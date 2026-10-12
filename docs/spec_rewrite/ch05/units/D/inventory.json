@@ -19,7 +19,7 @@
   {
    "id": "C-003",
    "old": "At a step boundary the order is integrate → project → boundary sweep → guards.",
-   "new": "At each step boundary the framework integrates, projects, runs the boundary sweep (the full pass that refreshes the signal table, with the boundary's due discrete ticks gated in), evaluates all guards once against that sweep, and fires the eligible events.",
+   "new": "At each step boundary the framework runs the boundary sequence. It integrates, projects, runs the boundary sweep (the full pass that refreshes the signal table, including the discrete components due at this boundary), evaluates all guards once against that sweep, and fires the eligible events.",
    "where": "new",
    "cites": [],
    "tag": "R",
@@ -97,11 +97,12 @@
   {
    "id": "C-012",
    "old": "The boundary sequence. At each boundary the framework integrates, projects, runs the boundary sweep, evaluates all guards once against that sweep, and fires the eligible events.",
-   "new": "At each step boundary the framework integrates, projects, runs the boundary sweep (the full pass that refreshes the signal table, with the boundary's due discrete ticks gated in), evaluates all guards once against that sweep, and fires the eligible events.",
+   "new": "At each step boundary the framework runs the boundary sequence. It integrates, projects, runs the boundary sweep (the full pass that refreshes the signal table, including the discrete components due at this boundary), evaluates all guards once against that sweep, and fires the eligible events.",
    "where": "new",
    "cites": [],
    "tag": "R",
-   "ruling": "R4"
+   "ruling": "R4",
+   "note": "the name boundary sequence restored per chapter pass finding 12"
   },
   {
    "id": "C-013",
@@ -294,7 +295,7 @@
   {
    "id": "C-033",
    "old": "Gain trajectories are observable in log, trace and replay, where a parameter write would be invisible to all three.",
-   "new": "Gain trajectories are observable in log, trace and replay (the session's recorded inputs, and the ordinary loop re-driven from that recorded trace), where a parameter write would be invisible to all three.",
+   "new": "Gain trajectories are observable in log, trace and replay, where a parameter write would be invisible to all three.",
    "where": "new",
    "cites": [],
    "tag": "F"
@@ -359,7 +360,7 @@
   {
    "id": "C-040",
    "old": "The compensator sits topologically after the supervisor and honors them this tick:",
-   "new": "The compensator sits topologically after the supervisor and honors them this tick:",
+   "new": "The compensator, here a proportional-integral `PI` block, sits topologically after the supervisor and honors them this tick:",
    "where": "new",
    "cites": [],
    "tag": "F"
@@ -439,7 +440,7 @@
   {
    "id": "C-049",
    "old": "Appendix A carries this as the same-tick reset entry, and the bumpless-engage answer (§11.7) presupposes exactly this spelling.",
-   "new": "Appendix A carries this as the same-tick reset entry, and the bumpless-engage answer of the C172X demo's Mode engage frame presupposes exactly this spelling.",
+   "new": "Appendix A carries this as the same-tick reset entry. The C172X demo is the interactive Flight.jl demo that section 3 of `companions/flight_case_studies.md` examines. The bumpless-engage answer of its Mode engage frame presupposes exactly this spelling.",
    "where": "new",
    "cites": [
     "Appendix A",
@@ -510,14 +511,15 @@
   }
  ],
  "added": [
-  "(the full pass that refreshes the signal table, with the boundary's due discrete ticks gated in)",
+  "(the full pass that refreshes the signal table, including the discrete components due at this boundary)",
   "(the instants at which a discrete component's stages and update run)",
   "Gain scheduling and resets are both",
-  "(the session's recorded inputs, and the ordinary loop re-driven from that recorded trace)",
+  "The trace is the session's recorded inputs, and replay re-drives the ordinary loop from that trace.",
   "Under zero-order hold, which keeps a discrete component's outputs constant between its ticks (§10.5),",
-  "of the C172X demo's Mode engage frame",
+  "of its Mode engage frame",
   "The C172X demo is the interactive Flight.jl demo that section 3 of `companions/flight_case_studies.md` examines.",
   "The gear wires the strut's `wow` port to the regulator `frc`'s `reset` input, `strut.wow → frc.reset`, so the reset fires on the touchdown edge.",
-  "(the name a port wears on its component's boundary)"
+  "(the name a port wears on its component's boundary)",
+  "here a proportional-integral `PI` block"
  ]
 }

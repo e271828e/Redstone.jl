@@ -16,7 +16,14 @@ None new. Applied as ruled:
   feedthrough and rejects algebraic loops by naming the cycle"). The roadmap
   names §5.1 to §5.6 by their titles. "The central chapter" was left out, so
   the opening claims nothing about Part I. §5.1's declared clause is "A cyclic
-  graph is the subject of [§5.5]", in `added`.
+  graph is the subject of [§5.5]", in `added`. After step 5: R18 makes it
+  "the subject of [§5.4], [§5.5] and [§5.6]", and chapter pass finding 1
+  adds "supervisory inputs" to the roadmap's §5.3 entry, from that
+  section's last subheading.
+- R19, after step 5: "`y_state` is stage 1 and `y_direct` is stage 2." ends
+  §5.2's context paragraph, in `added`. Sources: the signature block (`y_x`
+  from `y_state`), the glossary's *stage function* (spec 12792) and
+  *execution order* (12934) entries.
 - R2, M1: "What the views are" follows the hand-off (A-027 to A-039). The
   roadmap sentence gains "where each view comes from" (A-017).
 - R3, as corrected by R14: "The views themselves are unchanged in meaning"
@@ -35,7 +42,7 @@ None new. Applied as ruled:
   fixed call shape" (A-021), then "Two more reasons support it" before the
   other two (A-022, A-023).
 - R13: `#g-cell` is linked at the first "cells" in the views block, glossed
-  "(concretely typed entries, one per output port)" from the glossary entry
+  "(concretely typed table entries, one per output port)" from the glossary entry
   (12826). The old "(the declared ports, §8.2)" parenthetical becomes the
   sentence "Those cells are the declared ports (§8.2)", so one sentence holds
   one gloss (A-031).
@@ -54,8 +61,8 @@ None new. Applied as ruled:
 | A-025, `x_projection` alone positional (bold) | D-074 Position, log 2218 | "`project(comp, x)` alone stays positional" (`project` is the log's old name; the spec keeps `x_projection`) |
 | A-035, produced signals only (bold) | D-035 Position, log 1132–1133 | "the table holds produced signals only, never transported ones (one home per datum)" |
 
-Section pointers added: §5.1 to §5.6 in the opening's roadmap, and §5.5 in
-§5.1's declared clause.
+Section pointers added: §5.1 to §5.6 in the opening's roadmap, and §5.4,
+§5.5 and §5.6 in §5.1's declared clause (R18).
 
 Not cited: D-258, which survey part E lists for §5.1. Its Position rules the
 words "schedule" and "execution order", not the claims of §5.1. The five view

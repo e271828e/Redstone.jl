@@ -1,33 +1,31 @@
 ## 5. Evaluation order and feedthrough
 
-This chapter fixes two output stages per component, what each stage may see,
-and how those signatures alone yield a static execution order. The build
-derives that order from declared feedthrough and rejects algebraic loops by
-naming the cycle. [§5.1][s5-1] states the ordering problem; [§5.2][s5-2] the
-two output stages, their signatures, bundles and the hand-off laws;
-[§5.3][s5-3] the stage roles, the execution order and step boundaries;
-[§5.4][s5-4] artificial loops and the escape hatch; [§5.5][s5-5] the policy
-that rejects algebraic loops at build time; and [§5.6][s5-6] diagnostics
-through feedthrough tracing.
+This chapter fixes two output stages per component, what each stage may see, and
+how those signatures alone yield a static execution order. The build derives
+that order from declared feedthrough and rejects algebraic loops by naming the
+cycle. [§5.1][s5-1] states the ordering problem; [§5.2][s5-2] the two output stages, their
+signatures, bundles and the hand-off laws; [§5.3][s5-3] the stage roles, the execution
+order, step boundaries and supervisory inputs; [§5.4][s5-4] artificial loops and the
+escape hatch; [§5.5][s5-5] the policy that rejects algebraic loops at build time; and
+[§5.6][s5-6] diagnostics through feedthrough tracing.
 
 ### 5.1 The ordering problem
 
 At every evaluation instant, all signals must be computed consistently. Every
-consumer reads values already produced at that instant. The build constructs
-the directed graph of wiring edges and intra-[component](#g-component)
-[feedthrough](#g-feedthrough) relations (instantaneous input→output
-dependences). If the graph is acyclic, a topological sort yields a static
-[execution order](#g-execution-order) (the order in which the stage functions
-run), computed once at build time ([D-048][d-048]). A cyclic graph is the
-subject of [§5.5][s5-5]. The hot loop runs a flat list of `(component,
-stage)` pairs, with no runtime graph logic ([D-086][d-086]).
+consumer reads values already produced at that instant. The build constructs the
+directed graph of wiring edges and intra-[component](#g-component) [feedthrough](#g-feedthrough) relations
+(instantaneous input→output dependences). If the graph is acyclic, a topological
+sort yields a static [execution order](#g-execution-order) (the order in which the stage functions
+run), computed once at build time ([D-048][d-048]). A cyclic graph is the subject of
+[§5.4][s5-4], [§5.5][s5-5] and [§5.6][s5-6]. The hot loop runs a flat list of `(component, stage)`
+pairs, with no runtime graph logic ([D-086][d-086]).
 
 ### 5.2 Two-stage outputs: signatures, bundles and the hand-off laws
 
-**Every [component](#g-component) provides exactly two output stages**
-([D-006][d-006]). [Feedthrough](#g-feedthrough) (an instantaneous input→output
-dependence) is declared structurally, by function signature. There are no
-dependency annotations anywhere in the design ([D-006][d-006]).
+**Every [component](#g-component) provides exactly two output stages** ([D-006][d-006]). [Feedthrough](#g-feedthrough) (an
+instantaneous input→output dependence) is declared structurally, by function
+signature. There are no dependency annotations anywhere in the design ([D-006][d-006]).
+`y_state` is stage 1 and `y_direct` is stage 2.
 
 ```julia
 # continuous component — maximal legal view set of each bundle in comments
@@ -49,16 +47,15 @@ x⁺ = x_projection(comp, x)      # manifold projection; positional (below)
 ```
 
 The laws that govern that surface follow. They fix how a function receives its
-arguments, where each view comes from, which names it receives, what an output
+arguments, where each [view](#g-view) comes from, which names it receives, what an output
 stage returns, and what a handler returns.
 
 #### The hand-off: one component, one bundle
 
-**Every function receives exactly two arguments**, the component and one
-NamedTuple [bundle](#g-bundle) of zero-copy [views](#g-view)
-([D-074][d-074]). From that bundle the author destructures by name only what
-the body reads, as in `x_deriv(c::LowPassFilter, (; x, u)) = …` and
-`y_direct(c::PID, (; s, u, Δt)) = …`. Here `PID` names a
+**Every function receives exactly two arguments**, the component and one NamedTuple
+[bundle](#g-bundle) of zero-copy views ([D-074][d-074]). From that bundle the author destructures by
+name only what the body reads, as in `x_deriv(c::LowPassFilter, (; x, u)) = …`
+and `y_direct(c::PID, (; s, u, Δt)) = …`. Here `PID` names a
 proportional-integral-derivative controller.
 
 The rule exists so that the [executor](#g-executor) (the compiled form of
@@ -72,20 +69,20 @@ arguments whose names the framework reads through Julia's internal
 `Base.kwarg_decl`. A slurping-keyword spelling takes keyword arguments and ends
 its keyword list with a `_...` slurp.
 
-**`x_projection` alone stays positional** ([D-074][d-074]). It takes one
-store in and returns the same store out, so there is nothing to select.
+**`x_projection` alone stays positional** ([D-074][d-074]). It takes one [store](#g-store) (the
+framework-owned home of a state letter) in and returns the same store out, so
+there is nothing to select.
 
 #### What the views are
 
 The views come from the sources below.
 
-- Own state. On the continuous [tier](#g-tier) (the continuous side of the
-  hybrid formalism), `x` comes from the flat [buffer](#g-buffer) and `m` from
-  the mode [stores](#g-store). On the discrete tier, `s` comes from its store.
-- Own published signals. `y` is gathered from the component's own
-  [cells](#g-cell) (concretely typed entries, one per output port) in the
-  [signal table](#g-signal-table). Those cells are the declared
-  [ports](#g-port) ([§8.2][s8-2]).
+- Own state. On the continuous [tier](#g-tier) (the continuous or discrete side of the
+  hybrid formalism), `x` comes from the flat [buffer](#g-buffer) and `m` from the mode
+  stores. On the discrete tier, `s` comes from its store.
+- Own published signals. `y` is gathered from the component's own [cells](#g-cell)
+  (concretely typed table entries, one per output port) in the [signal table](#g-signal-table).
+  Those cells are the declared [ports](#g-port) ([§8.2][s8-2]).
 - Inputs. `u` is gathered from foreign cells through the wiring, by name.
 - The clock. `t`, and `Δt` ([§10.5][s10-5]).
 - Scratch. `ws` ([§7.3][s7-3]).
@@ -96,7 +93,6 @@ The views come from the sources below.
 mirrors another. Every bundle field earns its place as a view genuinely
 readable. No minimization of the set survives without introducing a copy
 ([D-035][d-035]).
-
 
 #### The bundle law: which names a component receives
 
@@ -123,13 +119,12 @@ Undeclared stores are *absent*, never `nothing`-filled.
 values). [§9.3][s9-3] already sources the rule. A component with no stage-1
 ports has no `y_x`/`y_s` in its stage-2 bundle at all.
 
-Destructuring a field that does not exist for the component fails at the
-probe with a `BundleFieldError` diagnostic ([D-248][d-248]). [§13.2][s13-2]
-describes the catch that recognizes it. The diagnostic carries
-[did-you-mean](#g-did-you-mean) (the offending name plus the list-in-hand it
-should have matched) against the legal field set. An example is "`x_deriv` of
-`Foo` destructures `m`, but `Foo` declares no `m_init`". One law covers tier
-facts, stage legality and declarations alike.
+Destructuring a field that does not exist for the component fails at the probe
+with a `BundleFieldError` diagnostic ([Appendix C][sC], [D-248][d-248]). [§13.2][s13-2] describes the
+catch that recognizes it. The diagnostic carries [did-you-mean](#g-did-you-mean) (the offending
+name plus the list-in-hand it should have matched) against the legal field set.
+An example is "`x_deriv` of `Foo` destructures `m`, but `Foo` declares no
+`m_init`". One law covers tier facts, stage legality and declarations alike.
 
 The mechanism behind the diagnostic is structured, not textual. Destructuring
 an absent field throws a `FieldError` carrying the type and the field name as
@@ -234,22 +229,22 @@ The names are deliberately non-exhaustive. Modes fold under the state. `m` is
 state, and the name states the feedthrough split rather than an argument
 inventory ([D-075][d-075]). Ambient facts (`t`, `Δt`) and scratch (`ws`) ride unnamed.
 
-The update law carries the [tier](#g-tier) (the continuous or discrete side of
-the hybrid formalism) in its name, `x_deriv` versus `s_update`. The two output
-stages do not. One pair of names serves both tiers, over each tier's own state
-letter ([D-220][d-220]). A stateful leaf's declarations must agree on one tier
-throughout ([§8.2][s8-2], [D-112][d-112]). A leaf mixing the update laws, or
-declaring a [store](#g-store) (the framework-owned home of a state letter) of
-one tier and the update law of the other, is a build error, not a reading. The error is `DeclarationOnWrongTier`.
+The update law carries the [tier](#g-tier) (the continuous or discrete side of the hybrid
+formalism) in its name, `x_deriv` versus `s_update`. The two output stages do
+not. One pair of names serves both tiers, over each tier's own state letter
+([D-220][d-220]). A stateful leaf's declarations must agree on one tier throughout ([§8.2][s8-2],
+[D-112][d-112]). A leaf mixing the update laws, or declaring a [store](#g-store) (the framework-owned
+home of a state letter) of one tier and the update law of the other, is a build
+error, not a reading. The error is `DeclarationOnWrongTier` ([Appendix C][sC]).
 
 #### Stage roles: what each stage may see
 
-**`y_state` is the no-feedthrough stage**, defined entirely by what it
-cannot see ([D-035][d-035]). Its [bundle](#g-bundle) (the NamedTuple of zero-copy views a component function
+**`y_state` is the no-feedthrough stage**, defined entirely by what it cannot see
+([D-035][d-035]). Its [bundle](#g-bundle) (the NamedTuple of zero-copy views a component function
 receives) carries no `u`, so "no feedthrough" cannot be violated by
-construction. That structural guarantee is what stage-1 [ports](#g-port)
-(the model's addressable units, one declared name each) contribute to the
-feedthrough graph. Stage-1 ports break would-be loops.
+construction. That structural guarantee is what stage-1 [ports](#g-port) (the model's
+addressable units, one declared name each) contribute to the feedthrough graph.
+Stage-1 ports break would-be loops.
 
 Stage 1 exists when the [component](#g-component) has state-derived ports, including any
 state-derived intermediate a later function reads ([§5.2][s5-2]). Otherwise it is simply
@@ -270,14 +265,15 @@ tier ([D-194][d-194]). Stage 2 receives the [state views](#g-view)
 (zero-copy reconstructions of the component's stores) too.
 Conservatively, every stage-2 output is presumed dependent on every wired input.
 
-**`x_deriv` and `s_update` run after the [sweep](#g-sweep)** (one ordered
-pass through the stage functions against the current state) ([D-015][d-015]). They
-run when the full [signal table](#g-signal-table) (the framework-owned
-collection of cells holding every produced signal) is complete and fresh, the
-component's own stage-2 ports included ([D-015][d-015]). The fused idiom stands. Compute each
-law once, in a stage. Publish it. Let `x_deriv`/`s_update` copy from `y`. The
-interfaces *reward* single-source-of-truth rather than making duplication
-unwritable. Nothing ever needs computing twice ([D-015][d-015], [D-035][d-035]).
+**`x_deriv` and `s_update` run after the [sweep](#g-sweep)** (one ordered pass through the stage
+functions against the current state) ([D-015][d-015]). They run when the full
+[signal table](#g-signal-table) (the framework-owned collection of cells holding every produced
+signal) is complete and fresh, the component's own stage-2 ports included
+([D-015][d-015]). The fused idiom stands. Compute each law once, in a stage. Publish it.
+Let `x_deriv`/`s_update` copy from `y`. The interfaces *reward*
+single-source-of-truth rather than making duplication unwritable. Nothing ever
+needs computing twice ([D-015][d-015], [D-035][d-035]). Computing a law twice invites drift, an
+edited law in one place and a stale copy in the other ([D-015][d-015]).
 
 All output stages must be pure, with no side effects ([D-015][d-015]). State
 types make mutation impossible anyway ([§7][s7]).
@@ -295,13 +291,13 @@ The teaching line is this. *"stage 1 publishes what you know from state alone;
 stage 2 adds what needs inputs; your dynamics read your own published results
 instead of recomputing them."*
 
-The reason for this departure is that derivative/output overlap is the *norm*
-in physical and control models. Newton–Euler dynamics computes accelerations that are at once
-published outputs and state derivatives. Kinematics, engine models, gear
-friction and every discrete compensator show the same overlap. That overlap is
-what makes the orthodox split expensive here ([D-015][d-015]). `f_ode!`,
-FlightCore's fused in-place derivative function, already embodied the same
-economics. This design keeps those economics while adding checked ordering.
+The reason for this departure is that derivative/output overlap is the *norm* in
+physical and control models. Newton–Euler dynamics computes accelerations that
+are at once published outputs and state derivatives. Kinematics, engine models,
+gear friction and every discrete compensator show the same overlap. That overlap
+is what makes the orthodox split expensive here ([D-015][d-015]). `f_ode!`, FlightCore's
+fused in-place derivative function, already embodied the same economics. This
+design keeps those economics while adding checked ordering.
 
 Shared expensive computations are solved uniformly by the fused idiom above.
 Compute once in stage 2, publish, and let `x_deriv`/`s_update` consume the
@@ -318,29 +314,28 @@ Execution runs all stage-1 functions in any order, then stage 2 in topological
 order, then all `x_deriv` calls against the now-consistent signal table
 ([D-288][d-288], [§9.7][s9-7]).
 
-The systemic consequence is that *evaluating the RHS means running the sweep*.
-The RHS (right-hand side) is the flow, `x_deriv`. There is no incremental
-`x_deriv`-only re-evaluation. Nothing is lost by that, because implicit
-solvers, linearization and trim already work this way. They seed `x` and run
-the composite. [§10.3][s10-3] and [§10.4][s10-4] restate that evaluating the
-RHS runs the sweep, as a property of the execution model. RHS evaluations and
-trial evaluations of a [guard](#g-guard) (the declared function defining an
-event's predicate) alike run the *interior* sweep, the continuous-only
-variant of [§10.5][s10-5] ([D-147][d-147]). Discrete executor entries are
-absent from it by construction, so discrete [cells](#g-cell) (the typed
-signal-table slots, one per output port) hold across the step.
-
+The systemic consequence is that *evaluating the right-hand side (RHS) means
+running the sweep*. The RHS is the flow, `x_deriv`. There is no incremental
+`x_deriv`-only re-evaluation. Nothing is lost by that, because implicit solvers,
+linearization and trim already work this way. They seed `x` and run the
+composite. [§10.3][s10-3] and [§10.4][s10-4] restate that evaluating the RHS runs the sweep, as a
+property of the execution model. RHS evaluations and trial evaluations of a
+[guard](#g-guard) (the declared function defining an event's predicate) alike run the
+*interior* sweep, the continuous-only variant of [§10.5][s10-5] ([D-147][d-147]). Discrete [executor](#g-executor)
+entries are absent from it by construction, so discrete [cells](#g-cell) (concretely typed
+table entries, one per output port) hold across the step.
 
 #### Step boundaries
 
-Guards and handlers read the same fresh world. At each step boundary the framework
-integrates, projects, runs the boundary sweep (the full pass that
-refreshes the signal table, with the boundary's due discrete ticks gated in),
-evaluates *all guards once* against that sweep, and fires the eligible events.
-So by guard and handler time `y` is a fresh decode of exactly the state being
-transformed, and the state views are that state itself. Handlers construct
-their `x`/`m` returns from raw state naturally. A reset map is
-`(; x = (; x..., ω = 0.0))`, with no reassembly from published fields.
+Guards and handlers read the same fresh world. At each step boundary the
+framework runs the boundary sequence. It integrates, projects, runs the boundary
+sweep (the full pass that refreshes the signal table, including the discrete
+components due at this boundary), evaluates *all guards once* against that sweep,
+and fires the eligible events. So by guard and handler time `y` is a fresh
+decode of exactly the state being transformed, and the state views are that
+state itself. Handlers construct their `x`/`m` returns from raw state naturally.
+A reset map is `(; x = (; x..., ω = 0.0))`, with no reassembly from published
+fields.
 
 Each firing is `handler → x_projection`. The sweep → guards → handlers phase
 then iterates to [quiescence](#g-quiescence) (the fixed point where a round of
@@ -349,12 +344,11 @@ boundary ([D-020][d-020]).
 
 > integrate → project → [ sweep → guards → handlers ] iterated to quiescence
 
-**`x_projection` runs between a state write and its decode**
-([D-016][d-016]). That is after integration, and after any handler `x`-reset.
-Those are the only positions in the boundary sequence where no fresh `y` of
-the new state can exist yet.
-`x_projection` is not *unique* in receiving raw state, since every function
-gets state views. It is unique in that position of the boundary sequence.
+**`x_projection` runs between a state write and its decode** ([D-016][d-016]). That is after
+integration, and after any handler `x`-reset. Those are the only positions in
+the boundary sequence where no fresh `y` of the new state can exist yet.
+`x_projection` is not *unique* in receiving raw state, since every function gets
+state views. It is unique in that position of the boundary sequence.
 
 The signal table is written *only by sweeps*, so a transition reaches the
 table at the next round's re-sweep ([§10.6][s10-6], [D-154][d-154]). The round
@@ -383,22 +377,22 @@ gains and resets them on mode transitions. Gain scheduling and resets are both
 ordinary signal flow here, because the rules for stores and views admit neither
 parameter mutation nor hand-ordered resets.
 
-**Scheduled gains are inputs** ([D-089][d-089]). A scheduler component owns
-the lookup tables as inert parameters, reads the scheduling variables as
-inputs, and publishes one gain bundle per compensator. Compensators consume
-gains as `u`. Ports expose what mutation would hide. Gain trajectories are
-observable in log, [trace](#g-trace) and [replay](#g-replay) (the session's
-recorded inputs, and the ordinary loop re-driven from that recorded trace), where a parameter write
-would be invisible to all three. The feedthrough graph carries the dependency.
-Linearization holds unseeded gain inputs constant with no special casing
-([§14.10][s14-10]). One-shot design-time gains, such as a controller
-synthesized at init, are construction-time parameters or stopped-sim service
-outputs ([D-089][d-089]). They are not a runtime write path.
+**Scheduled gains are inputs** ([D-089][d-089]). A scheduler component owns the lookup tables
+as inert parameters, reads the scheduling variables as inputs, and publishes one
+gain bundle per compensator. Compensators consume gains as `u`. Ports expose
+what mutation would hide. Gain trajectories are observable in log, [trace](#g-trace) and
+[replay](#g-replay), where a parameter write would be invisible to all three. The trace is
+the session's recorded inputs, and replay re-drives the ordinary loop from that
+trace. The feedthrough graph carries the dependency. Linearization holds
+unseeded gain inputs constant with no special casing ([§14.10][s14-10]). One-shot
+design-time gains, such as a controller synthesized at init, are
+construction-time parameters or stopped-sim service outputs ([D-089][d-089]). They are
+not a runtime write path.
 
-**A commanded reset of a discrete component is a same-tick input, consumed in
-the output stage** ([D-089][d-089]). The supervisor publishes `engage` and the
-latch value from its own feedthrough stage. The compensator sits topologically
-after the supervisor and honors them *this tick*:
+**A commanded reset of a discrete component is a same-tick input, consumed in the
+output stage** ([D-089][d-089]). The supervisor publishes `engage` and the latch value from
+its own feedthrough stage. The compensator, here a proportional-integral `PI`
+block, sits topologically after the supervisor and honors them *this tick*:
 
 ```julia
 y_direct(c::PI, (; s, u)) = (; u_cmd = u.engage ? u.u_latch : c.k_p*u.e + s.s_i)
@@ -407,52 +401,48 @@ s_update(c::PI, (; s, u, Δt)) = (; s_i = u.engage ? u.u_latch - c.k_p*u.e
 ```
 
 Honoring the reset only in `s_update` is legal, and it means something else
-([D-089][d-089]). The state still lands correctly at the next tick. But the
-*output at the engagement tick* was already published from the stale state
-during the sweep. Under zero-order hold, which keeps a discrete component's
-outputs constant between its ticks ([§10.5][s10-5]), the plant integrates a
-full step under that stale command. That one-tick-late command is exactly the
-bump that bumpless transfer exists to remove. No diagnostic can catch the
-bump, because both spellings are meaningful designs. The update stage cannot
-rescue its own boundary, because republishing from `s⁺` is rejected
-([D-067][d-067]). The output stage is therefore the *only* same-tick path.
-[Appendix A][sA] carries this as the same-tick reset entry, and the
-bumpless-engage answer of the C172X demo's *Mode engage* frame presupposes
-exactly this spelling. The C172X demo is the interactive Flight.jl demo that
-section 3 of `companions/flight_case_studies.md` examines.
+([D-089][d-089]). The state still lands correctly at the next tick. But the *output at the
+engagement tick* was already published from the stale state during the sweep.
+Under zero-order hold, which keeps a discrete component's outputs constant
+between its ticks ([§10.5][s10-5]), the plant integrates a full step under that stale
+command. That one-tick-late command is exactly the bump that bumpless transfer
+exists to remove. No diagnostic can catch the bump, because both spellings are
+meaningful designs. The update stage cannot rescue its own boundary, because
+republishing from `s⁺` is rejected ([D-067][d-067]). The output stage is therefore the
+*only* same-tick path. [Appendix A][sA] carries this as the same-tick reset entry. The
+C172X demo is the interactive Flight.jl demo that section 3 of
+`companions/flight_case_studies.md` examines. The bumpless-engage answer of its
+*Mode engage* frame presupposes exactly this spelling.
 
-**A continuous component's reset is an event** ([D-141][d-141]). The
-continuous tier admits no input spelling at all, because only handlers write
-`x` ([§3.1][s3-1]). A commanded reset of continuous state, whose condition
-arrives as an ordinary `Bool` input, is therefore an edge-triggered event
-owned by the reset component. A landing gear's friction regulator,
-re-initialized at touchdown by weight-on-wheels, is the canonical case
-([D-141][d-141]). The gear wires the strut's `wow` port to the
-regulator `frc`'s `reset` input, `strut.wow → frc.reset`, so the reset fires
-on the touchdown edge. A flag-gated reset [face](#g-face) (the
-name a port wears on its component's boundary) on a library PI block is sugar over
-exactly that event. [Appendix A][sA] carries the continuous-reset contract
-too.
+**A [continuous component](#g-continuous-component)'s reset is an event** ([D-141][d-141]). The continuous tier admits
+no input spelling at all, because only handlers write `x` ([§3.1][s3-1]). A commanded
+reset of continuous state, whose condition arrives as an ordinary `Bool` input,
+is therefore an edge-triggered event owned by the reset component. A landing
+gear's friction regulator, re-initialized at touchdown by weight-on-wheels, is
+the canonical case ([D-141][d-141]). The gear wires the strut's `wow` port to the
+regulator `frc`'s `reset` input, `strut.wow → frc.reset`, so the reset fires on
+the touchdown edge. A flag-gated reset [face](#g-face) (the name a port wears on its
+component's boundary) on a library PI block is sugar over exactly that event.
+[Appendix A][sA] carries the continuous-reset contract too.
 
 ### 5.4 Artificial loops and the escape hatch
 
-A [component](#g-component) that bundles a no-[feedthrough](#g-feedthrough) output with a feedthrough output in
-one atomic evaluation unit can be [port](#g-port)-level acyclic yet admit no evaluation
-order. Simulink calls this an "artificial algebraic loop". A genuine cycle in
-the instantaneous dependency graph is a different case, the
-[algebraic loop](#g-algebraic-loop) of [§5.5][s5-5]. The canonical artificial
+A [component](#g-component) that bundles a no-[feedthrough](#g-feedthrough) output with a feedthrough output (one
+with an instantaneous input→output dependence) in one atomic evaluation unit can
+be [port](#g-port)-level acyclic yet admit no evaluation order. Simulink calls this an
+"artificial algebraic loop". A genuine cycle in the instantaneous dependency
+graph is a different case, the [algebraic loop](#g-algebraic-loop) of [§5.5][s5-5]. The canonical artificial
 loop in this domain is rigid-body dynamics. Velocity out is pure state, and
 acceleration out is feedthrough from total force. **The remedy ladder for
-artificial loops has three rungs** ([D-140][d-140]). The
-[two-stage split](#g-stage-function) (the two output stages every component
-provides) resolves the rigid-body case, and it is the rung that absorbs most
-artificial loops.
+artificial loops has three rungs** ([D-140][d-140]). The [two-stage split](#g-stage-function) (the two output
+stages every component provides) resolves the rigid-body case, and it is the
+rung that absorbs most artificial loops.
 
 What survives the split is the case where a single component's stage-2 outputs
 cross-couple through a neighbor. That case is port-level acyclic and stage-level
-cyclic. The [feedthrough tracer](#g-feedthrough-tracer) (the instrument that
-classifies a rejected cycle as real or artificial, [§5.6][s5-6]) labels it artificial. The ladder's
-other two rungs are two remedies, and they apply in this order.
+cyclic. The [feedthrough tracer](#g-feedthrough-tracer) (the instrument that classifies a rejected cycle
+as real or artificial, [§5.6][s5-6]) labels it artificial. The ladder's other two rungs
+are two remedies, and they apply in this order.
 
 - Re-factor the [contract](#g-contract) (a component's declared interface).
   Before moving any code, re-examine the cycle's wires. An input the neighbor
@@ -481,10 +471,9 @@ other two rungs are two remedies, and they apply in this order.
   Re-factoring the steering contract to emit `(engaged, ψ_cmd)`, and computing
   `ψ_sw = engaged ? ψ_cmd : ψ_v` inside the strut, deletes the backward wire
   outright. The factoring survives substitution. That is the test that it
-  records structure rather than dodging the diagnostic ([D-140][d-140]). A
-  stateful steering actuator produces `ψ_cmd` from its own state and still
-  needs nothing from the strut (the companion document `migration_outline.md`
-  records the migration).
+  records structure rather than dodging the diagnostic ([D-140][d-140]). A stateful
+  steering actuator produces `ψ_cmd` from its own state and still needs nothing
+  from the strut (`companions/migration_outline.md` records the migration).
 - Split the component. This is the residual remedy, taken when both halves
   genuinely belong to the component and the split documents real structure.
   Its cost is stated where it bites. Visibility ([§8.3][s8-3]) is binary, so
@@ -500,18 +489,18 @@ other two rungs are two remedies, and they apply in this order.
   presentational flag and the `Private(T)` wrapper, the two visibility
   spellings they reject.
 
-The build diagnostic offers both exits explicitly ([D-140][d-140]). It reads "cycle through
-`systems/aero` is artificial at port level — split the component, or narrow the
-neighbor's contract". The dead hop is the member with the input
-[face](#g-face) (the name a port wears on its component's boundary) that it
-does not route to the output port. The diagnostic carries the dead hop
-([D-245][d-245]) as a separate [payload](#g-payload) field rather than dotting
-it onto the path ([§8.6][s8-6], [§13.2][s13-2]).
+The build diagnostic offers both exits explicitly ([D-140][d-140]). It reads "cycle
+through `systems/aero` is artificial at port level — split the component, or
+narrow the neighbor's contract". The dead hop is the member with the input [face](#g-face)
+(the name a port wears on its component's boundary) that it does not route to
+the output port. The diagnostic carries the dead hop ([D-245][d-245]) as a separate field
+of its [payload](#g-payload) (the structured data a diagnostic carries) rather than dotting it
+onto the path ([§8.6][s8-6], [§13.2][s13-2]).
 
 The component split is rare, and the ladder is what earns that word rather than
-asserting it ([D-140][d-140]). The two-stage split dissolves the common shapes, and the contract
-re-factoring absorbs the false wires. What is left for the component split is
-cycles whose halves really are one component's own work.
+asserting it ([D-140][d-140]). The two-stage split dissolves the common shapes, and the
+contract re-factoring absorbs the false wires. What is left for the component
+split is cycles whose halves really are one component's own work.
 
 One consequence of stage-2 conservatism (the presumption that every stage-2
 output depends on every wired input, [§5.3][s5-3]) is worth recording. An input
@@ -530,17 +519,17 @@ pair in the canonical slash form of [§8.6][s8-6], as in
 `aero/F → dyn/F, dyn/a → aero/a`.
 
 The user breaks the cycle explicitly, by one of three routes. They can insert
-dynamics (the α-filter idiom, a filter state inserted in the loop), insert an
-explicit unit delay (`UnitDelay`, [§13.7][s13-7]), or restructure. The α-filter idiom is already standard practice in the domain.
+dynamics, insert an explicit unit delay, or restructure. The α-filter idiom (a
+filter state inserted in the loop) is one way to insert dynamics, and it is
+already standard practice in the domain.
 
-The unit delay carries a caveat. It changes the model's [tier](#g-tier)
-structure. The broken signal becomes discrete, sampled on a
-period on the scale of [`Δt_base`](#g-dt_base) (the base tick period, an
-integer multiple `N_base·h`). That is a modeling decision, not a transparent wire. The diagnostic
-states this caveat rather than offering the delay as a free remedy
-([§13.7][s13-7]).
-Implicit delays and per-step numerical loop solving are both closed
-([D-005][d-005]).
+The unit delay, `UnitDelay` ([§13.7][s13-7]), carries a caveat. It changes the model's
+[tier](#g-tier) structure (its split into continuous and discrete sides). The broken signal
+becomes discrete, sampled on a period on the scale of [`Δt_base`](#g-dt_base) (the base tick
+period, an integer multiple of the continuous step). That is a modeling
+decision, not a transparent wire. The diagnostic states this caveat rather than
+offering the delay as a free remedy ([§13.7][s13-7]). Implicit delays and per-step
+numerical loop solving are both closed ([D-005][d-005]).
 
 Implicit *algebraic balances* inside a [component](#g-component), such as a turbomachinery
 operating point, remain the component author's business. They are local, owned
@@ -548,15 +537,15 @@ and bounded. Rejecting framework-level loops does not forbid such models.
 
 ### 5.6 Diagnostics: feedthrough tracing
 
-**Tracing is diagnostic only**, never relied on for correctness
-([D-012][d-012]). Ordering correctness comes exclusively from the structural
-two-stage split. Tracing improves error messages and verification. When the
-build finds a cycle, it triggers the
-[feedthrough tracer](#g-feedthrough-tracer) (the set-propagation instrument
-that does the tracing) to classify that cycle. A genuine cycle gets "insert a state", and an artificial one gets the
-remedy ladder ([§5.4][s5-4]). The parts below cover, in order, how a cycle is
-detected and named, the tracer's two modes and what tracing touches, how
-classification runs and decides, and the caveats the diagnostic carries.
+**Tracing is diagnostic only**, never relied on for correctness ([D-012][d-012]). Ordering
+correctness comes exclusively from the structural two-stage split. Tracing
+improves error messages and verification. When the build finds a cycle, it
+triggers the [feedthrough tracer](#g-feedthrough-tracer) (the set-propagation instrument that tracks
+which inputs a value depends on) to classify that cycle. A genuine cycle gets
+"insert a state", and an artificial one gets the remedy ladder ([§5.4][s5-4]). The parts
+below cover, in order, how a cycle is detected and named, the tracer's two modes
+and what tracing touches, how classification runs and decides, and the caveats
+the diagnostic carries.
 
 #### Detection and naming
 
@@ -632,37 +621,35 @@ dead hop under either verdict**, so a real loop still shows the chords the
 trace found false ([D-245][d-245]). For a simple cycle this reduces to the
 expected reading, that the loop is real iff every hop survives.
 
-Classification touches no activation machinery. There is no
-[activation](#g-activation) (the build's typed products at a given scalar
-type), no layouts and no table. The cycle classifier uses the *local* variant
-of tracing ([D-012][d-012]), the order-free per-member trace at the probe
-point. The "tracer activation" ([§9.4][s9-4]) names the other variant
-([D-012][d-012]), the global set-tracer run as an ordinary activation. The two
-must not be conflated. The local variant is not the local set-tracer mode. A
-member's map may come from either mode, or from structure ([D-245][d-245]).
+Classification touches no activation machinery. There is no [activation](#g-activation) (the
+build's typed products at a given scalar type), no layouts and no table. The
+cycle classifier uses the *local* variant of tracing ([D-012][d-012]), the order-free
+per-member trace at the probe point. The "tracer activation" ([§9.4][s9-4]) names the
+other variant ([D-012][d-012]), the global set-tracer run as an ordinary activation. The
+two must not be conflated. The local variant is not the local set-tracer mode. A
+member's map may come from either mode.
 
 #### Caveats the diagnostic carries
 
 The diagnostic carries the tracer's caveats rather than assuming them away. The
-trace speaks for the branch taken at the probe state (the diagnostic-only
-doctrine, [D-012][d-012]). **Discrete members trace structurally**, because
-the discrete [tier](#g-tier)'s plain, wholesale-pinning declarations admit no
-tracer scalar ([D-012][d-012]). Structural tracing is sound as a may-depend
-answer but never sharp, so the remedy hint is offered only for continuous
-members ([D-140][d-140]). A continuous face or port declared with no
-[walking](#g-walked) leaf (one whose type follows the activation scalar) admits
-no tracer scalar either, so the hops through it trace structurally too
-([D-245][d-245]).
+trace speaks for the branch taken at the probe point (the diagnostic-only
+doctrine, [D-012][d-012]). **Discrete members trace structurally**, because the discrete
+[tier](#g-tier)'s plain, wholesale-pinning declarations admit no tracer scalar ([D-012][d-012]).
+Structural tracing is sound as a may-depend answer but never sharp, so the
+remedy hint is offered only for continuous members ([D-140][d-140]). A continuous face or
+port declared with no [walking](#g-walked) leaf (one whose type follows the activation
+scalar) admits no tracer scalar either, so the hops through it trace
+structurally too ([D-245][d-245]).
 
-**The diagnostic records the source of each member's map** ([D-245][d-245]).
-The source is the global tracer, sampled states or structure. A reader can
-thus weigh a dead hop found on a few sampled paths against one found exactly.
-The hint itself is to split this component, *or* to narrow the neighbor's
-[contract](#g-contract) (its declared interface) when the dead hop's input is
-consumed only in a fallback branch (the ladder, [§5.4][s5-4], [D-140][d-140]).
-If a member's evaluation itself throws, the diagnostic ships with its members
-and wires alone, unclassified. Classification is a bonus on the cycle
-error, never its precondition ([D-012][d-012]).
+**The diagnostic records the source of each member's map** ([D-245][d-245]). The source is
+the global tracer, sampled states or structure. A reader can thus weigh a dead
+hop found on a few sampled paths against one found exactly. The hint itself is
+to split this component, *or* to narrow the neighbor's [contract](#g-contract) (its declared
+interface) when the dead hop's input is consumed only in a fallback branch.
+Those are the ladder's two remedies ([§5.4][s5-4], [D-140][d-140]). If a member's evaluation
+itself throws, the diagnostic ships with its members and wires alone,
+unclassified. Classification is a bonus on the cycle error, never its
+precondition ([D-012][d-012]).
 
 ---
 

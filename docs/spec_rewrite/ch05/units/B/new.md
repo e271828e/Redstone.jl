@@ -23,13 +23,12 @@ Undeclared stores are *absent*, never `nothing`-filled.
 values). [§9.3][s9-3] already sources the rule. A component with no stage-1
 ports has no `y_x`/`y_s` in its stage-2 bundle at all.
 
-Destructuring a field that does not exist for the component fails at the
-probe with a `BundleFieldError` diagnostic ([D-248][d-248]). [§13.2][s13-2]
-describes the catch that recognizes it. The diagnostic carries
-[did-you-mean](#g-did-you-mean) (the offending name plus the list-in-hand it
-should have matched) against the legal field set. An example is "`x_deriv` of
-`Foo` destructures `m`, but `Foo` declares no `m_init`". One law covers tier
-facts, stage legality and declarations alike.
+Destructuring a field that does not exist for the component fails at the probe
+with a `BundleFieldError` diagnostic ([Appendix C][sC], [D-248][d-248]). [§13.2][s13-2] describes the
+catch that recognizes it. The diagnostic carries [did-you-mean](#g-did-you-mean) (the offending
+name plus the list-in-hand it should have matched) against the legal field set.
+An example is "`x_deriv` of `Foo` destructures `m`, but `Foo` declares no
+`m_init`". One law covers tier facts, stage legality and declarations alike.
 
 The mechanism behind the diagnostic is structured, not textual. Destructuring
 an absent field throws a `FieldError` carrying the type and the field name as

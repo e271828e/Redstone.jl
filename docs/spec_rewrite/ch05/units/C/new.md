@@ -37,22 +37,22 @@ The names are deliberately non-exhaustive. Modes fold under the state. `m` is
 state, and the name states the feedthrough split rather than an argument
 inventory ([D-075][d-075]). Ambient facts (`t`, `Δt`) and scratch (`ws`) ride unnamed.
 
-The update law carries the [tier](#g-tier) (the continuous or discrete side of
-the hybrid formalism) in its name, `x_deriv` versus `s_update`. The two output
-stages do not. One pair of names serves both tiers, over each tier's own state
-letter ([D-220][d-220]). A stateful leaf's declarations must agree on one tier
-throughout ([§8.2][s8-2], [D-112][d-112]). A leaf mixing the update laws, or
-declaring a [store](#g-store) (the framework-owned home of a state letter) of
-one tier and the update law of the other, is a build error, not a reading. The error is `DeclarationOnWrongTier`.
+The update law carries the [tier](#g-tier) (the continuous or discrete side of the hybrid
+formalism) in its name, `x_deriv` versus `s_update`. The two output stages do
+not. One pair of names serves both tiers, over each tier's own state letter
+([D-220][d-220]). A stateful leaf's declarations must agree on one tier throughout ([§8.2][s8-2],
+[D-112][d-112]). A leaf mixing the update laws, or declaring a [store](#g-store) (the framework-owned
+home of a state letter) of one tier and the update law of the other, is a build
+error, not a reading. The error is `DeclarationOnWrongTier` ([Appendix C][sC]).
 
 #### Stage roles: what each stage may see
 
-**`y_state` is the no-feedthrough stage**, defined entirely by what it
-cannot see ([D-035][d-035]). Its [bundle](#g-bundle) (the NamedTuple of zero-copy views a component function
+**`y_state` is the no-feedthrough stage**, defined entirely by what it cannot see
+([D-035][d-035]). Its [bundle](#g-bundle) (the NamedTuple of zero-copy views a component function
 receives) carries no `u`, so "no feedthrough" cannot be violated by
-construction. That structural guarantee is what stage-1 [ports](#g-port)
-(the model's addressable units, one declared name each) contribute to the
-feedthrough graph. Stage-1 ports break would-be loops.
+construction. That structural guarantee is what stage-1 [ports](#g-port) (the model's
+addressable units, one declared name each) contribute to the feedthrough graph.
+Stage-1 ports break would-be loops.
 
 Stage 1 exists when the [component](#g-component) has state-derived ports, including any
 state-derived intermediate a later function reads ([§5.2][s5-2]). Otherwise it is simply
@@ -73,14 +73,15 @@ tier ([D-194][d-194]). Stage 2 receives the [state views](#g-view)
 (zero-copy reconstructions of the component's stores) too.
 Conservatively, every stage-2 output is presumed dependent on every wired input.
 
-**`x_deriv` and `s_update` run after the [sweep](#g-sweep)** (one ordered
-pass through the stage functions against the current state) ([D-015][d-015]). They
-run when the full [signal table](#g-signal-table) (the framework-owned
-collection of cells holding every produced signal) is complete and fresh, the
-component's own stage-2 ports included ([D-015][d-015]). The fused idiom stands. Compute each
-law once, in a stage. Publish it. Let `x_deriv`/`s_update` copy from `y`. The
-interfaces *reward* single-source-of-truth rather than making duplication
-unwritable. Nothing ever needs computing twice ([D-015][d-015], [D-035][d-035]).
+**`x_deriv` and `s_update` run after the [sweep](#g-sweep)** (one ordered pass through the stage
+functions against the current state) ([D-015][d-015]). They run when the full
+[signal table](#g-signal-table) (the framework-owned collection of cells holding every produced
+signal) is complete and fresh, the component's own stage-2 ports included
+([D-015][d-015]). The fused idiom stands. Compute each law once, in a stage. Publish it.
+Let `x_deriv`/`s_update` copy from `y`. The interfaces *reward*
+single-source-of-truth rather than making duplication unwritable. Nothing ever
+needs computing twice ([D-015][d-015], [D-035][d-035]). Computing a law twice invites drift, an
+edited law in one place and a stale copy in the other ([D-015][d-015]).
 
 All output stages must be pure, with no side effects ([D-015][d-015]). State
 types make mutation impossible anyway ([§7][s7]).
@@ -98,13 +99,13 @@ The teaching line is this. *"stage 1 publishes what you know from state alone;
 stage 2 adds what needs inputs; your dynamics read your own published results
 instead of recomputing them."*
 
-The reason for this departure is that derivative/output overlap is the *norm*
-in physical and control models. Newton–Euler dynamics computes accelerations that are at once
-published outputs and state derivatives. Kinematics, engine models, gear
-friction and every discrete compensator show the same overlap. That overlap is
-what makes the orthodox split expensive here ([D-015][d-015]). `f_ode!`,
-FlightCore's fused in-place derivative function, already embodied the same
-economics. This design keeps those economics while adding checked ordering.
+The reason for this departure is that derivative/output overlap is the *norm* in
+physical and control models. Newton–Euler dynamics computes accelerations that
+are at once published outputs and state derivatives. Kinematics, engine models,
+gear friction and every discrete compensator show the same overlap. That overlap
+is what makes the orthodox split expensive here ([D-015][d-015]). `f_ode!`, FlightCore's
+fused in-place derivative function, already embodied the same economics. This
+design keeps those economics while adding checked ordering.
 
 Shared expensive computations are solved uniformly by the fused idiom above.
 Compute once in stage 2, publish, and let `x_deriv`/`s_update` consume the
@@ -121,15 +122,13 @@ Execution runs all stage-1 functions in any order, then stage 2 in topological
 order, then all `x_deriv` calls against the now-consistent signal table
 ([D-288][d-288], [§9.7][s9-7]).
 
-The systemic consequence is that *evaluating the RHS means running the sweep*.
-The RHS (right-hand side) is the flow, `x_deriv`. There is no incremental
-`x_deriv`-only re-evaluation. Nothing is lost by that, because implicit
-solvers, linearization and trim already work this way. They seed `x` and run
-the composite. [§10.3][s10-3] and [§10.4][s10-4] restate that evaluating the
-RHS runs the sweep, as a property of the execution model. RHS evaluations and
-trial evaluations of a [guard](#g-guard) (the declared function defining an
-event's predicate) alike run the *interior* sweep, the continuous-only
-variant of [§10.5][s10-5] ([D-147][d-147]). Discrete executor entries are
-absent from it by construction, so discrete [cells](#g-cell) (the typed
-signal-table slots, one per output port) hold across the step.
-
+The systemic consequence is that *evaluating the right-hand side (RHS) means
+running the sweep*. The RHS is the flow, `x_deriv`. There is no incremental
+`x_deriv`-only re-evaluation. Nothing is lost by that, because implicit solvers,
+linearization and trim already work this way. They seed `x` and run the
+composite. [§10.3][s10-3] and [§10.4][s10-4] restate that evaluating the RHS runs the sweep, as a
+property of the execution model. RHS evaluations and trial evaluations of a
+[guard](#g-guard) (the declared function defining an event's predicate) alike run the
+*interior* sweep, the continuous-only variant of [§10.5][s10-5] ([D-147][d-147]). Discrete [executor](#g-executor)
+entries are absent from it by construction, so discrete [cells](#g-cell) (concretely typed
+table entries, one per output port) hold across the step.

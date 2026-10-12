@@ -228,7 +228,7 @@
   {
    "id": "A-026",
    "old": "It takes one store in and returns the same store out, so there is nothing to select.",
-   "new": "It takes one store in and returns the same store out, so there is nothing to select.",
+   "new": "It takes one store (the framework-owned home of a state letter) in and returns the same store out, so there is nothing to select.",
    "where": "new",
    "cites": [],
    "tag": "F"
@@ -254,7 +254,7 @@
   {
    "id": "A-029",
    "old": "- Own state. On the continuous tier `x` comes from the flat buffer and `m` from the mode stores.",
-   "new": "- Own state. On the continuous tier (the continuous side of the hybrid formalism), `x` comes from the flat buffer and `m` from the mode stores.",
+   "new": "- Own state. On the continuous tier (the continuous or discrete side of the hybrid formalism), `x` comes from the flat buffer and `m` from the mode stores.",
    "where": "new",
    "cites": [],
    "tag": "M",
@@ -272,7 +272,7 @@
   {
    "id": "A-031",
    "old": "- Own published signals. `y` is gathered from the component's own table cells (the declared ports, §8.2).",
-   "new": "- Own published signals. `y` is gathered from the component's own cells (concretely typed entries, one per output port) in the signal table. Those cells are the declared ports (§8.2).",
+   "new": "- Own published signals. `y` is gathered from the component's own cells (concretely typed table entries, one per output port) in the signal table. Those cells are the declared ports (§8.2).",
    "where": "new",
    "cites": [
     "§8.2"
@@ -365,19 +365,21 @@
  "added": [
   "This chapter fixes two output stages per component, what each stage may see, and how those signatures alone yield a static execution order.",
   "The build derives that order from declared feedthrough and rejects algebraic loops by naming the cycle.",
-  "§5.1 states the ordering problem; §5.2 the two output stages, their signatures, bundles and the hand-off laws; §5.3 the stage roles, the execution order and step boundaries; §5.4 artificial loops and the escape hatch; §5.5 the policy that rejects algebraic loops at build time; and §5.6 diagnostics through feedthrough tracing.",
+  "§5.1 states the ordering problem; §5.2 the two output stages, their signatures, bundles and the hand-off laws; §5.3 the stage roles, the execution order, step boundaries and supervisory inputs; §5.4 artificial loops and the escape hatch; §5.5 the policy that rejects algebraic loops at build time; and §5.6 diagnostics through feedthrough tracing.",
   "(instantaneous input→output dependences)",
   "(the order in which the stage functions run)",
-  "A cyclic graph is the subject of §5.5.",
+  "A cyclic graph is the subject of §5.4, §5.5 and §5.6.",
   "(an instantaneous input→output dependence)",
   "where each view comes from,",
   "The rule exists so that",
   "Two more reasons support it.",
   "Here `PID` names a proportional-integral-derivative controller.",
-  "(concretely typed entries, one per output port)",
+  "(concretely typed table entries, one per output port)",
   "A `kwarg_decl`-reflected spelling takes keyword arguments whose names the framework reads through Julia's internal `Base.kwarg_decl`.",
   "A slurping-keyword spelling takes keyword arguments and ends its keyword list with a `_...` slurp.",
   "The views come from the sources below.",
-  "(the continuous side of the hybrid formalism)"
+  "(the continuous or discrete side of the hybrid formalism)",
+  "`y_state` is stage 1 and `y_direct` is stage 2.",
+  "(the framework-owned home of a state letter)"
  ]
 }

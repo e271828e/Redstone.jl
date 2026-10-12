@@ -51,6 +51,10 @@ Other edits:
 - D-248 at the `BundleFieldError` sentence (old 750–751). Position bullet 4,
   log 9401–9402: "A `FieldError` matched against the bundle is
   `BundleFieldError` at the probe".
+- Appendix C beside D-248 at the `BundleFieldError` sentence (editorial
+  fixer, chapter pass finding 25). Appendix C, spec 12435: "**`BundleFieldError`**
+  ([§5.2][s5-2], [§13.2][s13-2])". A pointer to the kind's row, as §5.5 and
+  §5.6 give at `AlgebraicCycle`.
 - D-074 right after "closed" at the closed name sets (old 769). Rationale, log 2224–2225: "closed
   per-function-kind name sets, growth = a decision-log event". The per-tier
   half is D-220's (Rationale, log 8181–8183: "`output_state` and

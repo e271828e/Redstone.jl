@@ -21,6 +21,14 @@ control/estimation convention", and claims what the old one did.
 
 ## Citations added or replaced
 
+- Appendix C at "The error is `DeclarationOnWrongTier`" (editorial fixer,
+  chapter pass finding 25). Appendix C, spec 12348: "**`DeclarationOnWrongTier`**
+  ([§5.2][s5-2], [§8.2][s8-2], [§8.5][s8-5])". A pointer to the kind's row,
+  as §5.5 and §5.6 give at `AlgebraicCycle`.
+- D-015 at R20's sentence after "Nothing ever needs computing twice"
+  (editorial fixer). Rejected, log 607–608: "*Accepting duplicate
+  computation:* drift bug class — edited law in `f`, stale copy in `g`."
+  Rationale-only; see below.
 - D-220 at "Mathematical symbols and API names are two vocabularies" (old
   840), bold. Position head, log 8133–8135: "The component-authoring family
   drops its single letters and bare nouns for distinctive words; the spec's
@@ -93,6 +101,10 @@ sourcing is unit B's).
 
 ## Rationale-only rulings
 
+- D-015, Rejected, log 607–608 ("drift bug class — edited law in `f`, stale
+  copy in `g`"): computing a law twice invites drift (R20, added after "Nothing
+  ever needs computing twice"), cited plain. Listed for track 2: the log owes
+  a Position that names the drift class.
 - D-075, Rationale, log 2263 ("modes fold under the state letter, ambient
   `t`/`Δt`/`ws` unnamed"), and Rejected, log 2273–2275. Old 861–863, cited
   in place already.
@@ -127,7 +139,10 @@ None broken. Rows of `inbound.tsv` that rely on unit C's sentences, each still
 true: spec 1852 (§7.4, overlap is the norm), 1579, 2840, 10541, 12419 (return
 the field from `y_state`), 5906 (each law computed once and published), 12855
 (stage-2 conservatism), 12945 (no incremental `x_deriv`-only re-evaluation);
-log 7046 (D-194, "evaluating the RHS means running the sweep", kept verbatim),
+log 7046 (D-194, "evaluating the RHS means running the sweep", kept verbatim
+until chapter pass finding 9 spelled out RHS at its first use; the sentence
+now reads "evaluating the right-hand side (RHS) means running the sweep", and
+the log's unquoted paraphrase with its §5.3 citation still holds),
 log 10772–10773 (D-267, no `direct` in the name is the no-feedthrough
 property); `linear_blocks.md` 100, `flight_case_studies.md` 99 and 132,
 `frame_walkthrough.md` 93. The pre-existing mismatches of part D (spec 636,

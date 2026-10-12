@@ -362,3 +362,25 @@ the execution order** (831–923 and 1016–1042; 973 words).
   (schedule-structural)", carries uniqueness of position, which the next
   sentence of §5.3 states. That the annotation drops "schedule-structural"
   goes to track 2.
+
+## Rulings after step 5
+
+- **R18. §5.1's added clause points at §5.4 to §5.6** (chapter pass 2). The
+  build rejects every cycle in that graph, artificial loops included, and
+  §5.4 and §5.6 treat those. "A cyclic graph is the subject of §5.5" becomes
+  "the subject of §5.4 to §5.6", with each section cited.
+- **R19. §5.2 names the stages' numbers** (chapter pass 3). The chapter uses
+  "stage-1" and "stage-2" without saying which is which. After the context
+  paragraph, one declared sentence: "`y_state` is stage 1 and `y_direct` is
+  stage 2." The signature block (`y_x` from `y_state`), the glossary's *stage
+  function* entry (spec 12792) and its *execution order* entry (12934) carry
+  it.
+- **R20. §5.3 names the drift class** (inbound check; spec 636, D-139
+  Position and Spec, `trim_environment_walkthrough.md` 62 all cite "the
+  silent-drift class that §5.3 exists to kill"). After "Nothing ever needs
+  computing twice", one plain sentence from D-015's Rejected list (log
+  607–608): computing a law twice invites drift, an edited law in one place
+  and a stale copy in the other, citing D-015. Rationale-only; listed for
+  track 2.
+- **Chapter pass 26 is declined.** §5.4 keeps its shape (R10); it needs no
+  parts sentence for two paragraphs and a list.

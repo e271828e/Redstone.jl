@@ -14,6 +14,9 @@ Old 796 normalized words (`show-old`), new 910 (`show-new`). Log lines are
   `flight_case_studies.md` at `b08afca`, 349–350 ("*Mode engage.* …
   **Bumpless-engage semantics live in the FCS already.**"), under section 3,
   "The interactive C172X demo: the periphery under load" (193).
+  Editorial fixer, chapter pass finding 16: the introducing sentence now
+  precedes the use, which reads "the bumpless-engage answer of its *Mode
+  engage* frame". No claim changed.
 - **Applied, R16.** Old 934–935 and 937: "positions in the execution order"
   and "that position of the execution order" now say "boundary sequence". The
   glossary's *execution order* (12934) is the order the stage functions run;

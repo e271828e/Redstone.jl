@@ -32,7 +32,9 @@ Other edits under the brief's rules:
 - The two "local"s are kept apart by two added sentences after "The two must
   not be conflated": "The local variant is not the local set-tracer mode. A
   member's map may come from either mode, or from structure ([D-245])." The
-  source is old 1184–1186 and D-245 Position bullet 3 (log 9231).
+  source is old 1184–1186 and D-245 Position bullet 3 (log 9231). Editorial
+  fixer, chapter pass finding 22: ", or from structure ([D-245])" is dropped
+  as a repeat of the bold ruling at old 1184–1186, which keeps it.
 - The modes' lead sentence gains "Both are set-tracers. A traced value
   carries a set of input indices, its tracer tags." It claims only what the
   two bullets say, and defines "tracer tags" before the classifier uses it.
@@ -72,7 +74,7 @@ fails loudly on any Float64-pinning. `[Appendix C][sC]` added with R7 (F-011).
 | F-054, the remedy hint is offered only for continuous members | D-140 | Rationale | 4660–4661 |
 | F-055, a continuous face or port with no walking leaf traces structurally | D-245 | Rationale | 9246–9249 |
 | F-058, the hint names both exits | D-140 | Rationale | 4660 |
-| F-052, the trace speaks for the branch taken at the probe state (cited to D-012 as before; D-012's Position implies it through "at the probe point", D-140's Rejected list states it) | D-140 | Rejected | 4681–4683 |
+| F-052, the trace speaks for the branch taken at the probe point, "probe state" in the old text, renamed by chapter pass finding 23 (cited to D-012 as before; D-012's Position implies it through "at the probe point", D-140's Rejected list states it) | D-140 | Rejected | 4681–4683 |
 
 None of these is bold. The modes' properties, what tracing seeds and never
 touches, the blind spot and `Dual`-cleanliness have no entry (survey part E)

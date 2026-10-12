@@ -38,7 +38,7 @@
   {
    "id": "F-005",
    "old": "The build triggers it when it finds a cycle, to classify that cycle.",
-   "new": "When the build finds a cycle, it triggers the feedthrough tracer (the set-propagation instrument that does the tracing) to classify that cycle.",
+   "new": "When the build finds a cycle, it triggers the feedthrough tracer (the set-propagation instrument that tracks which inputs a value depends on) to classify that cycle.",
    "where": "new",
    "cites": [],
    "tag": "F"
@@ -469,7 +469,7 @@
   {
    "id": "F-052",
    "old": "The trace speaks for the branch taken at the probe state (the diagnostic-only doctrine, D-012).",
-   "new": "The trace speaks for the branch taken at the probe state (the diagnostic-only doctrine, D-012).",
+   "new": "The trace speaks for the branch taken at the probe point (the diagnostic-only doctrine, D-012).",
    "where": "new",
    "cites": [
     "D-012"
@@ -533,7 +533,7 @@
   {
    "id": "F-058",
    "old": "The hint itself is to split this component, or to narrow the neighbor's contract when the dead hop's input is consumed only in a fallback branch (the ladder, §5.4).",
-   "new": "The hint itself is to split this component, or to narrow the neighbor's contract (its declared interface) when the dead hop's input is consumed only in a fallback branch (the ladder, §5.4, D-140).",
+   "new": "The hint itself is to split this component, or to narrow the neighbor's contract (its declared interface) when the dead hop's input is consumed only in a fallback branch. Those are the ladder's two remedies (§5.4, D-140).",
    "where": "new",
    "cites": [
     "§5.4"
@@ -574,7 +574,7 @@
  ],
  "added": [
   "The parts below cover, in order, how a cycle is detected and named, the tracer's two modes and what tracing touches, how classification runs and decides, and the caveats the diagnostic carries.",
-  "(the set-propagation instrument that does the tracing)",
+  "(the set-propagation instrument that tracks which inputs a value depends on)",
   "(SCCs)",
   "an `AlgebraicCycle` error (Appendix C)",
   "#### The tracer's two modes",
@@ -586,9 +586,10 @@
   "the order in which the stage functions run",
   "(the initial state, where the build probes every user function)",
   "(the name a port wears on its component's boundary)",
-  "The local variant is not the local set-tracer mode. A member's map may come from either mode, or from structure (D-245).",
+  "The local variant is not the local set-tracer mode. A member's map may come from either mode.",
   "#### Caveats the diagnostic carries",
   "(one whose type follows the activation scalar)",
-  "(its declared interface)"
+  "(its declared interface)",
+  "Those are the ladder's two remedies"
  ]
 }

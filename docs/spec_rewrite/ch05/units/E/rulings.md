@@ -49,6 +49,13 @@ Old lines are `spec.md` lines at `b08afca`; log lines are `decisions.md` at
   inserted in the loop)"), so the α-filter is not the only way to insert
   dynamics. The tracer's gloss now follows the glossary: "the instrument that
   classifies a rejected cycle as real or artificial".
+  Editorial fixer, chapter pass findings 18 and 19: the path now reads
+  "`companions/migration_outline.md`", as the spec spells companion paths.
+  The routes sentence lost its two parentheticals: the α-filter gloss moved
+  to its own sentence, "The α-filter idiom (a filter state inserted in the
+  loop) is one way to insert dynamics", which keeps it one way among others,
+  and `UnitDelay` with its §13.7 pointer moved to "The unit delay, `UnitDelay`
+  ([§13.7][s13-7]), carries a caveat."
 - **Wording fixes, no claim changed**: "absorbs most of the class" becomes
   "absorbs most artificial loops", which avoids reserved *class*. "The split
   is rare" and "left for the split" become "the component split", since the

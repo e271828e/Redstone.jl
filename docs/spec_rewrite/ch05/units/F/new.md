@@ -1,14 +1,14 @@
 ### 5.6 Diagnostics: feedthrough tracing
 
-**Tracing is diagnostic only**, never relied on for correctness
-([D-012][d-012]). Ordering correctness comes exclusively from the structural
-two-stage split. Tracing improves error messages and verification. When the
-build finds a cycle, it triggers the
-[feedthrough tracer](#g-feedthrough-tracer) (the set-propagation instrument
-that does the tracing) to classify that cycle. A genuine cycle gets "insert a state", and an artificial one gets the
-remedy ladder ([§5.4][s5-4]). The parts below cover, in order, how a cycle is
-detected and named, the tracer's two modes and what tracing touches, how
-classification runs and decides, and the caveats the diagnostic carries.
+**Tracing is diagnostic only**, never relied on for correctness ([D-012][d-012]). Ordering
+correctness comes exclusively from the structural two-stage split. Tracing
+improves error messages and verification. When the build finds a cycle, it
+triggers the [feedthrough tracer](#g-feedthrough-tracer) (the set-propagation instrument that tracks
+which inputs a value depends on) to classify that cycle. A genuine cycle gets
+"insert a state", and an artificial one gets the remedy ladder ([§5.4][s5-4]). The parts
+below cover, in order, how a cycle is detected and named, the tracer's two modes
+and what tracing touches, how classification runs and decides, and the caveats
+the diagnostic carries.
 
 #### Detection and naming
 
@@ -84,37 +84,35 @@ dead hop under either verdict**, so a real loop still shows the chords the
 trace found false ([D-245][d-245]). For a simple cycle this reduces to the
 expected reading, that the loop is real iff every hop survives.
 
-Classification touches no activation machinery. There is no
-[activation](#g-activation) (the build's typed products at a given scalar
-type), no layouts and no table. The cycle classifier uses the *local* variant
-of tracing ([D-012][d-012]), the order-free per-member trace at the probe
-point. The "tracer activation" ([§9.4][s9-4]) names the other variant
-([D-012][d-012]), the global set-tracer run as an ordinary activation. The two
-must not be conflated. The local variant is not the local set-tracer mode. A
-member's map may come from either mode, or from structure ([D-245][d-245]).
+Classification touches no activation machinery. There is no [activation](#g-activation) (the
+build's typed products at a given scalar type), no layouts and no table. The
+cycle classifier uses the *local* variant of tracing ([D-012][d-012]), the order-free
+per-member trace at the probe point. The "tracer activation" ([§9.4][s9-4]) names the
+other variant ([D-012][d-012]), the global set-tracer run as an ordinary activation. The
+two must not be conflated. The local variant is not the local set-tracer mode. A
+member's map may come from either mode.
 
 #### Caveats the diagnostic carries
 
 The diagnostic carries the tracer's caveats rather than assuming them away. The
-trace speaks for the branch taken at the probe state (the diagnostic-only
-doctrine, [D-012][d-012]). **Discrete members trace structurally**, because
-the discrete [tier](#g-tier)'s plain, wholesale-pinning declarations admit no
-tracer scalar ([D-012][d-012]). Structural tracing is sound as a may-depend
-answer but never sharp, so the remedy hint is offered only for continuous
-members ([D-140][d-140]). A continuous face or port declared with no
-[walking](#g-walked) leaf (one whose type follows the activation scalar) admits
-no tracer scalar either, so the hops through it trace structurally too
-([D-245][d-245]).
+trace speaks for the branch taken at the probe point (the diagnostic-only
+doctrine, [D-012][d-012]). **Discrete members trace structurally**, because the discrete
+[tier](#g-tier)'s plain, wholesale-pinning declarations admit no tracer scalar ([D-012][d-012]).
+Structural tracing is sound as a may-depend answer but never sharp, so the
+remedy hint is offered only for continuous members ([D-140][d-140]). A continuous face or
+port declared with no [walking](#g-walked) leaf (one whose type follows the activation
+scalar) admits no tracer scalar either, so the hops through it trace
+structurally too ([D-245][d-245]).
 
-**The diagnostic records the source of each member's map** ([D-245][d-245]).
-The source is the global tracer, sampled states or structure. A reader can
-thus weigh a dead hop found on a few sampled paths against one found exactly.
-The hint itself is to split this component, *or* to narrow the neighbor's
-[contract](#g-contract) (its declared interface) when the dead hop's input is
-consumed only in a fallback branch (the ladder, [§5.4][s5-4], [D-140][d-140]).
-If a member's evaluation itself throws, the diagnostic ships with its members
-and wires alone, unclassified. Classification is a bonus on the cycle
-error, never its precondition ([D-012][d-012]).
+**The diagnostic records the source of each member's map** ([D-245][d-245]). The source is
+the global tracer, sampled states or structure. A reader can thus weigh a dead
+hop found on a few sampled paths against one found exactly. The hint itself is
+to split this component, *or* to narrow the neighbor's [contract](#g-contract) (its declared
+interface) when the dead hop's input is consumed only in a fallback branch.
+Those are the ladder's two remedies ([§5.4][s5-4], [D-140][d-140]). If a member's evaluation
+itself throws, the diagnostic ships with its members and wires alone,
+unclassified. Classification is a bonus on the cycle error, never its
+precondition ([D-012][d-012]).
 
 ---
 

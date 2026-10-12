@@ -85,12 +85,13 @@
   {
    "id": "C-009",
    "old": "Destructuring a field that does not exist for the component fails at the probe, inside the §13.2 framing diagnostic.",
-   "new": "Destructuring a field that does not exist for the component fails at the probe with a `BundleFieldError` diagnostic (D-248). §13.2 describes the catch that recognizes it.",
+   "new": "Destructuring a field that does not exist for the component fails at the probe with a `BundleFieldError` diagnostic (Appendix C, D-248). §13.2 describes the catch that recognizes it.",
    "where": "new",
    "cites": [
     "§13.2"
    ],
    "newcites": [
+    "Appendix C",
     "D-248",
     "§13.2"
    ],

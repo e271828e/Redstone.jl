@@ -11,7 +11,7 @@
   {
    "id": "C-002",
    "old": "A component that bundles a no-feedthrough output with a feedthrough output in one atomic evaluation unit can be port-level acyclic yet admit no evaluation order.",
-   "new": "A component that bundles a no-feedthrough output with a feedthrough output in one atomic evaluation unit can be port-level acyclic yet admit no evaluation order.",
+   "new": "A component that bundles a no-feedthrough output with a feedthrough output (one with an instantaneous input→output dependence) in one atomic evaluation unit can be port-level acyclic yet admit no evaluation order.",
    "where": "new",
    "cites": [],
    "tag": "F"
@@ -209,7 +209,7 @@
   {
    "id": "C-026",
    "old": "A stateful steering actuator produces `ψ_cmd` from its own state and still needs nothing from the strut (`migration_outline.md` records the migration).",
-   "new": "A stateful steering actuator produces `ψ_cmd` from its own state and still needs nothing from the strut (the companion document `migration_outline.md` records the migration).",
+   "new": "A stateful steering actuator produces `ψ_cmd` from its own state and still needs nothing from the strut (`companions/migration_outline.md` records the migration).",
    "where": "new",
    "cites": [],
    "tag": "F"
@@ -335,7 +335,7 @@
   {
    "id": "C-040",
    "old": "is carried as a separate payload field rather than dotted onto the path (§8.6, §13.2).",
-   "new": "The diagnostic carries the dead hop (D-245) as a separate payload field rather than dotting it onto the path (§8.6, §13.2).",
+   "new": "The diagnostic carries the dead hop (D-245) as a separate field of its payload (the structured data a diagnostic carries) rather than dotting it onto the path (§8.6, §13.2).",
    "where": "new",
    "cites": [
     "§13.2",
@@ -458,17 +458,18 @@
   {
    "id": "C-053",
    "old": "They can insert dynamics (the α-filter idiom), insert an explicit unit delay (`UnitDelay`, §13.7), or restructure.",
-   "new": "They can insert dynamics (the α-filter idiom, a filter state inserted in the loop), insert an explicit unit delay (`UnitDelay`, §13.7), or restructure.",
+   "new": "They can insert dynamics, insert an explicit unit delay, or restructure.",
    "where": "new",
    "cites": [
     "§13.7"
    ],
-   "tag": "F"
+   "tag": "F",
+   "newcites": []
   },
   {
    "id": "C-054",
    "old": "insert dynamics (the α-filter idiom)",
-   "new": "insert dynamics (the α-filter idiom, a filter state inserted in the loop)",
+   "new": "The α-filter idiom (a filter state inserted in the loop) is one way to insert dynamics",
    "where": "new",
    "cites": [],
    "tag": "F"
@@ -476,7 +477,7 @@
   {
    "id": "C-055",
    "old": "The α-filter idiom is already standard practice in the domain.",
-   "new": "The α-filter idiom is already standard practice in the domain.",
+   "new": "The α-filter idiom (a filter state inserted in the loop) is one way to insert dynamics, and it is already standard practice in the domain.",
    "where": "new",
    "cites": [],
    "tag": "F"
@@ -484,15 +485,18 @@
   {
    "id": "C-056",
    "old": "The unit delay carries a caveat.",
-   "new": "The unit delay carries a caveat.",
+   "new": "The unit delay, `UnitDelay` (§13.7), carries a caveat.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "F",
+   "newcites": [
+    "§13.7"
+   ]
   },
   {
    "id": "C-057",
    "old": "It changes the model's tier structure.",
-   "new": "It changes the model's tier structure.",
+   "new": "It changes the model's tier structure (its split into continuous and discrete sides).",
    "where": "new",
    "cites": [],
    "tag": "F"
@@ -500,7 +504,7 @@
   {
    "id": "C-058",
    "old": "The broken signal becomes discrete, sampled at `Δt_base` (the base tick period, an integer multiple `N_base·h`).",
-   "new": "The broken signal becomes discrete, sampled on a period on the scale of `Δt_base` (the base tick period, an integer multiple `N_base·h`).",
+   "new": "The broken signal becomes discrete, sampled on a period on the scale of `Δt_base` (the base tick period, an integer multiple of the continuous step).",
    "where": "new",
    "cites": [],
    "tag": "R",
@@ -556,6 +560,9 @@
   "The strut hands",
   "to the steering model and consumes the `ψ_sw` the steering model returns.",
   "The build reports it as `AlgebraicCycle` (Appendix C).",
-  "The diagnostic states this caveat rather than offering the delay as a free remedy (§13.7)."
+  "The diagnostic states this caveat rather than offering the delay as a free remedy (§13.7).",
+  "(one with an instantaneous input→output dependence)",
+  "(the structured data a diagnostic carries)",
+  "(its split into continuous and discrete sides)"
  ]
 }
