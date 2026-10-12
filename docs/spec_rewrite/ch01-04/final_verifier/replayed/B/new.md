@@ -92,9 +92,9 @@ not which fields a guard reads. A guard over an input is still a state event.
   a random number generator (RNG). That modeling is faithful to how the noise
   processes are specified, and it is cheap. One consequence is elevated to a
   framework guarantee, deterministic [replay](#g-replay) (re-running the ordinary loop on a
-  recorded input trace). RNG state lives in [component](#g-component) discrete state `s`, never in
-  ambient globals, so the same seed gives a bit-identical trajectory ([D-231][d-231],
-  [D-101][d-101]).
+  recorded input trace, [D-101][d-101]). RNG state lives in [component](#g-component) discrete state `s`,
+  never in ambient globals, so the same seed gives a bit-identical trajectory
+  ([D-231][d-231]).
 - No unconditional per-step hook, because its semantics depend on the step
   size ([D-001][d-001]). So there is no equivalent of `f_step!`, FlightCore's
   per-step hook. Every current use of `f_step!` decomposes into one of two

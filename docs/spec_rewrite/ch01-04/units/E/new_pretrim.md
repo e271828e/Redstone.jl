@@ -11,7 +11,7 @@ granularity; and [§4.4][s4-4] function-valued signals for environment access.
 (floats, `SVector`s, enums, nested immutables). The framework owns a [signal table](#g-signal-table),
 with one concretely typed [cell](#g-cell) per output port in the flattened model. A
 producer's output [stage function](#g-stage-function) (`y_state`/`y_direct`, the two output stages every
-[component](#g-component) provides, on either [tier](#g-tier)) returns a NamedTuple of fresh values. The
+[component](#g-component) provides, on either [tier](#g-tier), continuous or discrete) returns a NamedTuple of fresh values. The
 framework writes each of those values into its cell, and consumers read cells.
 
 These names are binding throughout this document.

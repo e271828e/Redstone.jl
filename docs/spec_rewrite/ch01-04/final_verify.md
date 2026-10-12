@@ -166,3 +166,44 @@ From `docs/spec_rewrite/`, `python3 checks/check_unit.py ch01-04 check <U>`:
   sound: finding 10 kept the old text's "Dryden/von Kármán turbulence",
   finding 24 kept "through the port's", and finding 32 used a sentence, not a
   parenthetical, with its reason logged.
+
+## Re-check (after R24, entries E72 to E83)
+
+Verdict: R24 is applied as ruled and as proposed. P1 to P3 are closed, and
+the re-check finds no new problem. One check artifact remains, below.
+
+- **Replay.** All 83 entries replay in order on f8afe64. Each Old block
+  occurs exactly once at its turn. The result matches every current
+  `new.md`, plus `units/E/rulings.md`, `units/F/rulings.md` and
+  `units/G/rulings.md`, byte for byte. The `new.md` diff still has 21 hunks,
+  and the log explains all of them.
+- **E72 to E74 (P1, unit B).** D-101 now sits inside the replay gloss, "(re-running
+  the ordinary loop on a recorded input trace, [D-101][d-101])". This is the
+  pattern §3.4 and §4.2 use, and it is R24's text. The RNG sentence cites
+  D-231 alone. Each citation now covers only what its entry rules. The next
+  sentence opens on "RNG state", not a pronoun, so no antecedent moved. E74
+  changes whitespace only.
+- **E75 and E76 (P2, unit E).** §4.1's *tier* reads "on either
+  [tier](#g-tier), continuous or discrete" inside R19's parenthetical. This
+  is §4.3's wording and the glossary's sense (13288). There is still one
+  parenthetical, with nothing nested. E76 changes whitespace only.
+- **E77 and E78 (P3, unit F).** The text now reads "A field-projection
+  connector is a [guarded addition](#g-guarded-addition) ([D-036][d-036]), a
+  capability the design admits but does not build. Its shape is obvious."
+  D-036 covers only the guarded-addition claim, which its Rejected item
+  states (log 1183–1184). "Its shape is obvious" is uncited, as in the old
+  text. "Its" points at the connector. E78 changes whitespace only.
+- **E79 to E83 (records).** Row 99 now reads as plain since R18 everywhere
+  in `units/E/rulings.md` and `units/F/rulings.md`. E80 and E83 change
+  whitespace only. The remaining lines over 80 columns in both files predate
+  f8afe64.
+- **Checks.** All seven `check_unit.py ch01-04 check <U>` runs print `checks
+  failed: 0`. `chapter_new.md` matches a fresh assembly of the seven units.
+  No glossary link appears twice in a section. Every changed line renders at
+  80 columns or less.
+- **Check artifact.** `boldcheck.py ch01-04 E` now prints `checks failed: 1`
+  ("TEXT CHANGED beyond bold markers"). `new_pretrim.md` predates E75. The
+  only difference between it and `new.md`, apart from bold markers, is E75's
+  ", continuous or discrete". All four bolds still pass their D-citation
+  test. Fix: apply E75 and E76 to `units/E/new_pretrim.md`, so the bold-only
+  check passes again before landing.

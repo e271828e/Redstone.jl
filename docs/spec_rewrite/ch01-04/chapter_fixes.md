@@ -1833,3 +1833,12 @@ New:
   ruling twice.
 ~~~~
 
+
+### O1. Orchestrator touch: units/E/new_pretrim.md (final verifier re-check)
+
+The bold-only reference copy predates E75, so `boldcheck.py ch01-04 E` saw a
+text change beyond bold markers. Applied E75's words to it, unwrapped (the
+copy is a check reference, never landed).
+
+- Old: "on either [tier](#g-tier)) returns"
+- New: "on either [tier](#g-tier), continuous or discrete) returns"

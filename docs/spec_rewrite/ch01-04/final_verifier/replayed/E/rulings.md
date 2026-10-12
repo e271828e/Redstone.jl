@@ -14,7 +14,8 @@ Old lines are `spec.md` lines at `d3af35a`; log lines are `decisions.md` at
 - **R5, F9.** Old 506 "kind-blind" becomes "class-blind", with D-172 cited in
   that sentence. Grep of the unit for other instances of *kind*: none left.
 - **R6.** Bolds: D-004 (row 91), D-121 (row 95), row 99 (D-243 alone; D-231
-  moved to the next plain sentence at the verifier's request), D-172 (row 114, on the faces sentence), D-036's second ruling
+  moved to the next plain sentence at the verifier's request; row 99 is plain
+  since R18), D-172 (row 114, on the faces sentence), D-036's second ruling
   (row 118). Row 112 cites D-034 beside D-016. Row 116 (the periphery atom)
   stays plain and uncited. The labels **Vocabulary.**, **Visibility.** and
   **Rule.** are gone; "Scatter/gather is the whole protocol" is a plain topic
@@ -81,9 +82,10 @@ None beyond the rulings above.
 ## Rationale-only rulings
 
 - Row 99, "the signal requirement is immutability plus frozen references",
-  plain since R18, cited to D-243. D-243 Rationale, log 9210 ("[§4.1] requires of a port value
-  immutability plus frozen references"). D-231's Position presupposes it,
-  log 8691–8692, and is cited at the next sentence instead. The log owes a Position stating the requirement.
+  plain since R18, cited to D-243. D-243 Rationale, log 9210 ("[§4.1]
+  requires of a port value immutability plus frozen references"). D-231's
+  Position presupposes it, log 8691–8692, and is cited at the next sentence
+  instead. The log owes a Position stating the requirement.
 - Row 112, the `unlisted` flag is closed, plain. D-034 Rejected, log
   1126–1127 ("*`unlisted` presentational flag:* hidden but connectable"); D-016
   holds it only in a *Superseded position* item of its Rejected list, log
@@ -96,11 +98,12 @@ None beyond the rulings above.
   ruling bold twice.
 - D-243: unit F bolds its Position ("A `Symbol` is an opaque leaf too", row
   128); unit E's row 99 cites D-243 for its Rationale, plain since R18.
-- D-231: cited plain at row 100, not at row 99's bold. Unit C bolds "`m` is continuous-only" citing
-  D-231; §7.3 bolds D-231 at old 1880, 1892, 1975 and 3975. Old 1892, "**The
-  frozen-reference latitude stays with signals** ([§4.1], [D-231])", is the
-  store-side face of row 99's requirement. The owner may judge whether row 99
-  and old 1892 state one ruling twice.
+- D-231: cited plain at row 100, not at row 99 (plain since R18). Unit C
+  bolds "`m` is continuous-only" citing D-231; §7.3 bolds D-231 at old 1880,
+  1892, 1975 and 3975. Old 1892, "**The frozen-reference latitude stays with
+  signals** ([§4.1], [D-231])", is the store-side face of row 99's
+  requirement. The owner may judge whether row 99 and old 1892 state one
+  ruling twice.
 - D-034 (§8.3 2967, 3009), D-194 (§5.2 833), D-040 (§8.6 3272), D-276 (unit
   F, row 130) and D-016 (§5.3 1019) are bold elsewhere; unit E cites each
   plain.
