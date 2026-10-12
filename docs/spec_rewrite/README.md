@@ -24,10 +24,10 @@ readability with no loss of content. The steps are in
 | part | state | landed in | files |
 |---|---|---|---|
 | Front matter and Part roadmaps | not started | | |
-| 1. Introduction | in progress, in `ch01-04/` | | |
-| 2. Formalism | in progress, in `ch01-04/` | | |
-| 3. Component taxonomy | in progress, in `ch01-04/` | | |
-| 4. Ports and signals | in progress, in `ch01-04/` | | |
+| 1. Introduction | not started | | |
+| 2. Formalism | not started | | |
+| 3. Component taxonomy | not started | | |
+| 4. Ports and signals | not started | | |
 | 5. Evaluation order and feedthrough | done | `4802729` | `ffd659f` |
 | 6. Composition: connections, aggregation and hierarchy | done | `50ad740` | `cc5a41c` |
 | 7. State and data representation | done | `1cb6716` | `733be21` |
