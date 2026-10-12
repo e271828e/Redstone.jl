@@ -97,8 +97,8 @@ what the spec says, the spec edit is part of the item.
     that local fan-out is free, and that contributors publish in the common
     body frame (Flight.jl's convention).
   Chapter 5 left these for the owner. Each sentence stays plain and uncited
-  until ruled; the evidence is in chapter 5's `rulings_batch.md`, group C,
-  in the commit that deleted `docs/spec_rewrite/ch05/`.
+  until ruled; the evidence is group C of chapter 5's `rulings_batch.md`,
+  which `git show ffd659f:docs/spec_rewrite/ch05/rulings_batch.md` recovers.
   - five §5 rulings no entry records, each recommended for an entry:
     stage-2 conservatism, unless D-006's all-inputs feedthrough is read as
     carrying it (the glossary and `pid_anti_windup.md` rely on it);
