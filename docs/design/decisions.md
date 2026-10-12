@@ -433,7 +433,7 @@ assemblies; both mode factorings.
 **Position.** Strict two-stage structural feedthrough (state decoder `h_x` +
 all-inputs `h_xu`, named per [D-075][d-075]); component split as the refinement.
 
-**Spec.** [§7.4][s7-4]
+**Spec.** [§5.2][s5-2], [§5.3][s5-3], [§5.4][s5-4], [§7.4][s7-4]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -755,7 +755,7 @@ event firing at most once per boundary, with "newly fired" made precise via
 per-event baselines in loop state ([D-082][d-082]); due `g` updates run after
 quiescence, outside the iteration.
 
-**Spec.** [§2.2][s2-2], [§3.1][s3-1], [§10.6][s10-6]
+**Spec.** [§2.2][s2-2], [§3.1][s3-1], [§5.3][s5-3], [§10.6][s10-6]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -1499,7 +1499,7 @@ C activation — with deployment binding at `Simulation` construction only.
   topo/cycle.
 - C, activation: per-`T` slot typing + probe chain + layouts.
 
-**Spec.** [§6.1][s6-1], [§9.1][s9-1]
+**Spec.** [§5.1][s5-1], [§6.1][s6-1], [§9.1][s9-1]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -3440,7 +3440,7 @@ enumerates four declaration families — stage names, the `init_*` family,
 `workspace` arity, and (when declared) `events`, a continuous-tier marker since
 the event system is continuous-side only.
 
-**Spec.** [§3.2][s3-2], [§5.2][s5-2], [§8.2][s8-2], [Appendix C][sC]
+**Spec.** [§3.2][s3-2], [§5.2][s5-2], [§5.3][s5-3], [§8.2][s8-2], [Appendix C][sC]
 
 **Rationale.** The kind is widened and renamed `StageOnWrongTier` →
 `DeclarationOnWrongTier` (payload: the offending declaration — a stage name or
@@ -9267,7 +9267,7 @@ diagnostic carries what that question rested on.
 - Every dead hop is listed under either verdict.
 - Each member records its tracing mode: global, sampled or structural.
 
-**Spec.** [§5.6][s5-6], [Appendix C][sC]
+**Spec.** [§5.4][s5-4], [§5.6][s5-6], [Appendix C][sC]
 
 **Rationale.** [D-012][d-012] states the verdict for a simple cycle: real iff every
 hop survives. A strongly connected component is one cluster of possibly many
@@ -12175,7 +12175,7 @@ options it opens stay uncommitted.
 - Publication is not a phase body. Invoking phase bodies in isolation leaves
   the buffers valid but off-trajectory, and continuing takes `init!`.
 
-**Spec.** [§7.1][s7-1], [§7.5][s7-5], [§9.7][s9-7], [§10.5][s10-5]
+**Spec.** [§5.3][s5-3], [§7.1][s7-1], [§7.5][s7-5], [§9.7][s9-7], [§10.5][s10-5]
 
 **Rationale.** The phase bodies are the semantically forced outer
 decomposition, and their seams cost nothing; views rebuild per call, hoisting
@@ -12586,7 +12586,7 @@ state are fixed here.
 - Publicity is never implicit. A leaf's port and an assembly's face are
   public only by declaration.
 
-**Spec.** [§8.1][s8-1], [§8.2][s8-2], [§8.3][s8-3], [§8.6][s8-6]
+**Spec.** [§5.2][s5-2], [§8.1][s8-1], [§8.2][s8-2], [§8.3][s8-3], [§8.6][s8-6]
 
 **Rationale.** Each bullet restates what an existing entry recorded outside
 its Position. Contracts by type, with the workspace's exemption, were
