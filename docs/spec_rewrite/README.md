@@ -29,7 +29,7 @@ readability with no loss of content. The steps are in
 | 3. Component taxonomy | not started | | |
 | 4. Ports and signals | not started | | |
 | 5. Evaluation order and feedthrough | in progress | | |
-| 6. Composition: connections, aggregation and hierarchy | in progress | | |
+| 6. Composition: connections, aggregation and hierarchy | landed, track 2 pending | `50ad740` | |
 | 7. State and data representation | done | `1cb6716` | `733be21` |
 | 8. The declaration layer: components and assemblies | done | `ef7f5dd` | `d268d39` |
 | 9. The build pipeline | done | `9a7d84f` | `docs/reports/20261001_chapter9_rewrite/` |
@@ -42,7 +42,7 @@ readability with no loss of content. The steps are in
 
 ## Carried to later chapters
 
-Doubles and pointers chapters 7 and 8 found in chapters not yet rewritten. Each
+Doubles and pointers chapters 6, 7 and 8 found in chapters not yet rewritten. Each
 chapter's rewrite settles its own:
 
 - **Chapter 3.** §3.4's lead-in "Algebra removes the reset." bolds D-056's
@@ -52,16 +52,27 @@ chapter's rewrite settles its own:
   §7.1 states a flat NamedTuple of real scalars and `SArray`s, and §7.3 a
   value whose fields are isbits or a `Symbol` (D-231).
 - **Chapter 5.** §5.3 states D-252 under a **Rule.** label; §8.3 bolds it.
-- **Chapter 6.** §6.1 bolds "for a continuous consumer only", the walk
-  clause's tier scope that §8.2 bolds (D-295).
 - **Chapter 11.** §11.6 calls §8.1's shadowing check "the reflection class",
   a name §8.1 never uses.
 - **Chapter 11.** §11.8 scopes the zero-allocation invariant to "the model
   sweep", where §7.5 says "the stepping loop" (D-305).
+- **Chapter 13.** §13.7 bolds D-311's ruling on the junction's type
+  parameters, which §6.2 bolds.
+- **Chapter 13.** §13.7 admits `Constant` "under the inventory's
+  demonstrated-need charter", which predates D-313's admission by judgement.
+- **Chapter 14.** §14.2 says the locality law "is convention" and that this
+  "carries over from §6.1". §6.1 enforces the one-level rule in `resolve`
+  (D-207). Chapter 6's escalation E1 asks the owner to rule.
+- **Chapter 14.** §14.10 cites superseded D-167 three times.
 - **Chapter 14.** §14.4 says a discrete `s` field "is any isbits value"
   (§3.2). §7.3 admits isbits or `Symbol` fields (D-231).
 - **Chapter 14.** §14.10 bolds seedability and states the tap rejection,
   both of which §8.2 states (D-295, D-296).
+- **Appendix C.** `TwoProducers` says "sibling wire", which D-314 makes
+  "local wire".
+- **Appendix D.** *generic holding* cites §6.1, which no longer states it,
+  and *local wire* cites §6.1 for "one end on the boundary", which D-314's
+  Rationale states. `#g-entry` lacks the wiring entry that §6.1 and §13.3 use.
 
 Chapter 9 predates this directory. Its files stay in its report, with the
 §9.4 trial in `docs/reports/20261001_spec_rewrite_sample/`.
