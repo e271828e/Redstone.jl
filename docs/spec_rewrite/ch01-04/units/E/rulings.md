@@ -24,6 +24,13 @@ Old lines are `spec.md` lines at `d3af35a`; log lines are `decisions.md` at
 - **R15.** `ProducedByTwoStages` is named at old 528, "Name collisions across
   a component's stages are a build error", citing §8.3. The kind and its
   citation are a declared addition tagged R15.
+- **R18** (step 5). Row 99, "the signal requirement is immutability plus
+  frozen references", goes plain and keeps its D-243 citation. No entry rules
+  the requirement; whether the log owes a Position goes to the owner.
+- **R19** (step 5). "Every component provides two output stages" returns to
+  the old form, a gloss on `y_state`/`y_direct` with no citation of its own,
+  worded as at old 444–445. The §5.2 citation goes. The claim, here, at §5.2
+  old 696, glossary old 12951 and old 1111, goes to the owner.
 
 ## Corrections proposed
 
@@ -41,8 +48,8 @@ None beyond the rulings above.
 - D-231 at row 100, "Signals may reference bulk data ... read-only for the
   duration of the run": Position, "The frozen-reference latitude of [§4.1]
   stays with signals" (log 8691–8692).
-- §5.2 at row 93, "Every component provides two output stages": §5.2 old 696,
-  "Every component provides exactly two output stages" (D-006).
+- §5.2 at row 93, "Every component provides two output stages": removed by
+  R19; the claim is a gloss again, uncited as at old 444–445.
 - D-040 at row 106: Position, "Slash-string paths ... one canonical form shared
   by declarations, diagnostics, devices and logs" (log 1282–1283).
 - D-276 at row 107: Position, "a *leaf address*, a string naming one leaf of
@@ -74,7 +81,7 @@ None beyond the rulings above.
 ## Rationale-only rulings
 
 - Row 99, "the signal requirement is immutability plus frozen references",
-  bold. D-243 Rationale, log 9210 ("[§4.1] requires of a port value
+  plain since R18, cited to D-243. D-243 Rationale, log 9210 ("[§4.1] requires of a port value
   immutability plus frozen references"). D-231's Position presupposes it,
   log 8691–8692, and is cited at the next sentence instead. The log owes a Position stating the requirement.
 - Row 112, the `unlisted` flag is closed, plain. D-034 Rejected, log
@@ -88,8 +95,7 @@ None beyond the rulings above.
   133); unit E bolds the second (row 118). Four rulings, four bolds, no
   ruling bold twice.
 - D-243: unit F bolds its Position ("A `Symbol` is an opaque leaf too", row
-  128); unit E's row 99 bold cites D-243 for its Rationale. Both are R6's
-  choices and state different rulings.
+  128); unit E's row 99 cites D-243 for its Rationale, plain since R18.
 - D-231: cited plain at row 100, not at row 99's bold. Unit C bolds "`m` is continuous-only" citing
   D-231; §7.3 bolds D-231 at old 1880, 1892, 1975 and 3975. Old 1892, "**The
   frozen-reference latitude stays with signals** ([§4.1], [D-231])", is the
@@ -116,8 +122,8 @@ matches §4.3.
 1. **"Every component provides two output stages."** Old 444–445 put this in
    a gloss; the rewrite states it as its own sentence. Survey part B, item 9,
    notes it is not true of an assembly: an assembly provides no output stages,
-   and §5.2 old 696 says the same of every component. Wording kept, now cited
-   to §5.2; the owner may want "every leaf" in both places.
+   and §5.2 old 696 says the same of every component. R19 returns it to the
+   old gloss, uncited; the claim in all four places goes to the owner.
 2. **The port's gloss in §4.1.** §4.1 links *port* at "Ports exchange
    immutable values" with no gloss, because the bold headline clause cannot
    carry one; the chapter opening, directly above, glosses it as "the

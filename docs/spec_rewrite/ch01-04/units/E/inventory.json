@@ -47,13 +47,11 @@
   {
    "id": "C-006",
    "old": "(`y_state`/`y_direct`, the two output stages every component provides, on either tier)",
-   "new": "Every component provides two output stages (§5.2), `y_state`/`y_direct`, on either tier (the continuous or discrete side of the hybrid formalism).",
+   "new": "(`y_state`/`y_direct`, the two output stages every component provides, on either tier)",
    "where": "new",
    "cites": [],
-   "newcites": [
-    "§5.2"
-   ],
-   "tag": "C"
+   "tag": "R",
+   "ruling": "R19"
   },
   {
    "id": "C-007",
@@ -66,7 +64,7 @@
   {
    "id": "C-008",
    "old": "returns a named tuple of fresh values.",
-   "new": "returns a named tuple of fresh values.",
+   "new": "returns a NamedTuple of fresh values.",
    "where": "new",
    "cites": [],
    "tag": "F"
@@ -176,7 +174,7 @@
     "D-243"
    ],
    "tag": "R",
-   "ruling": "R6"
+   "ruling": "R18"
   },
   {
    "id": "C-020",
@@ -227,7 +225,7 @@
   {
    "id": "C-025",
    "old": "- Isbits payloads allocate nothing, because named tuples of isbits are isbits.",
-   "new": "Isbits payloads allocate nothing, because named tuples of isbits are isbits.",
+   "new": "Isbits payloads allocate nothing, because NamedTuples of isbits are isbits.",
    "where": "new",
    "cites": [],
    "tag": "F"
@@ -558,7 +556,7 @@
   {
    "id": "C-060",
    "old": "A stage function (`y_state`/`y_direct`, on either tier) returns a named tuple.",
-   "new": "A stage function (`y_state`/`y_direct`) returns a named tuple on either tier, continuous or discrete.",
+   "new": "A stage function (`y_state`/`y_direct`) returns a NamedTuple on either tier, continuous or discrete.",
    "where": "new",
    "cites": [],
    "tag": "F"
@@ -651,7 +649,7 @@
   }
  ],
  "added": [
-  "This chapter gives the port, the addressable unit through which components exchange immutable values.",
+  "This chapter defines the port, the addressable unit through which components exchange immutable values.",
   "§4.1 states the immutable value semantics of signals; §4.2 why consumers see ports, not stages; §4.3 the table mechanics and port granularity; and §4.4 function-valued signals for environment access.",
   "(the contiguous vector backing all continuous state)",
   "(any attached participant outside the loop, such as the GUI)",

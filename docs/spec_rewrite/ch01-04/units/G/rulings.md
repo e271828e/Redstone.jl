@@ -77,7 +77,10 @@ Wording changes that carry no claim:
   the International Standard Atmosphere (part F; FlightPhysics'
   `atmosphere.jl` names its ISA model); "the geoid undulation grid (the
   geoid's height above the reference ellipsoid)" (part F's reader-cold list;
-  the standard definition of geoid undulation). `ISAField`, `TerrainField`,
+  source, R20: FlightPhysics `geodesy.jl` 163, where the EGM96 grid holds
+  "geoid height measured from the WGS84 ellipsoid" (163–164), and 226–228,
+  which relate ellipsoidal and orthometric altitude "by the geoid's height",
+  `HEllip(h._val + get_geoid_height(loc))`). `ISAField`, `TerrainField`,
   `airdata`, `ray_intersect`, `Airflow` and `AbstractTerrainField` are called
   "illustrative" (part F: in neither `src/` nor Flight.jl). `SimpleAtmosphere`
   and `AirData` are called FlightPhysics' (`atmosphere.jl` 260, 198).
@@ -87,7 +90,10 @@ Wording changes that carry no claim:
   (glossary 12829, "It states **structural substitutability**: any concrete
   producer face below the bound wires to it (the field handles, [§4.4], are
   the demonstrated client)"). It is that term's first use in the section; the
-  old text left it unlinked. It takes no gloss beyond the sentence's own
+  old text left it unlinked. After step 5 (chapter pass finding 32) it takes
+  the gloss sentence "An abstract input entry is an input whose declared type
+  is abstract", from glossary 12829 ("an `u_types` entry whose declared type
+  is abstract"). Before that it took no gloss beyond the sentence's own
   "structural substitutability".
 
 ## Corrections proposed

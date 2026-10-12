@@ -525,7 +525,7 @@
   "finite-state machine",
   "the addressable unit of the model",
   "The rule of meaning separates a command from a detection.",
-  "On the continuous tier, a commanded reset of state, whose condition arrives as an input, still lands through an event whose guard reads that input (§5.3, D-141).",
+  "On the continuous tier, a reset of state commanded through an input still lands through an event whose guard reads that input (§5.3, D-141).",
   "an instantaneous input→output dependence",
   "the framework-owned home of a state letter",
   "the names ports wear on a component's boundary"

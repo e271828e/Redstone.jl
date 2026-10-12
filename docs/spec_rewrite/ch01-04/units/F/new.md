@@ -1,12 +1,10 @@
 #### What a port may hold
 
-**Stage returns are named tuples of port values, period** ([D-036][d-036]).
-**A custom struct is a first-class port value** ([D-036][d-036]). It is one
-field of the returned tuple, one declared port, one cell
-(`pose = KinPose{T}`, where `KinPose` is an illustrative struct). Nested
-fields get no cells of their own. A reader reaches a nested field through the
-port's [leaf address](#g-leaf-address) (the field name with dotted and
-bracketed steps below it), as in `"pose.q_eb"` ([§14.4][s14-4], [D-276][d-276]). A wired
+**Stage returns are NamedTuples of port values, period** ([D-036][d-036]). **A custom struct is
+a first-class port value** ([D-036][d-036]). It is one field of the returned tuple, one
+declared port, one cell (`pose = KinPose{T}`, where `KinPose` is an illustrative
+struct). Nested fields get no cells of their own. A reader reaches a nested
+field through the port's [leaf address](#g-leaf-address), as in `"pose.q_eb"` ([§14.4][s14-4], [D-276][d-276]). A wired
 consumer takes the bundle (the struct-valued port) whole. Bare-struct returns
 are rejected ([D-036][d-036]).
 
@@ -39,9 +37,8 @@ destructures the bundle in its own stage or through an unbundling component.
 An unbundling component is a `y_direct` leaf that takes the bundle and
 publishes its fields. It is a candidate for the standard library of [§13.7][s13-7].
 
-A field-projection connector is a [guarded
-addition](#g-guarded-addition) (a capability the design admits but does not
-build) ([D-036][d-036]). Its shape is obvious, and it is not built.
+A field-projection connector is a [guarded addition](#g-guarded-addition) (a capability the design
+admits but does not build), and its shape is obvious ([D-036][d-036]).
 
 Under the granularity guideline, **authors should bundle what shares a stage
 *and* is consumed together** ([D-036][d-036]). The first criterion is trivially
@@ -54,11 +51,10 @@ Fan-out is free, so publishing both a bundle and a hot loose field (`pose`
 *and* `q_eb`) is legitimate. It costs one extra isbits cell.
 
 The sketch below shows the bundle, the loose hot field and a face aliasing an
-interior port, in declaration form. `Kinematics` and `Vehicle` are
-illustrative names, and `KinPose` is the illustrative struct above. An `output_wires` entry
-sources a face from an immediate child's face ([§6.1][s6-1]). `RQuat` is
-FlightPhysics' rotation quaternion. `RQuat{Float64}` is the spec's form of it,
-since FlightPhysics' `RQuat` takes no type parameter.
+interior port, in declaration form. `Kinematics` and `Vehicle` are illustrative
+names. An `output_wires` entry sources a face from an immediate child's face
+([§6.1][s6-1]). `RQuat` is FlightPhysics' rotation quaternion. `RQuat{Float64}` is the
+spec's form of it, since FlightPhysics' `RQuat` takes no type parameter.
 
 ```julia
 #a continuous leaf: one bundle port and the hot field published loose — two cells

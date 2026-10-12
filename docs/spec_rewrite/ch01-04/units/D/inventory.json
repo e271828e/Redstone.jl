@@ -97,7 +97,7 @@
   {
    "id": "C-011",
    "old": "And the settled rules force a merged component's two halves to communicate exactly as two siblings do.",
-   "new": "The settled rules force a merged component's two halves to communicate exactly as two siblings do (D-056).",
+   "new": "The settled rules force an all-in-one component's two halves to communicate exactly as two siblings do (D-056).",
    "where": "new",
    "cites": [],
    "newcites": [
@@ -155,7 +155,7 @@
   {
    "id": "C-017",
    "old": "Cross-tier influence inside the merged class still routes through published table cells.",
-   "new": "Influence across tiers (the continuous and discrete sides of the formalism) inside a merged component still routes through published table cells (typed entries of the signal table, D-056).",
+   "new": "Inside an all-in-one component, influence across tiers (the continuous and discrete sides of the formalism) still routes through cells of the published signal table (D-056).",
    "where": "new",
    "cites": [],
    "newcites": [
@@ -166,7 +166,7 @@
   {
    "id": "C-018",
    "old": "The all-in-one component is therefore an assembly of two primitives in a trench coat.",
-   "new": "The all-in-one component is therefore an assembly of two primitives in a trench coat (D-056).",
+   "new": "The all-in-one component is therefore an assembly (pure composition) of two primitives in a trench coat (D-056).",
    "where": "new",
    "cites": [],
    "newcites": [
@@ -177,7 +177,7 @@
   {
    "id": "C-019",
    "old": "It buys no expressiveness",
-   "new": "The all-in-one component buys no expressiveness.",
+   "new": "It buys no expressiveness.",
    "where": "new",
    "cites": [],
    "tag": "F"
@@ -302,7 +302,7 @@
   {
    "id": "C-034",
    "old": "The reset is periodic, not condition-triggered, so events are the wrong tier.",
-   "new": "The reset is periodic, not condition-triggered, so events are the wrong mechanism (D-056).",
+   "new": "The reset is periodic, not predicate-triggered, so events are the wrong mechanism (D-056).",
    "where": "new",
    "cites": [],
    "newcites": [
@@ -383,7 +383,7 @@
   {
    "id": "C-042",
    "old": "§8.6 spells that idiom, its exactness condition and the resulting assembly in full.",
-   "new": "§8.6 spells that idiom, its exactness condition and the resulting assembly in full.",
+   "new": "§8.6 also spells that idiom, its exactness condition and the resulting assembly in full.",
    "where": "new",
    "cites": [
     "§8.6"
@@ -445,7 +445,7 @@
   {
    "id": "C-049",
    "old": "Under a `Dual` activation the discrete tier is held (§8.2),",
-   "new": "Under a `Dual` activation (the build's typed products at a given scalar type) the discrete tier is held (§8.2).",
+   "new": "Under a `Dual` activation (the build's typed products at ForwardDiff's dual-number scalar type) the discrete tier is held (§8.2).",
    "where": "new",
    "cites": [
     "§8.2"
@@ -471,7 +471,7 @@
   {
    "id": "C-052",
    "old": "One escape hatch is recorded, unbuilt.",
-   "new": "The one recorded, unbuilt escape hatch is a tick-triggered handler on continuous components (D-056).",
+   "new": "The recorded, unbuilt escape hatch is a tick-triggered handler on continuous components (D-056).",
    "where": "new",
    "cites": [],
    "newcites": [
@@ -510,9 +510,7 @@
  "added": [
   "A sweep is one pass through the execution order against the current state.",
   "A tick is an instant at which a discrete component's stages and update run.",
-  "An assembly is a component of pure composition.",
   "§8.6 spells this IMU in full.",
-  "`Dual` is ForwardDiff's dual number.",
   "In that wire, the integrals consume the sampler's published latch (§8.6)."
  ]
 }

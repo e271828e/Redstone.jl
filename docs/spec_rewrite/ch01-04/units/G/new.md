@@ -1,10 +1,10 @@
 ### 4.4 Function-valued signals: environment access
 
-Atmosphere and terrain are query-shaped. Consumers evaluate them at arguments
-of their own choosing, such as each gear strut at its own contact point, or
-airflow at the vehicle pose. **Ordinary [ports](#g-port) carry them as immutable query objects** (a port
-is one declared name with its cell), called [field handles](#g-field-handle),
-because of that shape ([D-008][d-008]).
+Atmosphere and terrain are query-shaped. Consumers evaluate them at arguments of
+their own choosing, such as each gear strut at its own contact point, or airflow
+at the vehicle pose. **Ordinary [ports](#g-port) carry them as immutable query objects**,
+called [field handles](#g-field-handle), because of that shape ([D-008][d-008]). A port is one declared name
+with its cell.
 
 - An environment [component](#g-component) (the unit of modeling, leaf or
   assembly) emits a field value, such as the illustrative
@@ -73,16 +73,15 @@ FlightPhysics' `AirData` for the whole vehicle. Resource injection
 (declare-and-resolve service registries) is closed for the first cut
 ([D-008][d-008]).
 
-The field-handle mechanism replaces Flight.jl's threading of
-`atmosphere`/`terrain` as arguments through every update signature. Flight.jl's
-landing-gear model finds contact through a bounded ray query to the terrain
-model, the query a terrain field handle's `ray_intersect` serves. Substitutability
-behind a stable [face](#g-face) (the name a port wears on its component's
-boundary) is declared with an
-[abstract input entry](#g-abstract-entry), here the illustrative
-`terrain = AbstractTerrainField`. That is structural substitutability
-([§8.2][s8-2], [D-296][d-296]). The consumer wires to any concrete field type
-below the bound ([D-078][d-078]). That preserves FlightPhysics' `AbstractTerrain`
+The field-handle mechanism replaces Flight.jl's threading of `atmosphere`/`terrain`
+as arguments through every update signature. Flight.jl's landing-gear model
+finds contact through a bounded ray query to the terrain model, the query a
+terrain field handle's `ray_intersect` serves. Substitutability behind a stable
+[face](#g-face) (the name a port wears on its component's boundary) is declared with an
+[abstract input entry](#g-abstract-entry), here the illustrative `terrain = AbstractTerrainField`. That
+is structural substitutability ([§8.2][s8-2], [D-296][d-296]). An abstract input entry is an
+input whose declared type is abstract. The consumer wires to any concrete field
+type below the bound ([D-078][d-078]). That preserves FlightPhysics' `AbstractTerrain`
 polymorphism at the declaration layer.
 
 ---

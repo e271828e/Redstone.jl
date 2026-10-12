@@ -17,32 +17,29 @@ A continuous component is a classical hybrid automaton. It has these facets.
   handlers.
 - Flow $\dot{x} = f(x, m, u, t)$.
 - Two output stages ([§5.2][s5-2]).
-- Events, each a [guard](#g-guard) (the declared function defining an event's
-  predicate) plus a handler. A handler may update `m` and may reset the
-  component's own `x` ([D-090][d-090]). Both guard and handler read the fresh
-  [boundary](#g-boundary) [signal table](#g-signal-table) ([§5.3][s5-3],
+- Events, each a [guard](#g-guard) (the declared function defining an event's predicate)
+  plus a handler. A handler may update `m` and may reset the [component](#g-component)'s own `x`
+  ([D-090][d-090]). Both guard and handler read the fresh [boundary](#g-boundary) [signal table](#g-signal-table) ([§5.3][s5-3],
   [D-154][d-154]).
 - An optional [projection](#g-projection) (the per-component hook
   `x_projection`).
 
-Any facet may be empty. In particular, a [component](#g-component) with *no*
-continuous state, only modes, events and mode-valued outputs, is a finite-state
-machine (FSM). **A single primitive supports both factorings of mode logic**
-([D-003][d-003]).
+Any facet may be empty. In particular, a component with *no* continuous state,
+only modes, events and mode-valued outputs, is a finite-state machine (FSM). **A
+single primitive supports both factorings of mode logic** ([D-003][d-003]).
 
 - Internal modes suit tightly coupled cases, such as stall hysteresis inside
   the aero component. They preserve cohesion and enable reset maps
   ([D-003][d-003]).
-- An external FSM component feeding modes through a [port](#g-port) (the
-  addressable unit of the model) gives maximal
-  purity, independent testability and swappable supervision logic.
+- An external FSM component feeding modes through a [port](#g-port) (the addressable unit
+  of the model) gives maximal purity, independent testability and swappable
+  supervision logic.
 
 The rule of meaning separates a command from a detection. A supervisor
-*commanding* a mode change is an ordinary input. A component *detecting* its
-own transition is an event. The two mechanisms carry two meanings and do not
-overlap. On the continuous [tier](#g-tier), a commanded reset of state, whose
-condition arrives as an input, still lands through an event whose guard reads
-that input ([§5.3][s5-3], [D-141][d-141]).
+*commanding* a mode change is an ordinary input. A component *detecting* its own
+transition is an event. The two mechanisms carry two meanings and do not
+overlap. On the continuous [tier](#g-tier), a reset of state commanded through an input
+still lands through an event whose guard reads that input ([§5.3][s5-3], [D-141][d-141]).
 
 ### 3.2 Periodic discrete component
 
@@ -86,4 +83,3 @@ flattened away for ordering ([D-019][d-019]). They are retained as the
 navigation and introspection hierarchy (GUI, logging, paths) and as
 declaration-level [rate scopes](#g-rate-scope) ([§10.5][s10-5],
 [D-019][d-019]).
-

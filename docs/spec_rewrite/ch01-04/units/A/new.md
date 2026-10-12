@@ -84,4 +84,3 @@ numbers are stable and never reused, so a citation here always names the same
 entry there.
 
 ---
-

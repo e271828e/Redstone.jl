@@ -27,7 +27,7 @@
   {
    "id": "C-004",
    "old": "Ordinary ports therefore carry them as immutable query objects, called field handles.",
-   "new": "Ordinary ports carry them as immutable query objects (a port is one declared name with its cell), called field handles, because of that shape (D-008).",
+   "new": "Ordinary ports carry them as immutable query objects, called field handles, because of that shape (D-008).",
    "where": "new",
    "cites": [],
    "tag": "R",
@@ -363,7 +363,7 @@
  ],
  "added": [
   "#### Pre-sampling and substitutability",
-  "(a port is one declared name with its cell)",
+  "A port is one declared name with its cell.",
   "(the unit of modeling, leaf or assembly)",
   "such as the illustrative `ISAField(T_sl, p_sl, wind)`",
   "such as the illustrative `airdata(field, pos, vel)`",
@@ -376,6 +376,7 @@
   "an illustrative `Airflow` component emits FlightPhysics' `AirData`",
   "(the name a port wears on its component's boundary)",
   "here the illustrative `terrain = AbstractTerrainField`",
-  "Flight.jl's threading of"
+  "Flight.jl's threading of",
+  "An abstract input entry is an input whose declared type is abstract."
  ]
 }

@@ -85,21 +85,19 @@ entry there.
 
 ---
 
-
 ## 2. Formalism
 
 **The framework simulates [hybrid causal systems](#g-hybrid-causal-system)**
 ([D-001][d-001], [D-002][d-002]). Such a system has five parts.
 
 - Continuous dynamics. $\dot{x} = f(x, m, u, t)$ with algebraic outputs. This
-  design's `f` also receives the published table, and the composite map from
-  `x` to $\dot{x}$ is mathematically identical to the textbook form's ([§5.3][s5-3]).
-- Multi-rate periodic discrete dynamics. $s^{+} = g(s, u, t)$ at declared
-  rates, with outputs held zero-order ([D-019][d-019]) between
-  [ticks](#g-tick) (instants at which a discrete component's stages and update
-  run).
+  design's `f` also receives the published signal table, and the composite map
+  from `x` to $\dot{x}$ is mathematically identical to the textbook form's ([§5.3][s5-3]).
+- Multi-rate periodic discrete dynamics. $s^{+} = g(s, u, t)$ at declared rates,
+  with outputs held zero-order between [ticks](#g-tick) ([D-019][d-019]). A tick is an instant at
+  which a discrete component's stages and update run.
 - Zero-crossing events. [Guard](#g-guard) functions (each defining an event's
-  predicate) with handlers, under two detection policies, stated below.
+  predicate) with handlers, under two detection policies.
 - Post-step manifold [projection](#g-projection). **The formalism includes an
   optional per-[component](#g-component) hook, `x ← x_projection(x)`**
   ([D-001][d-001]). It is applied after each accepted step and after any
@@ -126,16 +124,13 @@ the sign of a continuous function under the normative convention positive =
 predicate holds. Writing the guard's sign value `σ`, holding means `σ ≥ 0`.
 
 **An event fires when its predicate transitions from not-holding to holding**
-([D-082][d-082], [D-001][d-001]). This is
-[edge semantics](#g-edge-semantics), and it is uniform across both forms.
-[§10.6][s10-6] states the bookkeeping of the [prior](#g-prior), each event's
-predicate sample stored at the previous [boundary](#g-boundary) (a published
-consistency point). The opposite crossing
-direction is declared as a second event with the negated guard
-([D-082][d-082]). Stall entry and exit are one such pair. A per-event
-`direction` keyword is recorded as a
-[guarded addition](#g-guarded-addition) (a capability recorded with its shape
-so adoption stays additive), unbuilt ([D-180][d-180]).
+([D-082][d-082], [D-001][d-001]). This is [edge semantics](#g-edge-semantics), and it is uniform across both forms.
+[§10.6][s10-6] states the bookkeeping of the [prior](#g-prior). The prior is each event's predicate
+sample stored at the previous [boundary](#g-boundary) (a published consistency point). The
+opposite crossing direction is declared as a second event with the negated guard
+([D-082][d-082]). Stall entry and exit are one such pair. [D-180][d-180] records a per-event
+`direction` keyword as a [guarded addition](#g-guarded-addition) (a capability the design admits but does
+not build).
 
 Which form an author declares is not a free choice. The guard's return type is
 the declared policy. A `Bool` return declares
@@ -144,13 +139,12 @@ the declared policy. A `Bool` return declares
 the exactness result that motivates the `Bool` form, and the gate idiom for
 localizing mixed predicates. The two policies follow.
 
-- Boundary-detected (cheap). The framework checks each guard for a
-  not-holding → holding edge against its prior ([§10.6][s10-6]) at step
-  boundaries only. There is no
+- Boundary-detected (cheap). The framework checks each guard for a not-holding →
+  holding edge against its prior ([§10.6][s10-6]) at step boundaries only. There is no
   root-finding and no step rejection. The handler fires at the end of the step
-  in which the edge was observed. The cost is one guard evaluation per event
-  per iteration round ([§10.6][s10-6]). This policy is fully compatible with
-  fixed-step real-time execution.
+  in which the edge was observed. The cost is one guard evaluation per event per
+  round of the boundary's event iteration ([§10.6][s10-6]). This policy is fully
+  compatible with fixed-step real-time execution.
 - Localized (precise). The framework finds the crossing instant by
   root-finding ([D-018][d-018]). This policy serves events where timing
   precision genuinely matters. [§10.4][s10-4] gives the mechanics.
@@ -159,19 +153,18 @@ Detection policy never depends on real-time [pacing](#g-pacing)
 ([§10.7][s10-7], [D-080][d-080]). The pacer inserts waits between completed
 frames and never alters the boundary sequence.
 
-This arrangement gives step-boundary logic *well-defined semantics*. The
+The two-policy arrangement gives step-boundary logic *well-defined semantics*. The
 crossing defines the transition ([D-179][d-179]). Detection resolution is an
 execution-policy detail.
 
 Time events and state events differ in how their instants are found. **The
-discrete [tier](#g-tier)'s [ticks](#g-tick) are [time events](#g-time-event)**
-([D-220][d-220]). Ticks are declared by `sample_times`. Their instants are known
-in advance and scheduled ([§10.5][s10-5]). Everything declared through
-`StateEvent(guard, handler)` is a [state event](#g-state-event). Its instant is
-unknown and must be detected, by boundary check or by localization. That is why
-the declaration is named `state_events` ([§8.2][s8-2], [D-220][d-220]). The
-criterion is detection versus scheduling, not which fields a guard reads. A
-guard over an input is still a state event.
+discrete [tier](#g-tier)'s [ticks](#g-tick) are [time events](#g-time-event)** ([D-220][d-220]). A tier is one side of the hybrid
+formalism, continuous or discrete. Ticks are declared by `sample_times`. Their
+instants are known in advance and scheduled ([§10.5][s10-5]). Everything declared through
+`StateEvent(guard, handler)` is a [state event](#g-state-event). Its instant is unknown and must be
+detected, by boundary check or by localization. That is why the declaration is
+named `state_events` ([§8.2][s8-2], [D-220][d-220]). The criterion is detection versus scheduling,
+not which fields a guard reads. A guard over an input is still a state event.
 
 ### 2.2 Exclusions (deliberate)
 
@@ -181,16 +174,13 @@ guard over an input is still a state event.
   actual need is state manifolds, and [projection](#g-projection), the optional
   per-component hook `x ← x_projection(x)`, covers it ([D-001][d-001]).
 - No stochastic differential equations (SDEs) or stochastic integrators. Noise
-  processes, such as sensor noise and turbulence from Dryden/von Kármán
-  turbulence models, are modeled as shaping filters ([D-001][d-001]), that is,
-  as ordinary discrete processes driven by a random number generator (RNG).
-  That modeling is
-  faithful to how the noise processes are specified, and it is cheap. One
-  consequence is elevated to a framework guarantee, deterministic
-  [replay](#g-replay) (re-running the ordinary loop on a recorded input trace).
-  RNG state lives in [component](#g-component) discrete state `s`, never in
-  ambient globals, so the same seed gives a bit-identical trajectory
-  ([D-231][d-231]).
+  processes, such as sensor noise and Dryden/von Kármán turbulence, are modeled
+  as shaping filters ([D-001][d-001]), that is, as ordinary discrete processes driven by
+  a random number generator (RNG). That modeling is faithful to how the noise
+  processes are specified, and it is cheap. One consequence is elevated to a
+  framework guarantee, deterministic [replay](#g-replay) (re-running the ordinary loop on a
+  recorded input trace). RNG state lives in [component](#g-component) discrete state `s`, never in
+  ambient globals, so the same seed gives a bit-identical trajectory ([D-231][d-231]).
 - No unconditional per-step hook, because its semantics depend on the step
   size ([D-001][d-001]). So there is no equivalent of `f_step!`, FlightCore's
   per-step hook. Every current use of `f_step!` decomposes into one of two
@@ -224,32 +214,29 @@ A continuous component is a classical hybrid automaton. It has these facets.
   handlers.
 - Flow $\dot{x} = f(x, m, u, t)$.
 - Two output stages ([§5.2][s5-2]).
-- Events, each a [guard](#g-guard) (the declared function defining an event's
-  predicate) plus a handler. A handler may update `m` and may reset the
-  component's own `x` ([D-090][d-090]). Both guard and handler read the fresh
-  [boundary](#g-boundary) [signal table](#g-signal-table) ([§5.3][s5-3],
+- Events, each a [guard](#g-guard) (the declared function defining an event's predicate)
+  plus a handler. A handler may update `m` and may reset the [component](#g-component)'s own `x`
+  ([D-090][d-090]). Both guard and handler read the fresh [boundary](#g-boundary) [signal table](#g-signal-table) ([§5.3][s5-3],
   [D-154][d-154]).
 - An optional [projection](#g-projection) (the per-component hook
   `x_projection`).
 
-Any facet may be empty. In particular, a [component](#g-component) with *no*
-continuous state, only modes, events and mode-valued outputs, is a finite-state
-machine (FSM). **A single primitive supports both factorings of mode logic**
-([D-003][d-003]).
+Any facet may be empty. In particular, a component with *no* continuous state,
+only modes, events and mode-valued outputs, is a finite-state machine (FSM). **A
+single primitive supports both factorings of mode logic** ([D-003][d-003]).
 
 - Internal modes suit tightly coupled cases, such as stall hysteresis inside
   the aero component. They preserve cohesion and enable reset maps
   ([D-003][d-003]).
-- An external FSM component feeding modes through a [port](#g-port) (the
-  addressable unit of the model) gives maximal
-  purity, independent testability and swappable supervision logic.
+- An external FSM component feeding modes through a [port](#g-port) (the addressable unit
+  of the model) gives maximal purity, independent testability and swappable
+  supervision logic.
 
 The rule of meaning separates a command from a detection. A supervisor
-*commanding* a mode change is an ordinary input. A component *detecting* its
-own transition is an event. The two mechanisms carry two meanings and do not
-overlap. On the continuous [tier](#g-tier), a commanded reset of state, whose
-condition arrives as an input, still lands through an event whose guard reads
-that input ([§5.3][s5-3], [D-141][d-141]).
+*commanding* a mode change is an ordinary input. A component *detecting* its own
+transition is an event. The two mechanisms carry two meanings and do not
+overlap. On the continuous [tier](#g-tier), a reset of state commanded through an input
+still lands through an event whose guard reads that input ([§5.3][s5-3], [D-141][d-141]).
 
 ### 3.2 Periodic discrete component
 
@@ -294,7 +281,6 @@ navigation and introspection hierarchy (GUI, logging, paths) and as
 declaration-level [rate scopes](#g-rate-scope) ([§10.5][s10-5],
 [D-019][d-019]).
 
-
 ### 3.4 Why two leaf classes, not one hybrid primitive
 
 This section asks why there are two leaf classes at all. One all-in-one
@@ -314,26 +300,22 @@ predicate) and handlers ([§3.1][s3-1]). What separates the two leaf classes is
 one pass through the execution order against the current state. A tick is an
 instant at which a discrete component's stages and update run.
 
-The settled rules force a merged component's two halves to communicate exactly
-as two siblings do ([D-056][d-056]). There is
-[one home per datum](#g-one-home-per-datum) (no store mirrors another,
-[§5.2][s5-2]). `x_deriv` sees only the continuous state, and `s_update` only
-the discrete one. And `s⁺` is decoded only at the owner's next tick, because
-`s_update` runs last. That deferred decode is what makes ticks→events
-structurally impossible ([D-020][d-020]). It is also what terminates the
-iteration at each [boundary](#g-boundary) (a published consistency point,
-[§10.6][s10-6]). Influence across [tiers](#g-tier) (the continuous and
-discrete sides of the formalism) inside a merged component still routes
-through published table [cells](#g-cell) (typed entries of the signal table,
-[D-056][d-056]).
+The settled rules force an all-in-one component's two halves to communicate
+exactly as two siblings do ([D-056][d-056]). There is [one home per datum](#g-one-home-per-datum) (no store
+mirrors another, [§5.2][s5-2]). `x_deriv` sees only the continuous state, and `s_update`
+only the discrete one. And `s⁺` is decoded only at the owner's next tick, because
+`s_update` runs last. That deferred decode is what makes ticks→events structurally
+impossible ([D-020][d-020]). It is also what terminates the iteration at each [boundary](#g-boundary) (a
+published consistency point, [§10.6][s10-6]). Inside an all-in-one component, influence
+across [tiers](#g-tier) (the continuous and discrete sides of the formalism) still routes
+through [cells](#g-cell) of the published signal table ([D-056][d-056]).
 
-The all-in-one component is therefore an [assembly](#g-assembly) of two
-primitives in a trench coat ([D-056][d-056]). An assembly is a component of
-pure composition. The all-in-one component buys no expressiveness. It incurs
-costs of its own, which [D-056][d-056] enumerates. One of those costs is not
-bookkeeping. The sampling interface is the zero-order hold (ZOH) plus the
-one-sample `z⁻¹` delay. It is the most bug-prone boundary in a flight-control
-stack. A monolith swallows it. The split keeps it a visible wire.
+The all-in-one component is therefore an [assembly](#g-assembly) (pure composition) of two
+primitives in a trench coat ([D-056][d-056]). It buys no expressiveness. It incurs costs
+of its own, which [D-056][d-056] enumerates. One of those costs is not bookkeeping. The
+sampling interface is the zero-order hold (ZOH) plus the one-sample `z⁻¹` delay.
+It is the most bug-prone boundary in a flight-control stack. A monolith swallows
+it. The split keeps it a visible wire.
 
 #### The hardest case: integrate-and-dump
 
@@ -354,63 +336,54 @@ $= \int_{t_{k-1}}^{t_k} R^{c_{k-1}}_{c} f^{c} \, dt$ has its rotation
 anchored at the interval start. The differencing idiom of [§8.6][s8-6]
 recovers exactly these forms from the cumulative stores, term by term.
 
-The reset is periodic, not condition-triggered, so events are the wrong
-mechanism ([D-056][d-056]). And the reset is a discrete-tier write into
-continuous state, exactly the operation this design forbids ([D-056][d-056]).
-`s_update` writes only its own `s`. Guard-driven handlers are the sole
-resetters of continuous state ([D-141][d-141]). Integrate-and-dump falls
-squarely into the crack between the two leaf
-classes. It is tightly coupled continuous
-and periodic dynamics in one physical instrument.
+The reset is periodic, not predicate-triggered, so events are the wrong
+mechanism ([D-056][d-056]). And the reset is a discrete-tier write into continuous state,
+exactly the operation this design forbids ([D-056][d-056]). `s_update` writes only its own
+`s`. Guard-driven handlers are the sole resetters of continuous state ([D-141][d-141]).
+Integrate-and-dump falls squarely into the crack between the two leaf classes.
+It is tightly coupled continuous and periodic dynamics in one physical
+instrument.
 
-Algebra removes the reset ([§8.6][s8-6]). Every interval-relative integral
-becomes a cumulative one, and a discrete sampler differences consecutive
-samples against its latch ([D-056][d-056]). [§8.6][s8-6] spells that idiom,
-its exactness condition and the resulting assembly in full.
+Algebra removes the reset ([§8.6][s8-6]). Every interval-relative integral becomes a
+cumulative one, and a discrete sampler differences consecutive samples against
+its latch ([D-056][d-056]). [§8.6][s8-6] also spells that idiom, its exactness condition and the
+resulting assembly in full.
 
 The strongest counterexample landed on the two-class taxonomy with *less* code
-than the direct formulation. It keeps the same thirteen integral scalars and
-the same math, minus the reset block. It brings three structural gains. First,
-the sampling interface became a wire. Second, the error model became a
-discrete sibling, which makes the truth/corrupted sample pair separately
-loggable ([§8.6][s8-6]). Third, linearization got sane. `Dual` is
-ForwardDiff's dual number. Under a `Dual`
-[activation](#g-activation) (the build's typed products at a given scalar
-type) the discrete tier is held ([§8.2][s8-2]). And "integrators that never
-reset" *is* the cumulative formulation. The framework's rules pushed the IMU
-into the only form that the framework's own linearization semantics could
-coherently handle.
+than the direct formulation. It keeps the same thirteen integral scalars and the
+same math, minus the reset block. It brings three structural gains. First, the
+sampling interface became a wire. Second, the error model became a discrete
+sibling, which makes the truth/corrupted sample pair separately loggable ([§8.6][s8-6]).
+Third, linearization got sane. Under a `Dual` [activation](#g-activation) (the build's typed
+products at ForwardDiff's dual-number scalar type) the discrete tier is held
+([§8.2][s8-2]). And "integrators that never reset" *is* the cumulative formulation. The
+framework's rules pushed the IMU into the only form that the framework's own
+linearization semantics could coherently handle.
 
-**The one recorded, unbuilt escape hatch is a tick-triggered handler on
-continuous components** ([D-056][d-056]). Such a handler is a periodic event.
-It is a [guarded addition](#g-guarded-addition) (a capability the design
-admits but does not build), for use if interval-relative dynamics ever
-neither factor algebraically nor tolerate the latch-back wire. In that wire,
-the integrals consume the sampler's published latch ([§8.6][s8-6]). No known
-case needs the escape hatch ([D-056][d-056]).
+**The recorded, unbuilt escape hatch is a tick-triggered handler on continuous
+components** ([D-056][d-056]). Such a handler is a periodic event. It is a [guarded addition](#g-guarded-addition)
+(a capability the design admits but does not build), for use if
+interval-relative dynamics ever neither factor algebraically nor tolerate the
+latch-back wire. In that wire, the integrals consume the sampler's published
+latch ([§8.6][s8-6]). No known case needs the escape hatch ([D-056][d-056]).
 
 ---
 
-
 ## 4. Ports and signals
 
-This chapter gives the port, the addressable unit through which components
-exchange immutable values. [§4.1][s4-1] states the immutable value semantics of
-signals; [§4.2][s4-2] why consumers see ports, not stages; [§4.3][s4-3] the table
-mechanics and port granularity; and [§4.4][s4-4] function-valued signals for
-environment access.
+This chapter defines the [port](#g-port), the addressable unit through which components
+exchange immutable values. [§4.1][s4-1] states the immutable value semantics of signals;
+[§4.2][s4-2] why consumers see ports, not stages; [§4.3][s4-3] the table mechanics and port
+granularity; and [§4.4][s4-4] function-valued signals for environment access.
 
 ### 4.1 Immutable value semantics
 
-**[Ports](#g-port) exchange immutable values** ([D-004][d-004]). The values are
-typically isbits structs (floats, `SVector`s, enums, nested immutables). The
-framework owns a [signal table](#g-signal-table), with one concretely typed
-[cell](#g-cell) per output port in the flattened model. Every
-[component](#g-component) provides two output stages ([§5.2][s5-2]),
-`y_state`/`y_direct`, on either [tier](#g-tier) (the continuous or discrete
-side of the hybrid formalism). A producer's output [stage function](#g-stage-function) returns a
-named tuple of fresh values. The framework writes each of those values into its
-cell, and consumers read cells.
+**[Ports](#g-port) exchange immutable values** ([D-004][d-004]). The values are typically isbits structs
+(floats, `SVector`s, enums, nested immutables). The framework owns a [signal table](#g-signal-table),
+with one concretely typed [cell](#g-cell) per output port in the flattened model. A
+producer's output [stage function](#g-stage-function) (`y_state`/`y_direct`, the two output stages every
+[component](#g-component) provides, on either [tier](#g-tier)) returns a NamedTuple of fresh values. The
+framework writes each of those values into its cell, and consumers read cells.
 
 These names are binding throughout this document.
 
@@ -428,8 +401,8 @@ These names are binding throughout this document.
   [periphery](#g-periphery) (everything outside the loop that exchanges data
   with it) rather than by a producer ([§11.3][s11-3]).
 
-Stated precisely, **the signal requirement is immutability plus frozen
-references** ([D-243][d-243]). Signals may reference bulk data
+Stated precisely, the signal requirement is immutability plus frozen
+references ([D-243][d-243]). Signals may reference bulk data
 ([§4.4][s4-4]) provided that data is read-only for the duration of the run
 ([D-231][d-231]). `isbits` is the common case, not the rule.
 
@@ -437,7 +410,7 @@ The signal requirement has four consequences.
 
 - There is no aliasing, ever. Nothing can be mutated under a consumer's feet.
 - Concurrent reads from the GUI and logging threads are safe by construction.
-- Isbits payloads allocate nothing, because named tuples of isbits are isbits.
+- Isbits payloads allocate nothing, because NamedTuples of isbits are isbits.
 - Each cell has a definite freshness, tied to its producer's position in the
   [execution order](#g-execution-order), the order in which the stage
   functions run ([D-004][d-004]).
@@ -446,14 +419,13 @@ The signal requirement has four consequences.
 
 The [port](#g-port) is the addressable unit. A [component](#g-component)'s
 outputs appear to consumers, the GUI and logs as one flat namespace of ports,
-such as the illustrative paths `"dyn/vel"` and `"dyn/f_c_c"` ([D-040][d-040]). A reader reaches a leaf
-inside a port value through the port's [leaf address](#g-leaf-address) (the
-field name with dotted and bracketed steps below it, [§14.4][s14-4],
-[D-276][d-276]). Which output stage computes which port is an ordering
-annotation, invisible outside the component. Moving an output between stages is
-non-breaking *for consumers*. No wire, log or panel sees it. The build does see
-it, because the [feedthrough](#g-feedthrough) graph (the graph of instantaneous
-input→output dependences) and stage membership change ([§9.1][s9-1]).
+such as the illustrative paths `"dyn/vel"` and `"dyn/f_c_c"` ([D-040][d-040]). A reader
+reaches a leaf inside a port value through the port's [leaf address](#g-leaf-address) (the field
+name with dotted and bracketed steps below it, [§14.4][s14-4], [D-276][d-276]). Which output stage
+computes which port is an ordering annotation, invisible outside the component.
+Moving an output between stages is non-breaking *for consumers*. No wire, log or
+panel sees it. The build does see it, because the [feedthrough](#g-feedthrough) graph (the graph
+of instantaneous input→output dependences) and stage membership change ([§9.1][s9-1]).
 
 Which ports exist at all is a declaration-layer decision. The output
 [contract](#g-contract) (the ports a component declares in `y_types`) *is* the
@@ -479,7 +451,7 @@ A component's ports are its signal endpoints, one cell and one producer each.
 boundary** ([D-172][d-172]). For a leaf the two coincide. For an
 [assembly](#g-assembly) (pure composition of child components) every face
 aliases an interior port through its boundary declarations ([§8.6][s8-6]) and
-never creates an endpoint. The distinction is class-blind ([D-172][d-172]).
+never creates an endpoint. The distinction is [class](#g-class)-blind ([D-172][d-172]).
 Wiring and the [periphery](#g-periphery) (everything outside the loop that
 exchanges data with it) address a child's faces without knowing whether it is
 primitive or composite.
@@ -498,13 +470,13 @@ following.
 
 #### Scatter and gather
 
-Scatter/gather is the whole protocol. A [stage function](#g-stage-function)
-(`y_state`/`y_direct`) returns a named tuple on either [tier](#g-tier),
-continuous or discrete. The framework scatters each field into that port's
-concretely typed cell. Every reader gathers views from cells. The readers are
-the next stage, `x_deriv`/`s_update` ([§5.2][s5-2]), [guards](#g-guard), wired consumers and
-[snapshot](#g-snapshot) capture. A guard is the function defining an event's
-predicate, and the snapshot is the immutable per-boundary publication.
+Scatter/gather is the whole protocol. A [stage function](#g-stage-function) (`y_state`/`y_direct`)
+returns a NamedTuple on either [tier](#g-tier), continuous or discrete. The framework
+scatters each field into that port's concretely typed cell. Every reader gathers
+views from cells. The readers are the next stage, `x_deriv`/`s_update` ([§5.2][s5-2]),
+[guards](#g-guard), wired consumers and [snapshot](#g-snapshot) capture. A guard is the function defining
+an event's predicate, and the snapshot is the immutable per-boundary
+publication.
 
 **The aggregate `y` is a merge semantically and virtual physically**
 ([D-036][d-036]). Semantically, a component's `y` is the merge of its stage
@@ -518,13 +490,11 @@ Name collisions across a component's stages are a build error
 
 #### What a port may hold
 
-**Stage returns are named tuples of port values, period** ([D-036][d-036]).
-**A custom struct is a first-class port value** ([D-036][d-036]). It is one
-field of the returned tuple, one declared port, one cell
-(`pose = KinPose{T}`, where `KinPose` is an illustrative struct). Nested
-fields get no cells of their own. A reader reaches a nested field through the
-port's [leaf address](#g-leaf-address) (the field name with dotted and
-bracketed steps below it), as in `"pose.q_eb"` ([§14.4][s14-4], [D-276][d-276]). A wired
+**Stage returns are NamedTuples of port values, period** ([D-036][d-036]). **A custom struct is
+a first-class port value** ([D-036][d-036]). It is one field of the returned tuple, one
+declared port, one cell (`pose = KinPose{T}`, where `KinPose` is an illustrative
+struct). Nested fields get no cells of their own. A reader reaches a nested
+field through the port's [leaf address](#g-leaf-address), as in `"pose.q_eb"` ([§14.4][s14-4], [D-276][d-276]). A wired
 consumer takes the bundle (the struct-valued port) whole. Bare-struct returns
 are rejected ([D-036][d-036]).
 
@@ -557,9 +527,8 @@ destructures the bundle in its own stage or through an unbundling component.
 An unbundling component is a `y_direct` leaf that takes the bundle and
 publishes its fields. It is a candidate for the standard library of [§13.7][s13-7].
 
-A field-projection connector is a [guarded
-addition](#g-guarded-addition) (a capability the design admits but does not
-build) ([D-036][d-036]). Its shape is obvious, and it is not built.
+A field-projection connector is a [guarded addition](#g-guarded-addition) (a capability the design
+admits but does not build), and its shape is obvious ([D-036][d-036]).
 
 Under the granularity guideline, **authors should bundle what shares a stage
 *and* is consumed together** ([D-036][d-036]). The first criterion is trivially
@@ -572,11 +541,10 @@ Fan-out is free, so publishing both a bundle and a hot loose field (`pose`
 *and* `q_eb`) is legitimate. It costs one extra isbits cell.
 
 The sketch below shows the bundle, the loose hot field and a face aliasing an
-interior port, in declaration form. `Kinematics` and `Vehicle` are
-illustrative names, and `KinPose` is the illustrative struct above. An `output_wires` entry
-sources a face from an immediate child's face ([§6.1][s6-1]). `RQuat` is
-FlightPhysics' rotation quaternion. `RQuat{Float64}` is the spec's form of it,
-since FlightPhysics' `RQuat` takes no type parameter.
+interior port, in declaration form. `Kinematics` and `Vehicle` are illustrative
+names. An `output_wires` entry sources a face from an immediate child's face
+([§6.1][s6-1]). `RQuat` is FlightPhysics' rotation quaternion. `RQuat{Float64}` is the
+spec's form of it, since FlightPhysics' `RQuat` takes no type parameter.
 
 ```julia
 #a continuous leaf: one bundle port and the hot field published loose — two cells
@@ -605,11 +573,11 @@ addition, unbuilt.
 
 ### 4.4 Function-valued signals: environment access
 
-Atmosphere and terrain are query-shaped. Consumers evaluate them at arguments
-of their own choosing, such as each gear strut at its own contact point, or
-airflow at the vehicle pose. **Ordinary [ports](#g-port) carry them as immutable query objects** (a port
-is one declared name with its cell), called [field handles](#g-field-handle),
-because of that shape ([D-008][d-008]).
+Atmosphere and terrain are query-shaped. Consumers evaluate them at arguments of
+their own choosing, such as each gear strut at its own contact point, or airflow
+at the vehicle pose. **Ordinary [ports](#g-port) carry them as immutable query objects**,
+called [field handles](#g-field-handle), because of that shape ([D-008][d-008]). A port is one declared name
+with its cell.
 
 - An environment [component](#g-component) (the unit of modeling, leaf or
   assembly) emits a field value, such as the illustrative
@@ -678,16 +646,15 @@ FlightPhysics' `AirData` for the whole vehicle. Resource injection
 (declare-and-resolve service registries) is closed for the first cut
 ([D-008][d-008]).
 
-The field-handle mechanism replaces Flight.jl's threading of
-`atmosphere`/`terrain` as arguments through every update signature. Flight.jl's
-landing-gear model finds contact through a bounded ray query to the terrain
-model, the query a terrain field handle's `ray_intersect` serves. Substitutability
-behind a stable [face](#g-face) (the name a port wears on its component's
-boundary) is declared with an
-[abstract input entry](#g-abstract-entry), here the illustrative
-`terrain = AbstractTerrainField`. That is structural substitutability
-([§8.2][s8-2], [D-296][d-296]). The consumer wires to any concrete field type
-below the bound ([D-078][d-078]). That preserves FlightPhysics' `AbstractTerrain`
+The field-handle mechanism replaces Flight.jl's threading of `atmosphere`/`terrain`
+as arguments through every update signature. Flight.jl's landing-gear model
+finds contact through a bounded ray query to the terrain model, the query a
+terrain field handle's `ray_intersect` serves. Substitutability behind a stable
+[face](#g-face) (the name a port wears on its component's boundary) is declared with an
+[abstract input entry](#g-abstract-entry), here the illustrative `terrain = AbstractTerrainField`. That
+is structural substitutability ([§8.2][s8-2], [D-296][d-296]). An abstract input entry is an
+input whose declared type is abstract. The consumer wires to any concrete field
+type below the bound ([D-078][d-078]). That preserves FlightPhysics' `AbstractTerrain`
 polymorphism at the declaration layer.
 
 ---

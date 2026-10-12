@@ -11,7 +11,7 @@
   {
    "id": "C-002",
    "old": "Stage returns are named tuples of port values, period.",
-   "new": "Stage returns are named tuples of port values, period (D-036).",
+   "new": "Stage returns are NamedTuples of port values, period (D-036).",
    "where": "new",
    "cites": [],
    "newcites": [
@@ -51,7 +51,7 @@
   {
    "id": "C-006",
    "old": "A reader reaches one through the port's leaf address (the field name with dotted and bracketed steps below it), `\"pose.q_eb\"` (§14.4, D-276),",
-   "new": "A reader reaches a nested field through the port's leaf address (the field name with dotted and bracketed steps below it), as in `\"pose.q_eb\"` (§14.4, D-276).",
+   "new": "A reader reaches a nested field through the port's leaf address, as in `\"pose.q_eb\"` (§14.4, D-276).",
    "where": "new",
    "cites": [
     "§14.4",
@@ -288,22 +288,22 @@
   {
    "id": "C-030",
    "old": "A field-projection connector is a guarded addition (a capability the design admits but does not build).",
-   "new": "A field-projection connector is a guarded addition (a capability the design admits but does not build) (D-036).",
+   "new": "A field-projection connector is a guarded addition (a capability the design admits but does not build),",
    "where": "new",
    "cites": [],
-   "newcites": [
-    "D-036"
-   ],
    "tag": "C",
    "note": "Rationale-only (D-036 Rejected list)"
   },
   {
    "id": "C-031",
    "old": "Its shape is obvious, and it is not built.",
-   "new": "Its shape is obvious, and it is not built.",
+   "new": "and its shape is obvious (D-036).",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "F",
+   "newcites": [
+    "D-036"
+   ]
   },
   {
    "id": "C-032",
@@ -488,7 +488,7 @@
   "where `KinPose` is an illustrative struct",
   "(the struct-valued port)",
   "an immutable query object a consumer evaluates at arguments of its own choosing",
-  "`Kinematics` and `Vehicle` are illustrative names, and `KinPose` is the illustrative struct above.",
+  "`Kinematics` and `Vehicle` are illustrative names.",
   "`RQuat` is FlightPhysics' rotation quaternion.",
   "An `output_wires` entry sources a face from an immediate child's face (§6.1).",
   "stage 1 (§5.2)",

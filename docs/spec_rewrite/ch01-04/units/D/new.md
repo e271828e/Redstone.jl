@@ -17,26 +17,22 @@ predicate) and handlers ([§3.1][s3-1]). What separates the two leaf classes is
 one pass through the execution order against the current state. A tick is an
 instant at which a discrete component's stages and update run.
 
-The settled rules force a merged component's two halves to communicate exactly
-as two siblings do ([D-056][d-056]). There is
-[one home per datum](#g-one-home-per-datum) (no store mirrors another,
-[§5.2][s5-2]). `x_deriv` sees only the continuous state, and `s_update` only
-the discrete one. And `s⁺` is decoded only at the owner's next tick, because
-`s_update` runs last. That deferred decode is what makes ticks→events
-structurally impossible ([D-020][d-020]). It is also what terminates the
-iteration at each [boundary](#g-boundary) (a published consistency point,
-[§10.6][s10-6]). Influence across [tiers](#g-tier) (the continuous and
-discrete sides of the formalism) inside a merged component still routes
-through published table [cells](#g-cell) (typed entries of the signal table,
-[D-056][d-056]).
+The settled rules force an all-in-one component's two halves to communicate
+exactly as two siblings do ([D-056][d-056]). There is [one home per datum](#g-one-home-per-datum) (no store
+mirrors another, [§5.2][s5-2]). `x_deriv` sees only the continuous state, and `s_update`
+only the discrete one. And `s⁺` is decoded only at the owner's next tick, because
+`s_update` runs last. That deferred decode is what makes ticks→events structurally
+impossible ([D-020][d-020]). It is also what terminates the iteration at each [boundary](#g-boundary) (a
+published consistency point, [§10.6][s10-6]). Inside an all-in-one component, influence
+across [tiers](#g-tier) (the continuous and discrete sides of the formalism) still routes
+through [cells](#g-cell) of the published signal table ([D-056][d-056]).
 
-The all-in-one component is therefore an [assembly](#g-assembly) of two
-primitives in a trench coat ([D-056][d-056]). An assembly is a component of
-pure composition. The all-in-one component buys no expressiveness. It incurs
-costs of its own, which [D-056][d-056] enumerates. One of those costs is not
-bookkeeping. The sampling interface is the zero-order hold (ZOH) plus the
-one-sample `z⁻¹` delay. It is the most bug-prone boundary in a flight-control
-stack. A monolith swallows it. The split keeps it a visible wire.
+The all-in-one component is therefore an [assembly](#g-assembly) (pure composition) of two
+primitives in a trench coat ([D-056][d-056]). It buys no expressiveness. It incurs costs
+of its own, which [D-056][d-056] enumerates. One of those costs is not bookkeeping. The
+sampling interface is the zero-order hold (ZOH) plus the one-sample `z⁻¹` delay.
+It is the most bug-prone boundary in a flight-control stack. A monolith swallows
+it. The split keeps it a visible wire.
 
 #### The hardest case: integrate-and-dump
 
@@ -57,40 +53,35 @@ $= \int_{t_{k-1}}^{t_k} R^{c_{k-1}}_{c} f^{c} \, dt$ has its rotation
 anchored at the interval start. The differencing idiom of [§8.6][s8-6]
 recovers exactly these forms from the cumulative stores, term by term.
 
-The reset is periodic, not condition-triggered, so events are the wrong
-mechanism ([D-056][d-056]). And the reset is a discrete-tier write into
-continuous state, exactly the operation this design forbids ([D-056][d-056]).
-`s_update` writes only its own `s`. Guard-driven handlers are the sole
-resetters of continuous state ([D-141][d-141]). Integrate-and-dump falls
-squarely into the crack between the two leaf
-classes. It is tightly coupled continuous
-and periodic dynamics in one physical instrument.
+The reset is periodic, not predicate-triggered, so events are the wrong
+mechanism ([D-056][d-056]). And the reset is a discrete-tier write into continuous state,
+exactly the operation this design forbids ([D-056][d-056]). `s_update` writes only its own
+`s`. Guard-driven handlers are the sole resetters of continuous state ([D-141][d-141]).
+Integrate-and-dump falls squarely into the crack between the two leaf classes.
+It is tightly coupled continuous and periodic dynamics in one physical
+instrument.
 
-Algebra removes the reset ([§8.6][s8-6]). Every interval-relative integral
-becomes a cumulative one, and a discrete sampler differences consecutive
-samples against its latch ([D-056][d-056]). [§8.6][s8-6] spells that idiom,
-its exactness condition and the resulting assembly in full.
+Algebra removes the reset ([§8.6][s8-6]). Every interval-relative integral becomes a
+cumulative one, and a discrete sampler differences consecutive samples against
+its latch ([D-056][d-056]). [§8.6][s8-6] also spells that idiom, its exactness condition and the
+resulting assembly in full.
 
 The strongest counterexample landed on the two-class taxonomy with *less* code
-than the direct formulation. It keeps the same thirteen integral scalars and
-the same math, minus the reset block. It brings three structural gains. First,
-the sampling interface became a wire. Second, the error model became a
-discrete sibling, which makes the truth/corrupted sample pair separately
-loggable ([§8.6][s8-6]). Third, linearization got sane. `Dual` is
-ForwardDiff's dual number. Under a `Dual`
-[activation](#g-activation) (the build's typed products at a given scalar
-type) the discrete tier is held ([§8.2][s8-2]). And "integrators that never
-reset" *is* the cumulative formulation. The framework's rules pushed the IMU
-into the only form that the framework's own linearization semantics could
-coherently handle.
+than the direct formulation. It keeps the same thirteen integral scalars and the
+same math, minus the reset block. It brings three structural gains. First, the
+sampling interface became a wire. Second, the error model became a discrete
+sibling, which makes the truth/corrupted sample pair separately loggable ([§8.6][s8-6]).
+Third, linearization got sane. Under a `Dual` [activation](#g-activation) (the build's typed
+products at ForwardDiff's dual-number scalar type) the discrete tier is held
+([§8.2][s8-2]). And "integrators that never reset" *is* the cumulative formulation. The
+framework's rules pushed the IMU into the only form that the framework's own
+linearization semantics could coherently handle.
 
-**The one recorded, unbuilt escape hatch is a tick-triggered handler on
-continuous components** ([D-056][d-056]). Such a handler is a periodic event.
-It is a [guarded addition](#g-guarded-addition) (a capability the design
-admits but does not build), for use if interval-relative dynamics ever
-neither factor algebraically nor tolerate the latch-back wire. In that wire,
-the integrals consume the sampler's published latch ([§8.6][s8-6]). No known
-case needs the escape hatch ([D-056][d-056]).
+**The recorded, unbuilt escape hatch is a tick-triggered handler on continuous
+components** ([D-056][d-056]). Such a handler is a periodic event. It is a [guarded addition](#g-guarded-addition)
+(a capability the design admits but does not build), for use if
+interval-relative dynamics ever neither factor algebraically nor tolerate the
+latch-back wire. In that wire, the integrals consume the sampler's published
+latch ([§8.6][s8-6]). No known case needs the escape hatch ([D-056][d-056]).
 
 ---
-

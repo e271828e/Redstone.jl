@@ -1,22 +1,18 @@
 ## 4. Ports and signals
 
-This chapter gives the port, the addressable unit through which components
-exchange immutable values. [§4.1][s4-1] states the immutable value semantics of
-signals; [§4.2][s4-2] why consumers see ports, not stages; [§4.3][s4-3] the table
-mechanics and port granularity; and [§4.4][s4-4] function-valued signals for
-environment access.
+This chapter defines the [port](#g-port), the addressable unit through which components
+exchange immutable values. [§4.1][s4-1] states the immutable value semantics of signals;
+[§4.2][s4-2] why consumers see ports, not stages; [§4.3][s4-3] the table mechanics and port
+granularity; and [§4.4][s4-4] function-valued signals for environment access.
 
 ### 4.1 Immutable value semantics
 
-**[Ports](#g-port) exchange immutable values** ([D-004][d-004]). The values are
-typically isbits structs (floats, `SVector`s, enums, nested immutables). The
-framework owns a [signal table](#g-signal-table), with one concretely typed
-[cell](#g-cell) per output port in the flattened model. Every
-[component](#g-component) provides two output stages ([§5.2][s5-2]),
-`y_state`/`y_direct`, on either [tier](#g-tier) (the continuous or discrete
-side of the hybrid formalism). A producer's output [stage function](#g-stage-function) returns a
-named tuple of fresh values. The framework writes each of those values into its
-cell, and consumers read cells.
+**[Ports](#g-port) exchange immutable values** ([D-004][d-004]). The values are typically isbits structs
+(floats, `SVector`s, enums, nested immutables). The framework owns a [signal table](#g-signal-table),
+with one concretely typed [cell](#g-cell) per output port in the flattened model. A
+producer's output [stage function](#g-stage-function) (`y_state`/`y_direct`, the two output stages every
+[component](#g-component) provides, on either [tier](#g-tier)) returns a NamedTuple of fresh values. The
+framework writes each of those values into its cell, and consumers read cells.
 
 These names are binding throughout this document.
 
@@ -34,8 +30,8 @@ These names are binding throughout this document.
   [periphery](#g-periphery) (everything outside the loop that exchanges data
   with it) rather than by a producer ([§11.3][s11-3]).
 
-Stated precisely, **the signal requirement is immutability plus frozen
-references** ([D-243][d-243]). Signals may reference bulk data
+Stated precisely, the signal requirement is immutability plus frozen
+references ([D-243][d-243]). Signals may reference bulk data
 ([§4.4][s4-4]) provided that data is read-only for the duration of the run
 ([D-231][d-231]). `isbits` is the common case, not the rule.
 
@@ -43,7 +39,7 @@ The signal requirement has four consequences.
 
 - There is no aliasing, ever. Nothing can be mutated under a consumer's feet.
 - Concurrent reads from the GUI and logging threads are safe by construction.
-- Isbits payloads allocate nothing, because named tuples of isbits are isbits.
+- Isbits payloads allocate nothing, because NamedTuples of isbits are isbits.
 - Each cell has a definite freshness, tied to its producer's position in the
   [execution order](#g-execution-order), the order in which the stage
   functions run ([D-004][d-004]).
@@ -52,14 +48,13 @@ The signal requirement has four consequences.
 
 The [port](#g-port) is the addressable unit. A [component](#g-component)'s
 outputs appear to consumers, the GUI and logs as one flat namespace of ports,
-such as the illustrative paths `"dyn/vel"` and `"dyn/f_c_c"` ([D-040][d-040]). A reader reaches a leaf
-inside a port value through the port's [leaf address](#g-leaf-address) (the
-field name with dotted and bracketed steps below it, [§14.4][s14-4],
-[D-276][d-276]). Which output stage computes which port is an ordering
-annotation, invisible outside the component. Moving an output between stages is
-non-breaking *for consumers*. No wire, log or panel sees it. The build does see
-it, because the [feedthrough](#g-feedthrough) graph (the graph of instantaneous
-input→output dependences) and stage membership change ([§9.1][s9-1]).
+such as the illustrative paths `"dyn/vel"` and `"dyn/f_c_c"` ([D-040][d-040]). A reader
+reaches a leaf inside a port value through the port's [leaf address](#g-leaf-address) (the field
+name with dotted and bracketed steps below it, [§14.4][s14-4], [D-276][d-276]). Which output stage
+computes which port is an ordering annotation, invisible outside the component.
+Moving an output between stages is non-breaking *for consumers*. No wire, log or
+panel sees it. The build does see it, because the [feedthrough](#g-feedthrough) graph (the graph
+of instantaneous input→output dependences) and stage membership change ([§9.1][s9-1]).
 
 Which ports exist at all is a declaration-layer decision. The output
 [contract](#g-contract) (the ports a component declares in `y_types`) *is* the
@@ -85,7 +80,7 @@ A component's ports are its signal endpoints, one cell and one producer each.
 boundary** ([D-172][d-172]). For a leaf the two coincide. For an
 [assembly](#g-assembly) (pure composition of child components) every face
 aliases an interior port through its boundary declarations ([§8.6][s8-6]) and
-never creates an endpoint. The distinction is class-blind ([D-172][d-172]).
+never creates an endpoint. The distinction is [class](#g-class)-blind ([D-172][d-172]).
 Wiring and the [periphery](#g-periphery) (everything outside the loop that
 exchanges data with it) address a child's faces without knowing whether it is
 primitive or composite.
@@ -104,13 +99,13 @@ following.
 
 #### Scatter and gather
 
-Scatter/gather is the whole protocol. A [stage function](#g-stage-function)
-(`y_state`/`y_direct`) returns a named tuple on either [tier](#g-tier),
-continuous or discrete. The framework scatters each field into that port's
-concretely typed cell. Every reader gathers views from cells. The readers are
-the next stage, `x_deriv`/`s_update` ([§5.2][s5-2]), [guards](#g-guard), wired consumers and
-[snapshot](#g-snapshot) capture. A guard is the function defining an event's
-predicate, and the snapshot is the immutable per-boundary publication.
+Scatter/gather is the whole protocol. A [stage function](#g-stage-function) (`y_state`/`y_direct`)
+returns a NamedTuple on either [tier](#g-tier), continuous or discrete. The framework
+scatters each field into that port's concretely typed cell. Every reader gathers
+views from cells. The readers are the next stage, `x_deriv`/`s_update` ([§5.2][s5-2]),
+[guards](#g-guard), wired consumers and [snapshot](#g-snapshot) capture. A guard is the function defining
+an event's predicate, and the snapshot is the immutable per-boundary
+publication.
 
 **The aggregate `y` is a merge semantically and virtual physically**
 ([D-036][d-036]). Semantically, a component's `y` is the merge of its stage
