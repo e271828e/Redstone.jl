@@ -348,6 +348,9 @@ were derived.
 | [D-321][d-321] | The parallel-routes signal, the handle's pin chain and the input pin's failure at the wire | ratified |
 | [D-322][d-322] | No auto-bubbling of unconnected inputs, and the whole-tree checks decided at the root | ratified |
 | [D-323][d-323] | No framework aggregation mechanism, what explicit junctions buy, and no bundled contributions | ratified |
+| [D-341][d-341] | The bundle law, the closed name sets and per-key return checks | ratified |
+| [D-342][d-342] | Pure output stages, the dependence-class names and supervisory resets | ratified |
+| [D-343][d-343] | The remedy ladder's content, the closed loop remedies and the trace's reach | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -629,7 +632,8 @@ guards and handlers read the fresh boundary table, with per-event re-decode
 
 Annotation (2026-10-02): superseded in part. [D-154][d-154] removes the per-event
 re-decode and [D-252][d-252] the selective auto-publication. `h_x` as the uniform
-state decoder and `project` as the sole raw-state function stand.
+state decoder and `project` as the sole raw-state function
+(schedule-structural) stand.
 
 **Rejected.**
 - *Superseded position — identity publication of state and modes as the
@@ -3424,6 +3428,8 @@ hole the always-on check exists to close).
 **Rationale.** `ConformanceFailure`'s payload field renamed `stage` →
 `function` (its values are function kinds — [§13.4][s13-4]'s cursor vocabulary;
 `UndeclaredReturnField` keeps `stage`, which for it is exact).
+
+Annotation (2026-10-12): the two positions are stated in [§5.3][s5-3] ([D-131][d-131]).
 
 **Rejected.**
 - *Leaving `project` probe-checked only:* the probe exercises one branch once —
@@ -7164,6 +7170,10 @@ disjoint ([D-056][d-056], [§3.2][s3-2]), so its premise never applied here. [D-
 `is_discrete` rejection is untouched — the arity-is-the-tier doctrine survives
 with the letters split.
 
+Annotation (2026-10-12): amended by [D-220][d-220], which retires the output-stage split
+with its member of `DeclarationOnWrongTier`, and gives `y_state` and
+`y_direct` one legal name set per tier. The state-letter split stands.
+
 **Rejected.**
 - *`w`:* free in current text since [D-194][d-194], but permanently means intermediates
   in the log's lineage ([D-165][d-165], [D-169][d-169], [D-194][d-194]) — reuse would make one letter
@@ -10773,7 +10783,7 @@ defines no bundle field keeps its noun phrase.
 - No aliases and no deprecation shims, on [D-220][d-220]'s terms. The log keeps the
   old spellings under `decisions_style.md`'s rule 2.
 
-**Spec.** [§3.4][s3-4], [§4.1][s4-1], [§4.3][s4-3], [§4.4][s4-4], [§5.2][s5-2], [§5.3][s5-3], [§5.4][s5-4], [§6.2][s6-2], [§7.1][s7-1], [§7.2][s7-2], [§7.3][s7-3],
+**Spec.** [§3.4][s3-4], [§4.1][s4-1], [§4.3][s4-3], [§4.4][s4-4], [§5.2][s5-2], [§5.3][s5-3], [§5.4][s5-4], [§5.6][s5-6], [§6.2][s6-2], [§7.1][s7-1], [§7.2][s7-2], [§7.3][s7-3],
 [§7.4][s7-4], [§7.5][s7-5], [§8.1][s8-1], [§8.2][s8-2], [§8.3][s8-3], [§8.4][s8-4], [§8.5][s8-5], [§8.6][s8-6], [§8.8][s8-8], [§9.1][s9-1], [§9.3][s9-3], [§9.4][s9-4], [§9.5][s9-5],
 [§9.7][s9-7], [§10.5][s10-5], [§10.6][s10-6], [§11.2][s11-2], [§11.3][s11-3], [§12.5][s12-5], [§13.1][s13-1], [§13.3][s13-3], [§13.4][s13-4], [§13.5][s13-5], [§13.7][s13-7],
 [§14.3][s14-3], [§14.4][s14-4], [§14.5][s14-5], [§14.7][s14-7], [§14.8][s14-8], [§14.10][s14-10], [Appendix A][sA], [Appendix B][sB],
@@ -14013,6 +14023,123 @@ against it. The ragged contributors and the identity noise were recorded in
 
 **Rejected.** None beyond the source entries' lists.
 
+### D-341 — The bundle law, the closed name sets and per-key return checks
+
+**Status.** ratified
+
+**Position.** Seven hand-off rulings that [§5.2][s5-2] states are fixed here.
+
+- A bundle field is present iff its store or fact exists for the component.
+  An undeclared store is absent, never `nothing`-filled. `t` is always
+  present, `Δt` only on the discrete tier, and `ws` iff `ws_init` is
+  declared.
+- Each function's legal name set is closed, one set per function per tier,
+  and growing a set takes a log entry.
+- A failed destructuring is diagnosed from the structured `FieldError`
+  matched against the bundle's own NamedTuple type, with did-you-mean against
+  the legal set. No message text is scraped, the bundle stays a bare
+  NamedTuple, and a getproperty wrapper is the recorded fallback.
+- The legal set narrows in three levels: stage name at its tier ⊇ bundle ⊇
+  destructured reads.
+- Positional signatures, keyword arguments read by `Base.kwarg_decl`
+  reflection and keyword slurping are closed spellings. So is padding an
+  undeclared store with `nothing` or `(;)`, in arguments and handler returns
+  alike.
+- A handler return is checked per key, the argument side's `FieldError`
+  machinery run in both directions. A present `m` passes the names-subset
+  predicate.
+- No component declares its dependencies. There are no per-output dependency
+  annotations.
+
+**Spec.** [§5.2][s5-2]
+
+**Rationale.** Each bullet restates what an existing entry recorded outside
+its Position. The bundle law, the closed name sets and the `FieldError`
+mechanism were recorded in [D-074][d-074]'s Rationale, and the per-tier sets in
+[D-220][d-220]'s. The three-level narrowing was recorded in [D-075][d-075]'s Rationale. The
+closed spellings and the argument padding were recorded in [D-074][d-074]'s Rejected
+list, and the handler-return padding in [D-090][d-090]'s. The per-key checks were
+recorded in [D-090][d-090]'s and [D-287][d-287]'s Rationales. The absence of dependency
+annotations was recorded in [D-006][d-006]'s Rejected list.
+
+**Rejected.** None beyond the source entries' lists.
+
+### D-342 — Pure output stages, the dependence-class names and supervisory resets
+
+**Status.** ratified
+
+**Position.** Seven stage-role rulings that [§5.3][s5-3] states are fixed here.
+
+- A stage's name states its dependence class, state-only or
+  state-plus-input. Modes fold under the state, and the ambient `t`, `Δt`
+  and `ws` go unnamed.
+- Output stages are pure. No mutable cache carries values between the
+  derivative and the outputs.
+- Accepting duplicate computation is rejected as a drift bug class, an
+  edited law in one place and a stale copy in the other.
+- The orthodox `f(x, u)` with atomized components is not the standard idiom,
+  since it doubles components and wiring in the domain-normal overlap case.
+- A one-shot design-time gain is a construction-time parameter or a
+  stopped-sim service output.
+- A commanded reset is a same-tick input consumed in the output stage, and
+  the update law stores the matching state. A reset honored only in
+  `s_update` gives one-tick-late outputs, legal where that is meant and never
+  the idiom.
+- The update law does not republish from `s⁺`, so the output stage is the
+  only same-tick path.
+
+**Spec.** [§5.3][s5-3], [Appendix A][sA]
+
+**Rationale.** Each bullet restates what an existing entry recorded outside
+its Position. The dependence class and the folded modes were recorded in
+[D-075][d-075]'s Rationale, and the class again in [D-220][d-220]'s. Purity, the drift bug
+class and the orthodox split were recorded in [D-015][d-015]'s Rejected list. The
+gains and the reset were recorded in [D-089][d-089]'s Rationale and Rejected list.
+The refused republishing was recorded in [D-067][d-067]'s Rejected list and applied
+in [D-089][d-089]'s.
+
+**Rejected.** None beyond the source entries' lists.
+
+### D-343 — The remedy ladder's content, the closed loop remedies and the trace's reach
+
+**Status.** ratified
+
+**Position.** Nine loop rulings that [§5.4][s5-4], [§5.5][s5-5] and [§5.6][s5-6] state are fixed
+here.
+
+- An evaluation unit coarser than the stage admits artificial loops. A
+  component-atomic unit makes false loops everywhere, and an atomic assembly
+  makes them at assembly scale.
+- An input the neighbor consumes only in a fallback branch is the archetypal
+  false dependency. Contract re-factoring moves the branch to its natural
+  owner, and the wire disappears.
+- A re-factoring records structure when it survives substitution.
+- The component split's cost is stated where it bites. Every intermediate
+  shared across the new boundary becomes a declared port, capped at one
+  struct-valued bundle port.
+- The cycle diagnostic's hint offers both exits, split this component or
+  narrow the neighbor's contract, for continuous members only.
+- The component split is rare because the first two rungs absorb the common
+  shapes.
+- Implicit delays and per-step numerical loop solving are closed.
+- The classifier's trace speaks only for the branch taken at the probe
+  point, so the author selects the remedy. The framework neither splits nor
+  narrows on its own.
+- A continuous face or port declared without a walking leaf traces
+  structurally, as a discrete member does.
+
+**Spec.** [§5.4][s5-4], [§5.5][s5-5], [§5.6][s5-6]
+
+**Rationale.** Each bullet restates what an existing entry recorded outside
+its Position. The coarse atomic units were recorded in [D-006][d-006]'s and [D-019][d-019]'s
+Rejected lists. The false dependency, the substitution test, the split's
+cost, the two exits and the earned "rare" were recorded in [D-140][d-140]'s
+Rationale, and the trace's reach in its Rejected list. The closed remedies
+were recorded in [D-005][d-005]'s Rejected list. The structural answer for unwalked
+faces was recorded in [D-245][d-245]'s Rationale.
+
+**Rejected.** None beyond the source entries' lists.
+
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
 [d-002]: #d-002--adopt-the-causal-port-based-paradigm
@@ -14337,6 +14464,9 @@ against it. The ragged contributors and the identity noise were recorded in
 [d-321]: #d-321--the-parallel-routes-signal-the-handles-pin-chain-and-the-input-pins-failure-at-the-wire
 [d-322]: #d-322--no-auto-bubbling-of-unconnected-inputs-and-the-whole-tree-checks-decided-at-the-root
 [d-323]: #d-323--no-framework-aggregation-mechanism-what-explicit-junctions-buy-and-no-bundled-contributions
+[d-341]: #d-341--the-bundle-law-the-closed-name-sets-and-per-key-return-checks
+[d-342]: #d-342--pure-output-stages-the-dependence-class-names-and-supervisory-resets
+[d-343]: #d-343--the-remedy-ladders-content-the-closed-loop-remedies-and-the-traces-reach
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property
