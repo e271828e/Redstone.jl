@@ -156,7 +156,7 @@ skipped — the mirror of [§11.2][s11-2]'s output gather), in attachment order
 for entry in roster                                    # frame top, loop task
     batch = @atomicswap entry.cell.pending = nothing   # indivisible take
     batch === nothing && continue                      # nothing staged: fine
-    scatter!(inputs, entry, batch)                     # no checks — see §6
+    scatter!(inputs, entry, batch)                     # no checks — see section 6
     record_in_trace!(frame, entry.id, batch)
 end
 ```

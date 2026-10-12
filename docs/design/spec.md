@@ -1292,7 +1292,7 @@ One-level routing was mandatory at a generic seam in any case ([§8.8][s8-8]). W
 entries multiply, they are computed rather than typed, through
 `input_passthrough`/`output_passthrough` over a single authored feed list
 ([§8.8][s8-8]). Parallel routes threading many boundaries are the signal to gather them
-into a component of their own ([D-207][d-207]).
+into a component of their own ([D-207][d-207], [D-321][d-321]).
 
 Enforcement lives in the path-resolution primitive itself, `resolve`
 ([§13.3][s13-3], [D-130][d-130]). It walks declared field types alongside
@@ -1339,7 +1339,7 @@ whatever it reads from it ([D-264][d-264]). A discrete producer of a handle, whi
 wholesale, is admitted the same way. **The identity rule for an opaque leaf
 governs a store, never a wire** ([§9.5][s9-5], [D-264][d-264]). Under that rule, a component that
 re-emits a frozen handle pins that output too, so a handle's pin is a property
-of its chain ([D-264][d-264]).
+of its chain ([D-264][d-264], [D-321][d-321]).
 
 A violation of the walk clause is `WalkingFaceAtFrozenEntry`, naming both
 endpoints, the leaf and both declared leaf types. The message carries both
@@ -1350,7 +1350,7 @@ one-line spelling of the second remedy ([§13.7][s13-7], [D-266][d-266]).
 The walk clause also gives the two sides of a [contract](#g-contract) (a component's declared
 interface) their failure asymmetry. A pin written at an entry whose consumer
 really promotes fails at the *first nominal build*, at the wire, with both
-endpoints named ([D-263][d-263]). It fails there because an input has a build-time
+endpoints named ([D-263][d-263], [D-321][d-321]). It fails there because an input has a build-time
 counterparty. The output side has none, so a pin written at a leaf that really
 participates lurks until the first `Dual` activation. It lurks loudly, never
 silently ([§8.2][s8-2], [D-286][d-286]).
@@ -1366,16 +1366,17 @@ its own level *and* handed up through its parent's `input_wires` is a
 two-producers build error, `TwoProducers`. Routing a face upward cannot
 silently double-feed.
 
-There is no auto-bubbling of unconnected inputs ([D-043][d-043]). Unconnected input ports
-are a build error, with no silent defaults. The check is a whole-tree property,
-not a per-declaration one ([D-048][d-048]). Both this check and the two-producers check
-are decided at the root, since neither is decidable below it ([D-048][d-048]). Within a
-single assembly declaration an unfed child input is simply *awaiting a wire from
-above*, either a local wire or an `input_wires` entry handing the obligation up
-one level ([§8.6][s8-6]). The unconnected-input error, `UnconnectedInput`, fires at the
-root build for any input whose obligation chain never terminates. The one
-legitimate terminus fed by no component is the root component's own input face,
-a [root input](#g-root-input) ([§11.3][s11-3], [D-208][d-208]).
+There is no auto-bubbling of unconnected inputs ([D-043][d-043], [D-322][d-322]). Unconnected
+input ports are a build error, with no silent defaults. The check is a
+whole-tree property, not a per-declaration one ([D-048][d-048], [D-322][d-322]). Both this check
+and the two-producers check are decided at the root, since neither is decidable
+below it ([D-048][d-048], [D-322][d-322]). Within a single assembly declaration an unfed child
+input is simply *awaiting a wire from above*, either a local wire or an
+`input_wires` entry handing the obligation up one level ([§8.6][s8-6]). The
+unconnected-input error, `UnconnectedInput`, fires at the root build for any
+input whose obligation chain never terminates. The one legitimate terminus fed
+by no component is the root component's own input face, a [root input](#g-root-input) ([§11.3][s11-3],
+[D-208][d-208]).
 
 **Unconnected output ports are legal, silently, with no build-time warning**
 ([D-084][d-084]).
@@ -1394,7 +1395,7 @@ zero contributors and the cost.
 [components](#g-component) and explicit wires** ([D-037][d-037]).
 
 There is no framework aggregation mechanism. There are no multi-connection
-[ports](#g-port), no declared fold ops and no identity-element opt-outs. Every
+[ports](#g-port), no declared fold ops and no identity-element opt-outs ([D-323][d-323]). Every
 input port takes exactly one connection, everywhere ([§6.1][s6-1]).
 
 ```julia
@@ -1507,7 +1508,7 @@ Do not bundle wrench, mass properties and internal angular momentum into one
 contribution struct. Contributors are ragged, each having only some of the three
 quantities. A bundled contribution struct forces zero-filled identity noise
 through every port, which is the "silently sum nothing" hazard in a new coat
-([D-037][d-037]).
+([D-037][d-037], [D-323][d-323]).
 
 A `sum_ports!`-style helper would instantiate, wire and export in one call.
 **Such a helper is [guarded-addition](#g-guarded-addition) sugar** (a
@@ -1525,7 +1526,7 @@ unconditionally.
 
 There is no junction to write and no producer to wire. [§6.1][s6-1] bans
 unconnected inputs and silent defaults. The identity element a zero-arity
-junction would need is deliberately absent ([D-037][d-037]).
+junction would need is deliberately absent ([D-037][d-037], [D-323][d-323]).
 
 **The zero-contributor spelling is a library
 [`Constant` source](#g-constant-source) ([§13.7][s13-7]) wired straight to the
@@ -1551,7 +1552,7 @@ with every silence in the aggregation's bookkeeping inverted into a warning or
 error ([D-037][d-037]).
 
 Consumer-declared folds with multi-connection legality are closed
-([D-037][d-037]).
+([D-037][d-037], [D-323][d-323]).
 
 ---
 
@@ -14079,6 +14080,9 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-318]: decisions.md#d-318--a-simulation-claims-its-model
 [d-319]: decisions.md#d-319--split-the-checkpoint-into-the-models-state-and-the-runs-cursor-and-put-the-services-on-the-model
 [d-320]: decisions.md#d-320--admit-only-a-scalar-into-which-float64-embeds-exactly-at-the-model-door
+[d-321]: decisions.md#d-321--the-parallel-routes-signal-the-handles-pin-chain-and-the-input-pins-failure-at-the-wire
+[d-322]: decisions.md#d-322--no-auto-bubbling-of-unconnected-inputs-and-the-whole-tree-checks-decided-at-the-root
+[d-323]: decisions.md#d-323--no-framework-aggregation-mechanism-what-explicit-junctions-buy-and-no-bundled-contributions
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop
