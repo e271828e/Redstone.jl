@@ -335,7 +335,7 @@
   {
    "id": "C-040",
    "old": "is carried as a separate payload field rather than dotted onto the path (§8.6, §13.2).",
-   "new": "The diagnostic carries the dead hop (D-245) as a separate field of its payload (the structured data a diagnostic carries) rather than dotting it onto the path (§8.6, §13.2).",
+   "new": "The diagnostic carries the dead hop (D-245) as a separate field of its payload (the structured data a diagnostic carries) rather than dotting the hop onto the path (§8.6, §13.2).",
    "where": "new",
    "cites": [
     "§13.2",

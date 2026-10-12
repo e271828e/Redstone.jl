@@ -1594,3 +1594,114 @@ editorial edits it quotes.
 - R13 entry: the quoted cell gloss now reads "(concretely typed table
   entries, one per output port)" (finding 6).
 - "Section pointers added": §5.4, §5.5 and §5.6 in §5.1's clause (R18).
+
+## Final verify fixes
+
+Two antecedent slips the final verifier found, with the wording the
+coordinator gave.
+
+Unit D:
+
+### Final verify 1, unit D (edit)
+
+Reason: after finding 14's sentence, 'the dependency' sat four sentences from its referent; name it.
+
+Old:
+
+```text
+The feedthrough graph carries the dependency.
+```
+
+New:
+
+```text
+The feedthrough graph carries the compensators' dependence on the gains.
+```
+
+Inventory: C-034; added+.
+
+### Final verify 1, unit D (rewrap)
+
+Reason: rewrap after the edit above.
+
+Old:
+
+```text
+**Scheduled gains are inputs** ([D-089][d-089]). A scheduler component owns the lookup tables
+as inert parameters, reads the scheduling variables as inputs, and publishes one
+gain bundle per compensator. Compensators consume gains as `u`. Ports expose
+what mutation would hide. Gain trajectories are observable in log, [trace](#g-trace) and
+[replay](#g-replay), where a parameter write would be invisible to all three. The trace is
+the session's recorded inputs, and replay re-drives the ordinary loop from that
+trace. The feedthrough graph carries the compensators' dependence on the gains. Linearization holds
+unseeded gain inputs constant with no special casing ([§14.10][s14-10]). One-shot
+design-time gains, such as a controller synthesized at init, are
+construction-time parameters or stopped-sim service outputs ([D-089][d-089]). They are
+not a runtime write path.
+```
+
+New:
+
+```text
+**Scheduled gains are inputs** ([D-089][d-089]). A scheduler component owns the lookup tables
+as inert parameters, reads the scheduling variables as inputs, and publishes one
+gain bundle per compensator. Compensators consume gains as `u`. Ports expose
+what mutation would hide. Gain trajectories are observable in log, [trace](#g-trace) and
+[replay](#g-replay), where a parameter write would be invisible to all three. The trace is
+the session's recorded inputs, and replay re-drives the ordinary loop from that
+trace. The feedthrough graph carries the compensators' dependence on the gains.
+Linearization holds unseeded gain inputs constant with no special casing
+([§14.10][s14-10]). One-shot design-time gains, such as a controller synthesized at init,
+are construction-time parameters or stopped-sim service outputs ([D-089][d-089]). They
+are not a runtime write path.
+```
+
+Unit E:
+
+### Final verify 2, unit E (edit)
+
+Reason: finding 17's payload gloss separated 'it' from 'the dead hop'; name the hop.
+
+Old:
+
+```text
+rather than dotting it
+onto the path
+```
+
+New:
+
+```text
+rather than dotting the hop
+onto the path
+```
+
+Inventory: C-040.
+
+### Final verify 2, unit E (rewrap)
+
+Reason: rewrap after the edit above.
+
+Old:
+
+```text
+The build diagnostic offers both exits explicitly ([D-140][d-140]). It reads "cycle
+through `systems/aero` is artificial at port level — split the component, or
+narrow the neighbor's contract". The dead hop is the member with the input [face](#g-face)
+(the name a port wears on its component's boundary) that it does not route to
+the output port. The diagnostic carries the dead hop ([D-245][d-245]) as a separate field
+of its [payload](#g-payload) (the structured data a diagnostic carries) rather than dotting the hop
+onto the path ([§8.6][s8-6], [§13.2][s13-2]).
+```
+
+New:
+
+```text
+The build diagnostic offers both exits explicitly ([D-140][d-140]). It reads "cycle
+through `systems/aero` is artificial at port level — split the component, or
+narrow the neighbor's contract". The dead hop is the member with the input [face](#g-face)
+(the name a port wears on its component's boundary) that it does not route to
+the output port. The diagnostic carries the dead hop ([D-245][d-245]) as a separate field
+of its [payload](#g-payload) (the structured data a diagnostic carries) rather than dotting
+the hop onto the path ([§8.6][s8-6], [§13.2][s13-2]).
+```

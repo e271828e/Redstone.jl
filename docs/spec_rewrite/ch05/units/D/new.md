@@ -56,11 +56,11 @@ gain bundle per compensator. Compensators consume gains as `u`. Ports expose
 what mutation would hide. Gain trajectories are observable in log, [trace](#g-trace) and
 [replay](#g-replay), where a parameter write would be invisible to all three. The trace is
 the session's recorded inputs, and replay re-drives the ordinary loop from that
-trace. The feedthrough graph carries the dependency. Linearization holds
-unseeded gain inputs constant with no special casing ([§14.10][s14-10]). One-shot
-design-time gains, such as a controller synthesized at init, are
-construction-time parameters or stopped-sim service outputs ([D-089][d-089]). They are
-not a runtime write path.
+trace. The feedthrough graph carries the compensators' dependence on the gains.
+Linearization holds unseeded gain inputs constant with no special casing
+([§14.10][s14-10]). One-shot design-time gains, such as a controller synthesized at init,
+are construction-time parameters or stopped-sim service outputs ([D-089][d-089]). They
+are not a runtime write path.
 
 **A commanded reset of a discrete component is a same-tick input, consumed in the
 output stage** ([D-089][d-089]). The supervisor publishes `engage` and the latch value from

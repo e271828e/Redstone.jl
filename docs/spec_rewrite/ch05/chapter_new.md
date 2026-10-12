@@ -383,11 +383,11 @@ gain bundle per compensator. Compensators consume gains as `u`. Ports expose
 what mutation would hide. Gain trajectories are observable in log, [trace](#g-trace) and
 [replay](#g-replay), where a parameter write would be invisible to all three. The trace is
 the session's recorded inputs, and replay re-drives the ordinary loop from that
-trace. The feedthrough graph carries the dependency. Linearization holds
-unseeded gain inputs constant with no special casing ([§14.10][s14-10]). One-shot
-design-time gains, such as a controller synthesized at init, are
-construction-time parameters or stopped-sim service outputs ([D-089][d-089]). They are
-not a runtime write path.
+trace. The feedthrough graph carries the compensators' dependence on the gains.
+Linearization holds unseeded gain inputs constant with no special casing
+([§14.10][s14-10]). One-shot design-time gains, such as a controller synthesized at init,
+are construction-time parameters or stopped-sim service outputs ([D-089][d-089]). They
+are not a runtime write path.
 
 **A commanded reset of a discrete component is a same-tick input, consumed in the
 output stage** ([D-089][d-089]). The supervisor publishes `engage` and the latch value from
@@ -494,8 +494,8 @@ through `systems/aero` is artificial at port level — split the component, or
 narrow the neighbor's contract". The dead hop is the member with the input [face](#g-face)
 (the name a port wears on its component's boundary) that it does not route to
 the output port. The diagnostic carries the dead hop ([D-245][d-245]) as a separate field
-of its [payload](#g-payload) (the structured data a diagnostic carries) rather than dotting it
-onto the path ([§8.6][s8-6], [§13.2][s13-2]).
+of its [payload](#g-payload) (the structured data a diagnostic carries) rather than dotting
+the hop onto the path ([§8.6][s8-6], [§13.2][s13-2]).
 
 The component split is rare, and the ladder is what earns that word rather than
 asserting it ([D-140][d-140]). The two-stage split dissolves the common shapes, and the

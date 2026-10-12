@@ -67,8 +67,8 @@ through `systems/aero` is artificial at port level — split the component, or
 narrow the neighbor's contract". The dead hop is the member with the input [face](#g-face)
 (the name a port wears on its component's boundary) that it does not route to
 the output port. The diagnostic carries the dead hop ([D-245][d-245]) as a separate field
-of its [payload](#g-payload) (the structured data a diagnostic carries) rather than dotting it
-onto the path ([§8.6][s8-6], [§13.2][s13-2]).
+of its [payload](#g-payload) (the structured data a diagnostic carries) rather than dotting
+the hop onto the path ([§8.6][s8-6], [§13.2][s13-2]).
 
 The component split is rare, and the ladder is what earns that word rather than
 asserting it ([D-140][d-140]). The two-stage split dissolves the common shapes, and the

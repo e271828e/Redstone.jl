@@ -303,7 +303,7 @@
   {
    "id": "C-034",
    "old": "The feedthrough graph carries the dependency.",
-   "new": "The feedthrough graph carries the dependency.",
+   "new": "The feedthrough graph carries the compensators' dependence on the gains.",
    "where": "new",
    "cites": [],
    "tag": "F"
@@ -520,6 +520,7 @@
   "The C172X demo is the interactive Flight.jl demo that section 3 of `companions/flight_case_studies.md` examines.",
   "The gear wires the strut's `wow` port to the regulator `frc`'s `reset` input, `strut.wow → frc.reset`, so the reset fires on the touchdown edge.",
   "(the name a port wears on its component's boundary)",
-  "here a proportional-integral `PI` block"
+  "here a proportional-integral `PI` block",
+  "the compensators' dependence on the gains"
  ]
 }
