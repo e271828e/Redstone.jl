@@ -1,0 +1,36 @@
+1774	D-263	**`ws_init(::C, ::Type{T})` takes the [activation](#g-activation) scalar on both [tiers](#g-tier)**	|| **`ws_init(::C, ::Type{T})` takes the [activation](#g-activation) scalar on both [tiers](#g-tier)**, and it is the one declaration that does ([D-263][d-263]).
+2267	D-263	**Every declaration of a structural fact but the allocator takes the component alone**	|| **Every declaration of a structural fact but the allocator takes the component alone** ([D-263][d-263]).
+2309	D-263	**Every leaf declares exactly one of `x_init` and `s_init`**	|| **Every leaf declares exactly one of `x_init` and `s_init`**, and a stateless leaf declares it empty ([D-263][d-263]):
+2371	D-078,D-263	**Entries are [face](#g-face) bounds, not cell types, and the reading is permissive**	|| **Entries are [face](#g-face) bounds, not cell types, and the reading is permissive** ([D-263][d-263], [D-078][d-078]).
+2390	D-266	**`Pinned` records that a leaf carries no partials, not that an implementation cannot take them**	|| **`Pinned` records that a leaf carries no partials, not that an implementation cannot take them** ([D-266][d-266]).
+2402	D-078,D-296	**[Abstract entries](#g-abstract-entry) state structural substitutability**	|| **[Abstract entries](#g-abstract-entry) state structural substitutability** ([D-078][d-078], [D-296][d-296]).
+2417	D-236,D-263	**Two clauses check a wire**	|| **Two clauses check a wire** ([§6.1][s6-1], [D-263][d-263], [D-236][d-236]).
+2433	D-263,D-295	**Discrete consumers take the bound check only**	|| **Discrete consumers take the bound check only** ([D-263][d-263], [D-295][d-295]).
+2446	D-263,D-295	**The obligation is scoped to the unpinned entries**	|| **The obligation is scoped to the unpinned entries** ([D-263][d-263], [D-295][d-295]).
+2446	D-078,D-296	**Declarations record choices, and obligations are checked**	|| **Declarations record choices, and obligations are checked** ([D-078][d-078], [D-296][d-296]).
+2472	D-236	**Abstract-at-root is a build error**	|| **Abstract-at-root is a build error** ([D-236][d-236]).
+2485	D-263,D-295	**That retyping makes seedability schema-visible**	|| **That retyping makes seedability schema-visible** ([D-263][d-263], [D-295][d-295]).
+2491	D-168	**Fan-out combines tolerance by a meet, not by agreement**	|| **Fan-out combines tolerance by a meet, not by agreement** ([D-168][d-168]).
+2517	D-208	**Any component may be the root of a build, and the model's root inputs are the root's own input faces**	|| **Any component may be the root of a build, and the model's root inputs are the root's own input faces** ([D-208][d-208]).
+2578	D-263	**A handle keeps its bulk at `Float64` and its activation-dependent part in the parameter**	|| **A handle keeps its bulk at `Float64` and its activation-dependent part in the parameter** ([D-263][d-263]).
+2989	D-211	**A component may declare at most one of its container fields name-transparent**	|| **A component may declare at most one of its container fields name-transparent** ([D-211][d-211]).
+3022	D-211	**A bare key from a name-transparent container colliding with any sibling child name is a build error naming both**	|| - **A bare key from a name-transparent container colliding with any sibling child name is a build error naming both** ([D-211][d-211]).
+3028	D-212	**A bare key equal to the name of a sibling *container field* that contributes children is refused the same way**	|| - **A bare key equal to the name of a sibling *container field* that contributes children is refused the same way** ([D-212][d-212]).
+3028	D-212	**An empty field reserves nothing**	|| **An empty field reserves nothing** ([D-212][d-212]), because it reaches no children and its value cannot be told from empty inert parameter data.
+3136	D-170	**Every pair runs strictly from a child face to a child face**	|| **Every pair runs strictly from a child face to a child face** ([D-170][d-170]).
+3141	D-170	**The assembly's boundary is declared by two further methods, one per direction**	|| **The assembly's boundary is declared by two further methods, one per direction** ([D-170][d-170]).
+3141	D-210	**Every entry routes to at least one internal endpoint**	|| **Every entry routes to at least one internal endpoint** ([D-210][d-210]).
+3153	D-170	**Direction is declared by the method**	|| **Direction is declared by the method**, not inferred ([D-170][d-170]).
+3208	D-210	**At the root the uniqueness invariant follows the root's class**	|| **At the root the uniqueness invariant follows the root's class** ([D-210][d-210]).
+3617	D-209	**`output_passthrough` is its sibling**	|| **`output_passthrough` is its sibling** ([D-209][d-209]).
+3713	D-145,D-299	**The single source must be authored data, never inferred structure**	|| **The single source must be authored data, never inferred structure** ([D-145][d-145], [D-299][d-299]).
+3721	D-043	**Generic holding is an imposed derived contract**	|| **Generic holding is an imposed derived contract** ([D-043][d-043]).
+3767	D-259	**The pipeline runs as the steps below**	|| **The pipeline runs as the steps below**, each consuming one artifact and producing the next, and each a barrier ([D-259][d-259]).
+3826	D-078	**The producer's declaration at `Float64` must be `<:` the entry at `Float64`**	|| **The producer's declaration at `Float64` must be `<:` the entry at `Float64`** ([D-078][d-078]).
+3831	D-236,D-263	**The walk-compatibility clause is decided by retyping both declarations at a marker scalar**	|| **The walk-compatibility clause is decided by retyping both declarations at a marker scalar** and comparing per leaf at a concrete entry, or on the whole declaration at an abstract one ([D-263][d-263], [D-236][d-236]).
+3898	D-253,D-259	**The nominal evaluation is a function of the `Structure`**	|| **The nominal evaluation is a function of the `Structure`**, and it returns three artifacts, `Outputs`, `Events` and the nominal `Float64` activation ([D-253][d-253], [D-259][d-259]).
+4032	D-207,D-315	**The face table is two-sided, and `Structure` answers it as a function over the declared wires**	|| **The face table is two-sided, and `Structure` answers it as a function over the declared wires** ([D-207][d-207], [D-315][d-315]).
+4299	D-051	**The build synthesizes their values via `probe_value(::Type)`**	|| **The build synthesizes their values via `probe_value(::Type)`** ([D-051][d-051]).
+4333	D-051	**Probe values are strictly probe-scoped**	|| **Probe values are strictly probe-scoped** ([D-051][d-051]).
+4406	D-259	**Only the activation step re-runs for a new scalar**	|| **Only the activation step re-runs for a new scalar** ([D-259][d-259]).
+4636	D-238	**The check is decided on the type**	|| **The check is decided on the type**, not leaf by leaf ([D-238][d-238]).
