@@ -345,6 +345,9 @@ were derived.
 | [D-318][d-318] | A `Simulation` claims its `Model` | ratified |
 | [D-319][d-319] | Split the checkpoint into the `Model`'s state and the run's cursor, and put the services on the `Model` | ratified |
 | [D-320][d-320] | Admit only a scalar into which `Float64` embeds exactly at the `Model` door | ratified |
+| [D-321][d-321] | The parallel-routes signal, the handle's pin chain and the input pin's failure at the wire | ratified |
+| [D-322][d-322] | No auto-bubbling of unconnected inputs, and the whole-tree checks decided at the root | ratified |
+| [D-323][d-323] | No framework aggregation mechanism, what explicit junctions buy, and no bundled contributions | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -1191,6 +1194,13 @@ author-visible; helper/macro sugar guarded.
 
 **Rationale.** Recorded only through the rejections below.
 
+Annotation (2026-10-12): since [D-207][d-207] every connection routes one level, so
+every assembly that owns contributors exports its total, at every boundary
+and not only at a generic one ([§6.2][s6-2]). The tree walks of the second rejection
+are FlightPhysics' generated functions `get_wr_b`, `get_mp_b` and `get_hr_b`
+([§6.2][s6-2]), not FlightCore's. The junctions, the idiom, the author-visible fold
+order and the guarded sugar stand.
+
 **Rejected.**
 - *Reduce-ports ([D-007][d-007], reversed):* the declaration vocabulary's last wrapper;
   three-site census, all Newton–Euler, one library file; canonical-fold,
@@ -1830,6 +1840,14 @@ path's final segment (slash the only structural separator).
 
 **Rationale.** Recorded only through the rejections below.
 
+Annotation (2026-10-12): [§6.1][s6-1] has stated no generic-boundary rule since
+[D-207][d-207], which made the generic-seam stop the universal rule. The wiring
+client's duty is the one-level rule, and an endpoint reaching past the
+immediate child is `PathResolution` ([§6.1][s6-1]). The generic-holding rule, with
+its past-generic diagnostic, governs the deep paths the read side still
+writes, under [D-130][d-130]'s client scoping ([§13.3][s13-3]). The declared-type walk, the
+face lists and the terminal split stand.
+
 **Rejected.**
 - *Instance-only walk:* blind to generic holding — [§6.1][s6-1] unenforceable where
   paths are actually resolved.
@@ -1851,6 +1869,12 @@ path's final segment (slash the only structural separator).
 **Spec.** [§6.2][s6-2]
 
 **Rationale.** Recorded only through the rejections below.
+
+Annotation (2026-10-12): the summing junction and the Bool gates are one leaf,
+`Junction{In, Out, N, F}`, since [D-311][d-311], and `SumJunction{V, N}`, `Or{N}` and
+`And{N}` are its aliases. A block joins the library by judgement against three
+guidelines, not by demonstrated need ([D-313][d-313]). Ordinary components, arity by type
+parameter and tier transparency stand ([§13.7][s13-7]).
 
 **Rejected.**
 - *Framework-privileged library blocks:* schema authority no longer total; the
@@ -2189,6 +2213,10 @@ unparametrized type constructor.
 **Spec.** [§6.2][s6-2], [§8.2][s8-2], [§14][s14], [§14.9][s14-9], [§14.10][s14-10]
 
 **Rationale.** Recorded only through the rejections below.
+
+Annotation (2026-10-12): [D-311][d-311] makes the junction's type parameter the
+nominal type, as in `SumJunction{Wrench{Float64}, 3}`, never an
+unparametrized constructor, and [§6.2][s6-2] writes it so.
 
 **Rejected.**
 - *Split-form sketch files and separate `navsensors.jl`/`imu.md` notes:*
@@ -4881,6 +4909,13 @@ wherever the double must compute something. Admission honors [§13.7][s13-7]'s s
 from demonstrated need charter: the dry run demonstrated the need twice, at the
 zero-contributor totals and at the rig. [Appendix D][sD] gains a constant source
 entry.
+
+Annotation (2026-10-12): `Constant{V}` declares `(out = Pinned{V},)`
+([D-312][d-312]), and `output_types` is `y_types` ([D-267][d-267]). The stateless `h_xu` of
+the tier argument is `y_direct` ([D-220][d-220], [D-267][d-267], [§13.7][s13-7]). The identity methods
+the Rationale calls FlightCore's are FlightPhysics', defined at the
+`aircraftbase.jl` lines it cites. The block, its two clarifications and its
+tier stand.
 
 **Rejected.**
 - *A zero-arity summing junction with an identity element:* [D-037][d-037]'s retirement
@@ -13890,6 +13925,94 @@ fusion, so a refusal at the `Model` door now refuses the mode itself.
 - *Refusing in `activation`:* the build's activation cache is internal, and the
   `Model` constructor is the API a caller reaches.
 
+### D-321 — The parallel-routes signal, the handle's pin chain and the input pin's failure at the wire
+
+**Status.** ratified
+
+**Position.** Three connection rulings that [§6.1][s6-1] states are fixed here.
+
+- Parallel routes threading several boundaries are the signal to gather them
+  into a component of their own.
+- A handle's pin is a property of its chain. A component that re-emits a
+  frozen handle pins that output too, since the store's identity rule refuses
+  the handle at an unpinned output.
+- A pin written at an input entry whose consumer promotes fails at the first
+  nominal build, at the wire, and never silently. The input side fails first
+  because an input has a build-time counterparty and an output has none.
+
+**Spec.** [§6.1][s6-1]
+
+**Rationale.** Each bullet restates what an existing entry recorded outside a
+Position. The parallel-routes signal was recorded in [D-207][d-207]'s Rationale, which
+says "a custom type". The pin chain was recorded in [D-264][d-264]'s Rationale. The
+input side's timing was recorded in [D-236][d-236]'s Rationale, as the promise [D-167][d-167]
+makes, and in [D-263][d-263]'s, where an input pin is a wire check at the first
+nominal build only when written. The counterparty reason was recorded in
+[D-167][d-167]'s Rationale. [D-263][d-263]'s rejection of [D-167][d-167] reaches only the mandated
+forms, and [D-263][d-263]'s Rationale restates both halves of the asymmetry, an input
+pin failing at the first nominal build and an output built from frozen data
+refused at the first `Dual` activation.
+
+**Rejected.** None beyond the source entries' lists.
+
+### D-322 — No auto-bubbling of unconnected inputs, and the whole-tree checks decided at the root
+
+**Status.** ratified
+
+**Position.** Two rulings on unfed and doubly fed inputs that [§6.1][s6-1] states are
+fixed here.
+
+- An unconnected input is never bubbled up automatically. Auto-bubbling would
+  promote a forgotten wire silently to a live root input.
+- The unconnected-input check and the two-producers check are whole-tree
+  properties, decided at the root build. Neither is decidable below the root,
+  so neither is validated level by level.
+
+**Spec.** [§6.1][s6-1]
+
+**Rationale.** Each bullet restates what an existing entry recorded outside a
+Position. Auto-bubbling was recorded in [D-043][d-043]'s Rejected list, which says
+"root slot", a root input since [D-206][d-206]. The checks' scope was recorded in
+[D-048][d-048]'s Rejected list, against a single-pass tree walk with per-level
+validation, and [D-048][d-048]'s Position places global wiring and obligations in the
+structure step.
+
+**Rejected.** None beyond the source entries' lists.
+
+### D-323 — No framework aggregation mechanism, what explicit junctions buy, and no bundled contributions
+
+**Status.** ratified
+
+**Position.** Three aggregation rulings that [§6.2][s6-2] states are fixed here.
+
+- The framework has no aggregation mechanism. It has no multi-connection
+  ports, no declared fold ops and no identity elements, and the canonical-fold,
+  multi-connection legality and identity-element machinery stay retired, a
+  zero-contributor total included.
+- Explicit junctions make the aggregate an observable port and the fold
+  arbitrary stage-2 code written at the site, such as a weighted blend or a
+  mass-properties composition. Every contribution a total includes is a
+  declared wire. A tree walk omits a contribution silently, and its
+  zero-edit convenience is the hazard.
+- Wrench, mass properties and internal angular momentum are not bundled into
+  one contribution struct. Contributors are ragged, and a bundle forces
+  zero-filled identity noise through every port, the "silently sum nothing"
+  hazard in a new coat.
+
+**Spec.** [§6.2][s6-2]
+
+**Rationale.** Each bullet restates what an existing entry recorded outside a
+Position. The retired machinery was recorded in [D-037][d-037]'s Rejected list,
+against reduce-ports, and [D-143][d-143]'s Rejected list keeps it retired for the
+zero-arity junction. The unobservable aggregate was recorded in the same
+rejection of reduce-ports, and the arbitrary stage-2 fold in [D-311][d-311]'s
+Rationale. The tree walk's silent omission was recorded in [D-037][d-037]'s Rejected
+list, and [D-143][d-143]'s Rationale sets a declared wire and an observable port
+against it. The ragged contributors and the identity noise were recorded in
+[D-037][d-037]'s Rejected list and its annotation bullet.
+
+**Rejected.** None beyond the source entries' lists.
+
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
 [d-002]: #d-002--adopt-the-causal-port-based-paradigm
@@ -14211,6 +14334,9 @@ fusion, so a refusal at the `Model` door now refuses the mode itself.
 [d-318]: #d-318--a-simulation-claims-its-model
 [d-319]: #d-319--split-the-checkpoint-into-the-models-state-and-the-runs-cursor-and-put-the-services-on-the-model
 [d-320]: #d-320--admit-only-a-scalar-into-which-float64-embeds-exactly-at-the-model-door
+[d-321]: #d-321--the-parallel-routes-signal-the-handles-pin-chain-and-the-input-pins-failure-at-the-wire
+[d-322]: #d-322--no-auto-bubbling-of-unconnected-inputs-and-the-whole-tree-checks-decided-at-the-root
+[d-323]: #d-323--no-framework-aggregation-mechanism-what-explicit-junctions-buy-and-no-bundled-contributions
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property
