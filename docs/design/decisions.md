@@ -360,7 +360,7 @@ were derived.
 DAE/SDE/per-step hook. Tier-2 detection is pace-independent ([D-080][d-080]); guard
 conditions are normative — positive = holding, edge semantics ([D-082][d-082]).
 
-**Spec.** [§2.2][s2-2]
+**Spec.** [§2][s2], [§2.1][s2-1], [§2.2][s2-2]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -375,6 +375,8 @@ conditions are normative — positive = holding, edge semantics ([D-082][d-082])
 
 **Position.** Causal port-based paradigm.
 
+**Spec.** [§2][s2]
+
 **Rationale.** Recorded only through the rejections below.
 
 **Rejected.**
@@ -388,6 +390,8 @@ conditions are normative — positive = holding, edge semantics ([D-082][d-082])
 
 **Position.** Taxonomy: hybrid continuous primitive + periodic discrete +
 assemblies; both mode factorings.
+
+**Spec.** [§3][s3], [§3.1][s3-1]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -695,7 +699,7 @@ state (off-manifold like RK stages), projection running at the `t*` boundary
 where [§10.6][s10-6]'s edge checks read it — a projection that undoes the crossing costs
 one extra harmless boundary.
 
-**Spec.** [§10.4][s10-4], [§10.6][s10-6]
+**Spec.** [§2.1][s2-1], [§10.4][s10-4], [§10.6][s10-6]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -718,7 +722,7 @@ scopes for declaration (integer multipliers $K \ge 1$ composing down the tree,
 compiled to absolute divisors); `Δt` arrives as a discrete-bundle field
 ([D-074][d-074]), single source of truth, no stored `Δt`-derived parameters.
 
-**Spec.** [§5.2][s5-2], [§10.5][s10-5]
+**Spec.** [§2][s2], [§3.2][s3-2], [§3.3][s3-3], [§5.2][s5-2], [§10.5][s10-5]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -759,7 +763,7 @@ event firing at most once per boundary, with "newly fired" made precise via
 per-event baselines in loop state ([D-082][d-082]); due `g` updates run after
 quiescence, outside the iteration.
 
-**Spec.** [§2.2][s2-2], [§3.1][s3-1], [§5.3][s5-3], [§10.6][s10-6]
+**Spec.** [§2.2][s2-2], [§3.1][s3-1], [§3.4][s3-4], [§5.3][s5-3], [§10.6][s10-6]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -812,7 +816,7 @@ one atomic reference op, GC as reclamation; no user code or unbounded work in
 framework critical sections; control on a separate atomic surface (staging
 cannot un-pause a drainless loop); interactive = batch + devices.
 
-**Spec.** [§11.1][s11-1]
+**Spec.** [§2][s2], [§11.1][s11-1]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -1108,7 +1112,7 @@ no outputs; intermediates declared via strict `local_types` ([D-055][d-055]) —
 cells, non-connectable, snapshot-visible, presentation-filtered;
 branch-shape-stable returns; undeclared stage-return fields = build error.
 
-**Spec.** [§5.4][s5-4], [§7.4][s7-4], [§8.3][s8-3]
+**Spec.** [§4.2][s4-2], [§5.4][s5-4], [§7.4][s7-4], [§8.3][s8-3]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -1282,7 +1286,7 @@ behind the contract.
 **Position.** Slash-string paths, relative to the declaring assembly, one
 canonical form shared by declarations, diagnostics, devices and logs.
 
-**Spec.** [§8.6][s8-6]
+**Spec.** [§4.2][s4-2], [§8.6][s8-6]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -1411,7 +1415,7 @@ conditioning, mappings, edge logic and pokeability:
 - Edge logic is staged counters plus model-state accumulators.
 - Unexported ports are unpokeable.
 
-**Spec.** [§11.7][s11-7]
+**Spec.** [§4.3][s4-3], [§11.7][s11-7]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -2003,7 +2007,7 @@ snapshot.
   activation — and only the commit runs boundary zero, a guard firing at commit
   replacing today's hand-written trim asserts.
 
-**Spec.** [§10.6][s10-6], [§14.5][s14-5], [§5.3][s5-3], [§3.4][s3-4], [§8.6][s8-6]
+**Spec.** [§10.6][s10-6], [§14.5][s14-5], [§5.3][s5-3], [§8.6][s8-6]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -2460,7 +2464,7 @@ schema-visible freezing a recorded [§14.10][s14-10] door.
 identically in every execution mode, its sweep cost absorbed as [§10.7][s10-7] pacer debt
 like any other expensive frame.
 
-**Spec.** [§10.4][s10-4], [§10.7][s10-7]
+**Spec.** [§2.1][s2-1], [§10.4][s10-4], [§10.7][s10-7]
 
 **Rationale.** Events are rare by nature.
 
@@ -2513,7 +2517,7 @@ on not-holding → holding edges against a per-event baseline held in loop state
 bookkeeping, not model memory: not in `z`, not captured, reconstructed on warm
 restart).
 
-**Spec.** [§10.4][s10-4], [§10.6][s10-6], [§14.5][s14-5]
+**Spec.** [§2.1][s2-1], [§10.4][s10-4], [§10.6][s10-6], [§14.5][s14-5]
 
 **Rationale.** Boundary-zero baseline = nothing-holds (authored guard-true
 conditions fire at `t₀`, [§14.5][s14-5] derived); opposite direction = second event with
@@ -2751,7 +2755,7 @@ honored only in `g` = one-tick-late outputs, legal where that is meant).
 [§9.5][s9-5]): `(; x, m)`, a key present iff the store exists AND the handler updates
 it — a pure FSM returns `(; m = …)`, a reset map `(; x = …)`.
 
-**Spec.** [§5.2][s5-2], [§9.5][s9-5]
+**Spec.** [§3.1][s3-1], [§5.2][s5-2], [§9.5][s9-5]
 
 **Rationale.** Checks per key: `x` present ⇒ complete against the state field
 set, `m` present ⇒ names-subset, unknown key ⇒ did-you-mean against `{x, m}`
@@ -2852,7 +2856,7 @@ next `run!`); the write/read paths while stepping are [D-096][d-096]'s harness w
 **Position.** State leaf vocabulary closed ([§7.1][s7-1]): `init_x` leaves are plain
 real scalars and `SArray`s at the common eltype — no domain wrapper types.
 
-**Spec.** [§7.1][s7-1], [§8.2][s8-2], [§10.4][s10-4], [§14.3][s14-3]
+**Spec.** [§3.1][s3-1], [§7.1][s7-1], [§8.2][s8-2], [§10.4][s10-4], [§14.3][s14-3]
 
 **Rationale.** Views therefore materialize by ordinary invariant-free
 construction (bit-faithful round trip, no constructor bypass, no
@@ -4737,7 +4741,7 @@ implemented internally as an ordinary guard/handler event (the [Appendix A][sA]
 contract's worked instance). The gear wires `strut.wow → frc.reset` (the
 touchdown edge).
 
-**Spec.** [§2.1][s2-1], [§3.1][s3-1], [§3.3][s3-3], [§10.6][s10-6], [§8.5][s8-5], [§13.7][s13-7], [§5.3][s5-3], [Appendix A][sA]
+**Spec.** [§2.1][s2-1], [§2.2][s2-2], [§3.1][s3-1], [§3.3][s3-3], [§3.4][s3-4], [§10.6][s10-6], [§8.5][s8-5], [§13.7][s13-7], [§5.3][s5-3], [Appendix A][sA]
 
 **Rationale.** The reason is semantic, not stylistic: only the discrete tier's
 update stage is already a jump map (a reset there is merely another value for
@@ -5462,7 +5466,7 @@ a blocked event is re-decided next round against the post-transition sweep
 (fire-on-falsified-premise gone), and cross-component handler order is
 unobservable with no delivering mechanism (nothing writes mid-round).
 
-**Spec.** [§5.3][s5-3], [§10.4][s10-4], [§10.6][s10-6]
+**Spec.** [§3.1][s3-1], [§5.3][s5-3], [§10.4][s10-4], [§10.6][s10-6]
 
 **Rationale.** A round-5 kernel dry-run finding (finding 10), resolved by
 redesign after re-examining the within-round visibility rule it implements —
@@ -8692,7 +8696,7 @@ leaf's `m` — is isbits or a `Symbol`, and Stratum A checks every
 latitude of [§4.1][s4-1] stays with signals. A PRNG object is workspace; the values
 that determine its next draw are the state.
 
-**Spec.** [§3.2][s3-2], [§7.3][s7-3], [§8.2][s8-2], [§9.1][s9-1], [Appendix C][sC], [Appendix D][sD]
+**Spec.** [§2.2][s2-2], [§3.2][s3-2], [§7.3][s7-3], [§8.2][s8-2], [§9.1][s9-1], [Appendix C][sC], [Appendix D][sD]
 
 **Rationale.** The three sources disagreed and the code checked nothing:
 [§7.3][s7-3] granted `s` "any immutable value" under the frozen-reference rule, the
@@ -9377,7 +9381,7 @@ tier classifier and the vocabulary checks read the value, and reports a bare
 value as `StoreNotNamedTuple`, collected, carrying the store, the observed
 type and the wrap that fixes it.
 
-**Spec.** [§7.1][s7-1], [§8.2][s8-2], [§9.1][s9-1], [Appendix C][sC]
+**Spec.** [§3.1][s3-1], [§3.2][s3-2], [§7.1][s7-1], [§8.2][s8-2], [§9.1][s9-1], [Appendix C][sC]
 
 **Rationale.** Nothing checked the form, and every reader of a store value
 assumes a `NamedTuple`: the tier classifier, the two Stratum A field checks,
@@ -9503,7 +9507,7 @@ site holds.
 - `StopFaceInvalid`'s binding site is one of three, the constructor, `run!`
   or `replay!`, since a replay binds the run policy as `run!` does ([§12.7][s12-7]).
 
-**Spec.** [§8.2][s8-2], [§8.5][s8-5], [§8.6][s8-6], [§9.5][s9-5], [§12.7][s12-7], [§13.5][s13-5], [Appendix C][sC]
+**Spec.** [§3.2][s3-2], [§8.2][s8-2], [§8.5][s8-5], [§8.6][s8-6], [§9.5][s9-5], [§12.7][s12-7], [§13.5][s13-5], [Appendix C][sC]
 
 **Rationale.** [D-216][d-216] kept the payload columns as the design and left the
 prototype's gaps visible under them. Closing those gaps found three columns
@@ -10448,7 +10452,7 @@ tier is never spelled in a signature.
   a primitive declaring neither store, and an empty-store leaf with no
   `output_types` is `StatelessWithoutOutputs`.
 
-**Spec.** [§4.3][s4-3], [§6.1][s6-1], [§6.2][s6-2], [§7.2][s7-2], [§7.3][s7-3], [§8.1][s8-1], [§8.2][s8-2], [§8.3][s8-3], [§8.5][s8-5], [§8.6][s8-6], [§9.1][s9-1],
+**Spec.** [§3.4][s3-4], [§4.3][s4-3], [§6.1][s6-1], [§6.2][s6-2], [§7.2][s7-2], [§7.3][s7-3], [§8.1][s8-1], [§8.2][s8-2], [§8.3][s8-3], [§8.5][s8-5], [§8.6][s8-6], [§9.1][s9-1],
 [§9.4][s9-4], [§9.5][s9-5], [§13.7][s13-7], [§14.10][s14-10], [Appendix A][sA], [Appendix C][sC], [Appendix D][sD]
 
 **Rationale.** The two-argument form charged every continuous leaf for a
@@ -12559,7 +12563,7 @@ rulings beyond the walk of `x_init`.
   the face alone. The author's next move, promoting that leaf or routing the
   tap around it, depends on knowing which leaf froze the root input.
 
-**Spec.** [§8.2][s8-2], [§14.10][s14-10]
+**Spec.** [§4.4][s4-4], [§8.2][s8-2], [§14.10][s14-10]
 
 **Rationale.** Each bullet restates what an existing entry recorded outside
 its Position. Abstract entries, the record-and-check doctrine and the tight
@@ -14509,6 +14513,7 @@ faces was recorded in [D-245][d-245]'s Rationale.
 [s14-7]: spec.md#147-the-trim-problem-namedtuple-decisions-declared-reads-named-residuals
 [s14-8]: spec.md#148-the-trim-service-solver-seam-scratch-stores-commit-and-report
 [s14-9]: spec.md#149-mounting-problems-as-relocatable-values
+[s2]: spec.md#2-formalism
 [s2-1]: spec.md#21-events-two-detection-policies
 [s2-2]: spec.md#22-exclusions-deliberate
 [s3]: spec.md#3-component-taxonomy
