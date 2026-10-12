@@ -98,8 +98,9 @@ inside the block and the correction reads the block's own fresh `u`, which a
 derivative stage may do. The tracking input then serves what it is for: a
 value produced elsewhere, by a stateful actuator or an inner loop, whose
 publication from state breaks the cycle. An assembly of library blocks never
-meets the refusal, because its integrator splits the stages by
-construction, which is [§5.4][s5-4]'s second remedy for free.
+meets the refusal, because its integrator is a component of its own by
+construction, which is [§5.4][s5-4]'s second remedy, the component split, for
+free.
 
 **A saturation code flips on a declared boundary.** Conditional integration
 is a mode made silently when its switch reads a continuous quantity. But

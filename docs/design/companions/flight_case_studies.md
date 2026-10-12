@@ -176,8 +176,8 @@ republishing from `s⁺` is rejected ([D-067][d-067]). The output stage is
 therefore the *only* same-tick path. Today's hand-ordering, `f_init!` before
 `f_periodic!` in one call, is that same-tick reset contract enforced by hand.
 [Appendix A][sA] carries it as the same-tick reset entry, and the
-bumpless-engage answer ([§11.7][s11-7]) presupposes exactly this spelling.
-Engage semantics live in the FCS.
+bumpless-engage answer of section 3's *Mode engage* frame presupposes
+exactly this spelling. Engage semantics live in the FCS.
 
 One relative lives outside the FCS. The landing gear's level-triggered
 cross-component reset (`!wow` re-initializing the friction regulator every

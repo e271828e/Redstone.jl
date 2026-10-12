@@ -695,8 +695,8 @@ pairs, with no runtime graph logic ([D-086][d-086]).
 
 **Every [component](#g-component) provides exactly two output stages** ([D-006][d-006]). [Feedthrough](#g-feedthrough) (an
 instantaneous input→output dependence) is declared structurally, by function
-signature. There are no dependency annotations anywhere in the design ([D-006][d-006]).
-`y_state` is stage 1 and `y_direct` is stage 2.
+signature. There are no dependency annotations anywhere in the design ([D-006][d-006],
+[D-341][d-341]). `y_state` is stage 1 and `y_direct` is stage 2.
 
 ```julia
 # continuous component — maximal legal view set of each bundle in comments
@@ -735,7 +735,7 @@ more reasons support it. Language semantics ignore unread fields. Argument
 order cannot be confused, because there is no order.
 
 Positional, `kwarg_decl`-reflected and slurping-keyword spellings are all
-closed ([D-074][d-074]). A `kwarg_decl`-reflected spelling takes keyword
+closed ([D-074][d-074], [D-341][d-341]). A `kwarg_decl`-reflected spelling takes keyword
 arguments whose names the framework reads through Julia's internal
 `Base.kwarg_decl`. A slurping-keyword spelling takes keyword arguments and ends
 its keyword list with a `_...` slurp.
@@ -768,7 +768,7 @@ readable. No minimization of the set survives without introducing a copy
 #### The bundle law: which names a component receives
 
 Under the bundle law, **a name appears in a component's bundle iff the
-corresponding store or fact exists for that component** ([D-074][d-074]).
+corresponding store or fact exists for that component** ([D-074][d-074], [D-341][d-341]).
 
 | bundle field | present iff |
 |---|---|
@@ -803,7 +803,7 @@ data (Julia ≥ 1.12). The probe catches it *matched against the bundle's own
 NamedTuple type*. The probe synthesizes the `BundleFieldError` from the legal
 set. It classifies the field as an undeclared store, a wrong-tier fact, or a
 name illegal for this function family. No message text is scraped, and the
-bundle stays a bare NamedTuple ([D-074][d-074]). A getproperty-wrapper
+bundle stays a bare NamedTuple ([D-074][d-074], [D-341][d-341]). A getproperty-wrapper
 spelling is the recorded fallback, should type-matched interception prove
 insufficient.
 
@@ -812,7 +812,7 @@ The wrong-tier classification covers the state letters too ([D-195][d-195]).
 destructuring any of the four on the wrong tier is classified as a wrong-tier
 fact.
 
-The per-function name sets are closed ([D-074][d-074]), one set per function
+The per-function name sets are closed ([D-074][d-074], [D-341][d-341]), one set per function
 per tier. The update laws carry their tier in the name, so `x_deriv`
 and `s_update` have one set each. The two output stages are shared machinery
 over both tiers ([D-220][d-220]), so `y_state` and `y_direct` have one set per
@@ -825,8 +825,8 @@ The comments in the signature block above state each function's maximal legal
 set at each tier. A given component's bundle narrows that set to declared
 reality, and the destructuring narrows it further to actual reads. That
 three-level funnel (stage name at its tier ⊇ bundle ⊇ reads) is worth teaching
-once, because a stateless component legitimately writes `y_direct` while owning
-neither `x` nor `m`.
+once ([D-341][d-341]), because a stateless component legitimately writes `y_direct` while
+owning neither `x` nor `m`.
 
 #### The stage return law
 
@@ -851,12 +851,12 @@ That is the bundle law's *iff* shape, now governing the return side. A pure
 FSM (finite-state machine, with modes and events and no `x`) returns
 `(; m = (; phase = running))`. An `x`-only reset map returns
 `(; x = (; x..., ω = 0.0))`. A handler touching both returns both. Padding
-forms such as `((;), m⁺)` and `(x⁺, (;))` do not exist ([D-090][d-090], on the
+forms such as `((;), m⁺)` and `(x⁺, (;))` do not exist ([D-090][d-090], [D-341][d-341], on the
 argument-side ground of [D-074][d-074]).
 
 The return's semantics are per key ([D-287][d-287]). When `x` is present, the
 value is complete against the state field set. When `m` is present, the
-names-subset predicate applies ([D-090][d-090]). An unknown key gets
+names-subset predicate applies ([D-090][d-090], [D-341][d-341]). An unknown key gets
 did-you-mean against `{x, m}` in a `HandlerReturnKey` diagnostic. This is the
 same `FieldError`-shaped machinery [§13.2][s13-2] builds for bundles, now
 running in both directions ([§9.5][s9-5]).
@@ -891,14 +891,15 @@ author's own module is unambiguous evidence of a forgotten import
 | `y = h(x, u)` | `y_direct` |
 
 **A stage's name states the dependence class**, not the argument list
-([D-220][d-220]). `y_state` is the `y = h(x)` case and `y_direct` the `y = h(x,
+([D-220][d-220], [D-342][d-342]). `y_state` is the `y = h(x)` case and `y_direct` the `y = h(x,
 u)` case. So "no `direct` in the name" *is* the no-[feedthrough](#g-feedthrough)
 property (no instantaneous input→output dependence), visible at every
 definition site.
 
 The names are deliberately non-exhaustive. Modes fold under the state. `m` is
 state, and the name states the feedthrough split rather than an argument
-inventory ([D-075][d-075]). Ambient facts (`t`, `Δt`) and scratch (`ws`) ride unnamed.
+inventory ([D-075][d-075], [D-342][d-342]). Ambient facts (`t`, `Δt`) and scratch (`ws`) ride
+unnamed.
 
 The update law carries the [tier](#g-tier) (the continuous or discrete side of the hybrid
 formalism) in its name, `x_deriv` versus `s_update`. The two output stages do
@@ -944,9 +945,9 @@ signal) is complete and fresh, the component's own stage-2 ports included
 Let `x_deriv`/`s_update` copy from `y`. The interfaces *reward*
 single-source-of-truth rather than making duplication unwritable. Nothing ever
 needs computing twice ([D-015][d-015], [D-035][d-035]). Computing a law twice invites drift, an
-edited law in one place and a stale copy in the other ([D-015][d-015]).
+edited law in one place and a stale copy in the other ([D-015][d-015], [D-342][d-342]).
 
-All output stages must be pure, with no side effects ([D-015][d-015]). State
+All output stages must be pure, with no side effects ([D-015][d-015], [D-342][d-342]). State
 types make mutation impossible anyway ([§7][s7]).
 
 #### Derivatives that read outputs
@@ -966,9 +967,9 @@ The reason for this departure is that derivative/output overlap is the *norm* in
 physical and control models. Newton–Euler dynamics computes accelerations that
 are at once published outputs and state derivatives. Kinematics, engine models,
 gear friction and every discrete compensator show the same overlap. That overlap
-is what makes the orthodox split expensive here ([D-015][d-015]). `f_ode!`, FlightCore's
-fused in-place derivative function, already embodied the same economics. This
-design keeps those economics while adding checked ordering.
+is what makes the orthodox split expensive here ([D-015][d-015], [D-342][d-342]). `f_ode!`,
+FlightCore's fused in-place derivative function, already embodied the same
+economics. This design keeps those economics while adding checked ordering.
 
 Shared expensive computations are solved uniformly by the fused idiom above.
 Compute once in stage 2, publish, and let `x_deriv`/`s_update` consume the
@@ -977,7 +978,7 @@ ports. External consumers read the same ports, as an accelerometer model reads
 computer/integrator split remains fully expressible without framework support
 ([D-015][d-015]). [§7.4][s7-4] carries the full statement, including when the
 factoring earns its keep. Purity rules forbid the classic resolution by mutable
-caching, by design ([D-015][d-015]).
+caching, by design ([D-015][d-015], [D-342][d-342]).
 
 #### The execution order
 
@@ -1057,13 +1058,14 @@ the session's recorded inputs, and replay re-drives the ordinary loop from that
 trace. The feedthrough graph carries the compensators' dependence on the gains.
 Linearization holds unseeded gain inputs constant with no special casing
 ([§14.10][s14-10]). One-shot design-time gains, such as a controller synthesized at init,
-are construction-time parameters or stopped-sim service outputs ([D-089][d-089]). They
-are not a runtime write path.
+are construction-time parameters or stopped-sim service outputs ([D-089][d-089], [D-342][d-342]).
+They are not a runtime write path.
 
 **A commanded reset of a discrete component is a same-tick input, consumed in the
-output stage** ([D-089][d-089]). The supervisor publishes `engage` and the latch value from
-its own feedthrough stage. The compensator, here a proportional-integral `PI`
-block, sits topologically after the supervisor and honors them *this tick*:
+output stage** ([D-089][d-089], [D-342][d-342]). The supervisor publishes `engage` and the latch
+value from its own feedthrough stage. The compensator, here a
+proportional-integral `PI` block, sits topologically after the supervisor and
+honors them *this tick*:
 
 ```julia
 y_direct(c::PI, (; s, u)) = (; u_cmd = u.engage ? u.u_latch : c.k_p*u.e + s.s_i)
@@ -1072,18 +1074,18 @@ s_update(c::PI, (; s, u, Δt)) = (; s_i = u.engage ? u.u_latch - c.k_p*u.e
 ```
 
 Honoring the reset only in `s_update` is legal, and it means something else
-([D-089][d-089]). The state still lands correctly at the next tick. But the *output at the
-engagement tick* was already published from the stale state during the sweep.
-Under zero-order hold, which keeps a discrete component's outputs constant
-between its ticks ([§10.5][s10-5]), the plant integrates a full step under that stale
-command. That one-tick-late command is exactly the bump that bumpless transfer
-exists to remove. No diagnostic can catch the bump, because both spellings are
-meaningful designs. The update stage cannot rescue its own boundary, because
-republishing from `s⁺` is rejected ([D-067][d-067]). The output stage is therefore the
-*only* same-tick path. [Appendix A][sA] carries this as the same-tick reset entry. The
-C172X demo is the interactive Flight.jl demo that section 3 of
-`companions/flight_case_studies.md` examines. The bumpless-engage answer of its
-*Mode engage* frame presupposes exactly this spelling.
+([D-089][d-089], [D-342][d-342]). The state still lands correctly at the next tick. But the
+*output at the engagement tick* was already published from the stale state
+during the sweep. Under zero-order hold, which keeps a discrete component's
+outputs constant between its ticks ([§10.5][s10-5]), the plant integrates a full step
+under that stale command. That one-tick-late command is exactly the bump that
+bumpless transfer exists to remove. No diagnostic can catch the bump, because
+both spellings are meaningful designs. The update stage cannot rescue its own
+boundary, because republishing from `s⁺` is rejected ([D-067][d-067], [D-342][d-342]). The output
+stage is therefore the *only* same-tick path. [Appendix A][sA] carries this as the
+same-tick reset entry. The C172X demo is the interactive Flight.jl demo that
+section 3 of `companions/flight_case_studies.md` examines. The bumpless-engage
+answer of its *Mode engage* frame presupposes exactly this spelling.
 
 **A [continuous component](#g-continuous-component)'s reset is an event** ([D-141][d-141]). The continuous tier admits
 no input spelling at all, because only handlers write `x` ([§3.1][s3-1]). A commanded
@@ -1100,8 +1102,8 @@ component's boundary) on a library PI block is sugar over exactly that event.
 
 A [component](#g-component) that bundles a no-[feedthrough](#g-feedthrough) output with a feedthrough output (one
 with an instantaneous input→output dependence) in one atomic evaluation unit can
-be [port](#g-port)-level acyclic yet admit no evaluation order. Simulink calls this an
-"artificial algebraic loop". A genuine cycle in the instantaneous dependency
+be [port](#g-port)-level acyclic yet admit no evaluation order ([D-343][d-343]). Simulink calls this
+an "artificial algebraic loop". A genuine cycle in the instantaneous dependency
 graph is a different case, the [algebraic loop](#g-algebraic-loop) of [§5.5][s5-5]. The canonical artificial
 loop in this domain is rigid-body dynamics. Velocity out is pure state, and
 acceleration out is feedthrough from total force. **The remedy ladder for
@@ -1142,9 +1144,10 @@ are two remedies, and they apply in this order.
   Re-factoring the steering contract to emit `(engaged, ψ_cmd)`, and computing
   `ψ_sw = engaged ? ψ_cmd : ψ_v` inside the strut, deletes the backward wire
   outright. The factoring survives substitution. That is the test that it
-  records structure rather than dodging the diagnostic ([D-140][d-140]). A stateful
-  steering actuator produces `ψ_cmd` from its own state and still needs nothing
-  from the strut (`companions/migration_outline.md` records the migration).
+  records structure rather than dodging the diagnostic ([D-140][d-140], [D-343][d-343]). A
+  stateful steering actuator produces `ψ_cmd` from its own state and still needs
+  nothing from the strut (`companions/migration_outline.md` records the
+  migration).
 - Split the component. This is the residual remedy, taken when both halves
   genuinely belong to the component and the split documents real structure.
   Its cost is stated where it bites. Visibility ([§8.3][s8-3]) is binary, so
@@ -1160,18 +1163,18 @@ are two remedies, and they apply in this order.
   presentational flag and the `Private(T)` wrapper, the two visibility
   spellings they reject.
 
-The build diagnostic offers both exits explicitly ([D-140][d-140]). It reads "cycle
-through `systems/aero` is artificial at port level — split the component, or
-narrow the neighbor's contract". The dead hop is the member with the input [face](#g-face)
-(the name a port wears on its component's boundary) that it does not route to
-the output port. The diagnostic carries the dead hop ([D-245][d-245]) as a separate field
-of its [payload](#g-payload) (the structured data a diagnostic carries) rather than dotting
-the hop onto the path ([§8.6][s8-6], [§13.2][s13-2]).
+The build diagnostic offers both exits explicitly ([D-140][d-140], [D-343][d-343]). It reads
+"cycle through `systems/aero` is artificial at port level — split the component,
+or narrow the neighbor's contract". The dead hop is the member with the input
+[face](#g-face) (the name a port wears on its component's boundary) that it does not route
+to the output port. The diagnostic carries the dead hop ([D-245][d-245]) as a separate
+field of its [payload](#g-payload) (the structured data a diagnostic carries) rather than
+dotting the hop onto the path ([§8.6][s8-6], [§13.2][s13-2]).
 
 The component split is rare, and the ladder is what earns that word rather than
-asserting it ([D-140][d-140]). The two-stage split dissolves the common shapes, and the
-contract re-factoring absorbs the false wires. What is left for the component
-split is cycles whose halves really are one component's own work.
+asserting it ([D-140][d-140], [D-343][d-343]). The two-stage split dissolves the common shapes,
+and the contract re-factoring absorbs the false wires. What is left for the
+component split is cycles whose halves really are one component's own work.
 
 One consequence of stage-2 conservatism (the presumption that every stage-2
 output depends on every wired input, [§5.3][s5-3]) is worth recording. An input
@@ -1200,7 +1203,7 @@ becomes discrete, sampled on a period on the scale of [`Δt_base`](#g-dt_base) (
 period, an integer multiple of the continuous step). That is a modeling
 decision, not a transparent wire. The diagnostic states this caveat rather than
 offering the delay as a free remedy ([§13.7][s13-7]). Implicit delays and per-step
-numerical loop solving are both closed ([D-005][d-005]).
+numerical loop solving are both closed ([D-005][d-005], [D-343][d-343]).
 
 Implicit *algebraic balances* inside a [component](#g-component), such as a turbomachinery
 operating point, remain the component author's business. They are local, owned
@@ -1304,21 +1307,21 @@ member's map may come from either mode.
 
 The diagnostic carries the tracer's caveats rather than assuming them away. The
 trace speaks for the branch taken at the probe point (the diagnostic-only
-doctrine, [D-012][d-012]). **Discrete members trace structurally**, because the discrete
-[tier](#g-tier)'s plain, wholesale-pinning declarations admit no tracer scalar ([D-012][d-012]).
-Structural tracing is sound as a may-depend answer but never sharp, so the
-remedy hint is offered only for continuous members ([D-140][d-140]). A continuous face or
-port declared with no [walking](#g-walked) leaf (one whose type follows the activation
-scalar) admits no tracer scalar either, so the hops through it trace
-structurally too ([D-245][d-245]).
+doctrine, [D-012][d-012], [D-343][d-343]). **Discrete members trace structurally**, because the
+discrete [tier](#g-tier)'s plain, wholesale-pinning declarations admit no tracer scalar
+([D-012][d-012]). Structural tracing is sound as a may-depend answer but never sharp, so
+the remedy hint is offered only for continuous members ([D-140][d-140], [D-343][d-343]). A
+continuous face or port declared with no [walking](#g-walked) leaf (one whose type follows
+the activation scalar) admits no tracer scalar either, so the hops through it
+trace structurally too ([D-245][d-245], [D-343][d-343]).
 
 **The diagnostic records the source of each member's map** ([D-245][d-245]). The source is
 the global tracer, sampled states or structure. A reader can thus weigh a dead
 hop found on a few sampled paths against one found exactly. The hint itself is
 to split this component, *or* to narrow the neighbor's [contract](#g-contract) (its declared
 interface) when the dead hop's input is consumed only in a fallback branch.
-Those are the ladder's two remedies ([§5.4][s5-4], [D-140][d-140]). If a member's evaluation
-itself throws, the diagnostic ships with its members and wires alone,
+Those are the ladder's two remedies ([§5.4][s5-4], [D-140][d-140], [D-343][d-343]). If a member's
+evaluation itself throws, the diagnostic ships with its members and wires alone,
 unclassified. Classification is a bonus on the cycle error, never its
 precondition ([D-012][d-012]).
 
@@ -3949,7 +3952,7 @@ The step is a tree walk from the root instance, in this order:
 1. [Components](#g-component) are collected by path.
 2. Each component's [class](#g-class) (its primitive-vs-assembly status) is
    read off declaration shape ([§8.5][s8-5]).
-3. Leaf contracts are collected: `u_types`, `y_types`, `init_*` values,
+3. Leaf contracts are collected: `u_types`, `y_types`, `*_init` values,
    `state_events`.
 4. Face derivation runs bottom-up. It records at every level the input and
    output faces it declares and the chain each one routes through.
@@ -4428,7 +4431,8 @@ backstop.
 
 Probe arguments are sourced as follows:
 
-- `x`/`s`/`m` come from `init_*` declarations, which declare by value.
+- `x`/`s`/`m` come from the `x_init`, `s_init` and `m_init` declarations,
+  which declare by value.
 - The stage-1 hand-down, `y_x` on the continuous [tier](#g-tier) and `y_s` on
   the discrete, comes from the stage-1 probes' *returns*. That hand-down is
   every stage-1 [port](#g-port) there is ([§5.2][s5-2]).
@@ -10375,8 +10379,8 @@ form. The full list is checked, violations are collected, and one
 **The overlay base is always the declared defaults.** Every [store](#g-store)
 has a declared initial value (declaration-by-initial-value, [§8.2][s8-2]), so
 conditions are naturally sparse. Applying one means "fresh run from the
-`init_*` defaults, with these overrides" ([D-063][d-063]). A condition is an
-initial condition and nothing else ([D-273][d-273]). A simulation's state
+`x_init`, `s_init` and `m_init` defaults, with these overrides" ([D-063][d-063]). A
+condition is an initial condition and nothing else ([D-273][d-273]). A simulation's state
 past its initial instant is a [checkpoint](#g-checkpoint) (the `Model`'s
 state at a frame top as one value), not a condition, and it has no algebra
 ([§12.6][s12-6], [D-274][d-274]).
@@ -14191,6 +14195,9 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-321]: decisions.md#d-321--the-parallel-routes-signal-the-handles-pin-chain-and-the-input-pins-failure-at-the-wire
 [d-322]: decisions.md#d-322--no-auto-bubbling-of-unconnected-inputs-and-the-whole-tree-checks-decided-at-the-root
 [d-323]: decisions.md#d-323--no-framework-aggregation-mechanism-what-explicit-junctions-buy-and-no-bundled-contributions
+[d-341]: decisions.md#d-341--the-bundle-law-the-closed-name-sets-and-per-key-return-checks
+[d-342]: decisions.md#d-342--pure-output-stages-the-dependence-class-names-and-supervisory-resets
+[d-343]: decisions.md#d-343--the-remedy-ladders-content-the-closed-loop-remedies-and-the-traces-reach
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop
