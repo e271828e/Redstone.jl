@@ -79,9 +79,23 @@ what the spec says, the spec edit is part of the item.
   declaration names; correct a copy before measuring, and leave the report as
   it is.
 - **A tutorial** that takes a newcomer from a component to a run and a plot.
-- **The spec's readability rewrite.** Chapters 7, 8, 9 and 10 are done. The other
-  chapters follow `docs/spec_rewrite/recipe.md`, and that directory's README
-  tracks them. Until a chapter's turn comes, it keeps the old markers.
+- **The spec's readability rewrite.** Chapters 6, 7, 8, 9 and 10 are done. The
+  other chapters follow `docs/spec_rewrite/recipe.md`, and that directory's
+  README tracks them. Until a chapter's turn comes, it keeps the old markers.
+  Chapter 6 left these for the owner:
+  - whether the locality law is machine-checked or convention. §6.1 enforces
+    the one-level rule in `resolve` (D-207) and names it the locality law
+    (D-065). §14.2 says the law "is convention" and that this carries over
+    from §6.1, as D-065's Rejected list does. Recommended: rule the wiring
+    instance machine-checked and the fragment law's ownership clause
+    convention, if it survives D-207's second bullet at all; then annotate
+    D-065 and fix §14.2 in chapter 14's rewrite.
+  - four §6 sentences with no live entry behind them, each uncited until
+    ruled: the walk violation's payload and remedies (only superseded D-167
+    records them; Appendix C states them), unconnected inputs as a build
+    error with no silent defaults (two Rejected lists point back at §6.1),
+    that local fan-out is free, and that contributors publish in the common
+    body frame (Flight.jl's convention).
 - **Package registration.**
 - **A precompile workload** for the generic machinery a cold process
   pays, about 9 s whatever the model (§9.7).

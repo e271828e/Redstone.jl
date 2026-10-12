@@ -105,6 +105,19 @@ Two lessons from chapter 8's checkpoint:
   which cost a ruling (R13) after step 4. Grep the chapter for the phrase
   before writing the ruling.
 
+From chapter 6's checkpoint:
+
+- **A clause a Position introduces with "therefore" is a consequence.** D-207's
+  second bullet joins "the face graph is therefore total" with the `Build`'s
+  retention, which §9.2 bolds. The survey proposed bolding totality in §6.1
+  as a second ruling; the bullet is one ruling, and its consequence stays
+  plain.
+- **When a section holds two sketches of one hierarchy, rule at checkpoint 1
+  which one the prose follows.** Chapter 6's survey left its F6 as written.
+  It came back three times: as a rewriter's added clause (R14), a chapter
+  pass ruling (RP-4), and the final verifier's cold read of the
+  orchestrator's own wording (O-2 to O-4).
+
 ### Step 2: the brief (written by the orchestrator)
 
 Chapter 9's `brief.md` is the model, read with the corrections below. One
@@ -160,6 +173,16 @@ unit's `old.md`, which its own inventory guarantees.
 - List the words the glossary reserves ("Bare 'tier' means only this").
   Chapter 7's rewriters used "tiers" for the genericity classes and for
   §7.5's budgets; only the chapter pass caught both.
+
+**From chapter 6, the brief should also:**
+
+- Check a Flight.jl type's shape, not only its owner, before ruling its
+  gloss. FlightPhysics' `Wrench` has fixed `Float64` fields, and the spec
+  writes `Wrench{Float64}`, so the gloss had to say the spec's form is the
+  walked one (R12).
+- Prefer an introducing clause to a companion move for a status-quo
+  measurement that gives a rule its scale. Chapter 6's C172 count stayed in
+  §6.2 with "Flight.jl's Cessna 172 model"; the survey's move was withdrawn.
 
 ### Step 3: rewrite the units in parallel (one Opus agent per unit)
 
@@ -253,6 +276,10 @@ Apply the rulings with agents partitioned by unit, so no two edit one file.
 Every ruled edit carries its ruling id in the inventory. A bold-only edit
 copies `new.md` to `new_pretrim.md` first, for `boldcheck.py`.
 
+A small chapter may skip the consolidator. Chapter 6 had seven in-chapter
+items: the orchestrator wrote `rulings_batch.md` itself, and one fixer
+applied the editorial and ruled edits across all three units in turn.
+
 **Step 6b: the final verifier.** One cold Opus agent checks every edit made
 since step 4, against its log and its source: editorial fixes, bold trims,
 ruled edits, orchestrator touches. In chapter 9 it checked 164 edits and
@@ -263,6 +290,8 @@ found two unlogged rewraps, two duplicated glossary links, a citation left
 off a split sentence and a broken sibling span. In chapter 7 its one finding
 was the orchestrator's own: a scripted replace joined two source lines. Log
 every orchestrator touch, and rewrap after any scripted edit.
+Run `checks/assemble.sh` after every orchestrator touch too: chapter 6's
+re-check found `chapter_new.md` stale after the orchestrator's three fixes.
 
 ### Step 7: land (the orchestrator)
 
@@ -299,6 +328,18 @@ when it lands; chapter 10 coordinated with one that way.
   machine lacks. Without it the PDF read runs on extracted text, which finds
   raw markup, broken tables and lost numbering but not spacing or page
   layout. Chapter 8's read ran that way.
+- Run each battery check as its own command. A zsh loop over a variable
+  holding `check_glossary.jl --strict` passes it as one file name, which looks
+  like a crash in the check.
+- Two chapters can run in parallel sessions (chapters 5 and 6 did). Agree a
+  protocol by message first: each session works only in its own `chNN/`;
+  landings go one at a time, with a message before the splice and after the
+  landing commit, and the second session recounts its range; each takes a
+  block of new entry numbers (chapter 6 D-321 to D-340, chapter 5 from
+  D-341); and the shared files, `README.md`, this recipe, `pending.md`,
+  `check_bold.jl` and `row_baseline.txt`, are edited by one session at a time,
+  after a message and a fresh read. Pick a chapter with little citation
+  traffic to the other: chapters 5 and 6 cite each other nowhere.
 
 ### Step 8: the second track
 
@@ -396,6 +437,23 @@ half. A small chapter costs more per word, about 0.8M per 1,000 words: the
 survey, the chapter-wide passes and track 2 cost nearly as much as for a
 chapter three times its size.
 
+Chapter 6, 2,181 words, ruled by the orchestrator, beside chapter 5 in a
+parallel session:
+
+| step | agent runs | subagent tokens |
+|---|---|---|
+| survey | 1 | 0.42M |
+| rewrites | 3, plus fix rounds | 0.53M |
+| unit verification | 3, plus re-checks | 0.30M |
+| chapter pass, inbound check, editorial fixer | 3 | 0.48M |
+| consolidation | none, by the orchestrator | — |
+| final verification and PDF check | 2 | 0.15M |
+| track 2 and its verification | 2 | 0.30M |
+| total | 14, plus fix rounds | about 2.2M |
+
+The chapter, track 2 included, ran in one session of about an hour and a
+half. Like chapter 7, it cost about 1M per 1,000 words.
+
 ## 4. What to expect from a chapter
 
 From chapter 9:
@@ -438,6 +496,18 @@ From chapter 7, which held 79 rules:
 - **The chapter grew about a sixth**, from 3,252 words to about 3,840, and
   bold fell from 42 spans and 8 labels to 12 spans of 119 words.
 
+From chapter 6, which held 56 rules:
+
+- **One rule in five lived only outside a Position**, 12 of 56, and three had
+  no entry. Track 2 wrote D-321 to D-323; four sentences with no live entry
+  went to the owner.
+- **One rule in five cited its entry at its spot**, 11 of 56. D-143 ruled a
+  whole subsection and was cited nowhere.
+- **A code example broke the build.** The survey's probe found
+  `SumJunction{Wrench, 3}` failing with `WireTypeMismatch`.
+- **The chapter grew about a quarter**, from 2,181 words to about 2,690, and
+  bold fell from 28 spans, 9 of them labels, to 13 spans of 142 words.
+
 ## 5. Lessons, in one list
 
 1. Survey first, and rule on its decisions before writing. Moves settled
@@ -477,6 +547,14 @@ From chapter 7, which held 79 rules:
     owner is checked in the Flight.jl source.
 26. List the glossary's reserved words in the brief.
 27. Log every orchestrator touch, and rewrap after a scripted edit.
+28. A "therefore" clause in a Position is a consequence, never a second bold
+    (chapter 6).
+29. Rule at checkpoint 1 which of two disagreeing sketches the prose follows.
+30. Check a Flight.jl type's shape, not only its owner, before its gloss.
+31. Reassemble the chapter after every orchestrator touch.
+32. Run each battery check as its own command.
+33. Parallel chapters coordinate by message: serial landings, entry-number
+    blocks, one session at a time on shared files.
 
 ## 6. A chapter's files
 
