@@ -336,3 +336,11 @@ difficulty and names its hazards.
   in the repository. It shrinks to what the old text says: the noise comes
   from Dryden/von Kármán turbulence models, with no introducing sentence.
   D-002 beside D-001's first bold stands (the survey's table, R6).
+- **R17. D-001's two-tier bold and D-082's edge bold** (verifier B). "Both
+  policies share one declaration" is D-179's content, not D-001's ruling.
+  §2.1 opens with a context sentence bolding the ruling, "**Events have two
+  detection policies** ([D-001])", and the shared declaration is stated
+  plain, citing D-179. §2.1's edge sentence keeps D-082's bold, its home;
+  §10.4's "A localized event triggers when its predicate was not-holding…"
+  (base 5492), which calls itself "the directional edge of §2.1", goes plain
+  at landing.

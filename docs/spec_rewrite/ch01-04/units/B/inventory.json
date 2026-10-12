@@ -1,0 +1,638 @@
+{
+ "claims": [
+  {
+   "id": "B-001",
+   "old": "## 2. Formalism",
+   "new": "## 2. Formalism",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "B-002",
+   "old": "The framework simulates hybrid causal systems.",
+   "new": "The framework simulates hybrid causal systems (D-001, D-002).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-001",
+    "D-002"
+   ],
+   "tag": "R",
+   "ruling": "R6"
+  },
+  {
+   "id": "B-003",
+   "old": "Such a system has five parts.",
+   "new": "Such a system has five parts.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "B-004",
+   "old": "- Continuous dynamics. $\\dot{x} = f(x, m, u, t)$ with algebraic outputs.",
+   "new": "- Continuous dynamics. $\\dot{x} = f(x, m, u, t)$ with algebraic outputs.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "B-005",
+   "old": "- Multi-rate periodic discrete dynamics. $s^{+} = g(s, u, t)$ at declared rates, with outputs held zero-order between ticks.",
+   "new": "- Multi-rate periodic discrete dynamics. $s^{+} = g(s, u, t)$ at declared rates, with outputs held zero-order (D-019) between ticks",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-019"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "B-006",
+   "old": "- Zero-crossing events. Guard functions with handlers, under two detection policies, stated below.",
+   "new": "- Zero-crossing events. Guard functions (each defining an event's predicate) with handlers, under two detection policies, stated below.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "B-007",
+   "old": "- Post-step manifold projection. An optional per-component hook `x ← x_projection(x)`,",
+   "new": "- Post-step manifold projection. The formalism includes an optional per-component hook, `x ← x_projection(x)` (D-001).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-001"
+   ],
+   "tag": "R",
+   "ruling": "R6"
+  },
+  {
+   "id": "B-008",
+   "old": "applied after each accepted step.",
+   "new": "It is applied after each accepted step and after any handler reset of `x` (§5.3).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§5.3"
+   ],
+   "tag": "R",
+   "ruling": "R5 F2"
+  },
+  {
+   "id": "B-009",
+   "old": "It covers quaternion renormalization, DCM orthonormalization and any other manifold-valued state.",
+   "new": "It covers quaternion renormalization, direction cosine matrix (DCM) orthonormalization and any other manifold-valued state.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "B-010",
+   "old": "It is the cheap end of the projection-methods family from geometric integration.",
+   "new": "It is the cheap end of the projection-methods family from geometric integration.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "B-011",
+   "old": "- External inputs. The runtime injects them asynchronously, from pilot controls or the network, under the staging rules of §11.",
+   "new": "- External inputs. The runtime injects them asynchronously, from pilot controls or the network, under the staging rules of §11 (D-022).",
+   "where": "new",
+   "cites": [
+    "§11"
+   ],
+   "newcites": [
+    "§11",
+    "D-022"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "B-012",
+   "old": "### 2.1 Events: two detection policies",
+   "new": "### 2.1 Events: two detection policies",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "B-013",
+   "old": "Both policies share one declaration, a guard function plus a handler.",
+   "new": "Both policies share one declaration, a guard function plus a handler (D-179).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-179"
+   ],
+   "tag": "R",
+   "ruling": "R17"
+  },
+  {
+   "id": "B-014",
+   "old": "Only detection differs.",
+   "new": "Only detection differs.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "B-015",
+   "old": "- Boundary-detected (cheap). The framework checks each guard for a not-holding → holding edge against its prior (§10.6) at step boundaries only.",
+   "new": "- Boundary-detected (cheap). The framework checks each guard for a not-holding → holding edge against its prior (§10.6) at step boundaries only.",
+   "where": "new",
+   "cites": [
+    "§10.6"
+   ],
+   "tag": "M",
+   "ruling": "R4"
+  },
+  {
+   "id": "B-016",
+   "old": "There is no root-finding and no step rejection.",
+   "new": "There is no root-finding and no step rejection.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "B-017",
+   "old": "The handler fires at the end of the step in which the edge was observed.",
+   "new": "The handler fires at the end of the step in which the edge was observed.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "B-018",
+   "old": "The cost is one guard evaluation per event per step.",
+   "new": "The cost is one guard evaluation per event per iteration round (§10.6).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§10.6"
+   ],
+   "tag": "R",
+   "ruling": "R5 F4"
+  },
+  {
+   "id": "B-019",
+   "old": "This policy is fully compatible with fixed-step real-time execution.",
+   "new": "This policy is fully compatible with fixed-step real-time execution.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "B-020",
+   "old": "- Localized (precise). The framework finds the crossing instant by root-finding.",
+   "new": "- Localized (precise). The framework finds the crossing instant by root-finding (D-018).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-018"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "B-021",
+   "old": "This policy serves events where timing precision genuinely matters.",
+   "new": "This policy serves events where timing precision genuinely matters.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "B-022",
+   "old": "§10.4 gives the mechanics.",
+   "new": "§10.4 gives the mechanics.",
+   "where": "new",
+   "cites": [
+    "§10.4"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "B-023",
+   "old": "Detection policy never depends on real-time pacing (§10.7).",
+   "new": "Detection policy never depends on real-time pacing (§10.7, D-080).",
+   "where": "new",
+   "cites": [
+    "§10.7"
+   ],
+   "newcites": [
+    "§10.7",
+    "D-080"
+   ],
+   "tag": "M",
+   "ruling": "R4"
+  },
+  {
+   "id": "B-024",
+   "old": "Time events and state events. The discrete tier's ticks, declared by `sample_times`, are time events.",
+   "new": "The discrete tier's ticks are time events (D-220).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-220"
+   ],
+   "tag": "R",
+   "ruling": "R6"
+  },
+  {
+   "id": "B-025",
+   "old": "declared by `sample_times`,",
+   "new": "Ticks are declared by `sample_times`.",
+   "where": "new",
+   "cites": [],
+   "tag": "M",
+   "ruling": "R4"
+  },
+  {
+   "id": "B-026",
+   "old": "Their instants are known in advance and scheduled (§10.5).",
+   "new": "Their instants are known in advance and scheduled (§10.5).",
+   "where": "new",
+   "cites": [
+    "§10.5"
+   ],
+   "tag": "M",
+   "ruling": "R4"
+  },
+  {
+   "id": "B-027",
+   "old": "Everything declared through `StateEvent(guard, handler)` is a state event.",
+   "new": "Everything declared through `StateEvent(guard, handler)` is a state event.",
+   "where": "new",
+   "cites": [],
+   "tag": "M",
+   "ruling": "R4"
+  },
+  {
+   "id": "B-028",
+   "old": "Its instant is unknown and must be detected, by boundary check or by localization.",
+   "new": "Its instant is unknown and must be detected, by boundary check or by localization.",
+   "where": "new",
+   "cites": [],
+   "tag": "M",
+   "ruling": "R4"
+  },
+  {
+   "id": "B-029",
+   "old": "That is why the declaration is named `state_events` (§8.2).",
+   "new": "That is why the declaration is named `state_events` (§8.2, D-220).",
+   "where": "new",
+   "cites": [
+    "§8.2"
+   ],
+   "newcites": [
+    "§8.2",
+    "D-220"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "B-030",
+   "old": "The criterion is detection versus scheduling, not which fields a guard reads.",
+   "new": "The criterion is detection versus scheduling, not which fields a guard reads.",
+   "where": "new",
+   "cites": [],
+   "tag": "M",
+   "ruling": "R4"
+  },
+  {
+   "id": "B-031",
+   "old": "A guard over an input is still a state event.",
+   "new": "A guard over an input is still a state event.",
+   "where": "new",
+   "cites": [],
+   "tag": "M",
+   "ruling": "R4"
+  },
+  {
+   "id": "B-032",
+   "old": "This arrangement gives step-boundary logic well-defined semantics.",
+   "new": "This arrangement gives step-boundary logic well-defined semantics.",
+   "where": "new",
+   "cites": [],
+   "tag": "M",
+   "ruling": "R4"
+  },
+  {
+   "id": "B-033",
+   "old": "The crossing defines the transition.",
+   "new": "The crossing defines the transition (D-179).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-179"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "B-034",
+   "old": "Detection resolution is an execution-policy detail.",
+   "new": "Detection resolution is an execution-policy detail.",
+   "where": "new",
+   "cites": [],
+   "tag": "M",
+   "ruling": "R4"
+  },
+  {
+   "id": "B-035",
+   "old": "A guard defines a predicate.",
+   "new": "A guard defines a predicate (D-082, D-001).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-082",
+    "D-001"
+   ],
+   "tag": "R",
+   "ruling": "R6"
+  },
+  {
+   "id": "B-036",
+   "old": "It does so in one of two forms, either a `Bool`-valued form or the sign of a continuous function under the normative convention positive = predicate holds.",
+   "new": "It does so in one of two forms, either a `Bool`-valued form or the sign of a continuous function under the normative convention positive = predicate holds.",
+   "where": "new",
+   "cites": [],
+   "tag": "M",
+   "ruling": "R4"
+  },
+  {
+   "id": "B-037",
+   "old": "Writing the guard's sign value `σ`, holding means `σ ≥ 0`.",
+   "new": "Writing the guard's sign value `σ`, holding means `σ ≥ 0`.",
+   "where": "new",
+   "cites": [],
+   "tag": "M",
+   "ruling": "R4"
+  },
+  {
+   "id": "B-038",
+   "old": "An event fires when its predicate transitions from not-holding to holding.",
+   "new": "An event fires when its predicate transitions from not-holding to holding (D-082, D-001).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-082",
+    "D-001"
+   ],
+   "tag": "R",
+   "ruling": "R6"
+  },
+  {
+   "id": "B-039",
+   "old": "This is edge semantics, and it is uniform across both forms.",
+   "new": "This is edge semantics, and it is uniform across both forms.",
+   "where": "new",
+   "cites": [],
+   "tag": "M",
+   "ruling": "R4"
+  },
+  {
+   "id": "B-040",
+   "old": "§10.6 states the prior bookkeeping.",
+   "new": "§10.6 states the bookkeeping of the prior, each event's predicate sample stored at the previous boundary (a published consistency point).",
+   "where": "new",
+   "cites": [
+    "§10.6"
+   ],
+   "tag": "M",
+   "ruling": "R4"
+  },
+  {
+   "id": "B-041",
+   "old": "The opposite crossing direction is declared as a second event with the negated guard.",
+   "new": "The opposite crossing direction is declared as a second event with the negated guard (D-082).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-082"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "B-042",
+   "old": "Stall entry and exit are one such pair.",
+   "new": "Stall entry and exit are one such pair.",
+   "where": "new",
+   "cites": [],
+   "tag": "M",
+   "ruling": "R4"
+  },
+  {
+   "id": "B-043",
+   "old": "Which form an author declares is not a free choice.",
+   "new": "Which form an author declares is not a free choice.",
+   "where": "new",
+   "cites": [],
+   "tag": "M",
+   "ruling": "R4"
+  },
+  {
+   "id": "B-044",
+   "old": "The guard's return type is the declared policy.",
+   "new": "The guard's return type is the declared policy.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R4"
+  },
+  {
+   "id": "B-045",
+   "old": "A `Bool` return declares boundary-detected, and the sign form declares localized (D-179).",
+   "new": "A `Bool` return declares boundary-detected, and the sign form declares localized (D-179).",
+   "where": "new",
+   "cites": [
+    "D-179"
+   ],
+   "tag": "M",
+   "ruling": "R4"
+  },
+  {
+   "id": "B-046",
+   "old": "§10.4 states the rule, the exactness result that motivates the `Bool` form, and the gate idiom for localizing mixed predicates.",
+   "new": "§10.4 states the rule, the exactness result that motivates the `Bool` form, and the gate idiom for localizing mixed predicates.",
+   "where": "new",
+   "cites": [
+    "§10.4"
+   ],
+   "tag": "M",
+   "ruling": "R4"
+  },
+  {
+   "id": "B-047",
+   "old": "### 2.2 Exclusions (deliberate)",
+   "new": "### 2.2 Exclusions (deliberate)",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "B-048",
+   "old": "- No DAEs / algebraic constraints.",
+   "new": "- No differential-algebraic equations (DAEs) or algebraic constraints.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "B-049",
+   "old": "The actual need is state manifolds, and projection covers it (D-001).",
+   "new": "The actual need is state manifolds, and projection, the optional per-component hook `x ← x_projection(x)`, covers it (D-001).",
+   "where": "new",
+   "cites": [
+    "D-001"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "B-050",
+   "old": "- No SDEs / stochastic integrators.",
+   "new": "- No stochastic differential equations (SDEs) or stochastic integrators.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "B-051",
+   "old": "Noise processes such as Dryden/von Kármán turbulence and sensor noise are modeled as ordinary RNG-driven discrete processes, that is, shaping filters.",
+   "new": "Noise processes, such as sensor noise and turbulence from Dryden/von Kármán turbulence models, are modeled as shaping filters (D-001), that is, as ordinary discrete processes driven by a random number generator (RNG).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-001"
+   ],
+   "tag": "R",
+   "ruling": "R16"
+  },
+  {
+   "id": "B-052",
+   "old": "That modeling is faithful to how they are specified, and it is cheap.",
+   "new": "That modeling is faithful to how the noise processes are specified, and it is cheap.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "B-053",
+   "old": "One consequence is elevated to a framework guarantee, deterministic replay.",
+   "new": "One consequence is elevated to a framework guarantee, deterministic replay",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "B-054",
+   "old": "RNG state lives in component discrete state (`s`), never in ambient globals, so the same seed gives a bit-identical trajectory.",
+   "new": "RNG state lives in component discrete state `s`, never in ambient globals, so the same seed gives a bit-identical trajectory (D-231).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-231"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "B-055",
+   "old": "- No unconditional per-step hook, so no `f_step!` equivalent.",
+   "new": "So there is no equivalent of `f_step!`, FlightCore's per-step hook.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "B-056",
+   "old": "- No unconditional per-step hook,",
+   "new": "- No unconditional per-step hook, because its semantics depend on the step size (D-001).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-001"
+   ],
+   "tag": "R",
+   "ruling": "R9"
+  },
+  {
+   "id": "B-057",
+   "old": "Every current use decomposes into one of two mechanisms.",
+   "new": "Every current use of `f_step!` decomposes into one of two mechanisms.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "B-058",
+   "old": "Projection covers quaternion renormalization.",
+   "new": "Projection covers quaternion renormalization.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "B-059",
+   "old": "Boundary-detected events (checked for edges at step boundaries only, no root-finding) cover engine phase transitions and the stall hysteresis latch.",
+   "new": "Boundary-detected events (checked for edges at step boundaries only, no root-finding) cover engine phase transitions and the stall hysteresis latch.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "B-060",
+   "old": "For one class the mapping tightens semantics.",
+   "new": "For one group of uses the mapping tightens semantics.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "B-061",
+   "old": "Level-triggered cross-component resets become edge-triggered events.",
+   "new": "Level-triggered cross-component resets become edge-triggered events.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "B-062",
+   "old": "The gear friction regulator under `!wow` is one such reset (§5.3, D-001).",
+   "new": "Flight.jl resets the gear's friction regulator while `!wow` (no weight on wheels) holds; here that reset becomes an event on the touchdown edge (§5.3, D-001, D-141).",
+   "where": "new",
+   "cites": [
+    "§5.3",
+    "D-001"
+   ],
+   "newcites": [
+    "§5.3",
+    "D-001",
+    "D-141"
+   ],
+   "tag": "R",
+   "ruling": "R5 F1"
+  },
+  {
+   "id": "B-063",
+   "old": "---",
+   "new": "---",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  }
+ ],
+ "added": [
+  "This design's `f` also receives the published table, and the composite map from `x` to $\\dot{x}$ is mathematically identical to the textbook form's (§5.3).",
+  "(instants at which a discrete component's stages and update run).",
+  "§2.1 gives the two event-detection policies, and §2.2 the exclusions taken deliberately.",
+  "A per-event `direction` keyword is recorded as a guarded addition (a capability recorded with its shape so adoption stays additive), unbuilt (D-180).",
+  "The two policies follow.",
+  "The pacer inserts waits between completed frames and never alters the boundary sequence.",
+  "Time events and state events differ in how their instants are found.",
+  "The formalism deliberately excludes three constructs (D-001).",
+  "Events have two detection policies (D-001).",
+  "(re-running the ordinary loop on a recorded input trace)."
+ ]
+}

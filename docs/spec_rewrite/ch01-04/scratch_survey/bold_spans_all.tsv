@@ -1,0 +1,1096 @@
+141	Purpose.		**Purpose.** Redstone is a framework for modeling and simulating hierarchical [hybrid causal systems](#g-hybrid-causal-system) (models that mix continuous dynam
+148	Capabilities.		**Capabilities.** A model is written as a tree of [components](#g-component) in plain Julia.
+166	Design criteria.		**Design criteria.** The design answers to five criteria.
+170	Zero-allocation stepping and type stability.		- **Zero-allocation stepping and type stability.** The inner loop allocates nothing, and the test suite asserts it ([§7.5][s7-5], [§9.7][s9-7]).
+172	Real-time interactive operation.		- **Real-time interactive operation.** A simulation runs paced against the wall clock, with devices and a GUI attached ([§10.7][s10-7], [§11][s11]).
+174	Live introspection.		- **Live introspection.** Every published signal can be inspected by path, during a run and after it ([§11.2][s11-2]).
+176	Compositional flexibility.		- **Compositional flexibility.** Components compose hierarchically, and a component substitutes for another behind the same declared contract ([§6][s6], [§8][s8
+179	Rigor and error locality.		- **Rigor and error locality.** Structure is declared and checked at build time, so a mistake fails where it was made, with a diagnostic naming it ([§8.4][s8-4]
+185	Origins.		**Origins.** Redstone began as a replacement for `FlightCore`, the simulation core of the Flight.jl package.
+194	Scope of this document.		**Scope of this document.** This document is the [normative statement](#g-normative) of the design.
+215	[hybrid causal systems](#g-hybrid-causal-system)		The framework simulates **[hybrid causal systems](#g-hybrid-causal-system)**.
+217	Continuous dynamics.		- **Continuous dynamics.** $\dot{x} = f(x, m, u, t)$ with algebraic outputs.
+218	Multi-rate periodic discrete dynamics.		- **Multi-rate periodic discrete dynamics.** $s^{+} = g(s, u, t)$ at declared rates, with outputs held zero-order between [ticks](#g-tick).
+220	Zero-crossing events.		- **Zero-crossing events.** [Guard](#g-guard) functions with handlers, under two detection policies, stated below.
+222	Post-step manifold [projection](#g-projection).		- **Post-step manifold [projection](#g-projection).** An optional per-[component](#g-component) hook `x ← x_projection(x)`, applied after each accepted step.
+227	External inputs.		- **External inputs.** The runtime injects them asynchronously, from pilot controls or the network, under the staging rules of [§11][s11].
+235	[Boundary-detected](#g-boundary-detected) (cheap).		- **[Boundary-detected](#g-boundary-detected) (cheap).** The framework checks each guard for a not-holding → [holding](#g-edge-semantics) edge against its [prio
+241	[Localized](#g-localized) (precise).		- **[Localized](#g-localized) (precise).** The framework finds the crossing instant by root-finding.
+247	Time events and state events.		**Time events and state events.** The discrete [tier](#g-tier)'s [ticks](#g-tick), declared by `sample_times`, are [time events](#g-time-event).
+259	[predicate](#g-predicate)		A guard defines a **[predicate](#g-predicate)**.
+259	positive = predicate holds		It does so in one of two forms, either a `Bool`-valued form or the sign of a continuous function under the normative convention **positive = predicate holds**.
+269	The guard's return type is the declared policy.	D-179	**The guard's return type is the declared policy.** A `Bool` return declares boundary-detected, and the sign form declares localized ([D-179][d-179]).
+277	No DAEs / algebraic constraints.	D-001	- **No DAEs / algebraic constraints.** The actual need is state manifolds, and [projection](#g-projection) covers it ([D-001][d-001]).
+279	No SDEs / stochastic integrators.		- **No SDEs / stochastic integrators.** Noise processes such as Dryden/von Kármán turbulence and sensor noise are modeled as ordinary RNG-driven discrete proces
+279	deterministic [replay](#g-replay)		One consequence is elevated to a framework guarantee, **deterministic [replay](#g-replay)**.
+286	No unconditional per-step hook		- **No unconditional per-step hook**, so no `f_step!` equivalent.
+305	Continuous state		- **Continuous state** `x`, an isbits struct of real scalars ([§7][s7]).
+306	Mode variables		- **Mode variables** `m`.
+308	Flow		- **Flow** $\dot{x} = f(x, m, u, t)$.
+309	Two output stages		- **Two output stages** ([§5.2][s5-2]).
+310	Events		- **Events**, each a [guard](#g-guard) plus a handler.
+313	[projection](#g-projection)		- An optional **[projection](#g-projection)**.
+319	Internal modes		- **Internal modes** suit tightly coupled cases, such as stall hysteresis inside the aero component.
+321	external FSM component		- An **external FSM component** feeding modes through a [port](#g-port) gives maximal purity, independent testability and swappable supervision logic.
+324	Rule of meaning.		**Rule of meaning.** A supervisor *commanding* a mode change is an ordinary **input**.
+324	input		**Rule of meaning.** A supervisor *commanding* a mode change is an ordinary **input**.
+324	event		A component *detecting* its own transition is an **event**.
+332	Discrete state		- **Discrete state** `s`, any isbits value ([§7][s7]).
+333	Update		- **Update** $s^{+} = g(s, u, t)$ at a declared rate.
+334	Two output stages		- **Two output stages**, with [feedthrough](#g-feedthrough) applying at update instants.
+337	through signals		A discrete component's `s` influences continuous dynamics only **through signals**.
+346	`m` is continuous-only.		**`m` is continuous-only.** A discrete component has no mode store.
+349	Why.		**Why.** `m` exists on the continuous side because modes must change *between* flow evaluations, which is what handlers do.
+356	It has no dynamics of its own.		**It has no dynamics of its own.** Hybridness emerges at the [assembly](#g-assembly) level.
+374	Why.		**Why.** The split is between *time bases*, not state classes.
+395	zeroes them		Then, at the IMU's own `Δt`, a discrete step reads the integrals, publishes the sample, and **zeroes them**.
+415	Algebra removes the reset.		**Algebra removes the reset.** Every interval-relative integral becomes a cumulative one, and a discrete sampler differences consecutive samples against its lat
+420	Verdict.		**Verdict.** The strongest counterexample landed on the two-class taxonomy with *less* code than the direct formulation.
+420	tick-triggered handler		If interval-relative dynamics ever neither factor algebraically nor tolerate the latch-back wire, the [guarded addition](#g-guarded-addition) is a **tick-trigge
+441	immutable values		[Ports](#g-port) exchange **immutable values**, typically isbits structs (floats, `SVector`s, enums, nested immutables).
+441	[signal table](#g-signal-table)		The framework owns a **[signal table](#g-signal-table)**, with one concretely typed **[cell](#g-cell)** per output port in the flattened model.
+441	[cell](#g-cell)		The framework owns a **[signal table](#g-signal-table)**, with one concretely typed **[cell](#g-cell)** per output port in the flattened model.
+449	Vocabulary.		**Vocabulary.** These names are binding throughout this document.
+461	immutability plus frozen references		Stated precisely, the signal requirement is **immutability plus frozen references**.
+485	Visibility.		**Visibility.** Which ports exist at all is a declaration-layer decision.
+502	ports		A component's **ports** are its signal endpoints, one [cell](#g-cell) and one producer each.
+502	[faces](#g-face)		Its **[faces](#g-face)** are the names those ports wear on the component's boundary.
+509	Rule.		**Rule.** The port is the atomic unit of the entire periphery.
+515	Scatter/gather is the whole protocol.		**Scatter/gather is the whole protocol.** A [stage function](#g-stage-function) (`y_state`/`y_direct`, on either [tier](#g-tier)) returns a named tuple.
+521	The aggregate `y` is a merge semantically and virtual physically.		**The aggregate `y` is a merge semantically and virtual physically.** Semantically, a component's `y` is the merge of its stage products, `merge(y_x, y_xu)` on 
+532	Stage returns are named tuples of port values, period.		**Stage returns are named tuples of port values, period.** A custom struct is a first-class port *value*.
+557	Rule.		**Rule.** Wiring is port-granular.
+566	Granularity guideline.		**Granularity guideline.** Authors should bundle what *shares a stage* *and is consumed together*.
+574	Example.		**Example.** The sketch below shows the bundle, the loose hot field and a face aliasing an interior port, in declaration form.
+587	Write-side rule.		**Write-side rule.** **Bundle what is written together.**
+587	Bundle what is written together.		**Write-side rule.** **Bundle what is written together.**
+589	Rule.		**Rule.** Data written by different external writers, or at different cadences, must not share a port.
+604	query-shaped		Atmosphere and terrain are **query-shaped**.
+604	immutable query objects		Ordinary [ports](#g-port) therefore carry them as **immutable query objects**, called [field handles](#g-field-handle).
+614	Parametric models are isbits		- **Parametric models are isbits** (ISA, uniform wind, horizontal terrain).
+614	Bulk-data models use the handle pattern.		**Bulk-data models use the handle pattern.** The handle is an immutable struct combining isbits parameters with references to bulk data (heightmaps, wind grids,
+620	No mutable caches inside field objects		- **No mutable caches inside field objects**, such as memoizing interpolators or lazy loaders.
+626	The [value-level constructor](#g-value-level-constructor).		**The [value-level constructor](#g-value-level-constructor).** Every field-emitting component must expose the map (component, input values) → handle as a plain,
+626	one-line call to that function		The field-emitting component's swept output stage must be a **one-line call to that function**, never the other way round.
+646	Example.		**Example.** The sketch below shows the map as a plain function, and the stage that does nothing but call it.
+657	idiom built on top		Pre-sampling is an **idiom built on top**, used where natural, not a separate mechanism.
+696	Every [component](#g-component) provides exactly two output stages	D-006	**Every [component](#g-component) provides exactly two output stages** ([D-006][d-006]).
+726	Every function receives exactly two arguments	D-074	**Every function receives exactly two arguments**, the component and one NamedTuple [bundle](#g-bundle) of zero-copy views ([D-074][d-074]).
+743	`x_projection` alone stays positional	D-074	**`x_projection` alone stays positional** ([D-074][d-074]).
+761	The signal table holds only *produced* signals, never transported ones	D-035	**The signal table holds only *produced* signals, never transported ones** ([D-035][d-035]).
+770	a name appears in a component's bundle iff the corresponding store or fact exists for that component	D-074,D-341	Under the bundle law, **a name appears in a component's bundle iff the corresponding store or fact exists for that component** ([D-074][d-074], [D-341][d-341]).
+787	The stage-1 hand-down carries the stage-1 *return	D-285	**The stage-1 hand-down carries the stage-1 *return*** ([D-285][d-285]).
+833	An output stage returns its port NamedTuple, `y`, and nothing else	D-194	**An output stage returns its port NamedTuple, `y`, and nothing else** ([D-194][d-194]).
+846	A handler returns a NamedTuple carrying the stores it writes	D-090	**A handler returns a NamedTuple carrying the stores it writes** ([D-090][d-090]).
+876	Mathematical symbols and API names are two vocabularies	D-220	**Mathematical symbols and API names are two vocabularies**, deliberately ([D-220][d-220]).
+893	A stage's name states the dependence class	D-220,D-342	**A stage's name states the dependence class**, not the argument list ([D-220][d-220], [D-342][d-342]).
+914	`y_state` is the no-feedthrough stage	D-035	**`y_state` is the no-feedthrough stage**, defined entirely by what it cannot see ([D-035][d-035]).
+926	A component exposes a state or mode field by returning it from `y_state`	D-252	**A component exposes a state or mode field by returning it from `y_state`** ([D-252][d-252]).
+940	`x_deriv` and `s_update` run after the [sweep](#g-sweep)	D-015	**`x_deriv` and `s_update` run after the [sweep](#g-sweep)** (one ordered pass through the stage functions against the current state) ([D-015][d-015]).
+1019	`x_projection` runs between a state write and its decode	D-016	**`x_projection` runs between a state write and its decode** ([D-016][d-016]).
+1052	Scheduled gains are inputs	D-089	**Scheduled gains are inputs** ([D-089][d-089]).
+1064	A commanded reset of a discrete component is a same-tick input, consumed in the output stage	D-089,D-342	**A commanded reset of a discrete component is a same-tick input, consumed in the output stage** ([D-089][d-089], [D-342][d-342]).
+1090	A [continuous component](#g-continuous-component)'s reset is an event	D-141	**A [continuous component](#g-continuous-component)'s reset is an event** ([D-141][d-141]).
+1103	The remedy ladder for artificial loops has three rungs	D-140	**The remedy ladder for artificial loops has three rungs** ([D-140][d-140]).
+1188	An algebraic loop is a build error	D-005	**An algebraic loop is a build error** ([D-005][d-005]).
+1214	Tracing is diagnostic only	D-012	**Tracing is diagnostic only**, never relied on for correctness ([D-012][d-012]).
+1226	Each nontrivial SCC names one cyclic cluster exactly	D-012	**Each nontrivial SCC names one cyclic cluster exactly** ([D-012][d-012]).
+1286	The traced maps decide the verdict as one graph question over the cluster	D-245	**The traced maps decide the verdict as one graph question over the cluster** ([D-245][d-245]).
+1286	The diagnostic lists every dead hop under either verdict	D-245	**The diagnostic lists every dead hop under either verdict**, so a real loop still shows the chords the trace found false ([D-245][d-245]).
+1308	Discrete members trace structurally	D-012	**Discrete members trace structurally**, because the discrete [tier](#g-tier)'s plain, wholesale-pinning declarations admit no tracer scalar ([D-012][d-012]).
+1318	The diagnostic records the source of each member's map	D-245	**The diagnostic records the source of each member's map** ([D-245][d-245]).
+1358	Every connection endpoint names an immediate child and one of its faces	D-207	**Every connection endpoint names an immediate child and one of its faces** ([D-207][d-207]).
+1436	The walk clause decides an abstract entry on the whole declaration	D-236	**The walk clause decides an abstract entry on the whole declaration** ([D-236][d-236]).
+1442	A frozen handle arriving at an unpinned entry is the producer's [cell](#g-cell)	D-264	**A frozen handle arriving at an unpinned entry is the producer's [cell](#g-cell)** (the signal-table entry holding its output), gathered as stored ([D-264][d-2
+1442	The identity rule for an opaque leaf governs a store, never a wire	D-264	**The identity rule for an opaque leaf governs a store, never a wire** ([§9.5][s9-5], [D-264][d-264]).
+1469	Every input port takes exactly one connection	D-170	**Every input port takes exactly one connection**, with no exceptions ([D-170][d-170]).
+1490	Unconnected output ports are legal, silently, with no build-time warning	D-084	**Unconnected output ports are legal, silently, with no build-time warning** ([D-084][d-084]).
+1503	N-to-1 physical aggregation is expressed by ordinary junction [components](#g-component) and explicit wires	D-037	**N-to-1 physical aggregation is expressed by ordinary junction [components](#g-component) and explicit wires** ([D-037][d-037]).
+1523	The parameters are the [nominal](#g-nominal) port types and the arity	D-311	**The parameters are the [nominal](#g-nominal) port types and the arity** ([D-311][d-311]), as in `SumJunction{Wrench{Float64}, 3}`, and the fold is instance da
+1576	Fold order is author-visible	D-037	- **Fold order is author-visible** ([D-037][d-037]).
+1591	Each assembly that owns contributors aggregates them with an internal junction and exports the total	D-037	**Each assembly that owns contributors aggregates them with an internal junction and exports the total** ([D-037][d-037]).
+1622	Such a helper is [guarded-addition](#g-guarded-addition) sugar	D-037	**Such a helper is [guarded-addition](#g-guarded-addition) sugar** (a capability the design admits but does not build), added when real models show the pattern 
+1640	The zero-contributor spelling is a library [`Constant` source](#g-constant-source) ([§13.7][s13-7]) wired straight to the consumer's input	D-143	**The zero-contributor spelling is a library [`Constant` source](#g-constant-source) ([§13.7][s13-7]) wired straight to the consumer's input** ([D-143][d-143]),
+1650	The `Constant` wire is not the banned default ([§6.1][s6-1]) in component clothing but its opposite	D-143	**The `Constant` wire is not the banned default ([§6.1][s6-1]) in component clothing but its opposite** ([D-143][d-143]).
+1687	Its leaves are drawn from a deliberately closed vocabulary	D-094	**Its leaves are drawn from a deliberately closed vocabulary**, plain real scalars and `SArray`s (static vectors and matrices) of a common eltype `T`, and nothi
+1687	`Int`s, enums and `Bool`s belong in modes	D-308	**`Int`s, enums and `Bool`s belong in modes** ([D-308][d-308]).
+1700	The declaration is flat	D-094,D-304	**The declaration is flat** ([D-094][d-094], [D-304][d-304]).
+1721	The buffer is authoritative, and typed values are ephemeral reconstructions	D-010	**The buffer is authoritative, and typed values are ephemeral reconstructions** ([D-010][d-010]).
+1790	The entire continuous evaluation path is generic over `T <: Real`	D-011	**The entire continuous evaluation path is generic over `T <: Real`**, and so are the state [buffer](#g-buffer) (the framework-owned contiguous vector backing a
+1839	table data is a pinned parameter and the query coordinate is walked traffic	D-011,D-307	For lookups, **table data is a pinned parameter and the query coordinate is walked traffic** ([D-011][d-011], [D-307][d-307]).
+1850	Three rules are author-facing	D-011,D-235,D-304,D-307	**Three rules are author-facing** ([D-011][d-011], [D-235][d-235], [D-304][d-304], [D-307][d-307]).
+1871	Discrete state, a discrete leaf's `s`, and the modes `m` live in typed stores	D-013,D-302	**Discrete state, a discrete leaf's `s`, and the modes `m` live in typed stores**, apart from the buffer that holds `x` ([§7.1][s7-1], [D-013][d-013], [D-302][d
+1880	Every field of an `s` or `m` store value is isbits or a `Symbol`	D-231	**Every field of an `s` or `m` store value is isbits or a `Symbol`** ([D-231][d-231]).
+1892	The frozen-reference latitude stays with signals	D-231	**The frozen-reference latitude stays with signals** ([§4.1][s4-1], [D-231][d-231]).
+1912	It is not snapshotted and not replayed	D-308	**It is not snapshotted and not replayed** ([D-308][d-308]).
+1916	The framework never inspects or mutates a workspace	D-183	**The framework never inspects or mutates a workspace** ([D-183][d-183]).
+1924	A workspace is declared by allocation	D-077	**A workspace is declared by allocation**, never by initial value ([D-077][d-077]).
+1932	`ws_init(::C, ::Type{T})` takes the [activation](#g-activation) scalar on both [tiers](#g-tier)	D-263	**`ws_init(::C, ::Type{T})` takes the [activation](#g-activation) scalar on both [tiers](#g-tier)**, and it is the one declaration that does ([D-263][d-263]).
+1975	a generator object such as `Xoshiro` lives in the workspace, and the values that determine its next draw are state in `s`	D-231	In the blessed idiom for a PRNG in a discrete leaf, **a generator object such as `Xoshiro` lives in the workspace, and the values that determine its next draw a
+2078	The budget is exactly zero, CI-enforced	D-014,D-116,D-305	**The budget is exactly zero, CI-enforced** at the measurement [seam](#g-seam) that `phase_bodies` exposes ([§9.7][s9-7], [D-014][d-014], [D-116][d-116], [D-305
+2106	Event firings are not recorded	D-309	**Event firings are not recorded** ([D-309][d-309]).
+2177	There is no macro DSL	D-032	**There is no macro DSL** ([D-032][d-032]).
+2184	A convenience macro remains addable a posteriori	D-032	**A convenience macro remains addable a posteriori** as pure sugar, on the `@kwdef` precedent, and never becomes essential ([D-032][d-032]).
+2197	Declarations *define* the model's structure	D-032	**Declarations *define* the model's structure** ([D-032][d-032]).
+2213	A leaf's contract declarations must be determined by the component's type	D-033,D-297	**A leaf's contract declarations must be determined by the component's type**, its type parameters included, and never by its field *values* ([D-033][d-033], [D
+2248	The framework's extensible functions are extended, not called	D-117	**The framework's extensible functions are extended, not called** ([D-117][d-117]).
+2280	The structural walk runs the shadowing check on every component before its class is read	D-246	**The structural walk runs the shadowing check on every component before its class is read** ([§9.1][s9-1], [D-246][d-246]).
+2286	the build throws `DeclarationShadowed` alone	D-246	If the module holds one distinct from the framework's function, **the build throws `DeclarationShadowed` alone** ([D-246][d-246]).
+2322	A component that declares nothing and defines no stage is rejected at build time	D-164	**A component that declares nothing and defines no stage is rejected at build time** ([D-164][d-164]), because an inert component is unwritable on purpose.
+2330	Declarations live at module top level	D-164	**Declarations live at module top level** ([D-164][d-164]).
+2343	Every name on the framework's surface belongs to one of four classes	D-144	**Every name on the framework's surface belongs to one of four classes**, and its class fixes its grammatical shape ([D-144][d-144]).
+2363	A declaration names its *content*, what it returns, never the *consequence* its definition has	D-301	**A declaration names its *content*, what it returns, never the *consequence* its definition has** ([D-301][d-301]).
+2425	Every declaration of a structural fact but the allocator takes the component alone	D-263	**Every declaration of a structural fact but the allocator takes the component alone** ([D-263][d-263]).
+2453	`x_init` on the continuous tier, `s_init` on the discrete, and `m_init` declare by initial value	D-033	**`x_init` on the continuous tier, `s_init` on the discrete, and `m_init` declare by initial value** ([D-033][d-033]).
+2453	The value is a `NamedTuple`, one named field per leaf	D-247	**The value is a `NamedTuple`, one named field per leaf**, and no other form is admitted ([D-247][d-247]).
+2467	Every leaf declares exactly one of `x_init` and `s_init`	D-263	**Every leaf declares exactly one of `x_init` and `s_init`**, and a stateless leaf declares it empty ([D-263][d-263]):
+2517	a marker below the top of an entry is `IllegalPortType`	D-265	It wraps the whole entry, and **a marker below the top of an entry is `IllegalPortType`** ([D-265][d-265]).
+2529	Entries are [face](#g-face) bounds, not cell types, and the reading is permissive	D-078,D-263	**Entries are [face](#g-face) bounds, not cell types, and the reading is permissive** ([D-263][d-263], [D-078][d-078]).
+2548	`Pinned` records that a leaf carries no partials, not that an implementation cannot take them	D-266	**`Pinned` records that a leaf carries no partials, not that an implementation cannot take them** ([D-266][d-266]).
+2560	[Abstract entries](#g-abstract-entry) state structural substitutability	D-078,D-296	**[Abstract entries](#g-abstract-entry) state structural substitutability** ([D-078][d-078], [D-296][d-296]).
+2575	Two clauses check a wire	D-236,D-263	**Two clauses check a wire** ([§6.1][s6-1], [D-263][d-263], [D-236][d-236]).
+2591	Discrete consumers take the bound check only	D-263,D-295	**Discrete consumers take the bound check only** ([D-263][d-263], [D-295][d-295]).
+2604	The obligation is scoped to the unpinned entries	D-263,D-295	**The obligation is scoped to the unpinned entries** ([D-263][d-263], [D-295][d-295]).
+2604	Declarations record choices, and obligations are checked	D-078,D-296	**Declarations record choices, and obligations are checked** ([D-078][d-078], [D-296][d-296]).
+2630	Abstract-at-root is a build error	D-236	**Abstract-at-root is a build error** ([D-236][d-236]).
+2643	That retyping makes seedability schema-visible	D-263,D-295	**That retyping makes seedability schema-visible** ([D-263][d-263], [D-295][d-295]).
+2649	Fan-out combines tolerance by a meet, not by agreement	D-168	**Fan-out combines tolerance by a meet, not by agreement** ([D-168][d-168]).
+2675	Any component may be the root of a build, and the model's root inputs are the root's own input faces	D-208	**Any component may be the root of a build, and the model's root inputs are the root's own input faces** ([D-208][d-208]).
+2736	A handle keeps its bulk at `Float64` and its activation-dependent part in the parameter	D-263	**A handle keeps its bulk at `Float64` and its activation-dependent part in the parameter** ([D-263][d-263]).
+2780	A declared type must be buildable at the activation scalar	D-079	**A declared type must be buildable at the activation scalar** ([D-079][d-079]).
+2814	The first bug lurks, but is never silent	D-286	**The first bug lurks, but is never silent** ([D-286][d-286]).
+2859	`stop_reason(c)` returns the `String` a component's stop requests report, and it defaults to `""`	D-316	**`stop_reason(c)` returns the `String` a component's stop requests report, and it defaults to `""`** ([D-316][d-316]).
+2884	No port carries a stage tag, and stage membership is derived	D-033	**No port carries a stage tag, and stage membership is derived** ([D-033][d-033]).
+2932	The remaining tier-implying declarations must agree	D-112,D-249	**The remaining tier-implying declarations must agree** ([D-112][d-112], [D-249][d-249]).
+2967	Visibility is decided by *where the value goes	D-034	**Visibility is decided by *where the value goes*** ([D-034][d-034]):
+2992	A declared port must be produced by exactly one stage	D-252	**A declared port must be produced by exactly one stage**, stage 1 or stage 2 ([D-252][d-252]).
+3009	Stage returns must have the same `NamedTuple` shape on every branch	D-034	**Stage returns must have the same `NamedTuple` shape on every branch**, the branch-shape rule ([D-034][d-034]).
+3066	An assembly is a plain struct	D-039	**An assembly is a plain struct** ([D-039][d-039]).
+3081	There is no `AbstractAssembly`, only one root `AbstractComponent`	D-039	**There is no `AbstractAssembly`, only one root `AbstractComponent`** ([D-039][d-039]).
+3090	`local_wires` is the marker	D-039	**`local_wires` is the marker**, mandatory even when empty, and defining it makes an assembly ([D-039][d-039]).
+3126	A field whose type is a `Tuple` or `NamedTuple` with *every* element `<: AbstractComponent` contributes its elements as [container children](#g-container-children)	D-085	**A field whose type is a `Tuple` or `NamedTuple` with *every* element `<: AbstractComponent` contributes its elements as [container children](#g-container-chil
+3131	Containers are transparent grouping, not assemblies	D-085	**Containers are transparent grouping, not assemblies** ([D-085][d-085]).
+3147	A component may declare at most one of its container fields name-transparent	D-211	**A component may declare at most one of its container fields name-transparent** ([D-211][d-211]).
+3180	A bare key from a name-transparent container colliding with any sibling child name is a build error naming both	D-211	- **A bare key from a name-transparent container colliding with any sibling child name is a build error naming both** ([D-211][d-211]).
+3186	A bare key equal to the name of a sibling *container field* that contributes children is refused the same way	D-212	- **A bare key equal to the name of a sibling *container field* that contributes children is refused the same way** ([D-212][d-212]).
+3186	An empty field reserves nothing	D-212	**An empty field reserves nothing** ([D-212][d-212]), because it reaches no children and its value cannot be told from empty inert parameter data.
+3200	`Group` expresses it as a single library component	D-184	**`Group` expresses it as a single library component**, part of the starting inventory ([§13.7][s13-7], [D-184][d-184]).
+3200	A `Group` also carries its own rate scope	D-300	**A `Group` also carries its own rate scope**, a `sample_times` field keyed by bare element name ([D-300][d-300]).
+3246	The builder (`Assembly()` plus `add!`/`connect!`) is rejected	D-039,D-298	**The builder (`Assembly()` plus `add!`/`connect!`) is rejected** ([D-039][d-039], [D-298][d-298]).
+3272	Paths are slash-separated strings	D-040	**Paths are slash-separated strings**, relative to the assembly or the root they are read from, with no leading slash ([D-040][d-040]).
+3294	Every pair runs strictly from a child face to a child face	D-170	**Every pair runs strictly from a child face to a child face** ([D-170][d-170]).
+3299	The assembly's boundary is declared by two further methods, one per direction	D-170	**The assembly's boundary is declared by two further methods, one per direction** ([D-170][d-170]).
+3299	Every entry routes to at least one internal endpoint	D-210	**Every entry routes to at least one internal endpoint** ([D-210][d-210]).
+3311	Direction is declared by the method	D-170	**Direction is declared by the method**, not inferred ([D-170][d-170]).
+3321	Face *types and [tiers](#g-tier)* are derived from the internal endpoints	D-041	**Face *types and [tiers](#g-tier)* are derived from the internal endpoints** ([D-041][d-041]).
+3332	Face names are arbitrary strings with two build-checked invariants	D-046	**Face names are arbitrary strings with two build-checked invariants** ([D-046][d-046]).
+3341	It separates structure from derived contract, not read from write	D-129,D-298	**It separates structure from derived contract, not read from write** ([D-129][d-129], [D-298][d-298]).
+3366	At the root the uniqueness invariant follows the root's class	D-210	**At the root the uniqueness invariant follows the root's class** ([D-210][d-210]).
+3430	Every interval-relative integral becomes a *cumulative* one	D-056	**Every interval-relative integral becomes a *cumulative* one** ([D-056][d-056]).
+3474	Interval-relative integrals factor into cumulative ones whenever the interval dependence enters through a left action by the interval-start value of a cumulatively-integrable quantity	D-056	**Interval-relative integrals factor into cumulative ones whenever the interval dependence enters through a left action by the interval-start value of a cumulat
+3480	the cumulative attitude must be integrated with the *inertial* rate	D-056	First, **the cumulative attitude must be integrated with the *inertial* rate** ([D-056][d-056]).
+3480	the equivalence survives discretization	D-056	Second, **the equivalence survives discretization** ([D-056][d-056]).
+3593	That knowledge must be part of the framework's taught contract	D-056	**That knowledge must be part of the framework's taught contract**, not internal lore ([D-056][d-056]).
+3603	When the coupling is genuinely two-way, the latch becomes a wire back	D-056	**When the coupling is genuinely two-way, the latch becomes a wire back** ([D-056][d-056]).
+3640	Keys are immediate child names only	D-042	**Keys are immediate child names only** ([D-042][d-042]).
+3746	The selectors are exclusive	D-251	**The selectors are exclusive** ([D-251][d-251]).
+3753	A call that gives a selector and keeps nothing raises `EmptyFaceSelection`	D-251	**A call that gives a selector and keeps nothing raises `EmptyFaceSelection`**, a warning on the `Build`'s list ([§9.2][s9-2], [D-251][d-251]).
+3775	`output_passthrough` is its sibling	D-209	**`output_passthrough` is its sibling** ([D-209][d-209]).
+3819	Removing the duplication needs no vocabulary	D-145	**Removing the duplication needs no vocabulary** ([D-145][d-145]).
+3871	The single source must be authored data, never inferred structure	D-145,D-299	**The single source must be authored data, never inferred structure** ([D-145][d-145], [D-299][d-299]).
+3879	Generic holding is an imposed derived contract	D-043	**Generic holding is an imposed derived contract** ([D-043][d-043]).
+3925	The pipeline runs as the steps below	D-259	**The pipeline runs as the steps below**, each consuming one artifact and producing the next, and each a barrier ([D-259][d-259]).
+3945	The structure step is pure declaration reading	D-048	**The structure step is pure declaration reading** ([D-048][d-048]).
+3975	The store form is checked before the tier classifier and the vocabulary checks read the value	D-247	**The store form is checked before the tier classifier and the vocabulary checks read the value** ([D-247][d-247]).
+3975	The isbits rule is checked on `s_init` and `m_init` field by field	D-231	**The isbits rule is checked on `s_init` and `m_init` field by field** ([D-231][d-231]).
+3984	The producer's declaration at `Float64` must be `<:` the entry at `Float64`	D-078	**The producer's declaration at `Float64` must be `<:` the entry at `Float64`** ([D-078][d-078]).
+3989	The walk-compatibility clause is decided by retyping both declarations at a marker scalar	D-236,D-263	**The walk-compatibility clause is decided by retyping both declarations at a marker scalar** and comparing per leaf at a concrete entry, or on the whole declar
+4008	`sample_times` validation is the structure step's too	D-185	**`sample_times` validation is the structure step's too** ([D-185][d-185]).
+4034	The structure step returns `Structure`	D-253	**The structure step returns `Structure`** (the artifact holding everything the instance alone fixes), and that is its whole product ([D-253][d-253]).
+4056	The nominal evaluation is a function of the `Structure`	D-253,D-259	**The nominal evaluation is a function of the `Structure`**, and it returns three artifacts, `Outputs`, `Events` and the nominal `Float64` activation ([D-253][d
+4061	The [feedthrough](#g-feedthrough) graph the order is computed over is not carried	D-261	**The [feedthrough](#g-feedthrough) graph the order is computed over is not carried** ([D-261][d-261]).
+4124	`build(world) → Build` is a standalone entry point	D-049	**`build(world) → Build` is a standalone entry point** ([D-049][d-049]).
+4129	A `Build` is structure, outputs, events, the [activations](#g-activation) and `warnings`	D-253	**A `Build` is structure, outputs, events, the [activations](#g-activation) and `warnings`** ([D-253][d-253]).
+4133	Deploying and materializing are two steps	D-254	**Deploying and materializing are two steps**, with three sugar forms over them ([D-254][d-254]).
+4146	A `Simulation` runs a `Model{Float64}` and nothing else	D-317	**A `Simulation` runs a `Model{Float64}` and nothing else** ([D-317][d-317]).
+4152	A `Simulation` claims its `Model`	D-318	**A `Simulation` claims its `Model`** ([D-318][d-318]).
+4190	The face table is two-sided, and `Structure` answers it as a function over the declared wires	D-207,D-315	**The face table is two-sided, and `Structure` answers it as a function over the declared wires** ([D-207][d-207], [D-315][d-315]).
+4203	`Structure`'s timing tables are anchor-relative	D-283	**`Structure`'s timing tables are anchor-relative**, and the `Deployment` binds them ([D-283][d-283]).
+4222	A `Deployment` is scalar-free	D-254	**A `Deployment` is scalar-free** ([D-254][d-254]).
+4222	`Model` refuses any other scalar	D-320	**`Model` refuses any other scalar** as `ArgumentInvalid`, before it derives the activation at `T` ([§9.5][s9-5], [D-320][d-320]).
+4236	`Δt_base` has exactly one of three sources	D-283	**`Δt_base` has exactly one of three sources**, cross-validated ([D-283][d-283]):
+4255	If any unanchored component exists, deployment must declare `Δt_base`	D-283	**If any unanchored component exists, deployment must declare `Δt_base`** ([D-283][d-283]).
+4281	Deployment validation is collected like its declarative siblings	D-229	**Deployment validation is collected like its declarative siblings** ([§13.1][s13-1], [D-229][d-229]).
+4332	Each artifact renders itself through `show`	D-257	**Each artifact renders itself through `show`**, with no accessors ([D-257][d-257]):
+4350	The chart prints whole, as a tick chart over `k = 0 … lcm(Dᵢ) − 1`, when `lcm(Dᵢ)` is at most 100 base ticks	D-257	**The chart prints whole, as a tick chart over `k = 0 … lcm(Dᵢ) − 1`, when `lcm(Dᵢ)` is at most 100 base ticks** ([D-257][d-257]).
+4360	The grid diagnostics live on the `Deployment`	D-187,D-254	**The grid diagnostics live on the `Deployment`** and print from the pool, exactly ([D-187][d-187], [D-254][d-254]).
+4366	Every `r_p > 1` is listed	D-284	**Every `r_p > 1` is listed** rather than one culprit crowned ([D-284][d-284]).
+4379	Blame is computed against the actual pool	D-284	**Blame is computed against the actual pool** ([D-284][d-284]).
+4393	A step that completes carries its warnings on the artifact	D-250	**A step that completes carries its warnings on the artifact**, and the entry point logs each one once at return ([D-250][d-250]).
+4407	`warnings(x)` is defined on `Build` and `Deployment`	D-250	**`warnings(x)` is defined on `Build` and `Deployment`**, and on `Simulation` as the concatenation of its artifacts' lists ([D-250][d-250]).
+4420	The nominal evaluation probes every user function once	D-050	**The nominal evaluation probes every user function once**, at the initial state, with real values ([D-050][d-050]).
+4445	`ws` comes from invoking the component's `ws_init` allocator	D-115	**`ws` comes from invoking the component's `ws_init` allocator** at the probing scalar (`Float64` at build), before the nominal evaluation's probes that need it
+4453	A stage returning bare `(;)` produces no ports at all, and is `DeadStage`	D-194,D-285	**A stage returning bare `(;)` produces no ports at all, and is `DeadStage`**, fail-fast ([D-194][d-194], [D-285][d-285]).
+4458	The build synthesizes their values via `probe_value(::Type)`	D-051	**The build synthesizes their values via `probe_value(::Type)`** ([D-051][d-051]).
+4492	Probe values are strictly probe-scoped	D-051	**Probe values are strictly probe-scoped** ([D-051][d-051]).
+4497	`t` is probe-scoped `0.0`	D-115	**`t` is probe-scoped `0.0`** ([D-115][d-115]).
+4506	Every complete-world application, namely `init!`, trim setup and trim commit, carries the pre-write `UninitializedInputs` check	D-149	**Every complete-world application, namely `init!`, trim setup and trim commit, carries the pre-write `UninitializedInputs` check** ([§14.6][s14-6], [D-149][d-1
+4511	Stage code must be total over type-valid inputs	D-142	**Stage code must be total over type-valid inputs** ([D-142][d-142]).
+4548	Parameter validation belongs where user-controlled data enters	D-142	**Parameter validation belongs where user-controlled data enters** ([D-142][d-142]).
+4565	Only the activation step re-runs for a new scalar	D-259	**Only the activation step re-runs for a new scalar** ([D-259][d-259]).
+4592	Each activation probes exactly the set of functions it can execute	D-052	**Each activation probes exactly the set of functions it can execute** ([D-052][d-052]).
+4614	Non-nominal activations run at first request	D-052	**Non-nominal activations run at first request**, not at build ([D-052][d-052]).
+4626	Every component gets a `Dual` activation built in CI	D-280	**Every component gets a `Dual` activation built in CI** ([D-280][d-280]).
+4634	The keyword is the whole entry point	D-275	**The keyword is the whole entry point**, and no separate check function exists ([D-275][d-275]).
+4644	[`ProbeDual`](#g-probedual) is the framework's public canonical probe scalar	D-099	**[`ProbeDual`](#g-probedual) is the framework's public canonical probe scalar** ([D-099][d-099]).
+4657	The activation cache lives on the `Build` and holds only immutable compiled artifacts	D-135	**The activation cache lives on the `Build` and holds only immutable compiled artifacts** ([D-135][d-135]).
+4657	Whether an activation is cached never changes a result	D-052	**Whether an activation is cached never changes a result** ([D-052][d-052]).
+4666	Every buffer set has exactly one owner	D-282	**Every buffer set has exactly one owner** ([D-282][d-282]).
+4693	Lazy materialization is torn-state-free	D-281	**Lazy materialization is torn-state-free** ([D-281][d-281]).
+4709	The write is generated over that type and the return's type	D-235	**The write is generated over that type and the return's type** ([D-235][d-235]).
+4740	The names are the pairing	D-151	**The names are the pairing**, and field order carries no semantics ([D-151][d-151]).
+4773	the check is an exact type match	D-053	At the nominal activation, the only one that ever runs in real time, **the check is an exact type match**, with no convert-on-write ([D-053][d-053]).
+4779	A walking leaf, one the author left unpinned, accepts exactly two types	D-053	**A walking leaf, one the author left unpinned, accepts exactly two types**, the activation scalar or `Float64` ([D-053][d-053]).
+4790	An opaque leaf ([§4.3][s4-3]) embeds nothing into a store	D-237	**An opaque leaf ([§4.3][s4-3]) embeds nothing into a store**, and it is accepted there by identity alone ([D-237][d-237]).
+4795	The check is decided on the type	D-238	**The check is decided on the type**, not leaf by leaf ([D-238][d-238]).
+4830	The pinned leaf is the schema-visible freeze	D-286	**The pinned leaf is the schema-visible freeze** ([D-286][d-286]).
+4839	The check is uniform across all probed functions	D-053	**The check is uniform across all probed functions** ([D-053][d-053]).
+4842	`x_deriv` checks against `X`'s own shape	D-190	- **`x_deriv` checks against `X`'s own shape** at the activation's `T` ([D-190][d-190]).
+4851	`x_projection` checks against `X`'s own shape	D-111	- **`x_projection` checks against `X`'s own shape** at `T`, complete ([D-111][d-111]).
+4860	The returned NamedTuple's key set is checked first	D-287	**The returned NamedTuple's key set is checked first** ([D-287][d-287]).
+4891	The payload carries the component path, the function, the event name on a handler's occurrence, and the field-level diff	D-053,D-249	**The payload carries the component path, the function, the event name on a handler's occurrence, and the field-level diff** (missing / unexpected / per-field e
+4900	The source branch is deliberately absent from the payload	D-287	**The source branch is deliberately absent from the payload** ([D-287][d-287]).
+4950	The execution form is a concretely-typed tuple of entries	D-086	**The execution form is a concretely-typed tuple of entries** over statically typed [cell](#g-cell) storage, traversed by a compile-time-unrolled walk ([D-086][
+4969	Cells are stored per element type	D-162	**Cells are stored per element type**, not per cell ([D-162][d-162]).
+4985	[Phase bodies](#g-measurement-seam) are the outer decomposition	D-288	**[Phase bodies](#g-measurement-seam) are the outer decomposition**, and they are semantically forced ([D-288][d-288]).
+5000	Each sweep block compiles in two arities	D-147	**Each sweep block compiles in two arities** off one entry list ([D-147][d-147]).
+5012	At a localized event time `t*` ([§10.4][s10-4]), the empty due set is arity selection	D-147,D-288	**At a localized event time `t*` ([§10.4][s10-4]), the empty due set is arity selection**, not an index trick ([D-147][d-147], [D-288][d-288]).
+5019	These bodies communicate only through the stores and the table	D-194	**These bodies communicate only through the stores and the table** ([D-194][d-194]).
+5040	[Views](#g-view) are spelled rebuild-per-call	D-288	**[Views](#g-view) are spelled rebuild-per-call** ([D-288][d-288]).
+5048	Construction is type-opaque	D-288	**Construction is type-opaque**, and only the executor specializes ([D-288][d-288]).
+5058	Chunking bounds the compile cost	D-086	**Chunking bounds the compile cost** ([D-086][d-086]).
+5058	The event set's projection, guard and handler walks chunk the same way	D-289	**The event set's projection, guard and handler walks chunk the same way** ([D-289][d-289]).
+5086	Every walk over an entry tuple or a chunk tuple is a generated unroll	D-289	**Every walk over an entry tuple or a chunk tuple is a generated unroll**, one statement per element ([D-289][d-289]).
+5092	A barrier takes its chunk by reference	D-289	**A barrier takes its chunk by reference** ([D-289][d-289]).
+5100	The declaration layer takes components unspecialized	D-289	**The declaration layer takes components unspecialized** ([D-289][d-289]).
+5136	Three measures mitigate what remains	D-289	**Three measures mitigate what remains** ([D-289][d-289]).
+5151	The phase bodies are the [§7.5][s7-5] measurement seam	D-116	**The phase bodies are the [§7.5][s7-5] measurement seam** ([D-116][d-116]).
+5170	The four-body roster is fixed and total	D-156	**The four-body roster is fixed and total** ([D-156][d-156]).
+5178	These are the bodies the loop runs	D-116	**These are the bodies the loop runs**, not re-derivations ([D-116][d-116]).
+5185	CI is warm-then-assert over the roster	D-116	**CI is warm-then-assert over the roster** ([D-116][d-116]).
+5196	Publication is not a phase body	D-288	**Publication is not a phase body** ([D-288][d-288]).
+5252	The [localized](#g-localized) event time `t*` is a boundary but not a frame top	D-081	**The [localized](#g-localized) event time `t*` is a boundary but not a frame top** ([D-081][d-081]).
+5264	All six are framework code, unconditionally	D-017	**All six are framework code, unconditionally** ([D-017][d-017]).
+5272	`OrdinaryDiffEq` is dropped as a dependency	D-017	**`OrdinaryDiffEq` is dropped as a dependency** of the new core ([D-017][d-017]).
+5277	The framework delegates that operation across a narrow internal interface	D-017	**The framework delegates that operation across a narrow internal interface**, the [stepper seam](#g-seam) ([D-017][d-017]).
+5308	The seam is never entered empty	D-156	**The seam is never entered empty** ([D-156][d-156]).
+5324	The first cut ships in-house fixed-step RK4 and Heun	D-017	**The first cut ships in-house fixed-step RK4 and Heun** over the flat state buffer ([D-017][d-017]).
+5333	`RK4` is the default	D-227	**`RK4` is the default** of the two ([D-227][d-227]).
+5382	External readers observe the signal table only at step boundaries	D-023,D-293	**External readers observe the signal table only at step boundaries** ([D-023][d-023], [D-293][d-293]).
+5415	The guard's return type declares its detection policy	D-179	**The guard's return type declares its detection policy** ([D-179][d-179]).
+5438	For a guard that reads only `u` and `m`, boundary detection is exact	D-179,D-290	**For a guard that reads only `u` and `m`, boundary detection is exact** ([D-179][d-179], [D-290][d-290]).
+5450	When such a transition should localize, write it in the gate form `(gate) ? σ : -one(σ)`	D-179,D-290	**When such a transition should localize, write it in the gate form `(gate) ? σ : -one(σ)`** ([D-179][d-179], [D-290][d-290]).
+5480	Trial evaluations run the interior sweep	D-147	**Trial evaluations run the interior sweep** ([D-147][d-147]).
+5492	A localized event triggers when its predicate was not-[holding](#g-edge-semantics) at tₙ's [quiescence](#g-quiescence) and is holding at tₙ₊₁	D-082	**A localized event triggers when its predicate was not-[holding](#g-edge-semantics) at tₙ's [quiescence](#g-quiescence) and is holding at tₙ₊₁** ([D-082][d-082
+5501	The trigger check runs against the arrival sweep at tₙ₊₁	D-182	**The trigger check runs against the arrival sweep at tₙ₊₁** ([D-182][d-182]).
+5532	On trigger, the first act is a trial evaluation at the left end	D-182	**On trigger, the first act is a trial evaluation at the left end**, the θ = 0 validation ([D-182][d-182]).
+5563	An epoch-caused edge is discarded, not degraded	D-182,D-290	**An epoch-caused edge is discarded, not degraded** ([D-182][d-182], [D-290][d-290]).
+5586	Root-finding is bracketed and derivative-free	D-018	**Root-finding is bracketed and derivative-free** ([D-018][d-018]).
+5592	Convergence is a relative bracket width	D-133	**Convergence is a relative bracket width** ([D-133][d-133]).
+5622	The root-finder returns the holding endpoint of its final bracket	D-082,D-290	**The root-finder returns the holding endpoint of its final bracket** ([D-082][d-082], [D-290][d-290]).
+5649	Grid times are indexed, never accumulated	D-082,D-290	**Grid times are indexed, never accumulated** ([D-082][d-082], [D-290][d-290]).
+5659	At `t*` the full [§10.6][s10-6] event phase runs	D-081,D-290	**At `t*` the full [§10.6][s10-6] event phase runs** ([D-081][d-081], [D-290][d-290]).
+5670	Staged inputs are not drained either	D-081,D-290	**Staged inputs are not drained either** ([D-081][d-081], [D-290][d-290]), for two reasons.
+5679	The `t*` publication is not separately paced	D-081,D-290	**The `t*` publication is not separately paced** ([D-081][d-081], [D-290][d-290]).
+5691	Guard trial evaluations run against the raw interpolated state	D-018	**Guard trial evaluations run against the raw interpolated state** ([D-018][d-018]).
+5707	Its default is 8	D-133,D-181	**Its default is 8** ([D-133][d-133], [D-181][d-181]).
+5716	Budget exhaustion degrades; it does not throw	D-018	**Budget exhaustion degrades; it does not throw** ([D-018][d-018]).
+5763	Every discrete [component](#g-component)'s period is an integer multiple of a base [tick](#g-tick) period `Δt_base`	D-019	**Every discrete [component](#g-component)'s period is an integer multiple of a base [tick](#g-tick) period `Δt_base`** ([D-019][d-019]).
+5777	the build compiles it to two integers per discrete component	D-185,D-291	However an author declares a rate, and however deeply the declaration is nested, **the build compiles it to two integers per discrete component** ([D-185][d-185
+5784	A component is [due](#g-due) at a boundary when `(tick − Φ) % D == 0`	D-185,D-291	**A component is [due](#g-due) at a boundary when `(tick − Φ) % D == 0`**, where `tick` is the boundary's tick index ([D-185][d-185], [D-291][d-291]).
+5792	A discrete component's `y_state`/`y_direct` run only at its own ticks	D-019	**A discrete component's `y_state`/`y_direct` run only at its own ticks** ([D-019][d-019]).
+5800	Delivering that hold takes two statically distinct sweep variants, compiled from one entry list	D-147	**Delivering that hold takes two statically distinct sweep variants, compiled from one entry list** ([D-147][d-147]).
+5810	The boundary sweep walks the full list	D-147	- **The boundary sweep walks the full list**, with discrete entries gated by `(tick − Φ) % D` against the boundary's tick index ([D-147][d-147]).
+5816	The split applies to both sweep blocks	D-147	**The split applies to both sweep blocks** ([D-147][d-147]).
+5824	The due set is computed once for the boundary and reused by every re-sweep of its [quiescence](#g-quiescence) iteration	D-147	**The due set is computed once for the boundary and reused by every re-sweep of its [quiescence](#g-quiescence) iteration** ([D-147][d-147]).
+5870	An [assembly](#g-assembly) is virtual for execution	D-019	**An [assembly](#g-assembly) is virtual for execution** ([D-019][d-019]).
+5882	The entry declares one (period, phase) pair in one of two unit systems	D-185	**The entry declares one (period, phase) pair in one of two unit systems**, and the wrapper type names the unit system ([D-185][d-185]).
+5934	A relative phase never refines the base grid	D-185,D-291	**A relative phase never refines the base grid**, because it selects among scope ticks that already exist ([D-185][d-185], [D-291][d-291]).
+5943	An `Absolute` entry may appear in any scope's `sample_times`, not only the root's	D-186	**An `Absolute` entry may appear in any scope's `sample_times`, not only the root's** ([D-186][d-186]).
+5964	Absolute periods and nonzero offsets jointly constrain the base grid	D-186,D-283	**Absolute periods and nonzero offsets jointly constrain the base grid** ([D-186][d-186], [D-283][d-283]).
+5973	An absolute declaration inside a library type is legitimate when the rate is a fact about the modeled system, not a preference about the simulation	D-186,D-291	**An absolute declaration inside a library type is legitimate when the rate is a fact about the modeled system, not a preference about the simulation** ([D-186]
+5994	Anchoring leaves the never-cache-`Δt` argument below fully intact	D-186,D-291	**Anchoring leaves the never-cache-`Δt` argument below fully intact** ([D-186][d-186], [D-291][d-291]).
+6056	Each discrete component's effective period arrives read-only as the `Δt` field of every discrete-tier bundle	D-019	**Each discrete component's effective period arrives read-only as the `Δt` field of every discrete-tier bundle** ([§5.2][s5-2], [D-019][d-019]).
+6082	The bundle's `Δt` is still `D·Δt_base`	D-185,D-291	**The bundle's `Δt` is still `D·Δt_base`** ([D-185][d-185], [D-291][d-291]).
+6093	The phase iterates	D-020	**The phase iterates** ([D-020][d-020]).
+6093	A [component](#g-component) fires at most one event per round	D-154	**A [component](#g-component) fires at most one event per round** ([D-154][d-154]).
+6102	An event fires in an iteration round if and only if three conditions hold	D-181	**An event fires in an iteration round if and only if three conditions hold** ([D-181][d-181]):
+6192	Boundary zero sets every prior to not-holding	D-082,D-292	**Boundary zero sets every prior to not-holding** ([D-082][d-082], [D-292][d-292]).
+6219	A handler executes against exactly the world its guard fired on	D-154	**A handler executes against exactly the world its guard fired on** ([D-154][d-154]).
+6231	A component's other eligible events are blocked, not lost	D-191	**A component's other eligible events are blocked, not lost** ([D-191][d-191]).
+6260	a handler cannot opt into seeing a same-round foreign transition	D-100,D-292	The trade, stated openly, is that **a handler cannot opt into seeing a same-round foreign transition** ([D-100][d-100], [D-292][d-292]).
+6296	Budget exhaustion degrades; it does not throw	D-181,D-292	**Budget exhaustion degrades; it does not throw** ([D-181][d-181], [D-292][d-292]).
+6324	Ticks stay outside the iteration, after quiescence	D-020	**Ticks stay outside the iteration, after quiescence** ([D-020][d-020]).
+6373	Pacing is outside the semantics	D-021	**Pacing is outside the semantics** ([D-021][d-021]).
+6382	Event localization runs identically paced or unpaced	D-080	**Event localization runs identically paced or unpaced** ([§10.4][s10-4], [D-080][d-080]).
+6388	The wall-clock map is piecewise affine, re-anchored at every knee	D-021	**The wall-clock map is piecewise affine, re-anchored at every knee** ([D-021][d-021]).
+6402	The deadline law is an absolute schedule with bounded debt	D-021	**The deadline law is an absolute schedule with bounded debt** ([D-021][d-021]).
+6408	Debt beyond a threshold of five frames' worth of budget, `5·h/p`, is forgiven	D-133	**Debt beyond a threshold of five frames' worth of budget, `5·h/p`, is forgiven** by re-anchor plus a warning ([D-133][d-133]).
+6415	`p = ∞` is pacer-off, not a limit value	D-021	**`p = ∞` is pacer-off, not a limit value** ([D-021][d-021]).
+6421	The wait mechanism is a hybrid sleep-then-spin with one knob	D-021	**The wait mechanism is a hybrid sleep-then-spin with one knob** ([D-021][d-021]).
+6445	The default `margin` is 2 ms	D-133	**The default `margin` is 2 ms** ([D-133][d-133]), the value the measurements above imply.
+6544	Staging (inbound).		**Staging (inbound).** Devices submit pending input writes at any wall-clock moment, never touching live [root inputs](#g-root-input) ([§11.4][s11-4]).
+6547	The drain.		**The drain.** Exactly one point in each frame, at its top, where the loop takes the staged batches and applies them to the root inputs.
+6551	Publication (outbound).		**Publication (outbound).** At the end of each boundary sequence the loop publishes an immutable [snapshot](#g-snapshot).
+6554	Control.		**Control.** Pause, pace and stop live on a separate few-word atomic surface ([§12.1][s12-1]).
+6556	Task topology.		**Task topology.** One loop on the calling task, one spawned task per rostered device, all run-scoped.
+6562	Device tasks are run-scoped.		**Device tasks are run-scoped.** `run!` spawns one task per [roster](#g-roster) entry after device `init!`, and [§12.4][s12-4] joins them all at every stop ([§1
+6568	The loop runs on the calling task	D-310	**The loop runs on the calling task** ([D-310][d-310]).
+6580	Topology is derived after initialization		**Topology is derived after initialization**, from the [frozen roster](#g-roster) plus the outcomes of device `init!`, and never from `run!`'s keywords.
+6585	Spawn-inside-`run!` is the start gate.		**Spawn-inside-`run!` is the start gate.** A task exists only once the run it serves exists.
+6592	Every handoff is one atomic reference operation.		- **Every handoff is one atomic reference operation.** Both shared structures reduce their mutable surface to single words, release/acquire `@atomic` fields.
+6599	No user code, no unbounded work, ever, inside a framework critical section.		- **No user code, no unbounded work, ever, inside a framework critical section.** FlightCore's pathologies are all "arbitrary code under a shared lock".
+6626	Rule.		**Rule.** The loop builds each snapshot in private memory, then publishes it with a single release-store to an [`@atomic latest`](#g-latest) reference.
+6642	Binding rule: nothing reachable from a published snapshot is ever written again.		**Binding rule: nothing reachable from a published snapshot is ever written again.** The table's immutable values ([§4.1][s4-1], [§7][s7]) make the compiler enf
+6642	Why.		**Why.** The soundness of lock-free reading rests on this rule.
+6647	The [framework status](#g-framework-status) is a concrete frozen value, not a window onto live bookkeeping.		**The [framework status](#g-framework-status) is a concrete frozen value, not a window onto live bookkeeping.** It carries the pacer diagnostics ([§10.7][s10-7]
+6647	Why.		**Why.** The binding rule forces that shape.
+6655	The captured table is the whole table.		**The captured table is the whole table.** It holds the declared [ports](#g-port), every one of them public ([§8.3][s8-3]).
+6655	promotion to a declared output		The inspection path for one is **promotion to a declared output**.
+6664	The captured table also includes the [root inputs](#g-root-input).		**The captured table also includes the [root inputs](#g-root-input).** Root inputs are source cells of the table, not state stores, so they ride along.
+6675	The snapshot deliberately does *not* carry the state stores (`x`, `s`, `m`).		**The snapshot deliberately does *not* carry the state stores (`x`, `s`, `m`).** There are two reasons.
+6695	Logging dissolves into publication.		**Logging dissolves into publication.** The log is a vector of retained snapshot references.
+6703	Retention: the trace's kill switch, plus [decimation](#g-decimation).		**Retention: the trace's kill switch, plus [decimation](#g-decimation).** The log takes the same plain on/off switch the trace has ([§11.5][s11-5]), and additio
+6703	Why decimation is admissible here and not there.	D-038	**Why decimation is admissible here and not there.** The derived/primary split ([D-038][d-038]) decides it.
+6720	Rule.		**Rule.** The log takes a retention bound beside its switch and its stride: `log_max`, the maximum number of retained snapshot references, default **65536** (2¹
+6720	65536		**Rule.** The log takes a retention bound beside its switch and its stride: `log_max`, the maximum number of retained snapshot references, default **65536** (2¹
+6724	The bound is a count, not a memory budget.		**The bound is a count, not a memory budget.** Snapshots are immutable object graphs with internal sharing ([§4.1][s4-1]), and a [field handle](#g-field-handle)
+6733	The default is finite unconditionally		**The default is finite unconditionally**, not a modal rule keyed on `t_end`.
+6738	When the log fills, the retention stride doubles, so coverage stays global.	D-137	**When the log fills, the retention stride doubles, so coverage stays global.** A rolling window, with the recent past at full density and the start of the sess
+6738	re-decimates progressively		Instead the log **re-decimates progressively**.
+6745	Why.	D-038	**Why.** That is the division of labor ([D-038][d-038]) carried through.
+6750	The guarantees are normative, not the mechanism.		**The guarantees are normative, not the mechanism.** There are three.
+6755	amortized		The thinning is **amortized**.
+6762	full		> fill at stride `log_every` → **full** → stride doubles → thin one predecessor
+6763	full		> per retained append, while refilling → **full** at stride `log_every · 2` → ⋯
+6774	The endpoints are retained unconditionally.		**The endpoints are retained unconditionally.** The run's first snapshot and its terminal snapshot ([§12.4][s12-4], [§13.5][s13-5]) survive any `log_every` and 
+6784	view policy, not a trajectory-determining one		And `log_max` is a **view policy, not a trajectory-determining one**.
+6797	Output-device bindings are snapshot bindings.		**Output-device bindings are snapshot bindings.** An output device (telemetry, the XPlane visualizer, disk streaming) consumes snapshots via [§12.3][s12-3].
+6811	inspection		This is **inspection** ([§13.5][s13-5]).
+6817	A binding chooses its side.		**A binding chooses its side.** A deep path is an *inspection* read.
+6825	Why the choice matters.		**Why the choice matters.** Attach validation converts *structural* drift to loud errors on both sides.
+6841	The [write surface](#g-write-surface) (the set of faces a writer's batch entries may reach) is [root inputs](#g-root-input).		**The [write surface](#g-write-surface) (the set of faces a writer's batch entries may reach) is [root inputs](#g-root-input).** A root input *is* the root [com
+6854	face name		[Devices](#g-device), mappings, the [trace](#g-trace) and the GUI write path address root inputs by **face name** ([§8.6][s8-6]).
+6865	Root-input exclusivity: one writer per root input at any time.		**Root-input exclusivity: one writer per root input at any time.** A device [claims](#g-claim) its root inputs at attach, and claiming an already-claimed root i
+6874	Why.		**Why.** A second live writer on one root input makes the applied value a timing artifact, as the worked example in [§11.4][s11-4] shows.
+6879	A claim is what a device *may* write, not what it will.		**A claim is what a device *may* write, not what it will.** Data-dependent write-sets are ordinary.
+6879	binding's enumerated allowed set		Such a device therefore claims the **binding's enumerated allowed set**, the faces the binding table lists, whether or not any given batch touches them.
+6891	Every writer has a write surface, and the periphery enforces it.		**Every writer has a write surface, and the periphery enforces it.** A batch entry reaches a root input **iff the named face is inside the writer's surface**.
+6891	iff the named face is inside the writer's surface		**Every writer has a write surface, and the periphery enforces it.** A batch entry reaches a root input **iff the named face is inside the writer's surface**.
+6891	Every device's surface is its claim set		**Every device's surface is its claim set**, and a claim set has two *sources*:
+6900	Returned.		- **Returned.** The binding enumerates the faces.
+6907	Computed.		- **Computed.** The binding declares `is_greedy(b) = true` ([§11.6][s11-6]) and the framework computes the claim at attach: all root-input faces minus the union
+6918	The periphery resolves root faces against the activation's cell layout alone	D-261	**The periphery resolves root faces against the activation's cell layout alone** ([D-261][d-261]).
+6940	One framework-owned remainder: the [harness writer](#g-harness-writer).		**One framework-owned remainder: the [harness writer](#g-harness-writer).** Beside the roster sits a **task-free entry point**, `stage!(sim, "face" => value, …)
+6940	task-free entry point		**One framework-owned remainder: the [harness writer](#g-harness-writer).** Beside the roster sits a **task-free entry point**, `stage!(sim, "face" => value, …)
+6940	last		The [harness cell](#g-harness-cell) (the always-present staging cell of the harness writer) drains **last**, by convention.
+6962	Root-input initial values are owned by the init/trim services.		**Root-input initial values are owned by the init/trim services.** Input declarations are bare types ([§8.2][s8-2]) and carry no defaults, yet a root input unfe
+6972	The roster is frozen per run: attach and detach are stopped-sim operations.		**The roster is frozen per run: attach and detach are stopped-sim operations.** `attach!`/`detach!` are legal in the `built`, `initialized` and `stopped` states
+6998	Device identity, ids and roster admission.		**Device identity, ids and roster admission.** Identity is the device instance.
+7024	Device death does not detach.		**Device death does not detach.** A mid-run crash, voluntary exit or unplug ([§11.6][s11-6], [§12.4][s12-4]) ends the device's *task*.
+7037	[guarded addition](#g-guarded-addition)		One deliberate asymmetry is on record as a **[guarded addition](#g-guarded-addition)** (a capability the design admits but does not build).
+7058	Rule.		**Rule.** Staging keeps one atomic [cell](#g-staging-cell) per attached [device](#g-device) under one [coalescing](#g-coalescing) policy: CAS merge, newest wins
+7069	Why.		**Why.** Merge is the *only* policy because it is always correct.
+7069	complete		A **complete** writer covers every face in every batch it stages.
+7069	sparse		A **sparse** writer stages only what was touched.
+7080	Rule.		**Rule.** The staged representation is fixed per attachment, compiled at attach.
+7113	Why.		**Why.** One concrete layout is what makes the frame-top drain compilable.
+7122	scatter		The drain applies each cell through an attach-compiled **scatter**: position → root-input cell, statically typed, masked-off positions skipped.
+7140	A greedy entry needs no special treatment here.		**A greedy entry needs no special treatment here.** Its claim was computed at the attach point, and by the time shapes are compiled it is an ordinary claim set 
+7144	The [harness cell](#g-harness-cell) (the always-present staging cell of the harness writer) gets the same treatment.		**The [harness cell](#g-harness-cell) (the always-present staging cell of the harness writer) gets the same treatment.** Under the roster freeze its derived sur
+7163	Rule.		**Rule.** Diagnostic sites follow the compilation, all of them to staging.
+7163	harness		A **harness** write to a claimed face is rejected the same way, with `ClaimedFaceEntry` naming the incumbent device.
+7178	Doctrine: staged values are levels, never deltas		**Doctrine: staged values are levels, never deltas** (`press_count = 17`, never `presses += 1`).
+7182	Rule.		**Rule.** At frame top the drain takes each device's cell with one `atomicswap(cell, nothing)`.
+7182	in attachment order		Each taken cell is then applied through its compiled scatter, **in attachment order**.
+7206	Mappings run on the device task.		**Mappings run on the device task.** Today's `assign_input!(mdl, mapping, data)` becomes the pure `map_input(data, mapping) → batch`.
+7212	Mappings are binding data, not shaping code.		**Mappings are binding data, not shaping code.** A mapping is a declarative table: axis/button → root input, plus per-axis conditioning parameters (deadzone, ex
+7218	a face's meaning is writer-independent		The boundary is set by the face contract: **a face's meaning is writer-independent**.
+7244	per-input cells		Three candidate staging shapes were on the table: **per-input cells**, a shared **[batch](#g-batch) stack**, and **per-device cells**.
+7244	[batch](#g-batch) stack		Three candidate staging shapes were on the table: **per-input cells**, a shared **[batch](#g-batch) stack**, and **per-device cells**.
+7244	per-device cells		Three candidate staging shapes were on the table: **per-input cells**, a shared **[batch](#g-batch) stack**, and **per-device cells**.
+7249	Root-input exclusivity rules out the very contest the setup builds.		**Root-input exclusivity rules out the very contest the setup builds.** Under root-input exclusivity ([§11.3][s11-3]) the contested-`u_cmd` scenario cannot aris
+7258	Drag against the stream.		- **Drag against the stream.** The user grabs the `u_cmd` slider while the joystick streams.
+7272	Edits while paused.	D-024	- **Edits while paused.** Under per-input cells, the still-polling joystick overwrites the user's `u_cmd` edit about 10 ms later ([D-024][d-024]).
+7285	Corrections the exercise forced.		- **Corrections the exercise forced.** The sparse-writer lost-write hazard is specific to one-cell-per-device layouts.
+7290	Discoveries.		- **Discoveries.** There were two: the active-widget contract, and the [port](#g-port)-resolution answer to panel reuse ([§11.7][s11-7]).
+7298	The input [trace](#g-trace)		**The input [trace](#g-trace)** is the sequence of drained, [device](#g-device)-tagged batches per frame.
+7304	One record format: every batch is retained sparse.		**One record format: every batch is retained sparse.** At the [drain](#g-drain) (the frame-top swap that publishes staged device writes into the root inputs) ea
+7311	Why.		**Why.** The rule is uniform because a [claim](#g-claim)'s *width* is a fact about one binding, not about a class of writers.
+7324	The costs are recorded rather than argued away.		**The costs are recorded rather than argued away.** On the wide writers the conversion is what keeps the trace honest.
+7324	about 2×		On the dense [component](#g-component) the conversion costs **about 2×**, a position beside every value where the positional tuple carried the value alone.
+7324	reversible as pure implementation		And the decision is **reversible as pure implementation**.
+7343	The [trace header](#g-trace-header) is the checkpoint `init!` takes at the end of [boundary zero](#g-boundary-zero)	D-274	**The [trace header](#g-trace-header) is the checkpoint `init!` takes at the end of [boundary zero](#g-boundary-zero)**, after the first [snapshot](#g-snapshot)
+7362	The run's `Deployment` and the structural layout.		- **The run's `Deployment` and the structural layout.** The [deployment](#g-deployment) (the scalar-free artifact the grid parameters fix) comes from [§9.2][s9-
+7376	`Trace` is that fixed header plus two append-only lists	D-255	**`Trace` is that fixed header plus two append-only lists**, `schemas` and `batches`, and its length ([D-255][d-255]).
+7386	Each writer's face-name → position schema lives in the `schemas` list.		**Each writer's face-name → position schema lives in the `schemas` list.** Positional records are meaningless without it, and replay does not reconstruct claims
+7413	Trace recording is on by default.		**Trace recording is on by default.** `init!` builds a fresh trace with the run under its `trace` keyword ([§12.6][s12-6], [Appendix B][sB]), the trace is retri
+7439	A handle outlives its roster entry as an object only.		**A handle outlives its roster entry as an object only.** `detach!` retires the entry and the compiled writer behind it, but the caller may still hold the handl
+7449	[`should_abort`](#g-should_abort) is an `attach!` keyword		**[`should_abort`](#g-should_abort) is an `attach!` keyword**, defaulting to `false`.
+7496	`shutdown!` must tolerate a partially initialized device.		**`shutdown!` must tolerate a partially initialized device.** The release guarantee holds on the one path *outside* this wrapper too.
+7507	The same tolerance covers a repeated call.		**The same tolerance covers a repeated call.** The wrapper runs `shutdown!` once on every exit path and records the release just after it returns.
+7516	The tolerance also covers a call with no `init!` before it.	D-268	**The tolerance also covers a call with no `init!` before it.** The initialization step lists each device for release before its `init!` begins, so that no inte
+7523	An `InterruptException` is never a `DeviceCrash`.		**An `InterruptException` is never a `DeviceCrash`.** Under the spawned-loop topology the calling task is the one running a device loop body inline, the GUI's (
+7580	`should_close` dissolves.		**`should_close` dissolves.** A window ✕ or peer EOT is the loop body returning.
+7615	conventions of the author-owned loop idiom		`map_input`/`map_output` are, precisely, **conventions of the author-owned loop idiom**.
+7628	Rule.		**Rule.** `reads(b)` returns a labeled NamedTuple of [selectors](#g-selector) (the closed family of deferred reads, [§14.4][s14-4]), for example `(; alt = get_o
+7636	Sides are declared, and the obligations they create are enforced both ways.		**Sides are declared, and the obligations they create are enforced both ways.** `claims` and `reads` have **error-throwing fallbacks on the root**, so a declare
+7636	error-throwing fallbacks on the root		**Sides are declared, and the obligations they create are enforced both ways.** `claims` and `reads` have **error-throwing fallbacks on the root**, so a declare
+7636	bidirectional conformance check		The attach runs a **bidirectional conformance check** over the pair (trait, method):
+7653	specific		- A **specific** method of `claims` or `reads` defined for the binding type while its trait reads false ⇒ error, the converse direction of the same fact.
+7665	This is what closes the shadowing hole.	D-177	**This is what closes the shadowing hole.** Under the rejected alternative, detection by method presence ([D-177][d-177]), a bidirectional binding whose `claims
+7680	Why the [periphery](#g-periphery) gets roots where [components](#g-component) have one.		**Why the [periphery](#g-periphery) gets roots where [components](#g-component) have one.** [§8.5][s8-5] refuses a class supertype for two reasons, and neither 
+7680	sidedness is its public contract		Second, a component's class is implementation detail behind its contract ([§8.5][s8-5]), while a binding's **sidedness is its public contract**, the one thing e
+7690	answered rather than repeated		The last of the three is **answered rather than repeated** by the design above, since redundancy *with a cross-check* is drift detection.
+7698	`is_greedy` is a claim source, not a device class.		**`is_greedy` is a claim source, not a device class.** What the declaration buys is one computation at the attach point.
+7710	A second greedy attach stakes the empty remainder.		**A second greedy attach stakes the empty remainder.** The complement is computed against the [roster](#g-roster) as it stands.
+7722	Several interactive front ends may be rostered at once.		**Several interactive front ends may be rostered at once.** A web console can claim the autopilot faces beside a local GUI claiming the stick faces.
+7727	The shipped GUI binding is a greedy one.		**The shipped GUI binding is a greedy one.** It declares `is_input` and `is_greedy`, stakes the computed claim (everything unclaimed at the moment it attaches),
+7741	The empty enumeration is not a back door.		**The empty enumeration is not a back door.** `is_input(b) = true` with `claims(b) = ()` stays an honest degenerate, a device that may write nothing.
+7806	the component's own [ports](#g-port)		Widgets, however, name **the component's own [ports](#g-port)**, never [root inputs](#g-root-input).
+7814	Root-driven, within the GUI's claim: a live widget.		- **Root-driven, within the GUI's claim: a live widget.** It [peeks](#g-peek) and stages the resolved root input through the GUI's own [staging cell](#g-staging
+7817	Component-driven, or root-driven under another device's claim: a read-only rendering.		- **Component-driven, or root-driven under another device's claim: a read-only rendering.** It displays the driven value from the [snapshot](#g-snapshot), visua
+7823	a widget is live exactly when the underlying input is yours to command in this configuration.		This retires FlightCore's dead-slider convention and replaces it with checked structure: **a widget is live exactly when the underlying input is yours to comman
+7836	Liveness is a [derived property](#g-derived-liveness), and resolution is transitive.		**Liveness is a [derived property](#g-derived-liveness), and resolution is transitive.** A widget is live iff two things hold.
+7836	inside the GUI's own [claim](#g-claim)		Its port's feed chain terminates in a root input, *and* that root input lies **inside the GUI's own [claim](#g-claim)** in the run's frozen surface partition (r
+7847	Unexported ports are unpokeable.		**Unexported ports are unpokeable.** FlightCore's poke-any-`u` workflow does not survive [contract](#g-contract) visibility ([§8.3][s8-3]), deliberately.
+7862	Peek rule.		**Peek rule.** A widget displays its **own pending write if any, else the snapshot value**.
+7862	own pending write if any, else the snapshot value		**Peek rule.** A widget displays its **own pending write if any, else the snapshot value**.
+7871	Staging contract: widgets stage on interaction events only.		**Staging contract: widgets stage on interaction events only.** Value widgets (sliders, drags) stage the new absolute level on edit.
+7952	What stays deferred is the GUI package's half	D-310	**What stays deferred is the GUI package's half** (`pending.md`), which the built-in GUI's parking ([D-310][d-310]) assigns to the browser client over the bridg
+7985	One [diagnostic cell](#g-diagnostic-cell) per writer: one per rostered device, one for the harness writer, one for the loop itself ([D-200][d-200]).	D-200	**One [diagnostic cell](#g-diagnostic-cell) per writer: one per rostered device, one for the harness writer, one for the loop itself ([D-200][d-200]).** The [`M
+7985	bounded accumulation		The cell holds a **bounded accumulation** and one atomic liveness timestamp.
+7985	16		The accumulation is a small ring of diagnostic values, capacity **16**, plus a per-kind count of what the ring could not hold.
+8002	That bound *is* the rate limit.		**That bound *is* the rate limit.** When a writer emits past the ring's capacity within one frame, the entry is not stored and its kind's suppressed count incre
+8014	This [drain](#g-drain) is the same drain [§11.4][s11-4] specifies.		**This [drain](#g-drain) is the same drain [§11.4][s11-4] specifies.** One `atomicswap` per cell at frame top, at the same point and under the same indivisible-
+8014	empty sentinel		What the loop swaps *in* is a shared **empty sentinel**, so a quiet frame swaps the sentinel in and gets the sentinel back.
+8026	The heartbeat rides in the same cell		**The heartbeat rides in the same cell**, as an atomic timestamp field.
+8036	The published framework status is a concrete frozen value.		**The published framework status is a concrete frozen value.** Per writer it carries four things.
+8050	Presentation is where `maxlog` lives.		**Presentation is where `maxlog` lives.** A status renderer prints a given writer × kind up to **25** cumulative occurrences and then switches to count-only dis
+8050	25		**Presentation is where `maxlog` lives.** A status renderer prints a given writer × kind up to **25** cumulative occurrences and then switches to count-only dis
+8058	The terminal snapshot carries the run's final cumulative counters		**The terminal snapshot carries the run's final cumulative counters** ([§12.4][s12-4], [§13.5][s13-5]).
+8074	Allocation.		**Allocation.** On a quiet frame **nothing allocated scales with diagnostic activity**.
+8074	nothing allocated scales with diagnostic activity		**Allocation.** On a quiet frame **nothing allocated scales with diagnostic activity**.
+8074	fixed-shape isbits record, never a `Dict`		The per-kind counters are a **fixed-shape isbits record, never a `Dict`**.
+8128	The stop word carries its issuer.		**The stop word carries its issuer.** Each issuing site writes its identity (the device's name, `:code`, or `:interrupt`) by compare-and-swap from empty, and th
+8135	`ControlRequestedStop` sits outside the stop policy	D-255	**`ControlRequestedStop` sits outside the stop policy** ([D-255][d-255]).
+8139	Beside pause, pace and `margin`, `Control` keeps the stop word, the running flag, the wait and the shutdown tail's `join_timeout`	D-256,D-317	**Beside pause, pace and `margin`, `Control` keeps the stop word, the running flag, the wait and the shutdown tail's `join_timeout`** ([§12.4][s12-4], [D-256][d
+8147	Control is not staging, structurally.		**Control is not staging, structurally.** Staged writes apply at [drains](#g-drain), and a paused loop drains nothing, so un-pause via staging would deadlock by
+8156	The pause is two verbs on the simulation	D-268	**The pause is two verbs on the simulation** ([D-268][d-268]).
+8165	Rule.		**Rule.** The tail clears the pause flag beside the sticky stopped status.
+8168	Why.		**Why.** The stop word is cleared at the top of each run because a stop belongs to the run it ended.
+8177	Pace and `margin` are two more verbs and two readers	D-269	**Pace and `margin` are two more verbs and two readers** ([D-269][d-269]).
+8197	Rule.		**Rule.** The coarse phase uses task-yielding `sleep`.
+8200	Why.		**Why.** What the choice buys is the wait slot.
+8210	Rule.		**Rule.** With devices attached, every frame yields at least once.
+8212	Why.		**Why.** The rule is semantically free.
+8226	Rule.	D-027	**Rule.** The thread budget is a documented sizing rule and a startup warning, not a hard error ([D-027][d-027]).
+8248	Liveness heartbeat.		**Liveness heartbeat.** Since starvation is survivable, it must be diagnosable.
+8260	Rule.		**Rule.** `task_state` has three values.
+8268	Stale means a liveness timestamp more than 2 s behind wall clock.		**Stale means a liveness timestamp more than 2 s behind wall clock.** The threshold is deliberately loose, because the heartbeat is advisory.
+8280	Rule.		**Rule.** Two artifacts provide it: a monotonic **[boundary counter](#g-boundary-counter)**, the loop's own, plus one `Threads.Condition`.
+8280	[boundary counter](#g-boundary-counter)		**Rule.** Two artifacts provide it: a monotonic **[boundary counter](#g-boundary-counter)**, the loop's own, plus one `Threads.Condition`.
+8303	Two indices, and where each lives.		**Two indices, and where each lives.** The [snapshot](#g-snapshot) carries the trajectory's *published-boundary ordinal* with `t`.
+8316	Rule.		**Rule.** The order of the two publications is normative.
+8316	before		The release-store of `latest` ([§11.2][s11-2]) happens **before** the counter increment under the lock.
+8334	Semantics: newest-wins, no queues.		**Semantics: newest-wins, no queues.** A slow consumer skips frames and always receives the current world.
+8359	Rule.		**Rule.** Steps (1) through (5) below run in that order on every stop, whatever initiated it.
+8363	Initiation.		**Initiation.** Three events start a shutdown: `t_end` is reached, a control-plane stop is issued, or a [stop request](#g-stop-request) the advance honours read
+8373	Wake all framework waits.		**Wake all framework waits.** The waits are the next-snapshot wait and the pause.
+8376	Unblock device-specific blocking calls.		**Unblock device-specific blocking calls.** The hook is `unblock!(device)`, default no-op.
+8382	Loop bodies exit.		**Loop bodies exit.** The exit is the author's own `while running(handle)` loop, the authoring contract of [§11.6][s11-6].
+8388	Join under the `join_timeout` cap.	D-256	**Join under the `join_timeout` cap.** The cap lives on `Control`, the tail's own owner ([§12.1][s12-1], [D-256][d-256]).
+8399	Device-initiated paths.		**Device-initiated paths.** A device exits voluntarily when its loop body returns, at a window ✕ or a peer EOT.
+8411	Loop-side failure.		**Loop-side failure.** A failure on the loop's own side runs steps (1) through (5) from the catch path, specified in [§13.6][s13-6].
+8420	(1)		> **(1)** stop observed → current boundary completed → final snapshot published
+8421	(2)		> → sticky `stopped` set → **(2)** framework waits woken → **(3)** `unblock!`
+8421	(3)		> → sticky `stopped` set → **(2)** framework waits woken → **(3)** `unblock!`
+8422	(4)		> per device → **(4)** loop bodies return, each through its wrapper's
+8423	(5)		> `finally shutdown!` → **(5)** join under the `join_timeout` cap → `run!`
+8426	Why the final snapshot goes out before the status is set.		**Why the final snapshot goes out before the status is set.** Publishing first guarantees that output devices can flush the true final state.
+8435	Rule.		**Rule.** That terminal snapshot is retained in the log unconditionally, under any `log_every` and any `log_max` ([§11.2][s11-2]).
+8438	`t_end` lands on the grid.		**`t_end` lands on the grid.** The run ends at the first grid boundary whose time reaches or exceeds `t_end`.
+8447	The two termination sources differ in kind.		**The two termination sources differ in kind.** `t_end` is a grid fact, checked against boundary times on the grid.
+8451	Why the default is five seconds.		**Why the default is five seconds.** It is generous for GUI window teardown and socket closes.
+8455	The cap is deployment, not implementation.	D-198	**The cap is deployment, not implementation.** That is the disposition [§10.4][s10-4] gives its own two constants, extended here to an operational one ([D-198][
+8465	What survives the tail.		**What survives the tail.** After (5) the task set is empty, device tasks being per-run artifacts ([§11.1][s11-1]), and `shutdown!` has released each device's O
+8473	The next run re-acquires everything.		**The next run re-acquires everything.** The next `run!` re-runs device `init!`, since resource acquisition is per-run.
+8485	Initialization is a step of this protocol, taken at the top of a run.		**Initialization is a step of this protocol, taken at the top of a run.**
+8487	Rule.		**Rule.** Before any task is spawned, the loop calls `init!` once per roster entry, in attachment order, on the calling task.
+8510	Why the bracket.		**Why the bracket.** It is what makes "guaranteed on every exit path" ([§11.6][s11-6]) true of the path outside that wrapper.
+8517	The entry is listed for release before its `init!` begins	D-268	**The entry is listed for release before its `init!` begins** ([D-268][d-268]).
+8524	The report is the ordinary `DeviceCrash`, not a kind of its own		**The report is the ordinary `DeviceCrash`, not a kind of its own** ([Appendix C][sC]).
+8530	Rule.		**Rule.** The report is written through the ordinary `report!(address, diagnostic)` entry point, addressed by the roster entry rather than by a handle.
+8538	Rule.		**Rule.** No task is spawned for a failed device, so it is dead from [boundary zero](#g-boundary-zero) (the initialization boundary: the ordinary macro-sequence
+8547	Rule.		**Rule.** The claims of a failed device persist to run end.
+8556	The run's disposition splits on `should_abort`, uniformly with (6).		**The run's disposition splits on `should_abort`, uniformly with (6).** With the flag clear, which is the default ([§11.6][s11-6]), the remaining entries initia
+8575	Topology is derived after initialization		**Topology is derived after initialization**, not from the roster alone ([§11.1][s11-1]).
+8580	Rule.	D-268	**Rule.** An `InterruptException` inside a device's `init!` is the operator's stop, not that device's crash ([D-268][d-268]).
+8593	The operator interrupt is a stop, not a failure.		**The operator interrupt is a stop, not a failure.** Ctrl-C in an interactive session is a control-plane stop command issued by hand.
+8610	Rule.		**Rule.** Masking across the boundary is normative, not an implementation hint.
+8613	Why.		**Why.** An `InterruptException` is delivered asynchronously.
+8628	A deferred interrupt yields to the frame's own stop request	D-268	**A deferred interrupt yields to the frame's own stop request** ([D-268][d-268]).
+8637	A frame that throws with an interrupt pending ends `errored`	D-268	**A frame that throws with an interrupt pending ends `errored`** ([D-268][d-268]).
+8645	An interrupt after a frame's throw does not displace it	D-268	**An interrupt after a frame's throw does not displace it** ([D-268][d-268]).
+8653	Rule.	D-268	**Rule.** The tail's bookkeeping is masked too ([D-268][d-268]).
+8662	A forced throw reaches the defensive arm	D-268	**A forced throw reaches the defensive arm** ([D-268][d-268]).
+8674	A second interrupt during the tail		**A second interrupt during the tail** collapses the remaining joins immediately.
+8681	Interactive-session scope, stated plainly.		**Interactive-session scope, stated plainly.** Outside the REPL, Julia's default (`exit_on_sigint(true)`) kills the process on SIGINT before any of this machine
+8697	Sim-time scripts are model behavior, so they become [scenario components](#g-scenario-component)		**Sim-time scripts are model behavior, so they become [scenario components](#g-scenario-component)** (ordinary periodic discrete components holding a sim-time s
+8703	Rule.		**Rule.** A sim-time script becomes a source or supervisor [component](#g-component); a wall-clock interaction becomes a device.
+8712	The component mapping is strictly richer than the callback it replaces.		**The component mapping is strictly richer than the callback it replaces.**
+8728	`user_callback!` is eliminated	D-031	**`user_callback!` is eliminated** ([D-031][d-031]).
+8733	Manual event triggering needs no mechanism.		**Manual event triggering needs no mechanism.** It takes a [root input](#g-root-input) plus a [boundary-detected](#g-boundary-detected) [guard](#g-guard) readin
+8740	Mid-run re-initialization is not built, because it is not demonstrated.		**Mid-run re-initialization is not built, because it is not demonstrated.** Initialization and trim are stopped-sim workflows (first-class services, [§14][s14])
+8748	The doctrine, final form.		**The doctrine, final form.** While a simulation runs, the periphery stages root-input writes and issues control commands.
+8760	[`Run`](#g-run) is what one run owns	D-255,D-260,D-317	**[`Run`](#g-run) is what one run owns** ([D-255][d-255], [D-260][d-260], [D-317][d-317]).
+8784	placeholder run	D-255	A `Simulation` is constructed with a **placeholder run**, an empty log, no trace, no feed and no termination, which `init!`, `restore!` and `replay!` replace ([
+8791	`Simulation` is a mutable struct of four fields	D-317	**`Simulation` is a mutable struct of four fields**, the [`Model`](#g-model) (the deployment and its executor at one scalar), the run, the data plane and the [c
+8812	Rule.		**Rule.** A struct holds what it owns or what it must retain across calls.
+8817	built		A `Simulation` moves through five states: **built**, **initialized**, **running**, and terminally **stopped** or **errored** ([§13.4][s13-4]).
+8817	initialized		A `Simulation` moves through five states: **built**, **initialized**, **running**, and terminally **stopped** or **errored** ([§13.4][s13-4]).
+8817	running		A `Simulation` moves through five states: **built**, **initialized**, **running**, and terminally **stopped** or **errored** ([§13.4][s13-4]).
+8817	stopped		A `Simulation` moves through five states: **built**, **initialized**, **running**, and terminally **stopped** or **errored** ([§13.4][s13-4]).
+8817	errored		A `Simulation` moves through five states: **built**, **initialized**, **running**, and terminally **stopped** or **errored** ([§13.4][s13-4]).
+8817	Built		**Built** means stores allocated and [boundary zero](#g-boundary-zero) not completed.
+8817	Initialized		**Initialized** means `init!` has completed boundary zero, the initialization boundary run as the ordinary macro-sequence with an empty integrate ([§14.5][s14-5
+8826	`lifecycle(sim)` derives the state rather than storing it	D-317	**`lifecycle(sim)` derives the state rather than storing it** ([D-317][d-317]).
+8841	[input mode](#g-input-mode)		Beside the state, the run carries an **[input mode](#g-input-mode)**, `:live` or `:replay`, read as `mode(sim)`.
+8849	Rule.		**Rule.** `init!` is mandatory.
+8860	Where the loop runs.		**Where the loop runs.** The loop runs on the [calling task](#g-calling-task), the task that invoked `run!`, and every rostered [device](#g-device) on a spawned
+8867	Partial advance.		**Partial advance.** `step!(sim; frames = 1)` advances whole frames synchronously through the ordinary frame sequence ([drain](#g-drain), integrate, boundaries,
+8881	A stepping session is deviceless by construction.		**A stepping session is deviceless by construction.** Device tasks are per-`run!` artifacts ([§11.1][s11-1]), and a device loop's `while running(handle)` is fal
+8888	The [frame-top drain](#g-drain) still runs		**The [frame-top drain](#g-drain) still runs**, so `step!` frames stay bit-identical to `run!` frames.
+8888	harness [cell](#g-harness-cell)		What it drains is the **harness [cell](#g-harness-cell)**.
+8904	Status, termination and the `run!` [seam](#g-seam).		**Status, termination and the `run!` [seam](#g-seam).** Between `step!` calls a simulation reports **initialized**.
+8904	initialized		**Status, termination and the `run!` [seam](#g-seam).** Between `step!` calls a simulation reports **initialized**.
+8911	actually advanced		`step!` therefore returns the number of frames **actually advanced**.
+8920	Re-running: `stopped → init! → run!` remains the authored re-run.		**Re-running: `stopped → init! → run!` remains the authored re-run.** `init!` re-runs boundary zero from its condition.
+8936	`checkpoint` and `restore!` exist on the `Model` and on the `Simulation`, and a `Checkpoint` is the `Model`'s state beside the run's cursor	D-319	**`checkpoint` and `restore!` exist on the `Model` and on the `Simulation`, and a `Checkpoint` is the `Model`'s state beside the run's cursor** ([D-319][d-319])
+8977	Device attachments persist across re-initialization		**Device attachments persist across re-initialization**, because attachment is orthogonal to the run lifecycle ([§11.3][s11-3]).
+8985	Task topology follows the roster each time		**Task topology follows the roster each time** ([§11.1][s11-1]).
+8989	The stop policy is declared per advance.	D-255,D-316	**The stop policy is declared per advance.** `t_end` and `ignore_stop_requests` are keywords of `run!`, `replay!` and `step!`, and each call builds and validate
+8999	`errored` is terminal	D-059	**`errored` is terminal** ([D-059][d-059]).
+9016	the ordinary loop with exactly one substitution		`replay!` is **the ordinary loop with exactly one substitution**, not a second loop.
+9021	Restore from the header.		- **Restore from the header.** `replay!` restores the trace's [checkpoint](#g-checkpoint) (the `Model`'s state at a frame top as one value), the state the recor
+9031	The [drain](#g-drain) reads the trace.		- **The [drain](#g-drain) reads the trace.** Each frame top applies the recording's batches for that **[frame ordinal](#g-frame-ordinal)**, the frame index a ba
+9031	[frame ordinal](#g-frame-ordinal)		- **The [drain](#g-drain) reads the trace.** Each frame top applies the recording's batches for that **[frame ordinal](#g-frame-ordinal)**, the frame index a ba
+9031	verbatim, with no surface re-check		Recorded batches apply **verbatim, with no surface re-check**.
+9043	Rule.		**Rule.** A simulation is in one of two [input modes](#g-input-mode), `:live` or `:replay`, and the mode decides which source that one drain branch reads: the [
+9051	Why.		**Why.** A mode that outlives the call makes a partial replay a resumable position rather than the end of an operation.
+9059	Rule.		**Rule.** `replay!(sim, trc; restore = false)` attaches the feed to the simulation as it stands and restores nothing.
+9075	Termination and partial replay.		- **Termination and partial replay.** In `:replay` the recording is the bound.
+9075	through the frame whose execution published boundary `k`		The `to_boundary` spelling is defined as running **through the frame whose execution published boundary `k`**, so replay always halts at a frame top.
+9097	`to_time` addresses the same halt by time.		- **`to_time` addresses the same halt by time.** The keyword is mutually exclusive with `to_boundary`, and it halts at the **last frame top at or before** the t
+9097	last frame top at or before		- **`to_time` addresses the same halt by time.** The keyword is mutually exclusive with `to_boundary`, and it halts at the **last frame top at or before** the t
+9111	The halt flips the mode only at the recording's end.		- **The halt flips the mode only at the recording's end.** A frame budget that runs out halts the loop at a frame top, leaving the simulation `initialized` ([§1
+9119	`live!` is the mode's one manual door.		- **`live!` is the mode's one manual door.** The flip above is automatic, and it happens only at the recording's end.
+9146	Replay ends `initialized`, never `stopped`.		- **Replay ends `initialized`, never `stopped`.** That state is boundary-consistent and ready to advance, the same state `step!` leaves ([§12.6][s12-6]).
+9159	Replay re-records.		- **Replay re-records.** The drain records normally.
+9163	[Pacing](#g-pacing) and the [control plane](#g-control-plane) are unchanged		- **[Pacing](#g-pacing) and the [control plane](#g-control-plane) are unchanged** ([§10.7][s10-7], [§12.1][s12-1]).
+9170	[Devices](#g-device) are readers.		- **[Devices](#g-device) are readers.** Rostered devices init and spawn normally ([§11.1][s11-1]) and consume [snapshots](#g-snapshot) ([§11.2][s11-2], [§12.3][
+9178	Validation is loud and up front.		- **Validation is loud and up front.** Before the first frame, the checkpoint's fingerprint is validated against the target, its layout against the `Build` (sto
+9178	validated		Each writer's face-name → position schema, on the trace's `schemas` list ([§11.5][s11-5]), is **validated** in the same pass.
+9198	[what-if replay](#g-what-if-replay)		Replaying against the same structure with changed parameters is the **[what-if replay](#g-what-if-replay)**, the deterministic re-driving of the recorded inputs
+9209	The checkpoint check compares two deployments as values	D-254	**The checkpoint check compares two deployments as values** ([D-254][d-254]).
+9292	Declarative checks over collected structure collect.		- **Declarative checks over collected structure collect.** These are the checks for unconnected inputs, two producers, wire typos and type mismatches, [face](#g
+9302	User-code evaluation fails fast.		- **User-code evaluation fails fast.** User code runs in three places.
+9317	Rule.		**Rule.** Collection reaches the step barrier, under a dependency rule.
+9339	There is no cascade suppression within a step.	D-057	**There is no cascade suppression within a step.** This is a deliberate simplification ([D-057][d-057]).
+9352	Rule.	D-058	**Rule.** A diagnostic is a plain value from a small closed set of [kinds](#g-kind) ([D-058][d-058]).
+9352	[Appendix C][sC]		**[Appendix C][sC]** enumerates that set normatively.
+9371	The carrier's type parameter spells the policy.		**The carrier's type parameter spells the policy.** It is the diagnostic's kind for a fail-fast throw and `Vector{Diagnostic}` for a collected one.
+9433	Strings, never instances.		- **Strings, never instances.** Diagnostics carry paths and names as strings, never component instances and never component types.
+9438	The didactic style is policy.		- **The didactic style is policy.** Every diagnostic states the fix or the lists-in-hand, not just the violation.
+9443	Rule.		**Rule.** A warning raised while producing an artifact lives on that artifact.
+9450	The build produces artifacts, so its warnings live on them.		**The build produces artifacts, so its warnings live on them.** `Build` and [`Deployment`](#g-deployment) (the scalar-free artifact the grid parameters fix) car
+9462	The runtime mutates state, so its warnings live in that state's status.		**The runtime mutates state, so its warnings live in that state's status.** The stream is per-occurrence.
+9476	A stopped-sim service returns an artifact, so its warnings live on it.		**A stopped-sim service returns an artifact, so its warnings live on it.** `trim!` returns a `TrimReport`, and `TrimCommitEvents`, `TrimCommitResiduals` and `Tr
+9484	[Chattering](#g-chattering), or localization-budget exhaustion		- **[Chattering](#g-chattering), or localization-budget exhaustion** ([§10.4][s10-4]).
+9487	Firing-budget exhaustion		- **Firing-budget exhaustion** ([§10.6][s10-6]).
+9489	Forgiven-debt re-anchor		- **Forgiven-debt re-anchor** ([§10.7][s10-7]).
+9491	The write-surface and entry violations		- **The write-surface and entry violations** ([§11.3][s11-3]), all raised at staging.
+9500	A tolerated [device](#g-device)-side datum failure		- **A tolerated [device](#g-device)-side datum failure** ([§11.6][s11-6], [§13.4][s13-4]).
+9504	Staging discarded during [replay](#g-replay)		- **Staging discarded during [replay](#g-replay)** ([§12.7][s12-7]).
+9507	Thread-budget tightness		- **Thread-budget tightness** ([§12.2][s12-2]).
+9509	Device join timeout		- **Device join timeout** ([§12.4][s12-4]).
+9515	Device crash		- **Device crash** ([§12.4][s12-4], [§13.4][s13-4]).
+9518	Unbounded run		- **Unbounded run** ([§13.5][s13-5]).
+9540	The walk enforces two duties, and they belong to different clients.		**The walk enforces two duties, and they belong to different clients.** The first is the one-level rule ([§6.1][s6-1]).
+9540	past		A segment that traverses **past** a generically-held field (one whose declared type is non-concrete) is a diagnostic, even though the concrete instance in hand 
+9552	Which rule applies depends on who is resolving.	D-083	**Which rule applies depends on who is resolving.** [D-083][d-083] separates the reads a build's correctness rests on from the reads that only observe it.
+9560	wiring		| **wiring** | connection declarations, in the structure step | the one-level rule: an immediate child and one of its faces |
+9561	service		| **service** | [condition](#g-condition) entries (the path-addressed sparse overlay that sets a build's state), trim `reads`, [taps](#g-taps) ([§14.3][s14-3], 
+9561	at the authoring or mount level		| **service** | [condition](#g-condition) entries (the path-addressed sparse overlay that sets a build's state), trim `reads`, [taps](#g-taps) ([§14.3][s14-3], 
+9562	inspection		| **inspection** | [device](#g-device) read [bindings](#g-binding), GUI panels, [snapshot](#g-snapshot) and log inspection ([§11.2][s11-2], [§11.7][s11-7]) | th
+9580	The scoping is one principle, not three concessions.		**The scoping is one principle, not three concessions.** What varies across the three clients is not how far a client is trusted.
+9608	Where caught.		**Where caught.** The frame of the [`Model`](#g-model) (the deployment and its executor at one scalar) wraps each execution of the [boundary](#g-boundary) macro
+9608	[execution cursor](#g-execution-cursor)		The [executor](#g-executor) (the compiled form of the stage [execution order](#g-execution-order)) maintains an **[execution cursor](#g-execution-cursor)**, a p
+9639	How handled.		**How handled.** The catch site wraps the original exception in `StepError`, the runtime counterpart of the `DiagnosticError` carrier.
+9639	frame-entry boundary index		A `StepError` carries five things: the cursor's frame, the boundary time, the **frame-entry boundary index**, the host of the catch, and the original exception 
+9652	The species rule.		**The species rule.** The catch site unwraps a single-diagnostic `DiagnosticError` thrown inside the guarded sequence, and the `StepError`'s `cause` is that dia
+9665	The cause's type is the carrier's parameter.		**The cause's type is the carrier's parameter.** `StepError{C}` takes the type of its `cause`, bounded to a diagnostic or an exception.
+9702	Boundary zero is caught too, under the service's disposition.		**Boundary zero is caught too, under the service's disposition.** Boundary zero runs inside `init!`, a stopped-sim service, not inside the loop.
+9738	The one exception never wrapped.		**The one exception never wrapped.** An `InterruptException` is not model code failing.
+9750	Disposition.		**Disposition.** The `Simulation` ends in a terminal status, `stopped` or `errored`, with the exception retrievable.
+9762	The nonfinite check.		**The nonfinite check.** Divergence is not termination.
+9769	first act		*Placement is the whole value.* The sweep is the boundary's **first act**.
+9786	Domain separation.		**Domain separation.** [Device](#g-device)-side user code fails in the device's own domain, because loop bodies and mappings run on the device task ([§11.4][s11
+9797	no counterpart here	D-060	FlightCore's `SimulationTermination` idiom (model code throws, and the loop catches and logs it as informational) has **no counterpart here** ([D-060][d-060]).
+9797	exceptions from model code are always abnormal		The discipline is that **exceptions from model code are always abnormal**.
+9803	Detection		- **Detection** is ordinary [guard](#g-guard)/handler/mode machinery.
+9810	Publication		- **Publication** is a [stop request](#g-stop-request) (an output port of the framework enum `StopFlag`), declared where the condition is detected.
+9810	A port whose type is exactly `StopFlag` is a stop request, whoever publishes it	D-316	**A port whose type is exactly `StopFlag` is a stop request, whoever publishes it** ([D-316][d-316]).
+9821	Placement		- **Placement** is checked at build.
+9821	A `StopFlag` leaf nested inside a port of another type is `IllegalPortType`, and so is a root input whose type carries a `StopFlag` anywhere	D-316	**A `StopFlag` leaf nested inside a port of another type is `IllegalPortType`, and so is a root input whose type carries a `StopFlag` anywhere** ([D-316][d-316]
+9829	The roster		- **The roster** names every request.
+9829	The build records one `Requester(path, port, reason)` per `StopFlag` output port, as the `requesters` of the activation's cell layout, index-aligned with the `StopFlag` block	D-316	**The build records one `Requester(path, port, reason)` per `StopFlag` output port, as the `requesters` of the activation's cell layout, index-aligned with the 
+9837	Policy		- **Policy** is declared per advance.
+9837	Every request is honoured unless the advance ignores it	D-316	**Every request is honoured unless the advance ignores it** ([D-316][d-316]).
+9837	[`StopPolicy`](#g-stop-policy)	D-261	Each advance builds a **[`StopPolicy`](#g-stop-policy)**, the immutable value of `t_end` plus the ignored requester paths, and passes it to the loop with an ign
+9871	The library spelling is `StopRequest`.		**The library spelling is `StopRequest`.** It is a stateless continuous leaf in the mould of `Constant` ([§13.7][s13-7]).
+9897	An unbounded run is allowed.		**An unbounded run is allowed.** `run!(sim)` with `t_end = Inf` and no honoured request is the interactive session's ordinary shape, and the [operator interrupt
+9917	Why one binding site.	D-255	**Why one binding site.** A `StopPolicy` is what the caller declares for one advance, so it is a value that advance builds ([D-255][d-255]).
+9928	The termination record names the source, as a typed value.	D-255	**The termination record names the source, as a typed value.** The run's [termination record](#g-termination-record) carries its *outcome*, and the `StopPolicy`
+9964	Rule.		**Rule.** The sources are consulted in a fixed order.
+9969	Stop requests are sampled at completed boundaries; declare a sign-form event if you need the stop localized.		**Stop requests are sampled at completed boundaries; declare a sign-form event if you need the stop localized.** Both shapes of the condition feeding a request 
+10004	Inspection		**Inspection** is human-facing, has no effect on run semantics, and legitimately sees every public [cell](#g-cell).
+10004	A read the run acts on		**A read the run acts on** changes what the run *does*, and it reads only what the model declared for it, never an arbitrary cell.
+10025	The [boundary](#g-boundary) is all-or-nothing outside the sim task.		**The [boundary](#g-boundary) is all-or-nothing outside the sim task.** That is why a `StepError` cannot break [§12.4][s12-4].
+10035	discards the failed boundary, promotes the previous snapshot to final, and rejoins the ordinary tail.		The abnormal path therefore **discards the failed boundary, promotes the previous snapshot to final, and rejoins the ordinary tail.** The protocol becomes one t
+10094	Every artifact renders itself through `show`	D-257	**Every artifact renders itself through `show`** ([§9.2][s9-2], [D-257][d-257]).
+10107	`show(::Structure)` owes [face](#g-face) routes.		**`show(::Structure)` owes [face](#g-face) routes.** For every root face, that means the resolved chain down to the producing terminal, printed as one line per 
+10120	A standard [component](#g-component) library makes good on the junction promise ([§6.2][s6-2]).		**A standard [component](#g-component) library makes good on the junction promise ([§6.2][s6-2]).** That promise rests on explicit junctions being *cheap*.
+10124	A block joins the library's inventory by judgement against three guidelines	D-313	**A block joins the library's inventory by judgement against three guidelines** ([D-313][d-313]).
+10156	library blocks are ordinary components		The doctrine is that **library blocks are ordinary components**, with no framework privileges and no special vocabulary.
+10163	Arity and port types come from type parameters	D-311	**Arity and port types come from type parameters** ([D-311][d-311]).
+10176	discrete		`UnitDelay{V}` is a **discrete** leaf at `K = 1`.
+10192	The delay holds its initial value as instance data	D-312	**The delay holds its initial value as instance data** ([D-312][d-312]), so `UnitDelay(v0)` needs no `zero` method on `V`.
+10203	source block		`Constant{V}` is the **source block**.
+10216	the leaf is deliberately [pinned](#g-walked) at that value's own type	D-312	The block's output *is* its stored value, so **the leaf is deliberately [pinned](#g-walked) at that value's own type** ([D-312][d-312]).
+10229	declared stop-gradient		`Freeze{V}` is the **declared stop-gradient**.
+10241	`V` is a `Real` or a `StaticArray` of them, constrained at the type	D-312	**`V` is a `Real` or a `StaticArray` of them, constrained at the type** ([D-312][d-312]), so a struct-valued freeze is refused at the spelling until a model nee
+10264	The [component test rig](#g-component-test-rig) is the library's companion idiom.		**The [component test rig](#g-component-test-rig) is the library's companion idiom.** Exercising a leaf alone needs no rig of its own.
+10315	[condition](#g-condition) value		Everything they share reduces to one artifact, the **[condition](#g-condition) value**.
+10329	Lifecycle preconditions.		**Lifecycle preconditions.** Every service requires a non-running simulation.
+10356	`errored` is terminal for every row	D-059,D-108	**`errored` is terminal for every row** ([D-059][d-059], [D-108][d-108]).
+10379	The overlay base is always the declared defaults.		**The overlay base is always the declared defaults.** Every [store](#g-store) has a declared initial value (declaration-by-initial-value, [§8.2][s8-2]), so cond
+10388	Doctrine.		**Doctrine.** Addressing conditions by path does not reopen the observation-by-path rejection ([§13.5][s13-5]).
+10397	Pre-[sweep](#g-sweep) doctrine.		**Pre-[sweep](#g-sweep) doctrine.** Condition writes precede the first sweep by definition.
+10404	environment queries		"Caller-computable" reaches past closed-form knowledge to **environment queries**.
+10429	[fragment](#g-fragment) function		It is the **[fragment](#g-fragment) function**, a method of the framework's `condition` generic, shipped beside the component and dispatched on the component.
+10452	inert, lazy tree		The three combinators are constructors of an **inert, lazy tree**.
+10462	rebuilding the tree per trim iteration allocates nothing		So **rebuilding the tree per trim iteration allocates nothing**.
+10470	Rule.		**Rule.** `at` refuses an empty prefix when it is called.
+10489	The locality law		**The locality law** here is the one [§6.1][s6-1] states for connections, now in its third instance.
+10507	error method		A `combine(::Fragment, ::NamedTuple)`, or any other blend of a condition node with a bare NamedTuple, is an **error method**.
+10530	tree position		It is a trivial recursion with a path accumulator, and it also records each entry's **tree position**, its `getfield`/`getindex` step tuple.
+10544	Schema		**Schema** is the evaluated declarations, and it is the authority.
+10544	Layout		**Layout** is the destination.
+10559	Rule.		**Rule.** The converter is baked now, selected per leaf from that leaf's type in the resolved shape.
+10562	Why.		**Why.** Leaf types are shape facts, carried by the tree type along with the full nesting and every field name ([§14.4][s14-4]).
+10573	A leaf already at the activation's scalar type		**A leaf already at the activation's scalar type** is decision-descended.
+10583	A plain `Float64` leaf against a non-nominal activation's scratch		**A plain `Float64` leaf against a non-nominal activation's scratch** is a held constant, and it takes the `Float64 → Dual` zero-partial embedding.
+10601	The paradigm-change tax feared at execution does not materialize.		**The paradigm-change tax feared at execution does not materialize.** All string work, validation and addressing are functions of the *shape* of the [condition]
+10608	Specialized `apply!`		- **Specialized `apply!`** serves the service that iterates, trim's per-evaluation write.
+10625	The dynamic walk		- **The dynamic walk** serves the one-shot uses, `init!` and `linearize`'s operating condition.
+10633	Rule.		**Rule.** Which of the two a service uses is internal, never user-facing API.
+10642	The read-[selector](#g-selector) family is closed.		**The read-[selector](#g-selector) family is closed.** Its members are `get_state(path, leaf)`, `get_deriv(path, leaf)`, `get_output(path, leaf)`, `get_input(le
+10647	Rule.		**Rule.** `leaf` is a [leaf address](#g-leaf-address): the field or face name, followed by `.name` and `[k]` or `[k,l]` steps in any order, as in `"pose.q_eb[2]
+10682	Rule.		**Rule.** A selector resolves against a source, before any client policy applies.
+10705	Service reads speak the [contract](#g-contract).		- **Service reads speak the [contract](#g-contract).** Trim's `reads` and linearization's [taps](#g-taps) (the three selector lists declaring what linearization
+10719	Inspection readers admit the whole family, within the source rule.		- **Inspection readers admit the whole family, within the source rule.** Output-[device](#g-device) bindings, GUI panels and log inspection take deep paths, `ge
+10725	`ignore_stop_requests` is not a family client.	D-060,D-316	- **`ignore_stop_requests` is not a family client.** It names requesters from the `Build`'s requester roster, period ([§13.5][s13-5], [D-060][d-060], [D-316][d-
+10740	Compiled readers are the gather twin		**Compiled readers are the gather twin** over this family and the layout tables.
+10765	Project runs.		- **Project runs.** Authored `x` can sit off-manifold.
+10771	The sweep runs, and every discrete output stage publishes, due or not ([D-205][d-205]).	D-205	- **The sweep runs, and every discrete output stage publishes, due or not ([D-205][d-205]).** `t₀` is a grid point of every phase-free divisor, so the `Φ = 0` c
+10784	Events run.		- **Events run.** A condition can land a guard [predicate](#g-predicate) in [holding](#g-edge-semantics) territory (firing on not-holding → holding transitions,
+10804	Due `s_update` calls run.		- **Due `s_update` calls run.** This follows from an interval-alignment fact that is easy to mis-picture.
+10804	A boundary's `s_update` is the *outgoing* transition.		**A boundary's `s_update` is the *outgoing* transition.** At tick `t_k` it consumes the completed boundary's samples and produces `s_{k+1}`, the value the next 
+10827	`t₀` is an init-service argument		- **`t₀` is an init-service argument** (default `0.0`), never a condition entry, because time is not a store of any component.
+10839	Trim is untouched by all of this.		- **Trim is untouched by all of this.** Optimizer iterations are raw write → sweep → read cycles on the activation, with no boundaries, no events and no `s_upda
+10842	A guard firing at commit is a wanted failure signal.		- **A guard firing at commit is a wanted failure signal.** Today's hand-written trim asserts (`!stall`, no weight-on-wheels, `ω > ω_idle`) become the model's ow
+10848	A commit-fired handler is not the only mover, and the second one is unconditional.		- **A commit-fired handler is not the only mover, and the second one is unconditional.** Boundary zero's *first* act is `x_projection`, so the committed `x` is 
+10865	Totality is a precondition of starting, checked by the service.		**Totality is a precondition of starting, checked by the service.** A condition value is legitimately partial.
+10882	The [probe](#g-probe-value)-value barrier is structural.		**The [probe](#g-probe-value)-value barrier is structural.** The `probe_value` synthesis ([§9.3][s9-3]; zero/false/first-enum/`T()`) exists so build-time probes
+10893	[Baselines](#g-baseline) are aircraft-shipped [condition](#g-condition) functions, layered by `override`.		**[Baselines](#g-baseline) are aircraft-shipped [condition](#g-condition) functions, layered by `override`.** Nobody hand-writes ~20 root-input values per scrip
+10893	`override(base, patch)`		Hence the fourth node kind, **`override(base, patch)`**.
+10915	Rule.		**Rule.** The field set is normative.
+10954	Decision variables, initial guess and box bounds are plain, same-*named*, all-`Float64` NamedTuples.		- **Decision variables, initial guess and box bounds are plain, same-*named*, all-`Float64` NamedTuples.** The `AbstractTrimState{N}`/`FieldVector` supertype di
+10954	the names are the pairing, order carries no semantics		[§9.5][s9-5] states the rule this [seam](#g-seam) runs on: **the names are the pairing, order carries no semantics**.
+10970	`TrimParameters` stays a plain user struct		- **`TrimParameters` stays a plain user struct** the framework never sees.
+10974	The read side is declared, then compiled.		- **The read side is declared, then compiled.** The spelling is `reads(name = get_state(path, leaf) | get_deriv(path, leaf) | get_output(path, leaf) | get_input
+10996	The user supplies a residual *system*, not a scalar cost.		- **The user supplies a residual *system*, not a scalar cost.** It is authored as a NamedTuple of named equations and packed to the solver's vector by field ord
+11002	Checks are equations the service reports once, at the committed state, and never solves.		- **Checks are equations the service reports once, at the committed state, and never solves.** `checks` has the residual function's signature, and `check_tolera
+11019	The FlightCore formulation's core is correct and survives verbatim as user math.		- **The FlightCore formulation's core is correct and survives verbatim as user math.** That core is analytic elimination: `θ_constraint` substituting the pitch 
+11023	What changes is the numerics.		- **What changes is the numerics.** Trim is a square root-find.
+11028	Nonlinear least squares with exact AD Jacobians is the default.		- **Nonlinear least squares with exact AD Jacobians is the default.** The `Dual` [activation](#g-activation) seeds the decision variables through the `T`-generi
+11041	Non-squareness degrades gracefully.		- **Non-squareness degrades gracefully.** Redundant actuation becomes weighted or minimum-norm least squares.
+11046	The derivative-free scalar path survives as the fallback.		- **The derivative-free scalar path survives as the fallback.** The service squares *and normalizes* the residuals against the tolerances, minimizing $\sum (r_i
+11051	Two problems are [recorded, not built](#g-recorded-not-built)		- **Two problems are [recorded, not built](#g-recorded-not-built)** (a worked-out extension deliberately left unimplemented, its seams named).
+11066	Rule.		**Rule.** What the solver varies is passed.
+11112	pinned signature		The backend contract is a **pinned signature**, value-passed, with one required method per backend.
+11119	iff `J !== nothing`		It fills `J` **iff `J !== nothing`**.
+11135	open		The return holds `d`, the solution, `status::Symbol` from a deliberately **open** set, and the diagnostic counts `n_evaluations` and `n_iterations`.
+11144	by the service at the backend's returned point		That is the per-residual box test ([§14.7][s14-7]) in its own physical units, evaluated **by the service at the backend's returned point**.
+11199	The simulation's authoritative stores have exactly one writer, the commit through [boundary zero](#g-boundary-zero)		**The simulation's authoritative stores have exactly one writer, the commit through [boundary zero](#g-boundary-zero)** (the initialization boundary: the ordina
+11215	The frozen cells are established, not probe-seeded.		**The frozen cells are established, not probe-seeded.** At the seeded activation the discrete [tier](#g-tier) is frozen ([§9.4][s9-4]).
+11298	solved-point residuals		- The **solved-point residuals** come with their tolerances.
+11300	committed-state residuals		- The **committed-state residuals** are the same residuals re-gathered from the boundary-zero world after the commit.
+11302	committed-state checks		- The **committed-state checks** are the check function's return at the committed state, gathered beside the committed-state residuals and empty when the proble
+11401	What a `TrimProblem` is.		**What a `TrimProblem` is.** It is not a condition but an **implicitly specified condition**.
+11401	implicitly specified condition		**What a `TrimProblem` is.** It is not a condition but an **implicitly specified condition**.
+11412	`at` lifts a problem field by field, and each field falls in one of three cases.		**`at` lifts a problem field by field, and each field falls in one of three cases.** The `condition` field is condition-producing (path-relative), so the lift p
+11436	Rule.		**Rule.** A read set carries its mount chain as data.
+11461	A problem never authors the environment.		**A problem never authors the environment.** The environment is the world's and the `baseline`'s business.
+11467	Why.		**Why.** The reason is the resolution rule just stated.
+11473	The world wrapper dissolves.		**The world wrapper dissolves.** Flight.jl's `f_init!(::Model{<:SimpleWorld})` (initialize environment, then call the aircraft's trim) has no successor method.
+11480	"Aircraft as root" is a thin world.		**"Aircraft as root" is a thin world.** By default the aircraft is not literally the root.
+11480	value		The face becomes an ordinary root input holding the handle **value**, written by the `baseline` like any other root input.
+11497	Swarm doctrine.		**Swarm doctrine.** The service solves *one problem at a time*.
+11508	The tap declaration.		**The tap declaration.** Today's per-aircraft `XStateSpace`/`UStateSpace`/`YStateSpace` structs, plus the `get_*_ss`/`assign_*_ss!` shuttle methods, run to ~150
+11518	Rule.		**Rule.** A tap names one scalar.
+11548	The evaluation.		**The evaluation.** Each invocation instantiates its own scratch store set, the trim service's mechanism verbatim ([§14.8][s14-8]), and establishes the operatin
+11548	Rule.	D-272	**Rule.** `width` is a keyword of `linearize`, default 8, and the default width's scalar type is public, so a build can pre-materialize its activation through `
+11570	What the pass seeds, and what it holds frozen.		**What the pass seeds, and what it holds frozen.** Unseeded states sit constant at the operating point, and so do unseeded [root inputs](#g-root-input).
+11570	declaredly unseedable		A root input whose entry is declared `Pinned` is **declaredly unseedable**, and its cell is frozen at every activation.
+11570	pinning consumer		Under fan-out the rejection names the **pinning consumer**, not the face alone.
+11606	A pure query, and the default operating point.		**A pure query, and the default operating point.** Linearization is the first service with no commit and no [boundary zero](#g-boundary-zero) (the initializatio
+11623	The returned object and `LinearizedSS`.	D-272	**The returned object and `LinearizedSS`.** `linearize` returns a `Linearization` value: `ẋ₀`, `x₀`, `u₀` and `y₀` as NamedTuples under the tap labels, `A`, `B`
+11636	Recorded guidance.		**Recorded guidance.** Linearization taps should select minimal-coordinate mechanizations.
+11643	The sampled-data Dual activation is [recorded, not built](#g-recorded-not-built)		**The sampled-data Dual activation is [recorded, not built](#g-recorded-not-built)** (a worked-out extension deliberately left unimplemented, its seams named).
+11663	[Walked](#g-walked)-leaf parametrization		- **[Walked](#g-walked)-leaf parametrization** of the discrete tier's real-scalar state leaves.
+11666	Opt-in participation		- **Opt-in participation** on discrete components, with frozen-exact staying the default.
+11666	turns the walk on for its contracts		A participating component opts in through an explicit trait, and that trait **turns the walk on for its contracts**.
+11673	One new activation		- **One new activation** ([§9.4][s9-4]): "continuous chain + `x_deriv` + the discrete tier's output stages + `s_update`".
+11675	Forward sensitivities		- **Forward sensitivities** through the in-house RK steppers, for free.
+11677	A distinct `s`-tap list	D-197	- **A distinct `s`-tap list** beside the `x` list, labeling the step map's state blocks $\partial(x^+, s^+)/\partial(x, s)$ ([D-197][d-197]).
+11693	Declarative non-participation: what the schema states, and what stays recorded.	D-263	**Declarative non-participation: what the schema states, and what stays recorded.** **Both halves of this door have a spelling.** The output half is [D-263][d-2
+11693	Both halves of this door have a spelling.	D-263	**Declarative non-participation: what the schema states, and what stays recorded.** **Both halves of this door have a spelling.** The output half is [D-263][d-2
+11713	An implementation that cannot take `Dual`s has a third move.		**An implementation that cannot take `Dual`s has a third move.** The marker records that a leaf carries no partials, not that an implementation cannot propagate
+11743	tooling		What stays recorded is only the remaining **tooling** over that visibility.
+11765	index, not a second home		This appendix is an **index, not a second home**.
+11777	The stage funnel		- **The stage funnel** ([§5.2][s5-2], [§5.3][s5-3]).
+11785	One home per datum		- **One home per datum** ([§5.2][s5-2], [§4.3][s4-3]).
+11789	The value-level constructor		- **The value-level constructor** ([§4.4][s4-4]).
+11795	Boundary sampling		- **Boundary sampling** ([§10.5][s10-5]/[§10.6][s10-6]; worked example [§8.6][s8-6]). "Sampling at `t_k`" means sampling the post-integration, post-projection, 
+11801	Interval alignment		- **Interval alignment** ([§14.5][s14-5]).
+11807	Same-tick reset consumption		- **Same-tick reset consumption** ([§5.3][s5-3]), on the *discrete tier*.
+11815	A continuous component's state reset is an event		- **A continuous component's state reset is an event** ([§3.1][s3-1], [§10.6][s10-6], [§5.3][s5-3]).
+11830	Guard predicates, edges and priors		- **Guard predicates, edges and priors** ([§2.1][s2-1], [§10.6][s10-6]).
+11840	Handler-phase visibility		- **Handler-phase visibility** ([§5.3][s5-3], [§10.6][s10-6]).
+11846	Stage totality		- **Stage totality** ([§9.3][s9-3]; [§13.4][s13-4], [§13.5][s13-5]).
+11853	Stop-request sampling		- **Stop-request sampling** ([§13.5][s13-5]).
+11860	Levels, never deltas		- **Levels, never deltas** ([§11.4][s11-4]).
+11866	The device loop idioms		- **The device loop idioms** ([§11.6][s11-6], [§12.4][s12-4]).
+11874	`shutdown!` closes only what is open		- **`shutdown!` closes only what is open** ([§11.6][s11-6], [§12.4][s12-4]).
+11880	Binding traits are declarations, mappings are your own idiom		- **Binding traits are declarations, mappings are your own idiom** ([§11.6][s11-6]).
+11888	Bad datum vs. bug		- **Bad datum vs. bug** ([§11.6][s11-6], [§13.4][s13-4]).
+11894	Derived liveness		- **Derived liveness** ([§11.7][s11-7]).
+11898	The two observation sides		- **The two observation sides** ([§11.2][s11-2], [§13.5][s13-5]).
+11919	Authoring		**Authoring**, what a component or assembly defines ([§8.2][s8-2], [§8.5][s8-5]–[§8.7][s8-7]):
+11955	and		`u` is present iff the function family may see inputs **and** the component declares `u_types`.
+11955	handler returns `(; x, m)` with each key present iff that store exists and the handler updates it		A **handler returns `(; x, m)` with each key present iff that store exists and the handler updates it** (the return law, [§5.2][s5-2]).
+11969	Build.		**Build.**
+11996	Deployment.		**Deployment.**
+12122	Sides are declared		**Sides are declared** by the binding's Bool traits, and each declared side carries its own methods:
+12174	Condition algebra		**Condition algebra** ([§14.1][s14-1]–[§14.6][s14-6]).
+12190	Stopped-sim services		**Stopped-sim services** ([§14][s14]).
+12268	Running.		**Running.**
+12278	this advance		| `t_end` | `Inf` | the run's end time, declared for **this advance**, validated per call | [§13.5][s13-5] |
+12279	this advance		| `ignore_stop_requests` | `()` | the stop requesters **this advance** does not honour: `:all`, or their component paths, validated against the `Build`'s reques
+12368	Tests match on kind plus payload fields, never on message text		**Tests match on kind plus payload fields, never on message text** ([§13.2][s13-2]).
+12378	Severity		**Severity** is a property of the kind, read as `severity(d)` ([§13.2][s13-2]), and takes one of two values:
+12383	error		- **error**.
+12385	warning		- **warning**.
+12389	Raised		**Raised** and **policy** describe the occurrence, not the kind: where it surfaces, and how it is reported.
+12389	policy		**Raised** and **policy** describe the occurrence, not the kind: where it surfaces, and how it is reported.
+12396	build		- **build**.
+12399	service		- **service**.
+12401	runtime		- **runtime**.
+12405	collected		- **collected**.
+12411	fail-fast		- **fail-fast**.
+12416	logged		- **logged**.
+12426	rate-limited		- **rate-limited**.
+12443	Declaration and wiring		**Declaration and wiring** (the structure step):
+12445	`UnknownPort`		- **`UnknownPort`** ([§6.1][s6-1], [§8.4][s8-4] w1).
+12449	`UnconnectedInput`		- **`UnconnectedInput`** ([§6.1][s6-1], [§8.4][s8-4] w2).
+12453	`TwoProducers`		- **`TwoProducers`** ([§6.1][s6-1], [§8.8][s8-8]).
+12457	`WireTypeMismatch`		- **`WireTypeMismatch`** ([§6.1][s6-1], [§8.2][s8-2], [§8.4][s8-4] w4).
+12460	`WalkingFaceAtFrozenEntry`		- **`WalkingFaceAtFrozenEntry`** ([§6.1][s6-1], [§8.2][s8-2]).
+12465	`PathResolution`		- **`PathResolution`** ([§6.1][s6-1], [§13.3][s13-3]).
+12471	`AbstractAtRoot`		- **`AbstractAtRoot`** ([§8.2][s8-2]).
+12474	`RootInputTypeConflict`		- **`RootInputTypeConflict`** ([§8.2][s8-2]).
+12478	`StoreNotNamedTuple`	D-247	- **`StoreNotNamedTuple`** ([§8.2][s8-2], [§9.1][s9-1], [D-247][d-247]).
+12482	`IllegalStateLeaf`		- **`IllegalStateLeaf`** ([§7.1][s7-1], [§8.2][s8-2]).
+12485	`StoreWithoutUpdate`		- **`StoreWithoutUpdate`** ([§8.2][s8-2]).
+12489	`EventHalfMissing`		- **`EventHalfMissing`** ([§8.2][s8-2]).
+12493	`DeclarationShadowed`	D-246	- **`DeclarationShadowed`** ([§8.1][s8-1], [D-246][d-246]).
+12497	`ClassUnreadable`		- **`ClassUnreadable`** ([§8.5][s8-5]).
+12500	`ClassMixed`		- **`ClassMixed`** ([§8.5][s8-5]).
+12502	`ContainerMixed`		- **`ContainerMixed`** ([§8.5][s8-5]).
+12504	`ContainerNested`		- **`ContainerNested`** ([§8.5][s8-5]).
+12507	`DeclarationOnWrongTier`		- **`DeclarationOnWrongTier`** ([§5.3][s5-3], [§8.2][s8-2], [§8.5][s8-5]).
+12514	`FaceNameIllegal`		- **`FaceNameIllegal`** ([§8.6][s8-6]).
+12516	`FaceNameCollision`		- **`FaceNameCollision`** ([§8.6][s8-6]).
+12519	`FaceDirectionConflict`		- **`FaceDirectionConflict`** ([§8.6][s8-6]).
+12522	`UnknownFaceSelection`		- **`UnknownFaceSelection`** ([§8.8][s8-8]).
+12525	`EmptyFaceSelection`		- **`EmptyFaceSelection`** ([§8.8][s8-8]).
+12529	`RatesViolation`		- **`RatesViolation`** ([§10.5][s10-5], [§8.7][s8-7]).
+12532	`MissingProbeValue`		- **`MissingProbeValue`** ([§9.3][s9-3]).
+12534	`ChildNameCollision`		- **`ChildNameCollision`** ([§8.5][s8-5]).
+12538	`TransparentContainerUnknown`	D-211	- **`TransparentContainerUnknown`** ([§8.5][s8-5], [D-211][d-211]).
+12541	`TierUnreadable`		- **`TierUnreadable`** ([§8.2][s8-2]).
+12545	`StatelessWithoutOutputs`		- **`StatelessWithoutOutputs`** ([§8.2][s8-2], [§8.3][s8-3]).
+12548	`IllegalPortType`		- **`IllegalPortType`** ([§4.3][s4-3], [§8.2][s8-2]).
+12557	`IllegalStoreField`		- **`IllegalStoreField`** ([§7.3][s7-3], [§8.2][s8-2], [§9.1][s9-1]).
+12562	Execution order and contract conformance		**Execution order and contract conformance** (the nominal evaluation and activation):
+12565	`AlgebraicCycle`		- **`AlgebraicCycle`** ([§5.5][s5-5], [§5.6][s5-6]).
+12570	`ProducedByTwoStages`		- **`ProducedByTwoStages`** ([§4.3][s4-3], [§8.3][s8-3]).
+12574	`DeclaredNotProduced`		- **`DeclaredNotProduced`** ([§8.3][s8-3]).
+12580	`UndeclaredReturnField`		- **`UndeclaredReturnField`** ([§8.3][s8-3], [§8.4][s8-4] w5).
+12584	`DeadStage`		- **`DeadStage`** ([§5.2][s5-2], [§9.3][s9-3]).
+12587	`ConformanceFailure`		- **`ConformanceFailure`** ([§9.5][s9-5]).
+12592	`GuardForm`		- **`GuardForm`** ([§9.5][s9-5]).
+12594	`BundleFieldError`		- **`BundleFieldError`** ([§5.2][s5-2], [§13.2][s13-2]).
+12599	`HandlerReturnKey`		- **`HandlerReturnKey`** ([§5.2][s5-2], [§9.5][s9-5]).
+12602	`UserCodeFraming`		- **`UserCodeFraming`** ([§13.2][s13-2]).
+12608	Deployment, periphery and services:		**Deployment, periphery and services:**
+12610	`MissingInit`		- **`MissingInit`** ([§12.6][s12-6]).
+12612	`ServiceLifecycle`		- **`ServiceLifecycle`** ([§11.3][s11-3], [§14][s14]).
+12616	`StopRequestInvalid`		- **`StopRequestInvalid`** ([§13.5][s13-5]).
+12620	`DeploymentInvalid`		- **`DeploymentInvalid`** ([§9.2][s9-2]).
+12628	`AttachUnknownFace`		- **`AttachUnknownFace`** ([§11.3][s11-3]).
+12631	`AlreadyAttached`		- **`AlreadyAttached`** ([§11.3][s11-3]).
+12633	`ClaimConflict`		- **`ClaimConflict`** ([§11.3][s11-3]).
+12635	`EmptyGreedyClaim`		- **`EmptyGreedyClaim`** ([§11.3][s11-3], [§11.6][s11-6]).
+12639	`BindingContractMismatch`		- **`BindingContractMismatch`** ([§11.6][s11-6]).
+12647	`DeviceContractMismatch`		- **`DeviceContractMismatch`** ([§11.6][s11-6]).
+12652	`ReadBindingUnresolved`		- **`ReadBindingUnresolved`** ([§11.2][s11-2], [§14.4][s14-4]).
+12658	`ConditionResolution`		- **`ConditionResolution`** ([§14.2][s14-2], [§14.3][s14-3]).
+12666	`DuplicateConditionLeaf`		- **`DuplicateConditionLeaf`** ([§14.2][s14-2]).
+12669	`ConditionNodeMisuse`		- **`ConditionNodeMisuse`** ([§14.2][s14-2]).
+12672	`UninitializedInputs`		- **`UninitializedInputs`** ([§14.6][s14-6]).
+12674	`TapResolution`		- **`TapResolution`** ([§14.10][s14-10]).
+12680	`TrimProblemInvalid`		- **`TrimProblemInvalid`** ([§14.7][s14-7], [§14.8][s14-8]).
+12683	`TrimCommitEvents`		- **`TrimCommitEvents`** ([§14.8][s14-8]).
+12686	`TrimCommitResiduals`		- **`TrimCommitResiduals`** ([§14.8][s14-8]).
+12689	`TrimCommitChecks`		- **`TrimCommitChecks`** ([§14.8][s14-8]).
+12692	`ConditionShapeDrift`		- **`ConditionShapeDrift`** ([§14.4][s14-4]).
+12696	`GridUtilization`		- **`GridUtilization`** ([§9.2][s9-2]).
+12702	`CheckpointMismatch`		- **`CheckpointMismatch`** ([§11.5][s11-5], [§12.6][s12-6], [§12.7][s12-7]).
+12721	`CheckpointMidFrame`		- **`CheckpointMidFrame`** ([§12.6][s12-6], [§14][s14]).
+12729	`ReplaySchemaMismatch`		- **`ReplaySchemaMismatch`** ([§11.5][s11-5], [§12.7][s12-7]).
+12733	`ReplayUnknownFace`		- **`ReplayUnknownFace`** ([§12.7][s12-7]).
+12736	`ArgumentInvalid`		- **`ArgumentInvalid`** ([§10.5][s10-5], [§11.6][s11-6], [§12.1][s12-1], [§12.4][s12-4], [§12.6][s12-6], [§14.7][s14-7]).
+12749	`ReadSetMisuse`		- **`ReadSetMisuse`** ([§14.4][s14-4]).
+12753	`NotAttached`		- **`NotAttached`** ([§11.3][s11-3]).
+12756	Runtime:		**Runtime:**
+12758	`StepError`		- **`StepError`** ([§13.4][s13-4]).
+12764	`NonfiniteState`		- **`NonfiniteState`** ([§13.4][s13-4]).
+12766	`ChatteringBudget`		- **`ChatteringBudget`** ([§10.4][s10-4]).
+12769	`FiringBudget`		- **`FiringBudget`** ([§10.6][s10-6]).
+12772	`DebtReanchor`		- **`DebtReanchor`** ([§10.7][s10-7]).
+12775	`ClaimedFaceEntry`		- **`ClaimedFaceEntry`** ([§11.3][s11-3], [§11.4][s11-4]).
+12780	`OutOfClaimEntry`		- **`OutOfClaimEntry`** ([§11.3][s11-3]).
+12783	`ThreadBudget`		- **`ThreadBudget`** ([§12.2][s12-2]).
+12785	`DeviceJoinTimeout`		- **`DeviceJoinTimeout`** ([§12.4][s12-4]).
+12791	`DeviceCrash`		- **`DeviceCrash`** ([§12.4][s12-4], [§11.6][s11-6], [§13.4][s13-4]).
+12795	`ReplayDiscardedStaging`		- **`ReplayDiscardedStaging`** ([§12.7][s12-7]).
+12798	`MalformedDatum`		- **`MalformedDatum`** ([§11.6][s11-6], [§13.4][s13-4]).
+12801	`EntryTypeMismatch`		- **`EntryTypeMismatch`** ([§11.4][s11-4]).
+12804	`UnboundedRun`		- **`UnboundedRun`** ([§11.8][s11-8], [§13.5][s13-5]).
+12818	the owning section wins		Where an entry and its owning section diverge, **the owning section wins**.
+12829	abstract entry		<a id="g-abstract-entry"></a>**abstract entry** — an `u_types` entry whose declared type is abstract.
+12829	structural substitutability		It states **structural substitutability**: any concrete producer face below the bound wires to it (the field handles, [§4.4][s4-4], are the demonstrated client)
+12835	assembly		<a id="g-assembly"></a>**assembly** — pure composition.
+12842	class		<a id="g-class"></a>**class** — a component's primitive-vs-assembly status, read off *which* well-known declarations its type defines.
+12850	component		<a id="g-component"></a>**component** — the unit of modeling: a leaf (continuous or periodic discrete primitive) or an assembly of components. "Primitive" and "
+12854	container children		<a id="g-container-children"></a>**container children** — a `Tuple`/`NamedTuple` field whose elements are all components.
+12861	continuous component		<a id="g-continuous-component"></a>**continuous component** — the hybrid primitive: continuous state `x`, modes `m`, flow `x_deriv`, two output stages, events (
+12866	contract		<a id="g-contract"></a>**contract** — a component's declared interface.
+12879	declaration inventory		<a id="g-declaration-inventory"></a>**declaration inventory** — the closed set of well-known functions a component or assembly defines, each declared in a state
+12887	derived contract		<a id="g-derived-contract"></a>**derived contract** — the checkable surface an assembly or the `Build` derives from its children's declarations and its own wiri
+12897	function family		<a id="g-function-family"></a>**function family** — which bundle fields a given function may legally receive.
+12906	generic holding		<a id="g-generic-holding"></a>**generic holding** — a parent holding a child through a non-concrete field type.
+12911	hybrid causal system		<a id="g-hybrid-causal-system"></a>**hybrid causal system** — what the framework simulates: continuous flow with algebraic outputs, multi-rate periodic discrete
+12916	local wire		<a id="g-local-wire"></a>**local wire** — an entry of `local_wires`, a wire from one child's port to a child's face with both ends inside the assembly's boundar
+12921	the letters	D-220	<a id="g-the-letters"></a>**the letters** — the mathematical symbols the spec's formulas keep, against the words the API spells them as ([D-220][d-220]).
+12935	periodic discrete component		<a id="g-periodic-discrete-component"></a>**periodic discrete component** — a leaf with state `s`, update `s_update` at a declared rate, and two output stages w
+12940	rate scope		<a id="g-rate-scope"></a>**rate scope** — an assembly's `sample_times` declaration, mapping an immediate child name to a `Relative` or `Absolute` declaration ag
+12946	schema authority		<a id="g-schema-authority"></a>**schema authority** — the principle that declarations *define* structure and evaluation only *checks* conformance against them, 
+12951	stage function / two-stage outputs		<a id="g-stage-function"></a>**stage function / two-stage outputs** — every component provides exactly two output stages, `y_state` (no `u` in the bundle, hence
+12958	state declaration		<a id="g-state-declaration"></a>**state declaration** — a leaf's `x_init` or `s_init`, declaring its continuous or discrete state by initial value.
+12964	workspace		<a id="g-workspace"></a>**workspace** — component-declared mutable scratch, declared *by allocation* (`ws_init(::C, ::Type{T})` on both tiers, a discrete alloca
+12972	buffer		<a id="g-buffer"></a>**buffer** — the framework-owned contiguous `Vector{T}` backing all continuous state, laid out at build time, and the `ẋ` vectors the integ
+12980	bundle		<a id="g-bundle"></a>**bundle** — the single `NamedTuple` of zero-copy views a component function receives beside the component itself.
+12980	iff		Under the bundle law a name is present **iff** the corresponding store or fact exists for that component.
+12985	cell		<a id="g-cell"></a>**cell** — one concretely typed entry of the signal table, one per output port of the flattened model, written by its producing stage and rea
+12991	constant source		<a id="g-constant-source"></a>**constant source** — an ordinary library component with no inputs and no state, publishing a value its instance holds (`Constant{
+12997	entry		<a id="g-entry"></a>**entry** — never used bare.
+13002	face		<a id="g-face"></a>**face** — the name a port wears on its component's boundary.
+13011	feedthrough		<a id="g-feedthrough"></a>**feedthrough** — an instantaneous input→output dependence.
+13011	Structural feedthrough		**Structural feedthrough** is this design's version.
+13016	field handle / function-valued signal		<a id="g-field-handle"></a>**field handle / function-valued signal** — an immutable query object carried on an ordinary port (`ISAField`, `TerrainField`) that c
+13021	immutable value semantics		<a id="g-immutable-value-semantics"></a>**immutable value semantics** — the signal rule, stated precisely as immutability *plus frozen references* (`isbits` is 
+13026	one home per datum		<a id="g-one-home-per-datum"></a>**one home per datum** — the buffer holds `x`, the `s` and `m` stores hold `s` and `m`, and the table holds produced signals.
+13030	port		<a id="g-port"></a>**port** — the addressable unit of the model: one declared name, one cell, one root input, one staged write, one device claim, one trace addr
+13035	root input		<a id="g-root-input"></a>**root input** — the root component's own input face, which is an assembly's `input_wires` key or a primitive's `u_types` key.
+13040	scratch		<a id="g-scratch"></a>**scratch** — mutable working storage whose contents are never authoritative.
+13049	signal table		<a id="g-signal-table"></a>**signal table** — the framework-owned collection of cells holding every produced signal of the flattened model.
+13054	staging cell		<a id="g-staging-cell"></a>**staging cell** — the per-device atomic holding place where a device's pending write batch waits between drains.
+13059	store		<a id="g-store"></a>**store** — the framework-owned home of one of a component's state letters, `x`, `s` or `m`.
+13067	summing junction		<a id="g-summing-junction"></a>**summing junction** — an ordinary library component performing N-to-1 aggregation through explicit wires (`SumJunction{V, N}`, t
+13072	value-level constructor		<a id="g-value-level-constructor"></a>**value-level constructor** — the plain public function from (component, input values) to field handle that every field-em
+13078	view		<a id="g-view"></a>**view** — a zero-copy reconstruction of a store handed to a function through its bundle.
+13085	algebraic loop		<a id="g-algebraic-loop"></a>**algebraic loop** — a genuine cycle in the instantaneous dependency graph.
+13085	artificial loop		Not to be confused with an **artificial loop**, which is port-level acyclic but stage-level cyclic.
+13093	execution order		<a id="g-execution-order"></a>**execution order** — the order in which the stage functions run, fixed once at build time from wiring edges plus intra-component 
+13100	flow / RHS	D-220	<a id="g-flow"></a>**flow / RHS** — `x_deriv`, the continuous derivative function, `f` in the spec's formulas ([D-220][d-220]).
+13106	frame		<a id="g-frame"></a>**frame** — one iteration of the loop (drain, integrate, boundary sequence, publication).
+13112	projection		<a id="g-projection"></a>**projection** — the optional per-component hook `x ← x_projection(x)`.
+13117	sweep		<a id="g-sweep"></a>**sweep** — one pass through the execution order against the current state, in one of two statically distinct variants compiled from the sam
+13117	interior sweep		The **interior sweep** walks continuous entries only.
+13117	boundary sweep		The **boundary sweep** walks the full list, with the boundary's due discrete entries gated in by counter modulo.
+13130	anchor		<a id="g-anchor"></a>**anchor** — the exact `(T, τ)` pair an `Absolute` entry establishes: period and offset in rational seconds.
+13136	boundary		<a id="g-boundary"></a>**boundary** — a published consistency point, where the [§10.6][s10-6] macro-sequence completes and a snapshot goes out.
+13145	boundary-detected		<a id="g-boundary-detected"></a>**boundary-detected** — the detection policy a `Bool`-returning guard declares.
+13153	chattering / localization budget		<a id="g-chattering"></a>**chattering / localization budget** — the bounded per-frame localization allowance, `localization_budget`, a deployment keyword defaul
+13160	`Δt_base`		<a id="g-dt_base"></a>**`Δt_base`** — the base tick period, an integer multiple `N_base·h` of the continuous step.
+13166	due		<a id="g-due"></a>**due** — a discrete component is due at a boundary when its compiled `(D, Φ)` pair admits that boundary's tick index (`(tick − Φ) % D == 0`).
+13175	edge semantics / holding		<a id="g-edge-semantics"></a>**edge semantics / holding** — an event fires on a transition of its predicate from not-holding to holding, never on a bare sign ch
+13180	firing budget		<a id="g-firing-budget"></a>**firing budget** — the rule bounding the boundary event iteration.
+13188	guard		<a id="g-guard"></a>**guard** — the declared function defining an event's predicate.
+13194	harmonic grid		<a id="g-harmonic-grid"></a>**harmonic grid** — the rule that every discrete period is an integer multiple of `Δt_base`, and every anchor period and offset like
+13200	input epoch		<a id="g-input-epoch"></a>**input epoch** — a maximal span of constant `u`, delimited by the frame-top drains ([§11.4][s11-4]).
+13200	θ = 0 validation		Hence the **θ = 0 validation**.
+13211	interpolant		<a id="g-interpolant"></a>**interpolant** — the lazily built cubic Hermite continuous extension over the last completed step.
+13217	localized		<a id="g-localized"></a>**localized** — the detection policy a sign-form guard declares.
+13224	pacing / pacer debt		<a id="g-pacing"></a>**pacing / pacer debt** — the pacer inserts waits between completed frames and never alters the boundary sequence.
+13224	debt		A frame exceeding its wall budget leaves **debt** that later frames repay.
+13229	phase (`Φ`)		<a id="g-phase"></a>**phase (`Φ`)** — a schedule's offset against its grid, in scope ticks for `Relative(K, Φ)` and in rational seconds for `Absolute(q, τ)`.
+13235	predicate		<a id="g-predicate"></a>**predicate** — what a guard defines: a `Bool`-valued form, or the sign of a continuous function with positive meaning holding (writing 
+13243	prior		<a id="g-prior"></a>**prior** — the per-event stored sample of its predicate at the previous boundary's quiescence.
+13250	quiescence		<a id="g-quiescence"></a>**quiescence** — the fixed point of the boundary event phase.
+13254	remainder step		<a id="g-remainder-step"></a>**remainder step** — the integration from `t*` to the original grid target after a localized event, with `h′` derived at use.
+13258	schedule / `Schedule`		<a id="g-schedule"></a>**schedule / `Schedule`** — the typed tick timing the `Deployment` carries, built by the `Deployment` constructor: one row per discrete c
+13266	state event		<a id="g-state-event"></a>**state event** — an event whose instant is unknown in advance and must be detected, declared as a `StateEvent(guard, handler)` pair u
+13273	`t*`		<a id="g-t"></a>**`t*`** — the localized event time: the holding endpoint of the root-finder's final bracket, structurally strictly later than `tₙ`.
+13278	tick		<a id="g-tick"></a>**tick** — an instant at which a discrete component's stages and update run, gated by counter modulo against the harmonic grid inside the bou
+13283	tick index		<a id="g-tick-index"></a>**tick index** — the count of base ticks, `tick = k ÷ N_base` at the frame top of frame `k` when `k` is a multiple of `N_base`.
+13288	tier		<a id="g-tier"></a>**tier** — the continuous or discrete side of the hybrid formalism, read off the state declaration every leaf makes, `x_init` or `s_init`, em
+13295	time event		<a id="g-time-event"></a>**time event** — an event whose instant is known in advance and scheduled: the discrete tier's ticks, declared by `sample_times` and ga
+13302	activation		<a id="g-activation"></a>**activation** — the build's typed products at a given scalar type `T`.
+13313	always-on conformance check		<a id="g-always-on-conformance-check"></a>**always-on conformance check** — the probe's comparison left permanently in place: the key-set and per-field comparis
+13320	`Build`		<a id="g-build"></a>**`Build`** — the artifact `build(world)` produces, bundling the three steps' products: `Structure`, `Outputs`, `Events`, the activations ke
+13326	chunking		<a id="g-chunking"></a>**chunking** — splitting a large phase body's entry tuple into statically typed chunks behind non-inlined function barriers.
+13333	`Deployment`		<a id="g-deployment"></a>**`Deployment`** — the artifact the grid parameters fix: the build plus `h`, `N_base`, `Δt_base`, the algorithm and the three event par
+13339	`Events`		<a id="g-events"></a>**`Events`** — the nominal evaluation's other product, built last, after the nominal stage probes: per component the event names, their det
+13344	executable set		<a id="g-executable-set"></a>**executable set** — the function set an activation can actually run, hence exactly what it probes.
+13349	executor		<a id="g-executor"></a>**executor** — the compiled form of the stage execution order: a concretely typed tuple of entries over statically typed cell storage, tr
+13354	leaf walk		<a id="g-leaf-walk"></a>**leaf walk** — the framework's derivation of per-activation types from a declared nominal type.
+13365	lens		<a id="g-lens"></a>**lens** — the compiled navigation step of a condition entry.
+13369	measurement seam / phase bodies		<a id="g-measurement-seam"></a>**measurement seam / phase bodies** — `phase_bodies(sim)` returns the compiled bodies of the nominal activation bound over the si
+13377	`Model`		<a id="g-model"></a>**`Model`** — a deployment materialized at one scalar type: the deployment, its executor, a status of `:built`, `:consistent` or `:inconsist
+13386	nominal		<a id="g-nominal"></a>**nominal** — the `Float64` activation, and of a declaration its `Float64` face (for a continuous producer's output declaration, its evalu
+13393	`Outputs`		<a id="g-outputs"></a>**`Outputs`** — the nominal evaluation's product: per component the output port names each stage produces, and the execution order over th
+13399	probe		<a id="g-probe"></a>**probe** — the build's single evaluation of a user function with real values, checking shape and type conformance and discarding the result
+13404	probe value / input synthesis		<a id="g-probe-value"></a>**probe value / input synthesis** — the fabricated values a build-time probe runs on.
+13412	`ProbeDual`		<a id="g-probedual"></a>**`ProbeDual`** — the framework's public canonical concrete probe scalar (`ForwardDiff.Dual{ProbeTag, Float64, 1}`), which keys the CI a
+13417	schema vs. layout		<a id="g-schema-vs-layout"></a>**schema vs. layout** — the two lookup families the `Build` supplies to condition resolution.
+13423	`Structure`		<a id="g-structure"></a>**`Structure`** — the structure step's product: the component instances by path, the tier each sits on, one row per assembly with its ch
+13432	walked / pinned / exempt		<a id="g-walked"></a>**walked / pinned / exempt** — the eltype-genericity classes.
+13442	bad datum		<a id="g-bad-datum"></a>**bad datum** — a datum unmappable for environmental reasons (truncated datagram, malformed JSON, out-of-range field).
+13448	batch		<a id="g-batch"></a>**batch** — a device's staged set of face ⇒ value writes, coalesced in its staging cell and applied whole at the next drain ([§11.4][s11-4])
+13452	binding		<a id="g-binding"></a>**binding** — the value passed at `attach!` that makes a device framework-legible.
+13463	boundary counter		<a id="g-boundary-counter"></a>**boundary counter** — the loop's monotonic count of *published boundaries*, the fact the wait predicate tests, never reset acros
+13469	calling task		<a id="g-calling-task"></a>**calling task** — the task that invoked `run!`.
+13472	claim		<a id="g-claim"></a>**claim** — the set of faces a device *may* write.
+13478	coalescing		<a id="g-coalescing"></a>**coalescing** — the CAS merge keeping one pending batch per device.
+13483	control plane		<a id="g-control-plane"></a>**control plane** — the separate few-word atomic surface carrying pause, un-pause, pace, `margin`, the stop word, the running flag, 
+13489	derived liveness		<a id="g-derived-liveness"></a>**derived liveness** — the rule that a GUI widget is live iff its port's feed chain terminates in a root input inside the GUI's o
+13494	device		<a id="g-device"></a>**device** — any attached participant in the periphery: a subtype of `AbstractDevice` under one authoring contract (`init!`/`loop`/`shutdow
+13500	diagnostic cell		<a id="g-diagnostic-cell"></a>**diagnostic cell** — the per-writer cell each rostered device, the harness writer, the loop itself and the `Model` own for runtim
+13507	drain		<a id="g-drain"></a>**drain** — the single point at the top of each frame where the loop takes each staging cell by `atomicswap` and applies it through the atta
+13514	framework status		<a id="g-framework-status"></a>**framework status** — the concrete frozen value each snapshot carries beside the signal table.
+13521	greedy claim		<a id="g-greedy-claim"></a>**greedy claim** — the claim a binding declaring `is_greedy` receives: the unclaimed complement computed by the framework at attach i
+13527	harness cell		<a id="g-harness-cell"></a>**harness cell** — the always-present staging cell of the harness writer, written by `stage!(sim, "face" => value, …)` from the calli
+13532	harness writer		<a id="g-harness-writer"></a>**harness writer** — the framework-owned write path of the calling task, `stage!(sim, …)` and its cell, and the design's sole *deri
+13538	`latest`		<a id="g-latest"></a>**`latest`** — the `@atomic` reference a published snapshot is release-stored into and readers acquire-load.
+13543	next-snapshot wait		<a id="g-next-snapshot-wait"></a>**next-snapshot wait** — `wait_next_snapshot(handle)`: the boundary counter plus one `Threads.Condition` under the canonical pr
+13548	operator interrupt		<a id="g-operator-interrupt"></a>**operator interrupt** — Ctrl-C in an interactive session, read as a control-plane stop rather than a failure.
+13555	orphaned claims		<a id="g-orphaned-claims"></a>**orphaned claims** — the claims of a device whose task died mid-run.
+13560	peek		<a id="g-peek"></a>**peek** — the GUI display rule: a widget shows its own pending write if any, else the snapshot value.
+13564	periphery		<a id="g-periphery"></a>**periphery** — everything outside the loop that exchanges data with it (GUI, input devices, network I/O, logging), together with the co
+13569	roster		<a id="g-roster"></a>**roster** — the list of attached device entries (binding, claims, stable device id, attachment order).
+13574	`Run`		<a id="g-run"></a>**`Run`** — the state one run owns, a `Simulation` field beside the control plane.
+13582	scenario component		<a id="g-scenario-component"></a>**scenario component** — the home of a sim-time script under the mid-run mutation doctrine: an ordinary periodic discrete compo
+13588	selector (read-selector family)		<a id="g-selector"></a>**selector (read-selector family)** — the closed set of deferred reads `get_state`/`get_deriv`/`get_output`/`get_input`/`get_face`, each 
+13595	leaf address		<a id="g-leaf-address"></a>**leaf address** — a selector's second argument: the field or face name followed by `.name` and `[k]` or `[k,l]` steps in any order, 
+13602	`should_abort`		<a id="g-should_abort"></a>**`should_abort`** — the per-attachment failure policy, an `attach!` keyword defaulting to `false`.
+13610	snapshot		<a id="g-snapshot"></a>**snapshot** — the immutable per-boundary publication: boundary-consistent signal table (root inputs included), `t`, frame index, boundar
+13615	stage-on-interaction		<a id="g-stage-on-interaction"></a>**stage-on-interaction** — the GUI staging contract.
+13620	`StopPolicy`		<a id="g-stop-policy"></a>**`StopPolicy`** — the immutable value one advance declares: `t_end` plus the requester paths it ignores.
+13630	unattended run		<a id="g-unattended-run"></a>**unattended run** — a run with empty staging and no snapshot readers.
+13634	write surface		<a id="g-write-surface"></a>**write surface** — the set of faces a writer's batch entries may reach.
+13643	checkpoint		<a id="g-checkpoint"></a>**checkpoint** — the `Model`'s state at a frame top as one value, a `ModelState`, beside the run's two counters, the frame index and th
+13652	decimation		<a id="g-decimation"></a>**decimation** — the log's keep-every-kth retention policy (`log_every`), admissible on the log alone because it is derived data.
+13663	frame ordinal		<a id="g-frame-ordinal"></a>**frame ordinal** — the trace's key.
+13667	input mode		<a id="g-input-mode"></a>**input mode** — where the [drain](#g-drain) takes its batches from, read as `mode(sim)` off the run's `feed`: `:live` from the staging
+13674	log		<a id="g-log"></a>**log** — the retained sequence of published snapshots (the same objects, no copies), with a plain kill switch and `log_every` decimation.
+13678	recorders		<a id="g-recorders"></a>**recorders** — the trace and the log jointly.
+13682	replay		<a id="g-replay"></a>**replay** — the ordinary loop with one substitution: the drain reads the trace by frame ordinal, after the trace's checkpoint is restored.
+13688	run metadata		<a id="g-run-metadata"></a>**run metadata** — the trace header's `Deployment` and `t₀`, hence `Δt_base`, `h`, `N_base`, the algorithm identifier, `localization_
+13693	trace		<a id="g-trace"></a>**trace** — the primary record of a session: the sequence of drained, device-tagged batches per frame, plus its header.
+13698	trace header		<a id="g-trace-header"></a>**trace header** — the trace's fixed preamble: the checkpoint `init!` takes at the end of boundary zero, after the first snapshot.
+13704	trace record		<a id="g-trace-record"></a>**trace record** — the retained form of a drained batch, uniform for every writer: (position ⇒ value) pairs for the masked (touched) 
+13710	what-if replay		<a id="g-what-if-replay"></a>**what-if replay** — replaying a trace against the same structure with changed parameters: deterministic re-driving of the recorded
+13718	`at` / `Scoped`		<a id="g-at"></a>**`at` / `Scoped`** — the scoping combinator.
+13725	baseline		<a id="g-baseline"></a>**baseline** — an aircraft-shipped, full-coverage condition function (`ready_for_taxi(ac)`, `cold_and_dark(ac)`), layered under tweaks by
+13730	boundary zero		<a id="g-boundary-zero"></a>**boundary zero** — the initialization boundary: the ordinary macro-sequence with an empty integrate, run at `t₀` once `apply!` has 
+13736	combine		<a id="g-combine"></a>**combine** — the symmetric, collision-intolerant combinator over condition nodes.
+13741	component test rig		<a id="g-component-test-rig"></a>**component test rig** — a one-child assembly exporting the child's entire input face set.
+13741	stub child		An abstract entry is satisfied *inside* the rig by a concrete **stub child** wired to that face ([§13.7][s13-7]).
+13746	condition		<a id="g-condition"></a>**condition** — the datum that says "set this build to this state": a path-addressed sparse overlay on the declared defaults, covering `
+13752	`design_world`		<a id="g-design_world"></a>**`design_world`** — the shipped thin world (aircraft + `SimpleAtmosphere(wind = NoWind())` + `HorizontalTerrain`) that mounts an air
+13757	fragment		<a id="g-fragment"></a>**fragment** — the leaf node of the condition algebra.
+13757	self-vocabulary		`fragment(; x, s, m, u)` payloads speak only about the component at the authoring point (**self-vocabulary**), with addressing left entirely to `at` ([§14.2][s1
+13762	fragment tree		<a id="g-fragment-tree"></a>**fragment tree** — the inert, lazy composition of `Fragment`/`Scoped`/ `Combined`/override nodes.
+13767	mounting		<a id="g-mounting"></a>**mounting** — relocating a whole problem or tap set with `at(prefix, …)`.
+13774	override		<a id="g-override"></a>**override** — the ordered, asymmetric layering combinator.
+13778	root-input totality		<a id="g-root-input-totality"></a>**root-input totality** — the pre-write requirement that an application establishing a complete world over virgin stores (`ini
+13784	service lifecycle	D-319	<a id="g-service-lifecycle"></a>**service lifecycle** — the `Simulation` states `built` / `initialized` / `running` / `stopped` / `errored` ([§12.6][s12-6]) and
+13790	taps		<a id="g-taps"></a>**taps** — the three selector lists (`x`, `u`, `y`), built by `taps`, declaring what linearization seeds and reports.
+13795	`TrimProblem`		<a id="g-trimproblem"></a>**`TrimProblem`** — the closed nine-field value `guess`/`lower`/`upper`/`condition`/`reads`/`residuals`/`tolerances`/`checks`/`check_t
+13803	carrier exception		<a id="g-carrier-exception"></a>**carrier exception** — the single exception diagnostics travel in when thrown.
+13810	collect the checks, fail the evaluations fast		<a id="g-collect-the-checks-fail-the-evaluations-fast"></a>**collect the checks, fail the evaluations fast** — the reporting policy.
+13816	did-you-mean		<a id="g-did-you-mean"></a>**did-you-mean** — the required shape of any name-shaped failure: the offending name plus the list-in-hand it should have matched, ca
+13820	error locality		<a id="g-error-locality"></a>**error locality** — the property the declaration layer buys.
+13825	execution cursor		<a id="g-execution-cursor"></a>**execution cursor** — the plain mutable field recording where execution stands in the compiled order.
+13831	feedthrough tracer		<a id="g-feedthrough-tracer"></a>**feedthrough tracer** — the set-propagation instrument (global value-blind, or local primal-carrying at sampled states) used t
+13836	kind		<a id="g-kind"></a>**kind** — a diagnostic's identity in the closed set enumerated normatively in [Appendix C][sC], with payload fields, owning section, severit
+13842	payload		<a id="g-payload"></a>**payload** — the structured data a diagnostic carries beside its kind: paths and names as strings (never instances or component types), e
+13847	species		<a id="g-species"></a>**species** — a `StepError` whose `cause` is a diagnostic, `StepError{Kind}` by type.
+13852	stop request / termination is a state		<a id="g-stop-request"></a>**stop request / termination is a state** — graceful termination is model state, never an exception.
+13860	termination record		<a id="g-termination-record"></a>**termination record** — the stopped-sim value naming how the run ended.
+13868	artifact		<a id="g-artifact"></a>**artifact** — an immutable pure function of its inputs: `Structure`, `Outputs`, `Events`, an activation, the `Build`, the `Deployment`, 
+13875	blessed		<a id="g-blessed"></a>**blessed** — the spec's marker for a practice it explicitly sanctions where a neighboring one is forbidden: derivation from other declara
+13881	decision entry / `D-nnn`		<a id="g-row"></a>**decision entry / `D-nnn`** — a numbered entry of `decisions.md`, cited throughout as a linked `D-nnn` reference: one settled decision with t
+13887	the freeze		<a id="g-the-freeze"></a>**the freeze** — the roster freeze.
+13892	guarded addition		<a id="g-guarded-addition"></a>**guarded addition** — a capability the design admits but does not build, weighed against the design criteria of [§1][s1] and rec
+13897	normative / index, not a second home		<a id="g-normative"></a>**normative / index, not a second home** — the spec is the normative statement of the design, and its appendices are indices.
+13903	recorded, not built		<a id="g-recorded-not-built"></a>**recorded, not built** — the disposition of a worked-out extension deliberately left unimplemented, with its seams named so ad
+13908	state		<a id="g-state-single-owner"></a>**state** — the criterion's other word: a value with a single owner, mutated in place.
+13913	seam		<a id="g-seam"></a>**seam** — a narrow, named interface kept deliberately thin so what sits behind it can be replaced or measured: the stepper seam ([§10.2][s10
+13919	torture test		<a id="g-torture-test"></a>**torture test** — a maximally awkward case spelled against a proposed mechanism to validate it before adoption: the filter, joystick
+13925	worked (example)		<a id="g-worked"></a>**worked (example)** — a full spelling of a mechanism against a concrete case, carried in the spec rather than left to the reader: the IMU 

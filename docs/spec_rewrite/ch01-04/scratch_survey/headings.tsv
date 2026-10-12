@@ -1,0 +1,242 @@
+5	## Contents
+139	## 1. Introduction
+213	## 2. Formalism
+230	### 2.1 Events
+275	### 2.2 Exclusions (deliberate)
+296	## 3. Component taxonomy
+301	### 3.1 Continuous component (the hybrid primitive)
+328	### 3.2 Periodic discrete component
+354	### 3.3 Assembly
+364	### 3.4 Why two leaf classes, not one hybrid primitive
+393	#### The hardest case
+437	## 4. Ports and signals
+439	### 4.1 Immutable value semantics
+474	### 4.2 Consumers see ports, not stages
+492	### 4.3 Table mechanics and port granularity
+500	#### Ports and faces
+513	#### Scatter and gather
+530	#### What a port may hold
+555	#### Granularity, read side
+585	#### Granularity, write side
+602	### 4.4 Function-valued signals
+672	## 5. Evaluation order and feedthrough
+683	### 5.1 The ordering problem
+694	### 5.2 Two-stage outputs
+724	#### The hand-off
+747	#### What the views are
+768	#### The bundle law
+831	#### The stage return law
+844	#### The handler return law
+864	### 5.3 Structural feedthrough
+874	#### Stage roles
+912	#### Stage roles
+953	#### Derivatives that read outputs
+983	#### The execution order
+1000	#### Step boundaries
+1045	#### Supervisory inputs
+1101	### 5.4 Artificial loops and the escape hatch
+1186	### 5.5 Algebraic loop policy
+1212	### 5.6 Diagnostics
+1224	#### Detection and naming
+1236	#### The tracer's two modes
+1254	#### What tracing touches
+1272	#### Classification
+1306	#### Caveats the diagnostic carries
+1330	## 6. Composition
+1339	### 6.1 Connections and hierarchy
+1349	#### How far a path may reach
+1412	#### Type-checking a wire
+1467	#### Connections per port
+1493	### 6.2 Aggregation
+1562	#### What the explicit form buys
+1589	#### The hierarchical aggregation idiom
+1627	#### Zero contributors
+1655	#### The cost
+1668	## 7. State and data representation
+1678	### 7.1 Continuous state
+1788	### 7.2 Numeric genericity (eltype)
+1858	### 7.3 Discrete state, modes, and workspace
+1869	#### Stores
+1904	#### Workspace
+1967	#### Idioms
+2007	### 7.4 The fused-evaluation lineage (prior art and how we got here)
+2057	### 7.5 Allocation policy
+2140	## 8. The declaration layer
+2156	### 8.1 Position
+2175	#### Plain Julia, not a macro DSL
+2195	#### Declarations are the schema authority
+2211	#### Contracts are functions of the type
+2246	#### The namespace
+2341	#### Names
+2376	### 8.2 The declaration inventory
+2451	#### State and mode declarations
+2515	#### Input contracts
+2619	#### Root inputs
+2687	#### Output contracts
+2868	#### Events
+2882	#### Stage membership
+2900	#### Completeness
+2961	### 8.3 Visibility
+3027	### 8.4 Failure walkthroughs (the error-locality grounding)
+3059	### 8.5 Assembly declaration
+3079	#### Class by declaration shape
+3114	#### One arity on both tiers
+3124	#### Container children
+3198	#### `Group`
+3261	### 8.6 Paths, wiring and faces
+3375	#### A worked assembly
+3428	#### The leaves
+3472	#### The exactness condition
+3497	#### The leaves in code
+3568	#### Freshness at the sample
+3591	#### The boundary-sampling contract
+3620	### 8.7 Rate scopes
+3666	### 8.8 Computed connections and generic holding
+3675	#### The passthrough helpers
+3808	#### One authored feed list
+3877	#### Generic holding
+3894	## 9. The build pipeline
+3912	### 9.1 The build's three steps
+3943	#### The structure step
+4054	#### The nominal evaluation
+4097	#### Activation, parametric in `T`
+4109	### 9.2 The `Build` and `Deployment` artifacts
+4122	#### The `Build`
+4220	#### The `Deployment`
+4330	#### Rendering
+4358	#### Grid diagnostics
+4391	#### Warnings
+4412	### 9.3 Probing and input synthesis
+4557	### 9.4 Activations
+4700	### 9.5 The always-on conformance check
+4707	#### The generated write
+4738	#### Pairing by name
+4771	#### Exact match and embed-accept
+4818	#### Deliberate stripping
+4837	#### Per-function predicates
+4858	#### Handler returns
+4877	#### Guard forms
+4889	#### The failure payload
+4910	### 9.6 Stopped-sim services as activation clients
+4939	### 9.7 The compiled executor
+4948	#### The execution form
+4967	#### Cell storage
+4983	#### Phase bodies, arities and seams
+5038	#### Views and construction
+5056	#### Compile cost
+5149	#### The measurement seam
+5226	## 10. Time and execution
+5236	### 10.1 Loop ownership
+5275	### 10.2 The stepper seam
+5283	#### What the seam requires of a backend
+5302	#### Models with no continuous state
+5322	#### The first-cut backends
+5347	#### The case for fixed-step low order
+5373	### 10.3 Signal-table consistency is a boundary property
+5390	### 10.4 Localization mechanics
+5413	#### Detection policy
+5473	#### Trial evaluations
+5490	#### The trigger
+5509	#### The localization loop
+5620	#### Endpoint policy and grid integrity
+5657	#### The `t*` boundary
+5705	#### The localization budget
+5729	#### Deployment constants
+5750	### 10.5 Multi-rate tick scheduling
+5761	#### The base grid and the gate
+5790	#### Zero-order hold and the two sweep variants
+5822	#### Due sets
+5859	#### Simultaneous ticks
+5868	#### Assemblies and rate scopes
+5880	#### The two declaration forms
+5914	#### Relative composition
+5941	#### Anchors
+5971	#### When an anchor belongs in a library type
+6001	#### A worked example
+6034	#### Coincidence and stagger
+6054	#### `Δt` in the bundle
+6086	### 10.6 Event iteration at boundaries
+6115	#### Why the phase iterates
+6136	#### The three registers
+6203	#### What a handler sees within a round
+6272	#### The firing budget
+6322	#### Ticks after quiescence
+6363	### 10.7 Real-time pacing
+6371	#### The invariant and the wall-clock map
+6419	#### The wait
+6477	#### Diagnostics
+6495	#### Where staging and concurrency live
+6504	## 11. Runtime periphery
+6521	### 11.1 No shared mutable model
+6613	### 11.2 Outbound
+6624	#### The snapshot and its publication
+6693	#### The log
+6795	#### Output-device bindings
+6839	### 11.3 Inbound
+7048	### 11.4 Inbound
+7235	#### Worked example
+7296	### 11.5 Inbound
+7426	### 11.6 Devices
+7432	#### Every attached device receives the same handle
+7465	#### The authoring contract
+7532	#### The author owns the loop body; the framework owns the bracket
+7587	#### The binding
+7756	#### One shipped binding type; conditioning has an owner
+7778	#### Bad datum versus bug
+7804	### 11.7 The GUI write path
+7962	### 11.8 Diagnostics and liveness
+8106	## 12. Runtime periphery
+8113	### 12.1 Control plane
+8188	### 12.2 Loop scheduling
+8274	### 12.3 The next-snapshot wait
+8344	### 12.4 Shutdown protocol
+8357	#### The tail
+8483	#### Initialization
+8591	#### The operator interrupt
+8687	### 12.5 Scripts and the mid-run mutation doctrine
+8758	### 12.6 Run lifecycle and partial advance
+9002	### 12.7 Replay
+9275	## 13. Error discipline
+9286	### 13.1 Reporting policy
+9346	### 13.2 Diagnostics
+9523	### 13.3 Build primitives
+9606	### 13.4 Runtime failures
+9795	### 13.5 Termination is a state, not an exception
+10023	### 13.6 Abnormal shutdown
+10080	### 13.7 Tooling consequences
+10118	#### The standard component library
+10262	#### The component test rig
+10313	## 14. Stopped-sim services
+10366	### 14.1 Conditions are path-addressed overlays on the declared defaults
+10421	### 14.2 Fragment composition
+10528	### 14.3 Resolution
+10599	### 14.4 One plan, two ways to apply it
+10640	#### The read-selector family
+10753	### 14.5 Boundary zero
+10856	### 14.6 Root-input totality
+10909	### 14.7 The trim problem
+11090	### 14.8 The trim service
+11097	#### The backend seam
+11142	#### The convergence verdict is the service's, uniformly
+11151	#### The tolerance translation, per backend family
+11180	#### Box bounds and saturated decisions
+11187	#### Scratch stores, stated without type luck
+11259	#### The commit, in full
+11280	#### The report, not an exception
+11370	#### The AD obligation, scoped
+11399	### 14.9 Mounting
+11506	### 14.10 Linearization
+11763	## Appendix A. Taught contracts
+11909	## Appendix B. API synopsis
+12366	## Appendix C. The diagnostic kind set
+12816	## Appendix D. Glossary
+12827	### D.1 Component model and declaration layer
+12970	### D.2 Signals and data homes
+13083	### D.3 Evaluation and scheduling
+13128	### D.4 Time and events
+13300	### D.5 Build pipeline
+13440	### D.6 Runtime periphery
+13641	### D.7 Recording and replay
+13716	### D.8 Stopped-sim services and the condition algebra
+13801	### D.9 Error discipline and diagnostics
+13866	### D.10 Meta-vocabulary
