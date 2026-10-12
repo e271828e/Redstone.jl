@@ -327,3 +327,12 @@ difficulty and names its hazards.
   and CI asserts it ([§7.5], [§9.7])". The criterion name keeps "type
   stability": §7.5's allocation policy is the type-instability canary
   (D-305 bullet 2), so the bullet's pointer covers it; no clause is added.
+- **R15. R12's `ProducedByTwoStages` goes to unit E** (unit F's question 1).
+  Old 528, "Name collisions across a component's stages are a build error",
+  is the last line of unit E's `old.md`, so unit E names the kind there, not
+  unit F.
+- **R16. The turbulence gloss** (unit B's question 3). "Dryden and von
+  Kármán name two standard atmospheric turbulence models" rests on no source
+  in the repository. It shrinks to what the old text says: the noise comes
+  from Dryden/von Kármán turbulence models, with no introducing sentence.
+  D-002 beside D-001's first bold stands (the survey's table, R6).

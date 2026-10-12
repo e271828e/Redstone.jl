@@ -1,0 +1,533 @@
+{
+ "claims": [
+  {
+   "id": "C-001",
+   "old": "## 3. Component taxonomy",
+   "new": "## 3. Component taxonomy",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-002",
+   "old": "There are three classes.",
+   "new": "The taxonomy has three categories of component (D-003).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-003"
+   ],
+   "tag": "R",
+   "ruling": "R6"
+  },
+  {
+   "id": "C-003",
+   "old": "Two of them are leaves with crisp, closed semantics, and one is pure composition.",
+   "new": "Two of them are leaves with crisp, closed semantics, and one is pure composition.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-004",
+   "old": "### 3.1 Continuous component (the hybrid primitive)",
+   "new": "### 3.1 Continuous component (the hybrid primitive)",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-005",
+   "old": "A continuous component is a classical hybrid automaton.",
+   "new": "A continuous component is a classical hybrid automaton.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-006",
+   "old": "It has these facets.",
+   "new": "It has these facets.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-007",
+   "old": "Continuous state `x`, an isbits struct of real scalars (§7).",
+   "new": "Continuous state `x`, a NamedTuple whose leaves are real scalars and `SArray`s (§7.1, D-094, D-247).",
+   "where": "new",
+   "cites": [
+    "§7"
+   ],
+   "newcites": [
+    "§7.1",
+    "D-094",
+    "D-247"
+   ],
+   "tag": "R",
+   "ruling": "R5"
+  },
+  {
+   "id": "C-008",
+   "old": "Mode variables `m`. These are piecewise-constant values (enums, integers, flags) that parametrize the flow and change only through event handlers.",
+   "new": "Mode variables `m`. These are piecewise-constant values (enums, integers, flags) that parametrize the flow and change only through event handlers.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-009",
+   "old": "Flow $\\dot{x} = f(x, m, u, t)$.",
+   "new": "Flow $\\dot{x} = f(x, m, u, t)$.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-010",
+   "old": "Two output stages (§5.2).",
+   "new": "Two output stages (§5.2).",
+   "where": "new",
+   "cites": [
+    "§5.2"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-011",
+   "old": "Events, each a guard plus a handler.",
+   "new": "Events, each a guard (the declared function defining an event's predicate) plus a handler.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-012",
+   "old": "A handler may update `m` and may reset the component's own `x`.",
+   "new": "A handler may update `m` and may reset the component's own `x` (D-090).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-090"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-013",
+   "old": "Both guard and handler read the fresh boundary signal table (§5.3).",
+   "new": "Both guard and handler read the fresh boundary signal table (§5.3, D-154).",
+   "where": "new",
+   "cites": [
+    "§5.3"
+   ],
+   "newcites": [
+    "§5.3",
+    "D-154"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-014",
+   "old": "An optional projection.",
+   "new": "An optional projection (the per-component hook `x_projection`).",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-015",
+   "old": "Any facet may be empty.",
+   "new": "Any facet may be empty.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-016",
+   "old": "In particular, a component with no continuous state, only modes, events and mode-valued outputs, is an FSM.",
+   "new": "In particular, a component with no continuous state, only modes, events and mode-valued outputs, is a finite-state machine (FSM).",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-017",
+   "old": "A single primitive therefore supports both factorings of mode logic.",
+   "new": "A single primitive supports both factorings of mode logic (D-003).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-003"
+   ],
+   "tag": "R",
+   "ruling": "R6"
+  },
+  {
+   "id": "C-018",
+   "old": "Internal modes suit tightly coupled cases, such as stall hysteresis inside the aero component.",
+   "new": "Internal modes suit tightly coupled cases, such as stall hysteresis inside the aero component.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-019",
+   "old": "They preserve cohesion and enable reset maps.",
+   "new": "They preserve cohesion and enable reset maps (D-003).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-003"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-020",
+   "old": "An external FSM component feeding modes through a port gives maximal purity, independent testability and swappable supervision logic.",
+   "new": "An external FSM component feeding modes through a port (the addressable unit of the model) gives maximal purity, independent testability and swappable supervision logic.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-021",
+   "old": "Rule of meaning.",
+   "new": "The rule of meaning separates a command from a detection.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R7"
+  },
+  {
+   "id": "C-022",
+   "old": "A supervisor commanding a mode change is an ordinary input.",
+   "new": "A supervisor commanding a mode change is an ordinary input.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-023",
+   "old": "A component detecting its own transition is an event.",
+   "new": "A component detecting its own transition is an event.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-024",
+   "old": "The two mechanisms carry two meanings and do not overlap.",
+   "new": "The two mechanisms carry two meanings and do not overlap.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-025",
+   "old": "### 3.2 Periodic discrete component",
+   "new": "### 3.2 Periodic discrete component",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-026",
+   "old": "A periodic discrete component has these facets.",
+   "new": "A periodic discrete component has these facets.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-027",
+   "old": "Discrete state `s`, any isbits value (§7).",
+   "new": "Discrete state `s`, a NamedTuple whose fields are each isbits or a `Symbol` (§7.3, D-231, D-247).",
+   "where": "new",
+   "cites": [
+    "§7"
+   ],
+   "newcites": [
+    "§7.3",
+    "D-231",
+    "D-247"
+   ],
+   "tag": "R",
+   "ruling": "R5"
+  },
+  {
+   "id": "C-028",
+   "old": "Update $s^{+} = g(s, u, t)$ at a declared rate.",
+   "new": "Update $s^{+} = g(s, u, t)$ at a declared rate.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-029",
+   "old": "Two output stages, with feedthrough applying at update instants.",
+   "new": "Two output stages, with feedthrough (an instantaneous input→output dependence) applying at update instants.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-030",
+   "old": "A proportional path is direct feedthrough.",
+   "new": "A proportional path is direct feedthrough.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-031",
+   "old": "A state-only output is not.",
+   "new": "A state-only output is not.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-032",
+   "old": "Each tier carries its own state letter.",
+   "new": "Each tier carries its own state letter (D-195).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-195"
+   ],
+   "tag": "M"
+  },
+  {
+   "id": "C-033",
+   "old": "`x` is the argument of the flow map under `f`, and `s` is the argument of the jump map under `g`.",
+   "new": "`x` is the argument of the flow map under `f`, and `s` is the argument of the jump map under `g`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-034",
+   "old": "The two are different objects.",
+   "new": "The two are different objects.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-035",
+   "old": "`x` has a derivative and lives in the flat buffer.",
+   "new": "`x` has a derivative and lives in the flat buffer.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-036",
+   "old": "`s` has none and is latched in a store between ticks.",
+   "new": "`s` has none and is latched in a store (the framework-owned home of a state letter) between ticks.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-037",
+   "old": "So they are spelled differently (D-195).",
+   "new": "Each tier carries its own state letter (D-195).",
+   "where": "new",
+   "cites": [
+    "D-195"
+   ],
+   "tag": "M"
+  },
+  {
+   "id": "C-038",
+   "old": "Nothing is lost by the split, because a leaf is strictly one tier (D-056) and no component ever reads another's state.",
+   "new": "Nothing is lost by splitting the letter, because a leaf is strictly one tier (D-056) and no component ever reads another's state.",
+   "where": "new",
+   "cites": [
+    "D-056"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-039",
+   "old": "A discrete component's `s` influences continuous dynamics only through signals.",
+   "new": "A discrete component's `s` influences continuous dynamics only through signals (D-056).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-056"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-040",
+   "old": "Those outputs are held zero-order between ticks.",
+   "new": "Those outputs are held zero-order between ticks (D-019).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-019"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-041",
+   "old": "`m` is continuous-only.",
+   "new": "`m` is continuous-only (D-231, D-249).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-231",
+    "D-249"
+   ],
+   "tag": "R",
+   "ruling": "R6"
+  },
+  {
+   "id": "C-042",
+   "old": "A discrete component has no mode store.",
+   "new": "A discrete component has no mode store.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-043",
+   "old": "Its FSM enums, flags and counters are ordinary `s` fields.",
+   "new": "Its finite-state machine (FSM) enums, flags and counters are ordinary `s` fields.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-044",
+   "old": "Why.",
+   "new": "`m` exists on the continuous side because modes must change between flow evaluations",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-045",
+   "old": "`m` exists on the continuous side because modes must change between flow evaluations, which is what handlers do.",
+   "new": "`m` exists on the continuous side because modes must change between flow evaluations, which is what handlers do.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-046",
+   "old": "On the discrete side `g` already runs at the only instants at which anything may change.",
+   "new": "On the discrete side `g` already runs at the only instants at which anything may change.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-047",
+   "old": "A second store would duplicate the discrete tier's own state semantics under another name.",
+   "new": "A second store would duplicate the discrete tier's own state semantics under another name.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-048",
+   "old": "### 3.3 Assembly",
+   "new": "### 3.3 Assembly",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-049",
+   "old": "An assembly is pure composition.",
+   "new": "An assembly is pure composition.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-050",
+   "old": "It holds submodels, local wires and boundary faces.",
+   "new": "It holds child components, local wires and boundary faces (the names ports wear on a component's boundary).",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-051",
+   "old": "It has no dynamics of its own.",
+   "new": "It has no dynamics of its own.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-052",
+   "old": "Hybridness emerges at the assembly level.",
+   "new": "Hybridness emerges at the assembly level.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-053",
+   "old": "An aircraft is continuous vehicle parts plus discrete avionics parts.",
+   "new": "An aircraft is continuous vehicle parts plus discrete avionics parts.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-054",
+   "old": "The two-leaf split was upheld against the integrate-and-dump challenge (§3.4, D-056).",
+   "new": "The two-leaf split was upheld against the integrate-and-dump challenge (§3.4, D-056).",
+   "where": "new",
+   "cites": [
+    "§3.4",
+    "D-056"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-055",
+   "old": "Assemblies are flattened away for ordering.",
+   "new": "Assemblies are flattened away for ordering (D-019).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-019"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-056",
+   "old": "They are retained as the navigation and introspection hierarchy (GUI, logging, paths) and as declaration-level rate scopes (§10.5).",
+   "new": "They are retained as the navigation and introspection hierarchy (GUI, logging, paths) and as declaration-level rate scopes (§10.5, D-019).",
+   "where": "new",
+   "cites": [
+    "§10.5"
+   ],
+   "newcites": [
+    "§10.5",
+    "D-019"
+   ],
+   "tag": "C"
+  }
+ ],
+ "added": [
+  "§3.1 describes the continuous component, §3.2 the periodic discrete component and §3.3 the assembly, and §3.4 justifies the two-leaf split.",
+  "the declared function defining an event's predicate",
+  "the per-component hook `x_projection`",
+  "finite-state machine",
+  "the addressable unit of the model",
+  "The rule of meaning separates a command from a detection.",
+  "On the continuous tier, a commanded reset of state, whose condition arrives as an input, still lands through an event whose guard reads that input (§5.3, D-141).",
+  "an instantaneous input→output dependence",
+  "the framework-owned home of a state letter",
+  "the names ports wear on a component's boundary"
+ ]
+}
