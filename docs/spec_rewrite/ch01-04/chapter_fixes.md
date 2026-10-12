@@ -1479,3 +1479,99 @@ New:
   is abstract"). Before that it took no gloss beyond the sentence's own
 ~~~~
 
+### E68. R22, unit F
+
+Reason: R22: the stop-request gloss gains its override, in D-316's Position's words.
+
+Inventory: C-012's new span gains ', unless the advance ignores it'; tag R, ruling R22.
+
+Old:
+
+~~~~
+reads `STOP_REQUESTED`), and a `StopFlag`
+~~~~
+
+New:
+
+~~~~
+reads `STOP_REQUESTED`, unless the advance ignores it), and a `StopFlag`
+~~~~
+
+### E69. R22 rewrap, unit F
+
+Reason: rewrap to 80 rendered columns
+
+Old:
+
+~~~~
+A port value's leaves are what the [leaf walk](#g-leaf-walk) (the framework's
+derivation of per-activation types) reaches through `Real`s, static arrays and
+isbits structs ([D-237][d-237]). An enum is one leaf, pinned ([§8.2][s8-2],
+[D-316][d-316]). `StopFlag` is the one enum with a framework meaning. An
+output port of that type is a [stop request](#g-stop-request) (a port that ends the run when it
+reads `STOP_REQUESTED`, unless the advance ignores it), and a `StopFlag` nested in a port of another type or
+declared as a root input is refused (`IllegalPortType`, [§13.5][s13-5],
+[D-316][d-316]).
+~~~~
+
+New:
+
+~~~~
+A port value's leaves are what the [leaf walk](#g-leaf-walk) (the framework's derivation of
+per-activation types) reaches through `Real`s, static arrays and isbits structs
+([D-237][d-237]). An enum is one leaf, pinned ([§8.2][s8-2], [D-316][d-316]). `StopFlag` is the one enum
+with a framework meaning. An output port of that type is a [stop request](#g-stop-request) (a port
+that ends the run when it reads `STOP_REQUESTED`, unless the advance ignores it),
+and a `StopFlag` nested in a port of another type or declared as a root input is
+refused (`IllegalPortType`, [§13.5][s13-5], [D-316][d-316]).
+~~~~
+
+### E70. R23, unit B
+
+Reason: R23: D-101's Position rules replay exact; it is cited beside D-231 at the deterministic-replay sentence.
+
+Inventory: B-054 newcites gain D-101; tag R, ruling R23.
+
+Old:
+
+~~~~
+a bit-identical trajectory ([D-231][d-231]).
+~~~~
+
+New:
+
+~~~~
+a bit-identical trajectory ([D-231][d-231], [D-101][d-101]).
+~~~~
+
+### E71. R23 rewrap, unit B
+
+Reason: rewrap to 80 rendered columns
+
+Old:
+
+~~~~
+- No stochastic differential equations (SDEs) or stochastic integrators. Noise
+  processes, such as sensor noise and Dryden/von Kármán turbulence, are modeled
+  as shaping filters ([D-001][d-001]), that is, as ordinary discrete processes driven by
+  a random number generator (RNG). That modeling is faithful to how the noise
+  processes are specified, and it is cheap. One consequence is elevated to a
+  framework guarantee, deterministic [replay](#g-replay) (re-running the ordinary loop on a
+  recorded input trace). RNG state lives in [component](#g-component) discrete state `s`, never in
+  ambient globals, so the same seed gives a bit-identical trajectory ([D-231][d-231], [D-101][d-101]).
+~~~~
+
+New:
+
+~~~~
+- No stochastic differential equations (SDEs) or stochastic integrators. Noise
+  processes, such as sensor noise and Dryden/von Kármán turbulence, are modeled
+  as shaping filters ([D-001][d-001]), that is, as ordinary discrete processes driven by
+  a random number generator (RNG). That modeling is faithful to how the noise
+  processes are specified, and it is cheap. One consequence is elevated to a
+  framework guarantee, deterministic [replay](#g-replay) (re-running the ordinary loop on a
+  recorded input trace). RNG state lives in [component](#g-component) discrete state `s`, never in
+  ambient globals, so the same seed gives a bit-identical trajectory ([D-231][d-231],
+  [D-101][d-101]).
+~~~~
+

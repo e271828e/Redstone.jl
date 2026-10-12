@@ -113,10 +113,11 @@
   {
    "id": "C-012",
    "old": "An output port of that type is a stop request (a port that ends the run when it reads `STOP_REQUESTED`),",
-   "new": "An output port of that type is a stop request (a port that ends the run when it reads `STOP_REQUESTED`),",
+   "new": "An output port of that type is a stop request (a port that ends the run when it reads `STOP_REQUESTED`, unless the advance ignores it),",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "R",
+   "ruling": "R22"
   },
   {
    "id": "C-013",

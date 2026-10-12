@@ -529,13 +529,15 @@
   {
    "id": "B-054",
    "old": "RNG state lives in component discrete state (`s`), never in ambient globals, so the same seed gives a bit-identical trajectory.",
-   "new": "RNG state lives in component discrete state `s`, never in ambient globals, so the same seed gives a bit-identical trajectory (D-231).",
+   "new": "RNG state lives in component discrete state `s`, never in ambient globals, so the same seed gives a bit-identical trajectory (D-231, D-101).",
    "where": "new",
    "cites": [],
    "newcites": [
-    "D-231"
+    "D-231",
+    "D-101"
    ],
-   "tag": "C"
+   "tag": "R",
+   "ruling": "R23"
   },
   {
    "id": "B-055",

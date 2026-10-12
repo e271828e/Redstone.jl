@@ -8,14 +8,13 @@ field through the port's [leaf address](#g-leaf-address), as in `"pose.q_eb"` ([
 consumer takes the bundle (the struct-valued port) whole. Bare-struct returns
 are rejected ([D-036][d-036]).
 
-A port value's leaves are what the [leaf walk](#g-leaf-walk) (the framework's
-derivation of per-activation types) reaches through `Real`s, static arrays and
-isbits structs ([D-237][d-237]). An enum is one leaf, pinned ([§8.2][s8-2],
-[D-316][d-316]). `StopFlag` is the one enum with a framework meaning. An
-output port of that type is a [stop request](#g-stop-request) (a port that ends the run when it
-reads `STOP_REQUESTED`), and a `StopFlag` nested in a port of another type or
-declared as a root input is refused (`IllegalPortType`, [§13.5][s13-5],
-[D-316][d-316]).
+A port value's leaves are what the [leaf walk](#g-leaf-walk) (the framework's derivation of
+per-activation types) reaches through `Real`s, static arrays and isbits structs
+([D-237][d-237]). An enum is one leaf, pinned ([§8.2][s8-2], [D-316][d-316]). `StopFlag` is the one enum
+with a framework meaning. An output port of that type is a [stop request](#g-stop-request) (a port
+that ends the run when it reads `STOP_REQUESTED`, unless the advance ignores it),
+and a `StopFlag` nested in a port of another type or declared as a root input is
+refused (`IllegalPortType`, [§13.5][s13-5], [D-316][d-316]).
 
 **The walk stops at an immutable type that is not isbits and treats it as one
 opaque leaf** ([D-237][d-237]). The table stores an opaque leaf whole,
