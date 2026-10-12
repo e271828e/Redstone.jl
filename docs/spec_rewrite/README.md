@@ -28,7 +28,7 @@ readability with no loss of content. The steps are in
 | 2. Formalism | not started | | |
 | 3. Component taxonomy | not started | | |
 | 4. Ports and signals | not started | | |
-| 5. Evaluation order and feedthrough | in progress | | |
+| 5. Evaluation order and feedthrough | done | `4802729` | |
 | 6. Composition: connections, aggregation and hierarchy | done | `50ad740` | `cc5a41c` |
 | 7. State and data representation | done | `1cb6716` | `733be21` |
 | 8. The declaration layer: components and assemblies | done | `ef7f5dd` | `d268d39` |
@@ -42,7 +42,7 @@ readability with no loss of content. The steps are in
 
 ## Carried to later chapters
 
-Doubles and pointers chapters 6, 7 and 8 found in chapters not yet rewritten. Each
+Doubles and pointers chapters 5 to 8 found in chapters not yet rewritten. Each
 chapter's rewrite settles its own:
 
 - **Chapter 3.** §3.4's lead-in "Algebra removes the reset." bolds D-056's
@@ -51,7 +51,6 @@ chapter's rewrite settles its own:
   scalars" and §3.2 calls discrete state "any isbits value", both citing §7.
   §7.1 states a flat NamedTuple of real scalars and `SArray`s, and §7.3 a
   value whose fields are isbits or a `Symbol` (D-231).
-- **Chapter 5.** §5.3 states D-252 under a **Rule.** label; §8.3 bolds it.
 - **Chapter 11.** §11.6 calls §8.1's shadowing check "the reflection class",
   a name §8.1 never uses.
 - **Chapter 11.** §11.8 scopes the zero-allocation invariant to "the model
@@ -68,6 +67,11 @@ chapter's rewrite settles its own:
   (§3.2). §7.3 admits isbits or `Symbol` fields (D-231).
 - **Chapter 14.** §14.10 bolds seedability and states the tap rejection,
   both of which §8.2 states (D-295, D-296).
+- **Appendix A.** The old-style lead-ins "**Same-tick reset consumption**"
+  and "**A continuous component's state reset is an event**" bold rulings
+  §5.3 bolds (D-089, D-141), with no D-citation.
+- **Appendix B.** The handler return law is bold with no D-citation; §5.2
+  bolds it (D-090).
 - **Appendix C.** `TwoProducers` says "sibling wire", which D-314 makes
   "local wire".
 - **Appendix D.** *generic holding* cites §6.1, which no longer states it,

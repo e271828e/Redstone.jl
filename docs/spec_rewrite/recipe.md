@@ -118,6 +118,17 @@ From chapter 6's checkpoint:
   pass ruling (RP-4), and the final verifier's cold read of the
   orchestrator's own wording (O-2 to O-4).
 
+From chapter 5's checkpoint:
+
+- **Check the survey's bold table against the one-bold test before adopting
+  it.** Chapter 5's brief took five bolds for D-012 from the survey. D-012's
+  Position chains three rulings by semicolons, so two bolds were doubles;
+  unit F's verifier caught them (R15).
+- **Check each linked term's uses against its glossary entry, not only the
+  reserved words.** §5.3 placed `x_projection` "in the execution order",
+  which the glossary defines as the list of stage functions. A rewriter
+  found it; the fix (R16) reached three other chapters and the glossary.
+
 ### Step 2: the brief (written by the orchestrator)
 
 Chapter 9's `brief.md` is the model, read with the corrections below. One
@@ -173,6 +184,18 @@ unit's `old.md`, which its own inventory guarantees.
 - List the words the glossary reserves ("Bare 'tier' means only this").
   Chapter 7's rewriters used "tiers" for the genericity classes and for
   §7.5's budgets; only the chapter pass caught both.
+
+**From chapter 5, the brief should also:**
+
+- Assign each glossary term's first-use link where a section spans two
+  units. §5.2 and §5.3 each spanned two, and five links sat at a later use
+  until R13 moved them, at the cost of four fix rounds.
+- Name every term a merge must keep. R4 merged two statements of the
+  boundary sequence and dropped its name, which three inbound citations
+  relied on; only the chapter pass caught it.
+- Still hold its own wording to lesson 14. R3 dictated "each bundle field is
+  a view of one source", and the stage-1 hand-down is a field no source
+  names (R14).
 
 **From chapter 6, the brief should also:**
 
@@ -292,6 +315,10 @@ was the orchestrator's own: a scripted replace joined two source lines. Log
 every orchestrator touch, and rewrap after any scripted edit.
 Run `checks/assemble.sh` after every orchestrator touch too: chapter 6's
 re-check found `chapter_new.md` stale after the orchestrator's three fixes.
+The fixer's log should hold each edit's old and new text in order. Chapter
+5's final verifier replayed `chapter_fixes.md` on the verified commit and got
+every unit byte for byte, which made 65 changes checkable at once. The
+consolidator reads only, so it can run beside the editorial fixer.
 
 ### Step 7: land (the orchestrator)
 
@@ -340,6 +367,10 @@ when it lands; chapter 10 coordinated with one that way.
   `check_bold.jl` and `row_baseline.txt`, are edited by one session at a time,
   after a message and a fresh read. Pick a chapter with little citation
   traffic to the other: chapters 5 and 6 cite each other nowhere.
+
+- The landing can go to one Opus agent, given the accepted batch items and
+  this step's order. Chapter 5's lander ran linkify and the battery before
+  each of its three commits, so each commit passed on its own.
 
 ### Step 8: the second track
 
@@ -454,6 +485,24 @@ parallel session:
 The chapter, track 2 included, ran in one session of about an hour and a
 half. Like chapter 7, it cost about 1M per 1,000 words.
 
+Chapter 5, 4,717 words, ruled by the orchestrator, beside chapter 6 in a
+parallel session:
+
+| step | agent runs | subagent tokens |
+|---|---|---|
+| survey | 1 | 0.42M |
+| rewrites | 6, plus fix rounds | 1.06M |
+| unit verification | 6, plus re-checks | 0.63M |
+| chapter pass, inbound check, editorial fixer | 3 | 0.59M |
+| consolidation | 1 | 0.27M |
+| final verification and PDF check | 2 | 0.21M |
+| landing | 1 | 0.08M |
+| track 2 and its verification | 2 | 0.30M |
+| total | 22, plus fix rounds | about 3.6M |
+
+The chapter, track 2 included, ran in one session of about two hours. It
+cost about 0.75M per 1,000 words.
+
 ## 4. What to expect from a chapter
 
 From chapter 9:
@@ -508,6 +557,19 @@ From chapter 6, which held 56 rules:
 - **The chapter grew about a quarter**, from 2,181 words to about 2,690, and
   bold fell from 28 spans, 9 of them labels, to 13 spans of 142 words.
 
+From chapter 5, which held 103 rules:
+
+- **One rule in four lived only outside a Position**, 26 of 103, and seven
+  had no entry. Track 2 wrote D-341 to D-343; sixteen items went to the
+  owner.
+- **One rule in seven cited its entry at its spot**, 14 of 103. D-006,
+  D-089, D-140, D-154 and D-194 ruled the chapter and were cited nowhere in
+  it.
+- **No inbound citation was lost.** Of 231 rows, 27 needed an edit; 20 were
+  wrong before the rewrite.
+- **The chapter grew about a fifth**, from 4,717 words to about 5,680, and
+  bold fell from 59 spans, 14 of them labels, to 25 spans of 211 words.
+
 ## 5. Lessons, in one list
 
 1. Survey first, and rule on its decisions before writing. Moves settled
@@ -555,6 +617,11 @@ From chapter 6, which held 56 rules:
 32. Run each battery check as its own command.
 33. Parallel chapters coordinate by message: serial landings, entry-number
     blocks, one session at a time on shared files.
+34. Check the survey's bold table against the one-bold test (chapter 5).
+35. Check each linked term's uses against its glossary entry.
+36. Where a section spans units, the brief assigns each first-use link.
+37. A merge keeps every term the merged passages named.
+38. Log editorial fixes as old and new text, so the verifier can replay them.
 
 ## 6. A chapter's files
 

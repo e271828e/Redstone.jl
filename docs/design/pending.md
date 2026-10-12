@@ -79,7 +79,7 @@ what the spec says, the spec edit is part of the item.
   declaration names; correct a copy before measuring, and leave the report as
   it is.
 - **A tutorial** that takes a newcomer from a component to a run and a plot.
-- **The spec's readability rewrite.** Chapters 6, 7, 8, 9 and 10 are done. The
+- **The spec's readability rewrite.** Chapters 5 to 10 are done. The
   other chapters follow `docs/spec_rewrite/recipe.md`, and that directory's
   README tracks them. Until a chapter's turn comes, it keeps the old markers.
   Chapter 6 left these for the owner:
@@ -96,6 +96,22 @@ what the spec says, the spec edit is part of the item.
     error with no silent defaults (two Rejected lists point back at §6.1),
     that local fan-out is free, and that contributors publish in the common
     body frame (Flight.jl's convention).
+  Chapter 5 left these for the owner. Each sentence stays plain and uncited
+  until ruled; the evidence is in chapter 5's `rulings_batch.md`, group C,
+  in the commit that deleted `docs/spec_rewrite/ch05/`.
+  - five §5 rulings no entry records, each recommended for an entry:
+    stage-2 conservatism, unless D-006's all-inputs feedthrough is read as
+    carrying it (the glossary and `pid_anti_windup.md` rely on it);
+    evaluating the RHS means running the sweep, with no incremental
+    re-evaluation (§5.3, restated by §10.3 and §10.4); the unit delay's tier
+    caveat, which §5.5 and §13.7 each state citing only the other, with
+    algebraic balances inside a component as its scope note; the tracer's
+    two modes, what it seeds and its blind spot (§5.6); and stage discovery
+    by method existence (§5.2), which only superseded D-165 records.
+  - five more recommended as needing no entry: when stage 1 exists (it
+    follows from D-252), `BundleFieldError`'s three classifications and the
+    dead hop's payload form (Appendix C describes both payloads), the name
+    "tracer activation" (§9.4), and why `x_projection` stays positional.
 - **Package registration.**
 - **A precompile workload** for the generic machinery a cold process
   pays, about 9 s whatever the model (§9.7).
@@ -167,4 +183,13 @@ Where the code's shape is coherent and the spec may be what moves, the call
 is the user's; a ruling lands docs-commit-first, then the bullet retires or
 the code conforms.
 
-Currently empty.
+- **The quoted cycle and bundle diagnostics** (§5.2, §5.4, §5.6). The spec
+  quotes "cycle through `systems/aero` is artificial at port level — split
+  the component, or narrow the neighbor's contract", "insert a state" for a
+  genuine cycle, and "`x_deriv` of `Foo` destructures `m`, but `Foo`
+  declares no `m_init`". `src/diagnostics.jl` renders richer text that
+  agrees in substance: it names `split m` and the fallback-branch condition,
+  offers "a state, a stage-1 (`y_state`) port, or a `UnitDelay`" for a
+  genuine cycle, and names the component by its path rather than its type.
+  Recommended: conform the spec's quotes to `src`'s wording, after the user
+  rules whether the bundle diagnostic names a path or a type.
