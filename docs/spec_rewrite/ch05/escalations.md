@@ -16,3 +16,8 @@ chapter closes.
   spec's quotes illustrative rather than verbatim, or conform the spec to
   `src`'s wording, as a `pending.md` deviation bullet. The rewrite carries the
   quotes verbatim.
+- **§5.2's example diagnostic differs from `src`'s text** (unit B, same
+  class as the item above). Old 752–754 quotes "`x_deriv` of `Foo`
+  destructures `m`, but `Foo` declares no `m_init`"; the survey's run of
+  `src` printed "`x_deriv` destructures `m`, but the root component declares
+  no `m_init` — the bundle carries {x, y, t} (§5.2)". Same recommendation.

@@ -1,0 +1,777 @@
+{
+ "claims": [
+  {
+   "id": "C-001",
+   "old": "### 5.3 Structural feedthrough: stage roles, execution order and step boundaries",
+   "new": "### 5.3 Structural feedthrough: stage roles, execution order and step boundaries",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-002",
+   "old": "§5.2 fixes the two-stage surface and the laws that govern it.",
+   "new": "§5.2 fixes the two-stage surface and the laws that govern it.",
+   "where": "new",
+   "cites": [
+    "§5.2"
+   ],
+   "tag": "X"
+  },
+  {
+   "id": "C-003",
+   "old": "What remains is the reading.",
+   "new": "What remains is the reading.",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-004",
+   "old": "A stage's role has two halves, what its name asserts and what it may see.",
+   "new": "A stage's role has two halves, what its name asserts and what it may see.",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-005",
+   "old": "The rest of the section orders the stages, then puts that order inside a step boundary.",
+   "new": "The rest of the section orders the stages, then puts that order inside a step boundary (a published consistency point).",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-006",
+   "old": "#### Stage roles: the names",
+   "new": "#### Stage roles: the names",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-007",
+   "old": "Mathematical symbols and API names are two vocabularies, deliberately.",
+   "new": "Mathematical symbols and API names are two vocabularies, deliberately (D-220).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-220"
+   ],
+   "tag": "R",
+   "ruling": "R9"
+  },
+  {
+   "id": "C-008",
+   "old": "This document's formulas keep the symbols of the traditions they come from.",
+   "new": "This document's formulas keep the symbols of the traditions they come from.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-009",
+   "old": "`f` is the continuous flow and `g` the discrete update, the hybrid-systems flow/jump pair (Goebel–Sanfelice–Teel).",
+   "new": "`f` is the continuous flow, the derivative function. `g` is the discrete update. The two form the hybrid-systems flow/jump pair (Goebel–Sanfelice–Teel).",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-010",
+   "old": "`h` is the control/estimation convention that the output map is `y = h(x, u)`, as in every navigation filter's measurement function.",
+   "new": "The output map is `h` in `y = h(x, u)`, the control/estimation convention, as in every navigation filter's measurement function.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-011",
+   "old": "The API spells the same objects as words, so that a name bound in an author's own module is unambiguous evidence of a forgotten import (D-220).",
+   "new": "The API spells the same objects as words, so that a name bound in an author's own module is unambiguous evidence of a forgotten import (D-220).",
+   "where": "new",
+   "cites": [
+    "D-220"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-012",
+   "old": "The correspondence is one to one.",
+   "new": "The correspondence is one to one.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-013",
+   "old": "| symbol | declaration | |---|---| | `f`, the flow | `x_deriv` | | `g`, the jump | `s_update` | | `y = h(x)` | `y_state` | | `y = h(x, u)` | `y_direct` |",
+   "new": "| symbol | declaration | |---|---| | `f`, the flow | `x_deriv` | | `g`, the jump | `s_update` | | `y = h(x)` | `y_state` | | `y = h(x, u)` | `y_direct` |",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-014",
+   "old": "Rule. A stage's name states the dependence class, not the argument list.",
+   "new": "A stage's name states the dependence class, not the argument list (D-220).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-220"
+   ],
+   "tag": "R",
+   "ruling": "R9"
+  },
+  {
+   "id": "C-015",
+   "old": "`y_state` is the `y = h(x)` case and `y_direct` the `y = h(x, u)` case.",
+   "new": "`y_state` is the `y = h(x)` case and `y_direct` the `y = h(x, u)` case.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-016",
+   "old": "So \"no `direct` in the name\" is the no-feedthrough property, visible at every definition site.",
+   "new": "So \"no `direct` in the name\" is the no-feedthrough property (no instantaneous input→output dependence), visible at every definition site.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-017",
+   "old": "The names are deliberately non-exhaustive.",
+   "new": "The names are deliberately non-exhaustive.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-018",
+   "old": "Modes fold under the state.",
+   "new": "Modes fold under the state.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-019",
+   "old": "`m` is state, and the name states the feedthrough split rather than an argument inventory (D-075).",
+   "new": "`m` is state, and the name states the feedthrough split rather than an argument inventory (D-075).",
+   "where": "new",
+   "cites": [
+    "D-075"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-020",
+   "old": "Ambient facts (`t`, `Δt`) and scratch (`ws`) ride unnamed.",
+   "new": "Ambient facts (`t`, `Δt`) and scratch (`ws`) ride unnamed.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-021",
+   "old": "The update law carries the tier in its name, `x_deriv` versus `s_update`.",
+   "new": "The update law carries the tier (the continuous or discrete side of the hybrid formalism) in its name, `x_deriv` versus `s_update`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-022",
+   "old": "The two output stages do not.",
+   "new": "The two output stages do not.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-023",
+   "old": "One pair of names serves both tiers, over each tier's own state letter (D-220).",
+   "new": "One pair of names serves both tiers, over each tier's own state letter (D-220).",
+   "where": "new",
+   "cites": [
+    "D-220"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-024",
+   "old": "A stateful leaf's declarations must agree on one tier throughout (§8.2).",
+   "new": "A stateful leaf's declarations must agree on one tier throughout (§8.2, D-112).",
+   "where": "new",
+   "cites": [
+    "§8.2"
+   ],
+   "newcites": [
+    "§8.2",
+    "D-112"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-025",
+   "old": "A leaf mixing the update laws, or declaring a store of one tier and the update law of the other, is a build error, not a reading.",
+   "new": "A leaf mixing the update laws, or declaring a store (the framework-owned home of a state letter) of one tier and the update law of the other, is a build error, not a reading. The error is `DeclarationOnWrongTier`.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R7"
+  },
+  {
+   "id": "C-026",
+   "old": "#### Stage roles: what each stage may see",
+   "new": "#### Stage roles: what each stage may see",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-027",
+   "old": "`y_state` is the no-feedthrough stage, defined entirely by what it cannot see.",
+   "new": "`y_state` is the no-feedthrough stage, defined entirely by what it cannot see (D-035).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-035"
+   ],
+   "tag": "R",
+   "ruling": "R9"
+  },
+  {
+   "id": "C-028",
+   "old": "Its bundle (the NamedTuple of zero-copy views a component function receives) carries no `u`, so \"no feedthrough\" cannot be violated by construction.",
+   "new": "Its bundle (the NamedTuple of zero-copy views a component function receives) carries no `u`, so \"no feedthrough\" cannot be violated by construction.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-029",
+   "old": "That structural guarantee is what stage-1 ports contribute to the feedthrough graph.",
+   "new": "That structural guarantee is what stage-1 ports (the model's addressable units, one declared name each) contribute to the feedthrough graph.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-030",
+   "old": "They break would-be loops.",
+   "new": "Stage-1 ports break would-be loops.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-031",
+   "old": "Stage 1 exists when the component has state-derived ports, including any state-derived intermediate a later function reads (§5.2).",
+   "new": "Stage 1 exists when the component has state-derived ports, including any state-derived intermediate a later function reads (§5.2).",
+   "where": "new",
+   "cites": [
+    "§5.2"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-032",
+   "old": "Otherwise it is simply absent.",
+   "new": "Otherwise it is simply absent.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-033",
+   "old": "A stage that would produce none is the `DeadStage` error.",
+   "new": "A stage that would produce no port is the `DeadStage` error of §5.2.",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§5.2"
+   ],
+   "tag": "R",
+   "ruling": "R2"
+  },
+  {
+   "id": "C-034",
+   "old": "An empty stage is unwritable on purpose.",
+   "new": "An empty stage is unwritable on purpose.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-035",
+   "old": "Rule. A declared output is produced by stage 1 or by stage 2, and by nothing else (D-252).",
+   "new": "A declared output is produced by stage 1 or by stage 2, and by nothing else (D-252, §8.3).",
+   "where": "new",
+   "cites": [
+    "D-252"
+   ],
+   "newcites": [
+    "D-252",
+    "§8.3"
+   ],
+   "tag": "R",
+   "ruling": "R9"
+  },
+  {
+   "id": "C-036",
+   "old": "A component exposes a state or mode field by returning it from `y_state`.",
+   "new": "A component exposes a state or mode field by returning it from `y_state` (D-252).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-252"
+   ],
+   "tag": "R",
+   "ruling": "R9"
+  },
+  {
+   "id": "C-037",
+   "old": "The line is one method, `y_state(c, b) = (; q = b.x.q)`.",
+   "new": "The line is one method, `y_state(c, b) = (; q = b.x.q)`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-038",
+   "old": "A declared output that no stage produces is `DeclaredNotProduced` (§8.3), at every tier and every level of the tree.",
+   "new": "A declared output that no stage produces is `DeclaredNotProduced` (§8.3), at every tier and every level of the tree.",
+   "where": "new",
+   "cites": [
+    "§8.3"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-039",
+   "old": "`y_direct` receives all wired inputs plus the stage-1 hand-down.",
+   "new": "`y_direct` receives all wired inputs plus the stage-1 hand-down (D-006, D-194).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-006",
+    "D-194"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-040",
+   "old": "The hand-down is the component's own stage-1 ports.",
+   "new": "The hand-down is the component's own stage-1 ports.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-041",
+   "old": "A shared intermediate is therefore computed once and read, not re-derived.",
+   "new": "A shared intermediate is therefore computed once and read, not re-derived.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-042",
+   "old": "Stage 1 declares it as a port, and stage 2 finds it in `y_x`, or `y_s` on the discrete tier.",
+   "new": "Stage 1 declares it as a port, and stage 2 finds it in `y_x`, or `y_s` on the discrete tier (D-194).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-194"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-043",
+   "old": "Stage 2 receives the state views too.",
+   "new": "Stage 2 receives the state views (zero-copy reconstructions of the component's stores) too.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-044",
+   "old": "Conservatively, every stage-2 output is presumed dependent on every wired input.",
+   "new": "Conservatively, every stage-2 output is presumed dependent on every wired input.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-045",
+   "old": "`x_deriv` and `s_update` run after the sweep, when the full signal table is complete and fresh, the component's own stage-2 ports included.",
+   "new": "`x_deriv` and `s_update` run after the sweep (one ordered pass through the stage functions against the current state) (D-015). They run when the full signal table (the framework-owned collection of cells holding every produced signal) is complete and fresh, the component's own stage-2 ports included (D-015).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-015"
+   ],
+   "tag": "R",
+   "ruling": "R9"
+  },
+  {
+   "id": "C-046",
+   "old": "The fused idiom stands.",
+   "new": "The fused idiom stands.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-047",
+   "old": "Compute each law once, in a stage.",
+   "new": "Compute each law once, in a stage.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-048",
+   "old": "Publish it.",
+   "new": "Publish it.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-049",
+   "old": "Let `x_deriv`/`s_update` copy from `y`.",
+   "new": "Let `x_deriv`/`s_update` copy from `y`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-050",
+   "old": "Why. The interfaces reward single-source-of-truth rather than making duplication unwritable.",
+   "new": "The interfaces reward single-source-of-truth rather than making duplication unwritable.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-051",
+   "old": "Nothing ever needs computing twice (D-015, D-035).",
+   "new": "Nothing ever needs computing twice (D-015, D-035).",
+   "where": "new",
+   "cites": [
+    "D-015",
+    "D-035"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-052",
+   "old": "All output stages must be pure, with no side effects.",
+   "new": "All output stages must be pure, with no side effects (D-015).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-015"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-053",
+   "old": "State types make mutation impossible anyway (§7).",
+   "new": "State types make mutation impossible anyway (§7).",
+   "where": "new",
+   "cites": [
+    "§7"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-054",
+   "old": "#### The execution order",
+   "new": "#### The execution order",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-055",
+   "old": "Rule. Execution runs all stage-1 functions in any order, then stage 2 in topological order, then all `x_deriv` calls against the now-consistent signal table.",
+   "new": "Execution runs all stage-1 functions in any order, then stage 2 in topological order, then all `x_deriv` calls against the now-consistent signal table (D-288, §9.7).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-288",
+    "§9.7"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-056",
+   "old": "The systemic consequence is that evaluating the RHS means running the sweep.",
+   "new": "The systemic consequence is that evaluating the RHS means running the sweep.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-057",
+   "old": "There is no incremental `x_deriv`-only re-evaluation.",
+   "new": "There is no incremental `x_deriv`-only re-evaluation.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-058",
+   "old": "Nothing is lost by that, because implicit solvers, linearization and trim already work this way.",
+   "new": "Nothing is lost by that, because implicit solvers, linearization and trim already work this way.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-059",
+   "old": "They seed `x` and run the composite.",
+   "new": "They seed `x` and run the composite.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-060",
+   "old": "§10.3 and §10.4 restate that consequence as a property of the execution model.",
+   "new": "§10.3 and §10.4 restate that evaluating the RHS runs the sweep, as a property of the execution model.",
+   "where": "new",
+   "cites": [
+    "§10.3",
+    "§10.4"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-061",
+   "old": "RHS evaluations and guard trial evaluations alike run the interior sweep, the continuous-only variant of §10.5.",
+   "new": "RHS evaluations and trial evaluations of a guard (the declared function defining an event's predicate) alike run the interior sweep, the continuous-only variant of §10.5 (D-147).",
+   "where": "new",
+   "cites": [
+    "§10.5"
+   ],
+   "newcites": [
+    "§10.5",
+    "D-147"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-062",
+   "old": "Discrete entries are absent from it by construction, so discrete cells hold across the step.",
+   "new": "Discrete executor entries are absent from it by construction, so discrete cells (the typed signal-table slots, one per output port) hold across the step.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-063",
+   "old": "#### Why derivatives may read outputs",
+   "new": "#### Derivatives that read outputs",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R2"
+  },
+  {
+   "id": "C-064",
+   "old": "Departure from the orthodox formalism, stated openly.",
+   "new": "The design departs from the orthodox formalism, and says so openly.",
+   "where": "new",
+   "cites": [],
+   "tag": "M"
+  },
+  {
+   "id": "C-065",
+   "old": "The textbook form is $\\dot{x} = f(x, u)$, $y = g(x, u)$.",
+   "new": "The textbook form is $\\dot{x} = f(x, u)$, $y = h(x, u)$.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R5"
+  },
+  {
+   "id": "C-066",
+   "old": "This design's `f` receives the orthodox arguments plus the published table, $\\dot{x} = f(x, m, y, u, t)$.",
+   "new": "This design's `f` receives the orthodox arguments plus the published table, $\\dot{x} = f(x, m, y, u, t)$.",
+   "where": "new",
+   "cites": [],
+   "tag": "M"
+  },
+  {
+   "id": "C-067",
+   "old": "The composite map $x \\mapsto \\dot{x}$ is mathematically identical, so linearization, trim and AD are untouched.",
+   "new": "The composite map $x \\mapsto \\dot{x}$ is mathematically identical, so linearization, trim and automatic differentiation (AD) are untouched.",
+   "where": "new",
+   "cites": [],
+   "tag": "M"
+  },
+  {
+   "id": "C-068",
+   "old": "The heterodox element is only that derivatives may read outputs.",
+   "new": "The heterodox element is only that derivatives may read outputs.",
+   "where": "new",
+   "cites": [],
+   "tag": "M"
+  },
+  {
+   "id": "C-069",
+   "old": "The teaching line is this.",
+   "new": "The teaching line is this.",
+   "where": "new",
+   "cites": [],
+   "tag": "M"
+  },
+  {
+   "id": "C-070",
+   "old": "\"stage 1 publishes what you know from state alone; stage 2 adds what needs inputs; your dynamics read your own published results instead of recomputing them.\"",
+   "new": "\"stage 1 publishes what you know from state alone; stage 2 adds what needs inputs; your dynamics read your own published results instead of recomputing them.\"",
+   "where": "new",
+   "cites": [],
+   "tag": "M"
+  },
+  {
+   "id": "C-071",
+   "old": "Why. Derivative/output overlap is the norm in physical and control models.",
+   "new": "The reason for this departure is that derivative/output overlap is the norm in physical and control models.",
+   "where": "new",
+   "cites": [],
+   "tag": "M"
+  },
+  {
+   "id": "C-072",
+   "old": "Newton–Euler dynamics computes accelerations that are at once published outputs and state derivatives.",
+   "new": "Newton–Euler dynamics computes accelerations that are at once published outputs and state derivatives.",
+   "where": "new",
+   "cites": [],
+   "tag": "M"
+  },
+  {
+   "id": "C-073",
+   "old": "Kinematics, engine models, gear friction and every discrete compensator show the same overlap.",
+   "new": "Kinematics, engine models, gear friction and every discrete compensator show the same overlap.",
+   "where": "new",
+   "cites": [],
+   "tag": "M"
+  },
+  {
+   "id": "C-074",
+   "old": "That overlap is what makes the orthodox split expensive here (D-015).",
+   "new": "That overlap is what makes the orthodox split expensive here (D-015).",
+   "where": "new",
+   "cites": [
+    "D-015"
+   ],
+   "tag": "M"
+  },
+  {
+   "id": "C-075",
+   "old": "FlightCore's fused `f_ode!` already embodied the same economics.",
+   "new": "`f_ode!`, FlightCore's fused in-place derivative function, already embodied the same economics.",
+   "where": "new",
+   "cites": [],
+   "tag": "M"
+  },
+  {
+   "id": "C-076",
+   "old": "This design keeps them while adding checked ordering.",
+   "new": "This design keeps those economics while adding checked ordering.",
+   "where": "new",
+   "cites": [],
+   "tag": "M"
+  },
+  {
+   "id": "C-077",
+   "old": "Shared expensive computations are thereby solved uniformly.",
+   "new": "Shared expensive computations are solved uniformly by the fused idiom above.",
+   "where": "new",
+   "cites": [],
+   "tag": "M"
+  },
+  {
+   "id": "C-078",
+   "old": "Compute once in stage 2, publish, and let `x_deriv`/`s_update` consume the ports.",
+   "new": "Compute once in stage 2, publish, and let `x_deriv`/`s_update` consume the ports.",
+   "where": "new",
+   "cites": [],
+   "tag": "M"
+  },
+  {
+   "id": "C-079",
+   "old": "External consumers read the same ports, as an accelerometer model reads `f_c_c`.",
+   "new": "External consumers read the same ports, as an accelerometer model reads `f_c_c` (see the strapdown IMU example in §3.4).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§3.4"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-080",
+   "old": "The computer/integrator split remains fully expressible without framework support.",
+   "new": "The computer/integrator split remains fully expressible without framework support (D-015).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-015"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-081",
+   "old": "§7.4 carries the full statement, including when the factoring earns its keep.",
+   "new": "§7.4 carries the full statement, including when the factoring earns its keep.",
+   "where": "new",
+   "cites": [
+    "§7.4"
+   ],
+   "tag": "M"
+  },
+  {
+   "id": "C-082",
+   "old": "Purity rules forbid the classic resolution by mutable caching, by design.",
+   "new": "Purity rules forbid the classic resolution by mutable caching, by design (D-015).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-015"
+   ],
+   "tag": "C"
+  }
+ ],
+ "added": [
+  "The section takes the names first, then what each stage may see, then why derivatives may read outputs.",
+  "(a published consistency point)",
+  "It ends with two supervisory inputs, scheduled gains and commanded resets.",
+  "the derivative function",
+  "The two form the",
+  "(the framework-owned home of a state letter)",
+  "(one ordered pass through the stage functions against the current state)",
+  "They run when",
+  "for this departure",
+  "(the declared function defining an event's predicate)",
+  "(no instantaneous input→output dependence)",
+  "(the continuous or discrete side of the hybrid formalism)",
+  "The error is `DeclarationOnWrongTier`.",
+  "(the model's addressable units, one declared name each)",
+  "(zero-copy reconstructions of the component's stores)",
+  "(the framework-owned collection of cells holding every produced signal)",
+  "automatic differentiation (AD)",
+  "FlightCore's fused in-place derivative function",
+  "by the fused idiom above",
+  "(see the strapdown IMU example in §3.4)",
+  "The RHS (right-hand side) is the flow, `x_deriv`.",
+  "(the typed signal-table slots, one per output port)"
+ ]
+}

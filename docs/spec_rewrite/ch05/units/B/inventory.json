@@ -1,0 +1,481 @@
+{
+ "claims": [
+  {
+   "id": "C-001",
+   "old": "#### The bundle law: which names a component receives",
+   "new": "#### The bundle law: which names a component receives",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-002",
+   "old": "Rule. Under the bundle law, a name appears in a component's bundle iff the corresponding store or fact exists for that component.",
+   "new": "Under the bundle law, a name appears in a component's bundle iff the corresponding store or fact exists for that component (D-074).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-074"
+   ],
+   "tag": "R",
+   "ruling": "R9"
+  },
+  {
+   "id": "C-003",
+   "old": "| bundle field | present iff | |---|---| | `x` | the component declares `x_init` (continuous tier) | | `s` | the component declares `s_init` (discrete tier) | | `m` | the component declares `m_init` | | `ws` | the component declares `ws_init` | | `u` | the function family (which bundle fields a given function may legally receive) may see inputs and the component declares `u_types` | | `y` | the component produces any table cell at all (it declares `y_types`) | | `y_x` / `y_s` | stage-1 ports exist, under the tier's own spelling | | `t` | always | | `Δt` | the component is on the discrete tier |",
+   "new": "| bundle field | present iff | |---|---| | `x` | the component declares a non-empty `x_init` (continuous tier) (D-297) | | `s` | the component declares a non-empty `s_init` (discrete tier) (D-297) | | `m` | the component declares a non-empty `m_init` (D-297) | | `ws` | the component declares `ws_init` | | `u` | the function family (which bundle fields a given function may legally receive) may see inputs and the component declares `u_types` | | `y` | the component produces any table cell at all (it declares `y_types`) | | `y_x` / `y_s` | stage-1 ports exist, under the tier's own spelling | | `t` | always | | `Δt` | the component is on the discrete tier |",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-297"
+   ],
+   "tag": "R",
+   "ruling": "R5"
+  },
+  {
+   "id": "C-004",
+   "old": "The stage-1 hand-down carries the stage-1 return.",
+   "new": "The stage-1 hand-down carries the stage-1 return (D-285).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-285"
+   ],
+   "tag": "R",
+   "ruling": "R6"
+  },
+  {
+   "id": "C-005",
+   "old": "`y_x`, or `y_s` on the discrete tier, comes from the stage-1 probe's return (D-252).",
+   "new": "`y_x`, or `y_s` on the discrete tier, comes from the return of the stage-1 probe",
+   "where": "new",
+   "cites": [
+    "D-252"
+   ],
+   "newcites": [],
+   "tag": "R",
+   "ruling": "R6"
+  },
+  {
+   "id": "C-006",
+   "old": "§9.3 already sources the rule.",
+   "new": "§9.3 already sources the rule.",
+   "where": "new",
+   "cites": [
+    "§9.3"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-007",
+   "old": "A component with no stage-1 ports has no `y_x`/`y_s` in its stage-2 bundle at all.",
+   "new": "A component with no stage-1 ports has no `y_x`/`y_s` in its stage-2 bundle at all.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-008",
+   "old": "Undeclared stores are absent, never `nothing`-filled.",
+   "new": "Undeclared stores are absent, never `nothing`-filled.",
+   "where": "new",
+   "cites": [],
+   "tag": "M"
+  },
+  {
+   "id": "C-009",
+   "old": "Destructuring a field that does not exist for the component fails at the probe, inside the §13.2 framing diagnostic.",
+   "new": "Destructuring a field that does not exist for the component fails at the probe with a `BundleFieldError` diagnostic (D-248). §13.2 describes the catch that recognizes it.",
+   "where": "new",
+   "cites": [
+    "§13.2"
+   ],
+   "newcites": [
+    "D-248",
+    "§13.2"
+   ],
+   "tag": "R",
+   "ruling": "R5"
+  },
+  {
+   "id": "C-010",
+   "old": "The diagnostic carries did-you-mean (the offending name plus the list-in-hand it should have matched) against the legal field set.",
+   "new": "The diagnostic carries did-you-mean (the offending name plus the list-in-hand it should have matched) against the legal field set.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-011",
+   "old": "An example is \"`x_deriv` of `Foo` destructures `m`, but `Foo` declares no `m_init`\".",
+   "new": "An example is \"`x_deriv` of `Foo` destructures `m`, but `Foo` declares no `m_init`\".",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-012",
+   "old": "One law covers tier facts, stage legality and declarations alike.",
+   "new": "One law covers tier facts, stage legality and declarations alike.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-013",
+   "old": "The mechanism is structured, not textual.",
+   "new": "The mechanism behind the diagnostic is structured, not textual.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-014",
+   "old": "Destructuring an absent field throws a `FieldError` carrying the type and the field name as data (Julia ≥ 1.12).",
+   "new": "Destructuring an absent field throws a `FieldError` carrying the type and the field name as data (Julia ≥ 1.12).",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-015",
+   "old": "The probe catches it matched against the bundle's own NamedTuple type",
+   "new": "The probe catches it matched against the bundle's own NamedTuple type.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-016",
+   "old": "and synthesizes the framing diagnostic from the legal set.",
+   "new": "The probe synthesizes the `BundleFieldError` from the legal set.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R5"
+  },
+  {
+   "id": "C-017",
+   "old": "It classifies the field as an undeclared store, a wrong-tier fact, or a name illegal for this function family.",
+   "new": "It classifies the field as an undeclared store, a wrong-tier fact, or a name illegal for this function family.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-018",
+   "old": "No message text is scraped, and the bundle stays a bare NamedTuple (D-074).",
+   "new": "No message text is scraped, and the bundle stays a bare NamedTuple (D-074).",
+   "where": "new",
+   "cites": [
+    "D-074"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-019",
+   "old": "A getproperty-wrapper spelling is the recorded fallback, should type-matched interception prove insufficient.",
+   "new": "A getproperty-wrapper spelling is the recorded fallback, should type-matched interception prove insufficient.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-020",
+   "old": "The wrong-tier class covers the state letters too (D-195).",
+   "new": "The wrong-tier classification covers the state letters too (D-195).",
+   "where": "new",
+   "cites": [
+    "D-195"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-021",
+   "old": "`x` and `m` are continuous-only, and `s` and `Δt` are discrete-only,",
+   "new": "`x` and `m` are continuous-only, and `s` and `Δt` are discrete-only.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-022",
+   "old": "so destructuring any of the four on the wrong tier lands in that bucket.",
+   "new": "So destructuring any of the four on the wrong tier is classified as a wrong-tier fact.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-023",
+   "old": "The per-function name sets are closed, one set per function per tier.",
+   "new": "The per-function name sets are closed (D-074), one set per function per tier.",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-074"
+   ],
+   "tag": "R",
+   "ruling": "R9"
+  },
+  {
+   "id": "C-024",
+   "old": "The update laws carry their tier in the name, so `x_deriv` and `s_update` have one set each.",
+   "new": "The update laws carry their tier in the name, so `x_deriv` and `s_update` have one set each.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-025",
+   "old": "The two output stages are shared machinery over both tiers (D-220), so `y_state` and `y_direct` have one set per tier.",
+   "new": "The two output stages are shared machinery over both tiers (D-220), so `y_state` and `y_direct` have one set per tier.",
+   "where": "new",
+   "cites": [
+    "D-220"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-026",
+   "old": "On the continuous tier the sets are `x, m, t [, ws]` and `x, m, u, y_x, t [, ws]`.",
+   "new": "On the continuous tier the `y_state` and `y_direct` sets are `x, m, t [, ws]` and `x, m, u, y_x, t [, ws]`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-027",
+   "old": "On the discrete tier they are `s, t, Δt [, ws]` and `s, u, y_s, t, Δt [, ws]`.",
+   "new": "On the discrete tier they are `s, t, Δt [, ws]` and `s, u, y_s, t, Δt [, ws]`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-028",
+   "old": "Adding a name to any of them is a decision-log entry, not a convenience.",
+   "new": "Adding a name to any of them is a decision-log entry, not a convenience.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-029",
+   "old": "The comments in the signature block above state each function's maximal legal set at each tier.",
+   "new": "The comments in the signature block above state each function's maximal legal set at each tier.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-030",
+   "old": "A given component's bundle narrows that set to declared reality, and the destructuring narrows it further to actual reads.",
+   "new": "A given component's bundle narrows that set to declared reality, and the destructuring narrows it further to actual reads.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-031",
+   "old": "That three-level funnel (stage name at its tier ⊇ bundle ⊇ reads) is worth teaching once, because a stateless component legitimately writes `y_direct` while owning neither `x` nor `m`.",
+   "new": "That three-level funnel (stage name at its tier ⊇ bundle ⊇ reads) is worth teaching once, because a stateless component legitimately writes `y_direct` while owning neither `x` nor `m`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-032",
+   "old": "#### The stage return law",
+   "new": "#### The stage return law",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-033",
+   "old": "Rule. An output stage returns its port NamedTuple, `y`, and nothing else.",
+   "new": "An output stage returns its port NamedTuple, `y`, and nothing else (D-194).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-194"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-034",
+   "old": "`y` scatters into the component's declared cells as always, and every value a later function needs is one of those cells (§8.3).",
+   "new": "`y` scatters into the component's declared cells as always, and every value a later function needs is one of those cells (§8.3).",
+   "where": "new",
+   "cites": [
+    "§8.3"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-035",
+   "old": "Stages are discovered by method existence, and stage membership is a partition of the declared ports.",
+   "new": "Stages are discovered by method existence, and stage membership is a partition of the declared ports.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-036",
+   "old": "An empty `y = (;)` is a `DeadStage` build error at the probe (§9.3).",
+   "new": "An empty `y = (;)` is a `DeadStage` build error at the probe (§9.3, D-285).",
+   "where": "new",
+   "cites": [
+    "§9.3"
+   ],
+   "newcites": [
+    "§9.3",
+    "D-285"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-037",
+   "old": "A stage returning nothing at all computes nothing any consumer can read.",
+   "new": "A stage returning nothing at all computes nothing any consumer can read.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-038",
+   "old": "That is the inert-component check (§8.1), applied to a single stage.",
+   "new": "That is the inert-component check (§8.1), applied to a single stage.",
+   "where": "new",
+   "cites": [
+    "§8.1"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-039",
+   "old": "#### The handler return law",
+   "new": "#### The handler return law",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-040",
+   "old": "Rule. A handler returns a NamedTuple carrying the stores it writes.",
+   "new": "A handler returns a NamedTuple carrying the stores it writes (D-090).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-090"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-041",
+   "old": "A key is present iff the corresponding store exists on the component and the handler updates it.",
+   "new": "A key is present iff the corresponding store exists on the component and the handler updates it.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-042",
+   "old": "That is the bundle law's iff shape, now governing the return side.",
+   "new": "That is the bundle law's iff shape, now governing the return side.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-043",
+   "old": "A pure FSM (modes and events, no `x`) returns `(; m = (; phase = running))`.",
+   "new": "A pure FSM (finite-state machine, with modes and events and no `x`) returns `(; m = (; phase = running))`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-044",
+   "old": "An `x`-only reset map returns `(; x = (; x..., ω = 0.0))`.",
+   "new": "An `x`-only reset map returns `(; x = (; x..., ω = 0.0))`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-045",
+   "old": "A handler touching both returns both.",
+   "new": "A handler touching both returns both.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-046",
+   "old": "Padding forms such as `((;), m⁺)` and `(x⁺, (;))` do not exist (D-090, on the argument-side ground of D-074).",
+   "new": "Padding forms such as `((;), m⁺)` and `(x⁺, (;))` do not exist (D-090, on the argument-side ground of D-074).",
+   "where": "new",
+   "cites": [
+    "D-074",
+    "D-090"
+   ],
+   "tag": "R",
+   "ruling": "R11"
+  },
+  {
+   "id": "C-047",
+   "old": "The semantics per key are these.",
+   "new": "The return's semantics are per key (D-287).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-287"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-048",
+   "old": "When `x` is present, the value is complete against the state field set.",
+   "new": "When `x` is present, the value is complete against the state field set.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-049",
+   "old": "When `m` is present, the names-subset predicate applies.",
+   "new": "When `m` is present, the names-subset predicate applies (D-090).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-090"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-050",
+   "old": "An unknown key gets did-you-mean against `{x, m}`.",
+   "new": "An unknown key gets did-you-mean against `{x, m}` in a `HandlerReturnKey` diagnostic.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R7"
+  },
+  {
+   "id": "C-051",
+   "old": "This is the same `FieldError`-shaped machinery §13.2 builds for bundles, now running in both directions (§9.5).",
+   "new": "This is the same `FieldError`-shaped machinery §13.2 builds for bundles, now running in both directions (§9.5).",
+   "where": "new",
+   "cites": [
+    "§13.2",
+    "§9.5"
+   ],
+   "tag": "F"
+  }
+ ],
+ "added": [
+  "(the build's single evaluation of a user function with real values)"
+ ]
+}

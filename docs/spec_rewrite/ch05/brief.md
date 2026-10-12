@@ -321,3 +321,44 @@ the execution order** (831–923 and 1016–1042; 973 words).
   bullet; check it now precedes its use.
 - "out-of-cycle cells" and "in-cycle cells" sit in an evaluation with no
   table (old 1170–1171): "cell values" keeps the claim.
+
+## Rulings after step 4
+
+- **R13. Glossary links move to the first use across unit boundaries**
+  (units B, C and D's open questions; checked on the assembled chapter).
+  §5.2: `#g-cell` moves from unit B's table to unit A's first "cells", in the
+  views block; unit B drops its link. §5.3: `#g-store`, `#g-sweep` and
+  `#g-guard` move to unit C's first uses (the tier-agreement sentence, the
+  D-015 rule, the interior-sweep sentence); unit D drops its three links. A
+  first use inside a bold headline takes the link, and its gloss goes after
+  the bold span in the same sentence. `#g-execution-order` stays with unit D,
+  since unit C uses the term only in a heading.
+- **R14. R3's topic sentence claims no count and no "each"** (unit A's
+  verifier; corrects R3). The stage-1 hand-down `y_x`/`y_s` is a bundle field
+  that none of the five bullets names: §5.2 sources it from the stage-1
+  probe's return (D-285 bullet 3). R3's "each bundle field is a view of one
+  source" overclaimed. The sentence becomes "The views come from the sources
+  below", or words that claim no more.
+- **R15. D-012 takes three bolds, not five** (unit F's verifier; corrects
+  the survey table that unit F's list adopted). D-012's Position chains three
+  rulings by semicolons: tracing is diagnostic only; cycle diagnostics come
+  from SCC decomposition, classified by an order-free per-member trace;
+  discrete members are traced conservatively, and classification is optional
+  on the error. The comma clauses inside the second and third elaborate one
+  ruling each. Bold the first statement of each in reading order: "Tracing
+  is diagnostic only", "Each nontrivial SCC names one cyclic cluster
+  exactly" and "Discrete members trace structurally". "Classification needs
+  no execution order" and "Classification is a bonus on the cycle error" go
+  plain, keeping their D-012 citations.
+- **R16. `x_projection`'s positions are in the boundary sequence** (unit D's
+  rulings.md, confirmed by its verifier). The glossary's *execution order*
+  (spec 12934) is the flat list of stage entries; integration, handler resets
+  and `x_projection` are not in it. Old 934–935 and 937 say "boundary
+  sequence" instead, the term §10 uses (spec 5100, 5227, 6378). The
+  `#g-execution-order` link goes to the first remaining prose use of the term
+  in §5.3, if any.
+- **R17. D-016 stays the citation for the `x_projection` bold** (unit D's
+  verifier). Its standing clause, "the sole raw-state function
+  (schedule-structural)", carries uniqueness of position, which the next
+  sentence of §5.3 states. That the annotation drops "schedule-structural"
+  goes to track 2.

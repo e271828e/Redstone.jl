@@ -1,0 +1,561 @@
+{
+ "claims": [
+  {
+   "id": "C-001",
+   "old": "### 5.4 Artificial loops and the escape hatch",
+   "new": "### 5.4 Artificial loops and the escape hatch",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-002",
+   "old": "A component that bundles a no-feedthrough output with a feedthrough output in one atomic evaluation unit can be port-level acyclic yet admit no evaluation order.",
+   "new": "A component that bundles a no-feedthrough output with a feedthrough output in one atomic evaluation unit can be port-level acyclic yet admit no evaluation order.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-003",
+   "old": "Simulink calls this an \"artificial algebraic loop\".",
+   "new": "Simulink calls this an \"artificial algebraic loop\".",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-004",
+   "old": "The canonical instance in this domain is rigid-body dynamics.",
+   "new": "The canonical artificial loop in this domain is rigid-body dynamics.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-005",
+   "old": "Velocity out is pure state, and acceleration out is feedthrough from total force.",
+   "new": "Velocity out is pure state, and acceleration out is feedthrough from total force.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-006",
+   "old": "The two-stage split resolves it,",
+   "new": "The two-stage split (the two output stages every component provides) resolves the rigid-body case,",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-007",
+   "old": "and it is the rung that absorbs most of the class.",
+   "new": "and it is the rung that absorbs most artificial loops.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-008",
+   "old": "What survives the split is the case where a single component's stage-2 outputs cross-couple through a neighbor.",
+   "new": "What survives the split is the case where a single component's stage-2 outputs cross-couple through a neighbor.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-009",
+   "old": "That case is port-level acyclic and stage-level cyclic.",
+   "new": "That case is port-level acyclic and stage-level cyclic.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-010",
+   "old": "The tracer (§5.6) labels it artificial.",
+   "new": "The feedthrough tracer (the instrument that classifies a rejected cycle as real or artificial, §5.6) labels it artificial.",
+   "where": "new",
+   "cites": [
+    "§5.6"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-011",
+   "old": "Two remedies apply, in this order.",
+   "new": "The ladder's other two rungs are two remedies, and they apply in this order.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R10"
+  },
+  {
+   "id": "C-012",
+   "old": "- Re-factor the contract.",
+   "new": "- Re-factor the contract (a component's declared interface).",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-013",
+   "old": "Before moving any code, re-examine the cycle's wires.",
+   "new": "Before moving any code, re-examine the cycle's wires.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-014",
+   "old": "An input the neighbor consumes only in a fallback branch is the archetypal false dependency.",
+   "new": "An input the neighbor consumes only in a fallback branch is the archetypal false dependency.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-015",
+   "old": "The neighbor is computing, on the component's behalf, a fallback whose semantics belong on the component's own side of the boundary.",
+   "new": "The neighbor is computing, on the component's behalf, a fallback whose semantics belong on the component's own side of the boundary.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-016",
+   "old": "Move the branch to its natural owner and the wire disappears.",
+   "new": "Move the branch to its natural owner and the wire disappears.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-017",
+   "old": "The canonical instance is the landing gear's strut/steering pair.",
+   "new": "The canonical instance is the strut/steering pair of Flight.jl's landing gear.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-018",
+   "old": "the contact-point velocity azimuth `ψ_v`",
+   "new": "the contact-point velocity azimuth `ψ_v`",
+   "where": "new",
+   "cites": [],
+   "tag": "M"
+  },
+  {
+   "id": "C-019",
+   "old": "The steering model consumes the contact-point velocity azimuth `ψ_v` only in its disengaged, castoring branch.",
+   "new": "The steering model consumes `ψ_v` only in its disengaged, castoring branch.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-020",
+   "old": "Castoring, however, is free-swiveling wheel physics.",
+   "new": "Castoring, however, is free-swiveling wheel physics.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-021",
+   "old": "It is the strut's business, not the steering law's.",
+   "new": "It is the strut's business, not the steering law's.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-022",
+   "old": "``` # before strut ──ψ_v──▶ steering # ψ_v consumed only by the castoring branch steering ─────▶ strut # the pair of wires is the cycle",
+   "new": "``` # before strut ──ψ_v──▶ steering # ψ_v consumed only by the castoring branch steering ─────▶ strut # the pair of wires is the cycle",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-023",
+   "old": "# after steering ──(engaged, ψ_cmd)──▶ strut strut: ψ_sw = engaged ? ψ_cmd : ψ_v # nothing flows back ```",
+   "new": "# after steering ──(engaged, ψ_cmd)──▶ strut strut: ψ_sw = engaged ? ψ_cmd : ψ_v # nothing flows back ```",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-024",
+   "old": "Re-factoring the steering contract to emit `(engaged, ψ_cmd)`, and computing `ψ_sw = engaged ? ψ_cmd : ψ_v` inside the strut, deletes the backward wire outright.",
+   "new": "Re-factoring the steering contract to emit `(engaged, ψ_cmd)`, and computing `ψ_sw = engaged ? ψ_cmd : ψ_v` inside the strut, deletes the backward wire outright.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-025",
+   "old": "The factoring survives substitution, which is the test that it records structure rather than dodging the diagnostic.",
+   "new": "The factoring survives substitution. That is the test that it records structure rather than dodging the diagnostic (D-140).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-140"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-026",
+   "old": "A stateful steering actuator produces `ψ_cmd` from its own state and still needs nothing from the strut (`migration_outline.md` records the migration).",
+   "new": "A stateful steering actuator produces `ψ_cmd` from its own state and still needs nothing from the strut (the companion document `migration_outline.md` records the migration).",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-027",
+   "old": "- Split the component.",
+   "new": "- Split the component.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-028",
+   "old": "This is the residual remedy, taken when both halves genuinely belong to the component and the split documents real structure.",
+   "new": "This is the residual remedy, taken when both halves genuinely belong to the component and the split documents real structure.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-029",
+   "old": "Its cost is stated where it bites.",
+   "new": "Its cost is stated where it bites.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-030",
+   "old": "Visibility (§8.3) is binary, so every intermediate shared across the new boundary becomes `y_types`, which is public, connectable and substitution-relevant.",
+   "new": "Visibility (§8.3) is binary, so every intermediate shared across the new boundary is declared in `y_types`, and is therefore public, connectable and substitution-relevant.",
+   "where": "new",
+   "cites": [
+    "§8.3"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-031",
+   "old": "The mitigating idiom is the granularity guideline (§4.3), which the split case satisfies trivially, with one producing stage and one consumer.",
+   "new": "The mitigating idiom is the granularity guideline (§4.3), which the split case satisfies trivially, with one producing stage and one consumer.",
+   "where": "new",
+   "cites": [
+    "§4.3"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-032",
+   "old": "The idiom spells out as one struct-valued bundle port, a `StrutGeometry`-shaped value, not N loose ports.",
+   "new": "The idiom spells out as one struct-valued bundle port, a `StrutGeometry`-shaped value in the strut example, not N loose ports.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-033",
+   "old": "The bundle type is then contract.",
+   "new": "The bundle port's type is then contract.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-034",
+   "old": "That is a real cost, but a bounded and honest one.",
+   "new": "That is a real cost, but a bounded and honest one.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-035",
+   "old": "No visibility level is added for the orphaned intermediates.",
+   "new": "No visibility level is added for the orphaned intermediates (D-194).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-194"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-036",
+   "old": "D-034 and D-055 (`unlisted`, `Private(T)`) stay closed.",
+   "new": "D-034 and D-055 stay closed, and with them the `unlisted` presentational flag and the `Private(T)` wrapper, the two visibility spellings they reject.",
+   "where": "new",
+   "cites": [
+    "D-034",
+    "D-055"
+   ],
+   "tag": "R",
+   "ruling": "R11"
+  },
+  {
+   "id": "C-037",
+   "old": "The build diagnostic offers both exits explicitly.",
+   "new": "The build diagnostic offers both exits explicitly (D-140).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-140"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-038",
+   "old": "It reads \"cycle through `systems/aero` is artificial at port level — split the component, or narrow the neighbor's contract\".",
+   "new": "It reads \"cycle through `systems/aero` is artificial at port level — split the component, or narrow the neighbor's contract\".",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-039",
+   "old": "The dead hop, the member with the input face it does not route to the output port,",
+   "new": "The dead hop is the member with the input face (the name a port wears on its component's boundary) that it does not route to the output port.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-040",
+   "old": "is carried as a separate payload field rather than dotted onto the path (§8.6, §13.2).",
+   "new": "The diagnostic carries the dead hop (D-245) as a separate payload field rather than dotting it onto the path (§8.6, §13.2).",
+   "where": "new",
+   "cites": [
+    "§13.2",
+    "§8.6"
+   ],
+   "newcites": [
+    "D-245",
+    "§13.2",
+    "§8.6"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-041",
+   "old": "The split is rare, and the ladder is what earns that word rather than asserting it.",
+   "new": "The component split is rare, and the ladder is what earns that word rather than asserting it (D-140).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-140"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-042",
+   "old": "The two-stage split dissolves the common shapes, and the contract re-factoring absorbs the false wires.",
+   "new": "The two-stage split dissolves the common shapes, and the contract re-factoring absorbs the false wires.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-043",
+   "old": "What is left for the split is cycles whose halves really are one component's own work.",
+   "new": "What is left for the component split is cycles whose halves really are one component's own work.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-044",
+   "old": "One consequence of stage-2 conservatism is worth recording.",
+   "new": "One consequence of stage-2 conservatism (the presumption that every stage-2 output depends on every wired input, §5.3) is worth recording.",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§5.3"
+   ],
+   "tag": "X"
+  },
+  {
+   "id": "C-045",
+   "old": "An input consumed only by `x_deriv`, never by `y_direct`, still creates a feedthrough edge if the component has stage-2 outputs.",
+   "new": "An input consumed only by `x_deriv`, never by `y_direct`, still creates a feedthrough edge if the component has stage-2 outputs.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-046",
+   "old": "In practice such components are integrator-shaped and have no stage-2 outputs.",
+   "new": "In practice such components are integrator-shaped and have no stage-2 outputs.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-047",
+   "old": "The remedy, if ever needed, is the same ladder.",
+   "new": "The remedy, if ever needed, is the same ladder.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-048",
+   "old": "### 5.5 Algebraic loop policy: reject at build time",
+   "new": "### 5.5 Algebraic loop policy: reject at build time",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-049",
+   "old": "A genuine cycle in the instantaneous dependency graph, an algebraic loop,",
+   "new": "A genuine cycle in the instantaneous dependency graph is an algebraic loop.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-050",
+   "old": "is a build error.",
+   "new": "An algebraic loop is a build error (D-005).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-005"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-051",
+   "old": "The diagnostic names every wire of the loop as a terminal pair in the canonical slash form of §8.6, as in `aero/F → dyn/F, dyn/a → aero/a`.",
+   "new": "The diagnostic names every wire of the loop as a terminal pair in the canonical slash form of §8.6, as in `aero/F → dyn/F, dyn/a → aero/a`.",
+   "where": "new",
+   "cites": [
+    "§8.6"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-052",
+   "old": "The user breaks the cycle explicitly, by one of three routes.",
+   "new": "The user breaks the cycle explicitly, by one of three routes.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-053",
+   "old": "They can insert dynamics (the α-filter idiom), insert an explicit unit delay (`UnitDelay`, §13.7), or restructure.",
+   "new": "They can insert dynamics (the α-filter idiom, a filter state inserted in the loop), insert an explicit unit delay (`UnitDelay`, §13.7), or restructure.",
+   "where": "new",
+   "cites": [
+    "§13.7"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-054",
+   "old": "insert dynamics (the α-filter idiom)",
+   "new": "insert dynamics (the α-filter idiom, a filter state inserted in the loop)",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-055",
+   "old": "The α-filter idiom is already standard practice in the domain.",
+   "new": "The α-filter idiom is already standard practice in the domain.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-056",
+   "old": "The unit delay carries a caveat.",
+   "new": "The unit delay carries a caveat.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-057",
+   "old": "It changes the model's tier structure.",
+   "new": "It changes the model's tier structure.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-058",
+   "old": "The broken signal becomes discrete, sampled at `Δt_base` (the base tick period, an integer multiple `N_base·h`).",
+   "new": "The broken signal becomes discrete, sampled on a period on the scale of `Δt_base` (the base tick period, an integer multiple `N_base·h`).",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R5"
+  },
+  {
+   "id": "C-059",
+   "old": "That is a modeling decision, not a transparent wire.",
+   "new": "That is a modeling decision, not a transparent wire.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-060",
+   "old": "Implicit delays and per-step numerical loop solving are both closed (D-005).",
+   "new": "Implicit delays and per-step numerical loop solving are both closed (D-005).",
+   "where": "new",
+   "cites": [
+    "D-005"
+   ],
+   "tag": "R",
+   "ruling": "R11"
+  },
+  {
+   "id": "C-061",
+   "old": "Implicit algebraic balances inside a component, such as a turbomachinery operating point, remain the component author's business.",
+   "new": "Implicit algebraic balances inside a component, such as a turbomachinery operating point, remain the component author's business.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-062",
+   "old": "They are local, owned and bounded.",
+   "new": "They are local, owned and bounded.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-063",
+   "old": "Rejecting framework-level loops does not forbid such models.",
+   "new": "Rejecting framework-level loops does not forbid such models.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  }
+ ],
+ "added": [
+  "A genuine cycle in the instantaneous dependency graph is a different case, the algebraic loop of §5.5.",
+  "The remedy ladder for artificial loops has three rungs (D-140).",
+  "The strut hands",
+  "to the steering model and consumes the `ψ_sw` the steering model returns.",
+  "The build reports it as `AlgebraicCycle` (Appendix C).",
+  "The diagnostic states this caveat rather than offering the delay as a free remedy (§13.7)."
+ ]
+}
