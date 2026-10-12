@@ -10,8 +10,8 @@ and the spec ever disagree, the spec wins.*
 Everything here answers one question: **when several events fire at the same
 boundary, what world does each handler see?** The spec's one-sentence answer
 ([§5.3][s5-3]) is: *a handler executes against exactly the world its guard fired
-on; one component's transition reaches everyone — itself included — through
-the next sweep.* This document builds up to that sentence and shows why it
+on*. Since the signal table is written only by sweeps, one component's
+transition reaches everyone, itself included, through the next sweep. This document builds up to that sentence and shows why it
 needs no mechanism at all.
 
 ## 1. The primitive fact: cells hold references to immutable values

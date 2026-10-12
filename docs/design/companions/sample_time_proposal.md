@@ -388,7 +388,7 @@ untouched: discrete entries are *absent* from them at compile time ([§10.5][s10
 split), so the phase machinery adds literally nothing to the RK/localization hot
 path. `Δt` semantics are likewise unchanged: the bundle's `Δt` is still
 `D·Δt_base` — the offset shifts firing instants, never the period — so [§5.3][s5-3]'s
-discretized laws and the never-cache-`Δt` rule are unaffected.
+discretized laws and [§10.5][s10-5]'s never-cache-`Δt` rule are unaffected.
 
 ### 5.5 Boundary flavors: one gate, no special cases
 

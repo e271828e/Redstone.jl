@@ -129,8 +129,7 @@ on a port.
 
 Both components passed without blockers, and neither needed a port beyond
 current practice. That result is the empirical basis for the claim in
-[§5.3][s5-3] that derivative/output overlap is the domain norm and that the
-decoder matches the codebase's grain.
+[§5.3][s5-3] that derivative/output overlap is the domain norm.
 
 ### The supervisor slice: scheduled gains and bumpless engage
 

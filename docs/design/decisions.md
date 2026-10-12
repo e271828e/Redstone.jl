@@ -714,7 +714,7 @@ scopes for declaration (integer multipliers $K \ge 1$ composing down the tree,
 compiled to absolute divisors); `Δt` arrives as a discrete-bundle field
 ([D-074][d-074]), single source of truth, no stored `Δt`-derived parameters.
 
-**Spec.** [§5.4][s5-4], [§10.5][s10-5]
+**Spec.** [§5.2][s5-2], [§10.5][s10-5]
 
 **Rationale.** Recorded only through the rejections below.
 

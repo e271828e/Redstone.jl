@@ -1601,13 +1601,13 @@ The framework does three things with the declaration.
 - It reconstructs the typed immutable state value for a component at each
   evaluation. The value's type, `X`, is derived from `x_init`. The framework
   passes that value to every function receiving state [views](#g-view) (zero-copy
-  reconstructions of a store), under the argument rule of [§5.2][s5-2] ([D-035][d-035]). The
+  reconstructions of a store), under the hand-off of [§5.2][s5-2] ([D-035][d-035]). The
   reconstruction is field loads at known offsets, register-level, at zero cost.
 - It receives immutable results back. Derivative functions return an `Ẋ`-typed
   value, which is scatter-stored into the flat `ẋ` buffer. A handler's `x` key
   and the [projection](#g-projection) (the optional hook `x_projection`) carry a new `X`, which
   is written back. Projection's write-back happens at the two positions in the
-  [execution order](#g-execution-order) of [§5.3][s5-3] ([D-111][d-111]).
+  boundary sequence of [§5.3][s5-3] ([D-111][d-111]).
 
 **The buffer is authoritative, and typed values are ephemeral
 reconstructions** ([D-010][d-010]). Nobody outside the framework ever holds a
@@ -1915,7 +1915,7 @@ then the prior art, then an idiom the design admits without framework support.
    made a port's publicity a declaration, the identity decode stood revealed as
    *transport*. It copied the [buffer](#g-buffer) (the framework-owned contiguous vector
    backing all continuous state) into [cells](#g-cell) so that a buffer view could be
-   replaced by a cell view. The fixed point is the argument rule ([§5.2][s5-2]). A
+   replaced by a cell view. The fixed point is the hand-off ([§5.2][s5-2]). A
    function receives zero-copy views of the stores it genuinely reads. What
    survives of step 3 is the uniform shapes, the fused economics, and the
    stage-1 decoder itself (now `y_state`). That decoder is no longer the sole
@@ -1969,7 +1969,7 @@ The policy sets three budgets.
 - The continuous hot path is per-stage evaluation, plus everything else that
   runs unconditionally per frame or boundary. Those unconditional items are
   [guards](#g-guard), evaluated every boundary whether they fire or not, and `x_projection`
-  at both of its [§5.3][s5-3] positions in the [execution order](#g-execution-order). **The budget is exactly
+  at both of its positions in the boundary sequence ([§5.3][s5-3]). **The budget is exactly
   zero, CI-enforced** at the measurement [seam](#g-seam) that `phase_bodies` exposes ([§9.7][s9-7],
   [D-014][d-014], [D-116][d-116], [D-305][d-305]).
 - Periodic [ticks](#g-tick) (the instants a discrete component runs) and event handlers
@@ -4740,7 +4740,7 @@ function is checked against its own predicate.
   [predicate](#g-predicate) form (below).
 - **`x_projection` checks against `X`'s own shape** at `T`, complete
   ([D-111][d-111]). It is complete because its result is written back to the
-  [buffer](#g-buffer) wholesale at both of the positions in the execution order
+  [buffer](#g-buffer) wholesale at both of the positions in the boundary sequence
   ([§5.3][s5-3]), and because a [projection](#g-projection) with a
   mode-dependent branch first executes its second branch at run time. That is
   the same predicate as a handler's `x` key.
@@ -6544,9 +6544,9 @@ whose contents change after publication.
 
 **The captured table is the whole table.** It holds the declared
 [ports](#g-port), every one of them public
-([§8.3][s8-3]). No presentation layer has anything to filter. Private
-intermediates are not in it, because they were never [cells](#g-cell) at all
-([§5.2][s5-2]). The inspection path for one is **promotion to a declared
+([§8.3][s8-3]). No presentation layer has anything to filter. Undeclared
+intermediates are not in it, because only declared ports are [cells](#g-cell)
+([§8.3][s8-3]). The inspection path for one is **promotion to a declared
 output**. Add a line in `y_types`, and the value appears in the
 snapshot, the log, the GUI and the wiring alike. Its visibility is then an
 authored fact like every other.
@@ -6571,8 +6571,8 @@ trace-default decision ([D-029][d-029]) refuses in the other direction.
 
 "What was the private state at t = 37.2?" is answered by replaying to 37.2 and
 inspecting the live stores. A state field wanted in logs or GUI has the honest
-remedy of being declared public and returned from `y_state`, at a cost of one
-cell per [sweep](#g-sweep) ([§5.3][s5-3]). Post-run continuation reads the live stores directly.
+remedy of being declared public and returned from `y_state` ([§5.3][s5-3]), at a cost of one
+cell per [sweep](#g-sweep). Post-run continuation reads the live stores directly.
 Periodic full-state checkpoints, which would allow warm restart without replay
 from zero, are a [guarded addition](#g-guarded-addition) shaped as an opt-in log policy. Each would
 retain a [checkpoint](#g-checkpoint) (the `Model`'s state at a frame top as one value), the
@@ -10563,7 +10563,7 @@ declarations share with domain code.
 
 There is no selector for a value a [component](#g-component) computes without
 declaring it, and there cannot be one, because only [cells](#g-cell) are
-addressable ([§5.2][s5-2]). So a reader that wants one is asking the producing
+addressable ([§4.2][s4-2], [§8.3][s8-3]). So a reader that wants one is asking the producing
 component to declare it an output ([§8.3][s8-3]). `get_face` addresses an
 output [face](#g-face) of the mount level, the level its read set is mounted
 at ([§14.9][s14-9]). At the root that face is root-exported. Either way the
@@ -10875,7 +10875,7 @@ against today's `c172.jl`.
   deferred reads resolving against a source) reach only through the locality
   scopes ([§6.1][s6-1]). An equilibrium equation crossing a generic seam
   reads a face. A value a [component](#g-component) computes without
-  declaring it is not addressable at all ([§5.2][s5-2], [§14.4][s14-4]). A
+  declaring it is not addressable at all ([§8.3][s8-3], [§14.4][s14-4]). A
   trim evaluation needing one is a signal that the component should export
   it. A derivative wanted across a [contract](#g-contract) boundary takes the
   same remedy. Publish it as an ordinary output port computed in
@@ -11664,7 +11664,7 @@ one-home-per-datum rule to the document itself.
 
 For component authors:
 
-- **The stage funnel** ([§5.2][s5-2]). The stage name at its tier fixes the
+- **The stage funnel** ([§5.2][s5-2], [§5.3][s5-3]). The stage name at its tier fixes the
   maximal legal view set. The component's declarations narrow that set to the
   bundle. The signature's destructuring narrows the bundle to the actual
   reads. In short, stage name at its tier ⊇ bundle ⊇ destructured reads. So
@@ -11846,9 +11846,9 @@ Table footnotes, from the bundle law ([§5.2][s5-2]). The sets above are
 maximal, and each field is present only if it exists for the component. `u`
 is present iff the function family may see inputs **and** the component
 declares `u_types`. `y` is present iff the component declares
-`y_types`. `x`/`s`/`m`/`ws` are present iff
-declared. `y_x`/`y_s` are present iff the stage-1 *return* is non-empty
-([§5.2][s5-2], [D-252][d-252]). `Δt` is present
+`y_types`. `x`/`s`/`m` are present iff
+declared non-empty ([D-297][d-297]), and `ws` iff declared. `y_x`/`y_s` are present iff the stage-1 *return* is non-empty
+([§5.2][s5-2], [D-285][d-285]). `Δt` is present
 on the discrete tier only. Returns follow three rules. A stage returns a
 NamedTuple of port values ([§4.3][s4-3], [§5.2][s5-2]). `x_deriv`
 returns the layout image of `X` ([§7.1][s7-1]). A **handler returns `(; x, m)`
@@ -12394,7 +12394,7 @@ collection ([§13.2][s13-2], [D-250][d-250]).
 - **`ContainerNested`** ([§8.5][s8-5]). Error · build · fail-fast. Container
   field path, the element keys/indices that are themselves component-bearing
   containers, their types.
-- **`DeclarationOnWrongTier`** ([§5.2][s5-2], [§8.2][s8-2], [§8.5][s8-5]).
+- **`DeclarationOnWrongTier`** ([§5.3][s5-3], [§8.2][s8-2], [§8.5][s8-5]).
   Error · build · collected. Component path, the offending declaration, the
   tier the leaf's other declarations announce. The offending declaration is
   `x_deriv`/`s_update`, a store from the wrong family (`x_init`
@@ -13000,9 +13000,9 @@ kinematic reference frames of the aircraft domain, which always appear
 compounded ("the b frame").
 
 <a id="g-projection"></a>**projection** — the optional per-component hook `x ← x_projection(x)`.
-It runs in the only two positions in the execution order between a state write
-and its decode: after integration, and after a handler's `x`-reset. It is the
-cheap end of geometric integration's projection methods ([§2][s2], [§5.3][s5-3]).
+It runs in the only two positions in the boundary sequence between a state write
+and its decode: after integration, and after a handler's `x`-reset ([§5.3][s5-3]).
+It is the cheap end of geometric integration's projection methods ([§2][s2]).
 
 <a id="g-sweep"></a>**sweep** — one pass through the execution order against the current state, in
 one of two statically distinct variants compiled from the same entry list. The

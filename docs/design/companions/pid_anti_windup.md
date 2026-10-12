@@ -92,7 +92,7 @@ reads it or not. [§5.4][s5-4]'s last paragraph records this stage-2 conservatis
 input consumed only by `x_deriv` still creates the edge. Wire `v` from a
 memoryless clamp of the leaf's own `u` and the build refuses an
 `AlgebraicCycle` classified artificial, with the dead hop naming `v` as the
-face `u` does not route. The remedy is [§5.4][s5-4]'s first rung, taken: the clamp of
+face `u` does not route. The remedy is [§5.4][s5-4]'s middle rung, taken: the clamp of
 a controller's own output is the controller's business, so the limits live
 inside the block and the correction reads the block's own fresh `u`, which a
 derivative stage may do. The tracking input then serves what it is for: a
@@ -297,8 +297,8 @@ memoryless function of that output, however its derivative uses it, and the
 design answer is to own the function. Where the function is the clamp of
 the leaf's own output, owning it is also the better controller. Its mirror is
 that an assembly of stateless folds and one integrator never meets the
-constraint, and that the integrator in it is precisely the split [§5.4][s5-4]
-describes.
+constraint, and that the integrator in it is precisely the component split
+[§5.4][s5-4] describes.
 
 The declared boundary is what makes an external saturation signal usable.
 A gate on a continuous quantity is the silent mode the junction's docstring
