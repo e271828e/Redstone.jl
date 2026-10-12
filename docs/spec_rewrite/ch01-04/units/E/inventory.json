@@ -1,0 +1,674 @@
+{
+ "claims": [
+  {
+   "id": "C-001",
+   "old": "## 4. Ports and signals",
+   "new": "## 4. Ports and signals",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-002",
+   "old": "### 4.1 Immutable value semantics",
+   "new": "### 4.1 Immutable value semantics",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-003",
+   "old": "Ports exchange immutable values,",
+   "new": "Ports exchange immutable values (D-004).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-004"
+   ],
+   "tag": "R",
+   "ruling": "R6"
+  },
+  {
+   "id": "C-004",
+   "old": "typically isbits structs (floats, `SVector`s, enums, nested immutables).",
+   "new": "The values are typically isbits structs (floats, `SVector`s, enums, nested immutables).",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-005",
+   "old": "The framework owns a signal table, with one concretely typed cell per output port in the flattened model.",
+   "new": "The framework owns a signal table, with one concretely typed cell per output port in the flattened model.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-006",
+   "old": "(`y_state`/`y_direct`, the two output stages every component provides, on either tier)",
+   "new": "Every component provides two output stages (§5.2), `y_state`/`y_direct`, on either tier (the continuous or discrete side of the hybrid formalism).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§5.2"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-007",
+   "old": "A producer's output stage function",
+   "new": "A producer's output stage function",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-008",
+   "old": "returns a named tuple of fresh values.",
+   "new": "returns a named tuple of fresh values.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-009",
+   "old": "The framework writes each of those values into its cell, and consumers read cells.",
+   "new": "The framework writes each of those values into its cell, and consumers read cells.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-010",
+   "old": "Vocabulary. These names are binding throughout this document.",
+   "new": "These names are binding throughout this document.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-011",
+   "old": "- A bare cell is the table entry, and only that.",
+   "new": "A bare cell is the table entry, and only that (D-121).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-121"
+   ],
+   "tag": "R",
+   "ruling": "R6"
+  },
+  {
+   "id": "C-012",
+   "old": "- A store is the framework-owned home of one of a component's state letters, `x`, `s` or `m` (§7.1, §7.3, D-302).",
+   "new": "A store is the framework-owned home of one of a component's state letters, `x`, `s` or `m` (§7.1, §7.3, D-302).",
+   "where": "new",
+   "cites": [
+    "§7.1",
+    "§7.3",
+    "D-302"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-013",
+   "old": "An `x` store is a range of the buffer.",
+   "new": "An `x` store is a range of the buffer",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-014",
+   "old": "Stores are not cells.",
+   "new": "Stores are not cells.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-015",
+   "old": "- A staging cell is a distinct compound term.",
+   "new": "A staging cell is a distinct compound term (D-121).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-121"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-016",
+   "old": "It is the per-device inbound register of §11.4.",
+   "new": "It is the inbound register of §11.4, one per device",
+   "where": "new",
+   "cites": [
+    "§11.4"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-017",
+   "old": "Unlike a table cell it is mutated frame by frame, and it sits outside the table's publish-once discipline.",
+   "new": "Unlike a table cell it is mutated frame by frame, and it sits outside the table's publish-once discipline.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-018",
+   "old": "- A root input is a source cell fed by the periphery rather than by a producer (§11.3).",
+   "new": "rather than by a producer (§11.3).",
+   "where": "new",
+   "cites": [
+    "§11.3"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-019",
+   "old": "Stated precisely, the signal requirement is immutability plus frozen references.",
+   "new": "Stated precisely, the signal requirement is immutability plus frozen references (D-243).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-243"
+   ],
+   "tag": "R",
+   "ruling": "R6"
+  },
+  {
+   "id": "C-020",
+   "old": "Signals may reference bulk data (§4.4) provided that data is read-only for the duration of the run.",
+   "new": "Signals may reference bulk data (§4.4) provided that data is read-only for the duration of the run (D-231).",
+   "where": "new",
+   "cites": [
+    "§4.4"
+   ],
+   "newcites": [
+    "§4.4",
+    "D-231"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-021",
+   "old": "`isbits` is the common case, not the rule.",
+   "new": "`isbits` is the common case, not the rule.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-022",
+   "old": "This requirement has four consequences.",
+   "new": "The signal requirement has four consequences.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-023",
+   "old": "- There is no aliasing, ever. Nothing can be mutated under a consumer's feet.",
+   "new": "There is no aliasing, ever. Nothing can be mutated under a consumer's feet.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-024",
+   "old": "- Concurrent reads from the GUI and logging threads are safe by construction.",
+   "new": "Concurrent reads from the GUI and logging threads are safe by construction.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-025",
+   "old": "- Isbits payloads allocate nothing, because named tuples of isbits are isbits.",
+   "new": "Isbits payloads allocate nothing, because named tuples of isbits are isbits.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-026",
+   "old": "- Each cell has a definite freshness, tied to its producer's position in the execution order (D-004).",
+   "new": "Each cell has a definite freshness, tied to its producer's position in the execution order, the order in which the stage functions run (D-004).",
+   "where": "new",
+   "cites": [
+    "D-004"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-027",
+   "old": "### 4.2 Consumers see ports, not stages",
+   "new": "### 4.2 Consumers see ports, not stages",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-028",
+   "old": "The port is the addressable unit. A component's outputs",
+   "new": "The port is the addressable unit. A component's outputs",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-029",
+   "old": "appear to consumers, the GUI and logs as one flat namespace of ports (`dyn.vel`, `dyn.f_c_c`).",
+   "new": "appear to consumers, the GUI and logs as one flat namespace of ports, such as the illustrative paths `\"dyn/vel\"` and `\"dyn/f_c_c\"` (D-040).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-040"
+   ],
+   "tag": "R",
+   "ruling": "R5"
+  },
+  {
+   "id": "C-030",
+   "old": "A reader reaches a leaf inside a port value through the port's leaf address (the field name with dotted and bracketed steps below it, §14.4).",
+   "new": "A reader reaches a leaf inside a port value through the port's leaf address (the field name with dotted and bracketed steps below it, §14.4, D-276).",
+   "where": "new",
+   "cites": [
+    "§14.4"
+   ],
+   "newcites": [
+    "§14.4",
+    "D-276"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-031",
+   "old": "Which output stage computes which port is an ordering annotation, invisible outside the component.",
+   "new": "Which output stage computes which port is an ordering annotation, invisible outside the component.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-032",
+   "old": "Moving an output between stages is non-breaking for consumers. No wire, log or panel sees it.",
+   "new": "Moving an output between stages is non-breaking for consumers. No wire, log or panel sees it.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-033",
+   "old": "The build does see it, because the feedthrough graph and stage membership change (§9.1).",
+   "new": "and stage membership change (§9.1).",
+   "where": "new",
+   "cites": [
+    "§9.1"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-034",
+   "old": "Visibility. Which ports exist at all is a declaration-layer decision.",
+   "new": "Which ports exist at all is a declaration-layer decision.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-035",
+   "old": "The output contract is the public interface.",
+   "new": "is the public interface (D-034).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-034"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-036",
+   "old": "There are no private intermediates.",
+   "new": "There are no private intermediates.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-037",
+   "old": "A value a later function needs is a declared port like any other,",
+   "new": "A value a later function needs is a declared port like any other (§5.2, D-194).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§5.2",
+    "D-194"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-038",
+   "old": "and a stage result outside the contract is a build error (§5.2, §8.3).",
+   "new": "A stage result outside the contract is a build error (`UndeclaredReturnField`, §8.3).",
+   "where": "new",
+   "cites": [
+    "§5.2",
+    "§8.3"
+   ],
+   "newcites": [
+    "§8.3"
+   ],
+   "tag": "R",
+   "ruling": "R12"
+  },
+  {
+   "id": "C-039",
+   "old": "A presentational unlisted flag, skipped in logs and GUI but still connectable, is closed (D-016).",
+   "new": "A presentational unlisted flag, skipped in logs and GUI but still connectable, is closed (D-016, D-034).",
+   "where": "new",
+   "cites": [
+    "D-016"
+   ],
+   "newcites": [
+    "D-016",
+    "D-034"
+   ],
+   "tag": "R",
+   "ruling": "R6"
+  },
+  {
+   "id": "C-040",
+   "old": "### 4.3 Table mechanics and port granularity",
+   "new": "### 4.3 Table mechanics and port granularity",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-041",
+   "old": "§4.2 fixed the port as the addressable unit. Four questions remain. What is a port on a component's boundary?",
+   "new": "§4.2 fixed the port as the addressable unit. Four questions remain. What is a port on a component's boundary?",
+   "where": "new",
+   "cites": [
+    "§4.2"
+   ],
+   "tag": "X"
+  },
+  {
+   "id": "C-042",
+   "old": "How do values travel into cells and out of them?",
+   "new": "How do values travel into cells",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-043",
+   "old": "What may a port hold? And how much should a single port carry? The last question has two answers, one owed to the parties that read a port and one to the parties that write it.",
+   "new": "What may a port hold? And how much should a single port carry? The last question has two answers, one owed to the parties that read a port and one to the parties that write it.",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-044",
+   "old": "#### Ports and faces",
+   "new": "#### Ports and faces",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-045",
+   "old": "A component's ports are its signal endpoints, one cell and one producer each.",
+   "new": "A component's ports are its signal endpoints, one cell and one producer each.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-046",
+   "old": "Its faces are the names those ports wear on the component's boundary.",
+   "new": "Its faces are the names those ports wear on the component's boundary (D-172).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-172"
+   ],
+   "tag": "R",
+   "ruling": "R6"
+  },
+  {
+   "id": "C-047",
+   "old": "For a leaf the two coincide.",
+   "new": "For a leaf the two coincide.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-048",
+   "old": "For an assembly every face aliases an interior port through its boundary declarations (§8.6) and never creates an endpoint.",
+   "new": "every face aliases an interior port through its boundary declarations (§8.6) and never creates an endpoint.",
+   "where": "new",
+   "cites": [
+    "§8.6"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-049",
+   "old": "The distinction is kind-blind.",
+   "new": "The distinction is class-blind (D-172).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-172"
+   ],
+   "tag": "R",
+   "ruling": "R5"
+  },
+  {
+   "id": "C-050",
+   "old": "Wiring and the periphery address a child's faces without knowing whether it is primitive or composite.",
+   "new": "address a child's faces without knowing whether it is primitive or composite.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-051",
+   "old": "Rule. The port is the atomic unit of the entire periphery.",
+   "new": "The port is the atomic unit of the entire periphery.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-052",
+   "old": "It is one cell,",
+   "new": "One cell.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-053",
+   "old": "one root input,",
+   "new": "One root input",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-054",
+   "old": "one staged write,",
+   "new": "One staged write.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-055",
+   "old": "one device claim (§11.3),",
+   "new": "One device claim (the set of faces a device may write, §11.3).",
+   "where": "new",
+   "cites": [
+    "§11.3"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-056",
+   "old": "one trace address",
+   "new": "One trace address",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-057",
+   "old": "and one GUI liveness verdict (§11.7).",
+   "new": "One GUI liveness verdict (§11.7).",
+   "where": "new",
+   "cites": [
+    "§11.7"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-058",
+   "old": "#### Scatter and gather",
+   "new": "#### Scatter and gather",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-059",
+   "old": "Scatter/gather is the whole protocol.",
+   "new": "Scatter/gather is the whole protocol.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-060",
+   "old": "A stage function (`y_state`/`y_direct`, on either tier) returns a named tuple.",
+   "new": "A stage function (`y_state`/`y_direct`) returns a named tuple on either tier, continuous or discrete.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-061",
+   "old": "The framework scatters each field into that port's concretely typed cell.",
+   "new": "The framework scatters each field into that port's concretely typed cell.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-062",
+   "old": "Every reader gathers views from cells.",
+   "new": "Every reader gathers views from cells.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-063",
+   "old": "The readers are the next stage, `x_deriv`/`s_update`, guards, wired consumers and snapshot capture.",
+   "new": "The readers are the next stage, `x_deriv`/`s_update` (§5.2), guards, wired consumers and snapshot capture.",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§5.2"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-064",
+   "old": "The aggregate `y` is a merge semantically and virtual physically.",
+   "new": "The aggregate `y` is a merge semantically and virtual physically (D-036).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-036"
+   ],
+   "tag": "R",
+   "ruling": "R6"
+  },
+  {
+   "id": "C-065",
+   "old": "Semantically, a component's `y` is the merge of its stage products, `merge(y_x, y_xu)` on the continuous tier and `merge(y_s, y_su)` on the discrete.",
+   "new": "Semantically, a component's `y` is the merge of its stage products, `merge(y_x, y_xu)` on the continuous tier and `merge(y_s, y_su)` on the discrete (§5.2).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§5.2"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-066",
+   "old": "It carries declared ports only.",
+   "new": "It carries declared ports only.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-067",
+   "old": "Physically no such object exists.",
+   "new": "Physically no such object exists.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-068",
+   "old": "`y` is reconstructed per call from cells, as register-level field loads at zero cost for isbits, and is never stored as an object.",
+   "new": "`y` is reconstructed per call from cells, as register-level field loads at zero cost for isbits, and is never stored as an object.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-069",
+   "old": "Name collisions across a component's stages are a build error.",
+   "new": "Name collisions across a component's stages are a build error (`ProducedByTwoStages`, §8.3).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§8.3"
+   ],
+   "tag": "R",
+   "ruling": "R15"
+  }
+ ],
+ "added": [
+  "This chapter gives the port, the addressable unit through which components exchange immutable values.",
+  "§4.1 states the immutable value semantics of signals; §4.2 why consumers see ports, not stages; §4.3 the table mechanics and port granularity; and §4.4 function-valued signals for environment access.",
+  "(the contiguous vector backing all continuous state)",
+  "(any attached participant outside the loop, such as the GUI)",
+  "A root input is a source cell fed by the periphery (everything outside the loop that exchanges data with it)",
+  "(the graph of instantaneous input→output dependences)",
+  "The output contract (the ports a component declares in `y_types`)",
+  "and out of them?",
+  "(the typed entries of the signal table)",
+  "For an assembly (pure composition of child components)",
+  "Wiring and the periphery (everything outside the loop that exchanges data with it)",
+  "It is each of the following.",
+  "(a source cell the periphery feeds).",
+  "(the trace is the primary record of a session).",
+  "A guard is the function defining an event's predicate, and the snapshot is the immutable per-boundary publication.",
+  "The build does see it, because the feedthrough graph",
+  "the illustrative paths",
+  "`x_deriv`/`s_update` (§5.2)",
+  "(`ProducedByTwoStages`, §8.3)."
+ ]
+}
