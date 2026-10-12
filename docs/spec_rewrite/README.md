@@ -29,7 +29,7 @@ readability with no loss of content. The steps are in
 | 3. Component taxonomy | not started | | |
 | 4. Ports and signals | not started | | |
 | 5. Evaluation order and feedthrough | in progress | | |
-| 6. Composition: connections, aggregation and hierarchy | done | `50ad740` | |
+| 6. Composition: connections, aggregation and hierarchy | done | `50ad740` | `cc5a41c` |
 | 7. State and data representation | done | `1cb6716` | `733be21` |
 | 8. The declaration layer: components and assemblies | done | `ef7f5dd` | `d268d39` |
 | 9. The build pipeline | done | `9a7d84f` | `docs/reports/20261001_chapter9_rewrite/` |
