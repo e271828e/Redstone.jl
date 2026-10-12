@@ -1836,9 +1836,8 @@ New:
 
 ### O1. Orchestrator touch: units/E/new_pretrim.md (final verifier re-check)
 
-The bold-only reference copy predates E75, so `boldcheck.py ch01-04 E` saw a
-text change beyond bold markers. Applied E75's words to it, unwrapped (the
-copy is a check reference, never landed).
-
-- Old: "on either [tier](#g-tier)) returns"
-- New: "on either [tier](#g-tier), continuous or discrete) returns"
+The bold-only reference copy predates E75 and E76, so `boldcheck.py ch01-04 E`
+saw a text change beyond bold markers. Rebuilt it as the current new.md with
+R18's removed bold restored on "the signal requirement is immutability plus
+frozen references", so the check compares exactly R18's bold-only edit. The
+copy is a check reference and never lands.
