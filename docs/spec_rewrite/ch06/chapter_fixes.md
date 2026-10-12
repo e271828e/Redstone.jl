@@ -158,3 +158,23 @@ after, and its bold spans render the same words.
   2412 and 2882 at the base quote from §6.1.
 - **E13** moves the §4.4 citation inside the new gloss's parenthetical. It
   stays in the same sentence.
+
+## Orchestrator touches after step 6b
+
+Scripted with `otouch.py` in the session scratchpad. Each touched paragraph
+was refilled greedily at 80 rendered columns, and all three checkers print
+`checks failed: 0`.
+
+- **O-1 (unit A, the final verifier's E14 finding).** "kept deliberately
+  thin)." becomes "kept deliberately thin, [§8.8][s8-8])." The split
+  sentence lost its pointer to §8.8, which states it at base 3652–3654.
+  Inventory: the added gloss span gains ", §8.8".
+- **O-2 (unit C, RP-4's wording).** "The vehicle, the assembly one level
+  above the systems assembly, wires" becomes "The vehicle, which holds the
+  systems assembly beside its dynamics as Flight.jl's `Vehicle` does,
+  wires". The old clause could read as §6.1's `Cessna172`, which sits right
+  above `Systems` in that sketch. Source: `FlightPhysics/src/aircraftbase.jl`
+  48–53 (`systems`, `kinematics`, `dynamics`). Inventory: RP-4's added span.
+- **O-3 (unit C, RP-4's wording).** "The block above places" becomes "The
+  `local_wires(::Systems)` block earlier in this section places". "Above"
+  reached back 42 lines across a heading. Inventory: RP-4's added span.

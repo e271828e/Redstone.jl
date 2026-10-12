@@ -1,0 +1,44 @@
+struct Junction{In, Out, N, F} :: AbstractComponent   # library-provided (§13.7)
+    f::F                              # the fold, N-ary; instance data
+end
+const SumJunction{V, N} = Junction{V, V, N, typeof(+)}
+x_init(::Junction) = (;)              # stateless, continuous: the empty store is the tier 
+marker (§8.2)
+u_types(::Junction{In, Out, N}) where {In, Out, N} =
+    NamedTuple{ntuple(i :> Symbol(:in, i), N)}(ntuple(_ :> In, N))
+y_types(::Junction{In, Out}) where {In, Out} = (out = Out,)
+y_direct(j::Junction, (; u)) = (out = j.f(u::.),)
+The parameters are the nominal port types and the arity  ( D-311), as in 
+SumJunction{Wrench{Float64}, 3}, and the fold is instance data. Wrench is FlightPhysics' force-and-
+torque type, here parametrized by its scalar type as a walked type of §7.2. SumJunction{V, N} is the 
+Junction at +. A custom fold, such as a weighted blend or a mass-properties composition, is written 
+at the site as Junction{In, Out, N}(f), which infers F.
+The junction is a continuous leaf, so its contracts (a component's declared interface) are written at 
+nominal Float64. On a continuous leaf the leaf walk (the framework's derivation of per-activation 
+types) retypes them ( §8.2). An input entry at Wrench{Float64} is the tolerant form a promoting 
+consumer writes. Walking, frozen and root-input contributors are all admissible behind it. A root 
+input is the root component's own input face.
+The Bool gates of §13.7 are the same leaf at | and & (D-311). The junctions themselves, summing 
+junctions and Bool gates, are the seed of the standard component library committed in §13.7 (D-062). 
+They are ordinary components with no framework privileges. The inventory grows by judgement 
+against the three guidelines §13.7 states (D-313).
+Wired at an ownership boundary, inside the assembly that owns the contributors, the junction is 
+ordinary structure. An assembly is a component of pure composition. In the block below, Systems 
+is the systems assembly. Its children include the aerodynamics aero, the powerplant pwp and the 
+landing gear ldg, and a child dynamics that consumes the total. wr_sum::SumJunction{Wrench{Float64}, 
+3} is a field of Systems like any other child (§8.5).
+local_wires(::Systems) = (
+    "aero/wrench" :> "wr_sum/in1",
+    "pwp/wrench"  :> "wr_sum/in2",
+    "ldg/wrench"  :> "wr_sum/in3",
+    "wr_sum/out"  :> "dynamics/wr_ext",
+)
+What the explicit form buys
+• Every bookkeeping mistake at the junction is loud under the declaration layer. A contributor 
+the junction counts but nobody wires is an unconnected-input error naming in4. A double-wired 
+slot violates single-connection. A stale arity surfaces as one or the other. The bookkeeping is 
+ceremony, never silence. A contributor's output that nobody wires stays legal and silent, as any 
+unconnected output does (D-084).
+• The aggregate is a first-class signal. "wr_sum/out" is an ordinary port. It is loggable, GUI-visible, 
+and fanned out to a second consumer (a component monitoring structural loads) for one wire.
+9

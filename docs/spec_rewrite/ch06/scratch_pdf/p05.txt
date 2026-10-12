@@ -1,0 +1,36 @@
+Each recursion step of FlightCore's tree walk becomes one visible junction at the level that owns the 
+contributors. For the C172 that is about four junctions and fifteen wires, written once. They read as 
+a manifest of what weighs, what pushes and what spins.
+Frame responsibility is unchanged. Contributors publish in the common body frame, applying their 
+own mounting transforms at source.
+Do not bundle the three quantities into one contribution struct. Contributors are ragged. Aero 
+has wrench but no mass, fuel the reverse, and only pwp has angular momentum. A bundle forces 
+zero-filled identity noise through every port, which is the "silently sum nothing" hazard in a new 
+coat (D-037).
+A sum_ports!-style helper (instantiate + wire + export in one call) is guarded-addition sugar, added 
+when real models show the pattern repeated.
+The junctions themselves, summing junctions and Bool gates, are the seed of the standard compo -
+nent library committed in §13.7. They are ordinary components with no framework privileges, and 
+the inventory grows by the admission rule §13.7 states.
+The zero­contributor end of the same spectrum
+Ragged contributors bottom out at none. Some configuration has a consumer whose required 
+aggregate input has no physical contributors at all. The bare-propagation Vehicle{NoVehicleSystems} 
+is one. It has zero contributors to external wrench and to internal angular momentum, while 
+VehicleDynamics requires both unconditionally.
+There is no junction to write and no producer to wire. §6.1 bans unconnected inputs and silent 
+defaults, and the identity element a zero-arity junction would need is deliberately absent (D-037).
+Rule. The spelling is a library Constant source (§13.7) wired straight to the consumer's input, as in 
+Constant(Wrench()) → dynamics/wr_ext.
+Why. The zero total becomes declared structure. The configuration states "external wrench ≡ 0" as 
+a visible wire and an observable port, rather than as an identity method the framework supplies 
+behind the author's back.
+This is not the banned default ( §6.1) in component clothing but its opposite. That default is silent 
+and consumer-declared. This one is loud and assembly-declared, with the author writing the child 
+and the wire, both inspectable.
+The cost, recorded
+Adding a contributor from another subtree edits the assembly levels between its producer and 
+the junction ( §6.1) instead of zero. In exchange, explicit wiring buys per-contributor values and 
+intermediate totals as observable ports, with every silence inverted into a warning or error (D-007, 
+D-037).
+Consumer-declared folds with multi-connection legality are closed (D-007 and D-037).
+5

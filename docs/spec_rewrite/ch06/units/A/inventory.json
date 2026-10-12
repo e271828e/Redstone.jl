@@ -318,7 +318,7 @@
   {
    "id": "A-035",
    "old": "It is the ceremony the design already pays almost everywhere, because every level of a realistic tree is a generic seam, where one-level routing was mandatory in any case (§8.8).",
-   "new": "It is the ceremony the design already pays almost everywhere, because every level of a realistic tree is a generic seam (a narrow, named interface kept deliberately thin). One-level routing was mandatory at a generic seam in any case (§8.8).",
+   "new": "It is the ceremony the design already pays almost everywhere, because every level of a realistic tree is a generic seam (a narrow, named interface kept deliberately thin, \u00a78.8). One-level routing was mandatory at a generic seam in any case (§8.8).",
    "where": "new",
    "cites": [
     "§8.8"
@@ -394,7 +394,7 @@
   "The root `Cessna172` holds a systems assembly `Systems`, which holds the landing gear `Ldg`, whose three legs are `left`, `right` and `nose`.",
   "The root's input `trn` is a terrain field handle (an immutable query object its consumers evaluate, §4.4).",
   "Two consequences explain the rule.",
-  "(a narrow, named interface kept deliberately thin)",
+  "(a narrow, named interface kept deliberately thin, \u00a78.8)",
   "An endpoint reaching past the immediate child is a `PathResolution` error (Appendix C).",
   "(an immutable query object its consumers evaluate, §4.4)"
  ]

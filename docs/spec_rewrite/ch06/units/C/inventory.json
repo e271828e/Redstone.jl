@@ -462,7 +462,7 @@
   {
    "id": "C-051",
    "old": "The vehicle wires the systems totals into Newton–Euler.",
-   "new": "The vehicle, the assembly one level above the systems assembly, wires the systems totals into the rigid-body equations of motion.",
+   "new": "The vehicle, which holds the systems assembly beside its dynamics as Flight.jl's `Vehicle` does, wires the systems totals into the rigid-body equations of motion.",
    "where": "new",
    "cites": [],
    "tag": "R",
@@ -824,8 +824,8 @@
   "(a capability the design admits but does not build)",
   "A constant source has no inputs and no state, and publishes a value its instance holds.",
   "(force and torque)",
-  "the assembly one level above the systems assembly",
-  "The block above places the `dynamics` child inside `Systems` instead, and both shapes are legal."
+  "which holds the systems assembly beside its dynamics as Flight.jl's `Vehicle` does",
+  "The `local_wires(::Systems)` block earlier in this section places the `dynamics` child inside `Systems` instead, and both shapes are legal."
  ],
  "added_rulings": {
   "R12": "`Wrench` is FlightPhysics' force-and-torque type, here parametrized by its scalar type as a walked type of §7.2.",
@@ -834,8 +834,8 @@
   "RP-1": "Reference-frame responsibility",
   "RP-2": "(force and torque)",
   "RP-4": [
-   "the assembly one level above the systems assembly",
-   "The block above places the `dynamics` child inside `Systems` instead, and both shapes are legal."
+   "which holds the systems assembly beside its dynamics as Flight.jl's `Vehicle` does",
+   "The `local_wires(::Systems)` block earlier in this section places the `dynamics` child inside `Systems` instead, and both shapes are legal."
   ]
  }
 }

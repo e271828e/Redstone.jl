@@ -1,0 +1,42 @@
+input_wires(::Ldg)       = ("trn" :> ("left/trn_field", "right/trn_field",
+                                      "nose/trn_field"), …)
+Two consequences explain the rule. The first is that faces become the only currency crossing an 
+assembly boundary, so substitutability holds at every boundary rather than only at generic ones. This 
+is the contract-is-the-interface principle of §8.3 with its one leak closed. The second consequence is 
+that the face graph is total (D-207). Every signal crossing a boundary bears a declared face there, at 
+every level it crosses. Totality is what the condition algebra addresses against. An at prefix stopping 
+at a child's face has a name to resolve through (§14.2).
+The ceremony the rule costs is the re-export entry per level. It is the ceremony the design already 
+pays almost everywhere, because every level of a realistic tree is a generic seam (a narrow, named 
+interface kept deliberately thin). One-level routing was mandatory at a generic seam in any case 
+(§8.8). Where the entries multiply, they are computed rather than typed, through input_passthrough/
+output_passthrough over a single authored feed list (§8.8). Parallel routes threading many boundaries 
+are the signal to gather them into a component of their own (D-207).
+Enforcement lives in the path-resolution primitive itself, resolve (§13.3, D-130). It walks declared 
+field types alongside instances ( D-061). An endpoint reaching past the immediate child is a 
+PathResolution error (Appendix C). Paths are validated at build time, and renames break loudly.
+Type­checking a wire
+Once both endpoints of a wire resolve, two clauses type-check it ( §8.2). The first is the nominal 
+bound check. Nominal means the Float64 activation (the build's typed products at a given scalar 
+type), and a declaration's Float64 face. The bound check is stated over declaration evaluations. 
+The producer's declaration at Float64 must be :: the consumer's input entry at Float64 (D-078). 
+It is one uniform rule, and it degenerates to exact equality for a concrete entry. A violation is 
+WireTypeMismatch.
+Beside it stands the walk-compatibility clause (the walk clause for short), for a continuous consumer 
+only. A walking producer leaf, one the producer left unpinned, requires an unpinned entry. A pinned 
+producer leaf, one declared Pinned, satisfies either entry, because frozen values embed upward under 
+any activation. A discrete consumer takes the bound check alone, so a continuous producer feeding 
+a discrete consumer is unconditionally legal, for the reason §8.2 gives (D-295, D-263).
+The producer's declaration and the entry are plain declarations that the leaf walk (the framework's 
+derivation of per-activation types) retypes. The walk clause is therefore decided in the structure step 
+by retyping them at a marker scalar. That is declaration reading, and no user stage code runs (§9.1).
+An abstract entry is an input entry whose declared type is abstract. Its leaves cannot be enumerated. 
+The walk clause decides an abstract entry on the whole declaration (D-236). The producer's 
+declaration at the marker, or the same with every pinned leaf lifted to the marker, must be :: the 
+entry at the marker (D-236).
+The walk clause admits an opaque leaf on the same terms as a pinned or walking leaf. An opaque 
+leaf (§4.3), a handle stored whole, has no scalar position to embed through, and the walk clause 
+does not need one. A frozen handle arriving at an unpinned entry is the producer's cell (the 
+signal-table entry holding its output), gathered as stored ( D-264). The consumer's own arithmetic 
+promotes whatever it reads from it (D-264). A discrete producer of a handle, which pins wholesale, 
+7

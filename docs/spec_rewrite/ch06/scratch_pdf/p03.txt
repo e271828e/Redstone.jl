@@ -1,0 +1,40 @@
+Fan­out and fan­in
+Fan-out is free. One producer may feed many consumers. The converse is strict.
+Rule. Every input port takes exactly one connection, with no exceptions. Aggregation is done by 
+junctions (§6.2).
+The rule spans levels. A child input fed by a sibling wire at its own level and handed up through its 
+parent's input_wires is a two-producers build error. Routing a face upward cannot silently double-
+feed.
+Unconnected ports
+There is no auto-bubbling of unconnected inputs ( D-043). Unconnected output ports are legal, 
+silently, with no build-time warning ( D-084). Unconnected input ports are a build error, with no 
+silent defaults.
+The check is a whole ­tree property, not a per ­declaration one.  Within a single assembly 
+declaration an unfed child input is simply awaiting a claim from above, either a sibling wire or an 
+input_wires entry handing the obligation up one level (§8.6). The error fires at the root build for any 
+input whose obligation chain never terminates. The one legitimate terminus fed by no component 
+is the root component's own input face, a root input (§11.3).
+6.2 Aggregation: explicit summing junctions
+Several physical quantities are totals over many contributors. Total wrench, total mass properties 
+and total internal angular momentum are the examples, and today they are the work of the generated 
+get_wr_b/get_mp_b/get_hr_b tree walks.
+Rule. N-to-1 physical aggregation is expressed by ordinary junction components and explicit 
+wires.
+There is no framework aggregation mechanism. There are no multi-connection ports, no declared 
+fold ops and no identity-element opt-outs. Every input port takes exactly one connection, every -
+where.
+struct Junction{In, Out, N, F} :: AbstractComponent   # library-provided (§13.7)
+    f::F                              # the fold, N-ary; instance data
+end
+const SumJunction{V, N} = Junction{V, V, N, typeof(+)}
+x_init(::Junction) = (;)              # stateless, continuous: the empty store is the tier 
+marker (§8.2)
+u_types(::Junction{In, Out, N}) where {In, Out, N} =
+    NamedTuple{ntuple(i :> Symbol(:in, i), N)}(ntuple(_ :> In, N))
+y_types(::Junction{In, Out}) where {In, Out} = (out = Out,)
+y_direct(j::Junction, (; u)) = (out = j.f(u::.),)
+The parameters are the nominal port types and the arity  ( D-311), as in 
+SumJunction{Wrench{Float64}, 3}, and the fold is instance data. SumJunction{V, N} is the Junction at +. 
+A custom fold, a weighted blend or a mass-properties composition, is Junction{In, Out, N}(f) with 
+the fold written at the site.
+3

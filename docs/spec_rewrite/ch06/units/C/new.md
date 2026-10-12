@@ -105,10 +105,11 @@ at every boundary, so every assembly that owns contributors must export its
 aggregate.
 
 For example, the landing gear `Ldg` sums its three legs and exports `wrench`.
-The systems assembly sums `aero + ldg + pwp`. The vehicle, the assembly one
-level above the systems assembly, wires the systems totals into the rigid-body
-equations of motion. The block above places the `dynamics` child inside
-`Systems` instead, and both shapes are legal.
+The systems assembly sums `aero + ldg + pwp`. The vehicle, which holds the
+systems assembly beside its dynamics as Flight.jl's `Vehicle` does, wires the
+systems totals into the rigid-body equations of motion. The
+`local_wires(::Systems)` block earlier in this section places the `dynamics`
+child inside `Systems` instead, and both shapes are legal.
 
 Junctions placed this way replace FlightPhysics' tree walk. Each of its
 recursion steps becomes one visible junction at the level that owns the

@@ -1,0 +1,20 @@
+internal angular momentum, while its rigid-body dynamics component, VehicleDynamics, requires 
+both unconditionally.
+There is no junction to write and no producer to wire. §6.1 bans unconnected inputs and silent 
+defaults. The identity element a zero-arity junction would need is deliberately absent (D-037).
+The zero ­contributor spelling is a library Constant source  ( §13.7) wired straight to the 
+consumer's input (D-143), as in Constant(Wrench()) → dynamics/wr_ext. A constant source has no 
+inputs and no state, and publishes a value its instance holds.
+The spelling makes the zero total declared structure. The configuration states "external wrench ≡ 0" 
+as a visible wire and an observable port, rather than as an identity method the framework supplies 
+behind the author's back.
+The Constant wire is not the banned default ( §6.1) in component clothing but its opposite  
+(D-143). That default is silent and consumer-declared. This one is loud and assembly-declared, with 
+the author writing the child and the wire, both inspectable.
+The cost
+Adding a contributor from another subtree edits the assembly levels between its producer and the 
+junction (§6.1) instead of none. In exchange, explicit wiring buys per-contributor values and inter -
+mediate totals as observable ports, with every silence in the aggregation's bookkeeping inverted 
+into a warning or error (D-037).
+Consumer-declared folds with multi-connection legality are closed (D-037).
+11
