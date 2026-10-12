@@ -1122,7 +1122,7 @@ are two remedies, and they apply in this order.
   consumes *only in a fallback branch* is the archetypal false dependency. The
   neighbor is computing, on the component's behalf, a fallback whose semantics
   belong on the component's own side of the boundary. Move the branch to its
-  natural owner and the wire disappears.
+  natural owner and the wire disappears ([D-343][d-343]).
 
   The canonical instance is the strut/steering pair of Flight.jl's landing
   gear. The strut hands the contact-point velocity azimuth `ψ_v` to the
@@ -1150,7 +1150,7 @@ are two remedies, and they apply in this order.
   migration).
 - Split the component. This is the residual remedy, taken when both halves
   genuinely belong to the component and the split documents real structure.
-  Its cost is stated where it bites. Visibility ([§8.3][s8-3]) is binary, so
+  Its cost is stated where it bites ([D-343][d-343]). Visibility ([§8.3][s8-3]) is binary, so
   every intermediate shared across the new boundary is declared in `y_types`,
   and is therefore public, connectable and substitution-relevant. The
   mitigating idiom is the granularity guideline ([§4.3][s4-3]), which the split

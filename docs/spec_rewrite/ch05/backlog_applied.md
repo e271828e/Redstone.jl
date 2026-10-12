@@ -215,3 +215,12 @@ advisories); `check_bold.jl` (chapter 5: 25 bold spans, 211 bold words, "OK
 — every bold span in a rewritten chapter carries its D-citation");
 `linkify.jl` again, a no-op by checksum over the 120 Markdown files under
 `docs/design` to depth 2.
+
+## Orchestrator touches after the track 2 verification
+
+- B17, extended on the verifier's recommendation (backlog_verify.md): spec.md
+  1125, "natural owner and the wire disappears." → "natural owner and the wire
+  disappears ([D-343][d-343])."; spec.md 1153, "Its cost is stated where it
+  bites." → "Its cost is stated where it bites ([D-343][d-343])." D-343
+  bullets 2 and 4 state the two remedies. Both lines stay within 80 rendered
+  columns. Battery green, linkify a no-op.
