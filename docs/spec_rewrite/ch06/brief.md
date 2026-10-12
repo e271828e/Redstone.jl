@@ -396,3 +396,28 @@ reach"** (1221–1282, 501 words).
 The rewrite adds no log entries. Track 2, after landing, takes numbers from
 D-321 to D-340. Chapter 5's rewrite, running in parallel in another
 session, takes D-341 up.
+
+## Rulings after step 4
+
+- **Unit A's verifier** found no drift. Its fixes 1 (D-085 scoped to the key
+  segment, D-207 for "one level and not two") and 2 (the `UnknownPort`
+  sentence follows the bold rule) were applied. Its fix 3, a
+  `#g-root-input` link at "the root's input `trn`", is declined: unit B
+  links "root input" where §6.1 first names the term.
+- **R11. "Every mistake is loud" is scoped** (unit C's verifier, C-023). It
+  becomes "Every bookkeeping mistake at the junction is loud under the
+  declaration layer". Unscoped, it contradicted R7's D-084 sentence in the
+  same bullet.
+- **R12. `Wrench` is introduced as walked** (unit C's verifier). FlightPhysics'
+  `Wrench` has fixed `Float64` fields (`dynamics.jl` 114–117), and
+  `migration_outline.md` 37–39 lists it among §7.2's walked payload types.
+  The clause becomes "`Wrench` is FlightPhysics' force-and-torque type, here
+  parametrized by its scalar type as a walked type of §7.2", without naming
+  the migration, a reader-cold name.
+- **R13. Raggedness claims having, not publishing** (unit C's verifier).
+  "Contributors are ragged, each having only some of the three quantities."
+  D-037 says what contributors have, not what they publish.
+- **R14. The sketch's `dynamics` child is introduced** (unit C's verifier).
+  The `Systems` sentence also names the sketch's `dynamics` child, the
+  consumer of the total, and claims nothing about Flight.jl's tree. F6 stays
+  flagged.
