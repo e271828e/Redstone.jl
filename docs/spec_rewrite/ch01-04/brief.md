@@ -344,3 +344,23 @@ difficulty and names its hazards.
   §10.4's "A localized event triggers when its predicate was not-holding…"
   (base 5492), which calls itself "the directional edge of §2.1", goes plain
   at landing.
+
+## Rulings after step 5
+
+- **R18. Row 99 goes plain** (chapter pass 21). "The signal requirement is
+  immutability plus frozen references" has no entry that rules it: D-243's
+  Rationale (log 9210) and D-231's Position (log 8691) both point back at
+  §4.1. The bold goes; the sentence stays, citing D-243 plain. Whether the
+  log owes a Position goes to the owner.
+- **R19. "Every component provides two output stages"** (chapter pass 22).
+  The claim is untrue of an assembly, and the rewrite gave it more weight
+  than the old gloss did. It returns to the old form, a gloss on
+  `y_state`/`y_direct` with no citation of its own, worded as at old 444–445.
+  The claim, here and at §5.2 base 696, the glossary (base 12951) and base
+  1111, goes to the owner.
+- **R20. The geoid gloss stays** (chapter pass 30). Its source is
+  FlightPhysics `geodesy.jl` 163 and 226–228; unit G's rulings.md records
+  it.
+- **R21. R11's restored clause stays** (chapter pass 31). ", the query a
+  terrain field handle's `ray_intersect` serves" restates the old
+  "dovetails" claim (verifier G, C-038), so it claims nothing new.
