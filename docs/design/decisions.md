@@ -1489,7 +1489,7 @@ C activation — with deployment binding at `Simulation` construction only.
   topo/cycle.
 - C, activation: per-`T` slot typing + probe chain + layouts.
 
-**Spec.** [§9.1][s9-1]
+**Spec.** [§6.1][s6-1], [§9.1][s9-1]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -1847,6 +1847,8 @@ path's final segment (slash the only structural separator).
 - A standard component library (summing junctions, Bool gates) ships as ordinary
   components, demand-driven, arity by type parameter (`Or{N}` — computed
   contracts), stateless-continuous hence tier-transparent.
+
+**Spec.** [§6.2][s6-2]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -2357,7 +2359,7 @@ stand.
 <: entry` at nominal faces — one uniform rule, exact equality the concrete
 degenerate.
 
-**Spec.** [§4.4][s4-4], [§8.2][s8-2], [§9.1][s9-1]
+**Spec.** [§4.4][s4-4], [§6.1][s6-1], [§8.2][s8-2], [§9.1][s9-1]
 
 **Rationale.** Abstract entries = structural substitutability ([§4.4][s4-4] field
 handles), never needed for eltype genericity (an eltype-generic producer's
@@ -2545,7 +2547,7 @@ models carry many observation-oriented ports no wire consumes ([§11.2][s11-2] b
 exactly that), and [D-083][d-083]'s path-bound readers attach post-build, so "unused" is
 undecidable at build.
 
-**Spec.** [§6.1][s6-1], [§11.2][s11-2], [§11.7][s11-7], [§13.2][s13-2], [Appendix C][sC]
+**Spec.** [§6.1][s6-1], [§6.2][s6-2], [§11.2][s11-2], [§11.7][s11-7], [§13.2][s13-2], [Appendix C][sC]
 
 **Rationale.** Such a warning fires on every honest port and poisons the sole
 warning stream ([§11.7][s11-7]'s anti-diagnostic lesson); the hazard it would guard (a
@@ -2568,7 +2570,7 @@ all-component elements unpack as children (`"field/1"`/`"field/key"` path
 segments, declaration-order layout); containers are transparent grouping — no
 contract, no `connections`, no rate scope.
 
-**Spec.** [§8.5][s8-5], [§8.6][s8-6], [§8.7][s8-7], [§8.8][s8-8], [§14.9][s14-9]
+**Spec.** [§6.1][s6-1], [§8.5][s8-5], [§8.6][s8-6], [§8.7][s8-7], [§8.8][s8-8], [§14.9][s14-9]
 
 **Rationale.** Elements are the *parent's* children, wired/exported/rated by
 element name; parametric rosters (`Formation{NT <: NamedTuple}`) compose per
@@ -3995,7 +3997,7 @@ substitutability, drift still loud at attach (`ReadBindingUnresolved`); which
 of the three a client falls under is internal, never user-facing API
 ([§14.4][s14-4]'s `apply!` precedent). This amends [D-061][d-061].
 
-**Spec.** [§13.3][s13-3], [§14.2][s14-2], [§14.4][s14-4], [§14.9][s14-9]
+**Spec.** [§6.1][s6-1], [§13.3][s13-3], [§14.2][s14-2], [§14.4][s14-4], [§14.9][s14-9]
 
 **Rationale.** Not [D-061][d-061]'s rejected instance-only walk: the declared-type walk
 stays the primitive's semantics and stays enforcing where promises depend on
@@ -7617,7 +7619,7 @@ inputs are the root's input faces uniformly. The bundled rulings:
   still cannot be built bare, and the component test rig ([§13.7][s13-7]) keeps its
   stubbing role, losing only its gate status.
 
-**Spec.** [§8.2][s8-2], [§8.6][s8-6], [§9.1][s9-1], [§9.3][s9-3], [§11.3][s11-3], [§13.7][s13-7]
+**Spec.** [§6.1][s6-1], [§8.2][s8-2], [§8.6][s8-6], [§9.1][s9-1], [§9.3][s9-3], [§11.3][s11-3], [§13.7][s13-7]
 
 **Rationale.** The refusal existed because no rule made a primitive root's
 unfed inputs root inputs; the uniform doctrine supplies one with no new
@@ -12049,7 +12051,7 @@ conformance check holds it to its word at every activation.
   and strips inside the stage.
 - Stripping mid-expression at an unpinned leaf remains legal.
 
-**Spec.** [§8.2][s8-2], [§9.5][s9-5]
+**Spec.** [§6.1][s6-1], [§8.2][s8-2], [§9.5][s9-5]
 
 **Rationale.** [D-238][d-238]'s relation lifts a `Float64` position only where the
 declaration has `T`, so every other leaf is exact (as recorded in [D-238][d-238]),
@@ -13136,7 +13138,7 @@ required.
   workspace sub-package or a separate repository is an after-release
   question.
 
-**Spec.** [§13.7][s13-7]
+**Spec.** [§6.2][s6-2], [§13.7][s13-7]
 
 **Rationale.** Simulink's base library is large because the diagram is its
 expression language, so `2u + 3` needs a Gain and a Bias. Here a stage body
