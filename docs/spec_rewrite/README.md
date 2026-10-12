@@ -28,7 +28,7 @@ readability with no loss of content. The steps are in
 | 2. Formalism | not started | | |
 | 3. Component taxonomy | not started | | |
 | 4. Ports and signals | not started | | |
-| 5. Evaluation order and feedthrough | not started | | |
+| 5. Evaluation order and feedthrough | in progress | | |
 | 6. Composition: connections, aggregation and hierarchy | in progress | | |
 | 7. State and data representation | done | `1cb6716` | `733be21` |
 | 8. The declaration layer: components and assemblies | done | `ef7f5dd` | `d268d39` |
