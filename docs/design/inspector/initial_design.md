@@ -14,8 +14,14 @@ answers stage 1 keeps whole, and one on the whole graphical layer, whose
 bridge and panel material stages 2 to 4 keep. A third, on 2026-10-07, read
 the artifacts against the diagram's needs: it amended answer 16, added
 answers 17 and 18, renamed `describe` to `descriptor`, and gave stage 1's
-working order its step zero, the `Structure` refactor of increment 67. An earlier inspector
-proposal, deleted in commit 084d6f0, was left out of both. The built-in
+working order its step zero, the `Structure` refactor of increment 67. A
+fourth, on 2026-10-12, absorbed the framework changes that landed between
+the third session and it: the refactor itself (D-315), the structural stop
+requests (D-316), the `Model` split (D-317 to D-320) and the block library
+(D-311 to D-313). The split leaves the descriptor's sources as they were: a
+`Model` is a mutable materialization of a `Deployment`, not an artifact of
+its own. An earlier inspector proposal, deleted in commit 084d6f0, was left
+out of all four. The built-in
 Julia GUI the second session designed was parked on 2026-10-05 (D-310).
 Its reasons are in that entry, and its record last stands at commit
 b6f08b1.
@@ -69,8 +75,10 @@ b6f08b1.
 5. **Descriptor content: the artifacts' facts plus instance context.** A
    descriptor carries, as data, everything `show` prints for its artifact:
    the component tree, faces with value types and tiers, wires, root inputs,
-   the execution order with port classes, and the timing tables. Each
-   component adds three things: its type's docstring, the source location of
+   the execution order with port classes, and the timing tables. It also
+   carries the requester roster of D-316, each `StopFlag` port with its
+   path and reason, which `show` does not print. Each component adds three
+   things: its type's docstring, the source location of
    its declaration methods, and a parameter summary. Internals such as
    initial states, cell layouts and compiled forms stay out.
    There are two kinds. A build descriptor projects a `Build`. A deployment
@@ -142,8 +150,8 @@ b6f08b1.
      component tables, the schedule and hyperperiod chart for a deployment
      descriptor, and the root-input surface.
    - *Face routes:* selecting a root face highlights its chain through every
-     level. The structure step records the routing chain (D-257, amended
-     2026-09-30), so the data is at hand.
+     level. `face_routes` derives the chain from the declared wires
+     (D-315), so the data is at hand.
    - *Later, deferred and not refused:* a diff of two builds drawn on the
      diagram, and a general view of what feeds an output instantaneously.
 
@@ -236,8 +244,9 @@ b6f08b1.
     - a toggle labeling wires with their value types;
     - wire styles by the kind of value: thin for a scalar, thicker for a
       vector, a triple line for a NamedTuple, the way Simulink draws a bus;
-    - icons for §13.7's standard library, matched by type name: `SumJunction`
-      as a circle with its signs, `UnitDelay` as z⁻¹, `Constant` as its value;
+    - icons for §13.7's standard library, matched by type name: `Junction`
+      as a circle with its signs, `UnitDelay` as z⁻¹, `Constant` as its
+      value; the roster is `companions/library_inventory.md`;
     - a "Coming from Simulink" help page mapping the vocabulary (assembly ≈
       subsystem, face ≈ port, root input ≈ inport). The interface itself keeps
       Redstone's terms everywhere.
@@ -309,8 +318,8 @@ cited by number. Couplings are named where they exist.
    failure descriptors: field names, nesting, how types, paths, faces, kind
    markers, routes, timing tables, diagnostics and parameter summaries are
    encoded. It also covers the JSON Schema, the minor and major bump rules,
-   and a set of fixture descriptors. Three details to absorb: the two-sided
-   face table, the anchor and component tables in rational form, and state
+   and a set of fixture descriptors. Three details to absorb: the requester
+   roster, the anchor and component tables in rational form, and state
    events among the derived facts. *Builds on* answers 4 to 7, 13, 16, 17
    and 18. *Coupled to* axis 3, which says what the drawing needs, and to
    stage 2, which extends the schema.
@@ -352,10 +361,11 @@ cited by number. Couplings are named where they exist.
    a pinned Redstone, front-end tests, the no-CDN rule and the privacy
    statement. *Builds on* answers 10, 11 and 14.
 
-**Working order.** Step zero is the `Structure` refactor, increment 67:
-the artifact keeps the declared wiring per level and a level table in walk
-order, every resolved table becomes a function over them, and the layout
-stays the one home for addresses. After it `descriptor` is a projection of
+**Working order.** Step zero, the `Structure` refactor, landed as
+increment 67 on 2026-10-08 (D-315): the artifact keeps the declared wiring
+per level and a level table in walk order, every resolved table is a
+function over them, and the layout stays the one home for addresses. After
+it `descriptor` is a projection of
 the artifact, section by section, and the schema's sections map onto its
 fields. Then axes 1 and 2, in one session, scoped to a first
 `format_version` that carries what the core tier draws: the component tree
@@ -468,6 +478,9 @@ the run appears on it.
 - The run-control panel: pause, resume, stop, pace, margin; whether partial
   advance (§12.6) is exposed as a step control. It waits on stage 2's
   control question.
+- Stop requests (D-316): the requesters marked on the diagram, the
+  ignored ones of the current advance shown as such, and the requester a
+  `ModelRequestedStop` names shown with its reason when the run ends.
 - The diagnostics drawer going live: the per-writer accounts of §11.8 as
   they change.
 - Click-to-open from the diagram to the component's panel, which stage 4
