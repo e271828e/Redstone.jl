@@ -47,7 +47,7 @@ states it: "Guard-driven handlers are the sole resetters of continuous state
 - Old: "no input spelling at all, because only handlers write `x` ([§3.1][s3-1])."
 - New: "no input spelling at all, because only handlers write `x` ([§3.4][s3-4])."
 - Recommendation: apply, as R9 (ii) orders.
-- **Status.** open.
+- **Status.** ruled: apply at landing (R9 ii).
 
 **A2. Row 234, `companions/flight_case_studies.md` 187.** The same sentence
 with the same citation. R9 (ii) names only the spec line; unit C and the
@@ -56,7 +56,7 @@ inbound check both found this copy.
 - New: "input spelling at all, because only handlers write `x` ([§3.4][s3-4])."
 - Recommendation: apply, extending R9 (ii) to it. The companion already
   defines `[s3-4]` (its line 445).
-- **Status.** open.
+- **Status.** ruled: apply at landing, extending R9 (ii).
 
 **A3. `spec.md` 5492–5493 (§10.4, "The trigger"), R17.** The bold restates
 D-082's edge ruling, which new §2.1 bolds; 5498 calls it "the directional
@@ -67,7 +67,7 @@ edge of [§2.1]".
 - New: the same sentence with the two `**` pairs removed. The citation and
   both links stay.
 - Recommendation: apply, as R17 orders. Rerun `check_bold.jl` after it.
-- **Status.** open.
+- **Status.** ruled: apply at landing (R17); rerun check_bold.jl.
 
 **A4. Row 51, `spec.md` 10664 (§14.4).** F7 changes §3.2 to "a NamedTuple
 whose fields are each isbits or a `Symbol`". The citing sentence still says
@@ -81,7 +81,7 @@ whose fields are each isbits or a `Symbol`". The citing sentence still says
   says a discrete `s` field "is any isbits value"" (README base 66–67) in
   the same commit. The README's two chapter 3 bullets (base 48–53) retire at
   step 9, as R1 and F7 settle them.
-- **Status.** open.
+- **Status.** ruled: apply at landing, and delete the README's chapter 14 bullet in the same commit.
 
 **A5. Row 66, `spec.md` 12850–12852 (glossary *component*).** Unit C's §3
 lead now says "three categories of component", so as to use neither glossary
@@ -94,7 +94,7 @@ non-assembly class.
   categories ([§3][s3])."
 - Recommendation: apply, after checking that unit C's final §3 lead still
   says "categories" (it does at the time of writing, `units/C/new.md` 3).
-- **Status.** open.
+- **Status.** ruled: apply at landing, after checking unit C's §3 lead still says "categories".
 
 ### To land: wrong before the rewrite
 
@@ -108,7 +108,7 @@ only)"), and so does D-112's Position (base log 3446–3447).
   component declares no events ([D-112])", adds a claim to the chapter for
   the sake of an inbound pointer; not recommended. D-112's Spec field keeps
   §3.2 (B3).
-- **Status.** open.
+- **Status.** ruled: apply at landing; §3.2 gains no sentence.
 
 **A7. Row 55, `spec.md` 11785–11786 (Appendix A).** §4.3 does not state one
 home per datum (§5.2 does; §3.4 restates it citing §5.2). §4.3 does support
@@ -119,7 +119,7 @@ an endpoint.
 - New: "- **One home per datum** ([§5.2][s5-2]). The signal table holds
   *produced* signals only, never transported ones ([§4.3][s4-3])."
 - Recommendation: apply.
-- **Status.** open.
+- **Status.** ruled: apply at landing.
 
 **A8. Row 65, `spec.md` 12847–12848 (glossary *class*).** "class split"
 occurs in neither the old nor the new §3.4. New §3.4 says "two leaf classes"
@@ -130,7 +130,7 @@ and "the two-class taxonomy".
   the same trap with the same stale phrase ("§3.4's "class split" and "two
   leaf classes""); change "class split" to "two-class taxonomy" there in the
   same commit.
-- **Status.** open.
+- **Status.** ruled: apply at landing, with spec_style.md base 64 in the same commit.
 
 **A9. Row 75, `spec.md` 13051–13052 (glossary *signal table*).** §4.1 says
 nothing of the table being integrator scratch within a step; §10.3 does. §4.1
@@ -138,7 +138,7 @@ links *signal table* back to this entry, so the pointer is circular.
 - Old: "integrator scratch ([§4.1][s4-1], [§10.3][s10-3])."
 - New: "integrator scratch ([§10.3][s10-3])."
 - Recommendation: apply.
-- **Status.** open.
+- **Status.** ruled: apply at landing.
 
 **A10. Row 79, `spec.md` 13102–13103 (glossary *flow / RHS*).** §3.1 does not
 state that there is no `x_deriv`-only re-evaluation; §5.3 does. §3.1 links
@@ -149,7 +149,7 @@ state that there is no `x_deriv`-only re-evaluation; §5.3 does. §3.1 links
 - Recommendation: apply. This fixes a pointer only. Whether the claim needs
   an entry is the owner's open item ("evaluating the RHS means running the
   sweep", `pending.md` base 105), which this batch does not re-raise.
-- **Status.** open.
+- **Status.** ruled: apply at landing.
 
 **A11. Row 85, `spec.md` 13882–13885 (glossary *decision entry*).** §1 says
 entry numbers are stable and never reused, before and after the rewrite. The
@@ -163,7 +163,7 @@ log 13–15) and `decisions_style.md`, never in §1.
   `superseded → D-nnn` in its Status line rather than rewritten."
 - Recommendation: apply. The second sentence describes the log's own
   format, which the entry's first sentence already names.
-- **Status.** open.
+- **Status.** ruled: apply at landing.
 
 **A12. Row 87, `spec.md` 13892–13895 (glossary *guarded addition*).** Neither
 §1 says "recorded with its shape so adoption stays additive". New §2.1's
@@ -178,7 +178,7 @@ retarget to §2.1 would be circular. (The chapter pass's finding 1 replaces
   [§11.3][s11-3])."
 - Recommendation: apply. The clause itself is C10, and the field-addressed
   staging example is C6.
-- **Status.** open.
+- **Status.** ruled: apply at landing.
 
 **A13. Row 45, `spec.md` 6724–6725 (§11.2).** §4.1 states immutability and
 "no aliasing, ever", nothing of internal sharing. Sharing immutable data is
@@ -190,7 +190,7 @@ not aliasing, so the claim is not wrong, only uncarried by its citation.
 - Recommendation: apply. It moves the citation onto the word it carries and
   changes no claim. (The inbound check's wording, "that may share data
   internally", weakens "with internal sharing"; not recommended.)
-- **Status.** open.
+- **Status.** ruled: apply at landing.
 
 **A14. Row 233, `companions/flight_case_studies.md` 83–85.** The
 decomposition of `f_step!` into boundary-detected events is §2.2's ("cover
@@ -202,7 +202,7 @@ with a continuous one").
   [§10.4][s10-4])."
 - Recommendation: apply. `linkify.jl` adds the two missing link
   definitions (the companion is on its roster).
-- **Status.** open.
+- **Status.** ruled: apply at landing.
 
 **A15. Row 242, `companions/localization_validation_walkthrough.md` 147.**
 §2.1 only names "the exactness result that motivates the `Bool` form" and
@@ -211,7 +211,7 @@ only `u` and `m`, boundary detection is exact", [D-179], [D-290]).
 - Old: "the discrete-driven exactness doctrine ([§2.1][s2-1], [D-179][d-179])"
 - New: "the discrete-driven exactness doctrine ([§10.4][s10-4], [D-179][d-179])"
 - Recommendation: apply. The companion defines `[s10-4]` (its line 187).
-- **Status.** open.
+- **Status.** ruled: apply at landing.
 
 ### Closed or moved: no landing edit
 
@@ -222,7 +222,7 @@ and comprehension work on the language's own terms") so that this quote
 lands. The criterion's own name differs, as it did before the rewrite.
 - Recommendation: close. The inbound check's optional rewording of §8.1 is
   not needed.
-- **Status.** open.
+- **Status.** ruled: closed.
 
 **A17. Row 128, `decisions.md` 4437 (D-137 Rationale).** "snapshots are
 immutable object graphs with internal sharing ([§4.1][s4-1], …)". §4.1 says
@@ -230,7 +230,7 @@ nothing of sharing; sharing immutable data is not aliasing, so the
 Rationale is not wrong. The fix is none: a Rationale keeps its day's wording
 (`decisions_style.md` rule 1), as chapter 5's batch closed its A25 to A27.
 - Recommendation: close.
-- **Status.** open.
+- **Status.** ruled: closed.
 
 **A18. Row 230, `companions/event_visibility_walkthrough.md` 19–21.** "A
 signal-table cell does not hold bytes that get mutated in place — it holds a
@@ -251,13 +251,13 @@ untouched, holds under value semantics too.
   `event_visibility_walkthrough.md` pictures a cell as a reference, which
   the spec does not say. Companions are not normative, and §1 says the spec
   wins where they disagree.
-- **Status.** open.
+- **Status.** ruled: no landing edit; a pending.md note at step 9.
 
 **A19. Log rows moved to group B.** Rows 94, 95, 103, 108, 114, 126, 127 and
 138 are Spec fields (B1 to B3). Rows 136, 141 and 142 are D-141's text (B8).
 Row 197 is D-276's annotation (B9).
 - Recommendation: rule them in group B.
-- **Status.** open.
+- **Status.** ruled in group B.
 
 Noted, not proposed: Appendix A base 11794 says "re-creating the drift
 class", the wording unit G dropped from §4.4 for the reserved word *class*.
@@ -303,7 +303,7 @@ neighbours.
 - Recommendation: apply at landing (recipe step 7.3). Rerun the check
   after the ruled and editorial fixes, since a fix can add or move a
   citation.
-- **Status.** open.
+- **Status.** ruled: apply at landing (step 7.3), rechecked against the final text.
 
 **B2. Spec fields the run only points into.** These citations sit on a
 restatement of a ruling another section states and bolds, or on a pointer.
@@ -325,7 +325,7 @@ Chapter 5's B1 added such sections too.
   D-231's §4.1 until C2 is ruled. Low stakes either way. Do not add §4.1 to
   D-243 (9208): its only words for the §4.1 claim are a Rationale that points
   back at §4.1 (R18).
-- **Status.** open.
+- **Status.** ruled: apply, except D-231's §4.1 until C2 is ruled; never §4.1 on D-243.
 
 **B3. Spec fields checked and left, and one correction.**
 - D-067 (base log 2006) lists §3.4, which holds nothing of boundary zero or
@@ -344,7 +344,7 @@ Chapter 5's B1 added such sections too.
 - D-180's §2.1 (base log 6571) is now true: R5 put its guarded addition in
   §2.1. Close.
 - Recommendation: drop D-067's §3.4; leave the rest.
-- **Status.** open.
+- **Status.** ruled: drop D-067's §3.4; leave the rest; D-180 closed.
 
 ### After landing: Positions owed
 
@@ -394,7 +394,7 @@ Proposed entry:
 > **Rejected.** None beyond the source entries' lists.
 
 - Recommendation: add.
-- **Status.** open.
+- **Status.** ruled: add D-361 in track 2.
 
 **B5. D-362, the taxonomy rulings of §3.1, §3.2 and §3.4.**
 
@@ -455,7 +455,7 @@ Proposed entry:
   citing the spec for it. So this bullet is not R18's circle. The survey
   (part E) found the same two sources.
 - Recommendation: add.
-- **Status.** open.
+- **Status.** ruled: add D-362 in track 2.
 
 **B6. D-363, the port rulings of §4.1 to §4.4.**
 
@@ -513,7 +513,7 @@ Proposed entry:
   Rejected item on the loose hot field (base log 11649–11651) is not
   restated: it belongs to the owner's open "fan-out is free" item (C16).
 - Recommendation: add.
-- **Status.** open.
+- **Status.** ruled: add D-363 in track 2.
 
 **B7. Not restated: reasons and circles.**
 - D-001's Rejected reasons, "*SDEs:* shaping filters suffice" (base log 369)
@@ -527,7 +527,7 @@ Proposed entry:
 - D-141's "an assembly has no dynamics of its own, [§3.3]" (Rejected
   4797–4799): it cites §3.3 for the claim, C12.
 - Recommendation: no entry for these.
-- **Status.** open.
+- **Status.** ruled: no entry.
 
 ### After landing: stale annotations and entry text
 
@@ -550,7 +550,7 @@ Proposed entry:
 - Recommendation: apply (rule 1: annotate, never rewrite). Retargeting the
   two citations under rule 2's citation exception is not recommended: this
   is a miscitation, not a renumbering.
-- **Status.** open.
+- **Status.** ruled: annotate D-141 in track 2.
 
 **B9. D-276's annotation on `s` fields** (row 197; base log 11601–11605).
 The 2026-09-30 annotation reads "a discrete `s` field is any isbits value
@@ -561,13 +561,13 @@ was written, and F7 now puts "isbits or a `Symbol`" in §3.2.
 - Recommendation: apply, in the commit that lands A4. An annotation is a
   later note on what stands, not the historical record, so correcting it
   rewrites no history (chapter 5's B13).
-- **Status.** open.
+- **Status.** ruled: apply in the commit that lands A4.
 
 **B10. D-123's Rationale on the "kind" stragglers** (base log 3827). It
 records the component-sense "kind" residue in §3 as closed, which was false
 while §4.3 said "kind-blind". F9's "class-blind" makes it true.
 - Recommendation: close, no edit.
-- **Status.** open.
+- **Status.** ruled: closed.
 
 **B11. "the silent drift that [§5.3] exists to kill"** (§4.4, old 636–637;
 D-139's Position, base log 4582–4583; unit G's correction 1, which proposes
@@ -578,7 +578,7 @@ a law twice invites drift, an edited law in one place and a stale copy in
 the other" in §5.3, which the base holds (945–948). Unit G has already
 dropped "class" from the spec sentence.
 - Recommendation: close, no edit, in the spec and the log (lesson 18).
-- **Status.** open.
+- **Status.** ruled: closed.
 
 ### After landing: entries the chapter cites for claims their Position does not carry
 
@@ -609,7 +609,7 @@ Two citations stay weak by design: D-231 at §2.2's RNG sentence carries
 §3.1 carries the handler's returns but not "own" (verifier C accepted it).
 - Recommendation: apply after B4 to B6 land, with `check_bold.jl` rerun,
   since three bolds (time events, `m`, write side) gain a Position citation.
-- **Status.** open.
+- **Status.** ruled: apply in track 2 after B4 to B6, with check_bold.jl rerun.
 
 ## C. For the owner
 
@@ -639,7 +639,7 @@ own, and §8.5 counts "any stage" among the leaf declarations (base
 - Recommendation: rule it a wording correction under D-006 (lesson 19,
   every instance at once), needing no new entry, since §8.5's class rule
   already excludes stages from assemblies.
-- **Status.** open.
+- **Status.** to the owner (recommended: a wording correction under D-006 at all four places).
 
 **C2. "The signal requirement is immutability plus frozen references"**
 (R18; chapter pass 21; survey part E item 7; §4.1, old 461–462). No entry
@@ -656,7 +656,7 @@ the run", which the rewrite cites to D-231.
   it references is frozen for the duration of the run, so isbits is the
   common case and not the rule. Cite it at §4.1's two sentences and beside
   D-231 wherever §7.3 states the latitude. C3 depends on it.
-- **Status.** open.
+- **Status.** to the owner (recommended: one entry).
 
 **C3. Escalation E1: mutable caches "in the consumer's state"** (R8;
 survey F11 and q8; `escalations.md` E1; unit G open question 2). §4.4's
@@ -676,7 +676,7 @@ C2's requirement alone, as the author's obligation.
   say that the rule is the author's, unchecked inside a field handle, and
   point it at §4.1 (and C2's entry once ratified), not at §4.3's
   `IllegalPortType`.
-- **Status.** open.
+- **Status.** to the owner (escalation E1).
 
 **C4. The rule of meaning's "do not overlap"** (R7; survey row 59 and F6;
 unit C open question 1; §3.1, old 324–326). "The two mechanisms carry two
@@ -693,7 +693,7 @@ where both mechanisms take part.
   continuous reset uses both, one per meaning (D-141). Then reword "and do
   not overlap" to say so and cite the entry. If the owner prefers no entry,
   drop "and do not overlap", which R7's clause has made misleading.
-- **Status.** open.
+- **Status.** to the owner (recommended: an entry for the meanings reading, else drop "and do not overlap").
 
 **C5. "Mode variables … change *only* through event handlers"** (survey
 row 51; unit C open question 2; §3.1, old 306–307). No entry rules "only".
@@ -705,7 +705,7 @@ sets `m`, before a run.
 - Recommendation: ratify "during a run, `m` changes only through event
   handlers, at boundaries; a condition sets it before the run (§14.1)", and
   cite it at §3.1 and §10.4. The scope words come from §14.1 and §10.4.
-- **Status.** open.
+- **Status.** to the owner (recommended: an entry scoping "only" to a run).
 
 **C6. Field-addressed staging, "a recorded guarded addition"** (survey row
 142; unit F correction 2; §4.3, old 599–600; glossary base 13894 uses it as
@@ -719,7 +719,7 @@ connector. `docs/design/briefs/brief_increment_57_leaf_address.md` 40 and
   with that shape, beside D-036's connector; then cite it in §4.3 and keep
   the glossary example. If the owner declines, §4.3 drops "recorded" and
   the glossary (A12's line) drops the example.
-- **Status.** open.
+- **Status.** to the owner (recommended: an entry recording field-addressed staging).
 
 **C7. The composed granularity principle** (survey row 141; unit F
 correction 3; §4.3, old 597–599). "The guideline and the rule compose into
@@ -731,7 +731,7 @@ rule.
   and the write-side entry (D-363, or C8's) once ratified. The owner may
   note that the read-side guideline also weighs the consumers ("consumed
   together"), which "producers on the read side" leaves out.
-- **Status.** open.
+- **Status.** to the owner (recommended: a summary needing no entry).
 
 **C8. The write-side rule's cadence half** (unit F, "Rationale-only
 rulings"; verifier F). The bold reads "data written by different external
@@ -742,7 +742,7 @@ writers half. The cadence half is implied at most, through liveness.
 - Recommendation: ratify the rule with both halves, and cite it beside
   D-045 and D-363 at the bold. Otherwise the bold's citation covers only its
   first half.
-- **Status.** open.
+- **Status.** to the owner (recommended: an entry with both halves).
 
 **C9. Deterministic replay as "a framework guarantee"** (survey row 44;
 verifier B on D-231 at §2.2; §2.2, old 282–285). No Position says "framework
@@ -751,7 +751,7 @@ D-101's Position (3063–3067) rules replay as the ordinary loop with two
 substitutions, "exact: the frame sequence is itself deterministic".
 - Recommendation: rule that D-101 carries the guarantee and D-231 its RNG
   half, and cite D-101 beside D-231 at §2.2. No new entry.
-- **Status.** open.
+- **Status.** ruled R23: cite D-101 beside D-231 at §2.2's replay sentence; D-101's Position rules replay exact. No entry.
 
 **C10. The five design criteria, the weighing of a guarded addition, and
 "recorded with its shape"** (survey row 10; row 87; §1, old 166–168;
@@ -763,7 +763,7 @@ D-036's connector).
 - Recommendation: no entry. The criteria are the document's charter, and
   "recorded with its shape" describes the log's practice
   (`decisions_style.md` rule 9: process earns no entry). Both stay plain.
-- **Status.** open.
+- **Status.** to the owner (recommended: no entry).
 
 **C11. The loggers' skip-or-summarize rule** (survey row 147; unit G open
 question 3; §4.4, old 624). No entry (grep of "summar" and "skip or" over
@@ -773,7 +773,7 @@ already defers "field-handle summarization over retained snapshots".
 - Recommendation: no entry now. At step 9, add to that `pending.md` bullet
   that §4.4 and §7.5 state skip-or-summarize as a rule with no entry, to be
   ruled when the deferral lifts. This joins the existing item.
-- **Status.** open.
+- **Status.** to the owner (recommended: no entry; extend pending.md's persistence bullet at step 9).
 
 **C12. "It has no dynamics of its own"** (survey row 69; §3.3, old 357;
 R6 left it plain). D-141's Rejected item (base log 4797–4799) says "an
@@ -783,13 +783,13 @@ the substance plain: "Assemblies have no state of their own" (base 3105) and
 the `ClassMixed` rule (3103).
 - Recommendation: no entry. It restates §3.3's "pure composition" and
   §8.5's class rule. Leave it plain and uncited.
-- **Status.** open.
+- **Status.** to the owner (recommended: no entry).
 
 **C13. "well-defined semantics"** (survey row 35; §2.1, old 255). Framing:
 the next two sentences carry it, the second citing D-179 ("semantics-preserving
 by construction", base log 6541).
 - Recommendation: no entry.
-- **Status.** open.
+- **Status.** to the owner (recommended: no entry).
 
 **C14. The stop request's gloss drops the override** (unit F correction 1;
 verifier F agrees; §4.3, old 543–544). "(a port that ends the run when it
@@ -801,7 +801,7 @@ ignores it", and §13.5 bolds the same (base 9839–9840).
 - Recommendation: apply. The orchestrator can rule it: the words are
   D-316's Position, and a gloss claims nothing beyond its source (lesson
   14). It is a ruled edit to unit F.
-- **Status.** open.
+- **Status.** ruled R22: apply in unit F; the words are D-316's Position.
 
 **C15. Wording questions that change no claim: closed.**
 - Unit D: "the sampling interface" for D-056's "sampling seam" (R5
@@ -814,7 +814,7 @@ ignores it", and §13.5 bolds the same (base 9839–9840).
 - Unit C: "stall hysteresis inside the aero component" has no source to
   introduce it; it stays as the old text had it.
 - Recommendation: close.
-- **Status.** open.
+- **Status.** ruled: closed.
 
 **C16. "Fan-out is free"** (R13; §4.3, old 570). Chapter 6 left "local
 fan-out is free" with no live entry, and `pending.md` already lists it
@@ -824,4 +824,4 @@ its bundle, "kept as an optimization for a known hot field".
 - Recommendation: no new item. At step 9, extend `pending.md`'s chapter 6
   bullet to name §4.3's sentence too. When the owner rules fan-out, D-276's
   Rejected item can carry the "legitimate" clause.
-- **Status.** open.
+- **Status.** to the owner, joining pending.md's existing fan-out item at step 9.

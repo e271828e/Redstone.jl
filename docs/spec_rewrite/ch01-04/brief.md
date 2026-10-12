@@ -364,3 +364,13 @@ difficulty and names its hazards.
 - **R21. R11's restored clause stays** (chapter pass 31). ", the query a
   terrain field handle's `ray_intersect` serves" restates the old
   "dovetails" claim (verifier G, C-038), so it claims nothing new.
+
+## Rulings after step 6
+
+- **R22. The stop-request gloss gains its override** (batch C14; unit F).
+  "(a port that ends the run when it reads `STOP_REQUESTED`)" becomes "(a
+  port that ends the run when it reads `STOP_REQUESTED`, unless the advance
+  ignores it)", D-316's Position's words.
+- **R23. §2.2's replay guarantee cites D-101** (batch C9; unit B). D-101's
+  Position rules replay exact; add `[D-101][d-101]` beside D-231 at the
+  deterministic-replay sentence.
