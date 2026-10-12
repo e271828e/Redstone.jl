@@ -82,7 +82,7 @@ each of those features under the decoder interfaces.
   stages per step ([D-015][d-015]).
 - `f_step!`'s transitions become boundary-detected
   events with mixed predicate/threshold guards
-  ([§2.1][s2-1]).
+  ([§2.2][s2-2], [§10.4][s10-4]).
 - `fuel_available` becomes an ordinary port. It is state-derived at the fuel
   system, hence a stage-1 port, so it closes no loop.
 - Forced publications: none. Everything `x_deriv` reads was already
@@ -184,7 +184,7 @@ cross-component reset (`!wow` re-initializing the friction regulator every
 step) becomes an edge-triggered event owned by the regulator. That is a
 semantic tightening, recorded in the migration mapping (`migration_outline.md`). There the
 respelling is not a stylistic one. The continuous tier admits no
-input spelling at all, because only handlers write `x` ([§3.1][s3-1]). The
+input spelling at all, because only handlers write `x` ([§3.4][s3-4]). The
 event is therefore necessity rather than taste, and the reimplemented
 `PIVector`'s optional reset face (`migration_outline.md`) is sugar over exactly
 that event. [Appendix A][sA] carries the continuous-reset contract too.
@@ -422,6 +422,7 @@ ladder. The items below take the three claims in turn.
 [d-067]: ../decisions.md#d-067--boundary-zero-runs-the-macro-sequence-with-an-empty-integrate
 [d-139]: ../decisions.md#d-139--give-environment-field-handles-a-value-level-constructor-to-prevent-drift
 [s10-2]: ../spec.md#102-the-stepper-seam
+[s10-4]: ../spec.md#104-localization-mechanics
 [s10-5]: ../spec.md#105-multi-rate-tick-scheduling
 [s11]: ../spec.md#11-runtime-periphery-the-data-plane
 [s11-2]: ../spec.md#112-outbound-snapshot-publication
@@ -440,8 +441,7 @@ ladder. The items below take the three claims in turn.
 [s14-7]: ../spec.md#147-the-trim-problem-namedtuple-decisions-declared-reads-named-residuals
 [s14-8]: ../spec.md#148-the-trim-service-solver-seam-scratch-stores-commit-and-report
 [s14-9]: ../spec.md#149-mounting-problems-as-relocatable-values
-[s2-1]: ../spec.md#21-events-two-detection-policies
-[s3-1]: ../spec.md#31-continuous-component-the-hybrid-primitive
+[s2-2]: ../spec.md#22-exclusions-deliberate
 [s3-4]: ../spec.md#34-why-two-leaf-classes-not-one-hybrid-primitive
 [s4-4]: ../spec.md#44-function-valued-signals-environment-access
 [s5]: ../spec.md#5-evaluation-order-and-feedthrough

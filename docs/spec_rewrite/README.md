@@ -63,8 +63,6 @@ chapter's rewrite settles its own:
   "carries over from §6.1". §6.1 enforces the one-level rule in `resolve`
   (D-207). Chapter 6's escalation E1 asks the owner to rule.
 - **Chapter 14.** §14.10 cites superseded D-167 three times.
-- **Chapter 14.** §14.4 says a discrete `s` field "is any isbits value"
-  (§3.2). §7.3 admits isbits or `Symbol` fields (D-231).
 - **Chapter 14.** §14.10 bolds seedability and states the tap rejection,
   both of which §8.2 states (D-295, D-296).
 - **Appendix A.** The old-style lead-ins "**Same-tick reset consumption**"

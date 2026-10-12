@@ -1088,7 +1088,7 @@ section 3 of `companions/flight_case_studies.md` examines. The bumpless-engage
 answer of its *Mode engage* frame presupposes exactly this spelling.
 
 **A [continuous component](#g-continuous-component)'s reset is an event** ([D-141][d-141]). The continuous tier admits
-no input spelling at all, because only handlers write `x` ([§3.1][s3-1]). A commanded
+no input spelling at all, because only handlers write `x` ([§3.4][s3-4]). A commanded
 reset of continuous state, whose condition arrives as an ordinary `Bool` input,
 is therefore an edge-triggered event owned by the reset component. A landing
 gear's friction regulator, re-initialized at touchdown by weight-on-wheels, is
@@ -2931,7 +2931,7 @@ by both tiers, so they announce nothing and cast no vote ([D-220][d-220]).
 
 **The remaining tier-implying declarations must agree** ([D-112][d-112], [D-249][d-249]). `m_init`,
 `state_events` and `x_projection` are continuous-only, because the event system is
-continuous-side only ([§5.2][s5-2], [§3.2][s3-2], [§14.1][s14-1]) and projection's one manifold is the
+continuous-side only ([§5.2][s5-2], [§14.1][s14-1]) and projection's one manifold is the
 continuous state's ([§2.2][s2-2]). A `Pinned` entry in a contract is continuous-only,
 because the discrete tier pins wholesale and the marker there says nothing. No
 arity carries a tier (above).
@@ -5489,8 +5489,8 @@ one interior sweep.
 
 #### The trigger
 
-**A localized event triggers when its predicate was not-[holding](#g-edge-semantics) at tₙ's
-[quiescence](#g-quiescence) and is holding at tₙ₊₁** ([D-082][d-082]). Quiescence is the fixed
+A localized event triggers when its predicate was not-[holding](#g-edge-semantics) at tₙ's
+[quiescence](#g-quiescence) and is holding at tₙ₊₁ ([D-082][d-082]). Quiescence is the fixed
 point where a round of handlers fires nothing. The tₙ sample is the event's
 [prior](#g-prior), the predicate sample stored at the previous boundary
 ([§10.6][s10-6]).
@@ -6722,7 +6722,7 @@ it ends in an out-of-memory nobody was warned about.
 **65536** (2¹⁶), with `Inf` the explicit opt-out.
 
 **The bound is a count, not a memory budget.** Snapshots are immutable object
-graphs with internal sharing ([§4.1][s4-1]), and a
+graphs ([§4.1][s4-1]) with internal sharing, and a
 [field handle](#g-field-handle) (an immutable query object consumers evaluate
 at their own arguments, [§4.4][s4-4]) rides as a reference to
 build-time-frozen data ([§7.5][s7-5]). Byte accounting over them is therefore
@@ -10661,7 +10661,7 @@ Each step is checked at resolution against the type resolved so far. A
 yields named scalars. A step never enters an opaque leaf (a field handle or
 a `Symbol`), which is read whole. A continuous state field is flat
 ([§7.1][s7-1]), so `get_deriv`, and `get_state` on the continuous tier, take
-at most an index step. A discrete `s` field is any isbits value ([§3.2][s3-2]), and
+at most an index step. A discrete `s` field is isbits or a `Symbol` ([§3.2][s3-2]), and
 `get_state` on it takes the full address. The address is checked once and baked,
 and the read runs as field loads and indexing unrolled at compile time
 ([D-276][d-276]).
@@ -11782,8 +11782,8 @@ For component authors:
   line runs as follows. Stage 1 publishes what you know from state alone.
   Stage 2 adds what needs inputs. Your dynamics read your own published
   results instead of recomputing them.
-- **One home per datum** ([§5.2][s5-2], [§4.3][s4-3]). The signal table holds
-  *produced* signals only, never transported ones. The buffer holds `x`, the
+- **One home per datum** ([§5.2][s5-2]). The signal table holds
+  *produced* signals only, never transported ones ([§4.3][s4-3]). The buffer holds `x`, the
   `s` and `m` stores hold `s` and `m`, and the table holds signals. No store
   mirrors another.
 - **The value-level constructor** ([§4.4][s4-4]). A field-emitting component
@@ -12844,12 +12844,12 @@ well-known declarations its type defines. `local_wires` means assembly,
 any leaf declaration means primitive, and neither is `ClassUnreadable`
 ([§8.5][s8-5]). Not to be confused with *tier* (continuous vs. discrete,
 [§D.4][sD-4]), nor with a diagnostic *kind* ([§D.9][sD-9]). "Class" in
-the continuous-vs-discrete sense ("class split", "two leaf classes",
+the continuous-vs-discrete sense ("two-class taxonomy", "two leaf classes",
 [§3.4][s3-4]) is ordinary English, a distinct usage, never linked here.
 
 <a id="g-component"></a>**component** — the unit of modeling: a leaf (continuous or periodic discrete
 primitive) or an assembly of components. "Primitive" and "leaf" are used
-interchangeably for the non-assembly classes ([§3][s3]).
+interchangeably for the two leaf categories ([§3][s3]).
 
 <a id="g-container-children"></a>**container children** — a `Tuple`/`NamedTuple` field whose elements are all
 components. It contributes them as children path-named `"field/1"` or
@@ -13049,7 +13049,7 @@ authoritative one. Scratch names the role, not the type.
 <a id="g-signal-table"></a>**signal table** — the framework-owned collection of cells holding every
 produced signal of the flattened model. Consumers gather views from it. Its
 consistency is a boundary property, and within a step it is transiently
-integrator scratch ([§4.1][s4-1], [§10.3][s10-3]).
+integrator scratch ([§10.3][s10-3]).
 
 <a id="g-staging-cell"></a>**staging cell** — the per-device atomic holding place where a device's
 pending write batch waits between drains. It is mutated frame by frame,
@@ -13100,8 +13100,7 @@ entries, with zero runtime graph logic ([§5.1][s5-1], [§9.7][s9-7]).
 <a id="g-flow"></a>**flow / RHS** — `x_deriv`, the continuous derivative function, `f` in
 the spec's formulas ([D-220][d-220]). Evaluating the RHS means running the
 whole sweep, since `x_deriv` reads the fresh table. There is no
-incremental `x_deriv`-only re-evaluation ([§3.1][s3-1],
-[§5.3][s5-3]).
+incremental `x_deriv`-only re-evaluation ([§5.3][s5-3]).
 
 <a id="g-frame"></a>**frame** — one iteration of the loop (drain, integrate, boundary sequence,
 publication). It is the unit `step!` counts and the trace's ordinal key
@@ -13880,9 +13879,9 @@ a neighboring one is forbidden: derivation from other declarations
 
 <a id="g-row"></a>**decision entry / `D-nnn`** — a numbered entry of `decisions.md`, cited
 throughout as a linked `D-nnn` reference: one settled decision with the
-alternatives weighed against it. Entry numbers are stable and never reused.
+alternatives weighed against it. Entry numbers are stable and never reused ([§1][s1]).
 Each entry states its *current* position, and a superseded one is marked
-`superseded → D-nnn` in its Status line rather than rewritten ([§1][s1]).
+`superseded → D-nnn` in its Status line rather than rewritten.
 
 <a id="g-the-freeze"></a>**the freeze** — the roster freeze. `attach!`/`detach!` are stopped-sim
 operations, so the roster, its claims and the run's partition of the root
@@ -13891,7 +13890,7 @@ face set into write surfaces are static, inspectable facts of each run
 
 <a id="g-guarded-addition"></a>**guarded addition** — a capability the design admits but does not build,
 weighed against the design criteria of [§1][s1] and recorded with its
-shape so adoption stays additive ([§1][s1]; e.g. field-addressed staging,
+shape so adoption stays additive (e.g. field-addressed staging,
 [§4.3][s4-3]; mid-run reader attach, [§11.3][s11-3]).
 
 <a id="g-normative"></a>**normative / index, not a second home** — the spec is the normative

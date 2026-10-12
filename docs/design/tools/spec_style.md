@@ -61,7 +61,7 @@ in pedagogy is not.
 - **The wrap target is 80 columns of *rendered* text**, link markup collapsed.
   A source line carrying citations runs longer than 80 and is not a defect:
   `[contract](#g-contract)` is 24 source characters for 8 rendered ones.
-- One standing glossary-link trap: §3.4's "class split" and "two leaf
+- One standing glossary-link trap: §3.4's "two-class taxonomy" and "two leaf
   classes" name the continuous-vs-discrete taxonomy, not the
   primitive-vs-assembly status of `#g-class` — they take no glossary link.
   `check_glossary.jl`'s WHITELIST is the record of anchors adjudicated as

@@ -144,7 +144,7 @@ localization arithmetic. An event whose cause is only defined to frame resolutio
 a firing time that is only defined to frame resolution. **There is no finer truth for
 localization to recover — t\* doesn't exist**, not merely "isn't worth computing."
 
-This is the discrete-driven exactness doctrine ([§2.1][s2-1], [D-179][d-179]) resurfacing: for edges
+This is the discrete-driven exactness doctrine ([§10.4][s10-4], [D-179][d-179]) resurfacing: for edges
 caused by `u`/`m` steps, boundary detection is not a cheap approximation, it *is* the
 semantics. Localization's jurisdiction is trajectory facts; the θ = 0 trial
 evaluation is the jurisdictional check at its door. That is also why the degenerate
