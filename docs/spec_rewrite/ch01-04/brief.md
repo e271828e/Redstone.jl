@@ -316,3 +316,14 @@ difficulty and names its hazards.
   `SimpleAtmosphere` and `AirData` (FlightPhysics').
 - The mutable-cache bullet: old 622 stays as written (R8). The rest of the
   bullet may point at §4.3's refusal of mutable port types.
+
+## Rulings after step 4
+
+- **R14. F5's wording, corrected** (unit A; verifier A). R5's "The phase
+  bodies the stepping loop runs allocate nothing" overclaimed: §7.5 old
+  2078–2083 makes only the continuous hot path exactly zero, CI-enforced,
+  and gives ticks and handlers zero by idiom with a documented tolerance
+  (D-116). The sentence becomes "The continuous hot path allocates nothing,
+  and CI asserts it ([§7.5], [§9.7])". The criterion name keeps "type
+  stability": §7.5's allocation policy is the type-instability canary
+  (D-305 bullet 2), so the bullet's pointer covers it; no clause is added.
