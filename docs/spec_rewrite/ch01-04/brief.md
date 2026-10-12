@@ -374,3 +374,11 @@ difficulty and names its hazards.
 - **R23. §2.2's replay guarantee cites D-101** (batch C9; unit B). D-101's
   Position rules replay exact; add `[D-101][d-101]` beside D-231 at the
   deterministic-replay sentence.
+- **R24. Final verifier's three fixes** (final_verify.md P1 to P3). P1:
+  R23's D-101 moves to the replay sentence, "(re-running the ordinary loop
+  on a recorded input trace, [D-101][d-101])", and the RNG sentence keeps
+  D-231 alone; R23's two placements conflicted, and D-101 says nothing of
+  seeds. P2: §4.1's first *tier* regains a gloss inside R19's parenthetical,
+  "on either [tier](#g-tier), continuous or discrete", the wording §4.3
+  uses. P3: D-036's citation moves before the gloss, so it does not cover
+  "Its shape is obvious".

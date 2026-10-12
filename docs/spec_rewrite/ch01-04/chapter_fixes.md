@@ -1575,3 +1575,261 @@ New:
   [D-101][d-101]).
 ~~~~
 
+### E72. R24 (P1), unit B
+
+Reason: R24 P1: D-101's Position rules replay exact, so its citation goes inside the replay gloss, not on the seed sentence.
+
+Inventory: B-053 gains newcites D-101, tag R, ruling R24; the added gloss gains ', D-101'.
+
+Old:
+
+~~~~
+(re-running the ordinary loop on a
+  recorded input trace).
+~~~~
+
+New:
+
+~~~~
+(re-running the ordinary loop on a
+  recorded input trace, [D-101][d-101]).
+~~~~
+
+### E73. R24 (P1), unit B
+
+Reason: R24 P1: the RNG sentence keeps D-231 alone; D-101 says nothing of seeds.
+
+Inventory: B-054 back to newcites D-231, tag R, ruling R24.
+
+Old:
+
+~~~~
+trajectory ([D-231][d-231],
+  [D-101][d-101]).
+~~~~
+
+New:
+
+~~~~
+trajectory ([D-231][d-231]).
+~~~~
+
+### E74. R24 (P1) rewrap, unit B
+
+Reason: rewrap to 80 rendered columns
+
+Old:
+
+~~~~
+- No stochastic differential equations (SDEs) or stochastic integrators. Noise
+  processes, such as sensor noise and Dryden/von Kármán turbulence, are modeled
+  as shaping filters ([D-001][d-001]), that is, as ordinary discrete processes driven by
+  a random number generator (RNG). That modeling is faithful to how the noise
+  processes are specified, and it is cheap. One consequence is elevated to a
+  framework guarantee, deterministic [replay](#g-replay) (re-running the ordinary loop on a
+  recorded input trace, [D-101][d-101]). RNG state lives in [component](#g-component) discrete state `s`, never in
+  ambient globals, so the same seed gives a bit-identical trajectory ([D-231][d-231]).
+~~~~
+
+New:
+
+~~~~
+- No stochastic differential equations (SDEs) or stochastic integrators. Noise
+  processes, such as sensor noise and Dryden/von Kármán turbulence, are modeled
+  as shaping filters ([D-001][d-001]), that is, as ordinary discrete processes driven by
+  a random number generator (RNG). That modeling is faithful to how the noise
+  processes are specified, and it is cheap. One consequence is elevated to a
+  framework guarantee, deterministic [replay](#g-replay) (re-running the ordinary loop on a
+  recorded input trace, [D-101][d-101]). RNG state lives in [component](#g-component) discrete state `s`,
+  never in ambient globals, so the same seed gives a bit-identical trajectory
+  ([D-231][d-231]).
+~~~~
+
+### E75. R24 (P2), unit E
+
+Reason: R24 P2: §4.1's first tier regains a gloss inside R19's parenthetical, in §4.3's wording.
+
+Inventory: C-006 new gains ', continuous or discrete'; tag R, ruling R24.
+
+Old:
+
+~~~~
+provides, on either [tier](#g-tier)) returns
+~~~~
+
+New:
+
+~~~~
+provides, on either [tier](#g-tier), continuous or discrete) returns
+~~~~
+
+### E76. R24 (P2) rewrap, unit E
+
+Reason: rewrap to 80 rendered columns
+
+Old:
+
+~~~~
+**[Ports](#g-port) exchange immutable values** ([D-004][d-004]). The values are typically isbits structs
+(floats, `SVector`s, enums, nested immutables). The framework owns a [signal table](#g-signal-table),
+with one concretely typed [cell](#g-cell) per output port in the flattened model. A
+producer's output [stage function](#g-stage-function) (`y_state`/`y_direct`, the two output stages every
+[component](#g-component) provides, on either [tier](#g-tier), continuous or discrete) returns a NamedTuple of fresh values. The
+framework writes each of those values into its cell, and consumers read cells.
+~~~~
+
+New:
+
+~~~~
+**[Ports](#g-port) exchange immutable values** ([D-004][d-004]). The values are typically isbits structs
+(floats, `SVector`s, enums, nested immutables). The framework owns a [signal table](#g-signal-table),
+with one concretely typed [cell](#g-cell) per output port in the flattened model. A
+producer's output [stage function](#g-stage-function) (`y_state`/`y_direct`, the two output stages every
+[component](#g-component) provides, on either [tier](#g-tier), continuous or discrete) returns a NamedTuple
+of fresh values. The framework writes each of those values into its cell, and
+consumers read cells.
+~~~~
+
+### E77. R24 (P3), unit F
+
+Reason: R24 P3: D-036's citation moves before the gloss, so it does not cover the old text's uncited 'Its shape is obvious'.
+
+Inventory: C-030 new 'A field-projection connector is a guarded addition (D-036), a capability the design admits but does not build.', newcites D-036, tag R, ruling R24; C-031 new 'Its shape is obvious.', newcites dropped, tag R, ruling R24.
+
+Old:
+
+~~~~
+A field-projection connector is a [guarded addition](#g-guarded-addition) (a capability the design
+admits but does not build), and its shape is obvious ([D-036][d-036]).
+~~~~
+
+New:
+
+~~~~
+A field-projection connector is a [guarded addition](#g-guarded-addition) ([D-036][d-036]), a capability the design
+admits but does not build. Its shape is obvious.
+~~~~
+
+### E78. R24 (P3) rewrap, unit F
+
+Reason: rewrap to 80 rendered columns
+
+Old:
+
+~~~~
+A field-projection connector is a [guarded addition](#g-guarded-addition) ([D-036][d-036]), a capability the design
+admits but does not build. Its shape is obvious.
+~~~~
+
+New:
+
+~~~~
+A field-projection connector is a [guarded addition](#g-guarded-addition) ([D-036][d-036]), a capability the
+design admits but does not build. Its shape is obvious.
+~~~~
+
+### E79. R24 (stale records), unit E rulings.md
+
+Reason: The R6 bullet still listed row 99 among the bolds; row 99 is plain since R18. Rewrapped.
+
+Old:
+
+~~~~
+- **R6.** Bolds: D-004 (row 91), D-121 (row 95), row 99 (D-243 alone; D-231
+  moved to the next plain sentence at the verifier's request), D-172 (row 114, on the faces sentence), D-036's second ruling
+  (row 118).
+~~~~
+
+New:
+
+~~~~
+- **R6.** Bolds: D-004 (row 91), D-121 (row 95), row 99 (D-243 alone; D-231
+  moved to the next plain sentence at the verifier's request; row 99 is plain
+  since R18), D-172 (row 114, on the faces sentence), D-036's second ruling
+  (row 118).
+~~~~
+
+### E80. R24 (stale records), unit E rulings.md
+
+Reason: Rewrap the line E52 left at 95 columns.
+
+Old:
+
+~~~~
+- Row 99, "the signal requirement is immutability plus frozen references",
+  plain since R18, cited to D-243. D-243 Rationale, log 9210 ("[§4.1] requires of a port value
+  immutability plus frozen references"). D-231's Position presupposes it,
+  log 8691–8692, and is cited at the next sentence instead. The log owes a Position stating the requirement.
+~~~~
+
+New:
+
+~~~~
+- Row 99, "the signal requirement is immutability plus frozen references",
+  plain since R18, cited to D-243. D-243 Rationale, log 9210 ("[§4.1]
+  requires of a port value immutability plus frozen references"). D-231's
+  Position presupposes it, log 8691–8692, and is cited at the next sentence
+  instead. The log owes a Position stating the requirement.
+~~~~
+
+### E81. R24 (stale records), unit E rulings.md
+
+Reason: Row 99 is plain since R18.
+
+Old:
+
+~~~~
+- D-231: cited plain at row 100, not at row 99's bold.
+~~~~
+
+New:
+
+~~~~
+- D-231: cited plain at row 100, not at row 99 (plain since R18).
+~~~~
+
+### E82. R24 (stale records), unit F rulings.md
+
+Reason: Unit E's row 99 is plain since R18, not bold.
+
+Old:
+
+~~~~
+- **D-243**: bold nowhere else in the base spec. Unit E is to bold row 99
+  (immutability plus frozen references), which rests on D-243's Rationale,
+  a different ruling from the Position this unit bolds.
+~~~~
+
+New:
+
+~~~~
+- **D-243**: bold nowhere else in the base spec. Unit E's row 99
+  (immutability plus frozen references) rests on D-243's Rationale, a
+  different ruling from the Position this unit bolds, and is plain since R18.
+~~~~
+
+### E83. R24 (stale records) rewrap, unit E rulings.md
+
+Reason: Rewrap the bullet touched by E81.
+
+Old:
+
+~~~~
+- D-231: cited plain at row 100, not at row 99 (plain since R18). Unit C bolds "`m` is continuous-only" citing
+  D-231; §7.3 bolds D-231 at old 1880, 1892, 1975 and 3975. Old 1892, "**The
+  frozen-reference latitude stays with signals** ([§4.1], [D-231])", is the
+  store-side face of row 99's requirement. The owner may judge whether row 99
+  and old 1892 state one ruling twice.
+~~~~
+
+New:
+
+~~~~
+- D-231: cited plain at row 100, not at row 99 (plain since R18). Unit C
+  bolds "`m` is continuous-only" citing D-231; §7.3 bolds D-231 at old 1880,
+  1892, 1975 and 3975. Old 1892, "**The frozen-reference latitude stays with
+  signals** ([§4.1], [D-231])", is the store-side face of row 99's
+  requirement. The owner may judge whether row 99 and old 1892 state one
+  ruling twice.
+~~~~
+

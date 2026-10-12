@@ -36,8 +36,8 @@ destructures the bundle in its own stage or through an unbundling component.
 An unbundling component is a `y_direct` leaf that takes the bundle and
 publishes its fields. It is a candidate for the standard library of [§13.7][s13-7].
 
-A field-projection connector is a [guarded addition](#g-guarded-addition) (a capability the design
-admits but does not build), and its shape is obvious ([D-036][d-036]).
+A field-projection connector is a [guarded addition](#g-guarded-addition) ([D-036][d-036]), a capability the
+design admits but does not build. Its shape is obvious.
 
 Under the granularity guideline, **authors should bundle what shares a stage
 *and* is consumed together** ([D-036][d-036]). The first criterion is trivially

@@ -47,11 +47,11 @@
   {
    "id": "C-006",
    "old": "(`y_state`/`y_direct`, the two output stages every component provides, on either tier)",
-   "new": "(`y_state`/`y_direct`, the two output stages every component provides, on either tier)",
+   "new": "(`y_state`/`y_direct`, the two output stages every component provides, on either tier, continuous or discrete)",
    "where": "new",
    "cites": [],
    "tag": "R",
-   "ruling": "R19"
+   "ruling": "R24"
   },
   {
    "id": "C-007",

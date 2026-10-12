@@ -524,20 +524,23 @@
    "new": "One consequence is elevated to a framework guarantee, deterministic replay",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "R",
+   "ruling": "R24",
+   "newcites": [
+    "D-101"
+   ]
   },
   {
    "id": "B-054",
    "old": "RNG state lives in component discrete state (`s`), never in ambient globals, so the same seed gives a bit-identical trajectory.",
-   "new": "RNG state lives in component discrete state `s`, never in ambient globals, so the same seed gives a bit-identical trajectory (D-231, D-101).",
+   "new": "RNG state lives in component discrete state `s`, never in ambient globals, so the same seed gives a bit-identical trajectory (D-231).",
    "where": "new",
    "cites": [],
    "newcites": [
-    "D-231",
-    "D-101"
+    "D-231"
    ],
    "tag": "R",
-   "ruling": "R23"
+   "ruling": "R24"
   },
   {
    "id": "B-055",
@@ -635,7 +638,7 @@
   "Time events and state events differ in how their instants are found.",
   "The formalism deliberately excludes three constructs (D-001).",
   "Events have two detection policies (D-001).",
-  "(re-running the ordinary loop on a recorded input trace).",
+  "(re-running the ordinary loop on a recorded input trace, D-101).",
   "A tier is one side of the hybrid formalism, continuous or discrete."
  ]
 }

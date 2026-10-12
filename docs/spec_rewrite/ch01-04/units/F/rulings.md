@@ -94,9 +94,9 @@ Grep of every bold span in chapters 5 to 14 of the base spec
 - **D-036**: bold nowhere else in the base spec. Unit E is to bold its second
   ruling (aggregate `y`, row 118); this unit bolds the first, third and
   fourth. No overlap if E keeps to row 118.
-- **D-243**: bold nowhere else in the base spec. Unit E is to bold row 99
-  (immutability plus frozen references), which rests on D-243's Rationale,
-  a different ruling from the Position this unit bolds.
+- **D-243**: bold nowhere else in the base spec. Unit E's row 99
+  (immutability plus frozen references) rests on D-243's Rationale, a
+  different ruling from the Position this unit bolds, and is plain since R18.
 - **D-276**, **D-045**: bold nowhere else.
 
 None found bold in two places. Units B and E should be re-checked at landing.

@@ -179,9 +179,9 @@ not which fields a guard reads. A guard over an input is still a state event.
   a random number generator (RNG). That modeling is faithful to how the noise
   processes are specified, and it is cheap. One consequence is elevated to a
   framework guarantee, deterministic [replay](#g-replay) (re-running the ordinary loop on a
-  recorded input trace). RNG state lives in [component](#g-component) discrete state `s`, never in
-  ambient globals, so the same seed gives a bit-identical trajectory ([D-231][d-231],
-  [D-101][d-101]).
+  recorded input trace, [D-101][d-101]). RNG state lives in [component](#g-component) discrete state `s`,
+  never in ambient globals, so the same seed gives a bit-identical trajectory
+  ([D-231][d-231]).
 - No unconditional per-step hook, because its semantics depend on the step
   size ([D-001][d-001]). So there is no equivalent of `f_step!`, FlightCore's
   per-step hook. Every current use of `f_step!` decomposes into one of two
@@ -383,8 +383,9 @@ granularity; and [§4.4][s4-4] function-valued signals for environment access.
 (floats, `SVector`s, enums, nested immutables). The framework owns a [signal table](#g-signal-table),
 with one concretely typed [cell](#g-cell) per output port in the flattened model. A
 producer's output [stage function](#g-stage-function) (`y_state`/`y_direct`, the two output stages every
-[component](#g-component) provides, on either [tier](#g-tier)) returns a NamedTuple of fresh values. The
-framework writes each of those values into its cell, and consumers read cells.
+[component](#g-component) provides, on either [tier](#g-tier), continuous or discrete) returns a NamedTuple
+of fresh values. The framework writes each of those values into its cell, and
+consumers read cells.
 
 These names are binding throughout this document.
 
@@ -527,8 +528,8 @@ destructures the bundle in its own stage or through an unbundling component.
 An unbundling component is a `y_direct` leaf that takes the bundle and
 publishes its fields. It is a candidate for the standard library of [§13.7][s13-7].
 
-A field-projection connector is a [guarded addition](#g-guarded-addition) (a capability the design
-admits but does not build), and its shape is obvious ([D-036][d-036]).
+A field-projection connector is a [guarded addition](#g-guarded-addition) ([D-036][d-036]), a capability the
+design admits but does not build. Its shape is obvious.
 
 Under the granularity guideline, **authors should bundle what shares a stage
 *and* is consumed together** ([D-036][d-036]). The first criterion is trivially

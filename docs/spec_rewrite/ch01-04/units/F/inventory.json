@@ -289,22 +289,24 @@
   {
    "id": "C-030",
    "old": "A field-projection connector is a guarded addition (a capability the design admits but does not build).",
-   "new": "A field-projection connector is a guarded addition (a capability the design admits but does not build),",
+   "new": "A field-projection connector is a guarded addition (D-036), a capability the design admits but does not build.",
    "where": "new",
    "cites": [],
-   "tag": "C",
-   "note": "Rationale-only (D-036 Rejected list)"
+   "tag": "R",
+   "note": "Rationale-only (D-036 Rejected list)",
+   "newcites": [
+    "D-036"
+   ],
+   "ruling": "R24"
   },
   {
    "id": "C-031",
    "old": "Its shape is obvious, and it is not built.",
-   "new": "and its shape is obvious (D-036).",
+   "new": "Its shape is obvious.",
    "where": "new",
    "cites": [],
-   "tag": "F",
-   "newcites": [
-    "D-036"
-   ]
+   "tag": "R",
+   "ruling": "R24"
   },
   {
    "id": "C-032",
