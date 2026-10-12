@@ -1,0 +1,44 @@
+**static [execution order](#g-execution-order)**
+**two output stages**
+**structurally, by function signature**
+**destructures by name**
+**iff the corresponding store or fact exists for that component**
+**and**
+**closed**
+**iff**
+**and**
+**Mathematical symbols and API names are two vocabularies, deliberately.**
+**name**
+**dependence class**
+**`y_state` is the no-feedthrough stage**
+**`y_direct` receives all wired inputs plus the stage-1 hand-down.**
+**`x_deriv` and `s_update` run after the sweep**
+**[Guards](#g-guard) and handlers read the same fresh world.**
+**`x_projection` runs between a state write and its decode.**
+**The boundary sequence.**
+**all guards once**
+**[ sweep → guards → handlers ]**
+**only by sweeps**
+**Scheduled gains are inputs.**
+**this tick**
+**A continuous component's reset is an event.**
+**Departure from the orthodox formalism, stated openly.**
+**Shared expensive computations**
+**computer/integrator split**
+**[port](#g-port)-level acyclic yet admit no evaluation order**
+**artificial**
+**Re-factor the [contract](#g-contract).**
+**Split the component.**
+**one   struct-valued bundle port**
+**build error**
+**diagnostic only, never relied on for correctness**
+**Detection and naming.**
+**strongly connected components**
+**Classification needs no [execution order](#g-execution-order).**
+**real**
+**artificial**
+**Caveats, carried in the diagnostic rather than assumed away.**
+**Global (value-blind) set-tracer.**
+**may-depend semantics**
+**Local (primal-carrying) set-tracer at sampled states.**
+**Boundaries.**
