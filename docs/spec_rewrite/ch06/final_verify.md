@@ -75,3 +75,30 @@ Nothing reads wrong. Two notes, neither a defect in a hunk:
   `Cessna172`. That is harmless, and the text is as ruled.
 - "The block above" (line 272) points 42 lines back, across a `####`
   heading. It is still unambiguous, and the text is as ruled.
+
+## Re-check
+
+Subject: `git diff HEAD~1 HEAD -- docs/spec_rewrite/ch06/units`, the
+orchestrator's O-1 to O-3, as logged at the end of `chapter_fixes.md`.
+
+- Checkers: `check_unit.py ch06 check A`, `B` and `C` each print
+  `checks failed: 0`. The inventory spans match the logged text. A-035 and
+  A's added gloss span carry ", §8.8". C-051 and RP-4's `added` and
+  `added_rulings` spans carry the new clause and the new block sentence.
+- Width and wrap: no line is over 80 rendered columns. Both touched
+  paragraphs are still a greedy fill at 80. Line 70 of A takes the pointer
+  without a rewrap, because "One-level" would not fit after it.
+- **O-1. OK.** §8.8 now covers the seam sentence, which §8.8 states at
+  base 3652–3654. Its scope matches E13's pattern. The routing sentence
+  keeps its own pointer.
+- **O-2. OK on the source.** `aircraftbase.jl` 48–53 declares `Vehicle`
+  with fields `systems`, `kinematics` and `dynamics::VehicleDynamics`. So
+  "holds the systems assembly beside its dynamics" is accurate. A minor
+  antecedent risk: "its dynamics" could bind to "the systems assembly". The
+  chapter opening says assemblies have no dynamics of their own. Optional
+  fix: "beside its `dynamics` child", which also echoes the field name.
+- **O-3. OK.** The `local_wires(::Systems)` block is the only block in
+  §6.2 that names `dynamics`. "earlier in this section" is accurate.
+- **Problem: `chapter_new.md` is stale.** It still holds the pre-O text at
+  its lines 70 and 270–273, so it no longer equals A + B + C. Fix: run
+  `chapter.sh`, or the step that builds `chapter_new.md`, again.

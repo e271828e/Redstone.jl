@@ -67,7 +67,7 @@ has a name to resolve through ([§14.2][s14-2]).
 
 The ceremony the rule costs is the re-export entry per level. It is the ceremony
 the design already pays almost everywhere, because every level of a realistic
-tree is a generic [seam](#g-seam) (a narrow, named interface kept deliberately thin).
+tree is a generic [seam](#g-seam) (a narrow, named interface kept deliberately thin, [§8.8][s8-8]).
 One-level routing was mandatory at a generic seam in any case ([§8.8][s8-8]). Where the
 entries multiply, they are computed rather than typed, through
 `input_passthrough`/`output_passthrough` over a single authored feed list
@@ -267,10 +267,11 @@ at every boundary, so every assembly that owns contributors must export its
 aggregate.
 
 For example, the landing gear `Ldg` sums its three legs and exports `wrench`.
-The systems assembly sums `aero + ldg + pwp`. The vehicle, the assembly one
-level above the systems assembly, wires the systems totals into the rigid-body
-equations of motion. The block above places the `dynamics` child inside
-`Systems` instead, and both shapes are legal.
+The systems assembly sums `aero + ldg + pwp`. The vehicle, which holds the
+systems assembly beside its `dynamics` child as Flight.jl's `Vehicle` does,
+wires the systems totals into the rigid-body equations of motion. The
+`local_wires(::Systems)` block earlier in this section places the `dynamics`
+child inside `Systems` instead, and both shapes are legal.
 
 Junctions placed this way replace FlightPhysics' tree walk. Each of its
 recursion steps becomes one visible junction at the level that owns the

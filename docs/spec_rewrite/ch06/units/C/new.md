@@ -106,8 +106,8 @@ aggregate.
 
 For example, the landing gear `Ldg` sums its three legs and exports `wrench`.
 The systems assembly sums `aero + ldg + pwp`. The vehicle, which holds the
-systems assembly beside its dynamics as Flight.jl's `Vehicle` does, wires the
-systems totals into the rigid-body equations of motion. The
+systems assembly beside its `dynamics` child as Flight.jl's `Vehicle` does,
+wires the systems totals into the rigid-body equations of motion. The
 `local_wires(::Systems)` block earlier in this section places the `dynamics`
 child inside `Systems` instead, and both shapes are legal.
 

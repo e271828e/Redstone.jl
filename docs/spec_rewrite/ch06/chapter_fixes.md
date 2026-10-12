@@ -178,3 +178,6 @@ was refilled greedily at 80 rendered columns, and all three checkers print
 - **O-3 (unit C, RP-4's wording).** "The block above places" becomes "The
   `local_wires(::Systems)` block earlier in this section places". "Above"
   reached back 42 lines across a heading. Inventory: RP-4's added span.
+- **O-4 (unit C, the final verifier's re-check).** "beside its dynamics"
+  becomes "beside its `dynamics` child", so "its" cannot read as the
+  systems assembly's. Inventory: RP-4's added span.

@@ -462,7 +462,7 @@
   {
    "id": "C-051",
    "old": "The vehicle wires the systems totals into Newton–Euler.",
-   "new": "The vehicle, which holds the systems assembly beside its dynamics as Flight.jl's `Vehicle` does, wires the systems totals into the rigid-body equations of motion.",
+   "new": "The vehicle, which holds the systems assembly beside its `dynamics` child as Flight.jl's `Vehicle` does, wires the systems totals into the rigid-body equations of motion.",
    "where": "new",
    "cites": [],
    "tag": "R",
@@ -824,7 +824,7 @@
   "(a capability the design admits but does not build)",
   "A constant source has no inputs and no state, and publishes a value its instance holds.",
   "(force and torque)",
-  "which holds the systems assembly beside its dynamics as Flight.jl's `Vehicle` does",
+  "which holds the systems assembly beside its `dynamics` child as Flight.jl's `Vehicle` does",
   "The `local_wires(::Systems)` block earlier in this section places the `dynamics` child inside `Systems` instead, and both shapes are legal."
  ],
  "added_rulings": {
@@ -834,7 +834,7 @@
   "RP-1": "Reference-frame responsibility",
   "RP-2": "(force and torque)",
   "RP-4": [
-   "which holds the systems assembly beside its dynamics as Flight.jl's `Vehicle` does",
+   "which holds the systems assembly beside its `dynamics` child as Flight.jl's `Vehicle` does",
    "The `local_wires(::Systems)` block earlier in this section places the `dynamics` child inside `Systems` instead, and both shapes are legal."
   ]
  }
