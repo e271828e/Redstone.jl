@@ -19,13 +19,12 @@ becomes of the ports left unconnected.
 
 #### How far a path may reach
 
-An [assembly](#g-assembly) (a component of pure composition) has three wiring
-declarations ([§8.6][s8-6]). A `local_wires` pair wires one child's
-[face](#g-face) (the name a port wears on its component's boundary) to
-another's. An `input_wires` entry routes a face to an immediate child's face.
-An `output_wires` entry sources a face from an immediate child's face. An entry
-of any of the three is a wire, and an entry of the first is a
-[local wire](#g-local-wire) ([D-303][d-303], [D-314][d-314]).
+An [assembly](#g-assembly) (a [component](#g-component) of pure composition) has three wiring declarations
+([§8.6][s8-6]). A `local_wires` pair wires one child's [face](#g-face) (the name a port wears on
+its component's boundary) to another's. An `input_wires` entry routes a face to
+an immediate child's face. An `output_wires` entry sources a face from an
+immediate child's face. An entry of any of the three is a wire, and an entry of
+the first is a [local wire](#g-local-wire) ([D-303][d-303], [D-314][d-314]).
 
 **Every connection endpoint names an immediate child and one of its faces**
 ([D-207][d-207]). An endpoint naming no port of the child it resolves to is an
@@ -40,15 +39,15 @@ plain child's endpoint does, the same one level ([D-211][d-211]).
 
 Routing across several levels is therefore declared level by level, with each
 assembly speaking only of its own children. This restriction is named the
-locality law ([D-065][d-065]), and fragments of the condition algebra follow
-the same law ([§14.2][s14-2]).
+locality law ([D-065][d-065]). [Fragments](#g-fragment) of the condition algebra follow the same law
+([§14.2][s14-2]).
 
-The sketch below shows such routing in an aircraft. The root `Cessna172` holds
-a systems assembly `Systems`, which holds the landing gear `Ldg`, whose three
-legs are `left`, `right` and `nose`. The root's input `trn` is a terrain field
-handle ([§4.4][s4-4]). `Cessna172` hands its `trn` input to `systems`,
-`Systems` hands it to `ldg`, and `Ldg` fans it out to its three legs. The
-fan-out is declared at the level where the paths diverge.
+The sketch below shows such routing in an aircraft. The root `Cessna172` holds a
+systems assembly `Systems`, which holds the landing gear `Ldg`, whose three legs
+are `left`, `right` and `nose`. The root's input `trn` is a terrain [field handle](#g-field-handle)
+(an immutable query object its consumers evaluate, [§4.4][s4-4]). `Cessna172` hands its
+`trn` input to `systems`, `Systems` hands it to `ldg`, and `Ldg` fans it out to
+its three legs. The fan-out is declared at the level where the paths diverge.
 
 ```julia
 input_wires(::Cessna172) = ("trn" => "systems/trn", …)
@@ -66,14 +65,14 @@ bears a declared face there, at every level it crosses. Totality is what the
 condition algebra addresses against. An `at` prefix stopping at a child's face
 has a name to resolve through ([§14.2][s14-2]).
 
-The ceremony the rule costs is the re-export entry per level. It is the
-ceremony the design already pays almost everywhere, because every level of a
-realistic tree is a generic [seam](#g-seam) (a narrow, named interface kept
-deliberately thin), where one-level routing was mandatory in any case
-([§8.8][s8-8]). Where the entries multiply, they are computed rather than
-typed, through `input_passthrough`/`output_passthrough` over a single authored
-feed list ([§8.8][s8-8]). Parallel routes threading many boundaries are the
-signal to gather them into a component of their own ([D-207][d-207]).
+The ceremony the rule costs is the re-export entry per level. It is the ceremony
+the design already pays almost everywhere, because every level of a realistic
+tree is a generic [seam](#g-seam) (a narrow, named interface kept deliberately thin).
+One-level routing was mandatory at a generic seam in any case ([§8.8][s8-8]). Where the
+entries multiply, they are computed rather than typed, through
+`input_passthrough`/`output_passthrough` over a single authored feed list
+([§8.8][s8-8]). Parallel routes threading many boundaries are the signal to gather them
+into a component of their own ([D-207][d-207]).
 
 Enforcement lives in the path-resolution primitive itself, `resolve`
 ([§13.3][s13-3], [D-130][d-130]). It walks declared field types alongside

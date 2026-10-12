@@ -58,7 +58,7 @@
   {
    "id": "C-007",
    "old": "Beside it, and for a continuous consumer only, stands the walk-compatibility clause.",
-   "new": "Beside it stands the walk-compatibility clause, for a continuous consumer only.",
+   "new": "Beside it stands the walk-compatibility clause (the walk clause for short), for a continuous consumer only.",
    "where": "new",
    "cites": [],
    "tag": "R",
@@ -109,7 +109,7 @@
   {
    "id": "C-013",
    "old": "A frozen handle arriving at an unpinned entry is the producer's cell, gathered as stored,",
-   "new": "A frozen handle arriving at an unpinned entry is the producer's cell (its output's entry in the signal table), gathered as stored (D-264).",
+   "new": "A frozen handle arriving at an unpinned entry is the producer's cell (the signal-table entry holding its output), gathered as stored (D-264).",
    "where": "new",
    "cites": [],
    "tag": "R",
@@ -154,7 +154,7 @@
   {
    "id": "C-017",
    "old": "One consequence follows from that rule: a component that re-emits a frozen handle pins that output too, so a handle's pin is a property of its chain.",
-   "new": "One consequence follows from that rule. A component that re-emits a frozen handle pins that output too, so a handle's pin is a property of its chain (D-264).",
+   "new": "Under that rule, a component that re-emits a frozen handle pins that output too, so a handle's pin is a property of its chain (D-264).",
    "where": "new",
    "cites": [],
    "tag": "C",
@@ -165,7 +165,7 @@
   {
    "id": "C-018",
    "old": "Both sides are plain declarations the walk retypes, so the clause is decided in the structure step by retyping them at a marker scalar.",
-   "new": "The producer's declaration and the entry are plain declarations the walk retypes, so the walk clause is decided in the structure step by retyping them at a marker scalar.",
+   "new": "The producer's declaration and the entry are plain declarations that the leaf walk (the framework's derivation of per-activation types) retypes. The walk clause is therefore decided in the structure step by retyping them at a marker scalar.",
    "where": "new",
    "cites": [],
    "tag": "R",
@@ -215,7 +215,7 @@
   {
    "id": "C-023",
    "old": "For an abstract entry, whose leaves cannot be enumerated, the clause is decided on the whole declaration.",
-   "new": "The walk clause decides an abstract entry on the whole declaration, an entry whose leaves cannot be enumerated (D-236).",
+   "new": "Its leaves cannot be enumerated. The walk clause decides an abstract entry on the whole declaration (D-236).",
    "where": "new",
    "cites": [],
    "tag": "R",
@@ -296,7 +296,7 @@
   {
    "id": "C-031",
    "old": "The same clause also gives the two contract sides their failure asymmetry.",
-   "new": "The walk clause also gives the two contract sides their failure asymmetry.",
+   "new": "The walk clause also gives the two sides of a contract (a component's declared interface) their failure asymmetry.",
    "where": "new",
    "cites": [],
    "tag": "F"
@@ -488,11 +488,11 @@
   {
    "id": "C-051",
    "old": "The error fires at the root build for any input whose obligation chain never terminates.",
-   "new": "The error, `UnconnectedInput`, fires at the root build for any input whose obligation chain never terminates.",
+   "new": "The unconnected-input error, `UnconnectedInput`, fires at the root build for any input whose obligation chain never terminates.",
    "where": "new",
    "cites": [],
    "tag": "R",
-   "ruling": "R6"
+   "ruling": "R6, RI-1"
   },
   {
    "id": "C-052",
@@ -513,7 +513,14 @@
   "Once both endpoints of a wire resolve",
   "The first is the nominal bound check.",
   "An abstract entry is an input entry whose declared type is abstract.",
-  "(its output's entry in the signal table)",
-  "Both this check and the two-producers check are decided at the root, since neither is decidable below it (D-048)."
- ]
+  "(the signal-table entry holding its output)",
+  "Both this check and the two-producers check are decided at the root, since neither is decidable below it (D-048).",
+  "(the walk clause for short)",
+  "(the framework's derivation of per-activation types)",
+  "(a component's declared interface)",
+  "The unconnected-input error, `UnconnectedInput`,"
+ ],
+ "added_rulings": {
+  "RI-1": "The unconnected-input error, `UnconnectedInput`,"
+ }
 }

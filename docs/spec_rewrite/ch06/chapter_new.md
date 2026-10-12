@@ -19,13 +19,12 @@ becomes of the ports left unconnected.
 
 #### How far a path may reach
 
-An [assembly](#g-assembly) (a component of pure composition) has three wiring
-declarations ([§8.6][s8-6]). A `local_wires` pair wires one child's
-[face](#g-face) (the name a port wears on its component's boundary) to
-another's. An `input_wires` entry routes a face to an immediate child's face.
-An `output_wires` entry sources a face from an immediate child's face. An entry
-of any of the three is a wire, and an entry of the first is a
-[local wire](#g-local-wire) ([D-303][d-303], [D-314][d-314]).
+An [assembly](#g-assembly) (a [component](#g-component) of pure composition) has three wiring declarations
+([§8.6][s8-6]). A `local_wires` pair wires one child's [face](#g-face) (the name a port wears on
+its component's boundary) to another's. An `input_wires` entry routes a face to
+an immediate child's face. An `output_wires` entry sources a face from an
+immediate child's face. An entry of any of the three is a wire, and an entry of
+the first is a [local wire](#g-local-wire) ([D-303][d-303], [D-314][d-314]).
 
 **Every connection endpoint names an immediate child and one of its faces**
 ([D-207][d-207]). An endpoint naming no port of the child it resolves to is an
@@ -40,15 +39,15 @@ plain child's endpoint does, the same one level ([D-211][d-211]).
 
 Routing across several levels is therefore declared level by level, with each
 assembly speaking only of its own children. This restriction is named the
-locality law ([D-065][d-065]), and fragments of the condition algebra follow
-the same law ([§14.2][s14-2]).
+locality law ([D-065][d-065]). [Fragments](#g-fragment) of the condition algebra follow the same law
+([§14.2][s14-2]).
 
-The sketch below shows such routing in an aircraft. The root `Cessna172` holds
-a systems assembly `Systems`, which holds the landing gear `Ldg`, whose three
-legs are `left`, `right` and `nose`. The root's input `trn` is a terrain field
-handle ([§4.4][s4-4]). `Cessna172` hands its `trn` input to `systems`,
-`Systems` hands it to `ldg`, and `Ldg` fans it out to its three legs. The
-fan-out is declared at the level where the paths diverge.
+The sketch below shows such routing in an aircraft. The root `Cessna172` holds a
+systems assembly `Systems`, which holds the landing gear `Ldg`, whose three legs
+are `left`, `right` and `nose`. The root's input `trn` is a terrain [field handle](#g-field-handle)
+(an immutable query object its consumers evaluate, [§4.4][s4-4]). `Cessna172` hands its
+`trn` input to `systems`, `Systems` hands it to `ldg`, and `Ldg` fans it out to
+its three legs. The fan-out is declared at the level where the paths diverge.
 
 ```julia
 input_wires(::Cessna172) = ("trn" => "systems/trn", …)
@@ -66,14 +65,14 @@ bears a declared face there, at every level it crosses. Totality is what the
 condition algebra addresses against. An `at` prefix stopping at a child's face
 has a name to resolve through ([§14.2][s14-2]).
 
-The ceremony the rule costs is the re-export entry per level. It is the
-ceremony the design already pays almost everywhere, because every level of a
-realistic tree is a generic [seam](#g-seam) (a narrow, named interface kept
-deliberately thin), where one-level routing was mandatory in any case
-([§8.8][s8-8]). Where the entries multiply, they are computed rather than
-typed, through `input_passthrough`/`output_passthrough` over a single authored
-feed list ([§8.8][s8-8]). Parallel routes threading many boundaries are the
-signal to gather them into a component of their own ([D-207][d-207]).
+The ceremony the rule costs is the re-export entry per level. It is the ceremony
+the design already pays almost everywhere, because every level of a realistic
+tree is a generic [seam](#g-seam) (a narrow, named interface kept deliberately thin).
+One-level routing was mandatory at a generic seam in any case ([§8.8][s8-8]). Where the
+entries multiply, they are computed rather than typed, through
+`input_passthrough`/`output_passthrough` over a single authored feed list
+([§8.8][s8-8]). Parallel routes threading many boundaries are the signal to gather them
+into a component of their own ([D-207][d-207]).
 
 Enforcement lives in the path-resolution primitive itself, `resolve`
 ([§13.3][s13-3], [D-130][d-130]). It walks declared field types alongside
@@ -92,37 +91,35 @@ must be `<:` the consumer's input entry at `Float64` ([D-078][d-078]). It is
 one uniform rule, and it degenerates to exact equality for a concrete entry. A
 violation is `WireTypeMismatch`.
 
-Beside it stands the walk-compatibility clause, for a continuous consumer
-only. A [walking](#g-walked) producer leaf, one the producer left unpinned,
-requires an unpinned entry. A pinned producer leaf, one declared `Pinned`,
-satisfies either entry, because frozen values embed upward under any
+Beside it stands the walk-compatibility clause (the walk clause for short), for
+a continuous consumer only. A [walking](#g-walked) producer leaf, one the producer left
+unpinned, requires an unpinned entry. A pinned producer leaf, one declared
+`Pinned`, satisfies either entry, because frozen values embed upward under any
 activation. A discrete consumer takes the bound check alone, so a continuous
 producer feeding a discrete consumer is unconditionally legal, for the reason
 [§8.2][s8-2] gives ([D-295][d-295], [D-263][d-263]).
 
-The producer's declaration and the entry are plain declarations the walk
-retypes, so the walk clause is decided in the structure step by retyping them
-at a marker scalar. That is declaration reading, and no user stage code runs
-([§9.1][s9-1]).
+The producer's declaration and the entry are plain declarations that the
+[leaf walk](#g-leaf-walk) (the framework's derivation of per-activation types) retypes. The walk
+clause is therefore decided in the structure step by retyping them at a marker
+scalar. That is declaration reading, and no user stage code runs ([§9.1][s9-1]).
 
-An [abstract entry](#g-abstract-entry) is an input entry whose declared type
-is abstract. **The walk clause decides an abstract entry on the whole
-declaration**, an entry whose leaves cannot be enumerated ([D-236][d-236]). The
-producer's declaration at the marker, or the same with every pinned leaf
-lifted to the marker, must be `<:` the entry at the marker ([D-236][d-236]).
+An [abstract entry](#g-abstract-entry) is an input entry whose declared type is abstract. Its leaves
+cannot be enumerated. **The walk clause decides an abstract entry on the whole
+declaration** ([D-236][d-236]). The producer's declaration at the marker, or the same with
+every pinned leaf lifted to the marker, must be `<:` the entry at the marker
+([D-236][d-236]).
 
-The walk clause admits an opaque leaf on the same terms as a pinned or
-walking leaf. An opaque leaf
-([§4.3][s4-3]), a handle stored whole, has no scalar position to embed
-through, and the walk clause does not need one. **A frozen handle arriving at
-an unpinned entry is the producer's [cell](#g-cell)** (its output's entry in
-the signal table), gathered as stored ([D-264][d-264]). The consumer's own
-arithmetic promotes whatever it reads from it ([D-264][d-264]). A discrete producer of a
-handle, which pins wholesale, is admitted the same way. **The identity rule
-for an opaque leaf governs a store, never a wire** ([§9.5][s9-5],
-[D-264][d-264]). One consequence follows from that rule. A component that
-re-emits a frozen handle pins that output too, so a handle's pin is a
-property of its chain ([D-264][d-264]).
+The walk clause admits an opaque leaf on the same terms as a pinned or walking
+leaf. An opaque leaf ([§4.3][s4-3]), a handle stored whole, has no scalar position to
+embed through, and the walk clause does not need one. **A frozen handle arriving
+at an unpinned entry is the producer's [cell](#g-cell)** (the signal-table entry holding its
+output), gathered as stored ([D-264][d-264]). The consumer's own arithmetic promotes
+whatever it reads from it ([D-264][d-264]). A discrete producer of a handle, which pins
+wholesale, is admitted the same way. **The identity rule for an opaque leaf
+governs a store, never a wire** ([§9.5][s9-5], [D-264][d-264]). Under that rule, a component that
+re-emits a frozen handle pins that output too, so a handle's pin is a property
+of its chain ([D-264][d-264]).
 
 A violation of the walk clause is `WalkingFaceAtFrozenEntry`, naming both
 endpoints, the leaf and both declared leaf types. The message carries both
@@ -130,13 +127,13 @@ remedies, "remove the entry's `Pinned` if the consumer promotes; feed it from
 a non-walking source if the freeze is genuine". The `Freeze` block is the
 one-line spelling of the second remedy ([§13.7][s13-7], [D-266][d-266]).
 
-The walk clause also gives the two [contract](#g-contract) sides their
-failure asymmetry. A pin written at an entry whose consumer really promotes
-fails at the *first nominal build*, at the wire, with both endpoints named
-([D-263][d-263]). It fails there because an input has a build-time
-counterparty. The output side has none, so a pin written at a leaf that
-really participates lurks until the first `Dual` activation. It lurks loudly,
-never silently ([§8.2][s8-2], [D-286][d-286]).
+The walk clause also gives the two sides of a [contract](#g-contract) (a component's declared
+interface) their failure asymmetry. A pin written at an entry whose consumer
+really promotes fails at the *first nominal build*, at the wire, with both
+endpoints named ([D-263][d-263]). It fails there because an input has a build-time
+counterparty. The output side has none, so a pin written at a leaf that really
+participates lurks until the first `Dual` activation. It lurks loudly, never
+silently ([§8.2][s8-2], [D-286][d-286]).
 
 #### Connections per port
 
@@ -149,29 +146,29 @@ its own level *and* handed up through its parent's `input_wires` is a
 two-producers build error, `TwoProducers`. Routing a face upward cannot
 silently double-feed.
 
-There is no auto-bubbling of unconnected inputs ([D-043][d-043]). Unconnected
-input ports are a build error, with no silent defaults. The check is a
-whole-tree property, not a per-declaration one ([D-048][d-048]). Both this
-check and the two-producers check are decided at the root, since neither is
-decidable below it ([D-048][d-048]). Within a single assembly declaration an
-unfed child input is simply *awaiting a wire from above*, either a local wire
-or an `input_wires` entry handing the obligation up one level
-([§8.6][s8-6]). The error, `UnconnectedInput`, fires at the root build for
-any input whose obligation chain never terminates. The one legitimate
-terminus fed by no [component](#g-component) is the root component's own
-input face, a [root input](#g-root-input) ([§11.3][s11-3], [D-208][d-208]).
+There is no auto-bubbling of unconnected inputs ([D-043][d-043]). Unconnected input ports
+are a build error, with no silent defaults. The check is a whole-tree property,
+not a per-declaration one ([D-048][d-048]). Both this check and the two-producers check
+are decided at the root, since neither is decidable below it ([D-048][d-048]). Within a
+single assembly declaration an unfed child input is simply *awaiting a wire from
+above*, either a local wire or an `input_wires` entry handing the obligation up
+one level ([§8.6][s8-6]). The unconnected-input error, `UnconnectedInput`, fires at the
+root build for any input whose obligation chain never terminates. The one
+legitimate terminus fed by no component is the root component's own input face,
+a [root input](#g-root-input) ([§11.3][s11-3], [D-208][d-208]).
 
 **Unconnected output ports are legal, silently, with no build-time warning**
 ([D-084][d-084]).
 
 ### 6.2 Aggregation: explicit summing junctions
 
-Several physical quantities are totals over many contributors. Total wrench,
-total mass properties and total internal angular momentum are the examples. In
-Flight.jl these totals come from tree walks. FlightPhysics' generated functions
-`get_wr_b`, `get_mp_b` and `get_hr_b` sum each quantity over a model tree. This section states the rule and the junction that carries it. It then
-covers what the explicit form buys, the hierarchical aggregation idiom, zero
-contributors and the cost.
+Several physical quantities are totals over many contributors. Total wrench
+(force and torque), total mass properties and total internal angular momentum
+are the examples. In Flight.jl these totals come from tree walks. FlightPhysics'
+generated functions `get_wr_b`, `get_mp_b` and `get_hr_b` sum each quantity over
+a model tree. This section states the rule and the junction that carries it. It
+then covers what the explicit form buys, the hierarchical aggregation idiom,
+zero contributors and the cost.
 
 **N-to-1 physical aggregation is expressed by ordinary junction
 [components](#g-component) and explicit wires** ([D-037][d-037]).
@@ -193,13 +190,12 @@ y_types(::Junction{In, Out}) where {In, Out} = (out = Out,)
 y_direct(j::Junction, (; u)) = (out = j.f(u...),)
 ```
 
-**The parameters are the nominal port types and the arity**
-([D-311][d-311]), as in `SumJunction{Wrench{Float64}, 3}`, and the fold is
-instance data. `Wrench` is FlightPhysics' force-and-torque type, here
-parametrized by its scalar type as a walked type of [§7.2][s7-2].
-`SumJunction{V, N}` is the `Junction` at `+`. A custom fold, such as a
-weighted blend or a mass-properties composition, is written at the site as
-`Junction{In, Out, N}(f)`, which infers `F`.
+**The parameters are the [nominal](#g-nominal) port types and the arity** ([D-311][d-311]), as in
+`SumJunction{Wrench{Float64}, 3}`, and the fold is instance data. `Wrench` is
+FlightPhysics' force-and-torque type, here parametrized by its scalar type as a
+[walked](#g-walked) type of [§7.2][s7-2]. `SumJunction{V, N}` is the `Junction` at `+`. A custom
+fold, such as a weighted blend or a mass-properties composition, is written at
+the site as `Junction{In, Out, N}(f)`, which infers `F`.
 
 The junction is a continuous leaf, so its [contracts](#g-contract) (a
 component's declared interface) are written at nominal `Float64`. On a
@@ -216,14 +212,13 @@ standard component library committed in [§13.7][s13-7] ([D-062][d-062]). They
 are ordinary components with no framework privileges. The inventory grows by
 judgement against the three guidelines [§13.7][s13-7] states ([D-313][d-313]).
 
-Wired at an ownership boundary, inside the [assembly](#g-assembly) that owns
-the contributors, the junction is ordinary structure. An assembly is a
-component of pure composition, with no dynamics of its own. In the block below,
-`Systems` is the systems assembly. Its children include the aerodynamics
-`aero`, the powerplant `pwp` and the landing gear `ldg`, and a child
-`dynamics` that consumes the total.
-`wr_sum::SumJunction{Wrench{Float64}, 3}` is a field of `Systems` like any
-other child ([§8.5][s8-5]).
+Wired at an ownership boundary, inside the [assembly](#g-assembly) that owns the contributors,
+the junction is ordinary structure. An assembly is a component of pure
+composition. In the block below, `Systems` is the systems assembly. Its children
+include the aerodynamics `aero`, the powerplant `pwp` and the landing gear
+`ldg`, and a child `dynamics` that consumes the total.
+`wr_sum::SumJunction{Wrench{Float64}, 3}` is a field of `Systems` like any other
+child ([§8.5][s8-5]).
 
 ```julia
 local_wires(::Systems) = (
@@ -236,12 +231,12 @@ local_wires(::Systems) = (
 
 #### What the explicit form buys
 
-- Every bookkeeping mistake at the junction is loud under the declaration layer. A contributor the
-  junction counts but nobody wires is an unconnected-input error naming `in4`.
-  A double-wired slot violates single-connection. A stale arity surfaces as
-  one or the other. The bookkeeping is ceremony, never silence. A
-  contributor's output that nobody wires stays legal and silent, as any
-  unconnected output does ([D-084][d-084]).
+- Every bookkeeping mistake at the junction is loud under the declaration layer.
+  A contributor the junction counts but nobody wires is an unconnected-input
+  error naming `in4`. A double-wired slot violates single-connection. A stale
+  arity surfaces as one or the other. The bookkeeping is ceremony, never
+  silence. A contributor's output that nobody wires stays legal and silent, as
+  any unconnected output does ([D-084][d-084]).
 - The aggregate is a first-class signal. `"wr_sum/out"` is an ordinary port.
   It is loggable, GUI-visible, and fanned out to a second consumer (a
   component monitoring structural loads) for one wire.
@@ -271,24 +266,27 @@ The [§6.1][s6-1] connection rules force this shape. A child is opaque to wiring
 at every boundary, so every assembly that owns contributors must export its
 aggregate.
 
-For example, the landing gear `Ldg` sums its three struts and exports
-`wrench`. The systems assembly sums `aero + ldg + pwp`. The vehicle wires the
-systems totals into the rigid-body equations of motion.
+For example, the landing gear `Ldg` sums its three legs and exports `wrench`.
+The systems assembly sums `aero + ldg + pwp`. The vehicle, the assembly one
+level above the systems assembly, wires the systems totals into the rigid-body
+equations of motion. The block above places the `dynamics` child inside
+`Systems` instead, and both shapes are legal.
 
-Junctions placed this way replace the tree walk. Each recursion step
-of FlightPhysics' tree walk becomes one visible junction at the level that owns
-the contributors. For Flight.jl's Cessna 172 model that is about four junctions
-and fifteen wires, written once. They read as a manifest of what weighs, what
-pushes and what spins. Only physical contributors publish the ports a junction
-sums. A strut publishes `wrench`, and avionics publishes nothing.
+Junctions placed this way replace FlightPhysics' tree walk. Each of its
+recursion steps becomes one visible junction at the level that owns the
+contributors. For Flight.jl's Cessna 172 model that is about four junctions and
+fifteen wires, written once. They read as a manifest of what weighs, what pushes
+and what spins. Only physical contributors publish the ports a junction sums. A
+strut publishes `wrench`, and avionics publishes nothing.
 
-Frame responsibility is as in Flight.jl. Contributors publish in the common
-body frame, applying their own mounting transforms at source.
+Reference-frame responsibility is as in Flight.jl. Contributors publish in the
+common body frame, applying their own mounting transforms at source.
 
-Do not bundle the three quantities into one contribution struct. Contributors
-are ragged, each having only some of the three quantities. A bundled contribution
-struct forces zero-filled identity noise through every port, which is the
-"silently sum nothing" hazard in a new coat ([D-037][d-037]).
+Do not bundle wrench, mass properties and internal angular momentum into one
+contribution struct. Contributors are ragged, each having only some of the three
+quantities. A bundled contribution struct forces zero-filled identity noise
+through every port, which is the "silently sum nothing" hazard in a new coat
+([D-037][d-037]).
 
 A `sum_ports!`-style helper would instantiate, wire and export in one call.
 **Such a helper is [guarded-addition](#g-guarded-addition) sugar** (a
@@ -314,7 +312,7 @@ consumer's input** ([D-143][d-143]), as in `Constant(Wrench())` →
 `dynamics/wr_ext`. A constant source has no inputs and no state, and publishes
 a value its instance holds.
 
-The zero total thus becomes declared structure. The configuration states
+The spelling makes the zero total declared structure. The configuration states
 "external wrench ≡ 0" as a visible wire and an observable port, rather than as
 an identity method the framework supplies behind the author's back.
 

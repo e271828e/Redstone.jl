@@ -318,7 +318,7 @@
   {
    "id": "A-035",
    "old": "It is the ceremony the design already pays almost everywhere, because every level of a realistic tree is a generic seam, where one-level routing was mandatory in any case (§8.8).",
-   "new": "It is the ceremony the design already pays almost everywhere, because every level of a realistic tree is a generic seam (a narrow, named interface kept deliberately thin), where one-level routing was mandatory in any case (§8.8).",
+   "new": "It is the ceremony the design already pays almost everywhere, because every level of a realistic tree is a generic seam (a narrow, named interface kept deliberately thin). One-level routing was mandatory at a generic seam in any case (§8.8).",
    "where": "new",
    "cites": [
     "§8.8"
@@ -389,12 +389,13 @@
   "(the name a port wears on its component's boundary)",
   "the elements of a `Tuple` or `NamedTuple` field holding only components",
   "An endpoint naming no port of the child it resolves to is an `UnknownPort` error, at either end of the wire (D-113, Appendix C).",
-  "This restriction is named the locality law (D-065), and fragments of the condition algebra follow the same law (§14.2).",
+  "This restriction is named the locality law (D-065). Fragments of the condition algebra follow the same law (§14.2).",
   "The sketch below shows such routing in an aircraft.",
   "The root `Cessna172` holds a systems assembly `Systems`, which holds the landing gear `Ldg`, whose three legs are `left`, `right` and `nose`.",
-  "The root's input `trn` is a terrain field handle (§4.4).",
+  "The root's input `trn` is a terrain field handle (an immutable query object its consumers evaluate, §4.4).",
   "Two consequences explain the rule.",
   "(a narrow, named interface kept deliberately thin)",
-  "An endpoint reaching past the immediate child is a `PathResolution` error (Appendix C)."
+  "An endpoint reaching past the immediate child is a `PathResolution` error (Appendix C).",
+  "(an immutable query object its consumers evaluate, §4.4)"
  ]
 }

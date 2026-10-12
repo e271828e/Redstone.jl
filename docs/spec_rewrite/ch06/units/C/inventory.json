@@ -19,10 +19,11 @@
   {
    "id": "C-003",
    "old": "Total wrench, total mass properties and total internal angular momentum are the examples,",
-   "new": "Total wrench, total mass properties and total internal angular momentum are the examples.",
+   "new": "Total wrench (force and torque), total mass properties and total internal angular momentum are the examples.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "F",
+   "ruling": "RP-2"
   },
   {
    "id": "C-004",
@@ -372,7 +373,7 @@
   {
    "id": "C-042",
    "old": "This is what replaces the tree walk.",
-   "new": "Junctions placed this way replace the tree walk.",
+   "new": "Junctions placed this way replace FlightPhysics' tree walk.",
    "where": "new",
    "cites": [],
    "tag": "R",
@@ -444,7 +445,7 @@
   {
    "id": "C-049",
    "old": "Example. `Ldg` sums its three struts and exports `wr_b`.",
-   "new": "For example, the landing gear `Ldg` sums its three struts and exports `wrench`.",
+   "new": "For example, the landing gear `Ldg` sums its three legs and exports `wrench`.",
    "where": "new",
    "cites": [],
    "tag": "R",
@@ -461,16 +462,16 @@
   {
    "id": "C-051",
    "old": "The vehicle wires the systems totals into Newton–Euler.",
-   "new": "The vehicle wires the systems totals into the rigid-body equations of motion.",
+   "new": "The vehicle, the assembly one level above the systems assembly, wires the systems totals into the rigid-body equations of motion.",
    "where": "new",
    "cites": [],
    "tag": "R",
-   "ruling": "R3"
+   "ruling": "R3, RP-4"
   },
   {
    "id": "C-052",
    "old": "Each recursion step of FlightCore's tree walk becomes one visible junction at the level that owns the contributors.",
-   "new": "Each recursion step of FlightPhysics' tree walk becomes one visible junction at the level that owns the contributors.",
+   "new": "Each of its recursion steps becomes one visible junction at the level that owns the contributors.",
    "where": "new",
    "cites": [],
    "tag": "R",
@@ -496,11 +497,11 @@
   {
    "id": "C-055",
    "old": "Frame responsibility is unchanged.",
-   "new": "Frame responsibility is as in Flight.jl.",
+   "new": "Reference-frame responsibility is as in Flight.jl.",
    "where": "new",
    "cites": [],
    "tag": "R",
-   "ruling": "R3"
+   "ruling": "R3, RP-1"
   },
   {
    "id": "C-056",
@@ -513,7 +514,7 @@
   {
    "id": "C-057",
    "old": "Do not bundle the three quantities into one contribution struct.",
-   "new": "Do not bundle the three quantities into one contribution struct.",
+   "new": "Do not bundle wrench, mass properties and internal angular momentum into one contribution struct.",
    "where": "new",
    "cites": [],
    "tag": "F"
@@ -703,7 +704,7 @@
   {
    "id": "C-076",
    "old": "Why. The zero total becomes declared structure.",
-   "new": "The zero total thus becomes declared structure.",
+   "new": "The spelling makes the zero total declared structure.",
    "where": "new",
    "cites": [],
    "tag": "R",
@@ -815,17 +816,26 @@
   "(the framework's derivation of per-activation types)",
   "A root input is the root component's own input face.",
   "inside the assembly that owns the contributors",
-  "An assembly is a component of pure composition, with no dynamics of its own.",
+  "An assembly is a component of pure composition.",
   "In the block below, `Systems` is the systems assembly.",
   "Its children include the aerodynamics `aero`, the powerplant `pwp` and the landing gear `ldg`, and a child `dynamics` that consumes the total.",
   "A contributor's output that nobody wires stays legal and silent, as any unconnected output does (D-084).",
   "each having only some of the three quantities",
   "(a capability the design admits but does not build)",
-  "A constant source has no inputs and no state, and publishes a value its instance holds."
+  "A constant source has no inputs and no state, and publishes a value its instance holds.",
+  "(force and torque)",
+  "the assembly one level above the systems assembly",
+  "The block above places the `dynamics` child inside `Systems` instead, and both shapes are legal."
  ],
  "added_rulings": {
   "R12": "`Wrench` is FlightPhysics' force-and-torque type, here parametrized by its scalar type as a walked type of §7.2.",
   "R13": "each having only some of the three quantities",
-  "R14": "and a child `dynamics` that consumes the total"
+  "R14": "and a child `dynamics` that consumes the total",
+  "RP-1": "Reference-frame responsibility",
+  "RP-2": "(force and torque)",
+  "RP-4": [
+   "the assembly one level above the systems assembly",
+   "The block above places the `dynamics` child inside `Systems` instead, and both shapes are legal."
+  ]
  }
 }
