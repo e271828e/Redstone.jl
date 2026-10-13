@@ -266,7 +266,7 @@ predicate holds. Writing the guard's sign value `σ`, holding means `σ ≥ 0`.
 [§10.6][s10-6] states the bookkeeping of the [prior](#g-prior). The prior is each event's predicate
 sample stored at the previous [boundary](#g-boundary) (a published consistency point). The
 opposite crossing direction is declared as a second event with the negated guard
-([D-082][d-082]). Stall entry and exit are one such pair. [D-180][d-180] records a per-event
+([D-082][d-082], [D-361][d-361]). Stall entry and exit are one such pair. [D-180][d-180] records a per-event
 `direction` keyword as a [guarded addition](#g-guarded-addition) (a capability the design admits but does
 not build).
 
@@ -296,7 +296,7 @@ crossing defines the transition ([D-179][d-179]). Detection resolution is an
 execution-policy detail.
 
 Time events and state events differ in how their instants are found. **The
-discrete [tier](#g-tier)'s [ticks](#g-tick) are [time events](#g-time-event)** ([D-220][d-220]). A tier is one side of the hybrid
+discrete [tier](#g-tier)'s [ticks](#g-tick) are [time events](#g-time-event)** ([D-220][d-220], [D-361][d-361]). A tier is one side of the hybrid
 formalism, continuous or discrete. Ticks are declared by `sample_times`. Their
 instants are known in advance and scheduled ([§10.5][s10-5]). Everything declared through
 `StateEvent(guard, handler)` is a [state event](#g-state-event). Its instant is unknown and must be
@@ -350,7 +350,7 @@ A continuous component is a classical hybrid automaton. It has these facets.
   `SArray`s ([§7.1][s7-1], [D-094][d-094], [D-247][d-247]).
 - Mode variables `m`. These are piecewise-constant values (enums, integers,
   flags) that parametrize the [flow](#g-flow) and change *only* through event
-  handlers.
+  handlers ([D-308][d-308]).
 - Flow $\dot{x} = f(x, m, u, t)$.
 - Two output stages ([§5.2][s5-2]).
 - Events, each a [guard](#g-guard) (the declared function defining an event's predicate)
@@ -366,7 +366,7 @@ single primitive supports both factorings of mode logic** ([D-003][d-003]).
 
 - Internal modes suit tightly coupled cases, such as stall hysteresis inside
   the aero component. They preserve cohesion and enable reset maps
-  ([D-003][d-003]).
+  ([D-003][d-003], [D-362][d-362]).
 - An external FSM component feeding modes through a [port](#g-port) (the addressable unit
   of the model) gives maximal purity, independent testability and swappable
   supervision logic.
@@ -399,7 +399,7 @@ state. A discrete component's `s` influences continuous dynamics only through
 signals ([D-056][d-056]). Those outputs are held zero-order between ticks
 ([D-019][d-019]).
 
-**`m` is continuous-only** ([D-231][d-231], [D-249][d-249]). A discrete
+**`m` is continuous-only** ([D-231][d-231], [D-249][d-249], [D-362][d-362]). A discrete
 component has no mode store. Its finite-state machine (FSM) enums, flags and
 counters are ordinary `s` fields. `m` exists on the continuous side because
 modes must change *between* flow evaluations, which is what handlers do. On the
@@ -440,17 +440,17 @@ one pass through the execution order against the current state. A tick is an
 instant at which a discrete component's stages and update run.
 
 The settled rules force an all-in-one component's two halves to communicate
-exactly as two siblings do ([D-056][d-056]). There is [one home per datum](#g-one-home-per-datum) (no store
+exactly as two siblings do ([D-056][d-056], [D-362][d-362]). There is [one home per datum](#g-one-home-per-datum) (no store
 mirrors another, [§5.2][s5-2]). `x_deriv` sees only the continuous state, and `s_update`
 only the discrete one. And `s⁺` is decoded only at the owner's next tick, because
 `s_update` runs last. That deferred decode is what makes ticks→events structurally
-impossible ([D-020][d-020]). It is also what terminates the iteration at each [boundary](#g-boundary) (a
+impossible ([D-020][d-020], [D-362][d-362]). It is also what terminates the iteration at each [boundary](#g-boundary) (a
 published consistency point, [§10.6][s10-6]). Inside an all-in-one component, influence
 across [tiers](#g-tier) (the continuous and discrete sides of the formalism) still routes
 through [cells](#g-cell) of the published signal table ([D-056][d-056]).
 
 The all-in-one component is therefore an [assembly](#g-assembly) (pure composition) of two
-primitives in a trench coat ([D-056][d-056]). It buys no expressiveness. It incurs costs
+primitives in a trench coat ([D-056][d-056], [D-362][d-362]). It buys no expressiveness. It incurs costs
 of its own, which [D-056][d-056] enumerates. One of those costs is not bookkeeping. The
 sampling interface is the zero-order hold (ZOH) plus the one-sample `z⁻¹` delay.
 It is the most bug-prone boundary in a flight-control stack. A monolith swallows
@@ -476,8 +476,8 @@ anchored at the interval start. The differencing idiom of [§8.6][s8-6]
 recovers exactly these forms from the cumulative stores, term by term.
 
 The reset is periodic, not predicate-triggered, so events are the wrong
-mechanism ([D-056][d-056]). And the reset is a discrete-tier write into continuous state,
-exactly the operation this design forbids ([D-056][d-056]). `s_update` writes only its own
+mechanism ([D-056][d-056], [D-362][d-362]). And the reset is a discrete-tier write into continuous state,
+exactly the operation this design forbids ([D-056][d-056], [D-362][d-362]). `s_update` writes only its own
 `s`. Guard-driven handlers are the sole resetters of continuous state ([D-141][d-141]).
 Integrate-and-dump falls squarely into the crack between the two leaf classes.
 It is tightly coupled continuous and periodic dynamics in one physical
@@ -553,7 +553,7 @@ The signal requirement has four consequences.
 - Isbits payloads allocate nothing, because NamedTuples of isbits are isbits.
 - Each cell has a definite freshness, tied to its producer's position in the
   [execution order](#g-execution-order), the order in which the stage
-  functions run ([D-004][d-004]).
+  functions run ([D-004][d-004], [D-363][d-363]).
 
 ### 4.2 Consumers see ports, not stages
 
@@ -573,7 +573,7 @@ public interface ([D-034][d-034]). There are no private intermediates. A value
 a later function needs is a declared port like any other ([§5.2][s5-2], [D-194][d-194]). A
 stage result outside the contract is a build error (`UndeclaredReturnField`,
 [§8.3][s8-3]). A presentational *unlisted* flag, skipped in logs
-and GUI but still connectable, is closed ([D-016][d-016], [D-034][d-034]).
+and GUI but still connectable, is closed ([D-016][d-016], [D-034][d-034], [D-363][d-363]).
 
 ### 4.3 Table mechanics and port granularity
 
@@ -596,7 +596,7 @@ Wiring and the [periphery](#g-periphery) (everything outside the loop that
 exchanges data with it) address a child's faces without knowing whether it is
 primitive or composite.
 
-The port is the atomic unit of the entire periphery. It is each of the
+The port is the atomic unit of the entire periphery ([D-363][d-363]). It is each of the
 following.
 
 - One cell.
@@ -636,7 +636,7 @@ declared port, one cell (`pose = KinPose{T}`, where `KinPose` is an illustrative
 struct). Nested fields get no cells of their own. A reader reaches a nested
 field through the port's [leaf address](#g-leaf-address), as in `"pose.q_eb"` ([§14.4][s14-4], [D-276][d-276]). A wired
 consumer takes the bundle (the struct-valued port) whole. Bare-struct returns
-are rejected ([D-036][d-036]).
+are rejected ([D-036][d-036], [D-363][d-363]).
 
 A port value's leaves are what the [leaf walk](#g-leaf-walk) (the framework's derivation of
 per-activation types) reaches through `Real`s, static arrays and isbits structs
@@ -666,7 +666,7 @@ destructures the bundle in its own stage or through an unbundling component.
 An unbundling component is a `y_direct` leaf that takes the bundle and
 publishes its fields. It is a candidate for the standard library of [§13.7][s13-7].
 
-A field-projection connector is a [guarded addition](#g-guarded-addition) ([D-036][d-036]), a capability the
+A field-projection connector is a [guarded addition](#g-guarded-addition) ([D-036][d-036], [D-363][d-363]), a capability the
 design admits but does not build. Its shape is obvious.
 
 Under the granularity guideline, **authors should bundle what shares a stage
@@ -696,7 +696,7 @@ output_wires(::Vehicle) = ("kin/pose" => "pose", "kin/q_eb" => "q_eb")
 #### Granularity, write side
 
 Under the write-side rule, **data written by different external writers, or
-at different cadences, must not share a port** ([D-045][d-045]). In short,
+at different cadences, must not share a port** ([D-045][d-045], [D-363][d-363]). In short,
 bundle what is written together.
 
 Pilot commands are the case in point. They are scalar faces under a namespace
@@ -761,7 +761,7 @@ not something a consumer can retrofit. The real component composes environment
 sub-models, and anyone else reconstructing the map has re-created that drift.
 
 For bulk-data components the obligation is only that the query math be
-reachable as a plain function ([D-139][d-139]). They own their resource
+reachable as a plain function ([D-139][d-139], [D-363][d-363]). They own their resource
 loading, so building a handle outside a build may cost a load. That cost is
 acceptable, because condition authoring is design-time code.
 
@@ -779,11 +779,11 @@ y_direct(atm, args) = (; … = atmospheric_field(atm; T_sl = …, p_sl = …, wi
 #### Pre-sampling and substitutability
 
 Pre-sampling is an idiom built on top, used where natural, not a separate
-mechanism ([D-008][d-008]). In it, a component consumes the field and a pose
+mechanism ([D-008][d-008], [D-363][d-363]). In it, a component consumes the field and a pose
 and emits plain data, as an illustrative `Airflow` component emits
 FlightPhysics' `AirData` for the whole vehicle. Resource injection
 (declare-and-resolve service registries) is closed for the first cut
-([D-008][d-008]).
+([D-008][d-008], [D-363][d-363]).
 
 The field-handle mechanism replaces Flight.jl's threading of `atmosphere`/`terrain`
 as arguments through every update signature. Flight.jl's landing-gear model
@@ -14331,6 +14331,9 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-341]: decisions.md#d-341--the-bundle-law-the-closed-name-sets-and-per-key-return-checks
 [d-342]: decisions.md#d-342--pure-output-stages-the-dependence-class-names-and-supervisory-resets
 [d-343]: decisions.md#d-343--the-remedy-ladders-content-the-closed-loop-remedies-and-the-traces-reach
+[d-361]: decisions.md#d-361--time-and-state-events-and-the-opposite-crossing-direction
+[d-362]: decisions.md#d-362--reset-maps-the-continuous-only-mode-store-and-the-rejected-all-in-one-component
+[d-363]: decisions.md#d-363--cell-freshness-closed-port-alternatives-write-side-atomicity-and-bulk-data-handles
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop

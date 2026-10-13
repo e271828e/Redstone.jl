@@ -3073,7 +3073,7 @@ header, and the frame-top drain fed by the recording's batches keyed by frame
 ordinal (exact: the frame sequence is itself deterministic), applied verbatim
 with no surface re-check (the write-surface rule ran at recording time).
 
-**Spec.** [§12.7][s12-7], [§14.5][s14-5]
+**Spec.** [§2.2][s2-2], [§12.7][s12-7], [§14.5][s14-5]
 
 **Rationale.** The header captures the resolved stores + slots after `apply!`
 and BEFORE the boundary-zero sequence — [§14.5][s14-5]'s end-of-sequence capture
@@ -12978,7 +12978,7 @@ fixed here.
 - A continuous component's `Int`s, enums and `Bool`s belong in its modes.
 - A workspace is not snapshotted and not replayed.
 
-**Spec.** [§7.1][s7-1], [§7.3][s7-3]
+**Spec.** [§3.1][s3-1], [§7.1][s7-1], [§7.3][s7-3]
 
 **Rationale.** Continuous state takes only real scalars and `SArray`s
 ([D-094][d-094]), so a discrete-valued field of a continuous component has no leaf
