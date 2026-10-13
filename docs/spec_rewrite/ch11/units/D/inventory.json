@@ -53,7 +53,7 @@
   {
    "id": "C-007",
    "old": "This section fixes the policy under which a device writes into its cell, the shape the cell holds, and the drain",
-   "new": "This section first fixes the coalescing policy (the CAS merge, CAS being compare-and-swap, that keeps one pending set of writes per device) under which a device writes into its staging cell. It then fixes the doctrine for staged values, the mappings that produce them, the shape the staging cell holds, the sites of the staging diagnostics, and the drain",
+   "new": "This section first fixes the coalescing policy (the compare-and-swap, or CAS, merge that keeps one pending set of writes per device) under which a device writes into its staging cell. It then fixes the doctrine for staged values, the mappings that produce them, the shape the staging cell holds, the sites of the staging diagnostics, and the drain",
    "where": "new",
    "cites": [],
    "tag": "X"
@@ -81,7 +81,7 @@
   {
    "id": "C-010",
    "old": "under one coalescing policy: CAS merge, newest wins per face.",
-   "new": "Staging has one coalescing policy, CAS merge, newest wins per face (the name a port wears on its component's boundary) (D-104).",
+   "new": "Staging has one coalescing policy, CAS merge, newest wins per face (D-104).",
    "where": "new",
    "cites": [],
    "newcites": [
@@ -109,7 +109,7 @@
   {
    "id": "C-013",
    "old": "Staging merges the incoming batch into the pending one. Untouched faces survive, and re-staged faces take the newest level. That is the per-face ZOH.",
-   "new": "Staging merges the incoming batch into the pending one. Untouched faces survive, and re-staged faces take the newest level. That is the per-face ZOH.",
+   "new": "Staging merges the incoming batch into the pending one. Untouched faces (the names ports wear on their component's boundary) survive, and re-staged faces take the newest level. That is the per-face zero-order hold (ZOH).",
    "where": "new",
    "cites": [],
    "tag": "F"
@@ -166,10 +166,11 @@
   {
    "id": "C-020",
    "old": "The worked example at the end of this section works that hazard through: a pending `flaps` edit clobbered by an unrelated `gear` message, undrained and undiagnosable.",
-   "new": "The worked example at the end of this section works that hazard through. A pending `flaps` edit is clobbered by an unrelated `gear` message, undrained and undiagnosable.",
+   "new": "Under overwrite, a pending `flaps` edit is clobbered by an unrelated `gear` message, undrained and undiagnosable. The worked example at the end of this section works that hazard through.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "R",
+   "ruling": "RP-6"
   },
   {
    "id": "C-021",
@@ -195,7 +196,7 @@
   {
    "id": "C-023",
    "old": "An enumerated writer's claim set and root-input types are both known at attach, since `claims(binding)` (§11.6) is read against the root contract.",
-   "new": "An enumerated writer's claim set (the faces a device may write) and root-input types are both known at attach. Both are known because `claims(binding)` (§11.6) is read against the root contract (the root component's declared interface).",
+   "new": "An enumerated writer's claim set (the faces a device may write) and root-input types are both known at attach, because `claims(binding)` (§11.6) is read against the root contract (the root component's declared interface).",
    "where": "new",
    "cites": [
     "§11.6"
@@ -264,7 +265,7 @@
   {
    "id": "C-031",
    "old": "The face-name → position schema lives in the roster entry.",
-   "new": "The face-name → position schema lives in the roster entry (the writer's record in the list of attached devices) (D-104).",
+   "new": "The writer's roster entry, its record in the list of attached devices, holds the face-name → position schema (D-104).",
    "where": "new",
    "cites": [],
    "newcites": [
@@ -715,7 +716,7 @@
   {
    "id": "C-081",
    "old": "Each taken cell is then applied through its compiled scatter, in attachment order.",
-   "new": "Each taken staging cell is then applied through its compiled scatter, in attachment order (D-024).",
+   "new": "Each taken staging cell is then applied through its compiled scatter, in attachment order (D-024), the harness cell last (§11.3).",
    "where": "new",
    "cites": [],
    "newcites": [
@@ -866,7 +867,7 @@
   {
    "id": "C-097",
    "old": "The shipped `TableBinding` applies those parameters in its generic `map_input`, on the device task. That is the shared pure helper, with an owner (§11.6).",
-   "new": "The shipped `TableBinding` applies those parameters in its generic `map_input` on the device task, as the shared pure helper with an owner (§11.6).",
+   "new": "The shipped `TableBinding` applies those parameters in its generic `map_input` on the device task. `TableBinding` is the shared pure helper, with an owner (§11.6).",
    "where": "new",
    "cites": [
     "§11.6"
@@ -1002,7 +1003,7 @@
   {
    "id": "C-112",
    "old": "This worked example is the exercise that selected per-device cells and produced the §11.7 staging contracts.",
-   "new": "This worked example is the exercise that selected per-device cells. It produced two things for §11.7: the active-widget contract, which §11.7 rejects (D-026), and the port-resolution answer to panel reuse (a port being the addressable unit of the model).",
+   "new": "This worked example is the exercise that selected per-device cells. It produced two things for §11.7: the active-widget contract, which §11.7 rejects (D-026), and the port-resolution answer to panel reuse. A port is the addressable unit of the model.",
    "where": "new",
    "cites": [
     "§11.7"
@@ -1251,26 +1252,22 @@
   "at the top of each frame (one iteration of the loop)",
   "(any attached participant in the periphery)",
   "(the per-device atomic holding place for pending writes)",
-  "first fixes the coalescing policy (the CAS merge, CAS being compare-and-swap, that keeps one pending set of writes per device)",
+  "first fixes the coalescing policy (the compare-and-swap, or CAS, merge that keeps one pending set of writes per device)",
   "It then fixes",
-  "(the name a port wears on its component's boundary)",
   "(a set of writes applied whole at the next drain). Each write in it targets a root input (the root component's own input face).",
   "(the faces a device may write)",
-  "Both are known because",
   "(the root component's declared interface)",
-  "(the writer's record in the list of attached devices)",
   "(the real values the build evaluates each user function with)",
   "(the unclaimed complement, computed by the framework)",
   "(the structured data a diagnostic carries beside its kind)",
   "(the compiled form of the stage execution order, §9.7)",
   "(the ordinary loop, its drain reading the trace)",
-  "(a port being the addressable unit of the model)",
   "(published consistency points, where snapshots go out)",
   "(a unit of modeling)",
   "the doctrine for staged values, the mappings that produce them,",
   "the sites of the staging diagnostics,",
   "A worked example closes the section.",
-  "is the exception, since several tasks may stage into it concurrently, and a CAS that fails because another stager merged first retries the same way (D-200).",
+  "is the exception to the single writer, since several tasks may stage into it concurrently, and a CAS that fails because another stager merged first retries the same way (D-200).",
   "#### The coalescing policy",
   "#### The levels doctrine",
   "#### Mappings and conditioning",
@@ -1286,6 +1283,13 @@
   "the framework has the pure",
   "It produced two things for §11.7: the active-widget contract, which §11.7 rejects (D-026), and the port-resolution answer to panel reuse",
   "The levels doctrine says that",
-  "A rule about faces sets where conditioning belongs."
+  "A rule about faces sets where conditioning belongs.",
+  "(the names ports wear on their component's boundary)",
+  "zero-order hold",
+  "to the single writer",
+  "Under overwrite,",
+  "its record in the list of attached devices,",
+  "the harness cell last (§11.3)",
+  "A port is the addressable unit of the model."
  ]
 }

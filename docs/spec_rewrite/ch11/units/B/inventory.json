@@ -426,13 +426,14 @@
   {
    "id": "C-048",
    "old": "The snapshot deliberately does not carry the state stores (`x`, `s`, `m`).",
-   "new": "The snapshot deliberately does not carry the state stores (`x`, `s`, `m`) (D-038).",
+   "new": "The snapshot deliberately does not carry the state stores `x`, `s` and `m` (D-038).",
    "where": "new",
    "cites": [],
    "newcites": [
     "D-038"
    ],
-   "tag": "C"
+   "tag": "R",
+   "ruling": "RP-3"
   },
   {
    "id": "C-049",
@@ -453,7 +454,7 @@
   {
    "id": "C-051",
    "old": "plus the batches (§11.5)",
-   "new": "plus the batches (§11.5).",
+   "new": "plus the batches of staged device writes (§11.5).",
    "where": "new",
    "cites": [
     "§11.5"
@@ -1073,10 +1074,11 @@
   {
    "id": "C-118",
    "old": "The endpoints below are kept.",
-   "new": "The endpoints below are kept.",
+   "new": "And the endpoints are retained unconditionally",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "R",
+   "ruling": "RP-4"
   },
   {
    "id": "C-119",
@@ -1173,13 +1175,14 @@
   {
    "id": "C-130",
    "old": "The endpoints are retained unconditionally.",
-   "new": "The endpoints are retained unconditionally (D-137).",
+   "new": "the endpoints are retained unconditionally (D-137).",
    "where": "new",
    "cites": [],
    "newcites": [
     "D-137"
    ],
-   "tag": "C"
+   "tag": "R",
+   "ruling": "RP-4"
   },
   {
    "id": "C-131",
@@ -1195,7 +1198,7 @@
   {
    "id": "C-132",
    "old": "The first is the boundary-zero snapshot under `init!` (§14.5), and the snapshot the door publishes under `restore!` and `replay!` (§12.6).",
-   "new": "The first is the boundary-zero snapshot under `init!` (§14.5), and the snapshot the door publishes under `restore!` and `replay!` (§12.6).",
+   "new": "The first is the boundary-zero snapshot under `init!` (§14.5), and the snapshot `restore!` or `replay!` publishes as it builds the run (§12.6).",
    "where": "new",
    "cites": [
     "§12.6",
@@ -1268,7 +1271,7 @@
   {
    "id": "C-140",
    "old": "The `totals` monotonicity across logged snapshots (§11.8) is untouched.",
-   "new": "The `totals` monotonicity across logged snapshots (§11.8) is untouched.",
+   "new": "The monotonicity of `totals`, the status's cumulative per-writer counters, across logged snapshots (§11.8) is untouched.",
    "where": "new",
    "cites": [
     "§11.8"
@@ -1474,7 +1477,7 @@
   {
    "id": "C-161",
    "old": "and an intermediate a device wants to stream is one promoted to a declared output.",
-   "new": "An intermediate a device wants to stream is one promoted to a declared output.",
+   "new": "The inspection path for one is promotion to a declared output",
    "where": "new",
    "cites": [],
    "tag": "F"
@@ -1652,21 +1655,23 @@
   "(the cells holding every produced signal)",
   "(one iteration of the loop)",
   "(the run's diagnostics and liveness record, §11.8).",
-  "(each one declared name with its cell),",
-  "(the typed entries of the signal table, §8.3).",
-  "Root inputs are the root component's own input faces.",
+  "(the addressable unit, one declared name with one cell),",
+  "(the signal table's typed value holders, one per output port, §8.3).",
+  "Root inputs are the root component's own input faces (the names ports wear on their component's boundary).",
   "(the set of faces a device may write),",
   "(the primary record of a session).",
   "(the trace's fixed preamble)",
   "(the ordinary loop re-driven from the trace).",
   "(one pass through the execution order).",
   "A binding is the value passed at `attach!` that makes a device framework-legible.",
-  "(the name a port wears on its component's boundary),",
   "§11.8 lists what it carries.",
   "(a capability the design admits but does not build),",
   "The four recording keywords appear on `init!` with their defaults (Appendix B). `init!(sim, condition; trace = true, log = true, log_every = 1, log_max = 65536)`",
   "(FlightApps' Cessna 172X model)",
   "(FlightCore's `XPlane12Control` output device).",
-  "Attach refuses such a binding with `ReadBindingUnresolved` (D-130)."
+  "Attach refuses such a binding with `ReadBindingUnresolved` (D-130).",
+  "the status's cumulative per-writer counters,",
+  "as it builds the run",
+  "of staged device writes"
  ]
 }

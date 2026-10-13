@@ -92,21 +92,21 @@
   {
    "id": "G1-010",
    "old": "A batch staged there would land in a cell no drain reads,",
-   "new": "A batch staged there would land in a staging cell, and no drain (the frame-top swap that applies staged device writes to the root inputs) reads that cell.",
+   "new": "A batch staged there would land in a staging cell that no drain reads.",
    "where": "new",
    "cites": [],
    "tag": "R",
    "ruling": "R10-F65",
-   "note": "bare 'cell' becomes 'staging cell'; the drain's gloss is R13's"
+   "note": "bare 'cell' becomes 'staging cell'; batch, staging cell and drain linked here, glossed in the sentences after (P2-13)"
   },
   {
    "id": "G1-011",
    "old": "and a report would land in a diagnostic cell no frame top folds.",
-   "new": "A report would land in a diagnostic cell (each writer's bounded ring of diagnostics and its heartbeat). No frame top (the start of one loop iteration) folds that cell.",
+   "new": "A report would land in a diagnostic cell that no frame top folds.",
    "where": "new",
    "cites": [],
    "tag": "F",
-   "note": "split for the glosses of diagnostic cell and frame, both linked here at their first use"
+   "note": "diagnostic cell and frame linked here at their first use, glossed in the sentences after (P2-13)"
   },
   {
    "id": "G1-012",
@@ -254,7 +254,7 @@
   {
    "id": "G1-026",
    "old": "A device is a user type subtyping the framework's neutral root: `MyDevice <: AbstractDevice`.",
-   "new": "A device is a user type subtyping the framework's neutral root, `MyDevice <: AbstractDevice` (D-177).",
+   "new": "A device's type is a user type subtyping the framework's neutral root, `MyDevice <: AbstractDevice` (D-177).",
    "where": "new",
    "cites": [],
    "tag": "C",
@@ -332,15 +332,15 @@
   {
    "id": "G1-033",
    "old": "`init!(dev) # its own bracket, pre-spawn (§12.4): a throw # here is shutdown! + DeviceCrash by name task = Threads.@spawn try loop(dev, handle) catch e report!(entry, DeviceCrash(e)) # §12.4(6): sim continues, device absent finally shutdown!(dev) # any exit path: OS resources released mark_dead!(...) # heartbeat only — claims stay, §11.3 end`",
-   "new": "`init!(dev) # its own bracket, pre-spawn (§12.4): a throw # here is shutdown! + DeviceCrash by name task = Threads.@spawn try loop(dev, handle) catch e report!(entry, DeviceCrash(e)) # §12.4(6): sim continues, device absent finally shutdown!(dev) # any exit path: OS resources released # no dead-marking: task_state shows the end, claims stay, §11.3 end`",
+   "new": "`init!(dev) # its own bracket, pre-spawn (§12.4): a throw # here is shutdown! + DeviceCrash by name task = Threads.@spawn try loop(dev, handle) catch e report!(entry, DeviceCrash(e)) # §12.4(6): sim continues, device absent finally shutdown!(dev) # any exit path: OS resources released # no dead-marking: task_state shows the end, # claims stay, §11.3 end`",
    "where": "new",
    "cites": [
     "§11.3",
     "§12.4"
    ],
    "tag": "R",
-   "ruling": "R21",
-   "note": "code block; the mark_dead! line becomes a comment by ruling"
+   "ruling": "R21, RP-12",
+   "note": "code block; the mark_dead! line becomes a comment by ruling (R21), split over two lines aligned at column 46 (RP-12)"
   },
   {
    "id": "G1-034",
@@ -684,7 +684,7 @@
   {
    "id": "G1-068",
    "old": "A window ✕ or peer EOT is the loop body returning.",
-   "new": "A window ✕ or peer EOT is the loop body returning.",
+   "new": "A window ✕ or peer EOT is the loop body returning",
    "where": "new",
    "cites": [],
    "tag": "F"
@@ -720,7 +720,7 @@
   {
    "id": "G1-071",
    "old": "§12.4(6) is literally \"the task body returned.\"",
-   "new": "This is §12.4(6)'s case.",
+   "new": "which is §12.4(6)'s case.",
    "where": "new",
    "cites": [
     "§12.4"
@@ -883,14 +883,11 @@
   "(the immutable per-boundary publication)",
   "(a published consistency point)",
   "Each attached device has a roster entry (its record in the list of attached devices).",
-  "(the frame-top swap that applies staged device writes to the root inputs)",
-  "(each writer's bounded ring of diagnostics and its heartbeat)",
-  "(the start of one loop iteration)",
   "`attach!(sim::Simulation, dev::AbstractDevice, new_binding::AbstractBinding; should_abort::Bool = false)`",
   "`attach!` takes the device with its binding (the value that makes a device framework-legible, described below).",
   "Its keyword `should_abort` (the per-attachment failure policy) is covered after the loop bodies below.",
   "#### The authoring contract",
-  "Only `loop` is mandatory (D-366). `init!`, `shutdown!` and `unblock!` are optional hooks, each defaulting to a no-op.",
+  "Of the four functions, only `loop` is mandatory (D-366). `init!`, `shutdown!` and `unblock!` are optional hooks, each defaulting to a no-op.",
   "`attach!` refuses a device with no `loop` method (`DeviceContractMismatch`, D-216).",
   "#### What `shutdown!` must tolerate",
   "(Ctrl-C in an interactive session)",
@@ -898,6 +895,13 @@
   "In the sketches, `T16000M` is FlightCore's type for the Thrustmaster T16000M joystick, and `UDPInput` is FlightCore's UDP input device type.",
   "FlightCore's device hook",
   "The sketches map data through the binding's `map_input` and `map_output`, described below.",
-  "A device's claim is the set of faces (the names ports wear on their component's boundary) it may write."
+  "A device's claim is the set of faces (the names ports wear on their component's boundary) it may write.",
+  "A batch is a device's staged set of writes.",
+  "A staging cell is the per-device holding place where a pending batch waits between drains.",
+  "The drain is the frame-top swap that applies staged device writes to the root inputs.",
+  "A diagnostic cell is each writer's bounded ring of diagnostics and its heartbeat.",
+  "A frame is one iteration of the loop.",
+  "`Telemetry` is an illustrative output device type.",
+  "#### The failure policy"
  ]
 }

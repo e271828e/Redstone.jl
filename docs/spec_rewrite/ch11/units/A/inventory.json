@@ -48,7 +48,7 @@
   {
    "id": "C-005",
    "old": "- the inbound path: - root inputs, claims and the frozen roster (§11.3); - per-device staging and the drain (§11.4); - the input trace (§11.5);",
-   "new": "§11.3, §11.4 and §11.5 the inbound data channel, in turn its root inputs, claims and frozen roster, its per-device staging and drain, and its input trace;",
+   "new": "§11.3, §11.4 and §11.5 the inbound data channel, in turn its root inputs, claims and frozen roster, its per-device staging, staged representation and drain, and its input trace;",
    "where": "new",
    "cites": [
     "§11.3",
@@ -83,7 +83,7 @@
   {
    "id": "C-008",
    "old": "- the third cross-task channel, runtime diagnostics and liveness (§11.8).",
-   "new": "and §11.8 the third cross-task channel, runtime diagnostics and liveness.",
+   "new": "and §11.8 runtime diagnostics and liveness, a third channel between tasks beside the two data channels.",
    "where": "new",
    "cites": [
     "§11.8"
@@ -137,7 +137,7 @@
   {
    "id": "C-014",
    "old": "That lock does enforce the boundary-visibility rule (§10.3), because it is only ever free between steps.",
-   "new": "That lock does enforce the boundary-visibility rule (§10.3), a boundary being a published consistency point, because the lock is only ever free between steps.",
+   "new": "That lock does enforce the boundary-visibility rule (§10.3), because the lock is only ever free between steps.",
    "where": "new",
    "cites": [
     "§10.3"
@@ -147,7 +147,7 @@
   {
    "id": "C-015",
    "old": "Transplanting it here was nevertheless rejected, on three structural costs (D-022). One of the three is decisive for everything below.",
-   "new": "Transplanting it here was nevertheless rejected, on three structural costs (D-022). One of the three is decisive for everything below.",
+   "new": "Transplanting the lock here was nevertheless rejected, on three structural costs (D-022). One of the three is decisive for everything below.",
    "where": "new",
    "cites": [
     "D-022"
@@ -189,7 +189,7 @@
   {
    "id": "C-019",
    "old": "Its unit of account is the frame (one iteration of the loop: drain, integrate, boundary sequence, publication), the grid step §10.1 names.",
-   "new": "Its unit of account is the frame (one grid step, §10.1).",
+   "new": "The replacement's unit of account is the frame (one grid step, §10.1).",
    "where": "new",
    "cites": [
     "§10.1"
@@ -246,7 +246,7 @@
   {
    "id": "C-025",
    "old": "2. The drain. Exactly one point in each frame, at its top, where the loop takes the staged batches and applies them to the root inputs.",
-   "new": "2. The drain is exactly one point in each frame, at its top, where the loop takes the staged batches and applies them to the root inputs (D-022).",
+   "new": "2. The drain is exactly one point in each frame, at its top, where the loop takes the staged batches (each device's set of pending writes) and applies them to the root inputs (D-022).",
    "where": "new",
    "cites": [],
    "newcites": [
@@ -376,7 +376,7 @@
   {
    "id": "C-038",
    "old": "The calling task (the task that invoked `run!`) runs the loop itself, and every rostered device runs on a spawned task.",
-   "new": "The calling task runs the loop itself, and every rostered device runs on a spawned task.",
+   "new": "Task topology places one loop on the calling task (the task that invoked `run!`) and one spawned task per rostered device",
    "where": "new",
    "cites": [],
    "tag": "M"
@@ -535,7 +535,7 @@
   {
    "id": "C-053",
    "old": "That dissolves the reclamation problem (hazard pointers, epochs, RCU grace periods) which makes these patterns hard in non-GC languages.",
-   "new": "That dissolves the reclamation problem (hazard pointers, epochs, RCU grace periods) which makes these patterns hard in non-GC languages.",
+   "new": "That dissolves the reclamation problem (hazard pointers, epochs, read-copy-update grace periods) which makes lock-free handoffs hard in non-GC languages.",
    "where": "new",
    "cites": [],
    "tag": "F"
@@ -640,7 +640,6 @@
   "This section sets out the five planes that replace the lock, the two rules that bind their implementation, the task topology, and one consequence for execution modes.",
   "(the frame-top swap that applies staged device writes to the root inputs)",
   "(where a device's pending write batch waits between drains)",
-  "a boundary being a published consistency point,",
   "(the primary record of a session)",
   "(the ordinary loop with its drain reading the trace,",
   "The b frame is the body frame, and ECEF stands for Earth-centered, Earth-fixed.",
@@ -650,6 +649,10 @@
   "(the list of attached device entries)",
   "(the artifact `build(world)` produces)",
   "(the framework-owned vectors backing continuous state,",
-  "(the build's typed products at a scalar type)"
+  "(the build's typed products at a scalar type)",
+  "A boundary is a published consistency point.",
+  "staged representation",
+  "beside the two data channels",
+  "(each device's set of pending writes)"
  ]
 }

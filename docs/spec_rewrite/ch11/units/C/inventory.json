@@ -11,7 +11,7 @@
   {
    "id": "C-002",
    "old": "The write surface (the set of faces a writer's batch entries may reach) is root inputs.",
-   "new": "The write surface is the set of faces a writer's batch entries may reach. Its members are root inputs",
+   "new": "The write surface is the set of faces the entries of a writer's batch (its staged set of writes, applied whole at the next drain) may reach. Its members are root inputs",
    "where": "new",
    "cites": [],
    "tag": "F"
@@ -35,7 +35,7 @@
   {
    "id": "C-004",
    "old": "It is routed inward to consumers and produced by no component.",
-   "new": "It is routed inward to consumers and produced by no component.",
+   "new": "A root input is routed inward to consumers and produced by no component.",
    "where": "new",
    "cites": [],
    "tag": "F"
@@ -88,7 +88,7 @@
   {
    "id": "C-010",
    "old": "The GUI reaches them through the resolution (§11.7), and control commands are not writes (§12.1).",
-   "new": "The GUI reaches them through the resolution (§11.7), and control commands are not writes (§12.1).",
+   "new": "The GUI reaches them through port resolution (§11.7), and control commands are not writes (§12.1).",
    "where": "new",
    "cites": [
     "§11.7",
@@ -99,7 +99,7 @@
   {
    "id": "C-011",
    "old": "Devices, mappings, the trace and the GUI write path address root inputs by face name (§8.6).",
-   "new": "Devices, mappings, the trace and the GUI write path address root inputs by face name (§8.6).",
+   "new": "Devices, mappings, the trace (the primary record of a session) and the GUI write path address root inputs by face name (§8.6).",
    "where": "new",
    "cites": [
     "§8.6"
@@ -180,7 +180,7 @@
   {
    "id": "C-019",
    "old": "Per-device cells, the CAS merge and the atomicswap drain all stay. They serve atomicity and coalescing, not arbitration.",
-   "new": "Per-device staging cells (where each device's pending batch waits between drains), the CAS merge and the atomicswap drain all stay. They serve atomicity and coalescing (the CAS merge keeping one pending batch per device), not arbitration.",
+   "new": "Per-device staging cells (where each device's pending batch waits between drains), the compare-and-swap (CAS) merge and the atomicswap drain all stay. They serve atomicity and coalescing (keeping one pending batch per device), not arbitration.",
    "where": "new",
    "cites": [],
    "tag": "F"
@@ -446,7 +446,7 @@
   {
    "id": "C-048",
    "old": "The periphery resolves root faces against the activation's cell layout alone (D-261).",
-   "new": "The periphery resolves root faces against the activation's cell layout alone (D-261).",
+   "new": "The periphery resolves root faces against the activation's cell layout alone (D-261). An activation is the build's typed products at a scalar type.",
    "where": "new",
    "cites": [
     "D-261"
@@ -456,7 +456,7 @@
   {
    "id": "C-049",
    "old": "The layout carries the root faces in structure order with their probe values, beside the address table, so both of the build's lookup families, schema and layout, read it there, and writers, claims and the harness compile against it.",
-   "new": "The layout carries the root faces in structure order with their probe values, beside the address table, so both of the build's lookup families, schema and layout, read it there, and writers, claims and the harness compile against it.",
+   "new": "The layout carries the root faces in structure order with their probe values (the real values the build evaluates each user function with), beside the address table, so both of the build's lookup families, schema and layout, read it there, and writers, claims and the harness compile against it.",
    "where": "new",
    "cites": [],
    "tag": "F"
@@ -506,7 +506,7 @@
   {
    "id": "C-054",
    "old": "Attaching the greedy claimant last is the idiom.",
-   "new": "Attaching the greedy claimant last is the idiom (D-192).",
+   "new": "Attaching the greedy claimant (the device holding the computed claim) last is the idiom (D-192).",
    "where": "new",
    "cites": [],
    "newcites": [
@@ -575,7 +575,7 @@
   {
    "id": "C-061",
    "old": "Beside the roster sits a task-free entry point,",
-   "new": "It is a task-free entry point,",
+   "new": "It is an entry point with no task of its own,",
    "where": "new",
    "cites": [],
    "tag": "F"
@@ -816,7 +816,7 @@
   {
    "id": "C-084",
    "old": "The roster (entries, claims, attachment order) is therefore a plain immutable value",
-   "new": "The roster (entries, claims, attachment order) is therefore a plain immutable value.",
+   "new": "The roster (roster entries, claims, attachment order) is therefore a plain immutable value.",
    "where": "new",
    "cites": [],
    "tag": "F"
@@ -873,7 +873,7 @@
   {
    "id": "C-090",
    "old": "The trace still tags entries with a stable device id, never a roster index, because ids read across runs, where the roster does change.",
-   "new": "The trace still tags each record with a stable device id, never a roster index, because ids read across runs, where the roster does change (D-087).",
+   "new": "The trace still tags each record with a stable device id (described below), never a roster index, because ids read across runs, where the roster does change (D-087).",
    "where": "new",
    "cites": [],
    "newcites": [
@@ -1093,7 +1093,7 @@
   {
    "id": "C-114",
    "old": "stop, `detach!`, and either `init!` (fresh trajectory) or `replay!`-to-end then `run!` (continuation from the interrupted boundary, §12.7).",
-   "new": "It takes a stop, a `detach!`, and either `init!` (fresh trajectory) or `replay!`-to-end then `run!`, which continues from the interrupted boundary (§12.7).",
+   "new": "It takes a stop, a `detach!`, and either `init!` (fresh trajectory) or `replay!`-to-end then `run!`, which continues from the interrupted boundary, a published consistency point (§12.7).",
    "where": "new",
    "cites": [
     "§12.7"
@@ -1190,20 +1190,16 @@
   "(the value passed at `attach!` that makes a device framework-legible)",
   "(stakes them as faces it may write)",
   "(where each device's pending batch waits between drains)",
-  "(the CAS merge keeping one pending batch per device)",
   "(GUI widget liveness, baked once at run start,",
   "(attach and detach only while stopped,",
   "(the trace's fixed preamble, a checkpoint `init!` takes)",
   "(the claims of a device whose task died mid-run)",
-  "(the inputs no component produces).",
   "A component is the unit of modeling, and a face is the name a port wears on its component's boundary.",
-  "The trace is the primary record of a session.",
-  "(the one writer whose surface is derived, not claimed).",
-  "The periphery (everything outside the loop that exchanges data with it) writes into a running model through its root inputs alone.",
+  "The periphery (everything outside the loop that exchanges data with it) writes into a running model through its root inputs (the root component's own input faces) alone.",
   "The periphery's writers include devices (any attached participants in the periphery).",
   "Each root input has at most one writer at any time, and the assignment of root inputs to writers is fixed for a whole run, because the roster (the list of attached device entries) is frozen per run.",
-  "The section's parts, in order, cover the write surface, exclusivity and claims, write surfaces and claim sources, the harness writer and the layout, root-input initial values, the frozen roster, device identity and admission, device death, and mid-run readers.",
-  "#### The write surface",
+  "The section's parts, in order, cover root inputs, exclusivity and claims, write surfaces and claim sources, the harness writer and the layout, root-input initial values, the frozen roster, device identity and admission, device death, and mid-run readers.",
+  "#### Root inputs",
   "#### Exclusivity and claims",
   "#### Write surfaces and claim sources",
   "#### The harness writer and the layout",
@@ -1214,6 +1210,17 @@
   "(one iteration of the loop).",
   "(the frame-top swap that applies staged device writes to the root inputs).",
   "An enumeration naming a face outside the root's input faces is refused at attach (`AttachUnknownFace`, D-216).",
-  "Detaching a device the roster does not hold is an error (`NotAttached`, D-215)."
+  "Detaching a device the roster does not hold is an error (`NotAttached`, D-215).",
+  "(the root component's own input faces)",
+  "(the primary record of a session)",
+  "compare-and-swap (CAS)",
+  "(keeping one pending batch per device)",
+  "(the framework-owned writer beside the roster).",
+  "(described below)",
+  "(its staged set of writes, applied whole at the next drain)",
+  "(the device holding the computed claim)",
+  "An activation is the build's typed products at a scalar type.",
+  "(the real values the build evaluates each user function with)",
+  ", a published consistency point"
  ]
 }

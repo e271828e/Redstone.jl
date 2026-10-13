@@ -63,7 +63,7 @@
   {
    "id": "C-007",
    "old": "At the drain (the frame-top swap that publishes staged device writes into the root inputs)",
-   "new": "At the drain (the frame-top swap that applies staged device writes to the root inputs)",
+   "new": "The drain is the frame-top swap that applies staged device writes to the root inputs.",
    "where": "new",
    "cites": [],
    "tag": "R",
@@ -72,7 +72,7 @@
   {
    "id": "C-008",
    "old": "each drained cell is scanned.",
-   "new": "each drained staging cell is scanned.",
+   "new": "At the drain each drained staging cell is scanned.",
    "where": "new",
    "cites": [],
    "tag": "R",
@@ -89,7 +89,7 @@
   {
    "id": "C-010",
    "old": "That is an O(surface-width) scan and one small allocation per drained batch.",
-   "new": "That is an O(surface-width) scan and one small allocation per drained batch, plus the values boxed into that allocation.",
+   "new": "The recording is an O(surface-width) scan and one small allocation per drained batch, plus the values boxed into that allocation.",
    "where": "new",
    "cites": [],
    "tag": "R",
@@ -98,7 +98,7 @@
   {
    "id": "C-011",
    "old": "Why. The rule is uniform because a claim's width is a fact about one binding, not about a class of writers.",
-   "new": "The rule is uniform because a claim's width is a fact about one binding (the value passed at `attach!` that makes a device framework-legible), not about a category of writers.",
+   "new": "The rule is uniform because the width of a claim (the set of faces a device may write) is a fact about one binding, the value passed at `attach!` that makes a device framework-legible, not about a category of writers.",
    "where": "new",
    "cites": [],
    "tag": "F"
@@ -106,7 +106,7 @@
   {
    "id": "C-012",
    "old": "A greedy claim is enumerated and as wide as the root contract (§11.3),",
-   "new": "It is enumerated and as wide as the root contract (the root's declared interface, §11.3),",
+   "new": "A greedy claim is the unclaimed complement the framework computes at attach (§11.3). It is enumerated and as wide as the root contract (the root's declared interface),",
    "where": "new",
    "cites": [
     "§11.3"
@@ -220,7 +220,7 @@
   {
    "id": "C-025",
    "old": "On the dense component the conversion costs about 2×, a position beside every value where the positional tuple carried the value alone.",
-   "new": "On the dense component (the unit of modeling, a leaf or an assembly) the conversion costs about 2×, a position beside every value where the positional tuple carried the value alone.",
+   "new": "On the dense component the conversion costs about 2×, a position beside every value where the positional tuple carried the value alone.",
    "where": "new",
    "cites": [],
    "tag": "F"
@@ -248,7 +248,7 @@
   {
    "id": "C-028",
    "old": "Per boundary it is smaller than the log's snapshot, the carve-out's standing occupant and the one qualified exception to retains-what-was-already-allocated.",
-   "new": "Per boundary (a published consistency point) it is smaller than the log's snapshot, the immutable per-boundary publication. The log is the retained sequence of published snapshots. The snapshot is the carve-out's standing occupant and the one qualified exception to retains-what-was-already-allocated.",
+   "new": "Per boundary (a published consistency point) it is smaller than the log's snapshot. The log is the retained sequence of published snapshots. A snapshot, the immutable per-boundary publication, is the carve-out's standing occupant and the one qualified exception to retains-what-was-already-allocated.",
    "where": "new",
    "cites": [],
    "tag": "F"
@@ -291,7 +291,7 @@
   {
    "id": "C-033",
    "old": "A checkpoint (the `Model`'s state at a frame top as one value) holds the flat buffer `x`, the `s` and `m` stores, the whole signal table, the guard priors, `t` and `t₀`, the frame and boundary counters, and the fingerprint.",
-   "new": "A checkpoint holds the flat buffer `x`, the `s` and `m` stores, the whole signal table (the collection of cells holding every produced signal), the guard priors, `t` and `t₀`, the frame and boundary counters, and the fingerprint and the deployment (D-319).",
+   "new": "A checkpoint holds the flat buffer `x`, the `s` and `m` stores, the whole signal table (the collection of cells holding every produced signal), the guard priors, `t` and `t₀`, the frame and boundary counters, and the fingerprint (the structural layout) and the deployment (D-319).",
    "where": "new",
    "cites": [],
    "newcites": [
@@ -303,7 +303,7 @@
   {
    "id": "C-034",
    "old": "The executor's clock holds `t` and `t₀`, and the run (the state one run owns) holds the frame index and the boundary ordinal (D-317).",
-   "new": "The executor's clock holds `t` and `t₀`, and the run (the state one run owns) holds the frame index and the boundary ordinal (D-317).",
+   "new": "The executor's clock holds `t` and `t₀`, and the `Run` (the state one run owns, a `Simulation` field) holds the frame index and the boundary ordinal (D-317).",
    "where": "new",
    "cites": [
     "D-317"
@@ -352,7 +352,7 @@
   {
    "id": "C-039",
    "old": "The fingerprint is the part of the header replay compares rather than restores (§12.7).",
-   "new": "The fingerprint (the structural layout) and the deployment are the parts of the header replay compares rather than restores (§12.7).",
+   "new": "The fingerprint and the deployment are the parts of the header replay compares rather than restores (§12.7).",
    "where": "new",
    "cites": [
     "§12.7"
@@ -363,7 +363,7 @@
   {
    "id": "C-040",
    "old": "- The run's `Deployment` and the structural layout.",
-   "new": "The header carries the run's `Deployment` and the structural layout.",
+   "new": "the fingerprint (the structural layout) and the deployment",
    "where": "new",
    "cites": [],
    "tag": "X"
@@ -397,7 +397,7 @@
   {
    "id": "C-043",
    "old": "The layout is the store layout and the root-input faces the `Build` fixes.",
-   "new": "The layout is the store layout and the root-input faces the `Build` (the artifact `build(world)` produces) fixes.",
+   "new": "The fingerprint is the store layout and the root-input faces the `Build` (the artifact `build(world)` produces) fixes.",
    "where": "new",
    "cites": [],
    "tag": "F"
@@ -473,10 +473,13 @@
   {
    "id": "C-051",
    "old": "The header is written once, by the door that builds the run, and never again, which is what makes it an artifact.",
-   "new": "The header is written once, by the door that builds the run, and never again, which is what makes it an artifact.",
+   "new": "The header is written once, by the door that builds the run (`init!`, `restore!` or `replay!`, §12.6), and never again, which is what makes it an artifact.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "C",
+   "newcites": [
+    "§12.6"
+   ]
   },
   {
    "id": "C-052",
@@ -551,12 +554,13 @@
   {
    "id": "C-059",
    "old": "because a roster change between advances (§12.6) recompiles the harness writer and the same face moves position.",
-   "new": "They do so because a roster change between advances (§12.6) recompiles the harness writer (the framework-owned write path of the calling task) and the same face moves position.",
+   "new": "They do so because a roster change between advances (§12.6) recompiles the harness writer (the framework-owned write path `stage!(sim, …)`) and the same face moves position.",
    "where": "new",
    "cites": [
     "§12.6"
    ],
-   "tag": "F"
+   "tag": "R",
+   "ruling": "RP-9"
   },
   {
    "id": "C-060",
@@ -591,12 +595,17 @@
   {
    "id": "C-063",
    "old": "A header without them could therefore not back the bit-identity claim (§12.7).",
-   "new": "A header without them could therefore not back the bit-identity claim (§12.7).",
+   "new": "A header without them could therefore not back the bit-identity claim (§2.4, §12.7).",
    "where": "new",
    "cites": [
     "§12.7"
    ],
-   "tag": "M"
+   "tag": "R",
+   "newcites": [
+    "§2.4",
+    "§12.7"
+   ],
+   "ruling": "RP-8"
   },
   {
    "id": "C-064",
@@ -626,7 +635,7 @@
   {
    "id": "C-066",
    "old": "The header is the other half of what \"given the initial state and the trace, the log is recomputable\" requires.",
-   "new": "The header is the other half of what \"given the initial state and the trace, the log is recomputable\" requires.",
+   "new": "The header is the other half of what \"given the initial state and the trace, the log is recomputable\" (below) requires.",
    "where": "new",
    "cites": [],
    "tag": "M"
@@ -796,13 +805,10 @@
   "Replay re-runs the ordinary loop on a recorded input trace.",
   "A staging cell is the per-device holding place where a device's pending batch waits between drains.",
   "A face is the name a port wears on its component's boundary.",
-  "(the value passed at `attach!` that makes a device framework-legible)",
-  "A claim is the set of faces a device may write.",
-  "A greedy claim is the unclaimed complement the framework computes at attach.",
-  "(the root's declared interface,",
-  "(the unit of modeling, a leaf or an assembly)",
+  "A greedy claim is the unclaimed complement the framework computes at attach",
+  "(the root's declared interface)",
   "(a published consistency point)",
-  "the immutable per-boundary publication.",
+  "the immutable per-boundary publication,",
   "The log is the retained sequence of published snapshots.",
   "The trace header is the trace's fixed preamble.",
   "A checkpoint is the `Model`'s state at a frame top as one value.",
@@ -817,10 +823,18 @@
   ", its `Deployment` and `t₀`",
   "An illustrative unfed root input such as",
   "(the immutable list of attached devices)",
-  "(the framework-owned write path of the calling task)",
+  "(the framework-owned write path `stage!(sim, …)`)",
   "#### The record format",
   "#### The header",
   "#### The `Trace` value",
-  "#### Recording is on by default"
+  "#### Recording is on by default",
+  "The drain is the frame-top swap that applies staged device writes to the root inputs.",
+  "A component is the unit of modeling, a leaf or an assembly.",
+  "(the set of faces a device may write)",
+  "the value passed at `attach!` that makes a device framework-legible",
+  "(the structural layout)",
+  ", a `Simulation` field",
+  "(`init!`, `restore!` or `replay!`, §12.6)",
+  "(below) requires"
  ]
 }

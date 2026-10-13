@@ -41,7 +41,7 @@
   {
    "id": "C-005",
    "old": "on a device task or through the harness writer, D-200).",
-   "new": "The staging happens on the task of a device (any attached participant in the periphery). It can also go through the harness writer (the framework-owned write path `stage!(sim, …)`) (D-200).",
+   "new": "The staging happens on the task of a device (any attached participant in the periphery). It can also go through the harness writer (the framework-owned write path `stage!(sim, …)`, D-200).",
    "where": "new",
    "cites": [
     "D-200"
@@ -80,7 +80,7 @@
   {
    "id": "C-009",
    "old": "They are written at `attach!` too, into the roster entry being created (`EmptyGreedyClaim`, §11.3).",
-   "new": "`attach!` writes `EmptyGreedyClaim` as it adds a device to the roster (the list of attached device entries, §11.3). The value goes into the roster entry being created.",
+   "new": "`attach!` writes `EmptyGreedyClaim` as it adds a device to the roster (the list of attached devices, §11.3). The value goes into the roster entry being created.",
    "where": "new",
    "cites": [
     "§11.3"
@@ -100,7 +100,7 @@
   {
    "id": "C-011",
    "old": "The device's task does not exist until `run!`, so that cell has no other writer yet.",
-   "new": "The device's task does not exist until `run!`, so the new roster entry's diagnostic cell has no other writer yet.",
+   "new": "The device's task does not exist until `run!`, so the new roster entry's diagnostic cell (a writer's own holding place for runtime diagnostics) has no other writer yet.",
    "where": "new",
    "cites": [],
    "tag": "R",
@@ -139,7 +139,7 @@
   {
    "id": "C-015",
    "old": "One diagnostic cell per writer: one per rostered device, one for the harness writer, one for the loop itself (D-200).",
-   "new": "Each writer has one diagnostic cell (its own holding place for runtime diagnostics) (D-136, D-200). There is one per rostered device, one for the harness writer and one for the loop itself (D-200).",
+   "new": "Each writer has one diagnostic cell (D-136, D-200). There is one per rostered device, one for the harness writer and one for the loop itself (D-200).",
    "where": "new",
    "cites": [
     "D-200"
@@ -548,7 +548,7 @@
   {
    "id": "C-058",
    "old": "Presentation is where `maxlog` lives.",
-   "new": "Presentation is where `maxlog` lives.",
+   "new": "Presentation is where `maxlog`, the cap Julia's logging macros put on repeats, lives.",
    "where": "new",
    "cites": [],
    "tag": "F"
@@ -846,7 +846,7 @@
   {
    "id": "C-089",
    "old": "Because the log retains snapshot references (§11.2), `totals` is monotone across logged snapshots.",
-   "new": "The log (the retained sequence of published snapshots) retains snapshot references (§11.2), so `totals` is monotone across logged snapshots.",
+   "new": "Because the log (the retained sequence of published snapshots) retains snapshot references (§11.2), `totals` is monotone across logged snapshots.",
    "where": "new",
    "cites": [
     "§11.2"
@@ -860,7 +860,7 @@
   {
    "id": "C-090",
    "old": "So `log_every` decimation (the log's keep-every-kth retention policy) loses which boundary within a skipped stretch an occurrence fell on, never how many occurrences there were.",
-   "new": "So `log_every` decimation (the log's keep-every-kth retention policy) loses which boundary within a skipped stretch an occurrence fell on, never how many occurrences there were.",
+   "new": "`log_every` decimation (the log's keep-every-kth retention policy) therefore loses which boundary within a skipped stretch an occurrence fell on, never how many occurrences there were.",
    "where": "new",
    "cites": [],
    "tag": "F"
@@ -868,26 +868,26 @@
   {
    "id": "C-091",
    "old": "Rejected: a shared queue under a lock, a status referencing the live accumulator, ring reuse by double-buffering, and unbounded accumulation (D-136).",
-   "new": "D-136 lists the rejected alternatives.",
+   "new": "The rejected alternatives are in D-136.",
    "where": "new",
    "cites": [
     "D-136"
    ],
    "tag": "R",
-   "ruling": "R6"
+   "ruling": "R6",
+   "note": "P2-21 moves the pointer to the end of 'One diagnostic cell per writer'"
   }
  ],
  "added": [
   "#### Writers and readers",
   "The diagnostics are written in these places.",
   "(any attached participant in the periphery)",
-  "(the framework-owned write path `stage!(sim, …)`)",
+  "(the framework-owned write path `stage!(sim, …)`,",
   "(one iteration of the loop)",
-  "(the list of attached device entries, §11.3)",
+  "(the list of attached devices, §11.3)",
   "(the diagnostics value each snapshot carries, §11.2)",
   "(the immutable per-boundary publication)",
   "#### One diagnostic cell per writer",
-  "(its own holding place for runtime diagnostics)",
   "(the frame-top swap that applies staged device writes to the root inputs)",
   "(each device's atomic holding place for pending writes)",
   "(compare-and-swap)",
@@ -903,6 +903,8 @@
   "#### The run's end",
   "(the stopped-sim value naming how the run ended)",
   "(a published consistency point)",
-  "(the retained sequence of published snapshots)"
+  "(the retained sequence of published snapshots)",
+  "(a writer's own holding place for runtime diagnostics)",
+  ", the cap Julia's logging macros put on repeats,"
  ]
 }

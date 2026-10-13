@@ -90,10 +90,14 @@
   {
    "id": "C-011",
    "old": "The computed claim source is declared or absent.",
-   "new": "The computed claim source is declared or absent.",
+   "new": "The computed claim source (the greedy one, §11.3) is declared or absent.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "C",
+   "newcites": [
+    "§11.3"
+   ],
+   "note": "P2-15: the greedy source glossed here with its home"
   },
   {
    "id": "C-012",
@@ -318,13 +322,13 @@
   {
    "id": "C-037",
    "old": "That is the reflection class (§8.1), where the shadowing check is an `isdefined`/`!==` pair.",
-   "new": "It is the same kind of reflection check as §8.1's shadowing check, an `isdefined`/`!==` pair (§8.1).",
+   "new": "It is a reflection check like the shadowing check of §8.1, an `isdefined`/`!==` pair.",
    "where": "new",
    "cites": [
     "§8.1"
    ],
    "tag": "R",
-   "ruling": "R10"
+   "ruling": "R10, RP-10"
   },
   {
    "id": "C-038",
@@ -547,7 +551,7 @@
   {
    "id": "C-061",
    "old": "and a maximal surface is what exactly one line of a binding asks for, in the open, checked like any other claim.",
-   "new": "A binding declares that source in exactly one line, in the open, and past the attach point nothing tells a greedy claim (the unclaimed complement computed at attach) from a returned one (§11.3).",
+   "new": "A binding declares that source in exactly one line, in the open, and past the attach point nothing tells a greedy claim from a returned one (§11.3).",
    "where": "new",
    "cites": [],
    "tag": "R",
@@ -879,12 +883,13 @@
  "added": [
   "(the units of modeling)",
   "(a component's primitive-vs-assembly status)",
-  "(the unclaimed complement computed at attach)",
   "Selectors are the closed family of deferred reads",
   "Greedy claims",
   "The conformance check",
   "The empty enumeration",
   "`gather` against a binding with no output side reports `DeviceContractMismatch`, the device twin of `BindingContractMismatch` (D-216).",
-  "A malformed table reports `ArgumentInvalid`, collected over the table's entries (D-216)."
+  "A malformed table reports `ArgumentInvalid`, collected over the table's entries (D-216).",
+  "A greedy claim is the unclaimed complement computed at attach.",
+  "(the greedy one, §11.3)"
  ]
 }

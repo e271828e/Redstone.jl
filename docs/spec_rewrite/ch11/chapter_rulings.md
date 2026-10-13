@@ -43,3 +43,8 @@ The RULING items of `chapter_pass_1.md` and `chapter_pass_2.md`. Lines are
 - **RP-13 (P2-29). Accepted, connective outside the bold.** "However,
   **widgets name the component's own ports, never root inputs**"
   ([D-026][d-026]).
+- **RP-14 (fixer 1's question on P1-22). One harness-writer gloss.** §11.3's
+  harness-writer gloss now repeats its own sentence. It takes §11.8's gloss,
+  "(the framework-owned write path `stage!(sim, …)`)", as RP-9 does for
+  §11.5, so the chapter carries one gloss for the term. Applied with the
+  batch's ruled edits.
