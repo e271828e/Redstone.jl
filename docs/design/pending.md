@@ -85,7 +85,7 @@ what the spec says, the spec edit is part of the item.
   Chapter 11 left these for the owner. Each sentence stays as written,
   plain and uncited for the point in question, until ruled; the evidence is
   group 4 of its `rulings_batch.md`, which
-  `git show <PARENT>:docs/spec_rewrite/ch11/rulings_batch.md` recovers.
+  `git show e5cbb77:docs/spec_rewrite/ch11/rulings_batch.md` recovers.
   - "printable before the run starts" (§11.3), said of the write-surface
     partition. No printer exists for the roster or the partition, and D-106
     says only "inspectable". Recommended: "fixed before the run starts".
