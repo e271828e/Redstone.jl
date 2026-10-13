@@ -228,7 +228,7 @@ y_types(::DiscreteMap) = (b = Int,)
 y_direct(::DiscreteMap, (; u)) = (b = 2u.a,)
 
 """
-Two-channel exponential smoother, written in §7.3's blessed idiom: the in-place
+Two-channel exponential smoother, written in §8.2's blessed idiom: the in-place
 math runs on the workspace, and what reaches the store is an isbits snapshot.
 Nothing carries between calls — the scratch is garbage until written.
 """
@@ -308,7 +308,7 @@ struct ModesNoContract <: AbstractComponent end
 m_init(::ModesNoContract) = (phase = :idle,)
 x_deriv(::ModesNoContract, (; m)) = (;)
 
-# --- the event coverage set (§2.1, §10.6) -------------------------------------
+# --- the event coverage set (§2.3, §10.6) -------------------------------------
 # Guards and handlers are ordinary named functions referenced by `state_events` —
 # nothing global-generic about them, which is why they carry component-prefixed
 # names here rather than adding methods to a framework surface.
@@ -889,7 +889,7 @@ late_diverger_guard(c::LateDiverger, (; x)) = x.q - c.level
 late_diverger_handler(::LateDiverger, (; m)) = (m = (blown = true,),)
 state_events(::LateDiverger) = (blow = StateEvent(late_diverger_guard, late_diverger_handler),)
 
-# --- the algebraic-cycle coverage set (§5.5, §5.6) ----------------------------
+# --- the algebraic-cycle coverage set (§5.5, §13.8) ----------------------------
 # What the feedthrough tracer has to tell apart: a hop stage 2 does not route, a
 # declaration no tracer scalar can enter, and a member whose evaluation throws.
 
@@ -1255,7 +1255,7 @@ struct HeightField <: AbstractTerrain
 end
 
 """
-The field-emitting component (§4.4). It owns its resource loading, so the
+The field-emitting component (§4.4, §8.2). It owns its resource loading, so the
 heightmap is built once, at construction, and frozen on the instance; the swept
 output stage rebuilds only the immutable struct around that existing reference,
 which is what makes the rebuild allocation-free.
@@ -1268,7 +1268,7 @@ end
 Terrain(; h0 = 1.0) = Terrain(fill(h0, 2, 2), h0)
 
 """
-§4.4's value-level constructor: the map (component, input values) → handle,
+§8.2's value-level constructor: the map (component, input values) → handle,
 plain, pure and public, so condition math can build the same handle outside any
 sweep. `Terrain` takes no inputs, so the component is the whole domain.
 """
@@ -1459,7 +1459,7 @@ y_direct(::GearReader, (; u)) = (drag = u.gear === down ? 2 * u.x : u.x,
                                       code = Int(u.gear))
 
 """
-An enum mode declared public and returned from stage 1: §7.5's remedy for the
+An enum mode declared public and returned from stage 1: §11.2's remedy for the
 missing event stream is declaring the mode field public, which the return
 delivers.
 """
@@ -1490,7 +1490,7 @@ y_types(::PhaseReader) = (armed = Bool,)
 y_direct(::PhaseReader, (; u)) = (armed = u.phase === :armed,)
 
 """
-A `Symbol` mode declared public and returned from stage 1: §7.5's remedy on the
+A `Symbol` mode declared public and returned from stage 1: §11.2's remedy on the
 idiomatic label.
 """
 struct PhaseMode <: AbstractComponent end

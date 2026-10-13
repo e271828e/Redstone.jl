@@ -1,7 +1,7 @@
 # Trim and the environment, from the ground up
 
 *A companion explainer, not normative text. The ground truth is
-`spec.md` [§4.4][s4-4] (field handles and the value-level constructor),
+`spec.md` [§4.4][s4-4] (field handles), [§8.2][s8-2] (the value-level constructor),
 [§14.1][s14-1] (the pre-sweep doctrine), [§14.7][s14-7] and [§14.9][s14-9] (the trim problem and its
 mounting), `flight_case_studies.md` section 4, and decision [D-139][d-139], which settled all of it on
 2026-08-05 during the round-4 dry-run adjudication (commit `daf3298d`). This
@@ -150,7 +150,10 @@ the blessed default for design tasks.
 the ordinary rules, each becomes a root input — one whose *value* is a
 handle. The `baseline` writes it like any other root input. Nothing new is
 required: [§4.4][s4-4] handles are immutable values carried by ordinary ports, and a
-root input holds a value.
+root input holds a value. That holds for an isbits handle, such as the
+parametric atmosphere and the horizontal terrain below. A handle that
+references bulk data, such as a terrain heightmap, enters a rig through a
+constant source instead, never as a root input ([§4.4][s4-4], [D-364][d-364]).
 
 Three things are worth stating about the pair.
 
@@ -269,7 +272,7 @@ baseline = override(ready_for_taxi(ac),
                               "terrain.elevation" => 0.0))
 
 #the same handle the sweep will build, built one level up from the same
-#values, by the component's own value-level constructor (§4.4)
+#values, by the component's own value-level constructor (§8.2)
 atm = atmospheric_field(world.atmosphere; T_sl, p_sl, wind)
 
 params = TrimParameters(; Ob, EAS = 50.0, γ = 0.0, β = 0.0, ψ = 0.0, atm)
@@ -297,7 +300,7 @@ baseline, and into the handle. That single-variable discipline is the whole
 safety argument, and the next section is about what happens when it lapses.
 
 **(b) + elimination** — aircraft as root, environment faces unconnected, the
-handle *is* the root-input value.
+isbits handle *is* the root-input value.
 
 ```julia
 sim = Simulation(ac; h = 0.02)  #the `atm`/`trn` faces are unconnected → root inputs
@@ -522,7 +525,7 @@ One alternative deserves recording because it is the first thing anyone
 proposes: widen the condition seam to `condition(d, baseline)`, so the
 condition math can read the handle straight out of the baseline it will be
 applied over. It would genuinely single-source the handle — in rig shape (b),
-where the handle *is* a baseline root-input value, the params field disappears
+where an isbits handle *is* a baseline root-input value, the params field disappears
 entirely.
 
 It fails on two counts.
@@ -897,6 +900,7 @@ with the whole spectrum in view.
 [d-008]: ../decisions.md#d-008--function-valued-environment-signals-with-the-handle-pattern
 [d-139]: ../decisions.md#d-139--give-environment-field-handles-a-value-level-constructor-to-prevent-drift
 [d-262]: ../decisions.md#d-262--post-commit-checks-on-the-trim-problem
+[d-364]: ../decisions.md#d-364--hold-a-bulk-data-rig-environment-in-a-constant-source
 [s14-1]: ../spec.md#141-conditions-are-path-addressed-overlays-on-the-declared-defaults
 [s14-2]: ../spec.md#142-fragment-composition-locality-without-schema
 [s14-7]: ../spec.md#147-the-trim-problem-namedtuple-decisions-declared-reads-named-residuals
@@ -904,5 +908,6 @@ with the whole spectrum in view.
 [s14-9]: ../spec.md#149-mounting-problems-as-relocatable-values
 [s4-4]: ../spec.md#44-function-valued-signals-environment-access
 [s5-3]: ../spec.md#53-structural-feedthrough-stage-roles-execution-order-and-step-boundaries
+[s8-2]: ../spec.md#82-the-declaration-inventory
 [sA]: ../spec.md#appendix-a-taught-contracts-the-author-facing-index
 [sD]: ../spec.md#appendix-d-glossary

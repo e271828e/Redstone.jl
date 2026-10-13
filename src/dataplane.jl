@@ -687,7 +687,7 @@ port(snapshot::Snapshot, path::String, name::Symbol) =
     gather_cell(snapshot.store, snapshot.layout.addr[(path, name)])
 
 # One boundary's capture: fresh buffers, one allocation per boundary — the
-# framework side of §7.5's scope, which carved publication and logging out.
+# framework side of §9.8's scope, which carved publication and logging out.
 capture_stores(bundle::StoreBundle) = StoreBundle(map(cs -> CellStore(copy(cs.buffer)), bundle.stores))
 
 """
@@ -742,7 +742,7 @@ mutable struct SnapshotLog
     cursor::Int                     # the thinning cursor over odd indices; 0 = inactive
 end
 
-# A finite bound hints the middle's capacity, so regrowth is a non-event (§7.5,
+# A finite bound hints the middle's capacity, so regrowth is a non-event (§9.8,
 # §11.2). `init!` knows no duration (D-255), so the bound alone sets the hint;
 # a disabled or unbounded log gets none.
 function SnapshotLog(enabled::Bool, log_every::Int, log_max::Int)
@@ -759,7 +759,7 @@ snapshot re-points `last` — one field store, which is all the terminal endpoin
 costs. Off, the switch retains nothing at all: retention is what it gates,
 publication being upstream of it. The snapshot is the box `latest` holds,
 taken unspecialized, so every store here reuses publication's one allocation
-(§7.5). Its concrete type rides beside it and keeps the two `boundary` reads
+(§9.8). Its concrete type rides beside it and keeps the two `boundary` reads
 static, since a dynamic read boxes an `Int` past 511.
 """
 function log!(snapshot_log::SnapshotLog, @nospecialize(snapshot::Snapshot),

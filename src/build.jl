@@ -364,7 +364,7 @@ every consumed **stage-2** port; consuming a stage-1 port adds no edge, which is
 the whole structural payoff of the split — a stage-1 port takes no input and so
 carries no input dependence (§5.3). A stall is not reported as its residue: the
 residue is *decomposed* into one `AlgebraicCycle` per strongly connected cluster
-below (§5.6, D-012), which is why `edges` keeps each dependence's port and face,
+below (§13.8, D-012), which is why `edges` keeps each dependence's port and face,
 which Kahn itself discards.
 """
 function _outputs(structure::Structure, decls::Vector{Decls},
@@ -412,13 +412,13 @@ function _outputs(structure::Structure, decls::Vector{Decls},
 end
 
 """
-§5.6, D-012: the stalled subgraph decomposed. Every nontrivial strongly connected
+§13.8, D-012: the stalled subgraph decomposed. Every nontrivial strongly connected
 component of the subgraph induced on the unplaced components is one cluster and
 one diagnostic; the innocent downstream cone the residue also holds lies in no
 such component and is reported nowhere. `members` is the depth-first preorder
 along the cluster's own wires from its lowest flatten index, neighbours taken in
 flatten order, and `wires` follows the members. Each cluster is then handed to
-the tracer for §5.6's classification, `placed` being the acyclic prefix its
+the tracer for §13.8's classification, `placed` being the acyclic prefix its
 out-of-cycle faces read from.
 """
 function _cycle_diagnostics(structure::Structure, edges::Vector{Vector{Tuple{Int,Symbol,Symbol}}},
@@ -853,7 +853,7 @@ end
 # --- The structure step's wire pass (§6.1, §9.1, D-236) -----------------------
 
 """
-The marker scalar (§6.1, §9.1): the continuous contracts are retyped at it to
+The marker scalar (§8.2, §9.1): the continuous contracts are retyped at it to
 tell a walking leaf from a pinned one — a leaf typed `Marker` walks with the
 activation, anything else is pinned. It never enters arithmetic.
 """
@@ -1041,7 +1041,7 @@ _mstores(structure::Structure) =
                             isempty(m) ? nothing : Ref(m)), entry.path)
         for entry in structure.components]
 
-# Declaration by allocation (§7.3, D-077): sizes from the instance, eltypes from
+# Declaration by allocation (§8.2, D-077): sizes from the instance, eltypes from
 # the activation. Called once per probe and once per `Model`.
 _workspaces(structure::Structure, ::Type{T}) where {T} =
     Any[_workspace(entry, T) for entry in structure.components]
@@ -1166,7 +1166,7 @@ end
 """
 One component's stage-2 probe, writing its complete product into `products[ci]`:
 the body of `probe_stage2`'s topological loop, factored so the cycle classifier
-can run the same chain over the acyclic prefix Kahn did place (§5.6). A
+can run the same chain over the acyclic prefix Kahn did place (§13.8). A
 component with no `y_direct`, and a frozen one, is a no-op.
 """
 function _probe_direct!(products::Vector{NamedTuple}, ci::Int, structure::Structure,

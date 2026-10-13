@@ -920,7 +920,7 @@ function diagnostics_kind_set()
                                                declared = Int))
         @test occursin("m_init(::C) = (; phase = :idle)", rendered)
 
-        # The walk clause's hint on the input side (§6.1, §8.2, D-236, D-263)
+        # The walk clause's hint on the input side (§8.2, D-236, D-263)
         # states the fix by name.
         rendered = message(WalkingFaceAtFrozenEntry(path = "c", face = :u,
                                                      producer_path = "src",
@@ -942,7 +942,7 @@ function diagnostics_kind_set()
         @test startswith(rendered, "the root component: root input `stop` carries a `StopFlag`") &&
               occursin("never an operator's", rendered) && occursin("`stop!`", rendered)
 
-        # The cycle's three forms (§5.5, §5.6, D-245), over constructed values: the
+        # The cycle's three forms (§5.5, §13.8, D-245), over constructed values: the
         # cluster's wires read as one loop, and the classification, where there is
         # one, names the dead hops in the ladder's own words.
         rendered = message(AlgebraicCycle(members = ["plant", "sum", "ctl"],
@@ -977,7 +977,7 @@ function diagnostics_kind_set()
         @test occursin("structurally", rendered)
         # The sampled fallback rides in both forms: as the mode phrase under a
         # real verdict, and as the caveat on a hop it found under an artificial
-        # one, an untaken branch being its only miss (§5.6, D-012).
+        # one, an untaken branch being its only miss (§13.8, D-012).
         rendered = message(AlgebraicCycle(members = ["m", "g1", "g2"],
                                           wires = ["m/F" => "g1/e", "g1/out" => "m/f"],
                                           classification = :real, dead = [("m", :g, :F)],

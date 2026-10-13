@@ -1,4 +1,4 @@
-# §5.6's feedthrough tracer and the cycle classifier (D-012, D-140, D-245).
+# §13.8's feedthrough tracer and the cycle classifier (D-012, D-140, D-245).
 #
 # Diagnostic only, never relied on for correctness: scheduling correctness comes
 # from the structural two-stage split alone. What runs here is the *local*
@@ -17,7 +17,7 @@
 # --- the scalar ---------------------------------------------------------------
 
 """
-§5.6's set-propagation scalar. Every leaf carries the set of in-cycle input
+§13.8's set-propagation scalar. Every leaf carries the set of in-cycle input
 faces it may depend on, as a bitmask, unioned by every operation; `value` is a
 primal the local mode branches on. `S = true` is the global, value-blind
 tracer: a comparison or a value-severing conversion touching a tagged operand
@@ -29,7 +29,7 @@ struct Tracer{S} <: Real
     dependencies::UInt64
 end
 
-"The global tracer's refusal at a tainted decision (§5.6). A marker, never rendered."
+"The global tracer's refusal at a tainted decision (§13.8). A marker, never rendered."
 struct Undecidable <: Exception end
 
 Tracer{S}(x::Real) where {S} = Tracer{S}(Float64(x), UInt64(0))
@@ -43,7 +43,7 @@ Base.zero(::Type{Tracer{S}}) where {S} = Tracer{S}(0.0, UInt64(0))
 Base.one(::Type{Tracer{S}}) where {S} = Tracer{S}(1.0, UInt64(0))
 Base.float(x::Tracer) = x
 
-# The documented blind spot (§5.6): a value-severing conversion drops the set,
+# The documented blind spot (§13.8): a value-severing conversion drops the set,
 # which the local tracer accepts and the global one refuses.
 Base.Float64(x::Tracer{false}) = x.value
 Base.Float64(::Tracer{true}) = throw(Undecidable())
@@ -81,7 +81,7 @@ end
 # `hypot` beyond two arguments and `norm` scale by the largest operand, a
 # comparison the global tracer refuses; the union is that answer without the
 # branch. An infinite `p` keeps Base's own walk: `Inf` reaches the union `max`
-# and passes, `-Inf` meets a tainted comparison and refuses (§5.6).
+# and passes, `-Inf` meets a tainted comparison and refuses (§13.8).
 function Base.hypot(x::Tracer{S}, y::Tracer{S}, z::Tracer{S}...) where {S}
     operands = (x, y, z...)
     Tracer{S}(hypot(map(v -> v.value, operands)...),
@@ -100,7 +100,7 @@ LinearAlgebra.norm(v::StaticArray{S,<:Tracer}, p::Real = 2) where {S<:Tuple} =
 """
 A decision is legal when no operand carries a set, or when the local tracer is
 deciding on its primal. State, modes, parameters and time carry empty sets, so a
-branch on them decides at the probe state in either mode (§5.6's boundaries).
+branch on them decides at the probe state in either mode (§13.8's boundaries).
 """
 _decide(S::Bool, deps::UInt64) = (S && !iszero(deps)) ? throw(Undecidable()) : nothing
 
@@ -153,7 +153,7 @@ _tag(::Type{T}, v, bit::UInt64) where {T} =
     _map_leaves(T, v, l -> l isa Float64 ? T(l, bit) : l isa Tracer ? T(l.value, bit) : l)
 
 """
-`_tag` with the primal redrawn: the sampled fallback's seed (§5.6). The local
+`_tag` with the primal redrawn: the sampled fallback's seed (§13.8). The local
 tracer decides on `value`, so a state and an in-cycle face have to move between
 evaluations for the branches to move with them; the leaf order is the walk's,
 so one `rng` gives one reproducible draw per evaluation.
@@ -173,10 +173,10 @@ end
 # --- the per-member trace ------------------------------------------------------
 
 """
-One member's evaluation (§5.6): `y_direct` once, in isolation, at the
+One member's evaluation (§13.8): `y_direct` once, in isolation, at the
 probe point. The in-cluster faces of `faces` are seeded with their tags, every
 other bundle field untagged — only inputs are seeded, so a branch on state,
-modes, parameters or time never interferes (§5.6's boundaries). Returns
+modes, parameters or time never interferes (§13.8's boundaries). Returns
 `port => the union of the tags the port's leaves carry`, over `ports`.
 
 With an `rng` this is one sampled evaluation instead: the state and the seeded
@@ -205,7 +205,7 @@ function _trace_direct(ci::Int, traced_decl::Decls, faces::Vector{Symbol},
 end
 
 """
-The sampled fallback (§5.6, D-012): where the global tracer met an
+The sampled fallback (§13.8, D-012): where the global tracer met an
 input-tainted branch, the local tracer decides on its primal and reports the
 paths that decision took. Eight evaluations at a fixed seed, the state and the
 in-cycle faces redrawn for each, the map their union — so a face routed on any
@@ -265,7 +265,7 @@ end
 # --- the verdict ---------------------------------------------------------------
 
 """
-§5.6's classification, D-245's verdict. Returns `cycle` carrying `classification`,
+§13.8's classification, D-245's verdict. Returns `cycle` carrying `classification`,
 `dead` and `traced`, or `cycle` unchanged when any member's evaluation threw —
 classification is a bonus on the cycle error, never its precondition.
 
@@ -311,7 +311,7 @@ function _classify(cycle::AlgebraicCycle, scc::Vector{Int}, edges, placed::Vecto
 
             # A discrete member's pinned declarations admit no tracer scalar, and
             # neither does a continuous face or port declared with no walking leaf
-            # (§5.6, D-245). Beyond 64 faces the bitmask runs out.
+            # (§13.8, D-245). Beyond 64 faces the bitmask runs out.
             traced_decl = structure.components[ci].tier === CONTINUOUS && length(faces) ≤ 64 ?
                  declarations(structure.components[ci].instance, CONTINUOUS, T) : nothing
             face_traceable = traced_decl === nothing ? falses(length(faces)) :
@@ -328,7 +328,7 @@ function _classify(cycle::AlgebraicCycle, scc::Vector{Int}, edges, placed::Vecto
             end
             # The global tracer is exact in one evaluation and refuses an
             # input-tainted branch; the local one then decides on its primal
-            # over sampled states, missing only an untaken branch (§5.6, D-012).
+            # over sampled states, missing only an untaken branch (§13.8, D-012).
             routes, trace_mode = try
                 _trace_direct(ci, traced_decl, faces, face_traceable, ports, structure, decls,
                               stage1, mstores, products, cluster_set, T), :global

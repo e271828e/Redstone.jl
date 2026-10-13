@@ -748,7 +748,7 @@ function assembly_rate_chains()
     end
 end
 
-# --- the whole-tree obligation model (§6.1) -----------------------------------
+# --- the whole-tree obligation model (§6.1, §9.1) ------------------------------
 
 struct Starved <: AbstractComponent              # an obligation chain that never ends
     g::Gain

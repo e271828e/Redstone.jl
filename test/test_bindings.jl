@@ -144,7 +144,7 @@ function test_bindings()
         @test err isa ErrorException && occursin("`wheel`", err.msg)
     end
 
-    @testset "map_input over 64 channels allocates nothing and stays concrete (§11.6, §7.5)" begin
+    @testset "map_input over 64 channels allocates nothing and stays concrete (§11.6, §9.8)" begin
         # Past the 32 elements where `map` over a tuple allocates and loses its
         # element types.
         b = TableBinding(; (Symbol(:c, i) => (face = "f$i",) for i in 1:64)...)

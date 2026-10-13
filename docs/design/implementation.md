@@ -156,7 +156,7 @@ It reaches the parent through its import list alone, as a user's component
 file does (D-313). Nothing in the package depends on it, so `src/Redstone.jl`
 includes it last.
 
-Spec: §2.1, §5.4, §5.5, §6.2, §8.1, §8.5, §10.4, §13.5, §13.7, D-179, D-184, D-211, D-231, D-311, D-312, D-313, D-316.
+Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §8.5, §10.4, §13.5, §13.7, D-179, D-184, D-211, D-231, D-311, D-312, D-313, D-316.
 
 ### `src/build.jl`
 
@@ -195,7 +195,7 @@ Spec: §2.1, §5.4, §5.5, §6.2, §8.1, §8.5, §10.4, §13.5, §13.7, D-179, D
   - the order beside the rows, as `ci`s;
   - `_ports`, which concatenates a row into the products' order.
 - At a stall, the SCC decomposition into one `AlgebraicCycle` per cluster
-  (§5.6, D-012).
+  (§13.8, D-012).
 - The layout, with the root-input meet (D-168, D-236), `IllegalPortType`'s
   three layout arms (D-237) and its two stop-request arms (D-316), and the flat
   `x` ranges every offset is read from (D-261). `Requester` is one entry of the
@@ -220,7 +220,7 @@ Spec: §2.1, §5.4, §5.5, §6.2, §8.1, §8.5, §10.4, §13.5, §13.7, D-179, D
     stepper from the `algorithm` keyword.
   - The event set takes the phase bodies' chunk size (D-289).
 
-Spec: §5.3, §5.5, §5.6, §6.1, §7.1, §7.3, §8.2, §9.1–§9.4, §9.7, §10.4, §13.2,
+Spec: §5.3, §5.5, §13.8, §6.1, §7.1, §7.3, §8.2, §9.1–§9.4, §9.7, §10.4, §13.2,
 §13.5, D-012, D-051, D-094, D-166, D-179, D-208, D-210, D-229, D-231, D-235,
 D-236, D-237, D-247, D-248, D-250, D-252, D-253, D-256, D-261, D-263, D-265,
 D-289, D-315, D-316.
@@ -329,7 +329,7 @@ D-256, D-268, D-269, D-317.
     (§12.2, D-027).
 - Snapshots, and the log with re-decimation. The log stores the box
   publication made, which `log!` takes `@nospecialize`d beside its concrete
-  type, so the two `boundary` reads stay static (§7.5).
+  type, so the two `boundary` reads stay static (§9.8).
 - The published `FrameworkStatus`, which every snapshot carries. It holds the
   per-writer records `WriterStatus` and, beside them, the pacer's frozen
   `PacerStatus` (D-269):
@@ -362,7 +362,7 @@ The declaration layer:
   bundle-name functions and `foreign_declarations`, take it unspecialized, so a
   new component type compiles none of them again (§9.7, D-289).
 
-Spec: §2.1, §5.2, §8.1, §8.2, §8.5–§8.7, §9.3, §9.7, §13.5, Appendix B, D-051,
+Spec: §2.3, §5.2, §8.1, §8.2, §8.5–§8.7, §9.3, §9.7, §13.5, Appendix B, D-051,
 D-179, D-185, D-195, D-211, D-246, D-248, D-263, D-289, D-316.
 
 ### `src/deployment.jl`
@@ -881,14 +881,14 @@ D-254, D-255, D-260, D-261, D-274, D-317, D-319.
 
 ### `src/tracer.jl`
 
-- `Tracer{S}`, §5.6's set-propagation scalar. It is global on `true` and local
+- `Tracer{S}`, §13.8's set-propagation scalar. It is global on `true` and local
   on `false`, and `Undecidable` is the marker between them.
 - The leaf-wise lift and tag walks `_lift`, `_tag` and `_sample`.
 - `_classify`, the schedule-free per-member trace at the probe point, with its
   prefix probe, D-245's port-graph verdict and the sampled fallback at a fixed
   seed.
 
-Spec: §5.4, §5.6, §9.3, D-012, D-140, D-245.
+Spec: §5.4, §13.8, §9.3, D-012, D-140, D-245.
 
 ### `src/trim.jl`
 
@@ -1086,7 +1086,7 @@ Traps the code does not warn about, each hit more than once while building:
   nothing;
 - a fail-fast throw is `DiagnosticError{K}`, read with `diagnostic`, never
   `diagnostics`;
-- **a discrete member traces structurally (§5.6).** A cycle through a
+- **a discrete member traces structurally (§13.8).** A cycle through a
   discrete stage-2 block is `AlgebraicCycle` `:real` with an empty `dead`,
   never `:artificial`. A store counter reads `N + 1` after `N` steps, since
   the `t₀` boundary runs the first tick;

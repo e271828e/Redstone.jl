@@ -301,7 +301,7 @@ function leaves_retype()
             @test retype(Marker, retype(Marker, P)) === retype(Marker, P)
         end
         # A stripped pin is a plain `Float64` again, so a second pass walks it:
-        # that is the wire relation's lifted candidate (§6.1, D-236).
+        # that is the wire relation's lifted candidate (§8.2, D-236).
         @test retype(Marker, retype_entry(Marker, Pinned{Float64})) === Marker
         # The marker is read at the top alone (D-265): `retype` has no arm for
         # it, and `_holds_marker` finds one below the top under either spelling.
@@ -314,7 +314,7 @@ function leaves_retype()
 end
 
 function leaves_wire_relation()
-    @testset "the wire relation with its abstract arm (§6.1, D-236)" begin
+    @testset "the wire relation with its abstract arm (§8.2, D-236)" begin
         # A concrete entry is embed-accept leaf by leaf: a pinned entry refuses a
         # walking producer and takes a frozen one, a walking entry takes both.
         @test !_accepts_wire(SVector{3,Float64}, SVector{3,D8}, D8)

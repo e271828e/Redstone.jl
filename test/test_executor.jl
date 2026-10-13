@@ -38,7 +38,7 @@ function test_executor()
 
     @testset "the chunk walk is allocation-free at any width (§9.7)" begin
         # Six independent loops at chunk_size = 1: sweep_2 walks 18 one-entry
-        # chunks — a chunk count no other fixture approaches — so the §7.5 canary
+        # chunks — a chunk count no other fixture approaches — so the §9.8 canary
         # covers the outer walk over the chunk tuple itself, not just the entry
         # walks within one chunk.
         six = Group(NamedTuple{ntuple(i -> Symbol(:m, i), 6)}(ntuple(_ -> feedback_model(), 6));

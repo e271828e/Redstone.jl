@@ -1,4 +1,4 @@
-# --- events at boundaries (§2.1, §10.6, increment 6) ----------------------------
+# --- events at boundaries (§2.3, §10.6, increment 6) ----------------------------
 
 # Malformed event and projection declarations, at top level per D-164.
 struct HalfEvent <: AbstractComponent end
@@ -113,7 +113,7 @@ function test_events()
         @test d.event === nothing                 # no handler, no event
     end
 
-    @testset "the guard's form is the declared policy (§2.1, §10.4, D-179)" begin
+    @testset "the guard's form is the declared policy (§2.3, §10.4, D-179)" begin
         @test build(fed(Trigger(0.5), "sig")).events.components[1].policies === (fire = :boundary,)
         @test build(single(Sawtooth(0.3))).events.components[1].policies === (wrap = :localized,)
         @test build(single(Rotor())).events.components[1].policies === NamedTuple()
@@ -314,7 +314,7 @@ function test_events()
         @test ForwardDiff.value(state(rotor_model, "c").r[1]) ≈ 1.0 atol = 1e-15
     end
 
-    @testset "gate 3: a quiet boundary with events does not allocate (§7.5)" begin
+    @testset "gate 3: a quiet boundary with events does not allocate (§9.8)" begin
         # The first iteration round always runs, so guard evaluation is on the
         # measured path even when nothing ever fires.
         sim = Simulation(fed(Trigger(0.5), "sig"); h = 1//10)

@@ -513,7 +513,7 @@ coincide, and the simultaneous-tick rule orders them topologically within one sw
 cascade with zero intra-suite latency). Meanwhile `ctrl`, reading at 20, 40, 60, 80
 … ms, sees gnss data aged alternately 13 ms and 33 ms (writes at 7, 47, …) — not an
 artifact but the honest schedule of a multi-rate system, and *fully determined at
-build* from the `(D, Φ)` table. That determinism suggests a diagnostic: the [§5.6][s5-6]
+build* from the `(D, Φ)` table. That determinism suggests a diagnostic: the [§13.8][s13-8]
 feedthrough tracer could print per-wire data ages ("this connection delivers data
 aged 13–33 ms"), turning the staleness question from a debugging session into a
 table lookup.
@@ -793,10 +793,10 @@ All small, all honest; collected so a future increment can check them off:
 [s10-6]: ../spec.md#106-event-iteration-at-boundaries-to-quiescence-budgeted
 [s10-7]: ../spec.md#107-real-time-pacing
 [s13-1]: ../spec.md#131-reporting-policy-collect-the-checks-fail-the-evaluations-fast
+[s13-8]: ../spec.md#138-cycle-diagnosis-feedthrough-tracing
 [s14-5]: ../spec.md#145-boundary-zero-an-ordinary-boundary-with-authored-incoming-transitions
 [s14-8]: ../spec.md#148-the-trim-service-solver-seam-scratch-stores-commit-and-report
 [s5-3]: ../spec.md#53-structural-feedthrough-stage-roles-execution-order-and-step-boundaries
-[s5-6]: ../spec.md#56-diagnostics-feedthrough-tracing
 [s8-7]: ../spec.md#87-rate-scopes
 [s9-1]: ../spec.md#91-the-builds-three-steps
 [s9-2]: ../spec.md#92-the-build-and-deployment-artifacts

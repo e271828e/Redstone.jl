@@ -41,7 +41,7 @@ function test_log()
         @test length(logged(sim)) == 21                      # the session accumulates: one trajectory, one log
     end
 
-    @testset "the log allocates nothing beyond publication (§7.5, §11.2)" begin
+    @testset "the log allocates nothing beyond publication (§9.8, §11.2)" begin
         # Equal, not zero: §11.2 builds a snapshot and a table copy per frame
         # by design, log or no log. The log stores the box publication made.
         # 1000 frames carry the ordinal past 511, where a dynamic `Int` read boxes.
@@ -203,7 +203,7 @@ function test_log()
         @test length(sim.run.log.snaps.ref.mem) < 1024              # no bound, no hint
         run!(sim; t_end = 1.0)
         @test length(logged(sim)) == 11
-        # A finite bound hints the middle's capacity at `init!` (§7.5, §11.2).
+        # A finite bound hints the middle's capacity at `init!` (§9.8, §11.2).
         init!(sim, authored; log_max = 4096)
         @test isempty(sim.run.log.snaps)
         @test length(sim.run.log.snaps.ref.mem) ≥ 4096

@@ -411,7 +411,7 @@ end
 settling_time(samples) = (findlast(sample -> abs(sample - 5.0) > 0.05, samples) + 1) / 10
 
 function test_blocks()
-    @testset "the junction's arity and port types come from its type (§6.2, D-311)" begin
+    @testset "the junction's arity and port types come from its type (§13.7, D-311)" begin
         @test u_types(Or{3}()) == (in1 = Bool, in2 = Bool, in3 = Bool)
         @test y_types(Or{3}()) == (out = Bool,)
         @test u_types(SumJunction{Float64,2}()) == (in1 = Float64, in2 = Float64)
@@ -435,7 +435,7 @@ function test_blocks()
         end
     end
 
-    @testset "the sum adds a walking, a pinned and a delayed cell (§6.2, §6.1)" begin
+    @testset "the sum adds a walking, a pinned and a delayed cell (§13.7, §6.1)" begin
         sim = Simulation(blocks_sum_model(); h = 1//100)
         init!(sim, fragment())
         step!(sim; t_plus = 3//100)
@@ -446,7 +446,7 @@ function test_blocks()
         @test build(blocks_sum_model(); activations = (Float64, LinearizeDual)) isa Build
     end
 
-    @testset "the pack is the junction at a static vector, and linearizes to the identity (§6.2, §14.10, D-311)" begin
+    @testset "the pack is the junction at a static vector, and linearizes to the identity (§13.7, §14.10, D-311)" begin
         @test u_types(Pack{Float64, 3}()) == (in1 = Float64, in2 = Float64, in3 = Float64)
         @test y_types(Pack{Float64, 3}()) == (out = SVector{3, Float64},)
         @test typeof(Pack{Float64, 2}()) === Junction{Float64, SVector{2, Float64}, 2, typeof(Redstone.Blocks.pack)}
@@ -550,7 +550,7 @@ function test_blocks()
         end
     end
 
-    @testset "the structure blocks' and the time source's phase bodies allocate nothing (§7.5)" begin
+    @testset "the structure blocks' and the time source's phase bodies allocate nothing (§9.8)" begin
         for model in (pack_model(Pack{Float64, 2}()), unpack_model(), round_trip_model(),
                       switch_root(), vector_switch_model(), fed_by(Source(sin), Integrator()),
                       fed_by(Source(t -> 2 * sin(t)), Integrator()), vector_source_model(), flip_model(),
@@ -707,7 +707,7 @@ function test_blocks()
         @test build(vector_model; activations = (Float64, LinearizeDual)) isa Build
     end
 
-    @testset "the Gaussian white noise is a pure function of its seed and tick, with the moments it claims (§7.3, §2.2, D-231, D-313)" begin
+    @testset "the Gaussian white noise is a pure function of its seed and tick, with the moments it claims (§7.3, §2.5, D-231, D-313)" begin
         sim = Simulation(noise_model(GaussianWhiteNoise(seed = 42, σ = 1.0)); h = 1//100)
         init!(sim, fragment())
         @test port(sim, "c", :out) == Redstone.Blocks.gaussian(42, 0)
@@ -761,7 +761,7 @@ function test_blocks()
         end
     end
 
-    @testset "the discrete tier's phase bodies allocate nothing (§7.5)" begin
+    @testset "the discrete tier's phase bodies allocate nothing (§9.8)" begin
         for model in (fed_by(Constant(1.0), DiscreteIntegrator()), feedback_loop(DiscreteIntegrator()),
                       discrete_limited_model(), limiter_model(0.0, 1.0),
                       fed_by(Constant(1.0), Delay(K = 50, v0 = 0.0)),
@@ -834,7 +834,7 @@ function test_blocks()
         @test (StopFlag => 1) in activation(linearize_build, LinearizeDual).layout.sizes
     end
 
-    @testset "the sum model's phase bodies allocate nothing (§7.5)" begin
+    @testset "the sum model's phase bodies allocate nothing (§9.8)" begin
         sim = Simulation(blocks_sum_model(); h = 1//100)
         bodies = phase_bodies(sim)
         for name in (:sweep_1, :sweep_2, :rhs, :ticks)
@@ -1007,7 +1007,7 @@ function test_blocks()
         @test !Redstone.has_stage(y_state, lead_lag())
     end
 
-    @testset "the linear blocks' phase bodies allocate nothing (§7.5)" begin
+    @testset "the linear blocks' phase bodies allocate nothing (§9.8)" begin
         for model in (fed_by(Constant(SVector(1.0, -1.0)), two_state_block()), feedback_loop(0.0),
                       fed_by(Constant(1.0), lag_form()), lead_lag_loop())
             @test build(model; activations = (Float64, LinearizeDual)) isa Build
@@ -1137,7 +1137,7 @@ function test_blocks()
         @test_throws ArgumentError DiscretizedTransferFunction(num = (1,), den = (1, 0), u0 = 1.0)
     end
 
-    @testset "the localized step jumps at the crossing (§2.1, §10.4, D-179)" begin
+    @testset "the localized step jumps at the crossing (§2.3, §10.4, D-179)" begin
         sim = Simulation(step_model(Step(t_step = 0.25)); h = 1//10)
         init!(sim, fragment())
         step!(sim; t_plus = 0.2)
@@ -1149,7 +1149,7 @@ function test_blocks()
         @test step_events(step_model(Step(t_step = 0.25))).policies === (fire = :localized,)
     end
 
-    @testset "the boundary-detected step jumps at the first boundary at or after `t_step` (§2.1, §10.4, D-179)" begin
+    @testset "the boundary-detected step jumps at the first boundary at or after `t_step` (§2.3, §10.4, D-179)" begin
         sim = Simulation(step_model(Step(t_step = 0.25, localized = false)); h = 1//10)
         init!(sim, fragment())
         step!(sim; t_plus = 0.2)
@@ -1182,7 +1182,7 @@ function test_blocks()
         @test build(step_model(Step(t_step = 0.25)); activations = (Float64, LinearizeDual)) isa Build
     end
 
-    @testset "the step model's phase bodies and its quiet boundary allocate nothing (§7.5)" begin
+    @testset "the step model's phase bodies and its quiet boundary allocate nothing (§9.8)" begin
         for localized in (true, false)
             sim = Simulation(step_model(Step(t_step = 0.25, localized = localized)); h = 1//10)
             bodies = phase_bodies(sim)
@@ -1294,7 +1294,7 @@ function test_blocks()
         @test isapprox(linearization.B, diagm([0.0, 1.0]); atol = 1e-12)
     end
 
-    @testset "the limited integrator's departures follow `localized`, and its arrivals are localized (§2.1, §10.4, D-179)" begin
+    @testset "the limited integrator's departures follow `localized`, and its arrivals are localized (§2.3, §10.4, D-179)" begin
         @test limited_events(limited_model(true)).policies ===
               (hit_upper = :localized, hit_lower = :localized, leave_upper = :localized, leave_lower = :localized)
         @test limited_events(limited_model(false)).policies ===
@@ -1310,7 +1310,7 @@ function test_blocks()
                leave_lower_1 = :boundary, leave_lower_2 = :boundary)
     end
 
-    @testset "the boundary-detected departure is off by at most `a h² / 2` (§2.1, §10.4)" begin
+    @testset "the boundary-detected departure is off by at most `a h² / 2` (§2.3, §10.4)" begin
         # The block reaches 0.4 at t = 0.5 and leaves it at the input's zero, 1.05,
         # or at the boundary 1.1: θ = 0.5 and a = 1, so the offset is
         # a h² (1 - θ)² / 2 = 0.00125.
@@ -1738,7 +1738,7 @@ function test_blocks()
         @test build(discrete_hold_loop(DiscretePID(; gains..., Tt = 1.0, hold = true))) isa Build
     end
 
-    @testset "a tracking input wired from a clamp of the discrete PID's own output is a real cycle, traced structurally (§5.4, §5.6)" begin
+    @testset "a tracking input wired from a clamp of the discrete PID's own output is a real cycle, traced structurally (§5.4, §13.8)" begin
         # The continuous block's cycle is artificial with the hop named; a discrete
         # member admits no tracer scalar, so no hop is found dead.
         err = failure(() -> build(pid_clamp_loop(DiscretePID(Kp = 1.0, Ki = 0.5, Kd = 0.2, Tt = 1.0, tracking = true))))
@@ -1800,7 +1800,7 @@ function test_blocks()
         @test_throws ArgumentError GaussianWhiteNoise(seed = 1, σ = 1.0, psd = 1.0)
     end
 
-    @testset "the loops' phase bodies and their quiet boundaries allocate nothing (§7.5)" begin
+    @testset "the loops' phase bodies and their quiet boundaries allocate nothing (§9.8)" begin
         for model in (servo_loop(true), servo_loop(false), bang_bang_loop(),
                       vector_limited_model(true), vector_limited_model(false), vector_relay_model(),
                       pid_single_loop(pid_controller(false, false)), vector_pid_loop(), scheduled_pid_loop(),

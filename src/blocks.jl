@@ -12,7 +12,7 @@ import ForwardDiff
 # file is: the import list above is its whole reach into the parent, so every
 # block here is an ordinary component the framework knows nothing of.
 
-# --- the junction (§6.2, D-311) -------------------------------------------------
+# --- the junction (§13.7, D-311) -------------------------------------------------
 
 """
     Junction{In, Out, N}(f)
@@ -24,7 +24,7 @@ it. A custom fold, a weighted blend or a mass-properties composition, is written
 at the site.
 
 The fold is stateless and declares no events, so a discontinuity written into
-it lands wherever it lands inside a step (§2.1). A clamp is fine, since its
+it lands wherever it lands inside a step (§2.3). A clamp is fine, since its
 kink is second-order downstream, and so is a branch on a `Bool` that flips at a
 boundary, as a saturation code does. A branch on a continuous quantity is a
 mode made silently, which the moded blocks exist to declare.
@@ -110,7 +110,7 @@ The block declares no event, so the jump in `out` lands where `select` flips. A
 `select` published from a mode, or held between ticks, flips on a boundary and
 the jump is clean. One computed from a continuous quantity inside a stage body
 flips inside a step and smears that step, a mode made silently, which the moded
-blocks exist to declare (§2.1, D-179).
+blocks exist to declare (§2.3, D-179).
 """
 struct Switch{V} <: AbstractComponent end
 x_init(::Switch) = (;)
@@ -318,7 +318,7 @@ y_types(::RateLimiter{V}) where {V} = (out = V,)
 y_direct(c::RateLimiter, (; s, u, Δt)) = (out = s.v + clamp.(u.in - s.v, -c.falling * Δt, c.rising * Δt),)
 s_update(::RateLimiter, (; y)) = (v = y.out,)
 
-# --- the noise source (§7.3, §2.2, D-231, D-313) --------------------------------
+# --- the noise source (§7.3, §2.5, D-231, D-313) --------------------------------
 
 """
     GaussianWhiteNoise(; seed, μ = nothing, σ = nothing, psd = nothing)
@@ -327,7 +327,7 @@ A discrete Gaussian white noise process: at each tick `out` publishes an
 independent sample of mean `μ` and standard deviation `σ`, from stage 1. The
 sample is a pure function of `seed` and the tick count `k`, the one store field
 (D-231), so the stage draws, no generator or workspace is needed, and replay
-reproduces the stream (§2.2). After a tick the store holds the next sample's
+reproduces the stream (§2.4, §2.5). After a tick the store holds the next sample's
 index, so `k` reads `N + 1` once the block has ticked `N` times past `t₀`. Two
 blocks with one seed publish one stream, so independent sources take distinct
 seeds.
@@ -790,7 +790,7 @@ end
 held(c::DiscretizedTransferFunction) = held(c.realization)
 realization(c::DiscretizedTransferFunction, Δt) = realization(c.realization, Δt)
 
-# --- the step (§2.1, §10.4, D-313) ----------------------------------------------
+# --- the step (§2.3, §10.4, D-313) ----------------------------------------------
 
 """
     Step(; t_step, before = 0.0, after = 1.0, localized = true)
@@ -803,7 +803,7 @@ are promoted to one `V`, `Float64` or a static array of `Float64`, and taken by
 `V` (D-312): the value depends on neither state nor a walking input, so it
 carries zero partials under every activation, as a `Constant`'s does.
 
-`localized` picks the detection policy (§2.1). Localized, the guard is the sign
+`localized` picks the detection policy (§2.3). Localized, the guard is the sign
 form `t - t_step`: the step ends at the crossing and the jump lands there.
 Boundary-detected, the guard is the `Bool` `t ≥ t_step`: the event fires at the
 end of the step in which it was first observed, so the jump lands on the first
@@ -856,7 +856,7 @@ no feedthrough. It serves an anti-windup consumer, such as a controller that
 gates its integrator on the code, which flips only when an event fires and so
 only on a declared boundary.
 
-`localized` picks the detection policy of the leave events (§2.1). Localized,
+`localized` picks the detection policy of the leave events (§2.3). Localized,
 the guards are gated in §10.4's sign form, and the departure ends the step at
 the input's zero crossing. Boundary-detected, the guards are the `Bool`
 predicates, and the departure fires at the end of the step in which `in` first
@@ -1204,7 +1204,7 @@ tick, the clamping scheme as the limit of tracking.
 
 A tracking input wired from a memoryless clamp of the block's own `u` is
 refused as an `AlgebraicCycle`, as for `PID`, but classified real: a discrete
-member traces structurally (§5.6), so no hop is named dead. A scheduled
+member traces structurally (§13.8), so no hop is named dead. A scheduled
 parameter computed memorylessly from `u` closes a cycle likewise.
 `pid_anti_windup.md`, sections 9 and 10, gives the reasoning.
 """

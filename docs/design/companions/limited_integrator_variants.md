@@ -1,7 +1,7 @@
 # The limited integrator: the exact-zero defect, the variants weighed, and the two policies
 
 *A companion record, not normative text. The ground truth is `spec.md`
-[§2.1][s2-1] (events and edge semantics), [§10.4][s10-4] (detection policy, the gate form
+[§2.3][s2-3] (events and edge semantics), [§10.4][s10-4] (detection policy, the gate form
 and localization), [§10.6][s10-6] (priors and quiescence) and [§13.7][s13-7] (the library),
 with decisions [D-179][d-179] and [D-313][d-313]. If this document and the spec ever
 disagree, the spec wins. It was written on 2026-10-07, when the block's
@@ -28,7 +28,7 @@ One continuous state `q`, one mode `saturation` in `:free`, `:upper` or
 guard returns a scalar σ, the predicate holds when `σ ≥ 0`, and an event
 fires on an edge, the transition from not-holding to holding, which the
 framework detects against the guard's prior, its value at the last
-quiescent boundary ([§2.1][s2-1], [§10.6][s10-6]).
+quiescent boundary ([§2.3][s2-3], [§10.6][s10-6]).
 
 ```julia
 hit_upper_guard(c, (; x))   = x.q - c.upper                        # ungated
@@ -246,7 +246,7 @@ labels.
 
 The convention that a predicate holds at `σ ≥ 0`, with edges detected
 against a prior, is what makes boundary-detected and localized events share
-one declaration ([§2.1][s2-1]), and it is what made the rest point a trap: at
+one declaration ([§2.3][s2-3]), and it is what made the rest point a trap: at
 `(upper, 0)` both "`q` has reached the limit" and "`in` has stopped pushing"
 hold, and neither can produce an edge from there. Any block that latches a
 mode on one continuous quantity reaching zero and releases it on another
@@ -279,4 +279,4 @@ the idiom beside the gate form, and [D-290][d-290] carries the annotation.
 [s10-6]: ../spec.md#106-event-iteration-at-boundaries-to-quiescence-budgeted
 [s13-5]: ../spec.md#135-termination-is-a-state-not-an-exception
 [s13-7]: ../spec.md#137-tooling-consequences-face-routes-and-the-component-library
-[s2-1]: ../spec.md#21-events-two-detection-policies
+[s2-3]: ../spec.md#23-events-two-detection-policies

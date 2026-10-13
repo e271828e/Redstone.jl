@@ -618,7 +618,7 @@ function test_trim()
         @test port(sim, "", :in) === report.solution.u
     end
 
-    @testset "the per-iteration write and read are free at the seeded activation (§7.5)" begin
+    @testset "the per-iteration write and read are free at the seeded activation (§9.8)" begin
         # The iteration is a raw write → sweep → read cycle (§14.5), and both ends
         # of it are compiled: the shape-compiled plan and the compiled reader, at
         # the service's own seeded scalar. The user's residual lambda is theirs, so

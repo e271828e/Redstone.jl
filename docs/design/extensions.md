@@ -41,7 +41,7 @@ than the reference covers it:
   construction* through the interior/boundary sweep split ([§10.5][s10-5]) rather than by
   runtime gating.
 - **Event detection** with cheap boundary detection plus opt-in localization
-  ([§2.1][s2-1], [§10.4][s10-4]) matches Simulink's zero-crossing machinery in semantics; the explicit
+  ([§2.3][s2-3], [§10.4][s10-4]) matches Simulink's zero-crossing machinery in semantics; the explicit
   two-policy split is arguably cleaner than a global zero-crossing option.
 - **Virtual hierarchy**: assemblies flatten for scheduling and survive for navigation
   ([§3.3][s3-3]) — exactly Simulink's virtual subsystem, and deliberately *only* that. [D-019][d-019]
@@ -52,8 +52,8 @@ than the reference covers it:
 - **Trim and linearization** ([§14.7][s14-7]–[§14.10][s14-10]) are engine-integrated, with exact AD
   Jacobians through the eltype-generic sweep ([§7.2][s7-2]); perturbation-based `linmod` is
   strictly weaker.
-- Guarantees the reference lacks: deterministic replay ([§2.2][s2-2], [§11.5][s11-5]), the
-  zero-allocation invariant ([§7.5][s7-5]), and the error-locality discipline of [§13][s13].
+- Guarantees the reference lacks: deterministic replay ([§2.4][s2-4], [§11.5][s11-5]), the
+  zero-allocation invariant ([§9.8][s9-8]), and the error-locality discipline of [§13][s13].
 
 ### 1.2 Reachable through seams: the extension list
 
@@ -111,7 +111,7 @@ the closure was a choice, not an oversight.
   on every cell being written exactly once per sweep. A loop solver needs *iterated*
   re-evaluation of a cut subgraph with mutable trial values and data-dependent
   convergence. It cannot be bolted on; it forks the execution model.
-- **DAEs / implicit constraints.** Excluded in [§2.2][s2-2]. The sweep computes explicit
+- **DAEs / implicit constraints.** Excluded in [§2.5][s2-5]. The sweep computes explicit
   `ẋ = f(...)`; implicit form changes the sweep contract itself (residual equations,
   algebraic variables — which are, definitionally, algebraic loops). The same fork as
   the previous item, larger.
@@ -280,7 +280,7 @@ partials(f(a, xd, ud), 1)              # ∂ẋ/∂k = u/τ = 6.0, exact
 - **Parents must be generic over child types.** `Actuator{G,L}` absorbs a
   `Gain{Dual}` child; a parent pinning `gain::Gain{Float64}` re-erects the wall one
   level up (loudly, at assembly construction). [§8.5][s8-5]'s type-based assembly shape
-  already has this property — it is [§7.2][s7-2]'s "no `::SomeType{Float64}`
+  already has this property — it is [§8.2][s8-2]'s "no `::SomeType{Float64}`
   return-type annotations" rule transposed from method signatures to field
   declarations.
 - **Parameters mix; storage does not.** Cell types and the `x`-buffer eltype are
@@ -292,7 +292,7 @@ partials(f(a, xd, ud), 1)              # ∂ẋ/∂k = u/τ = 6.0, exact
   framework's canonical probe tag family, not private tags.
 - **Nominal cost is zero.** At the `Float64` activation a parametric field
   specializes to the same concrete struct; `@kwdef` defaults pin the no-argument
-  case — the pattern [§7.2][s7-2] already prescribes for the walked payload types. The
+  case — the pattern [§8.2][s8-2] already prescribes for the walked payload types. The
   pinned-parameters stance stays the right nominal default; this extension is
   additive.
 
@@ -332,7 +332,7 @@ family, with the framework performing the seeded construction internally; a
 documented construct-with-`Dual`s convention (the capability with no service
 wrapper); parameter-path overlays in [§14.1][s14-1]'s condition system. Also unexamined:
 which library structs get the parametric spelling in the [§13.7][s13-7] migration — whether
-[§7.2][s7-2]'s mechanical parametrization of the walked class, whose FlightPhysics
+[§8.2][s8-2]'s mechanical parametrization of the walked class, whose FlightPhysics
 payload list `companions/migration_outline.md` gives under "The parametrization
 pass", simply extends to parameter carriers, or participation is opted into per
 component.
@@ -367,8 +367,9 @@ pointer.
 [s14-10]: spec.md#1410-linearization-tap-selectors-one-seeded-pass-a-pure-query
 [s14-7]: spec.md#147-the-trim-problem-namedtuple-decisions-declared-reads-named-residuals
 [s2]: spec.md#2-formalism
-[s2-1]: spec.md#21-events-two-detection-policies
-[s2-2]: spec.md#22-exclusions-deliberate
+[s2-3]: spec.md#23-events-two-detection-policies
+[s2-4]: spec.md#24-runs
+[s2-5]: spec.md#25-exclusions-deliberate
 [s3-1]: spec.md#31-continuous-component-the-hybrid-primitive
 [s3-2]: spec.md#32-periodic-discrete-component
 [s3-3]: spec.md#33-assembly
@@ -376,10 +377,10 @@ pointer.
 [s5-5]: spec.md#55-algebraic-loop-policy-reject-at-build-time
 [s7-1]: spec.md#71-continuous-state-structured-immutable-flat-backing
 [s7-2]: spec.md#72-numeric-genericity-eltype
-[s7-5]: spec.md#75-allocation-policy-a-scoped-invariant
 [s8-2]: spec.md#82-the-declaration-inventory
 [s8-5]: spec.md#85-assembly-declaration-type-based-class-by-declaration-shape
 [s9-1]: spec.md#91-the-builds-three-steps
 [s9-2]: spec.md#92-the-build-and-deployment-artifacts
 [s9-4]: spec.md#94-activations-executable-sets-laziness-caching
 [s9-7]: spec.md#97-the-compiled-executor
+[s9-8]: spec.md#98-allocation-policy-a-scoped-invariant

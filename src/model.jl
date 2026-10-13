@@ -180,7 +180,7 @@ _apply_plan!(model::Model, plan::ConditionPlan) = apply!(model.exec, plan)
 
 The compiled bodies of the model's activation, bound over its own buffers, and
 a simulation's are its nominal model's — **these are the bodies the loop runs**, not re-derivations, which is
-what makes the §7.5 measurement honest. The roster is fixed and total: a model
+what makes the §9.8 measurement honest. The roster is fixed and total: a model
 with no discrete components still gets `ticks`, empty, compiling to a no-op
 whose `@ballocated` assertion passes vacuously, so consumers iterate uniformly
 with no per-model branching. Beside the four blocks ride `events`, the guard

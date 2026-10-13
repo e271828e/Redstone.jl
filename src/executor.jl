@@ -427,7 +427,7 @@ _merge_modes!(mstore::Base.RefValue{M}, m, path, what, event) where {M} =
     nothing
 end
 
-# The §7.5 seam's view of one event and one projection (§9.7): the guard and
+# The §9.8 seam's view of one event and one projection (§9.7): the guard and
 # the handler as the walks run them, closed over the entry and the buffers, so
 # `@ballocated(body()) == 0` measures the loop's own call. The entry arrives
 # typed through this barrier, never as the `Any` the build collects it in.

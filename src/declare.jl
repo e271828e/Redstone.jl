@@ -2,7 +2,7 @@
 # are ordinary functions of the *instance*, written at concrete `Float64`; the
 # framework's activation walk (§7.2) retypes them. No macros, no stage tags.
 #
-# Both tiers live here, and so does the event declaration surface (§2.1, §8.2).
+# Both tiers live here, and so does the event declaration surface (§2.3, §8.2).
 
 # --- the one root type (§8.5) -------------------------------------------------
 # There is no `AbstractAssembly`: primitives and assemblies share one root, so a
@@ -41,7 +41,7 @@ m_init(::Any) = NamedTuple()
 
 """
 Mutable scratch, instantiated by the framework and arriving as the bundle's
-`ws` field (§7.3). Declaration *is* allocation, so it is the one declaration
+`ws` field (§8.2). Declaration *is* allocation, so it is the one declaration
 taking the scalar, `ws_init(::C, ::Type{T})`, on both tiers: sizes from
 the instance, eltypes from the activation, and a discrete allocator always
 receives `Float64` (D-077, D-263). No fallback: absence is how a component
@@ -198,7 +198,7 @@ constructor parameter and read off the instance here (§10.5).
 """
 sample_times(::Any) = (;)
 
-# --- state events (§2.1, §8.2) -------------------------------------------------
+# --- state events (§2.3, §8.2) -------------------------------------------------
 
 """
 One guard/handler pair, and nothing else: `StateEvent(guard, handler)` carries
@@ -221,7 +221,7 @@ the event system is continuous-side only (§5.2). Nothing here is inferrable.
 state_events(::Any) = (;)
 
 """
-Manifold projection (§5.2): one store in, the same store out, which is why it
+Manifold projection (§8.2): one store in, the same store out, which is why it
 alone stays positional. It runs between a state write and its decode — after
 integration and after each handler firing (§5.3) — and its return is written
 back to the buffer wholesale, so the probe holds it complete against the state
@@ -229,7 +229,7 @@ shape (§9.3).
 """
 function x_projection end
 
-"""The §2.1 predicate of a guard's return: the `Bool` form itself, or `σ ≥ 0`."""
+"""The §2.3 predicate of a guard's return: the `Bool` form itself, or `σ ≥ 0`."""
 _holding(σ::Bool) = σ
 _holding(σ) = σ ≥ 0
 

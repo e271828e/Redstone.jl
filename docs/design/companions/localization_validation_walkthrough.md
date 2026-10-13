@@ -1,6 +1,6 @@
 # The θ = 0 validation: input drains, epochs, and the localization trigger
 
-*Companion explainer, non-normative. The spec ([§10.4][s10-4], [§10.6][s10-6]; context in [§2.1][s2-1], [§11.4][s11-4]) wins
+*Companion explainer, non-normative. The spec ([§10.4][s10-4], [§10.6][s10-6]; context in [§2.3][s2-3], [§11.4][s11-4]) wins
 wherever the two disagree. Written against the design as of [D-179][d-179]–[D-182][d-182]: detection
 policy declared by the guard's return type, honest priors under budgeted re-firing,
 `localization_budget`/`firing_budget` as the two event budgets.*
@@ -187,4 +187,4 @@ budgeted re-firing ([D-181][d-181]) without changing a single step.
 [s10-4]: ../spec.md#104-localization-mechanics
 [s10-6]: ../spec.md#106-event-iteration-at-boundaries-to-quiescence-budgeted
 [s11-4]: ../spec.md#114-inbound-per-device-staging-representation-and-the-drain
-[s2-1]: ../spec.md#21-events-two-detection-policies
+[s2-3]: ../spec.md#23-events-two-detection-policies

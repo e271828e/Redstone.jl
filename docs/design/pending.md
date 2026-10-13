@@ -90,7 +90,7 @@ what the spec says, the spec edit is part of the item.
 
 Each is additive, so it can land later without breaking user code.
 
-- **Publication's garbage** (§7.5, §10.7, §11.2, D-269). A new snapshot and
+- **Publication's garbage** (§9.8, §10.7, §11.2, D-269). A new snapshot and
   table copy per frame are by design: §11.2 leaves published snapshots to
   the GC, so a run never avoids it. The requirement that sets the target is
   a hardware-in-the-loop run: a paced run in which no collection pause may
@@ -106,7 +106,7 @@ Each is additive, so it can land later without breaking user code.
     records at every publication. An unchanged record could be shared with
     the previous snapshot. A device's heartbeat changes every frame, which
     makes this a design question.
-  - **A scheduled young collection.** §7.5 names `GC.gc(false)` at frame
+  - **A scheduled young collection.** §9.8 names `GC.gc(false)` at frame
     boundaries, and nothing in `src/` builds it. The candidate: the pacer's
     wait collects when enough garbage has built up and the time to the next
     deadline exceeds the recent p99 pause with a margin. Unpaced runs and
@@ -130,8 +130,8 @@ Each is additive, so it can land later without breaking user code.
   subtrees); field-handle summarization over retained snapshots, the
   post-processing entry point, as `getproperty`-style navigation of a run's
   history; and the trace file format, which doubles as the reproducibility
-  carrier and whose positions the replay pointers name (§13.4). §4.4 and
-  §7.5 state the loggers' skip-or-summarize rule for field handles with no
+  carrier and whose positions the replay pointers name (§13.4). §11.2
+  states the loggers' skip-or-summarize rule for field handles with no
   entry; it is ruled with the summarization question.
   - **The trace header's deployment half.** The checkpoint's `deployment`,
     which the trace header carries, holds the whole `Deployment`, and through
@@ -139,7 +139,8 @@ Each is additive, so it can land later without breaking user code.
     primary data; the deployment's `==` excludes the build, so replay never
     compares it. Whether the header should hold the build-free half is a
     D-254 question, to be ruled when this deferral lifts.
-  - **§7.1's FlightCore-era names.** §7.1's bullet on the flat vector names
+  - **The flat vector's FlightCore-era names.** `flight_case_studies.md`
+    section 1, which took §7.1's bullet on the flat vector, names
     OrdinaryDiffEq and HDF5 logging among its users. §10.2 dropped
     OrdinaryDiffEq as a dependency and the HDF5 export is undecided, so the
     bullet is reworded when this deferral lifts.
@@ -155,7 +156,7 @@ Where the code's shape is coherent and the spec may be what moves, the call
 is the user's; a ruling lands docs-commit-first, then the bullet retires or
 the code conforms.
 
-- **The quoted cycle and bundle diagnostics** (§5.2, §5.4, §5.6). The spec
+- **The quoted cycle and bundle diagnostics** (§13.2, §13.8). The spec
   quotes "cycle through `systems/aero` is artificial at port level — split
   the component, or narrow the neighbor's contract", "insert a state" for a
   genuine cycle, and "`x_deriv` of `Foo` destructures `m`, but `Foo`

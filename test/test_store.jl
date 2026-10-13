@@ -184,7 +184,7 @@ end
 # gets one homogeneous `CellStore` beside the numeric ones, and the gather and
 # the scatter are one load and one store of the whole struct.
 function store_opaque_leaf()
-    @testset "a handle type is its own cell store (§4.4, D-237)" begin
+    @testset "a handle type is its own cell store (§9.7, D-237)" begin
         sim = Simulation(handle_model(); h = 1//10)
         @test Set(keys(sim.model.exec.store.stores)) ==
               Set([_cell_key(Float64), _cell_key(HeightField)])
@@ -216,7 +216,7 @@ function store_opaque_leaf()
         end
 
         # The log and the trace: a snapshot copies the buffer whole, so the
-        # handle cell is one struct copy sharing the bulk reference (§4.4).
+        # handle cell is one struct copy sharing the bulk reference (§9.7).
         run!(sim; t_end = 0.5)
         @test port(latest(sim), "src", :terrain) isa HeightField
         trc = trace(sim)

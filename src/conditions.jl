@@ -548,7 +548,7 @@ end
 
 §14.4's dynamic walk: execute the validated entry list by runtime dispatch per
 write — microseconds total, allocation permitted, the stopped-sim path never
-having been under §7.5's zero-alloc regime — with no per-shape codegen, so
+having been under §9.8's zero-alloc regime — with no per-shape codegen, so
 fifty structurally different scripted conditions cost fifty walks rather than
 fifty compiles. Which way a service uses is internal, never user-facing:
 the specialized `apply!` below is the other way over the same checks, for

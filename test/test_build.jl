@@ -146,7 +146,7 @@ function build_schedule()
         # `build` alone: rejection needs no deployment, which is the build's
         # split from deployment.
         # One cluster, one diagnostic, and the carrier is the collected one — the
-        # policy the stall takes now that a residue can hold several (§5.6).
+        # policy the stall takes now that a residue can hold several (§13.8).
         err = failure(() -> build(feedback_model(feedback_port = "power")))
         @test err isa DiagnosticError{Vector{Diagnostic}}
         d = only(diagnostics(err))
@@ -158,12 +158,12 @@ function build_schedule()
     end
 end
 
-# --- the algebraic-cycle clusters (§5.5, §5.6, D-012, D-245) ------------------
+# --- the algebraic-cycle clusters (§5.5, §13.8, D-012, D-245) ------------------
 # The SCC decomposition, then the trace's verdict over it: kind and payload only
 # (§13.2). The three message forms are rendered in `test_diagnostics.jl`.
 
 function build_algebraic_cycles()
-    @testset "each cluster is one diagnostic and the tail is in none (§5.6, D-012)" begin
+    @testset "each cluster is one diagnostic and the tail is in none (§13.8, D-012)" begin
         # Two disjoint loops and a tail hanging off `b`. Kahn's residue holds all
         # five, which is the shape D-012 rejects; the decomposition holds two
         # clusters and leaves the innocent tail out of both.
@@ -182,7 +182,7 @@ function build_algebraic_cycles()
         @test all(d -> !("e" in d.members), diags)
     end
 
-    @testset "a self-wire is a one-member cluster with its wire (§5.6)" begin
+    @testset "a self-wire is a one-member cluster with its wire (§13.8)" begin
         # A self-edge is a nontrivial SCC of size one, and the wire is its own.
         d = only(diagnostics(failure(() -> build(
             Group((plant = Plant(),); local_wires = ("plant/power" => "plant/u",))))))
@@ -190,7 +190,7 @@ function build_algebraic_cycles()
         @test d.wires == ["plant/power" => "plant/u"]
     end
 
-    @testset "a tangle is one cluster with every wire among its members (§5.6, D-245)" begin
+    @testset "a tangle is one cluster with every wire among its members (§13.8, D-245)" begin
         # Two loops sharing `s`: one cluster, and every wire among its members,
         # the chord `s/e → i/b` included.
         d = only(diagnostics(failure(() -> build(
@@ -203,7 +203,7 @@ function build_algebraic_cycles()
                           "g/out" => "s/a", "i/y" => "s/b"]
     end
 
-    @testset "a loop every hop routes is real (§5.6)" begin
+    @testset "a loop every hop routes is real (§13.8)" begin
         d = only(diagnostics(failure(() -> build(feedback_model(feedback_port = "power")))))
         @test d.classification === :real
         @test isempty(d.dead)
@@ -215,7 +215,7 @@ function build_algebraic_cycles()
         @test d.traced == ["plant" => :global]
     end
 
-    @testset "a hop stage 2 does not route makes the loop artificial (§5.4, §5.6)" begin
+    @testset "a hop stage 2 does not route makes the loop artificial (§5.4, §13.8)" begin
         # `DerivativeFed` consumes `b` in `x_deriv` alone, so the wire
         # closing the loop through `b` is §5.4's false dependency.
         d = only(diagnostics(failure(() -> build(
@@ -244,7 +244,7 @@ function build_algebraic_cycles()
         @test d.traced == ["s" => :global, "g" => :global, "i" => :global]
     end
 
-    @testset "out-of-cycle inputs come from the prefix and never tag (§5.6)" begin
+    @testset "out-of-cycle inputs come from the prefix and never tag (§13.8)" begin
         # `pre` is placed by Kahn, so `i/a` reads its probe product rather than a
         # synthesized value — untagged either way, and the verdict is unchanged.
         d = only(diagnostics(failure(() -> build(
@@ -257,7 +257,7 @@ function build_algebraic_cycles()
         @test d.members == ["s", "g", "i"]
     end
 
-    @testset "a discrete member traces structurally (§5.6)" begin
+    @testset "a discrete member traces structurally (§13.8)" begin
         # The discrete tier's wholesale-pinned declarations admit no tracer
         # scalar, so every hop is alive by structure alone.
         d = only(diagnostics(failure(() -> build(
@@ -267,7 +267,7 @@ function build_algebraic_cycles()
         @test d.traced == ["p" => :structural, "q" => :structural]
     end
 
-    @testset "a pinned face traces structurally (§5.6, D-245)" begin
+    @testset "a pinned face traces structurally (§13.8, D-245)" begin
         # A continuous declaration with no walking leaf admits no scalar either.
         d = only(diagnostics(failure(() -> build(
             Group((a = PinnedGain(), b = PinnedGain());
@@ -276,7 +276,7 @@ function build_algebraic_cycles()
         @test d.traced == ["a" => :structural, "b" => :structural]
     end
 
-    @testset "a member that throws ships the cluster unclassified (§5.6)" begin
+    @testset "a member that throws ships the cluster unclassified (§13.8)" begin
         # Classification is a bonus on the cycle error, never its precondition:
         # the members and the wires still name the loop.
         d = only(diagnostics(failure(() -> build(
@@ -288,7 +288,7 @@ function build_algebraic_cycles()
         @test d.wires == ["a/out" => "b/e", "b/out" => "a/e"]
     end
 
-    @testset "an input-dependent branch falls back to sampled states (§5.6, D-012)" begin
+    @testset "an input-dependent branch falls back to sampled states (§13.8, D-012)" begin
         # `Piecewise` branches on `v`, an in-cycle face: either arm would drop the
         # other's set, so the global tracer refuses and the local one decides on
         # redrawn primals. `F` routes `f` on both arms, so the loop through `g1`
@@ -327,7 +327,7 @@ function build_algebraic_cycles()
                repeated.dead, repeated.traced)
     end
 
-    @testset "the tracer unions sets and refuses a tainted branch (§5.6)" begin
+    @testset "the tracer unions sets and refuses a tainted branch (§13.8)" begin
         @test (Tracer{true}(1.0, 0b01) + Tracer{true}(2.0, 0b10)).dependencies == 0b11
         # May-depend semantics: a saturated `clamp` still reports its set.
         @test clamp(Tracer{true}(5.0, 0b1), 0.0, 1.0).dependencies == 0b1
@@ -338,7 +338,7 @@ function build_algebraic_cycles()
         @test Tracer{false}(1.0, 0b1) < Tracer{false}(2.0, 0b10)
     end
 
-    @testset "the unary list and the norms carry the set through (§5.6)" begin
+    @testset "the unary list and the norms carry the set through (§13.8)" begin
         tracer = Tracer{true}(0.5, 0b1)
         @test atan(tracer).dependencies == 0b1
         @test asinh(tracer).dependencies == 0b1
@@ -564,7 +564,7 @@ u_types(::PinnedSVecEntry) = (v = Pinned{SVector{3,Float64}},)
 y_types(::PinnedSVecEntry) = (y = Float64,)
 y_direct(::PinnedSVecEntry, (; u)) = (y = sum(u.v),)
 
-# A pin written at an entry its producer walks (§6.1's failure asymmetry).
+# A pin written at an entry its producer walks (§8.2's failure asymmetry).
 struct FrozenEntry <: AbstractComponent end
 x_init(::FrozenEntry) = (;)
 u_types(::FrozenEntry) = (u = Pinned{Float64},)
@@ -678,7 +678,7 @@ function build_wire_clauses()
         @test d.declared === AbstractField && d.observed === Float64
     end
 
-    @testset "the walk clause fails at the first nominal build (§6.1, §8.2, D-236)" begin
+    @testset "the walk clause fails at the first nominal build (§8.2, D-236)" begin
         # A pinned entry fed by a walking producer fails here, with both
         # endpoints named, not at the first `Dual` activation.
         err = failure(() -> build(Group((; src = NomSource(), c = FrozenEntry());
@@ -1201,7 +1201,7 @@ function build_user_code_framing()
         @test d.fn == "local_wires" && path(d) == "a"
     end
 
-    @testset "a bundle field the bundle lacks is `BundleFieldError`, classified (§5.2, §13.2)" begin
+    @testset "a bundle field the bundle lacks is `BundleFieldError`, classified (§13.2)" begin
         err = failure(() -> build(single(ReadsM())))
         @test err isa DiagnosticError{BundleFieldError}
         d = diagnostic(err)
@@ -1225,7 +1225,7 @@ function build_user_code_framing()
         @test d.tier === :discrete
     end
 
-    @testset "the match is by the bundle's own type (§5.2)" begin
+    @testset "the match is by the bundle's own type (§13.2)" begin
         err = failure(() -> build(single(OwnFieldMiss())))
         @test err isa DiagnosticError{UserCodeFraming}
         @test diagnostic(err).cause isa FieldError
@@ -1362,7 +1362,7 @@ function build_label_ports()
         @test port(sim, "rd", :code) == 2
     end
 
-    @testset "an enum mode is returned from stage 1 (§7.5)" begin
+    @testset "an enum mode is returned from stage 1 (§11.2)" begin
         gear_mode_build = build(single(GearMode()))
         ci = index_of(gear_mode_build.structure, "c")
         stage1 = Tuple(gear_mode_build.outputs.components[ci].stage1)
@@ -1373,7 +1373,7 @@ function build_label_ports()
         @test port(dual_model, "c", :gear) === up
     end
 
-    @testset "a Symbol port is one opaque leaf, with no synthesis at a root (§4.3, D-243)" begin
+    @testset "a Symbol port is one opaque leaf, with no synthesis at a root (§4.3, §8.2, D-243)" begin
         model = Group((; sel = PhaseSelector(), rd = PhaseReader());
                       local_wires = ("sel/phase" => "rd/phase",))
         sim = Simulation(build(model); h = 1//10)
@@ -1382,7 +1382,7 @@ function build_label_ports()
         run!(sim; t_end = 0.1)
         @test port(sim, "sel", :phase) === :armed && port(sim, "rd", :armed)
 
-        # The mode label is returned (§7.5's remedy on the idiomatic label).
+        # The mode label is returned (§11.2's remedy on the idiomatic label).
         mode_build = build(single(PhaseMode()))
         ci = index_of(mode_build.structure, "c")
         @test activation(mode_build, Float64).products[ci][
@@ -1690,7 +1690,7 @@ s_init(::ClockStamp) = (;)
 y_types(::ClockStamp) = (stamp = Float64,)
 y_state(::ClockStamp, (; t)) = (stamp = t,)
 
-# A discrete allocator recording the scalar it receives (§7.3, D-263).
+# A discrete allocator recording the scalar it receives (§8.2, D-263).
 const DISCRETE_SCRATCH_SCALAR = Ref{Any}(nothing)
 struct DiscreteScratch <: AbstractComponent end
 s_init(::DiscreteScratch) = (;)

@@ -1,7 +1,7 @@
 # The PID block: anti-windup, the two axes and the variants weighed
 
 *A companion record, not normative text. The ground truth is `spec.md`
-[§13.7][s13-7] (the library), [§5.3][s5-3] and [§5.4][s5-4] (feedthrough and artificial loops), [§2.1][s2-1]
+[§13.7][s13-7] (the library), [§5.3][s5-3] and [§5.4][s5-4] (feedthrough and artificial loops), [§2.3][s2-3]
 and [§10.4][s10-4] (events and localization) and [§7.3][s7-3] (modes), with decisions [D-179][d-179],
 [D-231][d-231] and [D-313][d-313]. If this document and the spec ever disagree, the spec
 wins. It was written on 2026-10-07, when the PID was promoted from an
@@ -325,7 +325,7 @@ and `u_raw` the update may read. Both outputs come from stage 2, so the
 block is feedthrough as the continuous one is, and [§5.4][s5-4]'s refusal of a
 tracking input wired from a memoryless clamp of the own `u` holds for the
 same reason. The limits stay inside. One difference in the diagnostic: a
-discrete member traces structurally ([§5.6][s5-6]), its pinned declarations
+discrete member traces structurally ([§13.8][s13-8]), its pinned declarations
 admitting no tracer scalar, so the cycle is classified `:real` with no dead
 hop, where the continuous block's is `:artificial` with the hop named. The
 probe confirmed both.
@@ -454,7 +454,7 @@ clamped `v` does. It is classified real when the parameter enters the
 direct law, as every one but `Ki` and `Tt` does; a scheduled `Ki` or `Tt`
 closes an artificial cycle on the continuous tier, as `v` does, and a real
 one on the discrete tier, where a member traces structurally (section 9,
-[§5.6][s5-6]). One read from a state is fine. Under a `Dual` activation a
+[§13.8][s13-8]). One read from a state is fine. Under a `Dual` activation a
 scheduled gain carries partials, so a linearization sees the coupling
 through the schedule. A model that wants the gain frozen at its
 nominal value routes the port through `Freeze` ([§14.10][s14-10]).
@@ -491,9 +491,9 @@ On both tiers `u = clamp(u_raw, u_min, u_max)`.
 [s10-4]: ../spec.md#104-localization-mechanics
 [s10-5]: ../spec.md#105-multi-rate-tick-scheduling
 [s13-7]: ../spec.md#137-tooling-consequences-face-routes-and-the-component-library
+[s13-8]: ../spec.md#138-cycle-diagnosis-feedthrough-tracing
 [s14-10]: ../spec.md#1410-linearization-tap-selectors-one-seeded-pass-a-pure-query
-[s2-1]: ../spec.md#21-events-two-detection-policies
+[s2-3]: ../spec.md#23-events-two-detection-policies
 [s5-3]: ../spec.md#53-structural-feedthrough-stage-roles-execution-order-and-step-boundaries
 [s5-4]: ../spec.md#54-artificial-loops-and-the-escape-hatch
-[s5-6]: ../spec.md#56-diagnostics-feedthrough-tracing
 [s7-3]: ../spec.md#73-discrete-state-modes-and-workspace

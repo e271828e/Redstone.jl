@@ -362,6 +362,7 @@ were derived.
 | [D-361][d-361] | Time and state events, and the opposite crossing direction | ratified |
 | [D-362][d-362] | Reset maps, the continuous-only mode store and the rejected all-in-one component | ratified |
 | [D-363][d-363] | Cell freshness, closed port alternatives, write-side atomicity and bulk-data handles | ratified |
+| [D-364][d-364] | Hold a bulk-data rig environment in a constant source | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -371,7 +372,7 @@ were derived.
 DAE/SDE/per-step hook. Tier-2 detection is pace-independent ([D-080][d-080]); guard
 conditions are normative — positive = holding, edge semantics ([D-082][d-082]).
 
-**Spec.** [§2][s2], [§2.1][s2-1], [§2.2][s2-2]
+**Spec.** [§2][s2], [§2.3][s2-3], [§2.5][s2-5], [§3.2][s3-2]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -451,7 +452,7 @@ assemblies; both mode factorings.
 **Position.** Strict two-stage structural feedthrough (state decoder `h_x` +
 all-inputs `h_xu`, named per [D-075][d-075]); component split as the refinement.
 
-**Spec.** [§5.2][s5-2], [§5.3][s5-3], [§5.4][s5-4], [§7.4][s7-4]
+**Spec.** [§5.2][s5-2], [§5.3][s5-3], [§5.4][s5-4]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -525,7 +526,7 @@ leaf's, since [§8.5][s8-5]'s class rule keeps every stage off an assembly.
 **Position.** Structured immutable state over a framework-owned flat
 `Vector{T}`.
 
-**Spec.** [§7.1][s7-1]
+**Spec.** [§7.1][s7-1], [§9.7][s9-7]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -540,7 +541,7 @@ leaf's, since [§8.5][s8-5]'s class rule keeps every stage off an assembly.
 
 **Position.** Eltype genericity on the continuous path, three-tier scoping.
 
-**Spec.** [§7.2][s7-2]
+**Spec.** [§7.2][s7-2], [§8.2][s8-2]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -563,7 +564,7 @@ optional on the error. Superseded on the verdict clause by [D-245][d-245] — ov
 cluster the loop is real iff a traced cycle survives, which reduces to this
 reading on a simple cycle.
 
-**Spec.** [§5.6][s5-6], [§9.4][s9-4]
+**Spec.** [§5.5][s5-5], [§9.4][s9-4], [§13.8][s13-8]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -582,7 +583,7 @@ reading on a simple cycle.
 
 **Position.** Immutable `z` in cells + workspace + snapshot idiom.
 
-**Spec.** [§7.3][s7-3]
+**Spec.** [§7.3][s7-3], [§8.2][s8-2]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -600,11 +601,11 @@ workspace and the snapshot idiom stand.
 
 **Position.** Scoped allocation invariant, CI-enforced on the hot path.
 
-**Spec.** [§7.5][s7-5]
+**Spec.** [§9.8][s9-8]
 
 **Rationale.** Recorded only through the rejections below.
 
-Annotation (2026-10-03): [§7.5][s7-5] states three reasons for the policy, now
+Annotation (2026-10-03): [§9.8][s9-8] states three reasons for the policy, now
 ratified. The first is GC-pause jitter control for real-time runs. The second
 is throughput for unattended runs. The third is the canary. An unexpected
 allocation is Julia's most reliable symptom of type instability, so a zero
@@ -647,7 +648,7 @@ guards and handlers read the fresh boundary table, with per-event re-decode
 (`handler → project → h_x → h_xu`); `project` is the sole raw-state function
 (schedule-structural).
 
-**Spec.** [§4.2][s4-2], [§5.3][s5-3], [§7.4][s7-4], [§10.6][s10-6], [§8.3][s8-3], [Appendix D][sD]
+**Spec.** [§4.2][s4-2], [§5.3][s5-3], [§10.6][s10-6], [§8.3][s8-3], [Appendix D][sD]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -716,7 +717,7 @@ state (off-manifold like RK stages), projection running at the `t*` boundary
 where [§10.6][s10-6]'s edge checks read it — a projection that undoes the crossing costs
 one extra harmless boundary.
 
-**Spec.** [§2.1][s2-1], [§10.4][s10-4], [§10.6][s10-6]
+**Spec.** [§2.3][s2-3], [§10.4][s10-4], [§10.6][s10-6]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -780,7 +781,7 @@ event firing at most once per boundary, with "newly fired" made precise via
 per-event baselines in loop state ([D-082][d-082]); due `g` updates run after
 quiescence, outside the iteration.
 
-**Spec.** [§2.2][s2-2], [§3.1][s3-1], [§3.4][s3-4], [§5.3][s5-3], [§10.6][s10-6]
+**Spec.** [§2.5][s2-5], [§3.1][s3-1], [§5.3][s5-3], [§10.6][s10-6]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -790,7 +791,7 @@ re-decode is removed, and once-per-boundary firing gives way to the per-event
 
 **Rejected.**
 - *Single pass per boundary:* cascade latency N·h — step-size-dependent
-  semantics, the [§2.2][s2-2] `f_step!` footgun class, made common by [§3.1][s3-1] externalized
+  semantics, the [§2.5][s2-5] `f_step!` footgun class, made common by [§3.1][s3-1] externalized
   FSMs.
 - *Bounded-rounds cap:* arbitrary K knob; livelock burns the budget then errors
   instead of degrading to Tier-1 granularity.
@@ -1129,7 +1130,7 @@ no outputs; intermediates declared via strict `local_types` ([D-055][d-055]) —
 cells, non-connectable, snapshot-visible, presentation-filtered;
 branch-shape-stable returns; undeclared stage-return fields = build error.
 
-**Spec.** [§4.2][s4-2], [§5.4][s5-4], [§7.4][s7-4], [§8.3][s8-3]
+**Spec.** [§4.2][s4-2], [§8.3][s8-3]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -1161,7 +1162,7 @@ handlers alike — arriving as one named bundle destructured in the signature
 home per datum); selective auto-publication of declared state/mode fields;
 `h_x`/`h_z` = the no-feedthrough stage.
 
-**Spec.** [§5.2][s5-2], [§5.3][s5-3], [§7.1][s7-1], [§7.4][s7-4]
+**Spec.** [§5.2][s5-2], [§5.3][s5-3], [§7.1][s7-1]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -1192,7 +1193,7 @@ aggregate `y` = virtual merge, gathered per call, never stored; custom structs
 are port values — one port, one cell, atomic in wiring; granularity guideline:
 bundle what shares a stage and is consumed together.
 
-**Spec.** [§4.3][s4-3]
+**Spec.** [§4.3][s4-3], [§9.7][s9-7]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -1215,7 +1216,7 @@ named site-specific — plain components); hierarchical idiom: junctions at
 ownership boundaries, totals exported across generic boundaries; fold order
 author-visible; helper/macro sugar guarded.
 
-**Spec.** [§6.2][s6-2]
+**Spec.** [§6.2][s6-2], [§13.7][s13-7]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -1621,14 +1622,14 @@ rescinded by [D-135][d-135]: the cache holds immutable artifacts only and lives 
 **Position.** Always-on conformance = one baked expected-`NamedTuple` type test
 at the table-write point, no convert-on-write; folds away when inferrable;
 uniform across `f` (state-field completeness), guards (form-aware against the
-two [§2.1][s2-1] forms: `Bool` for predicates, the nominal scalar for continuous
+two [§2.3][s2-3] forms: `Bool` for predicates, the nominal scalar for continuous
 guards; anything else, and a Tier-2 guard probing `Bool`, a build error naming
 both forms), output stages, handlers (partial-`m` subset predicate); failure =
 path + stage + field diff + `t`, reproducible by trace replay. Exact match is
 scoped to the nominal activation; parametrized leaves under non-nominal
 activations accept `{T, Float64}` with zero-partial embedding ([D-079][d-079]).
 
-**Spec.** [§2.1][s2-1], [§9.5][s9-5]
+**Spec.** [§2.3][s2-3], [§9.5][s9-5]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -1677,7 +1678,7 @@ component-scoped cross-stage cells ≠ workspace; schema authority total
 (supersedes [D-034][d-034]'s observation exception; adds [§8.4][s8-4] walkthrough 5); concrete
 nominal on both tiers, same activation leaf walk as `output_types` ([D-079][d-079]).
 
-**Spec.** [§5.4][s5-4], [§8.3][s8-3], [§8.4][s8-4]
+**Spec.** [§8.3][s8-3], [§8.4][s8-4]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -1861,14 +1862,14 @@ client takes the instance walk); `input_faces`/`output_faces` return
 declaration-ordered face-name strings; the wiring resolver splits a terminal
 path's final segment (slash the only structural separator).
 
-**Spec.** [§6.1][s6-1]
+**Spec.** [§13.3][s13-3]
 
 **Rationale.** Recorded only through the rejections below.
 
 Annotation (2026-10-12): [§6.1][s6-1] has stated no generic-boundary rule since
 [D-207][d-207], which made the generic-seam stop the universal rule. The wiring
 client's duty is the one-level rule, and an endpoint reaching past the
-immediate child is `PathResolution` ([§6.1][s6-1]). The generic-holding rule, with
+immediate child is `PathResolution` ([§13.3][s13-3], [Appendix C][sC]). The generic-holding rule, with
 its past-generic diagnostic, governs the deep paths the read side still
 writes, under [D-130][d-130]'s client scoping ([§13.3][s13-3]). The declared-type walk, the
 face lists and the terminal split stand.
@@ -1891,7 +1892,7 @@ face lists and the terminal split stand.
   components, demand-driven, arity by type parameter (`Or{N}` — computed
   contracts), stateless-continuous hence tier-transparent.
 
-**Spec.** [§6.2][s6-2]
+**Spec.** [§13.7][s13-7]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -1995,11 +1996,11 @@ one-level rule a check in `resolve`. The lazy tree, resolution against the
 `apply!` (`Getter{P}` lenses, unrolled baked stores, zero-alloc; [§9.5][s9-5]-style
 shape check via tree type + literal `===` sweep; ~10–50 ms codegen once per
 shape) for iterating services; dynamic entry-list walk (microseconds, no
-per-shape codegen, allocation fine per [§7.5][s7-5]) for one-shot init; compiled
+per-shape codegen, allocation fine per [§9.8][s9-8]) for one-shot init; compiled
 readers as the gather twin (cost reads, linearization gather, `capture`) — one
 primitive family in the `Build`'s client kit.
 
-**Spec.** [§7.5][s7-5], [§9.5][s9-5]
+**Spec.** [§9.5][s9-5], [§9.8][s9-8]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -2242,10 +2243,10 @@ compiled to offsets, relocatable via `at`.
 settled design; a runnable dependency-free `condition_demo.jl` exercises the
 [§14][s14] algebra and [§14.9][s14-9] mounting (printed trees and flattened entry lists);
 declaration-by-initial-value upheld ([§8.2][s8-2]); sampled-data Dual activation
-recorded unbuilt ([§14.10][s14-10]); [§6.2][s6-2]'s `SumJunction` dispatches on its
+recorded unbuilt ([§14.10][s14-10]); [§13.7][s13-7]'s `SumJunction` dispatches on its
 unparametrized type constructor.
 
-**Spec.** [§6.2][s6-2], [§8.2][s8-2], [§14][s14], [§14.9][s14-9], [§14.10][s14-10]
+**Spec.** [§8.2][s8-2], [§13.7][s13-7], [§14][s14], [§14.9][s14-9], [§14.10][s14-10]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -2282,7 +2283,7 @@ unparametrized constructor, and [§6.2][s6-2] writes it so.
 args)` — one NamedTuple bundle of zero-copy views, destructured by name in the
 signature; `project(comp, x)` alone stays positional.
 
-**Spec.** [§5.2][s5-2], [§7.3][s7-3], [§11.4][s11-4]
+**Spec.** [§5.2][s5-2], [§7.3][s7-3], [§8.2][s8-2], [§11.4][s11-4], [§13.2][s13-2]
 
 **Rationale.** The bundle law (a field exists iff the store or tier fact
 exists: undeclared stores absent, never `nothing`-filled; `t` everywhere, `Δt`
@@ -2321,7 +2322,7 @@ with products `y_x`/`y_xu`/`y_z`/`y_zu` — the hybrid-systems flow/jump pair
 (Goebel–Sanfelice–Teel) joined to the control/estimation `y = h(x, u)`
 convention.
 
-**Spec.** [§5.3][s5-3]
+**Spec.** [§5.3][s5-3], [§8.1][s8-1]
 
 **Rationale.** Bare `h` = step size only (double booking retired); suffix = the
 *dependence class* (state-only vs state-plus-input — `y = h(x)` vs `y = h(x,
@@ -2376,7 +2377,7 @@ Annotation (2026-09-25): `input_types`/`output_types` are `u_types`/`y_types`, t
 / `workspace(::C)` (discrete) — the method *is* the allocator, called per
 activation and per scratch-store set.
 
-**Spec.** [§7.3][s7-3], [§8.1][s8-1], [§8.2][s8-2], [§9.1][s9-1], [§9.3][s9-3]
+**Spec.** [§7.3][s7-3], [§8.1][s8-1], [§8.2][s8-2], [§9.1][s9-1], [§9.3][s9-3], [§14.8][s14-8]
 
 **Rationale.** Sizes from the instance, eltypes from the activation; `undef`
 construction the recommended idiom; availability on both tiers (continuous
@@ -2491,7 +2492,7 @@ schema-visible freezing a recorded [§14.10][s14-10] door.
 identically in every execution mode, its sweep cost absorbed as [§10.7][s10-7] pacer debt
 like any other expensive frame.
 
-**Spec.** [§2.1][s2-1], [§10.4][s10-4], [§10.7][s10-7]
+**Spec.** [§2.3][s2-3], [§10.4][s10-4], [§10.7][s10-7]
 
 **Rationale.** Events are rare by nature.
 
@@ -2544,7 +2545,7 @@ on not-holding → holding edges against a per-event baseline held in loop state
 bookkeeping, not model memory: not in `z`, not captured, reconstructed on warm
 restart).
 
-**Spec.** [§2.1][s2-1], [§10.4][s10-4], [§10.6][s10-6], [§14.5][s14-5]
+**Spec.** [§2.3][s2-3], [§10.4][s10-4], [§10.6][s10-6], [§14.5][s14-5]
 
 **Rationale.** Boundary-zero baseline = nothing-holds (authored guard-true
 conditions fire at `t₀`, [§14.5][s14-5] derived); opposite direction = second event with
@@ -2661,10 +2662,10 @@ uniform-`K` sugar.
 
 **Position.** The compiled executor ([§9.7][s9-7]): schedule data compiled per
 activation into a concretely-typed entry tuple over statically typed storage,
-walked by compile-time unrolling — [§7.5][s7-5]/[§9.5][s9-5]/[§5.1][s5-1] are reachable only under
+walked by compile-time unrolling — [§9.8][s9-8]/[§9.5][s9-5]/[§5.1][s5-1] are reachable only under
 full specialization.
 
-**Spec.** [§5.1][s5-1], [§7.5][s7-5], [§9.5][s9-5], [§9.7][s9-7]
+**Spec.** [§5.1][s5-1], [§9.5][s9-5], [§9.7][s9-7], [§9.8][s9-8]
 
 **Rationale.** Phase bodies as the semantically forced outer decomposition
 (order-free `h_x`/`f`/`g` blocks, topo-ordered `h_xu` block, event callables —
@@ -2684,7 +2685,7 @@ call tables stands, now measured.
 
 **Rejected.**
 - *Vector-of-abstract entries:* per-entry dynamic dispatch boxes stage returns
-  — kills [§7.5][s7-5] and its canary role, unfolds [§9.5][s9-5]'s check; union splitting
+  — kills [§9.8][s9-8] and its canary role, unfolds [§9.5][s9-5]'s check; union splitting
   rescues only toy scale and cannot close an open method set.
 - *Type-erased call tables (`FunctionWrapper`-style):* same specialization
   count as chunk-of-one with extra machinery, no cross-entry inlining/SROA,
@@ -2971,7 +2972,7 @@ dominant write-`u` → `step!` → assert idiom.
   ceremony.
 - *`step!(sim; inputs = …)` drain-from-argument:* a second staging spelling
   with no `run!` analogue.
-- *Direct slot pokes from the calling task:* [§2.2][s2-2]/[§12.5][s12-5]'s rejected
+- *Direct slot pokes from the calling task:* [§2.5][s2-5]/[§12.5][s12-5]'s rejected
   unrecorded-mutation idiom — breaks replay.
 - *Leaving reads to device handles or the log:* the log can be off, a handle
   needs a device, and [D-088][d-088]'s "inspect" must be spellable.
@@ -3097,7 +3098,7 @@ header, and the frame-top drain fed by the recording's batches keyed by frame
 ordinal (exact: the frame sequence is itself deterministic), applied verbatim
 with no surface re-check (the write-surface rule ran at recording time).
 
-**Spec.** [§2.2][s2-2], [§12.7][s12-7], [§14.5][s14-5]
+**Spec.** [§2.5][s2-5], [§12.7][s12-7], [§14.5][s14-5]
 
 **Rationale.** The header captures the resolved stores + slots after `apply!`
 and BEFORE the boundary-zero sequence — [§14.5][s14-5]'s end-of-sequence capture
@@ -3308,11 +3309,11 @@ batches are retained verbatim, zero-copy (claim-narrow, dense by nature); the
 interactive writer's wide mostly-`nothing` tuple is converted at the drain on
 retention — (position ⇒ value) pairs for the non-`nothing` entries, an
 O(surface-width) scan and one small allocation at most once per frame, only on
-interactive-active frames, inside the [§7.5][s7-5] retention carve-out the log already
+interactive-active frames, inside the [§9.8][s9-8] retention carve-out the log already
 occupies — so trace size tracks information, not surface width, preserving
 [D-029][d-029]'s two-orders-below-the-log budget at every world scale.
 
-**Spec.** [§7.5][s7-5], [§11.5][s11-5], [§12.7][s12-7]
+**Spec.** [§9.8][s9-8], [§11.5][s11-5], [§12.7][s12-7]
 
 **Rationale.** The header carries each writer's face-name → position schema
 (positional records are meaningless without it and replay does not reconstruct
@@ -3519,7 +3520,7 @@ honest:
   `declaration_error`, and `UnknownFaceSelection` gains a reason field (unknown
   names / both selectors given).
 
-**Spec.** [§6.1][s6-1], [§8.4][s8-4], [§8.8][s8-8], [§9.2][s9-2], [§14.2][s14-2], [§14.8][s14-8], [Appendix C][sC]
+**Spec.** [§8.4][s8-4], [§8.8][s8-8], [§9.2][s9-2], [§14.2][s14-2], [§14.8][s14-8], [Appendix C][sC]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -3605,17 +3606,17 @@ loop runs, so the in-loop argument types come by construction; CI is
 warm-then-assert at per-body granularity (a documented tolerance loosens
 exactly one assertion).
 
-**Spec.** [§7.5][s7-5], [§9.7][s9-7], [Appendix B][sB]
+**Spec.** [§9.7][s9-7], [§9.8][s9-8], [Appendix B][sB]
 
-**Rationale.** [§7.5][s7-5]'s tiers completed: guards and `project` (unconditional per
+**Rationale.** [§9.8][s9-8]'s tiers completed: guards and `project` (unconditional per
 boundary/frame) join the exactly-zero tier, handlers (episodic, only on firing)
-join the tick tier's zero-by-idiom; publication is not a phase body — the [§7.5][s7-5]
+join the tick tier's zero-by-idiom; publication is not a phase body — the [§9.8][s9-8]
 carve-out made structural; isolated invocation leaves buffers valid but
 off-trajectory (re-`init!` to continue); the FlightCore allocation comparison in `migration_outline.md`
 measures through the seam.
 
-Annotation (2026-10-02): [§7.5][s7-5] calls its tiers budgets. The "carve-out" is the
-invariant's scope, which [§7.5][s7-5] states: the invariant covers the stepping loop
+Annotation (2026-10-02): [§9.8][s9-8] calls its tiers budgets. The "carve-out" is the
+invariant's scope, which [§9.8][s9-8] states: the invariant covers the stepping loop
 ([D-305][d-305]), and publication is not a phase body ([D-288][d-288]). `project` is `x_projection`
 ([D-220][d-220], [D-267][d-267]).
 
@@ -3761,7 +3762,7 @@ producer; in a rig, a stub child).
 inbound register, mutated per frame, outside the table's publish-once
 discipline).
 
-**Spec.** [§2.1][s2-1], [§4.1][s4-1], [§5.2][s5-2], [§7.1][s7-1], [§7.3][s7-3], [§10.4][s10-4], [§10.5][s10-5], [§11.7][s11-7], [§13.6][s13-6], [§14.3][s14-3],
+**Spec.** [§2.3][s2-3], [§4.1][s4-1], [§5.2][s5-2], [§7.1][s7-1], [§7.3][s7-3], [§10.4][s10-4], [§10.5][s10-5], [§11.4][s11-4], [§11.7][s11-7], [§13.6][s13-6], [§14.3][s14-3],
 [Appendix A][sA], [Appendix B][sB]
 
 **Rationale.** [§13.6][s13-6]'s integration intermediates are renamed framework-owned
@@ -3781,7 +3782,7 @@ only.
 
 **Rejected.**
 - *Renaming "staging cell" itself:* entrenched through [D-106][d-106]–[D-107][d-107], the
-  walkthrough and the commit history; the compound is unambiguous once [§4.1][s4-1]
+  walkthrough and the commit history; the compound is unambiguous once [§11.4][s11-4]
   defines it.
 - *Rewriting the log's historical [D-004][d-004]/[D-013][d-013]/[D-024][d-024] to the new vocabulary:*
   amendments annotate, never rewrite.
@@ -3905,11 +3906,11 @@ seam binds the curated face contract. This amends [D-095][d-095]: the four-selec
 was inherited from [D-083][d-083] and predates `get_face`'s spelling ([D-095][d-095]), so this is
 completion, not reversal.
 
-**Spec.** [§6.1][s6-1], [§7.4][s7-4], [§14.4][s14-4], [§14.7][s14-7], [§14.9][s14-9]
+**Spec.** [§5.3][s5-3], [§6.1][s6-1], [§14.4][s14-4], [§14.7][s14-7], [§14.9][s14-9]
 
 **Rationale.** Companion idiom recorded beside [§14.7][s14-7]'s `reads` bullet: a
 derivative a service must read across a contract boundary is published as an
-ordinary output port computed in `h_xu` ([§7.4][s7-4] step 2's one-line binding, made
+ordinary output port computed in `h_xu` (`fused_evaluation_lineage.md` step 2's one-line binding, made
 contract), `get_deriv` staying scoped to owned concrete subtrees; publication
 is demand-driven — the `get_local` doctrine's sibling (the need surfaces as a
 resolution error with the export remedy), not a design-time obligation on
@@ -4062,7 +4063,7 @@ substitutability, drift still loud at attach (`ReadBindingUnresolved`); which
 of the three a client falls under is internal, never user-facing API
 ([§14.4][s14-4]'s `apply!` precedent). This amends [D-061][d-061].
 
-**Spec.** [§6.1][s6-1], [§13.3][s13-3], [§14.2][s14-2], [§14.4][s14-4], [§14.9][s14-9]
+**Spec.** [§13.3][s13-3], [§14.2][s14-2], [§14.4][s14-4], [§14.9][s14-9]
 
 **Rationale.** Not [D-061][d-061]'s rejected instance-only walk: the declared-type walk
 stays the primitive's semantics and stays enforcing where promises depend on
@@ -4089,7 +4090,7 @@ citation retarget, one lifecycle count, and the walkthroughs' self-references;
 no settled decision changes, only text brought into line with decisions already
 recorded.
 
-**Spec.** [§5.3][s5-3], [§6.2][s6-2], [§7][s7], [§7.1][s7-1], [§7.5][s7-5], [§11.4][s11-4], [§11.7][s11-7], [§12][s12], [§12.6][s12-6], [§9.5][s9-5], [§13.4][s13-4],
+**Spec.** [§5.3][s5-3], [§6.2][s6-2], [§7][s7], [§7.1][s7-1], [§9.8][s9-8], [§11.4][s11-4], [§11.7][s11-7], [§12][s12], [§12.6][s12-6], [§9.5][s9-5], [§13.4][s13-4],
 [§14][s14], [§14.6][s14-6], [Appendix B][sB], [§D.3][sD-3], [§D.6][sD-6], [§D.8][sD-8]
 
 **Rationale.** `pending.md`'s GUI panel entry lists orphan display among the settled
@@ -4102,7 +4103,7 @@ slips reworded ([§14.6][s14-6] "the one initialized datum without declared defa
 [§11.4][s11-4]'s scatter "position → slot cell"), the claims themselves intact; chapter
 9's opener roadmaps only chapter 9, leaving [§12][s12]'s own opener the sole roadmap
 for chapter 10; `project`'s two schedule positions cited to [§5.3][s5-3], where the
-rule actually lives, from [§7.5][s7-5], [§9.5][s9-5] and [§D.3][sD-3], with a one-clause back-reference
+rule actually lives, from [§9.8][s9-8], [§9.5][s9-5] and [§D.3][sD-3], with a one-clause back-reference
 added at [§7.1][s7-1]'s write-back bullet; [§12.6][s12-6] says *five* states, agreeing with its
 own enumeration and with [§13.4][s13-4], [§14][s14]'s legality tables and [§D.8][sD-8]; and the two
 walkthroughs' six self-references, mis-resolved to unrelated spec chapters by
@@ -4341,7 +4342,7 @@ compiled artifacts** — layouts, compiled plans, the validated flag — keyed b
 concrete scalar type and living on the **`Build`**, since an activation is a
 pure function of the build and the scalar ([§9.4][s9-4]'s own words).
 
-**Spec.** [§7.5][s7-5], [§11.1][s11-1], [§9.2][s9-2], [§9.4][s9-4], [§14.8][s14-8]
+**Spec.** [§9.8][s9-8], [§11.1][s11-1], [§9.2][s9-2], [§9.4][s9-4], [§14.8][s14-8]
 
 **Rationale.** **Every buffer set has exactly one owner**: the `Simulation`
 owns its nominal activation's buffers, materialized from the cached layouts at
@@ -4353,7 +4354,7 @@ buffers aliases the sim's authoritative stores, warn-but-assign reborn). The
 envelope-grid sweep's amortization is restated honestly: what the cache saves
 is probe re-runs, layout construction and Julia's compilation of the `Dual`
 chain — never buffer reuse, the per-point working-store allocation being
-O(model size) and trivial against the solve it feeds, and [§7.5][s7-5]'s
+O(model size) and trivial against the solve it feeds, and [§9.8][s9-8]'s
 zero-allocation invariant being scoped to the stepping loop (the services were
 always allocation-tolerant, [§14.8][s14-8]). Two consequences stated where they belong:
 the `Build` is an **immutable artifact that may back any number of
@@ -4390,7 +4391,7 @@ ownership argument as [§11.4][s11-4]'s staging cells (no lock, no arbitration, 
 primitive), holding a **bounded ring of 16 diagnostic values plus per-kind
 suppressed counts** and an atomic heartbeat timestamp.
 
-**Spec.** [§7.5][s7-5], [§10.7][s10-7], [§11.1][s11-1], [§11.2][s11-2], [§11.4][s11-4], [§11.6][s11-6], [§11.8][s11-8], [§12.2][s12-2], [§12.4][s12-4], [§13.2][s13-2], [§13.5][s13-5],
+**Spec.** [§9.8][s9-8], [§10.7][s10-7], [§11.1][s11-1], [§11.2][s11-2], [§11.4][s11-4], [§11.6][s11-6], [§11.8][s11-8], [§12.2][s12-2], [§12.4][s12-4], [§13.2][s13-2], [§13.5][s13-5],
 Appendices C/D
 
 **Rationale.** The bound **is** the rate limit — an emission past capacity
@@ -4423,7 +4424,7 @@ values at emission on the writer's own task and a **fresh ring** lazily at the
 writer's next emission (the drained one being frozen into a snapshot and
 unwritable thereafter), the same GC-over-reuse trade [§11.2][s11-2] made when it rejected
 preallocated snapshot buffers; worst case per writer per boundary is therefore
-one ring of 16, everything past it an integer increment, and [§7.5][s7-5]'s scoped
+one ring of 16, everything past it an integer increment, and [§9.8][s9-8]'s scoped
 model-sweep zero-allocation invariant is untouched. Composition note, recorded
 once: `totals` is monotone across logged snapshots, so `log_every` decimation
 loses *which* boundary in a skipped stretch an occurrence fell on, never *how
@@ -4461,12 +4462,12 @@ many*.
 number of retained snapshot references, a new `Simulation` keyword beside
 `log`/`log_every`.
 
-**Spec.** [§4.1][s4-1], [§4.4][s4-4], [§7.5][s7-5], [§10.7][s10-7], [§11.2][s11-2], [§11.5][s11-5], [§11.8][s11-8], [§12.4][s12-4], [§12.7][s12-7], [§13.5][s13-5],
+**Spec.** [§4.1][s4-1], [§4.4][s4-4], [§9.8][s9-8], [§10.7][s10-7], [§11.2][s11-2], [§11.5][s11-5], [§11.8][s11-8], [§12.4][s12-4], [§12.7][s12-7], [§13.5][s13-5],
 Appendices B/D
 
 **Rationale.** **A count, not a memory budget**: snapshots are immutable object
 graphs with internal sharing ([§4.1][s4-1], and [§4.4][s4-4] field handles riding as references
-to build-time-frozen data, [§7.5][s7-5]), so byte accounting over them is fuzzy and
+to build-time-frozen data, [§9.8][s9-8]), so byte accounting over them is fuzzy and
 platform-dependent, while a count is exact and converts to memory through one
 number the user measures once (`Base.summarysize` of a single snapshot).
 **Default 65536 (2¹⁶), finite unconditionally**, with `Inf` the explicit
@@ -4494,7 +4495,7 @@ stroke, a major-GC burst worth a pacer-absorbed, `DebtReanchor`-visible hiccup
 but needless — while the amortized form drops exactly one old snapshot per
 retained append, the steady trickle a rolling window would produce anyway; the
 loop's own work is pointer bookkeeping, microseconds either way and on the
-framework side of [§7.5][s7-5]'s scope, publication staying wait-free with readers
+framework side of [§9.8][s9-8]'s scope, publication staying wait-free with readers
 never blocking. **The boundary-zero ([§14.5][s14-5]) and terminal ([§12.4][s12-4](1), [§13.5][s13-5])
 snapshots are retained unconditionally under any `log_every` and any `log_max`,
 and do not count against the bound** — two extra references — so the run's
@@ -4504,7 +4505,7 @@ once: `totals` monotonicity across logged snapshots ([§11.8][s11-8]) is unaffec
 re-decimation losing *which* boundary in a stretch an occurrence fell on and
 never *how many*; and `log_max` is a **view policy, not
 trajectory-determining** — outside the trace header's deployment block, neither
-recorded nor compared by replay ([D-127][d-127], [D-133][d-133]'s compared set untouched). [§7.5][s7-5]'s
+recorded nor compared by replay ([D-127][d-127], [D-133][d-133]'s compared set untouched). [§9.8][s9-8]'s
 `sizehint!` for the expected duration is reconciled: now capped by `log_max`,
 which is also what defines the hint when `t_end = Inf`. No new diagnostic kind
 — hitting the bound is stated policy, not an event to report.
@@ -4607,13 +4608,13 @@ natural end) and `gui = true`'s standard attachment stating that value
 map (component, input values) → handle exposed as a plain, pure, exported
 function (`atmospheric_field(atm; T_sl, p_sl, wind)` for the `SimpleAtmosphere`
 successor), with the component's swept output stage a **one-line call to it and
-never the reverse** — stated in [§4.4][s4-4] as a **shipped component's obligation**
+never the reverse** — stated in [§8.2][s8-2] as a **shipped component's obligation**
 ([Appendix A][sA] taught contract, [Appendix D][sD] entry), because only the component's
 author can write it: the real component composes sub-models, and anyone else
 reconstructing the map has re-created the silent-drift class [§5.3][s5-3] exists to
 kill.
 
-**Spec.** [§4.4][s4-4], [§5.3][s5-3], [§14.1][s14-1], [§14.2][s14-2], [§14.7][s14-7], [§14.9][s14-9], Appendices A/D
+**Spec.** [§4.4][s4-4], [§5.3][s5-3], [§8.2][s8-2], [§14.1][s14-1], [§14.2][s14-2], [§14.7][s14-7], [§14.9][s14-9], Appendices A/D
 
 **Rationale.** Bulk-data components owe only that the query math be *reachable*
 as a plain function; building a handle outside a build may then cost a resource
@@ -4645,7 +4646,7 @@ environment's tunables in the slot vocabulary that conditions, `capture`,
 linearization's input surface and the trace header already speak. [§9.6][s9-6]'s
 "`Kinematics.Initializer` … survives untouched, aircraft-side" is
 **corrected**: it survives aircraft-side with its `atmosphere::Model` argument
-respelled as a field handle (built at value level per [§4.4][s4-4], or held as a rig
+respelled as a field handle (built at value level per [§8.2][s8-2], or held as a rig
 slot value). Recorded once, the orthogonal **2×2** the discussion established:
 *elimination vs. enlargement* (where target enforcement lives — closed-form in
 the condition math, or as residuals on swept outputs) × *component-produced vs.
@@ -4660,6 +4661,11 @@ converges to a *true* equilibrium at an *unintended operating point* — the
 eliminated targets are never residual-checked, so nothing complains — and a
 cheap post-commit read-back of EAS/γ/β against the requested targets catches
 the whole class.
+
+Annotation (2026-10-13): narrowed by [D-364][d-364]. The test-rig idiom's root input
+holding the handle value applies to isbits handles only. A handle that
+references bulk data cannot be a root input ([D-237][d-237]), and a rig holds it in a
+constant source instead.
 
 **Rejected.**
 - *Widening the condition signature to `condition(d, baseline)` so the math
@@ -4696,11 +4702,11 @@ on values the caller already holds.
 **Position.** [§5.4][s5-4]'s escape hatch becomes a **three-rung remedy ladder** for
 artificial loops; [§8.3][s8-3] and [§4.3][s4-3] are unchanged.
 
-**Spec.** [§4.3][s4-3], [§5.4][s5-4], [§5.6][s5-6], [§8.3][s8-3]
+**Spec.** [§4.3][s4-3], [§5.4][s5-4], [§8.3][s8-3], [§13.8][s13-8]
 
 **Rationale.** (i) The **two-stage split** dissolves most of the class —
 the `VehicleDynamics` instance of `flight_case_studies.md` is the canonical dissolution. (ii)
-**Contract re-factoring**, the new middle rung: when [§5.6][s5-6]'s tracer says
+**Contract re-factoring**, the new middle rung: when [§13.8][s13-8]'s tracer says
 *artificial*, re-examine the cycle's wires before moving any code, because an
 input the neighbor consumes **only in a fallback branch** is the archetypal
 false dependency — the neighbor is computing, on the component's behalf, a
@@ -4724,7 +4730,7 @@ public, connectable, substitution-relevant. The cap is [§4.3][s4-3]'s granulari
 guideline, which the split case satisfies trivially (one producing stage, one
 consumer): **one struct-valued bundle port** (a `StrutGeometry`-shaped value),
 not N loose ports — the bundle type becomes contract, a real cost but a bounded
-and honest one. [§5.6][s5-6]'s hint offers **both exits** ("split this component, or
+and honest one. [§13.8][s13-8]'s hint offers **both exits** ("split this component, or
 narrow the neighbor's contract"), continuous members only as before, and the
 classifier machinery is untouched: it already knows which hop died. [§5.4][s5-4]'s
 "rare" is thereby **earned** rather than asserted — the split is rare *because*
@@ -4757,7 +4763,7 @@ remedy not taken; the `AbstractSteering` contract change is an
 **Position.** A continuous component's state reset is an event — a new Appendix
 A entry, with the tier asymmetry now taught as a contract: the same-tick reset
 entry is marked explicitly discrete-tier, and [§5.3][s5-3]'s gear sentence is extended
-to say why. [§3.1][s3-1], [§2.1][s2-1] and [§13.7][s13-7] are unchanged. Even a commanded continuous
+to say why. [§3.1][s3-1], [§2.3][s2-3] and [§13.7][s13-7] are unchanged. Even a commanded continuous
 reset — the condition arriving as an ordinary `Bool` input, weight-on-wheels
 being the shipped instance — is spelled as an event whose guard reads that
 input; the discrete tier's input answer does not transfer. Ownership settles on
@@ -4768,7 +4774,7 @@ implemented internally as an ordinary guard/handler event (the [Appendix A][sA]
 contract's worked instance). The gear wires `strut.wow → frc.reset` (the
 touchdown edge).
 
-**Spec.** [§2.1][s2-1], [§2.2][s2-2], [§3.1][s3-1], [§3.3][s3-3], [§3.4][s3-4], [§10.6][s10-6], [§8.5][s8-5], [§13.7][s13-7], [§5.3][s5-3], [Appendix A][sA]
+**Spec.** [§2.3][s2-3], [§2.5][s2-5], [§3.1][s3-1], [§3.3][s3-3], [§3.4][s3-4], [§10.6][s10-6], [§8.5][s8-5], [§13.7][s13-7], [§5.3][s5-3], [Appendix A][sA]
 
 **Rationale.** The reason is semantic, not stylistic: only the discrete tier's
 update stage is already a jump map (a reset there is merely another value for
@@ -4802,7 +4808,7 @@ same axis. Recorded as general doctrine, the graduation rule: a wrapper's
 pattern moves into the library at the second same-semantics demand.
 
 Annotation (2026-10-13): [§3.1][s3-1] now states the commanded-reset rule above, so
-"unchanged" describes its state when this entry was ratified, and [§2.2][s2-2] now
+"unchanged" describes its state when this entry was ratified, and [§5.3][s5-3] now
 states the gear's touchdown edge. The immutable stage views cited to [§3.1][s3-1]
 here and in the Rejected list are [§7.1][s7-1]'s.
 
@@ -5387,9 +5393,9 @@ to an internal fact the author never reproduces. At each seam the framework
 canonicalizes by a **type-level reorder** (`NamedTuple{canonical_names}(y)`), a
 compile-time permutation of an already-typed value that SROA folds away exactly
 where the existing test folds — so [§9.5][s9-5] keeps one whole-type `isa` (never
-per-field checks) and [§7.5][s7-5]'s canary verifies the fold empirically.
+per-field checks) and [§9.8][s9-8]'s canary verifies the fold empirically.
 
-**Spec.** [§7.5][s7-5], [§9.5][s9-5], [§14.7][s14-7], [§14.8][s14-8], Appendices B/C/D (as touched)
+**Spec.** [§9.5][s9-5], [§9.8][s9-8], [§14.7][s14-7], [§14.8][s14-8], Appendices B/C/D (as touched)
 
 **Rationale.** A round-5 kernel dry-run finding (findings 7 and 8): [D-053][d-053]'s
 fold economics preserved, [D-118][d-118]'s setup placement kept and its key-set check
@@ -5756,7 +5762,7 @@ evaluator, a hand-rolled per-component check, today's FlightCore path in `migrat
 comparison) does not, and along a dependency chain the last-ulp difference
 accumulates.
 
-**Spec.** [§6.2][s6-2], [§7.5][s7-5]
+**Spec.** [§6.2][s6-2], [§9.8][s9-8]
 
 **Rationale.** Increment-1 observation promoted to doctrine; measured in
 `prototypes/cellstore_bench`'s `check.jl`, same class as the main line's
@@ -5769,7 +5775,7 @@ run reproduces itself bit-for-bit.
 
 **Rejected.**
 - *Bit-exact assertions under a `muladd`-free or pinned-math build:* buys a
-  brittle equality by giving up the codegen [§7.5][s7-5]'s invariant depends on.
+  brittle equality by giving up the codegen [§9.8][s9-8]'s invariant depends on.
 - *Per-test ad-hoc tolerances:* precisely what stating it once as doctrine
   prevents.
 
@@ -5820,7 +5826,7 @@ law (stages are discovered by method existence, membership is a partition of
 declared ports that may be empty) — a stage producing neither ports nor `w` is
 a dead-stage build error (`DeadStage`).
 
-**Spec.** [§5.2][s5-2], [§5.4][s5-4], [§7.5][s7-5], [§11.2][s11-2], [§8.3][s8-3], [§9.5][s9-5], [§9.7][s9-7], [§13.2][s13-2], [§14.4][s14-4]
+**Spec.** [§5.2][s5-2], [§5.4][s5-4], [§9.8][s9-8], [§11.2][s11-2], [§8.3][s8-3], [§9.5][s9-5], [§9.7][s9-7], [§13.2][s13-2], [§14.4][s14-4]
 
 **Rationale.** `w` carries the component's private intermediates: an
 `isbits`-leaf NamedTuple, never a table cell.
@@ -5851,7 +5857,7 @@ beside the `y` test — folds to zero instructions when stable, and converts the
 unintended-branch-divergence class (which otherwise surfaces only as
 allocations in testing) into a loud, located, field-naming error at first
 divergent execution, with blame text honestly citing the probe ("expected what
-the nominal probe observed"), complementing [§7.5][s7-5]'s canary (detection) with
+the nominal probe observed"), complementing [§9.8][s9-8]'s canary (detection) with
 localization.
 
 **Non-nominal activations run no `w` check**: with no declaration for a
@@ -6139,10 +6145,10 @@ excluded** — the underspecification left by the bundle law's "iff stage-1 port
 exist", settled on the narrow reading: an auto-published port is the framework
 copying a state, mode or `z` field into a cell at stage-1 position ([§5.3][s5-3]), and
 stage 2 already holds `x`/`m`/`z` directly, so carrying it in the hand-down
-would be [§7.4][s7-4] step 4's rejected identity transport relocated from the table
+would be `fused_evaluation_lineage.md` step 4's rejected identity transport relocated from the table
 into a bundle.
 
-**Spec.** [§5.2][s5-2], [§5.3][s5-3], [§5.6][s5-6], [§7.4][s7-4], [§9.3][s9-3], [§13.2][s13-2], [Appendix B][sB], [Appendix D][sD]
+**Spec.** [§5.2][s5-2], [§5.3][s5-3], [§9.3][s9-3], [§13.2][s13-2], [§13.8][s13-8], [Appendix B][sB], [Appendix D][sD]
 
 **Rationale.** It is also what [§9.3][s9-3] already sources (the stage-1 *probe's
 return*), so the clause records existing machinery rather than changing it;
@@ -6167,7 +6173,7 @@ than the author.
   channel defined as private, costs a `(y, y)`-style repack idiom or
   hand-copied fields with a drift hazard, makes stage 2 the one own-function
   denied the fused idiom's "publish once, read your own product" that
-  `f`/`g`/guards get through `y`, and would unpick [§5.6][s5-6]'s tracer boundary
+  `f`/`g`/guards get through `y`, and would unpick [§13.8][s13-8]'s tracer boundary
   argument, in which `y_x` is the named never-seeded stage-2 input.
 
 ### D-170 — Split assembly connections into child/input/output declarations
@@ -6433,12 +6439,12 @@ schemas, so nothing that reads a completed run is affected).
 consumer-facing record format, no per-entry format flag, and replay one
 inverse-conversion path.
 
-**Spec.** [§7.5][s7-5], [§11.5][s11-5], [§12.7][s12-7], [Appendix D][sD]
+**Spec.** [§9.8][s9-8], [§11.5][s11-5], [§12.7][s12-7], [Appendix D][sD]
 
 **Rationale.** Costs recorded where they are paid: ~2× trace size on the dense
 component (two small values per touched face where the tuple held one, the
 order unchanged and [D-029][d-029]'s two-orders-below-the-log budget untouched); the
-conversion allocates once per drained batch, in-class with [§7.5][s7-5]'s retention
+conversion allocates once per drained batch, in-class with [§9.8][s9-8]'s retention
 carve-out and smaller than the log's per-boundary snapshot, which the carve-out
 already covers. The decision is **reversible as pure implementation**:
 conversion is lossless both ways, so verbatim retention could return as a
@@ -6574,9 +6580,9 @@ boilerplate-on-every-leaf outcome [D-039][d-039], [D-173][d-173] and this row al
 **Position.** Detection policy is declared by the guard's return type — `Bool`
 ⇒ boundary-detected, nominal scalar ⇒ localized — and `Event(guard, handler)`
 loses the `localize` keyword: de-localization = casting the guard to its
-predicate (`σ ≥ 0`, the [§2.1][s2-1] definition, semantics-preserving by construction).
+predicate (`σ ≥ 0`, the [§2.3][s2-3] definition, semantics-preserving by construction).
 
-**Spec.** [§2.1][s2-1], [§10.4][s10-4], [§8.2][s8-2], [§9.3][s9-3], [§9.5][s9-5]
+**Spec.** [§2.3][s2-3], [§10.4][s10-4], [§8.2][s8-2], [§9.3][s9-3], [§9.5][s9-5]
 
 **Rationale.** The localized-`Bool` combination becomes unrepresentable and
 `LocalizedGuardForm` retires, `GuardForm` remaining the sole guard diagnostic;
@@ -6604,7 +6610,7 @@ through probes).
 **Position.** Per-event `direction` (`:upward`/`:downward`/`:both`) is recorded
 as a guarded addition, unbuilt.
 
-**Spec.** [§2.1][s2-1]
+**Spec.** [§2.3][s2-3]
 
 **Rationale.** `:downward` is pure sign-flip sugar (desugars to the negated
 predicate); `:both` (fire on any predicate change) costs little machinery —
@@ -6616,7 +6622,7 @@ hysteresis wants two events anyway); strong precedent exists (MATLAB events
 relation events), so it is banked until migration shows demand.
 
 **Rejected.**
-- *Building it now:* machinery cheap but no grounded use case; [§2.1][s2-1]'s
+- *Building it now:* machinery cheap but no grounded use case; [§2.3][s2-3]'s
   negated-guard second event covers every current need.
 - *Rejecting it permanently:* the precedent is universal and the analysis shows
   no structural obstacle.
@@ -7182,7 +7188,7 @@ operator `z⁻¹`.
   `DeclarationOnWrongTier`'s member set — a discrete leaf declaring `h_x`, or
   a continuous one declaring `h_s`, is statically diagnosable again.
 
-**Spec.** [§3.2][s3-2], [§5.2][s5-2], [§5.3][s5-3], [§7.3][s7-3], [§8.2][s8-2], [§8.7][s8-7], [§9.3][s9-3], [§9.5][s9-5], [§12.5][s12-5], [§13.7][s13-7], [§14.1][s14-1], [§3.4][s3-4], [§8.6][s8-6],
+**Spec.** [§3.2][s3-2], [§5.2][s5-2], [§5.3][s5-3], [§7.3][s7-3], [§8.2][s8-2], [§8.7][s8-7], [§9.3][s9-3], [§9.5][s9-5], [§12.5][s12-5], [§13.2][s13-2], [§13.7][s13-7], [§14.1][s14-1], [§3.4][s3-4], [§8.6][s8-6],
 [Appendix A][sA], [Appendix B][sB], [Appendix C][sC], [Appendix D][sD] (all companions swept)
 
 **Rationale.** [D-173][d-173] correctly retired `z` but recycled the continuous letter,
@@ -8234,8 +8240,8 @@ mathematical symbols.
   included. No aliases and no deprecation shims: there are no external users,
   and a half-renamed surface is the ambiguity this entry removes.
 
-**Spec.** [§2.1][s2-1], [§3.2][s3-2], [§4.3][s4-3], [§4.4][s4-4], [§5.2][s5-2], [§5.3][s5-3], [§5.4][s5-4], [§6.2][s6-2], [§7.1][s7-1], [§7.3][s7-3], [§7.4][s7-4],
-[§7.5][s7-5], [§8.1][s8-1], [§8.2][s8-2], [§8.5][s8-5], [§9.3][s9-3], [§9.4][s9-4], [§9.5][s9-5], [§9.7][s9-7], [§10.4][s10-4], [§10.5][s10-5], [§10.6][s10-6], [§12.5][s12-5],
+**Spec.** [§2.3][s2-3], [§3.2][s3-2], [§4.3][s4-3], [§4.4][s4-4], [§5.2][s5-2], [§5.3][s5-3], [§5.4][s5-4], [§6.2][s6-2], [§7.1][s7-1],
+[§9.8][s9-8], [§8.1][s8-1], [§8.2][s8-2], [§8.5][s8-5], [§9.3][s9-3], [§9.4][s9-4], [§9.5][s9-5], [§9.7][s9-7], [§10.4][s10-4], [§10.5][s10-5], [§10.6][s10-6], [§12.5][s12-5],
 [§13.4][s13-4], [§13.5][s13-5], [§13.6][s13-6], [§13.7][s13-7], [§14.5][s14-5], [§14.7][s14-7], [§14.8][s14-8], [§14.10][s14-10], [§3.4][s3-4], [§8.6][s8-6],
 [Appendix A][sA], [Appendix B][sB], [Appendix C][sC], [Appendix D][sD]
 
@@ -8281,7 +8287,7 @@ from here, the stage and update-law names no longer being bare nouns, and the
 `workspace` item it flagged for the exported-name audit is settled by this entry.
 [D-144][d-144] keeps `ratified` for the same reason.
 
-`state_events` also names the distinction [§2.1][s2-1] now teaches. The discrete
+`state_events` also names the distinction [§2.3][s2-3] now teaches. The discrete
 tier's ticks, declared by `sample_times`, are *time events*, scheduled because
 their instants are known in advance; everything declared through
 `StateEvent(guard, handler)` is a *state event*, whose instant is unknown and
@@ -8523,11 +8529,11 @@ nothing.
 - The authoring family stays unexported under [D-117][d-117] whatever the audit
   decides for the operator half.
 
-**Spec.** [§4.4][s4-4], [§8.1][s8-1], [§9.4][s9-4], [Appendix B][sB], [Appendix D][sD]
+**Spec.** [§8.1][s8-1], [§8.2][s8-2], [§9.4][s9-4], [Appendix B][sB], [Appendix D][sD]
 
 **Rationale.** The 2026-09-04 conformance audit read "exported" at three sites
 as an obligation the module does not meet, `names(Redstone)` being
-`[:Redstone]`. The sites describe visibility. [§4.4][s4-4]'s value-level constructor is
+`[:Redstone]`. The sites describe visibility. [§8.2][s8-2]'s value-level constructor is
 a function a model package must expose so condition math can call it outside
 any sweep; [§9.4][s9-4]'s `ProbeDual` is a name a CI activation list spells. Neither
 needs `export`; both need a public name. `pending.md` already records the export list
@@ -8728,7 +8734,7 @@ leaf's `m` — is isbits or a `Symbol`, and Stratum A checks every
 latitude of [§4.1][s4-1] stays with signals. A PRNG object is workspace; the values
 that determine its next draw are the state.
 
-**Spec.** [§2.2][s2-2], [§3.2][s3-2], [§7.3][s7-3], [§8.2][s8-2], [§9.1][s9-1], [Appendix C][sC], [Appendix D][sD]
+**Spec.** [§2.5][s2-5], [§3.2][s3-2], [§7.3][s7-3], [§8.2][s8-2], [§9.1][s9-1], [Appendix C][sC], [Appendix D][sD]
 
 **Rationale.** The three sources disagreed and the code checked nothing:
 [§7.3][s7-3] granted `s` "any immutable value" under the frozen-reference rule, the
@@ -8877,7 +8883,7 @@ over the cell type and the return type.
   generates a throw of `ConformanceFailure`, a `StepError` species at runtime
   ([§13.4][s13-4]).
 
-**Spec.** [§7.1][s7-1], [§7.2][s7-2], [§9.5][s9-5], [Appendix C][sC]
+**Spec.** [§7.1][s7-1], [§8.2][s8-2], [§9.5][s9-5], [Appendix C][sC]
 
 **Rationale.** Two facts fix the shape. [D-166][d-166]'s embed-accept makes "types equal
 or refuse" impossible at the write: a `Float64` at a declared-`T` cell under a
@@ -8915,7 +8921,7 @@ embed-accept relation survives. [D-238][d-238] states it, decided on the type.
   `T`-declared output computed from a frozen discrete input is `Float64` at
   every activation, lawfully and stably, so the refusal would require the
   consumer to know its producer's tier, which [D-054][d-054] rules impossible by
-  construction. Type stability under `Dual` is an authoring rule ([§7.2][s7-2]), not a
+  construction. Type stability under `Dual` is an authoring rule ([§8.2][s8-2]), not a
   conformance predicate.
 
 ### D-236 — Type-check a wire by one relation with embedding, in Stratum A
@@ -8937,7 +8943,7 @@ declarations at a marker scalar and collected under the stratum's barrier.
   entries must agree at `Float64` (`RootInputTypeConflict`); abstract
   co-consumers are checked by the bound clause.
 
-**Spec.** [§6.1][s6-1], [§8.2][s8-2], [§9.1][s9-1], [Appendix C][sC]
+**Spec.** [§8.2][s8-2], [§9.1][s9-1], [Appendix C][sC]
 
 **Rationale.** At the nominal activation every lift is the identity and the
 relation is [§6.1][s6-1]'s bound check, `<:` with equality as the concrete case. Under
@@ -8991,7 +8997,7 @@ embedding lift ([D-238][d-238]) never enters it. A mutable type anywhere in a po
 refused (`IllegalPortType`), and so is a handle-typed face surfacing as a
 root input.
 
-**Spec.** [§4.3][s4-3], [§4.4][s4-4], [§8.2][s8-2], [§9.5][s9-5], [Appendix C][sC]
+**Spec.** [§4.3][s4-3], [§4.4][s4-4], [§8.2][s8-2], [§9.5][s9-5], [§9.7][s9-7], [Appendix C][sC]
 
 **Rationale.** [§4.4][s4-4] already fixes the boundary: a bulk-data model is an
 immutable struct combining isbits parameters with references to data loaded at
@@ -9000,7 +9006,7 @@ description off the type, so an author declares nothing and the walk cannot
 drift from the prose. The store is the existing one: a handle type is its own
 leaf eltype with one homogeneous store, and Julia keeps an immutable struct
 with reference fields inline in an array, so the gather and the scatter are
-one load and one store, the allocation-free rebuild [§4.4][s4-4] promises. A handle
+one load and one store, the allocation-free rebuild [§9.7][s9-7] promises. A handle
 may carry `T` among its isbits parameters; its cell is then a different type
 per activation, produced at `T` by the emitter's stage, and nothing embeds
 into it. An opaque leaf has no scalar positions to lift, so the relation
@@ -9027,6 +9033,11 @@ Annotation (2026-09-25): the identity rule governs a store and the producer's
 own conformance check. At a wire the entry is a bound, and a frozen opaque
 arrival, from a `Pinned` producer or a discrete one, is admitted at an
 unpinned entry as the producer's cell ([D-264][d-264]).
+
+Annotation (2026-10-13): [D-364][d-364] records the primary-data reason for refusing a
+handle-typed root input. Root inputs are traced and checkpointed by value, and
+a bulk-data handle can neither be recorded faithfully nor be kept frozen when a
+writer supplies it.
 
 **Rejected.**
 - *An author-declared trait marking handle types:* a second place for the
@@ -9165,7 +9176,7 @@ an isbits record, and a noisy frame allocates only its rings.
 - *A status tuple sized to the roster, in the snapshot's type:* two fewer
   small allocations, bought with a compile per roster size per process and a
   publisher rebound at every roster change; the zero-additional sentence was
-  [§7.5][s7-5]'s invariant extended past the scope [§7.5][s7-5] gives it.
+  [§9.8][s9-8]'s invariant extended past the scope [§9.8][s9-8] gives it.
 - *A fixed-capacity tuple:* no compile per size, but a cap on the roster and
   a record's worth of bytes per unused slot in every snapshot.
 
@@ -9250,7 +9261,7 @@ on the grounds the store already accepts. [D-237][d-237] refuses mutable types t
 out aliasing, and no API mutates a `Symbol`; the refusal the walk raised was
 an artifact of Julia's classification, not of the design's reasoning. The
 cost of the refusal was concrete: the idiomatic mode label is a `Symbol`, so a
-mode so labelled could not be declared public, and [§7.5][s7-5]'s remedy for the
+mode so labelled could not be declared public, and [§11.2][s11-2]'s remedy for the
 absent event stream worked for enum modes alone. The classification is by
 [D-237][d-237]'s existing rule with one exemption, so the store shape, the identity
 acceptance and the outermost-type rule all carry unchanged. A struct nesting
@@ -9261,7 +9272,7 @@ handle's refusal covers it.
 
 **Rejected.**
 - *Keeping the refusal and making `Symbol` store-only:* the argument that
-  admits it at the store is denied at the table, and [§7.5][s7-5]'s remedy stays
+  admits it at the store is denied at the table, and [§11.2][s11-2]'s remedy stays
   halved.
 - *A scalar-like leaf with `Symbol("")` as its synthesis:* a meaningless
   default the probe would feed to a stage; the empty symbol is no instance an
@@ -9313,7 +9324,7 @@ diagnostic carries what that question rested on.
 - Every dead hop is listed under either verdict.
 - Each member records its tracing mode: global, sampled or structural.
 
-**Spec.** [§5.4][s5-4], [§5.6][s5-6], [Appendix C][sC]
+**Spec.** [§5.4][s5-4], [§13.8][s13-8], [Appendix C][sC]
 
 **Rationale.** [D-012][d-012] states the verdict for a simple cycle: real iff every
 hop survives. A strongly connected component is one cluster of possibly many
@@ -9323,7 +9334,7 @@ the ladder ([D-140][d-140]) would steer the author toward narrowing a contract o
 loop that only a state can break. The graph question keeps [D-012][d-012]'s answer on
 a simple cycle and gives the tangle its true one. Listing the dead hops under
 a real verdict keeps the false chords visible, since each is a wire the
-author can still delete. The mode per member is [§5.6][s5-6]'s own demand that the
+author can still delete. The mode per member is [§13.8][s13-8]'s own demand that the
 caveats ride in the diagnostic rather than being assumed away. A dead hop the
 sampled tracer found rests on the paths it took, a structural map can never
 kill a hop, and a reader weighing the hint needs to know which. The
@@ -9338,7 +9349,7 @@ can enter it.
 - *Listing dead hops only under an artificial verdict:* hides false wires the
   author could delete from a loop that is real through another path.
 - *Omitting the tracing mode:* a sampled "artificial" and a global one would
-  read alike, and the sampled miss [§5.6][s5-6] documents would be assumed away in
+  read alike, and the sampled miss [§13.8][s13-8] documents would be assumed away in
   the message.
 
 ### D-246 — Diagnose a foreign declaration binding as its own fail-fast kind
@@ -9487,7 +9498,7 @@ synthesized inputs as a spelling and the original exception as `cause`.
   matches by the bundle's field names, since the activation's bundle type is
   not in hand there. `UserCodeFraming` stays build-only.
 
-**Spec.** [§5.2][s5-2], [§9.3][s9-3], [§13.2][s13-2], [§13.4][s13-4], [Appendix C][sC]
+**Spec.** [§9.3][s9-3], [§13.2][s13-2], [§13.4][s13-4], [Appendix C][sC]
 
 **Rationale.** [D-142][d-142]'s totality contract lists the functions that receive a
 bundle, because totality is a claim about inputs. A declaration takes none,
@@ -9706,8 +9717,8 @@ carries the component path and the port name; the two stages are the kind's
 own, so the producer column goes with the third class. Supersedes [D-016][d-016]'s
 publication rule, [D-152][d-152]'s successor in [D-154][d-154]'s sequence, and [D-169][d-169].
 
-**Spec.** [§5.2][s5-2], [§5.3][s5-3], [§7.1][s7-1], [§7.5][s7-5], [§8.3][s8-3],
-[§9.1][s9-1], [§9.3][s9-3], [§10.6][s10-6], [§13.2][s13-2], [Appendix B][sB],
+**Spec.** [§5.2][s5-2], [§5.3][s5-3], [§7.1][s7-1], [§8.3][s8-3], [§9.1][s9-1],
+[§9.3][s9-3], [§10.6][s10-6], [§11.2][s11-2], [§13.2][s13-2], [Appendix B][sB],
 [Appendix C][sC], [Appendix D][sD]
 
 **Rationale.** Auto-publishing was a third port class the framework wrote.
@@ -9942,7 +9953,7 @@ run is allowed because it is the interactive session's ordinary shape, with
 - *A mutable `RunPolicy` carrying `hit`:* the declared policy and the loop's
   scratch in one struct.
 - *`Run` as an immutable value rebuilt per frame:* the log and trace are
-  append-only state; copying them per frame is the allocation [§7.5][s7-5] forbids.
+  append-only state; copying them per frame is the allocation [§9.8][s9-8] forbids.
 - *`termination` staying on `Control`:* the control plane is what anyone
   may poke; a run's outcome is not.
 - *A `Union{Nothing,Run}` field:* every accessor branches on a state
@@ -10118,7 +10129,7 @@ retires "stratum".
   [D-253][d-253]'s fourth bullet is amended in place to the nominal evaluation's
   return.
 
-**Spec.** [§5.6][s5-6], [§6.1][s6-1], [§8.2][s8-2], [§8.5][s8-5], [§9.1][s9-1], [§9.2][s9-2], [§9.4][s9-4], [§9.6][s9-6], [§13.1][s13-1], [§13.2][s13-2], [§13.3][s13-3], [§14.3][s14-3], [Appendix C][sC], [Appendix D][sD]
+**Spec.** [§6.1][s6-1], [§8.2][s8-2], [§8.5][s8-5], [§9.1][s9-1], [§9.2][s9-2], [§9.4][s9-4], [§9.6][s9-6], [§13.1][s13-1], [§13.2][s13-2], [§13.3][s13-3], [§13.8][s13-8], [§14.3][s14-3], [Appendix C][sC], [Appendix D][sD]
 
 **Rationale.** The strata were named before any step existed as code. Once
 each step had a product ([D-253][d-253]), each letter had become a second name for
@@ -10206,7 +10217,7 @@ frame was a courier to the thunk that the trace's own drain count already
 carries, the writer range was read only where it was written, and the
 switch is a fact about the run's trace. The thunk cannot take the ordinal
 as an argument: it is called through an untyped field, and a boxed `Int`
-would allocate on the frame path ([§7.5][s7-5]). Closing over the trace, a mutable
+would allocate on the frame path ([§9.8][s9-8]). Closing over the trace, a mutable
 object, keeps the ordinal reachable at no cost. The origin's type follows
 the grid's. `h` and `t_end` are `Float64` already, and a `Dual` origin with
 a nonzero partial, a start-time perturbation, has no reader in the design.
@@ -10745,7 +10756,7 @@ and linearization keeps its one mechanism.
 - Linearization has the seeded `Dual` pass alone ([§14.10][s14-10]) and no
   perturbation-based fallback.
 
-**Spec.** [§6.1][s6-1], [§7.2][s7-2], [§8.2][s8-2], [§13.7][s13-7], [§14.10][s14-10]
+**Spec.** [§8.2][s8-2], [§13.7][s13-7], [§14.8][s14-8], [§14.10][s14-10]
 
 **Rationale.** A `Dual` can never become a `Float64` without discarding its
 partials, and [§9.5][s9-5] rules that no lossy cast exists inside the framework. The
@@ -10819,9 +10830,9 @@ defines no bundle field keeps its noun phrase.
 - No aliases and no deprecation shims, on [D-220][d-220]'s terms. The log keeps the
   old spellings under `decisions_style.md`'s rule 2.
 
-**Spec.** [§3.4][s3-4], [§4.1][s4-1], [§4.3][s4-3], [§4.4][s4-4], [§5.2][s5-2], [§5.3][s5-3], [§5.4][s5-4], [§5.6][s5-6], [§6.2][s6-2], [§7.1][s7-1], [§7.2][s7-2], [§7.3][s7-3],
-[§7.4][s7-4], [§7.5][s7-5], [§8.1][s8-1], [§8.2][s8-2], [§8.3][s8-3], [§8.4][s8-4], [§8.5][s8-5], [§8.6][s8-6], [§8.8][s8-8], [§9.1][s9-1], [§9.3][s9-3], [§9.4][s9-4], [§9.5][s9-5],
-[§9.7][s9-7], [§10.5][s10-5], [§10.6][s10-6], [§11.2][s11-2], [§11.3][s11-3], [§12.5][s12-5], [§13.1][s13-1], [§13.3][s13-3], [§13.4][s13-4], [§13.5][s13-5], [§13.7][s13-7],
+**Spec.** [§3.4][s3-4], [§4.1][s4-1], [§4.3][s4-3], [§4.4][s4-4], [§5.2][s5-2], [§5.3][s5-3], [§5.4][s5-4], [§6.2][s6-2], [§7.1][s7-1], [§7.2][s7-2], [§7.3][s7-3], [§8.1][s8-1],
+[§8.2][s8-2], [§8.3][s8-3], [§8.4][s8-4], [§8.5][s8-5], [§8.6][s8-6], [§8.8][s8-8], [§9.1][s9-1], [§9.3][s9-3], [§9.4][s9-4], [§9.5][s9-5], [§9.7][s9-7], [§9.8][s9-8],
+[§10.5][s10-5], [§10.6][s10-6], [§11.2][s11-2], [§11.3][s11-3], [§12.5][s12-5], [§13.1][s13-1], [§13.3][s13-3], [§13.4][s13-4], [§13.5][s13-5], [§13.7][s13-7], [§13.8][s13-8],
 [§14.3][s14-3], [§14.4][s14-4], [§14.5][s14-5], [§14.7][s14-7], [§14.8][s14-8], [§14.10][s14-10], [Appendix A][sA], [Appendix B][sB],
 [Appendix C][sC], [Appendix D][sD]
 
@@ -11818,7 +11829,7 @@ on that ground or beside it.
 - No aliases and no deprecation shims, on [D-220][d-220]'s terms. The log keeps the
   old spellings under `decisions_style.md`'s rule 2.
 
-**Spec.** [§3.3][s3-3], [§3.4][s3-4], [§4.3][s4-3], [§5.2][s5-2], [§5.3][s5-3], [§5.4][s5-4], [§6.1][s6-1], [§6.2][s6-2], [§7.1][s7-1], [§7.4][s7-4], [§8.1][s8-1],
+**Spec.** [§3.3][s3-3], [§3.4][s3-4], [§4.3][s4-3], [§5.2][s5-2], [§5.3][s5-3], [§5.4][s5-4], [§6.1][s6-1], [§6.2][s6-2], [§7.1][s7-1], [§8.1][s8-1],
 [§8.2][s8-2], [§8.5][s8-5], [§8.6][s8-6], [§8.8][s8-8], [§9.1][s9-1], [§9.2][s9-2], [§9.3][s9-3], [§9.4][s9-4], [§9.5][s9-5], [§9.7][s9-7], [§11.3][s11-3], [§13.1][s13-1],
 [§13.3][s13-3], [§13.4][s13-4], [§13.5][s13-5], [§13.7][s13-7], [§14.1][s14-1], [§14.2][s14-2], [§14.7][s14-7], [§14.8][s14-8], [§14.10][s14-10], [Appendix B][sB],
 [Appendix C][sC], [Appendix D][sD]
@@ -12132,7 +12143,7 @@ conformance check holds it to its word at every activation.
   and strips inside the stage.
 - Stripping mid-expression at an unpinned leaf remains legal.
 
-**Spec.** [§6.1][s6-1], [§8.2][s8-2], [§9.5][s9-5]
+**Spec.** [§8.2][s8-2], [§9.5][s9-5]
 
 **Rationale.** [D-238][d-238]'s relation lifts a `Float64` position only where the
 declaration has `T`, so every other leaf is exact (as recorded in [D-238][d-238]),
@@ -12221,7 +12232,7 @@ options it opens stay uncommitted.
 - Publication is not a phase body. Invoking phase bodies in isolation leaves
   the buffers valid but off-trajectory, and continuing takes `init!`.
 
-**Spec.** [§5.3][s5-3], [§7.1][s7-1], [§7.5][s7-5], [§9.7][s9-7], [§10.5][s10-5]
+**Spec.** [§5.3][s5-3], [§9.7][s9-7], [§9.8][s9-8], [§10.5][s10-5]
 
 **Rationale.** The phase bodies are the semantically forced outer
 decomposition, and their seams cost nothing; views rebuild per call, hoisting
@@ -12238,7 +12249,7 @@ per component per boundary and never per stage, and `t*` emptiness remains
 arity selection, with no sentinel index failing every gate (as recorded in
 [D-185][d-185]). [D-147][d-147] rules the due set empty at `t*` and the two arities.
 
-Publication is not a phase body, which is the [§7.5][s7-5] carve-out made
+Publication is not a phase body, which is the [§9.8][s9-8] carve-out made
 structural; isolated invocation leaves buffers valid but off-trajectory, and
 re-`init!` continues (as recorded in [D-116][d-116]).
 
@@ -12484,7 +12495,7 @@ recorded in [D-019][d-019]'s Rejected list.
 - Event/tick fixed-point iteration is structurally unnecessary, because a
   tick's `s⁺` is invisible until the next tick decode.
 
-**Spec.** [§3.4][s3-4], [§10.6][s10-6]
+**Spec.** [§5.3][s5-3], [§10.6][s10-6]
 
 **Rationale.** Each bullet restates what an existing entry recorded outside
 its Position. The registers were recorded in [D-181][d-181]'s Rationale, and the
@@ -12882,8 +12893,8 @@ and the rest stand.
 
 **Status.** ratified
 
-**Position.** Six state and genericity rulings that [§7.1][s7-1], [§7.2][s7-2] and [§7.3][s7-3] state
-are fixed here.
+**Position.** Six state and genericity rulings that [§7.1][s7-1], [§7.3][s7-3], [§8.2][s8-2] and
+[§9.7][s9-7] state are fixed here.
 
 - The `x_init` declaration is flat. Each field is one leaf, because the
   condition algebra and the readers address a field as one leaf, and
@@ -12903,7 +12914,7 @@ are fixed here.
   inference would invert the rule that declarations define and probes check,
   and one probe point cannot speak for branch-dependent participation.
 
-**Spec.** [§7.1][s7-1], [§7.2][s7-2], [§7.3][s7-3]
+**Spec.** [§7.1][s7-1], [§7.3][s7-3], [§8.2][s8-2], [§9.7][s9-7]
 
 **Rationale.** Each bullet restates what an existing entry recorded outside a
 Position. The flat declaration was recorded in [D-094][d-094]'s annotation of
@@ -12921,7 +12932,7 @@ participation in [D-079][d-079]'s.
 
 **Status.** ratified
 
-**Position.** Three allocation rulings that [§7.5][s7-5] states are fixed here.
+**Position.** Three allocation rulings that [§9.8][s9-8] states are fixed here.
 
 - The zero-allocation invariant is scoped to the stepping loop. The
   stopped-sim services were always allocation-tolerant.
@@ -12931,7 +12942,7 @@ participation in [D-079][d-079]'s.
   take the exactly-zero budget. Handlers, which are episodic and run only on
   firing, take the ticks' zero-by-idiom budget.
 
-**Spec.** [§7.5][s7-5]
+**Spec.** [§9.8][s9-8]
 
 **Rationale.** Each bullet restates what an existing entry recorded outside a
 Position. The invariant's scope and the services' tolerance were recorded in
@@ -12975,7 +12986,7 @@ argument annotations, no `Float64`-pinned intermediates and no
 `::SomeType{Float64}` return-type annotations. In a lookup, table data is a
 pinned parameter and the query coordinate is walked traffic.
 
-**Spec.** [§7.2][s7-2]
+**Spec.** [§7.2][s7-2], [§8.2][s8-2], [§14.8][s14-8]
 
 **Rationale.** A `Float64` pin in authored math breaks the continuous path's
 genericity over `T <: Real` ([D-011][d-011]). One evaluation sweep at `T = Dual` then
@@ -13021,7 +13032,7 @@ keeps it out of conditions.
 **Position.** Event firings are not recorded, and an event-firing stream is a
 guarded addition, which the design admits but does not build.
 
-**Spec.** [§7.5][s7-5]
+**Spec.** [§11.2][s11-2]
 
 **Rationale.** The log holds boundary snapshots and the trace holds staged
 inputs ([§11.2][s11-2], [§11.5][s11-5]). Neither carries a per-event record, and replay plus
@@ -13105,11 +13116,11 @@ whose instance holds the fold.
 - `SumJunction{V, N}`, `Or{N}` and `And{N}` are constant aliases at `+`, `|`
   and `&`, each with a zero-argument constructor. `Not` is not admitted.
 - The type parameter is the nominal type, `SumJunction{Wrench{Float64}, 3}`,
-  never an unparametrized constructor. [§6.2][s6-2]'s `W{Float64}` form falls with
+  never an unparametrized constructor. [§13.7][s13-7]'s `W{Float64}` form falls with
   [D-263][d-263].
 - Every library block's output port is `out`. The junction's `Σ` falls.
 
-**Spec.** [§6.2][s6-2], [§8.2][s8-2], [§8.5][s8-5], [§13.5][s13-5], [§13.7][s13-7]
+**Spec.** [§8.2][s8-2], [§8.5][s8-5], [§13.5][s13-5], [§13.7][s13-7]
 
 **Rationale.** A gate exists for its consumer, which wants one consolidated
 `Bool` input instead of several and the operation inside. That is the summing
@@ -13189,7 +13200,7 @@ leafwise map that waits for a model to demonstrate it.
 - *`zero(V)` as the delay's initial value:* an extra method on the user's
   type for a value the instance should carry.
 - *Stripping through the build-time leaf helpers:* allocates in a stage body,
-  against [§7.5][s7-5].
+  against [§9.8][s9-8].
 - *Writing the allocation-free leafwise map now:* machinery with no
   demonstrated user.
 
@@ -13219,7 +13230,7 @@ required.
   workspace sub-package or a separate repository is an after-release
   question.
 
-**Spec.** [§6.2][s6-2], [§13.7][s13-7]
+**Spec.** [§13.7][s13-7]
 
 **Rationale.** Simulink's base library is large because the diagram is its
 expression language, so `2u + 3` needs a Gain and a Bias. Here a stage body
@@ -13975,7 +13986,8 @@ fusion, so a refusal at the `Model` door now refuses the mode itself.
 
 **Status.** ratified
 
-**Position.** Three connection rulings that [§6.1][s6-1] states are fixed here.
+**Position.** Three connection rulings that [§6.1][s6-1], [§8.2][s8-2] and [§8.8][s8-8] state are fixed
+here.
 
 - Parallel routes threading several boundaries are the signal to gather them
   into a component of their own.
@@ -13986,7 +13998,7 @@ fusion, so a refusal at the `Model` door now refuses the mode itself.
   nominal build, at the wire, and never silently. The input side fails first
   because an input has a build-time counterparty and an output has none.
 
-**Spec.** [§6.1][s6-1]
+**Spec.** [§6.1][s6-1], [§8.2][s8-2], [§8.8][s8-8]
 
 **Rationale.** Each bullet restates what an existing entry recorded outside a
 Position. The parallel-routes signal was recorded in [D-207][d-207]'s Rationale, which
@@ -14005,8 +14017,8 @@ refused at the first `Dual` activation.
 
 **Status.** ratified
 
-**Position.** Two rulings on unfed and doubly fed inputs that [§6.1][s6-1] states are
-fixed here.
+**Position.** Two rulings on unfed and doubly fed inputs that [§6.1][s6-1] and [§9.1][s9-1]
+state are fixed here.
 
 - An unconnected input is never bubbled up automatically. Auto-bubbling would
   promote a forgotten wire silently to a live root input.
@@ -14014,7 +14026,7 @@ fixed here.
   properties, decided at the root build. Neither is decidable below the root,
   so neither is validated level by level.
 
-**Spec.** [§6.1][s6-1]
+**Spec.** [§6.1][s6-1], [§9.1][s9-1]
 
 **Rationale.** Each bullet restates what an existing entry recorded outside a
 Position. Auto-bubbling was recorded in [D-043][d-043]'s Rejected list, which says
@@ -14029,7 +14041,7 @@ structure step.
 
 **Status.** ratified
 
-**Position.** Three aggregation rulings that [§6.2][s6-2] states are fixed here.
+**Position.** Three aggregation rulings that [§6.2][s6-2] and [§13.7][s13-7] state are fixed here.
 
 - The framework has no aggregation mechanism. It has no multi-connection
   ports, no declared fold ops and no identity elements, and the canonical-fold,
@@ -14045,7 +14057,7 @@ structure step.
   zero-filled identity noise through every port, the "silently sum nothing"
   hazard in a new coat.
 
-**Spec.** [§6.2][s6-2]
+**Spec.** [§6.2][s6-2], [§13.7][s13-7]
 
 **Rationale.** Each bullet restates what an existing entry recorded outside a
 Position. The retired machinery was recorded in [D-037][d-037]'s Rejected list,
@@ -14096,7 +14108,8 @@ because "unused" is undecidable at build ([D-084][d-084]).
 
 **Status.** ratified
 
-**Position.** Seven hand-off rulings that [§5.2][s5-2] states are fixed here.
+**Position.** Seven hand-off rulings that [§5.2][s5-2], [§8.2][s8-2], [§9.5][s9-5] and [§13.2][s13-2] state
+are fixed here.
 
 - A bundle field is present iff its store or fact exists for the component.
   An undeclared store is absent, never `nothing`-filled. `t` is always
@@ -14120,7 +14133,7 @@ because "unused" is undecidable at build ([D-084][d-084]).
 - No component declares its dependencies. There are no per-output dependency
   annotations.
 
-**Spec.** [§5.2][s5-2]
+**Spec.** [§5.2][s5-2], [§8.2][s8-2], [§9.5][s9-5], [§13.2][s13-2]
 
 **Rationale.** Each bullet restates what an existing entry recorded outside
 its Position. The bundle law, the closed name sets and the `FieldError`
@@ -14137,7 +14150,7 @@ annotations was recorded in [D-006][d-006]'s Rejected list.
 
 **Status.** ratified
 
-**Position.** Seven stage-role rulings that [§5.3][s5-3] states are fixed here.
+**Position.** Seven stage-role rulings that [§5.3][s5-3] and [§8.1][s8-1] state are fixed here.
 
 - A stage's name states its dependence class, state-only or
   state-plus-input. Modes fold under the state, and the ambient `t`, `Δt`
@@ -14157,7 +14170,7 @@ annotations was recorded in [D-006][d-006]'s Rejected list.
 - The update law does not republish from `s⁺`, so the output stage is the
   only same-tick path.
 
-**Spec.** [§5.3][s5-3], [Appendix A][sA]
+**Spec.** [§5.3][s5-3], [§8.1][s8-1], [Appendix A][sA]
 
 **Rationale.** Each bullet restates what an existing entry recorded outside
 its Position. The dependence class and the folded modes were recorded in
@@ -14173,7 +14186,7 @@ in [D-089][d-089]'s.
 
 **Status.** ratified
 
-**Position.** Nine loop rulings that [§5.4][s5-4], [§5.5][s5-5] and [§5.6][s5-6] state are fixed
+**Position.** Nine loop rulings that [§5.4][s5-4], [§5.5][s5-5], [§8.3][s8-3] and [§13.8][s13-8] state are fixed
 here.
 
 - An evaluation unit coarser than the stage admits artificial loops. A
@@ -14197,7 +14210,7 @@ here.
 - A continuous face or port declared without a walking leaf traces
   structurally, as a discrete member does.
 
-**Spec.** [§5.4][s5-4], [§5.5][s5-5], [§5.6][s5-6]
+**Spec.** [§5.4][s5-4], [§5.5][s5-5], [§8.3][s8-3], [§13.8][s13-8]
 
 **Rationale.** Each bullet restates what an existing entry recorded outside
 its Position. The coarse atomic units were recorded in [D-006][d-006]'s and [D-019][d-019]'s
@@ -14348,7 +14361,7 @@ entry ruled it.
   operating point, stay legal and are the component author's business.
   [D-005][d-005]'s rejection covers loops among components.
 
-**Spec.** [§5.5][s5-5], [§13.7][s13-7]
+**Spec.** [§5.5][s5-5], [§13.7][s13-7], [§13.8][s13-8]
 
 **Rationale.** [§5.5][s5-5] and [§13.7][s13-7] each stated the caveat citing only the other,
 and [D-312][d-312] settles the delay's spelling, not its semantics. The caveat is the
@@ -14366,7 +14379,7 @@ models.
 
 **Status.** ratified
 
-**Position.** Three tracing rulings that [§5.6][s5-6] states are fixed here.
+**Position.** Three tracing rulings that [§13.8][s13-8] states are fixed here.
 
 - The tracer has two modes. The global set-tracer is a `Real` subtype
   carrying a set of input indices, unioned by every operation. Its
@@ -14383,10 +14396,10 @@ models.
 - A model clean under the CI `T = Dual` sweep is in practice traceable,
   because both tracer modes ride the same `T <: Real` genericity as `Dual`.
 
-**Spec.** [§5.6][s5-6]
+**Spec.** [§13.8][s13-8]
 
 **Rationale.** [D-012][d-012]'s Position names the two modes and nothing of their
-semantics, and [D-245][d-245]'s Rejected list leans on "the sampled miss [§5.6][s5-6]
+semantics, and [D-245][d-245]'s Rejected list leans on "the sampled miss [§13.8][s13-8]
 documents". A reader weighing a dead hop relies on these properties, which
 is why the diagnostic records the source of each member's map ([D-245][d-245]).
 Seeding only inputs keeps branching on state, modes, parameters or time from
@@ -14403,7 +14416,7 @@ blind spot, because dependence flows through the fractional weights.
 the build reads which stages exist from method existence, never by
 evaluating.
 
-**Spec.** [§5.2][s5-2]
+**Spec.** [§8.2][s8-2]
 
 **Rationale.** This restates what a superseded Position recorded. [D-165][d-165]'s
 Position said that stages are discovered by method existence, and [D-194][d-194]
@@ -14421,7 +14434,7 @@ recorded residual for optional features does not reach the output stages.
 
 **Status.** ratified
 
-**Position.** Two event rulings that [§2.1][s2-1] states are fixed here.
+**Position.** Two event rulings that [§2.3][s2-3] states are fixed here.
 
 - The discrete tier's ticks, declared by `sample_times`, are time events,
   scheduled because their instants are known in advance. Everything
@@ -14431,7 +14444,7 @@ recorded residual for optional features does not reach the output stages.
 - The opposite crossing direction is a second event with the negated
   guard.
 
-**Spec.** [§2.1][s2-1]
+**Spec.** [§2.3][s2-3]
 
 **Rationale.** Each bullet restates what an existing entry recorded
 outside its Position. The time and state events were recorded in [D-220][d-220]'s
@@ -14464,7 +14477,7 @@ fixed here.
   hand-roll the tick scheduler and forfeit the harmonic grid and the
   discrete-bundle `Δt`.
 
-**Spec.** [§3.1][s3-1], [§3.2][s3-2], [§3.4][s3-4]
+**Spec.** [§3.1][s3-1], [§3.2][s3-2], [§3.4][s3-4], [§8.6][s8-6]
 
 **Rationale.** Each bullet restates what an existing entry recorded
 outside its Position. The reset maps were recorded in [D-003][d-003]'s Rejected
@@ -14478,7 +14491,8 @@ list. The mode store was recorded in [D-231][d-231]'s annotation and follows fro
 
 **Status.** ratified
 
-**Position.** Seven port rulings that [§4.1][s4-1] to [§4.4][s4-4] state are fixed here.
+**Position.** Seven port rulings that [§4.1][s4-1] to [§4.4][s4-4], [§8.2][s8-2] and
+[§8.3][s8-3] state are fixed here.
 
 - Each cell's freshness is tied to its producer's position in the
   execution order. A monolithic per-component `y` struct is rejected,
@@ -14499,7 +14513,7 @@ list. The mode store was recorded in [D-231][d-231]'s annotation and follows fro
   inverts the dependency at the struts. Resource injection is rejected as
   a second, invisible composition mechanism.
 
-**Spec.** [§4.1][s4-1], [§4.2][s4-2], [§4.3][s4-3], [§4.4][s4-4]
+**Spec.** [§4.1][s4-1], [§4.2][s4-2], [§4.3][s4-3], [§4.4][s4-4], [§8.2][s8-2], [§8.3][s8-3]
 
 **Rationale.** Each bullet restates what an existing entry recorded
 outside its Position. The freshness was recorded in [D-004][d-004]'s Rejected list,
@@ -14509,6 +14523,54 @@ field-projection connector in [D-036][d-036]'s, the bundled command face in
 bulk-data obligation was recorded in [D-139][d-139]'s Rationale.
 
 **Rejected.** None beyond the source entries' lists.
+
+### D-364 — Hold a bulk-data rig environment in a constant source
+
+**Status.** ratified
+
+**Position.** A thin rig holds its environment as a root input only when the
+handle is isbits. A handle that references bulk data enters the rig through a
+constant source holding it, never as a root input ([§4.4][s4-4], [§14.9][s14-9], [D-237][d-237]).
+
+**Spec.** [§4.4][s4-4], [§8.2][s8-2], [§14.9][s14-9]
+
+**Rationale.** Root inputs are a run's primary data, the one part of the
+signal table no sweep recomputes. The trace header holds them as values, and
+the trace records every drained batch as position and value pairs, which are
+serialized to disk and decoded for replay and what-if replay ([§11.5][s11-5], [D-038][d-038]).
+A handle that references bulk data fits neither form. Recorded by value, it
+carries the bulk data into the trace and breaks the trace's size budget
+([D-029][d-029]). Recorded by reference, it does not survive serialization, so a
+trace on disk no longer replays bit for bit. A handle that a device or a
+script hands in also leaves its arrays in the writer's hands, so the
+frozen-reference requirement of [§4.1][s4-1] cannot be enforced on it.
+
+A handle a component emits has none of these problems. Its cell is
+recomputed from the model, its data is loaded when the model is built and is
+frozen there, and the build's identity covers it. This is the primary-data
+reason behind [D-237][d-237]'s refusal of a handle-typed root input, which [D-237][d-237]
+states only through its mechanism, the missing synthesis.
+
+A probe on 2026-10-13 confirmed the constant source. A `Constant` holding a
+non-isbits heightmap handle, wired to a consumer behind an abstract entry and
+to one behind a concrete entry, builds at the nominal and the linearization
+scalars. It runs, replays its trace bit for bit with the handle absent from
+the trace, restores from a checkpoint, and linearizes with the handle held.
+
+The cost is that a condition cannot change a bulk-data environment. A
+different heightmap is a different build, which is the replay argument's own
+conclusion. A rig that must tune the isbits parameters inside such a handle
+uses the full-world form, the field-emitting component with those parameters
+as its root inputs. Isbits handles, such as the parametric atmosphere, stay
+root inputs and keep their tunables in the root-input vocabulary [D-139][d-139] wanted.
+
+**Rejected.**
+- *A root input holding a handle of any type, [D-139][d-139]'s test-rig idiom
+  unrestricted:* it contradicts [D-237][d-237]'s refusal, and its trace carries either
+  the bulk data or a reference that does not survive serialization.
+- *Supplying a handle-typed root input at build:* it fills the probe's
+  synthesis gap but not the trace's, and it is the second injection path
+  [D-237][d-237] rejects.
 
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
@@ -14848,6 +14910,7 @@ bulk-data obligation was recorded in [D-139][d-139]'s Rationale.
 [d-361]: #d-361--time-and-state-events-and-the-opposite-crossing-direction
 [d-362]: #d-362--reset-maps-the-continuous-only-mode-store-and-the-rejected-all-in-one-component
 [d-363]: #d-363--cell-freshness-closed-port-alternatives-write-side-atomicity-and-bulk-data-handles
+[d-364]: #d-364--hold-a-bulk-data-rig-environment-in-a-constant-source
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property
@@ -14879,6 +14942,7 @@ bulk-data obligation was recorded in [D-139][d-139]'s Rationale.
 [s13-5]: spec.md#135-termination-is-a-state-not-an-exception
 [s13-6]: spec.md#136-abnormal-shutdown-one-tail-two-entries
 [s13-7]: spec.md#137-tooling-consequences-face-routes-and-the-component-library
+[s13-8]: spec.md#138-cycle-diagnosis-feedthrough-tracing
 [s14]: spec.md#14-stopped-sim-services
 [s14-1]: spec.md#141-conditions-are-path-addressed-overlays-on-the-declared-defaults
 [s14-10]: spec.md#1410-linearization-tap-selectors-one-seeded-pass-a-pure-query
@@ -14891,8 +14955,8 @@ bulk-data obligation was recorded in [D-139][d-139]'s Rationale.
 [s14-8]: spec.md#148-the-trim-service-solver-seam-scratch-stores-commit-and-report
 [s14-9]: spec.md#149-mounting-problems-as-relocatable-values
 [s2]: spec.md#2-formalism
-[s2-1]: spec.md#21-events-two-detection-policies
-[s2-2]: spec.md#22-exclusions-deliberate
+[s2-3]: spec.md#23-events-two-detection-policies
+[s2-5]: spec.md#25-exclusions-deliberate
 [s3]: spec.md#3-component-taxonomy
 [s3-1]: spec.md#31-continuous-component-the-hybrid-primitive
 [s3-2]: spec.md#32-periodic-discrete-component
@@ -14907,7 +14971,6 @@ bulk-data obligation was recorded in [D-139][d-139]'s Rationale.
 [s5-3]: spec.md#53-structural-feedthrough-stage-roles-execution-order-and-step-boundaries
 [s5-4]: spec.md#54-artificial-loops-and-the-escape-hatch
 [s5-5]: spec.md#55-algebraic-loop-policy-reject-at-build-time
-[s5-6]: spec.md#56-diagnostics-feedthrough-tracing
 [s6]: spec.md#6-composition-connections-aggregation-and-hierarchy
 [s6-1]: spec.md#61-connections-and-hierarchy
 [s6-2]: spec.md#62-aggregation-explicit-summing-junctions
@@ -14915,8 +14978,7 @@ bulk-data obligation was recorded in [D-139][d-139]'s Rationale.
 [s7-1]: spec.md#71-continuous-state-structured-immutable-flat-backing
 [s7-2]: spec.md#72-numeric-genericity-eltype
 [s7-3]: spec.md#73-discrete-state-modes-and-workspace
-[s7-4]: spec.md#74-the-fused-evaluation-lineage-prior-art-and-how-we-got-here
-[s7-5]: spec.md#75-allocation-policy-a-scoped-invariant
+[s7-4]: spec.md#74-the-computerintegrator-split
 [s8]: spec.md#8-the-declaration-layer-components-and-assemblies
 [s8-1]: spec.md#81-position-a-declarative-trait-layer-in-plain-julia-no-macros
 [s8-2]: spec.md#82-the-declaration-inventory
@@ -14934,6 +14996,7 @@ bulk-data obligation was recorded in [D-139][d-139]'s Rationale.
 [s9-5]: spec.md#95-the-always-on-conformance-check
 [s9-6]: spec.md#96-stopped-sim-services-as-activation-clients
 [s9-7]: spec.md#97-the-compiled-executor
+[s9-8]: spec.md#98-allocation-policy-a-scoped-invariant
 [sA]: spec.md#appendix-a-taught-contracts-the-author-facing-index
 [sB]: spec.md#appendix-b-api-synopsis-the-entry-points
 [sC]: spec.md#appendix-c-the-diagnostic-kind-set

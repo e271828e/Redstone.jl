@@ -188,3 +188,33 @@ against 31 the other, so the order trades one set of forward references for a
 set the same size. The Part roadmaps carry what remains. Stopped-sim services
 stay after Execution: §14.5 defines boundary zero in terms of §10.6's boundary
 machinery.
+
+## Part I's depth — settled, not open
+
+Part I says what a model computes. Parts II to IV say how it is written and
+checked, how it runs, and how it fails. A reader who knows hybrid systems but
+not the API reads Part I alone. The owner ruled this on 2026-10-13, read
+strictly; `docs/reports/20261013_part1_depth/` holds the audits and the pass
+that applied it.
+
+- **Meaning, not spelling.** Part I may use an API name as a label for a
+  concept it defines. It states no rule about the spelling itself: return
+  types, keywords, encodings, or why a name was chosen. If renaming or
+  re-encoding the API would change a sentence, the sentence belongs in
+  Part II.
+- **Laws, not enforcement.** Part I states each law. Which step checks it,
+  the diagnostic it raises and its enforcement edge cases live where the
+  check runs.
+- **Mechanisms by name only.** Part I names an algorithm and cites it.
+  Root-finding, bookkeeping, buffer layout and budgets are described where
+  they run. A law says that a parameter exists and what it does; its default
+  value lives with the mechanism.
+- **Short rationale.** A reason argues a Part I claim in Part I terms. Case
+  studies and worked domain examples go to the section that works them, to a
+  companion or to the log, leaving a one-paragraph summary and a pointer.
+- **Pointers, not prerequisites.** Every Part I sentence reads without
+  following its forward citations.
+- **Complete at its level.** Every semantic law Parts II to IV mechanize is
+  stated in Part I: anything that changes the values a well-formed model
+  produces, or which runs are equivalent. A new decision that adds such a law
+  lands its statement in Part I and its mechanism where it runs.

@@ -84,13 +84,13 @@ function test_stepper()
         @test modes(fed_sim, "c").t_fired == 4 * fed_sim.model.deployment.h
     end
 
-    @testset "gate 4: the second backend holds the §7.5 invariant" begin
+    @testset "gate 4: the second backend holds the §9.8 invariant" begin
         sim = Simulation(feedback_model(); h = 1//1000, algorithm = Heun)
         init!(sim, fragment(u = (ref = 0.0,)))
         integrate!(sim, 1e-3)
         @test @ballocated(integrate!($sim, 1e-3)) == 0
         # The localizing frame allocates exactly its two boundaries' publications,
-        # the t* one's and the frame top's — the framework-side carve-out (§7.5,
+        # the t* one's and the frame top's — the framework-side carve-out (§9.8,
         # §11.2) — as under RK4 (gate 3).
         bouncer_sim = Simulation(single(Bouncer(1.0, 0.07)); h = 1//10, algorithm = Heun)
         init!(bouncer_sim; log = false)

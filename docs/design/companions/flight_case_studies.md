@@ -13,8 +13,7 @@ reads the full C172X demo as a load test on the periphery. Section 4 reads
 today's C172 trim against the stopped-sim services. Section 5 holds the
 Flight.jl evidence behind [§10.2][s10-2]'s choice of fixed-step RK4. The two
 case studies that stand without Flight.jl live in the spec: the staging
-example of [§11.4][s11-4] and the strapdown IMU of [§3.4][s3-4] and
-[§8.6][s8-6].
+example of [§11.4][s11-4] and the strapdown IMU of [§8.6][s8-6].
 
 ## 1. `Vehicle` today → this framework
 
@@ -32,11 +31,55 @@ machinery specified here:
 | `Aircraft.f_ode!` runs avionics before the vehicle → continuous avionics reads one-stage-stale `vehicle.y` (implicit delay) | Avionics ordered inside the sweep, after the stage-1 outputs avionics consumes — no delay. Or avionics declared periodic, sampling post-step by stated semantics |
 | `atmosphere`/`terrain` threaded as arguments through every signature | Field-handle signals through ordinary ports ([§4.4][s4-4]) |
 
-Two of those rows carry detail a cell cannot hold. The artificial loop in
+Three of those rows carry detail a cell cannot hold. The artificial loop in
 `VehicleDynamics` pairs a state-only velocity output with
 feedthrough accelerations. The hand sync of the duplicated
 velocity state reaches into initialization, where `f_init!` carries the line
-`dynamics.x .= kinematics.u  #essential`.
+`dynamics.x .= kinematics.u  #essential`. And the landing-gear model finds
+contact through a bounded ray query to the terrain model, the query a terrain
+field handle's `ray_intersect` serves ([§4.4][s4-4]).
+
+The junction row has a size. For Flight.jl's Cessna 172 model, the junctions
+that replace the tree walks number about four, with about fifteen wires,
+written once ([§6.2][s6-2]).
+
+The tree walks are FlightPhysics' generated functions `get_wr_b`, `get_mp_b`
+and `get_hr_b`. Each sums one quantity over a model tree: total wrench, total
+mass properties and total internal angular momentum. Each recursion step of
+such a walk becomes one visible junction at the level that owns the
+contributors ([§6.2][s6-2]). Flight.jl's `Vehicle` holds its systems beside
+its `dynamics` child, which is the vehicle shape the hierarchical
+aggregation idiom of [§6.2][s6-2] describes. Its contributors already publish
+in the common body frame, each applying its own mounting transform at source,
+as [§6.2][s6-2] asks.
+
+FlightPhysics also holds the zero-contributor case of [§6.2][s6-2]. Its
+bare-propagation vehicle with no systems, `Vehicle{NoVehicleSystems}`, has
+zero contributors to external wrench and to internal angular momentum. Its
+rigid-body dynamics component, `VehicleDynamics`, requires both
+unconditionally. A library `Constant` source wired to each input spells that
+case ([D-143][d-143]).
+
+State shows the same contrast. FlightCore's pattern is a flat `Vector` read
+through `ComponentArrays` views, which are mutable views into the flat
+vector. Against that pattern and the Flight.jl code around it, the structured
+immutable state of [§7.1][s7-1] buys five things.
+
+- There are no aliased mutable views, where who writes what is a matter of
+  convention.
+- Derivative completeness is structural. The returned `Ẋ` has every field by
+  construction, so a forgotten `ẋ` entry is impossible rather than silently
+  stale.
+- State fields arrive as the declared scalars and `SArray`s, immutable. The
+  domain wrapper, where wanted, is one explicit invariant-free cast
+  (`RQuat(x.q, normalization = false)`). That is the conversion that
+  `f_ode!`, FlightCore's in-place derivative function, performed implicitly
+  on its raw views, now visible and chosen.
+- The flat vector still exists. Integrator compatibility (OrdinaryDiffEq or
+  custom), trim solvers, HDF5 logging and linearization all get their arrays.
+- Flight.jl's hand-written per-aircraft state-space mapping layer
+  (`get_x_ss`/`assign_x_ss!`/`get_u_ss`/...) is deleted, replaced by the
+  framework's canonical layout ([D-072][d-072]).
 
 The same exercise surfaced a migration cost. Today's monolithic `KinData`
 splits in two, because its parts *genuinely* have different dependencies.
@@ -82,7 +125,7 @@ each of those features under the decoder interfaces.
   stages per step ([D-015][d-015]).
 - `f_step!`'s transitions become boundary-detected
   events with mixed predicate/threshold guards
-  ([§2.2][s2-2], [§10.4][s10-4]).
+  ([§2.5][s2-5], [§10.4][s10-4]).
 - `fuel_available` becomes an ordinary port. It is state-derived at the fuel
   system, hence a stage-1 port, so it closes no loop.
 - Forced publications: none. Everything `x_deriv` reads was already
@@ -390,8 +433,8 @@ math, the service loop and the failure behavior in turn.
   equilibrium-subset choice. The respelling is the initializer's. Its
   `atmosphere::Model` argument becomes a field handle ([§4.4][s4-4],
   [D-139][d-139]). The handle is built at value level by the atmosphere's
-  value-level constructor, or held directly as a rig root-input value
-  ([§14.1][s14-1], [§14.9][s14-9]).
+  value-level constructor, or, being isbits, held directly as a rig
+  root-input value ([§14.1][s14-1], [§14.9][s14-9], [D-364][d-364]).
 - The generic service loop replaces today's per-aircraft NLopt plumbing
   ([§14.8][s14-8]).
 - A failed trim leaves the simulation's stores untouched. That is an
@@ -420,7 +463,10 @@ ladder. The items below take the three claims in turn.
 [d-038]: ../decisions.md#d-038--snapshot-and-log-derived-trajectory-primary-trace-header
 [d-045]: ../decisions.md#d-045--periphery-input-semantics-derived-liveness-conditioning-mappings-edge-logic
 [d-067]: ../decisions.md#d-067--boundary-zero-runs-the-macro-sequence-with-an-empty-integrate
+[d-072]: ../decisions.md#d-072--linearization-surface-three-selector-lists-one-chunked-dual-pass
 [d-139]: ../decisions.md#d-139--give-environment-field-handles-a-value-level-constructor-to-prevent-drift
+[d-143]: ../decisions.md#d-143--add-a-constant-source-block-for-zero-contributor-aggregates
+[d-364]: ../decisions.md#d-364--hold-a-bulk-data-rig-environment-in-a-constant-source
 [s10-2]: ../spec.md#102-the-stepper-seam
 [s10-4]: ../spec.md#104-localization-mechanics
 [s10-5]: ../spec.md#105-multi-rate-tick-scheduling
@@ -441,7 +487,7 @@ ladder. The items below take the three claims in turn.
 [s14-7]: ../spec.md#147-the-trim-problem-namedtuple-decisions-declared-reads-named-residuals
 [s14-8]: ../spec.md#148-the-trim-service-solver-seam-scratch-stores-commit-and-report
 [s14-9]: ../spec.md#149-mounting-problems-as-relocatable-values
-[s2-2]: ../spec.md#22-exclusions-deliberate
+[s2-5]: ../spec.md#25-exclusions-deliberate
 [s3-4]: ../spec.md#34-why-two-leaf-classes-not-one-hybrid-primitive
 [s4-4]: ../spec.md#44-function-valued-signals-environment-access
 [s5]: ../spec.md#5-evaluation-order-and-feedthrough
@@ -450,6 +496,7 @@ ladder. The items below take the three claims in turn.
 [s5-5]: ../spec.md#55-algebraic-loop-policy-reject-at-build-time
 [s6-1]: ../spec.md#61-connections-and-hierarchy
 [s6-2]: ../spec.md#62-aggregation-explicit-summing-junctions
+[s7-1]: ../spec.md#71-continuous-state-structured-immutable-flat-backing
 [s8-6]: ../spec.md#86-paths-wiring-and-faces
 [s8-8]: ../spec.md#88-computed-connections-and-generic-holding
 [s9-6]: ../spec.md#96-stopped-sim-services-as-activation-clients

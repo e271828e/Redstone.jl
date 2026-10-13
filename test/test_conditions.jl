@@ -523,7 +523,7 @@ function conditions_specialized_apply()
         @test only(plan.xs).authored isa Authored{(:nodes, (1,), :node, :x, :q),SVector{2,Float64}}
     end
 
-    @testset "the specialized `apply!` writes without allocating (§14.4, §7.5)" begin
+    @testset "the specialized `apply!` writes without allocating (§14.4, §9.8)" begin
         sim = Simulation(tri(); h = 1//10)
         plan = compile_plan(tri_tree(SVector(1.0, 2.0), 3.0, :fired, 4.0, 5.0), sim.model.deployment.build)
         tree = tri_tree(SVector(9.0, 8.0), 7.0, :armed, 6.0, 5.5)
@@ -533,7 +533,7 @@ function conditions_specialized_apply()
         @test (@ballocated apply!($(sim.model.exec), $plan, $tree)) == 0
     end
 
-    @testset "the specialized `apply!` stays allocation-free past 32 writes (§14.4, §7.5)" begin
+    @testset "the specialized `apply!` stays allocation-free past 32 writes (§14.4, §9.8)" begin
         # 64 `at` nodes over 64 components: 64 `x` writes and 64 prefixes to sweep.
         sim = Simulation(sawtooth_bank(); h = 1//10)
         bank_tree(v) = combine((at("s$i", fragment(x = (q = v + i,))) for i in 1:64)...)

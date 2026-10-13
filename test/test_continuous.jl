@@ -40,7 +40,7 @@ function continuous_skeleton()
         @test @ballocated(evaluate!($exec)) == 0
     end
 
-    @testset "gate 1: stepping does not allocate (§7.5)" begin
+    @testset "gate 1: stepping does not allocate (§9.8)" begin
         sim = Simulation(feedback_model(); h = 1//1000)
         init!(sim, fragment(u = (ref = 0.0,)))
         integrate!(sim, 1e-3)

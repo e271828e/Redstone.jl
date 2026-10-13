@@ -631,7 +631,7 @@ function discrete_deployment()
         @test moves == collect(8:4:40)
     end
 
-    @testset "the gated boundary walk does not allocate (§7.5)" begin
+    @testset "the gated boundary walk does not allocate (§9.8)" begin
         sim = Simulation(MultiRate(); h = 1//500)
         init!(sim)
         bodies = phase_bodies(sim)

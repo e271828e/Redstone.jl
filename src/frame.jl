@@ -104,7 +104,7 @@ function _localized_frame!(model::Model, t_to, hooks::FrameHooks)
         copyto!(events.σ1, events.σ)
 
         # The trigger (§10.4): localized policy, prior not-holding at the last
-        # boundary's quiescence, holding at arrival — §2.1's directional edge.
+        # boundary's quiescence, holding at arrival — §2.3's directional edge.
         any_triggered = false
         for i in 1:n_events
             events.triggered[i] = events.localized[i] && !events.prior[i] &&

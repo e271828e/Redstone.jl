@@ -43,7 +43,7 @@ becomes `Quaternion{N,T} <: AbstractVector{T}`. By invariance, `Float64`
 instances still match every existing `AbstractVector{Float64}` method, so
 existing behavior is untouched. Flight.jl's parameters and definitions, the
 pinned class of [§7.2][s7-2], stay `Float64` and need no migration. Flight.jl's math
-already mostly follows the first author rule of [§7.2][s7-2], writing `<:Real` or
+already mostly follows the first author rule of [§8.2][s8-2], writing `<:Real` or
 nothing in place of a `::Float64` argument annotation. The `*` method in
 Flight.jl's `attitude.jl` is the live example pattern for the third rule, no
 `::SomeType{Float64}` return-type annotations on the continuous path.
@@ -82,7 +82,7 @@ Level-pinning and reset-to-an-external-value, which is tracking, are different
 blocks rather than options on this one ([D-141][d-141]).
 
 The gear then wires `strut.wow → frc.reset`. That is the **touchdown** edge,
-with the not-holding → holding semantics ([§2.1][s2-1]),
+with the not-holding → holding semantics ([§2.3][s2-3]),
 and it gives fresh regulator state per contact episode. The liftoff edge
 (`!wow`) was rejected ([D-141][d-141]). The
 boundary-detected policy (checked for edges at step
@@ -135,7 +135,7 @@ projection, never as construction.
 [s13-7]: ../spec.md#137-tooling-consequences-face-routes-and-the-component-library
 [s14-5]: ../spec.md#145-boundary-zero-an-ordinary-boundary-with-authored-incoming-transitions
 [s14-8]: ../spec.md#148-the-trim-service-solver-seam-scratch-stores-commit-and-report
-[s2-1]: ../spec.md#21-events-two-detection-policies
+[s2-3]: ../spec.md#23-events-two-detection-policies
 [s5-3]: ../spec.md#53-structural-feedthrough-stage-roles-execution-order-and-step-boundaries
 [s5-4]: ../spec.md#54-artificial-loops-and-the-escape-hatch
 [s6-2]: ../spec.md#62-aggregation-explicit-summing-junctions

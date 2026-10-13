@@ -956,7 +956,7 @@ Base.@nospecializeinfer function flatten_tree!(draft::StructureDraft, @nospecial
         _walk!(draft, "", root, Timing((0, 1, 0)), RateLink[], nothing, diags)
     end
 
-    # The obligation model (§6.1): an input is fed by a wire in some ancestor's
+    # The obligation model (§6.1, §9.1): an input is fed by a wire in some ancestor's
     # `local_wires` or by an `input_wires` chain handing it up level
     # by level, and the chain that never terminates is the error. The one
     # legitimate unfed terminus is the root's own input face. A wire that failed
@@ -976,7 +976,7 @@ Base.@nospecializeinfer function flatten_tree!(draft::StructureDraft, @nospecial
     nothing
 end
 
-# The obligation chain (§6.1): the faces `input_wires` entries handed `consumer`
+# The obligation chain (§6.1, §9.1): the faces `input_wires` entries handed `consumer`
 # up through, innermost first. From the consumer, the wire into it at its parent
 # level, while that wire's producer is the level's own face; the last face is the
 # outermost one nobody wired.

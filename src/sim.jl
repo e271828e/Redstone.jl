@@ -1936,7 +1936,7 @@ end
 
 """
 Publish this boundary (§11.2): build the snapshot in private memory — one
-buffer copy, the framework side of §7.5's scope — then a single release-store
+buffer copy, the framework side of §9.8's scope — then a single release-store
 to `latest`. Runs only after the boundary sequence completes, so every
 published table is boundary-consistent (§10.3), and the copy is what makes the
 binding rule hold: nothing reachable from a published snapshot is ever written
@@ -1961,7 +1961,7 @@ function publish!(sim::Simulation, roster::Vector{RosterEntry},
                         sim.model.exec.act.layout, _status(sim, roster, pacer))
     run.boundary += 1
     @atomic :release sim.plane.published.latest = snapshot
-    # reloaded, so the log stores the box the release-store made (§7.5)
+    # reloaded, so the log stores the box the release-store made (§9.8)
     log!(sim.run.log, (@atomic :monotonic sim.plane.published.latest)::Snapshot,
          typeof(snapshot))
     lock(control.wake)

@@ -246,7 +246,7 @@ function test_localization()
         @test ForwardDiff.value(state(dual_model, "c").q) ≈ 0.5 rtol = 1e-12
     end
 
-    @testset "gate 3: localized frames do not allocate (§7.5)" begin
+    @testset "gate 3: localized frames do not allocate (§9.8)" begin
         # A quiet frame pays the arrival sweep and the trigger scan, nothing else.
         quiet_model = Group((; src = Sawtooth(0.1), s = Stamper(100.0));
                             local_wires = ("src/q" => "s/sig",))
@@ -255,7 +255,7 @@ function test_localization()
         run!(quiet_sim; t_end = 0.2)
         no_mask = Bool[]                    # the advance's argument (D-260, D-261)
         # The model's frame allocates nothing; the loop's hooks add the frame
-        # top's publication, the carve-out (§7.5, §11.2, D-317). The no-hooks
+        # top's publication, the carve-out (§9.8, §11.2, D-317). The no-hooks
         # frame runs on a standalone model, the simulation's being claimed (D-318).
         quiet_standalone = Model(quiet_sim.model.deployment)
         init!(quiet_standalone)
@@ -269,7 +269,7 @@ function test_localization()
         # trials, the t* boundary and the remainder — all against preallocated
         # buffers, re-run from init! each sample. What it allocates is exactly the
         # two boundaries' own publications, the t* one's and the frame top's —
-        # the framework-side carve-out (§7.5, §11.2) — and nothing of the
+        # the framework-side carve-out (§9.8, §11.2) — and nothing of the
         # localization machinery's.
         localizing_sim = Simulation(single(Bouncer(1.0, 0.07)); h = 1//10)
         init!(localizing_sim; log = false)
@@ -347,7 +347,7 @@ function test_localization()
         @test ForwardDiff.value(state(dual_model, "src").q) ≈ 0.1 rtol = 1e-12
     end
 
-    @testset "the frame loop allocates its publications and nothing else per frame (§7.5, §11.2)" begin
+    @testset "the frame loop allocates its publications and nothing else per frame (§9.8, §11.2)" begin
         # The quiet model of gate 3, at a step where nothing fires in 2000
         # frames: each frame publishes one boundary and localizes nothing. The
         # difference of two advances cancels what a call pays once, and both

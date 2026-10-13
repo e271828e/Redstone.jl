@@ -310,7 +310,7 @@ Base.showerror(io::IO, invariant::InternalInvariant) =
 # The structure step — declaration and wiring (§6.1, §8.2, §8.5–§8.8; collected)
 # ==============================================================================
 
-"§6.1, §8.4 w1: a wire end naming no port of the endpoint it resolved to, with that end's port list."
+"Appendix C, §8.4 w1: a wire end naming no port of the endpoint it resolved to, with that end's port list."
 Base.@kwdef struct UnknownPort <: Diagnostic
     entry::String                            # the declaring method and entry
     endpoint::Symbol                         # :source | :destination | :connection (D-210)
@@ -818,7 +818,7 @@ function message(d::IllegalPortType)
     d.reason === :handle_at_root &&
         return "$(_at_path(d.path)): root input `$(d.name)` declares $(d.declared), an opaque " *
                "leaf, which has no synthesis and no producer here — wire a component that " *
-               "emits it, or a stub child in a rig (§4.3, §9.3, D-237)"
+               "emits it, or a stub child in a rig (§8.2, §13.7, D-237, D-364)"
     d.reason === :stop_flag_nested &&
         return "$(_at_path(d.path)): $site `$(d.name)` declares $(d.declared), which nests a " *
                "`StopFlag` — a stop request is a port of exactly `StopFlag`, rostered per port, " *
@@ -887,7 +887,7 @@ message(d::IllegalStoreField) =
 # ==============================================================================
 
 """
-§5.5, §5.6: one strongly connected cluster of the stage-2 feedthrough graph.
+§5.5, §13.8: one strongly connected cluster of the stage-2 feedthrough graph.
 `members` are component paths in walk order and `wires` the cluster's own
 wires as `producer/port => consumer/face`, in the same order. The
 classification is D-245's graph verdict, `nothing` when a member's
@@ -905,7 +905,7 @@ end
 path(d::AlgebraicCycle) = first(d.members)
 
 # The cluster read out: its wires as one loop, a dead hop in the ladder's own
-# words, and the per-member tracing modes as one phrase (§5.6, D-245).
+# words, and the per-member tracing modes as one phrase (§13.8, D-245).
 _wirelist(wires) = join(("$p → $c" for (p, c) in wires), ", ")
 _hop((member, face, output_port)) = "`$member`'s `$output_port` does not route `$face`"
 
@@ -917,7 +917,7 @@ function _modes(traced)
         (any(tracing === :global for (_, tracing) in traced) ? ", the rest globally" : "")
 end
 
-# The ladder's two exits (§5.4, D-140), each dead member named once.
+# The ladder's two exits (§13.8, D-140), each dead member named once.
 _cycle_hint(dead) =
     join((let dead_faces = unique(face for (hop_member, face, _) in dead
                                   if hop_member == member)
@@ -948,7 +948,7 @@ function message(d::AlgebraicCycle)
     "$head — artificial at port level: $hops; $(_cycle_hint(d.dead))"
 end
 
-"§4.3, §8.3: one port written by both stages."
+"§8.3: one port written by both stages."
 Base.@kwdef struct ProducedByTwoStages <: Diagnostic
     path::String
     ports::Vector{Symbol}
@@ -1086,7 +1086,7 @@ path(d::GuardForm) = d.path
 message(d::GuardForm) =
     "`$(d.path)`: event `$(d.event)`'s guard returns $(d.observed) — a guard is " *
     "`Bool`-valued (boundary-detected) or returns the continuous sign value (localized) " *
-    "(§2.1, §10.4)"
+    "(§2.3, §10.4)"
 
 "§5.2, §13.2: a bundle field a component function destructured that its bundle does not carry, classified against the legal sets."
 Base.@kwdef struct BundleFieldError <: Diagnostic

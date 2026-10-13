@@ -155,7 +155,7 @@ function test_readers()
         @test stored.m12 === 7.0 && stored.w21 === 3.0
     end
 
-    @testset "the reader is the gather twin: allocation-free over an executor (§14.4, §7.5)" begin
+    @testset "the reader is the gather twin: allocation-free over an executor (§14.4, §9.8)" begin
         sim = Simulation(readable(); h = 1//10)
         init!(sim, readable_condition())
         evaluate!(sim.model.exec)
