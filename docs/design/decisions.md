@@ -348,9 +348,17 @@ were derived.
 | [D-321][d-321] | The parallel-routes signal, the handle's pin chain and the input pin's failure at the wire | ratified |
 | [D-322][d-322] | No auto-bubbling of unconnected inputs, and the whole-tree checks decided at the root | ratified |
 | [D-323][d-323] | No framework aggregation mechanism, what explicit junctions buy, and no bundled contributions | ratified |
+| [D-324][d-324] | An unconnected input is a build error, with no input defaults | ratified |
 | [D-341][d-341] | The bundle law, the closed name sets and per-key return checks | ratified |
 | [D-342][d-342] | Pure output stages, the dependence-class names and supervisory resets | ratified |
 | [D-343][d-343] | The remedy ladder's content, the closed loop remedies and the trace's reach | ratified |
+| [D-344][d-344] | The signal requirement: immutable values and frozen references | ratified |
+| [D-345][d-345] | The rule of meaning, and mode changes during a run | ratified |
+| [D-346][d-346] | Write-side port granularity and field-addressed staging | ratified |
+| [D-347][d-347] | Evaluating the RHS runs the sweep | ratified |
+| [D-348][d-348] | The unit delay's tier caveat, and algebraic balances inside a component | ratified |
+| [D-349][d-349] | The feedthrough tracer's modes, reach and limits | ratified |
+| [D-350][d-350] | Output stages are discovered by method existence | ratified |
 | [D-361][d-361] | Time and state events, and the opposite crossing direction | ratified |
 | [D-362][d-362] | Reset maps, the continuous-only mode store and the rejected all-in-one component | ratified |
 | [D-363][d-363] | Cell freshness, closed port alternatives, write-side atomicity and bulk-data handles | ratified |
@@ -446,6 +454,12 @@ all-inputs `h_xu`, named per [D-075][d-075]); component split as the refinement.
 **Spec.** [§5.2][s5-2], [§5.3][s5-3], [§5.4][s5-4], [§7.4][s7-4]
 
 **Rationale.** Recorded only through the rejections below.
+
+Annotation (2026-10-13): the all-inputs `h_xu`, `y_direct` today, carries
+stage-2 conservatism. Every stage-2 output is presumed dependent on every
+wired input, so an input read only by `x_deriv` still makes a feedthrough edge
+when the leaf has stage-2 outputs ([§5.3][s5-3], [§5.4][s5-4]). The two output stages are a
+leaf's, since [§8.5][s8-5]'s class rule keeps every stage off an assembly.
 
 **Rejected.**
 - *N output groups with declared input subsets:* declaration/validation surface
@@ -1955,6 +1969,16 @@ untouched.
 **Spec.** [§6.1][s6-1], [§13.5][s13-5], [§14.2][s14-2]
 
 **Rationale.** Recorded only through the rejections below.
+
+Annotation (2026-10-13): [D-207][d-207] amends the locality clause's face reading. An
+`at` prefix stops at the faces of any child, owned or generically held. The
+clause stands for deep structural paths, and its two halves are enforced
+differently. Its concrete half is machine-checked, since a service path may
+not traverse past a generically-held field ([D-061][d-061], [D-130][d-130], [§13.3][s13-3]). Its owned
+half is convention, because ownership is not build-visible. The Rejected
+list's "same convention status as [§6.1][s6-1]" is stale, since [D-207][d-207] made [§6.1][s6-1]'s
+one-level rule a check in `resolve`. The lazy tree, resolution against the
+`Build` and the duplicate-leaf error stand.
 
 **Rejected.**
 - *Eager path concatenation in `at`:* strings and allocation on the hot path.
@@ -14035,6 +14059,39 @@ against it. The ragged contributors and the identity noise were recorded in
 
 **Rejected.** None beyond the source entries' lists.
 
+### D-324 — An unconnected input is a build error, with no input defaults
+
+**Status.** ratified
+
+**Position.** An input fed neither by a producer nor by a root input is a
+build error, `UnconnectedInput` at the root build, and no declaration gives
+an input a default value.
+
+**Spec.** [§6.1][s6-1], [§6.2][s6-2]
+
+**Rationale.** The ruling was recorded only by presupposition. [D-143][d-143]'s
+Position calls it [§6.1][s6-1]'s banned default, silent and consumer-declared, and
+[D-048][d-048]'s Position places the obligations in the structure step. [D-051][d-051] and
+[D-143][d-143] point back at [§6.1][s6-1] for it, and [D-084][d-084] presupposes the error, so
+none of them could carry [§6.1][s6-1]'s sentence.
+
+The information about a forgotten wire lives on the consumer side, where the
+declared input says that a value is needed ([D-084][d-084]). A default would turn a
+forgotten wire into a plausible value, the silence [D-037][d-037] rejected in the tree
+walk and [D-143][d-143] in consumer-side defaults. An input meant to be fed from
+outside the model is a root input, the one terminus no component feeds
+([§4.1][s4-1], [§11.3][s11-3], [D-208][d-208]), and a deliberate constant is a `Constant` wired in the open
+([D-143][d-143]). Outputs take the opposite rule, legal and silent when unconnected,
+because "unused" is undecidable at build ([D-084][d-084]).
+
+**Rejected.**
+- *Input values declared like `x_init`:* they read as unwired-input
+  defaults, and every leaf would pay for a root-input-only need ([D-051][d-051]).
+- *Consumer-side optional inputs or unwired defaults:* the silence is the
+  hazard ([D-143][d-143]).
+- *Auto-bubbling an unconnected input:* a forgotten wire silently becomes a
+  live root input ([D-043][d-043], [D-322][d-322]).
+
 ### D-341 — The bundle law, the closed name sets and per-key return checks
 
 **Status.** ratified
@@ -14149,6 +14206,214 @@ cost, the two exits and the earned "rare" were recorded in [D-140][d-140]'s
 Rationale, and the trace's reach in its Rejected list. The closed remedies
 were recorded in [D-005][d-005]'s Rejected list. The structural answer for unwalked
 faces was recorded in [D-245][d-245]'s Rationale.
+
+**Rejected.** None beyond the source entries' lists.
+
+### D-344 — The signal requirement: immutable values and frozen references
+
+**Status.** ratified
+
+**Position.** Two rulings on what a signal may hold, which [§4.1][s4-1] and [§4.4][s4-4]
+state, are fixed here.
+
+- A port value is immutable, and any data it references is frozen for the
+  duration of the run. `isbits` is the common case, not the rule.
+- A field handle holds no mutable cache, such as a memoizing interpolator or
+  a lazy loader. The build does not look inside a handle, so the rule is the
+  author's obligation.
+
+**Spec.** [§4.1][s4-1], [§4.4][s4-4], [§7.3][s7-3]
+
+**Rationale.** [D-004][d-004] rules immutable value signals and carries the first
+bullet's immutability. The frozen-reference latitude has stood in [§4.1][s4-1] since
+the first design checkpoint, and [D-231][d-231] and [D-243][d-243] apply it while citing [§4.1][s4-1]
+for it, so no entry ruled it. The latitude exists for field handles ([§4.4][s4-4]).
+Bulk data such as a heightmap or a wind grid does not change during a run,
+so a reference to it keeps what the requirement buys, no aliasing and safe
+concurrent reads, without copying the data into cells.
+
+A mutable cache inside a handle breaks those properties, since concurrent
+consumers and the GUI thread would race on it. No store can host the cache
+instead. A store field is isbits or a `Symbol` ([D-231][d-231]), a workspace carries
+no information between calls ([D-183][d-183]), and no mutable cache carries values
+between stages ([D-342][d-342]). The leaf walk treats a handle as one opaque leaf and
+never enters its fields ([D-237][d-237]), so a handle holding a mutable `Vector`
+builds. The rule therefore binds the author, and no build check backs it.
+
+**Rejected.**
+- *A cache in the consumer's state:* no store can hold a mutable cache, by
+  [D-231][d-231], [D-183][d-183] and [D-342][d-342].
+- *`isbits` as the rule:* bulk data could ride no port, and the field handle
+  of [§4.4][s4-4] would have no spelling.
+
+### D-345 — The rule of meaning, and mode changes during a run
+
+**Status.** ratified
+
+**Position.** Two taxonomy rulings that [§3.1][s3-1] states are fixed here.
+
+- The rule of meaning separates meanings, not mechanisms. A commanded change
+  travels as an input and a component's detection of its own transition is
+  an event, and a commanded continuous reset uses both, one per meaning
+  ([D-141][d-141]).
+- During a run, `m` changes only through event handlers, at boundaries.
+  Outside a run a stopped-sim service may set it, as a condition does
+  ([§14.1][s14-1]).
+
+**Spec.** [§3.1][s3-1], [§10.4][s10-4]
+
+**Rationale.** Both sentences date from the first design checkpoint, and no
+entry ruled them. [D-141][d-141] spells a commanded continuous reset as an event whose
+guard reads the commanding input. Read as a claim about mechanisms, "the two
+mechanisms do not overlap" is false for that shipped instance. Read as a
+claim about meanings, it holds. The input carries the command, and the event
+carries the detection of its edge. The discrete tier keeps the input answer
+alone ([D-342][d-342]).
+
+"Only" needs its scope. [D-290][d-290]'s exact detection for a guard over `u` and `m`
+presupposes that `m` is constant within a frame. It is, because devices write
+root inputs and never `m`, and handlers run only at boundaries. Before a run
+a condition may specify modes ([§14.1][s14-1]), and `restore!` puts back a
+checkpoint's. Every service that writes `m` requires a non-running
+simulation, and a claimed model takes such writes only through its simulation
+([§14][s14], [D-318][d-318]).
+
+**Rejected.**
+- *Dropping "and do not overlap":* loses the separation the rule exists to
+  state.
+- *An unscoped "only":* false for a condition and for `restore!`, which set
+  `m` outside a run.
+
+### D-346 — Write-side port granularity and field-addressed staging
+
+**Status.** ratified
+
+**Position.** Two write-side rulings that [§4.3][s4-3] states are fixed here.
+
+- Data written by different external writers, or at different cadences,
+  must not share a port.
+- Field-addressed staging, a lens into struct slots on the write side, is a
+  guarded addition, unbuilt. It is the write-side counterpart of [D-036][d-036]'s
+  field-projection connector.
+
+**Spec.** [§4.3][s4-3]
+
+**Rationale.** [D-045][d-045]'s Rejected list carries the writers half, which [D-363][d-363]
+restates. A bundled command face kills per-field claiming, liveness and the
+trace tag. The cadence half follows from the same atomicity. Staging merges
+newest-wins per face ([§11.4][s11-4]), so each write replaces a face's whole value.
+Fields written at different cadences in one port would make every write
+restage the slower field, and the port's claim, liveness and trace address
+could not tell the fields apart.
+
+Field-addressed staging would let a write touch one slot of a struct-valued
+face, which is what would relax the rule. [§4.3][s4-3] and the glossary called it
+recorded, and no entry recorded it. [D-036][d-036]'s Rejected list holds only the
+read-side connector.
+
+**Rejected.** None beyond [D-045][d-045]'s and [D-036][d-036]'s lists.
+
+### D-347 — Evaluating the RHS runs the sweep
+
+**Status.** ratified
+
+**Position.** Evaluating the RHS means running the sweep and then the flow
+against the fresh table, never an incremental `x_deriv`-only re-evaluation.
+
+**Spec.** [§5.3][s5-3], [§10.3][s10-3]
+
+**Rationale.** The flow reads the published table ([D-015][d-015]), so `x_deriv` at a
+new state needs the stage functions run at that state first. A held table
+would be stale wherever `x` moved. Nothing is lost, because implicit solvers,
+linearization and trim already seed `x` and run the composite. Within a step
+the sweep is the interior variant ([D-147][d-147]). [D-194][d-194]'s Rationale takes the ruling
+from [§5.3][s5-3] as a premise, and [§10.3][s10-3], [§10.4][s10-4] and the glossary restate it, so no
+entry ruled it.
+
+**Rejected.**
+- *Incremental `x_deriv`-only re-evaluation:* the flow would read cells
+  computed at another state.
+
+### D-348 — The unit delay's tier caveat, and algebraic balances inside a component
+
+**Status.** ratified
+
+**Position.** Two loop-policy rulings that [§5.5][s5-5] states are fixed here.
+
+- A unit delay is a modeling decision, not a transparent wire. In a
+  continuous loop it moves the broken signal onto the discrete tier with a
+  `Δt_base`-scale zero-order hold, and every place that recommends it says
+  so, the cycle diagnostic included.
+- Implicit algebraic balances inside a component, such as a turbomachinery
+  operating point, stay legal and are the component author's business.
+  [D-005][d-005]'s rejection covers loops among components.
+
+**Spec.** [§5.5][s5-5], [§13.7][s13-7]
+
+**Rationale.** [§5.5][s5-5] and [§13.7][s13-7] each stated the caveat citing only the other,
+and [D-312][d-312] settles the delay's spelling, not its semantics. The caveat is the
+delay's tier semantics. A discrete leaf's cells hold zero-order between
+ticks, so the delayed signal is genuinely sampled. Offered as a free remedy,
+the delay would hide a change to the model's mathematics, the class [D-005][d-005]
+rejected in implicit delays. A balance inside a component is local, owned
+and bounded. It is solved within one stage, where no wire exists for the
+build to see, so rejecting framework-level loops does not forbid such
+models.
+
+**Rejected.** None beyond [D-005][d-005]'s list.
+
+### D-349 — The feedthrough tracer's modes, reach and limits
+
+**Status.** ratified
+
+**Position.** Three tracing rulings that [§5.6][s5-6] states are fixed here.
+
+- The tracer has two modes. The global set-tracer is a `Real` subtype
+  carrying a set of input indices, unioned by every operation. Its
+  may-depend answer is a sound over-approximation, exact in one evaluation,
+  and it requires stage-2 code free of branches and lookups on
+  input-tainted values. The local set-tracer, at sampled states, is the
+  fallback at an undecidable branch. It reports the taken paths' dependence
+  pattern, and its only misses are untaken branches.
+- Only inputs are seeded. State views and the stage-1 hand-down are never
+  seeded, stage-1 functions are never traced, and derivatives, guards,
+  handlers and projections are outside tracing. A value-severing operation,
+  which passes dependence through a bare `Int` index, is a documented blind
+  spot.
+- A model clean under the CI `T = Dual` sweep is in practice traceable,
+  because both tracer modes ride the same `T <: Real` genericity as `Dual`.
+
+**Spec.** [§5.6][s5-6]
+
+**Rationale.** [D-012][d-012]'s Position names the two modes and nothing of their
+semantics, and [D-245][d-245]'s Rejected list leans on "the sampled miss [§5.6][s5-6]
+documents". A reader weighing a dead hop relies on these properties, which
+is why the diagnostic records the source of each member's map ([D-245][d-245]).
+Seeding only inputs keeps branching on state, modes, parameters or time from
+interfering with the trace. Linear and cubic interpolation are immune to the
+blind spot, because dependence flows through the fractional weights.
+
+**Rejected.** None beyond [D-012][d-012]'s list.
+
+### D-350 — Output stages are discovered by method existence
+
+**Status.** ratified
+
+**Position.** An output stage exists when the leaf defines its method, and
+the build reads which stages exist from method existence, never by
+evaluating.
+
+**Spec.** [§5.2][s5-2]
+
+**Rationale.** This restates what a superseded Position recorded. [D-165][d-165]'s
+Position said that stages are discovered by method existence, and [D-194][d-194]
+superseded [D-165][d-165] over the `w` channel, not over stage discovery. Reading
+which declarations exist is reading declarations, the move [§8.5][s8-5] makes for
+class ([D-039][d-039]). A value fallback that made every component define every stage
+is the class [D-178][d-178] rejects. A missing or shadowed stage method stays loud.
+Its declared ports go unproduced, which is `DeclaredNotProduced` under
+[D-252][d-252]'s partition, and an empty return is `DeadStage` ([D-285][d-285]). So [D-178][d-178]'s
+recorded residual for optional features does not reach the output stages.
 
 **Rejected.** None beyond the source entries' lists.
 
@@ -14569,9 +14834,17 @@ bulk-data obligation was recorded in [D-139][d-139]'s Rationale.
 [d-321]: #d-321--the-parallel-routes-signal-the-handles-pin-chain-and-the-input-pins-failure-at-the-wire
 [d-322]: #d-322--no-auto-bubbling-of-unconnected-inputs-and-the-whole-tree-checks-decided-at-the-root
 [d-323]: #d-323--no-framework-aggregation-mechanism-what-explicit-junctions-buy-and-no-bundled-contributions
+[d-324]: #d-324--an-unconnected-input-is-a-build-error-with-no-input-defaults
 [d-341]: #d-341--the-bundle-law-the-closed-name-sets-and-per-key-return-checks
 [d-342]: #d-342--pure-output-stages-the-dependence-class-names-and-supervisory-resets
 [d-343]: #d-343--the-remedy-ladders-content-the-closed-loop-remedies-and-the-traces-reach
+[d-344]: #d-344--the-signal-requirement-immutable-values-and-frozen-references
+[d-345]: #d-345--the-rule-of-meaning-and-mode-changes-during-a-run
+[d-346]: #d-346--write-side-port-granularity-and-field-addressed-staging
+[d-347]: #d-347--evaluating-the-rhs-runs-the-sweep
+[d-348]: #d-348--the-unit-delays-tier-caveat-and-algebraic-balances-inside-a-component
+[d-349]: #d-349--the-feedthrough-tracers-modes-reach-and-limits
+[d-350]: #d-350--output-stages-are-discovered-by-method-existence
 [d-361]: #d-361--time-and-state-events-and-the-opposite-crossing-direction
 [d-362]: #d-362--reset-maps-the-continuous-only-mode-store-and-the-rejected-all-in-one-component
 [d-363]: #d-363--cell-freshness-closed-port-alternatives-write-side-atomicity-and-bulk-data-handles

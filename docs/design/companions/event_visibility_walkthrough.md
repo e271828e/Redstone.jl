@@ -14,29 +14,30 @@ on*. Since the signal table is written only by sweeps, one component's
 transition reaches everyone, itself included, through the next sweep. This document builds up to that sentence and shows why it
 needs no mechanism at all.
 
-## 1. The primitive fact: cells hold references to immutable values
+## 1. The primitive fact: cells hold immutable values
 
-A signal-table cell does not hold bytes that get mutated in place — it holds
-a *reference* to an immutable value ([§4.1][s4-1], [§7][s7]). "Writing a cell" means
-replacing that reference with a reference to a *new* value:
+A signal-table cell holds an immutable value ([§4.1][s4-1], [§7][s7]). Nothing
+mutates a value in place. "Writing a cell" means replacing its value with a
+*new* one:
 
 ```julia
-table[battery_bus_voltage] = 24.0    # cell → ref to the value 24.0
+table[battery_bus_voltage] = 24.0    # the cell holds the value 24.0
 # ... a later sweep, after the breaker tripped:
-table[battery_bus_voltage] = 0.0     # cell now → ref to 0.0
+table[battery_bus_voltage] = 0.0     # the cell now holds 0.0
 ```
 
-The old value is untouched by the overwrite. Anyone who already loaded the
-old reference keeps a perfectly coherent view of `24.0` for as long as they
-hold it, and the GC keeps it alive. This is exactly the mechanism [§11.2][s11-2] uses
-to publish snapshots across tasks; here the same property is what lets a
-handler's bundle stay meaningful no matter what later sweeps do.
+The overwrite cannot reach a value someone already gathered. A reader that
+loaded `24.0` keeps a perfectly coherent `24.0` for as long as it holds it, because
+its gather loaded the value itself, and nothing that value references ever
+changes. The same property lets [§11.2][s11-2] publish snapshots across tasks, since a
+published value never changes. Here it is what lets a handler's bundle stay
+meaningful no matter what later sweeps do.
 
 ## 2. Bundles and gathers
 
 Every user function is called as `fn(comp, args)`, where `args` is a
 NamedTuple bundle of views ([§5.2][s5-2]). Two of its fields are **gathers** — small
-compiled loops that load cell references into a NamedTuple — and they
+compiled loops that load cell values into a NamedTuple — and they
 partition the table by ownership:
 
 - **`y` gathers the component's *own* cells** (its published ports and

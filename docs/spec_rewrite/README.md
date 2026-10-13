@@ -53,9 +53,6 @@ chapter's rewrite settles its own:
   parameters, which §6.2 bolds.
 - **Chapter 13.** §13.7 admits `Constant` "under the inventory's
   demonstrated-need charter", which predates D-313's admission by judgement.
-- **Chapter 14.** §14.2 says the locality law "is convention" and that this
-  "carries over from §6.1". §6.1 enforces the one-level rule in `resolve`
-  (D-207). Chapter 6's escalation E1 asks the owner to rule.
 - **Chapter 14.** §14.10 cites superseded D-167 three times.
 - **Chapter 14.** §14.10 bolds seedability and states the tap rejection,
   both of which §8.2 states (D-295, D-296).
