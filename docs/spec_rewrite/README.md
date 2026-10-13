@@ -42,23 +42,23 @@ readability with no loss of content. The steps are in
 
 ## Carried to later chapters
 
-Doubles and pointers chapters 5 to 8 found in chapters not yet rewritten. Each
+Doubles and pointers chapters 5 to 11 found in chapters not yet rewritten. Each
 chapter's rewrite settles its own:
 
-- **Chapter 11.** §11.6 calls §8.1's shadowing check "the reflection class",
-  a name §8.1 never uses.
-- **Chapter 11.** §11.8 scopes the zero-allocation invariant to "the model
-  sweep", where §7.5 says "the stepping loop" (D-305).
-- **Chapter 12.** §12.6 9175 and 9183 say the harness `stage!` runs from the
-  calling task; D-200 says any task, which chapter 11's R4 applied to §11.3.
-  Appendix B 12795 and the glossary (14019, 14023) say the same. Lines at
-  `f61b1af`.
-- **Chapter 12.** §12.6 9224 and §12.7 9462–9463 name the header's compared
-  part differently from §11.5, which says "the fingerprint (the structural
-  layout) and the deployment" (chapter 11's R17, from `src/checkpoint.jl`
-  53–54).
-- **Chapter 12.** §12.2 8520 may use "door" for `run!`, which builds no run
+- **Chapter 12.** §12.6 and §12.7 name the header's compared part
+  differently from §11.5, which says "the fingerprint (the structural layout)
+  and the deployment" (chapter 11's R17, from `src/checkpoint.jl` 53–54).
+- **Chapter 12.** §12.2 may use "door" for `run!`, which builds no run
   (chapter 11's F23).
+- **Chapter 12.** §12.4 bolds "The entry is listed for release before its
+  `init!` begins" (D-268 bullet 7), which §11.6 bolds as the no-`init!`
+  tolerance; §12.4 states the listing plain. §12.6's bold "Task topology
+  follows the roster each time" cites §11.1, which no longer says
+  "topology" (chapter 11's R3).
+- **Chapter 12.** §12.7's "on the *structural* side of that line" points at
+  §11.5, which draws no such line; drop the pointer. §12.4's "reads stale …
+  from the first frame" points at §11.8, which never states it; cite D-138
+  or drop the pointer.
 - **Chapter 13.** §13.7 bolds D-311's ruling on the junction's type
   parameters, which §6.2 bolds.
 - **Chapter 13.** §13.7 admits `Constant` "under the inventory's

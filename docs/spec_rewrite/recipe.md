@@ -86,6 +86,14 @@ The survey maps the chapter before anyone writes. Chapter 9's
 A survey whose report is long writes it in parts, one append per section:
 one response over the output limit kills the agent and loses the report.
 
+**A chapter over about 10,000 words surveys in two halves.** Chapter 11
+(13,983 words) ran two survey agents in parallel, one per half, each reading
+the other half once for overlaps and classifying only its own. The halves
+number apart (rows 1 and 501, moves M1 and M51, findings F1 and F51,
+questions q1 and q21, units A to E and F to K), so the reports merge without
+renaming. The orchestrator builds `inbound.tsv` by script before the survey,
+so both halves judge one list; the script stays in `scratch_survey/`.
+
 Then check its key claims yourself, at the cited lines, before ruling on
 them. In chapter 9, six of six held, and in chapter 10, eleven of eleven.
 In chapter 8 the claims held, but a correction did not: see checkpoint 1.
@@ -225,6 +233,21 @@ unit's `old.md`, which its own inventory guarantees.
   component provides two output stages", untrue of an assembly, became a
   cited sentence; R19 returned it to its gloss.
 
+**From chapter 11, the brief should also:**
+
+- Say that a glossary link's first-use gloss is a declared addition and
+  required. One rewriter read "no claim the old text does not make" as
+  forbidding glosses, and eight running agents had to be told.
+- Say that a citation never sits inside a gloss's parentheses. Four units
+  placed one there, and each then read as the gloss's source.
+- When it rules one home for a fact two sections state, check that the home
+  states the fact's reason. R5 put `totals` monotonicity in §11.2, which
+  lacked the reason; the two sections ended up pointing at each other (R30).
+- Probe a dictated correction at its edge values. R10 dictated "the log's
+  `sizehint!` is `log_max`", false when `log_max = Inf` (R29). Verifiers
+  also caught a wrong section number in a pointer (R24) and a survey
+  proposal that reversed a gloss's meaning.
+
 ### Step 3: rewrite the units in parallel (one Opus agent per unit)
 
 Prompt: read `brief.md`, follow it, edit nothing outside `units/<U>/`, run
@@ -299,6 +322,12 @@ Run `checks/assemble.sh chNN` first.
 
 An editorial fixer (Opus) then applies the chapter pass's wording, placement,
 link and wrap fixes through each unit's inventory, and lists the rest.
+
+From chapter 11: a long chapter runs step 5 in halves too, a chapter pass
+and an inbound check per half, each pass grepping the other half for
+repeated claims and bolds. Two editorial fixers then edit disjoint units.
+Give each parallel agent its own scratch directory: chapter 11's two fixers
+overwrote each other's wrap script in a shared one.
 
 ### Step 6: rulings (one Opus consolidator, then the owner)
 
@@ -390,6 +419,12 @@ when it lands; chapter 10 coordinated with one that way.
   after a message and a fresh read. Pick a chapter with little citation
   traffic to the other: chapters 5 and 6 cite each other nowhere.
 
+- Run the battery on the assembled chapter, with the chapter added to
+  `REWRITTEN`, before the splice commit. Chapter 11's lander stopped on
+  three failures no unit check sees: the splice cites a new entry, so the
+  entry lands in the splice's commit (L-1); a correction removed a glossary
+  anchor's only link (L-2); and an old bold in a chart, never checked
+  before, had no D-citation (L-3).
 - The landing can go to one Opus agent, given the accepted batch items and
   this step's order. Chapter 5's lander ran linkify and the battery before
   each of its three commits, so each commit passed on its own.
@@ -557,6 +592,24 @@ The run, track 2 included, took one session of about two hours. It cost
 about 0.9M per 1,000 words, between chapter 5 and the small chapters,
 since four chapters shared one survey and one set of chapter-wide passes.
 
+Chapter 11, 13,983 words, ruled by the orchestrator, surveyed in two halves:
+
+| step | agent runs | subagent tokens |
+|---|---|---|
+| survey | 2, one per half | 0.85M |
+| rewrites | 9, plus fix rounds | 1.95M |
+| unit verification | 9, plus re-checks | 1.2M |
+| chapter passes, inbound checks, editorial fixers | 6 | 1.13M |
+| consolidation and ruled edits | 2 | 0.41M |
+| final verification and PDF check | 3 | 0.27M |
+| landing | 1 | 0.09M |
+| track 2 and its verification | 3 | 0.52M |
+| total | 35, plus fix rounds | about 6.4M |
+
+It cost about 0.46M per 1,000 words, the rate of the large chapters. The
+owner ruled five escalations while the units were being written, and the
+rulings reached the running rewriters by message.
+
 ## 4. What to expect from a chapter
 
 From chapter 9:
@@ -624,6 +677,21 @@ From chapter 5, which held 103 rules:
 - **The chapter grew about a fifth**, from 4,717 words to about 5,680, and
   bold fell from 59 spans, 14 of them labels, to 25 spans of 211 words.
 
+From chapter 11, which held 392 rules:
+
+- **One rule in three lived only outside a Position**, 150 of 392, most of
+  them in D-136's, D-137's, D-174's and D-177's Rationales. Track 2 wrote ten
+  entries, D-367 to D-376, and 32 annotations.
+- **Fewer than one rule in five cited its entry at its spot**, 71 of 392.
+- **Five findings were serious**, all where the spec described a design the
+  code or a later entry had moved past (D-310's topology, D-366's mandatory
+  functions). The owner ruled all five.
+- **No inbound citation was lost by accident.** Of 610 rows, 7 needed a
+  retarget, 15 were wrong before the rewrite, and five lost their claim by
+  ruling (the harness writer's task and the shipped GUI), fixed at landing.
+- **The chapter grew about a seventh**, from 13,983 words to about 16,200,
+  with 78 bold spans of 686 words.
+
 ## 5. Lessons, in one list
 
 1. Survey first, and rule on its decisions before writing. Moves settled
@@ -686,6 +754,18 @@ From chapter 5, which held 103 rules:
 44. Rebuild a stale `new_pretrim.md`, and rewrap by rendered columns.
 45. Subagents use `command ls`: a bare `ls` is `eza` here, and one hung a
     shell for five hours.
+
+46. A chapter over about 10,000 words surveys in two halves that number
+    apart; the orchestrator builds `inbound.tsv` by script (chapter 11).
+47. A first-use gloss is a required declared addition; say so in the brief.
+48. A citation never sits inside a gloss's parentheses.
+49. An overlap's home must state the fact's reason, or the pointers circle.
+50. Probe a dictated correction at its edge values.
+51. Each parallel agent gets its own scratch directory.
+52. Dry-run the battery on the assembled chapter before the splice commit;
+    a new entry the chapter cites lands in the same commit.
+53. Check a scripted edit's output: a `\s*$` in a regex ate the newlines
+    between 52 batch items.
 
 ## 6. A chapter's files
 
