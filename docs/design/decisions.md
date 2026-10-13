@@ -4777,9 +4777,9 @@ always-on-vs-flag-gated face question, decided at reimplementation time on the
 same axis. Recorded as general doctrine, the graduation rule: a wrapper's
 pattern moves into the library at the second same-semantics demand.
 
-Annotation (2026-10-13): [§3.1][s3-1] now states the commanded-reset rule above and
-[§2.2][s2-2] the gear's touchdown edge, so "unchanged" describes their state when this
-entry was ratified. The immutable stage views cited to [§3.1][s3-1] here and in the
+Annotation (2026-10-13): [§3.1][s3-1] now states the commanded-reset rule above, so
+"unchanged" describes its state when this entry was ratified, and [§2.2][s2-2] now
+states the gear's touchdown edge. The immutable stage views cited to [§3.1][s3-1] here and in the
 Rejected list are [§7.1][s7-1]'s.
 
 **Rejected.**
@@ -14186,11 +14186,11 @@ fixed here.
 - `m` is continuous-only: a discrete component has no mode store, and
   `m_init` on a discrete leaf is `DeclarationOnWrongTier`.
 - An all-in-one component, one leaf carrying both tiers' facets, is
-  rejected. Its halves would still communicate through cells, with one
-  home per datum, a sole-reader `s` and no cross-tier state views, so it
-  gains no expressiveness. It costs stage doubling with tier-tagged names,
-  per-port tier vocabulary and facet-conditional obligations, and it hides
-  the sampling interface.
+  rejected as an assembly in a trench coat. Its halves would still
+  communicate through cells, with one home per datum, a sole-reader `s` and
+  no cross-tier state views, so it gains no expressiveness. It costs stage
+  doubling with tier-tagged names, per-port tier vocabulary and
+  facet-conditional obligations, and it hides the sampling interface.
 - No `s` view in the flow and no discrete-tier write into `x`: either
   would un-sample the sampled-data semantics, break the held-`s`
   linearization's exactness and hide the coupling from the table, the

@@ -4,12 +4,12 @@ The log of track 2's edits: rulings batch items B4, B5, B6, B8 and B12, plus
 two Spec fields. Each entry gives the file, the old text, the new text and
 the source line it rests on. Log source lines are `decisions.md` at
 `675c5f8`, the commit before this track, for T1 to T25, and at `4dd81f2`
-for T26 on. Spec lines are `spec.md` at the same commits; only the rewraps,
-T31 to T36, add or remove a line. Citations were written bare and
+for T26 to T36, and at `49e2665` for T37 on. Spec lines are `spec.md` at
+the same commits; only the rewraps, T31 to T42, add or remove a line. Citations were written bare and
 `linkify.jl` linked them. The new text below is the linked text, as committed.
 
 Commits: `a23ad77` holds T1 to T4, `4dd81f2` holds T5 to T25 and this file,
-and the commit after it holds T26 to T36.
+`49e2665` holds T26 to T36, and the commit after it holds T37 to T44.
 
 ## Departures from the batch
 
@@ -41,6 +41,20 @@ a Position") fails for that row. D-362's fourth bullet duplicates it. A
 search of the log for the other rows' rulings found every other statement in
 a Rationale, a Rejected list or an annotation. The orchestrator ruled the
 fix, applied as T26 to T30.
+
+## Citations weak by design
+
+Three citations carry only part of their sentence. The batch named the first
+two; the track 2 verifier found the third (its P4).
+
+- D-231 at §2.2's RNG sentence carries "RNG state lives in `s`", not the
+  replay guarantee (C9).
+- D-090 at §3.1 carries the handler's returns, not "own".
+- D-308 at §3.1's mode-variables bullet (T7) carries the mode values only,
+  its Position bullet 1: a continuous component's `Int`s, enums and `Bool`s
+  belong in its modes. The same sentence's "change *only* through event
+  handlers" has no entry behind it. It is already the owner's item C5. No
+  edit, by ruling.
 
 ## The log
 
@@ -378,9 +392,10 @@ New: `**Spec.** [§2.2][s2-2], [§12.7][s12-7], [§14.5][s14-5]`
 to the spec's link-definition block, and the three Index rows and link
 definitions to the log.
 
-T5 to T23 leave six lines over 80 columns that were under it (402, 576, 599,
-699, 764, 782). T31 to T36 rewrap their paragraphs at the orchestrator's
-ruling.
+T5 to T23 leave these lines over 80 raw columns: 402, 576, 599, 699, 764 and
+782. T31 to T36 rewrap their paragraphs at the orchestrator's ruling. Measured
+in rendered columns (`spec_style.md`), the lines over 80 were 269, 299, 447,
+453, 479, 480 and 670, which T37 to T42 rewrap.
 
 ### T26. D-362's headline counts five rulings
 
@@ -584,3 +599,205 @@ emits FlightPhysics' `AirData` for the whole vehicle. Resource injection
 The rewrap script kept links, citation groups and code spans whole, filled
 to 80 columns, refused to start a line with a list marker, and asserted that
 each paragraph's text was unchanged up to whitespace.
+
+### T37. Refill §2.1's opposite-direction paragraph at 80 rendered columns
+
+File: `docs/design/spec.md`, lines 269–271 (now 269–271), whitespace only, from
+the long line to the paragraph's end. Source: the verifier's P1 text; the line
+was pushed past 80 rendered columns by T5.
+
+Old:
+
+~~~~
+([D-082][d-082], [D-361][d-361]). Stall entry and exit are one such pair. [D-180][d-180] records a per-event
+`direction` keyword as a [guarded addition](#g-guarded-addition) (a capability the design admits but does
+not build).
+~~~~
+
+New:
+
+~~~~
+([D-082][d-082], [D-361][d-361]). Stall entry and exit are one such pair. [D-180][d-180] records a
+per-event `direction` keyword as a [guarded addition](#g-guarded-addition) (a capability the design
+admits but does not build).
+~~~~
+
+### T38. Refill §2.1's time-events paragraph at 80 rendered columns
+
+File: `docs/design/spec.md`, lines 299–305 (now 299–306), whitespace only, from
+the long line to the paragraph's end. Source: the verifier's P1 text; the line
+was pushed past 80 rendered columns by T6.
+
+Old:
+
+~~~~
+discrete [tier](#g-tier)'s [ticks](#g-tick) are [time events](#g-time-event)** ([D-220][d-220], [D-361][d-361]). A tier is one side of the hybrid
+formalism, continuous or discrete. Ticks are declared by `sample_times`. Their
+instants are known in advance and scheduled ([§10.5][s10-5]). Everything declared through
+`StateEvent(guard, handler)` is a [state event](#g-state-event). Its instant is unknown and must be
+detected, by boundary check or by localization. That is why the declaration is
+named `state_events` ([§8.2][s8-2], [D-220][d-220]). The criterion is detection versus scheduling,
+not which fields a guard reads. A guard over an input is still a state event.
+~~~~
+
+New:
+
+~~~~
+discrete [tier](#g-tier)'s [ticks](#g-tick) are [time events](#g-time-event)** ([D-220][d-220], [D-361][d-361]). A tier is one side of the
+hybrid formalism, continuous or discrete. Ticks are declared by `sample_times`.
+Their instants are known in advance and scheduled ([§10.5][s10-5]). Everything declared
+through `StateEvent(guard, handler)` is a [state event](#g-state-event). Its instant is unknown and
+must be detected, by boundary check or by localization. That is why the
+declaration is named `state_events` ([§8.2][s8-2], [D-220][d-220]). The criterion is detection
+versus scheduling, not which fields a guard reads. A guard over an input is
+still a state event.
+~~~~
+
+### T39. Refill §3.4's deferred-decode paragraph at 80 rendered columns
+
+File: `docs/design/spec.md`, lines 447–450 (now 448–451), whitespace only, from
+the long line to the paragraph's end. Source: the verifier's P1 text; the line
+was pushed past 80 rendered columns by T11 and T30.
+
+Old:
+
+~~~~
+impossible ([D-020][d-020], [D-292][d-292]). It is also what terminates the iteration at each [boundary](#g-boundary) (a
+published consistency point, [§10.6][s10-6]). Inside an all-in-one component, influence
+across [tiers](#g-tier) (the continuous and discrete sides of the formalism) still routes
+through [cells](#g-cell) of the published signal table ([D-056][d-056]).
+~~~~
+
+New:
+
+~~~~
+impossible ([D-020][d-020], [D-292][d-292]). It is also what terminates the iteration at each
+[boundary](#g-boundary) (a published consistency point, [§10.6][s10-6]). Inside an all-in-one component,
+influence across [tiers](#g-tier) (the continuous and discrete sides of the formalism)
+still routes through [cells](#g-cell) of the published signal table ([D-056][d-056]).
+~~~~
+
+### T40. Refill §3.4's trench-coat paragraph at 80 rendered columns
+
+File: `docs/design/spec.md`, lines 453–457 (now 454–458), whitespace only, from
+the long line to the paragraph's end. Source: the verifier's P1 text; the line
+was pushed past 80 rendered columns by T12.
+
+Old:
+
+~~~~
+primitives in a trench coat ([D-056][d-056], [D-362][d-362]). It buys no expressiveness. It incurs costs
+of its own, which [D-056][d-056] enumerates. One of those costs is not bookkeeping. The
+sampling interface is the zero-order hold (ZOH) plus the one-sample `z⁻¹` delay.
+It is the most bug-prone boundary in a flight-control stack. A monolith swallows
+it. The split keeps it a visible wire.
+~~~~
+
+New:
+
+~~~~
+primitives in a trench coat ([D-056][d-056], [D-362][d-362]). It buys no expressiveness. It incurs
+costs of its own, which [D-056][d-056] enumerates. One of those costs is not bookkeeping.
+The sampling interface is the zero-order hold (ZOH) plus the one-sample `z⁻¹`
+delay. It is the most bug-prone boundary in a flight-control stack. A monolith
+swallows it. The split keeps it a visible wire.
+~~~~
+
+### T41. Refill §3.4's reset paragraph at 80 rendered columns
+
+File: `docs/design/spec.md`, lines 479–484 (now 480–485), whitespace only, from
+the long line to the paragraph's end. Source: the verifier's P1 text; the line
+was pushed past 80 rendered columns by T13 and T14.
+
+Old:
+
+~~~~
+mechanism ([D-056][d-056], [D-362][d-362]). And the reset is a discrete-tier write into continuous state,
+exactly the operation this design forbids ([D-056][d-056], [D-362][d-362]). `s_update` writes only its own
+`s`. Guard-driven handlers are the sole resetters of continuous state ([D-141][d-141]).
+Integrate-and-dump falls squarely into the crack between the two leaf classes.
+It is tightly coupled continuous and periodic dynamics in one physical
+instrument.
+~~~~
+
+New:
+
+~~~~
+mechanism ([D-056][d-056], [D-362][d-362]). And the reset is a discrete-tier write into continuous
+state, exactly the operation this design forbids ([D-056][d-056], [D-362][d-362]). `s_update` writes
+only its own `s`. Guard-driven handlers are the sole resetters of continuous state
+([D-141][d-141]). Integrate-and-dump falls squarely into the crack between the two leaf
+classes. It is tightly coupled continuous and periodic dynamics in one physical
+instrument.
+~~~~
+
+### T42. Refill §4.3's field-projection paragraph at 80 rendered columns
+
+File: `docs/design/spec.md`, lines 670–671 (now 671–672), whitespace only, from
+the long line to the paragraph's end. Source: the verifier's P1 text; the line
+was pushed past 80 rendered columns by T19.
+
+Old:
+
+~~~~
+A field-projection connector is a [guarded addition](#g-guarded-addition) ([D-036][d-036], [D-363][d-363]), a capability the
+design admits but does not build. Its shape is obvious.
+~~~~
+
+New:
+
+~~~~
+A field-projection connector is a [guarded addition](#g-guarded-addition) ([D-036][d-036], [D-363][d-363]), a capability
+the design admits but does not build. Its shape is obvious.
+~~~~
+
+### T43. D-141's annotation no longer counts §2.2 as "unchanged"
+
+File: `docs/design/decisions.md`, lines 4780–4782. Source: D-141 Position,
+line 4736, names only §3.1, §2.1 and §13.7 as unchanged. The verifier's P2
+text. The last sentence, on §7.1, stays.
+
+Old:
+
+~~~~
+Annotation (2026-10-13): [§3.1][s3-1] now states the commanded-reset rule above and
+[§2.2][s2-2] the gear's touchdown edge, so "unchanged" describes their state when this
+entry was ratified.
+~~~~
+
+New:
+
+~~~~
+Annotation (2026-10-13): [§3.1][s3-1] now states the commanded-reset rule above, so
+"unchanged" describes its state when this entry was ratified, and [§2.2][s2-2] now
+states the gear's touchdown edge.
+~~~~
+
+### T44. D-362's third bullet carries the trench coat
+
+File: `docs/design/decisions.md`, lines 14188–14193. Source: D-056 Rejected,
+line 1708, "*All-in-one component kind:* an assembly in a trench coat". The
+verifier's P3 text, so D-362 carries spec §3.4's trench-coat sentence; the
+spec stays.
+
+Old:
+
+~~~~
+- An all-in-one component, one leaf carrying both tiers' facets, is
+  rejected. Its halves would still communicate through cells, with one
+  home per datum, a sole-reader `s` and no cross-tier state views, so it
+  gains no expressiveness. It costs stage doubling with tier-tagged names,
+  per-port tier vocabulary and facet-conditional obligations, and it hides
+  the sampling interface.
+~~~~
+
+New:
+
+~~~~
+- An all-in-one component, one leaf carrying both tiers' facets, is
+  rejected as an assembly in a trench coat. Its halves would still
+  communicate through cells, with one home per datum, a sole-reader `s` and
+  no cross-tier state views, so it gains no expressiveness. It costs stage
+  doubling with tier-tagged names, per-port tier vocabulary and
+  facet-conditional obligations, and it hides the sampling interface.
+~~~~

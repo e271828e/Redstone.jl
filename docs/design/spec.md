@@ -266,9 +266,9 @@ predicate holds. Writing the guard's sign value `σ`, holding means `σ ≥ 0`.
 [§10.6][s10-6] states the bookkeeping of the [prior](#g-prior). The prior is each event's predicate
 sample stored at the previous [boundary](#g-boundary) (a published consistency point). The
 opposite crossing direction is declared as a second event with the negated guard
-([D-082][d-082], [D-361][d-361]). Stall entry and exit are one such pair. [D-180][d-180] records a per-event
-`direction` keyword as a [guarded addition](#g-guarded-addition) (a capability the design admits but does
-not build).
+([D-082][d-082], [D-361][d-361]). Stall entry and exit are one such pair. [D-180][d-180] records a
+per-event `direction` keyword as a [guarded addition](#g-guarded-addition) (a capability the design
+admits but does not build).
 
 Which form an author declares is not a free choice. The guard's return type is
 the declared policy. A `Bool` return declares
@@ -296,13 +296,14 @@ crossing defines the transition ([D-179][d-179]). Detection resolution is an
 execution-policy detail.
 
 Time events and state events differ in how their instants are found. **The
-discrete [tier](#g-tier)'s [ticks](#g-tick) are [time events](#g-time-event)** ([D-220][d-220], [D-361][d-361]). A tier is one side of the hybrid
-formalism, continuous or discrete. Ticks are declared by `sample_times`. Their
-instants are known in advance and scheduled ([§10.5][s10-5]). Everything declared through
-`StateEvent(guard, handler)` is a [state event](#g-state-event). Its instant is unknown and must be
-detected, by boundary check or by localization. That is why the declaration is
-named `state_events` ([§8.2][s8-2], [D-220][d-220]). The criterion is detection versus scheduling,
-not which fields a guard reads. A guard over an input is still a state event.
+discrete [tier](#g-tier)'s [ticks](#g-tick) are [time events](#g-time-event)** ([D-220][d-220], [D-361][d-361]). A tier is one side of the
+hybrid formalism, continuous or discrete. Ticks are declared by `sample_times`.
+Their instants are known in advance and scheduled ([§10.5][s10-5]). Everything declared
+through `StateEvent(guard, handler)` is a [state event](#g-state-event). Its instant is unknown and
+must be detected, by boundary check or by localization. That is why the
+declaration is named `state_events` ([§8.2][s8-2], [D-220][d-220]). The criterion is detection
+versus scheduling, not which fields a guard reads. A guard over an input is
+still a state event.
 
 ### 2.2 Exclusions (deliberate)
 
@@ -444,17 +445,17 @@ exactly as two siblings do ([D-056][d-056], [D-362][d-362]). There is [one home 
 mirrors another, [§5.2][s5-2]). `x_deriv` sees only the continuous state, and `s_update`
 only the discrete one. And `s⁺` is decoded only at the owner's next tick, because
 `s_update` runs last. That deferred decode is what makes ticks→events structurally
-impossible ([D-020][d-020], [D-292][d-292]). It is also what terminates the iteration at each [boundary](#g-boundary) (a
-published consistency point, [§10.6][s10-6]). Inside an all-in-one component, influence
-across [tiers](#g-tier) (the continuous and discrete sides of the formalism) still routes
-through [cells](#g-cell) of the published signal table ([D-056][d-056]).
+impossible ([D-020][d-020], [D-292][d-292]). It is also what terminates the iteration at each
+[boundary](#g-boundary) (a published consistency point, [§10.6][s10-6]). Inside an all-in-one component,
+influence across [tiers](#g-tier) (the continuous and discrete sides of the formalism)
+still routes through [cells](#g-cell) of the published signal table ([D-056][d-056]).
 
 The all-in-one component is therefore an [assembly](#g-assembly) (pure composition) of two
-primitives in a trench coat ([D-056][d-056], [D-362][d-362]). It buys no expressiveness. It incurs costs
-of its own, which [D-056][d-056] enumerates. One of those costs is not bookkeeping. The
-sampling interface is the zero-order hold (ZOH) plus the one-sample `z⁻¹` delay.
-It is the most bug-prone boundary in a flight-control stack. A monolith swallows
-it. The split keeps it a visible wire.
+primitives in a trench coat ([D-056][d-056], [D-362][d-362]). It buys no expressiveness. It incurs
+costs of its own, which [D-056][d-056] enumerates. One of those costs is not bookkeeping.
+The sampling interface is the zero-order hold (ZOH) plus the one-sample `z⁻¹`
+delay. It is the most bug-prone boundary in a flight-control stack. A monolith
+swallows it. The split keeps it a visible wire.
 
 #### The hardest case: integrate-and-dump
 
@@ -476,11 +477,11 @@ anchored at the interval start. The differencing idiom of [§8.6][s8-6]
 recovers exactly these forms from the cumulative stores, term by term.
 
 The reset is periodic, not predicate-triggered, so events are the wrong
-mechanism ([D-056][d-056], [D-362][d-362]). And the reset is a discrete-tier write into continuous state,
-exactly the operation this design forbids ([D-056][d-056], [D-362][d-362]). `s_update` writes only its own
-`s`. Guard-driven handlers are the sole resetters of continuous state ([D-141][d-141]).
-Integrate-and-dump falls squarely into the crack between the two leaf classes.
-It is tightly coupled continuous and periodic dynamics in one physical
+mechanism ([D-056][d-056], [D-362][d-362]). And the reset is a discrete-tier write into continuous
+state, exactly the operation this design forbids ([D-056][d-056], [D-362][d-362]). `s_update` writes
+only its own `s`. Guard-driven handlers are the sole resetters of continuous state
+([D-141][d-141]). Integrate-and-dump falls squarely into the crack between the two leaf
+classes. It is tightly coupled continuous and periodic dynamics in one physical
 instrument.
 
 Algebra removes the reset ([§8.6][s8-6]). Every interval-relative integral becomes a
@@ -667,8 +668,8 @@ destructures the bundle in its own stage or through an unbundling component.
 An unbundling component is a `y_direct` leaf that takes the bundle and
 publishes its fields. It is a candidate for the standard library of [§13.7][s13-7].
 
-A field-projection connector is a [guarded addition](#g-guarded-addition) ([D-036][d-036], [D-363][d-363]), a capability the
-design admits but does not build. Its shape is obvious.
+A field-projection connector is a [guarded addition](#g-guarded-addition) ([D-036][d-036], [D-363][d-363]), a capability
+the design admits but does not build. Its shape is obvious.
 
 Under the granularity guideline, **authors should bundle what shares a stage
 *and* is consumed together** ([D-036][d-036]). The first criterion is trivially
