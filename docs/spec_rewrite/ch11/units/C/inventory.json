@@ -1,0 +1,1219 @@
+{
+ "claims": [
+  {
+   "id": "C-001",
+   "old": "### 11.3 Inbound: root inputs, claims and the frozen roster",
+   "new": "### 11.3 Inbound: root inputs, claims and the frozen roster",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-002",
+   "old": "The write surface (the set of faces a writer's batch entries may reach) is root inputs.",
+   "new": "The write surface is the set of faces a writer's batch entries may reach. Its members are root inputs",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-003",
+   "old": "A root input is the root component's own input face, an assembly's `input_wires` key or a primitive's `u_types` key (§8.2, §8.6).",
+   "new": "A root input is the root component's own input face, an assembly's `input_wires` key or a primitive's `u_types` key (§8.2, §8.6, D-208).",
+   "where": "new",
+   "cites": [
+    "§8.2",
+    "§8.6"
+   ],
+   "newcites": [
+    "D-208",
+    "§8.2",
+    "§8.6"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-004",
+   "old": "It is routed inward to consumers and produced by no component.",
+   "new": "It is routed inward to consumers and produced by no component.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-005",
+   "old": "At every non-root level an input face is fed by the parent's wire, and at the root there is no parent. No dedicated vocabulary is needed.",
+   "new": "At every non-root level an input face is fed by the parent's wire, and at the root there is no parent. No dedicated vocabulary is needed.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-006",
+   "old": "A root input is usefully read as the output face of the one producer the build never sees: the periphery and the services.",
+   "new": "A root input is usefully read as the output face of the one producer the build never sees, the periphery and the services.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-007",
+   "old": "On that reading, root-input exclusivity (below) is that producer's one-writer right, and the totality (§14.6) is its completeness obligation.",
+   "new": "On that reading, root-input exclusivity (below) is that producer's one-writer right, and the totality (§14.6) is its completeness obligation.",
+   "where": "new",
+   "cites": [
+    "§14.6"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-008",
+   "old": "Root inputs are sources to the build-time ordering, constants within a frame,",
+   "new": "Root inputs are sources to the build-time ordering, and they are constants within a frame",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-009",
+   "old": "and the only thing the periphery may write.",
+   "new": "They are the only thing the periphery may write (D-031).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-031"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-010",
+   "old": "The GUI reaches them through the resolution (§11.7), and control commands are not writes (§12.1).",
+   "new": "The GUI reaches them through the resolution (§11.7), and control commands are not writes (§12.1).",
+   "where": "new",
+   "cites": [
+    "§11.7",
+    "§12.1"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-011",
+   "old": "Devices, mappings, the trace and the GUI write path address root inputs by face name (§8.6).",
+   "new": "Devices, mappings, the trace and the GUI write path address root inputs by face name (§8.6).",
+   "where": "new",
+   "cites": [
+    "§8.6"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-012",
+   "old": "Structural slash paths never cross the periphery's write boundary.",
+   "new": "Structural slash paths never reach the periphery's writes.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R10"
+  },
+  {
+   "id": "C-013",
+   "old": "The write side speaks the root contract's names only.",
+   "new": "The write side speaks the names of the root's contract, the interface the root component declares, and no others (D-129).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-129"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-014",
+   "old": "The read side chooses per binding. It uses slash paths in inspection reads, and face names in integration reads and in service reads (§11.2/§13.5/§14.4).",
+   "new": "The read side chooses per binding (the value passed at `attach!` that makes a device framework-legible). It uses slash paths in inspection reads, and face names in integration reads and in service reads (§11.2/§13.5/§14.4).",
+   "where": "new",
+   "cites": [
+    "§11.2",
+    "§13.5",
+    "§14.4"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-015",
+   "old": "Root-input exclusivity: one writer per root input at any time.",
+   "new": "Root-input exclusivity permits at most one writer per root input at any time (D-044).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-044"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-016",
+   "old": "A device claims its root inputs at attach, and claiming an already-claimed root input is an attach-time error. Detaching releases the claims.",
+   "new": "A device claims its root inputs (stakes them as faces it may write) at attach, and claiming an already-claimed root input is an attach-time error. Detaching releases the claims.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-017",
+   "old": "A released root input's GUI widgets are live again from the next run (§11.7).",
+   "new": "A released root input's GUI widgets are live again from the next run (§11.7).",
+   "where": "new",
+   "cites": [
+    "§11.7"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-018",
+   "old": "Exclusivity replaces any cross-device conflict policy, such as attachment-order precedence at drain (D-044).",
+   "new": "Exclusivity replaces any cross-device conflict policy (D-044), such as attachment-order precedence at the drain",
+   "where": "new",
+   "cites": [
+    "D-044"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-019",
+   "old": "Per-device cells, the CAS merge and the atomicswap drain all stay. They serve atomicity and coalescing, not arbitration.",
+   "new": "Per-device staging cells (where each device's pending batch waits between drains), the CAS merge and the atomicswap drain all stay. They serve atomicity and coalescing (the CAS merge keeping one pending batch per device), not arbitration.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-020",
+   "old": "Why. A second live writer on one root input makes the applied value a timing artifact, as the worked example in §11.4 shows.",
+   "new": "Exclusivity holds because a second live writer on one root input makes the applied value a timing artifact, as the worked example in §11.4 shows.",
+   "where": "new",
+   "cites": [
+    "§11.4"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-021",
+   "old": "The usual pair is a stream and its mirror, a joystick axis and the GUI slider showing it. Claiming the stream settles that pair with no concurrent writing.",
+   "new": "The usual pair is a stream and its mirror, a joystick axis and the GUI slider showing it. Claiming the stream settles that pair with no concurrent writing.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-022",
+   "old": "A claim is what a device may write, not what it will.",
+   "new": "A claim is what a device may write, not what it will.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-023",
+   "old": "Data-dependent write-sets are ordinary. A UDP/JSON peer writes whichever subset of faces the incoming message names, and `map_input` is arbitrary user code the framework never inspects.",
+   "new": "Data-dependent write-sets are ordinary. A UDP/JSON peer writes whichever subset of faces the incoming message names, and `map_input` is arbitrary user code the framework never inspects.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-024",
+   "old": "Such a device therefore claims the binding's enumerated allowed set, the faces the binding table lists, whether or not any given batch touches them.",
+   "new": "Such a device therefore claims the binding's enumerated allowed set, the faces the binding table lists, whether or not any given batch touches them.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-025",
+   "old": "The claim is registered at attach exactly as a joystick's is.",
+   "new": "The claim is registered at attach exactly as a joystick's is.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-026",
+   "old": "A broad claim costs liveness. Every enumerated face is claimed for the device's whole attachment, so the derived-liveness rule (§11.7)",
+   "new": "A broad claim costs liveness. Every enumerated face is claimed for the device's whole attachment, so the derived-liveness rule (GUI widget liveness, baked once at run start, §11.7)",
+   "where": "new",
+   "cites": [
+    "§11.7"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-027",
+   "old": "renders the device's GUI widget read-only even on faces the peer never writes.",
+   "new": "renders the GUI's widgets read-only even on faces the peer never writes.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R10"
+  },
+  {
+   "id": "C-028",
+   "old": "Narrow the binding to narrow the claim. The enumeration is the interface.",
+   "new": "Narrow the binding to narrow the claim. The enumeration is the interface.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-029",
+   "old": "Every writer has a write surface, and the periphery enforces it.",
+   "new": "Every writer has a write surface, and the periphery enforces it.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-030",
+   "old": "A batch entry reaches a root input iff the named face is inside the writer's surface.",
+   "new": "A batch entry reaches a root input iff the named face is inside the writer's surface (D-044).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-044"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-031",
+   "old": "Anything else is discarded with a runtime warning (§13.2).",
+   "new": "Anything else is discarded with a runtime warning (§13.2).",
+   "where": "new",
+   "cites": [
+    "§13.2"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-032",
+   "old": "Because surfaces are static per run (the roster freeze, below),",
+   "new": "Because surfaces are static per run under the roster freeze (attach and detach only while stopped, below),",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-033",
+   "old": "enforcement runs entirely at staging, the earliest site, on the writer's own task. The drain performs no checks at all.",
+   "new": "enforcement runs entirely at staging, the earliest site, on the writer's own task. The drain performs no checks at all.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-034",
+   "old": "Every device's surface is its claim set, and a claim set has two sources:",
+   "new": "Every device's surface is its claim set, and a claim set has two sources (D-174):",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-174"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-035",
+   "old": "- Returned. The binding enumerates the faces.",
+   "new": "- A returned claim is enumerated by the binding.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-036",
+   "old": "It declares `is_input(b) = true`, `claims(b)` (§11.6) is called once at attach, and what it names is staked.",
+   "new": "The binding declares `is_input(b) = true`, `claims(b)` (§11.6) is called once at attach, and what it names is staked.",
+   "where": "new",
+   "cites": [
+    "§11.6"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-037",
+   "old": "Such a claim is static for the attachment and exclusively its own,",
+   "new": "Such a claim is static for the attachment and exclusively its own,",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-038",
+   "old": "since claims are disjoint by construction.",
+   "new": "since the attach-time exclusivity check keeps claims disjoint.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R10"
+  },
+  {
+   "id": "C-039",
+   "old": "It is binding-bounded even where no one else is involved. A mapping that has drifted onto an unenumerated face is a diagnosable anomaly (`OutOfClaimEntry`), never a silent write, claimed or not.",
+   "new": "It is binding-bounded even where no one else is involved. A mapping that has drifted onto an unenumerated face is a diagnosable anomaly (`OutOfClaimEntry`), never a silent write, claimed or not.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-040",
+   "old": "- Computed. The binding declares `is_greedy(b) = true` (§11.6) and the framework computes the claim at attach:",
+   "new": "- A computed claim is computed by the framework at attach, when the binding declares `is_greedy(b) = true` (§11.6).",
+   "where": "new",
+   "cites": [
+    "§11.6"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-041",
+   "old": "all root-input faces minus the union of the rostered claims, the unclaimed complement at that instant.",
+   "new": "It is all root-input faces minus the union of the rostered claims, the unclaimed complement at that instant.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-042",
+   "old": "This is the shipped GUI's claim (§11.7),",
+   "new": "This is the standard GUI binding's claim (§11.6),",
+   "where": "new",
+   "cites": [
+    "§11.7"
+   ],
+   "newcites": [
+    "§11.6"
+   ],
+   "tag": "R",
+   "ruling": "R23"
+  },
+  {
+   "id": "C-043",
+   "old": "everything unclaimed, without configuration.",
+   "new": "everything unclaimed, without configuration.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-044",
+   "old": "It is disjoint from every incumbent claim by construction, so exclusivity validates trivially and nothing downstream can tell the two sources apart.",
+   "new": "It is disjoint from every incumbent claim by construction, so exclusivity validates trivially and nothing downstream can tell the two sources apart.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-045",
+   "old": "A complement that comes out empty is legal and useless,",
+   "new": "A complement that comes out empty is legal and useless.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-046",
+   "old": "and `attach!` records `EmptyGreedyClaim`",
+   "new": "`attach!` records an `EmptyGreedyClaim` warning for it (§11.6).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§11.6"
+   ],
+   "tag": "R",
+   "ruling": "R5"
+  },
+  {
+   "id": "C-047",
+   "old": "in the roster entry's diagnostic cell (§11.6, §11.8, D-250).",
+   "new": "records `EmptyGreedyClaim` (Appendix C, a warning naming the device and its binding) in the roster entry's diagnostic cell.",
+   "where": "units/G2/old.md",
+   "cites": [
+    "D-250",
+    "§11.6",
+    "§11.8"
+   ],
+   "newcites": [],
+   "tag": "M",
+   "ruling": "R5"
+  },
+  {
+   "id": "C-048",
+   "old": "The periphery resolves root faces against the activation's cell layout alone (D-261).",
+   "new": "The periphery resolves root faces against the activation's cell layout alone (D-261).",
+   "where": "new",
+   "cites": [
+    "D-261"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-049",
+   "old": "The layout carries the root faces in structure order with their probe values, beside the address table, so both of the build's lookup families, schema and layout, read it there, and writers, claims and the harness compile against it.",
+   "new": "The layout carries the root faces in structure order with their probe values, beside the address table, so both of the build's lookup families, schema and layout, read it there, and writers, claims and the harness compile against it.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-050",
+   "old": "The services take their schema from the `Build` itself (§14.3); the periphery never needs an authored fact the layout does not hold.",
+   "new": "The services take their schema from the `Build` itself (§14.3). The periphery never needs an authored fact the layout does not hold.",
+   "where": "new",
+   "cites": [
+    "§14.3"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-051",
+   "old": "One claim mechanism, two claim sources.",
+   "new": "There is one claim mechanism with two claim sources.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-052",
+   "old": "The source is exhausted at the attach point. Past it, validation, roster-entry storage, shape compilation (§11.4), the drain, the trace and detach-releases-claims treat a computed claim exactly as a returned one.",
+   "new": "The source is exhausted at the attach point. Past it, validation, roster-entry storage, the compilation of shape, shim, merge and scatter (§11.4), the drain, the trace (§11.5) and detach-releases-claims treat a computed claim exactly as a returned one (D-174).",
+   "where": "new",
+   "cites": [
+    "§11.4"
+   ],
+   "newcites": [
+    "D-174",
+    "§11.4",
+    "§11.5"
+   ],
+   "tag": "R",
+   "ruling": "R5"
+  },
+  {
+   "id": "C-053",
+   "old": "The GUI is therefore not an exception but an ordinary enumerated writer whose enumeration the framework performed.",
+   "new": "The GUI is therefore not an exception but an ordinary enumerated writer whose enumeration the framework performed.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-054",
+   "old": "Attaching the greedy claimant last is the idiom.",
+   "new": "Attaching the greedy claimant last is the idiom (D-192).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-192"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-055",
+   "old": "Its computed claim is taken at the attach point and never recomputed, so attachment order is decisive by design.",
+   "new": "Its computed claim is taken at the attach point and never recomputed, so attachment order is decisive by design.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-056",
+   "old": "Opportunistic writing by autonomous devices does not exist.",
+   "new": "Opportunistic writing by autonomous devices does not exist (D-044).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-044"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-057",
+   "old": "A device that wants a face enumerates it, and greediness is an explicit declaration, never a default.",
+   "new": "A device that wants a face enumerates it, and greediness is an explicit declaration, never a default.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-058",
+   "old": "Cross-writer races on one root input therefore cannot arise structurally, because every claim is exclusive, whatever its source.",
+   "new": "Cross-writer races on one root input therefore cannot arise structurally, because every claim is exclusive, whatever its source.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-059",
+   "old": "That is what keeps drain order a diagnostic fact (below) and lets a drained GUI value simply stay (§11.7).",
+   "new": "That is what keeps drain order a diagnostic fact (§11.4) and lets a drained GUI value simply stay (§11.7).",
+   "where": "new",
+   "cites": [
+    "§11.7"
+   ],
+   "newcites": [
+    "§11.4",
+    "§11.7"
+   ],
+   "tag": "R",
+   "ruling": "R10"
+  },
+  {
+   "id": "C-060",
+   "old": "One framework-owned remainder: the harness writer.",
+   "new": "One framework-owned remainder sits beside the roster, the harness writer",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-061",
+   "old": "Beside the roster sits a task-free entry point,",
+   "new": "It is a task-free entry point,",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-062",
+   "old": "`stage!(sim, \"face\" => value, …)`,",
+   "new": "`stage!(sim, \"face\" => value, …)`",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R18"
+  },
+  {
+   "id": "C-063",
+   "old": "the harness/REPL write path (§12.6).",
+   "new": "the harness/REPL write path (§12.6, D-096), called as follows.",
+   "where": "new",
+   "cites": [
+    "§12.6"
+   ],
+   "newcites": [
+    "D-096",
+    "§12.6"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-064",
+   "old": "It stages a batch from the calling task itself (the task that invoked `run!`).",
+   "new": "It stages a batch from any task, the calling task (the task that invoked `run!`) included (D-200).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-200"
+   ],
+   "tag": "R",
+   "ruling": "R4"
+  },
+  {
+   "id": "C-065",
+   "old": "Its always-present cell is drained, traced and surface-checked exactly as any device's.",
+   "new": "is drained, traced and surface-checked exactly as any device's.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-066",
+   "old": "The harness writer's surface is the one thing in the design that is derived rather than claimed.",
+   "new": "The harness writer's surface is the one thing in the design that is derived rather than claimed (D-174).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-174"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-067",
+   "old": "It is the unclaimed complement, the faces no rostered device speaks for. That surface is recomputed at every stopped-sim roster change, and is therefore as fixed within a run as any claim set.",
+   "new": "It is the unclaimed complement, the faces no rostered device speaks for. That surface is recomputed at every stopped-sim roster change, and is therefore as fixed within a run as any claim set.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-068",
+   "old": "A `stage!` write to a claimed face is rejected at staging (`ClaimedFaceEntry`, naming the incumbent).",
+   "new": "A `stage!` write to a claimed face is rejected at staging (`ClaimedFaceEntry`, naming the incumbent, D-174).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-174"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-069",
+   "old": "A rostered greedy claimant empties that surface outright. The greedy claim is itself a rostered claim, so the complement it leaves is empty and every `stage!` in such a session is rejected that way (D-192).",
+   "new": "A rostered greedy claimant empties that surface outright. The greedy claim is itself a rostered claim, so the complement it leaves is empty and every `stage!` in such a session is rejected that way (D-192).",
+   "where": "new",
+   "cites": [
+    "D-192"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-070",
+   "old": "There is one seam, a batch staged while stopped whose face a subsequent `attach!` claims, and the attach itself renormalizes it away (below).",
+   "new": "There is one edge case, a batch staged while stopped whose face a subsequent `attach!` claims, and the attach itself renormalizes it away (§11.4).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§11.4"
+   ],
+   "tag": "R",
+   "ruling": "R10"
+  },
+  {
+   "id": "C-071",
+   "old": "The harness cell (the always-present staging cell of the harness writer)",
+   "new": "Its always-present staging cell, the harness cell,",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-072",
+   "old": "drains last, by convention.",
+   "new": "The harness cell drains last, by convention (D-174).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-174"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-073",
+   "old": "With every surface disjoint the order is unobservable, so the rule exists to make the trace read the same way every time, not to arbitrate anything.",
+   "new": "With every surface disjoint the order is unobservable, so the rule exists to make the trace read the same way every time, not to arbitrate anything.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-074",
+   "old": "Root-input initial values are owned by the init/trim services.",
+   "new": "The init/trim services own root-input initial values (D-047).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-047"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-075",
+   "old": "Input declarations are bare types (§8.2) and carry no defaults, yet a root input unfed by any device must hold a defined value from the first frame.",
+   "new": "Input declarations are bare types (§8.2) and carry no defaults, yet a root input unfed by any device must hold a defined value from the first frame.",
+   "where": "new",
+   "cites": [
+    "§8.2"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-076",
+   "old": "No declaration constant could own that value, because the trim service writes root-input values it solved for, such as throttle and elevator. Export-entry defaults were rejected (D-047).",
+   "new": "No declaration constant could own that value, because the trim service writes root-input values it solved for, such as throttle and elevator. Export-entry defaults were rejected (D-047).",
+   "where": "new",
+   "cites": [
+    "D-047"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-077",
+   "old": "`init!` establishes every root input, and the trace header captures the result.",
+   "new": "`init!` establishes every root input, and the trace header (the trace's fixed preamble, a checkpoint `init!` takes) captures the result.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-078",
+   "old": "Totality is enforced pre-write at every complete-world application: `init!`, trim setup, trim commit (§14.6).",
+   "new": "Totality is enforced pre-write at every complete-world application, namely `init!`, trim setup and trim commit (§14.6, D-149).",
+   "where": "new",
+   "cites": [
+    "§14.6"
+   ],
+   "newcites": [
+    "D-149",
+    "§14.6"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-079",
+   "old": "The roster is frozen per run: attach and detach are stopped-sim operations.",
+   "new": "The roster is frozen per run (D-106). Attach and detach are stopped-sim operations.",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-106"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-080",
+   "old": "`attach!`/`detach!` are legal in the `built`, `initialized` and `stopped` states (§12.6) and an error while `running`.",
+   "new": "`attach!`/`detach!` are legal in the `built`, `initialized` and `stopped` states (§12.6) and an error while `running`.",
+   "where": "new",
+   "cites": [
+    "§12.6"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-081",
+   "old": "That error is `ServiceLifecycle` (Appendix C), the same kind that gates the §14 services.",
+   "new": "That error is `ServiceLifecycle` (Appendix C, D-108), the same kind that gates the §14 services.",
+   "where": "new",
+   "cites": [
+    "Appendix C",
+    "§14"
+   ],
+   "newcites": [
+    "Appendix C",
+    "D-108",
+    "§14"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-082",
+   "old": "The list is exhaustive. An `errored` simulation refuses both with the same kind. A roster change configures the next run, and an errored simulation has none (§13.6, D-232).",
+   "new": "The list is exhaustive. An `errored` simulation refuses both with the same kind. A roster change configures the next run, and an errored simulation has none (§13.6, D-232).",
+   "where": "new",
+   "cites": [
+    "D-232",
+    "§13.6"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-083",
+   "old": "The prohibition includes pause. Pause is a control-plane state inside a run (§12.1), and a surface that could move while paused would move mid-run.",
+   "new": "The prohibition includes pause. Pause is a control-plane state inside a run (§12.1), and a surface that could move while paused would move mid-run.",
+   "where": "new",
+   "cites": [
+    "§12.1"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-084",
+   "old": "The roster (entries, claims, attachment order) is therefore a plain immutable value",
+   "new": "The roster (entries, claims, attachment order) is therefore a plain immutable value.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-085",
+   "old": "the loop reads once at `run!`.",
+   "new": "The loop reads it once at `run!`,",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-086",
+   "old": "The partition of the root face set into per-writer surfaces plus the harness remainder is a static, inspectable fact of the run.",
+   "new": "The partition of the root face set into per-writer surfaces plus the harness remainder is a static, inspectable fact of the run (D-106).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-106"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-087",
+   "old": "It is printable before the run starts and valid until it ends (printable like the face routes, §13.7).",
+   "new": "It is printable before the run starts and valid until it ends (printable like the face routes, §13.7).",
+   "where": "new",
+   "cites": [
+    "§13.7"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-088",
+   "old": "No republication machinery exists. There is no atomic roster reference, no per-frame acquire-load, no next-frame attachment granularity and no sequence numbers.",
+   "new": "and nothing republishes it (D-087).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-087"
+   ],
+   "tag": "R",
+   "ruling": "R6"
+  },
+  {
+   "id": "C-089",
+   "old": "Attachment order is the roster's own order.",
+   "new": "Attachment order is the roster's own order.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-090",
+   "old": "The trace still tags entries with a stable device id, never a roster index, because ids read across runs, where the roster does change.",
+   "new": "The trace still tags each record with a stable device id, never a roster index, because ids read across runs, where the roster does change (D-087).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-087"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-091",
+   "old": "Attach validation, claim registration and the staging-shape compilation (below) all run at the attach point,",
+   "new": "Attach validation, claim registration and the staging-shape compilation (§11.4) all run at the attach point.",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§11.4"
+   ],
+   "tag": "R",
+   "ruling": "R10"
+  },
+  {
+   "id": "C-092",
+   "old": "which makes `attach!`/`detach!` stopped-sim configuration operations beside `init!` and trim (§14).",
+   "new": "That makes `attach!`/`detach!` stopped-sim configuration operations beside `init!` and trim (§14).",
+   "where": "new",
+   "cites": [
+    "§14"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-093",
+   "old": "While a simulation runs, its configuration (build, roster, claims, surfaces) is immutable.",
+   "new": "While a simulation runs, its configuration (build, roster, claims, surfaces) is immutable.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-094",
+   "old": "The doctrine (§12.5) extends to its final form.",
+   "new": "The mid-run mutation doctrine (§12.5) extends to its final form.",
+   "where": "new",
+   "cites": [
+    "§12.5"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-095",
+   "old": "The running periphery stages writes and issues control commands, and nothing else changes.",
+   "new": "The running periphery stages writes and issues control commands, and nothing else changes (D-031).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-031"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-096",
+   "old": "Device identity, ids and roster admission.",
+   "new": "#### Device identity and admission",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-097",
+   "old": "Identity is the device instance. The same object (`===`) may occupy at most one roster entry. Two instances of the same type, two joysticks say, are two devices.",
+   "new": "Identity is the device instance. The same object (`===`) may occupy at most one roster entry. Two instances of the same type, two joysticks say, are two devices.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-098",
+   "old": "The stable device id the trace, heartbeat and diagnostics speak is assigned at `attach!`, monotonic per `Simulation` and never reused.",
+   "new": "The stable device id the trace, heartbeat and diagnostics speak is assigned at `attach!`, monotonic per `Simulation` and never reused.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-099",
+   "old": "It lives exactly as long as the entry: across runs (roster persistence, §12.6), until `detach!`.",
+   "new": "It lives exactly as long as its roster entry, across runs (roster persistence, §12.6) and until `detach!`.",
+   "where": "new",
+   "cites": [
+    "§12.6"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-100",
+   "old": "Admission is a two-part check at the attach point, in order:",
+   "new": "Admission is a two-part check at the attach point, in order:",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-101",
+   "old": "``` # each line: the condition that rejects the attach → the diagnostic it raises identity this instance is already rostered → AlreadyAttached (names the entry and its binding) claims face exclusivity: this device's claim set meets a rostered claim → ClaimConflict (names two distinct devices) ```",
+   "new": "``` # each line: the condition that rejects the attach → the diagnostic it raises identity this instance is already rostered → AlreadyAttached (names the entry and its binding) claims face exclusivity: this device's claim set meets a rostered claim → ClaimConflict (names two distinct devices) ```",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-102",
+   "old": "An already-rostered instance is rejected rather than silently absorbed, because rebinding has an explicit spelling: `detach!` then `attach!`, both legal at any stopped-sim point.",
+   "new": "An already-rostered instance is rejected rather than silently absorbed, because rebinding has an explicit spelling, `detach!` then `attach!`, both legal at any stopped-sim point.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-103",
+   "old": "Either a silent no-op or a silent rebind would discard a binding the caller handed over.",
+   "new": "Either a silent no-op or a silent rebind would discard a binding the caller handed over.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-104",
+   "old": "Running the claims check after the identity check is what makes `ClaimConflict` always name two distinct devices, never a device colliding with its own earlier attachment.",
+   "new": "Running the claims check after the identity check is what makes `ClaimConflict` always name two distinct devices, never a device colliding with its own earlier attachment.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-105",
+   "old": "Device death does not detach.",
+   "new": "Device death does not detach (D-106).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-106"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-106",
+   "old": "A mid-run crash, voluntary exit or unplug (§11.6, §12.4) ends the device's task.",
+   "new": "A mid-run crash, voluntary exit or unplug (§11.6, §12.4) ends the device's task.",
+   "where": "new",
+   "cites": [
+    "§11.6",
+    "§12.4"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-107",
+   "old": "The cell stops filling, the §12.2 heartbeat shows the death by name, and the roster entry, claims included, persists to the end of the run.",
+   "new": "The staging cell stops filling, the §12.2 heartbeat shows the death by name, and the roster entry, claims included, persists to the end of the run.",
+   "where": "new",
+   "cites": [
+    "§12.2"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-108",
+   "old": "The orphaned claims are the accepted cost of the freeze.",
+   "new": "The orphaned claims (the claims of a device whose task died mid-run) are the accepted cost of the freeze.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-109",
+   "old": "The device's root inputs hold their last-drained values and no other writer inherits them.",
+   "new": "The device's root inputs hold their last-drained values and no other writer inherits them.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-110",
+   "old": "The read-only widgets (§11.7) render the orphan visibly",
+   "new": "The read-only widgets render the orphan visibly, never mysteriously (§11.7).",
+   "where": "new",
+   "cites": [
+    "§11.7"
+   ],
+   "tag": "R",
+   "ruling": "R5"
+  },
+  {
+   "id": "C-111",
+   "old": "(\"claimed by `T16000M` — task dead\")",
+   "new": "renders the fact in its source label (\"claimed by `T16000M` — task dead\")",
+   "where": "units/H/old.md",
+   "cites": [],
+   "tag": "M",
+   "ruling": "R5"
+  },
+  {
+   "id": "C-112",
+   "old": ", never mysteriously.",
+   "new": "render the orphan visibly, never mysteriously",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-113",
+   "old": "Recovery is between runs:",
+   "new": "Recovery is between runs.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-114",
+   "old": "stop, `detach!`, and either `init!` (fresh trajectory) or `replay!`-to-end then `run!` (continuation from the interrupted boundary, §12.7).",
+   "new": "It takes a stop, a `detach!`, and either `init!` (fresh trajectory) or `replay!`-to-end then `run!`, which continues from the interrupted boundary (§12.7).",
+   "where": "new",
+   "cites": [
+    "§12.7"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-115",
+   "old": "The death is an anomaly, not a surface event.",
+   "new": "The death is an anomaly, not a surface event.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-116",
+   "old": "One deliberate asymmetry is on record as a guarded addition (a capability the design admits but does not build).",
+   "new": "One deliberate asymmetry is on record as a guarded addition (a capability the design admits but does not build).",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-117",
+   "old": "A pure reader claims nothing. Examples are a binding declaring `is_output` alone (§11.6), a visualizer or a telemetry tap.",
+   "new": "A pure reader claims nothing. Examples are a binding declaring `is_output` alone (§11.6), a visualizer or a telemetry tap.",
+   "where": "new",
+   "cites": [
+    "§11.6"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-118",
+   "old": "Attaching one mid-run would therefore move no writer's surface.",
+   "new": "Attaching one mid-run would therefore move no writer's surface (D-106).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-106"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-119",
+   "old": "A dynamic reader list would touch only §12.3 wakeups, the heartbeat and the shutdown join, never the drain,",
+   "new": "A dynamic reader list would touch only §12.3 wakeups, the heartbeat and the shutdown join, never the drain.",
+   "where": "new",
+   "cites": [
+    "§12.3"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-120",
+   "old": "and it is cleanly severable from the freeze should the join-a-running-session workflow find a customer.",
+   "new": "The addition is cleanly severable from the freeze should the join-a-running-session workflow find a customer.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-121",
+   "old": "The §12.2 thread-budget warning runs once per run,",
+   "new": "The §12.2 thread-budget warning runs once per run,",
+   "where": "new",
+   "cites": [
+    "§12.2"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-122",
+   "old": "at either door,",
+   "new": "at `run!` or `replay!`,",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R10"
+  },
+  {
+   "id": "C-123",
+   "old": "against the frozen population.",
+   "new": "against the frozen population.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  }
+ ],
+ "added": [
+  "the compilation of shape, shim, merge and scatter",
+  "the trace (§11.5)",
+  "the interface the root component declares",
+  "(the value passed at `attach!` that makes a device framework-legible)",
+  "(stakes them as faces it may write)",
+  "(where each device's pending batch waits between drains)",
+  "(the CAS merge keeping one pending batch per device)",
+  "(GUI widget liveness, baked once at run start,",
+  "(attach and detach only while stopped,",
+  "(the trace's fixed preamble, a checkpoint `init!` takes)",
+  "(the claims of a device whose task died mid-run)",
+  "(the inputs no component produces).",
+  "A component is the unit of modeling, and a face is the name a port wears on its component's boundary.",
+  "The trace is the primary record of a session.",
+  "(the one writer whose surface is derived, not claimed).",
+  "The periphery (everything outside the loop that exchanges data with it) writes into a running model through its root inputs alone.",
+  "The periphery's writers include devices (any attached participants in the periphery).",
+  "Each root input has at most one writer at any time, and the assignment of root inputs to writers is fixed for a whole run, because the roster (the list of attached device entries) is frozen per run.",
+  "The section's parts, in order, cover the write surface, exclusivity and claims, write surfaces and claim sources, the harness writer and the layout, root-input initial values, the frozen roster, device identity and admission, device death, and mid-run readers.",
+  "#### The write surface",
+  "#### Exclusivity and claims",
+  "#### Write surfaces and claim sources",
+  "#### The harness writer and the layout",
+  "#### Root-input initial values",
+  "#### The frozen roster",
+  "#### Device death and orphaned claims",
+  "#### Mid-run readers",
+  "(one iteration of the loop).",
+  "(the frame-top swap that applies staged device writes to the root inputs).",
+  "An enumeration naming a face outside the root's input faces is refused at attach (`AttachUnknownFace`, D-216).",
+  "Detaching a device the roster does not hold is an error (`NotAttached`, D-215)."
+ ]
+}

@@ -1,0 +1,908 @@
+{
+ "claims": [
+  {
+   "id": "C-001",
+   "old": "### 11.8 Diagnostics and liveness: the per-writer cell",
+   "new": "### 11.8 Diagnostics and liveness: the per-writer diagnostic cell",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R10 (F65)"
+  },
+  {
+   "id": "C-002",
+   "old": "The chapter's two data channels are specified down to their memory ordering.",
+   "new": "The chapter's two data channels are specified down to their memory ordering.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-003",
+   "old": "The runtime warning stream (§13.2) and the liveness heartbeat (§12.2) are a third, and they cross the same task boundaries.",
+   "new": "The runtime warning stream (§13.2) and the liveness heartbeat (§12.2) are a third, and they cross between the same tasks.",
+   "where": "new",
+   "cites": [
+    "§13.2",
+    "§12.2"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-004",
+   "old": "They are written at staging by whichever task stages (`OutOfClaimEntry`, `ClaimedFaceEntry` and `EntryTypeMismatch`, §11.4,",
+   "new": "Whichever task stages writes `OutOfClaimEntry`, `ClaimedFaceEntry` and `EntryTypeMismatch` at staging (§11.4).",
+   "where": "new",
+   "cites": [
+    "§11.4"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-005",
+   "old": "on a device task or through the harness writer, D-200).",
+   "new": "The staging happens on the task of a device (any attached participant in the periphery). It can also go through the harness writer (the framework-owned write path `stage!(sim, …)`) (D-200).",
+   "where": "new",
+   "cites": [
+    "D-200"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-006",
+   "old": "They are written by the device tasks (`MalformedDatum` from the author's loop body via `report!(handle, …)`, §11.6),",
+   "new": "The device tasks write `MalformedDatum`, from the author's loop body via `report!(handle, …)` (§11.6).",
+   "where": "new",
+   "cites": [
+    "§11.6"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-007",
+   "old": "by the loop itself (`DebtReanchor`, `UnboundedRun`),",
+   "new": "The loop itself writes `DebtReanchor` and `UnboundedRun`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-008",
+   "old": "and by the frame the loop runs (`ChatteringBudget`, `FiringBudget`).",
+   "new": "The frame (one iteration of the loop) that the loop runs writes `ChatteringBudget` and `FiringBudget` (D-317).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-317"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-009",
+   "old": "They are written at `attach!` too, into the roster entry being created (`EmptyGreedyClaim`, §11.3).",
+   "new": "`attach!` writes `EmptyGreedyClaim` as it adds a device to the roster (the list of attached device entries, §11.3). The value goes into the roster entry being created.",
+   "where": "new",
+   "cites": [
+    "§11.3"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-010",
+   "old": "`attach!` mutates the roster, so its warning lives in the roster's status rather than on an artifact (D-250).",
+   "new": "`attach!` mutates the roster, so its warning lives in the roster's status rather than on an artifact (D-250).",
+   "where": "new",
+   "cites": [
+    "D-250"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-011",
+   "old": "The device's task does not exist until `run!`, so that cell has no other writer yet.",
+   "new": "The device's task does not exist until `run!`, so the new roster entry's diagnostic cell has no other writer yet.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R10 (F65)"
+  },
+  {
+   "id": "C-012",
+   "old": "They are read by the loop, which folds them into the published framework status (§11.2) and hence into every snapshot.",
+   "new": "The loop reads the diagnostics. It folds them into the published framework status (the diagnostics value each snapshot carries, §11.2). They hence reach every snapshot",
+   "where": "new",
+   "cites": [
+    "§11.2"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-013",
+   "old": "An unspecified structure with those writers is exactly the arbitrary shared mutable state the two rules (§11.1) exist to eliminate,",
+   "new": "An unspecified structure with those writers is exactly the arbitrary shared mutable state that the two rules of §11.1 exist to eliminate.",
+   "where": "new",
+   "cites": [
+    "§11.1"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-014",
+   "old": "so it gets the mechanism §11.4 already established, not one of its own.",
+   "new": "So the channel gets the mechanism §11.4 already established, not one of its own.",
+   "where": "new",
+   "cites": [
+    "§11.4"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-015",
+   "old": "One diagnostic cell per writer: one per rostered device, one for the harness writer, one for the loop itself (D-200).",
+   "new": "Each writer has one diagnostic cell (its own holding place for runtime diagnostics) (D-136, D-200). There is one per rostered device, one for the harness writer and one for the loop itself (D-200).",
+   "where": "new",
+   "cites": [
+    "D-200"
+   ],
+   "newcites": [
+    "D-136",
+    "D-200"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-016",
+   "old": "The `Model` (the deployment and its executor at one scalar) owns one more.",
+   "new": "The `Model` (the deployment and its executor at one scalar) owns one more.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-017",
+   "old": "Its frame writes the chattering and firing-budget reports there,",
+   "new": "Its frame writes the chattering and firing-budget reports there.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-018",
+   "old": "and the drain folds that cell into the loop's account beside the loop's own (D-317).",
+   "new": "The drain (the frame-top swap that applies staged device writes to the root inputs) folds that diagnostic cell into the loop's account beside the loop's own (D-317).",
+   "where": "new",
+   "cites": [
+    "D-317"
+   ],
+   "tag": "R",
+   "ruling": "R10 (F65), R13"
+  },
+  {
+   "id": "C-019",
+   "old": "A device's cell, the loop's and the `Model`'s each have a single writer, the same ownership argument as the staging cells.",
+   "new": "A device's diagnostic cell, the loop's and the `Model`'s each have a single writer, by the same ownership argument as the staging cells",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R10 (F65)"
+  },
+  {
+   "id": "C-020",
+   "old": "There is no locking, no arbitration and no new primitive.",
+   "new": "There is no locking, no arbitration and no new primitive (D-136).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-136"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-021",
+   "old": "The harness writer's cell is written from whichever task stages, exactly as its staging cell is, and the same CAS append arbitrates.",
+   "new": "The harness writer's diagnostic cell is written from whichever task stages, exactly as its staging cell is, and the same CAS (compare-and-swap) append arbitrates (D-200).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-200"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-022",
+   "old": "It carries no heartbeat, and its status record no `task_state`, because it has no task of its own to be alive or dead.",
+   "new": "It carries no heartbeat, and its status record no `task_state`, because it has no task of its own to be alive or dead.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-023",
+   "old": "The cell holds a bounded accumulation and one atomic liveness timestamp.",
+   "new": "A diagnostic cell holds a bounded accumulation and one atomic liveness timestamp.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R10 (F65)"
+  },
+  {
+   "id": "C-024",
+   "old": "The accumulation is a small ring of diagnostic values, capacity 16, plus a per-kind count of what the ring could not hold.",
+   "new": "The accumulation is a small ring of diagnostic values, capacity 16, plus a count per kind (a diagnostic's identity in the closed set) of what the ring could not hold (D-136).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-136"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-025",
+   "old": "That bound is the rate limit.",
+   "new": "The ring's bound is the rate limit (D-136).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-136"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-026",
+   "old": "When a writer emits past the ring's capacity within one frame, the entry is not stored and its kind's suppressed count increments.",
+   "new": "When a writer emits past the ring's capacity within one frame, the value is not stored and its kind's suppressed count increments.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R10 (F65)"
+  },
+  {
+   "id": "C-027",
+   "old": "The drop policy retains the earliest in the frame, and the excess becomes counts.",
+   "new": "The drop policy retains the earliest in the frame, and the excess becomes counts.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-028",
+   "old": "The first occurrences are the ones with diagnostic content, and the hundredth is noise the count already reports.",
+   "new": "The first occurrences are the ones with diagnostic content, and the hundredth is noise the count already reports.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-029",
+   "old": "Rate-limiting \"wherever its source can repeat\" (§13.2) is therefore not a policy layered over the stream but a structural property of the channel that carries it.",
+   "new": "Rate-limiting \"wherever its source can repeat\" (§13.2) is therefore not a policy layered over the stream but a structural property of the channel that carries it.",
+   "where": "new",
+   "cites": [
+    "§13.2"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-030",
+   "old": "A chattering model or a peer flooding malformed datagrams costs at most sixteen retained values and one integer increment per kind per frame, whatever its source does.",
+   "new": "A chattering model (one exhausting its per-frame localization budget) or a peer flooding malformed datagrams costs at most sixteen retained values and one integer increment per kind per frame, whatever its source does.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-031",
+   "old": "No writer can starve another, because the cells are disjoint.",
+   "new": "No writer can starve another, because the diagnostic cells are disjoint.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R10 (F65)"
+  },
+  {
+   "id": "C-032",
+   "old": "This drain is the same drain §11.4 specifies.",
+   "new": "The diagnostic cells are taken at the same drain §11.4 specifies (D-136).",
+   "where": "new",
+   "cites": [
+    "§11.4"
+   ],
+   "newcites": [
+    "§11.4",
+    "D-136"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-033",
+   "old": "One `atomicswap` per cell at frame top, at the same point and under the same indivisible-take argument as the staging drain.",
+   "new": "The loop performs one `atomicswap` per diagnostic cell at frame top, at the same point and under the same indivisible-take argument as the staging drain.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R10 (F65)"
+  },
+  {
+   "id": "C-034",
+   "old": "What the loop swaps in is a shared empty sentinel, so a quiet frame swaps the sentinel in and gets the sentinel back.",
+   "new": "What the loop swaps in is a shared empty sentinel, so a quiet frame swaps the sentinel in and gets the sentinel back.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-035",
+   "old": "That allocates nothing, and it leaves no load-only code path that goes untested on healthy runs.",
+   "new": "That allocates nothing, and it leaves no load-only code path that goes untested on healthy runs.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-036",
+   "old": "The take is also what makes publication sound.",
+   "new": "The take also makes publication sound.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-037",
+   "old": "The batch is exclusively the loop's before it is ever reachable from a snapshot,",
+   "new": "Because the taken ring is exclusively the loop's before it is ever reachable from a snapshot,",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R10 (F65)"
+  },
+  {
+   "id": "C-038",
+   "old": "so the binding rule (§11.2), that nothing reachable from a published snapshot is ever written again, holds by construction.",
+   "new": "The binding rule says that nothing reachable from a published snapshot is ever written again (§11.2). Because the taken ring is exclusively the loop's before it is ever reachable from a snapshot, the binding rule holds by construction.",
+   "where": "new",
+   "cites": [
+    "§11.2"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-039",
+   "old": "The live accumulator is never reachable from a published value.",
+   "new": "The live accumulator is never reachable from a published value.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-040",
+   "old": "The heartbeat rides in the same cell, as an atomic timestamp field.",
+   "new": "The heartbeat rides in the same diagnostic cell, as an atomic timestamp field (D-136).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-136"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-041",
+   "old": "The device task stores it on every loop pass from inside the handle primitives (§11.6: the framework observes activity without owning the loop body),",
+   "new": "The device task stores it on every loop pass from inside the handle primitives. That way the framework observes activity without owning the loop body (§11.6).",
+   "where": "new",
+   "cites": [
+    "§11.6"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-042",
+   "old": "and the loop acquire-loads it at publication, when it assembles the status (D-240).",
+   "new": "The loop acquire-loads the heartbeat at publication, when it assembles the status (D-240).",
+   "where": "new",
+   "cites": [
+    "D-240"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-043",
+   "old": "There is no separate liveness channel and no second registry.",
+   "new": "There is no separate liveness channel and no second registry.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-044",
+   "old": "A device that is alive is a device whose cell carries a recent timestamp, and the 2 s staleness threshold (§12.2) is read against this field.",
+   "new": "A device that is alive is a device whose diagnostic cell carries a recent timestamp, and the 2 s staleness threshold (§12.2) is read against this field.",
+   "where": "new",
+   "cites": [
+    "§12.2"
+   ],
+   "tag": "R",
+   "ruling": "R10 (F65)"
+  },
+  {
+   "id": "C-045",
+   "old": "The heartbeat is not a diagnostic kind.",
+   "new": "The heartbeat is not a diagnostic kind.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-046",
+   "old": "It is a field, always present, never enumerated in Appendix C.",
+   "new": "It is a field, always present, never enumerated in Appendix C.",
+   "where": "new",
+   "cites": [
+    "Appendix C"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-047",
+   "old": "The published framework status is a concrete frozen value.",
+   "new": "The published framework status is a concrete frozen value (D-136).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-136"
+   ],
+   "tag": "R",
+   "ruling": "R5"
+  },
+  {
+   "id": "C-048",
+   "old": "Per writer it carries four things.",
+   "new": "Per writer it carries four things.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-049",
+   "old": "`recent` is the ring this boundary drained, at most sixteen entries.",
+   "new": "`recent` is the ring the frame's drain took, carried by the first publication after that drain, at most sixteen values.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R10 (F72, F65)"
+  },
+  {
+   "id": "C-050",
+   "old": "`suppressed` is the per-kind counts the ring refused this boundary.",
+   "new": "`suppressed` is the per-kind counts the ring refused in that drain.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R10 (F72)"
+  },
+  {
+   "id": "C-051",
+   "old": "`totals` is the cumulative per-writer × per-kind counts since the run began, owned privately by the loop and copied into each status.",
+   "new": "`totals` is the cumulative per-writer × per-kind counts since the run began, owned privately by the loop and copied into each status.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-052",
+   "old": "And `heartbeat` rides beside the `task_state` the loop reads off its own device `Task` handle at publication (§12.2).",
+   "new": "And `heartbeat` rides beside the `task_state` the loop reads off its own device `Task` handle at publication (§12.2, D-193).",
+   "where": "new",
+   "cites": [
+    "§12.2"
+   ],
+   "newcites": [
+    "§12.2",
+    "D-193"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-053",
+   "old": "Beside the per-writer records ride the pacer diagnostics (§10.7).",
+   "new": "Beside the per-writer records ride the pacer diagnostics (§10.7).",
+   "where": "new",
+   "cites": [
+    "§10.7"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-054",
+   "old": "Delta plus total is what makes the status legible at any reading cadence.",
+   "new": "Delta plus total is what makes the status legible at any reading cadence.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-055",
+   "old": "A GUI panel refreshing at 60 Hz sees each occurrence once in `recent`, while a consumer that samples occasionally still reads a complete account from `totals`.",
+   "new": "A GUI panel refreshing at 60 Hz sees each occurrence once in `recent`, while a consumer that samples occasionally still reads a complete account from `totals`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-056",
+   "old": "Nothing is lost by not looking.",
+   "new": "Nothing is lost by not looking.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-057",
+   "old": "The record's `who` is the only attribution a value has, so a renderer presents each value under its record's writer (D-228).",
+   "new": "The record's `who` is the only attribution a value has, so a renderer presents each value under its record's writer (D-228).",
+   "where": "new",
+   "cites": [
+    "D-228"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-058",
+   "old": "Presentation is where `maxlog` lives.",
+   "new": "Presentation is where `maxlog` lives.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-059",
+   "old": "A status renderer prints a given writer × kind up to 25 cumulative occurrences and then switches to count-only display (\"`MalformedDatum` from `UDPInput#3`: 1 482 occurrences\").",
+   "new": "A status renderer prints a given writer × kind up to 25 cumulative occurrences and then switches to count-only display (\"`MalformedDatum` from `UDPInput#3`: 1 482 occurrences\").",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-060",
+   "old": "That threshold is presentation policy, not channel policy.",
+   "new": "That threshold is presentation policy, not channel policy (D-136).",
+   "where": "new",
+   "cites": [],
+   "tag": "C",
+   "newcites": [
+    "D-136"
+   ]
+  },
+  {
+   "id": "C-061",
+   "old": "Counts keep accumulating regardless, nothing recorded depends on it, and the choice belongs to whoever renders.",
+   "new": "Counts keep accumulating regardless, nothing recorded depends on it, and the choice belongs to whoever renders.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-062",
+   "old": "The channel's own bound, above, is the one that is normative.",
+   "new": "The channel's own bound, above, is the one that is normative.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-063",
+   "old": "The terminal snapshot carries the run's final cumulative counters (§12.4, §13.5).",
+   "new": "The terminal snapshot carries the run's final cumulative counters (§12.4, §13.5, D-136).",
+   "where": "new",
+   "cites": [
+    "§12.4",
+    "§13.5"
+   ],
+   "newcites": [
+    "§12.4",
+    "§13.5",
+    "D-136"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-064",
+   "old": "An unattended run (a run with empty staging and no snapshot readers) that nobody watched therefore still answers \"what went wrong, and how often\" from the value its own shutdown published.",
+   "new": "An unattended run (a run with empty staging and no snapshot readers) that nobody watched therefore still answers \"what went wrong, and how often\" from the value its own shutdown published.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-065",
+   "old": "Final means final at the last frame top (D-201).",
+   "new": "Final means final at the last frame top (D-201).",
+   "where": "new",
+   "cites": [
+    "D-201"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-066",
+   "old": "The account closes with the drain that preceded the terminal publication.",
+   "new": "The account closes with the drain that preceded the terminal publication.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-067",
+   "old": "What lands after it can reach no snapshot.",
+   "new": "What lands after it can reach no snapshot.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-068",
+   "old": "Examples are a report from a device's exit path and the tail's own `DeviceJoinTimeout` (§12.4).",
+   "new": "Examples are a report from a device's exit path and the tail's own `DeviceJoinTimeout` (§12.4).",
+   "where": "new",
+   "cites": [
+    "§12.4"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-069",
+   "old": "So the loop takes each cell once more at the run's end, keeping the next run's account clean.",
+   "new": "So the loop takes each diagnostic cell once more at the run's end, keeping the next run's account clean.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R10 (F65)"
+  },
+  {
+   "id": "C-070",
+   "old": "That last take is folded into the termination record as the tail residue,",
+   "new": "That last take is folded into the termination record (the stopped-sim value naming how the run ended) as the tail residue (§13.5).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§13.5"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-071",
+   "old": "per writer the final ring and its suppressed counts (§13.5),",
+   "new": "Per writer, the tail residue is the final ring and its suppressed counts.",
+   "where": "new",
+   "cites": [
+    "§13.5"
+   ],
+   "newcites": [
+    "§13.5"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-072",
+   "old": "and presented through the standard logging backend.",
+   "new": "The take is also presented through the standard logging backend.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-073",
+   "old": "It is loud and recorded, and still never published (D-201, D-203).",
+   "new": "It is loud and recorded, and still never published (D-201, D-203).",
+   "where": "new",
+   "cites": [
+    "D-201",
+    "D-203"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-074",
+   "old": "Allocation.",
+   "new": "#### Allocation",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-075",
+   "old": "On a quiet frame nothing allocated scales with diagnostic activity.",
+   "new": "On a quiet frame nothing allocated scales with diagnostic activity (D-241).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-241"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-076",
+   "old": "The sentinel swap allocates nothing,",
+   "new": "The sentinel swap allocates nothing.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-077",
+   "old": "and the per-writer status costs one small vector of records per publication beside the per-boundary snapshot allocation §11.2 already accepts.",
+   "new": "The per-writer status costs one small vector of records per publication, beside the snapshot allocation per boundary (a published consistency point) that §11.2 already accepts.",
+   "where": "new",
+   "cites": [
+    "§11.2"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-078",
+   "old": "That is the same GC-over-reuse trade, a roster-sized vector rather than a snapshot type per roster size (D-241).",
+   "new": "That is the same GC-over-reuse trade, a roster-sized vector rather than a snapshot type per roster size (D-241).",
+   "where": "new",
+   "cites": [
+    "D-241"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-079",
+   "old": "The per-kind counters are a fixed-shape isbits record, never a `Dict`.",
+   "new": "The per-kind counters are a fixed-shape isbits record, never a `Dict` (D-136).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-136"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-080",
+   "old": "The closed kind set (Appendix C) licenses that, because it makes the counter layout a type rather than a lookup.",
+   "new": "The closed kind set (Appendix C) licenses that, because it makes the counter layout a type rather than a lookup.",
+   "where": "new",
+   "cites": [
+    "Appendix C"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-081",
+   "old": "On a noisy frame the diagnostic values are allocated at emission, on the writer's own task.",
+   "new": "On a noisy frame the diagnostic values are allocated at emission, on the writer's own task.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-082",
+   "old": "A drained non-empty ring is frozen into the snapshot and can never be written again, so the writer allocates a fresh ring lazily at its next emission.",
+   "new": "A drained non-empty ring is frozen into the snapshot and can never be written again, so the writer allocates a fresh ring lazily at its next emission.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-083",
+   "old": "That cost, too, lands on the writer's task, and it is the same GC-over-reuse trade §11.2 makes when it rejects preallocated snapshot buffers.",
+   "new": "That cost, too, lands on the writer's task, and it is the same GC-over-reuse trade §11.2 makes when it rejects preallocated snapshot buffers.",
+   "where": "new",
+   "cites": [
+    "§11.2"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-084",
+   "old": "The rate limit is therefore an allocation bound as well.",
+   "new": "The rate limit is therefore an allocation bound as well.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-085",
+   "old": "One ring of sixteen entries per writer per boundary is the worst case, and everything past it is an integer increment.",
+   "new": "One ring of sixteen values per writer per boundary is the worst case, and everything past it is an integer increment.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R10 (F65)"
+  },
+  {
+   "id": "C-086",
+   "old": "The zero-allocation invariant (§9.8), scoped to the model sweep, is untouched.",
+   "new": "The zero-allocation invariant, scoped to the stepping loop (§9.8, D-305), is untouched.",
+   "where": "new",
+   "cites": [
+    "§9.8"
+   ],
+   "newcites": [
+    "§9.8",
+    "D-305"
+   ],
+   "tag": "R",
+   "ruling": "R10 (F52)"
+  },
+  {
+   "id": "C-087",
+   "old": "The cells sit on the framework side of that scope with publication and logging.",
+   "new": "The diagnostic cells sit on the framework side of that scope with publication and logging.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R10 (F65)"
+  },
+  {
+   "id": "C-088",
+   "old": "One composition with the log is worth stating once.",
+   "new": "#### Composition with the log",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-089",
+   "old": "Because the log retains snapshot references (§11.2), `totals` is monotone across logged snapshots.",
+   "new": "The log (the retained sequence of published snapshots) retains snapshot references (§11.2), so `totals` is monotone across logged snapshots.",
+   "where": "new",
+   "cites": [
+    "§11.2"
+   ],
+   "tag": "R",
+   "ruling": "R30",
+   "newcites": [
+    "§11.2"
+   ]
+  },
+  {
+   "id": "C-090",
+   "old": "So `log_every` decimation (the log's keep-every-kth retention policy) loses which boundary within a skipped stretch an occurrence fell on, never how many occurrences there were.",
+   "new": "So `log_every` decimation (the log's keep-every-kth retention policy) loses which boundary within a skipped stretch an occurrence fell on, never how many occurrences there were.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-091",
+   "old": "Rejected: a shared queue under a lock, a status referencing the live accumulator, ring reuse by double-buffering, and unbounded accumulation (D-136).",
+   "new": "D-136 lists the rejected alternatives.",
+   "where": "new",
+   "cites": [
+    "D-136"
+   ],
+   "tag": "R",
+   "ruling": "R6"
+  }
+ ],
+ "added": [
+  "#### Writers and readers",
+  "The diagnostics are written in these places.",
+  "(any attached participant in the periphery)",
+  "(the framework-owned write path `stage!(sim, …)`)",
+  "(one iteration of the loop)",
+  "(the list of attached device entries, §11.3)",
+  "(the diagnostics value each snapshot carries, §11.2)",
+  "(the immutable per-boundary publication)",
+  "#### One diagnostic cell per writer",
+  "(its own holding place for runtime diagnostics)",
+  "(the frame-top swap that applies staged device writes to the root inputs)",
+  "(each device's atomic holding place for pending writes)",
+  "(compare-and-swap)",
+  "(a diagnostic's identity in the closed set)",
+  "#### The bound and the drain",
+  "(one exhausting its per-frame localization budget)",
+  "#### The heartbeat",
+  "#### The published status",
+  "Each per-writer record has this shape.",
+  "`struct WriterStatus who::String recent::Vector{DiagValue} suppressed::KindCounts totals::KindCounts heartbeat::Union{Nothing,Float64} task_state::Union{Nothing,Symbol} end`",
+  "`DiagValue` is any value of the kinds the channel carries, and `KindCounts` is the per-kind counter record that the allocation rules below describe.",
+  "#### Presentation",
+  "#### The run's end",
+  "(the stopped-sim value naming how the run ended)",
+  "(a published consistency point)",
+  "(the retained sequence of published snapshots)"
+ ]
+}

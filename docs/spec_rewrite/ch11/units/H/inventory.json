@@ -1,0 +1,908 @@
+{
+ "claims": [
+  {
+   "id": "C-001",
+   "old": "### 11.7 The GUI write path: port resolution, peek, staging contract",
+   "new": "### 11.7 The GUI write path: port resolution, peek, staging contract",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-002",
+   "old": "Panels remain per-component extensions in FlightCore's style, such as `GUI.draw!(ctx, ::LowPassFilter)`, discovered by walking the assembly.",
+   "new": "Panels remain extensions per component (the unit of modeling, a leaf or an assembly) in FlightCore's style, such as `GUI.draw!(ctx, ::LowPassFilter)`. They are discovered by walking the assembly (pure composition, whose component-typed fields are its children).",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-003",
+   "old": "Widgets, however, name the component's own ports, never root inputs.",
+   "new": "Widgets, however, name the component's own ports, never root inputs (D-026).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-026"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-004",
+   "old": "The build-time wiring answers one question statically and exactly: is this port transitively driven by a root input, and which one?",
+   "new": "The build-time wiring answers one question statically and exactly. Is this port transitively driven by a root input, and which one?",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-005",
+   "old": "Every input port has exactly one source (§6.1), so the resolution is total:",
+   "new": "Every input port has exactly one source (§6.1), so the resolution is total, with two outcomes.",
+   "where": "new",
+   "cites": [
+    "§6.1"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-006",
+   "old": "- Root-driven, within the GUI's claim: a live widget.",
+   "new": "- If the port is root-driven within the GUI's claim (the set of root inputs a device may write), its widget is live.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-007",
+   "old": "It peeks and stages the resolved root input through the GUI's own staging cell.",
+   "new": "It peeks (the GUI display rule, specified below) and stages the resolved root input through the GUI's own staging cell (the per-device atomic holding place for pending writes).",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-008",
+   "old": "- Component-driven, or root-driven under another device's claim: a read-only rendering.",
+   "new": "- If the port is component-driven, or root-driven under the claim of another device (any attached participant in the periphery), its widget is a read-only rendering.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-009",
+   "old": "It displays the driven value from the snapshot, visually distinct, with its source (\"driven by `avionics/throttle_cmd`\", the canonical slash form of §8.6).",
+   "new": "It displays the driven value from the snapshot (the immutable per-boundary publication), visually distinct, with its source (\"driven by `avionics/throttle_cmd`\", the canonical slash form of §8.6).",
+   "where": "new",
+   "cites": [
+    "§8.6"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-010",
+   "old": "This retires FlightCore's dead-slider convention and replaces it with checked structure:",
+   "new": "This retires FlightCore's dead-slider convention and replaces it with checked structure.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-011",
+   "old": "a widget is live exactly when the underlying input is yours to command in this configuration.",
+   "new": "A widget is live exactly when the underlying input is yours to command in this configuration (D-045).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-045"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-012",
+   "old": "The dead slider is the `Cessna172Xv1` throttle.",
+   "new": "The dead slider is the throttle of `Cessna172Xv1`, the first variant of FlightApps' Cessna 172X model.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R11"
+  },
+  {
+   "id": "C-013",
+   "old": "The engine panel's slider is visually live and the avionics silently overwrite it every cycle, so who commands what lives in the user's head.",
+   "new": "The engine panel's slider is visually live and the avionics silently overwrite it every cycle, so who commands what lives in the user's head.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-014",
+   "old": "User-commandability is a wiring decision made where configurations are made.",
+   "new": "User-commandability is a wiring decision made where configurations are made.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-015",
+   "old": "Command-plus-manual-override is a mux component with a root-wired select.",
+   "new": "Command-plus-manual-override is a mux component with a root-wired select.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-016",
+   "old": "That is explicit structure, not two writers racing (the same race as the drag phase in the worked example of §11.4, ruled out the same way).",
+   "new": "That is explicit structure, not two writers racing (the same race as the drag phase in the worked example of §11.4, ruled out the same way).",
+   "where": "new",
+   "cites": [
+    "§11.4"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-017",
+   "old": "This places one obligation on the GUI.",
+   "new": "This places one obligation on the GUI.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-018",
+   "old": "Read-only rendering is first-class, not an error state, because the author of `input_slider!` cannot know at authoring time whether it will be live.",
+   "new": "Read-only rendering is first-class, not an error state, because the author of `input_slider!` (an illustrative widget function) cannot know at authoring time whether it will be live (D-026).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-026"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-019",
+   "old": "Liveness is a derived property, and resolution is transitive.",
+   "new": "Liveness is a derived property (the rule computing a widget's liveness from wiring and claims), and resolution is transitive (D-045).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-045"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-020",
+   "old": "A widget is live iff two things hold.",
+   "new": "A widget is live iff two things hold.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-021",
+   "old": "Its port's feed chain terminates in a root input, and that root input lies inside the GUI's own claim in the run's frozen surface partition (root-input exclusivity, §11.3).",
+   "new": "Its port's feed chain terminates in a root input, and that root input lies inside the GUI's own claim (D-174) in the run's frozen surface partition (root-input exclusivity, §11.3).",
+   "where": "new",
+   "cites": [
+    "§11.3"
+   ],
+   "newcites": [
+    "D-174",
+    "§11.3"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-022",
+   "old": "The feed chain is walked through local wires and interface connections across all levels, not just the local assembly.",
+   "new": "The feed chain is walked through local wires (wires with both ends inside one assembly) and interface connections across all levels, not just the local assembly.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-023",
+   "old": "The claim may have been computed from the unclaimed complement under `is_greedy`, or enumerated face by face by a partial-claims binding (§11.6).",
+   "new": "The claim may have been computed from the unclaimed complement under `is_greedy`. It may instead have been enumerated by a partial-claims binding (the value passed at `attach!`, §11.6). Such a binding enumerates the claim one face (the name a port wears on its component's boundary) at a time.",
+   "where": "new",
+   "cites": [
+    "§11.6"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-024",
+   "old": "Either way, \"live\" reads as \"inside the surface I declared for\".",
+   "new": "Either way, \"live\" reads as \"inside the surface I declared for\".",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-025",
+   "old": "Under the roster freeze, liveness is a static fact of the run.",
+   "new": "Under that freeze, liveness is a static fact of the run.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-026",
+   "old": "It is baked once, with the port resolution, when the run starts, and never consulted against mutable claim state at render.",
+   "new": "It is baked once, with the port resolution, when the run starts, and never consulted against mutable claim state at render.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-027",
+   "old": "There is no per-port \"GUI-controlled\" marking anywhere.",
+   "new": "There is no per-port \"GUI-controlled\" marking anywhere.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-028",
+   "old": "The export chain is the marking, written by the one author entitled to write it.",
+   "new": "The export chain is the marking, written by the one author entitled to write it.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-029",
+   "old": "A component's ports become GUI-commandable exactly when the assemblies above surface them.",
+   "new": "A component's ports become GUI-commandable exactly when the assemblies above surface them.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-030",
+   "old": "The switch between \"driven by its own panel\" and \"driven by an external provider\" is therefore automatic.",
+   "new": "The switch between \"driven by its own panel\" and \"driven by an external provider\" is therefore automatic.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-031",
+   "old": "At build time it follows the wiring archetype, where a scripted `World` wires a scenario component into the same faces the interactive `World` exports to root.",
+   "new": "At build time it follows the wiring archetype, where a scripted `World` (the example assembly of pure composition that §8.8 introduces) wires a scenario component into the same faces the interactive `World` exports to root.",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§8.8"
+   ],
+   "tag": "R",
+   "ruling": "R24"
+  },
+  {
+   "id": "C-032",
+   "old": "At run start it follows roster claim state.",
+   "new": "At run start the switch follows roster claim state.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-033",
+   "old": "Nominally-connected ports with a GUI override channel are rejected (D-045).",
+   "new": "Nominally-connected ports with a GUI override channel are rejected (D-045).",
+   "where": "new",
+   "cites": [
+    "D-045"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-034",
+   "old": "The honest cost stands.",
+   "new": "The honest cost stands.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-035",
+   "old": "Unexported ports are unpokeable.",
+   "new": "Unexported ports are unpokeable (D-045).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-045"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-036",
+   "old": "FlightCore's poke-any-`u` workflow does not survive contract visibility (§8.3), deliberately.",
+   "new": "FlightCore's poke-any-`u` workflow deliberately does not survive the visibility rule of the contract (the declared interface of a component, §8.3).",
+   "where": "new",
+   "cites": [
+    "§8.3"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-037",
+   "old": "Peek rule. A widget displays its own pending write if any, else the snapshot value.",
+   "new": "Under the peek rule, a widget displays its own pending write if any, else the snapshot value (D-026).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-026"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-038",
+   "old": "It peeks its own cell only.",
+   "new": "It peeks its own staging cell only.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R10-F65"
+  },
+  {
+   "id": "C-039",
+   "old": "Another device's pending write is invisible by design.",
+   "new": "Another device's pending write is invisible by design.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-040",
+   "old": "Its applied value arrives via the snapshot one frame later, and cross-device peek is rejected (D-026).",
+   "new": "Its applied value arrives via the snapshot one frame (one iteration of the loop) later, and cross-device peek is rejected (D-026).",
+   "where": "new",
+   "cites": [
+    "D-026"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-041",
+   "old": "While paused, staged edits display indefinitely and apply at the un-pause drain (the frame-top swap that publishes staged device writes into the root inputs).",
+   "new": "While paused, staged edits display indefinitely and apply at the un-pause drain (the frame-top swap that applies staged device writes to the root inputs).",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R13"
+  },
+  {
+   "id": "C-042",
+   "old": "Fan-out is consistent for free.",
+   "new": "Fan-out is consistent for free.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-043",
+   "old": "Widgets on ports resolving to the same root input peek the same pending value.",
+   "new": "Widgets on ports resolving to the same root input peek the same pending value.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-044",
+   "old": "Staging contract: widgets stage on interaction events only.",
+   "new": "Widgets stage on interaction events only (D-047). This GUI staging contract is stage-on-interaction (staging on edit or activation, never per render pass).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-047"
+   ],
+   "tag": "R",
+   "ruling": "R10-F66"
+  },
+  {
+   "id": "C-045",
+   "old": "Value widgets (sliders, drags) stage the new absolute level on edit.",
+   "new": "Value widgets (sliders, drags) stage the new absolute level on edit.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-046",
+   "old": "Edge widgets (buttons) stage on activation, as a level computed from the peek.",
+   "new": "Edge widgets (buttons) stage on activation, as a level computed from the peek.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-047",
+   "old": "A flaps button peeks the current counter `k` and stages `k+1`.",
+   "new": "A flaps button peeks the current counter `k` and stages `k+1`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-048",
+   "old": "The levels doctrine makes this safe by construction.",
+   "new": "The levels doctrine makes this safe by construction.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-049",
+   "old": "Repeated staging of the same level within a drain window is idempotent, so there is no repeat-increment hazard.",
+   "new": "Repeated staging of the same level within a drain window is idempotent, so there is no repeat-increment hazard.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-050",
+   "old": "Multi-click within one window counts correctly through the own-pending-first peek (`k` → stage `k+1`; second click peeks pending `k+1` → stages `k+2`).",
+   "new": "Multi-click within one window counts correctly through the own-pending-first peek (`k` → stage `k+1`; second click peeks pending `k+1` → stages `k+2`).",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-051",
+   "old": "Held buttons do not re-stage.",
+   "new": "Held buttons do not re-stage.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-052",
+   "old": "After the drain applies and the snapshot catches up, re-staging from the peek would auto-repeat at frame rate.",
+   "new": "After the drain applies and the snapshot catches up, re-staging from the peek would auto-repeat at frame rate.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-053",
+   "old": "The activation edge is the intent.",
+   "new": "The activation edge is the intent.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-054",
+   "old": "The alternative, active widgets staging on every render pass, is rejected (D-026).",
+   "new": "The alternative, active widgets staging on every render pass, is rejected (D-026).",
+   "where": "new",
+   "cites": [
+    "D-026"
+   ],
+   "tag": "R",
+   "ruling": "R6"
+  },
+  {
+   "id": "C-055",
+   "old": "Under root-input exclusivity (§11.3) it has no motivation.",
+   "new": "Under root-input exclusivity (§11.3) it has no motivation.",
+   "where": "new",
+   "cites": [
+    "§11.3"
+   ],
+   "tag": "R",
+   "ruling": "R6"
+  },
+  {
+   "id": "C-056",
+   "old": "As a side benefit, staging traffic (and trace noise) drops from render-rate-while-grabbed to actual edits.",
+   "new": "As a side benefit, staging traffic (and trace noise) drops from render-rate-while-grabbed to actual edits.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R6"
+  },
+  {
+   "id": "C-057",
+   "old": "No claim-transition policy exists, because no claim transition can occur mid-run (the freeze, §11.3).",
+   "new": "No claim-transition policy exists, because no claim transition can occur mid-run (the freeze, §11.3).",
+   "where": "new",
+   "cites": [
+    "§11.3"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-058",
+   "old": "The one liveness-adjacent display rule is the orphan case.",
+   "new": "The one liveness-adjacent display rule is the orphan case.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-059",
+   "old": "A read-only widget whose claiming device's task has died renders the fact in its source label (\"claimed by `T16000M` — task dead\"), the heartbeat surfaced in place (§12.2).",
+   "new": "A read-only widget whose claiming device's task has died renders the fact in its source label (\"claimed by `T16000M` — task dead\", where `T16000M` is FlightCore's type for the Thrustmaster T16000M joystick), the heartbeat surfaced in place (§12.2).",
+   "where": "new",
+   "cites": [
+    "§12.2"
+   ],
+   "tag": "R",
+   "ruling": "R11"
+  },
+  {
+   "id": "C-060",
+   "old": "What it displays beside that fact is the ordinary snapshot value, the orphaned root input's last drained level.",
+   "new": "What the widget displays beside that fact is the ordinary snapshot value, the orphaned root input's last drained level.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-061",
+   "old": "An orphan widget is a read-only rendering like any other, never a blanked one.",
+   "new": "An orphan widget is a read-only rendering like any other, never a blanked one.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-062",
+   "old": "An orphaned root input is therefore visible where the user is looking, not only in the status panel.",
+   "new": "An orphaned root input is therefore visible where the user is looking, not only in the status panel.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-063",
+   "old": "The panel convention has two halves.",
+   "new": "The panel convention has two halves.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-064",
+   "old": "The framework's half is fixed here, and the GUI package's half is deferred.",
+   "new": "The framework's half is fixed here, and the GUI package's half is deferred (D-270).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-270"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-065",
+   "old": "A panel reaches the framework through three values: a port view, the device handle and a snapshot.",
+   "new": "A panel reaches the framework through three values, a port view, the device handle and a snapshot.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-066",
+   "old": "The port view is this section's baked verdict, one per declared port of every component, input and output.",
+   "new": "The port view is this section's baked verdict, one per declared port of every component, input and output.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-067",
+   "old": "The handle supplies the two reads the peek composes and the one write, `stage!`.",
+   "new": "The handle supplies the two reads the peek composes and the one write, `stage!`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-068",
+   "old": "The snapshot supplies every driven value and the writer status the orphan label reads.",
+   "new": "The snapshot supplies every driven value and the writer status the orphan label reads.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-069",
+   "old": "Nothing a panel needs reaches into the loop (D-270).",
+   "new": "Nothing a panel needs reaches into the loop (D-270).",
+   "where": "new",
+   "cites": [
+    "D-270"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-070",
+   "old": "Rule. The port view. `port_views(handle)` builds one view per port of every component, keyed by `(path, port)`, from the build's wiring, the handle's claim and the exclusivity index.",
+   "new": "`port_views(handle)` builds one view per port of every component, keyed by `(path, port)`, from the build's wiring, the handle's claim and the exclusivity index (D-270).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-270"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-071",
+   "old": "A view carries the port's terminal producer (`(\"\", face)` when root-driven), the liveness verdict, the port's position in the handle's staging schema when live, the producer's cell address, and the incumbent writer of a root-driven port the GUI does not command.",
+   "new": "A view carries the port's terminal producer (`(\"\", face)` when root-driven), the liveness verdict, the port's position in the handle's staging schema when live, the producer's cell address, and the incumbent writer of a root-driven port the GUI does not command.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-072",
+   "old": "The GUI's loop body builds the table once at its top.",
+   "new": "The GUI's loop body builds the table once at its top.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-073",
+   "old": "That point is after the roster freeze, so the incumbents are the run's, and nothing at render resolves a name.",
+   "new": "That point is after the roster freeze, so the incumbents are the run's, and nothing at render resolves a name.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-074",
+   "old": "The handle carries the build's `Structure` and the nominal `Layout` by reference for this, the two things the bake needs that the handle did not hold.",
+   "new": "The handle carries the build's `Structure` and the nominal `Layout` by reference for this, the two things the bake needs that the handle did not hold.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-075",
+   "old": "An output port's view is read-only with itself as producer, so a generated panel reads every face through one lookup.",
+   "new": "An output port's view is read-only with itself as producer, so a generated panel reads every face through one lookup.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-076",
+   "old": "| the port resolves to | live | slot | incumbent | |---|---|---|---| | a root input inside the GUI's claim | yes | its position | the GUI | | a root input in another device's claim | no | none | that device | | a root input no device claims | no | none | the harness | | another component's port, or its own output | no | none | none |",
+   "new": "| the port resolves to | live | slot | incumbent | |---|---|---|---| | a root input inside the GUI's claim | yes | its position | the GUI | | a root input in another device's claim | no | none | that device | | a root input no device claims | no | none | the harness | | another component's port, or its own output | no | none | none |",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-077",
+   "old": "Rule. The peek. `pending(handle, slot)` reads the handle's own staging cell with one acquire load and never takes it:",
+   "new": "`pending(handle, slot)` reads the handle's own staging cell with one acquire load and never takes it (D-270).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-270"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-078",
+   "old": "`Some(value)` when the slot is touched, else `nothing`.",
+   "new": "It returns `Some(value)` when the slot is touched, else `nothing`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-079",
+   "old": "A staged batch is never mutated after it is published into the cell, so the load sees a complete batch or none.",
+   "new": "A staged batch is never mutated after it is published into the staging cell, so the load sees a complete batch or none.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-080",
+   "old": "`peek(view, handle, snapshot)` composes that read with the snapshot.",
+   "new": "`peek(view, handle, snapshot)` composes that read with the snapshot.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-081",
+   "old": "A live view returns its own pending value when one is touched, and the producer's cell off the snapshot otherwise.",
+   "new": "A live view returns its own pending value when one is touched, and the producer's cell off the snapshot otherwise.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-082",
+   "old": "A read-only view skips the cell and reads the producer's cell.",
+   "new": "A read-only view skips the staging cell and reads the producer's cell.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-083",
+   "old": "Two ports resolving to one root input share slot and address, which is the fan-out consistency above.",
+   "new": "Two ports resolving to one root input share slot and address, which is the fan-out consistency above.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-084",
+   "old": "The rule has one visible consequence, and it is the rule's own.",
+   "new": "The peek rule has one visible consequence, and it is the rule's own.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-085",
+   "old": "Between the frame-top drain that takes the cell and the publication of that frame's snapshot, a live widget finds nothing pending and shows the previous snapshot's value, for at most one frame's compute.",
+   "new": "Between the frame-top drain that takes the staging cell and the publication of that frame's snapshot, a live widget finds nothing pending and shows the previous snapshot's value, for at most one frame's compute (D-270).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-270"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-086",
+   "old": "A click inside that window peeks the old level and stages a level already drained, which the levels doctrine makes idempotent.",
+   "new": "A click inside that window peeks the old level and stages a level already drained, which the levels doctrine makes idempotent.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-087",
+   "old": "No device task reads the loop's store, so no reading is more current than this one.",
+   "new": "No device task reads the loop's store, so no reading is more current than this one.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-088",
+   "old": "Rule. The orphan fact. `incumbent_status(view, snapshot)` returns the incumbent's writer record from the snapshot's status (§11.8), or `nothing` for a port no device writes.",
+   "new": "`incumbent_status(view, snapshot)` returns the incumbent's writer record from the snapshot's status (§11.8), or `nothing` for a port no device writes (D-270).",
+   "where": "new",
+   "cites": [
+    "§11.8"
+   ],
+   "newcites": [
+    "D-270",
+    "§11.8"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-089",
+   "old": "On that record, `orphaned` is a task that returned or crashed, and `stale` is §12.2's silent heartbeat.",
+   "new": "On that record, `orphaned` is a task that returned or crashed, and `stale` is the silent heartbeat (§12.2).",
+   "where": "new",
+   "cites": [
+    "§12.2"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-090",
+   "old": "The record tells an exited loop from a crashed one, and the label may.",
+   "new": "The record tells an exited loop from a crashed one, and the label may.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-091",
+   "old": "The label text is the GUI package's.",
+   "new": "The label text is the GUI package's.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-092",
+   "old": "What stays deferred is the GUI package's half (`pending.md`), which the built-in GUI's parking (D-310) assigns to the browser client over the bridge:",
+   "new": "What stays deferred is the GUI package's half (`pending.md`, which records what the implementation still owes and the questions the design leaves open), which the built-in GUI's parking (D-310) assigns to the browser client over the bridge.",
+   "where": "new",
+   "cites": [
+    "D-310"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-093",
+   "old": "what the client receives beside the three values, how a panel scopes to a child component, and the widgets.",
+   "new": "That half covers what the client receives beside the three values, how a panel scopes to a child component, and the widgets.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-094",
+   "old": "Its constraints are fixed here.",
+   "new": "Its constraints are fixed here.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-095",
+   "old": "Panels name their own ports by face-name string.",
+   "new": "Panels name their own ports by face-name string.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-096",
+   "old": "Resolution to root inputs and the liveness verdict are baked at run start, never performed at render.",
+   "new": "Resolution to root inputs and the liveness verdict are baked at run start, never performed at render.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-097",
+   "old": "Liveness and peek arrive through the framework-supplied context, never by reaching into the loop.",
+   "new": "Liveness and peek arrive through the framework-supplied context, never by reaching into the loop.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-098",
+   "old": "And assembly panels compose children by path.",
+   "new": "And assembly panels compose children by path.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  }
+ ],
+ "added": [
+  "This section specifies how a GUI widget resolves its port (the addressable unit, one declared name) to the root input (the only thing the periphery may write) behind it, when the widget is live, what it displays and when it stages, and the framework's half of the panel convention.",
+  "#### Port resolution and derived liveness",
+  "#### The peek and the staging contract",
+  "#### The orphan case",
+  "#### The framework's half of the panel convention",
+  "#### What stays deferred",
+  "with two outcomes",
+  "(the set of root inputs a device may write)",
+  "(the addressable unit, one declared name)",
+  "(the only thing the periphery may write)",
+  "(the unit of modeling, a leaf or an assembly)",
+  "They are discovered by walking the assembly (pure composition, whose component-typed fields are its children).",
+  "(any attached participant in the periphery)",
+  "(the rule computing a widget's liveness from wiring and claims)",
+  "Such a binding enumerates the claim one face (the name a port wears on its component's boundary) at a time.",
+  "The roster (the list of attached devices, with their claims) is frozen for a run, since `attach!` and `detach!` are stopped-sim operations (§11.3).",
+  "(the declared interface of a component, §8.3)",
+  "(staging on edit or activation, never per render pass)",
+  "(the GUI display rule, specified below)",
+  "(the per-device atomic holding place for pending writes)",
+  "(the immutable per-boundary publication)",
+  "the first variant of FlightApps' Cessna 172X model",
+  "(wires with both ends inside one assembly)",
+  "(the value passed at `attach!`, §11.6)",
+  "(the example assembly of pure composition that §8.8 introduces)",
+  "A scenario component is the home of a sim-time script.",
+  "(an illustrative widget function)",
+  "which records what the implementation still owes and the questions the design leaves open",
+  "where `T16000M` is FlightCore's type for the Thrustmaster T16000M joystick",
+  "(one iteration of the loop)",
+  "As insurance, staging every render pass would mask invariant violations at render rate (D-026).",
+  "The block below lists four functions, and the paragraphs after it specify each.",
+  "`port_views(handle) pending(handle, slot) peek(view, handle, snapshot) incumbent_status(view, snapshot)`"
+ ]
+}

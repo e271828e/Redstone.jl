@@ -1,0 +1,213 @@
+### 11.6 Devices: one authoring contract, no taxonomy
+
+FlightCore's input/output/GUI trichotomy is lock choreography, not modeling.
+With no lock, the protocol the taxonomy encoded has no referent ([D-025][d-025]). A
+[device](#g-device) is an attached participant in the [periphery](#g-periphery) (everything outside the loop
+that exchanges data with it). A device may be input-only or output-only, and
+those are degenerate uses, not framework classes ([D-025][d-025]). A bidirectional
+network peer is *one* device with one socket and one lifecycle, not two
+framework devices sharing state. The GUI is an ordinary device, the paradigm
+one, and it uses every capability of the handle below. Its one genuine
+peculiarity, read-modify-write widgets, is not taxonomic ([§11.7][s11-7]).
+
+#### The device handle
+
+Every attached device receives the same handle. The handle carries the two
+primitive capabilities, read and stage, plus control access (observe running,
+request shutdown) ([D-025][d-025]). Read returns the latest
+[snapshot](#g-snapshot) (the immutable per-boundary publication). It can
+optionally wait for the next [boundary](#g-boundary) (a published consistency
+point) first ([§12.3][s12-3]).
+
+Each attached device has a [roster](#g-roster) entry (its record in the
+list of attached devices). **A handle outlives its roster entry as an object
+only** ([D-244][d-244]). `detach!` retires the roster entry and the compiled
+writer behind it, but the caller may still hold the handle `attach!`
+returned. Its two write
+primitives, `stage!` and `report!`, then refuse by name
+(`DeviceContractMismatch`, [Appendix C][sC]). A batch staged there would land
+in a staging cell, and no [drain](#g-drain) (the frame-top swap that applies
+staged device writes to the root inputs) reads that cell. A report would land
+in a [diagnostic cell](#g-diagnostic-cell) (each writer's bounded ring of
+diagnostics and its heartbeat). No [frame](#g-frame) top (the start of one
+loop iteration) folds that cell. Silence is the hidden-bug class this section
+tolerates nowhere. The read primitives stay legal, since they read the
+simulation's shared state and nothing of the roster entry's ([D-244][d-244]).
+
+#### The authoring contract
+
+A device is a user type subtyping the framework's neutral root, `MyDevice <:
+AbstractDevice` ([D-177][d-177]). That is one mandatory word, and it costs nothing,
+because the periphery has no competing hierarchy to inherit from. What it buys
+is `attach!`'s dispatch gate ([D-177][d-177]).
+
+```julia
+attach!(sim::Simulation, dev::AbstractDevice, new_binding::AbstractBinding;
+        should_abort::Bool = false)
+```
+
+`attach!` takes the device with its [binding](#g-binding) (the value that
+makes a device framework-legible, described below). Its keyword
+[`should_abort`](#g-should_abort) (the per-attachment failure policy) is
+covered after the loop bodies below.
+
+The framework asks for four functions.
+
+```julia
+init!(dev)          # per-run resource acquisition — calling task, before spawn (§12.4)
+loop(dev, handle)   # the task body: owns its own wait structure
+shutdown!(dev)      # per-run resource release — guaranteed on every exit path
+unblock!(dev)       # make a blocked loop return (§12.4)
+```
+
+**Only `loop` is mandatory** ([D-366][d-366]). `init!`, `shutdown!` and
+`unblock!` are optional hooks, each defaulting to a no-op. `attach!` refuses a
+device with no `loop` method (`DeviceContractMismatch`, [D-216][d-216]).
+
+The framework owns everything around the four functions ([D-102][d-102]). The wrapper is
+the shutdown protocol ([§12.4][s12-4]) made structural.
+
+```julia
+init!(dev)                                   # its own bracket, pre-spawn (§12.4): a throw
+                                             # here is shutdown! + DeviceCrash by name
+task = Threads.@spawn try
+    loop(dev, handle)
+catch e
+    report!(entry, DeviceCrash(e))           # §12.4(6): sim continues, device absent
+finally
+    shutdown!(dev)                           # any exit path: OS resources released
+                                             # no dead-marking: task_state shows the end, claims stay, §11.3
+end
+```
+
+#### What `shutdown!` must tolerate
+
+**`shutdown!` must tolerate a partially initialized device**
+([D-138][d-138]). The release guarantee holds on the one path *outside* this
+wrapper too. The initialization step ([§12.4][s12-4]) brackets each `init!`
+([D-138][d-138]). A device that threw half-way through acquisition goes
+straight back to `shutdown!`, so nothing it did manage to open is leaked.
+The obligation that follows is "close only what is open". That is the same
+defensiveness `shutdown!` already owes the crash path, where a loop body may
+die at any point in its own life. `init!` is correspondingly *not* asked to
+clean up after itself. The bracket does once, for every device, what would
+otherwise be duplicated in each and enforced in none.
+
+**The same tolerance covers a repeated call** ([D-268][d-268]). The wrapper runs
+`shutdown!` once on every exit path. When an [operator interrupt](#g-operator-interrupt) (Ctrl-C in an
+interactive session) reaches `run!` before its tail, `run!` releases directly,
+not through a wrapper, each device it never spawned, advancing a cursor after
+each `shutdown!` returns, and retries from where an interrupt cut it ([§12.4][s12-4],
+[D-268][d-268]). An interrupt landing between a `shutdown!`'s return and the cursor's
+advance repeats that call rather than leak the device, so each such interrupt
+adds one call. A `shutdown!` that closes only what is open is idempotent by
+construction, so a repeated call costs nothing and is never reported.
+
+**The tolerance also covers a call with no `init!` before it**
+([D-268][d-268]). The initialization step lists each device for release
+before its `init!` begins, so that no interrupt can leave an initialized
+device unlisted ([§12.4][s12-4], [D-268][d-268]). An operator interrupt
+landing between the listing and the `init!` therefore releases a device that
+opened nothing. A `shutdown!` that closes only what is open does nothing
+there, and the call is never reported.
+
+#### The operator interrupt
+
+The wrapper makes one discrimination. **An `InterruptException` is never a
+`DeviceCrash`** ([D-132][d-132]). The operator interrupt is a control-plane
+stop, not a failure ([D-132][d-132]). The wrapper forwards the control-plane
+stop. There is no crash report for what is not a crash, and no
+`should_abort` consultation, since a stop is already requested.
+
+#### The author-owned loop body
+
+One device contract means author-owned loop bodies. A framework-owned hook
+loop would have to ask each device what it waits on, which is the rejected
+taxonomy resurrected as a trait ([D-102][d-102]). Under the author-owned
+body, every wait structure is ordinary user code composed from handle
+primitives. In the sketches, `T16000M` is FlightCore's type for the
+Thrustmaster T16000M joystick, and `UDPInput` is FlightCore's UDP input
+device type. The sketches map data through the binding's
+`map_input` and `map_output`, described below.
+
+```julia
+function loop(dev::T16000M, handle)              # timer-driven, full write-set
+    while running(handle)
+        sleep(dev.Δt_poll)
+        stage!(handle, map_input(poll_axes(dev), binding(handle))...)
+    end
+end
+
+function loop(dev::UDPInput, handle)             # source-driven, data-dependent
+    while running(handle)
+        datum = recv(dev.socket)                 # blocks; unblock! closes the socket
+        is_eot(datum) && return                  # voluntary exit
+        try
+            stage!(handle, map_input(datum, binding(handle))...)
+        catch e
+            is_datum_error(dev, e) || rethrow()  # a bug → wrapper → DeviceCrash
+            report!(handle, MalformedDatum(e))   # garbage → visible, bounded, alive
+        end
+    end
+end
+
+function loop(dev::Telemetry, handle)            # boundary-driven output
+    while running(handle)
+        snap = wait_next_snapshot(handle)        # §12.3; returns on stop
+        send(dev.socket, map_output(gather(handle, snap), binding(handle)))
+    end
+end
+```
+
+A bidirectional peer composes both halves itself, with an inner reader task
+inside its own domain, rather than forcing a select engine into the
+framework. Two idioms are author obligations the framework can only teach and
+diagnose, never force ([Appendix A][sA], [D-102][d-102]). The author must loop on
+`running(handle)` and must make blocking calls interruptible (`unblock!`, or
+timeouts). A forgotten predicate check surfaces as `DeviceJoinTimeout` with
+the device's name. A stall surfaces as a stale heartbeat ([§12.2][s12-2]).
+Liveness timestamps ride *inside* the handle primitives, which store them in
+the device's own diagnostic cell ([§11.8][s11-8]), so the framework observes
+activity without owning the loop.
+
+FlightCore's device hook **`should_close` dissolves** ([D-102][d-102]). A window ✕ or
+peer EOT is the loop body returning. The wrapper's exit path releases the
+device's OS resources and consults `should_abort`. Nothing marks the device dead
+beyond its record. The task has ended, `task_state` says so at the next
+publication, and its heartbeat goes stale ([§12.2][s12-2]). A device's [claim](#g-claim) is the set
+of [faces](#g-face) (the names ports wear on their component's boundary) it *may* write.
+Claims and the roster entry persist to run end (the freeze, [§11.3][s11-3], [D-106][d-106]). This
+is [§12.4][s12-4](6)'s case. The GUI implements the same authoring contract.
+
+**`should_abort` is an `attach!` keyword**, defaulting to `false`
+([D-138][d-138]). It is per-attachment, never a device property. The same
+joystick is advisory in one deployment and decisive in another. With
+`should_abort` clear, a device's departure is reported and the run continues
+without it. With it set, that departure also requests a sim stop
+([§12.4][s12-4]). A departure is the loop body returning, a crash, or a
+failed `init!`. A hardware-in-the-loop rig attaches its plant interface with
+it set, since a run without that device is meaningless.
+
+#### Bad datum versus bug: two classes, two fates
+
+A datum that cannot be mapped for environmental reasons (a truncated
+datagram, malformed JSON, an out-of-range field) is a
+[bad datum](#g-bad-datum), tolerated *in the loop body* ([D-105][d-105]). The
+body catches it, stages nothing, calls `report!(handle, MalformedDatum(cause))`
+and continues. That tolerance is bounded by the device's own diagnostic cell
+(the ring and suppressed counts, [§11.8][s11-8]; the stream, [§13.2][s13-2]),
+and what it records is visible next to a live heartbeat. Any other exception
+propagates, and the wrapper turns it into `DeviceCrash` ([§12.4][s12-4]).
+
+The classification is the author's, because only they know their parser.
+FlightCore's `InputMappingError` docstring assigned it the same way. What
+changes under the author-owned loop is that no framework per-iteration catch
+site exists, so the framework's contribution is the diagnostic channel, not
+the catch. A marked exception type is not provided ([D-105][d-105]).
+`report!(handle, …)` writes device-attributed runtime warnings into that
+device's diagnostic cell, the single-writer entry point into the runtime
+warning stream ([§13.2][s13-2], [§11.8][s11-8], [D-160][d-160]), and nothing
+more. It is not a general user-diagnostics channel. Tolerating everything
+hides bugs as "device attached, nothing happens". Tolerating nothing kills a
+live telemetry link on its first truncated datagram, and since tasks are
+per-run artifacts ([D-093][d-093]), kills it for the rest of the run.

@@ -584,3 +584,50 @@ its inventory entry maps there with `"where": "units/<U>/deleted.md"`,
     "This is the standard GUI binding's claim ([§11.6][s11-6])", since §11.6
     holds the binding.
   - The glossary and Appendix B change at landing, not in any unit.
+
+## Rulings after step 3
+
+- **R24. `World` points at §8.8** (unit H's question 1). R11 named §8.7,
+  "Rate scopes". The frozen spec introduces `World` in §8.8 (old 3837).
+  Unit H's pointer at §8.8 stands.
+- **R25. The interrupt arm's stale clause** (verifier G1; unit G1). R14's
+  paragraph kept "and lets the body leave through the ordinary
+  `running(handle)` predicate ([§12.4](4))". That clause describes the
+  withdrawn inline-GUI path, as R14's dropped reason did: in `src` the
+  wrapper catches the `InterruptException` after `loop` has unwound
+  (`src/devices.jl` 406–415). D-310's Position settles the topology. Delete
+  the clause into `deleted.md`; "The wrapper forwards the control-plane
+  stop" stays, with the rest of the paragraph.
+- **R26. The checkpoint's contents name the deployment** (unit F's
+  correction 3). Old 7629–7632's list ends "and the fingerprint". D-319
+  bullet 1 (log 13838–13840) lists the deployment among `ModelState`'s
+  fields, and R17 makes it a compared part. The list ends "and the
+  fingerprint and the deployment ([D-319][d-319])".
+- **R27. Devices under replay** (unit F's correction 1). Old 7584–7585, "with
+  staging fed from the recording and no devices or mappings present",
+  contradicts D-218's Position bullet 1 (log 8132–8134), under which devices
+  run as readers. It becomes "with staging fed from the recording, so no
+  device or mapping feeds the inputs ([D-218][d-218])".
+- **R28. Two wording fixes in §11.5** (unit F's corrections 2 and 4). Old
+  7592's "one small allocation per drained batch" gains "plus the values
+  boxed into it" (`src/trace.jl` 94–120). Old 7692–7694's "capped at that
+  frame" becomes "capped at the recording's last frame", D-218 bullet 2's
+  words (log 8135–8136).
+- **R29. F5's wording, corrected** (verifier B). R10's "The log's
+  `sizehint!` is `log_max`" is wrong when `log_max = Inf`, the opt-out:
+  `src/dataplane.jl` 750 sets the hint only when the bound is finite. The
+  sentence becomes "A finite `log_max` is the log's `sizehint!`
+  ([§9.8][s9-8])."
+- **R30. `totals` monotonicity's home is §11.8** (verifier J; units B and
+  J). R5 named §11.2, but §11.2 never states the reason (the log retains
+  snapshot references), and B and J now point at each other. §11.8 (J)
+  states the claim with its reason, citing §11.2 only for the log's
+  retention, and drops its pointer for the claim. §11.2 (B) keeps its one
+  sentence pointing at §11.8, and re-decimation stays in §11.2.
+- **R31. R20's clause, reworded** (verifier G1). "releases each device it
+  never spawned directly" misreads, since "directly" binds to "spawned". It
+  becomes "`run!` releases directly, not through a wrapper, each device it
+  never spawned". Source unchanged (`src/sim.jl` 1220–1221).
+- **R32. R28's clause, reworded** (verifier F). "plus the values boxed into
+  it" lets "it" read as the batch. It becomes "plus the values boxed into
+  that allocation" (`src/trace.jl` 94–99).

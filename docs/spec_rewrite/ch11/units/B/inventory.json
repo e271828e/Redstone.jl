@@ -1,0 +1,1672 @@
+{
+ "claims": [
+  {
+   "id": "C-001",
+   "old": "### 11.2 Outbound: snapshot publication",
+   "new": "### 11.2 Outbound: snapshot publication",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-002",
+   "old": "Every consumer of model state (GUI panels, output devices, the log) needs a picture of the model that holds still while it is read,",
+   "new": "Every consumer of model state needs a picture of the model that holds still while it is read. GUI panels and output devices",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-003",
+   "old": "Every consumer of model state (GUI panels, output devices, the log)",
+   "new": "are such consumers. So is the log",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-004",
+   "old": "and none of them should have to make the loop wait to get one.",
+   "new": "None of them should have to make the loop wait to get one.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-005",
+   "old": "Publication is the answer.",
+   "new": "Publication is the answer.",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-006",
+   "old": "One immutable value is published per boundary,",
+   "new": "One immutable value is published per boundary",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-007",
+   "old": "handed out through a single atomic reference.",
+   "new": "handed out through a single atomic reference.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-008",
+   "old": "Three things follow from it, in that order: how a snapshot",
+   "new": "Three things follow from it. In order, they are how a snapshot",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-009",
+   "old": "is built and published, how the log retains published snapshots under a bound, and how an output device addresses what it reads.",
+   "new": "is built and published, how the log retains published snapshots under a bound, and how an output device addresses what it reads.",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-010",
+   "old": "#### The snapshot and its publication",
+   "new": "#### The snapshot and its publication",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-011",
+   "old": "Rule. The loop builds each snapshot in private memory, then publishes it with a single release-store",
+   "new": "The loop builds each snapshot in private memory, then publishes it with a single release-store (D-023)",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-023"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-012",
+   "old": "to an `@atomic latest` reference.",
+   "new": "to an `@atomic latest` reference",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-013",
+   "old": "A snapshot carries the boundary-consistent signal table,",
+   "new": "A snapshot carries the boundary-consistent signal table",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-014",
+   "old": "`t`,",
+   "new": "and `t`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-015",
+   "old": "its frame index",
+   "new": "It carries the index of its frame",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-016",
+   "old": "and its published-boundary ordinal (§12.3),",
+   "new": "and its published-boundary ordinal (§12.3).",
+   "where": "new",
+   "cites": [
+    "§12.3"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-017",
+   "old": "and the framework status.",
+   "new": "It also carries the framework status",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-018",
+   "old": "The frame index is what places a `t` snapshot in its frame, since a `t` publication counts an ordinal of its own (D-261).",
+   "new": "The frame index is what places a `t` snapshot in its frame, since a `t` publication counts an ordinal of its own (D-261).",
+   "where": "new",
+   "cites": [
+    "D-261"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-019",
+   "old": "Readers acquire-load that reference and then work with an immutable, coherent world for as long as they like.",
+   "new": "Readers acquire-load that reference and then work with an immutable, coherent world for as long as they like.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-020",
+   "old": "The calling task (the task that invoked `run!`) reads the same value through `latest(sim)`, an inspection read (§12.6).",
+   "new": "The calling task (the task that invoked `run!`) reads the same value through `latest(sim)`, an inspection read (§12.6).",
+   "where": "new",
+   "cites": [
+    "§12.6"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-021",
+   "old": "The exchange is wait-free in both directions.",
+   "new": "The exchange is wait-free in both directions (D-023).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-023"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-022",
+   "old": "A wedged reader cannot delay publication by a nanosecond, and the loop cannot tear a reader's view.",
+   "new": "A wedged reader cannot delay publication by a nanosecond, and the loop cannot tear a reader's view.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-023",
+   "old": "Publication happens only after the boundary sequence completes (§10.3).",
+   "new": "Publication happens only after the boundary sequence completes (§10.3, D-293).",
+   "where": "new",
+   "cites": [
+    "§10.3"
+   ],
+   "newcites": [
+    "§10.3",
+    "D-293"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-024",
+   "old": "Binding rule: nothing reachable from a published snapshot is ever written again.",
+   "new": "The binding rule states that nothing reachable from a published snapshot is ever written again (D-023).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-023"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-025",
+   "old": "The table's immutable values (§4.1, §7) make the compiler enforce most of it.",
+   "new": "The table's immutable values (§4.1, §7) make the compiler enforce most of it.",
+   "where": "new",
+   "cites": [
+    "§4.1",
+    "§7"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-026",
+   "old": "Why. The soundness of lock-free reading rests on this rule.",
+   "new": "The soundness of lock-free reading rests on this rule.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-027",
+   "old": "The framework status is a concrete frozen value, not a window onto live bookkeeping.",
+   "new": "The framework status is a concrete frozen value, not a window onto live bookkeeping (D-136).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-136"
+   ],
+   "tag": "R",
+   "ruling": "R5"
+  },
+  {
+   "id": "C-028",
+   "old": "It carries the pacer diagnostics (§10.7),",
+   "new": "Beside the per-writer records ride the pacer diagnostics (§10.7).",
+   "where": "units/J/old.md",
+   "cites": [
+    "§10.7"
+   ],
+   "tag": "M",
+   "ruling": "R5"
+  },
+  {
+   "id": "C-029",
+   "old": "plus the per-writer diagnostic batches, the suppressed and cumulative counters and the liveness timestamps the loop takes at frame top (§11.8).",
+   "new": "Per writer it carries four things. `recent` is the ring this boundary drained, at most sixteen entries. `suppressed` is the per-kind counts the ring refused this boundary. `totals` is the cumulative per-writer × per-kind counts since the run began, owned privately by the loop and copied into each status. And `heartbeat` rides beside",
+   "where": "units/J/old.md",
+   "cites": [
+    "§11.8"
+   ],
+   "tag": "M",
+   "ruling": "R5"
+  },
+  {
+   "id": "C-030",
+   "old": "Why. The binding rule forces that shape.",
+   "new": "The binding rule forces that shape.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-031",
+   "old": "A status referencing an accumulator its writers are still filling would be a snapshot whose contents change after publication.",
+   "new": "A status referencing an accumulator its writers are still filling would be a snapshot whose contents change after publication.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-032",
+   "old": "The captured table is the whole table.",
+   "new": "The captured table is the whole table.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-033",
+   "old": "It holds the declared ports,",
+   "new": "It holds the declared ports",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-034",
+   "old": "every one of them public (§8.3).",
+   "new": "every one of them public (§8.3).",
+   "where": "new",
+   "cites": [
+    "§8.3"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-035",
+   "old": "No presentation layer has anything to filter.",
+   "new": "No presentation layer has anything to filter.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-036",
+   "old": "Undeclared intermediates are not in it, because only declared ports are cells (§8.3).",
+   "new": "Undeclared intermediates are not in it, because only declared ports are cells",
+   "where": "new",
+   "cites": [
+    "§8.3"
+   ],
+   "newcites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-037",
+   "old": "The inspection path for one is promotion to a declared output.",
+   "new": "The inspection path for one is promotion to a declared output (D-194).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-194"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-038",
+   "old": "Add a line in `y_types`, and the value appears in the snapshot, the log, the GUI and the wiring alike.",
+   "new": "Add a line in `y_types`, and the value appears in the snapshot, the log, the GUI and the wiring alike.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-039",
+   "old": "Its visibility is then an authored fact like every other.",
+   "new": "Its visibility is then an authored fact like every other.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-040",
+   "old": "The captured table also includes the root inputs.",
+   "new": "The captured table also includes the root inputs (D-047).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-047"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-041",
+   "old": "Root inputs are source cells of the table, not state stores, so they ride along.",
+   "new": "They are source cells of the table, not state stores, so they ride along.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-042",
+   "old": "That is essential, not incidental.",
+   "new": "That is essential, not incidental.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-043",
+   "old": "The §11.7 peek (showing a widget's own pending write, else the snapshot value) falls back to the snapshot, and that fallback is what an idle live widget displays.",
+   "new": "The peek (showing a widget's own pending write, else the snapshot value, §11.7) falls back to the snapshot, and that fallback is what an idle live widget displays.",
+   "where": "new",
+   "cites": [
+    "§11.7"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-044",
+   "old": "Read-only mirrors of claimed root inputs, such as the axis sliders under joystick claim,",
+   "new": "Read-only mirrors of claimed root inputs, such as the axis sliders under joystick claim",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-045",
+   "old": "show the applied root-input value from the snapshot.",
+   "new": "show the applied root-input value from the snapshot.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-046",
+   "old": "Root input values in the log are derived data, recomputable from the trace.",
+   "new": "Root input values in the log are derived data, recomputable from the trace",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-047",
+   "old": "That is consistent, because snapshots are derived wholesale.",
+   "new": "That is consistent, because snapshots are derived wholesale.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-048",
+   "old": "The snapshot deliberately does not carry the state stores (`x`, `s`, `m`).",
+   "new": "The snapshot deliberately does not carry the state stores (`x`, `s`, `m`) (D-038).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-038"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-049",
+   "old": "There are two reasons.",
+   "new": "There are two reasons.",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-050",
+   "old": "The state trajectory is derived data, recomputable from the trace header",
+   "new": "The state trajectory is derived data, recomputable from the trace header",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-051",
+   "old": "plus the batches (§11.5)",
+   "new": "plus the batches (§11.5).",
+   "where": "new",
+   "cites": [
+    "§11.5"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-052",
+   "old": "by bit-identical replay.",
+   "new": "The recomputation is bit-identical replay",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-053",
+   "old": "And per-boundary capture would systematically record derived data, the same asymmetry the trace-default decision (D-029) refuses in the other direction.",
+   "new": "And per-boundary capture would systematically record derived data, the same asymmetry the trace-default decision (D-029) refuses in the other direction.",
+   "where": "new",
+   "cites": [
+    "D-029"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-054",
+   "old": "\"What was the private state at t = 37.2?\" is answered by replaying to 37.2 and inspecting the live stores.",
+   "new": "\"What was the private state at t = 37.2?\" is answered by replaying to 37.2 and inspecting the live stores (D-038).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-038"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-055",
+   "old": "A state field wanted in logs or GUI has the honest remedy of being declared public and returned from `y_state` (§5.3),",
+   "new": "A state field wanted in logs or GUI has the honest remedy of being declared public and returned from `y_state` (§5.3, D-252).",
+   "where": "new",
+   "cites": [
+    "§5.3"
+   ],
+   "newcites": [
+    "§5.3",
+    "D-252"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-056",
+   "old": "at a cost of one cell per sweep.",
+   "new": "It costs one cell per sweep",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-057",
+   "old": "Post-run continuation reads the live stores directly.",
+   "new": "Post-run continuation reads the live stores directly.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-058",
+   "old": "Periodic full-state checkpoints,",
+   "new": "Periodic full-state checkpoints are a guarded addition",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-059",
+   "old": "which would allow warm restart without replay from zero,",
+   "new": "They would allow warm restart without replay from zero.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-060",
+   "old": "are a guarded addition shaped as an opt-in log policy.",
+   "new": "shaped as an opt-in log policy (D-038).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-038"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-061",
+   "old": "Each would retain a checkpoint (the `Model`'s state at a frame top as one value), the value `checkpoint(sim)` returns (§12.6).",
+   "new": "Each would retain a checkpoint (the `Model`'s state at a frame top as one value), the value `checkpoint(sim)` returns (§12.6).",
+   "where": "new",
+   "cites": [
+    "§12.6"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-062",
+   "old": "A dev-mode flag that reads every state field out of the stores is a possible future diagnostic.",
+   "new": "A dev-mode flag that reads every state field out of the stores is a possible future diagnostic.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-063",
+   "old": "It would be a reader over the stores, never a port class (D-252).",
+   "new": "It would be a reader over the stores, never a port class (D-252).",
+   "where": "new",
+   "cites": [
+    "D-252"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-064",
+   "old": "Event firings are not recorded (D-309).",
+   "new": "Event firings are not recorded (D-309).",
+   "where": "new",
+   "cites": [
+    "D-309"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-065",
+   "old": "The log holds boundary snapshots and the trace holds staged inputs (§11.5).",
+   "new": "The log holds boundary snapshots and the trace holds staged inputs (§11.5).",
+   "where": "new",
+   "cites": [
+    "§11.5"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-066",
+   "old": "Neither carries a per-event record.",
+   "new": "Neither carries a per-event record.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-067",
+   "old": "Replay plus the published modes recovers which events fired at which boundary.",
+   "new": "Replay plus the published modes recovers which events fired at which boundary.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-068",
+   "old": "The honest remedy is again to declare the mode field public and return it from `y_state` (D-252).",
+   "new": "The honest remedy is again to declare the mode field public and return it from `y_state` (D-252).",
+   "where": "new",
+   "cites": [
+    "D-252"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-069",
+   "old": "A mode field so exposed is in every snapshot.",
+   "new": "A mode field so exposed is in every snapshot.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-070",
+   "old": "An event-firing stream is a guarded addition.",
+   "new": "An event-firing stream is a guarded addition.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-071",
+   "old": "#### The log: retained snapshots under a bound",
+   "new": "#### The log: retained snapshots under a bound",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-072",
+   "old": "Logging dissolves into publication.",
+   "new": "Logging thus dissolves into publication.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-073",
+   "old": "The log is a vector of retained snapshot references.",
+   "new": "The log is a vector of retained snapshot references (D-023).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-023"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-074",
+   "old": "They are the same objects, with zero extra copies.",
+   "new": "The references are the same objects, with zero extra copies.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-075",
+   "old": "The per-step `deepcopy` detour of the `SavingCallback` disappears.",
+   "new": "The per-step `deepcopy` detour of FlightCore's `SavingCallback` disappears.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R11"
+  },
+  {
+   "id": "C-076",
+   "old": "The cost is one snapshot allocation per boundary,",
+   "new": "The cost is one snapshot allocation per boundary.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-077",
+   "old": "on the framework side of the §9.8 scope, which already carved out logging.",
+   "new": "It falls on the framework side of the allocation scope §9.8 sets, which already carved out logging.",
+   "where": "new",
+   "cites": [
+    "§9.8"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-078",
+   "old": "Logged snapshots are not garbage at all, and unlogged ones die young.",
+   "new": "Logged snapshots are not garbage at all, and unlogged ones die young.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-079",
+   "old": "Preallocated snapshot buffers are rejected (D-023).",
+   "new": "Preallocated snapshot buffers are rejected (D-023).",
+   "where": "new",
+   "cites": [
+    "D-023"
+   ],
+   "tag": "R",
+   "ruling": "R6"
+  },
+  {
+   "id": "C-080",
+   "old": "Retention: the trace's kill switch, plus decimation.",
+   "new": "Log retention is the trace's kill switch, plus decimation (D-038).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-038"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-081",
+   "old": "The log takes the same plain on/off switch the trace has (§11.5),",
+   "new": "The log takes the same plain on/off switch the trace has (§11.5).",
+   "where": "new",
+   "cites": [
+    "§11.5"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-082",
+   "old": "and additionally a keep-every-kth retention policy, `log_every` (Appendix B).",
+   "new": "Decimation is the log's additional keep-every-kth retention policy, `log_every` (Appendix B).",
+   "where": "new",
+   "cites": [
+    "Appendix B"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-083",
+   "old": "Why decimation is admissible here and not there. The derived/primary split (D-038) decides it.",
+   "new": "The derived/primary split (D-038) decides why decimation is admissible here and not there.",
+   "where": "new",
+   "cites": [
+    "D-038"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-084",
+   "old": "The log is recomputable from the trace by replay, so a thinned log costs resolution in a view, never in a record.",
+   "new": "The log is recomputable from the trace by replay, so a thinned log costs resolution in a view, never in a record.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-085",
+   "old": "Thinning the trace would destroy the only primary account of a session (D-029).",
+   "new": "Thinning the trace would destroy the only primary account of a session (D-029).",
+   "where": "new",
+   "cites": [
+    "D-029"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-086",
+   "old": "Decimation is a retention policy only.",
+   "new": "Decimation is a retention policy only.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-087",
+   "old": "Every boundary still runs, is still published to live readers, and still enters the trace.",
+   "new": "Every boundary still runs, is still published to live readers, and still enters the trace (D-038).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-038"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-088",
+   "old": "Decimation slows the log's growth.",
+   "new": "Decimation slows the log's growth.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-089",
+   "old": "It does not stop it.",
+   "new": "It does not stop it.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-090",
+   "old": "The default configuration is `log = true, log_every = 1` alongside `t_end = Inf`, the honest interactive default (Appendix B),",
+   "new": "The default configuration is `log = true, log_every = 1` alongside `t_end = Inf`, `init!`'s and `run!`'s defaults (Appendix B).",
+   "where": "new",
+   "cites": [
+    "Appendix B"
+   ],
+   "tag": "R",
+   "ruling": "R10"
+  },
+  {
+   "id": "C-091",
+   "old": "and it grows for as long as the session lasts.",
+   "new": "Under it the log grows for as long as the session lasts.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-092",
+   "old": "At C172X scale and 50 Hz that is gigabytes per hour,",
+   "new": "At the scale of the C172X (FlightApps' Cessna 172X model) and 50 Hz, that is gigabytes per hour.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R11"
+  },
+  {
+   "id": "C-093",
+   "old": "and it ends in an out-of-memory nobody was warned about.",
+   "new": "It ends in an out-of-memory nobody was warned about.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-094",
+   "old": "Rule. The log takes a retention bound beside its switch and its stride:",
+   "new": "The log takes a retention bound beside its switch and its stride (D-137).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-137"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-095",
+   "old": "`log_max`, the maximum number of retained snapshot references,",
+   "new": "The bound is `log_max`, the maximum number of retained snapshot references.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-096",
+   "old": "default 65536 (2¹⁶), with `Inf` the explicit opt-out.",
+   "new": "Its default is 65536 (2¹⁶), with `Inf` the explicit opt-out (D-137).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-137"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-097",
+   "old": "The bound is a count, not a memory budget.",
+   "new": "The bound is a count, not a memory budget (D-137).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-137"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-098",
+   "old": "Snapshots are immutable object graphs (§4.1) with internal sharing,",
+   "new": "Snapshots are immutable object graphs (§4.1) with internal sharing.",
+   "where": "new",
+   "cites": [
+    "§4.1"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-099",
+   "old": "and a field handle (an immutable query object consumers evaluate at their own arguments, §4.4) rides as a reference to build-time-frozen data (§9.8).",
+   "new": "A field handle (an immutable query object consumers evaluate at their own arguments, §4.4) rides as a reference to build-time-frozen data (§9.8).",
+   "where": "new",
+   "cites": [
+    "§4.4",
+    "§9.8"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-100",
+   "old": "Byte accounting over them is therefore fuzzy and platform-dependent.",
+   "new": "Byte accounting over snapshots is therefore fuzzy and platform-dependent.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-101",
+   "old": "A count is exact, and it converts to memory through one number the user can measure once, `Base.summarysize` of a single snapshot.",
+   "new": "A count is exact. It converts to memory through one number the user can measure once, `Base.summarysize` of a single snapshot.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-102",
+   "old": "The default is finite unconditionally,",
+   "new": "The default is finite unconditionally (D-137).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-137"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-103",
+   "old": "not a modal rule keyed on `t_end`.",
+   "new": "It is not a modal rule keyed on `t_end`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-104",
+   "old": "A finite run shorter than the bound never notices the bound, and one number is easier to hold than two regimes.",
+   "new": "A finite run shorter than the bound never notices the bound, and one number is easier to hold than two regimes.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-105",
+   "old": "At 50 Hz and full density, 2¹⁶ boundaries is about 22 minutes before anything is dropped at all.",
+   "new": "At 50 Hz and full density, 2¹⁶ boundaries is about 22 minutes before anything is dropped at all.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-106",
+   "old": "When the log fills, the retention stride doubles, so coverage stays global.",
+   "new": "When the log fills, the retention stride doubles, so coverage stays global (D-137).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-137"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-107",
+   "old": "A rolling window, with the recent past at full density and the start of the session forgotten, was rejected (D-137).",
+   "new": "A rolling window, with the recent past at full density and the start of the session forgotten, was rejected (D-137).",
+   "where": "new",
+   "cites": [
+    "D-137"
+   ],
+   "tag": "R",
+   "ruling": "R6"
+  },
+  {
+   "id": "C-108",
+   "old": "Instead the log re-decimates progressively.",
+   "new": "Instead the log re-decimates progressively.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-109",
+   "old": "After k generations the effective stride is `log_every · 2^k`.",
+   "new": "After k generations the effective stride is `log_every · 2^k`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-110",
+   "old": "The whole run stays plottable, and what coarsens is density, never extent.",
+   "new": "The whole run stays plottable, and what coarsens is density, never extent.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-111",
+   "old": "Why. That is the division of labor (D-038) carried through.",
+   "new": "The doubling is the division of labor (D-038) carried through.",
+   "where": "new",
+   "cites": [
+    "D-038"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-112",
+   "old": "The log's chief consumer is the post-run plot of a session as a whole, and nobody plots hours at 50 Hz.",
+   "new": "The log's chief consumer is the post-run plot of a session as a whole, and nobody plots hours at 50 Hz.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-113",
+   "old": "Full density over any segment of interest is what replay from the trace recovers (§11.5, §12.7).",
+   "new": "Full density over any segment of interest is what replay from the trace recovers (§11.5, §12.7).",
+   "where": "new",
+   "cites": [
+    "§11.5",
+    "§12.7"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-114",
+   "old": "The guarantees are normative, not the mechanism.",
+   "new": "The guarantees are normative, not the mechanism (D-137).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-137"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-115",
+   "old": "There are three.",
+   "new": "There are three.",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-116",
+   "old": "The bound is respected continuously, and the retained count never exceeds `log_max`.",
+   "new": "The bound is respected continuously, and the retained count never exceeds `log_max`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-117",
+   "old": "Coverage is global at the effective stride.",
+   "new": "Coverage is global at the effective stride.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-118",
+   "old": "The endpoints below are kept.",
+   "new": "The endpoints below are kept.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-119",
+   "old": "The mechanism sketch is non-binding.",
+   "new": "The mechanism sketch is non-binding.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-120",
+   "old": "The thinning is amortized.",
+   "new": "The thinning is amortized.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-121",
+   "old": "When the log fills, the stride doubles immediately, and each subsequent retained append also releases one predecessor of the previous generation.",
+   "new": "When the log fills, the stride doubles immediately. Each subsequent retained append also releases one predecessor of the previous generation.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-122",
+   "old": "A cursor over the odd indices does this in O(1) amortized, with physical compaction once per generation.",
+   "new": "A cursor over the odd indices does this in O(1) amortized, with physical compaction once per generation.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-123",
+   "old": "A generation's thinning therefore completes exactly when its refill does.",
+   "new": "A generation's thinning therefore completes exactly when its refill does.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-124",
+   "old": "> fill at stride `log_every` → full → stride doubles → thin one predecessor > per retained append, while refilling → full at stride `log_every · 2` → ⋯ > → generation k at `log_every · 2^k`",
+   "new": "> fill at stride `log_every` → full → stride doubles → thin one predecessor > per retained append, while refilling → full at stride `log_every · 2` → ⋯ > → generation k at `log_every · 2^k`",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-125",
+   "old": "Amortizing rather than halving in one shot is a responsiveness choice (D-137).",
+   "new": "Amortizing rather than halving in one shot is a responsiveness choice (D-137).",
+   "where": "new",
+   "cites": [
+    "D-137"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-126",
+   "old": "The amortized form drops exactly one old snapshot per retained append, the same steady trickle a rolling window would produce, so keeping coverage global costs nothing extra in GC pressure.",
+   "new": "The amortized form drops exactly one old snapshot per retained append, the same steady trickle a rolling window would produce. Keeping coverage global therefore costs nothing extra in GC pressure.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-127",
+   "old": "The loop's own work is pointer bookkeeping, microseconds either way and on the framework side of the scope (§9.8).",
+   "new": "The loop's own work is pointer bookkeeping, microseconds either way and on the framework side of the scope (§9.8).",
+   "where": "new",
+   "cites": [
+    "§9.8"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-128",
+   "old": "Publication stays wait-free and readers never block.",
+   "new": "Publication stays wait-free and readers never block.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-129",
+   "old": "A reader holding a released snapshot simply keeps it alive.",
+   "new": "A reader holding a released snapshot simply keeps it alive.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-130",
+   "old": "The endpoints are retained unconditionally.",
+   "new": "The endpoints are retained unconditionally (D-137).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-137"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-131",
+   "old": "The run's first snapshot and its terminal snapshot (§12.4, §13.5) survive any `log_every` and any `log_max`, and they do not count against the bound.",
+   "new": "The run's first snapshot and its terminal snapshot (§12.4, §13.5) survive any `log_every` and any `log_max`, and they do not count against the bound.",
+   "where": "new",
+   "cites": [
+    "§12.4",
+    "§13.5"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-132",
+   "old": "The first is the boundary-zero snapshot under `init!` (§14.5), and the snapshot the door publishes under `restore!` and `replay!` (§12.6).",
+   "new": "The first is the boundary-zero snapshot under `init!` (§14.5), and the snapshot the door publishes under `restore!` and `replay!` (§12.6).",
+   "where": "new",
+   "cites": [
+    "§12.6",
+    "§14.5"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-133",
+   "old": "The stride counts boundaries from it.",
+   "new": "The stride counts boundaries from it.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-134",
+   "old": "They are two extra references.",
+   "new": "They are two extra references.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-135",
+   "old": "The terminal snapshot's status carries the run's final cumulative diagnostic counters (§11.8).",
+   "new": "The terminal snapshot's status carries the run's final cumulative diagnostic counters (§11.8).",
+   "where": "new",
+   "cites": [
+    "§11.8"
+   ],
+   "tag": "R",
+   "ruling": "R5"
+  },
+  {
+   "id": "C-136",
+   "old": "A run's two endpoints and its diagnostic account,",
+   "new": "A run's two endpoints and its diagnostic account",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-137",
+   "old": "complete to the final frame top (D-201),",
+   "new": "Final means final at the last frame top (D-201).",
+   "where": "units/J/old.md",
+   "cites": [
+    "D-201"
+   ],
+   "tag": "M",
+   "ruling": "R5"
+  },
+  {
+   "id": "C-138",
+   "old": "therefore always outlive whatever retention did to the middle.",
+   "new": "therefore always outlive whatever retention did to the middle.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-139",
+   "old": "Two compositions are worth stating once.",
+   "new": "Two compositions are worth stating once.",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-140",
+   "old": "The `totals` monotonicity across logged snapshots (§11.8) is untouched.",
+   "new": "The `totals` monotonicity across logged snapshots (§11.8) is untouched.",
+   "where": "new",
+   "cites": [
+    "§11.8"
+   ],
+   "tag": "R",
+   "ruling": "R30"
+  },
+  {
+   "id": "C-141",
+   "old": "Re-decimation, like decimation, loses which boundary within a stretch an occurrence fell on, never how many.",
+   "new": "Re-decimation, like decimation, loses which boundary within a stretch an occurrence fell on, never how many.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R5"
+  },
+  {
+   "id": "C-142",
+   "old": "And `log_max` is a view policy, not a trajectory-determining one.",
+   "new": "And `log_max` is a view policy, not a trajectory-determining one (D-137).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-137"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-143",
+   "old": "Like `log` and `log_every` it stays out of the trace header's `Deployment` (the scalar-free artifact the grid parameters fix), and replay neither records nor compares it (§11.5, §12.7).",
+   "new": "Like `log` and `log_every` it stays out of the trace header's `Deployment` (the scalar-free artifact the grid parameters fix), and replay neither records nor compares it (§11.5, §12.7).",
+   "where": "new",
+   "cites": [
+    "§11.5",
+    "§12.7"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-144",
+   "old": "Sizing follows.",
+   "new": "Sizing follows.",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-145",
+   "old": "The `sizehint!` for the expected duration (§9.8) is now naturally capped by `log_max`, which is also what defines the hint when `t_end = Inf`.",
+   "new": "A finite `log_max` is the log's `sizehint!` (§9.8).",
+   "where": "new",
+   "cites": [
+    "§9.8"
+   ],
+   "tag": "R",
+   "ruling": "R29"
+  },
+  {
+   "id": "C-146",
+   "old": "#### Output-device bindings",
+   "new": "#### Output-device bindings",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-147",
+   "old": "Output-device bindings are snapshot bindings.",
+   "new": "Output-device bindings are snapshot bindings (D-083).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-083"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-148",
+   "old": "An output device (telemetry, the XPlane visualizer, disk streaming) consumes snapshots via §12.3.",
+   "new": "An output device consumes snapshots as §12.3 specifies. Examples are telemetry, disk streaming and the XPlane visualizer",
+   "where": "new",
+   "cites": [
+    "§12.3"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-149",
+   "old": "It addresses what it reads with the selectors (the closed family of deferred reads resolving against a source, §14.4),",
+   "new": "An output device addresses what it reads with the selectors (the closed family of deferred reads resolving against a source, §14.4).",
+   "where": "new",
+   "cites": [
+    "§14.4"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-150",
+   "old": "which reach any cell, since inspection reads admit deep paths.",
+   "new": "They reach any cell, since inspection reads admit deep paths.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-151",
+   "old": "A binding is resolved at attach against the `Build` with did-you-mean (the offending name plus the list-in-hand it should have matched), and compiled to one gather, the output half of the binding interface (§11.6).",
+   "new": "A binding is resolved at attach against the `Build` with did-you-mean (the offending name plus the list-in-hand it should have matched), and compiled to one gather, the output half of the binding interface (§11.6).",
+   "where": "new",
+   "cites": [
+    "§11.6"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-152",
+   "old": "`map_output` therefore receives a labeled NamedTuple,",
+   "new": "`map_output` therefore receives a labeled NamedTuple (§11.6)",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§11.6"
+   ],
+   "tag": "R",
+   "ruling": "R5"
+  },
+  {
+   "id": "C-153",
+   "old": "keyed by the names `reads` declared (§11.6),",
+   "new": "so the NamedTuple `map_output` receives is keyed by exactly the names `reads` declared.",
+   "where": "units/G2/old.md",
+   "cites": [
+    "§11.6"
+   ],
+   "tag": "M",
+   "ruling": "R5"
+  },
+  {
+   "id": "C-154",
+   "old": "instead of performing its own path lookups.",
+   "new": "instead of performing its own path lookups.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-155",
+   "old": "A model substitution that breaks a binding therefore fails at attach, not with silent garbage on the wire.",
+   "new": "A model substitution that breaks a binding therefore fails at attach, not with silent garbage on the wire.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-156",
+   "old": "Loggers treat field-handle signals specially. They skip or summarize them.",
+   "new": "An exporting logger treats field-handle signals specially. It skips or summarizes them.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R10"
+  },
+  {
+   "id": "C-157",
+   "old": "This is inspection (§13.5).",
+   "new": "An output device's read of the snapshot is inspection (§13.5, D-083).",
+   "where": "new",
+   "cites": [
+    "§13.5"
+   ],
+   "newcites": [
+    "§13.5",
+    "D-083"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-158",
+   "old": "It is human-facing, with no effect on run semantics.",
+   "new": "It is human-facing, with no effect on run semantics.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-159",
+   "old": "It is the same kind of observation as the log retaining the full table and the GUI's deep-reading panels.",
+   "new": "It is observation of the same sort as the log retaining the full table and the GUI's deep-reading panels.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-160",
+   "old": "Every cell is reachable, because the table is public throughout (§8.3),",
+   "new": "Every cell is reachable, because the table is public throughout (§8.3).",
+   "where": "new",
+   "cites": [
+    "§8.3"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-161",
+   "old": "and an intermediate a device wants to stream is one promoted to a declared output.",
+   "new": "An intermediate a device wants to stream is one promoted to a declared output.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-162",
+   "old": "A binding chooses its side.",
+   "new": "A binding chooses its side (D-129).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-129"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-163",
+   "old": "A deep path is an inspection read.",
+   "new": "A deep path is an inspection read.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-164",
+   "old": "It makes zero promises, gives free access, and is right for looking at this build.",
+   "new": "It makes zero promises, gives free access, and is right for looking at this build.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-165",
+   "old": "An exported output face,",
+   "new": "An exported output face",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-166",
+   "old": "spelled `get_face(name)` (§14.4), is an integration read.",
+   "new": "spelled `get_face(name)` (§14.4), is an integration read.",
+   "where": "new",
+   "cites": [
+    "§14.4"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-167",
+   "old": "It is named, curated and meaning-stable under substitution, and right for consumers that outlive the build they were configured against.",
+   "new": "It is named, curated and meaning-stable under substitution, and right for consumers that outlive the build they were configured against.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-168",
+   "old": "What makes a face meaning-stable is writer-independent semantics (§11.4).",
+   "new": "What makes a face meaning-stable is writer-independent semantics (§11.4, D-045).",
+   "where": "new",
+   "cites": [
+    "§11.4"
+   ],
+   "newcites": [
+    "§11.4",
+    "D-045"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-169",
+   "old": "Why the choice matters.",
+   "new": "The choice matters because of drift.",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-170",
+   "old": "Attach validation converts structural drift to loud errors on both sides.",
+   "new": "Attach validation converts structural drift to loud errors on both sides (D-083).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-083"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-171",
+   "old": "Only faces protect against semantic drift,",
+   "new": "Only faces protect against semantic drift.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-172",
+   "old": "where a substituted aircraft publishes the same path at the same type with a different meaning, such as a CG velocity under a name read as body-origin velocity.",
+   "new": "In semantic drift, a substituted aircraft publishes the same path at the same type with a different meaning, such as a center-of-gravity velocity under a name read as body-origin velocity.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-173",
+   "old": "Nothing else can, because meaning is not in the schema.",
+   "new": "Nothing else can protect against it, because meaning is not in the schema.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-174",
+   "old": "Semantically generic consumers should therefore bind faces.",
+   "new": "Semantically generic consumers should therefore bind faces (D-083).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-083"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-175",
+   "old": "A visualizer needs pose, and every aircraft has one.",
+   "new": "A visualizer needs pose, and every aircraft has one.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-176",
+   "old": "Aircraft families should export the conventional surface such consumers need, a library/migration deliverable (`migration_outline.md`).",
+   "new": "Aircraft families should export the conventional surface such consumers need, a library/migration deliverable (the migration outline companion).",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R11"
+  },
+  {
+   "id": "C-177",
+   "old": "Wrapper types make face semantics structurally checkable,",
+   "new": "Wrapper types make face semantics structurally checkable.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-178",
+   "old": "as in `VelocityData` with its `v_eb_b` defined at the type as body-origin velocity.",
+   "new": "An example is `VelocityData`, an illustrative wrapper type, with its `v_eb_b` defined at the type as body-origin velocity.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R11"
+  },
+  {
+   "id": "C-179",
+   "old": "A bare vector does not wire, and wrapping the wrong quantity is a deliberate lie, not a drift.",
+   "new": "A bare vector does not wire, and wrapping the wrong quantity is a deliberate lie, not a drift.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  }
+ ],
+ "added": [
+  "(attached participants in the periphery)",
+  "(the retained sequence of published snapshots).",
+  "(a published consistency point),",
+  "(the immutable per-boundary publication)",
+  "(the single handout point for published snapshots).",
+  "(the cells holding every produced signal)",
+  "(one iteration of the loop)",
+  "(the run's diagnostics and liveness record, §11.8).",
+  "(each one declared name with its cell),",
+  "(the typed entries of the signal table, §8.3).",
+  "Root inputs are the root component's own input faces.",
+  "(the set of faces a device may write),",
+  "(the primary record of a session).",
+  "(the trace's fixed preamble)",
+  "(the ordinary loop re-driven from the trace).",
+  "(one pass through the execution order).",
+  "A binding is the value passed at `attach!` that makes a device framework-legible.",
+  "(the name a port wears on its component's boundary),",
+  "§11.8 lists what it carries.",
+  "(a capability the design admits but does not build),",
+  "The four recording keywords appear on `init!` with their defaults (Appendix B). `init!(sim, condition; trace = true, log = true, log_every = 1, log_max = 65536)`",
+  "(FlightApps' Cessna 172X model)",
+  "(FlightCore's `XPlane12Control` output device).",
+  "Attach refuses such a binding with `ReadBindingUnresolved` (D-130)."
+ ]
+}
