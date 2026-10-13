@@ -1,0 +1,43 @@
+it records is visible next to a live heartbeat. Any other exception propagates, and the wrapper turns 
+it into DeviceCrash (§12.4).
+The classification is the author's, because only they know their parser. FlightCore's 
+InputMappingError docstring assigned it the same way. What changes under the author-owned loop 
+is that no framework per-iteration catch site exists, so the framework's contribution is the diagnostic 
+channel, not the catch. A marked exception type is not provided (D-105). report!(handle, …) writes 
+device-attributed runtime warnings into that device's diagnostic cell, the single-writer entry point 
+into the runtime warning stream (§13.2, §11.8), and nothing more. It is not a general user-diagnostics 
+channel. Tolerating everything hides bugs as "device attached, nothing happens". Tolerating nothing 
+kills a live telemetry link on its first truncated datagram, and since tasks are per-run artifacts (D-093), 
+kills it for the rest of the run.
+11.7 The GUI write path: port resolution, peek, staging contract
+Panels remain per- component extensions in FlightCore's style, such as GUI.draw!
+(ctx, =:LowPassFilter), discovered by walking the assembly. Widgets, however, name the 
+component's own ports, never root inputs. The build-time wiring answers one question statically 
+and exactly: is this port transitively driven by a root input, and which one? Every input port has exactly 
+one source (§6.1), so the resolution is total:
+• Root-driven, within the GUI's claim: a live widget. It peeks and stages the resolved root input 
+through the GUI's own staging cell.
+• Component-driven, or root-driven under another device's claim: a read-only rendering. 
+It displays the driven value from the snapshot, visually distinct, with its source ("driven by 
+avionics/throttle_cmd", the canonical slash form of §8.6).
+This retires FlightCore's dead-slider convention and replaces it with checked structure: a widget is 
+live exactly when the underlying input is yours to command in this configuration. The dead 
+slider is the Cessna172Xv1 throttle. The engine panel's slider is visually live and the avionics silently 
+overwrite it every cycle, so who commands what lives in the user's head. User-commandability is 
+a wiring decision made where configurations are made. Command-plus-manual-override is a mux 
+component with a root-wired select. That is explicit structure, not two writers racing (the same 
+race as the drag phase in the worked example of §11.4, ruled out the same way). This places one 
+obligation on the GUI. Read-only rendering is first-class, not an error state, because the author of 
+input_slider! cannot know at authoring time whether it will be live.
+Liveness is a derived property, and resolution is transitive. A widget is live iff two things hold. 
+Its port's feed chain terminates in a root input, and that root input lies inside the GUI's own claim 
+in the run's frozen surface partition (root-input exclusivity, §11.3). The feed chain is walked through 
+local wires and interface connections across all levels, not just the local assembly. The claim may 
+have been computed from the unclaimed complement under is_greedy, or enumerated face by face 
+by a partial-claims binding (§11.6). Either way, "live" reads as "inside the surface I declared for".
+Under the roster freeze, liveness is a static fact of the run. It is baked once, with the port resolution, 
+when the run starts, and never consulted against mutable claim state at render. There is no per-port 
+"GUI-controlled" marking anywhere. The export chain is the marking, written by the one author 
+entitled to write it. A component's ports become GUI-commandable exactly when the assemblies 
+above surface them. The switch between "driven by its own panel" and "driven by an external 
+21

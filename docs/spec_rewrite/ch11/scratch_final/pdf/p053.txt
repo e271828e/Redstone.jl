@@ -1,0 +1,41 @@
+Writers and readers
+The diagnostics are written in these places.
+• Whichever task stages writes OutOfClaimEntry, ClaimedFaceEntry and EntryTypeMismatch at staging 
+(§11.4). The staging happens on the task of a device (any attached participant in the periphery). It 
+can also go through the harness writer (the framework-owned write path stage!(sim, …), D-200).
+• The device tasks write MalformedDatum, from the author's loop body via report!(handle, …) (§11.6).
+• The loop itself writes DebtReanchor and UnboundedRun.
+• The frame (one iteration of the loop) that the loop runs writes ChatteringBudget and FiringBudget 
+(D-317).
+• attach! writes EmptyGreedyClaim as it adds a device to the roster (the list of attached devices, §11.3). 
+The value goes into the roster entry being created.
+attach! mutates the roster, so its warning lives in the roster's status rather than on an artifact (D-250). 
+The device's task does not exist until run!, so the new roster entry's diagnostic cell (a writer's own 
+holding place for runtime diagnostics) has no other writer yet.
+The loop reads the diagnostics. It folds them into the published framework status (the diagnostics 
+value each snapshot carries, §11.2). They hence reach every snapshot (the immutable per-boundary 
+publication). An unspecified structure with those writers is exactly the arbitrary shared mutable 
+state that the two rules of §11.1 exist to eliminate. So the channel gets the mechanism §11.4 already 
+established, not one of its own.
+One diagnostic cell per writer
+Each writer has one diagnostic cell (D-136, D-200). There is one per rostered device, one for the 
+harness writer and one for the loop itself (D-200). The Model (the deployment and its executor at one 
+scalar) owns one more. Its frame writes the chattering and firing-budget reports there. The drain 
+(the frame-top swap that applies staged device writes to the root inputs) folds that diagnostic cell 
+into the loop's account beside the loop's own (D-317).
+A device's diagnostic cell, the loop's and the Model's each have a single writer, by the same ownership 
+argument as the staging cells (each device's atomic holding place for pending writes). There is no 
+locking, no arbitration and no new primitive ( D-136). The harness writer's diagnostic cell is 
+written from whichever task stages , exactly as its staging cell is, and the same CAS (compare-
+and-swap) append arbitrates ( D-200). It carries no heartbeat, and its status record no task_state, 
+because it has no task of its own to be alive or dead. The loop's own record carries neither, for the 
+same reason (D-240, D-193).
+A diagnostic cell holds a bounded accumulation and one atomic liveness timestamp. The accumu -
+lation is a small ring of diagnostic values, capacity 16, plus a count per kind (a diagnostic's identity 
+in the closed set) of what the ring could not hold (D-136). The rejected alternatives are in D-136.
+The bound and the drain
+The ring's bound is the rate limit (D-136). When a writer emits past the ring's capacity within one 
+frame, the value is not stored and its kind's suppressed count increments. The drop policy retains 
+the earliest in the frame, and the excess becomes counts. The first occurrences are the ones with 
+diagnostic content, and the hundredth is noise the count already reports. Rate-limiting "wherever its 
+53

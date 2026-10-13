@@ -1,0 +1,42 @@
+conflict-precedence comparison and the active-widget stage-every-pass contract (§11.7) describe a 
+contested-input world the design does not have. The findings below are read under that scope.
+• Drag against the stream.  The user grabs the u_cmd slider while the joystick streams. Under per-
+input cells and the batch stack, each frame's conflict resolves by last-store/last-push wall-clock 
+order (D-024). With 16.7 ms renders against 10 ms polls, the applied input alternates between drag 
+value and ramp on the cadence beat, the filter visibly wobbles, and the pattern differs run to run. 
+The trace replays any given run exactly, but the behavior is still a timing artifact. Under per-device 
+cells the GUI stages in every drag frame, since it renders at least once per 20 ms frame and the 
+active-widget contract stages on every pass. The GUI therefore wins every drain by attachment 
+order. That win is a clean, deterministic override for exactly the grab duration. The same user 
+code gives qualitatively different physics.
+• Edits while paused. Under per-input cells, the still-polling joystick overwrites the user's u_cmd edit 
+about 10 ms later (D-024). The knob visibly snaps back and the edit never applies. Under the batch 
+stack, the edit is buried under newer pushes, and the pending chain grows at the polling rate, 
+about 10³ nodes per 10 s pause, with every peek walking that chain ( D-024). Under per-device 
+cells, the u_cmd edit holds in the GUI's own cell across the pause, and the knob keeps the edit by 
+the §11.7 peek rule. That edit merges with the τ edit, which is the sparse-accumulation case, and 
+applies at the un-pause drain. It holds for one deterministic frame before the joystick reclaims 
+the root input. That one-frame application is the honest semantics of one-shot editing a streamed 
+input. The uncontested τ edit works under all three shapes.
+• Corrections the exercise forced. The sparse-writer lost-write hazard is specific to one-cell-per-device 
+layouts. Per-input cells cannot lose independent-input writes, so the CAS merge is per-device cells' 
+antidote, not a general need. And the batch stack's conflict order is temporal, not an attachment-
+order policy (D-024).
+• Discoveries. There were two: the active-widget contract, and the port-resolution answer to panel 
+reuse (§11.7). The second came from asking how the filter's panel survives the filter becoming an 
+embedded component (a unit of modeling) with u_cmd driven by another component.
+11.5 Inbound: the input trace
+The input trace is the sequence of drained, device-tagged batches per frame. A device is any attached 
+participant in the periphery, and a batch is its staged set of writes. A frame is one iteration of the 
+loop, from drain to publication. The drain is the frame-top swap that applies staged device writes to 
+the root inputs. The trace extends the determinism (§10.7) end-to-end. Replay re-runs the ordinary 
+loop on a recorded input trace. Replaying a recorded interactive session reproduces the trajectory 
+bit-identically (§2.4), with staging fed from the recording, so no device or mapping feeds the inputs 
+(D-218).
+The record format
+The trace retains every batch sparse, in one record format (D-176). At the drain each drained 
+staging cell is scanned. A staging cell is the per-device holding place where a device's pending 
+batch waits between drains. Its masked (touched) batch entries are recorded as (position ⇒ value) 
+pairs, against the writer's face-name → position schema in the schemas list (below). A face is the 
+name a port wears on its component's boundary. A component is the unit of modeling, a leaf or 
+40

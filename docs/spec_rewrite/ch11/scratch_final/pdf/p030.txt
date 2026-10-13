@@ -1,0 +1,40 @@
+init!(sim, condition; trace = true, log = true, log_every = 1, log_max = 65536)
+The bound is a count, not a memory budget  (D-137). Snapshots are immutable object graphs 
+(§4.1) with internal sharing. A field handle  (an immutable query object consumers evaluate at 
+their own arguments, §4.4) rides as a reference to build-time-frozen data ( §9.8). Byte accounting 
+over snapshots is therefore fuzzy and platform-dependent. A count is exact. It converts to memory 
+through one number the user can measure once, Base.summarysize of a single snapshot.
+The default is finite unconditionally (D-137). It is not a modal rule keyed on t_end. A finite run 
+shorter than the bound never notices the bound, and one number is easier to hold than two regimes. 
+At 50 Hz and full density, 2¹⁶ boundaries is about 22 minutes before anything is dropped at all.
+When the log fills, the retention stride doubles , so coverage stays global ( D-137). A rolling 
+window, with the recent past at full density and the start of the session forgotten, was rejected 
+(D-137). Instead the log re-decimates progressively. After k generations the effective stride is 
+log_every · 2^k. The whole run stays plottable, and what coarsens is density, never extent.
+The doubling is the division of labor (D-038) carried through. The log's chief consumer is the post-
+run plot of a session as a whole, and nobody plots hours at 50 Hz. Full density over any segment of 
+interest is what replay from the trace recovers (§11.5, §12.7).
+The guarantees are normative, not the mechanism  (D-137). There are three. The bound is 
+respected continuously, and the retained count never exceeds log_max. Coverage is global at the 
+effective stride. And the endpoints are retained unconditionally (D-137).
+The run's first snapshot and its terminal snapshot ( §12.4, §13.5) survive any log_every and any 
+log_max, and they do not count against the bound. They are two extra references. The first is the 
+boundary-zero snapshot under init! (§14.5), and the snapshot restore! or replay! publishes as it 
+builds the run (§12.6). The stride counts boundaries from it. The terminal snapshot's status carries 
+the run's final cumulative diagnostic counters ( §11.8). A run's two endpoints and its diagnostic 
+account therefore always outlive whatever retention did to the middle.
+The mechanism sketch is non-binding. The thinning is amortized. When the log fills, the stride 
+doubles immediately. Each subsequent retained append also releases one predecessor of the previous 
+generation. A cursor over the odd indices does this in O(1) amortized, with physical compaction 
+once per generation. A generation's thinning therefore completes exactly when its refill does.
+fill at stride log_every → full → stride doubles → thin one predecessor per retained append, 
+while refilling → full at stride log_every · 2 → ⋯ → generation k at log_every · 2^k
+Amortizing rather than halving in one shot is a responsiveness choice (D-137). The amortized form 
+drops exactly one old snapshot per retained append, the same steady trickle a rolling window would 
+produce. Keeping coverage global therefore costs nothing extra in GC pressure. The loop's own work 
+is pointer bookkeeping, microseconds either way and on the framework side of the scope ( §9.8). 
+Publication stays wait-free and readers never block. A reader holding a released snapshot simply 
+keeps it alive.
+Two compositions are worth stating once. The monotonicity of totals, the status's cumulative per-
+writer counters, across logged snapshots (§11.8) is untouched. Re-decimation, like decimation, loses 
+30

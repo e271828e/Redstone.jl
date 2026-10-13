@@ -1,0 +1,43 @@
+map_input(datum, b)                    #              datum → face ⇒ value pairs — user 
+code
+reads(b)                               # output side: labeled §14.4 selectors → one 
+compiled gather
+map_output(nt, b)                      #              the gather's NamedTuple → wire datum
+The root carries is_greedy(=:AbstractBinding) = false beside the two side defaults, so silence is not 
+greediness (D-177). A greedy claim is the unclaimed complement computed at attach. The computed 
+claim source (the greedy one, §11.3) is declared or absent.
+The framework needs no contract on the datum's shape. The datum travels only between loop 
+and map_input, written by the same author. The framework's structural knowledge comes entirely 
+from the declared traits and the enumeration methods. Everything enumerable validates at attach. 
+Everything opaque is bounded at its runtime enforcement point. map_input is bounded by the staging 
+checks (§11.4). map_output receives exactly the compiled gather's NamedTuple, and what it puts on 
+the wire is the peer's business. map_input/map_output are, precisely, conventions of the author-
+owned loop idiom (D-177). The framework never calls them, so they are taught (Appendix A) and 
+never checked. A binding whose loop calls something else by another name is simply a binding with 
+a different private helper.
+reads(b) returns a labeled NamedTuple of selectors (D-199). Selectors are the closed family of 
+deferred reads (§14.4). An example is (; alt = get_output(…), pose = get_face(…)). The labels are 
+the binding's own naming, carried through compilation in declaration order, so the NamedTuple 
+map_output receives is keyed by exactly the names reads declared. One returned value thereby fixes 
+names, order and reads together, under the same attach-time validation as claims (D-199).
+The periphery gets roots where components (the units of modeling) have one. §8.5 refuses a super-
+type for class (a component's primitive-vs-assembly status) for two reasons, and neither reaches 
+here. First, a component's single-inheritance slot is already spoken for  by the domain hierarchies 
+(AbstractAircraft, engine families), while a device's and a binding's are vacant. Nothing else wants 
+them. Second, a component's class is implementation detail behind its contract ( §8.5), while a 
+binding's sidedness is its public contract, the one thing every consumer of it must know (D-177).
+The conformance check
+Sides are declared, and the obligations they create are enforced both ways  (D-177). claims 
+and reads have error-throwing fallbacks on the root. A declared side whose method was never 
+written therefore fails loudly at the attach point rather than degrading into silence. The attach runs 
+a bidirectional conformance check over the pair (trait, method):
+• is_input =& !is_greedy ⇒ claims(b) is called once and its faces staked. The fallback firing here 
+means "you declared an input side and wrote no enumeration".
+• is_input =& is_greedy ⇒ the claim is computed ( §11.3), and a claims method defined for this 
+binding is an error. The two sources are alternatives, not layers.
+• is_output ⇒ reads(b) is called and the gather compiled.
+• Neither side declared ⇒ attach-time error naming both traits. A binding that touches nothing is 
+a configuration mistake, not a degenerate.
+• is_greedy without is_input ⇒ error. Greediness is a source within a side, and a source without its 
+side is meaningless.
+47

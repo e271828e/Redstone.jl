@@ -1,0 +1,42 @@
+It stages a batch from any task, the calling task (the task that invoked run!) included ( D-200). Its 
+always-present staging cell, the harness cell, is drained, traced and surface-checked exactly as any 
+device's.
+The harness writer's surface is the one thing in the design that is derived rather than claimed (D-174). 
+It is the unclaimed complement, the faces no rostered device speaks for. That surface is recomputed 
+at every stopped-sim roster change, and is therefore as fixed within a run as any claim set. A stage! 
+write to a claimed face is rejected at staging ( ClaimedFaceEntry, naming the incumbent, D-174). A 
+rostered greedy claimant empties that surface outright. The greedy claim is itself a rostered claim, 
+so the complement it leaves is empty and every stage! in such a session is rejected that way (D-192). 
+There is one edge case, a batch staged while stopped whose face a subsequent attach! claims, and 
+the attach itself renormalizes it away (§11.4).
+The harness cell drains last, by convention (D-096, D-174). With every surface disjoint the order 
+is unobservable, so the rule exists to make the trace read the same way every time, not to arbitrate 
+anything.
+The periphery resolves root faces against the activation's cell layout alone  ( D-261). An 
+activation is the build's typed products at a scalar type. The layout carries the root faces in structure 
+order with their probe values (the real values the build evaluates each user function with), beside the 
+address table, so both of the build's lookup families, schema and layout, read it there, and writers, 
+claims and the harness compile against it. The services take their schema from the Build itself (§14.3). 
+The periphery never needs an authored fact the layout does not hold.
+Root-input initial values
+The init/trim services own root-input initial values (D-047). Input declarations are bare types 
+(§8.2) and carry no defaults, yet a root input unfed by any device must hold a defined value from 
+the first frame. No declaration constant could own that value, because the trim service writes root-
+input values it solved for, such as throttle and elevator. Export-entry defaults were rejected (D-047). 
+init! establishes every root input, and the trace header (the trace's fixed preamble, a checkpoint 
+init! takes) captures the result. Totality is enforced pre-write at every complete-world application, 
+namely init!, trim setup and trim commit (§14.6, D-149).
+The frozen roster
+The roster is frozen per run  (D-106). Attach and detach are stopped-sim operations. attach!/
+detach! are legal in the built, initialized and stopped states (§12.6) and an error while running. That 
+error is ServiceLifecycle (Appendix C, D-108), the same kind that gates the §14 services. The list is 
+exhaustive. An errored simulation refuses both with the same kind. A roster change configures the 
+next run, and an errored simulation has none (§13.6, D-232). The prohibition includes pause. Pause 
+is a control-plane state inside a run (§12.1), and a surface that could move while paused would move 
+mid-run.
+The roster (roster entries, claims, attachment order) is therefore a plain immutable value. The 
+loop reads it once at run!, and nothing republishes it ( D-087). The partition of the root face set 
+into per-writer surfaces plus the harness remainder is a static, inspectable fact of the run ( D-106). 
+It is printable before the run starts and valid until it ends (printable like the face routes, §13.7). 
+Attachment order is the roster's own order. The trace still tags each record with a stable device id 
+34

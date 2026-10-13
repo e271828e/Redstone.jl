@@ -90,12 +90,11 @@ stopped-sim state only ([§11.3][s11-3]), and the task appears at the next `run!
 rethrow ([§13.4][s13-4]) presupposes. It is also what lets parallel unattended sweeps
 thread `run!` inline with no nested task fan-out. One immutable [`Build`](#g-build) (the
 artifact `build(world)` produces) is shared across the workers ([§9.2][s9-2], [D-282][d-282]),
-and each `Simulation` owns its own `Model`, and with it the `Model`'s
-[buffers](#g-buffer) (the framework-owned vectors backing continuous state,
-[§9.4][s9-4]). Pre-materializing the sweep's [activations](#g-activation) (the build's
-typed products at a scalar type) with `build(world; activations = …)` ([§9.4][s9-4],
-[D-135][d-135]) then leaves no worker synchronizing on anything. `run!` blocks its caller
-until the run ends.
+and each `Simulation` owns its own `Model`, and with it the `Model`'s [buffers](#g-buffer)
+(the framework-owned vectors backing continuous state) ([§9.4][s9-4]). Pre-materializing
+the sweep's [activations](#g-activation) (the build's typed products at a scalar type) with
+`build(world; activations = …)` ([§9.4][s9-4], [D-135][d-135]) then leaves no worker
+synchronizing on anything. `run!` blocks its caller until the run ends.
 
 Which devices get a task is decided after initialization, from the frozen roster
 and the outcomes of device `init!`, never from `run!`'s keywords ([D-310][d-310], [D-138][d-138]).
@@ -489,9 +488,9 @@ leaves is empty and every `stage!` in such a session is rejected that way
 ([D-192][d-192]). There is one edge case, a batch staged while stopped whose face a
 subsequent `attach!` claims, and the attach itself renormalizes it away ([§11.4][s11-4]).
 
-**The harness cell drains last**, by convention ([D-096][d-096], [D-174][d-174]). With
-every surface disjoint the order is unobservable, so the rule exists to make the
-trace read the same way every time, not to arbitrate anything.
+**The harness cell drains last**, by convention ([D-096][d-096], [D-174][d-174]). With every
+surface disjoint the order is unobservable, so the rule exists to make the trace
+read the same way every time, not to arbitrate anything.
 
 **The periphery resolves root faces against the [activation](#g-activation)'s cell layout alone**
 ([D-261][d-261]). An activation is the build's typed products at a scalar type. The
@@ -580,7 +579,7 @@ device's root inputs hold their last-drained values and no other writer inherits
 them. The read-only widgets render the orphan visibly, never mysteriously
 ([§11.7][s11-7]). Recovery is between runs. It takes a stop, a `detach!`, and either
 `init!` (fresh trajectory) or `replay!`-to-end then `run!`, which continues from
-the interrupted [boundary](#g-boundary), a published consistency point ([§12.7][s12-7]). The death is an
+the interrupted [boundary](#g-boundary) ([§12.7][s12-7]), a published consistency point. The death is an
 anomaly, not a surface event.
 
 #### Mid-run readers
@@ -887,18 +886,18 @@ one small allocation per drained batch, plus the values boxed into that
 allocation.
 
 The rule is uniform because the *width* of a [claim](#g-claim) (the set of faces a device
-*may* write) is a fact about one [binding](#g-binding), the value passed at `attach!` that
-makes a device framework-legible, not about a category of writers. A [greedy
-claim](#g-greedy-claim) is the unclaimed complement the framework computes at attach ([§11.3][s11-3]). It
-is enumerated and as wide as the root [contract](#g-contract) (the root's declared interface),
-so keying retention by claim source is rejected ([D-176][d-176]). Every consumer then
-handles one format instead of two. There is one record format at the trace's
-edge, no per-record format flag, one decoder in the edited-inputs what-if
-(replay with edited inputs), in disk serialization and in human inspection, and
-one inverse conversion in replay. That work is paid once, up front, off the loop
-([§12.7][s12-7]). The conversion site is the drain and not the staging shim, because the
-drained tuple is the *coalesced* truth. A shim-side sparse log would need its
-own merge.
+*may* write) is a fact about one [binding](#g-binding), not about a category of writers. A
+binding is the value passed at `attach!` that makes a device framework-legible.
+A [greedy claim](#g-greedy-claim) is the unclaimed complement the framework computes at attach
+([§11.3][s11-3]). It is enumerated and as wide as the root [contract](#g-contract) (the root's declared
+interface), so keying retention by claim source is rejected ([D-176][d-176]). Every
+consumer then handles one format instead of two. There is one record format at
+the trace's edge, no per-record format flag, one decoder in the edited-inputs
+what-if (replay with edited inputs), in disk serialization and in human
+inspection, and one inverse conversion in replay. That work is paid once, up
+front, off the loop ([§12.7][s12-7]). The conversion site is the drain and not the
+staging shim, because the drained tuple is the *coalesced* truth. A shim-side
+sparse log would need its own merge.
 
 The format's costs are recorded rather than argued away. On the wide writers the
 conversion is what keeps the trace honest. A tuple as wide as the unclaimed
@@ -1590,13 +1589,13 @@ crashed one, and the label may. The label text is the GUI package's.
 The GUI package's half stays deferred, and `pending.md` (the record of what the
 implementation still owes) tracks it. The built-in GUI's parking ([D-310][d-310]) assigns
 it to the browser client over the bridge. The bridge is the link to the
-simulation, and [D-310][d-310] leaves its design open. That half covers what the client
-receives beside the three values, how a panel scopes to a child component, and
-the widgets. Its constraints are fixed here. Panels name their own ports by
-face-name string. Resolution to root inputs and the liveness verdict are baked
-at run start, never performed at render. Liveness and peek arrive through the
-framework-supplied context, never by reaching into the loop. And assembly panels
-compose children by path.
+simulation, and [D-310][d-310] leaves the bridge's design open. That half covers what the
+client receives beside the three values, how a panel scopes to a child
+component, and the widgets. Its constraints are fixed here. Panels name their
+own ports by face-name string. Resolution to root inputs and the liveness
+verdict are baked at run start, never performed at render. Liveness and peek
+arrive through the framework-supplied context, never by reaching into the loop.
+And assembly panels compose children by path.
 
 ### 11.8 Diagnostics and liveness: the per-writer diagnostic cell
 

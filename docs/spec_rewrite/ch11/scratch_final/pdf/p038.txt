@@ -1,0 +1,41 @@
+# the drain scatters, unmasked positions skipped:
+batch.mask[i] =& (the root input at position i receives batch.values[i])
+One concrete layout is what makes the frame-top drain compilable. The alternative carrier, 
+Union{Nothing, Tᵢ} per face with the marker riding in the value, has no such layout. Tuple types 
+are covariant, so each combination of touched faces is its own concrete type, and applying a batch 
+would specialize at frame top on which faces it touched (D-202). The mask buys the layout back at 
+the price of dead placeholders. Those are filled from the declaration's probe values (the real values 
+the build evaluates each user function with), which are constructible for every declared type and 
+unreachable behind the mask guard.
+The consequences are each mechanical. The merge is positional and mask-driven (the sketch above), 
+so it compiles straight-line, leans on no small-tuple heuristic, and does not degrade with surface 
+width (D-202). The drain applies each staging cell through an attach-compiled scatter, which maps 
+position → root-input cell, statically typed, with masked-off positions skipped (D-104). That scatter 
+is the exact mirror of the compiled output gather (§11.2).
+Authors never build the shape by hand. map_input returns face ⇒ value pairs for whatever the datum 
+touched, and stage! normalizes those pairs through an attach-compiled shim (D-104). The shim does 
+three things. It maps name to position, converts to the root input's declared type, and sets the mask. 
+It thereby confines the residual name-shaped dynamism to one framework-owned conversion on 
+the task that stages, at the point where wire-shaped data becomes system-shaped data. Author-
+built total tuples are rejected as a padding form, the same disease D-074 and the handler return law 
+refuse (D-104).
+A device with a greedy claim (the unclaimed complement, computed by the framework) needs no 
+special treatment here (D-174). Its claim was computed at the attach point, and by the time shapes are 
+compiled it is an ordinary claim set (§11.3). The GUI's staging cell is compiled exactly as a joystick's.
+The harness cell gets the same treatment ( D-174). Under the roster freeze (attach and detach as 
+stopped-sim operations) its derived surface, the unclaimed complement, is as static as any claim 
+set, so it too is compiled to a positional shape. That shape is recompiled at each attach!/detach!, 
+both stopped-sim points, and it carries the same shim, merge and scatter. Being always present, the 
+harness cell gets the compilation unasked. It is also the one staging cell whose shape the framework 
+derives rather than receives.
+All staging cells share one representation and one mechanism. The name-keyed dynamic path does 
+not exist, and no face name is ever resolved inside the loop's frame.
+The recompilation has one edge case. A pending harness batch staged before a stopped-sim attach! 
+may hold the old shape, or may name a face the new claim covers. The attach renormalizes that 
+batch. It is reshaped, and newly-claimed faces are discarded with ClaimedFaceEntry. So the run always 
+starts with staging cells matching the run's schemas.
+Diagnostic sites
+Diagnostic sites follow the compilation, every one of them to staging ( D-044). Face-name validity, 
+surface membership and value convertibility are all static facts of the run. Every check therefore 
+runs in stage!'s normalization, on the writer's own task. A device's out-of-claim face has no position 
+38

@@ -1,0 +1,45 @@
+by-default (D-029). On the dense component the conversion costs about 2×, a position beside every 
+value where the positional tuple carried the value alone. That changes no order of magnitude, and 
+it leaves the budget (D-029) standing for every writer at once. The allocation is in-class with what 
+the retention carve-out ( §9.8) already admits. Per boundary it is smaller than the log's snapshot, 
+the carve-out's standing occupant and the one qualified exception to retains-what-was-already-
+allocated. And the decision is reversible as pure implementation . The conversion is lossless 
+in both directions, so verbatim retention could return as a per-entry storage optimization if a 
+marathon-session measurement ever asks for it. Such a return would leave the record semantics, 
+the header and the replay path exactly as they are.
+The trace header is the checkpoint init! takes at the end of boundary zero, after the first 
+snapshot is published ( §12.6, D-274). A checkpoint (the Model's state at a frame top as one value) 
+holds the flat buffer x, the s and m stores, the whole signal table, the guard priors, t and t₀, the frame 
+and boundary counters, and the fingerprint. The executor's clock holds t and t₀, and the run (the 
+state one run owns) holds the frame index and the boundary ordinal (D-317). The header holds the 
+stores and the root-input cells as values, never the sparse authored overlay. Replay must survive 
+edits to declared defaults, the primary-data doctrine (D-038).
+An unfed mixture = 0.5 never appears in any batch, so replay is broken without the root inputs. The 
+init/trim services own root-input initialization ( §14.6), and the checkpoint's table holds the values 
+they wrote. The fingerprint is the part of the header replay compares rather than restores (§12.7).
+• The run's Deployment and the structural layout.  The deployment (the scalar-free artifact the 
+grid parameters fix) comes from §9.2, and it carries Δt_base, h, N_base, the algorithm identifier, 
+localization_tol, localization_budget (§10.4) and firing_budget (§10.6). The layout is the store 
+layout and the root-input faces the Build fixes. It also holds what a copy by position relies on: 
+each component's x type, every cell's address with its type, and the event list in the order of the 
+priors. Both are taken at the same instant as the state. The deployment holds no policy ( D-255). 
+t_end and ignore_stop_requests are keywords of each advance ( §13.5), and only the terminating 
+advance's policy explains the stop, so the termination record carries that one.
+Trace is that fixed header plus two append-only lists, schemas and batches, and its length (D-255). 
+A trace records a Simulation, which runs only a Model{Float64}, so Trace takes no scalar parameter 
+(D-317). The header is written once, by the door that builds the run, and never again, which is what 
+makes it an artifact. The lists grow in place, the batches at every drain and the schemas at every 
+roster change. The length is the drain's count on the live trace, frozen into the value trace(sim) 
+hands back. It advances at the top of each drain, and the frame ordinal every record of that drain 
+carries is this count (D-260).
+Each writer's face-name → position schema lives in the schemas list. Positional records are 
+meaningless without it, and replay does not reconstruct claims (§12.7). The list only grows (D-217). 
+attach! and detach! push the current writer set onto it in place, because a roster change between 
+advances (§12.6) recompiles the harness writer and the same face moves position. Earlier records 
+keep their index, and a record resolves only through its own schema entry.
+The trajectory depends on the deployment exactly as it depends on the stores. The Deployment 
+constructor (§9.2) sits outside the Build, and the checkpoint carries the clock, t₀ included (§14.5). A 
+header without them could therefore not back the bit-identity claim (§12.7). The header is also what 
+the artifact's run metadata names ( §13.5, Appendix B). A checkpoint is the one full-state capture, 
+taken by init! for the header and by checkpoint(sim) on demand (§12.6). The header is the other half 
+14

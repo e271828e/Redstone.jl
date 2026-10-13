@@ -1,0 +1,43 @@
+reflection class (§8.1), where the shadowing check is an isdefined/=== pair. The which detection 
+runs once at a stopped-sim service point, not inside any frame.
+Every violation in that list reports BindingContractMismatch (Appendix C). The report names the 
+binding type, the trait, the method at fault and the direction (declared-but-missing, or defined-but-
+undeclared).
+This is what closes the shadowing hole.  Under the rejected alternative, detection by method 
+presence ( D-177), a bidirectional binding whose claims was written without extending the 
+framework's generic presented as output-only and degraded silently. That omission is the using-
+without-import trap (§8.1), one level down. With the side declared, the absent method has something 
+to contradict.
+Greediness stays orthogonal to reads. A greedy front end may also drive a compiled output gather. 
+That combination is legal and currently uninstantiated. Its plausible customer is a narrow-wire 
+interactive surface, a motorized control board whose detents must be driven back out. The binding 
+stays an attach! argument, never a device field. The same T16000M binds differently per aircraft, and 
+narrowing the binding narrows the claim (§11.3).
+Why the periphery gets roots where components have one. §8.5 refuses a class supertype for 
+two reasons, and neither reaches here. First, a component's single-inheritance slot is already spoken 
+for by the domain hierarchies (AbstractAircraft, engine families), while a device's and a binding's 
+are vacant. Nothing else wants them. Second, a component's class is implementation detail behind 
+its contract (§8.5), while a binding's sidedness is its public contract, the one thing every consumer 
+of it must know.
+Rejected, correspondingly (D-177): an abstract binding-type taxonomy encoding the sides, optional 
+roots left unenforced, and a declared sides(b) trait returning the side set. The last of the three is 
+answered rather than repeated by the design above, since redundancy with a cross-check is drift 
+detection. That is what the bidirectional check turns the traits into. The same fact is stated twice, 
+in two forms, with the framework paid to compare them.
+is_greedy is a claim source, not a device class. What the declaration buys is one computation at 
+the attach point. After it the binding holds an ordinary claim set, and every mechanism downstream 
+is blind to where the set came from: exclusivity and storage (§11.3); shape, shim, merge, scatter and 
+drain (§11.4); trace (§11.5); detach's release. There is no derived surface shared among the writers 
+that elected it, and no device class hanging off the marker. The standing rejection is untouched. 
+Opportunistic writing to unclaimed faces "for any device" stays dead (D-044). Autonomous devices 
+still enumerate, and a maximal surface is what exactly one line of a binding asks for, in the open, 
+checked like any other claim.
+A second greedy attach stakes the empty remainder. The complement is computed against the 
+roster as it stands. A greedy binding attached after another has already swallowed everything there-
+fore gets the empty claim. That claim is legal, being the honest may-write-nothing degenerate below, 
+and it is useless, which is worth saying out loud. The attach succeeds and records EmptyGreedyClaim 
+(Appendix C, a warning naming the device and its binding) in the roster entry's diagnostic cell. 
+attach! mutates the roster, so the warning lives in that state's status and surfaces through the status 
+record (§11.8, D-250). The log line at return is presentation. That is the one honest reading of "you 
+asked for what is left and nothing was left".
+19

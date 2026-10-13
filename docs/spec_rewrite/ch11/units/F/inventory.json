@@ -98,7 +98,7 @@
   {
    "id": "C-011",
    "old": "Why. The rule is uniform because a claim's width is a fact about one binding, not about a class of writers.",
-   "new": "The rule is uniform because the width of a claim (the set of faces a device may write) is a fact about one binding, the value passed at `attach!` that makes a device framework-legible, not about a category of writers.",
+   "new": "The rule is uniform because the width of a claim (the set of faces a device may write) is a fact about one binding, not about a category of writers. A binding is the value passed at `attach!` that makes a device framework-legible.",
    "where": "new",
    "cites": [],
    "tag": "F"

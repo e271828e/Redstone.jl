@@ -1,0 +1,40 @@
+(described below), never a roster index, because ids read across runs, where the roster does change 
+(D-087).
+Attach validation, claim registration and the staging-shape compilation (§11.4) all run at the attach 
+point. That makes attach!/detach! stopped-sim configuration operations beside init! and trim (§14). 
+While a simulation runs, its configuration (build, roster, claims, surfaces) is immutable. The mid-
+run mutation doctrine ( §12.5) extends to its final form. The running periphery stages writes and 
+issues control commands, and nothing else changes (D-031).
+Device identity and admission
+Identity is the device instance. The same object ( ===) may occupy at most one roster entry. Two 
+instances of the same type, two joysticks say, are two devices. The stable device id the trace, 
+heartbeat and diagnostics speak is assigned at attach!, monotonic per Simulation and never reused. 
+It lives exactly as long as its roster entry, across runs (roster persistence, §12.6) and until detach!.
+Admission is a two-part check at the attach point, in order:
+# each line: the condition that rejects the attach → the diagnostic it raises
+identity   this instance is already rostered
+               → AlreadyAttached      (names the entry and its binding)
+claims     face exclusivity: this device's claim set meets a rostered claim
+               → ClaimConflict        (names two distinct devices)
+An already-rostered instance is rejected rather than silently absorbed, because rebinding has an 
+explicit spelling, detach! then attach!, both legal at any stopped-sim point. Either a silent no-op 
+or a silent rebind would discard a binding the caller handed over. Running the claims check after 
+the identity check is what makes ClaimConflict always name two distinct devices, never a device 
+colliding with its own earlier attachment. Detaching a device the roster does not hold is an error 
+(NotAttached, D-215).
+Device death and orphaned claims
+Device death does not detach  (D-106). A mid-run crash, voluntary exit or unplug ( §11.6, §12.4) 
+ends the device's task. The staging cell stops filling, the heartbeat (§12.2) shows the death by name, 
+and the roster entry, claims included, persists to the end of the run. The orphaned claims (the claims 
+of a device whose task died mid-run) are the accepted cost of the freeze. The device's root inputs 
+hold their last-drained values and no other writer inherits them. The read-only widgets render the 
+orphan visibly, never mysteriously (§11.7). Recovery is between runs. It takes a stop, a detach!, and 
+either init! (fresh trajectory) or replay!-to-end then run!, which continues from the interrupted 
+boundary (§12.7), a published consistency point. The death is an anomaly, not a surface event.
+Mid-run readers
+One deliberate asymmetry is on record as a guarded addition (a capability the design admits but does 
+not build). A pure reader claims nothing. Examples are a binding declaring is_output alone (§11.6), 
+a visualizer or a telemetry tap. Attaching one mid-run would therefore move no writer's surface 
+(D-106). A dynamic reader list would touch only §12.3 wakeups, the heartbeat and the shutdown 
+join, never the drain. The addition is cleanly severable from the freeze should the join-a-running-
+35

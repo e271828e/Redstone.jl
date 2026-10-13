@@ -1,0 +1,81 @@
+[A1] ...claims and frozen roster, its per-device | -'staging' +'staging, staged representation'
+[A2] ...the GUI write path; and [§11.8][s11-8] | -'the third cross-task channel,' +''
+[A3] ...third cross-task channel, runtime diagnostics and | -'liveness.' +'liveness, a third channel between tasks beside the two data channels.'
+[A4] ...does enforce the [boundary](#g-boundary)-visibility rule ([§10.3][s10-3]), | -'a boundary being a published consistency point,' +''
+[A5] ...is only ever free between steps. | -'' +'A boundary is a published consistency point.'
+[A6] ...only ever free between steps. Transplanting | -'it' +'the lock'
+[A7] ...consequence for execution modes. ¶ The | -'replacement has five planes. Its' +"replacement's"
+[A8] ...ECEF stands for Earth-centered, Earth-fixed. ¶ | -'' +'The replacement has five planes. ¶'
+[A9] ...where the loop takes the staged | -'batches' +"[batches](#g-batch) (each device's set of pending writes)"
+[A10] ...the reclamation problem (hazard pointers, epochs, | -'RCU' +'read-copy-update'
+[A11] ...epochs, RCU grace periods) which makes | -'these patterns' +'lock-free handoffs'
+[A12] ...runs on the calling task** ([D-310][d-310]). | -'The calling task runs the loop itself, and every rostered device runs on a spawned task.' +''
+[A13] ...and each `Simulation` owns its own | -'' +"`Model`, and with it the `Model`'s"
+== A: 13 hunks
+
+[B1] ...table. It holds the declared [ports](#g-port) | -'(each' +'(the addressable unit,'
+[B2] ...[ports](#g-port) (each one declared name with | -'its' +'one'
+[B3] ...only declared ports are [cells](#g-cell) (the | -'' +"signal table's"
+[B4] ...declared ports are [cells](#g-cell) (the typed | -'entries of the signal table,' +'value holders, one per output port,'
+[B5] ...are the root component's own input | -'faces.' +"[faces](#g-face) (the names ports wear on their component's boundary)."
+[B6] ...deliberately does *not* carry the state | -'stores (`x`, `s`, `m`)**' +'stores** `x`, `s` and `m`'
+[B7] ...(the trace's fixed preamble) plus the | -'batches' +'[batches](#g-batch) of staged device writes'
+[B8] ...is global at the effective stride. | -'The endpoints below are kept. ¶ **The' +'And **the'
+[B9] ...**The endpoints are retained unconditionally** ([D-137][d-137]). | -'' +'¶'
+[B10] ...under `init!` ([§14.5][s14-5]), and the snapshot | -'' +'`restore!` or `replay!` publishes as it builds'
+[B11] ...`init!` ([§14.5][s14-5]), and the snapshot the | -'door publishes under `restore!` and `replay!`' +'run'
+[B12] ...compositions are worth stating once. The | -'`totals`' +''
+[B13] ...worth stating once. The `totals` monotonicity | -'' +"of `totals`, the status's cumulative per-writer counters,"
+[B14] ...the table is public throughout ([§8.3][s8-3]). | -'An intermediate a device wants to stream is one promoted to a declared output.' +''
+[B15] ...at *this* build. An exported output | -"[face](#g-face) (the name a port wears on its component's boundary)," +'face,'
+== B: 15 hunks
+
+[C1] ...into a running model through its | -'' +'[root inputs](#g-root-input) (the'
+[C2] ...a running model through its root | -'inputs' +"component's own input faces)"
+[C3] ...The section's parts, in order, cover | -'the write surface,' +'root inputs,'
+[C4] ...death, and mid-run readers. ¶ #### | -'The write surface' +'Root inputs'
+[C5] ...surface](#g-write-surface) is the set of faces | -'' +'the entries of'
+[C6] ...the set of faces a writer's | -'batch entries' +'[batch](#g-batch) (its staged set of writes, applied whole at the next drain)'
+[C7] ...entries may reach. Its members are | -'[root inputs](#g-root-input) (the inputs no component produces).' +'root inputs.'
+[C8] ...port wears on its component's boundary. | -'It' +'A root input'
+[C9] ...([D-031][d-031]). The GUI reaches them through | -'the' +'port'
+[C10] ...writes ([§12.1][s12-1]). Devices, mappings, the [trace](#g-trace) | -'' +'(the primary record of a session)'
+[C11] ...root inputs by face name ([§8.6][s8-6]). | -'The trace is the primary record of a session.' +''
+[C12] ...pending batch waits between drains), the | -'CAS' +'compare-and-swap (CAS)'
+[C13] ...stay. They serve atomicity and [coalescing](#g-coalescing) | -'(the CAS merge keeping' +'(keeping'
+[C14] ...enumeration the framework performed. Attaching the | -'greedy claimant' +'[greedy claimant](#g-greedy-claim) (the device holding the computed claim)'
+[C15] ...the roster, the [harness writer](#g-harness-writer) (the | -'one writer whose surface is derived, not claimed).' +'framework-owned write path `stage!(sim, …)`).'
+[C16] ...is derived, not claimed). It is | -'a task-free' +'an'
+[C17] ...claimed). It is a task-free entry | -'point,' +'point with no task of its own,'
+[C18] ...harness cell drains last**, by convention | -'([D-174][d-174]).' +'([D-096][d-096], [D-174][d-174]).'
+[C19] ...periphery resolves root faces against the | -"activation's" +"[activation](#g-activation)'s"
+[C20] ...the activation's cell layout alone** ([D-261][d-261]). | -'' +"An activation is the build's typed products at a scalar type."
+[C21] ...faces in structure order with their | -'probe values,' +'[probe](#g-probe) values (the real values the build evaluates each user function with),'
+[C22] ...The roster | -'(entries,' +'(roster entries,'
+[C23] ...each record with a stable device | -'id,' +'id (described below),'
+[C24] ...The staging cell stops filling, the | -'[§12.2][s12-2]' +''
+[C25] ...cell stops filling, the [§12.2][s12-2] heartbeat | -'' +'([§12.2][s12-2])'
+[C26] ...`run!`, which continues from the interrupted | -'boundary' +'[boundary](#g-boundary), a published consistency point'
+== C: 26 hunks
+
+[D1] ...first fixes the [coalescing](#g-coalescing) policy (the | -'CAS merge, CAS being' +''
+[D2] ...(the CAS merge, CAS being compare-and-swap, | -'' +'or CAS, merge'
+[D3] ...policy, CAS merge, newest wins per | -"[face](#g-face)** (the name a port wears on its component's boundary)" +'face**'
+[D4] ...batch into the pending one. Untouched | -'faces' +"[faces](#g-face) (the names ports wear on their component's boundary)"
+[D5] ...newest level. That is the per-face | -'ZOH.' +'zero-order hold (ZOH).'
+[D6] ...of the harness writer) is the | -'exception,' +'exception to the single writer,'
+[D7] ...overwrite they lose writes silently instead. | -'' +'Under overwrite, a pending `flaps` edit is clobbered by an unrelated `gear` message, undrained and undiagnosable.'
+[D8] ...section works that hazard through. A | -'pending `flaps` edit is clobbered by an unrelated `gear` message, undrained and undiagnosable. A' +''
+[D9] ...its generic `map_input` on the device | -'task, as' +'task. `TableBinding` is'
+[D10] ...device task, as the shared pure | -'helper' +'helper,'
+[D11] ...root-input types are both known at | -'attach. Both are known' +'attach,'
+[D12] ...only ever receive masked positions. The | -'face-name → position schema lives in the' +"writer's"
+[D13] ...position schema lives in the [roster](#g-roster) | -"entry (the writer's" +'entry, its'
+[D14] ...record in the list of attached | -'devices)' +'devices, holds the face-name → position schema'
+[D15] ...its compiled scatter, in attachment order | -'([D-024][d-024]).' +'([D-024][d-024]), the harness cell last ([§11.3][s11-3]).'
+[D16] ...and the [port](#g-port)-resolution answer to panel | -'reuse (a' +'reuse. A'
+[D17] ...answer to panel reuse (a port | -'being' +'is'
+[D18] ...being the addressable unit of the | -'model).' +'model.'
+[D19] ...writer). [Boundaries](#g-boundary) (published consistency points, where | -'snapshots' +'[snapshots](#g-snapshot)'
+== D: 19 hunks
+

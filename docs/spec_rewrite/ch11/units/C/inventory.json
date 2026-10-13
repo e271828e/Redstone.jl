@@ -1097,7 +1097,7 @@
   {
    "id": "C-114",
    "old": "stop, `detach!`, and either `init!` (fresh trajectory) or `replay!`-to-end then `run!` (continuation from the interrupted boundary, §12.7).",
-   "new": "It takes a stop, a `detach!`, and either `init!` (fresh trajectory) or `replay!`-to-end then `run!`, which continues from the interrupted boundary, a published consistency point (§12.7).",
+   "new": "It takes a stop, a `detach!`, and either `init!` (fresh trajectory) or `replay!`-to-end then `run!`, which continues from the interrupted boundary (§12.7), a published consistency point.",
    "where": "new",
    "cites": [
     "§12.7"

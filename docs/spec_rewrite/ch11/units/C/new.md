@@ -140,9 +140,9 @@ leaves is empty and every `stage!` in such a session is rejected that way
 ([D-192][d-192]). There is one edge case, a batch staged while stopped whose face a
 subsequent `attach!` claims, and the attach itself renormalizes it away ([§11.4][s11-4]).
 
-**The harness cell drains last**, by convention ([D-096][d-096], [D-174][d-174]). With
-every surface disjoint the order is unobservable, so the rule exists to make the
-trace read the same way every time, not to arbitrate anything.
+**The harness cell drains last**, by convention ([D-096][d-096], [D-174][d-174]). With every
+surface disjoint the order is unobservable, so the rule exists to make the trace
+read the same way every time, not to arbitrate anything.
 
 **The periphery resolves root faces against the [activation](#g-activation)'s cell layout alone**
 ([D-261][d-261]). An activation is the build's typed products at a scalar type. The
@@ -231,7 +231,7 @@ device's root inputs hold their last-drained values and no other writer inherits
 them. The read-only widgets render the orphan visibly, never mysteriously
 ([§11.7][s11-7]). Recovery is between runs. It takes a stop, a `detach!`, and either
 `init!` (fresh trajectory) or `replay!`-to-end then `run!`, which continues from
-the interrupted [boundary](#g-boundary), a published consistency point ([§12.7][s12-7]). The death is an
+the interrupted [boundary](#g-boundary) ([§12.7][s12-7]), a published consistency point. The death is an
 anomaly, not a surface event.
 
 #### Mid-run readers

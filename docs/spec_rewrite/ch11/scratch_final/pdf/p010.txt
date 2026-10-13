@@ -1,0 +1,42 @@
+fast path rather than a second semantics. A sparse writer stages only what was touched. The 
+GUI and a JSON peer are sparse writers, and under overwrite they lose writes silently instead. 
+The worked example at the end of this section works that hazard through: a pending flaps edit 
+clobbered by an unrelated gear message, undrained and undiagnosable. A user-facing overwrite opt-
+in (complete(binding)) is closed (D-104).
+Rule. The staged representation is fixed per attachment, compiled at attach. An enumerated writer's 
+claim set and root-input types are both known at attach, since claims(binding) (§11.6) is read against 
+the root contract. So the framework fixes the cell's content type there. It is a pair of positional tuples 
+over the claim set: a values tuple, concretely typed Tuple{T₁, …, Tₙ}, and a parallel Bool touched-
+mask. A set mask position means staged this time . A clear one means not touched, never "reset". 
+Untouched positions carry placeholder values and are never read. The mask guards every consumer, 
+so no placeholder ever reaches the model. The batch is therefore isbits with one concrete layout per 
+writer. The levels doctrine is untouched, and root inputs only ever receive masked positions. The 
+face-name → position schema lives in the roster entry.
+In sketch form:
+# claim set enumerated f₁ … fₙ; Tᵢ = declared type of the root input behind fᵢ
+# attach fixes the cell's content type — values and mask, both concrete:
+values :: Tuple{T₁, …, Tₙ};  mask :: NTuple{n, Bool}
+# stage!, on the device task: the shim turns the author's face ⇒ value pairs
+# into `incoming` — name → position, convert to Tᵢ, set the mask
+# staging merges into the pending batch, newest wins per face:
+merged.values[i] = incoming.mask[i] ? incoming.values[i] : pending.values[i]
+merged.mask[i]   = incoming.mask[i] | pending.mask[i]
+# the drain scatters, unmasked positions skipped:
+batch.mask[i] =& (the root input at position i receives batch.values[i])
+Why. One concrete layout is what makes the frame-top drain compilable. The alternative carrier, 
+Union{Nothing, Tᵢ} per face with the marker riding in the value, has no such layout. Tuple types 
+are covariant, so each combination of touched faces is its own concrete type, and applying a batch 
+would specialize at frame top on which faces it touched ( D-202). The mask buys the layout back 
+at the price of dead placeholders. Those are filled from the declaration's probe values, which are 
+constructible for every declared type and unreachable behind the mask guard.
+The consequences are each mechanical. The merge is positional and mask-driven (the sketch above), 
+so it compiles straight-line, leans on no small-tuple heuristic, and does not degrade with surface 
+width (D-202). The drain applies each cell through an attach-compiled scatter: position → root-
+input cell, statically typed, masked-off positions skipped. That scatter is the exact mirror of the 
+compiled output gather (§11.2).
+Authors never build the shape by hand. map_input returns face ⇒ value pairs for whatever the datum 
+touched, and stage! normalizes those pairs through an attach-compiled shim. The shim does three 
+things. It maps name to position, converts to the root input's declared type, and sets the mask. It 
+thereby confines the residual name-shaped dynamism to one framework-owned conversion on the 
+device task, at the boundary where wire-shaped data becomes system-shaped data. Author-built 
+10

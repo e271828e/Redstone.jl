@@ -183,10 +183,10 @@ crashed one, and the label may. The label text is the GUI package's.
 The GUI package's half stays deferred, and `pending.md` (the record of what the
 implementation still owes) tracks it. The built-in GUI's parking ([D-310][d-310]) assigns
 it to the browser client over the bridge. The bridge is the link to the
-simulation, and [D-310][d-310] leaves its design open. That half covers what the client
-receives beside the three values, how a panel scopes to a child component, and
-the widgets. Its constraints are fixed here. Panels name their own ports by
-face-name string. Resolution to root inputs and the liveness verdict are baked
-at run start, never performed at render. Liveness and peek arrive through the
-framework-supplied context, never by reaching into the loop. And assembly panels
-compose children by path.
+simulation, and [D-310][d-310] leaves the bridge's design open. That half covers what the
+client receives beside the three values, how a panel scopes to a child
+component, and the widgets. Its constraints are fixed here. Panels name their
+own ports by face-name string. Resolution to root inputs and the liveness
+verdict are baked at run start, never performed at render. Liveness and peek
+arrive through the framework-supplied context, never by reaching into the loop.
+And assembly panels compose children by path.

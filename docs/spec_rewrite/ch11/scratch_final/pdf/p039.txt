@@ -1,0 +1,41 @@
+in the schema and is rejected with OutOfClaimEntry. Staging is an earlier, better-attributed site than 
+the drain for that rejection, and the kind and payload (the structured data a diagnostic carries beside 
+its kind) are the same either way. The GUI is included, its claim being an ordinary one. A harness 
+write to a claimed face is rejected the same way, with ClaimedFaceEntry naming the incumbent 
+device (D-174). And a value that cannot convert to its root input's declared type is discarded with 
+EntryTypeMismatch (Appendix C, D-105), at the same spot.
+Nothing remains at the drain. With surfaces frozen for the run, there is no fact only the drain can 
+know, and the drain is pure application (D-106).
+The drain
+At frame top the drain takes each device's staging cell with one atomicswap(cell, nothing) 
+(D-024). The swap is an indivisible take, so there is no lost-write window. Each taken staging cell is 
+then applied through its compiled scatter, in attachment order (D-024), the harness cell last (§11.3). 
+Attachment order is retained as a deterministic application order. Under root-input exclusivity, 
+cross-device writes to one root input cannot arise, so the order matters only for diagnostics (D-044).
+Which frame a write lands in remains wall-clock reality. What the drain guarantees is that the 
+frame's outcome is a pure function of the drained batches.
+Because the roster is a fixed value at run!, the drain is fully compilable (D-106). The staging cells and 
+their scatters form a heterogeneous but known tuple the frame function can specialize on, which 
+means zero dynamic dispatch at frame top. That is the same per-configuration compile trade the 
+executor (the compiled form of the stage execution order, §9.7) already makes, now incurred only at 
+stopped-sim attach points. The specialization is an implementation freedom the freeze creates, not 
+an obligation (D-106). Iterating a roster array costs a handful of dispatches per frame and remains 
+acceptable.
+Two shapes were rejected, per-input atomic cells and a shared lock-free batch stack ( D-024). The 
+worked example below examines both.
+Worked example: filter, joystick and GUI
+This worked example is the exercise that selected per-device cells. It produced two things for §11.7: 
+the active-widget contract, which §11.7 rejects ( D-026), and the port-resolution answer to panel 
+reuse. A port is the addressable unit of the model. The setup is a first-order filter with root inputs 
+u_cmd and τ, a fictitious 100 Hz single-axis joystick streaming a slow ramp onto u_cmd (a complete 
+writer), and a 60 Hz GUI with sliders for both root inputs (a sparse writer). Boundaries (published 
+consistency points, where snapshots go out) run at 50 Hz, at pace 1. The interference on u_cmd is 
+the point.
+Three candidate staging shapes were on the table: per-input cells, a shared batch stack, and per-device 
+cells. The user-level listing came out identical across all three, so ergonomics cannot discriminate 
+between them. Behavior under a concrete interleaving did.
+Root-input exclusivity rules out the very contest the setup builds. Under root-input exclusivity 
+(§11.3) the contested- u_cmd scenario cannot arise, because a second writer on u_cmd is an attach-
+time error. What the test settles is therefore the cell shapes: atomicity, coalescing, pause behavior 
+and the peek rule (a widget shows its own pending write if any, else the snapshot value). Its 
+39

@@ -1,0 +1,42 @@
+that reads every state field out of the stores is a possible future diagnostic. It would be a reader over 
+the stores, never a port class (D-252).
+Event firings are not recorded  (D-309). The log holds boundary snapshots and the trace holds 
+staged inputs (§11.5). Neither carries a per-event record. Replay plus the published modes recovers 
+which events fired at which boundary. The honest remedy is again to declare the mode field public 
+and return it from y_state (D-252). A mode field so exposed is in every snapshot. An event-firing 
+stream is a guarded addition.
+The log: retained snapshots under a bound
+Logging dissolves into publication.  The log is a vector of retained snapshot references. They 
+are the same objects, with zero extra copies. The per-step deepcopy detour of the SavingCallback 
+disappears. The cost is one snapshot allocation per boundary, on the framework side of the §9.8 
+scope, which already carved out logging. Logged snapshots are not garbage at all, and unlogged 
+ones die young. Preallocated snapshot buffers are rejected (D-023).
+Retention: the trace's kill switch, plus decimation. The log takes the same plain on/off switch 
+the trace has ( §11.5), and additionally a keep-every-kth retention policy, log_every (Appendix B). 
+Why decimation is admissible here and not there.  The derived/primary split ( D-038) decides 
+it. The log is recomputable from the trace by replay, so a thinned log costs resolution in a view, 
+never in a record. Thinning the trace would destroy the only primary account of a session (D-029). 
+Decimation is a retention policy only. Every boundary still runs, is still published to live readers, 
+and still enters the trace.
+Decimation slows the log's growth. It does not stop it. The default configuration is log = true, 
+log_every = 1 alongside t_end = Inf, the honest interactive default (Appendix B), and it grows for 
+as long as the session lasts. At C172X scale and 50 Hz that is gigabytes per hour, and it ends in an 
+out-of-memory nobody was warned about.
+Rule. The log takes a retention bound beside its switch and its stride: log_max, the maximum number 
+of retained snapshot references, default 65536 (2¹⁶), with Inf the explicit opt-out.
+The bound is a count, not a memory budget. Snapshots are immutable object graphs (§4.1) with 
+internal sharing, and a field handle (an immutable query object consumers evaluate at their own 
+arguments, §4.4) rides as a reference to build-time-frozen data (§9.8). Byte accounting over them is 
+therefore fuzzy and platform-dependent. A count is exact, and it converts to memory through one 
+number the user can measure once, Base.summarysize of a single snapshot.
+The default is finite unconditionally, not a modal rule keyed on t_end. A finite run shorter than 
+the bound never notices the bound, and one number is easier to hold than two regimes. At 50 Hz 
+and full density, 2¹⁶ boundaries is about 22 minutes before anything is dropped at all.
+When the log fills, the retention stride doubles, so coverage stays global. A rolling window, 
+with the recent past at full density and the start of the session forgotten, was rejected ( D-137). 
+Instead the log re-decimates progressively. After k generations the effective stride is log_every · 
+2^k. The whole run stays plottable, and what coarsens is density, never extent.
+Why. That is the division of labor ( D-038) carried through. The log's chief consumer is the post-
+run plot of a session as a whole, and nobody plots hours at 50 Hz. Full density over any segment of 
+interest is what replay from the trace recovers (§11.5, §12.7).
+4

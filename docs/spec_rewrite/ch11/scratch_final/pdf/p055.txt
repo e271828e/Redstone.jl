@@ -1,0 +1,40 @@
+Delta plus total is what makes the status legible at any reading cadence. A GUI panel refreshing at 
+60 Hz sees each occurrence once in recent, while a consumer that samples occasionally still reads a 
+complete account from totals. Nothing is lost by not looking. The record's who is the only attribution 
+a value has, so a renderer presents each value under its record's writer (D-228).
+Presentation
+Presentation is where maxlog, the cap Julia's logging macros put on repeats, lives. A status renderer 
+prints a given writer × kind up to 25 cumulative occurrences and then switches to count-only display 
+("MalformedDatum from UDPInput#3: 1 482 occurrences"). That threshold is presentation policy, 
+not channel policy (D-136). Counts keep accumulating regardless, nothing recorded depends on 
+it, and the choice belongs to whoever renders. The channel's own bound, above, is the one that is 
+normative.
+The run's end
+The terminal snapshot carries the run's final cumulative counters  (§12.4, §13.5, D-136). An 
+unattended run (a run with empty staging and no snapshot readers) that nobody watched therefore 
+still answers "what went wrong, and how often" from the value its own shutdown published. 
+Final means final at the last frame top ( D-201). The account closes with the drain that preceded 
+the terminal publication. What lands after it can reach no snapshot. Examples are a report from a 
+device's exit path and the tail's own DeviceJoinTimeout (§12.4). So the loop takes each diagnostic cell 
+once more at the run's end, keeping the next run's account clean.
+That last take is folded into the termination record (the stopped-sim value naming how the run 
+ended) as the tail residue ( §13.5). Per writer, the tail residue is the final ring and its suppressed 
+counts. The take is also presented through the standard logging backend. It is loud and recorded, 
+and still never published (D-201, D-203).
+Allocation
+On a quiet frame nothing allocated scales with diagnostic activity (D-241). The sentinel swap 
+allocates nothing. The per-writer status costs one small vector of records per publication  
+(D-241), beside the snapshot allocation per boundary (a published consistency point) that §11.2 
+already accepts. That is the same GC-over-reuse trade, a roster-sized vector rather than a snapshot 
+type per roster size (D-241).
+The per-kind counters are a fixed-shape isbits record, never a Dict (D-136). The closed kind 
+set (Appendix C) licenses that, because it makes the counter layout a type rather than a lookup.
+On a noisy frame the diagnostic values are allocated at emission, on the writer's own task. A drained 
+non-empty ring is frozen into the snapshot and can never be written again, so the writer allocates 
+a fresh ring lazily at its next emission. That cost, too, lands on the writer's task, and it is the same 
+GC-over-reuse trade §11.2 makes when it rejects preallocated snapshot buffers. The rate limit is 
+therefore an allocation bound as well. One ring of sixteen values per diagnostic cell per frame is the 
+worst case, and everything past it is an integer increment. The zero-allocation invariant, scoped to 
+the stepping loop (§9.8, D-305), is untouched. The diagnostic cells sit on the framework side of that 
+scope with publication and logging.
+55

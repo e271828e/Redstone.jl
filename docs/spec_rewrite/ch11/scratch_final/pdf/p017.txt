@@ -1,0 +1,46 @@
+The author owns the loop body; the framework owns the bracket
+One device contract means author-owned loop bodies. A framework-owned hook loop would have 
+to ask each device what it waits on, which is the rejected taxonomy resurrected as a trait ( D-102). 
+Under the author-owned body, every wait structure is ordinary user code composed from handle 
+primitives:
+function loop(dev=:T16000M, handle)              # timer-driven, full write-set
+    while running(handle)
+        sleep(dev.Δt_poll)
+        stage!(handle, map_input(poll_axes(dev), binding(handle)))
+    end
+end
+function loop(dev=:UDPInput, handle)             # source-driven, data-dependent
+    while running(handle)
+        datum = recv(dev.socket)                 # blocks; unblock! closes the socket
+        is_eot(datum) =& return                  # voluntary exit
+        try
+            stage!(handle, map_input(datum, binding(handle)))
+        catch e
+            is_datum_error(dev, e) =| rethrow()  # a bug → wrapper → DeviceCrash
+            report!(handle, MalformedDatum(e))   # garbage → visible, bounded, alive
+        end
+    end
+end
+function loop(dev=:Telemetry, handle)            # boundary-driven output
+    while running(handle)
+        snap = wait_next_snapshot(handle)        # §12.3; returns on stop
+        send(dev.socket, map_output(gather(handle, snap), binding(handle)))
+    end
+end
+A bidirectional peer composes both halves itself, with an inner reader task inside its own domain, 
+rather than forcing a select engine into the framework. Two idioms are author obligations the 
+framework can only teach and diagnose, never force ( Appendix A): loop on running(handle), and 
+make blocking calls interruptible ( unblock!, or timeouts). A forgotten predicate check surfaces as 
+DeviceJoinTimeout with the device's name. A stall surfaces as a stale heartbeat ( §12.2). Liveness 
+timestamps ride inside the handle primitives, which store them in the device's own diagnostic cell 
+(§11.8), so the framework observes activity without owning the loop.
+should_close dissolves. A window ✕ or peer EOT is the loop body returning. The wrapper's exit 
+path releases the device's OS resources, marks it dead for the heartbeat and consults should_abort. 
+Claims and the roster entry persist to run end (the freeze, §11.3). §12.4(6) is literally "the task body 
+returned. " The GUI implements the same authoring contract.
+The binding: framework-legible by enumeration, opaque in its mappings
+A binding is a value subtyping AbstractBinding, the second mandatory root. Its type declares which 
+sides it has and enumerates what each side touches. The legible half is explicit methods returning 
+data, called once at attach on the calling task (the task that invoked run!). The opaque half is called 
+per datum on the device task by the author's own loop:
+17

@@ -90,12 +90,11 @@ stopped-sim state only ([§11.3][s11-3]), and the task appears at the next `run!
 rethrow ([§13.4][s13-4]) presupposes. It is also what lets parallel unattended sweeps
 thread `run!` inline with no nested task fan-out. One immutable [`Build`](#g-build) (the
 artifact `build(world)` produces) is shared across the workers ([§9.2][s9-2], [D-282][d-282]),
-and each `Simulation` owns its own `Model`, and with it the `Model`'s
-[buffers](#g-buffer) (the framework-owned vectors backing continuous state,
-[§9.4][s9-4]). Pre-materializing the sweep's [activations](#g-activation) (the build's
-typed products at a scalar type) with `build(world; activations = …)` ([§9.4][s9-4],
-[D-135][d-135]) then leaves no worker synchronizing on anything. `run!` blocks its caller
-until the run ends.
+and each `Simulation` owns its own `Model`, and with it the `Model`'s [buffers](#g-buffer)
+(the framework-owned vectors backing continuous state) ([§9.4][s9-4]). Pre-materializing
+the sweep's [activations](#g-activation) (the build's typed products at a scalar type) with
+`build(world; activations = …)` ([§9.4][s9-4], [D-135][d-135]) then leaves no worker
+synchronizing on anything. `run!` blocks its caller until the run ends.
 
 Which devices get a task is decided after initialization, from the frozen roster
 and the outcomes of device `init!`, never from `run!`'s keywords ([D-310][d-310], [D-138][d-138]).

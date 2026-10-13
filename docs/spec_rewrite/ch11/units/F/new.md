@@ -22,18 +22,18 @@ one small allocation per drained batch, plus the values boxed into that
 allocation.
 
 The rule is uniform because the *width* of a [claim](#g-claim) (the set of faces a device
-*may* write) is a fact about one [binding](#g-binding), the value passed at `attach!` that
-makes a device framework-legible, not about a category of writers. A [greedy
-claim](#g-greedy-claim) is the unclaimed complement the framework computes at attach ([§11.3][s11-3]). It
-is enumerated and as wide as the root [contract](#g-contract) (the root's declared interface),
-so keying retention by claim source is rejected ([D-176][d-176]). Every consumer then
-handles one format instead of two. There is one record format at the trace's
-edge, no per-record format flag, one decoder in the edited-inputs what-if
-(replay with edited inputs), in disk serialization and in human inspection, and
-one inverse conversion in replay. That work is paid once, up front, off the loop
-([§12.7][s12-7]). The conversion site is the drain and not the staging shim, because the
-drained tuple is the *coalesced* truth. A shim-side sparse log would need its
-own merge.
+*may* write) is a fact about one [binding](#g-binding), not about a category of writers. A
+binding is the value passed at `attach!` that makes a device framework-legible.
+A [greedy claim](#g-greedy-claim) is the unclaimed complement the framework computes at attach
+([§11.3][s11-3]). It is enumerated and as wide as the root [contract](#g-contract) (the root's declared
+interface), so keying retention by claim source is rejected ([D-176][d-176]). Every
+consumer then handles one format instead of two. There is one record format at
+the trace's edge, no per-record format flag, one decoder in the edited-inputs
+what-if (replay with edited inputs), in disk serialization and in human
+inspection, and one inverse conversion in replay. That work is paid once, up
+front, off the loop ([§12.7][s12-7]). The conversion site is the drain and not the
+staging shim, because the drained tuple is the *coalesced* truth. A shim-side
+sparse log would need its own merge.
 
 The format's costs are recorded rather than argued away. On the wide writers the
 conversion is what keeps the trace honest. A tuple as wide as the unclaimed

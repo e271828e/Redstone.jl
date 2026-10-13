@@ -1,0 +1,40 @@
+This is inspection (§13.5). It is human-facing, with no effect on run semantics. It is the same kind 
+of observation as the log retaining the full table and the GUI's deep-reading panels. Every cell is 
+reachable, because the table is public throughout (§8.3), and an intermediate a device wants to stream 
+is one promoted to a declared output.
+A binding chooses its side. A deep path is an inspection read. It makes zero promises, gives free 
+access, and is right for looking at this build. An exported output face, spelled get_face(name) (§14.4), 
+is an integration read. It is named, curated and meaning-stable under substitution, and right for 
+consumers that outlive the build they were configured against. What makes a face meaning-stable 
+is writer-independent semantics (§11.4).
+Why the choice matters. Attach validation converts structural drift to loud errors on both sides. 
+Only faces protect against semantic drift, where a substituted aircraft publishes the same path at 
+the same type with a different meaning, such as a CG velocity under a name read as body-origin 
+velocity. Nothing else can, because meaning is not in the schema.
+Semantically generic consumers should therefore bind faces. A visualizer needs pose, and every 
+aircraft has one. Aircraft families should export the conventional surface such consumers need, 
+a library/migration deliverable ( migration_outline.md). Wrapper types make face semantics struc -
+turally checkable, as in VelocityData with its v_eb_b defined at the type as body-origin velocity. A 
+bare vector does not wire, and wrapping the wrong quantity is a deliberate lie, not a drift.
+11.3 Inbound: root inputs, claims and the frozen roster
+The write surface (the set of faces a writer's batch entries may reach) is root inputs. A root 
+input is the root component's own input face, an assembly's input_wires key or a primitive's u_types 
+key (§8.2, §8.6). It is routed inward to consumers and produced by no component. At every non-
+root level an input face is fed by the parent's wire, and at the root there is no parent. No dedicated 
+vocabulary is needed.
+A root input is usefully read as the output face of the one producer the build never sees: the periphery 
+and the services. On that reading, root-input exclusivity (below) is that producer's one-writer right, 
+and the totality (§14.6) is its completeness obligation.
+Root inputs are sources to the build-time ordering, constants within a frame, and the only thing the 
+periphery may write. The GUI reaches them through the resolution (§11.7), and control commands 
+are not writes (§12.1). Devices, mappings, the trace and the GUI write path address root inputs by 
+face name (§8.6). Structural slash paths never cross the periphery's write boundary. The write side 
+speaks the root contract's names only. The read side chooses per binding. It uses slash paths in 
+inspection reads, and face names in integration reads and in service reads (§11.2/§13.5/§14.4).
+Root-input exclusivity: one writer per root input at any time. A device claims its root inputs 
+at attach, and claiming an already-claimed root input is an attach-time error. Detaching releases 
+the claims. A released root input's GUI widgets are live again from the next run (§11.7). Exclusivity 
+replaces any cross-device conflict policy, such as attachment-order precedence at drain (D-044). Per-
+device cells, the CAS merge and the atomicswap drain all stay. They serve atomicity and coalescing, 
+not arbitration.
+6

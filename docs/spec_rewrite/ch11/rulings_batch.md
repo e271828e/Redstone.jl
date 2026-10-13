@@ -47,7 +47,9 @@ B-12 to B-14 are cheap and recommended in the same pass, but do not block.
   afterwards that all three definitions changed, since the companion's block
   may not be regenerated.
 - Recommendation: accept. Blocking.
-- Status: Accepted (orchestrator, checkpoint 2). Applied at landing, step 7.### B-2. §13.2's `EmptyGreedyClaim` cell now lives in §11.6 (inbound row 54)
+- Status: Accepted (orchestrator, checkpoint 2). Applied at landing, step 7.
+
+### B-2. §13.2's `EmptyGreedyClaim` cell now lives in §11.6 (inbound row 54)
 
 - Sources: `inbound_check_1.md` row 54; C `rulings.md` (citations removed
   with R5).
@@ -58,7 +60,9 @@ B-12 to B-14 are cheap and recommended in the same pass, but do not block.
 - Old (spec 9777–9778): `` criterion. It mutates the roster, so `EmptyGreedyClaim` lands in `` / `the roster entry's cell ([§11.3][s11-3]). The committed`
 - New: `the roster entry's cell ([§11.6][s11-6]). The committed`
 - Recommendation: accept. Blocking (caused by R5).
-- Status: Accepted (orchestrator, checkpoint 2). Applied at landing, step 7.### B-3. `implementation.md` 326, the same claim (inbound row 280)
+- Status: Accepted (orchestrator, checkpoint 2). Applied at landing, step 7.
+
+### B-3. `implementation.md` 326, the same claim (inbound row 280)
 
 - Sources: `inbound_check_1.md` row 280.
 - Evidence: `implementation.md` 325–326: "`attach!` into the roster entry's
@@ -66,14 +70,18 @@ B-12 to B-14 are cheap and recommended in the same pass, but do not block.
 - Old: `` `attach!` into the roster entry's own cell (§11.3, D-250); ``
 - New: `` `attach!` into the roster entry's own cell (§11.6, D-250); ``
 - Recommendation: accept. Blocking (caused by R5).
-- Status: Accepted (orchestrator, checkpoint 2). Applied at landing, step 7.### B-4. D-250's Spec field: §11.3 becomes §11.6 (inbound row 257)
+- Status: Accepted (orchestrator, checkpoint 2). Applied at landing, step 7.
+
+### B-4. D-250's Spec field: §11.3 becomes §11.6 (inbound row 257)
 
 - Sources: `inbound_check_1.md` row 257; the Spec-field script below (B-13).
 - Evidence: log 9627, `**Spec.** [§9.2][s9-2], [§11.3][s11-3], [§11.8][s11-8], [§13.2][s13-2], [Appendix C][sC]`.
   The new §11.3 no longer cites D-250; §11.6 states its routing with D-250.
 - New (written bare, then `linkify.jl`): `**Spec.** §9.2, §11.6, §11.8, §13.2, Appendix C`
 - Recommendation: accept. Blocking (a Spec field a move changed).
-- Status: Accepted (orchestrator, checkpoint 2). Applied at landing, step 7.### B-5. The walkthrough's "same schema, cell, drain and trace" points at §11.3
+- Status: Accepted (orchestrator, checkpoint 2). Applied at landing, step 7.
+
+### B-5. The walkthrough's "same schema, cell, drain and trace" points at §11.3
 
 - Sources: `inbound_check_2.md` (walkthrough 92); G2 `rulings.md` (inbound).
 - Evidence: `companions/inbound_periphery_walkthrough.md` 90–92 cite §11.6 for
@@ -84,7 +92,9 @@ B-12 to B-14 are cheap and recommended in the same pass, but do not block.
 - Recommendation: accept. Blocking (caused by R5). Rows citing §11.6 beside
   §11.3 for the same claim (spec 12636, glossary 14127, log 6364) stay as they
   are, as G2 notes.
-- Status: Accepted (orchestrator, checkpoint 2). Applied at landing, step 7.### B-6. The harness writer stages from any task: Appendix B and the glossary (R4, RP-9)
+- Status: Accepted (orchestrator, checkpoint 2). Applied at landing, step 7.
+
+### B-6. The harness writer stages from any task: Appendix B and the glossary (R4, RP-9)
 
 - Sources: R4; RP-9; `new_entries.md` (R4 / RP-9 bullet); `inbound_check_1.md`
   rows 88, 119, 120; C `rulings.md` (inbound); survey 1 F1 and part D.
@@ -109,7 +119,9 @@ B-12 to B-14 are cheap and recommended in the same pass, but do not block.
   included."
 - Recommendation: accept the three ruled edits (blocking). Accept the §12.6
   edit too, or hold it for chapter 12's rewrite; the orchestrator's call.
-- Status: Accepted, the §12.6 instance included (lesson 19; chapter 12 is put off). Applied at landing, step 7.### B-7. The standard GUI binding: Appendix B and two glossary entries (E5, R23)
+- Status: Accepted, the §12.6 instance included (lesson 19; chapter 12 is put off). Applied at landing, step 7.
+
+### B-7. The standard GUI binding: Appendix B and two glossary entries (E5, R23)
 
 - Sources: E5 (owner); R23; `new_entries.md` (E5 outside edits);
   `inbound_check_2.md` (spec 12636–12638, 14016, 14099); survey 2 F69.
@@ -124,7 +136,9 @@ B-12 to B-14 are cheap and recommended in the same pass, but do not block.
 - Old (spec 14097–14099): `advisory in one deployment and decisive in another. The shipped GUI` / `attaches with `true` ([§11.6][s11-6], [§12.4][s12-4]).`
 - New: `advisory in one deployment and decisive in another ([§11.6][s11-6],` / `[§12.4][s12-4]).`
 - Recommendation: accept; the owner ruled it. Blocking.
-- Status: Accepted (orchestrator, checkpoint 2). Applied at landing, step 7.### B-8. §12.4's init sketch drops `mark_dead!` (E3)
+- Status: Accepted (orchestrator, checkpoint 2). Applied at landing, step 7.
+
+### B-8. §12.4's init sketch drops `mark_dead!` (E3)
 
 - Sources: E3 (owner); `new_entries.md` (E3 outside edit); G1 `rulings.md`
   (inbound); survey 2 F55.
@@ -140,7 +154,9 @@ B-12 to B-14 are cheap and recommended in the same pass, but do not block.
   spawned" and adds nothing about `task_state`'s value.
 - Recommendation: accept. Blocking (owner-ruled outside edit). Re-check that
   the code block still parses as display code; nothing else in it changes.
-- Status: Accepted (orchestrator, checkpoint 2). Applied at landing, step 7.### B-9. The glossary's *device* entry reads as three mandatory functions (D-366)
+- Status: Accepted (orchestrator, checkpoint 2). Applied at landing, step 7.
+
+### B-9. The glossary's *device* entry reads as three mandatory functions (D-366)
 
 - Sources: G1 `rulings.md` (inbound); R22; RP-11; D-366 draft.
 - Evidence: spec 13985–13987, "under one authoring contract
@@ -153,7 +169,9 @@ B-12 to B-14 are cheap and recommended in the same pass, but do not block.
 - New: `` `AbstractDevice` under one authoring contract (a mandatory `loop`, and `` / `` optional `init!`, `shutdown!` and `unblock!` hooks) and one handle. Input-only and ``
 - Recommendation: accept. Blocking: D-366 lands with the chapter, and the
   glossary would contradict it.
-- Status: Accepted (orchestrator, checkpoint 2). Applied at landing, step 7.### B-10. D-102's Position lists `init!` and `shutdown!` as implemented by every device
+- Status: Accepted (orchestrator, checkpoint 2). Applied at landing, step 7.
+
+### B-10. D-102's Position lists `init!` and `shutdown!` as implemented by every device
 
 - Sources: consolidator, from checking D-366 against the log (lesson 42).
 - Evidence: D-102 Position (log 3138–3143): "a device implements `init!(dev)`
@@ -166,7 +184,9 @@ B-12 to B-14 are cheap and recommended in the same pass, but do not block.
   amends D-102's contract list." to D-366's Rationale.
 - Recommendation: accept, landing with D-366. The stale D-102 Rationale
   clauses (group 3) can join the same annotation in track 2, or now.
-- Status: Accepted (orchestrator, checkpoint 2). Applied at landing, step 7.### B-11. Appendix C's `CheckpointMismatch` and `ReplaySchemaMismatch` drop §11.5 (R12)
+- Status: Accepted (orchestrator, checkpoint 2). Applied at landing, step 7.
+
+### B-11. Appendix C's `CheckpointMismatch` and `ReplaySchemaMismatch` drop §11.5 (R12)
 
 - Sources: R12 (unit F: "retargeted at landing"); F `rulings.md` (inbound);
   survey 2 F64 and part D.
@@ -179,7 +199,9 @@ B-12 to B-14 are cheap and recommended in the same pass, but do not block.
 - New: `` - **`ReplaySchemaMismatch`** ([§12.7][s12-7]). Error · ``
 - Recommendation: accept. Blocking by R12's wording; check that
   `check_rows.jl` coverage does not shrink (§11.5 loses two Appendix C rows).
-- Status: Accepted (orchestrator, checkpoint 2). Applied at landing, step 7.### B-12. D-201's Spec field: §11.2 no longer states its ruling
+- Status: Accepted (orchestrator, checkpoint 2). Applied at landing, step 7.
+
+### B-12. D-201's Spec field: §11.2 no longer states its ruling
 
 - Sources: B `rulings.md` (inbound, D-201); R5; the script in B-13.
 - Evidence: log 7375 (D-201 Position: the terminal snapshot's account is
@@ -189,7 +211,9 @@ B-12 to B-14 are cheap and recommended in the same pass, but do not block.
 - New (bare): `**Spec.** §11.8, §12.4, §13.2, Appendix C`
 - Recommendation: accept (a Spec field a move changed). Low risk; it may also
   wait for track 2.
-- Status: Accepted. Applied at landing with the Spec-field pass.### B-13. Spec fields of entries the rewrite now cites in a new section
+- Status: Accepted. Applied at landing with the Spec-field pass.
+
+### B-13. Spec fields of entries the rewrite now cites in a new section
 
 - Sources: survey 1 part D ("Spec fields stale before any move"); survey 2
   part D ("Spec fields already short"); C, D, F, H, J `rulings.md` (inbound);
@@ -223,7 +247,9 @@ B-12 to B-14 are cheap and recommended in the same pass, but do not block.
 - Not proposed: D-026 + §11.4 (R7's framing sentence only points at §11.7).
 - Recommendation: accept the list at step 7's Spec-field pass, keeping each
   field's order. Not blocking; track 2 if time is short.
-- Status: Accepted. Applied at landing with the Spec-field pass.### B-14. Two glossary entries a clause behind the rewritten chapter
+- Status: Accepted. Applied at landing with the Spec-field pass.
+
+### B-14. Two glossary entries a clause behind the rewritten chapter
 
 - Sources: `inbound_check_2.md` (notes: spec 14141); J `rulings.md` (inbound,
   glossary *framework status*); R26; R10 F72.
@@ -258,7 +284,9 @@ item id in the inventory.
   `Model`'s [buffers](#g-buffer) ([§9.4][s9-4])". §9.4 already cites D-317, so
   the citation can stay §9.4 alone.
 - Recommendation: rule now as a correction (a later entry and §9.4 agree).
-- Status: Accepted (orchestrator, checkpoint 3). Ruled edit, applied by the ruled-edits agent.### B-16. "These patterns" has no antecedent in §11.1's first rule
+- Status: Accepted (orchestrator, checkpoint 3). Ruled edit, applied by the ruled-edits agent.
+
+### B-16. "These patterns" has no antecedent in §11.1's first rule
 
 - Sources: A `rulings.md`, open question 4; verifier A (still open).
 - Evidence: frozen spec 6869–6870, "the reclamation problem (hazard
@@ -268,7 +296,9 @@ item id in the inventory.
   bullet's subject is the atomic reference handoff, so this names what was
   meant and claims nothing new.
 - Recommendation: rule now as an editorial correction.
-- Status: Accepted (orchestrator, checkpoint 3). Ruled edit, applied by the ruled-edits agent.### B-17. D-022's first ruling bold on plane 2, and its fifth ruling plain
+- Status: Accepted (orchestrator, checkpoint 3). Ruled edit, applied by the ruled-edits agent.
+
+### B-17. D-022's first ruling bold on plane 2, and its fifth ruling plain
 
 - Sources: A `rulings.md`, open questions 1 and 2; verifier A ("the owner's
   call" on the fifth).
@@ -279,7 +309,9 @@ item id in the inventory.
   consequence, never a second bold") and RP-1 point the same way.
 - Recommendation: hold as written (plane 2 bold, fifth ruling plain). No
   owner question is needed: the style rule settles it.
-- Status: Held as written: the style rule settles it (consequence plain, lesson 28).### B-18. `recent` can carry thirty-two values in the loop's record
+- Status: Held as written: the style rule settles it (consequence plain, lesson 28).
+
+### B-18. `recent` can carry thirty-two values in the loop's record
 
 - Sources: J `rulings.md`, open question 1; verifier J; survey 2 F72; R10 F72
   ("whether the loop's record can carry thirty-two goes in `rulings.md`").
@@ -297,7 +329,9 @@ item id in the inventory.
   values … per frame") is per cell already and stays.
 - Recommendation: rule now. A Position (D-317) settles the fold, and the fix
   changes wording only. Not serious.
-- Status: Accepted (orchestrator, checkpoint 3). Ruled edit, applied by the ruled-edits agent.### B-19. The loop's own record carries no heartbeat either
+- Status: Accepted (orchestrator, checkpoint 3). Ruled edit, applied by the ruled-edits agent.
+
+### B-19. The loop's own record carries no heartbeat either
 
 - Sources: J `rulings.md`, correction 1.
 - Evidence: new 1772–1774 say only the harness writer's record lacks a
@@ -312,7 +346,9 @@ item id in the inventory.
   add "The loop's own record carries neither, for the same reason
   ([D-240][d-240], [D-193][d-193])."
 - Recommendation: rule now (later Positions and the code agree; rule 10).
-- Status: Accepted (orchestrator, checkpoint 3). Ruled edit, applied by the ruled-edits agent.### B-20. Bold for three Position rulings §11.8 states plain
+- Status: Accepted (orchestrator, checkpoint 3). Ruled edit, applied by the ruled-edits agent.
+
+### B-20. Bold for three Position rulings §11.8 states plain
 
 - Sources: J `rulings.md`, open question 4.
 - Evidence: `spec_style.md` 98–114: bold marks a ruling once, where the
@@ -335,7 +371,9 @@ item id in the inventory.
 - Recommendation: rule now, as a bold edit (`new_pretrim.md` not needed: bold
   is added, not removed). Run `check_bold.jl` against chapters 9, 12 and 13
   for a second bold on these rulings first; the frozen spec has none.
-- Status: Accepted (checkpoint 3), after the grep for a second bold. Ruled bold edit, applied by the ruled-edits agent.### B-21. The drains-last bold cites a Rationale where a Position states it
+- Status: Accepted (checkpoint 3), after the grep for a second bold. Ruled bold edit, applied by the ruled-edits agent.
+
+### B-21. The drains-last bold cites a Rationale where a Position states it
 
 - Sources: consolidator (lesson 42, Position grep); C `rulings.md`
   (Rationale-only list, D-174 log 6383–6385).
@@ -347,7 +385,9 @@ item id in the inventory.
   reason gets an annotation in track 2 (B-44).
 - Recommendation: rule now (a citation edit). It removes one item from the
   log's owed Positions (B-48).
-- Status: Accepted (orchestrator, checkpoint 3). Ruled edit, applied by the ruled-edits agent.### B-22. The `should_abort` keyword bold can cite D-177's Position
+- Status: Accepted (orchestrator, checkpoint 3). Ruled edit, applied by the ruled-edits agent.
+
+### B-22. The `should_abort` keyword bold can cite D-177's Position
 
 - Sources: consolidator (lesson 42); G1 `rulings.md` (Rationale-only, D-138
   log 4573–4575).
@@ -358,7 +398,9 @@ item id in the inventory.
   device property" (row 555) has no entry text (B-60).
 - Proposal: "([D-138][d-138], [D-177][d-177])".
 - Recommendation: rule now (a citation edit).
-- Status: Accepted (orchestrator, checkpoint 3). Ruled edit, applied by the ruled-edits agent.### B-23. "Baked once per run" can cite D-270's Position
+- Status: Accepted (orchestrator, checkpoint 3). Ruled edit, applied by the ruled-edits agent.
+
+### B-23. "Baked once per run" can cite D-270's Position
 
 - Sources: consolidator (lesson 42); H `rulings.md` (uncited, "the bake once
   per run (D-047 Rationale; D-270 Rationale)").
@@ -371,7 +413,9 @@ item id in the inventory.
 - Proposal: cite [D-270][d-270] on the new 1573–1574 sentence. New 1711 sits
   in the paragraph that already cites D-270 and needs nothing.
 - Recommendation: rule now (a citation add).
-- Status: Accepted (orchestrator, checkpoint 3). Ruled edit, applied by the ruled-edits agent.### B-24. Small editorial fixes the verifiers left open
+- Status: Accepted (orchestrator, checkpoint 3). Ruled edit, applied by the ruled-edits agent.
+
+### B-24. Small editorial fixes the verifiers left open
 
 - Sources: G1 verifier (re-check: "`task_state` still has no §11.8
   pointer"); C `rulings.md` ("the [§12.2][s12-2] heartbeat" kept); verifier
@@ -384,7 +428,9 @@ item id in the inventory.
     four things beside `who`". The block shows `who` and the five fields the
     text names (`task_state` rides with `heartbeat`).
 - Recommendation: rule now; the fixers may already have the third.
-- Status: Accepted (orchestrator, checkpoint 3). Ruled edit, applied by the ruled-edits agent.### B-25. G2's two binding sentences sit in the greedy group
+- Status: Accepted (orchestrator, checkpoint 3). Ruled edit, applied by the ruled-edits agent.
+
+### B-25. G2's two binding sentences sit in the greedy group
 
 - Sources: G2 `rulings.md` (corrections, second note).
 - Evidence: after M56 the greedy-claims group carries "The binding stays an
@@ -395,7 +441,9 @@ item id in the inventory.
   paragraph.
 - Recommendation: accept as a ruled move; it costs one re-verification of
   G2's two paragraphs. Hold if the orchestrator wants no new moves.
-- Status: Held: no new moves after step 5. The sentences stay in the greedy group.### B-26. One ruling bold in §11.6 and in §12.4 (D-268 bullet 7)
+- Status: Held: no new moves after step 5. The sentences stay in the greedy group.
+
+### B-26. One ruling bold in §11.6 and in §12.4 (D-268 bullet 7)
 
 - Sources: G1 `rulings.md` (bold elsewhere); verifier G1 (§11.6 is the home).
 - Evidence: frozen spec 8800 bolds "**The entry is listed for release before
@@ -407,7 +455,9 @@ item id in the inventory.
   listing plain, with D-268. Likewise §12.6's bold "Task topology follows the
   roster each time" (spec 9269), cited to §11.1 alone, after R3 removed
   "topology" from §11.1 (A `rulings.md`).
-- Status: Held. Recorded for chapter 12 in README's carried list (§12.4 listing plain; §12.6's topology bold).### B-27. The three step-5 holds (RP-2, RP-5, RP-7)
+- Status: Held. Recorded for chapter 12 in README's carried list (§12.4 listing plain; §12.6's topology bold).
+
+### B-27. The three step-5 holds (RP-2, RP-5, RP-7)
 
 - Sources: `chapter_rulings.md`.
 - Evidence: RP-2, "the binding rule" beside the glossary's *binding*: the name
@@ -417,7 +467,9 @@ item id in the inventory.
   worked example's Discoveries bullet beside R7's framing, exempt evidence.
 - Recommendation: close all three as held. Renaming "the binding rule" would
   touch §11.8 and the log for no reader gain the chapter needs now.
-- Status: Closed as held.### B-28. Held as written, no action
+- Status: Closed as held.
+
+### B-28. Held as written, no action
 
 - Sources: as listed.
 - Items:
@@ -473,7 +525,9 @@ then linkified; the date is the landing date.
 - New: `- **The write-surface and entry violations** ([§11.3][s11-3], [§11.4][s11-4]), all raised at`
 - Recommendation: accept; it can ride the landing pass (one line, chapter
   13's text untouched otherwise).
-- Status: Track 2, after landing (recipe step 8).### B-30. Appendix B's `claims` row cites §11.4 for §11.3's claim (inbound row 75)
+- Status: Track 2, after landing (recipe step 8).
+
+### B-30. Appendix B's `claims` row cites §11.4 for §11.3's claim (inbound row 75)
 
 - Sources: `inbound_check_1.md` row 75; survey 1 part D.
 - Evidence: spec 12622, "The enumerated face set *is* the claim, what the
@@ -481,7 +535,9 @@ then linkified; the date is the landing date.
   §11.3's (old 7160; new 449).
 - New: `… what the device may write rather than what it will | [§11.3][s11-3], [§11.4][s11-4] |`
 - Recommendation: accept; landing pass or track 2.
-- Status: Track 2, after landing (recipe step 8).### B-31. §8.6 says device and trace addressing use slash paths (inbound row 12)
+- Status: Track 2, after landing (recipe step 8).
+
+### B-31. §8.6 says device and trace addressing use slash paths (inbound row 12)
 
 - Sources: `inbound_check_1.md` row 12; survey 1 part D.
 - Evidence: spec 3390–3392: "Declarations, error messages,
@@ -501,7 +557,9 @@ then linkified; the date is the landing date.
 - Recommendation: rule in track 2 as a correction (a Position settles it).
   Chapter 8 is already rewritten, so run `check_bold.jl` and the glossary
   check after the edit.
-- Status: Track 2, after landing (recipe step 8).### B-32. The case study puts the greedy claim at run start (inbound row 308)
+- Status: Track 2, after landing (recipe step 8).
+
+### B-32. The case study puts the greedy claim at run start (inbound row 308)
 
 - Sources: `inbound_check_1.md` row 308.
 - Evidence: `companions/flight_case_studies.md` 355–359: the greedy claim and
@@ -514,7 +572,9 @@ then linkified; the date is the landing date.
   with zero configuration at run start, against the frozen roster
   ([§11.7][s11-7])."
 - Recommendation: accept in track 2.
-- Status: Track 2, after landing (recipe step 8).### B-33. `implementation.md`'s control.jl Spec line cites §11.3 (inbound row 279)
+- Status: Track 2, after landing (recipe step 8).
+
+### B-33. `implementation.md`'s control.jl Spec line cites §11.3 (inbound row 279)
 
 - Sources: `inbound_check_1.md` row 279.
 - Evidence: `implementation.md` 311, "Spec: §10.7, §11.3, §12.1–§12.4, …";
@@ -522,7 +582,9 @@ then linkified; the date is the landing date.
   pause block, and says the lifecycle gates are sim.jl's.
 - New: `Spec: §10.7, §12.1–§12.4, §12.6, D-021, D-027, D-203, D-255,`
 - Recommendation: accept in track 2.
-- Status: Track 2, after landing (recipe step 8).### B-34. Other outside citations into chapter 11 that were already loose
+- Status: Track 2, after landing (recipe step 8).
+
+### B-34. Other outside citations into chapter 11 that were already loose
 
 - Sources: survey 1 and 2 part D; `inbound_check_2.md` notes; B, F, J
   `rulings.md` (inbound).
@@ -581,7 +643,9 @@ then linkified; the date is the landing date.
   release.
 - Proposal: `Annotation (2026-10-13): since D-310 no device runs on the calling task, and the wrapper records no release. The repeat arises in run!'s interrupt arm, which releases directly each device it never spawned and advances a cursor after each shutdown! returns; an interrupt between a return and the cursor's advance repeats that call (§11.6).`
 - Recommendation: accept (owner-ruled).
-- Status: Track 2, after landing (recipe step 8).### B-37. D-160: no `mark_dead!` exists (E3)
+- Status: Track 2, after landing (recipe step 8).
+
+### B-37. D-160: no `mark_dead!` exists (E3)
 
 - Sources: E3 (owner); `new_entries.md`.
 - Evidence: D-160 Position (log 5683–5686) names `mark_dead!` as a contract
@@ -589,7 +653,9 @@ then linkified; the date is the landing date.
   4557–4558, "no dead-marking machinery of its own").
 - Proposal: `Annotation (2026-10-13): no mark_dead! exists. A device's death is marked nowhere beyond its record: the task has ended, task_state says so at the next publication, and the heartbeat goes stale (§11.6, §12.2, D-138, D-193).`
 - Recommendation: accept (owner-ruled).
-- Status: Track 2, after landing (recipe step 8).### B-38. D-138: the shipped GUI, `needs_calling_task` and "marks it dead" (E5 and more)
+- Status: Track 2, after landing (recipe step 8).
+
+### B-38. D-138: the shipped GUI, `needs_calling_task` and "marks it dead" (E5 and more)
 
 - Sources: E5 (owner); `new_entries.md`; A `rulings.md` (inbound, log
   4571–4573); survey 1 part E; survey 2 part E.
@@ -602,7 +668,9 @@ then linkified; the date is the landing date.
 - Proposal: one annotation: `Annotation (2026-10-13): since D-310, needs_calling_task and gui = true are withdrawn and no GUI ships, so the topology clause and the shipped GUI's should_abort = true are historical. "Marks it dead" in the Position means no task is spawned and the record shows it; nothing else marks a device dead (D-160's annotation).`
 - Recommendation: accept; the owner ruled the E5 part, and the other two
   clauses state only what D-310 and D-138's own Rationale record.
-- Status: Track 2, after landing (recipe step 8).### B-39. Four entries still describe the withdrawn calling-task device (D-310)
+- Status: Track 2, after landing (recipe step 8).
+
+### B-39. Four entries still describe the withdrawn calling-task device (D-310)
 
 - Sources: G1 `rulings.md` (corrections); A `rulings.md` (open question 3);
   `inbound_check_1.md` row 163; survey 1 and 2 part E; survey 2 F53.
@@ -627,7 +695,9 @@ then linkified; the date is the landing date.
   task, citing D-268's Rationale (log 11005–11008); that probe shows only
   where a held signal raises, not which task receives it, so the D-132 text
   above claims nothing about delivery.
-- Status: Track 2, after landing (recipe step 8).### B-40. D-174 superseded the interactive-writer halves of D-044, D-104 and D-106
+- Status: Track 2, after landing (recipe step 8).
+
+### B-40. D-174 superseded the interactive-writer halves of D-044, D-104 and D-106
 
 - Sources: survey 1 part E (superseded and half-superseded citations; stale
   entry text); C, D `rulings.md`.
@@ -640,7 +710,9 @@ then linkified; the date is the landing date.
 - Proposal: D-044 and D-106: `Annotation (2026-10-13): amended by D-174. The derived interactive surface is retired; the GUI is an ordinary enumerated writer, and the harness writer is the one derived surface.`
   D-104: the same, plus "The carrier is values-plus-mask since D-202."
 - Recommendation: accept.
-- Status: Track 2, after landing (recipe step 8).### B-41. D-134's whole Position is retired: mark it superseded
+- Status: Track 2, after landing (recipe step 8).
+
+### B-41. D-134's whole Position is retired: mark it superseded
 
 - Sources: `inbound_check_2.md` (log 4278); survey 1 and 2 part E.
 - Evidence: D-134 Position (log 4275–4278): the `interactive(b)` marker,
@@ -654,7 +726,9 @@ then linkified; the date is the landing date.
   `is_greedy`." Run `check_rows.jl`; rebaseline if coverage shrinks.
 - Recommendation: accept. If the orchestrator prefers not to change a status
   in track 2, the annotation alone suffices.
-- Status: Track 2, after landing (recipe step 8).### B-42. D-045 bullet 1 says "slot unclaimed"; §11.7 says "inside the GUI's own claim"
+- Status: Track 2, after landing (recipe step 8).
+
+### B-42. D-045 bullet 1 says "slot unclaimed"; §11.7 says "inside the GUI's own claim"
 
 - Sources: H `rulings.md` (open question 2); survey 2 part E (item 9, stale
   text).
@@ -669,7 +743,9 @@ then linkified; the date is the landing date.
 - Recommendation: accept (rule 10: the spec and the later entry agree). Not
   serious. The liveness bold keeps citing D-045; the owed Position for
   D-174's wording is in B-48.
-- Status: Track 2, after landing (recipe step 8).### B-43. D-026 says "build-time resolution"; liveness is baked at run start
+- Status: Track 2, after landing (recipe step 8).
+
+### B-43. D-026 says "build-time resolution"; liveness is baked at run start
 
 - Sources: H `rulings.md` (open question 3); survey 2 part E.
 - Evidence: D-026 Position (log 923–924): "build-time resolution to root input
@@ -677,7 +753,9 @@ then linkified; the date is the landing date.
   resolution and the liveness verdict "once at its top, after the freeze".
 - Proposal: `Annotation (2026-10-13): resolution is baked at run start, when the GUI's loop body builds its port views after the roster freeze (D-270), not at build.`
 - Recommendation: accept.
-- Status: Track 2, after landing (recipe step 8).### B-44. D-096: the calling task, the interactive writer and an objectless reason
+- Status: Track 2, after landing (recipe step 8).
+
+### B-44. D-096: the calling task, the interactive writer and an objectless reason
 
 - Sources: survey 1 part D and E; C `rulings.md` (D-096 citation).
 - Evidence: D-096 Position (log 2955–2960): staging "from the calling task
@@ -687,7 +765,9 @@ then linkified; the date is the landing date.
   disjoint", log 6383–6385).
 - Proposal: `Annotation (2026-10-13): stage! runs on any task (D-200) and writes the harness writer's cell (D-174). The harness cell still drains last, now as plain convention; the stated reason is objectless once surfaces are disjoint (D-174).`
 - Recommendation: accept; it pairs with B-21.
-- Status: Track 2, after landing (recipe step 8).### B-45. D-136 carries none of its five amendments
+- Status: Track 2, after landing (recipe step 8).
+
+### B-45. D-136 carries none of its five amendments
 
 - Sources: J `rulings.md` (open question 3); survey 2 part E; R10 F52.
 - Evidence: D-136 Position (log 4389–4390) "one per rostered device plus one
@@ -700,7 +780,9 @@ then linkified; the date is the landing date.
   annotation (log 4385–4456).
 - Proposal: `Annotation (2026-10-13): amended by D-200 (the harness writer's cell), D-317 (the Model's cell, folded into the loop's account), D-240 (the heartbeat is read at publication) and D-241 (one small vector of records per publication). The zero-allocation invariant is scoped to the stepping loop (D-305).`
 - Recommendation: accept.
-- Status: Track 2, after landing (recipe step 8).### B-46. Other stale Positions and Rationales
+- Status: Track 2, after landing (recipe step 8).
+
+### B-46. Other stale Positions and Rationales
 
 - Sources: survey 1 and 2 part E ("Stale entry text"); B, D, F `rulings.md`.
 - Each checked at its line; one annotation each, text in brief:
@@ -863,7 +945,9 @@ then linkified; the date is the landing date.
   merged), each Position quoting its Rationale's words and naming the
   source entry, then cite each beside its source in the chapter. Hold the
   plain list unless the orchestrator wants it.
-- Status: Track 2, after landing (recipe step 8).### B-49. Device identity and admission rest on superseded D-109
+- Status: Track 2, after landing (recipe step 8).
+
+### B-49. Device identity and admission rest on superseded D-109
 
 - Sources: C `rulings.md` (open question 1); survey 1 part E items 1 and
   "Superseded" (D-109).
@@ -884,7 +968,9 @@ then linkified; the date is the landing date.
   If the orchestrator reads D-310's sentence as citing the spec back (lesson
   43), send it to the owner instead; the owner would only ratify D-109's
   text.
-- Status: Track 2, after landing (recipe step 8).### B-50. D-217 and D-255 give the trace's length as a drain count
+- Status: Track 2, after landing (recipe step 8).
+
+### B-50. D-217 and D-255 give the trace's length as a drain count
 
 - Sources: F `rulings.md` (correction 6); verifier F; survey 2 F59 and part
   E; R10 F59.
@@ -926,7 +1012,9 @@ step 8). Ratifying any of them would be a design decision.
   partition printer in `pending.md` as owed.
 - Recommendation: send to the owner with (a) recommended; R19 to R23 did not
   cover F19, so it is still open.
-- Status: Owner item. Moves to docs/design/pending.md at the chapter's close (step 9).### B-52. The first endpoint under `restore!` and `replay!`, and the stride's origin
+- Status: Owner item. Moves to docs/design/pending.md at the chapter's close (step 9).
+
+### B-52. The first endpoint under `restore!` and `replay!`, and the stride's origin
 
 - Sources: B `rulings.md` (open question 2); survey 1 part E (rows 73, 74).
 - Evidence: frozen spec 7056–7058: the first endpoint is "the boundary-zero
@@ -936,14 +1024,18 @@ step 8). Ratifying any of them would be a design decision.
   only, and nothing records where the stride counts from.
 - Recommendation: send to the owner; ratify as written (it matches the doors'
   behaviour) in a track 2 entry.
-- Status: Owner item. Moves to docs/design/pending.md at the chapter's close (step 9).### B-53. An exporting logger skips or summarizes field-handle signals
+- Status: Owner item. Moves to docs/design/pending.md at the chapter's close (step 9).
+
+### B-53. An exporting logger skips or summarizes field-handle signals
 
 - Sources: B `rulings.md` (open question 2); R10 F7; survey 1 F7.
 - Evidence: `pending.md` 127–135 holds it open with the HDF5 export scope:
   "§11.2 states the loggers' skip-or-summarize rule for field handles with no
   entry; it is ruled with the summarization question."
 - Recommendation: no owner action now; `pending.md` already tracks it.
-- Status: Owner item. Moves to docs/design/pending.md at the chapter's close (step 9).### B-54. "A claim is what a device *may* write", and why exclusivity holds
+- Status: Owner item. Moves to docs/design/pending.md at the chapter's close (step 9).
+
+### B-54. "A claim is what a device *may* write", and why exclusivity holds
 
 - Sources: C `rulings.md` (open question 3); survey 1 part A rows 104, 105
   and part E.
@@ -958,7 +1050,9 @@ step 8). Ratifying any of them would be a design decision.
 - Recommendation: send the may/will sentence to the owner (ratify as
   written; it is the glossary's *claim* definition). Add row 104 to B-48's
   plain list.
-- Status: Owner item. Moves to docs/design/pending.md at the chapter's close (step 9).### B-55. A released root input's widgets are live again from the next run
+- Status: Owner item. Moves to docs/design/pending.md at the chapter's close (step 9).
+
+### B-55. A released root input's widgets are live again from the next run
 
 - Sources: survey 1 part E (row 101).
 - Evidence: frozen spec 7148–7149. It follows from the freeze (D-106) and
@@ -967,7 +1061,9 @@ step 8). Ratifying any of them would be a design decision.
 - Recommendation: owner, ratify as written. Low stakes: it may be read as a
   consequence of D-106 and D-270 and cited to them, if the orchestrator
   accepts a two-entry derivation as "restates only".
-- Status: Owner item. Moves to docs/design/pending.md at the chapter's close (step 9).### B-56. Three §11.4 sentences with no entry
+- Status: Owner item. Moves to docs/design/pending.md at the chapter's close (step 9).
+
+### B-56. Three §11.4 sentences with no entry
 
 - Sources: D `rulings.md` (open questions); survey 1 part E (rows 189, 197).
 - Evidence: frozen spec 7473–7475, "the frame's outcome is a pure function of
@@ -977,7 +1073,9 @@ step 8). Ratifying any of them would be a design decision.
 - Recommendation: owner for the first two (ratify as written; the first is
   what §2.4's determinism needs from the drain). The third is a description
   of cost, not a ruling: hold, uncited.
-- Status: Owner item. Moves to docs/design/pending.md at the chapter's close (step 9).### B-57. "Assembly panels compose children by path"
+- Status: Owner item. Moves to docs/design/pending.md at the chapter's close (step 9).
+
+### B-57. "Assembly panels compose children by path"
 
 - Sources: H `rulings.md` (open question 4); survey 2 part E (row 668).
 - Evidence: frozen §11.7, the deferred half's constraints (new 1711–1714).
@@ -986,7 +1084,9 @@ step 8). Ratifying any of them would be a design decision.
 - Recommendation: owner; it constrains the deferred GUI-package half, which
   D-310 hands to the browser client. Recommend parking it with that half in
   `pending.md` rather than ratifying now.
-- Status: Owner item. Moves to docs/design/pending.md at the chapter's close (step 9).### B-58. Appendix A: keep the binding traits trivial
+- Status: Owner item. Moves to docs/design/pending.md at the chapter's close (step 9).
+
+### B-58. Appendix A: keep the binding traits trivial
 
 - Sources: survey 2 part D; G2 `rulings.md` (inbound).
 - Evidence: spec 12372–12375: "Keep `is_input`/`is_output`/`is_greedy`
@@ -995,7 +1095,9 @@ step 8). Ratifying any of them would be a design decision.
   does.
 - Recommendation: owner. If ratified, §11.6 states it with the new entry;
   if not, Appendix A drops the sentence's §11.6 pointer.
-- Status: Owner item. Moves to docs/design/pending.md at the chapter's close (step 9).### B-59. Four §11.5, §11.6 and §11.8 statements with no entry
+- Status: Owner item. Moves to docs/design/pending.md at the chapter's close (step 9).
+
+### B-59. Four §11.5, §11.6 and §11.8 statements with no entry
 
 - Sources: survey 2 part E ("Rulings with no entry at all").
 - Evidence: the layout's field list (row 522; `src/checkpoint.jl` 10–26 its
@@ -1008,7 +1110,9 @@ step 8). Ratifying any of them would be a design decision.
   third summarizes D-177 and D-216 (enumeration validated at attach, mappings
   never inspected) and may be cited to them in track 2; the fourth is a
   reason for D-136's Rationale design, owner only if it is to be normative.
-- Status: Owner item. Moves to docs/design/pending.md at the chapter's close (step 9).### B-60. `should_abort` is "never a device property"
+- Status: Owner item. Moves to docs/design/pending.md at the chapter's close (step 9).
+
+### B-60. `should_abort` is "never a device property"
 
 - Sources: survey 2 part E (row 555); B-22.
 - Evidence: frozen spec 7733 (new 1289): "It is per-attachment, never a

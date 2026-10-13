@@ -1,0 +1,42 @@
+checkpoint's table holds the values they wrote. The fingerprint and the deployment are the parts of 
+the header replay compares rather than restores (§12.7).
+The deployment comes from §9.2. It carries Δt_base, h, N_base, the algorithm identifier, 
+localization_tol, localization_budget (§10.4) and firing_budget (§10.6, D-254). The fingerprint is the 
+store layout and the root-input faces the Build (the artifact build(world) produces) fixes. It also holds 
+what a copy by position relies on, namely each component's x type, every cell's address with its 
+type, and the event list in the order of the priors. Both are taken at the same instant as the state. The 
+deployment holds no policy (D-255). t_end and ignore_stop_requests are keywords of each advance 
+(§13.5, D-316). Only the terminating advance's policy explains the stop, so the termination record 
+(the stopped-sim value naming how the run ended) carries that one.
+The trajectory depends on the deployment exactly as it depends on the stores (§2.4). The Deployment 
+constructor (§9.2) sits outside the Build, and the checkpoint carries the clock, t₀ included ( §14.5). 
+A header without them could therefore not back the bit-identity claim ( §2.4, §12.7). The header is 
+also what the artifact's run metadata names, its Deployment and t₀ (§13.5, Appendix B). A checkpoint 
+is the one full-state capture, taken by init! for the header and by checkpoint(sim) on demand 
+(§12.6, D-274). The header is the other half of what "given the initial state and the trace, the log is 
+recomputable" (below) requires.
+The Trace value
+Trace is that fixed header plus two append-only lists, schemas and batches, and its length (D-255). 
+A trace records a Simulation, which runs only a Model{Float64}, so Trace takes no scalar parameter 
+(D-317). The header is written once, by the door that builds the run (init!, restore! or replay!, §12.6), 
+and never again, which is what makes it an artifact. The lists grow in place, the batches at every 
+drain and the schemas at every change to the roster (the immutable list of attached devices). The 
+length is the frame index of the last drain on the live trace (D-217), frozen into the value trace(sim) 
+hands back. It advances at the top of each drain, and the frame ordinal every record of that drain 
+carries is this frame index ( D-260). Under init! that is the number of drains since the header was 
+taken. A trace that restore! opens starts at the checkpoint's frame, so its records keep the trajectory's 
+own frame indices (D-274). A recording whose last frames drained nothing still ran them, and every 
+advance in :replay is capped at the recording's last frame (§12.7, D-218).
+Each writer's face-name → position schema lives in the schemas list. Positional records are mean -
+ingless without it, and replay does not reconstruct claims ( §12.7). The list only grows  (D-217). 
+attach! and detach! push the current writer set onto it in place (D-255). They do so because a roster 
+change between advances (§12.6) recompiles the harness writer (the framework-owned write path 
+stage!(sim, …)) and the same face moves position. Earlier records keep their index, and a record 
+resolves only through its own schema entry.
+Recording is on by default
+Trace recording is on by default (D-029). init! builds a fresh trace with the run under its trace 
+keyword (§12.6, Appendix B, D-261), the trace is retrievable after the run, and a plain kill switch 
+covers memory-constrained marathon sessions. The asymmetry that decides the default is that the 
+trace is primary data and the log derived. Header plus batches are the primary record. Everything 
+else, the state trajectory included, is derived ( §11.2, D-038). Given the initial state and the trace, 
+42

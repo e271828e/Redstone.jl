@@ -1,0 +1,41 @@
+Mappings and conditioning
+Mappings run on the device task (D-024). Where FlightCore, the predecessor, had assign_input!
+(mdl, mapping, data), the framework has the pure map_input(data, mapping) → batch. User-extensible 
+code thereby never executes inside the loop's frame, and the trace (the primary record of a session) 
+consists of root-input-level batches.
+Mappings are binding data, not shaping code  ( D-045). A mapping is a declarative table. It 
+maps axis/button → root input, plus per-axis conditioning parameters (deadzone, expo strength). 
+The shipped TableBinding applies those parameters in its generic map_input on the device task. 
+TableBinding is the shared pure helper, with an owner (§11.6).
+A rule about faces sets where conditioning belongs. A face's meaning is writer-independent  
+(D-045). Faces therefore carry post-conditioning semantics. A GUI slider or a script writes the same 
+command a curved stick delivers, and running a mouse drag through a deadzone would be absurd. 
+This GUI-parity test is what places conditioning upstream.
+Aircraft-semantic derivation must not ride along (D-045). A command fan-out such as the illustrative 
+q_ref = q_sf · axis is the case in point. It is flight control system (FCS) design and lives in-model, 
+in the avionics.
+The trace records post-conditioning levels. Those are exactly what the model consumed, so replay 
+(the ordinary loop, its drain reading the trace) is exact. The raw stick levels are the known, accepted 
+loss. Re-running a session through different curves is impossible.
+The staged representation
+The staged representation is fixed per attachment, compiled at attach  (D-104). An enumer-
+ated writer's claim set (the faces a device may write) and root-input types are both known at attach, 
+because claims(binding) (§11.6) is read against the root contract (the root component's declared 
+interface). So the framework fixes the staging cell's content type there. The content type is a pair 
+of positional tuples over the claim set (D-202). One is a values tuple, concretely typed Tuple{T₁, 
+…, Tₙ}, and the other a parallel Bool touched-mask. A set mask position means staged this time. A 
+clear one means not touched, never "reset". Untouched positions carry placeholder values and are 
+never read. The mask guards every consumer, so no placeholder ever reaches the model. The batch 
+is therefore isbits with one concrete layout per writer. The levels doctrine is untouched, and root 
+inputs only ever receive masked positions. The writer's roster entry, its record in the list of attached 
+devices, holds the face-name → position schema (D-104).
+In sketch form:
+# claim set enumerated f₁ … fₙ; Tᵢ = declared type of the root input behind fᵢ
+# attach fixes the cell's content type — values and mask, both concrete:
+values :: Tuple{T₁, …, Tₙ};  mask :: NTuple{n, Bool}
+# stage!, on the device task: the shim turns the author's face ⇒ value pairs
+# into `incoming` — name → position, convert to Tᵢ, set the mask
+# staging merges into the pending batch, newest wins per face:
+merged.values[i] = incoming.mask[i] ? incoming.values[i] : pending.values[i]
+merged.mask[i]   = incoming.mask[i] | pending.mask[i]
+37

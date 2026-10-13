@@ -1,0 +1,6 @@
+Composition with the log
+Because the log (the retained sequence of published snapshots) retains snapshot references (§11.2), 
+totals is monotone across logged snapshots. log_every decimation (the log's keep-every-kth reten-
+tion policy) therefore loses which boundary within a skipped stretch an occurrence fell on, never 
+how many occurrences there were.
+56

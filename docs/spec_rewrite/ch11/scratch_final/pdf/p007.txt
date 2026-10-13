@@ -1,0 +1,44 @@
+Why. A second live writer on one root input makes the applied value a timing artifact, as the worked 
+example in §11.4 shows. The usual pair is a stream and its mirror, a joystick axis and the GUI slider 
+showing it. Claiming the stream settles that pair with no concurrent writing.
+A claim is what a device may write, not what it will. Data-dependent write-sets are ordinary. 
+A UDP/JSON peer writes whichever subset of faces the incoming message names, and map_input 
+is arbitrary user code the framework never inspects. Such a device therefore claims the binding's 
+enumerated allowed set, the faces the binding table lists, whether or not any given batch touches 
+them. The claim is registered at attach exactly as a joystick's is. A broad claim costs liveness. Every 
+enumerated face is claimed for the device's whole attachment, so the derived-liveness rule ( §11.7) 
+renders the device's GUI widget read-only even on faces the peer never writes. Narrow the binding 
+to narrow the claim. The enumeration is the interface.
+Every writer has a write surface, and the periphery enforces it. A batch entry reaches a root 
+input iff the named face is inside the writer's surface. Anything else is discarded with a runtime 
+warning (§13.2). Because surfaces are static per run (the roster freeze, below), enforcement runs 
+entirely at staging, the earliest site, on the writer's own task. The drain performs no checks at all. 
+Every device's surface is its claim set, and a claim set has two sources:
+• Returned. The binding enumerates the faces. It declares is_input(b) = true, claims(b) (§11.6) is 
+called once at attach, and what it names is staked. Such a claim is static for the attachment and 
+exclusively its own, since claims are disjoint by construction. It is binding-bounded even where 
+no one else is involved. A mapping that has drifted onto an unenumerated face is a diagnosable 
+anomaly (OutOfClaimEntry), never a silent write, claimed or not.
+• Computed. The binding declares is_greedy(b) = true ( §11.6) and the framework computes 
+the claim at attach: all root-input faces minus the union of the rostered claims, the unclaimed 
+complement at that instant. This is the shipped GUI's claim (§11.7), everything unclaimed, without 
+configuration. It is disjoint from every incumbent claim by construction, so exclusivity validates 
+trivially and nothing downstream can tell the two sources apart. A complement that comes out 
+empty is legal and useless, and attach! records EmptyGreedyClaim in the roster entry's diagnostic 
+cell (§11.6, §11.8, D-250).
+The periphery resolves root faces against the activation's cell layout alone  (D-261). The 
+layout carries the root faces in structure order with their probe values, beside the address table, so 
+both of the build's lookup families, schema and layout , read it there, and writers, claims and the 
+harness compile against it. The services take their schema from the Build itself (§14.3); the periphery 
+never needs an authored fact the layout does not hold.
+One claim mechanism, two claim sources. The source is exhausted at the attach point. Past it, 
+validation, roster-entry storage, shape compilation (§11.4), the drain, the trace and detach-releases-
+claims treat a computed claim exactly as a returned one. The GUI is therefore not an exception but an 
+ordinary enumerated writer whose enumeration the framework performed. Attaching the greedy 
+claimant last is the idiom. Its computed claim is taken at the attach point and never recomputed, 
+so attachment order is decisive by design. Opportunistic writing by autonomous devices does not 
+exist. A device that wants a face enumerates it, and greediness is an explicit declaration, never a 
+default. Cross-writer races on one root input therefore cannot arise structurally, because every claim 
+is exclusive, whatever its source. That is what keeps drain order a diagnostic fact (below) and lets a 
+drained GUI value simply stay (§11.7).
+7

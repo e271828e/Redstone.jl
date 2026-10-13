@@ -1,0 +1,39 @@
+baked once at run start, §11.7) renders the GUI's widgets read-only even on faces the peer never 
+writes. Narrow the binding to narrow the claim. The enumeration is the interface.
+Write surfaces and claim sources
+Every writer has a write surface, and the periphery enforces it. A batch entry reaches a root 
+input iff the named face is inside the writer's surface (D-044). Anything else is discarded with 
+a runtime warning ( §13.2). Because surfaces are static per run under the roster freeze (attach and 
+detach only while stopped, below), enforcement runs entirely at staging, the earliest site, on the 
+writer's own task. The drain performs no checks at all.
+Every device's surface is its claim set, and a claim set has two sources (D-174):
+• A returned claim is enumerated by the binding. The binding declares is_input(b) = true, claims(b) 
+(§11.6) is called once at attach, and what it names is staked. Such a claim is static for the attachment 
+and exclusively its own, since the attach-time exclusivity check keeps claims disjoint. It is binding-
+bounded even where no one else is involved. A mapping that has drifted onto an unenumerated 
+face is a diagnosable anomaly (OutOfClaimEntry), never a silent write, claimed or not. An enumer-
+ation naming a face outside the root's input faces is refused at attach (AttachUnknownFace, D-216).
+• A computed claim is computed by the framework at attach, when the binding declares is_greedy(b) 
+= true (§11.6). It is all root-input faces minus the union of the rostered claims, the unclaimed com-
+plement at that instant. This is the standard GUI binding's claim ( §11.6), everything unclaimed, 
+without configuration. It is disjoint from every incumbent claim by construction, so exclusivity 
+validates trivially and nothing downstream can tell the two sources apart. A complement that 
+comes out empty is legal and useless. attach! records an EmptyGreedyClaim warning for it (§11.6).
+There is one claim mechanism with two claim sources. The source is exhausted at the attach 
+point. Past it, validation, roster-entry storage, the compilation of shape, shim, merge and scatter 
+(§11.4), the drain, the trace ( §11.5) and detach-releases-claims treat a computed claim exactly as a 
+returned one ( D-174). The GUI is therefore not an exception but an ordinary enumerated writer 
+whose enumeration the framework performed. Attaching the greedy claimant (the device holding 
+the computed claim) last is the idiom ( D-192). Its computed claim is taken at the attach point and 
+never recomputed, so attachment order is decisive by design.
+Opportunistic writing by autonomous devices does not exist ( D-044). A device that wants a face 
+enumerates it, and greediness is an explicit declaration, never a default. Cross-writer races on one 
+root input therefore cannot arise structurally, because every claim is exclusive, whatever its source. 
+That is what keeps drain order a diagnostic fact ( §11.4) and lets a drained GUI value simply stay 
+(§11.7).
+The harness writer and the layout
+One framework-owned remainder sits beside the roster, the harness writer (the framework-owned 
+write path stage!(sim, …)). It is an entry point with no task of its own, the harness/REPL write path 
+(§12.6, D-096), called as follows.
+stage!(sim, "face" => value, …)
+33

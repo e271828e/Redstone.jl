@@ -1,0 +1,45 @@
+One framework-owned remainder: the harness writer. Beside the roster sits a task-free entry 
+point, stage!(sim, "face" => value, …), the harness/REPL write path (§12.6). It stages a batch from 
+the calling task itself (the task that invoked run!). Its always-present cell is drained, traced and 
+surface-checked exactly as any device's. The harness writer's surface is the one thing in the design 
+that is derived rather than claimed. It is the unclaimed complement, the faces no rostered device 
+speaks for. That surface is recomputed at every stopped-sim roster change, and is therefore as fixed 
+within a run as any claim set. A stage! write to a claimed face is rejected at staging (ClaimedFaceEntry, 
+naming the incumbent). A rostered greedy claimant empties that surface outright. The greedy claim 
+is itself a rostered claim, so the complement it leaves is empty and every stage! in such a session is 
+rejected that way (D-192). There is one seam, a batch staged while stopped whose face a subsequent 
+attach! claims, and the attach itself renormalizes it away (below). The harness cell (the always-
+present staging cell of the harness writer) drains last, by convention. With every surface disjoint 
+the order is unobservable, so the rule exists to make the trace read the same way every time, not to 
+arbitrate anything.
+Root-input initial values are owned by the init/trim services. Input declarations are bare types 
+(§8.2) and carry no defaults, yet a root input unfed by any device must hold a defined value from 
+the first frame. No declaration constant could own that value, because the trim service writes root-
+input values it solved for, such as throttle and elevator. Export-entry defaults were rejected (D-047). 
+init! establishes every root input, and the trace header captures the result. Totality is enforced pre-
+write at every complete-world application: init!, trim setup, trim commit (§14.6).
+The roster is frozen per run: attach and detach are stopped-sim operations. attach!/detach! 
+are legal in the built, initialized and stopped states (§12.6) and an error while running. That error 
+is ServiceLifecycle (Appendix C), the same kind that gates the §14 services. The list is exhaustive. 
+An errored simulation refuses both with the same kind. A roster change configures the next run, 
+and an errored simulation has none ( §13.6, D-232). The prohibition includes pause. Pause is a 
+control-plane state inside a run ( §12.1), and a surface that could move while paused would move 
+mid-run. The roster (entries, claims, attachment order) is therefore a plain immutable value the 
+loop reads once at run!. The partition of the root face set into per-writer surfaces plus the harness 
+remainder is a static, inspectable fact of the run. It is printable before the run starts and valid 
+until it ends (printable like the face routes, §13.7). No republication machinery exists. There is no 
+atomic roster reference, no per-frame acquire-load, no next-frame attachment granularity and no 
+sequence numbers. Attachment order is the roster's own order. The trace still tags entries with a 
+stable device id, never a roster index, because ids read across runs, where the roster does change. 
+Attach validation, claim registration and the staging-shape compilation (below) all run at the attach 
+point, which makes attach!/detach! stopped-sim configuration operations beside init! and trim 
+(§14). While a simulation runs, its configuration (build, roster, claims, surfaces) is immutable. The 
+doctrine (§12.5) extends to its final form. The running periphery stages writes and issues control 
+commands, and nothing else changes.
+Device identity, ids and roster admission. Identity is the device instance. The same object (===) 
+may occupy at most one roster entry. Two instances of the same type, two joysticks say, are two 
+devices. The stable device id the trace, heartbeat and diagnostics speak is assigned at attach!, 
+monotonic per Simulation and never reused. It lives exactly as long as the entry: across runs (roster 
+persistence, §12.6), until detach!.
+Admission is a two-part check at the attach point, in order:
+8

@@ -1,0 +1,38 @@
+of what "given the initial state and the trace, the log is recomputable" requires. Header plus batches 
+are the primary record. Everything else, the state trajectory included, is derived ( §11.2). The trace 
+also carries its length, the frame index of its last drain ( D-217). Under init! that is the number of 
+drains since the header was taken. A trace that restore! opens starts at the checkpoint's frame, so 
+its records keep the trajectory's own frame indices (D-274). A recording whose last frames drained 
+nothing still ran them, and every advance in :replay is capped at that frame (§12.7, D-218).
+Trace recording is on by default. init! builds a fresh trace with the run under its trace keyword 
+(§12.6, Appendix B), the trace is retrievable after the run, and a plain kill switch covers memory-
+constrained marathon sessions. The asymmetry that decides the default is that the trace is primary 
+data and the log derived. Given the initial state and the trace, the log is recomputable, which is 
+what bit-identical replay means. An untraced interactive session, by contrast, is unreproducible, 
+permanently. The cost supports the default. The trace retains one small sparse record per drained 
+batch (above), at drain-rate × device-count. That is tens of MB per hour worst case, two orders of 
+magnitude below the snapshot log. There is no sampling and no rolling window (D-029).
+11.6 Devices: one authoring contract, no taxonomy
+FlightCore's input/output/GUI trichotomy is lock choreography, not modeling. With no lock, the 
+protocol the taxonomy encoded has no referent (D-025).
+Every attached device receives the same handle
+The handle carries the two primitive capabilities, read and stage, plus control access (observe 
+running, request shutdown). Read returns the latest snapshot, optionally waiting for the next 
+boundary (§12.3).
+A handle outlives its roster entry as an object only. detach! retires the entry and the compiled 
+writer behind it, but the caller may still hold the handle attach! returned. Its two write primitives, 
+stage! and report!, then refuse by name (DeviceContractMismatch, Appendix C). A batch staged there 
+would land in a cell no drain reads, and a report would land in a diagnostic cell no frame top folds. 
+Silence is the hidden-bug class this section tolerates nowhere. The read primitives stay legal, since 
+they read the simulation's shared state and nothing of the entry's (D-244).
+should_abort is an attach! keyword , defaulting to false. It is per-attachment, never a device 
+property. The same joystick is advisory in one deployment and decisive in another. With it clear, 
+a device's departure is reported and the run continues without it. With it set, that departure also 
+requests a sim stop ( §12.4). A departure is the loop body returning, a crash, or a failed init!. A 
+hardware-in-the-loop rig attaches its plant interface with it set, since a run without that device is 
+meaningless.
+Input-only and output-only devices are degenerate uses, not framework classes. A bidirectional 
+network peer is one device with one socket and one lifecycle, not two framework devices sharing 
+state. The GUI is an ordinary device, the paradigm one, and it uses every capability. Its one genuine 
+peculiarity is not taxonomic: read-modify-write widgets (§11.7).
+15

@@ -1,0 +1,39 @@
+available. It can attach with the greedy binding where the GUI would have been, or with explicit 
+claims beside other front ends.
+The empty enumeration
+The empty enumeration is not a back door. is_input(b) = true with claims(b) = () stays an honest 
+degenerate, a device that may write nothing (D-177). Its writes are still binding-bounded, so drift 
+onto any face is OutOfClaimEntry (D-044). There is no privileged category for it to promote into either. 
+claims bodies are ordinary code (the idiom, §8.5; comprehensions included), and an enumeration 
+that came back empty by accident stays inert, exactly as written. The maximal surface is reachable 
+only through the explicit is_greedy(b) = true declaration. The most privileged claim is the hardest 
+to acquire by accident, and a declared trait is deliberate authorship. For the same reason, claims 
+never returns nothing or a sentinel to mean "compute it for me". The enumeration contract has one 
+meaning and the trait carries the other. A dual-meaning return would be exactly the ambiguity the 
+declaration vocabulary is built to refuse.
+TableBinding
+TableBinding is the one shipped binding type, and it is data-driven (D-045). The framework writes its 
+map_input once. A table value (axis/button entry → face, deadzone/expo parameters) is constructed 
+per device × aircraft pairing, where configurations are made:
+TableBinding(stick_y  = (face = "elevator", deadzone = 0.05, expo = 0.6),
+             throttle = (face = "throttle",),
+             trigger  = (face = "brake_count",))       # levels doctrine: a counter
+A malformed table reports ArgumentInvalid, collected over the table's entries (D-216).
+TableBinding's generic map_input is the shared pure conditioning helper ( §11.4), and its owner. The 
+entry tuple rides in the type, so the mapping specializes per table with no dynamic dispatch. A code-
+driven binding looks identical to the framework. A JSON telecommand peer whose claims returns 
+the vocabulary and whose map_input parses bytes is one. One purity note is taught in Appendix A. 
+Cross-datum state, such as press counters and edge detection, lives in the device struct, maintained 
+by the loop, and arrives inside the datum. map_input stays pure.
+11.7 The GUI write path: port resolution, peek, staging contract
+This section specifies how a GUI widget resolves its port (the addressable unit, one declared name) 
+to the root input (the root component's own input face) behind it, when the widget is live, what it 
+displays and when it stages, and the framework's half of the panel convention.
+Port resolution and derived liveness
+Panels remain extensions per component (the unit of modeling, a leaf or an assembly) in FlightCore's 
+style, such as GUI.draw!(ctx, =:LowPassFilter). They are discovered by walking the assembly 
+(pure composition, whose component-typed fields are its children). However, widgets name the 
+component's own ports, never root inputs (D-026). The build-time wiring answers one question 
+statically and exactly. Is this port transitively driven by a root input, and which one? Every input port 
+has exactly one source (§6.1), so the resolution is total, with two outcomes.
+49

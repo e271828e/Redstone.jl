@@ -1,0 +1,41 @@
+The guarantees are normative, not the mechanism.  There are three. The bound is respected 
+continuously, and the retained count never exceeds log_max. Coverage is global at the effective stride. 
+The endpoints below are kept.
+The mechanism sketch is non-binding. The thinning is amortized. When the log fills, the stride 
+doubles immediately, and each subsequent retained append also releases one predecessor of the 
+previous generation. A cursor over the odd indices does this in O(1) amortized, with physical 
+compaction once per generation. A generation's thinning therefore completes exactly when its refill 
+does.
+fill at stride log_every → full → stride doubles → thin one predecessor per retained append, 
+while refilling → full at stride log_every · 2 → ⋯ → generation k at log_every · 2^k
+Amortizing rather than halving in one shot is a responsiveness choice (D-137). The amortized form 
+drops exactly one old snapshot per retained append, the same steady trickle a rolling window would 
+produce, so keeping coverage global costs nothing extra in GC pressure. The loop's own work 
+is pointer bookkeeping, microseconds either way and on the framework side of the scope ( §9.8). 
+Publication stays wait-free and readers never block. A reader holding a released snapshot simply 
+keeps it alive.
+The endpoints are retained unconditionally. The run's first snapshot and its terminal snapshot 
+(§12.4, §13.5) survive any log_every and any log_max, and they do not count against the bound. The 
+first is the boundary-zero snapshot under init! (§14.5), and the snapshot the door publishes under 
+restore! and replay! (§12.6). The stride counts boundaries from it. They are two extra references. 
+The terminal snapshot's status carries the run's final cumulative diagnostic counters (§11.8). A run's 
+two endpoints and its diagnostic account, complete to the final frame top (D-201), therefore always 
+outlive whatever retention did to the middle.
+Two compositions are worth stating once. The totals monotonicity across logged snapshots (§11.8) 
+is untouched. Re-decimation, like decimation, loses which boundary within a stretch an occurrence 
+fell on, never how many. And log_max is a view policy, not a trajectory-determining one. Like log 
+and log_every it stays out of the trace header's Deployment (the scalar-free artifact the grid parameters 
+fix), and replay neither records nor compares it (§11.5, §12.7). Sizing follows. The sizehint! for the 
+expected duration ( §9.8) is now naturally capped by log_max, which is also what defines the hint 
+when t_end = Inf.
+Output-device bindings
+Output-device bindings are snapshot bindings.  An output device (telemetry, the XPlane visu -
+alizer, disk streaming) consumes snapshots via §12.3. It addresses what it reads with the selectors 
+(the closed family of deferred reads resolving against a source, §14.4), which reach any cell, since 
+inspection reads admit deep paths. A binding is resolved at attach against the Build with did-you-
+mean (the offending name plus the list-in-hand it should have matched), and compiled to one gather, 
+the output half of the binding interface (§11.6). map_output therefore receives a labeled NamedTuple, 
+keyed by the names reads declared ( §11.6), instead of performing its own path lookups. A model 
+substitution that breaks a binding therefore fails at attach, not with silent garbage on the wire. 
+Loggers treat field-handle signals specially. They skip or summarize them.
+5
