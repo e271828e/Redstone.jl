@@ -239,17 +239,18 @@ entry there.
 ([D-001][d-001], [D-002][d-002]). Such a system has five parts.
 
 - Continuous dynamics. $\dot{x} = f(x, m, u, t)$ with algebraic outputs. This
-  design's `f` also receives the published signal table, and the composite map
+  design's `f` also receives the signal table, and the composite map
   from `x` to $\dot{x}$ is mathematically identical to the textbook form's ([§5.3][s5-3]).
 - Multi-rate periodic discrete dynamics. $s^{+} = g(s, u, t)$ at declared rates,
   with outputs held zero-order between [ticks](#g-tick) ([D-019][d-019]). A tick is an instant at
   which a discrete component's stages and update run.
-- Zero-crossing events. [Guard](#g-guard) functions (each defining an event's
+- [State events](#g-state-event). [Guard](#g-guard) functions (each defining an event's
   predicate) with handlers, under two detection policies.
 - Post-step manifold [projection](#g-projection). **The formalism includes an
   optional per-[component](#g-component) hook, `x ← x_projection(x)`**
-  ([D-001][d-001]). It is applied after each accepted step and after any
-  handler reset of `x` ([§5.3][s5-3]). It covers quaternion renormalization,
+  ([D-001][d-001]). It is applied at every [boundary](#g-boundary) (a
+  published consistency point) and after any handler reset of `x`
+  ([§5.3][s5-3]). It covers quaternion renormalization,
   direction cosine matrix (DCM) orthonormalization and any other
   manifold-valued state. It is the cheap end of the projection-methods family
   from geometric integration.
@@ -277,7 +278,7 @@ fixed for the whole run, and an event located inside a step never moves the
 next grid point ([§10.4][s10-4], [D-290][d-290]).
 
 A [boundary](#g-boundary) (a published consistency point) is an instant at
-which the discrete side of the model acts and the run publishes its values.
+which discrete changes may take place and the run publishes its values.
 Boundaries fall at three kinds of instant ([D-081][d-081]).
 
 - Every grid point after `t₀`.
@@ -300,10 +301,12 @@ boundary zero    grid           localized   grid             grid
 
 Everything discrete happens at boundaries. Discrete components
 [tick](#g-tick) (run their stages and update) only at boundaries
-([D-019][d-019]). Modes change only through event handlers, and handlers run
-only at boundaries ([D-345][d-345]). [Root inputs](#g-root-input) (source
-cells written from outside the model) change only at frame tops ([§2.2][s2-2]).
-Between two boundaries only the continuous state moves.
+([D-019][d-019]). During a run, modes change only through event handlers,
+and handlers run only at boundaries ([D-345][d-345]).
+[Root inputs](#g-root-input) (source cells written from outside the model)
+change only at frame tops ([§2.2][s2-2]). Between two boundaries only the
+continuous state and time move. Signals computed from them, such as a
+continuous component's outputs, move with them.
 
 Time is no component's state. No [store](#g-store) (a framework-owned home
 of `x`, `s` or `m`) holds it, and a [condition](#g-condition) (a
@@ -327,7 +330,9 @@ state has passed through any event handler's reset and through
 manifold). A one-step method carries no history from earlier steps, so a
 reset needs no special treatment ([D-017][d-017]). Inside a step, discrete outputs hold the values of their
 last [tick](#g-tick) (an instant at which a discrete component runs, [§5.3][s5-3],
-[D-147][d-147]).
+[D-147][d-147]). Before its first tick, a discrete component's outputs hold
+the values computed at [boundary zero](#g-boundary-zero) (the initialization
+boundary at `t₀`, [§5.3][s5-3]).
 
 [Root inputs](#g-root-input) (source cells written from outside the model)
 are a running model's only channel from outside. Nothing outside the model
@@ -367,8 +372,8 @@ laws that hold only for a localized event.
 
 **A guard defines a [predicate](#g-predicate)** ([D-082][d-082],
 [D-001][d-001]). It does so in one of two forms, either a `Bool`-valued form or
-the sign of a continuous function under the normative convention positive =
-predicate holds. Writing the guard's sign value `σ`, holding means `σ ≥ 0`.
+the sign of a continuous function. Under the normative convention, the
+predicate holds when the function's value `σ` satisfies `σ ≥ 0`.
 
 **An event fires when its predicate transitions from not-holding to holding**
 ([D-082][d-082], [D-001][d-001]). This is [edge semantics](#g-edge-semantics), and it is uniform across both forms.
@@ -386,9 +391,10 @@ exactness result that motivates the Boolean form, and the gate idiom for
 localizing mixed predicates. The two policies follow.
 
 - Boundary-detected (cheap). The framework checks each guard for a not-holding →
-  holding edge against its prior ([§10.6][s10-6]) at step boundaries only. There is no
-  root-finding and no step rejection. The handler fires at the end of the step
-  in which the edge was observed. This policy is fully compatible with
+  holding edge ([§10.6][s10-6]) at boundaries only. There is no
+  root-finding and no step rejection. The handler fires at the first boundary
+  that observes the edge. That boundary is the step's end, or a localized
+  event time earlier in the step ([§10.4][s10-4]). This policy is fully compatible with
   fixed-step real-time execution.
 - Localized (precise). The framework finds the crossing instant by
   root-finding ([D-018][d-018]). This policy serves events where timing
@@ -402,8 +408,8 @@ wall-clock time, [§10.7][s10-7], [D-080][d-080]).
 
 Boundary detection is exact for a guard whose value within a step depends
 only on modes, root inputs and held discrete outputs. None of these changes
-inside a step, so such a predicate cannot cross there, and a boundary check
-misses no crossing instant ([§10.4][s10-4], [D-365][d-365]). A guard that
+between boundaries. Such a predicate therefore cannot cross there, and a
+boundary check misses no crossing instant ([§10.4][s10-4], [D-365][d-365]). A guard that
 reads an input fed by continuous state or by time can cross inside a step, as
 a guard on its own state can.
 
@@ -433,8 +439,8 @@ step's end is the ordinary grid boundary, and the event fires there as a
 boundary-detected event would ([D-290][d-290]).
 
 The state at `t*` is the step's continuous extension evaluated there, the
-[interpolant](#g-interpolant) (a continuous extension built from the step's
-end values and derivatives, [D-018][d-018]). The evaluations root-finding
+[interpolant](#g-interpolant) (a continuous extension built from the values
+and derivatives at both ends of the step, [D-018][d-018]). The evaluations root-finding
 makes inside a step read that raw state.
 [Projection](#g-projection) (the per-component hook that returns state to its
 manifold) applies only at the `t*` boundary itself. A projection that moves
@@ -1247,7 +1253,7 @@ types make mutation impossible anyway ([§7][s7]).
 
 The design departs from the orthodox formalism, and says so openly. The
 textbook form is $\dot{x} = f(x, u)$, $y = h(x, u)$. This design's `f` receives
-the orthodox arguments *plus* the published table, $\dot{x} = f(x, m, y, u, t)$.
+the orthodox arguments *plus* the signal table, $\dot{x} = f(x, m, y, u, t)$.
 The composite map $x \mapsto \dot{x}$ is mathematically identical, so
 linearization, trim and automatic differentiation (AD) are untouched. The
 heterodox element is only that derivatives may read outputs.
@@ -5698,12 +5704,12 @@ at which they are observed changes.
 
 **For a guard whose value within a step depends only on modes, root inputs
 and held discrete outputs, boundary detection is exact** ([D-179][d-179],
-[D-365][d-365]). Such a predicate is constant within each frame. Root inputs
+[D-365][d-365]). Such a predicate is constant between boundaries. Root inputs
 change only at the frame-top [drain](#g-drain) (the swap that publishes staged
 device writes into the root inputs, [§11.4][s11-4]). Held discrete outputs
 change only at ticks, which fall on boundaries ([§10.5][s10-5]), and `m`
 changes only through handlers, at boundaries ([D-345][d-345]). The predicate
-cannot cross mid-step, so there is no interior instant for a root-finder to
+cannot cross between boundaries, so there is no interior instant for a root-finder to
 find. Here the boundary is not a resolution limit. It is the crossing itself,
 and localization would have nothing to do.
 
@@ -13634,12 +13640,12 @@ boundary, its boundary declarations, the interface connections crossing it,
 [§8.6][s8-6]) is ordinary English, a distinct usage, never linked here.
 
 <a id="g-boundary-detected"></a>**boundary-detected** — the detection policy a `Bool`-returning guard
-declares. Guards are checked for edges from not-holding to holding against
-their priors at step boundaries only, with no root-finding and no step
-rejection. The handler fires at the end of the step in which the edge was
-observed. The policy is exact, not approximate, for guards over `u`/`m`
-alone, because those predicates are piecewise frame-constant
-([§10.4][s10-4]).
+declares. Guards are checked for edges from not-holding to holding at
+boundaries only, with no root-finding and no step rejection. The handler
+fires at the first boundary that observes the edge, which is the step's end
+or an earlier localized event time. The policy is exact, not approximate,
+for guards over modes, root inputs and held discrete outputs alone, because
+those predicates cannot cross between boundaries ([§10.4][s10-4]).
 
 <a id="g-chattering"></a>**chattering / localization budget** — the bounded per-frame localization
 allowance, `localization_budget`, a deployment keyword
@@ -13724,8 +13730,8 @@ is `(tick − Φ) % D == 0`, and a phase shifts firing instants, never the
 period ([§10.5][s10-5]).
 
 <a id="g-predicate"></a>**predicate** — what a guard defines: a `Bool`-valued form, or the sign of a
-continuous function with positive meaning holding (writing the sign value
-`σ`, holding is `σ ≥ 0`) ([§2.3][s2-3]). Not to be confused with the
+continuous function, which holds when the function's value `σ` satisfies
+`σ ≥ 0` ([§2.3][s2-3]). Not to be confused with the
 *condition* ([§14][s14]), the value that sets a build's state
 ([§D.8][sD-8]). The device loop's running check ([§11.6][s11-6],
 [§12.3][s12-3]) and structural conformance predicates ([§9.5][s9-5]) are
