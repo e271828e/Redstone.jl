@@ -6881,9 +6881,10 @@ Which devices get a task is decided after initialization, from the frozen roster
 and the outcomes of device `init!`, never from `run!`'s keywords ([D-310][d-310], [D-138][d-138]).
 A device whose `init!` failed gets no task ([§12.4][s12-4], [D-138][d-138]).
 
-**Spawn-inside-`run!` is the start gate** ([D-093][d-093]). A task exists only once the
-run it serves exists. Any first-boundary synchronization a device needs is the
-counter-plus-condition predicate wait ([§12.3][s12-3]), never a `Base.Event` latch.
+**Spawn-inside-`run!` is the start gate** ([D-093][d-093], [D-367][d-367]). A task exists only
+once the run it serves exists. Any first-boundary synchronization a device needs
+is the counter-plus-condition predicate wait ([§12.3][s12-3]), never a `Base.Event`
+latch.
 
 One consequence is recorded here because it collapses an API axis. Interactive
 and unattended simulation stop being different execution modes ([D-022][d-022]). An
@@ -7011,40 +7012,42 @@ about.
 
 **The log takes a retention bound beside its switch and its stride** ([D-137][d-137]).
 The bound is `log_max`, the maximum number of retained snapshot references. Its
-default is 65536 (2¹⁶), with `Inf` the explicit opt-out ([D-137][d-137]). The four
+default is 65536 (2¹⁶), with `Inf` the explicit opt-out ([D-137][d-137], [D-368][d-368]). The four
 recording keywords appear on `init!` with their defaults ([Appendix B][sB]).
 
 ```julia
 init!(sim, condition; trace = true, log = true, log_every = 1, log_max = 65536)
 ```
 
-**The bound is a count, not a memory budget** ([D-137][d-137]). Snapshots are immutable
-object graphs ([§4.1][s4-1]) with internal sharing. A [field handle](#g-field-handle) (an immutable query
-object consumers evaluate at their own arguments, [§4.4][s4-4]) rides as a reference to
-build-time-frozen data ([§9.8][s9-8]). Byte accounting over snapshots is therefore fuzzy
-and platform-dependent. A count is exact. It converts to memory through one
-number the user can measure once, `Base.summarysize` of a single snapshot.
+**The bound is a count, not a memory budget** ([D-137][d-137], [D-368][d-368]). Snapshots are
+immutable object graphs ([§4.1][s4-1]) with internal sharing. A [field handle](#g-field-handle) (an
+immutable query object consumers evaluate at their own arguments, [§4.4][s4-4]) rides as
+a reference to build-time-frozen data ([§9.8][s9-8]). Byte accounting over snapshots is
+therefore fuzzy and platform-dependent. A count is exact. It converts to memory
+through one number the user can measure once, `Base.summarysize` of a single
+snapshot.
 
-**The default is finite unconditionally** ([D-137][d-137]). It is not a modal rule keyed
-on `t_end`. A finite run shorter than the bound never notices the bound, and one
-number is easier to hold than two regimes. At 50 Hz and full density, 2¹⁶
-boundaries is about 22 minutes before anything is dropped at all.
+**The default is finite unconditionally** ([D-137][d-137], [D-368][d-368]). It is not a modal rule
+keyed on `t_end`. A finite run shorter than the bound never notices the bound,
+and one number is easier to hold than two regimes. At 50 Hz and full density,
+2¹⁶ boundaries is about 22 minutes before anything is dropped at all.
 
 **When the log fills, the retention stride doubles**, so coverage stays global
-([D-137][d-137]). A rolling window, with the recent past at full density and the start of
-the session forgotten, was rejected ([D-137][d-137]). Instead the log re-decimates
-progressively. After *k* generations the effective stride is `log_every · 2^k`.
-The whole run stays plottable, and what coarsens is density, never extent.
+([D-137][d-137], [D-368][d-368]). A rolling window, with the recent past at full density and the
+start of the session forgotten, was rejected ([D-137][d-137]). Instead the log
+re-decimates progressively. After *k* generations the effective stride is
+`log_every · 2^k`. The whole run stays plottable, and what coarsens is density,
+never extent.
 
 The doubling is the division of labor ([D-038][d-038]) carried through. The log's chief
 consumer is the post-run plot of a session *as a whole*, and nobody plots hours
 at 50 Hz. Full density over any *segment* of interest is what replay from the
 trace recovers ([§11.5][s11-5], [§12.7][s12-7]).
 
-**The guarantees are normative, not the mechanism** ([D-137][d-137]). There are three.
-The bound is respected continuously, and the retained count never exceeds
+**The guarantees are normative, not the mechanism** ([D-137][d-137], [D-368][d-368]). There are
+three. The bound is respected continuously, and the retained count never exceeds
 `log_max`. Coverage is global at the effective stride. And **the endpoints are
-retained unconditionally** ([D-137][d-137]).
+retained unconditionally** ([D-137][d-137], [D-368][d-368]).
 
 The run's first snapshot and its terminal snapshot ([§12.4][s12-4], [§13.5][s13-5]) survive any
 `log_every` and any `log_max`, and they do not count against the bound. They are
@@ -7078,10 +7081,11 @@ Two compositions are worth stating once. The monotonicity of `totals`, the
 status's cumulative per-writer counters, across logged snapshots ([§11.8][s11-8]) is
 untouched. Re-decimation, like decimation, loses *which* boundary within a
 stretch an occurrence fell on, never *how many*. And **`log_max` is a view
-policy, not a trajectory-determining one** ([D-137][d-137]). Like `log` and `log_every`
-it stays out of the trace header's [`Deployment`](#g-deployment) (the scalar-free artifact the
-grid parameters fix), and replay neither records nor compares it ([§11.5][s11-5], [§12.7][s12-7]).
-Sizing follows. A finite `log_max` is the log's `sizehint!` ([§9.8][s9-8]).
+policy, not a trajectory-determining one** ([D-137][d-137], [D-368][d-368]). Like `log` and
+`log_every` it stays out of the trace header's [`Deployment`](#g-deployment) (the scalar-free
+artifact the grid parameters fix), and replay neither records nor compares it
+([§11.5][s11-5], [§12.7][s12-7]). Sizing follows. A finite `log_max` is the log's `sizehint!`
+([§9.8][s9-8]).
 
 #### Output-device bindings
 
@@ -7259,13 +7263,13 @@ included ([D-200][d-200]). Its always-present staging cell, the [harness cell](#
 traced and surface-checked exactly as any device's.
 
 The harness writer's surface is the one thing in the design that is *derived*
-rather than claimed ([D-174][d-174]). It is the unclaimed complement, the faces no
+rather than claimed ([D-174][d-174], [D-370][d-370]). It is the unclaimed complement, the faces no
 rostered device speaks for. That surface is recomputed at every stopped-sim
 roster change, and is therefore as fixed within a run as any claim set. A
 `stage!` write to a claimed face is rejected at staging (`ClaimedFaceEntry`,
-naming the incumbent, [D-174][d-174]). A rostered greedy claimant empties that surface
-outright. The greedy claim is itself a rostered claim, so the complement it
-leaves is empty and every `stage!` in such a session is rejected that way
+naming the incumbent, [D-174][d-174], [D-370][d-370]). A rostered greedy claimant empties that
+surface outright. The greedy claim is itself a rostered claim, so the complement
+it leaves is empty and every `stage!` in such a session is rejected that way
 ([D-192][d-192]). There is one edge case, a batch staged while stopped whose face a
 subsequent `attach!` claims, and the attach itself renormalizes it away ([§11.4][s11-4]).
 
@@ -7284,7 +7288,7 @@ fact the layout does not hold.
 
 #### Root-input initial values
 
-**The init/trim services own root-input initial values** ([D-047][d-047]). Input
+**The init/trim services own root-input initial values** ([D-047][d-047], [D-376][d-376]). Input
 declarations are bare types ([§8.2][s8-2]) and carry no defaults, yet a root input unfed
 by any device must hold a defined value from the first frame. No declaration
 constant could own that value, because the trim service writes root-input values
@@ -7324,14 +7328,14 @@ stages writes and issues control commands, *and nothing else changes* ([D-031][d
 
 #### Device identity and admission
 
-Identity is the device instance. The same object (`===`) may occupy at most one
-roster entry. Two instances of the same type, two joysticks say, are two
-devices. The stable device id the trace, heartbeat and diagnostics speak is
+Identity is the device instance ([D-375][d-375]). The same object (`===`) may occupy at
+most one roster entry. Two instances of the same type, two joysticks say, are
+two devices. The stable device id the trace, heartbeat and diagnostics speak is
 assigned at `attach!`, monotonic per `Simulation` and never reused. It lives
 exactly as long as its roster entry, across runs (roster persistence, [§12.6][s12-6]) and
 until `detach!`.
 
-Admission is a two-part check at the attach point, in order:
+Admission is a two-part check at the attach point, in order ([D-375][d-375]):
 
 ```
 # each line: the condition that rejects the attach → the diagnostic it raises
@@ -7351,11 +7355,11 @@ does not hold is an error (`NotAttached`, [D-215][d-215]).
 
 #### Device death and orphaned claims
 
-**Device death does not detach** ([D-106][d-106]). A mid-run crash, voluntary exit or
-unplug ([§11.6][s11-6], [§12.4][s12-4]) ends the device's *task*. The staging cell stops filling,
-the heartbeat ([§12.2][s12-2]) shows the death by name, and the roster entry, claims
-included, persists to the end of the run. The [orphaned claims](#g-orphaned-claims) (the claims of a
-device whose task died mid-run) are the accepted cost of the freeze. The
+**Device death does not detach** ([D-106][d-106], [D-374][d-374]). A mid-run crash, voluntary exit
+or unplug ([§11.6][s11-6], [§12.4][s12-4]) ends the device's *task*. The staging cell stops
+filling, the heartbeat ([§12.2][s12-2]) shows the death by name, and the roster entry,
+claims included, persists to the end of the run. The [orphaned claims](#g-orphaned-claims) (the claims
+of a device whose task died mid-run) are the accepted cost of the freeze. The
 device's root inputs hold their last-drained values and no other writer inherits
 them. The read-only widgets render the orphan visibly, never mysteriously
 ([§11.7][s11-7]). Recovery is between runs. It takes a stop, a `detach!`, and either
@@ -7368,7 +7372,7 @@ anomaly, not a surface event.
 One deliberate asymmetry is on record as a [guarded addition](#g-guarded-addition) (a capability the
 design admits but does not build). A pure reader claims nothing. Examples are a
 binding declaring `is_output` alone ([§11.6][s11-6]), a visualizer or a telemetry tap.
-Attaching one mid-run would therefore move no writer's surface ([D-106][d-106]). A
+Attaching one mid-run would therefore move no writer's surface ([D-106][d-106], [D-374][d-374]). A
 dynamic reader list would touch only [§12.3][s12-3] wakeups, the heartbeat and the
 shutdown join, never the drain. The addition is cleanly severable from the
 freeze should the join-a-running-session workflow find a customer. The [§12.2][s12-2]
@@ -7523,7 +7527,7 @@ framework) needs no special treatment here ([D-174][d-174]). Its claim was compu
 the attach point, and by the time shapes are compiled it is an ordinary claim
 set ([§11.3][s11-3]). The GUI's staging cell is compiled exactly as a joystick's.
 
-The harness cell gets the same treatment ([D-174][d-174]). Under the [roster freeze](#g-the-freeze)
+The harness cell gets the same treatment ([D-174][d-174], [D-370][d-370]). Under the [roster freeze](#g-the-freeze)
 (attach and detach as stopped-sim operations) its derived surface, the unclaimed
 complement, is as static as any claim set, so it too is compiled to a positional
 shape. That shape is recompiled at each `attach!`/`detach!`, both stopped-sim
@@ -7552,11 +7556,12 @@ site than the drain for that rejection, and the kind and [payload](#g-payload) (
 data a diagnostic carries beside its kind) are the same either way. The GUI is
 included, its claim being an ordinary one. A *harness* write to a claimed face
 is rejected the same way, with `ClaimedFaceEntry` naming the incumbent device
-([D-174][d-174]). And a value that cannot convert to its root input's declared type is
-discarded with `EntryTypeMismatch` ([Appendix C][sC], [D-105][d-105]), at the same spot.
+([D-174][d-174], [D-370][d-370]). And a value that cannot convert to its root input's declared
+type is discarded with `EntryTypeMismatch` ([Appendix C][sC], [D-105][d-105]), at the same
+spot.
 
 Nothing remains at the drain. With surfaces frozen for the run, there is no fact
-only the drain can know, and the drain is pure application ([D-106][d-106]).
+only the drain can know, and the drain is pure application ([D-106][d-106], [D-044][d-044]).
 
 #### The drain
 
@@ -7573,13 +7578,14 @@ guarantees is that the frame's outcome is a pure function of the drained
 batches.
 
 Because the roster is a fixed value at `run!`, the drain is fully compilable
-([D-106][d-106]). The staging cells and their scatters form a heterogeneous but *known*
-tuple the frame function can specialize on, which means zero dynamic dispatch at
-frame top. That is the same per-configuration compile trade the [executor](#g-executor) (the
-compiled form of the stage execution order, [§9.7][s9-7]) already makes, now incurred
-only at stopped-sim attach points. The specialization is an implementation
-freedom the freeze creates, not an obligation ([D-106][d-106]). Iterating a roster array
-costs a handful of dispatches per frame and remains acceptable.
+([D-106][d-106], [D-374][d-374]). The staging cells and their scatters form a heterogeneous but
+*known* tuple the frame function can specialize on, which means zero dynamic
+dispatch at frame top. That is the same per-configuration compile trade the
+[executor](#g-executor) (the compiled form of the stage execution order, [§9.7][s9-7]) already makes,
+now incurred only at stopped-sim attach points. The specialization is an
+implementation freedom the freeze creates, not an obligation ([D-106][d-106], [D-374][d-374]).
+Iterating a roster array costs a handful of dispatches per frame and remains
+acceptable.
 
 Two shapes were rejected, per-input atomic cells and a shared lock-free batch
 stack ([D-024][d-024]). The worked example below examines both.
@@ -7756,7 +7762,7 @@ header is written once, by the door that builds the run (`init!`, `restore!` or
 `replay!`, [§12.6][s12-6]), and never again, which is what makes it an artifact. The
 lists grow in place, the batches at every drain and the schemas at every change
 to the [roster](#g-roster) (the immutable list of attached devices). The length is the frame
-index of the last drain on the live trace ([D-217][d-217]), frozen into the value
+index of the last drain on the live trace ([D-217][d-217], [D-260][d-260]), frozen into the value
 `trace(sim)` hands back. It advances at the top of each drain, and the frame
 ordinal every record of that drain carries is this frame index ([D-260][d-260]). Under
 `init!` that is the number of drains since the header was taken. A trace that
@@ -7875,7 +7881,7 @@ end
 
 #### What `shutdown!` must tolerate
 
-**`shutdown!` must tolerate a partially initialized device** ([D-138][d-138]). The
+**`shutdown!` must tolerate a partially initialized device** ([D-138][d-138], [D-372][d-372]). The
 release guarantee holds on the one path *outside* this wrapper too. The
 initialization step ([§12.4][s12-4]) brackets each `init!` ([D-138][d-138]). A device that threw
 half-way through acquisition goes straight back to `shutdown!`, so nothing it
@@ -7953,22 +7959,23 @@ end
 A bidirectional peer composes both halves itself, with an inner reader task
 inside its own domain, rather than forcing a select engine into the framework.
 Two idioms are author obligations the framework can only teach and diagnose,
-never force ([Appendix A][sA], [D-102][d-102]). The author must loop on `running(handle)` and
-must make blocking calls interruptible (`unblock!`, or timeouts). A forgotten
-predicate check surfaces as `DeviceJoinTimeout` with the device's name. A stall
-surfaces as a stale heartbeat ([§12.2][s12-2]). Liveness timestamps ride *inside* the
-handle primitives, which store them in the device's own diagnostic cell ([§11.8][s11-8]),
-so the framework observes activity without owning the loop.
+never force ([Appendix A][sA], [D-102][d-102], [D-373][d-373]). The author must loop on
+`running(handle)` and must make blocking calls interruptible (`unblock!`, or
+timeouts). A forgotten predicate check surfaces as `DeviceJoinTimeout` with the
+device's name. A stall surfaces as a stale heartbeat ([§12.2][s12-2]). Liveness
+timestamps ride *inside* the handle primitives, which store them in the device's
+own diagnostic cell ([§11.8][s11-8]), so the framework observes activity without owning
+the loop.
 
-FlightCore's device hook **`should_close` dissolves** ([D-102][d-102]). A window ✕ or
-peer EOT is the loop body returning, which is [§12.4][s12-4](6)'s case. The wrapper's
+FlightCore's device hook **`should_close` dissolves** ([D-102][d-102], [D-373][d-373]). A window ✕
+or peer EOT is the loop body returning, which is [§12.4][s12-4](6)'s case. The wrapper's
 exit path releases the device's OS resources and consults `should_abort`.
 Nothing marks the device dead beyond its record. The task has ended,
 `task_state` ([§11.8][s11-8]) says so at the next publication, and its heartbeat goes
 stale ([§12.2][s12-2]). A device's [claim](#g-claim) is the set of [faces](#g-face) (the names ports wear on
 their component's boundary) it *may* write. Claims and the roster entry persist
-to run end (the freeze, [§11.3][s11-3], [D-106][d-106]). The GUI implements the same authoring
-contract.
+to run end (the freeze, [§11.3][s11-3], [D-106][d-106], [D-374][d-374]). The GUI implements the same
+authoring contract.
 
 #### The failure policy
 
@@ -8064,8 +8071,8 @@ thing every consumer of it must know ([D-177][d-177]).
 #### The conformance check
 
 **Sides are declared, and the obligations they create are enforced both ways**
-([D-177][d-177]). `claims` and `reads` have error-throwing fallbacks on the root. A
-declared side whose method was never written therefore fails loudly at the
+([D-177][d-177], [D-371][d-371]). `claims` and `reads` have error-throwing fallbacks on the root.
+A declared side whose method was never written therefore fails loudly at the
 attach point rather than degrading into silence. The attach runs a bidirectional
 conformance check over the pair (trait, method):
 
@@ -8117,18 +8124,18 @@ board whose detents must be driven back out. The binding stays an `attach!`
 argument, never a device field. The same `T16000M` binds differently per
 aircraft, and narrowing the binding narrows the claim ([§11.3][s11-3]).
 
-**A second greedy attach stakes the empty remainder** ([D-174][d-174]). The complement is
-computed against the roster as it stands. A greedy binding attached after
-another has already swallowed everything therefore gets the empty claim. That
-claim is legal, being the honest may-write-nothing degenerate below, and it is
-useless, which is worth saying out loud. The attach succeeds and records
-`EmptyGreedyClaim` ([Appendix C][sC], a warning naming the device and its binding) in
-the roster entry's diagnostic cell. `attach!` mutates the roster, so the warning
-lives in that state's status and surfaces through the status record ([§11.8][s11-8],
-[D-250][d-250]). The log line at return is presentation. That is the one honest reading
-of "you asked for what is left and nothing was left".
+**A second greedy attach stakes the empty remainder** ([D-174][d-174], [D-370][d-370]). The
+complement is computed against the roster as it stands. A greedy binding
+attached after another has already swallowed everything therefore gets the empty
+claim. That claim is legal, being the honest may-write-nothing degenerate below,
+and it is useless, which is worth saying out loud. The attach succeeds and
+records `EmptyGreedyClaim` ([Appendix C][sC], a warning naming the device and its
+binding) in the roster entry's diagnostic cell. `attach!` mutates the roster, so
+the warning lives in that state's status and surfaces through the status record
+([§11.8][s11-8], [D-250][d-250]). The log line at return is presentation. That is the one honest
+reading of "you asked for what is left and nothing was left".
 
-**Several interactive front ends may be rostered at once** ([D-174][d-174]). A web
+**Several interactive front ends may be rostered at once** ([D-174][d-174], [D-370][d-370]). A web
 console can claim the autopilot faces beside a local GUI claiming the stick
 faces. With explicit claims they are simply two enumerated devices, partitioning
 the surface rather than sharing it.
@@ -8148,7 +8155,7 @@ or with explicit claims beside other front ends.
 
 The empty enumeration is not a back door. **`is_input(b) = true` with
 `claims(b) = ()` stays an honest degenerate**, a device that may write nothing
-([D-177][d-177]). Its writes are still binding-bounded, so drift onto any face is
+([D-177][d-177], [D-371][d-371]). Its writes are still binding-bounded, so drift onto any face is
 `OutOfClaimEntry` ([D-044][d-044]). There is no privileged category for it to promote
 into either. `claims` bodies are ordinary code (the idiom, [§8.5][s8-5]; comprehensions
 included), and an enumeration that came back empty by accident stays inert,
@@ -8230,12 +8237,12 @@ whether it will be live ([D-026][d-026]).
 Liveness is a [derived property](#g-derived-liveness) (the rule computing a widget's liveness from
 wiring and claims), and resolution is transitive ([D-045][d-045]). A widget is live iff
 two things hold. Its port's feed chain terminates in a root input, *and* that
-root input lies inside the GUI's own claim ([D-174][d-174]) in the run's frozen surface
-partition (root-input exclusivity, [§11.3][s11-3]). The feed chain is walked through
-[local wires](#g-local-wire) (wires with both ends inside one assembly) and interface connections
-across *all* levels, not just the local assembly. The claim may have been
-computed from the unclaimed complement under `is_greedy`. It may instead have
-been enumerated by a partial-claims [binding](#g-binding) (the value passed at `attach!`,
+root input lies inside the GUI's own claim ([D-174][d-174], [D-370][d-370]) in the run's frozen
+surface partition (root-input exclusivity, [§11.3][s11-3]). The feed chain is walked
+through [local wires](#g-local-wire) (wires with both ends inside one assembly) and interface
+connections across *all* levels, not just the local assembly. The claim may have
+been computed from the unclaimed complement under `is_greedy`. It may instead
+have been enumerated by a partial-claims [binding](#g-binding) (the value passed at `attach!`,
 [§11.6][s11-6]). Such a binding enumerates the claim one [face](#g-face) (the name a port wears on
 its component's boundary) at a time. Either way, "live" reads as "inside the
 surface I declared for".
@@ -8438,10 +8445,10 @@ ring could not hold ([D-136][d-136]). The rejected alternatives are in [D-136][d
 
 #### The bound and the drain
 
-**The ring's bound *is* the rate limit** ([D-136][d-136]). When a writer emits past the
-ring's capacity within one frame, the value is not stored and its kind's
-suppressed count increments. The drop policy retains the earliest in the frame,
-and the excess becomes counts. The first occurrences are the ones with
+**The ring's bound *is* the rate limit** ([D-136][d-136], [D-369][d-369]). When a writer emits
+past the ring's capacity within one frame, the value is not stored and its
+kind's suppressed count increments. The drop policy retains the earliest in the
+frame, and the excess becomes counts. The first occurrences are the ones with
 diagnostic content, and the hundredth is noise the count already reports.
 Rate-limiting "wherever its source can repeat" ([§13.2][s13-2]) is therefore not a policy
 layered over the stream but a structural property of the channel that carries
@@ -8450,12 +8457,12 @@ peer flooding malformed datagrams costs at most sixteen retained values and one
 integer increment per kind per frame, whatever its source does. No writer can
 starve another, because the diagnostic cells are disjoint.
 
-**The diagnostic cells are taken at the same drain [§11.4][s11-4] specifies** ([D-136][d-136]).
-The loop performs one `atomicswap` per diagnostic cell at frame top, at the same
-point and under the same indivisible-take argument as the staging drain. What
-the loop swaps *in* is a shared *empty sentinel*, so a quiet frame swaps the
-sentinel in and gets the sentinel back. That allocates nothing, and it leaves no
-load-only code path that goes untested on healthy runs.
+**The diagnostic cells are taken at the same drain [§11.4][s11-4] specifies** ([D-136][d-136],
+[D-369][d-369]). The loop performs one `atomicswap` per diagnostic cell at frame top, at
+the same point and under the same indivisible-take argument as the staging
+drain. What the loop swaps *in* is a shared *empty sentinel*, so a quiet frame
+swaps the sentinel in and gets the sentinel back. That allocates nothing, and it
+leaves no load-only code path that goes untested on healthy runs.
 
 The take also makes publication sound. The binding rule says that nothing
 reachable from a published snapshot is ever written again ([§11.2][s11-2]). Because the
@@ -8477,8 +8484,8 @@ always present, never enumerated in [Appendix C][sC].
 
 #### The published status
 
-**The published framework status is a concrete frozen value** ([D-136][d-136]). Per
-writer it carries four things beside `who`. `recent` is the ring the frame's
+**The published framework status is a concrete frozen value** ([D-136][d-136], [D-369][d-369]).
+Per writer it carries four things beside `who`. `recent` is the ring the frame's
 drain took, carried by the first publication after that drain, at most sixteen
 values per diagnostic cell it takes. The loop's record folds two, its own and
 the `Model`'s ([D-317][d-317]). `suppressed` is the per-kind counts the ring refused in
@@ -8516,21 +8523,21 @@ Presentation is where `maxlog`, the cap Julia's logging macros put on repeats,
 lives. A status renderer prints a given writer × kind up to 25 cumulative
 occurrences and then switches to count-only display ("`MalformedDatum` from
 `UDPInput#3`: 1 482 occurrences"). **That threshold is presentation policy, not
-channel policy** ([D-136][d-136]). Counts keep accumulating regardless, nothing recorded
-depends on it, and the choice belongs to whoever renders. The channel's own
-bound, above, is the one that is normative.
+channel policy** ([D-136][d-136], [D-369][d-369]). Counts keep accumulating regardless, nothing
+recorded depends on it, and the choice belongs to whoever renders. The channel's
+own bound, above, is the one that is normative.
 
 #### The run's end
 
 **The terminal snapshot carries the run's final cumulative counters** ([§12.4][s12-4],
-[§13.5][s13-5], [D-136][d-136]). An [unattended run](#g-unattended-run) (a run with empty staging and no snapshot
-readers) that nobody watched therefore still answers "what went wrong, and how
-often" from the value its own shutdown published. Final means final at the last
-frame top ([D-201][d-201]). The account closes with the drain that preceded the terminal
-publication. What lands after it can reach no snapshot. Examples are a report
-from a device's exit path and the tail's own `DeviceJoinTimeout` ([§12.4][s12-4]). So the
-loop takes each diagnostic cell once more at the run's end, keeping the next
-run's account clean.
+[§13.5][s13-5], [D-136][d-136], [D-369][d-369]). An [unattended run](#g-unattended-run) (a run with empty staging and no
+snapshot readers) that nobody watched therefore still answers "what went wrong,
+and how often" from the value its own shutdown published. Final means final at
+the last frame top ([D-201][d-201]). The account closes with the drain that preceded the
+terminal publication. What lands after it can reach no snapshot. Examples are a
+report from a device's exit path and the tail's own `DeviceJoinTimeout` ([§12.4][s12-4]).
+So the loop takes each diagnostic cell once more at the run's end, keeping the
+next run's account clean.
 
 That last take is folded into the [termination record](#g-termination-record) (the stopped-sim value
 naming how the run ended) as the tail residue ([§13.5][s13-5]). Per writer, the tail
@@ -8540,16 +8547,16 @@ published ([D-201][d-201], [D-203][d-203]).
 
 #### Allocation
 
-**On a quiet frame nothing allocated scales with diagnostic activity** ([D-241][d-241]).
-The sentinel swap allocates nothing. **The per-writer status costs one small
-vector of records per publication** ([D-241][d-241]), beside the snapshot allocation per
-[boundary](#g-boundary) (a published consistency point) that [§11.2][s11-2] already accepts. That is the
-same GC-over-reuse trade, a roster-sized vector rather than a snapshot type per
-roster size ([D-241][d-241]).
+**On a quiet frame nothing allocated scales with diagnostic activity** ([D-241][d-241],
+[D-369][d-369]). The sentinel swap allocates nothing. **The per-writer status costs one
+small vector of records per publication** ([D-241][d-241]), beside the snapshot
+allocation per [boundary](#g-boundary) (a published consistency point) that [§11.2][s11-2] already
+accepts. That is the same GC-over-reuse trade, a roster-sized vector rather than
+a snapshot type per roster size ([D-241][d-241]).
 
 **The per-kind counters are a fixed-shape isbits record, never a `Dict`**
-([D-136][d-136]). The closed kind set ([Appendix C][sC]) licenses that, because it makes the
-counter layout a type rather than a lookup.
+([D-136][d-136], [D-369][d-369]). The closed kind set ([Appendix C][sC]) licenses that, because it makes
+the counter layout a type rather than a lookup.
 
 On a noisy frame the diagnostic values are allocated at emission, on the
 writer's own task. A drained non-empty ring is frozen into the snapshot and can
@@ -14900,6 +14907,16 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-364]: decisions.md#d-364--hold-a-bulk-data-rig-environment-in-a-constant-source
 [d-365]: decisions.md#d-365--narrow-exact-boundary-detection-to-guards-over-modes-root-inputs-and-held-discrete-outputs
 [d-366]: decisions.md#d-366--make-loop-the-device-contracts-one-mandatory-function
+[d-367]: decisions.md#d-367--replace-the-start-gate-with-spawning-inside-run
+[d-368]: decisions.md#d-368--bound-the-snapshot-log-by-count-with-a-finite-default-a-doubling-stride-and-kept-endpoints
+[d-369]: decisions.md#d-369--the-diagnostic-channels-rate-limit-drain-take-frozen-status-presentation-and-quiet-frame
+[d-370]: decisions.md#d-370--the-greedy-claims-corollaries-for-the-empty-remainder-front-ends-the-harness-surface-and-liveness
+[d-371]: decisions.md#d-371--check-binding-sides-both-ways-at-attach-and-keep-the-empty-enumeration-a-degenerate
+[d-372]: decisions.md#d-372--make-shutdown-tolerate-a-partially-initialized-device
+[d-373]: decisions.md#d-373--dissolve-should_close-and-teach-the-device-loops-two-obligations
+[d-374]: decisions.md#d-374--keep-a-dead-device-rostered-guard-mid-run-readers-and-compile-the-drain-against-the-roster
+[d-375]: decisions.md#d-375--identify-a-device-by-its-instance-and-admit-it-on-identity-then-claims
+[d-376]: decisions.md#d-376--give-the-services-ownership-of-root-input-initial-values
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop
