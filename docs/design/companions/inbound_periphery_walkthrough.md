@@ -89,7 +89,7 @@ is_greedy(::StandardGUIBinding) = true
 Past that point nothing can tell the two apart: the complement is disjoint
 from every incumbent claim by construction, so it validates for exclusivity
 like any other claim and gets the same schema, cell, drain and trace
-([§11.6][s11-6]). A second greedy binding attached afterwards finds nothing left
+([§11.3][s11-3]). A second greedy binding attached afterwards finds nothing left
 and stakes the empty claim — legal, and reported as `EmptyGreedyClaim`.
 
 Because the roster is frozen per run, so is the **partition of the face set**

@@ -8791,7 +8791,7 @@ for entry in roster                       # attachment order, calling task
             report!(entry, DeviceCrash(e))    # pre-spawn: the entry is the address, no handle yet
             entry.should_abort && stop!(control)
         end
-        mark_dead!(entry)                 # from boundary zero; no task is spawned
+                                          # no dead-marking: no task is spawned (§12.2)
     end
 end
 ```
@@ -9178,8 +9178,8 @@ the task appears at the next `run!`.
 **The [frame-top drain](#g-drain) still runs**, so `step!` frames stay
 bit-identical to `run!` frames. What it drains is the **harness
 [cell](#g-harness-cell)**. The harness write path is
-`stage!(sim, "face" => value, …)` ([§11.3][s11-3]), with the calling task as
-writer. Staged batches are ordinary batches. They are traced, so
+`stage!(sim, "face" => value, …)` ([§11.3][s11-3]), from any task, the calling
+task included. Staged batches are ordinary batches. They are traced, so
 [replay](#g-replay) and bit-identity hold. They are applied at the next
 frame top. They are surface-checked like any writer's ([§11.3][s11-3]).
 
@@ -9781,7 +9781,7 @@ about what the *build* warns on.
 and `TrimCommitChecks` are that report's fields ([§14.8][s14-8]). The line the
 call prints at return is presentation. `attach!` is the other side of the
 criterion. It mutates the roster, so `EmptyGreedyClaim` lands in
-the roster entry's cell ([§11.3][s11-3]). The committed
+the roster entry's cell ([§11.6][s11-6]). The committed
 runtime warnings, in one place, are these.
 
 - **[Chattering](#g-chattering), or localization-budget exhaustion**
@@ -12640,7 +12640,7 @@ return law, [§5.2][s5-2]). There is no padding. `x` comes back complete, and
   Everything downstream is identical. An empty remainder is legal and
   reported (`EmptyGreedyClaim`), and `is_greedy` without `is_input` is an
   error ([§11.3][s11-3], [§11.6][s11-6]). `TableBinding` is the shipped
-  data-driven binding, and the standard GUI binding is the shipped greedy one
+  data-driven binding, and the standard GUI binding is the greedy one
   ([§11.6][s11-6]).
 
   `attach!` is a stopped-sim operation. It is legal in `built`, `initialized`
@@ -12798,8 +12798,8 @@ return law, [§5.2][s5-2]). There is no padding. `x` comes back complete, and
   reports `initialized`. `run!` may follow, and it continues from the current
   boundary. A stepping session is deviceless. Write via `stage!` and read via
   `latest` ([§12.6][s12-6]).
-- `stage!(sim, "face" => value, …)`. Task-free staging from the calling task
-  into the harness writer ([§11.3][s11-3]). Its surface is the currently
+- `stage!(sim, "face" => value, …)`. Staging from any task, the calling
+  task included, into the harness writer ([§11.3][s11-3]). Its surface is the currently
   unclaimed faces. The batch is traced, drained last at the next frame top,
   and surface-checked exactly as the GUI's writes (the harness cell,
   [§12.6][s12-6]). It is legal under `run!` and `step!` alike.
@@ -13197,7 +13197,7 @@ activation):
   attribution (the pool with each entry's anchor and refinement factor,
   the coarsest admissible `Δt_base`, the prime attribution) and `min_i Dᵢ`,
   the grid rendered as "N× finer than the fastest declared work".
-- **`CheckpointMismatch`** ([§11.5][s11-5], [§12.6][s12-6], [§12.7][s12-7]).
+- **`CheckpointMismatch`** ([§12.6][s12-6], [§12.7][s12-7]).
   Error · service · collected. One kind for the replay entry pass and for
   `restore!`, raised when a checkpoint's fingerprint disagrees with the
   target simulation or model. The mismatch, discriminated. It is a store or root
@@ -13224,7 +13224,7 @@ activation):
   raises it too, on any of its forms, for a state whose `t` is off the grid
   ([§12.6][s12-6]). The clock's or the state's `t`, the frame top `t_frame`,
   the frame index `frame`.
-- **`ReplaySchemaMismatch`** ([§11.5][s11-5], [§12.7][s12-7]). Error ·
+- **`ReplaySchemaMismatch`** ([§12.7][s12-7]). Error ·
   service · collected. The trace's device tag, its recorded face-name →
   position schema, the disagreeing face names, the target's root input-face
   list.
@@ -13989,8 +13989,8 @@ run's frozen surface partition. It is baked once at run start, with no
 per-port "GUI-controlled" marking anywhere ([§11.7][s11-7]).
 
 <a id="g-device"></a>**device** — any attached participant in the periphery: a subtype of
-`AbstractDevice` under one authoring contract (`init!`/`loop`/`shutdown!`,
-optional `unblock!`) and one handle. Input-only and
+`AbstractDevice` under one authoring contract (a mandatory `loop`, and
+optional `init!`, `shutdown!` and `unblock!` hooks) and one handle. Input-only and
 output-only are degenerate uses, and the GUI is an ordinary device
 ([§11.6][s11-6]).
 
@@ -14010,7 +14010,7 @@ the roster freeze it performs no checks at all ([§11.1][s11-1],
 
 <a id="g-framework-status"></a>**framework status** — the concrete frozen value each snapshot carries
 beside the signal table. It holds the pacer diagnostics ([§10.7][s10-7])
-plus, per writer, this boundary's drained diagnostics (`recent`), the counts
+plus, per writer, the diagnostics the frame's drain took (`recent`), the counts
 the ring refused (`suppressed`), the loop's cumulative per-writer × per-kind
 counters copied in (`totals`) and the liveness timestamp ([§11.8][s11-8],
 [§11.2][s11-2]).
@@ -14018,16 +14018,16 @@ counters copied in (`totals`) and the liveness timestamp ([§11.8][s11-8],
 <a id="g-greedy-claim"></a>**greedy claim** — the claim a binding declaring `is_greedy` receives: the
 unclaimed complement computed by the framework at attach instead of returned
 by `claims`, ordinary in every respect afterwards. An empty remainder is
-legal and reported (`EmptyGreedyClaim`), and the shipped GUI binding is the
-shipped instance ([§11.3][s11-3], [§11.6][s11-6]).
+legal and reported (`EmptyGreedyClaim`), and the standard GUI binding is its
+instance ([§11.3][s11-3], [§11.6][s11-6]).
 
 <a id="g-harness-cell"></a>**harness cell** — the always-present staging cell of the harness writer,
-written by `stage!(sim, "face" => value, …)` from the calling task itself.
+written by `stage!(sim, "face" => value, …)` from any task, the calling task included.
 Its batches are ordinary, traced and surface-checked, and drained last by
 convention ([§12.6][s12-6], [§11.3][s11-3]).
 
-<a id="g-harness-writer"></a>**harness writer** — the framework-owned write path of the calling task,
-`stage!(sim, …)` and its cell, and the design's sole *derived* surface. That
+<a id="g-harness-writer"></a>**harness writer** — the framework-owned write path `stage!(sim, …)`, open
+to any task, with its cell; the design's sole *derived* surface. That
 surface is the unclaimed complement, the faces no rostered device claims,
 recomputed at every stopped-sim roster change. A write to a claimed face is
 `ClaimedFaceEntry` ([§11.3][s11-3], [§12.6][s12-6]).
@@ -14101,8 +14101,8 @@ defaulting to `false`. Set, a device's departure (loop body returning,
 crash, or a failed `init!`) also requests a control-plane stop. Clear, the
 run continues with the device absent and its claims held to run end. It is
 an attachment fact, never a device property, since the same device can be
-advisory in one deployment and decisive in another. The shipped GUI
-attaches with `true` ([§11.6][s11-6], [§12.4][s12-4]).
+advisory in one deployment and decisive in another ([§11.6][s11-6],
+[§12.4][s12-4]).
 
 <a id="g-snapshot"></a>**snapshot** — the immutable per-boundary publication: boundary-consistent
 signal table (root inputs included), `t`, frame index, boundary index and
@@ -14143,8 +14143,8 @@ boundary ordinal. `checkpoint(model)` reads the state alone and
 `checkpoint(sim)` the whole `Checkpoint`, which `init!` takes too as the
 trace's header. `restore!` puts either back with no boundary zero. The state
 holds the flat buffer, the `s` and `m` stores, the whole signal table, the
-guard priors, `t` and `t₀`, and the fingerprint. It is not a condition and
-has no algebra ([§11.5][s11-5], [§12.6][s12-6], [D-274][d-274], [D-317][d-317], [D-319][d-319]).
+guard priors, `t` and `t₀`, the fingerprint and the deployment. It is not a
+condition and has no algebra ([§11.5][s11-5], [§12.6][s12-6], [D-274][d-274], [D-317][d-317], [D-319][d-319]).
 
 <a id="g-decimation"></a>**decimation** — the log's keep-every-kth retention policy (`log_every`),
 admissible on the log alone because it is derived data. Every boundary still

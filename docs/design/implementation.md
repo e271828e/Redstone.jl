@@ -323,7 +323,7 @@ D-256, D-268, D-269, D-317.
 - The diagnostic kinds include:
   - `UnboundedRun`, the loop's own advisory (§13.5, D-255, D-316);
   - `EmptyGreedyClaim`, declared with the service kinds and reported by
-    `attach!` into the roster entry's own cell (§11.3, D-250);
+    `attach!` into the roster entry's own cell (§11.6, D-250);
   - `DebtReanchor`, the pacer's forgiveness on the loop's own cell (§10.7);
   - `ThreadBudget`, the run-top tightness warning on the loop's own cell
     (§12.2, D-027).
