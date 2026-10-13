@@ -79,7 +79,7 @@ what the spec says, the spec edit is part of the item.
   declaration names; correct a copy before measuring, and leave the report as
   it is.
 - **A tutorial** that takes a newcomer from a component to a run and a plot.
-- **The spec's readability rewrite.** Chapters 5 to 10 are done. The
+- **The spec's readability rewrite.** Chapters 1 to 10 are done. The
   other chapters follow `docs/spec_rewrite/recipe.md`, and that directory's
   README tracks them. Until a chapter's turn comes, it keeps the old markers.
   Chapter 6 left these for the owner:
@@ -94,8 +94,8 @@ what the spec says, the spec edit is part of the item.
     ruled: the walk violation's payload and remedies (only superseded D-167
     records them; Appendix C states them), unconnected inputs as a build
     error with no silent defaults (two Rejected lists point back at §6.1),
-    that local fan-out is free, and that contributors publish in the common
-    body frame (Flight.jl's convention).
+    that local fan-out is free (§4.3 says so too), and that contributors
+    publish in the common body frame (Flight.jl's convention).
   Chapter 5 left these for the owner. Each sentence stays plain and uncited
   until ruled; the evidence is group C of chapter 5's `rulings_batch.md`,
   which `git show ffd659f:docs/spec_rewrite/ch05/rulings_batch.md` recovers.
@@ -112,6 +112,35 @@ what the spec says, the spec edit is part of the item.
     follows from D-252), `BundleFieldError`'s three classifications and the
     dead hop's payload form (Appendix C describes both payloads), the name
     "tracer activation" (§9.4), and why `x_projection` stays positional.
+  Chapters 1 to 4 left these for the owner. Each sentence stays as written,
+  plain and uncited for the point in question, until ruled; the evidence is
+  group C of their `rulings_batch.md`, which
+  `git show 4214370:docs/spec_rewrite/ch01-04/rulings_batch.md` recovers.
+  - a mutable cache "in the consumer's state" (§4.4), a home D-231, D-183
+    and D-342 close. No build check backs the bullet either, since the leaf
+    walk never enters a field handle. Recommended: strike the clause,
+    leaving "the interpolant is restructured to be pure", and point the rule
+    at §4.1.
+  - "every component provides two output stages" (§4.1, §5.2, §5.4 and the
+    glossary), untrue of an assembly. Recommended: "every leaf", a wording
+    correction under D-006 at all four places.
+  - five rulings no entry records, each recommended for an entry: the
+    signal requirement, immutability plus frozen references (§4.1; D-243
+    and D-231 cite §4.1 back); the rule of meaning's "do not overlap"
+    (§3.1), read as the meanings not overlapping, since a commanded
+    continuous reset uses both mechanisms (D-141); "`m` changes only through
+    event handlers" (§3.1, §10.4), scoped to a run, since a condition sets
+    it before one (§14.1); field-addressed staging as a recorded guarded
+    addition (§4.3 and the glossary); and the write-side rule's cadence half
+    (§4.3; D-045 records only the writers half).
+  - four more recommended as needing no entry: the composed granularity
+    principle (§4.3), the five design criteria and "recorded with its shape"
+    (§1 and the glossary), "It has no dynamics of its own" (§3.3), and
+    "well-defined semantics" (§2.1).
+  - a companion fix, not a ruling: section 1 of
+    `event_visibility_walkthrough.md` pictures a cell as a reference to an
+    immutable value, which the spec does not say; its heading and code
+    comments need recasting in value terms.
 - **Package registration.**
 - **A precompile workload** for the generic machinery a cold process
   pays, about 9 s whatever the model (§9.7).
@@ -160,7 +189,9 @@ Each is additive, so it can land later without breaking user code.
   subtrees); field-handle summarization over retained snapshots, the
   post-processing entry point, as `getproperty`-style navigation of a run's
   history; and the trace file format, which doubles as the reproducibility
-  carrier and whose positions the replay pointers name (§13.4).
+  carrier and whose positions the replay pointers name (§13.4). §4.4 and
+  §7.5 state the loggers' skip-or-summarize rule for field handles with no
+  entry; it is ruled with the summarization question.
   - **The trace header's deployment half.** The checkpoint's `deployment`,
     which the trace header carries, holds the whole `Deployment`, and through
     it the `Build` with the component instances, into an artifact §11.5 calls

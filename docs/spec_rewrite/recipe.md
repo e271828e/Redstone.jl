@@ -35,6 +35,10 @@ The convention the rewrite writes to is `docs/design/tools/spec_style.md`,
   `check_unit.py ... show-old` and `show-new` print a unit's normalized
   texts. `checks/verify_prompt.md` is the step 4 prompt.
 - **Mark the chapter in progress** in `README.md`.
+- **Small chapters can run as one.** Chapters 1 to 4 (4,285 words) ran as
+  `ch01-04/`, with one survey, brief, chapter pass and batch, `NUM="1 to 4"`
+  and one `RANGE`. Units never cross a chapter boundary. The tools take any
+  directory name.
 
 ## 2. The recipe
 
@@ -207,6 +211,20 @@ unit's `old.md`, which its own inventory guarantees.
   measurement that gives a rule its scale. Chapter 6's C172 count stayed in
   §6.2 with "Flight.jl's Cessna 172 model"; the survey's move was withdrawn.
 
+**From chapters 1 to 4, the brief should also:**
+
+- Check each ruling's unit against the units' line ranges. R12 named a line
+  for unit F that was the last line of unit E's `old.md`; F could not apply
+  it, and R15 moved it.
+- Check a dictated correction against its source's scope, not only its
+  words. R5 replaced "the inner loop allocates nothing" with "the phase
+  bodies … allocate nothing", which §7.5 holds only for the continuous hot
+  path; unit A's verifier caught it (R14). R23 named two placements that
+  turned out to be different sentences (R24).
+- Say that a gloss moved into its own sentence gains weight. "Every
+  component provides two output stages", untrue of an assembly, became a
+  cited sentence; R19 returned it to its gloss.
+
 ### Step 3: rewrite the units in parallel (one Opus agent per unit)
 
 Prompt: read `brief.md`, follow it, edit nothing outside `units/<U>/`, run
@@ -320,6 +338,10 @@ The fixer's log should hold each edit's old and new text in order. Chapter
 every unit byte for byte, which made 65 changes checkable at once. The
 consolidator reads only, so it can run beside the editorial fixer.
 
+From chapters 1 to 4: a bold-only edit's `new_pretrim.md` goes stale when a
+later edit touches the same unit. Rebuild it from the current `new.md` with
+the removed bold restored before running `boldcheck.py`.
+
 ### Step 7: land (the orchestrator)
 
 **Checkpoint 4: the orchestrator approves landing.** Run
@@ -384,6 +406,20 @@ since ratifying it would be a design decision. Then cite the new entries
 beside their source entries in the chapter. Track 2 is
 where the log catches up with the spec; keeping it out of the rewrite kept
 each rewriter's job to prose.
+
+From chapters 1 to 4:
+
+- **Grep every Position for a proposed bullet's ruling before adding it.**
+  The batch proposed D-362's bullet on event/tick iteration from D-020's
+  Rejected list; D-292's Position already made it. The track 2 agent found
+  it, and the bullet went in favour of citing D-292.
+- **A source that cites the spec back is no source.** D-243's Rationale and
+  D-231's Position both took §4.1 as the authority for "immutability plus
+  frozen references", so no entry rules it (R18). The bold went and the
+  ruling went to the owner.
+- **Rewrap by rendered columns.** Track 2's first rewrap measured source
+  columns and missed seven lines that citations pushed past 80 rendered
+  columns; its verifier caught them.
 
 ### Step 9: close the chapter
 
@@ -502,6 +538,24 @@ parallel session:
 
 The chapter, track 2 included, ran in one session of about two hours. It
 cost about 0.75M per 1,000 words.
+
+Chapters 1 to 4, 4,285 words as one run, ruled by the orchestrator:
+
+| step | agent runs | subagent tokens |
+|---|---|---|
+| survey | 1 | 0.45M |
+| rewrites | 7, plus fix rounds | 1.15M |
+| unit verification | 7, plus re-checks | 0.69M |
+| chapter pass, inbound check, editorial fixer | 3 | 0.62M |
+| consolidation | 1 | 0.32M |
+| final verification and PDF check | 2 | 0.26M |
+| landing | 1 | 0.11M |
+| track 2 and its verification | 2 | 0.35M |
+| total | 24, plus fix rounds | about 3.95M |
+
+The run, track 2 included, took one session of about two hours. It cost
+about 0.9M per 1,000 words, between chapter 5 and the small chapters,
+since four chapters shared one survey and one set of chapter-wide passes.
 
 ## 4. What to expect from a chapter
 
@@ -622,6 +676,16 @@ From chapter 5, which held 103 rules:
 36. Where a section spans units, the brief assigns each first-use link.
 37. A merge keeps every term the merged passages named.
 38. Log editorial fixes as old and new text, so the verifier can replay them.
+39. Small chapters can run as one; units never cross a chapter boundary.
+40. Check each ruling's unit, and each dictated correction's scope, before
+    the brief goes out (chapters 1 to 4).
+41. A gloss promoted to a sentence gains weight; check the claim alone.
+42. Grep every Position before proposing a track-2 bullet.
+43. A source that cites the spec back is no source; the ruling goes to the
+    owner.
+44. Rebuild a stale `new_pretrim.md`, and rewrap by rendered columns.
+45. Subagents use `command ls`: a bare `ls` is `eza` here, and one hung a
+    shell for five hours.
 
 ## 6. A chapter's files
 

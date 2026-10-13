@@ -24,10 +24,10 @@ readability with no loss of content. The steps are in
 | part | state | landed in | files |
 |---|---|---|---|
 | Front matter and Part roadmaps | not started | | |
-| 1. Introduction | in progress, in `ch01-04/` | | |
-| 2. Formalism | in progress, in `ch01-04/` | | |
-| 3. Component taxonomy | in progress, in `ch01-04/` | | |
-| 4. Ports and signals | in progress, in `ch01-04/` | | |
+| 1. Introduction | done | `af4c13f` | |
+| 2. Formalism | done | `af4c13f` | |
+| 3. Component taxonomy | done | `af4c13f` | |
+| 4. Ports and signals | done | `af4c13f` | |
 | 5. Evaluation order and feedthrough | done | `4802729` | `ffd659f` |
 | 6. Composition: connections, aggregation and hierarchy | done | `50ad740` | `cc5a41c` |
 | 7. State and data representation | done | `1cb6716` | `733be21` |
@@ -45,12 +45,6 @@ readability with no loss of content. The steps are in
 Doubles and pointers chapters 5 to 8 found in chapters not yet rewritten. Each
 chapter's rewrite settles its own:
 
-- **Chapter 3.** §3.4's lead-in "Algebra removes the reset." bolds D-056's
-  first bullet, which §8.6 bolds.
-- **Chapter 3.** §3.1 calls continuous state "an isbits struct of real
-  scalars" and §3.2 calls discrete state "any isbits value", both citing §7.
-  §7.1 states a flat NamedTuple of real scalars and `SArray`s, and §7.3 a
-  value whose fields are isbits or a `Symbol` (D-231).
 - **Chapter 11.** §11.6 calls §8.1's shadowing check "the reflection class",
   a name §8.1 never uses.
 - **Chapter 11.** §11.8 scopes the zero-allocation invariant to "the model
