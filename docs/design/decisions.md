@@ -364,6 +364,7 @@ were derived.
 | [D-363][d-363] | Cell freshness, closed port alternatives, write-side atomicity and bulk-data handles | ratified |
 | [D-364][d-364] | Hold a bulk-data rig environment in a constant source | ratified |
 | [D-365][d-365] | Narrow exact boundary detection to guards over modes, root inputs and held discrete outputs | ratified |
+| [D-366][d-366] | Make `loop` the device contract's one mandatory function | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -1029,7 +1030,7 @@ composition removed its reason to exist); manual events = slot + guard;
 init/trim = stopped-sim services ([§14][s14]); mid-run intervention command = guarded
 addition with shape on record.
 
-**Spec.** [§12.5][s12-5], [§14][s14]
+**Spec.** [§11.3][s11-3], [§12.5][s12-5], [§14][s14]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -1401,7 +1402,7 @@ changes — a write to a claimed face is `ClaimedFaceEntry` at staging;
 dead); autonomous opportunistic writing does not exist, so cross-writer races
 structurally cannot arise and drain order stays diagnostic.
 
-**Spec.** [§11.3][s11-3], [§11.6][s11-6], [§11.7][s11-7]
+**Spec.** [§11.3][s11-3], [§11.4][s11-4], [§11.6][s11-6], [§11.7][s11-7]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -1434,7 +1435,7 @@ conditioning, mappings, edge logic and pokeability:
 - Edge logic is staged counters plus model-state accumulators.
 - Unexported ports are unpokeable.
 
-**Spec.** [§4.3][s4-3], [§11.7][s11-7]
+**Spec.** [§4.3][s4-3], [§11.4][s11-4], [§11.6][s11-6], [§11.7][s11-7]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -1496,7 +1497,7 @@ to initial slot values; engage semantics stay in the FCS (the existing
 `ControlLaws` transition latch — uniform across writers), GUI peek-batch
 demoted to display-sync sugar.
 
-**Spec.** [§11.3][s11-3]
+**Spec.** [§11.2][s11-2], [§11.3][s11-3], [§11.5][s11-5], [§11.7][s11-7]
 
 **Rationale.** No claim-transition policy exists — mid-run claim transitions
 cannot occur under the [D-106][d-106] freeze, liveness is baked once per run, and the
@@ -2582,7 +2583,7 @@ root contract (faces, claims, exclusivity — service by definition), reads see
 the whole table (inspection observation, the log/GUI/replay clients; local
 cells accessible — presentation filters are defaults, not walls).
 
-**Spec.** [§13.3][s13-3], [§13.5][s13-5], [§14.4][s14-4]
+**Spec.** [§11.2][s11-2], [§13.3][s13-3], [§13.5][s13-5], [§14.4][s14-4]
 
 **Rationale.** Attach validation against the `Build` makes structural drift
 loud; two-sided guidance — deep path = inspection (zero promises, right for
@@ -3099,7 +3100,7 @@ header, and the frame-top drain fed by the recording's batches keyed by frame
 ordinal (exact: the frame sequence is itself deterministic), applied verbatim
 with no surface re-check (the write-surface rule ran at recording time).
 
-**Spec.** [§2.5][s2-5], [§12.7][s12-7], [§14.5][s14-5]
+**Spec.** [§2.5][s2-5], [§11.1][s11-1], [§12.7][s12-7], [§14.5][s14-5]
 
 **Rationale.** The header captures the resolved stores + slots after `apply!`
 and BEFORE the boundary-zero sequence — [§14.5][s14-5]'s end-of-sequence capture
@@ -3152,6 +3153,9 @@ inline on the calling task ([§11.1][s11-1]); heartbeat timestamps ride inside h
 primitives, so liveness needs no loop ownership; the two author obligations
 (`running(handle)` predicate, interruptible blocking) are taught ([Appendix A][sA])
 and diagnosed (`DeviceJoinTimeout`, stale heartbeat), never forced.
+
+Annotation (2026-10-13): amended by [D-366][d-366]. Only `loop` is mandatory;
+`init!`, `shutdown!` and `unblock!` are optional hooks with no-op defaults.
 
 **Rejected.**
 - *Framework-owned hook loop (FlightCore's shape):* its eight hooks were never
@@ -3241,7 +3245,7 @@ is tolerated in the loop body (catch, stage nothing, `report(handle,
 MalformedDatum(cause))`, continue; rate-limited per device — the `maxlog = 25`
 successor), any other exception propagates to the wrapper as `DeviceCrash`.
 
-**Spec.** [§11.6][s11-6], [§13.2][s13-2], [§13.4][s13-4]
+**Spec.** [§11.4][s11-4], [§11.6][s11-6], [§13.2][s13-2], [§13.4][s13-4]
 
 **Rationale.** Classification is the author's, as FlightCore's
 `InputMappingError` docstring already assigned it; `report(handle, …)` is
@@ -3268,7 +3272,7 @@ face set into per-writer surfaces plus the interactive remainder are static,
 inspectable facts of each run; attach has one semantics (register; tasks appear
 at `run!`, [D-093][d-093]).
 
-**Spec.** [§11.3][s11-3], [§12.3][s12-3], [§12.5][s12-5], [§12.7][s12-7]
+**Spec.** [§11.3][s11-3], [§11.4][s11-4], [§11.6][s11-6], [§12.3][s12-3], [§12.5][s12-5], [§12.7][s12-7]
 
 **Rationale.** All write-surface checks move to staging and the drain is pure
 application, fully compilable against the frozen roster (specialization an
@@ -4064,7 +4068,7 @@ substitutability, drift still loud at attach (`ReadBindingUnresolved`); which
 of the three a client falls under is internal, never user-facing API
 ([§14.4][s14-4]'s `apply!` precedent). This amends [D-061][d-061].
 
-**Spec.** [§13.3][s13-3], [§14.2][s14-2], [§14.4][s14-4], [§14.9][s14-9]
+**Spec.** [§11.2][s11-2], [§13.3][s13-3], [§14.2][s14-2], [§14.4][s14-4], [§14.9][s14-9]
 
 **Rationale.** Not [D-061][d-061]'s rejected instance-only walk: the declared-type walk
 stays the primitive's semantics and stays enforcing where promises depend on
@@ -7124,7 +7128,7 @@ ordinary declared port, reaching its consumers through the existing views.
 - The workspace and the handler return law are untouched: `ws` is the
   mutable-scratch channel ([§7.3][s7-3]), handlers return stores ([D-090][d-090]).
 
-**Spec.** [§4.2][s4-2], [§4.3][s4-3], [§5.2][s5-2], [§5.3][s5-3], [§5.4][s5-4], [§8.2][s8-2], [§8.3][s8-3], [§9.1][s9-1], [§9.3][s9-3], [§9.5][s9-5], [§9.7][s9-7],
+**Spec.** [§4.2][s4-2], [§4.3][s4-3], [§5.2][s5-2], [§5.3][s5-3], [§5.4][s5-4], [§8.2][s8-2], [§8.3][s8-3], [§9.1][s9-1], [§9.3][s9-3], [§9.5][s9-5], [§9.7][s9-7], [§11.2][s11-2],
 [Appendix B][sB], [Appendix C][sC], [Appendix D][sD]
 
 **Rationale.** `w` served two needs, and each is served better without it.
@@ -7359,7 +7363,7 @@ change under substitution.
 
 **Position.** [§11.8][s11-8]'s cell roster has three writer classes: one cell per rostered device, one for the harness writer, one for the loop itself. The harness writer's staging diagnostics — `ClaimedFaceEntry`, `EntryTypeMismatch`, and the no-such-face `OutOfClaimEntry` ([§11.4][s11-4]) — are written into its cell on whichever task stages; its record rides the published status with no heartbeat and no `task_state`. This amends [D-136][d-136]: its mechanism, bound and drain stand, and the writer enumeration gains the harness writer.
 
-**Spec.** [§11.8][s11-8], [Appendix D][sD]
+**Spec.** [§11.3][s11-3], [§11.4][s11-4], [§11.8][s11-8], [Appendix D][sD]
 
 **Rationale.** The enumeration followed the writer list — device tasks and the loop — but the harness is a third writer: `ClaimedFaceEntry` is harness-only by definition ([Appendix C][sC]), and a harness `stage!` runs on whatever task calls it — the calling task, a script, the GUI — which is neither a device task nor the loop. Without a cell of its own, those diagnostics have no home with the channel's bound and drain, and would fall back to an unbounded synchronous stream invisible to every status reader. The single-writer ownership argument relaxes for this one cell exactly as it already does for the harness staging cell: several tasks may stage concurrently, and the same CAS append arbitrates — no lock, no new primitive. Attribution is unchanged: the cell supplies the writer identity, and the status discriminates a staging rejection from a loop degradation by record.
 
@@ -7374,7 +7378,7 @@ change under substitution.
 
 **Position.** The terminal snapshot's diagnostic account is complete up to its own frame top, and diagnostics arising after it are presented, never published: the loop sweeps every cell once more at the run's end — so nothing leaks into the next run's account — and emits the residue through the standard logging backend, with `DeviceJoinTimeout`, which arises in tail step (5) by construction, emitted the same way ([§12.4][s12-4], [§11.8][s11-8]). This amends [D-136][d-136]'s completeness claim by one window: complete means complete to the final frame top.
 
-**Spec.** [§11.2][s11-2], [§11.8][s11-8], [§12.4][s12-4], [§13.2][s13-2], [Appendix C][sC]
+**Spec.** [§11.8][s11-8], [§12.4][s12-4], [§13.2][s13-2], [Appendix C][sC]
 
 **Rationale.** The tail's ordering is normative — the final snapshot is published before the sticky status precisely so consumers can flush the true final state — so a join timeout postdates the run's last publishable value by construction, and a cell entry written after the final frame-top drain has no later drain to fold it. The window cannot be closed, only disposed of honestly: the run's-end sweep guarantees a bounded, attributed presentation and a clean next run, while every published status stays exactly what [§11.8][s11-8] promises — delta plus totals as of that boundary.
 
@@ -7982,7 +7986,7 @@ dual-stage kinds are fail-fast at both stages.
 - Internal invariant checks are not diagnostics: they raise a distinct
   `InternalInvariant` exception outside the kind set.
 
-**Spec.** [§8.2][s8-2], [§8.5][s8-5], [§13.2][s13-2], [Appendix C][sC]
+**Spec.** [§8.2][s8-2], [§8.5][s8-5], [§11.3][s11-3], [§13.2][s13-2], [Appendix C][sC]
 
 **Rationale.** Surfaced by the site inventory for the prototype increment
 retiring its string stand-in: 31 of its 144 refusal sites matched no [Appendix C][sC]
@@ -8033,7 +8037,7 @@ C's first test, and the table moves where the sites showed it wrong.
   A selector carried as its rendered spelling is licensed — [§13.2][s13-2]'s rule is
   against instances and model types, and a spelling is a string.
 
-**Spec.** [§13.2][s13-2], [Appendix C][sC]
+**Spec.** [§11.3][s11-3], [§11.6][s11-6], [§13.2][s13-2], [Appendix C][sC]
 
 **Rationale.** The payload and policy columns were untested design claims
 until a site had to construct each value. Three findings needed the table to
@@ -8139,7 +8143,7 @@ second substitution) is driven by that mode.
   the records exhausted, and stays `:replay` otherwise. `init!` and a fresh
   `replay!` reset it with the trajectory.
 
-**Spec.** [§12.6][s12-6], [§12.7][s12-7], [§13.4][s13-4]
+**Spec.** [§11.5][s11-5], [§12.6][s12-6], [§12.7][s12-7], [§13.4][s13-4]
 
 **Rationale.** [§13.4][s13-4] promises that after `replay!(sim2, trc; to_boundary = k)`
 a `step!` re-executes frame k+1 on its recorded inputs. The promise needs the
@@ -9624,7 +9628,7 @@ status. Logging is presentation, never a home.
   cell, since `attach!` mutates the roster, and surfaces through the status
   record. The log line at return stays as presentation.
 
-**Spec.** [§9.2][s9-2], [§11.3][s11-3], [§11.8][s11-8], [§13.2][s13-2], [Appendix C][sC]
+**Spec.** [§9.2][s9-2], [§11.6][s11-6], [§11.8][s11-8], [§13.2][s13-2], [Appendix C][sC]
 
 **Rationale.** [§13.2][s13-2] placed warnings by where they were raised: the build's
 collection, the runtime's per-writer cells, and a third home for service
@@ -12521,7 +12525,7 @@ iteration in [D-020][d-020]'s Rejected list.
 acquire-load the published snapshot, therefore observe the signal table only
 at boundaries.
 
-**Spec.** [§10.3][s10-3]
+**Spec.** [§10.3][s10-3], [§11.2][s11-2]
 
 **Rationale.** The rule was recorded only as [D-023][d-023]'s rejection of mid-step
 publication, whose reason pointed back at [§10.3][s10-3], together with [D-023][d-023]'s
@@ -12948,7 +12952,7 @@ participation in [D-079][d-079]'s.
   take the exactly-zero budget. Handlers, which are episodic and run only on
   firing, take the ticks' zero-by-idiom budget.
 
-**Spec.** [§9.8][s9-8]
+**Spec.** [§9.8][s9-8], [§11.8][s11-8]
 
 **Rationale.** Each bullet restates what an existing entry recorded outside a
 Position. The invariant's scope and the services' tolerance were recorded in
@@ -13513,7 +13517,7 @@ no-faces default; and [D-261][d-261]'s bullet making `StopPolicy` `t_end` and th
 faces with the faces' compiled addresses as the loop's argument. [D-060][d-060]'s rule
 that termination is state, never an exception, stands.
 
-**Spec.** [§4.3][s4-3], [§8.1][s8-1], [§8.2][s8-2], [§10.4][s10-4], [§12.4][s12-4], [§12.6][s12-6], [§12.7][s12-7], [§13.5][s13-5], [§13.7][s13-7], [§14.4][s14-4], [Appendix B][sB], [Appendix C][sC]
+**Spec.** [§4.3][s4-3], [§8.1][s8-1], [§8.2][s8-2], [§10.4][s10-4], [§11.5][s11-5], [§12.4][s12-4], [§12.6][s12-6], [§12.7][s12-7], [§13.5][s13-5], [§13.7][s13-7], [§14.4][s14-4], [Appendix B][sB], [Appendix C][sC]
 
 **Rationale.** A model-detected stop was a `Bool` face re-exported level by
 level to the root and named by the advance's `stop_on`, and the hop per
@@ -13891,7 +13895,7 @@ compose the model's.
 - The grid arithmetic the model layer reads, `_frame_slack`, `_frames_to`
   and `_frame_at`, lives in `frame.jl` beside `_grid_time`.
 
-**Spec.** [§9.2][s9-2], [§12.6][s12-6], [§14][s14], [§14.5][s14-5], [§14.8][s14-8], [§14.10][s14-10], [Appendix B][sB], [Appendix C][sC]
+**Spec.** [§9.2][s9-2], [§11.5][s11-5], [§12.6][s12-6], [§14][s14], [§14.5][s14-5], [§14.8][s14-8], [§14.10][s14-10], [Appendix B][sB], [Appendix C][sC]
 
 **Rationale.** The checkpoint fused the model's state with the trajectory's
 cursor. A `Model{Dual}` can checkpoint and restore without ever having a
@@ -14611,6 +14615,28 @@ input that the drain changed.
   included. A rule stated over the same name with a narrower meaning would
   mislead its readers.
 
+### D-366 — Make `loop` the device contract's one mandatory function
+
+**Status.** ratified
+
+**Position.** A device must define `loop(dev, handle)`, and `attach!` refuses
+a device with no `loop` method (`DeviceContractMismatch`, [D-216][d-216]). `init!`,
+`shutdown!` and `unblock!` are optional, each with a no-op default.
+
+**Spec.** [§11.6][s11-6]
+
+**Rationale.** A device with no OS resources has nothing to acquire or
+release, so a mandatory `init!` or `shutdown!` would only force empty
+methods. The code already gives the three hooks no-op defaults
+(`src/devices.jl` 67–85). The owner ruled this on 2026-10-13, when chapter
+11's rewrite found the spec reading as three mandatory functions. This
+amends [D-102][d-102]'s contract list.
+
+**Rejected.**
+- *Mandatory `init!` and `shutdown!`, as [§11.6][s11-6] read before ("four functions,
+  one optional"):* every device without OS resources would define two empty
+  methods.
+
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
 [d-002]: #d-002--adopt-the-causal-port-based-paradigm
@@ -14951,6 +14977,7 @@ input that the drain changed.
 [d-363]: #d-363--cell-freshness-closed-port-alternatives-write-side-atomicity-and-bulk-data-handles
 [d-364]: #d-364--hold-a-bulk-data-rig-environment-in-a-constant-source
 [d-365]: #d-365--narrow-exact-boundary-detection-to-guards-over-modes-root-inputs-and-held-discrete-outputs
+[d-366]: #d-366--make-loop-the-device-contracts-one-mandatory-function
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property
@@ -14965,7 +14992,7 @@ input that the drain changed.
 [s11-5]: spec.md#115-inbound-the-input-trace
 [s11-6]: spec.md#116-devices-one-authoring-contract-no-taxonomy
 [s11-7]: spec.md#117-the-gui-write-path-port-resolution-peek-staging-contract
-[s11-8]: spec.md#118-diagnostics-and-liveness-the-per-writer-cell
+[s11-8]: spec.md#118-diagnostics-and-liveness-the-per-writer-diagnostic-cell
 [s12]: spec.md#12-runtime-periphery-lifecycle-and-orchestration
 [s12-1]: spec.md#121-control-plane
 [s12-2]: spec.md#122-loop-scheduling-wait-primitive-yields-thread-budget

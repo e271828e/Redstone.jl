@@ -308,7 +308,7 @@ no drain.
 [s11-2]: ../spec.md#112-outbound-snapshot-publication
 [s11-3]: ../spec.md#113-inbound-root-inputs-claims-and-the-frozen-roster
 [s11-5]: ../spec.md#115-inbound-the-input-trace
-[s11-8]: ../spec.md#118-diagnostics-and-liveness-the-per-writer-cell
+[s11-8]: ../spec.md#118-diagnostics-and-liveness-the-per-writer-diagnostic-cell
 [s13-4]: ../spec.md#134-runtime-failures-one-catch-site-an-execution-cursor
 [s13-5]: ../spec.md#135-termination-is-a-state-not-an-exception
 [s14-5]: ../spec.md#145-boundary-zero-an-ordinary-boundary-with-authored-incoming-transitions
