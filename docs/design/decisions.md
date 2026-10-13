@@ -12460,7 +12460,7 @@ recorded in [D-019][d-019]'s Rejected list.
 - Event/tick fixed-point iteration is structurally unnecessary, because a
   tick's `s⁺` is invisible until the next tick decode.
 
-**Spec.** [§10.6][s10-6]
+**Spec.** [§3.4][s3-4], [§10.6][s10-6]
 
 **Rationale.** Each bullet restates what an existing entry recorded outside
 its Position. The registers were recorded in [D-181][d-181]'s Rationale, and the
@@ -14178,7 +14178,7 @@ Rationale, and the opposite direction in [D-082][d-082]'s.
 
 **Status.** ratified
 
-**Position.** Six taxonomy rulings that [§3.1][s3-1], [§3.2][s3-2] and [§3.4][s3-4] state are
+**Position.** Five taxonomy rulings that [§3.1][s3-1], [§3.2][s3-2] and [§3.4][s3-4] state are
 fixed here.
 
 - Internal modes enable reset maps. Without modes, latch logic becomes
@@ -14191,8 +14191,6 @@ fixed here.
   gains no expressiveness. It costs stage doubling with tier-tagged names,
   per-port tier vocabulary and facet-conditional obligations, and it hides
   the sampling interface.
-- Event/tick fixed-point iteration is structurally unnecessary, because
-  `s⁺` stays invisible until the next tick decode.
 - No `s` view in the flow and no discrete-tier write into `x`: either
   would un-sample the sampled-data semantics, break the held-`s`
   linearization's exactness and hide the coupling from the table, the
@@ -14207,8 +14205,7 @@ fixed here.
 outside its Position. The reset maps were recorded in [D-003][d-003]'s Rejected
 list. The mode store was recorded in [D-231][d-231]'s annotation and follows from
 [D-249][d-249]'s first bullet. The all-in-one component, the forbidden write into
-`x` and the periodic reset were recorded in [D-056][d-056]'s Rejected list, and the
-needless event/tick iteration in [D-020][d-020]'s.
+`x` and the periodic reset were recorded in [D-056][d-056]'s Rejected list.
 
 **Rejected.** None beyond the source entries' lists.
 

@@ -399,11 +399,11 @@ state. A discrete component's `s` influences continuous dynamics only through
 signals ([D-056][d-056]). Those outputs are held zero-order between ticks
 ([D-019][d-019]).
 
-**`m` is continuous-only** ([D-231][d-231], [D-249][d-249], [D-362][d-362]). A discrete
-component has no mode store. Its finite-state machine (FSM) enums, flags and
-counters are ordinary `s` fields. `m` exists on the continuous side because
-modes must change *between* flow evaluations, which is what handlers do. On the
-discrete side `g` already runs at the only instants at which anything may
+**`m` is continuous-only** ([D-231][d-231], [D-249][d-249], [D-362][d-362]). A
+discrete component has no mode store. Its finite-state machine (FSM) enums,
+flags and counters are ordinary `s` fields. `m` exists on the continuous side
+because modes must change *between* flow evaluations, which is what handlers do.
+On the discrete side `g` already runs at the only instants at which anything may
 change. A second store would duplicate the discrete tier's own state semantics
 under another name.
 
@@ -444,7 +444,7 @@ exactly as two siblings do ([D-056][d-056], [D-362][d-362]). There is [one home 
 mirrors another, [§5.2][s5-2]). `x_deriv` sees only the continuous state, and `s_update`
 only the discrete one. And `s⁺` is decoded only at the owner's next tick, because
 `s_update` runs last. That deferred decode is what makes ticks→events structurally
-impossible ([D-020][d-020], [D-362][d-362]). It is also what terminates the iteration at each [boundary](#g-boundary) (a
+impossible ([D-020][d-020], [D-292][d-292]). It is also what terminates the iteration at each [boundary](#g-boundary) (a
 published consistency point, [§10.6][s10-6]). Inside an all-in-one component, influence
 across [tiers](#g-tier) (the continuous and discrete sides of the formalism) still routes
 through [cells](#g-cell) of the published signal table ([D-056][d-056]).
@@ -569,11 +569,12 @@ of instantaneous input→output dependences) and stage membership change ([§9.1
 
 Which ports exist at all is a declaration-layer decision. The output
 [contract](#g-contract) (the ports a component declares in `y_types`) *is* the
-public interface ([D-034][d-034]). There are no private intermediates. A value
-a later function needs is a declared port like any other ([§5.2][s5-2], [D-194][d-194]). A
-stage result outside the contract is a build error (`UndeclaredReturnField`,
-[§8.3][s8-3]). A presentational *unlisted* flag, skipped in logs
-and GUI but still connectable, is closed ([D-016][d-016], [D-034][d-034], [D-363][d-363]).
+public interface ([D-034][d-034]). There are no private intermediates. A value a
+later function needs is a declared port like any other
+([§5.2][s5-2], [D-194][d-194]). A stage result outside the contract is a build
+error (`UndeclaredReturnField`, [§8.3][s8-3]). A presentational *unlisted* flag,
+skipped in logs and GUI but still connectable, is closed
+([D-016][d-016], [D-034][d-034], [D-363][d-363]).
 
 ### 4.3 Table mechanics and port granularity
 
@@ -596,8 +597,8 @@ Wiring and the [periphery](#g-periphery) (everything outside the loop that
 exchanges data with it) address a child's faces without knowing whether it is
 primitive or composite.
 
-The port is the atomic unit of the entire periphery ([D-363][d-363]). It is each of the
-following.
+The port is the atomic unit of the entire periphery ([D-363][d-363]). It is each
+of the following.
 
 - One cell.
 - One [root input](#g-root-input) (a source cell the periphery feeds).
@@ -695,9 +696,9 @@ output_wires(::Vehicle) = ("kin/pose" => "pose", "kin/q_eb" => "q_eb")
 
 #### Granularity, write side
 
-Under the write-side rule, **data written by different external writers, or
-at different cadences, must not share a port** ([D-045][d-045], [D-363][d-363]). In short,
-bundle what is written together.
+Under the write-side rule, **data written by different external writers, or at
+different cadences, must not share a port** ([D-045][d-045], [D-363][d-363]). In
+short, bundle what is written together.
 
 Pilot commands are the case in point. They are scalar faces under a namespace
 prefix. The convenient bundle is assembled *downstream*, inside the graph, by
@@ -760,8 +761,8 @@ to kill. The value-level constructor is a *shipped component's obligation*,
 not something a consumer can retrofit. The real component composes environment
 sub-models, and anyone else reconstructing the map has re-created that drift.
 
-For bulk-data components the obligation is only that the query math be
-reachable as a plain function ([D-139][d-139], [D-363][d-363]). They own their resource
+For bulk-data components the obligation is only that the query math be reachable
+as a plain function ([D-139][d-139], [D-363][d-363]). They own their resource
 loading, so building a handle outside a build may cost a load. That cost is
 acceptable, because condition authoring is design-time code.
 
@@ -779,9 +780,9 @@ y_direct(atm, args) = (; … = atmospheric_field(atm; T_sl = …, p_sl = …, wi
 #### Pre-sampling and substitutability
 
 Pre-sampling is an idiom built on top, used where natural, not a separate
-mechanism ([D-008][d-008], [D-363][d-363]). In it, a component consumes the field and a pose
-and emits plain data, as an illustrative `Airflow` component emits
-FlightPhysics' `AirData` for the whole vehicle. Resource injection
+mechanism ([D-008][d-008], [D-363][d-363]). In it, a component consumes the
+field and a pose and emits plain data, as an illustrative `Airflow` component
+emits FlightPhysics' `AirData` for the whole vehicle. Resource injection
 (declare-and-resolve service registries) is closed for the first cut
 ([D-008][d-008], [D-363][d-363]).
 
