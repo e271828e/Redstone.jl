@@ -351,6 +351,9 @@ were derived.
 | [D-341][d-341] | The bundle law, the closed name sets and per-key return checks | ratified |
 | [D-342][d-342] | Pure output stages, the dependence-class names and supervisory resets | ratified |
 | [D-343][d-343] | The remedy ladder's content, the closed loop remedies and the trace's reach | ratified |
+| [D-361][d-361] | Time and state events, and the opposite crossing direction | ratified |
+| [D-362][d-362] | Reset maps, the continuous-only mode store and the rejected all-in-one component | ratified |
+| [D-363][d-363] | Cell freshness, closed port alternatives, write-side atomicity and bulk-data handles | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -4773,6 +4776,11 @@ laws-as-plain-functions pattern), and `sat_ext` poses the same
 always-on-vs-flag-gated face question, decided at reimplementation time on the
 same axis. Recorded as general doctrine, the graduation rule: a wrapper's
 pattern moves into the library at the second same-semantics demand.
+
+Annotation (2026-10-13): [§3.1][s3-1] now states the commanded-reset rule above and
+[§2.2][s2-2] the gear's touchdown edge, so "unchanged" describes their state when this
+entry was ratified. The immutable stage views cited to [§3.1][s3-1] here and in the
+Rejected list are [§7.1][s7-1]'s.
 
 **Rejected.**
 - *Superseded position — a gear-owned `FrictionRegulator` leaf wrapping the PI
@@ -14144,6 +14152,102 @@ faces was recorded in [D-245][d-245]'s Rationale.
 
 **Rejected.** None beyond the source entries' lists.
 
+### D-361 — Time and state events, and the opposite crossing direction
+
+**Status.** ratified
+
+**Position.** Two event rulings that [§2.1][s2-1] states are fixed here.
+
+- The discrete tier's ticks, declared by `sample_times`, are time events,
+  scheduled because their instants are known in advance. Everything
+  declared through `StateEvent(guard, handler)` is a state event, whose
+  instant is unknown and must be detected. The criterion is detection
+  against scheduling, not which bundle fields a guard reads.
+- The opposite crossing direction is a second event with the negated
+  guard.
+
+**Spec.** [§2.1][s2-1]
+
+**Rationale.** Each bullet restates what an existing entry recorded
+outside its Position. The time and state events were recorded in [D-220][d-220]'s
+Rationale, and the opposite direction in [D-082][d-082]'s.
+
+**Rejected.** None beyond the source entries' lists.
+
+### D-362 — Reset maps, the continuous-only mode store and the rejected all-in-one component
+
+**Status.** ratified
+
+**Position.** Six taxonomy rulings that [§3.1][s3-1], [§3.2][s3-2] and [§3.4][s3-4] state are
+fixed here.
+
+- Internal modes enable reset maps. Without modes, latch logic becomes
+  wiring ceremony.
+- `m` is continuous-only: a discrete component has no mode store, and
+  `m_init` on a discrete leaf is `DeclarationOnWrongTier`.
+- An all-in-one component, one leaf carrying both tiers' facets, is
+  rejected. Its halves would still communicate through cells, with one
+  home per datum, a sole-reader `s` and no cross-tier state views, so it
+  gains no expressiveness. It costs stage doubling with tier-tagged names,
+  per-port tier vocabulary and facet-conditional obligations, and it hides
+  the sampling interface.
+- Event/tick fixed-point iteration is structurally unnecessary, because
+  `s⁺` stays invisible until the next tick decode.
+- No `s` view in the flow and no discrete-tier write into `x`: either
+  would un-sample the sampled-data semantics, break the held-`s`
+  linearization's exactness and hide the coupling from the table, the
+  trace and the feedthrough graph.
+- A periodic reset is not a time-guard event. Such an event would
+  hand-roll the tick scheduler and forfeit the harmonic grid and the
+  discrete-bundle `Δt`.
+
+**Spec.** [§3.1][s3-1], [§3.2][s3-2], [§3.4][s3-4]
+
+**Rationale.** Each bullet restates what an existing entry recorded
+outside its Position. The reset maps were recorded in [D-003][d-003]'s Rejected
+list. The mode store was recorded in [D-231][d-231]'s annotation and follows from
+[D-249][d-249]'s first bullet. The all-in-one component, the forbidden write into
+`x` and the periodic reset were recorded in [D-056][d-056]'s Rejected list, and the
+needless event/tick iteration in [D-020][d-020]'s.
+
+**Rejected.** None beyond the source entries' lists.
+
+### D-363 — Cell freshness, closed port alternatives, write-side atomicity and bulk-data handles
+
+**Status.** ratified
+
+**Position.** Seven port rulings that [§4.1][s4-1] to [§4.4][s4-4] state are fixed here.
+
+- Each cell's freshness is tied to its producer's position in the
+  execution order. A monolithic per-component `y` struct is rejected,
+  since it could be half-fresh mid-sweep with no way for a reader to tell.
+- A presentational `unlisted` flag, hidden but connectable, is rejected:
+  it pretends privacy without enforcing it.
+- Bare-struct returns with field-splatting are rejected as ambiguous,
+  type-lossy and reflection-hungry.
+- A field-projection connector is a guarded addition, unbuilt.
+- A bundled command face, such as the pilot inputs as one struct port, is
+  rejected: it kills per-field claiming, liveness and the trace tag. The
+  port is the periphery's atomic unit on the write side too.
+- A bulk-data component owes only that the query math be reachable as a
+  plain function. Building its handle outside a build may then cost a
+  resource load, acceptable because condition authoring is design-time
+  code.
+- Pre-sampling is an idiom, not a mechanism, since as a mechanism it
+  inverts the dependency at the struts. Resource injection is rejected as
+  a second, invisible composition mechanism.
+
+**Spec.** [§4.1][s4-1], [§4.2][s4-2], [§4.3][s4-3], [§4.4][s4-4]
+
+**Rationale.** Each bullet restates what an existing entry recorded
+outside its Position. The freshness was recorded in [D-004][d-004]'s Rejected list,
+the `unlisted` flag in [D-034][d-034]'s, the bare-struct returns and the
+field-projection connector in [D-036][d-036]'s, the bundled command face in
+[D-045][d-045]'s, and pre-sampling and resource injection in [D-008][d-008]'s. The
+bulk-data obligation was recorded in [D-139][d-139]'s Rationale.
+
+**Rejected.** None beyond the source entries' lists.
+
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
 [d-002]: #d-002--adopt-the-causal-port-based-paradigm
@@ -14471,6 +14575,9 @@ faces was recorded in [D-245][d-245]'s Rationale.
 [d-341]: #d-341--the-bundle-law-the-closed-name-sets-and-per-key-return-checks
 [d-342]: #d-342--pure-output-stages-the-dependence-class-names-and-supervisory-resets
 [d-343]: #d-343--the-remedy-ladders-content-the-closed-loop-remedies-and-the-traces-reach
+[d-361]: #d-361--time-and-state-events-and-the-opposite-crossing-direction
+[d-362]: #d-362--reset-maps-the-continuous-only-mode-store-and-the-rejected-all-in-one-component
+[d-363]: #d-363--cell-freshness-closed-port-alternatives-write-side-atomicity-and-bulk-data-handles
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property
