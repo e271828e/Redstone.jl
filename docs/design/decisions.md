@@ -884,6 +884,11 @@ device task; device-tagged replayable input trace.
 
 **Rationale.** Recorded only through the rejections below.
 
+Annotation (2026-10-13): amended by [D-104][d-104], whose one policy, CAS merge, holds
+for every writer, so no writer overwrites. Several tasks may stage into the
+harness writer's cell at once, so its retry is not bounded by drain
+interception alone ([D-200][d-200]).
+
 **Rejected.**
 - *Superseded position — attachment order as the cross-device conflict
   precedence policy (the earlier design of record):* superseded by slot
@@ -910,6 +915,10 @@ degenerate uses; bidirectional peer = one device; GUI an ordinary device
 
 **Rationale.** Recorded only through the rejections below.
 
+Annotation (2026-10-13): since [D-310][d-310] every rostered device, the GUI included,
+runs on a spawned task, so main-thread affinity is gone, and widgets that
+read, modify and write remain the GUI's one peculiarity.
+
 **Rejected.**
 - *Input/output/GUI taxonomy:* lock choreography artifact — blocking rules of
   `get_data!`/`extract_output` under `io_lock`; forces bidirectional peers into
@@ -929,6 +938,9 @@ on interaction events ([D-047][d-047]).
 **Spec.** [§11.7][s11-7]
 
 **Rationale.** Recorded only through the rejections below.
+
+Annotation (2026-10-13): resolution is baked at run start, when the GUI's loop
+body builds its port views after the roster freeze ([D-270][d-270]), not at build.
 
 **Rejected.**
 - *Superseded position — staging every render pass (the earlier design of
@@ -1262,6 +1274,10 @@ it; publication and tracing are unaffected.
 
 **Rationale.** Recorded only through the rejections below.
 
+Annotation (2026-10-13): no private cells remain to include or filter ([D-165][d-165],
+[D-194][d-194]), and the full-state capture is the checkpoint's, which the trace header
+now is ([D-274][d-274]).
+
 **Rejected.**
 - *Per-boundary full-state capture:* systematically records derived data —
   [D-029][d-029]'s asymmetry reversed.
@@ -1406,6 +1422,10 @@ structurally cannot arise and drain order stays diagnostic.
 
 **Rationale.** Recorded only through the rejections below.
 
+Annotation (2026-10-13): amended by [D-174][d-174]. The derived interactive surface is
+retired; the GUI is an ordinary enumerated writer, and the harness writer is
+the one derived surface.
+
 **Rejected.**
 - *Cross-device attachment-order precedence as conflict policy:* resolves races
   the C172X demo's cast (`flight_case_studies.md`) shows nobody wants — every dual writer is a stream shadowed by
@@ -1438,6 +1458,10 @@ conditioning, mappings, edge logic and pokeability:
 **Spec.** [§4.3][s4-3], [§11.4][s11-4], [§11.6][s11-6], [§11.7][s11-7]
 
 **Rationale.** Recorded only through the rejections below.
+
+Annotation (2026-10-13): since [D-174][d-174] the GUI is an enumerated writer, so "slot
+unclaimed" reads "slot inside the GUI's own claim"; a face outside it is
+`OutOfClaimEntry` ([D-044][d-044]).
 
 **Rejected.**
 - *Per-port "GUI-controlled" markings:* the export chain is the marking, owned
@@ -2595,6 +2619,9 @@ field meaning defined at the type; wrong quantity = deliberate lie, not drift)
 as the checkable fraction of semantics; [§13.5][s13-5]'s observation-by-path rejection
 rests on the service/inspection split alone.
 
+Annotation (2026-10-13): no local cells remain ([D-165][d-165], [D-194][d-194]), so the clause
+on local cells and presentation filters is historical.
+
 **Rejected.**
 - *Faces-only reads:* export bloat: the root contract as a peripheral dumping
   ground; no decoupling gained: diagnostic consumers are build-specific by
@@ -2864,6 +2891,10 @@ are deviceless by construction (`attach!` registers only, tasks appear at the
 next `run!`); the write/read paths while stepping are [D-096][d-096]'s harness writer;
 `init!` discards staged batches along with trace and log.
 
+Annotation (2026-10-13): since [D-310][d-310] every rostered device, the GUI included,
+runs on a spawned task, so the GUI-without-task clause and the movable loop
+are historical.
+
 **Rejected.**
 - *`Event` start gate "as today":* [§12.3][s12-3]'s rejected primitive — the `io_start`
   reset race, re-imported for the re-run cycle [§12.6][s12-6] newly supports.
@@ -2969,6 +3000,11 @@ exclusive with `frames`); together the write/read halves of [D-088][d-088]'s
 advance-assert and fly-inspect idioms and the migration path for the suite's
 dominant write-`u` → `step!` → assert idiom.
 
+Annotation (2026-10-13): `stage!` runs on any task ([D-200][d-200]) and writes the
+harness writer's cell ([D-174][d-174]). The harness cell still drains last, now as
+plain convention; the stated reason is objectless once surfaces are disjoint
+([D-174][d-174]).
+
 **Rejected.**
 - *A special harness device:* a device with no task is `stage!` with extra
   ceremony.
@@ -3020,6 +3056,9 @@ attach-time `ReadBindingUnresolved` (new `reason` payload field), didactic
 style, remedy = declare the field public and read the auto-published port;
 [D-083][d-083]'s client split rides on top unchanged, [D-095][d-095]'s family stays closed and
 identically spelled.
+
+Annotation (2026-10-13): [D-252][d-252] removed auto-publication, so the remedy is to
+return the field from `output_state`.
 
 **Rejected.**
 - *Client-only validation:* [D-095][d-095]'s original "diagnostic readers admit the
@@ -3157,6 +3196,10 @@ and diagnosed (`DeviceJoinTimeout`, stale heartbeat), never forced.
 Annotation (2026-10-13): amended by [D-366][d-366]. Only `loop` is mandatory;
 `init!`, `shutdown!` and `unblock!` are optional hooks with no-op defaults.
 
+Annotation (2026-10-13): since [D-310][d-310] every rostered device, the GUI included,
+runs on a spawned task, so the inline clause is historical, and claims stay to
+run end ([D-106][d-106]).
+
 **Rejected.**
 - *Framework-owned hook loop (FlightCore's shape):* its eight hooks were never
   sufficient alone, the loop came in three taxonomy-carried flavors; one kind
@@ -3185,6 +3228,10 @@ device field (narrowing the binding narrows the claim); `TableBinding` is the
 one shipped data-driven type (entries in the type ⇒ per-table specialization),
 its generic `map_input` owning [§11.4][s11-4]'s conditioning helper; `map_input` purity
 taught: cross-datum state lives in the device struct, arrives inside the datum.
+
+Annotation (2026-10-13): amended by [D-177][d-177], which declares a binding's sides by
+Bool traits in place of method presence, and by [D-146][d-146], which renames `faces`
+and `selectors` to `claims` and `reads`. The Rationale stands.
 
 **Rejected.**
 - *Abstract binding-type taxonomy:* resurrects the [§11.6][s11-6] kill one level down; a
@@ -3221,6 +3268,10 @@ the drain checks nothing ([D-106][d-106]); trace records match batch density ([D
 user-proposed shape (fixed tuple with `nothing` markers), framework-relocated
 normalization.
 
+Annotation (2026-10-13): amended by [D-174][d-174]. The derived interactive surface is
+retired; the GUI is an ordinary enumerated writer, and the harness writer is
+the one derived surface. The carrier is values-plus-mask since [D-202][d-202].
+
 **Rejected.**
 - *Name-keyed interactive batches, the earlier design of record:* justified
   only by the mid-session-mutable surface the [D-106][d-106] freeze removed.
@@ -3252,6 +3303,9 @@ successor), any other exception propagates to the wrapper as `DeviceCrash`.
 scoped to device-attributed runtime warnings, not a general user-diagnostics
 channel; companion drain-family kind `EntryTypeMismatch` for values
 unconvertible to the slot's declared type, checked at staging for every writer.
+
+Annotation (2026-10-13): the rate limit is the diagnostic cell's bound, and 25
+is a renderer's number ([D-136][d-136]).
 
 **Rejected.**
 - *A marked exception type (`InputMappingError` successor):* vestigial under
@@ -3293,6 +3347,10 @@ mid-run attach — every demo attaches before `run!`, and `run!` blocks its
 caller in both designs, so the dropped capability had no demonstrated customer
 and was barely reachable.
 
+Annotation (2026-10-13): amended by [D-174][d-174]. The derived interactive surface is
+retired; the GUI is an ordinary enumerated writer, and the harness writer is
+the one derived surface.
+
 **Rejected.**
 - *The earlier attach-anytime design of record:* [D-087][d-087]'s republished-roster
   machinery, drain-time derived-surface membership checking via
@@ -3326,6 +3384,10 @@ claims); replay pays the inverse conversion once, up front, in the [§12.7][s12-
 validation pass — no name resolved per frame under replay either; conversion
 site is the drain, not the staging shim (the drained tuple is the coalesced
 truth; a shim-side sparse log would need its own merge).
+
+Annotation (2026-10-13): superseded in part by [D-176][d-176], whose one sparse record
+format replaces this entry's density rule: every writer's batch is
+sparse-converted at the drain.
 
 **Rejected.**
 - *Verbatim retention of interactive positional batches:* size tracks surface
@@ -3986,6 +4048,10 @@ at replay as at `run!`, [D-091][d-091]).
 **Rationale.** Defined as the artifact "run metadata" already named three times
 without a home ([§13.5][s13-5] ×2, [Appendix B][sB]; [D-091][d-091]'s obligation, now discharged).
 
+Annotation (2026-10-13): the trace header holds the `Deployment` and `t₀` and
+no policy, so the `t_end`/`stop_on` pair is not recorded ([D-255][d-255]). The
+terminating advance's policy is in the termination record.
+
 **Rejected.**
 - *Validating the whole block uniformly:* freezes `t_end`/`stop_on`, which
   [§12.7][s12-7] explicitly leaves overridable, and a recorded `stop_on` termination
@@ -4179,6 +4245,11 @@ socket at shutdown) is a per-device unblocking hook — the direct precedent of
 [§12.4][s12-4](3)'s `unblock!`, not of this path; FlightCore has no
 `InterruptException`/SIGINT handling anywhere.
 
+Annotation (2026-10-13): since [D-310][d-310] every rostered device, the GUI included,
+runs on a spawned task, so the topology clause is historical; the wrapper's
+discrimination stands on the Position, an operator interrupt being a
+control-plane stop, not a failure.
+
 **Rejected.**
 - *Treating the interrupt as a runtime failure — the `StepError` path an
   unguarded Ctrl-C takes today:* destroys the session it means to pause:
@@ -4317,6 +4388,10 @@ human-mediated, singleton-limited and staging-checked (`ClaimedFaceEntry`
 untouched). The marker makes the privileged class visible and checkable, not
 open.
 
+Annotation (2026-10-13): [§11.6][s11-6] no longer detects sides by method presence.
+[D-177][d-177] declares them, and [D-174][d-174] replaced the `interactive(b)` marker with
+`is_greedy`.
+
 **Rejected.**
 - *`faces(b) = :derived` (a sentinel return):* i.e. a dual-meaning enumeration
   contract — exactly the ambiguity the declaration vocabulary is built to
@@ -4396,8 +4471,7 @@ ownership argument as [§11.4][s11-4]'s staging cells (no lock, no arbitration, 
 primitive), holding a **bounded ring of 16 diagnostic values plus per-kind
 suppressed counts** and an atomic heartbeat timestamp.
 
-**Spec.** [§9.8][s9-8], [§10.7][s10-7], [§11.1][s11-1], [§11.2][s11-2], [§11.4][s11-4], [§11.6][s11-6], [§11.8][s11-8], [§12.2][s12-2], [§12.4][s12-4], [§13.2][s13-2], [§13.5][s13-5],
-Appendices C/D
+**Spec.** [§9.8][s9-8], [§10.7][s10-7], [§11.2][s11-2], [§11.6][s11-6], [§11.8][s11-8], [§12.2][s12-2], [§12.4][s12-4], [§13.2][s13-2], [§13.5][s13-5], Appendices C/D
 
 **Rationale.** The bound **is** the rate limit — an emission past capacity
 within a frame is not stored and its kind's count increments, earliest-in-frame
@@ -4434,6 +4508,11 @@ model-sweep zero-allocation invariant is untouched. Composition note, recorded
 once: `totals` is monotone across logged snapshots, so `log_every` decimation
 loses *which* boundary in a skipped stretch an occurrence fell on, never *how
 many*.
+
+Annotation (2026-10-13): amended by [D-200][d-200] (the harness writer's cell), [D-317][d-317]
+(the `Model`'s cell, folded into the loop's account), [D-240][d-240] (the heartbeat is
+read at publication) and [D-241][d-241] (one small vector of records per publication).
+The zero-allocation invariant is scoped to the stepping loop ([D-305][d-305]).
 
 **Rejected.**
 - *A shared queue or buffer under a lock:* cross-task contention on the loop's
@@ -4515,6 +4594,11 @@ recorded nor compared by replay ([D-127][d-127], [D-133][d-133]'s compared set u
 which is also what defines the hint when `t_end = Inf`. No new diagnostic kind
 — hitting the bound is stated policy, not an event to report.
 
+Annotation (2026-10-13): `log_max` is a keyword of `init!`, `restore!` and
+`replay!`, the doors that build a run, not of `Simulation` ([D-261][d-261]). A finite
+`log_max` is the log's `sizehint!` ([§11.2][s11-2]), not a hint for the expected
+duration.
+
 **Rejected.**
 - *A rolling window:* optimizes recent-past-at-full-density, which replay
   already serves, at the cost of the whole-run overview replay is expensive for
@@ -4581,6 +4665,12 @@ dead joystick must not kill a session) — with the **shipped GUI attaching
 `should_abort = true`** (closing the window is the interactive session's
 natural end) and `gui = true`'s standard attachment stating that value
 ([Appendix B][sB], [D-134][d-134]'s sugar unchanged); [Appendix D][sD] gains the glossary entry.
+
+Annotation (2026-10-13): since [D-310][d-310], `needs_calling_task` and `gui = true`
+are withdrawn and no GUI ships, so the topology clause and the shipped GUI's
+`should_abort = true` are historical. "Marks it dead" in the Position means no
+task is spawned and the record shows it; nothing else marks a device dead
+([D-160][d-160]'s annotation).
 
 **Rejected.**
 - *Requiring `init!` to clean up after itself on failure:* an unenforced burden
@@ -5694,6 +5784,10 @@ and `mark_dead!`.
 **Rationale.** A round-5 vocabulary finding (finding 2.1), per [D-144][d-144]'s class
 (3).
 
+Annotation (2026-10-13): no `mark_dead!` exists. A device's death is marked
+nowhere beyond its record: the task has ended, `task_state` says so at the
+next publication, and the heartbeat goes stale ([§11.6][s11-6], [§12.2][s12-2], [D-138][d-138], [D-193][d-193]).
+
 **Rejected.**
 - *Keeping the bare spelling:* a mutating action in noun dress — the class
   violation [D-144][d-144]/[D-146][d-146] exist to retire.
@@ -6107,7 +6201,7 @@ a tolerance difference is not a type conflict, `SVector{3,T}` and
 cells **pin at every activation if any consumer entry pins** and follow the
 activation scalar only when every consumer tolerates.
 
-**Spec.** [§6.1][s6-1], [§11.3][s11-3], [§8.2][s8-2], [§14.10][s14-10]
+**Spec.** [§6.1][s6-1], [§8.2][s8-2], [§14.10][s14-10]
 
 **Rationale.** Mixed tolerance is a legitimate configuration rather than a
 mistake — one command consumed by a promoting aerodynamics leaf and by an
@@ -6459,6 +6553,9 @@ false — a greedy claim is enumerated and as wide as the root contract — so
 density could only be re-keyed on the claim source, i.e. on a distinction [D-174][d-174]
 exists to erase.
 
+Annotation (2026-10-13): the schema list left the header for the trace itself
+([D-255][d-255]), so records convert against the trace's schema list.
+
 **Rejected.**
 - *Keying retention by claim source:* a dichotomy needing re-justification at
   every change to the surface machinery, resting on a premise — enumerated
@@ -6518,6 +6615,9 @@ contract.
 Annotation (2026-10-02): "[§8.1][s8-1]'s reflection class" in the Rationale reads
 "[§8.1][s8-1]'s shadowing check", the `isdefined`/`!==` test [§8.1][s8-1] holds; [§8.1][s8-1] names
 no reflection class.
+
+Annotation (2026-10-13): [§11.6][s11-6] names the three rejections in one sentence
+citing this entry; the answer lives here.
 
 **Rejected.**
 - *Presence-only probing, the prior design of record:* silent partial
@@ -7501,6 +7601,11 @@ faces. `ModelRequestedStop` carries the requester's path, port and reason,
 and the source order reads the requests at each publication where it read
 the faces. Two requests at one boundary resolve to the first in roster order.
 
+Annotation (2026-10-13): the effective policy no longer lives in the run
+metadata. The deployment holds no policy, and the termination record carries
+the terminating advance's ([§11.5][s11-5], [D-255][d-255]). The `t_end` rejection's ground, one
+home for the fact, stands.
+
 **Rejected.**
 - *Superseded position — presentation-only disposal ([D-201][d-201]):* honest but
   ephemeral; the tail's facts evaporated from the program at the moment it
@@ -8053,6 +8158,13 @@ of a stop face — is data the design wants and the prototype does not yet
 gather; the column keeps naming it and the prototype's absence list carries the
 shortfall until a later increment closes it.
 
+Annotation (2026-10-13): [Appendix C][sC]'s `DeploymentInvalid` row names deployment
+parameters alone; the run-shaping keywords left it. `log`, `log_every` and
+`log_max` are keywords of the doors ([D-261][d-261]), `t_end` of `run!` and `replay!`
+([D-255][d-255]), and `join_timeout` stays a `Simulation` keyword ([D-261][d-261]). [Appendix C][sC]
+validates the `Simulation` constructor's keywords under `ArgumentInvalid`,
+whose call list also names `init!`, `restore!`, `run!` and `replay!`.
+
 **Rejected.**
 - *Making the three service checks fail-fast to match the column:* throws
   away violations the pass already has, against [§13.1][s13-1]'s reasoning.
@@ -8109,6 +8221,10 @@ header can only hold what `init!` knows, and the termination record already
 names what fired: `EndTimeReached` carries the final `t`, `ModelRequestedStop`
 the holding face. Replay neither compares nor applies the pair, so nothing
 rides on it.
+
+Annotation (2026-10-13): the length is the frame ordinal of the last drain
+([D-260][d-260]), which under `init!` equals the number of drains since the header; a
+trace that `restore!` opens starts at the checkpoint's frame ([D-274][d-274]).
 
 **Rejected.**
 - *A mutable termination slot in the header, rewritten at every advance:* one
@@ -9744,6 +9860,8 @@ homogeneous, the `Dataflow` artifact ([D-253][d-253]) classifies by return alone
 the trace and status surfaces stop distinguishing a framework write from a
 stage write.
 
+Annotation (2026-10-13): the dev-mode note is [§11.2][s11-2]'s.
+
 **Rejected.**
 - *Keeping publication as it stood:* the machinery above, for one line per
   exposed field.
@@ -9970,6 +10088,10 @@ Annotation (2026-10-08): amended by [D-316][d-316]. `stop_on` is
 `ignore_stop_requests`, with `()` as its default, and `StopPolicy` is
 `t_end` plus the ignored requester paths. `UnboundedRun` fires when no
 requester is honoured.
+
+Annotation (2026-10-13): the length is the frame ordinal of the last drain
+([D-260][d-260]), which under `init!` equals the number of drains since the header; a
+trace that `restore!` opens starts at the checkpoint's frame ([D-274][d-274]).
 
 
 ### D-256 — Regroup the `Simulation`'s fields by owner
@@ -11031,6 +11153,12 @@ Annotation (2026-10-02): amended by [D-269][d-269]. The loop reads the control
 plane, the pause flag included, at frame top alone; the pause block is the one
 wait woken at once.
 
+Annotation (2026-10-13): since [D-310][d-310] no device runs on the calling task, and
+the wrapper records no release. The repeat arises in `run!`'s interrupt arm,
+which releases directly each device it never spawned and advances a cursor
+after each `shutdown!` returns; an interrupt between a return and the cursor's
+advance repeats that call ([§11.6][s11-6]).
+
 **Rejected.**
 - *`pause!(sim, flag::Bool)` as one verb:* two verbs read at the call site
   and match `stop!`; a Boolean argument spells the un-pause as a negation.
@@ -11566,6 +11694,9 @@ frame index and the boundary ordinal are the run's counters, which a
 `Checkpoint` carries beside it. A `Checkpoint` is nominal by type, so the
 refusal by dispatch of a state from another activation sits on the two
 `restore!` methods that take a bare state.
+
+Annotation (2026-10-13): the persistence deferral is `pending.md`'s (Log and
+trace persistence) and [Appendix B][sB]'s, not [§11.5][s11-5]'s.
 
 **Rejected.**
 - *Two header kinds, the pre-sequence resolved condition for an authored
