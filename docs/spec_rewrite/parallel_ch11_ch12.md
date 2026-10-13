@@ -62,9 +62,14 @@ Each `RANGE` ends on the blank line after the chapter's closing `---`.
    that changes a term, a gloss or a claim the other chapter also states is
    sent by message before it enters a brief. Settle which chapter holds the
    statement and which one points at it.
-10. **Other sessions.** Session `redstone-jl-21` also edits the spec. It
-    landed `f61b1af` and has nothing further planned. A session that hears
-    of a new commit on `spec.md` or `decisions.md` tells the other.
+10. **Other sessions.** Session `redstone-jl-21` landed `f61b1af` and has
+    nothing further planned. Session `redstone-jl-0b` holds uncommitted
+    accuracy fixes to `spec.md` in the working tree, awaiting the owner's
+    commit. They touch chapter 2, §5.3, §10.4 and the glossary's
+    boundary-detected and predicate entries. They move chapter 11 down 6
+    lines and change nothing inside chapters 11 and 12. A splice must carry
+    them, whether committed or not. A session that hears of a new commit on
+    `spec.md` or `decisions.md` tells the other.
 
 ## Hand-overs
 
