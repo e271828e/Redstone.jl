@@ -1,7 +1,11 @@
 # Chapter 11: serious findings for the owner
 
 Each finding shows a defect or inconsistency in the design itself, not in its
-prose. The rewrite carries the text as written. Lines are `spec.md` lines at
+prose. The rewrite carries the text as written.
+
+The owner ruled all five on 2026-10-13, each as its recommendation. The
+brief's R19 to R23 apply them; `new_entries.md` holds D-366 and the edits
+for landing and track 2. Lines are `spec.md` lines at
 `f61b1af`; `log` marks `decisions.md` lines.
 
 ## From the survey (checkpoint 1)

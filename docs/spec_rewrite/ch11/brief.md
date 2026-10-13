@@ -520,3 +520,67 @@ versus bug"** (7709–7869 and 8061–8086; 1,319 words). Survey 2.
 - Twenty-one of thirty-eight rows rest on D-136's Rationale. The six bold
   lead-ins become labels or headline clauses.
 - J ends with the chapter's closing `---`.
+
+## Rulings after checkpoint 1: the owner's rulings on the escalations
+
+The owner ruled `escalations.md`'s five findings on 2026-10-13, each as its
+recommendation. They replace R8 and R15's holds for F54, F55, F62 and F71.
+A claim a ruling deletes is copied verbatim into `units/<U>/deleted.md`, and
+its inventory entry maps there with `"where": "units/<U>/deleted.md"`,
+`"tag": "R"` and the ruling's id.
+
+- **R19. The fan-out mapping entry is deleted** (E1; unit D). Delete old
+  7509–7510, "Alternatively it is accepted as a small per-aircraft×device
+  mapping entry, an aircraft-design fork." Cite `[D-045][d-045]` in the
+  sentence "Aircraft-semantic derivation must *not* ride along", and list it
+  under "Rationale-only rulings" (D-045 Rejected, log 1448–1449). This
+  replaces R8.
+- **R20. The repeated `shutdown!` call, as the code has it** (E2; unit G1).
+  Old 7790–7794, "The wrapper runs `shutdown!` once on every exit path and
+  records the release just after it returns. An operator interrupt landing
+  between the two makes the run's tail run `shutdown!` again rather than leak
+  the device ([§12.4], [D-268]). The tail's own call can be cut the same
+  way, so each such interrupt adds one call", becomes: "The wrapper runs
+  `shutdown!` once on every exit path. When an operator interrupt reaches
+  `run!` before its tail, `run!` releases each device it never spawned
+  directly, advancing a cursor after each `shutdown!` returns, and retries
+  from where an interrupt cut it ([§12.4][s12-4], [D-268][d-268]). An
+  interrupt landing between a `shutdown!`'s return and the cursor's advance
+  repeats that call rather than leak the device, so each such interrupt adds
+  one call." Source: `src/sim.jl` 1212–1227, the interrupt arm's comment.
+  Keep the bold rule "The same tolerance covers a repeated call" and the
+  idempotence sentences after it.
+- **R21. No `mark_dead!`** (E3; unit G1). In the wrapper sketch, old 7775,
+  the line `    mark_dead!(...)                          # heartbeat only —
+  claims stay, §11.3` becomes `                                             #
+  no dead-marking: task_state shows the end, claims stay, §11.3`, the
+  comment aligned with the block's other comments. At old 7864–7865, "The
+  wrapper's exit path releases the device's OS resources, marks it dead for
+  the heartbeat and consults `should_abort`" becomes "The wrapper's exit path
+  releases the device's OS resources and consults `should_abort`. Nothing
+  marks the device dead beyond its record. The task has ended, `task_state`
+  says so at the next publication, and its heartbeat goes stale
+  ([§12.2][s12-2])." Source: `src/devices.jl` 395–399.
+- **R22. One mandatory device function** (E4; unit G1). The new entry
+  D-366 rules it (draft in `new_entries.md`); cite `[D-366][d-366]`, which
+  lands with the chapter. The `####` label is "The authoring contract". The
+  contract block's `unblock!` comment, `# optional hook, default no-op: make
+  a blocked loop return (§12.4)`, becomes `# make a blocked loop return
+  (§12.4)`, a ruled code edit; the other three lines stay. After the block,
+  add: "**Only `loop` is mandatory** ([D-366][d-366]). `init!`, `shutdown!`
+  and `unblock!` are optional hooks, each defaulting to a no-op." Merge R12's
+  sentence for unit G1 with it: `attach!` refuses a device with no `loop`
+  method (`DeviceContractMismatch`, [D-216][d-216]).
+- **R23. The standard GUI binding** (E5; units C and G2). D-310 parked the
+  built-in GUI, and `src` ships no GUI binding.
+  - Unit G2, old 8010: "The shipped GUI binding is a greedy one" becomes "The
+    standard GUI binding is a greedy one", Appendix B's name for it. Delete
+    old 8013–8016, "Paced by its own clock, it reads `latest` afresh at each
+    tick ([§12.3]), with an ad-hoc read set over the whole snapshot. That is
+    the shape of an inspection read ([§11.2])." Keep "It declares no `reads`
+    either, because its read path is the handle's primitive read", and the
+    rest of the paragraph. "The same GUI device type" stays.
+  - Unit C, old 7191: "This is the shipped GUI's claim ([§11.7])" becomes
+    "This is the standard GUI binding's claim ([§11.6][s11-6])", since §11.6
+    holds the binding.
+  - The glossary and Appendix B change at landing, not in any unit.

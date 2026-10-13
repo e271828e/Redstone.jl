@@ -49,6 +49,16 @@ chapter's rewrite settles its own:
   a name §8.1 never uses.
 - **Chapter 11.** §11.8 scopes the zero-allocation invariant to "the model
   sweep", where §7.5 says "the stepping loop" (D-305).
+- **Chapter 12.** §12.6 9175 and 9183 say the harness `stage!` runs from the
+  calling task; D-200 says any task, which chapter 11's R4 applied to §11.3.
+  Appendix B 12795 and the glossary (14019, 14023) say the same. Lines at
+  `f61b1af`.
+- **Chapter 12.** §12.6 9224 and §12.7 9462–9463 name the header's compared
+  part differently from §11.5, which says "the fingerprint (the structural
+  layout) and the deployment" (chapter 11's R17, from `src/checkpoint.jl`
+  53–54).
+- **Chapter 12.** §12.2 8520 may use "door" for `run!`, which builds no run
+  (chapter 11's F23).
 - **Chapter 13.** §13.7 bolds D-311's ruling on the junction's type
   parameters, which §6.2 bolds.
 - **Chapter 13.** §13.7 admits `Constant` "under the inventory's
