@@ -64,12 +64,37 @@ Each `RANGE` ends on the blank line after the chapter's closing `---`.
    statement and which one points at it.
 10. **Other sessions.** Session `redstone-jl-21` landed `f61b1af` and has
     nothing further planned. Session `redstone-jl-0b` holds uncommitted
-    accuracy fixes to `spec.md` in the working tree, awaiting the owner's
-    commit. They touch chapter 2, §5.3, §10.4 and the glossary's
-    boundary-detected and predicate entries. They move chapter 11 down 6
-    lines and change nothing inside chapters 11 and 12. A splice must carry
-    them, whether committed or not. A session that hears of a new commit on
+    accuracy fixes to `spec.md`, committed as `227be06`. They touch
+    chapter 2, §5.3, §10.4 and the glossary's boundary-detected and
+    predicate entries. They move chapters 11 and 12 down 6 lines and change
+    nothing inside them. A splice must carry them. A session that hears of a new commit on
     `spec.md` or `decisions.md` tells the other.
+
+## Chapter 11's survey findings that reach chapter 12
+
+Chapter 11's checkpoint 1 rulings are in `ch11/brief.md`. These findings sit
+in chapter 12's text or bear on it. Lines are at `f61b1af`.
+
+- **The harness writer stages from any task** (ch11 R4, D-200). §12.6 9175
+  and 9183 say the harness `stage!` runs from the calling task, as §11.3 did.
+  Appendix B 12795 and the glossary (14019, 14023) say the same.
+- **`mark_dead!` does not exist** (ch11 escalation E3). §12.4's sketch at 8788
+  has the same line as §11.6's. Escalated to the owner, not ruled.
+- **The header's compared part** (ch11 R17). Chapter 11 says "the fingerprint
+  (the structural layout) and the deployment are the parts of the header
+  replay compares", from `src/checkpoint.jl` 53–54 and §12.7 9493–9497.
+  §12.6 9224 lists "`t₀` and the fingerprint", and §12.7 9462–9463 validates
+  "the fingerprint against the target, its layout against the `Build`".
+- **The operator interrupt** (ch11 R14). Chapter 11 drops §11.6's stale
+  calling-task reason for "an `InterruptException` is never a `DeviceCrash`"
+  and gives D-132's: the interrupt is a control-plane stop, not a failure.
+  §12.4 8871–8872 relies on the rule, which stands.
+- **"At either door"** (ch11 R10, F23). §11.3 now says the thread-budget
+  warning runs "at `run!` or `replay!`", since `run!` is not a door. Check
+  §12.2 8520 for the same use.
+- **The drain's gloss** (ch11 R13) becomes "the frame-top swap that applies
+  staged device writes to the root inputs". Chapter 12 has no instance at
+  `f61b1af`.
 
 ## Hand-overs
 
