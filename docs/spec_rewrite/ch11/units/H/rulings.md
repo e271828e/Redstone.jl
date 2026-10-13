@@ -138,3 +138,8 @@ shows the four calls without types, in the order the text specifies them.
    entry. It is kept plain.
 5. D-047's Spec field lists §11.3 only. It now rules a bold in §11.7
    (track 2).
+
+## Rulings batch edits (checkpoint 3)
+
+- **B-23**: "baked once … at render" cites D-270's Position bullet 1,
+  "([D-270][d-270])". C-026, tag R.

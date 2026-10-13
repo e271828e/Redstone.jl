@@ -172,3 +172,20 @@ B states the status plain.
 5. **The display block's names.** `WriterStatus`, `DiagValue` and `KindCounts`
    appear nowhere else in the spec, and the package exports nothing. Keep
    the internal type names, or show the field names only?
+
+## Rulings batch edits (checkpoint 3)
+
+- **B-18** settles open question 1: `recent` holds "at most sixteen values
+  per diagnostic cell it takes. The loop's record folds two, its own and the
+  `Model`'s ([D-317][d-317])." The worst case reads "per diagnostic cell per
+  frame". C-049 and C-085, tag R.
+- **B-19** settles correction 1: "The loop's own record carries neither, for
+  the same reason ([D-240][d-240], [D-193][d-193])." C-022, tag R.
+- **B-20** settles open question 4. A grep of the frozen spec and every
+  unit's `new.md` found no bold citing D-240, D-241 or D-200's second
+  ruling. Three headline clauses are now bold: "The harness writer's
+  diagnostic cell is written from whichever task stages" (D-200), "The loop
+  acquire-loads the heartbeat at publication" (D-240), and "The per-writer
+  status costs one small vector of records per publication", which gains
+  "([D-241][d-241])" in its own sentence. C-021, C-042 and C-077, tag R.
+- **B-24**: "Per writer it carries four things beside `who`." C-048, tag R.

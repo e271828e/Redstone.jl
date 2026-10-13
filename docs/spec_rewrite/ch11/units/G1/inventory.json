@@ -130,15 +130,17 @@
   {
    "id": "G1-014",
    "old": "`should_abort` is an `attach!` keyword, defaulting to `false`.",
-   "new": "`should_abort` is an `attach!` keyword, defaulting to `false` (D-138).",
+   "new": "`should_abort` is an `attach!` keyword, defaulting to `false` (D-138, D-177).",
    "where": "new",
    "cites": [],
-   "tag": "C",
+   "tag": "R",
    "newcites": [
-    "D-138"
+    "D-138",
+    "D-177"
    ],
    "move": "M57",
-   "note": "the bold gains D-138, whose Rationale gives should_abort its declaration site, 'an attach! keyword, default false'"
+   "note": "the bold gains D-138, whose Rationale gives should_abort its declaration site, 'an attach! keyword, default false'",
+   "ruling": "B-22"
   },
   {
    "id": "G1-015",
@@ -692,14 +694,15 @@
   {
    "id": "G1-069",
    "old": "The wrapper's exit path releases the device's OS resources, marks it dead for the heartbeat and consults `should_abort`.",
-   "new": "The wrapper's exit path releases the device's OS resources and consults `should_abort`. Nothing marks the device dead beyond its record. The task has ended, `task_state` says so at the next publication, and its heartbeat goes stale (§12.2).",
+   "new": "The wrapper's exit path releases the device's OS resources and consults `should_abort`. Nothing marks the device dead beyond its record. The task has ended, `task_state` (§11.8) says so at the next publication, and its heartbeat goes stale (§12.2).",
    "where": "new",
    "cites": [],
    "tag": "R",
    "newcites": [
+    "§11.8",
     "§12.2"
    ],
-   "ruling": "R21",
+   "ruling": "R21, B-24",
    "note": "src/devices.jl 395-399"
   },
   {
@@ -902,6 +905,8 @@
   "A diagnostic cell is each writer's bounded ring of diagnostics and its heartbeat.",
   "A frame is one iteration of the loop.",
   "`Telemetry` is an illustrative output device type.",
-  "#### The failure policy"
+  "#### The failure policy",
+  "(D-138, D-177)",
+  "`task_state` (§11.8) says so"
  ]
 }

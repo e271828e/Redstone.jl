@@ -118,8 +118,8 @@ simply stay ([§11.7][s11-7]).
 #### The harness writer and the layout
 
 One framework-owned remainder sits beside the roster, the [harness writer](#g-harness-writer) (the
-framework-owned writer beside the roster). It is an entry point with no task of
-its own, the harness/REPL write path ([§12.6][s12-6], [D-096][d-096]), called as follows.
+framework-owned write path `stage!(sim, …)`). It is an entry point with no task
+of its own, the harness/REPL write path ([§12.6][s12-6], [D-096][d-096]), called as follows.
 
 ```julia
 stage!(sim, "face" => value, …)
@@ -140,9 +140,9 @@ leaves is empty and every `stage!` in such a session is rejected that way
 ([D-192][d-192]). There is one edge case, a batch staged while stopped whose face a
 subsequent `attach!` claims, and the attach itself renormalizes it away ([§11.4][s11-4]).
 
-**The harness cell drains last**, by convention ([D-174][d-174]). With every surface
-disjoint the order is unobservable, so the rule exists to make the trace read
-the same way every time, not to arbitrate anything.
+**The harness cell drains last**, by convention ([D-096][d-096], [D-174][d-174]). With
+every surface disjoint the order is unobservable, so the rule exists to make the
+trace read the same way every time, not to arbitrate anything.
 
 **The periphery resolves root faces against the [activation](#g-activation)'s cell layout alone**
 ([D-261][d-261]). An activation is the build's typed products at a scalar type. The
@@ -224,7 +224,7 @@ does not hold is an error (`NotAttached`, [D-215][d-215]).
 
 **Device death does not detach** ([D-106][d-106]). A mid-run crash, voluntary exit or
 unplug ([§11.6][s11-6], [§12.4][s12-4]) ends the device's *task*. The staging cell stops filling,
-the [§12.2][s12-2] heartbeat shows the death by name, and the roster entry, claims
+the heartbeat ([§12.2][s12-2]) shows the death by name, and the roster entry, claims
 included, persists to the end of the run. The [orphaned claims](#g-orphaned-claims) (the claims of a
 device whose task died mid-run) are the accepted cost of the freeze. The
 device's root inputs hold their last-drained values and no other writer inherits

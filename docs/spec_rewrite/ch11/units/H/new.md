@@ -57,7 +57,7 @@ The [roster](#g-roster) (the list of attached devices, with their claims) is fro
 run, since `attach!` and `detach!` are stopped-sim operations ([§11.3][s11-3]). Under
 that freeze, liveness is a static fact of the run. It is baked once, with the
 port resolution, when the run starts, and never consulted against mutable claim
-state at render.
+state at render ([D-270][d-270]).
 
 There is no per-port "GUI-controlled" marking anywhere. The export chain is the
 marking, written by the one author entitled to write it. A component's ports

@@ -232,10 +232,14 @@
   {
    "id": "C-026",
    "old": "It is baked once, with the port resolution, when the run starts, and never consulted against mutable claim state at render.",
-   "new": "It is baked once, with the port resolution, when the run starts, and never consulted against mutable claim state at render.",
+   "new": "It is baked once, with the port resolution, when the run starts, and never consulted against mutable claim state at render (D-270).",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "R",
+   "newcites": [
+    "D-270"
+   ],
+   "ruling": "B-23"
   },
   {
    "id": "C-027",
@@ -907,6 +911,7 @@
   "`T16000M` is FlightCore's type for the Thrustmaster T16000M joystick.",
   ", such as",
   "(the record of what the implementation still owes)",
-  "The bridge is the link to the simulation, and D-310 leaves its design open."
+  "The bridge is the link to the simulation, and D-310 leaves its design open.",
+  "at render (D-270)."
  ]
 }

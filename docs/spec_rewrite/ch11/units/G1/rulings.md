@@ -202,3 +202,11 @@ Old lines are spec lines at `f61b1af`; log lines are the frozen
 - Survey 2 part B makes §11.8 the heartbeat-in-the-handle home and §11.6's
   sentence a pointer (old 7858–7861). No ruling or move orders it, so the
   sentence stays.
+
+## Rulings batch edits (checkpoint 3)
+
+- **B-22**: the `should_abort` keyword bold cites D-177's Position beside
+  D-138, "([D-138][d-138], [D-177][d-177])". G1-014, tag R.
+- **B-24**: R21's sentence gains the pointer, "`task_state`
+  ([§11.8][s11-8]) says so at the next publication". G1-069, ruling R21 and
+  B-24.

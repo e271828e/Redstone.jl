@@ -171,18 +171,19 @@ FlightCore's device hook **`should_close` dissolves** ([D-102][d-102]). A window
 peer EOT is the loop body returning, which is [§12.4][s12-4](6)'s case. The wrapper's
 exit path releases the device's OS resources and consults `should_abort`.
 Nothing marks the device dead beyond its record. The task has ended,
-`task_state` says so at the next publication, and its heartbeat goes stale
-([§12.2][s12-2]). A device's [claim](#g-claim) is the set of [faces](#g-face) (the names ports wear on their
-component's boundary) it *may* write. Claims and the roster entry persist to run
-end (the freeze, [§11.3][s11-3], [D-106][d-106]). The GUI implements the same authoring contract.
+`task_state` ([§11.8][s11-8]) says so at the next publication, and its heartbeat goes
+stale ([§12.2][s12-2]). A device's [claim](#g-claim) is the set of [faces](#g-face) (the names ports wear on
+their component's boundary) it *may* write. Claims and the roster entry persist
+to run end (the freeze, [§11.3][s11-3], [D-106][d-106]). The GUI implements the same authoring
+contract.
 
 #### The failure policy
 
-**`should_abort` is an `attach!` keyword**, defaulting to `false` ([D-138][d-138]). It is
-per-attachment, never a device property. The same joystick is advisory in one
-deployment and decisive in another. With `should_abort` clear, a device's
-departure is reported and the run continues without it. With it set, that
-departure also requests a sim stop ([§12.4][s12-4]). A departure is the loop body
+**`should_abort` is an `attach!` keyword**, defaulting to `false` ([D-138][d-138],
+[D-177][d-177]). It is per-attachment, never a device property. The same joystick is
+advisory in one deployment and decisive in another. With `should_abort` clear, a
+device's departure is reported and the run continues without it. With it set,
+that departure also requests a sim stop ([§12.4][s12-4]). A departure is the loop body
 returning, a crash, or a failed `init!`. A hardware-in-the-loop rig attaches its
 plant interface with it set, since a run without that device is meaningless.
 

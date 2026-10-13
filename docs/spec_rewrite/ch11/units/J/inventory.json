@@ -206,15 +206,21 @@
    "newcites": [
     "D-200"
    ],
-   "tag": "C"
+   "tag": "R",
+   "ruling": "B-20"
   },
   {
    "id": "C-022",
    "old": "It carries no heartbeat, and its status record no `task_state`, because it has no task of its own to be alive or dead.",
-   "new": "It carries no heartbeat, and its status record no `task_state`, because it has no task of its own to be alive or dead.",
+   "new": "It carries no heartbeat, and its status record no `task_state`, because it has no task of its own to be alive or dead. The loop's own record carries neither, for the same reason (D-240, D-193).",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "R",
+   "ruling": "B-19",
+   "newcites": [
+    "D-240",
+    "D-193"
+   ]
   },
   {
    "id": "C-023",
@@ -402,7 +408,8 @@
    "cites": [
     "D-240"
    ],
-   "tag": "F"
+   "tag": "R",
+   "ruling": "B-20"
   },
   {
    "id": "C-043",
@@ -456,19 +463,23 @@
   {
    "id": "C-048",
    "old": "Per writer it carries four things.",
-   "new": "Per writer it carries four things.",
+   "new": "Per writer it carries four things beside `who`.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "R",
+   "ruling": "B-24"
   },
   {
    "id": "C-049",
    "old": "`recent` is the ring this boundary drained, at most sixteen entries.",
-   "new": "`recent` is the ring the frame's drain took, carried by the first publication after that drain, at most sixteen values.",
+   "new": "`recent` is the ring the frame's drain took, carried by the first publication after that drain, at most sixteen values per diagnostic cell it takes. The loop's record folds two, its own and the `Model`'s (D-317).",
    "where": "new",
    "cites": [],
    "tag": "R",
-   "ruling": "R10 (F72, F65)"
+   "ruling": "R10 (F72, F65), B-18",
+   "newcites": [
+    "D-317"
+   ]
   },
   {
    "id": "C-050",
@@ -730,12 +741,17 @@
   {
    "id": "C-077",
    "old": "and the per-writer status costs one small vector of records per publication beside the per-boundary snapshot allocation §11.2 already accepts.",
-   "new": "The per-writer status costs one small vector of records per publication, beside the snapshot allocation per boundary (a published consistency point) that §11.2 already accepts.",
+   "new": "The per-writer status costs one small vector of records per publication (D-241), beside the snapshot allocation per boundary (a published consistency point) that §11.2 already accepts.",
    "where": "new",
    "cites": [
     "§11.2"
    ],
-   "tag": "F"
+   "tag": "R",
+   "ruling": "B-20",
+   "newcites": [
+    "D-241",
+    "§11.2"
+   ]
   },
   {
    "id": "C-078",
@@ -805,11 +821,11 @@
   {
    "id": "C-085",
    "old": "One ring of sixteen entries per writer per boundary is the worst case, and everything past it is an integer increment.",
-   "new": "One ring of sixteen values per writer per boundary is the worst case, and everything past it is an integer increment.",
+   "new": "One ring of sixteen values per diagnostic cell per frame is the worst case, and everything past it is an integer increment.",
    "where": "new",
    "cites": [],
    "tag": "R",
-   "ruling": "R10 (F65)"
+   "ruling": "R10 (F65), B-18"
   },
   {
    "id": "C-086",
@@ -905,6 +921,11 @@
   "(a published consistency point)",
   "(the retained sequence of published snapshots)",
   "(a writer's own holding place for runtime diagnostics)",
-  ", the cap Julia's logging macros put on repeats,"
+  ", the cap Julia's logging macros put on repeats,",
+  "The loop's own record carries neither, for the same reason (D-240, D-193).",
+  "four things beside `who`.",
+  "per diagnostic cell it takes. The loop's record folds two, its own and the `Model`'s (D-317).",
+  "per publication (D-241), beside",
+  "per diagnostic cell per frame"
  ]
 }

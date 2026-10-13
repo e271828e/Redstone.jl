@@ -402,7 +402,7 @@
   {
    "id": "C-041",
    "old": "One immutable `Build` is shared across the workers (§9.2), and each `Simulation` owns its own buffers (§9.4).",
-   "new": "One immutable `Build` (the artifact `build(world)` produces) is shared across the workers (§9.2, D-282), and each `Simulation` owns its own buffers (the framework-owned vectors backing continuous state, §9.4).",
+   "new": "One immutable `Build` (the artifact `build(world)` produces) is shared across the workers (§9.2, D-282), and each `Simulation` owns its own `Model`, and with it the `Model`'s buffers (the framework-owned vectors backing continuous state, §9.4).",
    "where": "new",
    "cites": [
     "§9.2",
@@ -413,7 +413,8 @@
     "D-282",
     "§9.4"
    ],
-   "tag": "C"
+   "tag": "R",
+   "ruling": "B-15"
   },
   {
    "id": "C-042",
@@ -653,6 +654,7 @@
   "A boundary is a published consistency point.",
   "staged representation",
   "beside the two data channels",
-  "(each device's set of pending writes)"
+  "(each device's set of pending writes)",
+  "owns its own `Model`, and with it the `Model`'s buffers"
  ]
 }

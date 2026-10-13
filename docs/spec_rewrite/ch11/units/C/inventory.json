@@ -567,10 +567,11 @@
   {
    "id": "C-060",
    "old": "One framework-owned remainder: the harness writer.",
-   "new": "One framework-owned remainder sits beside the roster, the harness writer",
+   "new": "One framework-owned remainder sits beside the roster, the harness writer (the framework-owned write path `stage!(sim, …)`).",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "R",
+   "ruling": "RP-14"
   },
   {
    "id": "C-061",
@@ -686,13 +687,15 @@
   {
    "id": "C-072",
    "old": "drains last, by convention.",
-   "new": "The harness cell drains last, by convention (D-174).",
+   "new": "The harness cell drains last, by convention (D-096, D-174).",
    "where": "new",
    "cites": [],
    "newcites": [
+    "D-096",
     "D-174"
    ],
-   "tag": "C"
+   "tag": "R",
+   "ruling": "B-21"
   },
   {
    "id": "C-073",
@@ -1031,12 +1034,13 @@
   {
    "id": "C-107",
    "old": "The cell stops filling, the §12.2 heartbeat shows the death by name, and the roster entry, claims included, persists to the end of the run.",
-   "new": "The staging cell stops filling, the §12.2 heartbeat shows the death by name, and the roster entry, claims included, persists to the end of the run.",
+   "new": "The staging cell stops filling, the heartbeat (§12.2) shows the death by name, and the roster entry, claims included, persists to the end of the run.",
    "where": "new",
    "cites": [
     "§12.2"
    ],
-   "tag": "F"
+   "tag": "R",
+   "ruling": "B-24"
   },
   {
    "id": "C-108",
@@ -1215,12 +1219,14 @@
   "(the primary record of a session)",
   "compare-and-swap (CAS)",
   "(keeping one pending batch per device)",
-  "(the framework-owned writer beside the roster).",
+  "(the framework-owned write path `stage!(sim, …)`).",
   "(described below)",
   "(its staged set of writes, applied whole at the next drain)",
   "(the device holding the computed claim)",
   "An activation is the build's typed products at a scalar type.",
   "(the real values the build evaluates each user function with)",
-  ", a published consistency point"
+  ", a published consistency point",
+  "(D-096, D-174)",
+  "the heartbeat (§12.2) shows"
  ]
 }

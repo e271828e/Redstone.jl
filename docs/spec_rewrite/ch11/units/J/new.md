@@ -45,11 +45,11 @@ diagnostic cell into the loop's account beside the loop's own ([D-317][d-317]).
 A device's diagnostic cell, the loop's and the `Model`'s each have a single
 writer, by the same ownership argument as the [staging cells](#g-staging-cell) (each device's
 atomic holding place for pending writes). There is no locking, no arbitration
-and no new primitive ([D-136][d-136]). The harness writer's diagnostic cell is written
-from whichever task stages, exactly as its staging cell is, and the same CAS
+and no new primitive ([D-136][d-136]). **The harness writer's diagnostic cell is written
+from whichever task stages**, exactly as its staging cell is, and the same CAS
 (compare-and-swap) append arbitrates ([D-200][d-200]). It carries no heartbeat, and its
 status record no `task_state`, because it has no task of its own to be alive or
-dead.
+dead. The loop's own record carries neither, for the same reason ([D-240][d-240], [D-193][d-193]).
 
 A diagnostic cell holds a bounded accumulation and one atomic liveness
 timestamp. The accumulation is a small ring of diagnostic values, capacity 16,
@@ -88,7 +88,7 @@ reachable from a published value.
 The heartbeat rides in the same diagnostic cell, as an atomic timestamp field
 ([D-136][d-136]). The device task stores it on every loop pass from inside the handle
 primitives. That way the framework observes activity without owning the loop
-body ([§11.6][s11-6]). The loop acquire-loads the heartbeat at publication, when it
+body ([§11.6][s11-6]). **The loop acquire-loads the heartbeat at publication**, when it
 assembles the status ([D-240][d-240]). There is no separate liveness channel and no
 second registry. A device that is alive is a device whose diagnostic cell
 carries a recent timestamp, and the 2 s staleness threshold ([§12.2][s12-2]) is read
@@ -98,14 +98,15 @@ always present, never enumerated in [Appendix C][sC].
 #### The published status
 
 **The published framework status is a concrete frozen value** ([D-136][d-136]). Per
-writer it carries four things. `recent` is the ring the frame's drain took,
-carried by the first publication after that drain, at most sixteen values.
-`suppressed` is the per-kind counts the ring refused in that drain. `totals` is
-the cumulative per-writer × per-kind counts since the run began, owned privately
-by the loop and *copied* into each status. And `heartbeat` rides beside the
-`task_state` the loop reads off its own device `Task` handle at publication
-([§12.2][s12-2], [D-193][d-193]). Beside the per-writer records ride the pacer diagnostics
-([§10.7][s10-7]).
+writer it carries four things beside `who`. `recent` is the ring the frame's
+drain took, carried by the first publication after that drain, at most sixteen
+values per diagnostic cell it takes. The loop's record folds two, its own and
+the `Model`'s ([D-317][d-317]). `suppressed` is the per-kind counts the ring refused in
+that drain. `totals` is the cumulative per-writer × per-kind counts since the
+run began, owned privately by the loop and *copied* into each status. And
+`heartbeat` rides beside the `task_state` the loop reads off its own device
+`Task` handle at publication ([§12.2][s12-2], [D-193][d-193]). Beside the per-writer records ride
+the pacer diagnostics ([§10.7][s10-7]).
 
 Each per-writer record has this shape.
 
@@ -160,10 +161,10 @@ published ([D-201][d-201], [D-203][d-203]).
 #### Allocation
 
 **On a quiet frame nothing allocated scales with diagnostic activity** ([D-241][d-241]).
-The sentinel swap allocates nothing. The per-writer status costs one small
-vector of records per publication, beside the snapshot allocation per [boundary](#g-boundary)
-(a published consistency point) that [§11.2][s11-2] already accepts. That is the same
-GC-over-reuse trade, a roster-sized vector rather than a snapshot type per
+The sentinel swap allocates nothing. **The per-writer status costs one small
+vector of records per publication** ([D-241][d-241]), beside the snapshot allocation per
+[boundary](#g-boundary) (a published consistency point) that [§11.2][s11-2] already accepts. That is the
+same GC-over-reuse trade, a roster-sized vector rather than a snapshot type per
 roster size ([D-241][d-241]).
 
 **The per-kind counters are a fixed-shape isbits record, never a `Dict`**
@@ -176,10 +177,10 @@ never be written again, so the writer allocates a fresh ring lazily at its next
 emission. That cost, too, lands on the writer's task, and it is the same
 GC-over-reuse trade [§11.2][s11-2] makes when it rejects preallocated snapshot buffers.
 The rate limit is therefore an allocation bound as well. One ring of sixteen
-values per writer per boundary is the worst case, and everything past it is an
-integer increment. The zero-allocation invariant, scoped to the stepping loop
-([§9.8][s9-8], [D-305][d-305]), is untouched. The diagnostic cells sit on the framework side of
-that scope with publication and logging.
+values per diagnostic cell per frame is the worst case, and everything past it
+is an integer increment. The zero-allocation invariant, scoped to the stepping
+loop ([§9.8][s9-8], [D-305][d-305]), is untouched. The diagnostic cells sit on the framework side
+of that scope with publication and logging.
 
 #### Composition with the log
 

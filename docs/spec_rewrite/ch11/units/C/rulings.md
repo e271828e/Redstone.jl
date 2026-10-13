@@ -157,3 +157,12 @@ here; their D-261 bolds are other bullets.
 - "Exclusivity holds because a second live writer …" and "A claim is what a
   device *may* write, not what it will" have no entry stating them in a
   Position (survey rows 104, 105); left plain.
+
+## Rulings batch edits (checkpoint 3)
+
+- **RP-14**: the harness-writer gloss becomes §11.8's, "(the
+  framework-owned write path `stage!(sim, …)`)". C-060, tag R.
+- **B-21**: the drains-last bold cites D-096's Position beside D-174,
+  "([D-096][d-096], [D-174][d-174])". C-072, tag R.
+- **B-24**: "the [§12.2][s12-2] heartbeat" becomes "the heartbeat
+  ([§12.2][s12-2])". C-107, tag R.

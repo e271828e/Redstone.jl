@@ -167,3 +167,11 @@ R13's wording. The roadmap names it without a link.
    annotates neither D-093 nor D-102.
 4. **"These patterns" has no antecedent** in the first rule's bullet. The
    old text had the same gap, and it is held as written.
+
+## Rulings batch edits (checkpoint 3)
+
+- **B-15** settles correction 1: "each `Simulation` owns its own `Model`, and
+  with it the `Model`'s [buffers](#g-buffer) (…, [§9.4][s9-4])". The gloss
+  stays, and §9.4 alone is cited, since it cites D-317. C-041, tag R.
+- **B-16** settles open question 4. "Lock-free handoffs" was already in the
+  text from the chapter fixes (P1-5), so no edit was made.
