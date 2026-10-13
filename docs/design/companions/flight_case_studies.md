@@ -352,11 +352,10 @@ The demo, line by line:
   a second joystick on the same faces errors here. The Gladiator variant is
   the same table with different keys and zero shaping code. The duplication
   smell is structurally gone.
-- `attach!` of the GUI under the greedy binding, then
-  `run!(sim; pace = 1, t_end = 1000)`, makes a
-  greedy claim over every unclaimed face and settles
-  liveness with zero configuration, both at run start against the
-  frozen roster ([§11.3][s11-3]). Axis
+- `attach!` of the GUI under the greedy binding makes a greedy claim over
+  every unclaimed face at the attach point ([§11.3][s11-3]). Then
+  `run!(sim; pace = 1, t_end = 1000)` settles liveness with zero
+  configuration at run start, against the frozen roster ([§11.7][s11-7]). Axis
   mirrors are read-only (claimed, source shown). The mode, setpoint,
   mixture, payload and environment widgets are live. Actuator sliders are
   read-only (component-fed).
@@ -394,7 +393,7 @@ One frame each:
   present command vector on mode transitions. So the capture fork dissolved.
   Semantic capture is aircraft design. That arrangement is the status quo, and
   it is uniform across writers, so a script engages sanely by staging one
-  value. The GUI peek-batch ([§11.7][s11-7]) therefore survives as
+  value. The GUI peek-batch ([D-047][d-047]) therefore survives as
   display and input-sync sugar only. One residual check remains for migration:
   the order-sensitivity of the latch against a sync-write on the same
   boundary. None is believed to exist, because both derive from
@@ -462,6 +461,7 @@ ladder. The items below take the three claims in turn.
 [d-035]: ../decisions.md#d-035--stores-and-views-components-read-zero-copy-view-bundles
 [d-038]: ../decisions.md#d-038--snapshot-and-log-derived-trajectory-primary-trace-header
 [d-045]: ../decisions.md#d-045--periphery-input-semantics-derived-liveness-conditioning-mappings-edge-logic
+[d-047]: ../decisions.md#d-047--stage-widgets-on-interaction-events-not-every-pass
 [d-067]: ../decisions.md#d-067--boundary-zero-runs-the-macro-sequence-with-an-empty-integrate
 [d-072]: ../decisions.md#d-072--linearization-surface-three-selector-lists-one-chunked-dual-pass
 [d-139]: ../decisions.md#d-139--give-environment-field-handles-a-value-level-constructor-to-prevent-drift

@@ -308,7 +308,7 @@ D-117, D-130, D-204, D-205, D-207, D-226, D-277, D-315.
   - a live pace change re-anchors forward, `Inf` included.
 - The copy `PacerStatus(::Pacer)`. The `PacerStatus` record is dataplane.jl's.
 
-Spec: §10.7, §11.3, §12.1–§12.4, §12.6, D-021, D-027, D-203, D-255,
+Spec: §10.7, §12.1–§12.4, §12.6, D-021, D-027, D-203, D-255,
 D-256, D-268, D-269, D-317.
 
 ### `src/dataplane.jl`

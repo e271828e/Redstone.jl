@@ -210,7 +210,7 @@ The controller played no part in this boundary: `t*` is off the grid, so its
 due set is empty by construction.
 
 `publish!` then captures a snapshot, appends it to the log, and bumps the wait
-counter ([§11.2][s11-2], [D-230][d-230]). The `t*` snapshot is a published consistency point
+counter ([§12.3][s12-3], [D-230][d-230]). The `t*` snapshot is a published consistency point
 like any other, and `_stop_hit` scans the stop requests on it ([§13.5][s13-5]). If none
 holds, the localization count increments and the loop turns again.
 
@@ -309,6 +309,7 @@ no drain.
 [s11-3]: ../spec.md#113-inbound-root-inputs-claims-and-the-frozen-roster
 [s11-5]: ../spec.md#115-inbound-the-input-trace
 [s11-8]: ../spec.md#118-diagnostics-and-liveness-the-per-writer-diagnostic-cell
+[s12-3]: ../spec.md#123-the-next-snapshot-wait
 [s13-4]: ../spec.md#134-runtime-failures-one-catch-site-an-execution-cursor
 [s13-5]: ../spec.md#135-termination-is-a-state-not-an-exception
 [s14-5]: ../spec.md#145-boundary-zero-an-ordinary-boundary-with-authored-incoming-transitions

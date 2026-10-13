@@ -3394,9 +3394,8 @@ contract.
 
 **Paths are slash-separated strings**, relative to the assembly or the root they
 are read from, with no leading slash ([D-040][d-040]). There is one canonical form.
-Declarations, error messages, [device](#g-device)/[trace](#g-trace) addressing ([§11.3][s11-3]) and the HDF5 log
-tree share it verbatim. A device is any attached participant outside the loop,
-and the trace is the primary record of a session. [Container children](#g-container-children) (the
+Declarations, error messages, inspection reads of the snapshot and the log
+([§11.2][s11-2]) and the HDF5 log tree share it verbatim. [Container children](#g-container-children) (the
 elements of a `Tuple` or `NamedTuple` field holding only components, [§8.5][s8-5]) add
 index and key segments, `"aircraft/2"` and `"aircraft/red"` ([D-085][d-085]). These are
 ordinary segments, resolved against the container field. A container declared
@@ -9972,7 +9971,7 @@ runtime warnings, in one place, are these.
   `firing_budget` at a boundary, and its further edges there are dropped.
 - **Forgiven-debt re-anchor** ([§10.7][s10-7]). The pacer abandons its
   accumulated debt and re-anchors its schedule.
-- **The write-surface and entry violations** ([§11.3][s11-3]), all raised at
+- **The write-surface and entry violations** ([§11.3][s11-3], [§11.4][s11-4]), all raised at
   staging. The [drain](#g-drain) checks nothing. `OutOfClaimEntry` is an
   enumerated surface's binding drift, a name with no position in the
   attach-compiled schema. `ClaimedFaceEntry` is a harness write to a face
@@ -12806,8 +12805,8 @@ return law, [§5.2][s5-2]). There is no padding. `x` comes back complete, and
   | `is_input(b)` | `false` on `AbstractBinding` | declares the input side | [§11.6][s11-6] |
   | `is_output(b)` | `false` on `AbstractBinding` | declares the output side | [§11.6][s11-6] |
   | `is_greedy(b)` | `false` on `AbstractBinding` | `true` switches the claim's *source* | [§11.3][s11-3], [§11.6][s11-6] |
-  | `claims(b)` / `map_input(datum, b)` | — | the input side. The enumerated face set *is* the claim, what the device may write rather than what it will | [§11.4][s11-4] |
-  | `reads(b)` / `map_output(nt, b)` | — | the output side | [§14.4][s14-4], [§11.2][s11-2] |
+  | `claims(b)` / `map_input(datum, b)` | — | the input side. The enumerated face set *is* the claim, what the device may write rather than what it will | [§11.3][s11-3], [§11.4][s11-4] |
+  | `reads(b)` / `map_output(nt, b)` | — | the output side | [§14.4][s14-4], [§11.2][s11-2], [§11.6][s11-6] |
 
   The conformance check runs at attach, pairing each trait against its
   method. A declared side whose `claims`/`reads` was never written reaches
@@ -13783,7 +13782,7 @@ incremental `x_deriv`-only re-evaluation ([§5.3][s5-3], [§10.3][s10-3]).
 
 <a id="g-frame"></a>**frame** — one iteration of the loop (drain, integrate, boundary sequence,
 publication). It is the unit `step!` counts and the trace's ordinal key
-([§11.1][s11-1]). Distinct from a *boundary* ([§D.4][sD-4]), and from the
+([§10.1][s10-1], [§11.1][s11-1]). Distinct from a *boundary* ([§D.4][sD-4]), and from the
 kinematic reference frames of the aircraft domain, which always appear
 compounded ("the b frame").
 
