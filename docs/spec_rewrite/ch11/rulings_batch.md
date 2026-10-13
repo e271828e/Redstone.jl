@@ -945,7 +945,7 @@ then linkified; the date is the landing date.
   merged), each Position quoting its Rationale's words and naming the
   source entry, then cite each beside its source in the chapter. Hold the
   plain list unless the orchestrator wants it.
-- Status: Accepted for track 2: eight new entries, D-367 to D-374 (sources 3 merged), each restating its source's words only, then cited beside the source in chapter 11. The plain list holds. Applied by track 2 agent 2.
+- Status: Accepted for track 2: eight new entries, D-367 to D-374 (sources 3 merged), each restating its source's words only, then cited beside the source in chapter 11. The plain list holds. Applied by track 2 agent 2. Amended after track 2's verification: B-48 has nine numbered sources (source 3 already holds D-136 and D-241), so source 9 took D-376, inside chapter 11's block; and lesson 42's drop of D-106's staging bullet cites D-044's Position beside D-106 at §11.4, as the track 2 prompt directs.
 
 ### B-49. Device identity and admission rest on superseded D-109
 

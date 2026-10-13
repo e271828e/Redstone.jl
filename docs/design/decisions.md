@@ -4605,7 +4605,8 @@ which is also what defines the hint when `t_end = Inf`. No new diagnostic kind
 — hitting the bound is stated policy, not an event to report.
 
 Annotation (2026-10-13): `log_max` is a keyword of `init!`, `restore!` and
-`replay!`, the doors that build a run, not of `Simulation` ([D-261][d-261]). A finite
+`replay!`, the doors that build a run, not of `Simulation` ([D-261][d-261],
+[Appendix B][sB]). A finite
 `log_max` is the log's `sizehint!` ([§11.2][s11-2]), not a hint for the expected
 duration.
 
