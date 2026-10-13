@@ -1142,3 +1142,21 @@ does. The near misses, each settled:
 - The trace's length (B-50): D-260 and D-274 settle it against D-217 and
   D-255.
 - The owner's five rulings (E1 to E5) stand and are not reopened.
+
+---
+
+## Landing rulings (the orchestrator, during step 7)
+
+- **L-1. The splice and the log land in one commit.** The spliced chapter
+  cites D-366, so the splice cannot pass the battery before the log entry
+  exists. Commit 2 holds the splice, the Contents fix, `check_bold.jl`, D-366,
+  D-102's annotation and the Spec fields.
+- **L-2. `g-executable-set` joins `check_glossary.jl`'s WHITELIST** as
+  "heading-defined (§9.4)". F24 removed the term's only body use (§11.1,
+  where it was misapplied to activations); the term survives verbatim in
+  §9.4's title, the category's case. Track 2 notes that the glossary entry
+  has no prose use.
+- **L-3. The stride chart's `**full**` becomes `*full*`** (§11.2, unit B).
+  The bold marks a state in the chain, not a ruling, and `check_bold.jl`
+  now checks chapter 11. Italics keep the emphasis, as the chain's *k*
+  already does.

@@ -33,3 +33,4 @@ Each edit the orchestrator made by hand, in order, with old and new text.
    to the one embedded in `chapter_fixes_1.md` entry 51). Line breaks only:
    each unit's `show-new` normalized text is byte-identical before and after,
    and every checker passes. Changed lines: A 11, C 10, F 25, H 14.
+9. Unit B (landing ruling L-3): the stride chart's two `**full**` became `*full*`. Normalized text unchanged.

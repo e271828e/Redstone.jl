@@ -169,8 +169,8 @@ indices does this in O(1) amortized, with physical compaction once per
 generation. A generation's thinning therefore completes exactly when its refill
 does.
 
-> fill at stride `log_every` → **full** → stride doubles → thin one predecessor
-> per retained append, while refilling → **full** at stride `log_every · 2` → ⋯
+> fill at stride `log_every` → *full* → stride doubles → thin one predecessor
+> per retained append, while refilling → *full* at stride `log_every · 2` → ⋯
 > → generation *k* at `log_every · 2^k`
 
 Amortizing rather than halving in one shot is a responsiveness choice ([D-137][d-137]).
