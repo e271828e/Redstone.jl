@@ -525,7 +525,7 @@ then linkified; the date is the landing date.
 - New: `- **The write-surface and entry violations** ([§11.3][s11-3], [§11.4][s11-4]), all raised at`
 - Recommendation: accept; it can ride the landing pass (one line, chapter
   13's text untouched otherwise).
-- Status: Track 2, after landing (recipe step 8).
+- Status: Accepted for track 2 (orchestrator). Applied by track 2 agent 1.
 
 ### B-30. Appendix B's `claims` row cites §11.4 for §11.3's claim (inbound row 75)
 
@@ -535,7 +535,7 @@ then linkified; the date is the landing date.
   §11.3's (old 7160; new 449).
 - New: `… what the device may write rather than what it will | [§11.3][s11-3], [§11.4][s11-4] |`
 - Recommendation: accept; landing pass or track 2.
-- Status: Track 2, after landing (recipe step 8).
+- Status: Accepted for track 2 (orchestrator). Applied by track 2 agent 1.
 
 ### B-31. §8.6 says device and trace addressing use slash paths (inbound row 12)
 
@@ -557,7 +557,7 @@ then linkified; the date is the landing date.
 - Recommendation: rule in track 2 as a correction (a Position settles it).
   Chapter 8 is already rewritten, so run `check_bold.jl` and the glossary
   check after the edit.
-- Status: Track 2, after landing (recipe step 8).
+- Status: Accepted for track 2 (orchestrator). Applied by track 2 agent 1.
 
 ### B-32. The case study puts the greedy claim at run start (inbound row 308)
 
@@ -572,7 +572,7 @@ then linkified; the date is the landing date.
   with zero configuration at run start, against the frozen roster
   ([§11.7][s11-7])."
 - Recommendation: accept in track 2.
-- Status: Track 2, after landing (recipe step 8).
+- Status: Accepted for track 2 (orchestrator). Applied by track 2 agent 1.
 
 ### B-33. `implementation.md`'s control.jl Spec line cites §11.3 (inbound row 279)
 
@@ -582,7 +582,7 @@ then linkified; the date is the landing date.
   pause block, and says the lifecycle gates are sim.jl's.
 - New: `Spec: §10.7, §12.1–§12.4, §12.6, D-021, D-027, D-203, D-255,`
 - Recommendation: accept in track 2.
-- Status: Track 2, after landing (recipe step 8).
+- Status: Accepted for track 2 (orchestrator). Applied by track 2 agent 1.
 
 ### B-34. Other outside citations into chapter 11 that were already loose
 
@@ -617,7 +617,7 @@ then linkified; the date is the landing date.
     at staging in general, and §11.8 (new 1726) names the harness case.
     Proposed: no edit (the Position is the ruling; §11.4 holds the site).
 - Recommendation: accept the proposals marked; the rest hold.
-- Status: Track 2, after landing (recipe step 8).
+- Status: Accepted for track 2: the marked proposals (Appendix B §11.6, the walkthrough §12.3, the case study's D-047, the frame glossary §10.1). The §12.7 and §12.4 items join chapter 12's carried list. The rest hold.
 ### 3b. Stale Spec fields
 
 ### B-35. D-136's Spec field lists §11.1 and §11.4; D-168's lists §11.3 (inbound rows 203, 205, 228)
@@ -631,7 +631,7 @@ then linkified; the date is the landing date.
 - New (bare): D-136, `**Spec.** §9.8, §10.7, §11.2, §11.6, §11.8, §12.2, §12.4, §13.2, §13.5, Appendices C/D`.
   D-168, `**Spec.** §6.1, §8.2, §14.10`.
 - Recommendation: accept in track 2.
-- Status: Track 2, after landing (recipe step 8).
+- Status: Accepted for track 2 (orchestrator). Applied by track 2 agent 1.
 ### 3c. Annotations of stale Positions and Rationales
 
 ### B-36. D-268: the repeated `shutdown!` arises in `run!`'s interrupt arm (E2)
@@ -643,7 +643,7 @@ then linkified; the date is the landing date.
   release.
 - Proposal: `Annotation (2026-10-13): since D-310 no device runs on the calling task, and the wrapper records no release. The repeat arises in run!'s interrupt arm, which releases directly each device it never spawned and advances a cursor after each shutdown! returns; an interrupt between a return and the cursor's advance repeats that call (§11.6).`
 - Recommendation: accept (owner-ruled).
-- Status: Track 2, after landing (recipe step 8).
+- Status: Accepted for track 2 (orchestrator). Applied by track 2 agent 1.
 
 ### B-37. D-160: no `mark_dead!` exists (E3)
 
@@ -653,7 +653,7 @@ then linkified; the date is the landing date.
   4557–4558, "no dead-marking machinery of its own").
 - Proposal: `Annotation (2026-10-13): no mark_dead! exists. A device's death is marked nowhere beyond its record: the task has ended, task_state says so at the next publication, and the heartbeat goes stale (§11.6, §12.2, D-138, D-193).`
 - Recommendation: accept (owner-ruled).
-- Status: Track 2, after landing (recipe step 8).
+- Status: Accepted for track 2 (orchestrator). Applied by track 2 agent 1.
 
 ### B-38. D-138: the shipped GUI, `needs_calling_task` and "marks it dead" (E5 and more)
 
@@ -668,7 +668,7 @@ then linkified; the date is the landing date.
 - Proposal: one annotation: `Annotation (2026-10-13): since D-310, needs_calling_task and gui = true are withdrawn and no GUI ships, so the topology clause and the shipped GUI's should_abort = true are historical. "Marks it dead" in the Position means no task is spawned and the record shows it; nothing else marks a device dead (D-160's annotation).`
 - Recommendation: accept; the owner ruled the E5 part, and the other two
   clauses state only what D-310 and D-138's own Rationale record.
-- Status: Track 2, after landing (recipe step 8).
+- Status: Accepted for track 2 (orchestrator). Applied by track 2 agent 1.
 
 ### B-39. Four entries still describe the withdrawn calling-task device (D-310)
 
@@ -695,7 +695,7 @@ then linkified; the date is the landing date.
   task, citing D-268's Rationale (log 11005–11008); that probe shows only
   where a held signal raises, not which task receives it, so the D-132 text
   above claims nothing about delivery.
-- Status: Track 2, after landing (recipe step 8).
+- Status: Accepted for track 2 (orchestrator). Applied by track 2 agent 1.
 
 ### B-40. D-174 superseded the interactive-writer halves of D-044, D-104 and D-106
 
@@ -710,7 +710,7 @@ then linkified; the date is the landing date.
 - Proposal: D-044 and D-106: `Annotation (2026-10-13): amended by D-174. The derived interactive surface is retired; the GUI is an ordinary enumerated writer, and the harness writer is the one derived surface.`
   D-104: the same, plus "The carrier is values-plus-mask since D-202."
 - Recommendation: accept.
-- Status: Track 2, after landing (recipe step 8).
+- Status: Accepted for track 2 (orchestrator). Applied by track 2 agent 1.
 
 ### B-41. D-134's whole Position is retired: mark it superseded
 
@@ -726,7 +726,7 @@ then linkified; the date is the landing date.
   `is_greedy`." Run `check_rows.jl`; rebaseline if coverage shrinks.
 - Recommendation: accept. If the orchestrator prefers not to change a status
   in track 2, the annotation alone suffices.
-- Status: Track 2, after landing (recipe step 8).
+- Status: Accepted as an annotation only. D-134's status stays: a status change is the log's decision, not track 2's.
 
 ### B-42. D-045 bullet 1 says "slot unclaimed"; §11.7 says "inside the GUI's own claim"
 
@@ -743,7 +743,7 @@ then linkified; the date is the landing date.
 - Recommendation: accept (rule 10: the spec and the later entry agree). Not
   serious. The liveness bold keeps citing D-045; the owed Position for
   D-174's wording is in B-48.
-- Status: Track 2, after landing (recipe step 8).
+- Status: Accepted for track 2 (orchestrator). Applied by track 2 agent 1.
 
 ### B-43. D-026 says "build-time resolution"; liveness is baked at run start
 
@@ -753,7 +753,7 @@ then linkified; the date is the landing date.
   resolution and the liveness verdict "once at its top, after the freeze".
 - Proposal: `Annotation (2026-10-13): resolution is baked at run start, when the GUI's loop body builds its port views after the roster freeze (D-270), not at build.`
 - Recommendation: accept.
-- Status: Track 2, after landing (recipe step 8).
+- Status: Accepted for track 2 (orchestrator). Applied by track 2 agent 1.
 
 ### B-44. D-096: the calling task, the interactive writer and an objectless reason
 
@@ -765,7 +765,7 @@ then linkified; the date is the landing date.
   disjoint", log 6383–6385).
 - Proposal: `Annotation (2026-10-13): stage! runs on any task (D-200) and writes the harness writer's cell (D-174). The harness cell still drains last, now as plain convention; the stated reason is objectless once surfaces are disjoint (D-174).`
 - Recommendation: accept; it pairs with B-21.
-- Status: Track 2, after landing (recipe step 8).
+- Status: Accepted for track 2 (orchestrator). Applied by track 2 agent 1.
 
 ### B-45. D-136 carries none of its five amendments
 
@@ -780,7 +780,7 @@ then linkified; the date is the landing date.
   annotation (log 4385–4456).
 - Proposal: `Annotation (2026-10-13): amended by D-200 (the harness writer's cell), D-317 (the Model's cell, folded into the loop's account), D-240 (the heartbeat is read at publication) and D-241 (one small vector of records per publication). The zero-allocation invariant is scoped to the stepping loop (D-305).`
 - Recommendation: accept.
-- Status: Track 2, after landing (recipe step 8).
+- Status: Accepted for track 2 (orchestrator). Applied by track 2 agent 1.
 
 ### B-46. Other stale Positions and Rationales
 
@@ -822,7 +822,7 @@ then linkified; the date is the landing date.
     and the `t_end`/`stop_on` pair; D-255 bullet (log 9919) leaves the policy
     out of the header. D-133 already carries its annotation (log 4247).
 - Recommendation: accept each as an annotation.
-- Status: Track 2, after landing (recipe step 8).
+- Status: Accepted for track 2 (orchestrator). Applied by track 2 agent 1.
 ### 3d. Log citations into chapter 11 that point at nothing
 
 ### B-47. Log pointers to chapter 11 content, and the ones needing no repair
@@ -869,7 +869,7 @@ then linkified; the date is the landing date.
   - D-029 Position (log 991), "cleared at `init!`": `init!` now builds a fresh
     trace (D-260); same effect, hold.
 - Recommendation: accept the four annotations; close the rest.
-- Status: Track 2, after landing (recipe step 8).
+- Status: Accepted: the four annotations (check Appendix C's DeploymentInvalid row before D-216's). The rest closed.
 ### 3e. Entries owing a Position (Rationale-only rulings the chapter bolds)
 
 ### B-48. Bolds resting on a Rationale or a Rejected item
@@ -945,7 +945,7 @@ then linkified; the date is the landing date.
   merged), each Position quoting its Rationale's words and naming the
   source entry, then cite each beside its source in the chapter. Hold the
   plain list unless the orchestrator wants it.
-- Status: Track 2, after landing (recipe step 8).
+- Status: Accepted for track 2: eight new entries, D-367 to D-374 (sources 3 merged), each restating its source's words only, then cited beside the source in chapter 11. The plain list holds. Applied by track 2 agent 2.
 
 ### B-49. Device identity and admission rest on superseded D-109
 
@@ -968,7 +968,7 @@ then linkified; the date is the landing date.
   If the orchestrator reads D-310's sentence as citing the spec back (lesson
   43), send it to the owner instead; the owner would only ratify D-109's
   text.
-- Status: Track 2, after landing (recipe step 8).
+- Status: Accepted for track 2 as D-375: D-310's Rationale records that D-109's identity and admission rulings survive, so the entry restates recorded rulings and decides nothing. Applied by track 2 agent 2.
 
 ### B-50. D-217 and D-255 give the trace's length as a drain count
 
@@ -989,7 +989,7 @@ then linkified; the date is the landing date.
   drain" (track 2 citation).
 - Recommendation: accept (rule 10). Not an owner item: two later Positions
   carry it.
-- Status: Track 2, after landing (recipe step 8).
+- Status: Accepted: the annotations by track 2 agent 1; the D-260 citation by track 2 agent 2.
 ---
 
 ## 4. Owner items: spec sentences with no entry behind them
