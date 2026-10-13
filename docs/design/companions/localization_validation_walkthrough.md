@@ -70,8 +70,9 @@ and t\* firings strictly precede tₙ₊₁'s boundary sequence.
 
 ## Section 3 — Input epochs, and the two kinds of edges
 
-The drain runs once per frame, at the frame top, so `u` is piecewise constant in
-model time. Call each maximal span of constant `u` an **input epoch**; the drain at a
+The drain runs once per frame, at the frame top, so the root inputs are piecewise
+constant in model time. Call each maximal span of constant root inputs an
+**input epoch**; the drain at a
 frame top is an epoch seam. A guard σ(x, u, …), viewed as a function of model time
 along the run, can change for exactly two reasons:
 
@@ -145,7 +146,7 @@ a firing time that is only defined to frame resolution. **There is no finer trut
 localization to recover — t\* doesn't exist**, not merely "isn't worth computing."
 
 This is the discrete-driven exactness doctrine ([§10.4][s10-4], [D-179][d-179]) resurfacing: for edges
-caused by `u`/`m` steps, boundary detection is not a cheap approximation, it *is* the
+caused by root-input or mode steps, boundary detection is not a cheap approximation, it *is* the
 semantics. Localization's jurisdiction is trajectory facts; the θ = 0 trial
 evaluation is the jurisdictional check at its door. That is also why the degenerate
 path warns nothing:

@@ -400,6 +400,13 @@ model, and it fixes the resolution at which the crossing is observed. It never
 depends on real-time [pacing](#g-pacing) (the waits that hold a run to
 wall-clock time, [§10.7][s10-7], [D-080][d-080]).
 
+Boundary detection is exact for a guard whose value within a step depends
+only on modes, root inputs and held discrete outputs. None of these changes
+inside a step, so such a predicate cannot cross there, and a boundary check
+misses no crossing instant ([§10.4][s10-4], [D-365][d-365]). A guard that
+reads an input fed by continuous state or by time can cross inside a step, as
+a guard on its own state can.
+
 Time events and state events differ in how their instants are found. **The
 discrete [tier](#g-tier)'s [ticks](#g-tick) are [time events](#g-time-event)** ([D-220][d-220], [D-361][d-361]). A tier is one side of the
 hybrid formalism, continuous or discrete. Ticks are declared by `sample_times`.
@@ -5689,13 +5696,22 @@ sign-form value `σ`. That cast is the definition of the predicate
 ([§2.3][s2-3]). The predicate and its edges stay the same. Only the resolution
 at which they are observed changes.
 
-**For a guard that reads only `u` and `m`, boundary detection is exact**
-([D-179][d-179], [D-290][d-290]). Such a predicate is constant within each frame. `u` changes
-only at the frame-top [drain](#g-drain) (the swap that publishes staged device writes into
-the root inputs, [§11.4][s11-4]), and `m` changes only through handlers, at
-boundaries ([D-345][d-345]). The predicate cannot cross mid-step, so there is no interior
-instant for a root-finder to find. Here the boundary is not a resolution limit.
-It is the crossing itself, and localization would have nothing to do.
+**For a guard whose value within a step depends only on modes, root inputs
+and held discrete outputs, boundary detection is exact** ([D-179][d-179],
+[D-365][d-365]). Such a predicate is constant within each frame. Root inputs
+change only at the frame-top [drain](#g-drain) (the swap that publishes staged
+device writes into the root inputs, [§11.4][s11-4]). Held discrete outputs
+change only at ticks, which fall on boundaries ([§10.5][s10-5]), and `m`
+changes only through handlers, at boundaries ([D-345][d-345]). The predicate
+cannot cross mid-step, so there is no interior instant for a root-finder to
+find. Here the boundary is not a resolution limit. It is the crossing itself,
+and localization would have nothing to do.
+
+The exactness does not extend to every input. A guard that reads an input
+fed, directly or through other components, by continuous state or by time
+can cross inside a step, as a guard on its own state can ([D-365][d-365]).
+Every interior sweep recomputes such an input, so boundary detection observes
+its crossing at grid resolution.
 
 A mixed predicate combines `Bool` factors with a continuous one. Take a piston
 engine whose modes include `starting` and `running`. Its `starting → running`
@@ -5706,9 +5722,10 @@ transition fires on `ω > ω_idle && fuel_available`.
 condition and the continuous factor in the value.
 
 The gate idiom is sound rather than a way around the policy check. Trial
-evaluations (below) vary only θ, the normalized time within the step. `u` and
-`m` stay fixed through a localization, so the gates are constant over the
-bracket. Restricted to the bracket, σ is the continuous atom, and it can be
+evaluations (below) vary only θ, the normalized time within the step. Modes,
+root inputs and held discrete outputs stay fixed through a localization, so
+gates over them are constant over the bracket ([D-365][d-365]). Restricted
+to the bracket, σ is the continuous atom, and it can be
 bracketed as such.
 
 A predicate that must exclude equality is the other case the gate form
@@ -5795,12 +5812,13 @@ value-based root-finders need. σ₁ = σ(tₙ₊₁) is retained from the arriv
 evaluation, but σ₀ had no source until now. And σ₀ tells the edge's cause apart.
 
 That discrimination needs one term. An [input epoch](#g-input-epoch) is a maximal span of
-constant `u`, delimited by frame-top drains ([§11.4][s11-4]). Within an epoch a
+constant root inputs, delimited by frame-top drains ([§11.4][s11-4]). Within an epoch a
 guard can change only through the trajectory. At a seam between epochs it can
 jump without crossing anything.
 
-The discriminator is conclusive ([D-182][d-182], [D-290][d-290]). `u` is the only thing that can
-differ between the prior's evaluation context and this trial evaluation. `m`
+The discriminator is conclusive ([D-182][d-182], [D-290][d-290]). The root inputs, and
+the inputs the sweep computes from them, are the only things that can differ
+between the prior's evaluation context and this trial evaluation. `m`
 changes only via handlers at boundaries, and priors are sampled at quiescence,
 after the handlers. Discrete cells hold their values under zero-order hold
 (ZOH), and the interior sweep excludes discrete entries ([§10.5][s10-5]).
@@ -5821,8 +5839,8 @@ boundary iteration detects and fires the event like any boundary-detected event.
 This path costs one interior sweep. It never pays for ẋₙ₊₁ or an interpolant,
 and it consumes no `localization_budget` (see "The localization budget" below).
 It also warns nothing. Input timing is a frame fact, by the same doctrine that
-forbids draining at `t*` below, and boundary detection is exact for a `u`-caused
-edge (above; [D-179][d-179], [D-290][d-290]). Boundary firing is therefore the correct
+forbids draining at `t*` below, and boundary detection is exact for an edge the
+drain causes (above; [D-179][d-179], [D-365][d-365]). Boundary firing is therefore the correct
 semantics, not a degradation. This is the left-end mirror of the `t* = tₙ₊₁`
 degeneracy below.
 
@@ -13670,8 +13688,8 @@ multiple of `Δt_base`, and every anchor period and offset likewise, with
 step boundaries. Grid times are indexed from the frame count, never
 accumulated ([§10.5][s10-5], [§10.4][s10-4]).
 
-<a id="g-input-epoch"></a>**input epoch** — a maximal span of constant `u`, delimited by the frame-top
-drains ([§11.4][s11-4]). Within an epoch a guard changes only through the
+<a id="g-input-epoch"></a>**input epoch** — a maximal span of constant root inputs, delimited by the
+frame-top drains ([§11.4][s11-4]). Within an epoch a guard changes only through the
 trajectory. At a seam it can jump without crossing. Hence the **θ = 0
 validation**. The first act of a triggered localization is a trial
 evaluation at `xₙ` under the frame's own `u`. Its `σ₀` supplies the left
@@ -14688,6 +14706,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-362]: decisions.md#d-362--reset-maps-the-continuous-only-mode-store-and-the-rejected-all-in-one-component
 [d-363]: decisions.md#d-363--cell-freshness-closed-port-alternatives-write-side-atomicity-and-bulk-data-handles
 [d-364]: decisions.md#d-364--hold-a-bulk-data-rig-environment-in-a-constant-source
+[d-365]: decisions.md#d-365--narrow-exact-boundary-detection-to-guards-over-modes-root-inputs-and-held-discrete-outputs
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop
