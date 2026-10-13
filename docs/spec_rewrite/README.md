@@ -34,7 +34,7 @@ readability with no loss of content. The steps are in
 | 8. The declaration layer: components and assemblies | done | `ef7f5dd` | `d268d39` |
 | 9. The build pipeline | done | `9a7d84f` | `docs/reports/20261001_chapter9_rewrite/` |
 | 10. Time and execution | done | `3d72f03` | `0f9ce8a` |
-| 11. Runtime periphery: the data plane | not started | | |
+| 11. Runtime periphery: the data plane | in progress | | |
 | 12. Runtime periphery: lifecycle and orchestration | not started | | |
 | 13. Error discipline | not started | | |
 | 14. Stopped-sim services | not started | | |
