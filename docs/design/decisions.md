@@ -4779,8 +4779,8 @@ pattern moves into the library at the second same-semantics demand.
 
 Annotation (2026-10-13): [§3.1][s3-1] now states the commanded-reset rule above, so
 "unchanged" describes its state when this entry was ratified, and [§2.2][s2-2] now
-states the gear's touchdown edge. The immutable stage views cited to [§3.1][s3-1] here and in the
-Rejected list are [§7.1][s7-1]'s.
+states the gear's touchdown edge. The immutable stage views cited to [§3.1][s3-1]
+here and in the Rejected list are [§7.1][s7-1]'s.
 
 **Rejected.**
 - *Superseded position — a gear-owned `FrictionRegulator` leaf wrapping the PI

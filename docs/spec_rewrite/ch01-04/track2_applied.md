@@ -801,3 +801,11 @@ New:
   doubling with tier-tagged names, per-port tier vocabulary and
   facet-conditional obligations, and it hides the sampling interface.
 ~~~~
+
+### T45. Orchestrator touch: rewrap D-141's annotation (track 2 re-check R1)
+
+`decisions.md`, D-141's annotation: T43 left one line at 89 rendered columns.
+Whitespace only, as the verifier proposed.
+
+- Old: "states the gear's touchdown edge. The immutable stage views cited to [§3.1][s3-1] here and in the\nRejected list are [§7.1][s7-1]'s."
+- New: "states the gear's touchdown edge. The immutable stage views cited to [§3.1][s3-1]\nhere and in the Rejected list are [§7.1][s7-1]'s."
