@@ -40,3 +40,15 @@ link-definition block.
   exists (D-138 Rationale, `src/devices.jl` 395–399).
 - E5: annotate D-138, whose Rationale has the shipped GUI attach with
   `should_abort = true` under the withdrawn `gui = true`.
+
+# Outside edits at landing (chapter 11's rulings)
+
+- R4 / RP-9: Appendix B (old 12795) and the glossary's harness-writer
+  entries (old 14019, 14023) say the harness writer stages from the calling
+  task. They become "from any task, the calling task included" (D-200), and
+  the glossary's gloss follows §11.8's, "the framework-owned write path
+  `stage!(sim, …)`".
+- The inbound checks' RETARGET and MISSING rows, as `rulings_batch.md` rules
+  them.
+- §11.8's retitle: the Contents entry, then `linkify.jl` regenerates every
+  `[s11-8]` definition.
