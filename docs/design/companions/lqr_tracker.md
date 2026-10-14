@@ -272,8 +272,8 @@ depends on each input, and sibling 1's `u` reaches the `Switch` and the
 `Switch` output reaches sibling 1's `v`, a cycle through sibling 1 itself.
 The remedy is a `UnitDelay` on the `Switch` output, fanned to every `v`. A
 block in standby then follows the selected command one tick old, and a block
-engaged sees its own one-tick-old output as `v`, its reference while the
-code is nonzero and ignored while the code is zero.
+engaged sees its own one-tick-old output as `v`, under a hold its reference
+while the code is nonzero and ignored while the code is zero.
 
 **The probe.** On 2026-10-14, before the brief, the wiring was built from
 shipped blocks against the tree at 53f35d0: two `DiscretePID`s with
