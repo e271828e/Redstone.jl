@@ -473,7 +473,7 @@ for what they owe: open-mind stance, probe scripts in the scratchpad,
   the inverse of `[A B; C D]`, and the continuous tracker's closed loop
   linearizes to `A - B K` and settles with zero error; the augmented design
   with `lqr` over `[A 0; C 0]`, `[B; D]` gives `K_x` and `K_ξ`, and the block
-  with `K_fbk = K_x`, `K_fwd = M_22 + K_x M_12` and `K_int = -K_ξ`
+  with `K_fbk = K_x`, `K_fwd = M_22 + K_x M_12` and `K_int = K_ξ`
   linearizes to the augmented closed loop. Report the matrices.
 - **Mutants on a scratch copy**, each named test going red: the sign of
   `K_fwd`'s term; `x_trim` and `z_trim` swapped (the test trims differ);

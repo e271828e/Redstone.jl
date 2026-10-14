@@ -15294,6 +15294,12 @@ Annotation (2026-10-14): [D-384][d-384] names the published code `saturated`, si
 holding discrete controller declaring its input and its output under one
 name is refused as a root ([§8.6][s8-6], [D-210][d-210]).
 
+Annotation (2026-10-14): increment 73's review found PX4's per-actuator
+saturation status and its rate controller's per-axis integrator stop to be
+separate mechanisms, the stop reading the unallocated torque and not the
+status; `lqr_tracker.md` section 6 states them apart. The signed status
+reported up a cascade stands on Foundation Fieldbus alone.
+
 ### D-384 — Publish the discrete controllers' saturation code as `saturated`
 
 **Status.** ratified

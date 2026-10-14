@@ -68,7 +68,7 @@ M_12 = -A⁻¹ B M_22    Δx* = M_12 Δz*
 ```
 
 These are the `Nu` and `Nx` of Franklin, Powell and Emami-Naeini's reference
-input with full state feedback, [§7.4][s7-4] of *Feedback Control of Dynamic
+input with full state feedback, section 7.4 of *Feedback Control of Dynamic
 Systems*. The sign of `M_12` follows from `0 = A Δx* + B Δu*`; the
 FlightPhysics notes drop it, and their design script is unaffected because
 it inverts the whole matrix numerically.
@@ -108,7 +108,8 @@ u_int = -∫ K_ξ (z_i - z_i*) dτ = ∫ K_int (z_ref - z) dτ
 ```
 
 where `K_int` is `n_u × n_z`, its columns zero for the commands that are not
-integrated and taken from `-K_ξ` for those that are. The integrator is then
+integrated and taken from `K_ξ` for those that are, since `q = -K_ξ ξ` with
+`ξ̇ = z_i - z_i*` gives `q̇ = K_ξ (z_i* - z_i)`. The integrator is then
 `n_u` wide, one channel per control input, which buys two things. Saturation
 is handled per input, since each channel's windup is its own. And the
 integral is held in output units, so a scheduled `K_int` changes only future
@@ -245,8 +246,9 @@ block carries a limit status on `BKCAL_OUT` to the upstream block's
 `BKCAL_IN`, which limits the upstream reset contribution when the downstream
 block cannot act, and DeltaV names the option "Dynamic Reset Limit". PX4's
 control allocator publishes a per-actuator `int8` saturation status with
-signed arms, and its rate controller stops integrating per axis in the
-direction of the saturation; ArduPilot's `AC_PID` takes a `limit` flag and
+signed arms, and by a separate path its rate controller stops integrating
+per axis in the direction of the torque it could not allocate; ArduPilot's
+`AC_PID` takes a `limit` flag and
 integrates only when the update would reduce the integrator. Simulink's PID
 block has no such input, and its tracking port pays the coupling the hold
 avoids.
@@ -270,8 +272,9 @@ depends on each input, and sibling 1's `u` reaches the `Switch` and the
 `Switch` output reaches sibling 1's `v`, a cycle through sibling 1 itself.
 The remedy is a `UnitDelay` on the `Switch` output, fanned to every `v`. A
 block in standby then follows the selected command one tick old, and a block
-engaged sees its own one-tick-old output as `v`, which standby's engaged arm
-ignores unless a hold with a nonzero code selects it.
+engaged sees its own one-tick-old output as `v`, which the engaged arm
+ignores unless the block also tracks; with tracking it is the reference, or
+under a hold the reference while the code is nonzero.
 
 **The probe.** On 2026-10-14, before the brief, the wiring was built from
 shipped blocks against the tree at 53f35d0: two `DiscretePID`s with
@@ -348,5 +351,4 @@ and the vector PID's `Ki` is componentwise.
 [s5-3]: ../spec.md#53-structural-feedthrough-stage-roles-execution-order-and-step-boundaries
 [s5-4]: ../spec.md#54-artificial-loops-and-the-escape-hatch
 [s7-3]: ../spec.md#73-discrete-state-modes-and-workspace
-[s7-4]: ../spec.md#74-the-computerintegrator-split
 [s8-6]: ../spec.md#86-paths-wiring-and-faces
