@@ -69,9 +69,12 @@ required. How the limited integrator's exact-zero defect was found, which
 implementation variants were weighed against it, and why the block ships two
 detection policies for its departures is `limited_integrator_variants.md`.
 How the PID's anti-windup design space was weighed, why the block carries
-two independent ports and what it does not carry is `pid_anti_windup.md`.
-Why the linear system is two blocks, how a transfer function is realized
-and why it takes a steady-state input and no `x0` is `linear_blocks.md`.
+two independent ports and what it does not carry is `pid_anti_windup.md`,
+and its section 11 adds the standby axis and the discrete saturation
+output. Why the linear system is two blocks, how a transfer function is
+realized and why it takes a steady-state input and no `x0` is
+`linear_blocks.md`. The LQR tracker's derivation, the cascade it serves and
+what it leaves to the design script is `lqr_tracker.md`.
 
 ## 3. The inventory
 
@@ -161,8 +164,10 @@ form, and its tests call it.
 
 | Block | Status | Mechanism |
 |---|---|---|
-| `PID{V, Hold, Track, Fixed}` over `Real` or a `StaticArray` | shipped | one law, `q̇ = Ki gate(e) + (ref - u_raw) / Tt`, componentwise over a static vector, with two independent ports: a saturation code that gates the integrator and a tracking reference; back-calculation against the own limits otherwise; `Ki` inside the integral; every parameter a `V`, and any of them a port by `AsPort()`; the setpoint weights `b = 1` and `c = 0`, so the derivative acts on the measurement by default; `pid_anti_windup.md`, section 10 for the vectors, the ports and the weights |
-| `DiscretePID{V, Hold, Track, Fixed}` | shipped | the positional law carried to the discrete tier, the ports, the gate, the reference rule and the parameters shared through `PIDBlock{V, Hold, Track, Fixed}`, so componentwise over a static vector, every parameter a `V`, any of them a port by `AsPort()` and the weights `b = 1` and `c = 0` as in `PID`; forward Euler on the integral, backward Euler on the derivative filter so `τd = 0` is the backward difference, and the correction's step `1 - e^{-Δt/Tt}` so every `Tt` is stable and `Tt = 0` is instant; `pid_anti_windup.md`, sections 9 and 10 |
+| `PID{V, Hold, Track, Standby, Fixed}` over `Real` or a `StaticArray` | shipped; standby pending | one law, `q̇ = Ki gate(e) + (ref - u_raw) / Tt`, componentwise over a static vector, with three independent axes, each adding a port: a saturation code that gates the integrator, a tracking reference, and a standby flag `engaged` under which the error is gated off and `v` is the reference whatever the code, so a block not in command follows the selected command and engages bumplessly; back-calculation against the own limits otherwise; `Ki` inside the integral; every parameter a `V`, and any of them a port by `AsPort()`; the setpoint weights `b = 1` and `c = 0`, so the derivative acts on the measurement by default; a fixed infinite `Tt` refused with `standby`; no saturation output, since a continuous code would need a mode and events; `pid_anti_windup.md`, section 10 for the vectors, the ports and the weights, section 11 for standby |
+| `DiscretePID{V, Hold, Track, Standby, Fixed}` | shipped; standby and the code pending | the positional law carried to the discrete tier, the ports, the gate, the reference rule, the standby arm and the parameters shared through `PIDBlock{V, Hold, Track, Standby, Fixed}`, so componentwise over a static vector, every parameter a `V`, any of them a port by `AsPort()` and the weights `b = 1` and `c = 0` as in `PID`; forward Euler on the integral, backward Euler on the derivative filter so `τd = 0` is the backward difference, and the correction's step `1 - e^{-Δt/Tt}` so every `Tt` is stable and `Tt = 0` is instant, which makes standby follow exactly; a second output `saturation`, the own clamp's `Int8` code written to the store at the tick and published from stage 1 at the next, one tick stale, for an outer block's hold; `pid_anti_windup.md`, sections 9 to 11 |
+| `LQRTracker{NX, NU, NZ, Hold, Track, Standby, Fixed}` | candidate | the LQR tracker about a trim point, `u_raw = u_trim + K_fwd (z_ref - z_trim) - K_fbk (x - x_trim) + q` with `q̇ = gate(K_int (z_ref - z)) + (ref - u_raw) / Tt` over an `n_u`-wide integrator, `K_int` inside it; inputs `x`, `z` and `z_ref` as static vectors, outputs `u` and `u_raw` from stage 2; the PID's three axes over the integrator input channel by channel, and the own clamp by back-calculation; the nine parameters, the three gains and the trim triple as static matrices and vectors and `Tt`, `u_min`, `u_max` per channel, any of them a port by `AsPort()`, which is how a gain schedule arrives; gains designed outside, from `trim!` and `linearize`; no saturation output; `lqr_tracker.md` |
+| `DiscreteLQRTracker{NX, NU, NZ, Hold, Track, Standby, Fixed}` | candidate | the tracker on the discrete tier over `LQRTrackerBlock`, forward Euler on the integrator and the correction's exact step as `DiscretePID`; the own clamp's `Int8` code vector as the output `saturation`, from stage 1 off the store, one tick stale, for the outer loops of a cascade, each channel reaching a scalar consumer through `Unpack{Int8, NU}`; `lqr_tracker.md`, sections 6 and 7 |
 
 A flag-gated reset face on a library PI block is sugar over exactly the
 edge-triggered reset event of [§5.3][s5-3], which resets a continuous

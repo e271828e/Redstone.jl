@@ -13,6 +13,14 @@ The bullets stand in working order, the first one next. The audit comes
 last, because it sweeps the whole surface and the library and the bridge
 both add names.
 
+- **Increment 73, the standby axis and the LQR tracker** (D-383), what the
+  code owes `companions/lqr_tracker.md`, `companions/pid_anti_windup.md`
+  section 11 and the inventory's four controller rows, in three stages:
+  the standby axis and the discrete saturation output on `PID` and
+  `DiscretePID` over a shared `ControllerBlock` (stage 1); `LQRTracker` and
+  `DiscreteLQRTracker` (stage 2); and a cascade of the C172's shape as a
+  test model (stage 3). The brief is
+  `briefs/brief_increment_73_lqr_tracker.md`.
 - **The inspector**, one browser client in four stages, in working order:
   the static inspector over the descriptor, whose first session is the
   descriptor's schema and `descriptor` together, at the tip of increment

@@ -381,6 +381,7 @@ were derived.
 | [D-380][d-380] | Accept the raw stick levels as the trace's known loss | ratified |
 | [D-381][d-381] | Make `should_abort` an attachment fact, never a device property | ratified |
 | [D-382][d-382] | Keep binding side traits trivial and the mappings the loop's own | ratified |
+| [D-383][d-383] | Admit the LQR tracker, with a standby axis and a discrete saturation code on the controller blocks | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -15203,6 +15204,91 @@ and an annotation there records this reading.
   bullet would point nowhere, and the conformance check's verdict would rest
   on advice.
 
+### D-383 — Admit the LQR tracker, with a standby axis and a discrete saturation code on the controller blocks
+
+**Status.** ratified
+
+**Position.** `LQRTracker` and `DiscreteLQRTracker` join the library under
+[D-313][d-313]'s guidelines, and the four controller blocks share one anti-windup
+design. Four rulings.
+
+- The tracker implements `u_raw = u_trim + K_fwd (z_ref - z_trim) - K_fbk (x -
+  x_trim) + q` with an `n_u`-wide integrator driven by `K_int (z_ref - z)`,
+  over `LQRTrackerBlock{NX, NU, NZ, Hold, Track, Standby, Fixed}` as the PID
+  is over `PIDBlock`. The gains and the trim triple are instance data, any
+  of them a port by `AsPort()`, and their design, the Riccati solve and the
+  feedforward `K_fwd = M_22 + K M_12`, stays in the design script. The ports
+  are `x`, `z` and `z_ref`.
+- A third axis, `standby = true`, adds the `Bool` input `engaged` and, where
+  tracking has not, the input `v`, on `PID`, `DiscretePID` and the two
+  trackers. While not engaged the error is gated off and `v` is the
+  reference whatever the code. A fixed infinite `Tt` is refused with it.
+- `DiscretePID` and `DiscreteLQRTracker` publish `saturation`, the own
+  clamp's `Int8` code, written to the store at the tick and published from
+  stage 1 at the next. `PID` and `LQRTracker` publish none.
+- The companion `lqr_tracker.md` carries the derivation, the cascade and the
+  probe; `pid_anti_windup.md` section 11 carries the axis and the output.
+
+**Spec.** [§13.7][s13-7]
+
+**Rationale.** The tracker descends from FlightPhysics's `LQR` model, whose
+law transfers unchanged while the mechanisms around it do not: parameters
+overwritten by a lookup become ports, a reset on every mode change becomes
+the standby axis, a halt against the own previous code becomes the
+correction, and the saturation output the outer loops read is kept where
+the tier makes it legitimate. Against the guidelines, the tracker is
+domain-agnostic, it is the one block that shows the trim and linearize
+pipeline closing on itself, its static matrices and per-channel windup are
+easy to get wrong, and the C172 hand-writes it five times. The vector PID
+cannot stand in, since its `Ki` is componentwise and the integral path is a
+matrix map.
+
+The standby axis closes a gap the owner found on 2026-10-14. The hold's
+reference rule reads `v` only while the code is nonzero, so a block not in
+command but unsaturated ignores `v`, and the variant that follows `v`
+unconditionally cannot hold. A cascade whose outer blocks must hold on the
+inner code while in command and follow the selected command while not has
+no spelling in two axes. The axis is Åström and Hägglund's manual mode with
+tracking, and the probe recorded in `lqr_tracker.md` section 7 measured the
+switchover bump at `4.76` with nothing, `1.92` with tracking always, and
+`0.002` with the error gated off and a short `Tt`.
+
+The code is published on the discrete tier because there it flips only on a
+tick boundary and its stage-1 publication breaks the cascade cycle, where a
+code from a continuous clamp is a mode made silently ([§2.3][s2-3]). A signed limit
+status reported up a cascade is Foundation Fieldbus's `BKCAL_OUT` and PX4's
+per-actuator saturation status, so the design follows two industries'
+practice.
+
+**Rejected.**
+- *Tracking in place of the code:* following the actuator position couples
+  the outer integrator to the actuator lag, and `pid_anti_windup.md`'s
+  cascade table ranks tracking alone as the weakest variant; following the
+  inner `u` closes a real cycle on the discrete tier.
+- *The code from stage 2, off the fresh clamp:* an outer hold wired from it
+  closes an algebraic cycle through the outer block, and on the continuous
+  tier the flip lands inside a step.
+- *A continuous moded code, the `LimitedIntegrator` pattern on `u_raw`:*
+  `4N` events and a localization per crossing for a consumer that does not
+  exist; feasible later, since a guard may read `y`.
+- *Reinterpreting the hold's reference rule to read `v` while unsaturated:*
+  it would restore the coupling the hold exists to remove.
+- *A reset input in place of standby:* the FlightPhysics one-shot, which
+  leaves the block's integrator wherever it drifted until the next reset and
+  needs model-level sequencing to fire.
+- *The block computing `K_fwd` from the linearization:* the feedforward needs
+  only an inverse, but it belongs with the Riccati solve, which brings a
+  dependency the package does not want, and a block that takes designed
+  gains tests as `StateSpace` does.
+- *Standby with a fixed infinite `Tt` allowed:* it follows nothing and
+  freezes instead, a mistake the constructor can see.
+
+**Divergence.** Simulink's PID Controller block serves bumpless transfer and
+external back-calculation from one `TR` port and one switch, and has no
+saturation input; here hold, tracking and standby are three axes, each
+changing the law in one place, because the C172's cascade needs the hold
+and the standby together and the tracking apart from both.
+
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
 [d-002]: #d-002--adopt-the-causal-port-based-paradigm
@@ -15560,6 +15646,7 @@ and an annotation there records this reading.
 [d-380]: #d-380--accept-the-raw-stick-levels-as-the-traces-known-loss
 [d-381]: #d-381--make-should_abort-an-attachment-fact-never-a-device-property
 [d-382]: #d-382--keep-binding-side-traits-trivial-and-the-mappings-the-loops-own
+[d-383]: #d-383--admit-the-lqr-tracker-with-a-standby-axis-and-a-discrete-saturation-code-on-the-controller-blocks
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property

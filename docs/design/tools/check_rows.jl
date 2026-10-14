@@ -47,6 +47,7 @@ const FILES = [SPEC,
                "companions/library_inventory.md",
                "companions/limited_integrator_variants.md",
                "companions/pid_anti_windup.md",
+               "companions/lqr_tracker.md",
                "companions/linear_blocks.md",
                "companions/fused_evaluation_lineage.md"]
 
