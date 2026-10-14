@@ -7,8 +7,11 @@ of D-383 (the companion `lqr_tracker.md`, section 11 of
 bullet), which touches no file under `src/` or `test/`. Every line number
 below is from `git show 99bdc9a:file`; the probes of "What is settled" ran
 at 53f35d0, whose `src/blocks.jl` and `test/test_blocks.jl` are identical
-at 99bdc9a. Find passages in
-`docs/design/implementation.md` by heading.
+at 99bdc9a. Amended on 2026-10-14 for D-384: the published code and its
+store field are `saturated`, apart from the hold's input `saturation`,
+since a root's input and output faces share one name space (§8.6, D-210)
+and one name on both refused a holding discrete controller as a root. Find
+passages in `docs/design/implementation.md` by heading.
 
 Design and code are peers, neither subservient. If a shape below proves
 wrong at the keyboard, stop and report rather than deviate silently.
@@ -64,7 +67,7 @@ committed first and the code conforms.
   PID's default `Tt` is `Inf`, so `standby = true` needs `Tt` spelled, and
   the docstrings say so. A `Tt` given as `AsPort()` passes.
 - **The discrete code.** `DiscretePID` and `DiscreteLQRTracker` gain a
-  store field `saturation`, from `zero(saturation_type(V))` and
+  store field `saturated`, from `zero(saturation_type(V))` and
   `zero(SVector{NU, Int8})`, published by `y_state` and written by
   `s_update` from `y.u_raw` against `u_min` and `u_max` with
   `saturation_code` (278). The blocks then declare both output stages, the
@@ -73,8 +76,9 @@ committed first and the code conforms.
   under `(Float64, LinearizeDual)`, `y_direct`'s bundle reads `(:s, :u, :y_s,
   :t, :Δt)`, the code reads `0` at the tick the input first crosses the
   limit and `1` from the next tick on, and the three phase bodies allocate
-  nothing. `y_types` on the discrete blocks gains `saturation`; the block
-  never reads its own code.
+  nothing. `y_types` on the discrete blocks gains `saturated`; the block
+  never reads its own code. The name is D-384's: the hold's input stays
+  `saturation`, so a holding discrete block builds alone as a root.
 - **The tracker.** `lqr_tracker.md` section 4 is the contract. The roster
   `const LQR_PARAMETERS = (:K_fbk, :K_fwd, :K_int, :x_trim, :u_trim,
   :z_trim, :Tt, :u_min, :u_max)`, the struct `fixed::Fixed` in roster order
@@ -93,7 +97,7 @@ committed first and the code conforms.
   end
   ```
 
-  The discrete twin has `s = (q, saturation)`, the same `y_direct` over
+  The discrete twin has `s = (q, saturated)`, the same `y_direct` over
   `s.q`, `y_state` publishing the code, and
   `q⁺ = q + Δt gated_error(…) + β .* (ref - u_raw)` with
   `β = -expm1.(-Δt ./ p.Tt)`, beside the code's write. The matrix products
@@ -128,9 +132,10 @@ committed first and the code conforms.
   off at `Tt = 1` and `0.002` at `Tt = 0.1`.
 - **Verified before writing.** `ControllerBlock`, `LQRTrackerBlock`,
   `LQRTracker`, `DiscreteLQRTracker`, `LQR_PARAMETERS`, `engaged_error`,
-  `engaged_reference`, `axis_ports`, `standby`, `engaged` and a store field
-  `saturation` bind nothing in `src/` or `test/`; `engaged` appears only in
-  prose in `migration_outline.md`. The Julia floor is 1.13. The continuous
+  `engaged_reference`, `axis_ports`, `standby` and `engaged` bind nothing
+  in `src/` or `test/`; `engaged` appears only in prose in
+  `migration_outline.md`; `saturated` is a field of the trim report in
+  `src/trim.jl` and a word in comments, neither a port nor a store field. The Julia floor is 1.13. The continuous
   fixtures `Plant` and `Motor` (`test/fixtures.jl` 27 and 55) declare both
   output stages; no discrete fixture does.
 
@@ -188,7 +193,7 @@ arms with one `signal_ports(c::PIDBlock{V}) = merge((r = V, y = V),
 axis_ports(c, saturation_type(V), V))`; the gate and the reference as
 settled, on `ControllerBlock`; both constructors taking `standby::Bool =
 false` with the `Tt` refusal; `DiscretePID`'s store, `y_types`, `y_state`
-and `s_update` gaining `saturation`. The `PID` and `DiscretePID`
+and `s_update` gaining `saturated`. The `PID` and `DiscretePID`
 docstrings gain the standby row in their table and a paragraph on the
 axis (the two ports, the law in standby, the convergence to `v`, the
 short `Tt`, the refusal), and `DiscretePID`'s a paragraph on the code (the
@@ -216,11 +221,11 @@ The `PIDBlock` docstring (1033 to 1042) names the supertype.
   `saturation = Int8(1)` the standby row's `engaged = false` value is the
   same, since the code is ignored while not engaged. The discrete testset
   at 1659 gains the same rows at `Δt = 0.01`, and asserts the update's
-  `saturation` as `Int8(1)` at the existing rows (`u_raw ≈ 2.07` against
+  `saturated` as `Int8(1)` at the existing rows (`u_raw ≈ 2.07` against
   `u_max = 1`) and `Int8(0)` on a row whose `u_raw` sits inside the limits.
 - At 1708 to 1712: `y_types(DiscretePID(Kp = 1.0)) == (u = Float64, u_raw =
-  Float64, saturation = Int8)`, `y_state(DiscretePID(Kp = 1.0), (; s = (q =
-  0.0, yf = 0.0, saturation = Int8(-1)))) == (saturation = Int8(-1),)`, the
+  Float64, saturated = Int8)`, `y_state(DiscretePID(Kp = 1.0), (; s = (q =
+  0.0, yf = 0.0, saturated = Int8(-1)))) == (saturated = Int8(-1),)`, the
   `PIDBlock{…}` assertions with the fourth parameter, and
   `has_stage(y_state, DiscretePID(Kp = 1.0))` now true.
 - A new testset after 1751, "a standby block follows the selected command
@@ -248,9 +253,9 @@ The `PIDBlock` docstring (1033 to 1042) names the supertype.
   outer `DiscretePID(Kp = 0.5, Ki = 0.5, Tt = 1.0, hold = hold)`, its `u`
   the reference of an inner `DiscretePID(Kp = 2.0, Ki = 1.0, Tt = 1.0,
   u_min = -1.0, u_max = 1.0)` driving `DiscreteIntegrator()`, whose `out`
-  is both measurements, and with `hold` the inner `saturation` wired to
+  is both measurements, and with `hold` the inner `saturated` wired to
   the outer `saturation`. At `h = 1//100`, sampling the inner's `u_raw`
-  and `saturation` each frame, the first frame with `u_raw > 1` reads
+  and `saturated` each frame, the first frame with `u_raw > 1` reads
   code `0` and the next reads `1`; with `hold = true` the outer's `q` stays
   below its value with `hold = false` at every frame of the saturated
   stretch, and its peak is smaller by the literal the probe gives; and the
@@ -341,8 +346,8 @@ second set with `K_int` zero is the tracker without integral action.
   hold with the opposite code, tracking with `v = SVector(0.2, -0.3)`,
   standby engaged and not engaged, each asserting `u_raw`, `u` and
   `deriv.q` to `atol = 1e-12` against literals computed in the REPL; the
-  same over `DiscreteLQRTracker` at `Δt = 0.01` with `s = (q, saturation =
-  zero(SVector{2, Int8}))`, asserting the update's `q` and `saturation`;
+  same over `DiscreteLQRTracker` at `Δt = 0.01` with `s = (q, saturated =
+  zero(SVector{2, Int8}))`, asserting the update's `q` and `saturated`;
   and a second pass with `K_int` and `u_min` scheduled, their values moved
   into `u`, every assertion unchanged.
 - A new testset "the tracker closes the loop on the linear plant: zero
@@ -365,7 +370,7 @@ second set with `K_int` zero is the tracker without integral action.
   the tracker's `q[1]` and `q[2]`, `A = [A - K_fbk  I; -K_int  0]` and `B =
   [K_fwd; K_int]`, each to `1e-12`. The same loop with
   `DiscreteLQRTracker` settles to `SVector(1.0, 0.5)` within `1e-3` at
-  `t = 20`, and with `u_max = SVector(0.5, Inf)` its `saturation` reads
+  `t = 20`, and with `u_max = SVector(0.5, Inf)` its `saturated` reads
   `SVector{2, Int8}(0, 0)` at the frame `u_raw[1]` first exceeds `0.5` and
   `(1, 0)` at the next. `build(…; activations = (Float64, LinearizeDual))
   isa Build` on both tiers' loops.
@@ -417,7 +422,7 @@ Bool, 1}(!)`; with `delay` a `UnitDelay(0.0)` from the `Switch` to both
 `Pack{Float64, 2}` into the tracker's `z_ref`; the inner
 `DiscreteLQRTracker(; tracker_gains()..., K_int = zeros, u_max =
 SVector(0.6, Inf))` over `tracker_plant()`, its `x` and `z` from
-`plant/out`; and with `hold` the tracker's `saturation` through
+`plant/out`; and with `hold` the tracker's `saturated` through
 `Unpack{Int8, 2}`, `out1` into both siblings' `saturation`. The
 longitudinal law's `te2te` loop is this shape with the plant's states
 for the vehicle's.
