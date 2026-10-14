@@ -1989,7 +1989,11 @@ function test_blocks()
         # The sizes are read off `K_fbk` first, so the misfit is `K_fwd`.
         err = failure(() -> LQRTracker(K_fbk = [1.0 0; 0 1], K_fwd = ones(3, 2)))
         @test err isa ArgumentError && occursin("`K_fwd` is 3×2", err.msg)
-        @test_throws ArgumentError LQRTracker(; tracker_gains()..., x_trim = [0.1, -0.2, 0.3])
+        # `K_fbk` is read before the trims, so a misfit trim is the misfit.
+        err = failure(() -> LQRTracker(; tracker_gains()..., x_trim = [0.1, -0.2, 0.3]))
+        @test err isa ArgumentError && occursin("`x_trim` is 3 where 2", err.msg)
+        err = failure(() -> LQRTracker(; tracker_gains()..., z_trim = [0.5, 0.6, 0.7]))
+        @test err isa ArgumentError && occursin("`z_trim` is 3 where 2", err.msg)
         @test_throws ArgumentError LQRTracker(; tracker_gains()..., u_max = [1.0, 2.0, 3.0])
         @test_throws ArgumentError LQRTracker(; tracker_gains()..., Tt = Inf, standby = true)
         @test_throws ArgumentError DiscreteLQRTracker(; tracker_gains()..., Tt = SVector(1.0, Inf), standby = true)

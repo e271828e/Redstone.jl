@@ -1020,9 +1020,10 @@ end
 """
     AsPort()
 
-The marker a PID keyword takes to make its parameter an input port of the block
-in place of a field, `PID(Kp = AsPort(), Ki = 0.5)`. The port is named for the
-parameter and typed `V`, and it takes no part in the keywords' shape.
+The marker a controller keyword takes to make its parameter an input port of
+the block in place of a field, `PID(Kp = AsPort(), Ki = 0.5)`. The port is named
+for the parameter and typed as the field would be, and it takes no part in the
+keywords' shape or sizes.
 """
 struct AsPort end
 
@@ -1032,8 +1033,9 @@ const PID_PARAMETERS = (:Kp, :Ki, :Kd, :τd, :Tt, :u_min, :u_max, :b, :c)
 """
     ControllerBlock{Hold, Track, Standby}
 
-The supertype of the controller families, `PIDBlock` among them. Its three
-parameters are the anti-windup axes, each adding inputs: `Hold` the code
+The supertype of the controller families `PIDBlock` and `LQRTrackerBlock`,
+under `AbstractComponent`. Its three parameters are the anti-windup axes, each
+adding inputs: `Hold` the code
 `saturation`, `Track` the reference `v`, and `Standby` the flag `engaged` and
 `v`. It carries what reads the axes alone, the axis ports, the gate on the
 integrator's input and the correction's reference, while each family carries
@@ -1041,10 +1043,10 @@ its signal ports, its parameters and its blocks' stages.
 """
 abstract type ControllerBlock{Hold, Track, Standby} <: AbstractComponent end
 
-# The axis ports in the order `saturation`, `v`, `engaged`, `code` the code's
-# type and `value` the tracking input's; `v` comes once, from either axis.
-axis_ports(::ControllerBlock{Hold, Track, Standby}, code, value) where {Hold, Track, Standby} =
-    merge(Hold ? (saturation = code,) : (;), Track || Standby ? (v = value,) : (;),
+# The axis ports in the order `saturation`, `v`, `engaged`, at the code's type
+# and the tracking input's; `v` comes once, from either axis.
+axis_ports(::ControllerBlock{Hold, Track, Standby}, code_type, value_type) where {Hold, Track, Standby} =
+    merge(Hold ? (saturation = code_type,) : (;), Track || Standby ? (v = value_type,) : (;),
           Standby ? (engaged = Bool,) : (;))
 # Not engaged, the error is gated off and `v` is the reference whatever the
 # code. `engaged` is a `Bool`, which flips on a boundary and carries no
