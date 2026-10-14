@@ -27,7 +27,8 @@ both add names.
   1); the handle's control verbs and the log-tail view (stage 2); and
   §11.7's panel convention amended from a drawing method to a panel
   description, with the GUI package's half of D-270's convention assigned
-  to the client (stage 4).
+  to the client, and a ruling on §11.7's "assembly panels compose children
+  by path", a constraint on that half with no entry (stage 4).
 - **The exported-name audit.** The export list is to be decided deliberately
   rather than by accident, and until the audit runs the module exports
   nothing (D-226). The audit is a full-surface sweep under the four-class
@@ -82,29 +83,6 @@ what the spec says, the spec edit is part of the item.
 - **The spec's readability rewrite.** Chapters 1 to 11 are done. The
   other chapters follow `docs/spec_rewrite/recipe.md`, and that directory's
   README tracks them. Until a chapter's turn comes, it keeps the old markers.
-  Chapter 11 left these for the owner. Each sentence stays as written,
-  plain and uncited for the point in question, until ruled; the evidence is
-  group 4 of its `rulings_batch.md`, which
-  `git show e5cbb77:docs/spec_rewrite/ch11/rulings_batch.md` recovers.
-  - "printable before the run starts" (§11.3), said of the write-surface
-    partition. No printer exists for the roster or the partition, and D-106
-    says only "inspectable". Recommended: "fixed before the run starts".
-  - six sentences recommended for ratification as written, each in a new
-    entry: the first endpoint under `restore!` and `replay!`, and the
-    stride counting from it (§11.2); "a claim is what a device *may* write,
-    not what it will" (§11.3 and the glossary's *claim*); a released root
-    input's widgets live again from the next run (§11.3); the frame's
-    outcome as a pure function of the drained batches, and the raw stick
-    levels as the accepted loss (§11.4); and `should_abort` "never a device
-    property" (§11.6 and the glossary).
-  - "assembly panels compose children by path" (§11.7), a constraint on
-    the deferred GUI-package half. Recommended: park it with that half,
-    which D-310 hands to the browser client.
-  - Appendix A's "keep the binding traits trivial", which cites §11.6 for
-    a rule §11.6 never stated. Recommended: ratify it and state it in §11.6,
-    or drop Appendix A's pointer.
-  - one Position the log owes: §11.6's bold on `map_input` and
-    `map_output` rests only on D-177's Rationale.
 - **Package registration.**
 - **A precompile workload** for the generic machinery a cold process
   pays, about 9 s whatever the model (§9.7).

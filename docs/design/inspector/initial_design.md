@@ -520,6 +520,8 @@ Panels over the bridge, so that the page commands the model it shows.
 
 - The panel description's vocabulary: the widget set, layout primitives,
   ranges and units, how a panel embeds the generic panel or a child's.
+  §11.7 says assembly panels compose children by path, a constraint no
+  decision entry rules yet.
 - Discovery of the panel method: its name and signature on the component
   type, subject to the exported-name audit in `pending.md`, and how the
   description reaches the descriptor.

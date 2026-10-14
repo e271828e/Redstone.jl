@@ -7053,7 +7053,7 @@ The run's first snapshot and its terminal snapshot ([§12.4][s12-4], [§13.5][s1
 `log_every` and any `log_max`, and they do not count against the bound. They are
 two extra references. The first is the boundary-zero snapshot under `init!`
 ([§14.5][s14-5]), and the snapshot `restore!` or `replay!` publishes as it builds the run
-([§12.6][s12-6]). The stride counts boundaries from it. The terminal snapshot's status
+([§12.6][s12-6]). **The stride counts boundaries from it** ([D-377][d-377]). The terminal snapshot's status
 carries the run's final cumulative diagnostic counters ([§11.8][s11-8]). A run's two
 endpoints and its diagnostic account therefore always outlive whatever retention
 did to the middle.
@@ -7176,8 +7176,10 @@ in service reads ([§11.2][s11-2]/[§13.5][s13-5]/[§14.4][s14-4]).
 **Root-input exclusivity permits at most one writer per root input at any time**
 ([D-044][d-044]). A device [claims](#g-claim) its root inputs (stakes them as faces it may write) at
 attach, and claiming an already-claimed root input is an attach-time error.
-Detaching releases the claims. A released root input's GUI widgets are live
-again from the next run ([§11.7][s11-7]). Exclusivity replaces any cross-device conflict
+Detaching releases the claims, and the harness writer (described below) takes
+the released faces ([D-370][d-370]). The GUI's widgets for a released root input go
+live only once a GUI attached after the release claims it, because a claim is
+taken at attach and never recomputed ([§11.7][s11-7], [D-174][d-174], [D-370][d-370]). Exclusivity replaces any cross-device conflict
 *policy* ([D-044][d-044]), such as attachment-order precedence at the [drain](#g-drain) (the
 frame-top swap that applies staged device writes to the root inputs). Per-device
 [staging cells](#g-staging-cell) (where each device's pending batch waits between drains), the
@@ -7190,7 +7192,7 @@ applied value a timing artifact, as the worked example in [§11.4][s11-4] shows.
 pair is a stream and its mirror, a joystick axis and the GUI slider showing it.
 Claiming the stream settles that pair with no concurrent writing.
 
-A claim is what a device *may* write, not what it will. Data-dependent
+**A claim is what a device *may* write, not what it will** ([D-378][d-378]). Data-dependent
 write-sets are ordinary. A UDP/JSON peer writes whichever subset of faces the
 incoming message names, and `map_input` is arbitrary user code the framework
 never inspects. Such a device therefore claims the binding's enumerated allowed
@@ -7314,10 +7316,10 @@ The roster (roster entries, claims, attachment order) is therefore a plain
 immutable value. The loop reads it once at `run!`, and nothing republishes it
 ([D-087][d-087]). The partition of the root face set into per-writer surfaces plus the
 harness remainder is a static, inspectable fact of the run ([D-106][d-106]). It is
-printable before the run starts and valid until it ends (printable like the face
-routes, [§13.7][s13-7]). Attachment order is the roster's own order. The trace still tags
-each record with a stable device id (described below), never a roster index,
-because ids read across runs, where the roster does change ([D-087][d-087]).
+fixed before the run starts and valid until it ends. Attachment order is the
+roster's own order. The trace still tags each record with a stable device id
+(described below), never a roster index, because ids read across runs, where
+the roster does change ([D-087][d-087]).
 
 Attach validation, claim registration and the staging-shape compilation ([§11.4][s11-4])
 all run at the attach point. That makes `attach!`/`detach!` stopped-sim
@@ -7458,7 +7460,7 @@ flight control system (FCS) design and lives in-model, in the avionics.
 
 The trace records post-conditioning levels. Those are exactly what the model
 consumed, so [replay](#g-replay) (the ordinary loop, its drain reading the trace) is exact.
-The raw stick levels are the known, accepted loss. Re-running a session through
+**The raw stick levels are the known, accepted loss** ([D-380][d-380]). Re-running a session through
 *different* curves is impossible.
 
 #### The staged representation
@@ -7573,9 +7575,8 @@ Attachment order is retained as a deterministic application order. Under
 root-input exclusivity, cross-device writes to one root input cannot arise, so
 the order matters only for diagnostics ([D-044][d-044]).
 
-Which *frame* a write lands in remains wall-clock reality. What the drain
-guarantees is that the frame's outcome is a pure function of the drained
-batches.
+Which *frame* a write lands in remains wall-clock reality. **The drain makes
+the frame's outcome a pure function of the drained batches** ([D-379][d-379]).
 
 Because the roster is a fixed value at `run!`, the drain is fully compilable
 ([D-106][d-106], [D-374][d-374]). The staging cells and their scatters form a heterogeneous but
@@ -7980,7 +7981,7 @@ authoring contract.
 #### The failure policy
 
 **`should_abort` is an `attach!` keyword**, defaulting to `false` ([D-138][d-138],
-[D-177][d-177]). It is per-attachment, never a device property. The same joystick is
+[D-177][d-177]). **It is per-attachment, never a device property** ([D-381][d-381]). The same joystick is
 advisory in one deployment and decisive in another. With `should_abort` clear, a
 device's departure is reported and the run continues without it. With it set,
 that departure also requests a sim stop ([§12.4][s12-4]). A departure is the loop body
@@ -8039,6 +8040,11 @@ defaults, so silence is not greediness ([D-177][d-177]). A [greedy claim](#g-gre
 complement computed at attach. The computed claim source (the greedy one, [§11.3][s11-3])
 is declared or absent.
 
+**A side trait is a declaration, not a computation** ([D-382][d-382]). It returns a
+literal, or a flag read off a field fixed when the binding is constructed. One
+`attach!` reads each trait more than once, and the conformance check described
+below holds only if every read agrees.
+
 The framework needs no contract on the datum's shape. The datum travels only
 between `loop` and `map_input`, written by the same author. The framework's
 structural knowledge comes entirely from the declared traits and the enumeration
@@ -8046,7 +8052,7 @@ methods. Everything enumerable validates at attach. Everything opaque is bounded
 at its runtime enforcement point. `map_input` is bounded by the staging checks
 ([§11.4][s11-4]). `map_output` receives exactly the compiled gather's NamedTuple, and
 what it puts on the wire is the peer's business. **`map_input`/`map_output` are,
-precisely, conventions of the author-owned loop idiom** ([D-177][d-177]). The framework
+precisely, conventions of the author-owned loop idiom** ([D-177][d-177], [D-382][d-382]). The framework
 never calls them, so they are taught ([Appendix A][sA]) and never checked. A binding
 whose loop calls something else by another name is simply a binding with a
 different private helper.
@@ -12563,10 +12569,10 @@ For periphery authors and consumers:
   handle) rather than assuming initialization completed. You do *not* carry
   the converse burden. `init!` owes no cleanup of its own.
 - **Binding traits are declarations, mappings are your own idiom**
-  ([§11.6][s11-6]). Keep `is_input`/`is_output`/`is_greedy` trivial, a
+  ([§11.6][s11-6], [D-382][d-382]). Keep `is_input`/`is_output`/`is_greedy` trivial, a
   literal or a flag read off a field fixed at the constructor call. The
-  framework calls them once, at attach, and cross-checks each against the
-  enumeration method it implies. `map_input`/`map_output` are a different
+  framework reads them only during `attach!`, and cross-checks each against
+  the enumeration method it implies. `map_input`/`map_output` are a different
   kind of thing. They are conventions of the loop idiom, called only by your
   own `loop` and never by the framework. The names are worth keeping for
   readers, and nothing enforces them.
@@ -14141,7 +14147,7 @@ by the Bool traits `is_input`/`is_output` (false by default on the root).
 error fallbacks on the root, and attach cross-checks each trait against its
 method in both directions (`BindingContractMismatch`).
 `map_input`/`map_output` are loop-idiom conventions the framework never
-calls. Every input-side binding stakes a claim. `TableBinding` is the
+calls ([D-382][d-382]). Every input-side binding stakes a claim. `TableBinding` is the
 shipped data-driven one ([§11.6][s11-6], [§11.4][s11-4]).
 
 <a id="g-boundary-counter"></a>**boundary counter** — the loop's monotonic count of *published
@@ -14157,7 +14163,7 @@ and every device runs on a spawned task ([§11.1][s11-1]).
 attach, either returned by its binding's `claims` or computed as the
 unclaimed complement under `is_greedy`, and released at detach. Claiming an
 already-claimed face is an attach-time error (`ClaimConflict`), and a broad
-claim costs GUI liveness ([§11.3][s11-3]).
+claim costs GUI liveness ([§11.3][s11-3], [D-378][d-378]).
 
 <a id="g-coalescing"></a>**coalescing** — the CAS merge keeping one pending batch per device.
 Untouched faces survive, and re-staged faces take the newest level (the
@@ -14289,7 +14295,7 @@ crash, or a failed `init!`) also requests a control-plane stop. Clear, the
 run continues with the device absent and its claims held to run end. It is
 an attachment fact, never a device property, since the same device can be
 advisory in one deployment and decisive in another ([§11.6][s11-6],
-[§12.4][s12-4]).
+[§12.4][s12-4], [D-381][d-381]).
 
 <a id="g-snapshot"></a>**snapshot** — the immutable per-boundary publication: boundary-consistent
 signal table (root inputs included), `t`, frame index, boundary index and
@@ -14917,6 +14923,12 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-374]: decisions.md#d-374--keep-a-dead-device-rostered-guard-mid-run-readers-and-compile-the-drain-against-the-roster
 [d-375]: decisions.md#d-375--identify-a-device-by-its-instance-and-admit-it-on-identity-then-claims
 [d-376]: decisions.md#d-376--give-the-services-ownership-of-root-input-initial-values
+[d-377]: decisions.md#d-377--count-the-snapshot-logs-stride-from-the-runs-first-snapshot
+[d-378]: decisions.md#d-378--make-a-claim-what-a-device-may-write-not-what-it-will
+[d-379]: decisions.md#d-379--make-the-frames-outcome-a-pure-function-of-the-drained-batches
+[d-380]: decisions.md#d-380--accept-the-raw-stick-levels-as-the-traces-known-loss
+[d-381]: decisions.md#d-381--make-should_abort-an-attachment-fact-never-a-device-property
+[d-382]: decisions.md#d-382--keep-binding-side-traits-trivial-and-the-mappings-the-loops-own
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop

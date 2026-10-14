@@ -375,6 +375,12 @@ were derived.
 | [D-374][d-374] | Keep a dead device rostered, guard mid-run readers, and compile the drain against the roster | ratified |
 | [D-375][d-375] | Identify a device by its instance, and admit it on identity then claims | ratified |
 | [D-376][d-376] | Give the services ownership of root-input initial values | ratified |
+| [D-377][d-377] | Count the snapshot log's stride from the run's first snapshot | ratified |
+| [D-378][d-378] | Make a claim what a device may write, not what it will | ratified |
+| [D-379][d-379] | Make the frame's outcome a pure function of the drained batches | ratified |
+| [D-380][d-380] | Accept the raw stick levels as the trace's known loss | ratified |
+| [D-381][d-381] | Make `should_abort` an attachment fact, never a device property | ratified |
+| [D-382][d-382] | Keep binding side traits trivial and the mappings the loop's own | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -3242,6 +3248,11 @@ taught: cross-datum state lives in the device struct, arrives inside the datum.
 Annotation (2026-10-13): amended by [D-177][d-177], which declares a binding's sides by
 Bool traits in place of method presence, and by [D-146][d-146], which renames `faces`
 and `selectors` to `claims` and `reads`. The Rationale stands.
+
+Annotation (2026-10-14): the Position's list of methods a binding implements
+no longer holds for `map_input` and `map_output`. They are conventions of the
+device's own loop, which the framework never calls ([D-177][d-177], [D-382][d-382]). A binding
+implements `claims` and `reads` under its side traits.
 
 **Rejected.**
 - *Abstract binding-type taxonomy:* resurrects the [§11.6][s11-6] kill one level down; a
@@ -15059,6 +15070,139 @@ says root input. The entry decides nothing new.
 - *Face-declaration defaults:* condition data inside the wiring contract,
   reopening the bare-types rule and the competing-defaults problem ([D-068][d-068]).
 
+### D-377 — Count the snapshot log's stride from the run's first snapshot
+
+**Status.** ratified
+
+**Position.** The snapshot log's stride counts boundaries from the run's first
+snapshot. That snapshot is the boundary-zero snapshot under `init!`, and the
+snapshot `restore!` or `replay!` publishes as it builds the run.
+
+**Spec.** [§11.2][s11-2]
+
+**Rationale.** [D-137][d-137]'s Rationale names the boundary-zero and terminal
+snapshots as the log's endpoints, and [D-368][d-368] restates them. Neither names the
+first endpoint of a restored or replayed run, and nothing records where the
+stride counts from. The code counts each ordinal from the first endpoint's,
+which a restore places past zero ([D-274][d-274]). The owner ratified [§11.2][s11-2]'s
+sentences as written on 2026-10-14, after chapter 11's rewrite found no entry
+behind them.
+
+**Rejected.** None beyond [D-137][d-137]'s list.
+
+### D-378 — Make a claim what a device may write, not what it will
+
+**Status.** ratified
+
+**Position.** A claim is the set of faces a device may write, not the set it
+will write, so a device whose write set depends on its data claims its
+binding's whole enumerated set.
+
+**Spec.** [§11.3][s11-3], [§D.6][sD-6]
+
+**Rationale.** [D-044][d-044]'s Position makes a device's claim set enumerated and
+bounded by its binding. It does not say whether the claim bounds what the
+device may write or predicts what it will. A UDP/JSON peer writes whichever
+faces each message names, and `map_input` is user code the framework never
+inspects ([D-382][d-382]). Nothing narrower than the binding's enumeration is known at
+attach. The cost is liveness, since every enumerated face stays claimed for
+the whole attachment. The owner ratified [§11.3][s11-3]'s sentence as written on
+2026-10-14, after chapter 11's rewrite found no entry behind it.
+
+**Rejected.** None beyond [D-044][d-044]'s list.
+
+### D-379 — Make the frame's outcome a pure function of the drained batches
+
+**Status.** ratified
+
+**Position.** The drain makes a frame's outcome a pure function of the
+batches it drains, while which frame a write lands in stays wall-clock
+reality.
+
+**Spec.** [§11.4][s11-4]
+
+**Rationale.** [D-024][d-024]'s Position fixes the drain's mechanics, one
+`atomicswap` per cell in attachment order, and [D-044][d-044]'s exclusivity leaves
+that order to diagnostics alone. Neither states the guarantee the mechanics
+deliver. Deterministic replay needs it from the drain ([§2.4][s2-4]). The owner
+ratified [§11.4][s11-4]'s sentence as written on 2026-10-14, after chapter 11's
+rewrite found no entry behind it.
+
+**Rejected.** None beyond [D-024][d-024]'s list.
+
+### D-380 — Accept the raw stick levels as the trace's known loss
+
+**Status.** ratified
+
+**Position.** The raw stick levels are a known, accepted loss of the trace,
+so a session cannot be re-run through different conditioning curves.
+
+**Spec.** [§11.4][s11-4]
+
+**Rationale.** [D-045][d-045]'s Position puts conditioning upstream of the faces, and
+[D-024][d-024]'s makes the trace a record of root-input-level batches. Together they
+make the trace hold post-conditioning levels, exactly what the model
+consumed, which keeps replay exact. Neither entry says the raw levels may be
+lost. The owner ratified [§11.4][s11-4]'s sentence as written on 2026-10-14, after
+chapter 11's rewrite found no entry behind it.
+
+**Rejected.** None beyond [D-045][d-045]'s list.
+
+### D-381 — Make `should_abort` an attachment fact, never a device property
+
+**Status.** ratified
+
+**Position.** `should_abort` is per-attachment and never a device property,
+since the same device can be advisory in one deployment and decisive in
+another.
+
+**Spec.** [§11.6][s11-6], [§D.6][sD-6]
+
+**Rationale.** This restates the reason of a rejection that no Position
+states. [D-138][d-138]'s Rejected list refuses declaring `should_abort` in the device
+authoring contract, as a function or a trait, because it is an attachment
+fact. [D-138][d-138]'s Rationale makes it an `attach!` keyword, and [D-177][d-177]'s Position
+shows it in the signature, but neither says it is never a device property.
+The owner ratified [§11.6][s11-6]'s sentence as written on 2026-10-14, after chapter
+11's rewrite found no entry behind it.
+
+**Rejected.** None beyond [D-138][d-138]'s list.
+
+### D-382 — Keep binding side traits trivial and the mappings the loop's own
+
+**Status.** ratified
+
+**Position.** Two binding rulings.
+
+- A side trait is a declaration, not a computation. `is_input`, `is_output`
+  and `is_greedy` each return a literal, or a flag read off a field fixed
+  when the binding is constructed.
+- `map_input` and `map_output` are conventions of the device's own loop. The
+  framework never calls them and never checks them, and [Appendix A][sA] teaches
+  them.
+
+**Spec.** [§11.6][s11-6], [Appendix A][sA], [§D.6][sD-6]
+
+**Rationale.** The first bullet is new, ruled by the owner on 2026-10-14.
+[Appendix A][sA] taught it and cited [§11.6][s11-6], which did not state it. One `attach!`
+reads each trait more than once. `check_binding` reads all three, then the
+attach reads `is_input` to take the claim, `is_output` to compile the gather,
+and `is_greedy` to pick the claim's source and to warn of an empty greedy
+claim. [D-371][d-371]'s conformance check vouches only for the answers it saw. A trait
+that answered `is_greedy` false to the check and true to the claim would
+stake the whole unclaimed complement past the greedy-with-claims error. That
+is the maximal surface without the explicit declaration [D-371][d-371] requires.
+
+The second bullet restates [D-177][d-177]'s Rationale and decides nothing new.
+[D-103][d-103]'s Position lists the mappings among the methods a binding implements,
+and an annotation there records this reading.
+
+**Rejected.**
+- *Leaving the rule to [Appendix A][sA] and dropping its pointer to [§11.6][s11-6]:*
+  [Appendix A][sA] indexes taught contracts by the section where each lives, so the
+  bullet would point nowhere, and the conformance check's verdict would rest
+  on advice.
+
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
 [d-002]: #d-002--adopt-the-causal-port-based-paradigm
@@ -15410,6 +15554,12 @@ says root input. The entry decides nothing new.
 [d-374]: #d-374--keep-a-dead-device-rostered-guard-mid-run-readers-and-compile-the-drain-against-the-roster
 [d-375]: #d-375--identify-a-device-by-its-instance-and-admit-it-on-identity-then-claims
 [d-376]: #d-376--give-the-services-ownership-of-root-input-initial-values
+[d-377]: #d-377--count-the-snapshot-logs-stride-from-the-runs-first-snapshot
+[d-378]: #d-378--make-a-claim-what-a-device-may-write-not-what-it-will
+[d-379]: #d-379--make-the-frames-outcome-a-pure-function-of-the-drained-batches
+[d-380]: #d-380--accept-the-raw-stick-levels-as-the-traces-known-loss
+[d-381]: #d-381--make-should_abort-an-attachment-fact-never-a-device-property
+[d-382]: #d-382--keep-binding-side-traits-trivial-and-the-mappings-the-loops-own
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property
@@ -15455,6 +15605,7 @@ says root input. The entry decides nothing new.
 [s14-9]: spec.md#149-mounting-problems-as-relocatable-values
 [s2]: spec.md#2-formalism
 [s2-3]: spec.md#23-events-two-detection-policies
+[s2-4]: spec.md#24-runs
 [s2-5]: spec.md#25-exclusions-deliberate
 [s3]: spec.md#3-component-taxonomy
 [s3-1]: spec.md#31-continuous-component-the-hybrid-primitive
