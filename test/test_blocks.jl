@@ -1553,11 +1553,13 @@ function test_blocks()
                  (true, false, (r = 3.0, y = 0.5, saturation = Int8(-1), engaged = true), 0.25),
                  (true, false, (r = 3.0, y = 0.5, saturation = Int8(0), engaged = true), 0.25),
                  (true, false, (r = 3.0, y = 0.5, saturation = Int8(0), engaged = false), -1.0),    # the freeze
+                 (true, false, (r = 3.0, y = 0.5, saturation = Int8(-1), engaged = false), -1.0),    # the flag before the code
                  (false, true, (r = 3.0, y = 0.5, v = 0.7), -0.05),
                  (true, true, (r = 3.0, y = 0.5, saturation = Int8(1), engaged = true, v = 0.7), -1.3),
                  (true, true, (r = 3.0, y = 0.5, saturation = Int8(0), engaged = true, v = 0.7), 0.25),    # the fallback
                  (true, true, (r = 3.0, y = 0.5, saturation = Int8(0), engaged = false, v = 0.7), -1.3),    # not engaged follows `v`
-                 (true, true, (r = 3.0, y = 0.5, saturation = Int8(1), engaged = false, v = 0.7), -1.3)),
+                 (true, true, (r = 3.0, y = 0.5, saturation = Int8(1), engaged = false, v = 0.7), -1.3),
+                 (true, true, (r = 3.0, y = 0.5, saturation = Int8(-1), engaged = false, v = 0.7), -1.3)),    # the flag before the code
                 (controller, scheduled_values) in
                 ((pid_controller(hold, tracking), (;)),
                  (PID(Kp = AsPort(), Ki = 0.5, Kd = 0.2, τd = 0.1, Tt = 1.0, u_min = AsPort(), u_max = 1.0;
@@ -1838,12 +1840,15 @@ function test_blocks()
                  (true, false, (r = 3.0, y = 0.5, saturation = Int8(-1), engaged = true), 0.30254983374916805),
                  (true, false, (r = 3.0, y = 0.5, saturation = Int8(0), engaged = true), 0.30254983374916805),
                  (true, false, (r = 3.0, y = 0.5, saturation = Int8(0), engaged = false), 0.29004983374916804),    # the freeze
+                 (true, false, (r = 3.0, y = 0.5, saturation = Int8(-1), engaged = false), 0.29004983374916804),    # the flag before the code
                  (false, true, (r = 3.0, y = 0.5, v = 0.7), 0.2995647838739185),
                  (true, true, (r = 3.0, y = 0.5, saturation = Int8(1), engaged = true, v = 0.7), 0.2870647838739185),
                  (true, true, (r = 3.0, y = 0.5, saturation = Int8(0), engaged = true, v = 0.7), 0.30254983374916805),    # the fallback
                  (true, true, (r = 3.0, y = 0.5, saturation = Int8(0), engaged = false, v = 0.7),
                   0.2870647838739185),    # not engaged follows `v`
-                 (true, true, (r = 3.0, y = 0.5, saturation = Int8(1), engaged = false, v = 0.7), 0.2870647838739185)),
+                 (true, true, (r = 3.0, y = 0.5, saturation = Int8(1), engaged = false, v = 0.7), 0.2870647838739185),
+                 (true, true, (r = 3.0, y = 0.5, saturation = Int8(-1), engaged = false, v = 0.7),
+                  0.2870647838739185)),    # the flag before the code
                 (controller, scheduled_values) in
                 ((DiscretePID(; gains..., hold = hold, tracking = tracking), (;)),
                  (DiscretePID(; gains..., Ki = AsPort(), Tt = AsPort(), hold, tracking), (Ki = 0.5, Tt = 1.0)))
@@ -1953,8 +1958,9 @@ function test_blocks()
     @testset "a hold without tracking freezes its integrator while not engaged and back-calculates against its own clamp (§13.7, D-385)" begin
         # The discrete pair of the testset above without tracking, `v` unwired: with
         # `b` in command, `a`'s clamp is free, so its `q` holds, and at the
-        # switchover its output carries none of the selected command. The law
-        # testsets' freeze rows read the back-calculation against the clamp.
+        # switchover its output carries none of the selected command. With limits
+        # of its own, `a`'s `q` moves on exactly the frames its `u_raw` passes
+        # `u_max`, 50 to 86, and holds before and after.
         gains = (Kp = 1.0, Ki = 0.5, Kd = 0.2, τd = 0.1, Tt = 0.1)
         frozen_pair = DiscretePID(; gains..., hold = true)
         model = standby_siblings(frozen_pair, frozen_pair, DiscreteIntegrator(); delay = false)
@@ -1968,6 +1974,15 @@ function test_blocks()
         @test switchover_bump(model) -
               switchover_bump(standby_siblings(tracking_pair, tracking_pair, DiscreteIntegrator(); delay = true)) ≈
               2.259898927223488 atol = 1e-9    # 2.264 against 0.0042
+        limited_pair = DiscretePID(; gains..., u_min = -1.0, u_max = 1.0, hold = true)
+        limited_sim = Simulation(standby_siblings(limited_pair, limited_pair, DiscreteIntegrator(); delay = false);
+                                 h = 1//100)
+        init!(limited_sim, fragment(u = (mode = false,)))
+        limited_frames = [(step!(limited_sim; frames = 1);
+                           (u_raw = port(limited_sim, "a", :u_raw), q = state(limited_sim, "a").q)) for _ in 1:200]
+        moved = [limited_frames[k].q !== (k == 1 ? 0.0 : limited_frames[k - 1].q) for k in 1:200]
+        @test findall(moved) == findall(frame -> frame.u_raw > 1.0, limited_frames) == 50:86
+        @test limited_frames[end].q ≈ -2.9858991837419993 atol = 1e-9
     end
 
     @testset "the discrete PID's code reaches an outer block one tick late and stops its integrator (§13.7, §7.3, D-383)" begin
@@ -2065,7 +2080,11 @@ function test_blocks()
                  (true, true, (saturation = SVector{2, Int8}(0, 0), engaged = not_engaged, v), SVector(-0.375, 0.225),
                   SVector(0.046259359394511736, -0.04775561563670704)),    # not engaged follows `v`
                  (true, true, (saturation = SVector{2, Int8}(1, 0), engaged = not_engaged, v), SVector(-0.375, 0.225),
-                  SVector(0.046259359394511736, -0.04775561563670704))),
+                  SVector(0.046259359394511736, -0.04775561563670704)),
+                 (true, true, (saturation = SVector{2, Int8}(-1, 0), engaged = not_engaged, v), SVector(-0.375, 0.225),
+                  SVector(0.046259359394511736, -0.04775561563670704)),    # the flag before the code
+                 (true, true, (saturation = SVector{2, Int8}(0, 0), engaged = SVector(true, false), v), SVector(0.25, 0.225),
+                  SVector(0.0525, -0.04775561563670704))),    # a flag per channel
                 (scheduled, scheduled_values) in
                 (((;), (;)),
                  ((K_int = AsPort(), u_min = AsPort()), (K_int = SMatrix{2, 2}(0.5, 0.0, 0.0, 0.25), u_min = SVector(-0.7, -0.7))))
