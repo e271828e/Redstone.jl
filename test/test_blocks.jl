@@ -253,9 +253,9 @@ bang_bang_loop() =
           local_wires = ("relay/out" => "integrator/in", "integrator/out" => "relay/in"))
 
 # The PID at the gains its direct calls and linearizations use, in one spelling.
-pid_controller(hold, tracking, standby = false) =
+pid_controller(hold, tracking) =
     PID(Kp = 1.0, Ki = 0.5, Kd = 0.2, τd = 0.1, Tt = 1.0, u_min = -1.0, u_max = 1.0,
-        hold = hold, tracking = tracking, standby = standby)
+        hold = hold, tracking = tracking)
 
 # `pid_controller`'s gains, and a second set apart from them in every term of
 # the law.
@@ -271,7 +271,7 @@ pid_law(c::DiscretePID, s, u, y) = (y_direct(c, (; s, u, Δt = 0.01)), s_update(
 # leave the root.
 function pid_root_model(controller::PID{V, Hold, Track}) where {V, Hold, Track}
     inputs = ["r" => "controller/r", "y" => "controller/y"]
-    Hold && push!(inputs, "saturation" => "controller/saturation")
+    Hold && append!(inputs, ["saturation" => "controller/saturation", "engaged" => "controller/engaged"])
     Track && push!(inputs, "v" => "controller/v")
     Group((; controller = controller); input_wires = Tuple(inputs),
           output_wires = ("controller/u" => "u", "controller/u_raw" => "u_raw"))
@@ -362,74 +362,83 @@ scheduled_pid_loop() = Group((
       output_wires = ("plant/out" => "y",))
 
 # A servo loop: a first-order position servo limited at ±1 between the
-# controller and the plant, whose position the controller tracks.
-pid_servo_loop(controller) = Group((
-        reference = Step(t_step = 0.5, after = 5.0), controller = controller,
-        servo_error = Junction{Float64, Float64, 2}(-),
-        servo = LimitedIntegrator(lower = -1.0, upper = 1.0), plant = Integrator());
-      local_wires = ("reference/out" => "controller/r", "plant/out" => "controller/y",
-                     "controller/u" => "servo_error/in1", "servo/out" => "servo_error/in2",
-                     "servo_error/out" => "servo/in", "servo/out" => "controller/v",
-                     "servo/out" => "plant/in"),
-      output_wires = ("plant/out" => "y",))
+# controller and the plant, whose position a tracking controller tracks.
+function pid_servo_loop(controller)
+    wires = Pair{String, String}[
+        "reference/out" => "controller/r", "plant/out" => "controller/y",
+        "controller/u" => "servo_error/in1", "servo/out" => "servo_error/in2",
+        "servo_error/out" => "servo/in"]
+    haskey(u_types(controller), :v) && push!(wires, "servo/out" => "controller/v")
+    push!(wires, "servo/out" => "plant/in")
+    Group((reference = Step(t_step = 0.5, after = 5.0), controller = controller,
+           servo_error = Junction{Float64, Float64, 2}(-),
+           servo = LimitedIntegrator(lower = -1.0, upper = 1.0), plant = Integrator());
+          local_wires = Tuple(wires), output_wires = ("plant/out" => "y",))
+end
 
 # A cascade: the controller sets a velocity servo's reference and reads the
 # position that integrates the velocity; `hold` wires the inner block's
-# saturation into the controller, `tracking` the velocity into `v`.
+# saturation into the controller and a constant `true` into its `engaged`,
+# `tracking` the velocity into `v`.
 function pid_cascade(controller; hold = false, tracking = false)
     wires = Pair{String, String}[
         "reference/out" => "controller/r", "position/out" => "controller/y",
         "controller/u" => "error/in1", "velocity/out" => "error/in2",
         "error/out" => "inner/in", "inner/out" => "actuator/in",
         "actuator/out" => "velocity/in", "velocity/out" => "position/in"]
-    hold && push!(wires, "inner/saturation" => "controller/saturation")
+    hold && push!(wires, "inner/saturation" => "controller/saturation", "engaged/out" => "controller/engaged")
     tracking && push!(wires, "velocity/out" => "controller/v")
-    Group((reference = Step(t_step = 0.5, after = 5.0), controller = controller,
-           error = Junction{Float64, Float64, 2}(-), inner = LimitedIntegrator(lower = -1.2, upper = 1.2),
-           actuator = FirstOrderLag(τ = 0.1), velocity = FirstOrderLag(τ = 1.0), position = Integrator());
+    blocks = (reference = Step(t_step = 0.5, after = 5.0), controller = controller,
+              error = Junction{Float64, Float64, 2}(-), inner = LimitedIntegrator(lower = -1.2, upper = 1.2),
+              actuator = FirstOrderLag(τ = 0.1), velocity = FirstOrderLag(τ = 1.0), position = Integrator())
+    Group(merge(blocks, hold ? (engaged = Constant(true),) : (;));
           local_wires = Tuple(wires), output_wires = ("position/out" => "y",))
 end
 
 # Two sibling controllers driving one plant through a `Switch` on the root input
-# `mode`, which selects `a` while true. A standby pair also reads the selected
-# command as `v`, through a `UnitDelay` with `delay`, and `mode` as `a`'s
-# `engaged` and its negation as `b`'s.
+# `mode`, which selects `a` while true. A holding pair reads `mode` as `a`'s
+# `engaged` and its negation as `b`'s, and the constant zero code `free` as both
+# `saturation`; a tracking pair also reads the selected command as `v`, through
+# a `UnitDelay` with `delay`.
 function standby_siblings(controller_a, controller_b, plant; delay)
-    standby = haskey(u_types(controller_a), :engaged)
+    holding = haskey(u_types(controller_a), :engaged)
     command = delay ? "delay/out" : "sel/out"
     wires = Pair{String, String}[
         "ref_a/out" => "a/r", "ref_b/out" => "b/r", "plant/out" => "a/y", "plant/out" => "b/y",
         "a/u" => "sel/in1", "b/u" => "sel/in2", "sel/out" => "plant/in"]
     delay && push!(wires, "sel/out" => "delay/in")
-    standby && append!(wires, [command => "a/v", command => "b/v", "negate/out" => "b/engaged"])
+    haskey(u_types(controller_a), :v) && append!(wires, [command => "a/v", command => "b/v"])
+    holding && append!(wires, ["negate/out" => "b/engaged", "free/out" => "a/saturation", "free/out" => "b/saturation"])
     blocks = (ref_a = Step(t_step = 0.5, after = 5.0), ref_b = Constant(2.0), a = controller_a, b = controller_b,
               sel = Switch{Float64}(), plant = plant)
-    Group(merge(blocks, standby ? (negate = Junction{Bool, Bool, 1}(!),) : (;), delay ? (delay = UnitDelay(0.0),) : (;));
-          input_wires = ("mode" => (standby ? ("sel/select", "a/engaged", "negate/in1") : ("sel/select",)),),
+    Group(merge(blocks, holding ? (negate = Junction{Bool, Bool, 1}(!), free = Constant(Int8(0))) : (;),
+                delay ? (delay = UnitDelay(0.0),) : (;));
+          input_wires = ("mode" => (holding ? ("sel/select", "a/engaged", "negate/in1") : ("sel/select",)),),
           local_wires = Tuple(wires))
 end
 
 # A discrete cascade: the outer block's `u` is the inner block's reference, the
 # inner block drives a discrete integrator plant that both measure, and with
-# `hold` the inner code reaches the outer hold.
+# `hold` the inner code reaches the outer hold and a constant `true` its
+# `engaged`.
 function discrete_pid_cascade(; hold)
     wires = Pair{String, String}[
         "reference/out" => "outer/r", "outer/u" => "inner/r", "inner/u" => "plant/in",
         "plant/out" => "outer/y", "plant/out" => "inner/y"]
-    hold && push!(wires, "inner/saturated" => "outer/saturation")
-    Group((reference = Step(t_step = 0.5, after = 5.0), outer = DiscretePID(Kp = 0.5, Ki = 0.5, Tt = 1.0, hold = hold),
-           inner = DiscretePID(Kp = 2.0, Ki = 1.0, Tt = 1.0, u_min = -1.0, u_max = 1.0), plant = DiscreteIntegrator());
-          local_wires = Tuple(wires))
+    hold && push!(wires, "inner/saturated" => "outer/saturation", "engaged/out" => "outer/engaged")
+    blocks = (reference = Step(t_step = 0.5, after = 5.0), outer = DiscretePID(Kp = 0.5, Ki = 0.5, Tt = 1.0, hold = hold),
+              inner = DiscretePID(Kp = 2.0, Ki = 1.0, Tt = 1.0, u_min = -1.0, u_max = 1.0), plant = DiscreteIntegrator())
+    Group(merge(blocks, hold ? (engaged = Constant(true),) : (;)); local_wires = Tuple(wires))
 end
 
-# A holding discrete PID driving a discrete integrator plant through a discrete
-# limited integrator, whose code it reads.
+# A holding discrete PID, engaged by a constant `true`, driving a discrete
+# integrator plant through a discrete limited integrator, whose code it reads.
 discrete_hold_loop(controller) = Group((
-        reference = Step(t_step = 0.5, after = 5.0), controller = controller,
+        reference = Step(t_step = 0.5, after = 5.0), controller = controller, engaged = Constant(true),
         actuator = DiscreteLimitedIntegrator(lower = -1.0, upper = 1.0), plant = DiscreteIntegrator());
       local_wires = ("reference/out" => "controller/r", "plant/out" => "controller/y",
                      "controller/u" => "actuator/in", "actuator/out" => "plant/in",
-                     "actuator/saturation" => "controller/saturation"))
+                     "actuator/saturation" => "controller/saturation", "engaged/out" => "controller/engaged"))
 
 # A loop run at `h = 1//100` and sampled every 0.1 up to `t_end`: `read(sim)`
 # at each sample.
@@ -518,12 +527,12 @@ function tracker_cycle(controller, name)
           local_wires = Tuple(wires))
 end
 
-# A cascade of the C172's shape: standby siblings measure the plant's first
-# state and, through a `Switch` on the root input `mode`, which selects `a`
-# while true, command channel 1 of a discrete tracker; channel 2 is commanded to
-# zero. With `delay` the selected command reaches both `v` through a
-# `UnitDelay`; with `hold` the tracker's channel 1 code reaches both
-# `saturation`.
+# A cascade of the C172's shape: holding and tracking siblings measure the
+# plant's first state and, through a `Switch` on the root input `mode`, which
+# selects `a` while true, command channel 1 of a discrete tracker; channel 2 is
+# commanded to zero. With `delay` the selected command reaches both `v` through
+# a `UnitDelay`; with `hold` the tracker's channel 1 code reaches both
+# `saturation`, and without it the constant zero code `free` does.
 function tracker_cascade(; delay = true, hold = true)
     command = delay ? "delay/out" : "sel/out"
     wires = Pair{String, String}[
@@ -533,14 +542,15 @@ function tracker_cascade(; delay = true, hold = true)
         "sel/out" => "reference/in1", "level/out" => "reference/in2", "reference/out" => "inner/z_ref",
         "plant/out" => "inner/x", "plant/out" => "inner/z", "inner/u" => "plant/in"]
     delay && push!(wires, "sel/out" => "delay/in")
-    hold && append!(wires, ["inner/saturated" => "code/in", "code/out1" => "a/saturation", "code/out1" => "b/saturation"])
-    outer = DiscretePID(; Kp = 0.5, Ki = 0.2, Tt = 0.1, hold, standby = true)
+    append!(wires, hold ? ["inner/saturated" => "code/in", "code/out1" => "a/saturation", "code/out1" => "b/saturation"] :
+                          ["free/out" => "a/saturation", "free/out" => "b/saturation"])
+    outer = DiscretePID(Kp = 0.5, Ki = 0.2, Tt = 0.1, hold = true, tracking = true)
     blocks = (ref_a = Step(t_step = 0.5, after = 1.5), ref_b = Constant(0.5), measurement = Unpack{Float64, 2}(),
               a = outer, b = outer, sel = Switch{Float64}(), negate = Junction{Bool, Bool, 1}(!),
               level = Constant(0.0), reference = Pack{Float64, 2}(),
               inner = DiscreteLQRTracker(; tracker_gains()..., K_int = zeros(2, 2), u_max = SVector(0.6, Inf)),
               plant = tracker_plant())
-    Group(merge(blocks, delay ? (delay = UnitDelay(0.0),) : (;), hold ? (code = Unpack{Int8, 2}(),) : (;));
+    Group(merge(blocks, delay ? (delay = UnitDelay(0.0),) : (;), hold ? (code = Unpack{Int8, 2}(),) : (free = Constant(Int8(0)),));
           input_wires = ("mode" => ("sel/select", "a/engaged", "negate/in1"),), local_wires = Tuple(wires))
 end
 
@@ -896,7 +906,7 @@ function test_blocks()
     end
 
     @testset "the discrete tier's phase bodies allocate nothing (§9.8)" begin
-        standby_pid = DiscretePID(Kp = 1.0, Ki = 0.5, Kd = 0.2, τd = 0.1, Tt = 0.1, standby = true)
+        standby_pid = DiscretePID(Kp = 1.0, Ki = 0.5, Kd = 0.2, τd = 0.1, Tt = 0.1, hold = true, tracking = true)
         for (model, inputs) in
                 (map(model -> (model, (;)),
                      (fed_by(Constant(1.0), DiscreteIntegrator()), feedback_loop(DiscreteIntegrator()),
@@ -1506,57 +1516,52 @@ function test_blocks()
         @test modes(constant_sim, "r").state == SVector{2, Int8}(1, 0)
     end
 
-    @testset "the PID's ports follow its three axes (§13.7, D-313, D-383)" begin
+    @testset "the PID's ports follow its two axes (§13.7, D-313, D-385)" begin
         @test u_types(PID(Kp = 1.0)) == (r = Float64, y = Float64)
-        @test u_types(PID(Kp = 1.0, hold = true)) == (r = Float64, y = Float64, saturation = Int8)
-        @test u_types(PID(Kp = 1.0, tracking = true)) == (r = Float64, y = Float64, v = Float64)
-        @test u_types(PID(Kp = 1.0, hold = true, tracking = true)) ==
-              (r = Float64, y = Float64, saturation = Int8, v = Float64)
-        @test u_types(PID(Kp = 1.0, Tt = 1.0, standby = true)) == (r = Float64, y = Float64, v = Float64, engaged = Bool)
-        @test u_types(PID(Kp = 1.0, Tt = 1.0, tracking = true, standby = true)) ==
-              (r = Float64, y = Float64, v = Float64, engaged = Bool)
-        @test u_types(PID(Kp = 1.0, Tt = 1.0, hold = true, tracking = true, standby = true)) ==
-              (r = Float64, y = Float64, saturation = Int8, v = Float64, engaged = Bool)
+        @test u_types(PID(Kp = 1.0, hold = true)) == (r = Float64, y = Float64, saturation = Int8, engaged = Bool)
+        @test u_types(PID(Kp = 1.0, Tt = 1.0, tracking = true)) == (r = Float64, y = Float64, v = Float64)
+        @test u_types(PID(Kp = 1.0, Tt = 1.0, hold = true, tracking = true)) ==
+              (r = Float64, y = Float64, saturation = Int8, engaged = Bool, v = Float64)
+        @test u_types(PID(Kp = SVector(1.0, 2.0), hold = true)).engaged === SVector{2, Bool}
         @test y_types(PID(Kp = 1.0)) == (u = Float64, u_raw = Float64)
-        @test PID(Kp = 1.0, hold = true, tracking = true) isa PID{Float64, true, true, false}
-        @test PID(Kp = 1.0, Tt = 1.0, standby = true) isa PID{Float64, false, false, true}
-        # Standby follows `v` at rate `1/Tt`, so a fixed infinite `Tt` is refused.
-        @test_throws ArgumentError PID(Kp = 1.0, standby = true)
-        @test_throws ArgumentError PID(Kp = SVector(1.0, 2.0), Tt = SVector(1.0, Inf), standby = true)
-        @test build(PID(Kp = 1.0, Tt = AsPort(), standby = true)) isa Build
+        @test PID(Kp = 1.0, Tt = 1.0, hold = true, tracking = true) isa PID{Float64, true, true}
+        @test PID(Kp = 1.0, Tt = 1.0, tracking = true) isa PID{Float64, false, true}
+        # Tracking follows `v` at rate `1/Tt`, so a fixed infinite `Tt` is refused;
+        # the hold alone needs no `Tt`.
+        @test_throws ArgumentError PID(Kp = 1.0, tracking = true)
+        @test_throws ArgumentError PID(Kp = SVector(1.0, 2.0), Tt = SVector(1.0, Inf), tracking = true)
+        @test build(PID(Kp = 1.0, Tt = AsPort(), tracking = true)) isa Build
+        @test build(PID(Kp = 1.0, hold = true)) isa Build
         @test u_types(PID(Kp = AsPort(), Ki = 0.5)) == (r = Float64, y = Float64, Kp = Float64)
-        @test keys(u_types(PID(Kp = 1.0, Ki = AsPort(), u_min = AsPort(), hold = true, tracking = true))) ==
-              (:r, :y, :saturation, :v, :Ki, :u_min)
-        @test keys(u_types(PID(Kp = 1.0, Ki = AsPort(), u_min = AsPort(), Tt = 1.0,
-                               hold = true, tracking = true, standby = true))) ==
-              (:r, :y, :saturation, :v, :engaged, :Ki, :u_min)
+        @test keys(u_types(PID(Kp = 1.0, Ki = AsPort(), u_min = AsPort(), Tt = 1.0, hold = true, tracking = true))) ==
+              (:r, :y, :saturation, :engaged, :v, :Ki, :u_min)
         @test fieldnames(typeof(PID(Kp = AsPort()).fixed)) == (:Ki, :Kd, :τd, :Tt, :u_min, :u_max, :b, :c)
         @test u_types(PID(Kp = AsPort(), Ki = SVector(1.0, 2.0))).Kp === SVector{2, Float64}
     end
 
-    @testset "the PID's law gates the error on the code's sign, falls back to `u` on a free path, and in standby follows `v` (§13.7, D-313, D-383)" begin
+    @testset "the PID's law gates the error on the code's sign, falls back to `u` on a free path, and not engaged follows `v` or freezes (§13.7, D-313, D-385)" begin
         # `u_raw = 2.5 + 0.3 - 0.8`, clamped to `u = 1`; `Ki e = 1.25`, and the
-        # correction reads `1 - 2` against `u` or `0.7 - 2` against `v`. Engaged,
-        # a standby block reads the no-axis row; not engaged, `0.7 - 2` alone,
-        # whatever the code. The second pass schedules `Kp` and `u_min`, their
-        # values moved into `u`.
+        # correction reads `1 - 2` against `u` or `0.7 - 2` against `v`. Not
+        # engaged, the error is gated off whatever the code: `0.7 - 2` alone with
+        # tracking, and `1 - 2` alone without, the freeze. The second pass
+        # schedules `Kp` and `u_min`, their values moved into `u`.
         x = (q = 0.3, yf = 0.1)
         y = (u = 1.0, u_raw = 2.0)
-        for (hold, tracking, standby, u, q_deriv) in
-                ((false, false, false, (r = 3.0, y = 0.5), 0.25),
-                 (true, false, false, (r = 3.0, y = 0.5, saturation = Int8(1)), -1.0),    # the gate holds
-                 (true, false, false, (r = 3.0, y = 0.5, saturation = Int8(-1)), 0.25),
-                 (true, false, false, (r = 3.0, y = 0.5, saturation = Int8(0)), 0.25),
-                 (false, true, false, (r = 3.0, y = 0.5, v = 0.7), -0.05),
-                 (true, true, false, (r = 3.0, y = 0.5, saturation = Int8(1), v = 0.7), -1.3),
-                 (true, true, false, (r = 3.0, y = 0.5, saturation = Int8(0), v = 0.7), 0.25),    # the fallback
-                 (false, false, true, (r = 3.0, y = 0.5, v = 0.7, engaged = true), 0.25),
-                 (false, false, true, (r = 3.0, y = 0.5, v = 0.7, engaged = false), -1.3),    # standby follows `v`
-                 (true, false, true, (r = 3.0, y = 0.5, saturation = Int8(1), v = 0.7, engaged = false), -1.3)),
+        for (hold, tracking, u, q_deriv) in
+                ((false, false, (r = 3.0, y = 0.5), 0.25),
+                 (true, false, (r = 3.0, y = 0.5, saturation = Int8(1), engaged = true), -1.0),    # the gate holds
+                 (true, false, (r = 3.0, y = 0.5, saturation = Int8(-1), engaged = true), 0.25),
+                 (true, false, (r = 3.0, y = 0.5, saturation = Int8(0), engaged = true), 0.25),
+                 (true, false, (r = 3.0, y = 0.5, saturation = Int8(0), engaged = false), -1.0),    # the freeze
+                 (false, true, (r = 3.0, y = 0.5, v = 0.7), -0.05),
+                 (true, true, (r = 3.0, y = 0.5, saturation = Int8(1), engaged = true, v = 0.7), -1.3),
+                 (true, true, (r = 3.0, y = 0.5, saturation = Int8(0), engaged = true, v = 0.7), 0.25),    # the fallback
+                 (true, true, (r = 3.0, y = 0.5, saturation = Int8(0), engaged = false, v = 0.7), -1.3),    # not engaged follows `v`
+                 (true, true, (r = 3.0, y = 0.5, saturation = Int8(1), engaged = false, v = 0.7), -1.3)),
                 (controller, scheduled_values) in
-                ((pid_controller(hold, tracking, standby), (;)),
+                ((pid_controller(hold, tracking), (;)),
                  (PID(Kp = AsPort(), Ki = 0.5, Kd = 0.2, τd = 0.1, Tt = 1.0, u_min = AsPort(), u_max = 1.0;
-                      hold, tracking, standby), (Kp = 1.0, u_min = -1.0)))
+                      hold, tracking), (Kp = 1.0, u_min = -1.0)))
             inputs = merge(u, scheduled_values)
             outputs = y_direct(controller, (; x, u = inputs))
             @test outputs.u_raw ≈ 2.0 atol = 1e-12
@@ -1598,9 +1603,9 @@ function test_blocks()
                          C = plain_matrices.C, D = [1.0 -3.0 0.0])
         for (hold, tracking, inputs, expected) in
                 ((false, false, (r = 0.0, y = 0.0), plain_matrices),
-                 (true, false, (r = 0.0, y = 0.0, saturation = Int8(0)), plain_matrices),
+                 (true, false, (r = 0.0, y = 0.0, saturation = Int8(0), engaged = true), plain_matrices),
                  (false, true, (r = 0.0, y = 0.0, v = 0.0), tracking_matrices),
-                 (true, true, (r = 0.0, y = 0.0, saturation = Int8(0), v = 0.0), both_matrices))
+                 (true, true, (r = 0.0, y = 0.0, saturation = Int8(0), engaged = true, v = 0.0), both_matrices))
             model = pid_root_model(pid_controller(hold, tracking))
             @test build(model; activations = (Float64, LinearizeDual)) isa Build
             sim = Simulation(model; h = 1//100)
@@ -1665,8 +1670,9 @@ function test_blocks()
 
     @testset "the vector PID is two scalar PIDs side by side, in both tiers (§13.7, D-313)" begin
         # Channel 1 is the law testsets' row; channel 2 reads the second gain set,
-        # its own state and outputs, `r = 1`, `y = 2`, the same code and `v = -0.3`,
-        # so its gate passes where channel 1's holds and holds where it passes.
+        # its own state and outputs, `r = 1`, `y = 2`, the same code and flag and
+        # `v = -0.3`, so its gate passes where channel 1's holds and holds where it
+        # passes.
         first_gains, second_gains = pid_gain_sets()
         stacked_gains = map(SVector, first_gains, second_gains)
         x1, x2 = (q = 0.3, yf = 0.1), (q = -0.1, yf = 1.2)
@@ -1674,12 +1680,12 @@ function test_blocks()
         x, y = map(SVector, x1, x2), map(SVector, y1, y2)
         for (hold, tracking, u1) in
                 ((false, false, (r = 3.0, y = 0.5)),
-                 (true, false, (r = 3.0, y = 0.5, saturation = Int8(1))),
-                 (true, false, (r = 3.0, y = 0.5, saturation = Int8(-1))),
-                 (true, false, (r = 3.0, y = 0.5, saturation = Int8(0))),
+                 (true, false, (r = 3.0, y = 0.5, saturation = Int8(1), engaged = true)),
+                 (true, false, (r = 3.0, y = 0.5, saturation = Int8(-1), engaged = true)),
+                 (true, false, (r = 3.0, y = 0.5, saturation = Int8(0), engaged = true)),
                  (false, true, (r = 3.0, y = 0.5, v = 0.7)),
-                 (true, true, (r = 3.0, y = 0.5, saturation = Int8(1), v = 0.7)),
-                 (true, true, (r = 3.0, y = 0.5, saturation = Int8(0), v = 0.7)))
+                 (true, true, (r = 3.0, y = 0.5, saturation = Int8(1), engaged = true, v = 0.7)),
+                 (true, true, (r = 3.0, y = 0.5, saturation = Int8(0), engaged = true, v = 0.7)))
             u2 = merge(u1, (r = 1.0, y = 2.0), tracking ? (v = -0.3,) : (;))
             u = map(SVector, u1, u2)
             for block_type in (PID, DiscretePID)
@@ -1785,9 +1791,8 @@ function test_blocks()
         # The positive half of the artificial-cycle refusal above.
         gains = (Kp = 1.0, Ki = 0.5, Kd = 0.2, τd = 0.1)
         @test build(pid_servo_loop(PID(; gains..., tracking = true, Tt = 1.0)); activations = (Float64, LinearizeDual)) isa Build
-        untracked, tracked = (loop_samples(sim -> port(sim, "", :y),
-                                           pid_servo_loop(PID(; gains..., tracking = true, Tt = Tt)), 40)
-                              for Tt in (Inf, 1.0))
+        untracked, tracked = (loop_samples(sim -> port(sim, "", :y), pid_servo_loop(controller), 40)
+                              for controller in (PID(; gains...), PID(; gains..., tracking = true, Tt = 1.0)))
         @test maximum(untracked) > 8.5    # 8.71
         @test maximum(tracked) < 6.5      # 5.96
         @test untracked[end] ≈ 5.0 atol = 1e-2
@@ -1819,29 +1824,29 @@ function test_blocks()
         # The continuous law's rows at `Δt = 0.01`: `u_raw = 2.5 + 0.3 - 0.2 · 0.4 / 0.11`,
         # clamped to `u = 1`; `Δt Ki e = 0.0125`, and the correction reads
         # `β (1 - 2)` against `u` or `β (0.7 - 2)` against `v`, `β = 1 - e^{-0.01}`.
-        # Standby reads the no-axis row engaged and `β (0.7 - 2)` alone not
-        # engaged, as the continuous rows do. `u_raw = 2` is above `u_max`, so
-        # the update writes the code `1`.
+        # Not engaged reads `β (0.7 - 2)` alone with tracking and `β (1 - 2)`
+        # alone without, as the continuous rows do. `u_raw = 2` is above `u_max`,
+        # so the update writes the code `1`.
         # The second pass schedules `Ki` and `Tt`, their values moved into `u`.
         gains = (Kp = 1.0, Ki = 0.5, Kd = 0.2, τd = 0.1, Tt = 1.0, u_min = -1.0, u_max = 1.0)
         s = (q = 0.3, yf = 0.1)
         y = (u = 1.0, u_raw = 2.0)
         Δt = 0.01
-        for (hold, tracking, standby, u, q_next) in
-                ((false, false, false, (r = 3.0, y = 0.5), 0.30254983374916805),
-                 (true, false, false, (r = 3.0, y = 0.5, saturation = Int8(1)), 0.29004983374916804),    # the gate holds
-                 (true, false, false, (r = 3.0, y = 0.5, saturation = Int8(-1)), 0.30254983374916805),
-                 (true, false, false, (r = 3.0, y = 0.5, saturation = Int8(0)), 0.30254983374916805),
-                 (false, true, false, (r = 3.0, y = 0.5, v = 0.7), 0.2995647838739185),
-                 (true, true, false, (r = 3.0, y = 0.5, saturation = Int8(1), v = 0.7), 0.2870647838739185),
-                 (true, true, false, (r = 3.0, y = 0.5, saturation = Int8(0), v = 0.7), 0.30254983374916805),    # the fallback
-                 (false, false, true, (r = 3.0, y = 0.5, v = 0.7, engaged = true), 0.30254983374916805),
-                 (false, false, true, (r = 3.0, y = 0.5, v = 0.7, engaged = false), 0.2870647838739185),    # standby follows `v`
-                 (true, false, true, (r = 3.0, y = 0.5, saturation = Int8(1), v = 0.7, engaged = false),
-                  0.2870647838739185)),
+        for (hold, tracking, u, q_next) in
+                ((false, false, (r = 3.0, y = 0.5), 0.30254983374916805),
+                 (true, false, (r = 3.0, y = 0.5, saturation = Int8(1), engaged = true), 0.29004983374916804),    # the gate holds
+                 (true, false, (r = 3.0, y = 0.5, saturation = Int8(-1), engaged = true), 0.30254983374916805),
+                 (true, false, (r = 3.0, y = 0.5, saturation = Int8(0), engaged = true), 0.30254983374916805),
+                 (true, false, (r = 3.0, y = 0.5, saturation = Int8(0), engaged = false), 0.29004983374916804),    # the freeze
+                 (false, true, (r = 3.0, y = 0.5, v = 0.7), 0.2995647838739185),
+                 (true, true, (r = 3.0, y = 0.5, saturation = Int8(1), engaged = true, v = 0.7), 0.2870647838739185),
+                 (true, true, (r = 3.0, y = 0.5, saturation = Int8(0), engaged = true, v = 0.7), 0.30254983374916805),    # the fallback
+                 (true, true, (r = 3.0, y = 0.5, saturation = Int8(0), engaged = false, v = 0.7),
+                  0.2870647838739185),    # not engaged follows `v`
+                 (true, true, (r = 3.0, y = 0.5, saturation = Int8(1), engaged = false, v = 0.7), 0.2870647838739185)),
                 (controller, scheduled_values) in
-                ((DiscretePID(; gains..., hold = hold, tracking = tracking, standby = standby), (;)),
-                 (DiscretePID(; gains..., Ki = AsPort(), Tt = AsPort(), hold, tracking, standby), (Ki = 0.5, Tt = 1.0)))
+                ((DiscretePID(; gains..., hold = hold, tracking = tracking), (;)),
+                 (DiscretePID(; gains..., Ki = AsPort(), Tt = AsPort(), hold, tracking), (Ki = 0.5, Tt = 1.0)))
             inputs = merge(u, scheduled_values)
             outputs = y_direct(controller, (; s, u = inputs, Δt))
             @test outputs.u_raw ≈ 2.0727272727272723 atol = 1e-12
@@ -1873,14 +1878,14 @@ function test_blocks()
         # At `τd = 0` the D term is the backward difference, `0.1 / Δt`.
         @test y_direct(DiscretePID(Kp = 1.0, Kd = 0.2, τd = 0.0),
                        (; s = (q = 0.0, yf = 0.4), u = (r = 0.0, y = 0.5), Δt)).u_raw == -2.5
-        @test u_types(DiscretePID(Kp = 1.0, hold = true, tracking = true)) ==
-              (r = Float64, y = Float64, saturation = Int8, v = Float64)
+        @test u_types(DiscretePID(Kp = 1.0, Tt = 1.0, hold = true, tracking = true)) ==
+              (r = Float64, y = Float64, saturation = Int8, engaged = Bool, v = Float64)
         @test y_types(DiscretePID(Kp = 1.0)) == (u = Float64, u_raw = Float64, saturated = Int8)
         @test y_state(DiscretePID(Kp = 1.0), (; s = (q = 0.0, yf = 0.0, saturated = Int8(-1)))) ==
               (saturated = Int8(-1),)
-        @test PID(Kp = 1.0) isa Redstone.Blocks.PIDBlock{Float64, false, false, false}
-        @test DiscretePID(Kp = 1.0, hold = true, tracking = true) isa Redstone.Blocks.PIDBlock{Float64, true, true, false}
-        @test DiscretePID(Kp = 1.0, Tt = 1.0, standby = true) isa Redstone.Blocks.ControllerBlock{false, false, true}
+        @test PID(Kp = 1.0) isa Redstone.Blocks.PIDBlock{Float64, false, false}
+        @test DiscretePID(Kp = 1.0, Tt = 1.0, hold = true, tracking = true) isa Redstone.Blocks.PIDBlock{Float64, true, true}
+        @test DiscretePID(Kp = 1.0, Tt = 1.0, hold = true, tracking = true) isa Redstone.Blocks.ControllerBlock{true, true}
         @test Redstone.has_stage(y_direct, DiscretePID(Kp = 1.0))
         @test Redstone.has_stage(y_state, DiscretePID(Kp = 1.0))
     end
@@ -1922,13 +1927,13 @@ function test_blocks()
         @test d.wires == ["controller/u" => "sat/in1", "sat/out" => "controller/v"]
     end
 
-    @testset "a standby block follows the selected command through a delay and engages without a bump, and the switch without the delay is a cycle (§13.7, §5.4, §13.8, D-383)" begin
+    @testset "a tracking block not engaged follows the selected command through a delay and engages without a bump, and the switch without the delay is a cycle (§13.7, §5.4, §13.8, D-385)" begin
         # Each sibling's `u` reaches the switch and the switch's output its `v`. A
         # continuous sibling reads `v` in the derivative alone, so its hop is dead;
         # a discrete one traces structurally.
         gains = (Kp = 1.0, Ki = 0.5, Kd = 0.2, τd = 0.1)
-        discrete_pair = DiscretePID(; gains..., Tt = 0.1, standby = true)
-        continuous_pair = PID(; gains..., Tt = 0.1, standby = true)
+        discrete_pair = DiscretePID(; gains..., Tt = 0.1, hold = true, tracking = true)
+        continuous_pair = PID(; gains..., Tt = 0.1, hold = true, tracking = true)
         d = only(diagnostics(failure(() -> build(standby_siblings(discrete_pair, discrete_pair, DiscreteIntegrator();
                                                                   delay = false)))))
         @test d isa AlgebraicCycle && d.classification === :real
@@ -1945,6 +1950,26 @@ function test_blocks()
         @test switchover_bump(standby_siblings(plain, plain, DiscreteIntegrator(); delay = true)) > 4.0    # 4.76
     end
 
+    @testset "a hold without tracking freezes its integrator while not engaged and back-calculates against its own clamp (§13.7, D-385)" begin
+        # The discrete pair of the testset above without tracking, `v` unwired: with
+        # `b` in command, `a`'s clamp is free, so its `q` holds, and at the
+        # switchover its output carries none of the selected command. The law
+        # testsets' freeze rows read the back-calculation against the clamp.
+        gains = (Kp = 1.0, Ki = 0.5, Kd = 0.2, τd = 0.1, Tt = 0.1)
+        frozen_pair = DiscretePID(; gains..., hold = true)
+        model = standby_siblings(frozen_pair, frozen_pair, DiscreteIntegrator(); delay = false)
+        @test build(model; activations = (Float64, LinearizeDual)) isa Build
+        sim = Simulation(model; h = 1//100)
+        init!(sim, fragment(u = (mode = false,)))
+        q0 = state(sim, "a").q
+        qs = [(step!(sim; frames = 1); state(sim, "a").q) for _ in 1:200]
+        @test all(q -> q === q0, qs)
+        tracking_pair = DiscretePID(; gains..., hold = true, tracking = true)
+        @test switchover_bump(model) -
+              switchover_bump(standby_siblings(tracking_pair, tracking_pair, DiscreteIntegrator(); delay = true)) ≈
+              2.259898927223488 atol = 1e-9    # 2.264 against 0.0042
+    end
+
     @testset "the discrete PID's code reaches an outer block one tick late and stops its integrator (§13.7, §7.3, D-383)" begin
         # The inner block writes the code at the tick `u_raw` first passes `u_max`
         # and publishes it at the next, where the outer update reads it.
@@ -1958,24 +1983,24 @@ function test_blocks()
         @test maximum(frame -> frame.q, free) - maximum(frame -> frame.q, held) ≈ 1.2635695014151755 atol = 1e-9    # 6.26 against 5.00
     end
 
-    @testset "the tracker's ports and parameters follow its sizes and its three axes (§13.7, D-383)" begin
+    @testset "the tracker's ports and parameters follow its sizes and its two axes (§13.7, D-383, D-385)" begin
         signals = (x = SVector{2, Float64}, z = SVector{2, Float64}, z_ref = SVector{2, Float64})
         @test u_types(LQRTracker(; tracker_gains()...)) == signals
-        @test u_types(LQRTracker(; tracker_gains()..., hold = true, tracking = true, standby = true)) ==
-              merge(signals, (saturation = SVector{2, Int8}, v = SVector{2, Float64}, engaged = Bool))
-        @test u_types(DiscreteLQRTracker(; tracker_gains()..., standby = true)) ==
-              merge(signals, (v = SVector{2, Float64}, engaged = Bool))
+        @test u_types(LQRTracker(; tracker_gains()..., hold = true, tracking = true)) ==
+              merge(signals, (saturation = SVector{2, Int8}, engaged = SVector{2, Bool}, v = SVector{2, Float64}))
+        @test u_types(DiscreteLQRTracker(; tracker_gains()..., hold = true)) ==
+              merge(signals, (saturation = SVector{2, Int8}, engaged = SVector{2, Bool}))
         @test y_types(LQRTracker(; tracker_gains()...)) == (u = SVector{2, Float64}, u_raw = SVector{2, Float64})
         @test y_types(DiscreteLQRTracker(; tracker_gains()...)) ==
               (u = SVector{2, Float64}, u_raw = SVector{2, Float64}, saturated = SVector{2, Int8})
-        @test LQRTracker(; tracker_gains()...) isa LQRTracker{2, 2, 2, false, false, false}
+        @test LQRTracker(; tracker_gains()...) isa LQRTracker{2, 2, 2, false, false}
         @test DiscreteLQRTracker(; tracker_gains()..., hold = true) isa
-              Redstone.Blocks.LQRTrackerBlock{2, 2, 2, true, false, false}
-        @test LQRTracker(; tracker_gains()..., standby = true) isa Redstone.Blocks.ControllerBlock{false, false, true}
+              Redstone.Blocks.LQRTrackerBlock{2, 2, 2, true, false}
+        @test LQRTracker(; tracker_gains()..., hold = true, tracking = true) isa Redstone.Blocks.ControllerBlock{true, true}
         @test u_types(LQRTracker(; tracker_gains()..., K_fbk = AsPort())).K_fbk === SMatrix{2, 2, Float64, 4}
         @test keys(u_types(LQRTracker(; tracker_gains()..., K_int = AsPort(), u_min = AsPort(),
-                                      hold = true, tracking = true, standby = true))) ==
-              (:x, :z, :z_ref, :saturation, :v, :engaged, :K_int, :u_min)
+                                      hold = true, tracking = true))) ==
+              (:x, :z, :z_ref, :saturation, :engaged, :v, :K_int, :u_min)
         # No value carries a size, so the refusal names the explicit spelling,
         # which takes them.
         err = failure(() -> LQRTracker(K_fbk = AsPort(), K_fwd = AsPort(), K_int = AsPort()))
@@ -1995,9 +2020,9 @@ function test_blocks()
         err = failure(() -> LQRTracker(; tracker_gains()..., z_trim = [0.5, 0.6, 0.7]))
         @test err isa ArgumentError && occursin("`z_trim` is 3 where 2", err.msg)
         @test_throws ArgumentError LQRTracker(; tracker_gains()..., u_max = [1.0, 2.0, 3.0])
-        @test_throws ArgumentError LQRTracker(; tracker_gains()..., Tt = Inf, standby = true)
-        @test_throws ArgumentError DiscreteLQRTracker(; tracker_gains()..., Tt = SVector(1.0, Inf), standby = true)
-        @test build(LQRTracker(; tracker_gains()..., Tt = AsPort(), standby = true)) isa Build
+        @test_throws ArgumentError LQRTracker(; tracker_gains()..., Tt = Inf, tracking = true)
+        @test_throws ArgumentError DiscreteLQRTracker(; tracker_gains()..., Tt = SVector(1.0, Inf), tracking = true)
+        @test build(LQRTracker(; tracker_gains()..., Tt = AsPort(), tracking = true)) isa Build
         @test fieldnames(typeof(LQRTracker(; tracker_gains()..., K_int = AsPort()).fixed)) ==
               (:K_fbk, :K_fwd, :x_trim, :u_trim, :z_trim, :Tt, :u_min, :u_max)
         @test LQRTracker(; tracker_gains()..., Tt = SVector(1.0, 2.0)).fixed.Tt === SVector(1.0, 2.0)
@@ -2005,13 +2030,15 @@ function test_blocks()
         @test LQRTracker(K_fbk = [1.0 0; 0 1], K_fwd = [1.0 -1; 2 4]).fixed.K_int === zero(SMatrix{2, 2, Float64, 4})
     end
 
-    @testset "the tracker's law is the feedforward, the feedback and the gated integral, on both tiers (§13.7, D-383)" begin
+    @testset "the tracker's law is the feedforward, the feedback and the gated integral, on both tiers (§13.7, D-383, D-385)" begin
         # `u_raw = u_trim + K_fwd (0.4, -0.4) - (0.2, 0.3) + q = (0.95, -0.75)`, clamped
         # to `u = (0.95, -0.7)`; the integrator input `K_int (0.5, -0.5)` is
         # `(0.25, -0.125)`, and the correction reads `(0, 0.05) / Tt` against `u` or
         # `(-0.75, 0.45) / Tt` against `v`. `Tt = 2` and `u_min = -0.7` keep every
         # term apart. The code `(1, 0)` gates channel 1, whose input is positive,
-        # `(0, -1)` channel 2, and `(-1, 0)` neither. The update writes `(0, -1)`.
+        # `(0, -1)` channel 2, and `(-1, 0)` neither. Not engaged, both inputs are
+        # zero: the correction alone, against `v` with tracking and against `u`
+        # without, the freeze. The update writes `(0, -1)`.
         # The second pass schedules `K_int` and `u_min`, their values moved into `u`.
         gains = merge(tracker_gains(), (Tt = 2.0, u_min = -0.7))
         signals = (x = SVector(0.3, 0.1), z = SVector(0.4, 0.7), z_ref = SVector(0.9, 0.2))
@@ -2019,32 +2046,36 @@ function test_blocks()
         x = (q = SVector(0.05, -0.05),)
         s = (q = SVector(0.05, -0.05), saturated = zero(SVector{2, Int8}))
         Δt = 0.01
-        for (hold, tracking, standby, axis_inputs, q_deriv, q_next) in
-                ((false, false, false, (;), SVector(0.25, -0.1), SVector(0.0525, -0.05100062395963412)),
-                 (true, false, false, (saturation = SVector{2, Int8}(1, 0),), SVector(0.0, -0.1),
+        engaged, not_engaged = SVector(true, true), SVector(false, false)
+        for (hold, tracking, axis_inputs, q_deriv, q_next) in
+                ((false, false, (;), SVector(0.25, -0.1), SVector(0.0525, -0.05100062395963412)),
+                 (true, false, (saturation = SVector{2, Int8}(1, 0), engaged), SVector(0.0, -0.1),
                   SVector(0.05, -0.05100062395963412)),    # the gate holds channel 1
-                 (true, false, false, (saturation = SVector{2, Int8}(-1, 0),), SVector(0.25, -0.1),
+                 (true, false, (saturation = SVector{2, Int8}(-1, 0), engaged), SVector(0.25, -0.1),
                   SVector(0.0525, -0.05100062395963412)),
-                 (true, false, false, (saturation = SVector{2, Int8}(0, -1),), SVector(0.25, 0.025),
+                 (true, false, (saturation = SVector{2, Int8}(0, -1), engaged), SVector(0.25, 0.025),
                   SVector(0.0525, -0.049750623959634116)),    # and channel 2
-                 (false, true, false, (; v), SVector(-0.125, 0.1), SVector(0.04875935939451174, -0.049005615636707044)),
-                 (true, true, false, (saturation = SVector{2, Int8}(1, 0), v), SVector(-0.375, -0.1),
+                 (true, false, (saturation = SVector{2, Int8}(0, 0), engaged = not_engaged), SVector(0.0, 0.025),
+                  SVector(0.05, -0.049750623959634116)),    # the freeze
+                 (false, true, (; v), SVector(-0.125, 0.1), SVector(0.04875935939451174, -0.049005615636707044)),
+                 (true, true, (saturation = SVector{2, Int8}(1, 0), engaged, v), SVector(-0.375, -0.1),
                   SVector(0.046259359394511736, -0.05100062395963412)),    # the fallback in channel 2
-                 (false, false, true, (; v, engaged = true), SVector(0.25, -0.1), SVector(0.0525, -0.05100062395963412)),
-                 (false, false, true, (; v, engaged = false), SVector(-0.375, 0.225),
-                  SVector(0.046259359394511736, -0.04775561563670704)),    # standby follows `v`
-                 (true, false, true, (saturation = SVector{2, Int8}(1, 0), v, engaged = false), SVector(-0.375, 0.225),
+                 (true, true, (saturation = SVector{2, Int8}(0, 0), engaged, v), SVector(0.25, -0.1),
+                  SVector(0.0525, -0.05100062395963412)),
+                 (true, true, (saturation = SVector{2, Int8}(0, 0), engaged = not_engaged, v), SVector(-0.375, 0.225),
+                  SVector(0.046259359394511736, -0.04775561563670704)),    # not engaged follows `v`
+                 (true, true, (saturation = SVector{2, Int8}(1, 0), engaged = not_engaged, v), SVector(-0.375, 0.225),
                   SVector(0.046259359394511736, -0.04775561563670704))),
                 (scheduled, scheduled_values) in
                 (((;), (;)),
                  ((K_int = AsPort(), u_min = AsPort()), (K_int = SMatrix{2, 2}(0.5, 0.0, 0.0, 0.25), u_min = SVector(-0.7, -0.7))))
             u = merge(signals, axis_inputs, scheduled_values)
-            controller = LQRTracker(; gains..., scheduled..., hold, tracking, standby)
+            controller = LQRTracker(; gains..., scheduled..., hold, tracking)
             outputs = y_direct(controller, (; x, u))
             @test outputs.u_raw ≈ SVector(0.95, -0.75) atol = 1e-12
             @test outputs.u ≈ SVector(0.95, -0.7) atol = 1e-12
             @test x_deriv(controller, (; x, u, y = outputs)).q ≈ q_deriv atol = 1e-12
-            controller = DiscreteLQRTracker(; gains..., scheduled..., hold, tracking, standby)
+            controller = DiscreteLQRTracker(; gains..., scheduled..., hold, tracking)
             outputs = y_direct(controller, (; s, u, Δt))
             @test outputs.u_raw ≈ SVector(0.95, -0.75) atol = 1e-12
             @test outputs.u ≈ SVector(0.95, -0.7) atol = 1e-12
@@ -2117,7 +2148,7 @@ function test_blocks()
         @test isempty(d.dead)
     end
 
-    @testset "a cascade of the C172's shape: standby siblings over a tracker, the tracker's code holding the outer integrators (§13.7, §5.4, D-383)" begin
+    @testset "a cascade of the C172's shape: holding and tracking siblings over a tracker, the tracker's code holding the outer integrators (§13.7, §5.4, D-383, D-385)" begin
         # Each sibling's `u` reaches the switch and the switch's output its `v`, so
         # the cycle runs through the siblings alone; the tracker's `u` reaches the
         # plant, whose `out` is stage 1.
@@ -2138,7 +2169,7 @@ function test_blocks()
         @test free[first_saturated + 1].saturated === SVector{2, Int8}(1, 0)
         stretch = findall(frame -> frame.saturated[1] == 1, free)
         @test all(k -> held[k].q < free[k].q, stretch)
-        @test maximum(k -> free[k].q - held[k].q, stretch) ≈ 0.21845466317957526 atol = 1e-9
+        @test maximum(k -> free[k].q - held[k].q, stretch) ≈ 0.21385439553190302 atol = 1e-9
     end
 
     @testset "every keyword constructor builds a `Float64` block from integer keywords, and a flag keyword or a misfit shape refuses one (§7.2)" begin
@@ -2159,22 +2190,22 @@ function test_blocks()
         @test RateLimiter(rising = 3).falling == 3.0
         @test PID(Kp = 1) isa PID{Float64, false, false}
         @test DiscretePID(Kp = 1) isa DiscretePID{Float64, false, false}
-        @test PID(Kp = 1, Tt = 1, standby = true) isa PID{Float64, false, false, true}
-        @test DiscretePID(Kp = 1, Tt = 1, standby = true) isa DiscretePID{Float64, false, false, true}
+        @test PID(Kp = 1, Tt = 1, tracking = true) isa PID{Float64, false, true}
+        @test DiscretePID(Kp = 1, Tt = 1, tracking = true) isa DiscretePID{Float64, false, true}
         @test PID(Kp = 1, Ki = 1, Kd = 1, τd = 1, Tt = 1, u_min = -1, u_max = 1) isa PID{Float64, false, false}
         @test PID(Kp = SVector(1, 2)) isa PID{SVector{2, Float64}, false, false}
         @test PID(Kp = SVector(1, 2)).fixed.Ki === SVector(0.0, 0.0)
         @test DiscretePID(Kp = 1, u_max = SVector(1.0, 2.0)) isa DiscretePID{SVector{2, Float64}, false, false}
         @test DiscretePID(Kp = 1, u_max = SVector(1.0, 2.0)).fixed.Kp === SVector(1.0, 1.0)
         @test u_types(PID(Kp = SVector(1.0, 2.0), hold = true)).saturation === SVector{2, Int8}
-        @test PID(Kp = 1, Ki = AsPort()) isa PID{Float64, false, false, false, <:NamedTuple}
+        @test PID(Kp = 1, Ki = AsPort()) isa PID{Float64, false, false, <:NamedTuple}
         @test PID(Kp = AsPort(), Ki = AsPort(), Kd = AsPort(), τd = AsPort(), Tt = AsPort(), u_min = AsPort(),
                   u_max = AsPort(), b = AsPort(), c = AsPort()) isa PID{Float64}
         @test PID(Kp = AsPort(), Ki = AsPort(), Kd = AsPort(), τd = AsPort(), Tt = AsPort(), u_min = AsPort(),
                   u_max = AsPort(), b = AsPort(), c = AsPort()).fixed === (;)
         @test u_types(PID(Kp = SVector(1.0, 2.0), Ki = AsPort())).Ki === SVector{2, Float64}
-        @test LQRTracker(K_fbk = [1 0; 0 1], K_fwd = [1 -1; 2 4]) isa LQRTracker{2, 2, 2, false, false, false}
-        @test DiscreteLQRTracker(K_fbk = [1 0; 0 1], K_fwd = [1 -1; 2 4]) isa DiscreteLQRTracker{2, 2, 2, false, false, false}
+        @test LQRTracker(K_fbk = [1 0; 0 1], K_fwd = [1 -1; 2 4]) isa LQRTracker{2, 2, 2, false, false}
+        @test DiscreteLQRTracker(K_fbk = [1 0; 0 1], K_fwd = [1 -1; 2 4]) isa DiscreteLQRTracker{2, 2, 2, false, false}
         @test all(v -> eltype(v) === Float64, values(LQRTracker(K_fbk = [1 0; 0 1], K_fwd = [1 -1; 2 4]).fixed))
         @test LQRTracker(K_fbk = [1 0; 0 1], K_fwd = [1 -1; 2 4], u_max = 1).fixed.u_max === SVector(1.0, 1.0)
         @test StateSpace(A = [-1;;], B = [1;;], C = [1;;]) isa StateSpace{1, 1, 1, false}
@@ -2191,7 +2222,7 @@ function test_blocks()
         @test_throws TypeError LimitedIntegrator(lower = -1, upper = 1, localized = 1)
         @test_throws TypeError PID(Kp = 1, hold = 1)
         @test_throws TypeError PID(Kp = 1, tracking = 1)
-        @test_throws TypeError PID(Kp = 1, Tt = 1, standby = 1)
+        @test_throws TypeError PID(Kp = 1, Tt = 1, tracking = 1)
         @test_throws ArgumentError StateSpace(A = [-1 0.5; 0 -2], B = [1 0.5], C = [1 2; 0 1])
         @test_throws ArgumentError StateSpace(A = [-1 0.5; 0 -2], B = [1 0.5; 0 1], C = [1 2; 0 1], x0 = [1, 2, 3])
         @test_throws ArgumentError StateSpace(A = zeros(0, 0), B = zeros(0, 1), C = zeros(1, 0), D = [2.0;;])
@@ -2243,8 +2274,8 @@ function test_blocks()
                      LimitedIntegrator(lower = SVector(-1.0, -1.0), upper = SVector(1.0, 1.0)),
                      LimitedIntegrator(lower = SVector(-1.0, -1.0), upper = SVector(1.0, 1.0), localized = false),
                      Relay(lower = SVector(0.2, 0.2), upper = SVector(0.8, 0.8)),
-                     PID(Kp = 1.0), PID(Kp = 1.0, hold = true), PID(Kp = 1.0, tracking = true),
-                     PID(Kp = 1.0, hold = true, tracking = true), PID(Kp = 1.0, Tt = 1.0, standby = true),
+                     PID(Kp = 1.0), PID(Kp = 1.0, hold = true), PID(Kp = 1.0, Tt = 1.0, tracking = true),
+                     PID(Kp = 1.0, Tt = 1.0, hold = true, tracking = true),
                      StateSpace(A = [-1.0;;], B = [1.0;;], C = [1.0;;], D = [0.0;;]),
                      StateSpace(A = [-1.0;;], B = [1.0;;], C = [1.0;;], D = [1.0;;]), two_state_block(),
                      lag_form(), lead_lag(), second_order(),
@@ -2254,13 +2285,13 @@ function test_blocks()
                      DiscretizedTransferFunction(num = (1,), den = (0.5, 1)),
                      DiscretizedTransferFunction(num = (1, 2), den = (1, 5)),
                      DiscretePID(Kp = 1.0), DiscretePID(Kp = 1.0, hold = true),
-                     DiscretePID(Kp = 1.0, tracking = true), DiscretePID(Kp = 1.0, hold = true, tracking = true),
-                     DiscretePID(Kp = 1.0, Tt = 0.0, hold = true, tracking = true, standby = true),
-                     PID(Kp = SVector(1.0, 2.0), hold = true, tracking = true),
-                     DiscretePID(Kp = SVector(1.0, 2.0), hold = true, tracking = true),
+                     DiscretePID(Kp = 1.0, Tt = 1.0, tracking = true), DiscretePID(Kp = 1.0, Tt = 1.0, hold = true, tracking = true),
+                     DiscretePID(Kp = 1.0, Tt = 0.0, hold = true, tracking = true),
+                     PID(Kp = SVector(1.0, 2.0), Tt = 1.0, hold = true, tracking = true),
+                     DiscretePID(Kp = SVector(1.0, 2.0), Tt = 1.0, hold = true, tracking = true),
                      PID(Kp = AsPort(), b = 0.5, c = 1.0), DiscretePID(Kp = 1.0, Ki = AsPort(), Tt = AsPort()),
-                     LQRTracker(; tracker_gains()..., hold = true, tracking = true, standby = true),
-                     DiscreteLQRTracker(; tracker_gains()..., Tt = 0.0, hold = true, tracking = true, standby = true),
+                     LQRTracker(; tracker_gains()..., hold = true, tracking = true),
+                     DiscreteLQRTracker(; tracker_gains()..., Tt = 0.0, hold = true, tracking = true),
                      GaussianWhiteNoise(seed = 1, σ = 1.0),
                      GaussianWhiteNoise(seed = 7, μ = SVector(1.0, -1.0), σ = SVector(1.0, 2.0)),
                      Group((; k = Constant(1.0))))

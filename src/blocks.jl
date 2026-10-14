@@ -834,9 +834,11 @@ state_events(::Step) = (fire = StateEvent(step_guard, step_handler),)
 
 # --- the moded blocks (§10.4, §10.6, D-313) -------------------------------------
 
-# The port type of a saturation code over `V`: one `Int8` per component.
-saturation_type(::Type{V}) where {V <: Real} = Int8
-saturation_type(::Type{V}) where {V <: StaticArray} = similar_type(V, Int8)
+# The port type of a per-channel value of type `T` over `V`: one `T` per
+# component. A saturation code is one `Int8` per component.
+channel_type(::Type{V}, ::Type{T}) where {V <: Real, T} = T
+channel_type(::Type{V}, ::Type{T}) where {V <: StaticArray, T} = similar_type(V, T)
+saturation_type(::Type{V}) where {V} = channel_type(V, Int8)
 
 """
     LimitedIntegrator(; lower, upper, x0 = zero(lower), localized = true)
@@ -1031,52 +1033,60 @@ struct AsPort end
 const PID_PARAMETERS = (:Kp, :Ki, :Kd, :τd, :Tt, :u_min, :u_max, :b, :c)
 
 """
-    ControllerBlock{Hold, Track, Standby}
+    ControllerBlock{Hold, Track}
 
 The supertype of the controller families `PIDBlock` and `LQRTrackerBlock`,
-under `AbstractComponent`. Its three parameters are the anti-windup axes, each
-adding inputs: `Hold` the code
-`saturation`, `Track` the reference `v`, and `Standby` the flag `engaged` and
-`v`. It carries what reads the axes alone, the axis ports, the gate on the
+under `AbstractComponent`. Its two parameters are the anti-windup axes, each
+adding inputs at the block's output shape: `Hold` the code `saturation` and
+the flag `engaged`, `Track` the reference `v`. Each block's law moves its
+integral term through two slots, `ε`, its integrator's input `e` as the axes
+pass it, and `ref`, the correction's reference, filled channel by channel over
+the channel's condition:
+
+| condition      | `ε`       | `ref`, `Track = false` | `ref`, `Track = true` |
+|:-------------- |:--------- |:---------------------- |:--------------------- |
+| `Hold = false` | `e`       | `u`                    | `v`                   |
+| free           | `e`       | `u`                    | `u`                   |
+| limited        | `gate(e)` | `u`                    | `v`                   |
+| not engaged    | `0`       | `u`                    | `v`                   |
+
+A channel is free with a zero code while engaged, limited with a nonzero code
+while engaged, and not engaged while its `engaged` is false, which takes
+precedence over the code. `gate(e) = saturation == sign(e) ? 0 : e`.
+
+It carries what reads the axes alone, the axis ports, the gate on the
 integrator's input and the correction's reference, while each family carries
 its signal ports, its parameters and its blocks' stages.
 """
-abstract type ControllerBlock{Hold, Track, Standby} <: AbstractComponent end
+abstract type ControllerBlock{Hold, Track} <: AbstractComponent end
 
-# The axis ports in the order `saturation`, `v`, `engaged`, at the code's type
-# and the tracking input's; `v` comes once, from either axis.
-axis_ports(::ControllerBlock{Hold, Track, Standby}, code_type, value_type) where {Hold, Track, Standby} =
-    merge(Hold ? (saturation = code_type,) : (;), Track || Standby ? (v = value_type,) : (;),
-          Standby ? (engaged = Bool,) : (;))
-# Not engaged, the error is gated off and `v` is the reference whatever the
-# code. `engaged` is a `Bool`, which flips on a boundary and carries no
-# partials, so the branch needs no broadcast `ifelse`.
-gated_error(c::ControllerBlock{Hold, Track, false}, e, u) where {Hold, Track} = engaged_error(c, e, u)
-gated_error(c::ControllerBlock{Hold, Track, true}, e, u) where {Hold, Track} =
-    u.engaged ? engaged_error(c, e, u) : zero(e)
-correction_reference(c::ControllerBlock{Hold, Track, false}, u, y) where {Hold, Track} = engaged_reference(c, u, y)
-correction_reference(c::ControllerBlock{Hold, Track, true}, u, y) where {Hold, Track} =
-    u.engaged ? engaged_reference(c, u, y) : u.v
+# The axis ports in the order `saturation`, `engaged`, `v`, at the code's type,
+# the flag's and the tracking input's.
+axis_ports(::ControllerBlock{Hold, Track}, code_type, flag_type, value_type) where {Hold, Track} =
+    merge(Hold ? (saturation = code_type, engaged = flag_type) : (;), Track ? (v = value_type,) : (;))
 # The gate tests the sign, not `saturation != 0`: integration resumes once the
 # error points back into the range, while the path still reports saturation.
 # The `.!= 0` in front leaves a free channel's zero error ungated, so the
 # derivative at an equilibrium does not depend on how `sign` orders a
-# zero-valued `Dual`. A broadcast `ifelse` selects per channel.
-engaged_error(::ControllerBlock{false}, e, u) = e
-engaged_error(::ControllerBlock{true}, e, u) =
-    ifelse.(u.saturation .!= 0 .&& u.saturation .== sign.(e), zero(e), e)
-# With a hold, `v` is the reference only while the code is nonzero. Tracking is
-# what to converge to while the path cannot follow; on a free path it would only
-# couple the integrator to the transients downstream.
-engaged_reference(::ControllerBlock{Hold, false}, u, y) where {Hold} = y.u
-engaged_reference(::ControllerBlock{false, true}, u, y) = u.v
-engaged_reference(::ControllerBlock{true, true}, u, y) = ifelse.(u.saturation .== 0, y.u, u.v)
+# zero-valued `Dual`. Not engaged, the error is gated off whatever the code. A
+# broadcast `ifelse` selects per channel, over a scalar flag or a vector one.
+gated_error(::ControllerBlock{false}, e, u) = e
+gated_error(::ControllerBlock{true}, e, u) =
+    ifelse.(u.engaged .&& .!(u.saturation .!= 0 .&& u.saturation .== sign.(e)), e, zero(e))
+# With a hold, `v` is the reference only while the channel is not free. Tracking
+# is what to converge to while the path cannot follow or another block flies the
+# plant; on a free path it would only couple the integrator to the transients
+# downstream.
+correction_reference(::ControllerBlock{Hold, false}, u, y) where {Hold} = y.u
+correction_reference(::ControllerBlock{false, true}, u, y) = u.v
+correction_reference(::ControllerBlock{true, true}, u, y) =
+    ifelse.(u.engaged .&& u.saturation .== 0, y.u, u.v)
 
 """
-    PIDBlock{V, Hold, Track, Standby, Fixed}
+    PIDBlock{V, Hold, Track, Fixed}
 
 The supertype of the two PID blocks, `PID` on the continuous tier and
-`DiscretePID` on the discrete one, a `ControllerBlock` over the three axes. It
+`DiscretePID` on the discrete one, a `ControllerBlock` over the two axes. It
 carries what their law shares past the gate and the reference: the ports
 picked by the axes and by the scheduled parameters, the outputs and the
 parameters' fetch, while each block carries its field `fixed`, its store and
@@ -1084,12 +1094,13 @@ its stages. `V` is the type of the parameters and the signals, a `Real` or a
 static array of them. `Fixed` is the `NamedTuple` type of the parameters given
 as values, in `PID_PARAMETERS` order.
 """
-abstract type PIDBlock{V, Hold, Track, Standby, Fixed} <: ControllerBlock{Hold, Track, Standby} end
+abstract type PIDBlock{V, Hold, Track, Fixed} <: ControllerBlock{Hold, Track} end
 
 # The methods both blocks share live here: `signal_ports`, `u_types`, `y_types`
 # and the parameters' fetch. `DiscretePID` adds its code to `y_types`.
-signal_ports(c::PIDBlock{V}) where {V} = merge((r = V, y = V), axis_ports(c, saturation_type(V), V))
-function u_types(c::PIDBlock{V, Hold, Track, Standby, Fixed}) where {V, Hold, Track, Standby, Fixed}
+signal_ports(c::PIDBlock{V}) where {V} =
+    merge((r = V, y = V), axis_ports(c, saturation_type(V), channel_type(V, Bool), V))
+function u_types(c::PIDBlock{V, Hold, Track, Fixed}) where {V, Hold, Track, Fixed}
     scheduled = filter(∉(fieldnames(Fixed)), PID_PARAMETERS)
     merge(signal_ports(c), NamedTuple{scheduled}(ntuple(_ -> V, length(scheduled))))
 end
@@ -1113,18 +1124,18 @@ function fixed_parameters(given::NamedTuple{names}, types::NamedTuple{names}) wh
     NamedTuple{fixed_names}(map(name -> types[name](given[name] .+ zero(types[name])), fixed_names))
 end
 
-# Standby follows `v` at rate `1/Tt`, so a `Tt` given infinite in any channel
+# Tracking follows `v` at rate `1/Tt`, so a `Tt` given infinite in any channel
 # would follow nothing; a scheduled `Tt` is the model's to keep finite.
-function check_standby(standby, Tt)
-    standby && Tt !== AsPort() && any(isinf, Tt) && throw(ArgumentError(
-        "`standby = true` follows `v` at rate `1/Tt`, which an infinite `Tt` switches off; " *
+function check_tracking(tracking, Tt)
+    tracking && Tt !== AsPort() && any(isinf, Tt) && throw(ArgumentError(
+        "`tracking = true` follows `v` at rate `1/Tt`, which an infinite `Tt` switches off; " *
         "give `Tt` finite in every channel, or as `AsPort()`"))
     nothing
 end
 
 """
     PID(; Kp, Ki = 0.0, Kd = 0.0, τd = 0.1, Tt = Inf, u_min = -Inf, u_max = Inf,
-          b = 1.0, c = 0.0, hold = false, tracking = false, standby = false)
+          b = 1.0, c = 0.0, hold = false, tracking = false)
 
 The PID controller with anti-windup. Inputs `r` and `y`, the error `e = r - y`,
 and two outputs from stage 2: `u_raw = Kp (b r - y) + q - Kd (w - yf) / τd`, and
@@ -1132,32 +1143,26 @@ and two outputs from stage 2: `u_raw = Kp (b r - y) + q - Kd (w - yf) / τd`, an
 term, and `yf`, the weighted measurement `w = y - c r` through a lag,
 `ẏf = (w - yf) / τd`. One law moves the integral term,
 
-    q̇ = Ki · gate(e) + (ref - u_raw) / Tt
+    q̇ = Ki ε + (ref - u_raw) / Tt
 
-and three independent type parameters pick its parts, each adding inputs:
+and two independent type parameters, each adding inputs, fill its slots `ε` and
+`ref` over the error `e` by the table of `ControllerBlock`.
 
-|         | reference: own `u`              | reference: tracking `v`                                   |
-|:------- |:------------------------------- |:--------------------------------------------------------- |
-| no hold | `Ki e + (u - u_raw) / Tt`       | `Ki e + (v - u_raw) / Tt`                                 |
-| hold    | `Ki gate(e) + (u - u_raw) / Tt` | `Ki gate(e) + ((saturation == 0 ? u : v) - u_raw) / Tt` |
-| standby | `(v - u_raw) / Tt`              | `(v - u_raw) / Tt`                                        |
-
-`hold = true`, the parameter `Hold`, adds the input `saturation`, an `Int8`
+`hold = true`, the parameter `Hold`, adds two inputs. `saturation` is an `Int8`
 code such as a `LimitedIntegrator` publishes for the path downstream, and gates
-the error: `gate(e) = saturation == sign(e) ? 0 : e`. `tracking = true`, the
-parameter `Track`, adds the input `v`, the value the path delivered, as the
-correction's reference in place of the own `u`. When both exist, `v` is the
-reference only while the code is nonzero, and `u` while the path is free.
+the error by sign: `gate(e) = saturation == sign(e) ? 0 : e`. `engaged` is a
+`Bool` that reads true while the block is in command; not engaged, the error is
+gated to zero whatever the code. Without tracking, a block not engaged freezes:
+`q` holds while the own clamp is free and back-calculates against it otherwise.
 
-`standby = true`, the parameter `Standby`, adds the `Bool` input `engaged`, and
-the input `v` where `tracking` has not. While `engaged` holds, the law is the
-row the other two axes pick. While it does not, the error is gated off and `v`
-is the reference whatever the code, the table's last row: the integral term
-absorbs the other terms and `u_raw` converges to `v` at rate `1/Tt`, so a block
-not in command follows the selected command and engages without a bump. It
-chases a moving `v` with lag `Tt`, so the standby `Tt` is short. The default
-`Tt = Inf` follows nothing, so `standby = true` with a `Tt` given as a value and
-infinite in any channel is refused with an `ArgumentError`: standby needs `Tt`
+`tracking = true`, the parameter `Track`, adds the input `v`, a value the path
+delivered or the selected command, as the correction's reference in place of the
+own `u`. With the hold, `v` is the reference only while the block is limited or
+not engaged, and `u` while it is free, so a block not in command follows the
+selected command at rate `1/Tt` and engages without a bump. It chases a moving
+`v` with lag `Tt`, so a block out of command wants a short `Tt`. The default
+`Tt = Inf` follows nothing, so `tracking = true` with a `Tt` given as a value and
+infinite in any channel is refused with an `ArgumentError`: tracking needs `Tt`
 spelled, or given as `AsPort()`, which leaves it to the model to keep finite.
 
 `q` holds the integral term in output units, with `Ki` inside the integral, so
@@ -1171,8 +1176,8 @@ correction off, and infinite limits.
 
 `V` is `Float64` or a static array of `Float64`. Over a static vector the law
 is componentwise: the parameters, `r`, `y`, `v`, the outputs and the states are
-each a `V`, `saturation` is a static vector of `Int8`, and `engaged` is one
-`Bool` for every channel. The nine keywords given as values broadcast to one
+each a `V`, and `saturation` and `engaged` are static vectors of `Int8` and of
+`Bool`. The nine keywords given as values broadcast to one
 `V`, whose shape is the sum of their `zero`s, so a scalar pairs with a vector
 and integer values qualify. A vector PID with
 uniform gains spells at least one keyword as a vector, `Kp = @SVector fill(2.0, 3)`.
@@ -1191,20 +1196,20 @@ the block's own `u` is refused as an `AlgebraicCycle` classified artificial
 published from state, such as a stateful actuator's position. A scheduled
 parameter computed memorylessly from `u` closes a cycle too, artificial for `Ki`
 and `Tt`, which only the derivative reads, and real for the others. One read
-from a state is fine. `pid_anti_windup.md` gives the reasoning, and its section
-11 the standby axis.
+from a state is fine. `pid_anti_windup.md` gives the reasoning, its section 4
+the two axes and its section 11 standby.
 """
-struct PID{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, Hold, Track, Standby, Fixed} <:
-       PIDBlock{V, Hold, Track, Standby, Fixed}
+struct PID{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, Hold, Track, Fixed} <:
+       PIDBlock{V, Hold, Track, Fixed}
     fixed::Fixed      # the parameters that are not ports, each a `V`, in roster order
 end
 function PID(; Kp, Ki = 0.0, Kd = 0.0, τd = 0.1, Tt = Inf, u_min = -Inf, u_max = Inf, b = 1.0, c = 0.0,
-             hold::Bool = false, tracking::Bool = false, standby::Bool = false)
-    check_standby(standby, Tt)
+             hold::Bool = false, tracking::Bool = false)
+    check_tracking(tracking, Tt)
     given = (; Kp, Ki, Kd, τd, Tt, u_min, u_max, b, c)
     V = shape_type(given)
     fixed = fixed_parameters(given, map(_ -> V, given))
-    PID{V, hold, tracking, standby, typeof(fixed)}(fixed)
+    PID{V, hold, tracking, typeof(fixed)}(fixed)
 end
 
 x_init(::PID{V}) where {V} = (q = zero(V), yf = zero(V))
@@ -1222,7 +1227,7 @@ end
 
 """
     DiscretePID(; Kp, Ki = 0.0, Kd = 0.0, τd = 0.1, Tt = Inf, u_min = -Inf, u_max = Inf,
-                  b = 1.0, c = 0.0, hold = false, tracking = false, standby = false)
+                  b = 1.0, c = 0.0, hold = false, tracking = false)
 
 The PID controller with anti-windup on the discrete tier: `PID`'s parameters,
 defaults, ports and law, with two store fields in place of its continuous
@@ -1235,22 +1240,13 @@ two outputs from stage 2:
 `yf⁺ = yf + Δt (w - yf) / (τd + Δt)`, and the integral term by forward Euler
 and the correction's exact step,
 
-    q⁺ = q + Δt Ki · gate(e) + β (ref - u_raw),    β = 1 - exp(-Δt / Tt)
+    q⁺ = q + Δt Ki ε + β (ref - u_raw),    β = 1 - exp(-Δt / Tt)
 
-which reads, over `PID`'s three type parameters:
-
-|         | reference: own `u`              | reference: tracking `v`                                   |
-|:------- |:------------------------------- |:--------------------------------------------------------- |
-| no hold | `Δt Ki e + β (u - u_raw)`       | `Δt Ki e + β (v - u_raw)`                                 |
-| hold    | `Δt Ki gate(e) + β (u - u_raw)` | `Δt Ki gate(e) + β ((saturation == 0 ? u : v) - u_raw)` |
-| standby | `β (v - u_raw)`                 | `β (v - u_raw)`                                           |
-
-`hold` adds the input `saturation` and the gate, `tracking` the input `v`, and
-with both the reference falls back to `u` while the code is zero, as in `PID`.
-`standby` adds the input `engaged`, and `v` where `tracking` has not, as in
-`PID`: while not engaged the error is gated off and `v` is the reference, the
-table's last row, so `u_raw` follows `v`, and a `Tt` given infinite in any
-channel is refused with it.
+with its slots `ε` and `ref` filled over `PID`'s two type parameters by the
+table of `ControllerBlock`. `hold` adds the inputs `saturation` and `engaged`,
+and a block not engaged without tracking freezes; `tracking` adds the input `v`,
+with the hold the reference falls back to `u` while the block is free, and a
+`Tt` given infinite in any channel is refused with it; all as in `PID`.
 The setpoint weights `b` and `c` multiply `r` alone, as in `PID`, and the
 integral's error stays `e`.
 
@@ -1267,8 +1263,8 @@ is then the previous weighted measurement, and the D term the backward
 difference `(w - yf) / Δt`. `β` is the exact step of the correction's relaxation
 over one period, so every `Tt` is stable: `Tt = Inf` switches the correction
 off, and `Tt = 0` is legal and brings `u_raw` to the reference by the next
-tick, the clamping scheme as the limit of tracking. In standby, `Tt = 0`
-follows `v` exactly.
+tick, the clamping scheme as the limit of tracking. Not engaged with tracking,
+`Tt = 0` follows `v` exactly.
 
 A third output, `saturated`, publishes the `Int8` code of the block's own
 clamp: `1` with `u_raw` at or above `u_max`, `-1` at or below `u_min` and `0`
@@ -1287,17 +1283,17 @@ member traces structurally (§13.8), so no hop is named dead. A scheduled
 parameter computed memorylessly from `u` closes a cycle likewise.
 `pid_anti_windup.md`, sections 9 to 11, gives the reasoning.
 """
-struct DiscretePID{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, Hold, Track, Standby, Fixed} <:
-       PIDBlock{V, Hold, Track, Standby, Fixed}
+struct DiscretePID{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, Hold, Track, Fixed} <:
+       PIDBlock{V, Hold, Track, Fixed}
     fixed::Fixed      # the parameters that are not ports, each a `V`, in roster order
 end
 function DiscretePID(; Kp, Ki = 0.0, Kd = 0.0, τd = 0.1, Tt = Inf, u_min = -Inf, u_max = Inf, b = 1.0, c = 0.0,
-                     hold::Bool = false, tracking::Bool = false, standby::Bool = false)
-    check_standby(standby, Tt)
+                     hold::Bool = false, tracking::Bool = false)
+    check_tracking(tracking, Tt)
     given = (; Kp, Ki, Kd, τd, Tt, u_min, u_max, b, c)
     V = shape_type(given)
     fixed = fixed_parameters(given, map(_ -> V, given))
-    DiscretePID{V, hold, tracking, standby, typeof(fixed)}(fixed)
+    DiscretePID{V, hold, tracking, typeof(fixed)}(fixed)
 end
 
 s_init(::DiscretePID{V}) where {V} = (q = zero(V), yf = zero(V), saturated = zero(saturation_type(V)))
@@ -1323,10 +1319,10 @@ end
 const LQR_PARAMETERS = (:K_fbk, :K_fwd, :K_int, :x_trim, :u_trim, :z_trim, :Tt, :u_min, :u_max)
 
 """
-    LQRTrackerBlock{NX, NU, NZ, Hold, Track, Standby, Fixed}
+    LQRTrackerBlock{NX, NU, NZ, Hold, Track, Fixed}
 
 The supertype of the two LQR trackers, `LQRTracker` on the continuous tier and
-`DiscreteLQRTracker` on the discrete one, a `ControllerBlock` over the three
+`DiscreteLQRTracker` on the discrete one, a `ControllerBlock` over the two
 axes. `NX`, `NU` and `NZ` are the sizes of the plant state, the control input
 and the command variables. It carries what their law shares past the gate and
 the reference: the ports picked by the axes and by the scheduled parameters,
@@ -1334,7 +1330,7 @@ the outputs and the parameters' fetch, while each block carries its field
 `fixed`, its store and its stages. `Fixed` is the `NamedTuple` type of the
 parameters given as values, in `LQR_PARAMETERS` order.
 """
-abstract type LQRTrackerBlock{NX, NU, NZ, Hold, Track, Standby, Fixed} <: ControllerBlock{Hold, Track, Standby} end
+abstract type LQRTrackerBlock{NX, NU, NZ, Hold, Track, Fixed} <: ControllerBlock{Hold, Track} end
 
 # The nine parameters' types at the sizes, in roster order, each matrix with its
 # length.
@@ -1348,7 +1344,7 @@ parameter_types(NX, NU, NZ) =
 # and the parameters' fetch. `DiscreteLQRTracker` adds its code to `y_types`.
 signal_ports(c::LQRTrackerBlock{NX, NU, NZ}) where {NX, NU, NZ} =
     merge((x = SVector{NX, Float64}, z = SVector{NZ, Float64}, z_ref = SVector{NZ, Float64}),
-          axis_ports(c, SVector{NU, Int8}, SVector{NU, Float64}))
+          axis_ports(c, SVector{NU, Int8}, SVector{NU, Bool}, SVector{NU, Float64}))
 function u_types(c::LQRTrackerBlock{NX, NU, NZ}) where {NX, NU, NZ}
     scheduled = filter(∉(keys(c.fixed)), LQR_PARAMETERS)
     merge(signal_ports(c), NamedTuple{scheduled}(map(name -> parameter_types(NX, NU, NZ)[name], scheduled)))
@@ -1392,7 +1388,7 @@ end
 
 """
     LQRTracker(; K_fbk, K_fwd, K_int = zeros, x_trim = zeros, u_trim = zeros, z_trim = zeros,
-                 Tt = Inf, u_min = -Inf, u_max = Inf, hold = false, tracking = false, standby = false)
+                 Tt = Inf, u_min = -Inf, u_max = Inf, hold = false, tracking = false)
     LQRTracker{NX, NU, NZ}(; K_fbk, K_fwd, …)
 
 The LQR tracker about a trim point, with anti-windup. Inputs `x`, the plant
@@ -1405,34 +1401,30 @@ and `u`, its clamp to `[u_min, u_max]` per channel. One continuous state, `q`,
 the integral term in output units, one channel per control input. One law
 moves it,
 
-    q̇ = gate(K_int (z_ref - z)) + (ref - u_raw) / Tt
+    q̇ = ε + (ref - u_raw) / Tt
 
-and `PID`'s three type parameters pick its parts over the integrator input
-`e = K_int (z_ref - z)`, channel by channel, each adding inputs:
+and `PID`'s two type parameters, each adding inputs, fill its slots `ε` and
+`ref` over the integrator input `e = K_int (z_ref - z)`, channel by channel, by
+the table of `ControllerBlock`.
 
-|         | reference: own `u`           | reference: tracking `v`                                |
-|:------- |:---------------------------- |:------------------------------------------------------ |
-| no hold | `e + (u - u_raw) / Tt`       | `e + (v - u_raw) / Tt`                                 |
-| hold    | `gate(e) + (u - u_raw) / Tt` | `gate(e) + ((saturation == 0 ? u : v) - u_raw) / Tt` |
-| standby | `(v - u_raw) / Tt`           | `(v - u_raw) / Tt`                                     |
-
-`hold = true`, the parameter `Hold`, adds the input `saturation`, a code per
-channel from the path downstream, and gates each channel whose code agrees with
-the sign of its integrator input: `gate(e) = saturation == sign(e) ? 0 : e`.
+`hold = true`, the parameter `Hold`, adds two inputs. `saturation`, a code per
+channel from the path downstream, gates each channel whose code agrees with the
+sign of its integrator input: `gate(e) = saturation == sign(e) ? 0 : e`.
+`engaged`, a flag per channel that reads true in command, zeroes the integrator
+input of a channel not engaged whatever its code. Without tracking, a channel
+not engaged freezes, its own clamp's correction alone moving it.
 `tracking = true`, the parameter `Track`, adds the input `v` as the
-correction's reference in place of the own `u`; with both, `v` is the
-reference in a channel only while its code is nonzero. `standby = true`, the
-parameter `Standby`, adds the `Bool` input `engaged`, and `v` where `tracking`
-has not. While it does not hold, the integrator input is zero and `v` is the
-reference whatever the code, the table's last row, so `u_raw` converges to `v`
-at rate `1/Tt` and engagement is bumpless. The own clamp is the correction's,
-and `Tt = Inf` switches it off; standby with a `Tt` given as a value and
-infinite in any channel is refused with an `ArgumentError`, as for `PID`.
+correction's reference in place of the own `u`; with the hold, `v` is the
+reference in a channel only while it is limited or not engaged, so a channel
+not engaged converges to `v` at rate `1/Tt` and engagement is bumpless. The own
+clamp is the correction's, and `Tt = Inf` switches it off; tracking with a `Tt`
+given as a value and infinite in any channel is refused with an
+`ArgumentError`, as for `PID`.
 
 The ports are static vectors at every size: `x` at `SVector{NX, Float64}`, `z`
 and `z_ref` at `SVector{NZ, Float64}`, `u`, `u_raw` and `v` at
-`SVector{NU, Float64}`, `saturation` at `SVector{NU, Int8}`, and `engaged` one
-`Bool` for every channel.
+`SVector{NU, Float64}`, `saturation` at `SVector{NU, Int8}`, and `engaged` at
+`SVector{NU, Bool}`.
 
 The nine parameters, in `LQR_PARAMETERS` order: `K_fbk`, `NU × NX`, and `K_fwd`
 and `K_int`, `NU × NZ`, each any `AbstractMatrix` of reals stored as a static
@@ -1468,20 +1460,18 @@ mode and events per channel for a consumer that does not exist. The gains are
 designed outside, from `trim!` and `linearize`. `lqr_tracker.md` gives the
 derivation and the reasoning.
 """
-struct LQRTracker{NX, NU, NZ, Hold, Track, Standby, Fixed} <:
-       LQRTrackerBlock{NX, NU, NZ, Hold, Track, Standby, Fixed}
+struct LQRTracker{NX, NU, NZ, Hold, Track, Fixed} <: LQRTrackerBlock{NX, NU, NZ, Hold, Track, Fixed}
     fixed::Fixed      # the parameters that are not ports, each at its type, in roster order
 end
 function LQRTracker{NX, NU, NZ}(; K_fbk, K_fwd, K_int = zero(SMatrix{NU, NZ, Float64}),
                                 x_trim = zero(SVector{NX, Float64}), u_trim = zero(SVector{NU, Float64}),
                                 z_trim = zero(SVector{NZ, Float64}), Tt = Inf, u_min = -Inf, u_max = Inf,
-                                hold::Bool = false, tracking::Bool = false,
-                                standby::Bool = false) where {NX, NU, NZ}
-    check_standby(standby, Tt)
+                                hold::Bool = false, tracking::Bool = false) where {NX, NU, NZ}
+    check_tracking(tracking, Tt)
     types, given = parameter_types(NX, NU, NZ), (; K_fbk, K_fwd, K_int, x_trim, u_trim, z_trim, Tt, u_min, u_max)
     check_shapes(types, given)
     fixed = fixed_parameters(given, types)
-    LQRTracker{NX, NU, NZ, hold, tracking, standby, typeof(fixed)}(fixed)
+    LQRTracker{NX, NU, NZ, hold, tracking, typeof(fixed)}(fixed)
 end
 LQRTracker(; K_fbk, K_fwd, kw...) =
     LQRTracker{tracker_sizes("LQRTracker", (; K_fbk, K_fwd, kw...))...}(; K_fbk, K_fwd, kw...)
@@ -1499,7 +1489,7 @@ end
 
 """
     DiscreteLQRTracker(; K_fbk, K_fwd, K_int = zeros, x_trim = zeros, u_trim = zeros, z_trim = zeros,
-                         Tt = Inf, u_min = -Inf, u_max = Inf, hold = false, tracking = false, standby = false)
+                         Tt = Inf, u_min = -Inf, u_max = Inf, hold = false, tracking = false)
     DiscreteLQRTracker{NX, NU, NZ}(; K_fbk, K_fwd, …)
 
 The LQR tracker on the discrete tier: `LQRTracker`'s parameters, defaults,
@@ -1512,25 +1502,17 @@ period (§10.5). Inputs `x`, `z` and `z_ref`, and two outputs from stage 2,
 and `u`, its clamp to `[u_min, u_max]` per channel. Each tick moves the
 integral term by forward Euler and the correction's exact step,
 
-    q⁺ = q + Δt gate(K_int (z_ref - z)) + β (ref - u_raw),    β = 1 - exp(-Δt / Tt)
+    q⁺ = q + Δt ε + β (ref - u_raw),    β = 1 - exp(-Δt / Tt)
 
-which reads, over the three type parameters and the integrator input
-`e = K_int (z_ref - z)`, channel by channel:
-
-|         | reference: own `u`           | reference: tracking `v`                                |
-|:------- |:---------------------------- |:------------------------------------------------------ |
-| no hold | `Δt e + β (u - u_raw)`       | `Δt e + β (v - u_raw)`                                 |
-| hold    | `Δt gate(e) + β (u - u_raw)` | `Δt gate(e) + β ((saturation == 0 ? u : v) - u_raw)` |
-| standby | `β (v - u_raw)`              | `β (v - u_raw)`                                        |
-
-`hold` adds the input `saturation` and the gate, `tracking` the input `v`, and
-with both the reference falls back to `u` in each channel whose code is zero,
-as in `LQRTracker`. `standby` adds the input `engaged`, and `v` where
-`tracking` has not: while not engaged the integrator input is zero and `v` is
-the reference, the table's last row, so `u_raw` follows `v`, and a `Tt` given
-infinite in any channel is refused with it. Every `Tt` is stable: `Tt = Inf`
-switches the correction off, and `Tt = 0` is legal and brings `u_raw` to the
-reference by the next tick, so in standby it follows `v` exactly.
+with its slots `ε` and `ref` filled over the two type parameters and the
+integrator input `e = K_int (z_ref - z)`, channel by channel, by the table of
+`ControllerBlock`. `hold` adds the inputs `saturation` and `engaged`, and a
+channel not engaged without tracking freezes; `tracking` adds the input `v`,
+with the hold the reference falls back to `u` in each channel that is free, and
+a `Tt` given infinite in any channel is refused with it; all as in
+`LQRTracker`. Every `Tt` is stable: `Tt = Inf` switches the correction off, and
+`Tt = 0` is legal and brings `u_raw` to the reference by the next tick, so a
+channel not engaged with tracking follows `v` exactly.
 
 The ports, the nine parameters and their types, the `AsPort()` spelling, the
 size inference and the explicit spelling `DiscreteLQRTracker{NX, NU, NZ}(; …)`
@@ -1554,20 +1536,18 @@ member traces structurally (§13.8), so no hop is named dead. A scheduled
 parameter computed memorylessly from `u` closes a cycle likewise.
 `lqr_tracker.md`, sections 4, 6 and 7, gives the reasoning.
 """
-struct DiscreteLQRTracker{NX, NU, NZ, Hold, Track, Standby, Fixed} <:
-       LQRTrackerBlock{NX, NU, NZ, Hold, Track, Standby, Fixed}
+struct DiscreteLQRTracker{NX, NU, NZ, Hold, Track, Fixed} <: LQRTrackerBlock{NX, NU, NZ, Hold, Track, Fixed}
     fixed::Fixed      # the parameters that are not ports, each at its type, in roster order
 end
 function DiscreteLQRTracker{NX, NU, NZ}(; K_fbk, K_fwd, K_int = zero(SMatrix{NU, NZ, Float64}),
                                         x_trim = zero(SVector{NX, Float64}), u_trim = zero(SVector{NU, Float64}),
                                         z_trim = zero(SVector{NZ, Float64}), Tt = Inf, u_min = -Inf, u_max = Inf,
-                                        hold::Bool = false, tracking::Bool = false,
-                                        standby::Bool = false) where {NX, NU, NZ}
-    check_standby(standby, Tt)
+                                        hold::Bool = false, tracking::Bool = false) where {NX, NU, NZ}
+    check_tracking(tracking, Tt)
     types, given = parameter_types(NX, NU, NZ), (; K_fbk, K_fwd, K_int, x_trim, u_trim, z_trim, Tt, u_min, u_max)
     check_shapes(types, given)
     fixed = fixed_parameters(given, types)
-    DiscreteLQRTracker{NX, NU, NZ, hold, tracking, standby, typeof(fixed)}(fixed)
+    DiscreteLQRTracker{NX, NU, NZ, hold, tracking, typeof(fixed)}(fixed)
 end
 DiscreteLQRTracker(; K_fbk, K_fwd, kw...) =
     DiscreteLQRTracker{tracker_sizes("DiscreteLQRTracker", (; K_fbk, K_fwd, kw...))...}(; K_fbk, K_fwd, kw...)

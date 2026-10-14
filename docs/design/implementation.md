@@ -139,19 +139,18 @@ The standard component library, the submodule `Redstone.Blocks`:
   `LimitedIntegrator` publishes its mode as the output `saturation`, typed by
   the helper `saturation_type`, shared with `DiscreteLimitedIntegrator` and the
   PID.
-- `ControllerBlock{Hold, Track, Standby}`, carrying `axis_ports`,
-  `gated_error`, `engaged_error`, `correction_reference` and
-  `engaged_reference`, over `PIDBlock{V, Hold, Track, Standby, Fixed}` over
-  `Real` and static vectors, carrying `signal_ports`, `u_types`, `y_types` and
+- `ControllerBlock{Hold, Track}`, carrying `axis_ports`, `gated_error` and
+  `correction_reference`, over `PIDBlock{V, Hold, Track, Fixed}` over `Real`
+  and static vectors, carrying `signal_ports`, `u_types`, `y_types` and
   `parameters`, over `PID` and `DiscretePID`, with the marker `AsPort`, the
-  roster `PID_PARAMETERS` and the helpers `shape_type`, `fixed_parameters` and
-  `check_standby` (D-313, D-383, D-384).
-- `LQRTrackerBlock{NX, NU, NZ, Hold, Track, Standby, Fixed}`, a
-  `ControllerBlock`, carrying `signal_ports`, `u_types`, `y_types` and
-  `parameters`, over `LQRTracker` and `DiscreteLQRTracker`, with the roster
-  `LQR_PARAMETERS`, the helpers `parameter_types`, `tracker_sizes` and
-  `check_shapes`, and `fixed_parameters` and `check_standby` shared with the
-  PID (D-383, D-384).
+  roster `PID_PARAMETERS` and the helpers `shape_type`, `fixed_parameters`,
+  `check_tracking` and `channel_type` (D-313, D-383, D-384, D-385).
+- `LQRTrackerBlock{NX, NU, NZ, Hold, Track, Fixed}`, a `ControllerBlock`,
+  carrying `signal_ports`, `u_types`, `y_types` and `parameters`, over
+  `LQRTracker` and `DiscreteLQRTracker`, with the roster `LQR_PARAMETERS`, the
+  helpers `parameter_types`, `tracker_sizes` and `check_shapes`, and
+  `fixed_parameters` and `check_tracking` shared with the PID (D-383, D-384,
+  D-385).
 - `StateSpace` with the helper `static_system`, over scalar or `SVector` ports
   by its matrix shapes, its feedthrough class the type parameter `FT`, and
   `TransferFunction`, realized by `realize` into a held `StateSpace` (D-313).
@@ -164,7 +163,7 @@ It reaches the parent through its import list alone, as a user's component
 file does (D-313). Nothing in the package depends on it, so `src/Redstone.jl`
 includes it last.
 
-Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §8.5, §10.4, §13.5, §13.7, D-179, D-184, D-211, D-231, D-311, D-312, D-313, D-316, D-383, D-384.
+Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §8.5, §10.4, §13.5, §13.7, D-179, D-184, D-211, D-231, D-311, D-312, D-313, D-316, D-383, D-384, D-385.
 
 ### `src/build.jl`
 
