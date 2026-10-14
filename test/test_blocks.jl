@@ -455,13 +455,14 @@ function switchover_bump(model)
     abs(port(sim, "sel", :out) - before)
 end
 
-# The discrete PID cascade run `n` frames at `h = 1//100`: after each frame, the
-# inner block's `u_raw` and `saturated`, and the outer block's stored `q`.
-function cascade_frames(model, n)
+# A cascade run `n` frames at `h = 1//100` from the root inputs `inputs`: after
+# each frame, the inner block's `u_raw` and `saturated`, and the stored `q` of
+# the block `outer`.
+function cascade_frames(model, n; outer = "outer", inputs = (;))
     sim = Simulation(model; h = 1//100)
-    init!(sim, fragment())
+    init!(sim, fragment(u = inputs))
     [(step!(sim; frames = 1);
-      (u_raw = port(sim, "inner", :u_raw), saturated = port(sim, "inner", :saturated), q = state(sim, "outer").q))
+      (u_raw = port(sim, "inner", :u_raw), saturated = port(sim, "inner", :saturated), q = state(sim, outer).q))
      for _ in 1:n]
 end
 
@@ -515,6 +516,32 @@ function tracker_cycle(controller, name)
     Group((plant = tracker_plant(), controller = controller, reference = Constant(SVector(1.0, 0.5)),
            feedback = Junction{SVector{2, Float64}, SVector{2, Float64}, 1}(name === :v ? (u -> clamp.(u, -1.0, 1.0)) : identity));
           local_wires = Tuple(wires))
+end
+
+# A cascade of the C172's shape: standby siblings measure the plant's first
+# state and, through a `Switch` on the root input `mode`, which selects `a`
+# while true, command channel 1 of a discrete tracker; channel 2 is commanded to
+# zero. With `delay` the selected command reaches both `v` through a
+# `UnitDelay`; with `hold` the tracker's channel 1 code reaches both
+# `saturation`.
+function tracker_cascade(; delay = true, hold = true)
+    command = delay ? "delay/out" : "sel/out"
+    wires = Pair{String, String}[
+        "ref_a/out" => "a/r", "ref_b/out" => "b/r", "plant/out" => "measurement/in",
+        "measurement/out1" => "a/y", "measurement/out1" => "b/y", "a/u" => "sel/in1", "b/u" => "sel/in2",
+        command => "a/v", command => "b/v", "negate/out" => "b/engaged",
+        "sel/out" => "reference/in1", "level/out" => "reference/in2", "reference/out" => "inner/z_ref",
+        "plant/out" => "inner/x", "plant/out" => "inner/z", "inner/u" => "plant/in"]
+    delay && push!(wires, "sel/out" => "delay/in")
+    hold && append!(wires, ["inner/saturated" => "code/in", "code/out1" => "a/saturation", "code/out1" => "b/saturation"])
+    outer = DiscretePID(; Kp = 0.5, Ki = 0.2, Tt = 0.1, hold, standby = true)
+    blocks = (ref_a = Step(t_step = 0.5, after = 1.5), ref_b = Constant(0.5), measurement = Unpack{Float64, 2}(),
+              a = outer, b = outer, sel = Switch{Float64}(), negate = Junction{Bool, Bool, 1}(!),
+              level = Constant(0.0), reference = Pack{Float64, 2}(),
+              inner = DiscreteLQRTracker(; tracker_gains()..., K_int = zeros(2, 2), u_max = SVector(0.6, Inf)),
+              plant = tracker_plant())
+    Group(merge(blocks, delay ? (delay = UnitDelay(0.0),) : (;), hold ? (code = Unpack{Int8, 2}(),) : (;));
+          input_wires = ("mode" => ("sel/select", "a/engaged", "negate/in1"),), local_wires = Tuple(wires))
 end
 
 function test_blocks()
@@ -887,7 +914,8 @@ function test_blocks()
                       tracker_loop(DiscreteLQRTracker(; tracker_loop_gains()...)),
                       noise_model(GaussianWhiteNoise(seed = 42, σ = 1.0)),
                       noise_model(GaussianWhiteNoise(seed = 7, μ = SVector(1.0, -1.0), σ = SVector(1.0, 2.0)))))...,
-                 (standby_siblings(standby_pid, standby_pid, DiscreteIntegrator(); delay = true), (mode = false,)))
+                 (standby_siblings(standby_pid, standby_pid, DiscreteIntegrator(); delay = true), (mode = false,)),
+                 (tracker_cascade(), (mode = false,)))
             @test build(model; activations = (Float64, LinearizeDual)) isa Build
             sim = Simulation(model; h = 1//10)
             bodies = phase_bodies(sim)
@@ -2083,6 +2111,30 @@ function test_blocks()
         d = only(diagnostics(failure(() -> build(tracker_cycle(DiscreteLQRTracker(; gains..., tracking = true), :v)))))
         @test d isa AlgebraicCycle && d.classification === :real
         @test isempty(d.dead)
+    end
+
+    @testset "a cascade of the C172's shape: standby siblings over a tracker, the tracker's code holding the outer integrators (§13.7, §5.4, D-383)" begin
+        # Each sibling's `u` reaches the switch and the switch's output its `v`, so
+        # the cycle runs through the siblings alone; the tracker's `u` reaches the
+        # plant, whose `out` is stage 1.
+        d = only(diagnostics(failure(() -> build(tracker_cascade(delay = false)))))
+        @test d isa AlgebraicCycle && d.classification === :real
+        @test isempty(d.dead)
+        @test d.wires == ["a/u" => "sel/in1", "sel/out" => "a/v", "sel/out" => "b/v", "b/u" => "sel/in2"]
+        model = tracker_cascade()
+        @test build(model) isa Build
+        @test build(model; activations = (Float64, LinearizeDual)) isa Build
+        @test switchover_bump(model) < 0.01    # 0.0057
+        # With `a` in command from the start, the trims hold channel 2 at its lower
+        # limit until the step at 0.5, which lifts `u_raw[1]` to 1.08 at once.
+        free, held = (cascade_frames(tracker_cascade(; hold), 300; outer = "a", inputs = (mode = true,))
+                      for hold in (false, true))
+        first_saturated = findfirst(frame -> frame.u_raw[1] > 0.6, free)
+        @test free[first_saturated].saturated === SVector{2, Int8}(0, -1)
+        @test free[first_saturated + 1].saturated === SVector{2, Int8}(1, 0)
+        stretch = findall(frame -> frame.saturated[1] == 1, free)
+        @test all(k -> held[k].q < free[k].q, stretch)
+        @test maximum(k -> free[k].q - held[k].q, stretch) ≈ 0.21845466317957526 atol = 1e-9
     end
 
     @testset "every keyword constructor builds a `Float64` block from integer keywords, and a flag keyword or a misfit shape refuses one (§7.2)" begin
