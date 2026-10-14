@@ -91,6 +91,28 @@ what the spec says, the spec edit is part of the item.
 - **The spec's readability rewrite.** Chapters 1 to 11 are done. The
   other chapters follow `docs/spec_rewrite/recipe.md`, and that directory's
   README tracks them. Until a chapter's turn comes, it keeps the old markers.
+- **The normative kernel**, after the rewrite lands. Settled on 2026-10-14:
+  the spec and the code are redundant where the spec describes mechanism,
+  and that description is what costs the bookkeeping on every increment and
+  leaves an implementer unsure which sentences are decisions. The code
+  already fulfils the spec (this file holds additions, not debt), so once
+  chapters 12 to 14 and the appendices are rewritten the spec splits into
+  three homes. The kernel keeps every bold ruling with one line of context,
+  its D-citation and a pointer to the test that pins it, in Appendix A's
+  shape; the cross-cutting chapters on evaluation order and time (§5, §10)
+  stay in prose. Description moves beside the code, into docstrings,
+  comments and `implementation.md`, where a diff review catches drift in one
+  place. The human-facing views are generated: an API reference from the
+  docstrings, diagrams of the build pipeline and the frame, the companions as
+  tutorials. The decision log is untouched. The rewrite comes first because
+  its survey and track 2 are the classification: a bold with an entry is the
+  kernel's unit, so extraction from a rewritten chapter is near mechanical.
+  Proposed and not yet in the recipe: from chapter 12 the survey tags each
+  descriptive passage with the source file that realizes it, which is the
+  migration list. Open: a ruling about the design's shape rather than runtime
+  behavior has no natural test, and the kernel needs a home for those; and
+  whether the kernel extraction replaces the report that closes
+  `docs/spec_rewrite/`.
 - **Package registration.**
 - **A precompile workload** for the generic machinery a cold process
   pays, about 9 s whatever the model (§9.7).

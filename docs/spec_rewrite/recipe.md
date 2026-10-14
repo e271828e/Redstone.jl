@@ -30,7 +30,16 @@ The convention the rewrite writes to is `docs/design/tools/spec_style.md`,
   python3 checks/boldcheck.py ch10 A        # a bold-only edit
   checks/assemble.sh ch10                   # chapter_new.md and chapter_old.md
   checks/build_pdf.sh ch10                  # chapter.pdf, untracked
+  python3 checks/slice_brief.py ch10 A      # units/A/brief.md: the rulings that reach A
+  python3 checks/slice_survey.py ch10 survey.md A 10.1 10.2  # units/A/survey.md
+  python3 checks/build_inventory.py ch10 A  # inventory.json from claims.md, then the checker
+  python3 checks/split_assertions.py ch10 A # verify_phase1.md, one item per sentence
+  python3 checks/inbound_scope.py ch10 > ch10/inbound_scope.md  # claims removed or moved
   ```
+
+  Each tool's docstring states its inputs. The five added on 2026-10-14 were
+  validated on chapter 11's archived files; the record is at the end of
+  section 2.
 
   `check_unit.py ... show-old` and `show-new` print a unit's normalized
   texts. `checks/verify_prompt.md` is the step 4 prompt.
@@ -43,7 +52,9 @@ The convention the rewrite writes to is `docs/design/tools/spec_style.md`,
 ## 2. The recipe
 
 Each step names its agent, model, inputs and outputs. Opus does every step
-that writes or judges text. The orchestrator is the main session: it reads
+that writes or judges spec text. Sonnet consolidates the rulings batch and
+reads the PDF, and a script does what needs no judgment. The orchestrator is
+the main session: it reads
 every report, checks key claims at the cited lines, routes fixes, and keeps
 rulings away from agents.
 
@@ -82,6 +93,9 @@ The survey maps the chapter before anyone writes. Chapter 9's
 - every code block the package can run, run against it. Chapter 7's survey
   ran §7.3's PRNG example and found that it failed its own conformance
   check. No reading had caught it.
+
+Head each per-section block `### §N.M ...`, as chapter 11's surveys did:
+`slice_survey.py` cuts the survey for each unit by that heading.
 
 A survey whose report is long writes it in parts, one append per section:
 one response over the output limit kills the agent and loses the report.
@@ -144,15 +158,45 @@ From chapter 5's checkpoint:
 ### Step 2: the brief (written by the orchestrator)
 
 Chapter 9's `brief.md` is the model, read with the corrections below. One
-brief serves every unit; the prompt names the unit. It holds:
+brief serves every unit, and each rewriter reads its slice. It holds:
 
-- what to read first: `spec_style.md`, a finished chapter as the example,
-  and the survey's parts for the unit;
+- what to read first: `spec_style.md`, one finished section as the example
+  (§10.1), and the unit's survey slice `units/<U>/survey.md`;
 - every ruling of checkpoint 1;
 - what may not change, and that factual problems stay as written and go to
   `rulings.md`;
-- the outputs: `new.md`, `inventory.json`, `rulings.md` with fixed headings;
-- the units: their line ranges, their moves, their hazards.
+- the outputs: `new.md`, `claims.md` (from which `build_inventory.py`
+  writes `inventory.json`), `rulings.md` with fixed headings;
+- the units: their line ranges, their moves, their hazards, and the rulings
+  that reach each.
+
+**The slices.** `slice_brief.py` writes `units/<U>/brief.md` with the
+rulings that do not reach U reduced to one-line stubs. It reads two things:
+a ruling's opening parenthetical names its units (`unit A`, `units B, C`,
+`units: all`; no unit named means every unit), and U's block under `## The
+units` names the rulings that reach it. Correction items under a ruling
+(`  - F5 (unit B, ...)`) are sliced the same way. Check the stub list the
+slicer prints against the unit blocks before any agent starts.
+`slice_survey.py` writes `units/<U>/survey.md`, the survey with other
+sections' per-section blocks stubbed and every chapter-wide part kept. The
+verifier reads the whole `brief.md`, never a slice. On chapter 11's files
+the brief slices ran 60 to 73 percent of the brief and the survey slices 62
+to 72 percent of the survey.
+
+**`claims.md` replaces the hand-built inventory.** One block per claim,
+blocks separated by blank lines, fields one per line: `old:`, `new:` (omitted
+when identical), `tag:`, `ruling:`, `where:`, `newcites:`, `note:`; one
+`added:` block per declared addition. The tool fills the ids and the old
+span's citations, refuses a tag `R` without its ruling, notes a span whose
+citations changed with no `newcites`, writes `inventory.json` and runs the
+checker. The model brief's `inventory.json` paragraph is replaced by this,
+with the same tags: `F` fact, `X` framing, `M` moved or held elsewhere, `C`
+citation added or replaced, `R` ruled edit.
+
+**Units run 2,500 to 3,000 words.** Chapter 11 cut nine units of about
+1,500 words, and each unit's rewriter and verifier paid the same reading cost
+before writing a line. Fewer units halve that overhead, and a 3,000-word
+unit still runs comfortably.
 
 **Cut units by content, not by section.** A unit is a range of original lines
 plus the blocks that move into it. In chapter 9, A2 was §9.2 plus §9.1's
@@ -250,9 +294,12 @@ unit's `old.md`, which its own inventory guarantees.
 
 ### Step 3: rewrite the units in parallel (one Opus agent per unit)
 
-Prompt: read `brief.md`, follow it, edit nothing outside `units/<U>/`, run
-`python3 checks/check_unit.py chNN check <U>` until it prints
-`checks failed: 0`.
+Prompt: read `units/<U>/brief.md` and `units/<U>/survey.md`, follow them,
+edit nothing outside `units/<U>/`, write `claims.md`, and run
+`python3 checks/build_inventory.py chNN <U>` until it prints
+`checks failed: 0`. In chapter 11 eight of nine rewriters wrote their own
+15,000 to 33,000 character script for the inventory; the tool reproduces
+all nine archived inventories from their claims.
 
 The checker proves, per unit:
 
@@ -268,9 +315,15 @@ It cannot see meaning. That is step 4's job.
 ### Step 4: verify each unit blind (one Opus agent per unit)
 
 Prompt: `checks/verify_prompt.md` with the chapter directory and the unit's
-name, plus notes on its known hazards. Phase 1 lists the new text's
-assertions before reading anything else. Phase 2 classifies every old claim
-as MATCH, DRIFT or LOST and lists ADDED.
+name, plus notes on its known hazards. Phase 1 is generated: the
+orchestrator runs `split_assertions.py`, which writes `verify_phase1.md`
+with one item per sentence, bullet, table cell or code block, its citations
+and a `(bold)` mark. The verifier reads that list first, adds the assertions
+a sentence holds that the list does not separate, and then reads the rest.
+Phase 2 classifies every old claim as MATCH, DRIFT or LOST and lists ADDED.
+On chapter 11's nine units the splitter gave 62 to 170 items where the Opus
+lists had 71 to 132; the Opus lists split some clauses and merged some
+sentences, and the splitter does neither.
 
 Route each fix list back to the **same rewriter**, then the fixes back to the
 **same verifier** for a re-check. Never skip the re-check. In chapter 9,
@@ -307,7 +360,9 @@ From chapter 8:
 
 ### Step 5: read the whole chapter (two Opus agents in parallel)
 
-Run `checks/assemble.sh chNN` first.
+Run `checks/assemble.sh chNN` first, and `inbound_scope.py`, which lists
+every claim the units removed, relocated or changed by ruling under its old
+section, from the inventories and the `deleted.md` files.
 
 - **The chapter pass** reads `chapter_new.md` whole for what no unit check
   sees: one name for one thing, one gloss per term, duplicated facts after
@@ -315,7 +370,11 @@ Run `checks/assemble.sh chNN` first.
   roadmap, reader-cold names, and anything worse than the old text.
 - **The inbound check** judges every row of `inbound.tsv` against the new
   chapter: OK, RETARGET, COMPANION, MISSING, VAGUE. A MISSING row the old
-  chapter stated is a loss. Chapter 9 had none. Chapter 10's one LOSS was a
+  chapter stated is a loss. The checker gets `inbound_scope.md`. A row whose
+  target section has no entry there needs only the check that the section's
+  number and title are unchanged; a row whose section is listed is judged
+  against the listed claims, and a loss is a citing sentence that relies on
+  one of them. Chapter 9 had none. Chapter 10's one LOSS was a
   circular pointer: a cut list pointed at D-154, whose Rejected item pointed
   back at the section. Before cutting a list to a pointer, check that the
   entry does not point back.
@@ -323,18 +382,27 @@ Run `checks/assemble.sh chNN` first.
 An editorial fixer (Opus) then applies the chapter pass's wording, placement,
 link and wrap fixes through each unit's inventory, and lists the rest.
 
+**The inbound check stays on Opus.** On 2026-10-14 two Sonnet agents judged
+chapter 11's 610 archived rows with the step 5 prompt against the final
+chapter. They returned 15 non-OK rows to the Opus agents' 24, agreed on
+seven, and marked OK all five rows the rulings had broken (R4's three, R23's
+two). The check exists for those five.
+
 From chapter 11: a long chapter runs step 5 in halves too, a chapter pass
 and an inbound check per half, each pass grepping the other half for
 repeated claims and bolds. Two editorial fixers then edit disjoint units.
 Give each parallel agent its own scratch directory: chapter 11's two fixers
 overwrote each other's wrap script in a shared one.
 
-### Step 6: rulings (one Opus consolidator, then the owner)
+### Step 6: rulings (one Sonnet consolidator, then the owner)
 
 The consolidator merges every `rulings.md`, the verifiers' leftovers, the
 chapter pass's ruling items, the inbound check and the survey's log and
 out-of-chapter parts into `rulings_batch.md`: deduplicated, sourced, each item
-with a proposal and a recommendation, blocking items first.
+with a proposal and a recommendation, blocking items first. It is a Sonnet
+agent from chapter 12: it merges and sources, and the orchestrator checks
+every proposal's evidence at the source anyway (lesson 10), so a weak
+recommendation costs orchestrator time, not text.
 
 **Checkpoints 2 and 3: the orchestrator rules.** Take the blocking items
 first. Check each proposal's evidence at its source before accepting it, and
@@ -470,7 +538,45 @@ From chapters 1 to 4:
 4. Report to the owner: the commits, and `escalations.md` with a
    recommendation per finding.
 
+### The appendices
+
+Appendix A is an index, B an API synopsis, C a table of diagnostic kinds and
+D the glossary. They carry few rulings and are list-shaped, so the moves,
+the overlap analysis and the two-half survey buy little. The plan is a
+reduced track: a survey, one rewriter per appendix, one verifier and the
+battery. The decision waits for chapter 14's landing, since the kernel
+extraction in `pending.md` may change what Appendices A and B are for.
+
+### The 2026-10-14 revision and its validation
+
+The levers above, applied from chapter 12: `claims.md` and
+`build_inventory.py` for the inventory; `slice_brief.py` and
+`slice_survey.py` for each rewriter's reading; units of 2,500 to 3,000
+words; a generated phase 1; `inbound_scope.md` for the inbound check; the
+consolidator on Sonnet. Each was tested on chapter 11's archived files
+(`git show e5cbb77:docs/spec_rewrite/ch11/...`) before it entered this
+recipe:
+
+- `build_inventory.py` round-trips all nine archived inventories, claims and
+  additions equal up to citation order, each passing the checker.
+- `split_assertions.py` ran on all nine units; its counts and the Opus
+  lists' are under step 4.
+- `slice_brief.py` and `slice_survey.py` ran on the brief and both surveys;
+  the sizes are under step 2. The slicer stubs R4 and R5 for unit A and
+  keeps R13, which names every unit.
+- `inbound_scope.py` lists R4's and R23's changed claims under §11.3 and
+  §11.6, and R5's relocations with their homes.
+- A Sonnet inbound check was tried and rejected; the record is under step 5.
+
+Chapter 12 is the measurement: its table in section 3 carries a findings
+column per step beside the tokens.
+
 ## 3. Cost and time
+
+From chapter 12 the table carries a findings column per step (checker
+failures, verifier DRIFT and LOST counts, chapter pass items, inbound non-OK
+rows, final verifier findings) beside the tokens, so a change in cost can be
+read against a change in catch.
 
 Chapter 9, 8,544 words:
 
@@ -767,16 +873,28 @@ From chapter 11, which held 392 rules:
 53. Check a scripted edit's output: a `\s*$` in a regex ate the newlines
     between 52 batch items.
 
+54. A rewriter writes `claims.md`; `build_inventory.py` writes the JSON
+    (2026-10-14, from chapter 11's nine hand-written scripts).
+55. Rewriters read slices of the brief and the survey; the verifier reads
+    the whole brief.
+56. Units run 2,500 to 3,000 words.
+57. Phase 1 is generated; the verifier adds what the splitter does not
+    separate.
+58. The inbound check is Opus with `inbound_scope.md`; Sonnet marked every
+    loss by ruling OK in the chapter 11 validation.
+59. The consolidator is Sonnet; the orchestrator checks its evidence anyway.
+
 ## 6. A chapter's files
 
 - `chapter.sh`: section 1.
 - `survey.md`, `inbound.tsv`: step 1.
 - `brief.md`: step 2.
-- `units/<U>/`: per unit, `old.md`, `new.md`, `inventory.json`, `rulings.md`,
-  `verify_phase1.md`, `verify.md`, and any text that leaves the chapter,
-  such as `companion_addition.md`.
-- `chapter_pass.md`, `inbound_check.md`, `inbound_check.tsv`,
-  `chapter_rulings.md`, `chapter_fixes.md`: step 5.
+- `units/<U>/`: per unit, `brief.md` and `survey.md` (the slices), `old.md`,
+  `new.md`, `claims.md`, `inventory.json`, `rulings.md`, `verify_phase1.md`
+  (generated), `verify.md`, and any text that leaves the chapter, such as
+  `companion_addition.md`.
+- `inbound_scope.md`, `chapter_pass.md`, `inbound_check.md`,
+  `inbound_check.tsv`, `chapter_rulings.md`, `chapter_fixes.md`: step 5.
 - `rulings_batch.md`: step 6, with each item's status.
 - `escalations.md`: serious findings from any step, for the owner.
 - `trim_log.md`, `ruled_edits.md`, `rulings_applied_*.md`,
