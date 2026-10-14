@@ -17,7 +17,7 @@ Section 1 states the problem, section 2 the equilibrium reference and the
 feedforward, section 3 the integral action, section 4 the law the block
 implements and its ports, section 5 what FlightPhysics did and what the
 framework does instead, section 6 the saturation code and the cascade,
-section 7 the standby axis and the switchover wiring with the probe's
+section 7 standby and the switchover wiring with the probe's
 numbers, section 8 what stays in the design script, and section 9 the
 decision.
 
@@ -120,7 +120,7 @@ since every tracker of the C172 is scheduled over airspeed and altitude.
 ## 4. The law the block implements
 
 Two blocks over one supertype, `LQRTrackerBlock{NX, NU, NZ, Hold, Track,
-Standby, Fixed}`, mirror `PIDBlock`: `LQRTracker` on the continuous tier and
+Fixed}`, mirror `PIDBlock`: `LQRTracker` on the continuous tier and
 `DiscreteLQRTracker` on the discrete one. The law, on both:
 
 ```
@@ -132,19 +132,18 @@ q⁺    = q + Δt gate(K_int (z_ref - z)) + β (ref - u_raw)         discrete
 
 with `β = 1 - exp(-Δt / Tt)`, `Δt` the component's own period ([§10.5][s10-5]). The
 integrator input `K_int (z_ref - z)` is `n_u` wide, so the PID's gate and
-reference rule apply to it channel by channel, over the same three axes
+reference rule apply to it channel by channel, over the same two axes
 (`pid_anti_windup.md`, sections 4 and 11):
 
-- **hold** adds the input `saturation`, an `SVector{NU, Int8}` code from the
-  path downstream, and gates each channel whose code agrees with the sign of
-  its integrator input;
+- **hold** adds the inputs `saturation`, an `SVector{NU, Int8}` code from
+  the path downstream, and `engaged`, an `SVector{NU, Bool}`. A channel
+  whose code agrees with the sign of its integrator input is gated; a
+  channel not engaged has its integrator input zeroed whatever its code;
 - **tracking** adds the input `v`, an `SVector{NU, Float64}`, as the
-  correction's reference, with the hold's fallback to own `u` while the code
-  is zero;
-- **standby** adds the `Bool` input `engaged`, and `v` where tracking has not
-  already added it. While not engaged the integrator input is zero and the
-  reference is `v` whatever the code, so `u_raw` converges to `v` at rate
-  `1/Tt` and engagement is bumpless.
+  correction's reference while a channel is limited or not engaged, with the
+  fallback to the own `u` while it is free. A channel not engaged with `v`
+  converges to it at rate `1/Tt`, so engagement is bumpless; without `v` it
+  freezes.
 
 Own windup goes through the correction against the block's own fresh `u`
 with `Tt`, as for the PID; `Tt = Inf` switches it off and `Tt = 0` is the
@@ -185,7 +184,8 @@ transfer, and each has a counterpart the library already ships.
   frozen at its nominal value routes the port through `Freeze` ([§14.10][s14-10]).
 - **A reset on every mode change.** FlightPhysics re-initialized the
   incoming tracker's integrator and bumped the outer PIDs' integrators by
-  hand, inside the control law's sequencing. The standby axis replaces both:
+  hand, inside the control law's sequencing. The hold's `engaged` input
+  with the tracking reference replaces both:
   a block not in command follows the selected command through `v`, so it is
   ready when engaged, with no reset and no sequencing (section 7).
 - **A halt against the block's own previous code.** The integrator stopped
@@ -256,14 +256,14 @@ avoids.
 An outer PID over one channel takes its code through `Unpack{Int8, NU}`,
 one `Int8` per component.
 
-## 7. The standby axis and the switchover wiring
+## 7. Standby and the switchover wiring
 
-`pid_anti_windup.md` section 11 records why the hold and tracking axes could
-not express a controller that holds on the inner code while in command and
-follows the selected command while not, and the standby axis that does. The
-trackers need it as the PIDs do: the C172 switches among three longitudinal
-trackers, and the two not in command follow the selected command through
-`v`.
+`pid_anti_windup.md` section 11 records why the hold's code and the tracking
+reference alone could not express a controller that holds on the inner code
+while in command and follows the selected command while not, and the
+`engaged` input that does. The trackers need it as the PIDs do: the C172
+switches among three longitudinal trackers, and the two not in command
+follow the selected command through `v`.
 
 **The wiring.** Sibling controllers feed a `Switch` selected by the mode,
 and the selected command goes down to the plant and back to every sibling's
@@ -301,10 +301,10 @@ And a standby block chases a moving target with lag `Tt`, since its `v` and
 its own proportional term both move while the other block flies the plant,
 so the standby `Tt` should be short. On the discrete tier `Tt = 0` follows
 exactly, the FlightPhysics reset applied every tick, and `Tt = Inf` follows
-nothing, which is why a fixed infinite `Tt` is refused with `standby = true`
-([D-383][d-383]). The emulation's `Tt = 0` row is not reported: with the shipped
-variant the block in command tracked itself at `β = 1`, which the standby
-law's engaged arm rules out.
+nothing, which is why a fixed infinite `Tt` is refused with `tracking = true`
+([D-385][d-385]). The emulation's `Tt = 0` row is not reported: with the shipped
+variant the block in command tracked itself at `β = 1`, which the engaged
+block's fallback to its own `u` rules out.
 
 ## 8. What stays in the design script
 
@@ -330,8 +330,8 @@ textbook procedures, and the block's novelty is deliberately none.
 [D-383][d-383] admits the two blocks under [D-313][d-313]'s guidelines and rules the four
 points this companion argues: the gains come from outside, the saturation
 code is published on the discrete tier alone from stage 1 off the store, the
-standby axis joins the PID's two on all four controller blocks, and the
-ports keep the FlightPhysics names. Against the guidelines, the tracker is
+standby reaches all four controller blocks, through the hold's `engaged`
+input since [D-385][d-385], and the ports keep the FlightPhysics names. Against the guidelines, the tracker is
 domain-agnostic, it is the one block that shows the trim and linearize
 pipeline closing on itself, its matrices and its per-channel windup are
 easy to get wrong, and the C172 hand-writes it five times. It is not
@@ -343,6 +343,7 @@ and the vector PID's `Ki` is componentwise.
 [d-313]: ../decisions.md#d-313--admit-a-library-block-by-judgement-against-three-guidelines
 [d-383]: ../decisions.md#d-383--admit-the-lqr-tracker-with-a-standby-axis-and-a-discrete-saturation-code-on-the-controller-blocks
 [d-384]: ../decisions.md#d-384--publish-the-discrete-controllers-saturation-code-as-saturated
+[d-385]: ../decisions.md#d-385--two-controller-axes-the-hold-with-two-inputs-and-the-tracking-reference
 [s10-5]: ../spec.md#105-multi-rate-tick-scheduling
 [s13-7]: ../spec.md#137-tooling-consequences-face-routes-and-the-component-library
 [s14-10]: ../spec.md#1410-linearization-tap-selectors-one-seeded-pass-a-pure-query

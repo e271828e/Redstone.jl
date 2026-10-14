@@ -383,6 +383,7 @@ were derived.
 | [D-382][d-382] | Keep binding side traits trivial and the mappings the loop's own | ratified |
 | [D-383][d-383] | Admit the LQR tracker, with a standby axis and a discrete saturation code on the controller blocks | ratified |
 | [D-384][d-384] | Publish the discrete controllers' saturation code as `saturated` | ratified |
+| [D-385][d-385] | Two controller axes, the hold with two inputs and the tracking reference | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -15300,6 +15301,10 @@ separate mechanisms, the stop reading the unallocated torque and not the
 status; `lqr_tracker.md` section 6 states them apart. The signed status
 reported up a cascade stands on Foundation Fieldbus alone.
 
+Annotation (2026-10-14): [D-385][d-385] folds the standby axis into the hold as its
+second input `engaged`, two type parameters in place of three; the tracker,
+the code and the companion rulings stand.
+
 ### D-384 — Publish the discrete controllers' saturation code as `saturated`
 
 **Status.** ratified
@@ -15327,6 +15332,74 @@ face, so it takes the new name, and the wire from an inner block's
   asks for.
 - *Renaming the hold's input:* it is shipped, every hold wiring lands on it,
   and `pid_anti_windup.md` section 4 documents it.
+
+### D-385 — Two controller axes, the hold with two inputs and the tracking reference
+
+**Status.** ratified
+
+**Position.** The four controller blocks carry two `Bool` type parameters,
+`Hold` and `Track`, in place of [D-383][d-383]'s three. Four rulings.
+
+- `hold = true` adds two independent inputs, `saturation`, the `Int8` code
+  of the path downstream, and `engaged`, the `Bool` that says the block is in
+  command; `tracking = true` adds `v`, the value `u_raw` converges to while
+  the block is not free. Each port is at the block's output shape, so a
+  vector block takes static vectors of its width, `engaged` included.
+- The law is one table over the channel's condition. Free, a zero code while
+  engaged: the error passes and the reference is the own `u`. Limited, a
+  nonzero code while engaged: the error is gated by sign and the reference
+  is `v` where the block tracks, else `u`. Not engaged, which takes
+  precedence over the code: the error is zero and the reference is `v`
+  where the block tracks, else `u`, the freeze. Without the hold inputs the
+  error passes and the reference is `v` where the block tracks, else `u`.
+- `tracking = true` with a fixed infinite `Tt` is refused at construction; a
+  scheduled `Tt` passes. The refusal [D-383][d-383] placed on standby moves here, and
+  the hold alone needs no `Tt`.
+- The keyword `standby` and the parameter `Standby` are retired.
+
+**Spec.** [§13.7][s13-7]
+
+**Rationale.** The space a controller's integrator lives in has two kinds of
+thing: conditions that arrive from the loop, the path being unable to follow
+in a direction and the block being out of command, and one reference, the
+value to converge to while a condition holds. [D-383][d-383] put the second condition
+beside the reference as a third axis. That gave the docstring tables a
+degenerate row, made two of the eight combinations near duplicates, let the
+reference arrive with a condition instead of on its own, and left the freeze,
+standby without a reference, with no spelling. Tracking's `v` and standby's
+`v` are one mechanism, convergence at rate `1/Tt`, under two conditions, so
+the reference is one port and the conditions are the hold's. The two
+conditions stay two ports because they differ in type, in granularity and in
+source, a directional per-channel code from the actuator path and a flag
+from the mode logic, and the block owns the precedence between them. The
+flag reads true in command so that a selector among parallel paths publishes
+one-hot flags each block wires directly, and a block nobody has selected sits
+in standby. The flag is per channel at the output's shape so a multi-output
+tracker can hand one channel to the pilot while the law keeps the others.
+`Tt` serves the reference alone: with the own `u` and no own limits the
+correction is identically zero and `Tt = Inf` is its honest spelling, with
+own limits it is plain windup the constructor cannot tell from a fence never
+touched, and with `v` it is the only path through which `v` reaches the
+integrator, so there the infinite value is a mistake the constructor can see.
+
+**Rejected.**
+- *Superseded position — standby as a third axis ([D-383][d-383]):* a condition
+  beside a reference; the degenerate table row, the duplicate corners and
+  the unspeakable freeze above.
+- *One per-channel status port merging the code and the flag:* an
+  enumeration mixing a directional value with a flag, and the precedence
+  between them pushed into a junction in every mode-switched model.
+- *A flag per block:* it cannot spell a channel handed to the pilot while the
+  others fly; a model whose mode is one flag broadcasts it.
+- *The port named `standby`, true in standby:* the selector would publish the
+  complement of what it means, and the zero state would be "in command".
+- *Refusing an infinite `Tt` with the hold:* the hold's inputs gate the
+  error and need no correction.
+
+**Divergence.** Simulink's PID Controller block serves tracking and bumpless
+transfer from one `TR` port and one switch; here the hold's two inputs and
+the reference stay apart because they come from three sources, the actuator
+path, the mode logic and the selected command.
 
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
@@ -15687,6 +15760,7 @@ face, so it takes the new name, and the wire from an inner block's
 [d-382]: #d-382--keep-binding-side-traits-trivial-and-the-mappings-the-loops-own
 [d-383]: #d-383--admit-the-lqr-tracker-with-a-standby-axis-and-a-discrete-saturation-code-on-the-controller-blocks
 [d-384]: #d-384--publish-the-discrete-controllers-saturation-code-as-saturated
+[d-385]: #d-385--two-controller-axes-the-hold-with-two-inputs-and-the-tracking-reference
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property

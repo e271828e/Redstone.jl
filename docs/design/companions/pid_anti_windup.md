@@ -25,8 +25,9 @@ numbers, and section 8 what the episode says about the framework. Section
 9, added the same day, carries the law to the discrete tier as
 `DiscretePID`. Section 10, added on 2026-10-08, widens both blocks over
 static vectors, makes any parameter a port and adds the setpoint weights.
-Section 11, added on 2026-10-14 with the LQR tracker, adds the standby axis
-and the discrete block's saturation output.
+Section 11, added on 2026-10-14 with the LQR tracker, adds the hold's
+second input `engaged`, records the standby axis it replaced, and adds the
+discrete block's saturation output.
 
 ## 1. Windup
 
@@ -128,33 +129,52 @@ to be short.
 
 ## 4. The two axes and the law
 
-Two independent choices remain, each adding one input port when taken.
+Two independent choices remain. The hold adds two input ports and the
+tracking reference one, each at the block's output shape, so a vector block
+takes static vectors of its width.
 
-- **An external saturation input**, the port `saturation::Int8`, the hold,
-  which gates the error: `gate(e) = saturation == sign(e) ? 0 : e`. Absent,
-  `gate(e) = e`.
-- **The correction's reference**, the block's own clamped output `u` or
-  the tracking port `v::Float64`.
+- **The hold**, `hold = true`: the loop tells the block its condition
+  through two independent inputs, `saturation::Int8`, the code of the path
+  downstream, and `engaged::Bool`, whether the block is in command. The code
+  gates the error by sign, `gate(e) = saturation == sign(e) ? 0 : e`; not
+  engaged, the error is gated to zero whatever the code.
+- **The tracking reference**, `tracking = true`: the input `v`, the value
+  `u_raw` converges to while the block is not free, in place of the own
+  clamped output `u`.
 
-The derivative is one line, `q̇ = Ki · gate(e) + (ref - u_raw) / Tt`, and
-the four variants are its table:
+The derivative is one line, `q̇ = Ki · ε + (ref - u_raw) / Tt`, and the
+variants are the table of its two slots over the channel's condition:
 
-| | reference: own `u` | reference: tracking `v` |
-|---|---|---|
-| no hold | `Ki e + (u - u_raw) / Tt` | `Ki e + (v - u_raw) / Tt` |
-| hold | `Ki gate(e) + (u - u_raw) / Tt` | `Ki gate(e) + ((saturation == 0 ? u : v) - u_raw) / Tt` |
+| condition | `ε` | `ref`, own `u` | `ref`, tracking `v` |
+|---|---|---|---|
+| no hold inputs | `e` | `u` | `v` |
+| free | `e` | `u` | `u` |
+| limited | `gate(e)` | `u` | `v` |
+| not engaged | `0` | `u` | `v` |
 
-One rule joins the axes. When both ports exist, `v` is the reference only
-while the code is nonzero, and the reference falls back to `u` while the
-path is free. This is not a special case but what a tracking reference
-means: a value to converge to while the path cannot follow, meaningless
-while it can. Without the hold there is no way to know, so that variant
-tracks always and carries section 3's coupling; with one, the coupling goes.
-The naive composition, the gate on `e` plus ungated tracking, would keep
-the coupling the hold was meant to remove, and an earlier form that stopped
-integrating whenever the code was nonzero failed to resume when the error
-reversed while the path still reported saturation, which the gate's sign
-test handles.
+Free is a zero code while engaged, limited a nonzero code while engaged, and
+not engaged takes precedence over the code. The three hold rows are one
+rule: `v` is a value to converge to while the path cannot follow or another
+block flies the plant, meaningless while the block is free, so the reference
+falls back to `u` while the path is free. Without the hold there is no way
+to know, so that variant tracks always and carries section 3's coupling;
+with one, the coupling goes. The last row without `v` is the freeze: `q`
+holds while the own clamp is free and back-calculates against it otherwise,
+exact whatever `Tt`. With `v` it is standby (section 11): the integral term
+absorbs the proportional and derivative terms and `u_raw` converges to `v`
+at rate `1/Tt`, so engagement is bumpless. The naive composition, the gate
+on `e` plus ungated tracking, would keep the coupling the hold was meant to
+remove, and an earlier form that stopped integrating whenever the code was
+nonzero failed to resume when the error reversed while the path still
+reported saturation, which the gate's sign test handles.
+
+`Tt` serves the reference alone. With the own `u` and no own limits the
+correction is identically zero, so the default `Tt = Inf` is its honest
+spelling; with own limits it is plain windup against them, allowed because
+the constructor cannot tell a fence never touched from a mistake. With `v`
+the correction is the only path through which `v` reaches the integrator,
+so `tracking = true` with a fixed infinite `Tt` is refused at construction;
+a scheduled `Tt` is the model's to keep finite ([D-385][d-385]).
 
 **Why the hold does not win over everything.** It is tempting to conclude
 that with the saturation input in hand no correction is needed at all. That holds for a
@@ -198,11 +218,20 @@ generated reference.
   its stops. The path follows the limited command without saturating, so
   only the internal term catches the comfort limit; only the hold catches
   the servo's.
-- **Tracking, no hold.** A controller not in command. An engine control's
-  speed loop and its temperature and pressure limiters each compute a fuel
-  flow and a minimum selector picks one; the deselected integrators must
-  follow the selected command so the switchover is bumpless. An autopilot
-  in standby tracking the pilot's command is the same shape.
+- **Tracking, no hold.** External back-calculation against a value whose
+  status the block cannot know: a servo whose position is measured but
+  which reports no limit. The block follows the servo always and pays
+  section 3's coupling for it, which is why section 7's table ranks it
+  below own limits wherever the limit is known.
+- **Not engaged, with tracking.** A controller not in command. An engine
+  control's speed loop and its temperature and pressure limiters each
+  compute a fuel flow and a minimum selector picks one; the deselected
+  integrators follow the selected command so the switchover is bumpless.
+  An autopilot in standby tracking the pilot's command, and the sibling
+  loops of section 11, are the same shape.
+- **Not engaged, without tracking.** The freeze, the manual mode without
+  tracking: a loop switched out whose value at re-engagement does not
+  matter, or whose integrator the mode logic resets from outside.
 - **Tracking with a hold.** A cascade whose achievable value moves while
   the hold is on. The outer flight-path loop commands normal acceleration
   and the inner loop's limit varies with airspeed; holding freezes the
@@ -211,10 +240,11 @@ generated reference.
   keeps that tracking from coupling to the inner loop's ordinary
   transients.
 
-In one sentence: own limits are for the limit the path cannot see,
-the hold for the limit the path reports, tracking for a value the integrator
-must follow rather than a limit it must respect, and the gate is what lets
-a tracking value be used without paying for it during free transients.
+In one sentence: own limits are for the limit the path cannot see, the
+hold for the limit the path reports and for the block's command status,
+tracking for a value the integrator must follow rather than a limit it must
+respect, and the gate is what lets a tracking value be used without paying
+for it during free transients.
 
 ## 6. The variants not carried
 
@@ -247,7 +277,8 @@ parameters, one per axis, since whether a port exists is a declaration;
 instance data `Kp`, `Ki`, `Kd`, `τd`, `Tt`, `u_min`, `u_max`, with `Ki = Kd
 = 0`, `τd = 0.1`, `Tt = Inf` and infinite limits as defaults, so the plain
 spelling is a P controller and every mechanism is opted into; inputs `r` and
-`y`, plus `saturation` and `v` as the parameters add them; outputs `u`, clamped,
+`y`, plus `saturation` and `engaged` with the hold and `v` with tracking;
+outputs `u`, clamped,
 and `u_raw`; states `q` and `yf`; one `x_deriv` with two one-line helpers
 for the gate and the reference. A simplified assembly of library blocks,
 the first cell as a `Group`, stays in the tests as the inspector's example
@@ -486,60 +517,76 @@ yf⁺   = yf + Δt deriv
 
 On both tiers `u = clamp(u_raw, u_min, u_max)`.
 
-## 11. The standby axis and the discrete saturation output
+## 11. Standby and the discrete saturation output
 
 Added on 2026-10-14, when the LQR tracker joined the library
 (`lqr_tracker.md`) and its cascade architecture was laid against the two
 axes. Both additions apply to `PID` and `DiscretePID` as to the two trackers.
+Standby arrived as a third axis ([D-383][d-383]) and was folded into the hold the
+same day ([D-385][d-385]); this section records the gap, the mechanism and the fold.
 
-**The gap the two axes leave.** A cascade of the C172's shape has several
+**The gap the two axes left.** A cascade of the C172's shape has several
 PIDs commanding an inner tracker, one of them in command at a time by the
 mode, and the tracker reporting its saturation to all of them. Each PID
 needs two things at once: to hold on the inner code while in command, and
 to follow the selected command while not, so that the switchover is
-bumpless. Section 4's rule reads `v` only while the code is nonzero, so a
-PID not in command but unsaturated ignores `v` and its integrator runs free
+bumpless. The hold's rule read `v` only while the code was nonzero, so a
+PID not in command but unsaturated ignored `v` and its integrator ran free
 on its error. The variant that follows `v` unconditionally is tracking
-without a hold, which cannot hold on the inner code. Neither axis tells the
-block whether it is in command, so no combination of the two expresses it.
+without a hold, which cannot hold on the inner code. Nothing told the block
+whether it was in command, so no combination of the two expressed it.
 FlightPhysics solved it by resetting the incoming block's integrator on
 every mode change, by hand, inside the control law's sequencing.
 
-**The standby axis.** The missing piece is the textbook's manual mode with
-tracking, Åström and Hägglund's third ingredient beside the correction and
-the tracking signal, and the reset was its one-shot approximation.
-`standby = true`, the type parameter `Standby`, adds the `Bool` input
-`engaged`, and the input `v` where `tracking` has not already added it:
+**Standby.** The missing piece is the textbook's manual mode with tracking,
+Åström and Hägglund's third ingredient beside the correction and the
+tracking signal, and the reset was its one-shot approximation. The hold's
+second input `engaged::Bool` carries it, section 4's last row: not engaged,
+the error is gated to zero whatever the code, and the reference is `v`
+where the block tracks and the own `u` where it does not. With `v` the
+integral term absorbs the proportional and derivative terms and `u_raw`
+converges to `v` at rate `1/Tt`, so at engagement the output equals the
+selected command and the transfer is bumpless. The error is gated off on
+purpose: with it left in, `u_raw` settles at `v + Tt Ki e`, a bias the
+switchover then pays. The probe in `lqr_tracker.md` section 7 measured
+both, a bump of `1.92` with the error left in against `0.002` with it gated
+off and `Tt = 0.1`. A standby block also chases a moving target with lag
+`Tt`, since `v` and its own proportional term both move while another block
+flies the plant, so the standby `Tt` is short. On the discrete tier `Tt = 0`
+follows exactly, which is the FlightPhysics reset applied every tick.
+`Tt = Inf` follows nothing, which is why `tracking = true` with a fixed
+infinite `Tt` is refused at construction.
 
-```
-engaged        gate(e) and the reference as section 4's table gives them
-not engaged    the error gated to zero, the reference `v` whatever the code
-```
+**Why the hold, and not a third axis.** [D-383][d-383] added standby as a third type
+parameter that brought `engaged` and `v` together. That put a condition of
+the loop beside a reference: the tables gained a row under which the two
+reference columns coincided, two of the eight combinations were near
+duplicates, and the freeze, not engaged without a reference, had no
+spelling. [D-385][d-385] reads the space as two kinds of thing. The loop's
+conditions, limited and not engaged, arrive from independent sources, the
+actuator path and the mode logic, so the hold carries both inputs and the
+block owns the precedence between them. The reference is one port, since
+tracking's `v` and standby's `v` are one mechanism under two conditions. A
+single per-channel status port merging the code and the flag was weighed
+and rejected: it would encode a directional value and a flag in one
+enumeration and push the precedence into a junction in every mode-switched
+model. The flag reads true in command, so a selector among parallel paths
+publishes one-hot flags that every block wires directly, and a block nobody
+has selected sits in standby. It is at the output's shape like the code,
+one flag per channel, so a multi-output tracker can hand one channel to the
+pilot while the law keeps the others; a model whose mode is one flag
+broadcasts it.
 
-While not engaged the integral term absorbs the proportional and derivative
-terms and `u_raw` converges to `v` at rate `1/Tt`, so at engagement the
-output equals the selected command and the transfer is bumpless. The error
-is gated off in standby on purpose: with it left in, `u_raw` settles at
-`v + Tt Ki e`, a bias the switchover then pays. The probe in
-`lqr_tracker.md` section 7 measured both, a bump of `1.92` with the error
-left in against `0.002` with it gated off and `Tt = 0.1`. A standby block
-also chases a moving target with lag `Tt`, since `v` and its own
-proportional term both move while another block flies the plant, so the
-standby `Tt` is short. On the discrete tier `Tt = 0` follows exactly, which
-is the FlightPhysics reset applied every tick. `Tt = Inf` follows nothing,
-so `standby = true` with a fixed infinite `Tt` is refused at construction;
-a scheduled `Tt` is the model's to keep finite.
-
-The axis changes the law only through the gate and the reference, so the
-blocks become `PID{V, Hold, Track, Standby, Fixed}` and its discrete twin,
-with `engaged` an ordinary input: a feedthrough edge like every other, since
-`u` is stage 2, and a `Bool` that a mode publishes flips on a boundary. The
-C172's outer PIDs are then `hold = true, standby = true`, holding on the
+The fold changes the law only through the gate and the reference, so the
+blocks are `PID{V, Hold, Track, Fixed}` and its discrete twin, with
+`engaged` an ordinary input: a feedthrough edge like every other, since `u`
+is stage 2, and a `Bool` that a mode publishes flips on a boundary. The
+C172's outer PIDs are then `hold = true, tracking = true`, holding on the
 inner code while engaged and following the selected command while not, and
-the trackers are `standby = true` alone. Simulink's PID block serves both
-needs from one `TR` port and one switch, and Foundation Fieldbus from its
-`MAN`, `AUTO` and `CAS` modes; this design keeps the three axes apart
-because each changes the law in one place.
+the trackers the same with a constant zero code. Simulink's PID block
+serves both needs from one `TR` port and one switch, and Foundation Fieldbus
+from its `MAN`, `AUTO` and `CAS` modes; this design keeps the hold's two
+inputs apart from the reference because they come from different sources.
 
 **The discrete saturation output.** `DiscretePID` publishes `saturated`,
 the `Int8` code of its own clamp, from stage 1 off a store field of the same
@@ -563,7 +610,9 @@ flight-stack precedents for a signed limit status reported up a cascade.
 [d-210]: ../decisions.md#d-210--tighten-the-input-boundary-class-uniform-face-uniqueness-and-no-empty-routing
 [d-231]: ../decisions.md#d-231--require-isbits-store-values-checked-at-build
 [d-313]: ../decisions.md#d-313--admit-a-library-block-by-judgement-against-three-guidelines
+[d-383]: ../decisions.md#d-383--admit-the-lqr-tracker-with-a-standby-axis-and-a-discrete-saturation-code-on-the-controller-blocks
 [d-384]: ../decisions.md#d-384--publish-the-discrete-controllers-saturation-code-as-saturated
+[d-385]: ../decisions.md#d-385--two-controller-axes-the-hold-with-two-inputs-and-the-tracking-reference
 [s10-4]: ../spec.md#104-localization-mechanics
 [s10-5]: ../spec.md#105-multi-rate-tick-scheduling
 [s13-7]: ../spec.md#137-tooling-consequences-face-routes-and-the-component-library
