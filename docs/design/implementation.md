@@ -144,8 +144,14 @@ The standard component library, the submodule `Redstone.Blocks`:
   `engaged_reference`, over `PIDBlock{V, Hold, Track, Standby, Fixed}` over
   `Real` and static vectors, carrying `signal_ports`, `u_types`, `y_types` and
   `parameters`, over `PID` and `DiscretePID`, with the marker `AsPort`, the
-  roster `PID_PARAMETERS` and the helpers `fixed_parameters` and
+  roster `PID_PARAMETERS` and the helpers `shape_type`, `fixed_parameters` and
   `check_standby` (D-313, D-383, D-384).
+- `LQRTrackerBlock{NX, NU, NZ, Hold, Track, Standby, Fixed}`, a
+  `ControllerBlock`, carrying `signal_ports`, `u_types`, `y_types` and
+  `parameters`, over `LQRTracker` and `DiscreteLQRTracker`, with the roster
+  `LQR_PARAMETERS`, the helpers `parameter_types`, `tracker_sizes` and
+  `check_shapes`, and `fixed_parameters` and `check_standby` shared with the
+  PID (D-383, D-384).
 - `StateSpace` with the helper `static_system`, over scalar or `SVector` ports
   by its matrix shapes, its feedthrough class the type parameter `FT`, and
   `TransferFunction`, realized by `realize` into a held `StateSpace` (D-313).

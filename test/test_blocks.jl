@@ -5,9 +5,10 @@
 # the noise, the time source, the stop-gradient, the stop request, the
 # integrator, the lag, the state space, the transfer function, their discrete
 # twins, the step, the limited integrator, the relay, the PID and its discrete
-# twin, the PID assembled from blocks, and the loops built from them alone. The
-# models are built at top level, like the fixtures they reuse: `RealEntry`,
-# `PinnedEntry` and `requested` are test_build.jl's.
+# twin, the PID assembled from blocks, the LQR tracker and its discrete twin,
+# and the loops built from them alone. The models are built at top level, like
+# the fixtures they reuse: `RealEntry`, `PinnedEntry` and `requested` are
+# test_build.jl's.
 
 # One gate over three `Constant` sources, at the given input values.
 gate_model(gate, (a, b, c)) =
@@ -464,6 +465,58 @@ function cascade_frames(model, n)
      for _ in 1:n]
 end
 
+# The tracker's plant, `D = 0` so `out` is stage 1: with `B = C = I`, `K_fbk = I`
+# gives `K_fwd = -A + K_fbk` and the closed loop `A - K_fbk`, both exact.
+tracker_plant() = StateSpace(A = [0 1; -2 -3], B = [1 0; 0 1], C = [1 0; 0 1])
+
+# The tracker's gains, the trims apart from each other and from zero.
+tracker_gains() = (K_fbk = [1.0 0; 0 1], K_fwd = [1.0 -1; 2 4], K_int = [0.5 0; 0 0.25], x_trim = [0.1, -0.2],
+                   u_trim = [0.3, 0.4], z_trim = [0.5, 0.6], Tt = 1.0, u_min = -1.0, u_max = 1.0)
+
+# `tracker_gains()` about the plant's origin, with no trims and no limits.
+function tracker_loop_gains()
+    (; K_fbk, K_fwd, K_int, Tt) = tracker_gains()
+    (; K_fbk, K_fwd, K_int, Tt)
+end
+
+# The tracker closing the loop on `tracker_plant()`: `plant/out` is both `x`
+# and `z`, and `u` plus a constant disturbance drives the plant. With
+# `stepped`, a step to `(1, 0.5)` at 0.5 drives `z_ref`; without, `z_ref` is
+# the root input.
+function tracker_loop(controller; disturbance = SVector(0.0, 0.0), stepped = true)
+    wires = Pair{String, String}[
+        "plant/out" => "controller/x", "plant/out" => "controller/z", "controller/u" => "sum/in1",
+        "disturbance/out" => "sum/in2", "sum/out" => "plant/in"]
+    stepped && push!(wires, "reference/out" => "controller/z_ref")
+    blocks = (controller = controller, disturbance = Constant(disturbance),
+              sum = SumJunction{SVector{2, Float64}, 2}(), plant = tracker_plant())
+    Group(merge(blocks, stepped ? (reference = Step(t_step = 0.5, before = SVector(0.0, 0.0), after = SVector(1.0, 0.5)),) : (;));
+          input_wires = stepped ? () : ("z_ref" => "controller/z_ref",), local_wires = Tuple(wires))
+end
+
+# A loop's plant state at `t_end`, run at `h = 1//100`.
+plant_state(model, t_end) = last(loop_samples(sim -> state(sim, "plant").q, model, t_end))
+
+# `tracker_loop` without the step, linearized about the origin at the states
+# `state_taps` and the root input `z_ref`.
+function tracker_linearization(controller, state_taps)
+    sim = Simulation(tracker_loop(controller; stepped = false); h = 1//100)
+    init!(sim, fragment(u = (z_ref = SVector(0.0, 0.0),)))
+    linearize(sim, taps(x = state_taps, u = (z_ref1 = get_input("z_ref[1]"), z_ref2 = get_input("z_ref[2]"))))
+end
+
+# A tracker whose input `name`, `z_ref` or `v`, is a memoryless function of its
+# own `u`: the identity for `z_ref`, a clamp for `v`, with `z_ref` then constant.
+function tracker_cycle(controller, name)
+    wires = Pair{String, String}[
+        "plant/out" => "controller/x", "plant/out" => "controller/z", "controller/u" => "plant/in",
+        "controller/u" => "feedback/in1", "feedback/out" => "controller/$name"]
+    name === :v && push!(wires, "reference/out" => "controller/z_ref")
+    Group((plant = tracker_plant(), controller = controller, reference = Constant(SVector(1.0, 0.5)),
+           feedback = Junction{SVector{2, Float64}, SVector{2, Float64}, 1}(name === :v ? (u -> clamp.(u, -1.0, 1.0)) : identity));
+          local_wires = Tuple(wires))
+end
+
 function test_blocks()
     @testset "the junction's arity and port types come from its type (§13.7, D-311)" begin
         @test u_types(Or{3}()) == (in1 = Bool, in2 = Bool, in3 = Bool)
@@ -831,6 +884,7 @@ function test_blocks()
                       pid_cascade(DiscretePID(Kp = 0.5, Ki = 0.1, Tt = 2.0, hold = true, tracking = true);
                                   hold = true, tracking = true),
                       discrete_pid_cascade(hold = true),
+                      tracker_loop(DiscreteLQRTracker(; tracker_loop_gains()...)),
                       noise_model(GaussianWhiteNoise(seed = 42, σ = 1.0)),
                       noise_model(GaussianWhiteNoise(seed = 7, μ = SVector(1.0, -1.0), σ = SVector(1.0, 2.0)))))...,
                  (standby_siblings(standby_pid, standby_pid, DiscreteIntegrator(); delay = true), (mode = false,)))
@@ -1876,6 +1930,161 @@ function test_blocks()
         @test maximum(frame -> frame.q, free) - maximum(frame -> frame.q, held) ≈ 1.2635695014151755 atol = 1e-9    # 6.26 against 5.00
     end
 
+    @testset "the tracker's ports and parameters follow its sizes and its three axes (§13.7, D-383)" begin
+        signals = (x = SVector{2, Float64}, z = SVector{2, Float64}, z_ref = SVector{2, Float64})
+        @test u_types(LQRTracker(; tracker_gains()...)) == signals
+        @test u_types(LQRTracker(; tracker_gains()..., hold = true, tracking = true, standby = true)) ==
+              merge(signals, (saturation = SVector{2, Int8}, v = SVector{2, Float64}, engaged = Bool))
+        @test u_types(DiscreteLQRTracker(; tracker_gains()..., standby = true)) ==
+              merge(signals, (v = SVector{2, Float64}, engaged = Bool))
+        @test y_types(LQRTracker(; tracker_gains()...)) == (u = SVector{2, Float64}, u_raw = SVector{2, Float64})
+        @test y_types(DiscreteLQRTracker(; tracker_gains()...)) ==
+              (u = SVector{2, Float64}, u_raw = SVector{2, Float64}, saturated = SVector{2, Int8})
+        @test LQRTracker(; tracker_gains()...) isa LQRTracker{2, 2, 2, false, false, false}
+        @test DiscreteLQRTracker(; tracker_gains()..., hold = true) isa
+              Redstone.Blocks.LQRTrackerBlock{2, 2, 2, true, false, false}
+        @test LQRTracker(; tracker_gains()..., standby = true) isa Redstone.Blocks.ControllerBlock{false, false, true}
+        @test u_types(LQRTracker(; tracker_gains()..., K_fbk = AsPort())).K_fbk === SMatrix{2, 2, Float64, 4}
+        @test keys(u_types(LQRTracker(; tracker_gains()..., K_int = AsPort(), u_min = AsPort(),
+                                      hold = true, tracking = true, standby = true))) ==
+              (:x, :z, :z_ref, :saturation, :v, :engaged, :K_int, :u_min)
+        # No value carries a size, so the refusal names the explicit spelling,
+        # which takes them.
+        err = failure(() -> LQRTracker(K_fbk = AsPort(), K_fwd = AsPort(), K_int = AsPort()))
+        @test err isa ArgumentError && occursin("`LQRTracker{NX, NU, NZ}(; …)`", err.msg)
+        err = failure(() -> DiscreteLQRTracker(K_fbk = AsPort(), K_fwd = AsPort(), K_int = AsPort()))
+        @test err isa ArgumentError && occursin("`DiscreteLQRTracker{NX, NU, NZ}(; …)`", err.msg)
+        explicit = LQRTracker{3, 2, 2}(K_fbk = AsPort(), K_fwd = AsPort())
+        @test u_types(explicit).x === SVector{3, Float64}
+        @test u_types(explicit).K_fbk === SMatrix{2, 3, Float64, 6}
+        @test build(explicit) isa Build
+        # The sizes are read off `K_fbk` first, so the misfit is `K_fwd`.
+        err = failure(() -> LQRTracker(K_fbk = [1.0 0; 0 1], K_fwd = ones(3, 2)))
+        @test err isa ArgumentError && occursin("`K_fwd` is 3×2", err.msg)
+        @test_throws ArgumentError LQRTracker(; tracker_gains()..., x_trim = [0.1, -0.2, 0.3])
+        @test_throws ArgumentError LQRTracker(; tracker_gains()..., u_max = [1.0, 2.0, 3.0])
+        @test_throws ArgumentError LQRTracker(; tracker_gains()..., Tt = Inf, standby = true)
+        @test_throws ArgumentError DiscreteLQRTracker(; tracker_gains()..., Tt = SVector(1.0, Inf), standby = true)
+        @test build(LQRTracker(; tracker_gains()..., Tt = AsPort(), standby = true)) isa Build
+        @test fieldnames(typeof(LQRTracker(; tracker_gains()..., K_int = AsPort()).fixed)) ==
+              (:K_fbk, :K_fwd, :x_trim, :u_trim, :z_trim, :Tt, :u_min, :u_max)
+        @test LQRTracker(; tracker_gains()..., Tt = SVector(1.0, 2.0)).fixed.Tt === SVector(1.0, 2.0)
+        @test LQRTracker(; tracker_gains()...).fixed.u_max === SVector(1.0, 1.0)
+        @test LQRTracker(K_fbk = [1.0 0; 0 1], K_fwd = [1.0 -1; 2 4]).fixed.K_int === zero(SMatrix{2, 2, Float64, 4})
+    end
+
+    @testset "the tracker's law is the feedforward, the feedback and the gated integral, on both tiers (§13.7, D-383)" begin
+        # `u_raw = u_trim + K_fwd (0.4, -0.4) - (0.2, 0.3) + q = (0.95, -0.75)`, clamped
+        # to `u = (0.95, -0.7)`; the integrator input `K_int (0.5, -0.5)` is
+        # `(0.25, -0.125)`, and the correction reads `(0, 0.05) / Tt` against `u` or
+        # `(-0.75, 0.45) / Tt` against `v`. `Tt = 2` and `u_min = -0.7` keep every
+        # term apart. The code `(1, 0)` gates channel 1, whose input is positive,
+        # `(0, -1)` channel 2, and `(-1, 0)` neither. The update writes `(0, -1)`.
+        # The second pass schedules `K_int` and `u_min`, their values moved into `u`.
+        gains = merge(tracker_gains(), (Tt = 2.0, u_min = -0.7))
+        signals = (x = SVector(0.3, 0.1), z = SVector(0.4, 0.7), z_ref = SVector(0.9, 0.2))
+        v = SVector(0.2, -0.3)
+        x = (q = SVector(0.05, -0.05),)
+        s = (q = SVector(0.05, -0.05), saturated = zero(SVector{2, Int8}))
+        Δt = 0.01
+        for (hold, tracking, standby, axis_inputs, q_deriv, q_next) in
+                ((false, false, false, (;), SVector(0.25, -0.1), SVector(0.0525, -0.05100062395963412)),
+                 (true, false, false, (saturation = SVector{2, Int8}(1, 0),), SVector(0.0, -0.1),
+                  SVector(0.05, -0.05100062395963412)),    # the gate holds channel 1
+                 (true, false, false, (saturation = SVector{2, Int8}(-1, 0),), SVector(0.25, -0.1),
+                  SVector(0.0525, -0.05100062395963412)),
+                 (true, false, false, (saturation = SVector{2, Int8}(0, -1),), SVector(0.25, 0.025),
+                  SVector(0.0525, -0.049750623959634116)),    # and channel 2
+                 (false, true, false, (; v), SVector(-0.125, 0.1), SVector(0.04875935939451174, -0.049005615636707044)),
+                 (true, true, false, (saturation = SVector{2, Int8}(1, 0), v), SVector(-0.375, -0.1),
+                  SVector(0.046259359394511736, -0.05100062395963412)),    # the fallback in channel 2
+                 (false, false, true, (; v, engaged = true), SVector(0.25, -0.1), SVector(0.0525, -0.05100062395963412)),
+                 (false, false, true, (; v, engaged = false), SVector(-0.375, 0.225),
+                  SVector(0.046259359394511736, -0.04775561563670704)),    # standby follows `v`
+                 (true, false, true, (saturation = SVector{2, Int8}(1, 0), v, engaged = false), SVector(-0.375, 0.225),
+                  SVector(0.046259359394511736, -0.04775561563670704))),
+                (scheduled, scheduled_values) in
+                (((;), (;)),
+                 ((K_int = AsPort(), u_min = AsPort()), (K_int = SMatrix{2, 2}(0.5, 0.0, 0.0, 0.25), u_min = SVector(-0.7, -0.7))))
+            u = merge(signals, axis_inputs, scheduled_values)
+            controller = LQRTracker(; gains..., scheduled..., hold, tracking, standby)
+            outputs = y_direct(controller, (; x, u))
+            @test outputs.u_raw ≈ SVector(0.95, -0.75) atol = 1e-12
+            @test outputs.u ≈ SVector(0.95, -0.7) atol = 1e-12
+            @test x_deriv(controller, (; x, u, y = outputs)).q ≈ q_deriv atol = 1e-12
+            controller = DiscreteLQRTracker(; gains..., scheduled..., hold, tracking, standby)
+            outputs = y_direct(controller, (; s, u, Δt))
+            @test outputs.u_raw ≈ SVector(0.95, -0.75) atol = 1e-12
+            @test outputs.u ≈ SVector(0.95, -0.7) atol = 1e-12
+            updated = s_update(controller, (; s, u, y = outputs, Δt))
+            @test updated.q ≈ q_next atol = 1e-12
+            @test updated.saturated === SVector{2, Int8}(0, -1)
+        end
+        @test y_state(DiscreteLQRTracker(; tracker_gains()...), (; s = (q = s.q, saturated = SVector{2, Int8}(1, -1)))) ==
+              (saturated = SVector{2, Int8}(1, -1),)
+        @test Redstone.has_stage(y_state, DiscreteLQRTracker(; tracker_gains()...))
+        @test !Redstone.has_stage(y_state, LQRTracker(; tracker_gains()...))
+    end
+
+    @testset "the tracker closes the loop on the linear plant: zero error by the feedforward, the designed closed loop under `linearize`, and the integral action against a disturbance (§13.7, §14.10, D-383)" begin
+        # `K_fwd = -A + K_fbk`, so the feedforward alone holds `z = z_ref`. The
+        # closed loop `A - K_fbk` has its poles at -2 and -3, and with `K_int` the
+        # slowest pole is at -0.069, so the integral loop is read at `t = 200`.
+        integral = tracker_loop_gains()
+        plain = merge(integral, (K_int = zeros(2, 2),))
+        target = SVector(1.0, 0.5)
+        disturbance = SVector(0.2, -0.1)
+        @test plant_state(tracker_loop(LQRTracker(; plain...)), 20) ≈ target atol = 1e-6
+        # `target + (A - K_fbk) \ (-disturbance)`.
+        @test plant_state(tracker_loop(LQRTracker(; plain...); disturbance), 20) ≈
+              SVector(1.1166666666666667, 0.4166666666666667) atol = 1e-6
+        @test plant_state(tracker_loop(LQRTracker(; integral...); disturbance), 200) ≈ target atol = 1e-6
+        plant_taps = (x1 = get_state("plant", "q[1]"), x2 = get_state("plant", "q[2]"))
+        linearization = tracker_linearization(LQRTracker(; plain...), plant_taps)
+        @test isapprox(linearization.A, [-1.0 1.0; -2.0 -4.0]; atol = 1e-12)
+        @test isapprox(linearization.B, [1.0 -1.0; 2.0 4.0]; atol = 1e-12)
+        linearization = tracker_linearization(LQRTracker(; integral...),
+                                              merge(plant_taps, (q1 = get_state("controller", "q[1]"),
+                                                                 q2 = get_state("controller", "q[2]"))))
+        @test isapprox(linearization.A, [-1.0 1.0 1.0 0.0; -2.0 -4.0 0.0 1.0; -0.5 0.0 0.0 0.0; 0.0 -0.25 0.0 0.0];
+                       atol = 1e-12)
+        @test isapprox(linearization.B, [1.0 -1.0; 2.0 4.0; 0.5 0.0; 0.0 0.25]; atol = 1e-12)
+        @test plant_state(tracker_loop(DiscreteLQRTracker(; plain...)), 20) ≈ target atol = 1e-6
+        # The step lifts `u_raw[1]` to 0.5 at once; the code is written at that
+        # tick and published at the next.
+        sim = Simulation(tracker_loop(DiscreteLQRTracker(; plain..., u_max = SVector(0.4, Inf))); h = 1//100)
+        init!(sim, fragment())
+        samples = [(step!(sim; frames = 1);
+                    (u_raw = port(sim, "controller", :u_raw), saturated = port(sim, "controller", :saturated)))
+                   for _ in 1:100]
+        first_saturated = findfirst(sample -> sample.u_raw[1] > 0.4, samples)
+        @test samples[first_saturated].saturated === SVector{2, Int8}(0, 0)
+        @test samples[first_saturated + 1].saturated === SVector{2, Int8}(1, 0)
+        for block_type in (LQRTracker, DiscreteLQRTracker)
+            @test build(tracker_loop(block_type(; integral...)); activations = (Float64, LinearizeDual)) isa Build
+        end
+    end
+
+    @testset "a reference or a tracking input wired from the tracker's own output closes a cycle, real where it enters the direct law (§5.4, §13.8)" begin
+        # `z_ref` enters `u_raw`, so its hop holds on both tiers. `v` reaches the
+        # derivative alone, so the continuous hop is dead, where a discrete member
+        # traces structurally.
+        gains = tracker_loop_gains()
+        for block_type in (LQRTracker, DiscreteLQRTracker)
+            d = only(diagnostics(failure(() -> build(tracker_cycle(block_type(; gains...), :z_ref)))))
+            @test d isa AlgebraicCycle && d.classification === :real
+            @test isempty(d.dead)
+            @test d.wires == ["controller/u" => "feedback/in1", "feedback/out" => "controller/z_ref"]
+        end
+        d = only(diagnostics(failure(() -> build(tracker_cycle(LQRTracker(; gains..., tracking = true), :v)))))
+        @test d isa AlgebraicCycle && d.classification === :artificial
+        @test d.dead == [("controller", :v, :u)]
+        @test d.wires == ["controller/u" => "feedback/in1", "feedback/out" => "controller/v"]
+        d = only(diagnostics(failure(() -> build(tracker_cycle(DiscreteLQRTracker(; gains..., tracking = true), :v)))))
+        @test d isa AlgebraicCycle && d.classification === :real
+        @test isempty(d.dead)
+    end
+
     @testset "every keyword constructor builds a `Float64` block from integer keywords, and a flag keyword or a misfit shape refuses one (§7.2)" begin
         @test Integrator(x0 = 1) isa Integrator{Float64}
         @test FirstOrderLag(τ = 1, x0 = 1) isa FirstOrderLag{Float64}
@@ -1908,6 +2117,10 @@ function test_blocks()
         @test PID(Kp = AsPort(), Ki = AsPort(), Kd = AsPort(), τd = AsPort(), Tt = AsPort(), u_min = AsPort(),
                   u_max = AsPort(), b = AsPort(), c = AsPort()).fixed === (;)
         @test u_types(PID(Kp = SVector(1.0, 2.0), Ki = AsPort())).Ki === SVector{2, Float64}
+        @test LQRTracker(K_fbk = [1 0; 0 1], K_fwd = [1 -1; 2 4]) isa LQRTracker{2, 2, 2, false, false, false}
+        @test DiscreteLQRTracker(K_fbk = [1 0; 0 1], K_fwd = [1 -1; 2 4]) isa DiscreteLQRTracker{2, 2, 2, false, false, false}
+        @test all(v -> eltype(v) === Float64, values(LQRTracker(K_fbk = [1 0; 0 1], K_fwd = [1 -1; 2 4]).fixed))
+        @test LQRTracker(K_fbk = [1 0; 0 1], K_fwd = [1 -1; 2 4], u_max = 1).fixed.u_max === SVector(1.0, 1.0)
         @test StateSpace(A = [-1;;], B = [1;;], C = [1;;]) isa StateSpace{1, 1, 1, false}
         @test StateSpace(A = [-1;;], B = [1;;], C = [1;;], x0 = 1).x0 === SVector(1.0)
         @test TransferFunction(num = (1,), den = (1, 2)) isa TransferFunction{1, false}
@@ -1938,7 +2151,8 @@ function test_blocks()
                                                    u_min = -1.0, u_max = 1.0)),
                       pid_servo_loop(PID(Kp = 1.0, Ki = 0.5, Kd = 0.2, τd = 0.1, Tt = 1.0, tracking = true)),
                       pid_cascade(PID(Kp = 0.5, Ki = 0.1, Tt = 2.0, hold = true, tracking = true);
-                                  hold = true, tracking = true))
+                                  hold = true, tracking = true),
+                      tracker_loop(LQRTracker(; tracker_loop_gains()...)))
             sim = Simulation(model; h = 1//10)
             bodies = phase_bodies(sim)
             for name in (:sweep_1, :sweep_2, :rhs, :ticks)
@@ -1989,6 +2203,8 @@ function test_blocks()
                      PID(Kp = SVector(1.0, 2.0), hold = true, tracking = true),
                      DiscretePID(Kp = SVector(1.0, 2.0), hold = true, tracking = true),
                      PID(Kp = AsPort(), b = 0.5, c = 1.0), DiscretePID(Kp = 1.0, Ki = AsPort(), Tt = AsPort()),
+                     LQRTracker(; tracker_gains()..., hold = true, tracking = true, standby = true),
+                     DiscreteLQRTracker(; tracker_gains()..., Tt = 0.0, hold = true, tracking = true, standby = true),
                      GaussianWhiteNoise(seed = 1, σ = 1.0),
                      GaussianWhiteNoise(seed = 7, μ = SVector(1.0, -1.0), σ = SVector(1.0, 2.0)),
                      Group((; k = Constant(1.0))))

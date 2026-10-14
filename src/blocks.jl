@@ -1096,12 +1096,19 @@ y_types(::PIDBlock{V}) where {V} = (u = V, u_raw = V)
 # No port name is a parameter name, so the whole input bundle merges.
 parameters(c::PIDBlock, u) = NamedTuple{PID_PARAMETERS}(merge(c.fixed, u))
 
-# The shape of the keywords given as values, the sum of their `zero`s, and those
-# keywords broadcast to it, in roster order; `AsPort()` keywords are left out.
-function fixed_parameters(given::NamedTuple{PID_PARAMETERS})
-    fixed_names = filter(name -> given[name] !== AsPort(), PID_PARAMETERS)
-    shape = Float64.(reduce((a, b) -> a .+ b, map(name -> zero(given[name]), fixed_names); init = 0.0))
-    (shape, NamedTuple{fixed_names}(map(name -> Float64.(given[name] .+ shape), fixed_names)))
+# The type of the PID's shape, the sum of the `zero`s of the keywords given as
+# values; `AsPort()` keywords take no part.
+function shape_type(given)
+    fixed_names = filter(name -> given[name] !== AsPort(), keys(given))
+    typeof(Float64.(reduce((a, b) -> a .+ b, map(name -> zero(given[name]), fixed_names); init = 0.0)))
+end
+
+# The keywords given as values, each broadcast against the zero of its type in
+# `types` and made one, in roster order; `AsPort()` keywords are left out. Every
+# PID parameter's type is the shape's, and the tracker's follow its sizes.
+function fixed_parameters(given::NamedTuple{names}, types::NamedTuple{names}) where {names}
+    fixed_names = filter(name -> given[name] !== AsPort(), names)
+    NamedTuple{fixed_names}(map(name -> types[name](given[name] .+ zero(types[name])), fixed_names))
 end
 
 # Standby follows `v` at rate `1/Tt`, so a `Tt` given infinite in any channel
@@ -1192,8 +1199,10 @@ end
 function PID(; Kp, Ki = 0.0, Kd = 0.0, τd = 0.1, Tt = Inf, u_min = -Inf, u_max = Inf, b = 1.0, c = 0.0,
              hold::Bool = false, tracking::Bool = false, standby::Bool = false)
     check_standby(standby, Tt)
-    shape, fixed = fixed_parameters((; Kp, Ki, Kd, τd, Tt, u_min, u_max, b, c))
-    PID{typeof(shape), hold, tracking, standby, typeof(fixed)}(fixed)
+    given = (; Kp, Ki, Kd, τd, Tt, u_min, u_max, b, c)
+    V = shape_type(given)
+    fixed = fixed_parameters(given, map(_ -> V, given))
+    PID{V, hold, tracking, standby, typeof(fixed)}(fixed)
 end
 
 x_init(::PID{V}) where {V} = (q = zero(V), yf = zero(V))
@@ -1283,8 +1292,10 @@ end
 function DiscretePID(; Kp, Ki = 0.0, Kd = 0.0, τd = 0.1, Tt = Inf, u_min = -Inf, u_max = Inf, b = 1.0, c = 0.0,
                      hold::Bool = false, tracking::Bool = false, standby::Bool = false)
     check_standby(standby, Tt)
-    shape, fixed = fixed_parameters((; Kp, Ki, Kd, τd, Tt, u_min, u_max, b, c))
-    DiscretePID{typeof(shape), hold, tracking, standby, typeof(fixed)}(fixed)
+    given = (; Kp, Ki, Kd, τd, Tt, u_min, u_max, b, c)
+    V = shape_type(given)
+    fixed = fixed_parameters(given, map(_ -> V, given))
+    DiscretePID{V, hold, tracking, standby, typeof(fixed)}(fixed)
 end
 
 s_init(::DiscretePID{V}) where {V} = (q = zero(V), yf = zero(V), saturated = zero(saturation_type(V)))
@@ -1301,6 +1312,278 @@ function s_update(c::DiscretePID, (; s, u, y, Δt))
     β = -expm1.(-Δt ./ p.Tt)
     (q  = s.q + Δt .* p.Ki .* gated_error(c, u.r - u.y, u) + β .* (correction_reference(c, u, y) - y.u_raw),
      yf = s.yf + Δt .* (u.y - p.c .* u.r - s.yf) ./ (p.τd .+ Δt),
+     saturated = saturation_code.(y.u_raw, p.u_min, p.u_max))
+end
+
+# --- the LQR tracker (§13.7, §5.4, D-383) ---------------------------------------
+
+# The tracker's parameters, in the order `Fixed` and `parameters` lay them out.
+const LQR_PARAMETERS = (:K_fbk, :K_fwd, :K_int, :x_trim, :u_trim, :z_trim, :Tt, :u_min, :u_max)
+
+"""
+    LQRTrackerBlock{NX, NU, NZ, Hold, Track, Standby, Fixed}
+
+The supertype of the two LQR trackers, `LQRTracker` on the continuous tier and
+`DiscreteLQRTracker` on the discrete one, a `ControllerBlock` over the three
+axes. `NX`, `NU` and `NZ` are the sizes of the plant state, the control input
+and the command variables. It carries what their law shares past the gate and
+the reference: the ports picked by the axes and by the scheduled parameters,
+the outputs and the parameters' fetch, while each block carries its field
+`fixed`, its store and its stages. `Fixed` is the `NamedTuple` type of the
+parameters given as values, in `LQR_PARAMETERS` order.
+"""
+abstract type LQRTrackerBlock{NX, NU, NZ, Hold, Track, Standby, Fixed} <: ControllerBlock{Hold, Track, Standby} end
+
+# The nine parameters' types at the sizes, in roster order, each matrix with its
+# length.
+parameter_types(NX, NU, NZ) =
+    NamedTuple{LQR_PARAMETERS}((SMatrix{NU, NX, Float64, NU * NX}, SMatrix{NU, NZ, Float64, NU * NZ},
+                                SMatrix{NU, NZ, Float64, NU * NZ},
+                                SVector{NX, Float64}, SVector{NU, Float64}, SVector{NZ, Float64},
+                                SVector{NU, Float64}, SVector{NU, Float64}, SVector{NU, Float64}))
+
+# The methods both blocks share live here: `signal_ports`, `u_types`, `y_types`
+# and the parameters' fetch. `DiscreteLQRTracker` adds its code to `y_types`.
+signal_ports(c::LQRTrackerBlock{NX, NU, NZ}) where {NX, NU, NZ} =
+    merge((x = SVector{NX, Float64}, z = SVector{NZ, Float64}, z_ref = SVector{NZ, Float64}),
+          axis_ports(c, SVector{NU, Int8}, SVector{NU, Float64}))
+function u_types(c::LQRTrackerBlock{NX, NU, NZ}) where {NX, NU, NZ}
+    scheduled = filter(∉(keys(c.fixed)), LQR_PARAMETERS)
+    merge(signal_ports(c), NamedTuple{scheduled}(map(name -> parameter_types(NX, NU, NZ)[name], scheduled)))
+end
+y_types(::LQRTrackerBlock{NX, NU}) where {NX, NU} = (u = SVector{NU, Float64}, u_raw = SVector{NU, Float64})
+# The nine parameters in roster order, each from the field or from its port.
+# No port name is a parameter name, so the whole input bundle merges.
+parameters(c::LQRTrackerBlock, u) = NamedTuple{LQR_PARAMETERS}(merge(c.fixed, u))
+
+# The sizes the values given carry, read off `K_fbk` first, then `K_fwd`,
+# `K_int` and the trims; a keyword given as `AsPort()` or left out carries none.
+function tracker_sizes(block_name, given)
+    function extent(name, axis)
+        value = get(given, name, AsPort())
+        value isa AbstractArray ? size(value, axis) : nothing
+    end
+    sizes = (NX = something(extent(:K_fbk, 2), extent(:x_trim, 1), Some(nothing)),
+             NU = something(extent(:K_fbk, 1), extent(:K_fwd, 1), extent(:K_int, 1), extent(:u_trim, 1),
+                            Some(nothing)),
+             NZ = something(extent(:K_fwd, 2), extent(:K_int, 2), extent(:z_trim, 1), Some(nothing)))
+    for size_name in keys(sizes)
+        sizes[size_name] === nothing && throw(ArgumentError(
+            "no keyword given as a value carries `$size_name`; " *
+            "spell the sizes as `$block_name{NX, NU, NZ}(; …)`"))
+    end
+    Tuple(sizes)
+end
+
+# Each value given against its type at the sizes: a matrix or a vector of that
+# size, or a real for the three per-channel parameters, as `static_system` checks.
+function check_shapes(types, given)
+    for name in LQR_PARAMETERS
+        value, shape = given[name], size(types[name])
+        value === AsPort() || value isa Real && name in (:Tt, :u_min, :u_max) ||
+            value isa AbstractArray && size(value) == shape || throw(ArgumentError(
+                "`$name` is $(value isa AbstractArray ? join(size(value), '×') : "a scalar") " *
+                "where $(join(shape, '×')) is needed"))
+    end
+    nothing
+end
+
+"""
+    LQRTracker(; K_fbk, K_fwd, K_int = zeros, x_trim = zeros, u_trim = zeros, z_trim = zeros,
+                 Tt = Inf, u_min = -Inf, u_max = Inf, hold = false, tracking = false, standby = false)
+    LQRTracker{NX, NU, NZ}(; K_fbk, K_fwd, …)
+
+The LQR tracker about a trim point, with anti-windup. Inputs `x`, the plant
+state, `z`, the command variables, and `z_ref`, their reference, and two
+outputs from stage 2,
+
+    u_raw = u_trim + K_fwd (z_ref - z_trim) - K_fbk (x - x_trim) + q
+
+and `u`, its clamp to `[u_min, u_max]` per channel. One continuous state, `q`,
+the integral term in output units, one channel per control input. One law
+moves it,
+
+    q̇ = gate(K_int (z_ref - z)) + (ref - u_raw) / Tt
+
+and `PID`'s three type parameters pick its parts over the integrator input
+`e = K_int (z_ref - z)`, channel by channel, each adding inputs:
+
+|         | reference: own `u`           | reference: tracking `v`                                |
+|:------- |:---------------------------- |:------------------------------------------------------ |
+| no hold | `e + (u - u_raw) / Tt`       | `e + (v - u_raw) / Tt`                                 |
+| hold    | `gate(e) + (u - u_raw) / Tt` | `gate(e) + ((saturation == 0 ? u : v) - u_raw) / Tt` |
+| standby | `(v - u_raw) / Tt`           | `(v - u_raw) / Tt`                                     |
+
+`hold = true`, the parameter `Hold`, adds the input `saturation`, a code per
+channel from the path downstream, and gates each channel whose code agrees with
+the sign of its integrator input: `gate(e) = saturation == sign(e) ? 0 : e`.
+`tracking = true`, the parameter `Track`, adds the input `v` as the
+correction's reference in place of the own `u`; with both, `v` is the
+reference in a channel only while its code is nonzero. `standby = true`, the
+parameter `Standby`, adds the `Bool` input `engaged`, and `v` where `tracking`
+has not. While it does not hold, the integrator input is zero and `v` is the
+reference whatever the code, the table's last row, so `u_raw` converges to `v`
+at rate `1/Tt` and engagement is bumpless. The own clamp is the correction's,
+and `Tt = Inf` switches it off; standby with a `Tt` given as a value and
+infinite in any channel is refused with an `ArgumentError`, as for `PID`.
+
+The ports are static vectors at every size: `x` at `SVector{NX, Float64}`, `z`
+and `z_ref` at `SVector{NZ, Float64}`, `u`, `u_raw` and `v` at
+`SVector{NU, Float64}`, `saturation` at `SVector{NU, Int8}`, and `engaged` one
+`Bool` for every channel.
+
+The nine parameters, in `LQR_PARAMETERS` order: `K_fbk`, `NU × NX`, and `K_fwd`
+and `K_int`, `NU × NZ`, each any `AbstractMatrix` of reals stored as a static
+matrix of `Float64`; `x_trim`, `u_trim` and `z_trim`, vectors of length `NX`,
+`NU` and `NZ`; and `Tt`, `u_min` and `u_max` per channel, each a real broadcast
+to an `SVector{NU, Float64}` or a vector of length `NU`. Integer entries
+qualify. `K_int` and the trims default to zero, and a zero `K_int` is the
+tracker without integral action. Any of the nine may be an input port in place
+of a field, spelled `K_fbk = AsPort()` and typed as the field would be, an
+`SMatrix{NU, NX, Float64, NU * NX}` for `K_fbk`. That is how a gain schedule
+reaches the block: under a `Dual` activation the port carries partials, and a
+model that wants it frozen at its nominal value routes it through `Freeze`.
+
+The keyword constructor reads `NX`, `NU` and `NZ` off the values given,
+`K_fbk` first, then `K_fwd`, `K_int` and the trims, and refuses with an
+`ArgumentError` a matrix or a vector that does not fit the sizes read. A size
+no value carries, every carrier a port or left at its default, is refused
+likewise, naming the explicit spelling `LQRTracker{NX, NU, NZ}(; …)`, which
+takes the sizes and the same keywords.
+
+`u` is a stage-2 output, so every input makes a feedthrough edge, whether
+`y_direct` reads it or not. An `x` assembled from what the plant publishes from
+state, and a `z` selected from the same, close no loop. A `z_ref` computed
+memorylessly from the block's own `u` closes an `AlgebraicCycle` classified
+real, since the direct law reads it. A tracking input wired from a memoryless
+clamp of `u` closes one classified artificial, since only the derivative reads
+it, which is why the limits live inside the block. A scheduled parameter
+computed memorylessly from `u` closes a cycle too, artificial for `K_int` and
+`Tt` and real for the others.
+
+The block publishes no saturation code, since a continuous one would need a
+mode and events per channel for a consumer that does not exist. The gains are
+designed outside, from `trim!` and `linearize`. `lqr_tracker.md` gives the
+derivation and the reasoning.
+"""
+struct LQRTracker{NX, NU, NZ, Hold, Track, Standby, Fixed} <:
+       LQRTrackerBlock{NX, NU, NZ, Hold, Track, Standby, Fixed}
+    fixed::Fixed      # the parameters that are not ports, each at its type, in roster order
+end
+function LQRTracker{NX, NU, NZ}(; K_fbk, K_fwd, K_int = zero(SMatrix{NU, NZ, Float64}),
+                                x_trim = zero(SVector{NX, Float64}), u_trim = zero(SVector{NU, Float64}),
+                                z_trim = zero(SVector{NZ, Float64}), Tt = Inf, u_min = -Inf, u_max = Inf,
+                                hold::Bool = false, tracking::Bool = false,
+                                standby::Bool = false) where {NX, NU, NZ}
+    check_standby(standby, Tt)
+    types, given = parameter_types(NX, NU, NZ), (; K_fbk, K_fwd, K_int, x_trim, u_trim, z_trim, Tt, u_min, u_max)
+    check_shapes(types, given)
+    fixed = fixed_parameters(given, types)
+    LQRTracker{NX, NU, NZ, hold, tracking, standby, typeof(fixed)}(fixed)
+end
+LQRTracker(; K_fbk, K_fwd, kw...) =
+    LQRTracker{tracker_sizes("LQRTracker", (; K_fbk, K_fwd, kw...))...}(; K_fbk, K_fwd, kw...)
+
+x_init(::LQRTracker{NX, NU}) where {NX, NU} = (q = zero(SVector{NU, Float64}),)
+function y_direct(c::LQRTracker, (; x, u))
+    p = parameters(c, u)
+    u_raw = p.u_trim + p.K_fwd * (u.z_ref - p.z_trim) - p.K_fbk * (u.x - p.x_trim) + x.q
+    (u = clamp.(u_raw, p.u_min, p.u_max), u_raw = u_raw)
+end
+function x_deriv(c::LQRTracker, (; x, u, y))
+    p = parameters(c, u)
+    (q = gated_error(c, p.K_int * (u.z_ref - u.z), u) + (correction_reference(c, u, y) - y.u_raw) ./ p.Tt,)
+end
+
+"""
+    DiscreteLQRTracker(; K_fbk, K_fwd, K_int = zeros, x_trim = zeros, u_trim = zeros, z_trim = zeros,
+                         Tt = Inf, u_min = -Inf, u_max = Inf, hold = false, tracking = false, standby = false)
+    DiscreteLQRTracker{NX, NU, NZ}(; K_fbk, K_fwd, …)
+
+The LQR tracker on the discrete tier: `LQRTracker`'s parameters, defaults,
+ports, outputs and law, with a store field `q` in place of its continuous
+state, and a second, `saturated`, holding its code. `Δt` is the component's own
+period (§10.5). Inputs `x`, `z` and `z_ref`, and two outputs from stage 2,
+
+    u_raw = u_trim + K_fwd (z_ref - z_trim) - K_fbk (x - x_trim) + q
+
+and `u`, its clamp to `[u_min, u_max]` per channel. Each tick moves the
+integral term by forward Euler and the correction's exact step,
+
+    q⁺ = q + Δt gate(K_int (z_ref - z)) + β (ref - u_raw),    β = 1 - exp(-Δt / Tt)
+
+which reads, over the three type parameters and the integrator input
+`e = K_int (z_ref - z)`, channel by channel:
+
+|         | reference: own `u`           | reference: tracking `v`                                |
+|:------- |:---------------------------- |:------------------------------------------------------ |
+| no hold | `Δt e + β (u - u_raw)`       | `Δt e + β (v - u_raw)`                                 |
+| hold    | `Δt gate(e) + β (u - u_raw)` | `Δt gate(e) + β ((saturation == 0 ? u : v) - u_raw)` |
+| standby | `β (v - u_raw)`              | `β (v - u_raw)`                                        |
+
+`hold` adds the input `saturation` and the gate, `tracking` the input `v`, and
+with both the reference falls back to `u` in each channel whose code is zero,
+as in `LQRTracker`. `standby` adds the input `engaged`, and `v` where
+`tracking` has not: while not engaged the integrator input is zero and `v` is
+the reference, the table's last row, so `u_raw` follows `v`, and a `Tt` given
+infinite in any channel is refused with it. Every `Tt` is stable: `Tt = Inf`
+switches the correction off, and `Tt = 0` is legal and brings `u_raw` to the
+reference by the next tick, so in standby it follows `v` exactly.
+
+The ports, the nine parameters and their types, the `AsPort()` spelling, the
+size inference and the explicit spelling `DiscreteLQRTracker{NX, NU, NZ}(; …)`
+are `LQRTracker`'s, and so are the refusals.
+
+A third output, `saturated`, publishes the `Int8` code of the block's own clamp
+per channel at `SVector{NU, Int8}`: `1` with `u_raw` at or above `u_max`, `-1`
+at or below `u_min` and `0` between. `s_update` writes it to the store from
+`u_raw` at the tick, and `y_state` publishes it from stage 1 at the next, so it
+is one tick stale and flips only on a tick boundary. It serves the hold of an
+outer block in a cascade, wired to its input `saturation`, each channel
+reaching a scalar consumer through `Unpack{Int8, NU}`; the outer integrator
+takes one extra step before the hold engages, and as a stage-1 port the code
+closes no cycle through the outer block's `u`. The block never reads its own
+code, since its own windup is the correction's.
+
+`u` is a stage-2 output, so every input makes a feedthrough edge, as for
+`LQRTracker`. A `z_ref` or a tracking input computed memorylessly from the
+block's own `u` is refused as an `AlgebraicCycle` classified real: a discrete
+member traces structurally (§13.8), so no hop is named dead. A scheduled
+parameter computed memorylessly from `u` closes a cycle likewise.
+`lqr_tracker.md`, sections 4, 6 and 7, gives the reasoning.
+"""
+struct DiscreteLQRTracker{NX, NU, NZ, Hold, Track, Standby, Fixed} <:
+       LQRTrackerBlock{NX, NU, NZ, Hold, Track, Standby, Fixed}
+    fixed::Fixed      # the parameters that are not ports, each at its type, in roster order
+end
+function DiscreteLQRTracker{NX, NU, NZ}(; K_fbk, K_fwd, K_int = zero(SMatrix{NU, NZ, Float64}),
+                                        x_trim = zero(SVector{NX, Float64}), u_trim = zero(SVector{NU, Float64}),
+                                        z_trim = zero(SVector{NZ, Float64}), Tt = Inf, u_min = -Inf, u_max = Inf,
+                                        hold::Bool = false, tracking::Bool = false,
+                                        standby::Bool = false) where {NX, NU, NZ}
+    check_standby(standby, Tt)
+    types, given = parameter_types(NX, NU, NZ), (; K_fbk, K_fwd, K_int, x_trim, u_trim, z_trim, Tt, u_min, u_max)
+    check_shapes(types, given)
+    fixed = fixed_parameters(given, types)
+    DiscreteLQRTracker{NX, NU, NZ, hold, tracking, standby, typeof(fixed)}(fixed)
+end
+DiscreteLQRTracker(; K_fbk, K_fwd, kw...) =
+    DiscreteLQRTracker{tracker_sizes("DiscreteLQRTracker", (; K_fbk, K_fwd, kw...))...}(; K_fbk, K_fwd, kw...)
+
+s_init(::DiscreteLQRTracker{NX, NU}) where {NX, NU} =
+    (q = zero(SVector{NU, Float64}), saturated = zero(SVector{NU, Int8}))
+y_types(::DiscreteLQRTracker{NX, NU}) where {NX, NU} =
+    (u = SVector{NU, Float64}, u_raw = SVector{NU, Float64}, saturated = SVector{NU, Int8})
+y_state(::DiscreteLQRTracker, (; s)) = (saturated = s.saturated,)
+function y_direct(c::DiscreteLQRTracker, (; s, u))
+    p = parameters(c, u)
+    u_raw = p.u_trim + p.K_fwd * (u.z_ref - p.z_trim) - p.K_fbk * (u.x - p.x_trim) + s.q
+    (u = clamp.(u_raw, p.u_min, p.u_max), u_raw = u_raw)
+end
+function s_update(c::DiscreteLQRTracker, (; s, u, y, Δt))
+    p = parameters(c, u)
+    β = -expm1.(-Δt ./ p.Tt)
+    (q = s.q + Δt .* gated_error(c, p.K_int * (u.z_ref - u.z), u) + β .* (correction_reference(c, u, y) - y.u_raw),
      saturated = saturation_code.(y.u_raw, p.u_min, p.u_max))
 end
 
