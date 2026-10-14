@@ -108,8 +108,12 @@ questions q1 and q21, units A to E and F to K), so the reports merge without
 renaming. The orchestrator builds `inbound.tsv` by script before the survey,
 so both halves judge one list; the script stays in `scratch_survey/`.
 
-Then check its key claims yourself, at the cited lines, before ruling on
-them. In chapter 9, six of six held, and in chapter 10, eleven of eleven.
+**The orchestrator reads parts C to G whole, and parts A and D only at a
+cited row.** Parts C, E, F and G carry the moves, the factual problems, the
+hazards and the decisions, which checkpoint 1 answers. Part A, the
+per-section rule table, is the rewriters' reference, and part D the inbound
+check's; in chapter 11 part A alone ran 545 lines. Then check the survey's
+key claims yourself, at the cited lines, before ruling on them. In chapter 9, six of six held, and in chapter 10, eleven of eleven.
 In chapter 8 the claims held, but a correction did not: see checkpoint 1.
 
 **Checkpoint 1: the orchestrator rules on the survey's decisions.** In
@@ -157,18 +161,23 @@ From chapter 5's checkpoint:
 
 ### Step 2: the brief (written by the orchestrator)
 
-Chapter 9's `brief.md` is the model, read with the corrections below. One
-brief serves every unit, and each rewriter reads its slice. It holds:
+The brief has a standing part and a chapter part. The standing part is
+`checks/brief_common.md`: what to read first, the rules for every unit, and
+what a unit produces. It was lifted from chapter 11's brief on 2026-10-14
+with the seven lines that named that chapter generalized, and it holds the
+"the brief should also say" items listed below, so a new lesson that applies
+to every chapter goes there and not into a brief. The chapter part is
+`brief.md`, which the orchestrator writes; chapter 9's is the model for its
+shape, read with the corrections below. It holds:
 
-- what to read first: `spec_style.md`, one finished section as the example
-  (§10.1), and the unit's survey slice `units/<U>/survey.md`;
+- the base commit, the frozen copies and the chapter's survey files;
 - every ruling of checkpoint 1;
-- what may not change, and that factual problems stay as written and go to
-  `rulings.md`;
-- the outputs: `new.md`, `claims.md` (from which `build_inventory.py`
-  writes `inventory.json`), `rulings.md` with fixed headings;
-- the units: their line ranges, their moves, their hazards, and the rulings
-  that reach each.
+- the units: their line ranges, their moves, their hazards, the rulings that
+  reach each, where each starts and ends, and which `####` anchors are linked
+  from elsewhere.
+
+In chapter 11 the standing part was about 155 of the brief's 634 lines, and
+the rulings the orchestrator writes are the rest.
 
 **The slices.** `slice_brief.py` writes `units/<U>/brief.md` with the
 rulings that do not reach U reduced to one-line stubs. It reads two things:
@@ -294,7 +303,8 @@ unit's `old.md`, which its own inventory guarantees.
 
 ### Step 3: rewrite the units in parallel (one Opus agent per unit)
 
-Prompt: read `units/<U>/brief.md` and `units/<U>/survey.md`, follow them,
+Prompt: read `checks/brief_common.md`, `units/<U>/brief.md` and
+`units/<U>/survey.md`, follow them,
 edit nothing outside `units/<U>/`, write `claims.md`, and run
 `python3 checks/build_inventory.py chNN <U>` until it prints
 `checks failed: 0`. In chapter 11 eight of nine rewriters wrote their own
@@ -326,7 +336,13 @@ lists had 71 to 132; the Opus lists split some clauses and merged some
 sentences, and the splitter does neither.
 
 Route each fix list back to the **same rewriter**, then the fixes back to the
-**same verifier** for a re-check. Never skip the re-check. In chapter 9,
+**same verifier** for a re-check. Never skip the re-check. **Route by path.**
+The verifier writes its fix list to `units/<U>/verify.md` and replies with
+the counts and its open questions; the orchestrator forwards the path to the
+rewriter without reading the list, since it never rules on a fix, and the
+open questions reach the consolidator through `rulings.md` and the
+verifier's report. The orchestrator reads a fix list only when the counts
+look wrong for the unit. In chapter 9,
 fixes broke something new three times: a cause clause fell off in a pointer,
 a citation's scope shrank, an "its" changed antecedent.
 
@@ -404,10 +420,19 @@ agent from chapter 12: it merges and sources, and the orchestrator checks
 every proposal's evidence at the source anyway (lesson 10), so a weak
 recommendation costs orchestrator time, not text.
 
+**Step 6a: the evidence check (one Opus agent).** Before the orchestrator
+rules, a cold agent reads every non-blocking item of `rulings_batch.md`,
+opens the source each proposal cites, and marks the item CONFIRMED with the
+source's words quoted inline, or UNCONFIRMED with what the source says
+instead. It writes `evidence_check.md` and edits nothing else. Blocking
+items and `escalations.md` are not its job.
+
 **Checkpoints 2 and 3: the orchestrator rules.** Take the blocking items
-first. Check each proposal's evidence at its source before accepting it, and
-record every ruling and its reason as the item's status in
-`rulings_batch.md`. Serious items go to `escalations.md` unruled. In
+first, and open the source for each of them yourself. For the rest, rule
+from the batch and the evidence check, and open the source only for an
+UNCONFIRMED item or a CONFIRMED one whose quote does not plainly carry the
+claim; the final verifier re-reads every edit the rulings produce. Record
+every ruling and its reason as the item's status in `rulings_batch.md`. Serious items go to `escalations.md` unruled. In
 chapter 9, the owner ruled 103 items in two sittings.
 
 Apply the rulings with agents partitioned by unit, so no two edit one file.
@@ -568,15 +593,26 @@ recipe:
   §11.6, and R5's relocations with their homes.
 - A Sonnet inbound check was tried and rejected; the record is under step 5.
 
+The same day added four changes for the orchestrator's own context, which
+the levers above had left alone: the standing part of the brief in
+`checks/brief_common.md`, the survey reading rule in step 1, fix lists by
+path in step 4, and the evidence check in step 6a.
+
 Chapter 12 is the measurement: its table in section 3 carries a findings
-column per step beside the tokens.
+column per step beside the tokens, and the orchestrator's context at each
+checkpoint.
 
 ## 3. Cost and time
 
 From chapter 12 the table carries a findings column per step (checker
 failures, verifier DRIFT and LOST counts, chapter pass items, inbound non-OK
 rows, final verifier findings) beside the tokens, so a change in cost can be
-read against a change in catch.
+read against a change in catch. It also records the orchestrator's context
+at each of the four checkpoints, read from the session transcript's last
+`usage` record as `input_tokens + cache_read_input_tokens +
+cache_creation_input_tokens`. The 2026-10-14 revision moved reading from the
+orchestrator to agents and scripts, so the subagent total may rise a little
+while the orchestrator's context falls; the two numbers are read together.
 
 Chapter 9, 8,544 words:
 
@@ -883,19 +919,29 @@ From chapter 11, which held 392 rules:
 58. The inbound check is Opus with `inbound_scope.md`; Sonnet marked every
     loss by ruling OK in the chapter 11 validation.
 59. The consolidator is Sonnet; the orchestrator checks its evidence anyway.
+60. The standing part of the brief is `checks/brief_common.md`; a brief holds
+    the chapter's rulings and units.
+61. The orchestrator reads the survey's parts C to G whole and A and D at a
+    cited row.
+62. A verifier's fix list travels to its rewriter by path; the orchestrator
+    reads counts and open questions.
+63. An evidence check confirms the batch's non-blocking items with the
+    source quoted; the orchestrator opens the source for blocking items and
+    unclear quotes.
 
 ## 6. A chapter's files
 
 - `chapter.sh`: section 1.
 - `survey.md`, `inbound.tsv`: step 1.
-- `brief.md`: step 2.
+- `brief.md`: step 2; its standing part is `checks/brief_common.md`.
 - `units/<U>/`: per unit, `brief.md` and `survey.md` (the slices), `old.md`,
   `new.md`, `claims.md`, `inventory.json`, `rulings.md`, `verify_phase1.md`
   (generated), `verify.md`, and any text that leaves the chapter, such as
   `companion_addition.md`.
 - `inbound_scope.md`, `chapter_pass.md`, `inbound_check.md`,
   `inbound_check.tsv`, `chapter_rulings.md`, `chapter_fixes.md`: step 5.
-- `rulings_batch.md`: step 6, with each item's status.
+- `rulings_batch.md`: step 6, with each item's status; `evidence_check.md`:
+  step 6a.
 - `escalations.md`: serious findings from any step, for the owner.
 - `trim_log.md`, `ruled_edits.md`, `rulings_applied_*.md`,
   `final_verify.md`: steps 6 and 6b.
