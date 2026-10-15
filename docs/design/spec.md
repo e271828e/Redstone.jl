@@ -8652,7 +8652,7 @@ A paused run is still running. The lifecycle reads `running`, and the
 
 **The tail clears the pause flag beside the sticky stopped status**
 ([D-268][d-268]). The flag is never cleared at a run's start. The stop word,
-by contrast, is cleared at the top of each run ([D-401][d-401]), because a stop belongs
+by contrast, is cleared at the top of each run ([D-398][d-398]), because a stop belongs
 to the run it ended. A pause left set by a run that stopped while paused would
 instead hold the next run at its first frame top, on a flag nobody remembers
 setting. Clearing it in the tail removes that trap and keeps the start-paused
@@ -8680,7 +8680,7 @@ stopped status, the running flag ([D-317][d-317]) and the wait
 ([§12.4][s12-4], [D-256][d-256]). The lifecycle state is not stored, and
 `lifecycle(sim)` derives it ([§12.6][s12-6]). A run's outcome is not a control
 surface, so `termination` belongs to the [`Run`](#g-run) (the state one run
-owns), not to `Control` ([§12.6][s12-6], [D-255][d-255], [D-399][d-399]). The control plane is
+owns), not to `Control` ([§12.6][s12-6], [D-255][d-255]). The control plane is
 what anyone may poke.
 
 ### 12.2 Loop scheduling: wait primitive, yields, thread budget
@@ -9152,7 +9152,7 @@ satisfied by the run ending. Where none held, the interrupt sets the stop
 word and the source is `ControlRequestedStop(:interrupt)`.
 
 **A frame that throws with an interrupt pending ends `errored`**
-([D-268][d-268], [D-401][d-401]). The frame's own throw is the disposition
+([D-268][d-268], [D-398][d-398]). The frame's own throw is the disposition
 ([§13.4][s13-4]). The catch wraps the cause under the mask and consumes the
 pending interrupt on its way out. The run then takes the abnormal shutdown entry
 under that `StepError` ([§13.6][s13-6]). The alternative, `stopped` over a
@@ -9175,7 +9175,7 @@ half-way and leave the lifecycle `running`, every service refusing. A raise
 deferred to the end of that bookkeeping propagates out of `run!` raw, the
 simulation already terminal.
 
-**A forced throw reaches the defensive arm** ([D-268][d-268], [D-401][d-401]). Julia stops deferring
+**A forced throw reaches the defensive arm** ([D-268][d-268], [D-398][d-398]). Julia stops deferring
 after repeated SIGINTs in a short window, warns that it is forcing the throw,
 and raises inside the mask. That is the one way the branch [§13.4][s13-4] keeps is
 reached. The arm abandons the frame unpublished and the run ends `stopped`, the
@@ -9302,7 +9302,7 @@ retained sequence of published snapshots). The other is the [trace](#g-trace) (t
 of each frame's drained inputs), which is `nothing` under `trace = false`. The
 door that builds the run takes the four recording keywords, `trace`, `log`,
 `log_every` and `log_max` ([Appendix B][sB], [D-261][d-261]). A run's recording is therefore
-that door's declaration, and the next door may declare otherwise ([D-261][d-261], [D-400][d-400]).
+that door's declaration, and the next door may declare otherwise ([D-261][d-261]).
 
 Four fields evolve during the run. `feed` is described above. `termination` is
 the record the loop's tail writes. `frame` and `boundary` are the trajectory's
@@ -9327,7 +9327,7 @@ with the clock ([§11.5][s11-5], [D-273][d-273]). It is a `Float64`, as `h` and 
 placeholder is an empty log, no trace, no feed and no termination, and
 `init!`, `restore!` and `replay!` replace it ([D-255][d-255]). The field is
 always a `Run` and never `nothing`, so every accessor has a run to read, and
-the lifecycle state below says whether that run ever started ([D-399][d-399]). The
+the lifecycle state below says whether that run ever started ([D-397][d-397]). The
 placeholder carries no configuration and no compiled state ([D-261][d-261]). `init!`
 allocates fresh objects rather than clearing them ([D-255][d-255]).
 
@@ -9447,8 +9447,8 @@ and they are applied at the next frame top.
 
 The read half is `latest(sim)`. It hands back the same immutable snapshot
 value a device handle acquires ([§11.2][s11-2]), navigated directly for
-assertions. Advance-assert-advance is `stage!` → `step!` → `latest`
-([D-096][d-096], [D-390][d-390]). Both entry points work under `run!` too. The harness cell is
+assertions ([D-390][d-390]). Advance-assert-advance is `stage!` → `step!` → `latest`
+([D-096][d-096]). Both entry points work under `run!` too. The harness cell is
 not step-scoped. An inspection accessor leaves the rejection of closure-based
 termination untouched ([§13.5][s13-5], [D-096][d-096], [D-390][d-390]).
 
@@ -9613,7 +9613,7 @@ the checkpoint ([D-274][d-274]). There is no [condition](#g-condition) resolutio
 [root-input totality](#g-root-input-totality) (every root input must hold a value) ([§14.6][s14-6]) held when the
 recording's `init!` ran. A condition is the datum that says "set this build to
 this state". Whatever fired at `t₀` is part of the restored state, so nothing is
-applied twice and nothing is skipped ([D-274][d-274], [D-402][d-402]).
+applied twice and nothing is skipped ([D-274][d-274], [D-399][d-399]).
 
 The drain reads the trace. Each frame top applies the recording's batches for
 that [frame ordinal](#g-frame-ordinal), the frame index a batch replays at ([D-101][d-101]). It does not swap
@@ -9635,7 +9635,7 @@ consume it from there, frame by frame, exactly as the drain paragraph above
 describes. There is still one loop and one drain ([D-218][d-218]).
 
 A mode that outlives the call makes a partial replay a resumable position rather
-than the end of an operation ([D-218][d-218], [D-397][d-397]). Whatever advances the simulation
+than the end of an operation ([D-218][d-218]). Whatever advances the simulation
 next reads the same mode and finds the same records. That is what lets the
 reproduction workflow of [§13.4][s13-4] run through the ordinary entry points, with no
 replay-only spelling of `step!`.
@@ -9698,7 +9698,7 @@ detaches the recording's remainder, touching nothing else** ([D-219][d-219]). Th
 trajectory stands where the replay left it, and so does the trace with its
 header, inherited under the default form. The next `run!` or `step!` is
 therefore the live continuation from the replayed boundary, and its drains
-append to the re-recorded prefix ([D-398][d-398]). `live!` is a stopped-sim operation,
+append to the re-recorded prefix ([D-219][d-219]). `live!` is a stopped-sim operation,
 legal only on an `initialized` simulation in `:replay`. Every other state refuses
 under the ordinary lifecycle gates ([§12.6][s12-6]), with `MissingInit` at `built` and
 `ServiceLifecycle` in the rest. A simulation already `:live` refuses too, with
@@ -9853,7 +9853,7 @@ the simulation's own checkpoint as the new trace's header, and publishes one
 snapshot. That form serves the what-if of a modified model initialized under
 the authored condition (above). It also serves a seek, `restore!` of a
 checkpoint the recording passed through followed by the feed from the next
-frame ([D-274][d-274], [D-402][d-402]).
+frame ([D-274][d-274], [D-399][d-399]).
 
 #### Rejected shapes
 
@@ -15079,17 +15079,14 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-389]: decisions.md#d-389--scope-device-observables-to-the-run-and-keep-stepping-deviceless
 [d-390]: decisions.md#d-390--the-harness-writers-read-half-and-steps-duration-spelling
 [d-391]: decisions.md#d-391--replay-re-records-keeps-pacing-and-control-and-validates-up-front
-[d-392]: decisions.md#d-392--check-the-thread-budget-once-per-run-against-the-frozen-roster
+[d-392]: decisions.md#d-392--never-re-check-the-thread-budget-per-attach
 [d-393]: decisions.md#d-393--let-a-recorded-stop-request-reproduce-its-termination
 [d-394]: decisions.md#d-394--the-operator-interrupts-masking-escalation-and-scope
 [d-395]: decisions.md#d-395--keep-heartbeat-staleness-loose-the-heartbeat-advisory
 [d-396]: decisions.md#d-396--dispose-of-a-failed-device-init-as-an-ordinary-crash-split-on-should_abort
-[d-397]: decisions.md#d-397--let-the-input-mode-outlive-the-replay-call
-[d-398]: decisions.md#d-398--keep-the-inherited-header-across-live
-[d-399]: decisions.md#d-399--keep-the-control-plane-open-to-anyone-and-the-run-field-never-nothing
-[d-400]: decisions.md#d-400--make-recording-a-per-run-declaration
-[d-401]: decisions.md#d-401--the-interrupts-throw-dispositions-and-the-stop-word-cleared-per-run
-[d-402]: decisions.md#d-402--record-boundary-zeros-firings-in-the-header-and-make-a-long-run-seekable
+[d-397]: decisions.md#d-397--keep-the-run-field-never-nothing
+[d-398]: decisions.md#d-398--the-interrupts-throw-dispositions-and-the-stop-word-cleared-per-run
+[d-399]: decisions.md#d-399--record-boundary-zeros-firings-in-the-header-and-make-a-long-run-seekable
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop

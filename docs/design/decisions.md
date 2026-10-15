@@ -390,17 +390,14 @@ were derived.
 | [D-389][d-389] | Scope device observables to the run, and keep stepping deviceless | ratified |
 | [D-390][d-390] | The harness writer's read half, and `step!`'s duration spelling | ratified |
 | [D-391][d-391] | Replay re-records, keeps pacing and control, and validates up front | ratified |
-| [D-392][d-392] | Check the thread budget once per run, against the frozen roster | ratified |
+| [D-392][d-392] | Never re-check the thread budget per attach | ratified |
 | [D-393][d-393] | Let a recorded stop request reproduce its termination | ratified |
 | [D-394][d-394] | The operator interrupt's masking, escalation and scope | ratified |
 | [D-395][d-395] | Keep heartbeat staleness loose, the heartbeat advisory | ratified |
 | [D-396][d-396] | Dispose of a failed device `init!` as an ordinary crash, split on `should_abort` | ratified |
-| [D-397][d-397] | Let the input mode outlive the replay call | ratified |
-| [D-398][d-398] | Keep the inherited header across `live!` | ratified |
-| [D-399][d-399] | Keep the control plane open to anyone and the run field never `nothing` | ratified |
-| [D-400][d-400] | Make recording a per-run declaration | ratified |
-| [D-401][d-401] | The interrupt's throw dispositions, and the stop word cleared per run | ratified |
-| [D-402][d-402] | Record boundary zero's firings in the header, and make a long run seekable | ratified |
+| [D-397][d-397] | Keep the run field never `nothing` | ratified |
+| [D-398][d-398] | The interrupt's throw dispositions, and the stop word cleared per run | ratified |
+| [D-399][d-399] | Record boundary zero's firings in the header, and make a long run seekable | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -4782,9 +4779,10 @@ first frame top. Its orphaned root inputs, the slots of the Rationale since
 totality ([§14.6][s14-6]). With `should_abort` clear the device is absent from the
 run's first frame. With it set the stop is pending at the run's first
 frame top, which the loop reads before any frame, so the run advances no
-frame and ends `stopped` where it started, its terminal snapshot the one
-it started from. `DeviceCrash`'s payload names no device id since [D-228][d-228].
-The cell it is written to names the device.
+frame and ends `stopped` where it started, its termination record naming
+the device. The Rationale's "boundary zero is published" and its [§13.5][s13-5]
+terminal-at-`t₀` path are historical. `DeviceCrash`'s payload names no
+device id since [D-228][d-228]. The cell it is written to names the device.
 
 **Rejected.**
 - *Requiring `init!` to clean up after itself on failure:* an unenforced burden
@@ -7534,7 +7532,7 @@ Annotation (2026-10-15): amended by [D-256][d-256] and [D-317][d-317]. [D-256][d
 `join_timeout` into `Control`, and [D-317][d-317] makes it a keyword of
 `Simulation(model::Model{Float64}; join_timeout = 5.0)`. The Rationale's
 "Deployment contexts" are contexts of use, not the `Deployment`. [§12.4][s12-4] says
-"usage contexts".
+"Usage contexts".
 
 **Rejected.**
 - *Superseded position — the join timeout as an operational constant with no
@@ -11310,8 +11308,8 @@ which releases directly each device it never spawned and advances a cursor
 after each `shutdown!` returns; an interrupt between a return and the cursor's
 advance repeats that call ([§11.6][s11-6]).
 
-Annotation (2026-10-15): the stop faces of the second bullet and the
-Rationale are stop requests since [D-316][d-316]. Since [D-274][d-274] `restore!` copies a
+Annotation (2026-10-15): the stop faces of the second bullet are stop
+requests since [D-316][d-316]. Since [D-274][d-274] `restore!` copies a
 checkpoint's state back, and replay is a restore followed by the feed, so
 the stores of the second 2026-09-26 annotation may hold mid-boundary values
 until the next `init!`, `restore!` or `replay!` ([§12.4][s12-4]).
@@ -15547,8 +15545,8 @@ path, the mode logic and the selected command.
 
 **Rationale.** This restates the first ground of [D-027][d-027]'s rejection of a hard
 `nthreads` error, "no framework thread monopolist", which its Position does
-not state. The spin's rule is not restated, because [D-027][d-027]'s Position states
-it. The entry decides nothing new.
+not state. The spin's reason is not restated, because it is a reason and not
+a ruling, and [D-027][d-027]'s Rejected list keeps it. The entry decides nothing new.
 
 **Rejected.** None beyond [D-027][d-027]'s list.
 
@@ -15667,12 +15665,11 @@ new.
 
 **Rejected.** None beyond [D-101][d-101]'s list.
 
-### D-392 — Check the thread budget once per run, against the frozen roster
+### D-392 — Never re-check the thread budget per attach
 
 **Status.** ratified
 
-**Position.** The thread budget is checked once per run, against the frozen
-roster, and never re-checked per attach.
+**Position.** The thread budget is never re-checked per attach.
 
 **Spec.** [§12.2][s12-2]
 
@@ -15761,8 +15758,8 @@ nothing new.
 
 **Position.** Three rulings on a device whose `init!` throws.
 
-- The failure is reported as the ordinary `DeviceCrash`, with no diagnostic
-  kind of its own. Its payload and disposition already fit.
+- An init failure gets no diagnostic kind of its own. `DeviceCrash`'s
+  payload and disposition already fit.
 - The device is dead from the run's first frame top, with no dead-marking
   machinery of its own, and its claims persist to run end. That is [§11.3][s11-3]'s
   death-is-not-detach disposition applied one step earlier than [§12.4][s12-4](6)'s,
@@ -15791,85 +15788,23 @@ annotation reads it. The source's orphaned slots are root inputs since
   without publishing:* invents a second exit path beside [§12.4][s12-4]'s one tail
   and yields a `stopped` simulation with no terminal snapshot ([D-138][d-138]).
 
-### D-397 — Let the input mode outlive the replay call
+### D-397 — Keep the run field never `nothing`
 
 **Status.** ratified
 
-**Position.** The input mode outlives the `replay!` call, so after a partial
-replay the recording still has a consumer, and the next `step!` re-executes
-the following frame on its recorded inputs.
+**Position.** The simulation's run field is never `nothing`.
 
-**Spec.** [§12.7][s12-7]
+**Spec.** [§12.6][s12-6]
 
-**Rationale.** This restates a clause of [D-218][d-218]'s Rationale that its Position
-does not state. One loop and one drain branch are not restated: [D-101][d-101]'s
-Position makes replay the ordinary loop, and [D-218][d-218]'s drives its one drain
-branch by the mode. The entry decides nothing new.
-
-**Rejected.**
-- *The implicit switch, a feed present only while the replay call runs:*
-  after a partial replay the next record has no consumer, and the following
-  `step!` runs a live frame with empty staging ([D-218][d-218]).
-
-### D-398 — Keep the inherited header across `live!`
-
-**Status.** ratified
-
-**Position.** After `live!` the trace keeps the header it inherited, so the
-frames flown after the call append to the re-recorded prefix and the
-session leaves behind one seamless recording of itself.
-
-**Spec.** [§12.7][s12-7]
-
-**Rationale.** This restates a clause of [D-219][d-219]'s Rationale that its Position
-does not state. The Position has `live!` touch nothing but the mode and the
-recording's remainder. `to_time`'s rounding, to the last frame top at or
-before the time given, is not restated, because [D-219][d-219]'s Position states it.
-The entry decides nothing new.
-
-**Rejected.** None beyond [D-219][d-219]'s list.
-
-### D-399 — Keep the control plane open to anyone and the run field never `nothing`
-
-**Status.** ratified
-
-**Position.** Two rulings on what the control plane and the simulation hold.
-
-- The control plane is what anyone may poke, and a run's outcome is not.
-- The simulation's run field is never `nothing`. The placeholder run gives
-  every accessor a run to read, and the lifecycle state says whether it
-  started.
-
-**Spec.** [§12.1][s12-1], [§12.6][s12-6]
-
-**Rationale.** Each bullet restates what [D-255][d-255]'s Rationale and Rejected list
+**Rationale.** This restates what [D-255][d-255]'s Rationale and Rejected list
 record and its Position does not state. The source's `Control.lifecycle` is
 `lifecycle(sim)` since [D-317][d-317]. The entry decides nothing new.
 
 **Rejected.**
-- *`termination` staying on `Control`:* the control plane is what anyone
-  may poke; a run's outcome is not ([D-255][d-255]).
 - *A `Union{Nothing,Run}` field:* every accessor branches on a state the
   lifecycle already reports ([D-255][d-255]).
 
-### D-400 — Make recording a per-run declaration
-
-**Status.** ratified
-
-**Position.** Recording is per run: a long untraced run and then a short
-traced one may share one simulation.
-
-**Spec.** [§12.6][s12-6]
-
-**Rationale.** This restates a clause of [D-261][d-261]'s Rationale that its Position
-does not state. The Position puts the recording keywords on the doors that
-build a run, and per-run recording comes with that move, at no cost the
-doors did not already pay, since each rebuilds the log, the trace and the
-drain thunks. The entry decides nothing new.
-
-**Rejected.** None beyond [D-261][d-261]'s list.
-
-### D-401 — The interrupt's throw dispositions, and the stop word cleared per run
+### D-398 — The interrupt's throw dispositions, and the stop word cleared per run
 
 **Status.** ratified
 
@@ -15894,7 +15829,7 @@ decides nothing new.
 
 **Rejected.** None beyond [D-268][d-268]'s list.
 
-### D-402 — Record boundary zero's firings in the header, and make a long run seekable
+### D-399 — Record boundary zero's firings in the header, and make a long run seekable
 
 **Status.** ratified
 
@@ -16280,17 +16215,14 @@ new.
 [d-389]: #d-389--scope-device-observables-to-the-run-and-keep-stepping-deviceless
 [d-390]: #d-390--the-harness-writers-read-half-and-steps-duration-spelling
 [d-391]: #d-391--replay-re-records-keeps-pacing-and-control-and-validates-up-front
-[d-392]: #d-392--check-the-thread-budget-once-per-run-against-the-frozen-roster
+[d-392]: #d-392--never-re-check-the-thread-budget-per-attach
 [d-393]: #d-393--let-a-recorded-stop-request-reproduce-its-termination
 [d-394]: #d-394--the-operator-interrupts-masking-escalation-and-scope
 [d-395]: #d-395--keep-heartbeat-staleness-loose-the-heartbeat-advisory
 [d-396]: #d-396--dispose-of-a-failed-device-init-as-an-ordinary-crash-split-on-should_abort
-[d-397]: #d-397--let-the-input-mode-outlive-the-replay-call
-[d-398]: #d-398--keep-the-inherited-header-across-live
-[d-399]: #d-399--keep-the-control-plane-open-to-anyone-and-the-run-field-never-nothing
-[d-400]: #d-400--make-recording-a-per-run-declaration
-[d-401]: #d-401--the-interrupts-throw-dispositions-and-the-stop-word-cleared-per-run
-[d-402]: #d-402--record-boundary-zeros-firings-in-the-header-and-make-a-long-run-seekable
+[d-397]: #d-397--keep-the-run-field-never-nothing
+[d-398]: #d-398--the-interrupts-throw-dispositions-and-the-stop-word-cleared-per-run
+[d-399]: #d-399--record-boundary-zeros-firings-in-the-header-and-make-a-long-run-seekable
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property
