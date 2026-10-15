@@ -634,13 +634,16 @@ Annotation (2026-10-15): the fourth bullet is historical. D-316 retires the
 
 ### L31. B69: D-255 annotation
 
+The matched text ends with "### D-256 — ", trailing space included.
+
 Old:
 
 ```
 trace that `restore!` opens starts at the checkpoint's frame ([D-274][d-274]).
 
 
-### D-256 — ```
+### D-256 — 
+```
 
 New:
 
@@ -654,7 +657,8 @@ keeping the lifecycle on `Control`. `Control` holds a running flag, and
 `lifecycle(sim)` derives the state.
 
 
-### D-256 — ```
+### D-256 — 
+```
 
 ### L32. B70: D-260 annotation
 

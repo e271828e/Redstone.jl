@@ -14,7 +14,7 @@ commit's `spec.md` reproduces the committed body exactly (checked by script).
 
 | Item | Source | Entry | Bullets kept | Dropped |
 |---|---|---|---|---|
-| B42 | D-027 | D-386 | the monopolist ground | the spin's rule (D-027's Position states it) |
+| B42 | D-027 | D-386 | the monopolist ground | the spin's reason, a reason and not a ruling, which D-027's Rejected list keeps |
 | B45 | D-059 | D-387 | reproduction is replay, not resurrection | — |
 | B46 | D-081 | none | — | the counter counts boundaries, not frames: D-028's Position ("monotonic boundary counter", citing D-081, whose Position makes `t*` and boundary zero boundaries); §12.3's bold already cites D-028 |
 | B47 | D-088 | D-388 | `step!`'s contract (3), the re-run with attachments persisting | — |
@@ -1029,3 +1029,555 @@ coverage drop, D-386 to D-402 newly cited, no rebaseline; `check_glossary.jl
 --strict` OK; `check_bold.jl` OK (chapter 12: 65 bold spans, 596 words; no
 bold added); `linkify.jl` again a no-op on both files. Every chapter 12 line
 is at most 80 rendered columns.
+
+## Review fixes
+
+The 13 findings of `track2_verify.md`, one commit, `025f78a` (amended from `9d66d54`). The orchestrator
+ruled findings 1, 4 and 5: drop D-397, D-398 and D-400, cite the Position's
+entry alone where the spec cited them, then renumber D-399, D-401 and D-402
+to D-397, D-398 and D-399. Before the edits, a grep of `docs/`, `src/`,
+`test/` and `README.md` found the six old numbers only in `decisions.md`
+(heading, Index row, link definition) and `spec.md` (citations, link
+definitions). `scratch_track2/fix/apply.py` made every edit below in order,
+asserting each old text matched the stated number of times (once unless
+noted). Old texts are the files as they stood before each edit; new texts
+carry bare citations, which `linkify.jl` then linked. `linkify.jl` also
+regenerated the Index rows and the link definitions of both files: the rows
+and definitions of D-397 to D-402 gave way to those of the new D-397 to
+D-399, under their new titles' anchors.
+
+Beyond the Fix lines, findings 2 and 3 together cut D-399 to one ruling, so
+its title lost "the control plane open to anyone and", the Position lost its
+headline, the Spec field lost §12.1 (the only §12.1 citation was the one
+finding 3 removed), the Rationale's "Each bullet" became "This", and the
+Rejected item for the dropped bullet went. D-392's retitle is R26, amended
+into the same commit.
+
+The `track2_log_1.md` edit (finding 13) and the B42 row above (finding 7)
+are not in the commit.
+
+### R1. F1 drop D-397
+
+`docs/design/decisions.md`.
+
+Old:
+
+````
+### D-397 — Let the input mode outlive the replay call
+
+**Status.** ratified
+
+**Position.** The input mode outlives the `replay!` call, so after a partial
+replay the recording still has a consumer, and the next `step!` re-executes
+the following frame on its recorded inputs.
+
+**Spec.** [§12.7][s12-7]
+
+**Rationale.** This restates a clause of [D-218][d-218]'s Rationale that its Position
+does not state. One loop and one drain branch are not restated: [D-101][d-101]'s
+Position makes replay the ordinary loop, and [D-218][d-218]'s drives its one drain
+branch by the mode. The entry decides nothing new.
+
+**Rejected.**
+- *The implicit switch, a feed present only while the replay call runs:*
+  after a partial replay the next record has no consumer, and the following
+  `step!` runs a live frame with empty staging ([D-218][d-218]).
+````
+
+New:
+
+````
+(nothing)
+````
+
+### R2. F4 drop D-398
+
+`docs/design/decisions.md`.
+
+Old:
+
+````
+### D-398 — Keep the inherited header across `live!`
+
+**Status.** ratified
+
+**Position.** After `live!` the trace keeps the header it inherited, so the
+frames flown after the call append to the re-recorded prefix and the
+session leaves behind one seamless recording of itself.
+
+**Spec.** [§12.7][s12-7]
+
+**Rationale.** This restates a clause of [D-219][d-219]'s Rationale that its Position
+does not state. The Position has `live!` touch nothing but the mode and the
+recording's remainder. `to_time`'s rounding, to the last frame top at or
+before the time given, is not restated, because [D-219][d-219]'s Position states it.
+The entry decides nothing new.
+
+**Rejected.** None beyond [D-219][d-219]'s list.
+````
+
+New:
+
+````
+(nothing)
+````
+
+### R3. F5 drop D-400
+
+`docs/design/decisions.md`.
+
+Old:
+
+````
+### D-400 — Make recording a per-run declaration
+
+**Status.** ratified
+
+**Position.** Recording is per run: a long untraced run and then a short
+traced one may share one simulation.
+
+**Spec.** [§12.6][s12-6]
+
+**Rationale.** This restates a clause of [D-261][d-261]'s Rationale that its Position
+does not state. The Position puts the recording keywords on the doors that
+build a run, and per-run recording comes with that move, at no cost the
+doors did not already pay, since each rebuilds the log, the trace and the
+drain thunks. The entry decides nothing new.
+
+**Rejected.** None beyond [D-261][d-261]'s list.
+````
+
+New:
+
+````
+(nothing)
+````
+
+### R4. F2/F3 D-399 title, renumbered D-397
+
+`docs/design/decisions.md`.
+
+Old:
+
+````
+### D-399 — Keep the control plane open to anyone and the run field never `nothing`
+````
+
+New:
+
+````
+### D-397 — Keep the run field never `nothing`
+````
+
+### R5. F2/F3 D-399 Position
+
+`docs/design/decisions.md`.
+
+Old:
+
+````
+**Position.** Two rulings on what the control plane and the simulation hold.
+
+- The control plane is what anyone may poke, and a run's outcome is not.
+- The simulation's run field is never `nothing`. The placeholder run gives
+  every accessor a run to read, and the lifecycle state says whether it
+  started.
+
+**Spec.** [§12.1][s12-1], [§12.6][s12-6]
+
+**Rationale.** Each bullet restates what [D-255][d-255]'s Rationale
+````
+
+New:
+
+````
+**Position.** The simulation's run field is never `nothing`.
+
+**Spec.** [§12.6][s12-6]
+
+**Rationale.** This restates what [D-255][d-255]'s Rationale
+````
+
+### R6. F3 D-399 Rejected item of the dropped bullet
+
+`docs/design/decisions.md`.
+
+Old:
+
+````
+**Rejected.**
+- *`termination` staying on `Control`:* the control plane is what anyone
+  may poke; a run's outcome is not ([D-255][d-255]).
+- *A `Union{Nothing,Run}` field:*
+````
+
+New:
+
+````
+**Rejected.**
+- *A `Union{Nothing,Run}` field:*
+````
+
+### R7. Renumber D-401 to D-398
+
+`docs/design/decisions.md`.
+
+Old:
+
+````
+### D-401 — 
+````
+
+New:
+
+````
+### D-398 — 
+````
+
+### R8. Renumber D-402 to D-399
+
+`docs/design/decisions.md`.
+
+Old:
+
+````
+### D-402 — 
+````
+
+New:
+
+````
+### D-399 — 
+````
+
+### R9. F6 D-396 bullet 1
+
+`docs/design/decisions.md`.
+
+Old:
+
+````
+- The failure is reported as the ordinary `DeviceCrash`, with no diagnostic
+  kind of its own. Its payload and disposition already fit.
+````
+
+New:
+
+````
+- An init failure gets no diagnostic kind of its own. Its payload and
+  disposition already fit.
+````
+
+### R10. F7 D-386 Rationale
+
+`docs/design/decisions.md`.
+
+Old:
+
+````
+not state. The spin's rule is not restated, because [D-027][d-027]'s Position states
+it. The entry decides nothing new.
+````
+
+New:
+
+````
+not state. The spin's reason is not restated, because it is a reason and not
+a ruling, and D-027's Rejected list keeps it. The entry decides nothing new.
+````
+
+### R11. F7 log 2 B42 row
+
+`docs/spec_rewrite/ch12/track2_log_2.md`.
+
+Old:
+
+````
+| the spin's rule (D-027's Position states it) |
+````
+
+New:
+
+````
+| the spin's reason, a reason and not a ruling, which D-027's Rejected list keeps |
+````
+
+### R12. F8 D-392 Position
+
+`docs/design/decisions.md`.
+
+Old:
+
+````
+**Position.** The thread budget is checked once per run, against the frozen
+roster, and never re-checked per attach.
+````
+
+New:
+
+````
+**Position.** The thread budget is never re-checked per attach.
+````
+
+### R13. F10 D-138 annotation
+
+`docs/design/decisions.md`.
+
+Old:
+
+````
+frame and ends `stopped` where it started, its terminal snapshot the one
+it started from. `DeviceCrash`'s payload names no device id since [D-228][d-228].
+The cell it is written to names the device.
+````
+
+New:
+
+````
+frame and ends `stopped` where it started, its termination record naming
+the device. The Rationale's "boundary zero is published" and its §13.5
+terminal-at-`t₀` path are historical. `DeviceCrash`'s payload names no
+device id since [D-228][d-228]. The cell it is written to names the device.
+````
+
+### R14. F11 D-198 annotation
+
+`docs/design/decisions.md`.
+
+Old:
+
+````
+ says
+"usage contexts".
+````
+
+New:
+
+````
+ says
+"Usage contexts".
+````
+
+### R15. F12 D-268 annotation
+
+`docs/design/decisions.md`.
+
+Old:
+
+````
+Annotation (2026-10-15): the stop faces of the second bullet and the
+Rationale are stop requests since [D-316][d-316]. Since
+````
+
+New:
+
+````
+Annotation (2026-10-15): the stop faces of the second bullet are stop
+requests since [D-316][d-316]. Since
+````
+
+### R16. F3 spec §12.1, D-399 dropped at D-255
+
+`docs/design/spec.md`.
+
+Old:
+
+````
+owns), not to `Control` ([§12.6][s12-6], [D-255][d-255], [D-399][d-399]). The control plane is
+````
+
+New:
+
+````
+owns), not to `Control` ([§12.6][s12-6], [D-255][d-255]). The control plane is
+````
+
+### R17. F5 spec §12.6, D-400 dropped at D-261
+
+`docs/design/spec.md`.
+
+Old:
+
+````
+otherwise ([D-261][d-261], [D-400][d-400]).
+````
+
+New:
+
+````
+otherwise ([D-261][d-261]).
+````
+
+### R18. F9 spec §12.6, D-390 moved
+
+`docs/design/spec.md`.
+
+Old:
+
+````
+navigated directly for
+assertions. Advance-assert-advance is `stage!` → `step!` → `latest`
+([D-096][d-096], [D-390][d-390]). Both entry points
+````
+
+New:
+
+````
+navigated directly for
+assertions ([D-390][d-390]). Advance-assert-advance is `stage!` → `step!` → `latest`
+([D-096][d-096]). Both entry points
+````
+
+### R19. F1 spec §12.7, D-397 dropped at D-218
+
+`docs/design/spec.md`.
+
+Old:
+
+````
+than the end of an operation ([D-218][d-218], [D-397][d-397]). Whatever
+````
+
+New:
+
+````
+than the end of an operation ([D-218][d-218]). Whatever
+````
+
+### R20. F4 spec §12.7, D-398 replaced by D-219
+
+`docs/design/spec.md`.
+
+Old:
+
+````
+append to the re-recorded prefix ([D-398][d-398]).
+````
+
+New:
+
+````
+append to the re-recorded prefix ([D-219][d-219]).
+````
+
+### R21. Renumber spec D-399 to D-397
+
+`docs/design/spec.md`.
+
+Old:
+
+````
+[D-399][d-399]
+````
+
+New:
+
+````
+[D-397][d-397]
+````
+
+### R22. Renumber spec D-401 to D-398
+
+`docs/design/spec.md` (3 matches).
+
+Old:
+
+````
+[D-401][d-401]
+````
+
+New:
+
+````
+[D-398][d-398]
+````
+
+### R23. Renumber spec D-402 to D-399
+
+`docs/design/spec.md` (2 matches).
+
+Old:
+
+````
+[D-402][d-402]
+````
+
+New:
+
+````
+[D-399][d-399]
+````
+
+### R24. F13 log 1 fences
+
+`docs/spec_rewrite/ch12/track2_log_1.md` (2 matches).
+
+Old:
+
+````
+### D-256 — ```
+````
+
+New:
+
+````
+### D-256 — 
+```
+````
+
+### R25. F13 log 1 note
+
+`docs/spec_rewrite/ch12/track2_log_1.md`.
+
+Old:
+
+````
+### L31. B69: D-255 annotation
+
+Old:
+````
+
+New:
+
+````
+### L31. B69: D-255 annotation
+
+The matched text ends with "### D-256 — ", trailing space included.
+
+Old:
+````
+
+### Battery
+
+`linkify.jl`; `check_refs.jl` OK; `check_rows.jl` OK, no coverage drop,
+no rebaseline; `check_glossary.jl --strict` OK; `check_bold.jl` OK
+(chapter 12: 65 bold spans, 596 words); `linkify.jl` again a no-op. No
+edited chapter 12 line is over 80 rendered columns.
+
+### R26. F8 D-392 title, at the orchestrator's ruling
+
+`docs/design/decisions.md`. The title now matches the cut Position.
+`linkify.jl` regenerated the Index row and both files' link definitions
+(anchor `#d-392--never-re-check-the-thread-budget-per-attach`). The one
+citation, `[D-392][d-392]` in §12.2, keeps its label. The edit was amended
+into the commit, now `025f78a`. This supersedes the earlier note that
+D-392's title was left as it was.
+
+Old:
+
+````
+### D-392 — Check the thread budget once per run, against the frozen roster
+````
+
+New:
+
+````
+### D-392 — Never re-check the thread budget per attach
+````
+
+Battery after R26: `linkify.jl`; `check_refs.jl` OK; `check_rows.jl` OK;
+`check_glossary.jl --strict` OK; `check_bold.jl` OK (chapter 12: 65 bold
+spans, 596 words); `linkify.jl` again a no-op.
+
+The orchestrator then fixed the re-check's R1 by hand: D-396 bullet 1's
+"Its payload" became "`DeviceCrash`'s payload", restoring its antecedent.

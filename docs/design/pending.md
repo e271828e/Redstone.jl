@@ -80,9 +80,38 @@ what the spec says, the spec edit is part of the item.
   declaration names; correct a copy before measuring, and leave the report as
   it is.
 - **A tutorial** that takes a newcomer from a component to a run and a plot.
-- **The spec's readability rewrite.** Chapters 1 to 11 are done. The
+- **The spec's readability rewrite.** Chapters 1 to 12 are done. The
   other chapters follow `docs/spec_rewrite/recipe.md`, and that directory's
   README tracks them. Until a chapter's turn comes, it keeps the old markers.
+  Chapter 12 left these for the owner. Each sentence stays as written until
+  ruled; the evidence is its `escalations.md`, `owner_items.md` and
+  `rulings_batch.md` (B77, B78), which `git show` recovers at the commit the
+  README's table records.
+  - Serious: §12.4 calls a stopped simulation "resumable by the next
+    `run!`", as D-132's Position does; §12.6, D-088 and the code refuse
+    `run!` on `stopped`. Recommended: read it as re-runnable through
+    `init!` or a checkpoint, reword §12.4 and annotate D-132.
+  - Serious: §12.2 promises a front end's stop button "keeps working" under
+    any starvation, a property the GUI on the calling task gave and D-310
+    withdrew; §12.3 still describes the parked GUI's read path.
+    Recommended: drop the promise, keep the per-frame yield and the
+    stall-coupling grounds, and annotate D-027 and D-134.
+  - Rulings §12 states with no entry: the `systemsleep` variant as a guarded
+    addition; "tight" as fewer threads than the roster plus one; the wrapper
+    treating an `unblock!`-provoked raise as shutdown; each task reading
+    `last_seen` at spawn; the pause block parking on a condition;
+    `checkpoint`'s latest-snapshot test; the `replay!(…; restore = false)`
+    form and its refusals; and B78's other half-2 rows. Recommended: record
+    the first four, which describe code the chapter states.
+  - Log gaps track 2 could not close without a ruling: D-127's "`t₀`
+    applied rather than compared", which `restore = false` contradicts;
+    `restore!` missing from D-218's mode-resetting doors; `restore!(sim,
+    cp)` taking the recording keywords, which D-261 does not name; and
+    D-138's "reads stale from the first frame", true only for a device that
+    never beat.
+  - Two loose fixes outside the spec: `flight_case_studies.md`'s "window
+    close" is the parked GUI's (a front end's now), and `src/sim.jl`'s
+    comment "either door checks once per run" should say "entry point".
 - **The normative kernel**, after the rewrite lands. Settled on 2026-10-14:
   the spec and the code are redundant where the spec describes mechanism,
   and that description is what costs the bookkeeping on every increment and

@@ -301,6 +301,18 @@ unit's `old.md`, which its own inventory guarantees.
   also caught a wrong section number in a pointer (R24) and a survey
   proposal that reversed a gloss's meaning.
 
+**From chapter 12, the brief should also:**
+
+- Check every dictated wording against the glossary's anchors and
+  `brief_common.md`'s reserved words, and every dictated index against the
+  code's numbering. Three of chapter 12's dictations failed after launch: a
+  gloss reused *stop request* (R15), "the cell written" used *cell* bare
+  (R20), and F83's halt landed one frame early. A rewriter or verifier
+  caught each.
+- List every claim a ruled deletion carries. B15 dropped a sentence for its
+  pointer and lost "the tail's own owner" with it; only the final verifier
+  caught the loss.
+
 ### Step 3: rewrite the units in parallel (one Opus agent per unit)
 
 Prompt: read `checks/brief_common.md`, `units/<U>/brief.md` and
@@ -410,6 +422,11 @@ repeated claims and bolds. Two editorial fixers then edit disjoint units.
 Give each parallel agent its own scratch directory: chapter 11's two fixers
 overwrote each other's wrap script in a shared one.
 
+From chapter 12: each editorial fixer applies the EDITORIAL findings of both
+passes that fall in its units. A pass reads across the split, so half 2's
+P2-42 landed in unit B, and neither fixer applied it until the ruled-edit
+round.
+
 ### Step 6: rulings (one Sonnet consolidator, then the owner)
 
 The consolidator merges every `rulings.md`, the verifiers' leftovers, the
@@ -518,6 +535,10 @@ when it lands; chapter 10 coordinated with one that way.
   entry lands in the splice's commit (L-1); a correction removed a glossary
   anchor's only link (L-2); and an old bold in a chart, never checked
   before, had no D-citation (L-3).
+- A chapter that newly links a glossary anchor `check_glossary.jl` lists in
+  its `WHITELIST` fails `--strict` until the line goes. Chapter 12's lander
+  stopped on `g-next-snapshot-wait`; trim the whitelist in the splice
+  commit.
 - The landing can go to one Opus agent, given the accepted batch items and
   this step's order. Chapter 5's lander ran linkify and the battery before
   each of its three commits, so each commit passed on its own.
@@ -548,6 +569,16 @@ From chapters 1 to 4:
 - **Rewrap by rendered columns.** Track 2's first rewrap measured source
   columns and missed seven lines that citations pushed past 80 rendered
   columns; its verifier caught them.
+
+From chapter 12:
+
+- **A Rationale-only ruling gets a new entry, never new Position text in an
+  old one.** `decisions_style.md` rules 1 and 10 say so; the evidence check
+  found the batch proposing the old form for 23 items (its note N1).
+- **A consequence of a Position is not a new entry.** Chapter 12's track 2
+  wrote 17 entries; its verifier dropped three that restated or followed
+  from D-218's, D-219's and D-261's Positions, and the survivors were
+  renumbered before the push.
 
 ### Step 9: close the chapter
 
@@ -752,6 +783,29 @@ It cost about 0.46M per 1,000 words, the rate of the large chapters. The
 owner ruled five escalations while the units were being written, and the
 rulings reached the running rewriters by message.
 
+Chapter 12, 9,815 words, ruled by the orchestrator, the first run of the
+2026-10-14 revision, surveyed in two halves:
+
+| step | agent runs | subagent tokens | findings |
+|---|---|---|---|
+| survey | 2, one per half | 0.87M | 380 rules; 57 factual findings, 2 serious |
+| rewrites | 4, plus fix rounds | 1.1M | checker failures at hand-back: 0 |
+| unit verification | 4, plus re-checks | 0.77M | DRIFT 14, LOST 0 |
+| chapter passes, inbound checks, editorial fixers | 6 | 1.09M | 77 pass findings (20 RULING); 21 non-OK rows, no loss |
+| consolidation, evidence check, ruled edits | 3 | 0.53M | 88 items; 4 UNCONFIRMED |
+| final verification and PDF check | 3 | 0.41M | 2 (one lost clause, one log note) |
+| landing | 1 | 0.10M | 1 stop (a stale whitelist entry) |
+| track 2, its verification and fixes | 4 | 0.75M | 13, three entries dropped |
+| total | 27, plus fix rounds | about 5.6M | |
+
+It cost about 0.57M per 1,000 words, above chapter 11's 0.46M. Units of
+2,000 to 2,800 words did not lower the rewrite and verification cost per
+word (about 0.19M per 1,000, chapter 11's 0.23M), and the evidence check
+and the track 2 review added work earlier chapters did not do. The
+orchestrator's context was 175k tokens at checkpoint 1, 291k at checkpoint
+2, 304k at checkpoint 3 and 333k at checkpoint 4. No earlier chapter
+measured it, so these numbers are the baseline.
+
 ## 4. What to expect from a chapter
 
 From chapter 9:
@@ -833,6 +887,19 @@ From chapter 11, which held 392 rules:
   ruling (the harness writer's task and the shipped GUI), fixed at landing.
 - **The chapter grew about a seventh**, from 13,983 words to about 16,200,
   with 78 bold spans of 686 words.
+
+From chapter 12, which held 380 rules:
+
+- **One rule in four lived only outside a Position**, 92 of 380, and 24 had
+  no entry. Track 2 wrote fourteen entries, D-386 to D-399, and 23
+  annotations; the rulings with no entry went to the owner.
+- **Two findings were serious**, both where the spec still described a
+  design the code or a later entry had moved past: a stopped run "resumable
+  by the next `run!`", and the parked GUI's stop button.
+- **No inbound citation was lost.** Of 460 rows, 11 needed a retarget and
+  10 were wrong before the rewrite.
+- **The chapter grew about a sixth**, from 9,815 words to about 11,600, with
+  65 bold spans of 596 words.
 
 ## 5. Lessons, in one list
 
@@ -928,6 +995,15 @@ From chapter 11, which held 392 rules:
 63. An evidence check confirms the batch's non-blocking items with the
     source quoted; the orchestrator opens the source for blocking items and
     unclear quotes.
+
+64. Check a dictated wording against the glossary's anchors and the
+    reserved words, and a dictated index against the code (chapter 12).
+65. A ruled deletion lists every claim its sentence carries.
+66. Each editorial fixer takes both passes' findings in its units.
+67. Trim `check_glossary.jl`'s whitelist when a chapter links a listed
+    anchor.
+68. Track 2 writes new entries, never new Position text in an old entry,
+    and no entry for a consequence of a Position.
 
 ## 6. A chapter's files
 

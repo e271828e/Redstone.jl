@@ -1,0 +1,152 @@
+[
+ [
+  "F1 drop D-397",
+  "docs/design/decisions.md",
+  "### D-397 — Let the input mode outlive the replay call\n\n**Status.** ratified\n\n**Position.** The input mode outlives the `replay!` call, so after a partial\nreplay the recording still has a consumer, and the next `step!` re-executes\nthe following frame on its recorded inputs.\n\n**Spec.** [§12.7][s12-7]\n\n**Rationale.** This restates a clause of [D-218][d-218]'s Rationale that its Position\ndoes not state. One loop and one drain branch are not restated: [D-101][d-101]'s\nPosition makes replay the ordinary loop, and [D-218][d-218]'s drives its one drain\nbranch by the mode. The entry decides nothing new.\n\n**Rejected.**\n- *The implicit switch, a feed present only while the replay call runs:*\n  after a partial replay the next record has no consumer, and the following\n  `step!` runs a live frame with empty staging ([D-218][d-218]).\n\n",
+  ""
+ ],
+ [
+  "F4 drop D-398",
+  "docs/design/decisions.md",
+  "### D-398 — Keep the inherited header across `live!`\n\n**Status.** ratified\n\n**Position.** After `live!` the trace keeps the header it inherited, so the\nframes flown after the call append to the re-recorded prefix and the\nsession leaves behind one seamless recording of itself.\n\n**Spec.** [§12.7][s12-7]\n\n**Rationale.** This restates a clause of [D-219][d-219]'s Rationale that its Position\ndoes not state. The Position has `live!` touch nothing but the mode and the\nrecording's remainder. `to_time`'s rounding, to the last frame top at or\nbefore the time given, is not restated, because [D-219][d-219]'s Position states it.\nThe entry decides nothing new.\n\n**Rejected.** None beyond [D-219][d-219]'s list.\n\n",
+  ""
+ ],
+ [
+  "F5 drop D-400",
+  "docs/design/decisions.md",
+  "### D-400 — Make recording a per-run declaration\n\n**Status.** ratified\n\n**Position.** Recording is per run: a long untraced run and then a short\ntraced one may share one simulation.\n\n**Spec.** [§12.6][s12-6]\n\n**Rationale.** This restates a clause of [D-261][d-261]'s Rationale that its Position\ndoes not state. The Position puts the recording keywords on the doors that\nbuild a run, and per-run recording comes with that move, at no cost the\ndoors did not already pay, since each rebuilds the log, the trace and the\ndrain thunks. The entry decides nothing new.\n\n**Rejected.** None beyond [D-261][d-261]'s list.\n\n",
+  ""
+ ],
+ [
+  "F2/F3 D-399 title, renumbered D-397",
+  "docs/design/decisions.md",
+  "### D-399 — Keep the control plane open to anyone and the run field never `nothing`\n",
+  "### D-397 — Keep the run field never `nothing`\n"
+ ],
+ [
+  "F2/F3 D-399 Position",
+  "docs/design/decisions.md",
+  "**Position.** Two rulings on what the control plane and the simulation hold.\n\n- The control plane is what anyone may poke, and a run's outcome is not.\n- The simulation's run field is never `nothing`. The placeholder run gives\n  every accessor a run to read, and the lifecycle state says whether it\n  started.\n\n**Spec.** [§12.1][s12-1], [§12.6][s12-6]\n\n**Rationale.** Each bullet restates what [D-255][d-255]'s Rationale",
+  "**Position.** The simulation's run field is never `nothing`.\n\n**Spec.** [§12.6][s12-6]\n\n**Rationale.** This restates what [D-255][d-255]'s Rationale"
+ ],
+ [
+  "F3 D-399 Rejected item of the dropped bullet",
+  "docs/design/decisions.md",
+  "**Rejected.**\n- *`termination` staying on `Control`:* the control plane is what anyone\n  may poke; a run's outcome is not ([D-255][d-255]).\n- *A `Union{Nothing,Run}` field:*",
+  "**Rejected.**\n- *A `Union{Nothing,Run}` field:*"
+ ],
+ [
+  "Renumber D-401 to D-398",
+  "docs/design/decisions.md",
+  "### D-401 — ",
+  "### D-398 — "
+ ],
+ [
+  "Renumber D-402 to D-399",
+  "docs/design/decisions.md",
+  "### D-402 — ",
+  "### D-399 — "
+ ],
+ [
+  "F6 D-396 bullet 1",
+  "docs/design/decisions.md",
+  "- The failure is reported as the ordinary `DeviceCrash`, with no diagnostic\n  kind of its own. Its payload and disposition already fit.\n",
+  "- An init failure gets no diagnostic kind of its own. Its payload and\n  disposition already fit.\n"
+ ],
+ [
+  "F7 D-386 Rationale",
+  "docs/design/decisions.md",
+  "not state. The spin's rule is not restated, because [D-027][d-027]'s Position states\nit. The entry decides nothing new.\n",
+  "not state. The spin's reason is not restated, because it is a reason and not\na ruling, and D-027's Rejected list keeps it. The entry decides nothing new.\n"
+ ],
+ [
+  "F7 log 2 B42 row",
+  "docs/spec_rewrite/ch12/track2_log_2.md",
+  "| the spin's rule (D-027's Position states it) |",
+  "| the spin's reason, a reason and not a ruling, which D-027's Rejected list keeps |"
+ ],
+ [
+  "F8 D-392 Position",
+  "docs/design/decisions.md",
+  "**Position.** The thread budget is checked once per run, against the frozen\nroster, and never re-checked per attach.\n",
+  "**Position.** The thread budget is never re-checked per attach.\n"
+ ],
+ [
+  "F10 D-138 annotation",
+  "docs/design/decisions.md",
+  "frame and ends `stopped` where it started, its terminal snapshot the one\nit started from. `DeviceCrash`'s payload names no device id since [D-228][d-228].\nThe cell it is written to names the device.\n",
+  "frame and ends `stopped` where it started, its termination record naming\nthe device. The Rationale's \"boundary zero is published\" and its §13.5\nterminal-at-`t₀` path are historical. `DeviceCrash`'s payload names no\ndevice id since [D-228][d-228]. The cell it is written to names the device.\n"
+ ],
+ [
+  "F11 D-198 annotation",
+  "docs/design/decisions.md",
+  " says\n\"usage contexts\".\n",
+  " says\n\"Usage contexts\".\n"
+ ],
+ [
+  "F12 D-268 annotation",
+  "docs/design/decisions.md",
+  "Annotation (2026-10-15): the stop faces of the second bullet and the\nRationale are stop requests since [D-316][d-316]. Since",
+  "Annotation (2026-10-15): the stop faces of the second bullet are stop\nrequests since [D-316][d-316]. Since"
+ ],
+ [
+  "F3 spec §12.1, D-399 dropped at D-255",
+  "docs/design/spec.md",
+  "owns), not to `Control` ([§12.6][s12-6], [D-255][d-255], [D-399][d-399]). The control plane is\n",
+  "owns), not to `Control` ([§12.6][s12-6], [D-255][d-255]). The control plane is\n"
+ ],
+ [
+  "F5 spec §12.6, D-400 dropped at D-261",
+  "docs/design/spec.md",
+  "otherwise ([D-261][d-261], [D-400][d-400]).\n",
+  "otherwise ([D-261][d-261]).\n"
+ ],
+ [
+  "F9 spec §12.6, D-390 moved",
+  "docs/design/spec.md",
+  "navigated directly for\nassertions. Advance-assert-advance is `stage!` → `step!` → `latest`\n([D-096][d-096], [D-390][d-390]). Both entry points",
+  "navigated directly for\nassertions ([D-390][d-390]). Advance-assert-advance is `stage!` → `step!` → `latest`\n([D-096][d-096]). Both entry points"
+ ],
+ [
+  "F1 spec §12.7, D-397 dropped at D-218",
+  "docs/design/spec.md",
+  "than the end of an operation ([D-218][d-218], [D-397][d-397]). Whatever",
+  "than the end of an operation ([D-218][d-218]). Whatever"
+ ],
+ [
+  "F4 spec §12.7, D-398 replaced by D-219",
+  "docs/design/spec.md",
+  "append to the re-recorded prefix ([D-398][d-398]).",
+  "append to the re-recorded prefix ([D-219][d-219])."
+ ],
+ [
+  "Renumber spec D-399 to D-397",
+  "docs/design/spec.md",
+  "[D-399][d-399]",
+  "[D-397][d-397]"
+ ],
+ [
+  "Renumber spec D-401 to D-398",
+  "docs/design/spec.md",
+  "[D-401][d-401]",
+  "[D-398][d-398]"
+ ],
+ [
+  "Renumber spec D-402 to D-399",
+  "docs/design/spec.md",
+  "[D-402][d-402]",
+  "[D-399][d-399]"
+ ],
+ [
+  "F13 log 1 fences",
+  "docs/spec_rewrite/ch12/track2_log_1.md",
+  "### D-256 — ```\n",
+  "### D-256 — \n```\n"
+ ],
+ [
+  "F13 log 1 note",
+  "docs/spec_rewrite/ch12/track2_log_1.md",
+  "### L31. B69: D-255 annotation\n\nOld:\n",
+  "### L31. B69: D-255 annotation\n\nThe matched text ends with \"### D-256 — \", trailing space included.\n\nOld:\n"
+ ]
+]

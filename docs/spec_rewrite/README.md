@@ -35,30 +35,30 @@ readability with no loss of content. The steps are in
 | 9. The build pipeline | done | `9a7d84f` | `docs/reports/20261001_chapter9_rewrite/` |
 | 10. Time and execution | done | `3d72f03` | `0f9ce8a` |
 | 11. Runtime periphery: the data plane | done | `1b1ac70` | `e5cbb77` |
-| 12. Runtime periphery: lifecycle and orchestration | in progress | | |
+| 12. Runtime periphery: lifecycle and orchestration | done | `e91aa40` | |
 | 13. Error discipline | not started | | |
 | 14. Stopped-sim services | not started | | |
 | Appendices A to D | not started | | |
 
 ## Carried to later chapters
 
-Doubles and pointers chapters 5 to 11 found in chapters not yet rewritten. Each
+Doubles and pointers chapters 5 to 12 found in chapters not yet rewritten. Each
 chapter's rewrite settles its own:
 
-- **Chapter 12.** §12.6 and §12.7 name the header's compared part
-  differently from §11.5, which says "the fingerprint (the structural layout)
-  and the deployment" (chapter 11's R17, from `src/checkpoint.jl` 53–54).
-- **Chapter 12.** §12.2 may use "door" for `run!`, which builds no run
-  (chapter 11's F23).
-- **Chapter 12.** §12.4 bolds "The entry is listed for release before its
-  `init!` begins" (D-268 bullet 7), which §11.6 bolds as the no-`init!`
-  tolerance; §12.4 states the listing plain. §12.6's bold "Task topology
-  follows the roster each time" cites §11.1, which no longer says
-  "topology" (chapter 11's R3).
-- **Chapter 12.** §12.7's "on the *structural* side of that line" points at
-  §11.5, which draws no such line; drop the pointer. §12.4's "reads stale …
-  from the first frame" points at §11.8, which never states it; cite D-138
-  or drop the pointer.
+- **Chapter 11.** §11.7 still shows the parked GUI as live, present tense,
+  near the dead-slider fight; chapter 12's R2 wording ("a front end's")
+  applies (chapter 12's B85). Chapter 11 is done, so this lands as a loose
+  fix.
+- **Chapter 13.** §13.5 repeats §12.6's per-advance stop policy down to its
+  lifetime; reduce it to a pointer (chapter 12's B82). §13.5's "GUI stop
+  button" (twice) becomes a front end's, and §13.4's unmask points add the
+  pause block (B83, B35).
+- **Chapter 14.** §14's "`errored` is terminal for every row" is bold where
+  §12.6 bolds it; make it plain (B84).
+- **Front matter.** The Part III roadmap omits §12.5 (B86).
+- **Appendix B.** The `Model`'s rows still call its entry points "doors";
+  chapter 12's R14 reserves *door* for an entry point that builds a run
+  (B29).
 - **Chapter 13.** §13.7 bolds D-311's ruling on the junction's type
   parameters, which §6.2 bolds.
 - **Chapter 13.** §13.7 admits `Constant` "under the inventory's
