@@ -1,0 +1,2058 @@
+{
+ "claims": [
+  {
+   "id": "C-001",
+   "old": "### 12.5 Scripts and the mid-run mutation doctrine",
+   "new": "### 12.5 Scripts and the mid-run mutation doctrine",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-002",
+   "old": "What the consumers demonstrably mutate mid-run is surveyed here.",
+   "new": "What the consumers demonstrably mutate mid-run is surveyed here.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-003",
+   "old": "FlightCore's `user_callback!` has exactly two archetypes.",
+   "new": "FlightCore's `user_callback!` has exactly two archetypes.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-004",
+   "old": "The first is the timetable script (c172_demos.jl:290: `elevator_offset` as a function of `t`).",
+   "new": "The first is the timetable script, `elevator_offset` as a function of `t` (c172_demos.jl:290).",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "the nested colon became an appositive; the file reference stays, introduced once in the added sentence before (R6)"
+  },
+  {
+   "id": "C-005",
+   "old": "The second is the synthetic pilot (c172_demos.jl:423, 525: a phase FSM reading `y` and writing mode requests, references, flaps, wind).",
+   "new": "The second is the synthetic pilot, a phase FSM (finite-state machine) reading `y` and writing mode requests, references, flaps and wind (c172_demos.jl:423, 525).",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "FSM expanded at first use"
+  },
+  {
+   "id": "C-006",
+   "old": "Both write only `u` fields.",
+   "new": "Both write only `u` fields.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-007",
+   "old": "No demo, test or GUI path pokes `x`/`s` mid-run, and `init!`/trim appear only between construction and `run!` (c172_demos.jl:303).",
+   "new": "No demo, test or GUI path pokes `x`/`s` mid-run, and `init!`/trim appear only between construction and `run!` (c172_demos.jl:303).",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "kept whole; D-195's Rationale relies on the `x`/`s` clause"
+  },
+  {
+   "id": "C-008",
+   "old": "Sim-time scripts are model behavior, so they become scenario components",
+   "new": "Sim-time scripts are model behavior, which is why they become scenario components.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "the reason now follows the bold rule (M59); the causal direction is kept"
+  },
+  {
+   "id": "C-009",
+   "old": "(ordinary periodic discrete components holding a sim-time script).",
+   "new": "A scenario component is an ordinary periodic discrete component holding a sim-time script.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "the gloss became its own sentence; the glossary's entry says the same"
+  },
+  {
+   "id": "C-010",
+   "old": "Both archetypes are clocked by sim time, `t`, the trajectory.",
+   "new": "Both archetypes are clocked by sim time, `t`, the trajectory.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-011",
+   "old": "Mapping them to devices is rejected (D-031).",
+   "new": "Mapping them to devices is rejected (D-031).",
+   "where": "new",
+   "cites": [
+    "D-031"
+   ],
+   "tag": "F",
+   "note": "one-clause verdict with its citation (R6)"
+  },
+  {
+   "id": "C-012",
+   "old": "The clock is the criterion.",
+   "new": "The clock is the criterion.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-013",
+   "old": "Rule. A sim-time script becomes a source or supervisor component; a wall-clock interaction becomes a device.",
+   "new": "A sim-time script becomes a scenario component, and a wall-clock interaction becomes a device (D-031).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-031"
+   ],
+   "tag": "R",
+   "ruling": "R10",
+   "note": "F74 and M59. The Rule. label folds into the bold clock criterion, which now reads \"scenario component\"; \"source or supervisor\" goes."
+  },
+  {
+   "id": "C-014",
+   "old": "A script mapped to a component is periodic discrete, with `K = 1` for today's `dt = 0.02` callbacks.",
+   "new": "A script mapped to a component is periodic discrete, with `K = 1` for the `dt = 0.02` callbacks FlightCore had,",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R6",
+   "note": "\"today's\" becomes FlightCore's, in the past tense"
+  },
+  {
+   "id": "C-015",
+   "old": "It executes synchronously in the loop, deterministic paced or unpaced.",
+   "new": "It executes synchronously in the loop, deterministic paced or unpaced.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-016",
+   "old": "It is replayed by recomputation, with no trace.",
+   "new": "It is replayed by recomputation, with no trace (the records of each frame's drained inputs).",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "gloss added at the trace link's first use"
+  },
+  {
+   "id": "C-017",
+   "old": "A device, by contrast, is traced and replayed from the trace.",
+   "new": "A device, by contrast, is traced and replayed from the trace.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-018",
+   "old": "The component mapping is strictly richer than the callback it replaces.",
+   "new": "The component mapping is strictly richer than the callback it replaces.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "the bold goes; no entry rules it (survey row 507)"
+  },
+  {
+   "id": "C-019",
+   "old": "- The `Ref(:init)` phase closure becomes honest `s`, visible in snapshots, logs and plots.",
+   "new": "- The callback's `Ref(:init)` phase closure becomes honest `s`, which a port (one declared name with its cell) can publish to snapshots, logs and plots.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R10",
+   "note": "F60; \"The callback's\" introduces the closure"
+  },
+  {
+   "id": "C-020",
+   "old": "- Inputs arrive same-boundary fresh by topological order.",
+   "new": "- Inputs arrive same-boundary (a published consistency point) fresh by topological order.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-021",
+   "old": "The callback ran post-step, one boundary staler.",
+   "new": "The callback ran post-step, one boundary staler.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-022",
+   "old": "- The pure timetable script is a one-liner reading the clock out of its bundle (the NamedTuple of zero-copy views a component function receives).",
+   "new": "- The pure timetable script is a one-liner reading the clock out of its bundle (the NamedTuple of zero-copy views a component function receives).",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-023",
+   "old": "That one-liner is `y_direct(c, (; t)) = (; offset = profile(t))`, exact at its own ticks, with no latching.",
+   "new": "That one-liner is `y_direct(c, (; t)) = (; offset = profile(t))`, exact at its own ticks, with no latch state of its own.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R10",
+   "note": "F77"
+  },
+  {
+   "id": "C-024",
+   "old": "- In a scenario configuration the script drives the avionics' input ports.",
+   "new": "- In a scenario configuration the script drives the input ports of the avionics (the onboard flight systems).",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "\"the avionics\" glossed as §10.1's \"(onboard flight systems)\" (spec 5615)"
+  },
+  {
+   "id": "C-025",
+   "old": "§11.7 therefore renders the corresponding GUI widgets read-only with its source shown.",
+   "new": "§11.7 therefore renders the corresponding GUI widgets read-only with its source shown.",
+   "where": "new",
+   "cites": [
+    "§11.7"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-026",
+   "old": "Today's demo-vs-GUI dead-slider fight is resolved by the port-resolution rule.",
+   "new": "The port-resolution rule resolves FlightCore's demo-vs-GUI dead-slider fight (§11.7).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§11.7"
+   ],
+   "tag": "R",
+   "ruling": "R6",
+   "note": "\"Today's\" becomes FlightCore's; the pointer at §11.7, whose rule retires FlightCore's dead-slider convention"
+  },
+  {
+   "id": "C-027",
+   "old": "`user_callback!` is eliminated (D-031).",
+   "new": "`user_callback!` is eliminated (D-031).",
+   "where": "new",
+   "cites": [
+    "D-031"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-028",
+   "old": "It is the periphery's `f_step!`, FlightCore's unconditional per-step hook (§2.5), and cheap composition leaves it without justification.",
+   "new": "It is the periphery's `f_step!`, FlightCore's unconditional per-step hook (§2.5), and cheap composition leaves it without justification.",
+   "where": "new",
+   "cites": [
+    "§2.5"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-029",
+   "old": "Its call sites migrate to scenario components, not devices.",
+   "new": "Its call sites migrate to scenario components, not devices.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-030",
+   "old": "Manual event triggering needs no mechanism.",
+   "new": "Manual event triggering needs no mechanism (D-031).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-031"
+   ],
+   "tag": "C",
+   "note": "D-031 Position, \"manual events = slot + guard\""
+  },
+  {
+   "id": "C-031",
+   "old": "It takes a root input plus a boundary-detected guard reading that root input (an edge check at step boundaries only, with no root-finding).",
+   "new": "It takes a root input (the root component's own input face) plus a boundary-detected guard (an edge check at step boundaries only, with no root-finding) reading that root input.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "the guard's gloss moved to sit at its term; root input glossed"
+  },
+  {
+   "id": "C-032",
+   "old": "That is already expressible in settled machinery.",
+   "new": "That is already expressible in settled machinery.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-033",
+   "old": "The levels doctrine applies: latched commands or counters.",
+   "new": "The levels doctrine applies (§11.4), with latched commands or counters.",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§11.4"
+   ],
+   "tag": "C",
+   "note": "the colon goes; pointer to §11.4's levels doctrine, which has no glossary entry"
+  },
+  {
+   "id": "C-034",
+   "old": "The demos' engine start/stop buttons are `u`-writes today.",
+   "new": "The engine start/stop buttons of FlightCore's demos were `u`-writes.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R6"
+  },
+  {
+   "id": "C-035",
+   "old": "Mid-run re-initialization is not built, because it is not demonstrated.",
+   "new": "Mid-run re-initialization is not built (D-031), because it is not demonstrated.",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-031"
+   ],
+   "tag": "C",
+   "note": "D-031 Position, \"init/trim = stopped-sim services\""
+  },
+  {
+   "id": "C-036",
+   "old": "Initialization and trim are stopped-sim workflows (first-class services, §14).",
+   "new": "Initialization and trim are stopped-sim workflows (first-class services, §14).",
+   "where": "new",
+   "cites": [
+    "§14"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-037",
+   "old": "No concurrency perimeter exists there.",
+   "new": "No concurrency perimeter exists there.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-038",
+   "old": "There is no loop and no devices, just plain single-task code.",
+   "new": "There is no loop and no devices, just plain single-task code.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-039",
+   "old": "The guarded-addition shape is on record should demand appear.",
+   "new": "The shape of the guarded addition (a capability the design admits but does not build) is on record should demand appear.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "guarded addition linked and glossed"
+  },
+  {
+   "id": "C-040",
+   "old": "It would be a traced, boundary-executed intervention command applied through project → sweep → publish, so that no consumer ever observes un-decoded state.",
+   "new": "It would be a traced, boundary-executed intervention command applied through project → sweep → publish, so that no consumer ever observes un-decoded state.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "\"project → sweep → publish\" verbatim (R6), so the sweep link takes no gloss there"
+  },
+  {
+   "id": "C-041",
+   "old": "The doctrine, final form. While a simulation runs, the periphery stages root-input writes and issues control commands.",
+   "new": "In the doctrine's final form, while a simulation runs, the periphery stages root-input writes and issues control commands (§2.2, D-031).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-031",
+    "§2.2"
+   ],
+   "tag": "C",
+   "note": "the bold lead-in becomes the sentence's opening; the headline clause is bold, cited to D-031's Position, with a pointer to §2.2, which states the law"
+  },
+  {
+   "id": "C-042",
+   "old": "Structurally, it does nothing else.",
+   "new": "Structurally, it does nothing else.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-043",
+   "old": "Anything that wants to poke the model mid-run is one of three things.",
+   "new": "Anything that wants to poke the model mid-run is one of three things.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-044",
+   "old": "It is an input in disguise, so wire a root input and a guard.",
+   "new": "- It is an input in disguise, so wire a root input and a guard.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-045",
+   "old": "It is model behavior in disguise, so add a scenario component.",
+   "new": "- It is model behavior in disguise, so add a scenario component.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-046",
+   "old": "Or it is a wall-clock interaction, so attach a device.",
+   "new": "- It is a wall-clock interaction, so attach a device.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "the three cases became a list"
+  },
+  {
+   "id": "C-047",
+   "old": "Graceful termination follows the same shape (§13.5): a stop request declared in the model, honoured unless the advance ignores it.",
+   "new": "Graceful termination follows the same shape (§13.5). It is a stop request (an output port of the framework enum `StopFlag`) declared in the model, honoured unless the advance ignores it (D-316).",
+   "where": "new",
+   "cites": [
+    "§13.5"
+   ],
+   "newcites": [
+    "D-316",
+    "§13.5"
+   ],
+   "tag": "C",
+   "note": "colon split; stop request glossed from its glossary entry; D-316 Position"
+  },
+  {
+   "id": "C-048",
+   "old": "Never a callback, and never a thrown exception.",
+   "new": "It is never a callback, and never a thrown exception (D-060).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-060"
+   ],
+   "tag": "C",
+   "note": "D-060 Position, standing under D-255 and D-316, \"termination is state, never an exception\""
+  },
+  {
+   "id": "C-049",
+   "old": "### 12.6 Run lifecycle and partial advance",
+   "new": "### 12.6 Run lifecycle and partial advance",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-050",
+   "old": "`Run` is what one run owns (D-255, D-260, D-317).",
+   "new": "`Run` is what one run owns (D-255, D-260, D-317).",
+   "where": "new",
+   "cites": [
+    "D-255",
+    "D-260",
+    "D-317"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-051",
+   "old": "It is a mutable struct of six fields.",
+   "new": "It is a mutable struct of six fields.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-052",
+   "old": "Two are `const` and last the run's whole life, the log and the trace (`nothing` under the trace switch).",
+   "new": "Two are `const` and last the run's whole life. One is the log (the retained sequence of published snapshots). The other is the trace (the records of each frame's drained inputs), which is `nothing` under the trace switch.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "split; log and trace linked and glossed"
+  },
+  {
+   "id": "C-053",
+   "old": "The door that builds the run takes the four recording keywords, `trace`, `log`, `log_every` and `log_max` (Appendix B, D-261),",
+   "new": "The door that builds the run takes the four recording keywords, `trace`, `log`, `log_every` and `log_max` (Appendix B, D-261).",
+   "where": "new",
+   "cites": [
+    "Appendix B",
+    "D-261"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-054",
+   "old": "so a run's recording is that door's declaration and the next door may declare otherwise.",
+   "new": "A run's recording is therefore that door's declaration, and the next door may declare otherwise (D-261).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-261"
+   ],
+   "tag": "C",
+   "note": "split from its citation, so the citation repeats (adjacency)"
+  },
+  {
+   "id": "C-055",
+   "old": "Four evolve during it.",
+   "new": "Four fields evolve during the run.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-056",
+   "old": "`feed` is the recording `replay!` attached, or `nothing`.",
+   "new": "`feed` is the recording `replay!` attached, or `nothing`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-057",
+   "old": "`termination` is the record the loop's tail writes.",
+   "new": "`termination` is the record the loop's tail writes.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-058",
+   "old": "`frame` and `boundary` are the trajectory's counters, the frame index and the boundary ordinal.",
+   "new": "`frame` and `boundary` are the trajectory's counters, the frame index and the boundary ordinal.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-059",
+   "old": "`init!`, `restore!` and `replay!` construct one, and nothing else rebinds it.",
+   "new": "`init!`, `restore!` and `replay!` construct a run, and nothing else rebinds it.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-060",
+   "old": "`live!` and the halt at a recording's end write `feed`.",
+   "new": "`live!` (§12.7) and the halt at a recording's end write `feed`.",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§12.7"
+   ],
+   "tag": "C",
+   "note": "pointer, since `live!` is used before §12.7 introduces it"
+  },
+  {
+   "id": "C-061",
+   "old": "The loop's tail writes `termination` once, and `closed(run)` is `termination !== nothing`.",
+   "new": "The loop's tail writes `termination` once, and `closed(run)` is `termination !== nothing`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-062",
+   "old": "Each door sets the two counters as it builds the run, `init!` to zero and `restore!` and `replay!` to the checkpoint's, and the loop advances them (D-317).",
+   "new": "Each door sets the two counters as it builds the run, `init!` to zero and `restore!` and `replay!` to the checkpoint's, and the loop advances them (D-317).",
+   "where": "new",
+   "cites": [
+    "D-317"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-063",
+   "old": "`restore!` of a bare state sets the frame index to the state's frame and the boundary ordinal to zero, as `init!` does (D-319).",
+   "new": "`restore!` of a bare state sets the frame index to the state's frame and the boundary ordinal to zero, as `init!` does (D-319).",
+   "where": "new",
+   "cites": [
+    "D-319"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-064",
+   "old": "The origin `t₀` is not a run field.",
+   "new": "The origin `t₀` is not a run field (D-260).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-260"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-065",
+   "old": "The executor's clock holds it beside `t`.",
+   "new": "The executor's clock holds it beside `t`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-066",
+   "old": "`init!` sets it on the clock before boundary zero (§14.5),",
+   "new": "`init!` sets it on the clock before boundary zero, the initialization boundary (§14.5).",
+   "where": "new",
+   "cites": [
+    "§14.5"
+   ],
+   "tag": "F",
+   "note": "boundary zero's first use moved here, so its link and gloss sit here"
+  },
+  {
+   "id": "C-067",
+   "old": "and a checkpoint (the `Model`'s state at a frame top as one value) carries it with the clock (§11.5, D-273).",
+   "new": "A checkpoint (the `Model`'s state at a frame top as one value) carries it with the clock (§11.5, D-273).",
+   "where": "new",
+   "cites": [
+    "D-273",
+    "§11.5"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-068",
+   "old": "It is a `Float64`, as `h` and `t_end` are.",
+   "new": "It is a `Float64`, as `h` and `t_end` are (D-260).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-260"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-069",
+   "old": "A `Simulation` is constructed with a placeholder run,",
+   "new": "A `Simulation` is constructed with a placeholder run (D-255).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-255"
+   ],
+   "tag": "C",
+   "note": "the bold term became the bold headline clause, cited to D-255 bullet 2"
+  },
+  {
+   "id": "C-070",
+   "old": "an empty log, no trace, no feed and no termination, which `init!`, `restore!` and `replay!` replace (D-255).",
+   "new": "The placeholder is an empty log, no trace, no feed and no termination, and `init!`, `restore!` and `replay!` replace it (D-255).",
+   "where": "new",
+   "cites": [
+    "D-255"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-071",
+   "old": "The field is always a `Run` and never `nothing`, so every accessor has a run to read, and the lifecycle state below says whether that run ever started.",
+   "new": "The field is always a `Run` and never `nothing`, so every accessor has a run to read, and the lifecycle state below says whether that run ever started.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-072",
+   "old": "The placeholder carries no configuration and no compiled state (D-261).",
+   "new": "The placeholder carries no configuration and no compiled state (D-261).",
+   "where": "new",
+   "cites": [
+    "D-261"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-073",
+   "old": "`init!` allocates fresh objects rather than clearing them.",
+   "new": "`init!` allocates fresh objects rather than clearing them (D-255).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-255"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-074",
+   "old": "`Simulation` is a mutable struct of four fields, the `Model` (the deployment and its executor at one scalar), the run, the data plane and the control plane (D-317).",
+   "new": "`Simulation` is a mutable struct of four fields, the `Model` (the deployment and its executor at one scalar), the run, the data plane and the control plane (D-317).",
+   "where": "new",
+   "cites": [
+    "D-317"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-075",
+   "old": "The `Model` holds the deployment (the scalar-free artifact the grid parameters fix, carrying the build), the executor, its status and its diagnostic cell.",
+   "new": "The `Model` holds the deployment, the executor, its status and its diagnostic cell. The deployment is the scalar-free artifact the grid parameters fix, carrying the build.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "the deployment's gloss became its own sentence, so the executor and diagnostic cell glosses fit"
+  },
+  {
+   "id": "C-076",
+   "old": "A simulation owns its `Model`, claimed at construction and never shared (§9.2, D-318).",
+   "new": "A simulation owns its `Model`, claimed at construction and never shared (§9.2, D-318).",
+   "where": "new",
+   "cites": [
+    "D-318",
+    "§9.2"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-077",
+   "old": "Every other value belongs to one of the four (D-256).",
+   "new": "Every other value belongs to one of the four (D-256).",
+   "where": "new",
+   "cites": [
+    "D-256"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-078",
+   "old": "The build is reached through the deployment, never held twice.",
+   "new": "The build is reached through the deployment, never held twice.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-079",
+   "old": "The grid parameters, the schedule (the typed per-component `(D, Φ, Δt)` tick table) and the event parameters are the deployment's (§9.2).",
+   "new": "The grid parameters, the schedule (the typed per-component `(D, Φ, Δt)` tick table) and the event parameters are the deployment's (§9.2).",
+   "where": "new",
+   "cites": [
+    "§9.2"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-080",
+   "old": "`chunk_size`, the stepper and the arrival buffers are the executor's.",
+   "new": "`chunk_size`, the stepper and the arrival buffers are the executor's.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-081",
+   "old": "`join_timeout` is `Control`'s (§12.1).",
+   "new": "`join_timeout` is `Control`'s (§12.1).",
+   "where": "new",
+   "cites": [
+    "§12.1"
+   ],
+   "tag": "F",
+   "note": "R5 keeps it here as written"
+  },
+  {
+   "id": "C-082",
+   "old": "The loop's diagnostic cell, its account and the published holder are the plane's, and the frame's own cell is the `Model`'s (§11.8).",
+   "new": "The loop's diagnostic cell, its account and the published holder are the plane's, and the frame's own cell is the `Model`'s (§11.8).",
+   "where": "new",
+   "cites": [
+    "§11.8"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-083",
+   "old": "The log, the trace and the two counters are the run's.",
+   "new": "The log, the trace and the two counters are the run's.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-084",
+   "old": "The stop policy, with its `t_end` and ignored requesters, is the advance's argument, and the termination record keeps the terminating one (D-260).",
+   "new": "The stop policy, with its `t_end` and ignored requesters, is the advance's argument, and the termination record (the stopped-sim value naming how the run ended) keeps the terminating one (D-260).",
+   "where": "new",
+   "cites": [
+    "D-260"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-085",
+   "old": "The pacer's schedule and counters are `run!`'s own, created per call and passed to the loop and its publications as the policy is,",
+   "new": "The pacer's schedule and counters are `run!`'s own, created per call and passed to the loop and its publications as the policy is.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-086",
+   "old": "and each snapshot's status carries their frozen record (§10.7, D-269).",
+   "new": "The status of each snapshot (the immutable per-boundary publication) carries their frozen record (§10.7, D-269).",
+   "where": "new",
+   "cites": [
+    "D-269",
+    "§10.7"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-087",
+   "old": "Rule. A struct holds what it owns or what it must retain across calls.",
+   "new": "A struct holds what it owns or what it must retain across calls (D-261).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-261"
+   ],
+   "tag": "F",
+   "note": "the Rule. label goes; the headline clause is bold and cites D-261 bullet 1, which the old paragraph cited at its end"
+  },
+  {
+   "id": "C-088",
+   "old": "A callee takes what it reads as an argument, never off a field added to the container it already holds.",
+   "new": "A callee takes what it reads as an argument, never off a field added to the container it already holds.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-089",
+   "old": "An object is built after its inputs exist, and the placeholder run above is the one exception (D-261).",
+   "new": "An object is built after its inputs exist, and the placeholder run above is the one exception (D-261).",
+   "where": "new",
+   "cites": [
+    "D-261"
+   ],
+   "tag": "F",
+   "note": "D-261 bullet 3, a second ruling, bold on its own headline clause"
+  },
+  {
+   "id": "C-090",
+   "old": "A `Simulation` moves through five states: built, initialized, running, and terminally stopped or errored (§13.4).",
+   "new": "A `Simulation` moves through five states, built, initialized, running, and terminally stopped or errored (§13.4, D-088).",
+   "where": "new",
+   "cites": [
+    "§13.4"
+   ],
+   "newcites": [
+    "D-088",
+    "§13.4"
+   ],
+   "tag": "C",
+   "note": "the bold state words went plain (italic); the headline clause is bold, cited to D-088's Position"
+  },
+  {
+   "id": "C-091",
+   "old": "Built means stores allocated and boundary zero not completed.",
+   "new": "Built means stores (the framework-owned homes of a component's state) allocated and boundary zero not completed (D-223).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-223"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-092",
+   "old": "It is the cold state, and the state a throw inside boundary zero returns the simulation to (§13.4).",
+   "new": "It is the cold state, and the state a throw inside boundary zero returns the simulation to (§13.4).",
+   "where": "new",
+   "cites": [
+    "§13.4"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-093",
+   "old": "Initialized means `init!` has completed boundary zero, the initialization boundary run as the ordinary macro-sequence with an empty integrate (§14.5), or `restore!` or `replay!` has restored a checkpoint.",
+   "new": "Initialized means `init!` has completed boundary zero, the initialization boundary run as the ordinary macro-sequence with an empty integrate (§14.5), or `restore!` or `replay!` has restored a checkpoint.",
+   "where": "new",
+   "cites": [
+    "§14.5"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-094",
+   "old": "`lifecycle(sim)` derives the state rather than storing it (D-317).",
+   "new": "`lifecycle(sim)` derives the state rather than storing it (D-317).",
+   "where": "new",
+   "cites": [
+    "D-317"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-095",
+   "old": "It reads three facts, the control plane's running flag, the `Model`'s status and whether the run is closed.",
+   "new": "It reads three facts, the control plane's running flag, the `Model`'s status and whether the run is closed.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-096",
+   "old": "The status is `:built`, `:consistent` or `:inconsistent`, and only the `Model`'s own doors and catch sites write it.",
+   "new": "The status is `:built`, `:consistent` or `:inconsistent`, and only the `Model`'s own entry points and catch sites write it.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R14"
+  },
+  {
+   "id": "C-097",
+   "old": "A claimed model's status is written only through its simulation's doors, since the model's doors refuse a direct call on a claimed model (D-318).",
+   "new": "A claimed model's status is written only through its simulation's entry points, since the model's entry points refuse a direct call on a claimed model (D-318).",
+   "where": "new",
+   "cites": [
+    "D-318"
+   ],
+   "tag": "R",
+   "ruling": "R14"
+  },
+  {
+   "id": "C-098",
+   "old": "| running flag | `Model` status | run closed | state | |---|---|---|---| | set | any | any | running | | clear | `:built` | any | built | | clear | `:inconsistent` | any | errored | | clear | `:consistent` | no | initialized | | clear | `:consistent` | yes | stopped |",
+   "new": "| running flag | `Model` status | run closed | state | |---|---|---|---| | set | any | any | running | | clear | `:built` | any | built | | clear | `:inconsistent` | any | errored | | clear | `:consistent` | no | initialized | | clear | `:consistent` | yes | stopped |",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "the derivation table, verbatim"
+  },
+  {
+   "id": "C-099",
+   "old": "`errored` is terminal (D-059).",
+   "new": "`errored` is terminal (D-059).",
+   "where": "new",
+   "cites": [
+    "D-059"
+   ],
+   "tag": "M",
+   "note": "M52, moved up from the section's end to follow the derivation table"
+  },
+  {
+   "id": "C-100",
+   "old": "Reproduction is trace replay (§12.7), not resurrection.",
+   "new": "Reproduction is trace replay, not resurrection (§12.7).",
+   "where": "new",
+   "cites": [
+    "§12.7"
+   ],
+   "tag": "M",
+   "note": "M52; the citation moved past \"not resurrection\" so it does not sit inside the replay gloss's sentence"
+  },
+  {
+   "id": "C-101",
+   "old": "Beside the state, the run carries an input mode, `:live` or `:replay`, read as `mode(sim)`.",
+   "new": "Beside the state, the run carries an input mode, `:live` or `:replay`, read as `mode(sim)`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "the bold term went plain"
+  },
+  {
+   "id": "C-102",
+   "old": "It is read off the run's `feed`: `:replay` while a recording is attached, `:live` otherwise (D-260).",
+   "new": "The mode is read off the run's `feed`, `:replay` while a recording is attached and `:live` otherwise (D-260).",
+   "where": "new",
+   "cites": [
+    "D-260"
+   ],
+   "tag": "F",
+   "note": "the colon goes; the headline clause is bold, D-260 bullet 2"
+  },
+  {
+   "id": "C-103",
+   "old": "The mode names where the next frame's drain takes its batches from, the staging cells or the attached recording (§12.7).",
+   "new": "The mode names where the next frame's drain takes its batches from, the staging cells or the attached recording (§12.7, D-218).",
+   "where": "new",
+   "cites": [
+    "§12.7"
+   ],
+   "newcites": [
+    "D-218",
+    "§12.7"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-104",
+   "old": "State and mode are orthogonal.",
+   "new": "State and mode are orthogonal.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-105",
+   "old": "The state says whether the simulation may advance, and the mode says what it will advance on.",
+   "new": "The state says whether the simulation may advance, and the mode says what it will advance on.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-106",
+   "old": "Rule. `init!` is mandatory.",
+   "new": "`init!` is mandatory (D-088).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-088"
+   ],
+   "tag": "C",
+   "note": "the Rule. label goes; bold headline clause cited to D-088 Position"
+  },
+  {
+   "id": "C-107",
+   "old": "`run!` or `step!` on a simulation whose boundary zero has not completed is an error in the kind set (§13.2) naming `init!`.",
+   "new": "`run!` or `step!` on a simulation whose boundary zero has not completed is `MissingInit`, an error in the kind set (§13.2) naming `init!`.",
+   "where": "new",
+   "cites": [
+    "§13.2"
+   ],
+   "tag": "R",
+   "ruling": "R10",
+   "note": "F58 names the kind; F66 unlinks the word \"boundary\" inside \"boundary zero\""
+  },
+  {
+   "id": "C-108",
+   "old": "That is distinct from `UninitializedInputs`, which fires inside `init!` (§14.6).",
+   "new": "That is distinct from `UninitializedInputs`, which fires inside `init!` (§14.6).",
+   "where": "new",
+   "cites": [
+    "§14.6"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-109",
+   "old": "`restore!` and `replay!` are the two alternative entries.",
+   "new": "`restore!` and `replay!` are the two alternative doors.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "bare \"entry\" is a reserved word; \"door\" is the term R14 defines in the context for exactly these calls"
+  },
+  {
+   "id": "C-110",
+   "old": "Each restores a checkpoint and runs no boundary zero (§12.7, D-274).",
+   "new": "Each restores a checkpoint and runs no boundary zero (§12.7, D-274).",
+   "where": "new",
+   "cites": [
+    "D-274",
+    "§12.7"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-111",
+   "old": "A throw inside boundary zero, which only `init!` runs, leaves the simulation `built` (§13.4), so the next `run!` or `step!` meets the same refusal.",
+   "new": "A throw inside boundary zero, which only `init!` runs, leaves the simulation `built` (§13.4, D-223), so the next `run!` or `step!` meets the same refusal.",
+   "where": "new",
+   "cites": [
+    "§13.4"
+   ],
+   "newcites": [
+    "D-223",
+    "§13.4"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-112",
+   "old": "Where the loop runs.",
+   "new": "says where the loop and the device tasks run",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R5",
+   "note": "M51; the bold lead-in goes with the paragraph it headed"
+  },
+  {
+   "id": "C-113",
+   "old": "The loop runs on the calling task, the task that invoked `run!`, and every rostered device on a spawned task (§11.1).",
+   "new": "and §11.1 says where the loop and the device tasks run",
+   "where": "new",
+   "cites": [
+    "§11.1"
+   ],
+   "tag": "R",
+   "ruling": "R5",
+   "note": "M51; §11.1 holds it bold, \"The loop runs on the calling task (D-310)\""
+  },
+  {
+   "id": "C-114",
+   "old": "Deviceless, `run!` is fully synchronous.",
+   "new": "Deviceless, `run!` is fully synchronous,",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R5",
+   "note": "kept, since D-268's Rationale cites §12.6 for it"
+  },
+  {
+   "id": "C-115",
+   "old": "An unattended run is the same loop with empty staging (§11.1).",
+   "new": "§11.1 says where the loop and the device tasks run and defines the unattended run (a run with empty staging and no snapshot readers).",
+   "where": "new",
+   "cites": [
+    "§11.1"
+   ],
+   "tag": "R",
+   "ruling": "R5",
+   "note": "M51, F65, F75; the pointer carries the definition, and the gloss is the glossary's"
+  },
+  {
+   "id": "C-116",
+   "old": "It is also what the synchronous rethrow presupposes (§13.4).",
+   "new": "This is what the synchronous rethrow (§13.4) presupposes.",
+   "where": "docs/design/spec.md",
+   "cites": [
+    "§13.4"
+   ],
+   "tag": "M",
+   "ruling": "R5",
+   "note": "M51; held in §11.1, where the antecedent is the calling-task loop (F65)"
+  },
+  {
+   "id": "C-117",
+   "old": "Partial advance.",
+   "new": "#### Partial advance",
+   "where": "new",
+   "cites": [],
+   "tag": "X",
+   "note": "the bold lead-in became the label"
+  },
+  {
+   "id": "C-118",
+   "old": "`step!(sim; frames = 1)` advances whole frames synchronously through the ordinary frame sequence (drain, integrate, boundaries, publication) and returns.",
+   "new": "`step!(sim; frames = 1)` advances whole frames synchronously through the ordinary frame sequence (drain, integrate, boundaries, publication) and returns (D-088).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-088"
+   ],
+   "tag": "C",
+   "note": "D-088 Rationale only"
+  },
+  {
+   "id": "C-119",
+   "old": "A stepped simulation is bit-identical to the same frames under `run!`,",
+   "new": "A stepped simulation is bit-identical to the same frames under `run!` (§2.4),",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§2.4"
+   ],
+   "tag": "C",
+   "note": "§2.4 states the law; this is its mechanism"
+  },
+  {
+   "id": "C-120",
+   "old": "and it never waits, whatever pace the control plane holds (D-269).",
+   "new": "and it never waits on the pacer, whatever pace the control plane holds (D-269).",
+   "where": "new",
+   "cites": [
+    "D-269"
+   ],
+   "tag": "R",
+   "ruling": "R10",
+   "note": "F79"
+  },
+  {
+   "id": "C-121",
+   "old": "`step!(sim; t_plus = 10.0)` is the duration spelling, mutually exclusive with `frames`.",
+   "new": "`step!(sim; t_plus = 10.0)` is the duration spelling. It is mutually exclusive with `frames`, and passing both is `ArgumentInvalid`.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R10",
+   "note": "F59 names the kind"
+  },
+  {
+   "id": "C-122",
+   "old": "It advances whole frames until the boundary time first covers the duration, which is the migration suite's advance-by-duration idiom.",
+   "new": "It advances whole frames until the boundary time first covers the duration, which is the migration suite's advance-by-duration idiom.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "\"the migration suite\" stays; neither §12.6 nor the log says it is FlightCore's (R6, rulings.md)"
+  },
+  {
+   "id": "C-123",
+   "old": "Partial advance is the test-harness mode: advance, assert, advance.",
+   "new": "Partial advance is the test-harness mode of advance, assert, advance.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-124",
+   "old": "It is equally the REPL mode: fly a while, inspect, continue.",
+   "new": "It is equally the REPL mode of fly a while, inspect, continue.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-125",
+   "old": "Neither is a script, so the scenario-component doctrine does not absorb them (§12.5).",
+   "new": "Neither is a script, so the scenario-component doctrine does not absorb them (§12.5).",
+   "where": "new",
+   "cites": [
+    "§12.5"
+   ],
+   "tag": "R",
+   "ruling": "R10",
+   "note": "F66 unlinks the word \"component\" inside \"scenario-component\""
+  },
+  {
+   "id": "C-126",
+   "old": "A stepping session is deviceless by construction.",
+   "new": "A stepping session is deviceless by construction (D-093).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-093"
+   ],
+   "tag": "C",
+   "note": "D-093 Rationale only"
+  },
+  {
+   "id": "C-127",
+   "old": "Device tasks are per-`run!` artifacts (§11.1), and a device loop's `while running(handle)` is false outside a run.",
+   "new": "Device tasks are per-`run!` artifacts (§11.1), and a device loop's `while running(handle)` is false outside a run.",
+   "where": "new",
+   "cites": [
+    "§11.1"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-128",
+   "old": "Between `step!` calls the simulation is in a stopped-sim state, `initialized` (below), so `attach!` is legal there and does what it always does.",
+   "new": "Between `step!` calls the simulation is in a stopped-sim state, `initialized` (below), so `attach!` is legal there and does what it always does.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-129",
+   "old": "It registers (§11.3), and the task appears at the next `run!`.",
+   "new": "It registers (§11.3), and the task appears at the next `run!`.",
+   "where": "new",
+   "cites": [
+    "§11.3"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-130",
+   "old": "The frame-top drain still runs, so `step!` frames stay bit-identical to `run!` frames.",
+   "new": "The frame-top drain still runs, so `step!` frames stay bit-identical to `run!` frames.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "the bold lead-in went plain"
+  },
+  {
+   "id": "C-131",
+   "old": "What it drains is the harness cell.",
+   "new": "In a stepping session the cell written is the harness cell (the always-present staging cell of the harness writer).",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R10",
+   "note": "F64; the harness cell's gloss moved to its first use"
+  },
+  {
+   "id": "C-132",
+   "old": "The harness write path is `stage!(sim, \"face\" => value, …)` (§11.3),",
+   "new": "The harness write path is `stage!(sim, \"face\" => value, …)`, and §11.3 specifies that harness writer.",
+   "where": "new",
+   "cites": [
+    "§11.3"
+   ],
+   "tag": "R",
+   "ruling": "R5",
+   "note": "M53, the pointer at §11.3 for what the harness writer is"
+  },
+  {
+   "id": "C-133",
+   "old": "from any task, the calling task included.",
+   "new": "It stages a batch from any task, the calling task (the task that invoked `run!`) included",
+   "where": "docs/design/spec.md",
+   "cites": [],
+   "tag": "M",
+   "ruling": "R5",
+   "note": "M53; §11.3 holds it, cited to D-200"
+  },
+  {
+   "id": "C-134",
+   "old": "Staged batches are ordinary batches.",
+   "new": "Staged batches are ordinary batches.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-135",
+   "old": "They are traced, so replay and bit-identity hold.",
+   "new": "They are traced, so replay and bit-identity hold,",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-136",
+   "old": "They are applied at the next frame top.",
+   "new": "and they are applied at the next frame top.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-137",
+   "old": "They are surface-checked like any writer's (§11.3).",
+   "new": "is drained, traced and surface-checked exactly as any device's",
+   "where": "docs/design/spec.md",
+   "cites": [
+    "§11.3"
+   ],
+   "tag": "M",
+   "ruling": "R5",
+   "note": "M53; §11.3 holds it for the harness cell"
+  },
+  {
+   "id": "C-138",
+   "old": "The read half is `latest(sim)`.",
+   "new": "The read half is `latest(sim)`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-139",
+   "old": "It hands back the same immutable snapshot value a device handle acquires (§11.2), navigated directly for assertions.",
+   "new": "It hands back the same immutable snapshot value a device handle acquires (§11.2), navigated directly for assertions.",
+   "where": "new",
+   "cites": [
+    "§11.2"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-140",
+   "old": "Advance-assert-advance is `stage!` → `step!` → `latest`.",
+   "new": "Advance-assert-advance is `stage!` → `step!` → `latest` (D-096).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-096"
+   ],
+   "tag": "C",
+   "note": "D-096 Rationale only"
+  },
+  {
+   "id": "C-141",
+   "old": "Both entry points work under `run!` too.",
+   "new": "Both entry points work under `run!` too.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "kept (R5); Appendix B relies on it"
+  },
+  {
+   "id": "C-142",
+   "old": "The harness cell, the always-present staging cell of the harness writer, is not step-scoped.",
+   "new": "The harness cell is not step-scoped.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "its gloss moved to the term's first use"
+  },
+  {
+   "id": "C-143",
+   "old": "An inspection accessor leaves the rejection of closure-based termination (§13.5) untouched.",
+   "new": "An inspection accessor leaves the rejection of closure-based termination untouched (§13.5, D-096).",
+   "where": "new",
+   "cites": [
+    "§13.5"
+   ],
+   "newcites": [
+    "D-096",
+    "§13.5"
+   ],
+   "tag": "C",
+   "note": "one-clause verdict with its citation (R6); D-096 Rejected list"
+  },
+  {
+   "id": "C-144",
+   "old": "Status, termination and the `run!` seam.",
+   "new": "#### Status, termination and `run!` after `step!`",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R10",
+   "note": "F61; the bold lead-in became a label naming the junction, with no \"seam\""
+  },
+  {
+   "id": "C-145",
+   "old": "Between `step!` calls a simulation reports initialized.",
+   "new": "Between `step!` calls a simulation reports `initialized` (D-088).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-088"
+   ],
+   "tag": "C",
+   "note": "D-088 Rationale only; the bold state word went plain"
+  },
+  {
+   "id": "C-146",
+   "old": "No loop task exists, so `running` would lie.",
+   "new": "No loop task exists, so `running` would lie.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-147",
+   "old": "Nothing is terminal, so `stopped` would lie too.",
+   "new": "Nothing is terminal, so `stopped` would lie too.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-148",
+   "old": "The state reads \"boundary-consistent and ready to advance\", not \"sitting at boundary zero\".",
+   "new": "The state reads \"boundary-consistent and ready to advance\", not \"sitting at boundary zero\".",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-149",
+   "old": "`run!` may therefore follow `step!`, continuing from the current boundary, and so may another `step!`.",
+   "new": "`run!` may therefore follow `step!`, continuing from the current boundary, and so may another `step!`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-150",
+   "old": "Termination policy is honored throughout, as bit-identity requires.",
+   "new": "Termination policy is honored throughout, as bit-identity requires.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-151",
+   "old": "`t_end` reached, or a stop request holding at frame 3 of `step!(sim; frames = 10)`, ends the run there through the ordinary §12.4 tail and leaves the simulation `stopped`.",
+   "new": "`t_end` reached, or a stop request (an output port of the framework enum `StopFlag`) holding at frame 3 of `step!(sim; frames = 10)`, ends the run there through the ordinary §12.4 tail and leaves the simulation `stopped`.",
+   "where": "new",
+   "cites": [
+    "§12.4"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-152",
+   "old": "`step!` therefore returns the number of frames actually advanced.",
+   "new": "`step!` therefore returns the number of frames actually advanced.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "the bold phrase went plain (italic)"
+  },
+  {
+   "id": "C-153",
+   "old": "That is the requested count in the ordinary case, and fewer when the run terminated inside the call.",
+   "new": "That is the requested count in the ordinary case, and fewer when the run terminated inside the call.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-154",
+   "old": "That return is how a harness detects the truncation without inspecting the clock.",
+   "new": "That return is how a harness detects the truncation without inspecting the clock.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-155",
+   "old": "Re-running:",
+   "new": "#### Re-running and checkpoints",
+   "where": "new",
+   "cites": [],
+   "tag": "X",
+   "note": "the lead-in's topic became the label"
+  },
+  {
+   "id": "C-156",
+   "old": "`stopped → init! → run!` remains the authored re-run.",
+   "new": "`stopped → init! → run!` remains the authored re-run (D-088).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-088"
+   ],
+   "tag": "C",
+   "note": "D-088 Rationale only"
+  },
+  {
+   "id": "C-157",
+   "old": "`init!` re-runs boundary zero from its condition.",
+   "new": "`init!` re-runs boundary zero from its condition (a path-addressed overlay that sets the build to a state).",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-158",
+   "old": "The warm restart is `checkpoint` → `restore!` → `run!` (§12.7, D-274).",
+   "new": "The warm restart is `checkpoint` → `restore!` → `run!` (§12.7, D-274).",
+   "where": "new",
+   "cites": [
+    "D-274",
+    "§12.7"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-159",
+   "old": "`restore!` is a door like `init!`, and it runs no boundary zero.",
+   "new": "`restore!` is a door like `init!`, and it runs no boundary zero.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-160",
+   "old": "Each builds a fresh run, so the trace, the log and the termination record (§13.5) are new objects rather than cleared ones, and each clears any batches still in staging cells.",
+   "new": "Each builds a fresh run, so the trace, the log and the termination record (§13.5) are new objects rather than cleared ones, and each clears any batches still in staging cells.",
+   "where": "new",
+   "cites": [
+    "§13.5"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-161",
+   "old": "The recorders restart with the run they record, and no stale batch survives to clobber the frame it predates.",
+   "new": "The recorders (the trace and the log jointly) restart with the run they record, and no stale batch survives to clobber the frame it predates.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-162",
+   "old": "`init!` and `restore!` also return the input mode to `:live`, and a fresh `replay!` sets the mode exactly as it sets the trajectory.",
+   "new": "`init!` and `restore!` also return the input mode to `:live`, and a fresh `replay!` sets the mode exactly as it sets the trajectory.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-163",
+   "old": "`live!` is the fourth door, and the only one that moves the mode alone.",
+   "new": "`live!` is the one call that moves the mode alone.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R14"
+  },
+  {
+   "id": "C-164",
+   "old": "It takes a replaying simulation live where it stands (§12.7).",
+   "new": "It takes a replaying simulation live where it stands (§12.7).",
+   "where": "new",
+   "cites": [
+    "§12.7"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-165",
+   "old": "A terminal state makes the mode moot.",
+   "new": "A terminal state makes the mode moot.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-166",
+   "old": "Nothing advances until one of those doors is taken (D-218, D-219).",
+   "new": "From `stopped`, nothing advances until `init!`, `restore!` or `replay!` opens a new run, and `errored` is terminal (D-218, D-219).",
+   "where": "new",
+   "cites": [
+    "D-218",
+    "D-219"
+   ],
+   "tag": "R",
+   "ruling": "R10",
+   "note": "F63"
+  },
+  {
+   "id": "C-167",
+   "old": "`checkpoint` and `restore!` exist on the `Model` and on the `Simulation`, and a `Checkpoint` is the `Model`'s state beside the run's cursor (D-319).",
+   "new": "`checkpoint` and `restore!` exist on the `Model` and on the `Simulation`, and a `Checkpoint` is the `Model`'s state beside the run's cursor (D-319).",
+   "where": "new",
+   "cites": [
+    "D-319"
+   ],
+   "tag": "F",
+   "note": "the bold shrank to the headline clause \"a `Checkpoint` is the `Model`'s state beside the run's cursor\""
+  },
+  {
+   "id": "C-168",
+   "old": "`checkpoint(model)` returns the state alone, a `ModelState`.",
+   "new": "`checkpoint(model)` returns the state alone, a `ModelState`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-169",
+   "old": "It holds the flat buffer, the `s` and `m` stores, the whole signal table, the guard priors, `t`, `t₀` and the fingerprint.",
+   "new": "It holds the flat buffer, the `s` and `m` stores, the whole signal table, the guard priors, `t`, `t₀`, the fingerprint (the structural layout) and the deployment.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R12"
+  },
+  {
+   "id": "C-170",
+   "old": "It is legal at `:consistent` with the clock on a grid top.",
+   "new": "It is legal at `:consistent` with the clock on a grid top.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-171",
+   "old": "`checkpoint(sim)` wraps that state with the run's frame index and boundary ordinal (D-274).",
+   "new": "`checkpoint(sim)` wraps that state with the run's frame index and boundary ordinal (D-319).",
+   "where": "new",
+   "cites": [
+    "D-274"
+   ],
+   "newcites": [
+    "D-319"
+   ],
+   "tag": "R",
+   "ruling": "R10",
+   "note": "F69, D-319 bullet 3"
+  },
+  {
+   "id": "C-172",
+   "old": "It is a stopped-sim service, legal in `initialized` and `stopped` (§14).",
+   "new": "It is a stopped-sim service, legal in `initialized` and `stopped` (§14), and refused as `ServiceLifecycle` in any other state.",
+   "where": "new",
+   "cites": [
+    "§14"
+   ],
+   "tag": "R",
+   "ruling": "R10",
+   "note": "F78 names the kind"
+  },
+  {
+   "id": "C-173",
+   "old": "It is refused wherever the executor is not at the rest a published frame top leaves (`CheckpointMidFrame`, Appendix C).",
+   "new": "It is refused wherever the executor is not at the rest a published frame top leaves (`CheckpointMidFrame`, Appendix C).",
+   "where": "new",
+   "cites": [
+    "Appendix C"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-174",
+   "old": "That is after a `t` stop, which leaves the clock mid-frame with the remainder abandoned, and after a frame abandoned unpublished (§12.4).",
+   "new": "That is after a `t` stop, which leaves the clock mid-frame with the remainder abandoned, and after a frame abandoned unpublished (§12.4).",
+   "where": "new",
+   "cites": [
+    "§12.4"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-175",
+   "old": "The test is that the clock sits on a grid time and that the latest snapshot is of that very boundary.",
+   "new": "The test is that the clock sits on a grid time and that the latest snapshot is of that very boundary.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-176",
+   "old": "`restore!(model, model_state)` checks the state's fingerprint against the model.",
+   "new": "`restore!(model, model_state)` checks the state's fingerprint and deployment against the model.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R12"
+  },
+  {
+   "id": "C-177",
+   "old": "It also checks that the state's `t` is a grid time `t₀ + k·h` of the state's own origin and step, and a state off its grid is `CheckpointMidFrame`.",
+   "new": "It also checks that the state's `t` is a grid time `t₀ + k·h` of the state's own origin and step, and a state off its grid is `CheckpointMidFrame`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-178",
+   "old": "Every mismatch of either kind is collected into one throw before any write.",
+   "new": "Every mismatch of either kind is collected into one throw before any write.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-179",
+   "old": "The door then copies the state back, settles the restored boundary through the hooks and writes `:consistent` last (D-318).",
+   "new": "The entry point then copies the state back, settles the restored boundary through the hooks and writes `:consistent` last (D-318, D-319).",
+   "where": "new",
+   "cites": [
+    "D-318"
+   ],
+   "newcites": [
+    "D-318",
+    "D-319"
+   ],
+   "tag": "R",
+   "ruling": "R14",
+   "note": "a `Model`'s entry point, so \"entry point\" (R14); D-319 bullet 2 added for the checks the paragraph states"
+  },
+  {
+   "id": "C-180",
+   "old": "`restore!(sim, cp)` takes the four recording keywords `init!` takes.",
+   "new": "`restore!(sim, cp)` takes the four recording keywords `init!` takes.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-181",
+   "old": "It checks the checkpoint's fingerprint against the simulation as replay checks the trace header, and a mismatch is `CheckpointMismatch` (§12.7).",
+   "new": "It checks the state's fingerprint and deployment against the simulation as replay checks the trace header (the trace's fixed preamble), and a mismatch is `CheckpointMismatch` (§12.7).",
+   "where": "new",
+   "cites": [
+    "§12.7"
+   ],
+   "tag": "R",
+   "ruling": "R12"
+  },
+  {
+   "id": "C-182",
+   "old": "It checks the state's `t` against its grid as the model's door does, collecting both kinds into one throw.",
+   "new": "It checks the state's `t` against its grid as the model's entry point does, collecting both kinds into one throw.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R14"
+  },
+  {
+   "id": "C-183",
+   "old": "It then copies the state back, opens a fresh run with the checkpoint as its trace header, and publishes one snapshot at the checkpoint's `t`.",
+   "new": "It then copies the state back, opens a fresh run with the checkpoint as its trace header, and publishes one snapshot at the checkpoint's `t`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-184",
+   "old": "It runs no sweep, evaluates no guard, runs no update and resets no prior.",
+   "new": "It runs no sweep, evaluates no guard, runs no update and resets no prior.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-185",
+   "old": "The next frame is the original lattice's next frame, because the clock came with the checkpoint.",
+   "new": "The next frame is the original lattice's next frame, because the clock came with the checkpoint.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-186",
+   "old": "The boundary ordinal continues, being the trajectory's (§12.3, D-230).",
+   "new": "The boundary ordinal continues, being the trajectory's (§12.3, D-274).",
+   "where": "new",
+   "cites": [
+    "D-230",
+    "§12.3"
+   ],
+   "newcites": [
+    "D-274",
+    "§12.3"
+   ],
+   "tag": "R",
+   "ruling": "R10",
+   "note": "F70, D-274 bullet 3"
+  },
+  {
+   "id": "C-187",
+   "old": "The snapshot `restore!` publishes is a re-publication.",
+   "new": "The snapshot `restore!` publishes is a re-publication.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-188",
+   "old": "It carries the ordinal of the boundary the checkpoint was taken at, and the next frame publishes under the next ordinal, as it did in the original run.",
+   "new": "It carries the ordinal of the boundary the checkpoint was taken at, and the next frame publishes under the next ordinal, as it did in the original run.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-189",
+   "old": "`restore!(sim, model_state)` is the door a state prepared on a standalone model takes into a simulation (§9.2).",
+   "new": "`restore!(sim, model_state)` is the door a state prepared on a standalone model takes into a simulation (§9.2, D-319).",
+   "where": "new",
+   "cites": [
+    "§9.2"
+   ],
+   "newcites": [
+    "D-319",
+    "§9.2"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-190",
+   "old": "It takes the same keywords and makes the same fingerprint check, and it refuses a state whose `t` is off the grid as `CheckpointMidFrame`.",
+   "new": "It takes the same keywords and makes the same check of the state's fingerprint and deployment, and it refuses a state whose `t` is off the grid as `CheckpointMidFrame`.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R12"
+  },
+  {
+   "id": "C-191",
+   "old": "It opens a fresh trajectory at the state's frame, and the restored boundary publishes under ordinal 0, as boundary zero's does.",
+   "new": "It opens a fresh trajectory at the state's frame, and the restored boundary publishes under ordinal 0, as boundary zero's does.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-192",
+   "old": "A standalone model published nothing, so the trajectory has no ordinals to continue.",
+   "new": "A standalone model published nothing, so the trajectory has no ordinals to continue.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-193",
+   "old": "A `Checkpoint` holds a `ModelState{Float64}`, so it is nominal by type.",
+   "new": "A `Checkpoint` holds a `ModelState{Float64}`, so it is nominal by type.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-194",
+   "old": "A state taken at another scalar is refused by dispatch with the same `CheckpointMismatch`, on either `restore!` that takes a bare state.",
+   "new": "A state taken at another scalar is refused by dispatch with the same `CheckpointMismatch`, on either `restore!` that takes a bare state.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-195",
+   "old": "Device attachments persist across re-initialization, because attachment is orthogonal to the run lifecycle (§11.3).",
+   "new": "Device attachments persist across re-initialization (D-088), because attachment is orthogonal to the run lifecycle (§11.3).",
+   "where": "new",
+   "cites": [
+    "§11.3"
+   ],
+   "newcites": [
+    "D-088",
+    "§11.3"
+   ],
+   "tag": "C",
+   "note": "D-088 Rationale only"
+  },
+  {
+   "id": "C-196",
+   "old": "Persistence means roster persistence.",
+   "new": "Persistence means roster persistence, the roster being the list of attached device entries.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-197",
+   "old": "Binding, claims and device id survive.",
+   "new": "Binding, claims (the set of faces a device may write) and device id survive.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-198",
+   "old": "Tasks and OS resources do not (the per-run topology, §11.1; the teardown, §12.4).",
+   "new": "Tasks and OS resources do not, the per-run topology being specified in §11.1 and the teardown in §12.4.",
+   "where": "new",
+   "cites": [
+    "§11.1",
+    "§12.4"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-199",
+   "old": "Each `run!` re-initializes every rostered device and spawns its task.",
+   "new": "Each `run!` re-initializes every rostered device and spawns its task (D-093).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-093"
+   ],
+   "tag": "C"
+  },
+  {
+   "id": "C-200",
+   "old": "`attach!` while stopped only registers, and the task appears at the next `run!`.",
+   "new": "`attach!` while stopped only registers, and the task appears at the next `run!`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-201",
+   "old": "Task topology follows the roster each time (§11.1).",
+   "new": "Which devices get a task at each `run!` is decided as §11.1 specifies.",
+   "where": "new",
+   "cites": [
+    "§11.1"
+   ],
+   "tag": "R",
+   "ruling": "R5",
+   "note": "M54, F53; a plain pointer, no bold"
+  },
+  {
+   "id": "C-202",
+   "old": "A front end attached by hand is still rostered, so the next `run!` spawns its task again.",
+   "new": "A front end attached by hand is still rostered (D-310), so the next `run!` spawns its task again.",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-310"
+   ],
+   "tag": "R",
+   "ruling": "R5",
+   "note": "bold headline clause, D-310 bullet 2"
+  },
+  {
+   "id": "C-203",
+   "old": "The stop policy is declared per advance.",
+   "new": "The stop policy is declared per advance (D-255, D-316).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-255",
+    "D-316"
+   ],
+   "tag": "F",
+   "note": "kept whole as the home (R5); the citation repeats on the bold sentence"
+  },
+  {
+   "id": "C-204",
+   "old": "`t_end` and `ignore_stop_requests` are keywords of `run!`, `replay!` and `step!`,",
+   "new": "`t_end` and `ignore_stop_requests` are keywords of `run!`, `replay!` and `step!`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-205",
+   "old": "and each call builds and validates the `StopPolicy` (the immutable value of `t_end` plus the ignored requester paths) it passes to the loop (§13.5, D-255, D-316).",
+   "new": "Each call builds and validates the `StopPolicy` (the immutable value of `t_end` plus the ignored requester paths) it passes to the loop (§13.5, D-255, D-316).",
+   "where": "new",
+   "cites": [
+    "D-255",
+    "D-316",
+    "§13.5"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-206",
+   "old": "The value lives as long as the call, and afterwards only on the termination record of the advance that ended the run (D-260).",
+   "new": "The value lives as long as the call, and afterwards only on the termination record of the advance that ended the run (D-260).",
+   "where": "new",
+   "cites": [
+    "D-260"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-207",
+   "old": "A second run, or a `step!` sequence between two runs, can therefore stop on a different clock or honour a different set of stop requests without a rebuild.",
+   "new": "A second run, or a `step!` sequence between two runs, can therefore stop on a different clock or honour a different set of stop requests without a rebuild.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  }
+ ],
+ "added": [
+  "This section settles what the periphery (everything outside the loop that exchanges data with it) may do to a running model.",
+  "The periphery's attached participants are its devices.",
+  "The section surveys FlightCore's mid-run mutations, states the clock criterion that maps scripts to components (units of modeling), eliminates `user_callback!`, covers manual events and mid-run re-initialization, and ends with the doctrine's final form.",
+  "The line references are to `c172_demos.jl`, FlightCore's demo file.",
+  "`K` being the multiplier in `Relative(K)` (§10.5).",
+  "A snapshot is the immutable per-boundary publication.",
+  "A tick is an instant at which a discrete component's stages and update run.",
+  "This section specifies what a `Simulation` and its run own, the lifecycle a simulation moves through, how it advances and restarts, and what it keeps of its devices (any attached participants in the periphery) across runs.",
+  "A simulation is in one of five lifecycle states, built, initialized, running, stopped or errored.",
+  "A door is an entry point that builds a run, and there are three, `init!`, `restore!` and `replay!`.",
+  "A run's `feed` is the recording `replay!` attached, or `nothing`.",
+  "The input mode says where the next frame (one grid step, the unit of scheduling) takes its inputs from.",
+  "In `:live` they come from the staging cells (where each device's pending batch waits between drains), and in `:replay` from the attached recording.",
+  "#### The run and the simulation",
+  "The control plane is the atomic surface carrying pause, pace and stop.",
+  "The executor is the compiled form of the stage execution order, and a diagnostic cell is a writer's own holding place for runtime diagnostics.",
+  "#### Lifecycle states and the input mode",
+  "Replay is the ordinary loop re-driven from the trace.",
+  "The drain is the frame-top swap that publishes staged device writes into the root inputs, and a batch is a device's staged set of writes.",
+  "#### Device attachments across runs",
+  "#### The stop policy per advance"
+ ]
+}

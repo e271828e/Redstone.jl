@@ -307,3 +307,12 @@ words). Survey 1.
   `k`" without naming which.
 - The entry-point block and the dispositions table stay verbatim except
   R12's and F57's rows. G ends with the chapter's closing `---`.
+
+## Rulings after step 3
+
+- **R15. The stop word's gloss** (unit B's open question 1; units A, B).
+  R11's dictated gloss collides with the glossary's *stop request*
+  (`#g-stop-request`, a model-detected termination), which §12.4 uses a
+  sentence later. The gloss becomes "the control plane's stop command, one
+  atomic word holding its issuer". The spec already calls the interrupt "a
+  control-plane stop command" (old 9076). Tag the edit R15.
