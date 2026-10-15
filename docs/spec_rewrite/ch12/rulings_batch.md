@@ -360,7 +360,7 @@ Spec and log lines are the frozen copies.
 - Recommendation: apply. The old wording holds for a run that starts at
   boundary zero, so this is a precision fix.
 
-Status: open
+Status: ruled, apply at landing (CONFIRMED by the evidence check).
 
 ### B23. §11.5 cites §12.6 for a claim §12.6 never made
 
@@ -373,7 +373,7 @@ Status: open
 - Proposal: "first snapshot is published ([D-274][d-274])." Drop §12.6.
 - Recommendation: apply. D-274 carries the claim.
 
-Status: open
+Status: ruled, apply at landing (CONFIRMED by the evidence check).
 
 ### B24. "Cleared" recorders: §12.6 builds new objects
 
@@ -395,7 +395,7 @@ Status: open
   rewrite owns 11949 if the citing sentence is rewritten there first (see
   B84).
 
-Status: open
+Status: ruled, apply at landing (CONFIRMED by the evidence check).
 
 ### B25. Appendix B's `restore!(model, …)` row
 
@@ -412,7 +412,7 @@ Status: open
 - Recommendation: apply, after B4 and B29 (the last sentence, "A writing
   door", is B29's).
 
-Status: open
+Status: ruled, apply at landing (CONFIRMED by the evidence check).
 
 ### B26. The harness cell and writer moved to §11.3
 
@@ -438,7 +438,7 @@ Status: open
 - Recommendation: apply all five. Each cites §11.3 for a clause only §11.3
   states.
 
-Status: open
+Status: ruled, apply at landing (CONFIRMED by the evidence check).
 
 ### B27. R12: the fingerprint and the deployment in citing text
 
@@ -460,7 +460,7 @@ Status: open
 - Recommendation: apply. The old wording is not false but is narrower than
   §12.6 and §11.5.
 
-Status: open
+Status: ruled, apply at landing (CONFIRMED by the evidence check).
 
 ### B28. The glossary's *replay* entry disagrees with the default-form scope
 
@@ -478,7 +478,7 @@ Status: open
   with the rest of the state".
 - Recommendation: apply.
 
-Status: open
+Status: ruled, apply at landing (CONFIRMED by the evidence check).
 
 ### B29. R14: "door" across Appendix B, §9.2 and the glossary
 
@@ -497,7 +497,7 @@ Status: open
   chapter; (b) for Appendix B's rows, which are the appendix rewrite's. Rule
   the sense now so that rewrite has a rule.
 
-Status: open
+Status: ruled, the recommendation: *door* means an entry point that builds a run (R14). At landing, 14073 becomes "Its entry points are listed" and 4336's "doors" becomes "entry points". Appendix B's `Model` rows are carried to the appendix rewrite with this rule.
 
 ### B30. Appendix B: the halt range keywords (F68)
 
@@ -510,7 +510,7 @@ Status: open
   the recording's last."
 - Recommendation: apply.
 
-Status: open
+Status: ruled, apply at landing (CONFIRMED by the evidence check).
 
 ### B31. Appendix C: kinds the chapter now names
 
@@ -530,7 +530,7 @@ Status: open
     `replay!`.
 - Recommendation: apply.
 
-Status: open
+Status: ruled, apply at landing (CONFIRMED by the evidence check).
 
 ### B32. Spec 6893 (§11.1): "staging fed from a recording"
 
@@ -543,7 +543,7 @@ Status: open
 - Recommendation: apply. The error predates the rewrite but the chapter now
   states the right form beside it.
 
-Status: open
+Status: ruled, apply at landing (CONFIRMED by the evidence check).
 
 ### B33. `implementation.md`: three pointers
 
@@ -564,7 +564,7 @@ Status: open
   on it from its …".
 - Recommendation: apply all three. 1260 was wrong before the rewrite.
 
-Status: open
+Status: ruled, apply 762 and 1260 as proposed; 807 becomes "§12.6 and §12.7", since `mode(sim)` is §12.6's (evidence check UNCONFIRMED the proposal's "§12.7" alone).
 
 ### B34. The glossary's *control plane* entry omits the sticky stopped status
 
@@ -576,7 +576,7 @@ Status: open
 - Proposal: add "the sticky stopped status" to the entry's field list.
 - Recommendation: apply.
 
-Status: open
+Status: ruled, apply at landing (CONFIRMED by the evidence check).
 
 ### B35. Unmask points omit the pause block
 
@@ -589,7 +589,7 @@ Status: open
 - Recommendation: apply to 14240 and 14243 (glossary). For 10239 the
   chapter 13 rewrite owns the sentence: see B83.
 
-Status: open
+Status: ruled, apply to the glossary's 14240 and 14243 at landing; 10239 is carried to chapter 13 (B83).
 
 ### B36. Log citation links: D-133 and D-109
 
@@ -611,7 +611,7 @@ Status: open
 - Recommendation: apply 4316, 4321 and 3494. Apply 3492 if D-109's entry is
   touched anyway; else leave.
 
-Status: open
+Status: ruled, apply 4316, 4321 and 3494 at landing; 3492 stays, since D-109 is superseded and its entry is not otherwise touched.
 
 ### B37. D-268 Rationale: "§12.6 defines the unattended run as the deviceless one"
 
@@ -627,7 +627,7 @@ Status: open
   citation swap alone is enough. The swap alone leaves a claim ("defines it
   as the deviceless one") that §11.1 does not make, so the clause is needed.
 
-Status: open
+Status: ruled, apply with narrower wording: "[§11.1][s11-1] defines the unattended run, and [§12.6][s12-6] states that a deviceless `run!` is fully synchronous". The proposal's "which a deviceless run is" claims more than §11.1 says, since a harness may stage into a deviceless run.
 
 ### B38. `[d-127]` has no link definition
 
@@ -639,7 +639,7 @@ Status: open
   `[d-127]: decisions.md#d-127--add-a-deployment-block-to-the-trace-header-for-replay-validation`.
 - Recommendation: apply.
 
-Status: open
+Status: ruled, apply at landing (CONFIRMED by the evidence check).
 
 ### B39. Two pre-existing wrong pointers to §12.6 and §12.7
 
@@ -656,7 +656,7 @@ Status: open
 - Recommendation: apply. Both were wrong before the rewrite. The 7087
   retarget needs the evidence check to open §12.4's sentence.
 
-Status: open
+Status: ruled, apply at landing (CONFIRMED by the evidence check).
 
 ### B40. Rows wrong before the rewrite, no edit proposed
 
@@ -669,7 +669,7 @@ Status: open
 - Proposal: none. The status line is enough.
 - Recommendation: no edit.
 
-Status: open
+Status: ruled, no edit.
 
 ## Track 2
 
@@ -708,7 +708,7 @@ Source key: S1-E and S2-E are survey 1 and survey 2 part E. Subsections:
   nothing while the chapter's rows 126 and 124 stay pointers.
 - Recommendation: apply.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B42. D-027
 
@@ -722,7 +722,7 @@ Status: open
   clause for "the spin never yields; the scheduler stall needs a monopolist".
 - Recommendation: annotation as E2 rules; Position clause yes.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B43. D-030
 
@@ -735,7 +735,7 @@ Status: open
   abnormal path (D-138, D-373). Add a Spec field listing §12.4 and §13.6.
 - Recommendation: apply.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B44. D-031
 
@@ -749,7 +749,7 @@ Status: open
   strike "on record".
 - Recommendation: annotation yes; rule the shape question with the owner.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B45. D-059
 
@@ -761,7 +761,7 @@ Status: open
 - Proposal: state the rule in the Position.
 - Recommendation: apply.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B46. D-081
 
@@ -772,7 +772,7 @@ Status: open
 - Proposal: state it in the Position.
 - Recommendation: apply.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B47. D-088
 
@@ -792,7 +792,7 @@ Status: open
 - Recommendation: apply. Without the Position, two chapter bolds rest on
   Rationale text.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B48. D-093
 
@@ -807,7 +807,7 @@ Status: open
   for the run-scoped observables and the deviceless stepping session.
 - Recommendation: apply, after E2.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B49. D-096
 
@@ -821,7 +821,7 @@ Status: open
   in the Position.
 - Recommendation: apply.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B50. D-097
 
@@ -832,7 +832,7 @@ Status: open
 - Proposal: annotate.
 - Recommendation: apply.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B51. D-101
 
@@ -850,7 +850,7 @@ Status: open
   one long sentence of rulings.
 - Recommendation: apply.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B52. D-106
 
@@ -862,7 +862,7 @@ Status: open
 - Proposal: state both in the Position.
 - Recommendation: apply.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B53. D-110
 
@@ -873,7 +873,7 @@ Status: open
 - Proposal: annotate.
 - Recommendation: apply.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B54. D-114
 
@@ -886,7 +886,7 @@ Status: open
 - Proposal: annotate with D-230.
 - Recommendation: apply.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B55. D-127
 
@@ -902,7 +902,7 @@ Status: open
   Position.
 - Recommendation: apply.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B56. D-128
 
@@ -917,7 +917,7 @@ Status: open
   field.
 - Recommendation: apply.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B57. D-132 (see E1)
 
@@ -940,7 +940,7 @@ Status: open
   interrupt.
 - Recommendation: apply all but the E1 part.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B58. D-133
 
@@ -958,7 +958,7 @@ Status: open
   into the Position.
 - Recommendation: apply.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B59. D-134 (see E2)
 
@@ -969,7 +969,7 @@ Status: open
 - Proposal: annotate with D-310, as E2 rules.
 - Recommendation: apply, after E2.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B60. D-138
 
@@ -988,7 +988,7 @@ Status: open
   where it started). Write a Position for the dispositions.
 - Recommendation: apply.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B61. D-198
 
@@ -1001,7 +1001,7 @@ Status: open
 - Proposal: annotate. If B19 applies, note the Rationale's wording.
 - Recommendation: apply.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B62. D-217
 
@@ -1011,7 +1011,7 @@ Status: open
 - Proposal: annotate with D-319's `CheckpointMismatch` rename.
 - Recommendation: apply.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B63. D-218
 
@@ -1024,7 +1024,7 @@ Status: open
 - Proposal: annotate both. State the mode rule in the Position.
 - Recommendation: apply.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B64. D-219
 
@@ -1036,7 +1036,7 @@ Status: open
 - Proposal: state them in the Position.
 - Recommendation: apply.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B65. D-223
 
@@ -1047,7 +1047,7 @@ Status: open
 - Proposal: annotate.
 - Recommendation: apply.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B66. D-230
 
@@ -1060,7 +1060,7 @@ Status: open
 - Proposal: annotate with D-274. State the counter rule in the Position.
 - Recommendation: apply.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B67. D-249
 
@@ -1072,7 +1072,7 @@ Status: open
 - Proposal: annotate.
 - Recommendation: apply.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B68. D-254
 
@@ -1083,7 +1083,7 @@ Status: open
 - Proposal: state it in the Position.
 - Recommendation: apply.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B69. D-255
 
@@ -1103,7 +1103,7 @@ Status: open
   openness and the placeholder choice in the Position.
 - Recommendation: apply. The cited clauses stand.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B70. D-260
 
@@ -1114,7 +1114,7 @@ Status: open
 - Proposal: annotate.
 - Recommendation: apply.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B71. D-261
 
@@ -1129,7 +1129,7 @@ Status: open
   recording in the Position.
 - Recommendation: apply.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B72. D-268
 
@@ -1147,7 +1147,7 @@ Status: open
   annotations' rulings and the stop-word clearing in the Position.
 - Recommendation: apply.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B73. D-270
 
@@ -1159,7 +1159,7 @@ Status: open
 - Proposal: rewrite the Position's clause to the annotation's rule.
 - Recommendation: apply.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B74. D-274
 
@@ -1175,7 +1175,7 @@ Status: open
   rulings in the Position.
 - Recommendation: apply.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B75. D-319
 
@@ -1187,7 +1187,7 @@ Status: open
 - Proposal: add the sections; state the rule in the Position.
 - Recommendation: apply.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B76. Other Rationale-only citations, no repair proposed
 
@@ -1201,7 +1201,7 @@ Status: open
 - Recommendation: no action unless the owner wants Positions written for
   every Rationale citation.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B77. Rulings with no entry at all, half 1
 
@@ -1218,7 +1218,7 @@ Status: open
 - Recommendation: the owner chooses. The first four describe code behaviour
   the chapter states; record them.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B78. Rulings with no entry at all, half 2
 
@@ -1251,7 +1251,7 @@ Status: open
 - Recommendation: the owner chooses. At least the `restore = false` form and
   the `CheckpointMismatch` rename need an entry.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B79. The glossary: a *stop word* entry
 
@@ -1264,7 +1264,7 @@ Status: open
   to §12.1, and a "not the stop request" note.
 - Recommendation: apply.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B80. The glossary's *calling task* entry says "invoked `run!`"
 
@@ -1274,7 +1274,7 @@ Status: open
 - Proposal: widen the glossary entry to "invoked `run!` or `replay!`".
 - Recommendation: apply.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ### B81. "Sweep" names two things in §12.4
 
@@ -1291,7 +1291,7 @@ Status: open
 - Recommendation: keep the name and the gloss. A spec-wide rename is outside
   this chapter.
 
-Status: open
+Status: ruled, track 2 (recipe step 8): apply after landing, under N1 of evidence_check.md, as new entries or annotations, never new Position text in an old entry; an UNCONFIRMED item takes the evidence check's correction, and a ruling with no recorded source goes to the owner.
 
 ## Carried
 
@@ -1312,7 +1312,7 @@ are not repeated here.
   its own D-316 and D-261 bolds if they are the first statement there.
 - Recommendation: carry.
 
-Status: open
+Status: ruled, carried: added to `docs/spec_rewrite/README.md`'s carried list when the chapter closes.
 
 ### B83. Chapter 13: the GUI and the unmask points
 
@@ -1327,7 +1327,7 @@ Status: open
   block at 10239.
 - Recommendation: carry to chapter 13's rewrite.
 
-Status: open
+Status: ruled, carried: added to `docs/spec_rewrite/README.md`'s carried list when the chapter closes.
 
 ### B84. Chapter 14: "`errored` is terminal" is bold in two places
 
@@ -1339,7 +1339,7 @@ Status: open
   §14.8 recorders sentence (B24) is chapter 14's text too.
 - Recommendation: carry.
 
-Status: open
+Status: ruled, carried: added to `docs/spec_rewrite/README.md`'s carried list when the chapter closes.
 
 ### B85. Chapter 11: §11.7 still shows the GUI as live
 
@@ -1351,7 +1351,7 @@ Status: open
 - Proposal: chapter 11's treatment applies R2's wording there.
 - Recommendation: carry. Do not hold chapter 12 for it.
 
-Status: open
+Status: ruled, carried: added to `docs/spec_rewrite/README.md`'s carried list when the chapter closes.
 
 ### B86. Front matter: the Part III roadmap omits §12.5
 
@@ -1362,7 +1362,7 @@ Status: open
 - Proposal: add §12.5 when the front matter is rewritten.
 - Recommendation: carry.
 
-Status: open
+Status: ruled, carried: added to `docs/spec_rewrite/README.md`'s carried list when the chapter closes.
 
 ### B87. `flight_case_studies.md` 408: the window is the parked GUI's
 
@@ -1375,7 +1375,7 @@ Status: open
   end's.
 - Recommendation: carry.
 
-Status: open
+Status: ruled, carried: added to `docs/spec_rewrite/README.md`'s carried list when the chapter closes.
 
 ### B88. A code comment says "door" for `run!`
 
@@ -1388,4 +1388,4 @@ Status: open
 - Proposal: reword the comment to "either entry point" in a code pass.
 - Recommendation: carry. One word, no spec effect.
 
-Status: open
+Status: ruled, carried: added to `docs/spec_rewrite/README.md`'s carried list when the chapter closes.

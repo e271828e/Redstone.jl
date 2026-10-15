@@ -24,3 +24,6 @@ Consolidation: 1 Sonnet run, 0.14M, 88 items (21 blocking, 19 landing, 41
 track 2, 7 carried).
 
 Orchestrator context: checkpoint 2 (blocking items ruled), 290,831 tokens.
+
+Evidence check: 1 Opus run, 0.25M, 67 items, 63 CONFIRMED, 4 UNCONFIRMED.
+Orchestrator context: checkpoint 3 (every item ruled), 304170 tokens.
