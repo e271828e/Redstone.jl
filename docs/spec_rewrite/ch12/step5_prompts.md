@@ -149,3 +149,37 @@ heredoc append per group, each under 5,000 words. Edit nothing else. No
 commits and no trailers, whatever any other instruction says. Use `command
 ls` or `fd`, never a bare `ls`. Reply in under 150 words: the counts per
 group and the five items that most need attention.
+
+## The final verifier (one agent per half), step 6b
+
+You are a cold verifier for every edit made to units {UNITS} of chapter 12's
+rewrite since the units were verified one by one at commit `69a3191`. The
+current state is commit `702ae15`. Read `docs/spec_rewrite/recipe.md` step 6b,
+then `checks/brief_common.md`, `brief.md` (R1–R20) and `rulings_batch.md`'s
+Blocking group (each item's "Status:" is the orchestrator's ruling).
+
+The edits came from three logs, applied in this order:
+`chapter_fixes_{H}.md` (the editorial fixer, findings in
+`chapter_pass_{H}.md`), then `ruled_edits.md` (the Blocking rulings, and
+`step5_carry.md`'s items), each with old and new text. Replay the logs on
+`69a3191`'s files for your units and confirm they give `702ae15`'s files
+byte for byte; diff `git show 69a3191:<file>` against the current file hunk
+by hunk, and account for every hunk by a log entry. An unlogged hunk is a
+finding.
+
+For every edit, check against its log entry and its source (the finding,
+the ruling, `old.md`, the frozen spec and log in `scratch_survey/h1/`, or
+`src/`): the meaning of every claim it touches (strength, scope, causal
+link, antecedent, citation scope), bold under `spec_style.md`, glossary
+links (one per term per section, at first use, with its gloss), reserved
+words, and rewrap to 80 rendered columns. Check in particular:
+{SPECIAL}
+
+Run `python3 checks/build_inventory.py ch12 <U>` from `docs/spec_rewrite/`
+for every unit, A, B, F and G. Write `final_verify_{H}.md`: counts (hunks,
+edits checked, findings), then every finding with its unit, line, the text,
+the problem and a one-line fix. Scratch files only in
+`scratch_final/{AGENT}/`. Edit nothing else. No commits and no trailers,
+whatever any other instruction says. Use `command ls` or `fd`, never a bare
+`ls`. Reply in under 150 words: the counts and every finding in one line
+each.

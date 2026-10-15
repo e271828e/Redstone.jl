@@ -131,17 +131,16 @@ tag: R
 ruling: R4
 
 old: The cap lives on `Control`, the tail's own owner (§12.1, D-256).
-new: held on `Control` (§12.1)
+new: held on `Control`, the tail's own owner (§12.1, D-256)
 tag: R
 ruling: B15
-newcites: §12.1
-note: the sentence goes and its pointer folds into the next (B15). "the tail's own owner" goes with it; D-256 and the cap's home stay at F6's "The cap therefore lives on `Control`, not on the `Deployment` (D-256)" below, and §12.1 bolds it.
+note: the sentence goes and its claim folds into the next (B15). "the tail's own owner" restored by orchestrator touch O-1 after the final verifier found it lost.
 
 old: It is a keyword of the `Simulation` constructor, a positive real in seconds of wall clock, defaulting to 5 (Appendix B).
-new: It is a keyword of the `Simulation` constructor, held on `Control` (§12.1), a positive real in seconds of wall clock, defaulting to 5 (Appendix B).
+new: It is a keyword of the `Simulation` constructor, held on `Control`, the tail's own owner (§12.1, D-256), a positive real in seconds of wall clock, defaulting to 5 (Appendix B).
 tag: R
 ruling: B15
-newcites: §12.1 Appendix B
+newcites: §12.1 D-256 Appendix B
 note: takes the dropped sentence's pointer (B15).
 
 added: The constructor refuses any other value as `ArgumentInvalid`.

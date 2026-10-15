@@ -1216,3 +1216,9 @@ Not applied:
 - P2-42 lies in unit B, half 1's fixer's.
 - The RULING findings P2-4, P2-14, P2-15, P2-19, P2-20, P2-21, P2-27, P2-29,
   P2-32 and P2-41 are untouched.
+
+Orchestrator's correction (from `final_verify_2.md`): 11 of the changed
+`claims.md` blocks in units F and G carry no "(step 5, P2-N)" note, and this
+log holds no old and new text for those claims edits. The final verifier
+checked every changed claims block against `69a3191` by diff, and all four
+checkers pass, so the claims spans are sound; only the note above overstates.
