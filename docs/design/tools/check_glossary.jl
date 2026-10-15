@@ -29,7 +29,6 @@ const WHITELIST = Dict(
     "g-periodic-discrete-component" => "heading-defined (§3.2)",
     "g-immutable-value-semantics" => "heading-defined (§4.1)",
     "g-executable-set" => "heading-defined (§9.4)",
-    "g-next-snapshot-wait" => "heading-defined (§10.3)",
     "g-declaration-inventory" => "heading-defined (§11.2)",
     "g-always-on-conformance-check" => "heading-defined (§12.5)",
     "g-collect-the-checks-fail-the-evaluations-fast" => "heading-defined (§13.1)",
