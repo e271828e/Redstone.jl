@@ -1,7 +1,7 @@
 old: ### 12.7 Replay: the trace re-drives the ordinary loop
 tag: X
 
-added: This section specifies replay, re-running the ordinary loop on a recorded input trace.
+added: This section specifies replay, re-running the ordinary loop on a recorded input trace, so that a recorded session can be inspected, its errors reproduced and its run continued live.
 
 added: A trace is the primary record of a session, a fixed trace header plus the batches drained at each frame.
 
@@ -14,9 +14,9 @@ added: The drain is the frame-top swap that applies staged device writes to the 
 added: The root inputs are the root component's own inputs, the only thing the periphery may write.
 
 old: The entry point the §11.5 trace exists for:
-new: `replay!` is the entry point the §11.5 trace exists for:
+new: `replay!` is the entry point the trace exists for (§11.5):
 tag: X
-note: framing sentence; it now names `replay!` as its subject
+note: framing sentence; it now names `replay!` as its subject; the section number left the adjective slot (step 5, P2-22)
 
 old: `trc = trace(sim) # the recorded session: header + per-frame batches sim2 = Simulation(world) # the same build replay!(sim2, trc) # restore the header, then re-drive every recorded frame replay!(sim2, trc; to_boundary = k) # partial: the §13.4 replay-pointer idiom replay!(sim2, trc; to_time = 100.0) # partial: the same halt addressed by time cp = checkpoint(sim) # the state at a frame-top rest restore!(sim2, cp) # that state alone: a warm restart, no feed`
 tag: F
@@ -40,10 +40,10 @@ old: That is what keeps every property proved of the loop true of replay.
 tag: F
 
 old: The loop starts from a restored state, and its drain reads the trace:
-new: Its drain reads the trace, and under the default form the loop starts from a restored state.
+new: The substitution is the drain, which reads the trace. Under the default form, `replay!(sim2, trc)` above, the loop also starts from a restored state.
 tag: R
 ruling: R9
-note: the units section's two-forms rule; the restore is the default form's
+note: the units section's two-forms rule; the restore is the default form's; the drain is the one substitution (D-274 bullet 4), and the default form is named by its call above (step 5, P2-24)
 
 old: Restore from the header.
 new: The default form restores from the header.
@@ -52,7 +52,7 @@ ruling: R9
 note: bold lead-in becomes a plain topic sentence scoped to the default form
 
 old: `replay!` restores the trace's checkpoint (the `Model`'s state at a frame top as one value), the state the recording opened from.
-new: It restores the trace's checkpoint (the `Model`'s state at a frame top as one value), the state the recording opened from.
+new: It restores the trace's checkpoint (the `Model`'s state at a frame top, beside the run's frame index and boundary ordinal), the state the recording opened from.
 tag: R
 ruling: R9
 note: two-forms rule; the subject is the default form named just before
@@ -75,7 +75,9 @@ note: subject scoped to the default form (two-forms rule, R9)
 newcites: §12.6 D-274
 
 old: There is no condition resolution, and the totality (§14.6) held when the recording's `init!` ran.
+new: There is no condition resolution, and the root-input totality (every root input must hold a value) (§14.6) held when the recording's `init!` ran.
 tag: F
+note: the term named and glossed as half 1 does (step 5, P2-25)
 
 added: A condition is the datum that says "set this build to this state".
 
@@ -115,13 +117,14 @@ newcites: D-101
 note: bold dropped; one ruling with the D-101 bold above
 
 old: The write-surface rule (§11.3) ran at recording time,
-new: The write-surface rule (§11.3) ran at recording time.
+new: The write-surface rule (the bound on the faces a writer's batch entries may reach) (§11.3) ran at recording time,
 tag: F
+note: the write-surface and face glosses moved off the middle of the old sentence (step 5, P2-26)
 
-added: A write surface is the set of faces a writer's batch entries may reach, and a face is the name a port wears on its component's boundary.
+added: A face is the name a port wears on its component's boundary.
 
 old: and claims are a live-roster fact of the recorded session that replay does not reconstruct.
-new: Claims (the set of faces a device may write) are a live-roster fact of the recorded session that replay does not reconstruct.
+new: and claims (the set of faces a device may write) are a live-roster fact of the recorded session that replay does not reconstruct.
 tag: F
 note: claim's first-use gloss added inside the span
 
@@ -161,7 +164,9 @@ old: That is what lets the reproduction workflow of §13.4 run through the ordin
 tag: F
 
 old: That workflow halts at the frame top the error names, then `step!`s the failing frame on its recorded inputs.
-tag: F
+new: then `step!`s the failing frame on its recorded inputs
+tag: M
+note: merged into the error-reproduction sentence of the halting block, whose frame-entry boundary `k` the error names is that frame top (F54) (step 5, P2-35)
 
 old: Rule. `replay!(sim, trc; restore = false)` attaches the feed to the simulation as it stands and restores nothing.
 new: `replay!(sim, trc; restore = false)` attaches the feed to the simulation as it stands and restores nothing.
@@ -234,7 +239,7 @@ new: `to_time` is the same cap addressed by time (below).
 tag: X
 
 old: Either names a frame at or after the one the feed starts from.
-new: Either keyword names a frame from the one the feed starts from through the recording's last.
+new: Either keyword names a frame from the one the feed starts from through the recording's last
 tag: R
 ruling: R10
 note: F68
@@ -245,10 +250,10 @@ tag: F
 note: antecedent named; pointer to the form's block
 
 old: An earlier one is refused (`ArgumentInvalid`).
-new: Anything else is refused (`ArgumentInvalid`).
+new: and anything else is refused (`ArgumentInvalid`).
 tag: R
 ruling: R10
-note: F68
+note: F68; joined to the range sentence so "else" reads against the range (step 5, P2-28)
 
 old: The `to_boundary` spelling is defined as running through the frame whose execution published boundary `k`,
 new: `to_boundary = k` takes the frame-entry boundary index (§13.4), a count of frame tops. It is not the published-boundary ordinal that a snapshot (the immutable per-boundary publication) carries (§12.3). Replay runs through frame `k` and halts exactly at the frame top after it (D-128).
@@ -271,7 +276,7 @@ old: The frame-entry pointer (§13.4) lands the same way.
 tag: F
 
 old: A localized `t` boundary inside the frame (the crossing instant bracketed by root-finding over trial sweeps) is reproduced but not stoppable-at.
-new: A localized `t` boundary inside the frame (the crossing instant bracketed by root-finding over trial sweeps) is reproduced but not stoppable-at (D-128).
+new: A localized `t` boundary (the crossing instant bracketed by root-finding over trial sweeps) inside the frame is reproduced but not stoppable-at (D-128).
 tag: C
 newcites: D-128
 
@@ -286,7 +291,7 @@ tag: C
 newcites: §12.6 D-255 D-316
 
 old: A termination the recorded session hit through a stop request reproduces itself anyway, deterministically.
-new: A termination the recorded session hit through a stop request reproduces itself anyway, deterministically (D-127).
+new: A termination the recorded session hit through a stop request (an output port of the framework enum `StopFlag`) reproduces itself anyway, deterministically (D-127).
 tag: C
 newcites: D-127
 
@@ -329,6 +334,7 @@ old: The point of halting is to stand before the anomaly, so a halt that stepped
 tag: F
 
 old: Validation is the other keywords'.
+new: `to_time` is validated as the other keywords are.
 tag: F
 
 old: The value must be real, finite and at least `t₀`, and it must name a time the recording covers.
@@ -368,7 +374,9 @@ tag: R
 ruling: R14
 
 old: The flip above is automatic, and it happens only at the recording's end.
+new: The flip above is automatic.
 tag: F
+note: "only at the recording's end" is stated by "The halt flips the mode only at the recording's end" above (step 5, P2-34)
 
 old: `live!(sim)` performs it by hand.
 tag: F
@@ -415,9 +423,9 @@ ruling: R13
 note: the fence leaves its list item and loses its two-space indent; lines verbatim
 
 old: The trace `sim2` leaves behind is a complete recording of itself: the replayed prefix out to t = 100, then the frames flown live after it.
-new: The trace `sim2` leaves behind is a complete recording of itself, the replayed prefix out to t = 100 and then the frames flown live after it.
+new: The trace `sim2` leaves behind is a complete recording of itself, the replayed prefix out to t = 100 and then the frames flown live after it, since replay re-records (below).
 tag: F
-note: mid-sentence colon removed
+note: mid-sentence colon removed; the pointer at "Replay re-records", which M56/M57 placed later (step 5, P2-36)
 
 old: Replay ends `initialized`, never `stopped`.
 new: A replay's halt leaves the simulation `initialized`, never `stopped` (D-218).
@@ -438,7 +446,7 @@ old: State-trajectory inspection asks "what was the private state at t = 37.2?",
 tag: F
 
 old: Error reproduction replays to `k − 1`, then `step!`s the failing frame under instrumentation (§13.4).
-new: Error reproduction replays to the frame-entry boundary `k` the error names, then `step!`s the failing frame under instrumentation (§13.4).
+new: Error reproduction replays to the frame-entry boundary `k` the error names, then `step!`s the failing frame on its recorded inputs, under instrumentation (§13.4).
 tag: R
 ruling: R10
 note: F54
@@ -481,7 +489,7 @@ tag: C
 newcites: §10.7 §12.1 D-101
 note: bold headline; D-101 Rationale only
 
-added: The control plane is the separate atomic surface carrying pause, pace and the stop word.
+added: The control plane is the separate atomic surface carrying pause, pace and stop.
 
 old: Pacing (waits inserted between completed frames, never altering the boundary sequence) sits outside the semantics, so paused, slow-motion or real-time replay is free.
 tag: F
@@ -581,8 +589,9 @@ newcites: D-101
 added: #### What-if replay and `restore = false`
 
 old: Replaying against the same structure with changed parameters is the what-if replay, the deterministic re-driving of the recorded inputs through a modified model.
+new: Replaying against the same structure with changed parameters is the what-if replay.
 tag: M
-note: block 5; bold term dropped
+note: block 5; bold term dropped; the gloss is stated once, in the context paragraph, and "deterministic" by "What-if replay promises determinism" (step 5, P2-23)
 
 old: It is spelled as `init!` of the modified model under the authored condition, then `replay!(sim, trc; restore = false)`.
 tag: M
@@ -672,7 +681,7 @@ tag: C
 note: subject scoped to the default form (F57, R10)
 newcites: D-127
 
-added: Under `restore = false` the simulation's own clock runs, its origin must equal the recording's, and the new trace's header is the simulation's own checkpoint.
+added: Under `restore = false` the simulation's own clock runs, and its origin must equal the recording's.
 
 old: The checkpoint holds no policy (D-255).
 tag: F

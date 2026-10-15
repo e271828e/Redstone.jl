@@ -11,38 +11,40 @@ newcites: §10 §11
 note: context sentence in chapter 11's form; "the loop boundary" goes. The glossary links on control plane and replay move to §12.1 and §12.3.
 
 old: the control plane and the scheduling primitives, the shutdown protocol, and the run lifecycle from `init!` through replay.
-new: §12.1 covers the control plane; §12.2 loop scheduling, in turn its wait primitive, its yields and the thread budget; §12.3 the next-snapshot wait; §12.4 the shutdown protocol; §12.5 scripts and the mid-run mutation doctrine; §12.6 the run lifecycle from `init!`, and partial advance; and §12.7 replay, where the trace re-drives the ordinary loop.
+new: §12.1 covers the control plane; §12.2 loop scheduling, in turn its wait primitive, its yields, the thread budget and the liveness heartbeat; §12.3 the next-snapshot wait; §12.4 the shutdown protocol; §12.5 scripts and the mid-run mutation doctrine; §12.6 the run lifecycle from `init!`, and partial advance; and §12.7 replay, where the trace re-drives the ordinary loop.
 tag: R
 ruling: R1
 newcites: §12.1 §12.2 §12.3 §12.4 §12.5 §12.6 §12.7
-note: roadmap sentence; every word from the old opening or a section title (§12.2, §12.3, §12.5, §12.6, §12.7 titles).
+note: roadmap sentence; every word from the old opening or a section title (§12.2, §12.3, §12.5, §12.6, §12.7 titles); "the liveness heartbeat" is §12.2's fourth `####` label (chapter pass P1-25).
 
 old: ### 12.1 Control plane
 tag: X
 
 old: Control is not staging, structurally.
-new: The control plane (the separate few-word atomic surface carrying pause, pace and stop) is not staging, structurally (D-022).
+new: It is not staging, structurally (D-022).
 tag: R
 ruling: R3
 newcites: D-022
-note: M1, now the context; row 19's bold goes since §11.1 bolds D-022; D-022's Position parenthetical carries it. Gloss from the glossary's control-plane entry.
+note: M1, now the context; row 19's bold goes since §11.1 bolds D-022; D-022's Position parenthetical carries it. The plane is named by apposition in the sentence before, which now opens the section (chapter pass P1-15).
 
-added: (the separate few-word atomic surface carrying pause, pace and stop)
+added: , the control plane.
 
 old: Staged writes apply at drains, and a paused loop drains nothing, so un-pause via staging would deadlock by construction.
-new: Staged writes apply at drains (the points where the loop applies staged device writes), and a paused loop drains nothing, so un-pause via staging would deadlock by construction.
+new: Staged writes apply at drains (the frame-top swaps that apply staged device writes), and a paused loop drains nothing, so un-pause via staging would deadlock by construction.
 tag: M
 note: M1.
 
-added: (the points where the loop applies staged device writes)
+added: (the frame-top swaps that apply staged device writes)
 
 old: Riding outside the drain/trace path is safe for determinism precisely because §10.7 put pacing outside the semantics.
-new: Riding outside the drain/trace path is safe for determinism precisely because §10.7 put pacing (the pacer's wall-clock waits) outside the semantics (D-021).
+new: Riding outside the path through the drain and the trace, the primary record of a session, is safe for determinism precisely because §10.7 put pacing (the pacer's wall-clock waits) outside the semantics (D-021).
 tag: C
 newcites: §10.7 D-021
 note: M1; D-021's Position "Pacing outside the semantics".
 
 added: (the pacer's wall-clock waits)
+
+added: , the primary record of a session,
 
 old: Control changes when frames execute, never what they compute, and stop merely truncates the trajectory.
 new: Control changes when frames (iterations of the loop) execute, never what they compute, and stop merely truncates the trajectory.
@@ -51,21 +53,27 @@ note: M1.
 
 added: (iterations of the loop)
 
-added: This section covers, in order, when the loop reads the plane, the stop and its issuer, the pause, pace and `margin`, and the fields of `Control`, one of the periphery's own types (D-256), the one that holds the control plane.
+added: This section covers, in order, when the loop reads the plane, the stop and its issuer, the pause, pace and `margin`, and the fields of `Control`, the periphery's own type that holds the control plane (D-256).
 # Control's introduction: D-256's "To the periphery's own types: `join_timeout` into `Control`"; D-255's Rejected equates Control and the control plane (log 10105).
 
 old: Pause, un-pause, pace changes, `margin` changes and stop are a few scalar fields on a separate atomic surface.
-new: Pause, un-pause, pace changes, `margin` changes and stop are a few scalar fields on that separate atomic surface.
+new: Pause, un-pause, pace changes, `margin` changes and stop are a few scalar fields on a separate atomic surface
 tag: F
+note: opens the section (chapter pass P1-15); the control plane is named by apposition after it.
 
 old: The loop consults them at frame top.
-new: The loop consults them at frame top, the start of each frame.
+new: The loop consults the control plane at frame top, the start of each frame.
+note: "them" becomes "the control plane", the fields now a paragraph back (chapter pass P1-15).
 tag: F
 
 added: the start of each frame
 
 old: A change issued while a frame runs or waits is observed at the next frame top, at most one frame budget `h/p` later (D-269).
+new: A change issued while a frame runs or waits is observed at the next frame top, at most one frame budget (`h/p`, the step over the pace) later (D-269).
 tag: F
+note: `p` is introduced 50 lines on, so `h/p` takes a gloss (chapter pass P1-27).
+
+added: , the step over the pace
 
 old: The pause block is the one wait that wakes at once (below).
 new: The pause block, described with the pause verbs below, is the one wait that wakes at once.
@@ -102,11 +110,11 @@ added: (Ctrl-C read as a control-plane stop)
 added: where a deferred Ctrl-C is raised
 
 old: The stop word carries its issuer.
-new: The stop word carries its issuer (D-203). The stop word is the control plane's stop command, one atomic word holding its issuer.
+new: The stop word carries its issuer (D-203). The stop word is the control plane's stop command, held in one atomic word.
 tag: R
 ruling: R15
 newcites: D-203
-note: D-203 bullet 3, the citation was two sentences on; the second sentence is R11's gloss as R15 words it.
+note: D-203 bullet 3, the citation was two sentences on; the second sentence is R11's gloss as R15 words it, less "holding its issuer", which the bold states (chapter pass P1-17).
 
 old: Each issuing site writes its identity (the device's name, `:code`, or `:interrupt`) by compare-and-swap from empty, and the first writer wins.
 tag: F
@@ -213,10 +221,10 @@ old: `pace!(sim, p)` and `margin!(sim, m)` set them from any task in any lifecyc
 tag: F
 
 old: `run!` and `replay!` take both as keywords and write them at entry, the advance's declaration as `t_end` is, `Inf` and 2 ms by default (Appendix B).
-new: `run!` and `replay!` take both as keywords and write them at entry. Both are declared by the advance, as `t_end` is. `pace` defaults to `Inf` and `margin` to 2 ms (Appendix B, D-133).
+new: `run!` and `replay!` take both as keywords and write them when called. Both are declared by the advance, as `t_end` is. `pace` defaults to `Inf` and `margin` to 2 ms (Appendix B, D-133).
 tag: C
 newcites: Appendix B D-133
-note: split in three; D-269 bullet 2 sets `pace`'s default, D-133's Position `margin` = 2 ms (bold at §10.7, plain here).
+note: split in three; bare "entry" becomes "when called" (chapter pass P1-26); D-269 bullet 2 sets `pace`'s default, D-133's Position `margin` = 2 ms (bold at §10.7, plain here).
 
 old: `step!` takes neither and never waits.
 tag: F
@@ -325,10 +333,10 @@ old: The loop holds a thread for at most one frame before the scheduler can run 
 tag: F
 
 old: Julia's cooperative-scheduler freeze requires a thread monopolist, a never-yielding task that holds its thread forever, and that precondition is structurally absent from framework tasks.
-new: Julia's scheduler is cooperative, and the scheduler stall requires a thread monopolist, a never-yielding task that holds its thread forever. That precondition is structurally absent from framework tasks.
+new: Julia's scheduler is cooperative, and a stall of that scheduler requires a thread monopolist, a never-yielding task that holds its thread forever. That precondition is structurally absent from framework tasks.
 tag: R
 ruling: R10
-note: F16, "freeze" in the scheduler sense becomes "the scheduler stall".
+note: F16, "freeze" in the scheduler sense becomes "the scheduler stall"; here "a stall of that scheduler", so the next section's "The scheduler stall" has its antecedent (chapter pass P1-30).
 
 added: The thread budget
 
@@ -379,10 +387,11 @@ newcites: Appendix C
 note: F15 names `ThreadBudget`.
 
 old: That is one check per run, against the frozen roster (§11.3).
-new: That is one check per run, against the frozen roster (the list of attached device entries) (§11.3).
+new: That is one check per run, against the frozen roster, the list of attached device entries (§11.3).
 tag: F
+note: the gloss is an appositive, so it and the citation are not two touching parentheses (chapter pass P1-20).
 
-added: (the list of attached device entries)
+added: , the list of attached device entries
 
 old: Tight means fewer threads than the roster plus one.
 tag: F
@@ -424,15 +433,16 @@ old: It includes per-device liveness (the liveness timestamp and the device's `t
 tag: F
 
 old: The mechanism is the per-writer cell, specified in full by §11.8, plus the device `Task` handles the loop already owns, and nothing besides.
-new: The mechanism is the per-writer diagnostic cell (a writer's own holding place for runtime diagnostics and liveness) (D-136), specified in full by §11.8, plus the device `Task` handles the loop already owns, and nothing besides.
+new: The mechanism is the per-writer diagnostic cell (D-136), specified in full by §11.8, plus the device `Task` handles the loop already owns, and nothing besides.
 tag: C
 newcites: §11.8 D-136
-note: bare "cell" is reserved, so "diagnostic cell". D-136's Position, placed at the cell; the handles are D-193's, cited next sentence.
+note: bare "cell" is reserved, so "diagnostic cell". D-136's Position, placed at the cell; the handles are D-193's, cited next sentence. The gloss takes its own sentence after it, so gloss and citation are not two touching parentheses and D-136 does not move onto the handles (chapter pass P1-20).
 
-added: (a writer's own holding place for runtime diagnostics and liveness)
+added: A diagnostic cell is a writer's own holding place for runtime diagnostics and liveness.
 
 old: The cell carries the single liveness timestamp.
-new: The diagnostic cell carries the single liveness timestamp.
+new: It carries the single liveness timestamp.
+note: "It" is the diagnostic cell of the gloss sentence before.
 tag: F
 
 old: The loop reads `task_state` off those handles where it publishes (D-193).
@@ -506,7 +516,8 @@ newcites: D-028
 note: R3, D-028's first ruling bold; the bold term goes, and "the loop's own" opens the gloss sentences.
 
 old: The counter counts published boundaries, that is grid, `t` and boundary zero (§10.1, §10.4), not frames.
-new: It counts published boundaries, that is grid, `t` and boundary zero (the initialization boundary at `t₀`) (§10.1, §10.4), not frames.
+new: It counts published boundaries, that is grid, `t` and boundary zero (the initialization boundary at `t₀`), not frames (§10.1, §10.4).
+note: the citation moves to the clause's end, off the gloss (chapter pass P1-20).
 tag: F
 
 added: (the initialization boundary at `t₀`)
@@ -533,22 +544,22 @@ newcites: D-114
 note: M5; R3, D-114's publication order bold; label goes.
 
 old: The release-store of `latest` (§11.2) happens before the counter increment under the lock.
-new: The release-store of `latest` (the atomic reference readers acquire-load) (§11.2) happens before the counter increment under the lock.
+new: The release-store of `latest`, the atomic reference readers acquire-load (§11.2), happens before the counter increment under the lock.
 tag: M
-note: M5; the bold on "before" goes.
+note: M5; the bold on "before" goes. The gloss is an appositive and §11.2 stays on `latest`, since §11.2 does not state the order (chapter pass P1-20).
 
-added: (the atomic reference readers acquire-load)
+added: , the atomic reference readers acquire-load
 
 old: `# the loop, at every published boundary @atomic latest = snap # 1. release-store: the snapshot becomes reachable (§11.2) lock(cond) do # 2. only then the counter, under the lock counter += 1 notify(cond) # parked waiters wake and re-test their predicate end`
 tag: M
 note: M5; the publication-order sketch, verbatim.
 
 old: `counter > last_seen` therefore implies that `latest` holds at least that boundary, and a waiter can never wake onto a stale snapshot.
-new: The device side's predicate, `counter > last_seen` (below), therefore implies that `latest` holds at least that boundary, and a waiter can never wake onto a snapshot (the immutable per-boundary publication) that is stale.
+new: The device side's test `counter > last_seen` (below) therefore implies that `latest` holds at least that boundary, and a waiter can never wake onto a snapshot (the immutable per-boundary publication) that is stale.
 tag: M
-note: M5; the predicate now precedes the device side, so it points below.
+note: M5; the predicate now precedes the device side, so it points below. "test", since the full predicate adds `&& running` (chapter pass P1-28).
 
-added: The device side's predicate
+added: The device side's test
 
 added: (the immutable per-boundary publication)
 
@@ -590,12 +601,12 @@ tag: M
 note: M6.
 
 old: Coalescing to the newest batch (in) and to the newest snapshot (out) are the same ZOH decision.
-new: Inbound coalescing (the CAS merge that leaves one pending batch per device) keeps the newest level per face, and the wait delivers the newest snapshot, the same zero-order hold (ZOH) decision.
+new: Inbound coalescing (the compare-and-swap merge that leaves one pending batch per device) keeps the newest level per face, and the wait delivers the newest snapshot, the same zero-order hold (ZOH) decision.
 tag: R
 ruling: R10
 note: F17, and R6 expands ZOH; M6.
 
-added: (the CAS merge that leaves one pending batch per device)
+added: (the compare-and-swap merge that leaves one pending batch per device)
 
 old: No backpressure exists in either direction, and the loop never waits on anyone.
 tag: M
@@ -629,7 +640,11 @@ old: Boundary zero is 0, and every publication after it, grid or `t`, counts one
 tag: F
 
 old: Any holder of a snapshot therefore indexes it without consulting the loop, whether the log or a post-run inspector.
+new: Any holder of a snapshot therefore indexes it without consulting the loop, whether the log (the retained sequence of published snapshots) or a post-run inspector.
 tag: F
+note: the log takes its §12.3 link and gloss (chapter pass P1-19).
+
+added: (the retained sequence of published snapshots)
 
 old: A new trajectory restarts the ordinal at zero, with everything else `init!` resets.
 tag: F

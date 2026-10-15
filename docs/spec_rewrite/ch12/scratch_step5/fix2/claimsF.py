@@ -1,0 +1,51 @@
+p='/Users/miguel/.julia/dev/Redstone.jl/docs/spec_rewrite/ch12/units/F/claims.md'
+s=open(p).read()
+R=[
+("added: The section surveys FlightCore's mid-run mutations, states the clock criterion that maps scripts to components (units of modeling), eliminates `user_callback!`,",
+ "added: The section surveys FlightCore's mid-run mutations, states the clock criterion that maps scripts to components (units of modeling), eliminates FlightCore's per-step hook `user_callback!`,"),
+("old: §11.7 therefore renders the corresponding GUI widgets read-only with its source shown.\ntag: F\n",
+ "old: §11.7 therefore renders the corresponding GUI widgets read-only with its source shown.\nnew: §11.7 therefore renders the corresponding GUI widgets read-only, each showing its source.\ntag: F\nnote: \"its\" now reads as each widget's (step 5, P2-3)\n"),
+("new: The port-resolution rule resolves FlightCore's demo-vs-GUI dead-slider fight (§11.7).\ntag: R\nruling: R6\nnewcites: §11.7\n",
+ "new: Its port-resolution rule resolves FlightCore's demo-vs-GUI dead-slider fight.\ntag: R\nruling: R6\n"),
+("note: \"Today's\" becomes FlightCore's; the pointer at §11.7, whose rule retires FlightCore's dead-slider convention\n",
+ "note: \"Today's\" becomes FlightCore's; the pointer at §11.7, whose rule retires FlightCore's dead-slider convention, is \"Its\", the sentence before's §11.7 (step 5, P2-3)\n"),
+("old: Initialization and trim are stopped-sim workflows (first-class services, §14).\ntag: F\n",
+ "old: Initialization and trim are stopped-sim workflows (first-class services, §14).\nnew: Initialization and trim are stopped-sim workflows, first-class services of §14.\ntag: F\nnote: the citation left the gloss's parentheses (step 5, P2-5)\n"),
+("added: This section specifies what a `Simulation` and its run own, the lifecycle a simulation moves through, how it advances and restarts, and what it keeps of its devices (any attached participants in the periphery) across runs.",
+ "added: This section specifies what a `Simulation` and its run own, the lifecycle a simulation moves through, how it advances and restarts, what it keeps of its devices (any attached participants in the periphery) across runs, and the stop policy each advance declares."),
+("added: A run's `feed` is the recording `replay!` attached, or `nothing`.\n\n", ""),
+("added: In `:live` they come from the staging cells (where each device's pending batch waits between drains), and in `:replay` from the attached recording.\n\n", ""),
+("new: Two are `const` and last the run's whole life. One is the log (the retained sequence of published snapshots). The other is the trace (the records of each frame's drained inputs), which is `nothing` under the trace switch.\ntag: F\nnote: split; log and trace linked and glossed\n",
+ "new: Two are `const` and last the run's whole life. One is the log (the retained sequence of published snapshots). The other is the trace (the records of each frame's drained inputs), which is `nothing` under `trace = false`.\ntag: F\nnote: split; log and trace linked and glossed; \"the trace switch\" names its keyword, which the next sentence lists (step 5, P2-9)\n"),
+("old: `feed` is the recording `replay!` attached, or `nothing`.\ntag: F\n",
+ "old: `feed` is the recording `replay!` attached, or `nothing`.\nnew: A run's `feed` is the recording `replay!` attached, or `nothing`.\ntag: M\nnote: R13's context paragraph holds it; the field list points back (step 5, P2-8)\n\nadded: `feed` is described above.\n"),
+("old: Each door sets the two counters as it builds the run, `init!` to zero and `restore!` and `replay!` to the checkpoint's, and the loop advances them (D-317).\ntag: F\n",
+ "old: Each door sets the two counters as it builds the run, `init!` to zero and `restore!` and `replay!` to the checkpoint's, and the loop advances them (D-317).\nnew: Each door sets the two counters as it builds the run, `init!` to zero and `restore!` and `replay!` to those of the checkpoint (the `Model`'s state at a frame top, beside the run's frame index and boundary ordinal), and the loop advances them (D-317).\ntag: F\nnote: checkpoint's first use in §12.6, so its link and the glossary's gloss sit here (step 5, P2-10)\n"),
+("old: The executor's clock holds it beside `t`.\ntag: F\n",
+ "old: The executor's clock holds it beside `t`.\nnew: The clock of the executor (the compiled form of the stage execution order) holds it beside `t`.\ntag: F\nnote: executor's first use in §12.6, so its link and gloss sit here (step 5, P2-11)\n"),
+("new: `init!` sets it on the clock before boundary zero, the initialization boundary (§14.5).\ntag: F\nnote: boundary zero's first use moved here, so its link and gloss sit here\n",
+ "new: `init!` sets it on the clock before boundary zero, the initialization boundary run as the ordinary macro-sequence with an empty integrate (§14.5).\ntag: F\nnote: boundary zero's first use moved here, so its link and gloss sit here; the full gloss moved here from the Initialized sentence (step 5, P2-12)\n"),
+("new: A checkpoint (the `Model`'s state at a frame top as one value) carries it with the clock (§11.5, D-273).\n",
+ "new: A checkpoint carries it with the clock (§11.5, D-273).\n"),
+("old: `Simulation` is a mutable struct of four fields, the `Model` (the deployment and its executor at one scalar), the run, the data plane and the control plane (D-317).\ntag: F\n",
+ "old: `Simulation` is a mutable struct of four fields, the `Model` (the deployment and its executor at one scalar), the run, the data plane and the control plane (D-317).\nnew: `Simulation` is a mutable struct of four fields, the `Model` (the deployment and its executor at one scalar), the run, the data plane (§11) and the control plane (D-317).\ntag: F\nnewcites: §11 D-317\nnote: §11 introduces the data plane (step 5, P2-13)\n"),
+("added: The executor is the compiled form of the stage execution order, and a diagnostic cell is a writer's own holding place for runtime diagnostics.",
+ "added: A diagnostic cell is a writer's own holding place for runtime diagnostics."),
+("new: The loop's diagnostic cell, its account and the published holder are the plane's, and the frame's own diagnostic cell is the `Model`'s (§11.8).\ntag: R\nruling: R20\n",
+ "new: The loop's diagnostic cell, its account and the published-snapshot holder (§11.2) are the data plane's, and the frame's own diagnostic cell is the `Model`'s (§11.8).\ntag: R\nruling: R20\nnewcites: §11.2 §11.8\nnote: \"the plane's\" names the data plane, whose `DataPlane` holds the three (`src/roster.jl` 196–204); the holder is §11.2's (step 5, P2-13)\n"),
+("old: Initialized means `init!` has completed boundary zero, the initialization boundary run as the ordinary macro-sequence with an empty integrate (§14.5), or `restore!` or `replay!` has restored a checkpoint.\ntag: F\n",
+ "old: Initialized means `init!` has completed boundary zero, the initialization boundary run as the ordinary macro-sequence with an empty integrate (§14.5), or `restore!` or `replay!` has restored a checkpoint.\nnew: Initialized means `init!` has completed boundary zero (§14.5), or `restore!` or `replay!` has restored a checkpoint.\ntag: F\nnote: boundary zero's gloss is stated once, at its first use above (step 5, P2-12)\n"),
+("new: The mode names where the next frame's drain takes its batches from, the staging cells or the attached recording (§12.7, D-218).\n",
+ "new: The mode names where the next frame's drain takes its batches from, the staging cells (where each device's pending batch waits between drains) or the attached recording (§12.7, D-218).\n"),
+("new: The harness write path is `stage!(sim, \"face\" => value, …)`, and §11.3 specifies that harness writer.\n",
+ "new: The harness write path is `stage!(sim, \"face\" => value, …)`, and §11.3 specifies the writer.\n"),
+("old: Termination policy is honored throughout, as bit-identity requires.\ntag: F\n",
+ "old: Termination policy is honored throughout, as bit-identity requires.\nnew: The stop policy is honoured throughout, as bit-identity requires.\ntag: F\nnote: one name for the stop policy and the chapter's spelling (step 5, P2-17)\n"),
+("new: `t_end` reached, or a stop request (an output port of the framework enum `StopFlag`) holding at frame 3 of",
+ "new: `t_end` reached, or a stop request (an output port of the framework enum `StopFlag`) holding (publishing `STOP_REQUESTED`) at frame 3 of"),
+]
+for o,n in R:
+    assert s.count(o)==1,(o[:70],s.count(o))
+    s=s.replace(o,n)
+open(p,'w').write(s)
+print('ok')

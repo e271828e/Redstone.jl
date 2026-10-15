@@ -58,15 +58,15 @@ old: The third event is model-detected termination (§13.5).
 tag: F
 
 old: The loop always completes the current boundary sequence and never stops mid-frame.
-new: The loop never stops mid-boundary. It always completes the boundary sequence in progress, which a stop at `t` (the localized event time) places inside a frame.
+new: The loop never stops mid-boundary. It always completes the boundary sequence in progress, which a stop at `t` (the localized event time) places inside a frame, one iteration of the loop.
 tag: R
 ruling: R10
-note: F4; `t*` linked and glossed at its first use (verifier); frame linked, its gloss in the next sentence
+note: F4; `t*` linked and glossed at its first use (verifier); frame linked at this first use, its gloss an appositive (chapter pass P1-11)
 
 old: It then publishes the final snapshot.
 new: The loop then publishes the final snapshot.
 tag: F
-note: "It" spelled "The loop", since the frame's gloss sentence now sits before it
+note: "It" spelled "The loop", since the frame's gloss now ends the sentence before it
 
 old: Only then does it set the sticky stopped status.
 tag: F
@@ -153,10 +153,10 @@ newcites: Appendix C
 note: F5; the kind and its Appendix C pointer move into the sentence before
 
 old: The diagnostic is written to the loop's own cell, collected by the run's-end sweep into the termination record and presented through the logging backend, with the terminal snapshot preceding the join (D-201, D-203).
-new: The diagnostic is written to the loop's own diagnostic cell (each writer's bounded ring of diagnostics and its heartbeat) (D-203). The run's-end sweep collects the diagnostic into the termination record (the stopped-sim value naming how the run ended). The logging backend presents the diagnostic, with the terminal snapshot preceding the join (D-201, D-203).
+new: The diagnostic is written to the loop's own diagnostic cell, a writer's own holding place for runtime diagnostics and liveness (D-203). The run's-end sweep, the loop's last pass over every diagnostic cell, collects the diagnostic into the termination record (the stopped-sim value naming how the run ended). The logging backend presents the diagnostic, with the terminal snapshot preceding the join (D-201, D-203).
 tag: R
 ruling: R3
-note: D-203 bullet 4's headline clause bold (row 111); bare "cell" becomes "diagnostic cell", whose link and gloss move here from old 9024, its new first use; termination record glossed; split into three sentences, "it" spelled "the diagnostic" twice (verifier)
+note: D-203 bullet 4's headline clause bold (row 111); bare "cell" becomes "diagnostic cell", whose link and gloss move here from old 9024, its new first use; termination record glossed; split into three sentences, "it" spelled "the diagnostic" twice (verifier); the cell takes §12.2's gloss as an appositive, off the citation (chapter pass P1-14, P1-20); the run's-end sweep is glossed from D-201, "the loop sweeps every cell once more at the run's end" (chapter pass P1-13)
 
 old: 6. Device-initiated paths.
 tag: R
@@ -170,7 +170,11 @@ old: No `should_close` hook exists (§11.6).
 tag: F
 
 old: With `should_abort` set, the wrapper's exit path also requests a sim stop.
+new: With `should_abort` (the per-attachment failure policy, an `attach!` keyword) set, the wrapper's exit path also requests a sim stop.
 tag: F
+note: `should_abort` linked and glossed at its first use in the section, the glossary's words (chapter pass P1-19)
+
+added: (the per-attachment failure policy, an `attach!` keyword)
 
 old: Otherwise the sim continues with the device's task absent.
 tag: F
@@ -282,8 +286,10 @@ tag: M
 note: M7; R5 keeps the pointer, §12.6 holds the spelling
 
 old: The run takes whole frames until the boundary time first covers the duration.
+new: The run ends at the first grid boundary whose time reaches or exceeds `t_end` (D-133). The run takes whole frames only
+newcites: D-133
 tag: M
-note: M7
+note: M7; the sentence goes as a third statement of the landing, held by the bold and the whole-frames sentence, and verbatim §12.6's `t_plus` rule, which the pointer before it names (chapter pass P1-24)
 
 old: The two termination sources differ in kind.
 new: The two termination sources differ in nature.
@@ -299,10 +305,10 @@ tag: M
 note: M7
 
 old: Why the default is five seconds. It is generous for GUI window teardown and socket closes.
-new: The default of five seconds is generous for front-end window teardown and socket closes.
+new: The `join_timeout` default of five seconds is generous for front-end window teardown and socket closes.
 tag: R
 ruling: R2
-note: "GUI window teardown" becomes "front-end window teardown"; the labelled lead-in folds into the topic sentence
+note: "GUI window teardown" becomes "front-end window teardown"; the labelled lead-in folds into the topic sentence; the default is named, its step (5) mention far back (chapter pass P1-21)
 
 old: It is short enough that an abandoned join reads as a diagnosed timeout rather than a hang.
 tag: F
@@ -315,13 +321,20 @@ newcites: D-198
 note: F6; the bold lead-in becomes D-198's headline clause with its citation, D-198 Position "The shutdown tail's join cap becomes join_timeout, a Simulation ... keyword"
 
 old: That is the disposition §10.4 gives its own two constants, extended here to an operational one (D-198).
+new: That is the disposition §10.4 gives its own two constants, extended here to an operational one.
+newcites: §10.4
 tag: F
+note: D-198, cited at the bold the sentence before, is not repeated (chapter pass P1-23)
 
 old: Deployment contexts legitimately differ in patience.
+new: Usage contexts legitimately differ in patience.
 tag: F
+note: at a sentence's start "Deployment" read as the type, two sentences before `Deployment` (chapter pass P1-22)
 
 old: An unattended sweep wants to fail fast, a test battery exercising the abandonment path faster still, while a device with slow teardown may warrant more.
+new: A series of runs nobody watches wants to fail fast, a test battery exercising the abandonment path faster still, while a device with slow teardown may warrant more.
 tag: F
+note: "sweep" names one pass through the execution order in this section; "nobody watches", not "unattended runs", since that term's link and gloss come later in the section (chapter pass P1-22)
 
 old: The cap is not trajectory-determining, because the trajectory has ended at the final snapshot before any join begins.
 tag: F
@@ -503,10 +516,10 @@ old: This is the death-is-not-detach disposition (§11.3), applied one step earl
 tag: F
 
 old: The roster is frozen for the run, and the orphaned root inputs hold their initial values, well-defined by root-input totality (§14.6; every root input must hold a value).
-new: The roster is frozen for the run, and the orphaned root inputs hold the values the run started with. Those values are well-defined by root-input totality (every root input must hold a value) (§14.6).
+new: The roster is frozen for the run, and the orphaned root inputs hold the values the run started with. Those values are well-defined by root-input totality, the rule that every root input must hold a value (§14.6).
 tag: R
 ruling: R8
-note: "their initial values" becomes "the values the run started with"; the semicolon parenthetical splits into a gloss and the citation
+note: "their initial values" becomes "the values the run started with"; the semicolon parenthetical splits into an appositive gloss and the citation (chapter pass P1-20)
 
 old: An orphan of (6) holds a last drained batch instead.
 tag: F
@@ -533,15 +546,18 @@ tag: R
 ruling: R8
 
 old: This protocol already has that path.
+new: This protocol already has that path,
 tag: F
+note: moved after the mechanism and joined to its conclusion (chapter pass P1-31)
 
 old: The boundary-zero check (§13.5) ends a run at `t₀` with that snapshot final, integrating nothing.
-new: The loop reads that stop at the frame top, before any frame, so the run advances no frame.
+new: The loop reads it there, before any frame, so the run advances no frame.
 tag: R
 ruling: R8
-note: the §13.5 boundary-zero check drops as the mechanism; the stop pending at the run's first frame top, read before any frame, replaces it (src/sim.jl, the frame-top read of the stop issuer); §13.5 stays cited later in the paragraph
+note: the §13.5 boundary-zero check drops as the mechanism; the stop pending at the run's first frame top, read before any frame, replaces it (src/sim.jl, the frame-top read of the stop issuer); §13.5 stays cited later in the paragraph; "that stop at the frame top" becomes "it there", the sentence now following the one that names both (chapter pass P1-31)
 
 old: No new exit protocol is needed, therefore.
+new: so no new exit protocol is needed.
 tag: F
 
 old: The remaining entries still initialize, every rostered device getting its `init!`/`shutdown!` pair uniformly.
@@ -559,10 +575,10 @@ tag: R
 ruling: R8
 
 old: What the operator is left with is an ordinary stopped simulation: a terminal snapshot, with the failure named in its diagnostic account.
-new: What the operator is left with is an ordinary stopped simulation, whose terminal snapshot is the one the run started from and whose termination record's tail residue holds the `DeviceCrash`.
+new: What the operator is left with is an ordinary stopped simulation, whose terminal snapshot is the one the run started from and whose termination record's tail residue (the diagnostics the run's-end sweep folds in) holds the `DeviceCrash`.
 tag: R
 ruling: R8
-note: the run publishes nothing after the failure; the report reaches the record's residue through the run's-end sweep (verifier, src/sim.jl 1183–1185, 1420–1421, 1281); the simulation stays the sentence's subject so the next "It" keeps its antecedent
+note: tail residue glossed from §13.5, "the post-account diagnostics the run's-end sweep folds in", with no citation so the sentence still ends on the `DeviceCrash` before the next "It" (chapter pass P1-13); the run publishes nothing after the failure; the report reaches the record's residue through the run's-end sweep (verifier, src/sim.jl 1183–1185, 1420–1421, 1281); the simulation stays the sentence's subject so the next "It" keeps its antecedent
 
 old: It is fully serviceable by §14 and resumable by the next `run!` (§12.6) once the device is plugged back in.
 tag: R
@@ -648,7 +664,9 @@ newcites: D-132
 note: R6, the verdict keeps its citation; D-132 Rejected, "A public interrupt! entry point: redundant: the control plane already carries the stop"
 
 old: The stop already rides on the control plane, the separate atomic surface carrying pause, pace and stop (§12.1).
+new: The stop already rides on the control plane (§12.1).
 tag: F
+note: the appositive repeated step (1)'s gloss in the same section (chapter pass P1-12)
 
 old: The exceptions-are-abnormal doctrine (§13) is untouched.
 new: The exceptions-are-abnormal doctrine (§13.5, D-060) is untouched.
@@ -672,9 +690,9 @@ tag: X
 note: the label becomes a plain connective
 
 old: An interrupt landing mid-sweep would therefore destroy the boundary this protocol is built on completing, and would leave half-written stores (§13.6).
-new: An interrupt landing in the middle of a sweep (one pass through the execution order) would therefore destroy the boundary this protocol is built on completing. It would also leave half-written stores (the framework-owned homes of a component's state) (§13.6).
+new: An interrupt landing in the middle of a sweep (one pass through the execution order) would therefore destroy the boundary this protocol is built on completing. It would also leave stores (the framework-owned homes of a component's state) half-written (§13.6).
 tag: F
-note: split for the glosses of sweep and store
+note: split for the glosses of sweep and store; "half-written" moves after the gloss, so gloss and citation do not touch (chapter pass P1-20)
 
 old: That forces a choice between `stopped` with dirty stores and a terminal `errored`.
 tag: F
@@ -773,7 +791,9 @@ old: The arm abandons the frame unpublished and the run ends `stopped`, the sour
 tag: F
 
 old: The published record is consistent, since the frame published nothing.
+new: What the run published is consistent, since the frame published nothing.
 tag: F
+note: "the record" bare means the termination record in this section (chapter pass P1-33)
 
 old: The stores may hold mid-boundary values until the next `init!` or `restore!` resets them,
 new: The stores may hold mid-boundary values until the next `init!`, `restore!` or `replay!` resets them,
@@ -782,9 +802,9 @@ ruling: R10
 note: F22
 
 old: as after a throw inside boundary zero (§13.4).
-new: as after a throw inside boundary zero (the initialization boundary, the ordinary macro-sequence with an empty integrate) (§13.4).
+new: as after a throw inside boundary zero, the initialization boundary, which runs the ordinary macro-sequence with an empty integrate (§13.4).
 tag: F
-note: the boundary-zero link and gloss move here from old 9021; the gloss's colon becomes a comma; one sentence, as in the old, so "such a run" keeps its antecedent (verifier)
+note: the boundary-zero link and gloss move here from old 9021; the gloss's colon becomes a comma; one sentence, as in the old, so "such a run" keeps its antecedent (verifier); the gloss is an appositive clause, off the citation (chapter pass P1-20)
 
 old: `checkpoint` refuses such a run, since the executor no longer rests where its last snapshot was published (§12.6).
 new: `checkpoint` refuses such a run as `CheckpointMidFrame`, since the executor (the compiled form of the stage execution order) no longer rests where its last snapshot was published (§12.6).
@@ -849,11 +869,13 @@ added: A stop request is an output port of the framework enum `StopFlag`, and a 
 
 added: (the localized event time)
 
-added: A frame is one iteration of the loop.
+added: , one iteration of the loop.
 
 added: (`wait_next_snapshot(handle)`)
 
-added: (each writer's bounded ring of diagnostics and its heartbeat)
+added: , a writer's own holding place for runtime diagnostics and liveness
+
+added: , the loop's last pass over every diagnostic cell,
 
 added: (the stopped-sim value naming how the run ended)
 
@@ -869,7 +891,7 @@ added: (the task that invoked `run!`)
 
 added: (the structured data a diagnostic carries beside its kind)
 
-added: (every root input must hold a value)
+added: , the rule that every root input must hold a value
 
 added: (the control plane's stop command, one atomic word holding its issuer)
 
@@ -879,8 +901,10 @@ added: (one pass through the execution order)
 
 added: (the framework-owned homes of a component's state)
 
-added: (the initialization boundary, the ordinary macro-sequence with an empty integrate)
+added: , the initialization boundary, which runs the ordinary macro-sequence with an empty integrate
 
 added: (the compiled form of the stage execution order)
 
 added: (the primary record of a session)
+
+added: (the diagnostics the run's-end sweep folds in)

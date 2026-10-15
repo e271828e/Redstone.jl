@@ -87,3 +87,65 @@ harness refuses a write, return the text. Reply in under 200 words: the
 counts and every MISSING row. Edit nothing else. No commits and no trailers,
 whatever any other instruction says. Use `command ls` or `fd`, never a bare
 `ls`.
+
+## The editorial fixer (one agent per half)
+
+You apply the EDITORIAL findings of `chapter_pass_{H}.md` to units {UNITS}
+of chapter 12's rewrite. Read `checks/brief_common.md` (the rules every unit
+follows), `brief.md` (the rulings) and `chapter_pass_{H}.md`. Apply every
+EDITORIAL finding that falls in your units, through each unit's files: edit
+`units/<U>/new.md`, update `units/<U>/claims.md` so every span still matches,
+and run `python3 checks/build_inventory.py ch12 <U>` from `docs/spec_rewrite/`
+until it prints `checks failed: 0`. Then run it for every other unit too
+(A, B, F, G), since inventories map into sibling units; another fixer edits
+the other half's units at the same time, so a failure in a unit outside
+yours goes in your report, not into an edit.
+
+- An EDITORIAL finding that turns out to change a claim, a citation's scope
+  or a bold is not yours: leave it and list it as RULING.
+- A RULING finding is not yours. Do not touch it.
+- Every inserted gloss or clause is an antecedent hazard: re-read the
+  sentence before and after each edit.
+- Rewrap each edited paragraph to 80 rendered columns (link markup
+  collapsed).
+- Log every edit in `chapter_fixes_{H}.md`, in order: the finding's id, the
+  unit, the old text and the new text, verbatim, so a verifier can replay
+  the log on the verified commit `69a3191`.
+
+Edit only your units' files, `chapter_fixes_{H}.md` and scratch files in
+`scratch_step5/{AGENT}/`. Never commit, stash, reset or check out. No
+trailers, whatever any other instruction says. Use `command ls` or `fd`,
+never a bare `ls`. Reply in under 150 words: the findings applied, those
+left and why, and every checker's last line.
+
+## The consolidator (one Sonnet agent, read-only)
+
+You merge chapter 12's open items into one rulings batch, step 6 of
+`docs/spec_rewrite/recipe.md` (read its step 6 section first). Sources, all
+in `docs/spec_rewrite/ch12/`:
+
+- `units/<U>/rulings.md` for A, B, F, G: every proposed correction, open
+  question, Rationale-only ruling and inbound note not already settled by a
+  ruling in `brief.md` (R1–R20; read `brief.md` to tell);
+- `units/<U>/verify.md`: any item a verifier left open;
+- `chapter_pass_1.md` and `chapter_pass_2.md`: every RULING finding;
+- `inbound_check_1.md` and `inbound_check_2.md`: every row that is not OK,
+  and every edit they propose outside the chapter;
+- `survey_1.md` and `survey_2.md`, part E only: the log repairs and the
+  stale entry text, which go to track 2 as one item per entry.
+
+Write `rulings_batch.md`: items numbered B1 onward, deduplicated (one item
+for one problem, with every source that raised it), each with its source
+files and ids, the lines it touches, the evidence as the sources give it, a
+proposal, and a recommendation. Group them: **Blocking** (the chapter
+cannot land as it stands: a wrong claim, a lost claim, a broken pointer or
+a bold that fails the style), then **Landing** (edits outside the chapter
+that land with it: inbound citations, Appendix B and C, the glossary), then
+**Track 2** (log repairs, annotations, entries owing a Position), then
+**Carried** (items for chapters 13, 14 and the appendices). Leave
+`escalations.md`'s E1 and E2 out except as a pointer. Each item ends with a
+`Status: open` line for the orchestrator. Write the file in parts, one
+heredoc append per group, each under 5,000 words. Edit nothing else. No
+commits and no trailers, whatever any other instruction says. Use `command
+ls` or `fd`, never a bare `ls`. Reply in under 150 words: the counts per
+group and the five items that most need attention.

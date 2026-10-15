@@ -11,13 +11,13 @@
   {
    "id": "C-002",
    "old": "The entry point the §11.5 trace exists for:",
-   "new": "`replay!` is the entry point the §11.5 trace exists for:",
+   "new": "`replay!` is the entry point the trace exists for (§11.5):",
    "where": "new",
    "cites": [
     "§11.5"
    ],
    "tag": "X",
-   "note": "framing sentence; it now names `replay!` as its subject"
+   "note": "framing sentence; it now names `replay!` as its subject; the section number left the adjective slot (step 5, P2-22)"
   },
   {
    "id": "C-003",
@@ -54,12 +54,12 @@
   {
    "id": "C-006",
    "old": "The loop starts from a restored state, and its drain reads the trace:",
-   "new": "Its drain reads the trace, and under the default form the loop starts from a restored state.",
+   "new": "The substitution is the drain, which reads the trace. Under the default form, `replay!(sim2, trc)` above, the loop also starts from a restored state.",
    "where": "new",
    "cites": [],
    "tag": "R",
    "ruling": "R9",
-   "note": "the units section's two-forms rule; the restore is the default form's"
+   "note": "the units section's two-forms rule; the restore is the default form's; the drain is the one substitution (D-274 bullet 4), and the default form is named by its call above (step 5, P2-24)"
   },
   {
    "id": "C-007",
@@ -74,7 +74,7 @@
   {
    "id": "C-008",
    "old": "`replay!` restores the trace's checkpoint (the `Model`'s state at a frame top as one value), the state the recording opened from.",
-   "new": "It restores the trace's checkpoint (the `Model`'s state at a frame top as one value), the state the recording opened from.",
+   "new": "It restores the trace's checkpoint (the `Model`'s state at a frame top, beside the run's frame index and boundary ordinal), the state the recording opened from.",
    "where": "new",
    "cites": [],
    "tag": "R",
@@ -116,12 +116,13 @@
   {
    "id": "C-012",
    "old": "There is no condition resolution, and the totality (§14.6) held when the recording's `init!` ran.",
-   "new": "There is no condition resolution, and the totality (§14.6) held when the recording's `init!` ran.",
+   "new": "There is no condition resolution, and the root-input totality (every root input must hold a value) (§14.6) held when the recording's `init!` ran.",
    "where": "new",
    "cites": [
     "§14.6"
    ],
-   "tag": "F"
+   "tag": "F",
+   "note": "the term named and glossed as half 1 does (step 5, P2-25)"
   },
   {
    "id": "C-013",
@@ -203,17 +204,18 @@
   {
    "id": "C-021",
    "old": "The write-surface rule (§11.3) ran at recording time,",
-   "new": "The write-surface rule (§11.3) ran at recording time.",
+   "new": "The write-surface rule (the bound on the faces a writer's batch entries may reach) (§11.3) ran at recording time,",
    "where": "new",
    "cites": [
     "§11.3"
    ],
-   "tag": "F"
+   "tag": "F",
+   "note": "the write-surface and face glosses moved off the middle of the old sentence (step 5, P2-26)"
   },
   {
    "id": "C-022",
    "old": "and claims are a live-roster fact of the recorded session that replay does not reconstruct.",
-   "new": "Claims (the set of faces a device may write) are a live-roster fact of the recorded session that replay does not reconstruct.",
+   "new": "and claims (the set of faces a device may write) are a live-roster fact of the recorded session that replay does not reconstruct.",
    "where": "new",
    "cites": [],
    "tag": "F",
@@ -302,10 +304,11 @@
   {
    "id": "C-031",
    "old": "That workflow halts at the frame top the error names, then `step!`s the failing frame on its recorded inputs.",
-   "new": "That workflow halts at the frame top the error names, then `step!`s the failing frame on its recorded inputs.",
+   "new": "then `step!`s the failing frame on its recorded inputs",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "M",
+   "note": "merged into the error-reproduction sentence of the halting block, whose frame-entry boundary `k` the error names is that frame top (F54) (step 5, P2-35)"
   },
   {
    "id": "C-032",
@@ -451,7 +454,7 @@
   {
    "id": "C-047",
    "old": "Either names a frame at or after the one the feed starts from.",
-   "new": "Either keyword names a frame from the one the feed starts from through the recording's last.",
+   "new": "Either keyword names a frame from the one the feed starts from through the recording's last",
    "where": "new",
    "cites": [],
    "tag": "R",
@@ -470,12 +473,12 @@
   {
    "id": "C-049",
    "old": "An earlier one is refused (`ArgumentInvalid`).",
-   "new": "Anything else is refused (`ArgumentInvalid`).",
+   "new": "and anything else is refused (`ArgumentInvalid`).",
    "where": "new",
    "cites": [],
    "tag": "R",
    "ruling": "R10",
-   "note": "F68"
+   "note": "F68; joined to the range sentence so \"else\" reads against the range (step 5, P2-28)"
   },
   {
    "id": "C-050",
@@ -523,7 +526,7 @@
   {
    "id": "C-054",
    "old": "A localized `t` boundary inside the frame (the crossing instant bracketed by root-finding over trial sweeps) is reproduced but not stoppable-at.",
-   "new": "A localized `t` boundary inside the frame (the crossing instant bracketed by root-finding over trial sweeps) is reproduced but not stoppable-at (D-128).",
+   "new": "A localized `t` boundary (the crossing instant bracketed by root-finding over trial sweeps) inside the frame is reproduced but not stoppable-at (D-128).",
    "where": "new",
    "cites": [],
    "newcites": [
@@ -560,7 +563,7 @@
   {
    "id": "C-057",
    "old": "A termination the recorded session hit through a stop request reproduces itself anyway, deterministically.",
-   "new": "A termination the recorded session hit through a stop request reproduces itself anyway, deterministically (D-127).",
+   "new": "A termination the recorded session hit through a stop request (an output port of the framework enum `StopFlag`) reproduces itself anyway, deterministically (D-127).",
    "where": "new",
    "cites": [],
    "newcites": [
@@ -656,7 +659,7 @@
   {
    "id": "C-067",
    "old": "Validation is the other keywords'.",
-   "new": "Validation is the other keywords'.",
+   "new": "`to_time` is validated as the other keywords are.",
    "where": "new",
    "cites": [],
    "tag": "F"
@@ -748,10 +751,11 @@
   {
    "id": "C-077",
    "old": "The flip above is automatic, and it happens only at the recording's end.",
-   "new": "The flip above is automatic, and it happens only at the recording's end.",
+   "new": "The flip above is automatic.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "F",
+   "note": "\"only at the recording's end\" is stated by \"The halt flips the mode only at the recording's end\" above (step 5, P2-34)"
   },
   {
    "id": "C-078",
@@ -851,11 +855,11 @@
   {
    "id": "C-088",
    "old": "The trace `sim2` leaves behind is a complete recording of itself: the replayed prefix out to t = 100, then the frames flown live after it.",
-   "new": "The trace `sim2` leaves behind is a complete recording of itself, the replayed prefix out to t = 100 and then the frames flown live after it.",
+   "new": "The trace `sim2` leaves behind is a complete recording of itself, the replayed prefix out to t = 100 and then the frames flown live after it, since replay re-records (below).",
    "where": "new",
    "cites": [],
    "tag": "F",
-   "note": "mid-sentence colon removed"
+   "note": "mid-sentence colon removed; the pointer at \"Replay re-records\", which M56/M57 placed later (step 5, P2-36)"
   },
   {
    "id": "C-089",
@@ -904,7 +908,7 @@
   {
    "id": "C-093",
    "old": "Error reproduction replays to `k − 1`, then `step!`s the failing frame under instrumentation (§13.4).",
-   "new": "Error reproduction replays to the frame-entry boundary `k` the error names, then `step!`s the failing frame under instrumentation (§13.4).",
+   "new": "Error reproduction replays to the frame-entry boundary `k` the error names, then `step!`s the failing frame on its recorded inputs, under instrumentation (§13.4).",
    "where": "new",
    "cites": [
     "§13.4"
@@ -1240,11 +1244,11 @@
   {
    "id": "C-127",
    "old": "Replaying against the same structure with changed parameters is the what-if replay, the deterministic re-driving of the recorded inputs through a modified model.",
-   "new": "Replaying against the same structure with changed parameters is the what-if replay, the deterministic re-driving of the recorded inputs through a modified model.",
+   "new": "Replaying against the same structure with changed parameters is the what-if replay.",
    "where": "new",
    "cites": [],
    "tag": "M",
-   "note": "block 5; bold term dropped"
+   "note": "block 5; bold term dropped; the gloss is stated once, in the context paragraph, and \"deterministic\" by \"What-if replay promises determinism\" (step 5, P2-23)"
   },
   {
    "id": "C-128",
@@ -1570,7 +1574,7 @@
   }
  ],
  "added": [
-  "This section specifies replay, re-running the ordinary loop on a recorded input trace.",
+  "This section specifies replay, re-running the ordinary loop on a recorded input trace, so that a recorded session can be inspected, its errors reproduced and its run continued live.",
   "A trace is the primary record of a session, a fixed trace header plus the batches drained at each frame.",
   "A batch is a device's staged set of writes, and a device is any attached participant in the periphery.",
   "A frame is one iteration of the loop, from drain to publication.",
@@ -1583,13 +1587,13 @@
   "(the initialization boundary at `t₀`)",
   "A condition is the datum that says \"set this build to this state\".",
   "(the list of attached device entries)",
-  "A write surface is the set of faces a writer's batch entries may reach, and a face is the name a port wears on its component's boundary.",
+  "A face is the name a port wears on its component's boundary.",
   "an entry point that builds a run (§12.6).",
   "Under `restore = false` the new trace's header is the simulation's own checkpoint (below).",
-  "The control plane is the separate atomic surface carrying pause, pace and the stop word.",
+  "The control plane is the separate atomic surface carrying pause, pace and stop.",
   "#### Validation up front",
   "#### What-if replay and `restore = false`",
-  "Under `restore = false` the simulation's own clock runs, its origin must equal the recording's, and the new trace's header is the simulation's own checkpoint.",
+  "Under `restore = false` the simulation's own clock runs, and its origin must equal the recording's.",
   "#### Rejected shapes"
  ]
 }

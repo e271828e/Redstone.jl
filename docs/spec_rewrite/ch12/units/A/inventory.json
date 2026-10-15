@@ -27,7 +27,7 @@
   {
    "id": "C-003",
    "old": "the control plane and the scheduling primitives, the shutdown protocol, and the run lifecycle from `init!` through replay.",
-   "new": "§12.1 covers the control plane; §12.2 loop scheduling, in turn its wait primitive, its yields and the thread budget; §12.3 the next-snapshot wait; §12.4 the shutdown protocol; §12.5 scripts and the mid-run mutation doctrine; §12.6 the run lifecycle from `init!`, and partial advance; and §12.7 replay, where the trace re-drives the ordinary loop.",
+   "new": "§12.1 covers the control plane; §12.2 loop scheduling, in turn its wait primitive, its yields, the thread budget and the liveness heartbeat; §12.3 the next-snapshot wait; §12.4 the shutdown protocol; §12.5 scripts and the mid-run mutation doctrine; §12.6 the run lifecycle from `init!`, and partial advance; and §12.7 replay, where the trace re-drives the ordinary loop.",
    "where": "new",
    "cites": [],
    "newcites": [
@@ -41,7 +41,7 @@
    ],
    "tag": "R",
    "ruling": "R1",
-   "note": "roadmap sentence; every word from the old opening or a section title (§12.2, §12.3, §12.5, §12.6, §12.7 titles)."
+   "note": "roadmap sentence; every word from the old opening or a section title (§12.2, §12.3, §12.5, §12.6, §12.7 titles); \"the liveness heartbeat\" is §12.2's fourth `####` label (chapter pass P1-25)."
   },
   {
    "id": "C-004",
@@ -54,7 +54,7 @@
   {
    "id": "C-005",
    "old": "Control is not staging, structurally.",
-   "new": "The control plane (the separate few-word atomic surface carrying pause, pace and stop) is not staging, structurally (D-022).",
+   "new": "It is not staging, structurally (D-022).",
    "where": "new",
    "cites": [],
    "newcites": [
@@ -62,12 +62,12 @@
    ],
    "tag": "R",
    "ruling": "R3",
-   "note": "M1, now the context; row 19's bold goes since §11.1 bolds D-022; D-022's Position parenthetical carries it. Gloss from the glossary's control-plane entry."
+   "note": "M1, now the context; row 19's bold goes since §11.1 bolds D-022; D-022's Position parenthetical carries it. The plane is named by apposition in the sentence before, which now opens the section (chapter pass P1-15)."
   },
   {
    "id": "C-006",
    "old": "Staged writes apply at drains, and a paused loop drains nothing, so un-pause via staging would deadlock by construction.",
-   "new": "Staged writes apply at drains (the points where the loop applies staged device writes), and a paused loop drains nothing, so un-pause via staging would deadlock by construction.",
+   "new": "Staged writes apply at drains (the frame-top swaps that apply staged device writes), and a paused loop drains nothing, so un-pause via staging would deadlock by construction.",
    "where": "new",
    "cites": [],
    "tag": "M",
@@ -76,7 +76,7 @@
   {
    "id": "C-007",
    "old": "Riding outside the drain/trace path is safe for determinism precisely because §10.7 put pacing outside the semantics.",
-   "new": "Riding outside the drain/trace path is safe for determinism precisely because §10.7 put pacing (the pacer's wall-clock waits) outside the semantics (D-021).",
+   "new": "Riding outside the path through the drain and the trace, the primary record of a session, is safe for determinism precisely because §10.7 put pacing (the pacer's wall-clock waits) outside the semantics (D-021).",
    "where": "new",
    "cites": [
     "§10.7"
@@ -100,28 +100,31 @@
   {
    "id": "C-009",
    "old": "Pause, un-pause, pace changes, `margin` changes and stop are a few scalar fields on a separate atomic surface.",
-   "new": "Pause, un-pause, pace changes, `margin` changes and stop are a few scalar fields on that separate atomic surface.",
+   "new": "Pause, un-pause, pace changes, `margin` changes and stop are a few scalar fields on a separate atomic surface",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "F",
+   "note": "opens the section (chapter pass P1-15); the control plane is named by apposition after it."
   },
   {
    "id": "C-010",
    "old": "The loop consults them at frame top.",
-   "new": "The loop consults them at frame top, the start of each frame.",
+   "new": "The loop consults the control plane at frame top, the start of each frame.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "F",
+   "note": "\"them\" becomes \"the control plane\", the fields now a paragraph back (chapter pass P1-15)."
   },
   {
    "id": "C-011",
    "old": "A change issued while a frame runs or waits is observed at the next frame top, at most one frame budget `h/p` later (D-269).",
-   "new": "A change issued while a frame runs or waits is observed at the next frame top, at most one frame budget `h/p` later (D-269).",
+   "new": "A change issued while a frame runs or waits is observed at the next frame top, at most one frame budget (`h/p`, the step over the pace) later (D-269).",
    "where": "new",
    "cites": [
     "D-269"
    ],
-   "tag": "F"
+   "tag": "F",
+   "note": "`p` is introduced 50 lines on, so `h/p` takes a gloss (chapter pass P1-27)."
   },
   {
    "id": "C-012",
@@ -184,7 +187,7 @@
   {
    "id": "C-017",
    "old": "The stop word carries its issuer.",
-   "new": "The stop word carries its issuer (D-203). The stop word is the control plane's stop command, one atomic word holding its issuer.",
+   "new": "The stop word carries its issuer (D-203). The stop word is the control plane's stop command, held in one atomic word.",
    "where": "new",
    "cites": [],
    "newcites": [
@@ -192,7 +195,7 @@
    ],
    "tag": "R",
    "ruling": "R15",
-   "note": "D-203 bullet 3, the citation was two sentences on; the second sentence is R11's gloss as R15 words it."
+   "note": "D-203 bullet 3, the citation was two sentences on; the second sentence is R11's gloss as R15 words it, less \"holding its issuer\", which the bold states (chapter pass P1-17)."
   },
   {
    "id": "C-018",
@@ -442,7 +445,7 @@
   {
    "id": "C-042",
    "old": "`run!` and `replay!` take both as keywords and write them at entry, the advance's declaration as `t_end` is, `Inf` and 2 ms by default (Appendix B).",
-   "new": "`run!` and `replay!` take both as keywords and write them at entry. Both are declared by the advance, as `t_end` is. `pace` defaults to `Inf` and `margin` to 2 ms (Appendix B, D-133).",
+   "new": "`run!` and `replay!` take both as keywords and write them when called. Both are declared by the advance, as `t_end` is. `pace` defaults to `Inf` and `margin` to 2 ms (Appendix B, D-133).",
    "where": "new",
    "cites": [
     "Appendix B"
@@ -452,7 +455,7 @@
     "D-133"
    ],
    "tag": "C",
-   "note": "split in three; D-269 bullet 2 sets `pace`'s default, D-133's Position `margin` = 2 ms (bold at §10.7, plain here)."
+   "note": "split in three; bare \"entry\" becomes \"when called\" (chapter pass P1-26); D-269 bullet 2 sets `pace`'s default, D-133's Position `margin` = 2 ms (bold at §10.7, plain here)."
   },
   {
    "id": "C-043",
@@ -668,12 +671,12 @@
   {
    "id": "C-065",
    "old": "Julia's cooperative-scheduler freeze requires a thread monopolist, a never-yielding task that holds its thread forever, and that precondition is structurally absent from framework tasks.",
-   "new": "Julia's scheduler is cooperative, and the scheduler stall requires a thread monopolist, a never-yielding task that holds its thread forever. That precondition is structurally absent from framework tasks.",
+   "new": "Julia's scheduler is cooperative, and a stall of that scheduler requires a thread monopolist, a never-yielding task that holds its thread forever. That precondition is structurally absent from framework tasks.",
    "where": "new",
    "cites": [],
    "tag": "R",
    "ruling": "R10",
-   "note": "F16, \"freeze\" in the scheduler sense becomes \"the scheduler stall\"."
+   "note": "F16, \"freeze\" in the scheduler sense becomes \"the scheduler stall\"; here \"a stall of that scheduler\", so the next section's \"The scheduler stall\" has its antecedent (chapter pass P1-30)."
   },
   {
    "id": "C-066",
@@ -770,12 +773,13 @@
   {
    "id": "C-075",
    "old": "That is one check per run, against the frozen roster (§11.3).",
-   "new": "That is one check per run, against the frozen roster (the list of attached device entries) (§11.3).",
+   "new": "That is one check per run, against the frozen roster, the list of attached device entries (§11.3).",
    "where": "new",
    "cites": [
     "§11.3"
    ],
-   "tag": "F"
+   "tag": "F",
+   "note": "the gloss is an appositive, so it and the citation are not two touching parentheses (chapter pass P1-20)."
   },
   {
    "id": "C-076",
@@ -861,7 +865,7 @@
   {
    "id": "C-085",
    "old": "The mechanism is the per-writer cell, specified in full by §11.8, plus the device `Task` handles the loop already owns, and nothing besides.",
-   "new": "The mechanism is the per-writer diagnostic cell (a writer's own holding place for runtime diagnostics and liveness) (D-136), specified in full by §11.8, plus the device `Task` handles the loop already owns, and nothing besides.",
+   "new": "The mechanism is the per-writer diagnostic cell (D-136), specified in full by §11.8, plus the device `Task` handles the loop already owns, and nothing besides.",
    "where": "new",
    "cites": [
     "§11.8"
@@ -871,15 +875,16 @@
     "§11.8"
    ],
    "tag": "C",
-   "note": "bare \"cell\" is reserved, so \"diagnostic cell\". D-136's Position, placed at the cell; the handles are D-193's, cited next sentence."
+   "note": "bare \"cell\" is reserved, so \"diagnostic cell\". D-136's Position, placed at the cell; the handles are D-193's, cited next sentence. The gloss takes its own sentence after it, so gloss and citation are not two touching parentheses and D-136 does not move onto the handles (chapter pass P1-20)."
   },
   {
    "id": "C-086",
    "old": "The cell carries the single liveness timestamp.",
-   "new": "The diagnostic cell carries the single liveness timestamp.",
+   "new": "It carries the single liveness timestamp.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "F",
+   "note": "\"It\" is the diagnostic cell of the gloss sentence before."
   },
   {
    "id": "C-087",
@@ -1036,13 +1041,14 @@
   {
    "id": "C-103",
    "old": "The counter counts published boundaries, that is grid, `t` and boundary zero (§10.1, §10.4), not frames.",
-   "new": "It counts published boundaries, that is grid, `t` and boundary zero (the initialization boundary at `t₀`) (§10.1, §10.4), not frames.",
+   "new": "It counts published boundaries, that is grid, `t` and boundary zero (the initialization boundary at `t₀`), not frames (§10.1, §10.4).",
    "where": "new",
    "cites": [
     "§10.1",
     "§10.4"
    ],
-   "tag": "F"
+   "tag": "F",
+   "note": "the citation moves to the clause's end, off the gloss (chapter pass P1-20)."
   },
   {
    "id": "C-104",
@@ -1094,13 +1100,13 @@
   {
    "id": "C-109",
    "old": "The release-store of `latest` (§11.2) happens before the counter increment under the lock.",
-   "new": "The release-store of `latest` (the atomic reference readers acquire-load) (§11.2) happens before the counter increment under the lock.",
+   "new": "The release-store of `latest`, the atomic reference readers acquire-load (§11.2), happens before the counter increment under the lock.",
    "where": "new",
    "cites": [
     "§11.2"
    ],
    "tag": "M",
-   "note": "M5; the bold on \"before\" goes."
+   "note": "M5; the bold on \"before\" goes. The gloss is an appositive and §11.2 stays on `latest`, since §11.2 does not state the order (chapter pass P1-20)."
   },
   {
    "id": "C-110",
@@ -1116,11 +1122,11 @@
   {
    "id": "C-111",
    "old": "`counter > last_seen` therefore implies that `latest` holds at least that boundary, and a waiter can never wake onto a stale snapshot.",
-   "new": "The device side's predicate, `counter > last_seen` (below), therefore implies that `latest` holds at least that boundary, and a waiter can never wake onto a snapshot (the immutable per-boundary publication) that is stale.",
+   "new": "The device side's test `counter > last_seen` (below) therefore implies that `latest` holds at least that boundary, and a waiter can never wake onto a snapshot (the immutable per-boundary publication) that is stale.",
    "where": "new",
    "cites": [],
    "tag": "M",
-   "note": "M5; the predicate now precedes the device side, so it points below."
+   "note": "M5; the predicate now precedes the device side, so it points below. \"test\", since the full predicate adds `&& running` (chapter pass P1-28)."
   },
   {
    "id": "C-112",
@@ -1205,7 +1211,7 @@
   {
    "id": "C-120",
    "old": "Coalescing to the newest batch (in) and to the newest snapshot (out) are the same ZOH decision.",
-   "new": "Inbound coalescing (the CAS merge that leaves one pending batch per device) keeps the newest level per face, and the wait delivers the newest snapshot, the same zero-order hold (ZOH) decision.",
+   "new": "Inbound coalescing (the compare-and-swap merge that leaves one pending batch per device) keeps the newest level per face, and the wait delivers the newest snapshot, the same zero-order hold (ZOH) decision.",
    "where": "new",
    "cites": [],
    "tag": "R",
@@ -1288,10 +1294,11 @@
   {
    "id": "C-129",
    "old": "Any holder of a snapshot therefore indexes it without consulting the loop, whether the log or a post-run inspector.",
-   "new": "Any holder of a snapshot therefore indexes it without consulting the loop, whether the log or a post-run inspector.",
+   "new": "Any holder of a snapshot therefore indexes it without consulting the loop, whether the log (the retained sequence of published snapshots) or a post-run inspector.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "F",
+   "note": "the log takes its §12.3 link and gloss (chapter pass P1-19)."
   },
   {
    "id": "C-130",
@@ -1364,12 +1371,14 @@
   }
  ],
  "added": [
-  "(the separate few-word atomic surface carrying pause, pace and stop)",
-  "(the points where the loop applies staged device writes)",
+  ", the control plane.",
+  "(the frame-top swaps that apply staged device writes)",
   "(the pacer's wall-clock waits)",
+  ", the primary record of a session,",
   "(iterations of the loop)",
-  "This section covers, in order, when the loop reads the plane, the stop and its issuer, the pause, pace and `margin`, and the fields of `Control`, one of the periphery's own types (D-256), the one that holds the control plane.",
+  "This section covers, in order, when the loop reads the plane, the stop and its issuer, the pause, pace and `margin`, and the fields of `Control`, the periphery's own type that holds the control plane (D-256).",
   "the start of each frame",
+  ", the step over the pace",
   "(any attached participant in the periphery)",
   "(Ctrl-C read as a control-plane stop)",
   "where a deferred Ctrl-C is raised",
@@ -1384,19 +1393,20 @@
   "The per-frame yield",
   "(the waits inserted between completed frames)",
   "The thread budget",
-  "(the list of attached device entries)",
+  ", the list of attached device entries",
   "(the task that invoked `run!`)",
   "The liveness heartbeat",
-  "(a writer's own holding place for runtime diagnostics and liveness)",
+  "A diagnostic cell is a writer's own holding place for runtime diagnostics and liveness.",
   "(attached participants in the periphery)",
   "A boundary is a published consistency point.",
   "The next-snapshot wait (a device's blocking wait for the next publication) is that way.",
   "This section gives its two artifacts, the loop's side, the device's side, its newest-wins semantics, and how the counter differs from the other two indices, in that order.",
   "(the initialization boundary at `t₀`)",
-  "(the atomic reference readers acquire-load)",
-  "The device side's predicate",
+  ", the atomic reference readers acquire-load",
+  "The device side's test",
   "(the immutable per-boundary publication)",
-  "(the CAS merge that leaves one pending batch per device)",
+  "(the compare-and-swap merge that leaves one pending batch per device)",
+  "(the retained sequence of published snapshots)",
   "(the ordinary loop re-driven from the trace)"
  ]
 }

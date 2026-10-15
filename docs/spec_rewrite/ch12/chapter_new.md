@@ -1,35 +1,32 @@
 ## 12. Runtime periphery: lifecycle and orchestration
 
 This chapter specifies the machinery that drives the loop itself, taking the
-loop of [§10][s10] and the data plane of [§11][s11] as given. [§12.1][s12-1] covers the control
-plane; [§12.2][s12-2] loop scheduling, in turn its wait primitive, its yields and the
-thread budget; [§12.3][s12-3] the next-snapshot wait; [§12.4][s12-4] the shutdown protocol;
-[§12.5][s12-5] scripts and the mid-run mutation doctrine; [§12.6][s12-6] the run lifecycle
-from `init!`, and partial advance; and [§12.7][s12-7] replay, where the trace re-drives
-the ordinary loop.
+loop of [§10][s10] and the data plane of [§11][s11] as given. [§12.1][s12-1] covers the control plane;
+[§12.2][s12-2] loop scheduling, in turn its wait primitive, its yields, the thread budget
+and the liveness heartbeat; [§12.3][s12-3] the next-snapshot wait; [§12.4][s12-4] the shutdown
+protocol; [§12.5][s12-5] scripts and the mid-run mutation doctrine; [§12.6][s12-6] the run
+lifecycle from `init!`, and partial advance; and [§12.7][s12-7] replay, where the trace
+re-drives the ordinary loop.
 
 ### 12.1 Control plane
 
-The [control plane](#g-control-plane) (the separate few-word atomic surface
-carrying pause, pace and stop) is not staging, structurally ([D-022][d-022]).
-Staged writes apply at [drains](#g-drain) (the points where the loop applies
-staged device writes), and a paused loop drains nothing, so un-pause via
-staging would deadlock by construction. Riding outside the drain/[trace](#g-trace)
-path is safe for determinism precisely because [§10.7][s10-7] put
-[pacing](#g-pacing) (the pacer's wall-clock waits) outside the semantics
-([D-021][d-021]). Control changes *when* [frames](#g-frame) (iterations of the
-loop) execute, never what they compute, and stop merely truncates the
-trajectory. This section covers, in order, when the loop reads the plane, the
-stop and its issuer, the pause, pace and `margin`, and the fields of
-`Control`, one of the periphery's own types ([D-256][d-256]), the one that
-holds the control plane.
+Pause, un-pause, pace changes, `margin` changes and stop are a few scalar fields
+on a separate atomic surface, the [control plane](#g-control-plane). It is not staging, structurally
+([D-022][d-022]). Staged writes apply at [drains](#g-drain) (the frame-top swaps that apply staged
+device writes), and a paused loop drains nothing, so un-pause via staging would
+deadlock by construction. Riding outside the path through the drain and the
+[trace](#g-trace), the primary record of a session, is safe for determinism precisely
+because [§10.7][s10-7] put [pacing](#g-pacing) (the pacer's wall-clock waits) outside the semantics
+([D-021][d-021]). Control changes *when* [frames](#g-frame) (iterations of the loop) execute, never
+what they compute, and stop merely truncates the trajectory. This section
+covers, in order, when the loop reads the plane, the stop and its issuer, the
+pause, pace and `margin`, and the fields of `Control`, the periphery's own type
+that holds the control plane ([D-256][d-256]).
 
-Pause, un-pause, pace changes, `margin` changes and stop are a few scalar
-fields on that separate atomic surface. The loop consults them at frame top,
-the start of each frame. A change issued while a frame runs or waits is
-observed at the next frame top, at most one frame budget `h/p` later
-([D-269][d-269]). The pause block, described with the pause verbs below, is
-the one wait that wakes at once.
+The loop consults the control plane at frame top, the start of each frame. A
+change issued while a frame runs or waits is observed at the next frame top, at
+most one frame budget (`h/p`, the step over the pace) later ([D-269][d-269]). The pause
+block, described with the pause verbs below, is the one wait that wakes at once.
 
 The stop's issuers are the operator's channels and, in an interactive session,
 Ctrl-C. The operator's channels are a front end's button, the handle of a
@@ -39,16 +36,14 @@ read as a control-plane stop) sets exactly this stop, with no separate entry
 point involved ([§12.4][s12-4], [D-132][d-132]). The loop catches it at one of its unmask
 points, where a deferred Ctrl-C is raised ([§12.4][s12-4]).
 
-**The stop word carries its issuer** ([D-203][d-203]). The stop word is the
-control plane's stop command, one atomic word holding its issuer. Each
-issuing site writes its identity (the device's name, `:code`, or `:interrupt`)
-by compare-and-swap from empty, and the first writer wins. The loop's
-frame-top read consults the word for non-empty, so the recorded issuer is the
-request that actually initiated the tail, the ordered shutdown sequence of
-[§12.4][s12-4]. The issuer lands in the
-[termination record](#g-termination-record) (the stopped-sim value naming how
-the run ended) as its `ControlRequestedStop`'s payload ([§13.5][s13-5],
-[D-203][d-203]).
+**The stop word carries its issuer** ([D-203][d-203]). The stop word is the control
+plane's stop command, held in one atomic word. Each issuing site writes its
+identity (the device's name, `:code`, or `:interrupt`) by compare-and-swap from
+empty, and the first writer wins. The loop's frame-top read consults the word
+for non-empty, so the recorded issuer is the request that actually initiated the
+tail, the ordered shutdown sequence of [§12.4][s12-4]. The issuer lands in the
+[termination record](#g-termination-record) (the stopped-sim value naming how the run ended) as its
+`ControlRequestedStop`'s payload ([§13.5][s13-5], [D-203][d-203]).
 
 **`ControlRequestedStop` sits outside the stop policy** ([D-255][d-255]). The
 policy is what the caller declares for one advance ([§13.5][s13-5]). The stop
@@ -81,15 +76,14 @@ control verbs for the bridge ([§11.7][s11-7]) is pending (`pending.md`, [D-310]
 
 **Pace and `margin` are two more verbs and two readers** ([D-269][d-269]).
 `pace!(sim, p)` and `margin!(sim, m)` set them from any task in any lifecycle
-state, and `pace(sim)` and `margin(sim)` read them. `margin`
-([§10.7][s10-7]) rides on the control plane for the same reason `pace` does.
-It tunes the wait, never the arithmetic, so retuning the coarse/spin split
-mid-run is safe by construction. `run!` and `replay!` take both as keywords
-and write them at entry. Both are declared by the advance, as `t_end` is.
-`pace` defaults to `Inf` and `margin` to 2 ms ([Appendix B][sB],
-[D-133][d-133]). `step!` takes neither and never waits. A stepping session is
-the harness mode ([§12.6][s12-6]), and its frames are bit-identical to `run!`'s
-by [§10.7][s10-7]'s invariant. `pace` is a positive real, `Inf` admitted, and
+state, and `pace(sim)` and `margin(sim)` read them. `margin` ([§10.7][s10-7]) rides on
+the control plane for the same reason `pace` does. It tunes the wait, never the
+arithmetic, so retuning the coarse/spin split mid-run is safe by construction.
+`run!` and `replay!` take both as keywords and write them when called. Both are
+declared by the advance, as `t_end` is. `pace` defaults to `Inf` and `margin` to
+2 ms ([Appendix B][sB], [D-133][d-133]). `step!` takes neither and never waits. A stepping
+session is the harness mode ([§12.6][s12-6]), and its frames are bit-identical to
+`run!`'s by [§10.7][s10-7]'s invariant. `pace` is a positive real, `Inf` admitted, and
 `margin` a non-negative real, `Inf` admitted. The two setters and the two
 keywords refuse anything else under `ArgumentInvalid` ([Appendix C][sC]).
 
@@ -141,9 +135,9 @@ runs and pure-spin frames with budget ≤ margin. The spin phase itself never
 yields ([D-027][d-027]). Yielding there would trade its µs precision for
 scheduler noise.
 
-The consequence is a bound on thread occupancy. The loop holds a thread for
-at most one frame before the scheduler can run anyone else. Julia's scheduler
-is cooperative, and the scheduler stall requires a thread monopolist, a
+The consequence is a bound on thread occupancy. The loop holds a thread for at
+most one frame before the scheduler can run anyone else. Julia's scheduler is
+cooperative, and a stall of that scheduler requires a thread monopolist, a
 never-yielding task that holds its thread forever. That precondition is
 structurally absent from framework tasks.
 
@@ -162,34 +156,30 @@ and the stop button keeps working.
 Undersized sessions degrade to laggy inputs and stale snapshots, which are
 visible, recoverable states.
 
-At `run!` or `replay!`, a run warns under `ThreadBudget` ([Appendix C][sC])
-when `Threads.nthreads()` is tight for the attached population, naming the
-`julia -t` remedy. That is one check per run, against the frozen
-[roster](#g-roster) (the list of attached device entries) ([§11.3][s11-3]).
-Tight means fewer threads than the roster plus one. Every rostered device is a
-task, and the [calling task](#g-calling-task) (the task that invoked `run!`)
-hosts the loop, so a run occupies one task more than its roster
-([D-310][d-310]). The sizing guidance behind the remedy is one thread for the
-loop and headroom for compute-heavy or blocking-ccall devices. I/O backed by
-libuv (the I/O library under Julia's tasks) yields. Raw blocking ccalls pin
-their thread for the duration. There is no pinning and there are no sticky
-tasks.
+At `run!` or `replay!`, a run warns under `ThreadBudget` ([Appendix C][sC]) when
+`Threads.nthreads()` is tight for the attached population, naming the `julia -t`
+remedy. That is one check per run, against the frozen [roster](#g-roster), the list of
+attached device entries ([§11.3][s11-3]). Tight means fewer threads than the roster plus
+one. Every rostered device is a task, and the [calling task](#g-calling-task) (the task that
+invoked `run!`) hosts the loop, so a run occupies one task more than its roster
+([D-310][d-310]). The sizing guidance behind the remedy is one thread for the loop and
+headroom for compute-heavy or blocking-ccall devices. I/O backed by libuv (the
+I/O library under Julia's tasks) yields. Raw blocking ccalls pin their thread
+for the duration. There is no pinning and there are no sticky tasks.
 
 #### The liveness heartbeat
 
-Since starvation is survivable, it must be diagnosable ([D-027][d-027]). The
-record is the published [framework status](#g-framework-status), the frozen
-diagnostics value each snapshot carries beside the table. It includes
-per-device liveness (the liveness timestamp and the device's `task_state`)
-next to the pacer diagnostics. The mechanism is the per-writer
-[diagnostic cell](#g-diagnostic-cell) (a writer's own holding place for
-runtime diagnostics and liveness) ([D-136][d-136]), specified in full by [§11.8][s11-8],
-plus the device `Task` handles the loop already owns, and nothing besides.
-The diagnostic cell carries the single liveness timestamp.
-The loop reads `task_state` off those handles where it publishes
-([D-193][d-193]). A starved, blocked or crashed device task shows in a front
-end as a stale heartbeat with a name on it, not as mysteriously frozen physics
-([D-310][d-310]).
+Since starvation is survivable, it must be diagnosable ([D-027][d-027]). The record is
+the published [framework status](#g-framework-status), the frozen diagnostics value each snapshot
+carries beside the table. It includes per-device liveness (the liveness
+timestamp and the device's `task_state`) next to the pacer diagnostics. The
+mechanism is the per-writer [diagnostic cell](#g-diagnostic-cell) ([D-136][d-136]), specified in full by [§11.8][s11-8],
+plus the device `Task` handles the loop already owns, and nothing besides. A
+diagnostic cell is a writer's own holding place for runtime diagnostics and
+liveness. It carries the single liveness timestamp. The loop reads `task_state`
+off those handles where it publishes ([D-193][d-193]). A starved, blocked or crashed
+device task shows in a front end as a stale heartbeat with a name on it, not as
+mysteriously frozen physics ([D-310][d-310]).
 
 **`task_state` has three values** ([D-270][d-270]). Outside a run every device
 reads `:none`. Inside a run a device reads `:running` while its task lives and
@@ -216,21 +206,19 @@ wait for the next publication) is that way. This section gives its two
 artifacts, the loop's side, the device's side, its newest-wins semantics, and
 how the counter differs from the other two indices, in that order.
 
-**Two artifacts provide the wait, a monotonic
-[boundary counter](#g-boundary-counter) plus one `Threads.Condition`**
-([D-028][d-028]). The boundary counter is the loop's own. It counts *published
-boundaries*, that is grid, `t*` and [boundary zero](#g-boundary-zero) (the
-initialization boundary at `t₀`) ([§10.1][s10-1], [§10.4][s10-4]), not
-frames. Consecutive wakes are therefore not necessarily `h` apart.
+**Two artifacts provide the wait, a monotonic [boundary counter](#g-boundary-counter) plus one
+`Threads.Condition`** ([D-028][d-028]). The boundary counter is the loop's own. It counts
+*published boundaries*, that is grid, `t*` and [boundary zero](#g-boundary-zero) (the initialization
+boundary at `t₀`), not frames ([§10.1][s10-1], [§10.4][s10-4]). Consecutive wakes are therefore
+not necessarily `h` apart.
 
 The loop's publication is `lock; counter += 1; notify; unlock`, nanoseconds
 of framework-only code. Waiters never block it. One parked in `wait` has
 released the lock as part of parking.
 
-**The order of the two publications is normative** ([D-114][d-114]). The
-release-store of [`latest`](#g-latest) (the atomic reference readers
-acquire-load) ([§11.2][s11-2]) happens before the counter increment under the
-lock.
+**The order of the two publications is normative** ([D-114][d-114]). The release-store of
+[`latest`](#g-latest), the atomic reference readers acquire-load ([§11.2][s11-2]), happens before the
+counter increment under the lock.
 
 ```julia
 # the loop, at every published boundary
@@ -241,12 +229,11 @@ lock(cond) do            # 2. only then the counter, under the lock
 end
 ```
 
-The device side's predicate, `counter > last_seen` (below), therefore implies
-that `latest` holds at least that boundary, and a waiter can never wake onto
-a [snapshot](#g-snapshot) (the immutable per-boundary publication) that is
-stale. The
-converse is expected and correct. A waiter may observe a *newer* snapshot than
-the increment that woke it. Newest wins.
+The device side's test `counter > last_seen` (below) therefore implies that
+`latest` holds at least that boundary, and a waiter can never wake onto a
+[snapshot](#g-snapshot) (the immutable per-boundary publication) that is stale. The converse is
+expected and correct. A waiter may observe a *newer* snapshot than the increment
+that woke it. Newest wins.
 
 The device side is `wait_next_snapshot(handle)`, which blocks until
 `counter > last_seen && running` under the canonical predicate-loop idiom.
@@ -255,13 +242,13 @@ transmitting, and shutdown, all with no per-frame reset. Shutdown works
 because [§12.4][s12-4] wakes all waiters and each predicate then routes its
 owner out ([D-028][d-028]).
 
-**The wait's semantics are newest-wins, no queues** ([D-028][d-028]). A slow
-consumer skips boundaries and always receives the current world. This mirrors
-the inbound side. Inbound [coalescing](#g-coalescing) (the CAS merge that
-leaves one pending batch per device) keeps the newest level per face, and the wait
-delivers the newest snapshot, the same zero-order hold (ZOH) decision. No
-backpressure exists in either direction, and the loop never waits on anyone.
-Per-consumer every-boundary queues are rejected ([D-028][d-028]).
+**The wait's semantics are newest-wins, no queues** ([D-028][d-028]). A slow consumer
+skips boundaries and always receives the current world. This mirrors the inbound
+side. Inbound [coalescing](#g-coalescing) (the compare-and-swap merge that leaves one pending
+batch per device) keeps the newest level per face, and the wait delivers the
+newest snapshot, the same zero-order hold (ZOH) decision. No backpressure exists
+in either direction, and the loop never waits on anyone. Per-consumer
+every-boundary queues are rejected ([D-028][d-028]).
 
 A `Base.Event` latch is the wrong primitive here ([D-028][d-028]). Condition
 variables carry no facts, only "look again". The facts that matter, the
@@ -271,15 +258,15 @@ Two indices number the publications, and each lives in its own place. The
 snapshot carries the trajectory's *published-boundary ordinal* with `t`.
 Boundary zero is 0, and every publication after it, grid or `t*`, counts one.
 Any holder of a snapshot therefore indexes it without consulting the loop,
-whether the log or a post-run inspector. A new trajectory restarts the ordinal
-at zero, with everything else `init!` resets. The boundary counter is a
-different number. It is the loop's monotone count of every publication it has
-ever made, never reset across trajectories, and its absolute value is nowhere
-normative. It exists for the wait predicate alone, and it is never reset
-because a waiter's `last_seen` must never run ahead of it ([D-230][d-230]). An
-error's pointer for [replay](#g-replay) (the ordinary loop re-driven from the
-trace) is a third index, the frame-entry boundary index of [§13.4][s13-4], a
-frame count that names no `t*` boundary ([D-128][d-128]).
+whether the [log](#g-log) (the retained sequence of published snapshots) or a post-run
+inspector. A new trajectory restarts the ordinal at zero, with everything else
+`init!` resets. The boundary counter is a different number. It is the loop's
+monotone count of every publication it has ever made, never reset across
+trajectories, and its absolute value is nowhere normative. It exists for the
+wait predicate alone, and it is never reset because a waiter's `last_seen` must
+never run ahead of it ([D-230][d-230]). An error's pointer for [replay](#g-replay) (the ordinary loop
+re-driven from the trace) is a third index, the frame-entry boundary index of
+[§13.4][s13-4], a frame count that names no `t*` boundary ([D-128][d-128]).
 
 The GUI does not use the wait. Being VSync-paced, it reads `latest` at each
 render.
@@ -305,19 +292,17 @@ initiated it ([D-030][d-030]). Steps (6) and (7) specify what happens when a
 device task or the loop itself ends first.
 
 1. Initiation. Three events start a shutdown. Either `t_end` is reached, or a
-   stop is issued on the [control plane](#g-control-plane) (the separate
-   atomic surface carrying pause, pace and stop), or a [stop
-   request](#g-stop-request) the advance honours reads `STOP_REQUESTED` in the
-   just-published [snapshot](#g-snapshot) ([D-316][d-316]). A stop request is
-   an output port of the framework enum `StopFlag`, and a snapshot is the
-   immutable per-boundary publication. The control-plane stop's issuers are a
-   front end ([D-310][d-310]), a device handle, code, or an operator interrupt
-   (Ctrl-C, treated below). The third event is model-detected termination
-   ([§13.5][s13-5]). The loop never stops mid-boundary. It always completes
-   the boundary sequence in progress, which a stop at [`t*`](#g-t) (the
-   localized event time) places inside a frame. A [frame](#g-frame) is one
-   iteration of the loop. The loop then publishes the final snapshot. Only
-   then does it set the sticky stopped status.
+   stop is issued on the [control plane](#g-control-plane) (the separate atomic surface carrying
+   pause, pace and stop), or a [stop request](#g-stop-request) the advance honours reads
+   `STOP_REQUESTED` in the just-published [snapshot](#g-snapshot) ([D-316][d-316]). A stop request is an
+   output port of the framework enum `StopFlag`, and a snapshot is the immutable
+   per-boundary publication. The control-plane stop's issuers are a front end
+   ([D-310][d-310]), a device handle, code, or an operator interrupt (Ctrl-C, treated
+   below). The third event is model-detected termination ([§13.5][s13-5]). The loop never
+   stops mid-boundary. It always completes the boundary sequence in progress,
+   which a stop at [`t*`](#g-t) (the localized event time) places inside a [frame](#g-frame), one
+   iteration of the loop. The loop then publishes the final snapshot. Only then
+   does it set the sticky stopped status.
 2. Wake all framework waits. The waits are the [next-snapshot
    wait](#g-next-snapshot-wait) (`wait_next_snapshot(handle)`) and the pause.
    Each waiter observes the stopped status and unwinds. A stop issued while
@@ -334,32 +319,30 @@ device task or the loop itself ends first.
    ([D-373][d-373]). Steps (2) and (3) are the framework's half. They wake its
    own waits and call each device's `unblock!`. The wrapper's `finally
    shutdown!(device)` is guaranteed on every exit path.
-5. Join under the `join_timeout` cap. The cap lives on `Control`, the tail's
-   own owner ([§12.1][s12-1], [D-256][d-256]). It is a keyword of the
-   `Simulation` constructor, a positive real in seconds of wall clock,
-   defaulting to 5 ([Appendix B][sB]). The constructor refuses any other value
-   as `ArgumentInvalid`. A device task exceeding the cap is reported *by name*
-   in a `DeviceJoinTimeout` diagnostic ([Appendix C][sC]). It is then
-   abandoned rather than left to hang `run!`. **The diagnostic is written to
-   the loop's own [diagnostic cell](#g-diagnostic-cell)** (each writer's
-   bounded ring of diagnostics and its heartbeat) ([D-203][d-203]). The
-   run's-end sweep collects the diagnostic into the [termination
-   record](#g-termination-record) (the stopped-sim value naming how the run
-   ended). The logging backend presents the diagnostic, with the terminal
+5. Join under the `join_timeout` cap. The cap lives on `Control`, the tail's own
+   owner ([§12.1][s12-1], [D-256][d-256]). It is a keyword of the `Simulation` constructor, a
+   positive real in seconds of wall clock, defaulting to 5 ([Appendix B][sB]). The
+   constructor refuses any other value as `ArgumentInvalid`. A device task
+   exceeding the cap is reported *by name* in a `DeviceJoinTimeout` diagnostic
+   ([Appendix C][sC]). It is then abandoned rather than left to hang `run!`. **The
+   diagnostic is written to the loop's own [diagnostic cell](#g-diagnostic-cell)**, a writer's own
+   holding place for runtime diagnostics and liveness ([D-203][d-203]). The run's-end
+   sweep, the loop's last pass over every diagnostic cell, collects the
+   diagnostic into the [termination record](#g-termination-record) (the stopped-sim value naming how the
+   run ended). The logging backend presents the diagnostic, with the terminal
    snapshot preceding the join ([D-201][d-201], [D-203][d-203]).
 6. Device-initiated paths. A device exits voluntarily when its loop body
-   returns, at a window ✕ or a peer EOT. No `should_close` hook exists
-   ([§11.6][s11-6]). With `should_abort` set, the wrapper's exit path also
-   requests a sim stop. Otherwise the sim continues with the device's *task*
-   absent. Its [staging cell](#g-staging-cell) (where the device's pending
-   write batch waits between drains) stops filling, and the loop is
-   structurally indifferent. Its [roster](#g-roster) entry and its
-   [claims](#g-claim) persist to run end, because [§11.3][s11-3] freezes the
-   roster for the run and death is not detach. The roster is the list of
-   attached device entries, and a claim is the set of faces a device may
-   write. The orphaned [root inputs](#g-root-input) (the root component's own
-   input faces) hold their last-drained values, visibly ([§11.7][s11-7]). A
-   crashing device task is caught by the framework wrapper and follows the
+   returns, at a window ✕ or a peer EOT. No `should_close` hook exists ([§11.6][s11-6]).
+   With [`should_abort`](#g-should_abort) (the per-attachment failure policy, an `attach!` keyword)
+   set, the wrapper's exit path also requests a sim stop. Otherwise the sim
+   continues with the device's *task* absent. Its [staging cell](#g-staging-cell) (where the
+   device's pending write batch waits between drains) stops filling, and the
+   loop is structurally indifferent. Its [roster](#g-roster) entry and its [claims](#g-claim) persist to
+   run end, because [§11.3][s11-3] freezes the roster for the run and death is not
+   detach. The roster is the list of attached device entries, and a claim is the
+   set of faces a device may write. The orphaned [root inputs](#g-root-input) (the root
+   component's own input faces) hold their last-drained values, visibly ([§11.7][s11-7]).
+   A crashing device task is caught by the framework wrapper and follows the
    same path, logged with the device's name (`DeviceCrash`, [Appendix C][sC]).
 7. Loop-side failure. A failure on the loop's own side runs steps (1) through
    (5) from the catch path ([D-030][d-030]). [§13.6][s13-6] specifies that
@@ -377,15 +360,13 @@ The ordered part, in one line:
 > `finally shutdown!` → (5) join under the `join_timeout` cap → `run!`
 > returns
 
-`t_end` lands on the grid. **The run ends at the first grid boundary whose
-time reaches or exceeds `t_end`** ([D-133][d-133]). The run takes whole frames
-only, never a shortened final step, which grid integrity forbids
-([§10.4][s10-4]). Each grid time is indexed, `tₖ = t₀ + k·h`, and never
-accumulated ([§10.4][s10-4]). The final boundary may therefore overshoot
-`t_end` by up to `h`. The termination record carries the actual final `t`
-([§13.5][s13-5]). This is the `t_plus` spelling ([§12.6][s12-6]) applied to
-the run's own clock. The run takes whole frames until the boundary time first
-covers the duration.
+`t_end` lands on the grid. **The run ends at the first grid boundary whose time
+reaches or exceeds `t_end`** ([D-133][d-133]). The run takes whole frames only, never a
+shortened final step, which grid integrity forbids ([§10.4][s10-4]). Each grid time is
+indexed, `tₖ = t₀ + k·h`, and never accumulated ([§10.4][s10-4]). The final boundary may
+therefore overshoot `t_end` by up to `h`. The termination record carries the
+actual final `t` ([§13.5][s13-5]). This is the `t_plus` spelling ([§12.6][s12-6]) applied to the
+run's own clock.
 
 The two termination sources differ in nature. `t_end` is a grid fact,
 checked against boundary times on the grid. Stop requests are checked at
@@ -403,21 +384,20 @@ That terminal snapshot is retained in the [log](#g-log) (the retained
 sequence of published snapshots) unconditionally, under any `log_every` and
 any `log_max` ([§11.2][s11-2], [D-368][d-368]).
 
-The default of five seconds is generous for front-end window teardown and
-socket closes. It is short enough that an abandoned join reads as a
+The `join_timeout` default of five seconds is generous for front-end window
+teardown and socket closes. It is short enough that an abandoned join reads as a
 diagnosed timeout rather than a hang.
 
-**The cap is a per-simulation setting, not an implementation constant**
-([D-198][d-198]). That is the disposition [§10.4][s10-4] gives its own two
-constants, extended here to an operational one ([D-198][d-198]). Deployment
-contexts legitimately differ in patience. An unattended sweep wants to fail
-fast, a test battery exercising the abandonment path faster still, while a
-device with slow teardown may warrant more. The cap is not
-trajectory-determining, because the trajectory has ended at the final
-snapshot before any join begins. So [replay](#g-replay) (the ordinary loop
-with the drain reading recorded batches) neither records nor compares the cap
-([§11.5][s11-5], [§12.7][s12-7]), just as for `log_max` ([§11.2][s11-2]). The
-cap therefore lives on `Control`, not on the `Deployment` ([D-256][d-256]).
+**The cap is a per-simulation setting, not an implementation constant** ([D-198][d-198]).
+That is the disposition [§10.4][s10-4] gives its own two constants, extended here to an
+operational one. Usage contexts legitimately differ in patience. A series of
+runs nobody watches wants to fail fast, a test battery exercising the
+abandonment path faster still, while a device with slow teardown may warrant
+more. The cap is not trajectory-determining, because the trajectory has ended at
+the final snapshot before any join begins. So [replay](#g-replay) (the ordinary loop with the
+drain reading recorded batches) neither records nor compares the cap ([§11.5][s11-5],
+[§12.7][s12-7]), just as for `log_max` ([§11.2][s11-2]). The cap therefore lives on `Control`, not
+on the `Deployment` ([D-256][d-256]).
 
 #### What survives the tail
 
@@ -490,29 +470,21 @@ to say. The name is honest. A device that cannot acquire its resources has
 crashed before it lived.
 
 **The report is written through the ordinary `report!(address, diagnostic)`
-entry point**, addressed by the roster entry rather than by a handle
-([D-189][d-189]).
+entry point**, addressed by the roster entry rather than by a handle ([D-189][d-189]).
+There is no device task to hold a handle before the spawn. The address supplies
+the device identity either way, which is why no call passes a device id ([§11.8][s11-8]).
 
-There is no device task to hold a handle before the spawn. The address
-supplies the device identity either way, which is why no call passes a
-device id ([§11.8][s11-8]).
+No task is spawned for a failed device, so it is dead from the run's first frame
+top ([D-138][d-138]). That needs no machinery. Its `task_state` reads `:done` from the
+first publication ([§12.2][s12-2]). A device that never ran never beat, so its diagnostic
+cell also reads stale against the [§12.2][s12-2] threshold from the start ([D-138][d-138]).
 
-No task is spawned for a failed device, so it is dead from the run's first
-frame top ([D-138][d-138]).
-
-That needs no machinery. Its `task_state` reads `:done` from the first
-publication ([§12.2][s12-2]). A device that never ran never beat, so its
-diagnostic cell also reads stale against the [§12.2][s12-2] threshold from
-the start ([D-138][d-138]).
-
-The claims of a failed device persist to run end ([D-138][d-138]).
-
-This is the death-is-not-detach disposition ([§11.3][s11-3]), applied one
-step earlier than (6)'s. The roster is frozen for the run, and the orphaned
-root inputs hold the values the run started with. Those values are
-well-defined by [root-input totality](#g-root-input-totality) (every root
-input must hold a value) ([§14.6][s14-6]). An orphan of (6) holds a last
-drained batch instead.
+The claims of a failed device persist to run end ([D-138][d-138]). This is the
+death-is-not-detach disposition ([§11.3][s11-3]), applied one step earlier than (6)'s.
+The roster is frozen for the run, and the orphaned root inputs hold the values
+the run started with. Those values are well-defined by [root-input totality](#g-root-input-totality), the
+rule that every root input must hold a value ([§14.6][s14-6]). An orphan of (6) holds a
+last drained batch instead.
 
 **The run's disposition splits on `should_abort`, uniformly with (6)**
 ([D-138][d-138]). With the flag clear, which is the default
@@ -522,29 +494,26 @@ is (6)'s "the sim continues with the device's *task* absent", shifted to the
 run's start.
 
 With the flag set, the failure requests a control-plane stop, and that stop is
-simply *already pending* at the run's first frame top. This protocol already
-has that path. The loop reads that stop at the frame top, before any frame, so
-the run advances no frame. No new exit protocol is needed, therefore. The
-remaining roster entries still initialize, every rostered device getting its
-`init!`/`shutdown!` pair uniformly. The run ends `stopped` where it started,
-through this same tail, with its termination record naming the device
-([§13.5][s13-5]). What the operator is left with is an ordinary stopped
-simulation, whose terminal snapshot is the one the run started from and whose
-termination record's tail residue holds the `DeviceCrash`. It is fully
-serviceable by [§14][s14] and resumable by the next `run!` ([§12.6][s12-6])
-once the device is plugged back in.
+simply *already pending* at the run's first frame top. The loop reads it there,
+before any frame, so the run advances no frame. This protocol already has that
+path, so no new exit protocol is needed. The remaining roster entries still
+initialize, every rostered device getting its `init!`/`shutdown!` pair
+uniformly. The run ends `stopped` where it started, through this same tail, with
+its termination record naming the device ([§13.5][s13-5]). What the operator is left with
+is an ordinary stopped simulation, whose terminal snapshot is the one the run
+started from and whose termination record's tail residue (the diagnostics the
+run's-end sweep folds in) holds the `DeviceCrash`. It is fully serviceable by
+[§14][s14] and resumable by the next `run!` ([§12.6][s12-6]) once the device is plugged back in.
 
-**An `InterruptException` inside a device's `init!` is the operator's stop,
-not that device's crash** ([D-268][d-268]).
-
-The bracket releases the device through `shutdown!` as for any throw and
-spawns no task for it. In place of the `DeviceCrash` report it sets the
-`:interrupt` stop through the stop word (the control plane's stop command,
-one atomic word holding its issuer). The run's `should_abort` split above
-therefore does not arise. The remaining roster entries still initialize,
-and the run ends at its first frame top with zero frames advanced, through
-the pending-stop path above. The device wrapper makes the same
-discrimination for a raise inside a loop body ([§11.6][s11-6]).
+**An `InterruptException` inside a device's `init!` is the operator's stop, not
+that device's crash** ([D-268][d-268]). The bracket releases the device through
+`shutdown!` as for any throw and spawns no task for it. In place of the
+`DeviceCrash` report it sets the `:interrupt` stop through the stop word (the
+control plane's stop command, one atomic word holding its issuer). The run's
+`should_abort` split above therefore does not arise. The remaining roster
+entries still initialize, and the run ends at its first frame top with zero
+frames advanced, through the pending-stop path above. The device wrapper makes
+the same discrimination for a raise inside a loop body ([§11.6][s11-6]).
 
 #### The operator interrupt
 
@@ -555,15 +524,13 @@ this tail like any other stop, and ends `stopped`. The result is
 boundary-consistent. It is fully serviceable by the [§14][s14] stopped-sim
 services and resumable by the next `run!` ([§12.6][s12-6]).
 
-The interrupt is the escape from a run nothing else ends, and the deviceless
-run has no other. A run with no finite `t_end` and no honoured stop request
-is the configuration `UnboundedRun` names ([Appendix C][sC]). The interrupt
-needs no entry point of its own ([D-132][d-132]). The stop already rides on
-the control plane, the separate atomic surface carrying
-pause, pace and stop ([§12.1][s12-1]). The exceptions-are-abnormal doctrine
-([§13.5][s13-5], [D-060][d-060]) is untouched. That doctrine is about
-*model* code, while this is the one exception whose meaning the framework
-knows.
+The interrupt is the escape from a run nothing else ends, and the deviceless run
+has no other. A run with no finite `t_end` and no honoured stop request is the
+configuration `UnboundedRun` names ([Appendix C][sC]). The interrupt needs no entry
+point of its own ([D-132][d-132]). The stop already rides on the control plane ([§12.1][s12-1]).
+The exceptions-are-abnormal doctrine ([§13.5][s13-5], [D-060][d-060]) is untouched. That doctrine
+is about *model* code, while this is the one exception whose meaning the
+framework knows.
 
 The interrupt's scope is the interactive session. Outside the REPL, Julia's
 default (`exit_on_sigint(true)`) kills the process on SIGINT before any of
@@ -573,15 +540,13 @@ staging and no snapshot readers, rely on `t_end` and stop requests, as they
 already must.
 
 **Masking across the boundary is normative, not an implementation hint**
-([D-132][d-132]).
-
-The reason is that an `InterruptException` is delivered asynchronously. An
-interrupt landing in the middle of a [sweep](#g-sweep) (one pass through the
-execution order) would therefore destroy the boundary this protocol is built
-on completing. It would also leave half-written [stores](#g-store) (the
-framework-owned homes of a component's state) ([§13.6][s13-6]). That forces
-a choice between `stopped` with dirty stores and a terminal `errored`. The
-`stopped`-with-consistent-stores guarantee is exactly what the masking buys.
+([D-132][d-132]). The reason is that an `InterruptException` is delivered asynchronously.
+An interrupt landing in the middle of a [sweep](#g-sweep) (one pass through the execution
+order) would therefore destroy the boundary this protocol is built on
+completing. It would also leave [stores](#g-store) (the framework-owned homes of a
+component's state) half-written ([§13.6][s13-6]). That forces a choice between `stopped`
+with dirty stores and a terminal `errored`. The `stopped`-with-consistent-stores
+guarantee is exactly what the masking buys.
 
 The loop masks delivery across the boundary macro-sequence, using Julia's
 `disable_sigint`, a sigatomic counter increment that is negligible per
@@ -617,46 +582,39 @@ handling of the throw itself propagates out of the call raw, and the
 disposition of the failure is skipped ([§13.4][s13-4]). The record is still
 written and the lifecycle is still `errored`.
 
-**The tail's bookkeeping is masked too** ([D-268][d-268]).
+**The tail's bookkeeping is masked too** ([D-268][d-268]). After the joins, the run's-end
+sweep, the termination record and the terminal lifecycle state are written under
+the same mask. An interrupt landing there would otherwise abort the sequence
+half-way and leave the lifecycle `running`, every service refusing. A raise
+deferred to the end of that bookkeeping propagates out of `run!` raw, the
+simulation already terminal.
 
-After the joins, the run's-end sweep, the termination record and the
-terminal lifecycle state are written under the same mask. An interrupt
-landing there would otherwise abort the sequence half-way and leave the
-lifecycle `running`, every service refusing. A raise deferred to the end of
-that bookkeeping propagates out of `run!` raw, the simulation already
-terminal.
-
-**A forced throw reaches the defensive arm** ([D-268][d-268]). Julia stops
-deferring after repeated SIGINTs in a short window, warns that it is forcing
-the throw, and raises inside the mask. That is the one way the branch
-[§13.4][s13-4] keeps is reached. The arm abandons the frame unpublished and
-the run ends `stopped`, the source `ControlRequestedStop(:interrupt)`. The
-published record is consistent, since the frame published nothing. The
-stores may hold mid-boundary values until the next `init!`, `restore!` or
-`replay!` resets them, as after a throw inside
-[boundary zero](#g-boundary-zero) (the initialization boundary, the ordinary
-macro-sequence with an empty integrate) ([§13.4][s13-4]). `checkpoint`
-refuses such a run as `CheckpointMidFrame`, since the
-[executor](#g-executor) (the compiled form of the stage execution order) no
-longer rests where its last snapshot was published ([§12.6][s12-6]). The
-[trace](#g-trace) (the primary record of a session) is the reproduction
-([§12.7][s12-7]).
+**A forced throw reaches the defensive arm** ([D-268][d-268]). Julia stops deferring
+after repeated SIGINTs in a short window, warns that it is forcing the throw,
+and raises inside the mask. That is the one way the branch [§13.4][s13-4] keeps is
+reached. The arm abandons the frame unpublished and the run ends `stopped`, the
+source `ControlRequestedStop(:interrupt)`. What the run published is consistent,
+since the frame published nothing. The stores may hold mid-boundary values until
+the next `init!`, `restore!` or `replay!` resets them, as after a throw inside
+[boundary zero](#g-boundary-zero), the initialization boundary, which runs the ordinary
+macro-sequence with an empty integrate ([§13.4][s13-4]). `checkpoint` refuses such a run
+as `CheckpointMidFrame`, since the [executor](#g-executor) (the compiled form of the stage
+execution order) no longer rests where its last snapshot was published ([§12.6][s12-6]).
+The [trace](#g-trace) (the primary record of a session) is the reproduction ([§12.7][s12-7]).
 
 **A second interrupt during the tail collapses the remaining joins
 immediately** ([D-132][d-132]). That is (5)'s abandonment path taken at once,
 with devices still reported by name (`DeviceJoinTimeout`). The run still
 ends `stopped`. Escalation shortens the tail, never reclassifies the run.
 
-
 ### 12.5 Scripts and the mid-run mutation doctrine
 
-This section settles what the [periphery](#g-periphery) (everything outside
-the loop that exchanges data with it) may do to a running model. The
-periphery's attached participants are its [devices](#g-device). The section
-surveys FlightCore's mid-run mutations, states the clock criterion that maps
-scripts to [components](#g-component) (units of modeling), eliminates
-`user_callback!`, covers manual events and mid-run re-initialization, and ends
-with the doctrine's final form.
+This section settles what the [periphery](#g-periphery) (everything outside the loop that
+exchanges data with it) may do to a running model. The periphery's attached
+participants are its [devices](#g-device). The section surveys FlightCore's mid-run
+mutations, states the clock criterion that maps scripts to [components](#g-component) (units of
+modeling), eliminates FlightCore's per-step hook `user_callback!`, covers manual
+events and mid-run re-initialization, and ends with the doctrine's final form.
 
 What the consumers demonstrably mutate mid-run is surveyed here. The line
 references are to `c172_demos.jl`, FlightCore's demo file. FlightCore's
@@ -668,13 +626,12 @@ Both write only `u` fields. No demo, test or GUI path pokes `x`/`s` mid-run,
 and `init!`/trim appear only between construction and `run!`
 (c172_demos.jl:303).
 
-**A sim-time script becomes a
-[scenario component](#g-scenario-component), and a wall-clock interaction
-becomes a device** ([D-031][d-031]). A scenario component is an ordinary
-periodic discrete component holding a sim-time script. Sim-time scripts are
-model behavior, which is why they become scenario components. Both archetypes
-are clocked by *sim time*, `t`, the trajectory. Mapping them to devices is
-rejected ([D-031][d-031]). The clock is the criterion.
+**A sim-time script becomes a [scenario component](#g-scenario-component), and a wall-clock interaction
+becomes a device** ([D-031][d-031]). A scenario component is an ordinary periodic
+discrete component holding a sim-time script. Sim-time scripts are model
+behavior, which is why they become scenario components. Both archetypes are
+clocked by *sim time*, `t`, the trajectory. Mapping them to devices is rejected
+([D-031][d-031]). The clock is the criterion.
 
 A script mapped to a component is periodic discrete, with `K = 1` for the
 `dt = 0.02` callbacks FlightCore had, `K` being the multiplier in
@@ -689,19 +646,17 @@ The component mapping is strictly richer than the callback it replaces.
   [port](#g-port) (one declared name with its cell) can publish to
   [snapshots](#g-snapshot), logs and plots. A snapshot is the immutable
   per-boundary publication.
-- Inputs arrive fresh from the same [boundary](#g-boundary) (a published
-  consistency point), by topological order. The callback ran post-step, one boundary
-  staler.
+- Inputs arrive fresh from the same [boundary](#g-boundary) (a published consistency point), by
+  topological order. The callback ran post-step, one boundary staler.
 - The pure timetable script is a one-liner reading the clock out of its
   [bundle](#g-bundle) (the NamedTuple of zero-copy views a component function
   receives). That one-liner is `y_direct(c, (; t)) = (; offset = profile(t))`,
   exact at its own [ticks](#g-tick), with no latch state of its own. A tick
   is an instant at which a discrete component's stages and update run.
-- In a scenario configuration the script drives the input ports of the
-  avionics (the onboard flight systems). [§11.7][s11-7] therefore renders the
-  corresponding GUI widgets read-only with its source shown. The
-  port-resolution rule resolves FlightCore's demo-vs-GUI dead-slider fight
-  ([§11.7][s11-7]).
+- In a scenario configuration the script drives the input ports of the avionics
+  (the onboard flight systems). [§11.7][s11-7] therefore renders the corresponding GUI
+  widgets read-only, each showing its source. Its port-resolution rule resolves
+  FlightCore's demo-vs-GUI dead-slider fight.
 
 **`user_callback!` is eliminated** ([D-031][d-031]). It is the periphery's
 `f_step!`, FlightCore's unconditional per-step hook ([§2.5][s2-5]), and cheap
@@ -717,14 +672,14 @@ already expressible in settled machinery. The levels doctrine applies
 buttons of FlightCore's demos were `u`-writes.
 
 **Mid-run re-initialization is not built** ([D-031][d-031]), because it is not
-demonstrated. Initialization and trim are stopped-sim workflows (first-class
-services, [§14][s14]). No concurrency perimeter exists there. There is no loop
-and no devices, just plain single-task code. The shape of the
-[guarded addition](#g-guarded-addition) (a capability the design admits but
-does not build) is on record should demand appear. It would be a traced,
-boundary-executed intervention command applied through
-project → [sweep](#g-sweep) → publish, so that no consumer ever observes
-un-decoded state.
+demonstrated. Initialization and trim are stopped-sim workflows, first-class
+services of [§14][s14]. No concurrency perimeter exists there. There is no loop and no
+devices, just plain single-task code. The shape of the [guarded addition](#g-guarded-addition) (a
+capability the design admits but does not build) is on record should demand
+appear. It would be a traced, boundary-executed intervention command applied
+through project → [sweep](#g-sweep) → publish, so that no consumer ever observes un-decoded
+state. A sweep is one pass through the execution order against the current
+state.
 
 In the doctrine's final form, while a simulation runs, **the periphery stages
 root-input writes and issues control commands** ([§2.2][s2-2],
@@ -744,48 +699,43 @@ Graceful termination follows the same shape ([§13.5][s13-5]). It is a
 ### 12.6 Run lifecycle and partial advance
 
 This section specifies what a `Simulation` and its run own, the lifecycle a
-simulation moves through, how it advances and restarts, and what it keeps of
-its [devices](#g-device) (any attached participants in the periphery) across
-runs. A simulation is in one of five lifecycle states, built, initialized,
-running, stopped or errored. A *door* is an entry point that builds a run, and
-there are three, `init!`, `restore!` and `replay!`. A run's `feed` is the
-recording `replay!` attached, or `nothing`. The [input mode](#g-input-mode)
-says where the next
-[frame](#g-frame) (one grid step, the unit of scheduling) takes its inputs
-from. In `:live` they come from the [staging cells](#g-staging-cell) (where
-each device's pending batch waits between drains), and in `:replay` from the
-attached recording.
+simulation moves through, how it advances and restarts, what it keeps of its
+[devices](#g-device) (any attached participants in the periphery) across runs, and the stop
+policy each advance declares. A simulation is in one of five lifecycle states,
+built, initialized, running, stopped or errored. A *door* is an entry point that
+builds a run, and there are three, `init!`, `restore!` and `replay!`. A run's
+`feed` is the recording `replay!` attached, or `nothing`. The [input mode](#g-input-mode) says
+where the next [frame](#g-frame) (one grid step, the unit of scheduling) takes its inputs
+from.
 
 #### The run and the simulation
 
-**[`Run`](#g-run) is what one run owns** ([D-255][d-255], [D-260][d-260], [D-317][d-317]).
-It is a mutable struct of six fields. Two are `const` and last the run's whole
-life. One is the [log](#g-log) (the retained sequence of published
-snapshots). The other is the [trace](#g-trace) (the records of each frame's
-drained inputs), which is `nothing` under the trace switch.
-The door that builds the run takes the four recording keywords, `trace`,
-`log`, `log_every` and `log_max` ([Appendix B][sB], [D-261][d-261]). A run's
-recording is therefore that door's declaration, and the next door may declare
-otherwise ([D-261][d-261]).
+**[`Run`](#g-run) is what one run owns** ([D-255][d-255], [D-260][d-260], [D-317][d-317]). It is a mutable struct of
+six fields. Two are `const` and last the run's whole life. One is the [log](#g-log) (the
+retained sequence of published snapshots). The other is the [trace](#g-trace) (the records
+of each frame's drained inputs), which is `nothing` under `trace = false`. The
+door that builds the run takes the four recording keywords, `trace`, `log`,
+`log_every` and `log_max` ([Appendix B][sB], [D-261][d-261]). A run's recording is therefore
+that door's declaration, and the next door may declare otherwise ([D-261][d-261]).
 
-Four fields evolve during the run. `feed` is the recording `replay!` attached,
-or `nothing`. `termination` is the record the loop's tail writes. `frame` and
-`boundary` are the trajectory's counters, the frame index and the boundary
-ordinal. `init!`, `restore!` and `replay!` construct a run, and nothing else
-rebinds it. `live!` ([§12.7][s12-7]) and the halt at a recording's end write
-`feed`. The loop's tail writes `termination` once, and `closed(run)` is
-`termination !== nothing`. Each door sets the two counters as it builds the
-run, `init!` to zero and `restore!` and `replay!` to the checkpoint's, and the
-loop advances them ([D-317][d-317]). `restore!` of a bare state sets the frame
-index to the state's frame and the boundary ordinal to zero, as `init!` does
-([D-319][d-319]).
+Four fields evolve during the run. `feed` is described above. `termination` is
+the record the loop's tail writes. `frame` and `boundary` are the trajectory's
+counters, the frame index and the boundary ordinal. `init!`, `restore!` and
+`replay!` construct a run, and nothing else rebinds it. `live!` ([§12.7][s12-7]) and the
+halt at a recording's end write `feed`. The loop's tail writes `termination`
+once, and `closed(run)` is `termination !== nothing`. Each door sets the two
+counters as it builds the run, `init!` to zero and `restore!` and `replay!` to
+those of the [checkpoint](#g-checkpoint) (the `Model`'s state at a frame top, beside the run's
+frame index and boundary ordinal), and the loop advances them ([D-317][d-317]).
+`restore!` of a bare state sets the frame index to the state's frame and the
+boundary ordinal to zero, as `init!` does ([D-319][d-319]).
 
-The origin `t₀` is not a run field ([D-260][d-260]). The executor's clock
-holds it beside `t`. `init!` sets it on the clock before
-[boundary zero](#g-boundary-zero), the initialization boundary
-([§14.5][s14-5]). A [checkpoint](#g-checkpoint) (the `Model`'s state at a
-frame top as one value) carries it with the clock ([§11.5][s11-5],
-[D-273][d-273]). It is a `Float64`, as `h` and `t_end` are ([D-260][d-260]).
+The origin `t₀` is not a run field ([D-260][d-260]). The clock of the [executor](#g-executor) (the
+compiled form of the stage execution order) holds it beside `t`. `init!` sets it
+on the clock before [boundary zero](#g-boundary-zero), the initialization boundary run as the
+ordinary macro-sequence with an empty integrate ([§14.5][s14-5]). A checkpoint carries it
+with the clock ([§11.5][s11-5], [D-273][d-273]). It is a `Float64`, as `h` and `t_end` are
+([D-260][d-260]).
 
 **A `Simulation` is constructed with a placeholder run** ([D-255][d-255]). The
 placeholder is an empty log, no trace, no feed and no termination, and
@@ -795,34 +745,29 @@ the lifecycle state below says whether that run ever started. The placeholder
 carries no configuration and no compiled state ([D-261][d-261]). `init!`
 allocates fresh objects rather than clearing them ([D-255][d-255]).
 
-**`Simulation` is a mutable struct of four fields**, the
-[`Model`](#g-model) (the deployment and its executor at one scalar), the run,
-the data plane and the control plane ([D-317][d-317]). The
-[control plane](#g-control-plane) is the atomic surface carrying pause, pace
-and stop. The `Model` holds the [deployment](#g-deployment), the
-[executor](#g-executor), its status and its
-[diagnostic cell](#g-diagnostic-cell). The deployment is the scalar-free
-artifact the grid parameters fix, carrying the build. The executor is the
-compiled form of the stage execution order, and a diagnostic cell is a
-writer's own holding place for runtime diagnostics. A simulation owns its `Model`,
-claimed at construction and never shared ([§9.2][s9-2], [D-318][d-318]).
+**`Simulation` is a mutable struct of four fields**, the [`Model`](#g-model) (the deployment
+and its executor at one scalar), the run, the data plane ([§11][s11]) and the control
+plane ([D-317][d-317]). The [control plane](#g-control-plane) is the atomic surface carrying pause, pace and
+stop. The `Model` holds the [deployment](#g-deployment), the executor, its status and its
+[diagnostic cell](#g-diagnostic-cell). The deployment is the scalar-free artifact the grid parameters
+fix, carrying the build. A diagnostic cell is a writer's own holding place for
+runtime diagnostics. A simulation owns its `Model`, claimed at construction and
+never shared ([§9.2][s9-2], [D-318][d-318]).
 
-Every other value belongs to one of the four ([D-256][d-256]). The build is
-reached through the deployment, never held twice. The grid parameters, the
-[schedule](#g-schedule) (the typed per-component `(D, Φ, Δt)` tick table) and
-the event parameters are the deployment's ([§9.2][s9-2]). `chunk_size`, the
-stepper and the arrival buffers are the executor's. `join_timeout` is
-`Control`'s ([§12.1][s12-1]). The loop's diagnostic cell, its account and the
-published holder are the plane's, and the frame's own diagnostic cell is the
-`Model`'s
-([§11.8][s11-8]). The log, the trace and the two counters are the run's. The
-stop policy, with its `t_end` and ignored requesters, is the advance's
-argument, and the [termination record](#g-termination-record) (the stopped-sim
-value naming how the run ended) keeps the terminating one ([D-260][d-260]).
-The pacer's schedule and counters are `run!`'s own, created per call and
-passed to the loop and its publications as the policy is. The status of each
-[snapshot](#g-snapshot) (the immutable per-boundary publication) carries the
-pacer's frozen record ([§10.7][s10-7], [D-269][d-269]).
+Every other value belongs to one of the four ([D-256][d-256]). The build is reached
+through the deployment, never held twice. The grid parameters, the [schedule](#g-schedule) (the
+typed per-component `(D, Φ, Δt)` tick table) and the event parameters are the
+deployment's ([§9.2][s9-2]). `chunk_size`, the stepper and the arrival buffers are the
+executor's. `join_timeout` is `Control`'s ([§12.1][s12-1]). The loop's diagnostic cell,
+its account and the published-snapshot holder ([§11.2][s11-2]) are the data plane's, and
+the frame's own diagnostic cell is the `Model`'s ([§11.8][s11-8]). The log, the trace and
+the two counters are the run's. The stop policy, with its `t_end` and ignored
+requesters, is the advance's argument, and the [termination record](#g-termination-record) (the
+stopped-sim value naming how the run ended) keeps the terminating one ([D-260][d-260]).
+The pacer's schedule and counters are `run!`'s own, created per call and passed
+to the loop and its publications as the policy is. The status of each [snapshot](#g-snapshot)
+(the immutable per-boundary publication) carries the pacer's frozen record
+([§10.7][s10-7], [D-269][d-269]).
 
 **A struct holds what it owns or what it must retain across calls**
 ([D-261][d-261]). A callee takes what it reads as an argument, never off a
@@ -833,13 +778,11 @@ inputs exist**, and the placeholder run above is the one exception
 #### Lifecycle states and the input mode
 
 **A `Simulation` moves through five states**, *built*, *initialized*, *running*,
-and terminally *stopped* or *errored* ([§13.4][s13-4], [D-088][d-088]).
-*Built* means [stores](#g-store) (the framework-owned homes of a component's
-state) allocated and boundary zero not completed ([D-223][d-223]). It is the
-cold state, and the state a throw inside boundary zero returns the simulation
-to ([§13.4][s13-4]). *Initialized* means `init!` has completed boundary zero,
-the initialization boundary run as the ordinary macro-sequence with an empty
-integrate ([§14.5][s14-5]), or `restore!` or `replay!` has restored a
+and terminally *stopped* or *errored* ([§13.4][s13-4], [D-088][d-088]). *Built* means [stores](#g-store) (the
+framework-owned homes of a component's state) allocated and boundary zero not
+completed ([D-223][d-223]). It is the cold state, and the state a throw inside boundary
+zero returns the simulation to ([§13.4][s13-4]). *Initialized* means `init!` has
+completed boundary zero ([§14.5][s14-5]), or `restore!` or `replay!` has restored a
 checkpoint.
 
 **`lifecycle(sim)` derives the state rather than storing it** ([D-317][d-317]).
@@ -862,15 +805,15 @@ points, since the model's entry points refuse a direct call on a claimed model
 [replay](#g-replay), not resurrection ([§12.7][s12-7]). Replay is the ordinary
 loop re-driven from the trace.
 
-Beside the state, the run carries an input mode, `:live` or
-`:replay`, read as `mode(sim)`. **The mode is read off the run's `feed`**,
-`:replay` while a recording is attached and `:live` otherwise
-([D-260][d-260]). The mode names where the next frame's [drain](#g-drain)
-takes its [batches](#g-batch) from, the staging cells or the attached
-recording ([§12.7][s12-7], [D-218][d-218]). The drain is the frame-top swap
-that publishes staged device writes into the root inputs, and a batch is a
-device's staged set of writes. State and mode are orthogonal. The state says
-whether the simulation may advance, and the mode says what it will advance on.
+Beside the state, the run carries an input mode, `:live` or `:replay`, read as
+`mode(sim)`. **The mode is read off the run's `feed`**, `:replay` while a
+recording is attached and `:live` otherwise ([D-260][d-260]). The mode names where the
+next frame's [drain](#g-drain) takes its [batches](#g-batch) from, the [staging cells](#g-staging-cell) (where each
+device's pending batch waits between drains) or the attached recording ([§12.7][s12-7],
+[D-218][d-218]). The drain is the frame-top swap that publishes staged device writes into
+the root inputs, and a batch is a device's staged set of writes. State and mode
+are orthogonal. The state says whether the simulation may advance, and the mode
+says what it will advance on.
 
 **`init!` is mandatory** ([D-088][d-088]). `run!` or `step!` on a simulation
 whose boundary zero has not completed is `MissingInit`, an error in the kind
@@ -884,10 +827,9 @@ refusal.
 
 #### Partial advance
 
-Deviceless, `run!` is fully synchronous, and [§11.1][s11-1] says where the
-loop and the device tasks run and defines the
-[unattended run](#g-unattended-run) (a run with empty staging and no snapshot
-readers).
+Deviceless, `run!` is fully synchronous, and [§11.1][s11-1] says where the loop and the
+device tasks run and defines the [unattended run](#g-unattended-run) (a run with empty staging and no
+snapshot readers).
 
 `step!(sim; frames = 1)` advances whole frames synchronously through the
 ordinary frame sequence (drain, integrate, boundaries, publication) and
@@ -911,12 +853,11 @@ legal there and does what it always does. It registers ([§11.3][s11-3]), and
 the task appears at the next `run!`.
 
 The frame-top drain still runs, so `step!` frames stay bit-identical to `run!`
-frames. In a stepping session the staging cell written is the
-[harness cell](#g-harness-cell) (the always-present staging cell of the
-harness writer). The harness write path is `stage!(sim, "face" => value, …)`,
-and [§11.3][s11-3] specifies that [harness writer](#g-harness-writer).
-Staged batches are ordinary batches. They are traced, so replay and
-bit-identity hold, and they are applied at the next frame top.
+frames. In a stepping session the staging cell written is the [harness cell](#g-harness-cell) (the
+always-present staging cell of the [harness writer](#g-harness-writer)). The harness write path is
+`stage!(sim, "face" => value, …)`, and [§11.3][s11-3] specifies the writer. Staged
+batches are ordinary batches. They are traced, so replay and bit-identity hold,
+and they are applied at the next frame top.
 
 The read half is `latest(sim)`. It hands back the same immutable snapshot
 value a device handle acquires ([§11.2][s11-2]), navigated directly for
@@ -933,14 +874,14 @@ would lie too. The state reads "boundary-consistent and ready to advance", not
 "sitting at boundary zero". `run!` may therefore follow `step!`, continuing
 from the current boundary, and so may another `step!`.
 
-Termination policy is honored throughout, as bit-identity requires. `t_end`
-reached, or a [stop request](#g-stop-request) (an output port of the framework
-enum `StopFlag`) [holding](#g-edge-semantics) at frame 3 of
-`step!(sim; frames = 10)`, ends the run there through the ordinary
-[§12.4][s12-4] tail and leaves the simulation `stopped`. `step!` therefore
-returns the number of frames *actually advanced*. That is the requested count
-in the ordinary case, and fewer when the run terminated inside the call. That
-return is how a harness detects the truncation without inspecting the clock.
+The stop policy is honoured throughout, as bit-identity requires. `t_end`
+reached, or a [stop request](#g-stop-request) (an output port of the framework enum `StopFlag`)
+[holding](#g-edge-semantics) (publishing `STOP_REQUESTED`) at frame 3 of `step!(sim; frames = 10)`,
+ends the run there through the ordinary [§12.4][s12-4] tail and leaves the simulation
+`stopped`. `step!` therefore returns the number of frames *actually advanced*.
+That is the requested count in the ordinary case, and fewer when the run
+terminated inside the call. That return is how a harness detects the truncation
+without inspecting the clock.
 
 #### Re-running and checkpoints
 
@@ -1031,30 +972,27 @@ specifies. **A front end attached by hand is still rostered**
 
 #### The stop policy per advance
 
-**The stop policy is declared per advance** ([D-255][d-255], [D-316][d-316]).
-`t_end` and `ignore_stop_requests` are keywords of `run!`, `replay!` and
-`step!`. Each call builds and validates the
-[`StopPolicy`](#g-stop-policy) (the immutable value of `t_end` plus the
-ignored requester paths) it passes to the loop ([§13.5][s13-5],
-[D-255][d-255], [D-316][d-316]). The value lives as long as the call, and
-afterwards only on the termination record of the advance that ended the run
-([D-260][d-260]). A second run, or a `step!` sequence between two runs, can
-therefore stop on a different clock or honour a different set of stop
-requests without a rebuild.
+**The stop policy is declared per advance** ([D-255][d-255], [D-316][d-316]). `t_end` and
+`ignore_stop_requests` are keywords of `run!`, `replay!` and `step!`. Each call
+builds and validates the [`StopPolicy`](#g-stop-policy) (the immutable value of `t_end` plus the
+ignored requester paths) it passes to the loop ([§13.5][s13-5], [D-255][d-255], [D-316][d-316]). The value
+lives as long as the call, and afterwards only on the termination record of the
+advance that ended the run ([D-260][d-260]). A second run, or a `step!` sequence between
+two runs, can therefore stop on a different clock or honour a different set of
+stop requests without a rebuild.
 
 
 ### 12.7 Replay: the trace re-drives the ordinary loop
 
-This section specifies [replay](#g-replay), re-running the ordinary loop on a
-recorded input [trace](#g-trace). A trace is the primary record of a session,
-a fixed [trace header](#g-trace-header) plus the [batches](#g-batch) drained at
-each [frame](#g-frame). A batch is a [device](#g-device)'s staged set of
-writes, and a device is any attached participant in the periphery. A frame is
-one iteration of the loop, from drain to publication. The [drain](#g-drain)
-is the frame-top swap that applies staged device writes to the
-[root inputs](#g-root-input). The root inputs are the root component's own
-inputs, the only thing the periphery may write. `replay!` is the entry point
-the [§11.5][s11-5] trace exists for:
+This section specifies [replay](#g-replay), re-running the ordinary loop on a recorded input
+[trace](#g-trace), so that a recorded session can be inspected, its errors reproduced and
+its run continued live. A trace is the primary record of a session, a fixed
+[trace header](#g-trace-header) plus the [batches](#g-batch) drained at each [frame](#g-frame). A batch is a [device](#g-device)'s
+staged set of writes, and a device is any attached participant in the periphery.
+A frame is one iteration of the loop, from drain to publication. The [drain](#g-drain) is
+the frame-top swap that applies staged device writes to the [root inputs](#g-root-input). The
+root inputs are the root component's own inputs, the only thing the periphery
+may write. `replay!` is the entry point the trace exists for ([§11.5][s11-5]):
 
 ```julia
 trc  = trace(sim)                     # the recorded session: header + per-frame batches
@@ -1075,37 +1013,34 @@ the simulation as it stands. The rejected shapes close the section.
 
 #### One substitution
 
-**`replay!` is the ordinary loop with exactly one substitution**, not a
-second loop ([D-101][d-101], [D-274][d-274]). That is what keeps every
-property proved of the loop true of replay. Its drain reads the trace, and
-under the default form the loop starts from a restored state.
+**`replay!` is the ordinary loop with exactly one substitution**, not a second
+loop ([D-101][d-101], [D-274][d-274]). That is what keeps every property proved of the loop true
+of replay. The substitution is the drain, which reads the trace. Under the
+default form, `replay!(sim2, trc)` above, the loop also starts from a restored
+state.
 
-The default form restores from the header. It restores the trace's
-[checkpoint](#g-checkpoint) (the `Model`'s state at a frame top as one value),
-the state the recording opened from. It runs no
-[boundary zero](#g-boundary-zero) (the initialization boundary at `t₀`).
-This form stands in the `init!` position of the lifecycle ([§12.6][s12-6]) and
-does what `restore!` does, with the trace header as the checkpoint
-([D-274][d-274]). There is no [condition](#g-condition) resolution, and the
-totality ([§14.6][s14-6]) held when the recording's `init!` ran. A condition
-is the datum that says "set this build to this state". Whatever fired at `t₀`
-is part of the restored state, so nothing is applied twice and nothing is
-skipped ([D-274][d-274]).
+The default form restores from the header. It restores the trace's [checkpoint](#g-checkpoint)
+(the `Model`'s state at a frame top, beside the run's frame index and boundary
+ordinal), the state the recording opened from. It runs no [boundary zero](#g-boundary-zero) (the
+initialization boundary at `t₀`). This form stands in the `init!` position of
+the lifecycle ([§12.6][s12-6]) and does what `restore!` does, with the trace header as
+the checkpoint ([D-274][d-274]). There is no [condition](#g-condition) resolution, and the
+[root-input totality](#g-root-input-totality) (every root input must hold a value) ([§14.6][s14-6]) held when the
+recording's `init!` ran. A condition is the datum that says "set this build to
+this state". Whatever fired at `t₀` is part of the restored state, so nothing is
+applied twice and nothing is skipped ([D-274][d-274]).
 
 The drain reads the trace. Each frame top applies the recording's batches for
-that [frame ordinal](#g-frame-ordinal), the frame index a batch replays at
-([D-101][d-101]). It does not swap the [staging cells](#g-staging-cell) of the
-[roster](#g-roster) (the list of attached device entries). A staging cell is
-where a device's pending write batch waits between drains. Ordinal keying is
-exact because the frame sequence is itself deterministic under replay (`t*`
-boundaries derive from state, [§10.4][s10-4]). Frame *k* of the replay *is*
-frame *k* of the recording. Recorded batches apply verbatim, with no surface
-re-check ([D-101][d-101]). The [write-surface](#g-write-surface) rule
-([§11.3][s11-3]) ran at recording time. A write surface is the set of
-[faces](#g-face) a writer's batch entries may reach, and a face is the name a
-port wears on its component's boundary. [Claims](#g-claim) (the set of faces a
-device may write) are a live-roster fact of the recorded session that replay
-does not reconstruct.
+that [frame ordinal](#g-frame-ordinal), the frame index a batch replays at ([D-101][d-101]). It does not swap
+the [staging cells](#g-staging-cell) of the [roster](#g-roster) (the list of attached device entries). A staging
+cell is where a device's pending write batch waits between drains. Ordinal
+keying is exact because the frame sequence is itself deterministic under replay
+(`t*` boundaries derive from state, [§10.4][s10-4]). Frame *k* of the replay *is* frame
+*k* of the recording. Recorded batches apply verbatim, with no surface re-check
+([D-101][d-101]). The [write-surface](#g-write-surface) rule (the bound on the [faces](#g-face) a writer's batch entries
+may reach) ([§11.3][s11-3]) ran at recording time, and [claims](#g-claim) (the set of faces a device
+may write) are a live-roster fact of the recorded session that replay does not
+reconstruct. A face is the name a port wears on its component's boundary.
 
 **A simulation is in one of two input modes, `:live` or
 `:replay`, and the mode decides which source that one drain branch reads**
@@ -1115,43 +1050,38 @@ enters `:replay`** ([D-218][d-218]). `step!` and `run!` consume it from there,
 frame by frame, exactly as the drain paragraph above describes. There is
 still one loop and one drain ([D-218][d-218]).
 
-A mode that outlives the call makes a partial replay a resumable position
-rather than the end of an operation ([D-218][d-218]). Whatever advances the
-simulation next reads the same mode and finds the same records. That is what
-lets the reproduction workflow of [§13.4][s13-4] run through the ordinary
-entry points, with no replay-only spelling of `step!`. That workflow halts at
-the frame top the error names, then `step!`s the failing frame on its
-recorded inputs.
+A mode that outlives the call makes a partial replay a resumable position rather
+than the end of an operation ([D-218][d-218]). Whatever advances the simulation next
+reads the same mode and finds the same records. That is what lets the
+reproduction workflow of [§13.4][s13-4] run through the ordinary entry points, with no
+replay-only spelling of `step!`.
 
 #### Halting, and the mode across halts
 
-**In `:replay` the recording is the bound** ([D-218][d-218]). Every advance's
-frame budget is capped at the recording's last frame, and `to_boundary = k`
-caps it earlier. That keyword is the consumer of the replay pointer
-([§13.4][s13-4]). `to_time` is the same cap addressed by time (below). Either
-keyword names a frame from the one the feed starts from through the
-recording's last. The feed starts from the header's frame under the default
-form, and from the simulation's own under `restore = false` (below). Anything
-else is refused (`ArgumentInvalid`).
+**In `:replay` the recording is the bound** ([D-218][d-218]). Every advance's frame
+budget is capped at the recording's last frame, and `to_boundary = k` caps it
+earlier. That keyword is the consumer of the replay pointer ([§13.4][s13-4]). `to_time`
+is the same cap addressed by time (below). Either keyword names a frame from the
+one the feed starts from through the recording's last, and anything else is
+refused (`ArgumentInvalid`). The feed starts from the header's frame under the
+default form, and from the simulation's own under `restore = false` (below).
 
-`to_boundary = k` takes the frame-entry boundary index ([§13.4][s13-4]), a
-count of frame tops. It is not the published-boundary ordinal that a
-[snapshot](#g-snapshot) (the immutable per-boundary publication) carries
-([§12.3][s12-3]). **Replay runs through frame `k` and halts exactly at the
-frame top after it** ([D-128][d-128]). Replay therefore always halts at a
-frame top. The frame-entry pointer ([§13.4][s13-4]) lands the same way. A
-[localized](#g-localized) `t*` boundary inside the frame (the crossing instant
-bracketed by root-finding over trial sweeps) is reproduced but not
-stoppable-at ([D-128][d-128]). The trace stays frame-indexed, replay pointers
-and error messages use the frame-entry boundary index, and snapshots carry the
-published-boundary ordinal ([§10.4][s10-4]).
+`to_boundary = k` takes the frame-entry boundary index ([§13.4][s13-4]), a count of frame
+tops. It is not the published-boundary ordinal that a [snapshot](#g-snapshot) (the immutable
+per-boundary publication) carries ([§12.3][s12-3]). **Replay runs through frame `k` and
+halts exactly at the frame top after it** ([D-128][d-128]). Replay therefore always halts
+at a frame top. The frame-entry pointer ([§13.4][s13-4]) lands the same way. A [localized](#g-localized)
+`t*` boundary (the crossing instant bracketed by root-finding over trial sweeps)
+inside the frame is reproduced but not stoppable-at ([D-128][d-128]). The trace stays
+frame-indexed, replay pointers and error messages use the frame-entry boundary
+index, and snapshots carry the published-boundary ordinal ([§10.4][s10-4]).
 
-Replay may also end earlier still under the ordinary policies, since `t_end`
-and `ignore_stop_requests` are keywords of `replay!` exactly as of `run!`
-([§12.6][s12-6], [D-255][d-255], [D-316][d-316]). A termination the recorded
-session hit through a stop request reproduces itself anyway, deterministically
-([D-127][d-127]). A replay honours requests by default too, and the trace
-header records no policy. So a replay of a live run that ignored some must
+Replay may also end earlier still under the ordinary policies, since `t_end` and
+`ignore_stop_requests` are keywords of `replay!` exactly as of `run!` ([§12.6][s12-6],
+[D-255][d-255], [D-316][d-316]). A termination the recorded session hit through a [stop request](#g-stop-request) (an
+output port of the framework enum `StopFlag`) reproduces itself anyway,
+deterministically ([D-127][d-127]). A replay honours requests by default too, and the
+trace header records no policy. So a replay of a live run that ignored some must
 pass the same `ignore_stop_requests`.
 
 `to_time` addresses the same halt by time. **The keyword halts at the last
@@ -1166,8 +1096,8 @@ a run, and `to_time` positions an inspection. The point of halting is to
 stand *before* the anomaly, so a halt that stepped past it would defeat the
 call ([D-219][d-219]).
 
-Validation is the other keywords'. The value must be real, finite and at
-least `t₀`, and it must name a time the recording covers. The checks run
+`to_time` is validated as the other keywords are. The value must be real, finite
+and at least `t₀`, and it must name a time the recording covers. The checks run
 before the replay writes anything, the default form's restore included.
 
 The halt flips the mode only at the recording's end. A frame budget that runs
@@ -1179,19 +1109,18 @@ the recording. So no advance ever flips mid-run. A `run!` whose `t_end` lies
 past the recording halts at the last recorded frame, now `:live`, and the
 *next* call is the live continuation ([D-218][d-218]).
 
-`live!` is the one call that moves the mode alone. The flip above is
-automatic, and it happens only at the recording's end. `live!(sim)` performs
-it by hand. **`live!` sets the mode to `:live` and detaches the recording's
-remainder, touching nothing else** ([D-219][d-219]). The trajectory stands
-where the replay left it, and so does the trace with its header, inherited
-under the default form. The next `run!` or `step!` is therefore the live
-continuation from the replayed boundary, and its drains append to the
-re-recorded prefix. `live!` is a stopped-sim operation, legal only on an
-`initialized` simulation in `:replay`. Every other state refuses under the
+`live!` is the one call that moves the mode alone. The flip above is automatic.
+`live!(sim)` performs it by hand. **`live!` sets the mode to `:live` and
+detaches the recording's remainder, touching nothing else** ([D-219][d-219]). The
+trajectory stands where the replay left it, and so does the trace with its
+header, inherited under the default form. The next `run!` or `step!` is
+therefore the live continuation from the replayed boundary, and its drains
+append to the re-recorded prefix. `live!` is a stopped-sim operation, legal only
+on an `initialized` simulation in `:replay`. Every other state refuses under the
 ordinary lifecycle gates ([§12.6][s12-6]), with `MissingInit` at `built` and
 `ServiceLifecycle` in the rest. A simulation already `:live` refuses too, with
-`ArgumentInvalid`. The call would have nothing to do, and a loud refusal beats
-a silent no-op ([D-219][d-219]).
+`ArgumentInvalid`. The call would have nothing to do, and a loud refusal beats a
+silent no-op ([D-219][d-219]).
 
 That call is what makes the rewrite workflow real. An interactive session is
 interrupted at t = 110, and the last ten seconds are to be flown again:
@@ -1205,23 +1134,23 @@ live!(sim2)                           # drop the remainder; the mode is :live
 run!(sim2; t_end = 130.0)             # live from t = 100, re-recording onward
 ```
 
-The trace `sim2` leaves behind is a complete recording of *itself*, the
-replayed prefix out to t = 100 and then the frames flown live after it.
+The trace `sim2` leaves behind is a complete recording of *itself*, the replayed
+prefix out to t = 100 and then the frames flown live after it, since replay
+re-records (below).
 
-A replay's halt leaves the simulation `initialized`, never `stopped`
-([D-218][d-218]). That state is boundary-consistent and ready to advance, the
-same state `step!` leaves ([§12.6][s12-6]). This is what makes three promised
-workflows real ([D-101][d-101]). State-trajectory inspection asks "what was
-the private state at t = 37.2?", and answers it by replaying there and reading
-the live stores ([§11.2][s11-2]). Error reproduction replays to the
-frame-entry boundary `k` the error names, then `step!`s the failing frame
-under instrumentation ([§13.4][s13-4]). Continuation is `run!` after
-`replay!`, a live session from the replayed boundary. After a full replay
-that is the next call, the records exhausted at the halt. After a partial one
-the remainder of the recording is consumed first, across as many `step!` and
-`run!` calls as the caller makes, and the session goes live at the
-recording's end. Or `live!` drops that remainder, and the continuation starts
-at the halt.
+A replay's halt leaves the simulation `initialized`, never `stopped` ([D-218][d-218]).
+That state is boundary-consistent and ready to advance, the same state `step!`
+leaves ([§12.6][s12-6]). This is what makes three promised workflows real ([D-101][d-101]).
+State-trajectory inspection asks "what was the private state at t = 37.2?", and
+answers it by replaying there and reading the live stores ([§11.2][s11-2]). Error
+reproduction replays to the frame-entry boundary `k` the error names, then
+`step!`s the failing frame on its recorded inputs, under instrumentation
+([§13.4][s13-4]). Continuation is `run!` after `replay!`, a live session from the
+replayed boundary. After a full replay that is the next call, the records
+exhausted at the halt. After a partial one the remainder of the recording is
+consumed first, across as many `step!` and `run!` calls as the caller makes, and
+the session goes live at the recording's end. Or `live!` drops that remainder,
+and the continuation starts at the halt.
 
 #### What stays the loop's
 
@@ -1232,14 +1161,13 @@ trace's header is the simulation's own checkpoint (below). A
 replayed-then-continued session therefore leaves behind a complete, valid
 trace of *itself*, with no special stitching.
 
-**[Pacing](#g-pacing) and the [control plane](#g-control-plane) are
-unchanged** ([§10.7][s10-7], [§12.1][s12-1], [D-101][d-101]). The control
-plane is the separate atomic surface carrying pause, pace and the stop word.
+**[Pacing](#g-pacing) and the [control plane](#g-control-plane) are unchanged** ([§10.7][s10-7], [§12.1][s12-1], [D-101][d-101]). The
+control plane is the separate atomic surface carrying pause, pace and stop.
 Pacing (waits inserted between completed frames, never altering the boundary
-sequence) sits outside the semantics, so paused, slow-motion or real-time
-replay is free. Paced replay with an attached visualizer *is* session
-playback, and `replay!` takes `pace` and `margin` as `run!` does
-([§12.1][s12-1], [D-269][d-269]). Stop truncates, as anywhere.
+sequence) sits outside the semantics, so paused, slow-motion or real-time replay
+is free. Paced replay with an attached visualizer *is* session playback, and
+`replay!` takes `pace` and `margin` as `run!` does ([§12.1][s12-1], [D-269][d-269]). Stop
+truncates, as anywhere.
 
 Devices are readers ([D-218][d-218]). Rostered devices init and spawn normally
 ([§11.1][s11-1]) and consume snapshots ([§11.2][s11-2], [§12.3][s12-3]). That
@@ -1252,22 +1180,20 @@ replay.
 
 #### Validation up front
 
-**Validation is loud and up front** ([D-101][d-101]). Before the first frame,
-the checkpoint's [deployment](#g-deployment) (the scalar-free artifact the
-grid parameters fix) is compared against the target's. Its fingerprint, the
-structural layout, is compared against the `Build`. The fingerprint covers
-the store layout, the root-input faces, and what a copy by position relies on
-([§11.5][s11-5]). The trace's batch entries are validated against the root
-input-face list, and each batch's frame ordinal against the recording's
-frames, from the one after the header's to the last ([D-217][d-217]). Each
-writer's face-name → position schema, on the trace's `schemas` list
-([§11.5][s11-5]), is validated in the same pass. A recorded schema that
+**Validation is loud and up front** ([D-101][d-101]). Before the first frame, the
+checkpoint's [deployment](#g-deployment) (the scalar-free artifact the grid parameters fix) is
+compared against the target's. Its fingerprint, the structural layout, is
+compared against the `Build`. The fingerprint covers the store layout, the
+root-input faces, and what a copy by position relies on ([§11.5][s11-5]). The trace's
+batch entries are validated against the root input-face list, and each batch's
+frame ordinal against the recording's frames, from the one after the header's to
+the last ([D-217][d-217]). Each writer's face-name → position schema, on the trace's
+`schemas` list ([§11.5][s11-5]), is validated in the same pass. A recorded schema that
 disagrees with the target model's own root-input faces is a replay error. The
-checks are attach-style, and a failure reports
-[did-you-mean](#g-did-you-mean), the offending name plus the list-in-hand it
-should have matched. The kinds are `CheckpointMismatch`,
-`ReplaySchemaMismatch` and `ReplayUnknownFace` ([Appendix C][sC]). The pass
-runs under both forms of `replay!`.
+checks are attach-style, and a failure reports [did-you-mean](#g-did-you-mean), the offending name
+plus the list-in-hand it should have matched. The kinds are
+`CheckpointMismatch`, `ReplaySchemaMismatch` and `ReplayUnknownFace`
+([Appendix C][sC]). The pass runs under both forms of `replay!`.
 
 The same pass pays the trace-record conversion in reverse. Every writer's
 sparse records ([§11.5][s11-5]) are normalized to positional batches against
@@ -1300,13 +1226,12 @@ the grid parameters are. It moves the trajectory, so a run that differs in it
 is not re-driving the recorded one. Comparison by value is what makes the
 check one expression rather than a field-by-field walk.
 
-Under the default form the clock is *restored*, not compared. That form
-restores `t₀` with the rest of the clock, so `replay!` takes no `t0` argument
-([D-127][d-127]). Under `restore = false` the simulation's own clock runs, its
-origin must equal the recording's, and the new trace's header is the
-simulation's own checkpoint. The checkpoint holds no policy ([D-255][d-255]).
-`t_end` and `ignore_stop_requests` are keywords of this `replay!` call,
-validated per call as at `run!`.
+Under the default form the clock is *restored*, not compared. That form restores
+`t₀` with the rest of the clock, so `replay!` takes no `t0` argument ([D-127][d-127]).
+Under `restore = false` the simulation's own clock runs, and its origin must
+equal the recording's. The checkpoint holds no policy ([D-255][d-255]). `t_end` and
+`ignore_stop_requests` are keywords of this `replay!` call, validated per call
+as at `run!`.
 
 The dispositions, by trace content:
 
@@ -1321,14 +1246,12 @@ The dispositions, by trace content:
 
 #### What-if replay and `restore = false`
 
-Replaying against the same structure with changed parameters is the
-what-if replay, the deterministic re-driving of the
-recorded inputs through a modified model. It is spelled as `init!` of the
-modified model under the authored condition, then
-`replay!(sim, trc; restore = false)`. The trace is not self-sufficient for it.
-Its checkpoint holds the recording model's state after boundary zero, so the
-authored condition comes from outside ([D-274][d-274]). Bit-identity is
-promised only against the identical build ([§2.4][s2-4]). What-if replay
+Replaying against the same structure with changed parameters is the what-if
+replay. It is spelled as `init!` of the modified model under the authored
+condition, then `replay!(sim, trc; restore = false)`. The trace is not
+self-sufficient for it. Its checkpoint holds the recording model's state after
+boundary zero, so the authored condition comes from outside ([D-274][d-274]).
+Bit-identity is promised only against the identical build ([§2.4][s2-4]). What-if replay
 promises determinism, never reproduction.
 
 `replay!(sim, trc; restore = false)` attaches the feed to the simulation as it
@@ -1337,10 +1260,9 @@ recording's `t₀`, and at a frame from the header's to one short of the
 recording's last. A simulation that is not `initialized` meets the lifecycle
 gate before any write, with `MissingInit` when it is `built` and
 `ServiceLifecycle` in any other state. One whose origin or frame is off the
-recording's is refused before any write as `CheckpointMismatch`, its clock
-arm. One grid is thus an invariant of
-every replay, and `to_time` has one meaning. The drain applies the records
-from the frame after the simulation's own.
+recording's is refused before any write as `CheckpointMismatch`, its clock arm.
+One grid is thus an invariant of every replay, and `to_time` has one meaning.
+The drain applies the records from the frame after the simulation's own.
 
 This form is a door like the default one, an entry point that builds a run
 ([§12.6][s12-6]). It builds a fresh run under the recording keywords, takes

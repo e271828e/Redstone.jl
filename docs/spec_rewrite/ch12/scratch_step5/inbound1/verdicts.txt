@@ -1,0 +1,239 @@
+1	OK	§12 periphery; heading unchanged
+2	OK	new 20-22 keeps "never what they compute"
+3	OK	t_end landing, new 380-388
+4	OK	issuers and frame-top effect, new 27-40
+5	OK	step (1), new 316-320
+6	OK	Part III roadmap, R1 leaves it to the front-matter rewrite; it omits §12.5 as before
+7	OK	counter increment, new 226-242
+8	OK	ordinal, new 270-275
+9	OK	coarse primitive, new 118-129
+10	OK	frame-top observation within h/p, new 28-31
+11	OK	wait is an unmask point, new 586-590
+12	OK	§12 heading unchanged
+13	OK	§12 heading unchanged; matches R1's context sentence
+14	OK	separate few-word atomic surface, new 13-14
+15	OK	tail step (5) joins all, new 337-343
+16	OK	no task for a failed device, new 500-501 (row 158 kept per R5)
+17	OK	counter plus condition, Event rejected, new 219-266
+18	OK	ordinal, new 270-272
+19	OK	terminal snapshot retained, new 394-404
+20	OK	new 208-264
+21	OK	control is not staging, new 13-17 (plain since R3)
+22	OK	survey D listed it wrong before; F21 now states it, new 67-69
+23	OK	step (6), new 350-363
+24	OK	heartbeat names the death, new 190-192 (front end per R2)
+25	OK	wakeups, §12.3
+26	OK	ThreadBudget once per run vs frozen roster, new 165-168
+27	OK	wait for next boundary, §12.3
+28	OK	init! on calling task pre-spawn, new 445-448
+29	OK	unblock!, step (3)
+30	OK	tail and wrapper, new 301-370
+31	OK	bracket: shutdown! plus DeviceCrash, new 450-494
+32	OK	step (6) still numbered (6) (R4)
+33	OK	bracket, new 445-474
+34	OK	interrupt escaping the bracket releases listed devices, new 476-482
+35	OK	listed for release before init!, new 476 (plain since R3)
+36	OK	wait returns on stop, new 251-256
+37	OK	stale heartbeat, §12.2
+38	OK	step (6) window ✕ or peer EOT, new 350-351
+39	OK	stale heartbeat, §12.2
+40	OK	should_abort split, step (6) and new 517-535
+41	OK	wrapper turns a crash into DeviceCrash, new 362-363
+42	OK	heartbeat, §12.2
+43	OK	stale heartbeat, new 202-206
+44	OK	heartbeat, §12.2
+45	OK	2 s threshold, new 202
+46	OK	task_state read at publication, new 189-190
+47	OK	terminal counters, new 394-398
+48	OK	DeviceJoinTimeout after terminal snapshot, new 341-349
+49	OK	heartbeat, §12.2
+50	OK	ThreadBudget once per run, new 165-168
+51	OK	abandoned by name, new 341-343
+52	OK	step (6): sim continues with device absent
+53	OK	operator's stop command, new 551-552
+54	OK	masking, new 586-593; survey D's minor point confirmed: the sentence omits the pause block, which §12.4 names (track 2)
+55	OK	forced throw: stopped, frame abandoned, new 629-633
+56	OK	operator path is the control plane, new 34-40
+57	OK	tail, §12.4
+58	OK	tail, §12.4
+59	OK	interrupt is the escape, new 558
+60	OK	issuer payload, new 42-51
+61	OK	meets at §12.4; "GUI stop button" is §13.5's own wording (R2 analogue for ch13)
+62	OK	boundary completion, §12.4
+63	OK	step (7) runs (1)-(5) from the catch path, new 364-367
+64	OK	survey D listed it wrong before; F21 now states it, new 67-69
+65	OK	masking, new 575-593
+66	OK	authoring contract, step (4) new 331-336
+67	OK	bracket releases on init! failure, new 469-474
+68	OK	t_end landing, new 380-388
+69	OK	join_timeout, step (5)
+70	OK	Control keeps join_timeout, new 98-99
+71	OK	replay neither records nor compares it, new 416-420
+72	OK	should_abort split, new 517-535
+73	OK	death is not detach, step (6)
+74	MISSING	old §12.4 stated "dead from boundary zero"; R8 corrected it to "dead from the run's first frame top" (new 500-501); the citing sentence keeps the corrected error
+75	OK	wrapper, voluntary exit, step (6)
+76	OK	wait_next_snapshot, §12.3
+77	OK	separate atomic surface, never staged, new 13-17
+78	OK	tail order, step (1)
+79	OK	abandoned frame, new 629-641 (CheckpointMidFrame now named)
+80	OK	two setters and two keywords refuse under ArgumentInvalid, new 92-94
+81	OK	constructor refuses join_timeout as ArgumentInvalid, new 340-341
+82	OK	ThreadBudget, new 165
+83	OK	DeviceJoinTimeout, step (5)
+84	OK	DeviceCrash payload and init-time report, new 484-494
+85	OK	interrupt is the escape, new 558-560
+86	OK	running in the wait predicate, new 251-252
+87	OK	order of publications, new 230-249
+88	OK	inbound and outbound newest-wins, new 258-263 (F17)
+89	OK	not staging, new 13-17; the glossary's field list lacks the sticky stopped status §12.1 now adds (F7), track 2
+90	OK	newest-wins, no per-frame reset, new 251-264
+91	OK	masking, second interrupt, REPL scope, new 568-648; survey D's minor point confirmed: omits the pause block
+92	OK	Ctrl-C as control-plane stop, new 34-40
+93	OK	§12 heading unchanged
+94	OK	should_abort per attachment, §12.4 split
+95	OK	Spec field; D-027 still rules §12.2
+96	OK	Spec field; D-028 still rules §12.3
+97	OK	device lifecycle, §12.4
+98	OK	boundary completion, new 578-584
+99	OK	control plane, §12.1
+100	OK	Spec field; D-081 still rules §12.3
+101	OK	counter increment at t*, §12.3; stop_on is historical
+102	OK	counter counts boundaries not frames, new 221-224
+103	OK	Spec field; D-088 still rules §12.4
+104	OK	ordinary tail, §12.4
+105	OK	per-run tasks, new 424-425
+106	OK	Spec field
+107	OK	Spec field
+108	OK	Spec field
+109	OK	joins, release, roster survives, new 422-431
+110	OK	counter-plus-condition wait, §12.3
+111	OK	heartbeat run-scoped, new 439-440
+112	OK	Event rejected, new 266-268
+113	OK	finally shutdown!, step (4)
+114	OK	survey D confirmed: the argument (new 155-160) still leans on the parked GUI; kept verbatim per R2 and escalated (E2); no inbound edit
+115	OK	Spec field; D-097 still rules §12.4
+116	OK	DeviceJoinTimeout and DeviceCrash, §12.4
+117	OK	Spec field; D-102 still rules §12.4
+118	OK	Spec field; D-106 still rules §12.3
+119	OK	wakeups, §12.3
+120	OK	Spec field; D-109 superseded, historical
+121	MISSING	never stated at 17ad42d: the calling-task device left with D-310; D-109 is superseded, so the Rationale is historical (survey D confirmed)
+122	RETARGET	§11.1: R5 cut §12.4's topology bold (old 9057-9060) and names §11.1 the home; D-109 is superseded, so the edit is optional
+123	OK	Spec field; D-114 still rules §12.3
+124	OK	Spec field
+125	OK	§12's opener is still a roadmap (R1)
+126	OK	initiation sources, step (1); survey D confirmed: stop_on retired (D-316) and "GUI" parked (D-310); "resumable by the next run!" is E1
+127	OK	Spec field §12.4(1): initiation
+128	OK	Spec field §12.4(3): unblock!
+129	OK	Spec field §12.4(5): join
+130	OK	second interrupt takes (5)'s abandonment, new 645-648
+131	MISSING	never stated at 17ad42d: (5) has had no asymmetry since D-310 (F3); the spec's echo (old 9159-9161) was deleted by R10 F3 (survey D confirmed)
+132	OK	unblock!, step (3)
+133	OK	5 s default, step (5)
+134	OK	2 s staleness, new 202
+135	RETARGET	§12.4 without "(1)": the landing rule sits in the paragraph after the chart (new 380-388), not in step (1); wrong before and after (survey D confirmed)
+136	OK	Spec field
+137	OK	Spec field §12.4
+138	RETARGET	Spec field §12.4(1): the landing rule is not in step (1); the field already lists plain §12.4, so the (1) item can go (survey D confirmed)
+139	OK	Spec field §12.4(5): join timeout
+140	OK	Spec field; D-134 retired in substance, historical
+141	OK	§12.3 still states the GUI's read path (new 284-285), kept per R2 and escalated (E2); survey D confirmed
+142	OK	Spec field
+143	OK	Spec field
+144	OK	2 s threshold, new 202
+145	OK	final snapshot in step (1), counters in the paragraph explaining (1)'s order, new 394-398, placed as in the old text
+146	OK	Spec field
+147	OK	terminal snapshot from step (1), retained, new 402-404
+148	OK	initialization is a step of the protocol, new 445
+149	OK	Spec field
+150	OK	Spec field
+151	OK	"shutdown! has also released each device's OS resources", new 425-426
+152	OK	threshold still in §12.2; survey D confirmed: "(§11.8, D-136)" does not state the staleness, which §12.4 now states citing D-138 (new 503-506); "dead from boundary zero" diverges from R8
+153	OK	(6)'s disposition, step (6); "initial values" diverges from R8's "the values the run started with" (new 512)
+154	OK	the ordinary tail, new 529-531; "boundary zero is published ... at t₀" diverges from R8 (new 524-535)
+155	OK	one tail, §12.4
+156	OK	step (6)'s intent
+157	OK	stale heartbeat, §12.2
+158	MISSING	never stated at 17ad42d: D-175 is superseded by D-310 and §12.4 holds no gui = true detach; historical (survey D confirmed)
+159	OK	Spec field; D-175 superseded, historical
+160	OK	roster entry as address, new 492-498
+161	OK	Spec field
+162	OK	single timestamp, new 184-188; historical
+163	OK	Spec field
+164	OK	historical; §12.2 now publishes task_state
+165	OK	qualified wording, new 184-187
+166	OK	loose threshold for parked readers, new 203-206
+167	OK	join_timeout keyword, step (5); replay invisibility, new 410-420
+168	OK	Spec field
+169	OK	DeviceJoinTimeout in step (5)
+170	OK	Spec field
+171	OK	stop word, CAS, first writer wins, new 42-51
+172	OK	written to the loop's cell, step (5)
+173	OK	Spec field
+174	OK	Spec field
+175	OK	counter separate and never reset, new 276-279
+176	OK	Spec field
+177	OK	historical
+178	OK	§12.3 names the third index, new 279-282
+179	OK	Spec field
+180	OK	advisory heartbeat, new 203-206
+181	OK	(5)'s abandonment
+182	OK	Spec field
+183	OK	Spec field
+184	OK	Spec field
+185	OK	Spec field
+186	OK	stable device id survives a stop, new 426-427
+187	OK	masking, §12.4
+188	OK	Spec field
+189	OK	Spec field
+190	OK	historical
+191	OK	historical
+192	OK	frame throwing with interrupt pending, new 603-609
+193	OK	stores mid-boundary, new 634-638 (now "init!, restore! or replay!", F22)
+194	OK	Spec field
+195	OK	task_state values, new 194-200
+196	OK	ordinal is the trajectory's, new 270-275
+197	OK	counter increments at t*, §12.3
+198	OK	Spec field
+199	OK	Spec field
+200	OK	Spec field
+201	OK	Spec field
+202	OK	operator's path is the control plane, new 34-55
+203	OK	Spec field
+204	OK	Spec field
+205	OK	counter-plus-condition wait, §12.3
+206	OK	wakeups, §12.3
+207	OK	control plane, §12.1
+208	OK	counter and condition, §12.3
+209	OK	pause block, new 57-65
+210	OK	task-yielding sleep, new 118
+211	OK	unmask point, new 586-590
+212	OK	Spec range
+213	OK	Spec range
+214	OK	ThreadBudget, new 165
+215	OK	Spec list
+216	OK	Spec list
+217	OK	orphaned is exactly :done, new 199
+218	OK	report! by roster entry, new 492-494
+219	OK	Spec range
+220	OK	Spec range
+221	OK	whole-frame landing, new 380-388
+222	OK	Spec list
+223	OK	Spec list
+224	RETARGET	§12.6: the four-field Simulation is §12.6's (new 798); §12.1 lists Control's fields (survey D confirmed)
+225	OK	pause verbs, new 57-65
+226	OK	pace and margin verbs, new 82-94
+227	OK	thread-budget check, new 165-168
+228	OK	task_state read at publication, new 189-190
+229	OK	mask and unmask points, new 575-648
+230	OK	Spec range
+231	OK	DeviceCrash account, step (6)
+232	OK	ThreadBudget, new 165
+233	MISSING	never stated: §12.2 (old and new 133) guarantees a per-frame yield only with devices attached, and a paced deviceless loop yields in its coarse sleep (src/control.jl 186); wrong before the rewrite
+234	OK	pause and pace, §12.1
+235	OK	§12 heading unchanged
+236	OK	§12.3
+237	OK	tail steps hold, (1)-(5); survey D confirmed: the window is the parked GUI's (D-310), the companion's wording
+238	OK	counter bump, §12.3
+239	OK	heartbeat names the death, §12.2

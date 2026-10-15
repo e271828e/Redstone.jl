@@ -7,7 +7,7 @@ added: This section settles what the periphery (everything outside the loop that
 
 added: The periphery's attached participants are its devices.
 
-added: The section surveys FlightCore's mid-run mutations, states the clock criterion that maps scripts to components (units of modeling), eliminates `user_callback!`, covers manual events and mid-run re-initialization, and ends with the doctrine's final form.
+added: The section surveys FlightCore's mid-run mutations, states the clock criterion that maps scripts to components (units of modeling), eliminates FlightCore's per-step hook `user_callback!`, covers manual events and mid-run re-initialization, and ends with the doctrine's final form.
 
 old: What the consumers demonstrably mutate mid-run is surveyed here.
 tag: F
@@ -117,14 +117,15 @@ tag: F
 note: "the avionics" glossed as §10.1's "(onboard flight systems)" (spec 5615)
 
 old: §11.7 therefore renders the corresponding GUI widgets read-only with its source shown.
+new: §11.7 therefore renders the corresponding GUI widgets read-only, each showing its source.
 tag: F
+note: "its" now reads as each widget's (step 5, P2-3)
 
 old: Today's demo-vs-GUI dead-slider fight is resolved by the port-resolution rule.
-new: The port-resolution rule resolves FlightCore's demo-vs-GUI dead-slider fight (§11.7).
+new: Its port-resolution rule resolves FlightCore's demo-vs-GUI dead-slider fight.
 tag: R
 ruling: R6
-newcites: §11.7
-note: "Today's" becomes FlightCore's; the pointer at §11.7, whose rule retires FlightCore's dead-slider convention
+note: "Today's" becomes FlightCore's; the pointer at §11.7, whose rule retires FlightCore's dead-slider convention, is "Its", the sentence before's §11.7 (step 5, P2-3)
 
 old: `user_callback!` is eliminated (D-031).
 tag: F
@@ -167,7 +168,9 @@ newcites: D-031
 note: D-031 Position, "init/trim = stopped-sim services"
 
 old: Initialization and trim are stopped-sim workflows (first-class services, §14).
+new: Initialization and trim are stopped-sim workflows, first-class services of §14.
 tag: F
+note: the citation left the gloss's parentheses (step 5, P2-5)
 
 old: No concurrency perimeter exists there.
 tag: F
@@ -182,7 +185,9 @@ note: guarded addition linked and glossed
 
 old: It would be a traced, boundary-executed intervention command applied through project → sweep → publish, so that no consumer ever observes un-decoded state.
 tag: F
-note: "project → sweep → publish" verbatim (R6), so the sweep link takes no gloss there
+note: "project → sweep → publish" verbatim (R6), so the sweep link takes no gloss there; the gloss follows as its own sentence (step 5, P2-6)
+
+added: A sweep is one pass through the execution order against the current state.
 
 old: The doctrine, final form. While a simulation runs, the periphery stages root-input writes and issues control commands.
 new: In the doctrine's final form, while a simulation runs, the periphery stages root-input writes and issues control commands (§2.2, D-031).
@@ -224,17 +229,13 @@ note: D-060 Position, standing under D-255 and D-316, "termination is state, nev
 old: ### 12.6 Run lifecycle and partial advance
 tag: X
 
-added: This section specifies what a `Simulation` and its run own, the lifecycle a simulation moves through, how it advances and restarts, and what it keeps of its devices (any attached participants in the periphery) across runs.
+added: This section specifies what a `Simulation` and its run own, the lifecycle a simulation moves through, how it advances and restarts, what it keeps of its devices (any attached participants in the periphery) across runs, and the stop policy each advance declares.
 
 added: A simulation is in one of five lifecycle states, built, initialized, running, stopped or errored.
 
 added: A door is an entry point that builds a run, and there are three, `init!`, `restore!` and `replay!`.
 
-added: A run's `feed` is the recording `replay!` attached, or `nothing`.
-
 added: The input mode says where the next frame (one grid step, the unit of scheduling) takes its inputs from.
-
-added: In `:live` they come from the staging cells (where each device's pending batch waits between drains), and in `:replay` from the attached recording.
 
 added: #### The run and the simulation
 
@@ -245,9 +246,9 @@ old: It is a mutable struct of six fields.
 tag: F
 
 old: Two are `const` and last the run's whole life, the log and the trace (`nothing` under the trace switch).
-new: Two are `const` and last the run's whole life. One is the log (the retained sequence of published snapshots). The other is the trace (the records of each frame's drained inputs), which is `nothing` under the trace switch.
+new: Two are `const` and last the run's whole life. One is the log (the retained sequence of published snapshots). The other is the trace (the records of each frame's drained inputs), which is `nothing` under `trace = false`.
 tag: F
-note: split; log and trace linked and glossed
+note: split; log and trace linked and glossed; "the trace switch" names its keyword, which the next sentence lists (step 5, P2-9)
 
 old: The door that builds the run takes the four recording keywords, `trace`, `log`, `log_every` and `log_max` (Appendix B, D-261),
 new: The door that builds the run takes the four recording keywords, `trace`, `log`, `log_every` and `log_max` (Appendix B, D-261).
@@ -264,7 +265,11 @@ new: Four fields evolve during the run.
 tag: F
 
 old: `feed` is the recording `replay!` attached, or `nothing`.
-tag: F
+new: A run's `feed` is the recording `replay!` attached, or `nothing`.
+tag: M
+note: R13's context paragraph holds it; the field list points back (step 5, P2-8)
+
+added: `feed` is described above.
 
 old: `termination` is the record the loop's tail writes.
 tag: F
@@ -286,7 +291,9 @@ old: The loop's tail writes `termination` once, and `closed(run)` is `terminatio
 tag: F
 
 old: Each door sets the two counters as it builds the run, `init!` to zero and `restore!` and `replay!` to the checkpoint's, and the loop advances them (D-317).
+new: Each door sets the two counters as it builds the run, `init!` to zero and `restore!` and `replay!` to those of the checkpoint (the `Model`'s state at a frame top, beside the run's frame index and boundary ordinal), and the loop advances them (D-317).
 tag: F
+note: checkpoint's first use in §12.6, so its link and the glossary's gloss sit here (step 5, P2-10)
 
 old: `restore!` of a bare state sets the frame index to the state's frame and the boundary ordinal to zero, as `init!` does (D-319).
 tag: F
@@ -297,15 +304,17 @@ tag: C
 newcites: D-260
 
 old: The executor's clock holds it beside `t`.
+new: The clock of the executor (the compiled form of the stage execution order) holds it beside `t`.
 tag: F
+note: executor's first use in §12.6, so its link and gloss sit here (step 5, P2-11)
 
 old: `init!` sets it on the clock before boundary zero (§14.5),
-new: `init!` sets it on the clock before boundary zero, the initialization boundary (§14.5).
+new: `init!` sets it on the clock before boundary zero, the initialization boundary run as the ordinary macro-sequence with an empty integrate (§14.5).
 tag: F
-note: boundary zero's first use moved here, so its link and gloss sit here
+note: boundary zero's first use moved here, so its link and gloss sit here; the full gloss moved here from the Initialized sentence (step 5, P2-12)
 
 old: and a checkpoint (the `Model`'s state at a frame top as one value) carries it with the clock (§11.5, D-273).
-new: A checkpoint (the `Model`'s state at a frame top as one value) carries it with the clock (§11.5, D-273).
+new: A checkpoint carries it with the clock (§11.5, D-273).
 tag: F
 
 old: It is a `Float64`, as `h` and `t_end` are.
@@ -335,7 +344,10 @@ tag: C
 newcites: D-255
 
 old: `Simulation` is a mutable struct of four fields, the `Model` (the deployment and its executor at one scalar), the run, the data plane and the control plane (D-317).
+new: `Simulation` is a mutable struct of four fields, the `Model` (the deployment and its executor at one scalar), the run, the data plane (§11) and the control plane (D-317).
 tag: F
+newcites: §11 D-317
+note: §11 introduces the data plane (step 5, P2-13)
 
 added: The control plane is the atomic surface carrying pause, pace and stop.
 
@@ -344,7 +356,7 @@ new: The `Model` holds the deployment, the executor, its status and its diagnost
 tag: F
 note: the deployment's gloss became its own sentence, so the executor and diagnostic cell glosses fit
 
-added: The executor is the compiled form of the stage execution order, and a diagnostic cell is a writer's own holding place for runtime diagnostics.
+added: A diagnostic cell is a writer's own holding place for runtime diagnostics.
 
 old: A simulation owns its `Model`, claimed at construction and never shared (§9.2, D-318).
 tag: F
@@ -366,9 +378,11 @@ tag: F
 note: R5 keeps it here as written
 
 old: The loop's diagnostic cell, its account and the published holder are the plane's, and the frame's own cell is the `Model`'s (§11.8).
-new: The loop's diagnostic cell, its account and the published holder are the plane's, and the frame's own diagnostic cell is the `Model`'s (§11.8).
+new: The loop's diagnostic cell, its account and the published-snapshot holder (§11.2) are the data plane's, and the frame's own diagnostic cell is the `Model`'s (§11.8).
 tag: R
 ruling: R20
+newcites: §11.2 §11.8
+note: "the plane's" names the data plane, whose `DataPlane` holds the three (`src/roster.jl` 196–204); the holder is §11.2's (step 5, P2-13)
 
 old: The log, the trace and the two counters are the run's.
 tag: F
@@ -416,7 +430,9 @@ old: It is the cold state, and the state a throw inside boundary zero returns th
 tag: F
 
 old: Initialized means `init!` has completed boundary zero, the initialization boundary run as the ordinary macro-sequence with an empty integrate (§14.5), or `restore!` or `replay!` has restored a checkpoint.
+new: Initialized means `init!` has completed boundary zero (§14.5), or `restore!` or `replay!` has restored a checkpoint.
 tag: F
+note: boundary zero's gloss is stated once, at its first use above (step 5, P2-12)
 
 old: `lifecycle(sim)` derives the state rather than storing it (D-317).
 tag: F
@@ -459,7 +475,7 @@ tag: F
 note: the colon goes; the headline clause is bold, D-260 bullet 2
 
 old: The mode names where the next frame's drain takes its batches from, the staging cells or the attached recording (§12.7).
-new: The mode names where the next frame's drain takes its batches from, the staging cells or the attached recording (§12.7, D-218).
+new: The mode names where the next frame's drain takes its batches from, the staging cells (where each device's pending batch waits between drains) or the attached recording (§12.7, D-218).
 tag: C
 newcites: §12.7 D-218
 
@@ -602,7 +618,7 @@ ruling: R20
 note: F64 as R20 words it; the harness cell's gloss moved to its first use
 
 old: The harness write path is `stage!(sim, "face" => value, …)` (§11.3),
-new: The harness write path is `stage!(sim, "face" => value, …)`, and §11.3 specifies that harness writer.
+new: The harness write path is `stage!(sim, "face" => value, …)`, and §11.3 specifies the writer.
 tag: R
 ruling: R5
 note: M53, the pointer at §11.3 for what the harness writer is
@@ -684,10 +700,12 @@ old: `run!` may therefore follow `step!`, continuing from the current boundary, 
 tag: F
 
 old: Termination policy is honored throughout, as bit-identity requires.
+new: The stop policy is honoured throughout, as bit-identity requires.
 tag: F
+note: one name for the stop policy and the chapter's spelling (step 5, P2-17)
 
 old: `t_end` reached, or a stop request holding at frame 3 of `step!(sim; frames = 10)`, ends the run there through the ordinary §12.4 tail and leaves the simulation `stopped`.
-new: `t_end` reached, or a stop request (an output port of the framework enum `StopFlag`) holding at frame 3 of `step!(sim; frames = 10)`, ends the run there through the ordinary §12.4 tail and leaves the simulation `stopped`.
+new: `t_end` reached, or a stop request (an output port of the framework enum `StopFlag`) holding (publishing `STOP_REQUESTED`) at frame 3 of `step!(sim; frames = 10)`, ends the run there through the ordinary §12.4 tail and leaves the simulation `stopped`.
 tag: F
 
 old: `step!` therefore returns the number of frames actually advanced.

@@ -218,25 +218,23 @@
   {
    "id": "C-025",
    "old": "§11.7 therefore renders the corresponding GUI widgets read-only with its source shown.",
-   "new": "§11.7 therefore renders the corresponding GUI widgets read-only with its source shown.",
+   "new": "§11.7 therefore renders the corresponding GUI widgets read-only, each showing its source.",
    "where": "new",
    "cites": [
     "§11.7"
    ],
-   "tag": "F"
+   "tag": "F",
+   "note": "\"its\" now reads as each widget's (step 5, P2-3)"
   },
   {
    "id": "C-026",
    "old": "Today's demo-vs-GUI dead-slider fight is resolved by the port-resolution rule.",
-   "new": "The port-resolution rule resolves FlightCore's demo-vs-GUI dead-slider fight (§11.7).",
+   "new": "Its port-resolution rule resolves FlightCore's demo-vs-GUI dead-slider fight.",
    "where": "new",
    "cites": [],
-   "newcites": [
-    "§11.7"
-   ],
    "tag": "R",
    "ruling": "R6",
-   "note": "\"Today's\" becomes FlightCore's; the pointer at §11.7, whose rule retires FlightCore's dead-slider convention"
+   "note": "\"Today's\" becomes FlightCore's; the pointer at §11.7, whose rule retires FlightCore's dead-slider convention, is \"Its\", the sentence before's §11.7 (step 5, P2-3)"
   },
   {
    "id": "C-027",
@@ -331,12 +329,13 @@
   {
    "id": "C-036",
    "old": "Initialization and trim are stopped-sim workflows (first-class services, §14).",
-   "new": "Initialization and trim are stopped-sim workflows (first-class services, §14).",
+   "new": "Initialization and trim are stopped-sim workflows, first-class services of §14.",
    "where": "new",
    "cites": [
     "§14"
    ],
-   "tag": "F"
+   "tag": "F",
+   "note": "the citation left the gloss's parentheses (step 5, P2-5)"
   },
   {
    "id": "C-037",
@@ -370,7 +369,7 @@
    "where": "new",
    "cites": [],
    "tag": "F",
-   "note": "\"project → sweep → publish\" verbatim (R6), so the sweep link takes no gloss there"
+   "note": "\"project → sweep → publish\" verbatim (R6), so the sweep link takes no gloss there; the gloss follows as its own sentence (step 5, P2-6)"
   },
   {
    "id": "C-041",
@@ -484,11 +483,11 @@
   {
    "id": "C-052",
    "old": "Two are `const` and last the run's whole life, the log and the trace (`nothing` under the trace switch).",
-   "new": "Two are `const` and last the run's whole life. One is the log (the retained sequence of published snapshots). The other is the trace (the records of each frame's drained inputs), which is `nothing` under the trace switch.",
+   "new": "Two are `const` and last the run's whole life. One is the log (the retained sequence of published snapshots). The other is the trace (the records of each frame's drained inputs), which is `nothing` under `trace = false`.",
    "where": "new",
    "cites": [],
    "tag": "F",
-   "note": "split; log and trace linked and glossed"
+   "note": "split; log and trace linked and glossed; \"the trace switch\" names its keyword, which the next sentence lists (step 5, P2-9)"
   },
   {
    "id": "C-053",
@@ -524,10 +523,11 @@
   {
    "id": "C-056",
    "old": "`feed` is the recording `replay!` attached, or `nothing`.",
-   "new": "`feed` is the recording `replay!` attached, or `nothing`.",
+   "new": "A run's `feed` is the recording `replay!` attached, or `nothing`.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "M",
+   "note": "R13's context paragraph holds it; the field list points back (step 5, P2-8)"
   },
   {
    "id": "C-057",
@@ -576,12 +576,13 @@
   {
    "id": "C-062",
    "old": "Each door sets the two counters as it builds the run, `init!` to zero and `restore!` and `replay!` to the checkpoint's, and the loop advances them (D-317).",
-   "new": "Each door sets the two counters as it builds the run, `init!` to zero and `restore!` and `replay!` to the checkpoint's, and the loop advances them (D-317).",
+   "new": "Each door sets the two counters as it builds the run, `init!` to zero and `restore!` and `replay!` to those of the checkpoint (the `Model`'s state at a frame top, beside the run's frame index and boundary ordinal), and the loop advances them (D-317).",
    "where": "new",
    "cites": [
     "D-317"
    ],
-   "tag": "F"
+   "tag": "F",
+   "note": "checkpoint's first use in §12.6, so its link and the glossary's gloss sit here (step 5, P2-10)"
   },
   {
    "id": "C-063",
@@ -607,26 +608,27 @@
   {
    "id": "C-065",
    "old": "The executor's clock holds it beside `t`.",
-   "new": "The executor's clock holds it beside `t`.",
+   "new": "The clock of the executor (the compiled form of the stage execution order) holds it beside `t`.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "F",
+   "note": "executor's first use in §12.6, so its link and gloss sit here (step 5, P2-11)"
   },
   {
    "id": "C-066",
    "old": "`init!` sets it on the clock before boundary zero (§14.5),",
-   "new": "`init!` sets it on the clock before boundary zero, the initialization boundary (§14.5).",
+   "new": "`init!` sets it on the clock before boundary zero, the initialization boundary run as the ordinary macro-sequence with an empty integrate (§14.5).",
    "where": "new",
    "cites": [
     "§14.5"
    ],
    "tag": "F",
-   "note": "boundary zero's first use moved here, so its link and gloss sit here"
+   "note": "boundary zero's first use moved here, so its link and gloss sit here; the full gloss moved here from the Initialized sentence (step 5, P2-12)"
   },
   {
    "id": "C-067",
    "old": "and a checkpoint (the `Model`'s state at a frame top as one value) carries it with the clock (§11.5, D-273).",
-   "new": "A checkpoint (the `Model`'s state at a frame top as one value) carries it with the clock (§11.5, D-273).",
+   "new": "A checkpoint carries it with the clock (§11.5, D-273).",
    "where": "new",
    "cites": [
     "D-273",
@@ -699,12 +701,17 @@
   {
    "id": "C-074",
    "old": "`Simulation` is a mutable struct of four fields, the `Model` (the deployment and its executor at one scalar), the run, the data plane and the control plane (D-317).",
-   "new": "`Simulation` is a mutable struct of four fields, the `Model` (the deployment and its executor at one scalar), the run, the data plane and the control plane (D-317).",
+   "new": "`Simulation` is a mutable struct of four fields, the `Model` (the deployment and its executor at one scalar), the run, the data plane (§11) and the control plane (D-317).",
    "where": "new",
    "cites": [
     "D-317"
    ],
-   "tag": "F"
+   "newcites": [
+    "D-317",
+    "§11"
+   ],
+   "tag": "F",
+   "note": "§11 introduces the data plane (step 5, P2-13)"
   },
   {
    "id": "C-075",
@@ -776,13 +783,18 @@
   {
    "id": "C-082",
    "old": "The loop's diagnostic cell, its account and the published holder are the plane's, and the frame's own cell is the `Model`'s (§11.8).",
-   "new": "The loop's diagnostic cell, its account and the published holder are the plane's, and the frame's own diagnostic cell is the `Model`'s (§11.8).",
+   "new": "The loop's diagnostic cell, its account and the published-snapshot holder (§11.2) are the data plane's, and the frame's own diagnostic cell is the `Model`'s (§11.8).",
    "where": "new",
    "cites": [
     "§11.8"
    ],
+   "newcites": [
+    "§11.2",
+    "§11.8"
+   ],
    "tag": "R",
-   "ruling": "R20"
+   "ruling": "R20",
+   "note": "\"the plane's\" names the data plane, whose `DataPlane` holds the three (`src/roster.jl` 196–204); the holder is §11.2's (step 5, P2-13)"
   },
   {
    "id": "C-083",
@@ -892,12 +904,13 @@
   {
    "id": "C-093",
    "old": "Initialized means `init!` has completed boundary zero, the initialization boundary run as the ordinary macro-sequence with an empty integrate (§14.5), or `restore!` or `replay!` has restored a checkpoint.",
-   "new": "Initialized means `init!` has completed boundary zero, the initialization boundary run as the ordinary macro-sequence with an empty integrate (§14.5), or `restore!` or `replay!` has restored a checkpoint.",
+   "new": "Initialized means `init!` has completed boundary zero (§14.5), or `restore!` or `replay!` has restored a checkpoint.",
    "where": "new",
    "cites": [
     "§14.5"
    ],
-   "tag": "F"
+   "tag": "F",
+   "note": "boundary zero's gloss is stated once, at its first use above (step 5, P2-12)"
   },
   {
    "id": "C-094",
@@ -991,7 +1004,7 @@
   {
    "id": "C-103",
    "old": "The mode names where the next frame's drain takes its batches from, the staging cells or the attached recording (§12.7).",
-   "new": "The mode names where the next frame's drain takes its batches from, the staging cells or the attached recording (§12.7, D-218).",
+   "new": "The mode names where the next frame's drain takes its batches from, the staging cells (where each device's pending batch waits between drains) or the attached recording (§12.7, D-218).",
    "where": "new",
    "cites": [
     "§12.7"
@@ -1296,7 +1309,7 @@
   {
    "id": "C-132",
    "old": "The harness write path is `stage!(sim, \"face\" => value, …)` (§11.3),",
-   "new": "The harness write path is `stage!(sim, \"face\" => value, …)`, and §11.3 specifies that harness writer.",
+   "new": "The harness write path is `stage!(sim, \"face\" => value, …)`, and §11.3 specifies the writer.",
    "where": "new",
    "cites": [
     "§11.3"
@@ -1471,15 +1484,16 @@
   {
    "id": "C-150",
    "old": "Termination policy is honored throughout, as bit-identity requires.",
-   "new": "Termination policy is honored throughout, as bit-identity requires.",
+   "new": "The stop policy is honoured throughout, as bit-identity requires.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "F",
+   "note": "one name for the stop policy and the chapter's spelling (step 5, P2-17)"
   },
   {
    "id": "C-151",
    "old": "`t_end` reached, or a stop request holding at frame 3 of `step!(sim; frames = 10)`, ends the run there through the ordinary §12.4 tail and leaves the simulation `stopped`.",
-   "new": "`t_end` reached, or a stop request (an output port of the framework enum `StopFlag`) holding at frame 3 of `step!(sim; frames = 10)`, ends the run there through the ordinary §12.4 tail and leaves the simulation `stopped`.",
+   "new": "`t_end` reached, or a stop request (an output port of the framework enum `StopFlag`) holding (publishing `STOP_REQUESTED`) at frame 3 of `step!(sim; frames = 10)`, ends the run there through the ordinary §12.4 tail and leaves the simulation `stopped`.",
    "where": "new",
    "cites": [
     "§12.4"
@@ -2039,20 +2053,20 @@
  "added": [
   "This section settles what the periphery (everything outside the loop that exchanges data with it) may do to a running model.",
   "The periphery's attached participants are its devices.",
-  "The section surveys FlightCore's mid-run mutations, states the clock criterion that maps scripts to components (units of modeling), eliminates `user_callback!`, covers manual events and mid-run re-initialization, and ends with the doctrine's final form.",
+  "The section surveys FlightCore's mid-run mutations, states the clock criterion that maps scripts to components (units of modeling), eliminates FlightCore's per-step hook `user_callback!`, covers manual events and mid-run re-initialization, and ends with the doctrine's final form.",
   "The line references are to `c172_demos.jl`, FlightCore's demo file.",
   "`K` being the multiplier in `Relative(K)` (§10.5).",
   "A snapshot is the immutable per-boundary publication.",
   "A tick is an instant at which a discrete component's stages and update run.",
-  "This section specifies what a `Simulation` and its run own, the lifecycle a simulation moves through, how it advances and restarts, and what it keeps of its devices (any attached participants in the periphery) across runs.",
+  "A sweep is one pass through the execution order against the current state.",
+  "This section specifies what a `Simulation` and its run own, the lifecycle a simulation moves through, how it advances and restarts, what it keeps of its devices (any attached participants in the periphery) across runs, and the stop policy each advance declares.",
   "A simulation is in one of five lifecycle states, built, initialized, running, stopped or errored.",
   "A door is an entry point that builds a run, and there are three, `init!`, `restore!` and `replay!`.",
-  "A run's `feed` is the recording `replay!` attached, or `nothing`.",
   "The input mode says where the next frame (one grid step, the unit of scheduling) takes its inputs from.",
-  "In `:live` they come from the staging cells (where each device's pending batch waits between drains), and in `:replay` from the attached recording.",
   "#### The run and the simulation",
+  "`feed` is described above.",
   "The control plane is the atomic surface carrying pause, pace and stop.",
-  "The executor is the compiled form of the stage execution order, and a diagnostic cell is a writer's own holding place for runtime diagnostics.",
+  "A diagnostic cell is a writer's own holding place for runtime diagnostics.",
   "#### Lifecycle states and the input mode",
   "Replay is the ordinary loop re-driven from the trace.",
   "The drain is the frame-top swap that publishes staged device writes into the root inputs, and a batch is a device's staged set of writes.",
