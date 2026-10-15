@@ -1,0 +1,169 @@
+abstract entry
+assembly
+class
+component
+container children
+continuous component
+contract
+declaration inventory
+derived contract
+function family
+generic holding
+hybrid causal system
+local wire
+the letters
+periodic discrete component
+rate scope
+schema authority
+stage function / two-stage outputs
+state declaration
+workspace
+buffer
+bundle
+cell
+constant source
+entry
+face
+feedthrough
+field handle / function-valued signal
+immutable value semantics
+one home per datum
+port
+root input
+scratch
+signal table
+staging cell
+store
+summing junction
+value-level constructor
+view
+algebraic loop
+execution order
+flow / RHS
+frame
+projection
+sweep
+anchor
+boundary
+boundary-detected
+chattering / localization budget
+due
+edge semantics / holding
+firing budget
+guard
+harmonic grid
+input epoch
+interpolant
+localized
+pacing / pacer debt
+phase (`Φ`)
+predicate
+prior
+quiescence
+remainder step
+schedule / `Schedule`
+state event
+tick
+tick index
+tier
+time event
+activation
+always-on conformance check
+`Build`
+chunking
+`Deployment`
+`Events`
+executable set
+executor
+leaf walk
+lens
+measurement seam / phase bodies
+`Model`
+nominal
+`Outputs`
+probe
+probe value / input synthesis
+`ProbeDual`
+schema vs. layout
+`Structure`
+walked / pinned / exempt
+bad datum
+batch
+binding
+boundary counter
+calling task
+claim
+coalescing
+control plane
+derived liveness
+device
+diagnostic cell
+drain
+framework status
+greedy claim
+harness cell
+harness writer
+`latest`
+next-snapshot wait
+operator interrupt
+orphaned claims
+peek
+periphery
+roster
+`Run`
+scenario component
+selector (read-selector family)
+leaf address
+snapshot
+stage-on-interaction
+`StopPolicy`
+unattended run
+write surface
+checkpoint
+decimation
+frame ordinal
+input mode
+log
+recorders
+replay
+run metadata
+trace
+trace header
+trace record
+what-if replay
+`at` / `Scoped`
+baseline
+boundary zero
+combine
+component test rig
+condition
+fragment
+fragment tree
+mounting
+override
+root-input totality
+service lifecycle
+taps
+`TrimProblem`
+carrier exception
+collect the checks, fail the evaluations fast
+did-you-mean
+error locality
+execution cursor
+feedthrough tracer
+kind
+payload
+species
+stop request / termination is a state
+termination record
+artifact
+blessed
+decision entry / `D-nnn`
+the freeze
+guarded addition
+normative / index, not a second home
+recorded, not built
+state
+seam
+torture test
+worked (example)
