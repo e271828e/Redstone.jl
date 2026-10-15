@@ -1,0 +1,13 @@
+chapter 1: 0 bold spans, 0 bold words
+chapter 2: 7 bold spans, 50 bold words
+chapter 3: 8 bold spans, 61 bold words
+chapter 4: 16 bold spans, 158 bold words
+chapter 5: 21 bold spans, 189 bold words
+chapter 6: 9 bold spans, 101 bold words
+chapter 7: 12 bold spans, 125 bold words
+chapter 8: 80 bold spans, 757 bold words
+chapter 9: 81 bold spans, 677 bold words
+chapter 10: 59 bold spans, 561 bold words
+chapter 11: 84 bold spans, 742 bold words
+chapter 12: 65 bold spans, 596 bold words
+OK — every bold span in a rewritten chapter carries its D-citation.

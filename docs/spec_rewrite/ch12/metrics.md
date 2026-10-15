@@ -30,3 +30,5 @@ Orchestrator context: checkpoint 3 (every item ruled), 304170 tokens.
 
 Ruled edits: 1 Opus run, 0.14M. Final verification: 2 Opus runs, 0.37M, 2 findings (one lost clause, restored as O-1; one log note). PDF check: 1 Sonnet run, no damage.
 Orchestrator context: checkpoint 4 (landing approved), 332611 tokens.
+
+Landing: 1 Opus run, 0.10M; commits c97a1d2 (outside edits) and e91aa40 (splice); one stop (a stale glossary whitelist entry, trimmed).
