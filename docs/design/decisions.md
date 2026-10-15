@@ -830,7 +830,7 @@ debt + re-anchor on excess; `p = ∞` as explicit pacer-off; hybrid
 sleep-then-spin toward `deadline − margin`, with `margin` the single knob (0 =
 pure sleep, ∞ = pure busy-wait = FlightCore).
 
-**Spec.** [§10.7][s10-7]
+**Spec.** [§10.7][s10-7], [§12.1][s12-1], [§12.2][s12-2]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -855,7 +855,7 @@ one atomic reference op, GC as reclamation; no user code or unbounded work in
 framework critical sections; control on a separate atomic surface (staging
 cannot un-pause a drainless loop); interactive = batch + devices.
 
-**Spec.** [§2][s2], [§11.1][s11-1]
+**Spec.** [§2][s2], [§11.1][s11-1], [§12.1][s12-1], [§12.3][s12-3]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -1042,7 +1042,14 @@ stopped status → wake framework waits → `unblock!` hook (close-own-socket
 idiom; EOT demoted to wire courtesy) → join with named timeout; device crash =
 `should_close` path; loop failure runs the same protocol from the catch path.
 
+**Spec.** [§12.4][s12-4], [§13.6][s13-6]
+
 **Rationale.** Recorded only through the rejections below.
+
+Annotation (2026-10-15): since [D-373][d-373] `should_close` dissolves into the loop
+body returning, a voluntary exit. A crashing device task is caught by the
+framework wrapper ([D-102][d-102]) and follows the same path, and it requests a sim
+stop only if the device's `should_abort` is set ([§12.4][s12-4]).
 
 **Rejected.**
 - *EOT as the relied-on unblock mechanism:* protocol detail doing framework
@@ -1064,6 +1071,9 @@ addition with shape on record.
 **Spec.** [§11.3][s11-3], [§12.5][s12-5], [§14][s14]
 
 **Rationale.** Recorded only through the rejections below.
+
+Annotation (2026-10-15): the "slot" of "manual events = slot + guard" is a
+root input since [D-206][d-206].
 
 **Rejected.**
 - *Scripts as input devices:* breaks unpaced — wall-clock staging against µs
@@ -1474,7 +1484,7 @@ conditioning, mappings, edge logic and pokeability:
 - Edge logic is staged counters plus model-state accumulators.
 - Unexported ports are unpokeable.
 
-**Spec.** [§4.3][s4-3], [§11.4][s11-4], [§11.6][s11-6], [§11.7][s11-7]
+**Spec.** [§4.3][s4-3], [§11.4][s11-4], [§11.6][s11-6], [§11.7][s11-7], [§12.5][s12-5]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -1862,7 +1872,7 @@ faces at `Simulation` construction (OR-combined, `Build`-validated,
 metadata-recorded, sampled at completed boundaries); exceptions from model code
 always abnormal; no `SimulationTermination` exception type.
 
-**Spec.** [§9.3][s9-3], [§13.5][s13-5], [§14.4][s14-4]
+**Spec.** [§9.3][s9-3], [§12.4][s12-4], [§12.5][s12-5], [§13.5][s13-5], [§14.4][s14-4]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -2790,6 +2800,12 @@ during `step!` through the ordinary [§12.4][s12-4] tail, and `step!` returns th
 *actually* advanced; `t_end`/`stop_on` re-bindable per run at `run!` ([D-091][d-091]);
 `errored` terminal ([D-059][d-059]).
 
+Annotation (2026-10-15): `UninitializedSlots` is `UninitializedInputs` since
+[D-206][d-206]. Since [D-255][d-255] `init!` allocates a fresh trace and log rather than
+clearing them, and [D-255][d-255] supersedes [D-091][d-091]: `t_end` and `stop_on` are
+keywords of `run!` and `replay!`, validated per call. `stop_on` is
+`ignore_stop_requests` since [D-316][d-316].
+
 **Rejected.**
 - *`run!`-only surface:* kills the test-harness advance-assert idiom and the
   REPL fly-inspect-continue idiom — neither is a [§12.5][s12-5] script.
@@ -3052,6 +3068,12 @@ join [§13.2][s13-2]'s closed inventory per [D-092][d-092]'s rule; two kinds, no
 payloads differ in the decisive field (`cause`) and [§13.4][s13-4]'s domain
 separation already treats the crash path as its own species.
 
+Annotation (2026-10-15): amended by [D-228][d-228]. A rate-limited diagnostic kind
+names its subjects in the payload and never its writer, and `DeviceCrash`
+is written to the crashing device's own cell, so its payload is the
+exception as `cause` and whether `should_abort` was set, with no device id
+([Appendix C][sC]).
+
 **Rejected.**
 - *A single merged device-failure kind:* union payload; blurs abandoned-join vs
   caught-crash, which [D-058][d-058]'s kind+payload test binding must distinguish.
@@ -3176,6 +3198,17 @@ header's schemas ([D-107][d-107] — once, off the loop, so the replay drain app
 compiled scatters exactly as the live drain); structural mismatch errors,
 parametric difference = the what-if replay (determinism promised,
 reproduction only against the identical build).
+
+Annotation (2026-10-15): amended by [D-174][d-174], [D-176][d-176], [D-255][d-255] and [D-274][d-274]. Since
+[D-274][d-274] the header is the checkpoint `init!` takes at the end of boundary
+zero, and replay restores it and feeds the batches, so the two
+substitutions become one, the drain fed by the recording: `init!` is the
+only door that runs boundary zero. The interactive writer is the harness
+writer since [D-174][d-174]. Since [D-176][d-176] every writer's drained batch is
+sparse-converted at the drain, so the trace has one record format and
+replay one inverse-conversion path, and since [D-255][d-255] the schemas are a list
+on the trace, not in its header. `ReplayHeaderMismatch` is
+`CheckpointMismatch` ([Appendix C][sC]).
 
 **Rejected.**
 - *A `run!(sim; replay = trc)` flag:* replay replaces `init!` and swaps the
@@ -3438,7 +3471,7 @@ follows each service's inputs — `capture` requires `initialized`/`stopped`
 inherits `capture`'s precondition with the defaulted operating point and
 `init!`'s with an explicit `about`.
 
-**Spec.** [§11.3][s11-3], [§13.6][s13-6], [§14][s14]
+**Spec.** [§11.3][s11-3], [§12.6][s12-6], [§12.7][s12-7], [§13.6][s13-6], [§14][s14]
 
 **Rationale.** `errored` is terminal for all four ([D-059][d-059]) — a captured
 condition is indistinguishable from a healthy one once produced, so
@@ -3524,6 +3557,10 @@ explicitly via `capture`'s returned `t` passed as `t0`.
 an `init!` in every respect — boundary zero, [§14.6][s14-6] pre-write totality,
 guards-at-commit, `t0` anchoring, and the [§12.6][s12-6] three-item clear (trace, log,
 staged batches).
+
+Annotation (2026-10-15): amended by [D-273][d-273]. `capture` no longer produces a
+condition, and a resume is a checkpoint and a restore, so resume-at-time is
+no longer spelled through `capture`'s returned `t` passed as `t0`.
 
 **Rejected.**
 - *Default `t0` = current boundary time (the review's proposal):* two defaults
@@ -3642,6 +3679,11 @@ is expected — newest-wins.
 **Spec.** [§10.4][s10-4], [§12.3][s12-3], [§13.4][s13-4]
 
 **Rationale.** Recorded only through the rejections below.
+
+Annotation (2026-10-15): amended by [D-230][d-230]. A snapshot carries the
+trajectory's published-boundary ordinal, and the wait counter is a
+separate, monotone count that is never reset, so the loop state the wait
+predicate tests no longer mirrors the snapshot's index.
 
 **Rejected.**
 - *Counter incremented before the release-store:* a woken waiter satisfying the
@@ -4076,6 +4118,10 @@ Annotation (2026-10-13): the trace header holds the `Deployment` and `t₀` and
 no policy, so the `t_end`/`stop_on` pair is not recorded ([D-255][d-255]). The
 terminating advance's policy is in the termination record.
 
+Annotation (2026-10-15): `n` is `N_base` since [D-234][d-234], and `event_budget` is
+`localization_budget` since [D-181][d-181]. `ReplayHeaderMismatch` is
+`CheckpointMismatch` ([Appendix C][sC]).
+
 **Rejected.**
 - *Validating the whole block uniformly:* freezes `t_end`/`stop_on`, which
   [§12.7][s12-7] explicitly leaves overridable, and a recorded `stop_on` termination
@@ -4103,10 +4149,14 @@ failing frame, localized boundaries included ("trace boundary index" deleted:
 the trace is frame-indexed, the pointer is a boundary index, the merged phrase
 named a nonexistent object).
 
-**Spec.** [§10.4][s10-4], [§12.6][s12-6], [§12.7][s12-7], [§13.4][s13-4], [Appendix C][sC]
+**Spec.** [§10.4][s10-4], [§12.3][s12-3], [§12.6][s12-6], [§12.7][s12-7], [§13.4][s13-4], [Appendix C][sC]
 
 **Rationale.** The boundary counter stays the reporting index ([§10.4][s10-4]'s
 counter/frame-ordinal separation intact).
+
+Annotation (2026-10-15): amended by [D-230][d-230]. The index a snapshot reports is
+the trajectory's published-boundary ordinal, and the boundary counter is
+the wait's separate, monotone count, its absolute value nowhere normative.
 
 **Rejected.**
 - *Last-published-boundary as the cursor pointer with a `k − 1` recipe:* not
@@ -4274,6 +4324,11 @@ runs on a spawned task, so the topology clause is historical; the wrapper's
 discrimination stands on the Position, an operator interrupt being a
 control-plane stop, not a failure.
 
+Annotation (2026-10-15): since [D-310][d-310] no device runs on the calling task, so
+[§12.4][s12-4](5) has no asymmetry left, and the clause on "(5)'s honest asymmetry"
+above is historical. `stop_on` is `ignore_stop_requests` since [D-316][d-316]: a
+model's stop request ends the run unless the advance ignores it.
+
 **Rejected.**
 - *Treating the interrupt as a runtime failure — the `StepError` path an
   unguarded Ctrl-C takes today:* destroys the session it means to pause:
@@ -4347,6 +4402,11 @@ Annotation (2026-10-02): amended by [D-256][d-256], [D-234][d-234] and [D-181][d
 parameters are `Deployment` constructor keywords beside `h`, `N_base` and the
 algorithm, `event_budget` is `localization_budget`, and `firing_budget` joins
 them as a third recorded parameter.
+
+Annotation (2026-10-15): amended by [D-198][d-198] and [D-316][d-316]. The join timeout is
+`join_timeout`, a keyword defaulting to 5 s ([D-198][d-198]). `stop_on` is
+`ignore_stop_requests` since [D-316][d-316]: a model's stop request ends the run at
+the first publication where it holds, unless the advance ignores it.
 
 **Rejected.**
 - *An absolute-in-`t` localization tolerance:* breaks scale-freedom across `h`
@@ -4696,6 +4756,18 @@ are withdrawn and no GUI ships, so the topology clause and the shipped GUI's
 `should_abort = true` are historical. "Marks it dead" in the Position means no
 task is spawned and the record shows it; nothing else marks a device dead
 ([D-160][d-160]'s annotation).
+
+Annotation (2026-10-15): the bracket runs at the top of a run, and a run
+need not start at boundary zero, so the Rationale's boundary-zero clauses
+read at the run's start ([§12.4][s12-4]). A failed device is dead from the run's
+first frame top. Its orphaned root inputs, the slots of the Rationale since
+[D-206][d-206], hold the values the run started with, well-defined by root-input
+totality ([§14.6][s14-6]). With `should_abort` clear the device is absent from the
+run's first frame. With it set the stop is pending at the run's first
+frame top, which the loop reads before any frame, so the run advances no
+frame and ends `stopped` where it started, its terminal snapshot the one
+it started from. `DeviceCrash`'s payload names no device id since [D-228][d-228].
+The cell it is written to names the device.
 
 **Rejected.**
 - *Requiring `init!` to clean up after itself on failure:* an unenforced burden
@@ -7441,6 +7513,12 @@ is published and the stopped status set, so the cap cannot move a trajectory
 and stays replay-blind, the `log_max` disposition ([§11.2][s11-2]). One value for the
 whole tail: the join loop has one patience.
 
+Annotation (2026-10-15): amended by [D-256][d-256] and [D-317][d-317]. [D-256][d-256] moves
+`join_timeout` into `Control`, and [D-317][d-317] makes it a keyword of
+`Simulation(model::Model{Float64}; join_timeout = 5.0)`. The Rationale's
+"Deployment contexts" are contexts of use, not the `Deployment`. [§12.4][s12-4] says
+"usage contexts".
+
 **Rejected.**
 - *Superseded position — the join timeout as an operational constant with no
   user knob ([D-133][d-133]):* the gap [D-133][d-133] closed was ownership, not configurability;
@@ -8251,6 +8329,9 @@ Annotation (2026-10-13): the length is the frame ordinal of the last drain
 ([D-260][d-260]), which under `init!` equals the number of drains since the header; a
 trace that `restore!` opens starts at the checkpoint's frame ([D-274][d-274]).
 
+Annotation (2026-10-15): `ReplayHeaderMismatch` is `CheckpointMismatch`
+([Appendix C][sC]).
+
 **Rejected.**
 - *A mutable termination slot in the header, rewritten at every advance:* one
   slot holds one run's pair, and the header stops being a single-instant
@@ -8296,6 +8377,10 @@ register the caller can read. The recording as the bound is what keeps the
 distinction honest across a halt: an advance never leaves the records behind
 and keeps going, so every frame of a session is either record-driven or live,
 and which one it was is readable before it runs.
+
+Annotation (2026-10-15): since [D-274][d-274] replay restores the header and runs no
+boundary zero, so [D-101][d-101]'s two substitutions are one, the drain fed by the
+recording.
 
 **Rejected.**
 - *The implicit switch — a feed present only while the replay call runs:* the
@@ -8578,6 +8663,9 @@ the ruling the lifecycle word moved only at `init!`'s end, so a re-`init!`
 that threw left a warm simulation reporting `initialized` with the clock reset
 and the stores half-transitioned, and `step!` advanced on them.
 
+Annotation (2026-10-15): since [D-274][d-274] `init!` is the only door that runs
+boundary zero, so a throw inside boundary zero comes under `init!` alone.
+
 **Rejected.**
 - *Raw propagation, closing only the lifecycle hole:* forgoes the frame and
   keeps two shapes for one failure.
@@ -8753,7 +8841,7 @@ the glossary's, and carries no such collision.
 and never its writer. The writer is the identity of the cell it was written
 to, and the published status record's `who` and the tail residue carry it.
 
-**Spec.** [§11.8][s11-8], [Appendix C][sC]
+**Spec.** [§11.8][s11-8], [§12.4][s12-4], [Appendix C][sC]
 
 **Rationale.** [§11.8][s11-8] gives every writer its own cell: one per rostered
 device, one for the harness writer, one for the loop. A device reports
@@ -8862,6 +8950,10 @@ payload. The replay pointer of [§13.4][s13-4] is a third index, the frame-entry
 boundary index, a frame count that can name no `t*` boundary; [§10.4][s10-4] and
 [§12.3][s12-3] had called it the counter and now name it as what it is. The cost is
 one field beside the clock, reset with it and stamped at publication.
+
+Annotation (2026-10-15): amended by [D-274][d-274]. A `restore!` of a checkpoint
+opens a fresh run, but the boundary ordinal continues, being the
+trajectory's ([§12.3][s12-3]).
 
 **Rejected.**
 - *The wait counter as the snapshot's index:* unique across every trajectory
@@ -9726,6 +9818,9 @@ Annotation (2026-09-24): `TierSignatureMismatch` retires with the contract
 arities, and the `init_workspace` arity leaves `DeclarationOnWrongTier`'s
 member set; a `Pinned` entry on a discrete leaf joins it ([D-263][d-263]).
 
+Annotation (2026-10-15): the fourth bullet is historical. [D-316][d-316] retires the
+`stop_on` keyword and `StopFaceInvalid`.
+
 **Rejected.**
 - *Keeping the contract arity under `DeclarationOnWrongTier` on a stateful
   leaf:* the same wrong form reports as two kinds by the leaf's statefulness,
@@ -10118,6 +10213,12 @@ Annotation (2026-10-13): the length is the frame ordinal of the last drain
 ([D-260][d-260]), which under `init!` equals the number of drains since the header; a
 trace that `restore!` opens starts at the checkpoint's frame ([D-274][d-274]).
 
+Annotation (2026-10-15): [D-260][d-260] supersedes the first bullet's `Run`, and
+with [D-261][d-261] the placeholder. `t₀` and the mode are not run fields, and the
+placeholder run is an empty log and no trace. [D-317][d-317] supersedes the clause
+keeping the lifecycle on `Control`. `Control` holds a running flag, and
+`lifecycle(sim)` derives the state.
+
 
 ### D-256 — Regroup the `Simulation`'s fields by owner
 
@@ -10376,6 +10477,9 @@ a nonzero partial, a start-time perturbation, has no reader in the design.
 A `Float64` origin also lets `init!` take `t0 = 0.25` on a `Dual`
 simulation, which a `T`-typed keyword refused.
 
+Annotation (2026-10-15): [D-317][d-317] supersedes the first bullet's four-field
+`Run`. The frame index and the boundary ordinal are the run's counters.
+
 **Rejected.**
 - *A run per advance, owning its policy:* the log and the trace span
   advances, so consecutive runs would share them and own neither; and an
@@ -10515,6 +10619,10 @@ Annotation (2026-10-08): amended by [D-316][d-316]. `StopPolicy` is `t_end` and 
 ignored requester paths. The loop's argument beside it is an ignore mask,
 one entry per requester, in place of the faces' compiled addresses, and a
 `t*` stop hit is a requester or `nothing`.
+
+Annotation (2026-10-15): [D-317][d-317] supersedes the clause keeping `chunk_size`
+on `Simulation(deployment, T)`. `chunk_size` is a keyword of
+`Model(deployment, T = Float64; chunk_size = 16)`.
 
 **Rejected.**
 - *The recording flags as a sixth `Simulation` field:* a parameter nothing
@@ -11185,6 +11293,12 @@ which releases directly each device it never spawned and advances a cursor
 after each `shutdown!` returns; an interrupt between a return and the cursor's
 advance repeats that call ([§11.6][s11-6]).
 
+Annotation (2026-10-15): the stop faces of the second bullet and the
+Rationale are stop requests since [D-316][d-316]. Since [D-274][d-274] `restore!` copies a
+checkpoint's state back, and replay is a restore followed by the feed, so
+the stores of the second 2026-09-26 annotation may hold mid-boundary values
+until the next `init!`, `restore!` or `replay!` ([§12.4][s12-4]).
+
 **Rejected.**
 - *`pause!(sim, flag::Bool)` as one verb:* two verbs read at the call site
   and match `stop!`; a Boolean argument spells the un-pause as a negation.
@@ -11689,7 +11803,7 @@ is the trace's header, and replay is a restore followed by the feed.
   restores the header and runs no boundary zero, so frame one's record is
   still ahead of it and `step!` re-executes that frame.)
 
-**Spec.** [§10.2][s10-2], [§10.6][s10-6], [§11.5][s11-5], [§12.6][s12-6], [§12.7][s12-7], [§13.7][s13-7], [§14.8][s14-8], [§14.10][s14-10], [Appendix B][sB]
+**Spec.** [§10.2][s10-2], [§10.6][s10-6], [§11.5][s11-5], [§12.6][s12-6], [§12.7][s12-7], [§14][s14], [§14.8][s14-8], [§14.10][s14-10], [Appendix B][sB]
 
 **Rationale.** Once the state past the initial instant is a value of its
 own, restoring it is a copy, and nothing can be one tick ahead: the held
@@ -11723,6 +11837,9 @@ refusal by dispatch of a state from another activation sits on the two
 
 Annotation (2026-10-13): the persistence deferral is `pending.md`'s (Log and
 trace persistence) and [Appendix B][sB]'s, not [§11.5][s11-5]'s.
+
+Annotation (2026-10-15): the stopped-sim services are [§14][s14], so the second
+bullet's [§13.7][s13-7] reads [§14][s14].
 
 **Rejected.**
 - *Two header kinds, the pre-sequence resolved condition for an authored
@@ -14052,7 +14169,8 @@ compose the model's.
 - The grid arithmetic the model layer reads, `_frame_slack`, `_frames_to`
   and `_frame_at`, lives in `frame.jl` beside `_grid_time`.
 
-**Spec.** [§9.2][s9-2], [§11.5][s11-5], [§12.6][s12-6], [§14][s14], [§14.5][s14-5], [§14.8][s14-8], [§14.10][s14-10], [Appendix B][sB], [Appendix C][sC]
+**Spec.** [§9.2][s9-2], [§11.5][s11-5], [§12.4][s12-4], [§12.6][s12-6], [§12.7][s12-7], [§14][s14], [§14.5][s14-5], [§14.8][s14-8], [§14.10][s14-10],
+[Appendix B][sB], [Appendix C][sC]
 
 **Rationale.** The checkpoint fused the model's state with the trajectory's
 cursor. A `Model{Dual}` can checkpoint and restore without ever having a
@@ -14780,7 +14898,7 @@ input that the drain changed.
 a device with no `loop` method (`DeviceContractMismatch`, [D-216][d-216]). `init!`,
 `shutdown!` and `unblock!` are optional, each with a no-op default.
 
-**Spec.** [§11.6][s11-6]
+**Spec.** [§11.6][s11-6], [§12.4][s12-4]
 
 **Rationale.** A device with no OS resources has nothing to acquire or
 release, so a mandatory `init!` or `shutdown!` would only force empty
@@ -14963,7 +15081,7 @@ decides nothing new.
 close only what is open, the same defensiveness the crash path already
 demands. The obligation is taught ([§11.6][s11-6], [Appendix A][sA]).
 
-**Spec.** [§11.6][s11-6]
+**Spec.** [§11.6][s11-6], [§12.4][s12-4]
 
 **Rationale.** This restates the taught obligation [D-138][d-138]'s Rationale records
 outside its Position. It follows from the bracket that Position rules. A
@@ -14985,7 +15103,7 @@ decides nothing new.
   interruptible blocking, are taught ([Appendix A][sA]) and diagnosed
   (`DeviceJoinTimeout`, a stale heartbeat), never forced.
 
-**Spec.** [§11.6][s11-6]
+**Spec.** [§11.6][s11-6], [§12.4][s12-4]
 
 **Rationale.** Each bullet restates a clause of [D-102][d-102]'s Rationale that its
 Position does not state. [D-030][d-030]'s Position names the predecessor's
@@ -15010,7 +15128,7 @@ Position does not state. [D-030][d-030]'s Position names the predecessor's
 - The drain is fully compilable against the frozen roster. The
   specialization is an implementation freedom, not an obligation.
 
-**Spec.** [§11.3][s11-3], [§11.4][s11-4], [§11.6][s11-6]
+**Spec.** [§11.3][s11-3], [§11.4][s11-4], [§11.6][s11-6], [§12.2][s12-2], [§12.4][s12-4]
 
 **Rationale.** Each bullet restates a clause of [D-106][d-106]'s Rationale that its
 Position does not state. The first reverses [D-087][d-087]'s zombie-claims rejection,
@@ -15160,7 +15278,7 @@ chapter 11's rewrite found no entry behind it.
 since the same device can be advisory in one deployment and decisive in
 another.
 
-**Spec.** [§11.6][s11-6], [§D.6][sD-6]
+**Spec.** [§11.6][s11-6], [§12.4][s12-4], [§D.6][sD-6]
 
 **Rationale.** This restates the reason of a rejection that no Position
 states. [D-138][d-138]'s Rejected list refuses declaring `should_abort` in the device
