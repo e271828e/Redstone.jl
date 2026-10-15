@@ -17,12 +17,16 @@ and control, but the formalism is domain-neutral.
 - A runtime data plane for devices, GUIs and scripts, with staged writes,
   snapshot reads and no shared mutable model.
 - Bit-identical replay from a recorded input trace.
-- Initialization and trim, with exact automatic-differentiation Jacobians.
+- Initialization, trim and linearization, with exact
+  automatic-differentiation Jacobians.
+- Real-time pacing against the wall clock, with pause and resume.
+- A standard block library: integrators and limited integrators, lags, linear
+  systems in `s` and `z`, relays, delays, noise, and PID and LQR tracking
+  controllers with anti-windup, hold and bumpless engage.
 - Structured diagnostics from a closed set of kinds, reported where the
   mistake was made.
 
-Linearization, the GUI write path, real-time pacing and pausing are designed
-but not yet built.
+The browser inspector and cockpit are designed but not yet built.
 
 ## Status
 
@@ -110,5 +114,7 @@ Redstone has no user manual yet. Its design is written down in full:
 - `docs/design/spec.md` is the normative specification.
 - `docs/design/decisions.md` records every design decision and the
   alternatives it rejected.
-- `docs/design/companions/` holds worked explainers.
+- `docs/design/companions/` holds worked explainers, among them
+  `library_inventory.md`, the block library and its admission rule.
+- `docs/design/pending.md` is the work order toward the first release.
 
