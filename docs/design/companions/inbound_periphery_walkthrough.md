@@ -1,8 +1,8 @@
 # The inbound periphery, from the ground up
 
 *A companion explainer, not normative text. The ground truth is
-`spec.md` [§11.3][s11-3] (root inputs, claims, the roster freeze), [§11.4][s11-4] (staging and the drain), [§11.7][s11-7] (GUI write path),
-[§12.6][s12-6] (harness cell) and decision [D-044][d-044], [D-093][d-093], [D-096][d-096], [D-106][d-106], [D-174][d-174], [D-176][d-176], [D-177][d-177].
+`spec.md` [§11.3][s11-3] (root inputs, claims, the roster freeze, the harness cell), [§11.4][s11-4] (staging and the drain),
+[§11.7][s11-7] (GUI write path) and decision [D-044][d-044], [D-093][d-093], [D-096][d-096], [D-106][d-106], [D-174][d-174], [D-176][d-176], [D-177][d-177].
 Written
 2026-07-31 after the round-3 write-surface settlement; rewritten 2026-08-01
 for the roster freeze ([D-106][d-106]–[D-107][d-107]) and 2026-08-11 for the surface
@@ -194,7 +194,7 @@ machinery:
   local GUI on the stick faces).
 - **The harness writer**: the framework-owned task-free entry point
   `stage!(sim, "face" => value, ...)` and its always-present cell
-  ([§12.6][s12-6]). This is the design's one **derived** surface — the unclaimed
+  ([§11.3][s11-3]). This is the design's one **derived** surface — the unclaimed
   remainder of the run's partition, the complement of the union of all
   claims, computed rather than staked and every bit as static for the run as
   a claim set. It has its own compiled positional shape and scatter over that
@@ -291,7 +291,6 @@ attached next under the greedy binding (claim computed at that instant:
 [s11-6]: ../spec.md#116-devices-one-authoring-contract-no-taxonomy
 [s11-7]: ../spec.md#117-the-gui-write-path-port-resolution-peek-staging-contract
 [s12-2]: ../spec.md#122-loop-scheduling-wait-primitive-yields-thread-budget
-[s12-6]: ../spec.md#126-run-lifecycle-and-partial-advance
 [s12-7]: ../spec.md#127-replay-the-trace-re-drives-the-ordinary-loop
 [s14-4]: ../spec.md#144-one-plan-two-ways-to-apply-it
 [s8-6]: ../spec.md#86-paths-wiring-and-faces

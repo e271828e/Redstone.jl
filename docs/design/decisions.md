@@ -3491,7 +3491,7 @@ its `init!`-outcomes term were sharpened after this entry was written —
 topology is derived *after initialization*, from the roster **plus `init!`
 outcomes**, not from the frozen roster alone. [§11.1][s11-1] and [§12.4][s12-4] carry the
 canonical statement, and the looser "roster-derived" shorthand elsewhere
-([D-093][d-093], [§12.6][s12-6]) stands as shorthand for it.
+([D-093][d-093]) stands as shorthand for it.
 
 **Rejected.**
 - *Sugar-only idempotency guard:* leaves explicit double-attach of the GUI
@@ -4313,12 +4313,12 @@ few frames' worth"); heartbeat staleness 2 s ([§12.2][s12-2]); `margin` = 2 ms 
 own arithmetic), replacing [Appendix B][sB]'s `margin = <default>` placeholder.
 [§13.2][s13-2]'s per-device warning rate limit alone is **deferred** to the
 diagnostic-stream decision [closed by [D-136][d-136]: the bound is the diagnostic cell's
-ring, not a constant]. Finally `t_end`'s landing rule, stated once in [§12.4][s12-4](1):
+ring, not a constant]. Finally `t_end`'s landing rule, stated once in [§12.4][s12-4]:
 the run ends at the first grid boundary whose time reaches or exceeds `t_end` —
 whole frames only, overshooting by up to `h`, with the termination record
 carrying the actual final `t` ([§13.5][s13-5]). This amends [D-127][d-127].
 
-**Spec.** [§10.4][s10-4], [§10.5][s10-5], [§10.7][s10-7], [§11.5][s11-5], [§12.2][s12-2], [§12.4][s12-4], [§12.4][s12-4](1), [§12.4][s12-4](5), [§12.6][s12-6],
+**Spec.** [§10.4][s10-4], [§10.5][s10-5], [§10.7][s10-7], [§11.5][s11-5], [§12.2][s12-2], [§12.4][s12-4], [§12.4][s12-4](5), [§12.6][s12-6],
 [§12.7][s12-7], [§9.2][s9-2], [§13.2][s13-2], [§13.5][s13-5], [Appendix B][sB], [Appendix C][sC], [Appendix D][sD]
 
 **Rationale.** Semantic constants: `event_budget`'s default 8 covers a
@@ -11150,8 +11150,9 @@ catch as a loop failure. The masked bookkeeping closes the last window: a
 raise inside the outermost `finally` would leave the lifecycle `running`
 with no run behind it, and every service refuses that state.
 
-The roster is the discriminator because [§12.6][s12-6] defines the unattended run as
-the deviceless one and [§13.4][s13-4]'s rethrow presupposes it. The discrimination
+The roster is the discriminator because [§11.1][s11-1] defines the unattended run,
+[§12.6][s12-6] states that a deviceless `run!` is fully synchronous, and
+[§13.4][s13-4]'s rethrow presupposes it. The discrimination
 sits in `run!` alone since `step!` is deviceless by construction. A probe
 under `Base.exit_on_sigint(false)` with `kill(getpid(), SIGINT)` confirmed
 the mechanism the entries rely on: a signal inside `disable_sigint` is held

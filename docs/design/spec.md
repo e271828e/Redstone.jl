@@ -4333,8 +4333,8 @@ frame by frame with no ticks and no events.
 **A `Simulation` claims its `Model`** ([D-318][d-318]). The constructor claims the
 model once, and refuses as `ArgumentInvalid` a model already claimed by a
 simulation or one whose status is not `:built`, before anything is
-allocated. A simulation never shares its model, and its doors are the only
-way in: on a claimed model a direct call of `init!`, `frame!`, `apply!` or
+allocated. A simulation never shares its model, and its entry points are the
+only way in: on a claimed model a direct call of `init!`, `frame!`, `apply!` or
 the restore door is refused as `ArgumentInvalid`, and a state prepared on a
 standalone model enters a simulation through a restore door, never through
 the constructor.
@@ -6889,7 +6889,7 @@ latch.
 One consequence is recorded here because it collapses an API axis. Interactive
 and unattended simulation stop being different execution modes ([D-022][d-022]). An
 [unattended run](#g-unattended-run) is the same loop with empty staging and no snapshot readers. A
-replayed interactive session is the same loop with staging fed from a recording
+replayed interactive session is the same loop with its drain fed from a recording
 ([§11.5][s11-5], [§12.7][s12-7]).
 
 ### 11.2 Outbound: snapshot publication
@@ -7084,7 +7084,7 @@ stretch an occurrence fell on, never *how many*. And **`log_max` is a view
 policy, not a trajectory-determining one** ([D-137][d-137], [D-368][d-368]). Like `log` and
 `log_every` it stays out of the trace header's [`Deployment`](#g-deployment) (the scalar-free
 artifact the grid parameters fix), and replay neither records nor compares it
-([§11.5][s11-5], [§12.7][s12-7]). Sizing follows. A finite `log_max` is the log's `sizehint!`
+([§11.5][s11-5], [§12.4][s12-4], [§12.7][s12-7]). Sizing follows. A finite `log_max` is the log's `sizehint!`
 ([§9.8][s9-8]).
 
 #### Output-device bindings
@@ -7713,7 +7713,7 @@ are.
 The [trace header](#g-trace-header) is the trace's fixed preamble. A [checkpoint](#g-checkpoint) is the `Model`'s
 state at a frame top as one value. **The header is the checkpoint `init!` takes
 at the end of [boundary zero](#g-boundary-zero)** (the initialization boundary at `t₀`), after the
-first snapshot is published ([§12.6][s12-6], [D-274][d-274]). A checkpoint holds the flat buffer
+first snapshot is published ([D-274][d-274]). A checkpoint holds the flat buffer
 `x`, the `s` and `m` stores, the whole [signal table](#g-signal-table) (the collection of cells
 holding every produced signal), the guard [priors](#g-prior), `t` and `t₀`, the frame and
 boundary counters, and the fingerprint (the structural layout) and the
@@ -10999,7 +10999,7 @@ that an application establishing a complete world cover every root input).
 [§14.10][s14-10] covers linearization. A fourth stopped-sim service,
 `checkpoint`, returns a [checkpoint](#g-checkpoint) (the `Model`'s state at
 a frame top as one value). A checkpoint is not a condition and has no
-algebra, and `restore!` puts it back ([§12.6][s12-6], [D-273][d-273]).
+algebra, and `restore!` puts it back ([D-273][d-273]).
 
 **Lifecycle preconditions.** Every service requires a non-running simulation.
 While a run exists the loop owns the [stores](#g-store) between
@@ -11015,7 +11015,7 @@ Within the stopped-sim states, legality follows each service's inputs.
 |---|---|---|---|---|
 | `checkpoint` | error | legal | legal | a frame-top rest; refused after a `t*` stop and after an abandoned frame |
 | `init!` | legal | legal | legal | authored conditions |
-| `restore!` | legal | legal | legal | a checkpoint whose fingerprint matches the simulation's and whose `t` sits on its grid ([§12.6][s12-6]) |
+| `restore!` | legal | legal | legal | a checkpoint whose fingerprint and deployment match the simulation's and whose `t` sits on its grid ([§12.6][s12-6]) |
 | `trim!` | legal | legal | legal | authored conditions; the scratch world is [`override`](#g-override)`(baseline, condition(guess))` ([§14.8][s14-8]), never the sim's stores |
 | `linearize`, operating point defaulted to `checkpoint(sim)` | error | legal | legal | inherits `checkpoint`'s precondition, its refusals included |
 | `linearize`, explicit `about` ([§14.10][s14-10]) | legal | legal | legal | inherits `init!`'s legality — legal wherever `init!` is |
@@ -11058,7 +11058,7 @@ conditions are naturally sparse. Applying one means "fresh run from the
 condition is an initial condition and nothing else ([D-273][d-273]). A simulation's state
 past its initial instant is a [checkpoint](#g-checkpoint) (the `Model`'s
 state at a frame top as one value), not a condition, and it has no algebra
-([§12.6][s12-6], [D-274][d-274]).
+([D-274][d-274]).
 
 **Doctrine.** Addressing conditions by path does not reopen the
 observation-by-path rejection ([§13.5][s13-5]). That rejection was about
@@ -11946,10 +11946,10 @@ sequence ([§14.5][s14-5]) and [guards](#g-guard) at commit.
 
 The `t0` argument that anchors the grid, and its default, are the same for
 both init-service entry points ([§14.5][s14-5]). The
-[recorders](#g-recorders) are cleared exactly as [§12.6][s12-6] states for
-`init!`. Those are the [trace](#g-trace), the log, and any
+[recorders](#g-recorders) restart exactly as [§12.6][s12-6] states for
+`init!`. The [trace](#g-trace) and the log are new objects, and any
 [batches](#g-batch) still in [staging cells](#g-staging-cell) (where a
-device's pending write batch waits between drains).
+device's pending write batch waits between drains) are cleared.
 
 A fresh recording starting at its own anchor is unattended mode's
 natural shape. A trim at a point reached by flying is not offered. Trim
@@ -12758,10 +12758,11 @@ return law, [§5.2][s5-2]). There is no padding. `x` comes back complete, and
     `ServiceLifecycle`, and a clock off the grid is `CheckpointMidFrame`
     ([§12.6][s12-6]).
   - `restore!(model, model_state; hooks = NoHooks())`. Checks the state's
-    fingerprint (`CheckpointMismatch`) and its `t` against its grid
-    (`CheckpointMidFrame`) before any write. Copies the state back, settles
-    through the hooks and writes `:consistent` last. It takes no status
-    gate ([§12.6][s12-6]). A writing door.
+    fingerprint and deployment (`CheckpointMismatch`) and its `t` against
+    its grid (`CheckpointMidFrame`) before any write ([§12.6][s12-6]).
+    Copies the state back, settles through the hooks and writes
+    `:consistent` last. It takes no status gate ([D-319][d-319]). A writing
+    door.
   - `trim!(model, problem; baseline, t0 = 0.0, backend) → TrimReport`. The
     trim service on a `Model{Float64}`, committing through the model's
     `init!` ([§14.8][s14-8]). A writing door.
@@ -12852,7 +12853,7 @@ return law, [§5.2][s5-2]). There is no padding. `x` comes back complete, and
   `loop(dev, handle)` / `shutdown!(dev)` and the optional `unblock!(dev)`.
   Around those functions the framework runs a per-run `init!` on the calling task. That
   call is bracketed, so a throw there is `shutdown!` plus `DeviceCrash` by
-  name, and the device is dead from boundary zero ([§12.4][s12-4]). The
+  name, and the device is dead from the run's first frame top ([§12.4][s12-4]). The
   author-owned task body runs inside the framework's try/catch/finally
   wrapper, and voluntary exit is returning ([§11.6][s11-6], [§12.4][s12-4]).
 - The device handle. One type, with capabilities rather than a taxonomy:
@@ -12910,7 +12911,7 @@ return law, [§5.2][s5-2]). There is no padding. `x` comes back complete, and
   order is the declared side's. The problem itself closes at seven fields
   ([§14.7][s14-7]). Setup and commit both carry the root-input-totality check ([§14.6][s14-6]).
   The commit is `init!` with `override(baseline, solution)`, boundary zero
-  anchored at `t0` and recordings cleared ([§12.6][s12-6]). On a `Model{Float64}`,
+  anchored at `t0` and the recorders built anew ([§12.6][s12-6]). On a `Model{Float64}`,
   `trim!(model, problem; …)` is the same service, its commit the model's
   `init!` ([D-319][d-319]). `converged` is the service's
   per-residual box test at the backend's returned point. It is
@@ -12925,13 +12926,14 @@ return law, [§5.2][s5-2]). There is no padding. `x` comes back complete, and
   the run's two counters, the frame index and the boundary ordinal. The state
   is a `ModelState`, as `checkpoint(model)` reads it, holding the flat
   buffer, the `s` and `m` stores, the whole signal table, the guard priors,
-  `t` and `t₀`, and the fingerprint. Legal in `initialized` and `stopped`,
-  refused after a `t*` stop and after an abandoned frame
+  `t` and `t₀`, the fingerprint and the deployment. Legal in `initialized`
+  and `stopped`, refused after a `t*` stop and after an abandoned frame
   (`CheckpointMidFrame`). A checkpoint is not a condition and has no algebra
-  ([§12.6][s12-6], [§14.1][s14-1], [D-274][d-274], [D-319][d-319]).
+  ([§14.1][s14-1], [D-274][d-274], [D-319][d-319]).
 - `restore!(sim, cp; trace = true, log = true, log_every = 1,
   log_max = 65536)`. A door beside `init!` and `replay!`, legal where `init!`
-  is. It checks the checkpoint's fingerprint (`CheckpointMismatch`) and its
+  is. It checks the checkpoint's fingerprint and deployment
+  (`CheckpointMismatch`) and its
   `t` against its grid (`CheckpointMidFrame`). It copies the state back,
   builds a fresh run with the checkpoint as its trace header
   and publishes one snapshot at the checkpoint's `t`. It runs no boundary
@@ -12939,7 +12941,7 @@ return law, [§5.2][s5-2]). There is no padding. `x` comes back complete, and
   `checkpoint` → `restore!` → `run!` ([§12.6][s12-6], [D-274][d-274]).
 
   `restore!(sim, model_state; kw...)` takes a `ModelState` prepared on a
-  standalone model, with the same keywords and the same fingerprint check. A
+  standalone model, with the same keywords and the same fingerprint and deployment check. A
   state off the grid is `CheckpointMidFrame`. It opens a fresh trajectory at
   the state's frame, and the restored boundary publishes under ordinal 0
   ([§9.2][s9-2], [§12.6][s12-6], [D-319][d-319]).
@@ -12994,8 +12996,9 @@ return law, [§5.2][s5-2]). There is no padding. `x` comes back complete, and
 - `stage!(sim, "face" => value, …)`. Staging from any task, the calling
   task included, into the harness writer ([§11.3][s11-3]). Its surface is the currently
   unclaimed faces. The batch is traced, drained last at the next frame top,
-  and surface-checked exactly as the GUI's writes (the harness cell,
-  [§12.6][s12-6]). It is legal under `run!` and `step!` alike.
+  and surface-checked exactly as any device's (the harness cell,
+  [§11.3][s11-3]). It is legal under `run!` and `step!` alike
+  ([§12.6][s12-6]).
 - `latest(sim) → snapshot`. The current published snapshot, the same
   immutable value device handles read ([§11.2][s11-2]). It is the assertion
   and inspection accessor of the harness and REPL modes ([§12.6][s12-6]).
@@ -13029,7 +13032,8 @@ return law, [§5.2][s5-2]). There is no padding. `x` comes back complete, and
   a fresh `Simulation(world)` bit-identically through the ordinary loop. It
   restores the trace's checkpoint and feeds the drain by frame ordinal from
   the frame after the header's; `restore = false` feeds the simulation as it
-  stands. A halt names a frame at or after the one the feed starts from. It ends
+  stands. A halt names a frame from the one the feed starts from through the
+  recording's last. It ends
   `initialized`. `to_time = t` is the mutually exclusive time spelling
   of the halt, floored to the last frame top at or before `t`. Inspect via
   `latest` or the live stores, advance via `step!`, continue via `run!`.
@@ -13298,11 +13302,12 @@ activation):
 
 **Deployment, periphery and services:**
 
-- **`MissingInit`** ([§12.6][s12-6]). Error · service · fail-fast. The
-  simulation's status, the entry point called (`run!`/`step!`).
-- **`ServiceLifecycle`** ([§11.3][s11-3], [§14][s14]). Error · service ·
-  fail-fast. The operation
-  (`attach!`/`detach!`/`init!`/`restore!`/`trim!`/`checkpoint`/`linearize`),
+- **`MissingInit`** ([§12.6][s12-6], [§12.7][s12-7]). Error · service ·
+  fail-fast. The simulation's status, the entry point called
+  (`run!`/`step!`/`replay!`/`live!`).
+- **`ServiceLifecycle`** ([§11.3][s11-3], [§12.7][s12-7], [§14][s14]). Error ·
+  service · fail-fast. The operation
+  (`attach!`/`detach!`/`init!`/`restore!`/`trim!`/`checkpoint`/`linearize`/`live!`),
   the current status, the legal statuses.
 - **`StopRequestInvalid`** ([§13.5][s13-5]). Error · service · collected,
   over the given paths. The path naming no requester, the binding site
@@ -13392,8 +13397,8 @@ activation):
   the grid rendered as "N× finer than the fastest declared work".
 - **`CheckpointMismatch`** ([§12.6][s12-6], [§12.7][s12-7]).
   Error · service · collected. One kind for the replay entry pass and for
-  `restore!`, raised when a checkpoint's fingerprint disagrees with the
-  target simulation or model. The mismatch, discriminated. It is a store or root
+  `restore!`, raised when a checkpoint's fingerprint or deployment disagrees
+  with the target simulation or model. The mismatch, discriminated. It is a store or root
   input (component path, store, expected vs. found layout/type), a
   component's `x` type, a cell's address or type, the event list, a recorded
   root-input value that does not convert to its declared type, the scalar
@@ -13425,12 +13430,12 @@ activation):
   name, or the bare position where the writer's schema has no name for it;
   frame ordinal, the trace's device tag, the root input-face list.
 - **`ArgumentInvalid`** ([§10.5][s10-5], [§11.6][s11-6], [§12.1][s12-1], [§12.4][s12-4],
-  [§12.6][s12-6], [§14.7][s14-7]). Error · service, or build in a `sample_times`
+  [§12.6][s12-6], [§12.7][s12-7], [§14.7][s14-7]). Error · service, or build in a `sample_times`
   declaration · fail-fast, but collected over a `TableBinding`'s entry table
   and over the `Model` and `Simulation` constructors' keywords and the claim
   on the model ([D-318][d-318]). The call
   (`Model`, `Simulation`, `init!`, `frame!`, `apply!`, `restore!`, `run!`,
-  `step!`, `replay!`, `pace!`, `margin!`, `trim!`, `linearize`, `TableBinding`,
+  `step!`, `replay!`, `live!`, `pace!`, `margin!`, `trim!`, `linearize`, `TableBinding`,
   a period constructor), the argument, the value in hand, the violated
   constraint. `trim!` and `linearize` on a `Model` at another scalar raise it
   with reason `:non_nominal` ([D-319][d-319]). `Model` at a scalar other than
@@ -14070,7 +14075,7 @@ diagnostic cell its frame writes. It can be written to, evaluated and stepped
 frame by frame. A `Simulation` runs only a `Model{Float64}`, and a `Model` at
 another scalar is a service's scratch, with no ticks and no events. A
 `Simulation` claims it at construction and never shares it
-([§9.2][s9-2], [§12.6][s12-6], [D-317][d-317], [D-318][d-318]). Its doors are listed
+([§9.2][s9-2], [§12.6][s12-6], [D-317][d-317], [D-318][d-318]). Its entry points are listed
 in the `Model` block of [Appendix B][sB].
 
 <a id="g-nominal"></a>**nominal** — the `Float64` activation, and of a declaration its `Float64`
@@ -14171,8 +14176,8 @@ per-face ZOH). Its outbound mirror is newest-wins snapshot delivery
 ([§11.4][s11-4], [§12.3][s12-3]).
 
 <a id="g-control-plane"></a>**control plane** — the separate few-word atomic surface carrying pause,
-un-pause, pace, `margin`, the stop word, the running flag, the wait and
-`join_timeout`, consulted at frame top, a change during a wait landing at
+un-pause, pace, `margin`, the stop word, the sticky stopped status, the
+running flag, the wait and `join_timeout`, consulted at frame top, a change during a wait landing at
 the next one. A run's outcome is the `Run`'s, not its. It is structurally not
 staging, since a paused loop drains nothing ([§12.1][s12-1]).
 
@@ -14217,13 +14222,13 @@ instance ([§11.3][s11-3], [§11.6][s11-6]).
 <a id="g-harness-cell"></a>**harness cell** — the always-present staging cell of the harness writer,
 written by `stage!(sim, "face" => value, …)` from any task, the calling task included.
 Its batches are ordinary, traced and surface-checked, and drained last by
-convention ([§12.6][s12-6], [§11.3][s11-3]).
+convention ([§11.3][s11-3], [§12.6][s12-6]).
 
 <a id="g-harness-writer"></a>**harness writer** — the framework-owned write path `stage!(sim, …)`, open
 to any task, with its cell; the design's sole *derived* surface. That
 surface is the unclaimed complement, the faces no rostered device claims,
 recomputed at every stopped-sim roster change. A write to a claimed face is
-`ClaimedFaceEntry` ([§11.3][s11-3], [§12.6][s12-6]).
+`ClaimedFaceEntry` ([§11.3][s11-3]).
 
 <a id="g-latest"></a>**`latest`** — the `@atomic` reference a published snapshot is
 release-stored into and readers acquire-load. `latest(sim)` hands the
@@ -14237,8 +14242,8 @@ per-frame reset ([§12.3][s12-3]).
 
 <a id="g-operator-interrupt"></a>**operator interrupt** — Ctrl-C in an interactive session, read as a
 control-plane stop rather than a failure. Delivery is masked across the
-boundary macro-sequence (`disable_sigint`) and raised at a frame-top or wait
-unmask point, so the run takes the ordinary graceful tail and ends
+boundary macro-sequence (`disable_sigint`) and raised at a frame-top, wait or
+pause-block unmask point, so the run takes the ordinary graceful tail and ends
 `stopped`. A second one collapses the device joins. Outside the REPL, SIGINT
 still kills the process ([§12.4][s12-4], [§12.1][s12-1]).
 
@@ -14365,15 +14370,16 @@ last frame is consumed, or when `live!` drops the remainder by hand
 copies), with a plain kill switch and `log_every` decimation. It is derived
 data, recomputable from the trace by replay ([§11.2][s11-2]).
 
-<a id="g-recorders"></a>**recorders** — the trace and the log jointly. They are cleared together at
-`init!`, at `restore!` and at a trim commit, so they restart with the run
-they record ([§12.6][s12-6], [§14.8][s14-8]).
+<a id="g-recorders"></a>**recorders** — the trace and the log jointly. `init!`, `restore!` and a trim commit
+build them anew together, so they restart with the run they record
+([§12.6][s12-6], [§14.8][s14-8]).
 
 <a id="g-replay"></a>**replay** — the ordinary loop with one substitution: the drain reads the
-trace by frame ordinal, after the trace's checkpoint is restored. It
-re-records, ends `initialized`, and validates the checkpoint's fingerprint
-(stores, root-input faces and the `Deployment`) up front, restoring the
-clock with the rest of the state ([§12.7][s12-7]).
+trace by frame ordinal, after the trace's checkpoint is restored under
+the default form. It re-records, ends `initialized`, and validates the
+checkpoint's fingerprint (the structural layout) and its `Deployment` up
+front. The default form restores the clock with the rest of the state
+([§12.7][s12-7]).
 
 <a id="g-run-metadata"></a>**run metadata** — the trace header's `Deployment` and `t₀`, hence
 `Δt_base`, `h`, `N_base`, the algorithm identifier, `localization_tol`,

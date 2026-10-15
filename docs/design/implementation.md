@@ -759,7 +759,7 @@ Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315.
 - `Run`, §12.6's run state with the frame and boundary counters, and
   `closed(run)` (D-255, D-260, D-317).
 - The mutable `Simulation` of four fields, the model, the plane, the control
-  and the run, its model a `Model{Float64}` by type (§12.1, D-256, D-317).
+  and the run, its model a `Model{Float64}` by type (§12.6, D-256, D-317).
   `Model` and its materialization are model.jl's.
 - `Simulation(model::Model{Float64})`, the one constructor every simulation
   goes through (D-317). It claims the model by compare-and-swap, and refuses
@@ -804,7 +804,7 @@ Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315.
   simulation's doors pass (D-318).
 - Publication's `task_state`, read off `run_tasks` by `_status` (§12.2,
   D-270).
-- §12.6's input mode: `mode(sim)`, `to_time` and `live!` (D-260).
+- §12.6 and §12.7's input mode: `mode(sim)`, `to_time` and `live!` (D-260).
 - `_bind_policy`, which builds each advance's `StopPolicy` and its ignore
   mask through `_ignored_requests`, and `_stop_hit`, the scan of the `StopFlag`
   buffer (D-316).
@@ -1256,8 +1256,9 @@ else the gate does not.
 says. The suite does not depend on the thread setup, and it passes under
 `-t 1` as well. There every rostered run carries §12.2's `ThreadBudget` in
 the loop writer's first-frame delta and totals, or in the tail's residue when
-no frame ran, so an assertion on that writer names its field. A deviceless loop
-never yields (§12.2), so a test that spawns an advance and waits on it from its
+no frame ran, so an assertion on that writer names its field. §12.2 guarantees
+a per-frame yield only with devices attached, and an unpaced deviceless loop
+never yields, so a test that spawns an advance and waits on it from its
 own task rosters a device first, `TailProbe` under `NoClaim()`. The loop then
 yields every frame, and the waiting task gets its turn on any thread layout.
 Without the device, the test holds only while Julia gives the main task an
