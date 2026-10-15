@@ -8623,7 +8623,7 @@ read as a control-plane stop) sets exactly this stop, with no separate entry
 point involved ([§12.4][s12-4], [D-132][d-132]). The loop catches it at one of its unmask
 points, where a deferred Ctrl-C is raised ([§12.4][s12-4]).
 
-**The stop word carries its issuer** ([D-203][d-203]). The stop word is the control
+**The [stop word](#g-stop-word) carries its issuer** ([D-203][d-203]). The stop word is the control
 plane's stop command, one atomic word holding its issuer. Each issuing site
 writes its identity (the device's name, `:code`, or `:interrupt`) by
 compare-and-swap from empty, and the first writer wins. The loop's frame-top
@@ -14290,7 +14290,7 @@ trajectories. It is incremented after the `latest` release-store, so a
 waking waiter can never see a stale snapshot ([§12.3][s12-3]). Distinct from
 the per-trajectory ordinal a snapshot carries.
 
-<a id="g-calling-task"></a>**calling task** — the task that invoked `run!`. It runs the loop itself,
+<a id="g-calling-task"></a>**calling task** — the task that invoked `run!` or `replay!`. It runs the loop itself,
 and every device runs on a spawned task ([§11.1][s11-1]).
 
 <a id="g-claim"></a>**claim** — the set of faces a device *may* write. It is registered at
@@ -14450,6 +14450,10 @@ and the loop reads the requester off the snapshot it just published.
 `ControlRequestedStop` is outside it, since the policy is what the caller
 declares and the stop word is what anyone can issue ([§13.5][s13-5],
 [D-255][d-255], [D-260][d-260], [D-316][d-316], [D-317][d-317]).
+
+<a id="g-stop-word"></a>**stop word** — the control plane's stop command, one atomic word holding
+its issuer ([§12.1][s12-1]). Not to be confused with a *stop request* ([§D.9][sD-9]), which
+the model publishes.
 
 <a id="g-unattended-run"></a>**unattended run** — a run with empty staging and no snapshot readers. It is
 the same loop, fully synchronous on the calling task, rethrowing after the
