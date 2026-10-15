@@ -63,13 +63,30 @@ decision of a chapter's rewrite to it on 2026-10-02. The four checkpoints
 below are the orchestrator's, and it records each ruling with its reason in
 the chapter's files, so the owner can audit any of them.
 
-Serious findings are the exception. A finding is serious when it shows a
-defect or inconsistency in the design itself, not in its prose: two sources
-the spec treats as authoritative contradict each other and no Position
-settles which is right; a fix would change what the framework does; or the
-design looks wrong. The orchestrator never rules on these. The text stays as
-written, the finding goes to `escalations.md` with its evidence and a
-recommendation, and the owner gets the list when the chapter closes.
+**Only a finding that might involve a real design decision goes to the
+owner.** A real design decision chooses what the framework does, between
+behaviors a reasonable owner could pick, where nothing ratified already
+chooses. The test: some answer would change the code, or the intended
+behavior where the code is silent, and no Position, spec bold or code
+settles it. Such a finding stays as written and goes to `escalations.md`
+with its evidence, the options and a recommendation. The owner gets the
+list when the chapter closes.
+
+The orchestrator rules everything else, however grave it looks, and records
+each ruling with its reason. That covers:
+
+- the spec lagging the code or a later entry. Chapters 11 and 12 escalated
+  seven findings, and all seven were of this kind. Chapter 12's stopped run
+  "resumable by the next `run!`" was settled by §12.6's bold and D-388, and
+  the parked GUI's stop button by D-310;
+- a contradiction `decisions_style.md` rule 10 settles, where the spec and
+  the latest entry beat an older entry that says otherwise in passing;
+- a consequence of a decision the owner already made;
+- log upkeep: annotations, and whether a ruling gets an entry (step 8);
+- wording, structure, citations and process.
+
+When in doubt, read the code. A behavior the code implements, the spec
+states and no entry contradicts is settled, not open.
 
 ### Step 1: survey (one Opus agent, read-only)
 
@@ -93,6 +110,10 @@ The survey maps the chapter before anyone writes. Chapter 9's
 - every code block the package can run, run against it. Chapter 7's survey
   ran §7.3's PRNG example and found that it failed its own conformance
   check. No reading had caught it.
+- from chapter 13, every descriptive passage, a rule's description rather
+  than the rule, tagged with the source file that realizes it. The tags are
+  the normative kernel's migration list (`docs/design/pending.md`), and the
+  rewrite does not act on them.
 
 Head each per-section block `### §N.M ...`, as chapter 11's surveys did:
 `slice_survey.py` cuts the survey for each unit by that heading.
@@ -435,7 +456,8 @@ out-of-chapter parts into `rulings_batch.md`: deduplicated, sourced, each item
 with a proposal and a recommendation, blocking items first. It is a Sonnet
 agent from chapter 12: it merges and sources, and the orchestrator checks
 every proposal's evidence at the source anyway (lesson 10), so a weak
-recommendation costs orchestrator time, not text.
+recommendation costs orchestrator time, not text. A recommendation proposes
+a ruling; it never reads "the owner chooses".
 
 **Step 6a: the evidence check (one Opus agent).** Before the orchestrator
 rules, a cold agent reads every non-blocking item of `rulings_batch.md`,
@@ -449,7 +471,10 @@ first, and open the source for each of them yourself. For the rest, rule
 from the batch and the evidence check, and open the source only for an
 UNCONFIRMED item or a CONFIRMED one whose quote does not plainly carry the
 claim; the final verifier re-reads every edit the rulings produce. Record
-every ruling and its reason as the item's status in `rulings_batch.md`. Serious items go to `escalations.md` unruled. In
+every ruling and its reason as the item's status in `rulings_batch.md`.
+Only an item that might involve a real design decision (section 2) goes to
+`escalations.md` unruled; the orchestrator rules every other one, including
+any the batch recommends leaving to the owner. In
 chapter 9, the owner ruled 103 items in two sittings.
 
 Apply the rulings with agents partitioned by unit, so no two edit one file.
@@ -546,12 +571,16 @@ when it lands; chapter 10 coordinated with one that way.
 ### Step 8: the second track
 
 After landing, the orchestrator rules and applies what the rewrite surfaced
-but did not need, serious findings excepted:
+but did not need, open design decisions excepted:
 entries that state Rationale-only rulings in a Position, annotations of stale
 Positions, Spec fields stale before the rewrite, and problems outside the
-chapter. A new entry restates only what an existing entry already records.
-A spec sentence with no entry behind it stays uncited and goes to the owner,
-since ratifying it would be a design decision. Then cite the new entries
+chapter. A new entry restates what an existing entry, the original design text in
+git history or a ruling commit records, or what the code does and the spec
+states (D-400 to D-404). The orchestrator rules each spec sentence with no
+entry behind it. A ruling the code implements gets an entry; a description
+of mechanism gets none, since the normative kernel moves it beside the code
+(`docs/design/pending.md`). It goes to the owner only when ratifying it
+would choose between behaviors. Then cite the new entries
 beside their source entries in the chapter. Track 2 is
 where the log catches up with the spec; keeping it out of the rewrite kept
 each rewriter's job to prose.
@@ -892,10 +921,13 @@ From chapter 12, which held 380 rules:
 
 - **One rule in four lived only outside a Position**, 92 of 380, and 24 had
   no entry. Track 2 wrote fourteen entries, D-386 to D-399, and 23
-  annotations; the rulings with no entry went to the owner.
-- **Two findings were serious**, both where the spec still described a
-  design the code or a later entry had moved past: a stopped run "resumable
-  by the next `run!`", and the parked GUI's stop button.
+  annotations. The rulings with no entry went to the owner, who handed
+  them back; the orchestrator recorded five as D-400 to D-404.
+- **Two findings were escalated as serious**, both where the spec still
+  described a design the code or a later entry had moved past: a stopped
+  run "resumable by the next `run!`", and the parked GUI's stop button.
+  Neither was a real design decision, and the orchestrator ruled both after
+  the close.
 - **No inbound citation was lost.** Of 460 rows, 11 needed a retarget and
   10 were wrong before the rewrite.
 - **The chapter grew about a sixth**, from 9,815 words to about 11,600, with
@@ -1004,6 +1036,9 @@ From chapter 12, which held 380 rules:
     anchor.
 68. Track 2 writes new entries, never new Position text in an old entry,
     and no entry for a consequence of a Position.
+69. Only a finding that might involve a real design decision goes to the
+    owner; the spec lagging the code or a later entry is the orchestrator's
+    to rule.
 
 ## 6. A chapter's files
 
@@ -1018,7 +1053,8 @@ From chapter 12, which held 380 rules:
   `inbound_check.tsv`, `chapter_rulings.md`, `chapter_fixes.md`: step 5.
 - `rulings_batch.md`: step 6, with each item's status; `evidence_check.md`:
   step 6a.
-- `escalations.md`: serious findings from any step, for the owner.
+- `escalations.md`: findings from any step that might involve a real
+  design decision, for the owner.
 - `trim_log.md`, `ruled_edits.md`, `rulings_applied_*.md`,
   `final_verify.md`: steps 6 and 6b.
 - `pdf_check.md`: step 7.
