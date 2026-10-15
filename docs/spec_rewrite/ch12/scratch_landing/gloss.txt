@@ -1,8 +1,0 @@
-glossary: 173 entries
-3 entry terms never matched in the body (advisory):
-  the letters
-  schema vs. layout
-  service lifecycle
-1 whitelisted anchors now linked (trim WHITELIST):
-  g-next-snapshot-wait
-FAIL

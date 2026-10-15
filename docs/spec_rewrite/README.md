@@ -35,7 +35,7 @@ readability with no loss of content. The steps are in
 | 9. The build pipeline | done | `9a7d84f` | `docs/reports/20261001_chapter9_rewrite/` |
 | 10. Time and execution | done | `3d72f03` | `0f9ce8a` |
 | 11. Runtime periphery: the data plane | done | `1b1ac70` | `e5cbb77` |
-| 12. Runtime periphery: lifecycle and orchestration | done | `e91aa40` | |
+| 12. Runtime periphery: lifecycle and orchestration | done | `e91aa40` | `eb1d832` |
 | 13. Error discipline | not started | | |
 | 14. Stopped-sim services | not started | | |
 | Appendices A to D | not started | | |
