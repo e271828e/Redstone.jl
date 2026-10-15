@@ -7911,7 +7911,9 @@ open does nothing there, and the call is never reported.
 
 #### The operator interrupt
 
-The wrapper makes one discrimination. **An `InterruptException` is never a
+The wrapper spares two raises a crash report. One is the raise a device's
+`unblock!` provokes in the tail, which is shutdown ([§12.4][s12-4](3), [D-402][d-402]). The
+other is the operator interrupt. **An `InterruptException` is never a
 `DeviceCrash`** ([D-132][d-132]). The operator interrupt is a control-plane stop, not a
 failure ([D-132][d-132]). The wrapper forwards the control-plane stop. There is no crash
 report for what is not a crash, and no `should_abort` consultation, since a stop
@@ -8707,7 +8709,7 @@ twice, as the staging slot ([§10.7][s10-7]) and as what the
 
 A `systemsleep` variant for dedicated-thread hard real-time deployments is a
 [guarded addition](#g-guarded-addition) (a capability the design admits but
-does not build).
+does not build) ([D-400][d-400]).
 
 #### The per-frame yield
 
@@ -8746,7 +8748,7 @@ At `run!` or `replay!`, a run warns under `ThreadBudget` ([Appendix C][sC]) when
 `Threads.nthreads()` is tight for the attached population, naming the `julia -t`
 remedy. That is one check per run, against the frozen [roster](#g-roster), the list of
 attached device entries ([§11.3][s11-3], [D-392][d-392]). Tight means fewer threads than the
-roster plus one. Every rostered device is a task, and the [calling task](#g-calling-task) (the task
+roster plus one ([D-401][d-401]). Every rostered device is a task, and the [calling task](#g-calling-task) (the task
 that invoked `run!`) hosts the loop, so a run occupies one task more than its
 roster ([D-310][d-310]). The sizing guidance behind the remedy is one thread for the loop
 and headroom for compute-heavy or blocking-ccall devices. I/O backed by libuv
@@ -8895,7 +8897,7 @@ device task or the loop itself ends first.
 3. Unblock device-specific blocking calls. The hook is `unblock!(device)`,
    default no-op. A network input's override closes its own socket, which
    raises in the blocked task. The framework wrapper catches that raise and
-   treats it as shutdown. This demotes FlightCore's EOT convention from
+   treats it as shutdown ([D-402][d-402]). This demotes FlightCore's EOT convention from
    essential shutdown mechanism to an optional wire-protocol courtesy between
    remote peers.
 4. Loop bodies exit. The exit is the author's own `while running(handle)`
@@ -9000,7 +9002,7 @@ The next run re-acquires everything. The next `run!` re-runs device
 precedent is FlightCore's network device, `network.jl`, which created a new
 socket at each `init!`. The next `run!` also spawns fresh tasks against the
 [§12.3][s12-3] counter, which is never re-armed. Each task reads its
-`last_seen` off the counter at spawn. While stopped there are no device
+`last_seen` off the counter at spawn ([D-403][d-403]). While stopped there are no device
 tasks at all, so voluntary exit and the [§12.2][s12-2] liveness heartbeat are
 run-scoped observables ([D-389][d-389]). A device unplugged while stopped surfaces as the
 next run's `init!` failure, disposed of by the initialization bracket below.
@@ -15087,6 +15089,10 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-397]: decisions.md#d-397--keep-the-run-field-never-nothing
 [d-398]: decisions.md#d-398--the-interrupts-throw-dispositions-and-the-stop-word-cleared-per-run
 [d-399]: decisions.md#d-399--record-boundary-zeros-firings-in-the-header-and-make-a-long-run-seekable
+[d-400]: decisions.md#d-400--admit-a-systemsleep-coarse-phase-as-a-guarded-addition-for-dedicated-thread-deployments
+[d-401]: decisions.md#d-401--call-the-thread-budget-tight-below-the-roster-plus-one
+[d-402]: decisions.md#d-402--treat-the-raise-unblock-provokes-as-shutdown-not-a-crash
+[d-403]: decisions.md#d-403--read-each-device-tasks-last_seen-off-the-counter-at-spawn
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop

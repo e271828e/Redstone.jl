@@ -1148,7 +1148,7 @@ end
 # The pacer is created here, one per call, and handed to the loop as the ignore
 # mask is (§10.7, §12.6, D-269). So is the roster, copied at the freeze and read by
 # the run alone, never off the plane (§11.3). The §12.2 thread-budget check runs
-# here too, after the freeze, so either door checks once per run against the
+# here too, after the freeze, so either entry point checks once per run against the
 # frozen roster. The doors that build a run publish with the plane's roster, as
 # every stopped-sim reader reads it.
 #
@@ -1180,7 +1180,7 @@ function _run_body!(sim::Simulation, policy::StopPolicy, ignore_mask::Vector{Boo
         @atomic control.stop_issuer = nothing # ahead of any safepoint: the arm reads the word
         append!(roster, plane.roster)         # read once (§11.3)
         _reset_accounts!(sim, roster)         # §11.8: totals count since the run began
-        report_thread_budget!(plane, roster, Threads.nthreads())  # §12.2: one check per run, either door
+        report_thread_budget!(plane, roster, Threads.nthreads())  # §12.2: one check per run, either entry point
         _init_devices!(sim, roster, live)     # §12.4's pre-spawn bracket, attachment order
         @atomic control.stopped = false
         # Masked, so a deferred interrupt raises with every task spawned and

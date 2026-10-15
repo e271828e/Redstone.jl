@@ -398,6 +398,10 @@ were derived.
 | [D-397][d-397] | Keep the run field never `nothing` | ratified |
 | [D-398][d-398] | The interrupt's throw dispositions, and the stop word cleared per run | ratified |
 | [D-399][d-399] | Record boundary zero's firings in the header, and make a long run seekable | ratified |
+| [D-400][d-400] | Admit a `systemsleep` coarse phase as a guarded addition for dedicated-thread deployments | ratified |
+| [D-401][d-401] | Call the thread budget tight below the roster plus one | ratified |
+| [D-402][d-402] | Treat the raise `unblock!` provokes as shutdown, not a crash | ratified |
+| [D-403][d-403] | Read each device task's `last_seen` off the counter at spawn | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -999,6 +1003,10 @@ status.
 **Spec.** [§10.7][s10-7], [§12.2][s12-2]
 
 **Rationale.** Recorded only through the rejections below.
+
+Annotation (2026-10-15): two of the three reasons below assume device tasks
+share threads. [D-400][d-400] admits `Libc.systemsleep` as a guarded addition for
+dedicated-thread deployments.
 
 **Rejected.**
 - *`Libc.systemsleep`:* second knob inside `margin`; correctness re-hinges on a
@@ -3265,6 +3273,9 @@ Annotation (2026-10-13): amended by [D-366][d-366]. Only `loop` is mandatory;
 Annotation (2026-10-13): since [D-310][d-310] every rostered device, the GUI included,
 runs on a spawned task, so the inline clause is historical, and claims stay to
 run end ([D-106][d-106]).
+
+Annotation (2026-10-15): two raises are not a `DeviceCrash`, the operator
+interrupt ([D-132][d-132]) and the raise a device's `unblock!` provokes ([D-402][d-402]).
 
 **Rejected.**
 - *Framework-owned hook loop (FlightCore's shape):* its eight hooks were never
@@ -15849,6 +15860,83 @@ new.
 
 **Rejected.** None beyond [D-274][d-274]'s list.
 
+### D-400 — Admit a `systemsleep` coarse phase as a guarded addition for dedicated-thread deployments
+
+**Status.** ratified
+
+**Position.** A `Libc.systemsleep` coarse phase for dedicated-thread hard
+real-time deployments is a guarded addition, unbuilt. Until it is built,
+every session uses task-yielding `sleep` ([D-027][d-027]).
+
+**Spec.** [§12.2][s12-2]
+
+**Rationale.** [D-027][d-027] rejects `systemsleep` because it turns the pacer's wait
+slot into dead time and makes the periphery correct only when every device
+task has its own thread. A dedicated-thread deployment meets that
+precondition by construction, so the starvation [D-027][d-027] fears cannot happen
+there, and the variant's smaller overshoot buys back part of `margin`. Its
+third objection, a primitive selector as a second knob inside `margin`,
+stays while the variant is unbuilt, and a deployment that builds it accepts
+the knob. The design text that ruled [D-027][d-027] admitted the variant in these
+terms, and the log's entry did not carry it. The entry decides nothing new.
+
+**Rejected.** None beyond [D-027][d-027]'s list.
+
+### D-401 — Call the thread budget tight below the roster plus one
+
+**Status.** ratified
+
+**Position.** The thread budget is tight when `Threads.nthreads()` is less
+than the run's roster plus one.
+
+**Spec.** [§12.2][s12-2]
+
+**Rationale.** Every rostered device is a task, and the calling task hosts
+the loop ([D-310][d-310]), so a run occupies one task more than its roster. A session
+with fewer threads than that cannot run every task at once, which is the
+condition the `ThreadBudget` warning names. The count is the frozen roster's,
+checked once per run ([D-392][d-392]).
+
+**Rejected.** None beyond [D-027][d-027]'s list.
+
+### D-402 — Treat the raise `unblock!` provokes as shutdown, not a crash
+
+**Status.** ratified
+
+**Position.** When a device's `unblock!` override makes its blocked call
+raise, the framework wrapper treats the raise as shutdown and reports no
+`DeviceCrash`.
+
+**Spec.** [§11.6][s11-6], [§12.4][s12-4]
+
+**Rationale.** Closing the device's own resource is how [D-030][d-030]'s tail unblocks
+a blocking call, so the raise that follows is the expected exit. Reporting it
+would make every such device's ordinary shutdown read as a crash. The
+wrapper takes every raise other than an interrupt, landing after the sticky
+stop in a device that overrides `unblock!`, as the provoked one. A genuine
+crash in that window therefore goes unreported. A device with no override
+has nothing to provoke a raise, so its raise is a crash whenever it lands.
+The design text that ruled [D-030][d-030] stated the ruling, and the log's entry did
+not carry it. The entry decides nothing new.
+
+**Rejected.** None beyond [D-030][d-030]'s list.
+
+### D-403 — Read each device task's `last_seen` off the counter at spawn
+
+**Status.** ratified
+
+**Position.** Each device task's `last_seen` is read off the [§12.3][s12-3] counter
+at spawn, on the calling task, before the task starts.
+
+**Spec.** [§12.3][s12-3], [§12.4][s12-4]
+
+**Rationale.** The counter is never reset ([D-230][d-230]), so a handle that served an
+earlier run holds a `last_seen` behind it. Read at spawn, a task's first
+`wait_next_snapshot` wakes on the first publication after spawn, never on
+one made before it.
+
+**Rejected.** None beyond [D-028][d-028]'s list.
+
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
 [d-002]: #d-002--adopt-the-causal-port-based-paradigm
@@ -16223,6 +16311,10 @@ new.
 [d-397]: #d-397--keep-the-run-field-never-nothing
 [d-398]: #d-398--the-interrupts-throw-dispositions-and-the-stop-word-cleared-per-run
 [d-399]: #d-399--record-boundary-zeros-firings-in-the-header-and-make-a-long-run-seekable
+[d-400]: #d-400--admit-a-systemsleep-coarse-phase-as-a-guarded-addition-for-dedicated-thread-deployments
+[d-401]: #d-401--call-the-thread-budget-tight-below-the-roster-plus-one
+[d-402]: #d-402--treat-the-raise-unblock-provokes-as-shutdown-not-a-crash
+[d-403]: #d-403--read-each-device-tasks-last_seen-off-the-counter-at-spawn
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property

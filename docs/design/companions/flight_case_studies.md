@@ -405,7 +405,7 @@ One frame each:
   bounded. The un-pause drain applies both, since the root inputs are disjoint
   and exclusivity makes the contested question unaskable. The pacer
   re-anchors.
-- *Window close.* [§12.4][s12-4] applies verbatim: complete the boundary,
+- *Closing a front end's window.* [§12.4][s12-4] applies verbatim: complete the boundary,
   final snapshot, sticky stopped, wake waits, unblock hooks, named-timeout
   joins.
 

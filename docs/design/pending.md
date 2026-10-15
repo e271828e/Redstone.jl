@@ -96,22 +96,19 @@ what the spec says, the spec edit is part of the item.
     withdrew; §12.3 still describes the parked GUI's read path.
     Recommended: drop the promise, keep the per-frame yield and the
     stall-coupling grounds, and annotate D-027 and D-134.
-  - Rulings §12 states with no entry: the `systemsleep` variant as a guarded
-    addition; "tight" as fewer threads than the roster plus one; the wrapper
-    treating an `unblock!`-provoked raise as shutdown; each task reading
-    `last_seen` at spawn; the pause block parking on a condition;
-    `checkpoint`'s latest-snapshot test; the `replay!(…; restore = false)`
-    form and its refusals; and B78's other half-2 rows. Recommended: record
-    the first four, which describe code the chapter states.
+  - Rulings §12 states with no entry: the pause block parking on a
+    condition; `checkpoint`'s latest-snapshot test; the `replay!(…; restore
+    = false)` form and its refusals; and B78's other half-2 rows. D-400 to
+    D-403 record the four that describe code the chapter states.
+  - D-402's test takes any raise after the sticky stop, in a device that
+    overrides `unblock!`, as the provoked one, so a genuine crash in that
+    window goes unreported. Open: whether the window wants a narrower test.
   - Log gaps track 2 could not close without a ruling: D-127's "`t₀`
     applied rather than compared", which `restore = false` contradicts;
     `restore!` missing from D-218's mode-resetting doors; `restore!(sim,
     cp)` taking the recording keywords, which D-261 does not name; and
     D-138's "reads stale from the first frame", true only for a device that
     never beat.
-  - Two loose fixes outside the spec: `flight_case_studies.md`'s "window
-    close" is the parked GUI's (a front end's now), and `src/sim.jl`'s
-    comment "either door checks once per run" should say "entry point".
 - **The normative kernel**, after the rewrite lands. Settled on 2026-10-14:
   the spec and the code are redundant where the spec describes mechanism,
   and that description is what costs the bookkeeping on every increment and

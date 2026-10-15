@@ -408,7 +408,7 @@ function _wrap(entry::RosterEntry)
         loop(entry.dev, entry.handle)
     catch err
         if err isa InterruptException
-            # The wrapper's one discrimination (§11.6, D-132): the operator's
+            # The wrapper's first discrimination (§11.6, D-132): the operator's
             # stop, raised inside a body that did nothing wrong, is forwarded
             # through the stop word — an earlier issuer keeps it — and never
             # reported as a crash. The abort consult below is inert after it.
