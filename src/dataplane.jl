@@ -329,9 +329,10 @@ the fresh (sentinel) state.
 The liveness heartbeat rides in the same cell (§11.8, §12.2), as the atomic
 timestamp the device task stores on every loop pass from inside the handle
 primitives and the loop acquire-loads where it publishes. It is a field,
-always present, never a diagnostic kind; its initial `0.0` is what makes a
-never-heartbeated cell — a failed `init!`'s — read stale against the §12.2
-threshold from the first frame, with no marking machinery (§12.4).
+always present, never a diagnostic kind, and never reset after `attach!`.
+Its initial `0.0` makes a cell that has not beaten since attach read stale
+against the §12.2 threshold from the first frame, a failed `init!`'s
+included, with no marking machinery (§12.4, D-138).
 """
 mutable struct DiagCell
     @atomic batch::DiagBatch

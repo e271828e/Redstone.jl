@@ -402,6 +402,7 @@ were derived.
 | [D-401][d-401] | Call the thread budget tight below the roster plus one | ratified |
 | [D-402][d-402] | Treat the raise `unblock!` provokes as shutdown, not a crash | ratified |
 | [D-403][d-403] | Read each device task's `last_seen` off the counter at spawn | ratified |
+| [D-404][d-404] | Attach the feed to the simulation as it stands under `replay!`'s `restore = false` | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -1007,6 +1008,11 @@ status.
 Annotation (2026-10-15): two of the three reasons below assume device tasks
 share threads. [D-400][d-400] admits `Libc.systemsleep` as a guarded addition for
 dedicated-thread deployments.
+
+Annotation (2026-10-15): since [D-310][d-310] every device runs on a spawned task, so the
+ground "GUI on the calling task" under *Hard `nthreads` error* is gone. The
+other two grounds stand. [§12.2][s12-2] no longer promises that a front end's stop works
+under starvation.
 
 **Rejected.**
 - *`Libc.systemsleep`:* second knob inside `margin`; correctness re-hinges on a
@@ -2952,6 +2958,12 @@ Annotation (2026-10-13): since [D-310][d-310] every rostered device, the GUI inc
 runs on a spawned task, so the GUI-without-task clause and the movable loop
 are historical.
 
+Annotation (2026-10-15): [§12.2][s12-2] no longer makes the cannot-fail-to-be-scheduled
+argument that the item *GUI as a genuinely spawned task pinned to thread 1*
+cites. That argument came from the GUI running on the calling task, which
+[D-310][d-310] withdrew. [§12.2][s12-2]'s thread budget rests on two grounds now. The loop yields
+every frame, and nothing couples a stall to anyone else.
+
 **Rejected.**
 - *`Event` start gate "as today":* [§12.3][s12-3]'s rejected primitive — the `io_start`
   reset race, re-imported for the re-run cycle [§12.6][s12-6] newly supports.
@@ -4147,6 +4159,11 @@ Annotation (2026-10-15): `n` is `N_base` since [D-234][d-234], and `event_budget
 `localization_budget` since [D-181][d-181]. `ReplayHeaderMismatch` is
 `CheckpointMismatch` ([Appendix C][sC]).
 
+Annotation (2026-10-15): under `restore = false` ([D-404][d-404]) the header's `t₀` is
+compared, not applied. The simulation's own state and clock stand, and its
+origin must equal the header's `t₀`, or the call is refused as
+`CheckpointMismatch`. `to_time` reads the header's `t₀` under either form.
+
 **Rejected.**
 - *Validating the whole block uniformly:* freezes `t_end`/`stop_on`, which
   [§12.7][s12-7] explicitly leaves overridable, and a recorded `stop_on` termination
@@ -4354,6 +4371,10 @@ Annotation (2026-10-15): since [D-310][d-310] no device runs on the calling task
 above is historical. `stop_on` is `ignore_stop_requests` since [D-316][d-316]: a
 model's stop request ends the run unless the advance ignores it.
 
+Annotation (2026-10-15): the Position's "resumable by the next `run!`" does
+not hold. `run!` refuses a stopped simulation ([§12.6][s12-6], [D-088][d-088], [D-388][d-388]). `init!`
+re-runs it, and `checkpoint` then `restore!` continues it ([D-274][d-274]).
+
 **Rejected.**
 - *Treating the interrupt as a runtime failure — the `StepError` path an
   unguarded Ctrl-C takes today:* destroys the session it means to pause:
@@ -4500,6 +4521,11 @@ open.
 Annotation (2026-10-13): [§11.6][s11-6] no longer detects sides by method presence.
 [D-177][d-177] declares them, and [D-174][d-174] replaced the `interactive(b)` marker with
 `is_greedy`.
+
+Annotation (2026-10-15): the GUI is parked ([D-310][d-310]), so the shipped GUI's read
+path above describes no shipped device. [§12.3][s12-3] describes a front end's read path
+instead. A front end paced by its own display may skip the wait and read
+`latest` at each render.
 
 **Rejected.**
 - *`faces(b) = :derived` (a sentinel return):* i.e. a dual-meaning enumeration
@@ -4794,6 +4820,15 @@ frame and ends `stopped` where it started, its termination record naming
 the device. The Rationale's "boundary zero is published" and its [§13.5][s13-5]
 terminal-at-`t₀` path are historical. `DeviceCrash`'s payload names no
 device id since [D-228][d-228]. The cell it is written to names the device.
+
+Annotation (2026-10-15): the Rationale's "reads stale against [§12.2][s12-2]'s
+threshold from the first frame" holds only for a device that never beat.
+`attach!` creates the device's diagnostic cell with a zero timestamp, and no
+door or run resets it. A device that has not beaten since its attach reads
+stale from the run's first frame. A device that has beaten since its attach
+keeps its last beat, so after a failed `init!` it reads stale only once that
+beat is more than 2 s behind wall clock. Its `task_state` reads `:done` from
+the run's first publication either way ([§12.2][s12-2]).
 
 **Rejected.**
 - *Requiring `init!` to clean up after itself on failure:* an unenforced burden
@@ -8408,6 +8443,10 @@ Annotation (2026-10-15): since [D-274][d-274] replay restores the header and run
 boundary zero, so [D-101][d-101]'s two substitutions are one, the drain fed by the
 recording.
 
+Annotation (2026-10-15): `restore!`, a door since [D-274][d-274], resets the mode with
+the trajectory too. Like `init!` it returns the mode to `:live`, and like
+`init!` and `replay!` it clears the batches still in staging cells ([§12.6][s12-6]).
+
 **Rejected.**
 - *The implicit switch — a feed present only while the replay call runs:* the
   feed is dismantled when the replay loop exits, so after a partial replay the
@@ -10649,6 +10688,10 @@ one entry per requester, in place of the faces' compiled addresses, and a
 Annotation (2026-10-15): [D-317][d-317] supersedes the clause keeping `chunk_size`
 on `Simulation(deployment, T)`. `chunk_size` is a keyword of
 `Model(deployment, T = Float64; chunk_size = 16)`.
+
+Annotation (2026-10-15): `restore!` is a door that builds a run too ([D-274][d-274]).
+Both its methods take the four recording keywords, with `init!`'s defaults
+([§12.6][s12-6]).
 
 **Rejected.**
 - *The recording flags as a sixth `Simulation` field:* a parameter nothing
@@ -15919,7 +15962,11 @@ has nothing to provoke a raise, so its raise is a crash whenever it lands.
 The design text that ruled [D-030][d-030] stated the ruling, and the log's entry did
 not carry it. The entry decides nothing new.
 
-**Rejected.** None beyond [D-030][d-030]'s list.
+**Rejected.**
+- *A narrower test, flagging the entry just before the tail calls
+  `unblock!`:* shrinks the window but cannot close it, since a genuine raise
+  can still land after the call, and it adds a field and a write to every
+  roster entry for a diagnostic of a device already shutting down.
 
 ### D-403 — Read each device task's `last_seen` off the counter at spawn
 
@@ -15936,6 +15983,42 @@ earlier run holds a `last_seen` behind it. Read at spawn, a task's first
 one made before it.
 
 **Rejected.** None beyond [D-028][d-028]'s list.
+
+### D-404 — Attach the feed to the simulation as it stands under `replay!`'s `restore = false`
+
+**Status.** ratified
+
+**Position.** `replay!(sim, trc; restore = false)` attaches the trace's feed
+to the simulation as it stands and restores nothing.
+
+- The simulation must be `initialized`. Any other state meets the lifecycle
+  gate before any write, with `MissingInit` at `built` and `ServiceLifecycle`
+  in any other state.
+- The simulation's clock origin must equal the recording's `t₀`, and its
+  frame must lie from the header's frame to one short of the recording's
+  last. Either mismatch is refused before any write as `CheckpointMismatch`,
+  its clock arm.
+- A `restore` that is not a `Bool` is refused as `ArgumentInvalid`.
+- The drain applies the records from the frame after the simulation's own.
+- The form is a door. It builds a fresh run under the four recording
+  keywords, takes the simulation's own checkpoint as the new trace's header,
+  and publishes one snapshot.
+- The entry pass's validation runs under both forms of `replay!`.
+
+**Spec.** [§12.6][s12-6], [§12.7][s12-7]
+
+**Rationale.** [§12.7][s12-7] records what the form serves. One use is the what-if of
+a modified model, `init!` under the authored condition and then the
+recorded inputs. The trace's checkpoint holds the recording model's state,
+so the authored condition comes from outside ([D-274][d-274]). The other use is a
+seek, `restore!` of a checkpoint the recording passed through and then the
+feed from the next frame ([D-399][d-399]). The form shares the advance entries'
+lifecycle gate because the feed joins a trajectory in progress. The clock
+check keeps one grid under every replay, so `to_time` has one meaning. [D-274][d-274]'s
+fifth bullet states the what-if's shape only. This entry records the form and
+its refusals as [§12.7][s12-7] and the code state them, and decides nothing new.
+
+**Rejected.** None beyond [D-274][d-274]'s list.
 
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
@@ -16315,6 +16398,7 @@ one made before it.
 [d-401]: #d-401--call-the-thread-budget-tight-below-the-roster-plus-one
 [d-402]: #d-402--treat-the-raise-unblock-provokes-as-shutdown-not-a-crash
 [d-403]: #d-403--read-each-device-tasks-last_seen-off-the-counter-at-spawn
+[d-404]: #d-404--attach-the-feed-to-the-simulation-as-it-stands-under-replays-restore--false
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property

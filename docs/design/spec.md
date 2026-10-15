@@ -8737,9 +8737,7 @@ hard error** ([D-027][d-027]).
 
 The scheduler stall FlightCore's `nthreads` error prevented cannot reproduce
 here, for two reasons. The loop yields every frame. Nothing couples a stall to
-anyone else, the GUI least of all. It waits on nothing, ever. It uses a snapshot
-acquire-load, its own [staging cell](#g-staging-cell) and atomic control. Under any starvation,
-then, the front end keeps rendering and the stop button keeps working.
+anyone else.
 
 Undersized sessions degrade to laggy inputs and stale [snapshots](#g-snapshot) (the immutable
 per-boundary publications), which are visible, recoverable states.
@@ -8855,8 +8853,8 @@ never run ahead of it ([D-230][d-230]). An error's pointer for [replay](#g-repla
 re-driven from the trace) is a third index, the frame-entry boundary index of
 [§13.4][s13-4], a frame count that names no `t*` boundary ([D-128][d-128]).
 
-The GUI does not use the wait. Being VSync-paced, it reads `latest` at each
-render.
+A front end paced by its own display may skip the wait and read `latest` at
+each render.
 
 ### 12.4 Shutdown protocol
 
@@ -9064,8 +9062,9 @@ the device identity either way, which is why no call passes a device id ([§11.8
 
 No task is spawned for a failed device, so it is dead from the run's first frame
 top ([D-138][d-138], [D-396][d-396]). That needs no machinery. Its `task_state` reads `:done` from the
-first publication ([§12.2][s12-2]). A device that never ran never beat, so its diagnostic
-cell also reads stale against the [§12.2][s12-2] threshold from the start ([D-138][d-138]).
+first publication ([§12.2][s12-2]). Its diagnostic cell keeps its last beat. It reads stale
+against the [§12.2][s12-2] threshold from the start if the device has not beaten since its
+attach, and otherwise once that beat is more than 2 s old ([D-138][d-138]).
 
 The claims of a failed device persist to run end ([D-138][d-138], [D-396][d-396]). This is the
 death-is-not-detach disposition ([§11.3][s11-3]), applied one step earlier than (6)'s.
@@ -9091,7 +9090,9 @@ its termination record naming the device ([§13.5][s13-5]). What the operator is
 is an ordinary stopped simulation, whose terminal snapshot is the one the run
 started from and whose termination record's tail residue (the diagnostics the
 run's-end sweep folds in) holds the `DeviceCrash`. It is fully serviceable by
-[§14][s14] and resumable by the next `run!` ([§12.6][s12-6]) once the device is plugged back in.
+[§14][s14]. `run!` refuses it, as it refuses any stopped simulation. Once the
+device is back, `init!` re-runs the simulation, and `checkpoint` then
+`restore!` continues it from where it stands ([§12.6][s12-6]).
 
 **An `InterruptException` inside a device's `init!` is the operator's stop, not
 that device's crash** ([D-268][d-268]). The bracket releases the device through
@@ -9110,7 +9111,8 @@ in an interactive session is a control-plane stop command issued by hand.
 The run completes the current boundary, publishes the final snapshot, takes
 this tail like any other stop, and ends `stopped`. The result is
 boundary-consistent. It is fully serviceable by the [§14][s14] stopped-sim
-services and resumable by the next `run!` ([§12.6][s12-6]).
+services. `init!` re-runs it, and `checkpoint` then `restore!` continues it
+from where it stands ([§12.6][s12-6]).
 
 The interrupt is the escape from a run nothing else ends, and the deviceless run
 has no other. A run with no finite `t_end` and no honoured stop request is the
@@ -9840,7 +9842,7 @@ Bit-identity is promised only against the identical build ([§2.4][s2-4]). What-
 promises determinism, never reproduction.
 
 `replay!(sim, trc; restore = false)` attaches the feed to the simulation as it
-stands and restores nothing. The simulation must be `initialized`, at the
+stands and restores nothing ([D-404][d-404]). The simulation must be `initialized`, at the
 recording's `t₀`, and at a frame from the header's to one short of the
 recording's last. A simulation that is not `initialized` meets the lifecycle
 gate before any write, with `MissingInit` when it is `built` and
@@ -10042,8 +10044,9 @@ and classifies the miss as an undeclared store, a wrong [tier](#g-tier), or a
 field illegal for this function. Nothing is recovered by reading message text.
 
 The probe raises the result as `BundleFieldError` ([Appendix C][sC],
-[D-248][d-248]). An example message is "`x_deriv` of `Foo` destructures `m`,
-but `Foo` declares no `m_init`". One law covers tier facts, stage legality and
+[D-248][d-248]). An example message is "`systems/plant`: `x_deriv`
+destructures `m`, but `systems/plant` declares no `m_init`". The message names
+the component by its path. One law covers tier facts, stage legality and
 declarations alike. The wrong-tier class covers the state letters too
 ([D-195][d-195]). `x` and `m` are continuous-only, and `s` and `Δt` are
 discrete-only, so destructuring any of the four on the wrong tier is a
@@ -10990,7 +10993,8 @@ only, never relied on for correctness ([D-012][d-012]). Tracing improves error
 messages and verification. When the build finds a cycle, it triggers the
 [feedthrough tracer](#g-feedthrough-tracer) (the set-propagation instrument
 that tracks which inputs a value depends on) to classify that cycle. A genuine
-cycle gets "insert a state", and an artificial one gets the remedy ladder
+cycle gets "break it with a state, a stage-1 (`y_state`) port, or a
+`UnitDelay`", and an artificial one gets the remedy ladder
 ([§5.4][s5-4]). Where the diagnostic recommends a unit delay, it states the
 delay's tier caveat rather than offering it as a free remedy ([§5.5][s5-5],
 [§13.7][s13-7], [D-348][d-348]). The parts below cover, in order, how a cycle
@@ -11103,9 +11107,11 @@ interface) when the dead hop's input is consumed only in a fallback branch.
 Those are the ladder's two remedies ([§5.4][s5-4], [D-140][d-140], [D-343][d-343]).
 
 The build diagnostic offers both exits explicitly ([D-140][d-140],
-[D-343][d-343]). It reads "cycle through `systems/aero` is artificial at port
-level — split the component, or narrow the neighbor's contract". The dead hop
-is the member with the input face that it does not route to the output port.
+[D-343][d-343]). For a loop between `systems/aero` and `systems/dyn` it reads
+"artificial at port level: `systems/aero`'s `F` does not route `a`; split
+`systems/aero`, or narrow the neighbor's contract if `a` is consumed only in a
+fallback branch". The dead hop is the member with the input face that it does
+not route to the output port.
 The diagnostic carries the dead hop ([D-245][d-245]) as a separate field of
 its [payload](#g-payload) (the structured data a diagnostic carries) rather
 than dotting the hop onto the path ([§8.6][s8-6], [§13.2][s13-2]).
@@ -15093,6 +15099,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-401]: decisions.md#d-401--call-the-thread-budget-tight-below-the-roster-plus-one
 [d-402]: decisions.md#d-402--treat-the-raise-unblock-provokes-as-shutdown-not-a-crash
 [d-403]: decisions.md#d-403--read-each-device-tasks-last_seen-off-the-counter-at-spawn
+[d-404]: decisions.md#d-404--attach-the-feed-to-the-simulation-as-it-stands-under-replays-restore--false
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop

@@ -83,32 +83,6 @@ what the spec says, the spec edit is part of the item.
 - **The spec's readability rewrite.** Chapters 1 to 12 are done. The
   other chapters follow `docs/spec_rewrite/recipe.md`, and that directory's
   README tracks them. Until a chapter's turn comes, it keeps the old markers.
-  Chapter 12 left these for the owner. Each sentence stays as written until
-  ruled; the evidence is its `escalations.md`, `owner_items.md` and
-  `rulings_batch.md` (B77, B78), which `git show` recovers at the commit the
-  README's table records.
-  - Serious: §12.4 calls a stopped simulation "resumable by the next
-    `run!`", as D-132's Position does; §12.6, D-088 and the code refuse
-    `run!` on `stopped`. Recommended: read it as re-runnable through
-    `init!` or a checkpoint, reword §12.4 and annotate D-132.
-  - Serious: §12.2 promises a front end's stop button "keeps working" under
-    any starvation, a property the GUI on the calling task gave and D-310
-    withdrew; §12.3 still describes the parked GUI's read path.
-    Recommended: drop the promise, keep the per-frame yield and the
-    stall-coupling grounds, and annotate D-027 and D-134.
-  - Rulings §12 states with no entry: the pause block parking on a
-    condition; `checkpoint`'s latest-snapshot test; the `replay!(…; restore
-    = false)` form and its refusals; and B78's other half-2 rows. D-400 to
-    D-403 record the four that describe code the chapter states.
-  - D-402's test takes any raise after the sticky stop, in a device that
-    overrides `unblock!`, as the provoked one, so a genuine crash in that
-    window goes unreported. Open: whether the window wants a narrower test.
-  - Log gaps track 2 could not close without a ruling: D-127's "`t₀`
-    applied rather than compared", which `restore = false` contradicts;
-    `restore!` missing from D-218's mode-resetting doors; `restore!(sim,
-    cp)` taking the recording keywords, which D-261 does not name; and
-    D-138's "reads stale from the first frame", true only for a device that
-    never beat.
 - **The normative kernel**, after the rewrite lands. Settled on 2026-10-14:
   the spec and the code are redundant where the spec describes mechanism,
   and that description is what costs the bookkeeping on every increment and
@@ -125,12 +99,16 @@ what the spec says, the spec edit is part of the item.
   tutorials. The decision log is untouched. The rewrite comes first because
   its survey and track 2 are the classification: a bold with an entry is the
   kernel's unit, so extraction from a rewritten chapter is near mechanical.
-  Proposed and not yet in the recipe: from chapter 12 the survey tags each
-  descriptive passage with the source file that realizes it, which is the
-  migration list. Open: a ruling about the design's shape rather than runtime
-  behavior has no natural test, and the kernel needs a home for those; and
-  whether the kernel extraction replaces the report that closes
-  `docs/spec_rewrite/`.
+  From chapter 13 the survey tags each descriptive passage with the source
+  file that realizes it, which is the migration list; chapters 1 to 12 are
+  tagged at extraction. A ruling about the design's shape rather than runtime
+  behavior has no natural test, so its kernel line points at the build-time
+  check or diagnostic that enforces it, and where none does, carries its
+  D-citation alone. Chapter 12's rulings with no entry beyond D-400 to
+  D-404, the pause block's condition, `checkpoint`'s latest-snapshot test
+  and the B78 rows of `rulings_batch.md` at `eb1d832`, are such description and get none.
+  The kernel extraction replaces the report that closes
+  `docs/spec_rewrite/`, whose lessons already live in its recipe.
 - **Package registration.**
 - **A precompile workload** for the generic machinery a cold process
   pays, about 9 s whatever the model (§9.7).
@@ -205,13 +183,4 @@ Where the code's shape is coherent and the spec may be what moves, the call
 is the user's; a ruling lands docs-commit-first, then the bullet retires or
 the code conforms.
 
-- **The quoted cycle and bundle diagnostics** (§13.2, §13.8). The spec
-  quotes "cycle through `systems/aero` is artificial at port level — split
-  the component, or narrow the neighbor's contract", "insert a state" for a
-  genuine cycle, and "`x_deriv` of `Foo` destructures `m`, but `Foo`
-  declares no `m_init`". `src/diagnostics.jl` renders richer text that
-  agrees in substance: it names `split m` and the fallback-branch condition,
-  offers "a state, a stage-1 (`y_state`) port, or a `UnitDelay`" for a
-  genuine cycle, and names the component by its path rather than its type.
-  Recommended: conform the spec's quotes to `src`'s wording, after the user
-  rules whether the bundle diagnostic names a path or a type.
+None open.
