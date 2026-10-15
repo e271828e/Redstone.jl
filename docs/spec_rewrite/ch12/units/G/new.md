@@ -58,13 +58,12 @@ may reach) ([§11.3][s11-3]) ran at recording time, and [claims](#g-claim) (the 
 may write) are a live-roster fact of the recorded session that replay does not
 reconstruct. A face is the name a port wears on its component's boundary.
 
-**A simulation is in one of two input modes, `:live` or
-`:replay`, and the mode decides which source that one drain branch reads**
-([D-218][d-218]). Under `:live` it reads the staging cells, and under
-`:replay` the attached recording. **`replay!` attaches the recording and
-enters `:replay`** ([D-218][d-218]). `step!` and `run!` consume it from there,
-frame by frame, exactly as the drain paragraph above describes. There is
-still one loop and one drain ([D-218][d-218]).
+A simulation is in one of two input modes, `:live` or `:replay`, and **the mode
+decides which source that one drain branch reads** ([D-218][d-218]). Under `:live` it
+reads the staging cells, and under `:replay` the attached recording. **`replay!`
+attaches the recording and enters `:replay`** ([D-218][d-218]). `step!` and `run!`
+consume it from there, frame by frame, exactly as the drain paragraph above
+describes. There is still one loop and one drain ([D-218][d-218]).
 
 A mode that outlives the call makes a partial replay a resumable position rather
 than the end of an operation ([D-218][d-218]). Whatever advances the simulation next
@@ -86,11 +85,11 @@ default form, and from the simulation's own under `restore = false` (below).
 tops. It is not the published-boundary ordinal that a [snapshot](#g-snapshot) (the immutable
 per-boundary publication) carries ([§12.3][s12-3]). **Replay runs through frame `k` and
 halts exactly at the frame top after it** ([D-128][d-128]). Replay therefore always halts
-at a frame top. The frame-entry pointer ([§13.4][s13-4]) lands the same way. A [localized](#g-localized)
-`t*` boundary (the crossing instant bracketed by root-finding over trial sweeps)
-inside the frame is reproduced but not stoppable-at ([D-128][d-128]). The trace stays
-frame-indexed, replay pointers and error messages use the frame-entry boundary
-index, and snapshots carry the published-boundary ordinal ([§10.4][s10-4]).
+at a frame top. A [localized](#g-localized) `t*` boundary (the crossing instant bracketed by
+root-finding over trial sweeps) inside the frame is reproduced but not
+stoppable-at ([D-128][d-128]). The trace stays frame-indexed, replay pointers and error
+messages use the frame-entry boundary index, and snapshots carry the
+published-boundary ordinal ([§10.4][s10-4], [§12.3][s12-3]).
 
 Replay may also end earlier still under the ordinary policies, since `t_end` and
 `ignore_stop_requests` are keywords of `replay!` exactly as of `run!` ([§12.6][s12-6],
@@ -100,11 +99,10 @@ deterministically ([D-127][d-127]). A replay honours requests by default too, an
 trace header records no policy. So a replay of a live run that ignored some must
 pass the same `ignore_stop_requests`.
 
-`to_time` addresses the same halt by time. **The keyword halts at the last
-frame top at or before the time given**, and it is mutually exclusive with
-`to_boundary` ([D-219][d-219]). It computes `k = ⌊(to_time − t₀)/h⌋` against
-the header's `t₀`, under either form. A time falling between two frame tops
-floors onto the earlier one.
+**`to_time` halts at the last frame top at or before the time given**, the same
+halt addressed by time, and it is mutually exclusive with `to_boundary` ([D-219][d-219]).
+It computes `k = ⌊(to_time − t₀)/h⌋` against the header's `t₀`, under either
+form. A time falling between two frame tops floors onto the earlier one.
 
 The rounding is the deliberate opposite of `t_end`'s, which ends a run at the
 first grid boundary reaching or exceeding it ([§12.4][s12-4]). `t_end` bounds

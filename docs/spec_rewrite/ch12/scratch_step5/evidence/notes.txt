@@ -1,0 +1,2 @@
+B22 C; B23 C; B24 C; B25 C; B26 C; B27 C; B28 C; B29 C(caveat: App B restore!(model) and checkpoint(model) rows cite §12.6 too); B30 C (line 13032); B31 C; B32 C (6892-6893); B33 U (807: mode(sim) is §12.6's); B34 C; B35 C (caveat: glossary phrase once, 14240-14241; 14243 is citation line); B36 C; B37 C (note: deviceless=unattended is §13.4 10253); B38 C (linkify is step 7 item 6); B39 C; B40 C
+B41 C (D-374 lists 11.3,11.4,11.6); B42 U (spin never yields is Position 981); B43 U (annotation wording: crash follows step 6 path, D-373 says nothing of crash)

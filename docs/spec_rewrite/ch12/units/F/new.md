@@ -45,9 +45,9 @@ The component mapping is strictly richer than the callback it replaces.
   exact at its own [ticks](#g-tick), with no latch state of its own. A tick
   is an instant at which a discrete component's stages and update run.
 - In a scenario configuration the script drives the input ports of the avionics
-  (the onboard flight systems). [§11.7][s11-7] therefore renders the corresponding GUI
-  widgets read-only, each showing its source. Its port-resolution rule resolves
-  FlightCore's demo-vs-GUI dead-slider fight.
+  (the onboard flight systems). [§11.7][s11-7] therefore renders a front end's
+  corresponding widgets read-only, each showing its source ([D-310][d-310]). Its
+  port-resolution rule resolves FlightCore's demo-vs-GUI dead-slider fight.
 
 **`user_callback!` is eliminated** ([D-031][d-031]). It is the periphery's
 `f_step!`, FlightCore's unconditional per-step hook ([§2.5][s2-5]), and cheap
@@ -218,9 +218,9 @@ refusal.
 
 #### Partial advance
 
-Deviceless, `run!` is fully synchronous, and [§11.1][s11-1] says where the loop and the
-device tasks run and defines the [unattended run](#g-unattended-run) (a run with empty staging and no
-snapshot readers).
+Deviceless, `run!` is fully synchronous. [§11.1][s11-1] says where the loop and the
+device tasks run, and defines the [unattended run](#g-unattended-run) (a run with empty staging and
+no snapshot readers).
 
 `step!(sim; frames = 1)` advances whole frames synchronously through the
 ordinary frame sequence (drain, integrate, boundaries, publication) and
@@ -311,12 +311,12 @@ is that the clock sits on a grid time and that the latest snapshot is of that
 very boundary.
 
 `restore!(model, model_state)` checks the state's fingerprint and deployment
-against the model. It also checks that the state's `t` is a grid time
-`t₀ + k·h` of the state's own origin and step, and a state off its grid is
-`CheckpointMidFrame`. Every mismatch of either kind is collected into one
-throw before any write. The entry point then copies the state back, settles
-the restored boundary through the hooks and writes `:consistent` last
-([D-318][d-318], [D-319][d-319]).
+against the model, and a mismatch is `CheckpointMismatch`. It also checks that
+the state's `t` is a grid time `t₀ + k·h` of the state's own origin and step,
+and a state off its grid is `CheckpointMidFrame`. Every mismatch of either kind
+is collected into one throw before any write. The entry point then copies the
+state back, settles the restored boundary through the hooks and writes
+`:consistent` last ([D-318][d-318], [D-319][d-319]).
 
 `restore!(sim, cp)` takes the four recording keywords `init!` takes. It checks
 the state's fingerprint and deployment against the simulation as replay checks
@@ -347,15 +347,14 @@ type. A state taken at another scalar is refused by dispatch with the same
 
 #### Device attachments across runs
 
-**Device attachments persist across re-initialization** ([D-088][d-088]),
-because attachment is orthogonal to the run lifecycle ([§11.3][s11-3]).
-Persistence means *roster* persistence, the [roster](#g-roster) being the list
-of attached device entries. Binding, [claims](#g-claim) (the set of faces a
-device may write) and device id survive. Tasks and OS resources do not, the
-per-run topology being specified in [§11.1][s11-1] and the teardown in
-[§12.4][s12-4]. Each `run!` re-initializes every rostered device and spawns
-its task ([D-093][d-093]). `attach!` while stopped only registers, and the
-task appears at the next `run!`.
+**Device attachments persist across re-initialization** ([D-088][d-088]), because
+attachment is orthogonal to the run lifecycle ([§11.3][s11-3]). Persistence means
+*roster* persistence, the [roster](#g-roster) being the list of attached device entries.
+Binding, [claims](#g-claim) (the set of faces a device may write) and device id survive.
+Tasks and OS resources do not, the per-run topology being specified in [§11.1][s11-1] and
+the teardown in [§12.4][s12-4]. Each `run!` re-initializes every rostered device and
+spawns a task for each whose `init!` succeeds ([§11.1][s11-1], [D-093][d-093]). `attach!` while
+stopped only registers, and the task appears at the next `run!`.
 
 Which devices get a task at each `run!` is decided as [§11.1][s11-1]
 specifies. **A front end attached by hand is still rostered**

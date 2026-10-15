@@ -218,13 +218,18 @@
   {
    "id": "C-025",
    "old": "§11.7 therefore renders the corresponding GUI widgets read-only with its source shown.",
-   "new": "§11.7 therefore renders the corresponding GUI widgets read-only, each showing its source.",
+   "new": "§11.7 therefore renders a front end's corresponding widgets read-only, each showing its source (D-310).",
    "where": "new",
    "cites": [
     "§11.7"
    ],
-   "tag": "F",
-   "note": "\"its\" now reads as each widget's (step 5, P2-3)"
+   "newcites": [
+    "D-310",
+    "§11.7"
+   ],
+   "tag": "R",
+   "ruling": "B11",
+   "note": "\"its\" now reads as each widget's (step 5, P2-3); R2 extended to §12.5, \"the corresponding GUI widgets\" becoming a front end's, D-310 cited once in the section (B11)"
   },
   {
    "id": "C-026",
@@ -1112,36 +1117,36 @@
   {
    "id": "C-113",
    "old": "The loop runs on the calling task, the task that invoked `run!`, and every rostered device on a spawned task (§11.1).",
-   "new": "and §11.1 says where the loop and the device tasks run",
+   "new": "§11.1 says where the loop and the device tasks run",
    "where": "new",
    "cites": [
     "§11.1"
    ],
    "tag": "R",
-   "ruling": "R5",
-   "note": "M51; §11.1 holds it bold, \"The loop runs on the calling task (D-310)\""
+   "ruling": "R5, B12",
+   "note": "M51; §11.1 holds it bold, \"The loop runs on the calling task (D-310)\"; the pointer opens its own sentence (B12)"
   },
   {
    "id": "C-114",
    "old": "Deviceless, `run!` is fully synchronous.",
-   "new": "Deviceless, `run!` is fully synchronous,",
+   "new": "Deviceless, `run!` is fully synchronous.",
    "where": "new",
    "cites": [],
    "tag": "R",
-   "ruling": "R5",
+   "ruling": "R5, B12",
    "note": "kept, since D-268's Rationale cites §12.6 for it"
   },
   {
    "id": "C-115",
    "old": "An unattended run is the same loop with empty staging (§11.1).",
-   "new": "§11.1 says where the loop and the device tasks run and defines the unattended run (a run with empty staging and no snapshot readers).",
+   "new": "§11.1 says where the loop and the device tasks run, and defines the unattended run (a run with empty staging and no snapshot readers).",
    "where": "new",
    "cites": [
     "§11.1"
    ],
    "tag": "R",
-   "ruling": "R5",
-   "note": "M51, F65, F75; the pointer carries the definition, and the gloss is the glossary's"
+   "ruling": "R5, B12",
+   "note": "M51, F65, F75; the pointer carries the definition, and the gloss is the glossary's; its own sentence, apart from the deviceless claim (B12)"
   },
   {
    "id": "C-116",
@@ -1733,11 +1738,12 @@
   {
    "id": "C-176",
    "old": "`restore!(model, model_state)` checks the state's fingerprint against the model.",
-   "new": "`restore!(model, model_state)` checks the state's fingerprint and deployment against the model.",
+   "new": "`restore!(model, model_state)` checks the state's fingerprint and deployment against the model, and a mismatch is `CheckpointMismatch`.",
    "where": "new",
    "cites": [],
    "tag": "R",
-   "ruling": "R12"
+   "ruling": "R12, B4",
+   "note": "B4 names the kind, as `src/model.jl` and D-319 bullet 2 carry it, so \"either kind\" below has both its antecedents"
   },
   {
    "id": "C-177",
@@ -1957,13 +1963,16 @@
   {
    "id": "C-199",
    "old": "Each `run!` re-initializes every rostered device and spawns its task.",
-   "new": "Each `run!` re-initializes every rostered device and spawns its task (D-093).",
+   "new": "Each `run!` re-initializes every rostered device and spawns a task for each whose `init!` succeeds (§11.1, D-093).",
    "where": "new",
    "cites": [],
    "newcites": [
-    "D-093"
+    "D-093",
+    "§11.1"
    ],
-   "tag": "C"
+   "tag": "R",
+   "ruling": "B3",
+   "note": "a device whose `init!` failed gets no task (§11.1, D-138); D-093's Position spawns per roster entry after per-run `init!` (B3)"
   },
   {
    "id": "C-200",
@@ -2070,6 +2079,7 @@
   "#### Lifecycle states and the input mode",
   "Replay is the ordinary loop re-driven from the trace.",
   "The drain is the frame-top swap that publishes staged device writes into the root inputs, and a batch is a device's staged set of writes.",
+  ", and a mismatch is `CheckpointMismatch`",
   "#### Device attachments across runs",
   "#### The stop policy per advance"
  ]

@@ -230,8 +230,9 @@
    "newcites": [
     "D-218"
    ],
-   "tag": "F",
-   "note": "label dropped; bold headline clause; D-218 was adjacent"
+   "tag": "R",
+   "ruling": "B7",
+   "note": "label dropped; D-218 was adjacent. The bold covers the headline clause only, \"the mode decides which source that one drain branch reads\", since §12.6 states the modes plain (B7)"
   },
   {
    "id": "C-024",
@@ -517,11 +518,13 @@
    "id": "C-053",
    "old": "The frame-entry pointer (§13.4) lands the same way.",
    "new": "The frame-entry pointer (§13.4) lands the same way.",
-   "where": "new",
+   "where": "units/G/deleted.md",
    "cites": [
     "§13.4"
    ],
-   "tag": "F"
+   "tag": "R",
+   "ruling": "B9",
+   "note": "deleted as a consequence of F83 and R17: `to_boundary` takes the frame-entry boundary index itself, so the sentence compared the pointer with itself"
   },
   {
    "id": "C-054",
@@ -537,13 +540,18 @@
   {
    "id": "C-055",
    "old": "§10.4 separates the two indices. The trace stays frame-indexed, and boundaries are the reporting index.",
-   "new": "The trace stays frame-indexed, replay pointers and error messages use the frame-entry boundary index, and snapshots carry the published-boundary ordinal (§10.4).",
+   "new": "The trace stays frame-indexed, replay pointers and error messages use the frame-entry boundary index, and snapshots carry the published-boundary ordinal (§10.4, §12.3).",
    "where": "new",
    "cites": [
     "§10.4"
    ],
+   "newcites": [
+    "§10.4",
+    "§12.3"
+   ],
    "tag": "R",
-   "ruling": "R17"
+   "ruling": "R17, B18",
+   "note": "§12.3, which states the three indices, cited beside §10.4 (B18)"
   },
   {
    "id": "C-056",
@@ -592,23 +600,25 @@
   {
    "id": "C-060",
    "old": "`to_time` addresses the same halt by time.",
-   "new": "`to_time` addresses the same halt by time.",
+   "new": "the same halt addressed by time",
    "where": "new",
    "cites": [],
-   "tag": "F",
-   "note": "bold lead-in becomes a plain topic sentence"
+   "tag": "R",
+   "ruling": "B8",
+   "note": "the bold lead-in's topic sentence goes; its subject moves into the bold and its claim into an appositive (B8)"
   },
   {
    "id": "C-061",
    "old": "The keyword is mutually exclusive with `to_boundary`, and it halts at the last frame top at or before the time given:",
-   "new": "The keyword halts at the last frame top at or before the time given, and it is mutually exclusive with `to_boundary` (D-219).",
+   "new": "`to_time` halts at the last frame top at or before the time given, the same halt addressed by time, and it is mutually exclusive with `to_boundary` (D-219).",
    "where": "new",
    "cites": [],
    "newcites": [
     "D-219"
    ],
-   "tag": "F",
-   "note": "clauses swapped so the bold headline leads; D-219 was adjacent"
+   "tag": "R",
+   "ruling": "B8",
+   "note": "clauses swapped so the bold headline leads; D-219 was adjacent. The bold names its subject, `to_time`, not \"The keyword\" (B8)"
   },
   {
    "id": "C-062",

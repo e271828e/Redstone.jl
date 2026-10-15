@@ -130,9 +130,10 @@ note: claim's first-use gloss added inside the span
 
 old: Rule. A simulation is in one of two input modes, `:live` or `:replay`, and the mode decides which source that one drain branch reads:
 new: A simulation is in one of two input modes, `:live` or `:replay`, and the mode decides which source that one drain branch reads (D-218).
-tag: F
+tag: R
+ruling: B7
 newcites: D-218
-note: label dropped; bold headline clause; D-218 was adjacent
+note: label dropped; D-218 was adjacent. The bold covers the headline clause only, "the mode decides which source that one drain branch reads", since §12.6 states the modes plain (B7)
 
 old: the staging cells under `:live`, the attached recording under `:replay`.
 new: Under `:live` it reads the staging cells, and under `:replay` the attached recording.
@@ -273,7 +274,10 @@ ruling: R10
 note: F83, "For a grid boundary" goes
 
 old: The frame-entry pointer (§13.4) lands the same way.
-tag: F
+where: units/G/deleted.md
+tag: R
+ruling: B9
+note: deleted as a consequence of F83 and R17: `to_boundary` takes the frame-entry boundary index itself, so the sentence compared the pointer with itself
 
 old: A localized `t` boundary inside the frame (the crossing instant bracketed by root-finding over trial sweeps) is reproduced but not stoppable-at.
 new: A localized `t` boundary (the crossing instant bracketed by root-finding over trial sweeps) inside the frame is reproduced but not stoppable-at (D-128).
@@ -281,9 +285,11 @@ tag: C
 newcites: D-128
 
 old: §10.4 separates the two indices. The trace stays frame-indexed, and boundaries are the reporting index.
-new: The trace stays frame-indexed, replay pointers and error messages use the frame-entry boundary index, and snapshots carry the published-boundary ordinal (§10.4).
+new: The trace stays frame-indexed, replay pointers and error messages use the frame-entry boundary index, and snapshots carry the published-boundary ordinal (§10.4, §12.3).
 tag: R
-ruling: R17
+ruling: R17, B18
+newcites: §10.4 §12.3
+note: §12.3, which states the three indices, cited beside §10.4 (B18)
 
 old: Replay may also end earlier still under the ordinary policies, since `t_end` and `ignore_stop_requests` are keywords of `replay!` exactly as of `run!` (§12.6).
 new: Replay may also end earlier still under the ordinary policies, since `t_end` and `ignore_stop_requests` are keywords of `replay!` exactly as of `run!` (§12.6, D-255, D-316).
@@ -306,14 +312,17 @@ ruling: R10
 note: F67
 
 old: `to_time` addresses the same halt by time.
-tag: F
-note: bold lead-in becomes a plain topic sentence
+new: the same halt addressed by time
+tag: R
+ruling: B8
+note: the bold lead-in's topic sentence goes; its subject moves into the bold and its claim into an appositive (B8)
 
 old: The keyword is mutually exclusive with `to_boundary`, and it halts at the last frame top at or before the time given:
-new: The keyword halts at the last frame top at or before the time given, and it is mutually exclusive with `to_boundary` (D-219).
-tag: F
+new: `to_time` halts at the last frame top at or before the time given, the same halt addressed by time, and it is mutually exclusive with `to_boundary` (D-219).
+tag: R
+ruling: B8
 newcites: D-219
-note: clauses swapped so the bold headline leads; D-219 was adjacent
+note: clauses swapped so the bold headline leads; D-219 was adjacent. The bold names its subject, `to_time`, not "The keyword" (B8)
 
 old: `k = ⌊(to_time − t₀)/h⌋` against the header's `t₀`.
 new: It computes `k = ⌊(to_time − t₀)/h⌋` against the header's `t₀`, under either form.

@@ -46,18 +46,17 @@ device task or the loop itself ends first.
    ([D-373][d-373]). Steps (2) and (3) are the framework's half. They wake its
    own waits and call each device's `unblock!`. The wrapper's `finally
    shutdown!(device)` is guaranteed on every exit path.
-5. Join under the `join_timeout` cap. The cap lives on `Control`, the tail's own
-   owner ([§12.1][s12-1], [D-256][d-256]). It is a keyword of the `Simulation` constructor, a
-   positive real in seconds of wall clock, defaulting to 5 ([Appendix B][sB]). The
-   constructor refuses any other value as `ArgumentInvalid`. A device task
-   exceeding the cap is reported *by name* in a `DeviceJoinTimeout` diagnostic
-   ([Appendix C][sC]). It is then abandoned rather than left to hang `run!`. **The
-   diagnostic is written to the loop's own [diagnostic cell](#g-diagnostic-cell)**, a writer's own
-   holding place for runtime diagnostics and liveness ([D-203][d-203]). The run's-end
-   sweep, the loop's last pass over every diagnostic cell, collects the
-   diagnostic into the [termination record](#g-termination-record) (the stopped-sim value naming how the
-   run ended). The logging backend presents the diagnostic, with the terminal
-   snapshot preceding the join ([D-201][d-201], [D-203][d-203]).
+5. Join under the `join_timeout` cap. It is a keyword of the `Simulation`
+   constructor, held on `Control` ([§12.1][s12-1]), a positive real in seconds of wall
+   clock, defaulting to 5 ([Appendix B][sB]). The constructor refuses any other value
+   as `ArgumentInvalid`. A device task exceeding the cap is reported *by name*
+   in a `DeviceJoinTimeout` diagnostic ([Appendix C][sC]). It is then abandoned rather
+   than left to hang `run!`. **The diagnostic is written to the loop's own
+   [diagnostic cell](#g-diagnostic-cell)**, a writer's own holding place for runtime diagnostics and
+   liveness ([D-203][d-203]). The run's-end sweep, the loop's last pass over every
+   diagnostic cell, collects the diagnostic into the [termination record](#g-termination-record) (the
+   stopped-sim value naming how the run ended). The logging backend presents the
+   diagnostic, with the terminal snapshot preceding the join ([D-201][d-201], [D-203][d-203]).
 6. Device-initiated paths. A device exits voluntarily when its loop body
    returns, at a window ✕ or a peer EOT. No `should_close` hook exists ([§11.6][s11-6]).
    With [`should_abort`](#g-should_abort) (the per-attachment failure policy, an `attach!` keyword)
@@ -165,7 +164,8 @@ for entry in roster                       # attachment order, calling task
         if e isa InterruptException       # the operator's stop, never a crash (below)
             stop!(control, :interrupt)
         else
-            report!(entry, DeviceCrash(e, entry.should_abort))    # pre-spawn: the entry is the address, no task holds a handle yet
+            # pre-spawn: the entry is the address, no task holds a handle yet
+            report!(entry, DeviceCrash(e, entry.should_abort))
             entry.should_abort && stop!(entry.handle)
         end
                                           # no dead-marking: no task is spawned (§12.2)

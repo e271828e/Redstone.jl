@@ -10,8 +10,8 @@ re-drives the ordinary loop.
 
 ### 12.1 Control plane
 
-Pause, un-pause, pace changes, `margin` changes and stop are a few scalar fields
-on a separate atomic surface, the [control plane](#g-control-plane). It is not staging, structurally
+Pause, un-pause, pace changes, `margin` changes and stop are a few fields on a
+separate atomic surface, the [control plane](#g-control-plane). It is not staging, structurally
 ([D-022][d-022]). Staged writes apply at [drains](#g-drain) (the frame-top swaps that apply staged
 device writes), and a paused loop drains nothing, so un-pause via staging would
 deadlock by construction. Riding outside the path through the drain and the
@@ -37,13 +37,13 @@ point involved ([§12.4][s12-4], [D-132][d-132]). The loop catches it at one of 
 points, where a deferred Ctrl-C is raised ([§12.4][s12-4]).
 
 **The stop word carries its issuer** ([D-203][d-203]). The stop word is the control
-plane's stop command, held in one atomic word. Each issuing site writes its
-identity (the device's name, `:code`, or `:interrupt`) by compare-and-swap from
-empty, and the first writer wins. The loop's frame-top read consults the word
-for non-empty, so the recorded issuer is the request that actually initiated the
-tail, the ordered shutdown sequence of [§12.4][s12-4]. The issuer lands in the
-[termination record](#g-termination-record) (the stopped-sim value naming how the run ended) as its
-`ControlRequestedStop`'s payload ([§13.5][s13-5], [D-203][d-203]).
+plane's stop command, one atomic word holding its issuer. Each issuing site
+writes its identity (the device's name, `:code`, or `:interrupt`) by
+compare-and-swap from empty, and the first writer wins. The loop's frame-top
+read consults the word for non-empty, so the recorded issuer is the request that
+actually initiated the tail, the ordered shutdown sequence of [§12.4][s12-4]. The issuer
+lands in the [termination record](#g-termination-record) (the stopped-sim value naming how the run ended)
+as its `ControlRequestedStop`'s payload ([§13.5][s13-5], [D-203][d-203]).
 
 **`ControlRequestedStop` sits outside the stop policy** ([D-255][d-255]). The
 policy is what the caller declares for one advance ([§13.5][s13-5]). The stop
@@ -81,9 +81,9 @@ the control plane for the same reason `pace` does. It tunes the wait, never the
 arithmetic, so retuning the coarse/spin split mid-run is safe by construction.
 `run!` and `replay!` take both as keywords and write them when called. Both are
 declared by the advance, as `t_end` is. `pace` defaults to `Inf` and `margin` to
-2 ms ([Appendix B][sB], [D-133][d-133]). `step!` takes neither and never waits. A stepping
-session is the harness mode ([§12.6][s12-6]), and its frames are bit-identical to
-`run!`'s by [§10.7][s10-7]'s invariant. `pace` is a positive real, `Inf` admitted, and
+2 ms ([Appendix B][sB], [D-133][d-133]). `step!` takes neither and never waits on the pacer. A
+stepping session is the harness mode ([§12.6][s12-6]), and its frames are bit-identical
+to `run!`'s by [§10.7][s10-7]'s invariant. `pace` is a positive real, `Inf` admitted, and
 `margin` a non-negative real, `Inf` admitted. The two setters and the two
 keywords refuse anything else under `ArgumentInvalid` ([Appendix C][sC]).
 
@@ -148,13 +148,12 @@ hard error** ([D-027][d-027]).
 
 The scheduler stall FlightCore's `nthreads` error prevented cannot reproduce
 here, for two reasons. The loop yields every frame. Nothing couples a stall to
-anyone else, the GUI least of all. It waits on nothing, ever. It uses a
-[snapshot](#g-snapshot) acquire-load, its own [staging cell](#g-staging-cell)
-and atomic control. Under any starvation, then, the front end keeps rendering
-and the stop button keeps working.
+anyone else, the GUI least of all. It waits on nothing, ever. It uses a snapshot
+acquire-load, its own [staging cell](#g-staging-cell) and atomic control. Under any starvation,
+then, the front end keeps rendering and the stop button keeps working.
 
-Undersized sessions degrade to laggy inputs and stale snapshots, which are
-visible, recoverable states.
+Undersized sessions degrade to laggy inputs and stale [snapshots](#g-snapshot) (the immutable
+per-boundary publications), which are visible, recoverable states.
 
 At `run!` or `replay!`, a run warns under `ThreadBudget` ([Appendix C][sC]) when
 `Threads.nthreads()` is tight for the attached population, naming the `julia -t`
@@ -216,9 +215,9 @@ The loop's publication is `lock; counter += 1; notify; unlock`, nanoseconds
 of framework-only code. Waiters never block it. One parked in `wait` has
 released the lock as part of parking.
 
-**The order of the two publications is normative** ([D-114][d-114]). The release-store of
-[`latest`](#g-latest), the atomic reference readers acquire-load ([§11.2][s11-2]), happens before the
-counter increment under the lock.
+The order of the two publications is normative. **The release-store of [`latest`](#g-latest),
+the atomic reference readers acquire-load ([§11.2][s11-2]), happens before the counter
+increment under the lock** ([D-114][d-114]).
 
 ```julia
 # the loop, at every published boundary
@@ -236,11 +235,10 @@ expected and correct. A waiter may observe a *newer* snapshot than the increment
 that woke it. Newest wins.
 
 The device side is `wait_next_snapshot(handle)`, which blocks until
-`counter > last_seen && running` under the canonical predicate-loop idiom.
-That idiom handles waiters at different paces, frames skipped while
-transmitting, and shutdown, all with no per-frame reset. Shutdown works
-because [§12.4][s12-4] wakes all waiters and each predicate then routes its
-owner out ([D-028][d-028]).
+`counter > last_seen && running` under the canonical predicate-loop idiom. That
+idiom handles waiters at different paces, boundaries skipped while transmitting,
+and shutdown, all with no per-frame reset. Shutdown works because [§12.4][s12-4] wakes
+all waiters and each predicate then routes its owner out ([D-028][d-028]).
 
 **The wait's semantics are newest-wins, no queues** ([D-028][d-028]). A slow consumer
 skips boundaries and always receives the current world. This mirrors the inbound

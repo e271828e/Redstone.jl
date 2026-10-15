@@ -57,9 +57,10 @@ added: This section covers, in order, when the loop reads the plane, the stop an
 # Control's introduction: D-256's "To the periphery's own types: `join_timeout` into `Control`"; D-255's Rejected equates Control and the control plane (log 10105).
 
 old: Pause, un-pause, pace changes, `margin` changes and stop are a few scalar fields on a separate atomic surface.
-new: Pause, un-pause, pace changes, `margin` changes and stop are a few scalar fields on a separate atomic surface
-tag: F
-note: opens the section (chapter pass P1-15); the control plane is named by apposition after it.
+new: Pause, un-pause, pace changes, `margin` changes and stop are a few fields on a separate atomic surface
+tag: R
+ruling: B20
+note: opens the section (chapter pass P1-15); the control plane is named by apposition after it. "scalar" goes, since `Control` also holds a `Threads.Condition` and the boundary counter (B20); "a", not the proposal's "that", which had no antecedent once P1-15 made the sentence the section's first.
 
 old: The loop consults them at frame top.
 new: The loop consults the control plane at frame top, the start of each frame.
@@ -110,11 +111,11 @@ added: (Ctrl-C read as a control-plane stop)
 added: where a deferred Ctrl-C is raised
 
 old: The stop word carries its issuer.
-new: The stop word carries its issuer (D-203). The stop word is the control plane's stop command, held in one atomic word.
+new: The stop word carries its issuer (D-203). The stop word is the control plane's stop command, one atomic word holding its issuer.
 tag: R
 ruling: R15
 newcites: D-203
-note: D-203 bullet 3, the citation was two sentences on; the second sentence is R11's gloss as R15 words it, less "holding its issuer", which the bold states (chapter pass P1-17).
+note: D-203 bullet 3, the citation was two sentences on; the second sentence is R11's gloss in R15's wording, which §12.4's gloss also uses (step 6, step5_carry.md).
 
 old: Each issuing site writes its identity (the device's name, `:code`, or `:interrupt`) by compare-and-swap from empty, and the first writer wins.
 tag: F
@@ -227,7 +228,10 @@ newcites: Appendix B D-133
 note: split in three; bare "entry" becomes "when called" (chapter pass P1-26); D-269 bullet 2 sets `pace`'s default, D-133's Position `margin` = 2 ms (bold at §10.7, plain here).
 
 old: `step!` takes neither and never waits.
-tag: F
+new: `step!` takes neither and never waits on the pacer.
+tag: R
+ruling: B1
+note: F79's scope, as §12.6 states it; `step!` blocks while paused (this section).
 
 old: A stepping session is the harness mode (§12.6), and its frames are bit-identical to `run!`'s by §10.7's invariant.
 tag: F
@@ -369,7 +373,7 @@ note: E2, as written.
 old: It uses a snapshot acquire-load, its own staging cell and atomic control.
 tag: R
 ruling: R2
-note: E2, as written; no glosses added to the snapshot and staging-cell links, since R2 allows a rewrap only.
+note: E2, as written; no glosses added, since R2 allows a rewrap only. The snapshot link moves to the next sentence's "stale snapshots" with its gloss (B16); the staging-cell link stays.
 
 old: Under any starvation, then, the front end keeps rendering and the stop button keeps working.
 tag: R
@@ -377,7 +381,12 @@ ruling: R2
 note: E2, as written.
 
 old: Undersized sessions degrade to laggy inputs and stale snapshots, which are visible, recoverable states.
-tag: F
+new: Undersized sessions degrade to laggy inputs and stale snapshots (the immutable per-boundary publications), which are visible, recoverable states.
+tag: R
+ruling: B16
+note: the section's snapshot link, moved here from the E2 sentence before, takes §12.3's gloss in the plural.
+
+added: (the immutable per-boundary publications)
 
 old: A run warns, at `run!` or `replay!`, when `Threads.nthreads()` is tight for the attached population, naming the `julia -t` remedy.
 new: At `run!` or `replay!`, a run warns under `ThreadBudget` (Appendix C) when `Threads.nthreads()` is tight for the attached population, naming the `julia -t` remedy.
@@ -538,15 +547,17 @@ tag: M
 note: M5.
 
 old: Rule. The order of the two publications is normative.
-new: The order of the two publications is normative (D-114).
-tag: C
-newcites: D-114
-note: M5; R3, D-114's publication order bold; label goes.
+new: The order of the two publications is normative.
+tag: R
+ruling: B6
+note: M5; label goes. Plain, since D-114's bold moves to the next sentence, which states the order (B6).
 
 old: The release-store of `latest` (§11.2) happens before the counter increment under the lock.
-new: The release-store of `latest`, the atomic reference readers acquire-load (§11.2), happens before the counter increment under the lock.
-tag: M
-note: M5; the bold on "before" goes. The gloss is an appositive and §11.2 stays on `latest`, since §11.2 does not state the order (chapter pass P1-20).
+new: The release-store of `latest`, the atomic reference readers acquire-load (§11.2), happens before the counter increment under the lock (D-114).
+tag: R
+ruling: B6
+newcites: §11.2 D-114
+note: M5; R3, D-114's publication order bold, on the sentence that states the order (B6). The gloss is an appositive and §11.2 stays on `latest`, since §11.2 does not state the order (chapter pass P1-20).
 
 added: , the atomic reference readers acquire-load
 
@@ -576,7 +587,10 @@ old: The device side is `wait_next_snapshot(handle)`, which blocks until `counte
 tag: F
 
 old: That idiom handles waiters at different paces, frames skipped while transmitting, and shutdown, all with no per-frame reset.
-tag: F
+new: That idiom handles waiters at different paces, boundaries skipped while transmitting, and shutdown, all with no per-frame reset.
+tag: R
+ruling: B2
+note: R10's F17 covers every instance; the counter counts boundaries.
 
 old: Shutdown works because §12.4 wakes all waiters and each predicate then routes its owner out.
 new: Shutdown works because §12.4 wakes all waiters and each predicate then routes its owner out (D-028).

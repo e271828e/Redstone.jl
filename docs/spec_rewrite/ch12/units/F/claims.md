@@ -117,9 +117,11 @@ tag: F
 note: "the avionics" glossed as §10.1's "(onboard flight systems)" (spec 5615)
 
 old: §11.7 therefore renders the corresponding GUI widgets read-only with its source shown.
-new: §11.7 therefore renders the corresponding GUI widgets read-only, each showing its source.
-tag: F
-note: "its" now reads as each widget's (step 5, P2-3)
+new: §11.7 therefore renders a front end's corresponding widgets read-only, each showing its source (D-310).
+tag: R
+ruling: B11
+newcites: §11.7 D-310
+note: "its" now reads as each widget's (step 5, P2-3); R2 extended to §12.5, "the corresponding GUI widgets" becoming a front end's, D-310 cited once in the section (B11)
 
 old: Today's demo-vs-GUI dead-slider fight is resolved by the port-resolution rule.
 new: Its port-resolution rule resolves FlightCore's demo-vs-GUI dead-slider fight.
@@ -522,22 +524,22 @@ ruling: R5
 note: M51; the bold lead-in goes with the paragraph it headed
 
 old: The loop runs on the calling task, the task that invoked `run!`, and every rostered device on a spawned task (§11.1).
-new: and §11.1 says where the loop and the device tasks run
+new: §11.1 says where the loop and the device tasks run
 tag: R
-ruling: R5
-note: M51; §11.1 holds it bold, "The loop runs on the calling task (D-310)"
+ruling: R5, B12
+note: M51; §11.1 holds it bold, "The loop runs on the calling task (D-310)"; the pointer opens its own sentence (B12)
 
 old: Deviceless, `run!` is fully synchronous.
-new: Deviceless, `run!` is fully synchronous,
+new: Deviceless, `run!` is fully synchronous.
 tag: R
-ruling: R5
+ruling: R5, B12
 note: kept, since D-268's Rationale cites §12.6 for it
 
 old: An unattended run is the same loop with empty staging (§11.1).
-new: §11.1 says where the loop and the device tasks run and defines the unattended run (a run with empty staging and no snapshot readers).
+new: §11.1 says where the loop and the device tasks run, and defines the unattended run (a run with empty staging and no snapshot readers).
 tag: R
-ruling: R5
-note: M51, F65, F75; the pointer carries the definition, and the gloss is the glossary's
+ruling: R5, B12
+note: M51, F65, F75; the pointer carries the definition, and the gloss is the glossary's; its own sentence, apart from the deviceless claim (B12)
 
 old: It is also what the synchronous rethrow presupposes (§13.4).
 new: This is what the synchronous rethrow (§13.4) presupposes.
@@ -804,9 +806,12 @@ old: The test is that the clock sits on a grid time and that the latest snapshot
 tag: F
 
 old: `restore!(model, model_state)` checks the state's fingerprint against the model.
-new: `restore!(model, model_state)` checks the state's fingerprint and deployment against the model.
+new: `restore!(model, model_state)` checks the state's fingerprint and deployment against the model, and a mismatch is `CheckpointMismatch`.
 tag: R
-ruling: R12
+ruling: R12, B4
+note: B4 names the kind, as `src/model.jl` and D-319 bullet 2 carry it, so "either kind" below has both its antecedents
+
+added: , and a mismatch is `CheckpointMismatch`
 
 old: It also checks that the state's `t` is a grid time `t₀ + k·h` of the state's own origin and step, and a state off its grid is `CheckpointMidFrame`.
 tag: F
@@ -901,9 +906,11 @@ new: Tasks and OS resources do not, the per-run topology being specified in §11
 tag: F
 
 old: Each `run!` re-initializes every rostered device and spawns its task.
-new: Each `run!` re-initializes every rostered device and spawns its task (D-093).
-tag: C
-newcites: D-093
+new: Each `run!` re-initializes every rostered device and spawns a task for each whose `init!` succeeds (§11.1, D-093).
+tag: R
+ruling: B3
+newcites: §11.1 D-093
+note: a device whose `init!` failed gets no task (§11.1, D-138); D-093's Position spawns per roster entry after per-run `init!` (B3)
 
 old: `attach!` while stopped only registers, and the task appears at the next `run!`.
 tag: F

@@ -297,23 +297,34 @@
   {
    "id": "C-033",
    "old": "The cap lives on `Control`, the tail's own owner (§12.1, D-256).",
-   "new": "The cap lives on `Control`, the tail's own owner (§12.1, D-256).",
+   "new": "held on `Control` (§12.1)",
    "where": "new",
    "cites": [
     "D-256",
     "§12.1"
    ],
-   "tag": "F"
+   "newcites": [
+    "§12.1"
+   ],
+   "tag": "R",
+   "ruling": "B15",
+   "note": "the sentence goes and its pointer folds into the next (B15). \"the tail's own owner\" goes with it; D-256 and the cap's home stay at F6's \"The cap therefore lives on `Control`, not on the `Deployment` (D-256)\" below, and §12.1 bolds it."
   },
   {
    "id": "C-034",
    "old": "It is a keyword of the `Simulation` constructor, a positive real in seconds of wall clock, defaulting to 5 (Appendix B).",
-   "new": "It is a keyword of the `Simulation` constructor, a positive real in seconds of wall clock, defaulting to 5 (Appendix B).",
+   "new": "It is a keyword of the `Simulation` constructor, held on `Control` (§12.1), a positive real in seconds of wall clock, defaulting to 5 (Appendix B).",
    "where": "new",
    "cites": [
     "Appendix B"
    ],
-   "tag": "F"
+   "newcites": [
+    "Appendix B",
+    "§12.1"
+   ],
+   "tag": "R",
+   "ruling": "B15",
+   "note": "takes the dropped sentence's pointer (B15)."
   },
   {
    "id": "C-035",
@@ -950,15 +961,15 @@
   {
    "id": "C-095",
    "old": "`for entry in roster # attachment order, calling task push!(live, entry) # listed for release before `init!` begins try init!(entry.device) catch e shutdown!(entry.device) # release, unconditionally (§11.6) pop!(live) # released, so unlisted if e isa InterruptException # the operator's stop, never a crash (below) stop!(control, :interrupt) else report!(entry, DeviceCrash(e)) # pre-spawn: the entry is the address, no handle yet entry.should_abort && stop!(control) end # no dead-marking: no task is spawned (§12.2) end end`",
-   "new": "`for entry in roster # attachment order, calling task push!(live, entry) # listed for release before `init!` begins try init!(entry.device) catch e shutdown!(entry.device) # release, unconditionally (§11.6) pop!(live) # released, so unlisted if e isa InterruptException # the operator's stop, never a crash (below) stop!(control, :interrupt) else report!(entry, DeviceCrash(e, entry.should_abort)) # pre-spawn: the entry is the address, no task holds a handle yet entry.should_abort && stop!(entry.handle) end # no dead-marking: no task is spawned (§12.2) end end`",
+   "new": "`for entry in roster # attachment order, calling task push!(live, entry) # listed for release before `init!` begins try init!(entry.device) catch e shutdown!(entry.device) # release, unconditionally (§11.6) pop!(live) # released, so unlisted if e isa InterruptException # the operator's stop, never a crash (below) stop!(control, :interrupt) else # pre-spawn: the entry is the address, no task holds a handle yet report!(entry, DeviceCrash(e, entry.should_abort)) entry.should_abort && stop!(entry.handle) end # no dead-marking: no task is spawned (§12.2) end end`",
    "where": "new",
    "cites": [
     "§11.6",
     "§12.2"
    ],
    "tag": "R",
-   "ruling": "R10, R19",
-   "note": "F24, the two ruled code edits; R19, the comment \"no handle yet\" becomes \"no task holds a handle yet\"; nothing else in the block changes"
+   "ruling": "R10, R19, B14",
+   "note": "F24, the two ruled code edits; R19, the comment \"no handle yet\" becomes \"no task holds a handle yet\"; B14, that comment moves to its own line above the `report!` call, its words unchanged; nothing else in the block changes"
   },
   {
    "id": "C-096",
