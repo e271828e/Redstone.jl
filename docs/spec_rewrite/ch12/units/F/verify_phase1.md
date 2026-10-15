@@ -253,3 +253,109 @@
 - V232 Each call builds and validates the `StopPolicy` (the immutable value of `t_end` plus the ignored requester paths) it passes to the loop (§13.5, D-255, D-316). [§13.5, D-255, D-316]
 - V233 The value lives as long as the call, and afterwards only on the termination record of the advance that ended the run (D-260). [D-260]
 - V234 A second run, or a `step!` sequence between two runs, can therefore stop on a different clock or honour a different set of stop requests without a rebuild.
+
+### Verifier splits
+- V10a No demo, test or GUI path pokes `x`/`s` mid-run.
+- V10b `init!`/trim appear only between construction and `run!` (c172_demos.jl:303).
+- V11a A sim-time script becomes a scenario component (D-031).
+- V11b A wall-clock interaction becomes a device (D-031).
+- V17a A script mapped to a component is periodic discrete.
+- V17b It has `K = 1` for FlightCore's `dt = 0.02` callbacks, `K` the multiplier in `Relative(K)` (§10.5).
+- V18a It executes synchronously in the loop.
+- V18b It is deterministic paced or unpaced.
+- V22a The `Ref(:init)` phase closure becomes honest `s`.
+- V22b A port can publish that `s` to snapshots, logs and plots.
+- V27a The one-liner is `y_direct(c, (; t)) = (; offset = profile(t))`.
+- V27b It is exact at its own ticks.
+- V27c It has no latch state of its own.
+- V33a `user_callback!` is the periphery's `f_step!`, FlightCore's unconditional per-step hook (§2.5).
+- V33b Cheap composition leaves it without justification.
+- V40a Mid-run re-initialization is not built (D-031).
+- V40b The reason is that it is not demonstrated.
+- V45a The guarded addition would be a traced, boundary-executed intervention command applied through project → sweep → publish.
+- V45b Its purpose is that no consumer ever observes un-decoded state.
+- V46a While a simulation runs, the periphery stages root-input writes.
+- V46b While a simulation runs, the periphery issues control commands.
+- V53a A stop request is declared in the model.
+- V53b It is honoured unless the advance ignores it (D-316).
+- V54a It is never a callback.
+- V54b It is never a thrown exception (D-060).
+- V57a A door is an entry point that builds a run.
+- V57b There are three doors, `init!`, `restore!` and `replay!`.
+- V65a The trace is the other const field.
+- V65b It is `nothing` under the trace switch.
+- V67a A run's recording is the building door's declaration (D-261).
+- V67b The next door may declare otherwise.
+- V72a `init!`, `restore!` and `replay!` construct a run.
+- V72b Nothing else rebinds it.
+- V74a The loop's tail writes `termination` once.
+- V74b `closed(run)` is `termination !== nothing`.
+- V75a Each door sets the counters, `init!` to zero, `restore!` and `replay!` to the checkpoint's.
+- V75b The loop advances them (D-317).
+- V83a The placeholder is an empty log, no trace, no feed and no termination.
+- V83b `init!`, `restore!` and `replay!` replace it (D-255).
+- V84a The field is always a `Run` and never `nothing`, so every accessor has a run to read.
+- V84b The lifecycle state says whether that run ever started.
+- V92a A simulation owns its `Model`.
+- V92b The `Model` is claimed at construction and never shared (§9.2, D-318).
+- V98a The loop's diagnostic cell, its account and the published holder are the plane's.
+- V98b The frame's own cell is the `Model`'s (§11.8).
+- V100a The stop policy, with `t_end` and ignored requesters, is the advance's argument.
+- V100b The termination record keeps the terminating one (D-260).
+- V101a The pacer's schedule and counters are `run!`'s own, created per call.
+- V101b They are passed to the loop and its publications as the policy is.
+- V105a An object is built after its inputs exist (D-261).
+- V105b The placeholder run is the one exception.
+- V108a Built is the cold state.
+- V108b A throw inside boundary zero returns the simulation to built (§13.4).
+- V112a The status is `:built`, `:consistent` or `:inconsistent`.
+- V112b Only the `Model`'s own entry points and catch sites write it.
+- V147a Each of `restore!` and `replay!` restores a checkpoint.
+- V147b Each runs no boundary zero (§12.7, D-274).
+- V148a A throw inside boundary zero leaves the simulation `built` (§13.4, D-223).
+- V148b The next `run!` or `step!` meets the same refusal.
+- V149a Deviceless, `run!` is fully synchronous.
+- V149b §11.1 says where the loop and the device tasks run and defines the unattended run.
+- V151a A stepped simulation is bit-identical to the same frames under `run!` (§2.4).
+- V151b It never waits on the pacer, whatever pace the control plane holds (D-269).
+- V154a `t_plus` advances whole frames until the boundary time first covers the duration.
+- V154b That is the migration suite's advance-by-duration idiom.
+- V159a Device tasks are per-`run!` artifacts (§11.1).
+- V159b A device loop's `while running(handle)` is false outside a run.
+- V160a Between `step!` calls the simulation is in the stopped-sim state `initialized`.
+- V160b `attach!` is legal there and does what it always does.
+- V166a Staged batches are traced, so replay and bit-identity hold.
+- V166b They are applied at the next frame top.
+- V177a `run!` may follow `step!`, continuing from the current boundary.
+- V177b Another `step!` may follow too.
+- V187a Each door builds a fresh run, so trace, log and termination record are new objects.
+- V187b Each clears any batches still in staging cells.
+- V188a The recorders restart with the run they record.
+- V188b No stale batch survives to clobber the frame it predates.
+- V189a `init!` and `restore!` return the input mode to `:live`.
+- V189b A fresh `replay!` sets the mode exactly as it sets the trajectory.
+- V193a From `stopped`, nothing advances until `init!`, `restore!` or `replay!` opens a new run (D-218, D-219).
+- V193b `errored` is terminal.
+- V194a `checkpoint` and `restore!` exist on the `Model` and on the `Simulation` (D-319).
+- V194b A `Checkpoint` is the `Model`'s state beside the run's cursor.
+- V199a `checkpoint(sim)` is a stopped-sim service legal in `initialized` and `stopped` (§14).
+- V199b It is refused as `ServiceLifecycle` in any other state.
+- V204a `restore!(model, …)` checks that the state's `t` is a grid time `t₀ + k·h` of its own origin and step.
+- V204b A state off its grid is `CheckpointMidFrame`.
+- V206a The model entry point copies the state back.
+- V206b It settles the restored boundary through the hooks.
+- V206c It writes `:consistent` last (D-318, D-319).
+- V210a `restore!(sim, cp)` copies the state back.
+- V210b It opens a fresh run with the checkpoint as its trace header.
+- V210c It publishes one snapshot at the checkpoint's `t`.
+- V215a The re-publication carries the ordinal of the boundary the checkpoint was taken at.
+- V215b The next frame publishes under the next ordinal, as in the original run.
+- V217a `restore!(sim, model_state)` takes the same keywords.
+- V217b It makes the same fingerprint and deployment check.
+- V217c It refuses an off-grid `t` as `CheckpointMidFrame`.
+- V218a It opens a fresh trajectory at the state's frame.
+- V218b The restored boundary publishes under ordinal 0.
+- V222a Device attachments persist across re-initialization (D-088).
+- V222b The reason is that attachment is orthogonal to the run lifecycle (§11.3).
+- V233a The stop policy value lives as long as the call.
+- V233b Afterwards it lives only on the termination record of the advance that ended the run (D-260).

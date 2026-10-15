@@ -39,8 +39,8 @@ The component mapping is strictly richer than the callback it replaces.
   [port](#g-port) (one declared name with its cell) can publish to
   [snapshots](#g-snapshot), logs and plots. A snapshot is the immutable
   per-boundary publication.
-- Inputs arrive same-[boundary](#g-boundary) (a published consistency point)
-  fresh by topological order. The callback ran post-step, one boundary
+- Inputs arrive fresh from the same [boundary](#g-boundary) (a published
+  consistency point), by topological order. The callback ran post-step, one boundary
   staler.
 - The pure timetable script is a one-liner reading the clock out of its
   [bundle](#g-bundle) (the NamedTuple of zero-copy views a component function
@@ -99,7 +99,8 @@ its [devices](#g-device) (any attached participants in the periphery) across
 runs. A simulation is in one of five lifecycle states, built, initialized,
 running, stopped or errored. A *door* is an entry point that builds a run, and
 there are three, `init!`, `restore!` and `replay!`. A run's `feed` is the
-recording `replay!` attached, or `nothing`. The input mode says where the next
+recording `replay!` attached, or `nothing`. The [input mode](#g-input-mode)
+says where the next
 [frame](#g-frame) (one grid step, the unit of scheduling) takes its inputs
 from. In `:live` they come from the [staging cells](#g-staging-cell) (where
 each device's pending batch waits between drains), and in `:replay` from the
@@ -162,15 +163,16 @@ reached through the deployment, never held twice. The grid parameters, the
 the event parameters are the deployment's ([§9.2][s9-2]). `chunk_size`, the
 stepper and the arrival buffers are the executor's. `join_timeout` is
 `Control`'s ([§12.1][s12-1]). The loop's diagnostic cell, its account and the
-published holder are the plane's, and the frame's own cell is the `Model`'s
+published holder are the plane's, and the frame's own diagnostic cell is the
+`Model`'s
 ([§11.8][s11-8]). The log, the trace and the two counters are the run's. The
 stop policy, with its `t_end` and ignored requesters, is the advance's
 argument, and the [termination record](#g-termination-record) (the stopped-sim
 value naming how the run ended) keeps the terminating one ([D-260][d-260]).
 The pacer's schedule and counters are `run!`'s own, created per call and
 passed to the loop and its publications as the policy is. The status of each
-[snapshot](#g-snapshot) (the immutable per-boundary publication) carries their
-frozen record ([§10.7][s10-7], [D-269][d-269]).
+[snapshot](#g-snapshot) (the immutable per-boundary publication) carries the
+pacer's frozen record ([§10.7][s10-7], [D-269][d-269]).
 
 **A struct holds what it owns or what it must retain across calls**
 ([D-261][d-261]). A callee takes what it reads as an argument, never off a
@@ -210,7 +212,7 @@ points, since the model's entry points refuse a direct call on a claimed model
 [replay](#g-replay), not resurrection ([§12.7][s12-7]). Replay is the ordinary
 loop re-driven from the trace.
 
-Beside the state, the run carries an [input mode](#g-input-mode), `:live` or
+Beside the state, the run carries an input mode, `:live` or
 `:replay`, read as `mode(sim)`. **The mode is read off the run's `feed`**,
 `:replay` while a recording is attached and `:live` otherwise
 ([D-260][d-260]). The mode names where the next frame's [drain](#g-drain)
@@ -259,7 +261,7 @@ legal there and does what it always does. It registers ([§11.3][s11-3]), and
 the task appears at the next `run!`.
 
 The frame-top drain still runs, so `step!` frames stay bit-identical to `run!`
-frames. In a stepping session the cell written is the
+frames. In a stepping session the staging cell written is the
 [harness cell](#g-harness-cell) (the always-present staging cell of the
 harness writer). The harness write path is `stage!(sim, "face" => value, …)`,
 and [§11.3][s11-3] specifies that [harness writer](#g-harness-writer).
@@ -341,7 +343,8 @@ mismatch is `CheckpointMismatch` ([§12.7][s12-7]). It checks the state's `t`
 against its grid as the model's entry point does, collecting both kinds into
 one throw. It then copies the state back, opens a fresh run with the
 checkpoint as its trace header, and publishes one snapshot at the
-checkpoint's `t`. It runs no sweep, evaluates no guard, runs no update and
+checkpoint's `t`. It runs no [sweep](#g-sweep) (one pass through the execution order against
+the current state), evaluates no guard, runs no update and
 resets no prior. The next frame is the original lattice's next frame, because
 the clock came with the checkpoint. The boundary ordinal continues, being the
 trajectory's ([§12.3][s12-3], [D-274][d-274]). The snapshot `restore!`

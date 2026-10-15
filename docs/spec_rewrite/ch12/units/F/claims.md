@@ -93,8 +93,9 @@ note: F60; "The callback's" introduces the closure
 added: A snapshot is the immutable per-boundary publication.
 
 old: - Inputs arrive same-boundary fresh by topological order.
-new: - Inputs arrive same-boundary (a published consistency point) fresh by topological order.
+new: - Inputs arrive fresh from the same boundary (a published consistency point), by topological order.
 tag: F
+note: the link no longer sits inside the compound (verifier, as F66)
 
 old: The callback ran post-step, one boundary staler.
 tag: F
@@ -365,7 +366,9 @@ tag: F
 note: R5 keeps it here as written
 
 old: The loop's diagnostic cell, its account and the published holder are the plane's, and the frame's own cell is the `Model`'s (§11.8).
-tag: F
+new: The loop's diagnostic cell, its account and the published holder are the plane's, and the frame's own diagnostic cell is the `Model`'s (§11.8).
+tag: R
+ruling: R20
 
 old: The log, the trace and the two counters are the run's.
 tag: F
@@ -379,8 +382,9 @@ new: The pacer's schedule and counters are `run!`'s own, created per call and pa
 tag: F
 
 old: and each snapshot's status carries their frozen record (§10.7, D-269).
-new: The status of each snapshot (the immutable per-boundary publication) carries their frozen record (§10.7, D-269).
+new: The status of each snapshot (the immutable per-boundary publication) carries the pacer's frozen record (§10.7, D-269).
 tag: F
+note: "their" became "the pacer's" once the clause stood as its own sentence (verifier, C-086)
 
 old: Rule. A struct holds what it owns or what it must retain across calls.
 new: A struct holds what it owns or what it must retain across calls (D-261).
@@ -592,10 +596,10 @@ tag: F
 note: the bold lead-in went plain
 
 old: What it drains is the harness cell.
-new: In a stepping session the cell written is the harness cell (the always-present staging cell of the harness writer).
+new: In a stepping session the staging cell written is the harness cell (the always-present staging cell of the harness writer).
 tag: R
-ruling: R10
-note: F64; the harness cell's gloss moved to its first use
+ruling: R20
+note: F64 as R20 words it; the harness cell's gloss moved to its first use
 
 old: The harness write path is `stage!(sim, "face" => value, …)` (§11.3),
 new: The harness write path is `stage!(sim, "face" => value, …)`, and §11.3 specifies that harness writer.
@@ -816,7 +820,9 @@ old: It then copies the state back, opens a fresh run with the checkpoint as its
 tag: F
 
 old: It runs no sweep, evaluates no guard, runs no update and resets no prior.
+new: It runs no sweep (one pass through the execution order against the current state), evaluates no guard, runs no update and resets no prior.
 tag: F
+note: sweep linked and glossed at its first use in §12.6
 
 old: The next frame is the original lattice's next frame, because the clock came with the checkpoint.
 tag: F

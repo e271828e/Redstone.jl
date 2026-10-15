@@ -75,6 +75,17 @@
 - D-128 (§12.3, the third index): Position, "`StepError`'s replay pointer is
   respelled the frame-entry boundary index".
 
+- D-256 (§12.1 context, `Control` introduced as "one of the periphery's own
+  types, the one that holds the control plane"): bullet 3, "To the periphery's own types:
+  `join_timeout` into `Control`". D-255's Rejected (log 10105) treats
+  `Control` as the control plane. Coordinator's ruling 4.
+- §12.4 (§12.1, the interrupt's stop sentence): the old sentence's citation,
+  kept on both halves of the split (verifier C-016).
+- §11.7 (§12.1, "the bridge"): a pointer to where §11.7 introduces the bridge
+  (spec 8384–8385).
+- R15: the stop word's gloss reads "the control plane's stop command, one
+  atomic word holding its issuer".
+
 ## Rationale-only rulings
 
 - No entry point for the interrupt (§12.1): D-132, Rejected, log 4285–4288.
@@ -147,17 +158,8 @@
 
 ## Open questions
 
-1. The pause-block sentence (old 8635–8636) closed the paragraph M1 moves up.
-   I placed it in the pause paragraph, which F8's "below" now names, rather
-   than in the context. A move outside M1–M6 by the letter.
-2. `Control`'s field list: the bold narrows from the whole sentence to D-256
-   bullet 3's clause ("`Control` also keeps the shutdown tail's
-   `join_timeout`"), the one ruling the sentence states whose home is §12.1
-   (R5). The running flag (D-317 bullet 6) is bold at §12.6.
-3. D-027's spin rule ("spin never yields") and its heartbeat clause, and
-   D-028's "shutdown-interruptible via the predicate", are semicolon-separated
-   rulings stated nowhere bold. R3 did not list them, so they are plain with
-   their citations. Bold them here?
-4. "Frame" stays unlinked in §12.3: its first use sits in a sentence that
-   already carries the boundary-zero gloss. `last_seen` is never introduced
-   beyond the predicate, as before.
+None open. Rulings after step 3: question 1 (the pause-block move) is
+accepted; question 3 stays plain with citations; R15 is applied; `Control`
+is introduced from D-256's words. Question 2 (the bold narrowed to D-256's
+`join_timeout` clause) stands as written. "Frame" stays unlinked in §12.3 and
+`last_seen` stays unintroduced, as before.

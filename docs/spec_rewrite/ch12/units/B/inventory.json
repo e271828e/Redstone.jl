@@ -99,7 +99,7 @@
   {
    "id": "C-012",
    "old": "1. Initiation. Three events start a shutdown: `t_end` is reached, a control-plane stop is issued, or a stop request the advance honours reads `STOP_REQUESTED` in the just-published snapshot.",
-   "new": "1. Initiation. Three events start a shutdown. Either `t_end` is reached, or a control-plane stop is issued, or a stop request the advance honours reads `STOP_REQUESTED` in the just-published snapshot (the immutable per-boundary publication) (D-316).",
+   "new": "1. Initiation. Three events start a shutdown. Either `t_end` is reached, or a stop is issued on the control plane (the separate atomic surface carrying pause, pace and stop), or a stop request the advance honours reads `STOP_REQUESTED` in the just-published snapshot (D-316).",
    "where": "new",
    "cites": [],
    "newcites": [
@@ -107,7 +107,7 @@
    ],
    "tag": "R",
    "ruling": "R4",
-   "note": "the step label unbolded; the colon becomes a sentence break; D-316 added (Position: every request ends the run at the first publication where it holds, unless the advance ignores it); snapshot glossed"
+   "note": "the step label unbolded; the colon becomes a sentence break; D-316 added (Position: every request ends the run at the first publication where it holds, unless the advance ignores it); control plane linked and glossed here, its first use (verifier); the stop-request and snapshot glosses follow in one sentence"
   },
   {
    "id": "C-013",
@@ -135,20 +135,21 @@
   {
    "id": "C-015",
    "old": "The loop always completes the current boundary sequence and never stops mid-frame.",
-   "new": "The loop never stops mid-boundary. It always completes the boundary sequence in progress, which a `t` stop places inside a frame (one iteration of the loop).",
+   "new": "The loop never stops mid-boundary. It always completes the boundary sequence in progress, which a stop at `t` (the localized event time) places inside a frame.",
    "where": "new",
    "cites": [],
    "tag": "R",
    "ruling": "R10",
-   "note": "F4; frame linked and glossed at its first use"
+   "note": "F4; `t` linked and glossed at its first use (verifier); frame linked, its gloss in the next sentence"
   },
   {
    "id": "C-016",
    "old": "It then publishes the final snapshot.",
-   "new": "It then publishes the final snapshot.",
+   "new": "The loop then publishes the final snapshot.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "F",
+   "note": "\"It\" spelled \"The loop\", since the frame's gloss sentence now sits before it"
   },
   {
    "id": "C-017",
@@ -347,7 +348,7 @@
   {
    "id": "C-037",
    "old": "The diagnostic is written to the loop's own cell, collected by the run's-end sweep into the termination record and presented through the logging backend, with the terminal snapshot preceding the join (D-201, D-203).",
-   "new": "The diagnostic is written to the loop's own diagnostic cell (each writer's bounded ring of diagnostics and its heartbeat) (D-203). The run's-end sweep collects it into the termination record (the stopped-sim value naming how the run ended). The logging backend presents it, with the terminal snapshot preceding the join (D-201, D-203).",
+   "new": "The diagnostic is written to the loop's own diagnostic cell (each writer's bounded ring of diagnostics and its heartbeat) (D-203). The run's-end sweep collects the diagnostic into the termination record (the stopped-sim value naming how the run ended). The logging backend presents the diagnostic, with the terminal snapshot preceding the join (D-201, D-203).",
    "where": "new",
    "cites": [
     "D-201",
@@ -355,7 +356,7 @@
    ],
    "tag": "R",
    "ruling": "R3",
-   "note": "D-203 bullet 4's headline clause bold (row 111); bare \"cell\" becomes \"diagnostic cell\", whose link and gloss move here from old 9024, its new first use; termination record glossed; split into three sentences"
+   "note": "D-203 bullet 4's headline clause bold (row 111); bare \"cell\" becomes \"diagnostic cell\", whose link and gloss move here from old 9024, its new first use; termination record glossed; split into three sentences, \"it\" spelled \"the diagnostic\" twice (verifier)"
   },
   {
    "id": "C-038",
@@ -544,15 +545,16 @@
   {
    "id": "C-057",
    "old": "What the tail itself produces comes later by construction.",
-   "new": "What the tail itself produces comes later by construction.",
+   "new": "It comes later by construction.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "X",
+   "note": "the subject moves into the bold sentence before it, so the bold names its subject (verifier)"
   },
   {
    "id": "C-058",
    "old": "It is folded into the termination record and presented through the logging backend, never published (D-201, D-203).",
-   "new": "It is folded into the termination record and presented through the logging backend, never published (D-201, D-203).",
+   "new": "What the tail itself produces is folded into the termination record and presented through the logging backend, never published (D-201, D-203).",
    "where": "new",
    "cites": [
     "D-201",
@@ -560,7 +562,7 @@
    ],
    "tag": "R",
    "ruling": "R3",
-   "note": "D-201's headline bold here (row 125)"
+   "note": "D-201's headline bold here (row 125), its subject spelled out and placed before the consequence sentence (verifier)"
   },
   {
    "id": "C-059",
@@ -603,7 +605,7 @@
   {
    "id": "C-062",
    "old": "Whole frames only, never a shortened final step, which grid integrity forbids (§10.4; `tₖ = t₀ + k·h`, indexed and never accumulated).",
-   "new": "The run takes whole frames only, never a shortened final step, which grid integrity forbids (§10.4). Each grid time is indexed, `tₖ = t₀ + k·h`, and never accumulated.",
+   "new": "The run takes whole frames only, never a shortened final step, which grid integrity forbids (§10.4). Each grid time is indexed, `tₖ = t₀ + k·h`, and never accumulated (§10.4).",
    "where": "new",
    "cites": [
     "§10.4"
@@ -749,7 +751,7 @@
   {
    "id": "C-077",
    "old": "So, like `log_max` (§11.2), it lives on `Control` rather than the deployment, and replay neither records nor compares it (§11.5, §12.7).",
-   "new": "So replay (the ordinary loop with the drain reading the trace) neither records nor compares the cap (§11.5, §12.7), just as for `log_max` (§11.2). The cap therefore lives on `Control`, not on the `Deployment` (D-256).",
+   "new": "So replay (the ordinary loop with the drain reading recorded batches) neither records nor compares the cap (§11.5, §12.7), just as for `log_max` (§11.2). The cap therefore lives on `Control`, not on the `Deployment` (D-256).",
    "where": "new",
    "cites": [
     "§11.2",
@@ -938,15 +940,15 @@
   {
    "id": "C-095",
    "old": "`for entry in roster # attachment order, calling task push!(live, entry) # listed for release before `init!` begins try init!(entry.device) catch e shutdown!(entry.device) # release, unconditionally (§11.6) pop!(live) # released, so unlisted if e isa InterruptException # the operator's stop, never a crash (below) stop!(control, :interrupt) else report!(entry, DeviceCrash(e)) # pre-spawn: the entry is the address, no handle yet entry.should_abort && stop!(control) end # no dead-marking: no task is spawned (§12.2) end end`",
-   "new": "`for entry in roster # attachment order, calling task push!(live, entry) # listed for release before `init!` begins try init!(entry.device) catch e shutdown!(entry.device) # release, unconditionally (§11.6) pop!(live) # released, so unlisted if e isa InterruptException # the operator's stop, never a crash (below) stop!(control, :interrupt) else report!(entry, DeviceCrash(e, entry.should_abort)) # pre-spawn: the entry is the address, no handle yet entry.should_abort && stop!(entry.handle) end # no dead-marking: no task is spawned (§12.2) end end`",
+   "new": "`for entry in roster # attachment order, calling task push!(live, entry) # listed for release before `init!` begins try init!(entry.device) catch e shutdown!(entry.device) # release, unconditionally (§11.6) pop!(live) # released, so unlisted if e isa InterruptException # the operator's stop, never a crash (below) stop!(control, :interrupt) else report!(entry, DeviceCrash(e, entry.should_abort)) # pre-spawn: the entry is the address, no task holds a handle yet entry.should_abort && stop!(entry.handle) end # no dead-marking: no task is spawned (§12.2) end end`",
    "where": "new",
    "cites": [
     "§11.6",
     "§12.2"
    ],
    "tag": "R",
-   "ruling": "R10",
-   "note": "F24, the two ruled code edits; nothing else in the block changes"
+   "ruling": "R10, R19",
+   "note": "F24, the two ruled code edits; R19, the comment \"no handle yet\" becomes \"no task holds a handle yet\"; nothing else in the block changes"
   },
   {
    "id": "C-096",
@@ -1270,11 +1272,12 @@
   {
    "id": "C-127",
    "old": "What the operator is left with is an ordinary stopped simulation: a terminal snapshot, with the failure named in its diagnostic account.",
-   "new": "What the operator is left with is an ordinary stopped simulation, a terminal snapshot with the failure named in its diagnostic account.",
+   "new": "What the operator is left with is an ordinary stopped simulation, whose terminal snapshot is the one the run started from and whose termination record's tail residue holds the `DeviceCrash`.",
    "where": "new",
    "cites": [],
-   "tag": "F",
-   "note": "the colon becomes a comma; the claim's truth off boundary zero is a correction proposed in rulings.md"
+   "tag": "R",
+   "ruling": "R8",
+   "note": "the run publishes nothing after the failure; the report reaches the record's residue through the run's-end sweep (verifier, src/sim.jl 1183–1185, 1420–1421, 1281); the simulation stays the sentence's subject so the next \"It\" keeps its antecedent"
   },
   {
    "id": "C-128",
@@ -1342,11 +1345,11 @@
   {
    "id": "C-134",
    "old": "In place of the `DeviceCrash` report it sets the `:interrupt` stop through the stop word, so the run's `should_abort` split above does not arise.",
-   "new": "In place of the `DeviceCrash` report it sets the `:interrupt` stop through the stop word (the control plane's stop request, one atomic word holding its issuer). The run's `should_abort` split above therefore does not arise.",
+   "new": "In place of the `DeviceCrash` report it sets the `:interrupt` stop through the stop word (the control plane's stop command, one atomic word holding its issuer). The run's `should_abort` split above therefore does not arise.",
    "where": "new",
    "cites": [],
    "tag": "R",
-   "ruling": "R11",
+   "ruling": "R15",
    "note": "the stop word glossed at its first use in the section; split for the gloss, \"so\" kept as \"therefore\""
   },
   {
@@ -1645,13 +1648,13 @@
   {
    "id": "C-165",
    "old": "The catch wraps the cause under the mask and consumes the pending interrupt on its way out, and the run takes the abnormal entry under that `StepError` (§13.6).",
-   "new": "The catch wraps the cause under the mask and consumes the pending interrupt on its way out. The run then takes the abnormal entry under that `StepError` (§13.6).",
+   "new": "The catch wraps the cause under the mask and consumes the pending interrupt on its way out. The run then takes the abnormal shutdown entry under that `StepError` (§13.6).",
    "where": "new",
    "cites": [
     "§13.6"
    ],
    "tag": "F",
-   "note": "split in two"
+   "note": "split in two; \"abnormal entry\" becomes \"abnormal shutdown entry\", since entry is never bare (verifier)"
   },
   {
    "id": "C-166",
@@ -1795,7 +1798,7 @@
   {
    "id": "C-182",
    "old": "The stores may hold mid-boundary values until the next `init!` or `restore!` resets them,",
-   "new": "The stores may hold mid-boundary values until the next `init!`, `restore!` or `replay!` resets them.",
+   "new": "The stores may hold mid-boundary values until the next `init!`, `restore!` or `replay!` resets them,",
    "where": "new",
    "cites": [],
    "tag": "R",
@@ -1805,13 +1808,13 @@
   {
    "id": "C-183",
    "old": "as after a throw inside boundary zero (§13.4).",
-   "new": "The same holds after a throw inside boundary zero (the initialization boundary, the ordinary macro-sequence with an empty integrate) (§13.4).",
+   "new": "as after a throw inside boundary zero (the initialization boundary, the ordinary macro-sequence with an empty integrate) (§13.4).",
    "where": "new",
    "cites": [
     "§13.4"
    ],
    "tag": "F",
-   "note": "split off for the boundary-zero gloss, whose link moves here from old 9021; the gloss's colon becomes a comma"
+   "note": "the boundary-zero link and gloss move here from old 9021; the gloss's colon becomes a comma; one sentence, as in the old, so \"such a run\" keeps its antecedent (verifier)"
   },
   {
    "id": "C-184",
@@ -1928,20 +1931,21 @@
   "(a published consistency point)",
   "(any attached participant in the periphery)",
   "(Ctrl-C in an interactive session)",
-  "(the immutable per-boundary publication)",
-  "A stop request is an output port of the framework enum `StopFlag`.",
-  "(one iteration of the loop)",
+  "(the separate atomic surface carrying pause, pace and stop)",
+  "A stop request is an output port of the framework enum `StopFlag`, and a snapshot is the immutable per-boundary publication.",
+  "(the localized event time)",
+  "A frame is one iteration of the loop.",
   "(`wait_next_snapshot(handle)`)",
   "(each writer's bounded ring of diagnostics and its heartbeat)",
   "(the stopped-sim value naming how the run ended)",
   "(where the device's pending write batch waits between drains)",
   "(the root component's own input faces)",
   "(the retained sequence of published snapshots)",
-  "(the ordinary loop with the drain reading the trace)",
+  "(the ordinary loop with the drain reading recorded batches)",
   "(the task that invoked `run!`)",
   "(the structured data a diagnostic carries beside its kind)",
   "(every root input must hold a value)",
-  "(the control plane's stop request, one atomic word holding its issuer)",
+  "(the control plane's stop command, one atomic word holding its issuer)",
   "The reason is that",
   "(one pass through the execution order)",
   "(the framework-owned homes of a component's state)",

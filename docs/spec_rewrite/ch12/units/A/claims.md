@@ -51,7 +51,8 @@ note: M1.
 
 added: (iterations of the loop)
 
-added: This section covers, in order, when the loop reads the plane, the stop and its issuer, the pause, pace and `margin`, and the fields `Control` keeps.
+added: This section covers, in order, when the loop reads the plane, the stop and its issuer, the pause, pace and `margin`, and the fields of `Control`, one of the periphery's own types (D-256), the one that holds the control plane.
+# Control's introduction: D-256's "To the periphery's own types: `join_timeout` into `Control`"; D-255's Rejected equates Control and the control plane (log 10105).
 
 old: Pause, un-pause, pace changes, `margin` changes and stop are a few scalar fields on a separate atomic surface.
 new: Pause, un-pause, pace changes, `margin` changes and stop are a few scalar fields on that separate atomic surface.
@@ -91,7 +92,7 @@ note: M3; "GUI button" becomes "a front end's button", D-310 cited once in §12.
 added: (any attached participant in the periphery)
 
 old: An operator interrupt is caught at one of the loop's unmask points and sets exactly this stop, with no separate entry point involved (§12.4).
-new: An operator interrupt (Ctrl-C read as a control-plane stop) sets exactly this stop, with no separate entry point involved (D-132). The loop catches it at one of its unmask points, where a deferred Ctrl-C is raised (§12.4).
+new: An operator interrupt (Ctrl-C read as a control-plane stop) sets exactly this stop, with no separate entry point involved (§12.4, D-132). The loop catches it at one of its unmask points, where a deferred Ctrl-C is raised (§12.4).
 tag: C
 newcites: D-132 §12.4
 note: M3; split in two. D-132's Position "a control-plane stop"; "no separate entry point" rests on D-132's Rejected list. The unmask-point gloss points at §12.4.
@@ -101,12 +102,11 @@ added: (Ctrl-C read as a control-plane stop)
 added: where a deferred Ctrl-C is raised
 
 old: The stop word carries its issuer.
-new: The stop word carries its issuer (D-203).
-tag: C
+new: The stop word carries its issuer (D-203). The stop word is the control plane's stop command, one atomic word holding its issuer.
+tag: R
+ruling: R15
 newcites: D-203
-note: D-203 bullet 3; the citation was two sentences on.
-
-added: The stop word is the control plane's stop request, one atomic word holding that issuer.
+note: D-203 bullet 3, the citation was two sentences on; the second sentence is R11's gloss as R15 words it.
 
 old: Each issuing site writes its identity (the device's name, `:code`, or `:interrupt`) by compare-and-swap from empty, and the first writer wins.
 tag: F
@@ -120,8 +120,9 @@ note: "the tail" glossed at first use with its pointer.
 added: the ordered shutdown sequence of §12.4
 
 old: It lands in the termination record's `ControlRequestedStop` (§13.5, D-203).
-new: It lands in the termination record (the stopped-sim value naming how the run ended) as its `ControlRequestedStop` (§13.5, D-203).
+new: The issuer lands in the termination record (the stopped-sim value naming how the run ended) as its `ControlRequestedStop`'s payload (§13.5, D-203).
 tag: F
+note: "It" becomes "The issuer" after the tail's gloss; the issuer is the source's payload (§13.5, D-203 bullet 1).
 
 added: (the stopped-sim value naming how the run ended)
 
@@ -200,7 +201,10 @@ new: The device handle carries no pause (§11.6).
 tag: F
 
 old: Whether it gains the control verbs for the bridge is pending (`pending.md`, D-310).
+new: Whether it gains the control verbs for the bridge (§11.7) is pending (`pending.md`, D-310).
 tag: F
+newcites: §11.7 D-310
+note: a pointer to where §11.7 introduces the bridge.
 
 old: Pace and `margin` are two more verbs and two readers (D-269).
 tag: F
@@ -420,10 +424,12 @@ old: It includes per-device liveness (the liveness timestamp and the device's `t
 tag: F
 
 old: The mechanism is the per-writer cell, specified in full by §11.8, plus the device `Task` handles the loop already owns, and nothing besides.
-new: The mechanism is the per-writer diagnostic cell, specified in full by §11.8, plus the device `Task` handles the loop already owns, and nothing besides (D-136).
+new: The mechanism is the per-writer diagnostic cell (a writer's own holding place for runtime diagnostics and liveness) (D-136), specified in full by §11.8, plus the device `Task` handles the loop already owns, and nothing besides.
 tag: C
 newcites: §11.8 D-136
-note: bare "cell" is reserved, so "diagnostic cell". D-136's Position.
+note: bare "cell" is reserved, so "diagnostic cell". D-136's Position, placed at the cell; the handles are D-193's, cited next sentence.
+
+added: (a writer's own holding place for runtime diagnostics and liveness)
 
 old: The cell carries the single liveness timestamp.
 new: The diagnostic cell carries the single liveness timestamp.
@@ -538,7 +544,7 @@ tag: M
 note: M5; the publication-order sketch, verbatim.
 
 old: `counter > last_seen` therefore implies that `latest` holds at least that boundary, and a waiter can never wake onto a stale snapshot.
-new: The device side's predicate, `counter > last_seen` (below), therefore implies that `latest` holds at least that boundary, and a waiter can never wake onto a stale snapshot (the immutable per-boundary publication).
+new: The device side's predicate, `counter > last_seen` (below), therefore implies that `latest` holds at least that boundary, and a waiter can never wake onto a snapshot (the immutable per-boundary publication) that is stale.
 tag: M
 note: M5; the predicate now precedes the device side, so it points below.
 

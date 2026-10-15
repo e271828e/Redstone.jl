@@ -18,23 +18,24 @@ interactive session), which enters the tail rather than bypassing it.
 initiated it ([D-030][d-030]). Steps (6) and (7) specify what happens when a
 device task or the loop itself ends first.
 
-1. Initiation. Three events start a shutdown. Either `t_end` is reached, or
-   a control-plane stop is issued, or a [stop request](#g-stop-request) the
-   advance honours reads `STOP_REQUESTED` in the just-published
-   [snapshot](#g-snapshot) (the immutable per-boundary publication)
-   ([D-316][d-316]). A stop request is an output port of the framework enum
-   `StopFlag`. The control-plane stop's issuers are a front end
-   ([D-310][d-310]), a device handle, code, or an operator interrupt (Ctrl-C,
-   treated below). The third
-   event is model-detected termination ([§13.5][s13-5]). The loop never
-   stops mid-boundary. It always completes the boundary sequence in
-   progress, which a `t*` stop places inside a [frame](#g-frame) (one
-   iteration of the loop). It then publishes the final snapshot. Only then
-   does it set the sticky stopped status.
-2. Wake all framework waits. The waits are the
-   [next-snapshot wait](#g-next-snapshot-wait) (`wait_next_snapshot(handle)`)
-   and the pause. Each waiter observes the stopped status and unwinds. A stop
-   issued while paused therefore works.
+1. Initiation. Three events start a shutdown. Either `t_end` is reached, or a
+   stop is issued on the [control plane](#g-control-plane) (the separate
+   atomic surface carrying pause, pace and stop), or a [stop
+   request](#g-stop-request) the advance honours reads `STOP_REQUESTED` in the
+   just-published [snapshot](#g-snapshot) ([D-316][d-316]). A stop request is
+   an output port of the framework enum `StopFlag`, and a snapshot is the
+   immutable per-boundary publication. The control-plane stop's issuers are a
+   front end ([D-310][d-310]), a device handle, code, or an operator interrupt
+   (Ctrl-C, treated below). The third event is model-detected termination
+   ([§13.5][s13-5]). The loop never stops mid-boundary. It always completes
+   the boundary sequence in progress, which a stop at [`t*`](#g-t) (the
+   localized event time) places inside a frame. A [frame](#g-frame) is one
+   iteration of the loop. The loop then publishes the final snapshot. Only
+   then does it set the sticky stopped status.
+2. Wake all framework waits. The waits are the [next-snapshot
+   wait](#g-next-snapshot-wait) (`wait_next_snapshot(handle)`) and the pause.
+   Each waiter observes the stopped status and unwinds. A stop issued while
+   paused therefore works.
 3. Unblock device-specific blocking calls. The hook is `unblock!(device)`,
    default no-op. A network input's override closes its own socket, which
    raises in the blocked task. The framework wrapper catches that raise and
@@ -44,21 +45,21 @@ device task or the loop itself ends first.
 4. Loop bodies exit. The exit is the author's own `while running(handle)`
    loop, the authoring contract of [§11.6][s11-6]. That authoring contract
    teaches two obligations, the predicate check and interruptible blocking
-   ([D-373][d-373]). Steps (2) and (3) are the framework's half. They wake
-   its own waits and call each device's `unblock!`. The wrapper's
-   `finally shutdown!(device)` is guaranteed on every exit path.
+   ([D-373][d-373]). Steps (2) and (3) are the framework's half. They wake its
+   own waits and call each device's `unblock!`. The wrapper's `finally
+   shutdown!(device)` is guaranteed on every exit path.
 5. Join under the `join_timeout` cap. The cap lives on `Control`, the tail's
    own owner ([§12.1][s12-1], [D-256][d-256]). It is a keyword of the
    `Simulation` constructor, a positive real in seconds of wall clock,
-   defaulting to 5 ([Appendix B][sB]). The constructor refuses any other
-   value as `ArgumentInvalid`. A device task exceeding the cap is reported
-   *by name* in a `DeviceJoinTimeout` diagnostic ([Appendix C][sC]). It is
-   then abandoned rather than left to hang `run!`. **The diagnostic is
-   written to the loop's own [diagnostic cell](#g-diagnostic-cell)** (each
-   writer's bounded ring of diagnostics and its heartbeat) ([D-203][d-203]).
-   The run's-end sweep collects it into the
-   [termination record](#g-termination-record) (the stopped-sim value naming
-   how the run ended). The logging backend presents it, with the terminal
+   defaulting to 5 ([Appendix B][sB]). The constructor refuses any other value
+   as `ArgumentInvalid`. A device task exceeding the cap is reported *by name*
+   in a `DeviceJoinTimeout` diagnostic ([Appendix C][sC]). It is then
+   abandoned rather than left to hang `run!`. **The diagnostic is written to
+   the loop's own [diagnostic cell](#g-diagnostic-cell)** (each writer's
+   bounded ring of diagnostics and its heartbeat) ([D-203][d-203]). The
+   run's-end sweep collects the diagnostic into the [termination
+   record](#g-termination-record) (the stopped-sim value naming how the run
+   ended). The logging backend presents the diagnostic, with the terminal
    snapshot preceding the join ([D-201][d-201], [D-203][d-203]).
 6. Device-initiated paths. A device exits voluntarily when its loop body
    returns, at a window ✕ or a peer EOT. No `should_close` hook exists
@@ -73,12 +74,11 @@ device task or the loop itself ends first.
    write. The orphaned [root inputs](#g-root-input) (the root component's own
    input faces) hold their last-drained values, visibly ([§11.7][s11-7]). A
    crashing device task is caught by the framework wrapper and follows the
-   same path, logged with the device's name (`DeviceCrash`,
-   [Appendix C][sC]).
-7. Loop-side failure. A failure on the loop's own side runs steps (1)
-   through (5) from the catch path ([D-030][d-030]). [§13.6][s13-6] specifies
-   that path, which discards the failed boundary and promotes the previous
-   snapshot to final. FlightCore's `SimulationTermination` catch path was the
+   same path, logged with the device's name (`DeviceCrash`, [Appendix C][sC]).
+7. Loop-side failure. A failure on the loop's own side runs steps (1) through
+   (5) from the catch path ([D-030][d-030]). [§13.6][s13-6] specifies that
+   path, which discards the failed boundary and promotes the previous snapshot
+   to final. FlightCore's `SimulationTermination` catch path was the
    precedent. The exception-based termination idiom itself has no place here
    ([§13.5][s13-5], [D-060][d-060]). Devices therefore unwind cleanly
    regardless of who died.
@@ -92,14 +92,14 @@ The ordered part, in one line:
 > returns
 
 `t_end` lands on the grid. **The run ends at the first grid boundary whose
-time reaches or exceeds `t_end`** ([D-133][d-133]). The run takes whole
-frames only, never a shortened final step, which grid integrity forbids
+time reaches or exceeds `t_end`** ([D-133][d-133]). The run takes whole frames
+only, never a shortened final step, which grid integrity forbids
 ([§10.4][s10-4]). Each grid time is indexed, `tₖ = t₀ + k·h`, and never
-accumulated. The final boundary may therefore overshoot `t_end` by up to
-`h`. The termination record carries the actual final `t` ([§13.5][s13-5]).
-This is the `t_plus` spelling ([§12.6][s12-6]) applied to the run's own
-clock. The run takes whole frames until the boundary time first covers the
-duration.
+accumulated ([§10.4][s10-4]). The final boundary may therefore overshoot
+`t_end` by up to `h`. The termination record carries the actual final `t`
+([§13.5][s13-5]). This is the `t_plus` spelling ([§12.6][s12-6]) applied to
+the run's own clock. The run takes whole frames until the boundary time first
+covers the duration.
 
 The two termination sources differ in nature. `t_end` is a grid fact,
 checked against boundary times on the grid. Stop requests are checked at
@@ -109,10 +109,9 @@ The final snapshot goes out before the status is set. Publishing first
 guarantees that output devices can flush the true final state. The status in
 that terminal snapshot carries the run's cumulative diagnostic counters
 ([§11.8][s11-8]), the warning account of a run nobody watched, complete up to
-that snapshot's own frame top. What the tail itself produces comes later by
-construction. **It is folded into the termination record and presented
-through the logging backend, never published** ([D-201][d-201],
-[D-203][d-203]).
+that snapshot's own frame top. **What the tail itself produces is folded into
+the termination record and presented through the logging backend, never
+published** ([D-201][d-201], [D-203][d-203]). It comes later by construction.
 
 That terminal snapshot is retained in the [log](#g-log) (the retained
 sequence of published snapshots) unconditionally, under any `log_every` and
@@ -130,7 +129,7 @@ fast, a test battery exercising the abandonment path faster still, while a
 device with slow teardown may warrant more. The cap is not
 trajectory-determining, because the trajectory has ended at the final
 snapshot before any join begins. So [replay](#g-replay) (the ordinary loop
-with the drain reading the trace) neither records nor compares the cap
+with the drain reading recorded batches) neither records nor compares the cap
 ([§11.5][s11-5], [§12.7][s12-7]), just as for `log_max` ([§11.2][s11-2]). The
 cap therefore lives on `Control`, not on the `Deployment` ([D-256][d-256]).
 
@@ -173,7 +172,7 @@ for entry in roster                       # attachment order, calling task
         if e isa InterruptException       # the operator's stop, never a crash (below)
             stop!(control, :interrupt)
         else
-            report!(entry, DeviceCrash(e, entry.should_abort))    # pre-spawn: the entry is the address, no handle yet
+            report!(entry, DeviceCrash(e, entry.should_abort))    # pre-spawn: the entry is the address, no task holds a handle yet
             entry.should_abort && stop!(entry.handle)
         end
                                           # no dead-marking: no task is spawned (§12.2)
@@ -236,24 +235,25 @@ and the sim runs with that device absent from the run's first frame. That
 is (6)'s "the sim continues with the device's *task* absent", shifted to the
 run's start.
 
-With the flag set, the failure requests a control-plane stop, and that stop
-is simply *already pending* at the run's first frame top. This protocol
-already has that path. The loop reads that stop at the frame top, before any
-frame, so the run advances no frame. No new exit protocol is needed, therefore. The
+With the flag set, the failure requests a control-plane stop, and that stop is
+simply *already pending* at the run's first frame top. This protocol already
+has that path. The loop reads that stop at the frame top, before any frame, so
+the run advances no frame. No new exit protocol is needed, therefore. The
 remaining roster entries still initialize, every rostered device getting its
 `init!`/`shutdown!` pair uniformly. The run ends `stopped` where it started,
 through this same tail, with its termination record naming the device
 ([§13.5][s13-5]). What the operator is left with is an ordinary stopped
-simulation, a terminal snapshot with the failure named in its diagnostic
-account. It is fully serviceable by [§14][s14] and resumable by the next
-`run!` ([§12.6][s12-6]) once the device is plugged back in.
+simulation, whose terminal snapshot is the one the run started from and whose
+termination record's tail residue holds the `DeviceCrash`. It is fully
+serviceable by [§14][s14] and resumable by the next `run!` ([§12.6][s12-6])
+once the device is plugged back in.
 
 **An `InterruptException` inside a device's `init!` is the operator's stop,
 not that device's crash** ([D-268][d-268]).
 
 The bracket releases the device through `shutdown!` as for any throw and
 spawns no task for it. In place of the `DeviceCrash` report it sets the
-`:interrupt` stop through the stop word (the control plane's stop request,
+`:interrupt` stop through the stop word (the control plane's stop command,
 one atomic word holding its issuer). The run's `should_abort` split above
 therefore does not arise. The remaining roster entries still initialize,
 and the run ends at its first frame top with zero frames advanced, through
@@ -273,7 +273,7 @@ The interrupt is the escape from a run nothing else ends, and the deviceless
 run has no other. A run with no finite `t_end` and no honoured stop request
 is the configuration `UnboundedRun` names ([Appendix C][sC]). The interrupt
 needs no entry point of its own ([D-132][d-132]). The stop already rides on
-the [control plane](#g-control-plane), the separate atomic surface carrying
+the control plane, the separate atomic surface carrying
 pause, pace and stop ([§12.1][s12-1]). The exceptions-are-abnormal doctrine
 ([§13.5][s13-5], [D-060][d-060]) is untouched. That doctrine is about
 *model* code, while this is the one exception whose meaning the framework
@@ -317,7 +317,7 @@ word and the source is `ControlRequestedStop(:interrupt)`.
 **A frame that throws with an interrupt pending ends `errored`**
 ([D-268][d-268]). The frame's own throw is the disposition
 ([§13.4][s13-4]). The catch wraps the cause under the mask and consumes the
-pending interrupt on its way out. The run then takes the abnormal entry
+pending interrupt on its way out. The run then takes the abnormal shutdown entry
 under that `StepError` ([§13.6][s13-6]). The alternative, `stopped` over a
 half-written boundary, is what the masking exists to prevent. The interrupt
 is satisfied by the run ending.
@@ -347,7 +347,7 @@ the throw, and raises inside the mask. That is the one way the branch
 the run ends `stopped`, the source `ControlRequestedStop(:interrupt)`. The
 published record is consistent, since the frame published nothing. The
 stores may hold mid-boundary values until the next `init!`, `restore!` or
-`replay!` resets them. The same holds after a throw inside
+`replay!` resets them, as after a throw inside
 [boundary zero](#g-boundary-zero) (the initialization boundary, the ordinary
 macro-sequence with an empty integrate) ([§13.4][s13-4]). `checkpoint`
 refuses such a run as `CheckpointMidFrame`, since the

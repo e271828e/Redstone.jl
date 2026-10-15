@@ -9,7 +9,9 @@ added: A batch is a device's staged set of writes, and a device is any attached 
 
 added: A frame is one iteration of the loop, from drain to publication.
 
-added: The drain is the frame-top swap that publishes staged device writes into the root inputs.
+added: The drain is the frame-top swap that applies staged device writes to the root inputs.
+
+added: The root inputs are the root component's own inputs, the only thing the periphery may write.
 
 old: The entry point the §11.5 trace exists for:
 new: `replay!` is the entry point the §11.5 trace exists for:
@@ -20,7 +22,9 @@ old: `trc = trace(sim) # the recorded session: header + per-frame batches sim2 =
 tag: F
 note: code block, verbatim
 
-added: The parts below cover the one substitution replay makes, halting and the input mode across halts, what stays the loop's, the validation up front, and the what-if replay with the `restore = false` form, which attaches the feed to the simulation as it stands.
+added: The parts below cover the one substitution replay makes, halting and the input mode (where the drain takes its batches from) across halts, what stays the loop's, and the validation up front.
+
+added: They then cover the what-if replay, re-driving the recorded inputs through a modified model, with the `restore = false` form, which attaches the feed to the simulation as it stands.
 
 added: The rejected shapes close the section.
 
@@ -48,7 +52,10 @@ ruling: R9
 note: bold lead-in becomes a plain topic sentence scoped to the default form
 
 old: `replay!` restores the trace's checkpoint (the `Model`'s state at a frame top as one value), the state the recording opened from.
-tag: F
+new: It restores the trace's checkpoint (the `Model`'s state at a frame top as one value), the state the recording opened from.
+tag: R
+ruling: R9
+note: two-forms rule; the subject is the default form named just before
 
 old: It runs no boundary zero.
 new: It runs no boundary zero
@@ -62,8 +69,9 @@ tag: M
 note: M60, dropped; the drain paragraph's topic sentence says it
 
 old: `replay!` stands in the `init!` position of the lifecycle (§12.6) and does what `restore!` does, with the trace header as the checkpoint.
-new: `replay!` stands in the `init!` position of the lifecycle (§12.6) and does what `restore!` does, with the trace header as the checkpoint (D-274).
+new: This form stands in the `init!` position of the lifecycle (§12.6) and does what `restore!` does, with the trace header as the checkpoint (D-274).
 tag: C
+note: subject scoped to the default form (two-forms rule, R9)
 newcites: §12.6 D-274
 
 old: There is no condition resolution, and the totality (§14.6) held when the recording's `init!` ran.
@@ -165,10 +173,10 @@ tag: M
 note: M56
 
 old: Anything else is refused before any write (`CheckpointMismatch`, its clock arm).
-new: A simulation that is not `initialized` meets the lifecycle gate. One whose origin or frame is off the recording's is refused before any write as `CheckpointMismatch`, its clock arm.
+new: A simulation that is not `initialized` meets the lifecycle gate before any write, with `MissingInit` when it is `built` and `ServiceLifecycle` in any other state. One whose origin or frame is off the recording's is refused before any write as `CheckpointMismatch`, its clock arm.
 tag: R
-ruling: R10
-note: F56
+ruling: R18
+note: F56 (R10) with R18's kinds and its write-order clause
 
 old: One grid is thus an invariant of every replay, and `to_time` has one meaning.
 tag: M
@@ -210,9 +218,10 @@ note: bold lead-in becomes a topic label (R13)
 
 old: In `:replay` the recording is the bound.
 new: In `:replay` the recording is the bound (D-218).
-tag: C
+tag: R
+ruling: R16
 newcites: D-218
-note: plain; D-218 bullet 2 takes its bold at the halt (F55)
+note: bold, D-218 bullet 2's first statement
 
 old: Every advance's frame budget is capped at the recording's last frame, and `to_boundary = k` caps it earlier.
 tag: F
@@ -266,11 +275,10 @@ new: A localized `t` boundary inside the frame (the crossing instant bracketed b
 tag: C
 newcites: D-128
 
-old: §10.4 separates the two indices.
-tag: F
-
-old: The trace stays frame-indexed, and boundaries are the reporting index.
-tag: F
+old: §10.4 separates the two indices. The trace stays frame-indexed, and boundaries are the reporting index.
+new: The trace stays frame-indexed, replay pointers and error messages use the frame-entry boundary index, and snapshots carry the published-boundary ordinal (§10.4).
+tag: R
+ruling: R17
 
 old: Replay may also end earlier still under the ordinary policies, since `t_end` and `ignore_stop_requests` are keywords of `replay!` exactly as of `run!` (§12.6).
 new: Replay may also end earlier still under the ordinary policies, since `t_end` and `ignore_stop_requests` are keywords of `replay!` exactly as of `run!` (§12.6, D-255, D-316).
@@ -414,9 +422,9 @@ note: mid-sentence colon removed
 old: Replay ends `initialized`, never `stopped`.
 new: A replay's halt leaves the simulation `initialized`, never `stopped` (D-218).
 tag: R
-ruling: R10
+ruling: R16
 newcites: D-218
-note: F55
+note: F55's wording, now plain; R16 moves bullet 2's bold to the bound
 
 old: That state is boundary-consistent and ready to advance, the same state `step!` leaves (§12.6).
 tag: F
@@ -527,8 +535,6 @@ ruling: R12
 newcites: §11.5
 note: §11.5's naming and layout list; the deployment's gloss moved here with its first use
 
-added: The root inputs are the root component's own input faces.
-
 old: The trace's batch entries are validated against the root input-face list, and each batch's frame ordinal against the recording's frames, from the one after the header's to the last (D-217).
 tag: F
 
@@ -554,9 +560,9 @@ old: The same pass pays the trace-record conversion in reverse.
 tag: F
 
 old: Every writer's sparse records (§11.5) are normalized to positional batches against the trace's `schemas` list, once, off the loop.
-new: Every writer's sparse records (§11.5) are normalized to positional batches against the trace's `schemas` list, once, off the loop (D-176).
+new: Every writer's sparse records (§11.5) are normalized to positional batches against the trace's `schemas` list, once, off the loop (D-101, D-176).
 tag: C
-newcites: §11.5 D-176
+newcites: §11.5 D-101 D-176
 
 old: Replay has the whole trace in hand before frame 1.
 tag: F
@@ -661,8 +667,9 @@ ruling: R10
 note: F57
 
 old: Replay restores `t₀` with the rest of the clock, so `replay!` takes no `t0` argument.
-new: Replay restores `t₀` with the rest of the clock, so `replay!` takes no `t0` argument (D-127).
+new: That form restores `t₀` with the rest of the clock, so `replay!` takes no `t0` argument (D-127).
 tag: C
+note: subject scoped to the default form (F57, R10)
 newcites: D-127
 
 added: Under `restore = false` the simulation's own clock runs, its origin must equal the recording's, and the new trace's header is the simulation's own checkpoint.

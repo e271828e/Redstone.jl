@@ -20,8 +20,9 @@ path is safe for determinism precisely because [§10.7][s10-7] put
 ([D-021][d-021]). Control changes *when* [frames](#g-frame) (iterations of the
 loop) execute, never what they compute, and stop merely truncates the
 trajectory. This section covers, in order, when the loop reads the plane, the
-stop and its issuer, the pause, pace and `margin`, and the fields `Control`
-keeps.
+stop and its issuer, the pause, pace and `margin`, and the fields of
+`Control`, one of the periphery's own types ([D-256][d-256]), the one that
+holds the control plane.
 
 Pause, un-pause, pace changes, `margin` changes and stop are a few scalar
 fields on that separate atomic surface. The loop consults them at frame top,
@@ -35,18 +36,19 @@ Ctrl-C. The operator's channels are a front end's button, the handle of a
 [device](#g-device) (any attached participant in the periphery) and calling
 code ([D-310][d-310]). An [operator interrupt](#g-operator-interrupt) (Ctrl-C
 read as a control-plane stop) sets exactly this stop, with no separate entry
-point involved ([D-132][d-132]). The loop catches it at one of its unmask
+point involved ([§12.4][s12-4], [D-132][d-132]). The loop catches it at one of its unmask
 points, where a deferred Ctrl-C is raised ([§12.4][s12-4]).
 
 **The stop word carries its issuer** ([D-203][d-203]). The stop word is the
-control plane's stop request, one atomic word holding that issuer. Each
+control plane's stop command, one atomic word holding its issuer. Each
 issuing site writes its identity (the device's name, `:code`, or `:interrupt`)
 by compare-and-swap from empty, and the first writer wins. The loop's
 frame-top read consults the word for non-empty, so the recorded issuer is the
 request that actually initiated the tail, the ordered shutdown sequence of
-[§12.4][s12-4]. It lands in the [termination record](#g-termination-record)
-(the stopped-sim value naming how the run ended) as its `ControlRequestedStop`
-([§13.5][s13-5], [D-203][d-203]).
+[§12.4][s12-4]. The issuer lands in the
+[termination record](#g-termination-record) (the stopped-sim value naming how
+the run ended) as its `ControlRequestedStop`'s payload ([§13.5][s13-5],
+[D-203][d-203]).
 
 **`ControlRequestedStop` sits outside the stop policy** ([D-255][d-255]). The
 policy is what the caller declares for one advance ([§13.5][s13-5]). The stop
@@ -75,7 +77,7 @@ setting. Clearing it in the tail removes that trap and keeps the start-paused
 spelling above.
 
 The device handle carries no pause ([§11.6][s11-6]). Whether it gains the
-control verbs for the bridge is pending (`pending.md`, [D-310][d-310]).
+control verbs for the bridge ([§11.7][s11-7]) is pending (`pending.md`, [D-310][d-310]).
 
 **Pace and `margin` are two more verbs and two readers** ([D-269][d-269]).
 `pace!(sim, p)` and `margin!(sim, m)` set them from any task in any lifecycle
@@ -180,9 +182,10 @@ record is the published [framework status](#g-framework-status), the frozen
 diagnostics value each snapshot carries beside the table. It includes
 per-device liveness (the liveness timestamp and the device's `task_state`)
 next to the pacer diagnostics. The mechanism is the per-writer
-[diagnostic cell](#g-diagnostic-cell), specified in full by [§11.8][s11-8],
-plus the device `Task` handles the loop already owns, and nothing besides
-([D-136][d-136]). The diagnostic cell carries the single liveness timestamp.
+[diagnostic cell](#g-diagnostic-cell) (a writer's own holding place for
+runtime diagnostics and liveness) ([D-136][d-136]), specified in full by [§11.8][s11-8],
+plus the device `Task` handles the loop already owns, and nothing besides.
+The diagnostic cell carries the single liveness timestamp.
 The loop reads `task_state` off those handles where it publishes
 ([D-193][d-193]). A starved, blocked or crashed device task shows in a front
 end as a stale heartbeat with a name on it, not as mysteriously frozen physics
@@ -240,7 +243,8 @@ end
 
 The device side's predicate, `counter > last_seen` (below), therefore implies
 that `latest` holds at least that boundary, and a waiter can never wake onto
-a stale [snapshot](#g-snapshot) (the immutable per-boundary publication). The
+a [snapshot](#g-snapshot) (the immutable per-boundary publication) that is
+stale. The
 converse is expected and correct. A waiter may observe a *newer* snapshot than
 the increment that woke it. Newest wins.
 

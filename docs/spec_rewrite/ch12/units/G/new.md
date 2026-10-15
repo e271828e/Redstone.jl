@@ -5,10 +5,11 @@ recorded input [trace](#g-trace). A trace is the primary record of a session,
 a fixed [trace header](#g-trace-header) plus the [batches](#g-batch) drained at
 each [frame](#g-frame). A batch is a [device](#g-device)'s staged set of
 writes, and a device is any attached participant in the periphery. A frame is
-one iteration of the loop, from drain to publication. The
-[drain](#g-drain) is the frame-top swap that publishes staged device writes
-into the root inputs. `replay!` is the entry point the [§11.5][s11-5] trace
-exists for:
+one iteration of the loop, from drain to publication. The [drain](#g-drain)
+is the frame-top swap that applies staged device writes to the
+[root inputs](#g-root-input). The root inputs are the root component's own
+inputs, the only thing the periphery may write. `replay!` is the entry point
+the [§11.5][s11-5] trace exists for:
 
 ```julia
 trc  = trace(sim)                     # the recorded session: header + per-frame batches
@@ -21,8 +22,10 @@ restore!(sim2, cp)                    # that state alone: a warm restart, no fee
 ```
 
 The parts below cover the one substitution replay makes, halting and the
-input mode across halts, what stays the loop's, the validation up front, and
-the what-if replay with the `restore = false` form, which attaches the feed to
+[input mode](#g-input-mode) (where the drain takes its batches from) across
+halts, what stays the loop's, and the validation up front. They then cover the
+[what-if replay](#g-what-if-replay), re-driving the recorded inputs through a
+modified model, with the `restore = false` form, which attaches the feed to
 the simulation as it stands. The rejected shapes close the section.
 
 #### One substitution
@@ -32,11 +35,11 @@ second loop ([D-101][d-101], [D-274][d-274]). That is what keeps every
 property proved of the loop true of replay. Its drain reads the trace, and
 under the default form the loop starts from a restored state.
 
-The default form restores from the header. `replay!` restores the trace's
+The default form restores from the header. It restores the trace's
 [checkpoint](#g-checkpoint) (the `Model`'s state at a frame top as one value),
 the state the recording opened from. It runs no
 [boundary zero](#g-boundary-zero) (the initialization boundary at `t₀`).
-`replay!` stands in the `init!` position of the lifecycle ([§12.6][s12-6]) and
+This form stands in the `init!` position of the lifecycle ([§12.6][s12-6]) and
 does what `restore!` does, with the trace header as the checkpoint
 ([D-274][d-274]). There is no [condition](#g-condition) resolution, and the
 totality ([§14.6][s14-6]) held when the recording's `init!` ran. A condition
@@ -59,7 +62,7 @@ port wears on its component's boundary. [Claims](#g-claim) (the set of faces a
 device may write) are a live-roster fact of the recorded session that replay
 does not reconstruct.
 
-**A simulation is in one of two [input modes](#g-input-mode), `:live` or
+**A simulation is in one of two input modes, `:live` or
 `:replay`, and the mode decides which source that one drain branch reads**
 ([D-218][d-218]). Under `:live` it reads the staging cells, and under
 `:replay` the attached recording. **`replay!` attaches the recording and
@@ -77,7 +80,7 @@ recorded inputs.
 
 #### Halting, and the mode across halts
 
-In `:replay` the recording is the bound ([D-218][d-218]). Every advance's
+**In `:replay` the recording is the bound** ([D-218][d-218]). Every advance's
 frame budget is capped at the recording's last frame, and `to_boundary = k`
 caps it earlier. That keyword is the consumer of the replay pointer
 ([§13.4][s13-4]). `to_time` is the same cap addressed by time (below). Either
@@ -94,8 +97,9 @@ frame top after it** ([D-128][d-128]). Replay therefore always halts at a
 frame top. The frame-entry pointer ([§13.4][s13-4]) lands the same way. A
 [localized](#g-localized) `t*` boundary inside the frame (the crossing instant
 bracketed by root-finding over trial sweeps) is reproduced but not
-stoppable-at ([D-128][d-128]). [§10.4][s10-4] separates the two indices. The
-trace stays frame-indexed, and boundaries are the reporting index.
+stoppable-at ([D-128][d-128]). The trace stays frame-indexed, replay pointers
+and error messages use the frame-entry boundary index, and snapshots carry the
+published-boundary ordinal ([§10.4][s10-4]).
 
 Replay may also end earlier still under the ordinary policies, since `t_end`
 and `ignore_stop_requests` are keywords of `replay!` exactly as of `run!`
@@ -159,7 +163,7 @@ run!(sim2; t_end = 130.0)             # live from t = 100, re-recording onward
 The trace `sim2` leaves behind is a complete recording of *itself*, the
 replayed prefix out to t = 100 and then the frames flown live after it.
 
-**A replay's halt leaves the simulation `initialized`, never `stopped`**
+A replay's halt leaves the simulation `initialized`, never `stopped`
 ([D-218][d-218]). That state is boundary-consistent and ready to advance, the
 same state `step!` leaves ([§12.6][s12-6]). This is what makes three promised
 workflows real ([D-101][d-101]). State-trajectory inspection asks "what was
@@ -207,9 +211,8 @@ replay.
 the checkpoint's [deployment](#g-deployment) (the scalar-free artifact the
 grid parameters fix) is compared against the target's. Its fingerprint, the
 structural layout, is compared against the `Build`. The fingerprint covers
-the store layout, the [root-input](#g-root-input) faces, and what a copy by
-position relies on ([§11.5][s11-5]). The root inputs are the root component's
-own input faces. The trace's batch entries are validated against the root
+the store layout, the root-input faces, and what a copy by position relies on
+([§11.5][s11-5]). The trace's batch entries are validated against the root
 input-face list, and each batch's frame ordinal against the recording's
 frames, from the one after the header's to the last ([D-217][d-217]). Each
 writer's face-name → position schema, on the trace's `schemas` list
@@ -223,10 +226,10 @@ runs under both forms of `replay!`.
 
 The same pass pays the trace-record conversion in reverse. Every writer's
 sparse records ([§11.5][s11-5]) are normalized to positional batches against
-the trace's `schemas` list, once, off the loop ([D-176][d-176]). Replay has
-the whole trace in hand before frame 1. The replay drain therefore applies
-compiled scatters exactly as the live drain does, and no face name is
-resolved per frame under replay either.
+the trace's `schemas` list, once, off the loop ([D-101][d-101],
+[D-176][d-176]). Replay has the whole trace in hand before frame 1. The replay
+drain therefore applies compiled scatters exactly as the live drain does, and
+no face name is resolved per frame under replay either.
 
 *Structural* mismatch is an error. *Parametric* difference is not
 ([D-101][d-101]).
@@ -252,8 +255,8 @@ the grid parameters are. It moves the trajectory, so a run that differs in it
 is not re-driving the recorded one. Comparison by value is what makes the
 check one expression rather than a field-by-field walk.
 
-Under the default form the clock is *restored*, not compared. Replay restores
-`t₀` with the rest of the clock, so `replay!` takes no `t0` argument
+Under the default form the clock is *restored*, not compared. That form
+restores `t₀` with the rest of the clock, so `replay!` takes no `t0` argument
 ([D-127][d-127]). Under `restore = false` the simulation's own clock runs, its
 origin must equal the recording's, and the new trace's header is the
 simulation's own checkpoint. The checkpoint holds no policy ([D-255][d-255]).
@@ -274,7 +277,7 @@ The dispositions, by trace content:
 #### What-if replay and `restore = false`
 
 Replaying against the same structure with changed parameters is the
-[what-if replay](#g-what-if-replay), the deterministic re-driving of the
+what-if replay, the deterministic re-driving of the
 recorded inputs through a modified model. It is spelled as `init!` of the
 modified model under the authored condition, then
 `replay!(sim, trc; restore = false)`. The trace is not self-sufficient for it.
@@ -287,8 +290,10 @@ promises determinism, never reproduction.
 stands and restores nothing. The simulation must be `initialized`, at the
 recording's `t₀`, and at a frame from the header's to one short of the
 recording's last. A simulation that is not `initialized` meets the lifecycle
-gate. One whose origin or frame is off the recording's is refused before any
-write as `CheckpointMismatch`, its clock arm. One grid is thus an invariant of
+gate before any write, with `MissingInit` when it is `built` and
+`ServiceLifecycle` in any other state. One whose origin or frame is off the
+recording's is refused before any write as `CheckpointMismatch`, its clock
+arm. One grid is thus an invariant of
 every replay, and `to_time` has one meaning. The drain applies the records
 from the frame after the simulation's own.
 

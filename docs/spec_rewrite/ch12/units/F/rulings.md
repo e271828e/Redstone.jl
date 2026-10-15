@@ -1,8 +1,8 @@
 # Unit F (§12.5, §12.6): rulings, citations and open questions
 
 Old lines are spec lines at `17ad42d` (`old.md` line + 9168). Log lines are
-`scratch_survey/h2/decisions.md`; spec lines elsewhere are
-`scratch_survey/h2/spec.md`.
+`scratch_survey/h1/decisions.md`, byte-identical to the `h2` copy; spec lines
+elsewhere are `scratch_survey/h1/spec.md`.
 
 ## Rulings applied
 
@@ -88,14 +88,21 @@ Old lines are spec lines at `17ad42d` (`old.md` line + 9168). Log lines are
   "at frame 3" where a second parenthetical would break the sentence.
   "Boundary" has no link in §12.6: F66 removed the only one.
 
+- **R20.** "the frame's own cell" (9287) became "the frame's own diagnostic
+  cell", the `Model`'s diagnostic cell of D-317 bullet 1 (log 13748–13749).
+  F64's dictated "the cell written" became "the staging cell written".
+- **Verifier fixes.** "their frozen record" became "the pacer's frozen
+  record", since the clause now stands alone (C-086). The input mode's link
+  moved to its first use, in the context paragraph. `sweep` is linked and
+  glossed at "It runs no sweep", its first use in §12.6. "same-boundary
+  fresh" became "fresh from the same boundary (gloss), by topological
+  order", so the link no longer sits inside a compound. Left as inherited:
+  "the checkpoint's" (Run paragraph) comes before the checkpoint's link, and
+  "trim" (§12.5's survey) before its §14 pointer.
+
 ## Corrections proposed
 
-- **"The frame's own cell is the `Model`'s"** (9287). Bare *cell* is
-  reserved for a signal-table cell; this is the `Model`'s diagnostic cell
-  (D-317 bullet 1, log 13748–13749, "its status and its diagnostic cell").
-  Proposed: "the frame's own diagnostic cell is the `Model`'s". Held as
-  written. R10's F64 wording, "the cell written is the harness cell", has the
-  same bare *cell*; kept as dictated.
+- None open. The bare *cell* at 9287 was ruled by R20 (above).
 - **The context paragraph of §12.6** restates claims the section makes below
   (the five states, `feed`, the mode's two sources). They are declared
   additions, written to R13, and claim nothing the section does not.
@@ -245,12 +252,7 @@ Old lines are spec lines at `17ad42d` (`old.md` line + 9168). Log lines are
 
 ## Open questions
 
-1. Two glossary links stay unglossed (`sweep` in the verbatim "project →
-   sweep → publish", `holding`). Is a link without a gloss acceptable at
-   these two sites, or should the link go?
-2. Three bolds rest on Rationale-only rulings (D-088 twice, D-093). They keep
-   the old text's bold; should they stay bold until the log gives them a
-   Position?
-3. D-255's one Position sentence backs two bolds (`Run`, the per-advance
-   policy). Each also cites an entry whose Position states it (D-260; D-316
-   bullet 6), so the old bolds were kept. Confirm.
+None. The orchestrator ruled the three raised in the first pass. The
+unglossed `sweep` (in the verbatim chain) and `holding` keep their links.
+The Rationale-only bolds (D-088 twice, D-093) stay, and the log owes each a
+Position. D-255's two bolds stay.

@@ -316,3 +316,29 @@ words). Survey 1.
   sentence later. The gloss becomes "the control plane's stop command, one
   atomic word holding its issuer". The spec already calls the interrupt "a
   control-plane stop command" (old 9076). Tag the edit R15.
+- **R16. D-218 bullet 2's bold** (unit G's verifier, bold finding; unit G).
+  `spec_style.md` bolds a ruling's first statement in reading order. The
+  bold moves to "In `:replay` the recording is the bound", cited to D-218.
+  F55's halt sentence becomes plain, keeps its scoped wording and its
+  D-218 citation.
+- **R17. The two indices** (unit G's rulings item 1; unit G). The stale
+  "§10.4 separates the two indices … boundaries are the reporting index"
+  becomes: the trace stays frame-indexed, replay pointers and error messages
+  use the frame-entry boundary index, and snapshots carry the
+  published-boundary ordinal (§10.4).
+- **R18. The `restore = false` gate's kinds** (unit G's rulings item 2;
+  unit G). Name them, one clause: `MissingInit` on a `built` simulation,
+  `ServiceLifecycle` in any other state but `initialized` (`src/sim.jl`
+  401–411). Both refusals, like the clock arm's, precede any write.
+- **R10's F83 is corrected** (unit G). The rewriter's "halts exactly at the
+  frame top after it" stands; the brief's "halts at its top" was one frame
+  early, since frame `k`'s top is where frame `k` begins.
+- **R19. The init sketch's comment** (unit B's verifier; unit B). After
+  F24's `stop!(entry.handle)`, the comment "no handle yet" contradicts the
+  code. It becomes "pre-spawn: the entry is the address, no task holds a
+  handle yet", as `src/devices.jl`'s `_init_devices!` says.
+- **R20. Bare "cell" in unit F** (unit F's verifier and rewriter; unit F).
+  F64's dictated "the cell written" uses *cell* bare, which the glossary
+  reserves for a signal-table cell. It becomes "the staging cell written".
+  Old 9287's bare *cell* takes the correction unit F's `rulings.md`
+  proposes.

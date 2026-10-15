@@ -74,10 +74,12 @@
   {
    "id": "C-008",
    "old": "`replay!` restores the trace's checkpoint (the `Model`'s state at a frame top as one value), the state the recording opened from.",
-   "new": "`replay!` restores the trace's checkpoint (the `Model`'s state at a frame top as one value), the state the recording opened from.",
+   "new": "It restores the trace's checkpoint (the `Model`'s state at a frame top as one value), the state the recording opened from.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "R",
+   "ruling": "R9",
+   "note": "two-forms rule; the subject is the default form named just before"
   },
   {
    "id": "C-009",
@@ -99,7 +101,7 @@
   {
    "id": "C-011",
    "old": "`replay!` stands in the `init!` position of the lifecycle (§12.6) and does what `restore!` does, with the trace header as the checkpoint.",
-   "new": "`replay!` stands in the `init!` position of the lifecycle (§12.6) and does what `restore!` does, with the trace header as the checkpoint (D-274).",
+   "new": "This form stands in the `init!` position of the lifecycle (§12.6) and does what `restore!` does, with the trace header as the checkpoint (D-274).",
    "where": "new",
    "cites": [
     "§12.6"
@@ -108,7 +110,8 @@
     "D-274",
     "§12.6"
    ],
-   "tag": "C"
+   "tag": "C",
+   "note": "subject scoped to the default form (two-forms rule, R9)"
   },
   {
    "id": "C-012",
@@ -325,12 +328,12 @@
   {
    "id": "C-034",
    "old": "Anything else is refused before any write (`CheckpointMismatch`, its clock arm).",
-   "new": "A simulation that is not `initialized` meets the lifecycle gate. One whose origin or frame is off the recording's is refused before any write as `CheckpointMismatch`, its clock arm.",
+   "new": "A simulation that is not `initialized` meets the lifecycle gate before any write, with `MissingInit` when it is `built` and `ServiceLifecycle` in any other state. One whose origin or frame is off the recording's is refused before any write as `CheckpointMismatch`, its clock arm.",
    "where": "new",
    "cites": [],
    "tag": "R",
-   "ruling": "R10",
-   "note": "F56"
+   "ruling": "R18",
+   "note": "F56 (R10) with R18's kinds and its write-order clause"
   },
   {
    "id": "C-035",
@@ -415,8 +418,9 @@
    "newcites": [
     "D-218"
    ],
-   "tag": "C",
-   "note": "plain; D-218 bullet 2 takes its bold at the halt (F55)"
+   "tag": "R",
+   "ruling": "R16",
+   "note": "bold, D-218 bullet 2's first statement"
   },
   {
    "id": "C-044",
@@ -529,24 +533,17 @@
   },
   {
    "id": "C-055",
-   "old": "§10.4 separates the two indices.",
-   "new": "§10.4 separates the two indices.",
+   "old": "§10.4 separates the two indices. The trace stays frame-indexed, and boundaries are the reporting index.",
+   "new": "The trace stays frame-indexed, replay pointers and error messages use the frame-entry boundary index, and snapshots carry the published-boundary ordinal (§10.4).",
    "where": "new",
    "cites": [
     "§10.4"
    ],
-   "tag": "F"
+   "tag": "R",
+   "ruling": "R17"
   },
   {
    "id": "C-056",
-   "old": "The trace stays frame-indexed, and boundaries are the reporting index.",
-   "new": "The trace stays frame-indexed, and boundaries are the reporting index.",
-   "where": "new",
-   "cites": [],
-   "tag": "F"
-  },
-  {
-   "id": "C-057",
    "old": "Replay may also end earlier still under the ordinary policies, since `t_end` and `ignore_stop_requests` are keywords of `replay!` exactly as of `run!` (§12.6).",
    "new": "Replay may also end earlier still under the ordinary policies, since `t_end` and `ignore_stop_requests` are keywords of `replay!` exactly as of `run!` (§12.6, D-255, D-316).",
    "where": "new",
@@ -561,7 +558,7 @@
    "tag": "C"
   },
   {
-   "id": "C-058",
+   "id": "C-057",
    "old": "A termination the recorded session hit through a stop request reproduces itself anyway, deterministically.",
    "new": "A termination the recorded session hit through a stop request reproduces itself anyway, deterministically (D-127).",
    "where": "new",
@@ -572,7 +569,7 @@
    "tag": "C"
   },
   {
-   "id": "C-059",
+   "id": "C-058",
    "old": "A replay honours requests by default too, and the trace header records no policy,",
    "new": "A replay honours requests by default too, and the trace header records no policy.",
    "where": "new",
@@ -580,7 +577,7 @@
    "tag": "F"
   },
   {
-   "id": "C-060",
+   "id": "C-059",
    "old": "so a live run that ignored some is replayed under the same `ignore_stop_requests`.",
    "new": "So a replay of a live run that ignored some must pass the same `ignore_stop_requests`.",
    "where": "new",
@@ -590,7 +587,7 @@
    "note": "F67"
   },
   {
-   "id": "C-061",
+   "id": "C-060",
    "old": "`to_time` addresses the same halt by time.",
    "new": "`to_time` addresses the same halt by time.",
    "where": "new",
@@ -599,7 +596,7 @@
    "note": "bold lead-in becomes a plain topic sentence"
   },
   {
-   "id": "C-062",
+   "id": "C-061",
    "old": "The keyword is mutually exclusive with `to_boundary`, and it halts at the last frame top at or before the time given:",
    "new": "The keyword halts at the last frame top at or before the time given, and it is mutually exclusive with `to_boundary` (D-219).",
    "where": "new",
@@ -611,7 +608,7 @@
    "note": "clauses swapped so the bold headline leads; D-219 was adjacent"
   },
   {
-   "id": "C-063",
+   "id": "C-062",
    "old": "`k = ⌊(to_time − t₀)/h⌋` against the header's `t₀`.",
    "new": "It computes `k = ⌊(to_time − t₀)/h⌋` against the header's `t₀`, under either form.",
    "where": "new",
@@ -621,7 +618,7 @@
    "note": "two-forms rule; under restore = false the origin must equal the recording's, so the header's t₀ is the simulation's"
   },
   {
-   "id": "C-064",
+   "id": "C-063",
    "old": "A time falling between two frame tops floors onto the earlier one.",
    "new": "A time falling between two frame tops floors onto the earlier one.",
    "where": "new",
@@ -629,7 +626,7 @@
    "tag": "F"
   },
   {
-   "id": "C-065",
+   "id": "C-064",
    "old": "The rounding is the deliberate opposite of `t_end`'s, which ends a run at the first grid boundary reaching or exceeding it (§12.4).",
    "new": "The rounding is the deliberate opposite of `t_end`'s, which ends a run at the first grid boundary reaching or exceeding it (§12.4).",
    "where": "new",
@@ -639,7 +636,7 @@
    "tag": "F"
   },
   {
-   "id": "C-066",
+   "id": "C-065",
    "old": "`t_end` bounds a run, and `to_time` positions an inspection.",
    "new": "`t_end` bounds a run, and `to_time` positions an inspection.",
    "where": "new",
@@ -647,7 +644,7 @@
    "tag": "F"
   },
   {
-   "id": "C-067",
+   "id": "C-066",
    "old": "The point of halting is to stand before the anomaly, so a halt that stepped past it would defeat the call (D-219).",
    "new": "The point of halting is to stand before the anomaly, so a halt that stepped past it would defeat the call (D-219).",
    "where": "new",
@@ -657,7 +654,7 @@
    "tag": "F"
   },
   {
-   "id": "C-068",
+   "id": "C-067",
    "old": "Validation is the other keywords'.",
    "new": "Validation is the other keywords'.",
    "where": "new",
@@ -665,7 +662,7 @@
    "tag": "F"
   },
   {
-   "id": "C-069",
+   "id": "C-068",
    "old": "The value must be real, finite and at least `t₀`, and it must name a time the recording covers.",
    "new": "The value must be real, finite and at least `t₀`, and it must name a time the recording covers.",
    "where": "new",
@@ -673,7 +670,7 @@
    "tag": "F"
   },
   {
-   "id": "C-070",
+   "id": "C-069",
    "old": "The checks run before the replay writes anything, the restore included.",
    "new": "The checks run before the replay writes anything, the default form's restore included.",
    "where": "new",
@@ -683,7 +680,7 @@
    "note": "two-forms rule"
   },
   {
-   "id": "C-071",
+   "id": "C-070",
    "old": "The halt flips the mode only at the recording's end.",
    "new": "The halt flips the mode only at the recording's end.",
    "where": "new",
@@ -692,7 +689,7 @@
    "note": "bold lead-in becomes a plain topic sentence"
   },
   {
-   "id": "C-072",
+   "id": "C-071",
    "old": "A frame budget that runs out halts the loop at a frame top, leaving the simulation `initialized` (§12.6).",
    "new": "A frame budget that runs out halts the loop at a frame top, leaving the simulation `initialized` (§12.6).",
    "where": "new",
@@ -702,7 +699,7 @@
    "tag": "F"
   },
   {
-   "id": "C-073",
+   "id": "C-072",
    "old": "The mode becomes `:live` exactly when that halt lands at the recording's last frame, with the records exhausted.",
    "new": "The mode becomes `:live` exactly when that halt lands at the recording's last frame, with the records exhausted (D-218).",
    "where": "new",
@@ -714,7 +711,7 @@
    "note": "bold headline, D-218 bullet 3"
   },
   {
-   "id": "C-074",
+   "id": "C-073",
    "old": "It stays `:replay` otherwise, and the next `step!` or `run!` goes on consuming the recording.",
    "new": "It stays `:replay` otherwise, and the next `step!` or `run!` goes on consuming the recording.",
    "where": "new",
@@ -722,7 +719,7 @@
    "tag": "F"
   },
   {
-   "id": "C-075",
+   "id": "C-074",
    "old": "So no advance ever flips mid-run.",
    "new": "So no advance ever flips mid-run.",
    "where": "new",
@@ -730,7 +727,7 @@
    "tag": "F"
   },
   {
-   "id": "C-076",
+   "id": "C-075",
    "old": "A `run!` whose `t_end` lies past the recording halts at the last recorded frame, now `:live`, and the next call is the live continuation (D-218).",
    "new": "A `run!` whose `t_end` lies past the recording halts at the last recorded frame, now `:live`, and the next call is the live continuation (D-218).",
    "where": "new",
@@ -740,7 +737,7 @@
    "tag": "F"
   },
   {
-   "id": "C-077",
+   "id": "C-076",
    "old": "`live!` is the mode's one manual door.",
    "new": "`live!` is the one call that moves the mode alone.",
    "where": "new",
@@ -749,7 +746,7 @@
    "ruling": "R14"
   },
   {
-   "id": "C-078",
+   "id": "C-077",
    "old": "The flip above is automatic, and it happens only at the recording's end.",
    "new": "The flip above is automatic, and it happens only at the recording's end.",
    "where": "new",
@@ -757,7 +754,7 @@
    "tag": "F"
   },
   {
-   "id": "C-079",
+   "id": "C-078",
    "old": "`live!(sim)` performs it by hand.",
    "new": "`live!(sim)` performs it by hand.",
    "where": "new",
@@ -765,7 +762,7 @@
    "tag": "F"
   },
   {
-   "id": "C-080",
+   "id": "C-079",
    "old": "It sets the mode to `:live` and detaches the recording's remainder, touching nothing else.",
    "new": "`live!` sets the mode to `:live` and detaches the recording's remainder, touching nothing else (D-219).",
    "where": "new",
@@ -777,7 +774,7 @@
    "note": "bold headline, D-219 bullet 2; D-219 was adjacent"
   },
   {
-   "id": "C-081",
+   "id": "C-080",
    "old": "The trajectory stands where the replay left it, and so does the trace with the header it inherited.",
    "new": "The trajectory stands where the replay left it, and so does the trace with its header, inherited under the default form.",
    "where": "new",
@@ -787,7 +784,7 @@
    "note": "two-forms rule; under restore = false the header is the simulation's own checkpoint"
   },
   {
-   "id": "C-082",
+   "id": "C-081",
    "old": "The next `run!` or `step!` is therefore the live continuation from the replayed boundary, and its drains append to the re-recorded prefix.",
    "new": "The next `run!` or `step!` is therefore the live continuation from the replayed boundary, and its drains append to the re-recorded prefix.",
    "where": "new",
@@ -795,7 +792,7 @@
    "tag": "F"
   },
   {
-   "id": "C-083",
+   "id": "C-082",
    "old": "`live!` is a stopped-sim operation, legal only on an `initialized` simulation in `:replay`.",
    "new": "`live!` is a stopped-sim operation, legal only on an `initialized` simulation in `:replay`.",
    "where": "new",
@@ -803,7 +800,7 @@
    "tag": "F"
   },
   {
-   "id": "C-084",
+   "id": "C-083",
    "old": "`:running` and `:errored` refuse under the ordinary lifecycle gates (§12.6), and a simulation already `:live` refuses too.",
    "new": "Every other state refuses under the ordinary lifecycle gates (§12.6), with `MissingInit` at `built` and `ServiceLifecycle` in the rest. A simulation already `:live` refuses too, with `ArgumentInvalid`.",
    "where": "new",
@@ -815,7 +812,7 @@
    "note": "F76 and F59's three kinds"
   },
   {
-   "id": "C-085",
+   "id": "C-084",
    "old": "The call would have nothing to do, and a loud refusal beats a silent no-op (D-219).",
    "new": "The call would have nothing to do, and a loud refusal beats a silent no-op (D-219).",
    "where": "new",
@@ -825,7 +822,7 @@
    "tag": "F"
   },
   {
-   "id": "C-086",
+   "id": "C-085",
    "old": "That door is what makes the rewrite workflow real.",
    "new": "That call is what makes the rewrite workflow real.",
    "where": "new",
@@ -834,7 +831,7 @@
    "ruling": "R14"
   },
   {
-   "id": "C-087",
+   "id": "C-086",
    "old": "An interactive session is interrupted at t = 110, and the last ten seconds are to be flown again:",
    "new": "An interactive session is interrupted at t = 110, and the last ten seconds are to be flown again:",
    "where": "new",
@@ -842,7 +839,7 @@
    "tag": "F"
   },
   {
-   "id": "C-088",
+   "id": "C-087",
    "old": "```julia trc = trace(sim) # the interrupted session, out to t = 110 sim2 = Simulation(world) replay!(sim2, trc; to_time = 100.0) # halt at the last frame top at or before 100 latest(sim2) # inspect the boundary landed on live!(sim2) # drop the remainder; the mode is :live run!(sim2; t_end = 130.0) # live from t = 100, re-recording onward ```",
    "new": "`trc = trace(sim) # the interrupted session, out to t = 110 sim2 = Simulation(world) replay!(sim2, trc; to_time = 100.0) # halt at the last frame top at or before 100 latest(sim2) # inspect the boundary landed on live!(sim2) # drop the remainder; the mode is :live run!(sim2; t_end = 130.0) # live from t = 100, re-recording onward`",
    "where": "new",
@@ -852,7 +849,7 @@
    "note": "the fence leaves its list item and loses its two-space indent; lines verbatim"
   },
   {
-   "id": "C-089",
+   "id": "C-088",
    "old": "The trace `sim2` leaves behind is a complete recording of itself: the replayed prefix out to t = 100, then the frames flown live after it.",
    "new": "The trace `sim2` leaves behind is a complete recording of itself, the replayed prefix out to t = 100 and then the frames flown live after it.",
    "where": "new",
@@ -861,7 +858,7 @@
    "note": "mid-sentence colon removed"
   },
   {
-   "id": "C-090",
+   "id": "C-089",
    "old": "Replay ends `initialized`, never `stopped`.",
    "new": "A replay's halt leaves the simulation `initialized`, never `stopped` (D-218).",
    "where": "new",
@@ -870,11 +867,11 @@
     "D-218"
    ],
    "tag": "R",
-   "ruling": "R10",
-   "note": "F55"
+   "ruling": "R16",
+   "note": "F55's wording, now plain; R16 moves bullet 2's bold to the bound"
   },
   {
-   "id": "C-091",
+   "id": "C-090",
    "old": "That state is boundary-consistent and ready to advance, the same state `step!` leaves (§12.6).",
    "new": "That state is boundary-consistent and ready to advance, the same state `step!` leaves (§12.6).",
    "where": "new",
@@ -884,7 +881,7 @@
    "tag": "F"
   },
   {
-   "id": "C-092",
+   "id": "C-091",
    "old": "This is what makes three promised workflows real.",
    "new": "This is what makes three promised workflows real (D-101).",
    "where": "new",
@@ -895,7 +892,7 @@
    "tag": "C"
   },
   {
-   "id": "C-093",
+   "id": "C-092",
    "old": "State-trajectory inspection asks \"what was the private state at t = 37.2?\", and answers it by replaying there and reading the live stores (§11.2).",
    "new": "State-trajectory inspection asks \"what was the private state at t = 37.2?\", and answers it by replaying there and reading the live stores (§11.2).",
    "where": "new",
@@ -905,7 +902,7 @@
    "tag": "F"
   },
   {
-   "id": "C-094",
+   "id": "C-093",
    "old": "Error reproduction replays to `k − 1`, then `step!`s the failing frame under instrumentation (§13.4).",
    "new": "Error reproduction replays to the frame-entry boundary `k` the error names, then `step!`s the failing frame under instrumentation (§13.4).",
    "where": "new",
@@ -917,7 +914,7 @@
    "note": "F54"
   },
   {
-   "id": "C-095",
+   "id": "C-094",
    "old": "Continuation is `run!` after `replay!`, a live session from the replayed boundary.",
    "new": "Continuation is `run!` after `replay!`, a live session from the replayed boundary.",
    "where": "new",
@@ -925,7 +922,7 @@
    "tag": "F"
   },
   {
-   "id": "C-096",
+   "id": "C-095",
    "old": "After a full replay that is the next call, the records exhausted at the halt.",
    "new": "After a full replay that is the next call, the records exhausted at the halt.",
    "where": "new",
@@ -933,7 +930,7 @@
    "tag": "F"
   },
   {
-   "id": "C-097",
+   "id": "C-096",
    "old": "After a partial one the remainder of the recording is consumed first, across as many `step!` and `run!` calls as the caller makes, and the session goes live at the recording's end.",
    "new": "After a partial one the remainder of the recording is consumed first, across as many `step!` and `run!` calls as the caller makes, and the session goes live at the recording's end.",
    "where": "new",
@@ -941,7 +938,7 @@
    "tag": "F"
   },
   {
-   "id": "C-098",
+   "id": "C-097",
    "old": "Or `live!` drops that remainder, and the continuation starts at the halt.",
    "new": "Or `live!` drops that remainder, and the continuation starts at the halt.",
    "where": "new",
@@ -949,7 +946,7 @@
    "tag": "F"
   },
   {
-   "id": "C-099",
+   "id": "C-098",
    "old": "Replay re-records.",
    "new": "Replay re-records (D-101).",
    "where": "new",
@@ -961,7 +958,7 @@
    "note": "bold headline; D-101 Rationale only"
   },
   {
-   "id": "C-100",
+   "id": "C-099",
    "old": "The drain records normally.",
    "new": "The drain records normally.",
    "where": "new",
@@ -969,7 +966,7 @@
    "tag": "F"
   },
   {
-   "id": "C-101",
+   "id": "C-100",
    "old": "The new trace inherits the old header and accumulates the re-drained batches, a bit-identical prefix.",
    "new": "Under the default form the new trace inherits the old header and accumulates the re-drained batches, a bit-identical prefix.",
    "where": "new",
@@ -979,7 +976,7 @@
    "note": "F82"
   },
   {
-   "id": "C-102",
+   "id": "C-101",
    "old": "A replayed-then-continued session therefore leaves behind a complete, valid trace of itself, with no special stitching.",
    "new": "A replayed-then-continued session therefore leaves behind a complete, valid trace of itself, with no special stitching.",
    "where": "new",
@@ -987,7 +984,7 @@
    "tag": "F"
   },
   {
-   "id": "C-103",
+   "id": "C-102",
    "old": "Pacing and the control plane are unchanged (§10.7, §12.1).",
    "new": "Pacing and the control plane are unchanged (§10.7, §12.1, D-101).",
    "where": "new",
@@ -1004,7 +1001,7 @@
    "note": "bold headline; D-101 Rationale only"
   },
   {
-   "id": "C-104",
+   "id": "C-103",
    "old": "Pacing (waits inserted between completed frames, never altering the boundary sequence) sits outside the semantics, so paused, slow-motion or real-time replay is free.",
    "new": "Pacing (waits inserted between completed frames, never altering the boundary sequence) sits outside the semantics, so paused, slow-motion or real-time replay is free.",
    "where": "new",
@@ -1012,7 +1009,7 @@
    "tag": "F"
   },
   {
-   "id": "C-105",
+   "id": "C-104",
    "old": "Paced replay with an attached visualizer is session playback, and `replay!` takes `pace` and `margin` as `run!` does (D-269).",
    "new": "Paced replay with an attached visualizer is session playback, and `replay!` takes `pace` and `margin` as `run!` does (§12.1, D-269).",
    "where": "new",
@@ -1028,7 +1025,7 @@
    "note": "§12.1 holds the pace keywords; pointer added"
   },
   {
-   "id": "C-106",
+   "id": "C-105",
    "old": "Stop truncates, as anywhere.",
    "new": "Stop truncates, as anywhere.",
    "where": "new",
@@ -1036,7 +1033,7 @@
    "tag": "F"
   },
   {
-   "id": "C-107",
+   "id": "C-106",
    "old": "Devices are readers.",
    "new": "Devices are readers (D-218).",
    "where": "new",
@@ -1048,7 +1045,7 @@
    "note": "bold lead-in becomes a plain topic sentence; D-218 bullet 1, whose bold is on its first sentence"
   },
   {
-   "id": "C-108",
+   "id": "C-107",
    "old": "Rostered devices init and spawn normally (§11.1) and consume snapshots (§11.2, §12.3).",
    "new": "Rostered devices init and spawn normally (§11.1) and consume snapshots (§11.2, §12.3).",
    "where": "new",
@@ -1060,7 +1057,7 @@
    "tag": "F"
   },
   {
-   "id": "C-109",
+   "id": "C-108",
    "old": "That is the visualizer case.",
    "new": "That is the visualizer case.",
    "where": "new",
@@ -1068,7 +1065,7 @@
    "tag": "F"
   },
   {
-   "id": "C-110",
+   "id": "C-109",
    "old": "But no live staging cell is drained while the simulation is in `:replay`.",
    "new": "But no live staging cell is drained while the simulation is in `:replay`.",
    "where": "new",
@@ -1076,7 +1073,7 @@
    "tag": "F"
   },
   {
-   "id": "C-111",
+   "id": "C-110",
    "old": "A batch found staged is discarded with a rate-limited warning (`ReplayDiscardedStaging`, Appendix C).",
    "new": "A batch found staged is discarded with a rate-limited warning (`ReplayDiscardedStaging`, Appendix C).",
    "where": "new",
@@ -1086,7 +1083,7 @@
    "tag": "F"
   },
   {
-   "id": "C-112",
+   "id": "C-111",
    "old": "Mixing live writes into a replay would destroy the property replay exists to provide.",
    "new": "Mixing live writes into a replay would destroy the property replay exists to provide.",
    "where": "new",
@@ -1094,7 +1091,7 @@
    "tag": "F"
   },
   {
-   "id": "C-113",
+   "id": "C-112",
    "old": "A session that wants live input is a continuation (`run!` after replay), not a replay.",
    "new": "A session that wants live input is a continuation (`run!` after replay), not a replay.",
    "where": "new",
@@ -1102,7 +1099,7 @@
    "tag": "F"
   },
   {
-   "id": "C-114",
+   "id": "C-113",
    "old": "Validation is loud and up front.",
    "new": "Validation is loud and up front (D-101).",
    "where": "new",
@@ -1114,7 +1111,7 @@
    "note": "M57, the pass heads its own block; bold headline, D-101 Rationale only"
   },
   {
-   "id": "C-115",
+   "id": "C-114",
    "old": "Before the first frame, the checkpoint's fingerprint is validated against the target, its layout against the `Build` (store layout, root input faces).",
    "new": "Before the first frame, the checkpoint's deployment (the scalar-free artifact the grid parameters fix) is compared against the target's. Its fingerprint, the structural layout, is compared against the `Build`. The fingerprint covers the store layout, the root-input faces, and what a copy by position relies on (§11.5).",
    "where": "new",
@@ -1127,7 +1124,7 @@
    "note": "§11.5's naming and layout list; the deployment's gloss moved here with its first use"
   },
   {
-   "id": "C-116",
+   "id": "C-115",
    "old": "The trace's batch entries are validated against the root input-face list, and each batch's frame ordinal against the recording's frames, from the one after the header's to the last (D-217).",
    "new": "The trace's batch entries are validated against the root input-face list, and each batch's frame ordinal against the recording's frames, from the one after the header's to the last (D-217).",
    "where": "new",
@@ -1137,7 +1134,7 @@
    "tag": "F"
   },
   {
-   "id": "C-117",
+   "id": "C-116",
    "old": "Each writer's face-name → position schema, on the trace's `schemas` list (§11.5), is validated in the same pass.",
    "new": "Each writer's face-name → position schema, on the trace's `schemas` list (§11.5), is validated in the same pass.",
    "where": "new",
@@ -1148,7 +1145,7 @@
    "note": "bold word dropped"
   },
   {
-   "id": "C-118",
+   "id": "C-117",
    "old": "A recorded schema that disagrees with the target model's own root-input faces is a replay error.",
    "new": "A recorded schema that disagrees with the target model's own root-input faces is a replay error.",
    "where": "new",
@@ -1156,7 +1153,7 @@
    "tag": "F"
   },
   {
-   "id": "C-119",
+   "id": "C-118",
    "old": "The checks are attach-style, and a failure reports did-you-mean: the offending name plus the list-in-hand it should have matched.",
    "new": "The checks are attach-style, and a failure reports did-you-mean, the offending name plus the list-in-hand it should have matched.",
    "where": "new",
@@ -1165,7 +1162,7 @@
    "note": "mid-sentence colon removed"
   },
   {
-   "id": "C-120",
+   "id": "C-119",
    "old": "The kinds are `CheckpointMismatch`, `ReplaySchemaMismatch` and `ReplayUnknownFace` (Appendix C).",
    "new": "The kinds are `CheckpointMismatch`, `ReplaySchemaMismatch` and `ReplayUnknownFace` (Appendix C).",
    "where": "new",
@@ -1175,7 +1172,7 @@
    "tag": "F"
   },
   {
-   "id": "C-121",
+   "id": "C-120",
    "old": "The pass runs under both forms of `replay!`.",
    "new": "The pass runs under both forms of `replay!`.",
    "where": "new",
@@ -1183,7 +1180,7 @@
    "tag": "F"
   },
   {
-   "id": "C-122",
+   "id": "C-121",
    "old": "The same pass pays the trace-record conversion in reverse.",
    "new": "The same pass pays the trace-record conversion in reverse.",
    "where": "new",
@@ -1191,21 +1188,22 @@
    "tag": "F"
   },
   {
-   "id": "C-123",
+   "id": "C-122",
    "old": "Every writer's sparse records (§11.5) are normalized to positional batches against the trace's `schemas` list, once, off the loop.",
-   "new": "Every writer's sparse records (§11.5) are normalized to positional batches against the trace's `schemas` list, once, off the loop (D-176).",
+   "new": "Every writer's sparse records (§11.5) are normalized to positional batches against the trace's `schemas` list, once, off the loop (D-101, D-176).",
    "where": "new",
    "cites": [
     "§11.5"
    ],
    "newcites": [
+    "D-101",
     "D-176",
     "§11.5"
    ],
    "tag": "C"
   },
   {
-   "id": "C-124",
+   "id": "C-123",
    "old": "Replay has the whole trace in hand before frame 1.",
    "new": "Replay has the whole trace in hand before frame 1.",
    "where": "new",
@@ -1213,7 +1211,7 @@
    "tag": "F"
   },
   {
-   "id": "C-125",
+   "id": "C-124",
    "old": "The replay drain therefore applies compiled scatters exactly as the live drain does, and no face name is resolved per frame under replay either.",
    "new": "The replay drain therefore applies compiled scatters exactly as the live drain does, and no face name is resolved per frame under replay either.",
    "where": "new",
@@ -1221,7 +1219,7 @@
    "tag": "F"
   },
   {
-   "id": "C-126",
+   "id": "C-125",
    "old": "Structural mismatch is an error.",
    "new": "Structural mismatch is an error.",
    "where": "new",
@@ -1229,7 +1227,7 @@
    "tag": "F"
   },
   {
-   "id": "C-127",
+   "id": "C-126",
    "old": "Parametric difference is not.",
    "new": "Parametric difference is not (D-101).",
    "where": "new",
@@ -1240,7 +1238,7 @@
    "tag": "C"
   },
   {
-   "id": "C-128",
+   "id": "C-127",
    "old": "Replaying against the same structure with changed parameters is the what-if replay, the deterministic re-driving of the recorded inputs through a modified model.",
    "new": "Replaying against the same structure with changed parameters is the what-if replay, the deterministic re-driving of the recorded inputs through a modified model.",
    "where": "new",
@@ -1249,7 +1247,7 @@
    "note": "block 5; bold term dropped"
   },
   {
-   "id": "C-129",
+   "id": "C-128",
    "old": "It is spelled as `init!` of the modified model under the authored condition, then `replay!(sim, trc; restore = false)`.",
    "new": "It is spelled as `init!` of the modified model under the authored condition, then `replay!(sim, trc; restore = false)`.",
    "where": "new",
@@ -1257,7 +1255,7 @@
    "tag": "M"
   },
   {
-   "id": "C-130",
+   "id": "C-129",
    "old": "The trace is not self-sufficient for it.",
    "new": "The trace is not self-sufficient for it.",
    "where": "new",
@@ -1265,7 +1263,7 @@
    "tag": "M"
   },
   {
-   "id": "C-131",
+   "id": "C-130",
    "old": "Its checkpoint holds the recording model's state after boundary zero, so the authored condition comes from outside (D-274).",
    "new": "Its checkpoint holds the recording model's state after boundary zero, so the authored condition comes from outside (D-274).",
    "where": "new",
@@ -1275,7 +1273,7 @@
    "tag": "M"
   },
   {
-   "id": "C-132",
+   "id": "C-131",
    "old": "Bit-identity is promised only against the identical build.",
    "new": "Bit-identity is promised only against the identical build (§2.4).",
    "where": "new",
@@ -1287,7 +1285,7 @@
    "note": "§2.4 states the law; this is the mechanism's statement"
   },
   {
-   "id": "C-133",
+   "id": "C-132",
    "old": "What-if replay promises determinism, never reproduction.",
    "new": "What-if replay promises determinism, never reproduction.",
    "where": "new",
@@ -1295,7 +1293,7 @@
    "tag": "M"
   },
   {
-   "id": "C-134",
+   "id": "C-133",
    "old": "The checkpoint check compares two deployments as values (D-254).",
    "new": "The checkpoint check compares two deployments as values (D-254).",
    "where": "new",
@@ -1305,7 +1303,7 @@
    "tag": "F"
   },
   {
-   "id": "C-135",
+   "id": "C-134",
    "old": "The checkpoint carries the recorded run's `Deployment`",
    "new": "The checkpoint carries the recorded run's `Deployment`",
    "where": "new",
@@ -1313,7 +1311,7 @@
    "tag": "F"
   },
   {
-   "id": "C-136",
+   "id": "C-135",
    "old": "(the scalar-free artifact the grid parameters fix)",
    "new": "(the scalar-free artifact the grid parameters fix)",
    "where": "new",
@@ -1322,7 +1320,7 @@
    "note": "the deployment's gloss moves with its link to the first use, in the validation paragraph"
   },
   {
-   "id": "C-137",
+   "id": "C-136",
    "old": "the target `Simulation` carries its own",
    "new": "the target simulation's `Model` carries its own",
    "where": "new",
@@ -1332,7 +1330,7 @@
    "note": "F81"
   },
   {
-   "id": "C-138",
+   "id": "C-137",
    "old": "and the check is their comparison, on the structural side of that line (§11.5).",
    "new": "and the check is their comparison, on the structural side of that line.",
    "where": "new",
@@ -1345,7 +1343,7 @@
    "note": "F52; \"that line\" is the structural and parametric line just above"
   },
   {
-   "id": "C-139",
+   "id": "C-138",
    "old": "The value covers the trajectory-determining parameters, `Δt_base`, `h`, `N_base`, the algorithm, `localization_tol`, `localization_budget` (§10.4) and `firing_budget` (§10.6),",
    "new": "The value covers the trajectory-determining parameters, `Δt_base`, `h`, `N_base`, the algorithm, `localization_tol`, `localization_budget` (§10.4) and `firing_budget` (§10.6, D-133).",
    "where": "new",
@@ -1361,7 +1359,7 @@
    "tag": "C"
   },
   {
-   "id": "C-140",
+   "id": "C-139",
    "old": "and the schedule (the typed per-component `(D, Φ, Δt)` tick table) with every column, the anchor and rate-chain columns included.",
    "new": "It also covers the schedule (the typed per-component `(D, Φ, Δt)` tick table) with every column, the anchor and rate-chain columns included.",
    "where": "new",
@@ -1369,7 +1367,7 @@
    "tag": "F"
   },
   {
-   "id": "C-141",
+   "id": "C-140",
    "old": "A rate re-declared through a different anchor at the same tick table is therefore a different deployment, and the replay is refused.",
    "new": "A rate re-declared through a different anchor at the same tick table is therefore a different deployment, and the replay is refused.",
    "where": "new",
@@ -1377,7 +1375,7 @@
    "tag": "F"
   },
   {
-   "id": "C-142",
+   "id": "C-141",
    "old": "The refusal costs one re-recording in a rare case, and it keeps the equality a plain value equality rather than one that ignores two of a row's columns.",
    "new": "The refusal costs one re-recording in a rare case, and it keeps the equality a plain value equality rather than one that ignores two of a row's columns.",
    "where": "new",
@@ -1385,7 +1383,7 @@
    "tag": "F"
   },
   {
-   "id": "C-143",
+   "id": "C-142",
    "old": "Mismatch is `CheckpointMismatch` with a deployment-parameter discriminator, never a what-if.",
    "new": "Mismatch is `CheckpointMismatch` with a deployment-parameter discriminator, never a what-if (D-127).",
    "where": "new",
@@ -1396,7 +1394,7 @@
    "tag": "C"
   },
   {
-   "id": "C-144",
+   "id": "C-143",
    "old": "A deployment change moves the times at which the frame-ordinal batches apply.",
    "new": "A deployment change moves the times at which the frame-ordinal batches apply.",
    "where": "new",
@@ -1404,7 +1402,7 @@
    "tag": "F"
   },
   {
-   "id": "C-145",
+   "id": "C-144",
    "old": "That is different inputs, not a modified model.",
    "new": "That is different inputs, not a modified model.",
    "where": "new",
@@ -1412,7 +1410,7 @@
    "tag": "F"
   },
   {
-   "id": "C-146",
+   "id": "C-145",
    "old": "The event trio (the localization pair and `firing_budget`) is compared for exactly the same reason the grid parameters are.",
    "new": "The event trio (the localization pair and `firing_budget`) is compared for exactly the same reason the grid parameters are.",
    "where": "new",
@@ -1420,7 +1418,7 @@
    "tag": "F"
   },
   {
-   "id": "C-147",
+   "id": "C-146",
    "old": "It moves the trajectory, so a run that differs in it is not re-driving the recorded one.",
    "new": "It moves the trajectory, so a run that differs in it is not re-driving the recorded one.",
    "where": "new",
@@ -1428,7 +1426,7 @@
    "tag": "F"
   },
   {
-   "id": "C-148",
+   "id": "C-147",
    "old": "Comparison by value is what makes the check one expression rather than a field-by-field walk.",
    "new": "Comparison by value is what makes the check one expression rather than a field-by-field walk.",
    "where": "new",
@@ -1436,7 +1434,7 @@
    "tag": "F"
   },
   {
-   "id": "C-149",
+   "id": "C-148",
    "old": "The clock is restored, not compared.",
    "new": "Under the default form the clock is restored, not compared.",
    "where": "new",
@@ -1446,18 +1444,19 @@
    "note": "F57"
   },
   {
-   "id": "C-150",
+   "id": "C-149",
    "old": "Replay restores `t₀` with the rest of the clock, so `replay!` takes no `t0` argument.",
-   "new": "Replay restores `t₀` with the rest of the clock, so `replay!` takes no `t0` argument (D-127).",
+   "new": "That form restores `t₀` with the rest of the clock, so `replay!` takes no `t0` argument (D-127).",
    "where": "new",
    "cites": [],
    "newcites": [
     "D-127"
    ],
-   "tag": "C"
+   "tag": "C",
+   "note": "subject scoped to the default form (F57, R10)"
   },
   {
-   "id": "C-151",
+   "id": "C-150",
    "old": "The checkpoint holds no policy (D-255).",
    "new": "The checkpoint holds no policy (D-255).",
    "where": "new",
@@ -1467,7 +1466,7 @@
    "tag": "F"
   },
   {
-   "id": "C-152",
+   "id": "C-151",
    "old": "`t_end` and `ignore_stop_requests` are keywords of this `replay!` call, validated per call as at `run!`.",
    "new": "`t_end` and `ignore_stop_requests` are keywords of this `replay!` call, validated per call as at `run!`.",
    "where": "new",
@@ -1475,7 +1474,7 @@
    "tag": "F"
   },
   {
-   "id": "C-153",
+   "id": "C-152",
    "old": "The dispositions, by trace content:",
    "new": "The dispositions, by trace content:",
    "where": "new",
@@ -1483,7 +1482,7 @@
    "tag": "F"
   },
   {
-   "id": "C-154",
+   "id": "C-153",
    "old": "| trace content | disposition | |---|---|",
    "new": "| trace content | disposition | |---|---|",
    "where": "new",
@@ -1492,7 +1491,7 @@
    "note": "table header, verbatim"
   },
   {
-   "id": "C-155",
+   "id": "C-154",
    "old": "| the checkpoint's layout: store layout, root-input faces | compared against the `Build` |",
    "new": "| the checkpoint's fingerprint: store layout, root-input faces, and what a copy by position relies on | compared against the `Build` |",
    "where": "new",
@@ -1501,7 +1500,7 @@
    "ruling": "R12"
   },
   {
-   "id": "C-156",
+   "id": "C-155",
    "old": "| the recorded `Deployment`, carrying `Δt_base`, `h`, `N_base`, the algorithm, `localization_tol`, `localization_budget`, `firing_budget` | compared as a value against the target `Simulation`'s own deployment |",
    "new": "| the recorded `Deployment`, carrying `Δt_base`, `h`, `N_base`, the algorithm, `localization_tol`, `localization_budget`, `firing_budget` | compared as a value against the deployment the target simulation's `Model` carries |",
    "where": "new",
@@ -1511,7 +1510,7 @@
    "note": "F81, and R12's row"
   },
   {
-   "id": "C-157",
+   "id": "C-156",
    "old": "| each writer's face-name → position schema (on the trace's `schemas` list) | validated against the target model's root-input faces: disagreement is a replay error |",
    "new": "| each writer's face-name → position schema (on the trace's `schemas` list) | validated against the target model's root-input faces: disagreement is a replay error |",
    "where": "new",
@@ -1519,7 +1518,7 @@
    "tag": "F"
   },
   {
-   "id": "C-158",
+   "id": "C-157",
    "old": "| the checkpoint's state | restored; no boundary zero |",
    "new": "| the checkpoint's state | restored under the default form; no boundary zero |",
    "where": "new",
@@ -1529,7 +1528,7 @@
    "note": "F57"
   },
   {
-   "id": "C-159",
+   "id": "C-158",
    "old": "| the clock | restored, `replay!` takes no `t0` |",
    "new": "| the clock | restored under the default form, `replay!` takes no `t0`; under `restore = false` the simulation's own clock runs, its origin equal to the recording's |",
    "where": "new",
@@ -1539,7 +1538,7 @@
    "note": "F57"
   },
   {
-   "id": "C-160",
+   "id": "C-159",
    "old": "| `t_end`, `ignore_stop_requests` | absent from the checkpoint; each `replay!` call declares its own (§13.5) |",
    "new": "| `t_end`, `ignore_stop_requests` | absent from the checkpoint; each `replay!` call declares its own (§13.5) |",
    "where": "new",
@@ -1549,7 +1548,7 @@
    "tag": "F"
   },
   {
-   "id": "C-161",
+   "id": "C-160",
    "old": "Rejected shapes, for the record (D-101): a `run!(sim; replay = trc)` flag, a synthetic playback device staging the recorded batches, and replay ending `stopped`.",
    "new": "Three shapes are rejected for the record (D-101). They are a `run!(sim; replay = trc)` flag, a synthetic playback device staging the recorded batches, and replay ending `stopped`.",
    "where": "new",
@@ -1560,7 +1559,7 @@
    "note": "mid-sentence colon removed"
   },
   {
-   "id": "C-162",
+   "id": "C-161",
    "old": "The input mode clarifies that decision's drain substitution rather than replacing it, and carries its own rejected shapes (D-218).",
    "new": "The input mode clarifies that decision's drain substitution rather than replacing it, and carries its own rejected shapes (D-218).",
    "where": "new",
@@ -1575,8 +1574,10 @@
   "A trace is the primary record of a session, a fixed trace header plus the batches drained at each frame.",
   "A batch is a device's staged set of writes, and a device is any attached participant in the periphery.",
   "A frame is one iteration of the loop, from drain to publication.",
-  "The drain is the frame-top swap that publishes staged device writes into the root inputs.",
-  "The parts below cover the one substitution replay makes, halting and the input mode across halts, what stays the loop's, the validation up front, and the what-if replay with the `restore = false` form, which attaches the feed to the simulation as it stands.",
+  "The drain is the frame-top swap that applies staged device writes to the root inputs.",
+  "The root inputs are the root component's own inputs, the only thing the periphery may write.",
+  "The parts below cover the one substitution replay makes, halting and the input mode (where the drain takes its batches from) across halts, what stays the loop's, and the validation up front.",
+  "They then cover the what-if replay, re-driving the recorded inputs through a modified model, with the `restore = false` form, which attaches the feed to the simulation as it stands.",
   "The rejected shapes close the section.",
   "#### One substitution",
   "(the initialization boundary at `t₀`)",
@@ -1587,7 +1588,6 @@
   "Under `restore = false` the new trace's header is the simulation's own checkpoint (below).",
   "The control plane is the separate atomic surface carrying pause, pace and the stop word.",
   "#### Validation up front",
-  "The root inputs are the root component's own input faces.",
   "#### What-if replay and `restore = false`",
   "Under `restore = false` the simulation's own clock runs, its origin must equal the recording's, and the new trace's header is the simulation's own checkpoint.",
   "#### Rejected shapes"

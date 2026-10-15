@@ -174,10 +174,11 @@
   {
    "id": "C-020",
    "old": "- Inputs arrive same-boundary fresh by topological order.",
-   "new": "- Inputs arrive same-boundary (a published consistency point) fresh by topological order.",
+   "new": "- Inputs arrive fresh from the same boundary (a published consistency point), by topological order.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "F",
+   "note": "the link no longer sits inside the compound (verifier, as F66)"
   },
   {
    "id": "C-021",
@@ -775,12 +776,13 @@
   {
    "id": "C-082",
    "old": "The loop's diagnostic cell, its account and the published holder are the plane's, and the frame's own cell is the `Model`'s (§11.8).",
-   "new": "The loop's diagnostic cell, its account and the published holder are the plane's, and the frame's own cell is the `Model`'s (§11.8).",
+   "new": "The loop's diagnostic cell, its account and the published holder are the plane's, and the frame's own diagnostic cell is the `Model`'s (§11.8).",
    "where": "new",
    "cites": [
     "§11.8"
    ],
-   "tag": "F"
+   "tag": "R",
+   "ruling": "R20"
   },
   {
    "id": "C-083",
@@ -811,13 +813,14 @@
   {
    "id": "C-086",
    "old": "and each snapshot's status carries their frozen record (§10.7, D-269).",
-   "new": "The status of each snapshot (the immutable per-boundary publication) carries their frozen record (§10.7, D-269).",
+   "new": "The status of each snapshot (the immutable per-boundary publication) carries the pacer's frozen record (§10.7, D-269).",
    "where": "new",
    "cites": [
     "D-269",
     "§10.7"
    ],
-   "tag": "F"
+   "tag": "F",
+   "note": "\"their\" became \"the pacer's\" once the clause stood as its own sentence (verifier, C-086)"
   },
   {
    "id": "C-087",
@@ -1283,12 +1286,12 @@
   {
    "id": "C-131",
    "old": "What it drains is the harness cell.",
-   "new": "In a stepping session the cell written is the harness cell (the always-present staging cell of the harness writer).",
+   "new": "In a stepping session the staging cell written is the harness cell (the always-present staging cell of the harness writer).",
    "where": "new",
    "cites": [],
    "tag": "R",
-   "ruling": "R10",
-   "note": "F64; the harness cell's gloss moved to its first use"
+   "ruling": "R20",
+   "note": "F64 as R20 words it; the harness cell's gloss moved to its first use"
   },
   {
    "id": "C-132",
@@ -1793,10 +1796,11 @@
   {
    "id": "C-184",
    "old": "It runs no sweep, evaluates no guard, runs no update and resets no prior.",
-   "new": "It runs no sweep, evaluates no guard, runs no update and resets no prior.",
+   "new": "It runs no sweep (one pass through the execution order against the current state), evaluates no guard, runs no update and resets no prior.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "F",
+   "note": "sweep linked and glossed at its first use in §12.6"
   },
   {
    "id": "C-185",

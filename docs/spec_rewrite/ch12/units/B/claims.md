@@ -41,11 +41,11 @@ old: Steps (6) and (7) specify what happens when a device task or the loop itsel
 tag: F
 
 old: 1. Initiation. Three events start a shutdown: `t_end` is reached, a control-plane stop is issued, or a stop request the advance honours reads `STOP_REQUESTED` in the just-published snapshot.
-new: 1. Initiation. Three events start a shutdown. Either `t_end` is reached, or a control-plane stop is issued, or a stop request the advance honours reads `STOP_REQUESTED` in the just-published snapshot (the immutable per-boundary publication) (D-316).
+new: 1. Initiation. Three events start a shutdown. Either `t_end` is reached, or a stop is issued on the control plane (the separate atomic surface carrying pause, pace and stop), or a stop request the advance honours reads `STOP_REQUESTED` in the just-published snapshot (D-316).
 tag: R
 ruling: R4
 newcites: D-316
-note: the step label unbolded; the colon becomes a sentence break; D-316 added (Position: every request ends the run at the first publication where it holds, unless the advance ignores it); snapshot glossed
+note: the step label unbolded; the colon becomes a sentence break; D-316 added (Position: every request ends the run at the first publication where it holds, unless the advance ignores it); control plane linked and glossed here, its first use (verifier); the stop-request and snapshot glosses follow in one sentence
 
 old: The stop's issuers are the GUI, a device handle, code, or an operator interrupt (Ctrl-C, treated below).
 new: The control-plane stop's issuers are a front end (D-310), a device handle, code, or an operator interrupt (Ctrl-C, treated below).
@@ -58,13 +58,15 @@ old: The third event is model-detected termination (§13.5).
 tag: F
 
 old: The loop always completes the current boundary sequence and never stops mid-frame.
-new: The loop never stops mid-boundary. It always completes the boundary sequence in progress, which a `t` stop places inside a frame (one iteration of the loop).
+new: The loop never stops mid-boundary. It always completes the boundary sequence in progress, which a stop at `t` (the localized event time) places inside a frame.
 tag: R
 ruling: R10
-note: F4; frame linked and glossed at its first use
+note: F4; `t*` linked and glossed at its first use (verifier); frame linked, its gloss in the next sentence
 
 old: It then publishes the final snapshot.
+new: The loop then publishes the final snapshot.
 tag: F
+note: "It" spelled "The loop", since the frame's gloss sentence now sits before it
 
 old: Only then does it set the sticky stopped status.
 tag: F
@@ -151,10 +153,10 @@ newcites: Appendix C
 note: F5; the kind and its Appendix C pointer move into the sentence before
 
 old: The diagnostic is written to the loop's own cell, collected by the run's-end sweep into the termination record and presented through the logging backend, with the terminal snapshot preceding the join (D-201, D-203).
-new: The diagnostic is written to the loop's own diagnostic cell (each writer's bounded ring of diagnostics and its heartbeat) (D-203). The run's-end sweep collects it into the termination record (the stopped-sim value naming how the run ended). The logging backend presents it, with the terminal snapshot preceding the join (D-201, D-203).
+new: The diagnostic is written to the loop's own diagnostic cell (each writer's bounded ring of diagnostics and its heartbeat) (D-203). The run's-end sweep collects the diagnostic into the termination record (the stopped-sim value naming how the run ended). The logging backend presents the diagnostic, with the terminal snapshot preceding the join (D-201, D-203).
 tag: R
 ruling: R3
-note: D-203 bullet 4's headline clause bold (row 111); bare "cell" becomes "diagnostic cell", whose link and gloss move here from old 9024, its new first use; termination record glossed; split into three sentences
+note: D-203 bullet 4's headline clause bold (row 111); bare "cell" becomes "diagnostic cell", whose link and gloss move here from old 9024, its new first use; termination record glossed; split into three sentences, "it" spelled "the diagnostic" twice (verifier)
 
 old: 6. Device-initiated paths.
 tag: R
@@ -234,12 +236,15 @@ old: The status in that terminal snapshot carries the run's cumulative diagnosti
 tag: F
 
 old: What the tail itself produces comes later by construction.
-tag: F
+new: It comes later by construction.
+tag: X
+note: the subject moves into the bold sentence before it, so the bold names its subject (verifier)
 
 old: It is folded into the termination record and presented through the logging backend, never published (D-201, D-203).
+new: What the tail itself produces is folded into the termination record and presented through the logging backend, never published (D-201, D-203).
 tag: R
 ruling: R3
-note: D-201's headline bold here (row 125)
+note: D-201's headline bold here (row 125), its subject spelled out and placed before the consequence sentence (verifier)
 
 old: Rule. That terminal snapshot is retained in the log unconditionally, under any `log_every` and any `log_max` (§11.2).
 new: That terminal snapshot is retained in the log (the retained sequence of published snapshots) unconditionally, under any `log_every` and any `log_max` (§11.2, D-368).
@@ -260,7 +265,7 @@ newcites: D-133
 note: M7; D-133 Position, "t_end's landing rule ...: the run ends at the first grid boundary whose time reaches or exceeds t_end", bold
 
 old: Whole frames only, never a shortened final step, which grid integrity forbids (§10.4; `tₖ = t₀ + k·h`, indexed and never accumulated).
-new: The run takes whole frames only, never a shortened final step, which grid integrity forbids (§10.4). Each grid time is indexed, `tₖ = t₀ + k·h`, and never accumulated.
+new: The run takes whole frames only, never a shortened final step, which grid integrity forbids (§10.4). Each grid time is indexed, `tₖ = t₀ + k·h`, and never accumulated (§10.4).
 tag: M
 note: M7; the parenthetical with its semicolon becomes its own sentence
 
@@ -322,7 +327,7 @@ old: The cap is not trajectory-determining, because the trajectory has ended at 
 tag: F
 
 old: So, like `log_max` (§11.2), it lives on `Control` rather than the deployment, and replay neither records nor compares it (§11.5, §12.7).
-new: So replay (the ordinary loop with the drain reading the trace) neither records nor compares the cap (§11.5, §12.7), just as for `log_max` (§11.2). The cap therefore lives on `Control`, not on the `Deployment` (D-256).
+new: So replay (the ordinary loop with the drain reading recorded batches) neither records nor compares the cap (§11.5, §12.7), just as for `log_max` (§11.2). The cap therefore lives on `Control`, not on the `Deployment` (D-256).
 tag: R
 ruling: R10
 newcites: §11.5 §12.7 §11.2 D-256
@@ -407,10 +412,10 @@ old: Each call sits in its own bracket.
 tag: F
 
 old: `for entry in roster # attachment order, calling task push!(live, entry) # listed for release before `init!` begins try init!(entry.device) catch e shutdown!(entry.device) # release, unconditionally (§11.6) pop!(live) # released, so unlisted if e isa InterruptException # the operator's stop, never a crash (below) stop!(control, :interrupt) else report!(entry, DeviceCrash(e)) # pre-spawn: the entry is the address, no handle yet entry.should_abort && stop!(control) end # no dead-marking: no task is spawned (§12.2) end end`
-new: `for entry in roster # attachment order, calling task push!(live, entry) # listed for release before `init!` begins try init!(entry.device) catch e shutdown!(entry.device) # release, unconditionally (§11.6) pop!(live) # released, so unlisted if e isa InterruptException # the operator's stop, never a crash (below) stop!(control, :interrupt) else report!(entry, DeviceCrash(e, entry.should_abort)) # pre-spawn: the entry is the address, no handle yet entry.should_abort && stop!(entry.handle) end # no dead-marking: no task is spawned (§12.2) end end`
+new: `for entry in roster # attachment order, calling task push!(live, entry) # listed for release before `init!` begins try init!(entry.device) catch e shutdown!(entry.device) # release, unconditionally (§11.6) pop!(live) # released, so unlisted if e isa InterruptException # the operator's stop, never a crash (below) stop!(control, :interrupt) else report!(entry, DeviceCrash(e, entry.should_abort)) # pre-spawn: the entry is the address, no task holds a handle yet entry.should_abort && stop!(entry.handle) end # no dead-marking: no task is spawned (§12.2) end end`
 tag: R
-ruling: R10
-note: F24, the two ruled code edits; nothing else in the block changes
+ruling: R10, R19
+note: F24, the two ruled code edits; R19, the comment "no handle yet" becomes "no task holds a handle yet"; nothing else in the block changes
 
 old: Why the bracket. It is what makes "guaranteed on every exit path" (§11.6) true of the path outside that wrapper.
 new: The bracket is what makes "guaranteed on every exit path" (§11.6) true of the path outside that wrapper.
@@ -554,9 +559,10 @@ tag: R
 ruling: R8
 
 old: What the operator is left with is an ordinary stopped simulation: a terminal snapshot, with the failure named in its diagnostic account.
-new: What the operator is left with is an ordinary stopped simulation, a terminal snapshot with the failure named in its diagnostic account.
-tag: F
-note: the colon becomes a comma; the claim's truth off boundary zero is a correction proposed in rulings.md
+new: What the operator is left with is an ordinary stopped simulation, whose terminal snapshot is the one the run started from and whose termination record's tail residue holds the `DeviceCrash`.
+tag: R
+ruling: R8
+note: the run publishes nothing after the failure; the report reaches the record's residue through the run's-end sweep (verifier, src/sim.jl 1183–1185, 1420–1421, 1281); the simulation stays the sentence's subject so the next "It" keeps its antecedent
 
 old: It is fully serviceable by §14 and resumable by the next `run!` (§12.6) once the device is plugged back in.
 tag: R
@@ -590,9 +596,9 @@ old: The bracket releases the device through `shutdown!` as for any throw and sp
 tag: F
 
 old: In place of the `DeviceCrash` report it sets the `:interrupt` stop through the stop word, so the run's `should_abort` split above does not arise.
-new: In place of the `DeviceCrash` report it sets the `:interrupt` stop through the stop word (the control plane's stop request, one atomic word holding its issuer). The run's `should_abort` split above therefore does not arise.
+new: In place of the `DeviceCrash` report it sets the `:interrupt` stop through the stop word (the control plane's stop command, one atomic word holding its issuer). The run's `should_abort` split above therefore does not arise.
 tag: R
-ruling: R11
+ruling: R15
 note: the stop word glossed at its first use in the section; split for the gloss, "so" kept as "therefore"
 
 old: The remaining entries still initialize, and the run ends at its first frame top with zero frames advanced, through the pending-stop path above.
@@ -715,9 +721,9 @@ old: The frame's own throw is the disposition (§13.4).
 tag: F
 
 old: The catch wraps the cause under the mask and consumes the pending interrupt on its way out, and the run takes the abnormal entry under that `StepError` (§13.6).
-new: The catch wraps the cause under the mask and consumes the pending interrupt on its way out. The run then takes the abnormal entry under that `StepError` (§13.6).
+new: The catch wraps the cause under the mask and consumes the pending interrupt on its way out. The run then takes the abnormal shutdown entry under that `StepError` (§13.6).
 tag: F
-note: split in two
+note: split in two; "abnormal entry" becomes "abnormal shutdown entry", since entry is never bare (verifier)
 
 old: The alternative, `stopped` over a half-written boundary, is what the masking exists to prevent.
 tag: F
@@ -770,15 +776,15 @@ old: The published record is consistent, since the frame published nothing.
 tag: F
 
 old: The stores may hold mid-boundary values until the next `init!` or `restore!` resets them,
-new: The stores may hold mid-boundary values until the next `init!`, `restore!` or `replay!` resets them.
+new: The stores may hold mid-boundary values until the next `init!`, `restore!` or `replay!` resets them,
 tag: R
 ruling: R10
 note: F22
 
 old: as after a throw inside boundary zero (§13.4).
-new: The same holds after a throw inside boundary zero (the initialization boundary, the ordinary macro-sequence with an empty integrate) (§13.4).
+new: as after a throw inside boundary zero (the initialization boundary, the ordinary macro-sequence with an empty integrate) (§13.4).
 tag: F
-note: split off for the boundary-zero gloss, whose link moves here from old 9021; the gloss's colon becomes a comma
+note: the boundary-zero link and gloss move here from old 9021; the gloss's colon becomes a comma; one sentence, as in the old, so "such a run" keeps its antecedent (verifier)
 
 old: `checkpoint` refuses such a run, since the executor no longer rests where its last snapshot was published (§12.6).
 new: `checkpoint` refuses such a run as `CheckpointMidFrame`, since the executor (the compiled form of the stage execution order) no longer rests where its last snapshot was published (§12.6).
@@ -837,11 +843,13 @@ added: (any attached participant in the periphery)
 
 added: (Ctrl-C in an interactive session)
 
-added: (the immutable per-boundary publication)
+added: (the separate atomic surface carrying pause, pace and stop)
 
-added: A stop request is an output port of the framework enum `StopFlag`.
+added: A stop request is an output port of the framework enum `StopFlag`, and a snapshot is the immutable per-boundary publication.
 
-added: (one iteration of the loop)
+added: (the localized event time)
+
+added: A frame is one iteration of the loop.
 
 added: (`wait_next_snapshot(handle)`)
 
@@ -855,7 +863,7 @@ added: (the root component's own input faces)
 
 added: (the retained sequence of published snapshots)
 
-added: (the ordinary loop with the drain reading the trace)
+added: (the ordinary loop with the drain reading recorded batches)
 
 added: (the task that invoked `run!`)
 
@@ -863,7 +871,7 @@ added: (the structured data a diagnostic carries beside its kind)
 
 added: (every root input must hold a value)
 
-added: (the control plane's stop request, one atomic word holding its issuer)
+added: (the control plane's stop command, one atomic word holding its issuer)
 
 added: The reason is that
 

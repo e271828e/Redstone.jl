@@ -6,19 +6,10 @@ frozen `scratch_survey/h1/decisions.md`.
 ## Corrections proposed
 
 1. **"a terminal snapshot, with the failure named in its diagnostic
-   account"** (9052–9053, the `should_abort = true` init failure). R8 moved
-   the stop to the run's first frame top, and this clause still assumes the
-   run publishes a snapshot after the failure. `run!` resets the accounts and
-   runs the bracket before any publication (`src/sim.jl` 1182–1184), and the
-   run then advances no frame and publishes nothing (survey 1, part C: the
-   run "logged only boundary zero"). The terminal snapshot is the one the run
-   started from, published before the `DeviceCrash` was written, so its
-   account cannot name the failure. The report reaches the termination
-   record's residue through the run's-end sweep (`src/sim.jl` 1281).
-   Kept as written, the colon made a comma. Proposed: "What the operator is
-   left with is an ordinary stopped simulation, its termination record
-   naming the device and its residue carrying the `DeviceCrash`." Confirm the
-   residue path against the code before ruling.
+   account"** (9052–9053). Ruled under R8 after step 3 and applied: the
+   stopped simulation's terminal snapshot is the one the run started from,
+   and its termination record's tail residue holds the `DeviceCrash`
+   (verifier: `src/sim.jl` 1183–1185, 1420–1421, 1281).
 2. **"Deployment contexts legitimately differ in patience"** (8939–8940).
    The ordinary-English "deployment" now sits two sentences before "not on
    the `Deployment`" (F6), the glossary artifact. Kept as written. Proposed:
@@ -170,20 +161,26 @@ different rulings:
 - spec 14240 (glossary, operator interrupt): names frame-top and wait
   unmask points; §12.4 also names the pause block, as before.
 
+## Applied after verification
+
+- R15: the stop word's gloss reads "the control plane's stop command, one
+  atomic word holding its issuer".
+- R8: old 9052–9053, as above.
+- R19: the sketch's comment reads "pre-spawn: the entry is the address, no
+  task holds a handle yet".
+- The verifier's list: "the diagnostic" spelled out twice in (5); §10.4
+  repeated on the grid-index sentence; the boundary-zero clause rejoined to
+  its sentence, so "such a run" keeps its antecedent; the D-201/D-203 bold
+  now names its subject and precedes "It comes later by construction";
+  `t*` linked and glossed at its first use; the control-plane link moved to
+  its first use in (1), the later appositive left unlinked; "abnormal
+  shutdown entry". "It then publishes" became "The loop then publishes",
+  since the frame's gloss sentence now precedes it.
+- The trace link: instead of moving it, replay's gloss now reads "the
+  ordinary loop with the drain reading recorded batches", so the trace is
+  first used, linked and glossed where it was.
+
 ## Open questions
 
-1. **R11's gloss and the glossary's *stop request*.** The dictated gloss
-   calls the stop word "the control plane's stop request". §12.4 uses
-   *stop request* in the glossary's sense, a model's `StopFlag` port, in the
-   paragraph that follows ("Stop requests are consulted at each publication
-   and the stop word at the next frame top"). A reader may take the two for
-   one thing. Applied as dictated; "the control plane's stop command" would
-   avoid the collision.
-2. **EOT** (8862, 8882) stays unexpanded. No source in the spec or the log
-   expands it, so an introducing clause would claim beyond its source.
-3. **R7 and E2.** Old 9054 and 9080 ("resumable by the next `run!`") stay
-   as written (E1). The E2 lines, 8711–8716 and 8823–8824, are unit A's;
-   §12.4 holds none of them.
-4. **The `should_abort` stop's narrative** (correction 1 above) is the one
-   sentence of 9020–9060 that R8's list did not name and that still
-   assumes a publication after the failure. Kept as written.
+None open. EOT stays unexpanded (ruled after step 3). R7's two sentences
+stay as written (E1). The E2 lines, 8711–8716 and 8823–8824, are unit A's.

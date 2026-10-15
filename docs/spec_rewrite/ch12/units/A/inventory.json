@@ -169,7 +169,7 @@
   {
    "id": "C-016",
    "old": "An operator interrupt is caught at one of the loop's unmask points and sets exactly this stop, with no separate entry point involved (§12.4).",
-   "new": "An operator interrupt (Ctrl-C read as a control-plane stop) sets exactly this stop, with no separate entry point involved (D-132). The loop catches it at one of its unmask points, where a deferred Ctrl-C is raised (§12.4).",
+   "new": "An operator interrupt (Ctrl-C read as a control-plane stop) sets exactly this stop, with no separate entry point involved (§12.4, D-132). The loop catches it at one of its unmask points, where a deferred Ctrl-C is raised (§12.4).",
    "where": "new",
    "cites": [
     "§12.4"
@@ -184,14 +184,15 @@
   {
    "id": "C-017",
    "old": "The stop word carries its issuer.",
-   "new": "The stop word carries its issuer (D-203).",
+   "new": "The stop word carries its issuer (D-203). The stop word is the control plane's stop command, one atomic word holding its issuer.",
    "where": "new",
    "cites": [],
    "newcites": [
     "D-203"
    ],
-   "tag": "C",
-   "note": "D-203 bullet 3; the citation was two sentences on."
+   "tag": "R",
+   "ruling": "R15",
+   "note": "D-203 bullet 3, the citation was two sentences on; the second sentence is R11's gloss as R15 words it."
   },
   {
    "id": "C-018",
@@ -216,13 +217,14 @@
   {
    "id": "C-020",
    "old": "It lands in the termination record's `ControlRequestedStop` (§13.5, D-203).",
-   "new": "It lands in the termination record (the stopped-sim value naming how the run ended) as its `ControlRequestedStop` (§13.5, D-203).",
+   "new": "The issuer lands in the termination record (the stopped-sim value naming how the run ended) as its `ControlRequestedStop`'s payload (§13.5, D-203).",
    "where": "new",
    "cites": [
     "D-203",
     "§13.5"
    ],
-   "tag": "F"
+   "tag": "F",
+   "note": "\"It\" becomes \"The issuer\" after the tail's gloss; the issuer is the source's payload (§13.5, D-203 bullet 1)."
   },
   {
    "id": "C-021",
@@ -407,12 +409,17 @@
   {
    "id": "C-039",
    "old": "Whether it gains the control verbs for the bridge is pending (`pending.md`, D-310).",
-   "new": "Whether it gains the control verbs for the bridge is pending (`pending.md`, D-310).",
+   "new": "Whether it gains the control verbs for the bridge (§11.7) is pending (`pending.md`, D-310).",
    "where": "new",
    "cites": [
     "D-310"
    ],
-   "tag": "F"
+   "newcites": [
+    "D-310",
+    "§11.7"
+   ],
+   "tag": "F",
+   "note": "a pointer to where §11.7 introduces the bridge."
   },
   {
    "id": "C-040",
@@ -854,7 +861,7 @@
   {
    "id": "C-085",
    "old": "The mechanism is the per-writer cell, specified in full by §11.8, plus the device `Task` handles the loop already owns, and nothing besides.",
-   "new": "The mechanism is the per-writer diagnostic cell, specified in full by §11.8, plus the device `Task` handles the loop already owns, and nothing besides (D-136).",
+   "new": "The mechanism is the per-writer diagnostic cell (a writer's own holding place for runtime diagnostics and liveness) (D-136), specified in full by §11.8, plus the device `Task` handles the loop already owns, and nothing besides.",
    "where": "new",
    "cites": [
     "§11.8"
@@ -864,7 +871,7 @@
     "§11.8"
    ],
    "tag": "C",
-   "note": "bare \"cell\" is reserved, so \"diagnostic cell\". D-136's Position."
+   "note": "bare \"cell\" is reserved, so \"diagnostic cell\". D-136's Position, placed at the cell; the handles are D-193's, cited next sentence."
   },
   {
    "id": "C-086",
@@ -1109,7 +1116,7 @@
   {
    "id": "C-111",
    "old": "`counter > last_seen` therefore implies that `latest` holds at least that boundary, and a waiter can never wake onto a stale snapshot.",
-   "new": "The device side's predicate, `counter > last_seen` (below), therefore implies that `latest` holds at least that boundary, and a waiter can never wake onto a stale snapshot (the immutable per-boundary publication).",
+   "new": "The device side's predicate, `counter > last_seen` (below), therefore implies that `latest` holds at least that boundary, and a waiter can never wake onto a snapshot (the immutable per-boundary publication) that is stale.",
    "where": "new",
    "cites": [],
    "tag": "M",
@@ -1361,12 +1368,11 @@
   "(the points where the loop applies staged device writes)",
   "(the pacer's wall-clock waits)",
   "(iterations of the loop)",
-  "This section covers, in order, when the loop reads the plane, the stop and its issuer, the pause, pace and `margin`, and the fields `Control` keeps.",
+  "This section covers, in order, when the loop reads the plane, the stop and its issuer, the pause, pace and `margin`, and the fields of `Control`, one of the periphery's own types (D-256), the one that holds the control plane.",
   "the start of each frame",
   "(any attached participant in the periphery)",
   "(Ctrl-C read as a control-plane stop)",
   "where a deferred Ctrl-C is raised",
-  "The stop word is the control plane's stop request, one atomic word holding that issuer.",
   "the ordered shutdown sequence of §12.4",
   "(the stopped-sim value naming how the run ended)",
   "A paused run is still running. The lifecycle reads `running`, and the roster (the list of attached device entries) stays frozen (D-106).",
@@ -1381,6 +1387,7 @@
   "(the list of attached device entries)",
   "(the task that invoked `run!`)",
   "The liveness heartbeat",
+  "(a writer's own holding place for runtime diagnostics and liveness)",
   "(attached participants in the periphery)",
   "A boundary is a published consistency point.",
   "The next-snapshot wait (a device's blocking wait for the next publication) is that way.",
