@@ -27,3 +27,6 @@ Orchestrator context: checkpoint 2 (blocking items ruled), 290,831 tokens.
 
 Evidence check: 1 Opus run, 0.25M, 67 items, 63 CONFIRMED, 4 UNCONFIRMED.
 Orchestrator context: checkpoint 3 (every item ruled), 304170 tokens.
+
+Ruled edits: 1 Opus run, 0.14M. Final verification: 2 Opus runs, 0.37M, 2 findings (one lost clause, restored as O-1; one log note). PDF check: 1 Sonnet run, no damage.
+Orchestrator context: checkpoint 4 (landing approved), 332611 tokens.
