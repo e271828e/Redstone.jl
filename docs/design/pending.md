@@ -1,39 +1,56 @@
 # Pending
 
-What `src/` and `test/` still owe the design, and the questions the design
-leaves open, split by whether the first release waits on them. The first
-section also lists the release work the spec does not ask for. Every item
-here is known and recorded; none is abandoned. `check_refs.jl` and
-`check_rows.jl` read this file, so every `§N` and `D-nnn` below resolves or
-the tools go red.
+What `src/` and `test/` still owe the design, the release work the spec
+does not ask for, and the questions the design leaves open, in two lists:
+the work order, and the items with no order. Every item here is known and
+recorded; none is abandoned. `check_refs.jl` and `check_rows.jl` read this
+file, so every `§N` and `D-nnn` below resolves or the tools go red.
 
-## Before the first release
+## The work order
 
-The bullets stand in working order, the first one next. The audit comes
-last, because it sweeps the whole surface and the library and the bridge
-both add names.
+The bullets stand in working order, the first one next. The first release
+is an item of the list, and the items after it are ordered too. Where an
+item changes what the spec says, the spec edit is part of the item.
 
-- **The inspector**, one browser client in four stages, in working order:
-  the static inspector over the descriptor, whose first session is the
-  descriptor's schema and `descriptor` together, at the tip of increment
-  67's `Structure` refactor (the record's "Working order"); the bridge, an
-  ordinary
-  device serving the handle over a socket; the live inspector, values on
-  the diagram; and the cockpit, panels over the bridge. The built-in Julia
-  GUI is parked (D-310). The record is
+- **CI on GitHub.** The suite on every push and pull request, with its
+  badge in the README.
+- **The example model.** The submodule `Redstone.Examples`, its first
+  example a three-degree-of-freedom longitudinal aircraft, `Longitudinal`,
+  with its testset. It is the tutorial's subject, the static inspector's
+  first diagram, the precompile workload's model, and the model the
+  compile-time and garbage measurements run on, grown by subsystems the
+  tutorial does not read where "large enough to measure on" asks for
+  more. It imports only the public surface; whether the root exports
+  `Examples` is the audit's question (D-226). The admission guidelines,
+  the sketch of the aircraft, the tutorial's layers and the testset's pins
+  are `companions/examples_inventory.md`. The compile-cost report's harness
+  (`docs/reports/20261001_compile_cost_reeval/probes`) drifted at D-313 and
+  D-314: `Group` lives in `Redstone.Blocks` and its keywords are the
+  declaration names; correct a copy before measuring, and leave the report as
+  it is.
+- **A precompile workload** for the generic machinery a cold process
+  pays, about 9 s whatever the model (§9.7), run on the example model.
+- **The inspector, stage 1**: the static inspector over the descriptor,
+  whose first session is the descriptor's schema and `descriptor` together,
+  at the tip of increment 67's `Structure` refactor (the record's "Working
+  order"). The built-in Julia GUI is parked (D-310). The record is
   `docs/design/inspector/initial_design.md` (not normative), which carries
-  each stage's answered questions and open list. What the spec owes, each
-  ruled when its stage reaches it: `descriptor` and the carrier change (stage
-  1); the handle's control verbs and the log-tail view (stage 2); and
-  §11.7's panel convention amended from a drawing method to a panel
-  description, with the GUI package's half of D-270's convention assigned
-  to the client, and a ruling on §11.7's "assembly panels compose children
-  by path", a constraint on that half with no entry (stage 4).
+  each stage's answered questions and open list. What the spec owes at this
+  stage, ruled when it is reached: `descriptor` and the carrier change. The
+  later stages stand after the release, below.
+- **The tutorial and the README.** The tutorial takes a newcomer from a
+  component to a run and a plot, one chapter per layer of the example
+  model. The README keeps its quick start, shows three of the layers
+  condensed with the plot and the diagram, and links to the tutorial; the
+  interactive part is the binding's few lines until the live inspector
+  gives a recording. Writing the tutorial is what finds the API's friction,
+  which is why it precedes the audit.
 - **The exported-name audit.** The export list is to be decided deliberately
   rather than by accident, and until the audit runs the module exports
   nothing (D-226). The audit is a full-surface sweep under the four-class
   naming convention (§8.1, D-144): every API name is exported, renamed or
-  left unexported.
+  left unexported. It comes after the tutorial, which surfaces the names a
+  user types, and after the library and the examples have added theirs.
   - **The extension-only surface**, where *unexported* is preferred. It has
     three parts: the declaration and stage family of the import list (§8.1),
     the larger half, settled on every component file's first line; the
@@ -66,20 +83,17 @@ both add names.
       with a public Base name when the spec's verb is that word, reached by
       qualified name or explicit import; `peek` (§11.7, D-270) is the first
       instance, the panel kit's verb beside `Base.peek`.
-
-### Outside the spec
-
-Release work the spec does not ask for, in no order. Where an item changes
-what the spec says, the spec edit is part of the item.
-
-- **An example model**, large enough to measure on. It gives the
-  compile-time and garbage measurements a model to run on, and the cockpit
-  one to drive. The compile-cost report's harness
-  (`docs/reports/20261001_compile_cost_reeval/probes`) drifted at D-313 and
-  D-314: `Group` lives in `Redstone.Blocks` and its keywords are the
-  declaration names; correct a copy before measuring, and leave the report as
-  it is.
-- **A tutorial** that takes a newcomer from a component to a run and a plot.
+- **The first release.** Registration in General, the tag, and the
+  announcement, in that order. Registration is quiet and the announcement
+  is the public moment, so the announcement waits for everything above.
+- **The inspector, stages 2 to 4**: the bridge, an ordinary device serving
+  the handle over a socket; the live inspector, values on the diagram; and
+  the cockpit, panels over the bridge. What the spec owes, each ruled when
+  its stage reaches it: the handle's control verbs and the log-tail view
+  (stage 2); and §11.7's panel convention amended from a drawing method to
+  a panel description, with the GUI package's half of D-270's convention
+  assigned to the client, and a ruling on §11.7's "assembly panels compose
+  children by path", a constraint on that half with no entry (stage 4).
 - **The spec's readability rewrite.** Chapters 1 to 12 are done. The
   other chapters follow `docs/spec_rewrite/recipe.md`, and that directory's
   README tracks them. Until a chapter's turn comes, it keeps the old markers.
@@ -109,13 +123,16 @@ what the spec says, the spec edit is part of the item.
   and the B78 rows of `rulings_batch.md` at `eb1d832`, are such description and get none.
   The kernel extraction replaces the report that closes
   `docs/spec_rewrite/`, whose lessons already live in its recipe.
-- **Package registration.**
-- **A precompile workload** for the generic machinery a cold process
-  pays, about 9 s whatever the model (§9.7).
+- **The user guide and the API reference.** The reference is the kernel's
+  generated view of the docstrings. The guide grows from the tutorial and
+  the companions, and is written once the kernel has settled what the
+  docstrings carry.
 
-## After the first release
+## Unordered
 
-Each is additive, so it can land later without breaking user code.
+Items with no order among them. Nothing prevents any of them before the
+first release, but each is low priority, additive, and lands without
+breaking user code, and each may benefit from user feedback first.
 
 - **Publication's garbage** (§9.8, §10.7, §11.2, D-269). A new snapshot and
   table copy per frame are by design: §11.2 leaves published snapshots to
@@ -172,8 +189,8 @@ Each is additive, so it can land later without breaking user code.
     OrdinaryDiffEq as a dependency and the HDF5 export is undecided, so the
     bullet is reworded when this deferral lifts.
 - **The library's remaining candidates.** Whatever of the inventory in
-  `docs/design/companions/library_inventory.md` is unbuilt at release,
-  each block built when wanted (§13.7, D-313).
+  `docs/design/companions/library_inventory.md` is unbuilt, each block
+  built when wanted (§13.7, D-313).
 
 ## Deviations
 
