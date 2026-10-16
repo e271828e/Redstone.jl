@@ -773,9 +773,16 @@ sigint_pending() = unsafe_load(cglobal(:jl_signal_pending, Cint)) != 0
 
 # The operator's Ctrl-C, sent by the process to itself: SIGINT, then a wait
 # until the runtime holds it, so the caller's code runs on with it pending
-# rather than in flight. Needs `Base.exit_on_sigint(false)`.
+# rather than in flight. Needs `Base.exit_on_sigint(false)`. Windows has no
+# `kill`: there the C runtime's `raise` runs Julia's handler on the calling
+# thread, which arms the same pending word. On Unix `raise` would target the
+# calling thread, which blocks SIGINT, so `kill` addresses the process.
 function interrupt_self()
-    ccall(:kill, Cint, (Cint, Cint), getpid(), Cint(2))
+    if Sys.iswindows()
+        ccall(:raise, Cint, (Cint,), Cint(2))
+    else
+        ccall(:kill, Cint, (Cint, Cint), getpid(), Cint(2))
+    end
     deadline = time() + 10.0
     while !sigint_pending() && time() < deadline
     end
