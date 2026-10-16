@@ -62,7 +62,7 @@ function diagnostics_channel()
         handle = attach!(sim, dev, Enumerated("a"))
         init!(sim, fragment(u = (a = 0.0, b = 0.0)))
         logs, _ = Test.collect_test_logs() do
-            run!(sim; t_end = 1000.0)                        # ends by the device's stop
+            run_to_device_stop!(sim)                         # ends by the device's stop
         end
         msgs = [string(l.message) for l in logs]
         # The link survived its truncated datagram: no crash, and the report is
@@ -148,7 +148,7 @@ function diagnostics_channel()
         dev = Ticker()
         attach!(sim, dev, Enumerated())
         init!(sim, fragment(u = (a = 0.0, b = 0.0)))
-        run!(sim; t_end = 1000.0)                            # ends by the device's stop, ≥ 3 boundaries in
+        run_to_device_stop!(sim)                             # ends by the device's stop, ≥ 3 boundaries in
         @test dev.n ≥ 3
         writer = writer_status(latest(sim), "device 1 (Ticker)")
         # The device consumed boundaries through the handle primitives, each pass
@@ -166,7 +166,7 @@ function diagnostics_channel()
         attach!(sim, dev, Enumerated())
         init!(sim, fragment(u = (a = 0.0, b = 0.0)))
         logs, _ = Test.collect_test_logs() do
-            run!(sim; t_end = 1000.0)
+            run_to_device_stop!(sim)
         end
         # The report races the last frame top: folded into the terminal status, or
         # — no drain remaining — presented by the sweep, the tail's renderer of

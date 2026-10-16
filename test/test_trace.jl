@@ -892,15 +892,16 @@ end
 # task beside the loop on the calling task (§11.1).
 mutable struct HarnessPoker <: AbstractDevice
     sim::Any
+    @atomic stages::Int
 end
+HarnessPoker() = HarnessPoker(nothing, 0)
 loop(dev::HarnessPoker, handle) = (while running(handle);
-                                   stage!(dev.sim, "ref" => 99.0); yield(); end;
+                                   stage!(dev.sim, "ref" => 99.0); @atomic dev.stages += 1;
+                                   yield(); end;
                                    nothing)
 
 function trace_discarded_harness()
     @testset "live staging into the harness is discarded on its own cell (§12.7, §11.8)" begin
-        # A long recording, so the poker's task is scheduled against a run with
-        # frames left to give it: its stage is deterministic, its timing never is.
         sim = Simulation(replay_model(); h = 1//10)
         init!(sim, fragment(u = (ref = 1.0, rate = 0.0)))
         stage!(sim, "ref" => 2.0)
@@ -908,12 +909,19 @@ function trace_discarded_harness()
         trc = trace(sim)
 
         sim2 = replay_twin()
-        dev = HarnessPoker(nothing)
+        dev = HarnessPoker()
         attach!(sim2, dev, Enumerated("rate"))     # the device claims `rate`; `ref` stays the harness's
         dev.sim = sim2
+        # The replay starts paused and resumes once the poker has staged, so the
+        # stage lands inside the recording however late the poker's task starts
+        # (§12.1). The timeout only bounds a poker that never stages.
+        pause!(sim2)
+        gate = Threads.@spawn (timedwait(() -> (@atomic dev.stages) > 0, 60.0; pollint = 0.001);
+                               resume!(sim2))
         logs, _ = Test.collect_test_logs() do
             replay!(sim2, trc)
         end
+        wait(gate)
         @test lifecycle(sim2) === :initialized
 
         # The same property the device arm buys, through the other writer: the

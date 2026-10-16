@@ -257,7 +257,7 @@ function test_roster()
         init!(sim, fragment(u = (u = 0.0,)))
         # The gate refuses a mid-run `detach!`, so the copy is invisible through
         # the API; the emptier writes the plane's roster directly instead.
-        run!(sim; t_end = 1000.0)                        # the emptier's stop ends it
+        run_to_device_stop!(sim)                         # the emptier's stop ends it
         @test isempty(sim.plane.roster)                  # the write landed mid-run
         @test lifecycle(sim) === :stopped
         @test termination(sim).source isa ControlRequestedStop

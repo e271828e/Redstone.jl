@@ -171,7 +171,7 @@ function test_bindings()
         # and allocates nothing.
         @test @ballocated(map_input($(dev.datum), binding($handle))) == 0
         init!(sim, fragment(u = (a = 0.0, b = 0.0)))
-        run!(sim; t_end = 1000.0)                # ends by the device's stop, past its observed apply
+        run_to_device_stop!(sim)                 # ends by the device's stop, past its observed apply
         @test port(sim, "", :a) ≈ 0.5            # (0.55 − 0.1) / 0.9: conditioned at staging
         @test port(sim, "", :b) === 0.7          # pass-through, bitwise
         # The device-staged trajectory is the directly-staged one: conditioning ran

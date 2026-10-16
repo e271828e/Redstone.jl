@@ -272,8 +272,7 @@ function test_devices()
         dev = OneShot(0.7)
         handle = attach!(sim, dev, Enumerated("a"); should_abort = true)
         init!(sim, fragment(u = (a = 0.0, b = 0.0)))
-        run!(sim; t_end = 1000.0)                        # ends by the device's stop, not t_end
-        @test sim.run.frame < 10000            # the stop truncated the run
+        run_to_device_stop!(sim)                         # ends by the device's stop
         @test dev.log[1:3] == [:init, :loop, :shutdown]
         # the sticky status, read off the handle
         @test !running(handle)
@@ -763,9 +762,9 @@ function test_devices()
         attach!(sim, Crasher(), Enumerated("a"); should_abort = true)
         init!(sim, fragment(u = (a = 0.0, b = 0.0)))
         logs, _ = Test.collect_test_logs() do
-            run!(sim; t_end = 1000.0)
+            run_to_device_stop!(sim)
         end
-        @test sim.run.frame < 10000            # ended by the crash's stop, not t_end
+        @test termination(sim).source === ControlRequestedStop("device 1 (Crasher)")
         @test crash_accounted(sim, logs, "device 1 (Crasher)")
     end
 
@@ -1004,11 +1003,10 @@ function test_devices()
         attach!(sim, dev, Enumerated())
         init!(sim, fragment(u = (a = 0.0, b = 0.0)))
         logs, _ = Test.collect_test_logs() do
-            run!(sim; t_end = 1000.0)
+            run_to_device_stop!(sim)
         end
         @test lifecycle(sim) === :stopped
         @test termination(sim).source === ControlRequestedStop(:interrupt)
-        @test sim.run.frame < 10000       # ended by the forwarded stop, not t_end
         @test writer_status(latest(sim), "device 1 (Interrupting)").totals.crash == 0
         @test !any(occursin("DeviceCrash", string(l.message)) for l in logs)
         @test isempty(termination(sim).residue)
@@ -1018,7 +1016,7 @@ function test_devices()
         sim2 = Simulation(two_root_inputs(); h = 1//10, join_timeout = 2.0)
         attach!(sim2, Interrupting(), Enumerated(); should_abort = true)
         init!(sim2, fragment(u = (a = 0.0, b = 0.0)))
-        run!(sim2; t_end = 1000.0)
+        run_to_device_stop!(sim2)
         @test termination(sim2).source === ControlRequestedStop(:interrupt)
     end
 
