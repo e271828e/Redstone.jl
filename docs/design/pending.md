@@ -192,6 +192,12 @@ breaking user code, and each may benefit from user feedback first.
     OrdinaryDiffEq and HDF5 logging among its users. §10.2 dropped
     OrdinaryDiffEq as a dependency and the HDF5 export is undecided, so the
     bullet is reworded when this deferral lifts.
+- **The operator interrupt on Julia 1.14** (§12.4, D-132, D-394). Julia
+  master delivers Ctrl-C as a cancellation, not an `InterruptException`, so
+  the mechanism of §12.4 stops working while its contract can stay. The
+  break, a candidate design and its open questions are
+  `docs/reports/20261016_ctrlc_julia_114/report.md`. It is taken up when 1.14
+  branches or its cancellation names become public, whichever comes first.
 - **The library's remaining candidates.** Whatever of the inventory in
   `docs/design/companions/library_inventory.md` is unbuilt, each block
   built when wanted (§13.7, D-313).
