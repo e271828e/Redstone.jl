@@ -1,0 +1,39 @@
+name: Coverage
+on:
+  push:
+    branches: [master]
+    paths-ignore: ['docs/**', '**.md']
+  pull_request:
+    paths-ignore: ['docs/**', '**.md']
+  workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+jobs:
+  coverage:
+    name: Coverage - Julia 1.13 - ubuntu-latest
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: julia-actions/setup-julia@v3
+        with:
+          version: '1.13'
+      - uses: julia-actions/cache@v3
+      - name: Instantiate the workspace
+        run: julia --project=test -e 'using Pkg; Pkg.instantiate()'
+      - name: Run the gate under coverage
+        run: >-
+          JULIA_LOAD_PATH="@" julia -t auto --startup-file=no --check-bounds=yes
+          --warn-overwrite=yes --depwarn=yes --code-coverage=@src
+          --project=test test/runtests.jl
+      - uses: julia-actions/julia-processcoverage@v1
+      - uses: codecov/codecov-action@v7
+        with:
+          files: lcov.info
+          disable_search: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
