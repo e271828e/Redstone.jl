@@ -1,6 +1,7 @@
 # Redstone.jl
 
 [![CI](https://github.com/e271828e/Redstone.jl/actions/workflows/CI.yml/badge.svg?branch=master)](https://github.com/e271828e/Redstone.jl/actions/workflows/CI.yml)
+[![Coverage](https://codecov.io/gh/e271828e/Redstone.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/e271828e/Redstone.jl)
 
 Redstone is a Julia framework for modeling and simulating hierarchical hybrid
 systems. A model is written as a tree of components that exchange values

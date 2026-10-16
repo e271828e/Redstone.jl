@@ -1241,7 +1241,11 @@ and again by the fixer after a review fix. A loose fix outside an increment,
 and any commit in the table's last row, runs the gate itself. The suite is
 green at every push. CI (`.github/workflows/CI.yml`) runs the gate on Linux
 and Windows for every push to master and every pull request, and skips
-changes that touch only `docs/` and Markdown files.
+changes that touch only `docs/` and Markdown files. A separate workflow
+(`.github/workflows/Coverage.yml`) runs the gate on Linux under
+`--code-coverage=@src` on the same triggers and uploads the result to
+Codecov. It is kept apart so that a failure under instrumentation, such as an
+allocation the compiler adds, leaves the gate and its badge green.
 
 `--project=test` alone leaves three ambient sources on the load path that
 can satisfy a dependency the suite never declared, `startup.jl`, the default
