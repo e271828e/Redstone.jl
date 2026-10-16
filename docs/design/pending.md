@@ -12,8 +12,6 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
-- **CI on GitHub.** The suite on every push and pull request, with its
-  badge in the README.
 - **Coverage.** A coverage job beside the gate, on Linux only, uploading to
   Codecov with its badge in the README. The gate job stays uninstrumented, so
   a compiler change that makes instrumented code allocate breaks only the
