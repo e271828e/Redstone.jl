@@ -78,16 +78,17 @@ accounted(sim, logs, who::String, field::Symbol, kind::String) =
 
 crash_accounted(sim, logs, who::String) = accounted(sim, logs, who, :crash, "DeviceCrash")
 
-# A run only its rostered device ends. With no `t_end`, a device task that
-# starts late still ends the run, never a frame budget. A watchdog stops the
-# run after `limit` seconds, so a device that never acts fails the caller's
-# assertions rather than hangs the suite.
+# A run only its rostered device ends. Its `t_end` is one no run reaches, so a
+# device task that starts late still ends the run, never a frame budget, and
+# the end stays finite, so the loop raises no `UnboundedRun` (§13.5). A
+# watchdog stops the run after `limit` seconds, so a device that never acts
+# fails the caller's assertions rather than hangs the suite.
 function run_to_device_stop!(sim; limit = 60.0)
     returned = Threads.Atomic{Bool}(false)
     watchdog = Threads.@spawn timedwait(() -> returned[], limit; pollint = 0.01) === :ok ||
                               stop!(sim)
     try
-        run!(sim)
+        run!(sim; t_end = 1.0e9)
     finally
         returned[] = true
         wait(watchdog)
