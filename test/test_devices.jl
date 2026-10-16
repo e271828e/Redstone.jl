@@ -58,13 +58,15 @@ shutdown!(dev::BadInit) = (push!(dev.log, :shutdown); nothing)
 loop(dev::BadInit, handle) = (push!(dev.log, :loop); nothing)
 
 # The taught obligation violated: no running check, a blocking call with no
-# unblock! override — the join-timeout path's customer.
+# unblock! override — the join-timeout path's customer. It blocks until the
+# test releases it.
 mutable struct Stubborn <: AbstractDevice
+    release::Channel{Int}
     log::Vector{Symbol}
 end
-Stubborn() = Stubborn(Symbol[])
+Stubborn() = Stubborn(Channel{Int}(1), Symbol[])
 shutdown!(dev::Stubborn) = (push!(dev.log, :shutdown); nothing)
-loop(dev::Stubborn, handle) = (sleep(0.8); push!(dev.log, :woke); nothing)
+loop(dev::Stubborn, handle) = (take!(dev.release); push!(dev.log, :woke); nothing)
 
 # The obligation met: a blocking wait made interruptible by unblock! (§12.4(3)).
 mutable struct Blocked <: AbstractDevice
@@ -525,7 +527,7 @@ function test_devices()
     end
 
     @testset "paced and unpaced runs are bit-identical (§10.7)" begin
-        runs = map((Inf, 50)) do p
+        runs = map((Inf, 5)) do p                    # 2 ms budgets at pace 5
             sim = Simulation(feedback_model(); h = 1//100)
             init!(sim, fragment(u = (ref = 1.0,)))
             stage!(sim, "ref" => 2.0)            # a traced batch, so the traces carry one
@@ -533,7 +535,7 @@ function test_devices()
             sim
         end
         (unpaced, paced) = runs
-        @test latest(paced).status.pacer.pace == 50 && latest(paced).status.pacer.waits > 0
+        @test latest(paced).status.pacer.pace == 5 && latest(paced).status.pacer.waits > 0
         @test same_trajectory(logged(paced), logged(unpaced))
         @test trace(paced).frames == trace(unpaced).frames == 20
         @test trace(paced).batches == trace(unpaced).batches
@@ -562,24 +564,48 @@ function test_devices()
         @test writer_status(latest(sim), "loop").totals.reanchor == 0
     end
 
+    # The two pacer tests below drive the wait by hand and make the overrun by
+    # moving the anchor into the past. No frame runs, so a stall on the machine
+    # adds no debt the test did not make.
     @testset "an overrun leaves debt that later frames repay (§10.7)" begin
-        sim = warm_staller()
-        stage!(sim, "in" => 0.03)                # frame 1 stalls 30 ms against a 10 ms budget
-        run!(sim; t_end = 0.21, pace = 1)        # then twenty quiet frames
-        record = latest(sim).status.pacer
-        @test record.overruns ≥ 1 && record.peak_debt ≥ 0.019
-        @test record.debt < record.peak_debt     # repaid, not forgiven
-        @test record.reanchors == 0 && record.forgiven == 0
-        @test writer_status(latest(sim), "loop").totals.reanchor == 0
+        control, pacer, cell = Control(5.0), Pacer(), DiagCell(EMPTY_DIAG)
+        h = 0.1
+        @atomic control.pace = 1.0
+        anchor!(pacer, 0.0, 1.0)
+        pacer.τ_anchor -= 3h                         # frame 1 took 3h against an h budget
+        wait_deadline!(control, pacer, cell, h, h)   # 2h late: an overrun, its debt kept
+        @test pacer.overruns == 1 && pacer.peak_debt ≥ 0.19
+        wait_deadline!(control, pacer, cell, 2h, h)  # a quiet frame repays one budget
+        @test pacer.debt < pacer.peak_debt           # repaid, not forgiven
+        @test pacer.overruns == 1 && pacer.waits == 0
+        @test pacer.reanchors == 0 && pacer.forgiven == 0
+        @test isempty(_take!(cell).ring)
     end
 
     @testset "debt past five budgets is forgiven by a re-anchor and a warning (§10.7, §11.8)" begin
+        control, pacer, cell = Control(5.0), Pacer(), DiagCell(EMPTY_DIAG)
+        h = 0.01
+        @atomic control.pace = 1.0
+        anchor!(pacer, 0.0, 1.0)
+        pacer.τ_anchor -= 0.1                        # frame 1 took 100 ms against a 10 ms budget
+        wait_deadline!(control, pacer, cell, h, h)   # 90 ms of debt, past five budgets
+        @test pacer.reanchors == 1 && pacer.forgiven ≥ 0.089 && pacer.debt == 0
+        warning = only(_take!(cell).ring)
+        @test warning isa DebtReanchor && warning.forgiven == pacer.forgiven
+        @test warning.t == h                         # the frame top that saw it
+        wait_deadline!(control, pacer, cell, 2h, h)  # the next frame waits normally
+        @test pacer.waits == 1 && pacer.reanchors == 1
+    end
+
+    @testset "a forgiven debt's warning reaches the loop's record (§10.7, §11.8)" begin
         sim = warm_staller()
         stage!(sim, "in" => 0.1)                 # frame 1 stalls 100 ms against a 10 ms budget
         run!(sim; t_end = 0.1, pace = 1)
         record = latest(sim).status.pacer
-        warning = only(loop_reanchors(sim))
-        @test writer_status(latest(sim), "loop").totals.reanchor == 1
+        # A later stall on the machine may add a re-anchor, so the count is a
+        # floor here; the hand-driven test above pins it.
+        warning = first(loop_reanchors(sim))
+        @test writer_status(latest(sim), "loop").totals.reanchor ≥ 1
         @test warning.forgiven > 0.05 && warning.t == 0.01   # the frame top that saw it
         @test record.reanchors ≥ 1 && record.forgiven ≥ warning.forgiven
         @test record.waits > 0                   # the remaining frames wait normally
@@ -662,7 +688,7 @@ function test_devices()
     @testset "a stop issued during a wait lands at the next frame top (§12.1, D-269)" begin
         sim = warm_staller()
         attach!(sim, TailProbe(), NoClaim())
-        task = Threads.@spawn run!(sim; t_end = 1.0e6, pace = 0.1)   # 100 ms budgets
+        task = Threads.@spawn run!(sim; t_end = 1.0e6, pace = 0.01)  # 1 s budgets
         started = timedwait(() -> latest(sim).frame ≥ 1, 10.0; pollint = 0.001) === :ok
         seen = latest(sim).frame
         stop!(sim)
@@ -912,12 +938,16 @@ function test_devices()
         dev = Stubborn()
         attach!(sim, dev, Enumerated())
         init!(sim, fragment(u = (a = 0.0, b = 0.0)))
+        # A join that waited for the straggler returns only once this guard
+        # releases it, so a regression fails below rather than hangs.
+        guard = Timer(_ -> put!(dev.release, 1), 30.0)
         t0 = time()
         # The abandonment is written to the loop's own cell and presented by the
         # run's-end sweep, the record's renderer (§12.4(5), D-203).
         @test_logs (:warn, r"DeviceJoinTimeout from loop, past the final snapshot's account:.*Stubborn") #=
             =# match_mode=:any run!(sim; t_end = 0.3)
-        @test time() - t0 < 0.6                  # abandoned at ~0.2 s, not the sleep's 0.8 s
+        close(guard)
+        @test time() - t0 < 15.0                 # abandoned at the cap, not the guard's 30 s
         @test :woke ∉ dev.log                    # the straggler had not returned when run! did
         # Recorded, not just loud (D-203): the termination record's residue holds
         # the structured kind, by name, with the cap and the final boundary.
@@ -927,11 +957,11 @@ function test_devices()
         @test timeout.who == "device 1 (Stubborn)" && timeout.timeout == 0.2
         @test timeout.t == termination(sim).t ≈ 0.3 &&
               timeout.boundary == latest(sim).boundary
-        # Abandonment is not a kill: let the straggler expire inside this testset —
-        # its wrapper still runs shutdown! — rather than leave it parked in the
-        # timer wheel across process teardown.
-        sleep(1.0)
-        @test dev.log == [:woke, :shutdown]
+        # Abandonment is not a kill: release the straggler inside this testset —
+        # its wrapper still runs shutdown! — rather than leave it parked across
+        # process teardown.
+        put!(dev.release, 1)
+        @test timedwait(() -> dev.log == [:woke, :shutdown], 10.0) === :ok
     end
 
     @testset "an interrupt during the tail collapses the joins, the device named (§12.4, D-268)" begin
@@ -969,7 +999,7 @@ function test_devices()
     end
 
     @testset "unblock! makes the blocking call return: a clean exit, no timeout (§12.4(3))" begin
-        sim = Simulation(two_root_inputs(); h = 1//10, join_timeout = 2.0)
+        sim = Simulation(two_root_inputs(); h = 1//10, join_timeout = 30.0)
         dev = Blocked()
         attach!(sim, dev, Enumerated())
         init!(sim, fragment(u = (a = 0.0, b = 0.0)))
@@ -977,7 +1007,7 @@ function test_devices()
         logs, _ = Test.collect_test_logs() do
             run!(sim; t_end = 0.3)
         end
-        @test time() - t0 < 1.5                  # joined promptly, well inside the cap
+        @test time() - t0 < 15.0                 # joined promptly, well inside the cap
         @test !any(occursin("DeviceJoinTimeout", string(l.message)) for l in logs)
         @test isempty(termination(sim).residue)  # nothing landed past the account (D-203)
         @test dev.log == [:shutdown]
