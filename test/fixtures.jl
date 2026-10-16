@@ -776,10 +776,14 @@ sigint_pending() = unsafe_load(cglobal(:jl_signal_pending, Cint)) != 0
 # rather than in flight. Needs `Base.exit_on_sigint(false)`. Windows has no
 # `kill`: there the C runtime's `raise` runs Julia's handler on the calling
 # thread, which arms the same pending word. On Unix `raise` would target the
-# calling thread, which blocks SIGINT, so `kill` addresses the process.
+# calling thread, which blocks SIGINT, so `kill` addresses the process. Every
+# caller sends inside the frame's mask, where the safepoint after `raise`
+# defers the signal as Unix's handler does: on Windows (1.13) a throw before
+# any safepoint, with the signal freshly armed, crashes the process.
 function interrupt_self()
     if Sys.iswindows()
         ccall(:raise, Cint, (Cint,), Cint(2))
+        GC.safepoint()
     else
         ccall(:kill, Cint, (Cint, Cint), getpid(), Cint(2))
     end
