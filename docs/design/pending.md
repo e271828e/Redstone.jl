@@ -14,6 +14,12 @@ item changes what the spec says, the spec edit is part of the item.
 
 - **CI on GitHub.** The suite on every push and pull request, with its
   badge in the README.
+- **Coverage.** A coverage job beside the gate, on Linux only, uploading to
+  Codecov with its badge in the README. The gate job stays uninstrumented, so
+  a compiler change that makes instrumented code allocate breaks only the
+  coverage job. On 1.13 the allocation assertions pass under coverage, and
+  the run takes about 1.5 to 2 times as long. The Codecov token is a
+  repository secret.
 - **The example model.** The submodule `Redstone.Examples`, its first
   example a three-degree-of-freedom longitudinal aircraft, `Longitudinal`,
   with its testset. It is the tutorial's subject, the static inspector's
