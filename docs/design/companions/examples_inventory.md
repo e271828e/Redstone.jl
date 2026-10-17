@@ -114,7 +114,7 @@ package built on the framework.
 
 | Example | Status | Role |
 |---|---|---|
-| `Longitudinal`, a three-degree-of-freedom aircraft | planned | the tutorial's subject, the static inspector's first diagram, the model the compile-time and garbage measurements run on |
+| `Longitudinal`, a three-degree-of-freedom aircraft | shipped | the tutorial's subject, the static inspector's first diagram, the model the compile-time and garbage measurements run on |
 
 ### `Longitudinal`
 

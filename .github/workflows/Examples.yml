@@ -1,0 +1,29 @@
+name: Examples
+on:
+  push:
+    branches: [master]
+    paths-ignore: ['docs/**', '**.md']
+  pull_request:
+    paths-ignore: ['docs/**', '**.md']
+  workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+jobs:
+  examples:
+    name: Examples - Julia 1.13 - ubuntu-latest
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: julia-actions/setup-julia@v3
+        with:
+          version: '1.13'
+      - uses: julia-actions/cache@v3
+      - name: Instantiate the examples environment
+        run: julia --project=examples -e 'using Pkg; Pkg.instantiate()'
+      - name: Run the examples' tests
+        run: julia --project=examples -e 'using Pkg; Pkg.test()'

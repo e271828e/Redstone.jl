@@ -1,0 +1,21 @@
+name = "RedstoneExamples"
+uuid = "28cf5f55-110a-4578-bc3c-cf560fa74dd0"
+authors = ["Miguel Alonso <miguel883@gmail.com>"]
+version = "0.1.0"
+
+[workspace]
+projects = ["test"]
+
+[deps]
+ControlSystemsBase = "aaaaaaaa-a6ca-5380-bf3e-84a91bcd477e"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Redstone = "653472ee-a41b-4fb0-9ffa-a5db0d34d125"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+
+[sources]
+Redstone = {path = ".."}
+
+[compat]
+ControlSystemsBase = "1"
+StaticArrays = "1"
+julia = "1.13"
