@@ -1247,6 +1247,19 @@ changes that touch only `docs/` and Markdown files. A separate workflow
 Codecov. It is kept apart so that a failure under instrumentation, such as an
 allocation the compiler adds, leaves the gate and its badge green.
 
+The examples are a second package, `examples/`, in an environment of its
+own that reaches `Redstone` by a `[sources]` path
+(`companions/examples_inventory.md`, which is also their register). Their
+tests run from the repository root with
+
+    julia --project=examples -e 'using Pkg; Pkg.test()'
+
+and CI runs them as a third workflow (`.github/workflows/Examples.yml`), on
+Linux, on the same triggers. The gate never installs or loads the examples'
+dependencies, which is why the environment is separate. A change under
+`examples/` runs that runner; so does a commit in the table's last row, and
+any change to a name the examples import.
+
 `--project=test` alone leaves three ambient sources on the load path that
 can satisfy a dependency the suite never declared, `startup.jl`, the default
 environment and the stdlib directory, and each has already masked one. The

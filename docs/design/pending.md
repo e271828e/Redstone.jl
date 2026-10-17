@@ -12,22 +12,26 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
-- **The example model.** The submodule `Redstone.Examples`, its first
-  example a three-degree-of-freedom longitudinal aircraft, `Longitudinal`,
-  with its testset. It is the tutorial's subject, the static inspector's
-  first diagram, the precompile workload's model, and the model the
-  compile-time and garbage measurements run on, grown by subsystems the
-  tutorial does not read where "large enough to measure on" asks for
-  more. It imports only the public surface; whether the root exports
-  `Examples` is the audit's question (D-226). The admission guidelines,
-  the sketch of the aircraft, the tutorial's layers and the testset's pins
-  are `companions/examples_inventory.md`. The compile-cost report's harness
-  (`docs/reports/20261001_compile_cost_reeval/probes`) drifted at D-313 and
-  D-314: `Group` lives in `Redstone.Blocks` and its keywords are the
-  declaration names; correct a copy before measuring, and leave the report as
-  it is.
+- **The example model.** The package `RedstoneExamples` in `examples/`, an
+  environment of its own reaching `Redstone` by a `[sources]` path, with its
+  first example a three-degree-of-freedom longitudinal aircraft,
+  `Longitudinal`, and its testset, which CI runs as a workflow of its own.
+  It is the tutorial's subject, the static inspector's first diagram, and
+  the model the compile-time and garbage measurements run on, grown by
+  subsystems the tutorial does not read where "large enough to measure on"
+  asks for more. It imports only the public surface. Why it lives outside
+  the package, the admission guidelines, the sketch of the aircraft, the
+  tutorial's layers and the testset's pins are
+  `companions/examples_inventory.md`; the physics and the control design
+  are `companions/longitudinal_aircraft.md`. The compile-cost report's
+  harness (`docs/reports/20261001_compile_cost_reeval/probes`) drifted at
+  D-313 and D-314: `Group` lives in `Redstone.Blocks` and its keywords are
+  the declaration names; correct a copy before measuring, and leave the
+  report as it is.
 - **A precompile workload** for the generic machinery a cold process
-  pays, about 9 s whatever the model (§9.7), run on the example model.
+  pays, about 9 s whatever the model (§9.7), run on a closed loop of library
+  blocks: a workload exercises only what the package can see, and the
+  examples live outside it.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   whose first session is the descriptor's schema and `descriptor` together,
   at the tip of increment 67's `Structure` refactor (the record's "Working
@@ -48,7 +52,8 @@ item changes what the spec says, the spec edit is part of the item.
   nothing (D-226). The audit is a full-surface sweep under the four-class
   naming convention (§8.1, D-144): every API name is exported, renamed or
   left unexported. It comes after the tutorial, which surfaces the names a
-  user types, and after the library and the examples have added theirs.
+  user types, and after the library has added its names; the examples are
+  a package of their own and add none.
   - **The extension-only surface**, where *unexported* is preferred. It has
     three parts: the declaration and stage family of the import list (§8.1),
     the larger half, settled on every component file's first line; the
