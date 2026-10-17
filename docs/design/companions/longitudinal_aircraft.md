@@ -235,10 +235,11 @@ tracker's own law in one tick, and it sits within 0.015 rad after
 `t = 10 s`. At a switch to the tracker at 60 s, in steady flight, the
 elevator's largest frame-to-frame change is 3.45e-4, below the 5.05e-4 of
 jitter the altitude noise induces in steady cascade flight. At a switch at
-10 s, mid-climb, it is 1.5e-3. Handed back to the cascade at 7 s, early in
-the climb, the largest change around the hand-back is 5.8e-3, the same as
-the tracker's own motion just before it, which the elevator's rate limit
-caps.
+10 s, mid-climb, it is 1.5e-3. A hand-back to the cascade at 10 s, once
+the pull-up is over, jumps the elevator command by 2.3e-3. Handed back
+during the pull-up itself, at 7 s, the command would jump by about
+0.15 rad, the standby's lag behind a command slewing at up to about
+4 rad/s, which the actuator's rate limit then spreads over about 0.15 s.
 
 **What the loop does.** From trim, a 50 m step in the altitude reference at
 `t = 5 s` is held within 0.1 m by `t = 80 s` by either controller, the
