@@ -54,6 +54,11 @@ item changes what the spec says, the spec edit is part of the item.
     (§14.2) are generic names that share a namespace with user domain code,
     and whether the condition algebra ships behind a submodule is the
     packaging question.
+  - **Appendix B's omissions.** Names the examples import that Appendix B
+    does not list although their sections make them public:
+    `AbstractComponent`, `Absolute`, `get_deriv`, `logged`, `termination`,
+    `EndTimeReached` and `ModelRequestedStop`. The audit lists them or
+    renames them.
   - **Five boundary cases** the convention does not settle are flagged for
     the sweep, none a defect of its list:
     - `input_faces`/`output_faces` (§13.3), build primitives named by nouns

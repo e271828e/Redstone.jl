@@ -166,9 +166,10 @@ functions the tutorial's layers call, each the subject of one chapter:
   and the outputs `h` and `V`;
 - `lqr_gains(linearization; qx, qξ, r)`, the tracker's three gains from a
   linearization, by `lqr_tracker.md`'s sections 2 and 3;
-- `closed_loop(trim, gains; t_switch, h_step, noise_σ)`, layer 5's model,
-  and `trimmed(trim)`, its initial condition, which seeds the two innermost
-  integrators through `fragment(s = …)` beside the plant's state;
+- `closed_loop(solution, gains; cascade, h_step, noise_σ)`, layer 5's
+  model, and `trimmed(solution)`, its initial condition, which seeds the
+  three integrators whose trim value is not zero through `fragment(s = …)`
+  beside the plant's state;
 - `descent()`, the aircraft with the gear and the stop request.
 
 **The layers.** The tutorial peels the one model in order, each chapter
@@ -189,7 +190,8 @@ the tutorial for the rest.
    faster plant step, pitch rate inside, pitch attitude outside, altitude
    outermost, airspeed through throttle, a step reference, white noise on
    the sensed altitude, and a switch between the PID cascade and the LQR
-   tracker on a pinned `Source{Bool}` for a bumpless engage. The static
+   tracker on a pinned `Source{Bool}` over a predicate of time for a
+   bumpless engage. The static
    inspector's diagram and the README's second picture.
 6. Fly a descent to touchdown: a localized gear-contact guard and a stop
    request ([§13.5][s13-5]), the termination record and its reason.
@@ -204,10 +206,17 @@ the pitch angle, elevator and throttle `longitudinal_aircraft.md` gives,
 at a tolerance. The linearization's eigenvalues give the short-period and
 the phugoid pair at the pinned frequencies and dampings, and one eigenvalue
 at zero. The open-loop run from an off-trim airspeed crosses the trim
-airspeed at half the phugoid's period. The closed loop holds a step in the
-altitude reference within a tolerance under either controller, and the
-elevator's frame-to-frame jump at the switch between them stays below the
-jitter the sensor noise induces. The descent ends with the touchdown's stop
+airspeed at half the phugoid's period. The closed loop rests at the trim
+under either controller with no step and no noise. It holds a step in the
+altitude reference within a tolerance under either controller, and also
+when the switch hands command to the tracker in steady flight or mid-climb
+or hands it back to the cascade, with the cascade's peak below a bound and
+the tracker's above one. During the climb each block not in command stays within a
+pinned gap of what it tracks. The elevator's frame-to-frame jump at the
+switch in steady flight stays below the jitter the sensor noise induces,
+and the jumps mid-climb and around the hand-back stay below pinned bounds.
+The sensed altitude's noise has the declared standard deviation, to 10%.
+The descent ends with the touchdown's stop
 reason at the pinned time, with the altitude at zero to within the
 localization tolerance. The closed loop's phase bodies allocate nothing.
 

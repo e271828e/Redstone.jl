@@ -183,8 +183,8 @@ the block.
 ## 4. The order of work
 
 The shipped rows are the first two tranches. The candidate rows follow in any
-order, each when wanted. The example model `pending.md` queues under
-"Outside the spec" is one source of further candidates: what it hand-writes
+order, each when wanted. The example model (`examples_inventory.md`) is one
+source of further candidates: what it hand-writes
 twice is a block to list. Packaging beyond the `Redstone.Blocks` submodule,
 a workspace sub-package or a separate repository, is an after-release
 question ([D-313][d-313]).

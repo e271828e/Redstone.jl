@@ -105,8 +105,8 @@ reads themselves. It converges in four iterations to
 
     θ = 0.019930 rad    δe = 0.025058 rad    δt = 0.37234
 
-within a few parts in a thousand of the estimate, the difference being the
-small component of thrust along the lift.
+within one percent of the estimate, the difference being the small component
+of thrust along the lift.
 
 ## 3. Linearization and the modes
 
@@ -157,6 +157,10 @@ The tutorial's fifth layer closes the loop with library blocks alone
 **The actuators.** Each control passes through a discrete `RateLimiter` and
 a continuous `FirstOrderLag`: the elevator at 1 rad/s and 50 ms, the
 throttle at 0.5 /s and 0.5 s. Their initial values are the trim's.
+`trimmed(solution)` seeds the three integrators whose trim value is not
+zero through `at` and `fragment(s = …)`, the altitude loop's at `θ`, the
+pitch-rate loop's at `δe` and the throttle's at `δt`. The closed loop then
+starts at rest at the trim.
 
 **The cascade.** Four `DiscretePID` blocks, each with the hold and the
 tracking axis (`pid_anti_windup.md`, section 4):
@@ -185,6 +189,13 @@ attitude loop's, so an outer integrator stops winding when the inner
 command is on its limit. The two innermost blocks read a constant zero code
 and back-calculate against their own limits.
 
+Every tracking time constant `Tt` is one period, 0.02 s, the tracker's
+included. A block not in command follows the selected command with a lag
+of about `Tt` times the rate at which its own law moves, plus one tick, so
+a short `Tt` keeps the standby close to the command during a maneuver. A
+block in command back-calculates against its limits, and at one period it
+pulls a limited integrator back within a tick.
+
 **The LQR tracker.** A `DiscreteLQRTracker` over the full state
 `x = (V, γ, θ, q, h)` commanding both controls, with the command vector
 `z = (h, V)`, designed by `lqr_tracker.md`'s sections 2 and 3. The state is
@@ -203,22 +214,40 @@ the linearization's operating point. The tracker's own limits are the
 actuators' ranges, and its hold input reads a zero code.
 
 **The switch and the bumpless engage.** A `Switch` per control selects the
-cascade's command while a pinned `Source{Bool}` holds, and the tracker's
-otherwise. Both controllers run all the time, and the one not in command
-tracks the one that is (`pid_anti_windup.md`, section 11): the engaged
-flags are the switch's selector and its negation, and each innermost block
-reads the selected command, one tick old through a `UnitDelay`, as its
-tracking input. The two outer loops of the cascade track the measured
-variable of the loop inside them, pitch attitude for the altitude loop and
-pitch rate for the attitude loop, so when the cascade is re-engaged every
-integrator already holds the value that reproduces the current command.
-In the prototype the elevator's frame-to-frame jump at the switch is below
-the jitter the altitude noise induces in steady cascade flight.
+cascade's command while a pinned `Source{Bool}` over a predicate of time,
+`cascade(t)`, holds, and the tracker's otherwise. Both controllers run all
+the time, and the one not in command tracks the one that is
+(`pid_anti_windup.md`, section 11): the engaged flags are the switch's
+selector and its negation, and each innermost block reads the selected
+command, one tick old through a `UnitDelay`, as its tracking input. The two
+outer loops of the cascade track the measured variable of the loop inside
+them, pitch attitude for the altitude loop and pitch rate for the attitude
+loop, so when the cascade is re-engaged every integrator holds nearly the
+value that reproduces the current command.
+
+The switch is bumpless in steady flight. During a maneuver the standby lags
+the command by about `Tt` times the command's slew rate plus one tick, a
+few hundredths of a radian at one period. With the cascade in command, the
+standby tracker stays within about 0.034 rad of the elevator command over
+the climb after its first half second. It reaches 0.43 rad for about a
+tenth of a second right after the reference step, since the step moves the
+tracker's own law in one tick, and it sits within 0.015 rad after
+`t = 10 s`. At a switch to the tracker at 60 s, in steady flight, the
+elevator's largest frame-to-frame change is 3.45e-4, below the 5.05e-4 of
+jitter the altitude noise induces in steady cascade flight. At a switch at
+10 s, mid-climb, it is 1.5e-3. Handed back to the cascade at 7 s, early in
+the climb, the largest change around the hand-back is 5.8e-3, the same as
+the tracker's own motion just before it, which the elevator's rate limit
+caps.
 
 **What the loop does.** From trim, a 50 m step in the altitude reference at
 `t = 5 s` is held within 0.1 m by `t = 80 s` by either controller, the
-cascade without overshoot and the tracker with 5 m of it, and the airspeed
-stays within 0.02 m/s of 50 m/s throughout. Those are the testset's pins.
+cascade with no overshoot and the tracker with about 2 m. During the climb
+the airspeed strays from 50 m/s by up to about 4 m/s under the cascade and
+about 1 m/s under the tracker, and after `t = 80 s` it stays within
+0.02 m/s. The testset pins the hold after `t = 80 s`, the two peaks, the
+equilibrium at trim, the standby's tracking during the climb, the jumps at
+the two switches and at the hand-back, and the sensor noise.
 
 ## 5. The descent and the touchdown
 
