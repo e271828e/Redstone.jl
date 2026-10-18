@@ -45,8 +45,8 @@ surface of plain functions. A theory companion was asked for.
 ## The arc
 
 ade420f (docs), e663cf4 (brief and these notes), 3346a6d (stage 1),
-99a84f4 and 2821dad (the fixer), 55d2f25 (a last pin and three figures, landed
-by me). Nothing pushed.
+99a84f4 and 2821dad (the fixer), 55d2f25 and d63e024 (a last pin and four
+figures, landed by me, the reviewer confirming each). Nothing pushed.
 
 ## Rulings made at the review
 
