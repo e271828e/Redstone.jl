@@ -1,0 +1,390 @@
+diff --git a/src/bindings.jl b/src/bindings.jl
+index 07296c2..b1c3f6c 100644
+--- a/src/bindings.jl
++++ b/src/bindings.jl
+@@ -123,143 +123,29 @@ end
+ # `CellRead`, run over a snapshot's store where an inspection reader runs it
+ # over an executor's.
+ 
+-"""
+-The compiled gather (§11.2, §14.4): one attachment's `reads`, resolved and
+-frozen — the labels as a type parameter, the baked `CellRead` entries as a
+-tuple — so `gather(handle, snapshot)` builds its labeled NamedTuple with no
+-name resolved per read. The exact mirror of the compiled scatter the drain
+-applies (§11.4), run in the other direction over a published snapshot.
+-"""
+-struct ReadGather{L,E<:Tuple}
+-    entries::E
+-end
+-ReadGather{L}(entries::E) where {L,E<:Tuple} = ReadGather{L,E}(entries)
+-
+-gather_snapshot(read_gather::ReadGather{L}, snapshot::Snapshot) where {L} =
+-    NamedTuple{L}(_read_entries(read_gather.entries, snapshot.store))
+-
+ """
+ Resolve one attachment's `reads` against the build and compile the gather —
+ `attach!`'s output-side work (§11.2), run once at the attach point so a
+ binding that drifted from its model fails there, not with silent garbage on
+-the wire. The shape is fixed: `reads` returns a NamedTuple of labeled
+-selectors, `(; label = get_output(...), ...)`, and the labels are the
+-NamedTuple `map_output` receives. Every failure names the selector at fault,
+-and the two name-shaped misses carry candidate lists (§14.4).
++the wire. The shape is §11.6's contract, checked here: a NamedTuple of labeled
++selectors, `(; label = get_output(...), ...)`, whose labels key the NamedTuple
++`map_output` receives. Resolution is the family's one collecting pass
++(readers.jl, §14.4), run for a table source at the root, so every violation
++surfaces together as the read's own `TapResolution`, the mount walk's as
++`PathResolution`.
+ """
+-function _compile_gather(layout::Layout, selectors, binding_type::Type, device::String)
++function _compile_binding_reads(selectors, binding_type::Type, build::Build)
+     selectors isa NamedTuple || throw(DiagnosticError(
+         BindingContractMismatch(binding = _typename(binding_type),
+                                  reason = :reads_not_namedtuple,
+                                  observed = typeof(selectors))))
+-    entries = map(values(selectors)) do selector
++    for selector in values(selectors)
+         selector isa ReadSelector || throw(DiagnosticError(
+             BindingContractMismatch(binding = _typename(binding_type),
+                                      reason = :reads_not_selectors,
+                                      observed = typeof(selector))))
+-        _resolve_read(layout, selector, binding_type, device)
+-    end
+-    ReadGather{keys(selectors)}(entries)
+-end
+-
+-_root_input_names(layout::Layout) = Symbol[f for (f, _) in layout.root_inputs]
+-
+-# The two name-shaped read misses carry candidate lists (§14.4). One lists the
+-# cells at the selector's path, and an assembly path lists its faces, which the
+-# alias pass entered into `addr`. The other lists the root-exported output faces,
+-# the names at the root that are not root inputs.
+-_cells_at(layout::Layout, path::AbstractString) =
+-    sort!(Symbol[name for (cell_path, name) in keys(layout.addr) if cell_path == path])
+-function _root_output_faces(layout::Layout)
+-    inputs = _root_input_names(layout)
+-    sort!(Symbol[name for (cell_path, name) in keys(layout.addr)
+-                 if cell_path == "" && name ∉ inputs])
+-end
+-
+-# §14.4's source rule, enforced where the source is known: a snapshot carries
+-# no state stores by construction (§11.2) and `ẋ` is integrator scratch, so a
+-# snapshot-bound reader naming a store selector is a resolution error at
+-# attach — in the didactic style, with the remedy named.
+-_resolve_read(::Layout, selector::StoreSelector, binding_type::Type, device::String) =
+-    throw(DiagnosticError(
+-        ReadBindingUnresolved(device = device, binding = _typename(binding_type),
+-                               selector = _spell(selector), reason = :store_selector,
+-                               path = _selpath(selector), field = _field(selector))))
+-
+-# A step the leaf address cannot take, with what `parse_leaf` or `resolve_leaf`
+-# had in hand (§14.4, D-276). A face selector passes its matched face.
+-_leaf_unresolved(selector, refusal::LeafRefusal, binding_type::Type, device::String;
+-                 field = _field(selector)) =
+-    ReadBindingUnresolved(device = device, binding = _typename(binding_type),
+-                          selector = _spell(selector), reason = refusal.reason,
+-                          path = _selpath(selector), field = field,
+-                          leaf = _leaf_string(selector), step = refusal.step,
+-                          declared = refusal.declared, candidates = refusal.candidates)
+-
+-# A path selector's leaf address parsed into its head and steps, or refused;
+-# a face selector's is matched instead (`_matched_binding_leaf`).
+-function _parsed_binding_leaf(selector, binding_type::Type, device::String)
+-    parsed = parse_leaf(selector.leaf)
+-    parsed isa LeafRefusal &&
+-        throw(DiagnosticError(_leaf_unresolved(selector, parsed, binding_type, device)))
+-    parsed
+-end
+-
+-# A face selector's address matched against `faces`: the head and steps, or
+-# `nothing` on a miss the caller refuses; a step that does not parse is refused.
+-function _matched_binding_leaf(selector, faces, binding_type::Type, device::String)
+-    matched = match_leaf(selector.leaf, faces)
+-    matched isa LeafRefusal && throw(DiagnosticError(
+-        _leaf_unresolved(selector, matched, binding_type, device; field = _field(selector, faces))))
+-    matched
+-end
+-
+-# The baked read of one cell: the steps resolved against the port's declared
+-# type, the chain in the entry's type (§14.4, D-276).
+-function _cell_read(addr::CellAddr, selector, steps, binding_type::Type, device::String;
+-                    field = _field(selector))
+-    resolved = resolve_leaf(_port_type(addr), steps)
+-    resolved isa LeafRefusal && throw(DiagnosticError(
+-        _leaf_unresolved(selector, resolved, binding_type, device; field = field)))
+-    CellRead{typeof(addr),first(resolved)}(addr)
+-end
+-
+-function _resolve_read(layout::Layout, selector::GetOutput, binding_type::Type, device::String)
+-    head, steps = _parsed_binding_leaf(selector, binding_type, device)
+-    haskey(layout.addr, (selector.path, head)) || throw(DiagnosticError(
+-        ReadBindingUnresolved(device = device, binding = _typename(binding_type),
+-                               selector = _spell(selector), reason = :unknown_cell,
+-                               path = selector.path, field = head,
+-                               candidates = _cells_at(layout, selector.path))))
+-    _cell_read(layout.addr[(selector.path, head)], selector, steps, binding_type, device)
+-end
+-
+-function _resolve_read(layout::Layout, selector::GetInput, binding_type::Type, device::String)
+-    inputs = _root_input_names(layout)
+-    matched = _matched_binding_leaf(selector, inputs, binding_type, device)
+-    matched === nothing && throw(DiagnosticError(
+-        ReadBindingUnresolved(device = device, binding = _typename(binding_type),
+-                               selector = _spell(selector), reason = :unknown_root_input,
+-                               field = _field(selector, inputs), candidates = inputs)))
+-    head, steps = matched
+-    _cell_read(layout.addr[("", head)], selector, steps, binding_type, device; field = head)
+-end
+-
+-function _resolve_read(layout::Layout, selector::GetFace, binding_type::Type, device::String)
+-    faces, inputs = _root_output_faces(layout), _root_input_names(layout)
+-    matched = _matched_binding_leaf(selector, faces, binding_type, device)
+-    if matched === nothing
+-        match_face(selector.leaf, inputs) === nothing || throw(DiagnosticError(
+-            ReadBindingUnresolved(device = device, binding = _typename(binding_type),
+-                                   selector = _spell(selector), reason = :root_input_not_output,
+-                                   field = _field(selector, inputs))))
+-        throw(DiagnosticError(
+-            ReadBindingUnresolved(device = device, binding = _typename(binding_type),
+-                                   selector = _spell(selector), reason = :unknown_output_face,
+-                                   field = _field(selector, faces), candidates = faces)))
+     end
+-    head, steps = matched
+-    _cell_read(layout.addr[("", head)], selector, steps, binding_type, device; field = head)
++    _compile_reads(Reads((), selectors), build, Float64; source = :table)
+ end
+ 
+ """
+diff --git a/src/dataplane.jl b/src/dataplane.jl
+index a161faf..53212e8 100644
+--- a/src/dataplane.jl
++++ b/src/dataplane.jl
+@@ -687,6 +687,12 @@ end
+ port(snapshot::Snapshot, path::String, name::Symbol) =
+     gather_cell(snapshot.store, snapshot.layout.addr[(path, name)])
+ 
++# A compiled read set's gather over a snapshot's store (§11.2, §14.4): a
++# binding's reads, compiled at attach for a table source, run per snapshot on
++# the device's task. Here rather than in readers.jl for include order alone.
++@inline gather_reads(reader::Reader{T,L}, snapshot::Snapshot{T}) where {T,L} =
++    NamedTuple{L}(_read_entries(reader.entries, snapshot.store))
++
+ # One boundary's capture: fresh buffers, one allocation per boundary — the
+ # framework side of §9.8's scope, which carved publication and logging out.
+ capture_stores(bundle::StoreBundle) = StoreBundle(map(cs -> CellStore(copy(cs.buffer)), bundle.stores))
+diff --git a/src/devices.jl b/src/devices.jl
+index 1212704..1bf963e 100644
+--- a/src/devices.jl
++++ b/src/devices.jl
+@@ -43,7 +43,7 @@ handle (§11.7, D-270). Its type carries the binding's and the gatherer's
+ types, so `binding(handle)` and `gather(handle, snapshot)` are statically
+ typed inside a device's `loop` and allocate nothing.
+ """
+-mutable struct DeviceHandle{B<:AbstractBinding,G<:Union{Nothing,ReadGather}}
++mutable struct DeviceHandle{B<:AbstractBinding,G<:Union{Nothing,Reader}}
+     const who::String
+     const b::B
+     const writer::Writer
+@@ -189,7 +189,7 @@ function gather(handle::DeviceHandle, snapshot::Snapshot)
+     _beat!(handle.diag_cell)
+     handle.gatherer === nothing && throw(DiagnosticError(
+         DeviceContractMismatch(device = handle.who, reason = :no_output_side)))
+-    gather_snapshot(handle.gatherer, snapshot)
++    gather_reads(handle.gatherer, snapshot)
+ end
+ 
+ """
+@@ -317,7 +317,7 @@ function port_views(handle::DeviceHandle)
+         views[(path, port_name)] =
+             view_of(path, port_name, terminal_producer(structure, (path, port_name)))
+     end
+-    root_inputs = _root_input_names(handle.layout)
++    root_inputs = Symbol[f for (f, _) in handle.layout.root_inputs]
+     for key in keys(addr)
+         (path, port_name) = key
+         path == "" && port_name in root_inputs && continue
+diff --git a/src/diagnostics.jl b/src/diagnostics.jl
+index 195a815..af60a25 100644
+--- a/src/diagnostics.jl
++++ b/src/diagnostics.jl
+@@ -1717,6 +1717,11 @@ end
+ _count_word(n::Int) = n ≤ 4 ? ("one", "two", "three", "four")[n] : string(n)
+ 
+ function message(d::TapResolution)
++    d.reason === :store_selector &&
++        return _tap_violation(d, "it is a *store* selector — the store selectors resolve only " *
++                           "against live stores, and this reader reads a published snapshot, " *
++                           "which deliberately carries none; the remedy is to declare the field " *
++                           "public and read the port published from it", "§14.4, §11.2")
+     d.reason === :assembly_path &&
+         return _tap_violation(d, "$(_at_path(d.path)) is an assembly — a path selector addresses " *
+                            "a component's own declarations, and a level's exported face is " *
+diff --git a/src/readers.jl b/src/readers.jl
+index 7b06c44..5f5d39d 100644
+--- a/src/readers.jl
++++ b/src/readers.jl
+@@ -397,8 +397,9 @@ collecting pass is factored apart from the throw. The violations are
+ `TapResolution` values either way — the kind is the read's own, and it is the
+ *site* that decides where they surface (§13.2, Appendix C).
+ """
+-function _compile_reads(read_set::Reads, build::Build, ::Type{T} = Float64) where {T}
+-    reader, diags = _resolve_reads(read_set, build, T)
++function _compile_reads(read_set::Reads, build::Build, ::Type{T} = Float64;
++                        source::Symbol = :executor) where {T}
++    reader, diags = _resolve_reads(read_set, build, T; source)
+     isempty(diags) || throw(DiagnosticError(diags))
+     reader
+ end
+@@ -414,7 +415,8 @@ own setup diagnostic (§14.8): returns the compiled reader and the violation
+ list, the reader being `nothing` when anything failed. The mount step runs
+ first, and the resolvers read what it rebased (§14.9, D-277).
+ """
+-function _resolve_reads(read_set::Reads, build::Build, ::Type{T}) where {T}
++function _resolve_reads(read_set::Reads, build::Build, ::Type{T};
++                        source::Symbol = :executor) where {T}
+     act = activation(build, T)
+     diags = Diagnostic[]
+     entries = Any[]
+@@ -423,6 +425,12 @@ function _resolve_reads(read_set::Reads, build::Build, ::Type{T}) where {T}
+     for (label, authored) in pairs(read_set.selectors)
+         read = _rebase(authored, label, mount_point..., build, diags)
+         read === nothing && continue
++        # §14.4's source rule: a table source holds no stores (§11.2), so a
++        # store selector is refused here, with the remedy named.
++        if source === :table && read.selector isa StoreSelector
++            push!(diags, _reader_violation(read, :store_selector))
++            continue
++        end
+         entry = _resolve_selector(read.selector, read, build, act, diags)
+         entry === nothing || push!(entries, entry)
+     end
+diff --git a/src/sim.jl b/src/sim.jl
+index e352378..68a5af5 100644
+--- a/src/sim.jl
++++ b/src/sim.jl
+@@ -1734,8 +1734,8 @@ function attach!(sim::Simulation, dev::AbstractDevice, new_binding::AbstractBind
+     isempty(claim_diags) || throw(DiagnosticError(claim_diags))
+     # The output side: reads → one gather, resolved before admission commits.
+     gatherer = is_output(new_binding) ?
+-        _compile_gather(sim.model.exec.act.layout, reads(new_binding), typeof(new_binding),
+-                        _typename(dev)) : nothing
++        _compile_binding_reads(reads(new_binding), typeof(new_binding),
++                               sim.model.deployment.build) : nothing
+     device_id = plane.next_id                             # assigned on admission alone: a
+     plane.next_id += 1                             # rejected attach consumes no id
+     writer = Writer(sim.model.exec.act.layout, claim)
+diff --git a/test/imports.jl b/test/imports.jl
+index 9c80019..3dfe2d3 100644
+--- a/test/imports.jl
++++ b/test/imports.jl
+@@ -56,7 +56,7 @@ import Redstone: ASSEMBLY, Absolute, AbstractBinding, AbstractComponent,
+     classify, classify_bundle_field, classify_tier, closed, combine, compile, compile_plan,
+     condition, declarations, declarations_found, declared_at,
+     detach!, diagnostic, diagnostics, drain!, evaluate!, event_bundle_names, face_routes, flatten!, flatten_tree!,
+-    foreign_declarations, frame!, frame_top!, gather, gather_cell, gather_reads, gather_snapshot, get_deriv, get_face,
++    foreign_declarations, frame!, frame_top!, gather, gather_cell, gather_reads, get_deriv, get_face,
+     get_input, get_output, get_state, has_stage, incumbent_status, index_of, init!, integrate!,
+     invoke_declaration, invoke_probed,
+     input_wires, input_faces, input_passthrough, linearize,
+diff --git a/test/test_bindings.jl b/test/test_bindings.jl
+index 29bfed9..0b42db1 100644
+--- a/test/test_bindings.jl
++++ b/test/test_bindings.jl
+@@ -210,20 +210,25 @@ function test_bindings()
+ 
+     @testset "reads resolve at attach: binding drift fails there, never on the wire (§11.2, §14.4)" begin
+         sim = Simulation(outfaced(); h = 1//10)
+-        d = carried(@test_throws DiagnosticError{ReadBindingUnresolved} attach!(sim, Pad("t"), Readout(alt = get_output("q", "y"))))
+-        @test d.reason === :unknown_cell &&
+-              d.selector == "get_output(\"q\", \"y\")" &&
+-              d.candidates == Symbol[]            # no such path: no list to offer
+-        # The device is named by type (Appendix C): admission assigns no id yet.
+-        @test d.device == "Pad" && d.binding == "Readout"
+-        d = carried(@test_throws DiagnosticError{ReadBindingUnresolved} attach!(sim, Pad("t"), Readout(alt = get_output("p", "nope"))))
+-        @test d.reason === :unknown_cell && d.candidates == [:power, :y]
+-        d = carried(@test_throws DiagnosticError{ReadBindingUnresolved} attach!(sim, Pad("t"), Readout(v = get_input("nope"))))
+-        @test d.reason === :unknown_root_input && d.candidates == [:u]  # the root-input list, in hand
+-        d = carried(@test_throws DiagnosticError{ReadBindingUnresolved} attach!(sim, Pad("t"), Readout(v = get_face("u"))))
+-        @test d.reason === :root_input_not_output
+-        d = carried(@test_throws DiagnosticError{ReadBindingUnresolved} attach!(sim, Pad("t"), Readout(v = get_face("nope"))))
++        d = only(diagnostics(failure(() -> attach!(sim, Pad("t"), Readout(alt = get_output("q", "y"))))))
++        d = only(diagnostics(failure(() -> attach!(sim, Pad("t"), Readout(alt = get_output("p", "nope"))))))
++        @test d.reason === :undeclared && d.declares === :output_port && d.candidates == [:y, :power] && d.label === :alt
++        d = only(diagnostics(failure(() -> attach!(sim, Pad("t"), Readout(v = get_input("nope"))))))
++        @test d.reason === :unknown_root_input && d.candidates == [:u]
++        d = only(diagnostics(failure(() -> attach!(sim, Pad("t"), Readout(v = get_face("u"))))))
++        @test d.reason === :input_face_not_output
++        d = only(diagnostics(failure(() -> attach!(sim, Pad("t"), Readout(v = get_face("nope"))))))
+         @test d.reason === :unknown_output_face && d.candidates == [:y]
++        d = only(diagnostics(failure(() -> attach!(sim, Pad("t"), Readout(v = get_state("p", :x))))))
++        @test d.reason === :store_selector
++        # every violation collected, in declared order (§13.1)
++        err = try attach!(sim, Pad("t"), Readout(a = get_output("p", "nope"), b = get_state("p", :x), c = get_face("nope"))) catch e; e end
++        @test [x.reason for x in Redstone.diagnostics(err)] == [:undeclared, :store_selector, :unknown_output_face]
++        # the retired admissions: an assembly's face and a root input by path
++        d = only(diagnostics(failure(() -> attach!(sim, Pad("t"), Readout(v = get_output("", "y"))))))
++        @test d.reason === :assembly_path
++        d = only(diagnostics(failure(() -> attach!(sim, Pad("t"), Readout(v = get_output("", "u"))))))
++        @test d.reason === :assembly_path
+         # A rejected attach consumed no id, and the good one lands as device 1.
+         handle = attach!(sim, Pad("t"), Readout(alt = get_face("y")))
+         @test sim.plane.roster[1].id == 1
+diff --git a/test/test_readers.jl b/test/test_readers.jl
+index 3bd1734..e4c7df9 100644
+--- a/test/test_readers.jl
++++ b/test/test_readers.jl
+@@ -441,7 +441,7 @@ function test_readers()
+ 
+     @testset "the source rule: a snapshot-bound reader may not name a store selector (§14.4)" begin
+         sim = Simulation(readable(); h = 1//10)
+-        d = carried(@test_throws DiagnosticError{ReadBindingUnresolved} attach!(sim, Pad("t"), Readout(q = get_state("plant", :q))))
++        d = only(diagnostics(failure(() -> attach!(sim, Pad("t"), Readout(q = get_state("plant", :q))))))
+         @test d.reason === :store_selector &&
+               d.selector == "get_state(\"plant\", :q)"
+         @test isempty(sim.plane.roster)              # the rejection left the roster untouched
+@@ -471,7 +471,7 @@ function test_readers()
+         pose = port(snapshot, "c", :pose)
+         @test gather(handle, snapshot) === (v = pose.v, m12 = pose.m[1, 2])
+         gatherer = handle.gatherer
+-        @test @ballocated(gather_snapshot($gatherer, $snapshot)) == 0      # `pose.m[1,2]` is two steps
++        @test @ballocated(gather_reads($gatherer, $snapshot)) == 0      # `pose.m[1,2]` is two steps
+ 
+         # A device reading 64 outputs: the gather walks a tuple of 64 entries.
+         bank_sim = Simulation(sawtooth_bank(); h = 1//10)
+@@ -479,17 +479,17 @@ function test_readers()
+                               Readout(; (Symbol(:q, i) => get_output("s$i", "q") for i in 1:64)...))
+         init!(bank_sim)
+         bank_gatherer, bank_snapshot = bank_handle.gatherer, latest(bank_sim)
+-        gather_snapshot(bank_gatherer, bank_snapshot)
+-        @test @ballocated(gather_snapshot($bank_gatherer, $bank_snapshot)) == 0
+-        @test isconcretetype(only(Base.return_types(gather_snapshot,
++        gather_reads(bank_gatherer, bank_snapshot)
++        @test @ballocated(gather_reads($bank_gatherer, $bank_snapshot)) == 0
++        @test isconcretetype(only(Base.return_types(gather_reads,
+                                                     (typeof(bank_gatherer), typeof(bank_snapshot)))))
+ 
+         # A step the address cannot take is refused at attach with the family's
+         # reason, the step named as spelled.
+-        d = carried(@test_throws DiagnosticError{ReadBindingUnresolved} attach!(pose_sim, Pad("t"), Readout(q = get_output("c", "pose.q"))))
++        d = only(diagnostics(failure(() -> attach!(pose_sim, Pad("t"), Readout(q = get_output("c", "pose.q"))))))
+         @test d.reason === :no_such_field && d.step == ".q" && d.candidates == [:v, :m] &&
+               d.declared === LeafPose{Float64} && d.leaf == "pose.q" && d.field === :pose
+-        d = carried(@test_throws DiagnosticError{ReadBindingUnresolved} attach!(pose_sim, Pad("t"), Readout(v = get_output("c", "pose.v[4]"))))
++        d = only(diagnostics(failure(() -> attach!(pose_sim, Pad("t"), Readout(v = get_output("c", "pose.v[4]"))))))
+         @test d.reason === :index_bounds && d.step == "[4]" && d.declared === SVector{3,Float64}
+         @test length(pose_sim.plane.roster) == 1     # the two rejections left the roster as it was
+     end
+@@ -530,11 +530,11 @@ function test_readers()
+               a.candidates == [Symbol("left.brake")]
+         @test b_.reason === :unknown_output_face && b_.field === :att &&
+               b_.candidates == [Symbol("att.theta"), :pose, Symbol("pose.v")]
+-        d = carried(@test_throws DiagnosticError{ReadBindingUnresolved} attach!(sim, Pad("t"), Readout(v = get_face("att.th"))))
++        d = only(diagnostics(failure(() -> attach!(sim, Pad("t"), Readout(v = get_face("att.th"))))))
+         @test d.reason === :unknown_output_face && d.field === Symbol("att.th") &&
+               d.candidates == [Symbol("att.theta"), :pose, Symbol("pose.v")]
+         # A matched face refuses its steps under the face's own name.
+-        d = carried(@test_throws DiagnosticError{ReadBindingUnresolved} attach!(sim, Pad("t"), Readout(v = get_face("att.theta.x"))))
++        d = only(diagnostics(failure(() -> attach!(sim, Pad("t"), Readout(v = get_face("att.theta.x"))))))
+         @test d.reason === :no_such_field && d.field === Symbol("att.theta") && d.step == ".x"
+     end
+ 
