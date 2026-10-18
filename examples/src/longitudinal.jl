@@ -69,7 +69,7 @@ The aircraft's own vocabulary (§14.2): the fragment writing its five states,
 level at 50 m/s and 1000 m by default.
 """
 condition(::Longitudinal; V = 50.0, γ = 0.0, θ = 0.0, q = 0.0, h = 1000.0) =
-    fragment(x = (V = V, γ = γ, θ = θ, q = q, h = h))
+    set(x = (V = V, γ = γ, θ = θ, q = q, h = h))
 
 """
     GroundContact(; h_ground = 0.0)
@@ -122,7 +122,7 @@ level_flight(; V = 50.0, h = 1000.0) = TrimProblem(
     lower = (θ = -0.3, δe = -0.5, δt = 0.0),
     upper = (θ = 0.3, δe = 0.5, δt = 1.0),
     condition = d -> combine(at("plant", condition(Longitudinal(); V = V, θ = d.θ, h = h)),
-                             fragment(u = (δe = d.δe, δt = d.δt))),
+                             set(u = (δe = d.δe, δt = d.δt))),
     reads = reads(V̇ = get_deriv("plant", :V), γ̇ = get_deriv("plant", :γ), q̇ = get_deriv("plant", :q)),
     residuals = (derivatives, d) -> (V̇ = derivatives.V̇, γ̇ = derivatives.γ̇, q̇ = derivatives.q̇),
     tolerances = (V̇ = 1e-9, γ̇ = 1e-9, q̇ = 1e-9))
@@ -279,13 +279,13 @@ and the airspeed loop's the trim throttle. The attitude loop commands a pitch
 rate, zero at trim, and the tracker carries the trim as parameters, so neither
 needs a seed. `yf`, the derivative filter's state, is set to its fixed point,
 the measurement, which with `Kd = 0` changes nothing. A store overlay merges
-onto `s_init`, so `fragment(s = (q = solution.θ,))` alone would do; the full
+onto `s_init`, so `set(s = (q = solution.θ,))` alone would do; the full
 stores are written for clarity. `longitudinal_aircraft.md`, section 4.
 """
 trimmed(solution) = combine(at("plant", condition(Longitudinal(); θ = solution.θ)),
-                            at("h_ctl", fragment(s = (q = solution.θ, yf = 1000.0, saturated = Int8(0)))),
-                            at("q_ctl", fragment(s = (q = solution.δe, yf = 0.0, saturated = Int8(0)))),
-                            at("V_ctl", fragment(s = (q = solution.δt, yf = 50.0, saturated = Int8(0)))))
+                            at("h_ctl", set(s = (q = solution.θ, yf = 1000.0, saturated = Int8(0)))),
+                            at("q_ctl", set(s = (q = solution.δe, yf = 0.0, saturated = Int8(0)))),
+                            at("V_ctl", set(s = (q = solution.δt, yf = 50.0, saturated = Int8(0)))))
 
 """
     descent()

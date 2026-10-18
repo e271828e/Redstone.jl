@@ -1609,21 +1609,21 @@ message(d::DuplicateConditionLeaf) =
 "§14.2, D-278: a value handed to a condition combinator that is not a condition node, or an empty `at` prefix."
 Base.@kwdef struct ConditionNodeMisuse <: Diagnostic
     observed::Any                            # the offending argument's type
-    reason::Symbol = :not_a_node             # :not_a_node | :fragment_payload | :empty_prefix
-    payload::Union{Nothing,Symbol} = nothing # which `fragment` payload, for :fragment_payload
+    reason::Symbol = :not_a_node             # :not_a_node | :set_payload | :empty_prefix
+    payload::Union{Nothing,Symbol} = nothing # which `set` payload, for :set_payload
     in_hand::Vector{Symbol} = Symbol[]       # the node kinds in hand
 end
 message(d::ConditionNodeMisuse) =
     d.reason === :empty_prefix ?
     "`at` was given an empty prefix, which names no child — a node meant for the level " *
     "where it is authored stays unwrapped (§14.2)" :
-    d.reason === :fragment_payload ?
-    "`fragment`'s `$(d.payload)` payload is $(d.observed) — every payload is a NamedTuple " *
+    d.reason === :set_payload ?
+    "`set`'s `$(d.payload)` payload is $(d.observed) — every payload is a NamedTuple " *
     "of the authoring level's own names (§14.2)" :
     "$(d.observed) is not a condition node" *
     (isempty(d.in_hand) ? "" :
      ", and the node kind(s) in hand are $(_plainlist(d.in_hand))") *
-    " — wrap the NamedTuple in `fragment(…)`, or in `at(prefix, fragment(…))`, and " *
+    " — wrap the NamedTuple in `set(…)`, or in `at(prefix, set(…))`, and " *
     "combine nodes with nodes (§14.2)"
 
 "§14.6: an application whose condition leaves a root input with no value — nothing is written."

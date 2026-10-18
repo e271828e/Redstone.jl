@@ -130,7 +130,7 @@ function test_events()
 
     @testset "edge semantics: a u-edge fires at its boundary, a sticky predicate once" begin
         sim = Simulation(fed(Trigger(0.5), "sig"); h = 1//10)
-        init!(sim, fragment(u = (in = 0.0,)))    # authored at 0.0: not holding
+        init!(sim, set(u = (in = 0.0,)))    # authored at 0.0: not holding
         step!(sim; t_plus = 0.3)
         @test modes(sim, "c").count == 0
         stage!(sim, "in" => 1.0)                     # the input epoch seam, staged (§11.4)
@@ -143,18 +143,18 @@ function test_events()
         # Boundary zero establishes every prior as not-holding (§10.6): a predicate
         # already holding in the authored state fires at t₀ — derived, not asserted.
         sim2 = Simulation(fed(Trigger(0.5), "sig"); h = 1//10)
-        init!(sim2, fragment(u = (in = 1.0,)))
+        init!(sim2, set(u = (in = 1.0,)))
         @test modes(sim2, "c").count == 1
         # A warm restart resets the registers from scratch: it fires again — and
         # from the declared defaults, so `count` restarts at 0 and reaches 1, never 2
         # (D-063).
-        init!(sim2, fragment(u = (in = 1.0,)))
+        init!(sim2, set(u = (in = 1.0,)))
         @test modes(sim2, "c").count == 1
     end
 
     @testset "the priors survive a restore: a holding guard does not fire again (§12.6, D-274)" begin
         sim = Simulation(fed(Trigger(0.5), "sig"); h = 1//10)
-        init!(sim, fragment(u = (in = 0.0,)))
+        init!(sim, set(u = (in = 0.0,)))
         stage!(sim, "in" => 1.0)
         step!(sim; frames = 3)                       # fired at frame 1, holding since
         @test modes(sim, "c") === (state = :fired, count = 1)
@@ -171,8 +171,8 @@ function test_events()
         # `init!` from the same stores establishes the prior as not-holding, so
         # boundary zero fires the holding guard again (§10.6).
         fresh = Simulation(fed(Trigger(0.5), "sig"); h = 1//10)
-        init!(fresh, combine(at("c", fragment(m = (state = :fired, count = 1))),
-                             fragment(u = (in = 1.0,))))
+        init!(fresh, combine(at("c", set(m = (state = :fired, count = 1))),
+                             set(u = (in = 1.0,))))
         @test modes(fresh, "c") === (state = :fired, count = 2)
     end
 
@@ -183,7 +183,7 @@ function test_events()
                         input_wires = ("in" => "trig/sig",))
         for h in (1//10, 1//1000)                    # the latency is rounds, never steps
             sim = Simulation(chain(); h)
-            init!(sim, fragment(u = (in = 1.0,)))    # one boundary: three rounds to quiescence
+            init!(sim, set(u = (in = 1.0,)))    # one boundary: three rounds to quiescence
             @test modes(sim, "trig").state === :fired
             @test modes(sim, "f1").state === :on
             @test modes(sim, "f2").state === :on
@@ -196,13 +196,13 @@ function test_events()
         # `second` is eligible but blocked — its sample is not overwritten, so the
         # standing edge fires it in the next round.
         sim = Simulation(fed(TwoShot(), "sig"); h = 1//10)
-        init!(sim, fragment(u = (in = 2.0,)))
+        init!(sim, set(u = (in = 2.0,)))
         @test modes(sim, "c") === (a = true, b = true)
 
         # The premise the first transition falsifies: re-decided against the
         # post-transition sweep, `second` never fires on its stale round-1 edge.
         preempted_sim = Simulation(fed(Preempted(), "sig"); h = 1//10)
-        init!(preempted_sim, fragment(u = (in = 2.0,)))
+        init!(preempted_sim, set(u = (in = 2.0,)))
         @test modes(preempted_sim, "c") === (a = true, b = false)
     end
 
@@ -248,7 +248,7 @@ function test_events()
         chatty() = Group((; chat = Chatterer(), trig = Trigger(0.5));
                          input_wires = ("in" => "trig/sig",))
         sim = Simulation(chatty(); h = 1//10)
-        init!(sim, fragment(u = (in = 1.0,)))            # exhaustion at boundary zero
+        init!(sim, set(u = (in = 1.0,)))            # exhaustion at boundary zero
         @test modes(sim, "chat").flips == 8         # 2 × the default budget of 4
         @test modes(sim, "trig").count == 1         # the sibling fired normally
         # The report rides the loop's own diagnostic cell (§11.8), folded at the
@@ -271,14 +271,14 @@ function test_events()
         # its own boundary zero — the stores restart from the declared defaults
         # (D-063) and the priors reset with them — and the new run's totals carry
         # that one occurrence, never the last trajectory's.
-        init!(sim, fragment(u = (in = 1.0,)))
+        init!(sim, set(u = (in = 1.0,)))
         run!(sim; t_end = 0.1)
         @test modes(sim, "chat").flips == 8
         @test writer_status(latest(sim), "loop").totals.firing == 1
 
         # The budget is a deployment keyword, validated with its siblings.
         sim2 = Simulation(chatty(); h = 1//10, firing_budget = 2)
-        init!(sim2, fragment(u = (in = 1.0,)))
+        init!(sim2, set(u = (in = 1.0,)))
         @test modes(sim2, "chat").flips == 4
         run!(sim2; t_end = 0.1)
         d = only(writer_status(latest(sim2), "loop").recent)
@@ -304,7 +304,7 @@ function test_events()
     @testset "events compile out at a non-nominal activation (§9.4, D-052)" begin
         dual_model = Model(fed(Trigger(0.5), "sig"), D8; h = 1//10)
         @test isempty(dual_model.exec.events.entries)
-        init!(dual_model, fragment(u = (in = D8(1.0),)))
+        init!(dual_model, set(u = (in = D8(1.0),)))
         frames!(dual_model, 3)                      # `run!` to 0.3
         @test modes(dual_model, "c").count == 0     # the guard never ran
 
@@ -318,7 +318,7 @@ function test_events()
         # The first iteration round always runs, so guard evaluation is on the
         # measured path even when nothing ever fires.
         sim = Simulation(fed(Trigger(0.5), "sig"); h = 1//10)
-        init!(sim, fragment(u = (in = 0.0,)))
+        init!(sim, set(u = (in = 0.0,)))
         boundary!(sim, 1); offtick_boundary!(sim)
         @test @ballocated(boundary!($sim, 1)) == 0
         @test @ballocated(offtick_boundary!($sim)) == 0

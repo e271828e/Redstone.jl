@@ -102,7 +102,7 @@ noise_model(noise; sample_times = (;)) = Group((; c = noise); sample_times = sam
 # A noise model run at `h = 1//100`: `out` read after each of `n` steps.
 function noise_samples(model, n)
     sim = Simulation(model; h = 1//100)
-    init!(sim, fragment())
+    init!(sim, set())
     [(step!(sim; t_plus = 1//100); port(sim, "c", :out)) for _ in 1:n]
 end
 
@@ -183,7 +183,7 @@ step_events(model) = only(row for row in build(model).events.components if row.p
 # A block's one-state linearization through the root input `in`.
 block_linearization(comp) =
     (sim = Simulation(fed(comp, "in"); h = 1//100);
-     init!(sim, fragment(u = (in = 0.0,)));
+     init!(sim, set(u = (in = 0.0,)));
      linearize(sim, taps(x = (q = get_state("c", :q),), u = (in = get_input(:in),))))
 
 # A limited integrator fed by a step from `1` down to `-1`.
@@ -295,7 +295,7 @@ end
 # states, every real input and the face `u`.
 function pid_linearization(model, inputs)
     sim = Simulation(model; h = 1//100)
-    init!(sim, fragment(u = inputs))
+    init!(sim, set(u = inputs))
     real_names = filter(!=(:saturation), keys(inputs))
     linearize(sim, taps(x = (q = get_state("controller", :q), yf = get_state("controller", :yf)),
                         u = NamedTuple{real_names}(map(get_input, real_names)), y = (u = get_face(:u),)))
@@ -444,7 +444,7 @@ discrete_hold_loop(controller) = Group((
 # at each sample.
 function loop_samples(read, model, t_end)
     sim = Simulation(model; h = 1//100)
-    init!(sim, fragment())
+    init!(sim, set())
     [(step!(sim; frames = 10); read(sim)) for _ in 1:round(Int, 10 * t_end)]
 end
 
@@ -456,7 +456,7 @@ settling_time(samples) = (findlast(sample -> abs(sample - 5.0) > 0.05, samples) 
 # selected command's move over the frame after `mode` switches to `a`.
 function switchover_bump(model)
     sim = Simulation(model; h = 1//100)
-    init!(sim, fragment(u = (mode = false,)))
+    init!(sim, set(u = (mode = false,)))
     step!(sim; frames = 200)
     before = port(sim, "sel", :out)
     poke!(sim, "mode", true)
@@ -469,7 +469,7 @@ end
 # the block `outer`.
 function cascade_frames(model, n; outer = "outer", inputs = (;))
     sim = Simulation(model; h = 1//100)
-    init!(sim, fragment(u = inputs))
+    init!(sim, set(u = inputs))
     [(step!(sim; frames = 1);
       (u_raw = port(sim, "inner", :u_raw), saturated = port(sim, "inner", :saturated), q = state(sim, outer).q))
      for _ in 1:n]
@@ -511,7 +511,7 @@ plant_state(model, t_end) = last(loop_samples(sim -> state(sim, "plant").q, mode
 # `state_taps` and the root input `z_ref`.
 function tracker_linearization(controller, state_taps)
     sim = Simulation(tracker_loop(controller; stepped = false); h = 1//100)
-    init!(sim, fragment(u = (z_ref = SVector(0.0, 0.0),)))
+    init!(sim, set(u = (z_ref = SVector(0.0, 0.0),)))
     linearize(sim, taps(x = state_taps, u = (z_ref1 = get_input("z_ref[1]"), z_ref2 = get_input("z_ref[2]"))))
 end
 
@@ -574,14 +574,14 @@ function test_blocks()
             inputs in ((true, false, false), (false, true, true), (true, true, true),
                        (false, false, false))
             sim = Simulation(gate_model(gate, inputs); h = 1//100)
-            init!(sim, fragment())
+            init!(sim, set())
             @test port(sim, "g", :out) === truth(inputs)
         end
     end
 
     @testset "the sum adds a walking, a pinned and a delayed cell (§13.7, §6.1)" begin
         sim = Simulation(blocks_sum_model(); h = 1//100)
-        init!(sim, fragment())
+        init!(sim, set())
         step!(sim; t_plus = 3//100)
         cells = (port(sim, "r", :out), port(sim, "k", :out), port(sim, "d", :out))
         @test port(sim, "s", :out) == +(cells...)
@@ -597,12 +597,12 @@ function test_blocks()
         @test Pack{Float64, 2}().f === Redstone.Blocks.pack
         @test Redstone.has_stage(y_direct, Pack{Float64, 2}()) && !Redstone.has_stage(y_state, Pack{Float64, 2}())
         sim = Simulation(pack_model(Pack{Float64, 2}()); h = 1//10)
-        init!(sim, fragment())
+        init!(sim, set())
         step!(sim; t_plus = 0.3)
         @test isapprox(port(sim, "p", :out), SVector(0.3, 2.0); atol = 1e-12)
         @test build(pack_model(Pack{Float64, 2}()); activations = (Float64, LinearizeDual)) isa Build
         root_sim = Simulation(pack_root_model(); h = 1//100)
-        init!(root_sim, fragment(u = (a = 1.0, b = 2.0)))
+        init!(root_sim, set(u = (a = 1.0, b = 2.0)))
         linearization = linearize(root_sim, taps(u = (a = get_input(:a), b = get_input(:b)),
                                                  y = (v1 = get_face("v[1]"), v2 = get_face("v[2]"))))
         @test isapprox(linearization.D, [1 0; 0 1]; atol = 1e-12)
@@ -610,19 +610,19 @@ function test_blocks()
 
     @testset "the unpack splits a static vector into scalar ports, named `out1` on (§13.7, D-313)" begin
         sim = Simulation(unpack_model(); h = 1//10)
-        init!(sim, fragment())
+        init!(sim, set())
         @test (port(sim, "c", :out1), port(sim, "c", :out2), port(sim, "c", :out3)) == (1.0, -2.0, 3.5)
         @test y_types(Unpack{Float64, 3}()) == (out1 = Float64, out2 = Float64, out3 = Float64)
         @test y_types(Unpack{Float64, 1}()) == (out1 = Float64,)
         @test Redstone.has_stage(y_direct, Unpack{Float64, 3}()) && !Redstone.has_stage(y_state, Unpack{Float64, 3}())
         @test build(unpack_model(); activations = (Float64, LinearizeDual)) isa Build
         root_sim = Simulation(unpack_root_model(); h = 1//100)
-        init!(root_sim, fragment(u = (v = SVector(1.0, 2.0),)))
+        init!(root_sim, set(u = (v = SVector(1.0, 2.0),)))
         linearization = linearize(root_sim, taps(u = (v1 = get_input("v[1]"), v2 = get_input("v[2]")),
                                                  y = (a = get_face(:a), b = get_face(:b))))
         @test isapprox(linearization.D, [1 0; 0 1]; atol = 1e-12)
         round_sim = Simulation(round_trip_model(); h = 1//10)
-        init!(round_sim, fragment())
+        init!(round_sim, set())
         step!(round_sim; t_plus = 0.3)
         @test port(round_sim, "u", :out1) ≈ 0.3 atol = 1e-12
         @test port(round_sim, "u", :out2) == 2.0
@@ -632,7 +632,7 @@ function test_blocks()
     @testset "the switch publishes the selected input and linearizes to its selection (§13.7, §14.10, D-313)" begin
         for (select, out, row) in ((true, 1.0, [1 0]), (false, -1.0, [0 1]))
             sim = Simulation(switch_root(); h = 1//100)
-            init!(sim, fragment(u = (in1 = 1.0, in2 = -1.0, select = select)))
+            init!(sim, set(u = (in1 = 1.0, in2 = -1.0, select = select)))
             @test port(sim, "s", :out) == out
             linearization = linearize(sim, taps(u = (in1 = get_input(:in1), in2 = get_input(:in2)),
                                                 y = (out = get_face(:out),)))
@@ -640,7 +640,7 @@ function test_blocks()
         end
         @test build(switch_root(); activations = (Float64, LinearizeDual)) isa Build
         vector_sim = Simulation(vector_switch_model(); h = 1//10)
-        init!(vector_sim, fragment())
+        init!(vector_sim, set())
         @test port(vector_sim, "s", :out) == SVector(-1.0, -2.0)
         @test u_types(Switch{SVector{2, Float64}}()) ==
               (in1 = SVector{2, Float64}, in2 = SVector{2, Float64}, select = Bool)
@@ -662,7 +662,7 @@ function test_blocks()
 
     @testset "the source publishes `f` at the grid time, pinned, and walks nothing (§13.7, §7.2, D-312, D-313)" begin
         sim = Simulation(fed_by(Source(sin), Integrator()); h = 1//100)
-        init!(sim, fragment())
+        init!(sim, set())
         step!(sim; t_plus = 1)
         @test state(sim, "c").q ≈ 1 - cos(1) atol = 1e-10
         @test port(sim, "k", :out) == sin(1.0)    # a frame-top stamp of the grid time
@@ -670,18 +670,18 @@ function test_blocks()
         @test typeof(Source(sin)) === Source{Float64, typeof(sin)}
         @test build(fed_by(Source(sin), Integrator()); activations = (Float64, LinearizeDual)) isa Build
         vector_sim = Simulation(vector_source_model(); h = 1//100)
-        init!(vector_sim, fragment())
+        init!(vector_sim, set())
         step!(vector_sim; t_plus = 1)
         @test isapprox(state(vector_sim, "c").q, SVector(1 - cos(1), sin(1)); atol = 1e-10)
         @test build(vector_source_model(); activations = (Float64, LinearizeDual)) isa Build
         start_sim = Simulation(single(Source(t -> 2t)); h = 1//10)
-        init!(start_sim, fragment(); t0 = 1.0)
+        init!(start_sim, set(); t0 = 1.0)
         @test port(start_sim, "c", :out) == 2.0
         # The pinned source feeds a pinned entry, which a walking `out` could not.
         model = Group((; s = Source(sin), e = PinnedEntry()); local_wires = ("s/out" => "e/u",))
         @test build(model; activations = (Float64, LinearizeDual)) isa Build
         integer_sim = Simulation(single(Source{Int}(t -> 1)); h = 1//10)
-        init!(integer_sim, fragment())
+        init!(integer_sim, set())
         @test port(integer_sim, "c", :out) === 1
         @test Redstone.has_stage(y_state, Source(sin))
         @test !Redstone.has_stage(y_direct, Source(sin))
@@ -712,7 +712,7 @@ function test_blocks()
 
     @testset "the delay publishes its input one tick late, and `v0` first (§13.7, D-312)" begin
         sim = Simulation(delay_model(UnitDelay(-1)); h = 1//100)
-        init!(sim, fragment())
+        init!(sim, set())
         @test port(sim, "c", :n) == 0 && port(sim, "d", :out) == -1
         for k in 1:4
             step!(sim; t_plus = 1//100)
@@ -725,7 +725,7 @@ function test_blocks()
 
     @testset "the delay line publishes its input `K` ticks late, `v0` before, from a ring (§7.3, §13.7, D-313)" begin
         sim = Simulation(delay_model(Delay(K = 3, v0 = -1)); h = 1//100)
-        init!(sim, fragment())
+        init!(sim, set())
         @test port(sim, "c", :n) == 0 && port(sim, "d", :out) == -1
         # Past tick 5 the cursor has turned the three slots twice.
         for k in 1:8
@@ -735,7 +735,7 @@ function test_blocks()
         # `K = 1` is `UnitDelay` in keyword spelling.
         line_sim = Simulation(delay_model(Delay(K = 1, v0 = -1)); h = 1//100)
         unit_sim = Simulation(delay_model(UnitDelay(-1)); h = 1//100)
-        init!(line_sim, fragment()); init!(unit_sim, fragment())
+        init!(line_sim, set()); init!(unit_sim, set())
         @test port(line_sim, "d", :out) == port(unit_sim, "d", :out)
         for _ in 1:4
             step!(line_sim; t_plus = 1//100); step!(unit_sim; t_plus = 1//100)
@@ -743,7 +743,7 @@ function test_blocks()
         end
         vector_sim = Simulation(fed_by(Constant(SVector(1.0, -2.0)), Delay(K = 2, v0 = SVector(0.0, 0.0)));
                                 h = 1//100)
-        init!(vector_sim, fragment())
+        init!(vector_sim, set())
         @test port(vector_sim, "c", :out) == SVector(0.0, 0.0)
         for k in 1:4
             step!(vector_sim; t_plus = 1//100)
@@ -758,19 +758,19 @@ function test_blocks()
 
     @testset "the discrete integrator accumulates `Δt in` per tick from `s0`, at its own period, and breaks a loop from stage 1 (§7.3, §10.5, §5.5, D-313)" begin
         sim = Simulation(fed_by(Constant(1.0), DiscreteIntegrator()); h = 1//100)
-        init!(sim, fragment())
+        init!(sim, set())
         @test port(sim, "c", :out) == 0.0
         step!(sim; t_plus = 1//10)
         @test port(sim, "c", :out) ≈ 0.1 atol = 1e-12    # ten additions of 0.01
         # `Δt` is the component's own period, so half the rate reaches the same value.
         halved = Simulation(fed_by(Constant(1.0), DiscreteIntegrator(); sample_times = (c = Relative(2),));
                             h = 1//100)
-        init!(halved, fragment())
+        init!(halved, set())
         step!(halved; t_plus = 1//10)
         @test port(halved, "c", :out) ≈ 0.1 atol = 1e-12
         vector_model = fed_by(Constant(SVector(1.0, -2.0)), DiscreteIntegrator(s0 = SVector(0.0, 1.0)))
         vector_sim = Simulation(vector_model; h = 1//100)
-        init!(vector_sim, fragment())
+        init!(vector_sim, set())
         step!(vector_sim; t_plus = 1//10)
         @test isapprox(port(vector_sim, "c", :out), SVector(0.1, 0.8); atol = 1e-12)
         @test build(vector_model; activations = (Float64, LinearizeDual)) isa Build
@@ -778,14 +778,14 @@ function test_blocks()
         @test Redstone.has_stage(y_state, DiscreteIntegrator())
         # Forward Euler around unit feedback: the error decays by `1 - Δt` per tick.
         loop_sim = Simulation(feedback_loop(DiscreteIntegrator()); h = 1//100)
-        init!(loop_sim, fragment())
+        init!(loop_sim, set())
         step!(loop_sim; t_plus = 1)
         @test port(loop_sim, "p", :out) ≈ 1 - 0.99^100 rtol = 1e-12
     end
 
     @testset "the discrete limited integrator clamps in one line and publishes its code off the state (§7.3, §13.7, D-313)" begin
         sim = Simulation(discrete_limited_model(); h = 1//100)
-        init!(sim, fragment())
+        init!(sim, set())
         @test port(sim, "c", :out) == 0.0 && port(sim, "c", :saturation) === Int8(0)
         # Up at 1 to the upper limit by tick 5; the step flips at tick 10, where
         # the code still reads the state on the limit; down at 1 from tick 11.
@@ -802,7 +802,7 @@ function test_blocks()
         vector_block = DiscreteLimitedIntegrator(lower = SVector(-0.02, -0.02), upper = SVector(0.03, 0.03))
         vector_model = fed_by(Constant(SVector(1.0, -1.0)), vector_block)
         vector_sim = Simulation(vector_model; h = 1//100)
-        init!(vector_sim, fragment())
+        init!(vector_sim, set())
         step!(vector_sim; t_plus = 1//10)
         @test port(vector_sim, "c", :out) == SVector(0.03, -0.02)
         @test port(vector_sim, "c", :saturation) === SVector{2, Int8}(1, -1)
@@ -813,7 +813,7 @@ function test_blocks()
 
     @testset "the rate limiter follows its input within two slews per tick and is feedthrough (§7.3, §5.3, D-313)" begin
         rising_sim = Simulation(limiter_model(0.0, 1.0); h = 1//100)
-        init!(rising_sim, fragment())
+        init!(rising_sim, set())
         step!(rising_sim; t_plus = 1//10)
         @test port(rising_sim, "c", :out) == 0.02
         step!(rising_sim; t_plus = 1//100)
@@ -823,7 +823,7 @@ function test_blocks()
         step!(rising_sim; t_plus = 1//4)
         @test port(rising_sim, "c", :out) == 1.0
         falling_sim = Simulation(limiter_model(1.0, 0.0); h = 1//100)
-        init!(falling_sim, fragment())
+        init!(falling_sim, set())
         step!(falling_sim; t_plus = 1//10)
         @test port(falling_sim, "c", :out) == 0.95
         step!(falling_sim; t_plus = 1//10)
@@ -832,7 +832,7 @@ function test_blocks()
         @test port(falling_sim, "c", :out) == 0.0
         # `s0` is the previous output at the first tick, so `t₀` is one slew in.
         startup_sim = Simulation(fed_by(Constant(10.0), RateLimiter(rising = 2.0)); h = 1//100)
-        init!(startup_sim, fragment())
+        init!(startup_sim, set())
         @test port(startup_sim, "c", :out) == 0.02
         step!(startup_sim; t_plus = 1//100)
         @test port(startup_sim, "c", :out) == 0.04
@@ -845,7 +845,7 @@ function test_blocks()
         vector_model = fed_by(Constant(SVector(1.0, -1.0)),
                               RateLimiter(rising = 2.0, falling = 5.0, s0 = SVector(0.0, 0.0)))
         vector_sim = Simulation(vector_model; h = 1//100)
-        init!(vector_sim, fragment())
+        init!(vector_sim, set())
         step!(vector_sim; t_plus = 1//10)
         @test isapprox(port(vector_sim, "c", :out), SVector(0.22, -0.55); atol = 1e-12)
         @test build(vector_model; activations = (Float64, LinearizeDual)) isa Build
@@ -853,7 +853,7 @@ function test_blocks()
 
     @testset "the Gaussian white noise is a pure function of its seed and tick, with the moments it claims (§7.3, §2.5, D-231, D-313)" begin
         sim = Simulation(noise_model(GaussianWhiteNoise(seed = 42, σ = 1.0)); h = 1//100)
-        init!(sim, fragment())
+        init!(sim, set())
         @test port(sim, "c", :out) == Redstone.Blocks.gaussian(42, 0)
         @test Redstone.Blocks.gaussian(42, 0) ≈ 0.882248906222269 atol = 1e-12
         samples = [(step!(sim; t_plus = 1//100); port(sim, "c", :out)) for _ in 1:1000]
@@ -871,7 +871,7 @@ function test_blocks()
         vector_noise = GaussianWhiteNoise(seed = 7, μ = SVector(1.0, -1.0), σ = SVector(1.0, 2.0))
         @test y_types(vector_noise) == (out = SVector{2, Float64},)
         vector_sim = Simulation(noise_model(vector_noise); h = 1//100)
-        init!(vector_sim, fragment())
+        init!(vector_sim, set())
         @test isapprox(port(vector_sim, "c", :out), SVector(1.9884743323187353, -4.728511613462453); atol = 1e-12)
         # Three ticks on, `out` is sample 3, read over the sub-counters 6 and 7.
         for _ in 1:3
@@ -935,7 +935,7 @@ function test_blocks()
                 @test @ballocated($body()) == 0
                 @test @ballocated($body(1)) == 0
             end
-            init!(sim, fragment(u = inputs))
+            init!(sim, set(u = inputs))
             boundary!(sim, 1); offtick_boundary!(sim)
             @test @ballocated(boundary!($sim, 1)) == 0
             @test @ballocated(offtick_boundary!($sim)) == 0
@@ -944,7 +944,7 @@ function test_blocks()
 
     @testset "the freeze drops the partials, and nothing else (§13.7, D-312)" begin
         sim = Simulation(freeze_model(); h = 1//10)
-        init!(sim, combine(at("p", condition(Pendulum(); θ = 0.3)), fragment(u = (τ = 0.0,))))
+        init!(sim, combine(at("p", condition(Pendulum(); θ = 0.3)), set(u = (τ = 0.0,))))
         @test port(sim, "f", :out) == port(sim, "p", :θ) == 0.3
         linearization = linearize(sim, taps(x = (θ = get_state("p", :θ), ω = get_state("p", :ω)),
                                             u = (τ = get_input(:τ),),
@@ -972,7 +972,7 @@ function test_blocks()
     @testset "the stop request publishes its flag off its input, pinned, with its reason (§13.7, D-316)" begin
         for (value, flag) in ((true, STOP_REQUESTED), (false, NO_STOP))
             sim = Simulation(requested(value, "x"); h = 1//100)
-            init!(sim, fragment())
+            init!(sim, set())
             @test port(sim, "stop", :flag) === flag
             step!(sim; t_plus = 1//100)
             @test port(sim, "stop", :flag) === flag
@@ -998,12 +998,12 @@ function test_blocks()
 
     @testset "the integrator integrates its input, scalar or vector, and linearizes to A = 0, B = 1 (§13.7, §7.2)" begin
         sim = Simulation(integrator_model(1.0, 2.0); h = 1//100)
-        init!(sim, fragment())
+        init!(sim, set())
         step!(sim; t_plus = 0.5)
         @test state(sim, "i").q ≈ 2.0 atol = 1e-12
         @test port(sim, "i", :out) == state(sim, "i").q
         vector_sim = Simulation(integrator_model(SVector(0.0, 1.0), SVector(1.0, -1.0)); h = 1//100)
-        init!(vector_sim, fragment())
+        init!(vector_sim, set())
         step!(vector_sim; t_plus = 0.5)
         @test isapprox(state(vector_sim, "i").q, SVector(0.5, 0.5); atol = 1e-12)
         linearization = block_linearization(Integrator())
@@ -1013,12 +1013,12 @@ function test_blocks()
 
     @testset "the lag relaxes to its input at 1/τ, and linearizes to A = -1/τ, B = 1/τ (§13.7, §7.2)" begin
         sim = Simulation(lag_model(1.0); h = 1//100)
-        init!(sim, fragment())
+        init!(sim, set())
         step!(sim; t_plus = 1.0)
         @test state(sim, "l").q ≈ 1 - exp(-2) rtol = 1e-7
         @test port(sim, "l", :out) == state(sim, "l").q
         vector_sim = Simulation(lag_model(SVector(1.0, -2.0)); h = 1//100)
-        init!(vector_sim, fragment())
+        init!(vector_sim, set())
         step!(vector_sim; t_plus = 1.0)
         @test isapprox(state(vector_sim, "l").q, (1 - exp(-2)) * SVector(1.0, -2.0); rtol = 1e-7)
         linearization = block_linearization(FirstOrderLag(τ = 0.5))
@@ -1030,7 +1030,7 @@ function test_blocks()
 
     @testset "the state space linearizes to its own matrices at any operating point, over scalar or vector ports (§13.7, §14.10, D-313)" begin
         sim = Simulation(linear_root_model(two_state_block()); h = 1//100)
-        init!(sim, fragment(u = (in = SVector(1.0, -1.0),)))
+        init!(sim, set(u = (in = SVector(1.0, -1.0),)))
         step!(sim; t_plus = 0.3)
         linearization = linearize(sim, taps(x = (q1 = get_state("c", "q[1]"), q2 = get_state("c", "q[2]")),
                                             u = (in1 = get_input("in[1]"), in2 = get_input("in[2]")),
@@ -1042,7 +1042,7 @@ function test_blocks()
         # The state is an `SVector` at every size, so a scalar block's tap takes
         # an index step.
         scalar_sim = Simulation(fed(StateSpace(A = [-2.0;;], B = [3.0;;], C = [1.0;;]), "in"); h = 1//100)
-        init!(scalar_sim, fragment(u = (in = 0.0,)))
+        init!(scalar_sim, set(u = (in = 0.0,)))
         scalar_linearization = linearize(scalar_sim, taps(x = (q = get_state("c", "q[1]"),),
                                                           u = (in = get_input(:in),)))
         @test isapprox(scalar_linearization.A, [-2.0;;]; atol = 1e-12)
@@ -1069,7 +1069,7 @@ function test_blocks()
     @testset "the state space runs from `x0` and walks under `Dual` (§7.2, §13.7)" begin
         scalar_model = fed_by(Constant(1.0), StateSpace(A = [-1.0;;], B = [1.0;;], C = [1.0;;], x0 = 2))
         sim = Simulation(scalar_model; h = 1//100)
-        init!(sim, fragment())
+        init!(sim, set())
         step!(sim; t_plus = 1.0)
         @test state(sim, "c").q[1] ≈ 1 + exp(-1) rtol = 1e-7
         @test port(sim, "c", :out) == state(sim, "c").q[1]
@@ -1096,7 +1096,7 @@ function test_blocks()
 
     @testset "the transfer function of the lag matches the lag block (§13.7)" begin
         sim = Simulation(lag_pair_model(); h = 1//100)
-        init!(sim, fragment())
+        init!(sim, set())
         step!(sim; t_plus = 0.3)
         @test port(sim, "tf", :out) ≈ port(sim, "l", :out) rtol = 1e-12
         step!(sim; t_plus = 0.7)
@@ -1108,7 +1108,7 @@ function test_blocks()
 
     @testset "the lead-lag and the second-order system linearize to their transfer functions (§14.10, D-313)" begin
         sim = Simulation(linear_root_model(lead_lag()); h = 1//100)
-        init!(sim, fragment(u = (in = 0.0,)))
+        init!(sim, set(u = (in = 0.0,)))
         linearization = linearize(sim, taps(x = (q = get_state("c", "q[1]"),), u = (in = get_input(:in),),
                                             y = (out = get_face(:out),)))
         @test isapprox(linearization.A, [-5.0;;]; atol = 1e-12)
@@ -1116,7 +1116,7 @@ function test_blocks()
         @test isapprox(linearization.C, [-3.0;;]; atol = 1e-12)
         @test isapprox(linearization.D, [1.0;;]; atol = 1e-12)
         second_sim = Simulation(linear_root_model(second_order()); h = 1//100)
-        init!(second_sim, fragment(u = (in = 0.0,)))
+        init!(second_sim, set(u = (in = 0.0,)))
         (; A, B, C, D) = linearize(second_sim, taps(x = (q1 = get_state("c", "q[1]"), q2 = get_state("c", "q[2]")),
                                                     u = (in = get_input(:in),), y = (out = get_face(:out),)))
         for s in (0, im, 2im, 1 + 3im)
@@ -1127,7 +1127,7 @@ function test_blocks()
 
     @testset "the transfer function starts at rest or at the steady state for `u0`, and refuses an improper function or an origin pole with `u0` (§13.7)" begin
         sim = Simulation(linear_root_model(TransferFunction(num = (1,), den = (0.5, 1), u0 = 3.0)); h = 1//100)
-        init!(sim, fragment(u = (in = 3.0,)))
+        init!(sim, set(u = (in = 3.0,)))
         @test port(sim, "c", :out) == 3.0
         step!(sim; t_plus = 1.0)
         @test port(sim, "c", :out) ≈ 3.0 rtol = 1e-12
@@ -1135,7 +1135,7 @@ function test_blocks()
         origin_pole = TransferFunction(num = (1,), den = (1, 0))
         @test origin_pole isa TransferFunction{1, false}
         origin_sim = Simulation(fed_by(Constant(1.0), origin_pole); h = 1//100)
-        init!(origin_sim, fragment())
+        init!(origin_sim, set())
         step!(origin_sim; t_plus = 1.0)
         @test port(origin_sim, "c", :out) ≈ 1.0 rtol = 1e-12
         @test_throws ArgumentError TransferFunction(num = (1, 1, 1), den = (1, 1))
@@ -1177,7 +1177,7 @@ function test_blocks()
         block = DiscreteStateSpace(A = [0.5;;], B = [1.0;;], C = [1.0;;])
         @test typeof(block) === DiscreteStateSpace{1, 1, 1, false, 1, 1, 1, 1}
         sim = Simulation(fed_by(Constant(1.0), block); h = 1//100)
-        init!(sim, fragment())
+        init!(sim, set())
         step!(sim; t_plus = 5//100)
         @test port(sim, "c", :out) == 2(1 - 0.5^5)
         @test build(fed_by(Constant(1.0), block); activations = (Float64, LinearizeDual)) isa Build
@@ -1190,7 +1190,7 @@ function test_blocks()
         @test u_types(two_state) == (in = SVector{2, Float64},) && y_types(two_state) == (out = SVector{2, Float64},)
         two_state_model = fed_by(Constant(SVector(1.0, 1.0)), two_state)
         two_state_sim = Simulation(two_state_model; h = 1//100)
-        init!(two_state_sim, fragment())
+        init!(two_state_sim, set())
         step!(two_state_sim; t_plus = 3//100)
         @test isapprox(port(two_state_sim, "c", :out), SVector(1.98, 2.44); atol = 1e-12)
         @test build(two_state_model; activations = (Float64, LinearizeDual)) isa Build
@@ -1202,7 +1202,7 @@ function test_blocks()
         @test system.A == [0.5;;] && system.B == [1.0;;] && system.C == [0.5;;] && system.D == [0.0;;]
         @test typeof(strict) === DiscreteTransferFunction{1, false, 1, 2, 1}
         sim = Simulation(fed_by(Constant(1.0), strict); h = 1//100)
-        init!(sim, fragment())
+        init!(sim, set())
         step!(sim; t_plus = 5//100)
         @test port(sim, "c", :out) == 0.96875
         @test build(fed_by(Constant(1.0), strict); activations = (Float64, LinearizeDual)) isa Build
@@ -1210,7 +1210,7 @@ function test_blocks()
         steady = DiscreteTransferFunction(num = (0.5,), den = (1, -0.5), u0 = 2.0)
         @test Redstone.Blocks.held(steady).x0 == SVector(4.0)
         steady_sim = Simulation(fed_by(Constant(2.0), steady); h = 1//100)
-        init!(steady_sim, fragment())
+        init!(steady_sim, set())
         @test port(steady_sim, "c", :out) == 2.0
         step!(steady_sim; t_plus = 1)
         @test port(steady_sim, "c", :out) == 2.0
@@ -1218,7 +1218,7 @@ function test_blocks()
         slow = DiscreteTransferFunction(num = (0.2,), den = (1, -0.8), u0 = 2.0)
         @test isapprox(Redstone.Blocks.held(slow).x0, SVector(10.0); atol = 1e-12)
         slow_sim = Simulation(fed_by(Constant(2.0), slow); h = 1//100)
-        init!(slow_sim, fragment())
+        init!(slow_sim, set())
         @test port(slow_sim, "c", :out) ≈ 2.0 atol = 1e-12
         proper = DiscreteTransferFunction(num = (1, -0.9), den = (1, -0.5))
         @test typeof(proper) === DiscreteTransferFunction{1, true, 2, 2, 1}
@@ -1234,12 +1234,12 @@ function test_blocks()
     @testset "the zero-order hold reproduces the exact solution at every period and keeps the class (§10.5, §13.7, D-313)" begin
         for sample_times in ((;), (c = Relative(2),))
             sim = Simulation(fed_by(Constant(1.0), scalar_hold(); sample_times); h = 1//100)
-            init!(sim, fragment())
+            init!(sim, set())
             step!(sim; t_plus = 1)
             @test port(sim, "c", :out) ≈ 1 - exp(-1) atol = 1e-12
         end
         from_x0 = Simulation(fed_by(Constant(1.0), scalar_hold(x0 = 2.0)); h = 1//100)
-        init!(from_x0, fragment())
+        init!(from_x0, set())
         step!(from_x0; t_plus = 1)
         @test port(from_x0, "c", :out) ≈ 1 + exp(-1) atol = 1e-12
         (; A, B) = Redstone.Blocks.realization(scalar_hold(), 0.01)
@@ -1249,28 +1249,28 @@ function test_blocks()
                               h = 1//100)
         continuous_sim = Simulation(fed_by(Constant(SVector(1.0, -1.0)), two_state_block()); h = 1//100)
         for sim in (hold_sim, continuous_sim)
-            init!(sim, fragment())
+            init!(sim, set())
             step!(sim; t_plus = 3//10)
         end
         @test isapprox(port(hold_sim, "c", :out), port(continuous_sim, "c", :out); atol = 1e-8)
         lag_sim = Simulation(hold_pair_model((1,), (0.5, 1), FirstOrderLag(τ = 0.5)); h = 1//100)
-        init!(lag_sim, fragment())
+        init!(lag_sim, set())
         step!(lag_sim; t_plus = 1)
         @test port(lag_sim, "d", :out) ≈ 1 - exp(-2) atol = 1e-12
         @test port(lag_sim, "d", :out) ≈ port(lag_sim, "c", :out) atol = 1e-8
         slow_sim = Simulation(hold_pair_model((1,), (0.5, 1), FirstOrderLag(τ = 0.5);
                                               sample_times = (d = Relative(5),)); h = 1//100)
-        init!(slow_sim, fragment())
+        init!(slow_sim, set())
         step!(slow_sim; t_plus = 1)
         @test port(slow_sim, "d", :out) ≈ 1 - exp(-2) atol = 1e-12
         steady_sim = Simulation(fed_by(Constant(3.0), DiscretizedTransferFunction(num = (1,), den = (0.5, 1), u0 = 3.0));
                                 h = 1//100)
-        init!(steady_sim, fragment())
+        init!(steady_sim, set())
         @test port(steady_sim, "c", :out) == 3.0
         step!(steady_sim; t_plus = 1)
         @test port(steady_sim, "c", :out) ≈ 3.0 rtol = 1e-12
         second_sim = Simulation(hold_pair_model((4,), (1, 1.2, 4), second_order()); h = 1//100)
-        init!(second_sim, fragment())
+        init!(second_sim, set())
         step!(second_sim; t_plus = 1)
         @test port(second_sim, "d", :out) ≈ port(second_sim, "c", :out) atol = 1e-9
         # The class is the continuous one: the lag breaks a loop, the lead-lag closes one.
@@ -1290,7 +1290,7 @@ function test_blocks()
 
     @testset "the localized step jumps at the crossing (§2.3, §10.4, D-179)" begin
         sim = Simulation(step_model(Step(t_step = 0.25)); h = 1//10)
-        init!(sim, fragment())
+        init!(sim, set())
         step!(sim; t_plus = 0.2)
         @test port(sim, "s", :out) == 0.0 && state(sim, "i").q == 0.0
         step!(sim; t_plus = 0.1)
@@ -1302,7 +1302,7 @@ function test_blocks()
 
     @testset "the boundary-detected step jumps at the first boundary at or after `t_step` (§2.3, §10.4, D-179)" begin
         sim = Simulation(step_model(Step(t_step = 0.25, localized = false)); h = 1//10)
-        init!(sim, fragment())
+        init!(sim, set())
         step!(sim; t_plus = 0.2)
         @test port(sim, "s", :out) == 0.0
         step!(sim; t_plus = 0.1)
@@ -1316,7 +1316,7 @@ function test_blocks()
     @testset "a step at or before t₀ publishes `after` from boundary zero (§10.6)" begin
         for localized in (true, false), t_step in (0.0, -1.0)
             sim = Simulation(single(Step(t_step = t_step, localized = localized)); h = 1//10)
-            init!(sim, fragment())
+            init!(sim, set())
             @test modes(sim, "c").fired && port(sim, "c", :out) == 1.0
         end
     end
@@ -1325,7 +1325,7 @@ function test_blocks()
         @test y_types(Step(t_step = 1.0)) == (out = Pinned{Float64},)    # D-312
         source = Step(t_step = 0.25, before = SVector(0.0, 0.0), after = SVector(1.0, -1.0))
         sim = Simulation(single(source); h = 1//10)
-        init!(sim, fragment())
+        init!(sim, set())
         @test port(sim, "c", :out) == SVector(0.0, 0.0)
         step!(sim; t_plus = 0.3)
         @test port(sim, "c", :out) == SVector(1.0, -1.0)
@@ -1343,7 +1343,7 @@ function test_blocks()
                 @test @ballocated($body()) == 0
                 @test @ballocated($body(1)) == 0
             end
-            init!(sim, fragment())
+            init!(sim, set())
             boundary!(sim, 1); offtick_boundary!(sim)
             @test @ballocated(boundary!($sim, 1)) == 0
             @test @ballocated(offtick_boundary!($sim)) == 0
@@ -1356,7 +1356,7 @@ function test_blocks()
         # departure fires there too.
         for localized in (true, false)
             sim = Simulation(limited_model(localized); h = 1//10)
-            init!(sim, fragment())
+            init!(sim, set())
             step!(sim; t_plus = 0.7)
             @test state(sim, "li").q == 0.5 && modes(sim, "li").saturation === Int8(1)
             @test port(sim, "li", :saturation) === modes(sim, "li").saturation
@@ -1372,17 +1372,17 @@ function test_blocks()
         # The derivative reads the mode, so the Jacobian does too.
         @test isapprox(block_linearization(LimitedIntegrator(lower = -1.0, upper = 0.5)).B, [1.0;;]; atol = 1e-12)
         rig = Simulation(fed(LimitedIntegrator(lower = -1.0, upper = 0.5), "in"); h = 1//10)
-        init!(rig, fragment(u = (in = 1.0,)))
+        init!(rig, set(u = (in = 1.0,)))
         step!(rig; t_plus = 0.7)
         @test state(rig, "c").q == 0.5 && modes(rig, "c").saturation === Int8(1)
         linearization = linearize(rig, taps(x = (q = get_state("c", :q),), u = (in = get_input(:in),)))
         @test isapprox(linearization.B, [0.0;;]; atol = 1e-12)
         # An `x0` outside the limits is clamped at boundary zero (§10.6).
         clamped = Simulation(fed(LimitedIntegrator(x0 = 2.0, lower = -1.0, upper = 0.5), "in"); h = 1//10)
-        init!(clamped, fragment(u = (in = 1.0,)))
+        init!(clamped, set(u = (in = 1.0,)))
         @test state(clamped, "c").q == 0.5 && modes(clamped, "c").saturation === Int8(1)
         clamped_lower = Simulation(fed(LimitedIntegrator(x0 = -2.0, lower = -1.0, upper = 0.5), "in"); h = 1//10)
-        init!(clamped_lower, fragment(u = (in = -1.0,)))
+        init!(clamped_lower, set(u = (in = -1.0,)))
         @test state(clamped_lower, "c").q == -1.0 && modes(clamped_lower, "c").saturation === Int8(-1)
         @test LimitedIntegrator(lower = -1, upper = 0.5) isa LimitedIntegrator{Float64}
         @test LimitedIntegrator(lower = -1, upper = 0.5).x0 === 0.0
@@ -1394,7 +1394,7 @@ function test_blocks()
                                                          (-1.0, -0.5, 1.0, -0.5, Int8(-1))),
             localized in (true, false)
             sim = Simulation(zero_input_model(level, lower, upper, localized); h = 1//10)
-            init!(sim, fragment())
+            init!(sim, set())
             step!(sim; t_plus = 3.0)
             @test state(sim, "li").q == limit && modes(sim, "li").saturation === saturation
         end
@@ -1408,7 +1408,7 @@ function test_blocks()
         # guard reading its own component from one reading the first.
         for localized in (true, false)
             sim = Simulation(vector_limited_model(localized); h = 1//10)
-            init!(sim, fragment())
+            init!(sim, set())
             step!(sim; t_plus = 0.4)
             @test state(sim, "li").q[1] ≈ 0.4 atol = 1e-12
             @test state(sim, "li").q[2] == 0.8
@@ -1437,7 +1437,7 @@ function test_blocks()
     @testset "the vector limited integrator linearizes each component by its own mode (§7.2, §14.10, D-276, D-313)" begin
         # At 0.7 component 1 is clamped at its upper limit and component 2 is free.
         rig = Simulation(fed(LimitedIntegrator(lower = SVector(-1.0, -1.0), upper = SVector(0.5, 0.8)), "in"); h = 1//10)
-        init!(rig, fragment(u = (in = SVector(1.0, 0.0),)))
+        init!(rig, set(u = (in = SVector(1.0, 0.0),)))
         step!(rig; t_plus = 0.7)
         linearization = linearize(rig, taps(x = (q1 = get_state("c", "q[1]"), q2 = get_state("c", "q[2]")),
                                             u = (in1 = get_input("in[1]"), in2 = get_input("in[2]"))))
@@ -1466,12 +1466,12 @@ function test_blocks()
         # or at the boundary 1.1: θ = 0.5 and a = 1, so the offset is
         # a h² (1 - θ)² / 2 = 0.00125.
         localized_sim = Simulation(ramp_limited_model(true); h = 1//10)
-        init!(localized_sim, fragment())
+        init!(localized_sim, set())
         step!(localized_sim; t_plus = 3.0)
         bracket_width = localized_sim.model.deployment.localization_tol * localized_sim.model.deployment.h    # in time (§10.4)
         @test state(localized_sim, "li").q ≈ 0.4 - 1.95^2 / 2 atol = bracket_width
         boundary_sim = Simulation(ramp_limited_model(false); h = 1//10)
-        init!(boundary_sim, fragment())
+        init!(boundary_sim, set())
         step!(boundary_sim; t_plus = 3.0)
         @test state(boundary_sim, "li").q ≈ -1.5 atol = 1e-12    # RK4 is exact on the quadratic
         @test 0 < state(boundary_sim, "li").q - state(localized_sim, "li").q ≤ 0.1^2 / 2
@@ -1480,7 +1480,7 @@ function test_blocks()
     @testset "the relay switches with hysteresis, from boundary zero on (§10.4, §10.6, D-313)" begin
         @test y_types(Relay(lower = 0.0, upper = 1.0)) == (out = Pinned{Float64},)    # D-312
         sim = Simulation(relay_model(); h = 1//10)
-        init!(sim, fragment())
+        init!(sim, set())
         # At t = 0.5, 0.9, 1.5 (inside the band, still on) and 1.9.
         for (t_plus, out, relay_state) in ((0.5, 0.0, Int8(0)), (0.4, 1.0, Int8(1)), (0.6, 1.0, Int8(1)),
                                             (0.4, 0.0, Int8(0)))
@@ -1491,7 +1491,7 @@ function test_blocks()
             model = Group((; k = Constant(value), r = Relay(lower = 0.2, upper = 0.8));
                           local_wires = ("k/out" => "r/in",))
             constant_sim = Simulation(model; h = 1//10)
-            init!(constant_sim, fragment())
+            init!(constant_sim, set())
             @test modes(constant_sim, "r").state === relay_state
         end
     end
@@ -1500,7 +1500,7 @@ function test_blocks()
         @test y_types(Relay(lower = SVector(0.2, 0.2), upper = SVector(0.8, 0.8))) ==
               (out = Pinned{SVector{2, Float64}},)    # D-312
         sim = Simulation(vector_relay_model(); h = 1//10)
-        init!(sim, fragment())
+        init!(sim, set())
         # At t = 0.5, 0.9, 1.5 and 1.9; component 2 never reaches 0.8.
         for (t_plus, out, relay_state) in ((0.5, SVector(0.0, 0.0), SVector{2, Int8}(0, 0)),
                                            (0.4, SVector(1.0, 0.0), SVector{2, Int8}(1, 0)),
@@ -1512,7 +1512,7 @@ function test_blocks()
         model = Group((; k = Constant(SVector(1.0, 0.5)), r = Relay(lower = SVector(0.2, 0.2), upper = SVector(0.8, 0.8)));
                       local_wires = ("k/out" => "r/in",))
         constant_sim = Simulation(model; h = 1//10)
-        init!(constant_sim, fragment())
+        init!(constant_sim, set())
         @test modes(constant_sim, "r").state == SVector{2, Int8}(1, 0)
     end
 
@@ -1611,7 +1611,7 @@ function test_blocks()
             model = pid_root_model(pid_controller(hold, tracking))
             @test build(model; activations = (Float64, LinearizeDual)) isa Build
             sim = Simulation(model; h = 1//100)
-            init!(sim, fragment(u = inputs))
+            init!(sim, set(u = inputs))
             real_inputs = tracking ? (r = get_input(:r), y = get_input(:y), v = get_input(:v)) :
                                      (r = get_input(:r), y = get_input(:y))
             linearization = linearize(sim, taps(x = (q = get_state("controller", :q), yf = get_state("controller", :yf)),
@@ -1714,7 +1714,7 @@ function test_blocks()
         @test build(bang_bang_loop()) isa Build
         @test build(bang_bang_loop(); activations = (Float64, LinearizeDual)) isa Build
         sim = Simulation(bang_bang_loop(); h = 1//10)
-        init!(sim, fragment())
+        init!(sim, set())
         step!(sim; t_plus = 5.0)
         bracket_width = sim.model.deployment.localization_tol * sim.model.deployment.h    # in time, at slope 1
         @test 0.2 - bracket_width ≤ state(sim, "integrator").q ≤ 0.8 + bracket_width
@@ -1723,7 +1723,7 @@ function test_blocks()
     @testset "the servo loop saturates its controller, leaves the limit and settles on its reference (§13.7)" begin
         @test build(servo_loop(true); activations = (Float64, LinearizeDual)) isa Build
         sim = Simulation(servo_loop(true); h = 1//100)
-        init!(sim, fragment())
+        init!(sim, set())
         # To t = 1, 2, 2.5, 4, 5, 10 and 40: the controller hits its upper limit
         # near t = 2.04 and leaves it near t = 3.15.
         for (t_plus, saturation) in ((1.0, Int8(0)), (1.0, Int8(0)), (0.5, Int8(1)), (1.5, Int8(0)),
@@ -1735,7 +1735,7 @@ function test_blocks()
         @test port(sim, "plant", :out) ≈ 1.0 atol = 1e-3
         # Boundary-detected, the departure moves by up to one step.
         boundary_sim = Simulation(servo_loop(false); h = 1//100)
-        init!(boundary_sim, fragment())
+        init!(boundary_sim, set())
         step!(boundary_sim; t_plus = 40.0)
         @test port(boundary_sim, "plant", :out) ≈ 1.0 atol = 1e-3
     end
@@ -1779,7 +1779,7 @@ function test_blocks()
                  (pid_assembly(; gains...), (q = get_state("int", :q), yf = get_state("lag", :q))))
             @test build(model; activations = (Float64, LinearizeDual)) isa Build
             sim = Simulation(model; h = 1//100)
-            init!(sim, fragment(u = (r = 0.0, y = 0.0)))
+            init!(sim, set(u = (r = 0.0, y = 0.0)))
             linearization = linearize(sim, taps(x = state_taps, u = (r = get_input(:r), y = get_input(:y)),
                                                 y = (u = get_face(:u),)))
             @test isapprox(linearization.A, plain_matrices.A; atol = 1e-12)
@@ -1966,7 +1966,7 @@ function test_blocks()
         model = standby_siblings(frozen_pair, frozen_pair, DiscreteIntegrator(); delay = false)
         @test build(model; activations = (Float64, LinearizeDual)) isa Build
         sim = Simulation(model; h = 1//100)
-        init!(sim, fragment(u = (mode = false,)))
+        init!(sim, set(u = (mode = false,)))
         q0 = state(sim, "a").q
         qs = [(step!(sim; frames = 1); state(sim, "a").q) for _ in 1:200]
         @test all(q -> q === q0, qs)
@@ -1977,7 +1977,7 @@ function test_blocks()
         limited_pair = DiscretePID(; gains..., u_min = -1.0, u_max = 1.0, hold = true)
         limited_sim = Simulation(standby_siblings(limited_pair, limited_pair, DiscreteIntegrator(); delay = false);
                                  h = 1//100)
-        init!(limited_sim, fragment(u = (mode = false,)))
+        init!(limited_sim, set(u = (mode = false,)))
         limited_frames = [(step!(limited_sim; frames = 1);
                            (u_raw = port(limited_sim, "a", :u_raw), q = state(limited_sim, "a").q)) for _ in 1:200]
         moved = [limited_frames[k].q !== (k == 1 ? 0.0 : limited_frames[k - 1].q) for k in 1:200]
@@ -2135,7 +2135,7 @@ function test_blocks()
         # The step lifts `u_raw[1]` to 0.5 at once; the code is written at that
         # tick and published at the next.
         sim = Simulation(tracker_loop(DiscreteLQRTracker(; plain..., u_max = SVector(0.4, Inf))); h = 1//100)
-        init!(sim, fragment())
+        init!(sim, set())
         samples = [(step!(sim; frames = 1);
                     (u_raw = port(sim, "controller", :u_raw), saturated = port(sim, "controller", :saturated)))
                    for _ in 1:100]
@@ -2267,7 +2267,7 @@ function test_blocks()
                 @test @ballocated($body()) == 0
                 @test @ballocated($body(1)) == 0
             end
-            init!(sim, fragment())
+            init!(sim, set())
             boundary!(sim, 1); offtick_boundary!(sim)
             @test @ballocated(boundary!($sim, 1)) == 0
             @test @ballocated(offtick_boundary!($sim)) == 0
@@ -2327,7 +2327,7 @@ function test_blocks()
         rig = TerrainRig()
         @test build(rig).structure.root_inputs == [:var"dut.k"]
         sim = Simulation(rig; h = 1//100)
-        init!(sim, fragment(u = (var"dut.k" = 2.0,)))
+        init!(sim, set(u = (var"dut.k" = 2.0,)))
         @test port(sim, "dut", :h) == rig.stub.value.h0 * 2
     end
 end

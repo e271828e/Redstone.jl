@@ -1153,7 +1153,7 @@ end
 
 local_wires(::OpaqueHold) = ()
 
-# --- the fragment-function idiom (§14.2) ----------------------------------------
+# --- the condition-method idiom (§14.2) -----------------------------------------
 # Methods of the framework's `condition` generic, one per component, shipped
 # beside it. What the idiom buys is locality — the caller says "start the plant
 # at this displacement", and only `Plant` knows displacement and rate pack into
@@ -1161,10 +1161,10 @@ local_wires(::OpaqueHold) = ()
 # sub-specs down the tree (D-064).
 
 """The plant's own vocabulary: displacement and rate, which it packs into `q`."""
-condition(::Plant; y = 0.0, v = 0.0) = fragment(x = (q = SVector(y, v),))
+condition(::Plant; y = 0.0, v = 0.0) = set(x = (q = SVector(y, v),))
 
 """The integrator's: the held command, which it accumulates in `acc`."""
-condition(::DiscreteAccumulator; cmd = 0.0) = fragment(s = (acc = cmd,))
+condition(::DiscreteAccumulator; cmd = 0.0) = set(s = (acc = cmd,))
 
 """
 Composition by pull (§14.2): the owner of the structure names its children and
@@ -1183,7 +1183,7 @@ nesting, never written by hand — and authors the root input its own contract
 declares.
 """
 condition(vehicle::Vehicle; ref = 0.0, kw...) =
-    combine(at("loop", condition(vehicle.loop; kw...)), fragment(u = (ref = ref,)))
+    combine(at("loop", condition(vehicle.loop; kw...)), set(u = (ref = ref,)))
 
 # --- the multi-rate coverage set (§10.5) ----------------------------------------
 
@@ -1626,10 +1626,10 @@ y_types(::Pendulum) = (θ = Float64, ω = Float64)
 y_state(::Pendulum, (; x)) = (θ = x.θ, ω = x.ω)
 x_deriv(c::Pendulum, (; x, u)) = (θ = x.ω, ω = -c.g_l * sin(x.θ) - c.c * x.ω + u.u)
 
-"""The pendulum's own vocabulary, in the fragment-function idiom (§14.2)."""
-condition(::Pendulum; θ = 0.0, ω = 0.0) = fragment(x = (θ = θ, ω = ω))
+"""The pendulum's own vocabulary, in the condition-method idiom (§14.2)."""
+condition(::Pendulum; θ = 0.0, ω = 0.0) = set(x = (θ = θ, ω = ω))
 
-"""A component that ships no fragment function: the owner's pull fails on it by name."""
+"""A component that ships no condition method: the owner's pull fails on it by name."""
 struct Voiceless <: AbstractComponent end
 x_init(::Voiceless) = (; a = 0.0)
 x_deriv(::Voiceless, (; x)) = (; a = 0.0)

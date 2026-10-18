@@ -297,7 +297,7 @@ function test_show()
         # snapshot whose delta carries it, its count line on every later one.
         sim = Simulation(two_root_inputs(); h = 1//10)
         handle = attach!(sim, Pad("p"), Enumerated("a"))
-        init!(sim, fragment(u = (a = 0.0, b = 0.0)))
+        init!(sim, set(u = (a = 0.0, b = 0.0)))
         report!(handle, MalformedDatum("one"))       # folded at frame 1's top
         run!(sim; t_end = 0.5)
         first_frame, final = plain(logged(sim)[2].status), plain(latest(sim).status)

@@ -504,7 +504,7 @@ function _open_run!(sim::Simulation, header, schemas, feed, frame::Int, boundary
 end
 
 """
-    init!(sim, condition = fragment(); t0 = 0.0,
+    init!(sim, condition = set(); t0 = 0.0,
           trace = true, log = true, log_every = 1, log_max = 65536)
 
 Initialize: state at the declared defaults with the condition's overrides
@@ -588,7 +588,7 @@ simulation `built`, with no trace and no checkpoint, `init!`, `restore!` and
 `replay!` legal again (§13.4, D-223, D-274). `init!` under the same condition
 reproduces it.
 """
-function init!(sim::Simulation, condition = fragment(); t0::Real = 0.0, trace = true,
+function init!(sim::Simulation, condition = set(); t0::Real = 0.0, trace = true,
                log = true, log_every = 1, log_max = 65536)
     lifecycle_state = lifecycle(sim)
     lifecycle_state === :running && throw(DiagnosticError(

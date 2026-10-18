@@ -11,7 +11,7 @@ module RedstoneExamples
 
 using Redstone
 import Redstone: AbstractComponent, StateEvent, x_init, m_init, u_types, y_types, y_state, x_deriv,
-    state_events, condition, fragment, at, combine, TrimProblem, reads, get_state, get_deriv,
+    state_events, condition, set, at, combine, TrimProblem, reads, get_state, get_deriv,
     get_input, get_output, taps, Absolute, Hz
 import Redstone.Blocks: Group, Constant, Source, Step, StopRequest, GaussianWhiteNoise, SumJunction,
     Junction, Pack, Unpack, Switch, UnitDelay, RateLimiter, FirstOrderLag, DiscretePID, DiscreteLQRTracker

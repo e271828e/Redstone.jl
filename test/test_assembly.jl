@@ -88,7 +88,7 @@ function assembly_class()
         exact(t) = exp(A * t) * (A \ (B * u)) - A \ (B * u)
 
         sim = Simulation(Plant(; ω, ζ); h = 1//1000)
-        init!(sim, fragment(u = (u = u,)))
+        init!(sim, set(u = (u = u,)))
         @test port(sim, "", :u) === u              # the root input's own cell
         run!(sim; t_end = 2.0)
 
@@ -100,7 +100,7 @@ function assembly_class()
         # vocabulary composes at the root with no `at` prefix in sight.
         @test_throws DiagnosticError{UninitializedInputs} init!(sim)
         sim2 = Simulation(Plant(; ω, ζ); h = 1//1000)
-        init!(sim2, combine(condition(Plant(); y = 1.0), fragment(u = (u = 0.0,))))
+        init!(sim2, combine(condition(Plant(); y = 1.0), set(u = (u = 0.0,))))
         @test state(sim2, "").q === SVector(1.0, 0.0)
     end
 
@@ -182,7 +182,7 @@ function assembly_container_children()
         # (§8.5), addressable by the parent's declarations like any child name.
         tuple_sim = Simulation(TupleRoster((Gain(2.0), Gain(3.0))); h = 1//10)
         @test paths(tuple_sim.model.deployment.build.structure) == ["units/1", "units/2"]
-        init!(tuple_sim, fragment(u = (in = 1.0,)))
+        init!(tuple_sim, set(u = (in = 1.0,)))
         @test port(tuple_sim, "units/2", :out) === 6.0
         @test port(tuple_sim, "", :y) === port(tuple_sim, "units/2", :out)
 
@@ -272,7 +272,7 @@ function assembly_transparent_containers()
         # endpoints, the flat list and the read path alike.
         sim = Simulation(TransparentRoster((a = Gain(2.0), b = Gain(3.0))); h = 1//10)
         @test paths(sim.model.deployment.build.structure) == ["a", "b"]
-        init!(sim, fragment(u = (in = 1.0,)))
+        init!(sim, set(u = (in = 1.0,)))
         @test port(sim, "b", :out) === 6.0
         @test port(sim, "", :y) === port(sim, "b", :out)
 
@@ -327,7 +327,7 @@ function assembly_transparent_containers()
         # per-instantiation, as every wiring judgment already is.
         sim = Simulation(Shadowed((units = Gain(2.0),), (), Gain(3.0)); h = 1//10)
         @test paths(sim.model.deployment.build.structure) == ["units", "trim"]     # the bare child, and nothing under it
-        init!(sim, fragment(u = (in = 1.0,)))
+        init!(sim, set(u = (in = 1.0,)))
         @test port(sim, "units", :out) === 6.0             # reads resolve `units` bare
         @test port(sim, "", :y) === 6.0                    # and so does wiring resolution
 
@@ -358,7 +358,7 @@ function assembly_transparent_containers()
 
         # The normalized declarations are the ones that build.
         sim = Simulation(pair_group; h = 1//10)
-        init!(sim, fragment(u = (in = 2.0,)))
+        init!(sim, set(u = (in = 2.0,)))
         @test port(sim, "", :y) === 4.0
     end
 end
@@ -403,7 +403,7 @@ function assembly_paths()
         # Routed through the sub-assembly's own face: legal, the routed input is fed
         # exactly once, and the re-exported face aliases the port behind it.
         sim = Simulation(ConcreteHold(SampledLoop()); h = 1//50)
-        init!(sim, fragment(u = (ref = 1.0,)))
+        init!(sim, set(u = (ref = 1.0,)))
         @test port(sim, "", :y) === port(sim, "inner/plant", :y)
 
         # The identical declarations against the identical instance, held
@@ -411,7 +411,7 @@ function assembly_paths()
         # generic holder builds too, and the concrete/generic distinction has left
         # this case entirely.
         generic_sim = Simulation(GenericHold(SampledLoop()); h = 1//50)
-        init!(generic_sim, fragment(u = (ref = 1.0,)))
+        init!(generic_sim, set(u = (ref = 1.0,)))
         @test paths(generic_sim.model.deployment.build.structure) ==
               paths(sim.model.deployment.build.structure)
         @test [level.wires for level in generic_sim.model.deployment.build.structure.levels] ==
@@ -525,7 +525,7 @@ function assembly_wires()
         @test terminal_producer(collision_build.structure, ("c", :u)) == ("", :in)
         @test addr[("c", :u)] !== addr[("", :in)]
         sim = Simulation(collision_build; h = 1//10)
-        init!(sim, fragment(u = (in = 1.5,)))
+        init!(sim, set(u = (in = 1.5,)))
         step!(sim; frames = 1)
         @test port(sim, "c", :u) === 3.0
         @test port(sim, "", :in) === 1.5
@@ -551,7 +551,7 @@ function assembly_wires()
         # The misdiagnosis this closes: the dead face used to build, and a condition
         # addressing it read "declares no input face" — byte-identical to the message
         # a bare typo earns. Authoring one can no longer get that far.
-        err = failure(() -> resolve_condition(at("sub", fragment(u = (dead = 1.0,))),
+        err = failure(() -> resolve_condition(at("sub", set(u = (dead = 1.0,))),
                                     build(nested)))
         @test only(diagnostics(err)) isa UnknownPort      # never a ConditionResolution
     end
@@ -577,7 +577,7 @@ function assembly_two_level()
 
         sim = Simulation(Vehicle(; k, kI, ω, ζ); h = 1//50)
         @test paths(sim.model.deployment.build.structure) == ["loop/plant", "loop/ctl", "loop/sum", "trim"]
-        init!(sim, fragment(u = (ref = r,)))
+        init!(sim, set(u = (ref = r,)))
         run!(sim; t_end = n_steps * Δt)
         @test state(sim, "loop/plant").q ≈ q rtol = 1e-6
         @test port(sim, "loop", :cmd) ≈ s rtol = 1e-6
@@ -585,7 +585,7 @@ function assembly_two_level()
 
     @testset "a face's type and tier are its internal endpoint's (§8.6)" begin
         sim = Simulation(Vehicle(); h = 1//50)
-        init!(sim, fragment(u = (ref = 1.0,)))
+        init!(sim, set(u = (ref = 1.0,)))
         run!(sim; t_end = 0.1)
         # A face is its endpoint: no cell of its own, at any level of re-export.
         @test port(sim, "loop", :y) === port(sim, "loop/plant", :y)
@@ -890,9 +890,9 @@ function assembly_obligations()
         sim = Simulation(Group((; c = Gain(2.0)); input_wires = ("in" => "c/e",));
                          h = 1//100)
         @test sim.model.deployment.build.structure.root_inputs == [:in]
-        init!(sim, fragment(u = (in = 0.0,)))
+        init!(sim, set(u = (in = 0.0,)))
         @test port(sim, "c", :out) == 0.0
-        init!(sim, fragment(u = (in = 3.0,)))
+        init!(sim, set(u = (in = 3.0,)))
         @test port(sim, "c", :out) == 6.0
     end
 end
@@ -1122,7 +1122,7 @@ function assembly_primitives()
         @test exported(passed_build.structure) == exported(wired_build.structure)
         @test paths(passed_build.structure) == paths(wired_build.structure)
         passed_sim, wired_sim = Simulation(passed; h = 1//10), Simulation(wired; h = 1//10)
-        authored = fragment(u = (var"inner.b" = 1.0, e = 2.0))
+        authored = set(u = (var"inner.b" = 1.0, e = 2.0))
         init!(passed_sim, authored); init!(wired_sim, authored)
         @test port(passed_sim, "", :var"inner.scaled") ===
               port(wired_sim, "", :var"inner.scaled")
@@ -1250,7 +1250,7 @@ function assembly_primitives()
 
         sim = Simulation(group; h = 1//10)
         @test paths(sim.model.deployment.build.structure) == ["inner/s", "inner/g", "trim"]
-        init!(sim, fragment(u = (var"inner.b" = 1.0, e = 2.0)))
+        init!(sim, set(u = (var"inner.b" = 1.0, e = 2.0)))
         @test port(sim, "", :var"inner.scaled") === 2.0 * (3.0 * 2.0 - 1.0)
     end
 
@@ -1286,8 +1286,8 @@ function assembly_primitives()
               [:e => ("", :var"ldg.right.brake")]
 
         sim = Simulation(systems; h = 1//10)
-        init!(sim, fragment(u = (var"aero.alpha" = 0.5, var"ldg.right.brake" = 1.0,
-                                 cmd = 2.0)))
+        init!(sim, set(u = (var"aero.alpha" = 0.5, var"ldg.right.brake" = 1.0,
+                            cmd = 2.0)))
         @test port(sim, "", :wrench) === 6 * 2.0 + 0.5
         @test port(sim, "ldg/left", :out) === 4 * 2.0
         @test port(sim, "ldg/right", :out) === 1.0
@@ -1362,7 +1362,7 @@ function assembly_child_lists()
         # The service walk searches those lists, so a condition with a prefix per
         # loop and a mounted read set ask the root for its children no more.
         FANNED_LOOPS_DERIVATIONS[] = 0
-        resolve_condition(combine((at(loop_path, at("plant", fragment(x = (q = SVector(0.1, 0.0),))))
+        resolve_condition(combine((at(loop_path, at("plant", set(x = (q = SVector(0.1, 0.0),))))
                                    for loop_path in loop_paths)...), fanned_build)
         _compile_reads(at("loops/l2", reads(q = get_state("plant", :q))), fanned_build)
         @test FANNED_LOOPS_DERIVATIONS[] == 0

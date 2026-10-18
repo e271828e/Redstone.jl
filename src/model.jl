@@ -121,7 +121,7 @@ _claimed_gate(model::Model, ::FrameHooks, call::Symbol) =
         call = call, reason = :claimed, argument = :model)))
 
 """
-    init!(model, condition = fragment(); t0 = 0.0, hooks = NoHooks())
+    init!(model, condition = set(); t0 = 0.0, hooks = NoHooks())
     init!(model, plan::ConditionPlan; t0 = 0.0, hooks = NoHooks())
 
 The model's door into `:consistent` (§14.5, D-317): the state at the declared
@@ -138,7 +138,7 @@ cursor, `t₀`, pointer 0 and host `:boundary_zero`, and writes the status back
 to `:built`. An interrupt is not model code failing and has no stop path here,
 so it writes the status and propagates raw.
 """
-function init!(model::Model{T}, condition = fragment(); kw...) where {T}
+function init!(model::Model{T}, condition = set(); kw...) where {T}
     _claimed_gate(model, get(kw, :hooks, NoHooks()), :init!)       # the claim is said first (D-318)
     plan = resolve_condition(condition, model.deployment.build, T)   # both refusals precede every write
     assert_total(plan, model.deployment.build.structure, :init!)     # (§14.6): all-or-nothing

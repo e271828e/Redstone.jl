@@ -1133,7 +1133,7 @@ x_deriv(::OwnFieldMiss, (; x)) = (; a = 0.0)
 struct CarrierInside <: AbstractComponent end
 x_init(::CarrierInside) = (; a = 0.0)
 y_types(::CarrierInside) = (p = Float64,)
-y_state(::CarrierInside, (; x)) = (fragment(x = 1.0); (p = x.a,))
+y_state(::CarrierInside, (; x)) = (set(x = 1.0); (p = x.a,))
 x_deriv(::CarrierInside, (; x)) = (; a = 0.0)
 
 struct InterruptInside <: AbstractComponent end
@@ -1333,7 +1333,7 @@ function build_label_ports()
                       local_wires = ("sel/gear" => "rd/gear",), input_wires = ("x" => "rd/x",))
         gear_build = build(model)
         sim = Simulation(gear_build; h = 1//10)
-        init!(sim, fragment(u = (x = 1.0,)))
+        init!(sim, set(u = (x = 1.0,)))
         @test port(sim, "sel", :gear) === up
         @test port(sim, "rd", :code) == 1
         # The producer's tick moves the store, and the cell follows it whole.
@@ -1344,7 +1344,7 @@ function build_label_ports()
         # discrete producer is outside that activation's executable set (D-052),
         # so its cell holds the nominal probe's product.
         dual_model = Model(gear_build, D8; h = 1//10)
-        init!(dual_model, fragment(u = (x = 1.0,)))
+        init!(dual_model, set(u = (x = 1.0,)))
         @test port(dual_model, "rd", :drag) isa D8
         @test port(dual_model, "sel", :gear) === up
     end
@@ -1357,7 +1357,7 @@ function build_label_ports()
         # Probe values are probe-scoped: the run's value is the one the fragment
         # authored, and an enum converts through the condition apply as itself.
         sim = Simulation(gear_root_build; h = 1//10)
-        init!(sim, fragment(u = (gear = down, x = 1.0)))
+        init!(sim, set(u = (gear = down, x = 1.0)))
         @test port(sim, "", :gear) === down
         @test port(sim, "rd", :code) == 2
     end
@@ -1377,7 +1377,7 @@ function build_label_ports()
         model = Group((; sel = PhaseSelector(), rd = PhaseReader());
                       local_wires = ("sel/phase" => "rd/phase",))
         sim = Simulation(build(model); h = 1//10)
-        init!(sim, fragment())
+        init!(sim, set())
         @test port(sim, "sel", :phase) === :idle && !port(sim, "rd", :armed)
         run!(sim; t_end = 0.1)
         @test port(sim, "sel", :phase) === :armed && port(sim, "rd", :armed)
@@ -1652,7 +1652,7 @@ function build_embed_accept()
         # through a branch not taken, the `SVector` wholesale.
         dual_model = Model(Group((; c = ConstantBranch()); input_wires = ("in" => "c/in",)),
                            D8; h = 1//100)
-        init!(dual_model, fragment(u = (in = 0.0,)))
+        init!(dual_model, set(u = (in = 0.0,)))
         # What the table holds is the cell's type, the constant embedded into it.
         @test port(dual_model, "c", :out) isa D8
         @test port(dual_model, "c", :vec) isa SVector{2,D8}

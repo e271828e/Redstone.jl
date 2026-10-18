@@ -171,7 +171,7 @@ state_events(::LateModeScalar) = (fire = StateEvent(late_mode_guard, late_mode_s
 function failures_runtime()
     @testset "the cursor names where execution was after a quiet frame (§13.4)" begin
         sim = Simulation(feedback_model(); h = 1//50)
-        init!(sim, fragment(u = (ref = 0.0,)))
+        init!(sim, set(u = (ref = 0.0,)))
         step!(sim; t_end = 1.0)
         cursor = sim.model.exec.cursor
         @test cursor.phase === :ticks                    # the sequence's last block, empty here
@@ -181,7 +181,7 @@ function failures_runtime()
 
     @testset "a throw in the frame's top hook names the drain, not a stale frame (§13.4, D-317)" begin
         model = Model(diverging(); h = 1//10)
-        init!(model, fragment(u = (in = false,)))
+        init!(model, set(u = (in = false,)))
         frames!(model, 3)                               # the cursor holds frame 3's last dispatch
         err = failure(() -> frame!(model, 4, ThrowingTop()))
         @test err isa StepError{ErrorException}
@@ -199,7 +199,7 @@ function failures_runtime()
 
     @testset "a throw mid-integration names the component, `x_deriv` and the stage (§13.4)" begin
         sim = Simulation(fed(Tripwire(0.05), "arm"); h = 1//10)
-        init!(sim, fragment(u = (in = true,)))
+        init!(sim, set(u = (in = true,)))
         err = failure(() -> run!(sim; t_end = 5.0))
         @test err isa StepError
         @test err.cursor == CursorFrame("c", :x_deriv, :integrate, 2)  # RK4's half-step evaluation
@@ -214,7 +214,7 @@ function failures_runtime()
 
     @testset "a throw in a handler names the event round (§13.4)" begin
         sim = Simulation(fed(Mine(), "sig"); h = 1//10)
-        init!(sim, fragment(u = (in = false,)))
+        init!(sim, set(u = (in = false,)))
         stage!(sim, "in" => true)                       # frame 1's drain arms the guard
         err = failure(() -> step!(sim; t_end = 5.0))
         @test err isa StepError{Detonated}
@@ -223,7 +223,7 @@ function failures_runtime()
 
         # The pointer is the frame-entry index actually recorded, not a constant.
         sim2 = Simulation(fed(Mine(), "sig"); h = 1//10)
-        init!(sim2, fragment(u = (in = false,)))
+        init!(sim2, set(u = (in = false,)))
         @test step!(sim2; frames = 3, t_end = 5.0) == 3
         stage!(sim2, "in" => true)
         err = failure(() -> step!(sim2; t_end = 5.0))
@@ -251,7 +251,7 @@ function failures_runtime()
         # the not-holding prior boundary zero establishes, so the handler fires
         # inside `init!` rather than inside the loop.
         sim = Simulation(fed(Mine(), "sig"); h = 1//10)
-        err = failure(() -> init!(sim, fragment(u = (in = true,))))
+        err = failure(() -> init!(sim, set(u = (in = true,))))
         @test err isa StepError
         @test err.cursor == CursorFrame("c", :handler, :round, 1)
         @test err.boundary == 0 && err.t == 0.0         # frame one's pointer too…
@@ -277,14 +277,14 @@ function failures_runtime()
         # The reproduction is `init!` under the same condition (D-274): the same
         # frame, the same pointer, the same host, the same cause.
         sim2 = Simulation(fed(Mine(), "sig"); h = 1//10)
-        reproduced = failure(() -> init!(sim2, fragment(u = (in = true,))))
+        reproduced = failure(() -> init!(sim2, set(u = (in = true,))))
         @test reproduced isa StepError{Detonated}
         @test reproduced.cursor == err.cursor && reproduced.boundary == 0 && reproduced.t == err.t
         @test reproduced.host === :boundary_zero
         @test lifecycle(sim2) === :built
 
         # The remedy is a corrected condition, and `init!` re-establishes first.
-        init!(sim, fragment(u = (in = false,)))
+        init!(sim, set(u = (in = false,)))
         @test lifecycle(sim) === :initialized
         @test step!(sim; t_end = 5.0) == 1
     end
@@ -318,7 +318,7 @@ function failures_runtime()
 
     @testset "a throw in `s_update` or in `x_projection` names its own block (§13.4)" begin
         sim = Simulation(fed(Sapper(), "sig"); h = 1//10)
-        init!(sim, fragment(u = (in = false,)))
+        init!(sim, set(u = (in = false,)))
         stage!(sim, "in" => true)
         err = failure(() -> step!(sim; t_end = 5.0))
         @test err isa StepError{Detonated}
@@ -334,7 +334,7 @@ function failures_runtime()
 
     @testset "a failed frame is not counted, and the record ends at the last one (§13.4)" begin
         sim = Simulation(fed(Tripwire(0.25), "arm"); h = 1//10)
-        init!(sim, fragment(u = (in = true,)))
+        init!(sim, set(u = (in = true,)))
         err = failure(() -> step!(sim; frames = 5, t_end = 5.0))
         @test err isa StepError && err.boundary == 2    # frame 3 throws at its half step
         @test latest(sim).t == 0.2 && termination(sim).t == 0.2
@@ -442,7 +442,7 @@ function failures_runtime()
 
     @testset "the rendering states the frame and the reproduction (§13.4, §13.2)" begin
         sim = Simulation(fed(Tripwire(0.05), "arm"); h = 1//10)
-        init!(sim, fragment(u = (in = true,)))
+        init!(sim, set(u = (in = true,)))
         err = failure(() -> run!(sim; t_end = 5.0))
         rendered = sprint(showerror, err)
         @test occursin("`c`", rendered) && occursin("x_deriv", rendered) &&
@@ -455,7 +455,7 @@ function failures_runtime()
         # replay, and the `step!` it would refuse is not named.
         zero_sim = Simulation(fed(Mine(), "sig"); h = 1//10)
         zero_rendered =
-            sprint(showerror, failure(() -> init!(zero_sim, fragment(u = (in = true,)))))
+            sprint(showerror, failure(() -> init!(zero_sim, set(u = (in = true,)))))
         @test occursin("init!(sim2, condition) under the same condition reproduces it",
                        zero_rendered)
         @test !occursin("replay!", zero_rendered) && !occursin("step!", zero_rendered)
@@ -463,7 +463,7 @@ function failures_runtime()
         # A `Diagnostic` cause renders as its logline: the kind name leads, and the
         # leaf the sweep named is in the line.
         diverging_sim = Simulation(diverging(); h = 1//10)
-        init!(diverging_sim, fragment(u = (in = true,)))
+        init!(diverging_sim, set(u = (in = true,)))
         diverging_rendered =
             sprint(showerror, failure(() -> step!(diverging_sim; t_end = 5.0)))
         @test occursin("NonfiniteState", diverging_rendered) &&
@@ -499,7 +499,7 @@ function failures_runtime()
         # The model's frame hosts the catch: stepped under no hooks, it throws the
         # carrier and marks itself inconsistent (D-317).
         dual_model = Model(fed(Tripwire(0.05), "arm"), D8; h = 1//10)
-        init!(dual_model, fragment(u = (in = true,)))
+        init!(dual_model, set(u = (in = true,)))
         err = failure(() -> frames!(dual_model, 5))
         @test err isa StepError{Tripped}
         @test err.cursor == CursorFrame("c", :x_deriv, :integrate, 2)
@@ -509,7 +509,7 @@ function failures_runtime()
         # The sweep's own species too: `isfinite` is defined on a `Dual`, the value
         # rides as the `Dual` it is, and the payload times are seconds either way.
         diverging_model = Model(diverging(), D8; h = 1//10)
-        init!(diverging_model, fragment(u = (in = true,)))
+        init!(diverging_model, set(u = (in = true,)))
         err = failure(() -> frames!(diverging_model, 1))
         @test err isa StepError{NonfiniteState}
         # the species rule unwrapped the carrier
@@ -524,7 +524,7 @@ function failures_runtime()
 
     @testset "the sweep names the diverging block, never its downstream (§13.4, D-157)" begin
         sim = Simulation(diverging(); h = 1//10)
-        init!(sim, fragment(u = (in = false,)))
+        init!(sim, set(u = (in = false,)))
         @test step!(sim; t_end = 5.0) == 1
         stage!(sim, "in" => true)                       # frame 2's drain arms the RHS
         err = failure(() -> step!(sim; t_end = 5.0))
@@ -565,13 +565,13 @@ end
 # consumer for (§12.7, D-218).
 function reproduction(model, quiet::Int)
     sim = Simulation(model; h = 1//10)
-    init!(sim, fragment(u = (in = false,)))
+    init!(sim, set(u = (in = false,)))
     quiet > 0 && step!(sim; frames = quiet, t_end = 5.0)   # the quiet frames before it
     stage!(sim, "in" => true)                       # drained at the failing frame's top
     failure(() -> step!(sim; t_end = 5.0))
     err = termination(sim).source.exception
     sim2 = Simulation(model; h = 1//10)
-    init!(sim2, fragment(u = (in = false,)))
+    init!(sim2, set(u = (in = false,)))
     replay!(sim2, trace(sim); to_boundary = err.boundary, t_end = 5.0)
     @test lifecycle(sim2) === :initialized          # the pointer is always a legal halt
     @test mode(sim2) === :replay                    # …with the recording still ahead of it
@@ -615,14 +615,14 @@ function failures_pointer_twin()
     @testset "`to_boundary` counts grid boundaries, not base ticks (§12.7, §13.4)" begin
         grid() = Simulation(feedback_model(); h = 1//10, N_base = 2)
         sim = grid()
-        init!(sim, fragment(u = (ref = 1.0,)))
+        init!(sim, set(u = (ref = 1.0,)))
         stage!(sim, "ref" => 2.0)
         @test step!(sim; frames = 6, t_end = 5.0) == 6
         trc = trace(sim)
         @test trc.frames == 6
 
         sim2 = grid()
-        init!(sim2, fragment(u = (ref = 0.0,)))
+        init!(sim2, set(u = (ref = 0.0,)))
         replay!(sim2, trc; to_boundary = 3, t_end = 5.0)
         @test lifecycle(sim2) === :initialized
         @test sim2.run.frame == 3                # the halt is at `k`, never at `k · n`
@@ -632,14 +632,14 @@ function failures_pointer_twin()
         # `to_time` counts the same boundaries: 0.3 is boundary 3's own time here,
         # off-tick and three grid steps in, not the base tick three ticks in (D-219).
         sim4 = grid()
-        init!(sim4, fragment(u = (ref = 0.0,)))
+        init!(sim4, set(u = (ref = 0.0,)))
         replay!(sim4, trc; to_time = 0.3)
         @test sim4.run.frame == 3
 
         # The range is the recording's frame count, so one past it refuses.
         bad = trc.frames + 1
         sim3 = grid()
-        init!(sim3, fragment(u = (ref = 0.0,)))
+        init!(sim3, set(u = (ref = 0.0,)))
         d = carried(@test_throws DiagnosticError{ArgumentInvalid} replay!(sim3, trc; to_boundary = bad))
         @test d.call === :replay! && d.reason === :range
         @test d.argument === :to_boundary && d.value == bad

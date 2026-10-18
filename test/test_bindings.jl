@@ -170,14 +170,14 @@ function test_bindings()
         # The handle's type carries its binding's, so the idiom's call is static
         # and allocates nothing.
         @test @ballocated(map_input($(dev.datum), binding($handle))) == 0
-        init!(sim, fragment(u = (a = 0.0, b = 0.0)))
+        init!(sim, set(u = (a = 0.0, b = 0.0)))
         run_to_device_stop!(sim)                 # ends by the device's stop, past its observed apply
         @test port(sim, "", :a) ≈ 0.5            # (0.55 − 0.1) / 0.9: conditioned at staging
         @test port(sim, "", :b) === 0.7          # pass-through, bitwise
         # The device-staged trajectory is the directly-staged one: conditioning ran
         # upstream, so the model consumed post-conditioning levels (§11.4).
         reference = Simulation(two_root_inputs(); h = 1//10)
-        init!(reference, fragment(u = (a = 0.0, b = 0.0)))
+        init!(reference, set(u = (a = 0.0, b = 0.0)))
         reference_value = last(only(map_input(
             (; stick = 0.55), TableBinding(stick = (face = "a", deadzone = 0.1)))))
         stage!(reference, "a" => reference_value, "b" => 0.7)
@@ -187,7 +187,7 @@ function test_bindings()
         # run continuing (§11.6: any non-datum exception propagates to the wrapper).
         sim2 = Simulation(two_root_inputs(); h = 1//10)
         attach!(sim2, Poller((; wheel = 0.1)), TableBinding(stick = (face = "a",)))
-        init!(sim2, fragment(u = (a = 0.0, b = 0.0)))
+        init!(sim2, set(u = (a = 0.0, b = 0.0)))
         logs, _ = Test.collect_test_logs() do
             run!(sim2; t_end = 0.2)
         end
@@ -237,7 +237,7 @@ function test_bindings()
         handle = attach!(sim, dev, Readout(alt = get_face("y"),
                                            raw = get_output("p", "y"),
                                            cmd = get_input("u")))
-        init!(sim, fragment(u = (u = 0.0,)))
+        init!(sim, set(u = (u = 0.0,)))
         stage!(sim, "u" => 2.0)
         run!(sim; t_end = 0.5)
         @test !isempty(dev.wire)
@@ -257,7 +257,7 @@ function test_bindings()
     @testset "gather without an output side is a contract misuse, by name (§11.6)" begin
         sim = Simulation(two_root_inputs(); h = 1//10)
         handle = attach!(sim, Pad("p"), Enumerated("a"))
-        init!(sim, fragment(u = (a = 0.0, b = 0.0)))
+        init!(sim, set(u = (a = 0.0, b = 0.0)))
         d = carried(@test_throws DiagnosticError{DeviceContractMismatch} gather(handle, latest(sim)))
         @test d.reason === :no_output_side
     end
@@ -266,7 +266,7 @@ function test_bindings()
         sim = Simulation(two_root_inputs(); h = 1//10)
         handle = attach!(sim, Pad("p"), Duplex())
         @test sim.plane.roster[1].handle.writer.faces == [:a]   # the input half: the claim staked
-        init!(sim, fragment(u = (a = 0.0, b = 0.0)))
+        init!(sim, set(u = (a = 0.0, b = 0.0)))
         stage!(handle, "a" => 0.4)
         run!(sim; t_end = 0.2)
         readout = gather(handle, latest(sim))                        # the output half: the gather compiled

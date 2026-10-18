@@ -16,10 +16,10 @@ readable() = Group((; plant = Plant(), ctl = DiscreteAccumulator(3.0), src = Mod
 # zero so the integrator's `s_update` is stationary and boundary zero leaves
 # `acc` as authored (§14.5).
 readable_condition(q = SVector(0.3, -0.2), acc = 4.0) =
-    combine(at("plant", fragment(x = (q = q,))),
-            at("ctl", fragment(s = (acc = acc,))),
-            at("src", fragment(m = (phase = :running,))),
-            fragment(u = (u = 1.5, e = 0.0)))
+    combine(at("plant", set(x = (q = q,))),
+            at("ctl", set(s = (acc = acc,))),
+            at("src", set(m = (phase = :running,))),
+            set(u = (u = 1.5, e = 0.0)))
 
 # The read set the two activations share.
 readable_reads() = reads(q = get_state("plant", :q), v = get_state("plant", "q[2]"),
@@ -75,7 +75,7 @@ x_deriv(::DottedFaces, (; x, u)) = (q = u.u - x.q,)
 
 dotted_model() = Group((; c = DottedFaces()); input_wires = ("left.brake" => "c/u",),
                        output_wires = ("c/θ" => "att.theta", "c/pose" => "pose", "c/v" => "pose.v"))
-dotted_condition() = fragment(u = (var"left.brake" = SVector(1.5, 2.5),))
+dotted_condition() = set(u = (var"left.brake" = SVector(1.5, 2.5),))
 
 # `readable()` one level down, its two root inputs and its face re-exported under
 # the holder's own names, so a mounted read crosses a renaming export chain
@@ -279,8 +279,8 @@ function test_readers()
         # Declaring the field's concrete type restores the deep read legally, with
         # the hard-coding visible in the declaration itself (§13.3).
         sim = Simulation(ConcreteHold(SampledLoop()); h = 1//50)
-        init!(sim, combine(at("inner/plant", fragment(x = (q = SVector(0.3, 0.1),))),
-                           fragment(u = (ref = 1.0,))))
+        init!(sim, combine(at("inner/plant", set(x = (q = SVector(0.3, 0.1),))),
+                           set(u = (ref = 1.0,))))
         evaluate!(sim.model.exec)
         @test gather_reads(_compile_reads(deep, sim.model.deployment.build), sim.model.exec).q == SVector(0.3, 0.1)
 
@@ -304,8 +304,8 @@ function test_readers()
         # is walked from the mount level: the read `deep` names, refused above,
         # resolves mounted at `inner` (§13.3, D-277).
         generic_sim = Simulation(GenericHold(SampledLoop()); h = 1//50)
-        init!(generic_sim, combine(at("inner", at("plant", fragment(x = (q = SVector(0.3, 0.1),)))),
-                                   fragment(u = (ref = 1.0,))))
+        init!(generic_sim, combine(at("inner", at("plant", set(x = (q = SVector(0.3, 0.1),)))),
+                                   set(u = (ref = 1.0,))))
         evaluate!(generic_sim.model.exec)
         generic_build = generic_sim.model.deployment.build
         @test gather_reads(_compile_reads(at("inner", reads(q = get_state("plant", :q))), generic_build),

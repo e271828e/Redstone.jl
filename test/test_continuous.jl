@@ -10,7 +10,7 @@ function continuous_skeleton()
         exact(t) = exp(Acl * t) * (Acl \ (B * k * r)) - Acl \ (B * k * r)
 
         sim = Simulation(feedback_model(; k, ω, ζ); h = 1//1000)
-        init!(sim, fragment(u = (ref = r,)))
+        init!(sim, set(u = (ref = r,)))
         run!(sim; t_end = 2.0)
 
         # Tolerance, never `==` (D-163): RK4 truncation dominates at ~1e-12 here.
@@ -31,7 +31,7 @@ function continuous_skeleton()
 
         # The evaluation entry points are the executor's; the `Simulation` forms
         # delegate to the one executor it owns, buffers and all.
-        init!(sim, fragment(u = (ref = 0.5,)))
+        init!(sim, set(u = (ref = 0.5,)))
         evaluate!(sim)
         ẋ = copy(exec.ẋbuf)
         fill!(exec.ẋbuf, 0.0)
@@ -42,7 +42,7 @@ function continuous_skeleton()
 
     @testset "gate 1: stepping does not allocate (§9.8)" begin
         sim = Simulation(feedback_model(); h = 1//1000)
-        init!(sim, fragment(u = (ref = 0.0,)))
+        init!(sim, set(u = (ref = 0.0,)))
         integrate!(sim, 1e-3)
         @test @ballocated(integrate!($sim, 1e-3)) == 0
         @test @ballocated(evaluate!($sim)) == 0
@@ -50,7 +50,7 @@ function continuous_skeleton()
 
     @testset "the whole continuous path is generic over the scalar (§7.2)" begin
         dual_model = Model(feedback_model(), D8; h = 1//1000)
-        init!(dual_model, fragment(u = (ref = D8(0.7),)))
+        init!(dual_model, set(u = (ref = D8(0.7),)))
         frames!(dual_model, 50)                # `run!` to 0.05
         @test state(dual_model, "plant").q isa SVector{2,D8}
         @test ForwardDiff.value(port(dual_model, "plant", :y)) != 0.0
@@ -69,15 +69,15 @@ function continuous_state_return()
         # have left shows that boundary zero's `ESTABLISH` round ran
         # `y_state` over the authored stores.
         seeded = Simulation(fed(Motor(1.0), "M_load"); h = 1//100)
-        init!(seeded, combine(at("c", fragment(x = (ω = 3.0,), m = (running = true,))),
-                              fragment(u = (in = 0.0,))))
+        init!(seeded, combine(at("c", set(x = (ω = 3.0,), m = (running = true,))),
+                              set(u = (in = 0.0,))))
         @test port(seeded, "c", :ω) == 3.0
         @test port(seeded, "c", :running) === true
 
         sim = Simulation(fed(Motor(1.0), "M_load"); h = 1//100)
         # A root input must be covered at `init!` (§14.6, `UninitializedInputs`),
         # and `M_load = 0` is what makes the closed form below exact.
-        init!(sim, fragment(u = (in = 0.0,)))
+        init!(sim, set(u = (in = 0.0,)))
         # Boundary zero's `ESTABLISH` round ran `y_state` over the
         # authored stores.
         @test port(sim, "c", :ω) == 0.0
@@ -111,7 +111,7 @@ function continuous_state_return()
         vector_sim = Simulation(vector_feedback_model(; k = 4.0, q₀); h = 1//100)
         scalar_sim = Simulation(feedback_model(; k = 4.0, q₀); h = 1//100)
         init!(vector_sim)
-        init!(scalar_sim, fragment(u = (ref = 0.0,)))
+        init!(scalar_sim, set(u = (ref = 0.0,)))
         run!(vector_sim; t_end = 2.0)
         run!(scalar_sim; t_end = 2.0)
         # The same RK4 steps on the same closed loop, so this is exact agreement

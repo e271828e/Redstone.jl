@@ -60,7 +60,7 @@ function diagnostics_channel()
         sim = Simulation(two_root_inputs(); h = 1//10)
         dev = Parser(0.7, "garbage", 0.9)
         handle = attach!(sim, dev, Enumerated("a"))
-        init!(sim, fragment(u = (a = 0.0, b = 0.0)))
+        init!(sim, set(u = (a = 0.0, b = 0.0)))
         logs, _ = Test.collect_test_logs() do
             run_to_device_stop!(sim)                         # ends by the device's stop
         end
@@ -86,7 +86,7 @@ function diagnostics_channel()
     @testset "the ring's bound is the rate limit: 16 retained, excess to the counts (§11.8)" begin
         sim = Simulation(two_root_inputs(); h = 1//10)
         handle = attach!(sim, Pad("p"), Enumerated("a"))
-        init!(sim, fragment(u = (a = 0.0, b = 0.0)))
+        init!(sim, set(u = (a = 0.0, b = 0.0)))
         for k in 1:20                                # one frame's flood, pending in the cell
             report!(handle, MalformedDatum("datum $k"))
         end
@@ -103,7 +103,7 @@ function diagnostics_channel()
     @testset "a quiet publication allocates the capture, the status vector and the snapshot (§11.8, D-241)" begin
         sim = Simulation(two_root_inputs(); h = 1//10)
         attach!(sim, Pad("p"), Enumerated("a"))
-        init!(sim, fragment(u = (a = 0.0, b = 0.0)); log = false)
+        init!(sim, set(u = (a = 0.0, b = 0.0)); log = false)
         publish!(sim, sim.plane.roster); capture_stores(sim.model.exec.store)  # warm
         # Nothing scales with diagnostic activity: the store capture's own
         # allocations, the status vector (object and memory), and the snapshot
@@ -115,7 +115,7 @@ function diagnostics_channel()
     @testset "the status: the delta rides one snapshot, totals ride every one (§11.8, §11.2)" begin
         sim = Simulation(two_root_inputs(); h = 1//10)
         handle = attach!(sim, Pad("p"), Enumerated("a"))
-        init!(sim, fragment(u = (a = 0.0, b = 0.0)))
+        init!(sim, set(u = (a = 0.0, b = 0.0)))
         # Boundary zero's status: the writers in the drain's order — devices in
         # attachment order, the harness writer, the loop — every account zero,
         # and no run task to be alive: device tasks are run-scoped observables.
@@ -147,7 +147,7 @@ function diagnostics_channel()
         sim = Simulation(two_root_inputs(); h = 1//10)
         dev = Ticker()
         attach!(sim, dev, Enumerated())
-        init!(sim, fragment(u = (a = 0.0, b = 0.0)))
+        init!(sim, set(u = (a = 0.0, b = 0.0)))
         run_to_device_stop!(sim)                             # ends by the device's stop, ≥ 3 boundaries in
         @test dev.n ≥ 3
         writer = writer_status(latest(sim), "device 1 (Ticker)")
@@ -164,7 +164,7 @@ function diagnostics_channel()
         sim = Simulation(two_root_inputs(); h = 1//10)
         dev = LateReporter()
         attach!(sim, dev, Enumerated())
-        init!(sim, fragment(u = (a = 0.0, b = 0.0)))
+        init!(sim, set(u = (a = 0.0, b = 0.0)))
         logs, _ = Test.collect_test_logs() do
             run_to_device_stop!(sim)
         end
@@ -175,7 +175,7 @@ function diagnostics_channel()
         # A fresh trajectory opens a fresh account (§11.8): init! resets the
         # totals, and the stepped frames — deviceless, the reporter never respawns —
         # publish a zeroed record for it.
-        init!(sim, fragment(u = (a = 0.0, b = 0.0)))
+        init!(sim, set(u = (a = 0.0, b = 0.0)))
         step!(sim; frames = 2)
         @test writer_status(latest(sim), "device 1 (LateReporter)").totals.malformed == 0
     end
@@ -484,23 +484,23 @@ function diagnostics_kind_set()
                                   reason = :root_input_not_output, field = :a),
             ReadBindingUnresolved(device = "Pad", binding = "T", selector = "get_face(:q)",
                                   reason = :unknown_output_face, field = :q),
-            ConditionResolution(path = "a", field = :u, reason = :assembly_path, origin = "fragment"),
+            ConditionResolution(path = "a", field = :u, reason = :assembly_path, origin = "set"),
             ConditionResolution(field = :q, reason = :unexported_face, candidates = [:a],
-                                origin = "fragment"),
+                                origin = "set"),
             ConditionResolution(path = "a", field = :q, reason = :no_input_face,
-                                candidates = [:u], origin = "fragment"),
+                                candidates = [:u], origin = "set"),
             ConditionResolution(path = "a", field = :u, reason = :internally_wired,
-                                producer = ("a/b", :y), origin = "fragment"),
+                                producer = ("a/b", :y), origin = "set"),
             ConditionResolution(path = "a/b", store = :x, field = :q, reason = :no_store,
-                                tier = :discrete, origin = "fragment"),
+                                tier = :discrete, origin = "set"),
             ConditionResolution(path = "a/b", store = :x, field = :q, reason = :undeclared_field,
-                                candidates = [:p], role = :output_port, origin = "fragment"),
+                                candidates = [:p], role = :output_port, origin = "set"),
             ConditionResolution(path = "a/b", store = :x, field = :p, reason = :unconvertible,
-                                declared = Float64, observed = String, value = "x", origin = "fragment"),
+                                declared = Float64, observed = String, value = "x", origin = "set"),
             DuplicateConditionLeaf(path = "a/b", store = :x, field = :p,
-                                   origins = ["fragment", "at(\"a\") → fragment"]),
+                                   origins = ["set", "at(\"a\") → set"]),
             ConditionNodeMisuse(observed = NamedTuple, in_hand = [:Fragment]),
-            ConditionNodeMisuse(observed = Int, reason = :fragment_payload, payload = :x),
+            ConditionNodeMisuse(observed = Int, reason = :set_payload, payload = :x),
             ConditionNodeMisuse(observed = String, reason = :empty_prefix),
             UninitializedInputs(op = :init!, faces = [:a, :b]),
             TapResolution(label = :r, selector = "get_state(\"a\", :x)", reason = :assembly_path,

@@ -12,7 +12,7 @@ lin_pend() = Group((; s = Sum(), c = Pendulum()); local_wires = ("s/e" => "c/u",
                    input_wires = ("τ" => "s/a", "d" => "s/b"),
                    output_wires = ("c/θ" => "θ", "s/e" => "u_eff"))
 lin_point(θ = 0.3) = combine(at("c", condition(Pendulum(); θ = θ)),
-                             fragment(u = (τ = PEND_G_L * sin(θ), d = 0.0)))
+                             set(u = (τ = PEND_G_L * sin(θ), d = 0.0)))
 lin_taps() = taps(x = (θ = get_state("c", :θ), ω = get_state("c", :ω)),
                   u = (τ = get_input(:τ), d = get_input(:d)),
                   y = (θ = get_face(:θ), u_eff = get_face(:u_eff)))
@@ -26,8 +26,8 @@ lin_pend_sim() = (sim = Simulation(lin_pend(); h = 1//10); init!(sim, lin_point(
 lin_vector() = Group((; p = VectorPlant(), fb = StateFeedback(2.0));
                      local_wires = ("fb/u" => "p/u",), input_wires = ("qin" => "fb/q",),
                      output_wires = ("p/q" => "q", "p/power" => "power"))
-lin_vector_point() = combine(at("p", fragment(x = (q = SVector(0.1, 0.2),))),
-                             fragment(u = (qin = SVector(0.5, 0.0),)))
+lin_vector_point() = combine(at("p", set(x = (q = SVector(0.1, 0.2),))),
+                             set(u = (qin = SVector(0.5, 0.0),)))
 
 # A root input whose one consumer declares its entry `Pinned`.
 lin_pinned() = Group((; g = PinnedGain(), c = Pendulum());
@@ -36,9 +36,9 @@ lin_pinned() = Group((; g = PinnedGain(), c = Pendulum());
 # The pendulum's torque held by a discrete producer: `sampled_pend` again.
 lin_sampled() = Group((; ctl = DiscreteAccumulator(1.0), c = Pendulum());
                       local_wires = ("ctl/u" => "c/u",), input_wires = ("in" => "ctl/e",))
-lin_sampled_point() = combine(at("ctl", fragment(s = (acc = 4.0,))),
+lin_sampled_point() = combine(at("ctl", set(s = (acc = 4.0,))),
                               at("c", condition(Pendulum(); θ = asin(4.0 / PEND_G_L))),
-                              fragment(u = (in = 0.0,)))
+                              set(u = (in = 0.0,)))
 
 # The pendulum's closed form at θ₀, the walkthrough's section 2.
 lin_closed_A(θ = 0.3) = [0 1; -PEND_G_L*cos(θ) -PEND_C]
@@ -115,8 +115,8 @@ function test_linearize()
 
         # On a continuous model nothing is held, so a point authored from what
         # the checkpoint shows agrees with it.
-        at_rest = combine(at("c", fragment(x = state(sim, "c"))),
-                          fragment(u = (τ = port(sim, "", :τ), d = port(sim, "", :d))))
+        at_rest = combine(at("c", set(x = state(sim, "c"))),
+                          set(u = (τ = port(sim, "", :τ), d = port(sim, "", :d))))
         linearization = linearize(sim, lin_taps())
         @test same_linearization(linearization, linearize(sim, lin_taps(); about = at_rest, t0 = before.state.t))
 
@@ -148,8 +148,8 @@ function test_linearize()
         # the query leaves it as it was.
         frames!(model, 3)
         before = checkpoint(model)
-        at_rest = combine(at("c", fragment(x = state(model, "c"))),
-                          fragment(u = (τ = port(model, "", :τ), d = port(model, "", :d))))
+        at_rest = combine(at("c", set(x = state(model, "c"))),
+                          set(u = (τ = port(model, "", :τ), d = port(model, "", :d))))
         @test same_linearization(linearize(model, lin_taps()),
                                  linearize(model, lin_taps(); about = at_rest, t0 = before.t))
         after = checkpoint(model)
@@ -180,7 +180,7 @@ function test_linearize()
 
     @testset "the default form linearizes at the checkpoint's own time (§14.10, D-274)" begin
         sim = Simulation(fed(TimedDecay(), "u"); h = 1//10)
-        init!(sim, fragment(u = (in = 0.0,)); t0 = 0.2)
+        init!(sim, set(u = (in = 0.0,)); t0 = 0.2)
         step!(sim; frames = 3)
         t, q = sim.model.exec.clock.t, state(sim, "c").q
         @test t ≈ 0.5
@@ -209,7 +209,7 @@ function test_linearize()
         # `running` is the §11.3 freeze for both forms, as in test_trim. Both ends
         # of the run are test-controlled.
         running_sim = Simulation(armed(); h = 1//100)
-        init!(running_sim, fragment(u = (in = 0.0,)))
+        init!(running_sim, set(u = (in = 0.0,)))
         attach!(running_sim, TailProbe(), NoClaim())   # a rostered device makes the loop yield every
                                                 # frame (§12.2), so the spin gets its turn on one thread
         task = Threads.@spawn run!(running_sim; t_end = 3.0e5)
@@ -217,7 +217,7 @@ function test_linearize()
             yield()
         end
         by_default = carried(@test_throws DiagnosticError{ServiceLifecycle} linearize(running_sim, taps()))
-        by_about = carried(@test_throws DiagnosticError{ServiceLifecycle} linearize(running_sim, taps(); about = fragment()))
+        by_about = carried(@test_throws DiagnosticError{ServiceLifecycle} linearize(running_sim, taps(); about = set()))
         stage!(running_sim, "in" => 1.0)
         wait(task)
         @test by_default.op === :linearize && by_default.status === :running &&
@@ -231,7 +231,7 @@ function test_linearize()
         run!(tripped; t_end = 5.0)
         d = carried(@test_throws DiagnosticError{CheckpointMidFrame} linearize(tripped, taps()))
         @test d.t_frame == 0.4 && d.frame == 4
-        @test linearize(tripped, taps(); about = fragment()) isa Linearization
+        @test linearize(tripped, taps(); about = set()) isa Linearization
     end
 
     @testset "the width groups the directions and never changes the answer (§14.10, D-272)" begin
@@ -295,7 +295,7 @@ function test_linearize()
 
     @testset "a matrix root input's `[k,l]` and linear `[k]` taps name one seed site (§14.10, D-276)" begin
         sim = Simulation(fed(MatrixConsumer(), "w"); h = 1//10)
-        about = fragment(u = (in = SMatrix{2,2}(1.0, 2.0, 3.0, 4.0),))
+        about = set(u = (in = SMatrix{2,2}(1.0, 2.0, 3.0, 4.0),))
         state_taps = (q = get_state("c", :q),)
         d = only(diagnostics(failure(() -> linearize(sim, taps(
             x = state_taps, u = (a = get_input("in[1,2]"), b = get_input("in[3]"))); about = about))))
@@ -309,8 +309,8 @@ function test_linearize()
         # A seed writes a whole cell or one `SArray` component, and there is no
         # lens into a struct's slots, so the step is refused before any seed.
         sim = Simulation(fed(PoseConsumer(), "pose"); h = 1//10)
-        about = fragment(u = (in = LeafPose(SVector(1.0, 0.0, 0.0),
-                                            SMatrix{2,2}(1.0, 0.0, 0.0, 1.0)),))
+        about = set(u = (in = LeafPose(SVector(1.0, 0.0, 0.0),
+                                       SMatrix{2,2}(1.0, 0.0, 0.0, 1.0)),))
         d = only(diagnostics(failure(() -> linearize(sim, taps(u = (v1 = get_input("in.v[1]"),));
                                                      about = about))))
         @test d isa TapResolution && d.reason === :unseedable && d.tap === :u && d.field === :in
@@ -340,7 +340,7 @@ function test_linearize()
 
     @testset "the pinned root input is refused naming its consumer (§14.10, D-167, D-168)" begin
         sim = Simulation(lin_pinned(); h = 1//10)
-        d = only(diagnostics(failure(() -> linearize(sim, taps(u = (τ = get_input(:τ),)); about = fragment(u = (τ = 0.0,))))))
+        d = only(diagnostics(failure(() -> linearize(sim, taps(u = (τ = get_input(:τ),)); about = set(u = (τ = 0.0,))))))
         @test d isa TapResolution && d.reason === :unseedable && d.field === :τ && d.tap === :u
         @test d.pinning == [("g", :continuous, Pinned{Float64})] && d.declared === Float64
     end
@@ -429,7 +429,7 @@ function test_linearize()
         # names is the mount itself.
         sim = Simulation(lin_pinned(); h = 1//10)
         d = only(diagnostics(failure(() -> linearize(sim, at("g", taps(u = (e = get_input(:e),)));
-                                                     about = fragment(u = (τ = 0.0,))))))
+                                                     about = set(u = (τ = 0.0,))))))
         @test d isa TapResolution && d.reason === :unseedable && d.mount == "g"
         @test d.field === :τ && d.pinning == [("g", :continuous, Pinned{Float64})]
 

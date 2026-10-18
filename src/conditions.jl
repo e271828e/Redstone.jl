@@ -1,10 +1,10 @@
 # The condition algebra and its resolution (§14.1–§14.3, §14.6): the inert lazy
-# tree the fragment functions build, the collecting pass that validates it
+# tree the condition methods build, the collecting pass that validates it
 # against a `Build`, and the plan §14.4's dynamic walk executes.
 #
 # Two properties carry the section. Composition performs no path arithmetic and
-# no validation — `at` stores a prefix and never applies it — so a fragment
-# function is stack-only construction and a misaddressed node fails at
+# no validation — `at` stores a prefix and never applies it — so a condition
+# method is stack-only construction and a misaddressed node fails at
 # resolution, where the build is in hand. And resolution finishes before
 # anything is written, which is what makes `init!` all-or-nothing (§14.6).
 
@@ -52,26 +52,26 @@ const ConditionNode = Union{Fragment,Scoped,Combined,Override}
 """
     condition(c; kw...)
 
-The fragment function's generic (§14.2, Appendix B). A component ships its
-initialization vocabulary as a method, `condition(::C; kw...) = fragment(…)`,
+The condition methods' generic (§14.2, Appendix B). A component ships its
+initialization vocabulary as a method, `condition(::C; kw...) = set(…)`,
 and the owner of a structure pulls its children's under `at`. The generic is
 framework-owned so that pull crosses a package seam; a model package extends
 it through `import Redstone: condition`, as it extends the declaration family
 (§8.1). No fallback method: a child without one fails at the owner's pull as
 a `MethodError` naming it. D-246's shadowing check does not cover it: a
-fragment written to a foreign `condition` fails the same way.
+method written to a foreign `condition` fails the same way.
 """
 function condition end
 
 """
-    fragment(; x = (;), s = (;), m = (;), u = (;))
+    set(; x = (;), s = (;), m = (;), u = (;))
 
 The leaf constructor of the condition tree (§14.2, Appendix B). Payloads are
 NamedTuples in the authoring level's own vocabulary; a condition speaks state
 (`x`, `s`), modes (`m`) and root inputs, never outputs and never workspace
 (§14.1).
 """
-function fragment(; x = (;), s = (;), m = (;), u = (;))
+function set(; x = (;), s = (;), m = (;), u = (;))
     _payload(:x, x); _payload(:s, s); _payload(:m, m); _payload(:u, u)
     Fragment(x, s, m, u)
 end
@@ -80,7 +80,7 @@ end
 # heterogeneous tuple is not unrolled and boxes its elements, which is what made
 # tree construction allocate (§14.2).
 _payload(name, p) = p isa NamedTuple || throw(DiagnosticError(ConditionNodeMisuse(
-    observed = typeof(p), reason = :fragment_payload, payload = name)))
+    observed = typeof(p), reason = :set_payload, payload = name)))
 
 """
     at(prefix, node)
@@ -182,7 +182,7 @@ function _flat(node::Fragment, path::String, level, origin::String, tree_positio
     for (store, name, payload) in ((:x, :x, node.x), (:s, :s, node.s),
                                    (:m, :m, node.m), (:input, :u, node.u))
         for (field, v) in pairs(payload)
-            entry = CEntry(path, store, field, v, _step(origin, "fragment($name).$field"),
+            entry = CEntry(path, store, field, v, _step(origin, "set($name).$field"),
                            nothing, (tree_position..., name, field))
             store === :input &&
                 (entry = CEntry(entry.path, entry.store, entry.field, entry.value, entry.origin,

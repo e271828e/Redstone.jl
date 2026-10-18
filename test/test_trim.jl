@@ -12,7 +12,7 @@ const PEND_C = 0.5         # analytic solutions below read as what they are
 # component whose torque input is the root's (`fed`, test/utils.jl — root input
 # `in`, child `c`). The baseline covers that one root input, which is what
 # §14.6's totality asks of it.
-pend_base() = fragment(u = (in = 0.0,))
+pend_base() = set(u = (in = 0.0,))
 
 # The two problem shapes every case below is a variation on: decide the torque
 # at a held attitude (linear, one step), or decide the attitude at a held torque
@@ -21,9 +21,9 @@ torque_reads() = reads(ω̇ = get_deriv("c", :ω))
 torque_only(r, d) = (torque = r.ω̇,)
 
 decide_u(d) = combine(at("c", condition(Pendulum(); θ = 0.5)),
-                      fragment(u = (in = d.u,)))
-decide_θ(d) = combine(at("c", fragment(x = (θ = d.θ, ω = 0.0))),
-                      fragment(u = (in = 4.0,)))
+                      set(u = (in = d.u,)))
+decide_θ(d) = combine(at("c", set(x = (θ = d.θ, ω = 0.0))),
+                      set(u = (in = 4.0,)))
 
 u_problem() = TrimProblem(guess = (u = 0.0,), lower = (u = -Inf,), upper = (u = Inf,),
                           condition = decide_u, reads = torque_reads(),
@@ -35,7 +35,7 @@ u_problem() = TrimProblem(guess = (u = 0.0,), lower = (u = -Inf,), upper = (u = 
 
 # The same attitude problem with the torque left to the baseline, for the models
 # whose input is not the decision's to write.
-decide_θ_alone(d) = at("c", fragment(x = (θ = d.θ, ω = 0.0)))
+decide_θ_alone(d) = at("c", set(x = (θ = d.θ, ω = 0.0)))
 θ_alone_problem() = TrimProblem(guess = (θ = 0.1,), lower = (θ = -π/2,), upper = (θ = π/2,),
                                 condition = decide_θ_alone, reads = torque_reads(),
                                 residuals = torque_only, tolerances = (torque = 1e-9,))
@@ -43,8 +43,8 @@ decide_θ_alone(d) = at("c", fragment(x = (θ = d.θ, ω = 0.0)))
 # The two-decision shape, for the seam's packing: `torque` balances the moment
 # and `hold` pins the attitude, so the residual system is genuinely square and
 # both decisions are essential.
-decide_both(d) = combine(at("c", fragment(x = (θ = d.θ, ω = 0.0))),
-                         fragment(u = (in = d.u,)))
+decide_both(d) = combine(at("c", set(x = (θ = d.θ, ω = 0.0))),
+                         set(u = (in = d.u,)))
 both_reads() = reads(ω̇ = get_deriv("c", :ω), θ = get_state("c", :θ))
 both_residuals(r, d) = (torque = r.ω̇, hold = r.θ - 0.3)
 
@@ -67,8 +67,8 @@ end
 # the nominal half — which is exactly what the ruling is about.
 sampled_pend() = Group((; ctl = DiscreteAccumulator(1.0), c = Pendulum());
                        local_wires = ("ctl/u" => "c/u",), input_wires = ("in" => "ctl/e",))
-sampled_base(acc = 4.0) = combine(at("ctl", fragment(s = (acc = acc,))),
-                                  fragment(u = (in = 0.0,)))
+sampled_base(acc = 4.0) = combine(at("ctl", set(s = (acc = acc,))),
+                                  set(u = (in = 0.0,)))
 
 # A commit-time mover of the first kind (§14.5): a guard the solved attitude
 # already holds, so boundary zero fires it and the report says so.
@@ -90,10 +90,10 @@ x_deriv(::Snapback, (; x, u)) = (θ = x.ω, ω = -PEND_G_L * sin(x.θ) - PEND_C 
 snapback_guard(c::Snapback, (; x)) = x.θ > c.level
 snapback_handler(::Snapback, (; x)) = (x = (θ = 0.0, ω = x.ω),)
 state_events(::Snapback) = (snap = StateEvent(snapback_guard, snapback_handler),)
-condition(::Snapback; θ = 0.0, ω = 0.0) = fragment(x = (θ = θ, ω = ω))
+condition(::Snapback; θ = 0.0, ω = 0.0) = set(x = (θ = θ, ω = ω))
 
 snap_decide_u(d) = combine(at("c", condition(Snapback(0.3); θ = 0.5)),
-                           fragment(u = (in = d.u,)))
+                           set(u = (in = d.u,)))
 
 # §14.7's residual return has two observation points, because a lambda may
 # answer differently at each: the nominal guess evaluation runs at `Float64`
@@ -108,12 +108,12 @@ eltype_split(r, d) = r.ω̇ isa Float64 ? (torque = r.ω̇,) : (wrong = r.ω̇,)
 # cover each world's own root input.
 rig_pend() = Group((; rig = fed(Pendulum(), :u)); input_wires = ("torque" => "rig/in",))
 outer_pend() = Group((; outer = rig_pend()); input_wires = ("drive" => "outer/torque",))
-rig_base() = fragment(u = (torque = 0.0,))
-outer_base() = fragment(u = (drive = 0.0,))
+rig_base() = set(u = (torque = 0.0,))
+outer_base() = set(u = (drive = 0.0,))
 
 # A problem authored against the pendulum alone: its paths and its input face are
 # the component's own, so it means something only once mounted.
-decide_pendulum_u(d) = combine(condition(Pendulum(); θ = 0.5), fragment(u = (u = d.u,)))
+decide_pendulum_u(d) = combine(condition(Pendulum(); θ = 0.5), set(u = (u = d.u,)))
 pendulum_problem() = TrimProblem(guess = (u = 0.0,), lower = (u = -Inf,), upper = (u = Inf,),
                                  condition = decide_pendulum_u,
                                  reads = reads(ω̇ = get_deriv("", :ω)),
@@ -190,8 +190,8 @@ function test_trim()
         # and hitting the infeasible edge is information, not an exception.
         infeasible = TrimProblem(
             guess = (θ = 0.1,), lower = (θ = -π/2,), upper = (θ = π/2,),
-            condition = d -> combine(at("c", fragment(x = (θ = d.θ, ω = 0.0))),
-                                     fragment(u = (in = 2 * PEND_G_L,))),
+            condition = d -> combine(at("c", set(x = (θ = d.θ, ω = 0.0))),
+                                     set(u = (in = 2 * PEND_G_L,))),
             reads = torque_reads(), residuals = torque_only, tolerances = (torque = 1e-9,))
 
         # On a never-initialized simulation: it stays `built`, and `run!` still says so.
@@ -208,7 +208,7 @@ function test_trim()
         # On an initialized one: every buffer equals its pre-call copy.
         live = Simulation(fed(Pendulum(), :u); h = 1//10)
         init!(live, combine(at("c", condition(Pendulum(); θ = 0.2)),
-                            fragment(u = (in = 1.0,))))
+                            set(u = (in = 1.0,))))
         before = world(live)
         live_report = trim!(live, infeasible; baseline = pend_base())
         @test !live_report.converged && live_report.committed_residuals === nothing
@@ -242,7 +242,7 @@ function test_trim()
         probe(u) = TrimProblem(
             guess = (;), lower = (;), upper = (;),
             condition = d -> combine(at("c", condition(Pendulum(); θ = 0.0)),
-                                     fragment(u = (in = u,))),
+                                     set(u = (in = u,))),
             reads = both_reads(), residuals = torque_only, tolerances = (torque = 1e-9,),
             checks = (r, d) -> (θ = r.θ,), check_tolerances = (θ = 1e-12,))
 
@@ -442,9 +442,9 @@ function test_trim()
         before = world(sim)
         d = carried(@test_throws DiagnosticError{UninitializedInputs} trim!(sim, TrimProblem(
             guess = (θ = 0.1,), lower = (θ = -1.0,), upper = (θ = 1.0,),
-            condition = d -> at("c", fragment(x = (θ = d.θ, ω = 0.0))),
+            condition = d -> at("c", set(x = (θ = d.θ, ω = 0.0))),
             reads = torque_reads(), residuals = torque_only, tolerances = (torque = 1e-9,));
-            baseline = fragment()))
+            baseline = set()))
         @test d.faces == [:in] && d.op === :trim!
         @test world(sim) == before && lifecycle(sim) === :built
     end
@@ -477,10 +477,10 @@ function test_trim()
         err = failure(() -> trim!(refused, TrimProblem(
             guess = (θ = 0.1, acc = 4.0), lower = (θ = -π/2, acc = -Inf),
             upper = (θ = π/2, acc = Inf),
-            condition = d -> combine(at("c", fragment(x = (θ = d.θ, ω = 0.0))),
-                                     at("ctl", fragment(s = (acc = d.acc,)))),
+            condition = d -> combine(at("c", set(x = (θ = d.θ, ω = 0.0))),
+                                     at("ctl", set(s = (acc = d.acc,)))),
             reads = torque_reads(), residuals = torque_only, tolerances = (torque = 1e-9,));
-            baseline = fragment(u = (in = 0.0,))))
+            baseline = set(u = (in = 0.0,))))
         d = only(diagnostics(err))
         @test err isa DiagnosticError && d isa ConditionResolution && d.reason === :unconvertible
         @test d.path == "ctl" && d.store === :s && d.field === :acc
@@ -604,7 +604,7 @@ function test_trim()
     @testset "a stopped simulation trims from an authored baseline at a new anchor (§14.8, §12.6)" begin
         sim = Simulation(fed(Pendulum(), :u); h = 1//10)
         init!(sim, combine(at("c", condition(Pendulum(); θ = 0.2)),
-                           fragment(u = (in = 1.0,))))
+                           set(u = (in = 1.0,))))
         run!(sim; t_end = 0.4)
         @test lifecycle(sim) === :stopped && sim.run.frame == 4
 
@@ -676,7 +676,7 @@ function test_trim()
         # `running` is the §11.3 freeze, as for every other §14 service. Both ends
         # of the run are test-controlled, exactly as in test_lifecycle.
         live = Simulation(armed(); h = 1//100)
-        init!(live, fragment(u = (in = 0.0,)))
+        init!(live, set(u = (in = 0.0,)))
         attach!(live, TailProbe(), NoClaim())   # a rostered device makes the loop yield every
                                                 # frame (§12.2), so the spin gets its turn on one thread
         task = Threads.@spawn run!(live; t_end = 3.0e5)
@@ -705,8 +705,8 @@ function test_trim()
         # the impossible balance of the no-convergence testset above.
         infeasible = TrimProblem(
             guess = (θ = 0.1,), lower = (θ = -π/2,), upper = (θ = π/2,),
-            condition = d -> combine(at("c", fragment(x = (θ = d.θ, ω = 0.0))),
-                                     fragment(u = (in = 2 * PEND_G_L,))),
+            condition = d -> combine(at("c", set(x = (θ = d.θ, ω = 0.0))),
+                                     set(u = (in = 2 * PEND_G_L,))),
             reads = torque_reads(), residuals = torque_only, tolerances = (torque = 1e-9,))
         fresh = Model(fed(Pendulum(), :u); h = 1//10)
         fresh_report = trim!(fresh, infeasible; baseline = pend_base())

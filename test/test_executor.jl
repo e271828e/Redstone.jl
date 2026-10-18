@@ -131,7 +131,7 @@ function test_executor()
         # A body with no gated entry walks its interior at a boundary: its two
         # tuples have one type, and the boundary call writes what the interior does.
         sim = Simulation(feedback_model(); h = 1//100)
-        init!(sim, fragment(u = (ref = 0.5,)))
+        init!(sim, set(u = (ref = 0.5,)))
         run!(sim; t_end = 0.1)
         rhs = phase_bodies(sim).rhs
         @test fieldtype(typeof(rhs), :interior) === fieldtype(typeof(rhs), :boundary)

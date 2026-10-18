@@ -33,7 +33,7 @@ function test_stepper()
         exact(t) = exp(Acl * t) * (Acl \ (B * k * r)) - Acl \ (B * k * r)
         function final_error(algorithm, h)
             sim = Simulation(feedback_model(; k, ω, ζ); h, algorithm)
-            init!(sim, fragment(u = (ref = r,)))
+            init!(sim, set(u = (ref = r,)))
             run!(sim; t_end = 2.0)
             norm(state(sim, "plant").q - exact(2.0))
         end
@@ -77,7 +77,7 @@ function test_stepper()
         # The frame-top claims never depended on the method: an epoch-caused edge
         # falls through to fire at the indexed grid time bitwise under Heun too.
         fed_sim = Simulation(fed(Stamper(0.5), "sig"); h = 1//10, algorithm = Heun)
-        init!(fed_sim, fragment(u = (in = 0.0,)))
+        init!(fed_sim, set(u = (in = 0.0,)))
         step!(fed_sim; t_plus = 0.3)
         stage!(fed_sim, "in" => 1.0)                   # frame 4's drain, at its frame top
         step!(fed_sim; t_plus = 0.3)
@@ -86,7 +86,7 @@ function test_stepper()
 
     @testset "gate 4: the second backend holds the §9.8 invariant" begin
         sim = Simulation(feedback_model(); h = 1//1000, algorithm = Heun)
-        init!(sim, fragment(u = (ref = 0.0,)))
+        init!(sim, set(u = (ref = 0.0,)))
         integrate!(sim, 1e-3)
         @test @ballocated(integrate!($sim, 1e-3)) == 0
         # The localizing frame allocates exactly its two boundaries' publications,
@@ -110,7 +110,7 @@ function test_stepper()
 
     @testset "the second backend is generic over the scalar (§7.2)" begin
         dual_model = Model(feedback_model(), D8; h = 1//1000, algorithm = Heun)
-        init!(dual_model, fragment(u = (ref = D8(0.7),)))
+        init!(dual_model, set(u = (ref = D8(0.7),)))
         frames!(dual_model, 50)                # `run!` to 0.05
         @test state(dual_model, "plant").q isa SVector{2,D8}
     end

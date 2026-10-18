@@ -7,7 +7,7 @@ using Test, LinearAlgebra, BenchmarkTools
 using Statistics: std
 using Redstone, RedstoneExamples
 import Redstone: Build, ProbeDual, Simulation, build, init!, run!, trim!, linearize, state, modes, port,
-    logged, termination, phase_bodies, fragment, at, combine, condition, EndTimeReached, ModelRequestedStop
+    logged, termination, phase_bodies, set, at, combine, condition, EndTimeReached, ModelRequestedStop
 import RedstoneExamples: Longitudinal, aircraft, level_flight, longitudinal_taps, lqr_gains, closed_loop,
     trimmed, descent
 
@@ -16,13 +16,13 @@ import RedstoneExamples: Longitudinal, aircraft, level_flight, longitudinal_taps
 # The aircraft trimmed at level flight, the simulation left at the commit.
 function trimmed_aircraft()
     sim = Simulation(aircraft(); h = 1//100)
-    report = trim!(sim, level_flight(); baseline = fragment(u = (δe = 0.0, δt = 0.5)))
+    report = trim!(sim, level_flight(); baseline = set(u = (δe = 0.0, δt = 0.5)))
     (sim, report)
 end
 
 # The aircraft's state from `plant_state` at the trim controls, or at the throttle `δt`.
 at_trim(solution, plant_state; δt = solution.δt) =
-    combine(at("plant", plant_state), fragment(u = (δe = solution.δe, δt = δt)))
+    combine(at("plant", plant_state), set(u = (δe = solution.δe, δt = δt)))
 
 # A port's value over the logged snapshots, beside their times.
 logged_times(sim) = [snapshot.t for snapshot in logged(sim)]
