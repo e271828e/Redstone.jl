@@ -153,13 +153,14 @@ end
 
     @testset "the switch is bumpless in steady flight and nearly so in the climb (§13.7, D-385)" begin
         # The probe's elevator jumps: 3.45e-4 at the switch at 60 s, against 5.05e-4 of steady
-        # cascade jitter in [90, 100) of the cascade run, and 1.5e-3 at the switch at 10 s. The
-        # hand-back at 10 s is pinned on the command before the rate limiter, which caps the
-        # actuator's change at about 5.8e-3 whatever happens upstream. The probe's jump is 2.26e-3.
+        # cascade jitter in [90, 100) of the cascade run. The two mid-climb switches are pinned on
+        # the command before the rate limiter, which caps the actuator's change at about 5.8e-3
+        # whatever happens upstream: the probe's command jumps 1.13e-2 at the switch at 10 s and
+        # 2.26e-3 at the hand-back at 10 s.
         steady_jump = largest_jump(runs.switch_at_60, "δe_lag", :out, 59.5, 61)
         @test steady_jump < 1e-3
         @test steady_jump < largest_jump(runs.cascade, "δe_lag", :out, 90, 100)
-        @test largest_jump(runs.switch_at_10, "δe_lag", :out, 9.5, 11) < 5e-3
+        @test largest_jump(runs.switch_at_10, "select_δe", :out, 9.9, 10.1) < 0.03
         @test largest_jump(runs.hand_back_at_10, "select_δe", :out, 9.9, 10.1) < 0.005
     end
 

@@ -197,13 +197,13 @@ time, and the one not in command tracks the one that is: each innermost block
 and the tracker read the selected command one tick old through a `UnitDelay`,
 and each outer block of the cascade reads the measured variable of the loop
 inside it (`pid_anti_windup.md`, section 11). Every `Tt` is one period, 0.02 s.
-A block not in command lags the selected command by about `Tt` times the
-command's slew rate, plus one tick, and a block in command pulls a limited
-integrator back within a tick. The switch is therefore bumpless in steady
-flight. During a maneuver the standby lags the command by a few hundredths of
-a radian, and the switch jumps by that lag. Every discrete block runs at
-50 Hz. The gains, the limits and the wiring are `longitudinal_aircraft.md`
-section 4.
+A block not in command lags the selected command by an amount that grows with
+`Tt` and with the rate at which its own law moves, and a block in command
+pulls a limited integrator back within a tick. The switch is therefore
+bumpless in steady flight. During a maneuver the standby lags the command by
+a few hundredths of a radian, and the switch jumps by that lag. Every discrete
+block runs at 50 Hz. The gains, the limits and the wiring are
+`longitudinal_aircraft.md` section 4.
 """
 function closed_loop(solution, gains; cascade = t -> true, h_step = 50.0, noise_σ = 0.3)
     (; θ, δe, δt) = solution

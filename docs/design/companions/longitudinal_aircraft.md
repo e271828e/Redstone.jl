@@ -191,10 +191,13 @@ and back-calculate against their own limits.
 
 Every tracking time constant `Tt` is one period, 0.02 s, the tracker's
 included. A block not in command follows the selected command with a lag
-of about `Tt` times the rate at which its own law moves, plus one tick, so
-a short `Tt` keeps the standby close to the command during a maneuver. A
-block in command back-calculates against its limits, and at one period it
-pulls a limited integrator back within a tick.
+that grows with `Tt` and with the rate at which its own law moves, so a
+short `Tt` keeps the tracker, the altitude loop and the airspeed loop
+within about 0.015 rad of the command during a maneuver. The pitch-rate
+and attitude loops, whose references move with the measured state, sit a
+few hundredths of a radian off whatever `Tt` is. A block in command
+back-calculates against its limits, and at one period it pulls a limited
+integrator back within a tick.
 
 **The LQR tracker.** A `DiscreteLQRTracker` over the full state
 `x = (V, γ, θ, q, h)` commanding both controls, with the command vector
@@ -229,17 +232,19 @@ The switch is bumpless in steady flight. During a maneuver the standby lags
 the command by about `Tt` times the command's slew rate plus one tick, a
 few hundredths of a radian at one period. With the cascade in command, the
 standby tracker stays within about 0.034 rad of the elevator command over
-the climb after its first half second. It reaches 0.43 rad for about a
-tenth of a second right after the reference step, since the step moves the
-tracker's own law in one tick, and it sits within 0.015 rad after
+the climb after its first half second. It peaks at 0.43 rad right after
+the reference step, since the step moves the tracker's own law in one
+tick, is back under 0.1 rad within 55 ms, and sits within 0.015 rad after
 `t = 10 s`. At a switch to the tracker at 60 s, in steady flight, the
 elevator's largest frame-to-frame change is 3.45e-4, below the 5.05e-4 of
 jitter the altitude noise induces in steady cascade flight. At a switch at
-10 s, mid-climb, it is 1.5e-3. A hand-back to the cascade at 10 s, once
-the pull-up is over, jumps the elevator command by 2.3e-3. Handed back
-during the pull-up itself, at 7 s, the command would jump by about
-0.15 rad, the standby's lag behind a command slewing at up to about
-4 rad/s, which the actuator's rate limit then spreads over about 0.15 s.
+10 s, mid-climb, the command jumps by 1.1e-2 and the actuator, behind its
+rate limit, by 1.5e-3. A hand-back to the cascade at 10 s, once the
+pull-up is over, jumps the command by 2.3e-3. Handed back during the
+pull-up itself, at 7 s, the command would jump by about 0.09 rad, the
+standby having sat 0.15 rad behind a command slewing at up to about
+4 rad/s, and the actuator's rate limit would take about a tenth of a
+second to catch up.
 
 **What the loop does.** From trim, a 50 m step in the altitude reference at
 `t = 5 s` is held within 0.1 m by `t = 80 s` by either controller, the
