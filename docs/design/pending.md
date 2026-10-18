@@ -50,7 +50,7 @@ item changes what the spec says, the spec edit is part of the item.
     outside the question as loop-idiom conventions the framework never
     calls; and the device contract `init!`/`loop`/`shutdown!`/`unblock!`,
     extended by `import` or qualified name, `Base.show`-style.
-  - **The operator side.** `condition`, `fragment`, `at` and `combine`
+  - **The operator side.** `condition`, `set`, `at` and `combine`
     (§14.2) are generic names that share a namespace with user domain code,
     and whether the condition algebra ships behind a submodule is the
     packaging question.

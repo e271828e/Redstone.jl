@@ -168,7 +168,7 @@ functions the tutorial's layers call, each the subject of one chapter:
   linearization, by `lqr_tracker.md`'s sections 2 and 3;
 - `closed_loop(solution, gains; cascade, h_step, noise_σ)`, layer 5's
   model, and `trimmed(solution)`, its initial condition, which seeds the
-  three integrators whose trim value is not zero through `fragment(s = …)`
+  three integrators whose trim value is not zero through `set(s = …)`
   beside the plant's state;
 - `descent()`, the aircraft with the gear and the stop request.
 

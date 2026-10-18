@@ -11240,18 +11240,19 @@ declare `initialize(::C, spec)`, today's `f_init!` reborn declaratively, and
 add an [assembly](#g-assembly)-level rule routing sub-specs to children.
 
 What preserves the locality is an idiom, not schema. It is the
-**[fragment](#g-fragment) function**, a method of the framework's `condition`
-generic, shipped beside the component and dispatched on the component. The
+**condition method**, a method of the framework's `condition` generic,
+shipped beside the component and dispatched on the component, returning
+the component's own [fragment](#g-fragment). The
 generic is framework-owned so that an owner's pull reaches a child's fragment
 across a package seam. A model package extends it through
 `import Redstone: condition`, as it extends the declaration family
-([§8.1][s8-1]). No shadowing check covers it: a fragment written to a foreign
+([§8.1][s8-1]). No shadowing check covers it: a method written to a foreign
 `condition` fails loudly at the owner's pull, as a `MethodError` naming the
 child.
 
 ```julia
 condition(eng::PistonEngine; n_eng) =
-    fragment(x = (ω = n_eng * eng.ω_rated,), m = (phase = Phase.running,))
+    set(x = (ω = n_eng * eng.ω_rated,), m = (phase = Phase.running,))
 ```
 
 Fragments are composed by *pull* from the structure's owner.
@@ -11259,7 +11260,7 @@ Fragments are composed by *pull* from the structure's owner.
 ```julia
 condition(sys::C172XSystems; n_eng, α_a, β_a) = combine(
     at("pwp/engine", condition(sys.pwp.engine; n_eng)),
-    at("aero",       fragment(x = (α_filt = α_a, β_filt = β_a))))
+    at("aero",       set(x = (α_filt = α_a, β_filt = β_a))))
 ```
 
 Dispatch selects variant-specific methods, so the c172s/c172x actuation split
@@ -11267,7 +11268,7 @@ costs no upstream edits. The three combinators are constructors of an
 **inert, lazy tree**. No path arithmetic happens at composition.
 
 ```julia
-struct Fragment{X,S,M,L}  x::X; s::S; m::M; u::L  end      #self-vocabulary payloads; no paths
+struct Fragment{X,S,M,L}  x::X; s::S; m::M; u::L  end      #set(; x, s, m, u): self-vocabulary payloads; no paths
 struct Scoped{N}  prefix::String; node::N  end             #at(prefix, node): stores, never applies
 struct Combined{T<:Tuple}  nodes::T  end                   #combine(ns...): collects; order = diagnostics only
 ```
@@ -11287,7 +11288,7 @@ tree and cannot know where it will be mounted. On a condition node it raises
 `ConditionNodeMisuse` ([Appendix C][sC]) before any resolution pass runs.
 The read side's lifts refuse the same way ([§14.9][s14-9], [D-278][d-278]).
 
-`fragment`'s payloads speak only about the component at the authoring point.
+`set`'s payloads speak only about the component at the authoring point.
 Addressing children is exclusively `at`'s job, so there is one way to say
 everything. A `u` payload names faces *of the authoring level's
 [contract](#g-contract)*. Resolution walks the export chain to the root input
@@ -11317,7 +11318,7 @@ deep `at` or condition path may not traverse past a generically-held field, a
 check made at the authoring or mount level ([§13.3][s13-3], [D-130][d-130]). Ownership alone is
 convention. It is a fact about who maintains the code, and the build cannot see
 it, so keeping a deep path inside an owned subtree is idiomatic rather than
-machine-checked ([D-065][d-065]). `fragment`/`at`/`combine` are [§13.7][s13-7] standard-library
+machine-checked ([D-065][d-065]). `set`/`at`/`combine` are [§13.7][s13-7] standard-library
 material, ordinary artifacts with no privileges.
 
 A [combine](#g-combine) collision is two entries on one leaf. Collisions are
@@ -11331,8 +11332,8 @@ name should not promise them. Because `combine` is its own function, a bare
 NamedTuple blended into a node cannot fall through to any last-wins method.
 The blend is still closed explicitly. A `combine(::Fragment, ::NamedTuple)`,
 or any other blend of a condition node with a bare NamedTuple, is an **error
-method**. Its message is directive: wrap the NamedTuple in `fragment(…)` (or
-`at(prefix, fragment(…))`) and combine nodes with nodes. The rejection carries
+method**. Its message is directive: wrap the NamedTuple in `set(…)` (or
+`at(prefix, set(…))`) and combine nodes with nodes. The rejection carries
 a [kind](#g-kind) like every other. It is `ConditionNodeMisuse`
 ([Appendix C][sC]), carrying the offending argument's type and the node kinds
 in hand. It is raised at composition time, before any resolution pass runs
@@ -12763,8 +12764,8 @@ lifecycle.
   `transparent_container` (optional, default `nothing`).
 - Any component. `stop_reason` (optional, default `""`), the reason its stop
   requests report ([§13.5][s13-5]).
-- Shipped conditions. `condition(::C; kw)` fragment functions, methods of
-  the framework's `condition` generic ([§14.2][s14-2]).
+- Shipped conditions. `condition(::C; kw)`, methods of the framework's
+  `condition` generic that return the component's fragment ([§14.2][s14-2]).
 
 Bundle contents by function family (the maximal legal sets, [§5.2][s5-2];
 signatures destructure less at will):
@@ -13002,8 +13003,8 @@ return law, [§5.2][s5-2]). There is no padding. `x` comes back complete, and
 
 **Condition algebra** ([§14.1][s14-1]–[§14.6][s14-6]).
 
-- `fragment(; x, s, m, u)`. Self-vocabulary payloads at the authoring
-  level. `u` names faces of that level's contract.
+- `set(; x, s, m, u)`. The leaf, a fragment: self-vocabulary payloads at
+  the authoring level. `u` names faces of that level's contract.
 - `at(prefix, node)`. Scoping. It stores, never applies. It also lifts whole
   `TrimProblem`s and linearization tap sets ([§14.9][s14-9],
   [§14.10][s14-10]). An empty prefix is refused ([§14.2][s14-2]).
@@ -13012,7 +13013,7 @@ return law, [§5.2][s5-2]). There is no padding. `x` comes back complete, and
   method ([§14.2][s14-2]).
 - `override(base, patches...)`. Ordered layering. The patch wins, and
   the origin keeps both ([§14.6][s14-6]).
-- `condition(comp; kw)`. The shipped fragment-function idiom. Aircraft
+- `condition(comp; kw)`. The shipped condition-method idiom. Aircraft
   baselines (`ready_for_taxi(ac)`, `cold_and_dark(ac)`) are its
   full-coverage instances.
 
@@ -14591,9 +14592,9 @@ and `m` fields plus root inputs by face, never outputs and never workspace
 aircraft for trim and linearization. "Aircraft as root" is the shallowest
 world, not a special case ([§14.9][s14-9]).
 
-<a id="g-fragment"></a>**fragment** — the leaf node of the condition algebra. `fragment(; x, s, m,
-u)` payloads speak only about the component at the authoring point
-(**self-vocabulary**), with addressing left entirely to `at`
+<a id="g-fragment"></a>**fragment** — the leaf node of the condition algebra, built by
+`set(; x, s, m, u)`. Its payloads speak only about the component at the
+authoring point (**self-vocabulary**), with addressing left entirely to `at`
 ([§14.2][s14-2]).
 
 <a id="g-fragment-tree"></a>**fragment tree** — the inert, lazy composition of `Fragment`/`Scoped`/

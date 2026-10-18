@@ -261,8 +261,8 @@ Spec: §11.5, §12.6, §12.7, §14.10, D-038, D-254, D-273, D-274, D-317, D-319.
 
 ### `src/conditions.jl`
 
-- `condition`, the fragment function's generic (§14.2, Appendix B).
-- The condition algebra `fragment`, `at`, `combine` and `override`. `at`
+- `condition`, the condition methods' generic (§14.2, Appendix B).
+- The condition algebra `set`, `at`, `combine` and `override`. `at`
   also lifts read sets, joining the prefix to their mount chain; trim.jl
   and linearize.jl add its methods for problems and tap sets (D-277).
 - The export chain's lookup, `_input_faces_at` and `_face_producer`, shared
@@ -926,7 +926,7 @@ The suite's fixtures:
 - The coverage component set.
 - The named assemblies.
 - The devices and bindings.
-- The `condition` methods, the fragment-function idiom over the framework's
+- The `condition` methods, the condition-method idiom over the framework's
   generic. The generic lives in `src/conditions.jl`.
 - `Pendulum`.
 - `tick_alarmed`, the tick-detected stop request over `TickAlarm` (§10.5,
@@ -1101,7 +1101,8 @@ Traps the code does not warn about, each hit more than once while building:
   defaults to `nothing` and is resolved in the body;
 - **"every call site" takes two greps**, the direct call and the function
   passed as an argument, and a field's readers likewise (`\.id\b`). `\b` does
-  not close after `!`, so grep `run!\(`;
+  not close after `!`, so grep `run!\(`. `set` is an English word in half
+  the docstrings, so grep `set\(` and `\bset,` for the condition leaf;
 - **a mutant survives a test whose parameter is an identity for the
   operation**, such as `Tt = 1` for `/ Tt` or a pole at `0.5` for `I - A`, or
   whose oracle shares the mutated code, such as a vector draw checked through

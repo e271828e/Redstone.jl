@@ -286,7 +286,7 @@ be written there. This is the input-side no-silent-zeros rule ([D-167][d-167]) a
 ### 4.3 Conditions at a seeded activation: the zero-partial embedding
 
 A condition ([§14.1][s14-1]) is the path-addressed overlay that sets a build's state:
-`at("c", fragment(x = (θ = 0.3, ω = 0.0)))` combined with `fragment(u =
+`at("c", set(x = (θ = 0.3, ω = 0.0)))` combined with `set(u =
 (τ = 2.899, d = 0.0))`. Resolving it against a build yields a plan of baked
 destinations, each with the destination leaf's type at that activation as its
 converter (`Authored{P,L}` in `src/conditions.jl`):

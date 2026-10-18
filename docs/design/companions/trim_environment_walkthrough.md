@@ -737,9 +737,9 @@ function trim_condition(ac, params, d)
     v_wb_b = velocity_vector(d.TAS, d.α, d.β)        # wind-relative, body axes
     v_eb_n = params.wind + q_nb * v_wb_b             # the one environment use
     combine(at("vehicle/kinematics",
-               fragment(x = (q_nb = q_nb, v_eb_n = v_eb_n, r_eb = params.Ob))),
-            at("pwp/engine", fragment(x = (ω = d.n_eng,))),
-            fragment(u = (throttle = d.throttle, aileron = d.aileron,
+               set(x = (q_nb = q_nb, v_eb_n = v_eb_n, r_eb = params.Ob))),
+            at("pwp/engine", set(x = (ω = d.n_eng,))),
+            set(u = (throttle = d.throttle, aileron = d.aileron,
                           elevator = d.elevator, rudder = d.rudder)))
 end
 

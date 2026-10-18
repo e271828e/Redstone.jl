@@ -196,7 +196,7 @@ and back-calculate against their own limits.
 
 **The initial condition.** `trimmed(solution)` writes the plant's trim
 pitch angle beside its level state and seeds the stores of three of the
-four PID blocks through `at` and `fragment(s = …)`. A `DiscretePID`'s store
+four PID blocks through `at` and `set(s = …)`. A `DiscretePID`'s store
 is `(q, yf, saturated)`, the integral term, the derivative filter's state
 and the clamp code, all zero by default. At trim every loop's error is
 zero: `h_ref = h`, the attitude reference is the altitude loop's output,
