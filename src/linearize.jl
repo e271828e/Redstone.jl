@@ -98,7 +98,8 @@ end
 2. The tap set resolves in §13.1's collecting form: closed membership per list,
    one scalar per tap, no discrete store in `x` (D-197), no unseedable root
    input in `u` (D-167, D-168), no two seeds at one site (D-272). Every
-   violation is one `TapResolution` in one `DiagnosticError`.
+   violation sits in one `DiagnosticError`: the reads' own `ReadResolution`
+   values beside the tap set's `TapResolution` ones (D-406).
 3. The nominal half: a `Float64` scratch executor. By default the checkpoint
    restored, whose held cells are the frozen tier's (D-274); under `about`, the
    condition applied and checked total over the root inputs (§14.6), then one
@@ -245,6 +246,25 @@ _tap_kind(::Val{:x}) = GetState
 _tap_kind(::Val{:u}) = GetInput
 _tap_kind(::Val{:y}) = Union{GetOutput,GetFace}
 
+# Which of `x`/`u`/`y` a selector addresses, by its kind (§14.10).
+_tap(::Union{GetState,GetDeriv}) = :x
+_tap(::Union{GetOutput,GetFace}) = :y
+_tap(::GetInput) = :u
+
+# One `TapResolution` off a tap, for the tap set's own reasons: the read as
+# authored, as readers.jl's `_reader_violation` spells it, and the tap set. A
+# refusal the read's own resolution raised stays its `ReadResolution`.
+_tap_violation(read::MountedRead, reason::Symbol; kw...) =
+    _tap_violation(read.label, read.authored, read.mount, reason;
+                   field = something(read.face, read.head), kw...)
+
+# The kind check's form, before the selector is rebased.
+_tap_violation(label::Symbol, authored, mount::String, reason::Symbol; kw...) =
+    TapResolution(; label = label, selector = _spell(authored), reason = reason,
+                  mount = mount, tap = _tap(authored),
+                  path = _mounted_path(mount, _selpath(authored)),
+                  leaf = _leaf_string(authored), kw...)
+
 """
     _resolve_taps(tap_set, build, T) → (x_entries, u_entries, y_entries)
 
@@ -275,8 +295,8 @@ function _resolve_taps(tap_set::Taps, build::Build, ::Type{T}) where {T}
         mount_point === nothing && (push!(failed_prefixes, read_set.prefixes); return resolved)
         for (label, authored) in pairs(read_set.selectors)
             if !(authored isa _tap_kind(Val(list)))
-                push!(diags, _reader_violation(label, authored, first(mount_point), :tap_kind;
-                                               list = list))
+                push!(diags, _tap_violation(label, authored, first(mount_point), :tap_kind;
+                                            list = list))
                 continue
             end
             read = _rebase(authored, label, mount_point..., build, diags)
@@ -287,8 +307,8 @@ function _resolve_taps(tap_set::Taps, build::Build, ::Type{T}) where {T}
             entry === nothing && continue
             site = _site_key(Val(list), entry)
             if site !== nothing && haskey(seeded_by, site)
-                push!(diags, _reader_violation(read, :duplicate_site;
-                                               duplicate_of = seeded_by[site]))
+                push!(diags, _tap_violation(read, :duplicate_site;
+                                            duplicate_of = seeded_by[site]))
                 continue
             end
             site === nothing || (seeded_by[site] = read.label)
@@ -320,12 +340,12 @@ function _check_seedable(read::MountedRead, ::Type{P}, chain::Tuple, leaf_type::
                          diags::Vector{Diagnostic}) where {P}
     offending = findfirst(k -> chain[k] isa Symbol || k > 1, eachindex(chain))
     offending === nothing ||
-        return (push!(diags, _reader_violation(read, :unseedable; declared = P,
-                                               step = _step_string(chain[offending]))); false)
+        return (push!(diags, _tap_violation(read, :unseedable; declared = P,
+                                            step = _step_string(chain[offending]))); false)
     leaf_type <: Real ||
-        return (push!(diags, _reader_violation(read, :vector_tap; declared = leaf_type)); false)
+        return (push!(diags, _tap_violation(read, :vector_tap; declared = leaf_type)); false)
     leaf_type === Float64 ||
-        return (push!(diags, _reader_violation(read, :unseedable; declared = leaf_type)); false)
+        return (push!(diags, _tap_violation(read, :unseedable; declared = leaf_type)); false)
     true
 end
 
@@ -336,7 +356,7 @@ _linear_index(::Type{P}, index::Tuple{Vararg{Int}}) where {P} = LinearIndices(si
 # The `x` list: a discrete store is refused with its tier in hand (D-197).
 _seeded_tap(::Val{:x}, ::StoreRead, ::GetState, read::MountedRead, ::Build, ::Activation,
             diags::Vector{Diagnostic}) =
-    (push!(diags, _reader_violation(read, :discrete_state)); nothing)
+    (push!(diags, _tap_violation(read, :discrete_state)); nothing)
 
 # The `x` list's continuous leaf: the offset is `T`-independent (§9.2), so the
 # seeded entries are the nominal one retyped. The seed site is the leaf's slot
@@ -377,8 +397,8 @@ function _seeded_tap(::Val{:u}, entry::CellRead{A,C}, ::GetInput, read::MountedR
     # The refusal names the root input the pinning consumers read, not the face
     # the read was authored against.
     isempty(pinning) ||
-        return (push!(diags, _reader_violation(read, :unseedable; field = read.head,
-                                               declared = root_type, pinning = pinning));
+        return (push!(diags, _tap_violation(read, :unseedable; field = read.head,
+                                            declared = root_type, pinning = pinning));
                 nothing)
     CellRead{typeof(addr),C}(addr)
 end
@@ -389,7 +409,7 @@ function _seeded_tap(::Val{:y}, entry::CellRead{A,C}, selector::GetOutput, read:
                      ::Build, act::Activation, diags::Vector{Diagnostic}) where {A,C}
     leaf_type = _resolved_type(_port_type(entry.addr), C)
     leaf_type <: Real ||
-        return (push!(diags, _reader_violation(read, :vector_tap; declared = leaf_type));
+        return (push!(diags, _tap_violation(read, :vector_tap; declared = leaf_type));
                 nothing)
     addr = act.layout.addr[(selector.path, read.head)]
     CellRead{typeof(addr),C}(addr)

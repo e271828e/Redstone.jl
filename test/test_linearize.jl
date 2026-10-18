@@ -352,7 +352,8 @@ function test_linearize()
                                                 u = (c = get_face("q[1]"), d = get_input(:nope)),
                                                 y = (e = get_state("p", "q[1]"), f = get_face(:q)))))
         @test err isa DiagnosticError && length(diagnostics(err)) == 6            # the full list, one throw
-        @test all(d -> d isa TapResolution, diagnostics(err))
+        # The unknown root input is the read's own refusal, the rest the tap set's (D-406).
+        @test all(d -> d isa (d.label === :d ? ReadResolution : TapResolution), diagnostics(err))
         by_label = Dict(d.label => d for d in diagnostics(err))
         @test sort(collect(keys(by_label))) == [:a, :b, :c, :d, :e, :f]
         @test by_label[:a].reason === :vector_tap && by_label[:a].declared == SVector{2,Float64}
@@ -364,7 +365,7 @@ function test_linearize()
 
         # An index on a `Float64` state is the read side's own refusal (D-276).
         d = only(diagnostics(failure(() -> linearize(lin_pend_sim(), taps(x = (θ = get_state("c", "θ[1]"),))))))
-        @test d isa TapResolution && d.reason === :not_indexable && d.declared === Float64 &&
+        @test d isa ReadResolution && d.reason === :not_indexable && d.declared === Float64 &&
               d.step == "[1]"
     end
 
@@ -435,7 +436,7 @@ function test_linearize()
 
         # A face fed by a component holds no root input to seed.
         d = only(diagnostics(failure(() -> linearize(lin_pend_sim(), at("c", taps(u = (u = get_input(:u),)))))))
-        @test d isa TapResolution && d.reason === :internally_wired && d.mount == "c"
+        @test d isa ReadResolution && d.reason === :internally_wired && d.mount == "c"
         @test d.field === :u && d.producer == ("s", :e)
 
         # The kind check reads the selector as authored.

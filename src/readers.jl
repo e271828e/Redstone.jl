@@ -390,12 +390,13 @@ for a discrete `s`, a cell address for a port, a root input or a root-exported
 face.
 
 The standalone entry point is internal, because a read set is only ever
-compiled inside a client: `trim!` splices the collected list into its own throw
-beside the problem's `TrimProblemInvalid` values (§14.8), and a device binding
-raises `ReadBindingUnresolved` at attach instead (§11.2). That is why the
-collecting pass is factored apart from the throw. The violations are
-`TapResolution` values either way — the kind is the read's own, and it is the
-*site* that decides where they surface (§13.2, Appendix C).
+compiled inside a client. The sites are trim, linearization and attach, each
+surfacing the collected list its own way: `trim!` splices it into its own throw
+beside the problem's `TrimProblemInvalid` values (§14.8), and `linearize` beside
+the tap set's own `TapResolution` values (§14.10). That is why the collecting
+pass is factored apart from the throw. The violations are `ReadResolution`
+values at every site — the kind is the read's own, and it is the *site* that
+decides where they surface (§13.2, Appendix C, D-406).
 """
 function _compile_reads(read_set::Reads, build::Build, ::Type{T} = Float64) where {T}
     reader, diags = _resolve_reads(read_set, build, T)
@@ -574,11 +575,11 @@ function _read_component(read::MountedRead, structure::Structure, diags::Vector{
     nothing
 end
 
-# One `TapResolution` off a read, describing the read as authored (D-277): the
-# label, the selector and its mount make a collected list readable, and the tap
-# set, the path below the mount and the leaf address are the authored
-# selector's (§14.10's payload). `field` is a face selector's matched face and a
-# path selector's head; each arm adds what it observed.
+# One `ReadResolution` off a read, describing the read as authored (D-277): the
+# label, the selector and its mount make a collected list readable, and the path
+# below the mount and the leaf address are the authored selector's. `field` is a
+# face selector's matched face and a path selector's head; each arm adds what it
+# observed.
 _reader_violation(read::MountedRead, reason::Symbol; kw...) =
     _reader_violation(read.label, read.authored, read.mount, reason;
                       field = something(read.face, read.head), kw...)
@@ -586,10 +587,9 @@ _reader_violation(read::MountedRead, reason::Symbol; kw...) =
 # The mount step's form, before the selector is rebased: a path selector's path
 # below the mount, a face selector's the mount level itself.
 _reader_violation(label::Symbol, authored, mount::String, reason::Symbol; kw...) =
-    TapResolution(; label = label, selector = _spell(authored), reason = reason,
-                  mount = mount, tap = _tap(authored),
-                  path = _mounted_path(mount, _selpath(authored)),
-                  leaf = _leaf_string(authored), kw...)
+    ReadResolution(; label = label, selector = _spell(authored), reason = reason,
+                   mount = mount, path = _mounted_path(mount, _selpath(authored)),
+                   leaf = _leaf_string(authored), kw...)
 
 # A step the leaf address cannot take, with what `resolve_leaf` or `parse_leaf`
 # had in hand (§14.4, D-276). A face selector passes its matched face.
@@ -600,10 +600,6 @@ _leaf_violation(label::Symbol, authored, mount::String, refusal::LeafRefusal; kw
 _leaf_violation(read::MountedRead, refusal::LeafRefusal) =
     _reader_violation(read, refusal.reason; step = refusal.step,
                       declared = refusal.declared, candidates = refusal.candidates)
-
-_tap(::Union{GetState,GetDeriv}) = :x
-_tap(::Union{GetOutput,GetFace}) = :y
-_tap(::GetInput) = :u
 
 _selpath(selector::Union{GetState,GetDeriv,GetOutput}) = selector.path
 _selpath(::Union{GetInput,GetFace}) = ""

@@ -463,15 +463,18 @@ D-203, D-233, D-244, D-256, D-261, D-268, D-270, D-315, D-317.
 - `ArgumentInvalid`'s arms off the deployment surface (D-256, D-261).
 - The `Trim*` kinds `TrimProblemInvalid`, `TrimCommitEvents`,
   `TrimCommitResiduals` and `TrimCommitChecks` (D-262).
-- `TapResolution`'s tap-set reasons, with the `list`, `pinning` and
-  `duplicate_of` fields; `ReadSetMisuse`'s `:not_a_tap_list`;
+- `ReadResolution`, the read-selector family's refusals, and `_read_message`,
+  the message it shares with `TapResolution` (§14.4, D-406).
+- `TapResolution`'s tap-set reasons alone, with the `tap`, `list`, `pinning`
+  and `duplicate_of` fields; `ReadSetMisuse`'s `:not_a_tap_list`;
   `ArgumentInvalid`'s `:not_a_tap_set`, `:t0_without_about`,
-  `:nonpositive_width` and `:non_nominal` (D-272).
-- `TapResolution`'s and `ReadBindingUnresolved`'s leaf reasons
+  `:nonpositive_width` and `:non_nominal` (D-272, D-406).
+- `ReadResolution`'s and `ReadBindingUnresolved`'s leaf reasons
   `LEAF_REASONS`, with the `leaf` and `step` fields, and `_leaf_clause`
   (D-276).
-- `TapResolution`'s `mount` and `producer` fields, and the reasons
-  `:no_input_face`, `:internally_wired` and `:input_face_not_output` (D-277).
+- `ReadResolution`'s and `TapResolution`'s `mount` field, and
+  `ReadResolution`'s `producer` field and reasons `:no_input_face`,
+  `:internally_wired` and `:input_face_not_output` (D-277).
 - `TierUnreadable` and `StatelessWithoutOutputs` (D-263).
 - `InternalInvariant`.
 - §13.4's runtime trio `CursorFrame`, `StepError` and `NonfiniteState`.
@@ -492,9 +495,10 @@ D-203, D-233, D-244, D-256, D-261, D-268, D-270, D-315, D-317.
 - `ArgumentInvalid`'s `:scalar` on `Model`, the materialization's refusal of
   its scalar (§9.2, D-320).
 
-Spec: §9.1, §9.2, §12.6, §12.7, §13.1, §13.2, §13.4, §13.5, §14.8, §14.9, §14.10, Appendix C,
+Spec: §9.1, §9.2, §12.6, §12.7, §13.1, §13.2, §13.4, §13.5, §14.4, §14.8, §14.9, §14.10, Appendix C,
 D-058, D-059, D-157, D-187, D-214, D-215, D-222, D-225, D-250, D-255, D-256,
-D-261, D-262, D-263, D-272, D-274, D-276, D-277, D-316, D-318, D-319, D-320.
+D-261, D-262, D-263, D-272, D-274, D-276, D-277, D-316, D-318, D-319, D-320,
+D-406.
 
 ### `src/executor.jl`
 
@@ -594,6 +598,9 @@ D-235, D-236, D-237, D-238, D-243, D-263, D-264, D-265, D-276, D-316.
   the member in the wrong list, the unseedable root input and a second seed
   at one site refused. The unseedable root input names its pinning consumers
   with their tiers, the duplicate the earlier label.
+- `_tap_violation`, the tap-set builder: each of the five refusals is a
+  `TapResolution`, its tap set read off the selector's kind by `_tap`. A
+  read's own refusal stays the `ReadResolution` readers.jl raised (D-406).
 - At a mount the collecting tap resolution mounts each list. The kind check
   reads the selector as authored, and a chain that fails is reported once
   across the three lists. The pinning meet sees the root input the chain
@@ -605,7 +612,7 @@ D-235, D-236, D-237, D-238, D-243, D-263, D-264, D-265, D-276, D-316.
   linear `[k]` names and the two spellings are one site (D-276).
 
 Spec: §9.7, §14.4, §14.10, D-036, D-167, D-168, D-197, D-213, D-272, D-274,
-D-276, D-277, D-317, D-319.
+D-276, D-277, D-317, D-319, D-406.
 
 ### `src/model.jl`
 
@@ -692,6 +699,8 @@ D-320.
 - The internal `_compile_reads`, which yields a `Reader{T}`. Each entry carries
   its chain as a type parameter, and the `CellRead` core reads a store bundle,
   so every gather over a table shares it.
+- The violations, `ReadResolution` values built by `_reader_violation` and
+  `_leaf_violation`, the same at trim and at linearization (D-406).
 - `gather_reads`, `apply!`'s twin over an executor. It reads its entries
   through the generated `_read_entries`, which `gather_snapshot` shares.
 - The output-port candidates, read off the `Outputs`.
@@ -699,7 +708,7 @@ D-320.
   check on plans sits in conditions.jl's `apply!`.
 
 Spec: §13.1, §13.3, §14.1, §14.4, §14.7, §14.9, §14.10, D-125, D-130, D-253,
-D-276, D-277, D-315.
+D-276, D-277, D-315, D-406.
 
 ### `src/roster.jl`
 

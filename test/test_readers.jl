@@ -198,7 +198,7 @@ function test_readers()
         @test a isa PathResolution && a.reason === :unknown_child && a.segment == "plnt" &&
               a.candidates == ["plant", "ctl", "src"]
         @test startswith(a.entry, "the read labeled `a`")
-        @test all(x -> x isa TapResolution, (b_, c, d))
+        @test all(x -> x isa ReadResolution, (b_, c, d))
         @test b_.reason === :undeclared && b_.declares === :output_port &&
               b_.field === :thrust && b_.candidates == [:y, :power]            # the list in hand
         @test c.selector == "get_deriv(\"ctl\", :acc)" && c.reason === :discrete_deriv
@@ -213,15 +213,15 @@ function test_readers()
                                                  e = get_input("u[1]"), f = get_face("y[1]")),
                                      readable_build))
         (a, b_, c, d, e, f) = diagnostics(err)
-        @test a.reason === :assembly_path && a.path == "" && a.tap === :y
+        @test a.reason === :assembly_path && a.path == ""
         @test b_.reason === :input_face_not_output && b_.field === :u
         @test c.reason === :not_indexable && c.step == "[1]" && c.declared === Float64 &&
               c.leaf == "y[1]" && c.field === :y
         @test d.reason === :undeclared && d.declares === :state_field && d.field === :ω &&
               d.candidates == [:q]
         # The two table selectors check their steps as the others do (D-276).
-        @test e.reason === :not_indexable && e.step == "[1]" && e.declared === Float64 && e.tap === :u
-        @test f.reason === :not_indexable && f.step == "[1]" && f.declared === Float64 && f.tap === :y
+        @test e.reason === :not_indexable && e.step == "[1]" && e.declared === Float64
+        @test f.reason === :not_indexable && f.step == "[1]" && f.declared === Float64
         # The selector as authored: a `Symbol` leaf with its colon, a string one quoted.
         @test b_.selector == "get_face(:u)" && c.selector == "get_output(\"plant\", \"y[1]\")"
 
@@ -236,7 +236,7 @@ function test_readers()
                                                  g = get_state("c", "q.x")),
                                            build(pose_model())))
         by_label = Dict(d.label => d for d in diagnostics(err))
-        @test length(by_label) == 7 && all(d -> d isa TapResolution, values(by_label))
+        @test length(by_label) == 7 && all(d -> d isa ReadResolution, values(by_label))
         @test by_label[:a].reason === :leaf_syntax && by_label[:a].step == "[" &&
               by_label[:a].declared === nothing && by_label[:a].leaf == "pose.v["
         @test by_label[:b].reason === :no_such_field && by_label[:b].step == ".q" &&
@@ -389,14 +389,14 @@ function test_readers()
         fed_build = build(sibling_fed())
         d = only(diagnostics(failure(() ->
                 _compile_reads(at("trig", reads(s = get_input(:sig))), fed_build))))
-        @test d isa TapResolution && d.reason === :internally_wired && d.mount == "trig" &&
+        @test d isa ReadResolution && d.reason === :internally_wired && d.mount == "trig" &&
               d.producer == ("plant", :y) && d.field === :sig && d.selector == "get_input(:sig)"
         d = only(diagnostics(failure(() ->
                 _compile_reads(at("plant", reads(n = get_input(:nope))), fed_build))))
-        @test d isa TapResolution && d.reason === :no_input_face && d.mount == "plant" &&
+        @test d isa ReadResolution && d.reason === :no_input_face && d.mount == "plant" &&
               d.field === :nope && d.candidates == [:u]
         d = only(diagnostics(failure(() -> _compile_reads(reads(n = get_input(:nope)), fed_build))))
-        @test d isa TapResolution && d.reason === :unknown_root_input && d.mount == "" &&
+        @test d isa ReadResolution && d.reason === :unknown_root_input && d.mount == "" &&
               d.field === :nope && d.candidates == [:u]
 
         # The faces at a mount are the level's own, and an input face read as an
@@ -404,11 +404,11 @@ function test_readers()
         wrapped_build = build(wrapped_readable())
         d = only(diagnostics(failure(() ->
                 _compile_reads(at("inner", reads(f = get_face(:nope))), wrapped_build))))
-        @test d isa TapResolution && d.reason === :unknown_output_face && d.mount == "inner" &&
+        @test d isa ReadResolution && d.reason === :unknown_output_face && d.mount == "inner" &&
               d.field === :nope && d.candidates == [:y]
         d = only(diagnostics(failure(() ->
                 _compile_reads(at("inner", reads(f = get_face(:u))), wrapped_build))))
-        @test d isa TapResolution && d.reason === :input_face_not_output && d.mount == "inner" &&
+        @test d isa ReadResolution && d.reason === :input_face_not_output && d.mount == "inner" &&
               d.field === :u
 
         # A refusal raised after the rebase still describes the read as authored:
@@ -417,12 +417,12 @@ function test_readers()
         dotted_build = build(wrapped_dotted())
         d = only(diagnostics(failure(() ->
                 _compile_reads(at("inner", reads(a = get_face("att.theta[1]"))), dotted_build))))
-        @test d isa TapResolution && d.reason === :not_indexable && d.mount == "inner" &&
-              d.path == "inner" && d.field === Symbol("att.theta") && d.tap === :y
+        @test d isa ReadResolution && d.reason === :not_indexable && d.mount == "inner" &&
+              d.path == "inner" && d.field === Symbol("att.theta")
         d = only(diagnostics(failure(() ->
                 _compile_reads(at("inner", reads(b = get_input("left.brake[3]"))), dotted_build))))
-        @test d isa TapResolution && d.reason === :index_bounds && d.mount == "inner" &&
-              d.path == "inner" && d.field === Symbol("left.brake") && d.tap === :u
+        @test d isa ReadResolution && d.reason === :index_bounds && d.mount == "inner" &&
+              d.path == "inner" && d.field === Symbol("left.brake")
 
         # Collecting: a bad path, a wired input and an unknown face in one mounted
         # set are one refusal with three diagnostics, each naming the mount.
@@ -433,9 +433,9 @@ function test_readers()
         (a, b_, c) = diagnostics(err)
         @test a isa PathResolution && a.reason === :unknown_child && a.segment == "nope" &&
               a.entry == "the read labeled `a`, get_state(\"nope\", :q), mounted at `trig`"
-        @test b_ isa TapResolution && b_.reason === :internally_wired && b_.mount == "trig" &&
+        @test b_ isa ReadResolution && b_.reason === :internally_wired && b_.mount == "trig" &&
               b_.producer == ("plant", :y)
-        @test c isa TapResolution && c.reason === :unknown_output_face && c.mount == "trig" &&
+        @test c isa ReadResolution && c.reason === :unknown_output_face && c.mount == "trig" &&
               c.candidates == [:on]
     end
 

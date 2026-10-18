@@ -1474,6 +1474,71 @@ function message(d::DeviceContractMismatch)
     "`reads` enumeration (§11.6)"
 end
 
+"§14.4: a read selector that does not resolve against this build (D-406)."
+Base.@kwdef struct ReadResolution <: Diagnostic
+    # The payload Appendix C names for the kind.
+    label::Symbol                            # the read's label in the set
+    selector::String                         # the selector as authored
+    mount::String = ""                       # the joined mount path it was authored at (D-277)
+    reason::Symbol   # :assembly_path|:undeclared|:discrete_deriv|
+                     # :unknown_root_input|:no_input_face|:internally_wired|
+                     # :input_face_not_output|:unknown_output_face|
+                     # the leaf address's (§14.4, D-276): :leaf_syntax|:no_such_field|
+                     # :opaque_leaf|:not_indexable|:index_arity|:index_bounds
+                     # A missing input face is :unknown_root_input at the root
+                     # and :no_input_face at a mount. :input_face_not_output
+                     # serves both levels.
+    # Both describe the read as authored, at a mount too. `path` is the mount
+    # path joined to the selector's own path, the mount itself for a face
+    # selector. `field` is a face selector's matched face and a path selector's
+    # head.
+    path::String = ""
+    field::Union{Nothing,Symbol} = nothing
+    leaf::String = ""                        # the leaf address as authored
+    step::String = ""                        # the step at fault, as spelled
+    declares::Union{Nothing,Symbol} = nothing  # :state_field | :output_port
+    declared::Any = nothing
+    candidates::Vector{Symbol} = Symbol[]
+    producer::Union{Nothing,Tuple{String,Symbol}} = nothing  # :internally_wired — the port feeding the face
+end
+path(d::ReadResolution) = d.path
+
+function message(d::ReadResolution)
+    d.reason === :assembly_path &&
+        return _read_message(d, "$(_at_path(d.path)) is an assembly — a path selector addresses " *
+                           "a component's own declarations, and a level's exported face is " *
+                           "read with `get_face`")
+    d.reason in LEAF_REASONS && return _read_message(d, _leaf_clause(d), "§14.4, D-276")
+    d.reason === :discrete_deriv &&
+        return _read_message(d, "$(_at_path(d.path)) is a discrete component — a discrete `s` " *
+                           "has no derivative, and `ẋ` exists on the continuous tier alone",
+                           "§7.1, §14.4, D-195")
+    d.reason === :undeclared &&
+        return _read_message(d, "$(_at_path(d.path)) declares no $(_tap_noun(d.declares)) " *
+                           "`$(d.field)` — its $(_tap_noun(d.declares)) names are " *
+                           "$(_namelist(d.candidates))")
+    d.reason === :unknown_root_input &&
+        return _read_message(d, "`$(d.field)` is no root input face — the root's inputs are " *
+                           "$(_namelist(d.candidates))")
+    d.reason === :no_input_face &&
+        return _read_message(d, "`$(d.field)` is no input face of $(_at_path(d.mount)) — its " *
+                           "input faces are $(_namelist(d.candidates))", "§14.9, D-277")
+    d.reason === :internally_wired &&
+        return _read_message(d, "`$(d.field)` is fed by `$(first(d.producer))/" *
+                           "$(last(d.producer))`, so no root input holds it — a mounted " *
+                           "problem or tap set reads and writes its level's faces through the export " *
+                           "chain, and a face the world computes is not free", "§14.9")
+    d.reason === :input_face_not_output &&
+        return _read_message(d, "`$(d.field)` is an *input* face of $(_at_path(d.mount)) — " *
+                           "`get_face` reads the output faces a level exports, and an input " *
+                           "face is read back with `get_input`")
+    isempty(d.mount) ||
+        return _read_message(d, "`$(d.field)` is no output face of `$(d.mount)` — its " *
+                           "output faces are $(_namelist(d.candidates))", "§14.4, D-277")
+    _read_message(d, "`$(d.field)` is no root-exported output face — the root exports " *
+                "$(_namelist(d.candidates))")
+end
+
 "§11.2, §14.4: a binding read that does not resolve against the published snapshot."
 Base.@kwdef struct ReadBindingUnresolved <: Diagnostic
     device::String                           # the device type, admission not yet reached
@@ -1637,21 +1702,14 @@ message(d::UninitializedInputs) =
     "default (§11.3), so an application establishing a complete world authors every one of " *
     "them; nothing was written (§14.6, D-068)"
 
-"§14.10: a read selector that does not resolve against this build."
+"§14.10: a tap the tap set itself refuses, beside the reads' `ReadResolution` values."
 Base.@kwdef struct TapResolution <: Diagnostic
+    # The payload Appendix C names for the kind.
     label::Symbol                            # the read's label in the set
     selector::String                         # the selector as authored
     mount::String = ""                       # the joined mount path it was authored at (D-277)
-    reason::Symbol   # :assembly_path|:undeclared|:discrete_deriv|
-                     # :unknown_root_input|:no_input_face|:internally_wired|
-                     # :input_face_not_output|:unknown_output_face|
-                     # the leaf address's (§14.4, D-276): :leaf_syntax|:no_such_field|
-                     # :opaque_leaf|:not_indexable|:index_arity|:index_bounds|
-                     # the tap set's (§14.10): :tap_kind|:discrete_state|:vector_tap|:unseedable|
+    reason::Symbol   # the tap set's (§14.10): :tap_kind|:discrete_state|:vector_tap|:unseedable|
                      # :duplicate_site
-                     # A missing input face is :unknown_root_input at the root
-                     # and :no_input_face at a mount. :input_face_not_output
-                     # serves both levels.
     tap::Union{Nothing,Symbol} = nothing     # :x | :u | :y
     # Both describe the read as authored, at a mount too. `path` is the mount
     # path joined to the selector's own path, the mount itself for a face
@@ -1661,13 +1719,10 @@ Base.@kwdef struct TapResolution <: Diagnostic
     field::Union{Nothing,Symbol} = nothing
     leaf::String = ""                        # the leaf address as authored
     step::String = ""                        # the step at fault, as spelled
-    declares::Union{Nothing,Symbol} = nothing  # :state_field | :output_port
     declared::Any = nothing
-    candidates::Vector{Symbol} = Symbol[]
     list::Union{Nothing,Symbol} = nothing          # :tap_kind — the list the selector sat in
     pinning::Vector{Tuple{String,Symbol,Any}} = Tuple{String,Symbol,Any}[]  # :unseedable — (consumer path, its tier, its declared entry)
     duplicate_of::Union{Nothing,Symbol} = nothing  # :duplicate_site — the earlier tap's label
-    producer::Union{Nothing,Tuple{String,Symbol}} = nothing  # :internally_wired — the port feeding the face
 end
 path(d::TapResolution) = d.path
 
@@ -1677,14 +1732,15 @@ _tap_noun(declares) = declares === :output_port ? "output port" : "state field"
 _tap_list_kinds(list) = list === :x ? "`get_state` alone" :
                         list === :u ? "`get_input` alone" : "`get_output` and `get_face`"
 
-# The tap set comes off the selector's own kind, so every arm has it and the
-# shared prefix shows it: which of `x`/`u`/`y` the read addresses is §14.10's
-# payload. A mounted read names its mount after the selector as authored
-# (D-277). The citation is the clause's own, one group per message.
-_tap_violation(d, what, citation = "§14.4") =
+# The message both read kinds share. A mounted read names its mount after the
+# selector as authored (D-277). A `TapResolution` carries the tap set, which of
+# `x`/`u`/`y` the read addresses, and the prefix shows it (§14.10); a
+# `ReadResolution` has none. The citation is the clause's own, one group per message.
+_read_message(d, what, citation = "§14.4") =
     "the read labeled `$(d.label)` is $(d.selector)" *
     (isempty(d.mount) ? "" : ", mounted at `$(d.mount)`") *
-    (d.tap === nothing ? "" : " (tap `$(d.tap)`)") * ", and $what ($citation)"
+    (d isa TapResolution && d.tap !== nothing ? " (tap `$(d.tap)`)" : "") *
+    ", and $what ($citation)"
 
 const LEAF_REASONS = (:leaf_syntax, :no_such_field, :opaque_leaf, :not_indexable,
                       :index_arity, :index_bounds)
@@ -1717,56 +1773,22 @@ end
 _count_word(n::Int) = n ≤ 4 ? ("one", "two", "three", "four")[n] : string(n)
 
 function message(d::TapResolution)
-    d.reason === :assembly_path &&
-        return _tap_violation(d, "$(_at_path(d.path)) is an assembly — a path selector addresses " *
-                           "a component's own declarations, and a level's exported face is " *
-                           "read with `get_face`")
-    d.reason in LEAF_REASONS && return _tap_violation(d, _leaf_clause(d), "§14.4, D-276")
-    d.reason === :discrete_deriv &&
-        return _tap_violation(d, "$(_at_path(d.path)) is a discrete component — a discrete `s` " *
-                           "has no derivative, and `ẋ` exists on the continuous tier alone",
-                           "§7.1, §14.4, D-195")
-    d.reason === :undeclared &&
-        return _tap_violation(d, "$(_at_path(d.path)) declares no $(_tap_noun(d.declares)) " *
-                           "`$(d.field)` — its $(_tap_noun(d.declares)) names are " *
-                           "$(_namelist(d.candidates))")
     d.reason === :tap_kind &&
-        return _tap_violation(d, "it sits in the tap list `$(d.list)`, which takes " *
+        return _read_message(d, "it sits in the tap list `$(d.list)`, which takes " *
                            "$(_tap_list_kinds(d.list)) — membership is closed per list",
                            "§14.10, D-272")
     d.reason === :discrete_state &&
-        return _tap_violation(d, "$(_at_path(d.path)) is a discrete component — the pass " *
+        return _read_message(d, "$(_at_path(d.path)) is a discrete component — the pass " *
                            "holds the discrete tier frozen, so a tap on its store `$(d.field)` " *
                            "could only yield a zero row and column; the recorded next move is " *
                            "the sampled-data step map Φ", "§14.10, D-197")
     d.reason === :vector_tap &&
-        return _tap_violation(d, "the leaf it names is declared $(d.declared) — a tap is one " *
+        return _read_message(d, "the leaf it names is declared $(d.declared) — a tap is one " *
                            "scalar" * _vector_tap_remedy(d), "§14.10, D-276")
-    d.reason === :unseedable && return _tap_violation(d, _unseedable_clause(d)...)
-    d.reason === :duplicate_site &&
-        return _tap_violation(d, "it resolves to the site the tap labeled `$(d.duplicate_of)` " *
-                           "already seeds — one site is one column, and a second seed there " *
-                           "would overwrite the first", "§14.10, D-272")
-    d.reason === :unknown_root_input &&
-        return _tap_violation(d, "`$(d.field)` is no root input face — the root's inputs are " *
-                           "$(_namelist(d.candidates))")
-    d.reason === :no_input_face &&
-        return _tap_violation(d, "`$(d.field)` is no input face of $(_at_path(d.mount)) — its " *
-                           "input faces are $(_namelist(d.candidates))", "§14.9, D-277")
-    d.reason === :internally_wired &&
-        return _tap_violation(d, "`$(d.field)` is fed by `$(first(d.producer))/" *
-                           "$(last(d.producer))`, so no root input holds it — a mounted " *
-                           "problem or tap set reads and writes its level's faces through the export " *
-                           "chain, and a face the world computes is not free", "§14.9")
-    d.reason === :input_face_not_output &&
-        return _tap_violation(d, "`$(d.field)` is an *input* face of $(_at_path(d.mount)) — " *
-                           "`get_face` reads the output faces a level exports, and an input " *
-                           "face is read back with `get_input`")
-    isempty(d.mount) ||
-        return _tap_violation(d, "`$(d.field)` is no output face of `$(d.mount)` — its " *
-                           "output faces are $(_namelist(d.candidates))", "§14.4, D-277")
-    _tap_violation(d, "`$(d.field)` is no root-exported output face — the root exports " *
-                "$(_namelist(d.candidates))")
+    d.reason === :unseedable && return _read_message(d, _unseedable_clause(d)...)
+    _read_message(d, "it resolves to the site the tap labeled `$(d.duplicate_of)` " *
+                "already seeds — one site is one column, and a second seed there " *
+                "would overwrite the first", "§14.10, D-272")
 end
 
 # `:vector_tap`'s remedy. An `SArray` leaf splits by index steps; a struct leaf

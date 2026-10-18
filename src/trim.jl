@@ -277,7 +277,7 @@ end
 # One collecting pass over what a build can answer, then the guess evaluation,
 # which is where the residual return is observed. Both throws are §13.1's
 # collecting form: `TrimProblemInvalid` values for the problem's own fields,
-# with the read set's `TapResolution` values spliced in beside them — the read
+# with the read set's `ReadResolution` values spliced in beside them — the read
 # keeps its own kind and the *problem* is what the setup is refusing, which is
 # what `_resolve_reads` was factored apart for.
 
@@ -357,7 +357,7 @@ function _check_floats!(diags::Vector{Diagnostic}, name::Symbol, field_value::Na
 end
 
 # The read set: a `reads(…)` value whose selectors resolve against this build.
-# Its violations are §14.4's own `TapResolution` values, spliced into this list
+# Its violations are §14.4's own `ReadResolution` values, spliced into this list
 # as they are — the read is named as authored, with the list in hand — because
 # here the *problem* is what is malformed (§14.8) and one throw reports both
 # halves of it.
