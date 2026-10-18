@@ -193,7 +193,8 @@ Every tracking time constant `Tt` is one period, 0.02 s, the tracker's
 included. A block not in command follows the selected command with a lag
 that grows with `Tt` and with the rate at which its own law moves, so a
 short `Tt` keeps the tracker, the altitude loop and the airspeed loop
-within about 0.015 rad of the command during a maneuver. The pitch-rate
+within about 0.015 rad of the command once a maneuver's fast part is over,
+and within a few hundredths during it. The pitch-rate
 and attitude loops, whose references move with the measured state, sit a
 few hundredths of a radian off whatever `Tt` is. A block in command
 back-calculates against its limits, and at one period it pulls a limited
@@ -229,8 +230,8 @@ loop, so when the cascade is re-engaged every integrator holds nearly the
 value that reproduces the current command.
 
 The switch is bumpless in steady flight. During a maneuver the standby lags
-the command by about `Tt` times the command's slew rate plus one tick, a
-few hundredths of a radian at one period. With the cascade in command, the
+the command by a few hundredths of a radian at one period, more while the
+command slews fast. With the cascade in command, the
 standby tracker stays within about 0.034 rad of the elevator command over
 the climb after its first half second. It peaks at 0.43 rad right after
 the reference step, since the step moves the tracker's own law in one
