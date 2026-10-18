@@ -20,6 +20,12 @@ item changes what the spec says, the spec edit is part of the item.
   The admission of an assembly's face or a root input under
   `get_output(path, name)` retires with it (§11.2, §11.6, §14.4,
   Appendix C).
+- **A post-run series over the log** (D-407). `series(sim, read_set)`
+  resolves a `Reads` for a table source through `_resolve_reads`, gathers
+  each entry over `logged(sim)` into one typed column behind a function
+  barrier, and returns the columns labeled beside `t`, `frame` and
+  `boundary`; labels never reach a compiled body. The examples' testset
+  replaces its `logged_port` helper with it (§11.2, Appendix B).
 - **A precompile workload** for the generic machinery a cold process
   pays, about 9 s whatever the model (§9.7), run on a closed loop of library
   blocks: a workload exercises only what the package can see, and the

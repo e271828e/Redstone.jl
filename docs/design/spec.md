@@ -7087,6 +7087,19 @@ artifact the grid parameters fix), and replay neither records nor compares it
 ([§11.5][s11-5], [§12.4][s12-4], [§12.7][s12-7]). Sizing follows. A finite `log_max` is the log's `sizehint!`
 ([§9.8][s9-8]).
 
+**Post-run extraction reads the log through the read-selector family**
+([D-407][d-407]). `series(sim, read_set)` takes a read set, the value trim's
+`reads` builds and `at` mounts ([§14.7][s14-7], [§14.9][s14-9]), resolves it
+against the `Build` for a table source through the resolution every reader
+shares ([§14.4][s14-4], [D-406][d-406]), and gathers each labeled entry over
+the retained snapshots into one column, a plain vector of the entry's leaf
+type. The columns come back labeled as the set labels them, beside the
+snapshots' `t`, frame and boundary ordinals. A store selector is refused as
+it is at attach, since a snapshot carries no stores. Resolution runs once
+per call, so a column costs one typed loop over the log and no name lookup
+per snapshot. What a user plots is a column against `t`. A window is a mask
+over `t`, and full density over a segment is replay's ([§11.5][s11-5], [§12.7][s12-7]).
+
 #### Output-device bindings
 
 **Output-device [bindings](#g-binding) are snapshot bindings** ([D-083][d-083]). A binding is the value
@@ -13169,7 +13182,10 @@ return law, [§5.2][s5-2]). There is no padding. `x` comes back complete, and
   ports read at every published boundary unless the advance ignores them
   ([§13.5][s13-5]). Shutdown completes a boundary,
   publishes the final snapshot, then joins ([§12.4][s12-4]).
-- Post-run. The log is the retained snapshots. `trace(sim) → trc` retrieves
+- Post-run. The log is the retained snapshots. `series(sim, read_set) →
+  series` gathers them into labeled columns through the read-selector
+  family, one typed vector per entry beside `t`, frame and boundary
+  ([§11.2][s11-2], [D-407][d-407]). `trace(sim) → trc` retrieves
   the always-on input trace.
   `replay!(sim2, trc; to_boundary = k, pace = Inf, margin = 0.002,
   t_end = Inf, ignore_stop_requests = (), restore = true)`, taking `init!`'s four
@@ -15112,6 +15128,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-403]: decisions.md#d-403--read-each-device-tasks-last_seen-off-the-counter-at-spawn
 [d-404]: decisions.md#d-404--attach-the-feed-to-the-simulation-as-it-stands-under-replays-restore--false
 [d-406]: decisions.md#d-406--resolve-a-bindings-reads-through-the-one-read-resolver
+[d-407]: decisions.md#d-407--read-the-log-through-the-read-selector-family-as-columns
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop
