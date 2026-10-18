@@ -404,6 +404,7 @@ were derived.
 | [D-403][d-403] | Read each device task's `last_seen` off the counter at spawn | ratified |
 | [D-404][d-404] | Attach the feed to the simulation as it stands under `replay!`'s `restore = false` | ratified |
 | [D-405][d-405] | Spell the condition algebra's leaf constructor `set` | ratified |
+| [D-406][d-406] | Resolve a binding's reads through the one read resolver | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -8330,6 +8331,11 @@ parameters alone; the run-shaping keywords left it. `log`, `log_every` and
 validates the `Simulation` constructor's keywords under `ArgumentInvalid`,
 whose call list also names `init!`, `restore!`, `run!` and `replay!`.
 
+Annotation (2026-10-19): amended by [D-406][d-406]. `ReadBindingUnresolved`
+retires. The read refusal at attach is `ReadResolution`, which carries the
+read's label and not the device; the `attach!` call names the device and the
+binding.
+
 **Rejected.**
 - *Making the three service checks fail-fast to match the column:* throws
   away violations the pass already has, against [§13.1][s13-1]'s reasoning.
@@ -16073,6 +16079,76 @@ Setfield.jl qualifies one of the two, as it would for `at`.
   the spelling was unsettled, the examples package being its first use in
   anything like real code.
 
+### D-406 — Resolve a binding's reads through the one read resolver
+
+**Status.** ratified
+
+**Position.** Attach resolves a binding's `reads` through the read-selector
+family's one collecting resolver, the resolver trim and linearization already
+use ([§11.2][s11-2], [§13.1][s13-1], [§14.4][s14-4]). The bundled rulings:
+
+- The resolver takes the source it resolves for, live stores or a signal
+  table. Under a table source a store selector is refused as
+  `:store_selector`, with the remedy named. The source rule is the
+  resolver's, not a client's.
+- The refusals the resolver raises are one kind, `ReadResolution`, collected
+  and surfaced at every site. `TapResolution` keeps [§14.10][s14-10]'s five tap-set
+  reasons alone. `ReadBindingUnresolved` retires.
+- A binding's path selector names a primitive's own port, as every reader's
+  does, and a face an assembly exports is read with `get_face`. The
+  admission of an assembly's output face, or of a root input, under
+  `get_output(path, name)` retires, having never been ruled.
+- A binding's read set resolves at the root, with no mount. Whether it may
+  carry an `at` chain is left open until a binding needs an inner assembly's
+  face ([D-199][d-199]).
+- A read refusal at attach carries the read's label and not the device. The
+  `attach!` call names the device and the binding (amends [D-216][d-216]).
+
+**Spec.** [§11.2][s11-2], [§11.6][s11-6], [§14.4][s14-4], [§14.7][s14-7], [Appendix C][sC]
+
+**Rationale.** The family is closed, one address space for every reader of
+the model, and it splits by source and not by client ([§14.4][s14-4]). Attach
+nevertheless kept a resolver of its own over the layout's address table,
+beside the collecting one every service uses, and the two disagreed on what
+a path selector may name. The binding's admitted an assembly's output face
+through the alias the layout keeps for it, and a root input through its
+empty path, where the service resolver refused the first as an assembly
+path and had no spelling for the second. Neither admission was tested or
+used. The binding's resolver also threw at the first bad selector, so a
+binding with three bad reads learned of one per attempt, where every other
+site collects. One resolver with a source argument removes the duplicate and
+the divergence together, and a post-run reader over the log becomes a third
+site rather than a third resolver.
+
+The kind's name follows its producer. The resolver's refusals surfaced as
+`TapResolution` at trim as well as at linearization, and every trim read
+that failed printed "tap" after its selector. The name was linearization's
+and the type was everyone's. `ReadResolution` is what the resolver raises,
+and `TapResolution` is what the tap set's own checks raise, which is what
+its name says, beside `PathResolution` and `ConditionResolution`.
+
+The device is one frame up. [D-216][d-216] made `ReadBindingUnresolved` name the
+device by type because admission had assigned no id yet. The label
+identifies the read inside the binding, and the `attach!` call that threw
+named both the device and the binding, so the kind carries neither.
+
+**Rejected.**
+- *Lift the binding's resolver into readers.jl as a neutral function and
+  keep the binding's own kind as a wrap:* relocates the second resolver
+  instead of removing it, and the two readings of a path selector would
+  survive side by side.
+- *Raise `TapResolution` at attach:* a device author's first failure would
+  name a mechanism of linearization, and the name already misled at trim.
+- *Convert each collected refusal into a collected `ReadBindingUnresolved`
+  carrying the device and the binding:* keeps a spec-named kind at the cost
+  of a second reason vocabulary and a field mapping, to carry two names the
+  call site already has.
+- *Teach the resolver the alias, so `get_output(path, face)` resolves an
+  assembly's face everywhere:* a face's type and tier are derived from its
+  producer ([§8.6][s8-6]), and `get_face` is the selector that reads a face. A path
+  selector naming one would blur the two, and the mount gives an inner
+  assembly's face its spelling where a reader needs one.
+
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
 [d-002]: #d-002--adopt-the-causal-port-based-paradigm
@@ -16453,6 +16529,7 @@ Setfield.jl qualifies one of the two, as it would for `at`.
 [d-403]: #d-403--read-each-device-tasks-last_seen-off-the-counter-at-spawn
 [d-404]: #d-404--attach-the-feed-to-the-simulation-as-it-stands-under-replays-restore--false
 [d-405]: #d-405--spell-the-condition-algebras-leaf-constructor-set
+[d-406]: #d-406--resolve-a-bindings-reads-through-the-one-read-resolver
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property

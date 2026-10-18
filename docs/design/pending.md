@@ -12,6 +12,14 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
+- **One read resolver** (D-406). Attach resolves a binding's `reads` through
+  `_resolve_reads` with a table source, every violation collected.
+  `ReadResolution` splits off `TapResolution`, which keeps §14.10's five
+  tap-set reasons; `ReadBindingUnresolved`, `ReadGather`, `gather_snapshot`
+  and bindings.jl's own resolver retire; `Reader` gathers over a snapshot.
+  The admission of an assembly's face or a root input under
+  `get_output(path, name)` retires with it (§11.2, §11.6, §14.4,
+  Appendix C).
 - **A precompile workload** for the generic machinery a cold process
   pays, about 9 s whatever the model (§9.7), run on a closed loop of library
   blocks: a workload exercises only what the package can see, and the

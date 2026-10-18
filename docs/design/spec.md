@@ -7095,13 +7095,15 @@ consumes snapshots as [§12.3][s12-3] specifies. Examples are telemetry, disk st
 and the XPlane visualizer (FlightCore's `XPlane12Control` output device). An
 output device addresses what it reads with the [selectors](#g-selector) (the closed family of
 deferred reads resolving against a source, [§14.4][s14-4]). They reach any cell, since
-inspection reads admit deep paths. A binding is resolved at attach against the
-`Build` with [did-you-mean](#g-did-you-mean) (the offending name plus the list-in-hand it should
-have matched), and compiled to one gather, the output half of the binding
+inspection reads admit deep paths. **A binding's reads resolve at attach
+through the one resolver every reader of the family shares** ([D-406][d-406]),
+against the `Build`, with [did-you-mean](#g-did-you-mean) (the offending name plus the list-in-hand it should
+have matched), and compile to one gather, the output half of the binding
 interface ([§11.6][s11-6]). `map_output` therefore receives a labeled NamedTuple ([§11.6][s11-6])
 instead of performing its own path lookups. A model substitution that breaks a
-binding therefore fails at attach, not with silent garbage on the wire. Attach
-refuses such a binding with `ReadBindingUnresolved` ([D-130][d-130]). An exporting logger
+binding therefore fails at attach, not with silent garbage on the wire ([D-130][d-130]).
+**Attach refuses such a binding with the read's own kind, `ReadResolution`,
+every violation collected** ([§13.1][s13-1], [D-406][d-406]). An exporting logger
 treats field-handle signals specially. It skips or summarizes them.
 
 An output device's read of the snapshot is inspection ([§13.5][s13-5], [D-083][d-083]). It is
@@ -8065,7 +8067,9 @@ the closed family of deferred reads ([§14.4][s14-4]). An example is
 naming, carried through compilation in declaration order, so the NamedTuple
 `map_output` receives is keyed by exactly the names `reads` declared. One
 returned value thereby fixes names, order and reads together, under the same
-attach-time validation as `claims` ([D-199][d-199]).
+attach-time validation as `claims` ([D-199][d-199]). **The read set resolves at
+the root, with no mount** ([D-406][d-406]). A path selector's path is absolute,
+and a face selector names a root input or a root-exported face.
 
 The periphery gets roots where [components](#g-component) (the units of modeling) have one. [§8.5][s8-5]
 refuses a supertype for [class](#g-class) (a component's primitive-vs-assembly status) for
@@ -10204,9 +10208,9 @@ mount point ([§14.9][s14-9]). So the service check covers the authored path
 below that prefix. Inspection walks instances instead. A generic
 [seam](#g-seam) is not an error for a client that never claimed
 substitutability. "What is in *this* build" is inspection's defining question.
-Drift still stays loud. An unknown path is an attach-time
-`ReadBindingUnresolved` with a [did-you-mean](#g-did-you-mean) (the offending
-name plus the list-in-hand it should have matched).
+Drift still stays loud. An unknown path or name is refused at attach, as a
+`PathResolution` or a `ReadResolution`, with a [did-you-mean](#g-did-you-mean) (the offending
+name plus the list-in-hand it should have matched) ([§13.3][s13-3], [D-406][d-406]).
 
 **The scoping is one principle, not three concessions.** What varies across
 the three clients is not how far a client is trusted. It is what a violation
@@ -11510,9 +11514,11 @@ Only stopped-sim service evaluations, `checkpoint`, and post-run inspection of
 the live stores (the [replay](#g-replay)-to-inspect, [§11.2][s11-2]) ever hold
 live stores. The snapshot deliberately carries no state stores
 ([§11.2][s11-2]), and `ẋ` [buffers](#g-buffer) are integrator scratch, not
-boundary-consistent objects outside a service evaluation. A snapshot-bound
-reader naming a store selector is therefore a resolution error at attach
-(`ReadBindingUnresolved`), raised in the didactic style. The honest remedy
+boundary-consistent objects outside a service evaluation. A reader resolving
+for a table source that names a store selector is therefore refused at
+resolution, as a `ReadResolution` ([D-406][d-406]). The resolver takes the
+source it resolves for, so the rule is the resolver's and not a client's.
+The honest remedy
 ([§11.2][s11-2]) is to declare the field in `y_types`, return it from
 `y_state`, and read the resulting [port](#g-port) ([§5.3][s5-3]).
 
@@ -12168,7 +12174,8 @@ field-type disagreement, an unknown `reads` [selector](#g-selector), a
 and a `check_tolerances`/check key-set mismatch observed at the same
 evaluation.
 The error carries the offending field with the names or types in hand,
-collected, mirroring linearization's `TapResolution`. A permuted spelling is
+collected, and the read set's own `ReadResolution` values beside it
+([§14.4][s14-4], [D-406][d-406]). A permuted spelling is
 none of these ([§14.7][s14-7]).
 
 A throw inside the commit's boundary zero is a third case, and neither of
@@ -13483,12 +13490,6 @@ activation):
   side `gather` needs from a binding that declares none, or the roster entry
   a detached handle's `stage!`/`report!` no longer has ([D-244][d-244]). The device
   twin of `BindingContractMismatch`.
-- **`ReadBindingUnresolved`** ([§11.2][s11-2], [§14.4][s14-4]). Error ·
-  service · fail-fast. The device (by type, since its roster id is assigned
-  only at admission), the selector, path and field, the leaf address and
-  the offending step, candidates, and a `reason` distinguishing an
-  unresolved name, a step the leaf address cannot take, and a store selector
-  in a snapshot binding (the source rule, [§14.4][s14-4]).
 - **`ConditionResolution`** ([§14.2][s14-2], [§14.3][s14-3]). Error · service
   · collected. Entry path, store and field (or the root-input face the entry
   addresses), offending value type and declared leaf type, the leaf's tier
@@ -13503,14 +13504,22 @@ activation):
 - **`ConditionNodeMisuse`** ([§14.2][s14-2]). Error · service · fail-fast.
   The offending argument's type, the node kinds in hand. Or an empty prefix
   handed to `at`.
+- **`ReadResolution`** ([§14.4][s14-4]). Error · service · collected. The
+  read's label and the selector as authored, the mount path, path and field,
+  the leaf address and the offending step, candidates where a list is in
+  hand, the producer for an internally wired face, and a `reason`
+  distinguishing an assembly path, an undeclared name, a face miss, a step
+  the leaf address cannot take, and a store selector under a table source
+  (the source rule, [§14.4][s14-4]). Raised at trim, at linearization and at
+  attach, where the label names the read and the `attach!` call names the
+  device ([D-406][d-406]).
 - **`UninitializedInputs`** ([§14.6][s14-6]). Error · service, pre-write ·
   collected. Every uncovered root face, in declaration order.
-- **`TapResolution`** ([§14.10][s14-10]). Error · service · collected. Tap
-  set (`x`/`u`/`y`), selector kind, path, field, the leaf address and the
-  offending step, candidates, the mount path.
-  For an internally wired face at a mount, the producer.
-  For a declaredly unseedable root input, the pinning consumer's path and its
-  `u_types` entry.
+- **`TapResolution`** ([§14.10][s14-10]). Error · service · collected. The
+  tap set's own refusals, raised beside the reads' `ReadResolution` values:
+  the tap set (`x`/`u`/`y`), the list a selector sat in, a discrete store, a
+  vector leaf, a duplicate site, and a declaredly unseedable root input with
+  the pinning consumer's path and its `u_types` entry.
 - **`TrimProblemInvalid`** ([§14.7][s14-7], [§14.8][s14-8]). Error · service
   · collected. The offending `TrimProblem` field, the names or types in hand
   (a key-set or field-type mismatch; never a field-order difference).
@@ -14627,8 +14636,9 @@ legality against them, and on a `Model` the statuses `:built`, `:consistent` and
 
 <a id="g-taps"></a>**taps** — the three selector lists (`x`, `u`, `y`), built by `taps`,
 declaring what linearization seeds and reports. Every tap names one scalar,
-by a leaf address resolving to one scalar leaf. They are validated at resolution
-(`TapResolution`) and relocatable via `at` ([§14.10][s14-10]).
+by a leaf address resolving to one scalar leaf. Their selectors are validated
+at resolution (`ReadResolution`), the tap set's own constraints beside them
+(`TapResolution`), and they are relocatable via `at` ([§14.10][s14-10]).
 
 <a id="g-trimproblem"></a>**`TrimProblem`** — the closed nine-field value
 `guess`/`lower`/`upper`/`condition`/`reads`/`residuals`/`tolerances`/`checks`/`check_tolerances`: an
@@ -15101,6 +15111,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-402]: decisions.md#d-402--treat-the-raise-unblock-provokes-as-shutdown-not-a-crash
 [d-403]: decisions.md#d-403--read-each-device-tasks-last_seen-off-the-counter-at-spawn
 [d-404]: decisions.md#d-404--attach-the-feed-to-the-simulation-as-it-stands-under-replays-restore--false
+[d-406]: decisions.md#d-406--resolve-a-bindings-reads-through-the-one-read-resolver
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop

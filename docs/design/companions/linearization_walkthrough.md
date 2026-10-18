@@ -420,11 +420,12 @@ so $N = n_x + n_u = 4$.
 
 ### 5.3 What resolution refuses
 
-Every refusal is a `TapResolution`, collected in [§13.1][s13-1]'s form: the whole
+Every refusal is collected in [§13.1][s13-1]'s form: the whole
 list is checked, every violation gathered, one `DiagnosticError` thrown. The
 name-shaped misses (an undeclared field, an unknown root input, an assembly
 path where a component path was expected, an index on a scalar leaf) are the
-reader's own. The tap set adds five:
+reader's own, each a `ReadResolution`. The tap set adds five, each a
+`TapResolution`:
 
 - **A discrete store in the `x` list** ([D-197][d-197]). The pass freezes the discrete
   tier, so a discrete `x` tap could only produce a zero row and a zero column
