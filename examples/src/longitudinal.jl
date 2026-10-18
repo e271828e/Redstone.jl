@@ -100,7 +100,10 @@ state_events(::GroundContact) = (touchdown = StateEvent(contact_guard, contact_h
     aircraft()
 
 The plant alone, `Longitudinal()` as the child `plant`, under the root inputs
-`δe` and `δt`.
+`δe` and `δt`. A leaf may be the root on its own (D-208); the `Group` is there
+only to give the plant the path `"plant"` it has in `closed_loop` and
+`descent`, so the trim problem, the taps and every reader address it the same
+way in every layer.
 """
 aircraft() = Group((; plant = Longitudinal()); input_wires = ("δe" => "plant/δe", "δt" => "plant/δt"))
 
@@ -267,15 +270,22 @@ end
     trimmed(solution)
 
 The initial condition of `closed_loop` at the trim triple `solution`: the
-plant's pitch angle beside its default level state, and the full stores of the
-three blocks whose integral terms are not zero at trim. The altitude loop's
-holds the trim pitch angle, the pitch-rate loop's the trim elevator and the
-airspeed loop's the trim throttle, so the cascade starts in equilibrium.
+plant's pitch angle beside its default level state, and the stores of the three
+`DiscretePID` blocks whose integral terms are not zero at trim. Every loop has
+zero error at trim and `Kd = 0`, so a block's output is its integral term
+alone, and the term must hold the trim value of what the block commands: the
+altitude loop's the trim pitch angle, the pitch-rate loop's the trim elevator
+and the airspeed loop's the trim throttle. The attitude loop commands a pitch
+rate, zero at trim, and the tracker carries the trim as parameters, so neither
+needs a seed. `yf`, the derivative filter's state, is set to its fixed point,
+the measurement, which with `Kd = 0` changes nothing. A store overlay merges
+onto `s_init`, so `fragment(s = (q = solution.θ,))` alone would do; the full
+stores are written for clarity. `longitudinal_aircraft.md`, section 4.
 """
 trimmed(solution) = combine(at("plant", condition(Longitudinal(); θ = solution.θ)),
                             at("h_ctl", fragment(s = (q = solution.θ, yf = 1000.0, saturated = Int8(0)))),
                             at("q_ctl", fragment(s = (q = solution.δe, yf = 0.0, saturated = Int8(0)))),
-                            at("V_ctl", fragment(s = (q = solution.δt, yf = 0.0, saturated = Int8(0)))))
+                            at("V_ctl", fragment(s = (q = solution.δt, yf = 50.0, saturated = Int8(0)))))
 
 """
     descent()
