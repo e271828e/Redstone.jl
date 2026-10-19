@@ -6,8 +6,9 @@
 using Test, LinearAlgebra, BenchmarkTools
 using Statistics: std
 using Redstone, RedstoneExamples
-import Redstone: Build, ProbeDual, Simulation, build, init!, run!, trim!, linearize, state, modes, port,
-    logged, termination, phase_bodies, set, at, combine, condition, EndTimeReached, ModelRequestedStop
+import Redstone: Build, ProbeDual, Simulation, build, init!, run!, trim!, linearize, state, modes,
+    series, reads, get_output, termination, phase_bodies, set, at, combine, condition, EndTimeReached,
+    ModelRequestedStop
 import RedstoneExamples: Longitudinal, aircraft, level_flight, longitudinal_taps, lqr_gains, closed_loop,
     trimmed, descent
 
@@ -25,8 +26,8 @@ at_trim(solution, plant_state; δt = solution.δt) =
     combine(at("plant", plant_state), set(u = (δe = solution.δe, δt = δt)))
 
 # A port's value over the logged snapshots, beside their times.
-logged_times(sim) = [snapshot.t for snapshot in logged(sim)]
-logged_port(sim, path, name) = [port(snapshot, path, name) for snapshot in logged(sim)]
+logged_times(sim) = series(sim, reads()).t
+logged_port(sim, path, name) = series(sim, reads(y = get_output(path, name))).columns.y
 
 # The times at which `values` crosses `level`, at the snapshot after each crossing.
 crossings(times, values, level) =

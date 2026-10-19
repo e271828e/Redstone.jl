@@ -251,6 +251,9 @@ function resolve_leaf(::Type{P}, steps) where {P}
     (Tuple(steps), in_hand)
 end
 
+# The type a resolved chain lands on under `P`.
+_resolved_type(::Type{P}, chain::Tuple) where {P} = last(resolve_leaf(P, chain))
+
 """
     walk_steps(value, Val(chain))
 
@@ -394,16 +397,17 @@ face. `source` is what the reader will run over: `:executor`, live stores, or
 (§14.4's source rule).
 
 The standalone entry point is internal, because a read set is only ever
-compiled inside a client. The sites are trim, linearization and attach, each
-surfacing the collected list its own way: `trim!` splices it into its own throw
-beside the problem's `TrimProblemInvalid` values (§14.8), `linearize` beside
-the tap set's own `TapResolution` values (§14.10), and `attach!` throws it
-whole, for a table source (§11.2). That is why the collecting
+compiled inside a client. The sites are trim, linearization, attach and the
+series, each surfacing the collected list its own way: `trim!` splices it into
+its own throw beside the problem's `TrimProblemInvalid` values (§14.8),
+`linearize` beside the tap set's own `TapResolution` values (§14.10), and
+`attach!` throws it whole, for a table source (§11.2), as `series` does, a table
+source over the log (§11.2, D-407). That is why the collecting
 pass is factored apart from the throw. The violations are `ReadResolution`
 values at every site — the kind is the read's own, and it is the *site* that
 decides where they surface (§13.2, Appendix C, D-406).
 """
-function _compile_reads(read_set::Reads, build::Build, ::Type{T} = Float64;
+function _compile_reads(@nospecialize(read_set::Reads), build::Build, ::Type{T} = Float64;
                         source::Symbol = :executor) where {T}
     reader, diags = _resolve_reads(read_set, build, T; source)
     isempty(diags) || throw(DiagnosticError(diags))
@@ -422,7 +426,7 @@ list, the reader being `nothing` when anything failed. It takes the same
 `source`. The mount step runs first, and the resolvers read what it rebased
 (§14.9, D-277).
 """
-function _resolve_reads(read_set::Reads, build::Build, ::Type{T};
+function _resolve_reads(@nospecialize(read_set::Reads), build::Build, ::Type{T};
                         source::Symbol = :executor) where {T}
     act = activation(build, T)
     diags = Diagnostic[]

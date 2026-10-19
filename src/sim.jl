@@ -2045,6 +2045,50 @@ function logged(sim::Simulation)
 end
 
 """
+What `series` returns (§11.2, D-407): the retained snapshots' stamps, oldest
+first, and one column per labeled entry of the read set, a plain vector of
+that entry's leaf type, keyed as the set labels it.
+"""
+struct Series{NT<:NamedTuple}
+    t::Vector{Float64}
+    frame::Vector{Int}
+    boundary::Vector{Int}
+    columns::NT
+end
+
+"""
+    series(sim, read_set) → Series
+
+Post-run extraction from the log through the read-selector family (§11.2,
+D-407): the read set, `reads(…)` or `at(prefix, reads(…))`, resolves against
+the build for a table source through the one resolver every reader shares
+(§14.4, D-406), and each entry is gathered over `logged(sim)` into one typed
+column. Resolution runs once per call and the gather is one typed loop per
+column; the labels never reach a compiled body, so a new label set costs no
+compilation, only a new leaf type or chain does. Behind `logged`'s stopped-sim
+gate (§11.3); empty columns before the first `init!`, typed all the same.
+"""
+function series(sim::Simulation, @nospecialize(read_set::Reads))
+    assert_stopped(sim, :series)
+    reader = _compile_reads(read_set, sim.model.deployment.build, Float64; source = :table)
+    snapshots = logged(sim)
+    columns = Any[_column(snapshots, entry) for entry in reader.entries]
+    Series([s.t for s in snapshots], [s.frame for s in snapshots], [s.boundary for s in snapshots],
+           NamedTuple{keys(read_set.selectors)}(Tuple(columns)))
+end
+
+# One column, the function barrier: specialized on the entry's leaf type and
+# chain alone, the eltype read off the resolved chain so an empty log yields
+# a typed empty vector.
+function _column(snapshots::Vector, entry::CellRead{A,C}) where {A,C}
+    column = Vector{_resolved_type(_port_type(entry.addr), C)}(undef, length(snapshots))
+    for (i, snapshot) in enumerate(snapshots)
+        column[i] = _read(entry, snapshot.store)
+    end
+    column
+end
+
+"""
     trace(sim)
 
 §11.5's recording, as a value detached from the run's live one: the header, the

@@ -328,9 +328,6 @@ _site_key(::Val{:u}, entry::CellRead{A,C}) where {A,C} =
     (entry.addr, isempty(C) ? 0 : _linear_index(_port_type(entry.addr), only(C)))
 _site_key(::Val{:y}, ::CellRead) = nothing
 
-# The type a resolved chain lands on under `P`.
-_resolved_type(::Type{P}, chain::Tuple) where {P} = last(resolve_leaf(P, chain))
-
 # A seed is a `Float64` direction written into a whole cell or one `SArray`
 # component, so a seeded tap reaches its scalar through one index step at most
 # and never a `.name` step: there is no lens into a struct's slots (D-036,

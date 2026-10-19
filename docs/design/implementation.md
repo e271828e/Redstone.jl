@@ -688,7 +688,8 @@ D-320.
 - The leaf address (D-276). `parse_leaf` splits it at resolution. On a face
   selector `match_leaf` matches the head against the face list instead, since
   a face name may hold a dot. `resolve_leaf` checks each step against the declared type and returns the
-  chain or a `LeafRefusal`, the six leaf reasons any kind wraps. `walk_steps`
+  chain or a `LeafRefusal`, the six leaf reasons any kind wraps, and
+  `_resolved_type` reads the type a resolved chain lands on. `walk_steps`
   runs the chain as `getfield` and `getindex` calls unrolled at generation.
   A step is an `AccessStep`, and a condition's tree position is a tuple of
   the same steps, so the specialized `apply!` runs on the same walk.
@@ -697,9 +698,11 @@ D-320.
   its chain as a type parameter, and the `CellRead` core reads a store bundle,
   so every gather over a table shares it. Its `source` argument is the source
   the reader runs over, and under `:table` the resolver refuses a store
-  selector (§14.4, D-406).
+  selector (§14.4, D-406). `_compile_reads` and `_resolve_reads` take the
+  read set unspecialized, so a new label set compiles neither (D-407).
 - The violations, `ReadResolution` values built by `_reader_violation` and
-  `_leaf_violation`, the same at trim, at linearization and at attach (D-406).
+  `_leaf_violation`, the same at trim, at linearization, at attach and at
+  `series` (D-406, D-407).
 - `gather_reads`, `apply!`'s twin over an executor. It reads its entries
   through the generated `_read_entries`, which the snapshot method in
   dataplane.jl shares.
@@ -708,7 +711,7 @@ D-320.
   check on plans sits in conditions.jl's `apply!`.
 
 Spec: §11.2, §13.1, §13.3, §14.1, §14.4, §14.7, §14.9, §14.10, D-125, D-130, D-253,
-D-276, D-277, D-315, D-406.
+D-276, D-277, D-315, D-406, D-407.
 
 ### `src/roster.jl`
 
@@ -827,6 +830,9 @@ Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315.
   stated in the comments at those sites.
 - The accessors `lifecycle`, `mode`, `termination`, `latest`, `logged` and
   `trace`.
+- `series` and `Series`, the post-run extraction from the log through the
+  read resolver for a table source, and `_column`, the function barrier
+  that gathers one entry over the log (§11.2, D-407).
 - A one-line forwarding method on the simulation for each of the model's
   `port`, `state`, `modes`, `phase_bodies`, `apply!`, `evaluate!`,
   `integrate!`, `boundary!`, `offtick_boundary!` and `boundary_zero!`, which
@@ -836,7 +842,7 @@ Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315.
 Spec: §10.2–§10.7, §11.1–§11.5, §11.8, §12.1–§12.7, §13.4–§13.6,
 §14, §14.5, §14.6, §14.8, §14.10, D-027, D-101, D-203, D-218, D-219,
 D-223, D-232, D-233, D-250, D-253, D-254, D-255, D-256, D-260, D-261,
-D-268, D-269, D-270, D-274, D-316, D-317, D-318, D-319.
+D-268, D-269, D-270, D-274, D-316, D-317, D-318, D-319, D-407.
 
 ### `src/stepper.jl`
 
