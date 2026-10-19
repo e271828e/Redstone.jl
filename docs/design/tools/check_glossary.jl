@@ -32,7 +32,6 @@ const WHITELIST = Dict(
     "g-declaration-inventory" => "heading-defined (§11.2)",
     "g-always-on-conformance-check" => "heading-defined (§12.5)",
     "g-collect-the-checks-fail-the-evaluations-fast" => "heading-defined (§13.1)",
-    "g-carrier-exception" => "heading-defined (§13.2)",
     # meta / never used bare in body prose
     "g-entry" => "disambiguation entry; never used bare by its own text",
     "g-row" => "D-nnn citations are mechanical links already; glossary-linking them was rejected",
