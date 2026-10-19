@@ -481,7 +481,7 @@ is parsed or matched. Its callers run it read by read, each read resolved
 before the next is rebased, so the collected list keeps the authored order
 (§13.1); a selector that fails is skipped and the others go on.
 """
-function _mount(read_set::Reads, build::Build, diags::Vector{Diagnostic})
+function _mount(@nospecialize(read_set::Reads), build::Build, diags::Vector{Diagnostic})
     mount, level, description = "", first(build.structure.levels).instance, ""
     for (i, prefix) in enumerate(read_set.prefixes)
         description = (i == 1 ? "the read set" : description * " →") * " at(\"$prefix\")"

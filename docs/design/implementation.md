@@ -698,8 +698,9 @@ D-320.
   its chain as a type parameter, and the `CellRead` core reads a store bundle,
   so every gather over a table shares it. Its `source` argument is the source
   the reader runs over, and under `:table` the resolver refuses a store
-  selector (§14.4, D-406). `_compile_reads` and `_resolve_reads` take the
-  read set unspecialized, so a new label set compiles neither (D-407).
+  selector (§14.4, D-406). `_compile_reads`, `_resolve_reads` and `_mount`
+  take the read set unspecialized, so a new label set compiles none of them
+  (D-407).
 - The violations, `ReadResolution` values built by `_reader_violation` and
   `_leaf_violation`, the same at trim, at linearization, at attach and at
   `series` (D-406, D-407).

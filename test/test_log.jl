@@ -229,12 +229,12 @@ function test_log()
         init!(stamped)
         run!(stamped; t_end = 0.5)
         snapshots = logged(stamped)
-        stamps = series(stamped, reads(armed = get_output("s", :armed)))
-        @test stamps.t == [snapshot.t for snapshot in snapshots]
-        @test stamps.frame == [0, 1, 2, 3, 4, 4, 5]
-        @test stamps.boundary == [snapshot.boundary for snapshot in snapshots] == 0:6
-        @test stamps.columns.armed == [port(snapshot, "s", :armed) for snapshot in snapshots]
-        @test typeof(stamps.columns.armed) === Vector{Bool}
+        stamped_series = series(stamped, reads(armed = get_output("s", :armed)))
+        @test stamped_series.t == [snapshot.t for snapshot in snapshots]
+        @test stamped_series.frame == [0, 1, 2, 3, 4, 4, 5]
+        @test stamped_series.boundary == [snapshot.boundary for snapshot in snapshots] == 0:6
+        @test stamped_series.columns.armed == [port(snapshot, "s", :armed) for snapshot in snapshots]
+        @test typeof(stamped_series.columns.armed) === Vector{Bool}
     end
 
     @testset "a leaf step reads one component (§14.4, D-276, D-407)" begin
