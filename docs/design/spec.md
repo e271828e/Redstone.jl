@@ -10608,7 +10608,7 @@ strings names requesters by component path. Each path is validated against
 the requester roster on every call, and duplicates collapse, in the order
 given. A path naming no requester is `StopRequestInvalid`, collected over the
 given paths ([Appendix C][sC]). A `t_end` that is not a non-negative real is
-`ArgumentInvalid`, refused before the ignore list is read ([D-414][d-414]).
+`ArgumentInvalid`, refused before the ignore list is read ([D-413][d-413]).
 
 Each advance builds a [`StopPolicy`](#g-stop-policy) (the immutable value of `t_end` plus the
 ignored requester paths), and passes it to the loop with an ignore mask, one
@@ -10631,7 +10631,7 @@ That terminal snapshot's status carries the run's final cumulative diagnostic
 counters ([§11.8][s11-8]).
 
 Every advance checks the latest snapshot for an honoured request before its
-first frame ([D-414][d-414]). After `init!` that snapshot is boundary zero's, so an
+first frame ([D-413][d-413]). After `init!` that snapshot is boundary zero's, so an
 authored [condition](#g-condition) (the path-addressed sparse overlay that sets a build's state)
 already terminal ends the run at `t₀` with that snapshot final, integrating
 nothing. A run that starts later ends where it started, advancing no frame.
@@ -10709,9 +10709,9 @@ ordinary stop**, not a source type of its own, because nothing failed
 #### Ignored requests and post-terminal dynamics
 
 An ignored request is still a cell in every snapshot, so the log records when
-validity broke even on a run that continued ([D-316][d-316], [D-413][d-413]). Two uses share
+validity broke even on a run that continued ([D-316][d-316]). Two uses share
 the mechanism, validity breakdown and scenario completion. The reason string
-is what tells a reader which, and the framework never will.
+is what tells a reader which, and the framework never will ([D-412][d-412]).
 
 Post-terminal dynamics are the model's job, and that is a feature. `robot2d`,
 FlightApps' self-balancing robot in Flight.jl, *throws* `LostBalance`, a
@@ -10721,7 +10721,7 @@ switches to a frozen mode, and feeds `fallen` to a stop request. The frozen mode
 is a mode-dependent `x_deriv`, machinery the model already has. Honoured, the
 request ends the sim at the fall. Ignored, the sim integrates a frozen robot,
 which is well-defined, unlike an uncaught throw. The discipline forces models to
-have well-defined terminal states, which is better modeling ([D-060][d-060], [D-410][d-410]).
+have well-defined terminal states, which is better modeling ([D-060][d-060]).
 
 #### Rejected mechanisms and the reads a run acts on
 
@@ -11017,9 +11017,9 @@ scalar type), and the pinned port says so where a walking one would promote
 the value and declare less. The honest pin is spelled rather than inferred.
 The same holds for every library block whose output depends on neither its
 continuous state nor a walking input, such as a step source or a relay, and
-each declares its `out` pinned ([D-312][d-312], [D-412][d-412]).
+each declares its `out` pinned ([D-312][d-312], [D-411][d-411]).
 
-Two uses need `Constant` ([D-143][d-143], [D-411][d-411]), though a listed block needs none to be
+Two uses need `Constant` ([D-143][d-143], [D-410][d-410]), though a listed block needs none to be
 built ([D-313][d-313]). The zero-contributor configurations ([§6.2][s6-2]) are one. There, a
 required aggregate input has no physical contributor, and the zero total must be
 spelled as a wire. The rig stub below is the other. The block's value is
@@ -11089,7 +11089,7 @@ input_wires(rig::StrutRig) =
 ```
 
 That stub child is typically just a `Constant` holding the test handle, which
-makes it the source block's first shipped instance ([D-143][d-143], [D-411][d-411]). Bespoke
+makes it the source block's first shipped instance ([D-143][d-143], [D-410][d-410]). Bespoke
 stubs remain ordinary components wherever the double must compute something.
 
 The rig adds zero new machinery, because wiring and `except` already exist
@@ -15246,11 +15246,10 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-407]: decisions.md#d-407--read-the-log-through-the-read-selector-family-as-columns
 [d-408]: decisions.md#d-408--discard-a-failed-boundary-and-promote-the-previous-snapshot-to-final
 [d-409]: decisions.md#d-409--keep-service-observation-on-the-contract-and-let-inspection-see-everything
-[d-410]: decisions.md#d-410--leave-post-terminal-dynamics-to-the-model
-[d-411]: decisions.md#d-411--spell-the-component-test-rigs-stub-as-a-constant-holding-the-test-handle
-[d-412]: decisions.md#d-412--pin-a-library-block-whose-output-depends-on-neither-state-nor-a-walking-input
-[d-413]: decisions.md#d-413--let-the-reason-string-never-the-framework-tell-a-stop-requests-two-uses-apart
-[d-414]: decisions.md#d-414--check-for-an-honoured-request-at-an-advances-entry-and-bound-t_end-first
+[d-410]: decisions.md#d-410--spell-the-component-test-rigs-stub-as-a-constant-holding-the-test-handle
+[d-411]: decisions.md#d-411--pin-a-library-block-whose-output-depends-on-neither-state-nor-a-walking-input
+[d-412]: decisions.md#d-412--let-the-reason-string-never-the-framework-tell-a-stop-requests-two-uses-apart
+[d-413]: decisions.md#d-413--check-for-an-honoured-request-at-an-advances-entry-and-bound-t_end-first
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop
