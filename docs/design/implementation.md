@@ -247,6 +247,10 @@ D-247, D-248, D-250, D-252, D-253, D-256, D-261, D-263, D-289, D-315, D-316.
   about the scalar. `_restore_stores!` is the part of it that writes the `s`
   and `m` stores, shared with `linearize`'s seeded half.
 - `_detach`'s two methods, the state's and the checkpoint's over it.
+- The mismatch namers behind `_check_checkpoint!` (§12.7): `_check_addresses!`
+  over the table's addresses, and `_walk_deployment!`, which names what a
+  deployment `==` refused, the seven parameters and the schedule's rows and
+  scopes by path and column.
 - The model-level functions, `_fingerprint`, `checkpoint(model)`, the
   fingerprint check `_check_checkpoint!` and the model's restore doors, are
   model.jl's (D-317, D-319).
@@ -916,9 +920,6 @@ Spec: §9.5, §9.7, §13.5, D-162, D-235, D-237, D-260, D-316, D-317.
   the header, the schemas and the records. Both stages, `_check_checkpoint!`
   with `_check_schemas!` and then `_compile_records!`, collect (D-217). The
   pass builds the `ReplayFeed` the drain reads.
-- The entry pass checks the checkpoint's deployment with one `==`, and
-  `_walk_deployment!` names what the `==` refused, the schedule's rows and
-  scopes by path and column (§12.7).
 
 Spec: §11.5, §12.6, §12.7, §14.5, D-029, D-038, D-101, D-176, D-217, D-218,
 D-254, D-255, D-260, D-261, D-274, D-317, D-319.

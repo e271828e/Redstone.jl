@@ -125,53 +125,6 @@ end
 # throughout for include order alone; the scalar gate that dispatches into this
 # is `_compile_feed` in sim.jl, beside the loop it feeds.
 
-_deployment_diff!(diags::Vector{Diagnostic}, path::String, name::Symbol, expected, found) =
-    expected == found ? nothing :
-    push!(diags, CheckpointMismatch(what = :deployment, path = path, name = name,
-                                    expected = expected, found = found))
-
-# What the `==` above refused, named (§12.7, Appendix C): the seven
-# trajectory-determining parameters by name, then the schedule, which the value
-# covers with every column — the anchor and the rates included, so a rate
-# re-declared through a different anchor at the same tick table is a different
-# deployment. The walk covers exactly what `Deployment`'s and `Schedule`'s `==`
-# compare, so a refusal is never silent.
-function _walk_deployment!(diags::Vector{Diagnostic}, recorded::Deployment,
-                           target::Deployment)
-    for name in (:Δt_base, :h, :N_base, :algorithm, :localization_tol,
-                 :localization_budget, :firing_budget)
-        _deployment_diff!(diags, "", name, getfield(recorded, name), getfield(target, name))
-    end
-    recorded_schedule, target_schedule = recorded.schedule, target.schedule
-    # the rows, identified by path: a differing row count or path list is the
-    # whole list, since rows past the first difference name different components
-    if [r.path for r in recorded_schedule.rows] == [r.path for r in target_schedule.rows]
-        for (recorded_row, target_row) in zip(recorded_schedule.rows, target_schedule.rows),
-            column in (:anchor, :D, :Φ, :Δt, :rates)
-            _deployment_diff!(diags, recorded_row.path, column, getfield(recorded_row, column),
-                              getfield(target_row, column))
-        end
-    else
-        _deployment_diff!(diags, "", :schedule, [r.path for r in recorded_schedule.rows],
-                          [r.path for r in target_schedule.rows])
-    end
-    if [(scope.path, scope.key) for scope in recorded_schedule.scopes] ==
-       [(scope.path, scope.key) for scope in target_schedule.scopes]
-        for (recorded_scope, target_scope) in
-                zip(recorded_schedule.scopes, target_schedule.scopes),
-            column in (:anchor, :D, :Φ)
-            _deployment_diff!(diags, recorded_scope.path, Symbol("scope.", column),
-                              getfield(recorded_scope, column), getfield(target_scope, column))
-        end
-    else
-        _deployment_diff!(diags, "", Symbol("scope.key"),
-                          [string(scope.path, ':', scope.key)
-                           for scope in recorded_schedule.scopes],
-                          [string(scope.path, ':', scope.key) for scope in target_schedule.scopes])
-    end
-    nothing
-end
-
 # Each recorded writer's schema against the target's root-input faces (§12.7):
 # a recorded name this model does not export is a replay error, reported per
 # writer with the whole schema and the list-in-hand beside it. Superseded schema
