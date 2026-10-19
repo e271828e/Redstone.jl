@@ -37,7 +37,7 @@ readability with no loss of content. The steps are in
 | 11. Runtime periphery: the data plane | done | `1b1ac70` | `e5cbb77` |
 | 12. Runtime periphery: lifecycle and orchestration | done | `e91aa40` | `eb1d832` |
 | 13. Error discipline | done | `3d4cb27` | `ae63ca9` |
-| 14. Stopped-sim services | not started | | |
+| 14. Stopped-sim services | in progress | | |
 | Appendices A to D | not started | | |
 
 ## Carried to later chapters
