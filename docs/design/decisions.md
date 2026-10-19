@@ -412,6 +412,7 @@ were derived.
 | [D-411][d-411] | Pin a library block whose output depends on neither state nor a walking input | ratified |
 | [D-412][d-412] | Let the reason string, never the framework, tell a stop request's two uses apart | ratified |
 | [D-413][d-413] | Check for an honoured request at an advance's entry, and bound `t_end` first | ratified |
+| [D-414][d-414] | Drop the past-generic refusal from the service walk | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -1992,6 +1993,12 @@ immediate child, and the declared-type walk is the service walk ([§13.3][s13-3]
 Since [D-406][d-406] and [D-407][d-407], device read bindings and log extraction by series
 resolve on the service side; GUI panels are parked ([D-310][d-310]). The inspection
 case is snapshot and log inspection ([§13.3][s13-3]).
+
+Annotation (2026-10-19): [D-414][d-414] retires the past-generic diagnostic. The
+service walk follows declared children and refuses an unknown segment; it no
+longer refuses traversal past a generically held child, so the declared-type
+walk's remaining duty is the children listing. The face lists and the
+terminal split stand.
 
 **Rejected.**
 - *Instance-only walk:* blind to generic holding — [§6.1][s6-1] unenforceable where
@@ -4142,6 +4149,11 @@ outline. Grounding: the C172's engine-speed equilibrium
 (`ẋ.systems.pwp.engine.ω`) is unspellable under [D-083][d-083]/[D-095][d-095] alone — every level
 of the real aircraft tree is a generic seam.
 
+Annotation (2026-10-19): [D-414][d-414] admits service deep paths past generic seams,
+the first rejected alternative below, since the mount chain already crossed
+them. `get_face`'s admission stands as the read for a consumer meant to
+outlive the build, and the export doctrine as advice for that consumer.
+
 **Rejected.**
 - *Service deep paths past generic seams / instance-resolved `reads`:*
   dissolves [D-083][d-083]'s client split exactly where it pays: a same-path/same-type
@@ -4312,6 +4324,10 @@ Annotation (2026-10-19): since [D-406][d-406] and [D-407][d-407], device read bi
 extraction by series resolve on the service side, and
 `ReadBindingUnresolved` retires ([D-406][d-406]); GUI panels are parked ([D-310][d-310]). The
 inspection case is snapshot and log inspection ([§13.3][s13-3]).
+
+Annotation (2026-10-19): [D-414][d-414] drops the service walk's refusal of traversal
+past a generically held child, so the service and inspection clients no
+longer differ in what resolution enforces. Wiring's one-level rule stands.
 
 **Rejected.**
 - *A single unconditional strict rule:* as written it made [D-083][d-083]'s blessed
@@ -16427,6 +16443,86 @@ scan after every publication, not the entry read, and [D-255][d-255]'s says only
 
 **Rejected.** None beyond [D-255][d-255]'s and [D-316][d-316]'s lists.
 
+### D-414 — Drop the past-generic refusal from the service walk
+
+**Status.** ratified
+
+**Position.** The service walk follows declared children and refuses an
+unknown segment with the siblings in hand, and it no longer refuses a path
+that traverses past a generically held child. Every service client resolves
+under that one walk: condition entries, trim reads, taps, device read
+bindings and log extraction. The bundled rulings:
+
+- `:past_generic` retires from `PathResolution`. A deep path resolves
+  wherever the structure has it, whatever the declared field types along it.
+- The mount chain keeps its one job, relocation. `at(prefix, …)` still walks
+  each prefix from the level the previous one reached and rebases every
+  entry and selector below it ([§14.9][s14-9]). It is no longer the spelling a path
+  needs to cross a seam.
+- Wiring's one-level rule is untouched ([§6.1][s6-1], [D-207][d-207]). Wiring resolution is
+  separate code enforcing a separate rule. No client enforces a
+  generic-holding rule after this entry, since wiring never did and
+  inspection never walked declared types.
+- The locality law for shipped fragments and problems ([§14.2][s14-2]) is authoring
+  guidance, not a framework check. An author scopes a fragment's or a
+  problem's applicability by dispatch on the holding's type parameter, and
+  `get_face` remains the read for a consumer meant to outlive the build.
+
+This amends [D-061][d-061], [D-125][d-125] and [D-130][d-130].
+
+**Spec.** [§6.1][s6-1], [§11.2][s11-2], [§13.3][s13-3], [§14.2][s14-2], [§14.4][s14-4]
+
+**Rationale.** The refusal priced a hazard it did not prevent. The hazard
+[D-125][d-125] names is semantic drift under same-path, same-type substitution: a
+substituted child publishes the same path at the same type with another
+meaning, and a trim commits a wrong point silently. The mount chain crosses
+the same seam and reads the same cell, since each prefix is walked from the
+level the previous one reached ([D-277][d-277]), and the suite asserted that a chain
+of two is legal where the joined prefix is refused. So
+`at("aircraft", at("pwp", reads(ω̇ = get_deriv("engine", :ω))))` was
+admitted where `get_deriv("aircraft/pwp/engine", :ω)` was refused, and both
+are exposed to the drift alike. A check whose bypass is splitting a string
+is a toll, not a guarantee.
+
+The error discipline's warrant does not reach a service path either. [§13.3][s13-3]
+justifies wiring's strictness by the non-local failure class ([§8.4][s8-4]): a wire
+is compiled into a type, so a deep endpoint would fail at substitution time,
+at another site, for whoever exercised the substitution. A condition, a trim
+problem or a read set is a value applied to one build. A deep path the
+structure no longer has fails at its own site, loudly, with candidates in
+hand. That is the warrant [§13.3][s13-3] gives the inspection row, and it holds for a
+script's trim problem as well.
+
+What the refusal served was the library author. An author who declares
+`pwp::P` and ships a trim problem reading `pwp/engine/ω` contradicts the
+declaration, and the refusal prompted either a concrete holding or an
+exported face, [D-125][d-125]'s demand-driven publication. The coherence belongs to
+the method signature, not to a path rule. A problem defined for
+`C172{<:PistonPowerplant}` names the family it covers, and dispatch refuses
+the rest, where the refusal only named the seam it crossed. An author with a
+genuinely generic consumer still binds faces, and [D-125][d-125]'s export doctrine
+survives as the advice for that case. What goes is the forcing, which taxed
+every script posed against a concrete aircraft for a reusability its
+residuals could never have.
+
+The mechanism was one branch in `resolve_authored`, shared by every service
+client. Removing it relaxes the condition side and the read side together,
+which keeps a trim problem coherent: it writes `pwp/engine`'s state and
+reads the derivative back under the same rule.
+
+**Rejected.**
+- *Keep the refusal and admit the single-path spelling through an opt-in on
+  the read set or the selector:* a second spelling for one read, carrying the
+  same non-guarantee the chain did.
+- *Relax reads and keep condition entries strict:* one trim problem would
+  write a state through a seam it could not read back through, and the walk
+  is one function the two sides share.
+- *Relax the inspection clients alone, restoring [D-130][d-130]'s three-way split:*
+  leaves the script writer's trim and linearization taxed, which is where the
+  cost landed, and puts a client flag on a resolver [§14.4][s14-4] keeps client-free.
+- *A warning in place of the refusal:* the seam's visibility is the one thing
+  the refusal gave; not built now, and nothing forecloses it.
+
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
 [d-002]: #d-002--adopt-the-causal-port-based-paradigm
@@ -16815,6 +16911,7 @@ scan after every publication, not the entry read, and [D-255][d-255]'s says only
 [d-411]: #d-411--pin-a-library-block-whose-output-depends-on-neither-state-nor-a-walking-input
 [d-412]: #d-412--let-the-reason-string-never-the-framework-tell-a-stop-requests-two-uses-apart
 [d-413]: #d-413--check-for-an-honoured-request-at-an-advances-entry-and-bound-t_end-first
+[d-414]: #d-414--drop-the-past-generic-refusal-from-the-service-walk
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property
