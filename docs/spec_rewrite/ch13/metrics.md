@@ -9,5 +9,6 @@
 | unit verification | 4, plus re-checks | 0.73M | DRIFT 5, LOST 0 |
 | chapter passes, inbound checks, editorial fixers | 6 | 1.16M | 59 pass findings (14 RULING); 47 non-OK rows of 557, no loss |
 | consolidation, evidence check, ruled edits | 4 | 0.65M | 87 items (24 blocking); 4 UNCONFIRMED |
+| final verification and PDF check | 3 | 0.44M | 14 (two rulings, one lost claim caught at B12 before it) |
 
-The orchestrator's context: 209k tokens at checkpoint 1, 289k at the end of step 4.
+The orchestrator's context: 209k tokens at checkpoint 1, 289k at the end of step 4, 372k at checkpoint 4.

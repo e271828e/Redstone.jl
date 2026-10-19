@@ -1054,7 +1054,7 @@ yet rewritten, so its citations of this chapter go with its rewrite.
   already carries its omissions of §13.3, §13.6 and §13.7.
 - Proposal: carry this sentence with those omissions.
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, carried to the front matter in `README.md`, with the roadmap's omissions.
 
 ### B81. The glossary's `#g-entry` lacks the wiring entry
 
@@ -1066,7 +1066,7 @@ yet rewritten, so its citations of this chapter go with its rewrite.
   entries. The rewrite keeps "wiring entry" and "entry point" as written.
 - Proposal: add the wiring entry to `#g-entry` in Appendix D's rewrite.
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, carried to Appendix D in `README.md`.
 
 ### B82. §14.8 cites the bare §13 for a §13.5 doctrine
 
@@ -1076,7 +1076,7 @@ yet rewritten, so its citations of this chapter go with its rewrite.
   model code are always abnormal"). Wrong before the rewrite.
 - Proposal: "([§13.5][s13-5])".
 - Recommendation: carry to chapter 14's rewrite.
-- Status: open
+- Status: ruled, carried to chapter 14 in `README.md`.
 
 ### B83. §14.2 calls `set`, `at` and `combine` §13.7 library material
 
@@ -1088,7 +1088,7 @@ yet rewritten, so its citations of this chapter go with its rewrite.
 - Proposal: "`set`/`at`/`combine` are ordinary artifacts with no privileges,
   as [§13.7][s13-7]'s library blocks are ordinary components."
 - Recommendation: carry to chapter 14's rewrite.
-- Status: open
+- Status: ruled, carried to chapter 14 in `README.md`.
 
 ### B84. §14.9 says a `product(...)` helper belongs in the §13.7 library
 
@@ -1098,7 +1098,7 @@ yet rewritten, so its citations of this chapter go with its rewrite.
   components, not helpers.
 - Proposal: "helper belongs in the framework ([D-071][d-071])."
 - Recommendation: carry to chapter 14's rewrite, with B50.
-- Status: open
+- Status: ruled, carried to chapter 14 in `README.md`, with B50.
 
 ### B85. `frame_walkthrough.md` 283 names a function `src/` does not define
 
@@ -1110,4 +1110,4 @@ yet rewritten, so its citations of this chapter go with its rewrite.
   boundary zero. The check did not open the code; step 6a should.
 - Proposal: correct the companion against §12.4 and the code.
 - Recommendation: carry to the companions' pass.
-- Status: open
+- Status: ruled, to track 2: a problem outside the chapter (recipe step 8).
