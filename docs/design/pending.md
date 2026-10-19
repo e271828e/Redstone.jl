@@ -82,7 +82,7 @@ item changes what the spec says, the spec edit is part of the item.
   a panel description, with the GUI package's half of D-270's convention
   assigned to the client, and a ruling on §11.7's "assembly panels compose
   children by path", a constraint on that half with no entry (stage 4).
-- **The spec's readability rewrite.** Chapters 1 to 12 are done. The
+- **The spec's readability rewrite.** Chapters 1 to 13 are done. The
   other chapters follow `docs/spec_rewrite/recipe.md`, and that directory's
   README tracks them. Until a chapter's turn comes, it keeps the old markers.
 - **The normative kernel**, after the rewrite lands. Settled on 2026-10-14:
@@ -90,8 +90,8 @@ item changes what the spec says, the spec edit is part of the item.
   and that description is what costs the bookkeeping on every increment and
   leaves an implementer unsure which sentences are decisions. The code
   already fulfils the spec (this file holds additions, not debt), so once
-  chapters 12 to 14 and the appendices are rewritten the spec splits into
-  three homes. The kernel keeps every bold ruling with one line of context,
+  chapter 14 and the appendices are rewritten the spec splits into three
+  homes. The kernel keeps every bold ruling with one line of context,
   its D-citation and a pointer to the test that pins it, in Appendix A's
   shape; the cross-cutting chapters on evaluation order and time (§5, §10)
   stay in prose. Description moves beside the code, into docstrings,
