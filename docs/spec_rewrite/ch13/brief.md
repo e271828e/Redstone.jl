@@ -420,7 +420,8 @@ Survey 1.
 
 **B: §13.3 and §13.4** (10170–10442; 2,557 words). Survey 1.
 - R2, R3, R4, R5, R6 (F2, F3, F10, F12, F13, F14, F15, F16, F17, F18, F19,
-  F20, F21, F24, F26, F29, F30, F33, F34), R7, R10, R15.
+  F20, F21, F24, F26, F29, F30, F33, F34), R7, R10, R15, R16, R17, R18,
+  R19.
 - Survey 1's M5 to M7 and its part C order.
 - §13.4 has no context paragraph: give it one, from survey 1's part C
   wording, ending with a parts sentence.
@@ -429,7 +430,7 @@ Survey 1.
 
 **F: §13.5 and §13.6** (10443–10727; 2,449 words). Survey 2.
 - R2, R3, R4, R5, R6 (F51, F52, F53, F54, F55, F56, F57, F67), R9, R10,
-  R12, R14, R15.
+  R12, R14, R15, R22, R23.
 - Survey 2's M51 to M59 and its part C order.
 - D-030 rules §13.6 and is cited nowhere in it. D-316 bullets 5 and 7 and
   D-203's rulings are stated uncited in §13.5.
@@ -440,10 +441,48 @@ Survey 1.
 
 **G: §13.7 and §13.8** (10728–11141; 3,342 words). Survey 2.
 - R3, R4, R5, R6 (F58, F59, F60, F61, F62, F63, F64, F67), R10, R12, R13,
-  R14, R15.
+  R14, R15, R20, R21.
 - Survey 2's M60 to M62 and its part C order.
 - D-143 and D-120 rule nine rows of §13.7 and are cited nowhere in it.
 - The four block sketches and the rig sketch stay verbatim.
 - G ends with the chapter's closing `---`.
 
 ## Rulings after step 3
+
+- **R16. The inspection row's §11.7** (unit B's open question 1; unit B).
+  §11.7 was cited for GUI panels, which R2 removed. The citation goes; the
+  row keeps D-310 once for the removal.
+- **R17. "One primitive"** (unit B's correction 1; unit B). After F3 the
+  clients do not share one function. Old 10203 becomes "Three kinds of
+  client share one resolution, and each gets the rule its promises
+  require."
+- **R18. The inspection example** (unit B's correction 2; unit B). Under R2
+  a binding is a service client. Old 10232–10233 becomes "It addresses one
+  build's instances, and a broken inspection read fails at its own site,
+  harming only the observer." "At attach" goes with the binding. Cite D-130
+  only for the clauses R2 leaves standing.
+- **R19. "No declared condition"** (unit B's correction 3; unit B). Old
+  10412 becomes "so no declared guard will catch them": *condition* is
+  §14's word. Unit B's correction 4, the `Outputs` gloss, stays as written.
+- **R20. D-012's last ruling** (unit G's open question 1; unit G). This
+  corrects R5. D-012's Position joins "conservative on discrete members" and
+  "classification optional on the error" with a comma, so they are one
+  ruling and take one bold. "Discrete members trace structurally" keeps the
+  bold; "classification is optional" goes plain, still citing D-012.
+- **R21. D-120's bold** (unit G's open question 2; unit G). D-120 is bold
+  nowhere in the spec, and §13.7 is its home. Bold the headline clause of
+  the stub-child sentence ("A concrete stub child … is wired to the face"),
+  with D-120 cited in that sentence. "The rig therefore satisfies that
+  entry" is a consequence and stays plain with its citation. "The component
+  test rig is the library's companion idiom" stays plain.
+- **R22. D-060's last ruling** (unit F's open question 1; unit F). This
+  corrects R5. D-060's Position ends "; no `SimulationTermination` exception
+  type", a ruling of its own by the semicolon test, and §13.5 is its home.
+  Row 501's "no counterpart here" keeps one bold headline clause with
+  D-060, history plain around it.
+- **R23. Links that would share a sentence** (unit F's open questions 2 and
+  3; unit F). A link sits at the term's first use in the section, with its
+  gloss. Where two glosses would land in one sentence, split the sentence.
+  R9's sentence keeps the `#g-blessed` link, and §13.6 links *component* at
+  its first use as well as *workspace*. Unit F's numbering note on D-316's
+  bullets is right: cite and describe bullets by content.

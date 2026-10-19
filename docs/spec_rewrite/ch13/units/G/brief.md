@@ -285,7 +285,8 @@ Survey 1.
 
 **B: §13.3 and §13.4** (10170–10442; 2,557 words). Survey 1.
 - R2, R3, R4, R5, R6 (F2, F3, F10, F12, F13, F14, F15, F16, F17, F18, F19,
-  F20, F21, F24, F26, F29, F30, F33, F34), R7, R10, R15.
+  F20, F21, F24, F26, F29, F30, F33, F34), R7, R10, R15, R16, R17, R18,
+  R19.
 - Survey 1's M5 to M7 and its part C order.
 - §13.4 has no context paragraph: give it one, from survey 1's part C
   wording, ending with a parts sentence.
@@ -305,10 +306,26 @@ Survey 1.
 
 **G: §13.7 and §13.8** (10728–11141; 3,342 words). Survey 2.
 - R3, R4, R5, R6 (F58, F59, F60, F61, F62, F63, F64, F67), R10, R12, R13,
-  R14, R15.
+  R14, R15, R20, R21.
 - Survey 2's M60 to M62 and its part C order.
 - D-143 and D-120 rule nine rows of §13.7 and are cited nowhere in it.
 - The four block sketches and the rig sketch stay verbatim.
 - G ends with the chapter's closing `---`.
 
 ## Rulings after step 3
+
+- R16 reaches units B, not this one; see brief.md.
+- R17 reaches units B, not this one; see brief.md.
+- R18 reaches units B, not this one; see brief.md.
+- R19 reaches units B, not this one; see brief.md.
+- **R20. D-012's last ruling** (unit G's open question 1; unit G). This
+  corrects R5. D-012's Position joins "conservative on discrete members" and
+  "classification optional on the error" with a comma, so they are one
+  ruling and take one bold. "Discrete members trace structurally" keeps the
+  bold; "classification is optional" goes plain, still citing D-012.
+- **R21. D-120's bold** (unit G's open question 2; unit G). D-120 is bold
+  nowhere in the spec, and §13.7 is its home. Bold the headline clause of
+  the stub-child sentence ("A concrete stub child … is wired to the face"),
+  with D-120 cited in that sentence. "The rig therefore satisfies that
+  entry" is a consequence and stays plain with its citation. "The component
+  test rig is the library's companion idiom" stays plain.

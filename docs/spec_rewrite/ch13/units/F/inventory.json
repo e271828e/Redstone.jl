@@ -1,0 +1,1823 @@
+{
+ "claims": [
+  {
+   "id": "C-001",
+   "old": "### 13.5 Termination is a state, not an exception",
+   "new": "### 13.5 Termination is a state, not an exception",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-002",
+   "old": "FlightCore's `SimulationTermination` idiom (model code throws, and the loop catches and logs it as informational) has no counterpart here (D-060).",
+   "new": "FlightCore's `SimulationTermination` idiom (model code throws, and the loop catches and logs it as informational) has no counterpart here (D-060).",
+   "where": "new",
+   "cites": [
+    "D-060"
+   ],
+   "tag": "R",
+   "ruling": "R22",
+   "note": "row 501. One bold on \"has no counterpart here\", D-060's \"no `SimulationTermination` exception type\" ruling, with D-060 in the sentence; the history stays plain."
+  },
+  {
+   "id": "C-003",
+   "old": "The discipline is that exceptions from model code are always abnormal.",
+   "new": "The discipline is that exceptions from model code are always abnormal (D-060).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-060"
+   ],
+   "tag": "C",
+   "note": "row 502; bold kept on the headline clause, D-060's chained ruling 5, cited in its own sentence now."
+  },
+  {
+   "id": "C-004",
+   "old": "Graceful termination is model state,",
+   "new": "Graceful termination is model state, never an exception (D-060).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-060"
+   ],
+   "tag": "R",
+   "ruling": "R5",
+   "note": "row 503; D-060's headline ruling, bold here and nowhere else; \"never an exception\" is R5's dictated wording and D-060's first ruling."
+  },
+  {
+   "id": "C-005",
+   "old": "and it reaches the loop through declared machinery.",
+   "new": "It reaches the loop through declared machinery.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-006",
+   "old": "Detection is ordinary guard/handler/mode machinery.",
+   "new": "Detection is ordinary guard (the declared function that detects an event), handler and mode machinery (D-060).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-060"
+   ],
+   "tag": "C",
+   "note": "row 504; bold list lead-in goes (R3); D-060 Position \"detection by ordinary guard/handler machinery\"."
+  },
+  {
+   "id": "C-007",
+   "old": "If the stop should be localized, declare the predicate as a sign-form event.",
+   "new": "If the stop should be localized, declare the predicate (what a guard defines) as a sign-form event.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-008",
+   "old": "Such an event is localized (the crossing instant bracketed by root-finding over trial sweeps).",
+   "new": "Such an event is localized (the crossing instant bracketed by root-finding over trial sweeps).",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-009",
+   "old": "Touchdown overload is precisely a zero-crossing.",
+   "new": "Touchdown overload is precisely a zero-crossing.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-010",
+   "old": "The boundary is localized to the crossing, the handler sets `m.crashed`,",
+   "new": "The boundary (a published consistency point) is localized to the crossing, and the handler sets `m.crashed`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "boundary newly linked at its first use in §13.5."
+  },
+  {
+   "id": "C-011",
+   "old": "and the snapshot at the crossing instant carries the touchdown state.",
+   "new": "The snapshot (the immutable per-boundary publication) at the crossing instant carries the touchdown state.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-012",
+   "old": "Publication is a stop request (an output port of the framework enum `StopFlag`), declared where the condition is detected.",
+   "new": "Publication is a stop request (an output port of the framework enum `StopFlag`), declared where the stop's `Bool` is detected.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R12",
+   "note": "\"condition\" in its first sense becomes \"the stop's `Bool`\"; bold list lead-in goes (R3)."
+  },
+  {
+   "id": "C-013",
+   "old": "A port whose type is exactly `StopFlag` is a stop request, whoever publishes it (D-316).",
+   "new": "A port whose type is exactly `StopFlag` is a stop request, whoever publishes it (D-316).",
+   "where": "new",
+   "cites": [
+    "D-316"
+   ],
+   "tag": "F",
+   "note": "bold trimmed to the headline clause, D-316 bullet 1."
+  },
+  {
+   "id": "C-014",
+   "old": "The enum is `@enum StopFlag NO_STOP STOP_REQUESTED`.",
+   "new": "The enum is `@enum StopFlag NO_STOP STOP_REQUESTED`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-015",
+   "old": "An enum is one leaf, pinned at every activation (§4.3), and cells are stored per element type (§9.7), so every request in the model lands in one `StopFlag` block.",
+   "new": "An enum is one leaf, pinned at every activation (§4.3), and cells (typed entries of the signal table) are stored per element type (§9.7), so every request in the model lands in one `StopFlag` block.",
+   "where": "new",
+   "cites": [
+    "§4.3",
+    "§9.7"
+   ],
+   "tag": "F",
+   "note": "cell linked at its first use (the old link sat late, at 10654)."
+  },
+  {
+   "id": "C-016",
+   "old": "The condition is gathered at its owning boundary in one visible block.",
+   "new": "The stop's `Bool` is gathered at its owning boundary in one visible block.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R12"
+  },
+  {
+   "id": "C-017",
+   "old": "`Ldg` ORs its three legs through a junction (the ownership idiom, §6.2; the library, §13.7)",
+   "new": "The landing gear `Ldg` from the example of §6.1 ORs its three legs through a junction (the ownership idiom, §6.2; the library, §13.7).",
+   "where": "new",
+   "cites": [
+    "§13.7",
+    "§6.2"
+   ],
+   "newcites": [
+    "§13.7",
+    "§6.1",
+    "§6.2"
+   ],
+   "tag": "R",
+   "ruling": "R10",
+   "note": "R10's introducing clause; `Ldg` is defined at §6.1 (frozen spec 1553)."
+  },
+  {
+   "id": "C-018",
+   "old": "and wires the result into a `StopRequest` child, the library's spelling of a request (below).",
+   "new": "It wires the result into a `StopRequest` child, the library's spelling of a request, described below.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "split from the `Ldg` sentence, which held two parentheticals."
+  },
+  {
+   "id": "C-019",
+   "old": "No level above it re-exports anything, because the loop reads the request where it is.",
+   "new": "No level above it re-exports anything, because the loop reads the request where it is.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-020",
+   "old": "Placement is checked at build.",
+   "new": "Placement is checked at build.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "bold list lead-in goes (R3)."
+  },
+  {
+   "id": "C-021",
+   "old": "A `StopFlag` leaf nested inside a port of another type is `IllegalPortType`,",
+   "new": "Two placements are `IllegalPortType` (D-316). A `StopFlag` leaf nested inside a port of another type is refused with reason `:stop_flag_nested`,",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-316"
+   ],
+   "tag": "R",
+   "ruling": "R14",
+   "note": "bold shrinks to D-316 bullet 2's own headline, \"Two placements are `IllegalPortType`\"; R14 names the reason."
+  },
+  {
+   "id": "C-022",
+   "old": "and so is a root input whose type carries a `StopFlag` anywhere (D-316).",
+   "new": "and a root input whose type carries a `StopFlag` anywhere with reason `:stop_flag_at_root`.",
+   "where": "new",
+   "cites": [
+    "D-316"
+   ],
+   "tag": "R",
+   "ruling": "R14",
+   "note": "D-316 cited in the same paragraph, one sentence earlier."
+  },
+  {
+   "id": "C-023",
+   "old": "The first is refused because the build rosters requests per port, so a request inside a struct field or a static array would have no entry of its own.",
+   "new": "The first is refused because the build lists requests per port, so a request inside a struct field or a static array would have no listing of its own.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R12",
+   "note": "bare \"roster\" goes (R12); bare \"entry\" is reserved (brief_common), so \"no entry of its own\" becomes \"no listing of its own\"."
+  },
+  {
+   "id": "C-024",
+   "old": "The second is refused because a request is the model's, never an operator's.",
+   "new": "The second is refused because a request is the model's, never an operator's.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-025",
+   "old": "The operator's path is the control plane (§12.1).",
+   "new": "The operator's path is the control plane (§12.1).",
+   "where": "new",
+   "cites": [
+    "§12.1"
+   ],
+   "tag": "F",
+   "note": "the control-plane link moves to its first use, in the context (M51)."
+  },
+  {
+   "id": "C-026",
+   "old": "A `StopFlag` input port places nothing and is left alone.",
+   "new": "A `StopFlag` input port places nothing and is left alone.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-027",
+   "old": "The roster names every request.",
+   "new": "The requester roster (the build's list of stop requests, one `Requester(path, port, reason)` per `StopFlag` output port, in build order) names every request.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R12",
+   "note": "R12's gloss at first use; bold list lead-in goes (R3)."
+  },
+  {
+   "id": "C-028",
+   "old": "The build records one `Requester(path, port, reason)` per `StopFlag` output port, as the `requesters` of the activation's cell layout, index-aligned with the `StopFlag` block (D-316).",
+   "new": "The build records one `Requester(path, port, reason)` per `StopFlag` output port, as the `requesters` of the activation's cell layout, index-aligned with the `StopFlag` block (D-316).",
+   "where": "new",
+   "cites": [
+    "D-316"
+   ],
+   "tag": "F",
+   "note": "bold trimmed to the headline clause, D-316 bullet 4."
+  },
+  {
+   "id": "C-029",
+   "old": "Entry `i` owns the block's offset `i - 1`, and roster order is build order.",
+   "new": "The requester at index `i` owns the block's offset `i - 1`, and requester roster order is build order.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R12",
+   "note": "bare \"entry\" reserved; \"roster\" in full."
+  },
+  {
+   "id": "C-030",
+   "old": "The reason is the publishing component's `stop_reason`, an optional declaration with default `\"\"` (§8.2).",
+   "new": "The reason is the publishing component's `stop_reason`, an optional declaration with default `\"\"` (§8.2).",
+   "where": "new",
+   "cites": [
+    "§8.2"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-031",
+   "old": "One reason serves all of a component's requests.",
+   "new": "One reason serves all of a component's requests.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-032",
+   "old": "It is instance data on the component, never a port value.",
+   "new": "It is instance data on the component, never a port value.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-033",
+   "old": "Policy is declared per advance.",
+   "new": "§12.6 declares the stop policy per advance,",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§12.6"
+   ],
+   "tag": "R",
+   "ruling": "R4",
+   "note": "M55; §12.6 holds the declaration (bold, frozen spec 9581). The pointer sentence."
+  },
+  {
+   "id": "C-034",
+   "old": "`t_end` and `ignore_stop_requests` are keywords of `run!` and `replay!`,",
+   "new": "with `t_end` and `ignore_stop_requests` as keywords of `run!`, `replay!` and `step!`, and gives the value's lifetime.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R6",
+   "note": "F67, row 520; §12.6 lists all three calls (frozen spec 9582). \"gives the value's lifetime\" is R4's pointer for row 525."
+  },
+  {
+   "id": "C-035",
+   "old": "with `Inf` and `()` as defaults, and `step!` states the same defaults itself (D-255).",
+   "new": "Each of the three calls takes `Inf` and `()` as the defaults (D-255).",
+   "where": "new",
+   "cites": [
+    "D-255"
+   ],
+   "tag": "R",
+   "ruling": "R6",
+   "note": "F67; kept here because §12.6 does not state the defaults. D-255 bullet 5, \"`step!` states the same defaults itself\"; D-316 bullet 6 gives all three `()`."
+  },
+  {
+   "id": "C-036",
+   "old": "Every request is honoured unless the advance ignores it (D-316).",
+   "new": "Every request is honoured unless the advance ignores it (D-316).",
+   "where": "new",
+   "cites": [
+    "D-316"
+   ],
+   "tag": "F",
+   "note": "bold kept, D-316 Position."
+  },
+  {
+   "id": "C-037",
+   "old": "`ignore_stop_requests = :all` ignores every requester.",
+   "new": "`ignore_stop_requests = :all` ignores every requester.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-038",
+   "old": "An iterable of strings names requesters by component path.",
+   "new": "An iterable of strings names requesters by component path.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-039",
+   "old": "Each path is validated against the roster on every call, and duplicates collapse, in the order given.",
+   "new": "Each path is validated against the requester roster on every call, and duplicates collapse, in the order given.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R12"
+  },
+  {
+   "id": "C-040",
+   "old": "A path naming no requester is `StopRequestInvalid`, collected over the given paths (Appendix C).",
+   "new": "A path naming no requester is `StopRequestInvalid`, collected over the given paths (Appendix C).",
+   "where": "new",
+   "cites": [
+    "Appendix C"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-041",
+   "old": "Each advance builds a `StopPolicy`, the immutable value of `t_end` plus the ignored requester paths, and passes it to the loop with an ignore mask, one `Bool` per requester, as a second argument (D-261).",
+   "new": "Each advance builds a `StopPolicy` (the immutable value of `t_end` plus the ignored requester paths), and passes it to the loop with an ignore mask, one `Bool` per requester, as a second argument (D-316).",
+   "where": "new",
+   "cites": [
+    "D-261"
+   ],
+   "newcites": [
+    "D-316"
+   ],
+   "tag": "C",
+   "note": "row 524; D-261's bullet is superseded by D-316 (log 13867–13868); D-316's bullet \"The binder returns the policy and an ignore mask\" states it. The bold glossary link goes plain (R5); the appositive becomes the link's gloss. §12.6's citation of §13.5 for the policy each call builds keeps this referent."
+  },
+  {
+   "id": "C-042",
+   "old": "The value lives as long as the call, and afterwards only on the termination record of the advance that ended the run (§12.6, D-260).",
+   "new": "The value lives as long as the call, and afterwards only on the termination record of the advance that ended the run (D-260).",
+   "where": "docs/design/spec.md",
+   "cites": [
+    "D-260",
+    "§12.6"
+   ],
+   "tag": "M",
+   "note": "R4 makes the lifetime §12.6's (frozen spec 9584–9586); the pointer sentence says §12.6 gives it."
+  },
+  {
+   "id": "C-043",
+   "old": "A `t` hit reaches the loop as `frame!`'s return value, a `Bool` saying whether the frame was abandoned, never as a field of the policy or of the execution cursor (D-261, D-317).",
+   "new": "A `t` hit reaches the loop as `frame!`'s return value (D-261, D-317), a `Bool` saying whether the frame was abandoned, never as a field of the policy or of the execution cursor (the field recording where execution stands).",
+   "where": "new",
+   "cites": [
+    "D-261",
+    "D-317"
+   ],
+   "tag": "F",
+   "note": "citation moved off the gloss's parentheses; D-261's cited clause stands, its type clause is D-317's."
+  },
+  {
+   "id": "C-044",
+   "old": "The loop then reads the requester off the snapshot it just published.",
+   "new": "The loop then reads the requester off the snapshot it just published.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-045",
+   "old": "After every published boundary the loop scans the `StopFlag` block of the snapshot it just published, in roster order.",
+   "new": "After every published boundary the loop scans the `StopFlag` block of the snapshot it just published, in requester roster order (D-316).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-316"
+   ],
+   "tag": "C",
+   "note": "row 527; D-316's scan bullet (\"After every publication the loop scans …\"), bold here (R5); \"requester roster\" in full (R12)."
+  },
+  {
+   "id": "C-046",
+   "old": "Grid boundaries, `t` (§10.4) and boundary zero (§14.5) all count.",
+   "new": "Grid boundaries, `t` (§10.4) and boundary zero (the initialization boundary at `t₀`) all count (§14.5).",
+   "where": "new",
+   "cites": [
+    "§10.4",
+    "§14.5"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-047",
+   "old": "The first honoured request reading `STOP_REQUESTED` initiates §12.4 shutdown with this snapshot as the final one.",
+   "new": "The first honoured request reading `STOP_REQUESTED` initiates §12.4 shutdown with this snapshot as the final one.",
+   "where": "new",
+   "cites": [
+    "§12.4"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-048",
+   "old": "The terminal snapshot is the terminal state.",
+   "new": "The terminal snapshot is the terminal state.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-049",
+   "old": "There is no roll-back, and nothing §12.4 does not already do.",
+   "new": "There is no roll-back, and nothing §12.4 does not already do.",
+   "where": "new",
+   "cites": [
+    "§12.4"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-050",
+   "old": "That terminal snapshot's status carries the run's final cumulative diagnostic counters (§11.8).",
+   "new": "That terminal snapshot's status carries the run's final cumulative diagnostic counters (§11.8).",
+   "where": "new",
+   "cites": [
+    "§11.8"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-051",
+   "old": "`run!` therefore checks the boundary-zero snapshot before the first step.",
+   "new": "Every advance checks the latest snapshot for an honoured request before its first frame.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R6",
+   "note": "F51; `_advance!`'s entry `_stop_hit` on `latest(sim)`."
+  },
+  {
+   "id": "C-052",
+   "old": "An authored condition (the path-addressed sparse overlay that sets a build's state) that is already terminal ends the run at `t₀` with that snapshot final, integrating nothing.",
+   "new": "After `init!` that snapshot is boundary zero's, so an authored condition (the path-addressed sparse overlay that sets a build's state) already terminal ends the run at `t₀` with that snapshot final, integrating nothing.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R6",
+   "note": "F51's wording, keeping the old \"with that snapshot final\"."
+  },
+  {
+   "id": "C-053",
+   "old": "The request is the author's and the override the integrator's, and the override sits beside `t_end` at the same declaration site.",
+   "new": "The request is the author's and the ignore list the integrator's, and the ignore list sits beside `t_end` at the same declaration site.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R12",
+   "note": "\"the ignore list\" for \"the override\"."
+  },
+  {
+   "id": "C-054",
+   "old": "The library spelling is `StopRequest`.",
+   "new": "The library spelling is `StopRequest` (D-316).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-316"
+   ],
+   "tag": "C",
+   "note": "M52 moves the block up, after the publication paragraph that says \"below\" of it; D-316 bullet 5, bold kept on the headline."
+  },
+  {
+   "id": "C-055",
+   "old": "It is a stateless continuous leaf in the mould of `Constant` (§13.7).",
+   "new": "It is a stateless continuous leaf in the mould of `Constant` (§13.7).",
+   "where": "new",
+   "cites": [
+    "§13.7"
+   ],
+   "tag": "M",
+   "note": "M52."
+  },
+  {
+   "id": "C-056",
+   "old": "Its one input is the `Bool` condition, its one output the flag, and its reason is instance data.",
+   "new": "Its one input is the stop's `Bool`, its one output the flag, and its reason is instance data.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R12",
+   "note": "M52."
+  },
+  {
+   "id": "C-057",
+   "old": "`# StopRequest — a stateless continuous leaf; its reason is instance data struct StopRequest <: AbstractComponent reason::String end StopRequest(; reason = \"\") = StopRequest(reason) x_init(::StopRequest) = (;) u_types(::StopRequest) = (request = Bool,) y_types(::StopRequest) = (flag = StopFlag,) y_direct(::StopRequest, (; u)) = (flag = u.request ? STOP_REQUESTED : NO_STOP,) stop_reason(c::StopRequest) = c.reason`",
+   "new": "`# StopRequest — a stateless continuous leaf; its reason is instance data struct StopRequest <: AbstractComponent reason::String end StopRequest(; reason = \"\") = StopRequest(reason) x_init(::StopRequest) = (;) u_types(::StopRequest) = (request = Bool,) y_types(::StopRequest) = (flag = StopFlag,) y_direct(::StopRequest, (; u)) = (flag = u.request ? STOP_REQUESTED : NO_STOP,) stop_reason(c::StopRequest) = c.reason`",
+   "where": "new",
+   "cites": [],
+   "tag": "M",
+   "note": "M52; the sketch verbatim."
+  },
+  {
+   "id": "C-058",
+   "old": "Its output is consumed by nobody, which §6.1 allows silently (D-084).",
+   "new": "Its output is consumed by nobody, which §6.1 allows silently (D-084).",
+   "where": "new",
+   "cites": [
+    "D-084",
+    "§6.1"
+   ],
+   "tag": "M",
+   "note": "M52."
+  },
+  {
+   "id": "C-059",
+   "old": "`StopRequest` is continuous, so it refreshes at every boundary, `t` included.",
+   "new": "`StopRequest` is continuous, so it refreshes at every boundary, `t` included (D-316).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-316"
+   ],
+   "tag": "C",
+   "note": "M52; D-316 bullet 5, \"Continuous, it refreshes at every boundary, `t` included\"."
+  },
+  {
+   "id": "C-060",
+   "old": "Assemblies are virtual for execution and rate scopes touch discrete children only, so one leaf sits anywhere in the tree (§10.5, D-019).",
+   "new": "Assemblies are virtual for execution and rate scopes touch discrete children only, so one leaf sits anywhere in the tree (§10.5, D-019).",
+   "where": "new",
+   "cites": [
+    "D-019",
+    "§10.5"
+   ],
+   "tag": "M",
+   "note": "M52."
+  },
+  {
+   "id": "C-061",
+   "old": "Fed by a discrete detector, it sees the tick at the tick's own boundary, because the boundary sweep walks the full execution order in topological order (§10.5, D-147).",
+   "new": "Fed by a discrete detector, it sees the tick at the tick's own boundary, because the boundary sweep walks the full execution order in topological order (§10.5, D-147).",
+   "where": "new",
+   "cites": [
+    "D-147",
+    "§10.5"
+   ],
+   "tag": "M",
+   "note": "M52."
+  },
+  {
+   "id": "C-062",
+   "old": "The block holds no privilege.",
+   "new": "The block holds no privilege.",
+   "where": "new",
+   "cites": [],
+   "tag": "M",
+   "note": "M52."
+  },
+  {
+   "id": "C-063",
+   "old": "Any component may publish a `StopFlag` port directly.",
+   "new": "Any component (a leaf or an assembly of components) may publish a `StopFlag` port directly.",
+   "where": "new",
+   "cites": [],
+   "tag": "M",
+   "note": "M52; component linked at its first use (the old links sat at 10622 and 10643)."
+  },
+  {
+   "id": "C-064",
+   "old": "An unbounded run is allowed.",
+   "new": "An unbounded run is allowed (D-255).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-255"
+   ],
+   "tag": "C",
+   "note": "bold headline kept; D-255 bullet 5, \"A run with `Inf` and no faces is allowed\", amended by D-316 bullet 9."
+  },
+  {
+   "id": "C-065",
+   "old": "`run!(sim)` with `t_end = Inf` and no honoured request is the interactive session's ordinary shape, and the operator interrupt is its escape (§12.4).",
+   "new": "`run!(sim)` with `t_end = Inf` and no honoured request is the interactive session's ordinary shape, and the operator interrupt (Ctrl-C, read as a control-plane stop) is its escape (§12.4).",
+   "where": "new",
+   "cites": [
+    "§12.4"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-066",
+   "old": "The model may have no requester, or the advance may ignore them all.",
+   "new": "The model may have no requester, or the advance may ignore them all.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-067",
+   "old": "The loop raises `UnboundedRun` into its own diagnostic cell, and the status record carries it (§11.8, D-255, D-316).",
+   "new": "`run!` raises `UnboundedRun` before the loop starts, into the loop's own diagnostic cell (the per-writer cell for runtime diagnostics), and the status record carries it (§11.8, D-255, D-316).",
+   "where": "new",
+   "cites": [
+    "D-255",
+    "D-316",
+    "§11.8"
+   ],
+   "tag": "R",
+   "ruling": "R6",
+   "note": "F67, row 543; `src/sim.jl` 1107–1108."
+  },
+  {
+   "id": "C-068",
+   "old": "Its message says which of the two cases holds.",
+   "new": "Its message says which of the two cases holds.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-069",
+   "old": "The advisory fires in `:live` only.",
+   "new": "The advisory fires in `:live` only.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-070",
+   "old": "A `run!` in `:replay` is bounded by the recording, whatever its policy says (§12.7, D-218).",
+   "new": "A `run!` in `:replay` is bounded by the recording, whatever its policy says (§12.7, D-218).",
+   "where": "new",
+   "cites": [
+    "D-218",
+    "§12.7"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-071",
+   "old": "`sim = Simulation(world; h = 0.02) # no policy here: the deployment has none",
+   "new": "sim = Simulation(world; h = 1//50) # no policy here: the deployment has none",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R6",
+   "note": "F52, a ruled code edit; the block is otherwise verbatim."
+  },
+  {
+   "id": "C-072",
+   "old": "init!(sim, cond); run!(sim; t_end = 60) # every request honoured init!(sim, cond); run!(sim; t_end = 60, ignore_stop_requests = (\"ldg/stop\",)) # one requester ignored, by path init!(sim, cond); step!(sim; frames = 100) # Inf and (), the defaults init!(sim, cond); run!(sim; ignore_stop_requests = :all) # unbounded: UnboundedRun, then fly`",
+   "new": "init!(sim, cond); run!(sim; t_end = 60) # every request honoured init!(sim, cond); run!(sim; t_end = 60, ignore_stop_requests = (\"ldg/stop\",)) # one requester ignored, by path init!(sim, cond); step!(sim; frames = 100) # Inf and (), the defaults init!(sim, cond); run!(sim; ignore_stop_requests = :all) # unbounded: UnboundedRun, then fly",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "the block's second half, verbatim; the blank line inside the fence splits it into two units."
+  },
+  {
+   "id": "C-073",
+   "old": "Why one binding site.",
+   "new": "Why one binding site.",
+   "where": "units/F/deleted.md",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R3",
+   "note": "the labelled lead-in goes; R4 reduces its paragraph to the policy pointer."
+  },
+  {
+   "id": "C-074",
+   "old": "A `StopPolicy` is what the caller declares for one advance, so it is a value that advance builds (D-255).",
+   "new": "§12.6 declares the stop policy per advance,",
+   "where": "new",
+   "cites": [
+    "D-255"
+   ],
+   "tag": "R",
+   "ruling": "R4",
+   "note": "reduced to the pointer sentence, whose paragraph cites D-255; \"a value that advance builds\" is kept by \"Each advance builds a `StopPolicy`\" in the next paragraph but one."
+  },
+  {
+   "id": "C-075",
+   "old": "The defaults belong to the calls that take it.",
+   "new": "The defaults belong to the calls that take the policy.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "R4 keeps it; \"it\" was the `StopPolicy`, now named."
+  },
+  {
+   "id": "C-076",
+   "old": "With no constructor defaults the trace header has no policy to record (§11.5),",
+   "new": "With no constructor defaults the trace header (the trace's fixed preamble, taken at boundary zero) has no policy to record (§11.5).",
+   "where": "new",
+   "cites": [
+    "§11.5"
+   ],
+   "tag": "F",
+   "note": "R4 keeps the trace-header clause."
+  },
+  {
+   "id": "C-077",
+   "old": "and the termination record carries the policy that actually ended the run.",
+   "new": "The termination record (the stopped-sim value naming how the run ended) carries the policy that actually ended the run.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "termination record linked at its first use (the old link sat at 10577)."
+  },
+  {
+   "id": "C-078",
+   "old": "This is not the root-declared stop policy rejected below.",
+   "new": "root-type-declared stop policy, which the per-advance policy is not,",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R4",
+   "note": "R4 and R9 place it as a clause beside the rejected mechanisms."
+  },
+  {
+   "id": "C-079",
+   "old": "Binding at the call moves the policy one notch later along the same axis, more deployment-flavored rather than less (D-060).",
+   "new": "Binding at the call moves the policy one notch later along the same axis, more deployment-flavored rather than less (D-060).",
+   "where": "units/F/deleted.md",
+   "cites": [
+    "D-060"
+   ],
+   "tag": "R",
+   "ruling": "R4",
+   "note": "cut; its only source is superseded D-091's Rejected list (log 2909–2911)."
+  },
+  {
+   "id": "C-080",
+   "old": "The `stopped → init! → run!` cycle and the `step!` idiom (§12.6) are precisely where one `Simulation` wants different stopping policies on different runs.",
+   "new": "A second run, or a `step!` sequence between two runs, can therefore stop on a different clock or honour a different set of stop requests without a rebuild.",
+   "where": "docs/design/spec.md",
+   "cites": [
+    "§12.6"
+   ],
+   "tag": "M",
+   "note": "R4; §12.6 holds it (frozen spec 9586–9588)."
+  },
+  {
+   "id": "C-081",
+   "old": "The termination record names the source, as a typed value.",
+   "new": "The termination record names the source, as a typed value (D-203).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-203"
+   ],
+   "tag": "C",
+   "note": "bold headline kept; D-203 bullet 1."
+  },
+  {
+   "id": "C-082",
+   "old": "The run's termination record carries its outcome, and the `StopPolicy` of the advance that ended it (D-255).",
+   "new": "The run's termination record carries its outcome, and the `StopPolicy` of the advance that ended it (D-255).",
+   "where": "new",
+   "cites": [
+    "D-255"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-083",
+   "old": "The record holds four things, the final boundary time, the terminating policy, the source and the tail residue.",
+   "new": "The record holds four things, the final boundary time, the terminating policy, the source and the tail residue (the post-account diagnostics the run's-end sweep folds in).",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-084",
+   "old": "The tail residue is the post-account diagnostics the run's-end sweep folds in (§11.8).",
+   "new": "(the post-account diagnostics the run's-end sweep folds in). §11.8 specifies that sweep.",
+   "where": "new",
+   "cites": [
+    "§11.8"
+   ],
+   "newcites": [
+    "§11.8"
+   ],
+   "tag": "R",
+   "ruling": "R12",
+   "note": "R12's inline gloss where \"tail residue\" first appears; the citation stays outside the gloss."
+  },
+  {
+   "id": "C-085",
+   "old": "The time is always present, because boundary zero precedes every record and a throw inside boundary zero writes none (§12.6, D-233).",
+   "new": "The time is always present, because boundary zero precedes every record and a throw inside boundary zero writes none (§12.6, D-233).",
+   "where": "new",
+   "cites": [
+    "D-233",
+    "§12.6"
+   ],
+   "tag": "F",
+   "note": "row 555; \"The time is always present\" bold (R5), D-233 Position."
+  },
+  {
+   "id": "C-086",
+   "old": "The source follows the diagnostic convention, so its kind is its identity and its payload is plain data (§13.2).",
+   "new": "The source follows the diagnostic convention, so its type is its identity and its payload is plain data (§13.2, D-203).",
+   "where": "new",
+   "cites": [
+    "§13.2"
+   ],
+   "newcites": [
+    "D-203",
+    "§13.2"
+   ],
+   "tag": "C",
+   "note": "D-203 bullet 1; bare \"kind\" is reserved and R12 bars the `#g-kind` sense, and the sources are types (`src/sim.jl` 24–42)."
+  },
+  {
+   "id": "C-087",
+   "old": "It has four kinds.",
+   "new": "There are four source types.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R12"
+  },
+  {
+   "id": "C-088",
+   "old": "`EndTimeReached` means `t_end`'s frame completed.",
+   "new": "`EndTimeReached` means `t_end`'s frame completed.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-089",
+   "old": "It has no payload.",
+   "new": "It has no payload.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-090",
+   "old": "The record's own `t` is the fact, and the bound that was configured is in the record's own policy.",
+   "new": "The record's own `t` is the fact, and the bound that was configured is in the record's own policy.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-091",
+   "old": "`ModelRequestedStop` means an honoured stop request read `STOP_REQUESTED`.",
+   "new": "`ModelRequestedStop` means an honoured stop request read `STOP_REQUESTED`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-092",
+   "old": "The payload is the requester's component path, its port and its reason.",
+   "new": "The payload is the requester's component path, its port and its reason.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-093",
+   "old": "When two requests hold at one boundary, the record names the first in roster order (D-316).",
+   "new": "When two requests hold at one boundary, the record names the first in requester roster order (D-316).",
+   "where": "new",
+   "cites": [
+    "D-316"
+   ],
+   "tag": "R",
+   "ruling": "R12"
+  },
+  {
+   "id": "C-094",
+   "old": "`ControlRequestedStop` means a control-plane stop.",
+   "new": "`ControlRequestedStop` means a control-plane stop.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-095",
+   "old": "The payload is its issuer (§12.1): the requesting device, `:code`, or `:interrupt`.",
+   "new": "The payload is its issuer, the requesting device, `:code` or `:interrupt` (§12.1).",
+   "where": "new",
+   "cites": [
+    "§12.1"
+   ],
+   "tag": "F",
+   "note": "the mid-sentence colon goes."
+  },
+  {
+   "id": "C-096",
+   "old": "`LoopError` means the abnormal entry of §13.6.",
+   "new": "`LoopError` means the abnormal entry of §13.6.",
+   "where": "new",
+   "cites": [
+    "§13.6"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-097",
+   "old": "The payload is the propagated cause.",
+   "new": "The payload is the propagated cause.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-098",
+   "old": "A throw inside the frame reaches the record with the `Model` already marked `:inconsistent` by its own catch, and the simulation reads `errored`;",
+   "new": "A throw inside the frame reaches the record with the `Model` already marked `:inconsistent` by its own catch, and the simulation reads `errored`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-099",
+   "old": "a loop fault outside the frame, in the pacer, a yield or the tail, closes the run as `stopped` with the `Model` consistent at its last settled boundary, since only the `Model`'s own catch sites mark it (D-317).",
+   "new": "A loop fault outside the frame, in the pacer, a yield or the tail, closes the run as `stopped` with the `Model` consistent at its last settled boundary, since only the `Model`'s own catch sites mark it (D-317).",
+   "where": "new",
+   "cites": [
+    "D-317"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-100",
+   "old": "The record covers both exactly alike.",
+   "new": "The record covers both exactly alike.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-101",
+   "old": "A `stopped` simulation therefore answers \"why did it stop?\" without its consumer reconstructing the answer from the clock.",
+   "new": "A `stopped` simulation therefore answers \"why did it stop?\" without its consumer reconstructing the answer from the clock.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-102",
+   "old": "It answers \"how did the stop go?\" from the same value.",
+   "new": "It answers \"how did the stop go?\" from the same value.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-103",
+   "old": "The operator interrupt is a tag on an ordinary stop, not a kind of its own, because nothing failed.",
+   "new": "The operator interrupt is a tag on an ordinary stop, not a source type of its own, because nothing failed (D-203).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-203"
+   ],
+   "tag": "C",
+   "note": "row 563; D-203 bullet 2, bold here (R5); no `#g-kind` link (R12); the second operator-interrupt link goes."
+  },
+  {
+   "id": "C-104",
+   "old": "Appendix C gains nothing from it.",
+   "new": "Appendix C gains nothing from it.",
+   "where": "new",
+   "cites": [
+    "Appendix C"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-105",
+   "old": "Rule.",
+   "new": "Rule.",
+   "where": "units/F/deleted.md",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R3"
+  },
+  {
+   "id": "C-106",
+   "old": "The sources are consulted in a fixed order.",
+   "new": "The sources are consulted in a fixed order (D-203).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-203"
+   ],
+   "tag": "C",
+   "note": "M53 moves the order up, after the scan and the entry check; bold headline, D-203 bullet 5 as amended by D-316 bullet 7."
+  },
+  {
+   "id": "C-107",
+   "old": "The loop checks a pending control stop at frame top, then `t_end`, then the stop requests at each publication.",
+   "new": "The loop checks a pending control stop at frame top, then `t_end`, then the stop requests at each publication.",
+   "where": "new",
+   "cites": [],
+   "tag": "M",
+   "note": "M53."
+  },
+  {
+   "id": "C-108",
+   "old": "When two sources hold at one boundary, the recorded source is the first in that order (D-203).",
+   "new": "When two sources hold at one boundary, the recorded source is the first in that order (D-203).",
+   "where": "new",
+   "cites": [
+    "D-203"
+   ],
+   "tag": "M",
+   "note": "M53."
+  },
+  {
+   "id": "C-109",
+   "old": "The taught contract is this.",
+   "new": "The rule authors are taught is this.",
+   "where": "new",
+   "cites": [],
+   "tag": "X",
+   "note": "M54. contract is reserved for a component's declared interface (brief_common), so the touched sentence is reworded."
+  },
+  {
+   "id": "C-110",
+   "old": "Stop requests are sampled at completed boundaries; declare a sign-form event if you need the stop localized.",
+   "new": "Stop requests are sampled at completed boundaries; declare a sign-form event if you need the stop localized.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R5",
+   "note": "M54; row 565's bold goes plain (R5), the wording verbatim."
+  },
+  {
+   "id": "C-111",
+   "old": "Both shapes of the condition feeding a request work without framework latching.",
+   "new": "Both shapes of the stop's `Bool` feeding a request work without framework latching.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R12",
+   "note": "M54."
+  },
+  {
+   "id": "C-112",
+   "old": "A handler-set `m` flag is sticky by nature.",
+   "new": "A handler-set `m` flag is sticky by nature.",
+   "where": "new",
+   "cites": [],
+   "tag": "M",
+   "note": "M54."
+  },
+  {
+   "id": "C-113",
+   "old": "A transient stage-2 Bool is caught because the loop reacts to the first request it reads holding.",
+   "new": "A transient stage-2 Bool is caught because the loop reacts to the first request it reads holding.",
+   "where": "new",
+   "cites": [],
+   "tag": "M",
+   "note": "M54."
+  },
+  {
+   "id": "C-114",
+   "old": "Compound stop logic composes in-model, as a monitor component reading the relevant signals and feeding one request.",
+   "new": "Compound stop logic composes in-model, as a monitor component reading the relevant signals and feeding one request.",
+   "where": "new",
+   "cites": [],
+   "tag": "M",
+   "note": "M54."
+  },
+  {
+   "id": "C-115",
+   "old": "That is the same move §12.5 made for scripts.",
+   "new": "That is the same move §12.5 made for scripts.",
+   "where": "new",
+   "cites": [
+    "§12.5"
+   ],
+   "tag": "M",
+   "note": "M54."
+  },
+  {
+   "id": "C-116",
+   "old": "An ignored request is still a cell in every snapshot, so the log records when validity broke even on a run that continued.",
+   "new": "An ignored request is still a cell in every snapshot, so the log records when validity broke even on a run that continued (D-316).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-316"
+   ],
+   "tag": "C",
+   "note": "D-316 Rationale (log 13907–13911); see Rationale-only rulings."
+  },
+  {
+   "id": "C-117",
+   "old": "Two uses share the mechanism, validity breakdown and scenario completion.",
+   "new": "Two uses share the mechanism, validity breakdown and scenario completion.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-118",
+   "old": "The reason string is what tells a reader which, and the framework never will.",
+   "new": "The reason string is what tells a reader which, and the framework never will.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-119",
+   "old": "Post-terminal dynamics are the model's job, and that is a feature.",
+   "new": "Post-terminal dynamics are the model's job, and that is a feature.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-120",
+   "old": "Today `robot2d` throws when it falls, because it has no other way to say \"my dynamics are no longer meaningful\".",
+   "new": "`robot2d` is FlightApps' self-balancing robot in Flight.jl, which throws `LostBalance`, a `SimulationTermination`, past 45° of tilt. It throws when it falls, because it has no other way to say \"my dynamics are no longer meaningful\".",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R10",
+   "note": "R10's introducing clause; \"Today\" goes."
+  },
+  {
+   "id": "C-121",
+   "old": "Here it declares the fall as an event, switches to a frozen mode, and feeds `fallen` to a stop request.",
+   "new": "Here it declares the fall as an event, switches to a frozen mode, and feeds `fallen` to a stop request.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-122",
+   "old": "The frozen mode is a mode-dependent `x_deriv`, machinery the model already has.",
+   "new": "The frozen mode is a mode-dependent `x_deriv`, machinery the model already has.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-123",
+   "old": "Honoured, the request ends the sim at the fall.",
+   "new": "Honoured, the request ends the sim at the fall.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-124",
+   "old": "Ignored, the sim integrates a frozen robot, which is well-defined, unlike an uncaught throw.",
+   "new": "Ignored, the sim integrates a frozen robot, which is well-defined, unlike an uncaught throw.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-125",
+   "old": "The discipline forces models to have well-defined terminal states, which is better modeling.",
+   "new": "The discipline forces models to have well-defined terminal states, which is better modeling (D-060).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-060"
+   ],
+   "tag": "C",
+   "note": "row 569 stays as a verdict with its citation (R9); D-060 Rejected, \"models never state their terminal dynamics\"."
+  },
+  {
+   "id": "C-126",
+   "old": "The rejected mechanisms are litigated in D-060 and D-316.",
+   "new": "The rejected mechanisms, litigated in D-060 and D-316, are",
+   "where": "new",
+   "cites": [
+    "D-060",
+    "D-316"
+   ],
+   "tag": "R",
+   "ruling": "R9"
+  },
+  {
+   "id": "C-127",
+   "old": "They are predicate closures (`stop_when = snap -> …`), root-type-declared stop policy, `terminal` event flags, a control-plane capability for components, and observation-by-path (an advance naming a deep path into any public output).",
+   "new": "predicate closures such as `stop_when = snap -> …`, root-type-declared stop policy, which the per-advance policy is not, `terminal` event flags, a control-plane capability for components, observation-by-path (an advance naming a deep path into any public output), and",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R9",
+   "note": "one sentence names all seven; the `stop_when` example loses its parentheses so the sentence keeps one parenthetical, observation-by-path's gloss."
+  },
+  {
+   "id": "C-128",
+   "old": "The `Bool` face re-exported level by level to the root and named by the advance fell to stop requests (D-316).",
+   "new": "the `Bool` face re-exported level by level to the root and named by the advance, which fell to stop requests.",
+   "where": "new",
+   "cites": [
+    "D-316"
+   ],
+   "tag": "R",
+   "ruling": "R9"
+  },
+  {
+   "id": "C-129",
+   "old": "D-060 also rejected blessed terminal types scanned from the tree.",
+   "new": "D-060 also rejected blessed (explicitly sanctioned by the spec) terminal types scanned from the tree,",
+   "where": "new",
+   "cites": [
+    "D-060"
+   ],
+   "tag": "R",
+   "ruling": "R23",
+   "note": "R23 splits R9's sentence so the `#g-blessed` link keeps its gloss in a sentence of its own; D-060's attribution comes back with it."
+  },
+  {
+   "id": "C-130",
+   "old": "The stop request supersedes that arm on its own terms.",
+   "new": "an arm the stop request supersedes on its own terms.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R9"
+  },
+  {
+   "id": "C-131",
+   "old": "The requester is loud at inspection, since the roster and the termination record name it.",
+   "new": "The requester is loud at inspection, since the requester roster and the termination record name it.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R9",
+   "note": "folded into the inspection doctrine (R9); \"requester roster\" in full (R12)."
+  },
+  {
+   "id": "C-132",
+   "old": "Substitution is answered by the override, and disabling is one keyword.",
+   "new": "Substitution is answered by the ignore list, and disabling is one keyword.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R9",
+   "note": "folded (R9); \"the ignore list\" (R12)."
+  },
+  {
+   "id": "C-133",
+   "old": "The trigger is the author's knowledge and the override the integrator's.",
+   "new": "The trigger is the author's knowledge and the ignore list the integrator's.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R9",
+   "note": "folded (R9); \"the ignore list\" (R12)."
+  },
+  {
+   "id": "C-134",
+   "old": "The observation-by-path line leaves doctrine behind it, narrowed by D-316.",
+   "new": "The observation-by-path line leaves doctrine behind it, narrowed by D-316.",
+   "where": "new",
+   "cites": [
+    "D-316"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-135",
+   "old": "Inspection is human-facing, has no effect on run semantics, and legitimately sees every public cell.",
+   "new": "Inspection is human-facing, has no effect on run semantics, and legitimately sees every public cell.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "bold term goes plain (R3)."
+  },
+  {
+   "id": "C-136",
+   "old": "The log retaining the full table, GUI panels rendering a component's ports, and replay inspection are all inspection.",
+   "new": "The log retaining the full table, a front end's panels rendering a component's ports, and inspection under replay (the ordinary loop re-driven from a recorded trace) are all inspection.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R6",
+   "note": "F53; D-310 is cited once in the section, at the stop button (context). The port link goes (it sat late here)."
+  },
+  {
+   "id": "C-137",
+   "old": "A read the run acts on changes what the run does, and it reads only what the model declared for it, never an arbitrary cell.",
+   "new": "A read the run acts on changes what the run does, and it reads only what the model declared for it, never an arbitrary cell.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "bold term goes plain (R3)."
+  },
+  {
+   "id": "C-138",
+   "old": "The stop scan is the one such read.",
+   "new": "The stop scan is the one such read.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-139",
+   "old": "It reads the `StopFlag` block, which holds nothing but the requests their authors declared by type.",
+   "new": "It reads the `StopFlag` block, which holds nothing but the requests their authors declared by type.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-140",
+   "old": "The ignore list addresses the `Build`'s requester roster, a build product like the root-input list.",
+   "new": "The ignore list addresses the `Build`'s requester roster, a build product like the root-input list.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-141",
+   "old": "It binds at an advance, a stopped-sim point where conditions already address state by path (§14.1).",
+   "new": "It binds at an advance, a stopped-sim point where conditions already address state by path (§14.1).",
+   "where": "new",
+   "cites": [
+    "§14.1"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-142",
+   "old": "Output devices are the other half of the same doctrine.",
+   "new": "Output devices are the other half of the same doctrine.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-143",
+   "old": "Their reads are inspection bindings on snapshot paths (§11.2).",
+   "new": "Their reads are inspection bindings on snapshot paths (§11.2).",
+   "where": "new",
+   "cites": [
+    "§11.2"
+   ],
+   "tag": "F",
+   "note": "R2 keeps it as written."
+  },
+  {
+   "id": "C-144",
+   "old": "The wall-clock channel (GUI stop button, device handle, code) is orthogonal and untouched.",
+   "new": "The wall-clock channel, through a front end's stop button (D-310), a device handle or code, is orthogonal and untouched.",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-310"
+   ],
+   "tag": "R",
+   "ruling": "R6",
+   "note": "F53; M51 moves the paragraph into the context."
+  },
+  {
+   "id": "C-145",
+   "old": "That is the control plane's operator path.",
+   "new": "That is the operator path of the control plane (the separate atomic surface carrying pause, pace and stop).",
+   "where": "new",
+   "cites": [],
+   "tag": "M",
+   "note": "M51; control plane linked at its new first use."
+  },
+  {
+   "id": "C-146",
+   "old": "The sim-time, model-detected channel specified here meets it at §12.4 and nowhere else.",
+   "new": "The sim-time, model-detected channel specified here meets it at §12.4 and nowhere else.",
+   "where": "new",
+   "cites": [
+    "§12.4"
+   ],
+   "tag": "M",
+   "note": "M51."
+  },
+  {
+   "id": "C-147",
+   "old": "### 13.6 Abnormal shutdown: one tail, two entries",
+   "new": "### 13.6 Abnormal shutdown: one tail, two entries",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-148",
+   "old": "The boundary is all-or-nothing outside the sim task.",
+   "new": "The boundary is all-or-nothing outside the loop (D-030).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-030"
+   ],
+   "tag": "R",
+   "ruling": "R6",
+   "note": "F55; M58 moves the reason paragraph after the ruling. The bold goes plain, as a reason after its rule; D-030 Rejected (\"Mid-frame abort: torn final snapshot\") carries it (Rationale-only rulings)."
+  },
+  {
+   "id": "C-149",
+   "old": "That is why a `StepError` cannot break §12.4.",
+   "new": "That is why a `StepError` cannot break §12.4.",
+   "where": "new",
+   "cites": [
+    "§12.4"
+   ],
+   "tag": "M",
+   "note": "M58."
+  },
+  {
+   "id": "C-150",
+   "old": "Sweeps write into table blocks.",
+   "new": "Sweeps (passes through the execution order) write into table blocks.",
+   "where": "new",
+   "cites": [],
+   "tag": "M",
+   "note": "M58."
+  },
+  {
+   "id": "C-151",
+   "old": "Integration intermediates live in framework-owned integrator buffers,",
+   "new": "Integration intermediates live in framework-owned integrator buffers.",
+   "where": "new",
+   "cites": [],
+   "tag": "M",
+   "note": "M58."
+  },
+  {
+   "id": "C-152",
+   "old": "never in a component's workspace as §7.3 defines it.",
+   "new": "They never live in the scratch of a component (a leaf or an assembly of components). That scratch is its workspace (declared by allocation and excluded from state semantics), as §7.3 defines it.",
+   "where": "new",
+   "cites": [
+    "§7.3"
+   ],
+   "tag": "R",
+   "ruling": "R23",
+   "note": "M58; R23 links component at its first use beside workspace, one gloss per sentence. Both glosses from the glossary (`#g-component`, `#g-workspace`)."
+  },
+  {
+   "id": "C-153",
+   "old": "The only externally visible act is snapshot publication at the very end of the sequence.",
+   "new": "The only externally visible act is snapshot publication at the very end of the sequence.",
+   "where": "new",
+   "cites": [],
+   "tag": "M",
+   "note": "M58."
+  },
+  {
+   "id": "C-154",
+   "old": "A boundary that throws has published nothing.",
+   "new": "A boundary that throws has published nothing.",
+   "where": "new",
+   "cites": [],
+   "tag": "M",
+   "note": "M58."
+  },
+  {
+   "id": "C-155",
+   "old": "The last published snapshot is a complete, consistent boundary by construction, and it is still the newest thing any device, logger or waiter has seen.",
+   "new": "The last published snapshot is a complete, consistent boundary by construction, and it is still the newest thing any device, logger or waiter has seen.",
+   "where": "new",
+   "cites": [],
+   "tag": "M",
+   "note": "M58."
+  },
+  {
+   "id": "C-156",
+   "old": "The abnormal path therefore discards the failed boundary, promotes the previous snapshot to final, and rejoins the ordinary tail.",
+   "new": "The abnormal path discards the failed boundary, promotes the previous snapshot to final, and rejoins the ordinary tail (D-030).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-030"
+   ],
+   "tag": "C",
+   "note": "row 581; \"therefore\" goes so the bold heads its sentence (R5); D-030 Position, \"loop failure runs the same protocol from the catch path\". Now the section's first ruling."
+  },
+  {
+   "id": "C-157",
+   "old": "The protocol becomes one tail with two entry points.",
+   "new": "The protocol becomes one tail with two entry points.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-158",
+   "old": "Graceful entry follows a completed final boundary, and abnormal entry follows a discarded one.",
+   "new": "Graceful entry follows a completed final boundary, and abnormal entry follows a discarded one.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-159",
+   "old": "Everything downstream of \"final snapshot\" runs identically: sticky stopped, waiters woken through the boundary-counter plus `Condition` path, `unblock!`/close hooks, and named joins with timeout.",
+   "new": "Everything downstream of \"final snapshot\" runs identically. That covers sticky stopped, waiters woken through the boundary-counter plus `Condition` path, the hooks `unblock!` and `shutdown!`, and named joins with timeout.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R6",
+   "note": "F56; the colon list becomes its own sentence."
+  },
+  {
+   "id": "C-160",
+   "old": "Those waiters observe stopped rather than a new boundary, so no device task hangs.",
+   "new": "Those waiters observe stopped rather than a new boundary, so no task of a device (an attached participant in the periphery) hangs.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "device linked at its new first use."
+  },
+  {
+   "id": "C-161",
+   "old": "``` graceful entry abnormal entry final boundary completes failed boundary discarded final snapshot published previous snapshot promoted to final | | +-----------------+-----------------+ | \"final snapshot\" | sticky stopped → waiters woken → unblock!/close hooks → named joins with timeout ```",
+   "new": "``` graceful entry abnormal entry final boundary completes failed boundary discarded final snapshot published previous snapshot promoted to final | | +-----------------+-----------------+ | \"final snapshot\" | sticky stopped → waiters woken → unblock! and shutdown! → named joins with timeout ```",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R6",
+   "note": "F56, the ruled chart edit; the chart is otherwise verbatim."
+  },
+  {
+   "id": "C-162",
+   "old": "This fills the seat §12.4 reserved for it.",
+   "new": "This fills the seat §12.4 reserved for it.",
+   "where": "new",
+   "cites": [
+    "§12.4"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-163",
+   "old": "A loop-side failure runs the same protocol from the catch path.",
+   "new": "A loop-side failure runs the same protocol from the catch path (D-030).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-030"
+   ],
+   "tag": "C",
+   "note": "D-030 Position, last clause; plain, since the ruling's bold is the section's first sentence."
+  },
+  {
+   "id": "C-164",
+   "old": "The termination record covers this entry too.",
+   "new": "The termination record (the stopped-sim value naming how the run ended) covers this entry too.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-165",
+   "old": "Its source is `LoopError`, and the payload is the propagated cause (§13.5, D-203).",
+   "new": "Its source is `LoopError`, and the payload is the propagated cause (§13.5, D-203).",
+   "where": "new",
+   "cites": [
+    "D-203",
+    "§13.5"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-166",
+   "old": "Tail hygiene follows from the hooks being user code too.",
+   "new": "Tail hygiene follows from the hooks being user code too.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-167",
+   "old": "Each is individually caught and logged.",
+   "new": "Each is individually caught and logged.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-168",
+   "old": "Shutdown therefore runs to completion even if a device's hook misbehaves.",
+   "new": "Shutdown therefore runs to completion even if a device's hook misbehaves.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-169",
+   "old": "The join timeout already bounds a hook that hangs rather than throws.",
+   "new": "The join timeout already bounds a hook that hangs rather than throws.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-170",
+   "old": "What is lost is quarantined.",
+   "new": "What is lost is quarantined.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-171",
+   "old": "The state stores may hold mid-boundary values (a half-written `m`, integration intermediates).",
+   "new": "A throw inside the frame leaves the stores (the framework-owned homes of a component's `x`, `s` and `m`) possibly holding mid-boundary values, such as a half-written `m` or integration intermediates.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R6",
+   "note": "F57; the example list loses its parentheses to make room for the store's gloss."
+  },
+  {
+   "id": "C-172",
+   "old": "They are retained on the errored `Simulation` for post-mortem inspection,",
+   "new": "They are retained on the errored simulation for post-mortem inspection.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R6",
+   "note": "F57."
+  },
+  {
+   "id": "C-173",
+   "old": "but an errored sim is terminally stopped, not resumable.",
+   "new": "An errored simulation is terminal, not resumable,",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R6",
+   "note": "F57, \"terminal, not resumable\"; R4 and M59 make it a pointer to §12.6, cited in the same sentence."
+  },
+  {
+   "id": "C-174",
+   "old": "The reproduction tool is trace replay, not resurrection.",
+   "new": "and the reproduction tool is trace replay (re-driving the ordinary loop from the session's recorded inputs), not resurrection (§12.6, D-059, D-387).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-059",
+    "D-387",
+    "§12.6"
+   ],
+   "tag": "R",
+   "ruling": "R4",
+   "note": "M59; §12.6 bolds `errored` terminal (D-059) and states the reproduction (D-387)."
+  },
+  {
+   "id": "C-175",
+   "old": "The stopped-sim services enforce that non-resumability by refusing an errored simulation outright (`ServiceLifecycle`, §14).",
+   "new": "The stopped-sim services enforce that non-resumability by refusing an errored simulation outright (`ServiceLifecycle`, §14).",
+   "where": "new",
+   "cites": [
+    "§14"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-176",
+   "old": "The roster operations refuse it with them (§11.3, D-232).",
+   "new": "The roster operations refuse it with them (§11.3, D-232).",
+   "where": "new",
+   "cites": [
+    "D-232",
+    "§11.3"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-177",
+   "old": "Inspection is reading, but `attach!` configures a run that cannot follow.",
+   "new": "Inspection is reading, but `attach!` configures a run that cannot follow.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-178",
+   "old": "The published record (snapshot chain, log, trace) ends at the last consistent boundary.",
+   "new": "The published record (snapshot chain, log, trace) ends at the last consistent boundary.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-179",
+   "old": "Nothing downstream of the sim ever sees half a boundary.",
+   "new": "Nothing downstream of the sim ever sees half a boundary.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  }
+ ],
+ "added": [
+  "This section specifies how a model ends its own run.",
+  "(the declared function that detects an event)",
+  "(what a guard defines)",
+  "(a published consistency point)",
+  "(the immutable per-boundary publication)",
+  "(typed entries of the signal table)",
+  "The landing gear",
+  "from the example of §6.1",
+  "(the build's list of stop requests, one `Requester(path, port, reason)` per `StopFlag` output port, in build order)",
+  "A `t_end` that is not a non-negative real is `ArgumentInvalid`, refused before the ignore list is read.",
+  "(the field recording where execution stands)",
+  "(the initialization boundary at `t₀`)",
+  "A run that starts later ends where it started, advancing no frame.",
+  "(a leaf or an assembly of components)",
+  "(Ctrl-C, read as a control-plane stop)",
+  "(the per-writer cell for runtime diagnostics)",
+  "(the trace's fixed preamble, taken at boundary zero)",
+  "(the stopped-sim value naming how the run ended)",
+  "`robot2d` is FlightApps' self-balancing robot in Flight.jl, which throws `LostBalance`, a `SimulationTermination`, past 45° of tilt.",
+  "(explicitly sanctioned by the spec)",
+  "(the ordinary loop re-driven from a recorded trace)",
+  "§13.3 draws the same line for path resolution, client by client.",
+  "(the separate atomic surface carrying pause, pace and stop)",
+  "The section covers, in order, detection and publication, placement and requesters, the policy per advance, the scan and the source order, unbounded runs, the termination record, ignored requests and post-terminal dynamics, and inspection beside the reads a run acts on.",
+  "#### Detection and publication",
+  "#### Placement and requesters",
+  "#### The policy per advance",
+  "#### The scan and the source order",
+  "#### Unbounded runs",
+  "#### The termination record",
+  "#### Ignored requests and post-terminal dynamics",
+  "#### Inspection and the reads a run acts on",
+  "A failure on the loop's side can arrive in the middle of a boundary (a published consistency point).",
+  "The run must still end through the shutdown tail of §12.4, which starts from a final snapshot (the immutable per-boundary publication).",
+  "This section gives the abnormal path, the reason it is safe, the two entries charted, the record it writes, tail hygiene, and what an errored simulation keeps and refuses.",
+  "The abnormal path rests on this.",
+  "(passes through the execution order)",
+  "(a leaf or an assembly of components). That scratch is its",
+  "(declared by allocation and excluded from state semantics)",
+  "(an attached participant in the periphery)",
+  "(the framework-owned homes of a component's `x`, `s` and `m`)",
+  "(re-driving the ordinary loop from the session's recorded inputs)"
+ ]
+}
