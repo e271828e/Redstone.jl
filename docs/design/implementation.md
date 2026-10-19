@@ -314,17 +314,10 @@ D-256, D-268, D-269, D-317.
 - The compiled writer `Writer` and `Batch`, and the staging cells.
 - The per-writer drain `_drain!`, which sim.jl's `drain!` reaches through the
   roster's thunks.
-- The typed diagnostic kinds and the diagnostic cells, one per writer and one
-  on each model for its frame (D-317).
+- The diagnostic cells, one per writer and one on each model for its frame
+  (D-317). The channel's kinds are diagnostics.jl's.
 - `KINDS`, the closed set's one home. The union `DiagValue` and `KindCounts`'
   field order are built from it.
-- The diagnostic kinds include:
-  - `UnboundedRun`, the loop's own advisory (§13.5, D-255, D-316);
-  - `EmptyGreedyClaim`, declared with the service kinds and reported by
-    `attach!` into the roster entry's own cell (§11.6, D-250);
-  - `DebtReanchor`, the pacer's forgiveness on the loop's own cell (§10.7);
-  - `ThreadBudget`, the run-top tightness warning on the loop's own cell
-    (§12.2, D-027).
 - Snapshots, and the log with re-decimation. The log stores the box
   publication made, which `log!` takes `@nospecialize`d beside its concrete
   type, so the two `boundary` reads stay static (§9.8).
@@ -441,6 +434,15 @@ D-256, D-261, D-268, D-270, D-315.
 ### `src/diagnostics.jl`
 
 - The diagnostic kinds, under `Diagnostic`.
+- The runtime channel's kinds, the members of dataplane.jl's `KINDS` (§11.8,
+  Appendix C), in their own section beside `EmptyGreedyClaim`: the three
+  staging kinds (§11.4), the two budget degradations (§10.4, §10.6),
+  `DebtReanchor`, the pacer's forgiveness on the loop's own cell (§10.7),
+  `UnboundedRun`, the loop's own advisory (§13.5, D-255, D-316),
+  `ThreadBudget`, the run-top tightness warning on the loop's own cell
+  (§12.2, D-027), `DeviceCrash`, `DeviceJoinTimeout` (§12.4, D-203) and
+  `ReplayDiscardedStaging` (§12.7). `EmptyGreedyClaim` is reported by
+  `attach!` into the roster entry's own cell (§11.6, D-250).
 - `_typename`.
 - The `DiagnosticError` carrier and its `warnings` (D-250), with
   `diagnostic`, `diagnostics`, `kinds` and the two renderings.
@@ -483,8 +485,10 @@ D-256, D-261, D-268, D-270, D-315.
 - `ArgumentInvalid`'s `:scalar` on `Model`, the materialization's refusal of
   its scalar (§9.2, D-320).
 
-Spec: §9.1, §9.2, §12.6, §12.7, §13.1, §13.2, §13.4, §13.5, §14.4, §14.8, §14.9, §14.10, Appendix C,
-D-058, D-059, D-157, D-187, D-214, D-215, D-222, D-225, D-250, D-255, D-256,
+Spec: §9.1, §9.2, §10.4, §10.6, §10.7, §11.4, §11.6, §11.8, §12.2, §12.4,
+§12.6, §12.7, §13.1, §13.2, §13.4, §13.5, §14.4, §14.8, §14.9, §14.10,
+Appendix C, D-027, D-058, D-059, D-157, D-187, D-203, D-214, D-215, D-222,
+D-225, D-250, D-255, D-256,
 D-261, D-262, D-263, D-272, D-274, D-276, D-277, D-316, D-318, D-319, D-320,
 D-406.
 
