@@ -162,8 +162,6 @@ Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §8.5, §10.4, §13.5, §13.7, D-179, D
 
 ### `src/build.jl`
 
-- The user-code frame is `invoke_declaration`, `invoke_probed` and
-  `at_component` (§13.2, D-248).
 - Tier classification records what it finds instead of throwing. The walk
   reads the tier beside the class, and the store decides the tier.
   Classification records `StatelessWithoutOutputs` and runs the pinned-entry
@@ -174,10 +172,10 @@ Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §8.5, §10.4, §13.5, §13.7, D-179, D
   - a `DiagnosticError` leaving the build is rewrapped with the warning list,
     and any other throw passes unchanged;
   - a completed build logs each warning once at return.
-- `build`, the user-code frame, the declaration checks and the probes take
-  components and the root unspecialized, and each per-component frame reads
-  the instance inside rather than capture it, so a new component or root type
-  compiles none of them again (§9.7, D-289).
+- `build`, the declaration checks and the probes take components and the
+  root unspecialized, and each per-component frame reads the instance inside
+  rather than capture it, so a new component or root type compiles none of
+  them again (§9.7, D-289).
 - The wire pass (D-236) checks both type clauses, at `Float64` and at the
   marker scalar. It retypes the contracts at each. It also fixes the
   root-input type, which has two refusals, `AbstractAtRoot` and
@@ -360,6 +358,8 @@ The declaration layer:
 - The rate forms `Period`, `Relative` and `Absolute`, with `sample_times`.
 - The event surface `StateEvent`, `state_events` and `x_projection`.
 - The declaration family `DECLARATION_FAMILY` and `foreign_declarations`.
+- The user-code frame `invoke_declaration`, `invoke_probed` and
+  `at_component` (§13.2, D-248), the file's last section.
 - The readers of a component, `has_stage`, `_declares`, `declared_at`, the two
   bundle-name functions and `foreign_declarations`, take it unspecialized, so a
   new component type compiles none of them again (§9.7, D-289).
