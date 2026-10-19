@@ -260,10 +260,14 @@ The orchestrator's, outside the chapter, in step 7:
   inspection walk instances ([§13.3][s13-3])" (R2, F3).
 - §9.5 (old 5094) and §10.6 (old 6531): the nonfinite check's "loop" becomes
   the model's (F20).
+- §9.2: cite D-261 at the feedthrough-line sentence, which M60 makes the
+  edges' only home, if D-261's Position carries the derivation (unit G's
+  verifier).
 - `README.md`'s carried items for chapter 13 are struck, and the Part IV
   roadmap's omissions (§13.3, §13.6, §13.7) are added for the front matter.
-- Track 2 takes D-130 and D-242 (annotations for R2), D-250 and D-058 (R11),
-  the requester-roster glossary entry (R12), Appendix C's `StepError` and
+- Track 2 takes D-130, D-242 and D-061 (annotations for R2, R25, R26), D-250 and D-058 (R11),
+  the requester-roster glossary entry (R12), the glossary's feedthrough-tracer
+  entry (R28), Appendix C's `StepError` and
   `ArgumentInvalid` rows (F12, F14, F54), and survey part E's lists.
 
 ## The units
@@ -276,7 +280,7 @@ the chapter is linked from elsewhere.
 **A: chapter heading, roadmap, §13.1 and §13.2** (9909–10169; 2,287 words).
 Survey 1.
 - R1, R3, R4, R5, R6 (F4, F5, F6, F7, F9, F10, F22, F28, F29), R7, R8, R10,
-  R11, R15.
+  R11, R15, R24.
 - Survey 1's M1 to M4, M8, M9 and its part C order for each section.
 - D-214 and D-136 rule rows of §13.2 and are cited nowhere in it.
 - Two carriers, two parameters: `DiagnosticError{P}`'s is the policy,
@@ -286,7 +290,7 @@ Survey 1.
 **B: §13.3 and §13.4** (10170–10442; 2,557 words). Survey 1.
 - R2, R3, R4, R5, R6 (F2, F3, F10, F12, F13, F14, F15, F16, F17, F18, F19,
   F20, F21, F24, F26, F29, F30, F33, F34), R7, R10, R15, R16, R17, R18,
-  R19.
+  R19, R25, R26.
 - Survey 1's M5 to M7 and its part C order.
 - §13.4 has no context paragraph: give it one, from survey 1's part C
   wording, ending with a parts sentence.
@@ -295,7 +299,7 @@ Survey 1.
 
 **F: §13.5 and §13.6** (10443–10727; 2,449 words). Survey 2.
 - R2, R3, R4, R5, R6 (F51, F52, F53, F54, F55, F56, F57, F67), R9, R10,
-  R12, R14, R15.
+  R12, R14, R15, R22, R23, R29.
 - Survey 2's M51 to M59 and its part C order.
 - D-030 rules §13.6 and is cited nowhere in it. D-316 bullets 5 and 7 and
   D-203's rulings are stated uncited in §13.5.
@@ -306,7 +310,7 @@ Survey 1.
 
 **G: §13.7 and §13.8** (10728–11141; 3,342 words). Survey 2.
 - R3, R4, R5, R6 (F58, F59, F60, F61, F62, F63, F64, F67), R10, R12, R13,
-  R14, R15, R20, R21.
+  R14, R15, R20, R21, R27, R28, R30.
 - Survey 2's M60 to M62 and its part C order.
 - D-143 and D-120 rule nine rows of §13.7 and are cited nowhere in it.
 - The four block sketches and the rig sketch stay verbatim.
@@ -329,3 +333,27 @@ Survey 1.
   with D-120 cited in that sentence. "The rig therefore satisfies that
   entry" is a consequence and stays plain with its citation. "The component
   test rig is the library's companion idiom" stays plain.
+- R22 reaches units F, not this one; see brief.md.
+- R23 reaches units F, not this one; see brief.md.
+- R24 reaches units A, not this one; see brief.md.
+- R25 reaches units B, not this one; see brief.md.
+- R26 reaches units B, not this one; see brief.md.
+- **R27. F61 corrected** (unit G's verifier, open question 2; unit G).
+  R6's F61 wording stretched D-364, which rules a thin rig's environment,
+  to every configuration. The added sentence becomes: "A handle-typed value
+  never surfaces as a root input ([D-237][d-237]); a rig holds bulk data
+  through a constant source instead ([§14.9][s14-9], [D-364][d-364])."
+- **R28. Two senses of *contract*** (unit G's corrections 1 and 2; unit G).
+  Old 10993's "the substitutability contract" becomes "structural
+  substitutability doing its job", the glossary's words for an abstract
+  entry. Old 11001's "a root contract" becomes "the rig mounts one component
+  behind its own root faces". Correction 2, "error messages and
+  verification", stays as written: cutting the word on a guess would lose a
+  claim. Correction 3, the glossary's feedthrough-tracer entry, goes to
+  track 2.
+- R29 reaches units F, not this one; see brief.md.
+- **R30. R27 narrowed** (unit G's verifier, re-check; unit G). §14.9 makes
+  an isbits handle an ordinary root input, so "a handle-typed value" claims
+  too much. R27's first clause becomes "A handle that references bulk data
+  never surfaces as a root input ([D-237][d-237])", §14.9's own words. The
+  rig clause stays.

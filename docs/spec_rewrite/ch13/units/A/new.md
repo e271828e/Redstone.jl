@@ -122,9 +122,9 @@ three steps throws before the next begins) throws a single
 carrier's type parameter spells the policy** ([D-222][d-222]). It is the
 diagnostic's kind for a fail-fast throw and `Vector{Diagnostic}` for a
 collected one. A test therefore asserts policy and kind at once with
-`@test_throws DiagnosticError{Kind}`. The runtime carrier follows the same
-rule with a parameter of its own, since `StepError{C}` carries the type of its
-`cause` ([§13.4][s13-4], [D-225][d-225]). `showerror` renders a collection
+`@test_throws DiagnosticError{Kind}`. The runtime carrier `StepError{C}` takes
+a parameter of its own, the type of its `cause` ([§13.4][s13-4],
+[D-225][d-225]). `showerror` renders a collection
 compiler-style, grouped by kind and sorted by path. It renders a single
 diagnostic as its own line.
 
@@ -244,7 +244,7 @@ argument of [D-084][d-084] applies to it. That decision is about what the
 
 The committed runtime warnings, in one place, are these.
 
-- `ChatteringBudget`, [chattering](#g-chattering) or localization-budget
+- `ChatteringBudget`, [chattering](#g-chattering), or localization-budget
   exhaustion ([§10.4][s10-4]). A [localized](#g-localized) event's bracketing
   budget runs out at a [boundary](#g-boundary) (a published consistency
   point).
@@ -255,12 +255,12 @@ The committed runtime warnings, in one place, are these.
   abandons its accumulated debt and re-anchors its schedule.
 - The write-surface and batch-entry violations ([§11.3][s11-3],
   [§11.4][s11-4]), all raised at staging. The [drain](#g-drain) checks
-  nothing. `OutOfClaimEntry` is an enumerated surface's binding drift, a name
-  with no position in the attach-compiled schema. `ClaimedFaceEntry` is a
-  harness write to a face claimed in the run's frozen partition, and it names
+  nothing. `OutOfClaimEntry` ([§11.3][s11-3]) is an enumerated surface's
+  binding drift, a name with no position in the attach-compiled schema.
+  `ClaimedFaceEntry` ([§11.3][s11-3], [§11.4][s11-4]) is a harness write to a face claimed in the run's frozen partition, and it names
   the incumbent. The stopped-sim attach also fires it when it renormalizes a
-  pending [batch](#g-batch). `EntryTypeMismatch` is a value unconvertible to
-  its [root input](#g-root-input)'s declared type, rejected at staging for
+  pending [batch](#g-batch). `EntryTypeMismatch` ([§11.4][s11-4]) is a value
+  unconvertible to its [root input](#g-root-input)'s declared type, rejected at staging for
   every writer.
 - `MalformedDatum`, a tolerated [device](#g-device)-side datum failure
   ([§11.6][s11-6], [§13.4][s13-4]). It is emitted by the author's loop via
@@ -269,8 +269,8 @@ The committed runtime warnings, in one place, are these.
 - `ReplayDiscardedStaging`, staging discarded during [replay](#g-replay)
   ([§12.7][s12-7]). It reports a live batch found staged while the
   [trace](#g-trace) feeds the drain.
-- `ThreadBudget`, thread-budget tightness ([§12.2][s12-2]). It is raised once
-  per run, at `run!` or `replay!`, against the frozen roster ([D-401][d-401]).
+- `ThreadBudget`, thread-budget tightness ([§12.2][s12-2], [D-401][d-401]). It
+  is raised once per run, at `run!` or `replay!`, against the frozen roster.
 - `DeviceJoinTimeout`, a device join timeout ([§12.4][s12-4]). A device task
   exceeds the shutdown join timeout and is abandoned by name rather than
   hanging `run!`. It arises after the terminal snapshot. It is therefore

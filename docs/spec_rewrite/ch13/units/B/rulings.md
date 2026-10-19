@@ -49,6 +49,13 @@ frozen `scratch_survey/h1/decisions.md`.
 - **D-406** in the service row (R2). Position: "Attach resolves a binding's
   `reads` through the read-selector family's one collecting resolver, the
   resolver trim and linearization already use".
+- **D-407** in the service row, beside log extraction by `series` (R25).
+  Position: "Post-run extraction from the log is `series(sim, read_set)`. It
+  resolves a read set against the build for a table source, through the one
+  resolver every reader shares".
+- **D-130 removed** at "renames break loudly" (verifier). It carried that
+  clause only through "drift still loud at attach (`ReadBindingUnresolved`)",
+  the inspection-binding clause R2 overturns.
 - **D-310** in the inspection row (R2). Position: "The built-in Julia GUI is
   parked". **§11.7 removed** from that row (R16).
 - **§13.3 removed** from the moved attach sentence (F24).
@@ -174,4 +181,5 @@ finished) hold no bold citing any entry this unit cites.
 
 ## Open questions
 
-None. The first two were ruled R16 to R18 after step 3 and are applied.
+None. The first two were ruled R16 to R18 after step 3, and the verifier's
+two as R25 and R26; all are applied (R26 changes no text).

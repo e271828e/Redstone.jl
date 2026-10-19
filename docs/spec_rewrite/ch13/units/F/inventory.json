@@ -84,10 +84,11 @@
   {
    "id": "C-009",
    "old": "Touchdown overload is precisely a zero-crossing.",
-   "new": "Touchdown overload is precisely a zero-crossing.",
+   "new": "A landing-gear strut's touchdown overload is precisely a zero-crossing.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "F",
+   "note": "verifier's fix; the introducing clause follows spec 4717, \"A landing-gear strut model that throws on a touchdown overload\"."
   },
   {
    "id": "C-010",
@@ -429,14 +430,14 @@
   {
    "id": "C-043",
    "old": "A `t` hit reaches the loop as `frame!`'s return value, a `Bool` saying whether the frame was abandoned, never as a field of the policy or of the execution cursor (D-261, D-317).",
-   "new": "A `t` hit reaches the loop as `frame!`'s return value (D-261, D-317), a `Bool` saying whether the frame was abandoned, never as a field of the policy or of the execution cursor (the field recording where execution stands).",
+   "new": "A `t` hit reaches the loop as `frame!`'s return value, a `Bool` saying whether the frame was abandoned, never as a field of the policy or of the execution cursor (the field recording where execution stands) (D-261, D-317).",
    "where": "new",
    "cites": [
     "D-261",
     "D-317"
    ],
    "tag": "F",
-   "note": "citation moved off the gloss's parentheses; D-261's cited clause stands, its type clause is D-317's."
+   "note": "citation at the sentence end, covering the cursor clause (verifier's fix); D-261's cited clause stands, its type clause is D-317's."
   },
   {
    "id": "C-044",
@@ -461,7 +462,7 @@
   {
    "id": "C-046",
    "old": "Grid boundaries, `t` (§10.4) and boundary zero (§14.5) all count.",
-   "new": "Grid boundaries, `t` (§10.4) and boundary zero (the initialization boundary at `t₀`) all count (§14.5).",
+   "new": "Grid boundaries, `t` (§10.4) and boundary zero (the initialization boundary at `t₀`) (§14.5) all count.",
    "where": "new",
    "cites": [
     "§10.4",
@@ -594,11 +595,12 @@
   {
    "id": "C-059",
    "old": "`StopRequest` is continuous, so it refreshes at every boundary, `t` included.",
-   "new": "`StopRequest` is continuous, so it refreshes at every boundary, `t` included (D-316).",
+   "new": "`StopRequest` is continuous, so it refreshes at every boundary, `t` included (§10.4, D-316).",
    "where": "new",
    "cites": [],
    "newcites": [
-    "D-316"
+    "D-316",
+    "§10.4"
    ],
    "tag": "C",
    "note": "M52; D-316 bullet 5, \"Continuous, it refreshes at every boundary, `t` included\"."
@@ -769,7 +771,7 @@
   {
    "id": "C-076",
    "old": "With no constructor defaults the trace header has no policy to record (§11.5),",
-   "new": "With no constructor defaults the trace header (the trace's fixed preamble, taken at boundary zero) has no policy to record (§11.5).",
+   "new": "With no constructor defaults the trace header (the trace's fixed preamble) has no policy to record (§11.5).",
    "where": "new",
    "cites": [
     "§11.5"
@@ -1096,7 +1098,7 @@
   {
    "id": "C-109",
    "old": "The taught contract is this.",
-   "new": "The rule authors are taught is this.",
+   "new": "Authors are taught this rule.",
    "where": "new",
    "cites": [],
    "tag": "X",
@@ -1417,13 +1419,18 @@
   {
    "id": "C-143",
    "old": "Their reads are inspection bindings on snapshot paths (§11.2).",
-   "new": "Their reads are inspection bindings on snapshot paths (§11.2).",
+   "new": "Their reads are inspection on snapshot paths (§11.2), though attach resolves them strictly, as §13.3's service clients (D-406).",
    "where": "new",
    "cites": [
     "§11.2"
    ],
-   "tag": "F",
-   "note": "R2 keeps it as written."
+   "newcites": [
+    "D-406",
+    "§11.2"
+   ],
+   "tag": "R",
+   "ruling": "R29",
+   "note": "R29's dictated wording; D-406 Position, \"Attach resolves a binding's `reads` through the read-selector family's one collecting resolver\"."
   },
   {
    "id": "C-144",
@@ -1777,9 +1784,10 @@
   }
  ],
  "added": [
-  "This section specifies how a model ends its own run.",
+  "This section specifies how a model ends its own run, how an advance chooses which stop requests to honour, and what the run records when it ends.",
   "(the declared function that detects an event)",
   "(what a guard defines)",
+  "A landing-gear strut's",
   "(a published consistency point)",
   "(the immutable per-boundary publication)",
   "(typed entries of the signal table)",
@@ -1793,12 +1801,13 @@
   "(a leaf or an assembly of components)",
   "(Ctrl-C, read as a control-plane stop)",
   "(the per-writer cell for runtime diagnostics)",
-  "(the trace's fixed preamble, taken at boundary zero)",
+  "(the trace's fixed preamble)",
   "(the stopped-sim value naming how the run ended)",
   "`robot2d` is FlightApps' self-balancing robot in Flight.jl, which throws `LostBalance`, a `SimulationTermination`, past 45° of tilt.",
   "(explicitly sanctioned by the spec)",
   "(the ordinary loop re-driven from a recorded trace)",
-  "§13.3 draws the same line for path resolution, client by client.",
+  "§13.3 scopes path resolution by client, on a line of its own.",
+  ", though attach resolves them strictly, as §13.3's service clients (D-406)",
   "(the separate atomic surface carrying pause, pace and stop)",
   "The section covers, in order, detection and publication, placement and requesters, the policy per advance, the scan and the source order, unbounded runs, the termination record, ignored requests and post-terminal dynamics, and inspection beside the reads a run acts on.",
   "#### Detection and publication",

@@ -300,7 +300,7 @@ The orchestrator's, outside the chapter, in step 7:
   the model's (F20).
 - `README.md`'s carried items for chapter 13 are struck, and the Part IV
   roadmap's omissions (§13.3, §13.6, §13.7) are added for the front matter.
-- Track 2 takes D-130 and D-242 (annotations for R2), D-250 and D-058 (R11),
+- Track 2 takes D-130, D-242 and D-061 (annotations for R2, R25, R26), D-250 and D-058 (R11),
   the requester-roster glossary entry (R12), Appendix C's `StepError` and
   `ArgumentInvalid` rows (F12, F14, F54), and survey part E's lists.
 
@@ -314,7 +314,7 @@ the chapter is linked from elsewhere.
 **A: chapter heading, roadmap, §13.1 and §13.2** (9909–10169; 2,287 words).
 Survey 1.
 - R1, R3, R4, R5, R6 (F4, F5, F6, F7, F9, F10, F22, F28, F29), R7, R8, R10,
-  R11, R15.
+  R11, R15, R24.
 - Survey 1's M1 to M4, M8, M9 and its part C order for each section.
 - D-214 and D-136 rule rows of §13.2 and are cited nowhere in it.
 - Two carriers, two parameters: `DiagnosticError{P}`'s is the policy,
@@ -324,7 +324,7 @@ Survey 1.
 **B: §13.3 and §13.4** (10170–10442; 2,557 words). Survey 1.
 - R2, R3, R4, R5, R6 (F2, F3, F10, F12, F13, F14, F15, F16, F17, F18, F19,
   F20, F21, F24, F26, F29, F30, F33, F34), R7, R10, R15, R16, R17, R18,
-  R19.
+  R19, R25, R26.
 - Survey 1's M5 to M7 and its part C order.
 - §13.4 has no context paragraph: give it one, from survey 1's part C
   wording, ending with a parts sentence.
@@ -333,7 +333,7 @@ Survey 1.
 
 **F: §13.5 and §13.6** (10443–10727; 2,449 words). Survey 2.
 - R2, R3, R4, R5, R6 (F51, F52, F53, F54, F55, F56, F57, F67), R9, R10,
-  R12, R14, R15.
+  R12, R14, R15, R22, R23.
 - Survey 2's M51 to M59 and its part C order.
 - D-030 rules §13.6 and is cited nowhere in it. D-316 bullets 5 and 7 and
   D-203's rulings are stated uncited in §13.5.
@@ -369,3 +369,19 @@ Survey 1.
   §14's word. Unit B's correction 4, the `Outputs` gloss, stays as written.
 - R20 reaches units G, not this one; see brief.md.
 - R21 reaches units G, not this one; see brief.md.
+- R22 reaches units F, not this one; see brief.md.
+- R23 reaches units F, not this one; see brief.md.
+- R24 reaches units A, not this one; see brief.md.
+- **R25. Log extraction by `series`** (unit B's verifier, open question 1;
+  unit B). D-407's Position resolves `series`'s read set "through the one
+  resolver every reader shares ([D-406][d-406])", the strict one, so log
+  extraction by `series` is a service client like a binding. The service
+  row adds it with [§11.2][s11-2] and [D-407][d-407]. The inspection row
+  keeps "snapshot and log inspection", which read the retained tables
+  directly; `state`, `port` and `modes` still look up flattened paths with
+  no generic-seam refusal (`index_of`, `src/assembly.jl`).
+- **R26. D-061's annotation** (unit B's verifier, open question 2; unit B,
+  no text change). D-061's Position says `resolve` walks declared field
+  types; after F3 the public `resolve` is one level. Track 2 annotates
+  D-061 beside D-130 and D-242. V2's bold keeps D-061 for the clauses that
+  stand: the face accessors' order and the terminal split.

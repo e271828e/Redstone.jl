@@ -183,15 +183,18 @@
   {
    "id": "C-020",
    "old": "Paths are validated at build time, and renames break loudly (D-061, D-130).",
-   "new": "Paths are validated before anything runs on them, and renames break loudly (D-061, D-130).",
+   "new": "Paths are validated before anything runs on them, and renames break loudly (D-061).",
    "where": "new",
    "cites": [
     "D-061",
     "D-130"
    ],
+   "newcites": [
+    "D-061"
+   ],
    "tag": "R",
    "ruling": "R6",
-   "note": "F33"
+   "note": "F33; D-130 dropped, since it carried this only through the inspection-binding clause R2 overturns (R5, R18; verifier)"
   },
   {
    "id": "C-021",
@@ -248,10 +251,12 @@
   {
    "id": "C-026",
    "old": "| client | who resolves | what the walk enforces | |---|---|---|",
-   "new": "| client | who resolves | what the walk enforces | |---|---|---|",
+   "new": "| client | who resolves | what resolution enforces | |---|---|---|",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "R",
+   "ruling": "R6",
+   "note": "F3 leaves \"the walk\" without an antecedent, since the rows take three rules (verifier, C-026)"
   },
   {
    "id": "C-027",
@@ -265,7 +270,7 @@
   {
    "id": "C-028",
    "old": "| service | condition entries (the path-addressed sparse overlay that sets a build's state), trim `reads`, taps (§14.3, §14.7, §14.10) | strict: no traversal past a generic child, checked at the authoring or mount level |",
-   "new": "| service | condition entries (the path-addressed sparse overlay that sets a build's state), trim `reads`, taps, device read bindings (§14.3, §14.7, §14.10, §11.2, D-406) | strict: no traversal past a generic child, checked at the authoring or mount level |",
+   "new": "| service | condition entries (the path-addressed sparse overlay that sets a build's state), trim `reads`, taps, device read bindings, log extraction by `series` (§14.3, §14.7, §14.10, §11.2, D-406, D-407) | strict: no traversal past a generic child, checked at the authoring or mount level |",
    "where": "new",
    "cites": [
     "§14.10",
@@ -274,13 +279,14 @@
    ],
    "newcites": [
     "D-406",
+    "D-407",
     "§11.2",
     "§14.10",
     "§14.3",
     "§14.7"
    ],
    "tag": "R",
-   "ruling": "R2",
+   "ruling": "R2, R25",
    "note": "device read bindings join the service row with §11.2 and D-406 (R2); the bold row name and the bold cell go plain (R3)"
   },
   {
@@ -1958,7 +1964,7 @@
  ],
  "added": [
   "This section gives the three forms, the two duties resolution enforces, which client each duty binds and why, and the standing of `resolve_terminal`.",
-  "A runtime failure is a throw inside a frame (one iteration of the loop) or inside boundary zero,",
+  "A runtime failure of model code is a throw inside a frame (one iteration of the loop) or inside boundary zero,",
   "The framework catches it at one site, records where execution stood, and names how to reproduce it.",
   "This section covers, in order, where a failure is caught, the runtime carrier, the interrupt, the disposition, reproduction, boundary zero, the nonfinite check and device-side failures.",
   "The cursor frame and the pointer are then lost, and the lifecycle does not move as it does on the framed path.",

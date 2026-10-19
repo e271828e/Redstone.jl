@@ -7,11 +7,20 @@ Old lines are spec lines at `1fee0fc` (`old.md` line + 10442). Log lines are
 
 ## Rulings applied
 
-- **R2.** The inspection doctrine keeps "Output devices are the other half of
-  the same doctrine. Their reads are inspection bindings on snapshot paths
-  ([§11.2][s11-2])" as written. Nothing added says a binding takes the
-  instance walk. The q28 pointer to §13.3 says only that §13.3 "draws the
-  same line for path resolution, client by client".
+- **R2, R29.** The inspection doctrine keeps "Output devices are the other
+  half of the same doctrine". Under R29 the next sentence reads "Their reads
+  are inspection on snapshot paths ([§11.2][s11-2]), though attach resolves
+  them strictly, as [§13.3][s13-3]'s service clients ([D-406][d-406])", and
+  the q28 pointer reads "[§13.3][s13-3] scopes path resolution by client, on
+  a line of its own." The pointer is an `added` block, so it carries no tag.
+  Nothing says a binding takes the instance walk.
+- **Verifier's fixes (`verify.md`).** The `t*`-hit citation moved to the
+  sentence end, so it covers the cursor clause. §14.5 now sits right after
+  the boundary-zero gloss. The trace-header gloss dropped "taken at boundary
+  zero", which used the term before its gloss. §10.4 is cited at the first
+  `t*`. "A landing-gear strut's touchdown overload", following spec 4717.
+  The opening sentence now names the policy and the record. "Authors are
+  taught this rule." replaces the hard-to-parse version.
 - **R3.** §13.5 has eight `####` labels in part C's order: detection and
   publication (with `StopRequest` by M52), placement and requesters, the
   policy per advance, the scan and the source order (M53, M54), unbounded
@@ -150,6 +159,10 @@ Old lines are spec lines at `1fee0fc` (`old.md` line + 10442). Log lines are
 - D-059 and D-387 at the M59 pointer: D-059 Position "Status goes terminal
   `stopped`/`errored`"; D-387 Position "An error is reproduced by trace
   replay, not by resurrecting the errored simulation".
+- D-406 at the output-device sentence (R29): Position, "Attach resolves a
+  binding's `reads` through the read-selector family's one collecting
+  resolver".
+- §10.4 at the first `t*` (verifier's fix).
 - §12.6 at the policy pointer and the M59 pointer; §6.1 at `Ldg`; §13.3 at
   the q28 pointer; §11.8 moved outside the tail residue's gloss.
 - Not added: D-083 at "Their reads are inspection bindings on snapshot
@@ -213,4 +226,5 @@ G's `new.md`: B bolds D-317 bullet 8 and a D-059 point about the frame's
 ## Open questions
 
 None. The three raised at step 3 are ruled: R22 (row 501's bold) and R23
-(the `#g-blessed` and §13.6 *component* links).
+(the `#g-blessed` and §13.6 *component* links). The verifier's question is
+ruled R29.

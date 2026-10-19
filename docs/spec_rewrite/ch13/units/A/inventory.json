@@ -802,17 +802,17 @@
   {
    "id": "C-084",
    "old": "The runtime carrier follows the same rule.",
-   "new": "The runtime carrier follows the same rule with a parameter of its own,",
+   "new": "The runtime carrier `StepError{C}` takes a parameter of its own,",
    "where": "new",
    "cites": [],
    "tag": "R",
    "ruling": "R4",
-   "note": "M4. The added words keep the two parameters apart (DiagnosticError's the policy, StepError's the cause's type)."
+   "note": "M4. With the species clause gone, \"follows the same rule\" would read as \"the parameter spells the policy\"; StepError's parameter is the cause's type (D-225). Verifier's fix."
   },
   {
    "id": "C-085",
    "old": "`StepError{C}` carries the type of its `cause`,",
-   "new": "since `StepError{C}` carries the type of its `cause` (§13.4, D-225).",
+   "new": "the type of its `cause` (§13.4, D-225).",
    "where": "new",
    "cites": [],
    "newcites": [
@@ -1547,7 +1547,7 @@
   {
    "id": "C-159",
    "old": "Chattering, or localization-budget exhaustion (§10.4).",
-   "new": "`ChatteringBudget`, chattering or localization-budget exhaustion (§10.4).",
+   "new": "`ChatteringBudget`, chattering, or localization-budget exhaustion (§10.4).",
    "where": "new",
    "cites": [
     "§10.4"
@@ -1612,7 +1612,7 @@
    ],
    "tag": "R",
    "ruling": "R8",
-   "note": "bare \"entry\" is reserved; these are batch entries (§11.3 \"a batch entry outside the surface\"). One line for the three kinds, which share the staging clause."
+   "note": "bare \"entry\" is reserved; these are batch entries (§11.3 \"a batch entry outside the surface\"). One line for the three kinds, which share the staging clause, each kind with its own section (R24)."
   },
   {
    "id": "C-166",
@@ -1625,18 +1625,29 @@
   {
    "id": "C-167",
    "old": "`OutOfClaimEntry` is an enumerated surface's binding drift, a name with no position in the attach-compiled schema.",
-   "new": "`OutOfClaimEntry` is an enumerated surface's binding drift, a name with no position in the attach-compiled schema.",
+   "new": "`OutOfClaimEntry` (§11.3) is an enumerated surface's binding drift, a name with no position in the attach-compiled schema.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "newcites": [
+    "§11.3"
+   ],
+   "tag": "R",
+   "ruling": "R24",
+   "note": "Appendix C's section for the kind."
   },
   {
    "id": "C-168",
    "old": "`ClaimedFaceEntry` is a harness write to a face claimed in the run's frozen partition, and it names the incumbent.",
-   "new": "`ClaimedFaceEntry` is a harness write to a face claimed in the run's frozen partition, and it names the incumbent.",
+   "new": "`ClaimedFaceEntry` (§11.3, §11.4) is a harness write to a face claimed in the run's frozen partition, and it names the incumbent.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "newcites": [
+    "§11.3",
+    "§11.4"
+   ],
+   "tag": "R",
+   "ruling": "R24",
+   "note": "Appendix C's sections for the kind."
   },
   {
    "id": "C-169",
@@ -1649,10 +1660,15 @@
   {
    "id": "C-170",
    "old": "`EntryTypeMismatch` is a value unconvertible to its root input's declared type, rejected at staging for every writer.",
-   "new": "`EntryTypeMismatch` is a value unconvertible to its root input's declared type, rejected at staging for every writer.",
+   "new": "`EntryTypeMismatch` (§11.4) is a value unconvertible to its root input's declared type, rejected at staging for every writer.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "newcites": [
+    "§11.4"
+   ],
+   "tag": "R",
+   "ruling": "R24",
+   "note": "Appendix C's section for the kind."
   },
   {
    "id": "C-171",
@@ -1714,25 +1730,26 @@
   {
    "id": "C-176",
    "old": "Thread-budget tightness (§12.2).",
-   "new": "`ThreadBudget`, thread-budget tightness (§12.2).",
+   "new": "`ThreadBudget`, thread-budget tightness (§12.2, D-401).",
    "where": "new",
    "cites": [
     "§12.2"
    ],
+   "newcites": [
+    "D-401",
+    "§12.2"
+   ],
    "tag": "R",
-   "ruling": "R8"
+   "ruling": "R8",
+   "note": "D-401 Position, tight below \"the run's roster plus one\"; cited at the line's head, where the condition is (verifier's fix)."
   },
   {
    "id": "C-177",
    "old": "Raised once per run, at `run!` or `replay!`, against the frozen roster.",
-   "new": "It is raised once per run, at `run!` or `replay!`, against the frozen roster (D-401).",
+   "new": "It is raised once per run, at `run!` or `replay!`, against the frozen roster.",
    "where": "new",
    "cites": [],
-   "newcites": [
-    "D-401"
-   ],
-   "tag": "C",
-   "note": "D-401 Position, tight below \"the run's roster plus one\"; its Rationale, \"The count is the frozen roster's, checked once per run\"."
+   "tag": "F"
   },
   {
    "id": "C-178",
@@ -1857,7 +1874,6 @@
   "(the fabricated values a build-time probe runs on)",
   "#### The diagnostic and its carrier",
   "(a `StepError` whose `cause` is a diagnostic)",
-  "with a parameter of its own",
   "(the exception a framework self-check raises, outside the kind set)",
   "(the continuous or discrete side of the hybrid formalism)",
   "#### Where warnings live",

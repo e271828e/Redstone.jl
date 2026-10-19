@@ -366,15 +366,13 @@ newcites: D-222
 note: the citation moves two sentences back, to the bold.
 
 old: The runtime carrier follows the same rule.
-new: The runtime carrier follows the same rule with a parameter of its own,
+new: The runtime carrier `StepError{C}` takes a parameter of its own,
 tag: R
 ruling: R4
-note: M4. The added words keep the two parameters apart (DiagnosticError's the policy, StepError's the cause's type).
-
-added: with a parameter of its own
+note: M4. With the species clause gone, "follows the same rule" would read as "the parameter spells the policy"; StepError's parameter is the cause's type (D-225). Verifier's fix.
 
 old: `StepError{C}` carries the type of its `cause`,
-new: since `StepError{C}` carries the type of its `cause` (§13.4, D-225).
+new: the type of its `cause` (§13.4, D-225).
 tag: R
 ruling: R4
 newcites: §13.4 D-225
@@ -709,7 +707,7 @@ old: The committed runtime warnings, in one place, are these.
 tag: F
 
 old: Chattering, or localization-budget exhaustion (§10.4).
-new: `ChatteringBudget`, chattering or localization-budget exhaustion (§10.4).
+new: `ChatteringBudget`, chattering, or localization-budget exhaustion (§10.4).
 tag: R
 ruling: R8
 
@@ -740,22 +738,34 @@ old: The write-surface and entry violations (§11.3, §11.4), all raised at stag
 new: The write-surface and batch-entry violations (§11.3, §11.4), all raised at staging.
 tag: R
 ruling: R8
-note: bare "entry" is reserved; these are batch entries (§11.3 "a batch entry outside the surface"). One line for the three kinds, which share the staging clause.
+note: bare "entry" is reserved; these are batch entries (§11.3 "a batch entry outside the surface"). One line for the three kinds, which share the staging clause, each kind with its own section (R24).
 
 old: The drain checks nothing.
 tag: F
 
 old: `OutOfClaimEntry` is an enumerated surface's binding drift, a name with no position in the attach-compiled schema.
-tag: F
+new: `OutOfClaimEntry` (§11.3) is an enumerated surface's binding drift, a name with no position in the attach-compiled schema.
+tag: R
+ruling: R24
+newcites: §11.3
+note: Appendix C's section for the kind.
 
 old: `ClaimedFaceEntry` is a harness write to a face claimed in the run's frozen partition, and it names the incumbent.
-tag: F
+new: `ClaimedFaceEntry` (§11.3, §11.4) is a harness write to a face claimed in the run's frozen partition, and it names the incumbent.
+tag: R
+ruling: R24
+newcites: §11.3 §11.4
+note: Appendix C's sections for the kind.
 
 old: The stopped-sim attach also fires it when it renormalizes a pending batch.
 tag: F
 
 old: `EntryTypeMismatch` is a value unconvertible to its root input's declared type, rejected at staging for every writer.
-tag: F
+new: `EntryTypeMismatch` (§11.4) is a value unconvertible to its root input's declared type, rejected at staging for every writer.
+tag: R
+ruling: R24
+newcites: §11.4
+note: Appendix C's section for the kind.
 
 old: A tolerated device-side datum failure (§11.6, §13.4).
 new: `MalformedDatum`, a tolerated device-side datum failure (§11.6, §13.4).
@@ -785,15 +795,15 @@ ruling: R8
 note: the name moved to the line's head.
 
 old: Thread-budget tightness (§12.2).
-new: `ThreadBudget`, thread-budget tightness (§12.2).
+new: `ThreadBudget`, thread-budget tightness (§12.2, D-401).
 tag: R
 ruling: R8
+newcites: §12.2 D-401
+note: D-401 Position, tight below "the run's roster plus one"; cited at the line's head, where the condition is (verifier's fix).
 
 old: Raised once per run, at `run!` or `replay!`, against the frozen roster.
-new: It is raised once per run, at `run!` or `replay!`, against the frozen roster (D-401).
-tag: C
-newcites: D-401
-note: D-401 Position, tight below "the run's roster plus one"; its Rationale, "The count is the frozen roster's, checked once per run".
+new: It is raised once per run, at `run!` or `replay!`, against the frozen roster.
+tag: F
 
 old: Device join timeout (§12.4).
 new: `DeviceJoinTimeout`, a device join timeout (§12.4).

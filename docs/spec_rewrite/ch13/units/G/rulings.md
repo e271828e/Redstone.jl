@@ -26,6 +26,10 @@ Line numbers are old spec lines at `1fee0fc`; log lines are the frozen
    *component test rig* and `design_world`, which their own paragraphs define
    in the next sentences.
 
+- After verification: R28 applied corrections 1 ("structural substitutability
+  doing its job", "behind its own root faces"), kept correction 2 as written,
+  and sent correction 3 to track 2.
+
 ## Citations added or replaced
 
 - D-257 at "`show(::Structure)` owes face routes" (10755). Bullet 3,
@@ -51,9 +55,15 @@ Line numbers are old spec lines at `1fee0fc`; log lines are the frozen
 - D-313 at F60's sentence, "though a listed block needs none to be built".
   Position: "A listed block is built whenever wanted, with no demonstrating
   model required."
-- D-364 and §14.9 at F61's added sentence. Position: "A handle that
-  references bulk data enters the rig through a constant source holding it,
-  never as a root input".
+- D-237 and D-364 with §14.9 at F61's added sentence, as R27 words it and R30 narrows
+  its first clause.
+  D-237's Position: "and so is a handle-typed face surfacing as a root
+  input"; D-364's: "A handle that references bulk data enters the rig through
+  a constant source holding it, never as a root input".
+- D-143 at "Two uses need `Constant`" (verifier's V91). Rationale only; see
+  below.
+- §6.2 at the `VehicleWrenchSum` example, pointing to `Systems`, whose
+  children `aero`, `pwp` and `ldg` §6.2 introduces (spec 1655–1657).
 - D-062 at "library blocks are ordinary components" (10806). Bullet 3: "A
   standard component library ... ships as ordinary components". R5's bold.
 - D-062 at "Tier-transparency falls out of settled semantics" (10865).
@@ -96,9 +106,8 @@ Line numbers are old spec lines at `1fee0fc`; log lines are the frozen
   `Constant` holding the test handle — the block's first shipped instance"
   (10988–10989). Newly cited.
 - D-143 Rationale (log 5213–5214): the two uses, "the dry run demonstrated the
-  need twice, at the zero-contributor totals and at the rig". F60's sentence
-  cites D-313 for its second clause; the count of two uses rests on this
-  Rationale alone.
+  need twice, at the zero-contributor totals and at the rig". Now cited
+  at the count; D-313 carries the second clause.
 - Carried, already cited or adjacent, unchanged by the rewrite: D-062
   Rejected (log 1992–1996) for "cheap" (row 609), the toolbox (row 617) and
   the torture test (row 623); D-313 Rationale for "weighed" and the gain

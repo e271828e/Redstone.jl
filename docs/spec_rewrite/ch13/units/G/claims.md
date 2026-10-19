@@ -19,11 +19,11 @@ ruling: R6
 note: F58, the dictated relative clause.
 
 old: Two commitments follow, a library and an idiom.
-new: D-062 makes three tooling commitments for them, namely the passthrough helpers' predicate, the routes `show(::Structure)` prints for each face (the name a port wears on its component's boundary), and a standard library of components, the units of modeling.
+new: D-062 makes three tooling commitments for them, namely the passthrough helpers' predicate, the routes `show(::Structure)` prints for each root face (the name a port wears on its component's boundary), and a standard library of components, the units of modeling.
 tag: R
 ruling: R6
 newcites: D-062
-note: F58 and F67, the dictated sentence; "namely" replaces the colon, and "the face routes `show(::Structure)` prints" becomes "the routes `show(::Structure)` prints for each face" so face takes its first-use link and gloss. D-062's Position: "Three tooling commitments are made", predicate selection, face routes, the library.
+note: F58 and F67, the dictated sentence; "namely" replaces the colon, and "the face routes `show(::Structure)` prints" becomes "the routes `show(::Structure)` prints for each root face" (verifier fix: `show` prints only the root's routes), so face takes its first-use link and gloss. `Structure` is first used bare here, inside the code span; its link and gloss sit at its first prose use, the kept "`Structure` (…) has one" sentence after it. D-062's Position: "Three tooling commitments are made", predicate selection, face routes, the library.
 
 added: (the name a port wears on its component's boundary)
 # face's first-use gloss, the glossary's own words; face's first use moved here from the bold sentence.
@@ -59,11 +59,7 @@ ruling: R4
 note: M60. The one plain sentence R4 dictates; its bold goes (R5, a double of §9.2's bold).
 
 old: `Structure` (the structure step's product, the components, wires, faces and tiers) has one.
-new: `show(::Structure)` prints the anchor table with the `A₀` row
-where: docs/design/spec.md
-tag: R
-ruling: R4
-note: M60. §9.2's rendering list holds it. The gloss's content is the glossary entry for `Structure`.
+note: kept, unlike the rest of M60's list, so `Structure` takes its link and gloss at its first prose use before `show(::Structure)` owes its routes (verifier fix).
 
 old: So does `Outputs` (the nominal evaluation's product, the port classes and the execution order).
 new: `show(::Outputs)` prints the execution order with each port's class.
@@ -278,7 +274,10 @@ old: Walking, frozen and root-input contributors are all admissible behind it.
 
 old: A named site-specific junction documents a fixed contributor set better than generated slots, at the price of hard-coding it into a type (D-037).
 
-old: An example is `u_types(::VehicleWrenchSum) = (aero = …, ldg = …, pwp = …)`.
+old: An example is `u_types(::VehicleWrenchSum) = (aero = …, ldg = …, pwp = …)`
+note: the names get their introduction by pointing to §6.2's example (verifier fix).
+
+added: , whose entries name the aerodynamics, landing-gear and powerplant children of the `Systems` assembly (§6.2).
 
 old: The generic positional form remains the tool for configuration-variable sites.
 
@@ -390,10 +389,10 @@ old: The honest pin is spelled rather than inferred.
 old: The same holds for every library block whose output depends on neither its continuous state nor a walking input, such as a step source or a relay, and each declares its `out` pinned (D-312).
 
 old: Two demonstrated needs admit `Constant` under the inventory's demonstrated-need charter.
-new: Two uses need `Constant`, though a listed block needs none to be built (D-313).
+new: Two uses need `Constant` (D-143), though a listed block needs none to be built (D-313).
 tag: R
 ruling: R6
-newcites: D-313
+newcites: D-143 D-313
 note: F60, the dictated sentence; the paragraph moves up by M61, after the Constant paragraph and before Freeze.
 
 old: The zero-contributor configurations (§6.2) are one.
@@ -419,8 +418,8 @@ new: A configuration wanting an externally settable source uses a root input (§
 tag: M
 note: M61. The two sentences join so F61's added sentence cannot become "That"'s antecedent. Its root input link moved to the first use in the select paragraph.
 
-added: A handle that references bulk data never enters as a root input, only through a constant source (§14.9, D-364).
-# R6's F61, after the root-input sentence.
+added: A handle that references bulk data never surfaces as a root input (D-237); a rig holds bulk data through a constant source instead (§14.9, D-364).
+# R27's wording of F61 as R30 narrows its first clause, after the root-input sentence.
 
 old: `Freeze{V}` is the declared stop-gradient. It feeds a walking producer into a pinned entry, which the walk clause (§6.1) otherwise refuses.
 new: `Freeze{V}` is the declared stop-gradient (D-266). It feeds a walking producer into a pinned entry, which the walk clause (§6.1) otherwise refuses.
@@ -525,7 +524,9 @@ newcites: D-120
 note: D-120's Position: "zero new machinery, the substitutability contract read as 'the rig chooses its substitute explicitly, as ordinary inspectable code.'"
 
 old: It is the substitutability contract doing its job.
-note: "contract" here is D-120's term, not a component's declared interface; untouched, listed in rulings.md.
+new: It is structural substitutability doing its job.
+tag: R
+ruling: R28
 
 old: An abstract entry (an `u_types` entry admitting any concrete producer face) declares that a substitute must be chosen.
 
@@ -536,6 +537,9 @@ old: That is precisely the isolation the rig exists to provide.
 old: The rig is `design_world`'s little sibling (§14.9).
 
 old: Where `design_world(ac)` mounts an aircraft in a minimal world for trim and linearization, the rig mounts one component behind a root contract for unit tests and open-loop probing.
+new: Where `design_world(ac)` mounts an aircraft in a minimal world for trim and linearization, the rig mounts one component behind its own root faces for unit tests and open-loop probing.
+tag: R
+ruling: R28
 
 old: The machinery is deliberately ordinary end to end, with no framework support.
 

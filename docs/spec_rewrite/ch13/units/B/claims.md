@@ -83,10 +83,11 @@ old: An unknown segment errors with the sibling field list in hand.
 tag: F
 
 old: Paths are validated at build time, and renames break loudly (D-061, D-130).
-new: Paths are validated before anything runs on them, and renames break loudly (D-061, D-130).
+new: Paths are validated before anything runs on them, and renames break loudly (D-061).
 tag: R
 ruling: R6
-note: F33
+newcites: D-061
+note: F33; D-130 dropped, since it carried this only through the inspection-binding clause R2 overturns (R5, R18; verifier)
 
 old: Which rule applies depends on who is resolving.
 new: Which rule applies depends on who is resolving (D-130).
@@ -113,17 +114,20 @@ tag: M
 note: M5, merged into the internal-fact paragraph, which said it again
 
 old: | client | who resolves | what the walk enforces | |---|---|---|
-tag: F
+new: | client | who resolves | what resolution enforces | |---|---|---|
+tag: R
+ruling: R6
+note: F3 leaves "the walk" without an antecedent, since the rows take three rules (verifier, C-026)
 
 old: | wiring | connection declarations, in the structure step | the one-level rule: an immediate child and one of its faces |
 tag: F
 note: the bold row name goes plain (R3)
 
 old: | service | condition entries (the path-addressed sparse overlay that sets a build's state), trim `reads`, taps (§14.3, §14.7, §14.10) | strict: no traversal past a generic child, checked at the authoring or mount level |
-new: | service | condition entries (the path-addressed sparse overlay that sets a build's state), trim `reads`, taps, device read bindings (§14.3, §14.7, §14.10, §11.2, D-406) | strict: no traversal past a generic child, checked at the authoring or mount level |
+new: | service | condition entries (the path-addressed sparse overlay that sets a build's state), trim `reads`, taps, device read bindings, log extraction by `series` (§14.3, §14.7, §14.10, §11.2, D-406, D-407) | strict: no traversal past a generic child, checked at the authoring or mount level |
 tag: R
-ruling: R2
-newcites: §14.3 §14.7 §14.10 §11.2 D-406
+ruling: R2, R25
+newcites: §14.3 §14.7 §14.10 §11.2 D-406 D-407
 note: device read bindings join the service row with §11.2 and D-406 (R2); the bold row name and the bold cell go plain (R3)
 
 old: | inspection | device read bindings, GUI panels, snapshot and log inspection (§11.2, §11.7) | the instance walk |
@@ -264,7 +268,7 @@ note: F2, cut as false; the did-you-mean stays in R2's moved sentence
 old: ### 13.4 Runtime failures: one catch site, an execution cursor
 tag: F
 
-added: A runtime failure is a throw inside a frame (one iteration of the loop) or inside boundary zero,
+added: A runtime failure of model code is a throw inside a frame (one iteration of the loop) or inside boundary zero,
 
 old: (the initialization boundary: the ordinary macro-sequence with an empty integrate)
 new: the initialization boundary, which runs the ordinary macro-sequence with an empty integrate.

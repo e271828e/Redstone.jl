@@ -197,3 +197,84 @@
 - V174 Inspection is reading, but `attach!` configures a run that cannot follow.
 - V175 The published record (snapshot chain, log, trace) ends at the last consistent boundary.
 - V176 Nothing downstream of the sim ever sees half a boundary.
+
+## Verifier splits (phase 1)
+- V14a The boundary is localized to the crossing.
+- V14b The handler sets `m.crashed`.
+- V16a Publication is an output port of type `StopFlag` (a stop request).
+- V16b It is declared where the stop's `Bool` is detected.
+- V19a An enum is one leaf, pinned at every activation (§4.3).
+- V19b Cells are stored per element type (§9.7).
+- V19c Hence every request in the model lands in one `StopFlag` block.
+- V23a No level above `Ldg` re-exports anything.
+- V23b Reason: the loop reads the request where it is.
+- V26a `StopRequest`'s one input is the stop's `Bool`.
+- V26b Its one output is the flag.
+- V26c Its reason is instance data.
+- V29a `StopRequest` is continuous.
+- V29b So it refreshes at every boundary, `t` included.
+- V30a Assemblies are virtual for execution.
+- V30b Rate scopes touch discrete children only.
+- V30c So one leaf sits anywhere in the tree.
+- V36a A `StopFlag` leaf nested in a port of another type is refused, reason `:stop_flag_nested`.
+- V36b A root input whose type carries a `StopFlag` anywhere is refused, reason `:stop_flag_at_root`.
+- V42a The build records one `Requester(path, port, reason)` per `StopFlag` output port, as the cell layout's `requesters`.
+- V42b The list is index-aligned with the `StopFlag` block.
+- V43a Requester `i` owns block offset `i - 1`.
+- V43b Requester roster order is build order.
+- V44a The reason is the component's `stop_reason`.
+- V44b `stop_reason` is optional, default `""` (§8.2).
+- V47a §12.6 declares the policy per advance, `t_end` and `ignore_stop_requests` keywords of `run!`, `replay!`, `step!`.
+- V47b §12.6 gives the value's lifetime.
+- V55a Each path is validated against the requester roster on every call.
+- V55b Duplicates collapse, in the order given.
+- V56a A path naming no requester is `StopRequestInvalid`.
+- V56b The error is collected over the given paths.
+- V57a A `t_end` that is not a non-negative real is `ArgumentInvalid`.
+- V57b It is refused before the ignore list is read.
+- V58a Each advance builds a `StopPolicy` (`t_end` plus ignored paths).
+- V58b It passes the policy to the loop with an ignore mask, one `Bool` per requester, as a second argument.
+- V59a A `t` hit reaches the loop as `frame!`'s `Bool` return.
+- V59b Never as a field of the policy or the execution cursor.
+- V65a There is no roll-back.
+- V65b Nothing beyond what §12.4 already does.
+- V68a After `init!` the latest snapshot is boundary zero's.
+- V68b An already-terminal authored condition ends the run at `t₀`, that snapshot final, integrating nothing.
+- V70a The request is the author's, the ignore list the integrator's.
+- V70b The ignore list sits beside `t_end` at one declaration site.
+- V82a `run!(sim)` with `t_end = Inf` and no honoured request is the interactive session's ordinary shape.
+- V82b The operator interrupt (Ctrl-C, a control-plane stop) is its escape (§12.4).
+- V84a `run!` raises `UnboundedRun` before the loop starts, into the loop's own diagnostic cell.
+- V84b The status record carries it.
+- V98a The record's own `t` is the fact.
+- V98b The configured bound is in the record's own policy.
+- V106a A throw inside the frame reaches the record with the `Model` marked `:inconsistent` by its own catch.
+- V106b The simulation reads `errored`.
+- V107a A loop fault outside the frame (pacer, yield, tail) closes the run as `stopped`.
+- V107b The `Model` stays consistent at its last settled boundary.
+- V107c Reason: only the `Model`'s own catch sites mark it (D-317).
+- V117a `robot2d` is FlightApps' self-balancing robot in Flight.jl.
+- V117b It throws `LostBalance`, a `SimulationTermination`, past 45° of tilt.
+- V124a Rejected: predicate closures such as `stop_when = snap -> …`.
+- V124b Rejected: root-type-declared stop policy, which the per-advance policy is not.
+- V124c Rejected: `terminal` event flags.
+- V124d Rejected: a control-plane capability for components.
+- V124e Rejected: observation-by-path.
+- V124f Rejected: the `Bool` face re-exported to the root and named by the advance, which fell to stop requests.
+- V124g These were litigated in D-060 and D-316.
+- V127a Inspection is human-facing.
+- V127b Inspection has no effect on run semantics.
+- V127c Inspection legitimately sees every public cell.
+- V129a A read the run acts on changes what the run does.
+- V129b It reads only what the model declared for it.
+- V136a Substitution is answered by the ignore list.
+- V136b Disabling is one keyword.
+- V143a The abnormal path discards the failed boundary.
+- V143b It promotes the previous snapshot to final.
+- V143c It rejoins the ordinary tail.
+- V158a The last published snapshot is complete and consistent by construction.
+- V158b It is still the newest thing any device, logger or waiter has seen.
+- V171a An errored simulation is terminal, not resumable.
+- V171b The reproduction tool is trace replay, not resurrection.
+- V174a Inspection is reading.
+- V174b `attach!` configures a run that cannot follow.

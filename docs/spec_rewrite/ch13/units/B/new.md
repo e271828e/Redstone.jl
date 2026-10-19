@@ -30,17 +30,17 @@ declared type is non-concrete) is a diagnostic, even though the concrete
 instance in hand would resolve it. Resolving *to* a generic child is
 [port](#g-port)-level access and legal. An unknown segment errors with the
 sibling field list in hand. Paths are validated before anything runs on them,
-and renames break loudly ([D-061][d-061], [D-130][d-130]).
+and renames break loudly ([D-061][d-061]).
 
 **Which rule applies depends on who is resolving** ([D-130][d-130]).
 [D-083][d-083] separates the reads a build's correctness rests on from the
 reads that only observe it. The same line runs through resolution. Three kinds
 of client share one resolution, and each gets the rule its promises require.
 
-| client | who resolves | what the walk enforces |
+| client | who resolves | what resolution enforces |
 |---|---|---|
 | wiring | connection declarations, in the structure step | the one-level rule: an immediate child and one of its faces |
-| service | [condition](#g-condition) entries (the path-addressed sparse overlay that sets a build's state), trim `reads`, [taps](#g-taps), [device](#g-device) read [bindings](#g-binding) ([§14.3][s14-3], [§14.7][s14-7], [§14.10][s14-10], [§11.2][s11-2], [D-406][d-406]) | strict: no traversal past a generic child, checked at the authoring or mount level |
+| service | [condition](#g-condition) entries (the path-addressed sparse overlay that sets a build's state), trim `reads`, [taps](#g-taps), [device](#g-device) read [bindings](#g-binding), log extraction by `series` ([§14.3][s14-3], [§14.7][s14-7], [§14.10][s14-10], [§11.2][s11-2], [D-406][d-406], [D-407][d-407]) | strict: no traversal past a generic child, checked at the authoring or mount level |
 | inspection | [snapshot](#g-snapshot) and log inspection ([D-310][d-310]) | the instance walk |
 
 Each client's treatment has its own warrant. Wiring is what the law
@@ -85,7 +85,7 @@ services and the readers split their own paths through the service walk
 
 ### 13.4 Runtime failures: one catch site, an execution cursor
 
-A runtime failure is a throw inside a [frame](#g-frame) (one iteration of the
+A runtime failure of model code is a throw inside a [frame](#g-frame) (one iteration of the
 loop) or inside [boundary zero](#g-boundary-zero), the initialization
 boundary, which runs the ordinary macro-sequence with an empty integrate. The
 framework catches it at one site, records where execution stood, and names

@@ -30,10 +30,17 @@ changed:
 - Opening, "ground it" becomes "ground this chapter". After the roadmap
   sentence "it" would read as §13.8.
 
-R8's index keeps the write-surface line as one line naming its three kinds
-(`OutOfClaimEntry`, `ClaimedFaceEntry`, `EntryTypeMismatch`). They share
-"all raised at staging" and "The drain checks nothing", and splitting the
-line would repeat both three times.
+R8's index keeps the write-surface line as one line naming its three kinds.
+They share "all raised at staging" and "The drain checks nothing". Under R24
+each kind carries its own section, as Appendix C gives them:
+`OutOfClaimEntry` (§11.3), `ClaimedFaceEntry` (§11.3, §11.4) and
+`EntryTypeMismatch` (§11.4).
+
+After verification: the runtime-carrier sentence reads "The runtime carrier
+`StepError{C}` takes a parameter of its own, the type of its `cause`". Without
+the species clause, "follows the same rule" read as "the parameter spells the
+policy" (D-222 against D-225). The chattering line keeps the old comma,
+"chattering, or localization-budget exhaustion".
 
 ## Citations added or replaced
 
@@ -97,9 +104,11 @@ line would repeat both three times.
 - D-105 (§13.2 index, `MalformedDatum`): Position, "tolerated in the loop body
   (catch, stage nothing, `report(handle, MalformedDatum(cause))`, continue)".
   Plain; §11.6 bolds D-105.
-- D-401 (§13.2 index, `ThreadBudget`): Position, tight when `nthreads()` is
-  "less than the run's roster plus one". Its Rationale says "The count is the
-  frozen roster's, checked once per run (D-392)".
+- D-401 (§13.2 index, `ThreadBudget`, at the line's head): Position, tight
+  when `nthreads()` is "less than the run's roster plus one". It does not
+  carry "once per run, at `run!` or `replay!`", which stays uncited.
+- §11.3, §11.4 (§13.2 index, the write-surface kinds, R24): each kind's
+  section per Appendix C.
 - D-255 (§13.2 index, `UnboundedRun`): kept, now only for the loop's-cell
   clause, which bullet 5 states ("raises `UnboundedRun` into the loop's
   diagnostic cell"). The bullet's "`Inf` and no faces" condition is not

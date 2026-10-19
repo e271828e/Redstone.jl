@@ -31,7 +31,7 @@
   {
    "id": "C-004",
    "old": "Two commitments follow, a library and an idiom.",
-   "new": "D-062 makes three tooling commitments for them, namely the passthrough helpers' predicate, the routes `show(::Structure)` prints for each face (the name a port wears on its component's boundary), and a standard library of components, the units of modeling.",
+   "new": "D-062 makes three tooling commitments for them, namely the passthrough helpers' predicate, the routes `show(::Structure)` prints for each root face (the name a port wears on its component's boundary), and a standard library of components, the units of modeling.",
    "where": "new",
    "cites": [],
    "newcites": [
@@ -39,7 +39,7 @@
    ],
    "tag": "R",
    "ruling": "R6",
-   "note": "F58 and F67, the dictated sentence; \"namely\" replaces the colon, and \"the face routes `show(::Structure)` prints\" becomes \"the routes `show(::Structure)` prints for each face\" so face takes its first-use link and gloss. D-062's Position: \"Three tooling commitments are made\", predicate selection, face routes, the library."
+   "note": "F58 and F67, the dictated sentence; \"namely\" replaces the colon, and \"the face routes `show(::Structure)` prints\" becomes \"the routes `show(::Structure)` prints for each root face\" (verifier fix: `show` prints only the root's routes), so face takes its first-use link and gloss. `Structure` is first used bare here, inside the code span; its link and gloss sit at its first prose use, the kept \"`Structure` (…) has one\" sentence after it. D-062's Position: \"Three tooling commitments are made\", predicate selection, face routes, the library."
   },
   {
    "id": "C-005",
@@ -97,12 +97,11 @@
   {
    "id": "C-010",
    "old": "`Structure` (the structure step's product, the components, wires, faces and tiers) has one.",
-   "new": "`show(::Structure)` prints the anchor table with the `A₀` row",
-   "where": "docs/design/spec.md",
+   "new": "`Structure` (the structure step's product, the components, wires, faces and tiers) has one.",
+   "where": "new",
    "cites": [],
-   "tag": "R",
-   "ruling": "R4",
-   "note": "M60. §9.2's rendering list holds it. The gloss's content is the glossary entry for `Structure`."
+   "tag": "F",
+   "note": "kept, unlike the rest of M60's list, so `Structure` takes its link and gloss at its first prose use before `show(::Structure)` owes its routes (verifier fix)."
   },
   {
    "id": "C-011",
@@ -661,11 +660,12 @@
   },
   {
    "id": "C-069",
-   "old": "An example is `u_types(::VehicleWrenchSum) = (aero = …, ldg = …, pwp = …)`.",
-   "new": "An example is `u_types(::VehicleWrenchSum) = (aero = …, ldg = …, pwp = …)`.",
+   "old": "An example is `u_types(::VehicleWrenchSum) = (aero = …, ldg = …, pwp = …)`",
+   "new": "An example is `u_types(::VehicleWrenchSum) = (aero = …, ldg = …, pwp = …)`",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "F",
+   "note": "the names get their introduction by pointing to §6.2's example (verifier fix)."
   },
   {
    "id": "C-070",
@@ -957,10 +957,11 @@
   {
    "id": "C-100",
    "old": "Two demonstrated needs admit `Constant` under the inventory's demonstrated-need charter.",
-   "new": "Two uses need `Constant`, though a listed block needs none to be built (D-313).",
+   "new": "Two uses need `Constant` (D-143), though a listed block needs none to be built (D-313).",
    "where": "new",
    "cites": [],
    "newcites": [
+    "D-143",
     "D-313"
    ],
    "tag": "R",
@@ -1273,11 +1274,11 @@
   {
    "id": "C-130",
    "old": "It is the substitutability contract doing its job.",
-   "new": "It is the substitutability contract doing its job.",
+   "new": "It is structural substitutability doing its job.",
    "where": "new",
    "cites": [],
-   "tag": "F",
-   "note": "\"contract\" here is D-120's term, not a component's declared interface; untouched, listed in rulings.md."
+   "tag": "R",
+   "ruling": "R28"
   },
   {
    "id": "C-131",
@@ -1316,10 +1317,11 @@
   {
    "id": "C-135",
    "old": "Where `design_world(ac)` mounts an aircraft in a minimal world for trim and linearization, the rig mounts one component behind a root contract for unit tests and open-loop probing.",
-   "new": "Where `design_world(ac)` mounts an aircraft in a minimal world for trim and linearization, the rig mounts one component behind a root contract for unit tests and open-loop probing.",
+   "new": "Where `design_world(ac)` mounts an aircraft in a minimal world for trim and linearization, the rig mounts one component behind its own root faces for unit tests and open-loop probing.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "R",
+   "ruling": "R28"
   },
   {
    "id": "C-136",
@@ -2068,11 +2070,12 @@
   "The shipped list lives in `companions/library_inventory.md`.",
   "(pure composition, with no dynamics of its own)",
   ", a maximally awkward case spelled against the declaration rules to validate them",
+  ", whose entries name the aerodynamics, landing-gear and powerplant children of the `Systems` assembly (§6.2).",
   ", a tier being the continuous or discrete side of the hybrid formalism",
   "(one pass through the execution order)",
   "(the instants at which a discrete component's stages and update run)",
   "(`companions/pid_anti_windup.md`)",
-  "A handle that references bulk data never enters as a root input, only through a constant source (§14.9, D-364).",
+  "A handle that references bulk data never surfaces as a root input (D-237); a rig holds bulk data through a constant source instead (§14.9, D-364).",
   "(attached participants in the periphery)",
   "the table of each snapshot, the immutable per-boundary publication",
   ", an illustrative name",

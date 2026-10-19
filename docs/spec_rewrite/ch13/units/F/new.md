@@ -1,6 +1,7 @@
 ### 13.5 Termination is a state, not an exception
 
-This section specifies how a model ends its own run. FlightCore's
+This section specifies how a model ends its own run, how an advance chooses
+which stop requests to honour, and what the run records when it ends. FlightCore's
 `SimulationTermination` idiom (model code throws, and the loop catches and
 logs it as informational) **has no counterpart here** ([D-060][d-060]).
 **Graceful termination is model state, never an exception** ([D-060][d-060]).
@@ -24,8 +25,8 @@ Detection is ordinary [guard](#g-guard) (the declared function that detects an
 event), handler and mode machinery ([D-060][d-060]). If the stop should be
 localized, declare the [predicate](#g-predicate) (what a guard defines) as a
 sign-form event. Such an event is [localized](#g-localized) (the crossing
-instant bracketed by root-finding over trial sweeps). Touchdown overload is
-precisely a zero-crossing. The [boundary](#g-boundary) (a published
+instant bracketed by root-finding over trial sweeps). A landing-gear strut's
+touchdown overload is precisely a zero-crossing. The [boundary](#g-boundary) (a published
 consistency point) is localized to the crossing, and the handler sets
 `m.crashed`. The [snapshot](#g-snapshot) (the immutable per-boundary
 publication) at the crossing instant carries the touchdown state.
@@ -63,7 +64,7 @@ stop_reason(c::StopRequest) = c.reason
 
 Its output is consumed by nobody, which [§6.1][s6-1] allows silently ([D-084][d-084]).
 `StopRequest` is continuous, so it refreshes at every boundary, `t*`
-included ([D-316][d-316]). Assemblies are virtual for execution and rate
+included ([§10.4][s10-4], [D-316][d-316]). Assemblies are virtual for execution and rate
 scopes touch discrete children only, so one leaf sits anywhere in the tree
 ([§10.5][s10-5], [D-019][d-019]). Fed by a discrete detector, it sees the tick
 at the tick's own boundary, because the boundary sweep walks the full
@@ -101,7 +102,7 @@ port value.
 gives the value's lifetime. Each of the three calls takes `Inf` and `()` as
 the defaults ([D-255][d-255]). The defaults belong to the calls that take the
 policy. With no constructor defaults the [trace header](#g-trace-header) (the
-trace's fixed preamble, taken at boundary zero) has no policy to record
+trace's fixed preamble) has no policy to record
 ([§11.5][s11-5]). The [termination record](#g-termination-record) (the
 stopped-sim value naming how the run ended) carries the policy that actually
 ended the run.
@@ -117,10 +118,10 @@ given paths ([Appendix C][sC]). A `t_end` that is not a non-negative real is
 Each advance builds a [`StopPolicy`](#g-stop-policy) (the immutable value of
 `t_end` plus the ignored requester paths), and passes it to the loop with an
 ignore mask, one `Bool` per requester, as a second argument ([D-316][d-316]).
-A `t*` hit reaches the loop as `frame!`'s return value ([D-261][d-261],
-[D-317][d-317]), a `Bool` saying whether the frame was abandoned, never as a
-field of the policy or of the [execution cursor](#g-execution-cursor) (the
-field recording where execution stands). The loop then reads the requester
+A `t*` hit reaches the loop as `frame!`'s return value, a `Bool` saying
+whether the frame was abandoned, never as a field of the policy or of the
+[execution cursor](#g-execution-cursor) (the field recording where execution
+stands) ([D-261][d-261], [D-317][d-317]). The loop then reads the requester
 off the snapshot it just published.
 
 #### The scan and the source order
@@ -128,7 +129,7 @@ off the snapshot it just published.
 **After *every* published boundary the loop scans the `StopFlag` block of the
 snapshot it just published**, in requester roster order ([D-316][d-316]).
 Grid boundaries, `t*` ([§10.4][s10-4]) and [boundary zero](#g-boundary-zero)
-(the initialization boundary at `t₀`) all count ([§14.5][s14-5]). The first
+(the initialization boundary at `t₀`) ([§14.5][s14-5]) all count. The first
 honoured request reading `STOP_REQUESTED` initiates [§12.4][s12-4] shutdown
 with *this* snapshot as the final one. The terminal snapshot is the terminal
 state. There is no roll-back, and nothing [§12.4][s12-4] does not already do.
@@ -149,7 +150,7 @@ checks a pending control stop at frame top, then `t_end`, then the stop
 requests at each publication. When two sources hold at one boundary, the
 recorded source is the first in that order ([D-203][d-203]).
 
-The rule authors are taught is this. Stop requests are sampled at completed
+Authors are taught this rule. Stop requests are sampled at completed
 boundaries; declare a sign-form event if you need the stop localized. Both
 shapes of the stop's `Bool` feeding a request work without framework
 latching. A handler-set `m` flag is sticky by nature. A transient stage-2
@@ -256,16 +257,17 @@ front end's panels rendering a component's ports, and inspection under
 all inspection. A read the run acts on changes what the run *does*, and it
 reads only what the model declared for it, never an arbitrary cell. The stop
 scan is the one such read. It reads the `StopFlag` block, which holds nothing
-but the requests their authors declared by type. [§13.3][s13-3] draws the
-same line for path resolution, client by client. The ignore list addresses
+but the requests their authors declared by type. [§13.3][s13-3] scopes path
+resolution by client, on a line of its own. The ignore list addresses
 the `Build`'s requester roster, a build product like the root-input list. It
 binds at an advance, a stopped-sim point where conditions already address
 state by path ([§14.1][s14-1]). The requester is loud at inspection, since
 the requester roster and the termination record name it. Substitution is
 answered by the ignore list, and disabling is one keyword. The trigger is the
 author's knowledge and the ignore list the integrator's. Output devices are
-the other half of the same doctrine. Their reads are inspection bindings on
-snapshot paths ([§11.2][s11-2]).
+the other half of the same doctrine. Their reads are inspection on snapshot
+paths ([§11.2][s11-2]), though attach resolves them strictly, as [§13.3][s13-3]'s
+service clients ([D-406][d-406]).
 
 ### 13.6 Abnormal shutdown: one tail, two entries
 

@@ -4,8 +4,8 @@ Generic-holding [contracts](#g-contract) (the `u_types` and `y_types`
 declarations) are a structural customer of computed interface connections,
 which are therefore prominent in this section. [D-062][d-062] makes three
 tooling commitments for them, namely the passthrough helpers' predicate, the
-routes `show(::Structure)` prints for each [face](#g-face) (the name a port
-wears on its component's boundary), and a standard library of
+routes `show(::Structure)` prints for each root [face](#g-face) (the name a
+port wears on its component's boundary), and a standard library of
 [components](#g-component), the units of modeling. The section covers the
 predicate and the face routes first, then the standard component library and
 the component test rig.
@@ -22,7 +22,8 @@ promoting an unconnected input automatically to a
 ([D-322][d-322]).
 
 Every artifact renders itself through `show` ([§9.2][s9-2], [D-257][d-257]).
-**`show(::Structure)` owes face routes** ([D-257][d-257]). For every root face,
+[`Structure`](#g-structure) (the structure step's product, the components,
+wires, faces and tiers) has one. **`show(::Structure)` owes face routes** ([D-257][d-257]). For every root face,
 that means the resolved chain down to the producing terminal, printed as one
 line per chain (`crashed → aircraft/crashed → aircraft/monitor/out`). Once
 faces are computed rather than hand-listed, "what does this face actually
@@ -120,7 +121,9 @@ it.
 
 A named site-specific junction documents a fixed contributor set better than
 generated slots, at the price of hard-coding it into a type ([D-037][d-037]).
-An example is `u_types(::VehicleWrenchSum) = (aero = …, ldg = …, pwp = …)`.
+An example is `u_types(::VehicleWrenchSum) = (aero = …, ldg = …, pwp = …)`,
+whose entries name the aerodynamics, landing-gear and powerplant children of
+the `Systems` assembly ([§6.2][s6-2]).
 The generic positional form remains the tool for configuration-variable
 sites. Both are plain components, and the framework is not involved.
 
@@ -199,15 +202,16 @@ The same holds for every library block whose output depends on neither its
 continuous state nor a walking input, such as a step source or a relay, and
 each declares its `out` pinned ([D-312][d-312]).
 
-Two uses need `Constant`, though a listed block needs none to be built
-([D-313][d-313]). The zero-contributor configurations ([§6.2][s6-2]) are one.
+Two uses need `Constant` ([D-143][d-143]), though a listed block needs none
+to be built ([D-313][d-313]). The zero-contributor configurations ([§6.2][s6-2]) are one.
 There, a required aggregate input has no physical contributor, and the zero
 total must be spelled as a wire. The rig stub below is the other. The block's
 value is instance data, like junction arity, not an overridable default
 ([D-143][d-143]). A configuration wanting an externally settable source uses
 a root input ([§11.3][s11-3]), which keeps the block from drifting into a
-back-door input default. A handle that references bulk data never enters as a
-root input, only through a constant source ([§14.9][s14-9], [D-364][d-364]).
+back-door input default. A handle that references bulk data never surfaces as
+a root input ([D-237][d-237]); a rig holds bulk data through a constant source instead
+([§14.9][s14-9], [D-364][d-364]).
 
 `Freeze{V}` is the declared stop-gradient ([D-266][d-266]). It feeds a walking
 producer into a pinned entry, which the walk clause ([§6.1][s6-1]) otherwise
@@ -275,7 +279,7 @@ makes it the source block's first shipped instance ([D-143][d-143]). Bespoke
 stubs remain ordinary components wherever the double must compute something.
 
 The rig adds zero new machinery, because wiring and `except` already exist
-([D-120][d-120]). It is the substitutability contract doing its job. An
+([D-120][d-120]). It is structural substitutability doing its job. An
 [abstract entry](#g-abstract-entry) (an `u_types` entry admitting any
 concrete producer face) declares that a substitute must be chosen. The rig
 chooses its test double explicitly, as ordinary inspectable code. That is
@@ -283,8 +287,8 @@ precisely the isolation the rig exists to provide.
 
 The rig is [`design_world`](#g-design_world)'s little sibling
 ([§14.9][s14-9]). Where `design_world(ac)` mounts an aircraft in a minimal
-world for trim and linearization, the rig mounts one component behind a root
-contract for unit tests and open-loop probing. The machinery is deliberately
+world for trim and linearization, the rig mounts one component behind its own
+root faces for unit tests and open-loop probing. The machinery is deliberately
 ordinary end to end, with no framework support. That makes the rig, like the
 library blocks, a standing ergonomics test of the declaration rules.
 

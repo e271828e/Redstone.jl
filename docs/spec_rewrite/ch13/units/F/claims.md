@@ -3,7 +3,7 @@
 old: ### 13.5 Termination is a state, not an exception
 tag: X
 
-added: This section specifies how a model ends its own run.
+added: This section specifies how a model ends its own run, how an advance chooses which stop requests to honour, and what the run records when it ends.
 
 old: FlightCore's `SimulationTermination` idiom (model code throws, and the loop catches and logs it as informational) has no counterpart here (D-060).
 tag: R
@@ -45,7 +45,11 @@ old: Such an event is localized (the crossing instant bracketed by root-finding 
 tag: F
 
 old: Touchdown overload is precisely a zero-crossing.
+new: A landing-gear strut's touchdown overload is precisely a zero-crossing.
 tag: F
+note: verifier's fix; the introducing clause follows spec 4717, "A landing-gear strut model that throws on a touchdown overload".
+
+added: A landing-gear strut's
 
 old: The boundary is localized to the crossing, the handler sets `m.crashed`,
 new: The boundary (a published consistency point) is localized to the crossing, and the handler sets `m.crashed`.
@@ -216,9 +220,9 @@ tag: M
 note: R4 makes the lifetime §12.6's (frozen spec 9584–9586); the pointer sentence says §12.6 gives it.
 
 old: A `t` hit reaches the loop as `frame!`'s return value, a `Bool` saying whether the frame was abandoned, never as a field of the policy or of the execution cursor (D-261, D-317).
-new: A `t` hit reaches the loop as `frame!`'s return value (D-261, D-317), a `Bool` saying whether the frame was abandoned, never as a field of the policy or of the execution cursor (the field recording where execution stands).
+new: A `t` hit reaches the loop as `frame!`'s return value, a `Bool` saying whether the frame was abandoned, never as a field of the policy or of the execution cursor (the field recording where execution stands) (D-261, D-317).
 tag: F
-note: citation moved off the gloss's parentheses; D-261's cited clause stands, its type clause is D-317's.
+note: citation at the sentence end, covering the cursor clause (verifier's fix); D-261's cited clause stands, its type clause is D-317's.
 
 added: (the field recording where execution stands)
 
@@ -232,7 +236,7 @@ newcites: D-316
 note: row 527; D-316's scan bullet ("After every publication the loop scans …"), bold here (R5); "requester roster" in full (R12).
 
 old: Grid boundaries, `t` (§10.4) and boundary zero (§14.5) all count.
-new: Grid boundaries, `t` (§10.4) and boundary zero (the initialization boundary at `t₀`) all count (§14.5).
+new: Grid boundaries, `t` (§10.4) and boundary zero (the initialization boundary at `t₀`) (§14.5) all count.
 tag: F
 
 added: (the initialization boundary at `t₀`)
@@ -294,9 +298,9 @@ tag: M
 note: M52.
 
 old: `StopRequest` is continuous, so it refreshes at every boundary, `t` included.
-new: `StopRequest` is continuous, so it refreshes at every boundary, `t` included (D-316).
+new: `StopRequest` is continuous, so it refreshes at every boundary, `t` included (§10.4, D-316).
 tag: C
-newcites: D-316
+newcites: §10.4 D-316
 note: M52; D-316 bullet 5, "Continuous, it refreshes at every boundary, `t*` included".
 
 old: Assemblies are virtual for execution and rate scopes touch discrete children only, so one leaf sits anywhere in the tree (§10.5, D-019).
@@ -379,11 +383,11 @@ tag: F
 note: R4 keeps it; "it" was the `StopPolicy`, now named.
 
 old: With no constructor defaults the trace header has no policy to record (§11.5),
-new: With no constructor defaults the trace header (the trace's fixed preamble, taken at boundary zero) has no policy to record (§11.5).
+new: With no constructor defaults the trace header (the trace's fixed preamble) has no policy to record (§11.5).
 tag: F
 note: R4 keeps the trace-header clause.
 
-added: (the trace's fixed preamble, taken at boundary zero)
+added: (the trace's fixed preamble)
 
 old: and the termination record carries the policy that actually ended the run.
 new: The termination record (the stopped-sim value naming how the run ended) carries the policy that actually ended the run.
@@ -525,7 +529,7 @@ tag: M
 note: M53.
 
 old: The taught contract is this.
-new: The rule authors are taught is this.
+new: Authors are taught this rule.
 tag: X
 note: M54. *contract* is reserved for a component's declared interface (brief_common), so the touched sentence is reworded.
 
@@ -669,7 +673,7 @@ tag: F
 old: It reads the `StopFlag` block, which holds nothing but the requests their authors declared by type.
 tag: F
 
-added: §13.3 draws the same line for path resolution, client by client.
+added: §13.3 scopes path resolution by client, on a line of its own.
 
 old: The ignore list addresses the `Build`'s requester roster, a build product like the root-input list.
 tag: F
@@ -681,8 +685,13 @@ old: Output devices are the other half of the same doctrine.
 tag: F
 
 old: Their reads are inspection bindings on snapshot paths (§11.2).
-tag: F
-note: R2 keeps it as written.
+new: Their reads are inspection on snapshot paths (§11.2), though attach resolves them strictly, as §13.3's service clients (D-406).
+tag: R
+ruling: R29
+newcites: §11.2 D-406
+note: R29's dictated wording; D-406 Position, "Attach resolves a binding's `reads` through the read-selector family's one collecting resolver".
+
+added: , though attach resolves them strictly, as §13.3's service clients (D-406)
 
 old: The wall-clock channel (GUI stop button, device handle, code) is orthogonal and untouched.
 new: The wall-clock channel, through a front end's stop button (D-310), a device handle or code, is orthogonal and untouched.
