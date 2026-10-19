@@ -5359,8 +5359,8 @@ section 4).
   package image. A closed loop of library blocks runs through `build`,
   `Simulation`, `init!`, `step!`, `run!`, the readers, `series`,
   `checkpoint`, `restore!`, `trim!` and `linearize` while the package
-  precompiles, which adds about 12 s to its precompilation and 30 MB to
-  its image. On that loop a cold process pays under 0.1 s, and a first
+  precompiles, which adds about 12 s to its precompilation, 30 MB to its
+  image and 0.08 s to loading it. On that loop a cold process pays under 0.1 s, and a first
   `trim!` or `linearize` about 0.3 s and 0.1 s more. A component package's
   workload does the same for its types. That turns the time to first
   execution from a session tax into a CI artifact.

@@ -56,9 +56,9 @@ package workload cannot carry a user type's stage methods, the chunks they
 fill or their `Dual` activation. The device's 0.17 s is likewise the device
 and binding types' own specialization, so devices stay out.
 
-Including `trim!` and `linearize` costs 3.4 s of precompile and nothing in
-image size (10.2 s and 37 MB for the core path alone), and buys the two
-service rows above. The §9.7 table's three scenarios, cold, `build` to the
+Including `trim!` and `linearize` costs 3.4 s of precompile and about 7 MB
+of image (10.2 s and 31 MB for the core path alone, as the review measured),
+and buys the two service rows above. The §9.7 table's three scenarios, cold, `build` to the
 end of the first `run!`, minimum of three:
 
 | model | bare, `-O2` | workload, `-O2` | bare, `-O0` | workload, `-O0` |

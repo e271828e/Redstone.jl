@@ -33,9 +33,9 @@ Two placements were weighed before this one.
     own beside the gate.
   - *The precompile workload needs a model the package can see.* It does,
     and that model need not be an example. The workload's target is the
-    generic machinery, which [§9.7][s9-7] prices at about 9 s whatever the model,
+    generic machinery, which [§9.7][s9-7] prices at about 6 s whatever the model,
     and a closed loop of library blocks alone exercises every generic path
-    without a new component type. `pending.md` queues the workload so.
+    without a new component type. `src/precompile.jl` is that loop.
   - *The example is the first consumer that uses only the public surface.*
     A separate package is the purer form of that consumer: it depends on
     `Redstone` as a user's package does, and its names are not `Redstone`'s
