@@ -84,6 +84,35 @@ Model(build::Build, ::Type{T} = Float64; h = nothing, N_base = nothing,
 Model(root::AbstractComponent, ::Type{T} = Float64; kw...) where {T} =
     Model(build(root), T; kw...)
 
+# --- the seeded-half scratch world (§14.8, D-213) ------------------------------
+# Shared by the two stopped-sim services, trim.jl and linearize.jl, which run
+# the same two-half scratch world, with and without a commit.
+
+# One scratch model: the same buffer set the model owns, at whatever scalar,
+# from the same cached activation and the same deployment — and it dies with
+# the call (§9.2, §14.8, glossary `scratch`, D-317).
+_scratch(model::Model, ::Type{T}) where {T} =
+    Model(model.deployment, T; chunk_size = model.exec.chunk_size)
+
+# D-213's copy: a frozen component's stages are outside the seeded activation's
+# executable set (§9.4), so its output cells can only come from the nominal half
+# — where the authored `s` has just been published by the establishment round.
+# A discrete producer's cells are pinned `Float64` at every activation, so this
+# is a value copy; the zero-partial embedding happens where a continuous
+# consumer reads them (§14.3).
+function _establish_frozen!(seeded_exec::Executor, act::Activation{T},
+                            nominal_exec::Executor, build::Build) where {T}
+    for (ci, entry) in enumerate(build.structure.components)
+        _frozen(entry.tier, T) || continue
+        path = entry.path
+        for name in _ports(build.outputs.components[ci])
+            scatter_cell!(seeded_exec.store, act.layout.addr[(path, name)],
+                     gather_cell(nominal_exec.store, nominal_exec.act.layout.addr[(path, name)]))
+        end
+    end
+    nothing
+end
+
 """
     FrameHooks
     frame_top!(hooks)

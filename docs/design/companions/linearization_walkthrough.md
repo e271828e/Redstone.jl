@@ -309,7 +309,7 @@ At any non-nominal activation a discrete component's stages are outside the
 executable set (`_frozen` in `src/build.jl`): its output cells are pinned
 `Float64` constants, zero partials, holding whatever the nominal world last
 published. That is "linearize the continuous dynamics with the discrete state
-held" ([§8.2][s8-2]), and [D-213][d-213]'s copy in trim (`_establish_frozen!`) is what fills
+held" ([§8.2][s8-2]), and [D-213][d-213]'s copy in model.jl (`_establish_frozen!`) is what fills
 those cells from the nominal half before the seeded pass reads them. Trim and
 `linearize`'s `about` form establish them there with one round. In
 `linearize`'s default form they are the checkpoint's held cells

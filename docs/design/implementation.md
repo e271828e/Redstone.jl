@@ -577,7 +577,7 @@ D-235, D-236, D-237, D-238, D-243, D-263, D-264, D-265, D-276, D-316.
   labels.
 - `linearize` on a `Model{Float64}`, over D-213's two-half scratch world in
   passes of `width` directions, the seeds written at the resolved taps' own
-  sites. Each half is a scratch `Model`, built by trim.jl's `_scratch`
+  sites. Each half is a scratch `Model`, built by model.jl's `_scratch`
   (D-317, D-319).
 - `_check_linearize_call`, the keyword refusals, and `_linearize`, the query
   over a chosen operating point, which the simulation's method in sim.jl
@@ -625,6 +625,10 @@ soon as nothing in it names a `Simulation` in a signature, and below
   `T` but `Float64` and a `ForwardDiff.Dual`, thrown alone (§9.5, D-320). Its
   keyword refusal, `ArgumentInvalid` `:range` on a `chunk_size` that is not an
   integer ≥ 1, is collected (Appendix C).
+- The seeded-half scratch world trim.jl and linearize.jl share (§14.8,
+  D-213, D-317): `_scratch`, the model's buffer set at another scalar, which
+  dies with the call, and `_establish_frozen!`, the frozen copy over the
+  `Outputs`' port list.
 - The frame's hooks `FrameHooks`, with `frame_top!` and `settled!`, and the
   no-op `NoHooks` (§11.2, §13.5, D-317).
 - The claim's gate `_claimed_gate`, which refuses a claimed model's direct
@@ -926,14 +930,13 @@ Spec: §5.4, §13.8, §9.3, D-012, D-140, D-245.
   passed through (§14.9, D-277).
 - The `solve` seam, with `LevenbergMarquardt`.
 - `trim!` on a `Model{Float64}`, gated on the claim (D-318), over D-213's
-  two-half scratch world. Each half is a scratch `Model`, built by
-  `_scratch` over the model, which linearize.jl shares (D-317, D-319).
+  two-half scratch world. Each half is a scratch `Model`, built by model.jl's
+  `_scratch` (D-317, D-319).
 - `_solve_problem`, the solve through the verdict's evaluation, and
   `_verdict!`, which takes the caller's commit, both shared with the
   simulation's method in sim.jl (D-319).
 - The misuse fallback on a `Model`, and `ArgumentInvalid`'s `:non_nominal` on
   a `Model` at another scalar (D-319).
-- The frozen copy, over the `Outputs`' port list.
 - `TrimReport`, with its `committed_checks` (D-262).
 
 Spec: §9.6, §13.1, §14.5–§14.9, D-070, D-158, D-213, D-224, D-253, D-262,

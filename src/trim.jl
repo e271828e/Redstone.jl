@@ -14,9 +14,9 @@
 # does not converge leaves the simulation bit-for-bit untouched — "never
 # initialized" included.
 #
-# The seeded-half machinery below — `_scratch`, `_establish_frozen!` — has a
-# second client, linearize.jl, which runs the same two-half scratch world
-# (D-213) without a commit.
+# The seeded-half machinery — `_scratch`, `_establish_frozen!` — is model.jl's,
+# shared with linearize.jl, which runs the same two-half scratch world (D-213)
+# without a commit.
 #
 # The service takes the `Model{Float64}` that holds the operating point
 # (D-319). The simulation's method is sim.jl's: it gates on the lifecycle and
@@ -567,31 +567,6 @@ function _solve_problem(model::Model{Float64}, problem::TrimProblem; baseline, b
 end
 
 # --- the pieces the service is built out of --------------------------------------
-
-# One scratch model: the same buffer set the model owns, at whatever scalar,
-# from the same cached activation and the same deployment — and it dies with
-# the call (§9.2, §14.8, glossary `scratch`, D-317).
-_scratch(model::Model, ::Type{T}) where {T} =
-    Model(model.deployment, T; chunk_size = model.exec.chunk_size)
-
-# D-213's copy: a frozen component's stages are outside the seeded activation's
-# executable set (§9.4), so its output cells can only come from the nominal half
-# — where the authored `s` has just been published by the establishment round.
-# A discrete producer's cells are pinned `Float64` at every activation, so this
-# is a value copy; the zero-partial embedding happens where a continuous
-# consumer reads them (§14.3).
-function _establish_frozen!(seeded_exec::Executor, act::Activation{T},
-                            nominal_exec::Executor, build::Build) where {T}
-    for (ci, entry) in enumerate(build.structure.components)
-        _frozen(entry.tier, T) || continue
-        path = entry.path
-        for name in _ports(build.outputs.components[ci])
-            scatter_cell!(seeded_exec.store, act.layout.addr[(path, name)],
-                     gather_cell(nominal_exec.store, nominal_exec.act.layout.addr[(path, name)]))
-        end
-    end
-    nothing
-end
 
 # The decisions at the seeded activation: field `i` carrying the unit partial in
 # slot `i`, which is what makes one sweep yield `r` and `J` together (§14.7).
