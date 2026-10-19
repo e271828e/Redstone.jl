@@ -10135,11 +10135,11 @@ bound rather than a policy layered over the stream. The bound is a bounded ring
 plus per-kind suppressed counts, drained at frame top. So "rate-limited wherever
 its source can repeat" holds of every kind below without any kind arranging it.
 The stream surfaces through the published [framework status](#g-framework-status) (the frozen value
-each snapshot carries beside the signal table) ([§11.2][s11-2]). The liveness heartbeat
-([§12.2][s12-2]) rides in the same diagnostic cells, and the pacer's record ([§10.7][s10-7]) sits
-beside the writers' records in the status. The stream is never collected, since
-there is no collection to join. Nothing in the argument of [D-084][d-084] applies to it.
-That decision is about what the *build* warns on.
+each snapshot carries beside the signal table) ([§11.2][s11-2], [D-369][d-369]). The liveness
+heartbeat ([§12.2][s12-2]) rides in the same diagnostic cells, and the pacer's record
+([§10.7][s10-7]) sits beside the writers' records in the status. The stream is never
+collected, since there is no collection to join. Nothing in the argument of
+[D-084][d-084] applies to it. That decision is about what the *build* warns on.
 
 The committed runtime warnings, in one place, are these.
 
@@ -10608,7 +10608,7 @@ strings names requesters by component path. Each path is validated against
 the requester roster on every call, and duplicates collapse, in the order
 given. A path naming no requester is `StopRequestInvalid`, collected over the
 given paths ([Appendix C][sC]). A `t_end` that is not a non-negative real is
-`ArgumentInvalid`, refused before the ignore list is read.
+`ArgumentInvalid`, refused before the ignore list is read ([D-414][d-414]).
 
 Each advance builds a [`StopPolicy`](#g-stop-policy) (the immutable value of `t_end` plus the
 ignored requester paths), and passes it to the loop with an ignore mask, one
@@ -10631,10 +10631,10 @@ That terminal snapshot's status carries the run's final cumulative diagnostic
 counters ([§11.8][s11-8]).
 
 Every advance checks the latest snapshot for an honoured request before its
-first frame. After `init!` that snapshot is boundary zero's, so an authored
-[condition](#g-condition) (the path-addressed sparse overlay that sets a build's state) already
-terminal ends the run at `t₀` with that snapshot final, integrating nothing. A
-run that starts later ends where it started, advancing no frame.
+first frame ([D-414][d-414]). After `init!` that snapshot is boundary zero's, so an
+authored [condition](#g-condition) (the path-addressed sparse overlay that sets a build's state)
+already terminal ends the run at `t₀` with that snapshot final, integrating
+nothing. A run that starts later ends where it started, advancing no frame.
 
 **The sources are consulted in a fixed order** ([D-203][d-203]). The loop checks a pending
 control stop at frame top, then `t_end`, then the stop requests at each
@@ -10709,7 +10709,7 @@ ordinary stop**, not a source type of its own, because nothing failed
 #### Ignored requests and post-terminal dynamics
 
 An ignored request is still a cell in every snapshot, so the log records when
-validity broke even on a run that continued ([D-316][d-316]). Two uses share
+validity broke even on a run that continued ([D-316][d-316], [D-413][d-413]). Two uses share
 the mechanism, validity breakdown and scenario completion. The reason string
 is what tells a reader which, and the framework never will.
 
@@ -10721,7 +10721,7 @@ switches to a frozen mode, and feeds `fallen` to a stop request. The frozen mode
 is a mode-dependent `x_deriv`, machinery the model already has. Honoured, the
 request ends the sim at the fall. Ignored, the sim integrates a frozen robot,
 which is well-defined, unlike an uncaught throw. The discipline forces models to
-have well-defined terminal states, which is better modeling ([D-060][d-060]).
+have well-defined terminal states, which is better modeling ([D-060][d-060], [D-410][d-410]).
 
 #### Rejected mechanisms and the reads a run acts on
 
@@ -10736,7 +10736,7 @@ practice is forbidden) terminal types scanned from the tree, an arm the stop
 request supersedes on its own terms.
 
 Rejecting observation-by-path separates inspection from the reads a run acts on,
-a line [D-316][d-316] narrows. Inspection is human-facing, has no effect on run
+a line [D-316][d-316] narrows ([D-409][d-409]). Inspection is human-facing, has no effect on run
 semantics, and legitimately sees every public cell. The log retaining the full
 table, a front end's panels rendering a component's ports, and inspection under
 [replay](#g-replay) (the ordinary loop re-driven from a recorded trace) are all inspection. A
@@ -10765,9 +10765,9 @@ charted, the record it writes, tail hygiene, and what an errored simulation
 keeps and refuses.
 
 **The abnormal path discards the failed boundary, promotes the previous snapshot
-to final, and rejoins the ordinary tail** ([D-030][d-030]). The protocol becomes one tail
-with two entry points. Graceful entry follows a *completed* final boundary, and
-abnormal entry follows a *discarded* one. Everything downstream of "final
+to final, and rejoins the ordinary tail** ([D-030][d-030], [D-408][d-408]). The protocol becomes one
+tail with two entry points. Graceful entry follows a *completed* final boundary,
+and abnormal entry follows a *discarded* one. Everything downstream of "final
 snapshot" runs identically. That covers sticky stopped, waiters woken through
 the boundary-counter plus `Condition` path, the hooks `unblock!` and
 `shutdown!`, and named joins with timeout. Those waiters observe stopped rather
@@ -10817,8 +10817,8 @@ errored simulation is terminal, not resumable, and the reproduction tool is
 [trace](#g-trace) [replay](#g-replay) (the ordinary loop re-driven from a recorded trace), not
 resurrection ([§12.6][s12-6], [D-059][d-059], [D-387][d-387]). A trace is a session's record of its drained
 inputs. The stopped-sim services enforce the non-resumability by refusing an
-errored simulation outright (`ServiceLifecycle`, [§14][s14]). Operations on the [roster](#g-roster)
-(the list of attached device entries) refuse it with them ([§11.3][s11-3], [D-232][d-232]).
+errored simulation outright (`ServiceLifecycle`, [§14][s14], [D-108][d-108]). Operations on the
+[roster](#g-roster) (the list of attached device entries) refuse it with them ([§11.3][s11-3], [D-232][d-232]).
 Inspection is reading, but `attach!` configures a run that cannot follow. The
 published record (snapshot chain, log, trace) ends at the last consistent
 boundary. Nothing downstream of the sim ever sees half a boundary.
@@ -11017,18 +11017,18 @@ scalar type), and the pinned port says so where a walking one would promote
 the value and declare less. The honest pin is spelled rather than inferred.
 The same holds for every library block whose output depends on neither its
 continuous state nor a walking input, such as a step source or a relay, and
-each declares its `out` pinned ([D-312][d-312]).
+each declares its `out` pinned ([D-312][d-312], [D-412][d-412]).
 
-Two uses need `Constant` ([D-143][d-143]), though a listed block needs none to be built
-([D-313][d-313]). The zero-contributor configurations ([§6.2][s6-2]) are one. There, a required
-aggregate input has no physical contributor, and the zero total must be spelled
-as a wire. The rig stub below is the other. The block's value is instance data,
-like junction arity, not an overridable default ([D-143][d-143]). A configuration wanting
-an externally settable source uses a root input ([§11.3][s11-3]), which keeps the block
-from drifting into a back-door input default. A handle that references bulk data
-never surfaces as a root input ([D-237][d-237]); a rig holds such a handle through a
-[constant source](#g-constant-source) (a `Constant`, publishing the value its instance holds) instead
-([§14.9][s14-9], [D-364][d-364]).
+Two uses need `Constant` ([D-143][d-143], [D-411][d-411]), though a listed block needs none to be
+built ([D-313][d-313]). The zero-contributor configurations ([§6.2][s6-2]) are one. There, a
+required aggregate input has no physical contributor, and the zero total must be
+spelled as a wire. The rig stub below is the other. The block's value is
+instance data, like junction arity, not an overridable default ([D-143][d-143]). A
+configuration wanting an externally settable source uses a root input ([§11.3][s11-3]),
+which keeps the block from drifting into a back-door input default. A handle
+that references bulk data never surfaces as a root input ([D-237][d-237]); a rig holds
+such a handle through a [constant source](#g-constant-source) (a `Constant`, publishing the value its
+instance holds) instead ([§14.9][s14-9], [D-364][d-364]).
 
 `Freeze{V}` feeds a walking producer into a pinned entry, which the walk clause
 ([§6.1][s6-1]) otherwise refuses ([D-266][d-266]).
@@ -11089,7 +11089,7 @@ input_wires(rig::StrutRig) =
 ```
 
 That stub child is typically just a `Constant` holding the test handle, which
-makes it the source block's first shipped instance ([D-143][d-143]). Bespoke
+makes it the source block's first shipped instance ([D-143][d-143], [D-411][d-411]). Bespoke
 stubs remain ordinary components wherever the double must compute something.
 
 The rig adds zero new machinery, because wiring and `except` already exist
@@ -15244,6 +15244,13 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-404]: decisions.md#d-404--attach-the-feed-to-the-simulation-as-it-stands-under-replays-restore--false
 [d-406]: decisions.md#d-406--resolve-a-bindings-reads-through-the-one-read-resolver
 [d-407]: decisions.md#d-407--read-the-log-through-the-read-selector-family-as-columns
+[d-408]: decisions.md#d-408--discard-a-failed-boundary-and-promote-the-previous-snapshot-to-final
+[d-409]: decisions.md#d-409--keep-service-observation-on-the-contract-and-let-inspection-see-everything
+[d-410]: decisions.md#d-410--leave-post-terminal-dynamics-to-the-model
+[d-411]: decisions.md#d-411--spell-the-component-test-rigs-stub-as-a-constant-holding-the-test-handle
+[d-412]: decisions.md#d-412--pin-a-library-block-whose-output-depends-on-neither-state-nor-a-walking-input
+[d-413]: decisions.md#d-413--let-the-reason-string-never-the-framework-tell-a-stop-requests-two-uses-apart
+[d-414]: decisions.md#d-414--check-for-an-honoured-request-at-an-advances-entry-and-bound-t_end-first
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop
