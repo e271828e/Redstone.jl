@@ -637,6 +637,130 @@ function _wrong_direction(entry, path, comp_path, name, @nospecialize(comp), wan
     nothing
 end
 
+# --- tier classification (§8.2) -----------------------------------------------
+# Tier is declared by the store every leaf declares, `x_init` continuous against
+# `s_init` discrete, the two disjoint (D-195), and empty on a stateless leaf
+# (D-263). The declaration is asked for by method existence, never by
+# emptiness: a declared `(;)` and the fallback are the same value. A stateful
+# leaf announces its tier in the update law as well, and the update law decides
+# where there is one; the output stages are one pair of names shared by both
+# tiers (D-220) and cast no vote, and no arity carries a tier. Every other
+# tier-implying declaration must then agree, and disagreement names the
+# offending one — including the wrong-tier cases the split state letters make
+# visible, an `x_init` on a leaf whose update law is `s_update`, the
+# converse, both stores on one leaf, and a `Pinned` contract entry on a
+# discrete leaf.
+#
+# The classifier sees primitives only: a component that declares nothing at all
+# has no *class* to read, which §8.5 settles before this runs.
+
+# §7.1, §8.2, D-094: every `x_init` field is a `Float64` or an `SArray` of them,
+# and the declaration is flat. The arm names where the value belongs instead.
+function check_state_leaves(path::String, @nospecialize(comp), diags::Vector{Diagnostic})
+    for (name, value) in pairs(invoke_declaration(x_init, comp))
+        leaf_eltype = value isa SArray ? eltype(value) : typeof(value)
+        leaf_eltype === Float64 && continue
+        reason = value isa NamedTuple ? :nested :
+                 leaf_eltype <: Union{Integer,Enum} ? :mode_value :
+                 leaf_eltype <: Real ? :eltype : :wrapper
+        push!(diags, IllegalStateLeaf(path = path, name = name, declared = typeof(value),
+                                      reason = reason))
+    end
+end
+
+# §8.2, D-247: every by-value store is a `NamedTuple`, and the classifier and
+# the two field checks below read it as one. Returns whether this primitive
+# can be read further; the fallbacks return `NamedTuple()` and pass.
+function check_store_form(path::String, @nospecialize(comp), diags::Vector{Diagnostic})
+    readable = true
+    for (name, fn) in ((:x_init, x_init), (:s_init, s_init), (:m_init, m_init))
+        contents = invoke_declaration(fn, comp)
+        contents isa NamedTuple && continue
+        push!(diags, StoreNotNamedTuple(path = path, store = name, declared = typeof(contents)))
+        readable = false
+    end
+    readable
+end
+
+# §7.3, D-231: every store field is isbits or a `Symbol`, checked on both stores.
+function check_stores(path::String, @nospecialize(comp), diags::Vector{Diagnostic})
+    for (store, contents) in ((:s_init, invoke_declaration(s_init, comp)),
+                              (:m_init, invoke_declaration(m_init, comp)))
+        for (name, value) in pairs(contents)
+            isbits(value) || value isa Symbol ||
+                push!(diags, IllegalStoreField(path = path, store = store,
+                                               name = name, declared = typeof(value)))
+        end
+    end
+end
+
+"""
+The tier the primitive at `path` announces, or `nothing` with what disagrees
+recorded in `diags` (§13.1).
+"""
+function classify_tier(path::String, @nospecialize(comp), diags::Vector{Diagnostic})
+    votes = Tuple{Symbol,Tier}[]
+    has_stage(x_deriv, comp) && push!(votes, (:x_deriv, CONTINUOUS))
+    has_stage(s_update, comp) && push!(votes, (:s_update, DISCRETE))
+    _declares(x_init, comp) && push!(votes, (:x_init, CONTINUOUS))
+    _declares(s_init, comp) && push!(votes, (:s_init, DISCRETE))
+    !isempty(invoke_declaration(m_init, comp)) && push!(votes, (:m_init, CONTINUOUS))
+    !isempty(invoke_declaration(state_events, comp)) && push!(votes, (:state_events, CONTINUOUS))
+
+    # The store is mandatory, empty when stateless (§8.2, D-263).
+    if !_declares(x_init, comp) && !_declares(s_init, comp)
+        push!(diags, TierUnreadable(path = path, type = _typename(comp),
+                                   declarations = leaf_declarations(comp)))
+        return nothing
+    end
+    state_store = !isempty(invoke_declaration(x_init, comp)) ? :x_init :
+                  !isempty(invoke_declaration(s_init, comp)) ? :s_init : nothing
+    update_vote = findfirst(v -> first(v) === :x_deriv || first(v) === :s_update,
+                            votes)
+    if state_store !== nothing && update_vote === nothing
+        push!(diags, StoreWithoutUpdate(path = path, store = state_store))
+        return nothing
+    end
+
+    # The decider: the update law where there is one, the store otherwise. Of two
+    # stores `x_init` decides, and `s_init` is reported against it.
+    decider = something(update_vote, findfirst(v -> first(v) === :x_init || first(v) === :s_init,
+                                               votes))
+    tier = last(votes[decider])
+    recorded = length(diags)
+    state_store === nothing && !_declares(y_types, comp) &&
+        push!(diags, StatelessWithoutOutputs(path = path, type = _typename(comp),
+                                            declarations = leaf_declarations(comp)))
+
+    # The vote loop collects (§13.1): a leaf written half in each tier's spelling
+    # names every declaration that disagrees, not the first one found. The tier
+    # is announced only if none does.
+    for (name, vote_tier) in votes
+        vote_tier === tier && continue
+        push!(diags, DeclarationOnWrongTier(path = path, declaration = name,
+                                           reason = :tier_form,
+                                           found = Symbol(tier_word(vote_tier)),
+                                           announced = Symbol(tier_word(tier))))
+    end
+    # Both contracts read on the declaration as written, one report per entry:
+    # the marker below the top of an entry is refused on both tiers (§8.2,
+    # D-265), and a top marker says nothing where every leaf pins (§8.5, D-263).
+    for (name, fn) in ((:u_types, u_types), (:y_types, y_types))
+        _declares(fn, comp) || continue
+        for (entry_name, P) in pairs(invoke_declaration(fn, comp))
+            _holds_marker(P) &&
+                push!(diags, IllegalPortType(path = path, site = name === :u_types ? :face : :port,
+                                             name = entry_name, declared = P,
+                                             reason = :nested_marker))
+            tier === DISCRETE && _is_marker(P) &&
+                push!(diags, DeclarationOnWrongTier(path = path, declaration = name,
+                                                   reason = :pinned_entry, entry = entry_name,
+                                                   announced = :discrete))
+        end
+    end
+    length(diags) == recorded ? tier : nothing
+end
+
 # --- the flatten pass ---------------------------------------------------------
 
 """

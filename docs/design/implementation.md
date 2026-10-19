@@ -73,6 +73,15 @@ in the `src/model.jl` entry.
 - The sample-time fold.
 - The shadowing check ahead of `classify` in the walk (D-246).
 - The store-form gate ahead of the classifier in the walk (D-247).
+- The tier classification `classify_tier` (§8.2), in its own section ahead
+  of the walk. It records what it finds instead of throwing, the walk reads
+  the tier beside the class, and the store decides the tier. It records
+  `StatelessWithoutOutputs` and runs the pinned-entry check, both from D-263,
+  and holds `IllegalPortType`'s nested-marker arm, on both tiers (D-265).
+- Beside it the store-form check `check_store_form` (§8.2, D-247), the store
+  isbits check `check_stores` (§7.3, D-231) and the state-leaf vocabulary
+  check `check_state_leaves` (§7.1, D-094), all taking the component
+  unspecialized (D-289).
 - The component frame around the walk's two branches (D-248).
 - §13.3's `resolve`/`resolve_terminal`/face-list primitives `input_faces` and
   `output_faces`. The walk records each assembly's evaluated face lists in
@@ -96,9 +105,10 @@ in the `src/model.jl` entry.
   function that takes a connection or its endpoint tuple, as `_fanout` does,
   still compiles once per connection type.
 
-Spec: §6.1, §8.1, §8.5–§8.8, §9.1, §9.2, §9.7, §13.3, §13.7, §14.2, Appendix C, D-061, D-130,
-D-171, D-207–D-212, D-229, D-236, D-246, D-247, D-248, D-251, D-253, D-261,
-D-263, D-289, D-315.
+Spec: §6.1, §7.1, §7.3, §8.1, §8.2, §8.5–§8.8, §9.1, §9.2, §9.7, §13.1, §13.3,
+§13.7, §14.2, Appendix C, D-061, D-094, D-130, D-171, D-207–D-212, D-229,
+D-231, D-236, D-246, D-247, D-248, D-251, D-253, D-261, D-263, D-265, D-289,
+D-315.
 
 ### `src/bindings.jl`
 
@@ -162,26 +172,18 @@ Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §8.5, §10.4, §13.5, §13.7, D-179, D
 
 ### `src/build.jl`
 
-- Tier classification records what it finds instead of throwing. The walk
-  reads the tier beside the class, and the store decides the tier.
-  Classification records `StatelessWithoutOutputs` and runs the pinned-entry
-  check, both from D-263. It also holds `IllegalPortType`'s nested-marker arm,
-  on both tiers (D-265).
 - `build` owns the structure step's one throw.
 - `build` binds the warning channel once around its three steps (D-250):
   - a `DiagnosticError` leaving the build is rewrapped with the warning list,
     and any other throw passes unchanged;
   - a completed build logs each warning once at return.
-- `build`, the declaration checks and the probes take components and the
-  root unspecialized, and each per-component frame reads the instance inside
-  rather than capture it, so a new component or root type compiles none of
-  them again (§9.7, D-289).
+- `build` and the probes take components and the root unspecialized, and
+  each per-component frame reads the instance inside rather than capture it,
+  so a new component or root type compiles none of them again (§9.7, D-289).
 - The wire pass (D-236) checks both type clauses, at `Float64` and at the
   marker scalar. It retypes the contracts at each. It also fixes the
   root-input type, which has two refusals, `AbstractAtRoot` and
   `RootInputTypeConflict`.
-- The store-form check `check_store_form` (§8.2, D-247), the store isbits
-  check (§7.3, D-231) and the state-leaf vocabulary check (§7.1, D-094).
 - The probe and the event probe. The dead-stage rule applies at both stage
   probes, and `cell_layout` raises `MissingProbeValue` (§9.3).
 - `ProbeTag`/`ProbeDual`, the canonical probe scalar (§9.4).
@@ -221,9 +223,8 @@ Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §8.5, §10.4, §13.5, §13.7, D-179, D
   - The event set takes the phase bodies' chunk size (D-289).
 
 Spec: §5.3, §5.5, §13.8, §6.1, §7.1, §7.3, §8.2, §9.1–§9.4, §9.7, §10.4, §13.2,
-§13.5, D-012, D-051, D-094, D-166, D-179, D-208, D-210, D-229, D-231, D-235,
-D-236, D-237, D-247, D-248, D-250, D-252, D-253, D-256, D-261, D-263, D-265,
-D-289, D-315, D-316.
+§13.5, D-012, D-051, D-166, D-179, D-208, D-210, D-229, D-235, D-236, D-237,
+D-247, D-248, D-250, D-252, D-253, D-256, D-261, D-263, D-289, D-315, D-316.
 
 ### `src/checkpoint.jl`
 
