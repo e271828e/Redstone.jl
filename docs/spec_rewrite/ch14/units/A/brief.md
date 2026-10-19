@@ -247,3 +247,28 @@ words). Survey 2.
 - H ends with the chapter's closing `---` and the blank line after it.
 
 ## Rulings after step 3
+
+- R17 reaches units B, G, not this one; see brief.md.
+- R18 reaches units B, not this one; see brief.md.
+- R19 reaches units B, not this one; see brief.md.
+- R20 reaches units B, not this one; see brief.md.
+- R21 reaches units F, H, not this one; see brief.md.
+- **R22. `f_periodic!`** (unit F's open question 2; units: all). FlightCore
+  renamed `f_disc!` to `f_periodic!` (Flight.jl commit `30a5942c`), and
+  `lib/FlightCore/src/` holds no `f_disc!`. Write FlightCore's current name.
+- **R23. Flight.jl's trim** (unit F's open question 3; units: all).
+  FlightCore holds no trim code. The formulation is FlightPhysics'
+  (`aircraftbase.jl`) and the BOBYQA minimization with its `stopval` is
+  Flight.jl's Cessna 172 model (`c172.jl`). Each "FlightCore's" that names
+  the trim formulation or its threshold becomes the owner the source shows.
+  This corrects R12, which called `stopval` and BOBYQA FlightCore's; they
+  still need no clause beyond their owner's name.
+- R24 reaches units H, not this one; see brief.md.
+- R25 reaches units H, not this one; see brief.md.
+- R26 reaches units H, not this one; see brief.md.
+- **R27. Unit A's three corrections** (unit A's open question 1 and its
+  corrections 1 to 3; unit A). F16 reaches old 11514–11516, which is unit
+  A's §14.3; the brief misassigned it to unit B alone. Apply unit A's
+  item 3, the §14.3 sentence that compiles two ways and points to §14.4.
+  Apply item 1, §9.6 previewing trim and linearization, as §9.6 opens. Apply
+  item 2, the lifecycle table's em dash removed.

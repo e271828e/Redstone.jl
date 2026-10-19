@@ -1,0 +1,1622 @@
+{
+ "claims": [
+  {
+   "id": "C-001",
+   "old": "#### The commit, in full",
+   "new": "#### The commit, in full",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-002",
+   "old": "The committed solution is applied as an `init!` in every respect.",
+   "new": "The committed solution is applied as an `init!` in every respect.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-003",
+   "old": "It is `override(baseline, solution)` through boundary zero, with the pre-write root-input totality check (§14.6), the sequence (§14.5) and guards at commit.",
+   "new": "It is `override(baseline, condition(d))` through boundary zero, with the pre-write root-input totality check (§14.6), the sequence (§14.5) and guards at commit.",
+   "where": "new",
+   "cites": [
+    "§14.5",
+    "§14.6"
+   ],
+   "tag": "R",
+   "ruling": "R9",
+   "note": "F61, \"`override(baseline, solution)`\" becomes \"`override(baseline, condition(d))`\" (the normalizer drops the ``), as `src/trim.jl` 612 commits and §14.9 writes it. The guard link goes (F67, a duplicate of unit F's 12190); root-input totality keeps its link, its first use in §14.8."
+  },
+  {
+   "id": "C-004",
+   "old": "The `t0` argument that anchors the grid, and its default, are the same for both init-service entry points (§14.5).",
+   "new": "The `t0` argument that anchors the grid, and its default, are the same for both init-service entry points (§14.5, D-110).",
+   "where": "new",
+   "cites": [
+    "§14.5"
+   ],
+   "newcites": [
+    "D-110",
+    "§14.5"
+   ],
+   "tag": "C",
+   "note": "D-110 Position, \"`trim!` gains the init-service `t0` argument ... default `0.0` matching `init!` (one rule for both entry points)\". Already a pointer to §14.5, the home under R6."
+  },
+  {
+   "id": "C-005",
+   "old": "The recorders restart exactly as §12.6 states for `init!`.",
+   "new": "The recorders (the trace and the log jointly) restart exactly as §12.6 states for `init!` (D-110).",
+   "where": "new",
+   "cites": [
+    "§12.6"
+   ],
+   "newcites": [
+    "D-110",
+    "§12.6"
+   ],
+   "tag": "C",
+   "note": "D-110, Rationale only (\"the §12.6 three-item clear (trace, log, staged batches)\"). The gloss is the glossary's `recorders` entry."
+  },
+  {
+   "id": "C-006",
+   "old": "The trace and the log are new objects, and any batches still in staging cells (where a device's pending write batch waits between drains) are cleared.",
+   "new": "The trace (the primary record of a session) and the log are new objects. Any batches still in staging cells (where a device's pending write batch waits between drains) are cleared.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "split in two. Batch takes no parenthesized gloss: the staging cell's gloss in the same sentence says what a batch is, and one parenthetical is the limit."
+  },
+  {
+   "id": "C-007",
+   "old": "A fresh recording starting at its own anchor is unattended mode's natural shape.",
+   "new": "A fresh recording that starts at its own anchor is the natural shape of unattended mode.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-008",
+   "old": "A trim at a point reached by flying is not offered.",
+   "new": "Trim is not offered at a point reached by flying.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-009",
+   "old": "Trim takes an authored baseline.",
+   "new": "It takes an authored baseline.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-010",
+   "old": "Fly-then-retrim is `checkpoint` the flight, then author the trim's baseline from what the checkpoint (the `Model`'s state at a frame top as one value) shows (D-273).",
+   "new": "Fly-then-retrim is spelled as a `checkpoint` of the flight, then a trim baseline authored from what the checkpoint (the `Model`'s state at a frame top as one value) shows (D-273).",
+   "where": "new",
+   "cites": [
+    "D-273"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-011",
+   "old": "#### The report, not an exception",
+   "new": "#### The report",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R8",
+   "note": "M56. \"not an exception\" survives in the sketch's comment and in \"Non-convergence never throws\"."
+  },
+  {
+   "id": "C-012",
+   "old": "`trim!` returns a structured `TrimReport`:",
+   "new": "`trim!` returns a structured `TrimReport` (D-070).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-070"
+   ],
+   "tag": "C",
+   "note": "D-070 bullet 3, \"`TrimReport` is a no-throw structured value\". The mid-sentence colon goes."
+  },
+  {
+   "id": "C-013",
+   "old": "`# what trim! returns: a value to read, never an exception to catch struct TrimReport converged # the service's box test at the backend's returned point … # the remaining fields, enumerated below; this section # does not name them end`",
+   "new": "`# what trim! returns: a value to read, never an exception to catch struct TrimReport converged # the service's box test at the backend's returned point solution # the solution NamedTuple, guess-shaped residuals # the solved-point residuals the verdict is read off tolerances # the tolerances they come with committed_residuals # the same residuals, re-gathered after the commit committed_checks # the check function's return at the committed state status # the backend's returned status, diagnostic only n_evaluations # the backend's evaluation count n_iterations # the backend's iteration count saturated # the saturated-bounds list fired_events # the events the commit fired end`",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R11",
+   "note": "F63. The eleven fields in the code's order (`src/trim.jl` 145-157), each comment drawn from the list below; the list is keyed to the names. The first two comment lines stand verbatim."
+  },
+  {
+   "id": "C-014",
+   "old": "Field by field:",
+   "new": "The list below takes the fields in turn.",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-015",
+   "old": "- The `converged` flag is the service's own box test at the returned point, never a backend's opinion.",
+   "new": "- `converged` is the service's own box test at the returned point, never a backend's opinion.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R11",
+   "note": "keyed to the field name."
+  },
+  {
+   "id": "C-016",
+   "old": "- The solution NamedTuple is guess-shaped, hence warm-startable.",
+   "new": "- `solution` is the solution NamedTuple. It is guess-shaped, hence warm-startable.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R11"
+  },
+  {
+   "id": "C-017",
+   "old": "- The solved-point residuals come with their tolerances.",
+   "new": "- `residuals` are the solved-point residuals, and `tolerances` the tolerances they come with (§14.5, D-155).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-155",
+    "§14.5"
+   ],
+   "tag": "R",
+   "ruling": "R11",
+   "note": "keyed to `residuals` and `tolerances`. R7: D-155's first ruling (the report carries both residual sets) is bold at §14.5, so a plain pointer here with its citation. D-155 Position: \"the `TrimReport` carries both residual sets: the solved-point residuals ... and the committed-state residuals\". The bold on the term goes."
+  },
+  {
+   "id": "C-018",
+   "old": "They are the very numbers the verdict is read off, gathered at the backend's returned point.",
+   "new": "They are the very numbers the verdict is read off, gathered at the backend's returned point.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-019",
+   "old": "- The committed-state residuals are the same residuals re-gathered from the boundary-zero world after the commit.",
+   "new": "- `committed_residuals` are the committed-state residuals, the same residuals re-gathered from the boundary-zero world after the commit.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R11"
+  },
+  {
+   "id": "C-020",
+   "old": "- The committed-state checks are the check function's return at the committed state, gathered beside the committed-state residuals and empty when the problem declares none (§14.7).",
+   "new": "- `committed_checks` holds the committed-state checks, the check function's return at the committed state. They are gathered beside the committed-state residuals and empty when the problem declares none (§14.7).",
+   "where": "new",
+   "cites": [
+    "§14.7"
+   ],
+   "tag": "R",
+   "ruling": "R11"
+  },
+  {
+   "id": "C-021",
+   "old": "- The backend's returned status comes with its iteration and evaluation counts.",
+   "new": "- `status` is the backend's returned status, and `n_evaluations` and `n_iterations` are its evaluation and iteration counts.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R11"
+  },
+  {
+   "id": "C-022",
+   "old": "These are diagnostic throughout, informative about how the solve went and decisive about nothing.",
+   "new": "These are diagnostic throughout, informative about how the solve went and decisive about nothing.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-023",
+   "old": "- The saturated-bounds list.",
+   "new": "- `saturated` is the saturated-bounds list.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R11"
+  },
+  {
+   "id": "C-024",
+   "old": "- The commit's fired events, as component paths and event names.",
+   "new": "- `fired_events` holds the commit's fired events, as component paths and event names.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R11"
+  },
+  {
+   "id": "C-025",
+   "old": "The list is empty when boundary zero ran quiet (§14.5).",
+   "new": "The list is empty when boundary zero ran quiet (§14.5, D-126).",
+   "where": "new",
+   "cites": [
+    "§14.5"
+   ],
+   "newcites": [
+    "D-126",
+    "§14.5"
+   ],
+   "tag": "C",
+   "note": "D-126 Position, \"the `TrimReport` carries the fired set (component paths and event names)\". R7: D-126 is bold at §14.5; a plain pointer here."
+  },
+  {
+   "id": "C-026",
+   "old": "The committed-state residuals are nearly free.",
+   "new": "The committed-state residuals are nearly free (D-155).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-155"
+   ],
+   "tag": "C",
+   "note": "D-155 Position, \"nearly free — boundary zero's sweep has already run\"."
+  },
+  {
+   "id": "C-027",
+   "old": "That boundary's sweep has already run, so the residuals' declared reads need only gather from it.",
+   "new": "Boundary zero's sweep has already run, so the residuals' declared reads need one derivative evaluation and a gather from it.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R9",
+   "note": "F56. `_verdict!` runs one `rhs` before the gather (`src/trim.jl` 622-627)."
+  },
+  {
+   "id": "C-028",
+   "old": "There is no offset caveat to carry.",
+   "new": "There is no offset caveat to carry.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-029",
+   "old": "Every output stage publishes at boundary zero (D-205, §14.5), so a residual reading an offset component's port reads a commit-refreshed cell like any other.",
+   "new": "Every output stage publishes at boundary zero (D-205, §14.5). A residual reading the port (one declared name, one cell) of an offset component therefore reads a commit-refreshed cell like any other.",
+   "where": "new",
+   "cites": [
+    "D-205",
+    "§14.5"
+   ],
+   "tag": "F",
+   "note": "split in two; \"therefore\" keeps the causal link's direction. Port takes its gloss from the glossary (\"one declared name, one cell, ...\"). Component keeps its link without a gloss, one parenthetical being the limit."
+  },
+  {
+   "id": "C-030",
+   "old": "Those committed-state residuals are the numbers describing the state the simulation is actually in, which is the point a `linearize` at its default operating point reads.",
+   "new": "Those committed-state residuals are the numbers describing the state the simulation is actually in, which is the point a `linearize` at its default operating point reads.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-031",
+   "old": "A non-empty fired-event set also raises `TrimCommitEvents` (Appendix C).",
+   "new": "A non-empty fired-event set also raises `TrimCommitEvents` (Appendix C, D-126).",
+   "where": "new",
+   "cites": [
+    "Appendix C"
+   ],
+   "newcites": [
+    "Appendix C",
+    "D-126"
+   ],
+   "tag": "C",
+   "note": "D-126 Position, \"a non-empty set raises `TrimCommitEvents`\". Its bold is §14.5's (R7)."
+  },
+  {
+   "id": "C-032",
+   "old": "The committed stores then sit at the post-handler point, not the reported solution, and a `linearize` at its default operating point (§14.10) reads that point.",
+   "new": "The committed stores then sit at the post-handler point, not the reported solution, and a `linearize` at its default operating point (§14.10) reads that point.",
+   "where": "new",
+   "cites": [
+    "§14.10"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-033",
+   "old": "The two residual sets are what make the moved point auditable.",
+   "new": "The two residual sets are what make the moved point auditable.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-034",
+   "old": "A converged solve whose committed-state residuals violate the box test raises `TrimCommitResiduals` (Appendix C), naming the offending residuals with their committed values and tolerances.",
+   "new": "A converged solve whose committed-state residuals violate the box test raises `TrimCommitResiduals`, naming the offending residuals with their committed values and tolerances (Appendix C, D-155).",
+   "where": "new",
+   "cites": [
+    "Appendix C"
+   ],
+   "newcites": [
+    "Appendix C",
+    "D-155"
+   ],
+   "tag": "R",
+   "ruling": "R7",
+   "note": "R7, D-155's second ruling bold here. D-155 Position: \"a converged solve whose committed-state residuals violate the box test raises the new service warning `TrimCommitResiduals` (Appendix C: offending residual names, committed values, tolerances)\"."
+  },
+  {
+   "id": "C-035",
+   "old": "The move, whether `x_projection` or a commit-fired handler (§14.5), is surfaced rather than left silent.",
+   "new": "The move, whether `x_projection` or a commit-fired handler (§14.5), is surfaced rather than left silent.",
+   "where": "new",
+   "cites": [
+    "§14.5"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-036",
+   "old": "The verdict itself is not re-litigated.",
+   "new": "The verdict itself is not revisited.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-037",
+   "old": "It gated the commit, at the solved point, and the numbers (D-150) stand as reported.",
+   "new": "It gated the commit, at the solved point, and the numbers (D-150) stand as reported.",
+   "where": "new",
+   "cites": [
+    "D-150"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-038",
+   "old": "The committed-state checks audit the point rather than the move.",
+   "new": "The committed-state checks audit the point rather than the move.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-039",
+   "old": "A converged solve whose committed-state checks leave their tolerances raises `TrimCommitChecks` (Appendix C), naming the offending checks with their committed values and tolerances.",
+   "new": "A converged solve whose committed-state checks leave their tolerances raises `TrimCommitChecks`, naming the offending checks with their committed values and tolerances (Appendix C, D-262).",
+   "where": "new",
+   "cites": [
+    "Appendix C"
+   ],
+   "newcites": [
+    "Appendix C",
+    "D-262"
+   ],
+   "tag": "R",
+   "ruling": "R9",
+   "note": "F81, D-262 cited where it rules; R7 bolds its headline clause, the ruling's home being where the checks run. D-262 Position: \"A check outside its tolerance raises `TrimCommitChecks`, a logged warning that rides the report.\""
+  },
+  {
+   "id": "C-040",
+   "old": "The equilibrium is real.",
+   "new": "The equilibrium is real.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-041",
+   "old": "The operating point is not the one the problem asked for, which is what a params-vs-world atmosphere mismatch produces under elimination (§14.7, D-139).",
+   "new": "The operating point is not the one the problem asked for, which is what a params-vs-world atmosphere mismatch produces under elimination (§14.7, D-139).",
+   "where": "new",
+   "cites": [
+    "D-139",
+    "§14.7"
+   ],
+   "tag": "F",
+   "note": "D-139 stays for the elimination clause (its Rationale: \"under elimination a params-vs-world handle mismatch converges to a true equilibrium at an unintended operating point\"), as F81 allows."
+  },
+  {
+   "id": "C-042",
+   "old": "The checks are gathered from the same boundary-zero sweep, so they cost no evaluation of their own.",
+   "new": "The checks are gathered from the same boundary-zero sweep, so they cost no evaluation of their own.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-043",
+   "old": "No commit means no checks, exactly as for the committed-state residuals.",
+   "new": "No commit means no checks, exactly as for the committed-state residuals.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-044",
+   "old": "Non-convergence never throws.",
+   "new": "Non-convergence never throws (D-070).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-070"
+   ],
+   "tag": "R",
+   "ruling": "R7",
+   "note": "q24 row 625, bold with D-070 bullet 3 (\"non-convergence is an expected envelope-sweep outcome\") and Rejected (\"Throw-on-non-convergence: an expected outcome, not broken machinery\")."
+  },
+  {
+   "id": "C-045",
+   "old": "It is an expected outcome, per the exceptions-are-broken-machinery line (§13).",
+   "new": "It is an expected outcome, not broken machinery (§13.5).",
+   "where": "new",
+   "cites": [
+    "§13"
+   ],
+   "newcites": [
+    "§13.5"
+   ],
+   "tag": "R",
+   "ruling": "R9",
+   "note": "F58 (carried). The bare §13 becomes §13.5, whose line is \"exceptions from model code are always abnormal\"; the phrase §13.5 does not use goes, and D-070's Rejected list carries \"not broken machinery\"."
+  },
+  {
+   "id": "C-046",
+   "old": "In an envelope sweep, hitting the infeasible edge is information.",
+   "new": "In an envelope of trims, hitting the infeasible edge is information.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R9",
+   "note": "F66, sweep is reserved."
+  },
+  {
+   "id": "C-047",
+   "old": "A malformed problem is a different case.",
+   "new": "A malformed problem is a different case.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-048",
+   "old": "It is a `DiagnosticError`-class failure at setup, `TrimProblemInvalid` (Appendix C).",
+   "new": "It fails at setup with a `DiagnosticError` carrying `TrimProblemInvalid` (Appendix C).",
+   "where": "new",
+   "cites": [
+    "Appendix C"
+   ],
+   "tag": "R",
+   "ruling": "R9",
+   "note": "F66, class is reserved."
+  },
+  {
+   "id": "C-049",
+   "old": "The malformed cases are a guess/bounds key-set or field-type disagreement,",
+   "new": "- A guess/bounds key-set or field-type disagreement.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R9",
+   "note": "F52; the inline list becomes a bullet list (survey part A's display candidate) once F52 adds the code's reasons."
+  },
+  {
+   "id": "C-050",
+   "old": "an unknown `reads` selector,",
+   "new": "An unknown `reads` selector (one of the closed family of deferred reads) is refused that way.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R9",
+   "note": "F52, an unknown `reads` path raises `PathResolution` `:unknown_child`, the read set's own refusal, not a `TrimProblemInvalid` case. Selector takes its first-use link and the gloss §14.9 already used."
+  },
+  {
+   "id": "C-051",
+   "old": "a `tolerances`/residual key-set mismatch observed at the setup guess evaluation, and a `check_tolerances`/check key-set mismatch observed at the same evaluation.",
+   "new": "- A `tolerances`/residual key-set mismatch observed at the setup guess evaluation, and a `check_tolerances`/check key-set mismatch observed at the same evaluation.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-052",
+   "old": "The error carries the offending field with the names or types in hand, collected, and the read set's own `ReadResolution` values beside it (§14.4, D-406).",
+   "new": "The error carries the offending field with the names or types in hand, collected. The read set's own refusals ride beside it, `ReadResolution` and the path walk's `PathResolution` (§14.4, D-406).",
+   "where": "new",
+   "cites": [
+    "D-406",
+    "§14.4"
+   ],
+   "tag": "R",
+   "ruling": "R9",
+   "note": "F52's wording for the read set's refusals."
+  },
+  {
+   "id": "C-053",
+   "old": "A permuted spelling is none of these (§14.7).",
+   "new": "A permuted spelling is none of these (§14.7).",
+   "where": "new",
+   "cites": [
+    "§14.7"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-054",
+   "old": "A throw inside the commit's boundary zero is a third case, and neither of those.",
+   "new": "A throw inside the commit's boundary zero is a third case, and neither of those.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-055",
+   "old": "It is model code failing.",
+   "new": "It is model code failing.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-056",
+   "old": "It propagates out of `trim!` as the commit's `StepError`.",
+   "new": "The throw propagates out of `trim!` as the commit's `StepError`, and no report is returned for that solve (D-224).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-224"
+   ],
+   "tag": "R",
+   "ruling": "R7",
+   "note": "q24 row 629. D-224 Position: \"`trim!` does not catch the `StepError` a commit-time throw raises out of its `init!`. The throw propagates, ... and no `TrimReport` is returned for that solve.\" The two clauses join so the bold and its citation share a sentence."
+  },
+  {
+   "id": "C-057",
+   "old": "The simulation is left `built` (§13.4, D-223), and no report is returned for that solve (D-224).",
+   "new": "The simulation is left `built` (§13.4, D-223).",
+   "where": "new",
+   "cites": [
+    "D-223",
+    "D-224",
+    "§13.4"
+   ],
+   "newcites": [
+    "D-223",
+    "D-224",
+    "§13.4"
+   ],
+   "tag": "F",
+   "note": "the no-report clause and D-224 joined the sentence before, in the same paragraph."
+  },
+  {
+   "id": "C-058",
+   "old": "An empty problem is none of them either.",
+   "new": "An empty problem is none of them either.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-059",
+   "old": "`TrimProblem``(guess = (;), …)` is legal, not `TrimProblemInvalid`.",
+   "new": "`TrimProblem(guess = (;), …)` is legal, not `TrimProblemInvalid` (D-156).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-156"
+   ],
+   "tag": "R",
+   "ruling": "R7",
+   "note": "q24 row 630. D-156 Position, \"Zero decision variables: `TrimProblem(guess = (;))` bypasses the solver\"; Rejected, \"`TrimProblemInvalid` on an empty guess\". The late `TrimProblem` link goes (F67): unit F links it at 12057. The two code spans join into one."
+  },
+  {
+   "id": "C-060",
+   "old": "With zero decision variables the solver is bypassed outright.",
+   "new": "With zero decision variables the solver is bypassed outright.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-061",
+   "old": "There is nothing to pack, no seeded activation and no backend call.",
+   "new": "There is nothing to pack, no seeded activation and no backend call.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-062",
+   "old": "The service simply evaluates the residuals once at the baseline.",
+   "new": "The service simply evaluates the residuals once at `override(baseline, condition((;)))`, the baseline with whatever the problem's condition sets.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R9",
+   "note": "F82 (`src/trim.jl` 481). The late baseline link goes (F67): unit F links it at 12065."
+  },
+  {
+   "id": "C-063",
+   "old": "The ordinary box test decides `converged`, and the commit runs as usual.",
+   "new": "The ordinary box test decides `converged`, and the commit runs as usual.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-064",
+   "old": "The degenerate problem is the \"is this operating point an equilibrium?\" probe.",
+   "new": "The degenerate problem is the \"is this operating point an equilibrium?\" probe.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-065",
+   "old": "It evaluates this condition's equations and reports, which is useful in its own right and free.",
+   "new": "It evaluates this condition's equations and reports, which is useful in its own right and free.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-066",
+   "old": "#### The AD obligation, scoped",
+   "new": "#### The AD obligation",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R8",
+   "note": "M56."
+  },
+  {
+   "id": "C-067",
+   "old": "The default formulation requires `Dual` genericity of exactly the continuous output-stage chains and `x_deriv`, plus the user's assignment and residual math.",
+   "new": "The default formulation requires `Dual` genericity of exactly the continuous output-stage chains and `x_deriv`, plus the user's assignment and residual math (D-070).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-070"
+   ],
+   "tag": "R",
+   "ruling": "R7",
+   "note": "q24 row 632. D-070 bullet 4: \"The AD obligation is scoped to continuous stages, `f` and user assignment/residual math, the discrete tier frozen-exact\"."
+  },
+  {
+   "id": "C-068",
+   "old": "The discrete tier's stages and `s_update`, and the event system's guards and handlers, never see a `Dual`.",
+   "new": "The discrete tier's stages and `s_update`, and the event system's guards and handlers, never see a `Dual`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "the tier link goes (F67, a duplicate of unit F's 12183)."
+  },
+  {
+   "id": "C-069",
+   "old": "They are frozen constants with zero partials, semantically exact (§8.2).",
+   "new": "They are frozen constants with zero partials, semantically exact (§8.2).",
+   "where": "new",
+   "cites": [
+    "§8.2"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-070",
+   "old": "This is not a new obligation.",
+   "new": "This is not a new obligation.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-071",
+   "old": "It is the same activation linearization is defined on.",
+   "new": "It is the same activation linearization is defined on.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-072",
+   "old": "AD-readiness is also a build-checked property.",
+   "new": "AD-readiness is also a build-checked property.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-073",
+   "old": "The Dual probe detonates pinned intermediates with a culprit-naming `InexactError`, and `build(world; activations)` puts it in CI.",
+   "new": "A pinned intermediate (a value held at `Float64` inside authored continuous math) makes the Dual probe fail with a culprit-naming `MethodError` or `InexactError` (D-307). `build(world; activations)` puts the probe in CI (D-280).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-280",
+    "D-307"
+   ],
+   "tag": "R",
+   "ruling": "R9",
+   "note": "F77, D-307 Rationale: \"fails at the offending line with a `MethodError` or an `InexactError`\". D-280 (H85): \"The repository's test suite builds a `Dual` activation of every component, with `build(world; activations = ...)`\". The gloss follows D-307's \"`Float64`-pinned intermediates\"."
+  },
+  {
+   "id": "C-074",
+   "old": "The robustness comes from enforcement, not hope.",
+   "new": "The robustness comes from enforcement, not hope.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-075",
+   "old": "C172 migration audit (one afternoon):",
+   "new": "A migration audit of Flight.jl's Cessna 172 model (`c172.jl`) against this obligation took one afternoon.",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-070"
+   ],
+   "tag": "R",
+   "ruling": "R15",
+   "note": "verify, \"migration\" kept and D-070 moved to the findings sentence in the same paragraph. R12 and R15. Owner checked at `~/.julia/dev/Flight.jl/lib/FlightApps/src/c172/c172.jl`. D-070 bullet 5: \"The C172 audit is Interpolations tables (prefer cubic knots), saturation rank-deficiency (LM-tolerated, reported), gear zero airborne.\" \"against this obligation\" names the audit's subject, `migration_outline.md`'s \"the C172 AD audit for trim\"."
+  },
+  {
+   "id": "C-076",
+   "old": "- `Interpolations.jl` tables (propeller coefficient maps, engine maps) must accept generic scalars.",
+   "new": "- `Interpolations.jl` tables (propeller coefficient maps, engine maps) must accept generic scalars.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "R15 keeps it. Flight.jl's tables checked at `lib/FlightPhysics/src/propellers.jl` 266-270 and `piston.jl` 84, 102 (`extrapolate(scale(interpolate(..., BSpline(Linear())), ...))`)."
+  },
+  {
+   "id": "C-077",
+   "old": "They do.",
+   "new": "They do.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-078",
+   "old": "A call `itp(x::Dual)` works through the `BSpline`/`scale`/`extrapolate` compositions in Flight.jl's tables.",
+   "new": "A call `itp(x::Dual)` works through the `BSpline`/`scale`/`extrapolate` compositions in Flight.jl's tables.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-079",
+   "old": "But prefer cubic knots over linear where partials matter, since linear knots make Jacobian entries piecewise-constant.",
+   "new": "Prefer cubic knots over linear where partials matter, though, since linear knots make Jacobian entries piecewise-constant.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-080",
+   "old": "That is no regression against finite differences (D-307).",
+   "new": "That is no regression against finite differences (D-307).",
+   "where": "new",
+   "cites": [
+    "D-307"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-081",
+   "old": "A manual chain rule via `Interpolations.gradient` is the escape hatch for anything exotic, and the pattern for wrapping non-Julia black boxes (§14.10, D-266).",
+   "new": "A manual chain rule via `Interpolations.gradient` is the escape hatch for anything exotic, and the pattern for wrapping non-Julia black boxes (§14.10, D-266).",
+   "where": "new",
+   "cites": [
+    "D-266",
+    "§14.10"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-082",
+   "old": "- In-model saturations (actuator limits, idle/FRC clamps) zero Jacobian columns when active.",
+   "new": "- In-model saturations (actuator limits, idle/FRC clamps) zero Jacobian columns when active.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "R15 keeps it."
+  },
+  {
+   "id": "C-083",
+   "old": "LM damping tolerates the rank deficiency, and the report names the saturated variable (D-070).",
+   "new": "LM damping tolerates the rank deficiency, and the report names the saturated variable (D-070).",
+   "where": "new",
+   "cites": [
+    "D-070"
+   ],
+   "tag": "F",
+   "note": "kept as written; see rulings.md, correction 1."
+  },
+  {
+   "id": "C-084",
+   "old": "Cruise trim leaves those saturations inactive.",
+   "new": "Cruise trim leaves those saturations inactive.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-085",
+   "old": "- The landing gear is never evaluated off-zero airborne.",
+   "new": "The landing gear is never evaluated off-zero airborne.",
+   "where": "units/G/companion_addition.md",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R15",
+   "note": "moved to `migration_outline.md`, below its table."
+  },
+  {
+   "id": "C-086",
+   "old": "- `norm`-at-zero guards are already in place (e5efb3a).",
+   "new": "The `norm`-at-zero guards are already in place.",
+   "where": "units/G/companion_addition.md",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R15",
+   "note": "moved; R12 drops the Flight.jl commit hash."
+  },
+  {
+   "id": "C-087",
+   "old": "The fallback is per problem, through one `backend =` keyword.",
+   "new": "The derivative-free fallback would be chosen per call, through the one `backend =` keyword.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R10",
+   "note": "R10, the unbuilt fallback in the conditional; F73 (R9), `backend` is a `trim!` keyword, so the choice is per call."
+  },
+  {
+   "id": "C-088",
+   "old": "### 14.9 Mounting: problems as relocatable values",
+   "new": "### 14.9 Mounting: problems as relocatable values",
+   "where": "new",
+   "cites": [],
+   "tag": "X"
+  },
+  {
+   "id": "C-089",
+   "old": "What a `TrimProblem` is. It is not a condition but an implicitly specified condition.",
+   "new": "A `TrimProblem` is not a condition but an implicitly specified condition (D-071).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-071"
+   ],
+   "tag": "R",
+   "ruling": "R7",
+   "note": "R8 (M60): the bold label becomes the topic sentence. q24 row 641; D-071 Position: \"A `TrimProblem` is an implicitly specified condition — a condition-valued function over decisions plus pinning equations, made explicit by solving and committed by initializing with the solved condition — which unifies the services as condition-algebra clients.\" The bold on the term goes; the headline clause takes it."
+  },
+  {
+   "id": "C-090",
+   "old": "`condition` is a condition-valued function over the decision space.",
+   "new": "`condition` is a condition-valued function over the decision space.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-091",
+   "old": "`reads`/`residuals` are the equations that pin the free variables down.",
+   "new": "`reads`/`residuals` are the equations that pin the free variables down.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-092",
+   "old": "`guess`/`bounds` say where to search.",
+   "new": "`guess`, `lower` and `upper` say where to search.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R9",
+   "note": "F61, the fields are `lower` and `upper`."
+  },
+  {
+   "id": "C-093",
+   "old": "Solving makes the implicit condition explicit.",
+   "new": "Solving makes the implicit condition explicit.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-094",
+   "old": "The commit is then literally an init, `override(baseline, condition(d))` through boundary zero (the initialization boundary: the ordinary macro-sequence with an empty integrate).",
+   "new": "The commit is then literally an init, `override(baseline, condition(d))` through boundary zero (the initialization boundary, the ordinary macro-sequence with an empty integrate).",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "the colon inside the gloss becomes a comma."
+  },
+  {
+   "id": "C-095",
+   "old": "The services unify as clients of one condition algebra.",
+   "new": "The services unify as clients of one condition algebra.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-096",
+   "old": "`init!` applies an explicit condition, and `trim!` searches a family for the member satisfying its equations.",
+   "new": "`init!` applies an explicit condition, and `trim!` searches a family for the member satisfying its equations.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-097",
+   "old": "`at` lifts a problem field by field, and each field falls in one of three cases.",
+   "new": "`at` lifts a problem field by field, and each field falls in one of three cases (D-071, D-277).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-071",
+    "D-277"
+   ],
+   "tag": "R",
+   "ruling": "R7",
+   "note": "q24 row 645. D-071 bullet 1, cited for its standing clauses (\"the condition is post-composed ... while guess, bounds and residuals pass through path-free\"); its read-set clause is amended by D-277 (annotation 2026-09-30). D-277 bullet 4: \"`at` on a `TrimProblem` lifts field by field\". The bold label becomes a headline clause."
+  },
+  {
+   "id": "C-098",
+   "old": "The `condition` field is condition-producing (path-relative), so the lift post-composes it.",
+   "new": "The `condition` field is condition-producing (path-relative), so the lift post-composes it.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-099",
+   "old": "The `reads` field is a read set, and the lift prepends the prefix to the set's mount chain.",
+   "new": "The `reads` field is a read set, and the lift prepends the prefix to the set's mount chain (the prefixes it is mounted under, root first).",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R9",
+   "note": "F68, the mount chain glossed at its first use."
+  },
+  {
+   "id": "C-100",
+   "old": "Every other field is path-free and passes through.",
+   "new": "Every other field is path-free and passes through.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-101",
+   "old": "The rule that residual math sees only the gathered NamedTuple (§14.7) pays off here.",
+   "new": "The rule that residual math sees only the gathered NamedTuple (§14.7) is what makes the residuals path-free.",
+   "where": "new",
+   "cites": [
+    "§14.7"
+   ],
+   "tag": "F",
+   "note": "\"pays off here\" unwound into what the rule does for the lift; the sketch's `residuals = p.residuals, #path-free`."
+  },
+  {
+   "id": "C-102",
+   "old": "`at(prefix::String, p::TrimProblem) = TrimProblem( guess = p.guess, #path-free: pass through lower = p.lower, upper = p.upper, condition = d -> at(prefix, p.condition(d)), #post-compose: wrap each returned tree reads = at(prefix, p.reads), #inert selector data: the prefix joins the read set's mount chain residuals = p.residuals, #path-free: pass through tolerances = p.tolerances, checks = p.checks, check_tolerances = p.check_tolerances)`",
+   "new": "`at(prefix::String, p::TrimProblem) = TrimProblem( guess = p.guess, #path-free: pass through lower = p.lower, upper = p.upper, condition = d -> at(prefix, p.condition(d)), #post-compose: wrap each returned tree reads = at(prefix, p.reads), #inert selector data: the prefix joins the read set's mount chain residuals = p.residuals, #path-free: pass through tolerances = p.tolerances, checks = p.checks, check_tolerances = p.check_tolerances)`",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "verbatim and keyword-form, as D-188 rules."
+  },
+  {
+   "id": "C-103",
+   "old": "The condition side needs nothing new at resolution.",
+   "new": "The condition side needs nothing new at resolution.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-104",
+   "old": "The flattening accumulator of §14.3 enters each `Scoped` wrapper and prefixes every entry below it.",
+   "new": "The flattening accumulator of §14.3 enters each `Scoped` wrapper and prefixes every condition entry below it.",
+   "where": "new",
+   "cites": [
+    "§14.3"
+   ],
+   "tag": "R",
+   "ruling": "R13",
+   "note": "bare entry becomes \"condition entry\"."
+  },
+  {
+   "id": "C-105",
+   "old": "Rule. A read set carries its mount chain as data.",
+   "new": "A read set carries its mount chain as data (D-277).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-277"
+   ],
+   "tag": "R",
+   "ruling": "R7",
+   "note": "q24 row 650; the Rule. label goes. D-277 Position: \"`at(prefix, read_set)` prepends the prefix to the read set's own chain of prefixes and joins nothing; `Reads` is not a condition node and `Scoped` never wraps one.\" The two semicolon halves are read as one ruling, the second saying where the chain is not kept; see rulings.md."
+  },
+  {
+   "id": "C-106",
+   "old": "`at(prefix, read_set)` prepends the prefix to that chain and joins nothing.",
+   "new": "`at(prefix, read_set)` prepends the prefix to that chain and joins nothing.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-107",
+   "old": "A `Reads` value is no condition node, so `Scoped` never wraps one.",
+   "new": "A `Reads` value is no condition node, so `Scoped` never wraps one (D-277).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-277"
+   ],
+   "tag": "R",
+   "ruling": "R28",
+   "note": "R28, the second ruling of D-277's first Position sentence, bold once; the frozen spec bolds it nowhere else."
+  },
+  {
+   "id": "C-108",
+   "old": "Resolution walks the chain from the root, each prefix from the level the previous one reached (§13.3).",
+   "new": "Resolution walks the chain from the root, each prefix from the level the previous one reached (§13.3, D-277).",
+   "where": "new",
+   "cites": [
+    "§13.3"
+   ],
+   "newcites": [
+    "D-277",
+    "§13.3"
+   ],
+   "tag": "R",
+   "ruling": "R7",
+   "note": "D-277 Position's second sentence, \"Resolution walks the chain from the root, each prefix from the level the previous one reached, and rewrites every selector into the root-authored selector it denotes before the ordinary resolvers run\". Bullets 1-3 elaborate it and stay plain."
+  },
+  {
+   "id": "C-109",
+   "old": "It then rebases every selector (one of the closed family of deferred reads) to the root before the selector resolves.",
+   "new": "It then rebases every selector (one of the closed family of deferred reads) to the root before the selector resolves.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-110",
+   "old": "A path selector's path is joined to the mount (`\"vehicle/dynamics\"` → `\"wing/vehicle/dynamics\"`).",
+   "new": "A path selector's path is joined to the mount (`\"vehicle/dynamics\"` → `\"wing/vehicle/dynamics\"`).",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-111",
+   "old": "`get_input` names an input face (the name a port wears on its component's boundary) of the mount level.",
+   "new": "`get_input` names an input face (the name a port wears on its component's boundary) of the mount level.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "component's link moves here, its first use in §14.9 (F67), with no gloss of its own inside face's gloss."
+  },
+  {
+   "id": "C-112",
+   "old": "It follows the export chain to the root input it lands on.",
+   "new": "It follows the export chain to the root input it lands on (the root component's own input face).",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-113",
+   "old": "`get_face` names an output face of the mount level and reads its producer's port (D-277).",
+   "new": "`get_face` names an output face of the mount level and reads its producer's port (D-277).",
+   "where": "new",
+   "cites": [
+    "D-277"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-114",
+   "old": "A refusal spells the selector as authored and names the mount.",
+   "new": "A refusal spells the selector as authored and names the mount (D-277).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-277"
+   ],
+   "tag": "R",
+   "ruling": "R7",
+   "note": "D-277 bullet 5, \"A refusal spells the selector as authored and names the mount.\" A separate bullet, so a bold of its own; it opens the refusals' paragraph."
+  },
+  {
+   "id": "C-115",
+   "old": "`at` refuses an empty prefix on a read set, as it does on a condition node (§14.2), and raises `ReadSetMisuse`.",
+   "new": "`at` refuses an empty prefix on a read set, as it does on a condition node (§14.2), and raises `ReadSetMisuse`.",
+   "where": "new",
+   "cites": [
+    "§14.2"
+   ],
+   "tag": "F",
+   "note": "plain; D-278's bold is §14.2's (R7). Kind named (R14)."
+  },
+  {
+   "id": "C-116",
+   "old": "A problem's lift and a tap set's lift reach that refusal through `at` on their read sets (D-278).",
+   "new": "A problem's lift and a tap set's lift reach that refusal through `at` on their read sets (D-278).",
+   "where": "new",
+   "cites": [
+    "D-278"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-117",
+   "old": "Root input entries authored in the aircraft's face vocabulary resolve through the export chain from the mount point (`throttle` at `\"wing\"` → root input `\"wing.throttle\"`).",
+   "new": "Input entries authored in the aircraft's face vocabulary resolve through the export chain from the mount point (D-071). For a wingman aircraft mounted at `\"wing\"`, the input entry `throttle` resolves to root input `\"wing.throttle\"`.",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-071"
+   ],
+   "tag": "R",
+   "ruling": "R7",
+   "note": "verify, the clause says the wing is a second aircraft. q24 row 657, D-071 bullet 2, cited for its standing clause (\"Slots resolve through export chains from the mount point\"; \"named by the build\" is stale, F54). R13: \"Root input entries\" becomes \"Input entries\". The example becomes its own sentence so the citation sits outside it. R6: §14.9 keeps the from-the-mount consequence, §14.2 the rule."
+  },
+  {
+   "id": "C-118",
+   "old": "An unexported face fails resolution by name, and correctly so.",
+   "new": "An unexported face fails resolution by name, and correctly so (§14.2).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§14.2"
+   ],
+   "tag": "C",
+   "note": "R6, the pointer to §14.2, home of the `u` payload's export chain (old 11435-11442, \"a `u` payload names faces of the authoring level\")."
+  },
+  {
+   "id": "C-119",
+   "old": "An internally wired input (a scenario component driving the wingman's throttle) is untrimmable from outside, and the build says so.",
+   "new": "An internally wired input (a scenario component driving the wingman's throttle) is untrimmable from outside. Resolution refuses it by name, with the producer that drives it in hand, as `ConditionResolution` for a condition entry and as `ReadResolution` for a `get_input`.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R9",
+   "note": "F54, the refusal is resolution's (`src/conditions.jl` 444-455, `src/readers.jl` 536-539); R14 and F71 name the kinds, both `:internally_wired`, confirmed in survey 2's part C."
+  },
+  {
+   "id": "C-120",
+   "old": "The service compiles the scoped condition and reads, and runs the identical loop.",
+   "new": "The service compiles the scoped condition and reads, and runs the identical loop.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-121",
+   "old": "It never knows where its paths are mounted.",
+   "new": "It never knows where its paths are mounted.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-122",
+   "old": "A problem never authors the environment.",
+   "new": "A problem never authors the environment (D-139).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-139"
+   ],
+   "tag": "R",
+   "ruling": "R7",
+   "note": "q24 row 661, Rationale only: D-139 Rationale, \"Trim problems never author the environment (§14.7, §14.9)\". The bold lead-in becomes a cited headline."
+  },
+  {
+   "id": "C-123",
+   "old": "The environment is the world's and the `baseline`'s business.",
+   "new": "The environment is the business of the world and of the `baseline` (the full-coverage condition `trim!` takes as a keyword).",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "baseline's first-use link in §14.9 (its earlier uses sit in code), with a gloss from the glossary (\"a full-coverage condition function ... also the `baseline` keyword `init!`/`trim!` take\")."
+  },
+  {
+   "id": "C-124",
+   "old": "In a full world it is a sibling component's root inputs.",
+   "new": "In a full world it is a sibling component's root inputs.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "component's link moved to its first use (F67)."
+  },
+  {
+   "id": "C-125",
+   "old": "In a thin rig it is a root input holding an isbits handle, or a constant source holding a bulk-data one (D-364).",
+   "new": "In a thin rig it is a root input holding an isbits handle (an immutable query object carried on an ordinary port). In a thin rig it can also be a constant source (a library component publishing a value its instance holds) holding a bulk-data handle (D-364).",
+   "where": "new",
+   "cites": [
+    "D-364"
+   ],
+   "newcites": [
+    "D-364"
+   ],
+   "tag": "F",
+   "note": "verify, the constant source stays tied to the thin rig. Split in two so each gloss has its sentence. Field handle takes its first-use link with the glossary's words; constant source takes its gloss at its first use, moved from old 12465 (F67)."
+  },
+  {
+   "id": "C-126",
+   "old": "The problem receives its handles through the user parameter record (§14.7), and only queries them.",
+   "new": "The problem receives its handles through the user parameter record (§14.7), and only queries them.",
+   "where": "new",
+   "cites": [
+    "§14.7"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-127",
+   "old": "Why. The reason is the resolution rule just stated.",
+   "new": "The reason is the resolution rule stated above.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R8",
+   "note": "M60, the Why. label goes."
+  },
+  {
+   "id": "C-128",
+   "old": "A condition entry naming an internally wired input fails by name, correctly.",
+   "new": "A condition entry naming an internally wired input fails by name, correctly.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-129",
+   "old": "A problem writing an environment face would therefore be applicable only to those rigs where that face happens to be unconnected.",
+   "new": "A problem writing an environment face would therefore be applicable only to those rigs where that face happens to be unconnected.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-130",
+   "old": "The relocatability this section exists to guarantee would be lost.",
+   "new": "The relocatability this section exists to guarantee would be lost.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-131",
+   "old": "The world wrapper dissolves.",
+   "new": "The world wrapper dissolves (D-071).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-071"
+   ],
+   "tag": "R",
+   "ruling": "R7",
+   "note": "q24 row 665, D-071 bullet 3, \"The world-level `f_init!` wrapper dissolves into the `baseline` condition: method nesting becomes value layering.\" The bold label becomes the cited headline."
+  },
+  {
+   "id": "C-132",
+   "old": "Flight.jl's `f_init!(::Model{<:SimpleWorld})` (initialize environment, then call the aircraft's trim) has no successor method.",
+   "new": "Flight.jl's `f_init!(::Model{<:SimpleWorld})` (initialize environment, then call the aircraft's trim) has no successor method.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "R12, owner already named; checked at `~/.julia/dev/Flight.jl/lib/FlightPhysics/src/world.jl` 48-56 (FlightPhysics is a Flight.jl package)."
+  },
+  {
+   "id": "C-133",
+   "old": "The environment, the other aircraft and all root inputs are covered by the `baseline` condition (§14.6), applied once at setup.",
+   "new": "The environment, the other aircraft and all root inputs are covered by the `baseline` condition (§14.6), applied once at setup.",
+   "where": "new",
+   "cites": [
+    "§14.6"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-134",
+   "old": "The commit is `override(baseline, at(mount, condition(d)))`.",
+   "new": "The commit is `override(baseline, at(mount, condition(d)))`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-135",
+   "old": "Method nesting became value layering.",
+   "new": "Method nesting became value layering.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-136",
+   "old": "\"Aircraft as root\" is a thin world.",
+   "new": "\"Aircraft as root\" is a thin world.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "the bold lead-in goes plain, a topic sentence; D-139 Rationale's \"softened from doctrine to default\" stays uncited, as in the old text."
+  },
+  {
+   "id": "C-137",
+   "old": "By default the aircraft is not literally the root.",
+   "new": "They need one because by default the aircraft is not literally the root.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "the old order was reason, then \"Design tasks therefore use\" the rig; the rule now comes first, the reason after, and the causal link keeps its direction."
+  },
+  {
+   "id": "C-138",
+   "old": "Its environment inputs (§4.4 function-valued signals) are wired from provider components.",
+   "new": "Its environment inputs are function-valued signals (§4.4), wired from provider components.",
+   "where": "new",
+   "cites": [
+    "§4.4"
+   ],
+   "tag": "F",
+   "note": "the citation leaves the gloss's parentheses."
+  },
+  {
+   "id": "C-139",
+   "old": "Design tasks therefore use a shipped rig, `design_world(ac)` = aircraft + `SimpleAtmosphere(wind = NoWind())` + `HorizontalTerrain`.",
+   "new": "Design tasks use a shipped rig, `design_world(ac)` (D-071).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-071"
+   ],
+   "tag": "R",
+   "ruling": "R7",
+   "note": "q24 row 668, D-071 bullet 4, \"`design_world(ac)` promotes today's ad-hoc linearize models to a shipped rig\". `design_world` takes its first-use link (F67); its gloss is the next sentences' composition."
+  },
+  {
+   "id": "C-140",
+   "old": "`design_world(ac)` = aircraft + `SimpleAtmosphere(wind = NoWind())` + `HorizontalTerrain`.",
+   "new": "The rig is `design_world(ac)` = aircraft + `SimpleAtmosphere(wind = NoWind())` + `HorizontalTerrain`, where `SimpleAtmosphere` and `NoWind` are FlightPhysics' atmosphere types.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R29",
+   "note": "R29 and R12; `HorizontalTerrain` named with no owner. Checked at `~/.julia/dev/Flight.jl/lib/FlightPhysics/src/atmosphere.jl` 153 (`NoWind`) and 260 (`SimpleAtmosphere`). No `HorizontalTerrain` and no `design_world` exist in Flight.jl, so neither takes an owner; see rulings.md."
+  },
+  {
+   "id": "C-141",
+   "old": "That rig is today's ad-hoc models inside `linearize` promoted to a named artifact.",
+   "new": "`design_world` promotes the ad-hoc atmosphere and terrain FlightCore `Model`s inside Flight.jl's `linearize` to a named artifact.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R12",
+   "note": "verify, FlightCore's `Model` (`lib/FlightCore/src/modeling.jl` 89) named so it does not read as the spec's. \"today's\" becomes Flight.jl's. Checked at `~/.julia/dev/Flight.jl/lib/FlightPhysics/src/aircraftbase.jl` 291-299: `linearize` builds `Model(SimpleAtmosphere(; wind = NoWind()))` and `Model(UniformTerrain())`. Flight.jl's own `Model` keeps its spelling."
+  },
+  {
+   "id": "C-142",
+   "old": "There is one mechanism.",
+   "new": "There is one mechanism.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-143",
+   "old": "The \"root\" case is the shallowest world, and the trim problem mounts at `\"aircraft\"` like anywhere else.",
+   "new": "The \"root\" case is the shallowest world, and the trim problem mounts at `\"aircraft\"` like anywhere else.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-144",
+   "old": "Leaving an environment face unconnected is legal by construction, though, for an isbits handle.",
+   "new": "Leaving an environment face unconnected is legal by construction, though, for an isbits handle (D-364).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-364"
+   ],
+   "tag": "C",
+   "note": "verify (V159). D-364 Position: \"A thin rig holds its environment as a root input only when the handle is isbits.\""
+  },
+  {
+   "id": "C-145",
+   "old": "The face becomes an ordinary root input holding the handle value, written by the `baseline` like any other root input.",
+   "new": "The face becomes an ordinary root input holding the handle value, written by the `baseline` like any other root input.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "the bold on \"value\" becomes italic."
+  },
+  {
+   "id": "C-146",
+   "old": "That is the test-rig idiom.",
+   "new": "That is the test-rig idiom.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-147",
+   "old": "It is the function-valued sibling of a constant source (a library component publishing a value its instance holds), with zero ceremony for a frozen environment.",
+   "new": "It is the function-valued sibling of a constant source, with zero ceremony for a frozen environment.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "the gloss moved to the first use (F67), above."
+  },
+  {
+   "id": "C-148",
+   "old": "A handle that references bulk data is never a root input. The rig wires a constant source holding it (D-364).",
+   "new": "A handle that references bulk data is never a root input, and the rig wires a constant source holding it (D-364).",
+   "where": "new",
+   "cites": [
+    "D-364"
+   ],
+   "tag": "R",
+   "ruling": "R7",
+   "note": "q24 row 670, trimmed to its headline clause, the two sentences joined so the bold and D-364 share one. D-364 Position: \"A handle that references bulk data enters the rig through a constant source holding it, never as a root input.\""
+  },
+  {
+   "id": "C-149",
+   "old": "Root inputs are traced and checkpointed by value,",
+   "new": "Root inputs are traced and checkpointed by value,",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R30",
+   "note": "R30, the old phrase stays in the pointer sentence."
+  },
+  {
+   "id": "C-150",
+   "old": "and such a handle can be neither recorded faithfully nor kept frozen when a writer supplies it (§4.4, D-237).",
+   "new": "A bulk-data handle can be neither recorded faithfully that way nor kept frozen in a writer's hands.",
+   "where": "docs/design/spec.md",
+   "cites": [
+    "D-237",
+    "§4.4"
+   ],
+   "tag": "M",
+   "note": "M66, a pointer to §4.4 (H80), which states the reason at Part I's depth (old 975-979: \"A root input instead comes from outside the model and is recorded with the run by value. A bulk-data handle can be neither recorded faithfully that way nor kept frozen in a writer's hands.\"). §14.9 keeps the pointer below with both citations."
+  },
+  {
+   "id": "C-151",
+   "old": "For design tasks the shipped rig stays `design_world(ac)`.",
+   "new": "For design tasks the shipped rig stays `design_world(ac)`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-152",
+   "old": "That keeps the environment's tunables in the root-input vocabulary that conditions, linearization's input surface and the trace header already speak.",
+   "new": "That keeps the environment's tunables in the root-input vocabulary that conditions, linearization's input surface and the trace header (the trace's fixed preamble) already speak.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-153",
+   "old": "Swarm doctrine.",
+   "new": "The swarm doctrine covers trims of several aircraft.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R8",
+   "note": "M60, the bold label becomes a topic sentence; \"swarm doctrine\" is a term of art and stays."
+  },
+  {
+   "id": "C-154",
+   "old": "The service solves one problem at a time.",
+   "new": "The service solves one problem at a time (D-071).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-071"
+   ],
+   "tag": "R",
+   "ruling": "R7",
+   "note": "q24 row 673, D-071 bullet 5, \"A swarm takes one problem per solve — sequential commits, or user-side joint composition\"."
+  },
+  {
+   "id": "C-155",
+   "old": "Sequential independent trims (trim lead, commit, trim wing against the committed world) cover weak or one-way coupling.",
+   "new": "Sequential independent trims (trim lead, commit, trim wing against the committed world) cover weak or one-way coupling.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-156",
+   "old": "A joint trim is user-side value composition.",
+   "new": "A joint trim is user-side value composition.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-157",
+   "old": "Concatenate decision NamedTuples under prefixed names, combine the scoped condition trees, and stack the residuals.",
+   "new": "Concatenate decision NamedTuples under prefixed names, combine the scoped condition trees, and stack the residuals.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-158",
+   "old": "If joint trims become routine, a `product(p₁ => \"lead\", p₂ => \"wing\")` helper belongs in the §13.7 library.",
+   "new": "If joint trims become routine, a `product(p₁ => \"lead\", p₂ => \"wing\")` helper is the extension recorded for them (D-071).",
+   "where": "new",
+   "cites": [
+    "§13.7"
+   ],
+   "newcites": [
+    "D-071"
+   ],
+   "tag": "R",
+   "ruling": "R9",
+   "note": "F57 (carried). D-071's annotation of 2026-10-19: \"the helper is recorded in §14.9. §13.7's library holds components only.\" q24 row 675 bolds it with D-071 bullet 6, cited for its standing clause (\"A `product()` helper is recorded ..., unbuilt\")."
+  },
+  {
+   "id": "C-159",
+   "old": "That helper is recorded, not built (a worked-out extension deliberately left unimplemented, its seams named).",
+   "new": "That helper is recorded, not built (a worked-out extension deliberately left unimplemented, its seams named).",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  }
+ ],
+ "added": [
+  "That check requires the application to cover every root input.",
+  "(the trace and the log jointly)",
+  "(the primary record of a session)",
+  "The sketch names its eleven fields in order.",
+  "(one declared name, one cell)",
+  "The malformed cases are these.",
+  "- A field that is not a NamedTuple, or a `reads` that is no read set.",
+  "- A box with `lower` above `upper`.",
+  "- A tolerance or check tolerance that is not finite and positive.",
+  "(one of the closed family of deferred reads)",
+  "- A residual or check return whose fields are not real scalars, observed at that evaluation too.",
+  "(a value held at `Float64` inside authored continuous math)",
+  "Its findings on tables and saturations follow (D-070), and its two Flight.jl-only findings, on the landing gear and the `norm`-at-zero guards, are in the `migration_outline.md` companion.",
+  "FRC is the friction constraint compensator of FlightPhysics' piston engine (`piston.jl`).",
+  "This section treats a `TrimProblem` (the closed nine-field value a trim solves) as a relocatable value.",
+  "Mounting (relocating a whole problem or tap set to a prefix) is the work of `at`, the scoping combinator.",
+  "The section says what a problem is, then how `at` lifts one, how a mounted read set and mounted input entries resolve, why a problem never authors the environment, and how worlds, thin rigs and swarms use the lift.",
+  "A condition is the datum that says \"set this build to this state\".",
+  "`override` is the ordered, asymmetric layering combinator, in which the patch wins on a shared leaf.",
+  "(the prefixes it is mounted under, root first)",
+  "(the root component's own input face)",
+  "(the full-coverage condition `trim!` takes as a keyword)",
+  "(an immutable query object carried on an ordinary port)",
+  "and §4.4 states why such a handle cannot be one (D-237).",
+  "(the trace's fixed preamble)"
+ ]
+}

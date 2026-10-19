@@ -245,3 +245,44 @@ words). Survey 2.
 - H ends with the chapter's closing `---` and the blank line after it.
 
 ## Rulings after step 3
+
+- R17 reaches units B, G, not this one; see brief.md.
+- R18 reaches units B, not this one; see brief.md.
+- R19 reaches units B, not this one; see brief.md.
+- R20 reaches units B, not this one; see brief.md.
+- **R21. An unbuilt ruled design keeps its bold** (unit F's open question 1;
+  units F, H). A ruling is bold whether or not the code builds it yet, as
+  D-073's recorded-unbuilt activation is. D-069 bullet 5's fallback takes one
+  bold on its headline clause, written as design under R10. D-070's
+  `NLoptBackend` clause bolds only if the one-bold test makes it a ruling of
+  its own.
+- **R22. `f_periodic!`** (unit F's open question 2; units: all). FlightCore
+  renamed `f_disc!` to `f_periodic!` (Flight.jl commit `30a5942c`), and
+  `lib/FlightCore/src/` holds no `f_disc!`. Write FlightCore's current name.
+- **R23. Flight.jl's trim** (unit F's open question 3; units: all).
+  FlightCore holds no trim code. The formulation is FlightPhysics'
+  (`aircraftbase.jl`) and the BOBYQA minimization with its `stopval` is
+  Flight.jl's Cessna 172 model (`c172.jl`). Each "FlightCore's" that names
+  the trim formulation or its threshold becomes the owner the source shows.
+  This corrects R12, which called `stopval` and BOBYQA FlightCore's; they
+  still need no clause beyond their owner's name.
+- **R24. The seeded tap's leaf** (unit H's open question 1; unit H). F53's
+  wording gains the leaf rule the code enforces (`_check_seedable`): a
+  seeded tap's leaf is exactly `Float64`. "A whole state field or root
+  input" in place of "a whole cell" stands.
+- **R25. The default point's citations** (unit H's open question 2; unit H).
+  The bold is D-274 bullet 5's. D-319 stays cited in the sentence, as the old
+  text cites it; it does not take a second bold.
+- **R26. `design_world` and the frozen-exact remainder** (unit H's open
+  questions 3 and 4; unit H). The gloss drops "shipped": `design_world` is
+  the rig this design records for design-time work ([§14.9][s14-9],
+  [D-071][d-071]); the glossary's word is a track 2 item. The two
+  frozen-exact sentences §7.2 lacks stay, plain.
+- R27 reaches units A, not this one; see brief.md.
+- R28 reaches units G, not this one; see brief.md.
+- **R29. The rig's types** (unit G's open question 2 and its verifier's;
+  units G, H). `SimpleAtmosphere` and `NoWind` are FlightPhysics' types
+  (`atmosphere.jl`). Flight.jl has no `HorizontalTerrain`, so the text names
+  it with no owner, as the old text did, and no clause calls it Flight.jl's.
+  The glossary's `#g-design_world` is a track 2 item.
+- R30 reaches units G, not this one; see brief.md.

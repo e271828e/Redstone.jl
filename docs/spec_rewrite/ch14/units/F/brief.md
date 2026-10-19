@@ -277,3 +277,27 @@ words). Survey 2.
 - H ends with the chapter's closing `---` and the blank line after it.
 
 ## Rulings after step 3
+
+- R17 reaches units B, G, not this one; see brief.md.
+- R18 reaches units B, not this one; see brief.md.
+- R19 reaches units B, not this one; see brief.md.
+- R20 reaches units B, not this one; see brief.md.
+- **R21. An unbuilt ruled design keeps its bold** (unit F's open question 1;
+  units F, H). A ruling is bold whether or not the code builds it yet, as
+  D-073's recorded-unbuilt activation is. D-069 bullet 5's fallback takes one
+  bold on its headline clause, written as design under R10. D-070's
+  `NLoptBackend` clause bolds only if the one-bold test makes it a ruling of
+  its own.
+- **R22. `f_periodic!`** (unit F's open question 2; units: all). FlightCore
+  renamed `f_disc!` to `f_periodic!` (Flight.jl commit `30a5942c`), and
+  `lib/FlightCore/src/` holds no `f_disc!`. Write FlightCore's current name.
+- **R23. Flight.jl's trim** (unit F's open question 3; units: all).
+  FlightCore holds no trim code. The formulation is FlightPhysics'
+  (`aircraftbase.jl`) and the BOBYQA minimization with its `stopval` is
+  Flight.jl's Cessna 172 model (`c172.jl`). Each "FlightCore's" that names
+  the trim formulation or its threshold becomes the owner the source shows.
+  This corrects R12, which called `stopval` and BOBYQA FlightCore's; they
+  still need no clause beyond their owner's name.
+- R24 reaches units H, not this one; see brief.md.
+- R25 reaches units H, not this one; see brief.md.
+- R26 reaches units H, not this one; see brief.md.

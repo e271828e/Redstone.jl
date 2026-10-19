@@ -253,3 +253,40 @@ words). Survey 2.
 - H ends with the chapter's closing `---` and the blank line after it.
 
 ## Rulings after step 3
+
+- **R17. The recording clear** (unit B's open question 1, unit G's 5;
+  units B, G). Old §14.5 never states it, so §14.8 keeps it with D-110, as
+  unit G wrote it. Unit B drops the sentence it added, and R6's bullet on
+  §14.5 covers the raw iterations and `t0` only.
+- R18 reaches units B, not this one; see brief.md.
+- R19 reaches units B, not this one; see brief.md.
+- R20 reaches units B, not this one; see brief.md.
+- R21 reaches units F, H, not this one; see brief.md.
+- **R22. `f_periodic!`** (unit F's open question 2; units: all). FlightCore
+  renamed `f_disc!` to `f_periodic!` (Flight.jl commit `30a5942c`), and
+  `lib/FlightCore/src/` holds no `f_disc!`. Write FlightCore's current name.
+- **R23. Flight.jl's trim** (unit F's open question 3; units: all).
+  FlightCore holds no trim code. The formulation is FlightPhysics'
+  (`aircraftbase.jl`) and the BOBYQA minimization with its `stopval` is
+  Flight.jl's Cessna 172 model (`c172.jl`). Each "FlightCore's" that names
+  the trim formulation or its threshold becomes the owner the source shows.
+  This corrects R12, which called `stopval` and BOBYQA FlightCore's; they
+  still need no clause beyond their owner's name.
+- R24 reaches units H, not this one; see brief.md.
+- R25 reaches units H, not this one; see brief.md.
+- R26 reaches units H, not this one; see brief.md.
+- R27 reaches units A, not this one; see brief.md.
+- **R28. D-277's bolds** (unit G's verifier, open question 1; unit G).
+  D-277's first Position sentence holds two rulings at its semicolon: the
+  mount prepends and joins nothing, and `Reads` is not a condition node.
+  The second takes one bold if §14.9 states it and no other section of the
+  frozen spec bolds it. Bullets 1 to 3 spell, per selector, the rewrite the
+  Position's second sentence rules; they stay plain, as a consequence does.
+- **R29. The rig's types** (unit G's open question 2 and its verifier's;
+  units G, H). `SimpleAtmosphere` and `NoWind` are FlightPhysics' types
+  (`atmosphere.jl`). Flight.jl has no `HorizontalTerrain`, so the text names
+  it with no owner, as the old text did, and no clause calls it Flight.jl's.
+  The glossary's `#g-design_world` is a track 2 item.
+- **R30. "Traced and checkpointed by value"** (unit G's verifier, open
+  question 3; unit G). §4.4 says only "recorded with the run by value", so
+  the pointer sentence keeps the old phrase.

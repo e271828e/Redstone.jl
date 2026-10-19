@@ -282,3 +282,35 @@ words). Survey 2.
 - H ends with the chapter's closing `---` and the blank line after it.
 
 ## Rulings after step 3
+
+- **R17. The recording clear** (unit B's open question 1, unit G's 5;
+  units B, G). Old §14.5 never states it, so §14.8 keeps it with D-110, as
+  unit G wrote it. Unit B drops the sentence it added, and R6's bullet on
+  §14.5 covers the raw iterations and `t0` only.
+- **R18. D-067's four bolds** (unit B's open question 2; unit B). D-067's
+  Position is a headline and three bullets, four rulings, and §14.5 is their
+  home. The headline, bullet 1, bullet 2 (`t₀` the init-service argument)
+  and bullet 3 each take one bold.
+- **R19. D-276's bullets** (unit B's open question 3; unit B). Each bullet
+  is a ruling. A bullet §14.4 states takes one bold on its headline clause
+  when no other section of the frozen spec bolds it and §14.4 is where the
+  spec states it; grep the frozen spec for each. A bullet whose home is
+  another section, the binding read (§11.2) and wiring's port granularity
+  (§4.3), stays plain with its pointer.
+- **R20. The one-remedy sentences** (unit B's open question 4; unit B). M5's
+  merge stands. R5's "stay, as guidance" governs their content, not their
+  place.
+- R21 reaches units F, H, not this one; see brief.md.
+- **R22. `f_periodic!`** (unit F's open question 2; units: all). FlightCore
+  renamed `f_disc!` to `f_periodic!` (Flight.jl commit `30a5942c`), and
+  `lib/FlightCore/src/` holds no `f_disc!`. Write FlightCore's current name.
+- **R23. Flight.jl's trim** (unit F's open question 3; units: all).
+  FlightCore holds no trim code. The formulation is FlightPhysics'
+  (`aircraftbase.jl`) and the BOBYQA minimization with its `stopval` is
+  Flight.jl's Cessna 172 model (`c172.jl`). Each "FlightCore's" that names
+  the trim formulation or its threshold becomes the owner the source shows.
+  This corrects R12, which called `stopval` and BOBYQA FlightCore's; they
+  still need no clause beyond their owner's name.
+- R24 reaches units H, not this one; see brief.md.
+- R25 reaches units H, not this one; see brief.md.
+- R26 reaches units H, not this one; see brief.md.

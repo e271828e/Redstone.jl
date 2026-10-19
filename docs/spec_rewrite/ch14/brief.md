@@ -323,3 +323,69 @@ words). Survey 2.
 - H ends with the chapter's closing `---` and the blank line after it.
 
 ## Rulings after step 3
+
+- **R17. The recording clear** (unit B's open question 1, unit G's 5;
+  units B, G). Old §14.5 never states it, so §14.8 keeps it with D-110, as
+  unit G wrote it. Unit B drops the sentence it added, and R6's bullet on
+  §14.5 covers the raw iterations and `t0` only.
+- **R18. D-067's four bolds** (unit B's open question 2; unit B). D-067's
+  Position is a headline and three bullets, four rulings, and §14.5 is their
+  home. The headline, bullet 1, bullet 2 (`t₀` the init-service argument)
+  and bullet 3 each take one bold.
+- **R19. D-276's bullets** (unit B's open question 3; unit B). Each bullet
+  is a ruling. A bullet §14.4 states takes one bold on its headline clause
+  when no other section of the frozen spec bolds it and §14.4 is where the
+  spec states it; grep the frozen spec for each. A bullet whose home is
+  another section, the binding read (§11.2) and wiring's port granularity
+  (§4.3), stays plain with its pointer.
+- **R20. The one-remedy sentences** (unit B's open question 4; unit B). M5's
+  merge stands. R5's "stay, as guidance" governs their content, not their
+  place.
+- **R21. An unbuilt ruled design keeps its bold** (unit F's open question 1;
+  units F, H). A ruling is bold whether or not the code builds it yet, as
+  D-073's recorded-unbuilt activation is. D-069 bullet 5's fallback takes one
+  bold on its headline clause, written as design under R10. D-070's
+  `NLoptBackend` clause bolds only if the one-bold test makes it a ruling of
+  its own.
+- **R22. `f_periodic!`** (unit F's open question 2; units: all). FlightCore
+  renamed `f_disc!` to `f_periodic!` (Flight.jl commit `30a5942c`), and
+  `lib/FlightCore/src/` holds no `f_disc!`. Write FlightCore's current name.
+- **R23. Flight.jl's trim** (unit F's open question 3; units: all).
+  FlightCore holds no trim code. The formulation is FlightPhysics'
+  (`aircraftbase.jl`) and the BOBYQA minimization with its `stopval` is
+  Flight.jl's Cessna 172 model (`c172.jl`). Each "FlightCore's" that names
+  the trim formulation or its threshold becomes the owner the source shows.
+  This corrects R12, which called `stopval` and BOBYQA FlightCore's; they
+  still need no clause beyond their owner's name.
+- **R24. The seeded tap's leaf** (unit H's open question 1; unit H). F53's
+  wording gains the leaf rule the code enforces (`_check_seedable`): a
+  seeded tap's leaf is exactly `Float64`. "A whole state field or root
+  input" in place of "a whole cell" stands.
+- **R25. The default point's citations** (unit H's open question 2; unit H).
+  The bold is D-274 bullet 5's. D-319 stays cited in the sentence, as the old
+  text cites it; it does not take a second bold.
+- **R26. `design_world` and the frozen-exact remainder** (unit H's open
+  questions 3 and 4; unit H). The gloss drops "shipped": `design_world` is
+  the rig this design records for design-time work ([§14.9][s14-9],
+  [D-071][d-071]); the glossary's word is a track 2 item. The two
+  frozen-exact sentences §7.2 lacks stay, plain.
+- **R27. Unit A's three corrections** (unit A's open question 1 and its
+  corrections 1 to 3; unit A). F16 reaches old 11514–11516, which is unit
+  A's §14.3; the brief misassigned it to unit B alone. Apply unit A's
+  item 3, the §14.3 sentence that compiles two ways and points to §14.4.
+  Apply item 1, §9.6 previewing trim and linearization, as §9.6 opens. Apply
+  item 2, the lifecycle table's em dash removed.
+- **R28. D-277's bolds** (unit G's verifier, open question 1; unit G).
+  D-277's first Position sentence holds two rulings at its semicolon: the
+  mount prepends and joins nothing, and `Reads` is not a condition node.
+  The second takes one bold if §14.9 states it and no other section of the
+  frozen spec bolds it. Bullets 1 to 3 spell, per selector, the rewrite the
+  Position's second sentence rules; they stay plain, as a consequence does.
+- **R29. The rig's types** (unit G's open question 2 and its verifier's;
+  units G, H). `SimpleAtmosphere` and `NoWind` are FlightPhysics' types
+  (`atmosphere.jl`). Flight.jl has no `HorizontalTerrain`, so the text names
+  it with no owner, as the old text did, and no clause calls it Flight.jl's.
+  The glossary's `#g-design_world` is a track 2 item.
+- **R30. "Traced and checkpointed by value"** (unit G's verifier, open
+  question 3; unit G). §4.4 says only "recorded with the run by value", so
+  the pointer sentence keeps the old phrase.
