@@ -69,5 +69,129 @@ discussed before they left. Its four bundled rulings and the reasons:
 
 ## The arc
 
-To be completed as the two sessions report: the stage commits, the
-review findings, the fixes, and what the user is asked to diff-verify.
+Run on 2026-10-19 by a second session, from the brief, with the user away.
+The baseline gate at 1cba470 passed 6540 assertions on Julia 1.13.1, the
+floor. Nothing was pushed.
+
+### Stage 1, 9e9782b: the kind split
+
+Both routed subsets unchanged, 1899 and 609 assertions before and after.
+The stage's judgment calls, each accepted as routine:
+
+- **The shared message builder is `_read_message`**, not the brief's
+  `_tap_violation`: the brief gave that name to both the prefix builder in
+  diagnostics.jl and linearize.jl's tap-set builder, and Naming forbids one
+  name with two meanings. The tap-set builder keeps `_tap_violation`,
+  beside `_reader_violation`, `_leaf_violation` and `_trim_violation`.
+  The review's "tap clause on a `ReadResolution`" mutant targets
+  `_read_message`.
+- **`TapResolution` keeps `leaf`** although no message arm reads it:
+  `test/test_linearize.jl` pins `d.leaf` on a `:duplicate_site`, and a
+  no-behavior-change stage drops no payload. `declares`, `candidates` and
+  `producer` go, as the recount against the arms says.
+- **`linearize`'s docstring** said every violation is a `TapResolution`,
+  false after the split; it now names both kinds. A docstring-sized
+  conformance inside a file the stage owns.
+- **`_tap_noun` keeps its name** although only `ReadResolution`'s
+  `:undeclared` arm reads it now. A rename was outside the brief. For the
+  user: `_declares_noun` or similar, a loose fix if wanted.
+- **The docs run one stage ahead**: `_compile_reads`'s docstring names
+  attach as a site from stage 1, as the brief asked, while
+  `implementation.md`'s readers.jl entry describes the file as it stands
+  and gains attach at stage 2.
+
+### Stage 2, a630dea: attach as a site
+
+The gate green at 6504 assertions against 6540, the examples' runner
+green. The drop of 36 is accounted: five `@test_throws` in
+`test_readers.jl` folded into the collected form; `test_bindings.jl` lost
+the `device`/`binding` pin with the kind and gained the brief's three pins
+and a `:store_selector` pin; `test_diagnostics.jl` lost eleven
+`ReadBindingUnresolved` rows at three assertions each and gained one
+`:store_selector` row and one rendering pin. The reviewer re-checks the
+accounting. The stage's judgment calls, each accepted as routine:
+
+- **The `{power, y}` rendering pin became the backtick list**
+  "its output port names are `power`, `y`": `ReadResolution`'s
+  `:undeclared` arm prints with `_namelist`, the reader's rendering at trim
+  and linearization, and the brief's "keep the pin" meant the list in
+  hand is printed, not its braces. Changing the message would have changed
+  trim's and linearization's rendering, which D-406 leaves alone.
+- **The three-violation pin uses `failure` and `diagnostics`**, not the
+  prototype's `try … catch`: Naming's rule for a caught exception.
+- **The unknown-path case gained a pin** the prototype left bare: a
+  `PathResolution` with `:unknown_child`, segment `"q"`, candidates
+  `["p"]`.
+- **Citations added in `implementation.md`**: the dataplane.jl entry's
+  spec line gains §14.4 and D-406; the readers.jl entry's gains §11.2;
+  the bindings.jl entry's drops D-276, since the file no longer touches
+  the leaf address.
+- **`src/roster.jl`'s header still says the compiled gather lives in
+  bindings.jl**, outside the stage's file list. Handed to the reviewer's
+  sweep; lands with the fix commit.
+
+### The cold review
+
+Nothing blocking. The gate green at 6504 in the real tree on 1.13.1, the
+examples green. The brief's five mutants all died on a scratch copy: the
+dropped `:store_selector` check (the store-selector pins in readers and
+bindings), `source` defaulting to `:table` (trim's `get_deriv` reads),
+attach throwing at the first violation in both variants (the
+three-violation pin), sorted output-port candidates (`[:y, :power]`), and
+the tap clause printed for a `ReadResolution` (the `:store_selector`
+rendering pin). The assertion accounting checks out; nothing was lost
+beyond what the brief retired. D-406's rulings were each probed and hold;
+`reads(b)` still returns a NamedTuple and the contract checks fire as
+before; a mount on a binding read is impossible by construction; the
+gather allocation pins hold with `Reader` in the handle's type.
+
+Five low findings, each ruled "fix" and landed by the fixer:
+
+1. The one-argument `_field` in readers.jl was dead after bindings.jl's
+   resolver went; deleted.
+2. `src/roster.jl`'s header still placed the compiled gather in
+   bindings.jl; reworded.
+3. readers.jl's file header and `_leaf_clause`'s comment described the
+   retired shape; reworded.
+4. `_tap_noun` served only `ReadResolution`'s `:undeclared` arm; renamed
+   `_declares_noun` and moved beside the kind. A private helper, not
+   spec-named.
+5. No pin covered `TapResolution`'s " (tap `x`)" clause, the guard stage 1
+   rewrote: an extra mutant survived. One rendering pin added.
+
+Two informational items, left for the user:
+
+- **A state-field candidates sort survives** in `_undeclared_violation`'s
+  NamedTuple method: every state candidate list in the suite is one name
+  or already sorted. Attach cannot reach it, so it is an older gap outside
+  this increment; a loose fix if wanted.
+- **§14.4 still says** "on `get_input`, `get_face` and a binding read the
+  head is matched rather than parsed" (D-276's annotation). After D-406 a
+  binding read has no resolution of its own and its `get_output` is
+  parsed like any path selector, so "and a binding read" is redundant, or
+  misleading if read as covering `get_output`. A spec edit, the user's
+  ruling.
+
+### The fix, 22ef32c
+
+The five findings in one commit over `src/readers.jl`, `src/roster.jl`,
+`src/diagnostics.jl` and `test/test_diagnostics.jl`. The gate green at
+6505 in the real tree, the examples green; the new pin shown to kill its
+mutant on the scratch copy. The reviewer verified the delta.
+
+### What the user should diff-verify
+
+The arc is 9e9782b, a630dea and 22ef32c over 1cba470, unpushed.
+
+- `git show 9e9782b -- src/diagnostics.jl`: the field roster of each kind
+  against Appendix C, and that the arms split by reason with none lost.
+- `git show a630dea -- src/bindings.jl src/readers.jl`: that what remains
+  in bindings.jl is the two contract checks and the one call, and that the
+  `:store_selector` refusal sits after `_rebase` and before
+  `_resolve_selector`.
+- `test/test_bindings.jl` at a630dea: the pins' values against D-406's
+  rulings, candidates in declaration order included.
+- The rendering pin's backtick form and the `_declares_noun` rename, both
+  rulings made here.
+- The two informational items above: the state-field candidates sort
+  and §14.4's "and a binding read".
