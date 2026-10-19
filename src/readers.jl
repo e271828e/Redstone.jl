@@ -1,7 +1,8 @@
 # The read-selector family and the compiled reader (§14.4, §14.7): the closed
 # set of deferred reads every reader of the model addresses through, the
 # declared read set they are labeled in, and the compiled gather that runs one
-# such set against an executor.
+# such set against an executor, or over a snapshot's store through
+# dataplane.jl's `gather_reads`.
 #
 # The reader is `apply!`'s **gather twin** (§14.4): one primitive family run in
 # both directions over the same layout tables. What the condition algebra
@@ -616,13 +617,6 @@ _leaf_violation(read::MountedRead, refusal::LeafRefusal) =
 
 _selpath(selector::Union{GetState,GetDeriv,GetOutput}) = selector.path
 _selpath(::Union{GetInput,GetFace}) = ""
-
-# The head name the leaf address starts with, the payloads' `field`; `nothing`
-# when the address does not parse.
-function _field(selector::Union{GetState,GetDeriv,GetOutput})
-    parsed = parse_leaf(selector.leaf)
-    parsed isa LeafRefusal ? nothing : first(parsed)
-end
 
 # A face selector's head is matched against the faces it may name (§14.4,
 # D-276): the face its address names, or the whole address where none matches.

@@ -4,8 +4,8 @@
 # both claim sources, and the harness writer as the derived remainder. The
 # task side of the contract — the handle, the wrapper, the run's bracket and
 # tail — lives in devices.jl, the trace whose schema list the roster's writers
-# grow in trace.jl; the binding conventions and the compiled gather live in
-# bindings.jl.
+# grow in trace.jl; the binding conventions live in bindings.jl and the
+# compiled reader in readers.jl.
 #
 # This file holds the types and the pure mechanics; `attach!`/`detach!` and
 # the staging entry points live in sim.jl, beside the loop whose frames they

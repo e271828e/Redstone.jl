@@ -873,6 +873,10 @@ function diagnostics_kind_set()
         @test startswith(rendered, "the read labeled `q` is get_state(\"p\", :q), and it is a " *
                                    "*store* selector") &&
               occursin("the remedy is to declare the field public", rendered)
+        # A tap-set refusal names the tap the read sits in (§14.10).
+        rendered = message(TapResolution(label = :r, selector = "get_deriv(\"a/b\", :q)",
+                                         reason = :tap_kind, tap = :x, path = "a/b", list = :x))
+        @test occursin(" (tap `x`)", rendered)
 
         # The forgotten import (§8.1, D-246) states its fix as the line to paste,
         # spelled for exactly the names the module shadowed.

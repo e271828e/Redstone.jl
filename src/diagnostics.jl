@@ -1504,6 +1504,8 @@ Base.@kwdef struct ReadResolution <: Diagnostic
 end
 path(d::ReadResolution) = d.path
 
+_declares_noun(declares) = declares === :output_port ? "output port" : "state field"
+
 function message(d::ReadResolution)
     d.reason === :store_selector &&
         return _read_message(d, "it is a *store* selector — the store selectors resolve only " *
@@ -1520,8 +1522,8 @@ function message(d::ReadResolution)
                            "has no derivative, and `ẋ` exists on the continuous tier alone",
                            "§7.1, §14.4, D-195")
     d.reason === :undeclared &&
-        return _read_message(d, "$(_at_path(d.path)) declares no $(_tap_noun(d.declares)) " *
-                           "`$(d.field)` — its $(_tap_noun(d.declares)) names are " *
+        return _read_message(d, "$(_at_path(d.path)) declares no $(_declares_noun(d.declares)) " *
+                           "`$(d.field)` — its $(_declares_noun(d.declares)) names are " *
                            "$(_namelist(d.candidates))")
     d.reason === :unknown_root_input &&
         return _read_message(d, "`$(d.field)` is no root input face — the root's inputs are " *
@@ -1689,8 +1691,6 @@ Base.@kwdef struct TapResolution <: Diagnostic
 end
 path(d::TapResolution) = d.path
 
-_tap_noun(declares) = declares === :output_port ? "output port" : "state field"
-
 # What each tap list admits (§14.10, D-272).
 _tap_list_kinds(list) = list === :x ? "`get_state` alone" :
                         list === :u ? "`get_input` alone" : "`get_output` and `get_face`"
@@ -1709,8 +1709,8 @@ const LEAF_REASONS = (:leaf_syntax, :no_such_field, :opaque_leaf, :not_indexable
                       :index_arity, :index_bounds)
 
 # The six leaf-address refusals, one clause each naming the step at fault
-# (§14.4, D-276). Shared by every kind that carries `leaf`, `step`, `declared`
-# and `candidates`; the caller adds its prefix and the citation.
+# (§14.4, D-276), for `ReadResolution`; the caller adds its prefix and the
+# citation.
 function _leaf_clause(d)
     d.reason === :leaf_syntax &&
         return (isempty(d.leaf) ? "its leaf address is empty" :
