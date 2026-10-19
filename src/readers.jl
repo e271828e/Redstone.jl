@@ -579,6 +579,28 @@ function _exported_faces(structure::Structure, path::String)
     row === nothing ? Symbol[] : _boundary_outputs(structure.levels[row])
 end
 
+# The export chain's lookup, shared by the mount step's `get_input` rebase and a
+# condition's `u` entry (conditions.jl, D-277), each side pushing its own kind.
+# The chain is `terminal_producer` over the declared wires, total at every
+# level (§9.2, D-207, D-315).
+
+# The input faces of the level at `path`: the root inputs at the root, a
+# primitive's declared ones, and an assembly's the boundary inputs of its row.
+function _input_faces_at(structure::Structure, decls::Vector{Decls}, path::String)
+    isempty(path) && return structure.root_inputs
+    ci = findfirst(entry -> entry.path == path, structure.components)
+    ci === nothing || return Symbol[keys(decls[ci].ins)...]
+    row = _level_index(structure, path)
+    row === nothing ? Symbol[] : _boundary_inputs(structure.levels[row])
+end
+
+# The producer the input face `face` of the level at `path` lands on, `("", root
+# input)` when the chain reaches the root, or `nothing` when the level has no
+# such face.
+_face_producer(structure::Structure, decls::Vector{Decls}, path::String, face::Symbol) =
+    face in _input_faces_at(structure, decls, path) ? terminal_producer(structure, (path, face)) :
+                                                      nothing
+
 # --- the resolvers (§14.4) ------------------------------------------------------
 
 # The component a path-addressed read names. The mount step walked its path from

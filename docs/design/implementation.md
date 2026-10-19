@@ -260,9 +260,6 @@ Spec: §11.5, §12.6, §12.7, §14.10, D-038, D-254, D-273, D-274, D-317, D-319.
 - The condition algebra `set`, `at`, `combine` and `override`. `at`
   also lifts read sets, joining the prefix to their mount chain; trim.jl
   and linearize.jl add its methods for problems and tap sets (D-277).
-- The export chain's lookup, `_input_faces_at` and `_face_producer`, shared
-  by a condition's `u` entry and the read side's `get_input` (D-277), over
-  `terminal_producer` (D-315).
 - One collecting pass behind both ways of applying a plan. Each `at` prefix is
   walked from its authoring level (§13.3). The two ways are:
   - `resolve_condition`, for values;
@@ -685,6 +682,9 @@ D-320.
   mount level and becomes `get_output` of the port behind it. The callers
   rebase and resolve one selector at a time, so the collected list keeps the
   authored order, and the resolvers read the rebased selector.
+- The export chain's lookup, `_input_faces_at` and `_face_producer`, shared
+  by `get_input`'s rebase and a condition's `u` entry in conditions.jl
+  (D-277), over `terminal_producer` (D-315).
 - The leaf address (D-276). `parse_leaf` splits it at resolution. On a face
   selector `match_leaf` matches the head against the face list instead, since
   a face name may hold a dot. `resolve_leaf` checks each step against the declared type and returns the

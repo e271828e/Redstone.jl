@@ -456,27 +456,6 @@ function _root_input(structure::Structure, decls::Vector{Decls}, entry::CEntry,
     nothing
 end
 
-# The export chain's lookup, shared with the read side's mount step (readers.jl,
-# D-277), each side pushing its own kind. The chain is `terminal_producer` over
-# the declared wires, total at every level (§9.2, D-207, D-315).
-
-# The input faces of the level at `path`: the root inputs at the root, a
-# primitive's declared ones, and an assembly's the boundary inputs of its row.
-function _input_faces_at(structure::Structure, decls::Vector{Decls}, path::String)
-    isempty(path) && return structure.root_inputs
-    ci = findfirst(entry -> entry.path == path, structure.components)
-    ci === nothing || return Symbol[keys(decls[ci].ins)...]
-    row = _level_index(structure, path)
-    row === nothing ? Symbol[] : _boundary_inputs(structure.levels[row])
-end
-
-# The producer the input face `face` of the level at `path` lands on, `("", root
-# input)` when the chain reaches the root, or `nothing` when the level has no
-# such face.
-_face_producer(structure::Structure, decls::Vector{Decls}, path::String, face::Symbol) =
-    face in _input_faces_at(structure, decls, path) ? terminal_producer(structure, (path, face)) :
-                                                      nothing
-
 # The store a condition names has to exist on the component at all: `x` is the
 # continuous tier's state and `s` the discrete one's, disjoint by construction
 # (D-195), and `m` is continuous-only (§3.2).
