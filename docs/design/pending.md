@@ -12,15 +12,6 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
-- **A precompile workload** for the generic machinery a cold process
-  pays, about 9 s whatever the model (§9.7), run on a closed loop of library
-  blocks: a workload exercises only what the package can see, and the
-  examples live outside it. The compile-cost report's harness
-  (`docs/reports/20261001_compile_cost_reeval/probes`) drifted at D-313 and
-  D-314: `Group` lives in `Redstone.Blocks` and its keywords are the
-  declaration names; correct a copy before measuring, and leave the report
-  as it is. The workload includes a `series` call over the loop's log: the
-  first call in a fresh process measured 66 ms (D-407).
 - **The inspector, stage 1**: the static inspector over the descriptor,
   whose first session is the descriptor's schema and `descriptor` together,
   at the tip of increment 67's `Structure` refactor (the record's "Working

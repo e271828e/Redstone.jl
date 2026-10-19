@@ -45,7 +45,8 @@ user material inside the package, with no property of its own to own it.
 The package module: the dependencies and the include order the other files load
 in: leaves, diagnostics, declare, assembly, store, executor, build, tracer,
 readers, deployment, dataplane, checkpoint, trace, roster, bindings, control,
-devices, conditions, model, stepper, frame, trim, linearize, sim, show, blocks.
+devices, conditions, model, stepper, frame, trim, linearize, sim, show, blocks,
+precompile.
 The model layer sits between the executor layer and the runtime, by the rule
 in the `src/model.jl` entry.
 
@@ -676,6 +677,17 @@ Spec: §9.2, §9.5, §10.2, §10.4, §10.6, §11.2, §11.8, §12.4, §12.6, §13
 §13.4, §13.5, §14.5, §14.8, D-059, D-157, D-213, D-221, D-223, D-248, D-250,
 D-254, D-260, D-274, D-317, D-318, D-319, D-320.
 
+### `src/precompile.jl`
+
+The precompile workload (§9.7, D-289): `workload_loop`, a closed loop of
+library blocks, and `workload`, its run through the loop's path, `trim!` and
+`linearize`. The `@compile_workload` call inside `@setup_workload` runs
+`workload` while the package precompiles, and `test_precompile.jl`'s child
+runs it in a fresh process. Nothing in the package depends on it, so
+`src/Redstone.jl` includes it last, after the library it uses.
+
+Spec: §9.7, D-289.
+
 ### `src/readers.jl`
 
 - The closed read-selector family `get_state`, `get_deriv`, `get_output`,
@@ -1252,6 +1264,8 @@ Run the suite in the foreground with a 600 s timeout, never in the
 background. The full run takes minutes, so run it only where the rules below
 call for it. A cold process pays its startup and any precompile once, and
 little per file after, so name a generous set rather than a minimal one.
+The package's precompile runs the workload in `src/precompile.jl`, which
+costs about 12 s more.
 Which files a change reaches is read off this table, the last row being the
 override:
 
@@ -1265,6 +1279,7 @@ override:
 | a new `AbstractComponent` fixture in any test file | add `build`, since `test_build.jl`'s Dual-activation sweep pins the skipped count |
 | `blocks` | `blocks build` |
 | `show` | `show` |
+| `precompile` | `precompile` |
 | `sim`, `model`, `deployment`, `store`, `leaves`, `Redstone`, or `diagnostics.jl` beyond a new kind | all of it |
 
 To check a refactor for test loss, compare the suite's own assertion total;
