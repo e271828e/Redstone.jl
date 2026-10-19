@@ -16470,7 +16470,7 @@ bindings and log extraction. The bundled rulings:
 
 This amends [D-061][d-061], [D-125][d-125] and [D-130][d-130].
 
-**Spec.** [§6.1][s6-1], [§11.2][s11-2], [§13.3][s13-3], [§14.2][s14-2], [§14.4][s14-4]
+**Spec.** [§6.1][s6-1], [§11.2][s11-2], [§13.3][s13-3], [§14.2][s14-2], [§14.4][s14-4], [§14.7][s14-7], [Appendix C][sC]
 
 **Rationale.** The refusal priced a hazard it did not prevent. The hazard
 [D-125][d-125] names is semantic drift under same-path, same-type substitution: a

@@ -1547,7 +1547,7 @@ The elements of a [container](#g-container-children) (a `Tuple` or
 Routing across several levels is therefore declared level by level, with each
 assembly speaking only of its own children. This restriction is named the
 locality law ([D-065][d-065]). [Fragments](#g-fragment) of the condition algebra follow the same law
-([§14.2][s14-2]).
+as authoring guidance, with no check behind it ([§14.2][s14-2], [D-414][d-414]).
 
 The sketch below shows such routing in an aircraft. The root `Cessna172` holds a
 systems assembly `Systems`, which holds the landing gear `Ldg`, whose three legs
@@ -7108,8 +7108,8 @@ passed at `attach!` that makes a device framework-legible. An output device
 consumes snapshots as [§12.3][s12-3] specifies. Examples are telemetry, disk streaming
 and the XPlane visualizer (FlightCore's `XPlane12Control` output device). An
 output device addresses what it reads with the [selectors](#g-selector) (the closed family of
-deferred reads resolving against a source, [§14.4][s14-4]). They reach any cell a path
-through no generic seam names ([§13.3][s13-3]). **A binding's reads resolve at attach
+deferred reads resolving against a source, [§14.4][s14-4]). They reach any cell the
+structure has ([§13.3][s13-3]). **A binding's reads resolve at attach
 through the one resolver every reader of the family shares** ([D-406][d-406]),
 against the `Build`, with [did-you-mean](#g-did-you-mean) (the offending name plus the list-in-hand it should
 have matched), and compile to one gather, the output half of the binding
@@ -7123,8 +7123,8 @@ treats field-handle signals specially. It skips or summarizes them.
 An output device's read of the snapshot is inspection ([§13.5][s13-5], [D-083][d-083]). It is
 human-facing, with no effect on run semantics. It is observation of the same
 sort as the log retaining the full table and the GUI's deep-reading panels.
-Every cell a path through no generic seam names is reachable, because the
-table is public throughout ([§8.3][s8-3], [§13.3][s13-3]).
+Every cell is reachable, because the table is public throughout
+([§8.3][s8-3], [§13.3][s13-3]).
 
 A binding chooses its side ([D-129][d-129]). A deep path is an *inspection* read. It
 makes zero promises, gives free access, and is right for looking at *this*
@@ -10205,63 +10205,66 @@ enforces, which client each duty binds and why, and the standing of
 Resolution enforces two duties, and they belong to different clients. The first
 is the one-level rule ([§6.1][s6-1], [D-207][d-207]). A connection endpoint resolves to an
 immediate child and one of its faces. A wiring path reaching further is a build
-error, `PathResolution`, whatever the declared field types along it. The second is
-the [generic-holding](#g-generic-holding) rule, which governs the deep paths a service or a reader is
-given. It is enforced by the service walk, which follows *declared field types*
-alongside instances. Every service and the read resolver run the walk over an
-authored path. A segment that traverses *past* a generically-held field (one whose
-declared type is non-concrete) is a diagnostic, even though the concrete
-instance in hand would resolve it. Resolving *to* a generic child is legal, as
-access at the level of a [port](#g-port) (one declared input or output). An unknown segment
-errors with the sibling field list in hand. Paths are validated before anything
-runs on them, and renames break loudly ([D-061][d-061]).
+error, `PathResolution`, whatever the declared field types along it. The second
+is the service walk, which governs the deep paths a service or a reader is
+given. **The service walk follows the structure's children and refuses no
+traversal past a generically held child** ([D-414][d-414]). Every service and
+the read resolver run the walk over an authored path. A deep path resolves
+wherever the structure has it, whatever the declared field types along it,
+and a [port](#g-port) (one declared input or output) of a generically held
+child is as reachable as one of an owned child. An unknown segment errors with
+the sibling field list in hand. Paths are validated before anything runs on
+them, and renames break loudly ([D-061][d-061]).
 
-**Which rule applies depends on who is resolving** ([D-130][d-130]). [D-083][d-083] separates the
-reads a build's correctness rests on from the reads that only observe it. The
-same line runs through resolution. Three clients share one resolution, and each
-gets the rule its promises require.
+**Which rule applies depends on who is resolving** ([D-130][d-130], [D-414][d-414]).
+[D-083][d-083] separates the reads a build's correctness rests on from the reads
+that only observe it. The same line runs through resolution. Wiring gets the
+strict rule, and every other client gets the walk.
 
 | client | who resolves | what resolution enforces |
 |---|---|---|
 | wiring | connection declarations, in the structure step | the one-level rule: an immediate child and one of its faces |
-| service | [condition](#g-condition) entries (the path-addressed sparse overlay that sets a build's state), trim `reads`, [taps](#g-taps) (the three selector lists declaring what linearization seeds and reports), [device](#g-device) read [bindings](#g-binding) (the values passed at `attach!` that make a device framework-legible), log extraction by `series` ([§14.3][s14-3], [§14.7][s14-7], [§14.10][s14-10], [§11.2][s11-2], [D-406][d-406], [D-407][d-407]) | strict: no traversal past a generic child, checked at the authoring or mount level |
-| inspection | [snapshot](#g-snapshot) (the immutable per-boundary publication) and log inspection | the instance walk |
+| service | [condition](#g-condition) entries (the path-addressed sparse overlay that sets a build's state), trim `reads`, [taps](#g-taps) (the three selector lists declaring what linearization seeds and reports), [device](#g-device) read [bindings](#g-binding) (the values passed at `attach!` that make a device framework-legible), log extraction by `series` ([§14.3][s14-3], [§14.7][s14-7], [§14.10][s14-10], [§11.2][s11-2], [D-406][d-406], [D-407][d-407]) | the service walk: every segment names a child the structure has, at the authoring or mount level |
+| inspection | [snapshot](#g-snapshot) (the immutable per-boundary publication) and log inspection | the address table: a cell the structure has |
 
 Each client's treatment has its own warrant. Wiring is what the law ([§6.1][s6-1]) is
 stated for, so wiring resolution applies that law verbatim. Under one-level
-routing the generic-holding question never arises there, because an endpoint
-stops before any field it could traverse past. Service paths are checked at the
-authoring or mount level for two reasons. First, the locality law is an
-authoring-level law, and absolute paths are a compiled derivative ([§14.2][s14-2]).
-Second, the mount itself checks a mount prefix, where the problem's authored
-names resolve through the export chain from the mount point ([§14.9][s14-9]). So the
-service check covers the authored path below that prefix. Drift stays loud. A
-binding's unknown path or name is refused at attach, as a `PathResolution` or a
-`ReadResolution`, with a [did-you-mean](#g-did-you-mean) (the offending name plus the list-in-hand it
-should have matched) ([D-406][d-406]). Inspection walks instances instead. A generic [seam](#g-seam)
-(a narrow, named interface kept deliberately thin) is not an error for a client
-that never claimed substitutability. "What is in *this* build" is inspection's
-defining question. The stop scan, the one read a run acts on, belongs to [§13.5][s13-5].
+routing no deep path exists there, because an endpoint stops at the immediate
+child. Service paths are walked at the authoring or mount level for two
+reasons. First, the locality law is an authoring-level law, and absolute paths
+are a compiled derivative ([§14.2][s14-2]). Second, the mount itself walks a
+mount prefix, where the problem's authored names resolve through the export
+chain from the mount point ([§14.9][s14-9]). So the walk covers the authored
+path below that prefix. Drift stays loud. A binding's unknown path or name is
+refused at attach, as a `PathResolution` or a `ReadResolution`, with a
+[did-you-mean](#g-did-you-mean) (the offending name plus the list-in-hand it
+should have matched) ([D-406][d-406]). Inspection reads the address table.
+"What is in *this* build" is its defining question, and it is the service
+walk's as well. The stop scan, the one read a run acts on, belongs to
+[§13.5][s13-5].
 
-The scoping is one principle, not three concessions. What varies across
-the three clients is not how far a client is trusted. It is what a violation
-costs, and where the cost lands. An inspection client claims no
-substitutability. It addresses one build's instances, and a broken inspection
-read fails at its own site, harming only the observer. A wiring entry is
-carried by the declaring *type* and compiled into every instantiation. That is
-why its endpoints stop at the boundary. A wire reaching past one would fail at
-substitution time, at a different site, for whoever exercised the substitution
-the field advertised. That is the non-local failure class the error discipline
-exists to eliminate ([§8.4][s8-4]). The rule is strict exactly where a promise
-depends on it, and relaxed exactly where none is made ([D-083][d-083],
-[D-130][d-130]). Strictness forbids nothing outright for a service path.
-Declaring the field's concrete type restores the deep read legally, with the
-hard-coding visible in the declaration itself. For wiring there is no deep
-route left to restore, because the face chain is the route ([§6.1][s6-1]).
+The split is one principle, not a concession. What varies between wiring and
+the other clients is not how far a client is trusted. It is what a violation
+costs, and where the cost lands. A service path or an inspection read is a
+value applied to one build. A path the structure no longer has fails at its
+own site, loudly, with the candidates in hand, harming only the caller. A
+wiring entry is carried by the declaring *type* and compiled into every
+instantiation. That is why its endpoints stop at the boundary. A wire
+reaching past one would fail at substitution time, at a different site, for
+whoever exercised the substitution the field advertised. That is the
+non-local failure class the error discipline exists to eliminate
+([§8.4][s8-4]). The rule is strict exactly where a promise depends on it, and
+relaxed exactly where none is made ([D-083][d-083], [D-130][d-130],
+[D-414][d-414]). A generic [seam](#g-seam) (a narrow, named interface kept
+deliberately thin) is therefore no error for any path. An author who ships a
+fragment or a problem that reaches into one child of a generically held
+field scopes it by dispatch on the holding's type parameter, and an author
+who wants a read to outlive the build binds a face ([§14.2][s14-2],
+[§14.4][s14-4]). Both are authoring guidance, and neither is checked.
 
-Which of the three treatments a client resolves under is internal framework
-fact, never user-facing API ([D-130][d-130]). The two ways of applying one plan ([§14.4][s14-4])
-use the same arrangement and have the same status.
+Which treatment a client resolves under is internal framework fact, never
+user-facing API ([D-130][d-130]). The two ways of applying one plan
+([§14.4][s14-4]) use the same arrangement and have the same status.
 
 Inside the framework only wiring resolution calls `resolve_terminal`. Condition
 addressing ([§14.3][s14-3]) and the readers ([§14.4][s14-4], [D-406][d-406]) split their own paths through
@@ -11429,16 +11432,17 @@ interface connections and conditions. Each level speaks its own fields, its
 declared children's names, and its own faces. Delegation runs by dispatch at
 every genericity [seam](#g-seam). An `at` prefix may stop at *any* child's
 faces, owned or generically held, because the face graph is total
-([D-207][d-207]). A deep `at` path into structure stays legitimate exactly
-where a deep [condition](#g-condition) path is, within an owned concrete
-subtree ([§13.3][s13-3]). Absolute paths exist only in the flattened entry
+([D-207][d-207]). A deep `at` or [condition](#g-condition) path resolves
+wherever the structure has it ([§13.3][s13-3], [D-414][d-414]). Absolute paths exist only in the flattened entry
 list, a *compiled derivative* of the composition, as cell offsets are of
 `local_wires`. Substituting a component invalidates precisely the
 fragments its owner shipped, nothing else. The build checks the law wherever it
 can see what the law constrains. Wiring resolves one level ([§6.1][s6-1]). The faces a `u`
-payload names resolve through the export chain, under any `at` prefix ([D-207][d-207]). A
-deep `at` or condition path may not traverse past a generically-held field, a
-check made at the authoring or mount level ([§13.3][s13-3], [D-130][d-130]). Ownership alone is
+payload names resolve through the export chain, under any `at` prefix ([D-207][d-207]). No
+check refuses a deep path past a generically held field ([D-414][d-414]). An
+author who ships a fragment for a family scopes it by dispatch on the
+holding's type parameter, so a fragment reaching into one powerplant is
+defined for the aircraft that hold that powerplant. Ownership alone is
 convention. It is a fact about who maintains the code, and the build cannot see
 it, so keeping a deep path inside an owned subtree is idiomatic rather than
 machine-checked ([D-065][d-065]). `set`/`at`/`combine` are [§13.7][s13-7] standard-library
@@ -11649,13 +11653,15 @@ sides restated as a resolver property.
   linearization seeds and reports) name
   `get_state`/`get_deriv`/`get_output`/`get_input`/`get_face`. They do so
   within the scopes the locality law ([§6.1][s6-1]) and
-  [fragment](#g-fragment) scoping ([§14.2][s14-2]) own. `get_face` is the
+  [fragment](#g-fragment) scoping ([§14.2][s14-2]) describe, as authoring
+  guidance ([D-414][d-414]). `get_face` is the
   set's [seam](#g-seam)-crossing member. It resolves through export chains
   exactly as [mounting](#g-mounting) (relocating a whole problem or tap set
   with `at(prefix, …)`) resolves [root input](#g-root-input) faces
   ([§14.9][s14-9]), so the read side mirrors the write side. An equilibrium
-  equation reaching behind a generically-held child therefore binds the
-  curated face instead of a path the locality law forbids. A service evaluation
+  equation meant to outlive the build it was posed against therefore binds
+  the curated face behind a generically-held child rather than a path into
+  it. A service evaluation
   needing an undeclared intermediate has one remedy, and it is the same for
   every client. The component exports it ([§14.7][s14-7]).
 - **Inspection readers admit the whole family, within the source rule.**
@@ -11924,9 +11930,9 @@ against today's `c172.jl`.
   [port](#g-port) (validated against `y_types`). `get_input` and
   `get_face` address a root input [face](#g-face) and an output face
   (validated against the root face lists). The path [selectors](#g-selector) (the closed family of
-  deferred reads resolving against a source) reach only through the locality
-  scopes ([§6.1][s6-1]). An equilibrium equation crossing a generic seam
-  reads a face. A value a [component](#g-component) computes without
+  deferred reads resolving against a source) reach any port the structure has
+  ([§13.3][s13-3], [D-414][d-414]). An equilibrium equation meant to survive
+  substitution at a generic seam reads a face. A value a [component](#g-component) computes without
   declaring it is not addressable at all ([§8.3][s8-3], [§14.4][s14-4]). A
   trim evaluation needing one is a signal that the component should export
   it. A derivative wanted across a [contract](#g-contract) boundary takes the
@@ -12936,8 +12942,8 @@ return law, [§5.2][s5-2]). There is no padding. `x` comes back complete, and
   sweep shares a fully immutable `Build` ([§11.1][s11-1], [§9.4][s9-4]).
 - `resolve(assembly, path) → AbstractComponent`. Resolves an immediate child, a
   container element's key segment included. Wiring resolution applies the
-  one-level rule ([§6.1][s6-1]), and the service walk enforces the
-  generic-holding rule ([§13.3][s13-3]).
+  one-level rule ([§6.1][s6-1]). The service walk follows the structure's
+  children ([§13.3][s13-3]).
 - `input_faces(c)` / `output_faces(c) → Vector{String}`. Declaration-ordered
   face names ([§13.3][s13-3]).
 - `input_passthrough(assembly, path; prefix, sep, except, only, select)` /
@@ -13428,9 +13434,7 @@ collection ([§9.2][s9-2], [D-250][d-250]).
 - **`PathResolution`** ([§6.1][s6-1], [§13.3][s13-3]). Error · build, or
   service resolving a service path · collected. Path, offending segment,
   sibling field list. For a wiring endpoint reaching past the immediate
-  child, the level it stopped at. For a service path traversing past a
-  generically-held field, the level it reached past and that field's declared
-  type.
+  child, the level it stopped at.
 - **`AbstractAtRoot`** ([§8.2][s8-2]). Error · build · collected. Face name,
   consuming leaf path, the abstract entry; a remedy hint (wire a concrete
   producer, or in a rig a stub child, [§13.7][s13-7]).
@@ -13619,8 +13623,7 @@ activation):
   and role where the refusal is tier-bound, the producer where a face is
   fed, candidates where a list is in hand, the origin. Its sub-kinds
   are assembly path, undeclared field, unconvertible value and unexported
-  root-input face. An unknown or past-generic path is `PathResolution`'s
-  ([§13.3][s13-3]).
+  root-input face. An unknown path is `PathResolution`'s ([§13.3][s13-3]).
 - **`DuplicateConditionLeaf`** ([§14.2][s14-2]). Error · service ·
   collected. The leaf `(path, store, field)`, both origins, the
   `override` advice.
@@ -15250,6 +15253,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-411]: decisions.md#d-411--pin-a-library-block-whose-output-depends-on-neither-state-nor-a-walking-input
 [d-412]: decisions.md#d-412--let-the-reason-string-never-the-framework-tell-a-stop-requests-two-uses-apart
 [d-413]: decisions.md#d-413--check-for-an-honoured-request-at-an-advances-entry-and-bound-t_end-first
+[d-414]: decisions.md#d-414--drop-the-past-generic-refusal-from-the-service-walk
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop
