@@ -496,8 +496,7 @@ end
 _mounted_path(mount::String, path::String) = isempty(path) ? mount : _join(mount, path)
 
 # A path selector: its path is walked from the mount level (§13.3), the walk
-# owning the unknown-segment and past-generic refusals, and its address is
-# parsed. The rebased selector is the same kind at the joined path, the leaf
+# owning the unknown-segment refusal, and its address is parsed. The rebased selector is the same kind at the joined path, the leaf
 # address as authored.
 function _rebase(authored::Union{GetState,GetDeriv,GetOutput}, label::Symbol, mount::String,
                  level, build::Build, diags::Vector{Diagnostic})
@@ -605,7 +604,7 @@ _face_producer(structure::Structure, decls::Vector{Decls}, path::String, face::S
 
 # The component a path-addressed read names. The mount step walked its path from
 # the mount level (§13.3, D-277), and the walk owns the unknown-segment refusal
-# and its candidates, and the past-generic one with them. What stays here is
+# and its candidates. What stays here is
 # `_component`'s residue, one case over — a level the walk admitted that owns
 # no state of its own.
 function _read_component(read::MountedRead, structure::Structure, diags::Vector{Diagnostic})

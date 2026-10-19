@@ -286,9 +286,6 @@ function diagnostics_kind_set()
                            owner = "`a`", segment = "z", candidates = ["b", "c"]),
             PathResolution(entry = "`resolve` on `Group`", spelling = "a/b/c",
                            reason = :reaches_past, level = "a/b", segment = "b", tail = 1),
-            PathResolution(entry = "at(\"a/b\")", spelling = "a/b", reason = :past_generic,
-                           owner = "the root component", segment = "a", level = "a",
-                           declared = TypeVar(:L, AbstractComponent)),
             PathResolution(entry = "`resolve` on `Group`", spelling = "", reason = :empty_path),
             StoreWithoutUpdate(path = "a/b", store = :x_init),
             EventHalfMissing(path = "a/b", event = :snap, reason = :guard, found = "Latch"),
@@ -675,15 +672,6 @@ function diagnostics_kind_set()
             rendered = message(d)
             @test rendered isa String && !isempty(rendered)
         end
-        # A declared generic holding renders through `_typename` like any other
-        # name: the variable and its bound, unqualified, whoever is printing — the
-        # `string(::TypeVar)` spelling reads `Redstone.AbstractComponent` from
-        # anywhere but this module. A payload claim, so it sits here rather than in
-        # the rendering testset below.
-        rendered = message(only(d for d in occurrences
-                                if d isa PathResolution && d.reason === :past_generic))
-        @test occursin("`L<:AbstractComponent`", rendered) &&
-              !occursin("Redstone.", rendered)
         # A `Union`-typed holding has no name to take: it renders from its members,
         # in the order Julia itself keeps them.
         @test _typename(Union{Plant, Gain}) == "Union{Gain, Plant}"

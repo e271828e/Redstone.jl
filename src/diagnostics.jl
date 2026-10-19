@@ -33,9 +33,6 @@ _typename(value) = string(nameof(typeof(value)))
 _typename(type::Type) =
     type isa Union ? "Union{" * join(_typename.(Base.uniontypes(type)), ", ") * "}" :
                      string(nameof(type))
-# A declared generic holding: `nameof` has no method, and `string` on the
-# variable qualifies its bound the same way interpolating a type does.
-_typename(typevar::TypeVar) = "$(typevar.name)<:$(_typename(typevar.ub))"
 # A plain-data type with its shape, for the two container kinds alone: the outer
 # name through `_typename` and every parameter spelled the same way, so a
 # `Tuple{Gain,Gain}` keeps its arity and stays unqualified. A port type is
@@ -440,13 +437,12 @@ message(d::RootInputTypeConflict) =
 Base.@kwdef struct PathResolution <: Diagnostic
     entry::String                            # the condition or wiring entry
     spelling::String                         # the path as written
-    reason::Symbol   # :not_a_terminal|:unknown_child|:reaches_past|:past_generic|:empty_path
+    reason::Symbol   # :not_a_terminal|:unknown_child|:reaches_past|:empty_path
     owner::String = ""                       # the component the path was resolved against
     segment::String = ""                     # the offending segment
     level::String = ""                       # the level it stopped at
     candidates::Vector{String} = String[]    # the sibling child names
     tail::Int = 0                            # 1 for a wiring endpoint, 0 for a bare child path
-    declared::Any = nothing                  # the offending field's declared type, where generic
 end
 path(d::PathResolution) = d.spelling
 function message(d::PathResolution)
@@ -460,12 +456,6 @@ function message(d::PathResolution)
         return "$(d.entry): `$(d.spelling)` names no child `$(d.segment)` of $(d.owner)" *
                (isempty(d.candidates) ? " — it has no children" :
                 " — its children are $(_plainlist(d.candidates))")
-    d.reason === :past_generic &&
-        return "$(d.entry): `$(d.spelling)` reaches past `$(d.level)`, which $(d.owner) " *
-               "holds through the non-concrete declared type `$(_typename(d.declared))` — a " *
-               "service path stops at a generically held child or stays within a " *
-               "concretely declared subtree: address the child at its own level, read a " *
-               "face it exports, or declare the field's concrete type (§13.3, §14.2)"
     "$(d.entry): `$(d.spelling)` reaches past `$(d.level)` — " *
     (d.tail == 1 ?
      "a connection endpoint names an immediate child and one of its faces, so an " *

@@ -80,8 +80,7 @@ dotted_condition() = set(u = (var"left.brake" = SVector(1.5, 2.5),))
 # `readable()` one level down, its two root inputs and its face re-exported under
 # the holder's own names, so a mounted read crosses a renaming export chain
 # (§14.9, D-277). The field is declared concretely, as `ConcreteHold`'s is
-# (test_assembly.jl): a `Group` holds its children generically, and the
-# root-authored twin's `inner/plant` would reach past one (§13.3).
+# (test_assembly.jl).
 struct ReadableHold <: AbstractComponent
     inner::typeof(readable())
 end
@@ -265,27 +264,23 @@ function test_readers()
         @test d.reason === :not_a_selector && d.label === :q
     end
 
-    @testset "a read selector's path stays within a concretely declared subtree (§13.3, §14.7, D-125)" begin
-        # A root-authored selector path is walked from the root in full: the first
-        # segment may be generically held, a segment past one may not. A mounted
-        # one is walked from its mount level, below.
-        # `ConcreteHold`/`GenericHold` hold the same instance two ways
-        # (`test_assembly.jl`).
+    @testset "a read selector's path resolves wherever the structure has it (§13.3, §14.7, D-414)" begin
+        # A root-authored selector path is walked from the root in full, along
+        # the structure's children: a segment past a generically held one
+        # resolves as one past an owned one does. A mounted one is walked from
+        # its mount level, below. `ConcreteHold`/`GenericHold` hold the same
+        # instance two ways (`test_assembly.jl`).
         deep = reads(q = get_state("inner/plant", :q))
-        d = only(diagnostics(failure(() -> _compile_reads(deep,
-                                              build(GenericHold(SampledLoop()))))))
-        @test d isa PathResolution && d.reason === :past_generic && d.segment == "inner"
+        for holder in (ConcreteHold(SampledLoop()), GenericHold(SampledLoop()))
+            sim = Simulation(holder; h = 1//50)
+            init!(sim, combine(at("inner/plant", set(x = (q = SVector(0.3, 0.1),))),
+                               set(u = (ref = 1.0,))))
+            evaluate!(sim.model.exec)
+            @test gather_reads(_compile_reads(deep, sim.model.deployment.build), sim.model.exec).q == SVector(0.3, 0.1)
+        end
 
-        # Declaring the field's concrete type restores the deep read legally, with
-        # the hard-coding visible in the declaration itself (§13.3).
-        sim = Simulation(ConcreteHold(SampledLoop()); h = 1//50)
-        init!(sim, combine(at("inner/plant", set(x = (q = SVector(0.3, 0.1),))),
-                           set(u = (ref = 1.0,))))
-        evaluate!(sim.model.exec)
-        @test gather_reads(_compile_reads(deep, sim.model.deployment.build), sim.model.exec).q == SVector(0.3, 0.1)
-
-        # D-125's own remedy, and the one that survives substitution: the seam
-        # publishes a face, which is what the read binds to.
+        # D-125's face remedy, the one that survives substitution: the seam
+        # publishes a face, which is what a read meant to outlive the build binds to.
         for holder in (ConcreteHold(SampledLoop()), GenericHold(SampledLoop()))
             @test _compile_reads(reads(y = get_face(:y)), build(holder)) isa Reader
         end
@@ -301,8 +296,8 @@ function test_readers()
         @test startswith(d.entry, "the read labeled `z`")
 
         # A mount *to* a generic child is legal, and the authored path below it
-        # is walked from the mount level: the read `deep` names, refused above,
-        # resolves mounted at `inner` (§13.3, D-277).
+        # is walked from the mount level: the read `deep` names resolves mounted
+        # at `inner` as it does at the root (§13.3, D-277).
         generic_sim = Simulation(GenericHold(SampledLoop()); h = 1//50)
         init!(generic_sim, combine(at("inner", at("plant", set(x = (q = SVector(0.3, 0.1),)))),
                                    set(u = (ref = 1.0,))))
@@ -310,14 +305,12 @@ function test_readers()
         generic_build = generic_sim.model.deployment.build
         @test gather_reads(_compile_reads(at("inner", reads(q = get_state("plant", :q))), generic_build),
                            generic_sim.model.exec).q == SVector(0.3, 0.1)
-        # Each prefix is walked from the level the one before it reached, so a
-        # chain of two is legal where the joined prefix walks past the child.
+        # Each prefix is walked from the level the one before it reached, and a
+        # chain of two reads what the joined prefix reads (D-277, D-414).
         @test gather_reads(_compile_reads(at("inner", at("plant", reads(q = get_state("", :q)))),
                                           generic_build), generic_sim.model.exec).q == SVector(0.3, 0.1)
-        d = only(diagnostics(failure(() ->
-                _compile_reads(at("inner/plant", reads(q = get_state("", :q))), generic_build))))
-        @test d isa PathResolution && d.reason === :past_generic && d.segment == "inner" &&
-              d.entry == "the read set at(\"inner/plant\")"
+        @test gather_reads(_compile_reads(at("inner/plant", reads(q = get_state("", :q))),
+                                          generic_build), generic_sim.model.exec).q == SVector(0.3, 0.1)
         # An unknown prefix is the walk's refusal at the level it was walked from,
         # with that level's children in hand.
         d = only(diagnostics(failure(() ->

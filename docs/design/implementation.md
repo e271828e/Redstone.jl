@@ -91,7 +91,8 @@ in the `src/model.jl` entry.
   fresh cache of each assembly's child list, so endpoint resolution derives a
   list once per walk rather than once per endpoint (§9.7).
 - The service walk `resolve_authored` runs from the root's level row and
-  reads declared holdings off the type definition (D-061, D-130). It searches
+  follows the structure's children, refusing no traversal past a generically
+  held child (D-414). It searches
   `Structure.levels`, each assembly's children as the walk derived them, so a
   service derives none again. A path with no row is a primitive. The walk
   sits in the file's last section, after the `Structure` it reads.

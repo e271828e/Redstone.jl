@@ -1466,25 +1466,13 @@ _routes_behind(structure::Structure, hop::Tuple{String,Symbol}) =
     _level_index(structure, first(hop)) === nothing ? [[hop]] :
         [pushfirst!(route, hop) for route in face_routes(structure, hop)]
 
-# --- the service walk (§13.3, D-130) --------------------------------------------
-
-# A child's holding, read off the type's definition rather than the instance:
-# a field typed by a parameter is a `TypeVar` there, whatever the
-# instantiation filled in (§8.5, D-061). Container elements follow their
-# container's declared type.
-_declared_holding(comp, field::Symbol) =
-    fieldtype(Base.unwrap_unionall(typeof(comp).name.wrapper), field)
-_held_concretely(comp, field::Symbol) =
-    (ft = _declared_holding(comp, field); !(ft isa TypeVar) && isconcretetype(ft))
+# --- the service walk (§13.3, D-414) --------------------------------------------
 
 """
-The service walk (§13.3, D-130): `path`'s segments from
-`level`, the component at `base`, following the declared field types
-alongside the instances. Resolving *to* a generically held child is legal;
-traversing *past* one is the refusal, whatever the instance in hand — the
-authoring level speaks its own fields and its declared children's names
-(§14.2), and a deep path is legitimate exactly within an owned concrete
-subtree. Returns the component the path names, primitive or assembly, or
+The service walk (§13.3, D-414): `path`'s segments from `level`, the
+component at `base`, following the structure's children. A deep path
+resolves wherever the structure has it, whatever the declared field types
+along it. Returns the component the path names, primitive or assembly, or
 `nothing` after recording the refusal against `entry`. The empty path names
 `level` itself.
 
@@ -1522,14 +1510,6 @@ function resolve_authored(entry::String, base::String, level, path::AbstractStri
         end
         child = kids[child_index]
         i += count(==('/'), child.segment) + 1      # a matched pair consumes two segments
-        if i ≤ length(segments) && !_held_concretely(here, child.field)
-            push!(diags, PathResolution(entry = entry, spelling = String(path),
-                                       reason = :past_generic, owner = _at_path(here_path),
-                                       segment = child.segment,
-                                       level = _join(here_path, child.segment),
-                                       declared = _declared_holding(here, child.field)))
-            return nothing
-        end
         here, here_path = child.instance, _join(here_path, child.segment)
     end
     here

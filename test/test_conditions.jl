@@ -376,15 +376,14 @@ function conditions_algebra()
     end
 end
 
-# --- the service walk (§13.3, §14.2, D-130) --------------------------------------
+# --- the service walk (§13.3, §14.2, D-414) --------------------------------------
 # Every `at` prefix is resolved at the level its enclosing `at`s compiled, along
-# the *declared* field types rather than the instance: resolving to a
-# generically held child is port-level access and legal, traversing past one is
-# the refusal whatever the instance in hand. The holders live in
+# the structure's children: a deep path resolves wherever the structure has it,
+# whatever the declared field types along it. The holders live in
 # `test_assembly.jl`, which is included first.
 
 function conditions_service_walk()
-    @testset "a deep `at` path stays within a concretely declared subtree (§13.3, §14.2, D-130)" begin
+    @testset "a deep `at` path resolves wherever the structure has it (§13.3, §14.2, D-414)" begin
         q = SVector(0.3, 0.1)
         deep = at("inner/plant", set(x = (q = q,)))
 
@@ -397,28 +396,26 @@ function conditions_service_walk()
         @test state(concrete_sim, "inner/plant").q == q
 
         # The identical instance held through a type parameter: the declaration
-        # promises substitutability below `inner`, and the path traverses past it.
-        # The refusal names the field's declared type as written, a `TypeVar`.
+        # promises substitutability below `inner`, and the path resolves all the
+        # same, since no check refuses traversal past a generically held child.
         generic_build = build(GenericHold(SampledLoop()))
-        d = only(diagnostics(failure(() -> resolve_condition(deep, generic_build))))
-        @test d isa PathResolution && d.reason === :past_generic
-        @test d.segment == "inner" && d.level == "inner"
-        @test d.owner == "the root component" && d.declared isa TypeVar
-        @test d.entry == "at(\"inner/plant\")"
+        @test resolve_condition(deep, generic_build) isa ConditionPlan
+        generic_sim = Simulation(GenericHold(SampledLoop()); h = 1//50)
+        init!(generic_sim, combine(deep, set(u = (ref = 1.0,))))
+        @test state(generic_sim, "inner/plant").q === state(concrete_sim, "inner/plant").q
 
-        # The remedy the refusal names, and §14.2's pull-composition idiom: the
-        # nested spelling resolves `inner` *to* a child, then `plant` from that
-        # child's own instance, so the generic holder takes the same value.
+        # §14.2's pull-composition idiom spells the same write as a nest: `inner`
+        # resolves *to* a child, then `plant` from that child's own level.
         nest = at("inner", at("plant", set(x = (q = q,))))
         @test resolve_condition(nest, generic_build) isa ConditionPlan
-        generic_sim = Simulation(GenericHold(SampledLoop()); h = 1//50)
-        init!(generic_sim, combine(nest, set(u = (ref = 1.0,))))
-        @test state(generic_sim, "inner/plant").q === state(concrete_sim, "inner/plant").q
+        nested_sim = Simulation(GenericHold(SampledLoop()); h = 1//50)
+        init!(nested_sim, combine(nest, set(u = (ref = 1.0,))))
+        @test state(nested_sim, "inner/plant").q === state(generic_sim, "inner/plant").q
 
         # One refusal per node, not per leaf: the offender is the path, and the
         # subtree under it is dropped before any leaf reaches the duplicate check.
-        twice = at("inner/plant", combine(set(x = (q = q,)),
-                                          set(x = (q = SVector(1.0, 2.0),))))
+        twice = at("inner/plnt", combine(set(x = (q = q,)),
+                                         set(x = (q = SVector(1.0, 2.0),))))
         @test length(diagnostics(failure(() -> resolve_condition(twice, generic_build)))) ==
               1
 
@@ -429,13 +426,11 @@ function conditions_service_walk()
         @test d isa PathResolution && d.reason === :unknown_child && d.segment == "plnt"
         @test d.owner == "`inner`" && d.candidates == ["plant", "ctl", "sum"]
 
-        # A `Group` holds its children through one type parameter, so *every*
-        # child of one is generically held and a two-segment path from a `Group`
-        # root refuses — with the same nested remedy.
+        # A `Group` holds its children through one type parameter, so every
+        # child of one is generically held, and a two-segment path from a `Group`
+        # root resolves as the nested spelling does.
         nested_build = build(nested())
-        d = only(diagnostics(failure(() -> resolve_condition(at("loop/plant",
-                           set(x = (q = q,))), nested_build))))
-        @test d isa PathResolution && d.reason === :past_generic && d.segment == "loop"
+        @test resolve_condition(at("loop/plant", set(x = (q = q,))), nested_build) isa ConditionPlan
         @test resolve_condition(at("loop", at("plant", set(x = (q = q,)))),
                                 nested_build) isa ConditionPlan
 
