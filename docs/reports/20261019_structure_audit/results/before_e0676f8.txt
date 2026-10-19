@@ -1,0 +1,326 @@
+=== FILE DSM (row references column; weighted reference counts, include order) ===
+              leaves diagno declar assemb  store execut  build tracer reader deploy datapl checkp  trace roster bindin contro condit  model steppe  frame   trim linear    sim device   show blocks
+leaves.jl          ·      6                                                                                                                                                                        
+diagnostics.jl      1      ·                                                1             2                                                                                                         
+declare.jl         1      8      ·                           6                                                                                                                                     
+assembly.jl        1     68     33      ·                   14                                                                                                                                     
+store.jl           5      4                    ·                                                                                                                                                   
+executor.jl        7      9      3            10      ·                                                                                                                                           1
+build.jl          27    113     38     34      7     12      ·      1             1                                                                                                               0
+tracer.jl          7      3      6      6                   12      ·                                                                                                                             0
+readers.jl         3     17             9      2      1     28             ·             1                                         5                                                               
+deployment.jl            35      1      4                    3                    ·                                                              2                                                 
+dataplane.jl             17                    7             2             2             ·             1                    0                                                                      
+checkpoint.jl             2                    1             2                    1      1      ·                                                1                                                 
+trace.jl                 12                                  1                    2      6      1      ·      6                                                                                    
+roster.jl                28                                  3                          20             1      ·      1                                                              2              
+bindings.jl              15                           1      1             3                                  1      ·                                                                             
+control.jl                                                                               3                                  ·                                                                      
+conditions.jl      5     26      6     14      2      3     26             6             1                                         ·                                                              1
+model.jl           3     40      7      2      1     14     11                    3      7      8      1                           6      ·      2      3                    4                     
+stepper.jl                                                                                                                                5      ·                           3                     
+frame.jl                  2                           8                                  2                                               13      4      ·                    5                     
+trim.jl                  19                    2      1      8             6             2                                         8     11                    ·             2      0              
+linearize.jl       3     21      1      1      5      1     19            50             6      2                                  4      7                    3      ·      2                     
+sim.jl                  131      1             1             6             6      2     46     10     13     36      2     16      4     13      1      5      4      4      ·     16              
+devices.jl                6             2      2             1             2            37                   20             5             0                                  7      ·              
+show.jl                   4      3     12                   14                    8     10                                  0                                                              ·       
+blocks.jl          5            35                                                                                                                                                                ·
+
+=== PER-FILE SUMMARY ===
+file            defs nodes  intern   out    in  cohes  fan-out files -> fan-in files
+leaves.jl         43    26      26     6    68   0.81  1 -> 12
+diagnostics.jl   275   144     478     4   586   0.99  3 -> 22
+declare.jl        48    41      18    15   134   0.55  3 -> 11
+assembly.jl       76    71     165   116    84   0.59  4 -> 9
+store.jl          12    11      10     9    40   0.53  2 -> 11
+executor.jl       68    46      84    30    41   0.74  5 -> 8
+build.jl          63    63     154   234   157    0.4  9 -> 17
+tracer.jl         42    29      68    34     1   0.67  6 -> 1
+readers.jl        77    52     164    66    74   0.71  8 -> 8
+deployment.jl     22    13      27    45    17   0.38  5 -> 6
+dataplane.jl     100    58     144    30   145   0.83  6 -> 14
+checkpoint.jl      8     7       9     8    22   0.53  6 -> 4
+trace.jl          15    15      18    28    16   0.39  6 -> 4
+roster.jl         18    17      26    55    63   0.32  6 -> 4
+bindings.jl       10     9       8    21     2   0.28  5 -> 2
+control.jl        11     9      14     3    22   0.82  1 -> 4
+conditions.jl     77    54     129    90    27   0.59  10 -> 5
+model.jl          42    31      57   113    50   0.34  15 -> 6
+stepper.jl        14     9      14     8    10   0.64  2 -> 5
+frame.jl           8     8       6    33     8   0.15  6 -> 2
+trim.jl           31    26      53    58     7   0.48  10 -> 2
+linearize.jl      40    24      43   124     4   0.26  14 -> 1
+sim.jl            95    84     180   317    22   0.36  19 -> 6
+devices.jl        31    30      35    83    18    0.3  10 -> 3
+show.jl           41    27      85    52     0   0.62  7 -> 0
+blocks.jl        255    96     275    40     3   0.87  2 -> 4
+
+=== FORWARD REFERENCES (earlier file references a later file, include order) ===
+sim.jl -> devices.jl               16   DeviceHandle _finish! _init_devices! _shutdown! _spawn! _sweep_tail! _tail! binding init! latest
+assembly.jl -> build.jl            14   at_component check_state_leaves check_store_form check_stores classify_tier invoke_declaration
+trace.jl -> roster.jl               6   RosterEntry _drain_thunk _handle _who
+leaves.jl -> diagnostics.jl         6   ConformanceFailure DiagnosticError
+declare.jl -> build.jl              6   invoke_declaration
+readers.jl -> conditions.jl         5   _face_producer _input_faces_at _leaf_offset
+frame.jl -> sim.jl                  5   _claimed_gate boundary! evaluate! frame_top! integrate! offtick_boundary! settled!
+model.jl -> sim.jl                  4   _claimed_gate apply! boundary_zero! settled!
+stepper.jl -> sim.jl                3   evaluate!
+model.jl -> frame.jl                3   _frames_to _grid_time
+diagnostics.jl -> dataplane.jl      2   message severity
+roster.jl -> devices.jl             2   DeviceHandle
+model.jl -> stepper.jl              2   RK4 checkpoint_stepper
+deployment.jl -> stepper.jl         2   AbstractStepper RK4
+trim.jl -> sim.jl                   2   _claimed_gate apply! evaluate! init!
+linearize.jl -> sim.jl              2   apply! checkpoint evaluate!
+roster.jl -> bindings.jl            1   claims is_input
+readers.jl -> dataplane.jl          1   _port_type
+executor.jl -> blocks.jl            1   s_update x_deriv
+diagnostics.jl -> readers.jl        1   _step_string
+dataplane.jl -> trace.jl            1   _record!
+conditions.jl -> blocks.jl          1   m_init
+checkpoint.jl -> stepper.jl         1   restore_stepper!
+build.jl -> tracer.jl               1   _classify
+build.jl -> deployment.jl           1   _gates
+tracer.jl -> blocks.jl              0   y_direct
+dataplane.jl -> control.jl          0   PacerStatus
+build.jl -> blocks.jl               0   m_init
+trim.jl -> devices.jl               0   init!
+total forward weight (include order): 90
+
+=== STRONGLY CONNECTED FILE GROUPS (cycles) ===
+group: leaves.jl diagnostics.jl declare.jl assembly.jl store.jl executor.jl build.jl tracer.jl readers.jl deployment.jl dataplane.jl checkpoint.jl trace.jl roster.jl bindings.jl control.jl conditions.jl model.jl stepper.jl frame.jl trim.jl linearize.jl sim.jl devices.jl blocks.jl
+
+suggested bottom-up order (forward weight 103):
+  control.jl diagnostics.jl leaves.jl store.jl executor.jl dataplane.jl checkpoint.jl bindings.jl declare.jl blocks.jl roster.jl trace.jl stepper.jl deployment.jl devices.jl assembly.jl build.jl tracer.jl show.jl readers.jl conditions.jl model.jl trim.jl linearize.jl frame.jl sim.jl
+
+=== NAMES DEFINED IN MORE THAN ONE FILE (method count per file) ===
+warnings                    build.jl:1 deployment.jl:1 model.jl:1 sim.jl:1
+apply!                      conditions.jl:5 model.jl:1 sim.jl:1
+at                          conditions.jl:3 trim.jl:1 linearize.jl:1
+init!                       model.jl:2 sim.jl:1 devices.jl:1
+integrate!                  model.jl:1 stepper.jl:2 sim.jl:1
+port                        dataplane.jl:1 model.jl:1 sim.jl:1
+PacerStatus                 dataplane.jl:2 control.jl:1
+_claimed_gate               model.jl:1 sim.jl:1
+_restore_state!             checkpoint.jl:1 model.jl:1
+boundary!                   model.jl:1 sim.jl:1
+boundary_zero!              model.jl:1 sim.jl:1
+checkpoint                  model.jl:1 sim.jl:1
+claims                      roster.jl:1 bindings.jl:1
+evaluate!                   model.jl:2 sim.jl:1
+frame_top!                  model.jl:1 sim.jl:1
+gather_reads                readers.jl:2 dataplane.jl:1
+input_wires                 declare.jl:1 blocks.jl:1
+is_input                    roster.jl:1 bindings.jl:1
+latest                      sim.jl:1 devices.jl:1
+linearize                   linearize.jl:3 sim.jl:2
+local_wires                 declare.jl:1 blocks.jl:1
+m_init                      declare.jl:1 blocks.jl:3
+message                     diagnostics.jl:71 dataplane.jl:12
+modes                       model.jl:1 sim.jl:1
+offtick_boundary!           model.jl:1 sim.jl:1
+output_wires                declare.jl:1 blocks.jl:1
+path                        diagnostics.jl:47 dataplane.jl:2
+phase_bodies                model.jl:1 sim.jl:1
+reads                       readers.jl:1 roster.jl:1
+restore!                    model.jl:2 sim.jl:3
+s_init                      declare.jl:1 blocks.jl:9
+s_update                    declare.jl:1 blocks.jl:9
+sample_times                declare.jl:1 blocks.jl:1
+settled!                    model.jl:1 sim.jl:1
+severity                    diagnostics.jl:7 dataplane.jl:12
+stage!                      sim.jl:1 devices.jl:1
+state                       model.jl:1 sim.jl:1
+state_events                declare.jl:1 blocks.jl:5
+stop!                       sim.jl:1 devices.jl:1
+stop_reason                 declare.jl:1 blocks.jl:1
+transparent_container       declare.jl:1 blocks.jl:1
+trim!                       trim.jl:3 sim.jl:2
+u_types                     declare.jl:1 blocks.jl:18
+x_deriv                     declare.jl:1 blocks.jl:6
+x_init                      declare.jl:1 blocks.jl:15
+y_direct                    declare.jl:1 blocks.jl:12
+y_state                     declare.jl:1 blocks.jl:16
+y_types                     declare.jl:1 blocks.jl:24
+
+=== EXTENSION METHODS (qualified names) BY FILE ===
+diagnostics.jlBase.==×1 Base.showerror×4
+build.jl      Base.show×1
+tracer.jl     Base.$f×5 Base.Bool×1 Base.Float64×2 Base.Int×1 Base.^×1 Base.clamp×1 Base.float×1 Base.hypot×1 Base.ifelse×1 Base.muladd×1 Base.one×1 Base.promote_rule×2 Base.zero×1 LinearAlgebra.norm×2
+deployment.jl Base.==×3 Base.hash×3
+dataplane.jl  Base.+×1
+trace.jl      Base.==×1 Base.hash×1
+show.jl       Base.show×8
+
+=== FEATURE-ENVY CANDIDATES (node references another file more than its own) ===
+columns: file  name  kind  methods  own-refs  foreign-file:refs  | referenced-from files
+assembly.jl   _passthrough_faces            function   1    0  diagnostics.jl:6       | assembly.jl:2
+assembly.jl   leaf_declarations             function   1    0  declare.jl:5           | assembly.jl:2 build.jl:2
+assembly.jl   _check_face_names             function   1    0  diagnostics.jl:3       | assembly.jl:1
+assembly.jl   resolve                       function   1    1  diagnostics.jl:4       | assembly.jl:2
+assembly.jl   _check_sample_times           function   1    0  declare.jl:3           | assembly.jl:1
+assembly.jl   resolve_terminal              function   2    2  diagnostics.jl:5       | assembly.jl:2
+assembly.jl   _children                     function   1    6  diagnostics.jl:8       | assembly.jl:2
+assembly.jl   _one_level                    function   1    2  diagnostics.jl:4       | assembly.jl:2
+assembly.jl   resolve_authored              function   1    6  diagnostics.jl:7       | readers.jl:2 conditions.jl:1
+assembly.jl   _check_transparent            function   1    2  diagnostics.jl:3       | assembly.jl:1
+bindings.jl   TableBinding                  struct     2    2  diagnostics.jl:8       | bindings.jl:4
+bindings.jl   _compile_binding_reads        function   1    0  diagnostics.jl:6       | sim.jl:1
+blocks.jl     state_events                  function   5    5  declare.jl:13          | 
+build.jl      _check_state_write            function   1    0  diagnostics.jl:6       | build.jl:2
+build.jl      _check_derivative             function   1    0  diagnostics.jl:6       | build.jl:1
+build.jl      _check_update                 function   1    0  diagnostics.jl:5       | build.jl:1
+build.jl      classify_tier                 function   1    5  declare.jl:10          | assembly.jl:1
+build.jl      _check_handler                function   1    3  diagnostics.jl:8       | build.jl:1
+build.jl      _check_ports                  function   1    0  diagnostics.jl:4       | build.jl:2
+build.jl      at_component                  function   1    0  diagnostics.jl:4       | build.jl:12 assembly.jl:3
+build.jl      build                         function   1    5  diagnostics.jl:8       | model.jl:1 sim.jl:1
+build.jl      _embed                        function   1    0  leaves.jl:3            | build.jl:1
+build.jl      _check_event_declarations     function   1    2  diagnostics.jl:5       | build.jl:1
+build.jl      _probe_input                  function   1    1  assembly.jl:3          | build.jl:3
+build.jl      _check_wires                  function   1    5  diagnostics.jl:7       | build.jl:1
+build.jl      _walking_leaf                 function   1    1  leaves.jl:3            | build.jl:1
+build.jl      cell_layout                   function   1    7  diagnostics.jl:9       | build.jl:2 tracer.jl:1
+build.jl      invoke_probed                 function   1    2  diagnostics.jl:4       | build.jl:6
+conditions.jl _input_faces_at               function   1    0  assembly.jl:3          | conditions.jl:2 readers.jl:2
+conditions.jl at                            function   3    3  diagnostics.jl:4       | 
+dataplane.jl  capture_stores                function   1    0  store.jl:3             | checkpoint.jl:1 model.jl:1 sim.jl:1
+declare.jl    Absolute                      struct     1    2  diagnostics.jl:4       | assembly.jl:3 show.jl:1
+deployment.jl Deployment                    struct     2    2  diagnostics.jl:12      | show.jl:4 deployment.jl:4 model.jl:3 trace.jl:2 sim.jl:2 checkpoint.jl:1
+deployment.jl _exact                        function   5    0  diagnostics.jl:7       | deployment.jl:2
+deployment.jl _grid_report                  function   1    2  diagnostics.jl:6       | deployment.jl:1
+devices.jl    _residue!                     function   1    0  dataplane.jl:8         | devices.jl:3
+devices.jl    report!                       function   2    2  dataplane.jl:5         | devices.jl:2
+devices.jl    DeviceHandle                  struct     1    0  dataplane.jl:3         | devices.jl:12 roster.jl:2 sim.jl:1
+devices.jl    _sweep_tail!                  function   1    3  dataplane.jl:5         | sim.jl:3
+devices.jl    _shutdown!                    function   1    1  roster.jl:3            | devices.jl:2 sim.jl:1
+devices.jl    stage!                        function   1    2  dataplane.jl:3         | 
+executor.jl   _merge_modes!                 function   2    0  diagnostics.jl:6       | executor.jl:1
+executor.jl   _bundle_expr                  function   1    0  store.jl:4             | executor.jl:4
+frame.jl      _localized_frame!             function   1    1  executor.jl:5          | frame.jl:1
+frame.jl      frame!                        function   1    2  model.jl:6             | sim.jl:1
+leaves.jl     flatten_state!                function   2    2  diagnostics.jl:6       | executor.jl:4
+linearize.jl  _seeded_tap                   function   4    6  readers.jl:18          | linearize.jl:1
+linearize.jl  _tap                          function   3    0  readers.jl:5           | linearize.jl:1
+linearize.jl  _tap_violation                function   2    1  readers.jl:5           | linearize.jl:8
+linearize.jl  _tap_kind                     function   3    0  readers.jl:4           | linearize.jl:1
+linearize.jl  _check_linearize_call         function   1    0  diagnostics.jl:4       | linearize.jl:1 sim.jl:1
+linearize.jl  Taps                          struct     1    0  readers.jl:3           | linearize.jl:7 sim.jl:1
+linearize.jl  _site_key                     function   3    1  readers.jl:3           | linearize.jl:1
+linearize.jl  _seed_site!                   function   3    1  store.jl:3             | linearize.jl:1
+linearize.jl  linearize                     function   3    5  diagnostics.jl:6       | 
+model.jl      _check_checkpoint!            function   1    2  diagnostics.jl:8       | sim.jl:3 model.jl:1
+model.jl      Model                         struct     4    0  diagnostics.jl:5       | model.jl:29 trim.jl:7 frame.jl:5 linearize.jl:4 sim.jl:4 stepper.jl:2
+model.jl      _wrap_step                    function   1    2  diagnostics.jl:5       | model.jl:1 frame.jl:1
+model.jl      _nonfinite                    function   1    1  diagnostics.jl:4       | model.jl:1
+model.jl      _species                      function   3    3  declare.jl:6           | model.jl:1
+model.jl      checkpoint                    function   1    2  diagnostics.jl:5       | sim.jl:2 linearize.jl:0
+model.jl      _check_grid!                  function   1    0  diagnostics.jl:3       | sim.jl:2 model.jl:1
+model.jl      boundary_zero!                function   1    2  executor.jl:4          | model.jl:0
+model.jl      _round!                       function   4    1  build.jl:3             | model.jl:2 linearize.jl:1 trim.jl:1
+model.jl      boundary!                     function   1    2  executor.jl:3          | frame.jl:0
+readers.jl    _exported_faces               function   1    0  assembly.jl:3          | readers.jl:1
+readers.jl    _compile_reads                function   2    2  diagnostics.jl:3       | sim.jl:1 bindings.jl:1 trim.jl:1
+roster.jl     DataPlane                     struct     2    2  dataplane.jl:14        | sim.jl:4 roster.jl:2
+roster.jl     check_binding                 function   1    6  diagnostics.jl:15      | sim.jl:1
+roster.jl     claims                        function   1    1  diagnostics.jl:3       | roster.jl:0
+roster.jl     reads                         function   1    1  diagnostics.jl:3       | sim.jl:0
+show.jl       Artifact                      global     1    0  build.jl:3             | show.jl:1
+show.jl       _feedthrough                  function   1    1  assembly.jl:3          | show.jl:1
+show.jl       _writer_lines                 function   1    2  dataplane.jl:3         | 
+sim.jl        attach!                       function   1    2  diagnostics.jl:14      | 
+sim.jl        restore!                      function   3    9  diagnostics.jl:18      | 
+sim.jl        _assert_advanceable           function   1    2  diagnostics.jl:11      | sim.jl:4
+sim.jl        Simulation                    struct     5    2  diagnostics.jl:7       | sim.jl:64 devices.jl:5
+sim.jl        assert_configurable           function   1    2  diagnostics.jl:6       | sim.jl:2
+sim.jl        _compile_feed                 function   1    1  diagnostics.jl:5       | sim.jl:1
+sim.jl        _ignored_requests             function   2    0  diagnostics.jl:4       | sim.jl:1
+sim.jl        _writer_status                function   1    0  dataplane.jl:4         | sim.jl:3
+sim.jl        _discard_staged!              function   1    0  dataplane.jl:4         | sim.jl:2
+sim.jl        _check_recording              function   1    0  diagnostics.jl:3       | sim.jl:4
+sim.jl        _column                       function   1    0  readers.jl:3           | sim.jl:1
+sim.jl        trim!                         function   2    3  diagnostics.jl:6       | 
+sim.jl        checkpoint                    function   1    2  diagnostics.jl:5       | sim.jl:2 linearize.jl:0
+sim.jl        replay!                       function   1   12  diagnostics.jl:14      | 
+sim.jl        _reset_accounts!              function   1    1  dataplane.jl:3         | sim.jl:2
+sim.jl        drain!                        function   1    2  dataplane.jl:4         | sim.jl:1
+sim.jl        trace                         function   1    2  diagnostics.jl:4       | 
+sim.jl        publish!                      function   1    2  dataplane.jl:4         | sim.jl:1
+sim.jl        detach!                       function   1    2  roster.jl:3            | 
+sim.jl        _replay_drain!                function   1    3  dataplane.jl:4         | sim.jl:1
+sim.jl        _open_run!                    function   1    2  trace.jl:3             | sim.jl:2
+sim.jl        assert_stopped                function   1    2  diagnostics.jl:3       | sim.jl:2
+sim.jl        linearize                     function   2    4  linearize.jl:4         | 
+sim.jl        _status                       function   1    4  dataplane.jl:4         | sim.jl:1
+store.jl      scatter_group!                function   1    1  diagnostics.jl:4       | executor.jl:1 build.jl:1
+trace.jl      _install_writers!             function   1    1  roster.jl:4            | sim.jl:1 roster.jl:1
+trace.jl      _compile_records!             function   1    4  diagnostics.jl:5       | sim.jl:1
+tracer.jl     _map_leaves                   function   1    0  leaves.jl:3            | tracer.jl:3
+trim.jl       _establish_frozen!            function   1    0  build.jl:6             | linearize.jl:1 trim.jl:1
+trim.jl       _verdict!                     function   1    4  diagnostics.jl:6       | sim.jl:1 trim.jl:1
+
+=== INTERNAL CONNECTED COMPONENTS PER FILE (undirected, intra-file edges only) ===
+leaves.jl: 26 nodes, 2 components (1 isolated)
+   [25] Pinned _accepts _accepts_wire _atom _flatten_expr _holds_marker _is_marker _leaf_names! _leaf_values _mflatten_expr _mreconstruct_expr _mutable_position _opaque _reconstruct_expr flatten! flatten_state! leaf_eltypes leaf_names leaf_types mutable_position nleaves reconstruct retype retype_entry retype_value
+diagnostics.jl: 144 nodes, 5 components (4 isolated)
+   [140] AbstractAtRoot AlgebraicCycle AlreadyAttached ArgumentInvalid AttachUnknownFace BUILD_WARNINGS Base.== Base.showerror BindingContractMismatch BundleFieldError CheckpointMidFrame CheckpointMismatch ChildNameCollision ClaimConflict ClassMixed ClassUnreadable ConditionNodeMisuse ConditionResolution ConditionShapeDrift ConformanceFailure ContainerMixed ContainerNested CursorFrame DeadStage DeclarationOnWrongTier DeclarationShadowed DeclaredNotProduced DeploymentInvalid DeviceContractMismatch Diagnostic DiagnosticError DuplicateConditionLeaf EmptyFaceSelection EmptyGreedyClaim EventHalfMissing FaceDirectionConflict FaceNameCollision FaceNameIllegal GridEntry GridReport GridUtilization GuardForm HandlerReturnKey IllegalPortType IllegalStateLeaf IllegalStoreField InternalInvariant LEAF_REASONS MissingInit MissingProbeValue NonfiniteState NotAttached PathResolution ProducedByTwoStages RatesViolation ReadResolution ReadSetMisuse ReplaySchemaMismatch ReplayUnknownFace RootInputTypeConflict ServiceLifecycle StatelessWithoutOutputs StepError StopRequestInvalid StoreNotNamedTuple StoreWithoutUpdate TapResolution TierUnreadable TransparentContainerUnknown TrimCommitChecks TrimCommitEvents TrimCommitResiduals TrimProblemInvalid TwoProducers UnconnectedInput UndeclaredReturnField UninitializedInputs UnknownFaceSelection UnknownPort UserCodeFraming WalkingFaceAtFrozenEntry WireTypeMismatch _BREAK_CYCLE _SUPERSCRIPTS _advance_entry _anchor_label _at_path _bundle_declaration _checkpoint_deployment _checkpoint_paths _checkpoint_subject _checkpoint_value _cleaf _conformance_expect _conformance_section _conformance_what _count_word _ctail _cycle_hint _declaration _declares_noun _deployment_constraint _deployment_section _drift_position _faceset _grid_block _grid_label _groups _hop _leaf_clause _modes _namelist _origin _phase_text _pin _plainlist _rates_entry _read_message _role_word _show_warnings _superscript _symtuple _tap_list_kinds _trim_bad _trim_floats _trim_shape _trim_verb _typename _typespell _unseedable_clause _vector_tap_remedy _warn! _wirelist diagnostic diagnostics kinds logline message path severity
+declare.jl: 41 nodes, 30 components (26 isolated)
+   [6] _declares _declares_workspace bundle_names declared_at event_bundle_names update_of
+   [4] Absolute Hz Period period
+   [3] LEGAL_BUNDLE _tier_names classify_bundle_field
+   [2] DECLARATION_FAMILY foreign_declarations
+assembly.jl: 71 nodes, 1 components (0 isolated)
+   [71] ASSEMBLY_FAMILY Anchor Child ComponentEntry LEAF_FAMILY LevelEntry RateLink RateScope Structure StructureDraft Timing WALK_CHILDREN WALK_FACES _OTHER_FAMILY _bears_component _boundary_inputs _boundary_outputs _check_child_names _check_face_names _check_root_faces _check_sample_times _check_transparent _child_scope _children _claim! _container_fields _contract _declared_holding _draft_routes _element_keys _elements _endpoints _entry _extend _fanout _handed _held_concretely _holds_components _is_container _join _labelled _level_index _one_level _parent_index _passthrough_faces _rate_entry _routes_behind _terminal _walk! _walked_children _walked_faces _wire_into _wrong_direction children classify declarations_found face_routes flatten_tree! index_of input_faces input_passthrough leaf_declarations membership output_faces output_passthrough resolve resolve_authored resolve_dest resolve_source resolve_terminal terminal_producer
+store.jl: 11 nodes, 3 components (1 isolated)
+   [8] CellAddr STOP_FLAG_KEY StoreBundle _cell_key gather_cell gather_group scatter_cell! scatter_group!
+   [2] Clock activation_scalar
+executor.jl: 46 nodes, 2 components (1 isolated)
+   [45] Chunk ESTABLISH Establish EventChunk EventEntry EventSet ExecutionCursor Gated PhaseBody ProjectEntry RHSEntry StageEntry UpdateEntry _bundle_expr _event_bodies _event_chunks _fire! _fire_chunk! _fire_chunks _fire_entry! _fire_project! _fire_walk _guard_chunk! _guard_chunks _guard_entry! _guard_walk _guards! _latch! _merge_modes! _phase! _project_body _project_chunk! _project_chunks _project_walk _projects! _store_successor! _unrolled _walk _walk_at _walk_chunks chunked_body make_bundle run_at! run_entry! run_project!
+build.jl: 63 nodes, 3 components (1 isolated)
+   [60] Activation Base.show Build ComponentEvents ComponentOutputs Decls Events Executor Layout Marker Outputs Requester _activate _bundle_values _check_derivative _check_event_declarations _check_handler _check_ports _check_state_write _check_update _check_wires _cluster_walk _cycle_diagnostics _declarations _embed _embed_ports _frozen _homes _inputs_spelling _mstores _nominal _outputs _passes_frame _ports _probe_direct! _probe_input _root_input_cell _state_fields _tarjan _walking_leaf _workspace _workspaces activation at_component build cell_layout check_state_leaves check_store_form check_stores classify_tier compile declarations establish_defaults! invoke_declaration invoke_probed probe_events probe_stage1 probe_stage2 state_decls warnings
+   [2] ProbeDual ProbeTag
+tracer.jl: 29 nodes, 2 components (1 isolated)
+   [28] Base.$f Base.Bool Base.Float64 Base.Int Base.^ Base.clamp Base.float Base.hypot Base.ifelse Base.muladd Base.one Base.promote_rule Base.zero LinearAlgebra.norm Tracer Undecidable _classify _decide _depset _has_cycle _lift _map_leaves _norm _sample _seed_face _tag _trace_direct _trace_sampled
+readers.jl: 52 nodes, 1 components (0 isolated)
+   [52] AccessStep CellRead DerivRead GetDeriv GetFace GetInput GetOutput GetState LeafRefusal MountedRead ReadSelector Reader Reads StateRead StoreRead StoreSelector _authored_leaf _compile_reads _exported_faces _field _leaf_chain _leaf_string _leaf_violation _mount _mounted_path _name_end _read _read_component _read_entries _reader_violation _reads _rebase _resolve_reads _resolve_selector _resolved_type _selpath _spell _step_string _undeclared_violation gather_reads get_deriv get_face get_input get_output get_state match_face match_leaf parse_leaf parse_steps reads resolve_leaf walk_steps
+deployment.jl: 13 nodes, 1 components (0 isolated)
+   [13] Base.== Base.hash Deployment Schedule ScheduleEntry ScopeEntry _as_int _exact _gates _grid_report _prime_powers bind_schedule warnings
+dataplane.jl: 58 nodes, 3 components (2 isolated)
+   [56] Base.+ Batch ChatteringBudget ClaimedFaceEntry DIAG_RING DebtReanchor DeviceCrash DeviceJoinTimeout DiagBatch DiagCell DiagValue EMPTY_DIAG EMPTY_RECENT EntryTypeMismatch FiringBudget FrameworkStatus KINDS KindCounts MalformedDatum OutOfClaimEntry PacerStatus Published ReplayDiscardedStaging ResidueRecord STALE_S Snapshot SnapshotLog StagingCell ThreadBudget UnboundedRun Writer WriterAccount WriterStatus _apply! _beat! _bump _drain! _fold! _heartbeat _kind _merge _normalize _port_type _reset! _retain! _take! _total gather_reads log! message path port report_cell! severity stage_batch! stale
+checkpoint.jl: 7 nodes, 2 components (1 isolated)
+   [6] Checkpoint Fingerprint ModelState _detach _restore_state! _restore_stores!
+trace.jl: 15 nodes, 4 components (1 isolated)
+   [10] Base.== Base.hash ReplayFeed ReplayRecord Trace TraceBatch _apply_thunk _compile_records! _record! _replay_writer
+   [2] _deployment_diff! _walk_deployment!
+   [2] _install_writers! _writer_schemas
+roster.jl: 17 nodes, 3 components (2 isolated)
+   [15] AbstractBinding AbstractDevice DataPlane RosterEntry _claim _handle _who check_binding check_device claims is_greedy is_input is_output reads reclaim!
+bindings.jl: 9 nodes, 3 components (2 isolated)
+   [7] TableBinding _TABLE_ENTRY_VOCABULARY _condition _map_channel claims is_input map_input
+control.jl: 9 nodes, 1 components (0 isolated)
+   [9] Control Pacer PacerStatus _request_stop! _wall_now anchor! reanchor! wait_deadline! wait_resume!
+conditions.jl: 54 nodes, 2 components (1 isolated)
+   [53] Authored CEntry Combined ConditionNode ConditionPlan Fragment InputWrite Override Prefix Resolved Scoped SpecializedPlan StoreWrite XWrite _authored_values _check_duplicates! _compare _component _condition_violation _convert _declared_workspace _face_producer _flat _input_faces_at _key _leaf_offset _misuse_in _no_store _node_misuse _payload _prefix_drift _report_violations _resolve_entries _root_input _scoped! _scoped_prefixes _seeded_into_pinned _shape_drift _step _store_bases _sweep_prefixes _unconvertible _undeclared _write! _writes! apply! assert_total at combine compile_plan override resolve_condition set
+model.jl: 31 nodes, 1 components (0 isolated)
+   [31] FrameHooks Model NoHooks _apply_plan! _check_checkpoint! _check_finite! _check_grid! _claimed_gate _fingerprint _nonfinite _restore_state! _round! _species _wrap_step apply! boundary! boundary_zero! checkpoint evaluate! event_phase! frame_top! init! integrate! modes offtick_boundary! phase_bodies port restore! settled! state warnings
+stepper.jl: 9 nodes, 1 components (0 isolated)
+   [9] AbstractStepper Heun RK4 _stage_point! checkpoint_stepper dense! integrate! restore_stepper! startpoint
+frame.jl: 8 nodes, 2 components (0 isolated)
+   [5] _crossing _grid_time _localized_frame! _trial! frame!
+   [3] _frame_at _frame_slack _frames_to
+trim.jl: 26 nodes, 2 components (1 isolated)
+   [25] LM_λMAX LM_λMIN LevenbergMarquardt TrimProblem TrimReport TrimTag _check_decisions! _check_equations _check_floats! _check_reads! _check_tolerances! _establish_frozen! _named _report_trim! _saturated _scaled_norm _scratch _seeded _solve_problem _trim_violation _verdict! _within at solve trim!
+linearize.jl: 24 nodes, 1 components (0 isolated)
+   [24] LINEARIZE_WIDTH Linearization LinearizeDual LinearizeTag Taps _check_linearize_call _check_seedable _linear_index _linearize _readback! _resolve_taps _seed _seed_site! _seeded_tap _set_clock! _site_key _site_value _tap _tap_kind _tap_list _tap_violation at linearize taps
+sim.jl: 84 nodes, 1 components (0 isolated)
+   [84] ControlRequestedStop EndTimeReached LoopError LoopHooks ModelRequestedStop Run Series Simulation StopPolicy TerminationRecord TerminationSource _advance! _assert_advanceable _bind_policy _check_recording _claimed_gate _column _compile_feed _discard_staged! _enter_checkpoint! _ignored_requests _interrupt_source _margin_value _open_run! _pace_value _record _register_tasks! _replay_bound _replay_drain! _reset_accounts! _reset_periphery! _run_body! _settle_mode! _status _stop_hit _t_bound _t_end_frame _writer_status apply! assert_configurable assert_stopped attach! boundary! boundary_zero! checkpoint closed detach! drain! evaluate! frame_top! init! integrate! latest lifecycle linearize live! logged margin margin! mode modes offtick_boundary! pace pace! pause! paused phase_bodies port publish! replay! report_thread_budget! restore! resume! run! series settled! stage! state step! stop! termination trace trim! warnings
+devices.jl: 30 nodes, 4 components (2 isolated)
+   [26] DeviceHandle PortView _assert_attached _init_devices! _report_join_timeout! _shutdown! _spawn! _tail! _unblocks _wrap binding gather incumbent_status init! latest loop peek pending port_views report! running shutdown! stage! stop! unblock! wait_next_snapshot
+   [2] _residue! _sweep_tail!
+show.jl: 27 nodes, 1 components (0 isolated)
+   [27] Artifact Base.show STATUS_MAXLOG _SUBSCRIPTS _activations_label _anchor_name _count _deployment_parameters _entry_label _events_counts _feedthrough _hyperperiod _indented _kind_lines _lines _names_label _pace_label _pacer_line _path_label _rates_label _route_label _route_lines _status_counts _structure_counts _table _warning_lines _writer_lines
+blocks.jl: 96 nodes, 7 components (5 isolated)
+   [84] AsPort Constant ControllerBlock Delay DiscreteIntegrator DiscreteLQRTracker DiscreteLimitedIntegrator DiscreteLinearBlock DiscretePID DiscreteStateSpace DiscreteTransferFunction DiscretizedStateSpace DiscretizedTransferFunction FirstOrderLag Freeze GaussianWhiteNoise Integrator Junction LQRTracker LQRTrackerBlock LQR_PARAMETERS LimitedIntegrator LinearBlock PID PIDBlock PID_PARAMETERS RateLimiter Relay Source StateSpace Step StopRequest Switch TransferFunction UnitDelay Unpack as_port as_vector axis_ports channel_type check_shapes check_tracking correction_reference fixed_parameters gated_error gaussian held hit_lower_guard hit_lower_handler hit_upper_guard hit_upper_handler leave_handler leave_lower_guard leave_upper_guard m_init parameter_types parameters port_type realization realize s_init s_update saturation_code saturation_type shape_type signal_ports splitmix state_events static_system step_guard step_handler stop_reason switch_off_guard switch_off_handler switch_on_guard switch_on_handler tracker_sizes u_types unpack_names x_deriv x_init y_direct y_state y_types
+   [7] Group _entries input_wires local_wires output_wires sample_times transparent_container
+
