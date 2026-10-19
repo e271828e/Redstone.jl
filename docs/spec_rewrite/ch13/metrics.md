@@ -1,6 +1,7 @@
 # Chapter 13's metrics
 
-10,635 words at `1fee0fc`, surveyed in two halves.
+10,635 words at `1fee0fc`, surveyed in two halves; about 12,100 after.
+About 0.57M subagent tokens per 1,000 words, chapter 12's rate.
 
 | step | agent runs | subagent tokens | findings |
 |---|---|---|---|
@@ -10,5 +11,8 @@
 | chapter passes, inbound checks, editorial fixers | 6 | 1.16M | 59 pass findings (14 RULING); 47 non-OK rows of 557, no loss |
 | consolidation, evidence check, ruled edits | 4 | 0.65M | 87 items (24 blocking); 4 UNCONFIRMED |
 | final verification and PDF check | 3 | 0.44M | 14 (two rulings, one lost claim caught at B12 before it) |
+| landing | 1 | 0.10M | 0 stops; 1 whitelist trim |
+| track 2, its verification and fixes | 3 | 0.95M | 4 findings; 7 entries written, one dropped, D-408 to D-413 kept |
+| total | 26, plus fix rounds | about 6.1M | |
 
 The orchestrator's context: 209k tokens at checkpoint 1, 289k at the end of step 4, 372k at checkpoint 4.

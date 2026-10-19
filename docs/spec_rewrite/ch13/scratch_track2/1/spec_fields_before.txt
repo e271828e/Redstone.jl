@@ -1,0 +1,31 @@
+79 entries cited in chapter 13; 29 (entry, section) pairs absent from the Spec field
+
+D-005 §13.8 at spec 11111; field: §5.5
+D-019 §13.5 at spec 10567; field: §2, §3.2, §3.3, §5.2, §10.5
+D-022 §13.4 at spec 10498; field: §2, §11.1, §12.1, §12.3
+D-058 §13.2 at spec 10000,10007,10052; field: Appendix C
+D-059 §13.6 at spec 10818; field: §12.6, §9.5, §13.4, §14
+D-084 §13.5 at spec 10564; field: §6.1, §6.2, §11.2, §11.7, §13.2, Appendix C
+D-147 §13.5 at spec 10570; field: §5.3, §10.3, §10.4, §10.5, §10.6, §9.7, §14.5, Appendix D
+D-203 §13.2 at spec 10177; field: §11.8, §12.1, §12.4, §12.6, §13.5, §13.6, Appendix C
+D-218 §13.5 at spec 10662; field: §11.5, §12.6, §12.7, §13.4
+D-231 §13.7 at spec 10986; field: §2.5, §3.2, §7.3, §8.2, §9.1, Appendix C, Appendix D
+D-235 §13.4 at spec 10340; field: §7.1, §8.2, §9.5, Appendix C
+D-237 §13.7 at spec 11029; field: §4.3, §4.4, §8.2, §9.5, §9.7, Appendix C
+D-251 §13.2 at spec 10117; field: §8.8, Appendix C
+D-251 §13.7 at spec 10838; field: §8.8, Appendix C
+D-254 §13.2 at spec 10118; field: §8.7, §9.2, §10.5, §11.5, §12.7, Appendix C
+D-255 §13.2 at spec 10183; field: §11.5, §12.1, §12.4, §12.6, §12.7, §13.5, Appendix C
+D-261 §13.4 at spec 10298; field: §9.1, §9.2, §11.2, §11.3, §11.5, §12.6, §13.5, Appendix B
+D-274 §13.4 at spec 10440; field: §10.2, §10.6, §11.5, §12.6, §12.7, §14, §14.8, §14.10, Appendix B
+D-294 §13.4 at spec 10384; field: §10.7, §12.4
+D-310 §13.5 at spec 10511; field: §11.1, §11.3, §11.6, §11.7, §12.1, §12.2, §12.4, §12.6, Appendix B, Appendix C
+D-322 §13.7 at spec 10845; field: §6.1, §9.1
+D-364 §13.7 at spec 11031; field: §4.4, §8.2, §14.9
+D-387 §13.6 at spec 10818; field: §12.6
+D-389 §13.4 at spec 10401; field: §12.4, §12.6
+D-398 §13.4 at spec 10386; field: §12.1, §12.4
+D-401 §13.2 at spec 10170; field: §12.2
+D-406 §13.3 at spec 10227,10241,10267; field: §11.2, §11.6, §14.4, §14.7, Appendix C
+D-406 §13.5 at spec 10755; field: §11.2, §11.6, §14.4, §14.7, Appendix C
+D-407 §13.3 at spec 10227; field: §11.2, Appendix B
