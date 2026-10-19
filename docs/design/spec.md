@@ -11665,8 +11665,9 @@ sides restated as a resolver property.
   needing an undeclared intermediate has one remedy, and it is the same for
   every client. The component exports it ([§14.7][s14-7]).
 - **Inspection readers admit the whole family, within the source rule.**
-  Output-[device](#g-device) bindings, GUI panels and log inspection take deep
-  paths, `get_face` names and leaf addresses alike. The store selectors reach only the
+  Output-[device](#g-device) bindings, log extraction by `series` and snapshot
+  inspection take deep paths, `get_face` names and leaf addresses alike
+  ([D-406][d-406], [D-407][d-407], [D-414][d-414]). The store selectors reach only the
   inspection clients that actually hold stores (`checkpoint`, post-run
   inspection). A snapshot-bound reader is barred from them by source, not by
   client.
