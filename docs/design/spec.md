@@ -13183,7 +13183,7 @@ return law, [§5.2][s5-2]). There is no padding. `x` comes back complete, and
   ([§13.5][s13-5]). Shutdown completes a boundary,
   publishes the final snapshot, then joins ([§12.4][s12-4]).
 - Post-run. The log is the retained snapshots. `series(sim, read_set) →
-  series` gathers them into labeled columns through the read-selector
+  ts` gathers them into labeled columns through the read-selector
   family, one typed vector per entry beside `t`, frame and boundary
   ([§11.2][s11-2], [D-407][d-407]). `trace(sim) → trc` retrieves
   the always-on input trace.

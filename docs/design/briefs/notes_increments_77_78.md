@@ -305,3 +305,14 @@ The arc is e297652 and 21b8793 over 63b00cb, unpushed.
 - `examples/test/runtests.jl`: the two helpers as `series` calls, every
   pin's value kept.
 - The `_mount` ruling above, and the two items left open.
+
+## After increment 78's arc
+
+- **`series(sim, other)` refuses a bare NamedTuple as `ReadSetMisuse`**
+  with `:not_a_read_set`, the reviewer's first item, landed as a loose fix
+  with one pin: the read side's §14.2 misuse is refused by name at every
+  other site (`_compile_reads`, `taps`, trim), and a `MethodError` there
+  would have been the one exception.
+- **Appendix B's row names the value `ts`**, not `series`, the reviewer's
+  second item, so the function and its value no longer share a spelling,
+  as `trace(sim) → trc` keeps them apart. A docs commit.
