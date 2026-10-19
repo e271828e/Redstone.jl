@@ -208,3 +208,100 @@ The arc is 9e9782b, a630dea and 22ef32c over 1cba470, unpushed.
   observe since every state candidate list in the suite is one name or
   sorted already. A loose fix if wanted, outside both increments.
 - **Brief 78 recounted at 997766b** before its launch, as its head says.
+
+## Increment 78's arc
+
+Run on 2026-10-19 by a third session, from the brief, with the user away.
+The baseline gate at 63b00cb passed 6505 assertions on Julia 1.13.1, the
+floor. Nothing was pushed.
+
+### Stage 1, e297652: the series
+
+The gate green at 6543 against 6505, the 38 new assertions all in
+`test/test_log.jl`; the examples' runner green at 73. The stage's judgment
+calls, each accepted as routine:
+
+- **The specialization pins use `specialization_counts`**, the helper
+  `test/test_build.jl` already defines, since `Base.specializations` takes
+  a `Method` on 1.13.1, not a function. They pin deltas across calls, not
+  absolute counts, which depend on what ran earlier in the process.
+  Probed: `series` holds at one instance per `Simulation` type across new
+  labels, a new order and a new entry of a seen type; `_column` grows by
+  one per new leaf type or chain. Without `@nospecialize` the relabel calls
+  took `series` from one to three.
+- **`port` and `logged` left the examples' import** once `series` replaced
+  both comprehensions; the brief said only that three names join.
+- **`logged_times` became `series(sim, reads()).t`**, since an empty read
+  set resolves, as the brief allowed.
+- **The mount test uses `fed(Plant(), "u")` at `"c"`**, the brief's pattern
+  on an existing fixture, not the prototype's aircraft.
+
+### The cold review
+
+Nothing blocking. The gate green at 6543 in the real tree on 1.13.1, the
+examples green. The brief's six mutants all died on a scratch worktree:
+`Vector{Any}` columns (the type pins), the default source (`get_state`
+resolves and `_column` errors), the dropped gate (the `op === :series`
+pin), `boundary` from `frame` (the t* run's `[0,1,2,3,4,4,5]` frames
+against `0:6` boundaries), `@nospecialize` dropped from `series` (the
+count pins), and sorted keys (`(:power, :q, :input)`). D-407's four rulings
+were each probed and hold. Latency in a fresh process on the examples'
+closed loop, 24001 snapshots: a repeated set 1.2 to 1.6 ms; a new label
+set over seen entries 11 to 12 ms; a new leaf type 26 ms; a new chain 18
+to 19 ms; the first call 66 ms.
+
+Three findings ruled "fix" and landed by the fixer:
+
+1. **`_mount` was still specialized on the `Reads` type**, so a new label
+   set paid about 10 ms of compilation there. D-407 says labels reach no
+   compiled body, and `_mount` is a second instance of the principle the
+   brief's grep missed; its two callers are setup, never hot. One
+   `@nospecialize`, and `implementation.md`'s readers.jl entry names it.
+   The brief's "12 ms without" was measured before this site was seen;
+   D-407's "a few milliseconds" is the ruling and now holds.
+2. **`Series` sat after `ServiceLifecycle` in `test/imports.jl`**; ASCII
+   order puts it before. The brief's "before `Simulation`" admitted both.
+3. **The test local `stamps` held a whole `Series`**; renamed for what it
+   holds.
+
+One accepted survivor: dropping both resolver `@nospecialize` passes
+`log readers`, since the only effect is latency and the keyword methods'
+specializations sit on their body functions, out of
+`specialization_counts`'s reach. A timing pin would be flaky.
+
+Two items left for the user:
+
+- **`series(sim, (; y = …))` raises a bare `MethodError`**, since the
+  signature requires `Reads`, where `taps` reports `ReadSetMisuse` and trim
+  `TrimProblemInvalid(:not_a_read_set)`. The brief gave the signature and
+  no spec line mandates the misuse for `series`; the fix would be a
+  `series(::Simulation, other)` method throwing
+  `ReadSetMisuse(observed = typeof(other), reason = :not_a_read_set)` plus
+  one pin, a loose fix if wanted.
+- **Appendix B's row writes `series(sim, read_set) → series`**, naming the
+  value as the function where `trace(sim) → trc` does not. A spec edit,
+  outside the increment.
+
+### The fix, 21b8793
+
+The three findings in one commit over `src/readers.jl`,
+`docs/design/implementation.md`, `test/imports.jl` and `test/test_log.jl`.
+The gate green at 6543 in the real tree, the examples green. A new label
+set over seen entries measured 4.9 to 5.1 ms in a fresh process after the
+change, of which 3.3 to 3.8 ms is compilation, against 12 ms before. The
+reviewer verified the delta.
+
+### What the user should diff-verify
+
+The arc is e297652 and 21b8793 over 63b00cb, unpushed.
+
+- `git show e297652 -- src/sim.jl`: the `series` block against the
+  prototype, and that the NamedTuple is built last from the runtime
+  labels.
+- `git show e297652 -- src/readers.jl src/linearize.jl`: the two
+  `@nospecialize` and `_resolved_type`'s move, unchanged.
+- `test/test_log.jl` at e297652: the pins' values against D-407's
+  rulings, the specialization deltas included.
+- `examples/test/runtests.jl`: the two helpers as `series` calls, every
+  pin's value kept.
+- The `_mount` ruling above, and the two items left open.
