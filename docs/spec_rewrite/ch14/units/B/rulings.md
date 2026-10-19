@@ -198,3 +198,11 @@ keeps it. R18: D-067's four bolds stand. R19: D-276 bullets 1–4 each take one
 bold in §14.4, since a grep of the frozen spec finds them bold nowhere else.
 The binding read (bullet 5) and wiring (bullet 7) stay plain. R20: the M5
 merge stands. None remain open.
+
+## After verification
+
+The verifier's fixes are applied: C-029, C-064, C-078, D-125 at the
+export-chain sentence, D-316 beside D-060, and the bolds moved for D-276
+bullet 3 and D-095. R31 to R35 and R37 are applied. Corrections 1 to 3 above
+are settled by R32, R31 and R33. The eight undefined reference links are for
+landing.

@@ -31,8 +31,8 @@ prefix beside a node) passes it through untouched ([D-118][d-118]).
 [Worked](#g-worked), the cruise case of Flight.jl's Cessna 172 model
 (`c172.jl`) reduces to its three-equation core. The real problem is the same
 shape with the full 7-variable search, and the θ-constraint elimination
-survives inside `trim_condition`, the worked problem's illustrative condition
-function.
+survives inside its condition function, which the worked problem calls
+`trim_condition`.
 
 ```julia
 cruise = TrimProblem(
@@ -81,9 +81,9 @@ pure `trim_condition(ac, params, d)` [fragment](#g-fragment)-tree function
 
 #### Reads
 
-**The read side is declared, then compiled** ([D-069][d-069]). The spelling is
-`reads(name = get_state(path, leaf) | get_deriv(path, leaf) |
-get_output(path, leaf) | get_input(leaf) | get_face(leaf), ...)`, the
+**The read side is declared, then compiled** ([D-069][d-069]). **The spelling
+is `reads(name = get_state(path, leaf) | get_deriv(path, leaf) |
+get_output(path, leaf) | get_input(leaf) | get_face(leaf), ...)`**, the
 service read set ([§14.4][s14-4], [D-124][d-124]). Each `leaf` is a
 [leaf address](#g-leaf-address) (the field name with dotted and bracketed
 steps below it). `get_state` and `get_deriv` address a declared state field
@@ -130,7 +130,7 @@ function building a field handle from the component and input values) that
 builds such a handle, and [§14.1][s14-1] the pre-sweep doctrine. The problem
 *receives* the environment, and never writes it ([§14.9][s14-9]).
 
-The returned NamedTuple's names are the equation names the report and the
+**The returned NamedTuple's names are the equation names** the report and the
 failure messages use ([D-118][d-118]). The service packs residuals and
 tolerances to the solver's vector by field order. The order is `tolerances`'
 field order, the declared side again, canonical for the r-side. Each residual
@@ -171,7 +171,7 @@ they carry no information for it ([D-262][d-262]).
 user math** ([D-069][d-069]). That core is analytic elimination, namely
 FlightPhysics' `θ_constraint` substituting the pitch constraint, filter and
 actuator equilibria imposed by construction, and the minimal 7-variable
-search.
+search over `c172.jl`'s `TrimState`.
 
 What changes is the numerics. Trim is a square root-find. The Cessna 172
 model's derivative-free scalar minimization over $\|r\|^2$ against a hand-scaled
@@ -229,7 +229,7 @@ scalar type) at `Float64` ([D-319][d-319]). A `Model` at another scalar is
 refused as `ArgumentInvalid` with reason `:non_nominal` ([D-319][d-319]). A
 model that a simulation has claimed is refused before any check, as
 `ArgumentInvalid` with reason `:claimed`, since the call commits
-([D-319][d-319]). The `baseline` keyword takes a [baseline](#g-baseline) (an
+([D-318][d-318], [D-319][d-319]). The `baseline` keyword takes a [baseline](#g-baseline) (an
 aircraft-shipped, full-coverage condition function). `trim!(sim, problem; …)`
 gates on the simulation's lifecycle and commits through the simulation's
 `init!`.
@@ -317,8 +317,8 @@ eliminated is per-backend meanings of `converged`.
 
 **Box bounds are honored by step projection** ([D-070][d-070]). A decision
 variable saturated *at the solution* is listed in the report's saturated list,
-as `(:elevator, :upper)`. That is the classic CG-limit diagnostic, which
-Flight.jl's trim leaves inferable only from mysterious residuals.
+as `(:elevator, :upper)`. That is the classic CG-limit diagnostic (CG is the
+center of gravity), which Flight.jl's trim leaves inferable only from mysterious residuals.
 
 #### Scratch stores
 
@@ -370,8 +370,8 @@ No scratch cell holds the [probe](#g-probe)'s synthesized values. That is the
 reach the published one. The iterations are untouched. They are raw write →
 sweep → read cycles at the seeded activation, over the continuous chain and
 `x_deriv` alone ([§14.5][s14-5]). The zero-decision problem (below) is the
-nominal half alone. Its one evaluation is that establishment round, followed
-by one derivative evaluation for the reads ([D-213][d-213]).
+nominal half alone ([D-213][d-213]). Its one evaluation is that establishment
+round, followed by one derivative evaluation for the reads.
 
 The commit applies the same composite over the same `baseline`
 (`override(baseline, condition(d*))`, [§14.9][s14-9]), so its coverage is

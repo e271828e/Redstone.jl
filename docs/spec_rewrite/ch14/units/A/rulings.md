@@ -48,9 +48,10 @@ All three are ruled as R27 and applied in new.md.
   §12.6 bolds "`errored` is terminal" on D-059 (9429). D-108 stays.
 - [D-232][d-232] at the post-mortem read: Position, "The stopped-sim reads
   stay admitted there: post-mortem inspection is reading."
-- [D-274][d-274] at "It may not become a checkpoint": bullet 2,
-  "`checkpoint(sim)` is a stopped-sim service …: legal in `initialized` and
-  `stopped`".
+- [D-108][d-108], [D-274][d-274] at "It may not become a checkpoint": D-108
+  Rationale, "post-mortem stores/log/trace stay readable as diagnostics,
+  never as condition values"; D-274 bullet 2, "`checkpoint(sim)` is a
+  stopped-sim service …: legal in `initialized` and `stopped`".
 - [§12.6][s12-6], [Appendix C][sC] at the added `CheckpointMidFrame`
   sentence: §12.6 9540–9545, "It is refused wherever the executor is not at
   the rest a published frame top leaves (`CheckpointMidFrame`, …). That is
@@ -96,8 +97,6 @@ All three are ruled as R27 and applied in new.md.
   below it." It was cited at the paragraph's last sentence.
 - [D-065][d-065] at the locality law's headline: Position, "locality law =
   §6.1's, third instance (own fields, declared children, own faces …)".
-- [D-064][d-064] at "Delegation runs by dispatch at every genericity seam":
-  Position, "dispatched on component types".
 - [D-414][d-414] at the family-dispatch sentence: bullet 4, "An author
   scopes a fragment's or a problem's applicability by dispatch on the
   holding's type parameter".
@@ -164,7 +163,9 @@ rulings; D-273's second sentence (the state past `t₀` is a checkpoint), whose
 §14.1 sentence cites D-274, the checkpoint's own entry. D-063's first
 ruling is bold at the overlay base, not at the earlier sentences on what a
 condition may specify: the base is what its Rejected list decides against
-the current-stores base, and §14.3 calls it "the overlay-base rule".
+the current-stores base, and §14.3 calls it "the overlay-base rule". Its second ruling, "never outputs or workspace", a separate
+semicolon clause of the Position, is bold once at "It never specifies
+outputs"; the workspace half cites D-306 plain.
 
 ## Inbound citations affected
 
@@ -192,6 +193,17 @@ None breaks. Every move stays inside its section.
   §14.1.
 - spec 14779–14780 (glossary `#g-service-lifecycle`, "all four services"):
   the opening names five; the brief lists it for landing (R1).
+
+## Rulings after verification
+
+- R35: §14.2's construction clause in the `assign!` sentence is scoped to
+  literal prefixes.
+- R36: F8's sentence adds "and `override` builds a fourth kind
+  ([§14.6][s14-6])".
+- R37: §14.3 states both plans' contents, the `lens` gloss included.
+- Verifier fixes: the D-316 "because" restored; D-108 added beside D-274;
+  the D-064 citation at "Delegation runs by dispatch" dropped; the quoted
+  message introduced by "It reads".
 
 ## Open questions
 

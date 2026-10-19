@@ -46,7 +46,7 @@ No service accepts an `errored` simulation ([§12.6][s12-6], [D-108][d-108]).
 Post-mortem inspection of an errored sim's stores, log and
 [trace](#g-trace) (the primary record of a session) stays available as a
 diagnostic read ([D-232][d-232]). It may not become a checkpoint
-([D-274][d-274]).
+([D-108][d-108], [D-274][d-274]).
 
 A violation is `ServiceLifecycle` ([Appendix C][sC], [D-108][d-108]). Its
 payload is the operation, the current status and the legal statuses. It is the
@@ -147,8 +147,8 @@ node of the condition algebra, built by `set`) ([D-405][d-405]). The generic
 is framework-owned so that an owner's pull, described below, reaches a
 child's fragment when the two live in different packages. A model package
 extends it through `import Redstone: condition`, as it extends the declaration
-family ([§8.1][s8-1]). No shadowing check covers it. A method written to a
-foreign `condition` fails loudly at the owner's pull, as a `MethodError`
+family ([§8.1][s8-1]). No shadowing check covers it, because a method written
+to a foreign `condition` fails loudly at the owner's pull, as a `MethodError`
 naming the child ([D-316][d-316]). In the first block, the engine is an
 illustrative component named after FlightPhysics' `PistonEngine`, and `Phase`
 an illustrative enum of its modes.
@@ -188,9 +188,10 @@ Dispatch selects variant-specific methods, so the actuation split between
 FlightApps' C172 variants, c172s and c172x, costs no upstream edits.
 
 **Composition builds an inert, lazy [fragment tree](#g-fragment-tree)**
-([D-065][d-065]). `set` builds the leaf, and `at` and
-[`combine`](#g-combine) (the symmetric, collision-intolerant combinator)
-build the tree's inner nodes. No path arithmetic happens at composition.
+([D-065][d-065]). `set` builds the leaf, `at` and [`combine`](#g-combine)
+(the symmetric, collision-intolerant combinator) build the tree's inner nodes,
+and `override` builds a fourth node type ([§14.6][s14-6]). No path arithmetic
+happens at composition.
 
 ```julia
 struct Fragment{X,S,M,L}  x::X; s::S; m::M; u::L  end      #set(; x, s, m, u): self-vocabulary payloads; no paths
@@ -207,9 +208,9 @@ operand is a node, and each `at` prefix is nonempty. A `set` payload that is
 not a NamedTuple is `ConditionNodeMisuse` with reason `:set_payload`
 ([Appendix C][sC]). The trim of Flight.jl's Cessna 172 model (`c172.jl`)
 writes each trial state through FlightPhysics' `assign!`, and the zero-alloc
-property of that `assign!` loop
-holds of the construction and of the specialized `apply!` that writes the
-tree ([§14.4][s14-4]) alike. An evaluation's cost is therefore the sweep it
+property of that `assign!` loop holds of the construction with literal
+prefixes and of the specialized `apply!` that writes the tree ([§14.4][s14-4])
+alike. An evaluation's cost is therefore the sweep it
 feeds.
 
 **`at` refuses an empty prefix when it is called** ([D-278][d-278]). An empty
@@ -224,8 +225,8 @@ before any resolution pass runs. The read side's lifts refuse the same way
 in its third instance ([D-065][d-065]). The three instances are
 [local wires](#g-local-wire), computed interface connections and conditions.
 Each level speaks its own fields, its declared children's names, and its own
-faces. Delegation runs by dispatch at every genericity [seam](#g-seam)
-([D-064][d-064]). An `at` prefix may stop at *any* child's faces, owned or
+faces. Delegation runs by dispatch at every genericity [seam](#g-seam). An
+`at` prefix may stop at *any* child's faces, owned or
 [generically held](#g-generic-holding), because the face graph is total
 ([D-207][d-207]). A deep `at` or condition path resolves wherever the
 structure has it ([§13.3][s13-3], [D-414][d-414]). Absolute paths exist only
@@ -248,7 +249,7 @@ blocks of [§13.7][s13-7] are ordinary components.
 A `combine` collision is two condition entries on one leaf. **Collisions are
 errors at resolution** ([D-065][d-065]). The error is `DuplicateConditionLeaf`
 ([Appendix C][sC]), and it reports *both* origins. Its message names the
-layering combinator, "`combine` is collision-intolerant by design — use
+layering combinator. It reads "`combine` is collision-intolerant by design — use
 `override(base, patch)` to layer." Last-writer-wins was rejected
 ([D-065][d-065]). That rejection is also why **the combinator is not
 `Base.merge`**, and is no longer named after it ([D-204][d-204]). `Base.merge`
@@ -262,7 +263,7 @@ method. Its message is directive. It says to wrap the NamedTuple in `set(…)`
 (or `at(prefix, set(…))`) and to combine nodes with nodes. The rejection
 carries a [kind](#g-kind) like every other. **It is `ConditionNodeMisuse`**
 ([Appendix C][sC], [D-113][d-113]), carrying the offending argument's type and
-the node kinds in hand. It is raised at composition time, before any
+the node types in hand. It is raised at composition time, before any
 resolution pass runs or any origin exists. That is why it is its own kind and
 not a `ConditionResolution` sub-kind ([§14.3][s14-3]). The explicit,
 *ordered* layering spelling, [`override`](#g-override), belongs with the use
@@ -311,8 +312,10 @@ every activation ([§9.1][s9-1], [D-253][d-253]).
 
 A valid list of condition entries compiles two ways ([§14.4][s14-4]). The
 specialized `apply!`'s plan holds, per leaf, a [lens](#g-lens) (the compiled
-navigation step of a condition entry), a destination and a converter. The lens is the position tuple lifted to a type parameter, so
-navigation of the fixed tree type is type-stable.
+navigation step of a condition entry), a destination and a converter. The
+dynamic walk's plan holds the converted values themselves. The lens is the
+position tuple lifted to a type parameter, so navigation of the fixed tree
+type is type-stable.
 
 **The converter is baked now, selected per leaf from that leaf's type in the
 resolved shape** ([D-065][d-065], [D-148][d-148]). Leaf types are shape facts,

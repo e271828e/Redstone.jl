@@ -158,11 +158,11 @@
   {
    "id": "C-017",
    "old": "The real problem is the same shape with the full 7-variable search, and the θ-constraint elimination survives inside `trim_condition`.",
-   "new": "The real problem is the same shape with the full 7-variable search, and the θ-constraint elimination survives inside `trim_condition`",
+   "new": "The real problem is the same shape with the full 7-variable search, and the θ-constraint elimination survives inside its condition function, which the worked problem calls `trim_condition`.",
    "where": "new",
    "cites": [],
    "tag": "F",
-   "note": "TrimState <: AbstractTrimState{7} in c172.jl has seven fields"
+   "note": "verify (C-017): the real problem's elimination lives in its own condition function, and `trim_condition` is the worked problem's name for it; trim_condition exists nowhere in Flight.jl. TrimState <: AbstractTrimState{7} in c172.jl has seven fields"
   },
   {
    "id": "C-018",
@@ -341,8 +341,9 @@
     "D-124",
     "§14.4"
    ],
-   "tag": "C",
-   "note": "D-124 Position, \"§14.7's reads grammar widens to the full service set (D-095's four plus D-125's get_face) with per-selector validation targets\""
+   "tag": "R",
+   "ruling": "R39",
+   "note": "R39: bold on the headline clause; D-124's Position is a ruling of its own, §14.7 its home, and no section of the frozen spec bolds it. D-124 Position, \"§14.7's reads grammar widens to the full service set (D-095's four plus D-125's get_face) with per-selector validation targets\""
   },
   {
    "id": "C-035",
@@ -659,12 +660,12 @@
   {
    "id": "C-065",
    "old": "`θ_constraint` substituting the pitch constraint, filter and actuator equilibria imposed by construction, and the minimal 7-variable search.",
-   "new": "FlightPhysics' `θ_constraint` substituting the pitch constraint, filter and actuator equilibria imposed by construction, and the minimal 7-variable search.",
+   "new": "FlightPhysics' `θ_constraint` substituting the pitch constraint, filter and actuator equilibria imposed by construction, and the minimal 7-variable search over `c172.jl`'s `TrimState`.",
    "where": "new",
    "cites": [],
    "tag": "R",
-   "ruling": "R12",
-   "note": "owner named; checked ~/.julia/dev/Flight.jl/lib/FlightPhysics/src/aircraftbase.jl line 110, `function θ_constraint(; v_wb_b, γ_wb_n, φ_nb)`"
+   "ruling": "R39",
+   "note": "R39 (R23): the search's owner is c172.jl's `TrimState <: AbstractTrimState{7}` (lib/FlightApps/src/c172/c172.jl 796). R12, owner named; checked ~/.julia/dev/Flight.jl/lib/FlightPhysics/src/aircraftbase.jl line 110, `function θ_constraint(; v_wb_b, γ_wb_n, φ_nb)`"
   },
   {
    "id": "C-066",
@@ -1032,8 +1033,9 @@
    "newcites": [
     "D-118"
    ],
-   "tag": "C",
-   "note": "M51; D-118 Position, \"Returned names are the report's equation names\""
+   "tag": "R",
+   "ruling": "R39",
+   "note": "R39: bold on the headline clause; D-118 Position's third sentence, its own ruling before the semicolon, §14.7 its home, bold nowhere in the frozen spec. M51; D-118 Position, \"Returned names are the report's equation names\""
   },
   {
    "id": "C-100",
@@ -1654,12 +1656,12 @@
   {
    "id": "C-166",
    "old": "That is the classic CG-limit diagnostic, today inferable only from mysterious residuals.",
-   "new": "That is the classic CG-limit diagnostic, which Flight.jl's trim leaves inferable only from mysterious residuals.",
+   "new": "That is the classic CG-limit diagnostic (CG is the center of gravity), which Flight.jl's trim leaves inferable only from mysterious residuals.",
    "where": "new",
    "cites": [],
    "tag": "R",
    "ruling": "R12",
-   "note": "\"today\" is Flight.jl's: c172.jl's trim returns (success, trim_state) with no saturation report (~/.julia/dev/Flight.jl/lib/FlightApps/src/c172/c172.jl 931–939)"
+   "note": "verify: CG glossed as a reader-cold aerospace term; \"today\" is Flight.jl's: c172.jl's trim returns (success, trim_state) with no saturation report (~/.julia/dev/Flight.jl/lib/FlightApps/src/c172/c172.jl 931–939)"
   },
   {
    "id": "C-167",
@@ -1973,22 +1975,29 @@
   {
    "id": "C-199",
    "old": "The zero-decision problem (below) is the nominal half alone,",
-   "new": "The zero-decision problem (below) is the nominal half alone.",
+   "new": "The zero-decision problem (below) is the nominal half alone (D-213).",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "newcites": [
+    "D-213"
+   ],
+   "tag": "C",
+   "note": "verify (V188): D-213 now sits on what it carries, Rationale \"the zero-decision probe falls out as the nominal half alone\""
   },
   {
    "id": "C-200",
    "old": "and its one evaluation is that establishment round (D-213).",
-   "new": "Its one evaluation is that establishment round, followed by one derivative evaluation for the reads (D-213).",
+   "new": "Its one evaluation is that establishment round, followed by one derivative evaluation for the reads.",
    "where": "new",
    "cites": [
     "D-213"
    ],
+   "newcites": [
+    "D-213"
+   ],
    "tag": "R",
    "ruling": "R9",
-   "note": "F56's omission at this site: setup runs `nominal_exec.bodies.rhs()` after the establishment round and before the gather (src/trim.jl 484–486)"
+   "note": "verify (V188): D-213 moved to the previous sentence, the paragraph keeping it; F56's omission at this site: setup runs `nominal_exec.bodies.rhs()` after the establishment round and before the gather (src/trim.jl 484–486)"
   },
   {
    "id": "C-201",
@@ -2135,7 +2144,6 @@
   "That value is a `TrimProblem`.",
   "This section gives its fields, then its decisions and parameters, its reads, its residuals and checks, the formulation it encodes and its recorded extensions.",
   "#### The fields",
-  "the worked problem's illustrative condition function.",
   "#### Decisions and parameters",
   "It is an alias of StaticArrays' `FieldVector{N, Float64}`.",
   "`TrimParameters` is the struct in Flight.jl's `c172.jl` that holds a trim's targets and settings.",
@@ -2145,7 +2153,7 @@
   "#### The formulation",
   "#### Recorded extensions",
   "A `Model` at another scalar is refused as `ArgumentInvalid` with reason `:non_nominal` (D-319).",
-  "A model that a simulation has claimed is refused before any check, as `ArgumentInvalid` with reason `:claimed`, since the call commits (D-319).",
+  "A model that a simulation has claimed is refused before any check, as `ArgumentInvalid` with reason `:claimed`, since the call commits (D-318, D-319).",
   "The `baseline` keyword takes a baseline (an aircraft-shipped, full-coverage condition function).",
   "#### The convergence verdict",
   "The derivative-free fallback is designed and not yet built, and `pending.md` lists it (D-070).",

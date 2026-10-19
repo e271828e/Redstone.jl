@@ -42,25 +42,29 @@
   {
    "id": "C-005",
    "old": "Execution is therefore resolve-once/execute-many, with two ways to apply one plan.",
-   "new": "Execution is therefore resolve-once/execute-many. A valid list of condition entries compiles two ways, one for each way to apply it.",
+   "new": "Execution is therefore resolve-once/execute-many, with two ways to apply the compiled plans (§14.3).",
    "where": "new",
    "cites": [],
+   "newcites": [
+    "§14.3"
+   ],
    "tag": "R",
-   "ruling": "R9",
-   "note": "F16 amended wording, its first sentence, with 'entry list' made 'list of condition entries' (R13); the per-plan sentences sit in each bullet. Code: ConditionPlan and SpecializedPlan, src/conditions.jl 254-275, 640-707 (survey F16)"
+   "ruling": "R37",
+   "note": "verify: §14.3 (unit A) says the list compiles two ways and states both plans' contents (R37); §14.4 speaks of applying the compiled plans two ways, D-066's 'two ways to apply one compiled plan', and points to §14.3. Code: ConditionPlan and SpecializedPlan, src/conditions.jl 254-275, 640-707"
   },
   {
    "id": "C-006",
    "old": "- Specialized `apply!` serves the service that iterates, trim's per-evaluation write.",
-   "new": "- Specialized `apply!` serves the service that iterates, trim's per-evaluation write (D-066). Its plan holds, per leaf, a lens (the compiled navigation step of a condition entry), a destination and a converter.",
+   "new": "- Specialized `apply!` serves the service that iterates, trim's per-evaluation write (D-066). It applies its own plan, whose contents §14.3 gives.",
    "where": "new",
    "cites": [],
    "newcites": [
-    "D-066"
+    "D-066",
+    "§14.3"
    ],
    "tag": "R",
    "ruling": "R7",
-   "note": "list label becomes the bold headline clause of D-066's first semicolon ruling, 'specialized apply! ... for iterating services'. The plan sentence is F16's amended wording (R9); lens linked and glossed at its first use, gloss from #g-lens"
+   "note": "R37: the per-leaf lens/destination/converter sentence (F16's wording) is cut to a pointer; §14.3 (unit A) is the one home of both plans' contents and keeps the lens gloss. Earlier: list label becomes the bold headline clause of D-066's first semicolon ruling, 'specialized apply! ... for iterating services'. The plan sentence is F16's amended wording (R9); lens linked and glossed at its first use, gloss from #g-lens"
   },
   {
    "id": "C-007",
@@ -69,17 +73,17 @@
    "where": "new",
    "cites": [],
    "tag": "F",
-   "note": "store linked at its first use, no gloss"
+   "note": "store linked at its first use, no gloss; lens linked here with no second gloss (R37)"
   },
   {
    "id": "C-008",
    "old": "Those are the same machine operations as today's in-place writes: zero-alloc, no strings, no dispatch.",
-   "new": "Those are the same machine operations as FlightCore's in-place state writes, with no allocation, no strings and no dispatch.",
+   "new": "Those are the same machine operations as the in-place writes of FlightPhysics' `assign!`, with no allocation, no strings and no dispatch.",
    "where": "new",
    "cites": [],
    "tag": "R",
    "ruling": "R12",
-   "note": "'today's' names FlightCore's in-place writes to a Model's state (checked ~/.julia/dev/Flight.jl/lib/FlightCore/src/modeling.jl, Model and f_init!/f_ode! extended in place); mid-sentence colon goes"
+   "note": "verify: V10 (R23), Flight.jl's trim writes through FlightPhysics' assign! (~/.julia/dev/Flight.jl/lib/FlightPhysics/src/aircraftbase.jl 94), as §14.2 names it. Earlier: 'today's' names FlightCore's in-place writes to a Model's state (checked ~/.julia/dev/Flight.jl/lib/FlightCore/src/modeling.jl, Model and f_init!/f_ode! extended in place); mid-sentence colon goes"
   },
   {
    "id": "C-009",
@@ -176,12 +180,15 @@
   {
    "id": "C-018",
    "old": "It executes the same validated entry list by runtime dispatch per write.",
-   "new": "It executes the same validated condition entries by runtime dispatch per write, from a plan that holds the converted values themselves.",
+   "new": "It executes the same validated condition entries by runtime dispatch per write, from its own plan (§14.3).",
    "where": "new",
    "cites": [],
+   "newcites": [
+    "§14.3"
+   ],
    "tag": "R",
-   "ruling": "R9",
-   "note": "F29 (bare entry, R13) and F16's amended last sentence, 'The dynamic walk's plan holds the converted values themselves'"
+   "ruling": "R37",
+   "note": "R37: the converted-values clause is cut to a pointer to §14.3, which states the dynamic walk's plan contents (units/A/new.md). Earlier: F29 (bare entry, R13) and F16's amended last sentence, 'The dynamic walk's plan holds the converted values themselves'"
   },
   {
    "id": "C-019",
@@ -264,7 +271,7 @@
     "D-095"
    ],
    "tag": "C",
-   "note": "bold kept on D-095's one ruling, first in reading order ('spelled with a get_ prefix and completed'); the prefix sentence below cites it plain"
+   "note": "verify: the D-095 bold moves to the get_ prefix, the Position's headline; earlier: bold kept on D-095's one ruling, first in reading order ('spelled with a get_ prefix and completed'); the prefix sentence below cites it plain"
   },
   {
    "id": "C-028",
@@ -277,10 +284,11 @@
   {
    "id": "C-029",
    "old": "They form one address space for every reader of the model.",
-   "new": "They form one address space for every reader of the model.",
+   "new": "They form one address space for every reader that takes a selector.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "F",
+   "note": "verify: C-029 drift, snapshot inspection reads by path and port name (F21)"
   },
   {
    "id": "C-030",
@@ -400,7 +408,7 @@
    ],
    "tag": "R",
    "ruling": "R19",
-   "note": "bold headline of D-276 bullet 3, 'The baked read ... executes it as getfield and getindex calls unrolled at compile time', bold nowhere else; the binding read (bullet 5) stays plain with its pointers, and wiring (bullet 7) is not stated here"
+   "note": "verify: the bold moves from 'checked once and baked' to 'the read runs ... unrolled at compile time'; bold headline of D-276 bullet 3, 'The baked read ... executes it as getfield and getindex calls unrolled at compile time', bold nowhere else; the binding read (bullet 5) stays plain with its pointers, and wiring (bullet 7) is not stated here"
   },
   {
    "id": "C-041",
@@ -411,8 +419,9 @@
    "newcites": [
     "D-095"
    ],
-   "tag": "C",
-   "note": "D-095 Position: 'spelled with a get_ prefix ... a selector is a deferred read, so the prefix names the eventual action, keeps six short common nouns out of the namespace'; plain, the family's bold above carries D-095's one ruling"
+   "tag": "R",
+   "ruling": "R7",
+   "note": "verify: bold moved here, the headline of D-095's one ruling. D-095 Position: 'spelled with a get_ prefix ... a selector is a deferred read, so the prefix names the eventual action, keeps six short common nouns out of the namespace'; plain, the family's bold above carries D-095's one ruling"
   },
   {
    "id": "C-042",
@@ -489,15 +498,15 @@
   {
    "id": "C-049",
    "old": "Rule. A selector resolves against a source, before any client policy applies.",
-   "new": "A selector resolves against a source, before any client policy applies (D-098).",
+   "new": "A selector resolves against a source (D-098).",
    "where": "new",
    "cites": [],
    "newcites": [
     "D-098"
    ],
    "tag": "R",
-   "ruling": "R7",
-   "note": "Rule. label goes; bold headline of D-098's Position, 'a selector resolves against a source before any client policy'. R5 keeps the source rule as the one enforced rule"
+   "ruling": "R31",
+   "note": "R31: 'before any client policy applies' goes, since R5 leaves no client policy. Rule. label goes; bold headline of D-098's Position, 'a selector resolves against a source before any client policy'. R5 keeps the source rule as the one enforced rule"
   },
   {
    "id": "C-050",
@@ -651,9 +660,13 @@
   {
    "id": "C-063",
    "old": "`get_face` is the set's seam-crossing member. It resolves through export chains exactly as mounting (relocating a whole problem or tap set with `at(prefix, …)`) resolves root input faces (§14.9), so the read side mirrors the write side.",
-   "new": "`get_face` resolves through export chains exactly as mounting resolves root input faces (§14.9), so the read side mirrors the write side.",
+   "new": "`get_face` resolves through export chains exactly as mounting resolves root input faces (§14.9, D-125), so the read side mirrors the write side.",
    "where": "new",
    "cites": [
+    "§14.9"
+   ],
+   "newcites": [
+    "D-125",
     "§14.9"
    ],
    "tag": "R",
@@ -668,7 +681,7 @@
    "cites": [],
    "tag": "R",
    "ruling": "R5",
-   "note": "kept as guidance (R5); 'generically held' linked at first use, gloss from #g-generic-holding"
+   "note": "verify: C-064, moved after the export-chain sentence its 'therefore' follows; kept as guidance (R5); 'generically held' linked at first use, gloss from #g-generic-holding"
   },
   {
    "id": "C-065",
@@ -754,14 +767,15 @@
   {
    "id": "C-071",
    "old": "Termination is run policy over the requests the model declares, and no path selector reaches `ignore_stop_requests`.",
-   "new": "Termination is run policy over the requests the model declares, and no path selector reaches `ignore_stop_requests` (D-060).",
+   "new": "Termination is run policy over the requests the model declares, and no path selector reaches `ignore_stop_requests` (D-060, D-316).",
    "where": "new",
    "cites": [],
    "newcites": [
-    "D-060"
+    "D-060",
+    "D-316"
    ],
    "tag": "C",
-   "note": "D-060 Rejected, 'Root-type-declared policy: stopping is run policy', a clause D-316's annotation leaves standing; Rationale-only"
+   "note": "verify: D-316 added for the second clause (the ignore list addresses the roster, reads no cell). D-060 Rejected, 'Root-type-declared policy: stopping is run policy', a clause D-316's annotation leaves standing; Rationale-only"
   },
   {
    "id": "C-072",
@@ -825,14 +839,14 @@
   {
    "id": "C-078",
    "old": "They are the user fragment math (the domain computations unchanged from today, plus the tree's few boxes, §14.2), the leaf stores, the folded shape check, and the sweep.",
-   "new": "They are the user fragment math, the leaf stores, the folded shape check and the sweep (one pass through the execution order against the current state). The fragment math is the domain computations, unchanged from Flight.jl's, plus building the tree, which allocates nothing (§14.2).",
+   "new": "They are the user fragment math, the leaf stores, the folded shape check and the sweep (one pass through the execution order against the current state). The fragment math is the domain computations, unchanged from Flight.jl's, plus building the tree, which with literal prefixes allocates nothing (§14.2).",
    "where": "new",
    "cites": [
     "§14.2"
    ],
    "tag": "R",
-   "ruling": "R9",
-   "note": "M3 move; F9(c) 'plus building the tree, which allocates nothing'; R12 'today' becomes Flight.jl's (the domain math of Flight.jl's FlightPhysics and FlightApps models); sweep linked and glossed at its first true use (#g-sweep)"
+   "ruling": "R35",
+   "note": "verify: C-078, R35 adds 'with literal prefixes' as §14.2 scopes it; M3 move; F9(c) 'plus building the tree, which allocates nothing'; R12 'today' becomes Flight.jl's (the domain math of Flight.jl's FlightPhysics and FlightApps models); sweep linked and glossed at its first true use (#g-sweep)"
   },
   {
    "id": "C-079",
@@ -1445,12 +1459,12 @@
   {
    "id": "C-143",
    "old": "Today's hand-written trim asserts (`!stall`, no weight-on-wheels, `ω > ω_idle`) become the model's own event logic, surfaced through the ordinary machinery instead of `@assert`.",
-   "new": "The hand-written trim asserts of Flight.jl's Cessna 172 models (`!stall`, no weight-on-wheels, `ω > ω_idle`) become the model's own event logic, surfaced through the ordinary machinery instead of `@assert`.",
+   "new": "The hand-written trim asserts of Flight.jl's Cessna 172 models (no weight-on-wheels, `ω > ω_idle`) become the model's own event logic, surfaced through the ordinary machinery instead of `@assert`.",
    "where": "new",
    "cites": [],
    "tag": "R",
-   "ruling": "R12",
-   "note": "owner checked: ~/.julia/dev/Flight.jl/lib/FlightApps/src/c172/c172s/c172s.jl 256-257 and c172x/c172x.jl 317-318 (the weight-on-wheels and ω_idle asserts after f_init!); see rulings on !stall"
+   "ruling": "R32",
+   "note": "R32: `!stall` goes, since c172s.jl 244 sets stall = false and asserts nothing of it. R12: owner checked: ~/.julia/dev/Flight.jl/lib/FlightApps/src/c172/c172s/c172s.jl 256-257 and c172x/c172x.jl 317-318 (the weight-on-wheels and ω_idle asserts after f_init!); see rulings on !stall"
   },
   {
    "id": "C-144",
@@ -1667,10 +1681,12 @@
   {
    "id": "C-165",
    "old": "That is one class, one mechanism and one kind.",
-   "new": "That is one class, one mechanism and one kind.",
+   "new": "That is one group of sites, one mechanism and one kind.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "R",
+   "ruling": "R33",
+   "note": "R33: class is reserved; the count stays"
   },
   {
    "id": "C-166",
@@ -1854,15 +1870,15 @@
   {
    "id": "C-185",
    "old": "The collision is the intent. Hence the fourth node kind, `override(base, patch)`.",
-   "new": "The collision is the intent, and the fourth node kind, `override(base, patch)`, exists for it (D-068).",
+   "new": "The collision is the intent, and the fourth node type, `override(base, patch)`, exists for it (D-068).",
    "where": "new",
    "cites": [],
    "newcites": [
     "D-068"
    ],
    "tag": "R",
-   "ruling": "R7",
-   "note": "the bold term becomes the bold headline of D-068 bullet 3, 'override(base, patch) is admitted as the fourth node kind'; 'Hence' goes so the rule is not a consequence; override linked at its first prose use, no gloss (the next sentences define it)"
+   "ruling": "R38",
+   "note": "R38: node kind becomes node type, kind being reserved. R7: the bold term becomes the bold headline of D-068 bullet 3, 'override(base, patch) is admitted as the fourth node kind'; 'Hence' goes so the rule is not a consequence; override linked at its first prose use, no gloss (the next sentences define it)"
   },
   {
    "id": "C-186",
@@ -1924,6 +1940,6 @@
   "The section gives the two ways, then the read-selector family.",
   "#### Applying a plan",
   "An inspection read, a binding's or `series`', may name any cell the structure has, since it promises nothing beyond this build (D-083).",
-  "Both resolve under the one service walk (§13.3)."
+  "Both reads resolve under the one service walk (§13.3)."
  ]
 }

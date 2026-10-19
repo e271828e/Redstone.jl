@@ -272,3 +272,32 @@ words). Survey 2.
   item 3, the §14.3 sentence that compiles two ways and points to §14.4.
   Apply item 1, §9.6 previewing trim and linearization, as §9.6 opens. Apply
   item 2, the lifecycle table's em dash removed.
+- R28 reaches units G, not this one; see brief.md.
+- R29 reaches units G, H, not this one; see brief.md.
+- R30 reaches units G, not this one; see brief.md.
+- R31 reaches units B, not this one; see brief.md.
+- R32 reaches units B, not this one; see brief.md.
+- R33 reaches units B, not this one; see brief.md.
+- R34 reaches units B, not this one; see brief.md.
+- **R35. The ledger's allocation scope** (unit B's verifier, open question 5;
+  units A, B). F9 scopes "allocates nothing" to literal prefixes; C-078's
+  ledger clause takes the same qualifier.
+- **R36. `override` among the node builders** (unit A's verifier, open
+  question 1; unit A). F8's sentence names `set`, `at` and `combine`, and
+  `override` builds the fourth node kind §14.6 introduces. The sentence
+  gains a pointer clause, "and `override` builds a fourth kind
+  ([§14.6][s14-6])", so §14.2 defines nothing §14.6 owns.
+- **R37. One home for the two plans' contents** (unit A's verifier, open
+  question 2; units A, B). §14.3 is where the entry list compiles, so it
+  states both plans' contents once: per leaf, the specialized `apply!`'s
+  plan holds a lens, a destination and a converter, and the dynamic walk's
+  plan holds the converted values themselves. The `lens` gloss stays there.
+  §14.4 states which plan each way applies and points to §14.3 for their
+  contents, with no second gloss of `lens`. R27's sentence and F16's
+  amended wording in §14.4 conform.
+- **R38. *Node type*, not *node kind*** (unit A's verifier, re-check of R36;
+  units A, B). *Kind* is reserved for diagnostic kinds, and R36's dictation
+  broke that rule. Every *node kind* in the chapter becomes *node type*: R36's
+  clause ("and `override` builds a fourth node type"), §14.2's misuse payload
+  ("the node types in hand", old 11471 area) and §14.6's "the fourth node
+  type" (old 11841 area), whose bold stays on its clause.

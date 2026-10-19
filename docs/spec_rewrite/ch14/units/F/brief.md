@@ -203,7 +203,7 @@ The orchestrator's, outside the chapter, in step 7:
   pointer after F64.
 - `README.md`'s carried items for chapter 14 are struck. Appendix B's and
   C's rows this chapter found stale (survey 2's part E closing list, F5's
-  `ReadSetMisuse`, F8's `ConditionNodeMisuse`, F11's
+  `ReadSetMisuse`, F8's and R38's `ConditionNodeMisuse`, F11's
   `DuplicateConditionLeaf`, F53's `TapResolution`, F71's `ArgumentInvalid`)
   join the appendices' carried list, and `linearization_walkthrough.md` 572
   joins the companions'.
@@ -301,3 +301,23 @@ words). Survey 2.
 - R24 reaches units H, not this one; see brief.md.
 - R25 reaches units H, not this one; see brief.md.
 - R26 reaches units H, not this one; see brief.md.
+- R27 reaches units A, not this one; see brief.md.
+- R28 reaches units G, not this one; see brief.md.
+- R29 reaches units G, H, not this one; see brief.md.
+- R30 reaches units G, not this one; see brief.md.
+- R31 reaches units B, not this one; see brief.md.
+- R32 reaches units B, not this one; see brief.md.
+- R33 reaches units B, not this one; see brief.md.
+- R34 reaches units B, not this one; see brief.md.
+- R35 reaches units A, B, not this one; see brief.md.
+- R36 reaches units A, not this one; see brief.md.
+- R37 reaches units A, B, not this one; see brief.md.
+- R38 reaches units A, B, not this one; see brief.md.
+- **R39. Unit F's verifier questions** (unit F's verifier, open questions
+  1 to 3; unit F). Questions 1 and 2 are R7's test: D-124's widened `reads`
+  grammar and D-118's "returned names are the report's equation names" each
+  take one bold if the entry's Position states it as a ruling of its own,
+  §14.7 is where the spec states it, and no other section of the frozen spec
+  bolds it; otherwise they stay plain. Question 3 is R23's: the 7-variable
+  search names the owner the Flight.jl source shows, `c172.jl`'s
+  `TrimState`.

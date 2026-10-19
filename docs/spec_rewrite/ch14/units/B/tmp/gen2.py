@@ -10,11 +10,11 @@ C("A continuous state field is flat (§7.1), so `get_deriv`, and `get_state` on 
   new="`get_deriv`, and `get_state` on the continuous tier, take at most an index step, since a continuous state field is flat (§7.1, D-276).",
   tag="R", ruling="R19", newcites="§7.1 D-276", note="bold headline of D-276 bullet 4 and its 2026-09-30 annotation; rule first, reason after; bold nowhere else in the frozen spec")
 F(38)
-F(39, tag="R", ruling="R19", note="bold headline of D-276 bullet 3, 'The baked read ... executes it as getfield and getindex calls unrolled at compile time', bold nowhere else; the binding read (bullet 5) stays plain with its pointers, and wiring (bullet 7) is not stated here")
+F(39, tag="R", ruling="R19", note="verify: the bold moves from 'checked once and baked' to 'the read runs ... unrolled at compile time'; bold headline of D-276 bullet 3, 'The baked read ... executes it as getfield and getindex calls unrolled at compile time', bold nowhere else; the binding read (bullet 5) stays plain with its pointers, and wiring (bullet 7) is not stated here")
 C("The names carry a deliberate `get_` prefix.",
   new="The names carry a deliberate `get_` prefix (D-095).",
-  tag="C", newcites="D-095",
-  note="D-095 Position: 'spelled with a get_ prefix ... a selector is a deferred read, so the prefix names the eventual action, keeps six short common nouns out of the namespace'; plain, the family's bold above carries D-095's one ruling")
+  tag="R", ruling="R7", newcites="D-095",
+  note="verify: bold moved here, the headline of D-095's one ruling. D-095 Position: 'spelled with a get_ prefix ... a selector is a deferred read, so the prefix names the eventual action, keeps six short common nouns out of the namespace'; plain, the family's bold above carries D-095's one ruling")
 F(41); F(42)
 C("There is no selector for a value a component computes without declaring it, and there cannot be one, because only cells are addressable (§4.2, §8.3).",
   new="There is no selector for a value a component computes without declaring it, and there cannot be one, because only declared cells and stores are addressable (§4.2, §8.3).",
@@ -26,9 +26,9 @@ C("`get_face` addresses an output face of the mount level, the level its read se
   note="D-277 bullet 3: 'get_face(name) names an output face of the mount level ... at the root it is the integration read it was'. Mounting linked at its first use (late link fixed); its gloss, moved from old 11675, stands as its own sentence, the #g-mounting definition; tap set linked there with the taps gloss moved from old 11668")
 F(46); F(47)
 C("Rule. A selector resolves against a source, before any client policy applies.",
-  new="A selector resolves against a source, before any client policy applies (D-098).",
-  tag="R", ruling="R7", newcites="D-098",
-  note="Rule. label goes; bold headline of D-098's Position, 'a selector resolves against a source before any client policy'. R5 keeps the source rule as the one enforced rule")
+  new="A selector resolves against a source (D-098).",
+  tag="R", ruling="R31", newcites="D-098",
+  note="R31: 'before any client policy applies' goes, since R5 leaves no client policy. Rule. label goes; bold headline of D-098's Position, 'a selector resolves against a source before any client policy'. R5 keeps the source rule as the one enforced rule")
 F(50)
 C("A table source is a boundary snapshot, or the scratch tables a service evaluation instantiates (§14.8).",
   new="A table source is a boundary snapshot, or the scratch tables a service evaluation instantiates (§14.8, D-124).",
@@ -56,7 +56,7 @@ C("Client policy rides on top. It is D-083's service and inspection sides restat
   tag="R", ruling="R5", newcites="D-414",
   note="R5: the two sentences are cut as false (D-414 Rejected, a resolver §14.4 keeps client-free; src/readers.jl 429-445) and replaced by the dictated guidance sentence. D-083 moves to the inspection sentence below")
 A("An inspection read, a binding's or `series`', may name any cell the structure has, since it promises nothing beyond this build (D-083).")
-A("Both resolve under the one service walk (§13.3).")
+A("Both reads resolve under the one service walk (§13.3).")
 C("- Service reads speak the contract.",
   new="A service read, trim's `reads` or a tap, that should outlive the build reads a face with `get_face` (D-125).",
   tag="R", ruling="R5", newcites="D-125",
@@ -66,13 +66,13 @@ C("Trim's `reads` and linearization's taps (the three selector lists declaring w
   note="the taps link and gloss move to the first use, 'tap set' in the mounting sentence, the old gloss verbatim")
 F(63)
 C("`get_face` is the set's seam-crossing member. It resolves through export chains exactly as mounting (relocating a whole problem or tap set with `at(prefix, …)`) resolves root input faces (§14.9), so the read side mirrors the write side.",
-  new="`get_face` resolves through export chains exactly as mounting resolves root input faces (§14.9), so the read side mirrors the write side.",
-  tag="R", ruling="R5",
+  new="`get_face` resolves through export chains exactly as mounting resolves root input faces (§14.9, D-125), so the read side mirrors the write side.",
+  tag="R", ruling="R5", newcites="§14.9 D-125",
   note="R5 cuts 'get_face is the set's seam-crossing member': since D-414 every path selector crosses a seam. The mounting gloss moved to the first use above. The sentence moves up into the guidance paragraph, beside the dictated get_face sentence (D-125 Position 'resolves through export chains exactly as §14.9's mounting resolves slot faces')")
 C("An equilibrium equation meant to outlive the build it was posed against therefore binds the curated face behind a generically-held child rather than a path into it.",
   new="An equilibrium equation meant to outlive the build it was posed against therefore binds the curated face behind a generically held child (one held through a non-concrete field type) rather than a path into it.",
   tag="R", ruling="R5",
-  note="kept as guidance (R5); 'generically held' linked at first use, gloss from #g-generic-holding")
+  note="verify: C-064, moved after the export-chain sentence its 'therefore' follows; kept as guidance (R5); 'generically held' linked at first use, gloss from #g-generic-holding")
 C("A service evaluation needing an undeclared intermediate has one remedy, and it is the same for every client. The component exports it (§14.7).",
   new="A service evaluation needing an undeclared intermediate has that one remedy too, and it is the same for every client. The component exports it (§14.7).",
   tag="M", note="M5 and R6: merged into the undeclared-value paragraph, §14.4 its home; 'that ... too' ties it to the declare-an-output remedy")
@@ -96,9 +96,9 @@ C("It names requesters from the `Build`'s requester roster, period (§13.5, D-06
   tag="C", newcites="§13.5 D-316",
   note="D-060's policy clause is superseded by D-316 (annotation 2026-10-08); D-316 bullet 6 carries the fact. D-060 moves to the next sentence. requester roster linked and glossed (carried item), gloss from #g-requester-roster")
 C("Termination is run policy over the requests the model declares, and no path selector reaches `ignore_stop_requests`.",
-  new="Termination is run policy over the requests the model declares, and no path selector reaches `ignore_stop_requests` (D-060).",
-  tag="C", newcites="D-060",
-  note="D-060 Rejected, 'Root-type-declared policy: stopping is run policy', a clause D-316's annotation leaves standing; Rationale-only")
+  new="Termination is run policy over the requests the model declares, and no path selector reaches `ignore_stop_requests` (D-060, D-316).",
+  tag="C", newcites="D-060 D-316",
+  note="verify: D-316 added for the second clause (the ignore list addresses the roster, reads no cell). D-060 Rejected, 'Root-type-declared policy: stopping is run policy', a clause D-316's annotation leaves standing; Rationale-only")
 C("The five selectors, their sources, and their clients:",
   new="The five selectors and their sources:", tag="R", ruling="R5")
 C("| selector | resolves against | service reads | inspection readers | |---|---|---|---| | `get_state(path, leaf)` | live stores | named in the contract | only clients that hold stores | | `get_deriv(path, leaf)` | live stores | named in the contract | only clients that hold stores | | `get_output(path, leaf)` | a table source | named in the contract | admitted | | `get_input(leaf)` | a table source | named in the contract | admitted | | `get_face(leaf)` | a table source | named in the contract | admitted |",

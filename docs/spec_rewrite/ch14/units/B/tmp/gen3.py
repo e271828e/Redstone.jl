@@ -78,9 +78,9 @@ C("- Trim is untouched by all of this.",
 F(141); F(142)
 F(143, note="bold lead-in goes plain: D-067 bullet 3's one bold sits on 'Trim is untouched' (R7)")
 C("Today's hand-written trim asserts (`!stall`, no weight-on-wheels, `ω > ω_idle`) become the model's own event logic, surfaced through the ordinary machinery instead of `@assert`.",
-  new="The hand-written trim asserts of Flight.jl's Cessna 172 models (`!stall`, no weight-on-wheels, `ω > ω_idle`) become the model's own event logic, surfaced through the ordinary machinery instead of `@assert`.",
-  tag="R", ruling="R12",
-  note="owner checked: ~/.julia/dev/Flight.jl/lib/FlightApps/src/c172/c172s/c172s.jl 256-257 and c172x/c172x.jl 317-318 (the weight-on-wheels and ω_idle asserts after f_init!); see rulings on !stall")
+  new="The hand-written trim asserts of Flight.jl's Cessna 172 models (no weight-on-wheels, `ω > ω_idle`) become the model's own event logic, surfaced through the ordinary machinery instead of `@assert`.",
+  tag="R", ruling="R32",
+  note="R32: `!stall` goes, since c172s.jl 244 sets stall = false and asserts nothing of it. R12: owner checked: ~/.julia/dev/Flight.jl/lib/FlightApps/src/c172/c172s/c172s.jl 256-257 and c172x/c172x.jl 317-318 (the weight-on-wheels and ω_idle asserts after f_init!); see rulings on !stall")
 F(145); F(146)
 C("The channel that says it is the trim report (§14.8).",
   new="The channel that says it is the trim report (§14.8, D-126).",
@@ -119,7 +119,8 @@ C("They are `init!`, trim's setup application to freshly allocated scratch store
   new="They are `init!`, trim's setup application to freshly allocated scratch stores, trim's commit through boundary zero (§14.8), and linearization's operating condition under `about`, applied to its own scratch (§14.10).",
   tag="R", ruling="R3", newcites="§14.8 §14.10",
   note="R3, F2's dictated wording (src/linearize.jl 172-181); the wrong #g-boundary link inside 'boundary zero' goes (F4)")
-F(165); F(166)
+C(S[165], new="That is one group of sites, one mechanism and one kind.", tag="R", ruling="R33", note="R33: class is reserved; the count stays")
+F(166)
 C("A shortfall is one collected, declaration-ordered diagnostic (`UninitializedInputs`, a §13.2 kind) naming every uncovered face.",
   new="A shortfall is one collected, declaration-ordered diagnostic (`UninitializedInputs`, Appendix C) naming every uncovered face.",
   tag="R", ruling="R9", newcites="Appendix C", note="F24: the kind's owning section is §14.6 (Appendix C 13659); §13.2 is the diagnostic value")
@@ -146,9 +147,9 @@ C("Today `SystemsInitializer`'s `@kwdef` defaults carry that load.",
   note="owner checked: ~/.julia/dev/Flight.jl/lib/FlightApps/src/c172/c172.jl 768, '@kwdef struct SystemsInitializer'")
 F(183); F(184)
 C("The collision is the intent. Hence the fourth node kind, `override(base, patch)`.",
-  new="The collision is the intent, and the fourth node kind, `override(base, patch)`, exists for it (D-068).",
-  tag="R", ruling="R7", newcites="D-068",
-  note="the bold term becomes the bold headline of D-068 bullet 3, 'override(base, patch) is admitted as the fourth node kind'; 'Hence' goes so the rule is not a consequence; override linked at its first prose use, no gloss (the next sentences define it)")
+  new="The collision is the intent, and the fourth node type, `override(base, patch)`, exists for it (D-068).",
+  tag="R", ruling="R38", newcites="D-068",
+  note="R38: node kind becomes node type, kind being reserved. R7: the bold term becomes the bold headline of D-068 bullet 3, 'override(base, patch) is admitted as the fourth node kind'; 'Hence' goes so the rule is not a consequence; override linked at its first prose use, no gloss (the next sentences define it)")
 C("It is ordered and asymmetric, where `combine` is symmetric and collision-intolerant.", note="combine linked at its first use")
 C("At resolution a leaf present in both takes the patch's value, with the origin recording both layers (\"patch overrode base's `throttle`\").",
   new="At resolution a leaf present in both takes the patch's value, and the origin names both layers.",

@@ -80,12 +80,9 @@ ruling: R12
 note: owner named; checked ~/.julia/dev/Flight.jl/lib/FlightApps/src/c172/c172.jl (the Cessna172 model, its TrimState{7} and trim routine)
 
 old: The real problem is the same shape with the full 7-variable search, and the θ-constraint elimination survives inside `trim_condition`.
-new: The real problem is the same shape with the full 7-variable search, and the θ-constraint elimination survives inside `trim_condition`
+new: The real problem is the same shape with the full 7-variable search, and the θ-constraint elimination survives inside its condition function, which the worked problem calls `trim_condition`.
 tag: F
-note: TrimState <: AbstractTrimState{7} in c172.jl has seven fields
-
-added: the worked problem's illustrative condition function.
-# R12/brief_common: trim_condition exists nowhere in Flight.jl (rg over ~/.julia/dev/Flight.jl finds no definition); it is the worked problem's own name, so "illustrative" and no more
+note: verify (C-017): the real problem's elimination lives in its own condition function, and `trim_condition` is the worked problem's name for it; trim_condition exists nowhere in Flight.jl. TrimState <: AbstractTrimState{7} in c172.jl has seven fields
 
 old: `cruise = TrimProblem( guess = (throttle = 0.6, elevator = -0.05, α = 0.06), lower = (throttle = 0.0, elevator = -1.0, α = -0.1), upper = (throttle = 1.0, elevator = 1.0, α = 0.3), condition = d -> trim_condition(ac, params, d), #params closed over (§14.2) reads = reads(v̇_b = get_deriv("vehicle/dynamics", :v_eb_b), ω̇_b = get_deriv("vehicle/dynamics", :ω_eb_b), EAS = get_output("vehicle/airdata", :EAS)), residuals = (r, d) -> (axial_force = r.v̇_b[1], normal_force = r.v̇_b[3], pitch_moment = r.ω̇_b[2]), tolerances = (axial_force = 1e-3, normal_force = 1e-3, pitch_moment = 1e-4), checks = (r, d) -> (EAS = r.EAS - params.EAS,), # read back after the commit check_tolerances = (EAS = 0.1,))`
 tag: F
@@ -176,9 +173,10 @@ note: D-069 bullet 2 ("Assignment is the pure trim_condition fragment function, 
 
 old: The spelling is `reads(name = get_state(path, leaf) | get_deriv(path, leaf) | get_output(path, leaf) | get_input(leaf) | get_face(leaf), ...)`, the service read set (§14.4),
 new: The spelling is `reads(name = get_state(path, leaf) | get_deriv(path, leaf) | get_output(path, leaf) | get_input(leaf) | get_face(leaf), ...)`, the service read set (§14.4, D-124).
-tag: C
+tag: R
+ruling: R39
 newcites: §14.4 D-124
-note: D-124 Position, "§14.7's reads grammar widens to the full service set (D-095's four plus D-125's get_face) with per-selector validation targets"
+note: R39: bold on the headline clause; D-124's Position is a ruling of its own, §14.7 its home, and no section of the frozen spec bolds it. D-124 Position, "§14.7's reads grammar widens to the full service set (D-095's four plus D-125's get_face) with per-selector validation targets"
 
 old: each `leaf` a leaf address (the field name with dotted and bracketed steps below it).
 new: Each `leaf` is a leaf address (the field name with dotted and bracketed steps below it).
@@ -337,10 +335,10 @@ tag: F
 note: the mid-sentence colon goes
 
 old: `θ_constraint` substituting the pitch constraint, filter and actuator equilibria imposed by construction, and the minimal 7-variable search.
-new: FlightPhysics' `θ_constraint` substituting the pitch constraint, filter and actuator equilibria imposed by construction, and the minimal 7-variable search.
+new: FlightPhysics' `θ_constraint` substituting the pitch constraint, filter and actuator equilibria imposed by construction, and the minimal 7-variable search over `c172.jl`'s `TrimState`.
 tag: R
-ruling: R12
-note: owner named; checked ~/.julia/dev/Flight.jl/lib/FlightPhysics/src/aircraftbase.jl line 110, `function θ_constraint(; v_wb_b, γ_wb_n, φ_nb)`
+ruling: R39
+note: R39 (R23): the search's owner is c172.jl's `TrimState <: AbstractTrimState{7}` (lib/FlightApps/src/c172/c172.jl 796). R12, owner named; checked ~/.julia/dev/Flight.jl/lib/FlightPhysics/src/aircraftbase.jl line 110, `function θ_constraint(; v_wb_b, γ_wb_n, φ_nb)`
 
 old: - What changes is the numerics.
 new: What changes is the numerics.
@@ -517,9 +515,10 @@ note: M51; H56, §14.9 the home, here the pointer it already was
 
 old: The returned NamedTuple's names are the equation names the report and the failure messages use.
 new: The returned NamedTuple's names are the equation names the report and the failure messages use (D-118).
-tag: C
+tag: R
+ruling: R39
 newcites: D-118
-note: M51; D-118 Position, "Returned names are the report's equation names"
+note: R39: bold on the headline clause; D-118 Position's third sentence, its own ruling before the semicolon, §14.7 its home, bold nowhere in the frozen spec. M51; D-118 Position, "Returned names are the report's equation names"
 
 old: The service packs residuals and tolerances by field order.
 new: The service packs residuals and tolerances to the solver's vector by field order.
@@ -587,8 +586,8 @@ note: the signature stays here, its home (R6); t0's home is §14.5
 added: A `Model` at another scalar is refused as `ArgumentInvalid` with reason `:non_nominal` (D-319).
 # R14, F71: D-319 bullet, "trim! and linearize on a Model{T} at any T other than Float64 throw ArgumentInvalid with reason :non_nominal"; src/trim.jl 458–459
 
-added: A model that a simulation has claimed is refused before any check, as `ArgumentInvalid` with reason `:claimed`, since the call commits (D-319).
-# R14, F71: D-319 bullet 5, "trim! takes the claim's gate before any check, since it commits"; src/trim.jl 448 and src/model.jl 148–150 (`_claimed_gate`, reason :claimed)
+added: A model that a simulation has claimed is refused before any check, as `ArgumentInvalid` with reason `:claimed`, since the call commits (D-318, D-319).
+# verify (V107): D-318 Position, "A model already claimed is refused as ArgumentInvalid with reason :claimed"; R14, F71: D-319 bullet 5, "trim! takes the claim's gate before any check, since it commits"; src/trim.jl 448 and src/model.jl 148–150 (`_claimed_gate`, reason :claimed)
 
 added: The `baseline` keyword takes a baseline (an aircraft-shipped, full-coverage condition function).
 # F67: the brief assigns baseline's §14.8 link to unit F at 12065, which sits inside the signature's code span; the glossary: "an aircraft-shipped, full-coverage condition function … It is also the baseline keyword init!/trim! take"
@@ -815,10 +814,10 @@ ruling: R9
 note: F78: nothing prints that message
 
 old: That is the classic CG-limit diagnostic, today inferable only from mysterious residuals.
-new: That is the classic CG-limit diagnostic, which Flight.jl's trim leaves inferable only from mysterious residuals.
+new: That is the classic CG-limit diagnostic (CG is the center of gravity), which Flight.jl's trim leaves inferable only from mysterious residuals.
 tag: R
 ruling: R12
-note: "today" is Flight.jl's: c172.jl's trim returns (success, trim_state) with no saturation report (~/.julia/dev/Flight.jl/lib/FlightApps/src/c172/c172.jl 931–939)
+note: verify: CG glossed as a reader-cold aerospace term; "today" is Flight.jl's: c172.jl's trim returns (success, trim_state) with no saturation report (~/.julia/dev/Flight.jl/lib/FlightApps/src/c172/c172.jl 931–939)
 
 old: #### Scratch stores, stated without type luck
 new: #### Scratch stores
@@ -954,14 +953,17 @@ tag: F
 note: H66, kept with its pointer to §14.5 (R6)
 
 old: The zero-decision problem (below) is the nominal half alone,
-new: The zero-decision problem (below) is the nominal half alone.
-tag: F
+new: The zero-decision problem (below) is the nominal half alone (D-213).
+tag: C
+newcites: D-213
+note: verify (V188): D-213 now sits on what it carries, Rationale "the zero-decision probe falls out as the nominal half alone"
 
 old: and its one evaluation is that establishment round (D-213).
-new: Its one evaluation is that establishment round, followed by one derivative evaluation for the reads (D-213).
+new: Its one evaluation is that establishment round, followed by one derivative evaluation for the reads.
 tag: R
 ruling: R9
-note: F56's omission at this site: setup runs `nominal_exec.bodies.rhs()` after the establishment round and before the gather (src/trim.jl 484–486)
+newcites: D-213
+note: verify (V188): D-213 moved to the previous sentence, the paragraph keeping it; F56's omission at this site: setup runs `nominal_exec.bodies.rhs()` after the establishment round and before the gather (src/trim.jl 484–486)
 
 old: The commit applies the same composite over the same `baseline` (`override(baseline, condition(d))`, §14.9), so its coverage is setup's.
 tag: F

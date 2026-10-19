@@ -314,3 +314,39 @@ words). Survey 2.
 - R24 reaches units H, not this one; see brief.md.
 - R25 reaches units H, not this one; see brief.md.
 - R26 reaches units H, not this one; see brief.md.
+- R27 reaches units A, not this one; see brief.md.
+- R28 reaches units G, not this one; see brief.md.
+- R29 reaches units G, H, not this one; see brief.md.
+- R30 reaches units G, not this one; see brief.md.
+- **R31. "Before any client policy applies"** (unit B's verifier, open
+  question 1; unit B). R5 leaves no client policy that applies, so the clause
+  goes. The glossary's `#g-selector` carries the same clause: a landing
+  edit.
+- **R32. `!stall`** (unit B's correction 1 and its verifier's question 2;
+  unit B). Flight.jl's C172 trim setup sets `stall = false` in its
+  initializer and does not assert it (`c172s.jl` 244, 256–260). Apply the
+  proposed "(no weight-on-wheels, `ω > ω_idle`)".
+- **R33. "One class"** (unit B's verifier, open question 3; unit B). *Class*
+  is reserved for primitive versus assembly. Reword with a plain word that
+  keeps the count and names no glossary term.
+- **R34. D-149's bold** (unit B's verifier, open question 4; unit B). §14.6
+  is its home (R7). §9.3's bold (old 4690–4692) goes plain with a pointer to
+  §14.6: a landing edit, joined to R3's.
+- **R35. The ledger's allocation scope** (unit B's verifier, open question 5;
+  units A, B). F9 scopes "allocates nothing" to literal prefixes; C-078's
+  ledger clause takes the same qualifier.
+- R36 reaches units A, not this one; see brief.md.
+- **R37. One home for the two plans' contents** (unit A's verifier, open
+  question 2; units A, B). §14.3 is where the entry list compiles, so it
+  states both plans' contents once: per leaf, the specialized `apply!`'s
+  plan holds a lens, a destination and a converter, and the dynamic walk's
+  plan holds the converted values themselves. The `lens` gloss stays there.
+  §14.4 states which plan each way applies and points to §14.3 for their
+  contents, with no second gloss of `lens`. R27's sentence and F16's
+  amended wording in §14.4 conform.
+- **R38. *Node type*, not *node kind*** (unit A's verifier, re-check of R36;
+  units A, B). *Kind* is reserved for diagnostic kinds, and R36's dictation
+  broke that rule. Every *node kind* in the chapter becomes *node type*: R36's
+  clause ("and `override` builds a fourth node type"), §14.2's misuse payload
+  ("the node types in hand", old 11471 area) and §14.6's "the fourth node
+  type" (old 11841 area), whose bold stays on its clause.

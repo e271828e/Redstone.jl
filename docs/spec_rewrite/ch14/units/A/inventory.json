@@ -284,14 +284,15 @@
   {
    "id": "C-025",
    "old": "It may not become a checkpoint.",
-   "new": "It may not become a checkpoint (D-274).",
+   "new": "It may not become a checkpoint (D-108, D-274).",
    "where": "new",
    "cites": [],
    "newcites": [
+    "D-108",
     "D-274"
    ],
    "tag": "C",
-   "note": "D-274 bullet 2, `checkpoint(sim)` \"legal in `initialized` and `stopped`\"."
+   "note": "verify. D-108 Rationale, \"post-mortem stores/log/trace stay readable as diagnostics, never as condition values\", and its rejected `capture` on `errored`; D-274 bullet 2, `checkpoint(sim)` \"legal in `initialized` and `stopped`\"."
   },
   {
    "id": "C-026",
@@ -761,16 +762,16 @@
   {
    "id": "C-072",
    "old": "No shadowing check covers it:",
-   "new": "No shadowing check covers it.",
+   "new": "No shadowing check covers it, because",
    "where": "new",
    "cites": [],
    "tag": "F",
-   "note": "the mid-sentence colon becomes a full stop."
+   "note": "verify. The colon's causal sense becomes \"because\" (D-316)."
   },
   {
    "id": "C-073",
    "old": "a method written to a foreign `condition` fails loudly at the owner's pull, as a `MethodError` naming the child.",
-   "new": "A method written to a foreign `condition` fails loudly at the owner's pull, as a `MethodError` naming the child (D-316).",
+   "new": "a method written to a foreign `condition` fails loudly at the owner's pull, as a `MethodError` naming the child (D-316).",
    "where": "new",
    "cites": [],
    "newcites": [
@@ -908,7 +909,7 @@
   {
    "id": "C-086",
    "old": "The three combinators are constructors of an inert, lazy tree.",
-   "new": "Composition builds an inert, lazy fragment tree (D-065). `set` builds the leaf, and `at` and `combine` (the symmetric, collision-intolerant combinator) build the tree's inner nodes.",
+   "new": "Composition builds an inert, lazy fragment tree (D-065). `set` builds the leaf, `at` and `combine` (the symmetric, collision-intolerant combinator) build the tree's inner nodes,",
    "where": "new",
    "cites": [],
    "newcites": [
@@ -916,7 +917,7 @@
    ],
    "tag": "R",
    "ruling": "R9",
-   "note": "F8's dictated clause; \"three combinators\" counted `set` and left out `override`. The bold term inert, lazy tree becomes the bold headline for D-065's first ruling, \"Fragments form a lazy inert tree (... store, never apply — stack-only rebuild per iteration)\"; fragment tree takes its link (#g-fragment-tree). `combine` takes its first-use link and gloss (#g-combine)."
+   "note": "F8's dictated clause; \"three combinators\" counted `set` and left out `override`. The bold term inert, lazy tree becomes the bold headline for D-065's first ruling, \"Fragments form a lazy inert tree (... store, never apply — stack-only rebuild per iteration)\"; fragment tree takes its link (#g-fragment-tree). `combine` takes its first-use link and gloss (#g-combine). R36 adds the clause \"and `override` builds a fourth node type (§14.6)\", the added block below, worded by R38; an added block takes no ruling field."
   },
   {
    "id": "C-087",
@@ -974,14 +975,14 @@
   {
    "id": "C-093",
    "old": "The zero-alloc property of today's `assign!` loop holds of the construction and of the walk that applies the tree (§14.4) alike.",
-   "new": "The trim of Flight.jl's Cessna 172 model (`c172.jl`) writes each trial state through FlightPhysics' `assign!`, and the zero-alloc property of that `assign!` loop holds of the construction and of the specialized `apply!` that writes the tree (§14.4) alike.",
+   "new": "The trim of Flight.jl's Cessna 172 model (`c172.jl`) writes each trial state through FlightPhysics' `assign!`, and the zero-alloc property of that `assign!` loop holds of the construction with literal prefixes and of the specialized `apply!` that writes the tree (§14.4) alike.",
    "where": "new",
    "cites": [
     "§14.4"
    ],
    "tag": "R",
-   "ruling": "R9",
-   "note": "F9 (b), the specialized `apply!` only. R12 and R23, \"today's\" becomes the owner the source shows, Flight.jl's Cessna 172 model calling FlightPhysics' `assign!`: checked in `~/.julia/dev/Flight.jl/lib/FlightPhysics/src/aircraftbase.jl` 94 (`assign!(vehicle, params, state, ...)`) and `lib/FlightApps/src/c172/c172.jl` 876 (the C172 trim's target function calls `AircraftBase.assign!` per evaluation)."
+   "ruling": "R35",
+   "note": "R35 scopes the construction to literal prefixes, as F9 (a). R9's F9 (b), the specialized `apply!` only. R12 and R23, \"today's\" becomes the owner the source shows, Flight.jl's Cessna 172 model calling FlightPhysics' `assign!`: checked in `~/.julia/dev/Flight.jl/lib/FlightPhysics/src/aircraftbase.jl` 94 (`assign!(vehicle, params, state, ...)`) and `lib/FlightApps/src/c172/c172.jl` 876 (the C172 trim's target function calls `AircraftBase.assign!` per evaluation)."
   },
   {
    "id": "C-094",
@@ -1077,14 +1078,11 @@
   {
    "id": "C-103",
    "old": "Delegation runs by dispatch at every genericity seam.",
-   "new": "Delegation runs by dispatch at every genericity seam (D-064).",
+   "new": "Delegation runs by dispatch at every genericity seam.",
    "where": "new",
    "cites": [],
-   "newcites": [
-    "D-064"
-   ],
-   "tag": "C",
-   "note": "D-064 Position, \"dispatched on component types\"."
+   "tag": "F",
+   "note": "verify. The added D-064 citation is dropped: its Position says \"dispatched on component types\" and nothing of seams."
   },
   {
    "id": "C-104",
@@ -1235,11 +1233,11 @@
   {
    "id": "C-118",
    "old": "The message names the layering combinator:",
-   "new": "Its message names the layering combinator,",
+   "new": "Its message names the layering combinator. It reads",
    "where": "new",
    "cites": [],
    "tag": "F",
-   "note": "the mid-sentence colon becomes a comma."
+   "note": "verify. The colon becomes a full stop and \"It reads\", so the quote does not read as the combinator's name."
   },
   {
    "id": "C-119",
@@ -1324,7 +1322,7 @@
   {
    "id": "C-128",
    "old": "It is `ConditionNodeMisuse` (Appendix C), carrying the offending argument's type and the node kinds in hand.",
-   "new": "It is `ConditionNodeMisuse` (Appendix C, D-113), carrying the offending argument's type and the node kinds in hand.",
+   "new": "It is `ConditionNodeMisuse` (Appendix C, D-113), carrying the offending argument's type and the node types in hand.",
    "where": "new",
    "cites": [
     "Appendix C"
@@ -1333,7 +1331,8 @@
     "Appendix C",
     "D-113"
    ],
-   "tag": "C",
+   "tag": "R",
+   "ruling": "R38",
    "note": "D-113 bullet 4, \"`ConditionNodeMisuse` for §14.2's mixed-`merge` error method: offending argument type, node kinds in hand\"; R7 bold headline."
   },
   {
@@ -1532,7 +1531,7 @@
    "cites": [],
    "tag": "R",
    "ruling": "R27",
-   "note": "F16's wording; the dynamic walk's plan is §14.4's."
+   "note": "F16's wording. R37 makes §14.3 the one home of both plans' contents and adds the dynamic walk's sentence, the added block below."
   },
   {
    "id": "C-150",
@@ -1756,8 +1755,10 @@
   "This section covers, in order, the condition method, composition by pull, what `set`'s payloads may name, the inert tree, the empty-prefix refusal, the locality law, and the collision and blend errors.",
   "In the first block, the engine is an illustrative component named after FlightPhysics' `PistonEngine`, and `Phase` an illustrative enum of its modes.",
   "Such a write is `ConditionResolution` with reason `:internally_wired`.",
+  "and `override` builds a fourth node type (§14.6).",
   "A `set` payload that is not a NamedTuple is `ConditionNodeMisuse` with reason `:set_payload` (Appendix C).",
   "This section covers, in order, flattening, the collecting checks, the two lookup families, the plan, the converter rule with its two cases, and overlay partiality.",
-  "Each check names its kind (Appendix C). A path that does not resolve is `PathResolution` with reason `:unknown_child`. An undeclared field is `ConditionResolution` with reason `:undeclared_field`, or `:no_store` or `:assembly_path` where the target has no such store or is an assembly. A value that does not convert is `ConditionResolution` with reason `:unconvertible`. A face that reaches no root input takes one of the face reasons §14.2 names. A leaf written twice is `DuplicateConditionLeaf`."
+  "Each check names its kind (Appendix C). A path that does not resolve is `PathResolution` with reason `:unknown_child`. An undeclared field is `ConditionResolution` with reason `:undeclared_field`, or `:no_store` or `:assembly_path` where the target has no such store or is an assembly. A value that does not convert is `ConditionResolution` with reason `:unconvertible`. A face that reaches no root input takes one of the face reasons §14.2 names. A leaf written twice is `DuplicateConditionLeaf`.",
+  "The dynamic walk's plan holds the converted values themselves."
  ]
 }

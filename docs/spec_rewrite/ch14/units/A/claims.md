@@ -129,10 +129,10 @@ newcites: D-232
 note: D-232 Position, "The stopped-sim reads stay admitted there: post-mortem inspection is reading." Trace gloss from #g-trace.
 
 old: It may not become a checkpoint.
-new: It may not become a checkpoint (D-274).
+new: It may not become a checkpoint (D-108, D-274).
 tag: C
-newcites: D-274
-note: D-274 bullet 2, `checkpoint(sim)` "legal in `initialized` and `stopped`".
+newcites: D-108 D-274
+note: verify. D-108 Rationale, "post-mortem stores/log/trace stay readable as diagnostics, never as condition values", and its rejected `capture` on `errored`; D-274 bullet 2, `checkpoint(sim)` "legal in `initialized` and `stopped`".
 
 old: A violation is `ServiceLifecycle` (Appendix C).
 new: A violation is `ServiceLifecycle` (Appendix C, D-108).
@@ -347,12 +347,12 @@ old: A model package extends it through `import Redstone: condition`, as it exte
 tag: F
 
 old: No shadowing check covers it:
-new: No shadowing check covers it.
+new: No shadowing check covers it, because
 tag: F
-note: the mid-sentence colon becomes a full stop.
+note: verify. The colon's causal sense becomes "because" (D-316).
 
 old: a method written to a foreign `condition` fails loudly at the owner's pull, as a `MethodError` naming the child.
-new: A method written to a foreign `condition` fails loudly at the owner's pull, as a `MethodError` naming the child (D-316).
+new: a method written to a foreign `condition` fails loudly at the owner's pull, as a `MethodError` naming the child (D-316).
 tag: C
 newcites: D-316
 note: D-316 Rationale (log 13997-13999), "`condition` stays outside the family because a foreign `condition` fails loudly, as a `MethodError` at the owner's pull". Rationale-only.
@@ -422,11 +422,13 @@ ruling: R12
 note: checked in `~/.julia/dev/Flight.jl/lib/FlightApps/src/c172/c172s/c172s.jl` 153 (`MechanicalActuation`) and `c172x/c172x.jl` 207 (`FlyByWireActuation`).
 
 old: The three combinators are constructors of an inert, lazy tree.
-new: Composition builds an inert, lazy fragment tree (D-065). `set` builds the leaf, and `at` and `combine` (the symmetric, collision-intolerant combinator) build the tree's inner nodes.
+new: Composition builds an inert, lazy fragment tree (D-065). `set` builds the leaf, `at` and `combine` (the symmetric, collision-intolerant combinator) build the tree's inner nodes,
 tag: R
 ruling: R9
 newcites: D-065
-note: F8's dictated clause; "three combinators" counted `set` and left out `override`. The bold term **inert, lazy tree** becomes the bold headline for D-065's first ruling, "Fragments form a lazy inert tree (... store, never apply — stack-only rebuild per iteration)"; fragment tree takes its link (#g-fragment-tree). `combine` takes its first-use link and gloss (#g-combine).
+note: F8's dictated clause; "three combinators" counted `set` and left out `override`. The bold term **inert, lazy tree** becomes the bold headline for D-065's first ruling, "Fragments form a lazy inert tree (... store, never apply — stack-only rebuild per iteration)"; fragment tree takes its link (#g-fragment-tree). `combine` takes its first-use link and gloss (#g-combine). R36 adds the clause "and `override` builds a fourth node type (§14.6)", the added block below, worded by R38; an added block takes no ruling field.
+
+added: and `override` builds a fourth node type (§14.6).
 
 old: No path arithmetic happens at composition.
 tag: F
@@ -456,10 +458,10 @@ note: F8, the brief's amended wording. The empty-prefix check stays one of the t
 added: A `set` payload that is not a NamedTuple is `ConditionNodeMisuse` with reason `:set_payload` (Appendix C).
 
 old: The zero-alloc property of today's `assign!` loop holds of the construction and of the walk that applies the tree (§14.4) alike.
-new: The trim of Flight.jl's Cessna 172 model (`c172.jl`) writes each trial state through FlightPhysics' `assign!`, and the zero-alloc property of that `assign!` loop holds of the construction and of the specialized `apply!` that writes the tree (§14.4) alike.
+new: The trim of Flight.jl's Cessna 172 model (`c172.jl`) writes each trial state through FlightPhysics' `assign!`, and the zero-alloc property of that `assign!` loop holds of the construction with literal prefixes and of the specialized `apply!` that writes the tree (§14.4) alike.
 tag: R
-ruling: R9
-note: F9 (b), the specialized `apply!` only. R12 and R23, "today's" becomes the owner the source shows, Flight.jl's Cessna 172 model calling FlightPhysics' `assign!`: checked in `~/.julia/dev/Flight.jl/lib/FlightPhysics/src/aircraftbase.jl` 94 (`assign!(vehicle, params, state, ...)`) and `lib/FlightApps/src/c172/c172.jl` 876 (the C172 trim's target function calls `AircraftBase.assign!` per evaluation).
+ruling: R35
+note: R35 scopes the construction to literal prefixes, as F9 (a). R9's F9 (b), the specialized `apply!` only. R12 and R23, "today's" becomes the owner the source shows, Flight.jl's Cessna 172 model calling FlightPhysics' `assign!`: checked in `~/.julia/dev/Flight.jl/lib/FlightPhysics/src/aircraftbase.jl` 94 (`assign!(vehicle, params, state, ...)`) and `lib/FlightApps/src/c172/c172.jl` 876 (the C172 trim's target function calls `AircraftBase.assign!` per evaluation).
 
 old: An evaluation's cost is therefore the sweep it feeds.
 tag: F
@@ -499,10 +501,8 @@ old: Each level speaks its own fields, its declared children's names, and its ow
 tag: F
 
 old: Delegation runs by dispatch at every genericity seam.
-new: Delegation runs by dispatch at every genericity seam (D-064).
-tag: C
-newcites: D-064
-note: D-064 Position, "dispatched on component types".
+tag: F
+note: verify. The added D-064 citation is dropped: its Position says "dispatched on component types" and nothing of seams.
 
 old: An `at` prefix may stop at any child's faces, owned or generically held, because the face graph is total (D-207).
 tag: F
@@ -567,9 +567,9 @@ newcites: D-065 Appendix C
 note: F5 names `DuplicateConditionLeaf`. R7 bold headline for D-065's "duplicate leaf = error with both origins".
 
 old: The message names the layering combinator:
-new: Its message names the layering combinator,
+new: Its message names the layering combinator. It reads
 tag: F
-note: the mid-sentence colon becomes a comma.
+note: verify. The colon becomes a full stop and "It reads", so the quote does not read as the combinator's name.
 
 old: "`combine` is collision-intolerant by design — use `override(base, patch)` to layer."
 tag: F
@@ -604,8 +604,9 @@ old: The rejection carries a kind like every other.
 tag: F
 
 old: It is `ConditionNodeMisuse` (Appendix C), carrying the offending argument's type and the node kinds in hand.
-new: It is `ConditionNodeMisuse` (Appendix C, D-113), carrying the offending argument's type and the node kinds in hand.
-tag: C
+new: It is `ConditionNodeMisuse` (Appendix C, D-113), carrying the offending argument's type and the node types in hand.
+tag: R
+ruling: R38
 newcites: Appendix C D-113
 note: D-113 bullet 4, "`ConditionNodeMisuse` for §14.2's mixed-`merge` error method: offending argument type, node kinds in hand"; R7 bold headline.
 
@@ -705,7 +706,9 @@ old: Per leaf, the plan holds a lens (the compiled navigation step of a conditio
 new: The specialized `apply!`'s plan holds, per leaf, a lens (the compiled navigation step of a condition entry), a destination and a converter.
 tag: R
 ruling: R27
-note: F16's wording; the dynamic walk's plan is §14.4's.
+note: F16's wording. R37 makes §14.3 the one home of both plans' contents and adds the dynamic walk's sentence, the added block below.
+
+added: The dynamic walk's plan holds the converted values themselves.
 
 old: The lens is the position tuple lifted to a type parameter, so navigation of the fixed tree type is type-stable.
 tag: F

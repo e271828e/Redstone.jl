@@ -10,15 +10,14 @@ read-selector family.
 
 All string work, validation and addressing are functions of the *shape* of
 the condition. Every hot path holds the shape fixed while varying values.
-Execution is therefore resolve-once/execute-many. A valid list of condition
-entries compiles two ways, one for each way to apply it.
+Execution is therefore resolve-once/execute-many, with two ways to apply
+the compiled plans ([§14.3][s14-3]).
 
 - **Specialized `apply!` serves the service that iterates**, trim's
-  per-evaluation write ([D-066][d-066]). Its plan holds, per leaf, a
-  [lens](#g-lens) (the compiled navigation step of a condition entry), a
-  destination and a converter. It unrolls [stores](#g-store) through the
-  baked lenses and converters. Those are the same machine operations as
-  FlightCore's in-place state writes, with no allocation, no strings and no
+  per-evaluation write ([D-066][d-066]). It applies its own plan, whose
+  contents [§14.3][s14-3] gives. It unrolls [stores](#g-store) through the
+  baked [lenses](#g-lens) and converters. Those are the same machine operations as
+  the in-place writes of FlightPhysics' `assign!`, with no allocation, no strings and no
   dispatch. The per-iteration shape check is the mechanism of [§9.5][s9-5]
   transferred. The tree type is proven by dispatch, and it carries the full
   nesting, every field name and leaf type. A `===` comparison of each prefix
@@ -38,8 +37,7 @@ entries compiles two ways, one for each way to apply it.
 - **The dynamic walk serves the one-shot uses**, `init!`, `linearize`'s
   operating condition and trim's setup write ([§14.8][s14-8],
   [D-066][d-066]). It executes the same validated condition entries by
-  runtime dispatch per write, from a plan that holds the converted values
-  themselves. That takes microseconds in total, with allocation permitted,
+  runtime dispatch per write, from its own plan ([§14.3][s14-3]). That takes microseconds in total, with allocation permitted,
   since the stopped-sim path was never under the zero-alloc regime
   ([§9.8][s9-8]). It needs no per-shape codegen. Fifty structurally
   different scripted conditions cost fifty walks, not fifty compiles.
@@ -50,16 +48,16 @@ The per-iteration ledger for trim has four terms. They are the user
 fragment math, the leaf stores, the folded shape check and the
 [sweep](#g-sweep) (one pass through the execution order against the current
 state). The fragment math is the domain computations, unchanged from
-Flight.jl's, plus building the tree, which allocates nothing
-([§14.2][s14-2]). The sweep dominates, exactly as `f_ode!` does in
+Flight.jl's, plus building the tree, which with literal prefixes allocates
+nothing ([§14.2][s14-2]). The sweep dominates, exactly as `f_ode!` does in
 FlightCore, where it is the continuous-dynamics function a model extends.
 
 #### The read-selector family
 
-**The read-[selector](#g-selector) family is closed** ([D-095][d-095]). Its
+The read-[selector](#g-selector) family is closed ([D-095][d-095]). Its
 members are `get_state(path, leaf)`, `get_deriv(path, leaf)`,
 `get_output(path, leaf)`, `get_input(leaf)` and `get_face(leaf)`. They form
-one address space for every reader of the model.
+one address space for every reader that takes a selector.
 
 **`leaf` is a [leaf address](#g-leaf-address)** ([D-276][d-276]). It is the
 field or [face](#g-face) name (the name a port wears on its component's
@@ -81,11 +79,11 @@ yields named scalars. A step never enters an opaque leaf (a field handle or
 a `Symbol`), which is read whole. **`get_deriv`, and `get_state` on the continuous
 tier, take at most an index step**, since a continuous state field is flat
 ([§7.1][s7-1], [D-276][d-276]). A discrete `s` field is isbits or a `Symbol`
-([§3.2][s3-2]), and `get_state` on it takes the full address. **The address
-is checked once and baked**, and the read runs as field loads and indexing
-unrolled at compile time ([D-276][d-276]).
+([§3.2][s3-2]), and `get_state` on it takes the full address. The address
+is checked once and baked, and **the read runs as field loads and indexing
+unrolled at compile time** ([D-276][d-276]).
 
-The names carry a deliberate `get_` prefix ([D-095][d-095]). A selector is
+**The names carry a deliberate `get_` prefix** ([D-095][d-095]). A selector is
 a *deferred read*, a value describing the read the compiled gather will
 perform. The prefix names that action, and it keeps five short common nouns
 out of the namespace user declarations share with domain code.
@@ -105,8 +103,7 @@ declaring what linearization seeds and reports) with `at(prefix, …)`. At the r
 face is root-exported. Either way the read is an *integration* read
 ([§11.2][s11-2]).
 
-**A selector resolves against a source**, before any client policy applies
-([D-098][d-098]). The table selectors (`get_output`, `get_input`,
+**A selector resolves against a source** ([D-098][d-098]). The table selectors (`get_output`, `get_input`,
 `get_face`) resolve against a *table source*. A table source is a
 [boundary](#g-boundary) [snapshot](#g-snapshot), or the scratch tables a
 service evaluation instantiates ([§14.8][s14-8], [D-124][d-124]). The store
@@ -131,20 +128,20 @@ On top of the source rule sits one piece of authoring guidance
 ([D-414][d-414]). A service read, trim's `reads` or a tap, that should outlive
 the build reads a face with `get_face` ([D-125][d-125]).
 `get_face` resolves through export chains exactly as mounting resolves
-[root input](#g-root-input) faces ([§14.9][s14-9]), so the read side
-mirrors the write side. An inspection read, a binding's or `series`', may
+[root input](#g-root-input) faces ([§14.9][s14-9], [D-125][d-125]), so
+the read side mirrors the write side. An equilibrium equation meant to
+outlive the build it was posed against therefore binds the curated face
+behind a [generically held](#g-generic-holding) child (one held through a
+non-concrete field type) rather than a path into it. An inspection read, a binding's or `series`', may
 name any cell the structure has, since it promises nothing beyond this
-build ([D-083][d-083]). Both resolve under the one service walk
+build ([D-083][d-083]). Both reads resolve under the one service walk
 ([§13.3][s13-3]).
 
 Trim's `reads` and linearization's taps name
 `get_state`/`get_deriv`/`get_output`/`get_input`/`get_face`. They do so
 within the scopes the locality law ([§6.1][s6-1]) and
 [fragment](#g-fragment) scoping ([§14.2][s14-2]) describe, as authoring
-guidance ([D-414][d-414]). An equilibrium equation meant to outlive the
-build it was posed against therefore binds the curated face behind a
-[generically held](#g-generic-holding) child (one held through a
-non-concrete field type) rather than a path into it.
+guidance ([D-414][d-414]).
 
 Inspection reads admit the whole family, within the source rule.
 Output-[device](#g-device) bindings and log extraction by `series` take
@@ -160,7 +157,7 @@ it by source, not by client.
 requests, one per `StopFlag` output port), period ([§13.5][s13-5],
 [D-316][d-316]). Termination is run policy over the requests the model
 declares, and no path selector reaches `ignore_stop_requests`
-([D-060][d-060]).
+([D-060][d-060], [D-316][d-316]).
 
 The five selectors and their sources:
 
@@ -288,7 +285,7 @@ boundary at `t₀`) means for trim.
   boundaries, no events and no `s_update`. Only the committed solution
   executes boundary zero.
 - A guard firing at commit is a wanted failure signal. The hand-written trim
-  asserts of Flight.jl's Cessna 172 models (`!stall`, no weight-on-wheels,
+  asserts of Flight.jl's Cessna 172 models (no weight-on-wheels,
   `ω > ω_idle`) become the model's own event logic, surfaced through the
   ordinary machinery instead of `@assert`. A handler that fires at commit
   moves the committed stores off the solved point. Saying nothing would be
@@ -323,8 +320,8 @@ virgin stores** ([D-149][d-149]). That principle, not an enumeration,
 names the sites. They are `init!`, trim's setup application to freshly
 allocated scratch stores, trim's commit through boundary zero
 ([§14.8][s14-8]), and linearization's operating condition under `about`,
-applied to its own scratch ([§14.10][s14-10]). That is one class, one
-mechanism and one kind. Each compares the resolved plan's root-input
+applied to its own scratch ([§14.10][s14-10]). That is one group of sites,
+one mechanism and one kind. Each compares the resolved plan's root-input
 coverage against the `Build`'s `input_faces` before writing anything. A
 shortfall is one collected, declaration-ordered diagnostic
 (`UninitializedInputs`, [Appendix C][sC]) naming every uncovered face.
@@ -355,7 +352,7 @@ values per script. In Flight.jl the `@kwdef` defaults of
 authoritative home, such as `ready_for_taxi(ac)` or `cold_and_dark(ac)`,
 returning full-coverage conditions. But "baseline plus tweaks" collides
 with the duplicate-leaf error ([§14.2][s14-2]) by design. The collision
-*is* the intent, and **the fourth node kind,
+*is* the intent, and **the fourth node type,
 [`override(base, patch)`](#g-override), exists for it** ([D-068][d-068]).
 It is ordered and asymmetric, where [`combine`](#g-combine) is symmetric
 and collision-intolerant. At resolution a leaf present in both takes the

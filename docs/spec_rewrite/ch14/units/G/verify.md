@@ -40,3 +40,19 @@ Under `brief_common.md`'s test, D-277's second half (V119) and bullets 1–3 are
 
 - §14.9's first `override` (line 198) is unlinked (F67).
 - Lines 180 and 293 run past the wrap width.
+
+## Re-check (after R28–R30)
+
+`checks/build_inventory.py ch14 G`: 159 claims, 25 added, 0 failed checks, no uncovered words. 19 bold spans.
+
+- C-075: OK. "migration" is back, and D-070 now sits on the findings sentence. The inventory's C-075 still lists D-070, which now cites the next sentence; that is bookkeeping only.
+- C-107: OK under R28. The bold is the headline only, and D-277 is in the sentence. No other bold of this ruling exists in the frozen spec (the glossary's `#g-at` is plain) or in the siblings' new.md.
+- C-117: OK. "For a wingman aircraft mounted at" claims only what the example implies.
+- C-125: OK. The thin-rig scope is restored.
+- C-140: OK under R29. `atmosphere.jl` 153 and 260 confirm the owners, and `HorizontalTerrain` is left unowned.
+- C-141: OK. `Model` is FlightCore's (`lib/FlightCore/src/modeling.jl` 89).
+- C-144: OK. D-364's first Position sentence carries it.
+- C-149: OK under R30. It matches old, with §4.4 and D-237 kept on the pointer clause, and "one" refers back to root input.
+- FRC gloss: OK. `piston.jl` 229 and 296 say "friction constraint compensator", a bounded PI submodel beside `idle`.
+- `override` link: OK. Its gloss is a subset of `#g-override`. Unit F links `override` in §14.8, but this link is in §14.9, a new section, so it is not a duplicate. The inserted sentence breaks no pronoun's antecedent.
+- Neighbouring claims, antecedents and citations are intact. Nothing new.

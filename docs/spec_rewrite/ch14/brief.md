@@ -249,7 +249,7 @@ The orchestrator's, outside the chapter, in step 7:
   pointer after F64.
 - `README.md`'s carried items for chapter 14 are struck. Appendix B's and
   C's rows this chapter found stale (survey 2's part E closing list, F5's
-  `ReadSetMisuse`, F8's `ConditionNodeMisuse`, F11's
+  `ReadSetMisuse`, F8's and R38's `ConditionNodeMisuse`, F11's
   `DuplicateConditionLeaf`, F53's `TapResolution`, F71's `ArgumentInvalid`)
   join the appendices' carried list, and `linearization_walkthrough.md` 572
   joins the companions'.
@@ -389,3 +389,47 @@ words). Survey 2.
 - **R30. "Traced and checkpointed by value"** (unit G's verifier, open
   question 3; unit G). §4.4 says only "recorded with the run by value", so
   the pointer sentence keeps the old phrase.
+- **R31. "Before any client policy applies"** (unit B's verifier, open
+  question 1; unit B). R5 leaves no client policy that applies, so the clause
+  goes. The glossary's `#g-selector` carries the same clause: a landing
+  edit.
+- **R32. `!stall`** (unit B's correction 1 and its verifier's question 2;
+  unit B). Flight.jl's C172 trim setup sets `stall = false` in its
+  initializer and does not assert it (`c172s.jl` 244, 256–260). Apply the
+  proposed "(no weight-on-wheels, `ω > ω_idle`)".
+- **R33. "One class"** (unit B's verifier, open question 3; unit B). *Class*
+  is reserved for primitive versus assembly. Reword with a plain word that
+  keeps the count and names no glossary term.
+- **R34. D-149's bold** (unit B's verifier, open question 4; unit B). §14.6
+  is its home (R7). §9.3's bold (old 4690–4692) goes plain with a pointer to
+  §14.6: a landing edit, joined to R3's.
+- **R35. The ledger's allocation scope** (unit B's verifier, open question 5;
+  units A, B). F9 scopes "allocates nothing" to literal prefixes; C-078's
+  ledger clause takes the same qualifier.
+- **R36. `override` among the node builders** (unit A's verifier, open
+  question 1; unit A). F8's sentence names `set`, `at` and `combine`, and
+  `override` builds the fourth node kind §14.6 introduces. The sentence
+  gains a pointer clause, "and `override` builds a fourth kind
+  ([§14.6][s14-6])", so §14.2 defines nothing §14.6 owns.
+- **R37. One home for the two plans' contents** (unit A's verifier, open
+  question 2; units A, B). §14.3 is where the entry list compiles, so it
+  states both plans' contents once: per leaf, the specialized `apply!`'s
+  plan holds a lens, a destination and a converter, and the dynamic walk's
+  plan holds the converted values themselves. The `lens` gloss stays there.
+  §14.4 states which plan each way applies and points to §14.3 for their
+  contents, with no second gloss of `lens`. R27's sentence and F16's
+  amended wording in §14.4 conform.
+- **R38. *Node type*, not *node kind*** (unit A's verifier, re-check of R36;
+  units A, B). *Kind* is reserved for diagnostic kinds, and R36's dictation
+  broke that rule. Every *node kind* in the chapter becomes *node type*: R36's
+  clause ("and `override` builds a fourth node type"), §14.2's misuse payload
+  ("the node types in hand", old 11471 area) and §14.6's "the fourth node
+  type" (old 11841 area), whose bold stays on its clause.
+- **R39. Unit F's verifier questions** (unit F's verifier, open questions
+  1 to 3; unit F). Questions 1 and 2 are R7's test: D-124's widened `reads`
+  grammar and D-118's "returned names are the report's equation names" each
+  take one bold if the entry's Position states it as a ruling of its own,
+  §14.7 is where the spec states it, and no other section of the frozen spec
+  bolds it; otherwise they stay plain. Question 3 is R23's: the 7-variable
+  search names the owner the Flight.jl source shows, `c172.jl`'s
+  `TrimState`.

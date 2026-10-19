@@ -18,19 +18,19 @@ C("All string work, validation and addressing are functions of the shape of the 
   note="link and gloss moved to the context sentence, the new first use")
 F(2)
 C("Execution is therefore resolve-once/execute-many, with two ways to apply one plan.",
-  new="Execution is therefore resolve-once/execute-many. A valid list of condition entries compiles two ways, one for each way to apply it.",
-  tag="R", ruling="R9",
-  note="F16 amended wording, its first sentence, with 'entry list' made 'list of condition entries' (R13); the per-plan sentences sit in each bullet. Code: ConditionPlan and SpecializedPlan, src/conditions.jl 254-275, 640-707 (survey F16)")
+  new="Execution is therefore resolve-once/execute-many, with two ways to apply the compiled plans (§14.3).",
+  tag="R", ruling="R37", newcites="§14.3",
+  note="verify: §14.3 (unit A) says the list compiles two ways and states both plans' contents (R37); §14.4 speaks of applying the compiled plans two ways, D-066's 'two ways to apply one compiled plan', and points to §14.3. Code: ConditionPlan and SpecializedPlan, src/conditions.jl 254-275, 640-707")
 C("- Specialized `apply!` serves the service that iterates, trim's per-evaluation write.",
-  new="- Specialized `apply!` serves the service that iterates, trim's per-evaluation write (D-066). Its plan holds, per leaf, a lens (the compiled navigation step of a condition entry), a destination and a converter.",
-  tag="R", ruling="R7", newcites="D-066",
-  note="list label becomes the bold headline clause of D-066's first semicolon ruling, 'specialized apply! ... for iterating services'. The plan sentence is F16's amended wording (R9); lens linked and glossed at its first use, gloss from #g-lens")
+  new="- Specialized `apply!` serves the service that iterates, trim's per-evaluation write (D-066). It applies its own plan, whose contents §14.3 gives.",
+  tag="R", ruling="R7", newcites="D-066 §14.3",
+  note="R37: the per-leaf lens/destination/converter sentence (F16's wording) is cut to a pointer; §14.3 (unit A) is the one home of both plans' contents and keeps the lens gloss. Earlier: list label becomes the bold headline clause of D-066's first semicolon ruling, 'specialized apply! ... for iterating services'. The plan sentence is F16's amended wording (R9); lens linked and glossed at its first use, gloss from #g-lens")
 C("It unrolls stores through the baked lenses and converters.",
-  note="store linked at its first use, no gloss")
+  note="store linked at its first use, no gloss; lens linked here with no second gloss (R37)")
 C("Those are the same machine operations as today's in-place writes: zero-alloc, no strings, no dispatch.",
-  new="Those are the same machine operations as FlightCore's in-place state writes, with no allocation, no strings and no dispatch.",
+  new="Those are the same machine operations as the in-place writes of FlightPhysics' `assign!`, with no allocation, no strings and no dispatch.",
   tag="R", ruling="R12",
-  note="'today's' names FlightCore's in-place writes to a Model's state (checked ~/.julia/dev/Flight.jl/lib/FlightCore/src/modeling.jl, Model and f_init!/f_ode! extended in place); mid-sentence colon goes")
+  note="verify: V10 (R23), Flight.jl's trim writes through FlightPhysics' assign! (~/.julia/dev/Flight.jl/lib/FlightPhysics/src/aircraftbase.jl 94), as §14.2 names it. Earlier: 'today's' names FlightCore's in-place writes to a Model's state (checked ~/.julia/dev/Flight.jl/lib/FlightCore/src/modeling.jl, Model and f_init!/f_ode! extended in place); mid-sentence colon goes")
 F(7); F(8)
 C("A `===` sweep over the prefix strings closes the remainder.",
   new="A `===` comparison of each prefix string closes the remainder.",
@@ -53,8 +53,8 @@ C("- The dynamic walk serves the one-shot uses, `init!` and `linearize`'s operat
   tag="R", ruling="R9", newcites="§14.8 D-066",
   note="F19 adds trim's setup write (src/trim.jl 480-483; §14.8 12186-12187). List label becomes the bold headline of D-066's second semicolon ruling, 'dynamic entry-list walk ... for one-shot init' (R7)")
 C("It executes the same validated entry list by runtime dispatch per write.",
-  new="It executes the same validated condition entries by runtime dispatch per write, from a plan that holds the converted values themselves.",
-  tag="R", ruling="R9", note="F29 (bare entry, R13) and F16's amended last sentence, 'The dynamic walk's plan holds the converted values themselves'")
+  new="It executes the same validated condition entries by runtime dispatch per write, from its own plan (§14.3).",
+  tag="R", ruling="R37", newcites="§14.3", note="R37: the converted-values clause is cut to a pointer to §14.3, which states the dynamic walk's plan contents (units/A/new.md). Earlier: F29 (bare entry, R13) and F16's amended last sentence, 'The dynamic walk's plan holds the converted values themselves'")
 F(17); F(18); F(19)
 C("Rule. Which of the two a service uses is internal, never user-facing API.",
   new="Which of the two a service uses is internal, never user-facing API.",
@@ -64,8 +64,9 @@ C("#### The read-selector family", note="no file links this anchor")
 C("The read-selector family is closed.",
   new="The read-selector family is closed (D-095).",
   tag="C", newcites="D-095",
-  note="bold kept on D-095's one ruling, first in reading order ('spelled with a get_ prefix and completed'); the prefix sentence below cites it plain")
-F(26); F(27)
+  note="verify: the D-095 bold moves to the get_ prefix, the Position's headline; earlier: bold kept on D-095's one ruling, first in reading order ('spelled with a get_ prefix and completed'); the prefix sentence below cites it plain")
+F(26)
+C(S[27], new="They form one address space for every reader that takes a selector.", note="verify: C-029 drift, snapshot inspection reads by path and port name (F21)")
 C("Rule. `leaf` is a leaf address: the field or face name, followed by `.name` and `[k]` or `[k,l]` steps in any order, as in `\"pose.q_eb[2]\"`, `\"ω_eb_b[1]\"` or `\"J[1,3]\"`.",
   new="`leaf` is a leaf address (D-276). It is the field or face name (the name a port wears on its component's boundary), followed by `.name` and `[k]` or `[k,l]` steps in any order, as in `\"pose.q_eb[2]\"`, `\"ω_eb_b[1]\"` or `\"J[1,3]\"`.",
   tag="R", ruling="R7", newcites="D-276",
