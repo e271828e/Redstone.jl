@@ -1,1 +1,0 @@
-- `DeviceCrash`, a device crash ([§12.4][s12-4], [§13.4][s13-4]). The framework wrapper catches a device task's failure, and the run goes on without the device unless its attachment set [`should_abort`](#g-should_abort) (the per-attachment failure policy, an `attach!` keyword) ([§11.6][s11-6]).

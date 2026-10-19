@@ -112,7 +112,8 @@ item changes what the spec says, the spec edit is part of the item.
   kernel's unit, so extraction from a rewritten chapter is near mechanical.
   From chapter 13 the survey tags each descriptive passage with the source
   file that realizes it, which is the migration list; chapters 1 to 12 are
-  tagged at extraction. A ruling about the design's shape rather than runtime
+  tagged at extraction. Chapter 13's list is part H of
+  `docs/spec_rewrite/ch13/survey_1.md` and `survey_2.md` at `ae63ca9`. A ruling about the design's shape rather than runtime
   behavior has no natural test, so its kernel line points at the build-time
   check or diagnostic that enforces it, and where none does, carries its
   D-citation alone. Chapter 12's rulings with no entry beyond D-400 to

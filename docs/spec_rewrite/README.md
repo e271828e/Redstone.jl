@@ -36,7 +36,7 @@ readability with no loss of content. The steps are in
 | 10. Time and execution | done | `3d72f03` | `0f9ce8a` |
 | 11. Runtime periphery: the data plane | done | `1b1ac70` | `e5cbb77` |
 | 12. Runtime periphery: lifecycle and orchestration | done | `e91aa40` | `eb1d832` |
-| 13. Error discipline | landed, track 2 pending | `3d4cb27` | |
+| 13. Error discipline | done | `3d4cb27` | `ae63ca9` |
 | 14. Stopped-sim services | not started | | |
 | Appendices A to D | not started | | |
 
@@ -57,6 +57,11 @@ chapter's rewrite settles its own:
 - **Chapter 14.** §14.10 cites superseded D-167 three times.
 - **Chapter 14.** §14.10 bolds seedability and states the tap rejection,
   both of which §8.2 states (D-295, D-296).
+- **Chapter 14 and Appendix B.** "Requester roster" is unlinked in §14.4
+  and Appendix B; chapter 13's track 2 added `#g-requester-roster`.
+- **Companions.** `frame_walkthrough.md`'s sketches lag the code: they name
+  `sim.jl`, `sim.exec` and `event_phase!(sim, …)` where `src/` now has the
+  `Model`'s `event_phase!(model, tick)` (chapter 13's track 2).
 - **Front matter.** The Part III roadmap omits §12.5 (chapter 12's B86).
   The Part IV roadmap omits §13.3, §13.6 and §13.7, and still says §13
   "fixes only how a failure is reported once it happens"; the chapter now
