@@ -210,20 +210,36 @@ function test_bindings()
 
     @testset "reads resolve at attach: binding drift fails there, never on the wire (§11.2, §14.4)" begin
         sim = Simulation(outfaced(); h = 1//10)
-        d = carried(@test_throws DiagnosticError{ReadBindingUnresolved} attach!(sim, Pad("t"), Readout(alt = get_output("q", "y"))))
-        @test d.reason === :unknown_cell &&
-              d.selector == "get_output(\"q\", \"y\")" &&
-              d.candidates == Symbol[]            # no such path: no list to offer
-        # The device is named by type (Appendix C): admission assigns no id yet.
-        @test d.device == "Pad" && d.binding == "Readout"
-        d = carried(@test_throws DiagnosticError{ReadBindingUnresolved} attach!(sim, Pad("t"), Readout(alt = get_output("p", "nope"))))
-        @test d.reason === :unknown_cell && d.candidates == [:power, :y]
-        d = carried(@test_throws DiagnosticError{ReadBindingUnresolved} attach!(sim, Pad("t"), Readout(v = get_input("nope"))))
+        # An unknown path is the path walk's refusal, the children in hand (§13.3).
+        d = only(diagnostics(failure(() -> attach!(sim, Pad("t"), Readout(alt = get_output("q", "y"))))))
+        @test d isa PathResolution && d.reason === :unknown_child && d.segment == "q" &&
+              d.candidates == ["p"]
+        # The read's own refusals are `ReadResolution`, named by the read's label;
+        # the `attach!` call names the device (D-406).
+        d = only(diagnostics(failure(() -> attach!(sim, Pad("t"), Readout(alt = get_output("p", "nope"))))))
+        @test d isa ReadResolution && d.reason === :undeclared && d.declares === :output_port &&
+              d.label === :alt && d.candidates == [:y, :power]   # in declaration order
+        d = only(diagnostics(failure(() -> attach!(sim, Pad("t"), Readout(v = get_input("nope"))))))
         @test d.reason === :unknown_root_input && d.candidates == [:u]  # the root-input list, in hand
-        d = carried(@test_throws DiagnosticError{ReadBindingUnresolved} attach!(sim, Pad("t"), Readout(v = get_face("u"))))
-        @test d.reason === :root_input_not_output
-        d = carried(@test_throws DiagnosticError{ReadBindingUnresolved} attach!(sim, Pad("t"), Readout(v = get_face("nope"))))
+        d = only(diagnostics(failure(() -> attach!(sim, Pad("t"), Readout(v = get_face("u"))))))
+        @test d.reason === :input_face_not_output
+        d = only(diagnostics(failure(() -> attach!(sim, Pad("t"), Readout(v = get_face("nope"))))))
         @test d.reason === :unknown_output_face && d.candidates == [:y]
+        d = only(diagnostics(failure(() -> attach!(sim, Pad("t"), Readout(v = get_state("p", :x))))))
+        @test d.reason === :store_selector
+        # Every violation is collected, in declared order (§13.1).
+        err = failure(() -> attach!(sim, Pad("t"), Readout(a = get_output("p", "nope"),
+                                                           b = get_state("p", :x),
+                                                           c = get_face("nope"))))
+        @test err isa DiagnosticError{Vector{Diagnostic}} &&
+              [d.reason for d in diagnostics(err)] ==
+              [:undeclared, :store_selector, :unknown_output_face]
+        # A path selector names a primitive's own port: an assembly's face and a
+        # root input, each by the empty path, are an assembly path (D-406).
+        d = only(diagnostics(failure(() -> attach!(sim, Pad("t"), Readout(v = get_output("", "y"))))))
+        @test d.reason === :assembly_path
+        d = only(diagnostics(failure(() -> attach!(sim, Pad("t"), Readout(v = get_output("", "u"))))))
+        @test d.reason === :assembly_path
         # A rejected attach consumed no id, and the good one lands as device 1.
         handle = attach!(sim, Pad("t"), Readout(alt = get_face("y")))
         @test sim.plane.roster[1].id == 1

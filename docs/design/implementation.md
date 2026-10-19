@@ -105,16 +105,11 @@ D-263, D-289, D-315.
 - `TableBinding`.
 - `map_input`, generated over the datum's keys with one `_map_channel` call
   each, and the conditioning helper `_condition`.
-- Binding reads `ReadGather`, resolved at attach by `_compile_gather`.
-  Resolution raises `ReadBindingUnresolved` and enforces the source rule.
-- The three table members take a leaf address, parsed and resolved by the
-  family's `parse_leaf` and `resolve_leaf`, a face selector's head matched
-  by `match_leaf`. `ReadGather` holds the family's
-  `CellRead` entries, and `gather_snapshot` runs `_read` over the
-  snapshot's store (D-276).
-- The candidates on the two name-shaped read misses (§14.4).
+- The binding reads' contract checks, and `_compile_binding_reads`, which
+  resolves the reads through readers.jl's `_compile_reads` for a table source
+  at the root (D-406).
 
-Spec: §11.2, §11.4, §11.6, §14.4, D-276.
+Spec: §11.2, §11.4, §11.6, §14.4.
 
 ### `src/blocks.jl`
 
@@ -337,6 +332,9 @@ D-256, D-268, D-269, D-317.
 - Snapshots, and the log with re-decimation. The log stores the box
   publication made, which `log!` takes `@nospecialize`d beside its concrete
   type, so the two `boundary` reads stay static (§9.8).
+- `gather_reads` over a snapshot, a compiled `Reader`'s gather over the
+  snapshot's store, here and not in readers.jl for the include order (§11.2,
+  §14.4, D-406).
 - The published `FrameworkStatus`, which every snapshot carries. It holds the
   per-writer records `WriterStatus` and, beside them, the pacer's frozen
   `PacerStatus` (D-269):
@@ -345,8 +343,8 @@ D-256, D-268, D-269, D-317.
 - `ResidueRecord`, one writer's share of the tail residue, which devices.jl's
   sweep builds and the termination record holds (§13.5, D-203).
 
-Spec: §10.7, §11.1–§11.4, §11.8, §12.2, §12.4, §12.6, §13.2, §13.5, D-023,
-D-027, D-038, D-137, D-203, D-250, D-255, D-269, D-316, D-317.
+Spec: §10.7, §11.1–§11.4, §11.8, §12.2, §12.4, §12.6, §13.2, §13.5, §14.4, D-023,
+D-027, D-038, D-137, D-203, D-250, D-255, D-269, D-316, D-317, D-406.
 
 ### `src/declare.jl`
 
@@ -408,7 +406,7 @@ D-250, D-254, D-256, D-261.
 - The device contract `init!`, `shutdown!`, `unblock!` and `loop`.
 - The handle (D-261):
   - it holds the binding, the writer, the diagnostic cell and the compiled
-    gather;
+    gather, a `Reader`;
   - its type carries the binding's and the gatherer's types, so
     `binding(handle)` and `gather(handle, snapshot)` are static inside a
     device's `loop` and allocate nothing;
@@ -469,9 +467,8 @@ D-203, D-233, D-244, D-256, D-261, D-268, D-270, D-315, D-317.
   and `duplicate_of` fields; `ReadSetMisuse`'s `:not_a_tap_list`;
   `ArgumentInvalid`'s `:not_a_tap_set`, `:t0_without_about`,
   `:nonpositive_width` and `:non_nominal` (D-272, D-406).
-- `ReadResolution`'s and `ReadBindingUnresolved`'s leaf reasons
-  `LEAF_REASONS`, with the `leaf` and `step` fields, and `_leaf_clause`
-  (D-276).
+- `ReadResolution`'s leaf reasons `LEAF_REASONS`, with the `leaf` and `step`
+  fields, and `_leaf_clause` (D-276).
 - `ReadResolution`'s and `TapResolution`'s `mount` field, and
   `ReadResolution`'s `producer` field and reasons `:no_input_face`,
   `:internally_wired` and `:input_face_not_output` (D-277).
@@ -698,16 +695,19 @@ D-320.
 - `reads` and `Reads`.
 - The internal `_compile_reads`, which yields a `Reader{T}`. Each entry carries
   its chain as a type parameter, and the `CellRead` core reads a store bundle,
-  so every gather over a table shares it.
+  so every gather over a table shares it. Its `source` argument is the source
+  the reader runs over, and under `:table` the resolver refuses a store
+  selector (§14.4, D-406).
 - The violations, `ReadResolution` values built by `_reader_violation` and
-  `_leaf_violation`, the same at trim and at linearization (D-406).
+  `_leaf_violation`, the same at trim, at linearization and at attach (D-406).
 - `gather_reads`, `apply!`'s twin over an executor. It reads its entries
-  through the generated `_read_entries`, which `gather_snapshot` shares.
+  through the generated `_read_entries`, which the snapshot method in
+  dataplane.jl shares.
 - The output-port candidates, read off the `Outputs`.
 - Activation identity on readers, checked as an internal invariant. The same
   check on plans sits in conditions.jl's `apply!`.
 
-Spec: §13.1, §13.3, §14.1, §14.4, §14.7, §14.9, §14.10, D-125, D-130, D-253,
+Spec: §11.2, §13.1, §13.3, §14.1, §14.4, §14.7, §14.9, §14.10, D-125, D-130, D-253,
 D-276, D-277, D-315, D-406.
 
 ### `src/roster.jl`

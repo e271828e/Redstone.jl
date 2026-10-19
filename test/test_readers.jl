@@ -441,8 +441,8 @@ function test_readers()
 
     @testset "the source rule: a snapshot-bound reader may not name a store selector (§14.4)" begin
         sim = Simulation(readable(); h = 1//10)
-        d = carried(@test_throws DiagnosticError{ReadBindingUnresolved} attach!(sim, Pad("t"), Readout(q = get_state("plant", :q))))
-        @test d.reason === :store_selector &&
+        d = only(diagnostics(failure(() -> attach!(sim, Pad("t"), Readout(q = get_state("plant", :q))))))
+        @test d isa ReadResolution && d.reason === :store_selector && d.label === :q &&
               d.selector == "get_state(\"plant\", :q)"
         @test isempty(sim.plane.roster)              # the rejection left the roster untouched
 
@@ -471,7 +471,7 @@ function test_readers()
         pose = port(snapshot, "c", :pose)
         @test gather(handle, snapshot) === (v = pose.v, m12 = pose.m[1, 2])
         gatherer = handle.gatherer
-        @test @ballocated(gather_snapshot($gatherer, $snapshot)) == 0      # `pose.m[1,2]` is two steps
+        @test @ballocated(gather_reads($gatherer, $snapshot)) == 0      # `pose.m[1,2]` is two steps
 
         # A device reading 64 outputs: the gather walks a tuple of 64 entries.
         bank_sim = Simulation(sawtooth_bank(); h = 1//10)
@@ -479,18 +479,20 @@ function test_readers()
                               Readout(; (Symbol(:q, i) => get_output("s$i", "q") for i in 1:64)...))
         init!(bank_sim)
         bank_gatherer, bank_snapshot = bank_handle.gatherer, latest(bank_sim)
-        gather_snapshot(bank_gatherer, bank_snapshot)
-        @test @ballocated(gather_snapshot($bank_gatherer, $bank_snapshot)) == 0
-        @test isconcretetype(only(Base.return_types(gather_snapshot,
+        gather_reads(bank_gatherer, bank_snapshot)
+        @test @ballocated(gather_reads($bank_gatherer, $bank_snapshot)) == 0
+        @test isconcretetype(only(Base.return_types(gather_reads,
                                                     (typeof(bank_gatherer), typeof(bank_snapshot)))))
 
         # A step the address cannot take is refused at attach with the family's
         # reason, the step named as spelled.
-        d = carried(@test_throws DiagnosticError{ReadBindingUnresolved} attach!(pose_sim, Pad("t"), Readout(q = get_output("c", "pose.q"))))
-        @test d.reason === :no_such_field && d.step == ".q" && d.candidates == [:v, :m] &&
-              d.declared === LeafPose{Float64} && d.leaf == "pose.q" && d.field === :pose
-        d = carried(@test_throws DiagnosticError{ReadBindingUnresolved} attach!(pose_sim, Pad("t"), Readout(v = get_output("c", "pose.v[4]"))))
-        @test d.reason === :index_bounds && d.step == "[4]" && d.declared === SVector{3,Float64}
+        d = only(diagnostics(failure(() -> attach!(pose_sim, Pad("t"), Readout(q = get_output("c", "pose.q"))))))
+        @test d isa ReadResolution && d.reason === :no_such_field && d.step == ".q" &&
+              d.candidates == [:v, :m] && d.declared === LeafPose{Float64} &&
+              d.leaf == "pose.q" && d.field === :pose
+        d = only(diagnostics(failure(() -> attach!(pose_sim, Pad("t"), Readout(v = get_output("c", "pose.v[4]"))))))
+        @test d isa ReadResolution && d.reason === :index_bounds && d.step == "[4]" &&
+              d.declared === SVector{3,Float64}
         @test length(pose_sim.plane.roster) == 1     # the two rejections left the roster as it was
     end
 
@@ -530,12 +532,14 @@ function test_readers()
               a.candidates == [Symbol("left.brake")]
         @test b_.reason === :unknown_output_face && b_.field === :att &&
               b_.candidates == [Symbol("att.theta"), :pose, Symbol("pose.v")]
-        d = carried(@test_throws DiagnosticError{ReadBindingUnresolved} attach!(sim, Pad("t"), Readout(v = get_face("att.th"))))
-        @test d.reason === :unknown_output_face && d.field === Symbol("att.th") &&
+        d = only(diagnostics(failure(() -> attach!(sim, Pad("t"), Readout(v = get_face("att.th"))))))
+        @test d isa ReadResolution && d.reason === :unknown_output_face &&
+              d.field === Symbol("att.th") &&
               d.candidates == [Symbol("att.theta"), :pose, Symbol("pose.v")]
         # A matched face refuses its steps under the face's own name.
-        d = carried(@test_throws DiagnosticError{ReadBindingUnresolved} attach!(sim, Pad("t"), Readout(v = get_face("att.theta.x"))))
-        @test d.reason === :no_such_field && d.field === Symbol("att.theta") && d.step == ".x"
+        d = only(diagnostics(failure(() -> attach!(sim, Pad("t"), Readout(v = get_face("att.theta.x"))))))
+        @test d isa ReadResolution && d.reason === :no_such_field &&
+              d.field === Symbol("att.theta") && d.step == ".x"
     end
 
     @testset "a reader and a plan belong to one activation, by dispatch (§9.4, §14.4)" begin

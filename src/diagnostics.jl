@@ -1483,6 +1483,7 @@ Base.@kwdef struct ReadResolution <: Diagnostic
     reason::Symbol   # :assembly_path|:undeclared|:discrete_deriv|
                      # :unknown_root_input|:no_input_face|:internally_wired|
                      # :input_face_not_output|:unknown_output_face|
+                     # the source rule's (§14.4): :store_selector|
                      # the leaf address's (§14.4, D-276): :leaf_syntax|:no_such_field|
                      # :opaque_leaf|:not_indexable|:index_arity|:index_bounds
                      # A missing input face is :unknown_root_input at the root
@@ -1504,6 +1505,11 @@ end
 path(d::ReadResolution) = d.path
 
 function message(d::ReadResolution)
+    d.reason === :store_selector &&
+        return _read_message(d, "it is a *store* selector — the store selectors resolve only " *
+                           "against live stores, and this reader reads a published snapshot, " *
+                           "which deliberately carries none; the remedy is to declare the field " *
+                           "public and read the port published from it", "§14.4, §11.2")
     d.reason === :assembly_path &&
         return _read_message(d, "$(_at_path(d.path)) is an assembly — a path selector addresses " *
                            "a component's own declarations, and a level's exported face is " *
@@ -1537,49 +1543,6 @@ function message(d::ReadResolution)
                            "output faces are $(_namelist(d.candidates))", "§14.4, D-277")
     _read_message(d, "`$(d.field)` is no root-exported output face — the root exports " *
                 "$(_namelist(d.candidates))")
-end
-
-"§11.2, §14.4: a binding read that does not resolve against the published snapshot."
-Base.@kwdef struct ReadBindingUnresolved <: Diagnostic
-    device::String                           # the device type, admission not yet reached
-    binding::String                          # the binding type, by name (§13.2)
-    selector::String                         # the selector as authored
-    reason::Symbol   # :store_selector|:unknown_cell|:unknown_root_input|
-                     # :root_input_not_output|:unknown_output_face|
-                     # the leaf address's (§14.4, D-276): :leaf_syntax|:no_such_field|
-                     # :opaque_leaf|:not_indexable|:index_arity|:index_bounds
-    path::String = ""
-    field::Union{Nothing,Symbol} = nothing
-    leaf::String = ""                        # the leaf address as authored
-    step::String = ""                        # the step at fault, as spelled
-    declared::Any = nothing
-    candidates::Vector{Symbol} = Symbol[]
-end
-path(d::ReadBindingUnresolved) = d.path
-function message(d::ReadBindingUnresolved)
-    d.reason === :store_selector &&
-        return "$(d.device)'s $(d.binding) reads $(d.selector), a *store* selector — the " *
-               "store selectors resolve only against live stores, and a binding reads a " *
-               "published snapshot, which deliberately carries none (§14.4, §11.2). The " *
-               "remedy is to declare the field public and read the port published from it"
-    d.reason in LEAF_REASONS &&
-        return "$(d.device)'s $(d.binding) reads $(d.selector), and $(_leaf_clause(d)) " *
-               "(§14.4, D-276)"
-    d.reason === :unknown_cell &&
-        return "$(d.device)'s $(d.binding) reads $(d.selector), which names no cell — " *
-               (isempty(d.candidates) ?
-                "$(_at_path(d.path)) has no cells; only declared outputs, assembly " *
-                "faces and root inputs are addressable" :
-                "the cells at $(_at_path(d.path)) are $(_faceset(d.candidates))") * " (§14.4)"
-    d.reason === :unknown_root_input &&
-        return "$(d.device)'s $(d.binding) reads $(d.selector), which names no root input " *
-               "face — the root inputs are $(_faceset(d.candidates)) (§14.4)"
-    d.reason === :root_input_not_output &&
-        return "$(d.device)'s $(d.binding) reads $(d.selector), which names a root *input* " *
-               "face — the integration reads are the exported output faces, and a root " *
-               "input is read back with get_input (§14.4, §11.2)"
-    "$(d.device)'s $(d.binding) reads $(d.selector): `$(d.field)` is no root-exported " *
-    "output face — the output faces are $(_faceset(d.candidates)) (§14.4, §11.2)"
 end
 
 "§14.2, §14.3: a condition leaf that does not resolve against this build."

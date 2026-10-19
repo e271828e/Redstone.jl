@@ -1,15 +1,16 @@
 # The binding's runtime half (§11.6): the shipped `TableBinding` with its
 # generic `map_input` — the one data-driven binding the framework writes, and
 # the owner of the shared pure conditioning helper (§11.4) — and the output
-# side: the table members of §14.4's read-selector family, the resolution
-# `attach!` runs against the build, and the one compiled gather whose labeled
-# NamedTuple is what `map_output` receives (§11.2). `map_input`/`map_output`
-# are *conventions of the author-owned loop idiom*: the framework never calls
-# them, so what is enforced here is only what construction and attach can
-# check — the table's own shape, and the enumerated `reads`. Everything the
-# mappings touch at runtime is bounded elsewhere: `map_input` by the staging
-# checks (§11.4), on the writer's own task; `map_output` by receiving exactly
-# the gather's NamedTuple, what it puts on the wire being the peer's business.
+# side: the contract checks on an attachment's `reads`, which then resolve
+# through §14.4's one read resolver (readers.jl) into the compiled reader
+# whose labeled NamedTuple is what `map_output` receives (§11.2, D-406).
+# `map_input`/`map_output` are *conventions of the author-owned loop idiom*:
+# the framework never calls them, so what is enforced here is only what
+# construction and attach can check — the table's own shape, and the
+# enumerated `reads`. Everything the mappings touch at runtime is bounded
+# elsewhere: `map_input` by the staging checks (§11.4), on the writer's own
+# task; `map_output` by receiving exactly the gather's NamedTuple, what it puts
+# on the wire being the peer's business.
 #
 # The framework-legible half of the binding vocabulary — the roots, the
 # declared sides, `claims`/`reads` and the conformance check — lives in
@@ -107,159 +108,43 @@ device struct, maintained by the loop, and arrives *inside* the datum:
     String(entry.face) => _condition(datum[channel], entry)
 end
 
-# --- the output side: selectors, resolution, the compiled gather (§14.4, §11.2) --
+# --- the output side: the contract checks and the one resolver (§14.4, §11.2) --
 
 # The selectors themselves are §14.4's closed family, declared in readers.jl
-# above this file: the three *table* members are what a snapshot-bound reader
-# may name, and the source rule is enforced here, at the attach point where the
-# source is finally known (§14.4). `get_output` is an inspection read —
-# deep paths, zero promises, free access, right for looking at *this* build —
+# above this file, and a binding's reads resolve through the family's one
+# collecting resolver, the one trim and linearization use (D-406). What stays
+# here is §11.6's shape check on the enumeration. The resolver runs for a table
+# source at the root, so a store selector is refused by source, and the
+# compiled `Reader` runs over a snapshot's store (dataplane.jl's
+# `gather_reads`). `get_output` is an inspection read of a primitive's own port
+# — deep paths, zero promises, free access, right for looking at *this* build —
 # and `get_face` an integration read: a root-exported output face, named,
 # curated, meaning-stable under substitution (§11.2). `get_input` reads a root
-# input back, the source cell it is. All three take a leaf address, checked
-# here by the family's own parse (a path selector) or face-list match (a face
-# selector, whose name may hold a dot) and per-step resolution against the
-# port's declared type (§14.4, D-276). A binding gather is the family's baked read,
-# `CellRead`, run over a snapshot's store where an inspection reader runs it
-# over an executor's.
+# input back, the source cell it is.
 
 """
-The compiled gather (§11.2, §14.4): one attachment's `reads`, resolved and
-frozen — the labels as a type parameter, the baked `CellRead` entries as a
-tuple — so `gather(handle, snapshot)` builds its labeled NamedTuple with no
-name resolved per read. The exact mirror of the compiled scatter the drain
-applies (§11.4), run in the other direction over a published snapshot.
-"""
-struct ReadGather{L,E<:Tuple}
-    entries::E
-end
-ReadGather{L}(entries::E) where {L,E<:Tuple} = ReadGather{L,E}(entries)
-
-gather_snapshot(read_gather::ReadGather{L}, snapshot::Snapshot) where {L} =
-    NamedTuple{L}(_read_entries(read_gather.entries, snapshot.store))
-
-"""
-Resolve one attachment's `reads` against the build and compile the gather —
+Check one attachment's `reads` against its contract and compile them —
 `attach!`'s output-side work (§11.2), run once at the attach point so a
 binding that drifted from its model fails there, not with silent garbage on
-the wire. The shape is fixed: `reads` returns a NamedTuple of labeled
-selectors, `(; label = get_output(...), ...)`, and the labels are the
-NamedTuple `map_output` receives. Every failure names the selector at fault,
-and the two name-shaped misses carry candidate lists (§14.4).
+the wire. The contract is §11.6's: a NamedTuple of labeled selectors,
+`(; label = get_output(...), ...)`, whose labels key the NamedTuple
+`map_output` receives. Resolution is the family's one collecting pass
+(readers.jl, §14.4), run for a table source at the root, so every violation
+surfaces together, the read's own as `ReadResolution` and the path walk's as
+`PathResolution`.
 """
-function _compile_gather(layout::Layout, selectors, binding_type::Type, device::String)
+function _compile_binding_reads(selectors, binding_type::Type, build::Build)
     selectors isa NamedTuple || throw(DiagnosticError(
         BindingContractMismatch(binding = _typename(binding_type),
                                  reason = :reads_not_namedtuple,
                                  observed = typeof(selectors))))
-    entries = map(values(selectors)) do selector
+    for selector in values(selectors)
         selector isa ReadSelector || throw(DiagnosticError(
             BindingContractMismatch(binding = _typename(binding_type),
                                      reason = :reads_not_selectors,
                                      observed = typeof(selector))))
-        _resolve_read(layout, selector, binding_type, device)
     end
-    ReadGather{keys(selectors)}(entries)
-end
-
-_root_input_names(layout::Layout) = Symbol[f for (f, _) in layout.root_inputs]
-
-# The two name-shaped read misses carry candidate lists (§14.4). One lists the
-# cells at the selector's path, and an assembly path lists its faces, which the
-# alias pass entered into `addr`. The other lists the root-exported output faces,
-# the names at the root that are not root inputs.
-_cells_at(layout::Layout, path::AbstractString) =
-    sort!(Symbol[name for (cell_path, name) in keys(layout.addr) if cell_path == path])
-function _root_output_faces(layout::Layout)
-    inputs = _root_input_names(layout)
-    sort!(Symbol[name for (cell_path, name) in keys(layout.addr)
-                 if cell_path == "" && name ∉ inputs])
-end
-
-# §14.4's source rule, enforced where the source is known: a snapshot carries
-# no state stores by construction (§11.2) and `ẋ` is integrator scratch, so a
-# snapshot-bound reader naming a store selector is a resolution error at
-# attach — in the didactic style, with the remedy named.
-_resolve_read(::Layout, selector::StoreSelector, binding_type::Type, device::String) =
-    throw(DiagnosticError(
-        ReadBindingUnresolved(device = device, binding = _typename(binding_type),
-                               selector = _spell(selector), reason = :store_selector,
-                               path = _selpath(selector), field = _field(selector))))
-
-# A step the leaf address cannot take, with what `parse_leaf` or `resolve_leaf`
-# had in hand (§14.4, D-276). A face selector passes its matched face.
-_leaf_unresolved(selector, refusal::LeafRefusal, binding_type::Type, device::String;
-                 field = _field(selector)) =
-    ReadBindingUnresolved(device = device, binding = _typename(binding_type),
-                          selector = _spell(selector), reason = refusal.reason,
-                          path = _selpath(selector), field = field,
-                          leaf = _leaf_string(selector), step = refusal.step,
-                          declared = refusal.declared, candidates = refusal.candidates)
-
-# A path selector's leaf address parsed into its head and steps, or refused;
-# a face selector's is matched instead (`_matched_binding_leaf`).
-function _parsed_binding_leaf(selector, binding_type::Type, device::String)
-    parsed = parse_leaf(selector.leaf)
-    parsed isa LeafRefusal &&
-        throw(DiagnosticError(_leaf_unresolved(selector, parsed, binding_type, device)))
-    parsed
-end
-
-# A face selector's address matched against `faces`: the head and steps, or
-# `nothing` on a miss the caller refuses; a step that does not parse is refused.
-function _matched_binding_leaf(selector, faces, binding_type::Type, device::String)
-    matched = match_leaf(selector.leaf, faces)
-    matched isa LeafRefusal && throw(DiagnosticError(
-        _leaf_unresolved(selector, matched, binding_type, device; field = _field(selector, faces))))
-    matched
-end
-
-# The baked read of one cell: the steps resolved against the port's declared
-# type, the chain in the entry's type (§14.4, D-276).
-function _cell_read(addr::CellAddr, selector, steps, binding_type::Type, device::String;
-                    field = _field(selector))
-    resolved = resolve_leaf(_port_type(addr), steps)
-    resolved isa LeafRefusal && throw(DiagnosticError(
-        _leaf_unresolved(selector, resolved, binding_type, device; field = field)))
-    CellRead{typeof(addr),first(resolved)}(addr)
-end
-
-function _resolve_read(layout::Layout, selector::GetOutput, binding_type::Type, device::String)
-    head, steps = _parsed_binding_leaf(selector, binding_type, device)
-    haskey(layout.addr, (selector.path, head)) || throw(DiagnosticError(
-        ReadBindingUnresolved(device = device, binding = _typename(binding_type),
-                               selector = _spell(selector), reason = :unknown_cell,
-                               path = selector.path, field = head,
-                               candidates = _cells_at(layout, selector.path))))
-    _cell_read(layout.addr[(selector.path, head)], selector, steps, binding_type, device)
-end
-
-function _resolve_read(layout::Layout, selector::GetInput, binding_type::Type, device::String)
-    inputs = _root_input_names(layout)
-    matched = _matched_binding_leaf(selector, inputs, binding_type, device)
-    matched === nothing && throw(DiagnosticError(
-        ReadBindingUnresolved(device = device, binding = _typename(binding_type),
-                               selector = _spell(selector), reason = :unknown_root_input,
-                               field = _field(selector, inputs), candidates = inputs)))
-    head, steps = matched
-    _cell_read(layout.addr[("", head)], selector, steps, binding_type, device; field = head)
-end
-
-function _resolve_read(layout::Layout, selector::GetFace, binding_type::Type, device::String)
-    faces, inputs = _root_output_faces(layout), _root_input_names(layout)
-    matched = _matched_binding_leaf(selector, faces, binding_type, device)
-    if matched === nothing
-        match_face(selector.leaf, inputs) === nothing || throw(DiagnosticError(
-            ReadBindingUnresolved(device = device, binding = _typename(binding_type),
-                                   selector = _spell(selector), reason = :root_input_not_output,
-                                   field = _field(selector, inputs))))
-        throw(DiagnosticError(
-            ReadBindingUnresolved(device = device, binding = _typename(binding_type),
-                                   selector = _spell(selector), reason = :unknown_output_face,
-                                   field = _field(selector, faces), candidates = faces)))
-    end
-    head, steps = matched
-    _cell_read(layout.addr[("", head)], selector, steps, binding_type, device; field = head)
+    _compile_reads(Reads((), selectors), build, Float64; source = :table)
 end
 
 """

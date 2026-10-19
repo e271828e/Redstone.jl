@@ -36,9 +36,10 @@ The family splits by **source**, not by client (§14.4's source rule). The
 store selectors `get_state`/`get_deriv` resolve only against live stores, which
 here means an `Executor` — the only live-store holder there is; the
 table selectors `get_output`/`get_input`/`get_face` resolve against a table
-source, an executor's own signal table or a published snapshot. A
-snapshot-bound reader naming a store selector is therefore refused at attach
-(`ReadBindingUnresolved`, bindings.jl), by source rather than by client.
+source, an executor's own signal table or a published snapshot. The resolver
+takes the source it resolves for, and under a table source a store selector
+is refused as `ReadResolution`'s `:store_selector`, by source rather than by
+client (D-406).
 
 `get_output` is an *inspection read* — a component's own declared output
 port, addressed by path — and `get_face` an *integration read*: a
@@ -370,8 +371,8 @@ Reader{T,L}(entries::E) where {T,L,E<:Tuple} = Reader{T,L,E}(entries)
 gather_reads(::Reader{T}, ::Executor{S}) where {T,S} = _activation_mismatch("reader", T, S)
 
 # One `_read` per entry over an executor or a snapshot's store, shared with
-# bindings.jl's `gather_snapshot`. A read set can name 32 or more labels,
-# so the walk is an unrolled tuple rather than a `map` (executor.jl's
+# dataplane.jl's `gather_reads` over a snapshot. A read set can name 32 or more
+# labels, so the walk is an unrolled tuple rather than a `map` (executor.jl's
 # `_unrolled_tuple`).
 @generated _read_entries(entries::Tuple, source) =
     _unrolled_tuple(i -> :(_read(entries[$i], source)), fieldcount(entries))
@@ -379,7 +380,7 @@ gather_reads(::Reader{T}, ::Executor{S}) where {T,S} = _activation_mismatch("rea
 # --- resolution (§14.4, §13.1) --------------------------------------------------
 
 """
-    _compile_reads(read_set::Reads, build::Build, T = Float64) → Reader
+    _compile_reads(read_set::Reads, build::Build, T = Float64; source = :executor) → Reader
 
 Resolve a declared read set against a build and compile it, validating every
 selector in §13.1's collecting form — full list, violations collected, one
@@ -387,19 +388,23 @@ selector in §13.1's collecting form — full list, violations collected, one
 the activation's layout supplies the source: an `xbuf` offset for a continuous
 state field, the `ẋbuf` offset beside it for its derivative, a component index
 for a discrete `s`, a cell address for a port, a root input or a root-exported
-face.
+face. `source` is what the reader will run over: `:executor`, live stores, or
+`:table`, a signal table alone, under which a store selector is refused
+(§14.4's source rule).
 
 The standalone entry point is internal, because a read set is only ever
 compiled inside a client. The sites are trim, linearization and attach, each
 surfacing the collected list its own way: `trim!` splices it into its own throw
-beside the problem's `TrimProblemInvalid` values (§14.8), and `linearize` beside
-the tap set's own `TapResolution` values (§14.10). That is why the collecting
+beside the problem's `TrimProblemInvalid` values (§14.8), `linearize` beside
+the tap set's own `TapResolution` values (§14.10), and `attach!` throws it
+whole, for a table source (§11.2). That is why the collecting
 pass is factored apart from the throw. The violations are `ReadResolution`
 values at every site — the kind is the read's own, and it is the *site* that
 decides where they surface (§13.2, Appendix C, D-406).
 """
-function _compile_reads(read_set::Reads, build::Build, ::Type{T} = Float64) where {T}
-    reader, diags = _resolve_reads(read_set, build, T)
+function _compile_reads(read_set::Reads, build::Build, ::Type{T} = Float64;
+                        source::Symbol = :executor) where {T}
+    reader, diags = _resolve_reads(read_set, build, T; source)
     isempty(diags) || throw(DiagnosticError(diags))
     reader
 end
@@ -412,10 +417,12 @@ _compile_reads(other, ::Build, ::Type = Float64) = throw(DiagnosticError(
 """
 The collecting half of `_compile_reads`, shared with the services that own their
 own setup diagnostic (§14.8): returns the compiled reader and the violation
-list, the reader being `nothing` when anything failed. The mount step runs
-first, and the resolvers read what it rebased (§14.9, D-277).
+list, the reader being `nothing` when anything failed. It takes the same
+`source`. The mount step runs first, and the resolvers read what it rebased
+(§14.9, D-277).
 """
-function _resolve_reads(read_set::Reads, build::Build, ::Type{T}) where {T}
+function _resolve_reads(read_set::Reads, build::Build, ::Type{T};
+                        source::Symbol = :executor) where {T}
     act = activation(build, T)
     diags = Diagnostic[]
     entries = Any[]
@@ -424,6 +431,12 @@ function _resolve_reads(read_set::Reads, build::Build, ::Type{T}) where {T}
     for (label, authored) in pairs(read_set.selectors)
         read = _rebase(authored, label, mount_point..., build, diags)
         read === nothing && continue
+        # §14.4's source rule: a table source holds no stores (§11.2), so a
+        # store selector is refused before any state resolution.
+        if source === :table && read.selector isa StoreSelector
+            push!(diags, _reader_violation(read, :store_selector))
+            continue
+        end
         entry = _resolve_selector(read.selector, read, build, act, diags)
         entry === nothing || push!(entries, entry)
     end

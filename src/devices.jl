@@ -43,7 +43,7 @@ handle (§11.7, D-270). Its type carries the binding's and the gatherer's
 types, so `binding(handle)` and `gather(handle, snapshot)` are statically
 typed inside a device's `loop` and allocate nothing.
 """
-mutable struct DeviceHandle{B<:AbstractBinding,G<:Union{Nothing,ReadGather}}
+mutable struct DeviceHandle{B<:AbstractBinding,G<:Union{Nothing,Reader}}
     const who::String
     const b::B
     const writer::Writer
@@ -189,7 +189,7 @@ function gather(handle::DeviceHandle, snapshot::Snapshot)
     _beat!(handle.diag_cell)
     handle.gatherer === nothing && throw(DiagnosticError(
         DeviceContractMismatch(device = handle.who, reason = :no_output_side)))
-    gather_snapshot(handle.gatherer, snapshot)
+    gather_reads(handle.gatherer, snapshot)
 end
 
 """
@@ -317,7 +317,7 @@ function port_views(handle::DeviceHandle)
         views[(path, port_name)] =
             view_of(path, port_name, terminal_producer(structure, (path, port_name)))
     end
-    root_inputs = _root_input_names(handle.layout)
+    root_inputs = Symbol[f for (f, _) in handle.layout.root_inputs]
     for key in keys(addr)
         (path, port_name) = key
         path == "" && port_name in root_inputs && continue

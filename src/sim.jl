@@ -1734,8 +1734,8 @@ function attach!(sim::Simulation, dev::AbstractDevice, new_binding::AbstractBind
     isempty(claim_diags) || throw(DiagnosticError(claim_diags))
     # The output side: reads → one gather, resolved before admission commits.
     gatherer = is_output(new_binding) ?
-        _compile_gather(sim.model.exec.act.layout, reads(new_binding), typeof(new_binding),
-                        _typename(dev)) : nothing
+        _compile_binding_reads(reads(new_binding), typeof(new_binding),
+                               sim.model.deployment.build) : nothing
     device_id = plane.next_id                             # assigned on admission alone: a
     plane.next_id += 1                             # rejected attach consumes no id
     writer = Writer(sim.model.exec.act.layout, claim)

@@ -687,6 +687,12 @@ end
 port(snapshot::Snapshot, path::String, name::Symbol) =
     gather_cell(snapshot.store, snapshot.layout.addr[(path, name)])
 
+# A compiled read set's gather over a snapshot's store (§11.2, §14.4): a
+# binding's reads, compiled at attach for a table source, run per snapshot on
+# the device's task. Here rather than in readers.jl for include order alone.
+@inline gather_reads(reader::Reader{T,L}, snapshot::Snapshot{T}) where {T,L} =
+    NamedTuple{L}(_read_entries(reader.entries, snapshot.store))
+
 # One boundary's capture: fresh buffers, one allocation per boundary — the
 # framework side of §9.8's scope, which carved publication and logging out.
 capture_stores(bundle::StoreBundle) = StoreBundle(map(cs -> CellStore(copy(cs.buffer)), bundle.stores))

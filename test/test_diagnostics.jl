@@ -450,40 +450,6 @@ function diagnostics_kind_set()
                                     observed = "1"),
             DeviceContractMismatch(device = "Loopless", reason = :no_loop),
             DeviceContractMismatch(device = "device 1 (Pad)", reason = :no_output_side),
-            ReadBindingUnresolved(device = "Pad", binding = "T", selector = "get_state(\"a\", :x)",
-                                  reason = :store_selector, path = "a", field = :x),
-            # the leaf address's six (§14.4, D-276), through the shared clause
-            ReadBindingUnresolved(device = "Pad", binding = "T",
-                                  selector = "get_output(\"a\", \"pose.q_eb[\")",
-                                  reason = :leaf_syntax, path = "a", leaf = "pose.q_eb[",
-                                  step = "["),
-            ReadBindingUnresolved(device = "Pad", binding = "T",
-                                  selector = "get_output(\"a\", \"gs.q\")",
-                                  reason = :no_such_field, path = "a", field = :gs,
-                                  leaf = "gs.q", step = ".q", declared = GearState{Float64},
-                                  candidates = [:h, :gear]),
-            ReadBindingUnresolved(device = "Pad", binding = "T",
-                                  selector = "get_output(\"a\", \"terrain.h0\")",
-                                  reason = :opaque_leaf, path = "a", field = :terrain,
-                                  leaf = "terrain.h0", step = ".h0",
-                                  declared = OffsetField{Float64}),
-            ReadBindingUnresolved(device = "Pad", binding = "T", selector = "get_input(\"q[1]\")",
-                                  reason = :not_indexable, field = :q, leaf = "q[1]",
-                                  step = "[1]", declared = Float64),
-            ReadBindingUnresolved(device = "Pad", binding = "T", selector = "get_face(\"q[2,3]\")",
-                                  reason = :index_arity, field = :q, leaf = "q[2,3]",
-                                  step = "[2,3]", declared = SVector{3,Float64}),
-            ReadBindingUnresolved(device = "Pad", binding = "T", selector = "get_face(\"q[4]\")",
-                                  reason = :index_bounds, field = :q, leaf = "q[4]",
-                                  step = "[4]", declared = SVector{3,Float64}),
-            ReadBindingUnresolved(device = "Pad", binding = "T", selector = "get_output(\"a\", :y)",
-                                  reason = :unknown_cell, path = "a", field = :y),
-            ReadBindingUnresolved(device = "Pad", binding = "T", selector = "get_input(:q)",
-                                  reason = :unknown_root_input, field = :q, candidates = [:a]),
-            ReadBindingUnresolved(device = "Pad", binding = "T", selector = "get_face(:a)",
-                                  reason = :root_input_not_output, field = :a),
-            ReadBindingUnresolved(device = "Pad", binding = "T", selector = "get_face(:q)",
-                                  reason = :unknown_output_face, field = :q),
             ConditionResolution(path = "a", field = :u, reason = :assembly_path, origin = "set"),
             ConditionResolution(field = :q, reason = :unexported_face, candidates = [:a],
                                 origin = "set"),
@@ -505,6 +471,8 @@ function diagnostics_kind_set()
             UninitializedInputs(op = :init!, faces = [:a, :b]),
             ReadResolution(label = :r, selector = "get_state(\"a\", :x)", reason = :assembly_path,
                            path = "a"),
+            ReadResolution(label = :r, selector = "get_state(\"a/b\", :q)",
+                           reason = :store_selector, path = "a/b", field = :q),
             ReadResolution(label = :r, selector = "get_state(\"a/b\", :q)", reason = :undeclared,
                            path = "a/b", field = :q, declares = :state_field, candidates = [:p]),
             ReadResolution(label = :r, selector = "get_deriv(\"a/b\", :q)",
@@ -895,12 +863,16 @@ function diagnostics_kind_set()
                                                cause = ErrorException("boom"))))
 
         # A read miss that is name-shaped prints the list the site had in hand.
-        rendered = message(ReadBindingUnresolved(device = "Pad", binding = "Readout",
-                                                 selector = "get_output(\"p\", :nope)",
-                                                 reason = :unknown_cell, path = "p",
-                                                 field = :nope,
-                                                 candidates = [:power, :y]))
-        @test occursin("{power, y}", rendered)
+        rendered = message(ReadResolution(label = :alt, selector = "get_output(\"p\", :nope)",
+                                          reason = :undeclared, path = "p", field = :nope,
+                                          declares = :output_port, candidates = [:power, :y]))
+        @test occursin("its output port names are `power`, `y`", rendered)
+        # A store selector under a table source names the remedy (§14.4).
+        rendered = message(ReadResolution(label = :q, selector = "get_state(\"p\", :q)",
+                                          reason = :store_selector, path = "p", field = :q))
+        @test startswith(rendered, "the read labeled `q` is get_state(\"p\", :q), and it is a " *
+                                   "*store* selector") &&
+              occursin("the remedy is to declare the field public", rendered)
 
         # The forgotten import (§8.1, D-246) states its fix as the line to paste,
         # spelled for exactly the names the module shadowed.

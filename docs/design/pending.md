@@ -12,14 +12,6 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
-- **One read resolver** (D-406). Attach resolves a binding's `reads` through
-  `_resolve_reads` with a table source, every violation collected.
-  `ReadResolution` splits off `TapResolution`, which keeps §14.10's five
-  tap-set reasons; `ReadBindingUnresolved`, `ReadGather`, `gather_snapshot`
-  and bindings.jl's own resolver retire; `Reader` gathers over a snapshot.
-  The admission of an assembly's face or a root input under
-  `get_output(path, name)` retires with it (§11.2, §11.6, §14.4,
-  Appendix C).
 - **A post-run series over the log** (D-407). `series(sim, read_set)`
   resolves a `Reads` for a table source through `_resolve_reads`, gathers
   each entry over `logged(sim)` into one typed column behind a function
