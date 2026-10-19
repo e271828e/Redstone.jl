@@ -12,7 +12,8 @@ count of `](#g-…)` links to the anchor in chapters 1–16. The `checkpoint` an
 first, rewrote the second and retired `capture` (D-273, D-274). No other row
 was recounted then. The `local wire` row was counted on 2026-10-02, when
 D-303 added the entry, and the `stop request` row on 2026-10-08, when D-316
-replaced `stop_on`'s.
+replaced `stop_on`'s. The `requester roster` row was counted on 2026-10-19,
+when chapter 13's rewrite added the entry.
 
 ## D.1 Component model and declaration layer
 
@@ -213,6 +214,7 @@ replaced `stop_on`'s.
 | kind | g-kind | 3 | B | a diagnostic's identity in the closed Appendix C set |
 | payload | g-payload | 6 | B | the structured data a diagnostic carries beside its kind |
 | stop request / termination is a state | g-stop-request | 10 | B | a `StopFlag` port, which ends the run unless the advance ignores it |
+| requester roster | g-requester-roster | 1 | A | the build's list of stop requests, one `Requester` per `StopFlag` output port |
 
 ## D.10 Meta-vocabulary
 

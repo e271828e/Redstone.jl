@@ -180,6 +180,21 @@ From chapter 5's checkpoint:
   which the glossary defines as the list of stage functions. A rewriter
   found it; the fix (R16) reached three other chapters and the glossary.
 
+From chapter 13's checkpoint:
+
+- **A ruling that moves a member between two classes is ruled for every
+  sentence that lists either class.** R2 moved device read bindings from
+  §13.3's inspection client to its service client. The move came back three
+  times: log extraction by `series` (R25), §13.5's inspection doctrine
+  (R29) and a citation left on the emptied row (B10). Grep the chapter, the
+  frozen spec and the log for the class's name and each of its members
+  before the brief goes out.
+- **Read in full the entry a dictation quotes, and check its scope.** R6's
+  F61 quoted D-364, whose Position rules a thin rig, as if it ruled every
+  configuration (R27), and the narrowed wording then missed §14.9's isbits
+  case (R30). F64's wording made a dead hop a face where the section makes
+  it a hop (B2).
+
 ### Step 2: the brief (written by the orchestrator)
 
 The brief has a standing part and a chapter part. The standing part is
@@ -334,6 +349,20 @@ unit's `old.md`, which its own inventory guarantees.
   pointer and lost "the tail's own owner" with it; only the final verifier
   caught the loss.
 
+**From chapter 13, the brief should also:**
+
+- Write every dictation to `spec_style.md`. Two of chapter 13's carried a
+  mid-sentence colon, and the rewriters had to split them.
+- Apply the one-bold test to its own bold table. R5 counted D-012's comma
+  as two rulings and D-060's semicolon as one; two rulings after launch
+  (R20, R22) corrected it.
+- Name both units' lines when it orders two sections to point at each
+  other. R4's pointer pair landed in one direction only, and the chapter
+  pass caught the other (B4).
+- Name the old text of every landing edit, not only its line. The brief's
+  §10.6 edit named a line that held a different sentence; the evidence
+  check caught it (B27).
+
 ### Step 3: rewrite the units in parallel (one Opus agent per unit)
 
 Prompt: read `checks/brief_common.md`, `units/<U>/brief.md` and
@@ -448,6 +477,11 @@ passes that fall in its units. A pass reads across the split, so half 2's
 P2-42 landed in unit B, and neither fixer applied it until the ruled-edit
 round.
 
+From chapter 13: a step 5 prompt reused from an earlier chapter carries
+that chapter's commit hashes. Replace every hash, not only the ones in
+placeholders. Chapter 13's final verifier found chapter 12's diff base in
+its prompt and used the right one only because it checked.
+
 ### Step 6: rulings (one Sonnet consolidator, then the owner)
 
 The consolidator merges every `rulings.md`, the verifiers' leftovers, the
@@ -480,6 +514,11 @@ chapter 9, the owner ruled 103 items in two sittings.
 Apply the rulings with agents partitioned by unit, so no two edit one file.
 Every ruled edit carries its ruling id in the inventory. A bold-only edit
 copies `new.md` to `new_pretrim.md` first, for `boldcheck.py`.
+
+From chapter 13: a ruled cut lists the claims of the clause it cuts, not
+only of the sentence. B12 cut a companion pointer and took "the Simulink
+mapping that prunes it" with it. The ruled-edit agent reported the loss, and
+the claim went back by amendment (lesson 65).
 
 A small chapter may skip the consolidator. Chapter 6 had seven in-chapter
 items: the orchestrator wrote `rulings_batch.md` itself, and one fixer
@@ -608,6 +647,19 @@ From chapter 12:
   wrote 17 entries; its verifier dropped three that restated or followed
   from D-218's, D-219's and D-261's Positions, and the survivors were
   renumbered before the push.
+
+From chapter 13:
+
+- **Most "add to the Position" proposals end as no entry.** The
+  orchestrator ruled 15 batch items as candidate entries and six more as
+  consequences or descriptions. Agent 2's grep (lesson 42) found nine of
+  the 15 already stated or following from a Position. It wrote seven
+  entries, and the verifier dropped one more as a consequence of D-060's
+  and D-316's Positions. Six survived, D-408 to D-413.
+- **A source in git history is cited by commit and section.** D-408
+  restates design text that no entry records. Its Rationale names the
+  commit and the section, and "§" stays reserved for spec citations, since
+  `check_refs.jl` reads it as one.
 
 ### Step 9: close the chapter
 
@@ -835,6 +887,24 @@ orchestrator's context was 175k tokens at checkpoint 1, 291k at checkpoint
 2, 304k at checkpoint 3 and 333k at checkpoint 4. No earlier chapter
 measured it, so these numbers are the baseline.
 
+Chapter 13, 10,635 words, ruled by the orchestrator, surveyed in two halves:
+
+| step | agent runs | subagent tokens | findings |
+|---|---|---|---|
+| survey | 2, one per half | 0.96M | 364 rules; 51 factual findings, 1 marked serious |
+| rewrites | 4, plus fix rounds | 1.07M | checker failures at hand-back: 0; 15 rulings after launch |
+| unit verification | 4, plus re-checks | 0.73M | DRIFT 5, LOST 0 |
+| chapter passes, inbound checks, editorial fixers | 6 | 1.16M | 59 pass findings (14 RULING); 47 non-OK rows, no loss |
+| consolidation, evidence check, ruled edits | 4 | 0.65M | 87 items; 4 UNCONFIRMED |
+| final verification and PDF check | 3 | 0.44M | 14 |
+| landing | 1 | 0.10M | 0 stops; 1 whitelist trim |
+| track 2, its verification and fixes | 3 | 0.71M | 4 findings; one entry dropped |
+| total | 27, plus fix rounds | about 5.8M | |
+
+It cost about 0.55M per 1,000 words, near chapter 12's 0.57M. The
+orchestrator's context was 209k tokens at checkpoint 1, 289k after step 4
+and 372k at checkpoint 4.
+
 ## 4. What to expect from a chapter
 
 From chapter 9:
@@ -932,6 +1002,24 @@ From chapter 12, which held 380 rules:
   10 were wrong before the rewrite.
 - **The chapter grew about a sixth**, from 9,815 words to about 11,600, with
   65 bold spans of 596 words.
+
+From chapter 13, which held 364 rules:
+
+- **One rule in five lived only outside a Position**, 79 of 364 (55 in a
+  Rationale, Rejected list or annotation, 24 with no entry). Track 2 wrote
+  six entries, D-408 to D-413, and 18 annotations.
+- **Two in five cited their entry at their spot**, 153 of 364.
+- **One finding was marked serious, and none was a real design decision.**
+  §13.3 still put device read bindings under the instance walk that D-406
+  had moved them off. The orchestrator ruled it from D-406's Position.
+- **No inbound citation was lost.** Of 557 rows, 47 were not OK: 9 needed a
+  retarget, and the rest were wrong before the rewrite or lagged a ruled
+  correction, fixed at landing.
+- **The survey's part H listed 69 descriptive passages**, 27 in half 1 and
+  42 in half 2, each with the source file that realizes it. They are the
+  kernel's migration list (`docs/design/pending.md`).
+- **The chapter grew about a seventh**, from 10,635 words to about 12,100,
+  and bold fell from 87 spans to 57 while its words rose from 497 to 521.
 
 ## 5. Lessons, in one list
 
@@ -1039,6 +1127,16 @@ From chapter 12, which held 380 rules:
 69. Only a finding that might involve a real design decision goes to the
     owner; the spec lagging the code or a later entry is the orchestrator's
     to rule.
+
+70. A ruling that moves a member between classes is ruled for every
+    sentence that lists either class (chapter 13).
+71. Read in full the entry a dictation quotes, and check its scope.
+72. Dictations follow `spec_style.md`, and the brief's bold table passes
+    the one-bold test.
+73. A pointer pair names both units' lines; a landing edit names its old
+    text.
+74. Replace every commit hash in a reused prompt.
+75. A ruled cut lists the claims of the clause it cuts.
 
 ## 6. A chapter's files
 
