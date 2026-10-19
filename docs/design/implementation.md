@@ -528,7 +528,7 @@ D-249, D-255, D-261, D-289, D-317.
 
 ### `src/frame.jl`
 
-- The model's `frame!(model, k, hooks)` and `_grid_time` (D-317): the top
+- The model's `frame!(model, k, hooks)` (D-317): the top
   hook, the integration, the frame-top boundary and the settled hook, inside
   §13.4's one `try`, whose catch writes the model's status and builds the
   `StepError` with `_wrap_step`. The claim's gate precedes the `try` (D-318).
@@ -538,11 +538,11 @@ D-249, D-255, D-261, D-289, D-317.
 - The cursor's drain/arrival/validation/trial phases.
 - `settled!` at every `t*` boundary and at the frame top. A `true` abandons
   the frame's remainder and is `frame!`'s return (§13.5, D-261, D-317).
-- The grid arithmetic beside `_grid_time`: `_frame_slack`, `_frames_to` and
-  `_frame_at` (§12.4, §12.6, D-319).
+- The grid arithmetic `frame!` steps by, `_grid_time` and `_frames_to`, is
+  model.jl's.
 
-Spec: §10.2, §10.4, §11.8, §12.4, §12.6, §13.4, §13.5, D-018, D-059, D-133,
-D-255, D-260, D-261, D-317, D-318, D-319.
+Spec: §10.2, §10.4, §11.8, §12.4, §13.4, §13.5, D-018, D-059, D-133, D-255,
+D-260, D-261, D-317, D-318.
 
 ### `src/leaves.jl`
 
@@ -632,6 +632,10 @@ soon as nothing in it names a `Simulation` in a signature, and below
   `Outputs`' port list.
 - The frame's hooks `FrameHooks`, with `frame_top!` and `settled!`, and the
   no-op `NoHooks` (§11.2, §13.5, D-317).
+- The grid (§10.4): `_grid_time`, frame top `k` from the index and `t₀`,
+  never accumulated, and the arithmetic over `t`, `t₀` and `h`,
+  `_frame_slack`, `_frames_to` and `_frame_at` (§12.4, §12.6, D-260, D-319),
+  read by `frame!`, the checkpoint and the loop.
 - The claim's gate `_claimed_gate`, which refuses a claimed model's direct
   call as `ArgumentInvalid` `:claimed`. Its `LoopHooks` method is sim.jl's
   and compiles the check away on the loop's path (D-318).
@@ -667,9 +671,9 @@ soon as nothing in it names a `Simulation` in a signature, and below
   beside it `_check_grid!`, the grid check the three restore doors share,
   collecting `CheckpointMidFrame` into the same list.
 
-Spec: §9.2, §9.5, §10.2, §10.6, §11.2, §11.8, §12.6, §13.2, §13.4, §13.5, §14.5,
-D-059, D-157, D-221, D-223, D-248, D-250, D-254, D-274, D-317, D-318, D-319,
-D-320.
+Spec: §9.2, §9.5, §10.2, §10.4, §10.6, §11.2, §11.8, §12.4, §12.6, §13.2,
+§13.4, §13.5, §14.5, §14.8, D-059, D-157, D-213, D-221, D-223, D-248, D-250,
+D-254, D-260, D-274, D-317, D-318, D-319, D-320.
 
 ### `src/readers.jl`
 
