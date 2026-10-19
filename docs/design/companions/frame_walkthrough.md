@@ -278,7 +278,7 @@ tick index only at frame 8, which is what the code's `k ÷ N_base` expresses.
 
 ## Section 4 — Boundary zero, for contrast
 
-`init!` and `replay!` run boundary zero through `_host_boundary_zero!`, which
+`init!` runs boundary zero through the `Model`'s `init!`, which
 calls `boundary_zero!` under the catch that returns a throwing simulation to
 `built` ([§13.4][s13-4], [D-223][d-223]). The sequence is the ordinary one with one difference:
 `event_phase!(sim, ESTABLISH)` passes a marker in place of a tick index, and

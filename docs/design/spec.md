@@ -10583,7 +10583,7 @@ alone.
 
 **The build records one `Requester(path, port, reason)` per `StopFlag` output
 port**, as the `requesters` of the activation's cell layout, index-aligned with
-the `StopFlag` block ([D-316][d-316]). This list is the requester roster (the build's
+the `StopFlag` block ([D-316][d-316]). This list is the [requester roster](#g-requester-roster) (the build's
 list of stop requests, one `Requester(path, port, reason)` per `StopFlag` output
 port, in build order), and it names every request. The requester at index `i`
 owns the block's offset `i - 1`. The reason is the publishing component's
@@ -13700,7 +13700,7 @@ activation):
   name, or the bare position where the writer's schema has no name for it;
   frame ordinal, the trace's device tag, the root input-face list.
 - **`ArgumentInvalid`** ([§10.5][s10-5], [§11.6][s11-6], [§12.1][s12-1], [§12.4][s12-4],
-  [§12.6][s12-6], [§12.7][s12-7], [§14.7][s14-7]). Error · service, or build in a `sample_times`
+  [§12.6][s12-6], [§12.7][s12-7], [§13.5][s13-5], [§14.7][s14-7]). Error · service, or build in a `sample_times`
   declaration · fail-fast, but collected over a `TableBinding`'s entry table
   and over the `Model` and `Simulation` constructors' keywords and the claim
   on the model ([D-318][d-318]). The call
@@ -14817,6 +14817,10 @@ message text ([§13.2][s13-2]). Not a component *class* ([§D.1][sD-1]) or a
 paths and names as strings (never instances or component types),
 expected/observed port types, the list-in-hand ([§13.2][s13-2],
 [Appendix C][sC]). Severity is the kind's, not the payload's.
+
+<a id="g-requester-roster"></a>**requester roster** — the build's list of stop
+requests, one `Requester(path, port, reason)` per `StopFlag` output port, in
+build order ([§13.5][s13-5]).
 
 <a id="g-species"></a>**species** — a `StepError` whose `cause` is a diagnostic, `StepError{Kind}`
 by type. It is what the catch site makes of a single-diagnostic
