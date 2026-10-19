@@ -930,7 +930,7 @@ D-254, D-255, D-260, D-261, D-274, D-317, D-319.
 
 ### `src/tracer.jl`
 
-- `Tracer{S}`, §13.8's set-propagation scalar. It is global on `true` and local
+- `Tracer{S}`, §13.8's set-propagation scalar. It is global on `true` and sampled
   on `false`, and `Undecidable` is the marker between them.
 - The leaf-wise lift and tag walks `_lift`, `_tag` and `_sample`.
 - `_classify`, the schedule-free per-member trace at the probe point, with its

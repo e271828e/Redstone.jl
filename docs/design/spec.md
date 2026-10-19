@@ -3323,7 +3323,7 @@ The edges of the container form are fixed by rule.
 The *immutable* version of grouping components by plain calls needs no builder
 (`Assembly()` plus `add!`/`connect!`, rejected below). It is already expressible
 under this section's rules. **`Group` expresses it as a single library component**,
-part of the starting inventory ([§13.7][s13-7], [D-184][d-184]). A `NamedTuple` field's elements
+part of the library ([§13.7][s13-7], [D-184][d-184]). A `NamedTuple` field's elements
 are its children by the container rule, name-transparent so they go by bare key
 ([D-211][d-211]). Its declarations are ordinary functions of the *instance*, free to read
 its fields. The fields that hold wires and rates, and the keywords that set
@@ -3408,9 +3408,8 @@ segment and one face name ([§6.1][s6-1], [D-207][d-207]). A container
 child keeps its key segment as part of that child segment, so
 `"aircraft/2/face"` is one level and not two. The read side
 walks the full depth, as `"systems/ldg/left/trn"` does in a [snapshot](#g-snapshot) (the
-immutable per-boundary publication) or the log tree. That read side is the
-inspection side. It resolves a path with `resolve` under the instance walk
-([§13.3][s13-3]). One fact behind the rejection of instance navigation is
+immutable per-boundary publication) or the log tree. Snapshot and log
+inspection walk instances ([§13.3][s13-3]). One fact behind the rejection of instance navigation is
 relied on downstream. Symmetric immutable siblings are `===`-identical, so a
 path is unrecoverable from an instance. That is why the helpers
 ([§8.8][s8-8]) name the child by path.
@@ -4524,7 +4523,8 @@ divisor is `D = m·D₁`, with `D₁ = T₁/Δt_base = (1//50)/(1//500) = 10`.
 - `show(::Build)` and `show(::Deployment)` print a summary and their parts.
   `show(::Build)`'s parts include the events, and a line of the feedthrough
   edges between the outputs table and the events table. The edges are derived
-  from the structure's connections and the producers' stage-2 names.
+  from the structure's connections and the producers' stage-2 names
+  ([D-261][d-261]).
 
 A REPL user gets each table by evaluating the value.
 
@@ -4703,7 +4703,8 @@ the only domain the framework can speak of, and the probe is the enforcement
 moment, not the reason.
 
 There are two consequence sites, with the same throw at both. At build it is a
-`UserCodeFraming`-wrapped build failure ([§13.1][s13-1]). Its diagnostic
+`UserCodeFraming`-wrapped build failure ([§13.1][s13-1],
+[§13.2][s13-2]). Its diagnostic
 points at code that is "correct" on every trajectory it has ever seen. At
 runtime it is a `StepError` and the run ends `errored` ([§13.4][s13-4]).
 Exceptions from model code are always abnormal ([§13.5][s13-5],
@@ -5082,8 +5083,8 @@ handler's occurrence, and the field-level diff** (missing / unexpected /
 per-field expected-vs-observed) ([D-053][d-053], [D-249][d-249]). Simulation
 time is the carrier's, not the diagnostic's. At run time the failure travels
 as a [species](#g-species) of `StepError` through the single catch site
-([§13.4][s13-4], [D-059][d-059]). That site's frame holds the boundary time
-and the replay index. A build-time occurrence has no time to carry
+([§13.4][s13-4], [D-059][d-059]). The carrier holds the clock at the failure
+and the replay pointer. A build-time occurrence has no time to carry
 ([D-249][d-249]).
 
 **The source branch is deliberately absent from the payload**
@@ -5093,7 +5094,7 @@ identifies it.
 The always-on input [trace](#g-trace) makes every such failure reproducible
 by [replay](#g-replay) ([D-053][d-053]). The error names the
 [boundary](#g-boundary) to replay to (`to_boundary`, [§12.7][s12-7]). The
-catch site adds the loop-level nonfinite-state check as the failure's
+catch site adds the model's nonfinite-state check as the failure's
 divergence sibling ([D-157][d-157]).
 
 ### 9.6 Stopped-sim services as activation clients
@@ -5382,7 +5383,7 @@ every body. The empty ones are legal, compile to no-ops, and their
 consumers then iterate the roster uniformly, with no existence checks and no
 per-model branching in the measurement code.
 
-The seam is diagnostic only ([§13.5][s13-5]), and it makes one promise.
+The seam is diagnostic only, and it makes one promise.
 **These are the bodies the loop runs**, not re-derivations ([D-116][d-116]).
 That is what makes the measurement honest, and why each callable carries the
 real in-loop argument types by construction. A hand-built standalone test
@@ -6529,7 +6530,7 @@ nothing for order to observe.
 Execution order is fixed all the same. It follows the component order of the
 [executor](#g-executor) (the compiled form of the stage execution order), then
 declaration order within a component. That keeps the [execution cursor](#g-execution-cursor) (the
-loop-state field recording where execution stands, [§13.4][s13-4]) and the
+executor's field recording where execution stands, [§13.4][s13-4]) and the
 diagnostics stream deterministic. No trajectory depends on it. The natural
 single-pass executor is therefore exactly correct. It builds each handler's
 bundle at dispatch, from the live table. It needs none of the extra machinery
@@ -7107,8 +7108,8 @@ passed at `attach!` that makes a device framework-legible. An output device
 consumes snapshots as [§12.3][s12-3] specifies. Examples are telemetry, disk streaming
 and the XPlane visualizer (FlightCore's `XPlane12Control` output device). An
 output device addresses what it reads with the [selectors](#g-selector) (the closed family of
-deferred reads resolving against a source, [§14.4][s14-4]). They reach any cell, since
-inspection reads admit deep paths. **A binding's reads resolve at attach
+deferred reads resolving against a source, [§14.4][s14-4]). They reach any cell a path
+through no generic seam names ([§13.3][s13-3]). **A binding's reads resolve at attach
 through the one resolver every reader of the family shares** ([D-406][d-406]),
 against the `Build`, with [did-you-mean](#g-did-you-mean) (the offending name plus the list-in-hand it should
 have matched), and compile to one gather, the output half of the binding
@@ -7122,7 +7123,8 @@ treats field-handle signals specially. It skips or summarizes them.
 An output device's read of the snapshot is inspection ([§13.5][s13-5], [D-083][d-083]). It is
 human-facing, with no effect on run semantics. It is observation of the same
 sort as the log retaining the full table and the GUI's deep-reading panels.
-Every cell is reachable, because the table is public throughout ([§8.3][s8-3]).
+Every cell a path through no generic seam names is reachable, because the
+table is public throughout ([§8.3][s8-3], [§13.3][s13-3]).
 
 A binding chooses its side ([D-129][d-129]). A deep path is an *inspection* read. It
 makes zero promises, gives free access, and is right for looking at *this*
@@ -7755,7 +7757,7 @@ also holds what a copy by position relies on, namely each component's `x` type,
 every cell's address with its type, and the event list in the order of the
 priors. Both are taken at the same instant as the state. The deployment holds no
 policy ([D-255][d-255]). `t_end` and `ignore_stop_requests` are keywords of each advance
-([§13.5][s13-5], [D-316][d-316]). Only the terminating advance's policy explains the stop, so the
+([§12.6][s12-6], [D-316][d-316]). Only the terminating advance's policy explains the stop, so the
 [termination record](#g-termination-record) (the stopped-sim value naming how the run ended) carries that
 one.
 
@@ -7763,8 +7765,8 @@ The trajectory depends on the deployment exactly as it depends on the stores
 ([§2.4][s2-4]). The `Deployment` constructor ([§9.2][s9-2]) sits outside the `Build`, and the
 checkpoint carries the clock, `t₀` included ([§14.5][s14-5]). A header without them could
 therefore not back the bit-identity claim ([§2.4][s2-4], [§12.7][s12-7]). The header is also what
-the artifact's [run metadata](#g-run-metadata) names, its `Deployment` and `t₀` ([§13.5][s13-5],
-[Appendix B][sB]). A checkpoint is the one full-state capture, taken by `init!` for
+the artifact's [run metadata](#g-run-metadata) names, its `Deployment` and `t₀`
+([Appendix B][sB]). A checkpoint is the one full-state capture, taken by `init!` for
 the header and by `checkpoint(sim)` on demand ([§12.6][s12-6], [D-274][d-274]). The header is the
 other half of what "given the initial state and the trace, the log is
 recomputable" (below) requires.
@@ -8652,7 +8654,7 @@ lands in the [termination record](#g-termination-record) (the stopped-sim value 
 as its `ControlRequestedStop`'s payload ([§13.5][s13-5], [D-203][d-203]).
 
 **`ControlRequestedStop` sits outside the stop policy** ([D-255][d-255]). The
-policy is what the caller declares for one advance ([§13.5][s13-5]). The stop
+policy is what the caller declares for one advance ([§12.6][s12-6]). The stop
 word is what anyone can issue at any moment.
 
 **The pause is two verbs on the simulation** ([D-268][d-268]). `pause!(sim)`
@@ -9846,7 +9848,7 @@ The dispositions, by trace content:
 | each writer's face-name → position schema (on the trace's `schemas` list) | validated against the target model's root-input faces: disagreement is a replay error |
 | the checkpoint's state | restored under the default form; no boundary zero |
 | the clock | restored under the default form, `replay!` takes no `t0`; under `restore = false` the simulation's own clock runs, its origin equal to the recording's |
-| `t_end`, `ignore_stop_requests` | absent from the checkpoint; each `replay!` call declares its own ([§13.5][s13-5]) |
+| `t_end`, `ignore_stop_requests` | absent from the checkpoint; each `replay!` call declares its own ([§12.6][s12-6]) |
 
 #### What-if replay and `restore = false`
 
@@ -12746,7 +12748,7 @@ For periphery authors and consumers:
   unpokeable.
 - **The two observation sides** ([§11.2][s11-2], [§13.5][s13-5]). A deep
   snapshot path is an *inspection* read. It sees everything and promises
-  nothing across builds. An exported output face is an *integration* read. It
+  nothing across builds ([§13.3][s13-3]). An exported output face is an *integration* read. It
   carries curated, writer-independent meaning, and it is the only shield
   against silent semantic drift. Bind faces in anything meant to outlive the
   current build. The store selectors (`get_state`/`get_deriv`) belong to
@@ -12828,9 +12830,10 @@ return law, [§5.2][s5-2]). There is no padding. `x` comes back complete, and
   activation invariants for CI (`ProbeDual` is the public canonical concrete
   probe scalar, [§9.4][s9-4]), and pre-materializes activations so a parallel
   sweep shares a fully immutable `Build` ([§11.1][s11-1], [§9.4][s9-4]).
-- `resolve(assembly, path) → AbstractComponent`. The getfield walk along `/`
-  segments. It enforces the one-level rule for wiring ([§6.1][s6-1]) and the
-  generic-holding rule for deep reads, at the primitive ([§13.3][s13-3]).
+- `resolve(assembly, path) → AbstractComponent`. Resolves an immediate child, a
+  container element's key segment included. Wiring resolution applies the
+  one-level rule ([§6.1][s6-1]), and the service walk enforces the
+  generic-holding rule ([§13.3][s13-3]).
 - `input_faces(c)` / `output_faces(c) → Vector{String}`. Declaration-ordered
   face names ([§13.3][s13-3]).
 - `input_passthrough(assembly, path; prefix, sep, except, only, select)` /
@@ -12871,7 +12874,7 @@ return law, [§5.2][s5-2]). There is no padding. `x` comes back complete, and
 
   The [deployment](#g-deployment) (the scalar-free artifact the grid parameters
   fix) binds no stop policy. `t_end` and `ignore_stop_requests` are keywords of each advance
-  ([§13.5][s13-5]). A run ends at the first grid boundary
+  ([§12.6][s12-6]). A run ends at the first grid boundary
   reaching or exceeding `t_end`, whole frames only ([§12.4][s12-4]). An
   unbounded run stays bounded in memory, since `log_max` keeps such a session
   from growing without limit ([§11.2][s11-2]).
@@ -13126,7 +13129,7 @@ return law, [§5.2][s5-2]). There is no padding. `x` comes back complete, and
   |---|---|---|---|
   | `pace` | `Inf` | the run's pacing rate; `Inf` is pacer-off, `1` real time | [§10.7][s10-7] |
   | `margin` | `0.002` | the single pacing knob, in seconds | [§10.7][s10-7] |
-  | `t_end` | `Inf` | the run's end time, declared for **this advance**, validated per call | [§13.5][s13-5] |
+  | `t_end` | `Inf` | the run's end time, declared for **this advance**, validated per call | [§12.6][s12-6], [§13.5][s13-5] |
   | `ignore_stop_requests` | `()` | the stop requesters **this advance** does not honour: `:all`, or their component paths, validated against the `Build`'s requester roster per call | [§13.5][s13-5] |
 
   `pace` defaults to `Inf`, pacer-off. A deviceless run is the harness and
@@ -13137,7 +13140,7 @@ return law, [§5.2][s5-2]). There is no padding. `x` comes back complete, and
   immutable `t_end`-plus-ignored-requesters value an advance declares) from its
   `t_end` and `ignore_stop_requests`. It passes that policy to the loop, and the value
   lives as long as the call. The termination record carries the policy that
-  ended the run, and nothing else keeps one ([§13.5][s13-5], [D-260][d-260]). `t_end = Inf` with no honoured
+  ended the run, and nothing else keeps one ([§12.6][s12-6], [§13.5][s13-5], [D-260][d-260]). `t_end = Inf` with no honoured
   stop request is an unbounded run, allowed, with `UnboundedRun` raised into the
   loop's diagnostic cell ([§11.8][s11-8]).
 - `step!(sim; frames = 1, t_end = Inf, ignore_stop_requests = ()) → frames_advanced`. A
@@ -13246,12 +13249,12 @@ severity · raised · policy, then the payload. Three fields place each kind.
 surfaces, and how it is reported. A kind raised at two stages lists both
 (`BundleFieldError` is raised at the probe, and as a `StepError`
 [species](#g-species) thereafter). The placement notes stay in the raised
-field beside the stage they qualify. The stages are the ones [§13][s13]
-fixes:
+field beside the stage they qualify. The stages are the ones [§13.2][s13-2]
+names:
 
 - **build**. During one of the build's three steps ([§9.1][s9-1]), whether in a
-  declarative pass or while *user code* runs (an interface-connection body, a
-  probe).
+  declarative pass or while *user code* runs (a declaration body, a probe, an
+  activation's continuous-tier function).
 - **service**. In a stopped-sim service, or in
   `attach!`/`Deployment`/`Simulation`/`run!` validating against the `Build`.
 - **runtime**. During a boundary.
@@ -13294,7 +13297,7 @@ The policies:
 The *collected*-warning slot, the warning-severity kinds that would render
 with a step's throw, is empty ([D-084][d-084]). Build warnings themselves
 live on the `Build`, and a step that throws renders its warnings with the
-collection ([§13.2][s13-2], [D-250][d-250]).
+collection ([§9.2][s9-2], [D-250][d-250]).
 
 **Declaration and wiring** (the structure step):
 
@@ -13615,13 +13618,15 @@ activation):
 **Runtime:**
 
 - **`StepError`** ([§13.4][s13-4]). Error · runtime · fail-fast. The carrier.
-  Cursor frame (component path, function, and the boundary phase, which is
-  an RK stage, an event round, a localization trial evaluation or a tick),
-  boundary time, frame-entry boundary index (the replay pointer), the host of
+  Cursor frame (the component by its component-list index, the function, and
+  the boundary phase: the frame-top drain, an integration stage, the arrival
+  sweep, the θ = 0 validation, a localization trial, projection, an event
+  round or the ticks), the clock at the failure, frame-entry boundary index (the replay pointer), the host of
   the catch (`:loop` or `:boundary_zero`), and the `cause`, a species'
   diagnostic or the original exception, its type the parameter.
 - **`NonfiniteState`** ([§13.4][s13-4]). Error · runtime · fail-fast.
-  Component path, the offending state block, boundary time and index.
+  Component path, the offending state leaf and its value, the frame-top time
+  and the frame-entry boundary index.
 - **`ChatteringBudget`** ([§10.4][s10-4]). Warning · runtime · rate-limited.
   Component path, event name, boundary time, the exhausted
   `localization_budget` and the frame's localization count.
@@ -14482,8 +14487,8 @@ and validate it per call and pass it to the loop, an ignore mask (one
 the termination record keeps one. A `t*` hit is `frame!`'s `Bool` return,
 and the loop reads the requester off the snapshot it just published.
 `ControlRequestedStop` is outside it, since the policy is what the caller
-declares and the stop word is what anyone can issue ([§13.5][s13-5],
-[D-255][d-255], [D-260][d-260], [D-316][d-316], [D-317][d-317]).
+declares and the stop word is what anyone can issue ([§12.1][s12-1],
+[§12.6][s12-6], [§13.5][s13-5], [D-255][d-255], [D-260][d-260], [D-316][d-316], [D-317][d-317]).
 
 <a id="g-stop-word"></a>**stop word** — the control plane's stop command, one atomic word holding
 its issuer ([§12.1][s12-1]). Not to be confused with a *stop request* ([§D.9][sD-9]), which
@@ -14686,14 +14691,15 @@ fails at the site of the mistake, not later and inside correct code. The
 five walkthroughs ([§8.4][s8-4]) are its grounding cases and the acceptance
 tests ([§8.4][s8-4]).
 
-<a id="g-execution-cursor"></a>**execution cursor** — the plain mutable field recording where execution
-stands in the compiled order. It holds three facts, the component path as an
-index into the `Outputs`'s execution order, the function running, and the
+<a id="g-execution-cursor"></a>**execution cursor** — the executor's plain mutable field recording where
+execution stands in the compiled order. It holds three facts, the component by
+its index in the structure's component list, the function running, and the
 boundary phase. It costs one cheap store per dispatch, so a runtime failure
-gets its frame without exception frames in the hot path ([§13.4][s13-4]).
+gets its cursor frame without exception handlers in the hot path
+([§13.4][s13-4]).
 
 <a id="g-feedthrough-tracer"></a>**feedthrough tracer** — the set-propagation instrument (global
-value-blind, or local primal-carrying at sampled states) used to classify a
+value-blind, or sampled primal-carrying) used to classify a
 rejected cycle as real or artificial. It is diagnostic only, never an input
 to the ordering ([§5.5][s5-5], [§13.8][s13-8]).
 

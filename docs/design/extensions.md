@@ -331,7 +331,7 @@ Candidates, none worked out: a parameter-tap idiom extending [§14.10][s14-10]'s
 family, with the framework performing the seeded construction internally; a
 documented construct-with-`Dual`s convention (the capability with no service
 wrapper); parameter-path overlays in [§14.1][s14-1]'s condition system. Also unexamined:
-which library structs get the parametric spelling in the [§13.7][s13-7] migration — whether
+which library structs get the parametric spelling in the migration — whether
 [§8.2][s8-2]'s mechanical parametrization of the walked class, whose FlightPhysics
 payload list `companions/migration_outline.md` gives under "The parametrization
 pass", simply extends to parameter carriers, or participation is opted into per
@@ -343,7 +343,7 @@ component.
 
 **Folded into the spec (2026-08-12, [D-184][d-184]).** `Group` is now normative: the
 pattern, its sketch and the anonymous-functions framing live in [§8.5][s8-5],
-and the component joins [§13.7][s13-7]'s starting inventory as its one
+and the component joins [§13.7][s13-7]'s library as its one
 persona-admitted member. Nothing of the addendum's argument was lost in the
 move; this heading remains so section 1.5's persona discussion keeps its
 pointer.

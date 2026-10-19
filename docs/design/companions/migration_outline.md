@@ -77,7 +77,8 @@ declared `x_init` values. The implementation is internal, an ordinary
 guard/handler event. It is the continuous-reset contract in its
 worked instance ([Appendix A][sA]).
 
-Falling-edge consumers wire a NOT gate (the Bool gates, [§13.7][s13-7]).
+Falling-edge consumers negate the `Bool` in their own stage, since the
+library admits no `Not` ([D-311][d-311]).
 Level-pinning and reset-to-an-external-value, which is tracking, are different
 blocks rather than options on this one ([D-141][d-141]).
 
@@ -131,6 +132,7 @@ projection, never as construction.
 [d-089]: ../decisions.md#d-089--route-supervisor-gains-and-resets-through-ordinary-ports
 [d-139]: ../decisions.md#d-139--give-environment-field-handles-a-value-level-constructor-to-prevent-drift
 [d-141]: ../decisions.md#d-141--continuous-state-resets-are-events-owned-by-the-reimplemented-pivector
+[d-311]: ../decisions.md#d-311--fold-the-summing-junction-and-the-bool-gates-into-one-generic-junction
 [s11-2]: ../spec.md#112-outbound-snapshot-publication
 [s13-7]: ../spec.md#137-tooling-consequences-face-routes-and-the-component-library
 [s14-5]: ../spec.md#145-boundary-zero-an-ordinary-boundary-with-authored-incoming-transitions
