@@ -111,6 +111,10 @@ end
     end
 end
 
+# One boundary's capture: fresh buffers, one allocation per boundary — the
+# framework side of §9.8's scope, which carved publication and logging out.
+capture_stores(bundle::StoreBundle) = StoreBundle(map(cs -> CellStore(copy(cs.buffer)), bundle.stores))
+
 """
 The clock, in its own mutable cell so the zero-arg phase bodies can close over
 it. `t` is a bundle field for every stage (§5.2's bundle law) and varies within

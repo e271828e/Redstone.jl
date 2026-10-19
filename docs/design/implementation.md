@@ -861,6 +861,8 @@ Spec: §10.2, D-017.
 - Per-eltype cell stores `CellStore` and `CellAddr`. A handle type is its own
   eltype, as `leaf_types` in leaves.jl decides (D-237).
 - The `StoreBundle`.
+- `capture_stores`, one boundary's fresh copy of a bundle, one allocation per
+  boundary (§9.8).
 - Gather `gather_cell`/`gather_group` and the checked scatter
   `scatter_cell!`/`scatter_group!`. The scatter's check is §9.5's always-on
   check, decided at generation (D-235).
