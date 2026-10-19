@@ -113,7 +113,7 @@ yours goes in your report, not into an edit.
   collapsed).
 - Log every edit in `chapter_fixes_{H}.md`, in order: the finding's id, the
   unit, the old text and the new text, verbatim, so a verifier can replay
-  the log on the verified commit `{VERIFIED}`.
+  the log on the verified commit `5f21eba`.
 
 Edit only your units' files, `chapter_fixes_{H}.md` and scratch files in
 `scratch_step5/{AGENT}/`. Never commit, stash, reset or check out. No
@@ -156,7 +156,7 @@ group and the five items that most need attention.
 ## The final verifier (one agent per half), step 6b
 
 You are a cold verifier for every edit made to units {UNITS} of chapter 13's
-rewrite since the units were verified one by one at commit `{VERIFIED}`. The
+rewrite since the units were verified one by one at commit `5f21eba`. The
 current state is commit `{CURRENT}`. Read `docs/spec_rewrite/recipe.md` step 6b,
 then `checks/brief_common.md`, `brief.md` (R1–R30) and `rulings_batch.md`'s
 Blocking group (each item's "Status:" is the orchestrator's ruling).
@@ -165,7 +165,7 @@ The edits came from three logs, applied in this order:
 `chapter_fixes_{H}.md` (the editorial fixer, findings in
 `chapter_pass_{H}.md`), then `ruled_edits.md` (the Blocking rulings, and
 `step5_carry.md`'s items), each with old and new text. Replay the logs on
-`{VERIFIED}`'s files for your units and confirm they give `{CURRENT}`'s files
+`5f21eba`'s files for your units and confirm they give `{CURRENT}`'s files
 byte for byte; diff `git show 69a3191:<file>` against the current file hunk
 by hunk, and account for every hunk by a log entry. An unlogged hunk is a
 finding.

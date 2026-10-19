@@ -1,0 +1,1458 @@
+=== #1 spec.md:531 §13.6  
+    
+    A run that does not fail ends at a completed boundary, in one of three ways.
+    A failure ends it otherwise ([§13.6][s13-6]).
+    
+    - An end time stops the run at the first grid boundary at or after it. The
+=== #2 spec.md:537 §13.5  
+      to one step ([§12.4][s12-4], [D-133][d-133]).
+    - A [stop request](#g-stop-request) is an output port of a framework type
+      whose value can request a stop ([§4.3][s4-3], [§13.5][s13-5]). It ends the
+      run when its value requests a stop, unless the call advancing the run chose
+      to ignore it ([D-316][d-316]). The run reads its stop requests after every
+=== #3 spec.md:888 §13.5  
+    ([D-237][d-237]). An enum is one leaf, pinned ([§8.2][s8-2], [D-316][d-316]). `StopFlag` is the one enum
+    with a framework meaning. An output port of that type is a
+    [stop request](#g-stop-request) (a port that can end the run, [§2.4][s2-4], [§13.5][s13-5],
+    [D-316][d-316]).
+    
+=== #4 spec.md:1493 §13.7  
+    
+    **A unit delay is a modeling decision, not a transparent wire**
+    ([D-348][d-348]). The library's `UnitDelay` ([§13.7][s13-7]) changes the model's
+    [tier](#g-tier) structure (its split into continuous and discrete sides). The broken signal
+    becomes discrete, sampled on a period on the scale of [`Δt_base`](#g-dt_base) (the base tick
+=== #5 spec.md:1506 §13.8  
+    When the build rejects a cycle, the
+    [feedthrough tracer](#g-feedthrough-tracer) (the instrument that classifies a
+    rejected cycle as real or artificial, [§13.8][s13-8]) applies the verdict of
+    [§5.4][s5-4] to it. **Tracing is diagnostic only**, never relied on for
+    correctness ([D-012][d-012]). Ordering correctness comes exclusively from the
+=== #6 spec.md:1650 §13.7  
+    Its arity and its port types are type parameters, and the fold is instance
+    data ([D-311][d-311]). A [summing junction](#g-summing-junction) folds with
+    `+`. The library of [§13.7][s13-7] supplies the junction, its summing form and
+    the Bool gates.
+    
+=== #7 spec.md:1732 §13.7  
+    
+    **The zero-contributor spelling is a library
+    [`Constant` source](#g-constant-source) ([§13.7][s13-7]) wired straight to the
+    consumer's input** ([D-143][d-143]), as in `Constant(Wrench())` →
+    `dynamics/wr_ext`. A constant source has no inputs and no state, and publishes
+=== #8 spec.md:1873 §13.8  
+    2. Derivatives for trim solvers.
+    3. The [feedthrough tracer](#g-feedthrough-tracer) (the set-propagation
+       instrument classifying a rejected cycle, [§13.8][s13-8]).
+    4. A trivially checkable CI invariant ([D-280][d-280]). One evaluation
+       [sweep](#g-sweep) (one pass through the execution order) with `T = Dual`
+=== #9 spec.md:2142 §13.7  
+    rule (`Engine` is the example component of [§8.2][s8-2]). The idiom for a
+    contract that genuinely varies is the type parameter, not the field, as in
+    `SumJunction{Wrench{Float64}, 3}` and `Or{N}` ([§13.7][s13-7]). Arity is spelled in
+    the type, at the price [§6.2][s6-2] states openly.
+    
+=== #10 spec.md:2515 §13.5  
+    (above). It wraps the whole entry, and **a marker below the top of an entry
+    is `IllegalPortType`** ([D-265][d-265]). The other is a `StopFlag` entry, which
+    places nothing and is left alone ([§13.5][s13-5]). A mutable type anywhere in
+    an entry of either contract is `IllegalPortType` too ([§4.3][s4-3],
+    [D-237][d-237]).
+=== #11 spec.md:2555 §13.7  
+    implementation that must participate keeps its entry tolerant and supplies a
+    local derivative rule ([§14.10][s14-10]). A walking producer feeds a pinned
+    entry through the `Freeze` block ([§13.7][s13-7]).
+    
+    `Int`/`Bool`/enum leaves and abstract reference-typed entries stand as they always
+=== #12 spec.md:2607 §13.7  
+    message carries both remedies, "remove the entry's `Pinned` if the consumer
+    promotes; feed it from a non-walking source if the freeze is genuine". The
+    `Freeze` block is the one-line spelling of the second remedy ([§13.7][s13-7],
+    [D-266][d-266]).
+    
+=== #13 spec.md:2670 §13.7  
+    names the face and the remedy, which is to wire a concrete producer, or a stub
+    child in a test rig. The [component test rig](#g-component-test-rig) (a one-child wrapper
+    exporting its child's whole input face set, [§13.7][s13-7]) is the idiom for that
+    case. It satisfies the entry with a stub child *inside* the rig ([D-120][d-120]).
+    
+=== #14 spec.md:2904 §13.5  
+    
+    A `StopFlag` output entry is a [stop request](#g-stop-request) (a port that
+    ends the run when it reads `STOP_REQUESTED`, [§13.5][s13-5]). Its companion
+    declaration is optional. **`stop_reason(c)` returns the `String` a
+    component's stop requests report, and it defaults to `""`** ([D-316][d-316]). The
+=== #15 spec.md:3057 §13.7  
+    
+    A stateless leaf is a leaf whose state declaration is empty, and it declares its
+    tier the same way. `x_init(::C) = (;)` makes it continuous, the tier [§13.7][s13-7] steers
+    stateless leaves to. `s_init(::C) = (;)` makes it discrete, one that runs at its
+    ticks and holds its outputs between them.
+=== #16 spec.md:3066 §13.7  
+    follow the tier like any other leaf's, with no `x` or `s` field, because the bundle
+    law puts a state declaration's letter in the bundle only when it is non-empty
+    ([§5.2][s5-2]). [§13.7][s13-7] records why one stateless continuous leaf already serves consumers
+    on both tiers. A type declaring both the leaf and the assembly families of
+    declarations, or neither, meets the class errors of [§8.5][s8-5].
+=== #17 spec.md:3266 §13.7  
+    names and mixed aircraft types. Its declaration bodies generate wires by
+    comprehension over the keys. That is the arity-via-computed-contracts pattern
+    [§13.7][s13-7] uses for `Junction`, here at structure scale. The swarm
+    worlds ([§14.9][s14-9]) consume it directly. So does [mounting](#g-mounting), the relocation of a
+    whole problem or tap set with [`at`](#g-at)`("aircraft/red", problem)`.
+=== #18 spec.md:3326 §13.7  
+    (`Assembly()` plus `add!`/`connect!`, rejected below). It is already expressible
+    under this section's rules. **`Group` expresses it as a single library component**,
+    part of the starting inventory ([§13.7][s13-7], [D-184][d-184]). A `NamedTuple` field's elements
+    are its children by the container rule, name-transparent so they go by bare key
+    ([D-211][d-211]). Its declarations are ordinary functions of the *instance*, free to read
+=== #19 spec.md:3378 §13.7  
+    anonymous assembly form beside the named types, shipped the way Julia ships
+    anonymous functions alongside named ones. It serves the model assembler (the
+    persona for whom topology is data rather than a named type, [§13.7][s13-7])
+    with a library addition that rests on one opt-in declaration,
+    `transparent_container` ([D-211][d-211]). With that declaration, a `Group`'s
+=== #20 spec.md:4520 §13.7  
+      `sample_times` declaration against the enclosing scope). `show(::Structure)`
+      derives each root face's routing chain from the declared wires and prints
+      the root's routes, one line per chain ([§13.7][s13-7]).
+    - `show(::Outputs)` prints the execution order with each port's class.
+    - `show(::Events)` prints each component's event names with their policies.
+=== #21 spec.md:4709 §13.5  
+    points at code that is "correct" on every trajectory it has ever seen. At
+    runtime it is a `StepError` and the run ends `errored` ([§13.4][s13-4]).
+    Exceptions from model code are always abnormal ([§13.5][s13-5],
+    [D-060][d-060]).
+    
+=== #22 spec.md:4716 §13.5  
+    - A *plausibility* check meaning "stop the run" is a
+      [stop request](#g-stop-request), a published `StopFlag` port, which
+      `StopRequest` spells ([§13.5][s13-5], [D-060][d-060], [D-285][d-285], [D-316][d-316]).
+      A landing-gear strut model that throws on a touchdown overload is one such
+      check. The request is machinery already there.
+=== #23 spec.md:4793 §13.8  
+    code against a number type it cannot receive.
+    
+    The rule has no special cases. The [§13.8][s13-8] tracer activation follows it
+    identically. "Tracer activation" names the *global* set-tracer
+    ([D-012][d-012]). It is a whole-model run at the tracer scalar, an activation
+=== #24 spec.md:4796 §13.8  
+    identically. "Tracer activation" names the *global* set-tracer
+    ([D-012][d-012]). It is a whole-model run at the tracer scalar, an activation
+    like any other. The cycle classifier ([§13.8][s13-8]) is the other tracer
+    variant ([D-012][d-012]). It traces each member of a cycle locally and needs
+    no execution order. It runs in the nominal evaluation's failure path and is
+=== #25 spec.md:5385 §13.5  
+    per-model branching in the measurement code.
+    
+    The seam is diagnostic only ([§13.5][s13-5]), and it makes one promise.
+    **These are the bodies the loop runs**, not re-derivations ([D-116][d-116]).
+    That is what makes the measurement honest, and why each callable carries the
+=== #26 spec.md:5592 §13.8  
+    required of the stepper, because linearization and the
+    [feedthrough tracer](#g-feedthrough-tracer) (the instrument that classifies a
+    rejected cycle as real or artificial, [§13.8][s13-8]) drive the *sweep*, never the
+    integrator.
+    
+=== #27 spec.md:5944 §13.5  
+    boundary-counter increment of [§12.3][s12-3] and the
+    [stop request](#g-stop-request) scan (the read of the `StopFlag` cells the
+    advance honours, [§13.5][s13-5]). A
+    crash localized at `t*` ends the run from that snapshot.
+    
+=== #28 spec.md:7052 §13.5  
+    retained unconditionally** ([D-137][d-137], [D-368][d-368]).
+    
+    The run's first snapshot and its terminal snapshot ([§12.4][s12-4], [§13.5][s13-5]) survive any
+    `log_every` and any `log_max`, and they do not count against the bound. They are
+    two extra references. The first is the boundary-zero snapshot under `init!`
+=== #29 spec.md:7122 §13.5  
+    treats field-handle signals specially. It skips or summarizes them.
+    
+    An output device's read of the snapshot is inspection ([§13.5][s13-5], [D-083][d-083]). It is
+    human-facing, with no effect on run semantics. It is observation of the same
+    sort as the log retaining the full table and the GUI's deep-reading panels.
+=== #30 spec.md:7187 §13.5  
+    [binding](#g-binding) (the value passed at `attach!` that makes a device framework-legible).
+    It uses slash paths in inspection reads, and face names in integration reads and
+    in service reads ([§11.2][s11-2]/[§13.5][s13-5]/[§14.4][s14-4]).
+    
+    #### Exclusivity and claims
+=== #31 spec.md:7326 §13.6  
+    services. The list is exhaustive. An `errored` simulation refuses both with the
+    same kind. A roster change configures the next run, and an errored simulation
+    has none ([§13.6][s13-6], [D-232][d-232]). The prohibition includes pause. Pause is a
+    control-plane state *inside* a run ([§12.1][s12-1]), and a surface that could move while
+    paused would move mid-run.
+=== #32 spec.md:7758 §13.5  
+    priors. Both are taken at the same instant as the state. The deployment holds no
+    policy ([D-255][d-255]). `t_end` and `ignore_stop_requests` are keywords of each advance
+    ([§13.5][s13-5], [D-316][d-316]). Only the terminating advance's policy explains the stop, so the
+    [termination record](#g-termination-record) (the stopped-sim value naming how the run ended) carries that
+    one.
+=== #33 spec.md:7766 §13.5  
+    checkpoint carries the clock, `t₀` included ([§14.5][s14-5]). A header without them could
+    therefore not back the bit-identity claim ([§2.4][s2-4], [§12.7][s12-7]). The header is also what
+    the artifact's [run metadata](#g-run-metadata) names, its `Deployment` and `t₀` ([§13.5][s13-5],
+    [Appendix B][sB]). A checkpoint is the one full-state capture, taken by `init!` for
+    the header and by `checkpoint(sim)` on demand ([§12.6][s12-6], [D-274][d-274]). The header is the
+=== #34 spec.md:8558 §13.5  
+    
+    **The terminal snapshot carries the run's final cumulative counters** ([§12.4][s12-4],
+    [§13.5][s13-5], [D-136][d-136], [D-369][d-369]). An [unattended run](#g-unattended-run) (a run with empty staging and no
+    snapshot readers) that nobody watched therefore still answers "what went wrong,
+    and how often" from the value its own shutdown published. Final means final at
+=== #35 spec.md:8568 §13.5  
+    
+    That last take is folded into the [termination record](#g-termination-record) (the stopped-sim value
+    naming how the run ended) as the tail residue ([§13.5][s13-5]). Per writer, the tail
+    residue is the final ring and its suppressed counts. The take is also presented
+    through the standard logging backend. It is loud *and* recorded, and still never
+=== #36 spec.md:8652 §13.5  
+    actually initiated the tail, the ordered shutdown sequence of [§12.4][s12-4]. The issuer
+    lands in the [termination record](#g-termination-record) (the stopped-sim value naming how the run ended)
+    as its `ControlRequestedStop`'s payload ([§13.5][s13-5], [D-203][d-203]).
+    
+    **`ControlRequestedStop` sits outside the stop policy** ([D-255][d-255]). The
+=== #37 spec.md:8655 §13.5  
+    
+    **`ControlRequestedStop` sits outside the stop policy** ([D-255][d-255]). The
+    policy is what the caller declares for one advance ([§13.5][s13-5]). The stop
+    word is what anyone can issue at any moment.
+    
+=== #38 spec.md:8903 §13.5  
+       per-boundary publication. The control-plane stop's issuers are a front end
+       ([D-310][d-310]), a device handle, code, or an operator interrupt (Ctrl-C, treated
+       below). The third event is model-detected termination ([§13.5][s13-5]). The loop never
+       stops mid-boundary. It always completes the boundary sequence in progress,
+       which a stop at [`t*`](#g-t) (the localized event time) places inside a [frame](#g-frame), one
+=== #39 spec.md:8950 §13.6  
+       same path, logged with the device's name (`DeviceCrash`, [Appendix C][sC]).
+    7. Loop-side failure. A failure on the loop's own side runs steps (1) through
+       (5) from the catch path ([D-030][d-030]). [§13.6][s13-6] specifies that
+       path, which discards the failed boundary and promotes the previous snapshot
+       to final. FlightCore's `SimulationTermination` catch path was the
+=== #40 spec.md:8954 §13.5  
+       to final. FlightCore's `SimulationTermination` catch path was the
+       precedent. The exception-based termination idiom itself has no place here
+       ([§13.5][s13-5], [D-060][d-060]). Devices therefore unwind cleanly
+       regardless of who died.
+    
+=== #41 spec.md:8970 §13.5  
+    indexed, `tₖ = t₀ + k·h`, and never accumulated ([§10.4][s10-4]). The final boundary may
+    therefore overshoot `t_end` by up to `h`. The termination record carries the
+    actual final `t` ([§13.5][s13-5]). This is the `t_plus` spelling ([§12.6][s12-6]) applied to the
+    run's own clock.
+    
+=== #42 spec.md:8975 §13.5  
+    The two termination sources differ in nature. `t_end` is a grid fact,
+    checked against boundary times on the grid. Stop requests are checked at
+    *every* published boundary, `t*` included ([§13.5][s13-5]).
+    
+    The final snapshot goes out before the status is set. Publishing first
+=== #43 spec.md:9106 §13.5  
+    initialize, every rostered device getting its `init!`/`shutdown!` pair
+    uniformly. The run ends `stopped` where it started, through this same tail, with
+    its termination record naming the device ([§13.5][s13-5]). What the operator is left with
+    is an ordinary stopped simulation, whose terminal snapshot is the one the run
+    started from and whose termination record's tail residue (the diagnostics the
+=== #44 spec.md:9138 §13.5  
+    configuration `UnboundedRun` names ([Appendix C][sC]). The interrupt needs no entry
+    point of its own ([D-132][d-132]). The stop already rides on the control plane ([§12.1][s12-1]).
+    The exceptions-are-abnormal doctrine ([§13.5][s13-5], [D-060][d-060]) is untouched. That doctrine
+    is about *model* code, while this is the one exception whose meaning the
+    framework knows.
+=== #45 spec.md:9154 §13.6  
+    the execution order) would therefore destroy the boundary this protocol is built
+    on completing. It would also leave [stores](#g-store) (the framework-owned homes of a
+    component's state) half-written ([§13.6][s13-6]). That forces a choice between `stopped`
+    with dirty stores and a terminal `errored`. The `stopped`-with-consistent-stores
+    guarantee is exactly what the masking buys.
+=== #46 spec.md:9169 §13.5  
+    **A deferred interrupt yields to the frame's own stop request**
+    ([D-268][d-268]). Stop requests are consulted at each publication and the
+    stop word at the next frame top ([§13.5][s13-5]), and the deferred raise
+    lands between the two. Where the frame's publication found an honoured
+    request holding, that request is the recorded source and the interrupt is
+=== #47 spec.md:9179 §13.6  
+    ([§13.4][s13-4]). The catch wraps the cause under the mask and consumes the
+    pending interrupt on its way out. The run then takes the abnormal shutdown entry
+    under that `StepError` ([§13.6][s13-6]). The alternative, `stopped` over a
+    half-written boundary, is what the masking exists to prevent. The interrupt
+    is satisfied by the run ending.
+=== #48 spec.md:9300 §13.5  
+    - It is a *wall-clock interaction*, so attach a device.
+    
+    Graceful termination follows the same shape ([§13.5][s13-5]). It is a
+    [stop request](#g-stop-request) (an output port of the framework enum
+    `StopFlag`) declared in the model, honoured unless the advance ignores it
+=== #49 spec.md:9474 §13.5  
+    ([D-096][d-096]). Both entry points work under `run!` too. The harness cell is
+    not step-scoped. An inspection accessor leaves the rejection of closure-based
+    termination untouched ([§13.5][s13-5], [D-096][d-096], [D-390][d-390]).
+    
+    #### Status, termination and `run!` after `step!`
+=== #50 spec.md:9500 §13.5  
+    `checkpoint` → `restore!` → `run!` ([§12.7][s12-7], [D-274][d-274]).
+    `restore!` is a door like `init!`, and it runs no boundary zero. Each builds a
+    fresh run, so the trace, the log and the termination record ([§13.5][s13-5])
+    are new objects rather than cleared ones, and each clears any batches still in
+    staging cells. The [recorders](#g-recorders) (the trace and the log jointly)
+=== #51 spec.md:9584 §13.5  
+    `ignore_stop_requests` are keywords of `run!`, `replay!` and `step!`. Each call
+    builds and validates the [`StopPolicy`](#g-stop-policy) (the immutable value of `t_end` plus the
+    ignored requester paths) it passes to the loop ([§13.5][s13-5], [D-255][d-255], [D-316][d-316]). The value
+    lives as long as the call, and afterwards only on the termination record of the
+    advance that ended the run ([D-260][d-260]). A second run, or a `step!` sequence between
+=== #52 spec.md:9849 §13.5  
+    | the checkpoint's state | restored under the default form; no boundary zero |
+    | the clock | restored under the default form, `replay!` takes no `t0`; under `restore = false` the simulation's own clock runs, its origin equal to the recording's |
+    | `t_end`, `ignore_stop_requests` | absent from the checkpoint; each `replay!` call declares its own ([§13.5][s13-5]) |
+    
+    #### What-if replay and `restore = false`
+=== #53 spec.md:11218 §13.5  
+    
+    **Doctrine.** Addressing conditions by path does not reopen the
+    observation-by-path rejection ([§13.5][s13-5]). That rejection was about
+    *runtime* coupling, where a root-authored predicate reaches through generic
+    [seams](#g-seam) the root does not own and breaks on substitution. A condition
+=== #54 spec.md:11338 §13.7  
+    convention. It is a fact about who maintains the code, and the build cannot see
+    it, so keeping a deep path inside an owned subtree is idiomatic rather than
+    machine-checked ([D-065][d-065]). `set`/`at`/`combine` are [§13.7][s13-7] standard-library
+    material, ordinary artifacts with no privileges.
+    
+=== #55 spec.md:11562 §13.5  
+      client.
+    - **`ignore_stop_requests` is not a family client.** It names requesters
+      from the `Build`'s requester roster, period ([§13.5][s13-5], [D-060][d-060],
+      [D-316][d-316]). Termination is run policy over the requests the model declares, and
+      no path selector reaches `ignore_stop_requests`.
+=== #56 spec.md:11639 §13.5  
+      `STOP_REQUESTED` is a different category. Nothing *fires*. The request
+      simply holds in the published `t₀` snapshot and the loop reacts
+      ([§13.5][s13-5]).
+    - **Due `s_update` calls run.** This follows from an interval-alignment
+      fact that is easy to mis-picture. It is hereby a taught contract, sibling to
+=== #57 spec.md:12351 §13.7  
+    Concatenate decision NamedTuples under prefixed names, combine the scoped
+    condition trees, and stack the residuals. If joint trims become routine, a
+    `product(p₁ => "lead", p₂ => "wing")` helper belongs in the [§13.7][s13-7]
+    library. That helper is [recorded, not built](#g-recorded-not-built) (a
+    worked-out extension deliberately left unimplemented, its seams named).
+=== #58 spec.md:12590 §13.7  
+    trim fallback ([§14.8][s14-8]) exists for problems with no Jacobian columns, a
+    case linearization does not have. `handle_walk_walkthrough.md` places the
+    rule beside the `Freeze` block ([§13.7][s13-7]) and the pinned entry.
+    
+    What stays recorded is only the remaining **tooling** over that visibility.
+=== #59 spec.md:12695 §13.5  
+      against the next round's sweep, one round per causal link, within and across
+      components alike. Only sweeps write the signal table.
+    - **Stage totality** ([§9.3][s9-3]; [§13.4][s13-4], [§13.5][s13-5]). Stage
+      code is total over type-valid inputs. The probe evaluates every user
+      function against values chosen for their types alone. A value-level throw
+=== #60 spec.md:12702 §13.5  
+      tests. Parameter validation belongs at instance construction, not inside a
+      stage.
+    - **Stop-request sampling** ([§13.5][s13-5]). Stop requests are read in
+      completed-boundary snapshots. Declare a sign-form (localized) event if the
+      stop needs localizing. Every request stops the run unless the advance
+=== #61 spec.md:12747 §13.5  
+      frozen partition. There is no per-port marking, and unexported ports are
+      unpokeable.
+    - **The two observation sides** ([§11.2][s11-2], [§13.5][s13-5]). A deep
+      snapshot path is an *inspection* read. It sees everything and promises
+      nothing across builds. An exported output face is an *integration* read. It
+=== #62 spec.md:12786 §13.5  
+      `transparent_container` (optional, default `nothing`).
+    - Any component. `stop_reason` (optional, default `""`), the reason its stop
+      requests report ([§13.5][s13-5]).
+    - Shipped conditions. `condition(::C; kw)`, methods of the framework's
+      `condition` generic that return the component's fragment ([§14.2][s14-2]).
+=== #63 spec.md:12874 §13.5  
+      The [deployment](#g-deployment) (the scalar-free artifact the grid parameters
+      fix) binds no stop policy. `t_end` and `ignore_stop_requests` are keywords of each advance
+      ([§13.5][s13-5]). A run ends at the first grid boundary
+      reaching or exceeding `t_end`, whole frames only ([§12.4][s12-4]). An
+      unbounded run stays bounded in memory, since `log_max` keeps such a session
+=== #64 spec.md:12904 §13.5  
+      - `frame!(model, k, hooks = NoHooks()) → Bool`. Advances the model through
+        frame `k` and settles its frame-top boundary ([§10.4][s10-4]). It returns
+        `true` when a hook abandoned the frame's remainder ([§13.5][s13-5]).
+        `FrameHooks` is the hooks' contract. `frame_top!(hooks)` runs before the
+        frame touches any state, and `settled!(hooks) → Bool` runs at every
+=== #65 spec.md:13001 §13.6  
+      and `stopped`. It is an error while `running` and on an `errored`
+      simulation (`ServiceLifecycle`; the roster freeze, [§11.3][s11-3], and the
+      terminal state, [§13.6][s13-6]). Admission checks identity and claims
+      ([§11.3][s11-3]). A second roster entry for one instance is
+      `AlreadyAttached`, and rebinding is `detach!` + `attach!`. An overlapping
+=== #66 spec.md:13129 §13.5  
+      | `pace` | `Inf` | the run's pacing rate; `Inf` is pacer-off, `1` real time | [§10.7][s10-7] |
+      | `margin` | `0.002` | the single pacing knob, in seconds | [§10.7][s10-7] |
+      | `t_end` | `Inf` | the run's end time, declared for **this advance**, validated per call | [§13.5][s13-5] |
+      | `ignore_stop_requests` | `()` | the stop requesters **this advance** does not honour: `:all`, or their component paths, validated against the `Build`'s requester roster per call | [§13.5][s13-5] |
+    
+=== #67 spec.md:13130 §13.5  
+      | `margin` | `0.002` | the single pacing knob, in seconds | [§10.7][s10-7] |
+      | `t_end` | `Inf` | the run's end time, declared for **this advance**, validated per call | [§13.5][s13-5] |
+      | `ignore_stop_requests` | `()` | the stop requesters **this advance** does not honour: `:all`, or their component paths, validated against the `Build`'s requester roster per call | [§13.5][s13-5] |
+    
+      `pace` defaults to `Inf`, pacer-off. A deviceless run is the harness and
+=== #68 spec.md:13140 §13.5  
+      `t_end` and `ignore_stop_requests`. It passes that policy to the loop, and the value
+      lives as long as the call. The termination record carries the policy that
+      ended the run, and nothing else keeps one ([§13.5][s13-5], [D-260][d-260]). `t_end = Inf` with no honoured
+      stop request is an unbounded run, allowed, with `UnboundedRun` raised into the
+      loop's diagnostic cell ([§11.8][s11-8]).
+=== #69 spec.md:13183 §13.5  
+    - Termination. The model's state ends a run via stop requests, `StopFlag`
+      ports read at every published boundary unless the advance ignores them
+      ([§13.5][s13-5]). Shutdown completes a boundary,
+      publishes the final snapshot, then joins ([§12.4][s12-4]).
+    - Post-run. The log is the retained snapshots. `series(sim, read_set) →
+=== #70 spec.md:13329 §13.7  
+    - **`AbstractAtRoot`** ([§8.2][s8-2]). Error · build · collected. Face name,
+      consuming leaf path, the abstract entry; a remedy hint (wire a concrete
+      producer, or in a rig a stub child, [§13.7][s13-7]).
+    - **`RootInputTypeConflict`** ([§8.2][s8-2]). Error · build · collected. Face
+      name, the consuming paths, their conflicting concrete declarations at
+=== #71 spec.md:13410 §13.5  
+      or a `Pinned` marker below the top of the entry, [D-265][d-265]), the leaf
+      vocabulary ([§4.3][s4-3]). Two reasons concern stop requests
+      ([§13.5][s13-5], [D-316][d-316]): `:stop_flag_nested`, a `StopFlag` leaf inside a
+      port whose type is not `StopFlag` itself, and `:stop_flag_at_root`, a root
+      input whose type carries a `StopFlag` anywhere.
+=== #72 spec.md:13421 §13.8  
+    activation):
+    
+    - **`AlgebraicCycle`** ([§5.5][s5-5], [§13.8][s13-8]). Error · build ·
+      collected. The SCC's members, the wires among them as terminal pairs in
+      slash form, optional classification (`real`/`artificial`) with every dead
+=== #73 spec.md:13473 §13.5  
+      (`attach!`/`detach!`/`init!`/`restore!`/`trim!`/`checkpoint`/`linearize`/`live!`),
+      the current status, the legal statuses.
+    - **`StopRequestInvalid`** ([§13.5][s13-5]). Error · service · collected,
+      over the given paths. The path naming no requester, the binding site
+      (`run!`, `replay!` or `step!`), and the roster's requester paths as
+=== #74 spec.md:13663 §13.5  
+      Face name, the offending value's type, the root input's declared type, the
+      discarded value.
+    - **`UnboundedRun`** ([§11.8][s11-8], [§13.5][s13-5]). Warning · runtime,
+      raised at `run!` in `:live` when `t_end` is `Inf` and no stop request is
+      honoured, the model having no requester or the advance ignoring them all
+=== #75 spec.md:13836 §13.6  
+    authoritative, and typed state values are ephemeral reconstructions of it
+    ([§7.1][s7-1]). The integration
+    intermediates ([§13.6][s13-6]) live in framework-owned integrator buffers,
+    never in a component's workspace.
+    
+=== #76 spec.md:13854 §13.7  
+    spelling for an aggregate input with zero contributors and for the rig stub
+    feeding an abstract face. Its value is instance data, never a default
+    ([§13.7][s13-7], [§6.2][s6-2]).
+    
+    <a id="g-entry"></a>**entry** — never used bare. The spec's compounds are table entry (a cell),
+=== #77 spec.md:14485 §13.5  
+    and the loop reads the requester off the snapshot it just published.
+    `ControlRequestedStop` is outside it, since the policy is what the caller
+    declares and the stop word is what anyone can issue ([§13.5][s13-5],
+    [D-255][d-255], [D-260][d-260], [D-316][d-316], [D-317][d-317]).
+    
+=== #78 spec.md:14554 §13.5  
+    `Δt_base`, `h`, `N_base`, the algorithm identifier, `localization_tol`,
+    `localization_budget` and `firing_budget`. It carries no stop policy; each
+    advance declares its own ([§11.5][s11-5], [§13.5][s13-5]).
+    
+    <a id="g-trace"></a>**trace** — the primary record of a session: the sequence of drained,
+=== #79 spec.md:14607 §13.7  
+    input face set. It is the idiom for exercising a leaf that needs something
+    wired beside it. An abstract entry is satisfied *inside* the rig by a
+    concrete **stub child** wired to that face ([§13.7][s13-7]).
+    
+    <a id="g-condition"></a>**condition** — the datum that says "set this build to this state": a
+=== #80 spec.md:14698 §13.8  
+    value-blind, or local primal-carrying at sampled states) used to classify a
+    rejected cycle as real or artificial. It is diagnostic only, never an input
+    to the ordering ([§5.5][s5-5], [§13.8][s13-8]).
+    
+    <a id="g-kind"></a>**kind** — a diagnostic's identity in the closed set enumerated normatively
+=== #81 spec.md:14722 §13.5  
+    boundary, and one reading `STOP_REQUESTED` ends the run unless the advance
+    names its component in `ignore_stop_requests`. The build rosters the
+    requests, and `StopRequest` is the library spelling ([§13.5][s13-5], [D-316][d-316]).
+    
+    <a id="g-termination-record"></a>**termination record** — the stopped-sim value naming how the run ended. It
+=== #82 spec.md:14728 §13.5  
+    typed source with its payload, and the tail residue. A model-requested stop's
+    payload is the requester's path, port and reason. It lives on the `Run`,
+    never on the control plane ([§12.6][s12-6], [§13.5][s13-5]).
+    
+    ### D.10 Meta-vocabulary
+=== #83 spec.md:14787 §13.7  
+    the [§11][s11] staging shapes ([§11.4][s11-4]), the strapdown IMU against the
+    leaf split ([§8.6][s8-6]). The standard component library is the standing
+    ergonomics one ([§13.7][s13-7]).
+    
+    <a id="g-worked"></a>**worked (example)** — a full spelling of a mechanism against a concrete
+=== #84 decisions.md:610 §13.8 D-012 Spec  [D-012 cited in new §13.8: True; old: True]
+    **Spec.** [§5.5][s5-5], [§9.4][s9-4], [§13.8][s13-8]
+=== #85 decisions.md:1076 §13.6 D-030 Spec  [D-030 cited in new §13.6: True; old: False]
+    **Spec.** [§12.4][s12-4], [§13.6][s13-6]
+=== #86 decisions.md:1293 §13.7 D-037 Spec  [D-037 cited in new §13.7: True; old: True]
+    **Spec.** [§6.2][s6-2], [§13.7][s13-7]
+=== #87 decisions.md:1906 §13.5 D-060 Spec  [D-060 cited in new §13.5: True; old: True]
+    **Spec.** [§9.3][s9-3], [§12.4][s12-4], [§12.5][s12-5], [§13.5][s13-5], [§14.4][s14-4]
+=== #88 decisions.md:1922 §13.5 D-060 Rejected
+      models never state their terminal dynamics.
+    - *`stop_when` predicate closures:* opaque, unserializable, a public snapshot
+      API — `user_callback!` redux. Annotation (from [§13.5][s13-5]'s inline treatment,
+      migrated): the closure rejection also rests on the extra expressiveness being
+      logic that belongs in-model in every use found.
+=== #89 decisions.md:1981 §13.7 D-062 Spec  [D-062 cited in new §13.7: True; old: True]
+    **Spec.** [§13.7][s13-7]
+=== #90 decisions.md:1989 §13.7 D-062 Annotation
+    `And{N}` are its aliases. A block joins the library by judgement against three
+    guidelines, not by demonstrated need ([D-313][d-313]). Ordinary components, arity by type
+    parameter and tier transparency stand ([§13.7][s13-7]).
+    
+    **Rejected.**
+=== #91 decisions.md:2053 §13.5 D-065 Position
+    included); locality law = [§6.1][s6-1]'s, third instance (own fields, declared
+    children, own faces; deep `at` only within owned concrete subtrees) — absolute
+    paths are compiled derivatives, so [§13.5][s13-5]'s observation-by-path rejection is
+    untouched.
+    
+=== #92 decisions.md:2056 §13.5 D-065 Spec  [D-065 cited in new §13.5: False; old: False]
+    **Spec.** [§6.1][s6-1], [§13.5][s13-5], [§14.2][s14-2]
+=== #93 decisions.md:2274 §13.7 D-071 Position
+    - A swarm takes one problem per solve — sequential commits, or user-side joint
+      composition (concatenated decisions, merged trees, stacked residuals).
+    - A `product()` helper is recorded for the [§13.7][s13-7] library, unbuilt.
+    
+    **Spec.** [§13.7][s13-7]
+=== #94 decisions.md:2276 §13.7 D-071 Spec  [D-071 cited in new §13.7: False; old: False]
+    **Spec.** [§13.7][s13-7]
+=== #95 decisions.md:2332 §13.7 D-073 Position
+    [§14][s14] algebra and [§14.9][s14-9] mounting (printed trees and flattened entry lists);
+    declaration-by-initial-value upheld ([§8.2][s8-2]); sampled-data Dual activation
+    recorded unbuilt ([§14.10][s14-10]); [§13.7][s13-7]'s `SumJunction` dispatches on its
+    unparametrized type constructor.
+    
+=== #96 decisions.md:2335 §13.7 D-073 Spec  [D-073 cited in new §13.7: False; old: False]
+    **Spec.** [§8.2][s8-2], [§13.7][s13-7], [§14][s14], [§14.9][s14-9], [§14.10][s14-10]
+=== #97 decisions.md:2614 §13.5 D-081 Rejected
+    
+    **Rejected.**
+    - *Frame-only publication:* contradicts [§13.5][s13-5]'s snapshot-at-the-crossing
+      promise.
+    - *Drain at `t*`:* input timing dependent on localization arithmetic — replay
+=== #98 decisions.md:2670 §13.5 D-083 Spec  [D-083 cited in new §13.5: False; old: False]
+    **Spec.** [§11.2][s11-2], [§13.3][s13-3], [§13.5][s13-5], [§14.4][s14-4]
+=== #99 decisions.md:2679 §13.5 D-083 Rationale
+    families export conventional surfaces with wrapper types (`VelocityData` —
+    field meaning defined at the type; wrong quantity = deliberate lie, not drift)
+    as the checkable fraction of semantics; [§13.5][s13-5]'s observation-by-path rejection
+    rests on the service/inspection split alone.
+    
+=== #100 decisions.md:2898 §13.5 D-091 Position
+    
+    **Position.** `t_end`/`stop_on` are `Simulation` defaults overridable per run
+    at `run!` ([§13.5][s13-5], [§12.6][s12-6]): the `run!` argument binds that run only, nothing on
+    the `Simulation` mutates.
+    
+=== #101 decisions.md:2901 §13.5 D-091 Spec  [D-091 cited in new §13.5: False; old: False]
+    **Spec.** [§12.6][s12-6], [§13.5][s13-5]
+=== #102 decisions.md:3051 §13.5 D-095 Rejected
+    - *Unexported qualification (`Sel.state(…)`):* taxes every use site and one
+      `using` reinstates the collisions.
+    - *`stop_on` as a family client:* [§13.5][s13-5] forbids path-addressed termination —
+      the round-1 slip that motivated the rewrite.
+    - *`get_slot` doubling for output faces:* opposite directions under one name.
+=== #103 decisions.md:3089 §13.5 D-096 Rejected
+    - *Leaving reads to device handles or the log:* the log can be off, a handle
+      needs a device, and [D-088][d-088]'s "inspect" must be spellable.
+    - *A public closure-evaluation API:* [§13.5][s13-5]'s rejected cost — an inspection
+      *accessor* returning the immutable snapshot is not it.
+    
+=== #104 decisions.md:3514 §13.6 D-108 Spec  [D-108 cited in new §13.6: False; old: False]
+    **Spec.** [§11.3][s11-3], [§12.6][s12-6], [§12.7][s12-7], [§13.6][s13-6], [§14][s14]
+=== #105 decisions.md:3916 §13.7 D-120 Spec  [D-120 cited in new §13.7: True; old: False]
+    **Spec.** [§4.4][s4-4], [§8.2][s8-2], [§13.7][s13-7], [Appendix C][sC]
+=== #106 decisions.md:3925 §13.7 D-120 Rejected
+      `probe_value` need concrete types at build.
+    - *A narrowing form at export:* new machinery, breaks the consumer-sourced
+      slot-typing rule and [§13.7][s13-7]'s no-framework-support charter.
+    - *Leaving [§13.7][s13-7]'s "any component in isolation" claim unqualified:* false for
+      exactly the class [§4.4][s4-4] exists to support.
+=== #107 decisions.md:3926 §13.7 D-120 Rejected
+    - *A narrowing form at export:* new machinery, breaks the consumer-sourced
+      slot-typing rule and [§13.7][s13-7]'s no-framework-support charter.
+    - *Leaving [§13.7][s13-7]'s "any component in isolation" claim unqualified:* false for
+      exactly the class [§4.4][s4-4] exists to support.
+    
+=== #108 decisions.md:3938 §13.6 D-121 Spec  [D-121 cited in new §13.6: False; old: False]
+    **Spec.** [§2.3][s2-3], [§4.1][s4-1], [§5.2][s5-2], [§7.1][s7-1], [§7.3][s7-3], [§10.4][s10-4], [§10.5][s10-5], [§11.4][s11-4], [§11.7][s11-7], [§13.6][s13-6], [§14.3][s14-3],
+=== #109 decisions.md:3941 §13.6 D-121 Rationale
+    [Appendix A][sA], [Appendix B][sB]
+    
+    **Rationale.** [§13.6][s13-6]'s integration intermediates are renamed framework-owned
+    integrator buffers, never a component's `workspace` ([§7.3][s7-3]'s term is
+    author-facing, poison-covered scratch); the four loose "sign change" spots are
+=== #110 decisions.md:4025 §13.7 D-123 Spec  [D-123 cited in new §13.7: False; old: False]
+    **Spec.** [§3][s3], [§11.1][s11-1], [§11.3][s11-3]–[§11.6][s11-6], [§8.1][s8-1], [§8.2][s8-2], [§8.6][s8-6], [§9.1][s9-1], [§13.7][s13-7], [§3.4][s3-4],
+=== #111 decisions.md:4033 §13.7 D-123 Rationale
+    compounded. Drafting doubled as an audit and closed [D-122][d-122]'s application
+    stragglers (component-sense "kind" residue in [§3][s3], [§11.3][s11-3]–[§11.6][s11-6], [§8.2][s8-2]/[§8.6][s8-6],
+    [§9.1][s9-1], [§13.7][s13-7], [§3.4][s3-4], [§8.6][s8-6], `flight_case_studies.md`; `KindMixed` → `ClassMixed`, completing the
+    diagnostic-name half).
+    
+=== #112 decisions.md:4152 §13.5 D-127 Spec  [D-127 cited in new §13.5: False; old: False]
+    **Spec.** [§11.5][s11-5], [§12.7][s12-7], [§13.5][s13-5], [Appendix B][sB], [Appendix C][sC]
+=== #113 decisions.md:4155 §13.5 D-127 Rationale
+    
+    **Rationale.** Defined as the artifact "run metadata" already named three times
+    without a home ([§13.5][s13-5] ×2, [Appendix B][sB]; [D-091][d-091]'s obligation, now discharged).
+    
+    Annotation (2026-10-13): the trace header holds the `Deployment` and `t₀` and
+=== #114 decisions.md:4333 §13.5 D-132 Spec  [D-132 cited in new §13.5: False; old: False]
+    **Spec.** [§10.7][s10-7], [§11.6][s11-6], [§12.4][s12-4](1), [§12.4][s12-4](3), [§12.4][s12-4](5), [§13.4][s13-4], [§13.5][s13-5], [§14][s14], [§14.8][s14-8],
+=== #115 decisions.md:4356 §13.5 D-132 Rationale
+    framework flips nothing process-global, and unattended runs rely on
+    `t_end`/`stop_on` as they already must. The termination record tags the stop
+    source ([§13.5][s13-5]), distinguishing it from `t_end`, `stop_on` and a
+    programmatic/GUI stop, with no new diagnostic kind; `UnboundedRun` ([Appendix C][sC])
+    names it as the sanctioned escape from the configuration it warns about; and
+=== #116 decisions.md:4423 §13.5 D-133 Position
+    the run ends at the first grid boundary whose time reaches or exceeds `t_end` —
+    whole frames only, overshooting by up to `h`, with the termination record
+    carrying the actual final `t` ([§13.5][s13-5]). This amends [D-127][d-127].
+    
+    **Spec.** [§10.4][s10-4], [§10.5][s10-5], [§10.7][s10-7], [§11.5][s11-5], [§12.2][s12-2], [§12.4][s12-4], [§12.4][s12-4](5), [§12.6][s12-6],
+=== #117 decisions.md:4426 §13.5 D-133 Spec  [D-133 cited in new §13.5: False; old: False]
+    [§12.7][s12-7], [§9.2][s9-2], [§13.2][s13-2], [§13.5][s13-5], [Appendix B][sB], [Appendix C][sC], [Appendix D][sD]
+=== #118 decisions.md:4612 §13.5 D-136 Spec  [D-136 cited in new §13.5: False; old: False]
+    **Spec.** [§9.8][s9-8], [§10.7][s10-7], [§11.2][s11-2], [§11.6][s11-6], [§11.8][s11-8], [§12.2][s12-2], [§12.4][s12-4], [§13.2][s13-2], [§13.5][s13-5], Appendices C/D
+=== #119 decisions.md:4634 §13.5 D-136 Rationale
+    switch to count-only display (the `maxlog` successor), counts accumulating
+    regardless; and the **terminal snapshot carries the final cumulative counters**
+    ([§12.4][s12-4](1), [§13.5][s13-5]), so an unattended run's complete diagnostic account survives
+    its own shutdown. The allocation story is spec-stated: a quiet frame adds
+    **zero heap allocation**, the per-writer status riding inline in the
+=== #120 decisions.md:4687 §13.5 D-137 Spec  [D-137 cited in new §13.5: False; old: False]
+    **Spec.** [§4.1][s4-1], [§4.4][s4-4], [§9.8][s9-8], [§10.7][s10-7], [§11.2][s11-2], [§11.5][s11-5], [§11.8][s11-8], [§12.4][s12-4], [§12.7][s12-7], [§13.5][s13-5],
+=== #121 decisions.md:4721 §13.5 D-137 Rationale
+    loop's own work is pointer bookkeeping, microseconds either way and on the
+    framework side of [§9.8][s9-8]'s scope, publication staying wait-free with readers
+    never blocking. **The boundary-zero ([§14.5][s14-5]) and terminal ([§12.4][s12-4](1), [§13.5][s13-5])
+    snapshots are retained unconditionally under any `log_every` and any `log_max`,
+    and do not count against the bound** — two extra references — so the run's
+=== #122 decisions.md:4773 §13.5 D-138 Spec  [D-138 cited in new §13.5: False; old: False]
+    **Spec.** [§11.1][s11-1], [§11.3][s11-3], [§11.6][s11-6], [§11.8][s11-8], [§12.2][s12-2], [§12.4][s12-4], [§13.5][s13-5], [§14][s14], [§14.6][s14-6], Appendices
+=== #123 decisions.md:4794 §13.5 D-138 Rationale
+    with the device absent from frame zero — (6)'s semantics shifted to `t₀`; set,
+    the failure requests a control-plane stop that is **already pending at boundary
+    zero**, so the run reuses [§13.5][s13-5]'s existing terminal-at-`t₀` path — remaining
+    entries still initialize, every rostered device getting its `init!`/`shutdown!`
+    pair uniformly, boundary zero is published, the run ends `stopped` at `t₀`
+=== #124 decisions.md:4823 §13.5 D-138 Annotation
+    frame top, which the loop reads before any frame, so the run advances no
+    frame and ends `stopped` where it started, its termination record naming
+    the device. The Rationale's "boundary zero is published" and its [§13.5][s13-5]
+    terminal-at-`t₀` path are historical. `DeviceCrash`'s payload names no
+    device id since [D-228][d-228]. The cell it is written to names the device.
+=== #125 decisions.md:4961 §13.8 D-140 Spec  [D-140 cited in new §13.8: True; old: True]
+    **Spec.** [§4.3][s4-3], [§5.4][s5-4], [§8.3][s8-3], [§13.8][s13-8]
+=== #126 decisions.md:4965 §13.8 D-140 Rationale
+    **Rationale.** (i) The **two-stage split** dissolves most of the class —
+    the `VehicleDynamics` instance of `flight_case_studies.md` is the canonical dissolution. (ii)
+    **Contract re-factoring**, the new middle rung: when [§13.8][s13-8]'s tracer says
+    *artificial*, re-examine the cycle's wires before moving any code, because an
+    input the neighbor consumes **only in a fallback branch** is the archetypal
+=== #127 decisions.md:4989 §13.8 D-140 Rationale
+    consumer): **one struct-valued bundle port** (a `StrutGeometry`-shaped value),
+    not N loose ports — the bundle type becomes contract, a real cost but a bounded
+    and honest one. [§13.8][s13-8]'s hint offers **both exits** ("split this component, or
+    narrow the neighbor's contract"), continuous members only as before, and the
+    classifier machinery is untouched: it already knows which hop died. [§5.4][s5-4]'s
+=== #128 decisions.md:5022 §13.7 D-141 Position
+    A entry, with the tier asymmetry now taught as a contract: the same-tick reset
+    entry is marked explicitly discrete-tier, and [§5.3][s5-3]'s gear sentence is extended
+    to say why. [§3.1][s3-1], [§2.3][s2-3] and [§13.7][s13-7] are unchanged. Even a commanded continuous
+    reset — the condition arriving as an ordinary `Bool` input, weight-on-wheels
+    being the shipped instance — is spelled as an event whose guard reads that
+=== #129 decisions.md:5033 §13.7 D-141 Spec  [D-141 cited in new §13.7: False; old: False]
+    **Spec.** [§2.3][s2-3], [§2.5][s2-5], [§3.1][s3-1], [§3.3][s3-3], [§3.4][s3-4], [§10.6][s10-6], [§8.5][s8-5], [§13.7][s13-7], [§5.3][s5-3], [Appendix A][sA]
+=== #130 decisions.md:5050 §13.7 D-141 Rationale
+    counts as demand for a domain block's feature set (external-reset ports on
+    integrator and PID blocks are standard vocabulary — Simulink, PLC PIDs) even at
+    a single migration consumer, which is how [§13.7][s13-7]'s grow-by-migration-demand rule
+    reads past a literal one-consumer count. `strut.wow → frc.reset` gives fresh
+    regulator state per contact episode, boundary-detected (the regulator's input
+=== #131 decisions.md:5082 §13.7 D-141 Rejected
+      baseline must then speak about.
+    - *Simulink's full policy menu (rising/falling/either/level triggers plus an
+      external-IC port):* one policy suffices, with [§13.7][s13-7]'s Bool gates covering
+      falling-edge consumers and separate blocks covering level-pinning and
+      reset-to-an-external-value, which is tracking — each extra option is contract
+=== #132 decisions.md:5119 §13.5 D-142 Position
+    population) whose diagnostic points at code that is "correct" on every
+    trajectory it has ever run; at runtime the identical throw is a `StepError` and
+    the run ends `errored` ([§13.4][s13-4]) — [§13.5][s13-5] already rules that exceptions from model
+    code are always abnormal, so no new failure mode is introduced, only a stated
+    obligation. Parameter validation is not banned but mislocated: it belongs where
+=== #133 decisions.md:5126 §13.5 D-142 Spec  [D-142 cited in new §13.5: False; old: False]
+    **Spec.** [§9.3][s9-3], [§13.1][s13-1], [§13.4][s13-4], [§13.5][s13-5], [Appendix A][sA]
+=== #134 decisions.md:5128 §13.5 D-142 Rationale
+    **Spec.** [§9.3][s9-3], [§13.1][s13-1], [§13.4][s13-4], [§13.5][s13-5], [Appendix A][sA]
+    
+    **Rationale.** [§13.1][s13-1], [§13.4][s13-4] and [§13.5][s13-5] are otherwise unchanged by this finding.
+    Three patterns in shipped `landinggear.jl`, all walked by the dry run, get
+    three distinct dispositions: (i) plausibility termination — `GroundCrash`
+=== #135 decisions.md:5132 §13.5 D-142 Rationale
+    three distinct dispositions: (i) plausibility termination — `GroundCrash`
+    thrown on `α_ts`/`ξ_dot` thresholds (`:330-346`) — migrates to a published
+    `Bool` output face plus `stop_on`, [§13.5][s13-5]'s existing machinery, so [§9.3][s9-3] only
+    cross-references it; (ii) numerical self-consistency asserts — `@assert
+    abs(v_ec_c[3]) < 1e-8` (`:320`), the author checking their own damper-rate
+=== #136 decisions.md:5160 §13.5 D-142 Rejected
+      of it, and reintroduces context-dependent behavior into stages the design
+      elsewhere keeps pure.
+    - *Doing nothing beyond [§13.5][s13-5]'s termination mapping:* it covers the termination
+      half and covers it well, but leaves the non-terminating assert classes —
+      self-consistency and exhaustiveness — with no stated rule at all, which is
+=== #137 decisions.md:5191 §13.7 D-143 Position
+    a configuration wanting an externally settable source uses a root slot ([§11.3][s11-3]),
+    the boundary that keeps the block from drifting into a back-door input default.
+    Tier: stateless continuous, so [§13.7][s13-7]'s existing tier-transparency argument (a
+    stateless `h_xu` recomputes every sweep, so fed ZOH-held signals its output
+    changes only at ticks) already covers discrete consumers — no discrete variant.
+=== #138 decisions.md:5195 §13.7 D-143 Spec  [D-143 cited in new §13.7: True; old: False]
+    **Spec.** [§6.1][s6-1], [§6.2][s6-2], [§11.3][s11-3], [§13.7][s13-7], [Appendix D][sD]
+=== #139 decisions.md:5212 §13.7 D-143 Rationale
+    `terrain` face is typically just a `Constant` holding the test handle — the
+    block's first shipped instance — while bespoke stubs stay ordinary components
+    wherever the double must compute something. Admission honors [§13.7][s13-7]'s strictly
+    from demonstrated need charter: the dry run demonstrated the need twice, at the
+    zero-contributor totals and at the rig. [Appendix D][sD] gains a constant source
+=== #140 decisions.md:5219 §13.7 D-143 Annotation
+    Annotation (2026-10-12): `Constant{V}` declares `(out = Pinned{V},)`
+    ([D-312][d-312]), and `output_types` is `y_types` ([D-267][d-267]). The stateless `h_xu` of
+    the tier argument is `y_direct` ([D-220][d-220], [D-267][d-267], [§13.7][s13-7]). The identity methods
+    the Rationale calls FlightCore's are FlightPhysics', defined at the
+    `aircraftbase.jl` lines it cites. The block, its two clarifications and its
+=== #141 decisions.md:5267 §13.7 D-144 Spec  [D-144 cited in new §13.7: False; old: False]
+    **Spec.** [§11.6][s11-6], [§8.1][s8-1], [§8.6][s8-6], [§8.8][s8-8], [§9.1][s9-1], [§13.3][s13-3], [§13.7][s13-7], [§14.4][s14-4], Appendix
+=== #142 decisions.md:6411 §13.8 D-169 Spec  [D-169 cited in new §13.8: False; old: False]
+    **Spec.** [§5.2][s5-2], [§5.3][s5-3], [§9.3][s9-3], [§13.2][s13-2], [§13.8][s13-8], [Appendix B][sB], [Appendix D][sD]
+=== #143 decisions.md:6436 §13.8 D-169 Rejected
+      hand-copied fields with a drift hazard, makes stage 2 the one own-function
+      denied the fused idiom's "publish once, read your own product" that
+      `f`/`g`/guards get through `y`, and would unpick [§13.8][s13-8]'s tracer boundary
+      argument, in which `y_x` is the named never-seeded stage-2 input.
+    
+=== #144 decisions.md:6561 §13.7 D-173 Spec  [D-173 cited in new §13.7: False; old: False]
+    **Spec.** [§3.2][s3-2], [§5.2][s5-2], [§5.3][s5-3], [§7.3][s7-3], [§8.2][s8-2], [§8.7][s8-7], [§9.3][s9-3], [§9.5][s9-5], [§13.7][s13-7], [§14.1][s14-1],
+=== #145 decisions.md:6577 §13.7 D-173 Rationale
+    
+    Motivation: `z` collided with the shift operator (`z⁻¹`, five spec sites —
+    [§13.7][s13-7]'s `UnitDelay` bullet had the letter meaning two things in three lines)
+    and was nonstandard besides — discrete state-space writes `x[k+1] = g(x[k],
+    u[k])` and hybrid-systems notation (Goebel–Sanfelice–Teel) writes flow `ẋ =
+=== #146 decisions.md:6596 §13.7 D-173 Rejected
+      `DeclarationOnWrongTier` agreement set with zero new information; mandatory =
+      boilerplate on every leaf, defaulted = class-by-omission, which [D-039][d-039] refused
+      for kind; the corner it protects is rare — [§13.7][s13-7] steers stateless leaves
+      continuous — already netted by [§8.7][s8-7]'s rates-on-continuous error and [D-166][d-166]'s
+      Dual-activation CI policy, and behaviorally near-neutral under
+=== #147 decisions.md:7009 §13.7 D-184 Spec  [D-184 cited in new §13.7: True; old: True]
+    **Spec.** [§8.5][s8-5], [§13.7][s13-7]
+=== #148 decisions.md:7017 §13.7 D-184 Rationale
+    persona with zero new declaration rules — [§8.5][s8-5]'s builder rejection stands
+    untouched (immutable grouping needs no builder), and the component enters
+    [§13.7][s13-7]'s inventory as its one persona-admitted member.
+    
+    Annotation (2026-10-02): amended by [D-211][d-211] and [D-279][d-279]. `Group` declares its
+=== #149 decisions.md:7457 §13.7 D-195 Spec  [D-195 cited in new §13.7: False; old: False]
+    **Spec.** [§3.2][s3-2], [§5.2][s5-2], [§5.3][s5-3], [§7.3][s7-3], [§8.2][s8-2], [§8.7][s8-7], [§9.3][s9-3], [§9.5][s9-5], [§12.5][s12-5], [§13.2][s13-2], [§13.7][s13-7], [§14.1][s14-1], [§3.4][s3-4], [§8.6][s8-6],
+=== #150 decisions.md:7720 §13.6 D-203 Position
+      `EndTimeReached` (no payload), `ModelRequestedStop` (the holding face),
+      `ControlRequestedStop` (its issuer), and `LoopError` (the propagated
+      cause). The record covers `errored` exactly as it covers `stopped` ([§13.6][s13-6]).
+    - The operator interrupt stays a tag on an ordinary stop ([§13.5][s13-5]): the
+      `:interrupt` issuer arm of `ControlRequestedStop`, never a fifth kind.
+=== #151 decisions.md:7721 §13.5 D-203 Position
+      `ControlRequestedStop` (its issuer), and `LoopError` (the propagated
+      cause). The record covers `errored` exactly as it covers `stopped` ([§13.6][s13-6]).
+    - The operator interrupt stays a tag on an ordinary stop ([§13.5][s13-5]): the
+      `:interrupt` issuer arm of `ControlRequestedStop`, never a fifth kind.
+    - The control-plane stop word carries its issuer — the requesting device,
+=== #152 decisions.md:7734 §13.5 D-203 Spec  [D-203 cited in new §13.5: True; old: True]
+    **Spec.** [§11.8][s11-8], [§12.1][s12-1], [§12.4][s12-4], [§12.6][s12-6], [§13.5][s13-5], [§13.6][s13-6], [Appendix C][sC]
+=== #153 decisions.md:7734 §13.6 D-203 Spec  [D-203 cited in new §13.6: True; old: True]
+    **Spec.** [§11.8][s11-8], [§12.1][s12-1], [§12.4][s12-4], [§12.6][s12-6], [§13.5][s13-5], [§13.6][s13-6], [Appendix C][sC]
+=== #154 decisions.md:7746 §13.5 D-203 Rationale
+    is not cell retention across runs (`init!` clears it with the trajectory), and
+    it is not a drop. It is stopped-sim state on the diagnostic-observation side
+    of [§13.5][s13-5]'s own doctrine, and the precedent of carrying failure detail was
+    already spent when the abnormal path put the cause exception in the record.
+    The typed sources apply [§13.2][s13-2]'s convention to the outcome channel, dissolving
+=== #155 decisions.md:7781 §13.5 D-203 Rejected
+      regained control. [D-201][d-201]'s rejected list never weighed the record, which
+      had not been built when it was adjudicated.
+    - *A fifth source kind for the interrupt:* [§13.5][s13-5] rules the interrupt a tag on
+      an ordinary stop — nothing failed; a consumer that cares matches on the
+      issuer, and a distinct type would quietly reverse a settled ruling for no
+=== #156 decisions.md:7793 §13.5 D-203 Rejected
+      the species [D-202][d-202] rejects; absence spelled out-of-band instead.
+    - *Carrying the configured `t_end` in `EndTimeReached`'s payload:* the
+      effective policy already lives in the run metadata ([§11.5][s11-5], [§13.5][s13-5]); a second
+      home for a fact that has one.
+    - *Termination sources as [Appendix C][sC] diagnostics:* the record is outcome, not
+=== #157 decisions.md:7797 §13.5 D-203 Rejected
+    - *Termination sources as [Appendix C][sC] diagnostics:* the record is outcome, not
+      warning — three of the four sources are healthy ends, and the interrupt
+      sentence in [§13.5][s13-5] already ruled the appendix gains nothing here.
+    
+    ### D-204 — Rename the condition algebra's symmetric combinator to `combine`
+=== #158 decisions.md:7983 §13.7 D-208 Position
+      own consuming entry), and [§8.2][s8-2]'s primitive-root refusal is retired.
+    - Abstract-at-root is unchanged: a primitive with an abstract input entry
+      still cannot be built bare, and the component test rig ([§13.7][s13-7]) keeps its
+      stubbing role, losing only its gate status.
+    
+=== #159 decisions.md:7986 §13.7 D-208 Spec  [D-208 cited in new §13.7: True; old: True]
+    **Spec.** [§6.1][s6-1], [§8.2][s8-2], [§8.6][s8-6], [§9.1][s9-1], [§9.3][s9-3], [§11.3][s11-3], [§13.7][s13-7]
+=== #160 decisions.md:8376 §13.5 D-217 Spec  [D-217 cited in new §13.5: False; old: False]
+    **Spec.** [§11.5][s11-5], [§12.7][s12-7], [§13.5][s13-5], [Appendix B][sB], [Appendix C][sC]
+=== #161 decisions.md:8390 §13.5 D-217 Rationale
+    reason: a check that runs over a list is collecting by its shape. The
+    termination pair is the one place the sections contradicted each other. [§11.5][s11-5]
+    captured "the effective pair" at `init!`, while [§13.5][s13-5] binds a `run!` override
+    for that run only, after `init!` and possibly several times per trace. The
+    header can only hold what `init!` knows, and the termination record already
+=== #162 decisions.md:8549 §13.5 D-220 Spec  [D-220 cited in new §13.5: False; old: False]
+    [§13.4][s13-4], [§13.5][s13-5], [§13.6][s13-6], [§13.7][s13-7], [§14.5][s14-5], [§14.7][s14-7], [§14.8][s14-8], [§14.10][s14-10], [§3.4][s3-4], [§8.6][s8-6],
+=== #163 decisions.md:8549 §13.6 D-220 Spec  [D-220 cited in new §13.6: False; old: False]
+    [§13.4][s13-4], [§13.5][s13-5], [§13.6][s13-6], [§13.7][s13-7], [§14.5][s14-5], [§14.7][s14-7], [§14.8][s14-8], [§14.10][s14-10], [§3.4][s3-4], [§8.6][s8-6],
+=== #164 decisions.md:8549 §13.7 D-220 Spec  [D-220 cited in new §13.7: False; old: False]
+    [§13.4][s13-4], [§13.5][s13-5], [§13.6][s13-6], [§13.7][s13-7], [§14.5][s14-5], [§14.7][s14-7], [§14.8][s14-8], [§14.10][s14-10], [§3.4][s3-4], [§8.6][s8-6],
+=== #165 decisions.md:8761 §13.5 D-224 Rationale
+    **Rationale.** A commit-fired handler that moves the stores is a modeling
+    event the report carries as `TrimCommitEvents`; a handler that throws is
+    model code failing, which [§13.5][s13-5] makes abnormal always. A report carrying an
+    exception would blur the two classes and hand the caller a converged verdict
+    over a simulation holding no committed point. The solution is not lost to a
+=== #166 decisions.md:9107 §13.6 D-232 Spec  [D-232 cited in new §13.6: True; old: True]
+    **Spec.** [§11.3][s11-3], [§13.6][s13-6], [Appendix B][sB]
+=== #167 decisions.md:9111 §13.6 D-232 Rationale
+    **Rationale.** The implementation gated the roster operations and the log
+    reader behind one check that refused only `running`, and called admitting
+    `errored` deliberate on [§13.6][s13-6]'s post-mortem grounds. Those grounds cover the
+    reads: [§13.6][s13-6] and [§14][s14] retain an errored simulation's stores, log and trace as
+    a diagnostic read. A roster change is not a read. It configures the next run,
+=== #168 decisions.md:9112 §13.6 D-232 Rationale
+    reader behind one check that refused only `running`, and called admitting
+    `errored` deliberate on [§13.6][s13-6]'s post-mortem grounds. Those grounds cover the
+    reads: [§13.6][s13-6] and [§14][s14] retain an errored simulation's stores, log and trace as
+    a diagnostic read. A roster change is not a read. It configures the next run,
+    and an errored simulation has none, every advance entry and `init!` refusing
+=== #169 decisions.md:9136 §13.5 D-233 Spec  [D-233 cited in new §13.5: True; old: True]
+    **Spec.** [§13.5][s13-5]
+=== #170 decisions.md:9139 §13.6 D-233 Rationale
+    
+    **Rationale.** [D-203][d-203] admitted an absent time for "no boundary ever ran", a
+    [§13.6][s13-6] failure before boundary zero. No run reaches it. Only the advance
+    entries write the record, both refuse a `built` simulation, and after `init!`
+    a snapshot always exists, boundary zero having published it. A throw inside
+=== #171 decisions.md:9524 §13.5 D-242 Spec  [D-242 cited in new §13.5: False; old: False]
+    **Spec.** [§8.1][s8-1], [§8.2][s8-2], [§10.5][s10-5], [§11.2][s11-2], [§11.3][s11-3], [§11.5][s11-5], [§12.6][s12-6], [§12.7][s12-7], [§13.2][s13-2], [§13.3][s13-3], [§13.5][s13-5],
+=== #172 decisions.md:9638 §13.8 D-245 Spec  [D-245 cited in new §13.8: True; old: True]
+    **Spec.** [§5.4][s5-4], [§13.8][s13-8], [Appendix C][sC]
+=== #173 decisions.md:9648 §13.8 D-245 Rationale
+    a simple cycle and gives the tangle its true one. Listing the dead hops under
+    a real verdict keeps the false chords visible, since each is a wire the
+    author can still delete. The mode per member is [§13.8][s13-8]'s own demand that the
+    caveats ride in the diagnostic rather than being assumed away. A dead hop the
+    sampled tracer found rests on the paths it took, a structural map can never
+=== #174 decisions.md:9663 §13.8 D-245 Rejected
+      author could delete from a loop that is real through another path.
+    - *Omitting the tracing mode:* a sampled "artificial" and a global one would
+      read alike, and the sampled miss [§13.8][s13-8] documents would be assumed away in
+      the message.
+    
+=== #175 decisions.md:9864 §13.5 D-249 Spec  [D-249 cited in new §13.5: False; old: False]
+    **Spec.** [§3.2][s3-2], [§8.2][s8-2], [§8.5][s8-5], [§8.6][s8-6], [§9.5][s9-5], [§12.7][s12-7], [§13.5][s13-5], [Appendix C][sC]
+=== #176 decisions.md:10110 §13.7 D-253 Spec  [D-253 cited in new §13.7: False; old: False]
+    **Spec.** [§9.1][s9-1], [§9.2][s9-2], [§9.3][s9-3], [§9.4][s9-4], [§9.7][s9-7], [§13.3][s13-3], [§13.4][s13-4], [§13.7][s13-7], [§14.1][s14-1], [§14.4][s14-4]
+=== #177 decisions.md:10231 §13.5 D-255 Position
+    - `t_end` and `stop_on` leave the constructor and are keywords of `run!` and
+      `replay!`, with `Inf` and no faces as defaults, validated per call.
+      `step!` states the same defaults itself. [§13.5][s13-5]'s second binding site goes.
+      A run with `Inf` and no faces is allowed and raises `UnboundedRun` into
+      the loop's diagnostic cell, the status record carrying it.
+=== #178 decisions.md:10242 §13.5 D-255 Spec  [D-255 cited in new §13.5: True; old: True]
+    **Spec.** [§11.5][s11-5], [§12.1][s12-1], [§12.4][s12-4], [§12.6][s12-6], [§12.7][s12-7], [§13.5][s13-5], [Appendix C][sC]
+=== #179 decisions.md:10251 §13.5 D-255 Rationale
+    its schema list in place, so an artifact captured at `init!` was not
+    immutable; and `t_end`/`stop_on` had two homes, the constructor and the
+    call, which [§13.5][s13-5] called "the honest cost" of [D-091][d-091]. Each of those is the
+    state/artifact criterion violated once. A `Run` collects what one run owns.
+    Its `const` fields are the ones the constructing entry point fixes; its
+=== #180 decisions.md:10264 §13.5 D-255 Rationale
+    run is allowed because it is the interactive session's ordinary shape, with
+    `UnboundedRun` as its advisory and the operator interrupt as its escape
+    ([§13.5][s13-5]); the advisory lives in the loop's cell because `run!` mutates state.
+    
+    **Rejected.**
+=== #181 decisions.md:10377 §13.7 D-257 Spec  [D-257 cited in new §13.7: True; old: True]
+    **Spec.** [§9.2][s9-2], [§13.7][s13-7]
+=== #182 decisions.md:10458 §13.8 D-259 Spec  [D-259 cited in new §13.8: False; old: False]
+    **Spec.** [§6.1][s6-1], [§8.2][s8-2], [§8.5][s8-5], [§9.1][s9-1], [§9.2][s9-2], [§9.4][s9-4], [§9.6][s9-6], [§13.1][s13-1], [§13.2][s13-2], [§13.3][s13-3], [§13.8][s13-8], [§14.3][s14-3], [Appendix C][sC], [Appendix D][sD]
+=== #183 decisions.md:10526 §13.5 D-260 Spec  [D-260 cited in new §13.5: False; old: True]
+    **Spec.** [§11.5][s11-5], [§12.6][s12-6], [§12.7][s12-7], [§13.5][s13-5], [Appendix B][sB]
+=== #184 decisions.md:10649 §13.5 D-261 Spec  [D-261 cited in new §13.5: True; old: True]
+    **Spec.** [§9.1][s9-1], [§9.2][s9-2], [§11.2][s11-2], [§11.3][s11-3], [§11.5][s11-5], [§12.6][s12-6], [§13.5][s13-5], [Appendix B][sB]
+=== #185 decisions.md:10836 §13.7 D-263 Spec  [D-263 cited in new §13.7: True; old: False]
+    [§9.4][s9-4], [§9.5][s9-5], [§13.7][s13-7], [§14.10][s14-10], [Appendix A][sA], [Appendix C][sC], [Appendix D][sD]
+=== #186 decisions.md:11090 §13.7 D-266 Position
+      rule ([§14.10][s14-10]).
+    - A walking producer feeds a pinned entry through the `Freeze{V}` library
+      block ([§13.7][s13-7]), a stateless continuous leaf with a tolerant input and a
+      `Pinned` output that strips with `ForwardDiff.value`; the wire then
+      declares a zero coupling in every Jacobian along that path.
+=== #187 decisions.md:11096 §13.7 D-266 Spec  [D-266 cited in new §13.7: True; old: True]
+    **Spec.** [§8.2][s8-2], [§13.7][s13-7], [§14.8][s14-8], [§14.10][s14-10]
+=== #188 decisions.md:11172 §13.5 D-267 Spec  [D-267 cited in new §13.5: False; old: False]
+    [§10.5][s10-5], [§10.6][s10-6], [§11.2][s11-2], [§11.3][s11-3], [§12.5][s12-5], [§13.1][s13-1], [§13.3][s13-3], [§13.4][s13-4], [§13.5][s13-5], [§13.7][s13-7], [§13.8][s13-8],
+=== #189 decisions.md:11172 §13.7 D-267 Spec  [D-267 cited in new §13.7: False; old: False]
+    [§10.5][s10-5], [§10.6][s10-6], [§11.2][s11-2], [§11.3][s11-3], [§12.5][s12-5], [§13.1][s13-1], [§13.3][s13-3], [§13.4][s13-4], [§13.5][s13-5], [§13.7][s13-7], [§13.8][s13-8],
+=== #190 decisions.md:11172 §13.8 D-267 Spec  [D-267 cited in new §13.8: False; old: False]
+    [§10.5][s10-5], [§10.6][s10-6], [§11.2][s11-2], [§11.3][s11-3], [§12.5][s12-5], [§13.1][s13-1], [§13.3][s13-3], [§13.4][s13-4], [§13.5][s13-5], [§13.7][s13-7], [§13.8][s13-8],
+=== #191 decisions.md:11326 §13.5 D-268 Rationale
+    hand the next run a first frame top it never leaves.
+    
+    The face-before-interrupt order is [§13.5][s13-5]'s consultation order applied to the
+    raise's actual position: the deferred raise lands after the frame's
+    publication, where the stop faces are read, and before the next frame top,
+=== #192 decisions.md:11389 §13.5 D-268 Rejected
+    - *`step!` ignoring the pause:* a second consultation rule for one frame
+      loop, and [§12.6][s12-6]'s bit-identity claim rests on the loop being one code.
+    - *Recording the interrupt over a holding face:* contradicts [§13.5][s13-5]'s order,
+      under which the face was consulted first.
+    - *Reporting an interrupt inside `init!` as `DeviceCrash`:* [D-132][d-132]'s grounds;
+=== #193 decisions.md:11844 §13.7 D-274 Position
+      cursor and the periphery stay out. The stepper seam gets a checkpoint
+      hook, empty for a single-step method.
+    - `checkpoint(sim)` is a stopped-sim service ([§13.7][s13-7]): legal in
+      `initialized` and `stopped`, refused while running, and refused when the
+      executor sits mid-frame after a `t*` stop, the clock being past the frame
+=== #194 decisions.md:11919 §13.7 D-274 Annotation
+    
+    Annotation (2026-10-15): the stopped-sim services are [§14][s14], so the second
+    bullet's [§13.7][s13-7] reads [§14][s14].
+    
+    **Rejected.**
+=== #195 decisions.md:12016 §13.7 D-276 Position
+    - Wiring stays port-granular ([§4.3][s4-3]). A consumer wanting less than a bundle
+      destructures it, in its own stage or through an unbundling component that
+      takes the bundle and publishes its fields, a candidate for [§13.7][s13-7]'s library.
+    
+    **Spec.** [§4.2][s4-2], [§4.3][s4-3], [§14.4][s14-4], [§14.7][s14-7], [§14.10][s14-10], [Appendix B][sB]
+=== #196 decisions.md:12190 §13.5 D-279 Spec  [D-279 cited in new §13.5: False; old: False]
+    [§13.3][s13-3], [§13.4][s13-4], [§13.5][s13-5], [§13.7][s13-7], [§14.1][s14-1], [§14.2][s14-2], [§14.7][s14-7], [§14.8][s14-8], [§14.10][s14-10], [Appendix B][sB],
+=== #197 decisions.md:12190 §13.7 D-279 Spec  [D-279 cited in new §13.7: False; old: False]
+    [§13.3][s13-3], [§13.4][s13-4], [§13.5][s13-5], [§13.7][s13-7], [§14.1][s14-1], [§14.2][s14-2], [§14.7][s14-7], [§14.8][s14-8], [§14.10][s14-10], [Appendix B][sB],
+=== #198 decisions.md:12467 §13.5 D-285 Rationale
+    Three patterns in shipped landing-gear code get three dispositions (as
+    recorded in [D-142][d-142]). Plausibility termination migrates to a published `Bool`
+    output face plus `stop_on`, [§13.5][s13-5]'s existing machinery. A numerical
+    self-consistency assert is a regression test living in stage code, and its
+    legitimate home is the test suite. It is also the most probe-fragile of the
+=== #199 decisions.md:12479 §13.5 D-285 Rejected
+    
+    **Rejected.**
+    - *Doing nothing beyond [§13.5][s13-5]'s termination mapping:* it covers the
+      termination half and covers it well, but leaves the non-terminating assert
+      classes — self-consistency and exhaustiveness — with no stated rule at
+=== #200 decisions.md:13209 §13.5 D-303 Spec  [D-303 cited in new §13.5: False; old: False]
+    [§11.7][s11-7], [§13.1][s13-1], [§13.3][s13-3], [§13.5][s13-5], [§13.7][s13-7], [§14.1][s14-1], [§14.2][s14-2], [Appendix B][sB], [Appendix C][sC],
+=== #201 decisions.md:13209 §13.7 D-303 Spec  [D-303 cited in new §13.7: False; old: False]
+    [§11.7][s11-7], [§13.1][s13-1], [§13.3][s13-3], [§13.5][s13-5], [§13.7][s13-7], [§14.1][s14-1], [§14.2][s14-2], [Appendix B][sB], [Appendix C][sC],
+=== #202 decisions.md:13480 §13.7 D-311 Position
+      and `&`, each with a zero-argument constructor. `Not` is not admitted.
+    - The type parameter is the nominal type, `SumJunction{Wrench{Float64}, 3}`,
+      never an unparametrized constructor. [§13.7][s13-7]'s `W{Float64}` form falls with
+      [D-263][d-263].
+    - Every library block's output port is `out`. The junction's `Σ` falls.
+=== #203 decisions.md:13484 §13.5 D-311 Spec  [D-311 cited in new §13.5: False; old: False]
+    **Spec.** [§8.2][s8-2], [§8.5][s8-5], [§13.5][s13-5], [§13.7][s13-7]
+=== #204 decisions.md:13484 §13.7 D-311 Spec  [D-311 cited in new §13.7: True; old: True]
+    **Spec.** [§8.2][s8-2], [§8.5][s8-5], [§13.5][s13-5], [§13.7][s13-7]
+=== #205 decisions.md:13524 §13.7 D-312 Position
+    **Status.** ratified
+    
+    **Position.** The three leaf blocks of [§13.7][s13-7] take these spellings.
+    
+    - `Constant{V}` declares `(out = Pinned{V},)` and is constructed as
+=== #206 decisions.md:13535 §13.7 D-312 Spec  [D-312 cited in new §13.7: True; old: True]
+    **Spec.** [§13.7][s13-7]
+=== #207 decisions.md:13594 §13.7 D-313 Spec  [D-313 cited in new §13.7: True; old: True]
+    **Spec.** [§13.7][s13-7]
+=== #208 decisions.md:13731 §13.7 D-315 Spec  [D-315 cited in new §13.7: True; old: True]
+    **Spec.** [§9.1][s9-1], [§9.2][s9-2], [§13.7][s13-7], [Appendix B][sB], [Appendix D][sD]
+=== #209 decisions.md:13871 §13.5 D-316 Spec  [D-316 cited in new §13.5: True; old: True]
+    **Spec.** [§4.3][s4-3], [§8.1][s8-1], [§8.2][s8-2], [§10.4][s10-4], [§11.5][s11-5], [§12.4][s12-4], [§12.6][s12-6], [§12.7][s12-7], [§13.5][s13-5], [§13.7][s13-7], [§14.4][s14-4], [Appendix B][sB], [Appendix C][sC]
+=== #210 decisions.md:13871 §13.7 D-316 Spec  [D-316 cited in new §13.7: True; old: True]
+    **Spec.** [§4.3][s4-3], [§8.1][s8-1], [§8.2][s8-2], [§10.4][s10-4], [§11.5][s11-5], [§12.4][s12-4], [§12.6][s12-6], [§12.7][s12-7], [§13.5][s13-5], [§13.7][s13-7], [§14.4][s14-4], [Appendix B][sB], [Appendix C][sC]
+=== #211 decisions.md:13885 §13.7 D-316 Rationale
+    eltype ([§9.7][s9-7], [D-162][d-162]). Every `StopFlag` port lands in one buffer, and the
+    loop's check is a scan of that buffer on the snapshot it just published,
+    allocating nothing; the roster is touched on a hit only. [§13.7][s13-7]'s doctrine
+    that library blocks have no framework privileges stands. The privilege is
+    the eltype's, as `Pinned` is a framework marker, and `StopRequest` is a
+=== #212 decisions.md:13899 §13.5 D-316 Rationale
+    owner's pull.
+    
+    [§13.5][s13-5]'s observation-by-path rejection stands narrowed. The ignore list reads
+    no arbitrary cell. It addresses the `Build`'s requester roster, a build
+    product like the root-input list, and it binds at an advance, a stopped-sim
+=== #213 decisions.md:14025 §13.5 D-317 Spec  [D-317 cited in new §13.5: True; old: True]
+    **Spec.** [§9.1][s9-1], [§9.2][s9-2], [§9.4][s9-4], [§11.5][s11-5], [§11.8][s11-8], [§12.1][s12-1], [§12.6][s12-6], [§13.4][s13-4], [§13.5][s13-5], [§14.5][s14-5], [Appendix C][sC]
+=== #214 decisions.md:14406 §13.7 D-323 Position
+    **Status.** ratified
+    
+    **Position.** Three aggregation rulings that [§6.2][s6-2] and [§13.7][s13-7] state are fixed here.
+    
+    - The framework has no aggregation mechanism. It has no multi-connection
+=== #215 decisions.md:14422 §13.7 D-323 Spec  [D-323 cited in new §13.7: True; old: True]
+    **Spec.** [§6.2][s6-2], [§13.7][s13-7]
+=== #216 decisions.md:14551 §13.8 D-343 Position
+    **Status.** ratified
+    
+    **Position.** Nine loop rulings that [§5.4][s5-4], [§5.5][s5-5], [§8.3][s8-3] and [§13.8][s13-8] state are fixed
+    here.
+    
+=== #217 decisions.md:14575 §13.8 D-343 Spec  [D-343 cited in new §13.8: True; old: True]
+    **Spec.** [§5.4][s5-4], [§5.5][s5-5], [§8.3][s8-3], [§13.8][s13-8]
+=== #218 decisions.md:14726 §13.7 D-348 Spec  [D-348 cited in new §13.7: True; old: True]
+    **Spec.** [§5.5][s5-5], [§13.7][s13-7], [§13.8][s13-8]
+=== #219 decisions.md:14726 §13.8 D-348 Spec  [D-348 cited in new §13.8: True; old: True]
+    **Spec.** [§5.5][s5-5], [§13.7][s13-7], [§13.8][s13-8]
+=== #220 decisions.md:14728 §13.7 D-348 Rationale
+    **Spec.** [§5.5][s5-5], [§13.7][s13-7], [§13.8][s13-8]
+    
+    **Rationale.** [§5.5][s5-5] and [§13.7][s13-7] each stated the caveat citing only the other,
+    and [D-312][d-312] settles the delay's spelling, not its semantics. The caveat is the
+    delay's tier semantics. A discrete leaf's cells hold zero-order between
+=== #221 decisions.md:14744 §13.8 D-349 Position
+    **Status.** ratified
+    
+    **Position.** Three tracing rulings that [§13.8][s13-8] states are fixed here.
+    
+    - The tracer has two modes. The global set-tracer is a `Real` subtype
+=== #222 decisions.md:14761 §13.8 D-349 Spec  [D-349 cited in new §13.8: True; old: True]
+    **Spec.** [§13.8][s13-8]
+=== #223 decisions.md:14764 §13.8 D-349 Rationale
+    
+    **Rationale.** [D-012][d-012]'s Position names the two modes and nothing of their
+    semantics, and [D-245][d-245]'s Rejected list leans on "the sampled miss [§13.8][s13-8]
+    documents". A reader weighing a dead hop relies on these properties, which
+    is why the diagnostic records the source of each member's map ([D-245][d-245]).
+=== #224 decisions.md:15430 §13.7 D-383 Spec  [D-383 cited in new §13.7: False; old: False]
+    **Spec.** [§13.7][s13-7]
+=== #225 decisions.md:15514 §13.7 D-384 Spec  [D-384 cited in new §13.7: False; old: False]
+    **Spec.** [§8.6][s8-6], [§13.7][s13-7]
+=== #226 decisions.md:15556 §13.7 D-385 Spec  [D-385 cited in new §13.7: False; old: False]
+    **Spec.** [§13.7][s13-7]
+=== #227 decisions.md:15691 §13.5 D-390 Position
+      boundary time covers the duration, mutually exclusive with `frames`.
+    - An inspection accessor returning the immutable snapshot is not the public
+      closure-evaluation API whose cost [§13.5][s13-5] rejects.
+    
+    **Spec.** [§12.6][s12-6]
+=== #228 extensions.md:78 §13.7  
+       root — also worked out in [`sample_time_proposal.md`](companions/sample_time_proposal.md).
+    4. **Continuous transport delay.** The engine reference supports delay blocks with
+       interpolated history; we have only the discrete `UnitDelay` ([§5.5][s5-5], [§13.7][s13-7]). A
+       continuous transport delay is a *library component* with a ring buffer in its
+       discrete state `s` —
+=== #229 extensions.md:334 §13.7  
+    documented construct-with-`Dual`s convention (the capability with no service
+    wrapper); parameter-path overlays in [§14.1][s14-1]'s condition system. Also unexamined:
+    which library structs get the parametric spelling in the [§13.7][s13-7] migration — whether
+    [§8.2][s8-2]'s mechanical parametrization of the walked class, whose FlightPhysics
+    payload list `companions/migration_outline.md` gives under "The parametrization
+=== #230 extensions.md:346 §13.7  
+    **Folded into the spec (2026-08-12, [D-184][d-184]).** `Group` is now normative: the
+    pattern, its sketch and the anonymous-functions framing live in [§8.5][s8-5],
+    and the component joins [§13.7][s13-7]'s starting inventory as its one
+    persona-admitted member. Nothing of the addendum's argument was lost in the
+    move; this heading remains so section 1.5's persona discussion keeps its
+=== #231 implementation.md:60 §13.7  
+    - Endpoint and face resolution, with the root's face invariants. The
+      resolvers return routes, the hops `(path, face)` from an endpoint down to
+      its terminal: one for a producer, one per consumer (§13.7).
+    - The flatten pass runs under one structure-step barrier (D-261):
+      - `StructureDraft` accumulates the per-component columns the `Structure` is
+=== #232 implementation.md:109 §13.7  
+    
+    Spec: §6.1, §7.1, §7.3, §8.1, §8.2, §8.5–§8.8, §9.1, §9.2, §9.7, §13.1, §13.3,
+    §13.7, §14.2, Appendix C, D-061, D-094, D-130, D-171, D-207–D-212, D-229,
+    D-231, D-236, D-246, D-247, D-248, D-251, D-253, D-261, D-263, D-265, D-289,
+    D-315.
+=== #233 implementation.md:171 §13.5  
+    includes it last.
+    
+    Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §8.5, §10.4, §13.5, §13.7, D-179, D-184, D-211, D-231, D-311, D-312, D-313, D-316, D-383, D-384, D-385.
+    
+    ### `src/build.jl`
+=== #234 implementation.md:171 §13.7  
+    includes it last.
+    
+    Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §8.5, §10.4, §13.5, §13.7, D-179, D-184, D-211, D-231, D-311, D-312, D-313, D-316, D-383, D-384, D-385.
+    
+    ### `src/build.jl`
+=== #235 implementation.md:200 §13.8  
+      - `_ports`, which concatenates a row into the products' order.
+    - At a stall, the SCC decomposition into one `AlgebraicCycle` per cluster
+      (§13.8, D-012).
+    - The layout, with the root-input meet (D-168, D-236), `IllegalPortType`'s
+      three layout arms (D-237) and its two stop-request arms (D-316), and the flat
+=== #236 implementation.md:225 §13.8  
+      - The event set takes the phase bodies' chunk size (D-289).
+    
+    Spec: §5.3, §5.5, §13.8, §6.1, §7.1, §7.3, §8.2, §9.1–§9.4, §9.7, §10.4, §13.2,
+    §13.5, D-012, D-051, D-166, D-179, D-208, D-210, D-229, D-235, D-236, D-237,
+    D-247, D-248, D-250, D-252, D-253, D-256, D-261, D-263, D-289, D-315, D-316.
+=== #237 implementation.md:226 §13.5  
+    
+    Spec: §5.3, §5.5, §13.8, §6.1, §7.1, §7.3, §8.2, §9.1–§9.4, §9.7, §10.4, §13.2,
+    §13.5, D-012, D-051, D-166, D-179, D-208, D-210, D-229, D-235, D-236, D-237,
+    D-247, D-248, D-250, D-252, D-253, D-256, D-261, D-263, D-289, D-315, D-316.
+    
+=== #238 implementation.md:337 §13.5  
+      - the copy off a live `Pacer` is control.jl's.
+    - `ResidueRecord`, one writer's share of the tail residue, which sim.jl's
+      sweep builds and the termination record holds (§13.5, D-203).
+    
+    Spec: §10.7, §11.1–§11.4, §11.8, §12.2, §12.4, §12.6, §13.2, §13.5, §14.4, D-023,
+=== #239 implementation.md:339 §13.5  
+      sweep builds and the termination record holds (§13.5, D-203).
+    
+    Spec: §10.7, §11.1–§11.4, §11.8, §12.2, §12.4, §12.6, §13.2, §13.5, §14.4, D-023,
+    D-027, D-038, D-137, D-203, D-250, D-255, D-269, D-316, D-317, D-406.
+    
+=== #240 implementation.md:365 §13.5  
+      new component type compiles none of them again (§9.7, D-289).
+    
+    Spec: §2.3, §5.2, §8.1, §8.2, §8.5–§8.7, §9.3, §9.7, §13.5, Appendix B, D-051,
+    D-179, D-185, D-195, D-211, D-246, D-248, D-263, D-289, D-316.
+    
+=== #241 implementation.md:435 §13.6  
+      sim.jl.
+    
+    Spec: §11.1, §11.3, §11.6, §11.7, §11.8, §12.1–§12.4, §13.6, D-233, D-244,
+    D-256, D-261, D-268, D-270, D-315.
+    
+=== #242 implementation.md:445 §13.5  
+      staging kinds (§11.4), the two budget degradations (§10.4, §10.6),
+      `DebtReanchor`, the pacer's forgiveness on the loop's own cell (§10.7),
+      `UnboundedRun`, the loop's own advisory (§13.5, D-255, D-316),
+      `ThreadBudget`, the run-top tightness warning on the loop's own cell
+      (§12.2, D-027), `DeviceCrash`, `DeviceJoinTimeout` (§12.4, D-203) and
+=== #243 implementation.md:481 §13.5  
+    - `CheckpointMismatch`'s store and clock arms, and `ArgumentInvalid`'s
+      `restore` arm.
+    - `StopRequestInvalid`, the refusal of an `ignore_stop_requests` path (§13.5,
+      D-316).
+    - `ArgumentInvalid`'s `:not_built` and `:claimed`, the `Simulation`
+=== #244 implementation.md:493 §13.5  
+    
+    Spec: §9.1, §9.2, §10.4, §10.6, §10.7, §11.4, §11.6, §11.8, §12.2, §12.4,
+    §12.6, §12.7, §13.1, §13.2, §13.4, §13.5, §14.4, §14.8, §14.9, §14.10,
+    Appendix C, D-027, D-058, D-059, D-157, D-187, D-203, D-214, D-215, D-222,
+    D-225, D-250, D-255, D-256,
+=== #245 implementation.md:524 §13.5  
+    - The execution cursor, which every entry stores into. The cursor holds its
+      dispatch fields alone, and whether a frame was abandoned is `frame!`'s
+      `Bool` return (§13.5, D-261, D-317).
+    
+    Spec: §5.3, §9.5, §9.7, §10.4–§10.6, §13.4, §13.5, §14.5, D-059, D-205, D-235,
+=== #246 implementation.md:526 §13.5  
+      `Bool` return (§13.5, D-261, D-317).
+    
+    Spec: §5.3, §9.5, §9.7, §10.4–§10.6, §13.4, §13.5, §14.5, D-059, D-205, D-235,
+    D-249, D-255, D-261, D-289, D-317.
+    
+=== #247 implementation.md:540 §13.5  
+    - The cursor's drain/arrival/validation/trial phases.
+    - `settled!` at every `t*` boundary and at the frame top. A `true` abandons
+      the frame's remainder and is `frame!`'s return (§13.5, D-261, D-317).
+    - The grid arithmetic `frame!` steps by, `_grid_time` and `_frames_to`, is
+      model.jl's.
+=== #248 implementation.md:544 §13.5  
+      model.jl's.
+    
+    Spec: §10.2, §10.4, §11.8, §12.4, §13.4, §13.5, D-018, D-059, D-133, D-255,
+    D-260, D-261, D-317, D-318.
+    
+=== #249 implementation.md:568 §13.5  
+    - The checked state write `flatten_state!` (D-235).
+    
+    Spec: §4.1, §4.3, §4.4, §6.1, §7.1, §7.2, §8.2, §9.5, §13.4, §13.5, D-166,
+    D-235, D-236, D-237, D-238, D-243, D-263, D-264, D-265, D-276, D-316.
+    
+=== #250 implementation.md:634 §13.5  
+      `Outputs`' port list.
+    - The frame's hooks `FrameHooks`, with `frame_top!` and `settled!`, and the
+      no-op `NoHooks` (§11.2, §13.5, D-317).
+    - The grid (§10.4): `_grid_time`, frame top `k` from the index and `t₀`,
+      never accumulated, and the arithmetic over `t`, `t₀` and `h`,
+=== #251 implementation.md:675 §13.5  
+    
+    Spec: §9.2, §9.5, §10.2, §10.4, §10.6, §11.2, §11.8, §12.4, §12.6, §13.2,
+    §13.4, §13.5, §14.5, §14.8, D-059, D-157, D-213, D-221, D-223, D-248, D-250,
+    D-254, D-260, D-274, D-317, D-318, D-319, D-320.
+    
+=== #252 implementation.md:769 §13.7  
+    - The `Structure`'s `input routes:` and `output routes:` blocks after the
+      anchors, one line per route of a root face, its hops joined with ` → `
+      (§13.7), derived through `face_routes` over the root's level row (D-315).
+      A side with no root face prints no block.
+    - The `Schedule`'s hyperperiod chart, over `lcm(Dᵢ)` base ticks, with its
+=== #253 implementation.md:779 §13.7  
+      count-only past it.
+    
+    Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315.
+    
+    ### `src/sim.jl`
+=== #254 implementation.md:783 §13.5  
+    ### `src/sim.jl`
+    
+    - §13.5's block: the four termination sources `EndTimeReached`,
+      `ModelRequestedStop`, `ControlRequestedStop` and `LoopError`, `StopPolicy`
+      and `TerminationRecord` (D-203, D-255). `ModelRequestedStop` carries the
+=== #255 implementation.md:831 §13.5  
+        `DeviceJoinTimeout` by name (D-198, D-268);
+      - the sweep `_sweep_tail!` after the tail, which builds the
+        `ResidueRecord`s, dataplane.jl's (§13.5, D-203), and folds the model's
+        diagnostic cell into the loop's account beside the loop's own cell
+        (§11.8, D-317).
+=== #256 implementation.md:846 §13.5  
+    - The loop's `LoopHooks`, one per advance, per `init!` and per restore: the
+      drain at the top, and publication then the stop sample at every settled
+      boundary (§11.2, §13.5, D-317). `FrameHooks` and `NoHooks` are model.jl's.
+      The claim's gate has its `LoopHooks` method here, a no-op, so the
+      simulation's doors pass (D-318).
+=== #257 implementation.md:875 §13.6  
+      (D-318).
+    
+    Spec: §10.2–§10.7, §11.1–§11.5, §11.8, §12.1–§12.7, §13.4–§13.6,
+    §14, §14.5, §14.6, §14.8, §14.10, D-027, D-101, D-198, D-203, D-218, D-219,
+    D-223, D-232, D-233, D-250, D-253, D-254, D-255, D-256, D-260, D-261,
+=== #258 implementation.md:906 §13.5  
+      - the constructor takes `t₀` and converts it into `t`.
+    
+    Spec: §9.5, §9.7, §13.5, D-162, D-235, D-237, D-260, D-316, D-317.
+    
+    ### `src/trace.jl`
+=== #259 implementation.md:933 §13.8  
+    ### `src/tracer.jl`
+    
+    - `Tracer{S}`, §13.8's set-propagation scalar. It is global on `true` and local
+      on `false`, and `Undecidable` is the marker between them.
+    - The leaf-wise lift and tag walks `_lift`, `_tag` and `_sample`.
+=== #260 implementation.md:940 §13.8  
+      seed.
+    
+    Spec: §5.4, §13.8, §9.3, D-012, D-140, D-245.
+    
+    ### `src/trim.jl`
+=== #261 implementation.md:974 §13.5  
+    - `Pendulum`.
+    - `tick_alarmed`, the tick-detected stop request over `TickAlarm` (§10.5,
+      §13.5, D-316).
+    - The `ForgottenImport` module and the forgotten-import fixtures `Inventory`,
+      `Update`, `Events`, `Rates` and `Reason`, which import nothing, and
+=== #262 implementation.md:1137 §13.8  
+    - a fail-fast throw is `DiagnosticError{K}`, read with `diagnostic`, never
+      `diagnostics`;
+    - **a discrete member traces structurally (§13.8).** A cycle through a
+      discrete stage-2 block is `AlgebraicCycle` `:real` with an empty `dead`,
+      never `:artificial`. A store counter reads `N + 1` after `N` steps, since
+=== #263 pending.md:196 §13.7  
+    - **The library's remaining candidates.** Whatever of the inventory in
+      `docs/design/companions/library_inventory.md` is unbuilt, each block
+      built when wanted (§13.7, D-313).
+    
+    ## Deviations
+=== #264 companions/examples_inventory.md:4 §13.7  
+    
+    *A companion record, not normative text. The ground truth is `spec.md`
+    [§13.7][s13-7] (the library, whose packaging question the examples share), [§8.1][s8-1] (the
+    extension-only surface) and [§9.7][s9-7] (the precompile workload), with decisions
+    [D-226][d-226] and [D-313][d-313]. If this document and the spec ever disagree, the spec wins.
+=== #265 companions/examples_inventory.md:197 §13.5  
+       inspector's diagram and the README's second picture.
+    6. Fly a descent to touchdown: a localized gear-contact guard and a stop
+       request ([§13.5][s13-5]), the termination record and its reason.
+    7. Replay from the recorded trace, bit-identical.
+    8. Bind a device to the open-loop aircraft's elevator and run paced.
+=== #266 companions/frame_walkthrough.md:44 §13.5  
+    `roster` is the run's copy of the roster, bound once at `run!` ([§11.3][s11-3]),
+    `ignore_mask` the advance's stop policy compiled into a mask of ignored requesters
+    ([§13.5][s13-5]), and `pacer` the run's pacer ([§10.7][s10-7]), all threaded
+    through the loop as arguments. Three things happen in order. `drain!`
+    applies the device writes, `frame!`
+=== #267 companions/frame_walkthrough.md:214 §13.5  
+    `publish!` then captures a snapshot, appends it to the log, and bumps the wait
+    counter ([§12.3][s12-3], [D-230][d-230]). The `t*` snapshot is a published consistency point
+    like any other, and `_stop_hit` scans the stop requests on it ([§13.5][s13-5]). If none
+    holds, the localization count increments and the loop turns again.
+    
+=== #268 companions/frame_walkthrough.md:269 §13.5  
+    ordinal and a capture of the store, then releases it and wakes device waiters
+    ([§11.2][s11-2]). `_stop_hit` scans the stop requests on that snapshot. If an honoured one
+    holds, the loop returns `ModelRequestedStop(path, port, reason)` ([§13.5][s13-5]). Otherwise the loop
+    proceeds to the next frame top, and the cursor's trail restarts: `:drain`,
+    `:integrate`, `:arrival`, `:validation`, `:trial`, `:project`, `:round`,
+=== #269 companions/handle_walk_walkthrough.md:5 §13.7  
+    *A companion explainer, not normative text. The ground truth is `spec.md`
+    [§4.4][s4-4] (field handles), [§6.1][s6-1] (the two wire clauses), [§8.2][s8-2] (the `Pinned`
+    marker and the handle shape rule), [§9.5][s9-5] (the embedding guarantee), [§13.7][s13-7]
+    (the `Freeze` block) and [§14.10][s14-10] (the local rule), with decisions [D-237][d-237],
+    [D-263][d-263], [D-264][d-264], [D-265][d-265] and [D-266][d-266]. If this document and the spec ever disagree,
+=== #270 companions/handle_walk_walkthrough.md:180 §13.7  
+    framework ([§9.5][s9-5]). The framework does not do the discard at the wire, on
+    purpose, because dropping partials is a modelling decision the design wants
+    on the page. The `Freeze` block ([§13.7][s13-7]) is that page:
+    
+    ```julia
+=== #271 companions/library_inventory.md:4 §13.7  
+    
+    *A companion record, not normative text. The ground truth is `spec.md`
+    [§13.7][s13-7] (the library and the rig), [§6.2][s6-2] (junctions), [§5.5][s5-5] (loop breaking)
+    and [§2.3][s2-3] (events), with decisions [D-311][d-311], [D-312][d-312] and [D-313][d-313]. If this
+    document and the spec ever disagree, the spec wins. It was written on
+=== #272 companions/library_inventory.md:21 §13.7  
+    costs a build entry, a cell, a gather and a scatter, plus the
+    per-component compile cost [§9.7][s9-7] measures. Shipping those blocks would also
+    teach the diagram-granularity style the design rejects. [§13.7][s13-7]'s phrase is
+    "Simulink's library is a language, while this is a toolbox".
+    
+=== #273 companions/library_inventory.md:29 §13.5  
+      the inspector.
+    - Terminator is unnecessary, because only inputs must be wired.
+    - Stop Simulation is a stop request, any `StopFlag` port ([§13.5][s13-5]).
+      `StopRequest` below spells one and holds no privilege.
+    - Goto/From are forbidden by the hierarchy rules ([§6.1][s6-1]).
+=== #274 companions/library_inventory.md:42 §13.7  
+    
+    A block joins the inventory by judgement against three guidelines
+    ([§13.7][s13-7], [D-313][d-313]). None is a requirement. A candidate is
+    weighed against them, it need not satisfy all three, and a block that
+    plainly belongs is not argued into them.
+=== #275 companions/library_inventory.md:112 §13.5  
+    | `Group` | shipped | the on-the-fly assembly ([§8.5][s8-5], [D-184][d-184]) |
+    | `Pack{V, N}`, a junction alias at a named fold, and `Unpack{V, N}` between scalar ports and an `SVector{N, V}` port | shipped | wires name whole ports |
+    | `StopRequest`, reason as instance data | shipped | a `Bool` in, a `StopFlag` out, consumed by nobody; the request is the port's type, so any component may publish one, and `stop_reason` names it in the termination record ([§13.5][s13-5], [D-316][d-316]) |
+    | An unbundling component, a `y_direct` leaf taking a struct-valued bundle port | candidate | publishes the bundle's fields as loose ports, for a consumer wanting less than the bundle, since wiring is port-granular ([§4.3][s4-3], [D-276][d-276]) |
+    | `Switch{V}` selecting between two inputs on a `Bool` | shipped | the `Bool` a junction's one `In` cannot type; the jump lands where the selector flips, so the event is the selector's producer's |
+=== #276 companions/limited_integrator_variants.md:5 §13.7  
+    *A companion record, not normative text. The ground truth is `spec.md`
+    [§2.3][s2-3] (events and edge semantics), [§10.4][s10-4] (detection policy, the gate form
+    and localization), [§10.6][s10-6] (priors and quiescence) and [§13.7][s13-7] (the library),
+    with decisions [D-179][d-179] and [D-313][d-313]. If this document and the spec ever
+    disagree, the spec wins. It was written on 2026-10-07, when the block's
+=== #277 companions/limited_integrator_variants.md:262 §13.5  
+    would break the events the design is built around, the ones in which a
+    quantity reaches a level: the touchdown archetype and the stop requests of
+    [§13.5][s13-5], a `Step` at `t_step = t₀`, a relay fed exactly its threshold, and
+    every state initialized exactly on a level, which fires at boundary zero
+    today and never would. It would also make the sign form `q - upper` and the
+=== #278 companions/linear_blocks.md:4 §13.7  
+    
+    *A companion record, not normative text. The ground truth is `spec.md`
+    [§13.7][s13-7] (the library), [§5.3][s5-3] and [§5.4][s5-4] (feedthrough and artificial loops),
+    [§7.2][s7-2] (numeric genericity) and [§14.10][s14-10] (linearization), with decisions
+    [D-226][d-226], [D-263][d-263] and [D-313][d-313]. If this document and the spec ever disagree, the
+=== #279 companions/longitudinal_aircraft.md:8 §13.5  
+    linearization and its modes, the closed loop the tutorial builds and the
+    descent it flies. The framework mechanisms it leans on are `spec.md` [§14.7][s14-7]
+    and [§14.8][s14-8] (trim), [§14.10][s14-10] (linearization), [§13.5][s13-5] (termination) and [§13.7][s13-7]
+    (the library), and the controllers' design is `pid_anti_windup.md` and
+    `lqr_tracker.md`. Written on 2026-10-18 from the prototype that fixed the
+=== #280 companions/longitudinal_aircraft.md:8 §13.7  
+    linearization and its modes, the closed loop the tutorial builds and the
+    descent it flies. The framework mechanisms it leans on are `spec.md` [§14.7][s14-7]
+    and [§14.8][s14-8] (trim), [§14.10][s14-10] (linearization), [§13.5][s13-5] (termination) and [§13.7][s13-7]
+    (the library), and the controllers' design is `pid_anti_windup.md` and
+    `lqr_tracker.md`. Written on 2026-10-18 from the prototype that fixed the
+=== #281 companions/longitudinal_aircraft.md:164 §13.7  
+    
+    The tutorial's fifth layer closes the loop with library blocks alone
+    ([§13.7][s13-7]). Everything discrete runs at 50 Hz under a plant step of 5 ms.
+    
+    **The actuators.** Each control passes through a discrete `RateLimiter` and
+=== #282 companions/longitudinal_aircraft.md:301 §13.5  
+    sets the mode `contact`. The leaf publishes the mode as a `Bool`, a
+    `StopRequest` turns it into a stop request, and the run ends at that
+    boundary ([§13.5][s13-5]). The termination record names the requester's path and
+    port and the reason `"touchdown"`, and the final state has `h = 0` to
+    within the localization tolerance rather than one step below it, which is
+=== #283 companions/lqr_tracker.md:4 §13.7  
+    
+    *A companion record, not normative text. The ground truth is `spec.md`
+    [§13.7][s13-7] (the library), [§5.3][s5-3] and [§5.4][s5-4] (feedthrough and artificial loops), [§7.3][s7-3]
+    (the discrete store), [§14.8][s14-8] (trim) and [§14.10][s14-10] (linearization), with decisions
+    [D-313][d-313] and [D-383][d-383]. If this document and the spec ever disagree, the spec wins.
+=== #284 companions/migration_outline.md:20 §13.7  
+    | The contributor survey feeding the aggregation chains | mechanical to extract from today's trait implementations | [§6.2][s6-2] | — |
+    | Comparison criteria against FlightCore's demonstrated strengths | three strengths to compare against: zero-alloc stepping, flexibility, interactive operation | [§9.7][s9-7] | — |
+    | The component library's starting inventory | — | [§13.7][s13-7] | — |
+    | The conventional exported aircraft surface for generic periphery consumers | pose and velocity faces with wrapper types, the periphery-facing half of the `KinData` successor | [§11.2][s11-2] | — |
+    | The supervisor seam | three respellings — gain ports and schedulers, mode-transition latches, the gear's reset — the last of which lands on the *library* side | [§5.3][s5-3] | [D-089][d-089], [D-139][d-139] and [D-141][d-141] |
+=== #285 companions/migration_outline.md:80 §13.7  
+    worked instance ([Appendix A][sA]).
+    
+    Falling-edge consumers wire a NOT gate (the Bool gates, [§13.7][s13-7]).
+    Level-pinning and reset-to-an-external-value, which is tracking, are different
+    blocks rather than options on this one ([D-141][d-141]).
+=== #286 companions/pid_anti_windup.md:4 §13.7  
+    
+    *A companion record, not normative text. The ground truth is `spec.md`
+    [§13.7][s13-7] (the library), [§5.3][s5-3] and [§5.4][s5-4] (feedthrough and artificial loops), [§2.3][s2-3]
+    and [§10.4][s10-4] (events and localization) and [§7.3][s7-3] (modes), with decisions [D-179][d-179],
+    [D-231][d-231] and [D-313][d-313]. If this document and the spec ever disagree, the spec
+=== #287 companions/pid_anti_windup.md:83 §13.7  
+    itself a `LimitedIntegrator` at the actuator's limits. Windup disappears
+    structurally and gain changes are bumpless, at the price of needing `ë` for
+    a D term. It is the common industrial discrete form, and [§13.7][s13-7] names
+    `UnitDelay` as the shape of its previous-saturation port, so it belongs to
+    the discrete tier.
+=== #288 companions/pid_anti_windup.md:361 §13.8  
+    tracking input wired from a memoryless clamp of the own `u` holds for the
+    same reason. The limits stay inside. One difference in the diagnostic: a
+    discrete member traces structurally ([§13.8][s13-8]), its pinned declarations
+    admitting no tracer scalar, so the cycle is classified `:real` with no dead
+    hop, where the continuous block's is `:artificial` with the hop named. The
+=== #289 companions/pid_anti_windup.md:427 §13.7  
+    scalar sketch of sections 7 and 9. The spec names neither the PID's shape
+    nor its parameters, so the design lives here and in the inventory
+    ([§13.7][s13-7], [D-313][d-313]).
+    
+    **Widening, not forking.** The library's vector blocks are one struct each
+=== #290 companions/pid_anti_windup.md:490 §13.8  
+    closes an artificial cycle on the continuous tier, as `v` does, and a real
+    one on the discrete tier, where a member traces structurally (section 9,
+    [§13.8][s13-8]). One read from a state is fine. Under a `Dual` activation a
+    scheduled gain carries partials, so a linearization sees the coupling
+    through the schedule. A model that wants the gain frozen at its
+=== #291 companions/sample_time_proposal.md:516 §13.8  
+    … ms, sees gnss data aged alternately 13 ms and 33 ms (writes at 7, 47, …) — not an
+    artifact but the honest schedule of a multi-rate system, and *fully determined at
+    build* from the `(D, Φ)` table. That determinism suggests a diagnostic: the [§13.8][s13-8]
+    feedthrough tracer could print per-wire data ages ("this connection delivers data
+    aged 13–33 ms"), turning the staleness question from a debugging session into a

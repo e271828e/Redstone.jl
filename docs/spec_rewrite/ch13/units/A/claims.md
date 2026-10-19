@@ -21,11 +21,11 @@ ruling: R1
 note: "This section" becomes "This chapter"; "once it happens" is the Part IV roadmap's (old 9902–9904); "what the framework offers around it" is R1's dictated clause.
 
 old: It covers the reporting policy, the diagnostic representation, the runtime failure story, the seam between "the model reached a terminal state" and "the run should end", the tooling and component library that follow, and the diagnosis of a rejected cycle.
-new: §13.1 covers the reporting policy; §13.2 the diagnostic representation; §13.3 the build primitives, `resolve` and the face-list accessors; §13.4 the runtime failure story; §13.5 the distinction between "the model reached a terminal state" and "the run should end"; §13.6 abnormal shutdown, one tail with two entries; §13.7 the tooling and component library that follow; and §13.8 the diagnosis of a rejected cycle.
+new: §13.1 covers the reporting policy; §13.2 the diagnostic representation; §13.3 the build primitives and how path resolution is scoped by client; §13.4 how a runtime failure is caught, carried and reproduced; §13.5 the distinction between "the model reached a terminal state" and "the run should end"; §13.6 abnormal shutdown, one tail with two entries; §13.7 the tooling and component library that follow; and §13.8 the diagnosis of a rejected cycle.
 tag: R
 ruling: R1
 newcites: §13.1 §13.2 §13.3 §13.4 §13.5 §13.6 §13.7 §13.8
-note: roadmap sentence naming §13.1–§13.8 in order. §13.3 and §13.6 take their subjects from their titles ("Build primitives: `resolve` and the face-list accessors"; "Abnormal shutdown: one tail, two entries"). "the seam between" becomes "the distinction between": seam is reserved for a narrow, named interface.
+note: roadmap sentence naming §13.1–§13.8 in order. §13.6 takes its subject from its title ("Abnormal shutdown: one tail, two entries"). Step 5 (P1-1): §13.3's subject is its main one, client-scoped resolution, and §13.4's "the runtime failure story" is named by its parts. "the seam between" becomes "the distinction between": seam is reserved for a narrow, named interface.
 
 old: Two lessons FlightCore paid for ground it.
 new: Two lessons FlightCore paid for ground this chapter.
@@ -108,16 +108,16 @@ ruling: R6
 note: F5. "the build's first step, declaration reading only" is carried by "the build's first three steps" and "reads the declaration bodies"; §9's table says "declaration bodies only".
 
 old: The other two are the stage-1 probes and the probe chain of the nominal evaluation (§9.1).
-new: The nominal evaluation runs every user function once, through the stage-1 probes (the build's single evaluations of a user function with real values) and the probe chain.
+new: The nominal evaluation runs every user function once, through the stage-1 probes (the build's single evaluations of a user function) and the probe chain.
 tag: R
 ruling: R6
 newcites: §9.1
 note: F5; §9.1 sits two sentences up in the same item.
 
-added: (the build's single evaluations of a user function with real values)
+added: (the build's single evaluations of a user function)
 # the glossary's probe entry: "the build's single evaluation of a user function with real values".
 
-added: The activation at `T` runs the continuous tier's functions.
+added: The activation at the scalar type `T` runs the continuous tier's functions.
 # F5's dictated wording (R6), from §9's step table.
 
 old: When user code throws, there is no meaningful rest of the collection to report.
@@ -186,7 +186,10 @@ old: A structural failure leaves the subtree behind it unknown.
 tag: F
 
 old: An unreadable or mixed class or a malformed container is such a failure.
+new: An unreadable or mixed class (a component's primitive-vs-assembly status) or a malformed container is such a failure.
 tag: F
+
+added: (a component's primitive-vs-assembly status)
 
 old: No pass can read past it, so it throws alone.
 tag: F
@@ -273,10 +276,12 @@ ruling: R3
 note: the bold on the link goes.
 
 old: For each kind it records the kind name, the payload fields, the owning section, the severity, where the kind is raised and under which policy.
-new: For each kind it records the kind name, the payload fields, the owning section, the severity, where the kind is raised and under which policy (D-214).
+new: For each kind it records the kind name, the payload fields (the structured data a diagnostic carries beside its kind), the owning section, the severity, where the kind is raised and under which policy (D-214).
 tag: C
 newcites: D-214
 note: D-214 Position splits the column into severity, raised and policy.
+
+added: (the structured data a diagnostic carries beside its kind)
 
 old: That index is the artifact the §8.4 acceptance tests and the error-message work are written against.
 new: That index is the reference the §8.4 walkthroughs, run as acceptance tests, and the error-message work are written against.
@@ -304,6 +309,8 @@ old: Each kind carries its own structured payload.
 tag: F
 
 old: The payload holds endpoint paths, face names, expected and observed types, and the list-in-hand a did-you-mean needs (the offending name plus the list it should have matched).
+new: The payload holds endpoint paths, face names, expected and observed types, and the list-in-hand a did-you-mean needs. A did-you-mean is the offending name plus the list-in-hand it should have matched.
+note: step 5 (P1-5): the gloss becomes its own sentence in the glossary's words, so it follows did-you-mean.
 tag: F
 
 old: A kind is a Julia type.
@@ -332,10 +339,12 @@ old: Those two fields describe the occurrence, not the kind.
 tag: F
 
 old: `BundleFieldError`, for example, is raised at the probe and as a `StepError` species thereafter.
-new: `BundleFieldError`, for example, is raised at the probe and as a `StepError` species (a `StepError` whose `cause` is a diagnostic) thereafter.
+new: `BundleFieldError`, for example, is raised at the probe and, at runtime, as a species of the runtime carrier `StepError` (§13.4).
+newcites: §13.4
+note: step 5 (P1-6): "thereafter" is the runtime, and `StepError` is introduced as the runtime carrier with its home.
 tag: F
 
-added: (a `StepError` whose `cause` is a diagnostic)
+added: A species is a `StepError` whose `cause` is a diagnostic.
 # the glossary's species entry: "a `StepError` whose `cause` is a diagnostic".
 
 old: Checking passes return diagnostics.
@@ -345,9 +354,11 @@ old: The step barrier (each of the build's three steps throws before the next be
 tag: F
 
 old: A fail-fast site throws the same carrier holding one diagnostic.
-new: A fail-fast site throws the same carrier exception holding one diagnostic.
+new: A fail-fast site throws the same carrier exception (the single exception diagnostics travel in when thrown) holding one diagnostic.
 tag: F
 note: "carrier exception" takes the section's #g-carrier-exception link, unlinked before (survey part F).
+
+added: (the single exception diagnostics travel in when thrown)
 
 old: The carrier's type parameter spells the policy.
 new: The carrier's type parameter spells the policy (D-222).
@@ -407,7 +418,7 @@ newcites: D-058
 note: M2, up to directly after the carrier block. D-058 Position, "paths and names as strings", and bullet 3, "The didactic style is policy".
 
 old: Strings, never instances.
-new: The first is strings, never instances.
+new: The first rule is strings, never instances.
 tag: M
 note: M2; the bold lead-in becomes a plain topic sentence (R3). "strings, never instances" verbatim.
 
@@ -430,7 +441,7 @@ tag: M
 note: M2.
 
 old: The didactic style is policy.
-new: The second is that the didactic style is policy.
+new: The second rule is that the didactic style is policy.
 tag: M
 note: M2; the bold lead-in becomes a plain topic sentence (R3). D-058 bullet 3 is a ruling of its own, but R5 bolds only D-058's closed set here.
 
@@ -621,6 +632,7 @@ newcites: D-254
 note: D-254 bullet 3, "`GridUtilization`, the last as a deployment warning under D-250". The gloss is row 60's, carried with the Deployment link.
 
 old: The unconnected-output warning stays rejected (§6.1, D-084), so the collected-warning slot stays open and empty.
+new: The unconnected-output warning stays rejected (§6.1, D-084), so the collected-warning category stays open and empty.
 tag: F
 note: D-084 plain (bold at §6.1).
 
@@ -656,7 +668,7 @@ added: (the list of attached device entries)
 # the glossary's roster entry: "the list of attached device entries".
 
 old: so `EmptyGreedyClaim` lands in the roster entry's cell (§11.6).
-new: `EmptyGreedyClaim` therefore lands in the roster entry's diagnostic cell (the single-writer cell each writer owns for diagnostics and heartbeat) (§11.6, D-250).
+new: `EmptyGreedyClaim` therefore lands in the roster entry's diagnostic cell (the per-writer cell for runtime diagnostics and liveness) (§11.6, D-250).
 tag: M
 newcites: §11.6 D-250
 note: M3; the diagnostic-cell link and its gloss move here from the runtime paragraph. D-250 bullet 5, "`EmptyGreedyClaim` moves … to the roster entry's diagnostic cell, since `attach!` mutates the roster"; repeated since M3 moves the paragraph away from the criterion's citation.
@@ -668,6 +680,7 @@ ruling: R3
 note: the bold lead-in goes plain; D-250's Position is bold at the criterion.
 
 old: The stream is per-occurrence.
+new: These warnings form a per-occurrence stream.
 tag: F
 
 old: The per-writer diagnostic cells (the single-writer cell each writer owns for diagnostics and heartbeat) carry it (§11.8).
@@ -677,6 +690,7 @@ newcites: §11.8 D-136
 note: the gloss and link moved up with M3. D-136 Position, "one per-writer diagnostic cell"; plain (bold at §11.8).
 
 old: The rate limit lives in the cells, as a structural bound rather than a policy layered over the stream.
+new: The rate limit lives in the diagnostic cells, as a structural bound rather than a policy layered over the stream.
 tag: F
 
 old: The bound is a bounded ring plus per-kind suppressed counts, drained at frame top.
@@ -686,10 +700,13 @@ old: So "rate-limited wherever its source can repeat" holds of every kind below 
 tag: F
 
 old: The stream surfaces through the published framework status (§11.2).
+new: The stream surfaces through the published framework status (the frozen value each snapshot carries beside the signal table) (§11.2).
 tag: F
 
+added: (the frozen value each snapshot carries beside the signal table)
+
 old: The §10.7 pacer diagnostics and the §12.2 liveness heartbeats ride in the same cells and surface beside it.
-new: The liveness heartbeat (§12.2) rides in the same cells, and the pacer's record (§10.7) sits beside the writers' records in the status.
+new: The liveness heartbeat (§12.2) rides in the same diagnostic cells, and the pacer's record (§10.7) sits beside the writers' records in the status.
 tag: R
 ruling: R6
 note: F9; the duplicate diagnostic-cell link goes (F29).
@@ -707,13 +724,15 @@ old: The committed runtime warnings, in one place, are these.
 tag: F
 
 old: Chattering, or localization-budget exhaustion (§10.4).
-new: `ChatteringBudget`, chattering, or localization-budget exhaustion (§10.4).
+new: `ChatteringBudget`, for chattering or localization-budget exhaustion (§10.4).
 tag: R
 ruling: R8
 
 old: A localized event's bracketing budget runs out at a boundary.
-new: A localized event's bracketing budget runs out at a boundary (a published consistency point).
+new: A localized event's crossing instant is bracketed by root-finding. The event's bracketing budget runs out at a boundary (a published consistency point).
 tag: F
+
+added: A localized event's crossing instant is bracketed by root-finding.
 
 added: (a published consistency point)
 # the glossary's boundary entry: "a published consistency point".
@@ -741,7 +760,10 @@ ruling: R8
 note: bare "entry" is reserved; these are batch entries (§11.3 "a batch entry outside the surface"). One line for the three kinds, which share the staging clause, each kind with its own section (R24).
 
 old: The drain checks nothing.
+new: The drain (the frame-top swap that applies staged writes) checks nothing.
 tag: F
+
+added: (the frame-top swap that applies staged writes)
 
 old: `OutOfClaimEntry` is an enumerated surface's binding drift, a name with no position in the attach-compiled schema.
 new: `OutOfClaimEntry` (§11.3) is an enumerated surface's binding drift, a name with no position in the attach-compiled schema.
@@ -761,19 +783,23 @@ old: The stopped-sim attach also fires it when it renormalizes a pending batch.
 tag: F
 
 old: `EntryTypeMismatch` is a value unconvertible to its root input's declared type, rejected at staging for every writer.
-new: `EntryTypeMismatch` (§11.4) is a value unconvertible to its root input's declared type, rejected at staging for every writer.
+new: `EntryTypeMismatch` (§11.4) is a value unconvertible to the declared type of its root input (the root component's own input face), rejected at staging for every writer.
 tag: R
 ruling: R24
 newcites: §11.4
 note: Appendix C's section for the kind.
 
+added: (the root component's own input face)
+
 old: A tolerated device-side datum failure (§11.6, §13.4).
-new: `MalformedDatum`, a tolerated device-side datum failure (§11.6, §13.4).
+new: `MalformedDatum`, a tolerated datum failure on the side of a device (any attached participant in the periphery) (§11.6, §13.4).
 tag: R
 ruling: R8
 
+added: (any attached participant in the periphery)
+
 old: `MalformedDatum` is emitted by the author's loop via `report!(handle, …)` into the device's own cell (§11.8).
-new: It is emitted by the author's loop via `report!(handle, …)` into the device's own cell (§11.8, D-105).
+new: It is emitted by the author's loop via `report!(handle, …)` into the device's own diagnostic cell (§11.8, D-105).
 tag: C
 newcites: §11.8 D-105
 note: D-105 Position, "tolerated in the loop body (catch, stage nothing, `report(handle, MalformedDatum(cause))`, continue)"; plain (bold at §11.6).
@@ -784,15 +810,19 @@ tag: R
 ruling: R10
 
 old: Staging discarded during replay (§12.7).
-new: `ReplayDiscardedStaging`, staging discarded during replay (§12.7).
+new: `ReplayDiscardedStaging`, staging discarded during replay (the ordinary loop re-driven from a recorded trace) (§12.7).
 tag: R
 ruling: R8
 
+added: (the ordinary loop re-driven from a recorded trace)
+
 old: `ReplayDiscardedStaging` reports a live batch found staged while the trace feeds the drain.
-new: It reports a live batch found staged while the trace feeds the drain.
+new: It reports a live batch found staged while the trace (the primary record of a session) feeds the drain.
 tag: R
 ruling: R8
 note: the name moved to the line's head.
+
+added: (the primary record of a session)
 
 old: Thread-budget tightness (§12.2).
 new: `ThreadBudget`, thread-budget tightness (§12.2, D-401).
@@ -817,7 +847,10 @@ old: It arises after the terminal snapshot.
 tag: F
 
 old: It is therefore collected into the termination record and presented through the logging backend, never carried into a status (D-201, D-203).
+new: It is therefore collected into the termination record (the stopped-sim value naming how the run ended) and presented through the logging backend, never carried into a status (D-201, D-203).
 tag: F
+
+added: (the stopped-sim value naming how the run ended)
 
 old: Device crash (§12.4, §13.4).
 new: `DeviceCrash`, a device crash (§12.4, §13.4).
@@ -834,11 +867,13 @@ ruling: R6
 note: F10.
 
 old: and the sim continues with the device absent.
-new: and the run goes on without the device unless its attachment set `should_abort` (§11.6).
+new: and the run goes on without the device unless its attachment set `should_abort` (the per-attachment failure policy, an `attach!` keyword) (§11.6).
 tag: R
 ruling: R6
 newcites: §11.6
 note: F10; the path in one clause, pointing to §11.6 (R4).
+
+added: (the per-attachment failure policy, an `attach!` keyword)
 
 old: Unbounded run (§13.5).
 new: `UnboundedRun`, an unbounded run (§13.5).
@@ -858,7 +893,7 @@ tag: M
 note: R4; §13.5's "The advisory fires in `:live` only" carries "raises nothing".
 
 old: `UnboundedRun` lands in the loop's own cell, because `run!` mutates state (D-255).
-new: It lands in the loop's own cell, because `run!` mutates state (D-255).
+new: It lands in the loop's own diagnostic cell, because `run!` mutates state (D-255).
 tag: R
 ruling: R8
 note: kept as the warning criterion's case; the name moved to the line's head. D-255 cited only for the cell clause, which stands.

@@ -4,12 +4,12 @@ old: ### 13.7 Tooling consequences: face routes and the component library
 tag: X
 
 old: Termination chains are the second structural customer of computed interface connections, after generic-holding contracts.
-new: Generic-holding contracts (the `u_types` and `y_types` declarations) are a structural customer of computed interface connections
+new: Generic-holding contracts (each a component's declared interface) are a structural customer of computed interface connections
 tag: R
 ruling: R6
 note: F58. The cut clause is "Termination chains are the second structural customer", stale since D-316 (a stop request is read where it is, with no re-export). Generic-holding contracts stay the customer, now the only one named.
 
-added: (the `u_types` and `y_types` declarations)
+added: (each a component's declared interface)
 # contract's first-use gloss, from the glossary entry: "`u_types` states its requirements ... `y_types` states its public ports".
 
 old: Computed connections are therefore prominent in this section.
@@ -19,7 +19,7 @@ ruling: R6
 note: F58, the dictated relative clause.
 
 old: Two commitments follow, a library and an idiom.
-new: D-062 makes three tooling commitments for them, namely the passthrough helpers' predicate, the routes `show(::Structure)` prints for each root face (the name a port wears on its component's boundary), and a standard library of components, the units of modeling.
+new: D-062 makes three tooling commitments for them, namely the passthrough helpers' predicate, the routes `show(::Structure)` prints for each root face (the name a port wears on its component's boundary), and a standard library of components (the units of modeling, each a leaf or an assembly of components).
 tag: R
 ruling: R6
 newcites: D-062
@@ -28,7 +28,7 @@ note: F58 and F67, the dictated sentence; "namely" replaces the colon, and "the 
 added: (the name a port wears on its component's boundary)
 # face's first-use gloss, the glossary's own words; face's first use moved here from the bold sentence.
 
-added: , the units of modeling
+added: (the units of modeling, each a leaf or an assembly of components)
 # component's first-use gloss; component's first use moved into the opening.
 
 added: The section covers the predicate and the face routes first, then the standard component library and the component test rig.
@@ -263,21 +263,25 @@ old: `SumJunction{V, N}` is the `Junction` at `+`.
 old: A custom fold, such as a weighted blend or a mass-properties composition, is written at the site as `Junction{In, Out, N}(f)`, which infers `F`.
 
 old: The junction is a continuous leaf, so its contracts are written at nominal `Float64` and the leaf walk retypes them (§8.2).
-new: The junction is a continuous leaf, so its contracts are written at nominal `Float64` and the leaf walk retypes them (§8.2, D-263).
+new: The junction is a continuous leaf, so its contract is written at nominal `Float64` and the leaf walk (the framework's derivation of per-activation types from a declared nominal type) retypes it (§8.2, D-263).
 tag: C
 newcites: §8.2 D-263
-note: D-263's Position: "Every contract declaration ... is written at nominal `Float64`, and is retyped by the framework"; bullet 1, "the leaf walk ... is applied to the declared types".
+note: D-263's Position: "Every contract declaration ... is written at nominal `Float64`, and is retyped by the framework"; bullet 1, "the leaf walk ... is applied to the declared types". Step 5 P2-20 and P2-24: *contract* singular for one component; the leaf walk linked with the glossary's gloss.
+
+added: (the framework's derivation of per-activation types from a declared nominal type)
 
 old: An input entry at `Wrench{Float64}` is the tolerant form a promoting consumer writes.
 
 old: Walking, frozen and root-input contributors are all admissible behind it.
 
 old: A named site-specific junction documents a fixed contributor set better than generated slots, at the price of hard-coding it into a type (D-037).
+new: A named site-specific junction documents a fixed contributor set better than generated input ports, at the price of hard-coding it into a type (D-037).
+note: step 5 P2-20: "slots" is the log's old word.
 
 old: An example is `u_types(::VehicleWrenchSum) = (aero = …, ldg = …, pwp = …)`
 note: the names get their introduction by pointing to §6.2's example (verifier fix).
 
-added: , whose entries name the aerodynamics, landing-gear and powerplant children of the `Systems` assembly (§6.2).
+added: , whose input entries name the aerodynamics, landing-gear and powerplant children of the `Systems` assembly (§6.2).
 
 old: The generic positional form remains the tool for configuration-variable sites.
 
@@ -321,7 +325,8 @@ added: (the instants at which a discrete component's stages and update run)
 # tick's first-use gloss, from the glossary entry.
 
 old: No tier-neutral class is needed.
-note: "class" in the leaf-category sense, unlinked (R12).
+new: No tier-neutral variant is needed.
+note: step 5 P2-20: *class* is reserved for primitive versus assembly.
 
 old: `UnitDelay{V}` is a discrete leaf at `K = 1`.
 tag: R
@@ -348,20 +353,22 @@ old: The store is isbits by rule (D-231), which bounds `V`.
 old: `UnitDelay`'s tier semantics are the point, and they must be stated wherever the remedy is recommended (D-348).
 
 old: Inserting a `UnitDelay` into a continuous loop moves that signal onto the discrete tier and inserts a `Δt_base`-scale ZOH into the model's mathematics.
-new: Inserting a `UnitDelay` into a continuous loop moves that signal onto the discrete tier and inserts a `Δt_base`-scale zero-order hold into the model's mathematics.
+new: Inserting a `UnitDelay` into a continuous loop moves that signal onto the discrete tier and inserts a `Δt_base`-scale zero-order hold into the model's mathematics, `Δt_base` being the base tick period.
 tag: R
 ruling: R10
-note: "ZOH" spelled out, D-348's own words ("a `Δt_base`-scale zero-order hold").
+note: "ZOH" spelled out, D-348's own words ("a `Δt_base`-scale zero-order hold"). Step 5 P2-24 links `Δt_base` with the glossary's gloss.
+
+added: , `Δt_base` being the base tick period.
 
 old: That is a modeling decision, because the delayed signal is genuinely sampled rather than a transparent wire.
 
 old: The cycle diagnostic (§13.8) therefore says so rather than offering the remedy as free.
 
 old: `Constant{V}` is the source block. It has no inputs, no state, and a stage-1 body returning the value the instance holds.
-new: `Constant{V}` is the source block (D-143). It has no inputs, no state, and a stage-1 body returning the value the instance holds.
+new: `Constant{V}` has no inputs, no state, and a stage-1 body returning the value the instance holds (D-143).
 tag: C
 newcites: D-143
-note: the bold term "source block" goes plain (R3). D-143's Position: "no inputs, no state ... the value itself held by the instance, and a stage-1 body returning it".
+note: step 5 P2-18: "is the source block" was a verbatim repeat of the inventory paragraph's sentence, which keeps it. The bold term "source block" goes plain (R3). D-143's Position: "no inputs, no state ... the value itself held by the instance, and a stage-1 body returning it".
 
 old: `# Constant{V} — a stateless continuous leaf; its value is instance data struct Constant{V} <: AbstractComponent value::V end x_init(::Constant) = (;) # the empty store declares the tier (§8.2) y_types(::Constant{V}) where {V} = (out = Pinned{V},) y_state(c::Constant, _) = (out = c.value,) # the value the instance holds`
 note: the Constant sketch, verbatim.
@@ -418,14 +425,14 @@ new: A configuration wanting an externally settable source uses a root input (§
 tag: M
 note: M61. The two sentences join so F61's added sentence cannot become "That"'s antecedent. Its root input link moved to the first use in the select paragraph.
 
-added: A handle that references bulk data never surfaces as a root input (D-237); a rig holds bulk data through a constant source instead (§14.9, D-364).
+added: A handle that references bulk data never surfaces as a root input (D-237); a rig holds such a handle through a constant source (a `Constant` holding it) instead (§14.9, D-364).
 # R27's wording of F61 as R30 narrows its first clause, after the root-input sentence.
 
 old: `Freeze{V}` is the declared stop-gradient. It feeds a walking producer into a pinned entry, which the walk clause (§6.1) otherwise refuses.
-new: `Freeze{V}` is the declared stop-gradient (D-266). It feeds a walking producer into a pinned entry, which the walk clause (§6.1) otherwise refuses.
+new: `Freeze{V}` feeds a walking producer into a pinned entry, which the walk clause (§6.1) otherwise refuses (D-266).
 tag: C
 newcites: D-266 §6.1
-note: the bold term goes plain (R3). D-266 bullet 2: "A walking producer feeds a pinned entry through the `Freeze{V}` library block".
+note: step 5 P2-18: "is the declared stop-gradient" was a verbatim repeat of the inventory paragraph's sentence, which keeps it; D-266 stays with the feeding claim. The bold term goes plain (R3). D-266 bullet 2: "A walking producer feeds a pinned entry through the `Freeze{V}` library block".
 
 old: `# Freeze{V} — a stateless continuous leaf; tolerant in, pinned out struct Freeze{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: AbstractComponent end x_init(::Freeze) = (;) u_types(::Freeze{V}) where {V} = (in = V,) y_types(::Freeze{V}) where {V} = (out = Pinned{V},) y_direct(::Freeze, (; u)) = (out = ForwardDiff.value.(u.in),) # leafwise strip, by broadcast`
 note: the Freeze sketch, verbatim.
@@ -435,9 +442,11 @@ old: At nominal the strip is the identity, so the block costs one gather and one
 old: `V` is a `Real` or a `StaticArray` of them, constrained at the type (D-312), so a struct-valued freeze is refused at the spelling until a model needs one.
 
 old: Under a `Dual` activation it drops the partials, and its output satisfies the pinned entry.
+new: Under a `Dual` activation the block drops the partials, and its output satisfies the pinned entry.
+note: step 5 P2-19: the nearest noun was "a model".
 
 old: What the wire then declares is a zero coupling in every Jacobian along that path, the modelling decision §14.10 asks an author to state on the page rather than bury mid-expression.
-new: What the wire then declares is a zero coupling in every Jacobian along that path (D-266), the modelling decision §14.10 asks an author to state on the page rather than bury mid-expression.
+new: What the wire then declares is a zero coupling in every Jacobian along that path (D-266), the modeling decision §14.10 asks an author to state on the page rather than bury mid-expression.
 tag: C
 newcites: D-266 §14.10
 note: D-266 bullet 2: "the wire then declares a zero coupling in every Jacobian along that path".
@@ -462,7 +471,10 @@ old: Any component may be the root of a build, and its input faces then become t
 note: its face link goes (doubled; first use in the opening).
 
 old: Ordinary conditions and devices feed them, and every output is observable in the snapshot table.
-new: Ordinary conditions and devices (attached participants in the periphery) feed them, and every output is observable in the table of each snapshot, the immutable per-boundary publication.
+new: Ordinary conditions (path-addressed sparse overlays that set a build's state) feed them. So do devices (attached participants in the periphery). Every output is observable in the table of each snapshot, the immutable per-boundary publication.
+note: step 5 P2-24 links conditions; R23 splits so each gloss has its sentence.
+
+added: (path-addressed sparse overlays that set a build's state)
 
 added: (attached participants in the periphery)
 # device's first-use gloss, from the glossary entry.
@@ -477,13 +489,13 @@ old: What it buys is a place to wire something beside the component under test.
 old: The demonstrated need is the root-input rule (§8.2).
 
 old: An abstract input entry (`terrain = AbstractTerrainField`, §8.2) cannot surface as a root input, because abstract-at-root is a build error.
-new: An abstract input entry (`terrain = AbstractTerrainField`, an illustrative name) cannot surface as a root input, because abstract-at-root is a build error, `AbstractAtRoot` (§8.2, Appendix C).
+new: An abstract entry (an `u_types` entry admitting any concrete producer face), such as the illustrative `terrain = AbstractTerrainField`, cannot surface as a root input, because abstract-at-root is a build error, `AbstractAtRoot` (§8.2, Appendix C).
 tag: R
 ruling: R6
 newcites: §8.2 Appendix C
 note: F62 and R14 name the kind; R10 marks `AbstractTerrainField` illustrative. §8.2 leaves the example's parentheses and cites the rule.
 
-added: , an illustrative name
+added: , such as the illustrative
 
 old: The rig therefore satisfies that entry inside the rig.
 new: The rig therefore satisfies that entry inside the rig (D-120).
@@ -529,6 +541,8 @@ tag: R
 ruling: R28
 
 old: An abstract entry (an `u_types` entry admitting any concrete producer face) declares that a substitute must be chosen.
+new: An abstract entry declares that a substitute must be chosen.
+note: step 5 P2-24: the link and its gloss move to the first use, the root-input rule paragraph.
 
 old: The rig chooses its test double explicitly, as ordinary inspectable code.
 
@@ -549,7 +563,7 @@ old: ### 13.8 Cycle diagnosis: feedthrough tracing
 tag: X
 
 old: The build rejects an algebraic loop (§5.5), and tracing is diagnostic only, never relied on for correctness (D-012).
-new: The build rejects an algebraic loop (§5.5, D-005), and tracing is diagnostic only, never relied on for correctness (D-012).
+new: The build rejects an algebraic loop (a genuine cycle in the instantaneous dependency graph) (§5.5, D-005), and tracing is diagnostic only, never relied on for correctness (D-012).
 tag: C
 newcites: §5.5 D-005 D-012
 note: D-005's Position: "Reject algebraic loops at build".
@@ -637,6 +651,10 @@ old: Stage-2 functions also receive state views, but neither those nor the stage
 old: Stage-1 functions are never traced, since there is nothing to seed.
 
 old: Derivatives, guards (the declared functions defining each event's predicate), handlers and projections are outside tracing's jurisdiction entirely.
+new: Derivatives, guards (the declared functions defining each event's predicate), handlers and projections (the optional per-component hook `x ← x_projection(x)`) are outside tracing's jurisdiction entirely.
+note: step 5 P2-24: projections glossed in the glossary's words.
+
+added: (the optional per-component hook `x ← x_projection(x)`)
 
 old: A known tracer blind spot is documented.
 
@@ -647,8 +665,12 @@ old: Linear and cubic interpolation are immune, because dependence flows through
 old: Dual-cleanliness in CI effectively guarantees traceability (D-349).
 
 old: Dual-clean means passing the `T = Dual` sweep of §7.2.
+new: Dual-clean means passing the `T = Dual` sweep of §7.2, `Dual` being ForwardDiff's dual number.
+note: step 5 P2-29: the gloss moves to the first prose use of `Dual` it can reach.
 
 old: The guarantee holds because both modes ride the same `T <: Real` genericity as `Dual`, ForwardDiff's dual number.
+new: The guarantee holds because both modes ride the same `T <: Real` genericity as `Dual`.
+note: step 5 P2-29: "ForwardDiff's dual number" moved one sentence up.
 
 old: #### Classification
 tag: X

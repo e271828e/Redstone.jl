@@ -56,7 +56,7 @@
   {
    "id": "C-006",
    "old": "Detection is ordinary guard/handler/mode machinery.",
-   "new": "Detection is ordinary guard (the declared function that detects an event), handler and mode machinery (D-060).",
+   "new": "Detection is ordinary guard (the declared function defining an event's predicate), handler and mode machinery (D-060).",
    "where": "new",
    "cites": [],
    "newcites": [
@@ -68,7 +68,7 @@
   {
    "id": "C-007",
    "old": "If the stop should be localized, declare the predicate as a sign-form event.",
-   "new": "If the stop should be localized, declare the predicate (what a guard defines) as a sign-form event.",
+   "new": "If the stop should be localized, declare the predicate (a `Bool`-valued form, or the sign of a continuous function) as a sign-form event.",
    "where": "new",
    "cites": [],
    "tag": "F"
@@ -151,11 +151,12 @@
   {
    "id": "C-016",
    "old": "The condition is gathered at its owning boundary in one visible block.",
-   "new": "The stop's `Bool` is gathered at its owning boundary in one visible block.",
+   "new": "The stop's `Bool` is gathered at the boundary of the assembly that owns it, in one visible block.",
    "where": "new",
    "cites": [],
    "tag": "R",
-   "ruling": "R12"
+   "ruling": "R12",
+   "note": "step 5 P2-29: boundary here is the owning assembly's structural boundary, said in full."
   },
   {
    "id": "C-017",
@@ -430,7 +431,7 @@
   {
    "id": "C-043",
    "old": "A `t` hit reaches the loop as `frame!`'s return value, a `Bool` saying whether the frame was abandoned, never as a field of the policy or of the execution cursor (D-261, D-317).",
-   "new": "A `t` hit reaches the loop as `frame!`'s return value, a `Bool` saying whether the frame was abandoned, never as a field of the policy or of the execution cursor (the field recording where execution stands) (D-261, D-317).",
+   "new": "A `t` hit reaches the loop as the return value of the `Model`'s `frame!`, a `Bool` saying whether the frame was abandoned, never as a field of the policy or of the execution cursor (the field recording where execution stands) (D-261, D-317).",
    "where": "new",
    "cites": [
     "D-261",
@@ -641,7 +642,7 @@
   {
    "id": "C-063",
    "old": "Any component may publish a `StopFlag` port directly.",
-   "new": "Any component (a leaf or an assembly of components) may publish a `StopFlag` port directly.",
+   "new": "Any component (the unit of modeling, a leaf or an assembly of components) may publish a `StopFlag` port directly.",
    "where": "new",
    "cites": [],
    "tag": "M",
@@ -680,7 +681,7 @@
   {
    "id": "C-067",
    "old": "The loop raises `UnboundedRun` into its own diagnostic cell, and the status record carries it (§11.8, D-255, D-316).",
-   "new": "`run!` raises `UnboundedRun` before the loop starts, into the loop's own diagnostic cell (the per-writer cell for runtime diagnostics), and the status record carries it (§11.8, D-255, D-316).",
+   "new": "`run!` raises `UnboundedRun` before the loop starts, into the loop's own diagnostic cell (the per-writer cell for runtime diagnostics and liveness), and the status record carries it (§11.8, D-255, D-316).",
    "where": "new",
    "cites": [
     "D-255",
@@ -791,7 +792,7 @@
   {
    "id": "C-078",
    "old": "This is not the root-declared stop policy rejected below.",
-   "new": "root-type-declared stop policy, which the per-advance policy is not,",
+   "new": "The per-advance policy is not the root-type-declared one,",
    "where": "new",
    "cites": [],
    "tag": "R",
@@ -1087,7 +1088,7 @@
   {
    "id": "C-108",
    "old": "When two sources hold at one boundary, the recorded source is the first in that order (D-203).",
-   "new": "When two sources hold at one boundary, the recorded source is the first in that order (D-203).",
+   "new": "When two sources hold at one boundary, the termination record names the first in that order (D-203).",
    "where": "new",
    "cites": [
     "D-203"
@@ -1098,7 +1099,7 @@
   {
    "id": "C-109",
    "old": "The taught contract is this.",
-   "new": "Authors are taught this rule.",
+   "new": "Authors are taught that",
    "where": "new",
    "cites": [],
    "tag": "X",
@@ -1107,12 +1108,12 @@
   {
    "id": "C-110",
    "old": "Stop requests are sampled at completed boundaries; declare a sign-form event if you need the stop localized.",
-   "new": "Stop requests are sampled at completed boundaries; declare a sign-form event if you need the stop localized.",
+   "new": "stop requests are sampled at completed boundaries, and that a stop that must be localized needs a sign-form event.",
    "where": "new",
    "cites": [],
    "tag": "R",
    "ruling": "R5",
-   "note": "M54; row 565's bold goes plain (R5), the wording verbatim."
+   "note": "M54; row 565's bold goes plain (R5); step 5 P2-8 folds it into the taught sentence."
   },
   {
    "id": "C-111",
@@ -1201,12 +1202,12 @@
   {
    "id": "C-120",
    "old": "Today `robot2d` throws when it falls, because it has no other way to say \"my dynamics are no longer meaningful\".",
-   "new": "`robot2d` is FlightApps' self-balancing robot in Flight.jl, which throws `LostBalance`, a `SimulationTermination`, past 45° of tilt. It throws when it falls, because it has no other way to say \"my dynamics are no longer meaningful\".",
+   "new": "`robot2d`, FlightApps' self-balancing robot in Flight.jl, throws `LostBalance`, a `SimulationTermination`, past 45° of tilt, because it has no other way to say \"my dynamics are no longer meaningful\".",
    "where": "new",
    "cites": [],
    "tag": "R",
    "ruling": "R10",
-   "note": "R10's introducing clause; \"Today\" goes."
+   "note": "R10's introducing clause; \"Today\" goes. Step 5 P2-7 merges the two sentences; \"past 45° of tilt\" is the fall."
   },
   {
    "id": "C-121",
@@ -1267,7 +1268,7 @@
   {
    "id": "C-127",
    "old": "They are predicate closures (`stop_when = snap -> …`), root-type-declared stop policy, `terminal` event flags, a control-plane capability for components, and observation-by-path (an advance naming a deep path into any public output).",
-   "new": "predicate closures such as `stop_when = snap -> …`, root-type-declared stop policy, which the per-advance policy is not, `terminal` event flags, a control-plane capability for components, observation-by-path (an advance naming a deep path into any public output), and",
+   "new": "predicate closures such as `stop_when = snap -> …`, root-type-declared stop policy, `terminal` event flags, a control-plane capability for components, observation-by-path (an advance naming a deep path into any public output), and",
    "where": "new",
    "cites": [],
    "tag": "R",
@@ -1277,18 +1278,19 @@
   {
    "id": "C-128",
    "old": "The `Bool` face re-exported level by level to the root and named by the advance fell to stop requests (D-316).",
-   "new": "the `Bool` face re-exported level by level to the root and named by the advance, which fell to stop requests.",
+   "new": "the `Bool` face re-exported level by level to the root and named by the advance. The per-advance policy is not the root-type-declared one, and the re-exported face fell to stop requests.",
    "where": "new",
    "cites": [
     "D-316"
    ],
    "tag": "R",
-   "ruling": "R9"
+   "ruling": "R9",
+   "note": "step 5 P2-4 moves both relative clauses into a sentence of their own; this span runs through it."
   },
   {
    "id": "C-129",
    "old": "D-060 also rejected blessed terminal types scanned from the tree.",
-   "new": "D-060 also rejected blessed (explicitly sanctioned by the spec) terminal types scanned from the tree,",
+   "new": "D-060 also rejected blessed (explicitly sanctioned where a neighboring practice is forbidden) terminal types scanned from the tree,",
    "where": "new",
    "cites": [
     "D-060"
@@ -1339,12 +1341,13 @@
   {
    "id": "C-134",
    "old": "The observation-by-path line leaves doctrine behind it, narrowed by D-316.",
-   "new": "The observation-by-path line leaves doctrine behind it, narrowed by D-316.",
+   "new": "Rejecting observation-by-path separates inspection from the reads a run acts on, a line D-316 narrows.",
    "where": "new",
    "cites": [
     "D-316"
    ],
-   "tag": "F"
+   "tag": "F",
+   "note": "step 5 P2-6; the topic sentence names the doctrine the paragraph states."
   },
   {
    "id": "C-135",
@@ -1476,7 +1479,7 @@
   {
    "id": "C-148",
    "old": "The boundary is all-or-nothing outside the sim task.",
-   "new": "The boundary is all-or-nothing outside the loop (D-030).",
+   "new": "The abnormal path is safe because the boundary is all-or-nothing outside the loop (D-030).",
    "where": "new",
    "cites": [],
    "newcites": [
@@ -1509,7 +1512,7 @@
   {
    "id": "C-151",
    "old": "Integration intermediates live in framework-owned integrator buffers,",
-   "new": "Integration intermediates live in framework-owned integrator buffers.",
+   "new": "Integration intermediates live in framework-owned integrator buffers,",
    "where": "new",
    "cites": [],
    "tag": "M",
@@ -1518,7 +1521,7 @@
   {
    "id": "C-152",
    "old": "never in a component's workspace as §7.3 defines it.",
-   "new": "They never live in the scratch of a component (a leaf or an assembly of components). That scratch is its workspace (declared by allocation and excluded from state semantics), as §7.3 defines it.",
+   "new": "never in the scratch of a component (the unit of modeling, a leaf or an assembly of components). That scratch is its workspace (declared by allocation and excluded from state semantics), as §7.3 defines it.",
    "where": "new",
    "cites": [
     "§7.3"
@@ -1595,7 +1598,7 @@
   {
    "id": "C-160",
    "old": "Those waiters observe stopped rather than a new boundary, so no device task hangs.",
-   "new": "Those waiters observe stopped rather than a new boundary, so no task of a device (an attached participant in the periphery) hangs.",
+   "new": "Those waiters observe stopped rather than a new boundary, so no device (an attached participant in the periphery) is left with a hanging task.",
    "where": "new",
    "cites": [],
    "tag": "F",
@@ -1725,7 +1728,7 @@
   {
    "id": "C-174",
    "old": "The reproduction tool is trace replay, not resurrection.",
-   "new": "and the reproduction tool is trace replay (re-driving the ordinary loop from the session's recorded inputs), not resurrection (§12.6, D-059, D-387).",
+   "new": "and the reproduction tool is trace replay (the ordinary loop re-driven from a recorded trace), not resurrection (§12.6, D-059, D-387).",
    "where": "new",
    "cites": [],
    "newcites": [
@@ -1750,13 +1753,14 @@
   {
    "id": "C-176",
    "old": "The roster operations refuse it with them (§11.3, D-232).",
-   "new": "The roster operations refuse it with them (§11.3, D-232).",
+   "new": "Operations on the roster (the list of attached device entries) refuse it with them (§11.3, D-232).",
    "where": "new",
    "cites": [
     "D-232",
     "§11.3"
    ],
-   "tag": "F"
+   "tag": "F",
+   "note": "step 5 P2-13; the device roster linked and glossed, so it is not read as the requester roster."
   },
   {
    "id": "C-177",
@@ -1785,8 +1789,8 @@
  ],
  "added": [
   "This section specifies how a model ends its own run, how an advance chooses which stop requests to honour, and what the run records when it ends.",
-  "(the declared function that detects an event)",
-  "(what a guard defines)",
+  "(the declared function defining an event's predicate)",
+  "(a `Bool`-valued form, or the sign of a continuous function)",
   "A landing-gear strut's",
   "(a published consistency point)",
   "(the immutable per-boundary publication)",
@@ -1798,18 +1802,18 @@
   "(the field recording where execution stands)",
   "(the initialization boundary at `t₀`)",
   "A run that starts later ends where it started, advancing no frame.",
-  "(a leaf or an assembly of components)",
+  "(the unit of modeling, a leaf or an assembly of components)",
   "(Ctrl-C, read as a control-plane stop)",
-  "(the per-writer cell for runtime diagnostics)",
+  "(the per-writer cell for runtime diagnostics and liveness)",
   "(the trace's fixed preamble)",
   "(the stopped-sim value naming how the run ended)",
-  "`robot2d` is FlightApps' self-balancing robot in Flight.jl, which throws `LostBalance`, a `SimulationTermination`, past 45° of tilt.",
-  "(explicitly sanctioned by the spec)",
+  "FlightApps' self-balancing robot in Flight.jl, throws `LostBalance`, a `SimulationTermination`, past 45° of tilt,",
+  "(explicitly sanctioned where a neighboring practice is forbidden)",
   "(the ordinary loop re-driven from a recorded trace)",
   "§13.3 scopes path resolution by client, on a line of its own.",
   ", though attach resolves them strictly, as §13.3's service clients (D-406)",
   "(the separate atomic surface carrying pause, pace and stop)",
-  "The section covers, in order, detection and publication, placement and requesters, the policy per advance, the scan and the source order, unbounded runs, the termination record, ignored requests and post-terminal dynamics, and inspection beside the reads a run acts on.",
+  "The section covers, in order, detection and publication, placement and requesters, the policy per advance, the scan and the source order, unbounded runs, the termination record, ignored requests and post-terminal dynamics, and the rejected mechanisms beside the reads a run acts on.",
   "#### Detection and publication",
   "#### Placement and requesters",
   "#### The policy per advance",
@@ -1817,16 +1821,17 @@
   "#### Unbounded runs",
   "#### The termination record",
   "#### Ignored requests and post-terminal dynamics",
-  "#### Inspection and the reads a run acts on",
+  "#### Rejected mechanisms and the reads a run acts on",
   "A failure on the loop's side can arrive in the middle of a boundary (a published consistency point).",
   "The run must still end through the shutdown tail of §12.4, which starts from a final snapshot (the immutable per-boundary publication).",
   "This section gives the abnormal path, the reason it is safe, the two entries charted, the record it writes, tail hygiene, and what an errored simulation keeps and refuses.",
-  "The abnormal path rests on this.",
   "(passes through the execution order)",
-  "(a leaf or an assembly of components). That scratch is its",
+  "(the unit of modeling, a leaf or an assembly of components). That scratch is its",
   "(declared by allocation and excluded from state semantics)",
   "(an attached participant in the periphery)",
   "(the framework-owned homes of a component's `x`, `s` and `m`)",
-  "(re-driving the ordinary loop from the session's recorded inputs)"
+  "(the ordinary loop re-driven from a recorded trace)",
+  "A trace is a session's record of its drained inputs.",
+  "(the list of attached device entries)"
  ]
 }

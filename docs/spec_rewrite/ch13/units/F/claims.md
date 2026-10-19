@@ -28,18 +28,18 @@ new: It reaches the loop through declared machinery.
 tag: F
 
 old: Detection is ordinary guard/handler/mode machinery.
-new: Detection is ordinary guard (the declared function that detects an event), handler and mode machinery (D-060).
+new: Detection is ordinary guard (the declared function defining an event's predicate), handler and mode machinery (D-060).
 tag: C
 newcites: D-060
 note: row 504; bold list lead-in goes (R3); D-060 Position "detection by ordinary guard/handler machinery".
 
-added: (the declared function that detects an event)
+added: (the declared function defining an event's predicate)
 
 old: If the stop should be localized, declare the predicate as a sign-form event.
-new: If the stop should be localized, declare the predicate (what a guard defines) as a sign-form event.
+new: If the stop should be localized, declare the predicate (a `Bool`-valued form, or the sign of a continuous function) as a sign-form event.
 tag: F
 
-added: (what a guard defines)
+added: (a `Bool`-valued form, or the sign of a continuous function)
 
 old: Such an event is localized (the crossing instant bracketed by root-finding over trial sweeps).
 tag: F
@@ -85,7 +85,8 @@ note: cell linked at its first use (the old link sat late, at 10654).
 added: (typed entries of the signal table)
 
 old: The condition is gathered at its owning boundary in one visible block.
-new: The stop's `Bool` is gathered at its owning boundary in one visible block.
+new: The stop's `Bool` is gathered at the boundary of the assembly that owns it, in one visible block.
+note: step 5 P2-29: *boundary* here is the owning assembly's structural boundary, said in full.
 tag: R
 ruling: R12
 
@@ -220,7 +221,7 @@ tag: M
 note: R4 makes the lifetime §12.6's (frozen spec 9584–9586); the pointer sentence says §12.6 gives it.
 
 old: A `t` hit reaches the loop as `frame!`'s return value, a `Bool` saying whether the frame was abandoned, never as a field of the policy or of the execution cursor (D-261, D-317).
-new: A `t` hit reaches the loop as `frame!`'s return value, a `Bool` saying whether the frame was abandoned, never as a field of the policy or of the execution cursor (the field recording where execution stands) (D-261, D-317).
+new: A `t` hit reaches the loop as the return value of the `Model`'s `frame!`, a `Bool` saying whether the frame was abandoned, never as a field of the policy or of the execution cursor (the field recording where execution stands) (D-261, D-317).
 tag: F
 note: citation at the sentence end, covering the cursor clause (verifier's fix); D-261's cited clause stands, its type clause is D-317's.
 
@@ -316,11 +317,11 @@ tag: M
 note: M52.
 
 old: Any component may publish a `StopFlag` port directly.
-new: Any component (a leaf or an assembly of components) may publish a `StopFlag` port directly.
+new: Any component (the unit of modeling, a leaf or an assembly of components) may publish a `StopFlag` port directly.
 tag: M
 note: M52; component linked at its first use (the old links sat at 10622 and 10643).
 
-added: (a leaf or an assembly of components)
+added: (the unit of modeling, a leaf or an assembly of components)
 
 old: An unbounded run is allowed.
 new: An unbounded run is allowed (D-255).
@@ -338,12 +339,12 @@ old: The model may have no requester, or the advance may ignore them all.
 tag: F
 
 old: The loop raises `UnboundedRun` into its own diagnostic cell, and the status record carries it (§11.8, D-255, D-316).
-new: `run!` raises `UnboundedRun` before the loop starts, into the loop's own diagnostic cell (the per-writer cell for runtime diagnostics), and the status record carries it (§11.8, D-255, D-316).
+new: `run!` raises `UnboundedRun` before the loop starts, into the loop's own diagnostic cell (the per-writer cell for runtime diagnostics and liveness), and the status record carries it (§11.8, D-255, D-316).
 tag: R
 ruling: R6
 note: F67, row 543; `src/sim.jl` 1107–1108.
 
-added: (the per-writer cell for runtime diagnostics)
+added: (the per-writer cell for runtime diagnostics and liveness)
 
 old: Its message says which of the two cases holds.
 tag: F
@@ -397,7 +398,7 @@ note: termination record linked at its first use (the old link sat at 10577).
 added: (the stopped-sim value naming how the run ended)
 
 old: This is not the root-declared stop policy rejected below.
-new: root-type-declared stop policy, which the per-advance policy is not,
+new: The per-advance policy is not the root-type-declared one,
 tag: R
 ruling: R4
 note: R4 and R9 place it as a clause beside the rejected mechanisms.
@@ -525,18 +526,20 @@ tag: M
 note: M53.
 
 old: When two sources hold at one boundary, the recorded source is the first in that order (D-203).
+new: When two sources hold at one boundary, the termination record names the first in that order (D-203).
 tag: M
 note: M53.
 
 old: The taught contract is this.
-new: Authors are taught this rule.
+new: Authors are taught that
 tag: X
 note: M54. *contract* is reserved for a component's declared interface (brief_common), so the touched sentence is reworded.
 
 old: Stop requests are sampled at completed boundaries; declare a sign-form event if you need the stop localized.
+new: stop requests are sampled at completed boundaries, and that a stop that must be localized needs a sign-form event.
 tag: R
 ruling: R5
-note: M54; row 565's bold goes plain (R5), the wording verbatim.
+note: M54; row 565's bold goes plain (R5); step 5 P2-8 folds it into the taught sentence.
 
 old: Both shapes of the condition feeding a request work without framework latching.
 new: Both shapes of the stop's `Bool` feeding a request work without framework latching.
@@ -576,12 +579,12 @@ old: Post-terminal dynamics are the model's job, and that is a feature.
 tag: F
 
 old: Today `robot2d` throws when it falls, because it has no other way to say "my dynamics are no longer meaningful".
-new: `robot2d` is FlightApps' self-balancing robot in Flight.jl, which throws `LostBalance`, a `SimulationTermination`, past 45° of tilt. It throws when it falls, because it has no other way to say "my dynamics are no longer meaningful".
+new: `robot2d`, FlightApps' self-balancing robot in Flight.jl, throws `LostBalance`, a `SimulationTermination`, past 45° of tilt, because it has no other way to say "my dynamics are no longer meaningful".
 tag: R
 ruling: R10
-note: R10's introducing clause; "Today" goes.
+note: R10's introducing clause; "Today" goes. Step 5 P2-7 merges the two sentences; "past 45° of tilt" is the fall.
 
-added: `robot2d` is FlightApps' self-balancing robot in Flight.jl, which throws `LostBalance`, a `SimulationTermination`, past 45° of tilt.
+added: FlightApps' self-balancing robot in Flight.jl, throws `LostBalance`, a `SimulationTermination`, past 45° of tilt,
 
 old: Here it declares the fall as an event, switches to a frozen mode, and feeds `fallen` to a stop request.
 tag: F
@@ -607,23 +610,24 @@ tag: R
 ruling: R9
 
 old: They are predicate closures (`stop_when = snap -> …`), root-type-declared stop policy, `terminal` event flags, a control-plane capability for components, and observation-by-path (an advance naming a deep path into any public output).
-new: predicate closures such as `stop_when = snap -> …`, root-type-declared stop policy, which the per-advance policy is not, `terminal` event flags, a control-plane capability for components, observation-by-path (an advance naming a deep path into any public output), and
+new: predicate closures such as `stop_when = snap -> …`, root-type-declared stop policy, `terminal` event flags, a control-plane capability for components, observation-by-path (an advance naming a deep path into any public output), and
 tag: R
 ruling: R9
 note: one sentence names all seven; the `stop_when` example loses its parentheses so the sentence keeps one parenthetical, observation-by-path's gloss.
 
 old: The `Bool` face re-exported level by level to the root and named by the advance fell to stop requests (D-316).
-new: the `Bool` face re-exported level by level to the root and named by the advance, which fell to stop requests.
+new: the `Bool` face re-exported level by level to the root and named by the advance. The per-advance policy is not the root-type-declared one, and the re-exported face fell to stop requests.
+note: step 5 P2-4 moves both relative clauses into a sentence of their own; this span runs through it.
 tag: R
 ruling: R9
 
 old: D-060 also rejected blessed terminal types scanned from the tree.
-new: D-060 also rejected blessed (explicitly sanctioned by the spec) terminal types scanned from the tree,
+new: D-060 also rejected blessed (explicitly sanctioned where a neighboring practice is forbidden) terminal types scanned from the tree,
 tag: R
 ruling: R23
 note: R23 splits R9's sentence so the `#g-blessed` link keeps its gloss in a sentence of its own; D-060's attribution comes back with it.
 
-added: (explicitly sanctioned by the spec)
+added: (explicitly sanctioned where a neighboring practice is forbidden)
 
 old: The stop request supersedes that arm on its own terms.
 new: an arm the stop request supersedes on its own terms.
@@ -649,7 +653,9 @@ ruling: R9
 note: folded (R9); "the ignore list" (R12).
 
 old: The observation-by-path line leaves doctrine behind it, narrowed by D-316.
+new: Rejecting observation-by-path separates inspection from the reads a run acts on, a line D-316 narrows.
 tag: F
+note: step 5 P2-6; the topic sentence names the doctrine the paragraph states.
 
 old: Inspection is human-facing, has no effect on run semantics, and legitimately sees every public cell.
 tag: F
@@ -711,7 +717,7 @@ old: The sim-time, model-detected channel specified here meets it at §12.4 and 
 tag: M
 note: M51.
 
-added: The section covers, in order, detection and publication, placement and requesters, the policy per advance, the scan and the source order, unbounded runs, the termination record, ignored requests and post-terminal dynamics, and inspection beside the reads a run acts on.
+added: The section covers, in order, detection and publication, placement and requesters, the policy per advance, the scan and the source order, unbounded runs, the termination record, ignored requests and post-terminal dynamics, and the rejected mechanisms beside the reads a run acts on.
 
 added: #### Detection and publication
 
@@ -727,7 +733,7 @@ added: #### The termination record
 
 added: #### Ignored requests and post-terminal dynamics
 
-added: #### Inspection and the reads a run acts on
+added: #### Rejected mechanisms and the reads a run acts on
 
 old: ### 13.6 Abnormal shutdown: one tail, two entries
 tag: X
@@ -739,13 +745,11 @@ added: The run must still end through the shutdown tail of §12.4, which starts 
 added: This section gives the abnormal path, the reason it is safe, the two entries charted, the record it writes, tail hygiene, and what an errored simulation keeps and refuses.
 
 old: The boundary is all-or-nothing outside the sim task.
-new: The boundary is all-or-nothing outside the loop (D-030).
+new: The abnormal path is safe because the boundary is all-or-nothing outside the loop (D-030).
 tag: R
 ruling: R6
 newcites: D-030
 note: F55; M58 moves the reason paragraph after the ruling. The bold goes plain, as a reason after its rule; D-030 Rejected ("Mid-frame abort: torn final snapshot") carries it (Rationale-only rulings).
-
-added: The abnormal path rests on this.
 
 old: That is why a `StepError` cannot break §12.4.
 tag: M
@@ -759,17 +763,17 @@ note: M58.
 added: (passes through the execution order)
 
 old: Integration intermediates live in framework-owned integrator buffers,
-new: Integration intermediates live in framework-owned integrator buffers.
+new: Integration intermediates live in framework-owned integrator buffers,
 tag: M
 note: M58.
 
 old: never in a component's workspace as §7.3 defines it.
-new: They never live in the scratch of a component (a leaf or an assembly of components). That scratch is its workspace (declared by allocation and excluded from state semantics), as §7.3 defines it.
+new: never in the scratch of a component (the unit of modeling, a leaf or an assembly of components). That scratch is its workspace (declared by allocation and excluded from state semantics), as §7.3 defines it.
 tag: R
 ruling: R23
 note: M58; R23 links component at its first use beside workspace, one gloss per sentence. Both glosses from the glossary (`#g-component`, `#g-workspace`).
 
-added: (a leaf or an assembly of components). That scratch is its
+added: (the unit of modeling, a leaf or an assembly of components). That scratch is its
 
 added: (declared by allocation and excluded from state semantics)
 
@@ -804,7 +808,7 @@ ruling: R6
 note: F56; the colon list becomes its own sentence.
 
 old: Those waiters observe stopped rather than a new boundary, so no device task hangs.
-new: Those waiters observe stopped rather than a new boundary, so no task of a device (an attached participant in the periphery) hangs.
+new: Those waiters observe stopped rather than a new boundary, so no device (an attached participant in the periphery) is left with a hanging task.
 tag: F
 note: device linked at its new first use.
 
@@ -868,19 +872,25 @@ ruling: R6
 note: F57, "terminal, not resumable"; R4 and M59 make it a pointer to §12.6, cited in the same sentence.
 
 old: The reproduction tool is trace replay, not resurrection.
-new: and the reproduction tool is trace replay (re-driving the ordinary loop from the session's recorded inputs), not resurrection (§12.6, D-059, D-387).
+new: and the reproduction tool is trace replay (the ordinary loop re-driven from a recorded trace), not resurrection (§12.6, D-059, D-387).
 tag: R
 ruling: R4
 newcites: §12.6 D-059 D-387
 note: M59; §12.6 bolds `errored` terminal (D-059) and states the reproduction (D-387).
 
-added: (re-driving the ordinary loop from the session's recorded inputs)
+added: (the ordinary loop re-driven from a recorded trace)
+
+added: A trace is a session's record of its drained inputs.
 
 old: The stopped-sim services enforce that non-resumability by refusing an errored simulation outright (`ServiceLifecycle`, §14).
 tag: F
 
 old: The roster operations refuse it with them (§11.3, D-232).
+new: Operations on the roster (the list of attached device entries) refuse it with them (§11.3, D-232).
 tag: F
+note: step 5 P2-13; the device roster linked and glossed, so it is not read as the requester roster.
+
+added: (the list of attached device entries)
 
 old: Inspection is reading, but `attach!` configures a run that cannot follow.
 tag: F

@@ -1,14 +1,13 @@
 ### 13.7 Tooling consequences: face routes and the component library
 
-Generic-holding [contracts](#g-contract) (the `u_types` and `y_types`
-declarations) are a structural customer of computed interface connections,
-which are therefore prominent in this section. [D-062][d-062] makes three
-tooling commitments for them, namely the passthrough helpers' predicate, the
-routes `show(::Structure)` prints for each root [face](#g-face) (the name a
-port wears on its component's boundary), and a standard library of
-[components](#g-component), the units of modeling. The section covers the
-predicate and the face routes first, then the standard component library and
-the component test rig.
+Generic-holding [contracts](#g-contract) (each a component's declared interface) are a
+structural customer of computed interface connections, which are therefore
+prominent in this section. [D-062][d-062] makes three tooling commitments for them,
+namely the passthrough helpers' predicate, the routes `show(::Structure)` prints
+for each root [face](#g-face) (the name a port wears on its component's boundary), and a
+standard library of [components](#g-component) (the units of modeling, each a leaf or an
+assembly of components). The section covers the predicate and the face routes
+first, then the standard component library and the component test rig.
 
 The passthrough helpers take a predicate. `select` is the third
 selector beside `except` and `only`, on `input_passthrough` and
@@ -21,18 +20,17 @@ promoting an unconnected input automatically to a
 [root input](#g-root-input), one of the root component's own input faces
 ([D-322][d-322]).
 
-Every artifact renders itself through `show` ([§9.2][s9-2], [D-257][d-257]).
-[`Structure`](#g-structure) (the structure step's product, the components,
-wires, faces and tiers) has one. **`show(::Structure)` owes face routes** ([D-257][d-257]). For every root face,
-that means the resolved chain down to the producing terminal, printed as one
-line per chain (`crashed → aircraft/crashed → aircraft/monitor/out`). Once
-faces are computed rather than hand-listed, "what does this face actually
-reach" is a question the artifact must answer, not the reader.
-`show(::Structure)` derives each face's routing chain from the declared wires
-and prints the root's routes ([D-257][d-257], [D-315][d-315]). Each line joins
-the hops with `→` and ends at the terminal. An input face that fans out prints
-one line per consumer. The wiring diagnostics name endpoints in the same slash
-form.
+Every artifact renders itself through `show` ([§9.2][s9-2], [D-257][d-257]). [`Structure`](#g-structure) (the
+structure step's product, the components, wires, faces and tiers) has one.
+**`show(::Structure)` owes face routes** ([D-257][d-257]). For every root face, that means
+the resolved chain down to the producing terminal, printed as one line per chain
+(`crashed → aircraft/crashed → aircraft/monitor/out`). Once faces are computed
+rather than hand-listed, "what does this face actually reach" is a question the
+artifact must answer, not the reader. `show(::Structure)` derives each face's
+routing chain from the declared wires and prints the root's routes ([D-257][d-257],
+[D-315][d-315]). Each line joins the hops with `→` and ends at the terminal. An input
+face that fans out prints one line per consumer. The wiring diagnostics name
+endpoints in the same slash form.
 
 #### The standard component library
 
@@ -113,19 +111,19 @@ parametrized by its scalar type as a walked type of [§7.2][s7-2].
 weighted blend or a mass-properties composition, is written at the site as
 `Junction{In, Out, N}(f)`, which infers `F`.
 
-The junction is a continuous leaf, so its contracts are written at nominal
-`Float64` and the leaf walk retypes them ([§8.2][s8-2], [D-263][d-263]). An
-input entry at `Wrench{Float64}` is the tolerant form a promoting consumer
-writes. Walking, frozen and root-input contributors are all admissible behind
-it.
+The junction is a continuous leaf, so its contract is written at nominal
+`Float64` and the [leaf walk](#g-leaf-walk) (the framework's derivation of per-activation types
+from a declared nominal type) retypes it ([§8.2][s8-2], [D-263][d-263]). An input entry at
+`Wrench{Float64}` is the tolerant form a promoting consumer writes. Walking,
+frozen and root-input contributors are all admissible behind it.
 
 A named site-specific junction documents a fixed contributor set better than
-generated slots, at the price of hard-coding it into a type ([D-037][d-037]).
-An example is `u_types(::VehicleWrenchSum) = (aero = …, ldg = …, pwp = …)`,
-whose entries name the aerodynamics, landing-gear and powerplant children of
-the `Systems` assembly ([§6.2][s6-2]).
-The generic positional form remains the tool for configuration-variable
-sites. Both are plain components, and the framework is not involved.
+generated input ports, at the price of hard-coding it into a type ([D-037][d-037]). An
+example is `u_types(::VehicleWrenchSum) = (aero = …, ldg = …, pwp = …)`, whose
+input entries name the aerodynamics, landing-gear and powerplant children of the
+`Systems` assembly ([§6.2][s6-2]). The generic positional form remains the tool for
+configuration-variable sites. Both are plain components, and the framework is
+not involved.
 
 **Wrench, mass properties and internal angular momentum each get their own
 junction, never one bundled contribution struct** ([D-037][d-037],
@@ -139,13 +137,12 @@ its total in one call. **Such a helper is
 admits but does not build), added when real models show the pattern repeated
 ([D-037][d-037]).
 
-[Tier](#g-tier)-transparency falls out of settled semantics ([D-062][d-062]),
-a tier being the continuous or discrete side of the hybrid formalism. A
-stateless continuous `y_direct` recomputes every [sweep](#g-sweep) (one pass
-through the execution order). Fed discrete signals held by a zero-order hold,
-its output therefore changes only at [ticks](#g-tick) (the instants at which
-a discrete component's stages and update run). No tier-neutral class is
-needed.
+[Tier](#g-tier)-transparency falls out of settled semantics ([D-062][d-062]), a tier being the
+continuous or discrete side of the hybrid formalism. A stateless continuous
+`y_direct` recomputes every [sweep](#g-sweep) (one pass through the execution order). Fed
+discrete signals held by a zero-order hold, its output therefore changes only at
+[ticks](#g-tick) (the instants at which a discrete component's stages and update run). No
+tier-neutral variant is needed.
 
 `UnitDelay{V}` is a discrete leaf at `K = 1`. It is the tier's native
 `z⁻¹` ([§10.6][s10-6]), the shape an anti-windup chain's previous-saturation
@@ -168,16 +165,16 @@ s_update(::UnitDelay, (; u)) = (v = u.in,)    # stores the incoming one
 `UnitDelay(v0)` needs no `zero` method on `V`. The store is isbits by rule
 ([D-231][d-231]), which bounds `V`.
 
-`UnitDelay`'s tier semantics are the point, and they must be stated wherever
-the remedy is recommended ([D-348][d-348]). Inserting a `UnitDelay` into a
-*continuous* loop moves that signal onto the discrete tier and inserts a
-`Δt_base`-scale zero-order hold into the model's mathematics. That is a
-modeling decision, because the delayed signal is genuinely sampled rather
-than a transparent wire. The cycle diagnostic ([§13.8][s13-8]) therefore says
-so rather than offering the remedy as free.
+`UnitDelay`'s tier semantics are the point, and they must be stated wherever the
+remedy is recommended ([D-348][d-348]). Inserting a `UnitDelay` into a *continuous* loop
+moves that signal onto the discrete tier and inserts a [`Δt_base`](#g-dt_base)-scale
+zero-order hold into the model's mathematics, `Δt_base` being the base tick
+period. That is a modeling decision, because the delayed signal is genuinely
+sampled rather than a transparent wire. The cycle diagnostic ([§13.8][s13-8]) therefore
+says so rather than offering the remedy as free.
 
-`Constant{V}` is the source block ([D-143][d-143]). It has no inputs, no
-state, and a stage-1 body returning the value the instance holds.
+`Constant{V}` has no inputs, no state, and a stage-1 body returning the value
+the instance holds ([D-143][d-143]).
 
 ```julia
 # Constant{V} — a stateless continuous leaf; its value is instance data
@@ -202,20 +199,18 @@ The same holds for every library block whose output depends on neither its
 continuous state nor a walking input, such as a step source or a relay, and
 each declares its `out` pinned ([D-312][d-312]).
 
-Two uses need `Constant` ([D-143][d-143]), though a listed block needs none
-to be built ([D-313][d-313]). The zero-contributor configurations ([§6.2][s6-2]) are one.
-There, a required aggregate input has no physical contributor, and the zero
-total must be spelled as a wire. The rig stub below is the other. The block's
-value is instance data, like junction arity, not an overridable default
-([D-143][d-143]). A configuration wanting an externally settable source uses
-a root input ([§11.3][s11-3]), which keeps the block from drifting into a
-back-door input default. A handle that references bulk data never surfaces as
-a root input ([D-237][d-237]); a rig holds bulk data through a constant source instead
-([§14.9][s14-9], [D-364][d-364]).
+Two uses need `Constant` ([D-143][d-143]), though a listed block needs none to be built
+([D-313][d-313]). The zero-contributor configurations ([§6.2][s6-2]) are one. There, a required
+aggregate input has no physical contributor, and the zero total must be spelled
+as a wire. The rig stub below is the other. The block's value is instance data,
+like junction arity, not an overridable default ([D-143][d-143]). A configuration wanting
+an externally settable source uses a root input ([§11.3][s11-3]), which keeps the block
+from drifting into a back-door input default. A handle that references bulk data
+never surfaces as a root input ([D-237][d-237]); a rig holds such a handle through a
+[constant source](#g-constant-source) (a `Constant` holding it) instead ([§14.9][s14-9], [D-364][d-364]).
 
-`Freeze{V}` is the declared stop-gradient ([D-266][d-266]). It feeds a walking
-producer into a pinned entry, which the walk clause ([§6.1][s6-1]) otherwise
-refuses.
+`Freeze{V}` feeds a walking producer into a pinned entry, which the walk clause
+([§6.1][s6-1]) otherwise refuses ([D-266][d-266]).
 
 ```julia
 # Freeze{V} — a stateless continuous leaf; tolerant in, pinned out
@@ -227,40 +222,38 @@ y_direct(::Freeze, (; u)) = (out = ForwardDiff.value.(u.in),)   # leafwise strip
 ```
 
 At nominal the strip is the identity, so the block costs one gather and one
-scatter. **`V` is a `Real` or a `StaticArray` of them, constrained at the
-type** ([D-312][d-312]), so a struct-valued freeze is refused at the spelling
-until a model needs one. Under a `Dual` activation it drops the partials, and
-its output satisfies the pinned entry. What the wire then declares is a zero
-coupling in every Jacobian along that path ([D-266][d-266]), the modelling
-decision [§14.10][s14-10] asks an author to state on the page rather than bury
-mid-expression. A sampler is the other non-walking source, and it changes the
-model, holding the value between ticks ([§10.5][s10-5]). The block is for a
-continuous value the consumer cannot differentiate through. Where the
-coupling matters to the Jacobian, the local rule ([§14.10][s14-10]) is the
-answer, not this block.
+scatter. **`V` is a `Real` or a `StaticArray` of them, constrained at the type**
+([D-312][d-312]), so a struct-valued freeze is refused at the spelling until a model
+needs one. Under a `Dual` activation the block drops the partials, and its
+output satisfies the pinned entry. What the wire then declares is a zero
+coupling in every Jacobian along that path ([D-266][d-266]), the modeling decision [§14.10][s14-10]
+asks an author to state on the page rather than bury mid-expression. A sampler
+is the other non-walking source, and it changes the model, holding the value
+between ticks ([§10.5][s10-5]). The block is for a continuous value the consumer cannot
+differentiate through. Where the coupling matters to the Jacobian, the local
+rule ([§14.10][s14-10]) is the answer, not this block.
 
 #### The component test rig
 
-The [component test rig](#g-component-test-rig) is the library's companion
-idiom. Exercising a leaf alone needs no rig of its own. Any component may be
-the root of a build, and its input faces then become the model's root inputs
-([§8.2][s8-2], [D-208][d-208]). Ordinary conditions and [devices](#g-device)
-(attached participants in the periphery) feed them, and every output is
-observable in the table of each [snapshot](#g-snapshot), the immutable
-per-boundary publication. The rig is a one-child assembly whose
-`input_wires` surface the child's entire input face set, as
-`input_passthrough(rig, "child")` verbatim ([§8.8][s8-8]). What it buys is a
+The [component test rig](#g-component-test-rig) is the library's companion idiom. Exercising a leaf alone
+needs no rig of its own. Any component may be the root of a build, and its input
+faces then become the model's root inputs ([§8.2][s8-2], [D-208][d-208]). Ordinary [conditions](#g-condition)
+(path-addressed sparse overlays that set a build's state) feed them. So do
+[devices](#g-device) (attached participants in the periphery). Every output is observable in
+the table of each [snapshot](#g-snapshot), the immutable per-boundary publication. The rig is a
+one-child assembly whose `input_wires` surface the child's entire input face
+set, as `input_passthrough(rig, "child")` verbatim ([§8.8][s8-8]). What it buys is a
 place to wire something *beside* the component under test.
 
-The demonstrated need is the root-input rule ([§8.2][s8-2]). An *abstract*
-input entry (`terrain = AbstractTerrainField`, an illustrative name) cannot
-surface as a root input, because abstract-at-root is a build error,
-`AbstractAtRoot` ([§8.2][s8-2], [Appendix C][sC]). The rig therefore
-satisfies that entry *inside* the rig ([D-120][d-120]). In the sketch below,
-the component under test is `Strut`, an illustrative landing-gear strut whose
+The demonstrated need is the root-input rule ([§8.2][s8-2]). An [abstract entry](#g-abstract-entry) (an
+`u_types` entry admitting any concrete producer face), such as the illustrative
+`terrain = AbstractTerrainField`, cannot surface as a root input, because
+abstract-at-root is a build error, `AbstractAtRoot` ([§8.2][s8-2], [Appendix C][sC]). The rig
+therefore satisfies that entry *inside* the rig ([D-120][d-120]). In the sketch below, the
+component under test is `Strut`, an illustrative landing-gear strut whose
 terrain input is abstract. **A concrete stub child (a provider of
-`SampleTerrainField`, an illustrative concrete terrain) is wired to the
-face**, and the concrete remainder is exposed via
+`SampleTerrainField`, an illustrative concrete terrain) is wired to the face**,
+and the concrete remainder is exposed via
 `input_passthrough(rig, "strut"; except = ("terrain",))` ([D-120][d-120]).
 
 ```julia
@@ -279,11 +272,10 @@ makes it the source block's first shipped instance ([D-143][d-143]). Bespoke
 stubs remain ordinary components wherever the double must compute something.
 
 The rig adds zero new machinery, because wiring and `except` already exist
-([D-120][d-120]). It is structural substitutability doing its job. An
-[abstract entry](#g-abstract-entry) (an `u_types` entry admitting any
-concrete producer face) declares that a substitute must be chosen. The rig
-chooses its test double explicitly, as ordinary inspectable code. That is
-precisely the isolation the rig exists to provide.
+([D-120][d-120]). It is structural substitutability doing its job. An abstract entry
+declares that a substitute must be chosen. The rig chooses its test double
+explicitly, as ordinary inspectable code. That is precisely the isolation the
+rig exists to provide.
 
 The rig is [`design_world`](#g-design_world)'s little sibling
 ([§14.9][s14-9]). Where `design_world(ac)` mounts an aircraft in a minimal
@@ -294,20 +286,19 @@ library blocks, a standing ergonomics test of the declaration rules.
 
 ### 13.8 Cycle diagnosis: feedthrough tracing
 
-The build rejects an algebraic loop ([§5.5][s5-5], [D-005][d-005]), and
-tracing is diagnostic only, never relied on for correctness ([D-012][d-012]).
-Tracing improves error messages and verification. When the build finds a
-cycle, it triggers the [feedthrough tracer](#g-feedthrough-tracer) (the
-set-propagation instrument that tracks which inputs a value depends on) to
-classify that cycle. A genuine cycle gets "break it with a state, a stage-1
-(`y_state`) port, or a `UnitDelay`", and an artificial one gets the remedy
-ladder ([§5.4][s5-4], [D-140][d-140]). Where the diagnostic recommends a unit
-delay, it states the delay's [tier](#g-tier) caveat rather than offering it as
-a free remedy ([§5.5][s5-5], [§13.7][s13-7], [D-348][d-348]). A tier is the
-continuous or discrete side of the hybrid formalism. The parts below cover,
-in order, how a cycle is detected and named, the tracer's two modes, what
-tracing touches, how classification runs and decides, and the caveats and
-hints the diagnostic carries.
+The build rejects an [algebraic loop](#g-algebraic-loop) (a genuine cycle in the instantaneous
+dependency graph) ([§5.5][s5-5], [D-005][d-005]), and tracing is diagnostic only, never relied on
+for correctness ([D-012][d-012]). Tracing improves error messages and verification. When
+the build finds a cycle, it triggers the [feedthrough tracer](#g-feedthrough-tracer) (the set-propagation
+instrument that tracks which inputs a value depends on) to classify that cycle.
+A genuine cycle gets "break it with a state, a stage-1 (`y_state`) port, or a
+`UnitDelay`", and an artificial one gets the remedy ladder ([§5.4][s5-4], [D-140][d-140]). Where
+the diagnostic recommends a unit delay, it states the delay's [tier](#g-tier) caveat rather
+than offering it as a free remedy ([§5.5][s5-5], [§13.7][s13-7], [D-348][d-348]). A tier is the continuous
+or discrete side of the hybrid formalism. The parts below cover, in order, how a
+cycle is detected and named, the tracer's two modes, what tracing touches, how
+classification runs and decides, and the caveats and hints the diagnostic
+carries.
 
 #### Detection and naming
 
@@ -343,12 +334,12 @@ indices, its tracer tags.
 
 #### What tracing touches
 
-**Only *inputs* are seeded** ([D-349][d-349]), so branching on state, modes,
-parameters or time never interferes. Stage-2 functions also receive state
-views, but neither those nor the stage-1 hand-down are ever seeded. Stage-1
-functions are never traced, since there is nothing to seed. Derivatives,
-[guards](#g-guard) (the declared functions defining each event's predicate),
-handlers and [projections](#g-projection) are outside tracing's jurisdiction
+**Only *inputs* are seeded** ([D-349][d-349]), so branching on state, modes, parameters or time
+never interferes. Stage-2 functions also receive state views, but neither those
+nor the stage-1 hand-down are ever seeded. Stage-1 functions are never traced,
+since there is nothing to seed. Derivatives, [guards](#g-guard) (the declared functions
+defining each event's predicate), handlers and [projections](#g-projection) (the optional
+per-component hook `x ← x_projection(x)`) are outside tracing's jurisdiction
 entirely.
 
 A known tracer blind spot is documented. Value-severing operations pass
@@ -356,10 +347,10 @@ dependence through a bare `Int` index, as a nearest-neighbor lookup does.
 Linear and cubic interpolation are immune, because dependence flows through
 the fractional weights.
 
-**Dual-cleanliness in CI effectively guarantees traceability**
-([D-349][d-349]). Dual-clean means passing the `T = Dual` sweep of
-[§7.2][s7-2]. The guarantee holds because both modes ride the same
-`T <: Real` genericity as `Dual`, ForwardDiff's dual number.
+**Dual-cleanliness in CI effectively guarantees traceability** ([D-349][d-349]). Dual-clean
+means passing the `T = Dual` sweep of [§7.2][s7-2], `Dual` being ForwardDiff's dual
+number. The guarantee holds because both modes ride the same `T <: Real`
+genericity as `Dual`.
 
 #### Classification
 

@@ -1,0 +1,1862 @@
+=== 1 spec.md:198 §13
+  ([§6][s6], [§8][s8]).
+- Rigor and error locality. Structure is declared and checked at build time,
+  so a mistake fails where it was made, with a diagnostic naming it
+  ([§8.4][s8-4], [§13][s13]). Components are plain Julia with no macro DSL
+  (domain-specific language), so debugging, tooling and comprehension work on
+  the language's own terms ([§8.1][s8-1]).
+=== 2 spec.md:1118 §13.2
+
+A function that reads a name outside its bundle is an error, whether the name
+is an undeclared store, a fact of the other tier or a name illegal for that
+function ([D-341][d-341]). [§13.2][s13-2] describes how the build recognizes
+and reports it.
+
+=== 3 spec.md:2280 §13.3
+   [snapshots](#g-snapshot), the immutable per-boundary publications
+   ([§14.4][s14-4]).
+3. Lifecycle and mutating actions are verbs, with `!` when they mutate.
+4. Build primitives are plain verbs ([§13.3][s13-3]).
+
+A name in the wrong class is a rename candidate on that ground alone.
+=== 4 spec.md:2863 §13.2
+that activation's own lazy compile ([§9.4][s9-4]), not at `build(world)`. The message
+carries the didactic hint ("if `F` participates in differentiation, remove its
+`Pinned`"), because an observed `Dual` at a pinned leaf has exactly one honest
+cause. A didactic diagnostic is one that states its fix ([§13.2][s13-2]). The second
+bug fails at the same activation. It fails inside the stage where the frozen
+internals meet a `Dual`, or at the identity comparison on an opaque leaf built
+=== 5 spec.md:3173 §13.1
+5. A typo'd return field, such as `P_shft = …` for a declared shaft power
+   `P_shaft`, fails as a probe error with [did-you-mean](#g-did-you-mean) (the offending name plus
+   the list-in-hand it should have matched) against `y_types`. That one error is
+   the whole report. The probe chain stops at the port check ([§13.1][s13-1], [D-239][d-239]),
+   and an unproduced-`P_shaft` error would only restate it from the other side,
+   since renaming the field produces the port. A declared port no stage returns,
+=== 6 spec.md:3413 §13.3
+walks the full depth, as `"systems/ldg/left/trn"` does in a [snapshot](#g-snapshot) (the
+immutable per-boundary publication) or the log tree. That read side is the
+inspection side. It resolves a path with `resolve` under the instance walk
+([§13.3][s13-3]). One fact behind the rejection of instance navigation is
+relied on downstream. Symmetric immutable siblings are `===`-identical, so a
+path is unrecoverable from an instance. That is why the helpers
+=== 7 spec.md:3897 §13.3
+`input_passthrough` is a thin composition. That is what keeps the helper sugar
+rather than machinery. There is no `rename` hook, because the boundary
+declarations are ordinary code ([D-046][d-046]). An author renames by mapping over the
+pairs. Normative signatures for both primitives are in [§13.3][s13-3].
+
+Every error stays first-class.
+=== 8 spec.md:3964 §13.3
+included ([D-207][d-207]). The default `prefix` folds the path's slash into `sep`, so
+`"gear/1"` labels its faces `"gear.1.…"` and the default stays a legal face name for
+every blessed `child_path`. An explicit `prefix` is used verbatim ([D-046][d-046]). A deeper
+path meets `resolve`'s one-level rejection like any other wiring endpoint ([§13.3][s13-3],
+[D-207][d-207]).
+
+=== 9 spec.md:4073 §13.1
+[§8][s8] states what is declared and what must hold. This chapter states *when*
+each fact is checked, against what, and with which failure. The [§8.4][s8-4]
+walkthroughs plus the error rules ([§6.1][s6-1]) are its acceptance tests.
+Error-*reporting* policy is settled in [§13.1][s13-1], under which declarative
+checking passes collect and user-code evaluation fails fast. [§9.1][s9-1]
+covers the build's three steps, [§9.2][s9-2] the [`Build`](#g-build) and
+=== 10 spec.md:4097 §13.1
+
+**The pipeline runs as the steps below**, each consuming one artifact and
+producing the next, and each a barrier ([D-259][d-259]). A step that
+produced any error throws before the next begins ([§13.1][s13-1]).
+
+| step | consumes | produces | user code it runs |
+=== 11 spec.md:4463 §13.1
+carries.
+
+**Deployment validation is collected like its declarative siblings**
+([§13.1][s13-1], [D-229][d-229]). Violations are collected and reported as
+`DeploymentInvalid` ([Appendix C][sC]), carrying parameter, value and the
+violated constraint:
+=== 12 spec.md:4577 §13.2
+**A step that completes carries its warnings on the artifact**, and the entry
+point logs each one once at return ([D-250][d-250]). A step that throws
+renders its warnings with the collection it throws. Logging is presentation
+and never a home ([§13.2][s13-2]).
+
+A warning raised inside a declaration body has no artifact in hand. The build
+=== 13 spec.md:4706 §13.1
+moment, not the reason.
+
+There are two consequence sites, with the same throw at both. At build it is a
+`UserCodeFraming`-wrapped build failure ([§13.1][s13-1]). Its diagnostic
+points at code that is "correct" on every trajectory it has ever seen. At
+runtime it is a `StepError` and the run ends `errored` ([§13.4][s13-4]).
+=== 14 spec.md:4708 §13.4
+There are two consequence sites, with the same throw at both. At build it is a
+`UserCodeFraming`-wrapped build failure ([§13.1][s13-1]). Its diagnostic
+points at code that is "correct" on every trajectory it has ever seen. At
+runtime it is a `StepError` and the run ends `errored` ([§13.4][s13-4]).
+Exceptions from model code are always abnormal ([§13.5][s13-5],
+[D-060][d-060]).
+=== 15 spec.md:5052 §13.2
+build error, `HandlerReturnKey`, with [did-you-mean](#g-did-you-mean) against
+`{x, m}` narrowed to the stores that exist. That is the
+[bundle law](#g-bundle)'s classification running in the return direction,
+through the same `FieldError`-shaped machinery [§13.2][s13-2] builds for
+bundles.
+
+=== 16 spec.md:5085 §13.4
+per-field expected-vs-observed) ([D-053][d-053], [D-249][d-249]). Simulation
+time is the carrier's, not the diagnostic's. At run time the failure travels
+as a [species](#g-species) of `StepError` through the single catch site
+([§13.4][s13-4], [D-059][d-059]). That site's frame holds the boundary time
+and the replay index. A build-time occurrence has no time to carry
+([D-249][d-249]).
+=== 17 spec.md:5963 §13.4
+[§10.7][s10-7] is about trajectories, and those are identical either way.
+
+Replay pointers and error messages index boundaries by the frame-entry
+boundary index ([§13.4][s13-4], [D-128][d-128]) together with the recorded
+`t`. Snapshots carry the trajectory's published-boundary ordinal
+([§12.3][s12-3], [D-230][d-230]). The trace stays frame-indexed, since `t*`
+=== 18 spec.md:6002 §13.4
+
+The degradation depends on the trajectory alone, never on wall clock. The
+pace-independence guarantee ([D-080][d-080]) therefore stands, and the run
+replays identically. A `StepError` ([§13.4][s13-4]) here would misclassify an
+expected modeling outcome as broken machinery, which the no-throw doctrine of
+[§14.8][s14-8] forbids.
+=== 19 spec.md:6186 §13.1
+anchored child (one declared `Absolute`, below) always appears explicitly.
+
+Validation belongs to the structure step (the build's declaration-reading
+step), which collects it with path attribution ([§9.1][s9-1], [§13.1][s13-1],
+[D-185][d-185]). It covers `K ≥ 1`, `0 ≤ Φ < K`, `T > 0`, `0 ≤ τ < T`, and
+keys naming discrete or scope children. The constructors themselves are plain
+=== 20 spec.md:6532 §13.4
+Execution order is fixed all the same. It follows the component order of the
+[executor](#g-executor) (the compiled form of the stage execution order), then
+declaration order within a component. That keeps the [execution cursor](#g-execution-cursor) (the
+loop-state field recording where execution stands, [§13.4][s13-4]) and the
+diagnostics stream deterministic. No trajectory depends on it. The natural
+single-pass executor is therefore exactly correct. It builds each handler's
+=== 21 spec.md:6578 §13.2
+event has fired `firing_budget` times at a boundary, its further edges there
+are lost for the rest of that boundary. The eligibility test skips it while
+every other event iterates normally. A lost edge emits a `FiringBudget` warning
+([§13.2][s13-2], [Appendix C][sC]), at most once per event per boundary. An
+event that fires its budget out and then quiesces lost nothing and warns
+nothing. The warning carries the component path, the event name, the boundary
+=== 22 spec.md:6871 §13.4
+stopped-sim state only ([§11.3][s11-3]), and the task appears at the next `run!`.
+
+**The loop runs on the calling task** ([D-310][d-310]). This is what the synchronous
+rethrow ([§13.4][s13-4]) presupposes. It is also what lets parallel unattended sweeps
+thread `run!` inline with no nested task fan-out. One immutable [`Build`](#g-build) (the
+artifact `build(world)` produces) is shared across the workers ([§9.2][s9-2], [D-282][d-282]),
+=== 23 spec.md:7119 §13.1
+instead of performing its own path lookups. A model substitution that breaks a
+binding therefore fails at attach, not with silent garbage on the wire ([D-130][d-130]).
+**Attach refuses such a binding with the read's own kind, `ReadResolution`,
+every violation collected** ([§13.1][s13-1], [D-406][d-406]). An exporting logger
+treats field-handle signals specially. It skips or summarizes them.
+
+=== 24 spec.md:7226 §13.2
+
+Every writer has a write surface, and the periphery enforces it. **A batch entry
+reaches a root input iff the named face is inside the writer's surface**
+([D-044][d-044]). Anything else is discarded with a runtime warning ([§13.2][s13-2]). Because
+surfaces are static per run under [the roster freeze](#g-the-freeze) (attach and detach only
+while stopped, below), enforcement runs entirely at *staging*, the earliest
+=== 25 spec.md:8015 §13.2
+body* ([D-105][d-105]). The body catches it, stages nothing, calls
+`report!(handle, MalformedDatum(cause))` and continues. That tolerance is
+bounded by the device's own diagnostic cell (the ring and suppressed counts,
+[§11.8][s11-8]; the stream, [§13.2][s13-2]), and what it records is visible next to a live
+heartbeat. Any other exception propagates, and the wrapper turns it into
+`DeviceCrash` ([§12.4][s12-4]).
+=== 26 spec.md:8025 §13.2
+site exists, so the framework's contribution is the diagnostic channel, not the
+catch. A marked exception type is not provided ([D-105][d-105]). `report!(handle, …)`
+writes device-attributed runtime warnings into that device's diagnostic cell,
+the single-writer entry point into the runtime warning stream ([§13.2][s13-2], [§11.8][s11-8],
+[D-160][d-160]), and nothing more. It is not a general user-diagnostics channel.
+Tolerating everything hides bugs as "device attached, nothing happens".
+=== 27 spec.md:8416 §13.2
+### 11.8 Diagnostics and liveness: the per-writer diagnostic cell
+
+The chapter's two data channels are specified down to their memory ordering. The
+runtime warning stream ([§13.2][s13-2]) and the liveness heartbeat ([§12.2][s12-2]) are a third,
+and they cross between the same tasks.
+
+=== 28 spec.md:8478 §13.2
+kind's suppressed count increments. The drop policy retains the earliest in the
+frame, and the excess becomes counts. The first occurrences are the ones with
+diagnostic content, and the hundredth is noise the count already reports.
+Rate-limiting "wherever its source can repeat" ([§13.2][s13-2]) is therefore not a policy
+layered over the stream but a structural property of the channel that carries
+it. A [chattering](#g-chattering) model (one exhausting its per-frame localization budget) or a
+=== 29 spec.md:8871 §13.4
+wait predicate alone, and it is never reset because a waiter's `last_seen` must
+never run ahead of it ([D-230][d-230]). An error's pointer for [replay](#g-replay) (the ordinary loop
+re-driven from the trace) is a third index, the frame-entry boundary index of
+[§13.4][s13-4], a frame count that names no `t*` boundary ([D-128][d-128]).
+
+A front end paced by its own display may skip the wait and read `latest` at
+=== 30 spec.md:9164 §13.4
+top, where it already consults the control plane ([§12.1][s12-1]), and
+points inside its wait and pause blocks. All of those points are
+boundary-consistent. Caught at one of them, the interrupt sets the
+control-plane stop and enters this tail. The catch site ([§13.4][s13-4])
+therefore never sees a single interrupt.
+
+=== 31 spec.md:9177 §13.4
+
+**A frame that throws with an interrupt pending ends `errored`**
+([D-268][d-268], [D-398][d-398]). The frame's own throw is the disposition
+([§13.4][s13-4]). The catch wraps the cause under the mask and consumes the
+pending interrupt on its way out. The run then takes the abnormal shutdown entry
+under that `StepError` ([§13.6][s13-6]). The alternative, `stopped` over a
+=== 32 spec.md:9189 §13.4
+record from that store. The run therefore ends `errored` under its
+`StepError` wherever a later interrupt lands. An interrupt that cuts the
+handling of the throw itself propagates out of the call raw, and the
+disposition of the failure is skipped ([§13.4][s13-4]). The record is still
+written and the lifecycle is still `errored`.
+
+=== 33 spec.md:9201 §13.4
+
+**A forced throw reaches the defensive arm** ([D-268][d-268], [D-398][d-398]). Julia stops deferring
+after repeated SIGINTs in a short window, warns that it is forcing the throw,
+and raises inside the mask. That is the one way the branch [§13.4][s13-4] keeps is
+reached. The arm abandons the frame unpublished and the run ends `stopped`, the
+source `ControlRequestedStop(:interrupt)`. What the run published is consistent,
+=== 34 spec.md:9207 §13.4
+since the frame published nothing. The stores may hold mid-boundary values until
+the next `init!`, `restore!` or `replay!` resets them, as after a throw inside
+[boundary zero](#g-boundary-zero), the initialization boundary, which runs the ordinary
+macro-sequence with an empty integrate ([§13.4][s13-4]). `checkpoint` refuses such a run
+as `CheckpointMidFrame`, since the [executor](#g-executor) (the compiled form of the stage
+execution order) no longer rests where its last snapshot was published ([§12.6][s12-6]).
+=== 35 spec.md:9388 §13.4
+#### Lifecycle states and the input mode
+
+**A `Simulation` moves through five states**, *built*, *initialized*, *running*,
+and terminally *stopped* or *errored* ([§13.4][s13-4], [D-088][d-088]). *Built* means [stores](#g-store) (the
+framework-owned homes of a component's state) allocated and boundary zero not
+completed ([D-223][d-223]). It is the cold state, and the state a throw inside boundary
+=== 36 spec.md:9391 §13.4
+and terminally *stopped* or *errored* ([§13.4][s13-4], [D-088][d-088]). *Built* means [stores](#g-store) (the
+framework-owned homes of a component's state) allocated and boundary zero not
+completed ([D-223][d-223]). It is the cold state, and the state a throw inside boundary
+zero returns the simulation to ([§13.4][s13-4]). *Initialized* means `init!` has
+completed boundary zero ([§14.5][s14-5]), or `restore!` or `replay!` has restored a
+checkpoint.
+=== 37 spec.md:9427 §13.2
+
+**`init!` is mandatory** ([D-088][d-088]). `run!` or `step!` on a simulation
+whose boundary zero has not completed is `MissingInit`, an error in the kind
+set ([§13.2][s13-2]) naming `init!`. That is distinct from
+`UninitializedInputs`, which fires *inside* `init!` ([§14.6][s14-6]).
+`restore!` and `replay!` are the two alternative doors. Each restores a
+=== 38 spec.md:9432 §13.4
+`restore!` and `replay!` are the two alternative doors. Each restores a
+checkpoint and runs no boundary zero ([§12.7][s12-7], [D-274][d-274]). A throw
+inside boundary zero, which only `init!` runs, leaves the simulation `built`
+([§13.4][s13-4], [D-223][d-223]), so the next `run!` or `step!` meets the same
+refusal.
+
+=== 39 spec.md:9607 §13.4
+trc  = trace(sim)                     # the recorded session: header + per-frame batches
+sim2 = Simulation(world)              # the same build
+replay!(sim2, trc)                    # restore the header, then re-drive every recorded frame
+replay!(sim2, trc; to_boundary = k)   # partial: the §13.4 replay-pointer idiom
+replay!(sim2, trc; to_time = 100.0)   # partial: the same halt addressed by time
+cp   = checkpoint(sim)                # the state at a frame-top rest
+=== 40 spec.md:9661 §13.4
+A mode that outlives the call makes a partial replay a resumable position rather
+than the end of an operation ([D-218][d-218]). Whatever advances the simulation
+next reads the same mode and finds the same records. That is what lets the
+reproduction workflow of [§13.4][s13-4] run through the ordinary entry points, with no
+replay-only spelling of `step!`.
+
+=== 41 spec.md:9668 §13.4
+
+**In `:replay` the recording is the bound** ([D-218][d-218]). Every advance's frame
+budget is capped at the recording's last frame, and `to_boundary = k` caps it
+earlier. That keyword is the consumer of the replay pointer ([§13.4][s13-4]). `to_time`
+is the same cap addressed by time (below). Either keyword names a frame from the
+one the feed starts from through the recording's last, and anything else is
+=== 42 spec.md:9674 §13.4
+refused (`ArgumentInvalid`). The feed starts from the header's frame under the
+default form, and from the simulation's own under `restore = false` (below).
+
+`to_boundary = k` takes the frame-entry boundary index ([§13.4][s13-4]), a count of frame
+tops. It is not the published-boundary ordinal that a [snapshot](#g-snapshot) (the immutable
+per-boundary publication) carries ([§12.3][s12-3]). **Replay runs through frame `k` and
+=== 43 spec.md:9752 §13.4
+answers it by replaying there and reading the live stores ([§11.2][s11-2]). Error
+reproduction replays to the frame-entry boundary `k` the error names, then
+`step!`s the failing frame on its recorded inputs, under instrumentation
+([§13.4][s13-4]). Continuation is `run!` after `replay!`, a live session from the
+replayed boundary. After a full replay that is the next call, the records
+exhausted at the halt. After a partial one the remainder of the recording is
+=== 44 spec.md:9892 §13
+# Part IV — Failure and services
+
+Part IV covers what happens when things go wrong, and what a stopped simulation
+can be asked to do. [§13][s13] is the error discipline. It fixes which failures
+are collected and which fail fast, and the diagnostic value both produce. It
+fixes the single runtime catch site and the execution cursor that locates a
+=== 45 spec.md:9904 §13
+linearization on that same foundation.
+
+Part IV assumes both earlier parts. [§9.1][s9-1] and [§9.2][s9-2] already fixed when each check
+runs, so [§13][s13] fixes only how a failure is reported once it happens.
+[§8.6][s8-6] supplies the paths a condition addresses. [§9.4][s9-4] supplies the
+activations trim and linearization run on. [§10.6][s10-6] supplies the
+=== 46 spec.md:11204 §13.1
+also specify [root inputs](#g-root-input), addressed by [face](#g-face). It
+never specifies outputs, which are derived data. It never specifies
+[workspace](#g-workspace) (component-declared mutable scratch arriving as the
+`ws` bundle field). Entries are validated in the [§13.1][s13-1] collecting
+form. The full list is checked, violations are collected, and one
+`DiagnosticError` is thrown.
+=== 47 spec.md:11328 §13.3
+faces, owned or generically held, because the face graph is total
+([D-207][d-207]). A deep `at` path into structure stays legitimate exactly
+where a deep [condition](#g-condition) path is, within an owned concrete
+subtree ([§13.3][s13-3]). Absolute paths exist only in the flattened entry
+list, a *compiled derivative* of the composition, as cell offsets are of
+`local_wires`. Substituting a component invalidates precisely the
+=== 48 spec.md:11335 §13.3
+can see what the law constrains. Wiring resolves one level ([§6.1][s6-1]). The faces a `u`
+payload names resolve through the export chain, under any `at` prefix ([D-207][d-207]). A
+deep `at` or condition path may not traverse past a generically-held field, a
+check made at the authoring or mount level ([§13.3][s13-3], [D-130][d-130]). Ownership alone is
+convention. It is a fact about who maintains the code, and the build cannot see
+it, so keeping a deep path inside an owned subtree is idiomatic rather than
+=== 49 spec.md:11712 §13.2
+mechanism and one kind. Each compares the resolved plan's root-input coverage
+against the `Build`'s `input_faces` before writing anything. A shortfall is
+one collected, declaration-ordered diagnostic (`UninitializedInputs`, a
+[§13.2][s13-2] kind) naming every uncovered face. Coverage is a *plan-level
+fact*, because both operands are resolution-time data. The check is therefore
+one comparison, and it runs before any evaluation, not merely before any
+=== 50 spec.md:12181 §13
+residuals.
+
+Non-convergence never throws. It is an expected *outcome*, per the
+exceptions-are-broken-machinery line ([§13][s13]). In an envelope sweep,
+hitting the infeasible edge is information. A malformed problem is a different
+case. It is a `DiagnosticError`-class failure at setup, `TrimProblemInvalid`
+=== 51 spec.md:12196 §13.4
+
+A throw inside the commit's boundary zero is a third case, and neither of
+those. It is model code failing. It propagates out of `trim!` as the commit's
+`StepError`. The simulation is left `built` ([§13.4][s13-4], [D-223][d-223]),
+and no report is returned for that solve ([D-224][d-224]).
+
+=== 52 spec.md:12284 §13.3
+prepends the prefix to that chain and joins nothing. A `Reads` value is no
+condition node, so `Scoped` never wraps one. Resolution walks the chain from
+the root, each prefix from the level the previous one reached
+([§13.3][s13-3]). It then rebases every [selector](#g-selector) (one of the
+closed family of deferred reads) to the root before the selector resolves. A
+path selector's path is joined to the mount (`"vehicle/dynamics"` →
+=== 53 spec.md:12695 §13.4
+  fires at most one event per round. Its later own events are re-decided
+  against the next round's sweep, one round per causal link, within and across
+  components alike. Only sweeps write the signal table.
+- **Stage totality** ([§9.3][s9-3]; [§13.4][s13-4], [§13.5][s13-5]). Stage
+  code is total over type-valid inputs. The probe evaluates every user
+  function against values chosen for their types alone. A value-level throw
+=== 54 spec.md:12737 §13.4
+  kind of thing. They are conventions of the loop idiom, called only by your
+  own `loop` and never by the framework. The names are worth keeping for
+  readers, and nothing enforces them.
+- **Bad datum vs. bug** ([§11.6][s11-6], [§13.4][s13-4]). Catch what your
+  parser can throw, call `report!(handle, MalformedDatum(cause))`, stage
+  nothing and continue. Let everything else propagate, and the wrapper makes
+=== 55 spec.md:12833 §13.3
+  sweep shares a fully immutable `Build` ([§11.1][s11-1], [§9.4][s9-4]).
+- `resolve(assembly, path) → AbstractComponent`. The getfield walk along `/`
+  segments. It enforces the one-level rule for wiring ([§6.1][s6-1]) and the
+  generic-holding rule for deep reads, at the primitive ([§13.3][s13-3]).
+- `input_faces(c)` / `output_faces(c) → Vector{String}`. Declaration-ordered
+  face names ([§13.3][s13-3]).
+=== 56 spec.md:12835 §13.3
+  segments. It enforces the one-level rule for wiring ([§6.1][s6-1]) and the
+  generic-holding rule for deep reads, at the primitive ([§13.3][s13-3]).
+- `input_faces(c)` / `output_faces(c) → Vector{String}`. Declaration-ordered
+  face names ([§13.3][s13-3]).
+- `input_passthrough(assembly, path; prefix, sep, except, only, select)` /
+  `output_passthrough(assembly, path; prefix, sep, except, only, select)`. The
+=== 57 spec.md:13206 §13.2
+  is deferred, `pending.md`).
+- `warnings(x) → Vector`. The artifact's warning list, on `Build` and
+  `Deployment`, and on `Simulation` as the concatenation of its artifacts'
+  lists ([§9.2][s9-2], [§13.2][s13-2]).
+- `closed(run) → Bool`. True once the loop's tail has written the run's
+  termination record ([§12.6][s12-6]).
+=== 58 spec.md:13226 §13.2
+
+The kinds below are the closed set [D-058][d-058] commits to, made normative.
+**Tests match on kind plus payload fields, never on message text**
+([§13.2][s13-2]). So the entries below, not any message, are the
+acceptance-test contract. Adding a kind is a decision-log entry. Every
+entry's payload is *in addition to* what [§13.2][s13-2] requires of all
+=== 59 spec.md:13228 §13.2
+**Tests match on kind plus payload fields, never on message text**
+([§13.2][s13-2]). So the entries below, not any message, are the
+acceptance-test contract. Adding a kind is a decision-log entry. Every
+entry's payload is *in addition to* what [§13.2][s13-2] requires of all
+diagnostics: paths and names as strings, never instances; the list-in-hand
+wherever a did-you-mean renders; the didactic style (state the fix).
+=== 60 spec.md:13237 §13.2
+Each entry names the kind, then its owning sections in parentheses, then
+severity · raised · policy, then the payload. Three fields place each kind.
+**Severity** is a property of the kind, read as `severity(d)`
+([§13.2][s13-2]), and takes one of two values:
+
+- **error**. An occurrence throws, alone or within a collection. A step
+=== 61 spec.md:13240 §13.1
+([§13.2][s13-2]), and takes one of two values:
+
+- **error**. An occurrence throws, alone or within a collection. A step
+  that produced one throws before the next begins ([§13.1][s13-1]).
+- **warning**. An occurrence never throws and joins no throw. It renders
+  with a collection, is logged beside a returned value, or rides the runtime
+=== 62 spec.md:13249 §13
+surfaces, and how it is reported. A kind raised at two stages lists both
+(`BundleFieldError` is raised at the probe, and as a `StepError`
+[species](#g-species) thereafter). The placement notes stay in the raised
+field beside the stage they qualify. The stages are the ones [§13][s13]
+fixes:
+
+=== 63 spec.md:13263 §13.1
+
+- **collected**. Gathered with its siblings and thrown as one carrier. A
+  declarative pass's violations are the `DiagnosticError` of the step
+  barrier, and every pass that ran under [§13.1][s13-1]'s dependency rule
+  merges into the one throw ([D-229][d-229]). A service's violations are
+  collected wherever the owning section says so (the condition algebra,
+=== 64 spec.md:13269 §13.1
+  [§14.1][s14-1]; the pre-write check, [§14.6][s14-6]).
+- **fail-fast**. The first occurrence throws on its own, and nothing else is
+  gathered. At build the first user-code failure aborts the phase
+  ([§13.1][s13-1]). At a service call the first violation is the throw. At
+  runtime it reaches the single catch site ([§13.4][s13-4]) as a species of
+  `StepError`.
+=== 65 spec.md:13270 §13.4
+- **fail-fast**. The first occurrence throws on its own, and nothing else is
+  gathered. At build the first user-code failure aborts the phase
+  ([§13.1][s13-1]). At a service call the first violation is the throw. At
+  runtime it reaches the single catch site ([§13.4][s13-4]) as a species of
+  `StepError`.
+- **logged**. A warning from an artifact-producing call that *completed*, the
+=== 66 spec.md:13278 §13.2
+  once at return through the standard logging backend. It is part of no
+  collection. There is no rate limit. A warning about the artifact itself
+  fires at most once per call, and its payload is drawn from the artifact the
+  call returns ([§9.2][s9-2], [§13.2][s13-2], [§14.8][s14-8]). A warning
+  raised at a call site inside the call, `EmptyFaceSelection` in a
+  passthrough helper ([§8.8][s8-8]), fires once per raising site and carries
+=== 67 spec.md:13283 §13.2
+  passthrough helper ([§8.8][s8-8]), fires once per raising site and carries
+  that site's payload, so one artifact may hold several of one kind.
+- **rate-limited**. The per-occurrence runtime warning stream of
+  [§13.2][s13-2], carried by the per-writer diagnostic cells ([§11.8][s11-8])
+  and bounded by them. Every kind reported this way is bounded per writer
+  per boundary (a ring of sixteen retained values, the excess becoming
+=== 68 spec.md:13297 §13.2
+The *collected*-warning slot, the warning-severity kinds that would render
+with a step's throw, is empty ([D-084][d-084]). Build warnings themselves
+live on the `Build`, and a step that throws renders its warnings with the
+collection ([§13.2][s13-2], [D-250][d-250]).
+
+**Declaration and wiring** (the structure step):
+=== 69 spec.md:13321 §13.3
+  offending leaf, both declared leaf types; both remedies in the message
+  ("remove the entry's `Pinned` if the consumer promotes; feed it from a
+  non-walking source if the freeze is genuine").
+- **`PathResolution`** ([§6.1][s6-1], [§13.3][s13-3]). Error · build, or
+  service resolving a service path · collected. Path, offending segment,
+  sibling field list. For a wiring endpoint reaching past the immediate
+=== 70 spec.md:13450 §13.2
+  fields pairing by name). Simulation time rides the runtime carrier ([D-249][d-249]).
+- **`GuardForm`** ([§9.5][s9-5]). Error · build · fail-fast. Component path,
+  event name, observed probe return type, both admissible forms.
+- **`BundleFieldError`** ([§5.2][s5-2], [§13.2][s13-2]). Error · build, at
+  probe; runtime thereafter · fail-fast, a `StepError` species at runtime.
+  Component path, function family, requested field, the legal field set,
+=== 71 spec.md:13458 §13.2
+- **`HandlerReturnKey`** ([§5.2][s5-2], [§9.5][s9-5]). Error · build ·
+  fail-fast. Component path, event name, offending key, the legal set
+  `{x, m}` narrowed to the stores that exist.
+- **`UserCodeFraming`** ([§13.2][s13-2]). Error · build · fail-fast.
+  Component path, which function, the bundle's field names, the synthesized
+  inputs as a spelling, the original exception as `cause`. Every
+=== 72 spec.md:13516 §13.3
+  fed, candidates where a list is in hand, the origin. Its sub-kinds
+  are assembly path, undeclared field, unconvertible value and unexported
+  root-input face. An unknown or past-generic path is `PathResolution`'s
+  ([§13.3][s13-3]).
+- **`DuplicateConditionLeaf`** ([§14.2][s14-2]). Error · service ·
+  collected. The leaf `(path, store, field)`, both origins, the
+=== 73 spec.md:13617 §13.4
+
+**Runtime:**
+
+- **`StepError`** ([§13.4][s13-4]). Error · runtime · fail-fast. The carrier.
+  Cursor frame (component path, function, and the boundary phase, which is
+  an RK stage, an event round, a localization trial evaluation or a tick),
+=== 74 spec.md:13623 §13.4
+  boundary time, frame-entry boundary index (the replay pointer), the host of
+  the catch (`:loop` or `:boundary_zero`), and the `cause`, a species'
+  diagnostic or the original exception, its type the parameter.
+- **`NonfiniteState`** ([§13.4][s13-4]). Error · runtime · fail-fast.
+  Component path, the offending state block, boundary time and index.
+- **`ChatteringBudget`** ([§10.4][s10-4]). Warning · runtime · rate-limited.
+=== 75 spec.md:13650 §13.4
+  the logging backend, past the terminal snapshot ([D-201][d-201],
+  [D-203][d-203]). Device id, the join timeout, boundary time and index at
+  shutdown.
+- **`DeviceCrash`** ([§12.4][s12-4], [§11.6][s11-6], [§13.4][s13-4]). Warning
+  · runtime · rate-limited. The original exception as `cause`, whether
+  `should_abort` was set. Also the init-time failure, reported pre-spawn from
+=== 76 spec.md:13657 §13.4
+- **`ReplayDiscardedStaging`** ([§12.7][s12-7]). Warning · runtime ·
+  rate-limited, a repeating source ([§11.8][s11-8]). The discarded batch's
+  face names, frame ordinal.
+- **`MalformedDatum`** ([§11.6][s11-6], [§13.4][s13-4]). Warning · runtime ·
+  rate-limited, a repeating source ([§11.8][s11-8]). The cause exception.
+  Emitted by the author's loop body via `report!(handle, …)`.
+=== 77 spec.md:13762 §13.2
+one closed set per name per tier, the shared output stages taking one set on
+each ([§5.2][s5-2], [D-220][d-220]). The comment block ([§5.2][s5-2]) states
+each family's maximal legal set, and `BundleFieldError` classifies a read as
+illegal for the family ([§13.2][s13-2]). Not a diagnostic *kind*
+([§D.9][sD-9]).
+
+=== 78 spec.md:14266 §13.1
+runs on. `probe_value(::Type)` synthesizes them at the one kind of terminal
+with no producer, root inputs (`zero(T)`/`false`/first enum/`T()`,
+overridable). From there they flow the probe chain as the probed stages' own
+returns ([§13.1][s13-1]). They are strictly probe-scoped, never an initial
+root-input value, which [§14.6][s14-6] makes a structural barrier
+([§9.3][s9-3]).
+=== 79 spec.md:14494 §13.4
+
+<a id="g-unattended-run"></a>**unattended run** — a run with empty staging and no snapshot readers. It is
+the same loop, fully synchronous on the calling task, rethrowing after the
+shutdown tail so CI fails honestly ([§11.1][s11-1], [§13.4][s13-4]).
+
+<a id="g-write-surface"></a>**write surface** — the set of faces a writer's batch entries may reach. For
+=== 80 spec.md:14672 §13.2
+collection at a step barrier, and its type parameter tells which.
+`StepError` at the runtime catch site takes a single diagnostic over as its
+`cause` and carries the cause's type as its parameter. Diagnostics
+themselves are plain values ([§13.2][s13-2], [§13.4][s13-4]).
+
+<a id="g-collect-the-checks-fail-the-evaluations-fast"></a>**collect the checks, fail the evaluations fast** — the reporting policy.
+=== 81 spec.md:14672 §13.4
+collection at a step barrier, and its type parameter tells which.
+`StepError` at the runtime catch site takes a single diagnostic over as its
+`cause` and carries the cause's type as its parameter. Diagnostics
+themselves are plain values ([§13.2][s13-2], [§13.4][s13-4]).
+
+<a id="g-collect-the-checks-fail-the-evaluations-fast"></a>**collect the checks, fail the evaluations fast** — the reporting policy.
+=== 82 spec.md:14678 §13.1
+Declarative passes over collected structure return their full violation
+list, while the first user-code exception aborts the phase. The build's
+steps are barriers, and the site column spells the collecting case "build
+(collected)" ([§13.1][s13-1], [Appendix C][sC]).
+
+<a id="g-did-you-mean"></a>**did-you-mean** — the required shape of any name-shaped failure: the
+=== 83 spec.md:14682 §13.2
+
+<a id="g-did-you-mean"></a>**did-you-mean** — the required shape of any name-shaped failure: the
+offending name plus the list-in-hand it should have matched, carried as
+payload rather than baked into message text ([§13.2][s13-2]).
+
+<a id="g-error-locality"></a>**error locality** — the property the declaration layer buys. A mistake
+=== 84 spec.md:14693 §13.4
+stands in the compiled order. It holds three facts, the component path as an
+index into the `Outputs`'s execution order, the function running, and the
+boundary phase. It costs one cheap store per dispatch, so a runtime failure
+gets its frame without exception frames in the hot path ([§13.4][s13-4]).
+
+<a id="g-feedthrough-tracer"></a>**feedthrough tracer** — the set-propagation instrument (global
+=== 85 spec.md:14703 §13.2
+<a id="g-kind"></a>**kind** — a diagnostic's identity in the closed set enumerated normatively
+in [Appendix C][sC], with payload fields, owning section, severity, where it
+is raised and under which policy. Tests match on kind plus payload, never on
+message text ([§13.2][s13-2]). Not a component *class* ([§D.1][sD-1]) or a
+*function family* ([§D.1][sD-1]).
+
+=== 86 spec.md:14708 §13.2
+
+<a id="g-payload"></a>**payload** — the structured data a diagnostic carries beside its kind:
+paths and names as strings (never instances or component types),
+expected/observed port types, the list-in-hand ([§13.2][s13-2],
+[Appendix C][sC]). Severity is the kind's, not the payload's.
+
+=== 87 spec.md:14714 §13.4
+<a id="g-species"></a>**species** — a `StepError` whose `cause` is a diagnostic, `StepError{Kind}`
+by type. It is what the catch site makes of a single-diagnostic
+`DiagnosticError` thrown inside the frame, under the species rule
+([§13.4][s13-4], [D-225][d-225]).
+
+<a id="g-stop-request"></a>**stop request / termination is a state** — graceful termination is model
+=== 88 spec.md:14735 §13.2
+<a id="g-artifact"></a>**artifact** — an immutable pure function of its inputs: `Structure`,
+`Outputs`, `Events`, an activation, the `Build`, the `Deployment`, the
+`Schedule`, a condition plan, a trim report and the trace header. A warning
+raised producing one lives on it ([§13.2][s13-2], [D-250][d-250]). It holds
+declared facts, and a consumer compiles what it needs from them at one home
+([§9.2][s9-2], [D-261][d-261]).
+=== 89 spec.md:14775 §13.2
+<a id="g-state-single-owner"></a>**state** — the criterion's other word: a value with a single owner, mutated
+in place. The executor's buffers, the roster, the diagnostic cells, the live
+log and trace and the `Run` are state. A warning raised mutating one lives in
+that state's status ([§13.2][s13-2], [D-250][d-250]).
+
+<a id="g-seam"></a>**seam** — a narrow, named interface kept deliberately thin so what sits
+=== 90 decisions.md:1830 §13.1
+exception (`exports` bodies, probes) aborts the phase; strata are barriers; no
+cascade suppression within a stratum.
+
+**Spec.** [§13.1][s13-1]
+
+**Rationale.** Recorded only through the rejections below.
+=== 91 decisions.md:1884 §13.4
+- Status goes terminal `stopped`/`errored`, and synchronous runs rethrow after
+  the tail.
+
+**Spec.** [§12.6][s12-6], [§9.5][s9-5], [§13.4][s13-4], [§14][s14]
+
+**Rationale.** Recorded only through the rejections below.
+=== 92 decisions.md:1951 §13.3
+declaration-ordered face-name strings; the wiring resolver splits a terminal
+path's final segment (slash the only structural separator).
+
+**Spec.** [§13.3][s13-3]
+
+**Rationale.** Recorded only through the rejections below.
+=== 93 decisions.md:1958 §13.3
+Annotation (2026-10-12): [§6.1][s6-1] has stated no generic-boundary rule since
+[D-207][d-207], which made the generic-seam stop the universal rule. The wiring
+client's duty is the one-level rule, and an endpoint reaching past the
+immediate child is `PathResolution` ([§13.3][s13-3], [Appendix C][sC]). The generic-holding rule, with
+its past-generic diagnostic, governs the deep paths the read side still
+writes, under [D-130][d-130]'s client scoping ([§13.3][s13-3]). The declared-type walk, the
+=== 94 decisions.md:1960 §13.3
+client's duty is the one-level rule, and an endpoint reaching past the
+immediate child is `PathResolution` ([§13.3][s13-3], [Appendix C][sC]). The generic-holding rule, with
+its past-generic diagnostic, governs the deep paths the read side still
+writes, under [D-130][d-130]'s client scoping ([§13.3][s13-3]). The declared-type walk, the
+face lists and the terminal split stand.
+
+=== 95 decisions.md:2064 §13.3
+`at` prefix stops at the faces of any child, owned or generically held. The
+clause stands for deep structural paths, and its two halves are enforced
+differently. Its concrete half is machine-checked, since a service path may
+not traverse past a generically-held field ([D-061][d-061], [D-130][d-130], [§13.3][s13-3]). Its owned
+half is convention, because ownership is not build-visible. The Rejected
+list's "same convention status as [§6.1][s6-1]" is stale, since [D-207][d-207] made [§6.1][s6-1]'s
+=== 96 decisions.md:2372 §13.2
+args)` — one NamedTuple bundle of zero-copy views, destructured by name in the
+signature; `project(comp, x)` alone stays positional.
+
+**Spec.** [§5.2][s5-2], [§7.3][s7-3], [§8.2][s8-2], [§11.4][s11-4], [§13.2][s13-2]
+
+**Rationale.** The bundle law (a field exists iff the store or tier fact
+=== 97 decisions.md:2670 §13.3
+the whole table (inspection observation, the log/GUI/replay clients; local
+cells accessible — presentation filters are defaults, not walls).
+
+**Spec.** [§11.2][s11-2], [§13.3][s13-3], [§13.5][s13-5], [§14.4][s14-4]
+
+**Rationale.** Attach validation against the `Build` makes structural drift
+=== 98 decisions.md:2703 §13.2
+exactly that), and [D-083][d-083]'s path-bound readers attach post-build, so "unused" is
+undecidable at build.
+
+**Spec.** [§6.1][s6-1], [§6.2][s6-2], [§11.2][s11-2], [§11.7][s11-7], [§13.2][s13-2], [Appendix C][sC]
+
+**Rationale.** Such a warning fires on every honest port and poisons the sole
+=== 99 decisions.md:2942 §13.4
+network.jl the precedent; `attach!` never spawns — one semantics, register,
+[D-106][d-106]).
+
+**Spec.** [§11.1][s11-1], [§11.6][s11-6], [§12.2][s12-2], [§12.3][s12-3], [§12.4][s12-4], [§12.6][s12-6], [§13.4][s13-4]
+
+**Rationale.** [§12.4][s12-4] joins all tasks at every stop with `shutdown!` releasing
+=== 100 decisions.md:2954 §13.4
+the calling task, so the loop is the movable piece: with a calling-task device
+rostered the loop moves to a spawned task for the run — roster-derived, `gui =
+true` mere ensure-rostered sugar ([D-109][d-109]) — otherwise the loop runs on the
+calling task (preserving [§13.4][s13-4]'s synchronous rethrow and inline threading of
+parallel batch sweeps); `run!` blocks its caller either way. Stepping sessions
+are deviceless by construction (`attach!` registers only, tasks appear at the
+=== 101 decisions.md:2979 §13.4
+- *Task handles or lifecycle state in the roster:* mixes mutable lifecycle into
+  [D-087][d-087]'s immutable roster value.
+- *Always-spawned loop task FlightCore-style:* uniform topology whose only
+  beneficiary is the GUI case: costs the [§13.4][s13-4] synchronous rethrow —
+  `TaskFailedException` wrapping — inline `@threads` composability of batch
+  sweeps, and direct interrupt delivery.
+=== 102 decisions.md:3101 §13.2
+`DeviceCrash` (device id, exception as `cause`, the `should_abort`
+disposition), both warning (runtime).
+
+**Spec.** [§12.4][s12-4], [§13.2][s13-2], [§13.4][s13-4], [Appendix C][sC]
+
+**Rationale.** [§12.4][s12-4]'s committed abandoned-join warning and device-crash log
+=== 103 decisions.md:3101 §13.4
+`DeviceCrash` (device id, exception as `cause`, the `should_abort`
+disposition), both warning (runtime).
+
+**Spec.** [§12.4][s12-4], [§13.2][s13-2], [§13.4][s13-4], [Appendix C][sC]
+
+**Rationale.** [§12.4][s12-4]'s committed abandoned-join warning and device-crash log
+=== 104 decisions.md:3104 §13.2
+**Spec.** [§12.4][s12-4], [§13.2][s13-2], [§13.4][s13-4], [Appendix C][sC]
+
+**Rationale.** [§12.4][s12-4]'s committed abandoned-join warning and device-crash log
+join [§13.2][s13-2]'s closed inventory per [D-092][d-092]'s rule; two kinds, not one, because the
+payloads differ in the decisive field (`cause`) and [§13.4][s13-4]'s domain
+separation already treats the crash path as its own species.
+=== 105 decisions.md:3105 §13.4
+
+**Rationale.** [§12.4][s12-4]'s committed abandoned-join warning and device-crash log
+join [§13.2][s13-2]'s closed inventory per [D-092][d-092]'s rule; two kinds, not one, because the
+payloads differ in the decisive field (`cause`) and [§13.4][s13-4]'s domain
+separation already treats the crash path as its own species.
+
+=== 106 decisions.md:3186 §13.4
+refreshed own ports (handler returns latch per-event) while foreign transitions
+arrive only through the next round's re-sweep.
+
+**Spec.** [§5.3][s5-3], [§10.6][s10-6], [§11.2][s11-2], [§13.4][s13-4]
+
+**Rationale.** Immutable cell values make early reference-loading a zero-copy,
+=== 107 decisions.md:3191 §13.4
+**Rationale.** Immutable cell values make early reference-loading a zero-copy,
+zero-allocation capture ([§11.2][s11-2]'s publication trick applied within a boundary);
+cross-component handler order is thereby semantically unobservable and is fixed
+(executor component order, declaration order within a component) only for [§13.4][s13-4]
+cursor/diagnostic determinism; `u` binds round-start uniformly, the own-wired
+corner included.
+=== 108 decisions.md:3396 §13.2
+MalformedDatum(cause))`, continue; rate-limited per device — the `maxlog = 25`
+successor), any other exception propagates to the wrapper as `DeviceCrash`.
+
+**Spec.** [§11.4][s11-4], [§11.6][s11-6], [§13.2][s13-2], [§13.4][s13-4]
+
+**Rationale.** Classification is the author's, as FlightCore's
+=== 109 decisions.md:3396 §13.4
+MalformedDatum(cause))`, continue; rate-limited per device — the `maxlog = 25`
+successor), any other exception propagates to the wrapper as `DeviceCrash`.
+
+**Spec.** [§11.4][s11-4], [§11.6][s11-6], [§13.2][s13-2], [§13.4][s13-4]
+
+**Rationale.** Classification is the author's, as FlightCore's
+=== 110 decisions.md:3626 §13.4
+projection first executes its second branch at run time (the branch-dependent
+hole the always-on check exists to close).
+
+**Spec.** [§7.1][s7-1], [§9.5][s9-5], [§13.4][s13-4], [Appendix C][sC]
+
+**Rationale.** `ConformanceFailure`'s payload field renamed `stage` →
+=== 111 decisions.md:3629 §13.4
+**Spec.** [§7.1][s7-1], [§9.5][s9-5], [§13.4][s13-4], [Appendix C][sC]
+
+**Rationale.** `ConformanceFailure`'s payload field renamed `stage` →
+`function` (its values are function kinds — [§13.4][s13-4]'s cursor vocabulary;
+`UndeclaredReturnField` keeps `stage`, which for it is exact).
+
+=== 112 decisions.md:3711 §13.4
+**Status.** ratified
+
+**Position.** Snapshot/counter publication order and the counter's home: the
+boundary index is carried *in* the snapshot (with `t`) — what [§10.4][s10-4]/[§13.4][s13-4]'s
+boundary indexing from retained snapshots presupposes — and additionally
+mirrored in the loop state the wait predicate tests; publication order is
+=== 113 decisions.md:3719 §13.4
+boundary; waking onto a newer snapshot than the increment that woke the waiter
+is expected — newest-wins.
+
+**Spec.** [§10.4][s10-4], [§12.3][s12-3], [§13.4][s13-4]
+
+**Rationale.** Recorded only through the rejections below.
+=== 114 decisions.md:3734 §13.4
+  invisible in testing at 50 Hz, catastrophic for rate-matched telemetry:
+  boundary n transmitted twice, n+1 never.
+- *Counter as loop state only:* unreachable from a retained snapshot — breaks
+  [§10.4][s10-4]/[§13.4][s13-4]'s counter-plus-recorded-`t` boundary indexing.
+- *Counter as snapshot field only:* the wait predicate tests it under the
+  Condition's lock.
+=== 115 decisions.md:4191 §13.4
+state `step!` leaves; exact for grid boundaries; a localized `t*` boundary is
+reproduced but not stoppable-at). `StepError`'s replay pointer is respelled the
+**frame-entry boundary index** — the frame-top boundary (grid or boundary zero)
+at which the failing frame began — making [§13.4][s13-4]'s recipe total and exact:
+`replay!(to_boundary = k)` halts precisely there, `step!` re-executes the
+failing frame, localized boundaries included ("trace boundary index" deleted:
+=== 116 decisions.md:4197 §13.4
+the trace is frame-indexed, the pointer is a boundary index, the merged phrase
+named a nonexistent object).
+
+**Spec.** [§10.4][s10-4], [§12.3][s12-3], [§12.6][s12-6], [§12.7][s12-7], [§13.4][s13-4], [Appendix C][sC]
+
+**Rationale.** The boundary counter stays the reporting index ([§10.4][s10-4]'s
+=== 117 decisions.md:4256 §13.3
+of the three a client falls under is internal, never user-facing API
+([§14.4][s14-4]'s `apply!` precedent). This amends [D-061][d-061].
+
+**Spec.** [§11.2][s11-2], [§13.3][s13-3], [§14.2][s14-2], [§14.4][s14-4], [§14.9][s14-9]
+
+**Rationale.** Not [D-061][d-061]'s rejected instance-only walk: the declared-type walk
+=== 118 decisions.md:4283 §13.4
+no settled decision changes, only text brought into line with decisions already
+recorded.
+
+**Spec.** [§5.3][s5-3], [§6.2][s6-2], [§7][s7], [§7.1][s7-1], [§9.8][s9-8], [§11.4][s11-4], [§11.7][s11-7], [§12][s12], [§12.6][s12-6], [§9.5][s9-5], [§13.4][s13-4],
+[§14][s14], [§14.6][s14-6], [Appendix B][sB], [§D.3][sD-3], [§D.6][sD-6], [§D.8][sD-8]
+
+=== 119 decisions.md:4298 §13.4
+for chapter 10; `project`'s two schedule positions cited to [§5.3][s5-3], where the
+rule actually lives, from [§9.8][s9-8], [§9.5][s9-5] and [§D.3][sD-3], with a one-clause back-reference
+added at [§7.1][s7-1]'s write-back bullet; [§12.6][s12-6] says *five* states, agreeing with its
+own enumeration and with [§13.4][s13-4], [§14][s14]'s legality tables and [§D.8][sD-8]; and the two
+walkthroughs' six self-references, mis-resolved to unrelated spec chapters by
+the phase-4 linkify pass, now point at their own headings (the stray [§6.2][s6-2],
+=== 120 decisions.md:4319 §13.4
+  a [§7][s7] of its own — the ambiguity is real, only the author can settle it, and
+  the check would fail on correct text.
+- *[§12.6][s12-6]'s "four phases, the last terminal in two flavours" grouping:*
+  defensible but it re-describes what [§13.4][s13-4], [§14][s14] and [§D.8][sD-8] all count as five
+  statuses.
+
+=== 121 decisions.md:4333 §13.4
+`stopped` — boundary-consistent, serviceable by the [§14][s14] services, resumable by
+the next `run!`.
+
+**Spec.** [§10.7][s10-7], [§11.6][s11-6], [§12.4][s12-4](1), [§12.4][s12-4](3), [§12.4][s12-4](5), [§13.4][s13-4], [§13.5][s13-5], [§14][s14], [§14.8][s14-8],
+[Appendix C][sC]
+
+=== 122 decisions.md:4342 §13.4
+increment per frame) and takes the deferred raise at the unmask points — frame
+top, wait and pause blocks — all boundary-consistent; the
+`stopped`-with-consistent-stores guarantee depends on it. Two discrimination
+clauses fall out: [§13.4][s13-4]'s catch site never wraps an `InterruptException` in
+`StepError` (routes it to the stop path; unreachable in practice under masking,
+kept defensively), and [§11.6][s11-6]'s device wrapper never turns one into `DeviceCrash`
+=== 123 decisions.md:4418 §13.2
+debt forgiveness at five frames' worth of budget, `5·h/p` ([§10.7][s10-7], replacing "a
+few frames' worth"); heartbeat staleness 2 s ([§12.2][s12-2]); `margin` = 2 ms ([§10.7][s10-7]'s
+own arithmetic), replacing [Appendix B][sB]'s `margin = <default>` placeholder.
+[§13.2][s13-2]'s per-device warning rate limit alone is **deferred** to the
+diagnostic-stream decision [closed by [D-136][d-136]: the bound is the diagnostic cell's
+ring, not a constant]. Finally `t_end`'s landing rule, stated once in [§12.4][s12-4]:
+=== 124 decisions.md:4426 §13.2
+carrying the actual final `t` ([§13.5][s13-5]). This amends [D-127][d-127].
+
+**Spec.** [§10.4][s10-4], [§10.5][s10-5], [§10.7][s10-7], [§11.5][s11-5], [§12.2][s12-2], [§12.4][s12-4], [§12.4][s12-4](5), [§12.6][s12-6],
+[§12.7][s12-7], [§9.2][s9-2], [§13.2][s13-2], [§13.5][s13-5], [Appendix B][sB], [Appendix C][sC], [Appendix D][sD]
+
+**Rationale.** Semantic constants: `event_budget`'s default 8 covers a
+=== 125 decisions.md:4605 §13.2
+
+**Status.** ratified
+
+**Position.** Closing [D-133][d-133]'s [§13.2][s13-2] deferral, the runtime diagnostic stream and
+the liveness heartbeat get one mechanism — **one per-writer diagnostic cell**,
+one per rostered device plus one for the loop itself, single-writer by the same
+=== 126 decisions.md:4612 §13.2
+primitive), holding a **bounded ring of 16 diagnostic values plus per-kind
+suppressed counts** and an atomic heartbeat timestamp.
+
+**Spec.** [§9.8][s9-8], [§10.7][s10-7], [§11.2][s11-2], [§11.6][s11-6], [§11.8][s11-8], [§12.2][s12-2], [§12.4][s12-4], [§13.2][s13-2], [§13.5][s13-5], Appendices C/D
+
+**Rationale.** The bound **is** the rate limit — an emission past capacity
+=== 127 decisions.md:4616 §13.2
+
+**Rationale.** The bound **is** the rate limit — an emission past capacity
+within a frame is not stored and its kind's count increments, earliest-in-frame
+retained — which homes [§13.2][s13-2]'s "rate-limited wherever its source can repeat" as
+a structural property of the channel and discharges [D-133][d-133]'s deferral with no
+constant to tune. The loop takes each cell with `atomicswap` at the **frame-top
+=== 128 decisions.md:5116 §13.1
+can speak of, and probe-scoped phrasing would make the probe the reason rather
+than the enforcement moment, inviting the "can I detect that I am being
+probed?" escape. Two enforcement moments, one throw: at build, a value-level
+throw is a `UserCodeFraming`-wrapped build failure ([§13.1][s13-1]'s fail-fast user-code
+population) whose diagnostic points at code that is "correct" on every
+trajectory it has ever run; at runtime the identical throw is a `StepError` and
+=== 129 decisions.md:5119 §13.4
+throw is a `UserCodeFraming`-wrapped build failure ([§13.1][s13-1]'s fail-fast user-code
+population) whose diagnostic points at code that is "correct" on every
+trajectory it has ever run; at runtime the identical throw is a `StepError` and
+the run ends `errored` ([§13.4][s13-4]) — [§13.5][s13-5] already rules that exceptions from model
+code are always abnormal, so no new failure mode is introduced, only a stated
+obligation. Parameter validation is not banned but mislocated: it belongs where
+=== 130 decisions.md:5126 §13.1
+values, which run pre-build, where asserts are perfectly legitimate — never in
+a constructor invoked inside a stage on probe-fed data.
+
+**Spec.** [§9.3][s9-3], [§13.1][s13-1], [§13.4][s13-4], [§13.5][s13-5], [Appendix A][sA]
+
+**Rationale.** [§13.1][s13-1], [§13.4][s13-4] and [§13.5][s13-5] are otherwise unchanged by this finding.
+=== 131 decisions.md:5126 §13.4
+values, which run pre-build, where asserts are perfectly legitimate — never in
+a constructor invoked inside a stage on probe-fed data.
+
+**Spec.** [§9.3][s9-3], [§13.1][s13-1], [§13.4][s13-4], [§13.5][s13-5], [Appendix A][sA]
+
+**Rationale.** [§13.1][s13-1], [§13.4][s13-4] and [§13.5][s13-5] are otherwise unchanged by this finding.
+=== 132 decisions.md:5128 §13.1
+
+**Spec.** [§9.3][s9-3], [§13.1][s13-1], [§13.4][s13-4], [§13.5][s13-5], [Appendix A][sA]
+
+**Rationale.** [§13.1][s13-1], [§13.4][s13-4] and [§13.5][s13-5] are otherwise unchanged by this finding.
+Three patterns in shipped `landinggear.jl`, all walked by the dry run, get
+three distinct dispositions: (i) plausibility termination — `GroundCrash`
+=== 133 decisions.md:5128 §13.4
+
+**Spec.** [§9.3][s9-3], [§13.1][s13-1], [§13.4][s13-4], [§13.5][s13-5], [Appendix A][sA]
+
+**Rationale.** [§13.1][s13-1], [§13.4][s13-4] and [§13.5][s13-5] are otherwise unchanged by this finding.
+Three patterns in shipped `landinggear.jl`, all walked by the dry run, get
+three distinct dispositions: (i) plausibility termination — `GroundCrash`
+=== 134 decisions.md:5153 §13.1
+**Rejected.**
+- *Probe-time exception downgrading (catch user-code throws while probing and
+  warn):* it hides genuine bugs behind a warning, only defers the identical
+  throw to the first real step as a `StepError`, and breaks [§13.1][s13-1]'s clean
+  two-population split — declarative checks collect, user-code evaluation fails
+  fast.
+=== 135 decisions.md:5258 §13.3
+snapshots carry `get_` — `get_state`, `get_deriv`, `get_output`, `get_local`,
+`get_slot`, `get_face` ([§14.4][s14-4]); (3) lifecycle and mutating actions are verbs,
+`!` when they mutate — `build`, `run!`, `step!`, `replay!`, `init!`, `attach!`,
+`detach!`, `shutdown!`, `apply!`; (4) build primitives ([§13.3][s13-3],
+framework/tooling-facing) are plain verbs — `resolve`, `resolve_terminal`. A
+name in the wrong class is a rename candidate on that ground alone. Two
+=== 136 decisions.md:5267 §13.3
+surface) and `workspace` (a declaration whose bare noun reads as an accessor —
+borderline, every rename candidate clunkier, lean keep).
+
+**Spec.** [§11.6][s11-6], [§8.1][s8-1], [§8.6][s8-6], [§8.8][s8-8], [§9.1][s9-1], [§13.3][s13-3], [§13.7][s13-7], [§14.4][s14-4], Appendix
+B (swept)
+
+=== 137 decisions.md:5870 §13.4
+and `ẋ` buffers are integrator scratch, not boundary-consistent ([D-098][d-098]'s
+source axis).
+
+**Spec.** [§8.4][s8-4], [§9.5][s9-5], [§13.4][s13-4]
+
+**Rationale.** A round-5 kernel dry-run finding (finding 13).
+=== 138 decisions.md:5919 §13.2
+stopped-sim service call that completed, emitted at the call site beside the
+returned value through the standard logging backend, never thrown, part of no
+collection, unlimited because each kind fires at most once per call, payload
+drawn from the report the call returns; [§13.2][s13-2]'s two-stream partition stands — a
+service warning is not a stream but a synchronous per-call annotation.
+
+=== 139 decisions.md:5922 §13.2
+drawn from the report the call returns; [§13.2][s13-2]'s two-stream partition stands — a
+service warning is not a stream but a synchronous per-call annotation.
+
+**Spec.** [§13.2][s13-2], [Appendix C][sC]
+
+**Rationale.** A round-5 landing-audit finding (finding 1), completing
+=== 140 decisions.md:6089 §13.2
+declared ports that may be empty) — a stage producing neither ports nor `w` is
+a dead-stage build error (`DeadStage`).
+
+**Spec.** [§5.2][s5-2], [§5.4][s5-4], [§9.8][s9-8], [§11.2][s11-2], [§8.3][s8-3], [§9.5][s9-5], [§9.7][s9-7], [§13.2][s13-2], [§14.4][s14-4]
+
+**Rationale.** `w` carries the component's private intermediates: an
+=== 141 decisions.md:6102 §13.2
+
+`w` joins the closed bundle name sets of `h_xu`, `f`, guards, handlers, `h_zu`,
+`g`; presence in a bundle follows the producing stage's probed return (bare-`y`
+producer ⇒ no `w` key ⇒ the [§13.2][s13-2] framing diagnostic on a consumer that
+destructures it).
+
+=== 142 decisions.md:6293 §13
+named wiring error at build), `Int`/`Bool` and abstract reference-typed entries
+(field handles) as today.
+
+**Spec.** [§6.1][s6-1], [§8.2][s8-2], [§8.5][s8-5], [§13][s13], [§14.10][s14-10], [Appendix D][sD]
+
+**Rationale.** Entries remain face bounds, not cell types: the nominal bound
+=== 143 decisions.md:6305 §13
+entry; a pinned producer leaf satisfies either* (frozen values embed upward),
+violation being `WalkingFaceAtFrozenEntry` (consumer path + entry, producer
+path + face, the leaf, both declared leaf types, both remedies in the message;
+[§13][s13]).
+
+**The clause is tier-scoped, and the scope is decisive**: discrete
+=== 144 decisions.md:6411 §13.2
+would be `fused_evaluation_lineage.md` step 4's rejected identity transport relocated from the table
+into a bundle.
+
+**Spec.** [§5.2][s5-2], [§5.3][s5-3], [§9.3][s9-3], [§13.2][s13-2], [§13.8][s13-8], [Appendix B][sB], [Appendix D][sD]
+
+**Rationale.** It is also what [§9.3][s9-3] already sources (the stage-1 *probe's
+=== 145 decisions.md:6417 §13.2
+return*), so the clause records existing machinery rather than changing it;
+corollary, stated because it is the case a reader will hit: a component whose
+only stage-1 ports are auto-published has no `y_x` in its stage-2 bundle at
+all, and a stage-2 function destructuring one meets [§13.2][s13-2]'s framing diagnostic.
+
+Context: this arose while re-examining whether `y_x` survives [D-165][d-165] at all — it
+=== 146 decisions.md:6455 §13.3
+the way the signal flows, left = producer or entry point, right = consumer,
+every right side fed exactly once.
+
+**Spec.** [§3.3][s3-3], [§6.1][s6-1], [§6.2][s6-2], [§11.3][s11-3], [§8.1][s8-1], [§8.2][s8-2], [§8.5][s8-5], [§8.6][s8-6], [§8.8][s8-8], [§9][s9], [§13.3][s13-3]
+(swept)
+
+=== 147 decisions.md:7059 §13.1
+defaulting to `Relative(1)`, validation Stratum A's with path attribution and
+the constructors plain data carriers.
+
+**Spec.** [§10.5][s10-5], [§8.7][s8-7], [§9.1][s9-1], [§9.7][s9-7], [§13.1][s13-1], [§14.5][s14-5], [§14.8][s14-8]
+
+**Rationale.** Composition: multipliers multiplicative, phases affine (`D =
+=== 148 decisions.md:7089 §13.1
+- *Floats in periods or offsets:* GCD derivation over floats is ill-defined;
+  `Rational{Int}` fields make exactness structural.
+- *Constructor-side range validation:* instant REPL feedback, but fails a
+  `sample_times` body's *evaluation* with a raw exception against [§13.1][s13-1]'s
+  collect-the-checks policy.
+- *Materialized due sets:* a precomputed hyperperiod table (the lcm grows
+=== 149 decisions.md:7457 §13.2
+  `DeclarationOnWrongTier`'s member set — a discrete leaf declaring `h_x`, or
+  a continuous one declaring `h_s`, is statically diagnosable again.
+
+**Spec.** [§3.2][s3-2], [§5.2][s5-2], [§5.3][s5-3], [§7.3][s7-3], [§8.2][s8-2], [§8.7][s8-7], [§9.3][s9-3], [§9.5][s9-5], [§12.5][s12-5], [§13.2][s13-2], [§13.7][s13-7], [§14.1][s14-1], [§3.4][s3-4], [§8.6][s8-6],
+[Appendix A][sA], [Appendix B][sB], [Appendix C][sC], [Appendix D][sD] (all companions swept)
+
+=== 150 decisions.md:7648 §13.2
+
+**Position.** The terminal snapshot's diagnostic account is complete up to its own frame top, and diagnostics arising after it are presented, never published: the loop sweeps every cell once more at the run's end — so nothing leaks into the next run's account — and emits the residue through the standard logging backend, with `DeviceJoinTimeout`, which arises in tail step (5) by construction, emitted the same way ([§12.4][s12-4], [§11.8][s11-8]). This amends [D-136][d-136]'s completeness claim by one window: complete means complete to the final frame top.
+
+**Spec.** [§11.8][s11-8], [§12.4][s12-4], [§13.2][s13-2], [Appendix C][sC]
+
+**Rationale.** The tail's ordering is normative — the final snapshot is published before the sticky status precisely so consumers can flush the true final state — so a join timeout postdates the run's last publishable value by construction, and a cell entry written after the final frame-top drain has no later drain to fold it. The window cannot be closed, only disposed of honestly: the run's-end sweep guarantees a bounded, attributed presentation and a clean next run, while every published status stays exactly what [§11.8][s11-8] promises — delta plus totals as of that boundary.
+=== 151 decisions.md:7717 §13.2
+still never published. The bundled rulings:
+
+- The sources follow the diagnostic kind convention — kind is identity,
+  payload plain data ([§13.2][s13-2]) — without joining [Appendix C][sC]'s diagnostic set:
+  `EndTimeReached` (no payload), `ModelRequestedStop` (the holding face),
+  `ControlRequestedStop` (its issuer), and `LoopError` (the propagated
+=== 152 decisions.md:7748 §13.2
+it is not a drop. It is stopped-sim state on the diagnostic-observation side
+of [§13.5][s13-5]'s own doctrine, and the precedent of carrying failure detail was
+already spent when the abnormal path put the cause exception in the record.
+The typed sources apply [§13.2][s13-2]'s convention to the outcome channel, dissolving
+a flat record whose `exception` field applied only to the error case and
+whose `face` field only to the stop-face case; construction simplifies with
+=== 153 decisions.md:7786 §13.2
+  issuer, and a distinct type would quietly reverse a settled ruling for no
+  gain.
+- *A flat record with `nothing`-padded per-source fields (the prototype's
+  first cut):* the shape [§13.2][s13-2] rejects for diagnostics — most fields
+  meaningless for most sources, tests matching on a `Symbol` instead of a
+  type.
+=== 154 decisions.md:7935 §13.3
+- Deep structural paths survive on the read side — inspection, logging,
+  the face routes — untouched.
+
+**Spec.** [§6.1][s6-1], [§8.6][s8-6], [§8.8][s8-8], [§9.2][s9-2], [§13.3][s13-3], [§14.2][s14-2], [§14.3][s14-3]
+
+**Rationale.** The deep-path privilege made the face graph structurally
+=== 155 decisions.md:8207 §13.2
+placement notes) and **policy** (how it is reported — `collected`, `fail-fast`,
+`logged`, `rate-limited`). A kind raised at more than one stage lists each.
+
+**Spec.** [§13.2][s13-2], [Appendix C][sC]
+
+**Rationale.** Surfaced while briefing the prototype's diagnostic-carrier
+=== 156 decisions.md:8210 §13.2
+**Spec.** [§13.2][s13-2], [Appendix C][sC]
+
+**Rationale.** Surfaced while briefing the prototype's diagnostic-carrier
+increment: [§13.2][s13-2] says severity is a payload field from which the column derives,
+but the column's vocabulary — `build (collected)`, `warning (service)`, `build
+(fail-fast) at probe; runtime as a StepError species` — is not a value one field
+=== 157 decisions.md:8261 §13.2
+- Internal invariant checks are not diagnostics: they raise a distinct
+  `InternalInvariant` exception outside the kind set.
+
+**Spec.** [§8.2][s8-2], [§8.5][s8-5], [§11.3][s11-3], [§13.2][s13-2], [Appendix C][sC]
+
+**Rationale.** Surfaced by the site inventory for the prototype increment
+=== 158 decisions.md:8309 §13.2
+  no output side).
+- Every other payload the prototype carries short of its column stays as
+  written: the column is the design, and the prototype records its own gaps.
+  A selector carried as its rendered spelling is licensed — [§13.2][s13-2]'s rule is
+  against instances and model types, and a spelling is a string.
+
+=== 159 decisions.md:8312 §13.2
+  A selector carried as its rendered spelling is licensed — [§13.2][s13-2]'s rule is
+  against instances and model types, and a spelling is a string.
+
+**Spec.** [§11.3][s11-3], [§11.6][s11-6], [§13.2][s13-2], [Appendix C][sC]
+
+**Rationale.** The payload and policy columns were untested design claims
+=== 160 decisions.md:8319 §13.1
+move rather than the code. A check that runs over a list — the stop faces
+given, the faces a device claims, the entries of a table — is collecting by
+its shape, and making it throw on the first would discard violations the pass
+already holds, the cost [§13.1][s13-1] exists to avoid. An id assigned at admission
+cannot be in a refusal that keeps the device out. A column narrower than the
+sub-kinds it names cannot be the acceptance contract for tests that match on
+=== 161 decisions.md:8342 §13.1
+
+**Rejected.**
+- *Making the three service checks fail-fast to match the column:* throws
+  away violations the pass already has, against [§13.1][s13-1]'s reasoning.
+- *Reserving a roster id before admission:* an id for a device the roster
+  never held, in every refusal's payload.
+=== 162 decisions.md:8437 §13.4
+  the records exhausted, and stays `:replay` otherwise. `init!` and a fresh
+  `replay!` reset it with the trajectory.
+
+**Spec.** [§11.5][s11-5], [§12.6][s12-6], [§12.7][s12-7], [§13.4][s13-4]
+
+**Rationale.** [§13.4][s13-4] promises that after `replay!(sim2, trc; to_boundary = k)`
+=== 163 decisions.md:8439 §13.4
+
+**Spec.** [§11.5][s11-5], [§12.6][s12-6], [§12.7][s12-7], [§13.4][s13-4]
+
+**Rationale.** [§13.4][s13-4] promises that after `replay!(sim2, trc; to_boundary = k)`
+a `step!` re-executes frame k+1 on its recorded inputs. The promise needs the
+recording to still have a consumer after `replay!` returns, which a mode
+=== 164 decisions.md:8462 §13.4
+- *The implicit switch — a feed present only while the replay call runs:* the
+  feed is dismantled when the replay loop exits, so after a partial replay the
+  record at ordinal k+1 has no consumer and the following `step!` runs a live
+  frame with empty staging. [§13.4][s13-4]'s reproduction workflow then reproduces a
+  different frame, silently.
+- *Re-staging the halt-adjacent records into the live staging cells:* it needs
+=== 165 decisions.md:8549 §13.4
+
+**Spec.** [§2.3][s2-3], [§3.2][s3-2], [§4.3][s4-3], [§4.4][s4-4], [§5.2][s5-2], [§5.3][s5-3], [§5.4][s5-4], [§6.2][s6-2], [§7.1][s7-1],
+[§9.8][s9-8], [§8.1][s8-1], [§8.2][s8-2], [§8.5][s8-5], [§9.3][s9-3], [§9.4][s9-4], [§9.5][s9-5], [§9.7][s9-7], [§10.4][s10-4], [§10.5][s10-5], [§10.6][s10-6], [§12.5][s12-5],
+[§13.4][s13-4], [§13.5][s13-5], [§13.6][s13-6], [§13.7][s13-7], [§14.5][s14-5], [§14.7][s14-7], [§14.8][s14-8], [§14.10][s14-10], [§3.4][s3-4], [§8.6][s8-6],
+[Appendix A][sA], [Appendix B][sB], [Appendix C][sC], [Appendix D][sD]
+
+=== 166 decisions.md:8646 §13.2
+- Deferred, registered in the pending list: parametrizing `StepError` on its
+  cause's type, so a species is assertable as `StepError{Kind}`.
+
+**Spec.** [§9.5][s9-5], [§13.2][s13-2], [§13.4][s13-4], [Appendix C][sC], [Appendix D][sD]
+
+**Rationale.** [§13.4][s13-4] said a conformance failure "is thrown as its typed
+=== 167 decisions.md:8646 §13.4
+- Deferred, registered in the pending list: parametrizing `StepError` on its
+  cause's type, so a species is assertable as `StepError{Kind}`.
+
+**Spec.** [§9.5][s9-5], [§13.2][s13-2], [§13.4][s13-4], [Appendix C][sC], [Appendix D][sD]
+
+**Rationale.** [§13.4][s13-4] said a conformance failure "is thrown as its typed
+=== 168 decisions.md:8648 §13.4
+
+**Spec.** [§9.5][s9-5], [§13.2][s13-2], [§13.4][s13-4], [Appendix C][sC], [Appendix D][sD]
+
+**Rationale.** [§13.4][s13-4] said a conformance failure "is thrown as its typed
+diagnostic" and "is a species of `StepError`" without saying how the catch site
+recognizes one. The prototype's spelling is ratified as the rule. A diagnostic
+=== 169 decisions.md:8685 §13.2
+- The rename sweeps the spec, its companions, the code and the tests; the log
+  keeps its vocabulary.
+
+**Spec.** [§13.2][s13-2], [§13.4][s13-4], [§14.1][s14-1], [§14.8][s14-8], [Appendix C][sC], [Appendix D][sD]
+
+**Rationale.** The name claimed a tier while the job spanned three sites: the
+=== 170 decisions.md:8685 §13.4
+- The rename sweeps the spec, its companions, the code and the tests; the log
+  keeps its vocabulary.
+
+**Spec.** [§13.2][s13-2], [§13.4][s13-4], [§14.1][s14-1], [§14.8][s14-8], [Appendix C][sC], [Appendix D][sD]
+
+**Rationale.** The name claimed a tier while the job spanned three sites: the
+=== 171 decisions.md:8694 §13.2
+the catch site's unwrap and the carrier's `showerror`. [D-214][d-214] made policy a
+property of the occurrence, and the exception is the occurrence, so the type
+carries it. Putting the kind in the parameter gives tests `@test_throws
+DiagnosticError{Kind}`, a spelling of [§13.2][s13-2]'s kind-not-message doctrine in the
+type system, and keeps `isa DiagnosticError` as the catch-all for both
+policies.
+=== 172 decisions.md:8726 §13.4
+- An interrupt inside boundary zero moves the lifecycle to `built` and
+  propagates raw; a service has no stop path.
+
+**Spec.** [§12.6][s12-6], [§13.4][s13-4]
+
+**Rationale.** Boundary zero runs the loop's user-code surfaces with the cursor
+=== 173 decisions.md:8793 §13.2
+  constructor with a `MethodError` inside the catch and leaves unframed.
+  Accepted, not handled.
+
+**Spec.** [§13.2][s13-2], [§13.4][s13-4], [Appendix C][sC], [Appendix D][sD]
+
+**Rationale.** [D-222][d-222] put the kind in the build carrier's parameter so a test
+=== 174 decisions.md:8793 §13.4
+  constructor with a `MethodError` inside the catch and leaves unframed.
+  Accepted, not handled.
+
+**Spec.** [§13.2][s13-2], [§13.4][s13-4], [Appendix C][sC], [Appendix D][sD]
+
+**Rationale.** [D-222][d-222] put the kind in the build carrier's parameter so a test
+=== 175 decisions.md:8800 §13.4
+deferred the runtime counterpart so the carrier change landed alone. Left as
+`cause::Any`, a species was recognizable only by reading the field, and every
+species assertion spelled the two conjuncts the build side had just retired.
+The bound states in the type what [§13.4][s13-4] states in prose: the cause is the
+unwrapped diagnostic of a species or the exception model code threw. Every
+ordinary throw is an `Exception`, `error`, `@assert`, a `MethodError`, a
+=== 176 decisions.md:8950 §13.1
+the next stratum. What that rule yields, pass by pass:
+- A wiring failure is walked past. The resolver records it and yields no
+  producer, the walk claims nothing, and the obligation check reports the
+  input it left unfed beside it ([§13.1][s13-1]'s worked example).
+- A structural failure throws at once and alone: an unreadable or mixed
+  class, a malformed container. The subtree behind it is unknown, so no
+=== 177 decisions.md:8960 §13.1
+- Outside the strata the unit is the call. Deployment validation ([§9.2][s9-2]) runs
+  every check whose premise holds and throws once.
+
+**Spec.** [§9.1][s9-1], [§9.2][s9-2], [§13.1][s13-1], [Appendix C][sC]
+
+**Rationale.** [§13.1][s13-1] fixed that declarative passes collect and strata are
+=== 178 decisions.md:8962 §13.1
+
+**Spec.** [§9.1][s9-1], [§9.2][s9-2], [§13.1][s13-1], [Appendix C][sC]
+
+**Rationale.** [§13.1][s13-1] fixed that declarative passes collect and strata are
+barriers, and left unsaid what a pass does with a violation inside itself
+and whether the throw belongs to the pass or the stratum. The worked example
+=== 179 decisions.md:9022 §13.4
+nothing reads its value otherwise. The snapshot is a per-trajectory value in
+every other field, `t` restarting at `t₀` and the frame index at 0, so its
+index restarts too, and a mechanism's private fact stays out of a published
+payload. The replay pointer of [§13.4][s13-4] is a third index, the frame-entry
+boundary index, a frame count that can name no `t*` boundary; [§10.4][s10-4] and
+[§12.3][s12-3] had called it the counter and now name it as what it is. The cost is
+=== 180 decisions.md:9195 §13.4
+  checks apply the same relation.
+- A conformant return type generates the straight stores. A non-conformant one
+  generates a throw of `ConformanceFailure`, a `StepError` species at runtime
+  ([§13.4][s13-4]).
+
+**Spec.** [§7.1][s7-1], [§8.2][s8-2], [§9.5][s9-5], [Appendix C][sC]
+=== 181 decisions.md:9294 §13.1
+  shape):* refuses an abstract entry's lawful concrete producer, so [§4.4][s4-4]'s
+  substitutability and [§8.2][s8-2]'s abstract entries have no code.
+- *The check at the probe, on the probed value's type:* one stratum late,
+  fail-fast where [§13.1][s13-1] collects, and blind to the walk clause at nominal.
+- *A per-leaf meet on root inputs:* legal by the clause but yields a cell type
+  no consumer declared, needs a leaf walk abstract co-consumers cannot join,
+=== 182 decisions.md:9411 §13.1
+`DeclaredNotProduced` belongs to the completeness pass over the complete
+products, which runs only once every port check has passed.
+
+**Spec.** [§8.3][s8-3], [§8.4][s8-4], [§13.1][s13-1], [Appendix C][sC]
+
+**Rationale.** [§8.4][s8-4]'s fifth walkthrough promised the pair: the did-you-mean
+=== 183 decisions.md:9424 §13.1
+the second diagnostic carries nothing the first does not: renaming the field
+produces the port, and the next build is clean. [D-057][d-057]'s no-suppression rule
+is untouched. It keeps a diagnostic two passes both produce, as the
+typo'd-wire pair of [§13.1][s13-1], and never asks a pass to manufacture one after the
+chain has stopped.
+
+=== 184 decisions.md:9498 §13.3
+
+**Status.** ratified
+
+**Position.** [§13.3][s13-3]'s three resolution cases are named by their client, and
+two words leave the design documents' vocabulary, the log included. Every
+position stands as ratified; only the words for unchanged concepts move, under
+=== 185 decisions.md:9524 §13.2
+- "Load-bearing" is dropped outright, its plain-intensifier uses replaced by
+  ordinary words.
+
+**Spec.** [§8.1][s8-1], [§8.2][s8-2], [§10.5][s10-5], [§11.2][s11-2], [§11.3][s11-3], [§11.5][s11-5], [§12.6][s12-6], [§12.7][s12-7], [§13.2][s13-2], [§13.3][s13-3], [§13.5][s13-5],
+[§14.4][s14-4], [§14.8][s14-8], [§3.4][s3-4], [§8.6][s8-6], [Appendix A][sA], [§D.10][sD-10]
+
+=== 186 decisions.md:9524 §13.3
+- "Load-bearing" is dropped outright, its plain-intensifier uses replaced by
+  ordinary words.
+
+**Spec.** [§8.1][s8-1], [§8.2][s8-2], [§10.5][s10-5], [§11.2][s11-2], [§11.3][s11-3], [§11.5][s11-5], [§12.6][s12-6], [§12.7][s12-7], [§13.2][s13-2], [§13.3][s13-3], [§13.5][s13-5],
+[§14.4][s14-4], [§14.8][s14-8], [§3.4][s3-4], [§8.6][s8-6], [Appendix A][sA], [§D.10][sD-10]
+
+=== 187 decisions.md:9766 §13.1
+service then uses, the discipline `output_types` already asks of ports. The
+leaf walk is not the obstacle: an `SArray` lays out wherever it sits.
+
+The check collects under [§13.1][s13-1]'s rule for declarative checks and runs first
+in the walk's primitive branch, since the classifier and the field checks
+cannot read the value. A primitive that fails it records `nothing` for its
+=== 188 decisions.md:9803 §13.2
+- The framed set is the declarations of [§8.2][s8-2] and the probed functions of [§9.3][s9-3]
+  alike. [D-142][d-142]'s list is its inputs-bearing subset.
+- The probe context is carried as names and a spelling, never as values,
+  under [§13.2][s13-2]'s strings-never-instances rule.
+- A `DiagnosticError` carrier, an `InternalInvariant` and an
+  `InterruptException` pass through the frame unwrapped.
+=== 189 decisions.md:9807 §13.4
+- A `DiagnosticError` carrier, an `InternalInvariant` and an
+  `InterruptException` pass through the frame unwrapped.
+- A `FieldError` matched against the bundle is `BundleFieldError` at the
+  probe and a `StepError` species at [§13.4][s13-4]'s catch site. The probe
+  matches by the bundle's own type, which its accessor holds; the catch site
+  matches by the bundle's field names, since the activation's bundle type is
+=== 190 decisions.md:9812 §13.2
+  matches by the bundle's field names, since the activation's bundle type is
+  not in hand there. `UserCodeFraming` stays build-only.
+
+**Spec.** [§9.3][s9-3], [§13.2][s13-2], [§13.4][s13-4], [Appendix C][sC]
+
+**Rationale.** [D-142][d-142]'s totality contract lists the functions that receive a
+=== 191 decisions.md:9812 §13.4
+  matches by the bundle's field names, since the activation's bundle type is
+  not in hand there. `UserCodeFraming` stays build-only.
+
+**Spec.** [§9.3][s9-3], [§13.2][s13-2], [§13.4][s13-4], [Appendix C][sC]
+
+**Rationale.** [D-142][d-142]'s totality contract lists the functions that receive a
+=== 192 decisions.md:9827 §13.2
+fourteen sites keeps the frame from being fourteen try blocks, and removes
+the repeated re-reads of `init_m` on the way. The context payload reads
+"including synthesized inputs" as a spelling because the values would be
+instances of the author's own port types, which [§13.2][s13-2] keeps out of every
+payload and [D-216][d-216] licenses as spellings.
+
+=== 193 decisions.md:9835 §13.2
+  surface that fails outside the framework's vocabulary, for no runtime
+  saving.
+- *One frame per stratum, recovering the function from the backtrace:* the
+  frame would name the function by scraping a stack, which [§13.2][s13-2]'s
+  structured-not-textual rule forbids.
+- *The bundle's values in the payload:* instances of the author's port types
+=== 194 decisions.md:9916 §13.2
+
+**Status.** ratified
+
+**Position.** One warning policy replaces the two streams of [§13.2][s13-2]. An
+artifact is an immutable pure function of its inputs; state is single-owner
+and mutated in place. A warning raised while producing an artifact lives on
+=== 195 decisions.md:9940 §13.2
+  cell, since `attach!` mutates the roster, and surfaces through the status
+  record. The log line at return stays as presentation.
+
+**Spec.** [§9.2][s9-2], [§11.6][s11-6], [§11.8][s11-8], [§13.2][s13-2], [Appendix C][sC]
+
+**Rationale.** [§13.2][s13-2] placed warnings by where they were raised: the build's
+=== 196 decisions.md:9942 §13.2
+
+**Spec.** [§9.2][s9-2], [§11.6][s11-6], [§11.8][s11-8], [§13.2][s13-2], [Appendix C][sC]
+
+**Rationale.** [§13.2][s13-2] placed warnings by where they were raised: the build's
+collection, the runtime's per-writer cells, and a third home for service
+warnings that "belong to neither stream" and are emitted once at return
+=== 197 decisions.md:9967 §13.2
+  to every reader but the one at the terminal.
+- *A global warning collector:* two concurrent builds would interleave, and
+  the collector would outlive the artifact it described.
+- *Promoting build warnings to errors under a CI switch:* [§13.2][s13-2] already
+  rejects it; an empty selection is a fact about the model worth knowing,
+  not a defect.
+=== 198 decisions.md:10035 §13.2
+publication rule, [D-152][d-152]'s successor in [D-154][d-154]'s sequence, and [D-169][d-169].
+
+**Spec.** [§5.2][s5-2], [§5.3][s5-3], [§7.1][s7-1], [§8.3][s8-3], [§9.1][s9-1],
+[§9.3][s9-3], [§10.6][s10-6], [§11.2][s11-2], [§13.2][s13-2], [Appendix B][sB],
+[Appendix C][sC], [Appendix D][sD]
+
+=== 199 decisions.md:10110 §13.3
+  fixes both the structure and the `Float64` typing, and no activation step
+  runs at `Float64`.
+
+**Spec.** [§9.1][s9-1], [§9.2][s9-2], [§9.3][s9-3], [§9.4][s9-4], [§9.7][s9-7], [§13.3][s13-3], [§13.4][s13-4], [§13.7][s13-7], [§14.1][s14-1], [§14.4][s14-4]
+
+**Rationale.** A step is well-defined when it consumes one new piece of
+=== 200 decisions.md:10110 §13.4
+  fixes both the structure and the `Float64` typing, and no activation step
+  runs at `Float64`.
+
+**Spec.** [§9.1][s9-1], [§9.2][s9-2], [§9.3][s9-3], [§9.4][s9-4], [§9.7][s9-7], [§13.3][s13-3], [§13.4][s13-4], [§13.7][s13-7], [§14.1][s14-1], [§14.4][s14-4]
+
+**Rationale.** A step is well-defined when it consumes one new piece of
+=== 201 decisions.md:10447 §13.1
+  out). [§9.1][s9-1] opens with a table of what each step consumes and produces,
+  with the deployment and the materialization on it as the steps after the
+  build.
+- Each step is a barrier, as each stratum was ([§13.1][s13-1]). No user stage code
+  runs before the structure step completes. The nominal evaluation's
+  products are names only. Only activation re-runs per scalar.
+=== 202 decisions.md:10458 §13.1
+  [D-253][d-253]'s fourth bullet is amended in place to the nominal evaluation's
+  return.
+
+**Spec.** [§6.1][s6-1], [§8.2][s8-2], [§8.5][s8-5], [§9.1][s9-1], [§9.2][s9-2], [§9.4][s9-4], [§9.6][s9-6], [§13.1][s13-1], [§13.2][s13-2], [§13.3][s13-3], [§13.8][s13-8], [§14.3][s14-3], [Appendix C][sC], [Appendix D][sD]
+
+**Rationale.** The strata were named before any step existed as code. Once
+=== 203 decisions.md:10458 §13.2
+  [D-253][d-253]'s fourth bullet is amended in place to the nominal evaluation's
+  return.
+
+**Spec.** [§6.1][s6-1], [§8.2][s8-2], [§8.5][s8-5], [§9.1][s9-1], [§9.2][s9-2], [§9.4][s9-4], [§9.6][s9-6], [§13.1][s13-1], [§13.2][s13-2], [§13.3][s13-3], [§13.8][s13-8], [§14.3][s14-3], [Appendix C][sC], [Appendix D][sD]
+
+**Rationale.** The strata were named before any step existed as code. Once
+=== 204 decisions.md:10458 §13.3
+  [D-253][d-253]'s fourth bullet is amended in place to the nominal evaluation's
+  return.
+
+**Spec.** [§6.1][s6-1], [§8.2][s8-2], [§8.5][s8-5], [§9.1][s9-1], [§9.2][s9-2], [§9.4][s9-4], [§9.6][s9-6], [§13.1][s13-1], [§13.2][s13-2], [§13.3][s13-3], [§13.8][s13-8], [§14.3][s14-3], [Appendix C][sC], [Appendix D][sD]
+
+**Rationale.** The strata were named before any step existed as code. Once
+=== 205 decisions.md:11172 §13.1
+
+**Spec.** [§3.4][s3-4], [§4.1][s4-1], [§4.3][s4-3], [§4.4][s4-4], [§5.2][s5-2], [§5.3][s5-3], [§5.4][s5-4], [§6.2][s6-2], [§7.1][s7-1], [§7.2][s7-2], [§7.3][s7-3], [§8.1][s8-1],
+[§8.2][s8-2], [§8.3][s8-3], [§8.4][s8-4], [§8.5][s8-5], [§8.6][s8-6], [§8.8][s8-8], [§9.1][s9-1], [§9.3][s9-3], [§9.4][s9-4], [§9.5][s9-5], [§9.7][s9-7], [§9.8][s9-8],
+[§10.5][s10-5], [§10.6][s10-6], [§11.2][s11-2], [§11.3][s11-3], [§12.5][s12-5], [§13.1][s13-1], [§13.3][s13-3], [§13.4][s13-4], [§13.5][s13-5], [§13.7][s13-7], [§13.8][s13-8],
+[§14.3][s14-3], [§14.4][s14-4], [§14.5][s14-5], [§14.7][s14-7], [§14.8][s14-8], [§14.10][s14-10], [Appendix A][sA], [Appendix B][sB],
+[Appendix C][sC], [Appendix D][sD]
+=== 206 decisions.md:11172 §13.3
+
+**Spec.** [§3.4][s3-4], [§4.1][s4-1], [§4.3][s4-3], [§4.4][s4-4], [§5.2][s5-2], [§5.3][s5-3], [§5.4][s5-4], [§6.2][s6-2], [§7.1][s7-1], [§7.2][s7-2], [§7.3][s7-3], [§8.1][s8-1],
+[§8.2][s8-2], [§8.3][s8-3], [§8.4][s8-4], [§8.5][s8-5], [§8.6][s8-6], [§8.8][s8-8], [§9.1][s9-1], [§9.3][s9-3], [§9.4][s9-4], [§9.5][s9-5], [§9.7][s9-7], [§9.8][s9-8],
+[§10.5][s10-5], [§10.6][s10-6], [§11.2][s11-2], [§11.3][s11-3], [§12.5][s12-5], [§13.1][s13-1], [§13.3][s13-3], [§13.4][s13-4], [§13.5][s13-5], [§13.7][s13-7], [§13.8][s13-8],
+[§14.3][s14-3], [§14.4][s14-4], [§14.5][s14-5], [§14.7][s14-7], [§14.8][s14-8], [§14.10][s14-10], [Appendix A][sA], [Appendix B][sB],
+[Appendix C][sC], [Appendix D][sD]
+=== 207 decisions.md:11172 §13.4
+
+**Spec.** [§3.4][s3-4], [§4.1][s4-1], [§4.3][s4-3], [§4.4][s4-4], [§5.2][s5-2], [§5.3][s5-3], [§5.4][s5-4], [§6.2][s6-2], [§7.1][s7-1], [§7.2][s7-2], [§7.3][s7-3], [§8.1][s8-1],
+[§8.2][s8-2], [§8.3][s8-3], [§8.4][s8-4], [§8.5][s8-5], [§8.6][s8-6], [§8.8][s8-8], [§9.1][s9-1], [§9.3][s9-3], [§9.4][s9-4], [§9.5][s9-5], [§9.7][s9-7], [§9.8][s9-8],
+[§10.5][s10-5], [§10.6][s10-6], [§11.2][s11-2], [§11.3][s11-3], [§12.5][s12-5], [§13.1][s13-1], [§13.3][s13-3], [§13.4][s13-4], [§13.5][s13-5], [§13.7][s13-7], [§13.8][s13-8],
+[§14.3][s14-3], [§14.4][s14-4], [§14.5][s14-5], [§14.7][s14-7], [§14.8][s14-8], [§14.10][s14-10], [Appendix A][sA], [Appendix B][sB],
+[Appendix C][sC], [Appendix D][sD]
+=== 208 decisions.md:11282 §13.4
+- The tail's bookkeeping after the joins runs under the mask; a raise
+  deferred to its end propagates raw out of `run!`, the simulation already
+  terminal.
+- `run!` discriminates [§13.4][s13-4]'s two dispositions by the roster: empty is
+  unattended and rethrows, non-empty logs the rendered error and returns
+  with the lifecycle `errored`. `step!` always rethrows.
+=== 209 decisions.md:11305 §13.4
+  loop's throw before anything can cut its handling, and the masked
+  bookkeeping builds the `LoopError` from the store, so the run ends
+  `errored`. An interrupt that cuts the handling itself propagates raw,
+  [§13.4][s13-4]'s disposition skipped and the record written.
+
+**Spec.** [§11.6][s11-6], [§12.1][s12-1], [§12.4][s12-4], [§13.4][s13-4], [Appendix B][sB]
+=== 210 decisions.md:11307 §13.4
+  `errored`. An interrupt that cuts the handling itself propagates raw,
+  [§13.4][s13-4]'s disposition skipped and the record written.
+
+**Spec.** [§11.6][s11-6], [§12.1][s12-1], [§12.4][s12-4], [§13.4][s13-4], [Appendix B][sB]
+
+**Rationale.** [§12.1][s12-1] named the pause as a control-plane field and [§12.4][s12-4] built
+=== 211 decisions.md:11340 §13.4
+
+The roster is the discriminator because [§11.1][s11-1] defines the unattended run,
+[§12.6][s12-6] states that a deviceless `run!` is fully synchronous, and
+[§13.4][s13-4]'s rethrow presupposes it. The discrimination
+sits in `run!` alone since `step!` is deviceless by construction. A probe
+under `Base.exit_on_sigint(false)` with `kill(getpid(), SIGINT)` confirmed
+=== 212 decisions.md:11349 §13.4
+
+Annotation (2026-09-26): a frame that throws while an interrupt is pending
+ends `errored` under its own `StepError`, the cause wrapped under the mask
+and the pending interrupt consumed at the catch on its way out ([§12.4][s12-4], [§13.4][s13-4]). Building the mask
+showed that both naive shapes, the mask begun outside the frame's `try` and
+the unmask in a `finally`, lose the frame's error to the deferred raise and
+=== 213 decisions.md:11355 §13.4
+would end the run `stopped` over a half-written boundary.
+
+Annotation (2026-09-26): two rulings the cold review raised. Julia's forced
+throw after repeated SIGINTs reaches [§13.4][s13-4]'s defensive arm inside the mask,
+so the arm is reachable; its disposition is `stopped` with the frame
+abandoned, the published record consistent and the stores possibly
+=== 214 decisions.md:11361 §13.4
+mid-boundary until the next `init!`, on boundary zero's precedent ([§12.4][s12-4]).
+And `replay!` discriminates the two dispositions by the roster as `run!`
+does: the reasoning against `isinteractive()` applies unchanged, and the
+deviceless reproduction still rethrows ([§13.4][s13-4]).
+
+Annotation (2026-10-02): amended by [D-269][d-269]. The loop reads the control
+=== 215 decisions.md:12102 §13.3
+  on a tap set lifts its three lists.
+- A refusal spells the selector as authored and names the mount.
+
+**Spec.** [§13.3][s13-3], [§14.4][s14-4], [§14.9][s14-9], [§14.10][s14-10]
+
+**Rationale.** [D-071][d-071] had the read set reuse the `Scoped` node. `Scoped` is
+=== 216 decisions.md:12124 §13.3
+  flattening pass stands in for a composition-time refusal.
+- *Joining the prefix into every selector's path at `at`:* path arithmetic
+  at composition ([§14.2][s14-2]), and the chain could no longer be walked level by
+  level ([§13.3][s13-3]).
+- *A mount-aware resolver per selector kind instead of a rebase:* every
+  resolver and the seeding logic would take the mount as an argument, and
+=== 217 decisions.md:12189 §13.1
+  old spellings under `decisions_style.md`'s rule 2.
+
+**Spec.** [§3.3][s3-3], [§3.4][s3-4], [§4.3][s4-3], [§5.2][s5-2], [§5.3][s5-3], [§5.4][s5-4], [§6.1][s6-1], [§6.2][s6-2], [§7.1][s7-1], [§8.1][s8-1],
+[§8.2][s8-2], [§8.5][s8-5], [§8.6][s8-6], [§8.8][s8-8], [§9.1][s9-1], [§9.2][s9-2], [§9.3][s9-3], [§9.4][s9-4], [§9.5][s9-5], [§9.7][s9-7], [§11.3][s11-3], [§13.1][s13-1],
+[§13.3][s13-3], [§13.4][s13-4], [§13.5][s13-5], [§13.7][s13-7], [§14.1][s14-1], [§14.2][s14-2], [§14.7][s14-7], [§14.8][s14-8], [§14.10][s14-10], [Appendix B][sB],
+[Appendix C][sC], [Appendix D][sD]
+=== 218 decisions.md:12190 §13.3
+
+**Spec.** [§3.3][s3-3], [§3.4][s3-4], [§4.3][s4-3], [§5.2][s5-2], [§5.3][s5-3], [§5.4][s5-4], [§6.1][s6-1], [§6.2][s6-2], [§7.1][s7-1], [§8.1][s8-1],
+[§8.2][s8-2], [§8.5][s8-5], [§8.6][s8-6], [§8.8][s8-8], [§9.1][s9-1], [§9.2][s9-2], [§9.3][s9-3], [§9.4][s9-4], [§9.5][s9-5], [§9.7][s9-7], [§11.3][s11-3], [§13.1][s13-1],
+[§13.3][s13-3], [§13.4][s13-4], [§13.5][s13-5], [§13.7][s13-7], [§14.1][s14-1], [§14.2][s14-2], [§14.7][s14-7], [§14.8][s14-8], [§14.10][s14-10], [Appendix B][sB],
+[Appendix C][sC], [Appendix D][sD]
+
+=== 219 decisions.md:12190 §13.4
+
+**Spec.** [§3.3][s3-3], [§3.4][s3-4], [§4.3][s4-3], [§5.2][s5-2], [§5.3][s5-3], [§5.4][s5-4], [§6.1][s6-1], [§6.2][s6-2], [§7.1][s7-1], [§8.1][s8-1],
+[§8.2][s8-2], [§8.5][s8-5], [§8.6][s8-6], [§8.8][s8-8], [§9.1][s9-1], [§9.2][s9-2], [§9.3][s9-3], [§9.4][s9-4], [§9.5][s9-5], [§9.7][s9-7], [§11.3][s11-3], [§13.1][s13-1],
+[§13.3][s13-3], [§13.4][s13-4], [§13.5][s13-5], [§13.7][s13-7], [§14.1][s14-1], [§14.2][s14-2], [§14.7][s14-7], [§14.8][s14-8], [§14.10][s14-10], [Appendix B][sB],
+[Appendix C][sC], [Appendix D][sD]
+
+=== 220 decisions.md:12453 §13.1
+(as recorded in [D-165][d-165]). [D-194][d-194], which superseded it, simplified the ground to
+a stage returning `(;)` and did not restate the error. Its fail-fast policy
+is [Appendix C][sC]'s: the probe is user-code evaluation, which fails fast under
+[§13.1][s13-1].
+
+The stage-1 probe's return is what [§9.3][s9-3] already sourced the hand-down from
+=== 221 decisions.md:13209 §13.1
+  old spellings under `decisions_style.md`'s rule 2.
+
+**Spec.** [§3.3][s3-3], [§4.3][s4-3], [§6.1][s6-1], [§6.2][s6-2], [§8.1][s8-1], [§8.2][s8-2], [§8.5][s8-5], [§8.6][s8-6], [§8.8][s8-8], [§9.1][s9-1], [§11.3][s11-3],
+[§11.7][s11-7], [§13.1][s13-1], [§13.3][s13-3], [§13.5][s13-5], [§13.7][s13-7], [§14.1][s14-1], [§14.2][s14-2], [Appendix B][sB], [Appendix C][sC],
+[Appendix D][sD]
+
+=== 222 decisions.md:13209 §13.3
+  old spellings under `decisions_style.md`'s rule 2.
+
+**Spec.** [§3.3][s3-3], [§4.3][s4-3], [§6.1][s6-1], [§6.2][s6-2], [§8.1][s8-1], [§8.2][s8-2], [§8.5][s8-5], [§8.6][s8-6], [§8.8][s8-8], [§9.1][s9-1], [§11.3][s11-3],
+[§11.7][s11-7], [§13.1][s13-1], [§13.3][s13-3], [§13.5][s13-5], [§13.7][s13-7], [§14.1][s14-1], [§14.2][s14-2], [Appendix B][sB], [Appendix C][sC],
+[Appendix D][sD]
+
+=== 223 decisions.md:14025 §13.4
+`Model`'s, and the two counters the run's. [D-260][d-260]'s clause that the clock
+holds `t₀` stands.
+
+**Spec.** [§9.1][s9-1], [§9.2][s9-2], [§9.4][s9-4], [§11.5][s11-5], [§11.8][s11-8], [§12.1][s12-1], [§12.6][s12-6], [§13.4][s13-4], [§13.5][s13-5], [§14.5][s14-5], [Appendix C][sC]
+
+**Rationale.** A `Simulation` built at any scalar other than `Float64` ran
+=== 224 decisions.md:14473 §13.2
+
+**Status.** ratified
+
+**Position.** Seven hand-off rulings that [§5.2][s5-2], [§8.2][s8-2], [§9.5][s9-5] and [§13.2][s13-2] state
+are fixed here.
+
+=== 225 decisions.md:14498 §13.2
+- No component declares its dependencies. There are no per-output dependency
+  annotations.
+
+**Spec.** [§5.2][s5-2], [§8.2][s8-2], [§9.5][s9-5], [§13.2][s13-2]
+
+**Rationale.** Each bullet restates what an existing entry recorded outside
+=== 226 decisions.md:15878 §13.4
+- A frame that throws while an interrupt is pending ends `errored` under its
+  own `StepError`, the cause wrapped under the mask and the pending
+  interrupt consumed at the catch on its way out.
+- Julia's forced throw after repeated SIGINTs reaches [§13.4][s13-4]'s defensive arm
+  inside the mask. Its disposition is `stopped` with the frame abandoned,
+  the published record consistent and the stores possibly mid-boundary
+=== 227 decisions.md:16089 §13.1
+
+**Position.** Attach resolves a binding's `reads` through the read-selector
+family's one collecting resolver, the resolver trim and linearization already
+use ([§11.2][s11-2], [§13.1][s13-1], [§14.4][s14-4]). The bundled rulings:
+
+- The resolver takes the source it resolves for, live stores or a signal
+=== 228 extensions.md:56 §13
+  Jacobians through the eltype-generic sweep ([§7.2][s7-2]); perturbation-based `linmod` is
+  strictly weaker.
+- Guarantees the reference lacks: deterministic replay ([§2.4][s2-4], [§11.5][s11-5]), the
+  zero-allocation invariant ([§9.8][s9-8]), and the error-locality discipline of [§13][s13].
+
+### 1.2 Reachable through seams: the extension list
+=== 229 implementation.md:86 §13.3
+  check `check_state_leaves` (§7.1, D-094), all taking the component
+  unspecialized (D-289).
+- The component frame around the walk's two branches (D-248).
+- §13.3's `resolve`/`resolve_terminal`/face-list primitives `input_faces` and
+  `output_faces`. The walk records each assembly's evaluated face lists in
+  `StructureDraft.faces`, and `flatten_tree!` binds them as `WALK_FACES` around the
+=== 230 implementation.md:108 §13.1
+  function that takes a connection or its endpoint tuple, as `_fanout` does,
+  still compiles once per connection type.
+
+Spec: §6.1, §7.1, §7.3, §8.1, §8.2, §8.5–§8.8, §9.1, §9.2, §9.7, §13.1, §13.3,
+§13.7, §14.2, Appendix C, D-061, D-094, D-130, D-171, D-207–D-212, D-229,
+D-231, D-236, D-246, D-247, D-248, D-251, D-253, D-261, D-263, D-265, D-289,
+=== 231 implementation.md:108 §13.3
+  function that takes a connection or its endpoint tuple, as `_fanout` does,
+  still compiles once per connection type.
+
+Spec: §6.1, §7.1, §7.3, §8.1, §8.2, §8.5–§8.8, §9.1, §9.2, §9.7, §13.1, §13.3,
+§13.7, §14.2, Appendix C, D-061, D-094, D-130, D-171, D-207–D-212, D-229,
+D-231, D-236, D-246, D-247, D-248, D-251, D-253, D-261, D-263, D-265, D-289,
+=== 232 implementation.md:225 §13.2
+    stepper from the `algorithm` keyword.
+  - The event set takes the phase bodies' chunk size (D-289).
+
+Spec: §5.3, §5.5, §13.8, §6.1, §7.1, §7.3, §8.2, §9.1–§9.4, §9.7, §10.4, §13.2,
+§13.5, D-012, D-051, D-166, D-179, D-208, D-210, D-229, D-235, D-236, D-237,
+D-247, D-248, D-250, D-252, D-253, D-256, D-261, D-263, D-289, D-315, D-316.
+=== 233 implementation.md:267 §13.3
+  also lifts read sets, joining the prefix to their mount chain; trim.jl
+  and linearize.jl add its methods for problems and tap sets (D-277).
+- One collecting pass behind both ways of applying a plan. Each `at` prefix is
+  walked from its authoring level (§13.3). The two ways are:
+  - `resolve_condition`, for values;
+  - `compile_plan`, with lenses run by `walk_steps` (readers.jl),
+=== 234 implementation.md:276 §13.1
+- `apply!` and `init!` on a model are model.jl's, and `apply!`'s forwarding
+  method on the simulation is sim.jl's.
+
+Spec: §9.5, §13.1, §13.3, §14.1–§14.6, §14.9, Appendix B, D-063–D-068,
+D-117, D-130, D-204, D-205, D-207, D-226, D-277, D-315.
+
+=== 235 implementation.md:276 §13.3
+- `apply!` and `init!` on a model are model.jl's, and `apply!`'s forwarding
+  method on the simulation is sim.jl's.
+
+Spec: §9.5, §13.1, §13.3, §14.1–§14.6, §14.9, Appendix B, D-063–D-068,
+D-117, D-130, D-204, D-205, D-207, D-226, D-277, D-315.
+
+=== 236 implementation.md:339 §13.2
+- `ResidueRecord`, one writer's share of the tail residue, which sim.jl's
+  sweep builds and the termination record holds (§13.5, D-203).
+
+Spec: §10.7, §11.1–§11.4, §11.8, §12.2, §12.4, §12.6, §13.2, §13.5, §14.4, D-023,
+D-027, D-038, D-137, D-203, D-250, D-255, D-269, D-316, D-317, D-406.
+
+=== 237 implementation.md:360 §13.2
+- The event surface `StateEvent`, `state_events` and `x_projection`.
+- The declaration family `DECLARATION_FAMILY` and `foreign_declarations`.
+- The user-code frame `invoke_declaration`, `invoke_probed` and
+  `at_component` (§13.2, D-248), the file's last section.
+- The readers of a component, `has_stage`, `_declares`, `declared_at`, the two
+  bundle-name functions and `foreign_declarations`, take it unspecialized, so a
+=== 238 implementation.md:474 §13.4
+  `:internally_wired` and `:input_face_not_output` (D-277).
+- `TierUnreadable` and `StatelessWithoutOutputs` (D-263).
+- `InternalInvariant`.
+- §13.4's runtime trio `CursorFrame`, `StepError` and `NonfiniteState`.
+- §12.7's replay trio `CheckpointMismatch`, `ReplaySchemaMismatch` and
+  `ReplayUnknownFace` (D-255, D-274).
+=== 239 implementation.md:478 §13.4
+- §12.7's replay trio `CheckpointMismatch`, `ReplaySchemaMismatch` and
+  `ReplayUnknownFace` (D-255, D-274).
+- `CheckpointMidFrame` (D-274).
+- `StepError`'s `host` and its rendered recipe (§13.4, D-274).
+- `CheckpointMismatch`'s store and clock arms, and `ArgumentInvalid`'s
+  `restore` arm.
+=== 240 implementation.md:493 §13.1
+  its scalar (§9.2, D-320).
+
+Spec: §9.1, §9.2, §10.4, §10.6, §10.7, §11.4, §11.6, §11.8, §12.2, §12.4,
+§12.6, §12.7, §13.1, §13.2, §13.4, §13.5, §14.4, §14.8, §14.9, §14.10,
+Appendix C, D-027, D-058, D-059, D-157, D-187, D-203, D-214, D-215, D-222,
+D-225, D-250, D-255, D-256,
+=== 241 implementation.md:493 §13.2
+  its scalar (§9.2, D-320).
+
+Spec: §9.1, §9.2, §10.4, §10.6, §10.7, §11.4, §11.6, §11.8, §12.2, §12.4,
+§12.6, §12.7, §13.1, §13.2, §13.4, §13.5, §14.4, §14.8, §14.9, §14.10,
+Appendix C, D-027, D-058, D-059, D-157, D-187, D-203, D-214, D-215, D-222,
+D-225, D-250, D-255, D-256,
+=== 242 implementation.md:493 §13.4
+  its scalar (§9.2, D-320).
+
+Spec: §9.1, §9.2, §10.4, §10.6, §10.7, §11.4, §11.6, §11.8, §12.2, §12.4,
+§12.6, §12.7, §13.1, §13.2, §13.4, §13.5, §14.4, §14.8, §14.9, §14.10,
+Appendix C, D-027, D-058, D-059, D-157, D-187, D-203, D-214, D-215, D-222,
+D-225, D-250, D-255, D-256,
+=== 243 implementation.md:526 §13.4
+  dispatch fields alone, and whether a frame was abandoned is `frame!`'s
+  `Bool` return (§13.5, D-261, D-317).
+
+Spec: §5.3, §9.5, §9.7, §10.4–§10.6, §13.4, §13.5, §14.5, D-059, D-205, D-235,
+D-249, D-255, D-261, D-289, D-317.
+
+=== 244 implementation.md:533 §13.4
+
+- The model's `frame!(model, k, hooks)` (D-317): the top
+  hook, the integration, the frame-top boundary and the settled hook, inside
+  §13.4's one `try`, whose catch writes the model's status and builds the
+  `StepError` with `_wrap_step`. The claim's gate precedes the `try` (D-318).
+- The localization loop, with the arrival sweep, the θ = 0 validation, ITP
+=== 245 implementation.md:544 §13.4
+- The grid arithmetic `frame!` steps by, `_grid_time` and `_frames_to`, is
+  model.jl's.
+
+Spec: §10.2, §10.4, §11.8, §12.4, §13.4, §13.5, D-018, D-059, D-133, D-255,
+D-260, D-261, D-317, D-318.
+
+=== 246 implementation.md:568 §13.4
+- The wire relation `_accepts_wire`, with its abstract arm (D-236).
+- The checked state write `flatten_state!` (D-235).
+
+Spec: §4.1, §4.3, §4.4, §6.1, §7.1, §7.2, §8.2, §9.5, §13.4, §13.5, D-166,
+D-235, D-236, D-237, D-238, D-243, D-263, D-264, D-265, D-276, D-316.
+
+=== 247 implementation.md:644 §13.4
+  and compiles the check away on the loop's path (D-318).
+- The model's doors (D-317), each gated on the claim (D-318):
+  - `init!`, whose condition method resolves and whose plan method does the
+    writes, runs boundary zero under §13.4's catch and settles it through the
+    hooks (§14.5, D-223);
+  - `apply!` on a model, gated under `NoHooks` before the inner
+=== 248 implementation.md:666 §13.2
+  the model.
+- The one `StepError` constructor `_wrap_step`, which the model's `frame!` and
+  `init!` call, and the species rule `_species` with the runtime bundle-field
+  match (§13.2, §13.4, D-059, D-221, D-248).
+- The checkpoint's model-level half: `_fingerprint`, and `checkpoint(model)`
+  with its two refusals, `ServiceLifecycle` and `CheckpointMidFrame`
+=== 249 implementation.md:666 §13.4
+  the model.
+- The one `StepError` constructor `_wrap_step`, which the model's `frame!` and
+  `init!` call, and the species rule `_species` with the runtime bundle-field
+  match (§13.2, §13.4, D-059, D-221, D-248).
+- The checkpoint's model-level half: `_fingerprint`, and `checkpoint(model)`
+  with its two refusals, `ServiceLifecycle` and `CheckpointMidFrame`
+=== 250 implementation.md:674 §13.2
+  beside it `_check_grid!`, the grid check the three restore doors share,
+  collecting `CheckpointMidFrame` into the same list.
+
+Spec: §9.2, §9.5, §10.2, §10.4, §10.6, §11.2, §11.8, §12.4, §12.6, §13.2,
+§13.4, §13.5, §14.5, §14.8, D-059, D-157, D-213, D-221, D-223, D-248, D-250,
+D-254, D-260, D-274, D-317, D-318, D-319, D-320.
+=== 251 implementation.md:675 §13.4
+  collecting `CheckpointMidFrame` into the same list.
+
+Spec: §9.2, §9.5, §10.2, §10.4, §10.6, §11.2, §11.8, §12.4, §12.6, §13.2,
+§13.4, §13.5, §14.5, §14.8, D-059, D-157, D-213, D-221, D-223, D-248, D-250,
+D-254, D-260, D-274, D-317, D-318, D-319, D-320.
+
+=== 252 implementation.md:685 §13.3
+  `Symbol` the short form of a plain name (D-276).
+- The mount step (§14.9, D-277). `Reads` carries its mount chain as
+  `prefixes`, and `_mount` walks it from the root's level row, each prefix
+  from the level the previous one reached (§13.3), to the mount path and the
+  level there, reporting a failed chain once. `_rebase` then turns each selector
+  into a `MountedRead`: the selector as authored, the mount, the
+=== 253 implementation.md:724 §13.1
+- Activation identity on readers, checked as an internal invariant. The same
+  check on plans sits in conditions.jl's `apply!`.
+
+Spec: §11.2, §13.1, §13.3, §14.1, §14.4, §14.7, §14.9, §14.10, D-125, D-130, D-253,
+D-276, D-277, D-315, D-406, D-407.
+
+=== 254 implementation.md:724 §13.3
+- Activation identity on readers, checked as an internal invariant. The same
+  check on plans sits in conditions.jl's `apply!`.
+
+Spec: §11.2, §13.1, §13.3, §14.1, §14.4, §14.7, §14.9, §14.10, D-125, D-130, D-253,
+D-276, D-277, D-315, D-406, D-407.
+
+=== 255 implementation.md:858 §13.4
+- `t_end` and `ignore_stop_requests`, the advances' keywords, and `run!`'s
+  `UnboundedRun` advisory (D-255, D-260, D-261, D-316).
+- The lifecycle, derived, and the termination record (D-317).
+- The frame loop `_advance!`, whose catch disposes only (§13.4, D-317). The
+  one constructor `_wrap_step` and the species rule `_species` are model.jl's.
+- §12.4's mask, its unmask points, and the interrupt arms of `run!` and
+=== 256 implementation.md:875 §13.4
+  are model.jl's (D-317). `apply!` forwards to the ungated `_apply_plan!`
+  (D-318).
+
+Spec: §10.2–§10.7, §11.1–§11.5, §11.8, §12.1–§12.7, §13.4–§13.6,
+§14, §14.5, §14.6, §14.8, §14.10, D-027, D-101, D-198, D-203, D-218, D-219,
+D-223, D-232, D-233, D-250, D-253, D-254, D-255, D-256, D-260, D-261,
+=== 257 implementation.md:960 §13.1
+  a `Model` at another scalar (D-319).
+- `TrimReport`, with its `committed_checks` (D-262).
+
+Spec: §9.6, §13.1, §14.5–§14.9, D-070, D-158, D-213, D-224, D-253, D-262,
+D-277, D-317, D-318, D-319.
+
+=== 258 pending.md:65 §13.3
+    renames them.
+  - **Five boundary cases** the convention does not settle are flagged for
+    the sweep, none a defect of its list:
+    - `input_faces`/`output_faces` (§13.3), build primitives named by nouns
+      where class (4) asks for plain verbs, mitigated by being
+      framework-facing; the pun on the `_types` declarations that D-144
+=== 259 pending.md:174 §13.4
+  subtrees); field-handle summarization over retained snapshots, the
+  post-processing entry point, as `getproperty`-style navigation of a run's
+  history; and the trace file format, which doubles as the reproducibility
+  carrier and whose positions the replay pointers name (§13.4). §11.2
+  states the loggers' skip-or-summarize rule for field handles with no
+  entry; it is ruled with the summarization question.
+=== 260 companions/event_visibility_walkthrough.md:98 §13.4
+of A and B changes nothing observable, so **cross-component handler order
+stops being a semantic decision at all**. The framework still fixes a
+canonical order (the executor's component order, declaration order within a
+component) — but only so the [§13.4][s13-4] execution cursor ("event round *r*,
+component *c*") and the diagnostics stream are deterministic and nameable,
+not because trajectories depend on it.
+=== 261 companions/frame_walkthrough.md:109 §13.4
+writes the derivative into `ẋbuf`. The controller's output cells are not
+touched at any of the four stages. That is the zero-order hold, by absence
+rather than by a runtime test ([§10.5][s10-5]). On return, `_check_finite!` sweeps `x`
+before anything reads it ([§13.4][s13-4]).
+
+**Arrival sweep and trigger.** Back in `_localized_frame!`, the state is at
+=== 262 companions/frame_walkthrough.md:156 §13.4
+`dense!` in `stepper.jl` writes `x̂(θ)` from `(x₀, ẋ₀)` and `(x₁, ẋ₁)`. A
+trial is an interior sweep on raw, unprojected state; the discrete cells hold
+through every trial. The cursor phase `:trial` with the iteration ordinal is
+what a `StepError` reports if a guard throws here ([§13.4][s13-4]). The earliest `θ★`
+across the triggered events wins, and a `θ★` of exactly one is discarded as a
+crossing at the frame top.
+=== 263 companions/frame_walkthrough.md:272 §13.4
+holds, the loop returns `ModelRequestedStop(path, port, reason)` ([§13.5][s13-5]). Otherwise the loop
+proceeds to the next frame top, and the cursor's trail restarts: `:drain`,
+`:integrate`, `:arrival`, `:validation`, `:trial`, `:project`, `:round`,
+`:ticks`, the sequence a `StepError`'s frame is read from ([§13.4][s13-4]).
+
+**Boundary count.** Frame 8 in this example published twice, at the `t*`
+=== 264 companions/frame_walkthrough.md:283 §13.4
+
+`init!` and `replay!` run boundary zero through `_host_boundary_zero!`, which
+calls `boundary_zero!` under the catch that returns a throwing simulation to
+`built` ([§13.4][s13-4], [D-223][d-223]). The sequence is the ordinary one with one difference:
+`event_phase!(sim, ESTABLISH)` passes a marker in place of a tick index, and
+`run_at!` on a `Gated` entry admits every discrete output stage against it,
+=== 265 companions/linearization_walkthrough.md:423 §13.1
+
+### 5.3 What resolution refuses
+
+Every refusal is collected in [§13.1][s13-1]'s form: the whole
+list is checked, every violation gathered, one `DiagnosticError` thrown. The
+name-shaped misses (an undeclared field, an unknown root input, an assembly
+=== 266 companions/sample_time_proposal.md:134 §13.1
+  0.5 Hz.
+- **Range validation belongs to Stratum A, not the constructors.** Constructor-side
+  checks give instant REPL feedback but fail the *evaluation* of a `sample_times` body with
+  a raw exception, whereas Stratum A's charter ([§9.1][s9-1], [§13.1][s13-1]) is to *collect*
+  declaration defects with path attribution ("`gnss` in `sample_times(::Sensors)`: phase 20
+  not in `0 ≤ Φ < K = 20`"). Today's `K ≥ 1` check already lives there. One

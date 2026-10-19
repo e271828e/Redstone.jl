@@ -11,7 +11,7 @@
   {
    "id": "C-002",
    "old": "Termination chains are the second structural customer of computed interface connections, after generic-holding contracts.",
-   "new": "Generic-holding contracts (the `u_types` and `y_types` declarations) are a structural customer of computed interface connections",
+   "new": "Generic-holding contracts (each a component's declared interface) are a structural customer of computed interface connections",
    "where": "new",
    "cites": [],
    "tag": "R",
@@ -31,7 +31,7 @@
   {
    "id": "C-004",
    "old": "Two commitments follow, a library and an idiom.",
-   "new": "D-062 makes three tooling commitments for them, namely the passthrough helpers' predicate, the routes `show(::Structure)` prints for each root face (the name a port wears on its component's boundary), and a standard library of components, the units of modeling.",
+   "new": "D-062 makes three tooling commitments for them, namely the passthrough helpers' predicate, the routes `show(::Structure)` prints for each root face (the name a port wears on its component's boundary), and a standard library of components (the units of modeling, each a leaf or an assembly of components).",
    "where": "new",
    "cites": [],
    "newcites": [
@@ -620,7 +620,7 @@
   {
    "id": "C-065",
    "old": "The junction is a continuous leaf, so its contracts are written at nominal `Float64` and the leaf walk retypes them (§8.2).",
-   "new": "The junction is a continuous leaf, so its contracts are written at nominal `Float64` and the leaf walk retypes them (§8.2, D-263).",
+   "new": "The junction is a continuous leaf, so its contract is written at nominal `Float64` and the leaf walk (the framework's derivation of per-activation types from a declared nominal type) retypes it (§8.2, D-263).",
    "where": "new",
    "cites": [
     "§8.2"
@@ -630,7 +630,7 @@
     "§8.2"
    ],
    "tag": "C",
-   "note": "D-263's Position: \"Every contract declaration ... is written at nominal `Float64`, and is retyped by the framework\"; bullet 1, \"the leaf walk ... is applied to the declared types\"."
+   "note": "D-263's Position: \"Every contract declaration ... is written at nominal `Float64`, and is retyped by the framework\"; bullet 1, \"the leaf walk ... is applied to the declared types\". Step 5 P2-20 and P2-24: contract singular for one component; the leaf walk linked with the glossary's gloss."
   },
   {
    "id": "C-066",
@@ -651,12 +651,13 @@
   {
    "id": "C-068",
    "old": "A named site-specific junction documents a fixed contributor set better than generated slots, at the price of hard-coding it into a type (D-037).",
-   "new": "A named site-specific junction documents a fixed contributor set better than generated slots, at the price of hard-coding it into a type (D-037).",
+   "new": "A named site-specific junction documents a fixed contributor set better than generated input ports, at the price of hard-coding it into a type (D-037).",
    "where": "new",
    "cites": [
     "D-037"
    ],
-   "tag": "F"
+   "tag": "F",
+   "note": "step 5 P2-20: \"slots\" is the log's old word."
   },
   {
    "id": "C-069",
@@ -763,11 +764,11 @@
   {
    "id": "C-080",
    "old": "No tier-neutral class is needed.",
-   "new": "No tier-neutral class is needed.",
+   "new": "No tier-neutral variant is needed.",
    "where": "new",
    "cites": [],
    "tag": "F",
-   "note": "\"class\" in the leaf-category sense, unlinked (R12)."
+   "note": "step 5 P2-20: class is reserved for primitive versus assembly."
   },
   {
    "id": "C-081",
@@ -840,12 +841,12 @@
   {
    "id": "C-088",
    "old": "Inserting a `UnitDelay` into a continuous loop moves that signal onto the discrete tier and inserts a `Δt_base`-scale ZOH into the model's mathematics.",
-   "new": "Inserting a `UnitDelay` into a continuous loop moves that signal onto the discrete tier and inserts a `Δt_base`-scale zero-order hold into the model's mathematics.",
+   "new": "Inserting a `UnitDelay` into a continuous loop moves that signal onto the discrete tier and inserts a `Δt_base`-scale zero-order hold into the model's mathematics, `Δt_base` being the base tick period.",
    "where": "new",
    "cites": [],
    "tag": "R",
    "ruling": "R10",
-   "note": "\"ZOH\" spelled out, D-348's own words (\"a `Δt_base`-scale zero-order hold\")."
+   "note": "\"ZOH\" spelled out, D-348's own words (\"a `Δt_base`-scale zero-order hold\"). Step 5 P2-24 links `Δt_base` with the glossary's gloss."
   },
   {
    "id": "C-089",
@@ -868,14 +869,14 @@
   {
    "id": "C-091",
    "old": "`Constant{V}` is the source block. It has no inputs, no state, and a stage-1 body returning the value the instance holds.",
-   "new": "`Constant{V}` is the source block (D-143). It has no inputs, no state, and a stage-1 body returning the value the instance holds.",
+   "new": "`Constant{V}` has no inputs, no state, and a stage-1 body returning the value the instance holds (D-143).",
    "where": "new",
    "cites": [],
    "newcites": [
     "D-143"
    ],
    "tag": "C",
-   "note": "the bold term \"source block\" goes plain (R3). D-143's Position: \"no inputs, no state ... the value itself held by the instance, and a stage-1 body returning it\"."
+   "note": "step 5 P2-18: \"is the source block\" was a verbatim repeat of the inventory paragraph's sentence, which keeps it. The bold term \"source block\" goes plain (R3). D-143's Position: \"no inputs, no state ... the value itself held by the instance, and a stage-1 body returning it\"."
   },
   {
    "id": "C-092",
@@ -1023,7 +1024,7 @@
   {
    "id": "C-106",
    "old": "`Freeze{V}` is the declared stop-gradient. It feeds a walking producer into a pinned entry, which the walk clause (§6.1) otherwise refuses.",
-   "new": "`Freeze{V}` is the declared stop-gradient (D-266). It feeds a walking producer into a pinned entry, which the walk clause (§6.1) otherwise refuses.",
+   "new": "`Freeze{V}` feeds a walking producer into a pinned entry, which the walk clause (§6.1) otherwise refuses (D-266).",
    "where": "new",
    "cites": [
     "§6.1"
@@ -1033,7 +1034,7 @@
     "§6.1"
    ],
    "tag": "C",
-   "note": "the bold term goes plain (R3). D-266 bullet 2: \"A walking producer feeds a pinned entry through the `Freeze{V}` library block\"."
+   "note": "step 5 P2-18: \"is the declared stop-gradient\" was a verbatim repeat of the inventory paragraph's sentence, which keeps it; D-266 stays with the feeding claim. The bold term goes plain (R3). D-266 bullet 2: \"A walking producer feeds a pinned entry through the `Freeze{V}` library block\"."
   },
   {
    "id": "C-107",
@@ -1065,15 +1066,16 @@
   {
    "id": "C-110",
    "old": "Under a `Dual` activation it drops the partials, and its output satisfies the pinned entry.",
-   "new": "Under a `Dual` activation it drops the partials, and its output satisfies the pinned entry.",
+   "new": "Under a `Dual` activation the block drops the partials, and its output satisfies the pinned entry.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "F",
+   "note": "step 5 P2-19: the nearest noun was \"a model\"."
   },
   {
    "id": "C-111",
    "old": "What the wire then declares is a zero coupling in every Jacobian along that path, the modelling decision §14.10 asks an author to state on the page rather than bury mid-expression.",
-   "new": "What the wire then declares is a zero coupling in every Jacobian along that path (D-266), the modelling decision §14.10 asks an author to state on the page rather than bury mid-expression.",
+   "new": "What the wire then declares is a zero coupling in every Jacobian along that path (D-266), the modeling decision §14.10 asks an author to state on the page rather than bury mid-expression.",
    "where": "new",
    "cites": [
     "§14.10"
@@ -1147,10 +1149,11 @@
   {
    "id": "C-118",
    "old": "Ordinary conditions and devices feed them, and every output is observable in the snapshot table.",
-   "new": "Ordinary conditions and devices (attached participants in the periphery) feed them, and every output is observable in the table of each snapshot, the immutable per-boundary publication.",
+   "new": "Ordinary conditions (path-addressed sparse overlays that set a build's state) feed them. So do devices (attached participants in the periphery). Every output is observable in the table of each snapshot, the immutable per-boundary publication.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "F",
+   "note": "step 5 P2-24 links conditions; R23 splits so each gloss has its sentence."
   },
   {
    "id": "C-119",
@@ -1183,7 +1186,7 @@
   {
    "id": "C-122",
    "old": "An abstract input entry (`terrain = AbstractTerrainField`, §8.2) cannot surface as a root input, because abstract-at-root is a build error.",
-   "new": "An abstract input entry (`terrain = AbstractTerrainField`, an illustrative name) cannot surface as a root input, because abstract-at-root is a build error, `AbstractAtRoot` (§8.2, Appendix C).",
+   "new": "An abstract entry (an `u_types` entry admitting any concrete producer face), such as the illustrative `terrain = AbstractTerrainField`, cannot surface as a root input, because abstract-at-root is a build error, `AbstractAtRoot` (§8.2, Appendix C).",
    "where": "new",
    "cites": [
     "§8.2"
@@ -1283,10 +1286,11 @@
   {
    "id": "C-131",
    "old": "An abstract entry (an `u_types` entry admitting any concrete producer face) declares that a substitute must be chosen.",
-   "new": "An abstract entry (an `u_types` entry admitting any concrete producer face) declares that a substitute must be chosen.",
+   "new": "An abstract entry declares that a substitute must be chosen.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "F",
+   "note": "step 5 P2-24: the link and its gloss move to the first use, the root-input rule paragraph."
   },
   {
    "id": "C-132",
@@ -1350,7 +1354,7 @@
   {
    "id": "C-139",
    "old": "The build rejects an algebraic loop (§5.5), and tracing is diagnostic only, never relied on for correctness (D-012).",
-   "new": "The build rejects an algebraic loop (§5.5, D-005), and tracing is diagnostic only, never relied on for correctness (D-012).",
+   "new": "The build rejects an algebraic loop (a genuine cycle in the instantaneous dependency graph) (§5.5, D-005), and tracing is diagnostic only, never relied on for correctness (D-012).",
    "where": "new",
    "cites": [
     "D-012",
@@ -1628,10 +1632,11 @@
   {
    "id": "C-168",
    "old": "Derivatives, guards (the declared functions defining each event's predicate), handlers and projections are outside tracing's jurisdiction entirely.",
-   "new": "Derivatives, guards (the declared functions defining each event's predicate), handlers and projections are outside tracing's jurisdiction entirely.",
+   "new": "Derivatives, guards (the declared functions defining each event's predicate), handlers and projections (the optional per-component hook `x ← x_projection(x)`) are outside tracing's jurisdiction entirely.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "F",
+   "note": "step 5 P2-24: projections glossed in the glossary's words."
   },
   {
    "id": "C-169",
@@ -1670,20 +1675,22 @@
   {
    "id": "C-173",
    "old": "Dual-clean means passing the `T = Dual` sweep of §7.2.",
-   "new": "Dual-clean means passing the `T = Dual` sweep of §7.2.",
+   "new": "Dual-clean means passing the `T = Dual` sweep of §7.2, `Dual` being ForwardDiff's dual number.",
    "where": "new",
    "cites": [
     "§7.2"
    ],
-   "tag": "F"
+   "tag": "F",
+   "note": "step 5 P2-29: the gloss moves to the first prose use of `Dual` it can reach."
   },
   {
    "id": "C-174",
    "old": "The guarantee holds because both modes ride the same `T <: Real` genericity as `Dual`, ForwardDiff's dual number.",
-   "new": "The guarantee holds because both modes ride the same `T <: Real` genericity as `Dual`, ForwardDiff's dual number.",
+   "new": "The guarantee holds because both modes ride the same `T <: Real` genericity as `Dual`.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "F",
+   "note": "step 5 P2-29: \"ForwardDiff's dual number\" moved one sentence up."
   },
   {
    "id": "C-175",
@@ -2061,26 +2068,30 @@
   }
  ],
  "added": [
-  "(the `u_types` and `y_types` declarations)",
+  "(each a component's declared interface)",
   "(the name a port wears on its component's boundary)",
-  ", the units of modeling",
+  "(the units of modeling, each a leaf or an assembly of components)",
   "The section covers the predicate and the face routes first, then the standard component library and the component test rig.",
   "(explicitly sanctioned where a neighboring practice is forbidden)",
   ", one of the root component's own input faces",
   "The shipped list lives in `companions/library_inventory.md`.",
   "(pure composition, with no dynamics of its own)",
   ", a maximally awkward case spelled against the declaration rules to validate them",
-  ", whose entries name the aerodynamics, landing-gear and powerplant children of the `Systems` assembly (§6.2).",
+  "(the framework's derivation of per-activation types from a declared nominal type)",
+  ", whose input entries name the aerodynamics, landing-gear and powerplant children of the `Systems` assembly (§6.2).",
   ", a tier being the continuous or discrete side of the hybrid formalism",
   "(one pass through the execution order)",
   "(the instants at which a discrete component's stages and update run)",
   "(`companions/pid_anti_windup.md`)",
-  "A handle that references bulk data never surfaces as a root input (D-237); a rig holds bulk data through a constant source instead (§14.9, D-364).",
+  ", `Δt_base` being the base tick period.",
+  "A handle that references bulk data never surfaces as a root input (D-237); a rig holds such a handle through a constant source (a `Constant` holding it) instead (§14.9, D-364).",
+  "(path-addressed sparse overlays that set a build's state)",
   "(attached participants in the periphery)",
   "the table of each snapshot, the immutable per-boundary publication",
-  ", an illustrative name",
+  ", such as the illustrative",
   "In the sketch below, the component under test is `Strut`, an illustrative landing-gear strut whose terrain input is abstract.",
   ", an illustrative concrete terrain",
-  "A tier is the continuous or discrete side of the hybrid formalism."
+  "A tier is the continuous or discrete side of the hybrid formalism.",
+  "(the optional per-component hook `x ← x_projection(x)`)"
  ]
 }
