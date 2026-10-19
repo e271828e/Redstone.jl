@@ -5317,23 +5317,33 @@ are small. `build` of 64 components of 64 new types
 takes 0.86 s, against 40.5 s with the layer specialized. `build` of a new
 root of 128 components over known types takes 0.08 s, against 12.1 s.
 
-The figures below were measured in 2026-10 on Julia 1.13.0 and Apple
+The figures below were measured in 2026-10 on Julia 1.13 and Apple
 Silicon, as were those above (`docs/reports/20261001_compile_cost_reeval/`).
 The components carry real arithmetic. Each figure is the minimum of three
 runs, from calling `build` to the end of its first `run!`. A cold
-process runs the model first in a fresh session. A new topology follows a
-model of the same component types in a warm one.
+process runs the model first in a fresh session. It runs on the package
+image as it ships, or on a bare image compiled without the precompile
+workload (below). A new topology follows a model of the same component
+types in a warm one.
 
 | model | situation | `-O2` | `-O0` |
 |---|---|---|---|
-| 10 components, 5 types | cold process | 8.6 s | 3.7 s |
+| 10 components, 5 types | cold process | 2.7 s | 1.1 s |
+| | cold process, bare image | 8.7 s | 3.6 s |
 | | new topology, types known | 0.85 s | 0.34 s |
-| 128 components, 2 types | cold process | 9.4 s | 4.4 s |
+| 128 components, 2 types | cold process | 3.9 s | 1.8 s |
+| | cold process, bare image | 9.8 s | 4.4 s |
 | | new topology, types known | 0.96 s | 0.30 s |
-| 64 components, 64 types | cold process | 13.5 s | 6.6 s |
+| 64 components, 64 types | cold process | 7.9 s | 3.9 s |
+| | cold process, bare image | 14.0 s | 6.5 s |
 | | new topology, types known | 3.6 s | 2.3 s |
 
-About 9 s of a cold process is generic machinery, the same for every model.
+The bare-image rows pay about 6 s more than the workload rows at `-O2`,
+and 2.5 s more at `-O0`, the same for every model: that is the generic
+machinery, and the package's precompile workload carries it (below). What
+a cold process still pays is its model's own compilation, namely the stage
+methods of its component types, the chunks they fill and, under trim or
+linearization, their `Dual` activation.
 A new component type adds about 0.01 s to `build`, plus the compilation of
 its own stage methods. A new topology pays for the chunks whose content
 changed. The figures are the nominal activation's. A `Dual` activation
@@ -5345,9 +5355,15 @@ section 4).
 
 - Activations are lazy ([§9.4][s9-4]), so a session that never linearizes never
   compiles `Dual`.
-- Precompile workloads bake the generic machinery into the package image. A
-  component package's workload does the same for its types. That turns the
-  time to first execution from a session tax into a CI artifact.
+- The package's precompile workload bakes the generic machinery into the
+  package image. A closed loop of library blocks runs through `build`,
+  `Simulation`, `init!`, `step!`, `run!`, the readers, `series`,
+  `checkpoint`, `restore!`, `trim!` and `linearize` while the package
+  precompiles, which adds about 12 s to its precompilation and 30 MB to
+  its image. On that loop a cold process pays under 0.1 s, and a first
+  `trim!` or `linearize` about 0.3 s and 0.1 s more. A component package's
+  workload does the same for its types. That turns the time to first
+  execution from a session tax into a CI artifact.
 - The optimization level is a knob for an iteration session. `-O0` about
   halves what remains, for a loop 2.3 to 2.8 times slower, and the
   allocation invariant ([§9.8][s9-8]) holds. Its trajectories differ from `-O2`'s by
