@@ -478,7 +478,7 @@ assemblies; both mode factorings.
 
 **Position.** Reject algebraic loops at build, explicit breaks.
 
-**Spec.** [§5.5][s5-5]
+**Spec.** [§5.5][s5-5], [§13.8][s13-8]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -610,6 +610,9 @@ reading on a simple cycle.
 **Spec.** [§5.5][s5-5], [§9.4][s9-4], [§13.8][s13-8]
 
 **Rationale.** Recorded only through the rejections below.
+
+Annotation (2026-10-19): [D-259][d-259] retired the strata, so the Stratum-B topological
+stall is the topological-sort stall in the nominal evaluation ([§13.8][s13-8]).
 
 **Rejected.**
 - *Dual-based tracing:* derivative-zero blind spot.
@@ -783,7 +786,7 @@ scopes for declaration (integer multipliers $K \ge 1$ composing down the tree,
 compiled to absolute divisors); `Δt` arrives as a discrete-bundle field
 ([D-074][d-074]), single source of truth, no stored `Δt`-derived parameters.
 
-**Spec.** [§2][s2], [§3.2][s3-2], [§3.3][s3-3], [§5.2][s5-2], [§10.5][s10-5]
+**Spec.** [§2][s2], [§3.2][s3-2], [§3.3][s3-3], [§5.2][s5-2], [§10.5][s10-5], [§13.5][s13-5]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -877,7 +880,7 @@ one atomic reference op, GC as reclamation; no user code or unbounded work in
 framework critical sections; control on a separate atomic surface (staging
 cannot un-pause a drainless loop); interactive = batch + devices.
 
-**Spec.** [§2][s2], [§11.1][s11-1], [§12.1][s12-1], [§12.3][s12-3]
+**Spec.** [§2][s2], [§11.1][s11-1], [§12.1][s12-1], [§12.3][s12-3], [§13.4][s13-4]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -1831,6 +1834,10 @@ cascade suppression within a stratum.
 
 **Rationale.** Recorded only through the rejections below.
 
+Annotation (2026-10-19): [§13.1][s13-1] no longer says the two errors of a typo'd
+wire render adjacently by path. The did-you-mean names the input the other
+error says is unfed, so the pairing explains itself.
+
 **Rejected.**
 - *Uniform fail-fast:* N build cycles for N clustered wiring errors.
 - *Full compiler-style batching:* poisoned nodes, cascade suppression,
@@ -1853,9 +1860,17 @@ compiler-style rendering.
 - The didactic style is policy.
 - Tests match kind + payload, never message text.
 
-**Spec.** [Appendix C][sC]
+**Spec.** [§13.2][s13-2], [Appendix C][sC]
 
 **Rationale.** Recorded only through the rejections below.
+
+Annotation (2026-10-19): amended by [D-222][d-222] and [D-250][d-250]. The one carrier is
+`DiagnosticError{P}`, which replaces `BuildError` ([D-222][d-222]). Warnings ride no
+shared stream: a warning raised while producing an artifact lives on that
+artifact, and one raised while mutating state lives in that state's status
+([D-250][d-250]). The fourth rejection counts blocking a warnings-as-errors switch
+against a separate channel; [D-250][d-250] rejects that switch, and [§13.2][s13-2] states the
+rejection.
 
 **Rejected.**
 - *`error()` strings:* acceptance tests pinned to message text; no batch
@@ -1881,7 +1896,7 @@ boundary phase, one plain store per dispatch.
 - Status goes terminal `stopped`/`errored`, and synchronous runs rethrow after
   the tail.
 
-**Spec.** [§12.6][s12-6], [§9.5][s9-5], [§13.4][s13-4], [§14][s14]
+**Spec.** [§12.6][s12-6], [§9.5][s9-5], [§13.4][s13-4], [§13.6][s13-6], [§14][s14]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -1914,6 +1929,12 @@ The scanned-terminal-type rejection is superseded on its own terms, and the
 observation-by-path rejection is narrowed: the ignore list reads no cell and
 addresses the `Build`'s requester roster. The rule that termination is
 state, never an exception, stands.
+
+Annotation (2026-10-19): the Tier-2 event of the detection clause is a
+localized event, which a stop that must be localized declares as a
+sign-form event ([§13.5][s13-5]). The `stop_on` root faces are stop requests since
+[D-316][d-316], and the policy binds per advance, not at `Simulation` construction
+([D-255][d-255]).
 
 **Rejected.**
 - *Termination-by-exception:* aborts a boundary [§12.4][s12-4] is built on completing;
@@ -1960,6 +1981,12 @@ its past-generic diagnostic, governs the deep paths the read side still
 writes, under [D-130][d-130]'s client scoping ([§13.3][s13-3]). The declared-type walk, the
 face lists and the terminal split stand.
 
+Annotation (2026-10-19): the public `resolve` resolves one level, an
+immediate child, and the declared-type walk is the service walk ([§13.3][s13-3]).
+Since [D-406][d-406] and [D-407][d-407], device read bindings and log extraction by series
+resolve on the service side; GUI panels are parked ([D-310][d-310]). The inspection
+case is snapshot and log inspection ([§13.3][s13-3]).
+
 **Rejected.**
 - *Instance-only walk:* blind to generic holding — [§6.1][s6-1] unenforceable where
   paths are actually resolved.
@@ -1987,6 +2014,11 @@ Annotation (2026-10-12): the summing junction and the Bool gates are one leaf,
 `And{N}` are its aliases. A block joins the library by judgement against three
 guidelines, not by demonstrated need ([D-313][d-313]). Ordinary components, arity by type
 parameter and tier transparency stand ([§13.7][s13-7]).
+
+Annotation (2026-10-19): predicate selection is `select`, a selector of
+`input_passthrough` and `output_passthrough` ([D-251][d-251]), not a `faces` method.
+The face-route printer is `show(::Structure)` ([D-257][d-257]), not the `Build`
+printer ([§13.7][s13-7]).
 
 **Rejected.**
 - *Framework-privileged library blocks:* schema authority no longer total; the
@@ -2273,9 +2305,12 @@ unifies the services as condition-algebra clients.
   composition (concatenated decisions, merged trees, stacked residuals).
 - A `product()` helper is recorded for the [§13.7][s13-7] library, unbuilt.
 
-**Spec.** [§13.7][s13-7]
+**Spec.** [§14.9][s14-9]
 
 **Rationale.** Recorded only through the rejections below.
+
+Annotation (2026-10-19): the helper is recorded in [§14.9][s14-9]. [§13.7][s13-7]'s library
+holds components only.
 
 **Rejected.**
 - *World-level trim wrapper methods:* call-tree reuse: one method per
@@ -2700,7 +2735,7 @@ models carry many observation-oriented ports no wire consumes ([§11.2][s11-2] b
 exactly that), and [D-083][d-083]'s path-bound readers attach post-build, so "unused" is
 undecidable at build.
 
-**Spec.** [§6.1][s6-1], [§6.2][s6-2], [§11.2][s11-2], [§11.7][s11-7], [§13.2][s13-2], [Appendix C][sC]
+**Spec.** [§6.1][s6-1], [§6.2][s6-2], [§11.2][s11-2], [§11.7][s11-7], [§13.2][s13-2], [§13.5][s13-5], [Appendix C][sC]
 
 **Rationale.** Such a warning fires on every honest port and poisons the sole
 warning stream ([§11.7][s11-7]'s anti-diagnostic lesson); the hazard it would guard (a
@@ -3725,6 +3760,10 @@ trajectory's published-boundary ordinal, and the wait counter is a
 separate, monotone count that is never reset, so the loop state the wait
 predicate tests no longer mirrors the snapshot's index.
 
+Annotation (2026-10-19): [§13.4][s13-4] indexes a failure by the frame-entry
+boundary index ([D-128][d-128], [D-230][d-230]). The counter-plus-recorded-`t` indexing this
+entry presupposes is historical, and [§13.4][s13-4] no longer rests on it.
+
 **Rejected.**
 - *Counter incremented before the release-store:* a woken waiter satisfying the
   predicate can acquire-load the *previous* snapshot — wake-with-stale-data,
@@ -3917,6 +3956,10 @@ substitute explicitly, as ordinary inspectable code."
 
 **Rationale.** `AbstractAtRoot` gains the remedy hint (wire a concrete
 producer; in a rig, a stub child).
+
+Annotation (2026-10-19): the remainder is exported via
+`input_passthrough(rig, child; except)` ([§13.7][s13-7]). The slot of the second
+rejection's slot-typing rule is a root input since [D-206][d-206].
 
 **Rejected.**
 - *Relaxing abstract-at-root:* [D-078][d-078] stands: staging cells, trace header and
@@ -4259,6 +4302,11 @@ of the three a client falls under is internal, never user-facing API
 stays the primitive's semantics and stays enforcing where promises depend on
 it.
 
+Annotation (2026-10-19): since [D-406][d-406] and [D-407][d-407], device read bindings and log
+extraction by series resolve on the service side, and
+`ReadBindingUnresolved` retires ([D-406][d-406]); GUI panels are parked ([D-310][d-310]). The
+inspection case is snapshot and log inspection ([§13.3][s13-3]).
+
 **Rejected.**
 - *A single unconditional strict rule:* as written it made [D-083][d-083]'s blessed
   inspection reads unreachable in any real tree — the shipped XPlane
@@ -4305,6 +4353,9 @@ section numbers — an explicit link, local or cross-file, is the resolution and
 survives every later run; check_refs.jl keeps validating in-file anchors
 against each file's own headings and now prints the self-vs-spec set as an
 advisory.
+
+Annotation (2026-10-19): [§13.4][s13-4] names only the terminal statuses and the
+return to `built`; the five-state count is [§12.6][s12-6]'s.
 
 **Rejected.**
 - *Renumbering the walkthrough sections to letters or names so the linkifier
@@ -5068,6 +5119,12 @@ Annotation (2026-10-13): [§3.1][s3-1] now states the commanded-reset rule above
 states the gear's touchdown edge. The immutable stage views cited to [§3.1][s3-1]
 here and in the Rejected list are [§7.1][s7-1]'s.
 
+Annotation (2026-10-19): the grow-by-migration-demand rule the Rationale
+cites is retired: a listed block is built whenever wanted, with no
+demonstrating model required ([D-313][d-313]). The Bool gates the third rejection
+cites admit no `Not`; the negation is one character at the consumer
+([D-311][d-311]).
+
 **Rejected.**
 - *Superseded position — a gear-owned `FrictionRegulator` leaf wrapping the PI
   law:* it buys a duplicated component whose only job is to keep the library
@@ -5147,6 +5204,10 @@ written as the dual of "physically silly values are acceptable by construction"
 [Appendix A][sA] recall line. [D-050][d-050]'s probe-everything scope stays unnarrowed by this
 finding.
 
+Annotation (2026-10-19): under [D-316][d-316] a plausibility check meaning "stop
+the run" publishes a `StopFlag` port, which `StopRequest` spells, and no
+keyword names it.
+
 **Rejected.**
 - *Probe-time exception downgrading (catch user-code throws while probing and
   warn):* it hides genuine bugs behind a warning, only defers the identical
@@ -5220,6 +5281,11 @@ the tier argument is `y_direct` ([D-220][d-220], [D-267][d-267], [§13.7][s13-7]
 the Rationale calls FlightCore's are FlightPhysics', defined at the
 `aircraftbase.jl` lines it cites. The block, its two clarifications and its
 tier stand.
+
+Annotation (2026-10-19): the root slot of the second clarification is a
+root input since [D-206][d-206] ([§11.3][s11-3]). The demonstrated-need charter the Rationale
+cites is retired: a block joins the library by judgement against three
+guidelines ([D-313][d-313], [§13.7][s13-7]).
 
 **Rejected.**
 - *A zero-arity summing junction with an identity element:* [D-037][d-037]'s retirement
@@ -5450,7 +5516,7 @@ previous frame's due set — and everything at boundary zero, which is [§14.5][
 existing rule (`t₀` is a grid point of every divisor, and no earlier tick
 exists for a ZOH to hold) rather than a new one.
 
-**Spec.** [§5.3][s5-3], [§10.3][s10-3], [§10.4][s10-4], [§10.5][s10-5], [§10.6][s10-6], [§9.7][s9-7], [§14.5][s14-5], [Appendix D][sD]
+**Spec.** [§5.3][s5-3], [§10.3][s10-3], [§10.4][s10-4], [§10.5][s10-5], [§10.6][s10-6], [§9.7][s9-7], [§13.5][s13-5], [§14.5][s14-5], [Appendix D][sD]
 
 **Rationale.** The split also recovers an implicit commitment: [§9.7][s9-7]'s
 recompilation-granularity sentence — editing a discrete component invalidates
@@ -5923,6 +5989,9 @@ service warning is not a stream but a synchronous per-call annotation.
 
 **Rationale.** A round-5 landing-audit finding (finding 1), completing
 [D-126][d-126]/[D-155][d-155] and superseding [D-092][d-092]'s five-value count to six.
+
+Annotation (2026-10-19): superseded in part by [D-250][d-250]. [§13.2][s13-2]'s two-stream
+partition is gone; a service warning lives on the artifact the call returns.
 
 **Rejected.**
 - *Demoting `TrimCommitEvents`/`TrimCommitResiduals` to report-only data:*
@@ -7030,6 +7099,9 @@ Annotation (2026-10-02): amended by [D-303][d-303]. `Group`'s fields and keyword
 the declarations they feed. The rest stands. The first is `local_wires` since
 [D-314][d-314].
 
+Annotation (2026-10-19): [§13.7][s13-7]'s starting inventory does not list `Group`.
+`Group` belongs to [§13.7][s13-7]'s library as its one member admitted by persona.
+
 **Rejected.**
 - *The mutable builder (`Assembly()` + `add!`/`connect!`):* [§8.5][s8-5]'s standing
   rejection — type/recipe drift, mutable state through declaration code, no
@@ -7731,7 +7803,7 @@ still never published. The bundled rulings:
   source of a boundary where two hold is the first in that order.
 - `init!` clears the record with the trajectory ([§12.6][s12-6]).
 
-**Spec.** [§11.8][s11-8], [§12.1][s12-1], [§12.4][s12-4], [§12.6][s12-6], [§13.5][s13-5], [§13.6][s13-6], [Appendix C][sC]
+**Spec.** [§11.8][s11-8], [§12.1][s12-1], [§12.4][s12-4], [§12.6][s12-6], [§13.2][s13-2], [§13.5][s13-5], [§13.6][s13-6], [Appendix C][sC]
 
 **Rationale.** [D-201][d-201] disposed of the tail window's diagnostics through
 presentation because the termination record did not yet exist as machinery;
@@ -7772,6 +7844,10 @@ Annotation (2026-10-13): the effective policy no longer lives in the run
 metadata. The deployment holds no policy, and the termination record carries
 the terminating advance's ([§11.5][s11-5], [D-255][d-255]). The `t_end` rejection's ground, one
 home for the fact, stands.
+
+Annotation (2026-10-19): amended by [D-233][d-233]. The final boundary time is always
+present, a value of the deployment's scalar and never `nothing`, so the
+record has no absent-time arm.
 
 **Rejected.**
 - *Superseded position — presentation-only disposal ([D-201][d-201]):* honest but
@@ -8434,7 +8510,7 @@ second substitution) is driven by that mode.
   the records exhausted, and stays `:replay` otherwise. `init!` and a fresh
   `replay!` reset it with the trajectory.
 
-**Spec.** [§11.5][s11-5], [§12.6][s12-6], [§12.7][s12-7], [§13.4][s13-4]
+**Spec.** [§11.5][s11-5], [§12.6][s12-6], [§12.7][s12-7], [§13.4][s13-4], [§13.5][s13-5]
 
 **Rationale.** [§13.4][s13-4] promises that after `replay!(sim2, trc; to_boundary = k)`
 a `step!` re-executes frame k+1 on its recorded inputs. The promise needs the
@@ -9045,7 +9121,7 @@ leaf's `m` — is isbits or a `Symbol`, and Stratum A checks every
 latitude of [§4.1][s4-1] stays with signals. A PRNG object is workspace; the values
 that determine its next draw are the state.
 
-**Spec.** [§2.5][s2-5], [§3.2][s3-2], [§7.3][s7-3], [§8.2][s8-2], [§9.1][s9-1], [Appendix C][sC], [Appendix D][sD]
+**Spec.** [§2.5][s2-5], [§3.2][s3-2], [§7.3][s7-3], [§8.2][s8-2], [§9.1][s9-1], [§13.7][s13-7], [Appendix C][sC], [Appendix D][sD]
 
 **Rationale.** The three sources disagreed and the code checked nothing:
 [§7.3][s7-3] granted `s` "any immutable value" under the frozen-reference rule, the
@@ -9194,7 +9270,7 @@ over the cell type and the return type.
   generates a throw of `ConformanceFailure`, a `StepError` species at runtime
   ([§13.4][s13-4]).
 
-**Spec.** [§7.1][s7-1], [§8.2][s8-2], [§9.5][s9-5], [Appendix C][sC]
+**Spec.** [§7.1][s7-1], [§8.2][s8-2], [§9.5][s9-5], [§13.4][s13-4], [Appendix C][sC]
 
 **Rationale.** Two facts fix the shape. [D-166][d-166]'s embed-accept makes "types equal
 or refuse" impossible at the write: a `Float64` at a declared-`T` cell under a
@@ -9308,7 +9384,7 @@ embedding lift ([D-238][d-238]) never enters it. A mutable type anywhere in a po
 refused (`IllegalPortType`), and so is a handle-typed face surfacing as a
 root input.
 
-**Spec.** [§4.3][s4-3], [§4.4][s4-4], [§8.2][s8-2], [§9.5][s9-5], [§9.7][s9-7], [Appendix C][sC]
+**Spec.** [§4.3][s4-3], [§4.4][s4-4], [§8.2][s8-2], [§9.5][s9-5], [§9.7][s9-7], [§13.7][s13-7], [Appendix C][sC]
 
 **Rationale.** [§4.4][s4-4] already fixes the boundary: a bulk-data model is an
 immutable struct combining isbits parameters with references to data loaded at
@@ -9537,6 +9613,10 @@ them, and sat a few characters from "didactic". "Structural" was
 serviceable but said nothing about wiring. Naming each case by its client
 lets the table's row name carry who resolves and, through the chapter the
 client belongs to, what is at stake.
+
+Annotation (2026-10-19): since [D-406][d-406] and [D-407][d-407], device read bindings and log
+extraction by series resolve on the service side; GUI panels are parked
+([D-310][d-310]). The inspection case is snapshot and log inspection ([§13.3][s13-3]).
 
 **Rejected.**
 - *"Task", "analysis" or "operation" in place of "service":* "task" collides
@@ -9989,7 +10069,7 @@ per call: `except`, `only`, or a new `select` predicate over face names.
 - The feed-list idiom of [§8.8][s8-8] gets a test transcribing the spec's sketch
   against the real helpers, and no code.
 
-**Spec.** [§8.8][s8-8], [Appendix C][sC]
+**Spec.** [§8.8][s8-8], [§13.2][s13-2], [§13.7][s13-7], [Appendix C][sC]
 
 **Rationale.** [§8.8][s8-8]'s `except` and `only` were mutually exclusive by rule;
 adding a predicate kept the rule and needed its arm to say "more than one"
@@ -10162,7 +10242,7 @@ materializes it.
 - `Simulation(build; kw...)` and `Simulation(root; kw...)` stay as sugar
   composing the deployment constructor.
 
-**Spec.** [§8.7][s8-7], [§9.2][s9-2], [§10.5][s10-5], [§11.5][s11-5], [§12.7][s12-7], [Appendix C][sC]
+**Spec.** [§8.7][s8-7], [§9.2][s9-2], [§10.5][s10-5], [§11.5][s11-5], [§12.7][s12-7], [§13.2][s13-2], [Appendix C][sC]
 
 **Rationale.** Deployment consumes the grid parameters and fixes everything
 they determine, the bound schedule and the grid diagnostics among them, and
@@ -10239,7 +10319,7 @@ Supersedes [D-091][d-091], [D-217][d-217]'s header-records-the-constructor-pair 
 [D-060][d-060]'s "policy at `Simulation` construction" clause; [D-060][d-060]'s rule that
 termination is state, never an exception, stands.
 
-**Spec.** [§11.5][s11-5], [§12.1][s12-1], [§12.4][s12-4], [§12.6][s12-6], [§12.7][s12-7], [§13.5][s13-5], [Appendix C][sC]
+**Spec.** [§11.5][s11-5], [§12.1][s12-1], [§12.4][s12-4], [§12.6][s12-6], [§12.7][s12-7], [§13.2][s13-2], [§13.5][s13-5], [Appendix C][sC]
 
 **Rationale.** The run was spread across the `Simulation`'s fields and the
 control plane. `termination` sat on `Control` beside the stop word, so the
@@ -10646,7 +10726,7 @@ stands. The rename of `Dataflow` to `Outputs` supersedes [D-253][d-253]'s clause
 the `Dataflow` name and [D-258][d-258]'s rejection of renaming it: both rested on the
 artifact carrying the graph, and it no longer does.
 
-**Spec.** [§9.1][s9-1], [§9.2][s9-2], [§11.2][s11-2], [§11.3][s11-3], [§11.5][s11-5], [§12.6][s12-6], [§13.5][s13-5], [Appendix B][sB]
+**Spec.** [§9.1][s9-1], [§9.2][s9-2], [§11.2][s11-2], [§11.3][s11-3], [§11.5][s11-5], [§12.6][s12-6], [§13.4][s13-4], [§13.5][s13-5], [Appendix B][sB]
 
 **Rationale.** A survey of every struct in `src/` (104 structs, 22
 findings, `docs/reports/20260921_data_survey/`) found no field with two
@@ -11880,7 +11960,7 @@ is the trace's header, and replay is a restore followed by the feed.
   restores the header and runs no boundary zero, so frame one's record is
   still ahead of it and `step!` re-executes that frame.)
 
-**Spec.** [§10.2][s10-2], [§10.6][s10-6], [§11.5][s11-5], [§12.6][s12-6], [§12.7][s12-7], [§14][s14], [§14.8][s14-8], [§14.10][s14-10], [Appendix B][sB]
+**Spec.** [§10.2][s10-2], [§10.6][s10-6], [§11.5][s11-5], [§12.6][s12-6], [§12.7][s12-7], [§13.4][s13-4], [§14][s14], [§14.8][s14-8], [§14.10][s14-10], [Appendix B][sB]
 
 **Rationale.** Once the state past the initial instant is a value of its
 own, restoring it is a copy, and nothing can be one tick ahead: the held
@@ -12902,7 +12982,7 @@ Position, where readers acquire-load a snapshot allocated per boundary.
 - A live switch to `pace = Inf` is a pace change like any other. It
   re-anchors and forgives the debt, and the forgiven debt is counted.
 
-**Spec.** [§10.7][s10-7], [§12.4][s12-4]
+**Spec.** [§10.7][s10-7], [§12.4][s12-4], [§13.4][s13-4]
 
 **Rationale.** Each bullet restates what an existing entry recorded outside
 its Position. The unmask points were recorded in [D-132][d-132]'s Rationale, and the
@@ -14388,7 +14468,7 @@ state are fixed here.
   properties, decided at the root build. Neither is decidable below the root,
   so neither is validated level by level.
 
-**Spec.** [§6.1][s6-1], [§9.1][s9-1]
+**Spec.** [§6.1][s6-1], [§9.1][s9-1], [§13.7][s13-7]
 
 **Rationale.** Each bullet restates what an existing entry recorded outside a
 Position. Auto-bubbling was recorded in [D-043][d-043]'s Rejected list, which says
@@ -14894,7 +14974,7 @@ bulk-data obligation was recorded in [D-139][d-139]'s Rationale.
 handle is isbits. A handle that references bulk data enters the rig through a
 constant source holding it, never as a root input ([§4.4][s4-4], [§14.9][s14-9], [D-237][d-237]).
 
-**Spec.** [§4.4][s4-4], [§8.2][s8-2], [§14.9][s14-9]
+**Spec.** [§4.4][s4-4], [§8.2][s8-2], [§13.7][s13-7], [§14.9][s14-9]
 
 **Rationale.** Root inputs are a run's primary data, the one part of the
 signal table no sweep recomputes. The trace header holds them as values, and
@@ -15619,7 +15699,7 @@ a ruling, and [D-027][d-027]'s Rejected list keeps it. The entry decides nothing
 **Position.** An error is reproduced by trace replay, not by resurrecting the
 errored simulation.
 
-**Spec.** [§12.6][s12-6]
+**Spec.** [§12.6][s12-6], [§13.6][s13-6]
 
 **Rationale.** This restates the reason in [D-059][d-059]'s Rejected list for refusing
 resumable-after-error simulations, which its Position does not state: the
@@ -15669,7 +15749,7 @@ both. The entry decides nothing new.
 - A stepping session is deviceless by construction: `attach!` only
   registers, and tasks appear at the next `run!`.
 
-**Spec.** [§12.4][s12-4], [§12.6][s12-6]
+**Spec.** [§12.4][s12-4], [§12.6][s12-6], [§13.4][s13-4]
 
 **Rationale.** Each bullet restates a clause of [D-093][d-093]'s Rationale that its
 Position does not state. The source's `should_close` is the loop body's
@@ -15881,7 +15961,7 @@ record and its Position does not state. The source's `Control.lifecycle` is
   until the next `init!`, `restore!` or `replay!`.
 - The stop word is cleared at a run's start.
 
-**Spec.** [§12.1][s12-1], [§12.4][s12-4]
+**Spec.** [§12.1][s12-1], [§12.4][s12-4], [§13.4][s13-4]
 
 **Rationale.** The first two bullets restate [D-268][d-268]'s annotations of
 2026-09-26, the second as its annotation of 2026-10-15 reads it. The third
@@ -15940,7 +16020,7 @@ terms, and the log's entry did not carry it. The entry decides nothing new.
 **Position.** The thread budget is tight when `Threads.nthreads()` is less
 than the run's roster plus one.
 
-**Spec.** [§12.2][s12-2]
+**Spec.** [§12.2][s12-2], [§13.2][s13-2]
 
 **Rationale.** Every rostered device is a task, and the calling task hosts
 the loop ([D-310][d-310]), so a run occupies one task more than its roster. A session
@@ -16105,7 +16185,7 @@ use ([§11.2][s11-2], [§13.1][s13-1], [§14.4][s14-4]). The bundled rulings:
 - A read refusal at attach carries the read's label and not the device. The
   `attach!` call names the device and the binding (amends [D-216][d-216]).
 
-**Spec.** [§11.2][s11-2], [§11.6][s11-6], [§14.4][s14-4], [§14.7][s14-7], [Appendix C][sC]
+**Spec.** [§11.2][s11-2], [§11.6][s11-6], [§13.3][s13-3], [§13.5][s13-5], [§14.4][s14-4], [§14.7][s14-7], [Appendix C][sC]
 
 **Rationale.** The family is closed, one address space for every reader of
 the model, and it splits by source and not by client ([§14.4][s14-4]). Attach
@@ -16171,7 +16251,7 @@ boundary ordinals ([§11.2][s11-2], [Appendix B][sB]). The bundled rulings:
 - The names `series` and `Series` are provisional until the export audit
   ([D-226][d-226]).
 
-**Spec.** [§11.2][s11-2], [Appendix B][sB]
+**Spec.** [§11.2][s11-2], [§13.3][s13-3], [Appendix B][sB]
 
 **Rationale.** The log is a vector of snapshots, and a comprehension over
 `port(snapshot, path, name)` extracts a signal. Three things made that less
