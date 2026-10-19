@@ -354,7 +354,7 @@ mode(sim::Simulation) = sim.run.feed === nothing ? :live : :replay
 """
     termination(sim)
 
-§13.5's termination record (devices.jl, D-203) — the current run's outcome: the
+§13.5's termination record (D-203) — the current run's outcome: the
 final snapshot's boundary time, the terminating advance's `StopPolicy`, the
 typed source that ended the run (`EndTimeReached`, `ModelRequestedStop` with
 the requester, `ControlRequestedStop` with its issuer, or `LoopError` with the
@@ -1066,7 +1066,7 @@ are fewer threads than the roster plus one, `replay!` checking the same way
 (§12.2); the §12.4 init bracket runs per
 roster entry on the calling task; one task is spawned per *live* entry and
 the loop runs here, on the calling task (§11.1, D-310); the loop advances
-until a termination source fires; and the tail closes the run (devices.jl):
+until a termination source fires; and the tail closes the run (below):
 sticky status after the final snapshot, waits woken, `unblock!`, the join
 under `join_timeout`. `run!` blocks its caller until the run ends.
 
@@ -1341,6 +1341,185 @@ end
 
 _register_tasks!(plane::DataPlane, entries::Vector{RosterEntry}, tasks::Vector{Task}) =
     (for (entry, task) in zip(entries, tasks); plane.run_tasks[entry.id] = task; end; nothing)
+
+# --- §12.4's run bracket: the init bracket, the tail and the sweep -----------
+# On the calling task, once per run, around the spawn and the wrapper that
+# devices.jl holds; `_run_body!` above runs them in order.
+
+"""
+§12.4's pre-spawn initialization bracket, a step of the shutdown protocol
+taken at the top of a run: `init!` once per roster entry, in attachment
+order, on the calling task, each call in its own bracket. A throw goes
+straight back to `shutdown!` — which is why `shutdown!` owes tolerance of a
+partially initialized device — is reported as the ordinary `DeviceCrash`,
+and spawns no task: the device is dead from the run's first frame, its
+claims persisting to run end and the orphaned root inputs holding their values.
+With `should_abort` set the failure requests a stop, already pending when
+the loop would start: the run advances zero frames and ends through the same
+tail, every remaining entry still getting its `init!`/`shutdown!` pair
+uniformly. An `InterruptException` is the operator's stop, not a crash, as in
+the wrapper (D-268): the device is released and spawns no task, the
+`:interrupt` stop is set in place of the report, and the run ends at its
+first frame top the same way. Fills the run's `live`, the entries from which
+§11.1's topology is derived — derived *after* initialization, never from the
+roster alone. Each entry is listed before its `init!` begins, and removed on a
+throw right after the bracket releases it, ahead of the arms, so an interrupt
+escaping the bracket leaves in `live` every entry whose `init!` began and that
+the bracket has not released, where `run!`'s arm releases it. Listing after
+`init!` would leak the device whose `init!` had just returned (§11.6, D-268).
+"""
+function _init_devices!(sim::Simulation, roster, live)
+    for entry in roster
+        push!(live, entry)
+        try
+            init!(entry.dev)
+        catch err
+            _shutdown!(entry)
+            pop!(live)                        # released, so an interrupt in an arm can't repeat it
+            if err isa InterruptException
+                _request_stop!(entry.handle.control, :interrupt)   # the operator's stop (§12.4, D-268)
+            else
+                # addressed by the entry: no task holds a handle yet (§12.4)
+                report!(entry, DeviceCrash(err, entry.should_abort))
+                entry.should_abort && stop!(entry.handle)
+            end
+        end
+    end
+    nothing
+end
+
+# Spawn the wrapper, one run-scoped task per entry (§11.1): inside `run!`
+# only, never at `attach!` — a task exists only once the run it serves does.
+# The §12.3 registers are refreshed first, on the calling task.
+# Tail steps (1)'s close and (2) (§12.4): the final snapshot is whatever the
+# loop last published; the sticky status flips only after it, the pause flag
+# clears beside it (§12.1, D-268), and the notify under the lock wakes every
+# §12.3 waiter, whose predicate routes it out. Idempotent, and run on §13.6's
+# catch path too, so no device task is left parked when the loop throws.
+function _finish!(sim::Simulation)
+    control = sim.control
+    @atomic control.stopped = true
+    @atomic control.paused = false
+    lock(control.wake)
+    try
+        notify(control.wake)
+    finally
+        unlock(control.wake)
+    end
+    nothing
+end
+
+"""
+Tail steps (3)–(5) (§12.4), on the calling task, after `_finish!` has set
+the sticky status and woken the waits: `unblock!` per spawned entry — the
+override's own blocking call returns; a throw out of the hook is warned and
+the tail proceeds — then the join under one shared `join_timeout` deadline,
+D-198's one patience for the whole tail. A task exceeding what remains of
+the deadline is abandoned rather than left to hang `run!`, reported by name
+under `DeviceJoinTimeout` into the loop's own cell (D-203): the terminal
+snapshot precedes the join by construction, so the run's-end sweep — not a
+drain — is what collects it, into the termination record and the logging
+backend.
+
+An interrupt reaching the tail, in the `unblock!` loop or the join, collapses
+it (§12.4, D-268): the remaining joins are abandoned at once, every entry
+whose task is not done reported by name exactly as the cap's path reports
+it, and nothing propagates. The run still ends `stopped`.
+"""
+function _tail!(sim::Simulation, entries::Vector{RosterEntry}, tasks::Vector{Task})
+    settled = 0                                 # entries the join has joined or reported
+    try
+        for entry in entries
+            try
+                unblock!(entry.dev)
+            catch err
+                err isa InterruptException && rethrow()
+                @warn "unblock! of $(_who(entry)) threw; its task can now exit only " *
+                      "through the join timeout (§12.4)" exception = (err, catch_backtrace())
+            end
+        end
+        deadline = time() + sim.control.join_timeout
+        for (i, (entry, task)) in enumerate(zip(entries, tasks))
+            remaining = deadline - time()
+            joined = istaskdone(task) ||
+                (remaining > 0 &&
+                 timedwait(() -> istaskdone(task), remaining; pollint = min(0.01, remaining)) === :ok)
+            joined || _report_join_timeout!(sim, entry)
+            settled = i
+        end
+    catch err
+        err isa InterruptException || rethrow()
+        # (5)'s abandonment, taken at once. A further interrupt cuts one report
+        # short and the loop resumes past the entries settled, so none leaves.
+        while true
+            try
+                for i in settled+1:length(tasks)
+                    istaskdone(tasks[i]) || _report_join_timeout!(sim, entries[i])
+                    settled = i
+                end
+                break
+            catch err                           # rebinds the outer `err`; nothing below reads it
+                err isa InterruptException || rethrow()
+            end
+        end
+    end
+    nothing
+end
+
+# Tail step (5)'s abandonment report, into the loop's own cell (D-203).
+function _report_join_timeout!(sim::Simulation, entry::RosterEntry)
+    snapshot = latest(sim)                      # after init!, never nothing (§14.5)
+    report_cell!(sim.plane.loop_diag,
+                 DeviceJoinTimeout(_who(entry), sim.control.join_timeout,
+                                   _seconds(snapshot.t), snapshot.boundary))
+end
+
+"""
+The run's last sweep (§11.8), in `run!`'s outermost `finally`: one more take
+per cell, folding what landed after the final frame top — a crash caught on
+the way out, a report from a device's exit path, the tail's own
+`DeviceJoinTimeout` — into the accounts, so the per-run record is complete
+and nothing leaks into the next run's status. The terminal snapshot is
+already out, so no snapshot can carry this residue: it is collected into the
+returned `ResidueRecord`s — the termination record's third field — and
+presented through the logging backend, the record's renderer (D-201, D-203).
+The terminal status's account is therefore complete up to its own frame top,
+and the tail's remainder is loud *and* recorded, still never published.
+"""
+function _sweep_tail!(sim::Simulation, roster)
+    plane = sim.plane
+    residue = ResidueRecord[]
+    for entry in roster
+        _fold!(entry.account, _handle(entry).diag_cell)
+        _residue!(residue, _who(entry), entry.account)
+    end
+    _fold!(plane.harness_account, plane.harness_diag)
+    _residue!(residue, "harness", plane.harness_account)
+    _fold!(plane.loop_account, plane.loop_diag)
+    _fold!(plane.loop_account, sim.model.frame_diag)   # the frame's own cell (§11.8, D-317)
+    _residue!(residue, "loop", plane.loop_account)
+    residue
+end
+
+# One writer's take: a quiet account contributes no record; a noisy one hands
+# its pending vector over — the account re-arms the shared empty, so the
+# record's vector is never written again — and is rendered entry by entry.
+function _residue!(residue::Vector{ResidueRecord}, who::String, account::WriterAccount)
+    isempty(account.recent) && _total(account.suppressed) == 0 && return nothing
+    record = ResidueRecord(who, account.recent, account.suppressed)
+    push!(residue, record)
+    for occurrence in record.recent
+        @warn "$(nameof(typeof(occurrence))) from $who, past the final snapshot's " *
+              "account: $(message(occurrence))"
+    end
+    suppressed_count = _total(record.suppressed)
+    suppressed_count > 0 &&
+        @warn "$suppressed_count more suppressed occurrence(s) from $who past the final " *
+              "snapshot's account (§11.8)"
+    account.recent = EMPTY_RECENT
+    account.suppressed = KindCounts()
+    nothing
+end
 
 # The loop's hooks (§11.2, §11.4, §13.5, D-317), one per advance and one per
 # `init!`: the top hook is the drain, and the settled hook publishes the

@@ -45,7 +45,7 @@ user material inside the package, with no property of its own to own it.
 The package module: the dependencies and the include order the other files load
 in: leaves, diagnostics, declare, assembly, store, executor, build, tracer,
 readers, deployment, dataplane, checkpoint, trace, roster, bindings, control,
-conditions, model, stepper, frame, trim, linearize, sim, devices, show, blocks.
+devices, conditions, model, stepper, frame, trim, linearize, sim, show, blocks.
 The model layer sits between the executor layer and the runtime, by the rule
 in the `src/model.jl` entry.
 
@@ -288,7 +288,7 @@ D-117, D-130, D-204, D-205, D-207, D-226, D-277, D-315.
   - the notify wakes a paused loop.
 - `wait_resume!` is the pause block (§12.1, D-268):
   - `resume!` and every stop request wake the block;
-  - the tail's `_finish!`, defined in devices.jl, clears the pause flag;
+  - the tail's `_finish!`, defined in sim.jl, clears the pause flag;
   - the block returns whether it parked.
 - The two lifecycle gates `assert_stopped` and `assert_configurable` are
   sim.jl's.
@@ -336,7 +336,7 @@ D-256, D-268, D-269, D-317.
   `PacerStatus` (D-269):
   - the `PacerStatus` reads `Inf` and zeros where no pacer runs;
   - the copy off a live `Pacer` is control.jl's.
-- `ResidueRecord`, one writer's share of the tail residue, which devices.jl's
+- `ResidueRecord`, one writer's share of the tail residue, which sim.jl's
   sweep builds and the termination record holds (§13.5, D-203).
 
 Spec: §10.7, §11.1–§11.4, §11.8, §12.2, §12.4, §12.6, §13.2, §13.5, §14.4, D-023,
@@ -426,24 +426,17 @@ D-250, D-254, D-256, D-261.
   - `incumbent_status`, the incumbent's `WriterStatus` by `who`, and
     `orphaned` on it, exactly `task_state === :done` (§12.2). A crashed
     loop's task ends `:done`, since the wrapper catches the crash.
-- The task wrapper.
-- The init bracket, with its interrupt arm. An `InterruptException` in `init!`
-  sets the `:interrupt` stop in place of `DeviceCrash`. The bracket lists each
-  entry in the run's own list before its `init!`, so an interrupt escaping the
-  bracket leaves no initialized device unreleased.
+- The task wrapper, with the guarded release `_shutdown!`, and `_spawn!`,
+  one task per live entry.
 - `report!(entry, DeviceCrash(…))`, the crash report addressed by the roster
-  entry (§12.4). The wrapper and the init bracket both file through it. It
-  writes the entry's cell with no attachment check and no heartbeat.
-- The tail under `join_timeout`, which `Control` carries (D-256). An interrupt
-  reaching the tail collapses the remaining joins into `DeviceJoinTimeout` by
-  name (D-268).
-- The sweep after the tail builds the `ResidueRecord`s, dataplane.jl's
-  (§13.5, D-203). The sweep folds the model's diagnostic cell into the loop's
-  account beside the loop's own cell (§11.8, D-317).
-- The file follows sim.jl, so its helpers take the `Simulation` typed.
+  entry (§12.4). The wrapper and sim.jl's init bracket both file through it.
+  It writes the entry's cell with no attachment check and no heartbeat.
+- §12.4's run bracket around the spawn, the init bracket, the tail and the
+  sweep, is sim.jl's. Nothing here names a `Simulation`, so the file precedes
+  sim.jl.
 
-Spec: §11.1, §11.3, §11.6, §11.7, §11.8, §12.1–§12.4, §13.5, §13.6, D-198,
-D-203, D-233, D-244, D-256, D-261, D-268, D-270, D-315, D-317.
+Spec: §11.1, §11.3, §11.6, §11.7, §11.8, §12.1–§12.4, §13.6, D-233, D-244,
+D-256, D-261, D-268, D-270, D-315.
 
 ### `src/diagnostics.jl`
 
@@ -805,6 +798,22 @@ Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315.
   the simulation's `init!`, with the misuse forms forwarding to the model's
   (§14.8, §14.10, D-319).
 - `_reset_periphery!` and `_open_run!`.
+- §12.4's run bracket, beside `_run_body!`, which runs it around devices.jl's
+  spawn and wrapper:
+  - the init bracket `_init_devices!`, with its interrupt arm. An
+    `InterruptException` in `init!` sets the `:interrupt` stop in place of
+    `DeviceCrash`. The bracket lists each entry in the run's own list before
+    its `init!`, so an interrupt escaping the bracket leaves no initialized
+    device unreleased;
+  - `_finish!`, which sets the sticky status, clears the pause flag and wakes
+    the waits;
+  - the tail `_tail!` under `join_timeout`, which `Control` carries (D-256).
+    An interrupt reaching the tail collapses the remaining joins into
+    `DeviceJoinTimeout` by name (D-198, D-268);
+  - the sweep `_sweep_tail!` after the tail, which builds the
+    `ResidueRecord`s, dataplane.jl's (§13.5, D-203), and folds the model's
+    diagnostic cell into the loop's account beside the loop's own cell
+    (§11.8, D-317).
 - `attach!`/`detach!`.
 - The pause verbs `pause!`/`resume!`/`paused`, beside `stop!(sim)` (§12.1,
   D-268).
@@ -847,7 +856,7 @@ Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315.
   (D-318).
 
 Spec: §10.2–§10.7, §11.1–§11.5, §11.8, §12.1–§12.7, §13.4–§13.6,
-§14, §14.5, §14.6, §14.8, §14.10, D-027, D-101, D-203, D-218, D-219,
+§14, §14.5, §14.6, §14.8, §14.10, D-027, D-101, D-198, D-203, D-218, D-219,
 D-223, D-232, D-233, D-250, D-253, D-254, D-255, D-256, D-260, D-261,
 D-268, D-269, D-270, D-274, D-316, D-317, D-318, D-319, D-407.
 

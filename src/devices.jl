@@ -1,22 +1,18 @@
-# The device contract and its task machinery (§11.6, §11.1) with the §12.4
-# lifecycle slice: the handle every attached device receives, the authoring
-# contract's four functions, the framework wrapper around the author-owned
-# loop body, the pre-spawn init bracket and the tail. The control plane the
-# handle reads — the stop word, the sticky status, §12.3's counter and
-# condition — is control.jl's, with the pause block and the pacer. A device
-# failure reports as `DeviceCrash` into the device's own diagnostic cell
-# (§11.8, §12.4); what the tail alone produces — the join timeout, and
-# whatever landed past the final frame top — is folded into the termination
-# record and presented through the logging backend, the last snapshot having
-# already been published (D-201, D-203).
+# The device contract and its task machinery (§11.6, §11.1): the handle every
+# attached device receives, the authoring contract's four functions, the
+# framework wrapper around the author-owned loop body, and the spawn. The
+# control plane the handle reads — the stop word, the sticky status, §12.3's
+# counter and condition — is control.jl's, with the pause block and the pacer.
+# A device failure reports as `DeviceCrash` into the device's own diagnostic
+# cell (§11.8, §12.4).
 #
-# This file holds the handle, the contract, the per-run task mechanics and
-# §11.7's panel kit, the framework's half of the panel convention: the baked
-# port views, the peek and the orphan fact, all reads off the handle and a
-# snapshot (D-270). `run!`'s frame anatomy and the Simulation-typed surface
-# (`attach!`, `stop!(sim)`) live in sim.jl, which this file follows, so the
-# helpers here take the `Simulation` typed. They run once per run, never inside
-# a frame. The tail's `ResidueRecord` is dataplane.jl's.
+# This file holds the handle, the contract, the wrapper and §11.7's panel kit,
+# the framework's half of the panel convention: the baked port views, the peek
+# and the orphan fact, all reads off the handle and a snapshot (D-270). §12.4's
+# run bracket around the spawn — the init bracket, the tail and the run's-end
+# sweep — is sim.jl's, beside `run!`'s frame anatomy and the Simulation-typed
+# surface (`attach!`, `stop!(sim)`); nothing here names a `Simulation`, so the
+# file precedes sim.jl.
 
 """
 The handle (§11.6): the one object every attached device receives, carrying
@@ -366,7 +362,7 @@ loop's `nothing`.
 """
 orphaned(record::WriterStatus) = record.task_state === :done
 
-# --- the wrapper and the run's bracket (§11.6, §12.4) --------------------------
+# --- the wrapper and the spawn (§11.6, §12.4) -----------------------------------
 
 # The guarded release: `shutdown!` is guaranteed on every exit path, and a
 # throw out of it must not wreck the bracket or the tail around it (§11.6). An
@@ -429,184 +425,11 @@ function _wrap(entry::RosterEntry)
     nothing
 end
 
-"""
-§12.4's pre-spawn initialization bracket, a step of the shutdown protocol
-taken at the top of a run: `init!` once per roster entry, in attachment
-order, on the calling task, each call in its own bracket. A throw goes
-straight back to `shutdown!` — which is why `shutdown!` owes tolerance of a
-partially initialized device — is reported as the ordinary `DeviceCrash`,
-and spawns no task: the device is dead from the run's first frame, its
-claims persisting to run end and the orphaned root inputs holding their values.
-With `should_abort` set the failure requests a stop, already pending when
-the loop would start: the run advances zero frames and ends through the same
-tail, every remaining entry still getting its `init!`/`shutdown!` pair
-uniformly. An `InterruptException` is the operator's stop, not a crash, as in
-the wrapper (D-268): the device is released and spawns no task, the
-`:interrupt` stop is set in place of the report, and the run ends at its
-first frame top the same way. Fills the run's `live`, the entries from which
-§11.1's topology is derived — derived *after* initialization, never from the
-roster alone. Each entry is listed before its `init!` begins, and removed on a
-throw right after the bracket releases it, ahead of the arms, so an interrupt
-escaping the bracket leaves in `live` every entry whose `init!` began and that
-the bracket has not released, where `run!`'s arm releases it. Listing after
-`init!` would leak the device whose `init!` had just returned (§11.6, D-268).
-"""
-function _init_devices!(sim::Simulation, roster, live)
-    for entry in roster
-        push!(live, entry)
-        try
-            init!(entry.dev)
-        catch err
-            _shutdown!(entry)
-            pop!(live)                        # released, so an interrupt in an arm can't repeat it
-            if err isa InterruptException
-                _request_stop!(entry.handle.control, :interrupt)   # the operator's stop (§12.4, D-268)
-            else
-                # addressed by the entry: no task holds a handle yet (§12.4)
-                report!(entry, DeviceCrash(err, entry.should_abort))
-                entry.should_abort && stop!(entry.handle)
-            end
-        end
-    end
-    nothing
-end
-
-# Spawn the wrapper, one run-scoped task per entry (§11.1): inside `run!`
-# only, never at `attach!` — a task exists only once the run it serves does.
-# The §12.3 registers are refreshed first, on the calling task.
+# The spawn (§12.4): each handle's `last_seen` refreshed so the run's first wait
+# observes that run's boundaries, then one task per live entry running the wrapper.
 function _spawn!(entries::Vector{RosterEntry})
     for entry in entries
         entry.handle.last_seen = entry.handle.control.counter
     end
     [Threads.@spawn _wrap(entry) for entry in entries]
-end
-
-# Tail steps (1)'s close and (2) (§12.4): the final snapshot is whatever the
-# loop last published; the sticky status flips only after it, the pause flag
-# clears beside it (§12.1, D-268), and the notify under the lock wakes every
-# §12.3 waiter, whose predicate routes it out. Idempotent, and run on §13.6's
-# catch path too, so no device task is left parked when the loop throws.
-function _finish!(sim::Simulation)
-    control = sim.control
-    @atomic control.stopped = true
-    @atomic control.paused = false
-    lock(control.wake)
-    try
-        notify(control.wake)
-    finally
-        unlock(control.wake)
-    end
-    nothing
-end
-
-"""
-Tail steps (3)–(5) (§12.4), on the calling task, after `_finish!` has set
-the sticky status and woken the waits: `unblock!` per spawned entry — the
-override's own blocking call returns; a throw out of the hook is warned and
-the tail proceeds — then the join under one shared `join_timeout` deadline,
-D-198's one patience for the whole tail. A task exceeding what remains of
-the deadline is abandoned rather than left to hang `run!`, reported by name
-under `DeviceJoinTimeout` into the loop's own cell (D-203): the terminal
-snapshot precedes the join by construction, so the run's-end sweep — not a
-drain — is what collects it, into the termination record and the logging
-backend.
-
-An interrupt reaching the tail, in the `unblock!` loop or the join, collapses
-it (§12.4, D-268): the remaining joins are abandoned at once, every entry
-whose task is not done reported by name exactly as the cap's path reports
-it, and nothing propagates. The run still ends `stopped`.
-"""
-function _tail!(sim::Simulation, entries::Vector{RosterEntry}, tasks::Vector{Task})
-    settled = 0                                 # entries the join has joined or reported
-    try
-        for entry in entries
-            try
-                unblock!(entry.dev)
-            catch err
-                err isa InterruptException && rethrow()
-                @warn "unblock! of $(_who(entry)) threw; its task can now exit only " *
-                      "through the join timeout (§12.4)" exception = (err, catch_backtrace())
-            end
-        end
-        deadline = time() + sim.control.join_timeout
-        for (i, (entry, task)) in enumerate(zip(entries, tasks))
-            remaining = deadline - time()
-            joined = istaskdone(task) ||
-                (remaining > 0 &&
-                 timedwait(() -> istaskdone(task), remaining; pollint = min(0.01, remaining)) === :ok)
-            joined || _report_join_timeout!(sim, entry)
-            settled = i
-        end
-    catch err
-        err isa InterruptException || rethrow()
-        # (5)'s abandonment, taken at once. A further interrupt cuts one report
-        # short and the loop resumes past the entries settled, so none leaves.
-        while true
-            try
-                for i in settled+1:length(tasks)
-                    istaskdone(tasks[i]) || _report_join_timeout!(sim, entries[i])
-                    settled = i
-                end
-                break
-            catch err                           # rebinds the outer `err`; nothing below reads it
-                err isa InterruptException || rethrow()
-            end
-        end
-    end
-    nothing
-end
-
-# Tail step (5)'s abandonment report, into the loop's own cell (D-203).
-function _report_join_timeout!(sim::Simulation, entry::RosterEntry)
-    snapshot = latest(sim)                      # after init!, never nothing (§14.5)
-    report_cell!(sim.plane.loop_diag,
-                 DeviceJoinTimeout(_who(entry), sim.control.join_timeout,
-                                   _seconds(snapshot.t), snapshot.boundary))
-end
-
-"""
-The run's last sweep (§11.8), in `run!`'s outermost `finally`: one more take
-per cell, folding what landed after the final frame top — a crash caught on
-the way out, a report from a device's exit path, the tail's own
-`DeviceJoinTimeout` — into the accounts, so the per-run record is complete
-and nothing leaks into the next run's status. The terminal snapshot is
-already out, so no snapshot can carry this residue: it is collected into the
-returned `ResidueRecord`s — the termination record's third field — and
-presented through the logging backend, the record's renderer (D-201, D-203).
-The terminal status's account is therefore complete up to its own frame top,
-and the tail's remainder is loud *and* recorded, still never published.
-"""
-function _sweep_tail!(sim::Simulation, roster)
-    plane = sim.plane
-    residue = ResidueRecord[]
-    for entry in roster
-        _fold!(entry.account, _handle(entry).diag_cell)
-        _residue!(residue, _who(entry), entry.account)
-    end
-    _fold!(plane.harness_account, plane.harness_diag)
-    _residue!(residue, "harness", plane.harness_account)
-    _fold!(plane.loop_account, plane.loop_diag)
-    _fold!(plane.loop_account, sim.model.frame_diag)   # the frame's own cell (§11.8, D-317)
-    _residue!(residue, "loop", plane.loop_account)
-    residue
-end
-
-# One writer's take: a quiet account contributes no record; a noisy one hands
-# its pending vector over — the account re-arms the shared empty, so the
-# record's vector is never written again — and is rendered entry by entry.
-function _residue!(residue::Vector{ResidueRecord}, who::String, account::WriterAccount)
-    isempty(account.recent) && _total(account.suppressed) == 0 && return nothing
-    record = ResidueRecord(who, account.recent, account.suppressed)
-    push!(residue, record)
-    for occurrence in record.recent
-        @warn "$(nameof(typeof(occurrence))) from $who, past the final snapshot's " *
-              "account: $(message(occurrence))"
-    end
-    suppressed_count = _total(record.suppressed)
-    suppressed_count > 0 &&
-        @warn "$suppressed_count more suppressed occurrence(s) from $who past the final " *
-              "snapshot's account (§11.8)"
-    account.recent = EMPTY_RECENT
-    account.suppressed = KindCounts()
-    nothing
 end
