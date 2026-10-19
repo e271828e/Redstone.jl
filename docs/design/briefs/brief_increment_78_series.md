@@ -2,11 +2,11 @@
 
 One code stage, one cold review and a fixer if the review needs one.
 Written on 2026-10-19 at 06ed3bf, the docs commit that landed D-407 and
-its spec paragraph, Appendix B row and `pending.md` bullet. The code side
-this increment conforms is increment 77's tip, which lands after this
-brief was written: every line number below is from `git show 06ed3bf:file`
-and is recounted at that tip before launch, the recount noted at the head
-of this file. Find passages in `docs/design/implementation.md` by heading.
+its spec paragraph, Appendix B row and `pending.md` bullet, and recounted
+the same day at 997766b, increment 77's tip, which the code side this
+increment conforms stands at. Every line number below is from
+`git show 997766b:file`. Find passages in `docs/design/implementation.md`
+by heading.
 
 Design and code are peers, neither subservient. If a shape below proves
 wrong at the keyboard, stop and report rather than deviate silently.
@@ -15,10 +15,12 @@ wrong at the keyboard, stop and report rather than deviate silently.
 implementation: the `Series`, `series` and `_column` block, the two
 `@nospecialize`, and the probe that ran green on the examples' closed loop
 in increment 77's prototype worktree. Its measurements are the brief's.
+Its probe ran before increment 77's stage 1, so the refusals it prints as
+`TapResolution` are `ReadResolution` at 997766b; the reasons are the same.
 
 ## What is settled
 
-D-407, in `docs/design/decisions.md` at 16153, D-406 at 16082, and §11.2's
+D-407, in `docs/design/decisions.md` at 16153, D-406 at 16083, and §11.2's
 post-run paragraph at 7090 to 7102 and Appendix B's post-run row at 13185
 to 13189 as 06ed3bf leaves them:
 
@@ -44,9 +46,9 @@ to 13189 as 06ed3bf leaves them:
   type and 12 ms without; a new leaf type or chain 25 to 30 ms either way,
   the column loop's own compile. Trim and linearization run the compiled
   `Reader` at runtime and never the resolver, so nothing hot changes.
-- `_resolved_type` moves from `src/linearize.jl` 312 to `src/readers.jl`
-  beside `resolve_leaf` at 226, unchanged, as the resolution helper it is;
-  its three callers at 346, 362 and 390 stay.
+- `_resolved_type` moves from `src/linearize.jl` 332 to `src/readers.jl`
+  beside `resolve_leaf` at 228, unchanged, as the resolution helper it is;
+  its three callers at 366, 382 and 410 stay.
 - The names `series` and `Series` are provisional until the export audit;
   nothing is exported.
 
@@ -65,7 +67,7 @@ to 13189 as 06ed3bf leaves them:
 
 ## Reading, in order
 
-- `docs/design/decisions.md` 16153 to the entry's end (D-407) and 16082
+- `docs/design/decisions.md` 16153 to the entry's end (D-407) and 16083
   to the Position's end (D-406).
 - `docs/design/spec.md` §11.2's log subsection, 6985 to 7102; Appendix B's
   post-run row, 13185 to 13200; §14.4's read-selector family, 11461 to
@@ -76,10 +78,10 @@ to 13189 as 06ed3bf leaves them:
   `src/linearize.jl`, `src/dataplane.jl` and `test/imports.jl`;
   "Authoring caveats" whole; "Naming"; "Running the suite".
 - `src/sim.jl` 415 to 430 and 2010 to 2070.
-- `src/readers.jl` 1 to 20, 220 to 260, 281 to 300, 327 to 345 and 395 to
-  445.
-- `src/linearize.jl` 300 to 315.
-- `src/dataplane.jl` 540 to 545 and 670 to 690.
+- `src/readers.jl` 1 to 20, 222 to 262, 283 to 302, 329 to 347 and 385 to
+  455.
+- `src/linearize.jl` 320 to 335.
+- `src/dataplane.jl` 540 to 545 and 670 to 700.
 - `test/test_log.jl` whole; `test/test_readers.jl` 1 to 60;
   `test/fixtures.jl` by the fixtures those two files call; `test/utils.jl`
   48 to 64; `test/imports.jl` whole.
@@ -92,15 +94,15 @@ to 13189 as 06ed3bf leaves them:
 
 - `_resolved_type` lands after `resolve_leaf`, with its one-line comment,
   and leaves `src/linearize.jl`.
-- `_compile_reads` (400) and `_resolve_reads` (417) take
+- `_compile_reads` (406) and `_resolve_reads` (425) take
   `@nospecialize(read_set::Reads)`. Their bodies iterate `pairs` and build
   `Any[]`, so nothing in them needed the specialization. The docstring of
-  `_compile_reads` names `series` as a site beside trim, linearization and
-  attach.
+  `_compile_reads` already lists its sites; `series` joins them as the
+  fourth, a table source over the log.
 
 ### `src/sim.jl`
 
-- After `logged` (2034 to 2047) and before `trace`'s docstring (2049): the
+- After `logged` (2034 to 2046) and before `trace`'s docstring (2047): the
   `Series` struct, `series` and `_column`, as the reference file has them,
   docstrings included. `_column` reads its eltype off
   `_resolved_type(_port_type(entry.addr), C)` and fills a preallocated
@@ -146,7 +148,7 @@ Fixtures stay where their siblings are: a new model, if one is needed, at
 top level in `test/fixtures.jl`, grepped across `test/` and `examples/`
 first.
 
-- `test/imports.jl`: `Series` joins the `S` run at 36 before `Simulation`;
+- `test/imports.jl`: `Series` joins the `S` run at 35 before `Simulation`;
   `series` joins the `s` run at 73 before `set`.
 
 ### The examples
@@ -169,7 +171,7 @@ the foreground, under the sandbox flags, and the examples' runner:
 ### Bookkeeping, in the same commit
 
 - `docs/design/implementation.md`: the `src/sim.jl` entry's accessors
-  bullet at 819 gains `series` and `Series`, with `_column` as the
+  bullet at 828 gains `series` and `Series`, with `_column` as the
   function barrier; the `src/readers.jl` entry gains `_resolved_type` and
   says `_compile_reads` and `_resolve_reads` take their read set
   unspecialized, naming `series` beside the other sites; the

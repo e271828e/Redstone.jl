@@ -195,3 +195,16 @@ The arc is 9e9782b, a630dea and 22ef32c over 1cba470, unpushed.
   rulings made here.
 - The two informational items above: the state-field candidates sort
   and §14.4's "and a binding read".
+
+## After increment 77's arc
+
+- **§14.4's "and a binding read" clause dropped**, the reviewer's first
+  item: after D-406 a binding's `get_output` is parsed like every path
+  selector and its face selectors are matched like every reader's, so the
+  clause named a resolution that no longer exists. Landed as a docs commit
+  at 997766b's tip; no code change.
+- **Left for the user**, the reviewer's second item: `_undeclared_violation`'s
+  NamedTuple method sorts state-field candidates, which no test can
+  observe since every state candidate list in the suite is one name or
+  sorted already. A loose fix if wanted, outside both increments.
+- **Brief 78 recounted at 997766b** before its launch, as its head says.

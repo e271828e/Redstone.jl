@@ -11483,7 +11483,7 @@ name, followed by `.name` and `[k]` or `[k,l]` steps in any order, as in
 `"pose.q_eb[2]"`, `"ω_eb_b[1]"` or `"J[1,3]"`. A bare `Symbol` is the short
 form of a plain name, so `get_state("kin", :θ)` reads `get_state("kin", "θ")`.
 A face name is an arbitrary string and may contain a dot ([§8.6][s8-6]), so on
-`get_input`, `get_face` and a binding read the head is matched rather than
+`get_input` and `get_face` the head is matched rather than
 parsed: it is the longest declared face name that is a prefix of the
 address and is followed by the end, a `.` or a `[`, and a `Symbol` leaf
 names the face whole, with no steps. So `get_input("wing.throttle")` and
