@@ -603,7 +603,7 @@ repair beyond what is listed.
 - Proposal: annotate the vocabulary. The glossary tracer entry is the
   brief's (R28).
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, annotation (agent 1): the vocabulary.
 
 ### B43. D-030
 
@@ -617,7 +617,7 @@ repair beyond what is listed.
   abnormal path discards the failed boundary and promotes the previous
   snapshot. Add §13.6 to the Spec field if absent.
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, a new entry (agent 2; lesson 68: never new Position text in an old entry), from D-030's Rejected "Mid-frame abort": a boundary is all-or-nothing, so the abnormal path discards the failed boundary and promotes the previous snapshot. Agent 1 adds §13.6 to D-030's Spec field if absent.
 
 ### B44. D-057
 
@@ -629,7 +629,7 @@ repair beyond what is listed.
 - Proposal: annotate log 1839 with F4's wording ("the did-you-mean names the
   input the other error says is unfed").
 - Recommendation: adopt the annotation; skip the Position.
-- Status: open
+- Status: ruled, annotation (agent 1): log 1839 with F4's wording. No entry for the no-partial-results reason.
 
 ### B45. D-058
 
@@ -644,7 +644,7 @@ repair beyond what is listed.
   one); add the Position for the `compact_backtrace` lesson; add §13.2 to
   Spec.
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, annotation (agent 1) of the three overtaken passages, the R11 one included; §13.2 added to the Spec field. The `compact_backtrace` lesson, strings never instances, is a new entry (agent 2; lesson 68: never new Position text in an old entry), from D-058's Rejected list.
 
 ### B46. D-059
 
@@ -655,7 +655,7 @@ repair beyond what is listed.
   §13.4's topic sentence and is not a Position.
 - Proposal: add §13.6 to Spec. Leave the Rejected line as the reason.
 - Recommendation: adopt the Spec change only.
-- Status: open
+- Status: ruled, Spec field only (agent 1). The Rejected line stays a reason.
 
 ### B47. D-060
 
@@ -670,7 +670,7 @@ repair beyond what is listed.
 - Proposal: annotate the vocabulary; add one Position clause stating the
   inspection doctrine and one for post-terminal dynamics.
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, annotation (agent 1) of the vocabulary. The inspection doctrine and post-terminal dynamics are a new entry (agent 2; lesson 68: never new Position text in an old entry), grouped with B72 where one topic of §13.5.
 
 ### B48. D-061, D-130 and D-242
 
@@ -687,7 +687,7 @@ repair beyond what is listed.
   panels are parked ([D-310][d-310]). The inspection case is snapshot and log
   inspection (§13.3)." D-130 and D-061 take the same pointer.
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, annotation (agent 1), with the proposal's text for D-242 and the same pointer for D-130 and D-061.
 
 ### B49. D-062
 
@@ -701,7 +701,7 @@ repair beyond what is listed.
 - Proposal: annotate the two stale phrases; add one Position clause that
   ordinary status keeps schema authority total.
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, annotation (agent 1) of the two stale phrases. "Ordinary status keeps schema authority total" is a new entry (agent 2; lesson 68: never new Position text in an old entry), grouped with B71 as one topic of §13.7's library.
 
 ### B50. D-071
 
@@ -713,7 +713,7 @@ repair beyond what is listed.
   library holds components only." Spec becomes `[§14.9][s14-9]` plus the
   trim sections the entry rules.
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, annotation (agent 1), and the Spec field as proposed.
 
 ### B51. D-108
 
@@ -722,7 +722,7 @@ repair beyond what is listed.
   row 591). The ruling rests on D-108's Rationale; §14 bolds it with D-059.
 - Proposal: add the refusal to the Position.
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, agent 2 checks first whether D-059's or another Position already carries the refusal (lesson 42; §14 bolds it with D-059 and D-108). If one does, no entry; otherwise a new entry (agent 2; lesson 68: never new Position text in an old entry).
 
 ### B52. D-114
 
@@ -734,7 +734,7 @@ repair beyond what is listed.
   indexing this entry presupposes is historical, and §13.4 no longer rests on
   it."
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, annotation (agent 1), the proposal's text.
 
 ### B53. D-120
 
@@ -745,7 +745,7 @@ repair beyond what is listed.
   nowhere before the rewrite.
 - Proposal: annotate both; make sure Spec lists §13.7.
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, annotation (agent 1) of both, and §13.7 in the Spec field.
 
 ### B54. D-131
 
@@ -756,7 +756,7 @@ repair beyond what is listed.
 - Proposal: annotate "§13.4 names only the terminal statuses and the return
   to built; the five-state count is §12.6's."
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, annotation (agent 1), the proposal's text.
 
 ### B55. D-132
 
@@ -766,7 +766,7 @@ repair beyond what is listed.
   bullet 8 says "never wrapped" alone. §13.4 cites D-132 there.
 - Proposal: state both in the Position.
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, a new entry (agent 2; lesson 68: never new Position text in an old entry), from D-132's Rationale: the interrupt is routed to the stop path at the catch site, and the branch is kept defensively.
 
 ### B56. D-136
 
@@ -775,7 +775,7 @@ repair beyond what is listed.
   Rationale (log 4623–4630). §13.2 cites D-136 plain; §11.8 bolds it.
 - Proposal: add the surfacing to the Position.
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, a new entry (agent 2; lesson 68: never new Position text in an old entry), from D-136's Rationale: the stream surfaces through the framework status.
 
 ### B57. D-141
 
@@ -785,7 +785,7 @@ repair beyond what is listed.
   falling-edge consumers", but D-311 rejects `Not` (the same fact as B39).
 - Proposal: annotate both lines.
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, annotation (agent 1) of both lines.
 
 ### B58. D-142
 
@@ -796,7 +796,7 @@ repair beyond what is listed.
   not.
 - Proposal: annotate as D-285 does.
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, annotation (agent 1), as D-285's.
 
 ### B59. D-143
 
@@ -809,7 +809,7 @@ repair beyond what is listed.
 - Proposal: annotate both stale lines; add the stub child and the two uses
   to the Position.
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, annotation (agent 1) of both stale lines. The stub child as first shipped instance and the two uses are a new entry (agent 2; lesson 68: never new Position text in an old entry), from D-143's Rationale.
 
 ### B60. D-159
 
@@ -821,7 +821,7 @@ repair beyond what is listed.
   two-stream partition is gone; a service warning lives on the artifact the
   call returns."
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, annotation (agent 1), the proposal's text.
 
 ### B61. D-167
 
@@ -831,7 +831,7 @@ repair beyond what is listed.
   superseded.
 - Proposal: no annotation unless the entry is kept live.
 - Recommendation: no action.
-- Status: open
+- Status: ruled, no action.
 
 ### B62. D-203
 
@@ -846,7 +846,7 @@ repair beyond what is listed.
 - Proposal: annotate the absent-time arm; add the three to the Position; add
   §13.2.
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, annotation (agent 1) of the absent-time arm, and §13.2 in the Spec field. The three rulings are a new entry (agent 2; lesson 68: never new Position text in an old entry), from D-203.
 
 ### B63. D-223
 
@@ -855,7 +855,7 @@ repair beyond what is listed.
   condition (Rationale, log 8733–8734), is cited at §13.4.
 - Proposal: move the remedy into the Position.
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, no entry: the remedy is a diagnostic's hint, a description the kernel moves beside the code.
 
 ### B64. D-225
 
@@ -866,7 +866,7 @@ repair beyond what is listed.
   framed path" (8805–8807), which F30 added to §13.4.
 - Proposal: state both in the Position.
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, the test spelling is a new entry (agent 2; lesson 68: never new Position text in an old entry), from D-225's Rationale. The lost frame and pointer are a consequence of bullet 3's "Accepted, not handled" and get none.
 
 ### B65. D-229
 
@@ -876,7 +876,7 @@ repair beyond what is listed.
   Position's first sentence.
 - Proposal: add to the Position.
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, no entry: a consequence of D-229's dependency rule.
 
 ### B66. D-248
 
@@ -885,7 +885,7 @@ repair beyond what is listed.
   rests on the Rationale (log 9815–9816).
 - Proposal: add to the Position.
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, no entry: a consequence of D-248's Position.
 
 ### B67. D-250
 
@@ -897,7 +897,7 @@ repair beyond what is listed.
   after R11 (ic1 row 197 OK); the brief's annotation is for D-058.
 - Proposal: add the stopped-sim case to the Position.
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, a new entry (agent 2; lesson 68: never new Position text in an old entry), from D-250's Rationale and Rejected: a stopped-sim service's warnings live on the artifact it returns.
 
 ### B68. D-255
 
@@ -910,7 +910,7 @@ repair beyond what is listed.
 - Proposal: check D-255 for the annotation; add it if missing; add §13.2 to
   Spec.
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, Spec field only (§13.2): the evidence check found bullet 5 annotated (log 10280–10283).
 
 ### B69. D-266
 
@@ -919,7 +919,7 @@ repair beyond what is listed.
   rest on the Rationale.
 - Proposal: add to the Position.
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, no entry: a cost and a reason.
 
 ### B70. D-312
 
@@ -929,7 +929,7 @@ repair beyond what is listed.
   annotation of 2026-10-06.
 - Proposal: add to the Position.
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, a new entry (agent 2; lesson 68: never new Position text in an old entry), from D-312's Rationale and annotation: `Constant`'s honest pin.
 
 ### B71. D-313
 
@@ -938,7 +938,7 @@ repair beyond what is listed.
   Rationale and D-062's Rejected.
 - Proposal: add to the Position.
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, a new entry (agent 2; lesson 68: never new Position text in an old entry), grouped with B49.
 
 ### B72. D-316
 
@@ -949,7 +949,7 @@ repair beyond what is listed.
   Rationale. §13.5 cites it at each.
 - Proposal: add the three to the Position.
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, a new entry (agent 2; lesson 68: never new Position text in an old entry), grouped with B47.
 
 ### B73. D-245 and D-349
 
@@ -959,7 +959,7 @@ repair beyond what is listed.
   sampled dead hop. Both are cited in §13.8.
 - Proposal: add each to its entry's Position.
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, no entry: reasons and a caveat the diagnostic carries; D-012's supersession line already states the simple-cycle reduction.
 
 ### B74. D-096 and D-390
 
@@ -970,7 +970,7 @@ repair beyond what is listed.
   rewrite.
 - Proposal: none.
 - Recommendation: no action.
-- Status: open
+- Status: ruled, no action.
 
 ### B75. D-383, D-384 and D-385
 
@@ -980,7 +980,7 @@ repair beyond what is listed.
   `lqr_tracker.md`. §13.7 points there, as the old text did.
 - Proposal: none.
 - Recommendation: no action.
-- Status: open
+- Status: ruled, no action.
 
 ### B76. Half 1 rulings with no entry
 
@@ -995,7 +995,7 @@ repair beyond what is listed.
 - Proposal: no new entry. Check D-125 for the remedy; add the rest to the
   entry the chapter cites beside each.
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, no entry and no Position text: each row is a description or a reason, the kernel's migration list. The evidence check found D-125 silent on the remedy.
 
 ### B77. Half 2 rulings with no entry
 
@@ -1010,7 +1010,7 @@ repair beyond what is listed.
   call" only).
 - Proposal: state F51 and F54 in D-255; leave the rest as descriptions.
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, the entry check (F51) and the `t_end` range (F54) are a new entry (agent 2; lesson 68: never new Position text in an old entry), from the code (`_advance!`, `_t_bound` in `src/sim.jl`) and the spec that states them, as D-400 to D-404 were. The rest are descriptions.
 
 ### B78. Spec fields that omit a section the chapter cites
 
@@ -1025,7 +1025,7 @@ repair beyond what is listed.
   compare every `[D-nnn]` cited in the chapter with the entry's Spec field,
   since the rewrite added citations beyond this list.
 - Recommendation: adopt, with the script run first.
-- Status: open
+- Status: ruled, Spec fields (agent 1), with the script run first over every D-citation in the landed chapter.
 
 ### B79. Entries needing no action
 
@@ -1038,7 +1038,7 @@ repair beyond what is listed.
   was wrong. D-114's and D-131's cites are handled at B52 and B54.
 - Proposal: none.
 - Recommendation: no action.
-- Status: open
+- Status: ruled, no action.
 
 ## Carried
 
