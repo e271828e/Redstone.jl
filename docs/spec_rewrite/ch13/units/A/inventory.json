@@ -1809,12 +1809,12 @@
   {
    "id": "C-183",
    "old": "The framework wrapper catches a device task's failure,",
-   "new": "The framework wrapper catches a device task's failure and reports `DeviceCrash`,",
+   "new": "The framework wrapper catches a device task's failure,",
    "where": "new",
    "cites": [],
    "tag": "R",
-   "ruling": "R6",
-   "note": "F10."
+   "ruling": "B6",
+   "note": "F10 (R6) trimmed by B6: \"A genuine bug takes the per-device crash path\" and \"reports `DeviceCrash`\" go; §13.4 keeps the path, the index line names the kind and points."
   },
   {
    "id": "C-184",
@@ -1895,7 +1895,6 @@
   "(the ordinary loop re-driven from a recorded trace)",
   "(the primary record of a session)",
   "(the stopped-sim value naming how the run ended)",
-  "A genuine bug takes the per-device crash path.",
   "(the per-attachment failure policy, an `attach!` keyword)"
  ]
 }

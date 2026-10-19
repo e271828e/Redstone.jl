@@ -39,28 +39,24 @@ A standard component library makes good on the junction promise
 junction hand-written per arity per type is not cheap. The junctions, summing
 junctions and Bool gates alike, are the library's seed ([D-062][d-062]).
 
-**A block joins the library's inventory by judgement against three
-guidelines** ([D-313][d-313]). The guidelines ask whether a block is
-domain-agnostic and generally useful, whether it has didactic value, and
-whether its implementation is difficult to get right. None is a
-requirement. They are weighed, not satisfied one by one, and a listed block
-is built whenever wanted. The inventory, and the Simulink mapping that
-prunes it, is `companions/library_inventory.md`. A one-line expression such
-as a gain earns no block, because a separate component costs a build entry,
-a cell, a gather and a scatter ([§9.7][s9-7]). Domain components, such as
-aerodynamics, engines or sensors, belong in separate packages built on the
-framework. Simulink's library is a language, while this is a toolbox.
+**A block joins the library's inventory by judgement against three guidelines**
+([D-313][d-313]). The guidelines ask whether a block is domain-agnostic and generally
+useful, whether it has didactic value, and whether its implementation is
+difficult to get right. None is a requirement. They are weighed, not satisfied
+one by one, and a listed block is built whenever wanted. A one-line expression
+such as a gain earns no block, because a separate component costs a build entry,
+a cell, a gather and a scatter ([§9.7][s9-7]). Domain components, such as aerodynamics,
+engines or sensors, belong in separate packages built on the framework.
+Simulink's library is a language, while this is a toolbox.
 
-The starting inventory holds the `Junction`, with `SumJunction{V, N}`,
-`Or{N}` and `And{N}` as its named forms, `UnitDelay{V}`, `Constant{V}`,
-`Freeze{V}` and `StopRequest`. The shipped list lives in
-`companions/library_inventory.md`. `UnitDelay` is the spelling the second
-loop-breaking remedy ([§5.5][s5-5]) needs. `Constant{V}` is the source block
-([D-143][d-143]). `Freeze{V}` is the declared stop-gradient ([D-266][d-266]).
-`StopRequest` is the library spelling of a [stop request](#g-stop-request) (a
-port that ends the run when it reads `STOP_REQUESTED`) ([§13.5][s13-5],
-[D-316][d-316]). The request is its port's `StopFlag` type, which any
-component may publish, so the block holds no privilege.
+The starting inventory holds the `Junction`, with `SumJunction{V, N}`, `Or{N}`
+and `And{N}` as its named forms, `UnitDelay{V}`, `Constant{V}`, `Freeze{V}` and
+`StopRequest`. The shipped list, and the Simulink mapping that prunes it, live
+in `companions/library_inventory.md`. `UnitDelay` is the spelling the second
+loop-breaking remedy ([§5.5][s5-5]) needs. `Constant{V}` is the source block ([D-143][d-143]).
+`Freeze{V}` is the declared stop-gradient ([D-266][d-266]). `StopRequest` is the library
+spelling of a [stop request](#g-stop-request) (an output port of the framework enum `StopFlag`)
+([§13.5][s13-5], [D-316][d-316]).
 
 The library is the submodule `Redstone.Blocks`, `Group` included, written
 against the extension-only surface ([§8.1][s8-1]) as a user's component file
@@ -251,10 +247,10 @@ The demonstrated need is the root-input rule ([§8.2][s8-2]). An [abstract entry
 abstract-at-root is a build error, `AbstractAtRoot` ([§8.2][s8-2], [Appendix C][sC]). The rig
 therefore satisfies that entry *inside* the rig ([D-120][d-120]). In the sketch below, the
 component under test is `Strut`, an illustrative landing-gear strut whose
-terrain input is abstract. **A concrete stub child (a provider of
-`SampleTerrainField`, an illustrative concrete terrain) is wired to the face**,
-and the concrete remainder is exposed via
-`input_passthrough(rig, "strut"; except = ("terrain",))` ([D-120][d-120]).
+terrain input is abstract. **A concrete stub child is wired to the face**, and the
+concrete remainder is exposed via
+`input_passthrough(rig, "strut"; except = ("terrain",))` ([D-120][d-120]). The stub
+provides `SampleTerrainField`, an illustrative concrete terrain.
 
 ```julia
 struct StrutRig <: AbstractComponent    # the rig: component under test + stub
@@ -325,12 +321,11 @@ indices, its tracer tags.
   reports, and $u^2$ at $u = 0$ still reports. It is exact, in one evaluation.
   It requires the traced stage-2 code to be free of branches and lookups on
   *input-tainted* values.
-- The *sampled* set-tracer (the local, primal-carrying mode) at sampled states
-  is the fallback whenever the global tracer hits an undecidable branch, such
-  as piecewise friction, stall blending or any gridded lookup at an
-  input-tainted coordinate. It reports the dependence pattern of the taken
-  paths, sampled across randomized states. Its only misses are untaken
-  branches ([D-012][d-012], [D-349][d-349]).
+- The *sampled* set-tracer (the log's *local* mode) at sampled states is the
+  fallback whenever the global tracer hits an undecidable branch, such as
+  piecewise friction, stall blending or any gridded lookup at an input-tainted
+  coordinate. It reports the dependence pattern of the taken paths, sampled
+  across randomized states. Its only misses are untaken branches ([D-012][d-012], [D-349][d-349]).
 
 #### What tracing touches
 
@@ -366,14 +361,13 @@ values, and in-cycle cell values synthesized through `probe_value`
 dependence set rather than a value, so no ordering has to be valid for the
 labels to come out right.
 
-Classification touches no activation machinery. There is no
-[activation](#g-activation) (the build's typed products at a given scalar
-type), no layouts and no table. The cycle classifier uses the *per-member*
-(local) variant of tracing, the order-free per-member trace at the probe point
-([D-012][d-012]). The "tracer activation" ([§9.4][s9-4]) names the other
-variant ([D-012][d-012]), the global set-tracer run as an ordinary activation.
-The two must not be conflated. The per-member variant is not the sampled mode.
-A member's map may come from either mode.
+Classification touches no activation machinery. There is no [activation](#g-activation) (the
+build's typed products at a given scalar type), no layouts and no table. The
+cycle classifier uses the *per-member* variant of tracing (the log's *local*
+variant), an order-free trace at the probe point ([D-012][d-012]). The "tracer
+activation" ([§9.4][s9-4]) names the other variant ([D-012][d-012]), the global set-tracer run as
+an ordinary activation. The two must not be conflated. The per-member variant is
+not the sampled mode. A member's map may come from either mode.
 
 **The traced maps decide the verdict as one graph question over the cluster**
 ([D-245][d-245]). The verdict is the one [§5.4][s5-4] defines. Every wire
@@ -410,15 +404,14 @@ The hint itself is to split this component, *or* to narrow the neighbor's
 consumed only in a fallback branch. Those are the ladder's two remedies
 ([§5.4][s5-4], [D-140][d-140], [D-343][d-343]).
 
-The build diagnostic offers both exits explicitly ([D-140][d-140],
-[D-343][d-343]). For a loop between `systems/aero` and `systems/dyn` it reads
-"artificial at port level: `systems/aero`'s `F` does not route `a`; split
-`systems/aero`, or narrow the neighbor's contract if `a` is consumed only in a
-fallback branch". The dead hop is the member's input face that its stage-2
-function does not route to the output port. The diagnostic carries the dead
-hop ([D-245][d-245]) as a separate field of its [payload](#g-payload) (the
-structured data a diagnostic carries) rather than dotting the hop onto the
-path ([§8.6][s8-6], [§13.2][s13-2]).
+The build diagnostic offers both exits explicitly ([D-140][d-140], [D-343][d-343]). For a loop
+between `systems/aero` and `systems/dyn` it reads "artificial at port level:
+`systems/aero`'s `F` does not route `a`; split `systems/aero`, or narrow the
+neighbor's contract if `a` is consumed only in a fallback branch". The dead hop
+runs from the member's input face that its stage-2 function does not route to
+the output port. The diagnostic carries the dead hop ([D-245][d-245]) as a separate field
+of its [payload](#g-payload) (the structured data a diagnostic carries) rather than dotting
+the hop onto the path ([§8.6][s8-6], [§13.2][s13-2]).
 
 If a member's evaluation itself throws, the diagnostic ships with its members
 and wires alone, unclassified. Classification is a bonus on the cycle error,

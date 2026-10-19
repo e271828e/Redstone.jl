@@ -857,14 +857,10 @@ new: `DeviceCrash`, a device crash (§12.4, §13.4).
 tag: R
 ruling: R8
 
-added: A genuine bug takes the per-device crash path.
-# F10's dictated wording (R6).
-
 old: The framework wrapper catches a device task's failure,
-new: The framework wrapper catches a device task's failure and reports `DeviceCrash`,
 tag: R
-ruling: R6
-note: F10.
+ruling: B6
+note: F10 (R6) trimmed by B6: "A genuine bug takes the per-device crash path" and "reports `DeviceCrash`" go; §13.4 keeps the path, the index line names the kind and points.
 
 old: and the sim continues with the device absent.
 new: and the run goes on without the device unless its attachment set `should_abort` (the per-attachment failure policy, an `attach!` keyword) (§11.6).

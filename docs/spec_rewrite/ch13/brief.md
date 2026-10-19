@@ -393,8 +393,9 @@ The orchestrator's, outside the chapter, in step 7:
 - §8.6 (old 3410–3412): "That read side is the inspection side. It resolves
   a path with `resolve` under the instance walk" becomes "Snapshot and log
   inspection walk instances ([§13.3][s13-3])" (R2, F3).
-- §9.5 (old 5094) and §10.6 (old 6531): the nonfinite check's "loop" becomes
-  the model's (F20).
+- §9.5 (old 5094): the nonfinite check's "loop" becomes the model's (F20).
+  The §10.6 line first listed here holds the cursor gloss instead; B27 of
+  `rulings_batch.md` replaces it.
 - §9.2: cite D-261 at the feedthrough-line sentence, which M60 makes the
   edges' only home, if D-261's Position carries the derivation (unit G's
   verifier).

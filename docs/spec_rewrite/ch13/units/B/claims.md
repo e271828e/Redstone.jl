@@ -64,14 +64,19 @@ old: A wiring path reaching further is a build error, `PathResolution`, whatever
 tag: F
 
 old: The second is the generic-holding rule, which governs the deep paths the read side still writes.
-tag: F
-note: generic holding linked at its first use, no gloss beside the sentence's own definition two sentences on
+new: The second is the generic-holding rule, which governs the deep paths a service or a reader is given.
+tag: R
+ruling: B1
+note: generic holding linked at its first use, no gloss beside the sentence's own definition two sentences on; "the read side still writes" reworded by B1 to name the clients
 
 old: The walk follows declared field types alongside instances.
 new: It is enforced by the service walk, which follows declared field types alongside instances.
 tag: R
-ruling: R6
-note: F3 wording
+ruling: B1
+note: F3 wording (R6); B1 defines the service walk in the next sentence: conditions walk with `resolve_authored` (`src/conditions.jl`), the read resolver walks every path selector with it (`src/readers.jl` `_rebase`)
+
+added: Every service and the read resolver run it over an authored path.
+# ruling: B1, as amended after application: the definition moves into its own sentence so "which" no longer reads as the path.
 
 old: A segment that traverses past a generically-held field (one whose declared type is non-concrete) is a diagnostic, even though the concrete instance in hand would resolve it.
 tag: F
@@ -107,10 +112,10 @@ old: The same line runs through resolution.
 tag: F
 
 old: Three kinds of client share one primitive, and each gets the rule its promises require.
-new: Three kinds of client share one resolution, and each gets the rule its promises require.
+new: Three clients share one resolution, and each gets the rule its promises require.
 tag: R
-ruling: R17
-note: after F3 the clients do not share one function
+ruling: B9
+note: after F3 the clients do not share one function (R17); "kinds of client" goes by B9, *kind* being reserved
 
 old: The two ways of applying one plan (§14.4) use the same arrangement.
 new: The two ways of applying one plan (§14.4) use the same arrangement and have the same status.
@@ -139,11 +144,11 @@ added: (the selector lists linearization seeds and reports)
 added: (the values passed at `attach!` that make a device framework-legible)
 
 old: | inspection | device read bindings, GUI panels, snapshot and log inspection (§11.2, §11.7) | the instance walk |
-new: | inspection | snapshot (the immutable per-boundary publication) and log inspection (D-310) | the instance walk |
+new: | inspection | snapshot (the immutable per-boundary publication) and log inspection | the instance walk |
 tag: R
-ruling: R2
-newcites: D-310
-note: device read bindings move to the service row; "GUI panels" goes, D-310 cited once in the section (Position: "The built-in Julia GUI is parked"); §11.7, cited for the GUI panels, goes with them (R16)
+ruling: B10
+newcites: none
+note: device read bindings move to the service row (R2); "GUI panels" goes, and §11.7, cited for the GUI panels, goes with them (R16); D-310 leaves the row by B10, amending R16, since the row no longer names the GUI (F53 cites it in §13.5)
 
 added: (the immutable per-boundary publication)
 
@@ -179,6 +184,9 @@ added: (a narrow, named interface kept deliberately thin)
 
 old: "What is in this build" is inspection's defining question.
 tag: F
+
+added: The stop scan, the one read a run acts on, belongs to §13.5.
+# ruling: B4, the pointer back to §13.5's stop scan that R4 asked for, as amended after application.
 
 old: Drift still stays loud.
 new: Drift stays loud.
@@ -260,11 +268,11 @@ ruling: R6
 note: F2's replacement paragraph
 
 old: Condition addressing (§14.3) and tap resolution (§14.10) are service clients.
-new: The services and the readers split their own paths through the service walk (§14.3, §14.4).
+new: Condition addressing (§14.3) and the readers (§14.4, D-406) split their own paths through the service walk.
 tag: R
-ruling: R6
-newcites: §14.3 §14.4
-note: F2's replacement; §14.10 goes with the false client list
+ruling: B1
+newcites: §14.3 §14.4 D-406
+note: F2's replacement (R6), amended by B1 so each pointer names its client; §14.10 goes with the false client list
 
 old: Device-binding validation (§11.2) and snapshot inspection are inspection clients.
 where: units/B/deleted.md
@@ -366,11 +374,11 @@ newcites: D-261
 note: F13 wording; D-261 replaces superseded D-253 (its `Dataflow` clause; D-261 "the execution order beside the rows as component indices")
 
 old: (the nominal evaluation's product, the port classes and the execution order) carries (D-253).
-new: That order is the one `Outputs` (the nominal evaluation's product, the port classes and the execution order) carries.
+new: That order is the one `Outputs` (the nominal evaluation's product, the output port names each stage produces and the execution order) carries.
 tag: R
-ruling: R6
+ruling: B87
 newcites: D-261
-note: F13; `Outputs` and its gloss kept in their own sentence; D-253 replaced by D-261 in the sentence before
+note: F13 (R6); `Outputs` and its gloss kept in their own sentence; D-253 replaced by D-261 in the sentence before; B87, amending R19's keep, replaces "the port classes" with the glossary's "the output port names each stage produces", *class* being reserved
 
 old: The second is which function is running: `y_state`, `y_direct`, `x_deriv`, `s_update`, a guard, a handler, or `x_projection`.
 new: The second is which function is running, one of `y_state`, `y_direct`, `x_deriv`, `s_update`, a guard (the declared function defining an event's predicate), a handler, or `x_projection`.
@@ -550,10 +558,10 @@ tag: F
 added: The cursor frame and the pointer are then lost, and the lifecycle does not move as it does when the catch builds a `StepError`.
 
 old: `# the runtime carrier: its parameter the cause's type — a diagnostic's kind # for a species, the exception model code threw otherwise struct StepError{C <: Union{Diagnostic, Exception}} <: Exception cursor # the cursor's frame at the catch t::Float64 # the boundary time boundary::Int # the frame-entry boundary index: the replay pointer host::Symbol # :boundary_zero under init!, :loop inside a frame cause::C end`
-new: `# the runtime carrier: its parameter the cause's type — a diagnostic's kind # for a species, the exception model code threw otherwise struct StepError{C <: Union{Diagnostic, Exception}} <: Exception cursor # the cursor's frame at the catch t::Float64 # the clock at the failure boundary::Int # the frame-entry boundary index: the replay pointer host::Symbol # :boundary_zero under init!, :loop inside a frame cause::C end`
+new: `# the runtime carrier: its parameter the cause's type — a diagnostic's kind # for a species, the exception model code threw otherwise struct StepError{C <: Union{Diagnostic, Exception}} <: Exception cursor # the cursor frame: the cursor's copy at the catch t::Float64 # the clock at the failure boundary::Int # the frame-entry boundary index: the replay pointer host::Symbol # :boundary_zero under init!, :loop inside a frame cause::C end`
 tag: R
-ruling: R6
-note: F12's comment edit
+ruling: B11
+note: F12's comment edit (R6); B11's comment edit puts R7's term "the cursor frame" on the `cursor` field
 
 old: The one exception never wrapped.
 new: An `InterruptException` is the one exception the catch site never wraps (D-317).

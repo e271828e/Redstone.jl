@@ -158,8 +158,10 @@ old: The starting inventory holds the `Junction`, with `SumJunction{V, N}`, `Or{
 tag: M
 note: part C order, the inventory after the guidelines. "The starting inventory" stays verbatim (R13).
 
-added: The shipped list lives in `companions/library_inventory.md`.
-# R13's sentence after the list.
+added: The shipped list,
+# R13's sentence after the list; B12 (amended) folds the Simulink mapping into it.
+
+added: live in
 
 old: `UnitDelay` is the spelling the second loop-breaking remedy (§5.5) needs.
 tag: M
@@ -176,13 +178,19 @@ tag: M
 note: with the inventory paragraph.
 
 old: `StopRequest` is the library spelling of a stop request (a port that ends the run when it reads `STOP_REQUESTED`, §13.5, D-316).
-new: `StopRequest` is the library spelling of a stop request (a port that ends the run when it reads `STOP_REQUESTED`) (§13.5, D-316).
-tag: M
-note: with the inventory paragraph; the citations leave the gloss's parentheses.
+new: `StopRequest` is the library spelling of a stop request (an output port of the framework enum `StopFlag`) (§13.5, D-316).
+tag: R
+ruling: B3
+note: with the inventory paragraph; the citations leave the gloss's parentheses. B3 replaces the old gloss, which said a request ends the run, with the glossary's; an ignored request ends nothing (§13.5).
+
+added: (an output port of the framework enum `StopFlag`)
 
 old: The request is its port's `StopFlag` type, which any component may publish, so the block holds no privilege.
-tag: M
-note: with the inventory paragraph.
+new: The block holds no privilege. Any component may publish a `StopFlag` port directly.
+where: units/F/old.md
+tag: R
+ruling: B16
+note: cut; §13.5 holds it, here and in its bold "A port whose type is exactly `StopFlag` is a stop request, whoever publishes it". The pointer to §13.5 in the sentence before stays.
 
 old: A block joins the library's inventory by judgement against three guidelines (D-313).
 note: bold kept; part C order puts the guidelines first.
@@ -194,6 +202,10 @@ old: None is a requirement.
 old: They are weighed, not satisfied one by one, and a listed block is built whenever wanted.
 
 old: The inventory, and the Simulink mapping that prunes it, is `companions/library_inventory.md`.
+new: and the Simulink mapping that prunes it, live in `companions/library_inventory.md`.
+tag: R
+ruling: B12
+note: cut as a sentence of its own; B12, as amended, folds its claim into R13's sentence after the list, the standing pointer.
 
 old: A one-line expression such as a gain earns no block, because a separate component costs a build entry, a cell, a gather and a scatter (§9.7).
 
@@ -507,11 +519,11 @@ added: In the sketch below, the component under test is `Strut`, an illustrative
 # R10's introducing clause for `Strut`.
 
 old: A concrete stub child (a `SampleTerrainField` provider) is wired to the face, and the concrete remainder is exposed via `input_passthrough(rig, "strut"; except = ("terrain",))`.
-new: A concrete stub child (a provider of `SampleTerrainField`, an illustrative concrete terrain) is wired to the face, and the concrete remainder is exposed via `input_passthrough(rig, "strut"; except = ("terrain",))` (D-120).
+new: A concrete stub child is wired to the face, and the concrete remainder is exposed via `input_passthrough(rig, "strut"; except = ("terrain",))` (D-120). The stub provides `SampleTerrainField`, an illustrative concrete terrain.
 tag: R
-ruling: R21
+ruling: B5
 newcites: D-120
-note: R21, the headline clause "A concrete stub child ... is wired to the face" newly bold with D-120's Position ("A component with abstract input entries is rigged with a concrete stub child ... wired to the abstract face"), bold nowhere else; R10's illustrative clause for `SampleTerrainField`.
+note: R21, the headline clause "A concrete stub child is wired to the face" newly bold with D-120's Position ("A component with abstract input entries is rigged with a concrete stub child ... wired to the abstract face"), bold nowhere else; R10's illustrative clause for `SampleTerrainField`. B5 takes the gloss out of the bold into a sentence of its own after it, with D-120 in the bold's sentence.
 
 added: , an illustrative concrete terrain
 
@@ -632,10 +644,10 @@ old: It is exact, in one evaluation.
 old: It requires the traced stage-2 code to be free of branches and lookups on input-tainted values.
 
 old: The local (primal-carrying) set-tracer at sampled states is the fallback whenever the global tracer hits an undecidable branch, such as piecewise friction, stall blending or any gridded lookup at an input-tainted coordinate.
-new: The sampled set-tracer (the local, primal-carrying mode) at sampled states is the fallback whenever the global tracer hits an undecidable branch, such as piecewise friction, stall blending or any gridded lookup at an input-tainted coordinate.
+new: The sampled set-tracer (the log's local mode) at sampled states is the fallback whenever the global tracer hits an undecidable branch, such as piecewise friction, stall blending or any gridded lookup at an input-tainted coordinate.
 tag: R
-ruling: R6
-note: F63, "the sampled mode", D-245's word; "local" survives in the gloss that ties it to its old name.
+ruling: B7
+note: F63, "the sampled mode", D-245's word (R6). B7 dictates the gloss "(the log's *local* mode)", so *local* reads as the log's old name; "primal-carrying" goes with the old gloss.
 
 old: It reports the dependence pattern of the taken paths, sampled across randomized states.
 
@@ -713,10 +725,10 @@ tag: M
 note: M62.
 
 old: The cycle classifier uses the local variant of tracing (D-012), the order-free per-member trace at the probe point.
-new: The cycle classifier uses the per-member (local) variant of tracing, the order-free per-member trace at the probe point (D-012).
+new: The cycle classifier uses the per-member variant of tracing (the log's local variant), an order-free trace at the probe point (D-012).
 tag: R
-ruling: R6
-note: F63, "the per-member variant"; "local" survives in the gloss. M62.
+ruling: B7
+note: F63, "the per-member variant" (R6); M62. B7 dictates "uses the *per-member* variant of tracing, an order-free trace at the probe point" and the gloss "(the log's *local* variant)", placed after the noun phrase it glosses.
 
 old: The "tracer activation" (§9.4) names the other variant (D-012), the global set-tracer run as an ordinary activation.
 tag: M
@@ -777,10 +789,10 @@ old: The build diagnostic offers both exits explicitly (D-140, D-343).
 old: For a loop between `systems/aero` and `systems/dyn` it reads "artificial at port level: `systems/aero`'s `F` does not route `a`; split `systems/aero`, or narrow the neighbor's contract if `a` is consumed only in a fallback branch".
 
 old: The dead hop is the member with the input face that it does not route to the output port.
-new: The dead hop is the member's input face that its stage-2 function does not route to the output port.
+new: The dead hop runs from the member's input face that its stage-2 function does not route to the output port.
 tag: R
-ruling: R6
-note: F64, the dictated sentence.
+ruling: B2
+note: F64, the dictated sentence; B2 amends it so the dead hop runs from a face to a port, as the hop is defined above (D-245 bullet 1).
 
 old: The diagnostic carries the dead hop (D-245) as a separate field of its payload (the structured data a diagnostic carries) rather than dotting the hop onto the path (§8.6, §13.2).
 

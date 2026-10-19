@@ -65,10 +65,12 @@ tag: F
 added: (the immutable per-boundary publication)
 
 old: Publication is a stop request (an output port of the framework enum `StopFlag`), declared where the condition is detected.
-new: Publication is a stop request (an output port of the framework enum `StopFlag`), declared where the stop's `Bool` is detected.
+new: Publication is a stop request, an output port (the addressable unit of the model) of the framework enum `StopFlag`, declared where the stop's `Bool` is detected.
 tag: R
-ruling: R12
-note: "condition" in its first sense becomes "the stop's `Bool`"; bold list lead-in goes (R3).
+ruling: B20
+note: "condition" in its first sense becomes "the stop's `Bool`" (R12); bold list lead-in goes (R3). B20 links port at its first use in §13.5 with the glossary's gloss; the stop-request gloss becomes an appositive so the parentheticals do not nest, and the bold after it stays gloss-free.
+
+added: (the addressable unit of the model)
 
 old: A port whose type is exactly `StopFlag` is a stop request, whoever publishes it (D-316).
 tag: F
@@ -102,9 +104,10 @@ added: The landing gear
 added: from the example of §6.1
 
 old: and wires the result into a `StopRequest` child, the library's spelling of a request (below).
-new: It wires the result into a `StopRequest` child, the library's spelling of a request, described below.
-tag: F
-note: split from the `Ldg` sentence, which held two parentheticals.
+new: It wires the result into a `StopRequest` child, described below.
+tag: R
+ruling: B17
+note: split from the `Ldg` sentence, which held two parentheticals. B17 cuts "the library's spelling of a request"; the bold "The library spelling is `StopRequest`" below holds it.
 
 old: No level above it re-exports anything, because the loop reads the request where it is.
 tag: F
@@ -136,17 +139,20 @@ old: The second is refused because a request is the model's, never an operator's
 tag: F
 
 old: The operator's path is the control plane (§12.1).
-tag: F
-note: the control-plane link moves to its first use, in the context (M51).
+new: That is the operator path of the control plane
+newcites:
+tag: R
+ruling: B14
+note: the control-plane link moves to its first use, in the context (M51). B14 cuts the sentence; the opening (M51) is its home. Its §12.1 cite goes with it; §13.5 still cites §12.1 at `ControlRequestedStop`.
 
 old: A `StopFlag` input port places nothing and is left alone.
 tag: F
 
 old: The roster names every request.
-new: The requester roster (the build's list of stop requests, one `Requester(path, port, reason)` per `StopFlag` output port, in build order) names every request.
+new: This list is the requester roster (the build's list of stop requests, one `Requester(path, port, reason)` per `StopFlag` output port, in build order), and it names every request.
 tag: R
-ruling: R12
-note: R12's gloss at first use; bold list lead-in goes (R3).
+ruling: B8
+note: R12's gloss at first use; bold list lead-in goes (R3). B8 opens the paragraph with the bold, and this sentence follows it.
 
 added: (the build's list of stop requests, one `Requester(path, port, reason)` per `StopFlag` output port, in build order)
 
@@ -155,10 +161,10 @@ tag: F
 note: bold trimmed to the headline clause, D-316 bullet 4.
 
 old: Entry `i` owns the block's offset `i - 1`, and roster order is build order.
-new: The requester at index `i` owns the block's offset `i - 1`, and requester roster order is build order.
+new: The requester at index `i` owns the block's offset `i - 1`.
 tag: R
-ruling: R12
-note: bare "entry" reserved; "roster" in full.
+ruling: B8
+note: bare "entry" reserved; "roster" in full (R12). B8 drops "and requester roster order is build order"; the roster's gloss, "in build order", carries it.
 
 old: The reason is the publishing component's `stop_reason`, an optional declaration with default `""` (§8.2).
 tag: F
@@ -269,10 +275,10 @@ note: F51's wording, keeping the old "with that snapshot final".
 added: A run that starts later ends where it started, advancing no frame.
 
 old: The request is the author's and the override the integrator's, and the override sits beside `t_end` at the same declaration site.
-new: The request is the author's and the ignore list the integrator's, and the ignore list sits beside `t_end` at the same declaration site.
+new: The ignore list sits beside `t_end` at the same declaration site.
 tag: R
-ruling: R12
-note: "the ignore list" for "the override".
+ruling: B13
+note: "the ignore list" for "the override" (R12). B13 cuts the first clause, which "The trigger is the author's knowledge and the ignore list the integrator's" carries, and moves the rest to the end of the policy paragraph of "The policy per advance".
 
 old: The library spelling is `StopRequest`.
 new: The library spelling is `StopRequest` (D-316).
@@ -422,7 +428,11 @@ newcites: D-203
 note: bold headline kept; D-203 bullet 1.
 
 old: The run's termination record carries its outcome, and the `StopPolicy` of the advance that ended it (D-255).
-tag: F
+new: The run's termination record carries its outcome, and the `StopPolicy` of the advance that ended it (D-255, D-260).
+tag: R
+ruling: B22
+newcites: D-255 D-260
+note: B22 cites D-260 beside D-255; D-260 bullet 3, "The termination record is the policy's one lasting home", the old text's cite for the clause R4 relocated.
 
 old: The record holds four things, the final boundary time, the terminating policy, the source and the tail residue.
 new: The record holds four things, the final boundary time, the terminating policy, the source and the tail residue (the post-account diagnostics the run's-end sweep folds in).
@@ -641,10 +651,11 @@ ruling: R9
 note: folded into the inspection doctrine (R9); "requester roster" in full (R12).
 
 old: Substitution is answered by the override, and disabling is one keyword.
-new: Substitution is answered by the ignore list, and disabling is one keyword.
+new: A substitution that changes when runs end is answered by the ignore list (D-060), and disabling is one keyword.
 tag: R
-ruling: R9
-note: folded (R9); "the ignore list" (R12).
+ruling: B86
+newcites: D-060
+note: folded (R9); "the ignore list" (R12). B86 names the substitution D-060's Rejected list objects to, "swapping an aircraft silently changes when runs end"; Rationale-only, listed in rulings.md.
 
 old: The trigger is the author's knowledge and the override the integrator's.
 new: The trigger is the author's knowledge and the ignore list the integrator's.

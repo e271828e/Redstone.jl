@@ -23,25 +23,26 @@ Resolution enforces two duties, and they belong to different clients. The first
 is the one-level rule ([§6.1][s6-1], [D-207][d-207]). A connection endpoint resolves to an
 immediate child and one of its faces. A wiring path reaching further is a build
 error, `PathResolution`, whatever the declared field types along it. The second is
-the [generic-holding](#g-generic-holding) rule, which governs the deep paths the read side still
-writes. It is enforced by the service walk, which follows *declared field types*
-alongside instances. A segment that traverses *past* a generically-held field (one
-whose declared type is non-concrete) is a diagnostic, even though the concrete
-instance in hand would resolve it. Resolving *to* a generic child is legal, as
-access at the level of a [port](#g-port) (one declared input or output). An unknown segment
-errors with the sibling field list in hand. Paths are validated before anything
-runs on them, and renames break loudly ([D-061][d-061]).
+the [generic-holding](#g-generic-holding) rule, which governs the deep paths a service or a reader is
+given. It is enforced by the service walk, which follows *declared field types*
+alongside instances. Every service and the read resolver run it over an authored
+path. A segment that traverses *past* a generically-held field (one whose declared
+type is non-concrete) is a diagnostic, even though the concrete instance in hand
+would resolve it. Resolving *to* a generic child is legal, as access at the level
+of a [port](#g-port) (one declared input or output). An unknown segment errors with the
+sibling field list in hand. Paths are validated before anything runs on them,
+and renames break loudly ([D-061][d-061]).
 
-**Which rule applies depends on who is resolving** ([D-130][d-130]).
-[D-083][d-083] separates the reads a build's correctness rests on from the
-reads that only observe it. The same line runs through resolution. Three kinds
-of client share one resolution, and each gets the rule its promises require.
+**Which rule applies depends on who is resolving** ([D-130][d-130]). [D-083][d-083] separates the
+reads a build's correctness rests on from the reads that only observe it. The
+same line runs through resolution. Three clients share one resolution, and each
+gets the rule its promises require.
 
 | client | who resolves | what resolution enforces |
 |---|---|---|
 | wiring | connection declarations, in the structure step | the one-level rule: an immediate child and one of its faces |
 | service | [condition](#g-condition) entries (the path-addressed sparse overlay that sets a build's state), trim `reads`, [taps](#g-taps) (the selector lists linearization seeds and reports), [device](#g-device) read [bindings](#g-binding) (the values passed at `attach!` that make a device framework-legible), log extraction by `series` ([§14.3][s14-3], [§14.7][s14-7], [§14.10][s14-10], [§11.2][s11-2], [D-406][d-406], [D-407][d-407]) | strict: no traversal past a generic child, checked at the authoring or mount level |
-| inspection | [snapshot](#g-snapshot) (the immutable per-boundary publication) and log inspection ([D-310][d-310]) | the instance walk |
+| inspection | [snapshot](#g-snapshot) (the immutable per-boundary publication) and log inspection | the instance walk |
 
 Each client's treatment has its own warrant. Wiring is what the law ([§6.1][s6-1]) is
 stated for, so wiring resolution applies that law verbatim. Under one-level
@@ -57,7 +58,7 @@ binding's unknown path or name is refused at attach, as a `PathResolution` or a
 should have matched) ([D-406][d-406]). Inspection walks instances instead. A generic [seam](#g-seam)
 (a narrow, named interface kept deliberately thin) is not an error for a client
 that never claimed substitutability. "What is in *this* build" is inspection's
-defining question.
+defining question. The stop scan, the one read a run acts on, belongs to [§13.5][s13-5].
 
 The scoping is one principle, not three concessions. What varies across
 the three clients is not how far a client is trusted. It is what a violation
@@ -79,9 +80,9 @@ Which of the three treatments a client resolves under is internal framework
 fact, never user-facing API ([D-130][d-130]). The two ways of applying one plan ([§14.4][s14-4])
 use the same arrangement and have the same status.
 
-Inside the framework only wiring resolution calls `resolve_terminal`. The
-services and the readers split their own paths through the service walk
-([§14.3][s14-3], [§14.4][s14-4]).
+Inside the framework only wiring resolution calls `resolve_terminal`. Condition
+addressing ([§14.3][s14-3]) and the readers ([§14.4][s14-4], [D-406][d-406]) split their own paths through
+the service walk.
 
 ### 13.4 Runtime failures: one catch site, an execution cursor
 
@@ -112,18 +113,18 @@ a plain mutable field of the executor recording where execution stands in the
 compiled order ([D-059][d-059]). The cursor records three facts. The first is the
 component, by its index in the structure's component list, the index the
 execution order lists ([D-261][d-261]). That order is the one [`Outputs`](#g-outputs) (the nominal
-evaluation's product, the port classes and the execution order) carries. The
-second is which function is running, one of `y_state`, `y_direct`, `x_deriv`,
-`s_update`, a [guard](#g-guard) (the declared function defining an event's predicate), a
-handler, or `x_projection`. The third is the boundary phase, one of the frame-top
-drain, integration stage *k*, the arrival [sweep](#g-sweep) (one pass through the execution
-order), the θ = 0 validation, a localization trial, projection, event round *r*,
-or the ticks. Maintaining the cursor costs one cheap store per dispatch on a
-single-tasked executor, with no allocation and no exception handlers. It covers
-every user-code surface uniformly, including the forgettable ones. Those are the
-evaluations of the [RHS](#g-flow) (the continuous derivative function) at interior RK stage
-points and the guard evaluations at the trial points of ITP or Brent
-root-finding ([§10.4][s10-4]).
+evaluation's product, the output port names each stage produces and the
+execution order) carries. The second is which function is running, one of
+`y_state`, `y_direct`, `x_deriv`, `s_update`, a [guard](#g-guard) (the declared function defining an
+event's predicate), a handler, or `x_projection`. The third is the boundary phase,
+one of the frame-top drain, integration stage *k*, the arrival [sweep](#g-sweep) (one pass
+through the execution order), the θ = 0 validation, a localization trial,
+projection, event round *r*, or the ticks. Maintaining the cursor costs one cheap
+store per dispatch on a single-tasked executor, with no allocation and no
+exception handlers. It covers every user-code surface uniformly, including the
+forgettable ones. Those are the evaluations of the [RHS](#g-flow) (the continuous
+derivative function) at interior RK stage points and the guard evaluations at
+the trial points of ITP or Brent root-finding ([§10.4][s10-4]).
 
 ```julia
 # the cursor: one mutable field of the executor, overwritten per dispatch
@@ -180,7 +181,7 @@ lost, and the lifecycle does not move as it does when the catch builds a
 # the runtime carrier: its parameter the cause's type — a diagnostic's kind
 # for a species, the exception model code threw otherwise
 struct StepError{C <: Union{Diagnostic, Exception}} <: Exception
-    cursor         # the cursor's frame at the catch
+    cursor         # the cursor frame: the cursor's copy at the catch
     t::Float64     # the clock at the failure
     boundary::Int  # the frame-entry boundary index: the replay pointer
     host::Symbol   # :boundary_zero under init!, :loop inside a frame

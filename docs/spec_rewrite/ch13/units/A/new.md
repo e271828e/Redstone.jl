@@ -265,9 +265,9 @@ The committed runtime warnings, in one place, are these.
   [termination record](#g-termination-record) (the stopped-sim value naming how the run ended) and
   presented through the logging backend, never carried into a status ([D-201][d-201],
   [D-203][d-203]).
-- `DeviceCrash`, a device crash ([§12.4][s12-4], [§13.4][s13-4]). A genuine bug takes the per-device
-  crash path. The framework wrapper catches a device task's failure and reports
-  `DeviceCrash`, and the run goes on without the device unless its attachment set
-  [`should_abort`](#g-should_abort) (the per-attachment failure policy, an `attach!` keyword) ([§11.6][s11-6]).
+- `DeviceCrash`, a device crash ([§12.4][s12-4], [§13.4][s13-4]). The framework wrapper catches a
+  device task's failure, and the run goes on without the device unless its
+  attachment set [`should_abort`](#g-should_abort) (the per-attachment failure policy, an `attach!`
+  keyword) ([§11.6][s11-6]).
 - `UnboundedRun`, an unbounded run ([§13.5][s13-5]). It lands in the loop's own diagnostic
   cell, because `run!` mutates state ([D-255][d-255]).

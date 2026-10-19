@@ -162,6 +162,12 @@ Old lines are spec lines at `1fee0fc` (`old.md` line + 10442). Log lines are
 - D-406 at the output-device sentence (R29): Position, "Attach resolves a
   binding's `reads` through the read-selector family's one collecting
   resolver".
+- D-260 at "The run's termination record carries its *outcome*, and the
+  `StopPolicy` of the advance that ended it" (B22), beside D-255: bullet 3,
+  "The termination record is the policy's one lasting home" (log 10509).
+- D-060 at "A substitution that changes when runs end is answered by the
+  ignore list" (B86): Rejected, "swapping an aircraft silently changes when
+  runs end" (log 1930–1932; Rationale-only, below).
 - §10.4 at the first `t*` (verifier's fix).
 - §12.6 at the policy pointer and the M59 pointer; §6.1 at `Ldg`; §13.3 at
   the q28 pointer; §11.8 moved outside the tail residue's gloss.
@@ -182,6 +188,11 @@ Old lines are spec lines at `1fee0fc` (`old.md` line + 10442). Log lines are
   outside the loop". Plain, not bold: in the new order it is the reason after
   the abnormal path's ruling.
 - D-060 Rejected (log 1919–1920), cited at row 569's verdict.
+- D-060 Rejected (log 1930–1932), "The scanned-terminal-type rejection also
+  rests on substitution — swapping an aircraft silently changes when runs
+  end", cited at "A substitution that changes when runs end is answered by
+  the ignore list" (B86). The paragraph cites only D-316, which states the
+  answer but not the objection.
 - Discard-and-promote, inside the abnormal path's bold, has no entry beyond
   D-030's Position (rejoining the protocol) and its Rejected "Mid-frame
   abort". The log owes a Position stating it.

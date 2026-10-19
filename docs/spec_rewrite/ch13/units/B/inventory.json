@@ -139,11 +139,12 @@
   {
    "id": "C-015",
    "old": "The second is the generic-holding rule, which governs the deep paths the read side still writes.",
-   "new": "The second is the generic-holding rule, which governs the deep paths the read side still writes.",
+   "new": "The second is the generic-holding rule, which governs the deep paths a service or a reader is given.",
    "where": "new",
    "cites": [],
-   "tag": "F",
-   "note": "generic holding linked at its first use, no gloss beside the sentence's own definition two sentences on"
+   "tag": "R",
+   "ruling": "B1",
+   "note": "generic holding linked at its first use, no gloss beside the sentence's own definition two sentences on; \"the read side still writes\" reworded by B1 to name the clients"
   },
   {
    "id": "C-016",
@@ -152,8 +153,8 @@
    "where": "new",
    "cites": [],
    "tag": "R",
-   "ruling": "R6",
-   "note": "F3 wording"
+   "ruling": "B1",
+   "note": "F3 wording (R6); B1 defines the service walk in the next sentence: conditions walk with `resolve_authored` (`src/conditions.jl`), the read resolver walks every path selector with it (`src/readers.jl` `_rebase`)"
   },
   {
    "id": "C-017",
@@ -230,12 +231,12 @@
   {
    "id": "C-024",
    "old": "Three kinds of client share one primitive, and each gets the rule its promises require.",
-   "new": "Three kinds of client share one resolution, and each gets the rule its promises require.",
+   "new": "Three clients share one resolution, and each gets the rule its promises require.",
    "where": "new",
    "cites": [],
    "tag": "R",
-   "ruling": "R17",
-   "note": "after F3 the clients do not share one function"
+   "ruling": "B9",
+   "note": "after F3 the clients do not share one function (R17); \"kinds of client\" goes by B9, kind being reserved"
   },
   {
    "id": "C-025",
@@ -292,18 +293,16 @@
   {
    "id": "C-029",
    "old": "| inspection | device read bindings, GUI panels, snapshot and log inspection (§11.2, §11.7) | the instance walk |",
-   "new": "| inspection | snapshot (the immutable per-boundary publication) and log inspection (D-310) | the instance walk |",
+   "new": "| inspection | snapshot (the immutable per-boundary publication) and log inspection | the instance walk |",
    "where": "new",
    "cites": [
     "§11.2",
     "§11.7"
    ],
-   "newcites": [
-    "D-310"
-   ],
+   "newcites": [],
    "tag": "R",
-   "ruling": "R2",
-   "note": "device read bindings move to the service row; \"GUI panels\" goes, D-310 cited once in the section (Position: \"The built-in Julia GUI is parked\"); §11.7, cited for the GUI panels, goes with them (R16)"
+   "ruling": "B10",
+   "note": "device read bindings move to the service row (R2); \"GUI panels\" goes, and §11.7, cited for the GUI panels, goes with them (R16); D-310 leaves the row by B10, amending R16, since the row no longer names the GUI (F53 cites it in §13.5)"
   },
   {
    "id": "C-030",
@@ -577,19 +576,20 @@
   {
    "id": "C-059",
    "old": "Condition addressing (§14.3) and tap resolution (§14.10) are service clients.",
-   "new": "The services and the readers split their own paths through the service walk (§14.3, §14.4).",
+   "new": "Condition addressing (§14.3) and the readers (§14.4, D-406) split their own paths through the service walk.",
    "where": "new",
    "cites": [
     "§14.10",
     "§14.3"
    ],
    "newcites": [
+    "D-406",
     "§14.3",
     "§14.4"
    ],
    "tag": "R",
-   "ruling": "R6",
-   "note": "F2's replacement; §14.10 goes with the false client list"
+   "ruling": "B1",
+   "note": "F2's replacement (R6), amended by B1 so each pointer names its client; §14.10 goes with the false client list"
   },
   {
    "id": "C-060",
@@ -762,7 +762,7 @@
   {
    "id": "C-076",
    "old": "(the nominal evaluation's product, the port classes and the execution order) carries (D-253).",
-   "new": "That order is the one `Outputs` (the nominal evaluation's product, the port classes and the execution order) carries.",
+   "new": "That order is the one `Outputs` (the nominal evaluation's product, the output port names each stage produces and the execution order) carries.",
    "where": "new",
    "cites": [
     "D-253"
@@ -771,8 +771,8 @@
     "D-261"
    ],
    "tag": "R",
-   "ruling": "R6",
-   "note": "F13; `Outputs` and its gloss kept in their own sentence; D-253 replaced by D-261 in the sentence before"
+   "ruling": "B87",
+   "note": "F13 (R6); `Outputs` and its gloss kept in their own sentence; D-253 replaced by D-261 in the sentence before; B87, amending R19's keep, replaces \"the port classes\" with the glossary's \"the output port names each stage produces\", class being reserved"
   },
   {
    "id": "C-077",
@@ -1135,12 +1135,12 @@
   {
    "id": "C-114",
    "old": "`# the runtime carrier: its parameter the cause's type — a diagnostic's kind # for a species, the exception model code threw otherwise struct StepError{C <: Union{Diagnostic, Exception}} <: Exception cursor # the cursor's frame at the catch t::Float64 # the boundary time boundary::Int # the frame-entry boundary index: the replay pointer host::Symbol # :boundary_zero under init!, :loop inside a frame cause::C end`",
-   "new": "`# the runtime carrier: its parameter the cause's type — a diagnostic's kind # for a species, the exception model code threw otherwise struct StepError{C <: Union{Diagnostic, Exception}} <: Exception cursor # the cursor's frame at the catch t::Float64 # the clock at the failure boundary::Int # the frame-entry boundary index: the replay pointer host::Symbol # :boundary_zero under init!, :loop inside a frame cause::C end`",
+   "new": "`# the runtime carrier: its parameter the cause's type — a diagnostic's kind # for a species, the exception model code threw otherwise struct StepError{C <: Union{Diagnostic, Exception}} <: Exception cursor # the cursor frame: the cursor's copy at the catch t::Float64 # the clock at the failure boundary::Int # the frame-entry boundary index: the replay pointer host::Symbol # :boundary_zero under init!, :loop inside a frame cause::C end`",
    "where": "new",
    "cites": [],
    "tag": "R",
-   "ruling": "R6",
-   "note": "F12's comment edit"
+   "ruling": "B11",
+   "note": "F12's comment edit (R6); B11's comment edit puts R7's term \"the cursor frame\" on the `cursor` field"
   },
   {
    "id": "C-115",
@@ -1967,11 +1967,13 @@
  ],
  "added": [
   "This section gives the three forms, the two duties resolution enforces, which client each duty binds and why, and the standing of `resolve_terminal`.",
+  "Every service and the read resolver run it over an authored path.",
   "(one declared input or output)",
   "(the selector lists linearization seeds and reports)",
   "(the values passed at `attach!` that make a device framework-legible)",
   "(the immutable per-boundary publication)",
   "(a narrow, named interface kept deliberately thin)",
+  "The stop scan, the one read a run acts on, belongs to §13.5.",
   "A runtime failure of model code is a throw inside a frame (one iteration of the loop) or inside boundary zero.",
   "(a published consistency point)",
   "The framework catches the failure at one site, records where execution stood, and names how to reproduce it.",

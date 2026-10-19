@@ -31,18 +31,18 @@ point) is localized to the crossing, and the handler sets `m.crashed`. The
 [snapshot](#g-snapshot) (the immutable per-boundary publication) at the crossing instant
 carries the touchdown state.
 
-Publication is a [stop request](#g-stop-request) (an output port of the framework enum `StopFlag`),
-declared where the stop's `Bool` is detected. **A port whose type is exactly
-`StopFlag` is a stop request**, whoever publishes it ([D-316][d-316]). The enum is
-`@enum StopFlag NO_STOP STOP_REQUESTED`. An enum is one leaf, pinned at every
-activation ([§4.3][s4-3]), and [cells](#g-cell) (typed entries of the signal table) are stored per
-element type ([§9.7][s9-7]), so every request in the model lands in one `StopFlag`
-block. The stop's `Bool` is gathered at the boundary of the assembly that owns
-it, in one visible block. The landing gear `Ldg` from the example of [§6.1][s6-1] ORs
-its three legs through a junction (the ownership idiom, [§6.2][s6-2]; the library,
-[§13.7][s13-7]). It wires the result into a `StopRequest` child, the library's spelling
-of a request, described below. No level above it re-exports anything, because
-the loop reads the request where it is.
+Publication is a [stop request](#g-stop-request), an output [port](#g-port) (the addressable unit of the
+model) of the framework enum `StopFlag`, declared where the stop's `Bool` is
+detected. **A port whose type is exactly `StopFlag` is a stop request**, whoever
+publishes it ([D-316][d-316]). The enum is `@enum StopFlag NO_STOP STOP_REQUESTED`. An
+enum is one leaf, pinned at every activation ([§4.3][s4-3]), and [cells](#g-cell) (typed entries of
+the signal table) are stored per element type ([§9.7][s9-7]), so every request in the
+model lands in one `StopFlag` block. The stop's `Bool` is gathered at the
+boundary of the assembly that owns it, in one visible block. The landing gear
+`Ldg` from the example of [§6.1][s6-1] ORs its three legs through a junction (the
+ownership idiom, [§6.2][s6-2]; the library, [§13.7][s13-7]). It wires the result into a
+`StopRequest` child, described below. No level above it re-exports anything,
+because the loop reads the request where it is.
 
 **The library spelling is `StopRequest`** ([D-316][d-316]). It is a stateless
 continuous leaf in the mould of `Constant` ([§13.7][s13-7]). Its one input is
@@ -72,26 +72,24 @@ leaf or an assembly of components) may publish a `StopFlag` port directly.
 
 #### Placement and requesters
 
-Placement is checked at build. **Two placements are `IllegalPortType`**
-([D-316][d-316]). A `StopFlag` leaf nested inside a port of another type is
-refused with reason `:stop_flag_nested`, and a root input whose type carries a
-`StopFlag` anywhere with reason `:stop_flag_at_root`. The first is refused
-because the build lists requests per port, so a request inside a struct field
-or a static array would have no listing of its own. The second is refused
-because a request is the model's, never an operator's. The operator's path is
-the control plane ([§12.1][s12-1]). A `StopFlag` input port places nothing and
-is left alone.
+Placement is checked at build. **Two placements are `IllegalPortType`** ([D-316][d-316]). A
+`StopFlag` leaf nested inside a port of another type is refused with reason
+`:stop_flag_nested`, and a root input whose type carries a `StopFlag` anywhere
+with reason `:stop_flag_at_root`. The first is refused because the build lists
+requests per port, so a request inside a struct field or a static array would
+have no listing of its own. The second is refused because a request is the
+model's, never an operator's. A `StopFlag` input port places nothing and is left
+alone.
 
-The requester roster (the build's list of stop requests, one
-`Requester(path, port, reason)` per `StopFlag` output port, in build order)
-names every request. **The build records one `Requester(path, port, reason)`
-per `StopFlag` output port**, as the `requesters` of the activation's cell
-layout, index-aligned with the `StopFlag` block ([D-316][d-316]). The
-requester at index `i` owns the block's offset `i - 1`, and requester roster
-order is build order. The reason is the publishing component's `stop_reason`,
-an optional declaration with default `""` ([§8.2][s8-2]). One reason serves
-all of a component's requests. It is instance data on the component, never a
-port value.
+**The build records one `Requester(path, port, reason)` per `StopFlag` output
+port**, as the `requesters` of the activation's cell layout, index-aligned with
+the `StopFlag` block ([D-316][d-316]). This list is the requester roster (the build's
+list of stop requests, one `Requester(path, port, reason)` per `StopFlag` output
+port, in build order), and it names every request. The requester at index `i`
+owns the block's offset `i - 1`. The reason is the publishing component's
+`stop_reason`, an optional declaration with default `""` ([§8.2][s8-2]). One reason
+serves all of a component's requests. It is instance data on the component,
+never a port value.
 
 #### The policy per advance
 
@@ -101,7 +99,8 @@ the value's lifetime. Each of the three calls takes `Inf` and `()` as the
 defaults ([D-255][d-255]). The defaults belong to the calls that take the policy. With no
 constructor defaults the [trace header](#g-trace-header) (the trace's fixed preamble) has no policy
 to record ([§11.5][s11-5]). The [termination record](#g-termination-record) (the stopped-sim value naming how the
-run ended) carries the policy that actually ended the run.
+run ended) carries the policy that actually ended the run. The ignore list sits
+beside `t_end` at the same declaration site.
 
 **Every request is honoured unless the advance ignores it** ([D-316][d-316]).
 `ignore_stop_requests = :all` ignores every requester. An iterable of
@@ -133,12 +132,9 @@ counters ([§11.8][s11-8]).
 
 Every advance checks the latest snapshot for an honoured request before its
 first frame. After `init!` that snapshot is boundary zero's, so an authored
-[condition](#g-condition) (the path-addressed sparse overlay that sets a
-build's state) already terminal ends the run at `t₀` with that snapshot
-final, integrating nothing. A run that starts later ends where it started,
-advancing no frame. The request is the author's and the ignore list the
-integrator's, and the ignore list sits beside `t_end` at the same
-declaration site.
+[condition](#g-condition) (the path-addressed sparse overlay that sets a build's state) already
+terminal ends the run at `t₀` with that snapshot final, integrating nothing. A
+run that starts later ends where it started, advancing no frame.
 
 **The sources are consulted in a fixed order** ([D-203][d-203]). The loop checks a pending
 control stop at frame top, then `t_end`, then the stop requests at each
@@ -177,15 +173,14 @@ init!(sim, cond); run!(sim; ignore_stop_requests = :all)    # unbounded: Unbound
 
 #### The termination record
 
-**The termination record names the source, as a typed value** ([D-203][d-203]).
-The run's termination record carries its *outcome*, and the `StopPolicy` of
-the advance that ended it ([D-255][d-255]). The record holds four things, the
-final boundary time, the terminating policy, the source and the tail residue
-(the post-account diagnostics the run's-end sweep folds in). [§11.8][s11-8]
-specifies that sweep. **The time is always present**, because boundary zero
-precedes every record and a throw inside boundary zero writes none
-([§12.6][s12-6], [D-233][d-233]). The source follows the diagnostic
-convention, so its type is its identity and its payload is plain data
+**The termination record names the source, as a typed value** ([D-203][d-203]). The run's
+termination record carries its *outcome*, and the `StopPolicy` of the advance that
+ended it ([D-255][d-255], [D-260][d-260]). The record holds four things, the final boundary time,
+the terminating policy, the source and the tail residue (the post-account
+diagnostics the run's-end sweep folds in). [§11.8][s11-8] specifies that sweep. **The time
+is always present**, because boundary zero precedes every record and a throw
+inside boundary zero writes none ([§12.6][s12-6], [D-233][d-233]). The source follows the
+diagnostic convention, so its type is its identity and its payload is plain data
 ([§13.2][s13-2], [D-203][d-203]). There are four source types.
 
 - `EndTimeReached` means `t_end`'s frame completed. It has no payload. The
@@ -252,12 +247,12 @@ declared by type. [§13.3][s13-3] scopes path resolution by client, on a line of
 The ignore list addresses the `Build`'s requester roster, a build product like
 the root-input list. It binds at an advance, a stopped-sim point where
 conditions already address state by path ([§14.1][s14-1]). The requester is loud at
-inspection, since the requester roster and the termination record name it.
-Substitution is answered by the ignore list, and disabling is one keyword. The
-trigger is the author's knowledge and the ignore list the integrator's. Output
-devices are the other half of the same doctrine. Their reads are inspection on
-snapshot paths ([§11.2][s11-2]), though attach resolves them strictly, as [§13.3][s13-3]'s service
-clients ([D-406][d-406]).
+inspection, since the requester roster and the termination record name it. A
+substitution that changes when runs end is answered by the ignore list ([D-060][d-060]),
+and disabling is one keyword. The trigger is the author's knowledge and the
+ignore list the integrator's. Output devices are the other half of the same
+doctrine. Their reads are inspection on snapshot paths ([§11.2][s11-2]), though attach
+resolves them strictly, as [§13.3][s13-3]'s service clients ([D-406][d-406]).
 
 ### 13.6 Abnormal shutdown: one tail, two entries
 

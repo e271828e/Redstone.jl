@@ -44,7 +44,7 @@ Landing 19 (B23 to B41), Track 2 38 (B42 to B79), Carried 6 (B80 to B85).
   pointer to what those sections do say. Reword "the read side".
 - Recommendation: adopt, and drop the §14.3/§14.4 cite unless step 6a finds
   the split stated there. Settle this before B28, which reuses the term.
-- Status: ruled, amended. At old 313–315 (unit B): "The second is the generic-holding rule, which governs the deep paths a service or a reader is given. It is enforced by the service walk, the walk every service and the read resolver run over an authored path, which follows *declared field types* alongside instances." Conditions walk with `resolve_authored` (`src/conditions.jl`), and the read resolver walks every path selector with it (`src/readers.jl` `_rebase`). At old 370–371: "Condition addressing ([§14.3][s14-3]) and the readers ([§14.4][s14-4], [D-406][d-406]) split their own paths through the service walk." The pointers then name the clients, and the walk is defined where it is used. No glossary entry: one section uses the term.
+- Status: ruled, amended. At old 313–315 (unit B): "The second is the generic-holding rule, which governs the deep paths a service or a reader is given. It is enforced by the service walk, the walk every service and the read resolver run over an authored path, which follows *declared field types* alongside instances." Conditions walk with `resolve_authored` (`src/conditions.jl`), and the read resolver walks every path selector with it (`src/readers.jl` `_rebase`). At old 370–371: "Condition addressing ([§14.3][s14-3]) and the readers ([§14.4][s14-4], [D-406][d-406]) split their own paths through the service walk." The pointers then name the clients, and the walk is defined where it is used. No glossary entry: one section uses the term. Amended after application, since "which" read as the path: "It is enforced by the service walk, which follows *declared field types* alongside instances. Every service and the read resolver run it over an authored path."
 
 ### B2. F64's dead hop is a face, but the section defines a hop as a path
 
@@ -89,7 +89,7 @@ Landing 19 (B23 to B41), Track 2 38 (B42 to B79), Carried 6 (B80 to B85).
   a run acts on, is §13.5's ([§13.5][s13-5])."
 - Recommendation: adopt; R4 asked for both pointers and R29 withdrew
   neither.
-- Status: ruled, adopt. R4 asked for both pointers.
+- Status: ruled, adopt. R4 asked for both pointers. Amended after application, since the dictated "is §13.5's (§13.5)" rendered twice: "The stop scan, the one read a run acts on, belongs to [§13.5][s13-5]."
 
 ### B5. The D-120 bold carries a whole gloss
 
@@ -198,7 +198,7 @@ Landing 19 (B23 to B41), Track 2 38 (B42 to B79), Carried 6 (B80 to B85).
   written before the survey's move put the guidelines first.
 - Proposal: cut the companion clause at 1004 and keep R13's sentence.
 - Recommendation: adopt; R13 is the standing ruling.
-- Status: ruled, adopt: R13's sentence is the standing one.
+- Status: ruled, adopt: R13's sentence is the standing one. Amended after application: the cut clause also carried "the Simulink mapping that prunes it", which the ruling failed to list (lesson 65). R13's sentence keeps it: "The shipped list, and the Simulink mapping that prunes it, live in `companions/library_inventory.md`."
 
 ### B13. "The author's, the integrator's" is stated twice in §13.5
 
@@ -362,7 +362,7 @@ texts are inbound_check's, quoted with wrapped lines joined.
 - Proposal: extend the landing edit to 7125, scoping it to a path through no
   generic seam ([§13.3][s13-3]).
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, adopt, with the 7108 edit.
 
 ### B24. Appendix A "The two observation sides" reads as a binding's reach
 
@@ -373,7 +373,7 @@ texts are inbound_check's, quoted with wrapped lines joined.
   §13.5 865–866 still says inspection sees every public cell, so the row holds.
 - Proposal: cite [§13.3][s13-3] at that sentence.
 - Recommendation: adopt, with B23.
-- Status: open
+- Status: ruled, adopt: inspection still sees everything, and the citation says where bindings differ.
 
 ### B25. §9.3 cites §13.1 for `UserCodeFraming`
 
@@ -384,7 +384,7 @@ texts are inbound_check's, quoted with wrapped lines joined.
 - Proposal: "`UserCodeFraming`-wrapped build failure ([§13.1][s13-1],
   [§13.2][s13-2])."
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, adopt.
 
 ### B26. §9.5 says "that site's frame holds the boundary time"
 
@@ -396,7 +396,7 @@ texts are inbound_check's, quoted with wrapped lines joined.
 - Proposal: "The carrier holds the clock at the failure and the replay
   pointer."
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, adopt (F12).
 
 ### B27. §10.6 calls the cursor a loop-state field
 
@@ -410,7 +410,7 @@ texts are inbound_check's, quoted with wrapped lines joined.
 - Proposal: "(the executor's field recording where execution stands,
   [§13.4][s13-4])". Check 6531 for a nonfinite "loop-state" phrase as well.
 - Recommendation: adopt, and have the landing agent open 6531 first.
-- Status: open
+- Status: ruled, adopt. 6531 holds the cursor gloss and no nonfinite phrase (evidence check), so the brief's §10.6 F20 line is withdrawn and replaced by this edit.
 
 ### B28. Appendix B's `resolve` entry states the old two-rule primitive
 
@@ -424,7 +424,7 @@ texts are inbound_check's, quoted with wrapped lines joined.
   included. Wiring resolution applies the one-level rule ([§6.1][s6-1]), and
   the service walk enforces the generic-holding rule ([§13.3][s13-3])."
 - Recommendation: adopt after B1 settles the term.
-- Status: open
+- Status: ruled, adopt, with B1's term as amended.
 
 ### B29. Appendix C's stage line cites the bare §13
 
@@ -436,7 +436,7 @@ texts are inbound_check's, quoted with wrapped lines joined.
   becomes "(a declaration body, a probe, an activation's continuous-tier
   function)".
 - Recommendation: adopt both.
-- Status: open
+- Status: ruled, adopt both (F5).
 
 ### B30. Appendix C cites §13.2 for a collection that §9.2 now holds
 
@@ -446,7 +446,7 @@ texts are inbound_check's, quoted with wrapped lines joined.
   collection" to §9.2 (C-135).
 - Proposal: "collection ([§9.2][s9-2], [D-250][d-250])."
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, adopt (R4, M9).
 
 ### B31. Appendix C's `StepError` row
 
@@ -460,7 +460,7 @@ texts are inbound_check's, quoted with wrapped lines joined.
   stage, the arrival sweep, the θ = 0 validation, a localization trial,
   projection, an event round or the ticks), the clock at the failure,".
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, adopt (F12, F13, F14, R7).
 
 ### B32. Appendix C's `NonfiniteState` row says "state block" and "boundary time"
 
@@ -471,7 +471,7 @@ texts are inbound_check's, quoted with wrapped lines joined.
 - Proposal: "Component path, the offending state leaf and its value, the
   frame-top time and the frame-entry boundary index."
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, adopt (F20, F32).
 
 ### B33. The glossary's execution-cursor entry
 
@@ -487,7 +487,7 @@ texts are inbound_check's, quoted with wrapped lines joined.
   failure gets its cursor frame without exception handlers in the hot path
   ([§13.4][s13-4])."
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, adopt (F13, R7).
 
 ### B34. The glossary's `StopPolicy` entry cites §13.5 for text now in §12.1 and §12.6
 
@@ -499,7 +499,7 @@ texts are inbound_check's, quoted with wrapped lines joined.
   `t*` hit.
 - Proposal: "([§12.1][s12-1], [§12.6][s12-6], [§13.5][s13-5],".
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, adopt (R4).
 
 ### B35. Six citations of §13.5 now belong to §12.6
 
@@ -514,7 +514,7 @@ texts are inbound_check's, quoted with wrapped lines joined.
   and 12875. At 13140 add §12.6 before §13.5 and keep D-260. At 13129 add
   §12.6 for "declared for this advance".
 - Recommendation: adopt all six.
-- Status: open
+- Status: ruled, adopt all six (R4).
 
 ### B36. §9.7 cites §13.5 for "the seam is diagnostic only"
 
@@ -526,7 +526,7 @@ texts are inbound_check's, quoted with wrapped lines joined.
   promise."
 - Recommendation: adopt; §9.7 is rewritten and a loose reading of §13.5's
   "no effect on run semantics" does not carry the claim.
-- Status: open
+- Status: ruled, adopt.
 
 ### B37. §11.5 cites §13.5 for run metadata
 
@@ -536,7 +536,7 @@ texts are inbound_check's, quoted with wrapped lines joined.
   glossary defines it (14551).
 - Proposal: drop the §13.5 cite, leaving [Appendix B][sB].
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, adopt.
 
 ### B38. `extensions.md` mentions a §13.7 migration
 
@@ -546,7 +546,7 @@ texts are inbound_check's, quoted with wrapped lines joined.
   fell with D-263 (D-311 bullet 3).
 - Proposal: "get the parametric spelling in the migration — whether".
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, adopt.
 
 ### B39. `migration_outline.md` wires a NOT gate
 
@@ -558,7 +558,7 @@ texts are inbound_check's, quoted with wrapped lines joined.
 - Proposal: "Falling-edge consumers negate the `Bool` in their own stage,
   since the library admits no `Not` ([D-311][d-311])."
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, adopt, with the companion's `[d-311]` link definition.
 
 ### B40. Three files place `Group` in "§13.7's starting inventory"
 
@@ -570,7 +570,7 @@ texts are inbound_check's, quoted with wrapped lines joined.
 - Proposal: in the two live files, "§13.7's library" in place of "§13.7's
   starting inventory"; annotate the log line in track 2.
 - Recommendation: adopt.
-- Status: open
+- Status: ruled, amended (UNCONFIRMED: the wordings differ). Spec 3326 "part of the starting inventory ([§13.7][s13-7])" becomes "part of the library ([§13.7][s13-7])"; `extensions.md` 346 "§13.7's starting inventory" becomes "§13.7's library"; log 7017 goes to track 2 as an annotation.
 
 ### B41. "Local" for the sampled mode, in the glossary and `implementation.md`
 
@@ -583,7 +583,7 @@ texts are inbound_check's, quoted with wrapped lines joined.
 - Proposal: the glossary entry reads "global value-blind, or sampled
   primal-carrying". At `implementation.md` 933, "the sampled mode".
 - Recommendation: adopt both.
-- Status: open
+- Status: ruled, amended (UNCONFIRMED for `implementation.md`). The glossary entry reads "global value-blind, or sampled primal-carrying". `implementation.md` 933's "global on `true` and local on `false`" becomes "global on `true` and sampled on `false`".
 
 ## Track 2
 

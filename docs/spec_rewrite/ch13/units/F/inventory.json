@@ -110,12 +110,12 @@
   {
    "id": "C-012",
    "old": "Publication is a stop request (an output port of the framework enum `StopFlag`), declared where the condition is detected.",
-   "new": "Publication is a stop request (an output port of the framework enum `StopFlag`), declared where the stop's `Bool` is detected.",
+   "new": "Publication is a stop request, an output port (the addressable unit of the model) of the framework enum `StopFlag`, declared where the stop's `Bool` is detected.",
    "where": "new",
    "cites": [],
    "tag": "R",
-   "ruling": "R12",
-   "note": "\"condition\" in its first sense becomes \"the stop's `Bool`\"; bold list lead-in goes (R3)."
+   "ruling": "B20",
+   "note": "\"condition\" in its first sense becomes \"the stop's `Bool`\" (R12); bold list lead-in goes (R3). B20 links port at its first use in §13.5 with the glossary's gloss; the stop-request gloss becomes an appositive so the parentheticals do not nest, and the bold after it stays gloss-free."
   },
   {
    "id": "C-013",
@@ -179,11 +179,12 @@
   {
    "id": "C-018",
    "old": "and wires the result into a `StopRequest` child, the library's spelling of a request (below).",
-   "new": "It wires the result into a `StopRequest` child, the library's spelling of a request, described below.",
+   "new": "It wires the result into a `StopRequest` child, described below.",
    "where": "new",
    "cites": [],
-   "tag": "F",
-   "note": "split from the `Ldg` sentence, which held two parentheticals."
+   "tag": "R",
+   "ruling": "B17",
+   "note": "split from the `Ldg` sentence, which held two parentheticals. B17 cuts \"the library's spelling of a request\"; the bold \"The library spelling is `StopRequest`\" below holds it."
   },
   {
    "id": "C-019",
@@ -248,13 +249,15 @@
   {
    "id": "C-025",
    "old": "The operator's path is the control plane (§12.1).",
-   "new": "The operator's path is the control plane (§12.1).",
+   "new": "That is the operator path of the control plane",
    "where": "new",
    "cites": [
     "§12.1"
    ],
-   "tag": "F",
-   "note": "the control-plane link moves to its first use, in the context (M51)."
+   "newcites": [],
+   "tag": "R",
+   "ruling": "B14",
+   "note": "the control-plane link moves to its first use, in the context (M51). B14 cuts the sentence; the opening (M51) is its home. Its §12.1 cite goes with it; §13.5 still cites §12.1 at `ControlRequestedStop`."
   },
   {
    "id": "C-026",
@@ -267,12 +270,12 @@
   {
    "id": "C-027",
    "old": "The roster names every request.",
-   "new": "The requester roster (the build's list of stop requests, one `Requester(path, port, reason)` per `StopFlag` output port, in build order) names every request.",
+   "new": "This list is the requester roster (the build's list of stop requests, one `Requester(path, port, reason)` per `StopFlag` output port, in build order), and it names every request.",
    "where": "new",
    "cites": [],
    "tag": "R",
-   "ruling": "R12",
-   "note": "R12's gloss at first use; bold list lead-in goes (R3)."
+   "ruling": "B8",
+   "note": "R12's gloss at first use; bold list lead-in goes (R3). B8 opens the paragraph with the bold, and this sentence follows it."
   },
   {
    "id": "C-028",
@@ -288,12 +291,12 @@
   {
    "id": "C-029",
    "old": "Entry `i` owns the block's offset `i - 1`, and roster order is build order.",
-   "new": "The requester at index `i` owns the block's offset `i - 1`, and requester roster order is build order.",
+   "new": "The requester at index `i` owns the block's offset `i - 1`.",
    "where": "new",
    "cites": [],
    "tag": "R",
-   "ruling": "R12",
-   "note": "bare \"entry\" reserved; \"roster\" in full."
+   "ruling": "B8",
+   "note": "bare \"entry\" reserved; \"roster\" in full (R12). B8 drops \"and requester roster order is build order\"; the roster's gloss, \"in build order\", carries it."
   },
   {
    "id": "C-030",
@@ -532,12 +535,12 @@
   {
    "id": "C-053",
    "old": "The request is the author's and the override the integrator's, and the override sits beside `t_end` at the same declaration site.",
-   "new": "The request is the author's and the ignore list the integrator's, and the ignore list sits beside `t_end` at the same declaration site.",
+   "new": "The ignore list sits beside `t_end` at the same declaration site.",
    "where": "new",
    "cites": [],
    "tag": "R",
-   "ruling": "R12",
-   "note": "\"the ignore list\" for \"the override\"."
+   "ruling": "B13",
+   "note": "\"the ignore list\" for \"the override\" (R12). B13 cuts the first clause, which \"The trigger is the author's knowledge and the ignore list the integrator's\" carries, and moves the rest to the end of the policy paragraph of \"The policy per advance\"."
   },
   {
    "id": "C-054",
@@ -837,12 +840,18 @@
   {
    "id": "C-082",
    "old": "The run's termination record carries its outcome, and the `StopPolicy` of the advance that ended it (D-255).",
-   "new": "The run's termination record carries its outcome, and the `StopPolicy` of the advance that ended it (D-255).",
+   "new": "The run's termination record carries its outcome, and the `StopPolicy` of the advance that ended it (D-255, D-260).",
    "where": "new",
    "cites": [
     "D-255"
    ],
-   "tag": "F"
+   "newcites": [
+    "D-255",
+    "D-260"
+   ],
+   "tag": "R",
+   "ruling": "B22",
+   "note": "B22 cites D-260 beside D-255; D-260 bullet 3, \"The termination record is the policy's one lasting home\", the old text's cite for the clause R4 relocated."
   },
   {
    "id": "C-083",
@@ -1321,12 +1330,15 @@
   {
    "id": "C-132",
    "old": "Substitution is answered by the override, and disabling is one keyword.",
-   "new": "Substitution is answered by the ignore list, and disabling is one keyword.",
+   "new": "A substitution that changes when runs end is answered by the ignore list (D-060), and disabling is one keyword.",
    "where": "new",
    "cites": [],
+   "newcites": [
+    "D-060"
+   ],
    "tag": "R",
-   "ruling": "R9",
-   "note": "folded (R9); \"the ignore list\" (R12)."
+   "ruling": "B86",
+   "note": "folded (R9); \"the ignore list\" (R12). B86 names the substitution D-060's Rejected list objects to, \"swapping an aircraft silently changes when runs end\"; Rationale-only, listed in rulings.md."
   },
   {
    "id": "C-133",
@@ -1794,6 +1806,7 @@
   "A landing-gear strut's",
   "(a published consistency point)",
   "(the immutable per-boundary publication)",
+  "(the addressable unit of the model)",
   "(typed entries of the signal table)",
   "The landing gear",
   "from the example of §6.1",
