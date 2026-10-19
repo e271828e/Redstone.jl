@@ -148,7 +148,7 @@ _who(entry::RosterEntry) = _handle(entry).who
 # the iteration §11.4 licenses in place of the tuple specialization the freeze
 # would also permit. The run's trace and this writer's index into its schema
 # list ride along (§11.5, D-260), which is why every thunk is compiled at one
-# site alone — `_install_writers!` (trace.jl) — and recompiled whenever the
+# site alone — `_install_writers!` below — and recompiled whenever the
 # indices move. `trc` is concrete in the closure, a `Trace` or `nothing`, so
 # the record branch inside `_drain!` folds where there is nothing to record.
 _drain_thunk(store, writer::Writer, trc, writer_index::Int) =
@@ -275,5 +275,57 @@ function reclaim!(plane::DataPlane, layout::Layout, store, trc)
                                   site = :renormalization)
         renormalized === nothing || stage_batch!(plane.harness, renormalized)
     end
+    nothing
+end
+
+# The run's writers in the drain's own order (§11.3, §11.4): each rostered
+# device in attachment order, then the harness writer. The tags are §11.8's
+# writer names, so a trace and a published status name a writer identically.
+function _writer_schemas(plane)
+    schemas = Pair{String,Vector{Symbol}}[_who(e) => copy(_handle(e).writer.faces)
+                                          for e in plane.roster]
+    push!(schemas, "harness" => copy(plane.harness.faces))
+    schemas
+end
+
+"""
+The growth rule (§11.5), and the one site a drain thunk is compiled at: append
+the current writer set to the trace's schema list, name the appended range
+`live_writers`, and recompile every thunk with its writer's new index. The list
+grows *in place* (D-255) — a `Trace` a caller holds is a detached value, its
+own copy of the schemas, so the growth cannot reach it.
+
+Reached from four places, all of them stopped-sim: the three doors that build a
+run, `init!`, `restore!` and `replay!`, and `reclaim!`'s two callers, `attach!` and
+`detach!`. With no trace to write into, under the door's `trace = false` or at
+a roster change before the first door, whose placeholder run has no trace
+(D-261), nothing is appended and the indices are provisional. No drain runs
+before a door has, so nothing reads either.
+
+The appended range is a local (D-260): the thunks are compiled against it here
+and nothing reads it afterwards. `store` is the executor's and `trc` the run's
+trace, `nothing` under the switch, both taken as arguments (D-261) and closed
+over concretely — so the record branch inside `_drain!` folds away where there
+is nothing to record.
+"""
+function _install_writers!(plane, store, trc)
+    writer_count = length(plane.roster) + 1
+    live_writers = if trc === nothing
+        1:writer_count
+    else
+        schema_count = length(trc.schemas)
+        append!(trc.schemas, _writer_schemas(plane))
+        (schema_count + 1):(schema_count + writer_count)
+    end
+    for (i, entry) in enumerate(plane.roster)
+        # the entry is immutable and its thunk carries the index, so the
+        # recompilation replaces the entry itself (§11.4's stopped-sim compile)
+        plane.roster[i] = RosterEntry(
+            entry.dev, entry.id,
+            _drain_thunk(store, _handle(entry).writer, trc, live_writers[i]),
+            entry.should_abort, entry.account, entry.handle)
+    end
+    plane.harness_drain =
+        _drain_thunk(store, plane.harness, trc, live_writers[writer_count])
     nothing
 end

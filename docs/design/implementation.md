@@ -732,6 +732,11 @@ D-276, D-277, D-315, D-406, D-407.
     roster change compiles it;
   - `reclaim!` takes the store and the run's trace from `attach!` and
     `detach!` rather than reading either off the plane.
+- `_install_writers!`, the file's last section, with `_writer_schemas`
+  (§11.5, D-261): the trace's schema-list growth rule, and the one site a
+  drain thunk is compiled at, against the executor's store and the run's
+  trace that it takes as arguments, with the appended range as a local
+  (D-260). `reclaim!` and sim.jl's `_open_run!` call it.
 - The loop is a writer too, so the plane holds the loop's diagnostic cell
   and account, and §11.2's published holder with them (D-256).
 
@@ -905,11 +910,6 @@ Spec: §9.5, §9.7, §13.5, D-162, D-235, D-237, D-260, D-316, D-317.
     and `restore!` and `replay!` open their run with the checkpoint they
     restore. It is `nothing` only between
     `init!`'s opening of the run and that publication (D-274).
-- `_install_writers!` (D-261):
-  - the growth rule;
-  - the one site a drain thunk is compiled at, against the executor's store
-    and the run's trace that `_install_writers!` takes as arguments, with the
-    appended range as a local (D-260).
 - `trace(sim)`, defined in sim.jl, which hands back a detached value, the
   checkpoint copied.
 - Replay's up-front entry pass, run by `_compile_feed` in sim.jl. It validates
