@@ -316,3 +316,26 @@ The arc is e297652 and 21b8793 over 63b00cb, unpushed.
 - **Appendix B's row names the value `ts`**, not `series`, the reviewer's
   second item, so the function and its value no longer share a spelling,
   as `trace(sim) → trc` keeps them apart. A docs commit.
+
+## The user's rulings
+
+Made on 2026-10-19 on the points the arcs left open; the arc was pushed
+after them.
+
+- **The state-field candidates sort does not exist.** `_undeclared_violation`'s
+  NamedTuple method collects `keys(declared)` in declaration order at every
+  commit of the arc, and the only candidate sorts readers.jl ever held were
+  the two `layout.addr` comprehensions stage 2 deleted. Closed as moot; no
+  code change.
+- **The backtick rendering pin and the `_declares_noun` rename**, stage 2's
+  two rulings, ratified.
+- **The `_mount` finding.** D-407's "a few milliseconds" holds at 5 ms, and
+  its 15 to 25 ms per new leaf type or chain stands beside the review's 26
+  and 18. No spec edit.
+- **The accepted survivor stands** with no timing pin: the count pins on
+  `series` and `_column` guard the public sites, and `implementation.md`
+  names the three `@nospecialize`d functions a future grep needs.
+- **`series` and `Series` stay provisional** until D-226; the audit's entry
+  in `pending.md` needs no per-name reminder.
+- **The first call's 66 ms goes to the precompile workload**: `pending.md`'s
+  workload bullet now names `series`.

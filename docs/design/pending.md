@@ -19,7 +19,8 @@ item changes what the spec says, the spec edit is part of the item.
   (`docs/reports/20261001_compile_cost_reeval/probes`) drifted at D-313 and
   D-314: `Group` lives in `Redstone.Blocks` and its keywords are the
   declaration names; correct a copy before measuring, and leave the report
-  as it is.
+  as it is. The workload includes a `series` call over the loop's log: the
+  first call in a fresh process measured 66 ms (D-407).
 - **The inspector, stage 1**: the static inspector over the descriptor,
   whose first session is the descriptor's schema and `descriptor` together,
   at the tip of increment 67's `Structure` refactor (the record's "Working
