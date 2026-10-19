@@ -303,6 +303,9 @@ function test_log()
         @test all(d -> d isa ReadResolution, diags)
         @test [d.label for d in diags] == [:a, :b, :c]
         @test [d.reason for d in diags] == [:undeclared, :store_selector, :unknown_output_face]
+        # A bare NamedTuple of selectors is the §14.2 misuse, not a MethodError.
+        d = carried(@test_throws DiagnosticError{ReadSetMisuse} series(sim, (; h = get_output("c", :q))))
+        @test d.reason === :not_a_read_set && d.observed <: NamedTuple
     end
 
     @testset "the stride thins the columns with the log (§11.2)" begin

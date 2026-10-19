@@ -832,8 +832,9 @@ Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315.
 - The accessors `lifecycle`, `mode`, `termination`, `latest`, `logged` and
   `trace`.
 - `series` and `Series`, the post-run extraction from the log through the
-  read resolver for a table source, and `_column`, the function barrier
-  that gathers one entry over the log (§11.2, D-407).
+  read resolver for a table source, with the `ReadSetMisuse` fallback for
+  a bare NamedTuple, and `_column`, the function barrier that gathers one
+  entry over the log (§11.2, D-407).
 - A one-line forwarding method on the simulation for each of the model's
   `port`, `state`, `modes`, `phase_bodies`, `apply!`, `evaluate!`,
   `integrate!`, `boundary!`, `offtick_boundary!` and `boundary_zero!`, which

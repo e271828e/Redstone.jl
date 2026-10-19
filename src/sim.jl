@@ -2077,6 +2077,12 @@ function series(sim::Simulation, @nospecialize(read_set::Reads))
            NamedTuple{keys(read_set.selectors)}(Tuple(columns)))
 end
 
+# A bare NamedTuple of selectors is the read side's §14.2 misuse, refused with
+# the directive `reads` names rather than a `MethodError`, as `_compile_reads`
+# and `taps` refuse it (readers.jl).
+series(::Simulation, other) = throw(DiagnosticError(
+    ReadSetMisuse(observed = typeof(other), reason = :not_a_read_set)))
+
 # One column, the function barrier: specialized on the entry's leaf type and
 # chain alone, the eltype read off the resolved chain so an empty log yields
 # a typed empty vector.
