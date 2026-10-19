@@ -31,7 +31,7 @@
   {
    "id": "C-004",
    "old": "Two commitments follow, a library and an idiom.",
-   "new": "D-062 makes three tooling commitments for them, namely the passthrough helpers' predicate, the routes `show(::Structure)` prints for each root face (the name a port wears on its component's boundary), and a standard library of components (the units of modeling, each a leaf or an assembly of components).",
+   "new": "D-062 makes three tooling commitments for them, namely the passthrough helpers' predicate, the routes `show(::Structure)` prints for each root face (the name a port wears on its component's boundary), and a standard library of components.",
    "where": "new",
    "cites": [],
    "newcites": [
@@ -406,7 +406,7 @@
    "cites": [],
    "tag": "R",
    "ruling": "B12",
-   "note": "cut as a sentence of its own; B12, as amended, folds its claim into R13's sentence after the list, the standing pointer."
+   "note": "cut as a sentence of its own; B12, as amended, folds its claim into R13's sentence after the list, the standing pointer. final_verify_2 finding 5 (ruled): that sentence opens \"The full inventory\", so the pointer covers the whole inventory as the old clause did."
   },
   {
    "id": "C-042",
@@ -1573,12 +1573,12 @@
   {
    "id": "C-161",
    "old": "The local (primal-carrying) set-tracer at sampled states is the fallback whenever the global tracer hits an undecidable branch, such as piecewise friction, stall blending or any gridded lookup at an input-tainted coordinate.",
-   "new": "The sampled set-tracer (the log's local mode) at sampled states is the fallback whenever the global tracer hits an undecidable branch, such as piecewise friction, stall blending or any gridded lookup at an input-tainted coordinate.",
+   "new": "The sampled set-tracer (the primal-carrying mode the log calls local) at sampled states is the fallback whenever the global tracer hits an undecidable branch, such as piecewise friction, stall blending or any gridded lookup at an input-tainted coordinate.",
    "where": "new",
    "cites": [],
    "tag": "R",
    "ruling": "B7",
-   "note": "F63, \"the sampled mode\", D-245's word (R6). B7 dictates the gloss \"(the log's local mode)\", so local reads as the log's old name; \"primal-carrying\" goes with the old gloss."
+   "note": "F63, \"the sampled mode\", D-245's word (R6). B7 dictates the gloss \"(the log's local mode)\", so local reads as the log's old name; final_verify_2 finding 1 (ruled) restores \"primal-carrying\" inside it."
   },
   {
    "id": "C-162",
@@ -1636,11 +1636,11 @@
   {
    "id": "C-168",
    "old": "Derivatives, guards (the declared functions defining each event's predicate), handlers and projections are outside tracing's jurisdiction entirely.",
-   "new": "Derivatives, guards (the declared functions defining each event's predicate), handlers and projections (the optional per-component hook `x ← x_projection(x)`) are outside tracing's jurisdiction entirely.",
+   "new": "Derivatives, guards (the declared functions defining each event's predicate), handlers and projections are outside tracing's jurisdiction entirely.",
    "where": "new",
    "cites": [],
    "tag": "F",
-   "note": "step 5 P2-24: projections glossed in the glossary's words."
+   "note": "step 5 P2-24: projections glossed in the glossary's words. final_verify_2 finding 3: the gloss moves to a sentence of its own (R23)."
   },
   {
    "id": "C-169",
@@ -2074,11 +2074,11 @@
  "added": [
   "(each a component's declared interface)",
   "(the name a port wears on its component's boundary)",
-  "(the units of modeling, each a leaf or an assembly of components)",
+  "Components are the units of modeling, each a leaf or an assembly of components.",
   "The section covers the predicate and the face routes first, then the standard component library and the component test rig.",
   "(explicitly sanctioned where a neighboring practice is forbidden)",
   ", one of the root component's own input faces",
-  "The shipped list,",
+  "The full inventory,",
   "live in",
   "(an output port of the framework enum `StopFlag`)",
   "(pure composition, with no dynamics of its own)",
@@ -2090,7 +2090,7 @@
   "(the instants at which a discrete component's stages and update run)",
   "(`companions/pid_anti_windup.md`)",
   ", `Δt_base` being the base tick period.",
-  "A handle that references bulk data never surfaces as a root input (D-237); a rig holds such a handle through a constant source (a `Constant` holding it) instead (§14.9, D-364).",
+  "A handle that references bulk data never surfaces as a root input (D-237); a rig holds such a handle through a constant source (a `Constant`, publishing the value its instance holds) instead (§14.9, D-364).",
   "(path-addressed sparse overlays that set a build's state)",
   "(attached participants in the periphery)",
   "the table of each snapshot, the immutable per-boundary publication",
@@ -2098,6 +2098,6 @@
   "In the sketch below, the component under test is `Strut`, an illustrative landing-gear strut whose terrain input is abstract.",
   ", an illustrative concrete terrain",
   "A tier is the continuous or discrete side of the hybrid formalism.",
-  "(the optional per-component hook `x ← x_projection(x)`)"
+  "A projection is the optional per-component hook `x ← x_projection(x)`."
  ]
 }

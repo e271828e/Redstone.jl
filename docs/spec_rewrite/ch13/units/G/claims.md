@@ -19,7 +19,7 @@ ruling: R6
 note: F58, the dictated relative clause.
 
 old: Two commitments follow, a library and an idiom.
-new: D-062 makes three tooling commitments for them, namely the passthrough helpers' predicate, the routes `show(::Structure)` prints for each root face (the name a port wears on its component's boundary), and a standard library of components (the units of modeling, each a leaf or an assembly of components).
+new: D-062 makes three tooling commitments for them, namely the passthrough helpers' predicate, the routes `show(::Structure)` prints for each root face (the name a port wears on its component's boundary), and a standard library of components.
 tag: R
 ruling: R6
 newcites: D-062
@@ -28,8 +28,8 @@ note: F58 and F67, the dictated sentence; "namely" replaces the colon, and "the 
 added: (the name a port wears on its component's boundary)
 # face's first-use gloss, the glossary's own words; face's first use moved here from the bold sentence.
 
-added: (the units of modeling, each a leaf or an assembly of components)
-# component's first-use gloss; component's first use moved into the opening.
+added: Components are the units of modeling, each a leaf or an assembly of components.
+# component's first-use gloss; component's first use moved into the opening. final_verify_2 finding 2: the gloss leaves the face's sentence for a sentence of its own (R23).
 
 added: The section covers the predicate and the face routes first, then the standard component library and the component test rig.
 # parts sentence; the old opening named none.
@@ -158,8 +158,8 @@ old: The starting inventory holds the `Junction`, with `SumJunction{V, N}`, `Or{
 tag: M
 note: part C order, the inventory after the guidelines. "The starting inventory" stays verbatim (R13).
 
-added: The shipped list,
-# R13's sentence after the list; B12 (amended) folds the Simulink mapping into it.
+added: The full inventory,
+# R13's sentence after the list; B12 (amended) folds the Simulink mapping into it, and final_verify_2 finding 5 (ruled) makes "the shipped list" "the full inventory".
 
 added: live in
 
@@ -205,7 +205,7 @@ old: The inventory, and the Simulink mapping that prunes it, is `companions/libr
 new: and the Simulink mapping that prunes it, live in `companions/library_inventory.md`.
 tag: R
 ruling: B12
-note: cut as a sentence of its own; B12, as amended, folds its claim into R13's sentence after the list, the standing pointer.
+note: cut as a sentence of its own; B12, as amended, folds its claim into R13's sentence after the list, the standing pointer. final_verify_2 finding 5 (ruled): that sentence opens "The full inventory", so the pointer covers the whole inventory as the old clause did.
 
 old: A one-line expression such as a gain earns no block, because a separate component costs a build entry, a cell, a gather and a scatter (§9.7).
 
@@ -437,8 +437,8 @@ new: A configuration wanting an externally settable source uses a root input (§
 tag: M
 note: M61. The two sentences join so F61's added sentence cannot become "That"'s antecedent. Its root input link moved to the first use in the select paragraph.
 
-added: A handle that references bulk data never surfaces as a root input (D-237); a rig holds such a handle through a constant source (a `Constant` holding it) instead (§14.9, D-364).
-# R27's wording of F61 as R30 narrows its first clause, after the root-input sentence.
+added: A handle that references bulk data never surfaces as a root input (D-237); a rig holds such a handle through a constant source (a `Constant`, publishing the value its instance holds) instead (§14.9, D-364).
+# final_verify_2 finding 7: the constant-source gloss says what the term is. R27's wording of F61 as R30 narrows its first clause, after the root-input sentence.
 
 old: `Freeze{V}` is the declared stop-gradient. It feeds a walking producer into a pinned entry, which the walk clause (§6.1) otherwise refuses.
 new: `Freeze{V}` feeds a walking producer into a pinned entry, which the walk clause (§6.1) otherwise refuses (D-266).
@@ -644,10 +644,10 @@ old: It is exact, in one evaluation.
 old: It requires the traced stage-2 code to be free of branches and lookups on input-tainted values.
 
 old: The local (primal-carrying) set-tracer at sampled states is the fallback whenever the global tracer hits an undecidable branch, such as piecewise friction, stall blending or any gridded lookup at an input-tainted coordinate.
-new: The sampled set-tracer (the log's local mode) at sampled states is the fallback whenever the global tracer hits an undecidable branch, such as piecewise friction, stall blending or any gridded lookup at an input-tainted coordinate.
+new: The sampled set-tracer (the primal-carrying mode the log calls local) at sampled states is the fallback whenever the global tracer hits an undecidable branch, such as piecewise friction, stall blending or any gridded lookup at an input-tainted coordinate.
 tag: R
 ruling: B7
-note: F63, "the sampled mode", D-245's word (R6). B7 dictates the gloss "(the log's *local* mode)", so *local* reads as the log's old name; "primal-carrying" goes with the old gloss.
+note: F63, "the sampled mode", D-245's word (R6). B7 dictates the gloss "(the log's *local* mode)", so *local* reads as the log's old name; final_verify_2 finding 1 (ruled) restores "primal-carrying" inside it.
 
 old: It reports the dependence pattern of the taken paths, sampled across randomized states.
 
@@ -663,10 +663,10 @@ old: Stage-2 functions also receive state views, but neither those nor the stage
 old: Stage-1 functions are never traced, since there is nothing to seed.
 
 old: Derivatives, guards (the declared functions defining each event's predicate), handlers and projections are outside tracing's jurisdiction entirely.
-new: Derivatives, guards (the declared functions defining each event's predicate), handlers and projections (the optional per-component hook `x ← x_projection(x)`) are outside tracing's jurisdiction entirely.
-note: step 5 P2-24: projections glossed in the glossary's words.
+new: Derivatives, guards (the declared functions defining each event's predicate), handlers and projections are outside tracing's jurisdiction entirely.
+note: step 5 P2-24: projections glossed in the glossary's words. final_verify_2 finding 3: the gloss moves to a sentence of its own (R23).
 
-added: (the optional per-component hook `x ← x_projection(x)`)
+added: A projection is the optional per-component hook `x ← x_projection(x)`.
 
 old: A known tracer blind spot is documented.
 

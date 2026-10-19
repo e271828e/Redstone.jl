@@ -275,10 +275,12 @@ note: F51's wording, keeping the old "with that snapshot final".
 added: A run that starts later ends where it started, advancing no frame.
 
 old: The request is the author's and the override the integrator's, and the override sits beside `t_end` at the same declaration site.
-new: The ignore list sits beside `t_end` at the same declaration site.
+new: The ignore list, `ignore_stop_requests`, sits beside `t_end` at the same declaration site.
 tag: R
 ruling: B13
-note: "the ignore list" for "the override" (R12). B13 cuts the first clause, which "The trigger is the author's knowledge and the ignore list the integrator's" carries, and moves the rest to the end of the policy paragraph of "The policy per advance".
+note: "the ignore list" for "the override" (R12). B13 cuts the first clause, which "The trigger is the author's knowledge and the ignore list the integrator's" carries, and moves the rest to the end of the policy paragraph of "The policy per advance". final_verify_2 finding 4: the moved sentence is the term's first use, so it names the keyword.
+
+added: , `ignore_stop_requests`,
 
 old: The library spelling is `StopRequest`.
 new: The library spelling is `StopRequest` (D-316).
@@ -894,7 +896,9 @@ added: (the ordinary loop re-driven from a recorded trace)
 added: A trace is a session's record of its drained inputs.
 
 old: The stopped-sim services enforce that non-resumability by refusing an errored simulation outright (`ServiceLifecycle`, §14).
+new: The stopped-sim services enforce the non-resumability by refusing an errored simulation outright (`ServiceLifecycle`, §14).
 tag: F
+note: final_verify_2 finding 6: "that" becomes "the", since the trace sentence now sits between it and "terminal, not resumable".
 
 old: The roster operations refuse it with them (§11.3, D-232).
 new: Operations on the roster (the list of attached device entries) refuse it with them (§11.3, D-232).

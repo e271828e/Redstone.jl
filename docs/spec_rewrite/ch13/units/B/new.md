@@ -11,13 +11,12 @@ enforces, which client each duty binds and why, and the standing of
   child, a container element's key segment included.
 - `input_faces(c)` / `output_faces(c) → Vector{String}` return the stringified keys
   of a leaf's `u_types` / `y_types` (the key set is `T`-independent). For an [assembly](#g-assembly)
-  they return the face names of `input_wires(c)` / `output_wires(c)`. Declaration
-  order is preserved, which gives deterministic printouts and stable
-  diagnostics.
+  they return the [face](#g-face) names (the names ports wear on their component's
+  boundary) of `input_wires(c)` / `output_wires(c)`. Declaration order is preserved,
+  which gives deterministic printouts and stable diagnostics.
 - `resolve_terminal(assembly, path) → (component, name)` splits off a terminal
   path's final segment and resolves the prefix through `resolve`. The split is
-  unambiguous because [face](#g-face) names (the names ports wear on their
-  component's boundary) may contain dots but never slashes ([§8.6][s8-6]).
+  unambiguous because face names may contain dots but never slashes ([§8.6][s8-6]).
 
 Resolution enforces two duties, and they belong to different clients. The first
 is the one-level rule ([§6.1][s6-1], [D-207][d-207]). A connection endpoint resolves to an
@@ -25,13 +24,13 @@ immediate child and one of its faces. A wiring path reaching further is a build
 error, `PathResolution`, whatever the declared field types along it. The second is
 the [generic-holding](#g-generic-holding) rule, which governs the deep paths a service or a reader is
 given. It is enforced by the service walk, which follows *declared field types*
-alongside instances. Every service and the read resolver run it over an authored
-path. A segment that traverses *past* a generically-held field (one whose declared
-type is non-concrete) is a diagnostic, even though the concrete instance in hand
-would resolve it. Resolving *to* a generic child is legal, as access at the level
-of a [port](#g-port) (one declared input or output). An unknown segment errors with the
-sibling field list in hand. Paths are validated before anything runs on them,
-and renames break loudly ([D-061][d-061]).
+alongside instances. Every service and the read resolver run the walk over an
+authored path. A segment that traverses *past* a generically-held field (one whose
+declared type is non-concrete) is a diagnostic, even though the concrete
+instance in hand would resolve it. Resolving *to* a generic child is legal, as
+access at the level of a [port](#g-port) (one declared input or output). An unknown segment
+errors with the sibling field list in hand. Paths are validated before anything
+runs on them, and renames break loudly ([D-061][d-061]).
 
 **Which rule applies depends on who is resolving** ([D-130][d-130]). [D-083][d-083] separates the
 reads a build's correctness rests on from the reads that only observe it. The
@@ -41,7 +40,7 @@ gets the rule its promises require.
 | client | who resolves | what resolution enforces |
 |---|---|---|
 | wiring | connection declarations, in the structure step | the one-level rule: an immediate child and one of its faces |
-| service | [condition](#g-condition) entries (the path-addressed sparse overlay that sets a build's state), trim `reads`, [taps](#g-taps) (the selector lists linearization seeds and reports), [device](#g-device) read [bindings](#g-binding) (the values passed at `attach!` that make a device framework-legible), log extraction by `series` ([§14.3][s14-3], [§14.7][s14-7], [§14.10][s14-10], [§11.2][s11-2], [D-406][d-406], [D-407][d-407]) | strict: no traversal past a generic child, checked at the authoring or mount level |
+| service | [condition](#g-condition) entries (the path-addressed sparse overlay that sets a build's state), trim `reads`, [taps](#g-taps) (the three selector lists declaring what linearization seeds and reports), [device](#g-device) read [bindings](#g-binding) (the values passed at `attach!` that make a device framework-legible), log extraction by `series` ([§14.3][s14-3], [§14.7][s14-7], [§14.10][s14-10], [§11.2][s11-2], [D-406][d-406], [D-407][d-407]) | strict: no traversal past a generic child, checked at the authoring or mount level |
 | inspection | [snapshot](#g-snapshot) (the immutable per-boundary publication) and log inspection | the instance walk |
 
 Each client's treatment has its own warrant. Wiring is what the law ([§6.1][s6-1]) is
@@ -143,13 +142,14 @@ frame (the cursor's copy at the catch), the time, the frame-entry boundary
 index, the host of the catch, and the original exception as `cause`. The time is
 the clock at the failure, a boundary time in a boundary phase, the stage or
 trial time inside integration. **The frame-entry boundary index is the [replay](#g-replay)
-pointer** ([D-128][d-128]). Replay is the ordinary loop re-driven from a recorded trace.
-The pointer names the frame-top boundary at which the failing frame began. That
-frame top is a grid boundary or boundary zero, and it is always a legal replay
-halt ([§12.7][s12-7]). The host names the catch that took the throw. It is `:loop` for a
-throw inside a frame, and `:boundary_zero` for a throw inside the boundary zero
-that `init!` runs. A `StepError` renders under the doctrine of [§13.2][s13-2]. The cursor
-frame and the reproduction come first, the cause second, and names are strings.
+pointer** ([D-128][d-128]). Replay is the ordinary loop re-driven from a recorded [trace](#g-trace).
+The trace is the primary record of a session. The pointer names the frame-top
+boundary at which the failing frame began. That frame top is a grid boundary or
+boundary zero, and it is always a legal replay halt ([§12.7][s12-7]). The host names the
+catch that took the throw. It is `:loop` for a throw inside a frame, and
+`:boundary_zero` for a throw inside the boundary zero that `init!` runs. A `StepError`
+renders under the doctrine of [§13.2][s13-2]. The cursor frame and the reproduction come
+first, the cause second, and names are strings.
 
 Conformance failure ([§9.5][s9-5]) needs no separate path. At the table-write
 point it throws as every fail-fast site does, a `DiagnosticError` holding the
@@ -172,10 +172,10 @@ of its `cause`, bounded to a diagnostic or an exception. A species is therefore
 `@test_throws StepError{ConformanceFailure}`, the runtime spelling of the build
 carrier's idiom ([§13.2][s13-2]). A collected carrier riding as `cause` is an exception and
 falls under that arm. A bare value thrown deliberately by model code is neither,
-and the constructor refuses it, so it leaves the catch unwrapped. The framework
-does not handle that throw ([D-225][d-225]). The cursor frame and the pointer are then
-lost, and the lifecycle does not move as it does when the catch builds a
-`StepError`.
+and the constructor refuses it, so it propagates from the catch unwrapped. The
+framework does not handle that throw ([D-225][d-225]). The cursor frame and the pointer
+are then lost, and the lifecycle does not move as it does when the catch builds
+a `StepError`.
 
 ```julia
 # the runtime carrier: its parameter the cause's type — a diagnostic's kind
@@ -218,16 +218,14 @@ through the logging backend and returns, the lifecycle reading `errored` and
 
 #### Reproduction
 
-Reproducibility holds by construction. Staged inputs are drained and recorded
-to the [trace](#g-trace) (the primary record of a session) at the frame top,
-*before* the boundary executes. So the failing boundary's inputs are already
-in the trace when it fails. The error names the frame-entry boundary `k` to
-replay to. `replay!(sim2, trc; to_boundary = k)` halts exactly at that frame
-top ([D-128][d-128]). It halts in `:replay`, the
-[input mode](#g-input-mode) that keeps the recording attached, so the failing
-frame's record is still ahead of the simulation ([§12.7][s12-7],
-[D-218][d-218]). `step!` then applies that record and re-executes the failing
-frame under instrumentation, [localized](#g-localized) boundaries included.
+Reproducibility holds by construction. Staged inputs are drained and recorded to
+the trace at the frame top, *before* the boundary executes. So the failing
+boundary's inputs are already in the trace when it fails. The error names the
+frame-entry boundary `k` to replay to. `replay!(sim2, trc; to_boundary = k)` halts
+exactly at that frame top ([D-128][d-128]). It halts in `:replay`, the [input mode](#g-input-mode) that
+keeps the recording attached, so the failing frame's record is still ahead of
+the simulation ([§12.7][s12-7], [D-218][d-218]). `step!` then applies that record and re-executes
+the failing frame under instrumentation, [localized](#g-localized) boundaries included.
 
 ```julia
 replay!(sim2, trc; to_boundary = k)   # halt at the frame top; still :replay

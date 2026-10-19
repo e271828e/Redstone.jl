@@ -29,8 +29,8 @@ tag: F
 
 old: For an assembly they return the entries of `input_wires(c)` / `output_wires(c)`.
 tag: F
-new: For an assembly they return the face names of `input_wires(c)` / `output_wires(c)`.
-note: step 5 (P1-14): bare "entries" becomes "the face names"; D-061's Position, "`input_faces`/`output_faces` return declaration-ordered face-name strings"
+new: For an assembly they return the face names (the names ports wear on their component's boundary) of `input_wires(c)` / `output_wires(c)`.
+note: step 5 (P1-14): bare "entries" becomes "the face names"; D-061's Position, "`input_faces`/`output_faces` return declaration-ordered face-name strings"; face linked and glossed here, the section's first prose use (final_verify_1 finding 2); glossary "the name a port wears on its component's boundary"
 
 old: Declaration order is preserved, which gives deterministic printouts and stable diagnostics.
 tag: F
@@ -39,9 +39,8 @@ old: - `resolve_terminal(assembly, path) → (component, name)` splits off a ter
 tag: F
 
 old: The split is unambiguous because face names may contain dots but never slashes (§8.6).
-new: The split is unambiguous because face names (the names ports wear on their component's boundary) may contain dots but never slashes (§8.6).
 tag: F
-note: face glossed at its link, the section's first use; glossary "the name a port wears on its component's boundary"
+note: face's link and gloss moved to the section's first prose use, the `input_faces` bullet (final_verify_1 finding 2)
 
 old: The walk enforces two duties, and they belong to different clients.
 new: Resolution enforces two duties, and they belong to different clients.
@@ -75,8 +74,8 @@ tag: R
 ruling: B1
 note: F3 wording (R6); B1 defines the service walk in the next sentence: conditions walk with `resolve_authored` (`src/conditions.jl`), the read resolver walks every path selector with it (`src/readers.jl` `_rebase`)
 
-added: Every service and the read resolver run it over an authored path.
-# ruling: B1, as amended after application: the definition moves into its own sentence so "which" no longer reads as the path.
+added: Every service and the read resolver run the walk over an authored path.
+# ruling: B1, as amended after application: the definition moves into its own sentence so "which" no longer reads as the path; "run it" becomes "run the walk" (final_verify_1 finding 1).
 
 old: A segment that traverses past a generically-held field (one whose declared type is non-concrete) is a diagnostic, even though the concrete instance in hand would resolve it.
 tag: F
@@ -133,13 +132,14 @@ tag: F
 note: the bold row name goes plain (R3)
 
 old: | service | condition entries (the path-addressed sparse overlay that sets a build's state), trim `reads`, taps (§14.3, §14.7, §14.10) | strict: no traversal past a generic child, checked at the authoring or mount level |
-new: | service | condition entries (the path-addressed sparse overlay that sets a build's state), trim `reads`, taps (the selector lists linearization seeds and reports), device read bindings (the values passed at `attach!` that make a device framework-legible), log extraction by `series` (§14.3, §14.7, §14.10, §11.2, D-406, D-407) | strict: no traversal past a generic child, checked at the authoring or mount level |
+new: | service | condition entries (the path-addressed sparse overlay that sets a build's state), trim `reads`, taps (the three selector lists declaring what linearization seeds and reports), device read bindings (the values passed at `attach!` that make a device framework-legible), log extraction by `series` (§14.3, §14.7, §14.10, §11.2, D-406, D-407) | strict: no traversal past a generic child, checked at the authoring or mount level |
 tag: R
 ruling: R2, R25
 newcites: §14.3 §14.7 §14.10 §11.2 D-406 D-407
 note: device read bindings join the service row with §11.2 and D-406 (R2); the bold row name and the bold cell go plain (R3)
 
-added: (the selector lists linearization seeds and reports)
+added: (the three selector lists declaring what linearization seeds and reports)
+# the spec's own taps gloss (glossary `#g-taps`, frozen spec 11542, 12475), final_verify_1 finding 4.
 
 added: (the values passed at `attach!` that make a device framework-legible)
 
@@ -455,6 +455,9 @@ tag: F
 
 added: Replay is the ordinary loop re-driven from a recorded trace.
 
+added: The trace is the primary record of a session.
+# trace glossed at §13.4's first use, in its own sentence since the sentence before defines replay (final_verify_1 finding 3); glossary "the primary record of a session".
+
 old: That frame top is a grid boundary or boundary zero
 new: That frame top is a grid boundary or boundary zero, and it is always a legal replay halt (§12.7).
 tag: F
@@ -548,8 +551,8 @@ old: A collected carrier riding as `cause` is an exception and falls under that 
 tag: F
 
 old: A bare value thrown deliberately by model code is neither, and the constructor refuses it unframed.
-new: A bare value thrown deliberately by model code is neither, and the constructor refuses it, so it leaves the catch unwrapped.
-note: step 5 (P1-21): "unframed" is D-225's word for leaving the catch with no `StepError`; *frame* keeps R7's senses
+new: A bare value thrown deliberately by model code is neither, and the constructor refuses it, so it propagates from the catch unwrapped.
+note: step 5 (P1-21): "unframed" is D-225's word for leaving the catch with no `StepError`; *frame* keeps R7's senses; "leaves the catch unwrapped" becomes "propagates from the catch unwrapped" (final_verify_1 finding 5)
 tag: F
 
 old: The framework does not handle that throw (D-225).
@@ -671,9 +674,8 @@ tag: F
 added: #### Reproduction
 
 old: Staged inputs are drained and recorded to the trace at the frame top, before the boundary executes.
-new: Staged inputs are drained and recorded to the trace (the primary record of a session) at the frame top, before the boundary executes.
 tag: F
-note: trace glossed; glossary "the primary record of a session"
+note: trace's link and gloss moved to §13.4's first use, at the replay pointer (final_verify_1 finding 3)
 
 old: So the failing boundary's inputs are already in the trace when it fails.
 tag: F

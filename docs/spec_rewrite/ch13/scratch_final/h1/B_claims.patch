@@ -1,0 +1,302 @@
+diff --git a/docs/spec_rewrite/ch13/units/B/claims.md b/docs/spec_rewrite/ch13/units/B/claims.md
+index 7dd234f..5dd8b04 100644
+--- a/docs/spec_rewrite/ch13/units/B/claims.md
++++ b/docs/spec_rewrite/ch13/units/B/claims.md
+@@ -29,7 +29,8 @@ tag: F
+ 
+ old: For an assembly they return the entries of `input_wires(c)` / `output_wires(c)`.
+ tag: F
+-note: "entries" kept, per survey part E's carried item (Appendix D's fix)
++new: For an assembly they return the face names of `input_wires(c)` / `output_wires(c)`.
++note: step 5 (P1-14): bare "entries" becomes "the face names"; D-061's Position, "`input_faces`/`output_faces` return declaration-ordered face-name strings"
+ 
+ old: Declaration order is preserved, which gives deterministic printouts and stable diagnostics.
+ tag: F
+@@ -77,8 +78,11 @@ tag: F
+ note: the bold word "past" becomes italic, as "to" is in the next sentence
+ 
+ old: Resolving to a generic child is port-level access and legal.
++new: Resolving to a generic child is legal, as access at the level of a port (one declared input or output).
+ tag: F
+ 
++added: (one declared input or output)
++
+ old: An unknown segment errors with the sibling field list in hand.
+ tag: F
+ 
+@@ -124,19 +128,25 @@ tag: F
+ note: the bold row name goes plain (R3)
+ 
+ old: | service | condition entries (the path-addressed sparse overlay that sets a build's state), trim `reads`, taps (§14.3, §14.7, §14.10) | strict: no traversal past a generic child, checked at the authoring or mount level |
+-new: | service | condition entries (the path-addressed sparse overlay that sets a build's state), trim `reads`, taps, device read bindings, log extraction by `series` (§14.3, §14.7, §14.10, §11.2, D-406, D-407) | strict: no traversal past a generic child, checked at the authoring or mount level |
++new: | service | condition entries (the path-addressed sparse overlay that sets a build's state), trim `reads`, taps (the selector lists linearization seeds and reports), device read bindings (the values passed at `attach!` that make a device framework-legible), log extraction by `series` (§14.3, §14.7, §14.10, §11.2, D-406, D-407) | strict: no traversal past a generic child, checked at the authoring or mount level |
+ tag: R
+ ruling: R2, R25
+ newcites: §14.3 §14.7 §14.10 §11.2 D-406 D-407
+ note: device read bindings join the service row with §11.2 and D-406 (R2); the bold row name and the bold cell go plain (R3)
+ 
++added: (the selector lists linearization seeds and reports)
++
++added: (the values passed at `attach!` that make a device framework-legible)
++
+ old: | inspection | device read bindings, GUI panels, snapshot and log inspection (§11.2, §11.7) | the instance walk |
+-new: | inspection | snapshot and log inspection (D-310) | the instance walk |
++new: | inspection | snapshot (the immutable per-boundary publication) and log inspection (D-310) | the instance walk |
+ tag: R
+ ruling: R2
+ newcites: D-310
+ note: device read bindings move to the service row; "GUI panels" goes, D-310 cited once in the section (Position: "The built-in Julia GUI is parked"); §11.7, cited for the GUI panels, goes with them (R16)
+ 
++added: (the immutable per-boundary publication)
++
+ old: Each client's treatment has its own warrant.
+ tag: F
+ 
+@@ -162,8 +172,11 @@ old: Inspection walks instances instead.
+ tag: F
+ 
+ old: A generic seam is not an error for a client that never claimed substitutability.
++new: A generic seam (a narrow, named interface kept deliberately thin) is not an error for a client that never claimed substitutability.
+ tag: F
+ 
++added: (a narrow, named interface kept deliberately thin)
++
+ old: "What is in this build" is inspection's defining question.
+ tag: F
+ 
+@@ -224,7 +237,7 @@ old: For wiring there is no deep route left to restore, because the face chain i
+ tag: F
+ 
+ old: Which of the three rules a client resolves under is internal framework fact, never user-facing API.
+-new: Which of the three rules a client resolves under is internal framework fact, never user-facing API (D-130).
++new: Which of the three treatments a client resolves under is internal framework fact, never user-facing API (D-130).
+ tag: C
+ newcites: D-130
+ note: D-130 Position: "which of the three a client falls under is internal, never user-facing API"
+@@ -268,14 +281,20 @@ note: F2, cut as false; the did-you-mean stays in R2's moved sentence
+ old: ### 13.4 Runtime failures: one catch site, an execution cursor
+ tag: F
+ 
+-added: A runtime failure of model code is a throw inside a frame (one iteration of the loop) or inside boundary zero,
++added: A runtime failure of model code is a throw inside a frame (one iteration of the loop) or inside boundary zero.
+ 
+ old: (the initialization boundary: the ordinary macro-sequence with an empty integrate)
+-new: the initialization boundary, which runs the ordinary macro-sequence with an empty integrate.
++new: Boundary zero is the initialization boundary (a published consistency point), and it runs the ordinary boundary macro-sequence with an empty integrate.
+ tag: F
+ note: boundary zero's link and gloss move to its new first use, the context paragraph; the colon becomes a relative clause; an appositive, since the sentence already holds the frame gloss
+ 
+-added: The framework catches it at one site, records where execution stood, and names how to reproduce it.
++added: (a published consistency point)
++
++added: The framework catches the failure at one site, records where execution stood, and names how to reproduce it.
++
++added: The code inside the `Model`'s `try` is the guarded sequence.
++
++added: Ticks are the instants at which discrete leaves run their stages and update.
+ 
+ added: This section covers, in order, where a failure is caught, the runtime carrier, the interrupt, the disposition, reproduction, boundary zero, the nonfinite check and device-side failures.
+ 
+@@ -315,15 +334,19 @@ ruling: R6
+ newcites: D-317
+ 
+ old: It never wraps per stage or per component (D-059).
+-new: `frame!` never wraps per stage or per component (D-059).
++new: `frame!` never wraps per stage or per component (the unit of modeling, a leaf or an assembly of components) (D-059).
+ tag: R
+ ruling: R5
+ note: D-059 bold, Position "Runtime failures are caught at one site, around the boundary macro-sequence"; "It" spelled `frame!` (R7), since the chain sentence now sits between
+ 
++added: (the unit of modeling, a leaf or an assembly of components)
++
+ old: The loop wraps each frame in a `try` of its own, which decides the failure's disposition (below) and builds no carrier (D-317).
+ tag: F
+ 
+ old: Framing information does not need to be caught into existence.
++new: Where execution stood does not need to be caught into existence.
++note: step 5 (P1-21): "framing" keeps its §13.2 sense (R7)
+ tag: F
+ 
+ old: The executor (the compiled form of the stage execution order) maintains an execution cursor, a plain mutable field of the executor recording where execution stands in the compiled order.
+@@ -350,10 +373,12 @@ newcites: D-261
+ note: F13; `Outputs` and its gloss kept in their own sentence; D-253 replaced by D-261 in the sentence before
+ 
+ old: The second is which function is running: `y_state`, `y_direct`, `x_deriv`, `s_update`, a guard, a handler, or `x_projection`.
+-new: The second is which function is running, one of `y_state`, `y_direct`, `x_deriv`, `s_update`, a guard, a handler, or `x_projection`.
++new: The second is which function is running, one of `y_state`, `y_direct`, `x_deriv`, `s_update`, a guard (the declared function defining an event's predicate), a handler, or `x_projection`.
+ tag: F
+ note: the colon becomes "one of"
+ 
++added: (the declared function defining an event's predicate)
++
+ old: The third is the boundary phase: integration stage k, event round r, a localization evaluation at trial time, or tick.
+ new: The third is the boundary phase, one of the frame-top drain, integration stage k, the arrival sweep (one pass through the execution order), the θ = 0 validation, a localization trial, projection, event round r, or the ticks.
+ tag: R
+@@ -369,12 +394,14 @@ old: It covers every user-code surface uniformly, including the forgettable ones
+ tag: F
+ 
+ old: Those are the RHS evaluations at interior RK stage points, the guard evaluations at ITP/Brent trial points, and the environment closures.
+-new: Those are the RHS evaluations at interior RK stage points and the guard evaluations at the trial points of ITP or Brent root-finding (§10.4).
++new: Those are the evaluations of the RHS (the continuous derivative function) at interior RK stage points and the guard evaluations at the trial points of ITP or Brent root-finding (§10.4).
+ tag: R
+ ruling: R6
+ newcites: §10.4
+ note: F15 cuts "the environment closures"; R10 introduces ITP/Brent
+ 
++added: (the continuous derivative function)
++
+ old: `# the cursor: one mutable field of the executor, overwritten per dispatch mutable struct ExecutionCursor … # what it records, per the prose above: component path # (execution-order index), which function, and the boundary phase end`
+ new: `# the cursor: one mutable field of the executor, overwritten per dispatch mutable struct ExecutionCursor … # what it records, per the prose above: component path # (component-list index), which function, and the boundary phase end`
+ tag: R
+@@ -402,7 +429,7 @@ ruling: R6
+ note: F12; the field list names "the time", and its sentence follows
+ 
+ old: the frame-entry boundary index, the host of the catch, and the original exception as `cause`.
+-new: They are the cursor frame (the copy of the cursor a `StepError` carries), the time, the frame-entry boundary index, the host of the catch, and the original exception as `cause`.
++new: They are the cursor frame (the cursor's copy at the catch), the time, the frame-entry boundary index, the host of the catch, and the original exception as `cause`.
+ tag: R
+ ruling: R7
+ note: "the cursor's frame" becomes "the cursor frame", glossed at first use (R7); the count stays five; the bold term goes plain
+@@ -415,8 +442,11 @@ newcites: D-128
+ note: D-128 bold, its second Position sentence "`StepError`'s replay pointer is respelled the frame-entry boundary index"
+ 
+ old: It names the frame-top boundary at which the failing frame began.
++new: The pointer names the frame-top boundary at which the failing frame began.
+ tag: F
+ 
++added: Replay is the ordinary loop re-driven from a recorded trace.
++
+ old: That frame top is a grid boundary or boundary zero
+ new: That frame top is a grid boundary or boundary zero, and it is always a legal replay halt (§12.7).
+ tag: F
+@@ -510,12 +540,14 @@ old: A collected carrier riding as `cause` is an exception and falls under that
+ tag: F
+ 
+ old: A bare value thrown deliberately by model code is neither, and the constructor refuses it unframed.
++new: A bare value thrown deliberately by model code is neither, and the constructor refuses it, so it leaves the catch unwrapped.
++note: step 5 (P1-21): "unframed" is D-225's word for leaving the catch with no `StepError`; *frame* keeps R7's senses
+ tag: F
+ 
+ old: The framework does not handle that throw (D-225).
+ tag: F
+ 
+-added: The cursor frame and the pointer are then lost, and the lifecycle does not move as it does on the framed path.
++added: The cursor frame and the pointer are then lost, and the lifecycle does not move as it does when the catch builds a `StepError`.
+ 
+ old: `# the runtime carrier: its parameter the cause's type — a diagnostic's kind # for a species, the exception model code threw otherwise struct StepError{C <: Union{Diagnostic, Exception}} <: Exception cursor # the cursor's frame at the catch t::Float64 # the boundary time boundary::Int # the frame-entry boundary index: the replay pointer host::Symbol # :boundary_zero under init!, :loop inside a frame cause::C end`
+ new: `# the runtime carrier: its parameter the cause's type — a diagnostic's kind # for a species, the exception model code threw otherwise struct StepError{C <: Union{Diagnostic, Exception}} <: Exception cursor # the cursor's frame at the catch t::Float64 # the clock at the failure boundary::Int # the frame-entry boundary index: the replay pointer host::Symbol # :boundary_zero under init!, :loop inside a frame cause::C end`
+@@ -550,6 +582,7 @@ old: The run takes the ordinary graceful tail and ends `stopped`, never `errored
+ tag: F
+ 
+ old: With the boundary masking in force (§12.4) a single interrupt never reaches the branch.
++new: With the boundary masking in force (§12.4) a single interrupt never reaches the interrupt branch.
+ tag: F
+ note: the catch-site clause M7 keeps; inbound §12.4 "never sees a single interrupt" relies on it
+ 
+@@ -603,10 +636,13 @@ ruling: R6
+ note: F18 cuts the clause; both claims false (D-310, D-317 bullet 7)
+ 
+ old: `run!` and `replay!` discriminate the two by the roster (D-268).
++new: `run!` and `replay!` discriminate the two by the roster (the list of attached device entries) (D-268).
+ tag: R
+ ruling: R5
+ note: D-268 bullet 5 bold, "`run!` discriminates §13.4's two dispositions by the roster"; `replay!` by its 2026-09-26 annotation
+ 
++added: (the list of attached device entries)
++
+ old: With no device rostered the run is unattended and rethrows.
+ new: With no device (any attached participant in the periphery) rostered the run is unattended and rethrows.
+ tag: F
+@@ -677,7 +713,7 @@ old: A throw inside boundary zero arrives as a `StepError` from the one construc
+ tag: F
+ 
+ old: Its frame comes from the cursor, its time is `t₀`, and the species rule applies.
+-new: Its cursor frame comes from the cursor, its time is `t₀`, and the species rule applies.
++new: Its cursor frame comes from the cursor, its time is `t₀`, its pointer is `0`, and the species rule applies.
+ tag: R
+ ruling: R7
+ 
+@@ -692,6 +728,8 @@ old: The host therefore lets it propagate raw, unwrapped.
+ tag: F
+ 
+ old: The pointer is `0`.
++new: its pointer is `0`
++note: step 5 (P1-26): moved into the sentence on the boundary-zero `StepError`'s fields, which it describes
+ tag: F
+ 
+ old: A throw inside boundary zero leaves no trace and no checkpoint (the `Model`'s state at a frame top as one value).
+@@ -707,10 +745,13 @@ old: `init!` takes the trace header only after boundary zero publishes (§11.5).
+ tag: F
+ 
+ old: The reproduction of a boundary-zero failure is `init!` under the same condition (D-274).
++new: The reproduction of a boundary-zero failure is `init!` under the same condition (the path-addressed sparse overlay that sets a build's state) (D-274).
+ tag: R
+ ruling: R5
+ note: D-274 bullet 7 bold, "Its reproduction is `init!` under the same condition"; no other chapter of the frozen spec bolds that bullet (§11.5 and §12.7 bold bullet 4)
+ 
++added: (the path-addressed sparse overlay that sets a build's state)
++
+ old: Boundary zero is frame one's entry boundary too, so a frame-one failure carries the same pointer.
+ tag: F
+ 
+@@ -742,8 +783,11 @@ tag: F
+ note: store linked and glossed at its first use; glossary "the framework-owned home of one of a component's state letters"
+ 
+ old: No termination record is written.
++new: No termination record (the stopped-sim value naming how the run ended) is written.
+ tag: F
+ 
++added: (the stopped-sim value naming how the run ended)
++
+ old: The stores may hold the half-transitioned `t₀` state until the next `init!` resets them.
+ new: The stores may hold the half-transitioned `t₀` state until the next `init!`, `restore!` or `replay!` resets them.
+ tag: R
+@@ -774,26 +818,30 @@ ruling: R19
+ note: condition is §14's word
+ 
+ old: A loop-level `isfinite` sweep over `x` at boundaries fails fast as a `StepError` species, naming the offending component's state block and the boundary.
+-new: An `isfinite` pass over the flat state buffer, run by the model after every return from the integrator backend, fails fast as `NonfiniteState`, a `StepError` species naming the component, the state leaf and the frame-entry boundary.
++new: An `isfinite` pass over the flat state buffer (the contiguous vector backing all continuous state), run by the model after every return from the integrator backend, fails fast as `NonfiniteState`, a `StepError` species naming the component, the state leaf and the frame-entry boundary.
+ tag: R
+ ruling: R6
+ note: F20 wording, F32's "state leaf", `NonfiniteState` named here; the wrong sweep link goes; buffer linked at this new first use
+ 
++added: (the contiguous vector backing all continuous state)
++
+ old: It catches diverging models generally, not just post-terminal ones.
+ tag: F
+ 
+ old: Placement is the whole value.
+ tag: F
+-note: the italic label becomes a plain topic sentence
++new: and that placement is the whole of its value.
++note: the italic label became a plain topic sentence; step 5 (P1-28) joins it to the bold, which now heads the paragraph
+ 
+ old: The sweep is the boundary's first act.
+-new: The pass is the boundary's first act (D-157).
++new: The pass is the boundary's first act (D-157),
+ tag: R
+ ruling: R5
+ newcites: D-157
+ note: D-157's first ruling bold, "The nonfinite-`x` check is the boundary's first act"; "sweep" becomes "pass" (F20)
+ 
+ old: It runs immediately after integrate returns, before `x_projection` and before the boundary sweep.
++new: The pass runs immediately after integrate returns, before `x_projection` and before the boundary sweep.
+ tag: F
+ 
+ old: Run there, `NonfiniteState` names the component whose own block diverged.
+@@ -806,11 +854,13 @@ old: It reaches an innocent downstream component through the ordinary signal pat
+ tag: F
+ 
+ old: That is the error-locality inversion (§8.4), designed out of the build tier and quietly reintroduced at runtime.
+-new: That is the error-locality inversion (§8.4), designed out of the build and quietly reintroduced at runtime.
++new: That is the inversion of error locality (the property that a mistake fails at the site of the mistake) (§8.4), designed out of the build and quietly reintroduced at runtime.
+ tag: R
+ ruling: R6
+ note: F21; error locality linked at its first use
+ 
++added: (the property that a mistake fails at the site of the mistake)
++
+ old: One `isfinite` pass over a flat buffer is cheap enough that placement, not cost, decides.
+ tag: F
+ 

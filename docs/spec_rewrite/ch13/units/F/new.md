@@ -99,8 +99,8 @@ the value's lifetime. Each of the three calls takes `Inf` and `()` as the
 defaults ([D-255][d-255]). The defaults belong to the calls that take the policy. With no
 constructor defaults the [trace header](#g-trace-header) (the trace's fixed preamble) has no policy
 to record ([§11.5][s11-5]). The [termination record](#g-termination-record) (the stopped-sim value naming how the
-run ended) carries the policy that actually ended the run. The ignore list sits
-beside `t_end` at the same declaration site.
+run ended) carries the policy that actually ended the run. The ignore list,
+`ignore_stop_requests`, sits beside `t_end` at the same declaration site.
 
 **Every request is honoured unless the advance ignores it** ([D-316][d-316]).
 `ignore_stop_requests = :all` ignores every requester. An iterable of
@@ -316,7 +316,7 @@ They are retained on the errored simulation for post-mortem inspection. An
 errored simulation is terminal, not resumable, and the reproduction tool is
 [trace](#g-trace) [replay](#g-replay) (the ordinary loop re-driven from a recorded trace), not
 resurrection ([§12.6][s12-6], [D-059][d-059], [D-387][d-387]). A trace is a session's record of its drained
-inputs. The stopped-sim services enforce that non-resumability by refusing an
+inputs. The stopped-sim services enforce the non-resumability by refusing an
 errored simulation outright (`ServiceLifecycle`, [§14][s14]). Operations on the [roster](#g-roster)
 (the list of attached device entries) refuse it with them ([§11.3][s11-3], [D-232][d-232]).
 Inspection is reading, but `attach!` configures a run that cannot follow. The

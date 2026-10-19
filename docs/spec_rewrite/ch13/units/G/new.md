@@ -5,9 +5,9 @@ structural customer of computed interface connections, which are therefore
 prominent in this section. [D-062][d-062] makes three tooling commitments for them,
 namely the passthrough helpers' predicate, the routes `show(::Structure)` prints
 for each root [face](#g-face) (the name a port wears on its component's boundary), and a
-standard library of [components](#g-component) (the units of modeling, each a leaf or an
-assembly of components). The section covers the predicate and the face routes
-first, then the standard component library and the component test rig.
+standard library of [components](#g-component). Components are the units of modeling, each a
+leaf or an assembly of components. The section covers the predicate and the face
+routes first, then the standard component library and the component test rig.
 
 The passthrough helpers take a predicate. `select` is the third
 selector beside `except` and `only`, on `input_passthrough` and
@@ -51,7 +51,7 @@ Simulink's library is a language, while this is a toolbox.
 
 The starting inventory holds the `Junction`, with `SumJunction{V, N}`, `Or{N}`
 and `And{N}` as its named forms, `UnitDelay{V}`, `Constant{V}`, `Freeze{V}` and
-`StopRequest`. The shipped list, and the Simulink mapping that prunes it, live
+`StopRequest`. The full inventory, and the Simulink mapping that prunes it, live
 in `companions/library_inventory.md`. `UnitDelay` is the spelling the second
 loop-breaking remedy ([§5.5][s5-5]) needs. `Constant{V}` is the source block ([D-143][d-143]).
 `Freeze{V}` is the declared stop-gradient ([D-266][d-266]). `StopRequest` is the library
@@ -203,7 +203,8 @@ like junction arity, not an overridable default ([D-143][d-143]). A configuratio
 an externally settable source uses a root input ([§11.3][s11-3]), which keeps the block
 from drifting into a back-door input default. A handle that references bulk data
 never surfaces as a root input ([D-237][d-237]); a rig holds such a handle through a
-[constant source](#g-constant-source) (a `Constant` holding it) instead ([§14.9][s14-9], [D-364][d-364]).
+[constant source](#g-constant-source) (a `Constant`, publishing the value its instance holds) instead
+([§14.9][s14-9], [D-364][d-364]).
 
 `Freeze{V}` feeds a walking producer into a pinned entry, which the walk clause
 ([§6.1][s6-1]) otherwise refuses ([D-266][d-266]).
@@ -321,11 +322,12 @@ indices, its tracer tags.
   reports, and $u^2$ at $u = 0$ still reports. It is exact, in one evaluation.
   It requires the traced stage-2 code to be free of branches and lookups on
   *input-tainted* values.
-- The *sampled* set-tracer (the log's *local* mode) at sampled states is the
-  fallback whenever the global tracer hits an undecidable branch, such as
-  piecewise friction, stall blending or any gridded lookup at an input-tainted
-  coordinate. It reports the dependence pattern of the taken paths, sampled
-  across randomized states. Its only misses are untaken branches ([D-012][d-012], [D-349][d-349]).
+- The *sampled* set-tracer (the primal-carrying mode the log calls *local*) at
+  sampled states is the fallback whenever the global tracer hits an undecidable
+  branch, such as piecewise friction, stall blending or any gridded lookup at an
+  input-tainted coordinate. It reports the dependence pattern of the taken
+  paths, sampled across randomized states. Its only misses are untaken branches
+  ([D-012][d-012], [D-349][d-349]).
 
 #### What tracing touches
 
@@ -333,9 +335,9 @@ indices, its tracer tags.
 never interferes. Stage-2 functions also receive state views, but neither those
 nor the stage-1 hand-down are ever seeded. Stage-1 functions are never traced,
 since there is nothing to seed. Derivatives, [guards](#g-guard) (the declared functions
-defining each event's predicate), handlers and [projections](#g-projection) (the optional
-per-component hook `x ← x_projection(x)`) are outside tracing's jurisdiction
-entirely.
+defining each event's predicate), handlers and [projections](#g-projection) are outside tracing's
+jurisdiction entirely. A projection is the optional per-component hook
+`x ← x_projection(x)`.
 
 A known tracer blind spot is documented. Value-severing operations pass
 dependence through a bare `Int` index, as a nearest-neighbor lookup does.

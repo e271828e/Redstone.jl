@@ -87,14 +87,14 @@ that value decides what an acceptance test can assert and what a user reads.
 
 #### The diagnostic and its carrier
 
-**A diagnostic is a plain value from a small closed set of [kinds](#g-kind)** ([D-058][d-058]). [Appendix
-C][sC] enumerates that set normatively. For each kind it records the kind name, the
-[payload](#g-payload) fields (the structured data a diagnostic carries beside its kind), the
-owning section, the severity, where the kind is raised and under which policy
-([D-214][d-214]). That index is the reference the [§8.4][s8-4] walkthroughs, run as acceptance
-tests, and the error-message work are written against. Tests match on kind plus
-payload fields, never on message text, so messages are pure presentation
-([D-058][d-058]).
+**A diagnostic is a plain value from a small closed set of [kinds](#g-kind)** ([D-058][d-058]).
+[Appendix C][sC] enumerates that set normatively. For each kind it records the kind
+name, the [payload](#g-payload) fields (the structured data a diagnostic carries beside its
+kind), the owning section, the severity, where the kind is raised and under
+which policy ([D-214][d-214]). That index is the reference the [§8.4][s8-4] walkthroughs, run as
+acceptance tests, and the error-message work are written against. Tests match on
+kind plus payload fields, never on message text, so messages are pure
+presentation ([D-058][d-058]).
 
 Each kind carries its own structured payload. The payload holds endpoint paths,
 [face](#g-face) names, expected and observed types, and the *list-in-hand* a [did-you-mean](#g-did-you-mean)
@@ -118,10 +118,10 @@ exception diagnostics travel in when thrown) holding one diagnostic. **The
 carrier's type parameter spells the policy** ([D-222][d-222]). It is the diagnostic's kind
 for a fail-fast throw and `Vector{Diagnostic}` for a collected one. A test
 therefore asserts policy and kind at once with
-`@test_throws DiagnosticError{Kind}`. The runtime carrier `StepError{C}` takes a
-parameter of its own, the type of its `cause` ([§13.4][s13-4], [D-225][d-225]). `showerror` renders a
-collection compiler-style, grouped by kind and sorted by path. It renders a
-single diagnostic as its own line.
+`@test_throws DiagnosticError{Kind}`. `StepError{C}` takes a parameter of its own,
+the type of its `cause` ([§13.4][s13-4], [D-225][d-225]). `showerror` renders a collection
+compiler-style, grouped by kind and sorted by path. It renders a single
+diagnostic as its own line.
 
 ```julia
 # a diagnostic value: its kind is its identity, its payload is plain data

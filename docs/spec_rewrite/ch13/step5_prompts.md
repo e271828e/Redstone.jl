@@ -157,7 +157,7 @@ group and the five items that most need attention.
 
 You are a cold verifier for every edit made to units {UNITS} of chapter 13's
 rewrite since the units were verified one by one at commit `5f21eba`. The
-current state is commit `{CURRENT}`. Read `docs/spec_rewrite/recipe.md` step 6b,
+current state is commit `4de4315`. Read `docs/spec_rewrite/recipe.md` step 6b,
 then `checks/brief_common.md`, `brief.md` (R1–R30) and `rulings_batch.md`'s
 Blocking group (each item's "Status:" is the orchestrator's ruling).
 
@@ -165,7 +165,7 @@ The edits came from three logs, applied in this order:
 `chapter_fixes_{H}.md` (the editorial fixer, findings in
 `chapter_pass_{H}.md`), then `ruled_edits.md` (the Blocking rulings, and
 `step5_carry.md`'s items), each with old and new text. Replay the logs on
-`5f21eba`'s files for your units and confirm they give `{CURRENT}`'s files
+`5f21eba`'s files for your units and confirm they give `4de4315`'s files
 byte for byte; diff `git show 69a3191:<file>` against the current file hunk
 by hunk, and account for every hunk by a log entry. An unlogged hunk is a
 finding.

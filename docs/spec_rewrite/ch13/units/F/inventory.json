@@ -535,12 +535,12 @@
   {
    "id": "C-053",
    "old": "The request is the author's and the override the integrator's, and the override sits beside `t_end` at the same declaration site.",
-   "new": "The ignore list sits beside `t_end` at the same declaration site.",
+   "new": "The ignore list, `ignore_stop_requests`, sits beside `t_end` at the same declaration site.",
    "where": "new",
    "cites": [],
    "tag": "R",
    "ruling": "B13",
-   "note": "\"the ignore list\" for \"the override\" (R12). B13 cuts the first clause, which \"The trigger is the author's knowledge and the ignore list the integrator's\" carries, and moves the rest to the end of the policy paragraph of \"The policy per advance\"."
+   "note": "\"the ignore list\" for \"the override\" (R12). B13 cuts the first clause, which \"The trigger is the author's knowledge and the ignore list the integrator's\" carries, and moves the rest to the end of the policy paragraph of \"The policy per advance\". final_verify_2 finding 4: the moved sentence is the term's first use, so it names the keyword."
   },
   {
    "id": "C-054",
@@ -1755,12 +1755,13 @@
   {
    "id": "C-175",
    "old": "The stopped-sim services enforce that non-resumability by refusing an errored simulation outright (`ServiceLifecycle`, §14).",
-   "new": "The stopped-sim services enforce that non-resumability by refusing an errored simulation outright (`ServiceLifecycle`, §14).",
+   "new": "The stopped-sim services enforce the non-resumability by refusing an errored simulation outright (`ServiceLifecycle`, §14).",
    "where": "new",
    "cites": [
     "§14"
    ],
-   "tag": "F"
+   "tag": "F",
+   "note": "final_verify_2 finding 6: \"that\" becomes \"the\", since the trace sentence now sits between it and \"terminal, not resumable\"."
   },
   {
    "id": "C-176",
@@ -1815,6 +1816,7 @@
   "(the field recording where execution stands)",
   "(the initialization boundary at `t₀`)",
   "A run that starts later ends where it started, advancing no frame.",
+  ", `ignore_stop_requests`,",
   "(the unit of modeling, a leaf or an assembly of components)",
   "(Ctrl-C, read as a control-plane stop)",
   "(the per-writer cell for runtime diagnostics and liveness)",

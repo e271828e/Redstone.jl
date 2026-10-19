@@ -1,0 +1,8 @@
+old words no claim covers: none
+new words no claim or addition covers: none
+citations: only in old {'D-261': 1} | only in new {'D-062': 3, 'D-322': 1, 'D-257': 1, '§6.2': 1, 'D-313': 1, 'D-143': 6, 'D-266': 2, 'D-263': 1, 'D-237': 1, '§14.9': 1, 'D-364': 1, 'Appendix C': 1, 'D-120': 3, 'D-005': 1, 'D-140': 1, '§9.1': 1}
+code spans: only in old {'Outputs': 1, 'Events': 1, 'Schedule': 1, '(D, Φ, Δt)': 1, 'Build': 1, 'Deployment': 1, 'show(::Build)': 1, 'STOP_REQUESTED': 1} | only in new {'show(::Structure)': 1, 'Systems': 1, 'companions/pid_anti_windup.md': 1, 'Δt_base': 1, 'Constant': 1, 'Dual': 1, 'AbstractAtRoot': 1, 'Strut': 1, 'x ← x_projection(x)': 1}
+glossary links: only in old {'#g-outputs': 1, '#g-events': 1, '#g-schedule': 1, '#g-deployment': 1, '#g-feedthrough': 1, '#g-face': 1, '#g-tick': 1, '#g-nominal': 1} | only in new {'#g-leaf-walk': 1, '#g-dt_base': 1, '#g-constant-source': 1, '#g-condition': 1, '#g-algebraic-loop': 1}
+bold spans: 21 | headings: ['### 13.7 Tooling consequences: face routes and the component library', '#### The standard component library', '#### The component test rig', '### 13.8 Cycle diagnosis: feedthrough tracing', '#### Detection and naming', "#### The tracer's two modes", '#### What tracing touches', '#### Classification', '#### Caveats and hints the diagnostic carries']
+checks failed: 0
+wrote /Users/miguel/.julia/dev/Redstone.jl/docs/spec_rewrite/ch13/units/G/inventory.json: 213 claims, 27 added

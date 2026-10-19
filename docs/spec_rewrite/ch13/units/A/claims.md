@@ -377,10 +377,10 @@ newcites: D-222
 note: the citation moves two sentences back, to the bold.
 
 old: The runtime carrier follows the same rule.
-new: The runtime carrier `StepError{C}` takes a parameter of its own,
+new: `StepError{C}` takes a parameter of its own,
 tag: R
 ruling: R4
-note: M4. With the species clause gone, "follows the same rule" would read as "the parameter spells the policy"; StepError's parameter is the cause's type (D-225). Verifier's fix.
+note: M4. With the species clause gone, "follows the same rule" would read as "the parameter spells the policy"; StepError's parameter is the cause's type (D-225). Verifier's fix. "The runtime carrier" goes by final_verify_1 finding 7: §13.2 already introduces the runtime carrier `StepError` (§13.4) earlier, and R4 (M4) keeps one pointing clause.
 
 old: `StepError{C}` carries the type of its `cause`,
 new: the type of its `cause` (§13.4, D-225).

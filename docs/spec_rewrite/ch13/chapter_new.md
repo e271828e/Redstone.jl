@@ -87,14 +87,14 @@ that value decides what an acceptance test can assert and what a user reads.
 
 #### The diagnostic and its carrier
 
-**A diagnostic is a plain value from a small closed set of [kinds](#g-kind)** ([D-058][d-058]). [Appendix
-C][sC] enumerates that set normatively. For each kind it records the kind name, the
-[payload](#g-payload) fields (the structured data a diagnostic carries beside its kind), the
-owning section, the severity, where the kind is raised and under which policy
-([D-214][d-214]). That index is the reference the [§8.4][s8-4] walkthroughs, run as acceptance
-tests, and the error-message work are written against. Tests match on kind plus
-payload fields, never on message text, so messages are pure presentation
-([D-058][d-058]).
+**A diagnostic is a plain value from a small closed set of [kinds](#g-kind)** ([D-058][d-058]).
+[Appendix C][sC] enumerates that set normatively. For each kind it records the kind
+name, the [payload](#g-payload) fields (the structured data a diagnostic carries beside its
+kind), the owning section, the severity, where the kind is raised and under
+which policy ([D-214][d-214]). That index is the reference the [§8.4][s8-4] walkthroughs, run as
+acceptance tests, and the error-message work are written against. Tests match on
+kind plus payload fields, never on message text, so messages are pure
+presentation ([D-058][d-058]).
 
 Each kind carries its own structured payload. The payload holds endpoint paths,
 [face](#g-face) names, expected and observed types, and the *list-in-hand* a [did-you-mean](#g-did-you-mean)
@@ -118,10 +118,10 @@ exception diagnostics travel in when thrown) holding one diagnostic. **The
 carrier's type parameter spells the policy** ([D-222][d-222]). It is the diagnostic's kind
 for a fail-fast throw and `Vector{Diagnostic}` for a collected one. A test
 therefore asserts policy and kind at once with
-`@test_throws DiagnosticError{Kind}`. The runtime carrier `StepError{C}` takes a
-parameter of its own, the type of its `cause` ([§13.4][s13-4], [D-225][d-225]). `showerror` renders a
-collection compiler-style, grouped by kind and sorted by path. It renders a
-single diagnostic as its own line.
+`@test_throws DiagnosticError{Kind}`. `StepError{C}` takes a parameter of its own,
+the type of its `cause` ([§13.4][s13-4], [D-225][d-225]). `showerror` renders a collection
+compiler-style, grouped by kind and sorted by path. It renders a single
+diagnostic as its own line.
 
 ```julia
 # a diagnostic value: its kind is its identity, its payload is plain data
@@ -285,13 +285,12 @@ enforces, which client each duty binds and why, and the standing of
   child, a container element's key segment included.
 - `input_faces(c)` / `output_faces(c) → Vector{String}` return the stringified keys
   of a leaf's `u_types` / `y_types` (the key set is `T`-independent). For an [assembly](#g-assembly)
-  they return the face names of `input_wires(c)` / `output_wires(c)`. Declaration
-  order is preserved, which gives deterministic printouts and stable
-  diagnostics.
+  they return the [face](#g-face) names (the names ports wear on their component's
+  boundary) of `input_wires(c)` / `output_wires(c)`. Declaration order is preserved,
+  which gives deterministic printouts and stable diagnostics.
 - `resolve_terminal(assembly, path) → (component, name)` splits off a terminal
   path's final segment and resolves the prefix through `resolve`. The split is
-  unambiguous because [face](#g-face) names (the names ports wear on their
-  component's boundary) may contain dots but never slashes ([§8.6][s8-6]).
+  unambiguous because face names may contain dots but never slashes ([§8.6][s8-6]).
 
 Resolution enforces two duties, and they belong to different clients. The first
 is the one-level rule ([§6.1][s6-1], [D-207][d-207]). A connection endpoint resolves to an
@@ -299,13 +298,13 @@ immediate child and one of its faces. A wiring path reaching further is a build
 error, `PathResolution`, whatever the declared field types along it. The second is
 the [generic-holding](#g-generic-holding) rule, which governs the deep paths a service or a reader is
 given. It is enforced by the service walk, which follows *declared field types*
-alongside instances. Every service and the read resolver run it over an authored
-path. A segment that traverses *past* a generically-held field (one whose declared
-type is non-concrete) is a diagnostic, even though the concrete instance in hand
-would resolve it. Resolving *to* a generic child is legal, as access at the level
-of a [port](#g-port) (one declared input or output). An unknown segment errors with the
-sibling field list in hand. Paths are validated before anything runs on them,
-and renames break loudly ([D-061][d-061]).
+alongside instances. Every service and the read resolver run the walk over an
+authored path. A segment that traverses *past* a generically-held field (one whose
+declared type is non-concrete) is a diagnostic, even though the concrete
+instance in hand would resolve it. Resolving *to* a generic child is legal, as
+access at the level of a [port](#g-port) (one declared input or output). An unknown segment
+errors with the sibling field list in hand. Paths are validated before anything
+runs on them, and renames break loudly ([D-061][d-061]).
 
 **Which rule applies depends on who is resolving** ([D-130][d-130]). [D-083][d-083] separates the
 reads a build's correctness rests on from the reads that only observe it. The
@@ -315,7 +314,7 @@ gets the rule its promises require.
 | client | who resolves | what resolution enforces |
 |---|---|---|
 | wiring | connection declarations, in the structure step | the one-level rule: an immediate child and one of its faces |
-| service | [condition](#g-condition) entries (the path-addressed sparse overlay that sets a build's state), trim `reads`, [taps](#g-taps) (the selector lists linearization seeds and reports), [device](#g-device) read [bindings](#g-binding) (the values passed at `attach!` that make a device framework-legible), log extraction by `series` ([§14.3][s14-3], [§14.7][s14-7], [§14.10][s14-10], [§11.2][s11-2], [D-406][d-406], [D-407][d-407]) | strict: no traversal past a generic child, checked at the authoring or mount level |
+| service | [condition](#g-condition) entries (the path-addressed sparse overlay that sets a build's state), trim `reads`, [taps](#g-taps) (the three selector lists declaring what linearization seeds and reports), [device](#g-device) read [bindings](#g-binding) (the values passed at `attach!` that make a device framework-legible), log extraction by `series` ([§14.3][s14-3], [§14.7][s14-7], [§14.10][s14-10], [§11.2][s11-2], [D-406][d-406], [D-407][d-407]) | strict: no traversal past a generic child, checked at the authoring or mount level |
 | inspection | [snapshot](#g-snapshot) (the immutable per-boundary publication) and log inspection | the instance walk |
 
 Each client's treatment has its own warrant. Wiring is what the law ([§6.1][s6-1]) is
@@ -417,13 +416,14 @@ frame (the cursor's copy at the catch), the time, the frame-entry boundary
 index, the host of the catch, and the original exception as `cause`. The time is
 the clock at the failure, a boundary time in a boundary phase, the stage or
 trial time inside integration. **The frame-entry boundary index is the [replay](#g-replay)
-pointer** ([D-128][d-128]). Replay is the ordinary loop re-driven from a recorded trace.
-The pointer names the frame-top boundary at which the failing frame began. That
-frame top is a grid boundary or boundary zero, and it is always a legal replay
-halt ([§12.7][s12-7]). The host names the catch that took the throw. It is `:loop` for a
-throw inside a frame, and `:boundary_zero` for a throw inside the boundary zero
-that `init!` runs. A `StepError` renders under the doctrine of [§13.2][s13-2]. The cursor
-frame and the reproduction come first, the cause second, and names are strings.
+pointer** ([D-128][d-128]). Replay is the ordinary loop re-driven from a recorded [trace](#g-trace).
+The trace is the primary record of a session. The pointer names the frame-top
+boundary at which the failing frame began. That frame top is a grid boundary or
+boundary zero, and it is always a legal replay halt ([§12.7][s12-7]). The host names the
+catch that took the throw. It is `:loop` for a throw inside a frame, and
+`:boundary_zero` for a throw inside the boundary zero that `init!` runs. A `StepError`
+renders under the doctrine of [§13.2][s13-2]. The cursor frame and the reproduction come
+first, the cause second, and names are strings.
 
 Conformance failure ([§9.5][s9-5]) needs no separate path. At the table-write
 point it throws as every fail-fast site does, a `DiagnosticError` holding the
@@ -446,10 +446,10 @@ of its `cause`, bounded to a diagnostic or an exception. A species is therefore
 `@test_throws StepError{ConformanceFailure}`, the runtime spelling of the build
 carrier's idiom ([§13.2][s13-2]). A collected carrier riding as `cause` is an exception and
 falls under that arm. A bare value thrown deliberately by model code is neither,
-and the constructor refuses it, so it leaves the catch unwrapped. The framework
-does not handle that throw ([D-225][d-225]). The cursor frame and the pointer are then
-lost, and the lifecycle does not move as it does when the catch builds a
-`StepError`.
+and the constructor refuses it, so it propagates from the catch unwrapped. The
+framework does not handle that throw ([D-225][d-225]). The cursor frame and the pointer
+are then lost, and the lifecycle does not move as it does when the catch builds
+a `StepError`.
 
 ```julia
 # the runtime carrier: its parameter the cause's type — a diagnostic's kind
@@ -492,16 +492,14 @@ through the logging backend and returns, the lifecycle reading `errored` and
 
 #### Reproduction
 
-Reproducibility holds by construction. Staged inputs are drained and recorded
-to the [trace](#g-trace) (the primary record of a session) at the frame top,
-*before* the boundary executes. So the failing boundary's inputs are already
-in the trace when it fails. The error names the frame-entry boundary `k` to
-replay to. `replay!(sim2, trc; to_boundary = k)` halts exactly at that frame
-top ([D-128][d-128]). It halts in `:replay`, the
-[input mode](#g-input-mode) that keeps the recording attached, so the failing
-frame's record is still ahead of the simulation ([§12.7][s12-7],
-[D-218][d-218]). `step!` then applies that record and re-executes the failing
-frame under instrumentation, [localized](#g-localized) boundaries included.
+Reproducibility holds by construction. Staged inputs are drained and recorded to
+the trace at the frame top, *before* the boundary executes. So the failing
+boundary's inputs are already in the trace when it fails. The error names the
+frame-entry boundary `k` to replay to. `replay!(sim2, trc; to_boundary = k)` halts
+exactly at that frame top ([D-128][d-128]). It halts in `:replay`, the [input mode](#g-input-mode) that
+keeps the recording attached, so the failing frame's record is still ahead of
+the simulation ([§12.7][s12-7], [D-218][d-218]). `step!` then applies that record and re-executes
+the failing frame under instrumentation, [localized](#g-localized) boundaries included.
 
 ```julia
 replay!(sim2, trc; to_boundary = k)   # halt at the frame top; still :replay
@@ -691,8 +689,8 @@ the value's lifetime. Each of the three calls takes `Inf` and `()` as the
 defaults ([D-255][d-255]). The defaults belong to the calls that take the policy. With no
 constructor defaults the [trace header](#g-trace-header) (the trace's fixed preamble) has no policy
 to record ([§11.5][s11-5]). The [termination record](#g-termination-record) (the stopped-sim value naming how the
-run ended) carries the policy that actually ended the run. The ignore list sits
-beside `t_end` at the same declaration site.
+run ended) carries the policy that actually ended the run. The ignore list,
+`ignore_stop_requests`, sits beside `t_end` at the same declaration site.
 
 **Every request is honoured unless the advance ignores it** ([D-316][d-316]).
 `ignore_stop_requests = :all` ignores every requester. An iterable of
@@ -908,13 +906,12 @@ They are retained on the errored simulation for post-mortem inspection. An
 errored simulation is terminal, not resumable, and the reproduction tool is
 [trace](#g-trace) [replay](#g-replay) (the ordinary loop re-driven from a recorded trace), not
 resurrection ([§12.6][s12-6], [D-059][d-059], [D-387][d-387]). A trace is a session's record of its drained
-inputs. The stopped-sim services enforce that non-resumability by refusing an
+inputs. The stopped-sim services enforce the non-resumability by refusing an
 errored simulation outright (`ServiceLifecycle`, [§14][s14]). Operations on the [roster](#g-roster)
 (the list of attached device entries) refuse it with them ([§11.3][s11-3], [D-232][d-232]).
 Inspection is reading, but `attach!` configures a run that cannot follow. The
 published record (snapshot chain, log, trace) ends at the last consistent
 boundary. Nothing downstream of the sim ever sees half a boundary.
-
 ### 13.7 Tooling consequences: face routes and the component library
 
 Generic-holding [contracts](#g-contract) (each a component's declared interface) are a
@@ -922,9 +919,9 @@ structural customer of computed interface connections, which are therefore
 prominent in this section. [D-062][d-062] makes three tooling commitments for them,
 namely the passthrough helpers' predicate, the routes `show(::Structure)` prints
 for each root [face](#g-face) (the name a port wears on its component's boundary), and a
-standard library of [components](#g-component) (the units of modeling, each a leaf or an
-assembly of components). The section covers the predicate and the face routes
-first, then the standard component library and the component test rig.
+standard library of [components](#g-component). Components are the units of modeling, each a
+leaf or an assembly of components. The section covers the predicate and the face
+routes first, then the standard component library and the component test rig.
 
 The passthrough helpers take a predicate. `select` is the third
 selector beside `except` and `only`, on `input_passthrough` and
@@ -968,7 +965,7 @@ Simulink's library is a language, while this is a toolbox.
 
 The starting inventory holds the `Junction`, with `SumJunction{V, N}`, `Or{N}`
 and `And{N}` as its named forms, `UnitDelay{V}`, `Constant{V}`, `Freeze{V}` and
-`StopRequest`. The shipped list, and the Simulink mapping that prunes it, live
+`StopRequest`. The full inventory, and the Simulink mapping that prunes it, live
 in `companions/library_inventory.md`. `UnitDelay` is the spelling the second
 loop-breaking remedy ([§5.5][s5-5]) needs. `Constant{V}` is the source block ([D-143][d-143]).
 `Freeze{V}` is the declared stop-gradient ([D-266][d-266]). `StopRequest` is the library
@@ -1120,7 +1117,8 @@ like junction arity, not an overridable default ([D-143][d-143]). A configuratio
 an externally settable source uses a root input ([§11.3][s11-3]), which keeps the block
 from drifting into a back-door input default. A handle that references bulk data
 never surfaces as a root input ([D-237][d-237]); a rig holds such a handle through a
-[constant source](#g-constant-source) (a `Constant` holding it) instead ([§14.9][s14-9], [D-364][d-364]).
+[constant source](#g-constant-source) (a `Constant`, publishing the value its instance holds) instead
+([§14.9][s14-9], [D-364][d-364]).
 
 `Freeze{V}` feeds a walking producer into a pinned entry, which the walk clause
 ([§6.1][s6-1]) otherwise refuses ([D-266][d-266]).
@@ -1238,11 +1236,12 @@ indices, its tracer tags.
   reports, and $u^2$ at $u = 0$ still reports. It is exact, in one evaluation.
   It requires the traced stage-2 code to be free of branches and lookups on
   *input-tainted* values.
-- The *sampled* set-tracer (the log's *local* mode) at sampled states is the
-  fallback whenever the global tracer hits an undecidable branch, such as
-  piecewise friction, stall blending or any gridded lookup at an input-tainted
-  coordinate. It reports the dependence pattern of the taken paths, sampled
-  across randomized states. Its only misses are untaken branches ([D-012][d-012], [D-349][d-349]).
+- The *sampled* set-tracer (the primal-carrying mode the log calls *local*) at
+  sampled states is the fallback whenever the global tracer hits an undecidable
+  branch, such as piecewise friction, stall blending or any gridded lookup at an
+  input-tainted coordinate. It reports the dependence pattern of the taken
+  paths, sampled across randomized states. Its only misses are untaken branches
+  ([D-012][d-012], [D-349][d-349]).
 
 #### What tracing touches
 
@@ -1250,9 +1249,9 @@ indices, its tracer tags.
 never interferes. Stage-2 functions also receive state views, but neither those
 nor the stage-1 hand-down are ever seeded. Stage-1 functions are never traced,
 since there is nothing to seed. Derivatives, [guards](#g-guard) (the declared functions
-defining each event's predicate), handlers and [projections](#g-projection) (the optional
-per-component hook `x ← x_projection(x)`) are outside tracing's jurisdiction
-entirely.
+defining each event's predicate), handlers and [projections](#g-projection) are outside tracing's
+jurisdiction entirely. A projection is the optional per-component hook
+`x ← x_projection(x)`.
 
 A known tracer blind spot is documented. Value-severing operations pass
 dependence through a bare `Int` index, as a nearest-neighbor lookup does.
