@@ -82,16 +82,16 @@ item changes what the spec says, the spec edit is part of the item.
   a panel description, with the GUI package's half of D-270's convention
   assigned to the client, and a ruling on §11.7's "assembly panels compose
   children by path", a constraint on that half with no entry (stage 4).
-- **The spec's readability rewrite.** Chapters 1 to 13 are done. The
-  other chapters follow `docs/spec_rewrite/recipe.md`, and that directory's
-  README tracks them. Until a chapter's turn comes, it keeps the old markers.
+- **The spec's readability rewrite.** Chapters 1 to 14 are done. The front
+  matter and the appendices follow `docs/spec_rewrite/recipe.md`, and that
+  directory's README tracks them. Until a part's turn comes, it keeps the old
+  markers.
 - **The normative kernel**, after the rewrite lands. Settled on 2026-10-14:
   the spec and the code are redundant where the spec describes mechanism,
   and that description is what costs the bookkeeping on every increment and
   leaves an implementer unsure which sentences are decisions. The code
   already fulfils the spec (this file holds additions, not debt), so once
-  chapter 14 and the appendices are rewritten the spec splits into three
-  homes. The kernel keeps every bold ruling with one line of context,
+  the appendices are rewritten the spec splits into three homes. The kernel keeps every bold ruling with one line of context,
   its D-citation and a pointer to the test that pins it, in Appendix A's
   shape; the cross-cutting chapters on evaluation order and time (§5, §10)
   stay in prose. Description moves beside the code, into docstrings,
@@ -104,7 +104,8 @@ item changes what the spec says, the spec edit is part of the item.
   From chapter 13 the survey tags each descriptive passage with the source
   file that realizes it, which is the migration list; chapters 1 to 12 are
   tagged at extraction. Chapter 13's list is part H of
-  `docs/spec_rewrite/ch13/survey_1.md` and `survey_2.md` at `ae63ca9`. A
+  `docs/spec_rewrite/ch13/survey_1.md` and `survey_2.md` at `ae63ca9`, and
+  chapter 14's the same parts of `ch14/`'s surveys at `133b58d`. A
   ruling about the design's shape rather than runtime behavior has no
   natural test, so its kernel line points at the build-time
   check or diagnostic that enforces it, and where none does, carries its
