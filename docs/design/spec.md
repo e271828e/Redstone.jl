@@ -648,6 +648,14 @@ meanings do not overlap** ([D-345][d-345]). One change may still use both. On
 the continuous [tier](#g-tier), a reset of state commanded through an input
 still lands through an event whose guard reads that input ([§5.3][s5-3], [D-141][d-141]).
 
+A branch in the flow that switches on a continuous quantity, such as an
+integrator that stops accumulating once its output reaches a limit, is a mode
+change with no declared event. It switches inside a step, at no boundary and
+against no prior, so nothing localizes it and nothing records it
+([§2.3][s2-3], [D-345][d-345]). Such a switch is spelled as a mode moved by an
+event, or as a branch on another component's mode-derived output, which
+changes only when that component's events fire.
+
 ### 3.2 Periodic discrete component
 
 A periodic discrete component has these facets.
@@ -1389,8 +1397,8 @@ what mutation would hide. Gain trajectories are observable in log, [trace](#g-tr
 [replay](#g-replay), where a parameter write would be invisible to all three. The trace is
 the session's recorded inputs, and replay re-drives the ordinary loop from that
 trace. The feedthrough graph carries the compensators' dependence on the gains.
-Linearization holds unseeded gain inputs constant with no special casing
-([§14.10][s14-10]). One-shot design-time gains, such as a controller synthesized at init,
+Linearization holds an unseeded gain root input constant and differentiates
+through a scheduled gain, with no special casing ([§14.10][s14-10]). One-shot design-time gains, such as a controller synthesized at init,
 are construction-time parameters or stopped-sim service outputs ([D-089][d-089], [D-342][d-342]).
 They are not a runtime write path.
 
@@ -5762,7 +5770,12 @@ it still converges on the crossing, but the root-finder loses its
 interpolation step and pays bisection's count on that event ([D-290][d-290]).
 The `Bool` form `u < 0` is the same predicate boundary-detected, strict by
 construction. `companions/limited_integrator_variants.md` works the case
-that needed it, and records why the convention itself stays at `σ ≥ 0`.
+that needed it, and records why the convention itself stays at `σ ≥ 0`. The
+latching predicate of such a pair stays ungated on the mode. Gated on the
+free mode, each handler hands the other guard a fresh edge, and the boundary
+chatters until the firing budget breaks the tie, under a `FiringBudget`
+warning, with the mode decided by which event runs out first ([§10.6][s10-6],
+[D-181][d-181]).
 
 #### Trial evaluations
 
@@ -6151,6 +6164,10 @@ build's single evaluation of a user function with real values ([§9.3][s9-3]). I
 a phase-free model every `Φ` is 0, so at boundary zero everything is due and the
 distinction is empty.
 
+A device that is dark until its first tick is a modeling decision. The author
+spells it as a validity flag or a mode, and the framework withholds no
+publication by default ([D-205][d-205]).
+
 #### Simultaneous ticks
 
 Several components can be due at one boundary, and settled machinery already
@@ -6368,7 +6385,11 @@ inconvenient ([D-019][d-019]).
 An author must never store `Δt`, or any `Δt`-derived coefficient, as a
 component parameter ([D-019][d-019]). Recomputing derived coefficients per
 tick is a few arithmetic ops. A cached copy is a second thing for
-gain-scheduling machinery to chase.
+gain-scheduling machinery to chase. The same reasoning reaches the law
+itself. A discretized law is written to be stable at every period a
+deployment may assign, since the component cannot know its period at
+construction and no check compares the law against it ([D-019][d-019],
+[D-291][d-291]).
 
 Relative declaration structurally enforces that author rule for the period
 itself. Under scoped multipliers a component author *cannot* know their
@@ -11876,7 +11897,12 @@ boundary, the ordinary macro-sequence with an empty integrate) means for trim.
   published in the `t₀` snapshot regardless. The continuous-tier analogue
   of `s_update`-at-`t₀` is not the empty incoming integrate but that first
   *outgoing* one. Both authored values are the published initial conditions
-  of their outgoing transitions.
+  of their outgoing transitions. The same placement fixes what a discrete
+  store holds at rest. After any boundary the store holds the state the
+  component's next due tick decodes, and its cell holds the sample its last
+  tick published; a counter due at boundary zero and authored at 0 holds 1
+  after `init!` alone. A discrete store copied off a stopped run into a
+  condition therefore starts that component one tick ahead ([D-273][d-273]).
 - **`t₀` is an init-service argument** (default `0.0`), never a condition
   entry, because time is not a store of any component ([D-067][d-067]). The
   [harmonic grid](#g-harmonic-grid) (every discrete period an integer
@@ -12125,7 +12151,10 @@ and nothing in the residual system can tell ([D-139][d-139]). A check reading
 EAS (equivalent airspeed) from the world's airdata at the committed state and
 subtracting the requested value is where a world measurement meets the
 request, so any mismatch moves it. The checks stay out of the solve because
-they carry no information for it ([D-262][d-262]).
+they carry no information for it ([D-262][d-262]). A check earns its place
+only on a quantity the world measures by itself. On a quantity the condition
+writes directly from a decision, a check compares the number with itself and
+is always zero ([D-262][d-262]).
 
 #### The formulation
 
@@ -12133,7 +12162,11 @@ they carry no information for it ([D-262][d-262]).
 user math** ([D-069][d-069]). That core is analytic elimination, namely FlightPhysics'
 `θ_constraint` substituting the pitch constraint, filter and actuator equilibria
 imposed by construction, and the minimal 7-variable search over `c172.jl`'s
-`TrimState`.
+`TrimState`. The services hold the discrete tier through the solve
+([§14.8][s14-8], [D-213][d-213]), so a controller's stores are not decisions,
+and the values that keep a closed loop at rest, such as each integrator's
+trim value, are the author's to derive and write into the condition
+([D-063][d-063]).
 
 What changes is the numerics. Trim is a square root-find. The Cessna 172
 model's derivative-free scalar minimization over $\|r\|^2$ against a hand-scaled
@@ -12785,7 +12818,10 @@ precisely "linearize with the discrete state held" ([§8.2][s8-2]). Partials ent
 through per-invocation seeding, one rule for `x` and root inputs alike ([§7.2][s7-2],
 [D-297][d-297]). [§8.2][s8-2] states which root inputs the schema leaves seedable ([D-295][d-295]). A root
 input whose input entry is declared `Pinned` is declaredly unseedable, and its
-cell is frozen at every activation.
+cell is frozen at every activation. Unseeded means fed by nothing seeded. A
+gain scheduled from seeded state carries the schedule's partials into the
+Jacobian like any other wired input, and a model that wants it held at its
+nominal value routes it through `Freeze` ([§13.7][s13-7], [D-266][d-266]).
 
 **Selecting such a root input as a `B`-matrix tap is rejected at tap resolution** as a
 `TapResolution`, with the offending input entry in hand, rather than silently

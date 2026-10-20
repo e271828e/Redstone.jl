@@ -39,11 +39,16 @@ leave_handler(c, _)         = (m = (saturation = :free,),)
 
 The hit guards are deliberately ungated. Gated on `:free`, a hit guard
 would read `-1` while saturated and `q - upper = 0` the instant a leave
-handler frees the mode. That is an edge, so it would fire and saturate the
-block again, with the leave guard then holding and unable to fire. The
-leave guards are gated by the mode in [§10.4][s10-4]'s gate form, `(gate) ? σ :
--one(σ)`, which is sound because the mode is constant through a
-localization.
+handler frees the mode. That is an edge, so it fires and saturates the
+block again, and the leave guard, which read `-1` while the mode was free,
+now sees an edge of its own. Each handler hands the other guard a fresh
+edge, and the boundary chatters until [§10.6][s10-6]'s firing budget breaks the
+tie, under a `FiringBudget` warning. The event that fired first runs out
+first, so a release mid-run ends saturated and stuck, and a release at
+boundary zero ends free (probed 2026-10-20 on a gated copy of the block,
+under both policies). The leave guards are gated by the mode in [§10.4][s10-4]'s
+gate form, `(gate) ? σ : -one(σ)`, which is sound because the mode is
+constant through a localization.
 
 ## 2. The defect
 
