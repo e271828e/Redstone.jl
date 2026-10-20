@@ -14245,7 +14245,7 @@ activation):
   the boundary phase: the frame-top drain, an integration stage, the arrival
   sweep, the θ = 0 validation, a localization trial, projection, an event
   round or the ticks), the clock at the failure, frame-entry boundary index (the replay pointer), the host of
-  the catch (`:loop` or `:boundary_zero`), and the `cause`, a species'
+  the catch (`:loop`, `:boundary_zero` or `:overlay`), and the `cause`, a species'
   diagnostic or the original exception, its type the parameter.
 - **`NonfiniteState`** ([§13.4][s13-4]). Error · runtime · fail-fast.
   Component path, the offending state leaf and its value, the frame-top time

@@ -17039,7 +17039,7 @@ continuing, and no mixed configuration means anything: resetting the priors
 while keeping the clock would re-fire held guards mid-run for no reason, and
 re-anchoring the lattice while keeping the stores would shift every multi-rate
 component's phase under a continuing controller. So the implementation carries
-one flag. The first two choices live in the doors' own bodies, the last three
+one flag. The first three choices live in the doors' own bodies, the last two
 inside the settling routine both doors call. Each step of the settling is
 needed after an overlay. An overlaid `x` can leave the manifold, and only
 projection puts it back. An overlay can move a guard's predicate into holding,
