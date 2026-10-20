@@ -11607,7 +11607,11 @@ working storage whose contents are never authoritative) is a held constant, and
 it takes the `Float64 → Dual` zero-partial embedding. That embedding is
 semantically exact in that case, and in no other. "Held at the operating point"
 *is* zero partials. Zero partials are the whole of a linearization operating-point
-condition, which is authored decision-free ([§14.10][s14-10]).
+condition, which is authored decision-free ([§14.10][s14-10]). The same
+embedding carries a root input's checkpoint value into `linearize`'s seeded
+half when no condition is authored, through the type's `convert` at the
+seeded scalar ([§14.10][s14-10]). A struct-typed root input therefore needs
+a `convert` between its scalar instantiations wherever it is linearized.
 
 The selection is a one-time resolution decision, and it leaves the nominal
 exact-match doctrine for table [cells](#g-cell) ([§9.5][s9-5]) untouched.
@@ -12738,7 +12742,12 @@ checkpoint is the `Model`'s state at a frame top as one value. The default point
 is `checkpoint(sim)` on a simulation and `checkpoint(model)` on a `Model`, each
 restored into the scratch world with no boundary zero ([§12.6][s12-6], [D-274][d-274], [D-319][d-319]). The
 frozen tier's [cells](#g-cell) (the typed entries of the signal table) are the checkpoint's
-held cells. After a `trim!` commit, `linearize(sim, taps)` or `linearize(model, taps)`
+held cells. The seeded half takes each root input's checkpoint value through
+[§14.3][s14-3]'s converter, the type's ordinary `convert` at the seeded scalar.
+**A root input whose type does not convert is refused as `ConditionResolution`
+with reason `:unconvertible`** ([D-428][d-428]), every such root input in one throw
+before the first evaluation, with the checkpoint as the origin. After a
+`trim!` commit, `linearize(sim, taps)` or `linearize(model, taps)`
 is about the trim point with nothing re-specified. **`about = <condition>`, with `t0`
 beside it, linearizes anywhere else without touching the sim**, the condition's
 coverage checked as [§14.6][s14-6] requires ([D-272][d-272]). `t0` is admitted only there, and a `t0`
@@ -13841,9 +13850,12 @@ activation):
   · collected. Entry path, store and field (or the root-input face the entry
   addresses), offending value type and declared leaf type, the leaf's tier
   and role where the refusal is tier-bound, the producer where a face is
-  fed, candidates where a list is in hand, the origin. Its sub-kinds
-  are assembly path, undeclared field, unconvertible value and unexported
-  root-input face. An unknown path is `PathResolution`'s ([§13.3][s13-3]).
+  fed, candidates where a list is in hand, the origin. The origin is the
+  condition tree's chain, or the checkpoint where `linearize`'s default
+  operating point supplies a root input's value ([§14.10][s14-10]). Its
+  sub-kinds are assembly path, undeclared field, unconvertible value and
+  unexported root-input face. An unknown path is `PathResolution`'s
+  ([§13.3][s13-3]).
 - **`DuplicateConditionLeaf`** ([§14.2][s14-2]). Error · service ·
   collected. The leaf `(path, store, field)`, both origins, the
   `override` advice.
@@ -15502,6 +15514,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-425]: decisions.md#d-425--admit-init-trim-and-linearize-under-about-on-a-model-at-any-status
 [d-426]: decisions.md#d-426--record-the-tooling-over-declared-non-participation-unbuilt
 [d-427]: decisions.md#d-427--refuse-a-condition-entry-naming-an-internally-wired-input-at-resolution-with-its-producer
+[d-428]: decisions.md#d-428--refuse-a-root-input-whose-type-does-not-convert-at-linearizes-default-operating-point
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop
