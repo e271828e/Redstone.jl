@@ -1749,6 +1749,9 @@ function message(d::ReadResolution)
                 "$(_namelist(d.candidates))")
 end
 
+"The origin a root input's checkpoint value carries at `linearize`'s default operating point (§14.10, D-428)."
+const CHECKPOINT_ORIGIN = "checkpoint"
+
 "§14.2, §14.3: a condition leaf that does not resolve against this build."
 Base.@kwdef struct ConditionResolution <: Diagnostic
     path::String = ""
@@ -1814,7 +1817,8 @@ function message(d::ConditionResolution)
                 "specifies state, " *
                 "modes and root inputs — never outputs, never workspace (§14.1)") *
                _ctail(d)
-    "$(_cleaf(d)) takes $(d.declared), and the authored value is " *
+    "$(_cleaf(d)) takes $(d.declared), and the " *
+    (d.origin == CHECKPOINT_ORIGIN ? "checkpoint's value is " : "authored value is ") *
     "$(repr(d.value))::$(d.observed), which does not convert" *
     (d.activation === nothing ? "" :
      "; this is the seeded activation's own refusal — a value at $(d.activation) " *

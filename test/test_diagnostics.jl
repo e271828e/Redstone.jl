@@ -460,6 +460,8 @@ function diagnostics_kind_set()
                                 candidates = [:p], role = :output_port, origin = "set"),
             ConditionResolution(path = "a/b", store = :x, field = :p, reason = :unconvertible,
                                 declared = Float64, observed = String, value = "x", origin = "set"),
+            ConditionResolution(field = :p, face = :p, reason = :unconvertible, declared = Float64,
+                                observed = String, value = "x", origin = CHECKPOINT_ORIGIN),
             DuplicateConditionLeaf(path = "a/b", store = :x, field = :p,
                                    origins = ["set", "at(\"a\") → set"]),
             ConditionNodeMisuse(observed = NamedTuple, in_hand = [:Fragment]),
@@ -745,6 +747,15 @@ function diagnostics_kind_set()
                                                   handed = [("i/j", :f), ("i", :g)])),
                          "`i/j/a`.e declared Float64 is fed by nothing, handed up through " *
                          "`i/j`.f, `i`.g and fed by nothing there — ")
+
+        # An unconvertible value names its author: the condition tree, or the
+        # checkpoint at `linearize`'s default operating point (D-428).
+        unconvertible(origin) = message(ConditionResolution(
+            field = :p, face = :p, reason = :unconvertible, declared = Float64,
+            observed = String, value = "x", origin = origin))
+        @test occursin("the authored value is \"x\"::String", unconvertible("set(u).p"))
+        @test occursin("the checkpoint's value is \"x\"::String", unconvertible(CHECKPOINT_ORIGIN))
+        @test endswith(unconvertible(CHECKPOINT_ORIGIN), "(§14.3) [checkpoint]")
 
         # A fail-fast site's single diagnostic renders on one line, no count.
         d = UnconnectedInput(path = "a", face = :v, declared = Float64)

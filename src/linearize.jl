@@ -196,7 +196,7 @@ function _linearize(model::Model{Float64}, tap_set::Taps, operating_point, about
             value = gather_cell(nominal_exec.store, nominal_exec.act.layout.addr[("", face)])
             (ok, converted) = _convert(_port_type(addr), value)
             ok || (push!(diags, ConditionResolution(; field = face, face = face,
-                       reason = :unconvertible, origin = "checkpoint", declared = _port_type(addr),
+                       reason = :unconvertible, origin = CHECKPOINT_ORIGIN, declared = _port_type(addr),
                        observed = typeof(value), value = value)); continue)
             scatter_cell!(seeded_exec.store, addr, converted)
         end
