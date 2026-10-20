@@ -39,8 +39,9 @@ indexed grid time, `t₀ + k·h` as the clock writes it, so a hand-typed decimal
 can miss the grid by an ulp and be refused.
 
 The table holds the root-input cells as values, never the authored overlay
-(D-038). A model's state is not a condition and has no algebra (D-273). `==` is
-identity: compare one field by field.
+(D-038). A model's state is not a condition: it enters no condition expression
+and yields none, where a condition can be overlaid on a model at rest (D-273,
+D-429). `==` is identity: compare one field by field.
 """
 struct ModelState{T}
     x::Vector{T}                     # the flat buffer

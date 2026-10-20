@@ -267,7 +267,8 @@ Spec: §11.5, §12.6, §12.7, §14.10, D-038, D-254, D-273, D-274, D-317, D-319.
   and linearize.jl add its methods for problems and tap sets (D-277).
 - One collecting pass behind both ways of applying a plan. Each `at` prefix is
   walked from its authoring level (§13.3). The two ways are:
-  - `resolve_condition`, for values;
+  - `resolve_condition`, for values, its merge bases the declared defaults
+    or the stores a door hands it (D-429);
   - `compile_plan`, with lenses run by `walk_steps` (readers.jl),
     `SpecializedPlan`, whose writes and prefixes `apply!` walks as generated
     unrolls, and `ConditionShapeDrift`.
@@ -276,7 +277,7 @@ Spec: §11.5, §12.6, §12.7, §14.10, D-038, D-254, D-273, D-274, D-317, D-319.
   method on the simulation is sim.jl's.
 
 Spec: §9.5, §13.1, §13.3, §14.1–§14.6, §14.9, Appendix B, D-063–D-068,
-D-117, D-130, D-204, D-205, D-207, D-226, D-277, D-315.
+D-117, D-130, D-204, D-205, D-207, D-226, D-277, D-315, D-429.
 
 ### `src/control.jl`
 
@@ -649,6 +650,10 @@ soon as nothing in it names a `Simulation` in a signature, and below
   - `init!`, whose condition method resolves and whose plan method does the
     writes, runs boundary zero under §13.4's catch and settles it through the
     hooks (§14.5, D-223);
+  - `overlay!`, in the same two methods, whose condition method resolves with
+    the stores as the merge bases, `_store_values`, and whose plan method
+    runs the continuing settling under the same catch with host `:overlay`
+    (§12.6, §14.1, D-429);
   - `apply!` on a model, gated under `NoHooks` before the inner
     `_apply_plan!`, which `init!` and the simulation's forwarding method call;
   - `restore!(model, model_state; hooks)`, whose fingerprint check
@@ -661,7 +666,9 @@ soon as nothing in it names a `Simulation` in a signature, and below
   `offtick_boundary!` and `boundary_zero!` stay ungated (D-318).
 - `phase_bodies`, and `evaluate!` on the executor and the model.
 - The boundary macro-sequence `boundary!`, `offtick_boundary!`,
-  `boundary_zero!` and `_round!`, and the §10.6 event phase `event_phase!`,
+  `boundary_zero!` over the settling routine `_settle!`, whose flag separates
+  boundary zero's sweep and updates from `overlay!`'s continuing settling
+  (D-429), and `_round!`, and the §10.6 event phase `event_phase!`,
   with its `FiringBudget` degradation into the model's diagnostic cell.
 - The seam's framework side `integrate!(model, h)` and its `isfinite` sweep
   `_check_finite!` (§10.2, D-157).
@@ -671,15 +678,16 @@ soon as nothing in it names a `Simulation` in a signature, and below
   `init!` call, and the species rule `_species` with the runtime bundle-field
   match (§13.2, §13.4, D-059, D-221, D-248).
 - The checkpoint's model-level half: `_fingerprint`, and `checkpoint(model)`
-  with its two refusals, `ServiceLifecycle` and `CheckpointMidFrame`
-  (D-274, D-319). `_check_checkpoint!`, the fingerprint check the restoring
+  over the rest gate `_assert_at_rest`, which `overlay!` shares, with its two
+  refusals, `ServiceLifecycle` and `CheckpointMidFrame` (D-274, D-319,
+  D-429). `_check_checkpoint!`, the fingerprint check the restoring
   doors and replay's entry pass share, collecting `CheckpointMismatch`, and
   beside it `_check_grid!`, the grid check the three restore doors share,
   collecting `CheckpointMidFrame` into the same list.
 
 Spec: §9.2, §9.5, §10.2, §10.4, §10.6, §11.2, §11.8, §12.4, §12.6, §13.2,
-§13.4, §13.5, §14.5, §14.8, D-059, D-157, D-213, D-221, D-223, D-248, D-250,
-D-254, D-260, D-274, D-317, D-318, D-319, D-320.
+§13.4, §13.5, §14.1, §14.5, §14.8, D-059, D-157, D-213, D-221, D-223, D-248,
+D-250, D-254, D-260, D-274, D-317, D-318, D-319, D-320, D-429.
 
 ### `src/precompile.jl`
 
@@ -817,13 +825,16 @@ Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315.
 - The two lifecycle gates `assert_stopped` and `assert_configurable`, one for
   the readers and one for the roster, beside the advances' gate
   `_assert_advanceable` (§11.3, D-232, D-317).
-- `init!`, `restore!`, `run!`/`step!` and `replay!`, with the run body
-  `_run_body!` and the door body `_enter_checkpoint!` (D-274). The
-  simulation's `init!` is the gate and the run's bookkeeping around the
-  model's `init!`, and `_enter_checkpoint!`, over a `Checkpoint`, opens the
-  run before it calls the model's inner restore. Both are model.jl's (D-317).
+- `init!`, `overlay!`, `restore!`, `run!`/`step!` and `replay!`, with the
+  run body `_run_body!` and the door body `_enter_checkpoint!` (D-274). The
+  simulation's `init!` and `overlay!` are the gate and the run's bookkeeping
+  around the model's doors, `overlay!` taking its header after the settling
+  (D-429), and `_enter_checkpoint!`, over a `Checkpoint`, opens the
+  run before it calls the model's inner restore. All three are model.jl's
+  (D-317).
 - `checkpoint(sim)`, the wrap of `checkpoint(sim.model)` with the run's two
-  counters, and `restore!`'s two forms, of a `Checkpoint` and of a bare
+  counters over the rest gate `_assert_at_rest`, which `overlay!` shares
+  (D-429), and `restore!`'s two forms, of a `Checkpoint` and of a bare
   `ModelState{Float64}`, each checking through model.jl's
   `_check_checkpoint!` and `_check_grid!`, with the scalar fallback on a bare
   state (D-319).
@@ -890,9 +901,9 @@ Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315.
   (D-318).
 
 Spec: §10.2–§10.7, §11.1–§11.5, §11.8, §12.1–§12.7, §13.4–§13.6,
-§14, §14.5, §14.6, §14.8, §14.10, D-027, D-101, D-198, D-203, D-218, D-219,
-D-223, D-232, D-233, D-250, D-253, D-254, D-255, D-256, D-260, D-261,
-D-268, D-269, D-270, D-274, D-316, D-317, D-318, D-319, D-407.
+§14, §14.1, §14.5, §14.6, §14.8, §14.10, D-027, D-101, D-198, D-203, D-218,
+D-219, D-223, D-232, D-233, D-250, D-253, D-254, D-255, D-256, D-260, D-261,
+D-268, D-269, D-270, D-274, D-316, D-317, D-318, D-319, D-407, D-429.
 
 ### `src/stepper.jl`
 

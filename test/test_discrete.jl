@@ -647,6 +647,39 @@ function discrete_deployment()
         @test @ballocated(offtick_boundary!($sim2)) == 0
         @test @ballocated(boundary!($sim2, 3)) == 0
     end
+
+    @testset "an overlaid store is the next tick's state, its held cell kept until then (§12.6, §14.5, D-273, D-429)" begin
+        sim = Simulation(single(TickCounter()); h = 1//10)
+        init!(sim)
+        step!(sim; frames = 3)
+        @test port(sim, "c", :n) == 3 && state(sim, "c").n == 4     # the rest reading
+        overlay!(sim, at("c", set(s = (n = 10,))))
+        @test latest(sim).t == 3 * 0.1 && latest(sim).frame == 3
+        @test port(sim, "c", :n) == 3                        # the held cell stays
+        @test state(sim, "c").n == 10                        # the store is the next tick's state
+        step!(sim)
+        @test port(sim, "c", :n) == 10 && state(sim, "c").n == 11
+        # `init!` from the same copy decodes it at boundary zero, one tick ahead
+        fresh = Simulation(single(TickCounter()); h = 1//10)
+        init!(fresh, at("c", set(s = (n = 10,))); t0 = 3 * 0.1)
+        @test port(fresh, "c", :n) == 10 && state(fresh, "c").n == 11
+    end
+
+    @testset "an overlay keeps the lattice: the controller moves at its own ticks (§10.5, §12.6, D-429)" begin
+        # The loop of the restore test above, overlaid at frame 6, a base tick
+        # where the controller is not due: its held command stays until frame 8.
+        sim = Simulation(SampledLoop(; ctl_rate = Relative(2)); h = 1//200, N_base = 2)
+        init!(sim, set(u = (ref = 0.7,)))
+        step!(sim; frames = 6)
+        held = port(sim, "ctl", :u)
+        overlay!(sim, at("ctl", set(s = (acc = 0.0,))))
+        @test port(sim, "ctl", :u) === held && state(sim, "ctl").acc == 0.0
+        @test step!(sim; frames = 34) == 34
+        snapshots = logged(sim)
+        moves = [later.frame for (earlier, later) in zip(snapshots, snapshots[2:end])
+                 if port(later, "ctl", :u) != port(earlier, "ctl", :u)]
+        @test moves == collect(8:4:40)
+    end
 end
 
 function test_discrete()

@@ -171,18 +171,6 @@ breaking user code, and each may benefit from user feedback first.
   break, a candidate design and its open questions are
   `docs/reports/20261016_ctrlc_julia_114/report.md`. It is taken up when 1.14
   branches or its cancellation names become public, whichever comes first.
-- **A state what-if: the `overlay!` door** (§10.6, §12.6, §14.1, D-063,
-  D-067, D-273, D-274). Fly a while, stop, change a few states, continue
-  has no door. A condition goes only through `init!`, so a user copies a
-  store off the stopped run into a condition and starts the discrete tier
-  one tick ahead, since a store read at rest is the next tick's state. The
-  door is `overlay!(sim, cond)` on a stopped run: the named stores
-  overwritten on the run's own stores, clock and priors kept, boundary
-  zero's tail run as a settling routine with the discrete stages and
-  updates skipped, and a fresh trajectory whose header is the checkpoint
-  after settling. The design record a brief is written from, the five
-  choices against `init!`, the three layers, the spec sentences and the
-  open points, is `companions/store_at_rest_walkthrough.md` section 7.
 - **The library's remaining candidates.** Whatever of the inventory in
   `docs/design/companions/library_inventory.md` is unbuilt, each block
   built when wanted (§13.7, D-313).

@@ -277,7 +277,7 @@ end
 # --- resolution (§14.3) ---------------------------------------------------------
 
 """
-    resolve_condition(node, build::Build, T = Float64) → ConditionPlan
+    resolve_condition(node, build::Build, T = Float64; bases = nothing) → ConditionPlan
 
 Flatten the condition tree, validate every entry against `build` in §13.1's
 collecting form — full list, violations collected, one `DiagnosticError` — and
@@ -290,9 +290,12 @@ root input, and no leaf is written twice — an input entry's leaf being the
 *root input* it resolves to, so two spellings of one root input are one leaf.
 Schema is the
 authority on *may you write this, at what type*; the activation's layout
-supplies the destination.
+supplies the destination. `bases` is the merge base of a partial store entry,
+the declared defaults when `nothing` (D-063) and the stores a door hands,
+`_store_bases`' triples, otherwise (D-429).
 """
-function resolve_condition(node::ConditionNode, build::Build, ::Type{T} = Float64) where {T}
+function resolve_condition(node::ConditionNode, build::Build, ::Type{T} = Float64;
+                           bases = nothing) where {T}
     resolved, diags, act = _resolve_entries(node, build, T)
     _report_violations(diags)
 
@@ -314,13 +317,14 @@ function resolve_condition(node::ConditionNode, build::Build, ::Type{T} = Float6
     end
 
     # Overlay partiality baked now (§14.3): the store's write is one whole
-    # value, `merge(defaults, overlay)`, so application decides nothing.
+    # value, `merge(base, overlay)`, so application decides nothing. The base is
+    # the declared defaults, `init!`'s, unless the door hands its own, as
+    # `overlay!` hands the stores as they stand (§14.1, D-429).
     stores = Tuple{Symbol,Int,Any}[]
-    for (store, ci, defaults) in _store_bases(build, act)
+    for (store, ci, base) in (bases === nothing ? _store_bases(build, act) : bases)
         overlay = get(overlays, (store, ci), nothing)
         overlay === nothing && continue
-        push!(stores, (store, ci, convert(typeof(defaults),
-                                          merge(defaults, (; overlay...)))))
+        push!(stores, (store, ci, convert(typeof(base), merge(base, (; overlay...)))))
     end
     ConditionPlan{T}(xs, stores, inputs, faces)
 end
@@ -397,7 +401,7 @@ _store_bases(build::Build, act::Activation) =
 # Anything that is not a node reaching a service entry point is the §14.2
 # misuse, not a `MethodError`: the directive is the same one `combine` prints,
 # and a bare NamedTuple handed to `init!` is exactly the slip it addresses.
-resolve_condition(other, ::Build, ::Type = Float64) = _node_misuse(other, ())
+resolve_condition(other, ::Build, ::Type = Float64; bases = nothing) = _node_misuse(other, ())
 
 function _leaf_offset(x::NamedTuple, field::Symbol)
     offset = 0

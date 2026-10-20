@@ -754,4 +754,77 @@ function test_lifecycle()
         @test lifecycle(sim) === :initialized
         @test step!(sim; t_end = 5.0) == 1
     end
+
+    @testset "`overlay!` is legal where `checkpoint` is, and refuses before any write (§12.6, §14, D-429)" begin
+        built = Simulation(resume_pend(); h = 1//10)
+        d = carried(@test_throws DiagnosticError{ServiceLifecycle} overlay!(built, set()))
+        @test d.op === :overlay! && d.status === :built && d.legal == [:initialized, :stopped]
+
+        sim = Simulation(resume_pend(); h = 1//10)
+        init!(sim, resume_condition())
+        before = checkpoint(sim)
+        d = only(diagnostics(failure(() -> overlay!(sim, set(); log_every = 0))))
+        @test d isa ArgumentInvalid && d.call === :overlay! && d.argument === :log_every
+        d = only(diagnostics(failure(() -> overlay!(sim, at("ctl", set(s = (nope = 1.0,)))))))
+        @test d isa ConditionResolution && d.reason === :undeclared_field
+        @test diagnostic(failure(() -> overlay!(sim, (; s = 1)))) isa ConditionNodeMisuse
+        @test lifecycle(sim) === :initialized && length(logged(sim)) == 1
+        @test checkpoint(sim).state.s == before.state.s && checkpoint(sim).state.x == before.state.x
+
+        # After a `t*` stop the clock sits mid-frame: refused as `checkpoint` is.
+        halted = Simulation(overloaded(); h = 1//10)
+        init!(halted)
+        run!(halted; t_end = 5.0)
+        d = carried(@test_throws DiagnosticError{CheckpointMidFrame} overlay!(halted, set()))
+        @test d.frame == 4 && lifecycle(halted) === :stopped
+
+        # An errored simulation is terminal (§13.6).
+        boom = Simulation(fed(Exploder(), "arm"); h = 1//10)
+        init!(boom, set(u = (in = false,)))
+        stage!(boom, "in" => true)
+        @test_throws StepError step!(boom; frames = 2)
+        d = carried(@test_throws DiagnosticError{ServiceLifecycle} overlay!(boom, set()))
+        @test d.op === :overlay! && d.status === :errored
+    end
+
+    @testset "a throw inside the settling returns the simulation to `built` (§12.6, §13.4, D-223, D-429)" begin
+        # The root-input entry arms the mine: the guard moves into holding, the
+        # handler throws in the overlay boundary's first event round.
+        sim = Simulation(fed(Mine(), "sig"); h = 1//10)
+        init!(sim, set(u = (in = false,)))
+        step!(sim; frames = 2)
+        err = failure(() -> overlay!(sim, set(u = (in = true,))))
+        @test err isa StepError{Detonated}
+        @test err.host === :overlay && err.boundary == 2 && err.t == 2 * 0.1
+        @test err.cursor.path == "c" && err.cursor.phase === :round
+        @test lifecycle(sim) === :built && termination(sim) === nothing
+        d = carried(@test_throws DiagnosticError{MissingInit} trace(sim))
+        @test d.op === :trace && d.status === :built
+        @test carried(@test_throws DiagnosticError{ServiceLifecycle} overlay!(sim, set())).status === :built
+        init!(sim, set(u = (in = false,)))         # `built` is re-initializable
+        @test lifecycle(sim) === :initialized
+    end
+
+    @testset "the model's `overlay!`: the state alone, and a claimed model refuses it (§12.6, §14, D-318, D-429)" begin
+        model = Model(single(TickCounter()); h = 1//10)
+        init!(model)
+        frames!(model, 3)
+        @test state(model, "c").n == 4 && port(model, "c", :n) == 3
+        overlay!(model, at("c", set(s = (n = 10,))))
+        @test (@atomic model.status) === :consistent
+        @test state(model, "c").n == 10 && port(model, "c", :n) == 3
+        frames!(model, 1)
+        @test port(model, "c", :n) == 10
+        plan = resolve_condition(at("c", set(s = (n = 20,))), model.deployment.build, Float64)
+        overlay!(model, plan)
+        @test state(model, "c").n == 20
+
+        cold = Model(single(TickCounter()); h = 1//10)
+        d = carried(@test_throws DiagnosticError{ServiceLifecycle} overlay!(cold, set()))
+        @test d.op === :overlay! && d.status === :built && d.legal == [:consistent]
+        sim = Simulation(Model(single(TickCounter()); h = 1//10))
+        init!(sim)
+        d = carried(@test_throws DiagnosticError{ArgumentInvalid} overlay!(sim.model, set()))
+        @test d.reason === :claimed && d.call === :overlay!
+    end
 end

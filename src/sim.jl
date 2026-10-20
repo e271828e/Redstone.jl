@@ -630,17 +630,26 @@ would have no next frame to continue on. A frame an interrupt from model code
 abandoned published nothing, its stores possibly mid-boundary, whatever the
 clock reads (§12.4).
 
-A checkpoint is not a condition and has no algebra (D-273). `restore!` puts
-it back.
+A checkpoint is not a condition and enters no condition expression (D-273);
+`restore!` puts it back, and `overlay!` writes a condition onto a stopped run
+(D-429).
 """
 function checkpoint(sim::Simulation)
+    _assert_at_rest(sim, :checkpoint)
+    Checkpoint(checkpoint(sim.model), sim.run.frame, sim.run.boundary)
+end
+
+# The rest a `checkpoint` reads and an `overlay!` writes on (§12.6, D-274,
+# D-429): a stopped-sim state, `initialized` or `stopped`, with the clock on a
+# frame top and that top published. A frame top is exactly the time the loop
+# writes there, `_grid_time` in the clock's scalar, whatever the origin; a `t*`
+# stop leaves the clock short of it. At rest the latest snapshot is that top's,
+# which an abandoned frame never published, a `t*` boundary it did publish
+# included.
+function _assert_at_rest(sim::Simulation, op::Symbol)
     lifecycle_state = lifecycle(sim)
     lifecycle_state in (:initialized, :stopped) || throw(DiagnosticError(ServiceLifecycle(
-        op = :checkpoint, status = lifecycle_state, legal = [:initialized, :stopped])))
-    # a frame top is exactly the time the loop writes there, `_grid_time` in the
-    # clock's scalar, whatever the origin; a `t*` stop leaves the clock short of it.
-    # At rest the latest snapshot is that top's, which an abandoned frame never
-    # published, a `t*` boundary it did publish included.
+        op = op, status = lifecycle_state, legal = [:initialized, :stopped])))
     clock = sim.model.exec.clock
     frame = sim.run.frame
     t_frame = _grid_time(sim.model, frame)
@@ -649,7 +658,52 @@ function checkpoint(sim::Simulation)
         published.t == clock.t ||
         throw(DiagnosticError(CheckpointMidFrame(t = _seconds(clock.t), t_frame = t_frame,
                                                  frame = frame)))
-    Checkpoint(checkpoint(sim.model), frame, sim.run.boundary)
+    nothing
+end
+
+"""
+    overlay!(sim, condition; trace = true, log = true, log_every = 1, log_max = 65536)
+
+§12.6's state what-if: write a condition onto a stopped run and continue it
+as a fresh trajectory (D-429). The stores the condition names are overwritten
+on the run's own, every other store, the clock, the sampling lattice and the
+guard priors are kept, and the overlaid state settles through the model's
+`overlay!`: projection and the event phase to quiescence, with no discrete
+output stage and no `s_update`, so an overlaid discrete store is the next
+tick's state and its held cell stays until then (D-273). A guard the overlay
+moves into holding fires at the overlay boundary, before the next integrate.
+It is the sibling of the input what-if, a restore followed by `stage!`.
+
+A door beside `init!`, `restore!` and `replay!`, taking their four recording
+keywords for the run it builds (D-261), handling the periphery as `restore!`
+does, and legal where `checkpoint` is: `initialized` or `stopped`, the clock
+on a published frame top, or `ServiceLifecycle` and `CheckpointMidFrame`. The
+condition resolves before anything touches the run, a partial store entry
+merging onto the current store, root-input entries allowed and no totality
+asked. The settling publishes one snapshot at the stopped run's `t`, under its
+last ordinal as `restore!` re-publishes, and the trace header is the checkpoint
+taken after it, so replay reproduces the overlaid trajectory with no record of
+the overlay. A throw inside the settling is a `StepError` with host `:overlay`
+and leaves the simulation `built`, with no header, as a failed boundary zero
+does (D-223).
+"""
+function overlay!(sim::Simulation, condition = set(); trace = true, log = true,
+                  log_every = 1, log_max = 65536)
+    _assert_at_rest(sim, :overlay!)
+    _check_recording(:overlay!, trace, log, log_every, log_max)   # the run's keywords (D-261)
+    plan = resolve_condition(condition, sim.model.deployment.build, Float64;
+                             bases = _store_values(sim.model.exec))   # the refusals precede every write
+    _reset_periphery!(sim)
+    _open_run!(sim, nothing, Pair{String,Vector{Symbol}}[], nothing, sim.run.frame,
+               sim.run.boundary, trace, log, Int(log_every), log_max)
+    sim.run.boundary -= 1   # the settling re-publishes the stopped run's last ordinal
+    overlay!(sim.model, plan; hooks = LoopHooks(sim, sim.plane.roster, nothing, Bool[]))
+    # §11.5's header: the checkpoint after the settling, so a throw inside it
+    # leaves no header and replay needs no knowledge of the overlay (D-429)
+    trc = sim.run.trace
+    trc === nothing ||
+        (trc.header = Checkpoint(checkpoint(sim.model), sim.run.frame, sim.run.boundary))
+    nothing
 end
 
 # The door body `restore!` and `replay!` share (§12.6, §12.7, D-274): first

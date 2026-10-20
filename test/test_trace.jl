@@ -1621,6 +1621,60 @@ function trace_checkpoints()
     end
 end
 
+function trace_overlay()
+    @testset "`overlay!` is a door: a fresh run whose header is the post-settling checkpoint (§11.5, §12.6, D-429)" begin
+        sim = Simulation(resume_pend(); h = 1//10)
+        init!(sim, resume_condition())
+        step!(sim; frames = 3)
+        @test port(sim, "ctl", :u) ≈ 4.15 && state(sim, "ctl").acc ≈ 4.20
+        stage!(sim, "in" => 99.0)                  # staged before the door: dropped by it
+        old_run = sim.run
+        last_ordinal = latest(sim).boundary
+        overlay!(sim, combine(at("ctl", set(s = (acc = 9.0,))), at("c", set(x = (θ = 0.0,)))))
+        @test lifecycle(sim) === :initialized && mode(sim) === :live
+        @test termination(sim) === nothing
+        @test sim.run !== old_run && sim.run.log !== old_run.log && sim.run.trace !== old_run.trace
+
+        # One snapshot at the stopped run's `t`, under its last ordinal as
+        # `restore!` re-publishes: the discrete cell held, the continuous refreshed.
+        @test length(logged(sim)) == 1
+        @test latest(sim).t == 3 * 0.1 && latest(sim).frame == 3
+        @test latest(sim).boundary == last_ordinal && sim.run.boundary == last_ordinal + 1
+        @test port(sim, "ctl", :u) ≈ 4.15 && state(sim, "ctl").acc == 9.0
+        @test state(sim, "c").θ == 0.0 && port(sim, "c", :θ) == 0.0
+
+        # The header is the checkpoint after the settling, field by field.
+        cp = checkpoint(sim)
+        header = trace(sim).header
+        @test header.state.x == cp.state.x && header.state.s == cp.state.s &&
+              header.state.m == cp.state.m && header.state.prior == cp.state.prior
+        @test same_table(header.state.table, cp.state.table)
+        @test (header.state.t, header.frame, header.boundary, header.state.t₀) ==
+              (cp.state.t, cp.frame, cp.boundary, cp.state.t₀)
+        @test trace(sim).frames == 3 && isempty(trace(sim).batches)
+
+        # The staged batch is gone; the next tick decodes the overlaid store.
+        step!(sim)
+        @test port(sim, "", :in) == 0.5 && port(sim, "ctl", :u) ≈ 9.0
+        run!(sim; t_end = 0.8)
+        @test lifecycle(sim) === :stopped
+
+        # Replay reproduces the overlaid trajectory, ordinals included, with no
+        # record of the overlay: the header carries the settled state.
+        twin = Simulation(resume_pend(); h = 1//10)
+        replay!(twin, trace(sim))
+        @test same_trajectory(logged(twin), logged(sim))
+        @test [x.boundary for x in logged(twin)] == [x.boundary for x in logged(sim)]
+
+        # Under the door's kill switch the run has no trace at all (§11.5, D-261).
+        untraced = Simulation(resume_pend(); h = 1//10)
+        init!(untraced, resume_condition())
+        step!(untraced)
+        overlay!(untraced, set(u = (in = 0.1,)); trace = false)
+        @test untraced.run.trace === nothing && lifecycle(untraced) === :initialized
+    end
+end
+
 function test_trace()
     trace_recording()
     trace_entry_pass()
@@ -1628,4 +1682,5 @@ function test_trace()
     trace_discarded_staging()
     trace_discarded_harness()
     trace_checkpoints()
+    trace_overlay()
 end

@@ -218,7 +218,7 @@ struct StepError{C <: Union{Diagnostic, Exception}} <: Exception
                      # phase, the stage or trial time mid-integration
     boundary::Int    # the frame-entry boundary index: replay!(…; to_boundary = boundary)
     host::Symbol     # the catch that took the throw: :boundary_zero under init!,
-                     # :loop inside a frame
+                     # :overlay under overlay!, :loop inside a frame
     cause::C
 end
 
@@ -262,6 +262,8 @@ function Base.showerror(io::IO, carrier::StepError)
     # runs no boundary zero, so frame one's record is still ahead.
     carrier.host === :boundary_zero ?
         print(io, "init!(sim2, condition) under the same condition reproduces it") :
+    carrier.host === :overlay ?
+        print(io, "overlay!(sim2, condition) on the same stopped state reproduces it") :
         print(io, "replay!(sim2, trc; to_boundary = ", carrier.boundary,
               ") then step!(sim2) reproduces it")
     print(io, "\n  cause: ")

@@ -347,4 +347,50 @@ function test_events()
         @test port(sim, "mon", :tripped) === true
         @test port(latest(sim), "mon", :tripped) === true
     end
+
+    @testset "an overlay fires the guard it moves into holding, at the overlay boundary (§12.6, D-429)" begin
+        # A root-input entry lifts the trigger's input over its level: the prior
+        # is kept, so that is an edge, and the handler runs before the next frame.
+        sim = Simulation(fed(Trigger(0.5), "sig"); h = 1//10)
+        init!(sim, set(u = (in = 0.0,)))
+        step!(sim; frames = 2)
+        @test modes(sim, "c") === (state = :armed, count = 0)
+        overlay!(sim, set(u = (in = 1.0,)))
+        @test port(sim, "", :in) == 1.0 && latest(sim).t == 2 * 0.1
+        @test modes(sim, "c") === (state = :fired, count = 1) && port(sim, "c", :on) === true
+        step!(sim)
+        @test modes(sim, "c") === (state = :fired, count = 1)
+
+        # An overlaid `x` past the sawtooth's sign-form guard: the handler wraps
+        # it at the overlay boundary, and the next frame integrates from there.
+        saw = Simulation(single(Sawtooth(1.0)); h = 1//10)
+        init!(saw)
+        step!(saw; frames = 2)
+        overlay!(saw, at("c", set(x = (q = 1.5,))))
+        @test state(saw, "c").q ≈ 0.5 && port(saw, "c", :q) ≈ 0.5
+        step!(saw)
+        @test state(saw, "c").q ≈ 0.6
+    end
+
+    @testset "an overlay keeps the priors and merges a partial store onto the current one (§12.6, §14.1, D-429)" begin
+        sim = Simulation(fed(Trigger(0.5), "sig"); h = 1//10)
+        init!(sim, set(u = (in = 0.0,)))
+        stage!(sim, "in" => 1.0)
+        step!(sim; frames = 3)                       # fired at frame 1, holding since
+        @test modes(sim, "c") === (state = :fired, count = 1)
+        overlay!(sim, at("c", set(m = (count = 7,))))
+        @test modes(sim, "c") === (state = :fired, count = 7)   # `state` from the current store, not `m_init`
+        @test sim.model.exec.events.prior == [true]              # kept, so no edge: no re-fire
+        step!(sim)
+        @test modes(sim, "c") === (state = :fired, count = 7)
+    end
+
+    @testset "an overlaid state off the manifold is projected before publication (§5.3, §12.6, D-429)" begin
+        sim = Simulation(single(Rotor(; ω = 2.0)); h = 1//100)
+        init!(sim)
+        step!(sim)
+        overlay!(sim, at("c", set(x = (r = SVector(3.0, 0.0),))))
+        @test state(sim, "c").r ≈ SVector(1.0, 0.0) atol = 1e-15
+        @test port(sim, "c", :c) == 1.0
+    end
 end

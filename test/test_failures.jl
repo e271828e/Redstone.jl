@@ -459,6 +459,15 @@ function failures_runtime()
         @test occursin("init!(sim2, condition) under the same condition reproduces it",
                        zero_rendered)
         @test !occursin("replay!", zero_rendered) && !occursin("step!", zero_rendered)
+        # …and a settling's, under `overlay!`, names that door on the stopped state (D-429).
+        armed_sim = Simulation(fed(Mine(), "sig"); h = 1//10)
+        init!(armed_sim, set(u = (in = false,)))
+        step!(armed_sim; frames = 2)
+        overlay_rendered =
+            sprint(showerror, failure(() -> overlay!(armed_sim, set(u = (in = true,)))))
+        @test occursin("overlay!(sim2, condition) on the same stopped state reproduces it",
+                       overlay_rendered)
+        @test !occursin("replay!", overlay_rendered) && !occursin("init!", overlay_rendered)
 
         # A `Diagnostic` cause renders as its logline: the kind name leads, and the
         # leaf the sweep named is in the line.

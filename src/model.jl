@@ -186,7 +186,7 @@ function init!(model::Model{T}, plan::ConditionPlan; t0::Real = 0.0,
     exec.clock.t₀ = Float64(t0)       # exact: the clock's origin is a `Float64` too
     fill!(exec.events.prior, false)   # every prior not-holding (§10.6)
     try
-        boundary_zero!(model)
+        _settle!(model; fresh = true)   # boundary zero (§14.5)
     catch err
         @atomic :release model.status = :built
         err isa InterruptException && rethrow()
@@ -196,6 +196,59 @@ function init!(model::Model{T}, plan::ConditionPlan; t0::Real = 0.0,
     @atomic :release model.status = :consistent   # boundary zero completed (D-317)
     nothing
 end
+
+"""
+    overlay!(model, condition; hooks = NoHooks())
+    overlay!(model, plan::ConditionPlan; hooks = NoHooks())
+
+The state what-if on a model at rest (§12.6, §14.1, D-429): the condition's
+stores overwritten on the model's own, every other store, the clock and the
+guard priors kept, and the overlaid state settled by boundary zero's tail with
+the discrete stages and updates skipped (`_settle!`). An overlaid discrete store
+is the next tick's state, so its held cell stays until that tick; an overlaid
+`x` is projected, and a guard the overlay moves into holding fires now. The
+model must be `:consistent` with its clock on a frame top, as `checkpoint`
+asks, or the call is `ServiceLifecycle` or `CheckpointMidFrame`.
+
+The condition resolves against the build with `init!`'s diagnostics, a partial
+store entry merging onto the current store rather than the declared default
+(§14.3), and root-input entries write the table's root-input cells. No totality
+is asserted: every root input already holds a value. The plan method writes
+alone, so the simulation's `overlay!` can resolve before it touches its run.
+
+A throw inside the settling takes the one `StepError` constructor with host
+`:overlay` and the frame the clock sits at, and writes the status back to
+`:built`, the stores partly written as a failed boundary zero leaves them.
+"""
+function overlay!(model::Model{T}, condition = set(); kw...) where {T}
+    _claimed_gate(model, get(kw, :hooks, NoHooks()), :overlay!)
+    _assert_at_rest(model, :overlay!)   # the stores are the merge base, so the gate precedes the resolve
+    plan = resolve_condition(condition, model.deployment.build, T;
+                             bases = _store_values(model.exec))
+    overlay!(model, plan; kw...)
+end
+
+function overlay!(model::Model, plan::ConditionPlan; hooks::FrameHooks = NoHooks())
+    _claimed_gate(model, hooks, :overlay!)
+    k = _assert_at_rest(model, :overlay!)
+    _apply_plan!(model, plan)
+    try
+        _settle!(model; fresh = false)
+    catch err
+        @atomic :release model.status = :built
+        err isa InterruptException && rethrow()
+        rethrow(_wrap_step(model, k, :overlay, err))
+    end
+    settled!(hooks)                   # the overlay boundary's snapshot (§11.2, §12.6)
+    @atomic :release model.status = :consistent
+    nothing
+end
+
+# The merge bases read off a model at rest (§14.1, D-429): the stores as they
+# stand, in `_store_bases`' order, `nothing` where a component has none.
+_store_values(exec::Executor) =
+    [(store, ci, st === nothing ? nothing : st[])
+     for ci in eachindex(exec.sstores) for (store, st) in ((:s, exec.sstores[ci]), (:m, exec.mstores[ci]))]
 
 # The public door gates; the simulation's forwarding method and `init!` take
 # the inner one (D-318).
@@ -322,13 +375,27 @@ everywhere.
 Never called bare: the model's `init!` (above) hosts it, the one door
 that runs it (D-274), wrapping a throw as §13.4's catch does (D-223, D-317).
 """
-@inline function boundary_zero!(model::Model)
+@inline boundary_zero!(model::Model) = _settle!(model; fresh = true)
+
+# The settling routine both doors call (§14.5, §12.6, D-429): boundary zero's
+# tail, projection and the event phase to quiescence, with one flag. Fresh, the
+# sweep admits every discrete output stage and the due updates run, boundary
+# zero's two amendments (D-205, D-067). Continuing, under `overlay!`, the sweep
+# is the off-tick one with every discrete entry gated out and no update runs:
+# an overlaid store is the next tick's state and its held cell stays (D-273).
+# The priors are the doors' business: `init!` resets them, `overlay!` keeps
+# them, so only a guard the overlay moved into holding fires here.
+@inline function _settle!(model::Model; fresh::Bool)
     cursor = model.exec.cursor
     _phase!(cursor, :project)
     _projects!(model.exec.events, model.exec.xbuf)
-    event_phase!(model, ESTABLISH)
-    _phase!(cursor, :ticks)
-    model.exec.bodies.ticks(0)
+    if fresh
+        event_phase!(model, ESTABLISH)
+        _phase!(cursor, :ticks)
+        model.exec.bodies.ticks(0)
+    else
+        event_phase!(model, nothing)
+    end
     nothing
 end
 
@@ -507,9 +574,9 @@ modes(model::Model, path::String) =
 # its caller names, and the cause under the species rule below. Nothing inside
 # the sequence throws a `StepError`, so one arriving here is an invariant firing,
 # not a re-wrap. Two callers reach it, both the model's catch sites (D-317):
-# `frame!` (frame.jl) as `:loop`, and the model's `init!` (above)
-# around boundary zero as `:boundary_zero` (D-223). It stays the only
-# constructor.
+# `frame!` (frame.jl) as `:loop`, and the model's `init!` and `overlay!`
+# (above) around their settling as `:boundary_zero` and `:overlay` (D-223,
+# D-429). It stays the only constructor.
 function _wrap_step(model::Model, entry_boundary::Int, host::Symbol, err)
     err isa StepError && throw(InternalInvariant(
         "a StepError reached the catch site (§13.4), which is its only constructor — " *
@@ -598,27 +665,36 @@ clock sits inside). A `t*` abandon leaves the clock inside the frame, and the
 model steps whole frames, so a state taken there would have no next frame to
 continue on. `checkpoint(sim)` wraps this state with the run's two counters.
 
-A model's state is not a condition and has no algebra (D-273). `restore!` puts
-it back.
+A model's state is not a condition and enters no condition expression (D-273);
+`restore!` puts it back, and `overlay!` writes a condition onto a model at rest
+(D-429).
 """
 function checkpoint(model::Model{T}) where {T}
-    model_status = @atomic :acquire model.status
-    model_status === :consistent || throw(DiagnosticError(ServiceLifecycle(
-        op = :checkpoint, status = model_status, legal = [:consistent])))
+    _assert_at_rest(model, :checkpoint)
     exec = model.exec
     clock = exec.clock
-    # a frame top is exactly the time the loop writes there, `_grid_time` in the
-    # clock's scalar, and `_frames_to` names the frame the clock sits inside
-    k = _frames_to(clock.t, clock.t₀, model.deployment.h)
-    t_frame = _grid_time(model, k)
-    clock.t == oftype(clock.t, t_frame) ||
-        throw(DiagnosticError(CheckpointMidFrame(t = _seconds(clock.t), t_frame = t_frame,
-                                                 frame = k)))
     s = Any[st === nothing ? nothing : st[] for st in exec.sstores]
     m = Any[st === nothing ? nothing : st[] for st in exec.mstores]
     checkpoint_stepper(exec.stepper)   # empty for a one-step method (stepper.jl)
     ModelState{T}(copy(exec.xbuf), s, m, capture_stores(exec.store), copy(exec.events.prior),
                   clock.t, clock.t₀, model.deployment, _fingerprint(model))
+end
+
+# The rest a `checkpoint` reads and an `overlay!` writes on (§12.6, D-274,
+# D-429): the status `:consistent`, and the clock on a frame top. A frame top is
+# exactly the time the loop writes there, `_grid_time` in the clock's scalar,
+# and `_frames_to` names the frame the clock sits inside. Returns the frame.
+function _assert_at_rest(model::Model, op::Symbol)
+    model_status = @atomic :acquire model.status
+    model_status === :consistent || throw(DiagnosticError(ServiceLifecycle(
+        op = op, status = model_status, legal = [:consistent])))
+    clock = model.exec.clock
+    k = _frames_to(clock.t, clock.t₀, model.deployment.h)
+    t_frame = _grid_time(model, k)
+    clock.t == oftype(clock.t, t_frame) ||
+        throw(DiagnosticError(CheckpointMidFrame(t = _seconds(clock.t), t_frame = t_frame,
+                                                 frame = k)))
+    k
 end
 
 # The fingerprint check the restoring doors and replay's entry pass share (§12.6,
