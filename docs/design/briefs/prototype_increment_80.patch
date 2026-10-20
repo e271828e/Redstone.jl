@@ -1,0 +1,368 @@
+diff --git a/src/checkpoint.jl b/src/checkpoint.jl
+index 58d3244..8324162 100644
+--- a/src/checkpoint.jl
++++ b/src/checkpoint.jl
+@@ -39,8 +39,9 @@ indexed grid time, `t₀ + k·h` as the clock writes it, so a hand-typed decimal
+ can miss the grid by an ulp and be refused.
+ 
+ The table holds the root-input cells as values, never the authored overlay
+-(D-038). A model's state is not a condition and has no algebra (D-273). `==` is
+-identity: compare one field by field.
++(D-038). A model's state is not a condition: it enters no condition expression
++and yields none, where a condition can be overlaid on a model at rest (D-273,
++D-429). `==` is identity: compare one field by field.
+ """
+ struct ModelState{T}
+     x::Vector{T}                     # the flat buffer
+diff --git a/src/conditions.jl b/src/conditions.jl
+index 07aafeb..e2415e5 100644
+--- a/src/conditions.jl
++++ b/src/conditions.jl
+@@ -277,7 +277,7 @@ end
+ # --- resolution (§14.3) ---------------------------------------------------------
+ 
+ """
+-    resolve_condition(node, build::Build, T = Float64) → ConditionPlan
++    resolve_condition(node, build::Build, T = Float64; bases = nothing) → ConditionPlan
+ 
+ Flatten the condition tree, validate every entry against `build` in §13.1's
+ collecting form — full list, violations collected, one `DiagnosticError` — and
+@@ -290,9 +290,12 @@ root input, and no leaf is written twice — an input entry's leaf being the
+ *root input* it resolves to, so two spellings of one root input are one leaf.
+ Schema is the
+ authority on *may you write this, at what type*; the activation's layout
+-supplies the destination.
++supplies the destination. `bases` is the merge base of a partial store entry,
++the declared defaults when `nothing` (D-063) and the stores a door hands,
++`_store_bases`' triples, otherwise (D-429).
+ """
+-function resolve_condition(node::ConditionNode, build::Build, ::Type{T} = Float64) where {T}
++function resolve_condition(node::ConditionNode, build::Build, ::Type{T} = Float64;
++                           bases = nothing) where {T}
+     resolved, diags, act = _resolve_entries(node, build, T)
+     _report_violations(diags)
+ 
+@@ -314,13 +317,14 @@ function resolve_condition(node::ConditionNode, build::Build, ::Type{T} = Float6
+     end
+ 
+     # Overlay partiality baked now (§14.3): the store's write is one whole
+-    # value, `merge(defaults, overlay)`, so application decides nothing.
++    # value, `merge(base, overlay)`, so application decides nothing. The base is
++    # the declared defaults, `init!`'s, unless the door hands its own, as
++    # `overlay!` hands the stores as they stand (§14.1, D-429).
+     stores = Tuple{Symbol,Int,Any}[]
+-    for (store, ci, defaults) in _store_bases(build, act)
++    for (store, ci, base) in (bases === nothing ? _store_bases(build, act) : bases)
+         overlay = get(overlays, (store, ci), nothing)
+         overlay === nothing && continue
+-        push!(stores, (store, ci, convert(typeof(defaults),
+-                                          merge(defaults, (; overlay...)))))
++        push!(stores, (store, ci, convert(typeof(base), merge(base, (; overlay...)))))
+     end
+     ConditionPlan{T}(xs, stores, inputs, faces)
+ end
+@@ -397,7 +401,7 @@ _store_bases(build::Build, act::Activation) =
+ # Anything that is not a node reaching a service entry point is the §14.2
+ # misuse, not a `MethodError`: the directive is the same one `combine` prints,
+ # and a bare NamedTuple handed to `init!` is exactly the slip it addresses.
+-resolve_condition(other, ::Build, ::Type = Float64) = _node_misuse(other, ())
++resolve_condition(other, ::Build, ::Type = Float64; bases = nothing) = _node_misuse(other, ())
+ 
+ function _leaf_offset(x::NamedTuple, field::Symbol)
+     offset = 0
+diff --git a/src/diagnostics.jl b/src/diagnostics.jl
+index 2191424..0d77dc9 100644
+--- a/src/diagnostics.jl
++++ b/src/diagnostics.jl
+@@ -218,7 +218,7 @@ struct StepError{C <: Union{Diagnostic, Exception}} <: Exception
+                      # phase, the stage or trial time mid-integration
+     boundary::Int    # the frame-entry boundary index: replay!(…; to_boundary = boundary)
+     host::Symbol     # the catch that took the throw: :boundary_zero under init!,
+-                     # :loop inside a frame
++                     # :overlay under overlay!, :loop inside a frame
+     cause::C
+ end
+ 
+@@ -262,6 +262,8 @@ function Base.showerror(io::IO, carrier::StepError)
+     # runs no boundary zero, so frame one's record is still ahead.
+     carrier.host === :boundary_zero ?
+         print(io, "init!(sim2, condition) under the same condition reproduces it") :
++    carrier.host === :overlay ?
++        print(io, "overlay!(sim2, condition) on the same stopped state reproduces it") :
+         print(io, "replay!(sim2, trc; to_boundary = ", carrier.boundary,
+               ") then step!(sim2) reproduces it")
+     print(io, "\n  cause: ")
+diff --git a/src/model.jl b/src/model.jl
+index 30643d1..c1d3db3 100644
+--- a/src/model.jl
++++ b/src/model.jl
+@@ -186,7 +186,7 @@ function init!(model::Model{T}, plan::ConditionPlan; t0::Real = 0.0,
+     exec.clock.t₀ = Float64(t0)       # exact: the clock's origin is a `Float64` too
+     fill!(exec.events.prior, false)   # every prior not-holding (§10.6)
+     try
+-        boundary_zero!(model)
++        _settle!(model; fresh = true)   # boundary zero (§14.5)
+     catch err
+         @atomic :release model.status = :built
+         err isa InterruptException && rethrow()
+@@ -197,6 +197,59 @@ function init!(model::Model{T}, plan::ConditionPlan; t0::Real = 0.0,
+     nothing
+ end
+ 
++"""
++    overlay!(model, condition; hooks = NoHooks())
++    overlay!(model, plan::ConditionPlan; hooks = NoHooks())
++
++The state what-if on a model at rest (§12.6, §14.1, D-429): the condition's
++stores overwritten on the model's own, every other store, the clock and the
++guard priors kept, and the overlaid state settled by boundary zero's tail with
++the discrete stages and updates skipped (`_settle!`). An overlaid discrete store
++is the next tick's state, so its held cell stays until that tick; an overlaid
++`x` is projected, and a guard the overlay moves into holding fires now. The
++model must be `:consistent` with its clock on a frame top, as `checkpoint`
++asks, or the call is `ServiceLifecycle` or `CheckpointMidFrame`.
++
++The condition resolves against the build with `init!`'s diagnostics, a partial
++store entry merging onto the current store rather than the declared default
++(§14.3), and root-input entries write the table's root-input cells. No totality
++is asserted: every root input already holds a value. The plan method writes
++alone, so the simulation's `overlay!` can resolve before it touches its run.
++
++A throw inside the settling takes the one `StepError` constructor with host
++`:overlay` and the frame the clock sits at, and writes the status back to
++`:built`, the stores partly written as a failed boundary zero leaves them.
++"""
++function overlay!(model::Model{T}, condition = set(); kw...) where {T}
++    _claimed_gate(model, get(kw, :hooks, NoHooks()), :overlay!)
++    _assert_at_rest(model, :overlay!)   # the stores are the merge base, so the gate precedes the resolve
++    plan = resolve_condition(condition, model.deployment.build, T;
++                             bases = _store_values(model.exec))
++    overlay!(model, plan; kw...)
++end
++
++function overlay!(model::Model, plan::ConditionPlan; hooks::FrameHooks = NoHooks())
++    _claimed_gate(model, hooks, :overlay!)
++    k = _assert_at_rest(model, :overlay!)
++    _apply_plan!(model, plan)
++    try
++        _settle!(model; fresh = false)
++    catch err
++        @atomic :release model.status = :built
++        err isa InterruptException && rethrow()
++        rethrow(_wrap_step(model, k, :overlay, err))
++    end
++    settled!(hooks)                   # the overlay boundary's snapshot (§11.2, §12.6)
++    @atomic :release model.status = :consistent
++    nothing
++end
++
++# The merge bases read off a model at rest (§14.1, D-429): the stores as they
++# stand, in `_store_bases`' order, `nothing` where a component has none.
++_store_values(exec::Executor) =
++    [(store, ci, st === nothing ? nothing : st[])
++     for ci in eachindex(exec.sstores) for (store, st) in ((:s, exec.sstores[ci]), (:m, exec.mstores[ci]))]
++
+ # The public door gates; the simulation's forwarding method and `init!` take
+ # the inner one (D-318).
+ apply!(model::Model, plan::ConditionPlan) =
+@@ -322,13 +375,27 @@ everywhere.
+ Never called bare: the model's `init!` (above) hosts it, the one door
+ that runs it (D-274), wrapping a throw as §13.4's catch does (D-223, D-317).
+ """
+-@inline function boundary_zero!(model::Model)
++@inline boundary_zero!(model::Model) = _settle!(model; fresh = true)
++
++# The settling routine both doors call (§14.5, §12.6, D-429): boundary zero's
++# tail, projection and the event phase to quiescence, with one flag. Fresh, the
++# sweep admits every discrete output stage and the due updates run, boundary
++# zero's two amendments (D-205, D-067). Continuing, under `overlay!`, the sweep
++# is the off-tick one with every discrete entry gated out and no update runs:
++# an overlaid store is the next tick's state and its held cell stays (D-273).
++# The priors are the doors' business: `init!` resets them, `overlay!` keeps
++# them, so only a guard the overlay moved into holding fires here.
++@inline function _settle!(model::Model; fresh::Bool)
+     cursor = model.exec.cursor
+     _phase!(cursor, :project)
+     _projects!(model.exec.events, model.exec.xbuf)
+-    event_phase!(model, ESTABLISH)
+-    _phase!(cursor, :ticks)
+-    model.exec.bodies.ticks(0)
++    if fresh
++        event_phase!(model, ESTABLISH)
++        _phase!(cursor, :ticks)
++        model.exec.bodies.ticks(0)
++    else
++        event_phase!(model, nothing)
++    end
+     nothing
+ end
+ 
+@@ -507,9 +574,9 @@ modes(model::Model, path::String) =
+ # its caller names, and the cause under the species rule below. Nothing inside
+ # the sequence throws a `StepError`, so one arriving here is an invariant firing,
+ # not a re-wrap. Two callers reach it, both the model's catch sites (D-317):
+-# `frame!` (frame.jl) as `:loop`, and the model's `init!` (above)
+-# around boundary zero as `:boundary_zero` (D-223). It stays the only
+-# constructor.
++# `frame!` (frame.jl) as `:loop`, and the model's `init!` and `overlay!`
++# (above) around their settling as `:boundary_zero` and `:overlay` (D-223,
++# D-429). It stays the only constructor.
+ function _wrap_step(model::Model, entry_boundary::Int, host::Symbol, err)
+     err isa StepError && throw(InternalInvariant(
+         "a StepError reached the catch site (§13.4), which is its only constructor — " *
+@@ -598,22 +665,14 @@ clock sits inside). A `t*` abandon leaves the clock inside the frame, and the
+ model steps whole frames, so a state taken there would have no next frame to
+ continue on. `checkpoint(sim)` wraps this state with the run's two counters.
+ 
+-A model's state is not a condition and has no algebra (D-273). `restore!` puts
+-it back.
++A model's state is not a condition and enters no condition expression (D-273);
++`restore!` puts it back, and `overlay!` writes a condition onto a model at rest
++(D-429).
+ """
+ function checkpoint(model::Model{T}) where {T}
+-    model_status = @atomic :acquire model.status
+-    model_status === :consistent || throw(DiagnosticError(ServiceLifecycle(
+-        op = :checkpoint, status = model_status, legal = [:consistent])))
++    _assert_at_rest(model, :checkpoint)
+     exec = model.exec
+     clock = exec.clock
+-    # a frame top is exactly the time the loop writes there, `_grid_time` in the
+-    # clock's scalar, and `_frames_to` names the frame the clock sits inside
+-    k = _frames_to(clock.t, clock.t₀, model.deployment.h)
+-    t_frame = _grid_time(model, k)
+-    clock.t == oftype(clock.t, t_frame) ||
+-        throw(DiagnosticError(CheckpointMidFrame(t = _seconds(clock.t), t_frame = t_frame,
+-                                                 frame = k)))
+     s = Any[st === nothing ? nothing : st[] for st in exec.sstores]
+     m = Any[st === nothing ? nothing : st[] for st in exec.mstores]
+     checkpoint_stepper(exec.stepper)   # empty for a one-step method (stepper.jl)
+@@ -621,6 +680,23 @@ function checkpoint(model::Model{T}) where {T}
+                   clock.t, clock.t₀, model.deployment, _fingerprint(model))
+ end
+ 
++# The rest a `checkpoint` reads and an `overlay!` writes on (§12.6, D-274,
++# D-429): the status `:consistent`, and the clock on a frame top. A frame top is
++# exactly the time the loop writes there, `_grid_time` in the clock's scalar,
++# and `_frames_to` names the frame the clock sits inside. Returns the frame.
++function _assert_at_rest(model::Model, op::Symbol)
++    model_status = @atomic :acquire model.status
++    model_status === :consistent || throw(DiagnosticError(ServiceLifecycle(
++        op = op, status = model_status, legal = [:consistent])))
++    clock = model.exec.clock
++    k = _frames_to(clock.t, clock.t₀, model.deployment.h)
++    t_frame = _grid_time(model, k)
++    clock.t == oftype(clock.t, t_frame) ||
++        throw(DiagnosticError(CheckpointMidFrame(t = _seconds(clock.t), t_frame = t_frame,
++                                                 frame = k)))
++    k
++end
++
+ # The fingerprint check the restoring doors and replay's entry pass share (§12.6,
+ # §12.7): the structural fingerprint compared field for field, then the two
+ # deployments as *values*, one `==` as D-254 asks, with `_walk_deployment!`
+diff --git a/src/sim.jl b/src/sim.jl
+index 7c33987..db9692e 100644
+--- a/src/sim.jl
++++ b/src/sim.jl
+@@ -630,17 +630,26 @@ would have no next frame to continue on. A frame an interrupt from model code
+ abandoned published nothing, its stores possibly mid-boundary, whatever the
+ clock reads (§12.4).
+ 
+-A checkpoint is not a condition and has no algebra (D-273). `restore!` puts
+-it back.
++A checkpoint is not a condition and enters no condition expression (D-273);
++`restore!` puts it back, and `overlay!` writes a condition onto a stopped run
++(D-429).
+ """
+ function checkpoint(sim::Simulation)
++    _assert_at_rest(sim, :checkpoint)
++    Checkpoint(checkpoint(sim.model), sim.run.frame, sim.run.boundary)
++end
++
++# The rest a `checkpoint` reads and an `overlay!` writes on (§12.6, D-274,
++# D-429): a stopped-sim state, `initialized` or `stopped`, with the clock on a
++# frame top and that top published. A frame top is exactly the time the loop
++# writes there, `_grid_time` in the clock's scalar, whatever the origin; a `t*`
++# stop leaves the clock short of it. At rest the latest snapshot is that top's,
++# which an abandoned frame never published, a `t*` boundary it did publish
++# included.
++function _assert_at_rest(sim::Simulation, op::Symbol)
+     lifecycle_state = lifecycle(sim)
+     lifecycle_state in (:initialized, :stopped) || throw(DiagnosticError(ServiceLifecycle(
+-        op = :checkpoint, status = lifecycle_state, legal = [:initialized, :stopped])))
+-    # a frame top is exactly the time the loop writes there, `_grid_time` in the
+-    # clock's scalar, whatever the origin; a `t*` stop leaves the clock short of it.
+-    # At rest the latest snapshot is that top's, which an abandoned frame never
+-    # published, a `t*` boundary it did publish included.
++        op = op, status = lifecycle_state, legal = [:initialized, :stopped])))
+     clock = sim.model.exec.clock
+     frame = sim.run.frame
+     t_frame = _grid_time(sim.model, frame)
+@@ -649,7 +658,52 @@ function checkpoint(sim::Simulation)
+         published.t == clock.t ||
+         throw(DiagnosticError(CheckpointMidFrame(t = _seconds(clock.t), t_frame = t_frame,
+                                                  frame = frame)))
+-    Checkpoint(checkpoint(sim.model), frame, sim.run.boundary)
++    nothing
++end
++
++"""
++    overlay!(sim, condition; trace = true, log = true, log_every = 1, log_max = 65536)
++
++§12.6's state what-if: write a condition onto a stopped run and continue it
++as a fresh trajectory (D-429). The stores the condition names are overwritten
++on the run's own, every other store, the clock, the sampling lattice and the
++guard priors are kept, and the overlaid state settles through the model's
++`overlay!`: projection and the event phase to quiescence, with no discrete
++output stage and no `s_update`, so an overlaid discrete store is the next
++tick's state and its held cell stays until then (D-273). A guard the overlay
++moves into holding fires at the overlay boundary, before the next integrate.
++It is the sibling of the input what-if, a restore followed by `stage!`.
++
++A door beside `init!`, `restore!` and `replay!`, taking their four recording
++keywords for the run it builds (D-261), handling the periphery as `restore!`
++does, and legal where `checkpoint` is: `initialized` or `stopped`, the clock
++on a published frame top, or `ServiceLifecycle` and `CheckpointMidFrame`. The
++condition resolves before anything touches the run, a partial store entry
++merging onto the current store, root-input entries allowed and no totality
++asked. The settling publishes one snapshot at the stopped run's `t`, under its
++last ordinal as `restore!` re-publishes, and the trace header is the checkpoint
++taken after it, so replay reproduces the overlaid trajectory with no record of
++the overlay. A throw inside the settling is a `StepError` with host `:overlay`
++and leaves the simulation `built`, with no header, as a failed boundary zero
++does (D-223).
++"""
++function overlay!(sim::Simulation, condition = set(); trace = true, log = true,
++                  log_every = 1, log_max = 65536)
++    _assert_at_rest(sim, :overlay!)
++    _check_recording(:overlay!, trace, log, log_every, log_max)   # the run's keywords (D-261)
++    plan = resolve_condition(condition, sim.model.deployment.build, Float64;
++                             bases = _store_values(sim.model.exec))   # the refusals precede every write
++    _reset_periphery!(sim)
++    _open_run!(sim, nothing, Pair{String,Vector{Symbol}}[], nothing, sim.run.frame,
++               sim.run.boundary, trace, log, Int(log_every), log_max)
++    sim.run.boundary -= 1   # the settling re-publishes the stopped run's last ordinal
++    overlay!(sim.model, plan; hooks = LoopHooks(sim, sim.plane.roster, nothing, Bool[]))
++    # §11.5's header: the checkpoint after the settling, so a throw inside it
++    # leaves no header and replay needs no knowledge of the overlay (D-429)
++    trc = sim.run.trace
++    trc === nothing ||
++        (trc.header = Checkpoint(checkpoint(sim.model), sim.run.frame, sim.run.boundary))
++    nothing
+ end
+ 
+ # The door body `restore!` and `replay!` share (§12.6, §12.7, D-274): first
+diff --git a/test/imports.jl b/test/imports.jl
+index 03a677d..c78340c 100644
+--- a/test/imports.jl
++++ b/test/imports.jl
+@@ -64,7 +64,7 @@ import Redstone: ASSEMBLY, Absolute, AbstractBinding, AbstractComponent,
+     latest, leaf_declarations, leaf_eltypes, leaf_names, leaf_types, lifecycle, live!, logged,
+     logline, loop, m_init, map_input, map_output, margin, margin!, membership, message, mode, modes,
+     mutable_position, nleaves, offtick_boundary!, orphaned,
+-    output_wires, output_faces, output_passthrough,
++    output_wires, output_faces, output_passthrough, overlay!,
+     override, pace, pace!, path, pause!, paused, peek, pending, period, phase_bodies, port,
+     port_views, probe_value, publish!, reads,
+     reconstruct, replay!, report!, resolve, resolve_condition, resolve_dest, restore!,
