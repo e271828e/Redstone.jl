@@ -39,7 +39,7 @@ readability with no loss of content. The steps are in
 | 13. Error discipline | done | `3d4cb27` | `ae63ca9` |
 | 14. Stopped-sim services | done | `fe29f36` | `133b58d` |
 | Appendix A. Taught contracts | done | `630e58e` | `appA/` |
-| Appendix B. API synopsis | done | | `appB/` |
+| Appendix B. API synopsis | done | `98d457e` | `appB/` |
 | Appendix C. Diagnostic kind set | not started | | |
 | Appendix D. Glossary | not started | | |
 
