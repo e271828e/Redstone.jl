@@ -317,6 +317,24 @@ function test_linearize()
         @test d.step == ".v" && d.declared === LeafPose{Float64} && isempty(d.pinning)
     end
 
+    @testset "a root input whose type does not convert is refused at the default operating point (§14.10, D-428)" begin
+        # `LeafPose` has no `convert` between its scalar instantiations, so the
+        # checkpoint's value cannot enter the seeded cell. The refusal is the
+        # condition path's own, with the checkpoint as the origin.
+        sim = Simulation(fed(PoseConsumer(), "pose"); h = 1//10)
+        pose = LeafPose(SVector(1.0, 0.0, 0.0), SMatrix{2,2}(1.0, 0.0, 0.0, 1.0))
+        init!(sim, set(u = (in = pose,)))
+        state_taps = (q = get_state("c", :q),)
+        d = only(diagnostics(failure(() -> linearize(sim, taps(x = state_taps)))))
+        @test d isa ConditionResolution && d.reason === :unconvertible && d.face === :in
+        @test d.declared === LeafPose{LinearizeDual} && d.observed === LeafPose{Float64}
+        @test d.value == pose && d.origin == "checkpoint" && d.activation === nothing
+        # the `about` form refuses the same type with the same kind
+        d = only(diagnostics(failure(() -> linearize(sim, taps(x = state_taps);
+                                                     about = set(u = (in = pose,))))))
+        @test d isa ConditionResolution && d.reason === :unconvertible && d.face === :in
+    end
+
     @testset "the frozen discrete tier holds, and its cell is the established one (§14.10, D-213, D-197)" begin
         sim = Simulation(lin_sampled(); h = 1//10)
         state_taps = (θ = get_state("c", :θ), ω = get_state("c", :ω))

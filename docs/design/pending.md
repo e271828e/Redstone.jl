@@ -189,16 +189,6 @@ breaking user code, and each may benefit from user feedback first.
   `docs/design/companions/library_inventory.md` is unbuilt, each block
   built when wanted (§13.7, D-313).
 
-- **A struct root input without `convert` under `linearize`** (§14.3,
-  §14.10). A walked struct root input whose type has no `convert` between
-  its scalar instances makes `linearize`'s default operating point die in a
-  raw `MethodError` from the root-input copy in `src/linearize.jl`. §14.3
-  states the `convert` obligation for condition writes only, and no
-  diagnostic names it here. The options: state the obligation for this
-  copy and keep the raw error, or state it and refuse the type with a kind
-  before the first evaluation. The second fits §13's rule that a
-  framework-detected failure has a kind. Found by chapter 14's survey.
-
 ## Deviations
 
 What is built in a shape the spec's is not. Transactional: the commit

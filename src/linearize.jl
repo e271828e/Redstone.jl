@@ -187,12 +187,20 @@ function _linearize(model::Model{Float64}, tap_set::Taps, operating_point, about
         copyto!(seeded_exec.xbuf, operating_point.x)   # zero partials throughout
         _restore_stores!(seeded_exec, operating_point)
         # each root input converted to its seeded cell's type, as an authored
-        # value is at resolution (conditions.jl)
+        # value is at resolution (conditions.jl); a type that does not convert
+        # takes the condition path's refusal, every root input in one throw
+        # (D-428)
+        diags = Diagnostic[]
         for face in build.structure.root_inputs
             addr = act.layout.addr[("", face)]
-            scatter_cell!(seeded_exec.store, addr, convert(_port_type(addr),
-                gather_cell(nominal_exec.store, nominal_exec.act.layout.addr[("", face)])))
+            value = gather_cell(nominal_exec.store, nominal_exec.act.layout.addr[("", face)])
+            (ok, converted) = _convert(_port_type(addr), value)
+            ok || (push!(diags, ConditionResolution(; field = face, face = face,
+                       reason = :unconvertible, origin = "checkpoint", declared = _port_type(addr),
+                       observed = typeof(value), value = value)); continue)
+            scatter_cell!(seeded_exec.store, addr, converted)
         end
+        _report_violations(diags)
         _set_clock!(seeded_exec, operating_point.t, operating_point.t₀)
     else
         _set_clock!(seeded_exec, t, t)

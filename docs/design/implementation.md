@@ -592,6 +592,10 @@ D-235, D-236, D-237, D-238, D-243, D-263, D-264, D-265, D-276, D-316.
   nominal half with no resolve, no `apply!` and no establishment round, so
   the frozen cells are the checkpoint's held cells. The `about` form keeps
   the resolve, the `apply!` and D-213's round (D-274).
+- At the default point each root input's checkpoint value enters the seeded
+  half through conditions.jl's `_convert`, and a type that does not convert
+  is `ConditionResolution` `:unconvertible` with the checkpoint as its
+  origin, every root input in one throw (D-428).
 - The collecting tap resolution, with the discrete store, the vector leaf,
   the member in the wrong list, the unseedable root input and a second seed
   at one site refused. The unseedable root input names its pinning consumers
@@ -610,7 +614,7 @@ D-235, D-236, D-237, D-238, D-243, D-263, D-264, D-265, D-276, D-316.
   linear `[k]` names and the two spellings are one site (D-276).
 
 Spec: §9.7, §14.4, §14.10, D-036, D-167, D-168, D-197, D-213, D-272, D-274,
-D-276, D-277, D-317, D-319, D-406.
+D-276, D-277, D-317, D-319, D-406, D-428.
 
 ### `src/model.jl`
 
