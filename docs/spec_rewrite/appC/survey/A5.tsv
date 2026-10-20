@@ -1,0 +1,94 @@
+kind	aspect	verdict	c_says	code_says	sites	note
+CheckpointMismatch	payload	c_stale	store or root input (path, store, expected vs found layout/type); x type; cell address/type; event list; root-input value; scalar; deployment parameter; schedule row column; rate scope column; schedule row/scope/per-component list; frame ordinal; clock	fields what, path, name, expected, found. Store arms: :sizes, :paths, :events, :x, :s, :m, port.NAME. Root-input arms: face-list (name empty) and value conversion	src/diagnostics.jl:2325, src/model.jl:710-740, src/checkpoint.jl:122	C never names the component-path list (:paths) or the cell-size list (:sizes), nor the root input-face list difference; add "the component-path list, the cell-size list, the root input-face list".
+CheckpointMismatch	payload	ok	x type, store s/m, cell address or type, event list	:x, :s, :m with path; port.NAME with path (cell present/type then offsets); :events	src/model.jl:726-740, src/checkpoint.jl:122	Member-by-member match.
+CheckpointMismatch	payload	ok	deployment parameter (Δt_base/h/N_base/algorithm/localization_tol/localization_budget/firing_budget, recorded vs bound)	same seven names walked, path empty	src/checkpoint.jl:140-150	Seven parameters match both ways.
+CheckpointMismatch	payload	ok	schedule row column differs (path, column, recorded vs bound); rate scope column differs (path, column, values)	row columns :anchor :D :Φ :Δt :rates; scope columns scope.anchor scope.D scope.Φ	src/checkpoint.jl:151-176	C leaves the column sets unspelled; no drift.
+CheckpointMismatch	payload	c_extra	a schedule whose row list, scope list or per-component vector differs (the name, the two lists)	only the row path list (name :schedule) and the scope list (name scope.key); no per-component vector case	src/checkpoint.jl:152-174	Drop "or per-component vector": "a schedule whose row list or scope list differs".
+CheckpointMismatch	payload	ok	frame ordinal outside the recording's frames (writer, ordinal, legal range); under restore=false the origin or frame index off (which, t0 or frame, recording's value/range, simulation's)	what :frame (name writer tag, expected range, found ordinal); what :clock (name :t₀ or :frame)	src/trace.jl:189, src/sim.jl:876-879	Match.
+CheckpointMismatch	payload	ok	scalar type (recorded vs target model's); recorded root-input value not converting to declared type	:scalar expected recorded T found target T; :root_input with name face, expected declared type, found value	src/model.jl:786, src/sim.jl:799, src/trace.jl:226	Match.
+CheckpointMismatch	severity	ok	Error	no severity method; default :error	src/diagnostics.jl:50	
+CheckpointMismatch	raised	ok	service; one kind for the replay entry pass and restore!	raised by _check_checkpoint! (restore! of Model and Simulation, both Checkpoint and ModelState forms), _compile_feed and _compile_records! (replay!), and the scalar dispatch methods	src/model.jl:706, src/sim.jl:771,788,870-880, src/trace.jl:189,226	
+CheckpointMismatch	policy	c_stale	collected	collected into diags and thrown as one DiagnosticError, except the scalar case, which restore! on a state at another scalar throws alone by dispatch	src/model.jl:786, src/sim.jl:799	Add "except the scalar case, which throws alone on restore! by dispatch".
+CheckpointMidFrame	payload	ok	clock's or state's t, frame top t_frame, frame index frame	t, t_frame, frame	src/diagnostics.jl:2420	
+CheckpointMidFrame	severity	ok	Error	default :error	src/diagnostics.jl:50	
+CheckpointMidFrame	raised	c_stale	service; checkpoint on a simulation or model not at rest; restore! for a state whose t is off the grid	also raised by overlay! (via _assert_at_rest op :overlay!) on Simulation and Model, stopped-sim; checkpoint and restore! as C says	src/sim.jl:649-660,692, src/model.jl:689-698,227-235,752-757	Add "`overlay!` raises it too, on the same rest".
+CheckpointMidFrame	policy	ok	fail-fast, but collected with CheckpointMismatch on restore!	_assert_at_rest throws alone; _check_grid! pushes onto diags with the mismatches in restore! (Model, Simulation Checkpoint and ModelState)	src/sim.jl:659,772,789, src/model.jl:697,757,779	
+ReplaySchemaMismatch	payload	ok	trace's device tag, recorded face-name to position schema, disagreeing face names, target's root input-face list	writer, schema, unknown, faces	src/diagnostics.jl:2437	
+ReplaySchemaMismatch	severity	ok	Error	default :error	src/diagnostics.jl:50	
+ReplaySchemaMismatch	raised	ok	service	replay! entry pass, header stage, _check_schemas!	src/trace.jl:138, src/sim.jl:882	
+ReplaySchemaMismatch	policy	ok	collected	pushed onto diags, thrown as one DiagnosticError	src/trace.jl:138, src/sim.jl:883	
+ReplayUnknownFace	payload	ok	face name or bare position; frame ordinal; trace's device tag; root input-face list	face::Union{Symbol,Int}, frame, writer, faces. Raise sites: position outside a schema (writer tag), record whose writer index has no schema (tag "writer #n", position), absent schema face (unreachable guard)	src/diagnostics.jl:2451, src/trace.jl:159,201,218	Match.
+ReplayUnknownFace	severity	ok	Error	default :error	src/diagnostics.jl:50	
+ReplayUnknownFace	raised	ok	service	replay! entry pass, record stage	src/trace.jl:159,201,218	
+ReplayUnknownFace	policy	ok	collected	pushed onto diags, one throw after the record stage	src/trace.jl:201-218, src/sim.jl:885	
+ArgumentInvalid	payload	c_stale	the call, the argument, the value in hand, the violated constraint	fields call, reason, argument, value, entry, vocabulary	src/diagnostics.jl:2143	Add "for a `TableBinding` entry, the entry key and the legal entry vocabulary"; reason is the constraint tag.
+ArgumentInvalid	payload	c_stale	call list: Model, Simulation, init!, frame!, apply!, restore!, run!, step!, replay!, live!, pace!, margin!, trim!, linearize, TableBinding, a period constructor	calls constructed: Model, Simulation, init!, overlay!, frame!, apply!, restore!, replay!, live!, step!, run!, pace!, margin!, trim!, linearize, trace, TableBinding, Period, Hz, Absolute	src/model.jl:64,150 (gate calls init!/overlay!/frame!/apply!/restore!/trim!), src/sim.jl:468-475,1079,2353, src/declare.jl:157-189	Every C member has a site. Code also raises it for `overlay!` (claimed gate, recording keywords) and `trace` (:disabled, trace = false); add both.
+ArgumentInvalid	payload	ok	reason :non_nominal on trim! and linearize at another scalar; reason :scalar on Model at another scalar	:non_nominal at trim.jl:461 and linearize.jl:150; :scalar at model.jl:64	src/trim.jl:461, src/linearize.jl:150, src/model.jl:64	Both named reasons exist. Other reasons constructed and unlisted by C: :range, :inexact, :not_a_quantity, :both_given, :not_replaying, :not_built, :claimed, :not_a_tap_set, :t0_without_about, :nonpositive_width, :not_a_problem, :disabled, :entry_shape, :no_face, :face_name, :vocabulary, :deadzone, :expo.
+ArgumentInvalid	severity	ok	Error	default :error	src/diagnostics.jl:50	
+ArgumentInvalid	raised	ok	service, or build in a sample_times declaration	service doors and constructors; Period, Hz and Absolute throw where called, which includes a sample_times body at build	src/declare.jl:157-189, src/sim.jl, src/model.jl	
+ArgumentInvalid	policy	c_stale	fail-fast, but collected over a TableBinding's entry table and over the Model and Simulation constructors' keywords and the claim on the model	TableBinding collects entries; Simulation collects join_timeout, not_built and claimed; Model collects chunk_size, but its :scalar refusal is thrown alone first. Also collected: the doors' recording keywords (trace, log, log_every, log_max, restore) in _check_recording for init!, overlay!, restore!, replay!. All else fail-fast	src/bindings.jl:43-72, src/sim.jl:197-212,468-480, src/model.jl:64-72	Add "and over the recording keywords of init!, overlay!, restore! and replay!"; note Model's scalar refusal throws alone.
+ReadSetMisuse	payload	c_stale	offending argument's type, the selector kinds in hand; or an empty prefix handed to at	fields observed, reason (:not_a_selector :not_a_read_set :not_a_tap_list :empty_prefix), label, in_hand	src/diagnostics.jl:2284	C omits the label (read or tap-list name) and the not-a-read-set and not-a-tap-list cases; add "the read's or tap list's label, and a bare NamedTuple or tap list that is no NamedTuple".
+ReadSetMisuse	severity	ok	Error	default :error	src/diagnostics.jl:50	
+ReadSetMisuse	raised	ok	service	reads(), _compile_reads, series, at(prefix, Reads), taps lists	src/readers.jl:303,420, src/sim.jl:2317, src/conditions.jl:98, src/linearize.jl:49	
+ReadSetMisuse	policy	ok	fail-fast	each site throws alone	src/readers.jl:303	
+NotAttached	payload	c_stale	device id or handle offered to detach!, the roster's device ids	device::String = type name of the device offered (_typename), roster = rostered ids (_who). detach! takes only a device, not a handle	src/diagnostics.jl:2307, src/sim.jl:2010-2015	Say "the offered device's type name, the roster's device ids"; roster ok.
+NotAttached	severity	ok	Error	default :error	src/diagnostics.jl:50	
+NotAttached	raised	ok	service	detach! after assert_configurable	src/sim.jl:2014	
+NotAttached	policy	ok	fail-fast	throw alone	src/sim.jl:2014	
+StepError	payload	c_stale	Cursor frame (component by its component-list index, function, boundary phase), clock, frame-entry boundary index, host, cause	cursor::CursorFrame(path::Union{Nothing,String}, fn, phase, index), t, boundary, host, cause::C. Phases :drain :integrate :arrival :validation :trial :project :round :ticks	src/diagnostics.jl:193-198,215-224	The component rides as its path (nothing when none), not an index; the cursor also holds `index` (stage, trial or round ordinal). Phase list matches C member by member.
+StepError	payload	ok	host (:loop, :boundary_zero or :overlay)	host set by _wrap_step callers: frame! :loop, init! :boundary_zero, overlay! :overlay	src/model.jl:582-590	
+StepError	severity	ok	Error	exception carrier, not a Diagnostic; always thrown	src/diagnostics.jl:215	
+StepError	raised	ok	runtime	built only at the catch sites in frame!, init! and overlay! around boundary work	src/model.jl:582-590	
+StepError	policy	ok	fail-fast	one catch site wraps the first throw	src/model.jl:582	
+NonfiniteState	payload	ok	component path, offending state leaf and its value, frame-top time, frame-entry boundary index	path, leaf, value, t, boundary	src/diagnostics.jl:285	
+NonfiniteState	severity	ok	Error	default :error	src/diagnostics.jl:50	
+NonfiniteState	raised	ok	runtime	nonfinite sweep after integrate	src/model.jl:523	
+NonfiniteState	policy	ok	fail-fast	thrown as DiagnosticError, unwrapped into StepError cause	src/model.jl:523,587-600	
+ChatteringBudget	payload	ok	component path, event name, boundary time, the exhausted localization_budget, the frame's localization count	path, event, t, budget, count	src/diagnostics.jl:1478	
+ChatteringBudget	severity	ok	Warning	severity method :warning	src/diagnostics.jl:1566	
+ChatteringBudget	raised	ok	runtime	localization trial loop in the frame	src/frame.jl:107	
+ChatteringBudget	policy	ok	rate-limited	report_cell! on model.frame_diag	src/frame.jl:107	
+FiringBudget	payload	ok	component path, event name, boundary time, exhausted firing_budget, boundary's firing count	path, event, t, budget, count	src/diagnostics.jl:1487	
+FiringBudget	severity	ok	Warning	severity method :warning	src/diagnostics.jl:1567	
+FiringBudget	raised	ok	runtime	event round at the boundary	src/model.jl:455	
+FiringBudget	policy	ok	rate-limited	report_cell! on model.frame_diag	src/model.jl:455	
+DebtReanchor	payload	ok	forgiven debt in seconds, new anchor's t and tau	forgiven, t, τ	src/diagnostics.jl:1496	
+DebtReanchor	severity	ok	Warning	severity method :warning	src/diagnostics.jl:1568	
+DebtReanchor	raised	ok	runtime	pacer, when debt exceeds 5*h/p	src/control.jl:180	
+DebtReanchor	policy	ok	rate-limited	report_cell! on loop_diag	src/control.jl:180	
+ClaimedFaceEntry	payload	ok	face name, incumbent device id, discarded value, site (staging or stopped-sim attach's renormalization)	face, incumbent, value, site; site values :staging (default) and :renormalization, the only two constructed	src/diagnostics.jl:1463, src/dataplane.jl:385, src/roster.jl:275	Harness-only claim holds (device != nothing goes to OutOfClaimEntry).
+ClaimedFaceEntry	severity	ok	Warning	severity method :warning	src/diagnostics.jl:1564	
+ClaimedFaceEntry	raised	ok	runtime	staging by the harness; the renormalization site fires at a stopped-sim attach but writes to the harness diagnostic cell, so it surfaces in the run's stream	src/dataplane.jl:385, src/roster.jl:275	C names both sites; no change.
+ClaimedFaceEntry	policy	ok	rate-limited	report_cell!	src/dataplane.jl:385	
+OutOfClaimEntry	payload	c_stale	face name, discarded value, the device's claim set, incumbent's device id when claimed elsewhere	face, value, surface (the writer's claim set), incumbent::Union{Nothing,String}. Also raised for the harness writer when the face is no root input at all	src/diagnostics.jl:1455, src/dataplane.jl:383,387	Say "the writer's claim set" (the harness's surface too) rather than "the device's".
+OutOfClaimEntry	severity	ok	Warning	severity method :warning	src/diagnostics.jl:1563	
+OutOfClaimEntry	raised	ok	runtime	staging	src/dataplane.jl:383,387	
+OutOfClaimEntry	policy	ok	rate-limited	report_cell!	src/dataplane.jl:383	
+ThreadBudget	payload	ok	thread count, device-task count	threads, device_tasks	src/diagnostics.jl:1520	
+ThreadBudget	severity	ok	Warning	severity method :warning	src/diagnostics.jl:1570	
+ThreadBudget	raised	ok	runtime, at run! or replay!	report_thread_budget! in the shared loop entry, run once per run, run! and replay!; step! never	src/sim.jl:1237,1389-1393	
+ThreadBudget	policy	ok	rate-limited	report_cell! on loop_diag	src/sim.jl:1392	
+DeviceJoinTimeout	payload	ok	device id, the join timeout, boundary time and index at shutdown	who, timeout, t, boundary	src/diagnostics.jl:1537	
+DeviceJoinTimeout	severity	ok	Warning	severity method :warning	src/diagnostics.jl:1572	
+DeviceJoinTimeout	raised	ok	runtime, at the shutdown tail	_report_join_timeout! at tail step 5	src/sim.jl:1523-1528	
+DeviceJoinTimeout	policy	ok	rate-limited; loop's cell, collected by run's-end sweep	report_cell! on loop_diag; swept by the run's last sweep	src/sim.jl:1526, src/sim.jl:1531-1535	
+DeviceCrash	payload	ok	original exception as cause, whether should_abort was set	cause::Any, abort::Bool	src/diagnostics.jl:1526	
+DeviceCrash	severity	ok	Warning	severity method :warning	src/diagnostics.jl:1571	
+DeviceCrash	raised	ok	runtime; also the init-time failure, reported pre-spawn from the init bracket after its shutdown!	wrapper catch on the device task; _init_devices! calls _shutdown! then report!	src/devices.jl:419, src/sim.jl:1430-1437	
+DeviceCrash	policy	ok	rate-limited	report_cell! on the entry's diag cell	src/devices.jl:221	
+ReplayDiscardedStaging	payload	ok	discarded batch's face names, frame ordinal	faces, frame	src/diagnostics.jl:1553	
+ReplayDiscardedStaging	severity	ok	Warning	severity method :warning	src/diagnostics.jl:1573	
+ReplayDiscardedStaging	raised	ok	runtime	replay drain, per writer cell	src/sim.jl:2127-2130,2164	
+ReplayDiscardedStaging	policy	ok	rate-limited, a repeating source	report_cell! on the writer's cell	src/sim.jl:2164	
+MalformedDatum	payload	ok	the cause exception	cause::Any	src/diagnostics.jl:1450	
+MalformedDatum	severity	ok	Warning	severity method :warning	src/diagnostics.jl:1562	
+MalformedDatum	raised	ok	runtime; emitted by the author's loop body via report!(handle, ...)	no framework raise site; only report!(handle, ::MalformedDatum)	src/devices.jl:208	
+MalformedDatum	policy	ok	rate-limited, a repeating source	report_cell! on the handle's diag cell	src/devices.jl:208-210	
+EntryTypeMismatch	payload	ok	face name, offending value's type, root input's declared type, discarded value	face, value, declared; the value's type is not stored, it is derived from value	src/diagnostics.jl:1471	Match; the type derives from the discarded value.
+EntryTypeMismatch	severity	ok	Warning	severity method :warning	src/diagnostics.jl:1565	
+EntryTypeMismatch	raised	ok	runtime	staging conversion in _normalize, every writer	src/dataplane.jl:394	
+EntryTypeMismatch	policy	ok	rate-limited	report_cell!	src/dataplane.jl:394	
+UnboundedRun	payload	ok	effective t_end, the ignored requester paths	t_end, ignored	src/diagnostics.jl:1509	
+UnboundedRun	severity	ok	Warning	severity method :warning	src/diagnostics.jl:1569	
+UnboundedRun	raised	ok	runtime, at run! in :live when t_end is Inf and no stop request is honoured; not in :replay	mode(sim) === :live && isinf(t_end) && all(ignore_mask)	src/sim.jl:1161-1162	
+UnboundedRun	policy	ok	rate-limited, in the loop's diagnostic cell	report_cell! on loop_diag	src/sim.jl:1162	

@@ -1,0 +1,57 @@
+kind	aspect	verdict	c_says	code_says	sites	note
+DeclarationOnWrongTier	payload	c_stale	Component path, the offending declaration, the tier the leaf's other declarations announce; offending declaration is x_deriv/s_update, wrong-family store, state_events, m_init, x_projection, or a Pinned entry on a discrete leaf named with its contract	fields path, declaration, reason (:tier_form|:pinned_entry|:continuous_only|:no_manifold), found, announced, entry (the Pinned entry on :pinned_entry). declaration values: x_deriv,s_update,x_init,s_init,m_init,state_events (:tier_form, assembly.jl:737-744); u_types/y_types (:pinned_entry, 756); x_projection (:continuous_only on a discrete leaf, :no_manifold with empty x_init, build.jl:944,949). Pinned arm sets announced=:discrete	diagnostics.jl:567,assembly.jl:740,756,build.jl:944,949	Name the fields reason, found (the tier the declaration is written in) and entry (the Pinned entry), and list x_projection's two reasons (off the continuous tier, no x_init manifold).
+DeclarationOnWrongTier	severity	ok	Error	default :error, no override	diagnostics.jl:50	
+DeclarationOnWrongTier	raised	ok	build	classify_tier in the structure walk; x_projection checks in the probe/activation step	assembly.jl:740,756,build.jl:944,949	
+DeclarationOnWrongTier	policy	ok	collected	pushed on diags vector and thrown as DiagnosticError (x_projection arm collected in its own barrier in build.jl)	assembly.jl:1191,build.jl:951	
+FaceNameIllegal	payload	ok	Assembly path, face name, the violated invariant (contains /)	fields path, face, invariant (only :contains_slash constructed)	diagnostics.jl:590,assembly.jl:1354	
+FaceNameIllegal	severity	ok	Error	default :error	diagnostics.jl:50	
+FaceNameIllegal	raised	ok	build	_check_face_names in the structure walk	assembly.jl:1354,1249	
+FaceNameIllegal	policy	ok	collected	pushed on diags	assembly.jl:1354	
+FaceNameCollision	payload	c_stale	Assembly path, the colliding face names	fields path, faces, site (:assembly|:root). :root is a primitive root whose u_types and y_types share a key (path "")	diagnostics.jl:603,assembly.jl:1357,1374	Add the site field and the primitive-root case: the colliding names are across input_wires and output_wires at an assembly, or across u_types and y_types at a primitive root.
+FaceNameCollision	severity	ok	Error	default :error	diagnostics.jl:50	
+FaceNameCollision	raised	ok	build	structure walk, assembly and primitive root	assembly.jl:1357,1374,1202	
+FaceNameCollision	policy	ok	collected	pushed on diags	assembly.jl:1357,1374	
+FaceDirectionConflict	payload	c_stale	Assembly path, the declaring method, the offending entry, the resolved port's actual direction	fields entry (declaring method and entry as one string), path (the child the endpoint resolved to, not the assembly), spelling (endpoint as written), found (:input|:output), wanted (:producer|:consumer)	diagnostics.jl:619,assembly.jl:633	Say path is the child the endpoint resolved to, entry the declaring method and entry, spelling the endpoint as written, found the actual direction, and name wanted (the side the entry requires).
+FaceDirectionConflict	severity	ok	Error	default :error	diagnostics.jl:50	
+FaceDirectionConflict	raised	ok	build	wire resolution in the structure walk	assembly.jl:561,587,633	
+FaceDirectionConflict	policy	ok	collected	recorded on diags, wire resolves to nothing	assembly.jl:633	
+UnknownFaceSelection	payload	c_stale	Child path, reason (unknown names / more than one selector given), the offending names or the selectors given, the child's face list	fields who (calling helper), path, reason (:multiple_selectors|:unknown_names), names, candidates. Reasons match C. who unnamed in C	diagnostics.jl:633,assembly.jl:508,513	Add the helper (who) to the payload, as EmptyFaceSelection's entry already does.
+UnknownFaceSelection	severity	ok	Error	default :error	diagnostics.jl:50	
+UnknownFaceSelection	raised	ok	build	_passthrough_faces runs inside a declaration body during the structure walk	assembly.jl:508,513	
+UnknownFaceSelection	policy	ok	fail-fast	throw(DiagnosticError(UnknownFaceSelection(...))), first violation	assembly.jl:508,513	
+EmptyFaceSelection	payload	ok	The helper, the child path, the selector given and its names, the child's face list	fields who, path, selector (:except|:only|:select; :only never constructed), names, candidates	diagnostics.jl:650,assembly.jl:525	
+EmptyFaceSelection	severity	ok	Warning	severity(::EmptyFaceSelection)=:warning	diagnostics.jl:659	
+EmptyFaceSelection	raised	ok	build	_passthrough_faces in a declaration body; bare call over faceless child raises nothing (length(given)==1 guard)	assembly.jl:522-527	
+EmptyFaceSelection	policy	ok	logged, on the Build's warnings	_warn! appends to BUILD_WARNINGS bound by build, logged once at return	assembly.jl:525,diagnostics.jl:168,build.jl:581	
+RatesViolation	payload	c_stale	Assembly path, offending key, reason (deep key / unknown child / K on a continuous child)	fields path, reason, key, value (offending value), candidates (immediate child names). Reasons: :declaration_shape,:value_vocabulary,:multiplier,:phase,:period,:offset,:unknown_child,:continuous_child. A deep key is :unknown_child (keys are immediate child names only)	diagnostics.jl:675,assembly.jl:978,1232	List all eight reasons (declaration shape, value vocabulary, multiplier K<1, phase, period T<=0, offset, unknown or deep key, key on a continuous child) and name the value and candidates fields.
+RatesViolation	severity	ok	Error	default :error	diagnostics.jl:50	
+RatesViolation	raised	ok	build	_check_sample_times and the continuous-child check in the structure walk	assembly.jl:978,1232	
+RatesViolation	policy	ok	collected	record_violation pushes on diags	assembly.jl:977-978,1232	
+MissingProbeValue	payload	ok	Face name, type	fields face, declared (the type)	diagnostics.jl:711,build.jl:404	
+MissingProbeValue	severity	ok	Error	default :error	diagnostics.jl:50	
+MissingProbeValue	raised	ok	build	cell_layout in the probe/activation step (also from the tracer's classify at build)	build.jl:404,802,827,tracer.jl:286	
+MissingProbeValue	policy	ok	collected	pushed on cell_layout's diags beside IllegalPortType, thrown at barrier	build.jl:404,410	
+ChildNameCollision	payload	c_stale	Assembly path, the colliding child name, reason (bare container key against sample_times sugar / against a sibling field / two children with one name), both declarations	fields path, name, reason (:sample_times_sugar|:sibling_field|:two_children), declarations (one entry on the bare-key arms, two on :two_children), field (container field the key came from, :sample_times_sugar arm only). Reasons match C	diagnostics.jl:723,assembly.jl:181,187,263	Name the field and say declarations holds one entry on the two bare-key reasons and both on the duplicate.
+ChildNameCollision	severity	ok	Error	default :error	diagnostics.jl:50	
+ChildNameCollision	raised	ok	build	_children during the structure walk (also children())	assembly.jl:181,187,263,1219	
+ChildNameCollision	policy	c_stale	fail-fast	collected on a local diags in _children with ContainerMixed, ContainerNested and TransparentContainerUnknown, thrown once at the end of that component's pass; never merged with the walk's diags	assembly.jl:119-201	Say collected within one component's child-naming pass and thrown at once, ahead of the walk's own collection.
+TransparentContainerUnknown	payload	c_stale	Assembly path, the field transparent_container names, the type's container fields (the list-in-hand)	fields path, field, component (declaring type name), candidates (container fields)	diagnostics.jl:753,assembly.jl:250	Name the component field (the declaring type as a string).
+TransparentContainerUnknown	severity	ok	Error	default :error	diagnostics.jl:50	
+TransparentContainerUnknown	raised	ok	build	_check_transparent in _children during the structure walk	assembly.jl:250,199	
+TransparentContainerUnknown	policy	c_stale	fail-fast	pushed on _children's local diags, thrown once at the end with its siblings of that pass	assembly.jl:199,201	Say collected within one component's child-naming pass and thrown at once.
+TierUnreadable	payload	ok	Component path, type, the leaf declarations found	fields path, type, declarations	diagnostics.jl:768,assembly.jl:712	
+TierUnreadable	severity	ok	Error	default :error	diagnostics.jl:50	
+TierUnreadable	raised	ok	build	classify_tier when neither x_init nor s_init is declared	assembly.jl:711-714	
+TierUnreadable	policy	ok	collected	pushed on diags, classify_tier returns nothing	assembly.jl:712	
+StatelessWithoutOutputs	payload	ok	Component path, type, the declarations found	fields path, type, declarations	diagnostics.jl:780,assembly.jl:732	
+StatelessWithoutOutputs	severity	ok	Error	default :error	diagnostics.jl:50	
+StatelessWithoutOutputs	raised	ok	build	classify_tier when the store is empty and y_types undeclared	assembly.jl:731-733	
+StatelessWithoutOutputs	policy	ok	collected	pushed on diags	assembly.jl:732	
+IllegalPortType	payload	c_stale	Component path, the declaration at fault (u_types/y_types, or a root input), port name, offending type, the leaf vocabulary; reasons: no leaves, mutable, opaque leaf at root input, Pinned below top, :stop_flag_nested, :stop_flag_at_root	fields path, site (:port|:face|:root_input), name, declared, reason, position (dotted mutable position). Reasons: :no_leaves (build.jl:352), :mutable (346), :handle_at_root (391), :nested_marker (assembly.jl:752), :stop_flag_nested (358), :stop_flag_at_root (380). Six reasons all match C. No field holds a leaf vocabulary	diagnostics.jl:793,build.jl:346,352,358,380,391,assembly.jl:752	Drop 'the leaf vocabulary' from the payload (no field holds it) and name the position field of the :mutable reason.
+IllegalPortType	severity	ok	Error	default :error	diagnostics.jl:50	
+IllegalPortType	raised	ok	build	cell_layout (ports, root inputs) and classify_tier (Pinned marker in u_types/y_types)	build.jl:346-391,assembly.jl:752	
+IllegalPortType	policy	ok	collected	pushed on diags in cell_layout and classify_tier, thrown at barrier	build.jl:346-391,assembly.jl:752	
+IllegalStoreField	payload	c_stale	Component path, the store at fault (s_init/m_init), field name, the offending type, the fix (text and bulk data belong on the component instance)	fields path, store (:s_init|:m_init), name, declared. The fix is in the message only	diagnostics.jl:867,assembly.jl:691	Drop 'the fix' from the payload list; it is message text, not a field.
+IllegalStoreField	severity	ok	Error	default :error	diagnostics.jl:50	
+IllegalStoreField	raised	ok	build	check_stores in the structure walk, on both s_init and m_init	assembly.jl:691,1192	
+IllegalStoreField	policy	ok	collected	pushed on diags	assembly.jl:691	

@@ -1,0 +1,69 @@
+kind	aspect	verdict	c_says	code_says	sites	note
+UnknownPort	payload	c_stale	wire end (source/destination/connection), that end's path, unknown port name, that end's port list	fields entry, endpoint, path, spelling, port, candidates; entry (declaring method and entry) and spelling (endpoint as written) are not named by C; on :connection candidates is left empty	src/diagnostics.jl:316,src/assembly.jl:627,src/assembly.jl:1302	Add: the declaring entry and the endpoint path as written; the port list is empty for a connection entry (declared with no internal endpoint).
+UnknownPort	severity	ok	Error	default :error, no override for this kind	src/diagnostics.jl:50	
+UnknownPort	raised	ok	build	structure step (flatten_tree! wiring resolution, _wrong_direction and input_wires empty-route case)	src/assembly.jl:627,src/assembly.jl:1302	
+UnknownPort	policy	ok	collected	pushed to diags, thrown at the structure barrier	src/assembly.jl:627,src/assembly.jl:1302	
+UnconnectedInput	payload	ok	leaf path, input name, declared entry type, faces handed up through innermost first	path, face, declared, handed::Vector{Tuple{String,Symbol}} (innermost first, empty when nothing handed it up)	src/diagnostics.jl:333	
+UnconnectedInput	severity	ok	Error	default :error, no override for this kind	src/diagnostics.jl:50	
+UnconnectedInput	raised	ok	build	flatten_tree! obligation loop	src/assembly.jl:1094	
+UnconnectedInput	policy	ok	collected	pushed to diags, thrown at the structure barrier	src/assembly.jl:1094	
+TwoProducers	payload	ok	destination terminal, both producers with their declarations (entry), each a terminal or handing face	path, port (destination terminal); incumbent, entry (the two declarations); incumbent_producer, producer (terminal or handing face)	src/diagnostics.jl:351	
+TwoProducers	severity	ok	Error	default :error, no override for this kind	src/diagnostics.jl:50	
+TwoProducers	raised	ok	build	structure step: _claim! (same-level and root claims) and input_wires hand-up filter	src/assembly.jl:1287,src/assembly.jl:1336	
+TwoProducers	policy	ok	collected	pushed to diags; the refused route hands nothing up	src/assembly.jl:1287,src/assembly.jl:1336	
+WireTypeMismatch	payload	ok	both endpoint paths, both face names, declared entry type, producer face type	path, face (consumer); producer_path (empty for a root input), producer_port; declared; observed	src/diagnostics.jl:366	Root-input case sets producer_path to the empty string; C's 'both endpoint paths' may note it.
+WireTypeMismatch	severity	ok	Error	default :error, no override for this kind	src/diagnostics.jl:50	
+WireTypeMismatch	raised	ok	build	_check_wires bound clause, per resolved wire and per abstract co-consumer of a root input	src/build.jl:687,src/build.jl:725	
+WireTypeMismatch	policy	ok	collected	pushed to diags; wire pass runs on a clean walk only	src/build.jl:687,src/build.jl:725	
+WalkingFaceAtFrozenEntry	payload	ok	consumer path and entry name, producer path and face name, offending leaf, both declared leaf types; both remedies in message	path, face, producer_path, producer_port, leaf (nothing when entry abstract), declared, observed; message carries both remedies	src/diagnostics.jl:382	Optional: leaf is nothing when the entry is abstract.
+WalkingFaceAtFrozenEntry	severity	ok	Error	default :error, no override for this kind	src/diagnostics.jl:50	
+WalkingFaceAtFrozenEntry	raised	ok	build	_check_wires walk clause, continuous consumers only	src/build.jl:696	
+WalkingFaceAtFrozenEntry	policy	ok	collected	pushed to diags	src/build.jl:696	
+PathResolution	payload	c_stale	path, offending segment, sibling field list; for a wiring endpoint reaching past the immediate child, the level it stopped at	fields entry, spelling, reason (:not_a_terminal|:unknown_child|:reaches_past|:empty_path), owner, segment, level, candidates, tail; C names none of entry, reason, owner, tail; level is set for every :reaches_past, not only wiring endpoints	src/diagnostics.jl:441,src/assembly.jl:296,src/assembly.jl:320,src/assembly.jl:328,src/assembly.jl:357,src/assembly.jl:1494,src/assembly.jl:1505	Add: the declaring entry, a reason (not a terminal / unknown child / reaches past / empty path), the component resolved against, and tail 1 for a wiring endpoint; level is set on every reaches_past.
+PathResolution	severity	ok	Error	default :error, no override for this kind	src/diagnostics.jl:50	
+PathResolution	raised	ok	build, or service resolving a service path	build: wiring resolution and public resolve/resolve_terminal; service: resolve_authored via readers (_mount,_rebase) and conditions (_flat)	src/assembly.jl:296,src/assembly.jl:1494,src/readers.jl:488,src/readers.jl:505,src/conditions.jl:199	
+PathResolution	policy	c_stale	collected	collected (diags) for wiring resolution and the service walk, but the public resolve/resolve_terminal called from declaration code throw the single refusal alone (DiagnosticError(only(diags)), comment 'declaration code: fail-fast'); resolve on an empty path throws alone	src/assembly.jl:357,src/assembly.jl:363,src/assembly.jl:378	Add: collected, except `resolve` and `resolve_terminal` called from a declaration body, which fail fast.
+AbstractAtRoot	payload	c_stale	face name, consuming leaf path, the abstract entry; a remedy hint	face, paths::Vector{String} (all consuming leaves), declared::Vector{Any} (their abstract entries); message carries the remedy	src/diagnostics.jl:401,src/build.jl:714	Say 'the consuming leaf paths, their abstract entries' (plural, as RootInputTypeConflict does).
+AbstractAtRoot	severity	ok	Error	default :error, no override for this kind	src/diagnostics.jl:50	
+AbstractAtRoot	raised	ok	build	_check_wires root-input arm, when no consumer entry is concrete	src/build.jl:714	
+AbstractAtRoot	policy	ok	collected	pushed to diags	src/build.jl:714	
+RootInputTypeConflict	payload	ok	face name, consuming paths, their conflicting concrete declarations at nominal	face, paths (concrete consumers only), declared (their entries at Float64)	src/diagnostics.jl:428,src/build.jl:720	
+RootInputTypeConflict	severity	ok	Error	default :error, no override for this kind	src/diagnostics.jl:50	
+RootInputTypeConflict	raised	ok	build	_check_wires root-input arm	src/build.jl:720	
+RootInputTypeConflict	policy	ok	collected	pushed to diags	src/build.jl:720	
+StoreNotNamedTuple	payload	ok	component path, store (x_init/s_init/m_init), observed type; message spells the wrap	path, store (:x_init|:s_init|:m_init; all three raised), declared (observed type); message gives the wrap	src/diagnostics.jl:829,src/assembly.jl:679	
+StoreNotNamedTuple	severity	ok	Error	default :error, no override for this kind	src/diagnostics.jl:50	
+StoreNotNamedTuple	raised	ok	build	check_store_form in the primitive walk	src/assembly.jl:679,src/assembly.jl:1190	
+StoreNotNamedTuple	policy	ok	collected	pushed to diags; the primitive is read no further	src/assembly.jl:679	
+IllegalStateLeaf	payload	c_stale	component path, x_init field name, leaf type, the closed vocabulary (scalar / SArray at the common eltype)	path, name, declared (typeof the value), reason::Symbol with :mode_value|:eltype|:nested|:wrapper (single site, all four values constructible)	src/diagnostics.jl:844,src/assembly.jl:666	Add the reason: mode value, eltype off the common one, nested NamedTuple, or wrapper type.
+IllegalStateLeaf	severity	ok	Error	default :error, no override for this kind	src/diagnostics.jl:50	
+IllegalStateLeaf	raised	ok	build	check_state_leaves, after the tier classification	src/assembly.jl:666,src/assembly.jl:1193	
+IllegalStateLeaf	policy	ok	collected	pushed to diags	src/assembly.jl:666	
+StoreWithoutUpdate	payload	ok	component path, the x_init or s_init store, the missing update (no x_deriv / no s_update); non-empty store only	path, store (:x_init|:s_init); non-empty store gate in classify_tier; update implied by store	src/diagnostics.jl:474,src/assembly.jl:721	
+StoreWithoutUpdate	severity	ok	Error	default :error, no override for this kind	src/diagnostics.jl:50	
+StoreWithoutUpdate	raised	ok	build	classify_tier	src/assembly.jl:721	
+StoreWithoutUpdate	policy	ok	collected	pushed to diags; tier returns nothing	src/assembly.jl:721	
+EventHalfMissing	payload	c_stale	component path, event name, reason (guard half missing / handler half missing / entry is not a StateEvent), the function that has no method or the entry's type	path, event, reason (:guard|:handler|:not_an_event, all constructed), found::String (the component type's name for a missing half; the entry's type for :not_an_event)	src/diagnostics.jl:484,src/build.jl:634,src/build.jl:640	Say: the component type's name for a missing half, the entry's type for a non-StateEvent; the function is named by reason.
+EventHalfMissing	severity	ok	Error	default :error, no override for this kind	src/diagnostics.jl:50	
+EventHalfMissing	raised	ok	build	_check_event_declarations, merged into the structure step	src/build.jl:634,src/build.jl:640,src/build.jl:585	
+EventHalfMissing	policy	ok	collected	pushed to diags	src/build.jl:634,src/build.jl:640	
+DeclarationShadowed	payload	ok	component path, parent module, the foreign family names; message spells the import	path, parent_module, names (family order); message gives import Redstone: names	src/diagnostics.jl:499,src/assembly.jl:1173	
+DeclarationShadowed	severity	ok	Error	default :error, no override for this kind	src/diagnostics.jl:50	
+DeclarationShadowed	raised	ok	build	_walk!, first thing per component	src/assembly.jl:1173	
+DeclarationShadowed	policy	ok	fail-fast	throw(DiagnosticError(...)) alone	src/assembly.jl:1173	
+ClassUnreadable	payload	ok	component path, type, declarations found, both family lists; did-you-mean when type holds component-typed fields	path, type, found, assembly_family, leaf_family, holds_components::Bool	src/diagnostics.jl:512,src/assembly.jl:64	
+ClassUnreadable	severity	ok	Error	default :error, no override for this kind	src/diagnostics.jl:50	
+ClassUnreadable	raised	ok	build	classify in _walk!	src/assembly.jl:64	
+ClassUnreadable	policy	ok	fail-fast	throw(DiagnosticError(...)) alone	src/assembly.jl:64	
+ClassMixed	payload	ok	component path, the local_wires declaration and the offending leaf declarations	path, declarations (leaf declarations); local_wires is implied by the kind and named in the message	src/diagnostics.jl:530,src/assembly.jl:60	
+ClassMixed	severity	ok	Error	default :error, no override for this kind	src/diagnostics.jl:50	
+ClassMixed	raised	ok	build	classify in _walk!	src/assembly.jl:60	
+ClassMixed	policy	ok	fail-fast	throw(DiagnosticError(...)) alone	src/assembly.jl:60	
+ContainerMixed	payload	ok	container field path, offending element keys/indices, their types	path, field, keys (non-component elements), types (unique element types)	src/diagnostics.jl:541,src/assembly.jl:169	
+ContainerMixed	severity	ok	Error	default :error, no override for this kind	src/diagnostics.jl:50	
+ContainerMixed	raised	ok	build	_children, called from _walk!	src/assembly.jl:169,src/assembly.jl:1219	
+ContainerMixed	policy	c_stale	fail-fast	pushed to the component's child-naming diags (all its containers, ChildNameCollision, TransparentContainerUnknown), thrown once at the end of _children; the walk aborts there (collected per component, not alone)	src/assembly.jl:119,src/assembly.jl:169,src/assembly.jl:199	Say: collected over the component's containers and child names, thrown at the end of its child walk, which aborts the structure walk.
+ContainerNested	payload	ok	container field path, element keys/indices that are component-bearing containers, their types	path, field, keys, types (one per key)	src/diagnostics.jl:554,src/assembly.jl:163	
+ContainerNested	severity	ok	Error	default :error, no override for this kind	src/diagnostics.jl:50	
+ContainerNested	raised	ok	build	_children, called from _walk!	src/assembly.jl:163,src/assembly.jl:1219	
+ContainerNested	policy	c_stale	fail-fast	same list as ContainerMixed: collected per component, one throw at the end of _children	src/assembly.jl:119,src/assembly.jl:163,src/assembly.jl:199	Say: collected over the component's containers and child names, thrown at the end of its child walk, which aborts the structure walk.

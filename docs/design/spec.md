@@ -10050,9 +10050,20 @@ its input as unfed. Tier and event checking read only the component list, so
 they run and merge. A structural failure leaves the subtree behind it unknown.
 An unreadable or mixed [class](#g-class) (a component's primitive-vs-assembly status) or a
 malformed container is such a failure. No pass can read past it, so it throws
-alone. In the two evaluating steps the probe chain consumes each check's subject
-as it goes. A check that reads a failed probe does not run, so the chain's
-fail-fast follows from the same rule. Outside the build the unit is the call.
+at once, and no other pass merges into the throw. In the two evaluating steps
+the probe chain consumes each check's subject as it goes. A check that reads a
+failed probe does not run, so the chain's fail-fast follows from the same rule.
+
+**A check that stops the step still reports every violation in its own unit**
+([D-431][d-431]). It collects over the unit and throws the list at once, so the
+carrier is the collection type ([§13.2][s13-2]). The unit is one component's
+child-naming pass, one probe stage's port check, one handler's return, or one
+probe pass over the component list. Three mixed containers on one component
+then cost one build cycle, not three. A user-code exception still aborts the
+phase alone, and so does a return that is not a NamedTuple. An unreadable or
+mixed class also throws alone, since nothing is left to read.
+
+Outside the build the unit is the call.
 Deployment validation ([§9.2][s9-2]) runs every check whose premise holds and throws
 once. The only partial results ever carried past a failure are violation lists
 and a claim table with the failed wires absent. None of the three steps
@@ -13793,7 +13804,9 @@ The policies:
 - **collected**. Gathered with its siblings and thrown as one carrier. A
   declarative pass's violations are the `DiagnosticError` of the step
   barrier, and every pass that ran under [§13.1][s13-1]'s dependency rule
-  merges into the one throw ([D-229][d-229]). A service's violations are
+  merges into the one throw ([D-229][d-229]). A check that stops the step
+  collects over its own unit and throws that list at once ([§13.1][s13-1],
+  [D-431][d-431]). A service's violations are
   collected wherever the owning section says so (the condition algebra,
   [§14.1][s14-1]; the pre-write check, [§14.6][s14-6]).
 - **fail-fast**. The first occurrence throws on its own, and nothing else is
@@ -13804,8 +13817,9 @@ The policies:
 - **logged**. A warning from an artifact-producing call that *completed*, the
   build and the `Deployment` constructor included ([D-250][d-250]). The
   warning lives on the artifact the call returns, and the entry point logs it
-  once at return through the standard logging backend. It is part of no
-  collection. There is no rate limit. A warning about the artifact itself
+  once at return through the standard logging backend. `trim!` differs. Its
+  `TrimReport` holds the facts, and the warnings are logged beside it
+  ([§13.2][s13-2]). A logged warning is part of no collection. There is no rate limit. A warning about the artifact itself
   fires at most once per call, and its payload is drawn from the artifact the
   call returns ([§9.2][s9-2], [§13.2][s13-2], [§14.8][s14-8]). A warning
   raised at a call site inside the call, `EmptyFaceSelection` in a
@@ -13832,14 +13846,15 @@ collection ([§9.2][s9-2], [D-250][d-250]).
 
 - **`UnknownPort`** ([§6.1][s6-1], [§8.4][s8-4] w1, [§9.1][s9-1], [D-113][d-113]). Error ·
   build · collected. The wire end (`source`/`destination`, or `connection` for an
-  interface-connection entry's internal side, [D-210][d-210]), that end's
-  path, the unknown port name, that end's port list (did-you-mean).
+  interface-connection entry's internal side, [D-210][d-210]), the declaring
+  entry, that end's path as resolved and as written, the unknown port name,
+  that end's port list (did-you-mean).
 - **`UnconnectedInput`** ([§6.1][s6-1], [§8.4][s8-4] w2, [§9.1][s9-1]). Error · build ·
   collected. Leaf path, input name, declared entry type, the faces
   `input_wires` entries handed it up through, innermost first, the last being
   the outermost face nobody wired.
 - **`TwoProducers`** ([§6.1][s6-1], [§8.8][s8-8], [§9.1][s9-1]). Error · build · collected.
-  Destination terminal, both producers with their declarations (sibling wire
+  Destination terminal, both producers with their declarations (local wire
   / interface connection entry), each a terminal or the face an entry hands
   the input up through.
 - **`WireTypeMismatch`** ([§6.1][s6-1], [§8.2][s8-2], [§8.4][s8-4] w4). Error
@@ -13850,12 +13865,16 @@ collection ([§9.2][s9-2], [D-250][d-250]).
   offending leaf, both declared leaf types; both remedies in the message
   ("remove the entry's `Pinned` if the consumer promotes; feed it from a
   non-walking source if the freeze is genuine").
-- **`PathResolution`** ([§6.1][s6-1], [§13.3][s13-3]). Error · build, or
-  service resolving a service path · collected. Path, offending segment,
-  sibling field list. For a wiring endpoint reaching past the immediate
-  child, the level it stopped at.
+- **`PathResolution`** ([§6.1][s6-1], [§13.3][s13-3], [§14.3][s14-3]). Error · build, or
+  service resolving a service path · collected, but fail-fast where a
+  declaration body calls `resolve` or `resolve_terminal`. The condition or
+  wiring entry, the path as written, the component it was resolved against,
+  offending segment, sibling child list, and a `reason`. The reasons are
+  `:unknown_child`, `:not_a_terminal`, `:empty_path` and `:reaches_past`. A
+  `:reaches_past` path goes past the immediate child, and it carries the
+  level it stopped at and whether the path ends in a port name.
 - **`AbstractAtRoot`** ([§8.2][s8-2]). Error · build · collected. Face name,
-  consuming leaf path, the abstract entry; a remedy hint (wire a concrete
+  the consuming leaf paths, their abstract entries; a remedy hint (wire a concrete
   producer, or in a rig a stub child, [§13.7][s13-7]).
 - **`RootInputTypeConflict`** ([§8.2][s8-2]). Error · build · collected. Face
   name, the consuming paths, their conflicting concrete declarations at
@@ -13866,16 +13885,17 @@ collection ([§9.2][s9-2], [D-250][d-250]).
   (`x_init`/`s_init`/`m_init`), the observed type; the message spells the
   wrap.
 - **`IllegalStateLeaf`** ([§7.1][s7-1], [§8.2][s8-2], [§9.1][s9-1]). Error · build ·
-  collected. Component path, `x_init` field name, leaf type, the closed
-  vocabulary (scalar / `SArray` at the common eltype).
+  collected. Component path, `x_init` field name, leaf type, and a `reason`
+  against the closed vocabulary (scalar / `SArray` at the common eltype):
+  `:mode_value`, `:eltype`, `:nested` or `:wrapper`.
 - **`StoreWithoutUpdate`** ([§8.2][s8-2]). Error · build · collected.
   Component path, the `x_init` or `s_init` store, the missing update (no
   `x_deriv` for the one, no `s_update` for the other). A
   non-empty store only; an empty store owes no update ([D-263][d-263]).
 - **`EventHalfMissing`** ([§8.2][s8-2]). Error · build · collected. Component
   path, event name, reason (guard half missing / handler half missing / the
-  entry is not a `StateEvent`), the function that has no method or the
-  entry's type.
+  entry is not a `StateEvent`), the component's type for a missing half or
+  the entry's type.
 - **`DeclarationShadowed`** ([§8.1][s8-1], [D-246][d-246]). Error · build ·
   fail-fast. Component path, the parent module, the family names the module
   binds to something other than the framework's function. The message spells
@@ -13885,45 +13905,59 @@ collection ([§9.2][s9-2], [D-250][d-250]).
   type holds component-typed fields.
 - **`ClassMixed`** ([§8.5][s8-5]). Error · build · fail-fast. Component path,
   the `local_wires` declaration and the offending leaf declarations.
-- **`ContainerMixed`** ([§8.5][s8-5]). Error · build · fail-fast. Container
+- **`ContainerMixed`** ([§8.5][s8-5]). Error · build · collected over the
+  component's child-naming pass, thrown at once ([D-431][d-431]). Container
   field path, offending element keys/indices, their types.
-- **`ContainerNested`** ([§8.5][s8-5]). Error · build · fail-fast. Container
+- **`ContainerNested`** ([§8.5][s8-5]). Error · build · collected as
+  `ContainerMixed` is. Container
   field path, the element keys/indices that are themselves component-bearing
   containers, their types.
 - **`DeclarationOnWrongTier`** ([§5.3][s5-3], [§8.2][s8-2], [§8.5][s8-5]).
-  Error · build · collected. Component path, the offending declaration, the
-  tier the leaf's other declarations announce. The offending declaration is
-  `x_deriv`/`s_update`, a store from the wrong family (`x_init`
-  against `s_init`, [D-195][d-195]), `state_events`, `m_init`,
-  `x_projection`, or a `Pinned` entry on a discrete leaf, named with its
-  contract ([D-263][d-263]).
+  Error · build · collected. Component path, the offending declaration, and
+  a `reason`. Reason `:tier_form` covers `x_deriv`/`s_update`, a store from
+  the wrong family (`x_init` against `s_init`, [D-195][d-195]),
+  `state_events` and `m_init`. It carries the tier the declaration is
+  written in and the tier the leaf's other declarations announce. A `Pinned` entry on a discrete leaf is reason
+  `:pinned_entry`, the entry named with its contract ([D-263][d-263]).
+  `x_projection` is reason `:continuous_only` on a discrete leaf and
+  `:no_manifold` on a leaf with an empty `x_init`.
 - **`FaceNameIllegal`** ([§8.6][s8-6]). Error · build · collected. Assembly
   path, face name, the violated invariant (contains `/`).
 - **`FaceNameCollision`** ([§8.6][s8-6]). Error · build · collected. Assembly
-  path, the colliding face names. No per-entry declaration: a computed entry
+  path, the colliding face names, the site. The site is `:assembly` for a
+  name repeated among an assembly's input and output faces, and `:root` for
+  a primitive root whose `u_types` and `y_types` share a name ([D-210][d-210]). No
+  per-entry declaration: a computed entry
   collides like a hand-written one ([§8.8][s8-8], [D-249][d-249]).
 - **`FaceDirectionConflict`** ([§8.6][s8-6]). Error · build · collected.
-  Assembly path, the declaring method, the offending entry, the resolved
-  port's actual direction.
-- **`UnknownFaceSelection`** ([§8.8][s8-8]). Error · build · fail-fast. Child
-  path, reason (unknown names / more than one selector given), the
+  The declaring method and offending entry, the endpoint as written, the
+  child it resolved to, the resolved port's actual direction, the side the
+  entry requires (`:producer` or `:consumer`).
+- **`UnknownFaceSelection`** ([§8.8][s8-8]). Error · build · fail-fast. The
+  helper, the child path, reason (unknown names / more than one selector given), the
   offending names or the selectors given, the child's face list.
 - **`EmptyFaceSelection`** ([§8.8][s8-8]). Warning · build · logged, on the
   `Build`'s warnings. The helper, the child path, the selector given and its
   names, the child's face list. A selector was given and nothing survived it;
   a bare call over a faceless child raises nothing.
 - **`RatesViolation`** ([§10.5][s10-5], [§8.7][s8-7]). Error · build ·
-  collected. Assembly path, offending key, reason (deep key / unknown child /
-  `K` on a continuous child).
+  collected. Assembly path, offending key and value, the immediate child
+  names in hand, and a `reason`. The reasons are `:declaration_shape`,
+  `:value_vocabulary`, `:multiplier` (`K` below 1), `:phase`, `:period`,
+  `:offset`, `:unknown_child` (a deep key included) and `:continuous_child`
+  (`K` on a continuous child).
 - **`MissingProbeValue`** ([§9.3][s9-3]). Error · build · collected. Face
   name, type.
-- **`ChildNameCollision`** ([§8.5][s8-5]). Error · build · fail-fast.
-  Assembly path, the colliding child name, reason (a bare container key
+- **`ChildNameCollision`** ([§8.5][s8-5]). Error · build · collected as
+  `ContainerMixed` is. Assembly path, the colliding child name, reason (a bare container key
   against the `sample_times` sugar, [D-211][d-211] / against a sibling field,
-  [D-212][d-212] / two children with one name), both declarations.
+  [D-212][d-212] / two children with one name), the declarations. Those are
+  both children for two with one name, and the one element for a bare key,
+  with the container field on the `sample_times` arm.
 - **`TransparentContainerUnknown`** ([§8.5][s8-5], [D-211][d-211]). Error ·
-  build · fail-fast. Assembly path, the field `transparent_container` names,
-  the type's container fields (the list-in-hand).
+  build · collected as `ContainerMixed` is. Assembly path, its type, the field
+  `transparent_container` names, the type's container fields (the
+  list-in-hand).
 - **`TierUnreadable`** ([§8.2][s8-2]). Error · build ·
   collected. Component path, type, the leaf declarations found. A primitive
   declaring neither `x_init` nor `s_init`; the message spells the empty form a
@@ -13932,18 +13966,20 @@ collection ([§9.2][s9-2], [D-250][d-250]).
   collected. Component path, type, the declarations found (no `y_types`,
   an empty store). A leaf that produces nothing and stores nothing ([D-263][d-263]).
 - **`IllegalPortType`** ([§4.3][s4-3], [§8.2][s8-2]). Error · build ·
-  collected. Component path, the declaration at fault
-  (`u_types`/`y_types`, or a root input), port name, the offending
-  type (one with no leaves, a mutable one, an opaque leaf at a root input,
-  or a `Pinned` marker below the top of the entry, [D-265][d-265]), the leaf
-  vocabulary ([§4.3][s4-3]). Two reasons concern stop requests
+  collected. Component path, the site at fault (`:face` for `u_types`,
+  `:port` for `y_types`, or `:root_input`), port name, the offending type,
+  and a `reason` against the leaf vocabulary ([§4.3][s4-3]). The reasons are
+  `:no_leaves`, `:mutable` (with the dotted position of the mutable type),
+  `:handle_at_root` (an opaque leaf at a root input) and `:nested_marker` (a
+  `Pinned` marker below the top of the entry, [D-265][d-265]). Two more reasons concern stop requests
   ([§13.5][s13-5], [D-316][d-316]): `:stop_flag_nested`, a `StopFlag` leaf inside a
   port whose type is not `StopFlag` itself, and `:stop_flag_at_root`, a root
   input whose type carries a `StopFlag` anywhere.
 - **`IllegalStoreField`** ([§7.3][s7-3], [§8.2][s8-2], [§9.1][s9-1]). Error ·
   build · collected. Component path, the store at fault (`s_init`/`m_init`),
-  field name, the offending type (one neither isbits nor `Symbol`), the fix
-  (text and bulk data belong on the component instance).
+  field name, the offending type (one neither isbits nor `Symbol`). The
+  message states the fix: text and bulk data belong on the component
+  instance.
 
 **Execution order and contract conformance** (the nominal evaluation and
 activation):
@@ -13964,26 +14000,35 @@ activation):
   remedy is returning the name from `y_state` ([§5.3][s5-3],
   [D-252][d-252]).
 - **`UndeclaredReturnField`** ([§8.3][s8-3], [§8.4][s8-4] w5). Error · build
-  · fail-fast, alone. It stops the probe chain before the completeness pass
+  · collected over the stage's port check, with that stage's
+  `ConformanceFailure`s, thrown at once ([D-431][d-431]). It stops the probe
+  chain before the completeness pass, so no `DeclaredNotProduced` joins it
   ([D-239][d-239]). Component path, stage, returned field name, candidates
   (`y_types`).
 - **`DeadStage`** ([§5.2][s5-2], [§9.3][s9-3]). Error · build, at probe ·
   fail-fast. Component path, stage. The stage method returned bare `(;)`,
   producing no ports.
 - **`ConformanceFailure`** ([§9.5][s9-5]). Error · build, at probe; runtime
-  thereafter · fail-fast, a `StepError` species at runtime. Component path,
+  thereafter · collected at probe over its unit and thrown at once (one
+  stage's port check, one handler's return, or the update or projection
+  pass, [D-431][d-431]), but a return that is not a NamedTuple throws alone.
+  Fail-fast at runtime, a `StepError` species. Component path,
   function, the event name on a handler's occurrence, field-level diff
   (missing / unexpected / per-field expected-vs-observed, order-insensitive,
-  fields pairing by name). Simulation time rides the runtime carrier ([D-249][d-249]).
+  fields pairing by name). A `reason` names the failed clause, `:return_type`,
+  `:field_set` or `:field_type`, and a `shape` the form it was held to:
+  `:ports`, `:namedtuple`, `:state`, `:x_init`, `:s_init`, `:stores` or
+  `:mode`. The activation scalar rides for the pin hint. Simulation time rides the runtime carrier ([D-249][d-249]).
 - **`GuardForm`** ([§9.5][s9-5]). Error · build · fail-fast. Component path,
   event name, observed probe return type, both admissible forms.
 - **`BundleFieldError`** ([§5.2][s5-2], [§13.2][s13-2]). Error · build, at
   probe; runtime thereafter · fail-fast, a `StepError` species at runtime.
-  Component path, function family, requested field, the legal field set,
+  Component path, function family, the leaf's tier, requested field, the legal field set,
   classification (undeclared store / wrong-tier fact / illegal for this
   function family).
 - **`HandlerReturnKey`** ([§5.2][s5-2], [§9.5][s9-5]). Error · build ·
-  fail-fast. Component path, event name, offending key, the legal set
+  collected over the handler's return, with its `ConformanceFailure`s,
+  thrown at once ([D-431][d-431]). Component path, event name, offending key, the legal set
   `{x, m}` narrowed to the stores that exist.
 - **`UserCodeFraming`** ([§13.2][s13-2]). Error · build · fail-fast.
   Component path, which function, the bundle's field names, the synthesized
@@ -13995,30 +14040,40 @@ activation):
 
 - **`MissingInit`** ([§12.6][s12-6], [§12.7][s12-7]). Error · service ·
   fail-fast. The simulation's status, the entry point called
-  (`run!`/`step!`/`replay!`/`live!`).
+  (`run!`/`step!`/`replay!`/`live!`, or `trace`).
 - **`ServiceLifecycle`** ([§11.3][s11-3], [§12.7][s12-7], [§14][s14]). Error ·
   service · fail-fast. The operation
-  (`attach!`/`detach!`/`init!`/`restore!`/`trim!`/`checkpoint`/`linearize`/`live!`),
-  the current status, the legal statuses.
+  (`attach!`/`detach!`/`init!`/`restore!`/`overlay!`/`trim!`/`checkpoint`/`linearize`,
+  the advances `run!`/`step!`/`replay!`/`live!`, or the readers
+  `logged`/`series`), the current status, the legal statuses.
 - **`StopRequestInvalid`** ([§13.5][s13-5]). Error · service · collected,
   over the given paths. The path naming no requester, the binding site
   (`run!`, `replay!` or `step!`), and the roster's requester paths as
   candidates, in roster order.
 - **`DeploymentInvalid`** ([§9.2][s9-2]). Error · service · collected. The
-  deployment parameter, the value in hand, the violated constraint. The
-  parameter is one of `h`, `N_base`, `Δt_base`, algorithm,
-  `localization_tol`, `localization_budget`, `firing_budget`, the
-  harmonic-grid relation, or a non-dividing anchor period or offset (the
-  anchor named with its declaring scope and key). The `Model` and
-  `Simulation` constructors' keywords validate under `ArgumentInvalid`
-  ([Appendix B][sB]).
+  deployment parameter, the value in hand and the value it is measured
+  against, and a `reason` naming the violated constraint. The parameter is
+  one of `h`, `N_base`, `Δt_base`, algorithm, `localization_tol`,
+  `localization_budget` or `firing_budget`. The reasons are `:range`,
+  `:inexact`, `:not_a_quantity` and `:missing` (no `h`), and four on
+  `Δt_base`'s grid. Those are `:not_harmonic` (the harmonic-grid relation),
+  `:disagrees_with_n` (`N_base` against `Δt_base / h`, the quotient in hand),
+  `:unanchored` (derivation with unanchored discrete components, their paths
+  in hand) and `:no_constraint` (derivation with no anchored work). A
+  non-dividing anchor period or offset is `:anchor_period` or
+  `:anchor_offset`, the anchor named with its declaring scope and key. The
+  anchor and `:unanchored` refusals carry the grid attribution
+  `GridUtilization` names. Arguments that are not deployment parameters
+  validate under `ArgumentInvalid`.
 - **`AttachUnknownFace`** ([§11.3][s11-3]). Error · service · fail-fast. The
   device (by type, since its roster id is assigned only at admission),
   binding entry, face name, the root input-face list.
 - **`AlreadyAttached`** ([§11.3][s11-3]). Error · service · fail-fast. The
-  device id of the existing roster entry, its binding.
+  offered device by type, the device id of the existing roster entry, its
+  binding.
 - **`ClaimConflict`** ([§11.3][s11-3]). Error · service · collected, over the
-  device's claim set. Face name, claiming device id, incumbent device id.
+  device's claim set. Face name, the claiming device by type (its id is
+  assigned only at admission), incumbent device id.
 - **`EmptyGreedyClaim`** ([§11.3][s11-3], [§11.6][s11-6]). Warning · service ·
   rate-limited, in the roster entry's diagnostic cell ([D-250][d-250]). The
   greedy device's id and its binding. The computed complement was
@@ -14030,72 +14085,119 @@ activation):
   reached), or a `claims`/`reads` method defined under a false trait
   (detected by `which` against the fallback). `is_greedy` without
   `is_input`, `claims` defined on a greedy binding, and a binding declaring
-  neither side report here too.
+  neither side report here too. So does a `reads` enumeration that returns
+  no NamedTuple, or holds an entry that is no read selector, the offending
+  type in hand. A `reason` tells the cases apart: `:claims_missing`,
+  `:reads_missing`, `:claims_without_input`, `:reads_without_output`,
+  `:greedy_without_input`, `:greedy_with_claims`, `:neither_side`,
+  `:reads_not_namedtuple` and `:reads_not_selectors`.
 - **`DeviceContractMismatch`** ([§11.6][s11-6]). Error · service · fail-fast.
   The device, and what the contract lacks: the `loop` method, the output
   side `gather` needs from a binding that declares none, or the roster entry
   a detached handle's `stage!`/`report!` no longer has ([D-244][d-244]). The device
   twin of `BindingContractMismatch`.
-- **`ConditionResolution`** ([§14.2][s14-2], [§14.3][s14-3]). Error · service
+- **`ConditionResolution`** ([§14.1][s14-1], [§14.2][s14-2], [§14.3][s14-3], [§14.9][s14-9], [§14.10][s14-10]). Error · service
   · collected. Entry path, store and field (or the root-input face the entry
-  addresses), offending value type and declared leaf type, the leaf's tier
+  addresses), the offending value with its type, declared leaf type, the
+  activation where the seeded activation refuses, the leaf's tier
   and role where the refusal is tier-bound, the producer where a face is
   fed, candidates where a list is in hand, the origin. The origin is the
   condition tree's chain, or the checkpoint where `linearize`'s default
-  operating point supplies a root input's value ([§14.10][s14-10]). Its
-  sub-kinds are assembly path, undeclared field, unconvertible value and
-  unexported root-input face. An unknown path is `PathResolution`'s
-  ([§13.3][s13-3]).
+  operating point supplies a root input's value ([§14.10][s14-10]). A
+  `reason` names the sub-kind: `:assembly_path`, `:undeclared_field`,
+  `:no_store`, `:unconvertible`, `:unexported_face`, `:no_input_face` or
+  `:internally_wired` ([D-427][d-427]). An unknown path is
+  `PathResolution`'s ([§13.3][s13-3]).
 - **`DuplicateConditionLeaf`** ([§14.2][s14-2]). Error · service ·
-  collected. The leaf `(path, store, field)`, both origins, the
-  `override` advice.
+  collected. The leaf, both origins. A store leaf is `(path, store,
+  field)`. A `u` payload's leaf is the root input its face resolves to, the
+  face in hand. The message gives the `override` advice.
 - **`ConditionNodeMisuse`** ([§14.2][s14-2]). Error · service · fail-fast.
-  The offending argument's type, the node kinds in hand. Or an empty prefix
-  handed to `at`.
-- **`ReadResolution`** ([§14.4][s14-4]). Error · service · collected. The
+  The offending argument's type, the node types in hand, and a `reason`.
+  It is `:not_a_node` for an operand that is no node, `:set_payload` for a
+  `set` payload that is not a NamedTuple (the payload named), and
+  `:empty_prefix` for an empty prefix handed to `at`.
+- **`ReadResolution`** ([§11.2][s11-2], [§14.4][s14-4], [§14.8][s14-8], [§14.9][s14-9], [§14.10][s14-10]). Error · service · collected. The
   read's label and the selector as authored, the mount path, path and field,
   the leaf address and the offending step, candidates where a list is in
-  hand, the producer for an internally wired face, and a `reason`
-  distinguishing an assembly path, an undeclared name, a face miss, a step
-  the leaf address cannot take, and a store selector under a table source
-  (the source rule, [§14.4][s14-4]). Raised at trim, at linearization and at
-  attach, where the label names the read and the `attach!` call names the
-  device ([D-406][d-406]).
+  hand, the producer for an internally wired face, and a `reason`. On
+  `:undeclared` the payload names the family searched (`:state_field` or
+  `:output_port`), its names the candidates. On a leaf-step reason it
+  carries the type the step met.
+  The reasons are grouped by what failed:
+  - an assembly path, `:assembly_path`;
+  - an undeclared name, `:undeclared`, or `get_deriv` on a discrete
+    component, `:discrete_deriv`;
+  - a face miss, `:unknown_root_input` at the root and `:no_input_face` at a
+    mount, `:unknown_output_face`, `:input_face_not_output`, or
+    `:internally_wired`;
+  - a step the leaf address cannot take ([D-276][d-276]), `:leaf_syntax`,
+    `:no_such_field`, `:opaque_leaf`, `:not_indexable`, `:index_arity` or
+    `:index_bounds`;
+  - a store selector under a table source, `:store_selector` (the source
+    rule, [§14.4][s14-4]).
+
+  Raised at trim, at linearization, at attach and at `series`, where the
+  label names the read and the `attach!` call names the device
+  ([D-406][d-406]).
 - **`UninitializedInputs`** ([§14.6][s14-6]). Error · service, pre-write ·
-  collected. Every uncovered root face, in declaration order.
+  collected. The operation that applied the condition (`init!`, `trim!` or
+  `linearize`), every uncovered root face, in declaration order.
 - **`TapResolution`** ([§14.10][s14-10]). Error · service · collected. The
-  tap set's own refusals, raised beside the reads' `ReadResolution` values:
-  the tap set (`x`/`u`/`y`), the list a selector sat in, a discrete store, a
-  vector leaf, a duplicate site, and a declaredly unseedable root input with
-  the pinning consumer's path and its `u_types` entry.
+  tap set's own refusals, raised beside the reads' `ReadResolution` values.
+  The read is described as `ReadResolution` describes it, with the tap set
+  (`x`/`u`/`y`) and a `reason`:
+  - `:tap_kind`, with the list the selector sat in;
+  - `:discrete_state`, a discrete store;
+  - `:vector_tap`, a leaf that is not a real scalar;
+  - `:duplicate_site`, with the earlier tap's label;
+  - `:unseedable`. A seeded tap reaches its scalar through one index step at
+    most, never a `.name` step, and its leaf is exactly `Float64`
+    ([D-424][d-424]). The step or the leaf type is in hand. A declaredly
+    unseedable root input is the same reason, with each pinning consumer's
+    path, tier and `u_types` entry.
 - **`TrimProblemInvalid`** ([§14.7][s14-7], [§14.8][s14-8]). Error · service
-  · collected. The offending `TrimProblem` field, the names or types in hand
-  (a key-set or field-type mismatch; never a field-order difference).
-- **`TrimCommitEvents`** ([§14.8][s14-8]). Warning · service · logged. The
+  · collected. The offending `TrimProblem` field, or the `residuals` or
+  `checks` return, and a `reason`. `:not_a_namedtuple` and `:not_a_read_set`
+  carry the observed type. `:key_set` carries the names against the
+  expected ones, and `:field_types` the offending fields. A field-order
+  difference is never a mismatch. `:inverted_box` carries the decision and
+  both bounds, and `:nonpositive_tolerance` the key and the value
+  ([D-422][d-422]).
+- **`TrimCommitEvents`** ([§14.8][s14-8]). Warning · service · logged, at the
+  commit, beside the `TrimReport` that holds its facts ([§13.2][s13-2]). The
   events fired at boundary zero, as component paths and event names. The
   same list rides the `TrimReport`.
-- **`TrimCommitResiduals`** ([§14.8][s14-8]). Warning · service · logged. The
+- **`TrimCommitResiduals`** ([§14.8][s14-8]). Warning · service · logged, as
+  `TrimCommitEvents` is. The
   offending residual names with committed-state values and tolerances. A
   converged solve whose committed-state residuals violate the box test.
-- **`TrimCommitChecks`** ([§14.8][s14-8]). Warning · service · logged. The offending
+- **`TrimCommitChecks`** ([§14.8][s14-8]). Warning · service · logged, as
+  `TrimCommitEvents` is. The offending
   check names with committed-state values and tolerances. A converged solve
   whose committed-state checks leave their tolerances.
 - **`ConditionShapeDrift`** ([§14.4][s14-4]). Error · service · fail-fast.
-  The compiled tree type and the observed one; for a prefix mismatch, the
-  node position and both strings; the remedy, which is that a condition
-  function returns one shape for every decision.
+  A `reason`, `:tree_type` or `:prefix` ([D-423][d-423]). The compiled tree
+  type and the observed one, or for `:prefix` the node position and both
+  strings. The message states the remedy, that a condition function returns
+  one shape for every decision.
 - **`GridUtilization`** ([§9.2][s9-2]). Warning · service, at
   the `Deployment` constructor (derivation path only) · logged, on the
   deployment's warnings ([D-254][d-254]). The derived `Δt_base`, the grid
   attribution (the pool with each entry's anchor and refinement factor,
   the coarsest admissible `Δt_base`, the prime attribution) and `min_i Dᵢ`,
-  the grid rendered as "N× finer than the fastest declared work".
+  the grid rendered as "N× finer than the fastest declared work", with that
+  work's path.
 - **`CheckpointMismatch`** ([§12.6][s12-6], [§12.7][s12-7]).
-  Error · service · collected. One kind for the replay entry pass and for
+  Error · service · collected, but the scalar case throws alone on
+  `restore!`, by dispatch. One kind for the replay entry pass and for
   `restore!`, raised when a checkpoint's fingerprint or deployment disagrees
-  with the target simulation or model. The mismatch, discriminated. It is a store or root
-  input (component path, store, expected vs. found layout/type), a
-  component's `x` type, a cell's address or type, the event list, a recorded
+  with the target simulation or model. The mismatch, discriminated by `what`
+  (`:store`, `:root_input`, `:deployment`, `:scalar`, `:frame` or
+  `:clock`). It is the component-path list or the cell-size list, a store or
+  root input (component path, store, expected vs. found layout/type), the
+  root input-face list, a component's `x` type, a cell's address or type,
+  the event list, a recorded
   root-input value that does not convert to its declared type, the scalar
   type (the
   recorded one vs. the target model's), a deployment parameter
@@ -14103,8 +14205,8 @@ activation):
   recorded vs. bound value), a [schedule](#g-schedule) row whose column
   differs (the component path, the column, recorded vs. bound value), a rate
   scope whose column differs (its path, the column, recorded vs. bound
-  value), a schedule whose row list, scope list or per-component vector
-  differs (the name, the two lists), a frame ordinal outside the
+  value), a schedule whose row list or scope list differs (the name, the two
+  lists), a frame ordinal outside the
   recording's frames (the writer, the ordinal, the legal range), or, under
   `restore = false`, the simulation's origin or frame index off the
   recording's (the one that differs, the clock's `t₀` or the run's frame, the
@@ -14113,8 +14215,8 @@ activation):
   fail-fast, but collected with `CheckpointMismatch` on `restore!`.
   `checkpoint` on a simulation or a model that is not at the rest a frame
   top leaves. Either the clock is past a frame top after a `t*` stop, or a
-  simulation's frame was abandoned unpublished ([§12.4][s12-4]). `restore!`
-  raises it too, on any of its forms, for a state whose `t` is off the grid
+  simulation's frame was abandoned unpublished ([§12.4][s12-4]). `overlay!`
+  raises it on the same rest. `restore!` raises it too, on any of its forms, for a state whose `t` is off the grid
   ([§12.6][s12-6]). The clock's or the state's `t`, the frame top `t_frame`,
   the frame index `frame`.
 - **`ReplaySchemaMismatch`** ([§12.7][s12-7]). Error ·
@@ -14124,33 +14226,44 @@ activation):
 - **`ReplayUnknownFace`** ([§12.7][s12-7]). Error · service · collected. Face
   name, or the bare position where the writer's schema has no name for it;
   frame ordinal, the trace's device tag, the root input-face list.
-- **`ArgumentInvalid`** ([§10.5][s10-5], [§11.6][s11-6], [§12.1][s12-1], [§12.4][s12-4],
+- **`ArgumentInvalid`** ([§9.2][s9-2], [§10.5][s10-5], [§11.6][s11-6], [§12.1][s12-1], [§12.4][s12-4],
   [§12.6][s12-6], [§12.7][s12-7], [§13.5][s13-5], [§14.8][s14-8], [§14.10][s14-10]). Error · service, or build in a `sample_times`
-  declaration · fail-fast, but collected over a `TableBinding`'s entry table
-  and over the `Model` and `Simulation` constructors' keywords and the claim
-  on the model ([D-318][d-318]). The call
-  (`Model`, `Simulation`, `init!`, `frame!`, `apply!`, `restore!`, `run!`,
-  `step!`, `replay!`, `live!`, `pace!`, `margin!`, `trim!`, `linearize`, `TableBinding`,
-  a period constructor), the argument, the value in hand, the violated
-  constraint. `trim!` and `linearize` on a `Model` at another scalar raise it
+  declaration · fail-fast, but collected over a `TableBinding`'s entry table,
+  over the `Model` and `Simulation` constructors' keywords and the claim
+  on the model ([D-318][d-318]), and over the recording keywords of `init!`,
+  `overlay!`, `restore!` and `replay!` ([D-261][d-261]). The call
+  (`Model`, `Simulation`, `init!`, `overlay!`, `frame!`, `apply!`, `restore!`, `run!`,
+  `step!`, `replay!`, `live!`, `pace!`, `margin!`, `trim!`, `linearize`,
+  `trace`, `TableBinding`, a period constructor), the argument, the value in
+  hand, and a `reason` naming the violated constraint. A `TableBinding`
+  refusal also carries the entry key, and one with reason `:vocabulary` the
+  offending key and the legal entry vocabulary. A model
+  a simulation has claimed is reason `:claimed`, and a `Simulation` over a
+  model not at `:built` is reason `:not_built` ([D-318][d-318]). `trace(sim)`
+  under `trace = false` is reason `:disabled`. `trim!` and `linearize` on a `Model` at another scalar raise it
   with reason `:non_nominal` ([D-319][d-319]). `Model` at a scalar other than
-  `Float64` or a `ForwardDiff.Dual` raises it with reason `:scalar` ([D-320][d-320]).
+  `Float64` or a `ForwardDiff.Dual` raises it with reason `:scalar`, alone
+  and before the keywords are read ([D-320][d-320]).
   The twin of `DeploymentInvalid` for arguments that are not deployment
   parameters.
 - **`ReadSetMisuse`** ([§14.9][s14-9]). Error · service · fail-fast. The
-  offending argument's type, the selector kinds in hand. Or an empty prefix
-  handed to `at` on a read set ([§14.9][s14-9]). The read side's twin of
-  `ConditionNodeMisuse`.
-- **`NotAttached`** ([§11.3][s11-3]). Error · service · fail-fast. The device
-  id or handle offered to `detach!`, the roster's device ids.
+  offending argument's type, the selector kinds in hand, the label of the
+  read or tap list at fault, and a `reason`. It is `:not_a_selector` for a
+  read set entry that is no selector, `:not_a_read_set` for an argument that
+  is no read set, `:not_a_tap_list` for a tap list that is no NamedTuple, and
+  `:empty_prefix` for an empty prefix handed to `at` on a read set
+  ([§14.9][s14-9]). The read side's twin of `ConditionNodeMisuse`.
+- **`NotAttached`** ([§11.3][s11-3]). Error · service · fail-fast. The
+  device offered to `detach!`, by type, and the roster's device ids.
 
 **Runtime:**
 
-- **`StepError`** ([§13.4][s13-4]). Error · runtime · fail-fast. The carrier.
-  Cursor frame (the component by its component-list index, the function, and
+- **`StepError`** ([§13.4][s13-4]). Error · runtime · fail-fast. The runtime
+  carrier, an `Exception` and not a kind of the set, listed for its payload.
+  Cursor frame (the component by its path, the function, and
   the boundary phase: the frame-top drain, an integration stage, the arrival
   sweep, the θ = 0 validation, a localization trial, projection, an event
-  round or the ticks), the clock at the failure, frame-entry boundary index (the replay pointer), the host of
+  round or the ticks, with the stage, trial or round ordinal), the clock at the failure, frame-entry boundary index (the replay pointer), the host of
   the catch (`:loop`, `:boundary_zero` or `:overlay`), and the `cause`, a species'
   diagnostic or the original exception, its type the parameter.
 - **`NonfiniteState`** ([§13.4][s13-4]). Error · runtime · fail-fast.
@@ -14171,7 +14284,7 @@ activation):
   renormalization). Harness writer only. A device's out-of-surface entry
   is `OutOfClaimEntry`.
 - **`OutOfClaimEntry`** ([§11.3][s11-3]). Warning · runtime · rate-limited.
-  Face name, the discarded value, the device's claim set, and the incumbent's
+  Face name, the discarded value, the writer's claim set, and the incumbent's
   device id when the face is claimed elsewhere.
 - **`ThreadBudget`** ([§12.2][s12-2]). Warning · runtime, at `run!` or
   `replay!` · rate-limited. Thread count, device-task count.
@@ -15707,6 +15820,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-428]: decisions.md#d-428--refuse-a-root-input-whose-type-does-not-convert-at-linearizes-default-operating-point
 [d-429]: decisions.md#d-429--write-a-condition-onto-a-stopped-run-through-overlay
 [d-430]: decisions.md#d-430--default-linearizes-t0-beside-about-to-00
+[d-431]: decisions.md#d-431--collect-a-stopping-check-over-its-own-unit
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop

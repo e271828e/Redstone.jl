@@ -40,7 +40,7 @@ readability with no loss of content. The steps are in
 | 14. Stopped-sim services | done | `fe29f36` | `133b58d` |
 | Appendix A. Taught contracts | done | `630e58e` | `appA/` |
 | Appendix B. API synopsis | done | `98d457e` | `appB/` |
-| Appendix C. Diagnostic kind set | not started | | |
+| Appendix C. Diagnostic kind set | done | | `appC/` |
 | Appendix D. Glossary | not started | | |
 
 ## Carried to later chapters
@@ -60,21 +60,6 @@ chapter's rewrite settles its own:
   §14.10's checkpoint restored into the scratch world; reword both together
   (chapter 14's B79). `tools/gloss_table.md` row 202 glosses `TrimProblem`
   as seven-field, where §14.7 says nine (B80).
-- **Appendix C.** `ArgumentInvalid` cites [Appendix B] for "the `Model` and
-  `Simulation` constructors' keywords validate under `ArgumentInvalid`",
-  which B never said; §12.4 says it of `join_timeout`. Its reasons lack
-  `:not_built`, which D-318 rules and B now lists (Appendix B's B1 rulings).
-- **Appendix C.** `TwoProducers` says "sibling wire", which D-314 makes
-  "local wire".
-- **Appendix C.** Rows chapter 14 found stale (its B75). `ConditionResolution`
-  lists four sub-kinds where §14.2 and §14.3 name seven reasons, and may
-  add §14.1 and §14.9. `DuplicateConditionLeaf`'s leaf is a `u` payload's
-  root input, not `(path, store, field)`. `ConditionNodeMisuse` lacks
-  `:set_payload` and says "node kinds" for node types. `ConditionShapeDrift`
-  names no `reason` field, where §14.4 names `:tree_type` and `:prefix`.
-  `TapResolution` lacks the seeded tap's limits (D-424). `TrimProblemInvalid`
-  lacks `:inverted_box` and `:nonpositive_tolerance` (D-422).
-  `ReadResolution` may not list §14.9.
 - **Appendix D.** *generic holding* cites §6.1, which no longer states it,
   and *local wire* cites §6.1 for "one end on the boundary", which D-314's
   Rationale states. `#g-entry` lacks the wiring entry that §6.1 and §13.3 use

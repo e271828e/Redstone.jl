@@ -187,6 +187,26 @@ condition algebra on; the working files stay in `appB/`.
 - **The signature checker's absences need a second grep.** It reported
   `termination` absent, missing a one-line method definition.
 
+## Lessons from Appendix C
+
+Landed 2026-10-21 as an audit, with D-431; the working files stay in
+`appC/`.
+
+- **Payload drift is the main drift.** Of 345 rows, 53 were stale, and
+  nearly all of them were fields and reason values the structs hold and C
+  never named. Severity agreed everywhere. Spell every `reason` with its
+  full value set, since tests match on it.
+- **A field set on one reason is not a field of the kind.** The audit rows
+  and the first edits stated four such fields for every occurrence. A fresh
+  Opus verifier over the diff caught all four. Say which reason carries a
+  conditional field.
+- **The owners check is noise unless filtered.** A section that mentions a
+  kind is not an owner. Add an owner only where the section states a raise
+  rule the entry describes.
+- **A policy mismatch can be a missed conformance.** The per-unit
+  collection predated D-229 by a week and was never conformed. Date the code
+  against the entry before deciding which side moves.
+
 ## Sequencing
 
 - Working order: A whole, that is the harvest, the owner's pick, then the
