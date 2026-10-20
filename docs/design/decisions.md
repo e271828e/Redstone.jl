@@ -16927,8 +16927,8 @@ the producer in hand.
 and errors if the face never surfaces — an internally-wired input has no slot
 and writing it is meaningless (the first sweep overwrites)". No Position
 carries it. [D-277][d-277]'s second bullet states the refusal for a `get_input` and
-points to [§14.2][s14-2] for the condition entry, and [D-071][d-071]'s second bullet and [D-139][d-139]'s
-Rationale assert it by citing [§14.9][s14-9]. The code raises it in `_root_input`
+points to [§14.2][s14-2] for the condition entry. [D-071][d-071]'s second bullet asserts it
+with no citation, and [D-139][d-139]'s Rationale by citing [§14.9][s14-9]. The code raises it in `_root_input`
 (`src/conditions.jl`), with the producer, and the landed [§14.2][s14-2] states it. This
 entry records the refusal as that design text, [§14.2][s14-2] and the code state it,
 and decides nothing new.
