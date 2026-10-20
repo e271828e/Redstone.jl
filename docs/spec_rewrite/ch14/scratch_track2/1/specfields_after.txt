@@ -1,6 +1,0 @@
-pairs whose Spec field lacks the section: 5
-D-026  §14.5  lines 11844  [ratified]  Spec: 11.7
-D-139  §14.8  lines 12452  [ratified]  Spec: 4.4, 5.3, 8.2, 14.1, 14.2, 14.7, 14.9
-D-237  §14.9  lines 12653  [ratified]  Spec: 4.3, 4.4, 8.2, 9.5, 9.7, 13.7
-D-280  §14.8  lines 12510  [ratified]  Spec: 7.2, 8.2, 9.4
-D-316  §14.2  lines 11415  [ratified]  Spec: 4.3, 8.1, 8.2, 10.4, 11.5, 12.4, 12.6, 12.7, 13.5, 13.7, 14.4
