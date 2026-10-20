@@ -11315,8 +11315,8 @@ diagnostic read ([D-232][d-232]). It may not become a checkpoint
 ([D-108][d-108], [D-274][d-274]).
 
 A violation is `ServiceLifecycle` ([Appendix C][sC], [D-108][d-108]). Its
-payload is the operation, the current status and the legal statuses. It is the
-same kind `attach!`/`detach!` raise while `running` ([§11.3][s11-3]), so there
+payload is the operation, the current status and the legal statuses ([D-415][d-415]). It
+is the same kind `attach!`/`detach!` raise while `running` ([§11.3][s11-3]), so there
 is one error form for "this operation is illegal in the current lifecycle
 state." `MissingInit` is distinct, and names a missing prior step. The
 `checkpoint` row's two refusals, after a `t*` stop and after an abandoned
@@ -11326,8 +11326,8 @@ frame, are `CheckpointMidFrame` ([§12.6][s12-6], [Appendix C][sC]).
 one scalar type), gated by the model's status rather than by the lifecycle
 ([D-319][d-319]). `checkpoint` and the default `linearize` are legal at `:consistent`.
 `init!`, `restore!`, `trim!` and `linearize` with an explicit `about` are legal
-at any status. A model a simulation has claimed refuses each form that writes,
-`init!`, `restore!` and `trim!`, as `ArgumentInvalid` with reason `:claimed`
+at any status ([D-425][d-425]). A model a simulation has claimed refuses each form that
+writes, `init!`, `restore!` and `trim!`, as `ArgumentInvalid` with reason `:claimed`
 ([D-318][d-318]).
 
 ### 14.1 Conditions are path-addressed overlays on the declared defaults
@@ -11376,10 +11376,10 @@ the value is known above, not computable below. The second case is a job for the
 trim service, not for init.
 
 **"Caller-computable" reaches past closed-form knowledge to environment queries**
-([D-139][d-139]). A condition needing one constructs the same handle the sweep will
-produce, and then calls the same query function the consuming component calls.
-There are two routes to that handle. One is the [value-level constructor](#g-value-level-constructor) (the
-plain public function building a field handle from the component and input
+([D-139][d-139], [D-416][d-416]). A condition needing one constructs the same handle the sweep
+will produce, and then calls the same query function the consuming component
+calls. There are two routes to that handle. One is the [value-level constructor](#g-value-level-constructor)
+(the plain public function building a field handle from the component and input
 values) of [§8.2][s8-2]. The condition applies it to the same values the [`baseline`](#g-baseline) (the
 full-coverage condition `trim!` takes as a keyword) writes into the environment
 [component](#g-component)'s root inputs. The other applies in a rig where an isbits handle
@@ -11446,7 +11446,7 @@ gives every level a declared face for every signal crossing its boundary, so the
 chain a sub-assembly's face routes through is in the `Build` ([§6.1][s6-1], [§9.2][s9-2],
 [D-207][d-207]). An internally-wired input has no root input behind it, and writing it
 would be meaningless because the first sweep overwrites it. Such a write is
-`ConditionResolution` with reason `:internally_wired`. Unexported stays
+`ConditionResolution` with reason `:internally_wired` ([D-277][d-277]). Unexported stays
 unpokeable for init exactly as it is for a front end's panels ([§11.7][s11-7]).
 
 **Composition builds an inert, lazy [fragment tree](#g-fragment-tree)** (the nested `Fragment`,
@@ -11645,7 +11645,7 @@ is therefore resolve-once/execute-many.
   computed at run time pairs with the compiled one exactly as a literal does, at
   the cost of one short comparison per `at` node. Shape drift is a tree of
   another type, or a prefix that differs at a position. It is
-  `ConditionShapeDrift` ([Appendix C][sC]), reason `:tree_type` or `:prefix`, a
+  `ConditionShapeDrift` ([Appendix C][sC], [D-423][d-423]), reason `:tree_type` or `:prefix`, a
   structured error rather than silent corruption. The cost is Julia codegen *once
   per condition shape*, and it grows with the shape's writes ([D-066][d-066]). On Julia
   1.13 it measures 10 to 50 ms up to 32 writes, 0.09 s at 64 and 0.2 s at 128
@@ -11690,9 +11690,9 @@ steps in any order, as in `"pose.q_eb[2]"`, `"ω_eb_b[1]"` or `"J[1,3]"`. **A ba
 `Symbol` is the short form of a plain name**, so `get_state("kin", :θ)` reads
 `get_state("kin", "θ")` ([D-276][d-276]). A face name is an arbitrary string and may
 contain a dot ([§8.6][s8-6]), so on `get_input` and `get_face` the head is matched
-rather than parsed. The head is the longest declared face name that is a prefix
-of the address and is followed by the end, a `.` or a `[`. A `Symbol` leaf names
-the face whole, with no steps. So `get_input("wing.throttle")` and
+rather than parsed ([D-418][d-418]). The head is the longest declared face name that is a
+prefix of the address and is followed by the end, a `.` or a `[`. A `Symbol` leaf
+names the face whole, with no steps. So `get_input("wing.throttle")` and
 `get_input("wind[1]")` both resolve, and where faces `a` and `a.b` both exist,
 `"a.b"` names the face `a.b`.
 
@@ -12240,10 +12240,10 @@ the report as diagnostic data, and it is authoritative over nothing.
 
 #### The tolerance translation
 
-The tolerance translation is the service's too, per backend family ([D-150][d-150]). In
-least-squares backends the tolerances *are* the stopping criterion. They feed the
-per-residual test directly, so the damping loop of Levenberg–Marquardt (LM)
-tests exactly what the service will re-test.
+The tolerance translation is the service's too, per backend family
+([D-150][d-150], [D-421][d-421]). In least-squares backends the tolerances *are* the
+stopping criterion. They feed the per-residual test directly, so the damping
+loop of Levenberg–Marquardt (LM) tests exactly what the service will re-test.
 
 The derivative-free fallback is designed and not yet built, and `pending.md` lists
 it ([D-070][d-070]). In the design it is `NLoptBackend(:LN_BOBYQA)` in a package extension.
@@ -12463,8 +12463,8 @@ malformed cases are these.
 
 - A field that is not a NamedTuple, or a `reads` that is no read set.
 - A guess/bounds key-set or field-type disagreement.
-- A box with `lower` above `upper`.
-- A tolerance or check tolerance that is not finite and positive.
+- A box with `lower` above `upper` ([D-422][d-422]).
+- A tolerance or check tolerance that is not finite and positive ([D-422][d-422]).
 - A `tolerances`/residual key-set mismatch observed at the setup guess
   evaluation, and a `check_tolerances`/check key-set mismatch observed at the
   same evaluation.
@@ -12605,10 +12605,10 @@ mounted at `"wing"`, the input entry `throttle` resolves to root input
 component](#g-scenario-component) driving the wingman's throttle) is untrimmable
 from outside. Resolution refuses it by name, with the producer that drives it in
 hand, as `ConditionResolution` for a condition entry and as `ReadResolution` for
-a `get_input`. The service compiles the scoped condition and reads, and runs the
-identical loop. It never knows where its paths are mounted.
+a `get_input` ([D-277][d-277]). The service compiles the scoped condition and reads, and
+runs the identical loop. It never knows where its paths are mounted.
 
-**A problem never authors the environment** ([D-139][d-139]). The environment is
+**A problem never authors the environment** ([D-139][d-139], [D-417][d-417]). The environment is
 the business of the world and of the [`baseline`](#g-baseline) (the
 full-coverage condition `trim!` takes as a keyword). In a full world it is a
 sibling component's root inputs. In a thin rig it is a root input holding an
@@ -12695,11 +12695,11 @@ vector leaf yields *named scalars*, one tap per element. A seeded tap, in the `x
 step, because a seed is written into a whole state field or [root input](#g-root-input) (the
 root's own input face), or into one array element of it. A seeded tap's leaf is
 exactly `Float64`. Any other seeded address is rejected at resolution as a
-`TapResolution`. A `y` tap is a read and takes any leaf address. A tap resolving to
-a vector or a struct is rejected at resolution as a `TapResolution`, and so is a
-member in the wrong list. A second tap resolving to a site already seeded is
-rejected naming the earlier label, since one site is one column and a second
-seed there would overwrite the first ([D-272][d-272]).
+`TapResolution` ([D-424][d-424]). A `y` tap is a read and takes any leaf address. A tap
+resolving to a vector or a struct is rejected at resolution as a `TapResolution`,
+and so is a member in the wrong list. A second tap resolving to a site already
+seeded is rejected naming the earlier label, since one site is one column and a
+second seed there would overwrite the first ([D-272][d-272], [D-419][d-419]).
 
 ```julia
 taps(x = (p = get_state("vehicle/dynamics", "ω_eb_b[1]"),
@@ -12742,7 +12742,7 @@ held cells. After a `trim!` commit, `linearize(sim, taps)` or `linearize(model, 
 is about the trim point with nothing re-specified. **`about = <condition>`, with `t0`
 beside it, linearizes anywhere else without touching the sim**, the condition's
 coverage checked as [§14.6][s14-6] requires ([D-272][d-272]). `t0` is admitted only there, and a `t0`
-passed without `about` is an `ArgumentInvalid`.
+passed without `about` is an `ArgumentInvalid` ([D-420][d-420]).
 
 #### The seeded pass
 
@@ -12788,7 +12788,8 @@ route the tap around it. Either move depends on knowing which leaf froze the
 root input. A discrete consumer pins its input entry by tier, not by declaration
 ([§8.2][s8-2]), so a root input it reads is unseedable at every activation with nothing
 to promote. The rejection then names the tier, and the next move is to tap the
-continuous cell that consumer drives, or the recorded step map below ([D-272][d-272]).
+continuous cell that consumer drives, or the recorded step map
+below ([D-272][d-272], [D-419][d-419]).
 
 The table sets seeded and frozen leaves side by side.
 
@@ -12922,11 +12923,11 @@ linearization does not have. `handle_walk_walkthrough.md` places the rule beside
 the `Freeze` block ([§13.7][s13-7]) and the pinned input entry.
 
 What stays recorded is only the remaining tooling over the schema's declared
-non-participation. One piece is pinned-face validation by the tap declaration,
-where selecting a declared-frozen output is a warning. The other is a
-[feedthrough](#g-feedthrough)-graph lint, where a frozen output fed by participating inputs names
-the severed coupling. Both are additive when a consumer shows up, with no flag
-day. Until then the declared pins and the visible zero rows suffice.
+non-participation ([D-426][d-426]). One piece is pinned-face validation by the tap
+declaration, where selecting a declared-frozen output is a warning. The other is
+a [feedthrough](#g-feedthrough)-graph lint, where a frozen output fed by participating inputs
+names the severed coupling. Both are additive when a consumer shows up, with no
+flag day. Until then the declared pins and the visible zero rows suffice.
 
 ---
 
@@ -15488,6 +15489,18 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-412]: decisions.md#d-412--let-the-reason-string-never-the-framework-tell-a-stop-requests-two-uses-apart
 [d-413]: decisions.md#d-413--check-for-an-honoured-request-at-an-advances-entry-and-bound-t_end-first
 [d-414]: decisions.md#d-414--drop-the-past-generic-refusal-from-the-service-walk
+[d-415]: decisions.md#d-415--carry-the-operation-the-current-status-and-the-legal-statuses-in-servicelifecycle
+[d-416]: decisions.md#d-416--extend-the-caller-computable-escape-to-environment-queries
+[d-417]: decisions.md#d-417--never-let-a-trim-problem-author-the-environment
+[d-418]: decisions.md#d-418--match-a-face-selectors-head-against-the-levels-face-list
+[d-419]: decisions.md#d-419--refuse-two-taps-at-one-site-and-name-the-tier-of-a-tier-pinned-root-input
+[d-420]: decisions.md#d-420--admit-t0-only-beside-about
+[d-421]: decisions.md#d-421--translate-the-tolerances-into-each-backend-familys-stopping-language
+[d-422]: decisions.md#d-422--refuse-an-inverted-box-and-a-non-positive-tolerance-as-trimprobleminvalid
+[d-423]: decisions.md#d-423--raise-a-drifted-condition-shape-as-conditionshapedrift
+[d-424]: decisions.md#d-424--limit-a-seeded-tap-to-one-index-step-and-a-float64-leaf
+[d-425]: decisions.md#d-425--admit-init-trim-and-linearize-under-about-on-a-model-at-any-status
+[d-426]: decisions.md#d-426--record-the-tooling-over-declared-non-participation-unbuilt
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop
