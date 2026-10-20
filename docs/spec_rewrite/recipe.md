@@ -363,6 +363,24 @@ unit's `old.md`, which its own inventory guarantees.
   §10.6 edit named a line that held a different sentence; the evidence
   check caught it (B27).
 
+**From chapter 14, the brief should also:**
+
+- Hold its own dictations to lessons 25 and 64 even when the rule seems
+  known. R12 called `stopval` and BOBYQA FlightCore's without opening the
+  Flight.jl source, where both are the Cessna 172 model's (R23). R36 used
+  the reserved *kind* in a dictated clause (R38). A rewriter or verifier
+  caught each after launch.
+- Assign each finding to the unit that holds its old line, not to the
+  section the survey filed it under. F16 sat in §14.4's row but rewrote a
+  §14.3 sentence, and R27 moved it from unit B to unit A (lesson 40).
+- State the one-bold test for a Position's bullets. A bullet that adds a
+  constraint is a ruling and takes a bold where its home is (R19, D-276).
+  A bullet that spells out the Position's own sentence case by case is a
+  consequence and stays plain (R28, D-277).
+- Name every unit that states a claim when it rules the claim's home. §14.3
+  and §14.4 both stated the two compiled plans after R27 and F16, and R37
+  had to pick one home after both verifiers flagged it.
+
 ### Step 3: rewrite the units in parallel (one Opus agent per unit)
 
 Prompt: read `checks/brief_common.md`, `units/<U>/brief.md` and
@@ -661,6 +679,19 @@ From chapter 13:
   commit and the section, and "§" stays reserved for spec citations, since
   `check_refs.jl` reads it as one.
 
+From chapter 14:
+
+- **Track 2's first agent writes a plan and stops.** It classes each item's
+  proposals as annotation, Spec field, new entry, none or closed, with the
+  source's words, then waits. The orchestrator's review dropped or narrowed
+  four of its 14 entry groups before any entry was written: one restated
+  D-277's Position, which the agent's grep had missed; one followed from
+  D-059's; one described mechanism; one needed a source in git history,
+  which the second agent then found.
+- **A source that cites the spec back still bites after the plan.** The
+  second agent cited D-277 at §14.2, and D-277 states the condition-entry
+  refusal only by pointing at §14.2 (lesson 43).
+
 ### Step 9: close the chapter
 
 1. Add this chapter's lessons to this recipe, at the step each changed, and
@@ -681,7 +712,7 @@ Appendix A is an index, B an API synopsis, C a table of diagnostic kinds and
 D the glossary. They carry few rulings and are list-shaped, so the moves,
 the overlap analysis and the two-half survey buy little. The plan is a
 reduced track: a survey, one rewriter per appendix, one verifier and the
-battery. The decision waits for chapter 14's landing, since the kernel
+battery. Chapter 14 has landed, so the decision is now open: the kernel
 extraction in `pending.md` may change what Appendices A and B are for.
 
 ### The 2026-10-14 revision and its validation
@@ -905,6 +936,26 @@ It cost about 0.55M per 1,000 words, near chapter 12's 0.57M. The
 orchestrator's context was 209k tokens at checkpoint 1, 289k after step 4
 and 372k at checkpoint 4.
 
+Chapter 14, 12,500 words, ruled by the orchestrator, surveyed in two halves:
+
+| step | agent runs | subagent tokens | findings |
+|---|---|---|---|
+| survey | 2, one per half | 1.05M | 455 rules; 62 factual findings, none serious |
+| rewrites | 5, plus fix rounds | 1.52M | checker failures at hand-back: 0; 23 rulings after launch |
+| unit verification | 5, plus re-checks | 0.92M | DRIFT 11, LOST 0 |
+| chapter passes, inbound checks, editorial fixers | 6 | 1.23M | 88 pass findings (14 RULING); 17 non-OK rows of 653, no loss |
+| consolidation, evidence check, ruled edits | 4 | 0.63M | 80 items (20 blocking); 6 UNCONFIRMED |
+| final verification and PDF check | 3 | 0.50M | 17, one a lost clause |
+| landing | 1 | 0.11M | 0 stops; 1 rebaseline, 1 whitelist trim |
+| track 2, its plan, verification and fixes | 3 | 0.69M | 9 findings; 4 of 14 entry groups dropped or narrowed at the plan |
+| total | 28, plus fix rounds | about 6.65M | |
+
+It cost about 0.53M per 1,000 words, near chapters 12 and 13. Units ran
+2,050 to 2,850 words, and 23 rulings after launch, against chapter 13's 15,
+came mostly from the one-bold test on Position bullets and from Flight.jl
+owners. The orchestrator's context was 183k tokens at checkpoint 1, 327k
+after step 4, 405k at checkpoint 4 and 460k at the close.
+
 ## 4. What to expect from a chapter
 
 From chapter 9:
@@ -1020,6 +1071,24 @@ From chapter 13, which held 364 rules:
   kernel's migration list (`docs/design/pending.md`).
 - **The chapter grew about a seventh**, from 10,635 words to about 12,100,
   and bold fell from 87 spans to 57 while its words rose from 497 to 521.
+
+From chapter 14, which held 455 rules:
+
+- **Two rules in seven lived only outside a Position**, 126 of 455 (96 in a
+  Rationale, Rejected list or annotation, 30 with no entry). Track 2 wrote
+  thirteen entries, D-415 to D-427, and 16 annotations.
+- **One rule in four cited its entry at its spot**, 108 of 455.
+- **No finding was serious.** Most were the spec lagging the code: §14.4's
+  client policy after D-414, a fourth totality site, the unbuilt NLopt
+  fallback in the present tense, and refusals the code raises that no
+  sentence stated.
+- **No inbound citation was lost.** Of 653 rows, 17 were not OK. Fifteen
+  were wrong before the rewrite, and two followed rulings: a cut clause
+  (R31) and a move to a companion (R15), each fixed at landing.
+- **The survey's part H listed 81 descriptive passages**, 36 in half 1 and
+  45 in half 2.
+- **The chapter grew about a fifth**, from 12,500 words to about 14,900,
+  with 98 bold spans.
 
 ## 5. Lessons, in one list
 
@@ -1137,6 +1206,15 @@ From chapter 13, which held 364 rules:
     text.
 74. Replace every commit hash in a reused prompt.
 75. A ruled cut lists the claims of the clause it cuts.
+
+76. The orchestrator's dictations open the Flight.jl source and the
+    reserved-word list, like any rewriter's (chapter 14).
+77. A finding goes to the unit holding its old line.
+78. A bullet that adds a constraint takes a bold; a bullet that spells out
+    the Position's sentence per case stays plain.
+79. A home ruling names every unit that states the claim.
+80. Track 2's first agent writes a classification plan and stops for the
+    orchestrator's review.
 
 ## 6. A chapter's files
 

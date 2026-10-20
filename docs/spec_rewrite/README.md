@@ -37,52 +37,61 @@ readability with no loss of content. The steps are in
 | 11. Runtime periphery: the data plane | done | `1b1ac70` | `e5cbb77` |
 | 12. Runtime periphery: lifecycle and orchestration | done | `e91aa40` | `eb1d832` |
 | 13. Error discipline | done | `3d4cb27` | `ae63ca9` |
-| 14. Stopped-sim services | in progress | | |
+| 14. Stopped-sim services | done | `fe29f36` | |
 | Appendices A to D | not started | | |
 
 ## Carried to later chapters
 
-Doubles and pointers chapters 5 to 13 found in chapters not yet rewritten. Each
+Doubles and pointers chapters 5 to 14 found in chapters not yet rewritten. Each
 chapter's rewrite settles its own:
 
 - **Chapter 11.** §11.7 still shows the parked GUI as live, present tense,
   near the dead-slider fight; chapter 12's R2 wording ("a front end's")
   applies (chapter 12's B85). Chapter 11 is done, so this lands as a loose
   fix.
-- **Chapter 14.** §14's "`errored` is terminal for every row" is bold where
-  §12.6 bolds it; make it plain (B84).
 - **Appendix B.** The `Model`'s rows still call its entry points "doors";
   chapter 12's R14 reserves *door* for an entry point that builds a run
   (B29).
-- **Chapter 14.** §14.10 cites superseded D-167 three times.
-- **Chapter 14.** §14.10 bolds seedability and states the tap rejection,
-  both of which §8.2 states (D-295, D-296).
-- **Chapter 14 and Appendix B.** "Requester roster" is unlinked in §14.4
-  and Appendix B; chapter 13's track 2 added `#g-requester-roster`.
+- **Appendix B.** "Requester roster" is unlinked; chapter 13's track 2
+  added `#g-requester-roster`.
 - **Companions.** `frame_walkthrough.md`'s sketches lag the code: they name
   `sim.jl`, `sim.exec` and `event_phase!(sim, …)` where `src/` now has the
   `Model`'s `event_phase!(model, tick)` (chapter 13's track 2).
+- **Companions.** `linearization_walkthrough.md` 572 says "`sim.exec` was
+  never touched", stale since D-317, and its "no restore step" sits beside
+  §14.10's checkpoint restored into the scratch world; reword both together
+  (chapter 14's B79). `tools/gloss_table.md` row 202 glosses `TrimProblem`
+  as seven-field, where §14.7 says nine (B80).
 - **Front matter.** The Part III roadmap omits §12.5 (chapter 12's B86).
   The Part IV roadmap omits §13.3, §13.6 and §13.7, and still says §13
   "fixes only how a failure is reported once it happens"; the chapter now
-  adds "and what the framework offers around it" (chapter 13's B80).
-- **Chapter 14.** §14.8 (old 12180) cites the bare §13 for §13.5's
-  exceptions-are-broken-machinery line; cite §13.5 (chapter 13's B82).
-  §14.2 (old 11338) calls `set`, `at` and `combine` §13.7 library material;
-  they are ordinary artifacts, as §13.7's blocks are ordinary components
-  (B83). §14.9 (old 12351) puts a `product(...)` helper in §13.7's library,
-  which holds components only (B84).
+  adds "and what the framework offers around it" (chapter 13's B80). The
+  Part IV roadmap's account of §14 predates the chapter's new roadmap
+  sentence for §14.1 to §14.10; take it from there (chapter 14's B77).
 - **Appendix A.** The old-style lead-ins "**Same-tick reset consumption**"
   and "**A continuous component's state reset is an event**" bold rulings
   §5.3 bolds (D-089, D-141), with no D-citation.
 - **Appendix B.** The handler return law is bold with no D-citation; §5.2
   bolds it (D-090).
+- **Appendix B.** It lists only `port(model, path, name)`; the code also
+  has `port(snapshot, path, name)` (`src/dataplane.jl`), which §14.4 now
+  names for snapshot inspection (chapter 14's B76).
 - **Appendix C.** `TwoProducers` says "sibling wire", which D-314 makes
   "local wire".
+- **Appendix C.** Rows chapter 14 found stale (its B75). `ConditionResolution`
+  lists four sub-kinds where §14.2 and §14.3 name seven reasons, and may
+  add §14.1 and §14.9. `DuplicateConditionLeaf`'s leaf is a `u` payload's
+  root input, not `(path, store, field)`. `ConditionNodeMisuse` lacks
+  `:set_payload` and says "node kinds" for node types. `ConditionShapeDrift`
+  names no `reason` field, where §14.4 names `:tree_type` and `:prefix`.
+  `TapResolution` lacks the seeded tap's limits (D-424). `TrimProblemInvalid`
+  lacks `:inverted_box` and `:nonpositive_tolerance` (D-422).
+  `ReadResolution` may not list §14.9.
 - **Appendix D.** *generic holding* cites §6.1, which no longer states it,
   and *local wire* cites §6.1 for "one end on the boundary", which D-314's
   Rationale states. `#g-entry` lacks the wiring entry that §6.1 and §13.3 use
-  (chapter 13's B81).
+  (chapter 13's B81), and the condition entry, input entry and tap that
+  chapter 14 uses (its B78).
 
 Chapter 9 predates this directory. Its files stay in its report, with the
 §9.4 trial in `docs/reports/20261001_spec_rewrite_sample/`.
