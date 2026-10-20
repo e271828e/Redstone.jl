@@ -111,9 +111,9 @@ The survey maps the chapter before anyone writes. Chapter 9's
   ran §7.3's PRNG example and found that it failed its own conformance
   check. No reading had caught it.
 - from chapter 13, every descriptive passage, a rule's description rather
-  than the rule, tagged with the source file that realizes it. The tags are
-  the normative kernel's migration list (`docs/design/pending.md`), and the
-  rewrite does not act on them.
+  than the rule, tagged with the source file that realizes it. The tags
+  were gathered for a normative kernel that was dropped on 2026-10-20, and
+  the rewrite does not act on them.
 
 Head each per-section block `### §N.M ...`, as chapter 11's surveys did:
 `slice_survey.py` cuts the survey for each unit by that heading.
@@ -635,8 +635,8 @@ chapter. A new entry restates what an existing entry, the original design text i
 git history or a ruling commit records, or what the code does and the spec
 states (D-400 to D-404). The orchestrator rules each spec sentence with no
 entry behind it. A ruling the code implements gets an entry; a description
-of mechanism gets none, since the normative kernel moves it beside the code
-(`docs/design/pending.md`). It goes to the owner only when ratifying it
+of mechanism gets none, since description is not a ruling. It goes to the
+owner only when ratifying it
 would choose between behaviors. Then cite the new entries
 beside their source entries in the chapter. Track 2 is
 where the log catches up with the spec; keeping it out of the rewrite kept
@@ -709,11 +709,11 @@ From chapter 14:
 ### The appendices
 
 Appendix A is an index, B an API synopsis, C a table of diagnostic kinds and
-D the glossary. They carry few rulings and are list-shaped, so the moves,
-the overlap analysis and the two-half survey buy little. The plan is a
-reduced track: a survey, one rewriter per appendix, one verifier and the
-battery. Chapter 14 has landed, so the decision is now open: the kernel
-extraction in `pending.md` may change what Appendices A and B are for.
+D the glossary. The chapter recipe does not transfer to them. Each gets a
+treatment of its own, planned in `appendices.md`: A is rewritten as one
+unit after a harvest of new entries, B is thinned to signatures and
+citations, C is audited against the code, and D has its citations, gaps and
+entry lengths checked.
 
 ### The 2026-10-14 revision and its validation
 
@@ -1067,8 +1067,8 @@ From chapter 13, which held 364 rules:
   retarget, and the rest were wrong before the rewrite or lagged a ruled
   correction, fixed at landing.
 - **The survey's part H listed 69 descriptive passages**, 27 in half 1 and
-  42 in half 2, each with the source file that realizes it. They are the
-  kernel's migration list (`docs/design/pending.md`).
+  42 in half 2, each with the source file that realizes it. They were
+  gathered for the kernel, dropped on 2026-10-20.
 - **The chapter grew about a seventh**, from 10,635 words to about 12,100,
   and bold fell from 87 spans to 57 while its words rose from 497 to 521.
 

@@ -97,9 +97,9 @@ item changes what the spec says, the spec edit is part of the item.
   assigned to the client, and a ruling on §11.7's "assembly panels compose
   children by path", a constraint on that half with no entry (stage 4).
 - **The spec's readability rewrite.** Chapters 1 to 14 are done. The front
-  matter and the appendices follow `docs/spec_rewrite/recipe.md`, and that
-  directory's README tracks them. Until a part's turn comes, it keeps the old
-  markers.
+  matter and the appendices remain, one treatment per appendix as
+  `docs/spec_rewrite/appendices.md` plans, and that directory's README
+  tracks them. Until a part's turn comes, it keeps the old markers.
 - **The user guide and the API reference.** The reference is a Documenter
   build over the API docstrings, which is why the docstrings precede the
   release and the build need not. The guide grows from the tutorial and the
