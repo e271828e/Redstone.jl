@@ -36,7 +36,8 @@ added: (the primary record of a session)
 # trace's first-use gloss, the glossary's words.
 
 old: A fresh recording starting at its own anchor is unattended mode's natural shape.
-new: A fresh recording that starts at its own anchor is the natural shape of unattended mode.
+new: A fresh recording that starts at its own anchor is the natural shape of an unattended run (a run with empty staging and no snapshot readers).
+note: step 5 P2-19: the glossary's term, linked and glossed with its words
 
 old: A trim at a point reached by flying is not offered.
 new: Trim is not offered at a point reached by flying.
@@ -45,7 +46,8 @@ old: Trim takes an authored baseline.
 new: It takes an authored baseline.
 
 old: Fly-then-retrim is `checkpoint` the flight, then author the trim's baseline from what the checkpoint (the `Model`'s state at a frame top as one value) shows (D-273).
-new: Fly-then-retrim is spelled as a `checkpoint` of the flight, then a trim baseline authored from what the checkpoint (the `Model`'s state at a frame top as one value) shows (D-273).
+new: Fly-then-retrim is spelled as a checkpoint (the `Model`'s state at a frame top as one value) of the flight, then a trim baseline authored from what the checkpoint shows (D-273).
+note: step 5 P2-20: the checkpoint link and gloss move to the first use
 
 old: #### The report, not an exception
 new: #### The report
@@ -84,11 +86,11 @@ tag: R
 ruling: R11
 
 old: - The solved-point residuals come with their tolerances.
-new: - `residuals` are the solved-point residuals, and `tolerances` the tolerances they come with (§14.5, D-155).
+new: - `residuals` are the solved-point residuals, and `tolerances` the tolerances they come with (D-155).
 tag: R
-ruling: R11
-newcites: §14.5 D-155
-note: keyed to `residuals` and `tolerances`. R7: D-155's first ruling (the report carries both residual sets) is bold at §14.5, so a plain pointer here with its citation. D-155 Position: "the `TrimReport` carries both residual sets: the solved-point residuals ... and the committed-state residuals". The bold on the term goes.
+ruling: R11 B9
+newcites: D-155
+note: B9 drops the §14.5 pointer: §14.5 does not state the two residual sets and points back to this section. Keyed to `residuals` and `tolerances`. R7: D-155's first ruling (the report carries both residual sets) is bold at §14.5, so a plain pointer here with its citation. D-155 Position: "the `TrimReport` carries both residual sets: the solved-point residuals ... and the committed-state residuals". The bold on the term goes.
 
 old: They are the very numbers the verdict is read off, gathered at the backend's returned point.
 
@@ -140,20 +142,27 @@ note: F56. `_verdict!` runs one `rhs` before the gather (`src/trim.jl` 622-627).
 old: There is no offset caveat to carry.
 
 old: Every output stage publishes at boundary zero (D-205, §14.5), so a residual reading an offset component's port reads a commit-refreshed cell like any other.
-new: Every output stage publishes at boundary zero (D-205, §14.5). A residual reading the port (one declared name, one cell) of an offset component therefore reads a commit-refreshed cell like any other.
-note: split in two; "therefore" keeps the causal link's direction. Port takes its gloss from the glossary ("one declared name, one cell, ..."). Component keeps its link without a gloss, one parenthetical being the limit.
+new: Every output stage publishes at boundary zero (D-205, §14.5). A residual reading the port (one declared name, one cell) of a component whose schedule has a nonzero phase (an offset against its grid) therefore reads a commit-refreshed cell like any other.
+note: split in two; "therefore" keeps the causal link's direction. Port takes its gloss from the glossary ("one declared name, one cell, ..."). Component keeps its link without a gloss, one parenthetical being the limit.; step 5 P2-22: 'an offset component' spelled out; phase linked with the glossary's gloss ('a schedule's offset against its grid')
 
 added: (one declared name, one cell)
 
 old: Those committed-state residuals are the numbers describing the state the simulation is actually in, which is the point a `linearize` at its default operating point reads.
+new: Those committed-state residuals are the numbers describing the state the simulation is actually in, which is the point a `linearize` at its default operating point (§14.10) reads.
+newcites: §14.10
+note: step 5 P2-23: the §14.10 pointer moves here, the first of the two mentions
 
 old: A non-empty fired-event set also raises `TrimCommitEvents` (Appendix C).
-new: A non-empty fired-event set also raises `TrimCommitEvents` (Appendix C, D-126).
-tag: C
+new: A non-empty fired-event set also raises `TrimCommitEvents`, a logged warning (Appendix C, D-126).
+tag: R
+ruling: B8
 newcites: Appendix C D-126
-note: D-126 Position, "a non-empty set raises `TrimCommitEvents`". Its bold is §14.5's (R7).
+note: D-126 Position, "a non-empty set raises `TrimCommitEvents`". Its bold is §14.5's (R7). B8, once at the first "raises": Appendix C, "Warning · service · logged"; D-262, "a logged warning that rides the report"; src/trim.jl 620-644 logs it with @warn.
 
 old: The committed stores then sit at the post-handler point, not the reported solution, and a `linearize` at its default operating point (§14.10) reads that point.
+new: The committed stores then sit at the post-handler point, not the reported solution, and that is the point `linearize` reads by default.
+newcites: none
+note: step 5 P2-23: the second mention shortened; its §14.10 pointer now sits on the first, in the paragraph before
 
 old: The two residual sets are what make the moved point auditable.
 
@@ -170,6 +179,8 @@ old: The verdict itself is not re-litigated.
 new: The verdict itself is not revisited.
 
 old: It gated the commit, at the solved point, and the numbers (D-150) stand as reported.
+new: It gated the commit at the solved point, and the numbers stand as reported (D-150).
+note: step 5 P2-25: the citation leaves mid-phrase
 
 old: The committed-state checks audit the point rather than the move.
 
@@ -204,10 +215,10 @@ newcites: §13.5
 note: F58 (carried). The bare §13 becomes §13.5, whose line is "exceptions from model code are always abnormal"; the phrase §13.5 does not use goes, and D-070's Rejected list carries "not broken machinery".
 
 old: In an envelope sweep, hitting the infeasible edge is information.
-new: In an envelope of trims, hitting the infeasible edge is information.
+new: When trims span the flight envelope, hitting the infeasible edge is information.
 tag: R
 ruling: R9
-note: F66, *sweep* is reserved.
+note: F66, *sweep* is reserved.; step 5 P2-26: 'an envelope of trims' was reader-cold; *sweep* stays out (F66)
 
 old: A malformed problem is a different case.
 
@@ -295,8 +306,14 @@ note: F82 (`src/trim.jl` 481). The late baseline link goes (F67): unit F links i
 old: The ordinary box test decides `converged`, and the commit runs as usual.
 
 old: The degenerate problem is the "is this operating point an equilibrium?" probe.
+new: The empty problem asks "is this operating point an equilibrium?"
+note: step 5 P2-13 and P2-14: one name for the problem, and 'probe' no longer takes a third sense in §14.8
 
 old: It evaluates this condition's equations and reports, which is useful in its own right and free.
+new: It evaluates this condition's equations and reports, which is useful in its own right and costs no solve.
+tag: R
+ruling: B16
+note: B16 (rulings.md, correction 3): the empty problem costs one residual evaluation (src/trim.jl 481-485), so "free" becomes "costs no solve"; D-156 says only "useful in its own right".
 
 old: #### The AD obligation, scoped
 new: #### The AD obligation
@@ -334,11 +351,11 @@ added: (a value held at `Float64` inside authored continuous math)
 old: The robustness comes from enforcement, not hope.
 
 old: C172 migration audit (one afternoon):
-new: A migration audit of Flight.jl's Cessna 172 model (`c172.jl`) against this obligation took one afternoon.
+new: A migration audit of Flight.jl's Cessna 172 model against this obligation took one afternoon.
 tag: R
 ruling: R15
 newcites: D-070
-note: verify, "migration" kept and D-070 moved to the findings sentence in the same paragraph. R12 and R15. Owner checked at `~/.julia/dev/Flight.jl/lib/FlightApps/src/c172/c172.jl`. D-070 bullet 5: "The C172 audit is Interpolations tables (prefer cubic knots), saturation rank-deficiency (LM-tolerated, reported), gear zero airborne." "against this obligation" names the audit's subject, `migration_outline.md`'s "the C172 AD audit for trim".
+note: verify, "migration" kept and D-070 moved to the findings sentence in the same paragraph. R12 and R15. Owner checked at `~/.julia/dev/Flight.jl/lib/FlightApps/src/c172/c172.jl`. D-070 bullet 5: "The C172 audit is Interpolations tables (prefer cubic knots), saturation rank-deficiency (LM-tolerated, reported), gear zero airborne." "against this obligation" names the audit's subject, `migration_outline.md`'s "the C172 AD audit for trim".; step 5 P2-11: the second introduction in §14.8 drops (`c172.jl`); R15's 'Flight.jl's Cessna 172 model' stays
 
 added: Its findings on tables and saturations follow (D-070), and its two Flight.jl-only findings, on the landing gear and the `norm`-at-zero guards, are in the `migration_outline.md` companion.
 # R15's one-clause pointer, beside the clause introducing the two kept bullets.
@@ -351,7 +368,8 @@ old: They do.
 old: A call `itp(x::Dual)` works through the `BSpline`/`scale`/`extrapolate` compositions in Flight.jl's tables.
 
 old: But prefer cubic knots over linear where partials matter, since linear knots make Jacobian entries piecewise-constant.
-new: Prefer cubic knots over linear where partials matter, though, since linear knots make Jacobian entries piecewise-constant.
+new: Prefer cubic knots over linear where partials matter, though, since linear knots make Jacobian elements piecewise-constant.
+note: step 5 P2-27: bare *entry* becomes 'elements'
 
 old: That is no regression against finite differences (D-307).
 
@@ -364,7 +382,10 @@ added: FRC is the friction constraint compensator of FlightPhysics' piston engin
 # verify, FRC glossed; checked at `~/.julia/dev/Flight.jl/lib/FlightPhysics/src/piston.jl` 229 (`frc::PIVector{1} #friction constraint compensator`).
 
 old: LM damping tolerates the rank deficiency, and the report names the saturated variable (D-070).
-note: kept as written; see rulings.md, correction 1.
+new: LM damping tolerates the rank deficiency (D-070). The report's `saturated` list names a decision only at its own bound, so an in-model saturation shows in the Jacobian's zero columns rather than in the report.
+tag: R
+ruling: B12
+note: B12 (rulings.md, correction 1): `_saturated` (src/trim.jl 588-596) compares each decision with its own bounds only, so "the report names the saturated variable" is cut as false of an in-model saturation; its replacement states what the list holds. "LM damping tolerates the rank deficiency (D-070)" stands. Track 2 annotates D-070 bullet 5 (B59).
 
 old: Cruise trim leaves those saturations inactive.
 
@@ -397,7 +418,7 @@ added: This section treats a `TrimProblem` (the closed nine-field value a trim s
 added: Mounting (relocating a whole problem or tap set to a prefix) is the work of `at`, the scoping combinator.
 # mounting's and `at`'s first-use links and glosses, the glossary's words ("relocating a whole problem or tap set with `at(prefix, …)`", "the scoping combinator").
 
-added: The section says what a problem is, then how `at` lifts one, how a mounted read set and mounted input entries resolve, why a problem never authors the environment, and how worlds, thin rigs and swarms use the lift.
+added: The section says what a problem is, then how `at` lifts one, how a mounted read set and mounted input entries resolve, why a problem never authors the environment, and how worlds, thin rigs (worlds holding only the aircraft and its environment) and swarms use the lift.
 # R8: the parts sentence.
 
 old: What a `TrimProblem` is. It is not a condition but an implicitly specified condition.
@@ -450,6 +471,9 @@ note: F68, the mount chain glossed at its first use.
 
 added: (the prefixes it is mounted under, root first)
 
+added: A read set is a `Reads` value.
+# step 5 P2-29: introduces Reads, the type D-277's next ruling names
+
 old: Every other field is path-free and passes through.
 
 old: The rule that residual math sees only the gathered NamedTuple (§14.7) pays off here.
@@ -457,15 +481,18 @@ new: The rule that residual math sees only the gathered NamedTuple (§14.7) is w
 note: "pays off here" unwound into what the rule does for the lift; the sketch's `residuals = p.residuals, #path-free`.
 
 old: `at(prefix::String, p::TrimProblem) = TrimProblem( guess = p.guess, #path-free: pass through lower = p.lower, upper = p.upper, condition = d -> at(prefix, p.condition(d)), #post-compose: wrap each returned tree reads = at(prefix, p.reads), #inert selector data: the prefix joins the read set's mount chain residuals = p.residuals, #path-free: pass through tolerances = p.tolerances, checks = p.checks, check_tolerances = p.check_tolerances)`
-note: verbatim and keyword-form, as D-188 rules.
+new: `at(prefix::String, p::TrimProblem) = TrimProblem( guess = p.guess, #path-free: pass through lower = p.lower, upper = p.upper, condition = d -> at(prefix, p.condition(d)), #post-compose: wrap each returned tree reads = at(prefix, p.reads), #inert selector data: the prefix is prepended to the read set's mount chain residuals = p.residuals, #path-free: pass through tolerances = p.tolerances, checks = p.checks, check_tolerances = p.check_tolerances)`
+tag: R
+ruling: B7
+note: verbatim and keyword-form, as D-188 rules, but for B7's one comment edit: the prefix is prepended to the mount chain and joins nothing (D-277).
 
 old: The condition side needs nothing new at resolution.
 
 old: The flattening accumulator of §14.3 enters each `Scoped` wrapper and prefixes every entry below it.
-new: The flattening accumulator of §14.3 enters each `Scoped` wrapper and prefixes every condition entry below it.
+new: The flattening accumulator of §14.3 enters each `Scoped` wrapper (the node `at` builds over a condition node) and prefixes every condition entry below it.
 tag: R
 ruling: R13
-note: bare *entry* becomes "condition entry".
+note: bare *entry* becomes "condition entry".; step 5 P2-29: Scoped glossed; checked src/conditions.jl 28 and 94
 
 old: Rule. A read set carries its mount chain as data.
 new: A read set carries its mount chain as data (D-277).
@@ -585,7 +612,8 @@ newcites: D-071
 note: q24 row 665, D-071 bullet 3, "The world-level `f_init!` wrapper dissolves into the `baseline` condition: method nesting becomes value layering." The bold label becomes the cited headline.
 
 old: Flight.jl's `f_init!(::Model{<:SimpleWorld})` (initialize environment, then call the aircraft's trim) has no successor method.
-note: R12, owner already named; checked at `~/.julia/dev/Flight.jl/lib/FlightPhysics/src/world.jl` 48-56 (FlightPhysics is a Flight.jl package).
+new: FlightPhysics' world initializer, its method of FlightCore's `f_init!` on a FlightCore `Model{<:SimpleWorld}` (initialize environment, then call the aircraft's trim), has no successor method.
+note: R12, owner already named; checked at `~/.julia/dev/Flight.jl/lib/FlightPhysics/src/world.jl` 48-56 (FlightPhysics is a Flight.jl package).; step 5 P2-31: owners named per piece, world.jl 49 (FlightPhysics) and lib/FlightCore/src/modeling.jl (f_init!, Model)
 
 old: The environment, the other aircraft and all root inputs are covered by the `baseline` condition (§14.6), applied once at setup.
 
@@ -594,7 +622,8 @@ old: The commit is `override(baseline, at(mount, condition(d)))`.
 old: Method nesting became value layering.
 
 old: "Aircraft as root" is a thin world.
-note: the bold lead-in goes plain, a topic sentence; D-139 Rationale's "softened from doctrine to default" stays uncited, as in the old text.
+new: "Aircraft as root" is a thin rig.
+note: the bold lead-in goes plain, a topic sentence; D-139 Rationale's "softened from doctrine to default" stays uncited, as in the old text.; step 5 P2-30: one name, D-364's 'thin rig'
 
 old: By default the aircraft is not literally the root.
 new: They need one because by default the aircraft is not literally the root.
@@ -605,11 +634,11 @@ new: Its environment inputs are function-valued signals (§4.4), wired from prov
 note: the citation leaves the gloss's parentheses.
 
 old: Design tasks therefore use a shipped rig, `design_world(ac)` = aircraft + `SimpleAtmosphere(wind = NoWind())` + `HorizontalTerrain`.
-new: Design tasks use a shipped rig, `design_world(ac)` (D-071).
+new: Design tasks use the rig this design records, `design_world(ac)` (D-071).
 tag: R
-ruling: R7
+ruling: R7 B11
 newcites: D-071
-note: q24 row 668, D-071 bullet 4, "`design_world(ac)` promotes today's ad-hoc linearize models to a shipped rig". `design_world` takes its first-use link (F67); its gloss is the next sentences' composition.
+note: B11 and R26: no source holds a `design_world`, so "shipped" goes, as in §14.10's gloss; the claim that design tasks use `design_world(ac)` stands. q24 row 668, D-071 bullet 4, "`design_world(ac)` promotes today's ad-hoc linearize models to a shipped rig". `design_world` takes its first-use link (F67); its gloss is the next sentences' composition.
 
 old: `design_world(ac)` = aircraft + `SimpleAtmosphere(wind = NoWind())` + `HorizontalTerrain`.
 new: The rig is `design_world(ac)` = aircraft + `SimpleAtmosphere(wind = NoWind())` + `HorizontalTerrain`, where `SimpleAtmosphere` and `NoWind` are FlightPhysics' atmosphere types.
@@ -664,6 +693,10 @@ added: and §4.4 states why such a handle cannot be one (D-237).
 # M66's pointer, carrying the old sentence's two citations.
 
 old: For design tasks the shipped rig stays `design_world(ac)`.
+new: For design tasks the rig stays `design_world(ac)`.
+tag: R
+ruling: B11
+note: B11 cuts "shipped" only. Its fate: the rig's standing is the bold's "the rig this design records" (Design tasks use the rig this design records, `design_world(ac)`). The sentence stays for the one claim the bold lacks: after the test-rig idiom, design tasks still use `design_world(ac)`. It is also the antecedent of "That keeps".
 
 old: That keeps the environment's tunables in the root-input vocabulary that conditions, linearization's input surface and the trace header already speak.
 new: That keeps the environment's tunables in the root-input vocabulary that conditions, linearization's input surface and the trace header (the trace's fixed preamble) already speak.
@@ -685,6 +718,8 @@ newcites: D-071
 note: q24 row 673, D-071 bullet 5, "A swarm takes one problem per solve — sequential commits, or user-side joint composition".
 
 old: Sequential independent trims (trim lead, commit, trim wing against the committed world) cover weak or one-way coupling.
+new: Sequential independent trims (trim the lead aircraft, commit, trim the wingman against the committed world) cover weak or one-way coupling.
+note: step 5 P2-33: the lead named in full
 
 old: A joint trim is user-side value composition.
 

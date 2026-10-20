@@ -28,11 +28,11 @@ It is closed because the lift ([§14.9][s14-9]) is field-by-field.
 its own convergence test. [`at`](#g-at) (the scoping combinator storing a path
 prefix beside a node) passes it through untouched ([D-118][d-118]).
 
-[Worked](#g-worked), the cruise case of Flight.jl's Cessna 172 model
-(`c172.jl`) reduces to its three-equation core. The real problem is the same
-shape with the full 7-variable search, and the θ-constraint elimination
-survives inside its condition function, which the worked problem calls
-`trim_condition`.
+The problem below is [worked](#g-worked) (spelled in full against a concrete case). It is the
+cruise case of Flight.jl's Cessna 172 model (`c172.jl`), reduced to its
+three-equation core. The real problem is the same shape with the full 7-variable
+search, and the θ-constraint elimination survives inside its condition function,
+which the worked problem calls `trim_condition`.
 
 ```julia
 cruise = TrimProblem(
@@ -56,22 +56,19 @@ against Flight.jl's `c172.jl`.
 
 #### Decisions and parameters
 
-Decision variables, initial guess and box bounds are plain, same-*named*,
-all-`Float64` NamedTuples. FlightPhysics' decision-variable supertype,
-`AbstractTrimState{N}`, is dropped. It is an alias of StaticArrays'
-`FieldVector{N, Float64}`. Its only job was vectorization, and vectorization
-is the service's ([D-069][d-069]). The service packs and unpacks by field order, and
-that order is the `guess` NamedTuple's own. This [seam](#g-seam) runs on the
-rule [§9.5][s9-5] states, "the names are the pairing, order carries no
-semantics" ([D-151][d-151]). `lower` and `upper` are checked at setup for
-key-set equality with `guess` and for `Float64` fields. They are then
-canonicalized to `guess`'s field order by the same type-level reorder
-(`NamedTuple{keys(guess)}(lower)`). A permuted bound spelling is therefore a
-non-event, rather than `α`'s bound silently applied to `throttle`. A key-set or
-field-type mismatch is `TrimProblemInvalid`. Guess, bounds and the returned
-solution share one spelling, and `Base.merge(guess, (throttle = 0.3,))` is free
-warm-start tweaking. An author who wants a documented `@kwdef` struct keeps it
-privately and converts.
+FlightPhysics' decision-variable supertype, `AbstractTrimState{N}`, is dropped. It
+is an alias of StaticArrays' `FieldVector{N, Float64}`. Its only job was
+vectorization, and vectorization is the service's ([D-069][d-069]). The service packs and
+unpacks by field order, and that order is the `guess` NamedTuple's own. This [seam](#g-seam)
+runs on the rule [§9.5][s9-5] states, "the names are the pairing, order carries no
+semantics" ([D-151][d-151]). `lower` and `upper` are checked at setup for key-set equality
+with `guess` and for `Float64` fields. They are then canonicalized to `guess`'s field
+order by the same type-level reorder (`NamedTuple{keys(guess)}(lower)`). A
+permuted bound spelling is therefore a non-event, rather than `α`'s bound silently
+applied to `throttle`. A key-set or field-type mismatch is `TrimProblemInvalid`.
+Guess, bounds and the returned solution share one spelling, and
+`Base.merge(guess, (throttle = 0.3,))` is free warm-start tweaking. An author who
+wants a documented `@kwdef` struct keeps it privately and converts.
 
 `TrimParameters` is the struct in Flight.jl's `c172.jl` that holds a trim's
 targets and settings. **`TrimParameters` stays a plain user struct** the
@@ -93,19 +90,17 @@ addresses a declared output [port](#g-port) (validated against `y_types`).
 [face](#g-face) and an output face (validated against the faces of the level
 the read set is mounted at, the root's when unmounted) ([D-277][d-277]).
 
-The path [selectors](#g-selector) (the closed family of deferred reads
-resolving against a source) reach any port the structure has
-([§13.3][s13-3], [D-414][d-414]). As authoring guidance, an equilibrium
-equation meant to survive substitution at a generic seam reads a face
-([D-414][d-414], [D-125][d-125]). A trim evaluation needing a value a
-[component](#g-component) computes without declaring it finds no selector for
-it ([§14.4][s14-4]). That is a signal that the component should export it. A
-derivative wanted across a [contract](#g-contract) boundary takes the same
-remedy. Publish it as an ordinary output port computed in `y_direct`. That is
-the one-line binding of the fused idiom ([§5.3][s5-3]), made contract. By
-convention, then, `get_deriv` stays inside subtrees the problem's author owns
-([D-414][d-414]). The compiled reader fills a stack-only NamedTuple per
-evaluation. It is the gather twin ([§14.4][s14-4]).
+The path [selectors](#g-selector) (the closed family of deferred reads resolving against a
+source) reach any port or state field the structure has ([§13.3][s13-3], [D-414][d-414]). As
+authoring guidance, an equilibrium equation meant to survive substitution at a
+generic seam reads a face ([D-414][d-414], [D-125][d-125]). A trim evaluation needing a value a
+[component](#g-component) computes without declaring it finds no selector for it ([§14.4][s14-4]). That
+is a signal that the component should export it. A derivative wanted across a
+[contract](#g-contract) boundary takes the same remedy. Publish it as an ordinary output port
+computed in `y_direct`. That is the one-line binding of the fused idiom ([§5.3][s5-3]),
+made contract. By convention, then, `get_deriv` stays inside subtrees the
+problem's author owns ([D-414][d-414]). The compiled reader fills a stack-only NamedTuple
+per evaluation. It is the gather twin ([§14.4][s14-4]).
 
 #### Residuals and checks
 
@@ -120,29 +115,26 @@ residuals(reads::NamedTuple, d::NamedTuple) → NamedTuple
 **What the solver varies is passed, and what is fixed per problem is closed
 over** ([D-118][d-118]).
 
-The gathered reads and the decision NamedTuple arrive as arguments. `d` is the
-one value that *cannot* be closed over. `TrimParameters` stays behind the
-closure, exactly as `condition` already holds it, and the framework never sees
-it. Being user-shaped, that record is also where any environment handles the
-condition math needs conventionally ride. [§8.2][s8-2] gives the
-[value-level constructor](#g-value-level-constructor) (the plain exported
-function building a field handle from the component and input values) that
-builds such a handle, and [§14.1][s14-1] the pre-sweep doctrine. The problem
-*receives* the environment, and never writes it ([§14.9][s14-9]).
+The gathered reads and the decision NamedTuple arrive as arguments. `d` is the one
+value that *cannot* be closed over. `TrimParameters` stays behind the closure,
+exactly as `condition` already holds it. Being user-shaped, that record is also
+where any environment handles the condition math needs conventionally ride. [§8.2][s8-2]
+gives the [value-level constructor](#g-value-level-constructor) that builds such a handle, a plain exported
+function of the component and its input values. [§14.1][s14-1] gives the pre-sweep
+doctrine. The problem *receives* the environment, and never writes it ([§14.9][s14-9]).
 
 **The returned NamedTuple's names are the equation names** the report and the
-failure messages use ([D-118][d-118]). The service packs residuals and
-tolerances to the solver's vector by field order. The order is `tolerances`'
-field order, the declared side again, canonical for the r-side. Each residual
-return is reordered to it (`NamedTuple{keys(tolerances)}(r)`) before packing
-([D-151][d-151]). An equation list spelled in a different order inside the
-lambda therefore pairs correctly and costs nothing. The decisions rule holds
-symmetrically on both ends of the seam. Names pair, and order never does.
-Names and types are checked at setup, because the guess evaluation the service
-performs anyway observes the residual key set. A `tolerances` key-set
-mismatch, or any field-type disagreement on either side of the seam, is
-`TrimProblemInvalid` ([Appendix C][sC]), with the offending field and the
-names or types in hand. Order is never a mismatch.
+failure messages use ([D-118][d-118]). The service packs residuals and tolerances to the
+solver's vector by field order. The order is `tolerances`' field order, the
+declared side again, canonical for the residuals. Each residual return is
+reordered to it (`NamedTuple{keys(tolerances)}(r)`) before packing ([D-151][d-151]). An
+equation list spelled in a different order inside the lambda therefore pairs
+correctly and costs nothing. The decisions rule holds symmetrically on both ends
+of the seam. Names pair, and order never does. Names and types are checked at
+setup, because the guess evaluation the service performs anyway observes the
+residual key set. A `tolerances` key-set mismatch, or any field-type disagreement
+on either side of the seam, is `TrimProblemInvalid` ([Appendix C][sC]), with the
+offending field and the names or types in hand. Order is never a mismatch.
 
 **Checks are equations the service reports once, at the committed state, and
 never solves** ([D-262][d-262]). `checks` has the residual function's
@@ -167,11 +159,11 @@ they carry no information for it ([D-262][d-262]).
 
 #### The formulation
 
-**The FlightPhysics formulation's core is correct and survives verbatim as
-user math** ([D-069][d-069]). That core is analytic elimination, namely
-FlightPhysics' `θ_constraint` substituting the pitch constraint, filter and
-actuator equilibria imposed by construction, and the minimal 7-variable
-search over `c172.jl`'s `TrimState`.
+**Flight.jl's trim formulation is correct at its core and survives verbatim as
+user math** ([D-069][d-069]). That core is analytic elimination, namely FlightPhysics'
+`θ_constraint` substituting the pitch constraint, filter and actuator equilibria
+imposed by construction, and the minimal 7-variable search over `c172.jl`'s
+`TrimState`.
 
 What changes is the numerics. Trim is a square root-find. The Cessna 172
 model's derivative-free scalar minimization over $\|r\|^2$ against a hand-scaled
@@ -223,16 +215,14 @@ and returns a report.
 #### The backend seam
 
 The signature is
-`trim!(model, problem; baseline, t0 = 0.0, backend = LevenbergMarquardt())`,
-where `model` is a [`Model`](#g-model) (a deployment materialized at one
-scalar type) at `Float64` ([D-319][d-319]). A `Model` at another scalar is
-refused as `ArgumentInvalid` with reason `:non_nominal` ([D-319][d-319]). A
-model that a simulation has claimed is refused before any check, as
-`ArgumentInvalid` with reason `:claimed`, since the call commits
-([D-318][d-318], [D-319][d-319]). The `baseline` keyword takes a [baseline](#g-baseline) (an
-aircraft-shipped, full-coverage condition function). `trim!(sim, problem; …)`
-gates on the simulation's lifecycle and commits through the simulation's
-`init!`.
+`trim!(model, problem; baseline, t0 = 0.0, backend = LevenbergMarquardt())`, where
+`model` is a [`Model`](#g-model) (a deployment materialized at one scalar type) at `Float64`
+([D-319][d-319]). A `Model` at another scalar is refused as `ArgumentInvalid` with reason
+`:non_nominal` ([D-319][d-319]). A `Model` that a simulation has claimed is refused before
+any check, as `ArgumentInvalid` with reason `:claimed`, since the call commits
+([D-318][d-318], [D-319][d-319]). The `baseline` keyword takes a [baseline](#g-baseline) (a full-coverage
+condition, such as an aircraft-shipped function returns). `trim!(sim, problem; …)`
+gates on the simulation's lifecycle and commits through the simulation's `init!`.
 
 **The default backend is an in-house dense Levenberg–Marquardt**
 ([D-070][d-070]). For decision dimensions ~10 with exact Jacobians, the core is
@@ -249,10 +239,10 @@ required method per backend ([D-158][d-158]). That one method is the seam.
 solve(backend, eval!, d0, lower, upper, tol) -> (; d, status, n_evaluations, n_iterations)
 ```
 
-`eval!(r, J, d)` is in-place and always fills `r`, the residual vector packed
-in `tolerances`' field order. It fills `J` iff `J !== nothing`. The Jacobian is
-requested by argument, so a Jacobian-free backend simply always passes
-`nothing`, and there is still exactly one evaluation method to implement.
+`eval!(r, J, d)` is in-place and always fills `r`, the residual vector packed in
+`tolerances`' field order. It fills `J` exactly when `J !== nothing`. The Jacobian is
+requested by argument, so a Jacobian-free backend simply always passes `nothing`,
+and there is still exactly one evaluation method to implement.
 
 `d0`, `lower` and `upper` are packed `Vector{Float64}` in `guess`'s field
 order, with `±Inf` meaning unbounded. The declared side is canonical on both
@@ -284,20 +274,20 @@ the report as diagnostic data, and it is authoritative over nothing.
 
 #### The tolerance translation
 
-The tolerance translation is the service's too, per backend family
-([D-150][d-150]). In least-squares backends the tolerances *are* the stopping
-criterion. They feed the per-residual test directly, so LM's damping loop tests
-exactly what the service will re-test.
+The tolerance translation is the service's too, per backend family ([D-150][d-150]). In
+least-squares backends the tolerances *are* the stopping criterion. They feed the
+per-residual test directly, so the damping loop of Levenberg–Marquardt (LM)
+tests exactly what the service will re-test.
 
-The derivative-free fallback is designed and not yet built, and `pending.md`
-lists it ([D-070][d-070]). In the design it is `NLoptBackend(:LN_BOBYQA)` in a
-package extension. It would pass `nothing` for the Jacobian, keep Flight.jl's
-algorithm one keyword away, and leave the framework core carrying zero
-optimizer dependencies. For that fallback the service would square *and
-normalize*. The objective minimized would be $\sum_i (r_i/\mathit{tol}_i)^2$
-with `stopval = 1`. That objective is dimensionless where the threshold
-in Flight.jl's Cessna 172 model (`c172.jl`) was hand-scaled and absolute ([§14.7][s14-7]). It is a well-scaled
-valley where a raw $\|r\|^2$ sums forces against moments.
+The derivative-free fallback is designed and not yet built, and `pending.md` lists
+it ([D-070][d-070]). In the design it is `NLoptBackend(:LN_BOBYQA)` in a package extension.
+It would pass `nothing` for the Jacobian, keep Flight.jl's algorithm one keyword
+away, and leave the framework core carrying zero optimizer dependencies. For
+that fallback the service would square *and normalize*. The objective minimized
+would be $\sum_i (r_i/\mathit{tol}_i)^2$ with `stopval = 1`. That objective is
+dimensionless where the threshold in Flight.jl's Cessna 172 model (`c172.jl`) was
+hand-scaled and absolute ([§14.7][s14-7]). It is a well-scaled valley where a raw
+$\|r\|^2$ sums forces against moments.
 
 The two criteria cannot disagree in the dangerous direction, because of this
 implication ([D-150][d-150]).
@@ -315,24 +305,23 @@ eliminated is per-backend meanings of `converged`.
 
 #### Box bounds and saturated decisions
 
-**Box bounds are honored by step projection** ([D-070][d-070]). A decision
-variable saturated *at the solution* is listed in the report's saturated list,
-as `(:elevator, :upper)`. That is the classic CG-limit diagnostic (CG is the
-center of gravity), which Flight.jl's trim leaves inferable only from mysterious residuals.
+**Box bounds are honored by step projection** ([D-070][d-070]). A decision variable saturated
+*at the solution* is listed in the report's saturated list, as
+`(:elevator, :upper)`. That is the classic CG-limit diagnostic (CG is the center
+of gravity), which Flight.jl's trim leaves inferable only from mysterious
+residuals.
 
 #### Scratch stores
 
-Every `trim!` invocation instantiates a fresh working store set. Each half of
-it (below) is a scratch `Model` of its own, materialized from the deployment
-the service was called on ([D-317][d-317], [D-319][d-319]). The set holds the
-`x` backing, the `s` and `m` stores, the [root input](#g-root-input) and
-[signal tables](#g-signal-table), and the derivative [buffer](#g-buffer). The
-set is built from the [activation](#g-activation)'s *layout* (the build's typed
-products at a given scalar type). The layout is the reusable compiled
-artifact. The buffers are per-invocation and die with the call (stopped-sim
-allocation, [§9.8][s9-8]). Each set also calls every
-[workspace](#g-workspace) (component-declared mutable scratch, arriving as
-`ws`) allocator once, at the activation's scalar ([D-077][d-077]).
+Every `trim!` invocation instantiates a fresh working store set. Each half of it
+(below) is a scratch `Model` of its own, materialized from the deployment the
+service was called on ([D-317][d-317], [D-319][d-319]). The set holds the `x` backing, the `s` and `m`
+stores, the [root input](#g-root-input) and [signal tables](#g-signal-table), and the derivative [buffer](#g-buffer). The set is
+built from the *layout* of the [activation](#g-activation) (the build's typed products at a given
+scalar type). The layout is the reusable compiled artifact. The buffers are
+per-invocation and die with the call (stopped-sim allocation, [§9.8][s9-8]). Each set
+also calls every [workspace](#g-workspace) (component-declared mutable scratch, arriving as `ws`)
+allocator once, at the activation's scalar ([D-077][d-077]).
 
 The `Dual` backend's buffers being un-aliasable by type is defense in depth,
 not the mechanism. A `Float64` backend, such as the designed NLopt fallback,
@@ -351,44 +340,43 @@ read. An incomplete `baseline` is one declaration-ordered
 `UninitializedInputs` at setup rather than a whole solve against undefined
 [cells](#g-cell).
 
-**The frozen cells are established, not probe-seeded** ([D-213][d-213]). At the
-seeded activation the discrete [tier](#g-tier) is frozen ([§9.4][s9-4]). Its
-stages never run there, so nothing at that activation can derive a discrete
-output cell from the authored `s`. Setup therefore instantiates the scratch set
-in two halves. A [nominal](#g-nominal) set (one at the `Float64` activation)
+**The frozen cells are established, not probe-seeded** ([D-213][d-213]). At the seeded
+activation the discrete [tier](#g-tier) (the discrete side of the hybrid formalism) is
+frozen ([§9.4][s9-4]). Its stages never run there, so nothing at that activation can
+derive a discrete output cell from the authored `s`. Setup therefore instantiates
+the scratch set in two halves. A [nominal](#g-nominal) set (one at the `Float64` activation)
 takes the composite first, by the dynamic walk ([§14.4][s14-4]), and runs one
 establishment round. That round is boundary zero's sweep with every discrete
-output stage admitted, due or not ([D-205][d-205]), with no
-[projection](#g-projection), no [guards](#g-guard) and no `s_update`. The
-seeded set is then written by the specialized `apply!`. Its frozen cells are
-copied from the nominal set, `Float64` values that a continuous consumer reads
-as zero-partial constants ([§9.5][s9-5]). Every cell the iterations read is
-thus derived from the authored world. A frozen cell holds what the authored
-discrete state publishes, which makes "held at the operating point" literal.
-No scratch cell holds the [probe](#g-probe)'s synthesized values. That is the
-[§14.6][s14-6] barrier reaching the scratch world, as [D-205][d-205] made it
-reach the published one. The iterations are untouched. They are raw write →
-sweep → read cycles at the seeded activation, over the continuous chain and
-`x_deriv` alone ([§14.5][s14-5]). The zero-decision problem (below) is the
-nominal half alone ([D-213][d-213]). Its one evaluation is that establishment
-round, followed by one derivative evaluation for the reads.
+output stage admitted, due or not ([D-205][d-205]), with no [projection](#g-projection) (the per-component
+`x_projection` hook), no [guards](#g-guard) and no `s_update`. The seeded set is then written by
+the specialized `apply!`. Its frozen cells are copied from the nominal set,
+`Float64` values that a continuous consumer reads as zero-partial constants
+([§9.5][s9-5]). Every cell the iterations read is thus derived from the authored world.
+A frozen cell holds what the authored discrete state publishes, which makes
+"held at the operating point" literal. No scratch cell holds a synthesized
+[probe value](#g-probe-value) (a fabricated value a build-time probe runs on). That is the
+probe-value barrier of [§14.6][s14-6] reaching the scratch world, as [D-205][d-205] made it reach
+the published one. The iterations are untouched ([§14.5][s14-5]). They run at the seeded
+activation, over the continuous chain and `x_deriv` alone. The empty problem
+(below) is the nominal half alone ([D-213][d-213]). Its one evaluation is that
+establishment round, followed by one derivative evaluation for the reads.
 
-The commit applies the same composite over the same `baseline`
-(`override(baseline, condition(d*))`, [§14.9][s14-9]), so its coverage is
-setup's. Commit's totality check is therefore structurally unfailable through
-the trim path, and it stands as the shared `init!` defense ([D-149][d-149]). A
-converged solve is always committable. `TrimReport` therefore carries no
-committed flag, and the no-throw doctrine needs no exception.
+The commit (below) applies the same composite over the same `baseline`, so its
+coverage is setup's. Commit's totality check is therefore structurally
+unfailable through the trim path, and it stands as the shared `init!` defense
+([D-149][d-149]). A converged solve is always committable. `TrimReport` therefore carries
+no committed flag, and the no-throw rule (below) needs no exception.
 
 Iterations rewrite the composite's write-set via the compiled plan. The
-write-set is `override(baseline, condition(d))`, the same tree setup resolved,
-so a store both layers touch merges exactly as it did at setup. An LM
-evaluation is one Dual-seeded sweep yielding `r` from the value parts and `J`
-from the partials, together ([D-069][d-069]). No convergence means no commit.
-Non-convergence is the service's box test failing at the returned point,
-whatever status the backend attached to it ([D-150][d-150]). No commit means
-the sim is bit-for-bit untouched, including "never initialized". Flight.jl's
-warn-but-assign is structurally impossible.
+write-set is `override(baseline, condition(d))`, the same tree setup resolved, so
+a store both layers touch merges exactly as it did at setup. An LM evaluation is
+one Dual-seeded sweep yielding `r` from the value parts and `J` from the partials,
+together ([D-069][d-069]). No convergence means no commit. Non-convergence is the
+service's box test failing at the returned point, whatever status the backend
+attached to it ([D-150][d-150]). No commit means the sim is bit-for-bit untouched,
+including "never initialized". Flight.jl's warn-but-assign, where the Cessna 172
+trim warns on a failed optimization and assigns its result anyway, is
+structurally impossible.
 
 The same structure covers an interrupt. Ctrl-C during a long solve unwinds an
 ordinary Julia call operating on per-invocation scratch stores. No commit has
@@ -397,4 +385,3 @@ non-converged solve leaves it. The services need no counterpart to the loop's
 boundary masking ([§12.4][s12-4]). An interrupt inside the commit's boundary
 zero moves the simulation to `built` and propagates raw ([§13.4][s13-4],
 [D-223][d-223]).
-

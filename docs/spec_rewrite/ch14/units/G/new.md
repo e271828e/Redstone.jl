@@ -14,11 +14,11 @@ both init-service entry points ([§14.5][s14-5], [D-110][d-110]). The
 [batches](#g-batch) still in [staging cells](#g-staging-cell) (where a
 device's pending write batch waits between drains) are cleared.
 
-A fresh recording that starts at its own anchor is the natural shape of
-unattended mode. Trim is not offered at a point reached by flying. It takes
-an authored baseline. Fly-then-retrim is spelled as a `checkpoint` of the
-flight, then a trim baseline authored from what the
-[checkpoint](#g-checkpoint) (the `Model`'s state at a frame top as one value)
+A fresh recording that starts at its own anchor is the natural shape of an
+[unattended run](#g-unattended-run) (a run with empty staging and no snapshot readers). Trim is not
+offered at a point reached by flying. It takes an authored baseline.
+Fly-then-retrim is spelled as a [checkpoint](#g-checkpoint) (the `Model`'s state at a frame top as
+one value) of the flight, then a trim baseline authored from what the checkpoint
 shows ([D-273][d-273]).
 
 #### The report
@@ -49,10 +49,9 @@ The list below takes the fields in turn.
   backend's opinion.
 - `solution` is the solution NamedTuple. It is guess-shaped, hence
   warm-startable.
-- `residuals` are the solved-point residuals, and `tolerances` the
-  tolerances they come with ([§14.5][s14-5], [D-155][d-155]). They are the
-  very numbers the verdict is read off, gathered at the backend's returned
-  point.
+- `residuals` are the solved-point residuals, and `tolerances` the tolerances they
+  come with ([D-155][d-155]). They are the very numbers the verdict is read off, gathered
+  at the backend's returned point.
 - `committed_residuals` are the committed-state residuals, the same
   residuals re-gathered from the boundary-zero world after the commit.
 - `committed_checks` holds the committed-state checks, the check function's
@@ -68,28 +67,27 @@ The list below takes the fields in turn.
   event names. The list is empty when boundary zero ran quiet
   ([§14.5][s14-5], [D-126][d-126]).
 
-The committed-state residuals are nearly free ([D-155][d-155]). Boundary
-zero's sweep has already run, so the residuals' declared reads need one
-derivative evaluation and a gather from it. There is no offset caveat to
-carry. Every output stage publishes at boundary zero ([D-205][d-205],
-[§14.5][s14-5]). A residual reading the [port](#g-port) (one declared name,
-one cell) of an offset [component](#g-component) therefore reads a
-commit-refreshed cell like any other. Those committed-state residuals are the
-numbers describing the state the simulation is actually *in*, which is the
-point a `linearize` at its default operating point reads.
+The committed-state residuals are nearly free ([D-155][d-155]). Boundary zero's sweep has
+already run, so the residuals' declared reads need one derivative evaluation and
+a gather from it. There is no offset caveat to carry. Every output stage
+publishes at boundary zero ([D-205][d-205], [§14.5][s14-5]). A residual reading the [port](#g-port) (one
+declared name, one cell) of a [component](#g-component) whose schedule has a nonzero [phase](#g-phase) (an
+offset against its grid) therefore reads a commit-refreshed cell like any other.
+Those committed-state residuals are the numbers describing the state the
+simulation is actually *in*, which is the point a `linearize` at its default
+operating point ([§14.10][s14-10]) reads.
 
-A non-empty fired-event set also raises `TrimCommitEvents` ([Appendix C][sC],
-[D-126][d-126]). The committed stores then sit at the post-handler point, not
-the reported solution, and a `linearize` at its default operating point
-([§14.10][s14-10]) reads that point.
+A non-empty fired-event set also raises `TrimCommitEvents`, a logged warning
+([Appendix C][sC], [D-126][d-126]). The committed stores then sit at the post-handler point,
+not the reported solution, and that is the point `linearize` reads by default.
 
-The two residual sets are what make the moved point auditable. **A converged
-solve whose committed-state residuals violate the box test raises
-`TrimCommitResiduals`**, naming the offending residuals with their committed
-values and tolerances ([Appendix C][sC], [D-155][d-155]). The move, whether
-`x_projection` or a commit-fired handler ([§14.5][s14-5]), is surfaced rather
-than left silent. The verdict itself is not revisited. It gated the commit,
-at the solved point, and the numbers ([D-150][d-150]) stand as reported.
+The two residual sets are what make the moved point auditable. **A converged solve
+whose committed-state residuals violate the box test raises `TrimCommitResiduals`**,
+naming the offending residuals with their committed values and tolerances
+([Appendix C][sC], [D-155][d-155]). The move, whether `x_projection` or a commit-fired handler
+([§14.5][s14-5]), is surfaced rather than left silent. The verdict itself is not
+revisited. It gated the commit at the solved point, and the numbers stand as
+reported ([D-150][d-150]).
 
 The committed-state checks audit the point rather than the move. **A
 converged solve whose committed-state checks leave their tolerances raises
@@ -101,9 +99,9 @@ params-vs-world atmosphere mismatch produces under elimination
 boundary-zero sweep, so they cost no evaluation of their own. No commit means
 no checks, exactly as for the committed-state residuals.
 
-**Non-convergence never throws** ([D-070][d-070]). It is an expected
-*outcome*, not broken machinery ([§13.5][s13-5]). In an envelope of trims,
-hitting the infeasible edge is information.
+**Non-convergence never throws** ([D-070][d-070]). It is an expected *outcome*, not broken
+machinery ([§13.5][s13-5]). When trims span the flight envelope, hitting the infeasible
+edge is information.
 
 A malformed problem is a different case. It fails at setup with a
 `DiagnosticError` carrying `TrimProblemInvalid` ([Appendix C][sC]). The
@@ -131,15 +129,15 @@ commit's `StepError`**, and no report is returned for that solve
 ([D-224][d-224]). The simulation is left `built` ([§13.4][s13-4],
 [D-223][d-223]).
 
-An *empty* problem is none of them either. **`TrimProblem(guess = (;), …)` is
-legal**, not `TrimProblemInvalid` ([D-156][d-156]). With zero decision
-variables the solver is bypassed outright. There is nothing to pack, no
-seeded activation and no backend call. The service simply evaluates the
-residuals once at `override(baseline, condition((;)))`, the baseline with
-whatever the problem's condition sets. The ordinary box test decides
-`converged`, and the commit runs as usual. The degenerate problem is the "is
-this operating point an equilibrium?" probe. It evaluates this condition's
-equations and reports, which is useful in its own right and free.
+An *empty* problem is none of them either. **`TrimProblem(guess = (;), …)` is legal**,
+not `TrimProblemInvalid` ([D-156][d-156]). With zero decision variables the solver is
+bypassed outright. There is nothing to pack, no seeded activation and no backend
+call. The service simply evaluates the residuals once at
+`override(baseline, condition((;)))`, the baseline with whatever the problem's
+condition sets. The ordinary box test decides `converged`, and the commit runs as
+usual. The empty problem asks "is this operating point an equilibrium?" It
+evaluates this condition's equations and reports, which is useful in its own
+right and costs no solve.
 
 #### The AD obligation
 
@@ -158,52 +156,50 @@ continuous math) makes the Dual probe fail with a culprit-naming
 puts the probe in CI ([D-280][d-280]). The robustness comes from enforcement,
 not hope.
 
-A migration audit of Flight.jl's Cessna 172 model (`c172.jl`) against this
-obligation took one afternoon. Its findings on tables and saturations follow
-([D-070][d-070]), and its two Flight.jl-only findings, on the landing gear and the
-`norm`-at-zero guards, are in the `migration_outline.md` companion.
+A migration audit of Flight.jl's Cessna 172 model against this obligation took
+one afternoon. Its findings on tables and saturations follow ([D-070][d-070]), and its
+two Flight.jl-only findings, on the landing gear and the `norm`-at-zero guards,
+are in the `migration_outline.md` companion.
 
-- `Interpolations.jl` tables (propeller coefficient maps, engine maps) must
-  accept generic scalars. They do. A call `itp(x::Dual)` works through the
-  `BSpline`/`scale`/`extrapolate` compositions in Flight.jl's tables. Prefer
-  cubic knots over linear where partials matter, though, since linear knots
-  make Jacobian entries piecewise-constant. That is no regression against
-  finite differences ([D-307][d-307]). A manual chain rule via
-  `Interpolations.gradient` is the escape hatch for anything exotic, and the
-  pattern for wrapping non-Julia black boxes ([§14.10][s14-10],
-  [D-266][d-266]).
-- In-model saturations (actuator limits, idle/FRC clamps) zero Jacobian
-  columns when active. FRC is the friction constraint compensator of
-  FlightPhysics' piston engine (`piston.jl`). LM damping tolerates the rank
-  deficiency, and the report names the saturated variable ([D-070][d-070]).
-  Cruise trim leaves those saturations inactive.
+- `Interpolations.jl` tables (propeller coefficient maps, engine maps) must accept
+  generic scalars. They do. A call `itp(x::Dual)` works through the
+  `BSpline`/`scale`/`extrapolate` compositions in Flight.jl's tables. Prefer cubic
+  knots over linear where partials matter, though, since linear knots make
+  Jacobian elements piecewise-constant. That is no regression against finite
+  differences ([D-307][d-307]). A manual chain rule via `Interpolations.gradient` is the
+  escape hatch for anything exotic, and the pattern for wrapping non-Julia black
+  boxes ([§14.10][s14-10], [D-266][d-266]).
+- In-model saturations (actuator limits, idle/FRC clamps) zero Jacobian columns
+  when active. FRC is the friction constraint compensator of FlightPhysics'
+  piston engine (`piston.jl`). LM damping tolerates the rank deficiency ([D-070][d-070]).
+  The report's `saturated` list names a decision only at its own bound, so an
+  in-model saturation shows in the Jacobian's zero columns rather than in the
+  report. Cruise trim leaves those saturations inactive.
 
 The derivative-free fallback would be chosen per call, through the one
 `backend =` keyword.
 
 ### 14.9 Mounting: problems as relocatable values
 
-This section treats a [`TrimProblem`](#g-trimproblem) (the closed nine-field
-value a trim solves) as a relocatable value. [Mounting](#g-mounting)
-(relocating a whole problem or tap set to a prefix) is the work of
-[`at`](#g-at), the scoping combinator. The section says what a problem is,
-then how `at` lifts one, how a mounted read set and mounted input entries
-resolve, why a problem never authors the environment, and how worlds, thin
-rigs and swarms use the lift.
+This section treats a [`TrimProblem`](#g-trimproblem) (the closed nine-field value a trim solves) as
+a relocatable value. [Mounting](#g-mounting) (relocating a whole problem or tap set to a
+prefix) is the work of [`at`](#g-at), the scoping combinator. The section says what a
+problem is, then how `at` lifts one, how a mounted read set and mounted input
+entries resolve, why a problem never authors the environment, and how worlds,
+thin rigs (worlds holding only the aircraft and its environment) and swarms use
+the lift.
 
-**A `TrimProblem` is not a [condition](#g-condition) but an implicitly
-specified condition** ([D-071][d-071]). A condition is the datum that says
-"set this build to this state". `condition` is a condition-*valued function*
-over the decision space. `reads`/`residuals` are the equations that pin the
-free variables down. `guess`, `lower` and `upper` say where to search.
-Solving makes the implicit condition explicit. The commit is then literally
-an init, `override(baseline, condition(d*))` through
-[boundary zero](#g-boundary-zero) (the initialization boundary, the ordinary
-macro-sequence with an empty integrate). [`override`](#g-override) is the
-ordered, asymmetric layering combinator, in which the patch wins on a shared
-leaf. The services unify as clients of one
-condition algebra. `init!` applies an explicit condition, and `trim!`
-searches a family for the member satisfying its equations.
+**A `TrimProblem` is not a [condition](#g-condition) but an implicitly specified condition** ([D-071][d-071]).
+A condition is the datum that says "set this build to this state". `condition` is
+a condition-*valued function* over the decision space. `reads`/`residuals` are the
+equations that pin the free variables down. `guess`, `lower` and `upper` say where to
+search. Solving makes the implicit condition explicit. The commit is then
+literally an init, `override(baseline, condition(d*))` through [boundary zero](#g-boundary-zero) (the
+initialization boundary, the ordinary macro-sequence with an empty integrate).
+[`override`](#g-override) is the ordered, asymmetric layering combinator, in which the patch wins
+on a shared leaf. The services unify as clients of one condition algebra. `init!`
+applies an explicit condition, and `trim!` searches a family for the member
+satisfying its equations.
 
 **`at` lifts a problem field by field**, and each field falls in one of three
 cases ([D-071][d-071], [D-277][d-277]). The `condition` field is
@@ -219,31 +215,28 @@ at(prefix::String, p::TrimProblem) = TrimProblem(
     lower      = p.lower,
     upper      = p.upper,
     condition  = d -> at(prefix, p.condition(d)),  #post-compose: wrap each returned tree
-    reads      = at(prefix, p.reads),              #inert selector data: the prefix joins the read set's mount chain
+    reads      = at(prefix, p.reads),              #inert selector data: the prefix is prepended to the read set's mount chain
     residuals  = p.residuals,                      #path-free: pass through
     tolerances = p.tolerances,
     checks     = p.checks,
     check_tolerances = p.check_tolerances)
 ```
 
-The condition side needs nothing new at resolution. The flattening
-accumulator of [§14.3][s14-3] enters each `Scoped` wrapper and prefixes every
-condition entry below it.
+The condition side needs nothing new at resolution. The flattening accumulator
+of [§14.3][s14-3] enters each `Scoped` wrapper (the node `at` builds over a condition node)
+and prefixes every condition entry below it.
 
-**A read set carries its mount chain as data** ([D-277][d-277]).
+**A read set carries its mount chain as data** ([D-277][d-277]). A read set is a `Reads` value.
 `at(prefix, read_set)` prepends the prefix to that chain and joins nothing. **A
-`Reads` value is no condition node**, so `Scoped` never wraps one
-([D-277][d-277]). **Resolution
+`Reads` value is no condition node**, so `Scoped` never wraps one ([D-277][d-277]). **Resolution
 walks the chain from the root**, each prefix from the level the previous one
-reached ([§13.3][s13-3], [D-277][d-277]). It then rebases every
-[selector](#g-selector) (one of the closed family of deferred reads) to the
-root before the selector resolves. A path selector's path is joined to the
-mount (`"vehicle/dynamics"` → `"wing/vehicle/dynamics"`). `get_input` names
-an input [face](#g-face) (the name a port wears on its
-[component](#g-component)'s boundary) of the mount level. It follows the
-export chain to the [root input](#g-root-input) it lands on (the root
-component's own input face). `get_face` names an output face of the mount
-level and reads its producer's port ([D-277][d-277]).
+reached ([§13.3][s13-3], [D-277][d-277]). It then rebases every [selector](#g-selector) (one of the closed family
+of deferred reads) to the root before the selector resolves. A path selector's
+path is joined to the mount (`"vehicle/dynamics"` → `"wing/vehicle/dynamics"`).
+`get_input` names an input [face](#g-face) (the name a port wears on its [component](#g-component)'s
+boundary) of the mount level. It follows the export chain to the [root input](#g-root-input) it
+lands on (the root component's own input face). `get_face` names an output face of
+the mount level and reads its producer's port ([D-277][d-277]).
 
 **A refusal spells the selector as authored and names the mount**
 ([D-277][d-277]). `at` refuses an empty prefix on a read set, as it does on a
@@ -279,45 +272,42 @@ environment face would therefore be applicable only to those rigs where that
 face happens to be unconnected. The relocatability this section exists to
 guarantee would be lost.
 
-**The world wrapper dissolves** ([D-071][d-071]). Flight.jl's
-`f_init!(::Model{<:SimpleWorld})` (initialize environment, then call the
-aircraft's trim) has no successor method. The environment, the other aircraft
-and all root inputs are covered by the `baseline` condition ([§14.6][s14-6]),
-applied once at setup. The commit is
+**The world wrapper dissolves** ([D-071][d-071]). FlightPhysics' world initializer, its
+method of FlightCore's `f_init!` on a FlightCore `Model{<:SimpleWorld}` (initialize
+environment, then call the aircraft's trim), has no successor method. The
+environment, the other aircraft and all root inputs are covered by the `baseline`
+condition ([§14.6][s14-6]), applied once at setup. The commit is
 `override(baseline, at(mount, condition(d*)))`. Method nesting became value
 layering.
 
-"Aircraft as root" is a thin world. **Design tasks use a shipped rig,
-[`design_world(ac)`](#g-design_world)** ([D-071][d-071]). They need one because
-by default the aircraft is not literally the root. Its environment inputs are
-function-valued signals ([§4.4][s4-4]), wired from provider components. The rig
-is `design_world(ac)` = aircraft + `SimpleAtmosphere(wind = NoWind())` +
-`HorizontalTerrain`, where `SimpleAtmosphere` and `NoWind` are FlightPhysics'
-atmosphere types. `design_world` promotes the ad-hoc atmosphere and terrain
-FlightCore `Model`s inside Flight.jl's `linearize` to a named artifact. There is
-one mechanism. The "root" case is the shallowest world, and the trim problem
-mounts at `"aircraft"` like anywhere else.
+"Aircraft as root" is a thin rig. **Design tasks use the rig this design records,
+[`design_world(ac)`](#g-design_world)** ([D-071][d-071]). They need one because by default the aircraft is not
+literally the root. Its environment inputs are function-valued signals ([§4.4][s4-4]),
+wired from provider components. The rig is `design_world(ac)` = aircraft +
+`SimpleAtmosphere(wind = NoWind())` + `HorizontalTerrain`, where `SimpleAtmosphere`
+and `NoWind` are FlightPhysics' atmosphere types. `design_world` promotes the ad-hoc
+atmosphere and terrain FlightCore `Model`s inside Flight.jl's `linearize` to a named
+artifact. There is one mechanism. The "root" case is the shallowest world, and
+the trim problem mounts at `"aircraft"` like anywhere else.
 
-Leaving an environment face *unconnected* is legal by construction, though, for
-an isbits handle ([D-364][d-364]). The face becomes an ordinary root input
-holding the handle *value*, written by the `baseline` like any other root input.
-That is the test-rig idiom. It is the function-valued sibling of a constant
-source, with zero ceremony for a frozen environment. **A handle that references
-bulk data is never a root input**, and the rig wires a constant source holding
-it ([D-364][d-364]). Root inputs are traced and checkpointed by value, and
-[§4.4][s4-4] states why such a handle cannot be one ([D-237][d-237]). For design
-tasks the shipped rig stays `design_world(ac)`. That keeps the environment's
-tunables in the root-input vocabulary that conditions, linearization's input
-surface and the [trace header](#g-trace-header) (the trace's fixed preamble)
+Leaving an environment face *unconnected* is legal by construction, though, for an
+isbits handle ([D-364][d-364]). The face becomes an ordinary root input holding the
+handle *value*, written by the `baseline` like any other root input. That is the
+test-rig idiom. It is the function-valued sibling of a constant source, with
+zero ceremony for a frozen environment. **A handle that references bulk data is
+never a root input**, and the rig wires a constant source holding it ([D-364][d-364]). Root
+inputs are traced and checkpointed by value, and [§4.4][s4-4] states why such a handle
+cannot be one ([D-237][d-237]). For design tasks the rig stays `design_world(ac)`. That
+keeps the environment's tunables in the root-input vocabulary that conditions,
+linearization's input surface and the [trace header](#g-trace-header) (the trace's fixed preamble)
 already speak.
 
-The swarm doctrine covers trims of several aircraft. **The service solves
-one problem at a time** ([D-071][d-071]). Sequential independent trims (trim
-lead, commit, trim wing against the committed world) cover weak or one-way
+The swarm doctrine covers trims of several aircraft. **The service solves one
+problem at a time** ([D-071][d-071]). Sequential independent trims (trim the lead aircraft,
+commit, trim the wingman against the committed world) cover weak or one-way
 coupling. A joint trim is user-side value composition. Concatenate decision
-NamedTuples under prefixed names, combine the scoped condition trees, and
-stack the residuals. If joint trims become routine, **a
-`product(p₁ => "lead", p₂ => "wing")` helper is the extension recorded for
-them** ([D-071][d-071]). That helper is
-[recorded, not built](#g-recorded-not-built) (a worked-out extension
-deliberately left unimplemented, its seams named).
+NamedTuples under prefixed names, combine the scoped condition trees, and stack
+the residuals. If joint trims become routine, **a
+`product(p₁ => "lead", p₂ => "wing")` helper is the extension recorded for them**
+([D-071][d-071]). That helper is [recorded, not built](#g-recorded-not-built) (a worked-out extension deliberately
+left unimplemented, its seams named).

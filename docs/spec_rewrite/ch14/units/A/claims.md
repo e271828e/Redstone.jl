@@ -25,35 +25,36 @@ old: A condition is the datum that says "set this build to this state."
 tag: F
 
 old: §14.1–§14.4 settle its representation, composition and application.
-new: §14.1 settles the condition's representation, §14.2 its composition, §14.3 its resolution and §14.4 its application;
+new: §14.1 settles the condition's representation, §14.2 its composition, §14.3 its resolution and §14.4 its application and the read selectors;
 tag: R
 ruling: R1
 newcites: §14.1 §14.2 §14.3 §14.4
-note: R1's roadmap sentence names §14.1 to §14.10 in order by subject. §14.3's subject, resolution, is its title's.
+note: R1's roadmap sentence names §14.1 to §14.10 in order by subject. §14.3's subject, resolution, is its title's. Step 5 fix1: P1-1, §14.4's read selectors join its subject, one verb for §14.1 to §14.4.
 
 old: §14.5–§14.6 cover the boundary-zero sequence and root-input totality (the requirement that an application establishing a complete world cover every root input).
-new: §14.5 covers the boundary-zero sequence; §14.6 covers root-input totality (the requirement that an application establishing a complete world cover every root input);
+new: §14.5 covers the initialization sequence called boundary zero, §14.6 root-input totality (the requirement that an application establishing a complete world cover every root input) and `override`,
 tag: R
 ruling: R1
 newcites: §14.5 §14.6
-note: F4, boundary zero linked to #g-boundary-zero, not #g-boundary. root input gains its first-use link inside the gloss.
+note: F4, boundary zero linked to #g-boundary-zero, not #g-boundary. root input gains its first-use link inside the gloss. Step 5 fix1: P1-1, one 'covers' and §14.6's `override` (its title's); P1-35, boundary zero glossed by 'the initialization sequence called', after #g-boundary-zero ('the initialization boundary: the ordinary macro-sequence'). root input stays linked inside the totality gloss, unglossed: a gloss there would nest.
 
 old: §14.7–§14.9 cover the trim service in full.
-new: §14.7 the trim problem, §14.8 the trim service and §14.9 mounting, which together cover the trim service in full;
+new: §14.7 the trim problem, §14.8 the trim service, §14.9 mounting
 tag: R
 ruling: R1
 newcites: §14.7 §14.8 §14.9
-note: each section's subject from its title (§14.7 "The trim problem", §14.8 "The trim service", §14.9 "Mounting").
+note: each section's subject from its title (§14.7 "The trim problem", §14.8 "The trim service", §14.9 "Mounting"). Step 5 fix1: P1-1 drops 'which together cover the trim service in full': §14.9's mounting also relocates tap sets, so the three sections are more than the trim service; each keeps its subject.
 
 old: §14.10 covers linearization.
-new: and §14.10 covers linearization.
+new: and §14.10 linearization.
 tag: F
+note: Step 5 fix1: P1-1.
 
 old: A fourth stopped-sim service, `checkpoint`, returns a checkpoint (the `Model`'s state at a frame top as one value).
 new: `checkpoint` returns a checkpoint (the `Model`'s state at a frame top as one value), and `restore!` puts it back.
 tag: R
 ruling: R1
-note: "a fourth stopped-sim service" goes with F3's count; the service count now sits in the sentence naming five. `Model` takes its first-use link here (late in the old text).
+note: "a fourth stopped-sim service" goes with F3's count; the service count now sits in the sentence naming five. `Model` takes its first-use link here (late in the old text). Step 5 fix1: P1-2 writes `Model` plain here; its link joins its gloss in the lifecycle paragraph's `Model` form.
 
 old: A checkpoint is not a condition and has no algebra, and `restore!` puts it back (D-273).
 new: A checkpoint is a distinct value with no condition algebra (D-273).
@@ -74,7 +75,9 @@ newcites: D-108
 note: R7 bold headline for D-108's first ruling, "every stopped-sim service requires a non-running simulation, pause included". D-108 was cited only at old 11310.
 
 old: While a run exists the loop owns the stores between drains (the frame-top swap that publishes staged device writes into the root inputs), and a service reading or writing them would race it.
+new: While the simulation is `running`, the loop owns the stores (the framework-owned homes of components' `x`, `s` and `m` state). It owns them between drains (the frame-top swap that publishes staged device writes into the root inputs), and a service reading or writing them would race it.
 tag: F
+note: Step 5 fix1: P1-3, P1-35.
 
 old: Pause is no exception, by the doctrine that freezes the roster.
 new: Pause is no exception, by the doctrine that freezes the roster (the list of attached devices, read once at `run!`).
@@ -82,8 +85,9 @@ tag: F
 note: first-use gloss for roster, from #g-roster ("the list of attached device entries ... the loop reads once at `run!`").
 
 old: Pause is a control-plane state inside a run, so a prohibition that holds mid-run holds while paused (§11.3, §12.1).
+new: Pause is a state inside a run, carried by the control plane (the separate atomic surface for pause, pace and the stop word), so a prohibition that holds mid-run holds while paused (§11.3, §12.1).
 tag: F
-note: control plane takes a first-use link (#g-control-plane).
+note: control plane takes a first-use link (#g-control-plane). Step 5 fix1: P1-35.
 
 old: Within the stopped-sim states, legality follows each service's inputs.
 new: Within the stopped-sim states, legality follows each service's inputs (D-108).
@@ -98,8 +102,9 @@ ruling: R27
 note: the table, verbatim except its last cell's em dash, now a comma.
 
 old: Each row's service also has a form on a `Model` (a deployment materialized at one scalar type), gated by the model's status rather than by the lifecycle (D-319).
+new: Each row's service also has a form on a `Model` (a deployment materialized at one scalar type), gated by the model's status rather than by the lifecycle (D-319).
 tag: M
-note: M1, moved after the ServiceLifecycle paragraph within the heading. R7 bold headline "Each row's service also has a form on a `Model`" for D-319's second sentence, "`checkpoint`, `restore!`, `trim!` and `linearize` are doors of the `Model`". The `Model` link moved to the first use, in the opening's checkpoint gloss; this gloss stays.
+note: M1, moved after the ServiceLifecycle paragraph within the heading. R7 bold headline "Each row's service also has a form on a `Model`" for D-319's second sentence, "`checkpoint`, `restore!`, `trim!` and `linearize` are doors of the `Model`". The `Model` link moved to the first use, in the opening's checkpoint gloss; this gloss stays. Step 5 fix1: P1-2: the `Model` link now sits here, with its gloss.
 
 old: `checkpoint` and the default `linearize` are legal at `:consistent`.
 tag: M
@@ -157,18 +162,18 @@ tag: X
 added: This section covers, in order, what a condition may specify, the overlay base, why addressing a condition by path is legitimate, the pre-sweep doctrine and the environment queries a condition may make.
 
 old: A condition may specify state fields (`x` on the continuous tier, `s` on the discrete) and modes (`m`, continuous components only, §3.2).
-new: A condition may specify state fields, `x` on the continuous tier and `s` on the discrete. It may also specify modes, `m`, which only continuous components have (§3.2).
+new: A condition may specify state fields, `x` on the continuous tier (one side of the hybrid formalism) and `s` on the discrete. It may also specify modes, `m`, which only continuous components have (§3.2).
 tag: F
-note: split; two parentheticals in one sentence became two sentences.
+note: split; two parentheticals in one sentence became two sentences. Step 5 fix1: P1-4, P1-35.
 
 old: All three are addressed by a §8.6 slash path plus a field name.
 new: All three are addressed by a slash path (§8.6) plus a field name.
 tag: F
 
 old: It may also specify root inputs, addressed by face.
-new: Beyond state, a condition may specify root inputs, addressed by face (the name a port wears on its component's boundary).
+new: Beyond state, a condition may specify root inputs (the root's own input faces). It addresses them by face (the name a port wears on its component's boundary).
 tag: F
-note: face gloss from #g-face; "a condition" replaces "It" after the split above.
+note: face gloss from #g-face; "a condition" replaces "It" after the split above. Step 5 fix1: P1-35.
 
 old: It never specifies outputs, which are derived data.
 new: It never specifies outputs, which are derived data (D-063).
@@ -257,7 +262,10 @@ newcites: D-064
 note: R7 bold headline for D-064's second ruling, the pre-sweep doctrine ("a condition value needing swept outputs is caller-computable ... or an equilibrium constraint"). "therefore" becomes the "because" of the next sentence.
 
 old: The first case is trim's `α_filt = α_a`.
+new: The first case is trim's `α_filt = α_a` (§14.2).
 tag: F
+newcites: §14.2
+note: Step 5 fix1: P1-6, a pointer to §14.2's block, which sets `α_filt = α_a`.
 
 old: There α is a decision variable, so the value is known above, not computable below.
 tag: F
@@ -278,9 +286,9 @@ old: There are two routes to that handle.
 tag: F
 
 old: One is the value-level constructor (the plain public function building a field handle from the component and input values, §8.2), applied to the same values the `baseline` writes into the environment component's root inputs.
-new: One is the value-level constructor (the plain public function building a field handle from the component and input values) of §8.2, applied to the same values the `baseline` writes into the environment component's root inputs.
+new: One is the value-level constructor (the plain public function building a field handle from the component and input values) of §8.2. The condition applies it to the same values the `baseline` (the full-coverage condition `trim!` takes as a keyword) writes into the environment component's root inputs.
 tag: F
-note: the citation left the gloss's parentheses.
+note: the citation left the gloss's parentheses. Step 5 fix1: P1-35.
 
 old: The other applies in a rig where an isbits handle itself is a root-input value (§4.4, D-364).
 tag: F
@@ -292,10 +300,10 @@ old: Either way there is one implementation of the field math, evaluated one lev
 tag: F
 
 old: Where closed-form enforcement of a target is not wanted at all, the second escape already covers the case.
-new: Where closed-form enforcement of a target is not wanted at all, the second escape already covers the case (D-139).
+new: Where closed-form enforcement of a target is not wanted at all, the doctrine's second case already covers it (D-139).
 tag: C
 newcites: D-139
-note: D-139 Rationale, "the environment-free fallback through the existing second escape". Rationale-only.
+note: D-139 Rationale, "the environment-free fallback through the existing second escape". Rationale-only. Step 5 fix1: P1-5.
 
 old: Promote the eliminated state coordinates to decision variables and enforce the targets as residuals on swept outputs.
 tag: F
@@ -312,6 +320,7 @@ tag: F
 old: The engine knows `n_eng → ω = n_eng·ω_rated`, and nothing above it should have to.
 new: An engine component knows `n_eng → ω = n_eng·ω_rated`, and nothing above it should have to.
 tag: F
+note: Step 5 fix1: P1-6's `n_eng` clause is the added block below.
 
 old: Making that locality a schema entry was rejected (D-064).
 tag: F
@@ -335,7 +344,7 @@ old: It is the condition method, a method of the framework's `condition` generic
 new: It is the condition method, a method of the framework's `condition` generic, shipped beside the component and dispatched on the component, returning the component's own fragment (the leaf node of the condition algebra, built by `set`) (D-405).
 tag: C
 newcites: D-405
-note: bold term **condition method** goes plain; D-405 bullet 2, "A method of the `condition` generic is a condition method". Fragment gloss from #g-fragment ("the leaf node of the condition algebra, built by `set(; x, s, m, u)`"). condition takes its first-use link here (late at old 11451).
+note: bold term **condition method** goes plain; D-405 bullet 2, "A method of the `condition` generic is a condition method". Fragment gloss from #g-fragment ("the leaf node of the condition algebra, built by `set(; x, s, m, u)`"). condition takes its first-use link here (late at old 11451). Step 5 fix1: P1-35.
 
 old: The generic is framework-owned so that an owner's pull reaches a child's fragment across a package seam.
 new: The generic is framework-owned so that an owner's pull, described below, reaches a child's fragment when the two live in different packages.
@@ -367,7 +376,7 @@ old: Fragments are composed by pull from the structure's owner.
 new: Fragments are composed by pull from the structure's owner, here `C172XSystems` (the C172X aircraft's systems assembly, after FlightApps' `C172X.Systems`).
 tag: R
 ruling: R12
-note: R12's gloss for `C172XSystems`; checked in `~/.julia/dev/Flight.jl/lib/FlightApps/src/c172/c172x/c172x.jl` 207 (`const Systems = C172.Systems{...}`).
+note: R12's gloss for `C172XSystems`; checked in `~/.julia/dev/Flight.jl/lib/FlightApps/src/c172/c172x/c172x.jl` 207 (`const Systems = C172.Systems{...}`). Step 5 fix1: P1-6's `α_filt` clause is the added block below.
 
 old: `condition(sys::C172XSystems; n_eng, α_a, β_a) = combine( at("pwp/engine", condition(sys.pwp.engine; n_eng)), at("aero", set(x = (α_filt = α_a, β_filt = β_a))))`
 tag: F
@@ -383,8 +392,9 @@ tag: M
 note: M2. First-use link for `at` (#g-at, "the scoping combinator"), never linked in the old half.
 
 old: A `u` payload names faces of the authoring level's contract.
+new: A `u` payload names faces of the authoring level's contract (its declared interface).
 tag: M
-note: M2.
+note: M2. Step 5 fix1: P1-35.
 
 old: Resolution walks the export chain to the root input and errors if the face never surfaces.
 new: Resolution walks the export chain to the root input and errors if the face never surfaces (D-065), as `ConditionResolution` with reason `:no_input_face`, or `:unexported_face` at the root (Appendix C).
@@ -416,19 +426,17 @@ ruling: R9
 note: M2 and F14, the parked GUI (D-310) as a front end's.
 
 old: Dispatch selects variant-specific methods, so the c172s/c172x actuation split costs no upstream edits.
-new: Dispatch selects variant-specific methods, so the actuation split between FlightApps' C172 variants, c172s and c172x, costs no upstream edits.
+new: Dispatch selects variant-specific methods, so the actuation split between Flight.jl's two Cessna 172 variants, c172s and c172x, costs no upstream edits.
 tag: R
 ruling: R12
-note: checked in `~/.julia/dev/Flight.jl/lib/FlightApps/src/c172/c172s/c172s.jl` 153 (`MechanicalActuation`) and `c172x/c172x.jl` 207 (`FlyByWireActuation`).
+note: checked in `~/.julia/dev/Flight.jl/lib/FlightApps/src/c172/c172s/c172s.jl` 153 (`MechanicalActuation`) and `c172x/c172x.jl` 207 (`FlyByWireActuation`). Step 5 fix1: P1-8 moves it to just after the `C172XSystems` block it comments on; P1-7 names the owner (both files sit in Flight.jl's lib/FlightApps/src/c172/).
 
 old: The three combinators are constructors of an inert, lazy tree.
-new: Composition builds an inert, lazy fragment tree (D-065). `set` builds the leaf, `at` and `combine` (the symmetric, collision-intolerant combinator) build the tree's inner nodes,
+new: Composition builds an inert, lazy fragment tree (the nested `Fragment`, `Scoped`, `Combined` and override nodes) (D-065). `set` builds the leaf, `at` and `combine` (the symmetric, collision-intolerant combinator) build the tree's inner nodes,
 tag: R
 ruling: R9
 newcites: D-065
-note: F8's dictated clause; "three combinators" counted `set` and left out `override`. The bold term **inert, lazy tree** becomes the bold headline for D-065's first ruling, "Fragments form a lazy inert tree (... store, never apply — stack-only rebuild per iteration)"; fragment tree takes its link (#g-fragment-tree). `combine` takes its first-use link and gloss (#g-combine). R36 adds the clause "and `override` builds a fourth node type (§14.6)", the added block below, worded by R38; an added block takes no ruling field.
-
-added: and `override` builds a fourth node type (§14.6).
+note: F8's dictated clause; "three combinators" counted `set` and left out `override`. The bold term **inert, lazy tree** becomes the bold headline for D-065's first ruling, "Fragments form a lazy inert tree (... store, never apply — stack-only rebuild per iteration)"; fragment tree takes its link (#g-fragment-tree). `combine` takes its first-use link and gloss (#g-combine). R36 adds the clause "and `override` builds a fourth node type (§14.6)", the added block below, worded by R38; an added block takes no ruling field. Step 5 fix1: P1-35.
 
 old: No path arithmetic happens at composition.
 tag: F
@@ -458,10 +466,10 @@ note: F8, the brief's amended wording. The empty-prefix check stays one of the t
 added: A `set` payload that is not a NamedTuple is `ConditionNodeMisuse` with reason `:set_payload` (Appendix C).
 
 old: The zero-alloc property of today's `assign!` loop holds of the construction and of the walk that applies the tree (§14.4) alike.
-new: The trim of Flight.jl's Cessna 172 model (`c172.jl`) writes each trial state through FlightPhysics' `assign!`, and the zero-alloc property of that `assign!` loop holds of the construction with literal prefixes and of the specialized `apply!` that writes the tree (§14.4) alike.
+new: The trim of Flight.jl's Cessna 172 model (`c172.jl`) writes each trial state through FlightPhysics' `assign!`, a loop that allocates nothing. That property holds of the construction with literal prefixes and of the specialized `apply!` that writes the tree (§14.4) alike.
 tag: R
 ruling: R35
-note: R35 scopes the construction to literal prefixes, as F9 (a). R9's F9 (b), the specialized `apply!` only. R12 and R23, "today's" becomes the owner the source shows, Flight.jl's Cessna 172 model calling FlightPhysics' `assign!`: checked in `~/.julia/dev/Flight.jl/lib/FlightPhysics/src/aircraftbase.jl` 94 (`assign!(vehicle, params, state, ...)`) and `lib/FlightApps/src/c172/c172.jl` 876 (the C172 trim's target function calls `AircraftBase.assign!` per evaluation).
+note: R35 scopes the construction to literal prefixes, as F9 (a). R9's F9 (b), the specialized `apply!` only. R12 and R23, "today's" becomes the owner the source shows, Flight.jl's Cessna 172 model calling FlightPhysics' `assign!`: checked in `~/.julia/dev/Flight.jl/lib/FlightPhysics/src/aircraftbase.jl` 94 (`assign!(vehicle, params, state, ...)`) and `lib/FlightApps/src/c172/c172.jl` 876 (the C172 trim's target function calls `AircraftBase.assign!` per evaluation). Step 5 fix1: P1-10.
 
 old: An evaluation's cost is therefore the sweep it feeds.
 tag: F
@@ -480,10 +488,10 @@ old: The refusal holds at the root too, because `at` builds an inert tree and ca
 tag: F
 
 old: On a condition node it raises `ConditionNodeMisuse` (Appendix C) before any resolution pass runs.
-new: On a condition node it raises `ConditionNodeMisuse` with reason `:empty_prefix` (Appendix C) before any resolution pass runs.
+new: On a node of a condition (the path-addressed sparse overlay that sets a build's state), `at` raises `ConditionNodeMisuse` with reason `:empty_prefix` (Appendix C) before any resolution pass runs.
 tag: R
 ruling: R14
-note: the reason, `src/conditions.jl` 93-94.
+note: the reason, `src/conditions.jl` 93-94. Step 5 fix1: P1-35.
 
 old: The read side's lifts refuse the same way (§14.9, D-278).
 tag: F
@@ -495,27 +503,31 @@ newcites: §6.1 D-065
 note: the bold term becomes the bold headline for D-065's locality ruling, "locality law = §6.1's, third instance (own fields, declared children, own faces ...)"; the clause stands as D-065's annotation reads it. D-065 was cited later in the paragraph.
 
 old: The three instances are local wires, computed interface connections and conditions.
+new: The three instances are local wires (wires from one child's port to a child's face), computed interface connections and conditions.
 tag: F
+note: Step 5 fix1: P1-35.
 
 old: Each level speaks its own fields, its declared children's names, and its own faces.
 tag: F
 
 old: Delegation runs by dispatch at every genericity seam.
+new: Delegation runs by dispatch at every genericity seam (a narrow, named interface kept deliberately thin).
 tag: F
-note: verify. The added D-064 citation is dropped: its Position says "dispatched on component types" and nothing of seams.
+note: verify. The added D-064 citation is dropped: its Position says "dispatched on component types" and nothing of seams. Step 5 fix1: P1-35.
 
 old: An `at` prefix may stop at any child's faces, owned or generically held, because the face graph is total (D-207).
+new: An `at` prefix may stop at any child's faces, owned or generically held (held through a non-concrete field type), because the face graph is total (D-207).
 tag: F
-note: generic holding takes its first-use link (#g-generic-holding).
+note: generic holding takes its first-use link (#g-generic-holding). Step 5 fix1: P1-35.
 
 old: A deep `at` or condition path resolves wherever the structure has it (§13.3, D-414).
 tag: F
 
 old: Absolute paths exist only in the flattened entry list, a compiled derivative of the composition, as cell offsets are of `local_wires`.
-new: Absolute paths exist only in the flattened list of condition entries, a compiled derivative of the composition, as cell offsets are of `local_wires`.
+new: Absolute paths exist only in the flattened list of condition entries, a compiled derivative of the composition, as the offsets of cells (the typed entries of the signal table) are of `local_wires`.
 tag: R
 ruling: R13
-note: F29, bare entry. §13.3 10251 relies on this sentence.
+note: F29, bare entry. §13.3 10251 relies on this sentence. Step 5 fix1: P1-35.
 
 old: Substituting a component invalidates precisely the fragments its owner shipped, nothing else.
 new: Under the locality law, substituting a component invalidates only the fragments its owner shipped.
@@ -579,8 +591,9 @@ old: Last-writer-wins was rejected (D-065).
 tag: F
 
 old: That rejection is also why the combinator is not `Base.merge`, and is no longer named after it (D-204).
+new: The combinator is not `Base.merge`, and is no longer named after it (D-204). The last-writer-wins rejection is also the reason.
 tag: F
-note: R7 bold headline "the combinator is not `Base.merge`" for D-204's first sentence, the rename to `combine`.
+note: R7 bold headline "the combinator is not `Base.merge`" for D-204's first sentence, the rename to `combine`. Step 5 fix1: P1-11, rule first: the bold sentence leads and the rejection follows as its reason.
 
 old: `Base.merge` is last-wins on NamedTuples, the exact semantics rejected here, and its own name should not promise them.
 tag: F
@@ -601,14 +614,16 @@ tag: F
 note: the mid-sentence colon becomes a full stop.
 
 old: The rejection carries a kind like every other.
+new: Like every other, the rejection carries a kind (a diagnostic's identity in a closed, enumerated set).
 tag: F
+note: Step 5 fix1: P1-35.
 
 old: It is `ConditionNodeMisuse` (Appendix C), carrying the offending argument's type and the node kinds in hand.
-new: It is `ConditionNodeMisuse` (Appendix C, D-113), carrying the offending argument's type and the node types in hand.
+new: The blend rejection is `ConditionNodeMisuse` (Appendix C, D-113), carrying the offending argument's type and the node types in hand.
 tag: R
-ruling: R38
+ruling: R38 B5
 newcites: Appendix C D-113
-note: D-113 bullet 4, "`ConditionNodeMisuse` for §14.2's mixed-`merge` error method: offending argument type, node kinds in hand"; R7 bold headline.
+note: D-113 bullet 4, "`ConditionNodeMisuse` for §14.2's mixed-`merge` error method: offending argument type, node kinds in hand"; R7 bold headline. B5: the bold's subject "It" becomes "The blend rejection", the blend of a node with a bare NamedTuple the paragraph closes.
 
 old: It is raised at composition time, before any resolution pass runs or any origin exists.
 tag: F
@@ -617,16 +632,17 @@ old: That is why it is its own kind and not a `ConditionResolution` sub-kind (§
 tag: F
 
 old: The explicit, ordered layering spelling, `override`, belongs with the use case root-input totality produces (§14.6).
+new: The explicit, ordered layering spelling, `override`, belongs with the use case of root-input totality (the requirement that an application establishing a complete world cover every root input) (§14.6).
 tag: F
-note: `override` takes its first-use link (#g-override); its first mention, inside the quoted message, is code.
+note: `override` takes its first-use link (#g-override); its first mention, inside the quoted message, is code. Step 5 fix1: P1-9, P1-35.
 
 old: ### 14.3 Resolution: flatten, validate, compile once
 tag: X
 
 old: Resolution takes the root node plus a `Build`.
-new: Resolution takes the root node plus a `Build` (the artifact `build(world)` produces).
+new: It takes the root node plus a `Build` (the artifact `build(world)` produces).
 tag: F
-note: `Build` takes its first-use link and gloss (#g-build, "the artifact `build(world)` produces").
+note: `Build` takes its first-use link and gloss (#g-build, "the artifact `build(world)` produces"). Step 5 fix1: P1-4's context sentence is the added block below; condition's link and gloss move to it from the flattening paragraph (P1-35).
 
 added: This section covers, in order, flattening, the collecting checks, the two lookup families, the plan, the converter rule with its two cases, and overlay partiality.
 
@@ -640,7 +656,7 @@ old: It is a trivial recursion with a path accumulator, and it also records each
 new: It is a trivial recursion with a path accumulator, and it also records each condition entry's tree position, its `getfield`/`getindex` step tuple.
 tag: R
 ruling: R13
-note: F29. The bold term **tree position** goes plain. condition takes its first-use link here (late at old 11547).
+note: F29. The bold term **tree position** goes plain. condition takes its first-use link here (late at old 11547). Step 5 fix1: P1-35.
 
 old: The collecting pass then checks each flat entry:
 new: The collecting pass then checks each flat condition entry:
@@ -741,7 +757,9 @@ tag: F
 note: the bold case opener goes plain.
 
 old: Under a `Dual`-seeded evaluation of a type-stable `trim_condition(d)`, every decision-dependent leaf is `Dual`-typed in the shape (§14.7).
+new: Under a `Dual`-seeded evaluation of a type-stable `trim_condition(d)`, every decision-descended leaf is `Dual`-typed in the shape (§14.7).
 tag: F
+note: Step 5 fix1: P1-13.
 
 old: Such a leaf takes the type's ordinary `convert`/constructor methods at that eltype.
 tag: F
@@ -756,15 +774,17 @@ old: That untouched flow of partials is what makes the seeded decisions reach th
 tag: F
 
 old: At the nominal activation the same rule is the ordinary `Float64` conversion.
+new: At the nominal activation (the `Float64` one), the same rule is the ordinary `Float64` conversion.
 tag: F
-note: nominal takes its first-use link (#g-nominal).
+note: nominal takes its first-use link (#g-nominal). Step 5 fix1: P1-35.
 
 old: An authored `RQuat` value becomes the `SVector{4}` state leaf it initializes.
 tag: F
 
 old: A plain `Float64` leaf against a non-nominal activation's scratch is a held constant, and it takes the `Float64 → Dual` zero-partial embedding.
+new: A plain `Float64` leaf against a non-nominal activation's scratch (mutable working storage whose contents are never authoritative) is a held constant, and it takes the `Float64 → Dual` zero-partial embedding.
 tag: F
-note: the bold case opener goes plain; scratch takes its first-use link (#g-scratch).
+note: the bold case opener goes plain; scratch takes its first-use link (#g-scratch). Step 5 fix1: P1-35.
 
 old: That embedding is semantically exact in that case, and in no other.
 tag: F
@@ -801,3 +821,13 @@ new: Each `s` or `m` store's write is one whole value, `merge(defaults, overlay)
 tag: R
 ruling: R9
 note: F15; `src/conditions.jl` 316-324, 600-620. The citation left the parentheses.
+
+added: A condition is the value an author writes to say which state a build starts from.
+
+added: `n_eng` is the engine speed as a fraction of its rated speed `ω_rated`.
+
+added: In the block, `α_filt` and `β_filt` are the aerodynamics' filtered airflow angles, set to the angle of attack `α_a` and the sideslip `β_a`.
+
+added: and `override`, the ordered, asymmetric layering combinator, builds a fourth node type (§14.6).
+
+added: Resolution turns a composed condition (the path-addressed sparse overlay that sets a build's state) into plans the services can apply.

@@ -74,10 +74,10 @@ newcites: D-118
 note: at linked and glossed at its first use (F67); D-118 Position "carried in the problem because a relocated problem must carry its own convergence test (at's lift gains it as a path-free pass-through)"
 
 old: Worked, the C172 cruise case reduces to its three-equation core.
-new: Worked, the cruise case of Flight.jl's Cessna 172 model (`c172.jl`) reduces to its three-equation core.
+new: The problem below is worked (spelled in full against a concrete case). It is the cruise case of Flight.jl's Cessna 172 model (`c172.jl`), reduced to its three-equation core.
 tag: R
 ruling: R12
-note: owner named; checked ~/.julia/dev/Flight.jl/lib/FlightApps/src/c172/c172.jl (the Cessna172 model, its TrimState{7} and trim routine)
+note: owner named; checked ~/.julia/dev/Flight.jl/lib/FlightApps/src/c172/c172.jl (the Cessna172 model, its TrimState{7} and trim routine); step 5 P2-2: recast for grammar, worked glossed after the glossary's #g-worked
 
 old: The real problem is the same shape with the full 7-variable search, and the θ-constraint elimination survives inside `trim_condition`.
 new: The real problem is the same shape with the full 7-variable search, and the θ-constraint elimination survives inside its condition function, which the worked problem calls `trim_condition`.
@@ -98,10 +98,11 @@ added: #### Decisions and parameters
 # R8 label
 
 old: - Decision variables, initial guess and box bounds are plain, same-named, all-`Float64` NamedTuples.
-new: Decision variables, initial guess and box bounds are plain, same-named, all-`Float64` NamedTuples.
-tag: R
+new: `guess`, `lower` and `upper` are same-named all-`Float64` NamedTuples (D-069).
+tag: M
 ruling: R8
-note: the bullet becomes the paragraph's topic sentence; its bold goes, D-069 bullet 1 being bold at the field list (H52, R7)
+note: the bullet becomes the paragraph's topic sentence; its bold goes, D-069 bullet 1 being bold at the field list (H52, R7); step 5 P2-1: the sentence doubled the field-list bullet and is dropped; the bullet carries it, and the decisions themselves are the decision NamedTuple of 'Residuals and checks', guess-shaped
+newcites: D-069
 
 old: The `AbstractTrimState{N}`/`FieldVector` supertype dies.
 new: FlightPhysics' decision-variable supertype, `AbstractTrimState{N}`, is dropped.
@@ -200,7 +201,10 @@ newcites: D-277
 note: F69; D-277 bullets 2 and 3, "get_input(face) names an input face of the mount level", "get_face(name) names an output face of the mount level"; `_input_faces_at(structure, decls, mount)`, src/readers.jl 523
 
 old: The path selectors (the closed family of deferred reads resolving against a source) reach any port the structure has (§13.3, D-414).
-tag: F
+new: The path selectors (the closed family of deferred reads resolving against a source) reach any port or state field the structure has (§13.3, D-414).
+tag: R
+ruling: B13
+note: B13, `get_state` and `get_deriv` reach a state field, not a port (U-rul F correction 3)
 
 old: An equilibrium equation meant to survive substitution at a generic seam reads a face.
 new: As authoring guidance, an equilibrium equation meant to survive substitution at a generic seam reads a face (D-414, D-125).
@@ -262,9 +266,9 @@ tag: M
 note: M51 merges the packing paragraph (old "The service packs residuals and tolerances by field order") into the residual system's (H53)
 
 old: The order here is `tolerances`' field order, the declared side again,
-new: The order is `tolerances`' field order, the declared side again, canonical for the r-side.
+new: The order is `tolerances`' field order, the declared side again, canonical for the residuals.
 tag: M
-note: M51 merge (H53)
+note: M51 merge (H53); step 5 P2-5: 'r-side' becomes 'residuals'
 
 old: and the residual return is canonicalized to it.
 new: Each residual return is reordered to it (`NamedTuple{keys(tolerances)}(r)`) before packing (D-151).
@@ -323,11 +327,11 @@ added: #### The formulation
 # R8 label
 
 old: - The FlightCore formulation's core is correct and survives verbatim as user math.
-new: The FlightPhysics formulation's core is correct and survives verbatim as user math (D-069).
+new: Flight.jl's trim formulation is correct at its core and survives verbatim as user math (D-069).
 tag: R
-ruling: R23
+ruling: R23 B4
 newcites: D-069
-note: R23, the owner the source shows: θ_constraint and AbstractTrimState are FlightPhysics' (lib/FlightPhysics/src/aircraftbase.jl 92, 110); FlightCore holds no trim code. R7, bold on the headline clause; D-069 bullet 4, "The analytic-elimination doctrine (θ_constraint, by-construction filter/actuator equilibria) is preserved verbatim as user math"
+note: B4, the bold names Flight.jl, true of both owners: the 7-variable TrimState is c172.jl's (lib/FlightApps/src/c172/c172.jl 796), θ_constraint FlightPhysics'. R23, the owner the source shows: θ_constraint and AbstractTrimState are FlightPhysics' (lib/FlightPhysics/src/aircraftbase.jl 92, 110); FlightCore holds no trim code. R7, bold on the headline clause; D-069 bullet 4, "The analytic-elimination doctrine (θ_constraint, by-construction filter/actuator equilibria) is preserved verbatim as user math"
 
 old: That core is analytic elimination:
 new: That core is analytic elimination, namely
@@ -496,8 +500,9 @@ tag: M
 note: M51
 
 old: `TrimParameters` stays behind the closure, exactly as `condition` already holds it, and the framework never sees it.
+new: `TrimParameters` stays behind the closure, exactly as `condition` already holds it.
 tag: M
-note: M51
+note: M51; step 5 P2-3: 'and the framework never sees it' dropped as the double of the bold in 'Decisions and parameters' (TrimParameters stays a plain user struct the framework never sees)
 
 old: Being user-shaped, that record is also where any environment handles the condition math needs conventionally ride
 new: Being user-shaped, that record is also where any environment handles the condition math needs conventionally ride.
@@ -505,9 +510,9 @@ tag: M
 note: M51
 
 old: (the value-level constructor, §8.2; the pre-sweep doctrine, §14.1).
-new: §8.2 gives the value-level constructor (the plain exported function building a field handle from the component and input values) that builds such a handle, and §14.1 the pre-sweep doctrine.
+new: §8.2 gives the value-level constructor that builds such a handle, a plain exported function of the component and its input values. §14.1 gives the pre-sweep doctrine.
 tag: M
-note: M51; the two pointers say what each section provides (spec_style, no possessive citations); value-level constructor glossed with the gloss table's class-A gloss, citations kept outside the gloss's parentheses
+note: M51; the two pointers say what each section provides (spec_style, no possessive citations); value-level constructor glossed with the gloss table's class-A gloss, citations kept outside the gloss's parentheses; step 5 P2-4: the gloss becomes an appositive after 'such a handle'
 
 old: The problem receives the environment, and never writes it (§14.9).
 tag: M
@@ -526,9 +531,9 @@ tag: M
 note: M51 merge (H53)
 
 old: `tolerances`' order is canonical for the r-side,
-new: The order is `tolerances`' field order, the declared side again, canonical for the r-side.
+new: The order is `tolerances`' field order, the declared side again, canonical for the residuals.
 tag: M
-note: M51 merge (H53)
+note: M51 merge (H53); step 5 P2-5
 
 old: and each residual return is reordered to it (`NamedTuple{keys(tolerances)}(r)`) before packing.
 new: Each residual return is reordered to it (`NamedTuple{keys(tolerances)}(r)`) before packing (D-151).
@@ -586,10 +591,10 @@ note: the signature stays here, its home (R6); t0's home is §14.5
 added: A `Model` at another scalar is refused as `ArgumentInvalid` with reason `:non_nominal` (D-319).
 # R14, F71: D-319 bullet, "trim! and linearize on a Model{T} at any T other than Float64 throw ArgumentInvalid with reason :non_nominal"; src/trim.jl 458–459
 
-added: A model that a simulation has claimed is refused before any check, as `ArgumentInvalid` with reason `:claimed`, since the call commits (D-318, D-319).
+added: A `Model` that a simulation has claimed is refused before any check, as `ArgumentInvalid` with reason `:claimed`, since the call commits (D-318, D-319).
 # verify (V107): D-318 Position, "A model already claimed is refused as ArgumentInvalid with reason :claimed"; R14, F71: D-319 bullet 5, "trim! takes the claim's gate before any check, since it commits"; src/trim.jl 448 and src/model.jl 148–150 (`_claimed_gate`, reason :claimed)
 
-added: The `baseline` keyword takes a baseline (an aircraft-shipped, full-coverage condition function).
+added: The `baseline` keyword takes a baseline (a full-coverage condition, such as an aircraft-shipped function returns).
 # F67: the brief assigns baseline's §14.8 link to unit F at 12065, which sits inside the signature's code span; the glossary: "an aircraft-shipped, full-coverage condition function … It is also the baseline keyword init!/trim! take"
 
 old: `trim!(sim, problem; …)` gates on the simulation's lifecycle and commits through the simulation's `init!`.
@@ -638,9 +643,10 @@ old: `eval!(r, J, d)` is in-place and always fills `r`, the residual vector pack
 tag: F
 
 old: It fills `J` iff `J !== nothing`.
+new: It fills `J` exactly when `J !== nothing`.
 tag: R
 ruling: R7
-note: the bold on "iff J !== nothing" goes plain, one ruling with the pinned signature (q24)
+note: the bold on "iff J !== nothing" goes plain, one ruling with the pinned signature (q24); step 5 P2-9: 'iff' in plain words
 
 old: The Jacobian is requested by argument, so a Jacobian-free backend simply always passes `nothing`, and there is still exactly one evaluation method to implement.
 tag: F
@@ -728,7 +734,9 @@ old: In least-squares backends the tolerances are the stopping criterion.
 tag: F
 
 old: They feed the per-residual test directly, so LM's damping loop tests exactly what the service will re-test.
+new: They feed the per-residual test directly, so the damping loop of Levenberg–Marquardt (LM) tests exactly what the service will re-test.
 tag: F
+note: step 5 P2-9: LM introduced at its first use in §14.8
 
 added: The derivative-free fallback is designed and not yet built, and `pending.md` lists it (D-070).
 # R10, the one status sentence; pending.md 158–160 lists "The NLopt fallback"; D-070 Position rules the design
@@ -835,7 +843,9 @@ old: The set holds the `x` backing, the `s` and `m` stores, the root input and s
 tag: F
 
 old: The set is built from the activation's layout (the build's typed products at a given scalar type).
+new: The set is built from the layout of the activation (the build's typed products at a given scalar type).
 tag: F
+note: step 5 P2-12: the gloss now follows activation
 
 old: The layout is the reusable compiled artifact.
 tag: F
@@ -905,7 +915,9 @@ newcites: D-213
 note: D-213 Position's first ruling, bold with its citation in the sentence (was adjacent)
 
 old: At the seeded activation the discrete tier is frozen (§9.4).
+new: At the seeded activation the discrete tier (the discrete side of the hybrid formalism) is frozen (§9.4).
 tag: F
+note: step 5 P2-49: tier glossed after the glossary's #g-tier
 
 old: Its stages never run there, so nothing at that activation can derive a discrete output cell from the authored `s`.
 tag: F
@@ -920,7 +932,9 @@ tag: F
 note: nominal glossed (class A; the glossary's "the Float64 activation")
 
 old: That round is boundary zero's sweep with every discrete output stage admitted, due or not (D-205), with no projection, no guards and no `s_update`.
+new: That round is boundary zero's sweep with every discrete output stage admitted, due or not (D-205), with no projection (the per-component `x_projection` hook), no guards and no `s_update`.
 tag: F
+note: step 5 P2-49: projection glossed after the glossary's #g-projection
 
 old: The seeded set is then written by the specialized `apply!`,
 new: The seeded set is then written by the specialized `apply!`.
@@ -940,23 +954,32 @@ old: A frozen cell holds what the authored discrete state publishes, which makes
 tag: F
 
 old: No scratch cell holds the probe's synthesized values.
+new: No scratch cell holds a synthesized probe value (a fabricated value a build-time probe runs on).
 tag: F
+note: step 5 P2-13: the link moves from #g-probe to #g-probe-value, glossed after the glossary
 
 old: That is the §14.6 barrier reaching the scratch world, as D-205 made it reach the published one.
+new: That is the probe-value barrier of §14.6 reaching the scratch world, as D-205 made it reach the published one.
 tag: F
+note: step 5 P2-13: named as §14.6 names it
 
 old: The iterations are untouched.
+new: The iterations are untouched (§14.5).
 tag: F
+note: step 5 P1-37: the pointer to the home of the raw iterations (R6)
+newcites: §14.5
 
 old: They are raw write → sweep → read cycles at the seeded activation, over the continuous chain and `x_deriv` alone (§14.5).
-tag: F
-note: H66, kept with its pointer to §14.5 (R6)
+new: They run at the seeded activation, over the continuous chain and `x_deriv` alone.
+tag: M
+note: H66, kept with its pointer to §14.5 (R6); step 5 P1-37: 'raw write → sweep → read cycles' is held at its home in §14.5 (units/B/new.md, 'Optimizer iterations are raw write → sweep → read cycles on the activation'); the §14.5 pointer sits on the sentence before; 'at the seeded activation' stays, since §14.5 does not say it
+newcites: §14.5
 
 old: The zero-decision problem (below) is the nominal half alone,
-new: The zero-decision problem (below) is the nominal half alone (D-213).
+new: The empty problem (below) is the nominal half alone (D-213).
 tag: C
 newcites: D-213
-note: verify (V188): D-213 now sits on what it carries, Rationale "the zero-decision probe falls out as the nominal half alone"
+note: verify (V188): D-213 now sits on what it carries, Rationale "the zero-decision probe falls out as the nominal half alone"; step 5 P2-14: the name 'The report' gives it
 
 old: and its one evaluation is that establishment round (D-213).
 new: Its one evaluation is that establishment round, followed by one derivative evaluation for the reads.
@@ -966,7 +989,10 @@ newcites: D-213
 note: verify (V188): D-213 moved to the previous sentence, the paragraph keeping it; F56's omission at this site: setup runs `nominal_exec.bodies.rhs()` after the establishment round and before the gather (src/trim.jl 484–486)
 
 old: The commit applies the same composite over the same `baseline` (`override(baseline, condition(d))`, §14.9), so its coverage is setup's.
+new: The commit (below) applies the same composite over the same `baseline`, so its coverage is setup's.
 tag: F
+newcites: none
+note: step 5 P2-15: the expression and its §14.9 pointer give way to 'below', where 'The commit, in full' (units/G/new.md) states the expression; §14.9 states it too
 
 old: Commit's totality check is therefore structurally unfailable through the trim path, and it stands as the shared `init!`-boundary defense.
 new: Commit's totality check is therefore structurally unfailable through the trim path, and it stands as the shared `init!` defense (D-149).
@@ -979,8 +1005,9 @@ old: A converged solve is always committable.
 tag: F
 
 old: `TrimReport` therefore carries no committed flag, and the no-throw doctrine needs no exception.
+new: `TrimReport` therefore carries no committed flag, and the no-throw rule (below) needs no exception.
 tag: F
-note: D-149 Rationale and Rejected list; cited in the paragraph
+note: D-149 Rationale and Rejected list; cited in the paragraph; step 5 P2-16: points to 'Non-convergence never throws' in 'The report'
 
 old: Iterations rewrite the composite's write-set via the compiled plan.
 tag: F
@@ -1007,10 +1034,10 @@ old: No commit means the sim is bit-for-bit untouched, including "never initiali
 tag: F
 
 old: Today's warn-but-assign is structurally impossible.
-new: Flight.jl's warn-but-assign is structurally impossible.
+new: Flight.jl's warn-but-assign, where the Cessna 172 trim warns on a failed optimization and assigns its result anyway, is structurally impossible.
 tag: R
 ruling: R12
-note: ~/.julia/dev/Flight.jl/lib/FlightApps/src/c172/c172.jl 933–938, `@warn("Trimming optimization failed …")` then `AircraftBase.assign!` regardless
+note: ~/.julia/dev/Flight.jl/lib/FlightApps/src/c172/c172.jl 933–938, `@warn("Trimming optimization failed …")` then `AircraftBase.assign!` regardless; step 5 P2-17: the clause states what that code does, c172.jl 934-939
 
 old: The same structure covers an interrupt.
 tag: F

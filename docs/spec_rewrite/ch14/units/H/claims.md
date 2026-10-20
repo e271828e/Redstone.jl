@@ -52,10 +52,13 @@ ruling: R9
 note: F66, an array element and not a component; the component link moves to its first real use (the returned value).
 
 # R9, F53: the seeded tap's step limit, the proposed wording fitted ("a whole cell" reads "a whole state field or root input", since an x seed lands in the state buffer, not a cell).
-added: A seeded tap, in the `x` or `u` list, reaches its scalar through one index step at most and never a `.name` step, because a seed is written into a whole state field or root input, or into one array element of it.
+added: A seeded tap, in the `x` or `u` list, reaches its scalar through one index step at most and never a `.name` step, because a seed is written into a whole state field or root input (the root's own input face), or into one array element of it.
 
 # R24: the seeded tap's leaf rule (`_check_seedable`, src/linearize.jl 344–345).
 added: A seeded tap's leaf is exactly `Float64`.
+
+# ruling: B15, the seeded tap's violation named: `_check_seedable` (src/linearize.jl 336-347) raises `:unseedable` and `:vector_tap` as `TapResolution`.
+added: Any other seeded address is rejected at resolution as a `TapResolution`.
 
 added: A `y` tap is a read and takes any leaf address.
 
@@ -91,12 +94,16 @@ newcites: D-197
 note: F66 (bare entry, twice); R14 kind named (`:discrete_state`); R7 bold headline of D-197's first ruling, citation added in the sentence. D-197 Position: "a tap naming a discrete store is a tap-resolution error carrying the offending entry and its tier".
 
 old: That is the no-silent-zeros rule again (D-167, D-197).
-new: That is the no-silent-zeros rule again (D-197).
-tag: C
-newcites: D-197
-note: F59, superseded D-167 dropped; D-197's Rationale names "D-167's no-silent-zeros principle".
+new: That is the no-silent-zeros rule (§9.5).
+tag: R
+ruling: B10
+newcites: §9.5
+note: F59, superseded D-167 dropped. B10: "again" had no antecedent (the zero-column rejection comes later); the rule's prose is §9.5's "Deliberate stripping", "producing a silent zero in the Jacobian"; D-197 stays once, on the bold sentence before, which states its ruling.
 
 old: The frozen tier's only possible partials are zeros, and the rejection's next-move guidance points at the recorded step-map extension below.
+new: The discrete tier is frozen (§8.2), so its only possible partials are zeros. The rejection's next-move guidance points at the recorded step-map extension below.
+newcites: §8.2
+note: step 5 P2-36: 'the frozen tier' was used before §14.10 says the discrete tier is frozen; §8.2 is the pointer the section already gives for that fact
 
 old: The lists compile to offsets once, and relocate whole via `at(prefix, taps)`.
 new: The lists compile to offsets once, and relocate whole via `at(prefix, taps)` (D-072).
@@ -135,13 +142,15 @@ ruling: R12
 note: FiniteDiff's first use after M62; checked ~/.julia/dev/Flight.jl/lib/FlightPhysics/src/linearization.jl 4 (`using FiniteDiff`).
 
 old: The default operating point is the checkpoint (the `Model`'s state at a frame top as one value) of the simulation or the model as it stands.
-new: The default operating point is the checkpoint (the model's state at a frame top as one value) of the simulation or the model as it stands (D-274, D-319).
+new: The default operating point is the checkpoint of the simulation or the `Model` (a deployment materialized at one scalar type) as it stands (D-274, D-319). A checkpoint is the `Model`'s state at a frame top as one value.
 tag: R
 ruling: R7
 newcites: D-274 D-319
-note: R25, bold headline of D-274 bullet 5 ("`linearize`'s default operating point is the checkpoint of the simulation as it stands"); D-319 bullet 5 adds `checkpoint(model)`. "`Model`'s" becomes "model's" so the `Model` link keeps its gloss at the next sentence.
+note: R25, bold headline of D-274 bullet 5 ("`linearize`'s default operating point is the checkpoint of the simulation as it stands"); D-319 bullet 5 adds `checkpoint(model)`. "`Model`'s" becomes "model's" so the `Model` link keeps its gloss at the next sentence.; step 5 P2-20 and P1-38: the shared gloss (glossary #g-checkpoint) in its own sentence, so it no longer splits the bold noun phrase; bare 'model' becomes `Model`, which takes its link and gloss here at its new first use
 
 old: It is `checkpoint(sim)` on a simulation and `checkpoint(model)` on a `Model` (a deployment materialized at one scalar type), each restored into the scratch world with no boundary zero (§12.6, D-274, D-319).
+new: It is `checkpoint(sim)` on a simulation and `checkpoint(model)` on a `Model`, each restored into the scratch world with no boundary zero (§12.6, D-274, D-319).
+note: step 5 P2-20: the `Model` link and gloss moved to the sentence before
 
 old: The frozen tier's cells are the checkpoint's held cells.
 new: The frozen tier's cells (the typed entries of the signal table) are the checkpoint's held cells.
@@ -150,11 +159,11 @@ note: cell's link moves to its first use after M62, with a gloss.
 old: After a `trim!` commit, `linearize(sim, taps)` or `linearize(model, taps)` is about the trim point with nothing re-specified.
 
 old: `about = <condition>`, with `t0` beside it as in `trim!`, linearizes anywhere else without touching the sim.
-new: `about = <condition>`, with `t0` beside it, linearizes anywhere else without touching the sim (D-272). `t0` is admitted only there, and a `t0` passed without `about` is an `ArgumentInvalid`.
+new: `about = <condition>`, with `t0` beside it, linearizes anywhere else without touching the sim, its coverage checked as §14.6 requires (D-272). `t0` is admitted only there, and a `t0` passed without `about` is an `ArgumentInvalid`.
 tag: R
-ruling: R9
-newcites: D-272
-note: F83; R14 names `ArgumentInvalid` `:t0_without_about` (src/linearize.jl 156–157); R7 bold on D-272 bullet 4's standing sentence. The lone-t0 refusal is D-272's annotation of 2026-09-28.
+ruling: R9 B18
+newcites: D-272 §14.6
+note: B18 (R3): the about point is a totality site §14.6 names ("linearization's operating condition under `about`, applied to its own scratch"), so the pointer back states it where the site lives; outside the bold, which keeps its headline clause. F83; R14 names `ArgumentInvalid` `:t0_without_about` (src/linearize.jl 156–157); R7 bold on D-272 bullet 4's standing sentence. The lone-t0 refusal is D-272's annotation of 2026-09-28.
 
 old: The evaluation.
 new: #### The seeded pass
@@ -175,10 +184,10 @@ newcites: D-072
 note: bold headline of D-072 bullet 2's first ruling ("one chunked Dual pass on per-invocation scratch at the operating point"); bare "entry" goes (R13, F66).
 
 old: Rule. `width` is a keyword of `linearize`, default 8, and the default width's scalar type is public, so a build can pre-materialize its activation through `activations` (§9.4) and a tap set of any size then linearizes with no compile at the keyboard (D-272).
-new: `width` is a keyword of `linearize`, default 8, and the default width's scalar type is public, so a build can pre-materialize its activation (the build's typed products at a given scalar type) through `activations` (§9.4) and a tap set of any size then linearizes with no compile at the keyboard (D-272).
+new: `width` is a keyword of `linearize`, default 8 (D-272). The default width's scalar type is named. A build can therefore pre-materialize its activation (the build's typed products at a given scalar type) through `activations` (§9.4), and a tap set of any size then linearizes with no compile at the keyboard (D-272).
 tag: R
-ruling: R7
-note: the Rule. label goes; bold headline of D-272 bullet 3. activation's link and gloss move to its first use (F67).
+ruling: R7 B14
+note: B14: "public" becomes "named". `LinearizeDual` (src/linearize.jl 64) is neither exported nor declared `public`, and Appendix B does not list it; the pre-materialization claim needs only that the type can be named. The Rule. label goes; bold headline of D-272 bullet 3. activation's link and gloss move to its first use (F67).; step 5 P2-37: split in three, 'so' kept as 'therefore'; D-272 repeated after the split, the bold keeping its own
 
 old: Value parts give `ẋ₀` and `y₀`.
 
@@ -192,10 +201,10 @@ old: ``` x-taps ─┐ ┌─ value parts → ẋ₀, y₀ ├─ seed direction
 note: the chart, verbatim.
 
 old: That seeded evaluation replaces four `FiniteDiff` jacobians, their step-size heuristics and ~4n perturbed evaluations.
-new: That seeded evaluation replaces Flight.jl's four `FiniteDiff` jacobians, their step-size heuristics and ~4n perturbed evaluations.
+new: That seeded evaluation replaces Flight.jl's four `FiniteDiff` Jacobians, their step-size heuristics and ~4n perturbed evaluations.
 tag: R
 ruling: R12
-note: checked ~/.julia/dev/Flight.jl/lib/FlightPhysics/src/linearization.jl 89–107 (`ss_matrices`, four `jacobian!` calls).
+note: checked ~/.julia/dev/Flight.jl/lib/FlightPhysics/src/linearization.jl 89–107 (`ss_matrices`, four `jacobian!` calls).; step 5 P2-38: capital J
 
 old: What the pass seeds, and what it holds frozen.
 new: #### Seeded and frozen leaves
@@ -203,11 +212,11 @@ tag: R
 ruling: R8
 
 old: Unseeded states sit constant at the operating point, and so do unseeded root inputs.
-new: Unseeded states sit constant at the operating point, and so do unseeded root inputs (the root's own input faces) (D-072).
+new: Unseeded states sit constant at the operating point, and so do unseeded root inputs (D-072).
 tag: R
 ruling: R7
 newcites: D-072
-note: bold headline of D-072 bullet 2's second ruling ("unseeded states stay constant, the discrete tier frozen-exact"); root input glossed (glossary: "the root component's own input face").
+note: bold headline of D-072 bullet 2's second ruling ("unseeded states stay constant, the discrete tier frozen-exact"); root input glossed (glossary: "the root component's own input face").; step 5 P2-34: the root-input link and gloss move to the first use, in 'The tap set'
 
 old: Establishing the operating point embeds their `Float64` values as zero-partial constants.
 
@@ -255,6 +264,8 @@ ruling: R7
 note: the bold term goes; one ruling with the rejection (D-296 bullet 4).
 
 old: A root input is unseedable whenever any one of its consumers demands frozen, which is the fan-out meet (§8.2; D-168).
+new: A root input is unseedable whenever any one of its consumers demands frozen, which is the fan-out meet (§8.2, D-168).
+note: step 5 P2-39: comma, not semicolon
 
 old: The author's next move is to promote that leaf to a tolerant entry, or to route the tap around it.
 new: The author's next move is to promote that leaf to a tolerant input entry, or to route the tap around it.
@@ -276,7 +287,10 @@ tag: X
 note: the mid-sentence colon goes.
 
 old: | leaf | in the one pass | what fixes it | |---|---|---| | a state leaf named by an `x` tap | seeded, one direction | per-invocation seeding | | any other state leaf | sits constant at the operating point | per-invocation seeding | | a root input named by a `u` tap | seeded, one direction | per-invocation seeding | | any other seedable root input | constant, its `Float64` value embedded as a zero-partial constant | per-invocation seeding | | a root input whose entry is declared `Pinned` | frozen at every activation, and rejected as a `B`-matrix tap | the schema: a declaration | | a root input a discrete consumer reads | frozen at every activation, and rejected as a `B`-matrix tap | the tier | | any discrete-tier leaf | frozen, zero partials | the tier |
-note: the table, verbatim (its bare "entry" stays with it).
+new: | leaf | in the one pass | what fixes it | |---|---|---| | a state leaf named by an `x` tap | seeded, one direction | per-invocation seeding | | any other state leaf | sits constant at the operating point | per-invocation seeding | | a root input named by a `u` tap | seeded, one direction | per-invocation seeding | | any other seedable root input | constant, its `Float64` value embedded as a zero-partial constant | per-invocation seeding | | a root input whose input entry is declared `Pinned` | frozen at every activation, and rejected as a `B`-matrix tap | the schema: a declaration | | a root input a discrete consumer reads | frozen at every activation, and rejected as a `B`-matrix tap | the tier | | any discrete-tier leaf | frozen, zero partials | the tier |
+tag: R
+ruling: B17
+note: the table, verbatim but for B17's one word: R13 bans bare "entry", so the cell reads "input entry", as the prose does; the layout stays.
 
 old: The returned object and `LinearizedSS`.
 new: #### The returned value
@@ -303,17 +317,17 @@ ruling: R12
 note: checked ~/.julia/dev/Flight.jl/lib/FlightPhysics/src/linearization.jl 8, 113, 135.
 
 old: The `c172x_ctl` LQR pipeline consumes it with cosmetic changes.
-new: Flight.jl's `c172x_ctl` LQR pipeline consumes it with cosmetic changes.
+new: Flight.jl's `c172x_ctl` LQR (linear-quadratic regulator) pipeline consumes it with cosmetic changes.
 tag: R
 ruling: R12
-note: checked ~/.julia/dev/Flight.jl/lib/FlightApps/src/c172/c172x/control/c172x_ctl.jl (module C172XControl, LQR), included from c172x.jl 504.
+note: checked ~/.julia/dev/Flight.jl/lib/FlightApps/src/c172/c172x/control/c172x_ctl.jl (module C172XControl, LQR), included from c172x.jl 504.; step 5 P2-42: LQR spelled out
 
 old: `LinearizedSS` the component survives separately, as an ordinary continuous component in the migrated library.
-new: FlightPhysics' `LinearizedSS` the component survives separately, as an ordinary continuous component in the migrated library (D-072).
+new: FlightPhysics' `LinearizedSS`, the component, survives separately, as an ordinary continuous component in the migrated library (D-072).
 tag: R
 ruling: R12
 newcites: D-072
-note: checked FlightPhysics/src/linearization.jl 26 (the struct) and 164 (its `f_ode!`, so it runs as a model). R7 bold on D-072 bullet 5, citation added. component's link lands here, its first real use.
+note: checked FlightPhysics/src/linearization.jl 26 (the struct) and 164 (its `f_ode!`, so it runs as a model). R7 bold on D-072 bullet 5, citation added. component's link lands here, its first real use.; step 5 P2-41: 'the component' set off as an appositive; the bold's words unchanged
 
 old: Its `x_init` is the state vector, its faces are labeled, and the affine update lives in `y_direct`/`x_deriv`.
 
@@ -333,16 +347,16 @@ note: "recorded" from the old label; D-072 bullet 6. Plain: a recommendation tak
 old: Perturbing Euler-angle states is meaningful where seeding quaternion components steps off the unit-norm manifold.
 
 old: This is why today's code linearizes the `{NED}` variant.
-new: This is why Flight.jl's C172X design code linearizes the aircraft's `{NED}` variant, the one built on NED kinematics.
+new: This is why Flight.jl's C172X design code linearizes the aircraft's `{NED}` variant, the one built on north-east-down (NED) kinematics.
 tag: R
 ruling: R12
-note: checked ~/.julia/dev/Flight.jl/lib/FlightApps/design/c172/c172x_design.jl 137 and 552 ("Cessna172Xv0(NED()) |> Model #linearization requires NED kinematics").
+note: checked ~/.julia/dev/Flight.jl/lib/FlightApps/design/c172/c172x_design.jl 137 and 552 ("Cessna172Xv0(NED()) |> Model #linearization requires NED kinematics").; step 5 P2-42: NED spelled out
 
 old: `design_world(ac)` rigs that variant, promoting implicit practice to stated rule.
-new: `design_world(ac)` (the thin world that mounts an aircraft for trim and linearization) rigs that variant, promoting implicit practice to stated rule.
+new: `design_world(ac)` (the thin rig that mounts an aircraft for trim and linearization) rigs that variant, promoting implicit practice to stated rule.
 tag: R
 ruling: R26
-note: R26 drops the glossary's "shipped". linked with the glossary's gloss (F67). Not a Flight.jl name (no hit in Flight.jl's source); §14.9 introduces it.
+note: R26 drops the glossary's "shipped". linked with the glossary's gloss (F67). Not a Flight.jl name (no hit in Flight.jl's source); §14.9 introduces it.; step 5 P2-30: one name, 'thin rig', as §14.9 now writes
 
 old: The coordinate choice belongs to the tap author, not the framework.
 
@@ -358,11 +372,11 @@ note: bold headline with D-073 ("sampled-data Dual activation recorded unbuilt")
 old: The frozen-exact doctrine is consumer-scoped, not a capability wall.
 
 old: Today's services differentiate the continuous dynamics with the discrete state held. For that, a frozen discrete output (a ZOH constant with zero partials) is the exact answer.
-new: Trim and linearization differentiate the continuous dynamics with the discrete state held, and for that a frozen discrete output (a ZOH constant with zero partials) is the exact answer, as §7.2 states (D-072).
+new: Trim and linearization differentiate the continuous dynamics with the discrete state held, and for that a frozen discrete output (a zero-order-hold constant with zero partials) is the exact answer, as §7.2 states (D-072).
 tag: R
 ruling: R6
 newcites: §7.2 D-072
-note: M65, the law points to §7.2 1900–1904 (D-072). "Today's services" are Redstone's, not Flight.jl's: §7.2 says "Linearization and trim differentiate continuous dynamics only" (R12).
+note: M65, the law points to §7.2 1900–1904 (D-072). "Today's services" are Redstone's, not Flight.jl's: §7.2 says "Linearization and trim differentiate continuous dynamics only" (R12).; step 5 P2-42: ZOH spelled out, which avoids nested parentheses
 
 old: The type system enforces it (§8.2).
 new: The discrete side pins wholesale. §8.2 states how the declarations spell this.
@@ -451,6 +465,8 @@ ruling: R9
 note: F66, boundary is reserved.
 
 old: Exactness across a firing needs saltation corrections.
+new: Exactness across a firing needs saltation corrections (the jump terms a sensitivity takes across an event).
+note: step 5 P2-42: saltation glossed
 
 old: The scope is therefore event-quiescent operating points, which trim points already are, because guards at commit see to that (§14.5).
 
@@ -465,6 +481,8 @@ ruling: R13
 note: door becomes extension (R13); g becomes `s_update` (R12); the fallback in the conditional (R10).
 
 old: The second is exact discrete-time linearization of the full loop, which is digital design on the exact discretized plant instead of continuous linearization plus Tustin.
+new: The second is exact discrete-time linearization of the full loop, which is digital design on the exact discretized plant instead of continuous linearization plus Tustin's discretization.
+note: step 5 P2-42: Tustin named as a discretization
 
 old: Declarative non-participation: what the schema states, and what stays recorded.
 new: #### Declared non-participation
@@ -501,6 +519,8 @@ ruling: R6
 note: M64, held at §8.2 2764–2766 and §9.5 5018–5020; the new text points to both.
 
 old: An opaque wrapper (an FMU, a C aerodynamic table) and a deliberately severed coupling can therefore both say so in the schema, instead of showing up in Jacobians as unexplained zero rows.
+new: An opaque wrapper, such as an FMU (a Functional Mock-up Unit, a packaged external model) or a C aerodynamic table, and a deliberately severed coupling can therefore both say so in the schema, instead of showing up in Jacobians as unexplained zero rows.
+note: step 5 P2-42: FMU glossed; the examples become a 'such as' clause so the gloss does not nest
 
 old: The conformance check holds them to it at every activation.
 new: The conformance check holds them to it at every activation (D-286).
@@ -569,7 +589,8 @@ newcites: D-266
 note: bold headline of D-266 bullet 1 with its citation; the appositive becomes its own sentence so the bold holds the headline alone; "input entry" (R13).
 
 old: It evaluates at the value, obtains a local Jacobian by whatever means it has, a finite difference at a step its own grid suggests or the table's analytic slope, and chains it onto the incoming partials (D-266)
-note: the closing colon becomes a period.
+new: It evaluates at the value and obtains a local Jacobian by whatever means it has, such as a finite difference at a step its own grid suggests or the table's analytic slope. It then chains that Jacobian onto the incoming partials (D-266)
+note: the closing colon becomes a period.; step 5 P2-43: split in two, the list of means set off by 'such as'
 
 old: lookup(tb, u::Float64) = c_lookup(tb, u) # nominal: straight to the table
 note: the local-rule block, verbatim, first line (the block's blank line splits it in the new text's units).
@@ -578,6 +599,8 @@ old: function lookup(tb, u::ForwardDiff.Dual{Tag}) where {Tag} # Dual: the local
 note: the local-rule block, verbatim, the rest.
 
 old: The stripping happens mid-expression, which §9.5 leaves legal at an unpinned leaf, and the seeded pass sees the component as an ordinary differentiable one.
+new: The block strips the partials with `ForwardDiff.value` mid-expression, which §9.5 leaves legal at an unpinned leaf, and the seeded pass sees the component as an ordinary differentiable one.
+note: step 5 P2-44: 'the stripping' had lost its antecedent; the block's own `ForwardDiff.value` call names it
 
 old: The derivative is finite-difference in quality on this one component and exact everywhere else.
 
@@ -598,9 +621,10 @@ tag: R
 ruling: R13
 
 old: What stays recorded is only the remaining tooling over that visibility.
+new: What stays recorded is only the remaining tooling over the schema's declared non-participation.
 tag: R
 ruling: R7
-note: the bold word goes.
+note: the bold word goes.; step 5 P2-45: 'that visibility' named, its antecedent being 40 lines back
 
 old: One piece is pinned-face validation by the tap declaration, where selecting a declared-frozen output is a warning.
 

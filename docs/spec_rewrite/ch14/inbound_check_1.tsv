@@ -1,0 +1,357 @@
+file	line	cited	entry	field	sentence	verdict	note
+spec.md	179	§14			automatic-differentiation Jacobians ([§14][s14]).	OK	
+spec.md	315	§14.5			tick schedule ([§14.5][s14-5], [D-067][d-067], [D-273][d-273]). A restored run keeps	OK	
+spec.md	490	§14.1			overrides them leaf by leaf ([§14.1][s14-1], [D-063][d-063], [D-273][d-273]). A	OK	
+spec.md	499	§14.6			missing one ([§14.6][s14-6], [D-068][d-068]). The initial state then passes through	OK	
+spec.md	623	§14.1			([D-345][d-345]). Before a run, a condition may set them ([§14.1][s14-1]).	OK	
+spec.md	682	§14.5			([§5.3][s5-3], [§14.5][s14-5], [D-067][d-067]).	OK	
+spec.md	823	§14.4			can reach any leaf inside a port value ([§14.4][s14-4], [D-276][d-276]). Which output stage	OK	
+spec.md	880	§14.4			"field through the port's [leaf address](#g-leaf-address), as in `""pose.q_eb""` ([§14.4][s14-4], [D-276][d-276]). A wired"	OK	
+spec.md	1368	§14.5			boundary, [§14.5][s14-5], [D-067][d-067]). Every discrete output stage	OK	
+spec.md	1550	§14.2			as authoring guidance, with no check behind it ([§14.2][s14-2], [D-414][d-414]).	OK	
+spec.md	1573	§14.2			has a name to resolve through ([§14.2][s14-2]).	OK	
+spec.md	1801	§14.3			as one leaf ([§14.3][s14-3], [§14.4][s14-4]), and structure comes from the [component](#g-component) tree, not	OK	
+spec.md	1801	§14.4			as one leaf ([§14.3][s14-3], [§14.4][s14-4]), and structure comes from the [component](#g-component) tree, not	OK	
+spec.md	1850	§14.3			([§14.3][s14-3]). Constructors run on the write paths, never on views.	OK	
+spec.md	1881	§14.5			and the discrete tier held at their initial values ([§14.5][s14-5],	OK	
+spec.md	1988	§14.1			replayed** ([D-308][d-308]). It is never a condition target ([§14.1][s14-1], [D-306][d-306]). It	OK	
+spec.md	2074	§14			the stopped-sim service spellings are [§14][s14]. The concrete syntax below is	OK	
+spec.md	2278	§14.4			([§14.4][s14-4]).	OK	
+spec.md	2313	§14.2			ω_rated::Float64                                 #unread here; §14.2's shipped condition uses it	OK	
+spec.md	2390	§14.1			path-addressed sparse overlay that sets a build's state, merges on it ([§14.1][s14-1]).	OK	
+spec.md	2391	§14.4			Readers and the trace spell it ([§14.4][s14-4]). The name a one-state component is asked	OK	
+spec.md	2454	§14.1			overlays ([§14.1][s14-1]) fall back to the declared values leaf by leaf, and	OK	
+spec.md	2883	§14.3			leaves ([§14.3][s14-3]) applied to the defaults those conditions overlay.	OK	
+spec.md	2948	§14.1			The reason is script-side. The condition math of [§14.1][s14-1] must be able	OK	
+spec.md	3043	§14.1			continuous-side only ([§5.2][s5-2], [§14.1][s14-1]) and projection's one manifold is the	OK	
+spec.md	3473	§14.4			(`get_face`, [§11.2][s11-2]) and service reads ([§14.4][s14-4]). The three	OK	Guidance, not enforcement (R5); new §14.4 keeps it.
+spec.md	3711	§14.5			sets a build to a state) under trim ([§14.5][s14-5]).	OK	
+spec.md	4029	§14.6			for [conditions](#g-condition), the data that set a build's state, to cover ([§14.6][s14-6]). What the	OK	
+spec.md	4380	§14.2			level ([§14.2][s14-2], [§14.3][s14-3]), the port views read it ([§11.7][s11-7]),	OK	
+spec.md	4380	§14.3			level ([§14.2][s14-2], [§14.3][s14-3]), the port views read it ([§11.7][s11-7]),	OK	
+spec.md	4682	§14.5			deployment ([§14.5][s14-5]), so `t` is a fabricated value. `Δt` in seconds	OK	
+spec.md	4692	§14.6			`UninitializedInputs` check** ([§14.6][s14-6], [D-149][d-149]).	OK	"Cited text lists three sites ""namely""; new §14.6 lists four (R3, linearize under about). Wrong before the rewrite (survey 1 part D, F2). R3 landing edit."
+spec.md	5105	§14			The services themselves are [§14][s14]. The bullets take trim, the generic	OK	
+spec.md	5536	§14.5			[§14.5][s14-5]) is a boundary and not a frame top either.	OK	
+spec.md	6142	§14.5			Output stages publish due or not ([D-205][d-205]), as [§14.5][s14-5]	OK	
+spec.md	6147	§14.5			evaluated from the authored world ([D-205][d-205], [§14.5][s14-5]). The	OK	
+spec.md	6490	§14.5			([§14.5][s14-5]) is derived rather than asserted. A re-run from a	OK	
+spec.md	6492	§14.1			state, [§14.1][s14-1]) resets all three registers from scratch, because `init!`	OK	
+spec.md	6493	§14.5			re-runs boundary zero ([§14.5][s14-5]). Predicates holding in the newly applied	OK	
+spec.md	6646	§14.5			Boundary zero is the same sequence with an empty integrate ([§14.5][s14-5],	OK	
+spec.md	7072	§14.5			([§14.5][s14-5]), and the snapshot `restore!` or `replay!` publishes as it builds the run	OK	
+spec.md	7111	§14.4			shares ([§14.4][s14-4], [D-406][d-406]), and gathers each labeled entry over	OK	
+spec.md	7127	§14.4			deferred reads resolving against a source, [§14.4][s14-4]). They reach any cell the	OK	
+spec.md	7147	§14.4			build. An exported output face, spelled `get_face(name)` ([§14.4][s14-4]), is an	OK	
+spec.md	7193	§14.6			([§14.6][s14-6]) is its completeness obligation.	OK	
+spec.md	7205	§14.4			in service reads ([§11.2][s11-2]/[§13.5][s13-5]/[§14.4][s14-4]).	OK	Guidance (R5); kept.
+spec.md	7321	§14.3			schema from the `Build` itself ([§14.3][s14-3]). The periphery never needs an authored	OK	
+spec.md	7334	§14.6			`init!`, trim setup and trim commit ([§14.6][s14-6], [D-149][d-149]).	OK	"As line 4692: three sites ""namely""; R3 adds linearize under about. R3 landing edit."
+spec.md	7341	§14			`ServiceLifecycle` ([Appendix C][sC], [D-108][d-108]), the same kind that gates the [§14][s14]	OK	
+spec.md	7359	§14			configuration operations beside `init!` and trim ([§14][s14]). While a simulation runs,	OK	
+spec.md	7764	§14.6			services own root-input initialization ([§14.6][s14-6]), and the checkpoint's table holds	OK	
+spec.md	7782	§14.5			checkpoint carries the clock, `t₀` included ([§14.5][s14-5]). A header without them could	OK	
+spec.md	8069	§14.4			reads(b)                               # output side: labeled §14.4 selectors → one compiled gather	OK	
+spec.md	8096	§14.4			the closed family of deferred reads ([§14.4][s14-4]). An example is	OK	
+spec.md	9108	§14.6			rule that every root input must hold a value ([§14.6][s14-6]). An orphan of (6) holds a	OK	
+spec.md	9128	§14			[§14][s14]. `run!` refuses it, as it refuses any stopped simulation. Once the	OK	
+spec.md	9148	§14			boundary-consistent. It is fully serviceable by the [§14][s14] stopped-sim	OK	
+spec.md	9301	§14			services of [§14][s14]. No concurrency perimeter exists there. There is no loop and no	OK	
+spec.md	9361	§14.5			ordinary macro-sequence with an empty integrate ([§14.5][s14-5]). A checkpoint carries it	OK	
+spec.md	9410	§14.5			completed boundary zero ([§14.5][s14-5]), or `restore!` or `replay!` has restored a	OK	
+spec.md	9446	§14.6			`UninitializedInputs`, which fires *inside* `init!` ([§14.6][s14-6]).	OK	
+spec.md	9539	§14			`initialized` and `stopped` ([§14][s14]), and refused as `ServiceLifecycle` in	OK	
+spec.md	9652	§14.6			[root-input totality](#g-root-input-totality) (every root input must hold a value) ([§14.6][s14-6]) held when the	OK	
+spec.md	9914	§14			rather than an exception, and how a rejected cycle is diagnosed. [§14][s14]	OK	
+spec.md	9916	§14.1			[§14.1][s14-1]–[§14.6][s14-6] build the condition (a path-addressed overlay on	OK	
+spec.md	9916	§14.6			[§14.1][s14-1]–[§14.6][s14-6] build the condition (a path-addressed overlay on	OK	
+spec.md	10243	§14.3			| service | [condition](#g-condition) entries (the path-addressed sparse overlay that sets a build's state), trim `reads`, [taps](#g-taps) (the three selector lists declaring what linearization seeds and reports), [device](#g-device) read [bindings](#g-binding) (the values passed at `attach!` that make a device framework-legible), log extraction by `series` ([§14.3][s14-3], [§14.7][s14-7], [§14.10][s14-10], [§11.2][s11-2], [D-406][d-406], [D-407][d-407]) | the service walk: every segment names a child the structure has, at the authoring or mount level |	OK	The survey's F1 disagreement with §14.4 is resolved: new §14.4 puts bindings and series under the service walk (R5).
+spec.md	10251	§14.2			are a compiled derivative ([§14.2][s14-2]). Second, the mount itself walks a	OK	
+spec.md	10278	§14.2			who wants a read to outlive the build binds a face ([§14.2][s14-2],	OK	
+spec.md	10279	§14.4			[§14.4][s14-4]). Both are authoring guidance, and neither is checked.	OK	
+spec.md	10283	§14.4			([§14.4][s14-4]) use the same arrangement and have the same status.	OK	"New §14.4: ""Which of the two a service uses is internal, never user-facing API."""
+spec.md	10286	§14.3			addressing ([§14.3][s14-3]) and the readers ([§14.4][s14-4], [D-406][d-406]) split their own paths through	OK	
+spec.md	10286	§14.4			addressing ([§14.3][s14-3]) and the readers ([§14.4][s14-4], [D-406][d-406]) split their own paths through	OK	
+spec.md	10472	§14.1			state letters) before it applies one ([§14.1][s14-1]). No [termination record](#g-termination-record) (the	OK	
+spec.md	10645	§14.5			(the initialization boundary at `t₀`) ([§14.5][s14-5]) all count. The first	OK	
+spec.md	10768	§14.1			conditions already address state by path ([§14.1][s14-1]). The requester is loud at	OK	
+spec.md	10839	§14			errored simulation outright (`ServiceLifecycle`, [§14][s14], [D-108][d-108]). Operations on the	OK	
+spec.md	12770	§14.1			([§14.1][s14-1]) must be able to produce the sweep's exact handle outside	OK	
+spec.md	12779	§14.5			- **Interval alignment** ([§14.5][s14-5]). A boundary's `s_update` is the	OK	
+spec.md	12883	§14.4			[§14.4][s14-4]).	OK	
+spec.md	12917	§14.2			`condition` generic that return the component's fragment ([§14.2][s14-2]).	OK	
+spec.md	13031	§14.5			([§14.5][s14-5], [§14.6][s14-6]). A writing door.	OK	
+spec.md	13031	§14.6			([§14.5][s14-5], [§14.6][s14-6]). A writing door.	OK	
+spec.md	13111	§14.4			| `reads(b)` / `map_output(nt, b)` | — | the output side | [§14.4][s14-4], [§11.2][s11-2], [§11.6][s11-6] |	OK	
+spec.md	13120	§14.4			([§14.4][s14-4], [§11.2][s11-2]). Under `is_greedy(b) = true` the framework	OK	
+spec.md	13154	§14.1			**Condition algebra** ([§14.1][s14-1]–[§14.6][s14-6]).	OK	
+spec.md	13154	§14.6			**Condition algebra** ([§14.1][s14-1]–[§14.6][s14-6]).	OK	
+spec.md	13160	§14.2			[§14.10][s14-10]). An empty prefix is refused ([§14.2][s14-2]).	OK	
+spec.md	13163	§14.2			method ([§14.2][s14-2]).	OK	
+spec.md	13165	§14.6			the origin keeps both ([§14.6][s14-6]).	OK	
+spec.md	13170	§14			**Stopped-sim services** ([§14][s14]).	OK	
+spec.md	13175	§14.6			pre-write ([§14.6][s14-6]). Then boundary zero runs: project, sweep, events,	OK	
+spec.md	13177	§14.5			is the run's trace header ([§11.5][s11-5], [§14.5][s14-5]).	OK	
+spec.md	13200	§14.6			([§14.7][s14-7]). Setup and commit both carry the root-input-totality check ([§14.6][s14-6]).	OK	
+spec.md	13220	§14.1			([§14.1][s14-1], [D-274][d-274], [D-319][d-319]).	OK	
+spec.md	13247	§14.4			([§14.4][s14-4], [§14.10][s14-10], [D-272][d-272], [D-276][d-276]).	OK	
+spec.md	13396	§14.1			[§14.1][s14-1]; the pre-write check, [§14.6][s14-6]).	OK	
+spec.md	13396	§14.6			[§14.1][s14-1]; the pre-write check, [§14.6][s14-6]).	OK	
+spec.md	13597	§14			- **`ServiceLifecycle`** ([§11.3][s11-3], [§12.7][s12-7], [§14][s14]). Error ·	OK	
+spec.md	13637	§14.2			- **`ConditionResolution`** ([§14.2][s14-2], [§14.3][s14-3]). Error · service	OK	Appendix C lists four ConditionResolution sub-kinds; new §14.2 and §14.3 name seven reasons. Appendix C to complete (survey 1 part D).
+spec.md	13637	§14.3			- **`ConditionResolution`** ([§14.2][s14-2], [§14.3][s14-3]). Error · service	OK	As the §14.2 row on the same line.
+spec.md	13644	§14.2			- **`DuplicateConditionLeaf`** ([§14.2][s14-2]). Error · service ·	OK	"Payload ""(path, store, field)"": new §14.3 makes a u payload's leaf its root input (R9, F11). Wrong before the rewrite. Appendix C carried list per the brief."
+spec.md	13647	§14.2			- **`ConditionNodeMisuse`** ([§14.2][s14-2]). Error · service · fail-fast.	OK	"Payload lacks :set_payload (F8) and says ""node kinds"" where §14.2 now says node types (R38). Appendix C carried list per the brief."
+spec.md	13650	§14.4			- **`ReadResolution`** ([§14.4][s14-4]). Error · service · collected. The	OK	
+spec.md	13656	§14.4			(the source rule, [§14.4][s14-4]). Raised at trim, at linearization and at	OK	
+spec.md	13659	§14.6			- **`UninitializedInputs`** ([§14.6][s14-6]). Error · service, pre-write ·	OK	
+spec.md	13678	§14.4			- **`ConditionShapeDrift`** ([§14.4][s14-4]). Error · service · fail-fast.	OK	
+spec.md	13707	§14			- **`CheckpointMidFrame`** ([§12.6][s12-6], [§14][s14]). Error · service ·	OK	
+spec.md	13735	§14.4			- **`ReadSetMisuse`** ([§14.4][s14-4]). Error · service · fail-fast. The	MISSING	Never stated: §14.4 never names ReadSetMisuse, old or new; it is stated in §14.9 (new 1376) and §14.10. Wrong before the rewrite (survey 1 part D, F5). Retarget to §14.9 at landing.
+spec.md	13988	§14.3			([§14.3][s14-3]), each a different thing.	OK	
+spec.md	13997	§14.4			rather than structure ([§8.6][s8-6], [§11.2][s11-2], [§14.4][s14-4]).	OK	Guidance (R5); kept.
+spec.md	14063	§14.1			device by which [§14.1][s14-1] condition math queries the environment before	OK	
+spec.md	14126	§14.5			([§10.1][s10-1]). *Boundary zero* ([§14.5][s14-5], [§D.8][sD-8]) is a	OK	
+spec.md	14225	§14			*condition* ([§14][s14]), the value that sets a build's state	OK	
+spec.md	14354	§14.3			to the authored value at apply time ([§14.3][s14-3]).	OK	
+spec.md	14396	§14.6			root-input value, which [§14.6][s14-6] makes a structural barrier	OK	
+spec.md	14408	§14.3			([§14.3][s14-3]).	OK	
+spec.md	14580	§14.4			is the live stores ([§14.4][s14-4]).	MISSING	"Glossary #g-selector (line 14579) says a selector resolves against a source ""before any client policy applies"". The old §14.4 stated it; R31 cut the clause as false after R5. Landing edit per R31: drop the clause."
+spec.md	14587	§14.4			([§14.4][s14-4], [D-276][d-276]).	OK	
+spec.md	14694	§14.5			[§14.5][s14-5], [D-274][d-274]).	OK	
+spec.md	14713	§14.2			linearization tap sets ([§14.2][s14-2], [§14.9][s14-9]). A read set keeps its	OK	
+spec.md	14720	§14.6			([§14.6][s14-6]). Not to be confused with an event *prior* ([§D.4][sD-4]).	OK	"""the baseline keyword init!/trim! take"": init! takes no baseline (F26). Wrong before the rewrite. Landing edit already in the brief."
+spec.md	14726	§14.5			takes the trace header ([§14.5][s14-5]).	OK	
+spec.md	14731	§14.2			([§14.2][s14-2]).	OK	
+spec.md	14741	§14.1			([§14.1][s14-1]). [§14][s14] owns the word. A guard defines a *predicate*	OK	
+spec.md	14741	§14			([§14.1][s14-1]). [§14][s14] owns the word. A guard defines a *predicate*	OK	
+spec.md	14752	§14.2			([§14.2][s14-2]).	OK	
+spec.md	14757	§14.2			iteration allocates nothing and does no path work ([§14.2][s14-2]).	OK	
+spec.md	14768	§14.6			a layer remain errors. It is variadic ([§14.6][s14-6]).	OK	
+spec.md	14774	§14.6			declaration-ordered, leaving the simulation untouched ([§14.6][s14-6]).	OK	The entry at 14770-14772 lists three sites; R3 adds the fourth. Landing edit already in the brief.
+spec.md	14779	§14			`:inconsistent` that its own service forms gate on ([§14][s14], [D-319][d-319]). A violation is	OK	
+spec.md	14780	§14			`ServiceLifecycle`, and `errored` is terminal for all four services ([§14][s14]).	OK	"""all four services"": the opening now names five (R1, F3). Wrong before the rewrite. Landing edit already in the brief."
+decisions.md	1109	§14	D-031	Position	init/trim = stopped-sim services ([§14][s14]); mid-run intervention command = guarded	OK	
+decisions.md	1112	§14	D-031	Spec	**Spec.** [§11.3][s11-3], [§12.5][s12-5], [§14][s14]	OK	
+decisions.md	1906	§14	D-059	Spec	**Spec.** [§12.6][s12-6], [§9.5][s9-5], [§13.4][s13-4], [§13.6][s13-6], [§14][s14]	OK	
+decisions.md	1928	§14.4	D-060	Spec	**Spec.** [§9.3][s9-3], [§12.4][s12-4], [§12.5][s12-5], [§13.5][s13-5], [§14.4][s14-4]	OK	
+decisions.md	2053	§14.1	D-063	Spec	**Spec.** [§8.6][s8-6], [§14.1][s14-1]	OK	
+decisions.md	2075	§14.2	D-064	Spec	**Spec.** [§14.2][s14-2]	OK	D-064 Spec lacks §14.1 (pre-sweep doctrine). Track 2.
+decisions.md	2101	§14.2	D-065	Spec	**Spec.** [§6.1][s6-1], [§13.5][s13-5], [§14.2][s14-2]	OK	D-065 Spec lacks §14.3. Track 2.
+decisions.md	2169	§14.5	D-067	Spec	**Spec.** [§10.6][s10-6], [§14.5][s14-5], [§5.3][s5-3], [§8.6][s8-6]	OK	
+decisions.md	2208	§14.6	D-068	Spec	**Spec.** [§14.6][s14-6]	OK	
+decisions.md	2378	§14	D-073	Position	[§14][s14] algebra and [§14.9][s14-9] mounting (printed trees and flattened entry lists);	OK	
+decisions.md	2383	§14	D-073	Spec	**Spec.** [§8.2][s8-2], [§13.7][s13-7], [§14][s14], [§14.9][s14-9], [§14.10][s14-10]	OK	
+decisions.md	2394	§14.1	D-073	Rejected	- *`init_*` as types + `probe_value` synthesis:* defaults are the [§14.1][s14-1] overlay	OK	
+decisions.md	2395	§14.6	D-073	Rejected	base; the [§14.6][s14-6] probe-value barrier; a per-field two-form protocol,	OK	
+decisions.md	2396	§14.2	D-073	Rejected	[§14.2][s14-2]. The `init_*`-as-types grounds spelled out ([§8.2][s8-2]): the condition	OK	§14.2 states the initialize(::C, spec) rejection; the per-field protocol ground is D-064 Rejected, never §14.2's. Historical log text.
+decisions.md	2397	§14.1	D-073	Rejected	substrate needs an authored value under every leaf ([§14.1][s14-1]'s overlays fall	OK	
+decisions.md	2399	§14.6	D-073	Rejected	overlay)`), a synthesized initial state crosses [§14.6][s14-6]'s probe-value barrier	OK	
+decisions.md	2404	§14.2	D-073	Rejected	[§14.2][s14-2] kills for `initialize` specs, aggravated in Julia by types being	OK	As line 2396.
+decisions.md	2682	§14.5	D-082	Spec	**Spec.** [§2.3][s2-3], [§10.4][s10-4], [§10.6][s10-6], [§14.5][s14-5]	OK	
+decisions.md	2685	§14.5	D-082	Rationale	conditions fire at `t₀`, [§14.5][s14-5] derived); opposite direction = second event with	OK	
+decisions.md	2705	§14.5	D-082	Rejected	- *Suppressing `t₀` firings:* [§14.5][s14-5]'s anti-diagnostic insurance.	OK	
+decisions.md	2718	§14.4	D-083	Spec	**Spec.** [§11.2][s11-2], [§13.3][s13-3], [§13.5][s13-5], [§14.4][s14-4]	OK	
+decisions.md	2891	§14.6	D-088	Rejected	- *Implicit auto-`init!`:* which condition? silent defaults are [§14.6][s14-6]'s	OK	
+decisions.md	3040	§14.3	D-094	Spec	**Spec.** [§3.1][s3-1], [§7.1][s7-1], [§8.2][s8-2], [§10.4][s10-4], [§14.3][s14-3]	OK	
+decisions.md	3049	§14.3	D-094	Rationale	[§14.3][s14-3], `capture`'s gather, handlers' own constructors).	OK	
+decisions.md	3053	§14.3	D-094	Annotation	readers address an `init_x` field as one leaf ([§14.3][s14-3], [§14.4][s14-4]), and structure is	OK	
+decisions.md	3053	§14.4	D-094	Annotation	readers address an `init_x` field as one leaf ([§14.3][s14-3], [§14.4][s14-4]), and structure is	OK	
+decisions.md	3076	§14.4	D-095	Position	([§14.4][s14-4]): `get_state`/`get_deriv`/`get_output`/`get_local`/`get_slot`/`get_face`	OK	Six-member family in the Position predates D-165 and D-206; §14.4 has five. Track 2 annotation (survey 1 part D).
+decisions.md	3081	§14.4	D-095	Spec	**Spec.** [§11.2][s11-2], [§14.4][s14-4]	OK	
+decisions.md	3178	§14.4	D-098	Spec	**Spec.** [§14.4][s14-4]	OK	D-098 Position (3172-3176) names capture; §14.4 says checkpoint. Track 2 annotation (survey 1 part D).
+decisions.md	3268	§14.5	D-101	Spec	**Spec.** [§2.5][s2-5], [§11.1][s11-1], [§12.7][s12-7], [§14.5][s14-5]	OK	
+decisions.md	3271	§14.5	D-101	Rationale	and BEFORE the boundary-zero sequence — [§14.5][s14-5]'s end-of-sequence capture	OK	Historical: D-274 moved the header to the end of the sequence, as new §14.5 states; D-101 carries the annotation.
+decisions.md	3308	§14.5	D-101	Rejected	- *Header = the authored sparse condition:* [§14.5][s14-5]'s old wording — silently	OK	
+decisions.md	3358	§14.4	D-103	Position	(output half: [§14.4][s14-4] selectors compiled to one gather at attach); sides detected	OK	
+decisions.md	3363	§14.4	D-103	Spec	**Spec.** [§11.4][s11-4], [§11.6][s11-6], [§8.5][s8-5], [§14.4][s14-4]	OK	
+decisions.md	3562	§14	D-108	Spec	**Spec.** [§11.3][s11-3], [§12.6][s12-6], [§12.7][s12-7], [§13.6][s13-6], [§14][s14]	OK	
+decisions.md	3642	§14.5	D-110	Spec	**Spec.** [§12.6][s12-6], [§14.5][s14-5], [§14.6][s14-6], [§14.8][s14-8], [Appendix B][sB]	OK	
+decisions.md	3642	§14.6	D-110	Spec	**Spec.** [§12.6][s12-6], [§14.5][s14-5], [§14.6][s14-6], [§14.8][s14-8], [Appendix B][sB]	OK	
+decisions.md	3645	§14.6	D-110	Rationale	an `init!` in every respect — boundary zero, [§14.6][s14-6] pre-write totality,	OK	
+decisions.md	3731	§14.2	D-113	Position	- `ConditionNodeMisuse` for [§14.2][s14-2]'s mixed-`merge` error method: offending	OK	
+decisions.md	3739	§14.2	D-113	Spec	**Spec.** [§8.4][s8-4], [§8.8][s8-8], [§9.2][s9-2], [§14.2][s14-2], [§14.8][s14-8], [Appendix C][sC]	OK	
+decisions.md	3994	§14.3	D-121	Spec	**Spec.** [§2.3][s2-3], [§4.1][s4-1], [§5.2][s5-2], [§7.1][s7-1], [§7.3][s7-3], [§10.4][s10-4], [§10.5][s10-5], [§11.4][s11-4], [§11.7][s11-7], [§13.6][s13-6], [§14.3][s14-3],	OK	
+decisions.md	4036	§14	D-122	Spec	**Spec.** [§11.3][s11-3], [§11.6][s11-6], [§12.6][s12-6], [§8.2][s8-2], [§14][s14], [§14.5][s14-5]	OK	
+decisions.md	4036	§14.5	D-122	Spec	**Spec.** [§11.3][s11-3], [§11.6][s11-6], [§12.6][s12-6], [§8.2][s8-2], [§14][s14], [§14.5][s14-5]	OK	
+decisions.md	4042	§14	D-122	Rationale	the double-numbered collision inside [§8.2][s8-2]). Guard condition → predicate: [§14][s14]'s	OK	"Citation holds. The next clause, ""the baseline keyword of trim!/init!"" (4043-4044), is wrong (F26). Track 2."
+decisions.md	4054	§14.5	D-122	Rationale	kept: *boundary zero* (a hyponym — it IS a step boundary, [§14.5][s14-5]'s whole point),	OK	
+decisions.md	4111	§14.4	D-124	Spec	**Spec.** [§14.4][s14-4], [§14.7][s14-7], [§14.8][s14-8]	OK	
+decisions.md	4113	§14.4	D-124	Rationale	**Rationale.** [§14.4][s14-4]'s source axis is restated as *table sources* (a boundary	OK	
+decisions.md	4138	§14.4	D-125	Spec	**Spec.** [§5.3][s5-3], [§6.1][s6-1], [§14.4][s14-4], [§14.7][s14-7], [§14.9][s14-9]	OK	
+decisions.md	4179	§14.5	D-126	Spec	**Spec.** [§14.5][s14-5], [§14.8][s14-8], [§14.10][s14-10], [Appendix C][sC]	OK	
+decisions.md	4188	§14.5	D-126	Rejected	ordinary boundary by [§14.5][s14-5]'s design — [D-100][d-100]'s visibility philosophy: surface,	OK	
+decisions.md	4285	§14.4	D-129	Position	([§11.2][s11-2]'s `get_face`, [D-095][d-095]) and service reads ([§14.4][s14-4], [D-125][d-125]).	OK	Guidance (R5); kept.
+decisions.md	4287	§14.4	D-129	Spec	**Spec.** [§11.2][s11-2], [§11.3][s11-3], [§8.6][s8-6], [§14.4][s14-4], [Appendix D][sD]	OK	
+decisions.md	4309	§14.2	D-130	Position	authoring-level, [§14.2][s14-2] — absolute paths are a compiled derivative — and the	OK	Citation holds. The adjacent clause putting device read bindings under inspection (4310-4312) contradicts D-414. Track 2.
+decisions.md	4315	§14.4	D-130	Position	([§14.4][s14-4]'s `apply!` precedent). This amends [D-061][d-061].	OK	
+decisions.md	4317	§14.2	D-130	Spec	**Spec.** [§11.2][s11-2], [§13.3][s13-3], [§14.2][s14-2], [§14.4][s14-4], [§14.9][s14-9]	OK	
+decisions.md	4317	§14.4	D-130	Spec	**Spec.** [§11.2][s11-2], [§13.3][s13-3], [§14.2][s14-2], [§14.4][s14-4], [§14.9][s14-9]	OK	
+decisions.md	4338	§14.4	D-130	Rejected	framework-internal; [§14.4][s14-4] precedent.	OK	
+decisions.md	4354	§14	D-131	Spec	[§14][s14], [§14.6][s14-6], [Appendix B][sB], [§D.3][sD-3], [§D.6][sD-6], [§D.8][sD-8]	OK	
+decisions.md	4354	§14.6	D-131	Spec	[§14][s14], [§14.6][s14-6], [Appendix B][sB], [§D.3][sD-3], [§D.6][sD-6], [§D.8][sD-8]	OK	
+decisions.md	4362	§14.6	D-131	Rationale	"slips reworded ([§14.6][s14-6] ""the one initialized datum without declared defaults"","	OK	
+decisions.md	4368	§14	D-131	Rationale	own enumeration and with [§13.4][s13-4], [§14][s14]'s legality tables and [§D.8][sD-8]; and the two	OK	
+decisions.md	4392	§14	D-131	Rejected	defensible but it re-describes what [§13.4][s13-4], [§14][s14] and [§D.8][sD-8] all count as five	OK	
+decisions.md	4403	§14	D-132	Position	`stopped` — boundary-consistent, serviceable by the [§14][s14] services, resumable by	OK	
+decisions.md	4406	§14	D-132	Spec	**Spec.** [§10.7][s10-7], [§11.6][s11-6], [§12.4][s12-4](1), [§12.4][s12-4](3), [§12.4][s12-4](5), [§13.4][s13-4], [§13.5][s13-5], [§14][s14], [§14.8][s14-8],	OK	
+decisions.md	4794	§14.5	D-137	Rationale	never blocking. **The boundary-zero ([§14.5][s14-5]) and terminal ([§12.4][s12-4](1), [§13.5][s13-5])	OK	
+decisions.md	4846	§14	D-138	Spec	**Spec.** [§11.1][s11-1], [§11.3][s11-3], [§11.6][s11-6], [§11.8][s11-8], [§12.2][s12-2], [§12.4][s12-4], [§13.5][s13-5], [§14][s14], [§14.6][s14-6], Appendices	OK	
+decisions.md	4846	§14.6	D-138	Spec	**Spec.** [§11.1][s11-1], [§11.3][s11-3], [§11.6][s11-6], [§11.8][s11-8], [§12.2][s12-2], [§12.4][s12-4], [§13.5][s13-5], [§14][s14], [§14.6][s14-6], Appendices	OK	
+decisions.md	4862	§14.6	D-138	Rationale	well-defined by [§14.6][s14-6]'s slot totality where a (6) orphan holds a last drained	OK	
+decisions.md	4892	§14.6	D-138	Annotation	totality ([§14.6][s14-6]). With `should_abort` clear the device is absent from the	OK	
+decisions.md	4915	§14	D-138	Rejected	`stopped` sim with no terminal snapshot — unserviceable by [§14][s14], with nothing	OK	
+decisions.md	4946	§14.1	D-139	Spec	**Spec.** [§4.4][s4-4], [§5.3][s5-3], [§8.2][s8-2], [§14.1][s14-1], [§14.2][s14-2], [§14.7][s14-7], [§14.9][s14-9], Appendices A/D	OK	
+decisions.md	4946	§14.2	D-139	Spec	**Spec.** [§4.4][s4-4], [§5.3][s5-3], [§8.2][s8-2], [§14.1][s14-1], [§14.2][s14-2], [§14.7][s14-7], [§14.9][s14-9], Appendices A/D	OK	
+decisions.md	4950	§14.1	D-139	Rationale	load, acceptable because condition authoring is design-time code. [§14.1][s14-1]'s	OK	
+decisions.md	4957	§14.1	D-139	Rationale	new mechanism. [§14.1][s14-1] also records the **environment-free fallback** through the	OK	
+decisions.md	5005	§14.1	D-139	Rejected	baseline it is applied against — the hidden-input shape [§14.1][s14-1]'s overlay-base	OK	
+decisions.md	5009	§14.2	D-139	Rejected	condition time:* reaffirms [§14.2][s14-2]'s by-name rejection of init as a third	MISSING	Never stated: §14.2 names no rejection of init as a third scheduled sweep; it rejects the initialize(::C, spec) schema entry. The third-sweep rejection is D-064 Rejected. Wrong before the rewrite (survey 1 part D). Log text: annotate D-139 (track 2).
+decisions.md	5344	§14.4	D-144	Position	`get_slot`, `get_face` ([§14.4][s14-4]); (3) lifecycle and mutating actions are verbs,	OK	Historical six-member list; §14.4 has five.
+decisions.md	5355	§14.4	D-144	Spec	**Spec.** [§11.6][s11-6], [§8.1][s8-1], [§8.6][s8-6], [§8.8][s8-8], [§9.1][s9-1], [§13.3][s13-3], [§13.7][s13-7], [§14.4][s14-4], Appendix	OK	
+decisions.md	5404	§14.6	D-145	Spec	**Spec.** [§8.4][s8-4], [§8.5][s8-5], [§8.8][s8-8], [§14.6][s14-6]	OK	
+decisions.md	5418	§14.6	D-145	Rationale	for conditions to cover ([§14.6][s14-6]) — what the idiom preserves and the rejected	OK	
+decisions.md	5458	§14.4	D-146	Position	establishes the binding's declared read set — a tuple of [§14.4][s14-4] selectors,	OK	
+decisions.md	5468	§14.4	D-146	Position	"selectors, store selectors, path selectors, [§14.10][s14-10]'s tap selectors, ""[§14.4][s14-4]"	OK	
+decisions.md	5470	§14.4	D-146	Position	[§14.4][s14-4] selectors.	OK	
+decisions.md	5472	§14.4	D-146	Spec	**Spec.** [§8.1][s8-1], [§11.3][s11-3], [§11.6][s11-6], [§14.4][s14-4], [§14.7][s14-7], [§14.10][s14-10], [Appendix B][sB], [Appendix C][sC],	OK	
+decisions.md	5537	§14.5	D-147	Position	previous frame's due set — and everything at boundary zero, which is [§14.5][s14-5]'s	OK	"""everything at boundary zero"" predates D-185 phases; new §14.5 says phase-free divisors. D-147 is annotated by D-185."
+decisions.md	5541	§14.5	D-147	Spec	**Spec.** [§5.3][s5-3], [§10.3][s10-3], [§10.4][s10-4], [§10.5][s10-5], [§10.6][s10-6], [§9.7][s9-7], [§13.5][s13-5], [§14.5][s14-5], [Appendix D][sD]	OK	
+decisions.md	5594	§14.3	D-148	Spec	**Spec.** [§9.5][s9-5], [§14.3][s14-3], [§14.4][s14-4], [§14.7][s14-7], [§14.10][s14-10]	OK	
+decisions.md	5594	§14.4	D-148	Spec	**Spec.** [§9.5][s9-5], [§14.3][s14-3], [§14.4][s14-4], [§14.7][s14-7], [§14.10][s14-10]	OK	
+decisions.md	5598	§14.4	D-148	Rationale	types are **shape facts** — [§14.4][s14-4] already fixes that the tree type carries the	OK	
+decisions.md	5615	§14.3	D-148	Rejected	prior literal reading of [§14.3][s14-3], and the finding — trim's decision-descended	OK	
+decisions.md	5648	§14.6	D-149	Spec	**Spec.** [§11.3][s11-3], [§9.3][s9-3], [§14.6][s14-6], [§14.8][s14-8], [Appendix B][sB], [§D.8][sD-8]	OK	
+decisions.md	5661	§14.6	D-149	Rationale	or is needed, and [§14.8][s14-8]'s no-throw doctrine holds without exception. [§14.6][s14-6]'s	OK	
+decisions.md	5665	§14.6	D-149	Rejected	- *`probe_value`-filling the scratch slots:* the [§14.6][s14-6] ban stands — it would	OK	
+decisions.md	5901	§14.5	D-155	Spec	**Spec.** [§14.5][s14-5], [§14.8][s14-8], [Appendix C][sC]	OK	
+decisions.md	6180	§14.4	D-165	Spec	**Spec.** [§5.2][s5-2], [§5.4][s5-4], [§9.8][s9-8], [§11.2][s11-2], [§8.3][s8-3], [§9.5][s9-5], [§9.7][s9-7], [§13.2][s13-2], [§14.4][s14-4]	OK	
+decisions.md	6224	§14.4	D-165	Rationale	candidates = `output_types`; `get_local` retired from the [§14.4][s14-4] selector family	OK	
+decisions.md	6652	§14.1	D-173	Spec	**Spec.** [§3.2][s3-2], [§5.2][s5-2], [§5.3][s5-3], [§7.3][s7-3], [§8.2][s8-2], [§8.7][s8-7], [§9.3][s9-3], [§9.5][s9-5], [§13.7][s13-7], [§14.1][s14-1],	OK	
+decisions.md	7153	§14.5	D-185	Spec	**Spec.** [§10.5][s10-5], [§8.7][s8-7], [§9.1][s9-1], [§9.7][s9-7], [§13.1][s13-1], [§14.5][s14-5], [§14.8][s14-8]	OK	
+decisions.md	7164	§14.5	D-185	Rationale	first tick at `Φ·Δt_base` ([§14.5][s14-5]'s sweep bullet and [§14.8][s14-8]'s committed-residual	OK	The caveat it names was removed by D-205, which records it.
+decisions.md	7551	§14.1	D-195	Spec	**Spec.** [§3.2][s3-2], [§5.2][s5-2], [§5.3][s5-3], [§7.3][s7-3], [§8.2][s8-2], [§8.7][s8-7], [§9.3][s9-3], [§9.5][s9-5], [§12.5][s12-5], [§13.2][s13-2], [§13.7][s13-7], [§14.1][s14-1], [§3.4][s3-4], [§8.6][s8-6],	OK	
+decisions.md	7696	§14.4	D-199	Position	**Position.** `reads(b)` returns a NamedTuple of [§14.4][s14-4] selectors,	OK	
+decisions.md	7907	§14.2	D-204	Spec	**Spec.** [§14.2][s14-2], [§14.6][s14-6], [§14.9][s14-9], [Appendix B][sB]	OK	
+decisions.md	7907	§14.6	D-204	Spec	**Spec.** [§14.2][s14-2], [§14.6][s14-6], [§14.9][s14-9], [Appendix B][sB]	OK	
+decisions.md	7911	§14.3	D-204	Rationale	promised the behavior the algebra prohibits, and [§14.3][s14-3] uses `merge` in the	OK	
+decisions.md	7943	§14.5	D-205	Spec	**Spec.** [§10.5][s10-5], [§14.5][s14-5], [§14.8][s14-8]	OK	
+decisions.md	7948	§14.5	D-205	Rationale	as a caveat at both sites ([§14.5][s14-5]'s sweep bullet, [§14.8][s14-8]'s committed-residual	OK	
+decisions.md	7949	§14.6	D-205	Rationale	read-back). The residue leaked exactly the values [§14.6][s14-6]'s barrier keeps out	OK	
+decisions.md	7961	§14.5	D-205	Rationale	under [§14.5][s14-5]'s charter — authorship replaces history — and a modeled startup	OK	
+decisions.md	7968	§14.5	D-205	Rejected	anti-diagnostic default; the caveats it forced onto [§14.5][s14-5] and [§14.8][s14-8] are	OK	
+decisions.md	7976	§14.1	D-205	Rejected	but outputs are derived data ([§14.1][s14-1]), and deriving them from the authored	OK	
+decisions.md	7994	§14.2	D-206	Spec	**Spec.** [§4.1][s4-1], [§11.3][s11-3], [§14.2][s14-2], [§14.4][s14-4], [§14.6][s14-6], [Appendix C][sC]	OK	
+decisions.md	7994	§14.4	D-206	Spec	**Spec.** [§4.1][s4-1], [§11.3][s11-3], [§14.2][s14-2], [§14.4][s14-4], [§14.6][s14-6], [Appendix C][sC]	OK	
+decisions.md	7994	§14.6	D-206	Spec	**Spec.** [§4.1][s4-1], [§11.3][s11-3], [§14.2][s14-2], [§14.4][s14-4], [§14.6][s14-6], [Appendix C][sC]	OK	
+decisions.md	8033	§14.2	D-207	Spec	**Spec.** [§6.1][s6-1], [§8.6][s8-6], [§8.8][s8-8], [§9.2][s9-2], [§13.3][s13-3], [§14.2][s14-2], [§14.3][s14-3]	OK	
+decisions.md	8033	§14.3	D-207	Spec	**Spec.** [§6.1][s6-1], [§8.6][s8-6], [§8.8][s8-8], [§9.2][s9-2], [§13.3][s13-3], [§14.2][s14-2], [§14.3][s14-3]	OK	
+decisions.md	8262	§14.5	D-213	Position	write → sweep → read cycles at the seeded activation ([§14.5][s14-5]).	OK	
+decisions.md	8283	§14.6	D-213	Rejected	[§14.6][s14-6]'s barrier rationale applies verbatim: a fabricated zero is a fine probe	OK	
+decisions.md	8290	§14	D-213	Rejected	composite condition, never the sim's stores ([§14][s14]'s lifecycle table) — the sim	OK	
+decisions.md	8647	§14.5	D-220	Spec	[§13.4][s13-4], [§13.5][s13-5], [§13.6][s13-6], [§13.7][s13-7], [§14.5][s14-5], [§14.7][s14-7], [§14.8][s14-8], [§14.10][s14-10], [§3.4][s3-4], [§8.6][s8-6],	OK	
+decisions.md	8783	§14.1	D-222	Spec	**Spec.** [§13.2][s13-2], [§13.4][s13-4], [§14.1][s14-1], [§14.8][s14-8], [Appendix C][sC], [Appendix D][sD]	OK	
+decisions.md	9111	§14.5	D-230	Rationale	the boundary index, while the log, [§14.5][s14-5] and the field's own comment treat	OK	
+decisions.md	9210	§14	D-232	Rationale	reads: [§13.6][s13-6] and [§14][s14] retain an errored simulation's stores, log and trace as	OK	
+decisions.md	9223	§14	D-232	Rejected	- *One gate for all three, `logged` refused beside them:* [§14][s14] mandates the	OK	
+decisions.md	9604	§14	D-242	Position	"taps, checked at the authoring or mount level. ""Service"" keeps its [§14][s14]"	OK	Citation holds. Adjacent 9606-9609 puts bindings and GUI panels under inspection, against D-414. Track 2.
+decisions.md	9616	§14.4	D-242	Position	convention's four *classes*, and [§14.4][s14-4]'s *two ways of applying one plan*	OK	
+decisions.md	9623	§14.4	D-242	Spec	[§14.4][s14-4], [§14.8][s14-8], [§3.4][s3-4], [§8.6][s8-6], [Appendix A][sA], [§D.10][sD-10]	OK	
+decisions.md	9858	§14.1	D-247	Rationale	([§14.1][s14-1]), readers and the trace header spell `plant/x.q` ([§11.5][s11-5], [§14.4][s14-4]), the	OK	
+decisions.md	9858	§14.4	D-247	Rationale	([§14.1][s14-1]), readers and the trace header spell `plant/x.q` ([§11.5][s11-5], [§14.4][s14-4]), the	OK	
+decisions.md	10212	§14.1	D-253	Spec	**Spec.** [§9.1][s9-1], [§9.2][s9-2], [§9.3][s9-3], [§9.4][s9-4], [§9.7][s9-7], [§13.3][s13-3], [§13.4][s13-4], [§13.7][s13-7], [§14.1][s14-1], [§14.4][s14-4]	RETARGET	§14.3. D-253 Spec lists §14.1, which never cites it, old or new; §14.3 does (new 311, face chains from Structure). Wrong before the rewrite (survey 1 part D, Spec fields). Track 2 annotation.
+decisions.md	10212	§14.4	D-253	Spec	**Spec.** [§9.1][s9-1], [§9.2][s9-2], [§9.3][s9-3], [§9.4][s9-4], [§9.7][s9-7], [§13.3][s13-3], [§13.4][s13-4], [§13.7][s13-7], [§14.1][s14-1], [§14.4][s14-4]	OK	
+decisions.md	10560	§14.3	D-259	Spec	**Spec.** [§6.1][s6-1], [§8.2][s8-2], [§8.5][s8-5], [§9.1][s9-1], [§9.2][s9-2], [§9.4][s9-4], [§9.6][s9-6], [§13.1][s13-1], [§13.2][s13-2], [§13.3][s13-3], [§13.8][s13-8], [§14.3][s14-3], [Appendix C][sC], [Appendix D][sD]	OK	
+decisions.md	10733	§14.3	D-261	Position	its layout lookups ([§14.3][s14-3]'s two families) both read it, and writers,	OK	
+decisions.md	10871	§14.4	D-262	Rationale	which costs nothing measurable and keeps one read mechanism ([§14.4][s14-4]).	OK	
+decisions.md	11275	§14.3	D-267	Spec	[§14.3][s14-3], [§14.4][s14-4], [§14.5][s14-5], [§14.7][s14-7], [§14.8][s14-8], [§14.10][s14-10], [Appendix A][sA], [Appendix B][sB],	OK	
+decisions.md	11275	§14.4	D-267	Spec	[§14.3][s14-3], [§14.4][s14-4], [§14.5][s14-5], [§14.7][s14-7], [§14.8][s14-8], [§14.10][s14-10], [Appendix A][sA], [Appendix B][sB],	OK	
+decisions.md	11275	§14.5	D-267	Spec	[§14.3][s14-3], [§14.4][s14-4], [§14.5][s14-5], [§14.7][s14-7], [§14.8][s14-8], [§14.10][s14-10], [Appendix A][sA], [Appendix B][sB],	OK	
+decisions.md	11743	§14.4	D-271	Spec	**Spec.** [§14.4][s14-4], [§14.10][s14-10], [Appendix B][sB]	OK	
+decisions.md	11789	§14.4	D-272	Spec	**Spec.** [§14.4][s14-4], [§14.10][s14-10], [Appendix B][sB]	OK	
+decisions.md	11794	§14.2	D-272	Rationale	the directive refusal `reads` gives ([§14.2][s14-2]'s misuse pattern) and gives	OK	
+decisions.md	11869	§14.1	D-273	Spec	**Spec.** [§12.6][s12-6], [§14.1][s14-1], [§14.5][s14-5], [§14.9][s14-9], [§14.10][s14-10], [Appendix B][sB]	OK	
+decisions.md	11869	§14.5	D-273	Spec	**Spec.** [§12.6][s12-6], [§14.1][s14-1], [§14.5][s14-5], [§14.9][s14-9], [§14.10][s14-10], [Appendix B][sB]	OK	
+decisions.md	11985	§14	D-274	Spec	**Spec.** [§10.2][s10-2], [§10.6][s10-6], [§11.5][s11-5], [§12.6][s12-6], [§12.7][s12-7], [§13.4][s13-4], [§14][s14], [§14.8][s14-8], [§14.10][s14-10], [Appendix B][sB]	OK	
+decisions.md	12002	§14.5	D-274	Rationale	user the condition they authored anyway. [§14.5][s14-5]'s line that boundary zero's	OK	
+decisions.md	12020	§14	D-274	Annotation	Annotation (2026-10-15): the stopped-sim services are [§14][s14], so the second	OK	
+decisions.md	12021	§14	D-274	Annotation	bullet's [§13.7][s13-7] reads [§14][s14].	OK	
+decisions.md	12120	§14.4	D-276	Spec	**Spec.** [§4.2][s4-2], [§4.3][s4-3], [§14.4][s14-4], [§14.7][s14-7], [§14.10][s14-10], [Appendix B][sB]	OK	
+decisions.md	12195	§14.2	D-277	Position	([§14.2][s14-2]).	OK	
+decisions.md	12204	§14.4	D-277	Spec	**Spec.** [§13.3][s13-3], [§14.4][s14-4], [§14.9][s14-9], [§14.10][s14-10]	OK	
+decisions.md	12214	§14.3	D-277	Rationale	the trim setup's check intact. The rebase is [§14.3][s14-3]'s flattening on the	OK	
+decisions.md	12225	§14.2	D-277	Rejected	at composition ([§14.2][s14-2]), and the chain could no longer be walked level by	OK	
+decisions.md	12240	§14.2	D-278	Spec	**Spec.** [§14.2][s14-2], [§14.9][s14-9], [Appendix B][sB], [Appendix C][sC]	OK	
+decisions.md	12248	§14.2	D-278	Rationale	unwrapped node, and [§14.2][s14-2] wants one way to say everything. A prefix with an	OK	
+decisions.md	12292	§14.1	D-279	Spec	[§13.3][s13-3], [§13.4][s13-4], [§13.5][s13-5], [§13.7][s13-7], [§14.1][s14-1], [§14.2][s14-2], [§14.7][s14-7], [§14.8][s14-8], [§14.10][s14-10], [Appendix B][sB],	OK	
+decisions.md	12292	§14.2	D-279	Spec	[§13.3][s13-3], [§13.4][s13-4], [§13.5][s13-5], [§13.7][s13-7], [§14.1][s14-1], [§14.2][s14-2], [§14.7][s14-7], [§14.8][s14-8], [§14.10][s14-10], [Appendix B][sB],	OK	
+decisions.md	12842	§14.4	D-289	Rejected	promises the outcome where it matters, [§14.4][s14-4]'s zero-allocation write path	OK	
+decisions.md	13311	§14.1	D-303	Spec	[§11.7][s11-7], [§13.1][s13-1], [§13.3][s13-3], [§13.5][s13-5], [§13.7][s13-7], [§14.1][s14-1], [§14.2][s14-2], [Appendix B][sB], [Appendix C][sC],	OK	
+decisions.md	13311	§14.2	D-303	Spec	[§11.7][s11-7], [§13.1][s13-1], [§13.3][s13-3], [§13.5][s13-5], [§13.7][s13-7], [§14.1][s14-1], [§14.2][s14-2], [Appendix B][sB], [Appendix C][sC],	OK	
+decisions.md	13747	§14.2	D-314	Spec	**Spec.** [§3.3][s3-3], [§6.1][s6-1], [§8.2][s8-2], [§8.5][s8-5], [§8.6][s8-6], [§8.8][s8-8], [§11.7][s11-7], [§14.2][s14-2], [Appendix B][sB],	OK	
+decisions.md	13973	§14.4	D-316	Spec	**Spec.** [§4.3][s4-3], [§8.1][s8-1], [§8.2][s8-2], [§10.4][s10-4], [§11.5][s11-5], [§12.4][s12-4], [§12.6][s12-6], [§12.7][s12-7], [§13.5][s13-5], [§13.7][s13-7], [§14.4][s14-4], [Appendix B][sB], [Appendix C][sC]	OK	
+decisions.md	14004	§14.1	D-316	Rationale	point where conditions already address state by path ([§14.1][s14-1]). [D-060][d-060]'s	OK	
+decisions.md	14127	§14.5	D-317	Spec	**Spec.** [§9.1][s9-1], [§9.2][s9-2], [§9.4][s9-4], [§11.5][s11-5], [§11.8][s11-8], [§12.1][s12-1], [§12.6][s12-6], [§13.4][s13-4], [§13.5][s13-5], [§14.5][s14-5], [Appendix C][sC]	OK	
+decisions.md	14351	§14	D-319	Spec	**Spec.** [§9.2][s9-2], [§11.5][s11-5], [§12.4][s12-4], [§12.6][s12-6], [§12.7][s12-7], [§14][s14], [§14.5][s14-5], [§14.8][s14-8], [§14.10][s14-10],	OK	
+decisions.md	14351	§14.5	D-319	Spec	**Spec.** [§9.2][s9-2], [§11.5][s11-5], [§12.4][s12-4], [§12.6][s12-6], [§12.7][s12-7], [§14][s14], [§14.5][s14-5], [§14.8][s14-8], [§14.10][s14-10],	OK	
+decisions.md	14363	§14	D-319	Rationale	a checkpoint the state at a frame top, and [§14][s14] says an errored state may not	OK	
+decisions.md	14738	§14.1	D-345	Position	([§14.1][s14-1]).	OK	
+decisions.md	14753	§14.1	D-345	Rationale	a condition may specify modes ([§14.1][s14-1]), and `restore!` puts back a	OK	
+decisions.md	14756	§14	D-345	Rationale	([§14][s14], [D-318][d-318]).	OK	
+decisions.md	16141	§14.2	D-405	Position	leaf node and for the tree it composes into ([§14.2][s14-2], [Appendix D][sD]); the	OK	
+decisions.md	16151	§14.2	D-405	Spec	**Spec.** [§14.2][s14-2], [§14.6][s14-6], [Appendix B][sB], [Appendix D][sD]	OK	
+decisions.md	16151	§14.6	D-405	Spec	**Spec.** [§14.2][s14-2], [§14.6][s14-6], [Appendix B][sB], [Appendix D][sD]	OK	
+decisions.md	16191	§14.4	D-406	Position	use ([§11.2][s11-2], [§13.1][s13-1], [§14.4][s14-4]). The bundled rulings:	OK	
+decisions.md	16210	§14.4	D-406	Spec	**Spec.** [§11.2][s11-2], [§11.6][s11-6], [§13.3][s13-3], [§13.5][s13-5], [§14.4][s14-4], [§14.7][s14-7], [Appendix C][sC]	OK	
+decisions.md	16213	§14.4	D-406	Rationale	the model, and it splits by source and not by client ([§14.4][s14-4]). Attach	OK	
+decisions.md	16466	§14.2	D-414	Position	- The locality law for shipped fragments and problems ([§14.2][s14-2]) is authoring	OK	
+decisions.md	16473	§14.2	D-414	Spec	**Spec.** [§6.1][s6-1], [§11.2][s11-2], [§13.3][s13-3], [§14.2][s14-2], [§14.4][s14-4], [§14.7][s14-7], [Appendix C][sC]	OK	
+decisions.md	16473	§14.4	D-414	Spec	**Spec.** [§6.1][s6-1], [§11.2][s11-2], [§13.3][s13-3], [§14.2][s14-2], [§14.4][s14-4], [§14.7][s14-7], [Appendix C][sC]	OK	
+decisions.md	16522	§14.4	D-414	Rejected	cost landed, and puts a client flag on a resolver [§14.4][s14-4] keeps client-free.	OK	New §14.4 is client-free, as this rejection says.
+extensions.md	333	§14.1			wrapper); parameter-path overlays in [§14.1][s14-1]'s condition system. Also unexamined:	OK	
+implementation.md	111	§14.2			§13.7, §14.2, Appendix C, D-061, D-094, D-130, D-171, D-207–D-212, D-229,	OK	
+implementation.md	124	§14.4			Spec: §11.2, §11.4, §11.6, §14.4.	OK	
+implementation.md	264	§14.2			- `condition`, the condition methods' generic (§14.2, Appendix B).	OK	
+implementation.md	278	§14.1			Spec: §9.5, §13.1, §13.3, §14.1–§14.6, §14.9, Appendix B, D-063–D-068,	OK	
+implementation.md	278	§14.6			Spec: §9.5, §13.1, §13.3, §14.1–§14.6, §14.9, Appendix B, D-063–D-068,	OK	
+implementation.md	332	§14.4			§14.4, D-406).	OK	
+implementation.md	341	§14.4			Spec: §10.7, §11.1–§11.4, §11.8, §12.2, §12.4, §12.6, §13.2, §13.5, §14.4, D-023,	OK	
+implementation.md	464	§14.4			the message it shares with `TapResolution` (§14.4, D-406).	OK	
+implementation.md	495	§14.4			§12.6, §12.7, §13.1, §13.2, §13.4, §13.5, §14.4, §14.8, §14.9, §14.10,	OK	
+implementation.md	528	§14.5			Spec: §5.3, §9.5, §9.7, §10.4–§10.6, §13.4, §13.5, §14.5, D-059, D-205, D-235,	OK	
+implementation.md	612	§14.4			Spec: §9.7, §14.4, §14.10, D-036, D-167, D-168, D-197, D-213, D-272, D-274,	OK	
+implementation.md	647	§14.5			hooks (§14.5, D-223);	OK	
+implementation.md	677	§14.5			§13.4, §13.5, §14.5, §14.8, D-059, D-157, D-213, D-221, D-223, D-248, D-250,	OK	
+implementation.md	724	§14.4			selector (§14.4, D-406). `_compile_reads`, `_resolve_reads` and `_mount`	OK	
+implementation.md	737	§14.1			Spec: §11.2, §13.1, §13.3, §14.1, §14.4, §14.7, §14.9, §14.10, D-125, D-130, D-253,	OK	
+implementation.md	737	§14.4			Spec: §11.2, §13.1, §13.3, §14.1, §14.4, §14.7, §14.9, §14.10, D-125, D-130, D-253,	OK	
+implementation.md	889	§14			§14, §14.5, §14.6, §14.8, §14.10, D-027, D-101, D-198, D-203, D-218, D-219,	OK	
+implementation.md	889	§14.5			§14, §14.5, §14.6, §14.8, §14.10, D-027, D-101, D-198, D-203, D-218, D-219,	OK	
+implementation.md	889	§14.6			§14, §14.5, §14.6, §14.8, §14.10, D-027, D-101, D-198, D-203, D-218, D-219,	OK	
+implementation.md	941	§14.5			Spec: §11.5, §12.6, §12.7, §14.5, D-029, D-038, D-101, D-176, D-217, D-218,	OK	
+implementation.md	973	§14.5			Spec: §9.6, §13.1, §14.5–§14.9, D-070, D-158, D-213, D-224, D-253, D-262,	OK	
+pending.md	46	§14.2			(§14.2) are generic names that share a namespace with user domain code,	OK	
+companions/flight_case_studies.md	286	§14			([§14][s14]), the control plane ([§12.1][s12-1]) and log/trace	OK	
+companions/flight_case_studies.md	332	§14			([§14][s14]). Trim is its own service, `trim!(sim, problem; baseline, …)`,	OK	
+companions/flight_case_studies.md	421	§14			[§9.6][s9-6] sketches and [§14][s14] specifies. The C172 trim problem	OK	
+companions/flight_case_studies.md	436	§14.1			root-input value ([§14.1][s14-1], [§14.9][s14-9], [D-364][d-364]).	OK	
+companions/frame_walkthrough.md	286	§14.5			due or not ([§14.5][s14-5], [D-205][d-205]), so the `t₀` snapshot carries the authored world	OK	
+companions/inbound_periphery_walkthrough.md	47	§14.4			consumers address table cells by path or face, [§11.2][s11-2]/[§14.4][s14-4].)	OK	New §14.4 says snapshot inspection reads a cell by path and port name (R5, F21), pointing to §11.2.
+companions/linearization_walkthrough.md	4	§14.4			[§14.10][s14-10] (the tap set, the seeded pass, the frozen tier) and [§14.4][s14-4] (the	OK	
+companions/linearization_walkthrough.md	288	§14.1			A condition ([§14.1][s14-1]) is the path-addressed overlay that sets a build's state:	OK	
+companions/linearization_walkthrough.md	370	§14.4			The selectors are [§14.4][s14-4]'s closed family. `get_state(path, field[, i])` names	MISSING	Never stated since D-276: §14.4 gives get_state(path, leaf) etc. with a leaf address, not a trailing [, i] index. Wrong before the rewrite (survey 1 part D). Companion fix.
+companions/linearization_walkthrough.md	449	§14.4			input (the leaf address, [§14.4][s14-4], [D-276][d-276]).	OK	
+companions/longitudinal_aircraft.md	218	§14.3			([§14.3][s14-3]), so naming `q` alone would do; the example writes the full stores.	OK	
+companions/migration_outline.md	96	§14.5			([§14.5][s14-5]).	OK	
+companions/sample_time_proposal.md	9	§14.5			amendments applied ([§10.5][s10-5], [§8.7][s8-7], [§9.1][s9-1], [§9.2][s9-2], [§9.7][s9-7], [§14.5][s14-5], [§14.8][s14-8], Appendices B/C —	OK	
+companions/sample_time_proposal.md	766	§14.5			everything with `Φ = 0` — implemented by nothing, per section 5.5. [§14.5][s14-5]'s	OK	
+companions/trim_environment_walkthrough.md	5	§14.1			[§14.1][s14-1] (the pre-sweep doctrine), [§14.7][s14-7] and [§14.9][s14-9] (the trim problem and its	OK	
+companions/trim_environment_walkthrough.md	45	§14.1			overlay applied before the first sweep exists ([§14.1][s14-1]) — and the condition	OK	
+companions/trim_environment_walkthrough.md	51	§14.1			[§14.1][s14-1]'s pre-sweep doctrine, as originally written, admitted exactly two	OK	
+companions/trim_environment_walkthrough.md	65	§14.2			"sweep is the ""init as a third scheduled sweep"" that [§14.2][s14-2] rejects by name."	MISSING	Never stated: §14.2 names no third-sweep rejection; that is D-064 Rejected. Wrong before the rewrite (survey 1 part D). Companion fix: cite D-064.
+companions/trim_environment_walkthrough.md	126	§14.1			With that in hand, [§14.1][s14-1]'s first escape stretches to cover the case: the	OK	
+companions/trim_environment_walkthrough.md	267	§14.6			#the baseline is the sole writer of the environment (§14.6, §14.9)	OK	
+companions/trim_environment_walkthrough.md	514	§14.1			it is what [§14.1][s14-1] now points at when closed-form enforcement is unwanted or	OK	
+companions/trim_environment_walkthrough.md	537	§14.2			"pre-sweeping the environment subtree, which is [§14.2][s14-2]'s rejected ""init as a"	MISSING	Never stated: as row at line 65; the third-sweep rejection is D-064 Rejected. Wrong before the rewrite (survey 1 part D). Companion fix: cite D-064.
+companions/trim_environment_walkthrough.md	542	§14.1			And it **reintroduces a hidden input one level up**. [§14.1][s14-1]'s overlay-base	OK	
+companions/trim_environment_walkthrough.md	566	§14.1			- **[§14.1][s14-1]**'s caller-computable escape is extended to cover environment	OK	

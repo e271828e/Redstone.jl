@@ -71,10 +71,11 @@
   {
    "id": "C-007",
    "old": "A fresh recording starting at its own anchor is unattended mode's natural shape.",
-   "new": "A fresh recording that starts at its own anchor is the natural shape of unattended mode.",
+   "new": "A fresh recording that starts at its own anchor is the natural shape of an unattended run (a run with empty staging and no snapshot readers).",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "F",
+   "note": "step 5 P2-19: the glossary's term, linked and glossed with its words"
   },
   {
    "id": "C-008",
@@ -95,12 +96,13 @@
   {
    "id": "C-010",
    "old": "Fly-then-retrim is `checkpoint` the flight, then author the trim's baseline from what the checkpoint (the `Model`'s state at a frame top as one value) shows (D-273).",
-   "new": "Fly-then-retrim is spelled as a `checkpoint` of the flight, then a trim baseline authored from what the checkpoint (the `Model`'s state at a frame top as one value) shows (D-273).",
+   "new": "Fly-then-retrim is spelled as a checkpoint (the `Model`'s state at a frame top as one value) of the flight, then a trim baseline authored from what the checkpoint shows (D-273).",
    "where": "new",
    "cites": [
     "D-273"
    ],
-   "tag": "F"
+   "tag": "F",
+   "note": "step 5 P2-20: the checkpoint link and gloss move to the first use"
   },
   {
    "id": "C-011",
@@ -164,16 +166,15 @@
   {
    "id": "C-017",
    "old": "- The solved-point residuals come with their tolerances.",
-   "new": "- `residuals` are the solved-point residuals, and `tolerances` the tolerances they come with (§14.5, D-155).",
+   "new": "- `residuals` are the solved-point residuals, and `tolerances` the tolerances they come with (D-155).",
    "where": "new",
    "cites": [],
    "newcites": [
-    "D-155",
-    "§14.5"
+    "D-155"
    ],
    "tag": "R",
-   "ruling": "R11",
-   "note": "keyed to `residuals` and `tolerances`. R7: D-155's first ruling (the report carries both residual sets) is bold at §14.5, so a plain pointer here with its citation. D-155 Position: \"the `TrimReport` carries both residual sets: the solved-point residuals ... and the committed-state residuals\". The bold on the term goes."
+   "ruling": "R11 B9",
+   "note": "B9 drops the §14.5 pointer: §14.5 does not state the two residual sets and points back to this section. Keyed to `residuals` and `tolerances`. R7: D-155's first ruling (the report carries both residual sets) is bold at §14.5, so a plain pointer here with its citation. D-155 Position: \"the `TrimReport` carries both residual sets: the solved-point residuals ... and the committed-state residuals\". The bold on the term goes."
   },
   {
    "id": "C-018",
@@ -286,27 +287,31 @@
   {
    "id": "C-029",
    "old": "Every output stage publishes at boundary zero (D-205, §14.5), so a residual reading an offset component's port reads a commit-refreshed cell like any other.",
-   "new": "Every output stage publishes at boundary zero (D-205, §14.5). A residual reading the port (one declared name, one cell) of an offset component therefore reads a commit-refreshed cell like any other.",
+   "new": "Every output stage publishes at boundary zero (D-205, §14.5). A residual reading the port (one declared name, one cell) of a component whose schedule has a nonzero phase (an offset against its grid) therefore reads a commit-refreshed cell like any other.",
    "where": "new",
    "cites": [
     "D-205",
     "§14.5"
    ],
    "tag": "F",
-   "note": "split in two; \"therefore\" keeps the causal link's direction. Port takes its gloss from the glossary (\"one declared name, one cell, ...\"). Component keeps its link without a gloss, one parenthetical being the limit."
+   "note": "split in two; \"therefore\" keeps the causal link's direction. Port takes its gloss from the glossary (\"one declared name, one cell, ...\"). Component keeps its link without a gloss, one parenthetical being the limit.; step 5 P2-22: 'an offset component' spelled out; phase linked with the glossary's gloss ('a schedule's offset against its grid')"
   },
   {
    "id": "C-030",
    "old": "Those committed-state residuals are the numbers describing the state the simulation is actually in, which is the point a `linearize` at its default operating point reads.",
-   "new": "Those committed-state residuals are the numbers describing the state the simulation is actually in, which is the point a `linearize` at its default operating point reads.",
+   "new": "Those committed-state residuals are the numbers describing the state the simulation is actually in, which is the point a `linearize` at its default operating point (§14.10) reads.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "newcites": [
+    "§14.10"
+   ],
+   "tag": "F",
+   "note": "step 5 P2-23: the §14.10 pointer moves here, the first of the two mentions"
   },
   {
    "id": "C-031",
    "old": "A non-empty fired-event set also raises `TrimCommitEvents` (Appendix C).",
-   "new": "A non-empty fired-event set also raises `TrimCommitEvents` (Appendix C, D-126).",
+   "new": "A non-empty fired-event set also raises `TrimCommitEvents`, a logged warning (Appendix C, D-126).",
    "where": "new",
    "cites": [
     "Appendix C"
@@ -315,18 +320,21 @@
     "Appendix C",
     "D-126"
    ],
-   "tag": "C",
-   "note": "D-126 Position, \"a non-empty set raises `TrimCommitEvents`\". Its bold is §14.5's (R7)."
+   "tag": "R",
+   "ruling": "B8",
+   "note": "D-126 Position, \"a non-empty set raises `TrimCommitEvents`\". Its bold is §14.5's (R7). B8, once at the first \"raises\": Appendix C, \"Warning · service · logged\"; D-262, \"a logged warning that rides the report\"; src/trim.jl 620-644 logs it with @warn."
   },
   {
    "id": "C-032",
    "old": "The committed stores then sit at the post-handler point, not the reported solution, and a `linearize` at its default operating point (§14.10) reads that point.",
-   "new": "The committed stores then sit at the post-handler point, not the reported solution, and a `linearize` at its default operating point (§14.10) reads that point.",
+   "new": "The committed stores then sit at the post-handler point, not the reported solution, and that is the point `linearize` reads by default.",
    "where": "new",
    "cites": [
     "§14.10"
    ],
-   "tag": "F"
+   "newcites": [],
+   "tag": "F",
+   "note": "step 5 P2-23: the second mention shortened; its §14.10 pointer now sits on the first, in the paragraph before"
   },
   {
    "id": "C-033",
@@ -373,12 +381,13 @@
   {
    "id": "C-037",
    "old": "It gated the commit, at the solved point, and the numbers (D-150) stand as reported.",
-   "new": "It gated the commit, at the solved point, and the numbers (D-150) stand as reported.",
+   "new": "It gated the commit at the solved point, and the numbers stand as reported (D-150).",
    "where": "new",
    "cites": [
     "D-150"
    ],
-   "tag": "F"
+   "tag": "F",
+   "note": "step 5 P2-25: the citation leaves mid-phrase"
   },
   {
    "id": "C-038",
@@ -471,12 +480,12 @@
   {
    "id": "C-046",
    "old": "In an envelope sweep, hitting the infeasible edge is information.",
-   "new": "In an envelope of trims, hitting the infeasible edge is information.",
+   "new": "When trims span the flight envelope, hitting the infeasible edge is information.",
    "where": "new",
    "cites": [],
    "tag": "R",
    "ruling": "R9",
-   "note": "F66, sweep is reserved."
+   "note": "F66, sweep is reserved.; step 5 P2-26: 'an envelope of trims' was reader-cold; sweep stays out (F66)"
   },
   {
    "id": "C-047",
@@ -654,18 +663,21 @@
   {
    "id": "C-064",
    "old": "The degenerate problem is the \"is this operating point an equilibrium?\" probe.",
-   "new": "The degenerate problem is the \"is this operating point an equilibrium?\" probe.",
+   "new": "The empty problem asks \"is this operating point an equilibrium?\"",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "F",
+   "note": "step 5 P2-13 and P2-14: one name for the problem, and 'probe' no longer takes a third sense in §14.8"
   },
   {
    "id": "C-065",
    "old": "It evaluates this condition's equations and reports, which is useful in its own right and free.",
-   "new": "It evaluates this condition's equations and reports, which is useful in its own right and free.",
+   "new": "It evaluates this condition's equations and reports, which is useful in its own right and costs no solve.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "R",
+   "ruling": "B16",
+   "note": "B16 (rulings.md, correction 3): the empty problem costs one residual evaluation (src/trim.jl 481-485), so \"free\" becomes \"costs no solve\"; D-156 says only \"useful in its own right\"."
   },
   {
    "id": "C-066",
@@ -758,7 +770,7 @@
   {
    "id": "C-075",
    "old": "C172 migration audit (one afternoon):",
-   "new": "A migration audit of Flight.jl's Cessna 172 model (`c172.jl`) against this obligation took one afternoon.",
+   "new": "A migration audit of Flight.jl's Cessna 172 model against this obligation took one afternoon.",
    "where": "new",
    "cites": [],
    "newcites": [
@@ -766,7 +778,7 @@
    ],
    "tag": "R",
    "ruling": "R15",
-   "note": "verify, \"migration\" kept and D-070 moved to the findings sentence in the same paragraph. R12 and R15. Owner checked at `~/.julia/dev/Flight.jl/lib/FlightApps/src/c172/c172.jl`. D-070 bullet 5: \"The C172 audit is Interpolations tables (prefer cubic knots), saturation rank-deficiency (LM-tolerated, reported), gear zero airborne.\" \"against this obligation\" names the audit's subject, `migration_outline.md`'s \"the C172 AD audit for trim\"."
+   "note": "verify, \"migration\" kept and D-070 moved to the findings sentence in the same paragraph. R12 and R15. Owner checked at `~/.julia/dev/Flight.jl/lib/FlightApps/src/c172/c172.jl`. D-070 bullet 5: \"The C172 audit is Interpolations tables (prefer cubic knots), saturation rank-deficiency (LM-tolerated, reported), gear zero airborne.\" \"against this obligation\" names the audit's subject, `migration_outline.md`'s \"the C172 AD audit for trim\".; step 5 P2-11: the second introduction in §14.8 drops (`c172.jl`); R15's 'Flight.jl's Cessna 172 model' stays"
   },
   {
    "id": "C-076",
@@ -796,10 +808,11 @@
   {
    "id": "C-079",
    "old": "But prefer cubic knots over linear where partials matter, since linear knots make Jacobian entries piecewise-constant.",
-   "new": "Prefer cubic knots over linear where partials matter, though, since linear knots make Jacobian entries piecewise-constant.",
+   "new": "Prefer cubic knots over linear where partials matter, though, since linear knots make Jacobian elements piecewise-constant.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "F",
+   "note": "step 5 P2-27: bare entry becomes 'elements'"
   },
   {
    "id": "C-080",
@@ -834,13 +847,14 @@
   {
    "id": "C-083",
    "old": "LM damping tolerates the rank deficiency, and the report names the saturated variable (D-070).",
-   "new": "LM damping tolerates the rank deficiency, and the report names the saturated variable (D-070).",
+   "new": "LM damping tolerates the rank deficiency (D-070). The report's `saturated` list names a decision only at its own bound, so an in-model saturation shows in the Jacobian's zero columns rather than in the report.",
    "where": "new",
    "cites": [
     "D-070"
    ],
-   "tag": "F",
-   "note": "kept as written; see rulings.md, correction 1."
+   "tag": "R",
+   "ruling": "B12",
+   "note": "B12 (rulings.md, correction 1): `_saturated` (src/trim.jl 588-596) compares each decision with its own bounds only, so \"the report names the saturated variable\" is cut as false of an in-model saturation; its replacement states what the list holds. \"LM damping tolerates the rank deficiency (D-070)\" stands. Track 2 annotates D-070 bullet 5 (B59)."
   },
   {
    "id": "C-084",
@@ -1014,11 +1028,12 @@
   {
    "id": "C-102",
    "old": "`at(prefix::String, p::TrimProblem) = TrimProblem( guess = p.guess, #path-free: pass through lower = p.lower, upper = p.upper, condition = d -> at(prefix, p.condition(d)), #post-compose: wrap each returned tree reads = at(prefix, p.reads), #inert selector data: the prefix joins the read set's mount chain residuals = p.residuals, #path-free: pass through tolerances = p.tolerances, checks = p.checks, check_tolerances = p.check_tolerances)`",
-   "new": "`at(prefix::String, p::TrimProblem) = TrimProblem( guess = p.guess, #path-free: pass through lower = p.lower, upper = p.upper, condition = d -> at(prefix, p.condition(d)), #post-compose: wrap each returned tree reads = at(prefix, p.reads), #inert selector data: the prefix joins the read set's mount chain residuals = p.residuals, #path-free: pass through tolerances = p.tolerances, checks = p.checks, check_tolerances = p.check_tolerances)`",
+   "new": "`at(prefix::String, p::TrimProblem) = TrimProblem( guess = p.guess, #path-free: pass through lower = p.lower, upper = p.upper, condition = d -> at(prefix, p.condition(d)), #post-compose: wrap each returned tree reads = at(prefix, p.reads), #inert selector data: the prefix is prepended to the read set's mount chain residuals = p.residuals, #path-free: pass through tolerances = p.tolerances, checks = p.checks, check_tolerances = p.check_tolerances)`",
    "where": "new",
    "cites": [],
-   "tag": "F",
-   "note": "verbatim and keyword-form, as D-188 rules."
+   "tag": "R",
+   "ruling": "B7",
+   "note": "verbatim and keyword-form, as D-188 rules, but for B7's one comment edit: the prefix is prepended to the mount chain and joins nothing (D-277)."
   },
   {
    "id": "C-103",
@@ -1031,14 +1046,14 @@
   {
    "id": "C-104",
    "old": "The flattening accumulator of §14.3 enters each `Scoped` wrapper and prefixes every entry below it.",
-   "new": "The flattening accumulator of §14.3 enters each `Scoped` wrapper and prefixes every condition entry below it.",
+   "new": "The flattening accumulator of §14.3 enters each `Scoped` wrapper (the node `at` builds over a condition node) and prefixes every condition entry below it.",
    "where": "new",
    "cites": [
     "§14.3"
    ],
    "tag": "R",
    "ruling": "R13",
-   "note": "bare entry becomes \"condition entry\"."
+   "note": "bare entry becomes \"condition entry\".; step 5 P2-29: Scoped glossed; checked src/conditions.jl 28 and 94"
   },
   {
    "id": "C-105",
@@ -1323,11 +1338,11 @@
   {
    "id": "C-132",
    "old": "Flight.jl's `f_init!(::Model{<:SimpleWorld})` (initialize environment, then call the aircraft's trim) has no successor method.",
-   "new": "Flight.jl's `f_init!(::Model{<:SimpleWorld})` (initialize environment, then call the aircraft's trim) has no successor method.",
+   "new": "FlightPhysics' world initializer, its method of FlightCore's `f_init!` on a FlightCore `Model{<:SimpleWorld}` (initialize environment, then call the aircraft's trim), has no successor method.",
    "where": "new",
    "cites": [],
    "tag": "F",
-   "note": "R12, owner already named; checked at `~/.julia/dev/Flight.jl/lib/FlightPhysics/src/world.jl` 48-56 (FlightPhysics is a Flight.jl package)."
+   "note": "R12, owner already named; checked at `~/.julia/dev/Flight.jl/lib/FlightPhysics/src/world.jl` 48-56 (FlightPhysics is a Flight.jl package).; step 5 P2-31: owners named per piece, world.jl 49 (FlightPhysics) and lib/FlightCore/src/modeling.jl (f_init!, Model)"
   },
   {
    "id": "C-133",
@@ -1358,11 +1373,11 @@
   {
    "id": "C-136",
    "old": "\"Aircraft as root\" is a thin world.",
-   "new": "\"Aircraft as root\" is a thin world.",
+   "new": "\"Aircraft as root\" is a thin rig.",
    "where": "new",
    "cites": [],
    "tag": "F",
-   "note": "the bold lead-in goes plain, a topic sentence; D-139 Rationale's \"softened from doctrine to default\" stays uncited, as in the old text."
+   "note": "the bold lead-in goes plain, a topic sentence; D-139 Rationale's \"softened from doctrine to default\" stays uncited, as in the old text.; step 5 P2-30: one name, D-364's 'thin rig'"
   },
   {
    "id": "C-137",
@@ -1387,15 +1402,15 @@
   {
    "id": "C-139",
    "old": "Design tasks therefore use a shipped rig, `design_world(ac)` = aircraft + `SimpleAtmosphere(wind = NoWind())` + `HorizontalTerrain`.",
-   "new": "Design tasks use a shipped rig, `design_world(ac)` (D-071).",
+   "new": "Design tasks use the rig this design records, `design_world(ac)` (D-071).",
    "where": "new",
    "cites": [],
    "newcites": [
     "D-071"
    ],
    "tag": "R",
-   "ruling": "R7",
-   "note": "q24 row 668, D-071 bullet 4, \"`design_world(ac)` promotes today's ad-hoc linearize models to a shipped rig\". `design_world` takes its first-use link (F67); its gloss is the next sentences' composition."
+   "ruling": "R7 B11",
+   "note": "B11 and R26: no source holds a `design_world`, so \"shipped\" goes, as in §14.10's gloss; the claim that design tasks use `design_world(ac)` stands. q24 row 668, D-071 bullet 4, \"`design_world(ac)` promotes today's ad-hoc linearize models to a shipped rig\". `design_world` takes its first-use link (F67); its gloss is the next sentences' composition."
   },
   {
    "id": "C-140",
@@ -1508,10 +1523,12 @@
   {
    "id": "C-151",
    "old": "For design tasks the shipped rig stays `design_world(ac)`.",
-   "new": "For design tasks the shipped rig stays `design_world(ac)`.",
+   "new": "For design tasks the rig stays `design_world(ac)`.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "R",
+   "ruling": "B11",
+   "note": "B11 cuts \"shipped\" only. Its fate: the rig's standing is the bold's \"the rig this design records\" (Design tasks use the rig this design records, `design_world(ac)`). The sentence stays for the one claim the bold lacks: after the test-rig idiom, design tasks still use `design_world(ac)`. It is also the antecedent of \"That keeps\"."
   },
   {
    "id": "C-152",
@@ -1547,10 +1564,11 @@
   {
    "id": "C-155",
    "old": "Sequential independent trims (trim lead, commit, trim wing against the committed world) cover weak or one-way coupling.",
-   "new": "Sequential independent trims (trim lead, commit, trim wing against the committed world) cover weak or one-way coupling.",
+   "new": "Sequential independent trims (trim the lead aircraft, commit, trim the wingman against the committed world) cover weak or one-way coupling.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "F",
+   "note": "step 5 P2-33: the lead named in full"
   },
   {
    "id": "C-156",
@@ -1609,10 +1627,11 @@
   "FRC is the friction constraint compensator of FlightPhysics' piston engine (`piston.jl`).",
   "This section treats a `TrimProblem` (the closed nine-field value a trim solves) as a relocatable value.",
   "Mounting (relocating a whole problem or tap set to a prefix) is the work of `at`, the scoping combinator.",
-  "The section says what a problem is, then how `at` lifts one, how a mounted read set and mounted input entries resolve, why a problem never authors the environment, and how worlds, thin rigs and swarms use the lift.",
+  "The section says what a problem is, then how `at` lifts one, how a mounted read set and mounted input entries resolve, why a problem never authors the environment, and how worlds, thin rigs (worlds holding only the aircraft and its environment) and swarms use the lift.",
   "A condition is the datum that says \"set this build to this state\".",
   "`override` is the ordered, asymmetric layering combinator, in which the patch wins on a shared leaf.",
   "(the prefixes it is mounted under, root first)",
+  "A read set is a `Reads` value.",
   "(the root component's own input face)",
   "(the full-coverage condition `trim!` takes as a keyword)",
   "(an immutable query object carried on an ordinary port)",

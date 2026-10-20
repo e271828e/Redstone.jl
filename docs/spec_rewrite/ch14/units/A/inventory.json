@@ -51,7 +51,7 @@
   {
    "id": "C-006",
    "old": "§14.1–§14.4 settle its representation, composition and application.",
-   "new": "§14.1 settles the condition's representation, §14.2 its composition, §14.3 its resolution and §14.4 its application;",
+   "new": "§14.1 settles the condition's representation, §14.2 its composition, §14.3 its resolution and §14.4 its application and the read selectors;",
    "where": "new",
    "cites": [
     "§14.1",
@@ -65,12 +65,12 @@
    ],
    "tag": "R",
    "ruling": "R1",
-   "note": "R1's roadmap sentence names §14.1 to §14.10 in order by subject. §14.3's subject, resolution, is its title's."
+   "note": "R1's roadmap sentence names §14.1 to §14.10 in order by subject. §14.3's subject, resolution, is its title's. Step 5 fix1: P1-1, §14.4's read selectors join its subject, one verb for §14.1 to §14.4."
   },
   {
    "id": "C-007",
    "old": "§14.5–§14.6 cover the boundary-zero sequence and root-input totality (the requirement that an application establishing a complete world cover every root input).",
-   "new": "§14.5 covers the boundary-zero sequence; §14.6 covers root-input totality (the requirement that an application establishing a complete world cover every root input);",
+   "new": "§14.5 covers the initialization sequence called boundary zero, §14.6 root-input totality (the requirement that an application establishing a complete world cover every root input) and `override`,",
    "where": "new",
    "cites": [
     "§14.5",
@@ -82,12 +82,12 @@
    ],
    "tag": "R",
    "ruling": "R1",
-   "note": "F4, boundary zero linked to #g-boundary-zero, not #g-boundary. root input gains its first-use link inside the gloss."
+   "note": "F4, boundary zero linked to #g-boundary-zero, not #g-boundary. root input gains its first-use link inside the gloss. Step 5 fix1: P1-1, one 'covers' and §14.6's `override` (its title's); P1-35, boundary zero glossed by 'the initialization sequence called', after #g-boundary-zero ('the initialization boundary: the ordinary macro-sequence'). root input stays linked inside the totality gloss, unglossed: a gloss there would nest."
   },
   {
    "id": "C-008",
    "old": "§14.7–§14.9 cover the trim service in full.",
-   "new": "§14.7 the trim problem, §14.8 the trim service and §14.9 mounting, which together cover the trim service in full;",
+   "new": "§14.7 the trim problem, §14.8 the trim service, §14.9 mounting",
    "where": "new",
    "cites": [
     "§14.7",
@@ -100,17 +100,18 @@
    ],
    "tag": "R",
    "ruling": "R1",
-   "note": "each section's subject from its title (§14.7 \"The trim problem\", §14.8 \"The trim service\", §14.9 \"Mounting\")."
+   "note": "each section's subject from its title (§14.7 \"The trim problem\", §14.8 \"The trim service\", §14.9 \"Mounting\"). Step 5 fix1: P1-1 drops 'which together cover the trim service in full': §14.9's mounting also relocates tap sets, so the three sections are more than the trim service; each keeps its subject."
   },
   {
    "id": "C-009",
    "old": "§14.10 covers linearization.",
-   "new": "and §14.10 covers linearization.",
+   "new": "and §14.10 linearization.",
    "where": "new",
    "cites": [
     "§14.10"
    ],
-   "tag": "F"
+   "tag": "F",
+   "note": "Step 5 fix1: P1-1."
   },
   {
    "id": "C-010",
@@ -120,7 +121,7 @@
    "cites": [],
    "tag": "R",
    "ruling": "R1",
-   "note": "\"a fourth stopped-sim service\" goes with F3's count; the service count now sits in the sentence naming five. `Model` takes its first-use link here (late in the old text)."
+   "note": "\"a fourth stopped-sim service\" goes with F3's count; the service count now sits in the sentence naming five. `Model` takes its first-use link here (late in the old text). Step 5 fix1: P1-2 writes `Model` plain here; its link joins its gloss in the lifecycle paragraph's `Model` form."
   },
   {
    "id": "C-011",
@@ -159,10 +160,11 @@
   {
    "id": "C-014",
    "old": "While a run exists the loop owns the stores between drains (the frame-top swap that publishes staged device writes into the root inputs), and a service reading or writing them would race it.",
-   "new": "While a run exists the loop owns the stores between drains (the frame-top swap that publishes staged device writes into the root inputs), and a service reading or writing them would race it.",
+   "new": "While the simulation is `running`, the loop owns the stores (the framework-owned homes of components' `x`, `s` and `m` state). It owns them between drains (the frame-top swap that publishes staged device writes into the root inputs), and a service reading or writing them would race it.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "F",
+   "note": "Step 5 fix1: P1-3, P1-35."
   },
   {
    "id": "C-015",
@@ -176,14 +178,14 @@
   {
    "id": "C-016",
    "old": "Pause is a control-plane state inside a run, so a prohibition that holds mid-run holds while paused (§11.3, §12.1).",
-   "new": "Pause is a control-plane state inside a run, so a prohibition that holds mid-run holds while paused (§11.3, §12.1).",
+   "new": "Pause is a state inside a run, carried by the control plane (the separate atomic surface for pause, pace and the stop word), so a prohibition that holds mid-run holds while paused (§11.3, §12.1).",
    "where": "new",
    "cites": [
     "§11.3",
     "§12.1"
    ],
    "tag": "F",
-   "note": "control plane takes a first-use link (#g-control-plane)."
+   "note": "control plane takes a first-use link (#g-control-plane). Step 5 fix1: P1-35."
   },
   {
    "id": "C-017",
@@ -220,7 +222,7 @@
     "D-319"
    ],
    "tag": "M",
-   "note": "M1, moved after the ServiceLifecycle paragraph within the heading. R7 bold headline \"Each row's service also has a form on a `Model`\" for D-319's second sentence, \"`checkpoint`, `restore!`, `trim!` and `linearize` are doors of the `Model`\". The `Model` link moved to the first use, in the opening's checkpoint gloss; this gloss stays."
+   "note": "M1, moved after the ServiceLifecycle paragraph within the heading. R7 bold headline \"Each row's service also has a form on a `Model`\" for D-319's second sentence, \"`checkpoint`, `restore!`, `trim!` and `linearize` are doors of the `Model`\". The `Model` link moved to the first use, in the opening's checkpoint gloss; this gloss stays. Step 5 fix1: P1-2: the `Model` link now sits here, with its gloss."
   },
   {
    "id": "C-020",
@@ -346,13 +348,13 @@
   {
    "id": "C-031",
    "old": "A condition may specify state fields (`x` on the continuous tier, `s` on the discrete) and modes (`m`, continuous components only, §3.2).",
-   "new": "A condition may specify state fields, `x` on the continuous tier and `s` on the discrete. It may also specify modes, `m`, which only continuous components have (§3.2).",
+   "new": "A condition may specify state fields, `x` on the continuous tier (one side of the hybrid formalism) and `s` on the discrete. It may also specify modes, `m`, which only continuous components have (§3.2).",
    "where": "new",
    "cites": [
     "§3.2"
    ],
    "tag": "F",
-   "note": "split; two parentheticals in one sentence became two sentences."
+   "note": "split; two parentheticals in one sentence became two sentences. Step 5 fix1: P1-4, P1-35."
   },
   {
    "id": "C-032",
@@ -367,11 +369,11 @@
   {
    "id": "C-033",
    "old": "It may also specify root inputs, addressed by face.",
-   "new": "Beyond state, a condition may specify root inputs, addressed by face (the name a port wears on its component's boundary).",
+   "new": "Beyond state, a condition may specify root inputs (the root's own input faces). It addresses them by face (the name a port wears on its component's boundary).",
    "where": "new",
    "cites": [],
    "tag": "F",
-   "note": "face gloss from #g-face; \"a condition\" replaces \"It\" after the split above."
+   "note": "face gloss from #g-face; \"a condition\" replaces \"It\" after the split above. Step 5 fix1: P1-35."
   },
   {
    "id": "C-034",
@@ -555,10 +557,14 @@
   {
    "id": "C-050",
    "old": "The first case is trim's `α_filt = α_a`.",
-   "new": "The first case is trim's `α_filt = α_a`.",
+   "new": "The first case is trim's `α_filt = α_a` (§14.2).",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "newcites": [
+    "§14.2"
+   ],
+   "tag": "F",
+   "note": "Step 5 fix1: P1-6, a pointer to §14.2's block, which sets `α_filt = α_a`."
   },
   {
    "id": "C-051",
@@ -607,13 +613,13 @@
   {
    "id": "C-056",
    "old": "One is the value-level constructor (the plain public function building a field handle from the component and input values, §8.2), applied to the same values the `baseline` writes into the environment component's root inputs.",
-   "new": "One is the value-level constructor (the plain public function building a field handle from the component and input values) of §8.2, applied to the same values the `baseline` writes into the environment component's root inputs.",
+   "new": "One is the value-level constructor (the plain public function building a field handle from the component and input values) of §8.2. The condition applies it to the same values the `baseline` (the full-coverage condition `trim!` takes as a keyword) writes into the environment component's root inputs.",
    "where": "new",
    "cites": [
     "§8.2"
    ],
    "tag": "F",
-   "note": "the citation left the gloss's parentheses."
+   "note": "the citation left the gloss's parentheses. Step 5 fix1: P1-35."
   },
   {
    "id": "C-057",
@@ -645,14 +651,14 @@
   {
    "id": "C-060",
    "old": "Where closed-form enforcement of a target is not wanted at all, the second escape already covers the case.",
-   "new": "Where closed-form enforcement of a target is not wanted at all, the second escape already covers the case (D-139).",
+   "new": "Where closed-form enforcement of a target is not wanted at all, the doctrine's second case already covers it (D-139).",
    "where": "new",
    "cites": [],
    "newcites": [
     "D-139"
    ],
    "tag": "C",
-   "note": "D-139 Rationale, \"the environment-free fallback through the existing second escape\". Rationale-only."
+   "note": "D-139 Rationale, \"the environment-free fallback through the existing second escape\". Rationale-only. Step 5 fix1: P1-5."
   },
   {
    "id": "C-061",
@@ -692,7 +698,8 @@
    "new": "An engine component knows `n_eng → ω = n_eng·ω_rated`, and nothing above it should have to.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "F",
+   "note": "Step 5 fix1: P1-6's `n_eng` clause is the added block below."
   },
   {
    "id": "C-066",
@@ -737,7 +744,7 @@
     "D-405"
    ],
    "tag": "C",
-   "note": "bold term condition method goes plain; D-405 bullet 2, \"A method of the `condition` generic is a condition method\". Fragment gloss from #g-fragment (\"the leaf node of the condition algebra, built by `set(; x, s, m, u)`\"). condition takes its first-use link here (late at old 11451)."
+   "note": "bold term condition method goes plain; D-405 bullet 2, \"A method of the `condition` generic is a condition method\". Fragment gloss from #g-fragment (\"the leaf node of the condition algebra, built by `set(; x, s, m, u)`\"). condition takes its first-use link here (late at old 11451). Step 5 fix1: P1-35."
   },
   {
    "id": "C-070",
@@ -797,7 +804,7 @@
    "cites": [],
    "tag": "R",
    "ruling": "R12",
-   "note": "R12's gloss for `C172XSystems`; checked in `~/.julia/dev/Flight.jl/lib/FlightApps/src/c172/c172x/c172x.jl` 207 (`const Systems = C172.Systems{...}`)."
+   "note": "R12's gloss for `C172XSystems`; checked in `~/.julia/dev/Flight.jl/lib/FlightApps/src/c172/c172x/c172x.jl` 207 (`const Systems = C172.Systems{...}`). Step 5 fix1: P1-6's `α_filt` clause is the added block below."
   },
   {
    "id": "C-076",
@@ -829,11 +836,11 @@
   {
    "id": "C-079",
    "old": "A `u` payload names faces of the authoring level's contract.",
-   "new": "A `u` payload names faces of the authoring level's contract.",
+   "new": "A `u` payload names faces of the authoring level's contract (its declared interface).",
    "where": "new",
    "cites": [],
    "tag": "M",
-   "note": "M2."
+   "note": "M2. Step 5 fix1: P1-35."
   },
   {
    "id": "C-080",
@@ -899,17 +906,17 @@
   {
    "id": "C-085",
    "old": "Dispatch selects variant-specific methods, so the c172s/c172x actuation split costs no upstream edits.",
-   "new": "Dispatch selects variant-specific methods, so the actuation split between FlightApps' C172 variants, c172s and c172x, costs no upstream edits.",
+   "new": "Dispatch selects variant-specific methods, so the actuation split between Flight.jl's two Cessna 172 variants, c172s and c172x, costs no upstream edits.",
    "where": "new",
    "cites": [],
    "tag": "R",
    "ruling": "R12",
-   "note": "checked in `~/.julia/dev/Flight.jl/lib/FlightApps/src/c172/c172s/c172s.jl` 153 (`MechanicalActuation`) and `c172x/c172x.jl` 207 (`FlyByWireActuation`)."
+   "note": "checked in `~/.julia/dev/Flight.jl/lib/FlightApps/src/c172/c172s/c172s.jl` 153 (`MechanicalActuation`) and `c172x/c172x.jl` 207 (`FlyByWireActuation`). Step 5 fix1: P1-8 moves it to just after the `C172XSystems` block it comments on; P1-7 names the owner (both files sit in Flight.jl's lib/FlightApps/src/c172/)."
   },
   {
    "id": "C-086",
    "old": "The three combinators are constructors of an inert, lazy tree.",
-   "new": "Composition builds an inert, lazy fragment tree (D-065). `set` builds the leaf, `at` and `combine` (the symmetric, collision-intolerant combinator) build the tree's inner nodes,",
+   "new": "Composition builds an inert, lazy fragment tree (the nested `Fragment`, `Scoped`, `Combined` and override nodes) (D-065). `set` builds the leaf, `at` and `combine` (the symmetric, collision-intolerant combinator) build the tree's inner nodes,",
    "where": "new",
    "cites": [],
    "newcites": [
@@ -917,7 +924,7 @@
    ],
    "tag": "R",
    "ruling": "R9",
-   "note": "F8's dictated clause; \"three combinators\" counted `set` and left out `override`. The bold term inert, lazy tree becomes the bold headline for D-065's first ruling, \"Fragments form a lazy inert tree (... store, never apply — stack-only rebuild per iteration)\"; fragment tree takes its link (#g-fragment-tree). `combine` takes its first-use link and gloss (#g-combine). R36 adds the clause \"and `override` builds a fourth node type (§14.6)\", the added block below, worded by R38; an added block takes no ruling field."
+   "note": "F8's dictated clause; \"three combinators\" counted `set` and left out `override`. The bold term inert, lazy tree becomes the bold headline for D-065's first ruling, \"Fragments form a lazy inert tree (... store, never apply — stack-only rebuild per iteration)\"; fragment tree takes its link (#g-fragment-tree). `combine` takes its first-use link and gloss (#g-combine). R36 adds the clause \"and `override` builds a fourth node type (§14.6)\", the added block below, worded by R38; an added block takes no ruling field. Step 5 fix1: P1-35."
   },
   {
    "id": "C-087",
@@ -975,14 +982,14 @@
   {
    "id": "C-093",
    "old": "The zero-alloc property of today's `assign!` loop holds of the construction and of the walk that applies the tree (§14.4) alike.",
-   "new": "The trim of Flight.jl's Cessna 172 model (`c172.jl`) writes each trial state through FlightPhysics' `assign!`, and the zero-alloc property of that `assign!` loop holds of the construction with literal prefixes and of the specialized `apply!` that writes the tree (§14.4) alike.",
+   "new": "The trim of Flight.jl's Cessna 172 model (`c172.jl`) writes each trial state through FlightPhysics' `assign!`, a loop that allocates nothing. That property holds of the construction with literal prefixes and of the specialized `apply!` that writes the tree (§14.4) alike.",
    "where": "new",
    "cites": [
     "§14.4"
    ],
    "tag": "R",
    "ruling": "R35",
-   "note": "R35 scopes the construction to literal prefixes, as F9 (a). R9's F9 (b), the specialized `apply!` only. R12 and R23, \"today's\" becomes the owner the source shows, Flight.jl's Cessna 172 model calling FlightPhysics' `assign!`: checked in `~/.julia/dev/Flight.jl/lib/FlightPhysics/src/aircraftbase.jl` 94 (`assign!(vehicle, params, state, ...)`) and `lib/FlightApps/src/c172/c172.jl` 876 (the C172 trim's target function calls `AircraftBase.assign!` per evaluation)."
+   "note": "R35 scopes the construction to literal prefixes, as F9 (a). R9's F9 (b), the specialized `apply!` only. R12 and R23, \"today's\" becomes the owner the source shows, Flight.jl's Cessna 172 model calling FlightPhysics' `assign!`: checked in `~/.julia/dev/Flight.jl/lib/FlightPhysics/src/aircraftbase.jl` 94 (`assign!(vehicle, params, state, ...)`) and `lib/FlightApps/src/c172/c172.jl` 876 (the C172 trim's target function calls `AircraftBase.assign!` per evaluation). Step 5 fix1: P1-10."
   },
   {
    "id": "C-094",
@@ -1024,14 +1031,14 @@
   {
    "id": "C-098",
    "old": "On a condition node it raises `ConditionNodeMisuse` (Appendix C) before any resolution pass runs.",
-   "new": "On a condition node it raises `ConditionNodeMisuse` with reason `:empty_prefix` (Appendix C) before any resolution pass runs.",
+   "new": "On a node of a condition (the path-addressed sparse overlay that sets a build's state), `at` raises `ConditionNodeMisuse` with reason `:empty_prefix` (Appendix C) before any resolution pass runs.",
    "where": "new",
    "cites": [
     "Appendix C"
    ],
    "tag": "R",
    "ruling": "R14",
-   "note": "the reason, `src/conditions.jl` 93-94."
+   "note": "the reason, `src/conditions.jl` 93-94. Step 5 fix1: P1-35."
   },
   {
    "id": "C-099",
@@ -1062,10 +1069,11 @@
   {
    "id": "C-101",
    "old": "The three instances are local wires, computed interface connections and conditions.",
-   "new": "The three instances are local wires, computed interface connections and conditions.",
+   "new": "The three instances are local wires (wires from one child's port to a child's face), computed interface connections and conditions.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "F",
+   "note": "Step 5 fix1: P1-35."
   },
   {
    "id": "C-102",
@@ -1078,22 +1086,22 @@
   {
    "id": "C-103",
    "old": "Delegation runs by dispatch at every genericity seam.",
-   "new": "Delegation runs by dispatch at every genericity seam.",
+   "new": "Delegation runs by dispatch at every genericity seam (a narrow, named interface kept deliberately thin).",
    "where": "new",
    "cites": [],
    "tag": "F",
-   "note": "verify. The added D-064 citation is dropped: its Position says \"dispatched on component types\" and nothing of seams."
+   "note": "verify. The added D-064 citation is dropped: its Position says \"dispatched on component types\" and nothing of seams. Step 5 fix1: P1-35."
   },
   {
    "id": "C-104",
    "old": "An `at` prefix may stop at any child's faces, owned or generically held, because the face graph is total (D-207).",
-   "new": "An `at` prefix may stop at any child's faces, owned or generically held, because the face graph is total (D-207).",
+   "new": "An `at` prefix may stop at any child's faces, owned or generically held (held through a non-concrete field type), because the face graph is total (D-207).",
    "where": "new",
    "cites": [
     "D-207"
    ],
    "tag": "F",
-   "note": "generic holding takes its first-use link (#g-generic-holding)."
+   "note": "generic holding takes its first-use link (#g-generic-holding). Step 5 fix1: P1-35."
   },
   {
    "id": "C-105",
@@ -1109,12 +1117,12 @@
   {
    "id": "C-106",
    "old": "Absolute paths exist only in the flattened entry list, a compiled derivative of the composition, as cell offsets are of `local_wires`.",
-   "new": "Absolute paths exist only in the flattened list of condition entries, a compiled derivative of the composition, as cell offsets are of `local_wires`.",
+   "new": "Absolute paths exist only in the flattened list of condition entries, a compiled derivative of the composition, as the offsets of cells (the typed entries of the signal table) are of `local_wires`.",
    "where": "new",
    "cites": [],
    "tag": "R",
    "ruling": "R13",
-   "note": "F29, bare entry. §13.3 10251 relies on this sentence."
+   "note": "F29, bare entry. §13.3 10251 relies on this sentence. Step 5 fix1: P1-35."
   },
   {
    "id": "C-107",
@@ -1261,13 +1269,13 @@
   {
    "id": "C-121",
    "old": "That rejection is also why the combinator is not `Base.merge`, and is no longer named after it (D-204).",
-   "new": "That rejection is also why the combinator is not `Base.merge`, and is no longer named after it (D-204).",
+   "new": "The combinator is not `Base.merge`, and is no longer named after it (D-204). The last-writer-wins rejection is also the reason.",
    "where": "new",
    "cites": [
     "D-204"
    ],
    "tag": "F",
-   "note": "R7 bold headline \"the combinator is not `Base.merge`\" for D-204's first sentence, the rename to `combine`."
+   "note": "R7 bold headline \"the combinator is not `Base.merge`\" for D-204's first sentence, the rename to `combine`. Step 5 fix1: P1-11, rule first: the bold sentence leads and the rejection follows as its reason."
   },
   {
    "id": "C-122",
@@ -1314,15 +1322,16 @@
   {
    "id": "C-127",
    "old": "The rejection carries a kind like every other.",
-   "new": "The rejection carries a kind like every other.",
+   "new": "Like every other, the rejection carries a kind (a diagnostic's identity in a closed, enumerated set).",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "F",
+   "note": "Step 5 fix1: P1-35."
   },
   {
    "id": "C-128",
    "old": "It is `ConditionNodeMisuse` (Appendix C), carrying the offending argument's type and the node kinds in hand.",
-   "new": "It is `ConditionNodeMisuse` (Appendix C, D-113), carrying the offending argument's type and the node types in hand.",
+   "new": "The blend rejection is `ConditionNodeMisuse` (Appendix C, D-113), carrying the offending argument's type and the node types in hand.",
    "where": "new",
    "cites": [
     "Appendix C"
@@ -1332,8 +1341,8 @@
     "D-113"
    ],
    "tag": "R",
-   "ruling": "R38",
-   "note": "D-113 bullet 4, \"`ConditionNodeMisuse` for §14.2's mixed-`merge` error method: offending argument type, node kinds in hand\"; R7 bold headline."
+   "ruling": "R38 B5",
+   "note": "D-113 bullet 4, \"`ConditionNodeMisuse` for §14.2's mixed-`merge` error method: offending argument type, node kinds in hand\"; R7 bold headline. B5: the bold's subject \"It\" becomes \"The blend rejection\", the blend of a node with a bare NamedTuple the paragraph closes."
   },
   {
    "id": "C-129",
@@ -1356,13 +1365,13 @@
   {
    "id": "C-131",
    "old": "The explicit, ordered layering spelling, `override`, belongs with the use case root-input totality produces (§14.6).",
-   "new": "The explicit, ordered layering spelling, `override`, belongs with the use case root-input totality produces (§14.6).",
+   "new": "The explicit, ordered layering spelling, `override`, belongs with the use case of root-input totality (the requirement that an application establishing a complete world cover every root input) (§14.6).",
    "where": "new",
    "cites": [
     "§14.6"
    ],
    "tag": "F",
-   "note": "`override` takes its first-use link (#g-override); its first mention, inside the quoted message, is code."
+   "note": "`override` takes its first-use link (#g-override); its first mention, inside the quoted message, is code. Step 5 fix1: P1-9, P1-35."
   },
   {
    "id": "C-132",
@@ -1375,11 +1384,11 @@
   {
    "id": "C-133",
    "old": "Resolution takes the root node plus a `Build`.",
-   "new": "Resolution takes the root node plus a `Build` (the artifact `build(world)` produces).",
+   "new": "It takes the root node plus a `Build` (the artifact `build(world)` produces).",
    "where": "new",
    "cites": [],
    "tag": "F",
-   "note": "`Build` takes its first-use link and gloss (#g-build, \"the artifact `build(world)` produces\")."
+   "note": "`Build` takes its first-use link and gloss (#g-build, \"the artifact `build(world)` produces\"). Step 5 fix1: P1-4's context sentence is the added block below; condition's link and gloss move to it from the flattening paragraph (P1-35)."
   },
   {
    "id": "C-134",
@@ -1401,7 +1410,7 @@
    "cites": [],
    "tag": "R",
    "ruling": "R13",
-   "note": "F29. The bold term tree position goes plain. condition takes its first-use link here (late at old 11547)."
+   "note": "F29. The bold term tree position goes plain. condition takes its first-use link here (late at old 11547). Step 5 fix1: P1-35."
   },
   {
    "id": "C-136",
@@ -1603,12 +1612,13 @@
   {
    "id": "C-157",
    "old": "Under a `Dual`-seeded evaluation of a type-stable `trim_condition(d)`, every decision-dependent leaf is `Dual`-typed in the shape (§14.7).",
-   "new": "Under a `Dual`-seeded evaluation of a type-stable `trim_condition(d)`, every decision-dependent leaf is `Dual`-typed in the shape (§14.7).",
+   "new": "Under a `Dual`-seeded evaluation of a type-stable `trim_condition(d)`, every decision-descended leaf is `Dual`-typed in the shape (§14.7).",
    "where": "new",
    "cites": [
     "§14.7"
    ],
-   "tag": "F"
+   "tag": "F",
+   "note": "Step 5 fix1: P1-13."
   },
   {
    "id": "C-158",
@@ -1639,11 +1649,11 @@
   {
    "id": "C-161",
    "old": "At the nominal activation the same rule is the ordinary `Float64` conversion.",
-   "new": "At the nominal activation the same rule is the ordinary `Float64` conversion.",
+   "new": "At the nominal activation (the `Float64` one), the same rule is the ordinary `Float64` conversion.",
    "where": "new",
    "cites": [],
    "tag": "F",
-   "note": "nominal takes its first-use link (#g-nominal)."
+   "note": "nominal takes its first-use link (#g-nominal). Step 5 fix1: P1-35."
   },
   {
    "id": "C-162",
@@ -1656,11 +1666,11 @@
   {
    "id": "C-163",
    "old": "A plain `Float64` leaf against a non-nominal activation's scratch is a held constant, and it takes the `Float64 → Dual` zero-partial embedding.",
-   "new": "A plain `Float64` leaf against a non-nominal activation's scratch is a held constant, and it takes the `Float64 → Dual` zero-partial embedding.",
+   "new": "A plain `Float64` leaf against a non-nominal activation's scratch (mutable working storage whose contents are never authoritative) is a held constant, and it takes the `Float64 → Dual` zero-partial embedding.",
    "where": "new",
    "cites": [],
    "tag": "F",
-   "note": "the bold case opener goes plain; scratch takes its first-use link (#g-scratch)."
+   "note": "the bold case opener goes plain; scratch takes its first-use link (#g-scratch). Step 5 fix1: P1-35."
   },
   {
    "id": "C-164",
@@ -1755,10 +1765,14 @@
   "This section covers, in order, the condition method, composition by pull, what `set`'s payloads may name, the inert tree, the empty-prefix refusal, the locality law, and the collision and blend errors.",
   "In the first block, the engine is an illustrative component named after FlightPhysics' `PistonEngine`, and `Phase` an illustrative enum of its modes.",
   "Such a write is `ConditionResolution` with reason `:internally_wired`.",
-  "and `override` builds a fourth node type (§14.6).",
   "A `set` payload that is not a NamedTuple is `ConditionNodeMisuse` with reason `:set_payload` (Appendix C).",
   "This section covers, in order, flattening, the collecting checks, the two lookup families, the plan, the converter rule with its two cases, and overlay partiality.",
   "Each check names its kind (Appendix C). A path that does not resolve is `PathResolution` with reason `:unknown_child`. An undeclared field is `ConditionResolution` with reason `:undeclared_field`, or `:no_store` or `:assembly_path` where the target has no such store or is an assembly. A value that does not convert is `ConditionResolution` with reason `:unconvertible`. A face that reaches no root input takes one of the face reasons §14.2 names. A leaf written twice is `DuplicateConditionLeaf`.",
-  "The dynamic walk's plan holds the converted values themselves."
+  "The dynamic walk's plan holds the converted values themselves.",
+  "A condition is the value an author writes to say which state a build starts from.",
+  "`n_eng` is the engine speed as a fraction of its rated speed `ω_rated`.",
+  "In the block, `α_filt` and `β_filt` are the aerodynamics' filtered airflow angles, set to the angle of attack `α_a` and the sideslip `β_a`.",
+  "and `override`, the ordered, asymmetric layering combinator, builds a fourth node type (§14.6).",
+  "Resolution turns a composed condition (the path-addressed sparse overlay that sets a build's state) into plans the services can apply."
  ]
 }

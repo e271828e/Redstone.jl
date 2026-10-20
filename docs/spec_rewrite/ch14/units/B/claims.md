@@ -1,7 +1,10 @@
 # Unit B (§14.4, §14.5, §14.6): claims
 
 old: ### 14.4 One plan, two ways to apply it
-note: title kept (R9, F16)
+new: ### 14.4 Two ways to apply a resolved condition
+tag: R
+ruling: B1
+note: title kept (R9, F16). B1 retitles it: "One plan" contradicted the body, since the list compiles to two plans (R37). Cut claim and its fate: "one plan" is not kept anywhere, being false; §14.3 (unit A) states both plans and this section's context paragraph says "the compiled plans". "Two ways to apply" stays in the title.
 
 old: The paradigm-change tax feared at execution does not materialize.
 new: A resolved condition (the path-addressed sparse overlay that sets a build's state) is applied two ways, because a one-shot service and an iterating one want different things from the same validated list of condition entries (D-066).
@@ -21,11 +24,11 @@ note: link and gloss moved to the context sentence, the new first use
 old: Every hot path holds the shape fixed while varying values.
 
 old: Execution is therefore resolve-once/execute-many, with two ways to apply one plan.
-new: Execution is therefore resolve-once/execute-many, with two ways to apply the compiled plans (§14.3).
+new: Execution is therefore resolve-once/execute-many.
 tag: R
 ruling: R37
-newcites: §14.3
-note: verify: §14.3 (unit A) says the list compiles two ways and states both plans' contents (R37); §14.4 speaks of applying the compiled plans two ways, D-066's 'two ways to apply one compiled plan', and points to §14.3. Code: ConditionPlan and SpecializedPlan, src/conditions.jl 254-275, 640-707
+newcites: none
+note: verify: §14.3 (unit A) says the list compiles two ways and states both plans' contents (R37); §14.4 speaks of applying the compiled plans two ways, D-066's 'two ways to apply one compiled plan', and points to §14.3. Code: ConditionPlan and SpecializedPlan, src/conditions.jl 254-275, 640-707 Step 5 fix1: P1-15 drops the clause 'with two ways to apply the compiled plans (§14.3)': the context paragraph and the heading state the two ways, and each bullet keeps its §14.3 pointer.
 
 old: - Specialized `apply!` serves the service that iterates, trim's per-evaluation write.
 new: - Specialized `apply!` serves the service that iterates, trim's per-evaluation write (D-066). It applies its own plan, whose contents §14.3 gives.
@@ -35,7 +38,8 @@ newcites: D-066 §14.3
 note: R37: the per-leaf lens/destination/converter sentence (F16's wording) is cut to a pointer; §14.3 (unit A) is the one home of both plans' contents and keeps the lens gloss. Earlier: list label becomes the bold headline clause of D-066's first semicolon ruling, 'specialized apply! ... for iterating services'. The plan sentence is F16's amended wording (R9); lens linked and glossed at its first use, gloss from #g-lens
 
 old: It unrolls stores through the baked lenses and converters.
-note: store linked at its first use, no gloss; lens linked here with no second gloss (R37)
+new: It unrolls stores (the framework-owned homes of components' `x`, `s` and `m` state) through the baked lenses and converters.
+note: store linked at its first use, no gloss; lens linked here with no second gloss (R37) Step 5 fix1: P1-35 and P1-36.
 
 old: Those are the same machine operations as today's in-place writes: zero-alloc, no strings, no dispatch.
 new: Those are the same machine operations as the in-place writes of FlightPhysics' `assign!`, with no allocation, no strings and no dispatch.
@@ -70,10 +74,10 @@ note: D-066 Position '~10-50 ms codegen once per shape' and its 2026-10-02 annot
 old: On Julia 1.13 it measures 10 to 50 ms up to 32 writes, 0.09 s at 64 and 0.2 s at 128 (`docs/reports/20261002_tuple_walks/`).
 
 old: That cost is noise against the model's own first-sweep warmup (seconds), and against the 10³–10⁴ optimizer evaluations the codegen amortizes over.
-new: That cost is noise against the model's own first-sweep warmup (seconds). It is paid once per tree type per session, so it spreads over every evaluation of every trim of that shape, an envelope of trims included.
+new: That cost is noise against the model's own first-sweep warmup (seconds). It is paid once per tree type per session, so it spreads over every evaluation of every trim of that shape, an envelope of trims (one trim per point of a grid of flight conditions) included.
 tag: R
 ruling: R9
-note: F18 amended: the 10³-10⁴ count is cut as unsupported against §14.7's ~5-15 evaluations
+note: F18 amended: the 10³-10⁴ count is cut as unsupported against §14.7's ~5-15 evaluations Step 5 fix1: P1-16.
 
 old: - The dynamic walk serves the one-shot uses, `init!` and `linearize`'s operating condition.
 new: - The dynamic walk serves the one-shot uses, `init!`, `linearize`'s operating condition and trim's setup write (§14.8, D-066).
@@ -115,10 +119,10 @@ old: #### The read-selector family
 note: no file links this anchor
 
 old: The read-selector family is closed.
-new: The read-selector family is closed (D-095).
+new: The family of read selectors (values describing a read the compiled gather will perform) is closed (D-095).
 tag: C
 newcites: D-095
-note: verify: the D-095 bold moves to the get_ prefix, the Position's headline; earlier: bold kept on D-095's one ruling, first in reading order ('spelled with a get_ prefix and completed'); the prefix sentence below cites it plain
+note: verify: the D-095 bold moves to the get_ prefix, the Position's headline; earlier: bold kept on D-095's one ruling, first in reading order ('spelled with a get_ prefix and completed'); the prefix sentence below cites it plain Step 5 fix1: P1-17.
 
 old: Its members are `get_state(path, leaf)`, `get_deriv(path, leaf)`, `get_output(path, leaf)`, `get_input(leaf)` and `get_face(leaf)`.
 
@@ -193,10 +197,10 @@ note: F20: the store selectors address stores (src/readers.jl 48-49, 'Only cells
 old: So a reader that wants one is asking the producing component to declare it an output (§8.3).
 
 old: `get_face` addresses an output face of the mount level, the level its read set is mounted at (§14.9).
-new: `get_face` addresses an output face of the mount level, the level its read set is mounted at (§14.9, D-277). Mounting relocates a whole problem or tap set (the three selector lists declaring what linearization seeds and reports) with `at(prefix, …)`.
+new: Mounting relocates a whole problem or tap set (the three selector lists declaring what linearization seeds and reports) with `at(prefix, …)`. `get_face` addresses an output face of the mount level, the level a problem's or tap set's reads are mounted at (§14.9, D-277).
 tag: C
 newcites: §14.9 D-277
-note: D-277 bullet 3: 'get_face(name) names an output face of the mount level ... at the root it is the integration read it was'. Mounting linked at its first use (late link fixed); its gloss, moved from old 11675, stands as its own sentence, the #g-mounting definition; tap set linked there with the taps gloss moved from old 11668
+note: D-277 bullet 3: 'get_face(name) names an output face of the mount level ... at the root it is the integration read it was'. Mounting linked at its first use (late link fixed); its gloss, moved from old 11675, stands as its own sentence, the #g-mounting definition; tap set linked there with the taps gloss moved from old 11668 Step 5 fix1: P1-20 and P1-36.
 
 old: At the root that face is root-exported.
 
@@ -212,10 +216,10 @@ note: R31: 'before any client policy applies' goes, since R5 leaves no client po
 old: The table selectors (`get_output`, `get_input`, `get_face`) resolve against a table source.
 
 old: A table source is a boundary snapshot, or the scratch tables a service evaluation instantiates (§14.8).
-new: A table source is a boundary snapshot, or the scratch tables a service evaluation instantiates (§14.8, D-124).
+new: A table source is a boundary snapshot (the immutable publication at a published consistency point), or the scratch tables a service evaluation instantiates (§14.8, D-124).
 tag: C
 newcites: §14.8 D-124
-note: D-124 Rationale: 'table sources (a boundary snapshot, or the scratch tables a service evaluation instantiates, §14.8)'; Rationale-only
+note: D-124 Rationale: 'table sources (a boundary snapshot, or the scratch tables a service evaluation instantiates, §14.8)'; Rationale-only Step 5 fix1: P1-35 and P1-36.
 
 old: The store selectors (`get_state`, `get_deriv`) resolve only against live stores.
 new: The store selectors (`get_state`, `get_deriv`) resolve only against live stores (D-098).
@@ -226,10 +230,14 @@ note: D-098 Position: 'store selectors (get_state/get_deriv) only against live s
 old: The table/store axis separates table-borne values from store-borne ones, not snapshots from services.
 
 old: Only stopped-sim service evaluations, `checkpoint`, and post-run inspection of the live stores (the replay-to-inspect, §11.2) ever hold live stores.
-new: Only stopped-sim service evaluations, `checkpoint`, and post-run inspection of the live stores (the replay-to-inspect) ever hold live stores (§11.2).
-note: the citation leaves the gloss's parentheses; checkpoint linked at its first use, no gloss
+new: Only stopped-sim service evaluations, `checkpoint`, and post-run inspection of the live stores ever hold live stores (§11.2). That inspection is the replay-to-inspect, where replay is the ordinary loop with its drain reading the trace. Of these holders, only the service evaluations' readers take a store selector.
+tag: R
+ruling: B2
+note: the citation leaves the gloss's parentheses; checkpoint linked at its first use, no gloss Step 5 fix1: P1-35. B2 adds the last sentence, so `checkpoint` and post-run inspection holding live stores does not read against F22's store-selector sentence: the code's only executor-source readers are trim's and linearization's (src/readers.jl 36-42). It follows the replay sentence so "That inspection" keeps its antecedent.
 
 old: The snapshot deliberately carries no state stores (§11.2), and `ẋ` buffers are integrator scratch, not boundary-consistent objects outside a service evaluation.
+new: The snapshot deliberately carries no state stores (§11.2), and `ẋ` buffers (the vectors the integrator fills) are integrator scratch, not boundary-consistent objects outside a service evaluation.
+note: Step 5 fix1: P1-35.
 
 old: A reader resolving for a table source that names a store selector is therefore refused at resolution, as a `ReadResolution` (D-406).
 new: A reader resolving for a table source that names a store selector is therefore refused at resolution, as a `ReadResolution` with reason `:store_selector` (D-406).
@@ -255,8 +263,6 @@ note: R5: the two sentences are cut as false (D-414 Rejected, a resolver §14.4 
 
 added: An inspection read, a binding's or `series`', may name any cell the structure has, since it promises nothing beyond this build (D-083).
 
-added: Both reads resolve under the one service walk (§13.3).
-
 old: - Service reads speak the contract.
 new: A service read, trim's `reads` or a tap, that should outlive the build reads a face with `get_face` (D-125).
 tag: R
@@ -269,6 +275,8 @@ new: Trim's `reads` and linearization's taps name `get_state`/`get_deriv`/`get_o
 note: the taps link and gloss move to the first use, 'tap set' in the mounting sentence, the old gloss verbatim
 
 old: They do so within the scopes the locality law (§6.1) and fragment scoping (§14.2) describe, as authoring guidance (D-414).
+new: They do so within the scopes the locality law (§6.1) and fragment scoping (§14.2) describe.
+note: Step 5 fix1: P1-21: 'as authoring guidance (D-414)' folds into the paragraph's opening sentence, which carries D-414; fragment's gloss is the added block below.
 
 old: `get_face` is the set's seam-crossing member. It resolves through export chains exactly as mounting (relocating a whole problem or tap set with `at(prefix, …)`) resolves root input faces (§14.9), so the read side mirrors the write side.
 new: `get_face` resolves through export chains exactly as mounting resolves root input faces (§14.9, D-125), so the read side mirrors the write side.
@@ -284,9 +292,9 @@ ruling: R5
 note: verify: C-064, moved after the export-chain sentence its 'therefore' follows; kept as guidance (R5); 'generically held' linked at first use, gloss from #g-generic-holding
 
 old: A service evaluation needing an undeclared intermediate has one remedy, and it is the same for every client. The component exports it (§14.7).
-new: A service evaluation needing an undeclared intermediate has that one remedy too, and it is the same for every client. The component exports it (§14.7).
+new: A service evaluation needing an undeclared intermediate has the same remedy, whatever its client. The component exports it (§14.7).
 tag: M
-note: M5 and R6: merged into the undeclared-value paragraph, §14.4 its home; 'that ... too' ties it to the declare-an-output remedy
+note: M5 and R6: merged into the undeclared-value paragraph, §14.4 its home; 'that ... too' ties it to the declare-an-output remedy Step 5 fix1: P1-19.
 
 old: - Inspection readers admit the whole family, within the source rule.
 new: Inspection reads admit the whole family, within the source rule.
@@ -295,28 +303,28 @@ ruling: R5
 note: bold lead-in goes plain (D-095 Rationale only); 'readers' becomes 'reads', the dictated text's word for a binding's or series' read
 
 old: Output-device bindings, log extraction by `series` and snapshot inspection take deep paths, `get_face` names and leaf addresses alike (D-406, D-407, D-414).
-new: Output-device bindings and log extraction by `series` take deep paths, `get_face` names and leaf addresses alike (D-406, D-407, D-414). Snapshot inspection reads a cell by path and port name instead (§11.2).
+new: Bindings of an output device (an attached participant in the periphery) and log extraction by `series` take deep paths, `get_face` names and leaf addresses alike (D-406, D-407, D-414). Snapshot inspection (§11.2) reads a cell by path and port name instead.
 tag: R
-ruling: R5
+ruling: R5 B3
 newcites: D-406 D-407 D-414 §11.2
-note: F21: snapshot inspection leaves the selector clients, R5's dictated sentence (src/dataplane.jl 480-481)
+note: F21: snapshot inspection leaves the selector clients, R5's dictated sentence (src/dataplane.jl 480-481) Step 5 fix1: P1-35, device glossed from #g-device; P1-21 regroups the inspection reads into one paragraph. B3: the §11.2 pointer moves onto "Snapshot inspection", since §11.2 has no path-and-port-name read; the read's evidence is the code; B76 carries Appendix B's snapshot form of `port`.
 
 old: The store selectors reach only the inspection clients that actually hold stores (`checkpoint`, post-run inspection). A snapshot-bound reader is barred from them by source, not by client.
-new: A store selector resolves only for a reader that runs over live stores, which today are the services' (§14.7, §14.10). A snapshot-bound reader is barred from it by source, not by client.
+new: A store selector resolves only for a reader that runs over live stores, which today are the services' (§14.8, §14.10). A snapshot-bound reader is barred from it by source, not by client.
 tag: R
-ruling: R5
-newcites: §14.7 §14.10
-note: F22's sentence, R5's dictated wording (src/readers.jl 36-42; src/bindings.jl 147, src/sim.jl 2252 resolve for :table)
+ruling: R5 B2
+newcites: §14.8 §14.10
+note: F22's sentence, R5's dictated wording (src/readers.jl 36-42; src/bindings.jl 147, src/sim.jl 2252 resolve for :table). B2 amends R5: §14.8's scratch stores, not §14.7, say trim's readers run over stores.
 
 old: - `ignore_stop_requests` is not a family client.
 new: `ignore_stop_requests` is not a family client.
 note: bold lead-in goes plain (D-095 Rationale and Rejected only)
 
 old: It names requesters from the `Build`'s requester roster, period (§13.5, D-060, D-316).
-new: It names requesters from the `Build`'s requester roster (the build's list of stop requests, one per `StopFlag` output port), period (§13.5, D-316).
+new: It names requesters from the `Build`'s requester roster (the build's list of stop requests, one per `StopFlag` output port) and nothing else (§13.5, D-316).
 tag: C
 newcites: §13.5 D-316
-note: D-060's policy clause is superseded by D-316 (annotation 2026-10-08); D-316 bullet 6 carries the fact. D-060 moves to the next sentence. requester roster linked and glossed (carried item), gloss from #g-requester-roster
+note: D-060's policy clause is superseded by D-316 (annotation 2026-10-08); D-316 bullet 6 carries the fact. D-060 moves to the next sentence. requester roster linked and glossed (carried item), gloss from #g-requester-roster Step 5 fix1: P1-24.
 
 old: Termination is run policy over the requests the model declares, and no path selector reaches `ignore_stop_requests`.
 new: Termination is run policy over the requests the model declares, and no path selector reaches `ignore_stop_requests` (D-060, D-316).
@@ -336,11 +344,11 @@ ruling: R5
 note: R5: the table keeps its selector and source columns and drops the two client columns
 
 old: Compiled readers are the gather twin over this family and the layout tables.
-new: Compiled readers are the gather twin (D-066) over this family and the layout tables (where each value physically lives).
+new: Over this family and the layout tables (where each value physically lives), compiled readers are the gather twin (D-066).
 tag: R
 ruling: R7
 newcites: D-066
-note: bold lead-in becomes the bold headline of D-066's third semicolon ruling, 'compiled readers as the gather twin'; §14.4 its home (R6). layout linked at first use, gloss from #g-schema-vs-layout
+note: bold lead-in becomes the bold headline of D-066's third semicolon ruling, 'compiled readers as the gather twin'; §14.4 its home (R6). layout linked at first use, gloss from #g-schema-vs-layout Step 5 fix1: P1-25.
 
 old: Trim's cost read (`ẋ` and output fields) and linearization's Jacobian gather are one primitive run in reverse.
 new: Trim's residual reads (`ẋ` and output fields) and linearization's Jacobian gather are one primitive run in reverse.
@@ -375,7 +383,8 @@ note: colon in the gloss goes; the citation leaves the gloss; stays the section'
 old: ### 14.5 Boundary zero: an ordinary boundary with authored incoming transitions
 
 old: `apply!` establishes the stores at `t₀`.
-note: store linked at its first use
+new: `apply!` establishes the stores (the framework-owned homes of components' `x`, `s` and `m` state) at `t₀`.
+note: store linked at its first use Step 5 fix1: P1-35.
 
 old: The init service then completes the §10.6 macro-sequence with an empty integrate.
 new: The init service then completes the §10.6 macro-sequence with an empty integrate (D-067).
@@ -392,14 +401,16 @@ old: project → [sweep → guards → handlers]\ → due `s_update` calls → f
 new: > project → [sweep → guards → handlers]\ → due `s_update` calls → first snapshot
 
 old: After the first snapshot `init!` takes the trace header, the checkpoint (the `Model`'s state at a frame top as one value) of the state the sequence leaves (§11.5, D-274).
+new: After the first snapshot `init!` takes the trace header, the checkpoint (the `Model`'s state at a frame top as one value) of the state the sequence leaves (§11.5, D-274).
+note: Step 5 fix1: P1-35's glosses of the chain's terms are the added blocks below; the trace header keeps its appositive gloss.
 
 old: The parity with an ordinary boundary is exact, not approximate.
 note: boundary linked here, since the old link sat inside 'boundary zero' (F4)
 
 old: The pieces follow one by one.
-new: The pieces follow one by one, in run order. Projection, the sweep, events and the due `s_update` calls come first, then the `t₀` argument, then what boundary zero (the initialization boundary at `t₀`) means for trim.
+new: The pieces follow one by one, in run order. Projection, the sweep, events and the due `s_update` calls come first, then the `t₀` argument, then what boundary zero (the initialization boundary, the ordinary macro-sequence with an empty integrate) means for trim.
 tag: X
-note: the context's parts sentence (survey part C); boundary zero linked and glossed at its first prose use (late link fixed, F4), gloss from #g-boundary-zero
+note: the context's parts sentence (survey part C); boundary zero linked and glossed at its first prose use (late link fixed, F4), gloss from #g-boundary-zero Step 5 fix1: P1-27.
 
 old: - Project runs.
 
@@ -408,6 +419,8 @@ old: Authored `x` can sit off-manifold.
 old: A hand-assembled quaternion may be ulps off unit norm, or a condition (the path-addressed sparse overlay that sets a build's state) may write part of a constrained block against fresh defaults.
 
 old: Projection after condition writes holds the same position it holds after any other `x` mutation.
+new: After condition writes, projection (the optional per-component hook `x ← x_projection(x)`) holds the same position it holds after any other `x` mutation.
+note: Step 5 fix1: P1-35.
 
 old: And it costs nothing when the state is already clean.
 
@@ -416,6 +429,8 @@ old: - The sweep runs, and every discrete output stage publishes, due or not (D-
 old: `t₀` is a grid point of every phase-free divisor, so the `Φ = 0` components are due in full.
 
 old: An offset component (§10.5) is not due, because its first tick is at `Φ·Δt_base`.
+new: An offset component (§10.5) is not due, because its first tick (an instant at which its stages and update run) is at `Φ·Δt_base`.
+note: Step 5 fix1: P1-35.
 
 old: Its output stages run at boundary zero all the same, publishing from the authored `s` and the `t₀` table in the ordinary sorted walk.
 
@@ -426,12 +441,18 @@ old: The schedule owns every instant after `t₀`, and the first sample the comp
 old: What the rule buys is a `t₀` snapshot carrying the authored world fully evaluated.
 
 old: No published cell holds the probe's synthesized values.
+new: No published cell holds a synthesized probe value (a fabricated value a build-time probe runs on).
+note: Step 5 fix1: P1-35: the probe's synthesized values are probe values (#g-probe-value, 'the fabricated values a build-time probe runs on'), so the link moves there with that gloss, as P2-13 rules for §14.8's twin sentence.
 
 old: That is the §14.6 barrier extended from the root inputs to the whole table.
+new: That is the probe-value barrier of §14.6 extended from the root inputs to the whole table.
+note: Step 5 fix1: P1-35: §14.6 calls it the probe-value barrier.
 
 old: - Events run.
 
 old: A condition can land a guard predicate in holding territory (firing on not-holding → holding transitions, never bare sign changes).
+new: A condition can land a guard predicate, a `Bool`-valued form or the sign of a continuous function, in holding territory (firing on not-holding → holding transitions, never bare sign changes).
+note: Step 5 fix1: P1-35.
 
 old: An authored stall flag, or a strut authored into contact, does exactly that.
 
@@ -441,16 +462,17 @@ old: The prior rule grounds that timing (§10.6).
 new: The prior rule grounds that timing (§10.6, D-292).
 tag: C
 newcites: §10.6 D-292
-note: D-292 bullet 1: 'Boundary zero sets every prior to not-holding, so an authored condition whose guard holds fires at t₀'; plain, §10.6 6487 bolds it (O7)
+note: D-292 bullet 1: 'Boundary zero sets every prior to not-holding, so an authored condition whose guard holds fires at t₀'; plain, §10.6 6487 bolds it (O7) Step 5 fix1: P1-28.
 
 old: Boundary zero establishes every guard prior (the event's stored predicate sample from the previous boundary) as not-holding.
-note: the late boundary-zero link moves to the section's first prose use (F4)
+new: Boundary zero establishes every guard prior (the event's stored predicate sample from the previous boundary) as not-holding.
+note: the late boundary-zero link moves to the section's first prose use (F4) Step 5 fix1: P1-28.
 
 old: Suppressing those firings was rejected (D-067), on the stage-on-interaction lesson of §11.7 (widgets stage on edit or activation, never per render pass). Insurance that masks invariant violations is anti-diagnostic (D-026).
-new: Suppressing those firings was rejected (D-067), on the lesson of the stage-on-interaction rule (§11.7). That lesson is that insurance masking invariant violations is anti-diagnostic (D-026).
+new: Suppressing those firings was rejected (D-067), on the lesson of the stage-on-interaction rule (when a GUI widget stages a new value) (§11.7). That lesson is that insurance masking invariant violations is anti-diagnostic (D-026).
 tag: R
 ruling: R9
-note: F14: the gloss describing the parked GUI's widgets goes, and the lesson is stated as the insurance rule (§11.7 8337-8340, D-026)
+note: F14: the gloss describing the parked GUI's widgets goes, and the lesson is stated as the insurance rule (§11.7 8337-8340, D-026) Step 5 fix1: P1-35.
 
 old: The trace header is taken after the sequence (§11.5).
 
@@ -463,6 +485,8 @@ note: D-274 bullet 3, 'runs no boundary zero', and bullet 4, 'Replay restores it
 old: The checkpoint records the post-firing state faithfully and suppresses nothing.
 
 old: A stop request already reading `STOP_REQUESTED` is a different category.
+new: A stop request (an output port of the framework enum `StopFlag`) already reading `STOP_REQUESTED` is a different category.
+note: Step 5 fix1: P1-35.
 
 old: Nothing fires.
 
@@ -478,6 +502,8 @@ note: list label goes plain (R7)
 old: This follows from an interval-alignment fact that is easy to mis-picture.
 
 old: It is hereby a taught contract, sibling to the boundary-sampling line (§8.6).
+new: It is hereby a taught contract, sibling to the boundary-sampling contract (§8.6).
+note: Step 5 fix1: P1-29.
 
 old: A boundary's `s_update` is the outgoing transition.
 new: A boundary's `s_update` is the outgoing transition (D-067).
@@ -559,14 +585,16 @@ old: - A guard firing at commit is a wanted failure signal.
 note: bold lead-in goes plain: D-067 bullet 3's one bold sits on 'Trim is untouched' (R7)
 
 old: Today's hand-written trim asserts (`!stall`, no weight-on-wheels, `ω > ω_idle`) become the model's own event logic, surfaced through the ordinary machinery instead of `@assert`.
-new: The hand-written trim asserts of Flight.jl's Cessna 172 models (no weight-on-wheels, `ω > ω_idle`) become the model's own event logic, surfaced through the ordinary machinery instead of `@assert`.
+new: The hand-written trim asserts (no gear strut in ground contact, engine speed `ω` above `ω_idle`) of Flight.jl's two Cessna 172 variants, c172s and c172x, become the model's own event logic, surfaced through the ordinary machinery instead of `@assert`.
 tag: R
 ruling: R32
-note: R32: `!stall` goes, since c172s.jl 244 sets stall = false and asserts nothing of it. R12: owner checked: ~/.julia/dev/Flight.jl/lib/FlightApps/src/c172/c172s/c172s.jl 256-257 and c172x/c172x.jl 317-318 (the weight-on-wheels and ω_idle asserts after f_init!); see rulings on !stall
+note: R32: `!stall` goes, since c172s.jl 244 sets stall = false and asserts nothing of it. R12: owner checked: ~/.julia/dev/Flight.jl/lib/FlightApps/src/c172/c172s/c172s.jl 256-257 and c172x/c172x.jl 317-318 (the weight-on-wheels and ω_idle asserts after f_init!); see rulings on !stall Step 5 fix1: P1-30 and P1-7.
 
 old: A handler that fires at commit moves the committed stores off the solved point.
 
 old: Saying nothing would be warn-but-assign relocated.
+new: Saying nothing would relocate warn-but-assign, where the trim of Flight.jl's Cessna 172 model (`c172.jl`) warns on a failed optimization and assigns its result anyway.
+note: Step 5 fix1: P1-30.
 
 old: The channel that says it is the trim report (§14.8).
 new: The channel that says it is the trim report (§14.8, D-126).
@@ -576,11 +604,11 @@ newcites: §14.8 D-126
 note: bold headline of D-126's one ruling, 'Events firing at trim's boundary zero get a channel, the TrimReport carries the fired set'; first in reading order, §14.8 points (R7)
 
 old: - A commit-fired handler is not the only mover, and the second one is unconditional.
-new: - A commit-fired handler is not the only mover, and the second one is unconditional (D-155).
+new: - A commit-fired handler is not the only mover. Projection is the second, and it is unconditional (D-155).
 tag: R
-ruling: R7
+ruling: R7 B6
 newcites: D-155
-note: bold lead-in becomes the bold headline clause of D-155's first ruling, 'Projection is named the second legitimate mover of the committed point'; §14.8 bolds TrimCommitResiduals (unit G)
+note: bold lead-in becomes the bold headline clause of D-155's first ruling, 'Projection is named the second legitimate mover of the committed point'; §14.8 bolds TrimCommitResiduals (unit G). B6: the bold leaves the framing clause, which stands plain as its own sentence, for the dictated headline "Projection is the second, and it is unconditional"; "the second one" is now named projection, glossed earlier in §14.5.
 
 old: Boundary zero's first act is `x_projection`, so the committed `x` is `x_projection(x)`, not the solver's `x`.
 
@@ -589,12 +617,17 @@ old: An attitude quaternion renormalized by a few ulps is the canonical case.
 old: That move is legitimate, wanted, and usually invisible in the residuals.
 
 old: But the point the stores sit at is no longer the point the verdict was read at.
+new: But the point the stores sit at is no longer the point the solver's convergence verdict was read at (§14.8).
+newcites: §14.8
+note: Step 5 fix1: P1-32, the verdict named and pointed to §14.8, where 'The convergence verdict' is specified.
 
 old: Both movers take the same remedy, specified with the report in §14.8.
 
 old: ### 14.6 Root-input totality: the missing-value error and the `override` combinator
 
 old: Root inputs are the one initialized datum without declared defaults.
+new: Root inputs (the root's own input faces) are the one initialized datum without declared defaults.
+note: Step 5 fix1: P1-35.
 
 old: That is the bare-types decision (§11.3), upheld here (D-068).
 new: That is the bare-types decision (§11.3), upheld here (D-068, D-376).
@@ -607,9 +640,9 @@ new: So a root input's only source before boundary zero is the condition (the pa
 note: condition linked and glossed at its first use (late link fixed); the boundary-zero gloss becomes its own sentence, one parenthetical per sentence; the gloss is #g-boundary-zero's
 
 old: Three consequences follow.
-new: Three consequences follow. They are the totality check, the probe-value barrier, and baselines layered by `override`.
+new: Three consequences follow. They are the totality check, the probe-value barrier, and baselines layered by `override` (the ordered, asymmetric layering combinator).
 tag: X
-note: the parts sentence names the three in order
+note: the parts sentence names the three in order Step 5 fix1: P1-9.
 
 old: Totality is a precondition of starting, checked by the service.
 new: Totality is a precondition of starting, checked by the service (D-068).
@@ -621,6 +654,8 @@ note: bold headline of D-068's Position sentence, 'Slot totality is enforced at 
 old: A condition value is legitimately partial.
 
 old: Fragments compose, and trim iterations write subsets.
+new: Fragments (the leaf nodes of the condition algebra, built by `set`) compose, and trim iterations write subsets.
+note: Step 5 fix1: P1-35.
 
 old: So "every root input covered" is not a property of conditions.
 
@@ -677,16 +712,20 @@ note: the citation leaves the gloss's parentheses; the slashed list spelled out
 old: A fabricated zero is a fine probe input and a terrible flight condition.
 
 old: A silently zeroed `mixture` kills the engine and sends the user debugging aerodynamics.
+new: A silently zeroed `mixture`, the mixture setting of FlightPhysics' `PistonEngine`, kills the engine and sends the user debugging aerodynamics.
+note: Step 5 fix1: P1-33.
 
 old: The services path simply contains no call to it.
 
 old: A root input gets a condition value or the application errors, with no third branch.
 
 old: Replay likewise never synthesizes.
+new: Replay (the ordinary loop with its drain reading the trace) likewise never synthesizes.
+note: Step 5 fix1: P1-35.
 
 old: The trace header holds every root-input cell as boundary zero left it, and with totality enforced that record is complete by construction (the requirement discharged, §11.3).
-new: The trace header holds every root-input cell as boundary zero left it, and with totality enforced that record is complete by construction. That discharges the requirement (§11.3).
-note: the citation leaves the parentheses
+new: The trace header (the trace's fixed preamble) holds every root-input cell as boundary zero left it, and with totality enforced that record is complete by construction. That discharges the requirement that a root input no device feeds hold a defined value from the first frame (§11.3).
+note: the citation leaves the parentheses Step 5 fix1: P1-35, trace header gloss from #g-trace-header; P1-34 spells the requirement out from §11.3 (frozen spec 7325-7326, 'a root input unfed by any device must hold a defined value from the first frame').
 
 old: Baselines are aircraft-shipped condition functions, layered by `override`.
 new: Baselines are aircraft-shipped condition functions, layered by `override` (D-068).
@@ -712,7 +751,7 @@ new: The collision is the intent, and the fourth node type, `override(base, patc
 tag: R
 ruling: R38
 newcites: D-068
-note: R38: node kind becomes node type, kind being reserved. R7: the bold term becomes the bold headline of D-068 bullet 3, 'override(base, patch) is admitted as the fourth node kind'; 'Hence' goes so the rule is not a consequence; override linked at its first prose use, no gloss (the next sentences define it)
+note: R38: node kind becomes node type, kind being reserved. R7: the bold term becomes the bold headline of D-068 bullet 3, 'override(base, patch) is admitted as the fourth node kind'; 'Hence' goes so the rule is not a consequence; override linked at its first prose use, no gloss (the next sentences define it) Step 5 fix1: P1-9.
 
 old: It is ordered and asymmetric, where `combine` is symmetric and collision-intolerant.
 note: combine linked at its first use
@@ -734,3 +773,11 @@ new: The committed condition is `override(baseline, condition(d))`, the solved c
 tag: R
 ruling: R9
 note: F25: the commit is override(baseline, condition(d*)) (src/trim.jl 425-426; §14.9 12379); norm drops the asterisk
+
+added: Both kinds of read resolve under the one service walk (§13.3).
+
+added: A fragment is the leaf node of the condition algebra, built by `set`.
+
+added: In the sequence, a sweep is one pass through the execution order against the current state, and a guard is the declared function defining an event's predicate.
+
+added: A due component is a discrete component whose schedule admits the boundary's tick index, and a snapshot is the immutable per-boundary publication.

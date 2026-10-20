@@ -1,34 +1,30 @@
 ## 14. Stopped-sim services
 
-[§9.6][s9-6] previewed trim and linearization as clients of an
-[activation](#g-activation) (the build's typed products at a given scalar
-type). The stopped-sim services
-are initialization, trim, linearization, and `checkpoint` with its partner
-`restore!`. The first three share one artifact, the
-[condition](#g-condition). A condition is the datum that says "set this build
-to this state." `checkpoint` returns a [checkpoint](#g-checkpoint) (the
-[`Model`](#g-model)'s state at a frame top as one value), and `restore!` puts
-it back. A checkpoint is a distinct value with no condition algebra
-([D-273][d-273]). [§14.1][s14-1] settles the condition's representation,
-[§14.2][s14-2] its composition, [§14.3][s14-3] its resolution and
-[§14.4][s14-4] its application; [§14.5][s14-5] covers the
-[boundary-zero](#g-boundary-zero) sequence; [§14.6][s14-6] covers
-[root-input totality](#g-root-input-totality) (the requirement that an
-application establishing a complete world cover every
-[root input](#g-root-input)); [§14.7][s14-7] the trim problem,
-[§14.8][s14-8] the trim service and [§14.9][s14-9] mounting, which together
-cover the trim service in full; and [§14.10][s14-10] covers linearization.
+[§9.6][s9-6] previewed trim and linearization as clients of an [activation](#g-activation) (the build's
+typed products at a given scalar type). The stopped-sim services are
+initialization, trim, linearization, and `checkpoint` with its partner
+`restore!`. The first three share one artifact, the [condition](#g-condition). A condition is
+the datum that says "set this build to this state." `checkpoint` returns a
+[checkpoint](#g-checkpoint) (the `Model`'s state at a frame top as one value), and `restore!`
+puts it back. A checkpoint is a distinct value with no condition algebra
+([D-273][d-273]). [§14.1][s14-1] settles the condition's representation, [§14.2][s14-2] its composition,
+[§14.3][s14-3] its resolution and [§14.4][s14-4] its application and the read selectors; [§14.5][s14-5]
+covers the initialization sequence called [boundary zero](#g-boundary-zero), [§14.6][s14-6]
+[root-input totality](#g-root-input-totality) (the requirement that an application establishing a complete
+world cover every [root input](#g-root-input)) and `override`, [§14.7][s14-7] the trim problem, [§14.8][s14-8] the
+trim service, [§14.9][s14-9] mounting and [§14.10][s14-10] linearization.
 
 #### Lifecycle preconditions
 
-**Every service requires a non-running simulation** ([D-108][d-108]). While a
-run exists the loop owns the [stores](#g-store) between [drains](#g-drain)
-(the frame-top swap that publishes staged device writes into the root inputs),
-and a service reading or writing them would race it. Pause is no exception,
-by the doctrine that freezes the [roster](#g-roster) (the list of attached
-devices, read once at `run!`). Pause is a [control-plane](#g-control-plane)
-state *inside* a run, so a prohibition that holds mid-run holds while paused
-([§11.3][s11-3], [§12.1][s12-1]).
+**Every service requires a non-running simulation** ([D-108][d-108]). While the simulation is
+`running`, the loop owns the [stores](#g-store) (the framework-owned homes of components'
+`x`, `s` and `m` state). It owns them between [drains](#g-drain) (the frame-top swap that
+publishes staged device writes into the root inputs), and a service reading or
+writing them would race it. Pause is no exception, by the doctrine that freezes
+the [roster](#g-roster) (the list of attached devices, read once at `run!`). Pause is a state
+*inside* a run, carried by the [control plane](#g-control-plane) (the separate atomic surface for
+pause, pace and the stop word), so a prohibition that holds mid-run holds while
+paused ([§11.3][s11-3], [§12.1][s12-1]).
 
 **Within the stopped-sim states, legality follows each service's inputs**
 ([D-108][d-108]).
@@ -56,33 +52,33 @@ state." `MissingInit` is distinct, and names a missing prior step. The
 `checkpoint` row's two refusals, after a `t*` stop and after an abandoned
 frame, are `CheckpointMidFrame` ([§12.6][s12-6], [Appendix C][sC]).
 
-**Each row's service also has a form on a `Model`** (a deployment materialized
-at one scalar type), gated by the model's status rather than by the lifecycle
-([D-319][d-319]). `checkpoint` and the default `linearize` are legal at
-`:consistent`. `init!`, `restore!`, `trim!` and `linearize` with an explicit
-`about` are legal at any status. A model a simulation has claimed refuses each
-form that writes, `init!`, `restore!` and `trim!`, as `ArgumentInvalid` with
-reason `:claimed` ([D-318][d-318]).
+**Each row's service also has a form on a [`Model`](#g-model)** (a deployment materialized at
+one scalar type), gated by the model's status rather than by the lifecycle
+([D-319][d-319]). `checkpoint` and the default `linearize` are legal at `:consistent`.
+`init!`, `restore!`, `trim!` and `linearize` with an explicit `about` are legal
+at any status. A model a simulation has claimed refuses each form that writes,
+`init!`, `restore!` and `trim!`, as `ArgumentInvalid` with reason `:claimed`
+([D-318][d-318]).
 
 ### 14.1 Conditions are path-addressed overlays on the declared defaults
 
-This section covers, in order, what a condition may specify, the overlay base,
-why addressing a condition by path is legitimate, the pre-sweep doctrine and
-the environment queries a condition may make.
+A [condition](#g-condition) is the value an author writes to say which state a build starts
+from. This section covers, in order, what a condition may specify, the overlay
+base, why addressing a condition by path is legitimate, the pre-sweep doctrine
+and the environment queries a condition may make.
 
-A [condition](#g-condition) may specify state fields, `x` on the continuous
-[tier](#g-tier) and `s` on the discrete. It may also specify modes, `m`, which
-only [continuous components](#g-continuous-component) have ([§3.2][s3-2]). All
-three are addressed by a slash path ([§8.6][s8-6]) plus a field name. Beyond
-state, a condition may specify [root inputs](#g-root-input), addressed by
-[face](#g-face) (the name a port wears on its component's boundary).
-**It never specifies outputs**, which are derived data ([D-063][d-063]). It
-never specifies [workspace](#g-workspace) (component-declared mutable scratch
-arriving as the `ws` bundle field) ([D-306][d-306]). Condition entries are
-validated in the collecting form ([§13.1][s13-1]). The full list is checked,
-violations are collected, and one `DiagnosticError` is thrown. A condition
-entry naming an output or a workspace field is one such violation,
-`ConditionResolution` with reason `:undeclared_field` ([Appendix C][sC]).
+A condition may specify state fields, `x` on the continuous [tier](#g-tier) (one side of
+the hybrid formalism) and `s` on the discrete. It may also specify modes, `m`,
+which only [continuous components](#g-continuous-component) have ([§3.2][s3-2]). All three are addressed by a slash
+path ([§8.6][s8-6]) plus a field name. Beyond state, a condition may specify [root inputs](#g-root-input)
+(the root's own input faces). It addresses them by [face](#g-face) (the name a port wears
+on its component's boundary). **It never specifies outputs**, which are derived data
+([D-063][d-063]). It never specifies [workspace](#g-workspace) (component-declared mutable scratch
+arriving as the `ws` bundle field) ([D-306][d-306]). Condition entries are validated in
+the collecting form ([§13.1][s13-1]). The full list is checked, violations are collected,
+and one `DiagnosticError` is thrown. A condition entry naming an output or a
+workspace field is one such violation, `ConditionResolution` with reason
+`:undeclared_field` ([Appendix C][sC]).
 
 **The overlay base is always the declared defaults** ([D-063][d-063]). Every
 [store](#g-store) (the framework-owned home of a component's `x`, `s` or `m`
@@ -101,66 +97,64 @@ is a *design-time statement about a concrete build*, written before the run
 begins, and the locality law of [§14.2][s14-2] is how an author keeps it to
 children the author owns.
 
-**A would-be init value that depends on swept outputs is either analytically
-known to the caller or an equilibrium constraint** ([D-064][d-064]). This is
-the pre-sweep doctrine, and it holds because condition writes precede the
-first [sweep](#g-sweep) (one pass through the execution order against the
-current state) by definition. The first case is trim's `α_filt = α_a`. There
-α is a *decision variable*, so the value is known above, not computable below.
-The second case is a job for the trim service, not for init.
+**A would-be init value that depends on swept outputs is either analytically known
+to the caller or an equilibrium constraint** ([D-064][d-064]). This is the pre-sweep
+doctrine, and it holds because condition writes precede the first [sweep](#g-sweep) (one
+pass through the execution order against the current state) by definition. The
+first case is trim's `α_filt = α_a` ([§14.2][s14-2]). There α is a *decision variable*, so
+the value is known above, not computable below. The second case is a job for the
+trim service, not for init.
 
-**"Caller-computable" reaches past closed-form knowledge to environment
-queries** ([D-139][d-139]). A condition needing one constructs the same handle
-the sweep will produce, and then calls the same query function the consuming
-component calls. There are two routes to that handle. One is the
-[value-level constructor](#g-value-level-constructor) (the plain public
-function building a field handle from the component and input values) of
-[§8.2][s8-2], applied to the same values the [`baseline`](#g-baseline) writes
-into the environment [component](#g-component)'s root inputs. The other
-applies in a rig where an isbits handle itself is a root-input value
-([§4.4][s4-4], [D-364][d-364]). There the condition simply holds the value the
-`baseline` wrote. Either way there is one implementation of the field math,
-evaluated one level up, with no pre-sweep and no new mechanism. Where
-closed-form enforcement of a target is not wanted at all, the second escape
-already covers the case ([D-139][d-139]). Promote the eliminated state
-coordinates to decision variables and enforce the targets as residuals on
-swept outputs. That route needs no environment access at condition time
-whatsoever.
+**"Caller-computable" reaches past closed-form knowledge to environment queries**
+([D-139][d-139]). A condition needing one constructs the same handle the sweep will
+produce, and then calls the same query function the consuming component calls.
+There are two routes to that handle. One is the [value-level constructor](#g-value-level-constructor) (the
+plain public function building a field handle from the component and input
+values) of [§8.2][s8-2]. The condition applies it to the same values the [`baseline`](#g-baseline) (the
+full-coverage condition `trim!` takes as a keyword) writes into the environment
+[component](#g-component)'s root inputs. The other applies in a rig where an isbits handle
+itself is a root-input value ([§4.4][s4-4], [D-364][d-364]). There the condition simply holds the
+value the `baseline` wrote. Either way there is one implementation of the field
+math, evaluated one level up, with no pre-sweep and no new mechanism. Where
+closed-form enforcement of a target is not wanted at all, the doctrine's second
+case already covers it ([D-139][d-139]). Promote the eliminated state coordinates to
+decision variables and enforce the targets as residuals on swept outputs. That
+route needs no environment access at condition time whatsoever.
 
 ### 14.2 Fragment composition: locality without schema
 
 Init knowledge is [component](#g-component)-local. An engine component knows
-`n_eng → ω = n_eng·ω_rated`, and nothing above it should have to. Making that
-locality a schema entry was rejected ([D-064][d-064]). That spelling would
-declare `initialize(::C, spec)`, a declarative rebirth of `f_init!`,
-FlightCore's per-model initialization hook. It would also add an
-[assembly](#g-assembly)-level rule routing sub-specs to children. This section
-covers, in order, the condition method, composition by pull, what `set`'s
-payloads may name, the inert tree, the empty-prefix refusal, the locality law,
-and the collision and blend errors.
+`n_eng → ω = n_eng·ω_rated`, and nothing above it should have to. `n_eng` is the
+engine speed as a fraction of its rated speed `ω_rated`. Making that locality a
+schema entry was rejected ([D-064][d-064]). That spelling would declare
+`initialize(::C, spec)`, a declarative rebirth of `f_init!`, FlightCore's
+per-model initialization hook. It would also add an [assembly](#g-assembly)-level rule routing
+sub-specs to children. This section covers, in order, the condition method,
+composition by pull, what `set`'s payloads may name, the inert tree, the
+empty-prefix refusal, the locality law, and the collision and blend errors.
 
-**What preserves the locality is an idiom, not schema** ([D-064][d-064]). It
-is the [condition](#g-condition) method, a method of the framework's
-`condition` generic, shipped beside the component and dispatched on the
-component, returning the component's own [fragment](#g-fragment) (the leaf
-node of the condition algebra, built by `set`) ([D-405][d-405]). The generic
-is framework-owned so that an owner's pull, described below, reaches a
+**What preserves the locality is an idiom, not schema** ([D-064][d-064]). It is the condition
+method, a method of the framework's `condition` generic, shipped beside the
+component and dispatched on the component, returning the component's own
+[fragment](#g-fragment) (the leaf node of the condition algebra, built by `set`) ([D-405][d-405]). The
+generic is framework-owned so that an owner's pull, described below, reaches a
 child's fragment when the two live in different packages. A model package
 extends it through `import Redstone: condition`, as it extends the declaration
-family ([§8.1][s8-1]). No shadowing check covers it, because a method written
-to a foreign `condition` fails loudly at the owner's pull, as a `MethodError`
-naming the child ([D-316][d-316]). In the first block, the engine is an
-illustrative component named after FlightPhysics' `PistonEngine`, and `Phase`
-an illustrative enum of its modes.
+family ([§8.1][s8-1]). No shadowing check covers it, because a method written to a
+foreign `condition` fails loudly at the owner's pull, as a `MethodError` naming
+the child ([D-316][d-316]). In the first block, the engine is an illustrative component
+named after FlightPhysics' `PistonEngine`, and `Phase` an illustrative enum of
+its modes.
 
 ```julia
 condition(eng::PistonEngine; n_eng) =
     set(x = (ω = n_eng * eng.ω_rated,), m = (phase = Phase.running,))
 ```
 
-Fragments are composed by *pull* from the structure's owner, here
-`C172XSystems` (the C172X aircraft's systems assembly, after FlightApps'
-`C172X.Systems`).
+Fragments are composed by *pull* from the structure's owner, here `C172XSystems`
+(the C172X aircraft's systems assembly, after FlightApps' `C172X.Systems`). In
+the block, `α_filt` and `β_filt` are the aerodynamics' filtered airflow angles,
+set to the angle of attack `α_a` and the sideslip `β_a`.
 
 ```julia
 condition(sys::C172XSystems; n_eng, α_a, β_a) = combine(
@@ -168,30 +162,28 @@ condition(sys::C172XSystems; n_eng, α_a, β_a) = combine(
     at("aero",       set(x = (α_filt = α_a, β_filt = β_a))))
 ```
 
-`set`'s payloads speak only about the component at the authoring point.
-Addressing children is exclusively the job of [`at`](#g-at) (the scoping
-combinator), so there is one way to say everything. A `u` payload names faces
-*of the authoring level's [contract](#g-contract)*. **Resolution walks the
-export chain to the root input** and errors if the face never surfaces
-([D-065][d-065]), as `ConditionResolution` with reason `:no_input_face`, or
-`:unexported_face` at the root ([Appendix C][sC]). That walk always has a name
-to follow. One-level routing gives every level a declared face for every
-signal crossing its boundary, so the chain a sub-assembly's face routes
-through is in the `Build` ([§6.1][s6-1], [§9.2][s9-2], [D-207][d-207]). An
-internally-wired input has no root input behind it, and writing it would be
-meaningless because the first sweep overwrites it. Such a write is
-`ConditionResolution` with reason `:internally_wired`. Unexported stays
-unpokeable for init exactly as it is for a front end's panels
-([§11.7][s11-7]).
-
 Dispatch selects variant-specific methods, so the actuation split between
-FlightApps' C172 variants, c172s and c172x, costs no upstream edits.
+Flight.jl's two Cessna 172 variants, c172s and c172x, costs no upstream edits.
 
-**Composition builds an inert, lazy [fragment tree](#g-fragment-tree)**
-([D-065][d-065]). `set` builds the leaf, `at` and [`combine`](#g-combine)
-(the symmetric, collision-intolerant combinator) build the tree's inner nodes,
-and `override` builds a fourth node type ([§14.6][s14-6]). No path arithmetic
-happens at composition.
+`set`'s payloads speak only about the component at the authoring point.
+Addressing children is exclusively the job of [`at`](#g-at) (the scoping combinator), so
+there is one way to say everything. A `u` payload names faces *of the authoring
+level's [contract](#g-contract)* (its declared interface). **Resolution walks the export chain to
+the root input** and errors if the face never surfaces ([D-065][d-065]), as
+`ConditionResolution` with reason `:no_input_face`, or `:unexported_face` at the
+root ([Appendix C][sC]). That walk always has a name to follow. One-level routing
+gives every level a declared face for every signal crossing its boundary, so the
+chain a sub-assembly's face routes through is in the `Build` ([§6.1][s6-1], [§9.2][s9-2],
+[D-207][d-207]). An internally-wired input has no root input behind it, and writing it
+would be meaningless because the first sweep overwrites it. Such a write is
+`ConditionResolution` with reason `:internally_wired`. Unexported stays
+unpokeable for init exactly as it is for a front end's panels ([§11.7][s11-7]).
+
+**Composition builds an inert, lazy [fragment tree](#g-fragment-tree)** (the nested `Fragment`,
+`Scoped`, `Combined` and override nodes) ([D-065][d-065]). `set` builds the leaf, `at`
+and [`combine`](#g-combine) (the symmetric, collision-intolerant combinator) build the tree's
+inner nodes, and [`override`](#g-override), the ordered, asymmetric layering combinator, builds
+a fourth node type ([§14.6][s14-6]). No path arithmetic happens at composition.
 
 ```julia
 struct Fragment{X,S,M,L}  x::X; s::S; m::M; u::L  end      #set(; x, s, m, u): self-vocabulary payloads; no paths
@@ -201,85 +193,84 @@ struct Combined{T<:Tuple}  nodes::T  end                   #combine(ns...): coll
 
 Every node is isbits except the prefix strings, and a prefix is a reference to
 the author's own literal. So, with literal prefixes, rebuilding the tree per
-trim iteration allocates nothing. There is no path arithmetic and no copy of
-the payloads. Composition checks three things, each by type or length alone,
-and none allocates. Each `set` payload is a NamedTuple, each combinator
-operand is a node, and each `at` prefix is nonempty. A `set` payload that is
-not a NamedTuple is `ConditionNodeMisuse` with reason `:set_payload`
-([Appendix C][sC]). The trim of Flight.jl's Cessna 172 model (`c172.jl`)
-writes each trial state through FlightPhysics' `assign!`, and the zero-alloc
-property of that `assign!` loop holds of the construction with literal
-prefixes and of the specialized `apply!` that writes the tree ([§14.4][s14-4])
-alike. An evaluation's cost is therefore the sweep it
+trim iteration allocates nothing. There is no path arithmetic and no copy of the
+payloads. Composition checks three things, each by type or length alone, and
+none allocates. Each `set` payload is a NamedTuple, each combinator operand is a
+node, and each `at` prefix is nonempty. A `set` payload that is not a NamedTuple
+is `ConditionNodeMisuse` with reason `:set_payload` ([Appendix C][sC]). The trim of
+Flight.jl's Cessna 172 model (`c172.jl`) writes each trial state through
+FlightPhysics' `assign!`, a loop that allocates nothing. That property holds of
+the construction with literal prefixes and of the specialized `apply!` that
+writes the tree ([§14.4][s14-4]) alike. An evaluation's cost is therefore the sweep it
 feeds.
 
-**`at` refuses an empty prefix when it is called** ([D-278][d-278]). An empty
-prefix names no child, and a node meant for the level where it is authored
-stays unwrapped. The refusal holds at the root too, because `at` builds an
-inert tree and cannot know where it will be mounted. On a condition node it
-raises `ConditionNodeMisuse` with reason `:empty_prefix` ([Appendix C][sC])
-before any resolution pass runs. The read side's lifts refuse the same way
-([§14.9][s14-9], [D-278][d-278]).
+**`at` refuses an empty prefix when it is called** ([D-278][d-278]). An empty prefix names no
+child, and a node meant for the level where it is authored stays unwrapped. The
+refusal holds at the root too, because `at` builds an inert tree and cannot know
+where it will be mounted. On a node of a [condition](#g-condition) (the path-addressed sparse
+overlay that sets a build's state), `at` raises `ConditionNodeMisuse` with
+reason `:empty_prefix` ([Appendix C][sC]) before any resolution pass runs. The read
+side's lifts refuse the same way ([§14.9][s14-9], [D-278][d-278]).
 
-**The locality law here is the one [§6.1][s6-1] states for connections**, now
-in its third instance ([D-065][d-065]). The three instances are
-[local wires](#g-local-wire), computed interface connections and conditions.
-Each level speaks its own fields, its declared children's names, and its own
-faces. Delegation runs by dispatch at every genericity [seam](#g-seam). An
-`at` prefix may stop at *any* child's faces, owned or
-[generically held](#g-generic-holding), because the face graph is total
-([D-207][d-207]). A deep `at` or condition path resolves wherever the
-structure has it ([§13.3][s13-3], [D-414][d-414]). Absolute paths exist only
-in the flattened list of condition entries, a *compiled derivative* of the
-composition, as [cell](#g-cell) offsets are of `local_wires`. Under the
-locality law, substituting a component invalidates only the fragments its
-owner shipped. The build checks the law wherever it can see what the law
-constrains. Wiring resolves one level ([§6.1][s6-1]). The faces a `u` payload
-names resolve through the export chain, under any `at` prefix
-([D-207][d-207]). No check refuses a deep path past a generically held field
-([D-414][d-414]). An author who ships a fragment for a family scopes it by
-dispatch on the holding's type parameter, so a fragment reaching into one
-powerplant is defined for the aircraft that hold that powerplant
-([D-414][d-414]). Ownership alone is convention. It is a fact about who
+**The locality law here is the one [§6.1][s6-1] states for connections**, now in its third
+instance ([D-065][d-065]). The three instances are [local wires](#g-local-wire) (wires from one child's
+port to a child's face), computed interface connections and conditions. Each
+level speaks its own fields, its declared children's names, and its own faces.
+Delegation runs by dispatch at every genericity [seam](#g-seam) (a narrow, named interface
+kept deliberately thin). An `at` prefix may stop at *any* child's faces, owned or
+[generically held](#g-generic-holding) (held through a non-concrete field type), because the face
+graph is total ([D-207][d-207]). A deep `at` or condition path resolves wherever the
+structure has it ([§13.3][s13-3], [D-414][d-414]). Absolute paths exist only in the flattened list
+of condition entries, a *compiled derivative* of the composition, as the offsets
+of [cells](#g-cell) (the typed entries of the signal table) are of `local_wires`. Under the
+locality law, substituting a component invalidates only the fragments its owner
+shipped. The build checks the law wherever it can see what the law constrains.
+Wiring resolves one level ([§6.1][s6-1]). The faces a `u` payload names resolve through
+the export chain, under any `at` prefix ([D-207][d-207]). No check refuses a deep path
+past a generically held field ([D-414][d-414]). An author who ships a fragment for a
+family scopes it by dispatch on the holding's type parameter, so a fragment
+reaching into one powerplant is defined for the aircraft that hold that
+powerplant ([D-414][d-414]). Ownership alone is convention. It is a fact about who
 maintains the code, and the build cannot see it, so keeping a deep path inside
-an owned subtree is idiomatic rather than machine-checked ([D-065][d-065]).
-`set`, `at` and `combine` are ordinary functions with no privileges, as the
-blocks of [§13.7][s13-7] are ordinary components.
+an owned subtree is idiomatic rather than machine-checked ([D-065][d-065]). `set`, `at`
+and `combine` are ordinary functions with no privileges, as the blocks of [§13.7][s13-7]
+are ordinary components.
 
 A `combine` collision is two condition entries on one leaf. **Collisions are
 errors at resolution** ([D-065][d-065]). The error is `DuplicateConditionLeaf`
-([Appendix C][sC]), and it reports *both* origins. Its message names the
-layering combinator. It reads "`combine` is collision-intolerant by design — use
-`override(base, patch)` to layer." Last-writer-wins was rejected
-([D-065][d-065]). That rejection is also why **the combinator is not
-`Base.merge`**, and is no longer named after it ([D-204][d-204]). `Base.merge`
-is last-wins on NamedTuples, the exact semantics rejected here, and its own
-name should not promise them. Because `combine` is its own function, a bare
-NamedTuple blended into a node cannot fall through to any last-wins method.
+([Appendix C][sC]), and it reports *both* origins. Its message names the layering
+combinator. It reads "`combine` is collision-intolerant by design — use
+`override(base, patch)` to layer." Last-writer-wins was rejected ([D-065][d-065]). **The
+combinator is not `Base.merge`**, and is no longer named after it ([D-204][d-204]). The
+last-writer-wins rejection is also the reason. `Base.merge` is last-wins on
+NamedTuples, the exact semantics rejected here, and its own name should not
+promise them. Because `combine` is its own function, a bare NamedTuple blended
+into a node cannot fall through to any last-wins method.
 
-The blend is still closed explicitly. A `combine(::Fragment, ::NamedTuple)`,
-or any other blend of a condition node with a bare NamedTuple, is an error
-method. Its message is directive. It says to wrap the NamedTuple in `set(…)`
-(or `at(prefix, set(…))`) and to combine nodes with nodes. The rejection
-carries a [kind](#g-kind) like every other. **It is `ConditionNodeMisuse`**
-([Appendix C][sC], [D-113][d-113]), carrying the offending argument's type and
-the node types in hand. It is raised at composition time, before any
-resolution pass runs or any origin exists. That is why it is its own kind and
-not a `ConditionResolution` sub-kind ([§14.3][s14-3]). The explicit,
-*ordered* layering spelling, [`override`](#g-override), belongs with the use
-case [root-input totality](#g-root-input-totality) produces ([§14.6][s14-6]).
+The blend is still closed explicitly. A `combine(::Fragment, ::NamedTuple)`, or
+any other blend of a condition node with a bare NamedTuple, is an error method.
+Its message is directive. It says to wrap the NamedTuple in `set(…)` (or
+`at(prefix, set(…))`) and to combine nodes with nodes. Like every other, the
+rejection carries a [kind](#g-kind) (a diagnostic's identity in a closed, enumerated set).
+**The blend rejection is `ConditionNodeMisuse`** ([Appendix C][sC], [D-113][d-113]), carrying the
+offending argument's type and the node types in hand. It is raised at
+composition time, before any resolution pass runs or any origin exists. That is
+why it is its own kind and not a `ConditionResolution` sub-kind ([§14.3][s14-3]). The
+explicit, *ordered* layering spelling, `override`, belongs with the use case of
+[root-input totality](#g-root-input-totality) (the requirement that an application establishing a complete
+world cover every root input) ([§14.6][s14-6]).
 
 ### 14.3 Resolution: flatten, validate, compile once
 
-Resolution takes the root node plus a [`Build`](#g-build) (the artifact
-`build(world)` produces). This section covers, in order, flattening, the
-collecting checks, the two lookup families, the plan, the converter rule with
-its two cases, and overlay partiality.
+Resolution turns a composed [condition](#g-condition) (the path-addressed sparse overlay that
+sets a build's state) into plans the services can apply. It takes the root node
+plus a [`Build`](#g-build) (the artifact `build(world)` produces). This section covers, in
+order, flattening, the collecting checks, the two lookup families, the plan, the
+converter rule with its two cases, and overlay partiality.
 
-**Flattening is the only place path strings are ever concatenated**
-([D-065][d-065]). It is a trivial recursion with a path accumulator, and it
-also records each [condition](#g-condition) entry's tree position, its
-`getfield`/`getindex` step tuple.
+**Flattening is the only place path strings are ever concatenated** ([D-065][d-065]). It is a
+trivial recursion with a path accumulator, and it also records each condition
+entry's tree position, its `getfield`/`getindex` step tuple.
 
 The collecting pass then checks each flat condition entry:
 
@@ -332,21 +323,21 @@ There are two cases.
 
 A leaf already at the activation's scalar type is decision-descended. Under a
 `Dual`-seeded evaluation of a type-stable `trim_condition(d)`, every
-decision-dependent leaf is `Dual`-typed in the shape ([§14.7][s14-7]). Such a
-leaf takes the type's ordinary `convert`/constructor methods *at that eltype*.
-An authored `RQuat` (FlightPhysics' rotation quaternion) of `Dual`s becomes
-the `SVector{4}` state leaf at `Dual`, with the partials flowing through
-untouched. That untouched flow of partials is what makes the seeded decisions
-reach the [sweep](#g-sweep) at all. At the [nominal](#g-nominal) activation
-the same rule is the ordinary `Float64` conversion. An authored `RQuat` value
-becomes the `SVector{4}` state leaf it initializes.
+decision-descended leaf is `Dual`-typed in the shape ([§14.7][s14-7]). Such a leaf takes
+the type's ordinary `convert`/constructor methods *at that eltype*. An authored
+`RQuat` (FlightPhysics' rotation quaternion) of `Dual`s becomes the `SVector{4}`
+state leaf at `Dual`, with the partials flowing through untouched. That
+untouched flow of partials is what makes the seeded decisions reach the [sweep](#g-sweep) at
+all. At the [nominal](#g-nominal) activation (the `Float64` one), the same rule is the
+ordinary `Float64` conversion. An authored `RQuat` value becomes the
+`SVector{4}` state leaf it initializes.
 
-A plain `Float64` leaf against a non-nominal activation's
-[scratch](#g-scratch) is a held constant, and it takes the `Float64 → Dual`
-zero-partial embedding. That embedding is semantically exact in that case, and
-in no other. "Held at the operating point" *is* zero partials. Zero partials
-are the whole of a linearization operating-point condition, which is
-authored decision-free ([§14.10][s14-10]).
+A plain `Float64` leaf against a non-nominal activation's [scratch](#g-scratch) (mutable
+working storage whose contents are never authoritative) is a held constant, and
+it takes the `Float64 → Dual` zero-partial embedding. That embedding is
+semantically exact in that case, and in no other. "Held at the operating point"
+*is* zero partials. Zero partials are the whole of a linearization operating-point
+condition, which is authored decision-free ([§14.10][s14-10]).
 
 The selection is a one-time resolution decision, and it leaves the nominal
 exact-match doctrine for table [cells](#g-cell) ([§9.5][s9-5]) untouched.
@@ -357,4 +348,3 @@ Overlay partiality for the `s` and `m` stores is baked the same way
 ([D-065][d-065]). Each `s` or `m` store's write is one whole value,
 `merge(defaults, overlay)`, with the store's declared defaults resolved at
 compile time under the overlay-base rule ([§14.1][s14-1]).
-
