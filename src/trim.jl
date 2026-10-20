@@ -97,10 +97,11 @@ fields included. A `reads` that is no read set passes through untouched, so
 read set's own `at` (D-278).
 """
 at(prefix::AbstractString, problem::TrimProblem) = TrimProblem(
-    problem.guess, problem.lower, problem.upper,
-    d -> at(prefix, problem.condition(d)),
-    problem.reads isa Reads ? at(prefix, problem.reads) : problem.reads,
-    problem.residuals, problem.tolerances, problem.checks, problem.check_tolerances)
+    guess = problem.guess, lower = problem.lower, upper = problem.upper,
+    condition = d -> at(prefix, problem.condition(d)),
+    reads = problem.reads isa Reads ? at(prefix, problem.reads) : problem.reads,
+    residuals = problem.residuals, tolerances = problem.tolerances,
+    checks = problem.checks, check_tolerances = problem.check_tolerances)
 
 """
 The service's own seeding tag (§9.4): an activation is keyed by a *concrete*

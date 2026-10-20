@@ -206,9 +206,3 @@ introducing a deviation adds its bullet, and the one retiring it deletes it.
 Where the code's shape is coherent and the spec may be what moves, the call
 is the user's; a ruling lands docs-commit-first, then the bullet retires or
 the code conforms.
-
-- **The `at` lift builds its `TrimProblem` positionally** (§14.9, D-188).
-  D-188 rules that every `TrimProblem` is built by keyword, the `at` lift
-  included, and §14.9's sketch is keyword-form. `at(prefix, problem)` in
-  `src/trim.jl` calls the positional constructor. The results are the same;
-  the code conforms by a one-line change. Found by chapter 14's survey.
