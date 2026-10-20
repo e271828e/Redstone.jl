@@ -102,6 +102,15 @@ its positional constructor. A block with one required parameter, such as
 `Constant(value)`, takes it positionally. Its docstring shows the keyword
 form, and its tests call it.
 
+A block's signal types carry the scalar as a type parameter. The walk
+substitutes type parameters and never fields ([§8.2][s8-2], [D-238][d-238]), so a `Float64`
+inside a parameterless struct is pinned whole, and a continuous stage that
+builds such a struct from `Dual`s fails the build's `Dual` probe ([D-307][d-307]).
+Every port type and every `x` leaf type a block ships is therefore
+`Pose{T}` rather than `Pose` with `Float64` fields. A block's own
+parameters, a discrete-tier type, and a value a continuous stage builds
+from pinned data alone need no parameter.
+
 ### Structure
 
 | Block | Status | Mechanism |
@@ -198,9 +207,11 @@ qualifies the two they share, `StateSpace` and `TransferFunction`.
 [d-184]: ../decisions.md#d-184--fold-group-into-the-spec-as-an-ordinary-library-component
 [d-226]: ../decisions.md#d-226--reach-the-public-surface-by-qualified-name-until-the-export-audit
 [d-231]: ../decisions.md#d-231--require-isbits-store-values-checked-at-build
+[d-238]: ../decisions.md#d-238--decide-embed-accept-on-the-type-lift-the-arrival-compare-exactly
 [d-263]: ../decisions.md#d-263--one-arity-on-both-tiers-plain-contracts-the-pinned-marker-and-the-mandatory-store
 [d-266]: ../decisions.md#d-266--two-doors-for-an-ad-opaque-implementation-the-local-rule-and-the-freeze-block
 [d-276]: ../decisions.md#d-276--address-a-leaf-inside-a-port-value-by-a-dotted-leaf-address
+[d-307]: ../decisions.md#d-307--keep-authored-continuous-math-generic-over-the-scalar
 [d-311]: ../decisions.md#d-311--fold-the-summing-junction-and-the-bool-gates-into-one-generic-junction
 [d-312]: ../decisions.md#d-312--settle-the-leaf-blocks-constant-pins-unitdelay-holds-its-initial-value-freeze-strips-by-broadcast
 [d-313]: ../decisions.md#d-313--admit-a-library-block-by-judgement-against-three-guidelines
