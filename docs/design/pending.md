@@ -71,6 +71,20 @@ item changes what the spec says, the spec edit is part of the item.
       with a public Base name when the spec's verb is that word, reached by
       qualified name or explicit import; `peek` (§11.7, D-270) is the first
       instance, the panel kit's verb beside `Base.peek`.
+- **The API docstrings.** The docstrings are written for the maintainer:
+  nearly all cite spec sections or log entries, and many open with a design
+  note where the manual asks for a signature. A user reads them through
+  `?name` and the API reference, and understands neither a section mark nor
+  a decision number. Every docstring of a name the audit confirms as API is
+  rewritten to the manual's conventions: the indented signature, a
+  one-sentence summary, the elaboration in short paragraphs, `# Examples`
+  where a doctest is cheap, and `[`name`](@ref)` cross-references, with no
+  citation of the spec or the log. The citations move to a `# Design:`
+  comment under the docstring, where a diff review still sees them.
+  Unexported names keep their docstrings as they are. A short style sheet
+  beside `docs/design/tools/spec_style.md` fixes the convention before the
+  rewrite runs, one source file per agent with a cold review after. It
+  follows the audit because the audit decides the set.
 - **The first release.** Registration in General, the tag, and the
   announcement, in that order. Registration is quiet and the announcement
   is the public moment, so the announcement waits for everything above.
@@ -86,38 +100,10 @@ item changes what the spec says, the spec edit is part of the item.
   matter and the appendices follow `docs/spec_rewrite/recipe.md`, and that
   directory's README tracks them. Until a part's turn comes, it keeps the old
   markers.
-- **The normative kernel**, after the rewrite lands. Settled on 2026-10-14:
-  the spec and the code are redundant where the spec describes mechanism,
-  and that description is what costs the bookkeeping on every increment and
-  leaves an implementer unsure which sentences are decisions. The code
-  already fulfils the spec (this file holds additions, not debt), so once
-  the appendices are rewritten the spec splits into three homes. The kernel keeps every bold ruling with one line of context,
-  its D-citation and a pointer to the test that pins it, in Appendix A's
-  shape; the cross-cutting chapters on evaluation order and time (§5, §10)
-  stay in prose. Description moves beside the code, into docstrings,
-  comments and `implementation.md`, where a diff review catches drift in one
-  place. The human-facing views are generated: an API reference from the
-  docstrings, diagrams of the build pipeline and the frame, the companions as
-  tutorials. The decision log is untouched. The rewrite comes first because
-  its survey and track 2 are the classification: a bold with an entry is the
-  kernel's unit, so extraction from a rewritten chapter is near mechanical.
-  From chapter 13 the survey tags each descriptive passage with the source
-  file that realizes it, which is the migration list; chapters 1 to 12 are
-  tagged at extraction. Chapter 13's list is part H of
-  `docs/spec_rewrite/ch13/survey_1.md` and `survey_2.md` at `ae63ca9`, and
-  chapter 14's the same parts of `ch14/`'s surveys at `133b58d`. A
-  ruling about the design's shape rather than runtime behavior has no
-  natural test, so its kernel line points at the build-time
-  check or diagnostic that enforces it, and where none does, carries its
-  D-citation alone. Chapter 12's rulings with no entry beyond D-400 to
-  D-404, the pause block's condition, `checkpoint`'s latest-snapshot test
-  and the B78 rows of `rulings_batch.md` at `eb1d832`, are such description and get none.
-  The kernel extraction replaces the report that closes
-  `docs/spec_rewrite/`, whose lessons already live in its recipe.
-- **The user guide and the API reference.** The reference is the kernel's
-  generated view of the docstrings. The guide grows from the tutorial and
-  the companions, and is written once the kernel has settled what the
-  docstrings carry.
+- **The user guide and the API reference.** The reference is a Documenter
+  build over the API docstrings, which is why the docstrings precede the
+  release and the build need not. The guide grows from the tutorial and the
+  companions.
 
 ## Unordered
 
