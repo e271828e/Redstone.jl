@@ -11446,7 +11446,7 @@ gives every level a declared face for every signal crossing its boundary, so the
 chain a sub-assembly's face routes through is in the `Build` ([§6.1][s6-1], [§9.2][s9-2],
 [D-207][d-207]). An internally-wired input has no root input behind it, and writing it
 would be meaningless because the first sweep overwrites it. Such a write is
-`ConditionResolution` with reason `:internally_wired` ([D-277][d-277]). Unexported stays
+`ConditionResolution` with reason `:internally_wired` ([D-427][d-427]). Unexported stays
 unpokeable for init exactly as it is for a front end's panels ([§11.7][s11-7]).
 
 **Composition builds an inert, lazy [fragment tree](#g-fragment-tree)** (the nested `Fragment`,
@@ -12605,8 +12605,8 @@ mounted at `"wing"`, the input entry `throttle` resolves to root input
 component](#g-scenario-component) driving the wingman's throttle) is untrimmable
 from outside. Resolution refuses it by name, with the producer that drives it in
 hand, as `ConditionResolution` for a condition entry and as `ReadResolution` for
-a `get_input` ([D-277][d-277]). The service compiles the scoped condition and reads, and
-runs the identical loop. It never knows where its paths are mounted.
+a `get_input` ([D-277][d-277], [D-427][d-427]). The service compiles the scoped condition and reads,
+and runs the identical loop. It never knows where its paths are mounted.
 
 **A problem never authors the environment** ([D-139][d-139], [D-417][d-417]). The environment is
 the business of the world and of the [`baseline`](#g-baseline) (the
@@ -15501,6 +15501,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-424]: decisions.md#d-424--limit-a-seeded-tap-to-one-index-step-and-a-float64-leaf
 [d-425]: decisions.md#d-425--admit-init-trim-and-linearize-under-about-on-a-model-at-any-status
 [d-426]: decisions.md#d-426--record-the-tooling-over-declared-non-participation-unbuilt
+[d-427]: decisions.md#d-427--refuse-a-condition-entry-naming-an-internally-wired-input-at-resolution-with-its-producer
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop
