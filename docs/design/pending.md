@@ -96,9 +96,9 @@ item changes what the spec says, the spec edit is part of the item.
   a panel description, with the GUI package's half of D-270's convention
   assigned to the client, and a ruling on §11.7's "assembly panels compose
   children by path", a constraint on that half with no entry (stage 4).
-- **The spec's readability rewrite.** Chapters 1 to 14 are done. The front
-  matter and the appendices remain, one treatment per appendix as
-  `docs/spec_rewrite/appendices.md` plans, and that directory's README
+- **The spec's readability rewrite.** Chapters 1 to 14, the front matter
+  and Appendix A are done. Appendices B, C and D remain, one treatment each
+  as `docs/spec_rewrite/appendices.md` plans, and that directory's README
   tracks them. Until a part's turn comes, it keeps the old markers.
 - **The user guide and the API reference.** The reference is a Documenter
   build over the API docstrings, which is why the docstrings precede the

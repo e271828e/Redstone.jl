@@ -132,6 +132,32 @@ matters more than its style. Three checks:
 
 `check_glossary.jl` covers the anchors and stays in the battery.
 
+## Lessons from Appendix A
+
+Landed 2026-10-20; the working files stay in `appA/` until the directory
+closes.
+
+- **Probe a companion's behavioral claim before it grounds a spec sentence.**
+  The limited-integrator companion said a hit guard gated on the free mode
+  re-latches once and leaves the release guard unable to fire. A probe on a
+  gated copy of the block showed the pair handing each other fresh edges and
+  chattering until the firing budget breaks the tie, with the mode decided
+  by which event fired first. The spec sentence and the companion were
+  written from the probe, not the companion. The rest-reading claim held
+  exactly, with one nuance the sentence had to respect: a component not due
+  at boundary zero holds its authored store until its first tick.
+- **The unit checker refuses a bold with no D-citation in its sentence**,
+  and an index's bold labels are sentences to it. The rewriter met it by
+  adding each old entry's ruling entry to its owners parenthetical, eleven
+  citations the verifier then had to check. Decide the label convention and
+  the checker's treatment of it before the rewriter starts.
+- **Thirteen new entries made ADDED the main check**, not an afterthought:
+  the verifier's prompt had to say that every added sentence is checked
+  against the spec sentence it rests on, by frozen line.
+- **A brief error travels.** The brief placed a §5.3 sentence in §1; the
+  rewriter caught it. Check every section number a brief's table names
+  against the outline.
+
 ## Sequencing
 
 - Working order: A whole, that is the harvest, the owner's pick, then the

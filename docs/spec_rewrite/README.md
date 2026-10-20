@@ -23,7 +23,7 @@ readability with no loss of content. The steps are in
 
 | part | state | landed in | files |
 |---|---|---|---|
-| Front matter and Part roadmaps | not started | | |
+| Front matter and Part roadmaps | done | `7156068` | |
 | 1. Introduction | done | `af4c13f` | `20992ad` |
 | 2. Formalism | done | `af4c13f` | `20992ad` |
 | 3. Component taxonomy | done | `af4c13f` | `20992ad` |
@@ -38,7 +38,10 @@ readability with no loss of content. The steps are in
 | 12. Runtime periphery: lifecycle and orchestration | done | `e91aa40` | `eb1d832` |
 | 13. Error discipline | done | `3d4cb27` | `ae63ca9` |
 | 14. Stopped-sim services | done | `fe29f36` | `133b58d` |
-| Appendices A to D | not started | | |
+| Appendix A. Taught contracts | done | `7156068` | `appA/` |
+| Appendix B. API synopsis | not started | | |
+| Appendix C. Diagnostic kind set | not started | | |
+| Appendix D. Glossary | not started | | |
 
 ## Carried to later chapters
 
@@ -62,15 +65,6 @@ chapter's rewrite settles its own:
   §14.10's checkpoint restored into the scratch world; reword both together
   (chapter 14's B79). `tools/gloss_table.md` row 202 glosses `TrimProblem`
   as seven-field, where §14.7 says nine (B80).
-- **Front matter.** The Part III roadmap omits §12.5 (chapter 12's B86).
-  The Part IV roadmap omits §13.3, §13.6 and §13.7, and still says §13
-  "fixes only how a failure is reported once it happens"; the chapter now
-  adds "and what the framework offers around it" (chapter 13's B80). The
-  Part IV roadmap's account of §14 predates the chapter's new roadmap
-  sentence for §14.1 to §14.10; take it from there (chapter 14's B77).
-- **Appendix A.** The old-style lead-ins "**Same-tick reset consumption**"
-  and "**A continuous component's state reset is an event**" bold rulings
-  §5.3 bolds (D-089, D-141), with no D-citation.
 - **Appendix B.** The handler return law is bold with no D-citation; §5.2
   bolds it (D-090).
 - **Appendix B.** It lists only `port(model, path, name)`; the code also
