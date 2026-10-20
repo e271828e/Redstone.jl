@@ -75,9 +75,10 @@ log; never read it whole.
   named interface only), *boundary* (the published consistency point or a
   component's structural boundary), *class* (primitive versus assembly),
   bare *tier*, *kind*, *condition*, *bundle*, *register*, lowercase
-  *model*, *contract* (a component's declared interface), *tick*. Where you
-  touch a sentence that uses one in another sense, reword it; never link
-  it. "Device class", "the hidden-bug class" and "two classes, two fates" are
+  *model*, *contract* (a component's declared interface), *tick*, *door* (an
+  entry point that builds a run; §8.2's "freeze door" and "FFI door" are
+  kept names). Where you touch a sentence that uses one in another sense,
+  reword it; never link it. "Device class", "the hidden-bug class" and "two classes, two fates" are
   ordinary English and take no link.
 - **Reader-cold names**: introduce each one, from the start, as the brief's
   ruling on them gives it. The log's vocabulary is old (part F's lists):
