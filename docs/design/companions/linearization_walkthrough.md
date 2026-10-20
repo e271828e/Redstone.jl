@@ -674,6 +674,6 @@ build.
 [s13-1]: ../spec.md#131-reporting-policy-collect-the-checks-fail-the-evaluations-fast
 [s14-1]: ../spec.md#141-conditions-are-path-addressed-overlays-on-the-declared-defaults
 [s14-10]: ../spec.md#1410-linearization-tap-selectors-one-seeded-pass-a-pure-query
-[s14-4]: ../spec.md#144-one-plan-two-ways-to-apply-it
+[s14-4]: ../spec.md#144-two-ways-to-apply-a-resolved-condition
 [s8-2]: ../spec.md#82-the-declaration-inventory
 [s9-4]: ../spec.md#94-activations-executable-sets-laziness-caching

@@ -16949,7 +16949,7 @@ reads the derivative back under the same rule.
 [s14-10]: spec.md#1410-linearization-tap-selectors-one-seeded-pass-a-pure-query
 [s14-2]: spec.md#142-fragment-composition-locality-without-schema
 [s14-3]: spec.md#143-resolution-flatten-validate-compile-once
-[s14-4]: spec.md#144-one-plan-two-ways-to-apply-it
+[s14-4]: spec.md#144-two-ways-to-apply-a-resolved-condition
 [s14-5]: spec.md#145-boundary-zero-an-ordinary-boundary-with-authored-incoming-transitions
 [s14-6]: spec.md#146-root-input-totality-the-missing-value-error-and-the-override-combinator
 [s14-7]: spec.md#147-the-trim-problem-namedtuple-decisions-declared-reads-named-residuals

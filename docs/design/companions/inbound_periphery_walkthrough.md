@@ -292,5 +292,5 @@ attached next under the greedy binding (claim computed at that instant:
 [s11-7]: ../spec.md#117-the-gui-write-path-port-resolution-peek-staging-contract
 [s12-2]: ../spec.md#122-loop-scheduling-wait-primitive-yields-thread-budget
 [s12-7]: ../spec.md#127-replay-the-trace-re-drives-the-ordinary-loop
-[s14-4]: ../spec.md#144-one-plan-two-ways-to-apply-it
+[s14-4]: ../spec.md#144-two-ways-to-apply-a-resolved-condition
 [s8-6]: ../spec.md#86-paths-wiring-and-faces

@@ -18,7 +18,7 @@
 
 const SPEC = normpath(joinpath(@__DIR__, "..", "spec.md"))
 
-const REWRITTEN = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+const REWRITTEN = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
 
 const LABEL = r"\*\*(Rule|Why|Example)\.\*\*"
 const BOLD = r"\*\*(.+?)\*\*"
