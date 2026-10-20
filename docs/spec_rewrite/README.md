@@ -23,7 +23,7 @@ readability with no loss of content. The steps are in
 
 | part | state | landed in | files |
 |---|---|---|---|
-| Front matter and Part roadmaps | done | `7156068` | |
+| Front matter and Part roadmaps | done | `630e58e` | |
 | 1. Introduction | done | `af4c13f` | `20992ad` |
 | 2. Formalism | done | `af4c13f` | `20992ad` |
 | 3. Component taxonomy | done | `af4c13f` | `20992ad` |
@@ -38,7 +38,7 @@ readability with no loss of content. The steps are in
 | 12. Runtime periphery: lifecycle and orchestration | done | `e91aa40` | `eb1d832` |
 | 13. Error discipline | done | `3d4cb27` | `ae63ca9` |
 | 14. Stopped-sim services | done | `fe29f36` | `133b58d` |
-| Appendix A. Taught contracts | done | `7156068` | `appA/` |
+| Appendix A. Taught contracts | done | `630e58e` | `appA/` |
 | Appendix B. API synopsis | not started | | |
 | Appendix C. Diagnostic kind set | not started | | |
 | Appendix D. Glossary | not started | | |
