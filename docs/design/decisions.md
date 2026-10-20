@@ -427,6 +427,7 @@ were derived.
 | [D-426][d-426] | Record the tooling over declared non-participation unbuilt | ratified |
 | [D-427][d-427] | Refuse a condition entry naming an internally wired input at resolution, with its producer | ratified |
 | [D-428][d-428] | Refuse a root input whose type does not convert at `linearize`'s default operating point | ratified |
+| [D-429][d-429] | Write a condition onto a stopped run through `overlay!` | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -2071,6 +2072,11 @@ apply).
 Annotation (2026-10-20): the warm-restart clause is retired. The cycle capture →
 tweak → apply retires with `capture`'s condition form, and a resume is a
 checkpoint and a restore ([D-273][d-273]). The overlay clauses stand.
+
+Annotation (2026-10-20): the rejected current-stores base returns as the base
+of `overlay!` ([D-429][d-429]), whose trajectory's header is taken after the overlay
+settles, so run-history dependence never reaches a header. The `init!` base
+stands.
 
 **Rejected.**
 - *Mirror-tree spelling:* a second structure artifact, ragged under partiality,
@@ -11988,6 +11994,12 @@ apart from its held output is the inconsistency this entry removes, a
 mid-run trim has no use in practice where trimming is done at an authored
 condition, and the algebra's unification never reached `capture`'s content.
 
+Annotation (2026-10-20): amended by [D-429][d-429]. A condition can be overlaid on a
+stopped run through `overlay!`, the state what-if beside the input what-if of
+the last bullet; a checkpoint still enters no condition expression and yields
+none. The checkpoint's read-only view the last bullet names was never built:
+the copy is `state` on the stopped run.
+
 **Rejected.**
 - *Running each boundary's due updates at the top of the next frame,
   before the drain:* it made the store consistent with the cells for a
@@ -12098,6 +12110,12 @@ trace persistence) and [Appendix B][sB]'s, not [§11.5][s11-5]'s.
 
 Annotation (2026-10-15): the stopped-sim services are [§14][s14], so the second
 bullet's [§13.7][s13-7] reads [§14][s14].
+
+Annotation (2026-10-20): the extension the second rejected alternative deferred,
+an override of `x` and the root inputs on a checkpoint, lands as `overlay!`
+([D-429][d-429]) over every store. The danger it named in the discrete tier is met by
+the rest reading: an overlaid store is the next tick's state, and its held
+cell is kept.
 
 **Rejected.**
 - *Two header kinds, the pre-sequence resolved condition for an authored
@@ -16969,6 +16987,99 @@ Found by chapter 14's survey.
 - *A new service-side kind:* the obligation is [§14.3][s14-3]'s and the refusal says
   so; a second kind for the same cause would split one rule across two names.
 
+### D-429 — Write a condition onto a stopped run through `overlay!`
+
+**Status.** ratified
+
+**Position.** `overlay!(sim, condition)` writes a condition onto a stopped run
+and continues it as a fresh trajectory: the named stores are overwritten on the
+run's own, every other store, the clock, the sampling lattice and the guard
+priors are kept, and a root-input entry writes its cell with no totality asked.
+`overlay!(model, condition; hooks)` is the model's form, legal at `:consistent`
+with the clock on a frame top.
+
+- The overlaid state settles through boundary zero's tail with the discrete
+  output stages and the `s_update` calls left out: projection runs, and the
+  sweep and the events iterate to quiescence with the priors kept. An
+  overlaid discrete store is therefore the next tick's state and its held cell
+  stays until that tick, and only a guard the overlay moved into holding fires.
+  The five choices that separate the door from `init!` come as one flag, fresh
+  or continuing.
+- The run's trace header is the checkpoint taken after the settling, so replay
+  needs no knowledge of overlays, and a throw inside the settling drops the
+  status to `:built`, as a throw inside boundary zero does ([D-223][d-223]).
+- A partial store entry merges onto the current store, as under `init!` it
+  merges onto the declared default. [D-063][d-063]'s reason against a current-stores
+  base, run-history dependence breaking the header, is met because the header
+  is taken after the overlay settles.
+
+**Spec.** [§11.5][s11-5], [§12.6][s12-6], [§13.4][s13-4], [§14][s14], [§14.1][s14-1], [Appendix B][sB]
+
+**Rationale.** Fly a while, stop, change a few states, continue had no door. A
+condition went only through `init!`, so a user copied a store off the stopped
+run into a condition and started the discrete tier one tick ahead, since a
+store read at rest is the next tick's state ([D-273][d-273],
+`companions/store_at_rest_walkthrough.md`). The door is three things it could
+be confused with and none of them. It is not `init!`: `init!` erases the run's
+history and decodes the condition's `s` at boundary zero, where `overlay!`
+keeps the history and decodes an overlaid `s` at the component's next due
+tick. It is not a bare write into the executor: a stopped run has a trace
+behind it, and a write the trace does not record breaks replay, so the door
+opens a fresh trajectory with the post-settling checkpoint as its header. It is
+not an algebra on checkpoints: [D-273][d-273]'s sentence kills the other direction, a
+checkpoint producing a condition, and none of its four obstacles applies to a
+condition applied to a stopped run, since the priors, the held cells and the
+clock come from the rest state and stay there.
+
+With the same condition, `init!` and `overlay!` differ in exactly five
+choices: the base for the fields the condition leaves unset, the clock and
+the lattice, the guard priors, the discrete output stages, and the `s_update`
+calls. The choices are not independent. They come in two bundles, fresh and
+continuing, and no mixed configuration means anything: resetting the priors
+while keeping the clock would re-fire held guards mid-run for no reason, and
+re-anchoring the lattice while keeping the stores would shift every multi-rate
+component's phase under a continuing controller. So the implementation carries
+one flag. The first two choices live in the doors' own bodies, the last three
+inside the settling routine both doors call. Each step of the settling is
+needed after an overlay. An overlaid `x` can leave the manifold, and only
+projection puts it back. An overlay can move a guard's predicate into holding,
+and with the priors kept that is a real edge, so the handler runs now, before
+the plant integrates, and the model enters the mode the new state belongs to:
+pushing altitude below ground fires touchdown at `t_k`, not one frame later
+and not never. An overlaid discrete store is the next tick's state by the rest
+reading, so its output is not republished now, and running the updates would
+consume a sample no tick took. The settling publishes one snapshot at the
+stopped run's `t`, a second at that time, which is what `restore!` already does
+at a trajectory's start.
+
+A failed overlay drops the status to `:built` because a throw inside the
+settling leaves the stores partly written, and a failed handler has left the
+state inconsistent either way; only `init!`, `restore!` and `replay!` are
+legal after it. The name is `overlay`, [D-063][d-063]'s own word for what a condition
+is. The export audit still decides whether the name is exported.
+
+**Rejected.**
+- *The pure-function form, `overlay(cp, condition) → Checkpoint` with
+  `restore!` unchanged:* consistency needs a boundary, projection and the event
+  phase, and a value cannot run one.
+- *Mixed flag configurations, the priors reset with the clock kept or the
+  lattice re-anchored with the stores kept:* no mixed configuration means
+  anything; the five choices come in two bundles.
+- *Refreshing the priors to the overlaid values:* swallows the edge a guard
+  the overlay moved into holding presents, and leaves the model airborne
+  underground.
+- *Skipping the update at boundary zero, as a cure for the copy hazard:* it
+  is the fresh bundle with the update off, and it loses the `t₀` sample for
+  every authored condition ([D-067][d-067]).
+- *A checkpoint taken before the overlay and restored on failure:* a state
+  copy per call for a safety a user can take themselves.
+- *`override!` as the name:* `override` is [§14.6][s14-6]'s root-input combinator, and
+  `override!` beside it would be one name in two senses, the pattern [D-144][d-144]
+  retires.
+- *Sugar on `restore!`, a checkpoint and a condition in one call:* a what-if
+  from a saved checkpoint is `restore!` followed by `overlay!`, and two calls
+  read as what they are.
+
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
 [d-002]: #d-002--adopt-the-causal-port-based-paradigm
@@ -17372,6 +17483,7 @@ Found by chapter 14's survey.
 [d-426]: #d-426--record-the-tooling-over-declared-non-participation-unbuilt
 [d-427]: #d-427--refuse-a-condition-entry-naming-an-internally-wired-input-at-resolution-with-its-producer
 [d-428]: #d-428--refuse-a-root-input-whose-type-does-not-convert-at-linearizes-default-operating-point
+[d-429]: #d-429--write-a-condition-onto-a-stopped-run-through-overlay
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property

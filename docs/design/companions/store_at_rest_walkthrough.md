@@ -265,10 +265,9 @@ surface nobody built, and for an annotation on [D-273][d-273].
 ## 7. The overlay door: a design record for the increment
 
 *Settled in discussion with the owner on 2026-10-20, in enough detail for a
-later session to write the brief from. Nothing here is ruled yet: the spec
-sentences and the log entry land docs-commit-first with the increment, and
-7.6 records the owner's answers to the points that were open. Section
-numbers below are this document's.*
+later session to write the brief from, and ruled the same day as [D-429][d-429], the
+spec sentences landing with it. 7.6 records the owner's answers to the points
+that were open. Section numbers below are this document's.*
 
 ### 7.1 The door
 
@@ -497,6 +496,7 @@ The brief states them as given; the log entry carries them.
 [d-273]: ../decisions.md#d-273--a-condition-is-an-initial-condition-capture-leaves-the-algebra
 [d-274]: ../decisions.md#d-274--checkpoints-the-executors-state-as-one-value-restored-without-boundary-zero
 [d-318]: ../decisions.md#d-318--a-simulation-claims-its-model
+[d-429]: ../decisions.md#d-429--write-a-condition-onto-a-stopped-run-through-overlay
 [s10-6]: ../spec.md#106-event-iteration-at-boundaries-to-quiescence-budgeted
 [s11-2]: ../spec.md#112-outbound-snapshot-publication
 [s11-5]: ../spec.md#115-inbound-the-input-trace

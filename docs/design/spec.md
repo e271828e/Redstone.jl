@@ -7769,8 +7769,9 @@ are.
 The [trace header](#g-trace-header) is the trace's fixed preamble. A [checkpoint](#g-checkpoint) is the `Model`'s
 state at a frame top as one value. **The header is the checkpoint `init!` takes
 at the end of [boundary zero](#g-boundary-zero)** (the initialization boundary at `t₀`), after the
-first snapshot is published ([D-274][d-274]). A checkpoint holds the flat buffer
-`x`, the `s` and `m` stores, the whole [signal table](#g-signal-table) (the collection of cells
+first snapshot is published ([D-274][d-274]). `overlay!` takes it the same way,
+after the overlaid state settles and publishes ([§12.6][s12-6], [D-429][d-429]). A checkpoint
+holds the flat buffer `x`, the `s` and `m` stores, the whole [signal table](#g-signal-table) (the collection of cells
 holding every produced signal), the guard [priors](#g-prior), `t` and `t₀`, the frame and
 boundary counters, and the fingerprint (the structural layout) and the
 [deployment](#g-deployment) ([D-319][d-319]). The deployment is the scalar-free artifact the grid
@@ -7815,8 +7816,8 @@ recomputable" (below) requires.
 **`Trace` is that fixed header plus two append-only lists**, `schemas` and
 `batches`, and its length ([D-255][d-255]). A trace records a `Simulation`, which runs
 only a `Model{Float64}`, so `Trace` takes no scalar parameter ([D-317][d-317]). The
-header is written once, by the door that builds the run (`init!`, `restore!` or
-`replay!`, [§12.6][s12-6]), and never again, which is what makes it an artifact. The
+header is written once, by the door that builds the run (`init!`, `overlay!`,
+`restore!` or `replay!`, [§12.6][s12-6]), and never again, which is what makes it an artifact. The
 lists grow in place, the batches at every drain and the schemas at every change
 to the [roster](#g-roster) (the immutable list of attached devices). The length is the frame
 index of the last drain on the live trace ([D-217][d-217], [D-260][d-260]), frozen into the value
@@ -9351,7 +9352,8 @@ simulation moves through, how it advances and restarts, what it keeps of its
 [devices](#g-device) (any attached participants in the periphery) across runs, and the stop
 policy each advance declares. A simulation is in one of five lifecycle states,
 built, initialized, running, stopped or errored. A *door* is an entry point that
-builds a run, and there are three, `init!`, `restore!` and `replay!`. A run's
+builds a run, and there are four, `init!`, `overlay!`, `restore!` and `replay!`.
+A run's
 `feed` is the recording `replay!` attached, or `nothing`. The [input mode](#g-input-mode) says
 where the next [frame](#g-frame) (one grid step, the unit of scheduling) takes its inputs
 from.
@@ -9368,12 +9370,12 @@ that door's declaration, and the next door may declare otherwise ([D-261][d-261]
 
 Four fields evolve during the run. `feed` is described above. `termination` is
 the record the loop's tail writes. `frame` and `boundary` are the trajectory's
-counters, the frame index and the boundary ordinal. `init!`, `restore!` and
-`replay!` construct a run, and nothing else rebinds it. `live!` ([§12.7][s12-7]) and the
+counters, the frame index and the boundary ordinal. The four doors construct
+a run, and nothing else rebinds it. `live!` ([§12.7][s12-7]) and the
 halt at a recording's end write `feed`. The loop's tail writes `termination`
 once, and `closed(run)` is `termination !== nothing`. Each door sets the two
-counters as it builds the run, `init!` to zero and `restore!` and `replay!` to
-those of the [checkpoint](#g-checkpoint) (the `Model`'s state at a frame top, beside the run's
+counters as it builds the run, `init!` to zero, `overlay!` to the stopped run's,
+and `restore!` and `replay!` to those of the [checkpoint](#g-checkpoint) (the `Model`'s state at a frame top, beside the run's
 frame index and boundary ordinal), and the loop advances them ([D-317][d-317]).
 `restore!` of a bare state sets the frame index to the state's frame and the
 boundary ordinal to zero, as `init!` does ([D-319][d-319]).
@@ -9387,7 +9389,7 @@ with the clock ([§11.5][s11-5], [D-273][d-273]). It is a `Float64`, as `h` and 
 
 **A `Simulation` is constructed with a placeholder run** ([D-255][d-255]). The
 placeholder is an empty log, no trace, no feed and no termination, and
-`init!`, `restore!` and `replay!` replace it ([D-255][d-255]). The field is
+every door replaces it ([D-255][d-255]). The field is
 always a `Run` and never `nothing`, so every accessor has a run to read, and
 the lifecycle state below says whether that run ever started ([D-397][d-397]). The
 placeholder carries no configuration and no compiled state ([D-261][d-261]). `init!`
@@ -9430,8 +9432,8 @@ and terminally *stopped* or *errored* ([§13.4][s13-4], [D-088][d-088]). *Built*
 framework-owned homes of a component's state) allocated and boundary zero not
 completed ([D-223][d-223]). It is the cold state, and the state a throw inside boundary
 zero returns the simulation to ([§13.4][s13-4]). *Initialized* means `init!` has
-completed boundary zero ([§14.5][s14-5]), or `restore!` or `replay!` has restored a
-checkpoint.
+completed boundary zero ([§14.5][s14-5]), `restore!` or `replay!` has restored a
+checkpoint, or `overlay!` has settled an overlaid state (below).
 
 **`lifecycle(sim)` derives the state rather than storing it** ([D-317][d-317]).
 It reads three facts, the control plane's running flag, the `Model`'s status
@@ -9467,8 +9469,9 @@ says what it will advance on.
 whose boundary zero has not completed is `MissingInit`, an error in the kind
 set ([§13.2][s13-2]) naming `init!`. That is distinct from
 `UninitializedInputs`, which fires *inside* `init!` ([§14.6][s14-6]).
-`restore!` and `replay!` are the two alternative doors. Each restores a
-checkpoint and runs no boundary zero ([§12.7][s12-7], [D-274][d-274]). A throw
+`restore!` and `replay!` are the two alternative doors from `built`. Each
+restores a checkpoint and runs no boundary zero ([§12.7][s12-7], [D-274][d-274]).
+`overlay!` is the fourth door, and it needs a run to overlay (below). A throw
 inside boundary zero, which only `init!` runs, leaves the simulation `built`
 ([§13.4][s13-4], [D-223][d-223]), so the next `run!` or `step!` meets the same
 refusal.
@@ -9544,7 +9547,7 @@ staging cells. The [recorders](#g-recorders) (the trace and the log jointly)
 restart with the run they record, and no stale batch survives to clobber the
 frame it predates.
 
-`init!` and `restore!` also return the input mode to `:live`, and a fresh
+`init!`, `overlay!` and `restore!` also return the input mode to `:live`, and a fresh
 `replay!` sets the mode exactly as it sets the trajectory. `live!` is the one
 call that moves the mode alone. It takes a replaying simulation live where it
 stands ([§12.7][s12-7]). A terminal state makes the mode moot. From `stopped`,
@@ -9601,6 +9604,33 @@ standalone model published nothing, so the trajectory has no ordinals to
 continue. A `Checkpoint` holds a `ModelState{Float64}`, so it is nominal by
 type. A state taken at another scalar is refused by dispatch with the same
 `CheckpointMismatch`, on either `restore!` that takes a bare state.
+
+**`overlay!(sim, condition)` writes a condition onto a stopped run and
+continues it as a fresh trajectory** ([D-429][d-429]). It is the state what-if, the
+sibling of the input what-if, which is a restore followed by `stage!`
+([D-273][d-273]). The stores the condition names are overwritten on the run's own.
+Every other store, the clock, the sampling lattice and the guard
+[priors](#g-prior) (each event's stored predicate sample from the previous
+boundary) are kept. A partial store entry merges onto the current store
+([§14.1][s14-1]), and a root-input entry writes the root input's cell. No root-input
+totality is asked, since every root input already holds a value.
+**The overlaid state settles through boundary zero's tail with the discrete
+output stages and the `s_update` calls left out** ([§14.5][s14-5], [D-429][d-429]). Projection
+runs, and the sweep and the events iterate to quiescence with the priors
+kept. An overlaid discrete store is therefore the next tick's state, and its
+held cell stays until that tick ([§14.5][s14-5], [D-273][d-273]). A guard the overlay moves into
+holding fires at the overlay boundary, before the next integrate, and a guard
+already holding does not fire again. The door takes the four recording
+keywords, handles the periphery as `restore!` does, and publishes one snapshot
+at the stopped run's `t` under its last ordinal, as `restore!` re-publishes.
+**The run's trace header is the checkpoint taken after the settling** ([D-429][d-429]),
+so replay reproduces the overlaid trajectory with no record of the overlay.
+The door is legal where `checkpoint` is, `initialized` or `stopped` with the
+clock on a published frame top, and refused otherwise as `ServiceLifecycle` or
+`CheckpointMidFrame` ([§14][s14]). **A throw inside the settling leaves the
+simulation `built`** ([D-429][d-429]), its stores partly written, as a throw inside
+boundary zero does ([§13.4][s13-4], [D-223][d-223]). `overlay!(model, condition; hooks)` is the
+model's form, legal at `:consistent` with the clock on a frame top.
 
 #### Device attachments across runs
 
@@ -10373,8 +10403,10 @@ pointer** ([D-128][d-128]). Replay is the ordinary loop re-driven from a recorde
 The trace is the primary record of a session. The pointer names the frame-top
 boundary at which the failing frame began. That frame top is a grid boundary or
 boundary zero, and it is always a legal replay halt ([§12.7][s12-7]). The host names the
-catch that took the throw. It is `:loop` for a throw inside a frame, and
-`:boundary_zero` for a throw inside the boundary zero that `init!` runs. A `StepError`
+catch that took the throw. It is `:loop` for a throw inside a frame,
+`:boundary_zero` for a throw inside the boundary zero that `init!` runs, and
+`:overlay` for a throw inside the settling that `overlay!` runs ([§12.6][s12-6],
+[D-429][d-429]). A `StepError`
 renders under the doctrine of [§13.2][s13-2]. The cursor frame and the reproduction come
 first, the cause second, and names are strings.
 
@@ -10411,7 +10443,7 @@ struct StepError{C <: Union{Diagnostic, Exception}} <: Exception
     cursor         # the cursor frame: the cursor's copy at the catch
     t::Float64     # the clock at the failure
     boundary::Int  # the frame-entry boundary index: the replay pointer
-    host::Symbol   # :boundary_zero under init!, :loop inside a frame
+    host::Symbol   # :boundary_zero under init!, :overlay under overlay!, :loop inside a frame
     cause::C
 end
 ```
@@ -10485,7 +10517,10 @@ entry boundary too, so a frame-one failure carries the same pointer. The
 carrier's `host` tells the two apart, and the rendered recipe reads it. A
 frame-one failure has a trace, and the halt-then-`step!` recipe above holds for it
 at pointer `0`. The halt restores the header and stops there, and `step!`
-re-executes frame one from the record.
+re-executes frame one from the record. A throw inside the settling `overlay!`
+runs takes boundary zero's disposition. The simulation returns to `built`, the
+run the door opened stays behind with no header, and the reproduction is
+`overlay!` under the same condition on the same stopped state ([§12.6][s12-6], [D-429][d-429]).
 
 Boundary zero's disposition differs from the loop's as well. Nothing was
 published and no advance was under way, so there is no tail to take and no
@@ -11292,8 +11327,8 @@ never its precondition ([D-012][d-012]).
 
 [§9.6][s9-6] previewed trim and linearization as clients of an [activation](#g-activation) (the build's
 typed products at a given scalar type). The stopped-sim services are
-initialization, trim, linearization, and `checkpoint` with its partner
-`restore!`. The first three share one artifact, the [condition](#g-condition). A condition is
+initialization, the overlay, trim, linearization, and `checkpoint` with its
+partner `restore!`. The first four share one artifact, the [condition](#g-condition). A condition is
 the datum that says "set this build to this state." `checkpoint` returns a
 [checkpoint](#g-checkpoint) (the `Model`'s state at a frame top as one value), and `restore!`
 puts it back. A checkpoint is a distinct value with no condition algebra
@@ -11324,6 +11359,7 @@ paused ([§11.3][s11-3], [§12.1][s12-1]).
 |---|---|---|---|---|
 | `checkpoint` | error | legal | legal | a frame-top rest; refused after a `t*` stop and after an abandoned frame |
 | `init!` | legal | legal | legal | authored conditions |
+| `overlay!` | error | legal | legal | a condition over a frame-top rest; refused after a `t*` stop and after an abandoned frame ([§12.6][s12-6]) |
 | `restore!` | legal | legal | legal | a checkpoint whose fingerprint and deployment match the simulation's and whose `t` sits on its grid ([§12.6][s12-6]) |
 | `trim!` | legal | legal | legal | authored conditions; the scratch world is `override(baseline, condition(guess))` ([§14.8][s14-8]), never the sim's stores |
 | `linearize`, operating point defaulted to `checkpoint(sim)` | error | legal | legal | inherits `checkpoint`'s precondition, its refusals included |
@@ -11340,16 +11376,17 @@ payload is the operation, the current status and the legal statuses ([D-415][d-4
 is the same kind `attach!`/`detach!` raise while `running` ([§11.3][s11-3]), so there
 is one error form for "this operation is illegal in the current lifecycle
 state." `MissingInit` is distinct, and names a missing prior step. The
-`checkpoint` row's two refusals, after a `t*` stop and after an abandoned
-frame, are `CheckpointMidFrame` ([§12.6][s12-6], [Appendix C][sC]).
+`checkpoint` and `overlay!` rows' two refusals, after a `t*` stop and after an
+abandoned frame, are `CheckpointMidFrame` ([§12.6][s12-6], [Appendix C][sC]).
 
 **Each row's service also has a form on a [`Model`](#g-model)** (a deployment materialized at
 one scalar type), gated by the model's status rather than by the lifecycle
-([D-319][d-319]). `checkpoint` and the default `linearize` are legal at `:consistent`.
+([D-319][d-319]). `checkpoint`, `overlay!` and the default `linearize` are legal at
+`:consistent`.
 `init!`, `restore!`, `trim!` and `linearize` with an explicit `about` are legal
 at any status ([D-425][d-425]). A model a simulation has claimed refuses each form that
-writes, `init!`, `restore!` and `trim!`, as `ArgumentInvalid` with reason `:claimed`
-([D-318][d-318]).
+writes, `init!`, `overlay!`, `restore!` and `trim!`, as `ArgumentInvalid` with
+reason `:claimed` ([D-318][d-318]).
 
 ### 14.1 Conditions are path-addressed overlays on the declared defaults
 
@@ -11371,15 +11408,23 @@ and one `DiagnosticError` is thrown. A condition entry naming an output or a
 workspace field is one such violation, `ConditionResolution` with reason
 `:undeclared_field` ([Appendix C][sC]).
 
-**The overlay base is always the declared defaults** ([D-063][d-063]). Every
-[store](#g-store) (the framework-owned home of a component's `x`, `s` or `m`
-state) has a declared initial value under declaration-by-initial-value
-([§8.2][s8-2]), so conditions are naturally sparse. Applying one means "fresh
-run from the `x_init`, `s_init` and `m_init` defaults, with these overrides"
-([D-063][d-063]). **A condition is an initial condition and nothing else**
-([D-273][d-273]). A simulation's state past its initial instant is a
-[checkpoint](#g-checkpoint) (the `Model`'s state at a frame top as one value),
-not a condition, and it has no algebra ([D-274][d-274]).
+**A condition applied through `init!` overlays the declared defaults, and
+applied through `overlay!` it overlays the stopped run's stores** ([D-063][d-063],
+[D-429][d-429]). Every [store](#g-store) (the framework-owned home of a component's `x`,
+`s` or `m` state) has a declared initial value under
+declaration-by-initial-value ([§8.2][s8-2]), so conditions are naturally
+sparse. Applying one through `init!` means "fresh run from the `x_init`,
+`s_init` and `m_init` defaults, with these overrides" ([D-063][d-063]). The
+defaults are the base a trace header can reproduce, since a base read off a
+run's history would break the header ([D-063][d-063]). `overlay!` meets that
+reason by taking its header after the overlay settles ([§12.6][s12-6]). A partial store
+entry merges onto its base, the declared default or the current store
+([§14.3][s14-3]). **A condition describes a starting state and nothing else**
+([D-273][d-273], [D-429][d-429]). Under `init!` it is the initial condition, and under
+`overlay!` it is the state a stopped run continues from. A simulation's state
+past its initial instant is a [checkpoint](#g-checkpoint) (the `Model`'s state
+at a frame top as one value), not a condition. It enters no condition
+expression and yields none ([D-274][d-274]).
 
 Addressing conditions by path does not reopen the observation-by-path
 rejection ([§13.5][s13-5], [D-409][d-409]). That rejection bars a run from
@@ -13299,6 +13344,10 @@ return law, [§5.2][s5-2]). There is no padding. `x` comes back complete, and
     Copies the state back, settles through the hooks and writes
     `:consistent` last. It takes no status gate ([D-319][d-319]). A writing
     door.
+  - `overlay!(model, condition; hooks = NoHooks())`. Writes the condition
+    onto the model at rest and settles the overlaid state with no discrete
+    output stage and no update, the clock and the priors kept ([§12.6][s12-6]).
+    Legal at `:consistent` with the clock on a frame top. A writing door.
   - `trim!(model, problem; baseline, t0 = 0.0, backend) → TrimReport`. The
     trim service on a `Model{Float64}`, committing through the model's
     `init!` ([§14.8][s14-8]). A writing door.
@@ -13481,6 +13530,14 @@ return law, [§5.2][s5-2]). There is no padding. `x` comes back complete, and
   state off the grid is `CheckpointMidFrame`. It opens a fresh trajectory at
   the state's frame, and the restored boundary publishes under ordinal 0
   ([§9.2][s9-2], [§12.6][s12-6], [D-319][d-319]).
+- `overlay!(sim, condition; trace = true, log = true, log_every = 1,
+  log_max = 65536)`. The state what-if. The condition's stores are written
+  onto a stopped run's own, the clock, the lattice and the priors are kept,
+  the overlaid state settles with no discrete output stage and no update, and
+  a fresh run opens whose header is the checkpoint taken after the settling.
+  A partial store entry merges onto the current store, and a root-input entry
+  writes its cell with no totality asked. Legal where `checkpoint` is, with the
+  four recording keywords ([§12.6][s12-6], [§14.1][s14-1], [D-429][d-429]).
 - `linearize(sim, taps; about, t0, width = 8) → Linearization`. A pure
   query, seeded Dual passes on scratch, `width` directions per pass. The
   operating point defaults to the checkpoint of the simulation, restored
@@ -15551,6 +15608,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-426]: decisions.md#d-426--record-the-tooling-over-declared-non-participation-unbuilt
 [d-427]: decisions.md#d-427--refuse-a-condition-entry-naming-an-internally-wired-input-at-resolution-with-its-producer
 [d-428]: decisions.md#d-428--refuse-a-root-input-whose-type-does-not-convert-at-linearizes-default-operating-point
+[d-429]: decisions.md#d-429--write-a-condition-onto-a-stopped-run-through-overlay
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop
