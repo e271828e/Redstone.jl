@@ -119,8 +119,8 @@ The gathered reads and the decision NamedTuple arrive as arguments. `d` is the o
 value that *cannot* be closed over. `TrimParameters` stays behind the closure,
 exactly as `condition` already holds it. Being user-shaped, that record is also
 where any environment handles the condition math needs conventionally ride. [§8.2][s8-2]
-gives the [value-level constructor](#g-value-level-constructor) that builds such a handle, a plain exported
-function of the component and its input values. [§14.1][s14-1] gives the pre-sweep
+gives the [value-level constructor](#g-value-level-constructor), a plain exported function of the component
+and its input values, that builds such a handle. [§14.1][s14-1] gives the pre-sweep
 doctrine. The problem *receives* the environment, and never writes it ([§14.9][s14-9]).
 
 **The returned NamedTuple's names are the equation names** the report and the

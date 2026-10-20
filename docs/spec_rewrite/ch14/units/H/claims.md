@@ -149,8 +149,8 @@ newcites: D-274 D-319
 note: R25, bold headline of D-274 bullet 5 ("`linearize`'s default operating point is the checkpoint of the simulation as it stands"); D-319 bullet 5 adds `checkpoint(model)`. "`Model`'s" becomes "model's" so the `Model` link keeps its gloss at the next sentence.; step 5 P2-20 and P1-38: the shared gloss (glossary #g-checkpoint) in its own sentence, so it no longer splits the bold noun phrase; bare 'model' becomes `Model`, which takes its link and gloss here at its new first use
 
 old: It is `checkpoint(sim)` on a simulation and `checkpoint(model)` on a `Model` (a deployment materialized at one scalar type), each restored into the scratch world with no boundary zero (§12.6, D-274, D-319).
-new: It is `checkpoint(sim)` on a simulation and `checkpoint(model)` on a `Model`, each restored into the scratch world with no boundary zero (§12.6, D-274, D-319).
-note: step 5 P2-20: the `Model` link and gloss moved to the sentence before
+new: The default point is `checkpoint(sim)` on a simulation and `checkpoint(model)` on a `Model`, each restored into the scratch world with no boundary zero (§12.6, D-274, D-319).
+note: step 5 P2-20: the `Model` link and gloss moved to the sentence before; step 6b finding 3: the subject named, since 'It' would now take the checkpoint gloss sentence as antecedent
 
 old: The frozen tier's cells are the checkpoint's held cells.
 new: The frozen tier's cells (the typed entries of the signal table) are the checkpoint's held cells.
@@ -159,11 +159,11 @@ note: cell's link moves to its first use after M62, with a gloss.
 old: After a `trim!` commit, `linearize(sim, taps)` or `linearize(model, taps)` is about the trim point with nothing re-specified.
 
 old: `about = <condition>`, with `t0` beside it as in `trim!`, linearizes anywhere else without touching the sim.
-new: `about = <condition>`, with `t0` beside it, linearizes anywhere else without touching the sim, its coverage checked as §14.6 requires (D-272). `t0` is admitted only there, and a `t0` passed without `about` is an `ArgumentInvalid`.
+new: `about = <condition>`, with `t0` beside it, linearizes anywhere else without touching the sim, the condition's coverage checked as §14.6 requires (D-272). `t0` is admitted only there, and a `t0` passed without `about` is an `ArgumentInvalid`.
 tag: R
 ruling: R9 B18
 newcites: D-272 §14.6
-note: B18 (R3): the about point is a totality site §14.6 names ("linearization's operating condition under `about`, applied to its own scratch"), so the pointer back states it where the site lives; outside the bold, which keeps its headline clause. F83; R14 names `ArgumentInvalid` `:t0_without_about` (src/linearize.jl 156–157); R7 bold on D-272 bullet 4's standing sentence. The lone-t0 refusal is D-272's annotation of 2026-09-28.
+note: B18 (R3): the about point is a totality site §14.6 names ("linearization's operating condition under `about`, applied to its own scratch"), so the pointer back states it where the site lives; outside the bold, which keeps its headline clause. F83; R14 names `ArgumentInvalid` `:t0_without_about` (src/linearize.jl 156–157); R7 bold on D-272 bullet 4's standing sentence. The lone-t0 refusal is D-272's annotation of 2026-09-28.; step 6b finding 4: 'its' named as the condition's
 
 old: The evaluation.
 new: #### The seeded pass
@@ -519,8 +519,8 @@ ruling: R6
 note: M64, held at §8.2 2764–2766 and §9.5 5018–5020; the new text points to both.
 
 old: An opaque wrapper (an FMU, a C aerodynamic table) and a deliberately severed coupling can therefore both say so in the schema, instead of showing up in Jacobians as unexplained zero rows.
-new: An opaque wrapper, such as an FMU (a Functional Mock-up Unit, a packaged external model) or a C aerodynamic table, and a deliberately severed coupling can therefore both say so in the schema, instead of showing up in Jacobians as unexplained zero rows.
-note: step 5 P2-42: FMU glossed; the examples become a 'such as' clause so the gloss does not nest
+new: An opaque wrapper, such as an FMU (a Functional Mock-up Unit, a packaged simulation unit) or a C aerodynamic table, and a deliberately severed coupling can therefore both say so in the schema, instead of showing up in Jacobians as unexplained zero rows.
+note: step 5 P2-42: FMU glossed; the examples become a 'such as' clause so the gloss does not nest; step 6b finding 5: the gloss avoids lowercase *model*, a reserved word
 
 old: The conformance check holds them to it at every activation.
 new: The conformance check holds them to it at every activation (D-286).

@@ -3,9 +3,13 @@
 Items B21 to B80 of `rulings_batch.md`: Landing, Track 2 and Carried. Spec and
 log lines are the frozen copies `scratch_survey/h1/spec.md` and
 `decisions.md` at `c3d29fb`. `src/`, the companions and `pending.md` are read
-at the working tree. Chapter lines are `chapter_new.md` lines. IC1 row
-numbers count data rows of `inbound_check_1.tsv`, header excluded, as
-`inbound_check_1.md` says.
+at the working tree. IC1 row numbers count data rows of
+`inbound_check_1.tsv`, header excluded, as `inbound_check_1.md` says.
+
+Chapter lines are those of `chapter_new.md` at `b187775`, before the editorial
+fixers, as the batch numbers them. Commit `bfcf024` rewrapped and edited the
+file while this check ran. A spot check of 24 cited passages found each one
+still present in the working tree, at shifted lines.
 
 For Track 2 items that propose an annotation or entry, "Position check" says
 whether an existing Position already states the ruling or the ruling follows
@@ -208,8 +212,8 @@ and the `capture` precondition an annotation pointing to D-274.
 
 CONFIRMED. Position 4936-4944 rules the value-level constructor only.
 Rationale 4950-4951: "[§14.1][s14-1]'s **caller-computable escape is
-extended to cover environment queries**"; 4961: "**Trim problems never
-author the environment** ([§14.7][s14-7], [§14.9][s14-9])"; 4967-4968:
+extended to cover environment queries**"; 4962: "**Trim problems never
+author the environment** ([§14.7][s14-7], [§14.9][s14-9])"; 4968-4969:
 "[§14.9][s14-9]'s "the aircraft is never literally the root" is
 **softened from doctrine to default**". D-364 Position (14995-14997): "A
 thin rig holds its environment as a root input only when the handle is
@@ -226,7 +230,7 @@ rulings take a new entry; the §14.2 correction is a plain annotation.
 
 ### B35. D-278
 
-CONFIRMED. Rationale 12243-12244: "Authoring at the current level already
+CONFIRMED. Rationale 12247-12248: "Authoring at the current level already
 has a spelling, the unwrapped node, and [§14.2][s14-2] wants one way to say
 everything." Position 12235-12238: "`at` refuses an empty prefix when it is
 called, at the root as below it."
@@ -362,7 +366,7 @@ observation must speak the contract, while inspection observation sees
 everything". §13.5 (spec 10757): "Rejecting observation-by-path separates
 inspection from the reads a run acts on". `chapter_new.md` 97-99 (R4):
 "That rejection bars a run from acting on reads its model did not
-declare." D-409's Rationale (16354) says "The entry decides nothing new."
+declare." D-409's Rationale (16357-16358) says "The entry decides nothing new."
 Position check: D-414 bullet 4 (16466-16469) states the service half as
 guidance: "authoring guidance, not a framework check ... `get_face`
 remains the read for a consumer meant to outlive the build". The
@@ -422,3 +426,345 @@ others. Old §14.1 (11320-11375) cites D-253 nowhere; old §14.3 cites it at
 11512 and `chapter_new.md` at 311. IC1 row 261 (RETARGET) gives the
 annotation text. See N2: step 7.3 edits Spec fields in place.
 
+### B53. D-118
+
+CONFIRMED. Position 3903-3904: "The `TrimProblem` field set closes at seven
+— `guess`/`lower`/`upper`, `condition`, `reads`, `residuals`, `tolerances`".
+Rationale 3917-3918: "Shape/key-set checks at the setup guess evaluation
+join `TrimProblemInvalid`". D-262's Rationale (10874-10877): "Setup
+evaluates the checks once at the guess ... so a key-set or field-type
+mismatch is `TrimProblemInvalid` before any solve".
+Position check: the nine fields follow from two Positions. D-262's
+Position (10834-10835): "A `TrimProblem` carries a second, optional
+equation set, `checks` with `check_tolerances`". So the D-118 annotation
+only points to D-262. The setup check is partly D-113 bullet 3's Position
+(3727-3730): "`TrimProblemInvalid`: offending problem field, shapes/names
+in hand; service batch ... the residual/tolerance length case joins when
+... `tolerances` field is adjudicated ... (discharged, [D-118][d-118])".
+Under N1, the remaining clause, placement at the guess evaluation, takes
+a new entry if any.
+
+### B54. D-262
+
+UNCONFIRMED. The batch says "checks stay out of the solve" is a Rejected
+clause. D-262's Position (10838) states it: "The service never solves
+them. It evaluates them once, at the committed state". Setup's check at
+the guess is Rationale (10874-10877), as the item says. The decline holds
+more strongly: the bolded rulings and the no-solve rule are both in the
+Position.
+
+### B55. D-151
+
+CONFIRMED. Position 5730-5731: "**At every author↔framework `NamedTuple`
+seam the names are the pairing and field order carries no semantics**".
+Rationale 5749-5750: "A permutation is a non-event." Rejected
+(5753-5758): "a permuted `lower` passes the check and applies α's bound to
+`throttle` ... the residual/tolerance pair carries the same hazard".
+
+### B56. D-132
+
+CONFIRMED. Rationale 4432-4434: "the services need no story of their own —
+an interrupt during a long `trim!` unwinds an ordinary call over
+per-invocation scratch stores, no commit having happened
+([§14.8][s14-8])."
+
+### B57. D-273
+
+CONFIRMED. Rationale 11904-11906: "What retires with the condition form is
+accepted: a captured state can no longer be tweaked, `trim!` no longer
+takes a mid-run capture as its baseline". `chapter_new.md` 1145-1148:
+"Fly-then-retrim is spelled as a `checkpoint` of the flight, then a trim
+baseline authored from what the checkpoint ... shows ([D-273][d-273])".
+Note on the reason: D-274's Position says nothing of trim's baseline. The
+clause follows from D-273's own Position (11847-11851): "`capture` no
+longer produces a condition, and the state of a simulation past its
+initial instant is carried by a checkpoint ([D-274][d-274]), a distinct
+value with no algebra." A baseline is a condition, so the decline rests on
+D-273's Position.
+
+### B58. D-307
+
+CONFIRMED. Rationale 13464-13465: "The spec's caveats on `Linear()` kinks
+and the `Interpolations.gradient` escape hatch are guidance, not rulings."
+
+### B59. D-070
+
+CONFIRMED. Bullet 3 (2275-2276): "a malformed problem a `BuildError` at
+setup". Bullet 5 (2280-2281): "saturation rank-deficiency (LM-tolerated,
+reported)". `_saturated` (`src/trim.jl` 587-596) pushes a decision only
+when `d[i] == lower[i]` or `d[i] == upper[i]`. Bullet 1 (2269-2270) already
+scopes the flag correctly: "saturated-at-solution flagged in the report".
+`chapter_new.md` 1235 says "`DiagnosticError` carrying
+`TrimProblemInvalid`".
+Position check: the `BuildError` half follows from D-222's Position
+(8772: "The one carrier is `DiagnosticError{P}`"; title "Replace
+`BuildError` with the policy-parametric `DiagnosticError` carrier"). That
+makes it a carrier rename, which rule 2 keeps out of the log unless D-222
+is read as an overtaken ruling. The `saturated` scope is in no Position.
+
+### B60. D-069
+
+CONFIRMED. Bullet 2 (2234-2235): "reads are declared via `deriv`/`output`
+selectors compiled to a stack NamedTuple reader."
+Position check: already stated. D-124's Position (4105-4109) widens the
+grammar and names the old form: "the two-selector alternation was a
+pre-[D-095][d-095] straggler, not policy". The `get_` prefix is D-095's
+Position, a rename (rule 2). An annotation would only point to D-124.
+
+### B61. D-071
+
+CONFIRMED. Bullet 2 (2310-2312): "an unexported face is untrimmable from
+outside — correctly, it being a model-driven input, named by the build."
+The refusal is at resolution: `src/conditions.jl` 455 pushes
+`:internally_wired` with the producer; `src/readers.jl` 538 does the same
+for a read. Survey 2 F54: "`build` of a tree whose mounted input is
+internally wired raised nothing". Note: "named by the build" can also read
+as "identified by the build as model-driven", which stays true; only the
+reading "the build raises it" is stale.
+Position check: no Position states the `:internally_wired` refusal.
+
+### B62. D-072
+
+CONFIRMED. Bullet 3 (2349-2351): "its default operating point is
+`capture(sim)`, `capture` settled as the full-store gather returning
+`(condition, t)`". No annotation follows (2336-2371). D-274 bullet 5
+(11967-11968): "`linearize`'s default operating point is the checkpoint of
+the simulation as it stands ([D-272][d-272])".
+Position check: D-274 bullet 5 states the current form; the annotation is
+a pointer.
+
+### B63. D-272
+
+CONFIRMED. Bullet 4 (11779-11780): "The operating point is `capture(sim)`
+by default." Annotation 2026-09-28 (11825-11836): "Two taps resolving to
+one site are refused at resolution with both labels in hand"; "the refusal
+names the tier rather than an entry to promote". Neither later annotation
+(the second is 2026-09-30, 11838-11841) records D-274.
+Position check: the default point is D-274 bullet 5's (pointer only). The
+two annotation rulings are in no Position. D-296 bullet 4 (13067-13070) is
+the sibling for an entry pin ("naming the pinning consumer and its
+entry"), not the tier pin. The same annotation's third ruling, "`t0` is
+admitted only beside `about`", is also in no Position, and the chapter
+states it (`chapter_new.md` 1533). Under N1, the rulings take a new entry,
+not Position text in an annotation.
+
+### B64. D-126
+
+CONFIRMED. Rationale 4181-4182: "which `capture`-defaulted `linearize`
+([§14.10][s14-10]) then reads".
+
+### B65. D-155
+
+CONFIRMED. Position 5895-5896: "the point `capture`-defaulted `linearize`
+reads".
+
+### B66. D-263
+
+CONFIRMED, with two corrections. D-167 is "superseded → D-263", and its
+Rejected item (6436-6440) reads: "if [§14.10][s14-10]'s sampled-data door
+opens, the opt-in participation trait brings the `T`-signature with it —
+the hinge is recorded here so the forms stay compatible." The words
+"turns the walk on for its contracts" are the spec's (old §14.10, 12646),
+not D-167's. D-263's brush is at 11003-11004 ("[§14.10][s14-10]'s
+sampled-data door would bring the scalar there anyway"); lines 10958-10960
+speak of the freeze and FFI doors.
+Position check: no Position states the trait. The trait belongs to the
+sampled-data extension, which D-073's Position records unbuilt (2379-2380).
+B74 declines entries for recorded design, so B66 and B74 treat one class
+two ways. Under N1, an annotation "stating the trait's ruling" is the
+retired form.
+
+### B67. D-197 and D-073
+
+CONFIRMED. D-197 Rationale 7634-7636: "the error's next-move guidance
+points at the step map $\Phi$, the object whose differentiation the author
+actually wants". D-073 Rejected (2406-2408): "*Extending differentiation
+through the discrete tier now:* frozen-`z` is exact for every built
+consumer; $\Phi$ differentiability breaks at events".
+
+### B68. D-150
+
+CONFIRMED. Rationale 5694-5699: "**The tolerance translation into each
+backend's stopping language is the service's too**, per backend family";
+5700-5704: "**Soundness (inscribed sphere)**". `chapter_new.md` 1012-1013
+states it as a rule: "The tolerance translation is the service's too, per
+backend family ([D-150][d-150])."
+Position check: partly stated. D-069 bullet 5 (2241-2242): "The
+derivative-free scalar fallback is the service squaring the residuals";
+D-070's Position: "the `NLoptBackend` extension takes squared residuals".
+The normalization at `stopval = 1` is Rationale only. The Rationale bolds
+the translation as a ruling, so N1 bears on the decline.
+
+### B69. D-213
+
+CONFIRMED. Spec field (8264): "**Spec.** [§14.8][s14-8]". D-213's Position
+(8257-8262) rules "A service's seeded scratch set", which §14.10's
+evaluation reuses (survey 2 row 690: "D-072 bullet 2; D-213 Position; D-319
+bullet 5"). Notes: §14.10 cites D-213 nowhere, old or new; D-274 bullet 5
+(11969-11970) narrows it for the default point ("the frozen tier's cells
+are the checkpoint's held cells, which is what [D-213][d-213]'s
+establishment round approximated"). Survey 2 lists six more stale Spec
+fields (D-070, D-286, D-237, D-406, D-414, D-317, survey 2 1050-1058) that
+no batch item carries.
+
+### B70. D-068
+
+CONFIRMED. Bullet 3 (2203-2206): "trim commits `override(baseline,
+solution)`." `src/trim.jl` 612: `commit!(override(baseline,
+problem.condition(solution)))`. Note: D-071's Position (2300-2301) says the
+problem is "committed by initializing with the solved condition", so
+"`solution`" in D-068 can read as the solved condition. The exact spelling
+is in D-149's Rationale (5658: "`override(baseline, condition(d*))`"), not
+a Position.
+
+### B71. New entry: the two `TrimProblemInvalid` reasons
+
+CONFIRMED. `src/trim.jl` 321 (`:inverted_box`) and 346
+(`:nonpositive_tolerance`). The frozen log contains neither name, nor any
+ruling on an inverted box or a non-positive tolerance. `chapter_new.md`
+1240-1241 states both: "A box with `lower` above `upper`. A tolerance or
+check tolerance that is not finite and positive." Note: `git log -S`
+finds both names first in `415ed0b` (the reason list in
+`src/diagnostics.jl` and its tests), and `3408028` moves them into
+`src/trim.jl`.
+Position check: no Position states either.
+
+### B72. New entry: the seeded tap's limits
+
+CONFIRMED. `test/test_linearize.jl` 308: "a seed follows index steps
+alone: a `.name` step is unseedable (§14.10, D-036, D-276)". D-036's
+Position (1275-1278) is table mechanics; D-276's (12063-12068) is the
+general leaf address. `_check_seedable` (`src/linearize.jl` 336-347)
+raises `:unseedable` for a `.name` step or a second step and for a
+non-`Float64` leaf, and `:vector_tap` for a non-`Real` leaf.
+Position check: none states the limits. D-272 bullet 6 (11785-11787),
+"Seeds are written at the resolved tap's own site, the state's buffer
+offset or the root input's cell", is the nearest and does not imply them.
+
+### B73. Rulings with no entry, survey 1
+
+CONFIRMED. No log entry names `ConditionShapeDrift`. Survey 1 rows 11, 17,
+122, 128 and 129 say what the batch says. D-130's Position (4313-4314):
+"which of the three a client falls under is internal, never user-facing
+API ([§14.4][s14-4]'s `apply!` precedent)".
+Position check: the restore row follows from a Position. Survey 1 row 11:
+"legality from `built` follows from "beside `init!`"" (D-274 bullet 3,
+11950: "`restore!(sim, cp)` is a door beside `init!` and `replay!`"). On a
+`Model`, D-319 bullet 2 (14312) says `restore!` "has no status gate". By
+lesson 68 that row takes no entry. `init!`'s any-status legality is in no
+Position. The kind's check is D-066's Position ("shape check via tree type
++ literal `===` sweep"), and the kind name and its two reasons are code
+facts (`src/conditions.jl` 781, 785).
+
+### B74. Rig and non-participation rulings with no entry; glossary `design_world`
+
+UNCONFIRMED in part. Confirmed: glossary 14745-14746 reads "the shipped
+thin world (aircraft + `SimpleAtmosphere(wind = NoWind())` +
+`HorizontalTerrain`)". Flight.jl defines `NoWind`
+(`lib/FlightPhysics/src/atmosphere.jl` 153) and `SimpleAtmosphere` (260),
+and no file in `~/.julia/dev/Flight.jl` names `HorizontalTerrain`. Old
+§14.10 12721-12725 records the tooling (pinned-face validation, the
+feedthrough-graph lint), and no Position names either.
+Not confirmed: the reason for no entry. `decisions_style.md` rule 9 is
+"**Implementation policy earns no entry.**", which is about implementation
+or process policy, not recorded design. D-073's Position records only the
+"sampled-data Dual activation recorded unbuilt ([§14.10][s14-10])"; it
+covers the walked-leaf parametrization but not the non-participation
+tooling.
+
+## Carried
+
+### B75. Appendix C rows the chapter found stale
+
+CONFIRMED. Spec 13637-13643 (`ConditionResolution`): "Its sub-kinds are
+assembly path, undeclared field, unconvertible value and unexported
+root-input face." The code's reason field (`src/diagnostics.jl` 1757-1758)
+lists seven: `:assembly_path`, `:unexported_face`, `:no_input_face`,
+`:internally_wired`, `:no_store`, `:undeclared_field`, `:unconvertible`,
+and `chapter_new.md` 176-183 and 296-299 name all seven. Spec 13644-13646
+(`DuplicateConditionLeaf`): "The leaf `(path, store, field)`";
+`chapter_new.md` 291: "where a `u` payload's leaf is the root input its
+face resolves to". Spec 13647-13649 (`ConditionNodeMisuse`): "The offending
+argument's type, the node kinds in hand. Or an empty prefix handed to
+`at`", with no `:set_payload`. Spec 13678-13681 (`ConditionShapeDrift`):
+"The compiled tree type and the observed one; for a prefix mismatch, the
+node position and both strings", with no `reason`; `chapter_new.md`
+389-390 names `:tree_type` and `:prefix`. Spec 13661-13665
+(`TapResolution`) lists "a discrete store, a vector leaf, a duplicate site,
+and a declaredly unseedable root input", with no `.name`-step or
+non-`Float64` limit. Spec 13666-13668 (`TrimProblemInvalid`): "(a key-set
+or field-type mismatch; never a field-order difference)". The
+`ConditionResolution` row cites §14.2 and §14.3, and `ReadResolution`
+(13650) cites §14.4 only; `chapter_new.md` 1387 (§14.9) names both kinds.
+`chapter_new.md` 85 (§14.1) names `ConditionResolution` with
+`:undeclared_field`, which supports adding §14.1.
+
+### B76. Appendix B owes the snapshot form of `port`
+
+CONFIRMED. Spec 13039: "`port(model, path, name)`, `state(model, path)` and
+`modes(model, path)`." `src/dataplane.jl` 480-481:
+`port(snapshot::Snapshot, path::String, name::Symbol) =
+gather_cell(snapshot.store, snapshot.layout.addr[(path, name)])`. The
+frozen spec has no `port(snapshot` spelling. Note: `src/sim.jl` 2304 also
+defines `port(sim::Simulation, path::String, name::Symbol)`, which
+Appendix B does not list either.
+
+### B77. The Part IV roadmap
+
+CONFIRMED. Spec 9907-9921 names "[§14.1][s14-1]–[§14.6][s14-6] build the
+condition ... and apply it through boundary zero ...
+[§14.7][s14-7]–[§14.10][s14-10] build trim and linearization", with no
+`checkpoint`. Brief R1: "The Part IV roadmap (9907–9921) is not edited: it
+belongs to the front-matter rewrite."
+
+### B78. Appendix D `#g-entry` and bare *entry*
+
+UNCONFIRMED. Glossary 13985-13988 does not list only *condition entry*:
+"**entry** — never used bare. The spec's compounds are table entry (a
+cell), input entry ([§8.2][s8-2]), executor entry ([§9.7][s9-7]), roster
+entry ([§11.3][s11-3]), batch entry ([§11.3][s11-3]) and condition entry
+([§14.3][s14-3]), each a different thing." *Input entry* is already there,
+and *tap* is not an *entry* compound. Chapter 13's carried item says
+something else (`docs/spec_rewrite/README.md` 84-85): "`#g-entry` lacks the
+wiring entry that §6.1 and §13.3 use (chapter 13's B81)." R13's three words
+need no glossary change; the open item is the wiring entry.
+
+### B79. `linearization_walkthrough.md` 572
+
+CONFIRMED. Lines 571-573: "`sim.exec` was never touched, and the sim's
+lifecycle is what it was. This is [§14.10][s14-10]'s "pure query": no
+commit, no boundary zero, no restore step." D-317's Position (14041-14047)
+gives `Simulation` four fields (model, run, data plane, control plane), so
+there is no `sim.exec`. `chapter_new.md` 1526: "each restored into the
+scratch world". D-072 bullet 3 (2349) supports the Flight.jl reading: "no
+commit, no boundary zero, no restore dance".
+
+### B80. `gloss_table.md` row 202
+
+CONFIRMED. `docs/design/tools/gloss_table.md` 202: "| `TrimProblem` |
+g-trimproblem | 1 | B | the closed seven-field value specifying a trim |".
+Glossary 14787: "the closed nine-field value". `chapter_new.md` 1312: "the
+closed nine-field".
+
+## Summary
+
+CONFIRMED: 54. UNCONFIRMED: 6.
+
+UNCONFIRMED: B41 (D-095 names `stop_on`, not `ignore_stop_requests`; D-316
+rules the ignore list), B48 (D-130 already has both annotations), B49
+(D-242 already has the annotation), B54 (D-262's Position says "The service
+never solves them"), B74 (rule 9 is implementation policy, and D-073
+covers only the sampled-data half), B78 (`#g-entry` lists six compounds,
+input entry included; the carried item is the wiring entry).
+
+Items an existing Position already states, or that follow from one: B36
+(D-207, D-414 bullet 4), B43 (D-273 bullet 4), B50 (D-149's own
+principle), B53 (D-262, D-113 bullet 3), B60 (D-124), B62 (D-274 bullet 5),
+B63's default-point half (D-274 bullet 5), B73's `restore!` row (D-274
+bullet 3; D-319 bullet 2), and in part B33 (D-232, D-404, D-274 bullet 2),
+B41 (D-316 bullet 7, D-206), B47 (D-414 bullet 4), B54 (D-262), B57
+(D-273), B59's carrier half (D-222) and B68's squaring half (D-069 bullet
+5, D-070).
+
+Proposals in the retired "annotation in Position form" shape (N1): B33,
+B34, B41, B46, B50, B53, B63, B66.

@@ -67,15 +67,15 @@ package dirtied the model, has no successor.
 
 **The default operating point is the [checkpoint](#g-checkpoint)** of the simulation or the [`Model`](#g-model) (a
 deployment materialized at one scalar type) as it stands ([D-274][d-274], [D-319][d-319]). A
-checkpoint is the `Model`'s state at a frame top as one value. It is
-`checkpoint(sim)` on a simulation and `checkpoint(model)` on a `Model`, each restored
-into the scratch world with no boundary zero ([§12.6][s12-6], [D-274][d-274], [D-319][d-319]). The frozen
-tier's [cells](#g-cell) (the typed entries of the signal table) are the checkpoint's held
-cells. After a `trim!` commit, `linearize(sim, taps)` or `linearize(model, taps)` is
-about the trim point with nothing re-specified. **`about = <condition>`, with `t0`
-beside it, linearizes anywhere else without touching the sim**, its coverage
-checked as [§14.6][s14-6] requires ([D-272][d-272]). `t0` is admitted only there, and a `t0` passed
-without `about` is an `ArgumentInvalid`.
+checkpoint is the `Model`'s state at a frame top as one value. The default point
+is `checkpoint(sim)` on a simulation and `checkpoint(model)` on a `Model`, each
+restored into the scratch world with no boundary zero ([§12.6][s12-6], [D-274][d-274], [D-319][d-319]). The
+frozen tier's [cells](#g-cell) (the typed entries of the signal table) are the checkpoint's
+held cells. After a `trim!` commit, `linearize(sim, taps)` or `linearize(model, taps)`
+is about the trim point with nothing re-specified. **`about = <condition>`, with `t0`
+beside it, linearizes anywhere else without touching the sim**, the condition's
+coverage checked as [§14.6][s14-6] requires ([D-272][d-272]). `t0` is admitted only there, and a `t0`
+passed without `about` is an `ArgumentInvalid`.
 
 #### The seeded pass
 
@@ -214,7 +214,7 @@ continuous linearization plus Tustin's discretization.
 Both halves of non-participation have a spelling ([D-263][d-263]). The output half is the
 freeze door, which declares a leaf frozen under differentiation as [§8.2][s8-2] and [§9.5][s9-5]
 spell it ([D-286][d-286]). An opaque wrapper, such as an FMU (a Functional Mock-up Unit,
-a packaged external model) or a C aerodynamic table, and a deliberately severed
+a packaged simulation unit) or a C aerodynamic table, and a deliberately severed
 coupling can therefore both say so in the schema, instead of showing up in
 Jacobians as unexplained zero rows. The conformance check holds them to it at
 every activation ([D-286][d-286]). The input half is the FFI door ([§8.2][s8-2]). A consumer's

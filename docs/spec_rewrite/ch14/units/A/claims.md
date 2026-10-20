@@ -32,18 +32,18 @@ newcites: §14.1 §14.2 §14.3 §14.4
 note: R1's roadmap sentence names §14.1 to §14.10 in order by subject. §14.3's subject, resolution, is its title's. Step 5 fix1: P1-1, §14.4's read selectors join its subject, one verb for §14.1 to §14.4.
 
 old: §14.5–§14.6 cover the boundary-zero sequence and root-input totality (the requirement that an application establishing a complete world cover every root input).
-new: §14.5 covers the initialization sequence called boundary zero, §14.6 root-input totality (the requirement that an application establishing a complete world cover every root input) and `override`,
+new: §14.5 covers the initialization sequence called boundary zero, §14.6 root-input totality (the requirement that an application establishing a complete world cover every root input) and `override` (the ordered, asymmetric layering combinator),
 tag: R
 ruling: R1
 newcites: §14.5 §14.6
-note: F4, boundary zero linked to #g-boundary-zero, not #g-boundary. root input gains its first-use link inside the gloss. Step 5 fix1: P1-1, one 'covers' and §14.6's `override` (its title's); P1-35, boundary zero glossed by 'the initialization sequence called', after #g-boundary-zero ('the initialization boundary: the ordinary macro-sequence'). root input stays linked inside the totality gloss, unglossed: a gloss there would nest.
+note: F4, boundary zero linked to #g-boundary-zero, not #g-boundary. root input gains its first-use link inside the gloss. Step 5 fix1: P1-1, one 'covers' and §14.6's `override` (its title's); P1-35, boundary zero glossed by 'the initialization sequence called', after #g-boundary-zero ('the initialization boundary: the ordinary macro-sequence'). root input stays linked inside the totality gloss, unglossed: a gloss there would nest. Final fix, finding 2: `override` takes its link and #g-override's gloss here, its first use in the opening.
 
 old: §14.7–§14.9 cover the trim service in full.
-new: §14.7 the trim problem, §14.8 the trim service, §14.9 mounting
+new: §14.7 the trim problem, §14.8 the trim service, §14.9 mounting, which together cover the trim service in full,
 tag: R
 ruling: R1
 newcites: §14.7 §14.8 §14.9
-note: each section's subject from its title (§14.7 "The trim problem", §14.8 "The trim service", §14.9 "Mounting"). Step 5 fix1: P1-1 drops 'which together cover the trim service in full': §14.9's mounting also relocates tap sets, so the three sections are more than the trim service; each keeps its subject.
+note: each section's subject from its title (§14.7 "The trim problem", §14.8 "The trim service", §14.9 "Mounting"). Step 5 fix1: P1-1 drops 'which together cover the trim service in full': §14.9's mounting also relocates tap sets, so the three sections are more than the trim service; each keeps its subject. Final fix, finding 1: the claim is restored, since the three sections still cover the trim service in full.
 
 old: §14.10 covers linearization.
 new: and §14.10 linearization.
@@ -96,10 +96,10 @@ newcites: D-108
 note: R7 bold headline for D-108's second ruling, "within the stopped states legality follows each service's inputs".
 
 old: | service | `built` | `initialized` | `stopped` | its inputs | |---|---|---|---|---| | `checkpoint` | error | legal | legal | a frame-top rest; refused after a `t` stop and after an abandoned frame | | `init!` | legal | legal | legal | authored conditions | | `restore!` | legal | legal | legal | a checkpoint whose fingerprint and deployment match the simulation's and whose `t` sits on its grid (§12.6) | | `trim!` | legal | legal | legal | authored conditions; the scratch world is `override``(baseline, condition(guess))` (§14.8), never the sim's stores | | `linearize`, operating point defaulted to `checkpoint(sim)` | error | legal | legal | inherits `checkpoint`'s precondition, its refusals included | | `linearize`, explicit `about` (§14.10) | legal | legal | legal | inherits `init!`'s legality — legal wherever `init!` is |
-new: | service | `built` | `initialized` | `stopped` | its inputs | |---|---|---|---|---| | `checkpoint` | error | legal | legal | a frame-top rest; refused after a `t` stop and after an abandoned frame | | `init!` | legal | legal | legal | authored conditions | | `restore!` | legal | legal | legal | a checkpoint whose fingerprint and deployment match the simulation's and whose `t` sits on its grid (§12.6) | | `trim!` | legal | legal | legal | authored conditions; the scratch world is `override``(baseline, condition(guess))` (§14.8), never the sim's stores | | `linearize`, operating point defaulted to `checkpoint(sim)` | error | legal | legal | inherits `checkpoint`'s precondition, its refusals included | | `linearize`, explicit `about` (§14.10) | legal | legal | legal | inherits `init!`'s legality, legal wherever `init!` is |
+new: | service | `built` | `initialized` | `stopped` | its inputs | |---|---|---|---|---| | `checkpoint` | error | legal | legal | a frame-top rest; refused after a `t` stop and after an abandoned frame | | `init!` | legal | legal | legal | authored conditions | | `restore!` | legal | legal | legal | a checkpoint whose fingerprint and deployment match the simulation's and whose `t` sits on its grid (§12.6) | | `trim!` | legal | legal | legal | authored conditions; the scratch world is `override(baseline, condition(guess))` (§14.8), never the sim's stores | | `linearize`, operating point defaulted to `checkpoint(sim)` | error | legal | legal | inherits `checkpoint`'s precondition, its refusals included | | `linearize`, explicit `about` (§14.10) | legal | legal | legal | inherits `init!`'s legality, legal wherever `init!` is |
 tag: R
 ruling: R27
-note: the table, verbatim except its last cell's em dash, now a comma.
+note: the table, verbatim except its last cell's em dash, now a comma. Final fix, finding 2: `override` here is plain, its link and gloss now at the roadmap's first use.
 
 old: Each row's service also has a form on a `Model` (a deployment materialized at one scalar type), gated by the model's status rather than by the lifecycle (D-319).
 new: Each row's service also has a form on a `Model` (a deployment materialized at one scalar type), gated by the model's status rather than by the lifecycle (D-319).
@@ -318,9 +318,9 @@ old: Init knowledge is component-local.
 tag: F
 
 old: The engine knows `n_eng → ω = n_eng·ω_rated`, and nothing above it should have to.
-new: An engine component knows `n_eng → ω = n_eng·ω_rated`, and nothing above it should have to.
+new: An engine component knows `n_eng → ω = n_eng·ω_rated`, where `n_eng` is the engine speed as a fraction of its rated speed, and nothing above it should have to.
 tag: F
-note: Step 5 fix1: P1-6's `n_eng` clause is the added block below.
+note: Step 5 fix1: P1-6's `n_eng` gloss; final fix, finding 3, folds it into this sentence so 'that locality' keeps its antecedent.
 
 old: Making that locality a schema entry was rejected (D-064).
 tag: F
@@ -632,9 +632,9 @@ old: That is why it is its own kind and not a `ConditionResolution` sub-kind (§
 tag: F
 
 old: The explicit, ordered layering spelling, `override`, belongs with the use case root-input totality produces (§14.6).
-new: The explicit, ordered layering spelling, `override`, belongs with the use case of root-input totality (the requirement that an application establishing a complete world cover every root input) (§14.6).
+new: The explicit, ordered layering spelling, `override`, belongs with the use case that root-input totality (the requirement that an application establishing a complete world cover every root input) produces (§14.6).
 tag: F
-note: `override` takes its first-use link (#g-override); its first mention, inside the quoted message, is code. Step 5 fix1: P1-9, P1-35.
+note: `override` takes its first-use link (#g-override); its first mention, inside the quoted message, is code. Step 5 fix1: P1-9, P1-35. Final fix, finding 4: 'produces' restored, keeping the causal link.
 
 old: ### 14.3 Resolution: flatten, validate, compile once
 tag: X
@@ -824,7 +824,6 @@ note: F15; `src/conditions.jl` 316-324, 600-620. The citation left the parenthes
 
 added: A condition is the value an author writes to say which state a build starts from.
 
-added: `n_eng` is the engine speed as a fraction of its rated speed `ω_rated`.
 
 added: In the block, `α_filt` and `β_filt` are the aerodynamics' filtered airflow angles, set to the angle of attack `α_a` and the sideslip `β_a`.
 

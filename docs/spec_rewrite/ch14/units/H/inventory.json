@@ -289,7 +289,7 @@
   {
    "id": "C-027",
    "old": "It is `checkpoint(sim)` on a simulation and `checkpoint(model)` on a `Model` (a deployment materialized at one scalar type), each restored into the scratch world with no boundary zero (§12.6, D-274, D-319).",
-   "new": "It is `checkpoint(sim)` on a simulation and `checkpoint(model)` on a `Model`, each restored into the scratch world with no boundary zero (§12.6, D-274, D-319).",
+   "new": "The default point is `checkpoint(sim)` on a simulation and `checkpoint(model)` on a `Model`, each restored into the scratch world with no boundary zero (§12.6, D-274, D-319).",
    "where": "new",
    "cites": [
     "D-274",
@@ -297,7 +297,7 @@
     "§12.6"
    ],
    "tag": "F",
-   "note": "step 5 P2-20: the `Model` link and gloss moved to the sentence before"
+   "note": "step 5 P2-20: the `Model` link and gloss moved to the sentence before; step 6b finding 3: the subject named, since 'It' would now take the checkpoint gloss sentence as antecedent"
   },
   {
    "id": "C-028",
@@ -319,7 +319,7 @@
   {
    "id": "C-030",
    "old": "`about = <condition>`, with `t0` beside it as in `trim!`, linearizes anywhere else without touching the sim.",
-   "new": "`about = <condition>`, with `t0` beside it, linearizes anywhere else without touching the sim, its coverage checked as §14.6 requires (D-272). `t0` is admitted only there, and a `t0` passed without `about` is an `ArgumentInvalid`.",
+   "new": "`about = <condition>`, with `t0` beside it, linearizes anywhere else without touching the sim, the condition's coverage checked as §14.6 requires (D-272). `t0` is admitted only there, and a `t0` passed without `about` is an `ArgumentInvalid`.",
    "where": "new",
    "cites": [],
    "newcites": [
@@ -328,7 +328,7 @@
    ],
    "tag": "R",
    "ruling": "R9 B18",
-   "note": "B18 (R3): the about point is a totality site §14.6 names (\"linearization's operating condition under `about`, applied to its own scratch\"), so the pointer back states it where the site lives; outside the bold, which keeps its headline clause. F83; R14 names `ArgumentInvalid` `:t0_without_about` (src/linearize.jl 156–157); R7 bold on D-272 bullet 4's standing sentence. The lone-t0 refusal is D-272's annotation of 2026-09-28."
+   "note": "B18 (R3): the about point is a totality site §14.6 names (\"linearization's operating condition under `about`, applied to its own scratch\"), so the pointer back states it where the site lives; outside the bold, which keeps its headline clause. F83; R14 names `ArgumentInvalid` `:t0_without_about` (src/linearize.jl 156–157); R7 bold on D-272 bullet 4's standing sentence. The lone-t0 refusal is D-272's annotation of 2026-09-28.; step 6b finding 4: 'its' named as the condition's"
   },
   {
    "id": "C-031",
@@ -1129,11 +1129,11 @@
   {
    "id": "C-109",
    "old": "An opaque wrapper (an FMU, a C aerodynamic table) and a deliberately severed coupling can therefore both say so in the schema, instead of showing up in Jacobians as unexplained zero rows.",
-   "new": "An opaque wrapper, such as an FMU (a Functional Mock-up Unit, a packaged external model) or a C aerodynamic table, and a deliberately severed coupling can therefore both say so in the schema, instead of showing up in Jacobians as unexplained zero rows.",
+   "new": "An opaque wrapper, such as an FMU (a Functional Mock-up Unit, a packaged simulation unit) or a C aerodynamic table, and a deliberately severed coupling can therefore both say so in the schema, instead of showing up in Jacobians as unexplained zero rows.",
    "where": "new",
    "cites": [],
    "tag": "F",
-   "note": "step 5 P2-42: FMU glossed; the examples become a 'such as' clause so the gloss does not nest"
+   "note": "step 5 P2-42: FMU glossed; the examples become a 'such as' clause so the gloss does not nest; step 6b finding 5: the gloss avoids lowercase model, a reserved word"
   },
   {
    "id": "C-110",

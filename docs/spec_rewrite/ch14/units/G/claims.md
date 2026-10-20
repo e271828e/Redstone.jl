@@ -340,11 +340,11 @@ old: It is the same activation linearization is defined on.
 old: AD-readiness is also a build-checked property.
 
 old: The Dual probe detonates pinned intermediates with a culprit-naming `InexactError`, and `build(world; activations)` puts it in CI.
-new: A pinned intermediate (a value held at `Float64` inside authored continuous math) makes the Dual probe fail with a culprit-naming `MethodError` or `InexactError` (D-307). `build(world; activations)` puts the probe in CI (D-280).
+new: A pinned intermediate (a value held at `Float64` inside authored continuous math) makes the Dual probe (the build's single evaluation of a user function) fail with a culprit-naming `MethodError` or `InexactError` (D-307). `build(world; activations)` puts the probe in CI (D-280).
 tag: R
 ruling: R9
 newcites: D-307 D-280
-note: F77, D-307 Rationale: "fails at the offending line with a `MethodError` or an `InexactError`". D-280 (H85): "The repository's test suite builds a `Dual` activation of every component, with `build(world; activations = ...)`". The gloss follows D-307's "`Float64`-pinned intermediates".
+note: F77, D-307 Rationale: "fails at the offending line with a `MethodError` or an `InexactError`". D-280 (H85): "The repository's test suite builds a `Dual` activation of every component, with `build(world; activations = ...)`". The gloss follows D-307's "`Float64`-pinned intermediates".; step 6b finding 1: probe linked at its first use in §14.8 with the glossary's gloss
 
 added: (a value held at `Float64` inside authored continuous math)
 
@@ -502,6 +502,8 @@ newcites: D-277
 note: q24 row 650; the **Rule.** label goes. D-277 Position: "`at(prefix, read_set)` prepends the prefix to the read set's own chain of prefixes and joins nothing; `Reads` is not a condition node and `Scoped` never wraps one." The two semicolon halves are read as one ruling, the second saying where the chain is not kept; see rulings.md.
 
 old: `at(prefix, read_set)` prepends the prefix to that chain and joins nothing.
+new: `at(prefix, read_set)` prepends the prefix to the read set's mount chain and joins nothing.
+note: step 6b finding 2: 'that chain' named, the added Reads sentence standing between it and its antecedent
 
 old: A `Reads` value is no condition node, so `Scoped` never wraps one.
 new: A `Reads` value is no condition node, so `Scoped` never wraps one (D-277).

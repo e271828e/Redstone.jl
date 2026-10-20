@@ -148,13 +148,12 @@ and residual math ([D-070][d-070]). The discrete tier's stages and
 They are frozen constants with zero partials, semantically exact
 ([§8.2][s8-2]).
 
-This is *not a new obligation*. It is the same activation linearization is
-defined on. AD-readiness is also a build-checked property. A
-[pinned](#g-walked) intermediate (a value held at `Float64` inside authored
-continuous math) makes the Dual probe fail with a culprit-naming
-`MethodError` or `InexactError` ([D-307][d-307]). `build(world; activations)`
-puts the probe in CI ([D-280][d-280]). The robustness comes from enforcement,
-not hope.
+This is *not a new obligation*. It is the same activation linearization is defined
+on. AD-readiness is also a build-checked property. A [pinned](#g-walked) intermediate (a
+value held at `Float64` inside authored continuous math) makes the Dual [probe](#g-probe) (the
+build's single evaluation of a user function) fail with a culprit-naming
+`MethodError` or `InexactError` ([D-307][d-307]). `build(world; activations)` puts the probe in
+CI ([D-280][d-280]). The robustness comes from enforcement, not hope.
 
 A migration audit of Flight.jl's Cessna 172 model against this obligation took
 one afternoon. Its findings on tables and saturations follow ([D-070][d-070]), and its
@@ -227,16 +226,16 @@ of [§14.3][s14-3] enters each `Scoped` wrapper (the node `at` builds over a con
 and prefixes every condition entry below it.
 
 **A read set carries its mount chain as data** ([D-277][d-277]). A read set is a `Reads` value.
-`at(prefix, read_set)` prepends the prefix to that chain and joins nothing. **A
-`Reads` value is no condition node**, so `Scoped` never wraps one ([D-277][d-277]). **Resolution
-walks the chain from the root**, each prefix from the level the previous one
-reached ([§13.3][s13-3], [D-277][d-277]). It then rebases every [selector](#g-selector) (one of the closed family
-of deferred reads) to the root before the selector resolves. A path selector's
-path is joined to the mount (`"vehicle/dynamics"` → `"wing/vehicle/dynamics"`).
-`get_input` names an input [face](#g-face) (the name a port wears on its [component](#g-component)'s
-boundary) of the mount level. It follows the export chain to the [root input](#g-root-input) it
-lands on (the root component's own input face). `get_face` names an output face of
-the mount level and reads its producer's port ([D-277][d-277]).
+`at(prefix, read_set)` prepends the prefix to the read set's mount chain and joins
+nothing. **A `Reads` value is no condition node**, so `Scoped` never wraps one ([D-277][d-277]).
+**Resolution walks the chain from the root**, each prefix from the level the
+previous one reached ([§13.3][s13-3], [D-277][d-277]). It then rebases every [selector](#g-selector) (one of the
+closed family of deferred reads) to the root before the selector resolves. A
+path selector's path is joined to the mount (`"vehicle/dynamics"` →
+`"wing/vehicle/dynamics"`). `get_input` names an input [face](#g-face) (the name a port wears
+on its [component](#g-component)'s boundary) of the mount level. It follows the export chain to
+the [root input](#g-root-input) it lands on (the root component's own input face). `get_face` names
+an output face of the mount level and reads its producer's port ([D-277][d-277]).
 
 **A refusal spells the selector as authored and names the mount**
 ([D-277][d-277]). `at` refuses an empty prefix on a read set, as it does on a

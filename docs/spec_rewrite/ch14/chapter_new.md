@@ -11,8 +11,9 @@ puts it back. A checkpoint is a distinct value with no condition algebra
 [§14.3][s14-3] its resolution and [§14.4][s14-4] its application and the read selectors; [§14.5][s14-5]
 covers the initialization sequence called [boundary zero](#g-boundary-zero), [§14.6][s14-6]
 [root-input totality](#g-root-input-totality) (the requirement that an application establishing a complete
-world cover every [root input](#g-root-input)) and `override`, [§14.7][s14-7] the trim problem, [§14.8][s14-8] the
-trim service, [§14.9][s14-9] mounting and [§14.10][s14-10] linearization.
+world cover every [root input](#g-root-input)) and [`override`](#g-override) (the ordered, asymmetric layering
+combinator), [§14.7][s14-7] the trim problem, [§14.8][s14-8] the trim service, [§14.9][s14-9] mounting,
+which together cover the trim service in full, and [§14.10][s14-10] linearization.
 
 #### Lifecycle preconditions
 
@@ -34,7 +35,7 @@ paused ([§11.3][s11-3], [§12.1][s12-1]).
 | `checkpoint` | error | legal | legal | a frame-top rest; refused after a `t*` stop and after an abandoned frame |
 | `init!` | legal | legal | legal | authored conditions |
 | `restore!` | legal | legal | legal | a checkpoint whose fingerprint and deployment match the simulation's and whose `t` sits on its grid ([§12.6][s12-6]) |
-| `trim!` | legal | legal | legal | authored conditions; the scratch world is [`override`](#g-override)`(baseline, condition(guess))` ([§14.8][s14-8]), never the sim's stores |
+| `trim!` | legal | legal | legal | authored conditions; the scratch world is `override(baseline, condition(guess))` ([§14.8][s14-8]), never the sim's stores |
 | `linearize`, operating point defaulted to `checkpoint(sim)` | error | legal | legal | inherits `checkpoint`'s precondition, its refusals included |
 | `linearize`, explicit `about` ([§14.10][s14-10]) | legal | legal | legal | inherits `init!`'s legality, legal wherever `init!` is |
 
@@ -124,8 +125,8 @@ route needs no environment access at condition time whatsoever.
 ### 14.2 Fragment composition: locality without schema
 
 Init knowledge is [component](#g-component)-local. An engine component knows
-`n_eng → ω = n_eng·ω_rated`, and nothing above it should have to. `n_eng` is the
-engine speed as a fraction of its rated speed `ω_rated`. Making that locality a
+`n_eng → ω = n_eng·ω_rated`, where `n_eng` is the engine speed as a fraction of
+its rated speed, and nothing above it should have to. Making that locality a
 schema entry was rejected ([D-064][d-064]). That spelling would declare
 `initialize(::C, spec)`, a declarative rebirth of `f_init!`, FlightCore's
 per-model initialization hook. It would also add an [assembly](#g-assembly)-level rule routing
@@ -256,9 +257,9 @@ rejection carries a [kind](#g-kind) (a diagnostic's identity in a closed, enumer
 offending argument's type and the node types in hand. It is raised at
 composition time, before any resolution pass runs or any origin exists. That is
 why it is its own kind and not a `ConditionResolution` sub-kind ([§14.3][s14-3]). The
-explicit, *ordered* layering spelling, `override`, belongs with the use case of
+explicit, *ordered* layering spelling, `override`, belongs with the use case that
 [root-input totality](#g-root-input-totality) (the requirement that an application establishing a complete
-world cover every root input) ([§14.6][s14-6]).
+world cover every root input) produces ([§14.6][s14-6]).
 
 ### 14.3 Resolution: flatten, validate, compile once
 
@@ -393,13 +394,14 @@ is therefore resolve-once/execute-many.
 
 Which of the two a service uses is internal, never user-facing API.
 
-The per-iteration ledger for trim has four terms. They are the user
-fragment math, the leaf stores, the folded shape check and the
-[sweep](#g-sweep) (one pass through the execution order against the current
-state). The fragment math is the domain computations, unchanged from
-Flight.jl's, plus building the tree, which with literal prefixes allocates
-nothing ([§14.2][s14-2]). The sweep dominates, exactly as `f_ode!` does in
-FlightCore, where it is the continuous-dynamics function a model extends.
+The per-iteration ledger for trim has four terms. They are the user [fragment](#g-fragment)
+math, the leaf stores, the folded shape check and the [sweep](#g-sweep) (one pass through
+the execution order against the current state). A fragment is the leaf node of
+the condition algebra, built by `set`. The fragment math is the domain
+computations, unchanged from Flight.jl's, plus building the tree, which with
+literal prefixes allocates nothing ([§14.2][s14-2]). The sweep dominates, exactly as
+`f_ode!` does in FlightCore, where it is the continuous-dynamics function a
+model extends.
 
 `apply!` ends at established stores. Making the model *coherent* is the job of
 [boundary zero](#g-boundary-zero) (the initialization boundary, the ordinary macro-sequence with an
@@ -463,10 +465,10 @@ ones, not snapshots from services.
 
 Only stopped-sim service evaluations, [`checkpoint`](#g-checkpoint), and post-run inspection of
 the live stores ever hold live stores ([§11.2][s11-2]). That inspection is the
-[replay](#g-replay)-to-inspect, where replay is the ordinary loop with its drain reading the
-trace. Of these holders, only the service evaluations' readers take a store
-selector. The snapshot deliberately carries no state stores ([§11.2][s11-2]), and `ẋ`
-[buffers](#g-buffer) (the vectors the integrator fills) are integrator scratch, not
+[replay](#g-replay)-to-inspect ([§11.2][s11-2]), where replay is the ordinary loop with its drain
+reading the trace. Of these holders, only the service evaluations' readers take
+a store selector. The snapshot deliberately carries no state stores ([§11.2][s11-2]), and
+`ẋ` [buffers](#g-buffer) (the vectors the integrator fills) are integrator scratch, not
 boundary-consistent objects outside a service evaluation. A reader resolving for
 a table source that names a store selector is therefore refused at resolution,
 as a `ReadResolution` with reason `:store_selector` ([D-406][d-406]). **The resolver takes
@@ -477,12 +479,11 @@ it from `y_state`, and read the resulting [port](#g-port) ([§5.3][s5-3]).
 On top of the source rule sits one piece of authoring guidance ([D-414][d-414]). Trim's
 `reads` and linearization's taps name
 `get_state`/`get_deriv`/`get_output`/`get_input`/`get_face`. They do so within
-the scopes the locality law ([§6.1][s6-1]) and [fragment](#g-fragment) scoping ([§14.2][s14-2]) describe. A
-fragment is the leaf node of the condition algebra, built by `set`. A service
-read, trim's `reads` or a tap, that should outlive the build reads a face with
-`get_face` ([D-125][d-125]). `get_face` resolves through export chains exactly as
-mounting resolves [root input](#g-root-input) faces ([§14.9][s14-9], [D-125][d-125]), so the read side mirrors the
-write side. An equilibrium equation meant to outlive the build it was posed
+the scopes the locality law ([§6.1][s6-1]) and fragment scoping ([§14.2][s14-2]) describe. A
+service read, trim's `reads` or a tap, that should outlive the build reads a
+face with `get_face` ([D-125][d-125]). `get_face` resolves through export chains exactly
+as mounting resolves [root input](#g-root-input) faces ([§14.9][s14-9], [D-125][d-125]), so the read side mirrors
+the write side. An equilibrium equation meant to outlive the build it was posed
 against therefore binds the curated face behind a [generically held](#g-generic-holding) child (one
 held through a non-concrete field type) rather than a path into it.
 
@@ -532,23 +533,23 @@ macro-sequence with an empty integrate** ([D-067][d-067]). The sequence is the f
 > project → [[sweep](#g-sweep) → [guards](#g-guard) → handlers]\* → [due](#g-due) `s_update` calls → first [snapshot](#g-snapshot)
 
 In the sequence, a sweep is one pass through the execution order against the
-current state, and a guard is the declared function defining an event's
-predicate. A due component is a discrete component whose schedule admits the
-boundary's tick index, and a snapshot is the immutable per-boundary publication.
-After the first snapshot `init!` takes the [trace header](#g-trace-header), the [checkpoint](#g-checkpoint) (the
-`Model`'s state at a frame top as one value) of the state the sequence leaves
-([§11.5][s11-5], [D-274][d-274]). The parity with an ordinary [boundary](#g-boundary) is exact, not approximate.
-The pieces follow one by one, in run order. Projection, the sweep, events and
-the due `s_update` calls come first, then the `t₀` argument, then what
-[boundary zero](#g-boundary-zero) (the initialization boundary, the ordinary macro-sequence with an
-empty integrate) means for trim.
+current state, and a guard is the declared function that decides when an event
+fires. A due component is a discrete component scheduled to run here, and a
+snapshot is the immutable publication that closes the sequence. After the first
+snapshot `init!` takes the [trace header](#g-trace-header), the [checkpoint](#g-checkpoint) (the `Model`'s state at
+a frame top as one value) of the state the sequence leaves ([§11.5][s11-5], [D-274][d-274]). The
+parity with an ordinary [boundary](#g-boundary) is exact, not approximate. The pieces follow
+one by one, in run order. [Projection](#g-projection) (the optional per-component hook
+`x ← x_projection(x)`), the sweep, events and the due `s_update` calls come
+first. Then come the `t₀` argument and what [boundary zero](#g-boundary-zero) (the initialization
+boundary, the ordinary macro-sequence with an empty integrate) means for trim.
 
 - Project runs. Authored `x` can sit off-manifold. A hand-assembled quaternion
   may be ulps off unit norm, or a [condition](#g-condition) (the path-addressed sparse overlay
   that sets a build's state) may write part of a constrained block against fresh
-  defaults. After condition writes, [projection](#g-projection) (the optional per-component hook
-  `x ← x_projection(x)`) holds the same position it holds after any other `x`
-  mutation. And it costs nothing when the state is already clean.
+  defaults. Projection after condition writes holds the same position it holds
+  after any other `x` mutation. And it costs nothing when the state is already
+  clean.
 - The sweep runs, and **every discrete output stage publishes, due or not** ([D-205][d-205]).
   `t₀` is a grid point of every phase-free divisor, so the `Φ = 0` components
   are due in full. An offset [component](#g-component) ([§10.5][s10-5]) is *not* due, because its first
@@ -569,15 +570,16 @@ empty integrate) means for trim.
   [D-292][d-292]). Boundary zero establishes every guard [prior](#g-prior) (the event's stored
   predicate sample from the previous boundary) as not-holding. Suppressing those
   firings was rejected ([D-067][d-067]), on the lesson of the [stage-on-interaction](#g-stage-on-interaction) rule
-  (when a GUI widget stages a new value) ([§11.7][s11-7]). That lesson is that insurance
-  masking invariant violations is anti-diagnostic ([D-026][d-026]). The trace header is
-  taken after the sequence ([§11.5][s11-5]). [Replay](#g-replay) restores it and runs no boundary
-  zero, so whatever fired at `t₀` comes back as part of the restored state and
-  never fires twice ([§12.7][s12-7], [D-274][d-274]). The checkpoint records the post-firing state
-  faithfully and suppresses nothing. A [stop request](#g-stop-request) (an output port of the
-  framework enum `StopFlag`) already reading `STOP_REQUESTED` is a different
-  category. Nothing *fires*. The request simply holds in the published `t₀`
-  snapshot and the loop reacts ([§13.5][s13-5], [D-413][d-413]).
+  (the rule that a GUI widget stages a new value only on interaction, never per
+  render pass) ([§11.7][s11-7]). That lesson is that insurance masking invariant
+  violations is anti-diagnostic ([D-026][d-026]). The trace header is taken after the
+  sequence ([§11.5][s11-5]). [Replay](#g-replay) restores it and runs no boundary zero, so whatever
+  fired at `t₀` comes back as part of the restored state and never fires twice
+  ([§12.7][s12-7], [D-274][d-274]). The checkpoint records the post-firing state faithfully and
+  suppresses nothing. A [stop request](#g-stop-request) (an output port of the framework enum
+  `StopFlag`) already reading `STOP_REQUESTED` is a different category. Nothing
+  *fires*. The request simply holds in the published `t₀` snapshot and the loop
+  reacts ([§13.5][s13-5], [D-413][d-413]).
 - Due `s_update` calls run. This follows from an interval-alignment fact that is
   easy to mis-picture. It is hereby a taught contract, sibling to the
   boundary-sampling contract ([§8.6][s8-6]). **A boundary's `s_update` is the *outgoing*
@@ -644,8 +646,8 @@ declared defaults. That is the bare-types decision ([§11.3][s11-3]), upheld her
 path-addressed sparse overlay that sets a build's state). Boundary zero is the
 initialization boundary, the ordinary macro-sequence with an empty integrate.
 Three consequences follow. They are the totality check, the probe-value barrier,
-and baselines layered by [`override`](#g-override) (the ordered, asymmetric layering
-combinator).
+and [baselines](#g-baseline) (aircraft-shipped, full-coverage condition functions) layered by
+[`override`](#g-override), the ordered, asymmetric layering combinator.
 
 **Totality is a precondition of starting, checked by the service** ([D-068][d-068]). A
 condition value is legitimately partial. [Fragments](#g-fragment) (the leaf nodes of the
@@ -678,7 +680,7 @@ root-input cell as boundary zero left it, and with totality enforced that record
 is complete by construction. That discharges the requirement that a root input
 no device feeds hold a defined value from the first frame ([§11.3][s11-3]).
 
-**[Baselines](#g-baseline) are aircraft-shipped condition functions**, layered by `override`
+**Baselines are aircraft-shipped condition functions**, layered by `override`
 ([D-068][d-068]). Nobody hand-writes ~20 root-input values per script. In Flight.jl the
 `@kwdef` defaults of `SystemsInitializer`, the systems initializer of its Cessna
 172 model (`c172.jl`), carry that load. Their successor is ordinary user math in
@@ -814,8 +816,8 @@ The gathered reads and the decision NamedTuple arrive as arguments. `d` is the o
 value that *cannot* be closed over. `TrimParameters` stays behind the closure,
 exactly as `condition` already holds it. Being user-shaped, that record is also
 where any environment handles the condition math needs conventionally ride. [§8.2][s8-2]
-gives the [value-level constructor](#g-value-level-constructor) that builds such a handle, a plain exported
-function of the component and its input values. [§14.1][s14-1] gives the pre-sweep
+gives the [value-level constructor](#g-value-level-constructor), a plain exported function of the component
+and its input values, that builds such a handle. [§14.1][s14-1] gives the pre-sweep
 doctrine. The problem *receives* the environment, and never writes it ([§14.9][s14-9]).
 
 **The returned NamedTuple's names are the equation names** the report and the
@@ -1231,13 +1233,12 @@ and residual math ([D-070][d-070]). The discrete tier's stages and
 They are frozen constants with zero partials, semantically exact
 ([§8.2][s8-2]).
 
-This is *not a new obligation*. It is the same activation linearization is
-defined on. AD-readiness is also a build-checked property. A
-[pinned](#g-walked) intermediate (a value held at `Float64` inside authored
-continuous math) makes the Dual probe fail with a culprit-naming
-`MethodError` or `InexactError` ([D-307][d-307]). `build(world; activations)`
-puts the probe in CI ([D-280][d-280]). The robustness comes from enforcement,
-not hope.
+This is *not a new obligation*. It is the same activation linearization is defined
+on. AD-readiness is also a build-checked property. A [pinned](#g-walked) intermediate (a
+value held at `Float64` inside authored continuous math) makes the Dual [probe](#g-probe) (the
+build's single evaluation of a user function) fail with a culprit-naming
+`MethodError` or `InexactError` ([D-307][d-307]). `build(world; activations)` puts the probe in
+CI ([D-280][d-280]). The robustness comes from enforcement, not hope.
 
 A migration audit of Flight.jl's Cessna 172 model against this obligation took
 one afternoon. Its findings on tables and saturations follow ([D-070][d-070]), and its
@@ -1310,16 +1311,16 @@ of [§14.3][s14-3] enters each `Scoped` wrapper (the node `at` builds over a con
 and prefixes every condition entry below it.
 
 **A read set carries its mount chain as data** ([D-277][d-277]). A read set is a `Reads` value.
-`at(prefix, read_set)` prepends the prefix to that chain and joins nothing. **A
-`Reads` value is no condition node**, so `Scoped` never wraps one ([D-277][d-277]). **Resolution
-walks the chain from the root**, each prefix from the level the previous one
-reached ([§13.3][s13-3], [D-277][d-277]). It then rebases every [selector](#g-selector) (one of the closed family
-of deferred reads) to the root before the selector resolves. A path selector's
-path is joined to the mount (`"vehicle/dynamics"` → `"wing/vehicle/dynamics"`).
-`get_input` names an input [face](#g-face) (the name a port wears on its [component](#g-component)'s
-boundary) of the mount level. It follows the export chain to the [root input](#g-root-input) it
-lands on (the root component's own input face). `get_face` names an output face of
-the mount level and reads its producer's port ([D-277][d-277]).
+`at(prefix, read_set)` prepends the prefix to the read set's mount chain and joins
+nothing. **A `Reads` value is no condition node**, so `Scoped` never wraps one ([D-277][d-277]).
+**Resolution walks the chain from the root**, each prefix from the level the
+previous one reached ([§13.3][s13-3], [D-277][d-277]). It then rebases every [selector](#g-selector) (one of the
+closed family of deferred reads) to the root before the selector resolves. A
+path selector's path is joined to the mount (`"vehicle/dynamics"` →
+`"wing/vehicle/dynamics"`). `get_input` names an input [face](#g-face) (the name a port wears
+on its [component](#g-component)'s boundary) of the mount level. It follows the export chain to
+the [root input](#g-root-input) it lands on (the root component's own input face). `get_face` names
+an output face of the mount level and reads its producer's port ([D-277][d-277]).
 
 **A refusal spells the selector as authored and names the mount**
 ([D-277][d-277]). `at` refuses an empty prefix on a read set, as it does on a
@@ -1464,15 +1465,15 @@ package dirtied the model, has no successor.
 
 **The default operating point is the [checkpoint](#g-checkpoint)** of the simulation or the [`Model`](#g-model) (a
 deployment materialized at one scalar type) as it stands ([D-274][d-274], [D-319][d-319]). A
-checkpoint is the `Model`'s state at a frame top as one value. It is
-`checkpoint(sim)` on a simulation and `checkpoint(model)` on a `Model`, each restored
-into the scratch world with no boundary zero ([§12.6][s12-6], [D-274][d-274], [D-319][d-319]). The frozen
-tier's [cells](#g-cell) (the typed entries of the signal table) are the checkpoint's held
-cells. After a `trim!` commit, `linearize(sim, taps)` or `linearize(model, taps)` is
-about the trim point with nothing re-specified. **`about = <condition>`, with `t0`
-beside it, linearizes anywhere else without touching the sim**, its coverage
-checked as [§14.6][s14-6] requires ([D-272][d-272]). `t0` is admitted only there, and a `t0` passed
-without `about` is an `ArgumentInvalid`.
+checkpoint is the `Model`'s state at a frame top as one value. The default point
+is `checkpoint(sim)` on a simulation and `checkpoint(model)` on a `Model`, each
+restored into the scratch world with no boundary zero ([§12.6][s12-6], [D-274][d-274], [D-319][d-319]). The
+frozen tier's [cells](#g-cell) (the typed entries of the signal table) are the checkpoint's
+held cells. After a `trim!` commit, `linearize(sim, taps)` or `linearize(model, taps)`
+is about the trim point with nothing re-specified. **`about = <condition>`, with `t0`
+beside it, linearizes anywhere else without touching the sim**, the condition's
+coverage checked as [§14.6][s14-6] requires ([D-272][d-272]). `t0` is admitted only there, and a `t0`
+passed without `about` is an `ArgumentInvalid`.
 
 #### The seeded pass
 
@@ -1611,7 +1612,7 @@ continuous linearization plus Tustin's discretization.
 Both halves of non-participation have a spelling ([D-263][d-263]). The output half is the
 freeze door, which declares a leaf frozen under differentiation as [§8.2][s8-2] and [§9.5][s9-5]
 spell it ([D-286][d-286]). An opaque wrapper, such as an FMU (a Functional Mock-up Unit,
-a packaged external model) or a C aerodynamic table, and a deliberately severed
+a packaged simulation unit) or a C aerodynamic table, and a deliberately severed
 coupling can therefore both say so in the schema, instead of showing up in
 Jacobians as unexplained zero rows. The conformance check holds them to it at
 every activation ([D-286][d-286]). The input half is the FFI door ([§8.2][s8-2]). A consumer's

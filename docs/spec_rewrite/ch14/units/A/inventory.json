@@ -70,7 +70,7 @@
   {
    "id": "C-007",
    "old": "§14.5–§14.6 cover the boundary-zero sequence and root-input totality (the requirement that an application establishing a complete world cover every root input).",
-   "new": "§14.5 covers the initialization sequence called boundary zero, §14.6 root-input totality (the requirement that an application establishing a complete world cover every root input) and `override`,",
+   "new": "§14.5 covers the initialization sequence called boundary zero, §14.6 root-input totality (the requirement that an application establishing a complete world cover every root input) and `override` (the ordered, asymmetric layering combinator),",
    "where": "new",
    "cites": [
     "§14.5",
@@ -82,12 +82,12 @@
    ],
    "tag": "R",
    "ruling": "R1",
-   "note": "F4, boundary zero linked to #g-boundary-zero, not #g-boundary. root input gains its first-use link inside the gloss. Step 5 fix1: P1-1, one 'covers' and §14.6's `override` (its title's); P1-35, boundary zero glossed by 'the initialization sequence called', after #g-boundary-zero ('the initialization boundary: the ordinary macro-sequence'). root input stays linked inside the totality gloss, unglossed: a gloss there would nest."
+   "note": "F4, boundary zero linked to #g-boundary-zero, not #g-boundary. root input gains its first-use link inside the gloss. Step 5 fix1: P1-1, one 'covers' and §14.6's `override` (its title's); P1-35, boundary zero glossed by 'the initialization sequence called', after #g-boundary-zero ('the initialization boundary: the ordinary macro-sequence'). root input stays linked inside the totality gloss, unglossed: a gloss there would nest. Final fix, finding 2: `override` takes its link and #g-override's gloss here, its first use in the opening."
   },
   {
    "id": "C-008",
    "old": "§14.7–§14.9 cover the trim service in full.",
-   "new": "§14.7 the trim problem, §14.8 the trim service, §14.9 mounting",
+   "new": "§14.7 the trim problem, §14.8 the trim service, §14.9 mounting, which together cover the trim service in full,",
    "where": "new",
    "cites": [
     "§14.7",
@@ -100,7 +100,7 @@
    ],
    "tag": "R",
    "ruling": "R1",
-   "note": "each section's subject from its title (§14.7 \"The trim problem\", §14.8 \"The trim service\", §14.9 \"Mounting\"). Step 5 fix1: P1-1 drops 'which together cover the trim service in full': §14.9's mounting also relocates tap sets, so the three sections are more than the trim service; each keeps its subject."
+   "note": "each section's subject from its title (§14.7 \"The trim problem\", §14.8 \"The trim service\", §14.9 \"Mounting\"). Step 5 fix1: P1-1 drops 'which together cover the trim service in full': §14.9's mounting also relocates tap sets, so the three sections are more than the trim service; each keeps its subject. Final fix, finding 1: the claim is restored, since the three sections still cover the trim service in full."
   },
   {
    "id": "C-009",
@@ -202,7 +202,7 @@
   {
    "id": "C-018",
    "old": "| service | `built` | `initialized` | `stopped` | its inputs | |---|---|---|---|---| | `checkpoint` | error | legal | legal | a frame-top rest; refused after a `t` stop and after an abandoned frame | | `init!` | legal | legal | legal | authored conditions | | `restore!` | legal | legal | legal | a checkpoint whose fingerprint and deployment match the simulation's and whose `t` sits on its grid (§12.6) | | `trim!` | legal | legal | legal | authored conditions; the scratch world is `override``(baseline, condition(guess))` (§14.8), never the sim's stores | | `linearize`, operating point defaulted to `checkpoint(sim)` | error | legal | legal | inherits `checkpoint`'s precondition, its refusals included | | `linearize`, explicit `about` (§14.10) | legal | legal | legal | inherits `init!`'s legality — legal wherever `init!` is |",
-   "new": "| service | `built` | `initialized` | `stopped` | its inputs | |---|---|---|---|---| | `checkpoint` | error | legal | legal | a frame-top rest; refused after a `t` stop and after an abandoned frame | | `init!` | legal | legal | legal | authored conditions | | `restore!` | legal | legal | legal | a checkpoint whose fingerprint and deployment match the simulation's and whose `t` sits on its grid (§12.6) | | `trim!` | legal | legal | legal | authored conditions; the scratch world is `override``(baseline, condition(guess))` (§14.8), never the sim's stores | | `linearize`, operating point defaulted to `checkpoint(sim)` | error | legal | legal | inherits `checkpoint`'s precondition, its refusals included | | `linearize`, explicit `about` (§14.10) | legal | legal | legal | inherits `init!`'s legality, legal wherever `init!` is |",
+   "new": "| service | `built` | `initialized` | `stopped` | its inputs | |---|---|---|---|---| | `checkpoint` | error | legal | legal | a frame-top rest; refused after a `t` stop and after an abandoned frame | | `init!` | legal | legal | legal | authored conditions | | `restore!` | legal | legal | legal | a checkpoint whose fingerprint and deployment match the simulation's and whose `t` sits on its grid (§12.6) | | `trim!` | legal | legal | legal | authored conditions; the scratch world is `override(baseline, condition(guess))` (§14.8), never the sim's stores | | `linearize`, operating point defaulted to `checkpoint(sim)` | error | legal | legal | inherits `checkpoint`'s precondition, its refusals included | | `linearize`, explicit `about` (§14.10) | legal | legal | legal | inherits `init!`'s legality, legal wherever `init!` is |",
    "where": "new",
    "cites": [
     "§12.6",
@@ -211,7 +211,7 @@
    ],
    "tag": "R",
    "ruling": "R27",
-   "note": "the table, verbatim except its last cell's em dash, now a comma."
+   "note": "the table, verbatim except its last cell's em dash, now a comma. Final fix, finding 2: `override` here is plain, its link and gloss now at the roadmap's first use."
   },
   {
    "id": "C-019",
@@ -695,11 +695,11 @@
   {
    "id": "C-065",
    "old": "The engine knows `n_eng → ω = n_eng·ω_rated`, and nothing above it should have to.",
-   "new": "An engine component knows `n_eng → ω = n_eng·ω_rated`, and nothing above it should have to.",
+   "new": "An engine component knows `n_eng → ω = n_eng·ω_rated`, where `n_eng` is the engine speed as a fraction of its rated speed, and nothing above it should have to.",
    "where": "new",
    "cites": [],
    "tag": "F",
-   "note": "Step 5 fix1: P1-6's `n_eng` clause is the added block below."
+   "note": "Step 5 fix1: P1-6's `n_eng` gloss; final fix, finding 3, folds it into this sentence so 'that locality' keeps its antecedent."
   },
   {
    "id": "C-066",
@@ -1365,13 +1365,13 @@
   {
    "id": "C-131",
    "old": "The explicit, ordered layering spelling, `override`, belongs with the use case root-input totality produces (§14.6).",
-   "new": "The explicit, ordered layering spelling, `override`, belongs with the use case of root-input totality (the requirement that an application establishing a complete world cover every root input) (§14.6).",
+   "new": "The explicit, ordered layering spelling, `override`, belongs with the use case that root-input totality (the requirement that an application establishing a complete world cover every root input) produces (§14.6).",
    "where": "new",
    "cites": [
     "§14.6"
    ],
    "tag": "F",
-   "note": "`override` takes its first-use link (#g-override); its first mention, inside the quoted message, is code. Step 5 fix1: P1-9, P1-35."
+   "note": "`override` takes its first-use link (#g-override); its first mention, inside the quoted message, is code. Step 5 fix1: P1-9, P1-35. Final fix, finding 4: 'produces' restored, keeping the causal link."
   },
   {
    "id": "C-132",
@@ -1770,7 +1770,6 @@
   "Each check names its kind (Appendix C). A path that does not resolve is `PathResolution` with reason `:unknown_child`. An undeclared field is `ConditionResolution` with reason `:undeclared_field`, or `:no_store` or `:assembly_path` where the target has no such store or is an assembly. A value that does not convert is `ConditionResolution` with reason `:unconvertible`. A face that reaches no root input takes one of the face reasons §14.2 names. A leaf written twice is `DuplicateConditionLeaf`.",
   "The dynamic walk's plan holds the converted values themselves.",
   "A condition is the value an author writes to say which state a build starts from.",
-  "`n_eng` is the engine speed as a fraction of its rated speed `ω_rated`.",
   "In the block, `α_filt` and `β_filt` are the aerodynamics' filtered airflow angles, set to the angle of attack `α_a` and the sideslip `β_a`.",
   "and `override`, the ordered, asymmetric layering combinator, builds a fourth node type (§14.6).",
   "Resolution turns a composed condition (the path-addressed sparse overlay that sets a build's state) into plans the services can apply."

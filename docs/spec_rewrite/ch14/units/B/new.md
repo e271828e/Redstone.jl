@@ -42,13 +42,14 @@ is therefore resolve-once/execute-many.
 
 Which of the two a service uses is internal, never user-facing API.
 
-The per-iteration ledger for trim has four terms. They are the user
-fragment math, the leaf stores, the folded shape check and the
-[sweep](#g-sweep) (one pass through the execution order against the current
-state). The fragment math is the domain computations, unchanged from
-Flight.jl's, plus building the tree, which with literal prefixes allocates
-nothing ([§14.2][s14-2]). The sweep dominates, exactly as `f_ode!` does in
-FlightCore, where it is the continuous-dynamics function a model extends.
+The per-iteration ledger for trim has four terms. They are the user [fragment](#g-fragment)
+math, the leaf stores, the folded shape check and the [sweep](#g-sweep) (one pass through
+the execution order against the current state). A fragment is the leaf node of
+the condition algebra, built by `set`. The fragment math is the domain
+computations, unchanged from Flight.jl's, plus building the tree, which with
+literal prefixes allocates nothing ([§14.2][s14-2]). The sweep dominates, exactly as
+`f_ode!` does in FlightCore, where it is the continuous-dynamics function a
+model extends.
 
 `apply!` ends at established stores. Making the model *coherent* is the job of
 [boundary zero](#g-boundary-zero) (the initialization boundary, the ordinary macro-sequence with an
@@ -112,10 +113,10 @@ ones, not snapshots from services.
 
 Only stopped-sim service evaluations, [`checkpoint`](#g-checkpoint), and post-run inspection of
 the live stores ever hold live stores ([§11.2][s11-2]). That inspection is the
-[replay](#g-replay)-to-inspect, where replay is the ordinary loop with its drain reading the
-trace. Of these holders, only the service evaluations' readers take a store
-selector. The snapshot deliberately carries no state stores ([§11.2][s11-2]), and `ẋ`
-[buffers](#g-buffer) (the vectors the integrator fills) are integrator scratch, not
+[replay](#g-replay)-to-inspect ([§11.2][s11-2]), where replay is the ordinary loop with its drain
+reading the trace. Of these holders, only the service evaluations' readers take
+a store selector. The snapshot deliberately carries no state stores ([§11.2][s11-2]), and
+`ẋ` [buffers](#g-buffer) (the vectors the integrator fills) are integrator scratch, not
 boundary-consistent objects outside a service evaluation. A reader resolving for
 a table source that names a store selector is therefore refused at resolution,
 as a `ReadResolution` with reason `:store_selector` ([D-406][d-406]). **The resolver takes
@@ -126,12 +127,11 @@ it from `y_state`, and read the resulting [port](#g-port) ([§5.3][s5-3]).
 On top of the source rule sits one piece of authoring guidance ([D-414][d-414]). Trim's
 `reads` and linearization's taps name
 `get_state`/`get_deriv`/`get_output`/`get_input`/`get_face`. They do so within
-the scopes the locality law ([§6.1][s6-1]) and [fragment](#g-fragment) scoping ([§14.2][s14-2]) describe. A
-fragment is the leaf node of the condition algebra, built by `set`. A service
-read, trim's `reads` or a tap, that should outlive the build reads a face with
-`get_face` ([D-125][d-125]). `get_face` resolves through export chains exactly as
-mounting resolves [root input](#g-root-input) faces ([§14.9][s14-9], [D-125][d-125]), so the read side mirrors the
-write side. An equilibrium equation meant to outlive the build it was posed
+the scopes the locality law ([§6.1][s6-1]) and fragment scoping ([§14.2][s14-2]) describe. A
+service read, trim's `reads` or a tap, that should outlive the build reads a
+face with `get_face` ([D-125][d-125]). `get_face` resolves through export chains exactly
+as mounting resolves [root input](#g-root-input) faces ([§14.9][s14-9], [D-125][d-125]), so the read side mirrors
+the write side. An equilibrium equation meant to outlive the build it was posed
 against therefore binds the curated face behind a [generically held](#g-generic-holding) child (one
 held through a non-concrete field type) rather than a path into it.
 
@@ -181,23 +181,23 @@ macro-sequence with an empty integrate** ([D-067][d-067]). The sequence is the f
 > project → [[sweep](#g-sweep) → [guards](#g-guard) → handlers]\* → [due](#g-due) `s_update` calls → first [snapshot](#g-snapshot)
 
 In the sequence, a sweep is one pass through the execution order against the
-current state, and a guard is the declared function defining an event's
-predicate. A due component is a discrete component whose schedule admits the
-boundary's tick index, and a snapshot is the immutable per-boundary publication.
-After the first snapshot `init!` takes the [trace header](#g-trace-header), the [checkpoint](#g-checkpoint) (the
-`Model`'s state at a frame top as one value) of the state the sequence leaves
-([§11.5][s11-5], [D-274][d-274]). The parity with an ordinary [boundary](#g-boundary) is exact, not approximate.
-The pieces follow one by one, in run order. Projection, the sweep, events and
-the due `s_update` calls come first, then the `t₀` argument, then what
-[boundary zero](#g-boundary-zero) (the initialization boundary, the ordinary macro-sequence with an
-empty integrate) means for trim.
+current state, and a guard is the declared function that decides when an event
+fires. A due component is a discrete component scheduled to run here, and a
+snapshot is the immutable publication that closes the sequence. After the first
+snapshot `init!` takes the [trace header](#g-trace-header), the [checkpoint](#g-checkpoint) (the `Model`'s state at
+a frame top as one value) of the state the sequence leaves ([§11.5][s11-5], [D-274][d-274]). The
+parity with an ordinary [boundary](#g-boundary) is exact, not approximate. The pieces follow
+one by one, in run order. [Projection](#g-projection) (the optional per-component hook
+`x ← x_projection(x)`), the sweep, events and the due `s_update` calls come
+first. Then come the `t₀` argument and what [boundary zero](#g-boundary-zero) (the initialization
+boundary, the ordinary macro-sequence with an empty integrate) means for trim.
 
 - Project runs. Authored `x` can sit off-manifold. A hand-assembled quaternion
   may be ulps off unit norm, or a [condition](#g-condition) (the path-addressed sparse overlay
   that sets a build's state) may write part of a constrained block against fresh
-  defaults. After condition writes, [projection](#g-projection) (the optional per-component hook
-  `x ← x_projection(x)`) holds the same position it holds after any other `x`
-  mutation. And it costs nothing when the state is already clean.
+  defaults. Projection after condition writes holds the same position it holds
+  after any other `x` mutation. And it costs nothing when the state is already
+  clean.
 - The sweep runs, and **every discrete output stage publishes, due or not** ([D-205][d-205]).
   `t₀` is a grid point of every phase-free divisor, so the `Φ = 0` components
   are due in full. An offset [component](#g-component) ([§10.5][s10-5]) is *not* due, because its first
@@ -218,15 +218,16 @@ empty integrate) means for trim.
   [D-292][d-292]). Boundary zero establishes every guard [prior](#g-prior) (the event's stored
   predicate sample from the previous boundary) as not-holding. Suppressing those
   firings was rejected ([D-067][d-067]), on the lesson of the [stage-on-interaction](#g-stage-on-interaction) rule
-  (when a GUI widget stages a new value) ([§11.7][s11-7]). That lesson is that insurance
-  masking invariant violations is anti-diagnostic ([D-026][d-026]). The trace header is
-  taken after the sequence ([§11.5][s11-5]). [Replay](#g-replay) restores it and runs no boundary
-  zero, so whatever fired at `t₀` comes back as part of the restored state and
-  never fires twice ([§12.7][s12-7], [D-274][d-274]). The checkpoint records the post-firing state
-  faithfully and suppresses nothing. A [stop request](#g-stop-request) (an output port of the
-  framework enum `StopFlag`) already reading `STOP_REQUESTED` is a different
-  category. Nothing *fires*. The request simply holds in the published `t₀`
-  snapshot and the loop reacts ([§13.5][s13-5], [D-413][d-413]).
+  (the rule that a GUI widget stages a new value only on interaction, never per
+  render pass) ([§11.7][s11-7]). That lesson is that insurance masking invariant
+  violations is anti-diagnostic ([D-026][d-026]). The trace header is taken after the
+  sequence ([§11.5][s11-5]). [Replay](#g-replay) restores it and runs no boundary zero, so whatever
+  fired at `t₀` comes back as part of the restored state and never fires twice
+  ([§12.7][s12-7], [D-274][d-274]). The checkpoint records the post-firing state faithfully and
+  suppresses nothing. A [stop request](#g-stop-request) (an output port of the framework enum
+  `StopFlag`) already reading `STOP_REQUESTED` is a different category. Nothing
+  *fires*. The request simply holds in the published `t₀` snapshot and the loop
+  reacts ([§13.5][s13-5], [D-413][d-413]).
 - Due `s_update` calls run. This follows from an interval-alignment fact that is
   easy to mis-picture. It is hereby a taught contract, sibling to the
   boundary-sampling contract ([§8.6][s8-6]). **A boundary's `s_update` is the *outgoing*
@@ -293,8 +294,8 @@ declared defaults. That is the bare-types decision ([§11.3][s11-3]), upheld her
 path-addressed sparse overlay that sets a build's state). Boundary zero is the
 initialization boundary, the ordinary macro-sequence with an empty integrate.
 Three consequences follow. They are the totality check, the probe-value barrier,
-and baselines layered by [`override`](#g-override) (the ordered, asymmetric layering
-combinator).
+and [baselines](#g-baseline) (aircraft-shipped, full-coverage condition functions) layered by
+[`override`](#g-override), the ordered, asymmetric layering combinator.
 
 **Totality is a precondition of starting, checked by the service** ([D-068][d-068]). A
 condition value is legitimately partial. [Fragments](#g-fragment) (the leaf nodes of the
@@ -327,7 +328,7 @@ root-input cell as boundary zero left it, and with totality enforced that record
 is complete by construction. That discharges the requirement that a root input
 no device feeds hold a defined value from the first frame ([§11.3][s11-3]).
 
-**[Baselines](#g-baseline) are aircraft-shipped condition functions**, layered by `override`
+**Baselines are aircraft-shipped condition functions**, layered by `override`
 ([D-068][d-068]). Nobody hand-writes ~20 root-input values per script. In Flight.jl the
 `@kwdef` defaults of `SystemsInitializer`, the systems initializer of its Cessna
 172 model (`c172.jl`), carry that load. Their successor is ordinary user math in

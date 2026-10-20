@@ -11,8 +11,9 @@ puts it back. A checkpoint is a distinct value with no condition algebra
 [§14.3][s14-3] its resolution and [§14.4][s14-4] its application and the read selectors; [§14.5][s14-5]
 covers the initialization sequence called [boundary zero](#g-boundary-zero), [§14.6][s14-6]
 [root-input totality](#g-root-input-totality) (the requirement that an application establishing a complete
-world cover every [root input](#g-root-input)) and `override`, [§14.7][s14-7] the trim problem, [§14.8][s14-8] the
-trim service, [§14.9][s14-9] mounting and [§14.10][s14-10] linearization.
+world cover every [root input](#g-root-input)) and [`override`](#g-override) (the ordered, asymmetric layering
+combinator), [§14.7][s14-7] the trim problem, [§14.8][s14-8] the trim service, [§14.9][s14-9] mounting,
+which together cover the trim service in full, and [§14.10][s14-10] linearization.
 
 #### Lifecycle preconditions
 
@@ -34,7 +35,7 @@ paused ([§11.3][s11-3], [§12.1][s12-1]).
 | `checkpoint` | error | legal | legal | a frame-top rest; refused after a `t*` stop and after an abandoned frame |
 | `init!` | legal | legal | legal | authored conditions |
 | `restore!` | legal | legal | legal | a checkpoint whose fingerprint and deployment match the simulation's and whose `t` sits on its grid ([§12.6][s12-6]) |
-| `trim!` | legal | legal | legal | authored conditions; the scratch world is [`override`](#g-override)`(baseline, condition(guess))` ([§14.8][s14-8]), never the sim's stores |
+| `trim!` | legal | legal | legal | authored conditions; the scratch world is `override(baseline, condition(guess))` ([§14.8][s14-8]), never the sim's stores |
 | `linearize`, operating point defaulted to `checkpoint(sim)` | error | legal | legal | inherits `checkpoint`'s precondition, its refusals included |
 | `linearize`, explicit `about` ([§14.10][s14-10]) | legal | legal | legal | inherits `init!`'s legality, legal wherever `init!` is |
 
@@ -124,8 +125,8 @@ route needs no environment access at condition time whatsoever.
 ### 14.2 Fragment composition: locality without schema
 
 Init knowledge is [component](#g-component)-local. An engine component knows
-`n_eng → ω = n_eng·ω_rated`, and nothing above it should have to. `n_eng` is the
-engine speed as a fraction of its rated speed `ω_rated`. Making that locality a
+`n_eng → ω = n_eng·ω_rated`, where `n_eng` is the engine speed as a fraction of
+its rated speed, and nothing above it should have to. Making that locality a
 schema entry was rejected ([D-064][d-064]). That spelling would declare
 `initialize(::C, spec)`, a declarative rebirth of `f_init!`, FlightCore's
 per-model initialization hook. It would also add an [assembly](#g-assembly)-level rule routing
@@ -256,9 +257,9 @@ rejection carries a [kind](#g-kind) (a diagnostic's identity in a closed, enumer
 offending argument's type and the node types in hand. It is raised at
 composition time, before any resolution pass runs or any origin exists. That is
 why it is its own kind and not a `ConditionResolution` sub-kind ([§14.3][s14-3]). The
-explicit, *ordered* layering spelling, `override`, belongs with the use case of
+explicit, *ordered* layering spelling, `override`, belongs with the use case that
 [root-input totality](#g-root-input-totality) (the requirement that an application establishing a complete
-world cover every root input) ([§14.6][s14-6]).
+world cover every root input) produces ([§14.6][s14-6]).
 
 ### 14.3 Resolution: flatten, validate, compile once
 

@@ -510,9 +510,9 @@ tag: M
 note: M51
 
 old: (the value-level constructor, §8.2; the pre-sweep doctrine, §14.1).
-new: §8.2 gives the value-level constructor that builds such a handle, a plain exported function of the component and its input values. §14.1 gives the pre-sweep doctrine.
+new: §8.2 gives the value-level constructor, a plain exported function of the component and its input values, that builds such a handle. §14.1 gives the pre-sweep doctrine.
 tag: M
-note: M51; the two pointers say what each section provides (spec_style, no possessive citations); value-level constructor glossed with the gloss table's class-A gloss, citations kept outside the gloss's parentheses; step 5 P2-4: the gloss becomes an appositive after 'such a handle'
+note: M51; the two pointers say what each section provides (spec_style, no possessive citations); value-level constructor glossed with the gloss table's class-A gloss, citations kept outside the gloss's parentheses; step 5 P2-4: the gloss becomes an appositive after 'such a handle'; step 6b finding 6: the appositive moves next to the constructor, so it no longer reads as glossing the handle
 
 old: The problem receives the environment, and never writes it (§14.9).
 tag: M

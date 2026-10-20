@@ -315,7 +315,7 @@ Proposal: add "and linearization's operating condition under `about`" to
 each list, and its count to four. At §9.3, remove the bold and point to
 [§14.6][s14-6].
 Recommendation: adopt, as the brief and R34 rule.
-Status: open
+Status: ruled, adopt as proposed (CONFIRMED in evidence_check.md). Lands at step 7, outside the chapter, before the splice where it cites old lines.
 
 ### B22. Glossary `#g-baseline` and "all four services"
 
@@ -326,7 +326,7 @@ Evidence: `#g-baseline` says `init!`/`trim!` take the `baseline` keyword, and
 Proposal: drop `init!` from `#g-baseline`. Change "all four services" to
 "all five", or to the list R1's sentence gives.
 Recommendation: adopt.
-Status: open
+Status: ruled, adopt as proposed (CONFIRMED in evidence_check.md). Lands at step 7, outside the chapter, before the splice where it cites old lines. Also align `#g-baseline`'s gloss with §14.8's after P2-8 (chapter_fixes_2.md), which moved the chapter's gloss off "condition function".
 
 ### B23. Glossary `#g-selector` keeps "before any client policy applies"
 
@@ -336,7 +336,7 @@ Evidence: R5 leaves no client policy that applies, and §14.4 dropped the
 clause. IC1 row 118 is the deliberate loss.
 Proposal: "against a source. Table sources are a ..." (IC1's new text).
 Recommendation: adopt.
-Status: open
+Status: ruled, adopt as proposed (CONFIRMED in evidence_check.md). Lands at step 7, outside the chapter, before the splice where it cites old lines.
 
 ### B24. §13.2 calls the `TrimCommit...` kinds report fields
 
@@ -350,7 +350,7 @@ events and both residual sets, and logs `TrimCommitEvents`,
 `TrimCommitResiduals` and `TrimCommitChecks` beside it ([§14.8][s14-8])."
 Reread "so its warnings live on it" and reword it to match.
 Recommendation: adopt, with B8 in the chapter.
-Status: open
+Status: ruled, adopt as proposed (CONFIRMED in evidence_check.md). Lands at step 7, outside the chapter, before the splice where it cites old lines.
 
 ### B25. §9.6 on the fallback and `get_x_ss`
 
@@ -363,7 +363,7 @@ Proposal: write the fallback as designed and not yet built, with the
 [D-070][d-070] and `pending.md` pointer; fix the `get_x_ss` pointer after F64.
 Do not use the term "recorded, not built" (R10).
 Recommendation: adopt, as the brief rules.
-Status: open
+Status: ruled, adopt as proposed (CONFIRMED in evidence_check.md). Lands at step 7, outside the chapter, before the splice where it cites old lines.
 
 ### B26. Appendix B rows that cite the chapter wrongly
 
@@ -376,7 +376,7 @@ F61 corrected §14.8 to `override(baseline, condition(d*))`. 13212 cites
 Proposal: "closes at nine fields"; `override(baseline, condition(solution))`;
 "Non-convergence reports, never throws ([§14.8][s14-8])."
 Recommendation: adopt. Each wrong spelling is exact in IC2.
-Status: open
+Status: ruled, adopt as proposed (CONFIRMED in evidence_check.md). Lands at step 7, outside the chapter, before the splice where it cites old lines.
 
 ### B27. Appendix C citations that point at the wrong section
 
@@ -389,7 +389,7 @@ Evidence: §14.4 never stated `ReadSetMisuse`, and §14.9 does (R14). The
 Proposal: 13735 cites [§14.9][s14-9]. 13723 ends "..., [§13.5][s13-5],
 [§14.8][s14-8], [§14.10][s14-10])."
 Recommendation: adopt. The content updates of the same rows are B75.
-Status: open
+Status: ruled, adopt as proposed (CONFIRMED in evidence_check.md). Lands at step 7, outside the chapter, before the splice where it cites old lines.
 
 ### B28. Contents entry for §14.4
 
@@ -398,7 +398,7 @@ Lines: spec 98 (the Contents).
 Evidence: B1 retitles §14.4.
 Proposal: change the Contents entry to B1's new title, if B1 is adopted.
 Recommendation: adopt with B1.
-Status: open
+Status: ruled, adopt with B1: the Contents entry becomes "14.4 Two ways to apply a resolved condition"; linkify rewrites the anchor.
 
 ### B29. Glossary entries that state the chapter wrongly
 
@@ -414,7 +414,7 @@ Proposal: `override(baseline, condition(solution))`; "the sampled-data `Dual`
 activation and the tooling over declared non-participation, [§14.10]"; add
 the limits to `taps`.
 Recommendation: adopt.
-Status: open
+Status: ruled, adopt as proposed (CONFIRMED in evidence_check.md). Lands at step 7, outside the chapter, before the splice where it cites old lines.
 
 ### B30. Companion pointers into the chapter that were wrong before the rewrite
 
@@ -431,7 +431,7 @@ spellings and D-276; D-064 for the third-sweep rejection, with its link
 definition added after `[d-008]` and the unused `[s14-2]` definition at 905
 removed) and IC2 (`Freeze` lines cite [§13.7][s13-7]).
 Recommendation: adopt. IC1 and IC2 give exact old and new text.
-Status: open
+Status: ruled, adopt as proposed (CONFIRMED in evidence_check.md). Lands at step 7, outside the chapter, before the splice where it cites old lines.
 
 ### B31. The C172 audit row and its added paragraph
 
@@ -442,7 +442,7 @@ companion. The row's §14.8 citation then covers the tables and saturations.
 Proposal: land `units/G/companion_addition.md` under the table. Append
 "(Flight.jl's model alone, below)" to the row's gear cell.
 Recommendation: adopt.
-Status: open
+Status: ruled, adopt as proposed (CONFIRMED in evidence_check.md). Lands at step 7, outside the chapter, before the splice where it cites old lines.
 
 ### B32. Reference definitions the chapter needs
 
@@ -455,7 +455,7 @@ D-262 and others) may lack one too.
 Proposal: run `linkify.jl` after the splice. It writes the definitions. Check
 by `check_refs.jl` that none stays undefined.
 Recommendation: adopt, as step 7.6 already does.
-Status: open
+Status: ruled, adopt as proposed (CONFIRMED in evidence_check.md). Lands at step 7, outside the chapter, before the splice where it cites old lines.
 
 ## Track 2
 
@@ -481,7 +481,7 @@ Proposal: one annotation stating the three rulings. It marks the `capture`
 precondition as overtaken by D-274 (`checkpoint` is legal in `initialized`
 and `stopped`).
 Recommendation: adopt. The chapter now cites D-108 at three rules.
-Status: open
+Status: ruled, track 2. Act on evidence_check.md's verdict. A Rationale-only ruling gets a new entry, never new Position text in an old entry, and a consequence of a Position gets none (lesson 68); an annotation records only stale text (decisions_style.md rule 1). Grep every Position before writing an entry (lesson 42).
 
 ### B34. D-139
 
@@ -498,7 +498,7 @@ Proposal: one annotation stating the two Rationale rulings, and IC1's:
 "Annotation (<date>): the by-name rejection of init as a third scheduled
 sweep is [D-064][d-064]'s; [§14.2][s14-2] never stated it."
 Recommendation: adopt. Both bolds in the chapter rest on Rationale text.
-Status: open
+Status: ruled, track 2. Act on evidence_check.md's verdict. A Rationale-only ruling gets a new entry, never new Position text in an old entry, and a consequence of a Position gets none (lesson 68); an annotation records only stale text (decisions_style.md rule 1). Grep every Position before writing an entry (lesson 42).
 
 ### B35. D-278
 
@@ -509,7 +509,7 @@ Proposal: no annotation.
 Recommendation: decline. It is a reason, and rule 8 forbids sourcing
 rationale the entry does not hold. The chapter cites D-278 for the
 empty-prefix refusal, which the Position rules.
-Status: open
+Status: ruled, track 2. Act on evidence_check.md's verdict. A Rationale-only ruling gets a new entry, never new Position text in an old entry, and a consequence of a Position gets none (lesson 68); an annotation records only stale text (decisions_style.md rule 1). Grep every Position before writing an entry (lesson 42).
 
 ### B36. D-065
 
@@ -523,7 +523,7 @@ Proposal: one annotation scoping the clause to D-207/D-414 and correcting
 "machine-checked"; add §14.3 to the Spec field. No annotation for the
 reasons.
 Recommendation: adopt.
-Status: open
+Status: ruled, track 2, no new entry: evidence_check.md finds an existing Position states it or it follows from one. Annotate stale text only.
 
 ### B37. D-064
 
@@ -534,7 +534,7 @@ list holds the by-name rejection of init as a third scheduled sweep that
 the two companions and D-139 attribute to §14.2.
 Proposal: add §14.1 to the Spec field. No other change.
 Recommendation: adopt.
-Status: open
+Status: ruled, track 2. Act on evidence_check.md's verdict. A Rationale-only ruling gets a new entry, never new Position text in an old entry, and a consequence of a Position gets none (lesson 68); an annotation records only stale text (decisions_style.md rule 1). Grep every Position before writing an entry (lesson 42).
 
 ### B38. D-316
 
@@ -544,7 +544,7 @@ Evidence: "a foreign `condition` fails loudly" is a Rationale clause, and
 the chapter cites it with a "because".
 Proposal: no annotation.
 Recommendation: decline. It is a reason the chapter cites as one.
-Status: open
+Status: ruled, track 2. Act on evidence_check.md's verdict. A Rationale-only ruling gets a new entry, never new Position text in an old entry, and a consequence of a Position gets none (lesson 68); an annotation records only stale text (decisions_style.md rule 1). Grep every Position before writing an entry (lesson 42).
 
 ### B39. D-148
 
@@ -555,7 +555,7 @@ converters on state views" live in the Rationale. The chapter states them
 next to D-148's Position.
 Proposal: no annotation.
 Recommendation: decline. They are reasons beside a ruling the Position holds.
-Status: open
+Status: ruled, track 2. Act on evidence_check.md's verdict. A Rationale-only ruling gets a new entry, never new Position text in an old entry, and a consequence of a Position gets none (lesson 68); an annotation records only stale text (decisions_style.md rule 1). Grep every Position before writing an entry (lesson 42).
 
 ### B40. D-124
 
@@ -565,7 +565,7 @@ Evidence: the table/store axis wording and "table sources" are Rationale
 text. The widened `reads` grammar is a Position ruling (U-ver F).
 Proposal: no annotation.
 Recommendation: decline.
-Status: open
+Status: ruled, track 2. Act on evidence_check.md's verdict. A Rationale-only ruling gets a new entry, never new Position text in an old entry, and a consequence of a Position gets none (lesson 68); an annotation records only stale text (decisions_style.md rule 1). Grep every Position before writing an entry (lesson 42).
 
 ### B41. D-095
 
@@ -578,7 +578,7 @@ Rejected text.
 Proposal: one annotation giving the family as D-276 and §14.4 state it,
 and the two Rationale clauses in Position form.
 Recommendation: adopt. The brief lists D-095.
-Status: open
+Status: ruled, track 2, amended per evidence_check.md (UNCONFIRMED): D-095 names `stop_on`, not `ignore_stop_requests`, and D-316's Position covers the ignore list, so the ignore-list item needs no entry. Annotate D-095's six-member list only.
 
 ### B42. D-098
 
@@ -588,7 +588,7 @@ Evidence: the Position says `capture`, where §14.4 says `checkpoint`.
 Proposal: the brief's annotation: `capture` reads `checkpoint` (D-273,
 D-274).
 Recommendation: adopt.
-Status: open
+Status: ruled, track 2. Act on evidence_check.md's verdict. A Rationale-only ruling gets a new entry, never new Position text in an old entry, and a consequence of a Position gets none (lesson 68); an annotation records only stale text (decisions_style.md rule 1). Grep every Position before writing an entry (lesson 42).
 
 ### B43. D-063
 
@@ -598,7 +598,7 @@ Evidence: the Position's `capture -> tweak -> apply` clause is retired by
 D-273 and carries no annotation. The overlay clauses stand.
 Proposal: one annotation naming D-273 as the retirement.
 Recommendation: adopt. It is an overtaken ruling, not a vocabulary change.
-Status: open
+Status: ruled, track 2, no new entry: evidence_check.md finds an existing Position states it or it follows from one. Annotate stale text only.
 
 ### B44. D-066
 
@@ -609,7 +609,7 @@ entry names `ConditionShapeDrift` as the kind. B's chapter text names the
 kind and its `:tree_type` and `:prefix` reasons.
 Proposal: no annotation for `capture` (rule 2). The kind is covered in B73.
 Recommendation: adopt the split.
-Status: open
+Status: ruled, track 2. Act on evidence_check.md's verdict. A Rationale-only ruling gets a new entry, never new Position text in an old entry, and a consequence of a Position gets none (lesson 68); an annotation records only stale text (decisions_style.md rule 1). Grep every Position before writing an entry (lesson 42).
 
 ### B45. D-067 and D-026
 
@@ -620,7 +620,7 @@ Rejected text the chapter cites. D-067's "every tick due" clause is amended
 by D-205, which is annotated already.
 Proposal: no annotation.
 Recommendation: decline. They are reasons, and the amendment is recorded.
-Status: open
+Status: ruled, track 2. Act on evidence_check.md's verdict. A Rationale-only ruling gets a new entry, never new Position text in an old entry, and a consequence of a Position gets none (lesson 68); an annotation records only stale text (decisions_style.md rule 1). Grep every Position before writing an entry (lesson 42).
 
 ### B46. D-276
 
@@ -632,7 +632,7 @@ matching.
 Proposal: fold the two annotations' ruling into one later annotation in
 Position form.
 Recommendation: adopt. It is low weight; do it with the D-095 pass.
-Status: open
+Status: ruled, track 2. Act on evidence_check.md's verdict. A Rationale-only ruling gets a new entry, never new Position text in an old entry, and a consequence of a Position gets none (lesson 68); an annotation records only stale text (decisions_style.md rule 1). Grep every Position before writing an entry (lesson 42).
 
 ### B47. D-409
 
@@ -644,7 +644,7 @@ guidance. §13.5 frames the rejection as bearing on reads a run acts on, and
 Proposal: the brief's annotation: scope the Position to the reads a run acts
 on, as §13.5 frames it.
 Recommendation: adopt.
-Status: open
+Status: ruled, track 2. Act on evidence_check.md's verdict. A Rationale-only ruling gets a new entry, never new Position text in an old entry, and a consequence of a Position gets none (lesson 68); an annotation records only stale text (decisions_style.md rule 1). Grep every Position before writing an entry (lesson 42).
 
 ### B48. D-130
 
@@ -654,7 +654,7 @@ Evidence: the Position puts device read bindings under inspection by the
 instance walk. D-414 and D-310 replace that reading.
 Proposal: the brief's annotation naming D-414 and D-310.
 Recommendation: adopt.
-Status: open
+Status: ruled, close: evidence_check.md finds D-130 already carries the 2026-10-19 annotation.
 
 ### B49. D-242
 
@@ -663,7 +663,7 @@ Lines: Position 9606-9609.
 Evidence: bindings and GUI panels under inspection, against D-414.
 Proposal: the brief's annotation, as B48.
 Recommendation: adopt.
-Status: open
+Status: ruled, close: evidence_check.md finds D-242 already carries the 2026-10-19 annotation.
 
 ### B50. D-149
 
@@ -675,7 +675,7 @@ no `committed` flag.
 Proposal: one annotation adding the fourth site, with the Rationale
 clause in Position form.
 Recommendation: adopt.
-Status: open
+Status: ruled, track 2, no new entry: evidence_check.md finds an existing Position states it or it follows from one. Annotate stale text only.
 
 ### B51. D-122
 
@@ -685,7 +685,7 @@ Evidence: "the `baseline` keyword of `trim!`/`init!`" is false of `init!`
 (`src/sim.jl` 591, `src/model.jl` 170).
 Proposal: one annotation: only `trim!` takes `baseline`.
 Recommendation: adopt, with B22.
-Status: open
+Status: ruled, track 2. Act on evidence_check.md's verdict. A Rationale-only ruling gets a new entry, never new Position text in an old entry, and a consequence of a Position gets none (lesson 68); an annotation records only stale text (decisions_style.md rule 1). Grep every Position before writing an entry (lesson 42).
 
 ### B52. D-253
 
@@ -695,7 +695,7 @@ Evidence: the Spec field lists §14.1, which never cites D-253. §14.3 does.
 Proposal: IC1's text: "Annotation (<date>): the Spec field's [§14.1][s14-1]
 reads [§14.3][s14-3]."
 Recommendation: adopt.
-Status: open
+Status: ruled, track 2. Act on evidence_check.md's verdict. A Rationale-only ruling gets a new entry, never new Position text in an old entry, and a consequence of a Position gets none (lesson 68); an annotation records only stale text (decisions_style.md rule 1). Grep every Position before writing an entry (lesson 42).
 
 ### B53. D-118
 
@@ -706,7 +706,7 @@ checks of the residual and check returns at the guess are Rationale text.
 Proposal: one annotation: the field set closes at nine (D-262); the
 setup-check clause in Position form.
 Recommendation: adopt. It pairs with B26.
-Status: open
+Status: ruled, track 2, no new entry: evidence_check.md finds an existing Position states it or it follows from one. Annotate stale text only.
 
 ### B54. D-262
 
@@ -717,7 +717,7 @@ check at the guess is Rationale text. The chapter bolds Position sentences
 2 to 4.
 Proposal: no annotation.
 Recommendation: decline. The bolded rulings are in the Position already.
-Status: open
+Status: ruled, track 2, amended per evidence_check.md (UNCONFIRMED): D-262's Position says "The service never solves them", so the checks-stay-out-of-the-solve item needs no entry.
 
 ### B55. D-151
 
@@ -727,7 +727,7 @@ Evidence: the hazard is in the Rejected list. The Position states the
 canonicalization.
 Proposal: no annotation.
 Recommendation: decline.
-Status: open
+Status: ruled, track 2. Act on evidence_check.md's verdict. A Rationale-only ruling gets a new entry, never new Position text in an old entry, and a consequence of a Position gets none (lesson 68); an annotation records only stale text (decisions_style.md rule 1). Grep every Position before writing an entry (lesson 42).
 
 ### B56. D-132
 
@@ -736,7 +736,7 @@ Lines: Rationale (services need no boundary masking).
 Evidence: a Rationale clause the chapter cites at row 601.
 Proposal: no annotation.
 Recommendation: decline.
-Status: open
+Status: ruled, track 2. Act on evidence_check.md's verdict. A Rationale-only ruling gets a new entry, never new Position text in an old entry, and a consequence of a Position gets none (lesson 68); an annotation records only stale text (decisions_style.md rule 1). Grep every Position before writing an entry (lesson 42).
 
 ### B57. D-273
 
@@ -746,7 +746,7 @@ baseline").
 Evidence: fly-then-retrim rests on this clause.
 Proposal: no annotation.
 Recommendation: decline. D-274's `checkpoint` ruling states the current form.
-Status: open
+Status: ruled, track 2. Act on evidence_check.md's verdict. A Rationale-only ruling gets a new entry, never new Position text in an old entry, and a consequence of a Position gets none (lesson 68); an annotation records only stale text (decisions_style.md rule 1). Grep every Position before writing an entry (lesson 42).
 
 ### B58. D-307
 
@@ -755,7 +755,7 @@ Lines: Rationale ("guidance, not rulings").
 Evidence: the interpolation guidance is guidance.
 Proposal: none.
 Recommendation: decline.
-Status: open
+Status: ruled, track 2. Act on evidence_check.md's verdict. A Rationale-only ruling gets a new entry, never new Position text in an old entry, and a consequence of a Position gets none (lesson 68); an annotation records only stale text (decisions_style.md rule 1). Grep every Position before writing an entry (lesson 42).
 
 ### B59. D-070
 
@@ -769,7 +769,7 @@ external-NLS rejection is constructive rationale.
 Proposal: one annotation covering `DiagnosticError` and the `saturated`
 scope.
 Recommendation: adopt.
-Status: open
+Status: ruled, track 2. Act on evidence_check.md's verdict. A Rationale-only ruling gets a new entry, never new Position text in an old entry, and a consequence of a Position gets none (lesson 68); an annotation records only stale text (decisions_style.md rule 1). Grep every Position before writing an entry (lesson 42).
 
 ### B60. D-069
 
@@ -779,7 +779,7 @@ Evidence: "`deriv`/`output` selectors" predate D-095's prefix and D-124's
 widening.
 Proposal: one annotation naming D-095 and D-124.
 Recommendation: adopt.
-Status: open
+Status: ruled, track 2, no new entry: evidence_check.md finds an existing Position states it or it follows from one. Annotate stale text only.
 
 ### B61. D-071
 
@@ -789,7 +789,7 @@ Evidence: "named by the build" is stale. A refusal now fails resolution by
 name.
 Proposal: one annotation.
 Recommendation: adopt.
-Status: open
+Status: ruled, track 2. Act on evidence_check.md's verdict. A Rationale-only ruling gets a new entry, never new Position text in an old entry, and a consequence of a Position gets none (lesson 68); an annotation records only stale text (decisions_style.md rule 1). Grep every Position before writing an entry (lesson 42).
 
 ### B62. D-072
 
@@ -799,7 +799,7 @@ Evidence: `capture(sim)` as the default point is overtaken by D-274 bullet 5.
 No annotation records it.
 Proposal: one annotation naming D-274 bullet 5.
 Recommendation: adopt. It is an overtaken ruling.
-Status: open
+Status: ruled, track 2, no new entry: evidence_check.md finds an existing Position states it or it follows from one. Annotate stale text only.
 
 ### B63. D-272
 
@@ -812,7 +812,7 @@ root input's refusal names the tier.
 Proposal: one annotation naming D-274 and stating the two rulings in
 Position form.
 Recommendation: adopt.
-Status: open
+Status: ruled, track 2: the default point follows from D-274 bullet 5's Position, so no entry for it; the rest per evidence_check.md, under lesson 68.
 
 ### B64. D-126
 
@@ -822,7 +822,7 @@ Evidence: "`capture`-defaulted `linearize`".
 Proposal: none.
 Recommendation: decline. It is vocabulary of its day (rule 2), and D-274
 states the current default.
-Status: open
+Status: ruled, track 2. Act on evidence_check.md's verdict. A Rationale-only ruling gets a new entry, never new Position text in an old entry, and a consequence of a Position gets none (lesson 68); an annotation records only stale text (decisions_style.md rule 1). Grep every Position before writing an entry (lesson 42).
 
 ### B65. D-155
 
@@ -831,7 +831,7 @@ Lines: Position 5896.
 Evidence: as B64.
 Proposal: none.
 Recommendation: decline, for B64's reason.
-Status: open
+Status: ruled, track 2. Act on evidence_check.md's verdict. A Rationale-only ruling gets a new entry, never new Position text in an old entry, and a consequence of a Position gets none (lesson 68); an annotation records only stale text (decisions_style.md rule 1). Grep every Position before writing an entry (lesson 42).
 
 ### B66. D-263
 
@@ -843,7 +843,7 @@ Rationale only brushes it.
 Proposal: one annotation on D-263 stating the trait's ruling.
 Recommendation: adopt. The chapter cited D-167 three times, and F59 moved
 them away.
-Status: open
+Status: ruled, track 2. Act on evidence_check.md's verdict. A Rationale-only ruling gets a new entry, never new Position text in an old entry, and a consequence of a Position gets none (lesson 68); an annotation records only stale text (decisions_style.md rule 1). Grep every Position before writing an entry (lesson 42).
 
 ### B67. D-197 and D-073
 
@@ -853,7 +853,7 @@ Evidence: the frozen-discrete step map as "the different object" and
 $\Phi$'s event-quiescent scope are Rationale and Rejected text.
 Proposal: none.
 Recommendation: decline. Reasons only.
-Status: open
+Status: ruled, track 2. Act on evidence_check.md's verdict. A Rationale-only ruling gets a new entry, never new Position text in an old entry, and a consequence of a Position gets none (lesson 68); an annotation records only stale text (decisions_style.md rule 1). Grep every Position before writing an entry (lesson 42).
 
 ### B68. D-150
 
@@ -864,7 +864,7 @@ sphere are Rationale text. The chapter cites D-150 at the display's lead
 sentence.
 Proposal: none.
 Recommendation: decline.
-Status: open
+Status: ruled, track 2. Act on evidence_check.md's verdict. A Rationale-only ruling gets a new entry, never new Position text in an old entry, and a consequence of a Position gets none (lesson 68); an annotation records only stale text (decisions_style.md rule 1). Grep every Position before writing an entry (lesson 42).
 
 ### B69. D-213
 
@@ -873,7 +873,7 @@ Lines: Spec field.
 Evidence: the Spec field lacks §14.10.
 Proposal: add §14.10.
 Recommendation: adopt.
-Status: open
+Status: ruled, track 2. Act on evidence_check.md's verdict. A Rationale-only ruling gets a new entry, never new Position text in an old entry, and a consequence of a Position gets none (lesson 68); an annotation records only stale text (decisions_style.md rule 1). Grep every Position before writing an entry (lesson 42).
 
 ### B70. D-068
 
@@ -884,7 +884,7 @@ The code spells it `override(baseline, condition(d*))`. The vocabulary
 (`UninitializedSlots`, "slot", `merge`) is kept by rule 2.
 Proposal: no annotation for vocabulary. One annotation for the spelling.
 Recommendation: adopt the spelling annotation only.
-Status: open
+Status: ruled, track 2. Act on evidence_check.md's verdict. A Rationale-only ruling gets a new entry, never new Position text in an old entry, and a consequence of a Position gets none (lesson 68); an annotation records only stale text (decisions_style.md rule 1). Grep every Position before writing an entry (lesson 42).
 
 ### B71. New entry: the two `TrimProblemInvalid` reasons
 
@@ -894,7 +894,7 @@ Evidence: `:inverted_box` and `:nonpositive_tolerance` come from a code
 commit (`3408028`). No entry rules them, and §14.8 states both.
 Proposal: one entry, ratified, whose Position states both reasons.
 Recommendation: adopt, as the brief says.
-Status: open
+Status: ruled, track 2. Act on evidence_check.md's verdict. A Rationale-only ruling gets a new entry, never new Position text in an old entry, and a consequence of a Position gets none (lesson 68); an annotation records only stale text (decisions_style.md rule 1). Grep every Position before writing an entry (lesson 42).
 
 ### B72. New entry: the seeded tap's limits
 
@@ -906,7 +906,7 @@ states it.
 Proposal: one entry, ratified, whose Position states the three limits and
 the `:unseedable` and `:vector_tap` kinds.
 Recommendation: adopt.
-Status: open
+Status: ruled, track 2. Act on evidence_check.md's verdict. A Rationale-only ruling gets a new entry, never new Position text in an old entry, and a consequence of a Position gets none (lesson 68); an annotation records only stale text (decisions_style.md rule 1). Grep every Position before writing an entry (lesson 42).
 
 ### B73. Rulings with no entry, survey 1
 
@@ -921,7 +921,7 @@ Proposal: one entry for the kind and the activation pairing, which the
 chapter states as rules. One short entry for the two legality rows. None for
 the rest, which describe code.
 Recommendation: adopt the two entries, and decline the rest.
-Status: open
+Status: ruled, track 2: the `restore!` row follows from D-274's Position, so no entry for it; the rest per evidence_check.md, under lesson 68.
 
 ### B74. Rig and non-participation rulings with no entry; glossary `design_world`
 
@@ -937,7 +937,7 @@ design under D-073). Rewrite the glossary entry to "the rig this design
 records for design-time work", naming `SimpleAtmosphere` and `NoWind` as
 FlightPhysics' (R29) and no owner for `HorizontalTerrain`.
 Recommendation: adopt.
-Status: open
+Status: ruled, track 2, amended per evidence_check.md (UNCONFIRMED): rule 9 covers implementation policy and D-073 only the sampled-data half; the tooling and rig rulings with no entry are judged one by one under lesson 68, and the glossary's `design_world` lands as a glossary edit (R26).
 
 ## Carried
 
@@ -966,7 +966,7 @@ list §14.9 (R14, F71).
 Proposal: carry each row to the appendices' list with the chapter's wording.
 `ConditionResolution` may add §14.1.
 Recommendation: adopt.
-Status: open
+Status: ruled, carried: joins README.md's "Carried to later chapters" list at the chapter's close.
 
 ### B76. Appendix B owes the snapshot form of `port`
 
@@ -976,7 +976,7 @@ Evidence: the code has `port(snapshot, path, name)` (`src/dataplane.jl`
 480-481), and Appendix B lists only the `model` form.
 Proposal: carry a row for the snapshot form, and let §11.2 state the read.
 Recommendation: adopt.
-Status: open
+Status: ruled, carried: joins README.md's "Carried to later chapters" list at the chapter's close.
 
 ### B77. The Part IV roadmap
 
@@ -986,7 +986,7 @@ Evidence: the roadmap names the chapter's contents as the old chapter did.
 R1 leaves it to the front-matter rewrite.
 Proposal: carry it with the chapter's new §14.1 to §14.10 roadmap sentence.
 Recommendation: adopt.
-Status: open
+Status: ruled, carried: joins README.md's "Carried to later chapters" list at the chapter's close.
 
 ### B78. Appendix D `#g-entry` and bare *entry*
 
@@ -997,7 +997,7 @@ used bare and lists only *condition entry* (§14.3). §14.1 to §14.5 used it
 bare, and R13 now gives "condition entry", "input entry" and "tap".
 Proposal: carry the glossary entry's update to list the three.
 Recommendation: adopt.
-Status: open
+Status: ruled, carried, amended per evidence_check.md (UNCONFIRMED): `#g-entry` already lists six compounds; the carried gap is the wiring entry, which README.md's Appendix D item already names. Merge into it.
 
 ### B79. `linearization_walkthrough.md` 572
 
@@ -1008,7 +1008,7 @@ now sits next to §14.10's checkpoint "restored into the scratch world"; it
 most likely means Flight.jl's restore dance.
 Proposal: reword both clauses together when the companions are swept.
 Recommendation: adopt.
-Status: open
+Status: ruled, carried: joins README.md's "Carried to later chapters" list at the chapter's close.
 
 ### B80. `gloss_table.md` row 202
 
@@ -1018,4 +1018,4 @@ Evidence: it glosses `TrimProblem` as "the closed seven-field value". The
 glossary and §14.7 say nine.
 Proposal: change "seven-field" to "nine-field".
 Recommendation: adopt.
-Status: open
+Status: ruled, carried: joins README.md's "Carried to later chapters" list at the chapter's close.

@@ -4,7 +4,7 @@ old: ### 14.4 One plan, two ways to apply it
 new: ### 14.4 Two ways to apply a resolved condition
 tag: R
 ruling: B1
-note: title kept (R9, F16). B1 retitles it: "One plan" contradicted the body, since the list compiles to two plans (R37). Cut claim and its fate: "one plan" is not kept anywhere, being false; §14.3 (unit A) states both plans and this section's context paragraph says "the compiled plans". "Two ways to apply" stays in the title.
+note: title kept (R9, F16). B1 retitles it: "One plan" contradicted the body, since the list compiles to two plans (R37). Cut claim and its fate: "one plan" is not kept anywhere, being false; §14.3 (unit A) states both plans and this section speaks of each way's "own plan" and of "A compiled plan". "Two ways to apply" stays in the title.
 
 old: The paradigm-change tax feared at execution does not materialize.
 new: A resolved condition (the path-addressed sparse overlay that sets a build's state) is applied two ways, because a one-shot service and an iterating one want different things from the same validated list of condition entries (D-066).
@@ -230,10 +230,10 @@ note: D-098 Position: 'store selectors (get_state/get_deriv) only against live s
 old: The table/store axis separates table-borne values from store-borne ones, not snapshots from services.
 
 old: Only stopped-sim service evaluations, `checkpoint`, and post-run inspection of the live stores (the replay-to-inspect, §11.2) ever hold live stores.
-new: Only stopped-sim service evaluations, `checkpoint`, and post-run inspection of the live stores ever hold live stores (§11.2). That inspection is the replay-to-inspect, where replay is the ordinary loop with its drain reading the trace. Of these holders, only the service evaluations' readers take a store selector.
+new: Only stopped-sim service evaluations, `checkpoint`, and post-run inspection of the live stores ever hold live stores (§11.2). That inspection is the replay-to-inspect (§11.2), where replay is the ordinary loop with its drain reading the trace. Of these holders, only the service evaluations' readers take a store selector.
 tag: R
 ruling: B2
-note: the citation leaves the gloss's parentheses; checkpoint linked at its first use, no gloss Step 5 fix1: P1-35. B2 adds the last sentence, so `checkpoint` and post-run inspection holding live stores does not read against F22's store-selector sentence: the code's only executor-source readers are trim's and linearization's (src/readers.jl 36-42). It follows the replay sentence so "That inspection" keeps its antecedent.
+note: the citation leaves the gloss's parentheses; checkpoint linked at its first use, no gloss Step 5 fix1: P1-35. B2 adds the last sentence, so `checkpoint` and post-run inspection holding live stores does not read against F22's store-selector sentence: the code's only executor-source readers are trim's and linearization's (src/readers.jl 36-42). It follows the replay sentence so "That inspection" keeps its antecedent. Final fix, finding 5: §11.2 repeats on the replay-to-inspect sentence, which old 11652 cited.
 
 old: The snapshot deliberately carries no state stores (§11.2), and `ẋ` buffers are integrator scratch, not boundary-consistent objects outside a service evaluation.
 new: The snapshot deliberately carries no state stores (§11.2), and `ẋ` buffers (the vectors the integrator fills) are integrator scratch, not boundary-consistent objects outside a service evaluation.
@@ -276,7 +276,7 @@ note: the taps link and gloss move to the first use, 'tap set' in the mounting s
 
 old: They do so within the scopes the locality law (§6.1) and fragment scoping (§14.2) describe, as authoring guidance (D-414).
 new: They do so within the scopes the locality law (§6.1) and fragment scoping (§14.2) describe.
-note: Step 5 fix1: P1-21: 'as authoring guidance (D-414)' folds into the paragraph's opening sentence, which carries D-414; fragment's gloss is the added block below.
+note: Step 5 fix1: P1-21: 'as authoring guidance (D-414)' folds into the paragraph's opening sentence, which carries D-414. Final fix, finding 7: fragment's link and gloss move to the section's first use, the ledger.
 
 old: `get_face` is the set's seam-crossing member. It resolves through export chains exactly as mounting (relocating a whole problem or tap set with `at(prefix, …)`) resolves root input faces (§14.9), so the read side mirrors the write side.
 new: `get_face` resolves through export chains exactly as mounting resolves root input faces (§14.9, D-125), so the read side mirrors the write side.
@@ -363,10 +363,10 @@ tag: M
 note: M3: moved up after the internal-API sentence
 
 old: They are the user fragment math (the domain computations unchanged from today, plus the tree's few boxes, §14.2), the leaf stores, the folded shape check, and the sweep.
-new: They are the user fragment math, the leaf stores, the folded shape check and the sweep (one pass through the execution order against the current state). The fragment math is the domain computations, unchanged from Flight.jl's, plus building the tree, which with literal prefixes allocates nothing (§14.2).
+new: They are the user fragment math, the leaf stores, the folded shape check and the sweep (one pass through the execution order against the current state). A fragment is the leaf node of the condition algebra, built by `set`. The fragment math is the domain computations, unchanged from Flight.jl's, plus building the tree, which with literal prefixes allocates nothing (§14.2).
 tag: R
 ruling: R35
-note: verify: C-078, R35 adds 'with literal prefixes' as §14.2 scopes it; M3 move; F9(c) 'plus building the tree, which allocates nothing'; R12 'today' becomes Flight.jl's (the domain math of Flight.jl's FlightPhysics and FlightApps models); sweep linked and glossed at its first true use (#g-sweep)
+note: verify: C-078, R35 adds 'with literal prefixes' as §14.2 scopes it; M3 move; F9(c) 'plus building the tree, which allocates nothing'; R12 'today' becomes Flight.jl's (the domain math of Flight.jl's FlightPhysics and FlightApps models); sweep linked and glossed at its first true use (#g-sweep) Final fix, finding 7: fragment's link and gloss sentence, from #g-fragment.
 
 old: The sweep dominates, exactly as `f_ode!` does today.
 new: The sweep dominates, exactly as `f_ode!` does in FlightCore, where it is the continuous-dynamics function a model extends.
@@ -408,9 +408,9 @@ old: The parity with an ordinary boundary is exact, not approximate.
 note: boundary linked here, since the old link sat inside 'boundary zero' (F4)
 
 old: The pieces follow one by one.
-new: The pieces follow one by one, in run order. Projection, the sweep, events and the due `s_update` calls come first, then the `t₀` argument, then what boundary zero (the initialization boundary, the ordinary macro-sequence with an empty integrate) means for trim.
+new: The pieces follow one by one, in run order. Projection (the optional per-component hook `x ← x_projection(x)`), the sweep, events and the due `s_update` calls come first. Then come the `t₀` argument and what boundary zero (the initialization boundary, the ordinary macro-sequence with an empty integrate) means for trim.
 tag: X
-note: the context's parts sentence (survey part C); boundary zero linked and glossed at its first prose use (late link fixed, F4), gloss from #g-boundary-zero Step 5 fix1: P1-27.
+note: the context's parts sentence (survey part C); boundary zero linked and glossed at its first prose use (late link fixed, F4), gloss from #g-boundary-zero Step 5 fix1: P1-27. Final fix, finding 8: projection's gloss from #g-projection; the sentence splits so each gloss has its own.
 
 old: - Project runs.
 
@@ -419,8 +419,8 @@ old: Authored `x` can sit off-manifold.
 old: A hand-assembled quaternion may be ulps off unit norm, or a condition (the path-addressed sparse overlay that sets a build's state) may write part of a constrained block against fresh defaults.
 
 old: Projection after condition writes holds the same position it holds after any other `x` mutation.
-new: After condition writes, projection (the optional per-component hook `x ← x_projection(x)`) holds the same position it holds after any other `x` mutation.
-note: Step 5 fix1: P1-35.
+new: Projection after condition writes holds the same position it holds after any other `x` mutation.
+note: Final fix, finding 8: projection's link and gloss move to the section's first prose use, the parts sentence.
 
 old: And it costs nothing when the state is already clean.
 
@@ -469,10 +469,10 @@ new: Boundary zero establishes every guard prior (the event's stored predicate s
 note: the late boundary-zero link moves to the section's first prose use (F4) Step 5 fix1: P1-28.
 
 old: Suppressing those firings was rejected (D-067), on the stage-on-interaction lesson of §11.7 (widgets stage on edit or activation, never per render pass). Insurance that masks invariant violations is anti-diagnostic (D-026).
-new: Suppressing those firings was rejected (D-067), on the lesson of the stage-on-interaction rule (when a GUI widget stages a new value) (§11.7). That lesson is that insurance masking invariant violations is anti-diagnostic (D-026).
+new: Suppressing those firings was rejected (D-067), on the lesson of the stage-on-interaction rule (the rule that a GUI widget stages a new value only on interaction, never per render pass) (§11.7). That lesson is that insurance masking invariant violations is anti-diagnostic (D-026).
 tag: R
 ruling: R9
-note: F14: the gloss describing the parked GUI's widgets goes, and the lesson is stated as the insurance rule (§11.7 8337-8340, D-026) Step 5 fix1: P1-35.
+note: F14: the gloss describing the parked GUI's widgets goes, and the lesson is stated as the insurance rule (§11.7 8337-8340, D-026) Step 5 fix1: P1-35. Final fix, finding 10: the gloss says what the rule is, after #g-stage-on-interaction.
 
 old: The trace header is taken after the sequence (§11.5).
 
@@ -640,9 +640,9 @@ new: So a root input's only source before boundary zero is the condition (the pa
 note: condition linked and glossed at its first use (late link fixed); the boundary-zero gloss becomes its own sentence, one parenthetical per sentence; the gloss is #g-boundary-zero's
 
 old: Three consequences follow.
-new: Three consequences follow. They are the totality check, the probe-value barrier, and baselines layered by `override` (the ordered, asymmetric layering combinator).
+new: Three consequences follow. They are the totality check, the probe-value barrier, and baselines (aircraft-shipped, full-coverage condition functions) layered by `override`, the ordered, asymmetric layering combinator.
 tag: X
-note: the parts sentence names the three in order Step 5 fix1: P1-9.
+note: the parts sentence names the three in order Step 5 fix1: P1-9. Final fix, finding 9: baselines linked and glossed at the section's first use (#g-baseline); `override`'s gloss becomes an appositive.
 
 old: Totality is a precondition of starting, checked by the service.
 new: Totality is a precondition of starting, checked by the service (D-068).
@@ -732,7 +732,7 @@ new: Baselines are aircraft-shipped condition functions, layered by `override` (
 tag: R
 ruling: R7
 newcites: D-068
-note: bold narrowed to the headline of D-068 bullet 2, 'Baselines are aircraft-shipped full-coverage condition functions'; 'layered by override' is bullet 3's, bold below. condition stays unlinked, linked in the context
+note: bold narrowed to the headline of D-068 bullet 2, 'Baselines are aircraft-shipped full-coverage condition functions'; 'layered by override' is bullet 3's, bold below. condition stays unlinked, linked in the context Final fix, finding 9: the link moves to the parts sentence above.
 
 old: Nobody hand-writes ~20 root-input values per script.
 
@@ -776,8 +776,7 @@ note: F25: the commit is override(baseline, condition(d*)) (src/trim.jl 425-426;
 
 added: Both kinds of read resolve under the one service walk (§13.3).
 
-added: A fragment is the leaf node of the condition algebra, built by `set`.
 
-added: In the sequence, a sweep is one pass through the execution order against the current state, and a guard is the declared function defining an event's predicate.
+added: In the sequence, a sweep is one pass through the execution order against the current state, and a guard is the declared function that decides when an event fires.
 
-added: A due component is a discrete component whose schedule admits the boundary's tick index, and a snapshot is the immutable per-boundary publication.
+added: A due component is a discrete component scheduled to run here, and a snapshot is the immutable publication that closes the sequence.

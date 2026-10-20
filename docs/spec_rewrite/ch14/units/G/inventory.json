@@ -748,7 +748,7 @@
   {
    "id": "C-073",
    "old": "The Dual probe detonates pinned intermediates with a culprit-naming `InexactError`, and `build(world; activations)` puts it in CI.",
-   "new": "A pinned intermediate (a value held at `Float64` inside authored continuous math) makes the Dual probe fail with a culprit-naming `MethodError` or `InexactError` (D-307). `build(world; activations)` puts the probe in CI (D-280).",
+   "new": "A pinned intermediate (a value held at `Float64` inside authored continuous math) makes the Dual probe (the build's single evaluation of a user function) fail with a culprit-naming `MethodError` or `InexactError` (D-307). `build(world; activations)` puts the probe in CI (D-280).",
    "where": "new",
    "cites": [],
    "newcites": [
@@ -757,7 +757,7 @@
    ],
    "tag": "R",
    "ruling": "R9",
-   "note": "F77, D-307 Rationale: \"fails at the offending line with a `MethodError` or an `InexactError`\". D-280 (H85): \"The repository's test suite builds a `Dual` activation of every component, with `build(world; activations = ...)`\". The gloss follows D-307's \"`Float64`-pinned intermediates\"."
+   "note": "F77, D-307 Rationale: \"fails at the offending line with a `MethodError` or an `InexactError`\". D-280 (H85): \"The repository's test suite builds a `Dual` activation of every component, with `build(world; activations = ...)`\". The gloss follows D-307's \"`Float64`-pinned intermediates\".; step 6b finding 1: probe linked at its first use in §14.8 with the glossary's gloss"
   },
   {
    "id": "C-074",
@@ -1071,10 +1071,11 @@
   {
    "id": "C-106",
    "old": "`at(prefix, read_set)` prepends the prefix to that chain and joins nothing.",
-   "new": "`at(prefix, read_set)` prepends the prefix to that chain and joins nothing.",
+   "new": "`at(prefix, read_set)` prepends the prefix to the read set's mount chain and joins nothing.",
    "where": "new",
    "cites": [],
-   "tag": "F"
+   "tag": "F",
+   "note": "step 6b finding 2: 'that chain' named, the added Reads sentence standing between it and its antecedent"
   },
   {
    "id": "C-107",
