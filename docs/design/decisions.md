@@ -2054,6 +2054,10 @@ apply).
 
 **Rationale.** Recorded only through the rejections below.
 
+Annotation (2026-10-20): the warm-restart clause is retired. The cycle capture →
+tweak → apply retires with `capture`'s condition form, and a resume is a
+checkpoint and a restore ([D-273][d-273]). The overlay clauses stand.
+
 **Rejected.**
 - *Mirror-tree spelling:* a second structure artifact, ragged under partiality,
   outside the path vocabulary.
@@ -2072,7 +2076,7 @@ structure's owner); pre-sweep doctrine: a condition value needing swept outputs
 is caller-computable (trim's `α_filt = α_a` — a decision variable) or an
 equilibrium constraint for the trim service.
 
-**Spec.** [§14.2][s14-2]
+**Spec.** [§14.1][s14-1], [§14.2][s14-2]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -2098,7 +2102,7 @@ children, own faces; deep `at` only within owned concrete subtrees) — absolute
 paths are compiled derivatives, so [§13.5][s13-5]'s observation-by-path rejection is
 untouched.
 
-**Spec.** [§6.1][s6-1], [§13.5][s13-5], [§14.2][s14-2]
+**Spec.** [§6.1][s6-1], [§13.5][s13-5], [§14.2][s14-2], [§14.3][s14-3]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -2111,6 +2115,11 @@ half is convention, because ownership is not build-visible. The Rejected
 list's "same convention status as [§6.1][s6-1]" is stale, since [D-207][d-207] made [§6.1][s6-1]'s
 one-level rule a check in `resolve`. The lazy tree, resolution against the
 `Build` and the duplicate-leaf error stand.
+
+Annotation (2026-10-20): the earlier annotation's machine-checked concrete half
+predates [D-414][d-414]. `:past_generic` retired from `PathResolution`, so a deep path
+resolves wherever the structure has it, and the locality law for shipped
+fragments and problems is authoring guidance, not a framework check ([D-414][d-414]).
 
 **Rejected.**
 - *Eager path concatenation in `at`:* strings and allocation on the hot path.
@@ -2131,7 +2140,7 @@ per-shape codegen, allocation fine per [§9.8][s9-8]) for one-shot init; compile
 readers as the gather twin (cost reads, linearization gather, `capture`) — one
 primitive family in the `Build`'s client kit.
 
-**Spec.** [§9.5][s9-5], [§9.8][s9-8]
+**Spec.** [§9.5][s9-5], [§9.8][s9-8], [§14.4][s14-4]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -2209,6 +2218,10 @@ diagnostic, all-or-nothing — a rejected init leaves the sim untouched.
 
 **Rationale.** Recorded only through the rejections below.
 
+Annotation (2026-10-20): the commit is spelled
+`override(baseline, condition(d*))`, the problem's condition at the solution, as
+[D-149][d-149]'s Rationale and the code spell it.
+
 **Rejected.**
 - *Face-declaration defaults:* condition data inside the wiring contract;
   reopens [§11.3][s11-3] bare-types and the competing-defaults problem.
@@ -2243,9 +2256,13 @@ assignment math.
 - Recorded unbuilt: closed-loop trim via $h(z) - z$ scratch residuals, and
   ground static equilibrium as another problem value.
 
-**Spec.** [§14.7][s14-7]
+**Spec.** [§14.7][s14-7], [§14.8][s14-8]
 
 **Rationale.** Recorded only through the rejections below.
+
+Annotation (2026-10-20): the reads are declared with the full read-selector
+family since [D-124][d-124], which calls the two-selector alternation a pre-[D-095][d-095]
+straggler. The selectors carry [D-095][d-095]'s `get_` prefix.
 
 **Rejected.**
 - *Framework decision-variable supertype* (`AbstractTrimState`/`FieldVector`):
@@ -2283,6 +2300,11 @@ optimizer deps.
 **Spec.** [§14.8][s14-8]
 
 **Rationale.** Recorded only through the rejections below.
+
+Annotation (2026-10-20): the audit bullet's "reported" overstates the report.
+Its `saturated` list names a decision only at its own bound, the first bullet's
+saturated-at-solution flag. An in-model saturation is LM-tolerated and shows in
+zero Jacobian columns, not in the report ([§14.8][s14-8]).
 
 **Rejected.**
 - *External NLS packages:* heavy dep for ~100 lines; [§10.2][s10-2] stepper precedent;
@@ -2325,6 +2347,11 @@ unifies the services as condition-algebra clients.
 Annotation (2026-10-19): the helper is recorded in [§14.9][s14-9]. [§13.7][s13-7]'s library
 holds components only.
 
+Annotation (2026-10-20): two bullets read stale. The build raises nothing for an
+internally wired face; resolution refuses it with the producer named, as [D-277][d-277]
+states for a face fed by a component. And no source ships a `design_world`; it
+is the rig this design records for design-time work ([§14.9][s14-9]).
+
 **Rejected.**
 - *World-level trim wrapper methods:* call-tree reuse: one method per
   container, ad-hoc plumbing per multi-aircraft case.
@@ -2358,6 +2385,10 @@ compiled to offsets, relocatable via `at`.
 **Spec.** [§7.1][s7-1], [§7.2][s7-2], [§14.10][s14-10]
 
 **Rationale.** Recorded only through the rejections below.
+
+Annotation (2026-10-20): the default operating point is the checkpoint of the
+simulation as it stands ([D-274][d-274]), and `capture` no longer produces a condition
+([D-273][d-273]).
 
 **Rejected.**
 - *Four `FiniteDiff` jacobians:* step-size heuristics, ~4n evaluations,
@@ -3088,6 +3119,11 @@ instead), inspection readers the whole family (within [D-098][d-098]'s later
 source axis), `stop_on` outside the family entirely (root-exported `Bool` faces
 only, [D-060][d-060]).
 
+Annotation (2026-10-20): the family [§14.4][s14-4] states has five members, `get_state`,
+`get_deriv`, `get_output`, `get_input` and `get_face`. `get_local` retired from
+it with `local_types` ([D-165][d-165]), and `get_slot` is spelled `get_input` since
+[D-206][d-206].
+
 **Rejected.**
 - *Bare-noun family:* `local(path, field)` is unparseable — reserved word,
   parses as a scope declaration — and `state`/`output`/`face` collide with
@@ -3185,6 +3221,12 @@ identically spelled.
 
 Annotation (2026-10-13): [D-252][d-252] removed auto-publication, so the remedy is to
 return the field from `output_state`.
+
+Annotation (2026-10-20): `capture` reads `checkpoint` here. A checkpoint is a
+distinct value with no condition algebra ([D-273][d-273], [D-274][d-274]). Of the holders of live
+stores, only the services' readers take a store selector ([§14.4][s14-4]). No client
+policy applies on top of the source rule, which is the resolver's, not a
+client's ([D-406][d-406]).
 
 **Rejected.**
 - *Client-only validation:* [D-095][d-095]'s original "diagnostic readers admit the
@@ -3570,6 +3612,11 @@ stay readable as diagnostics, never as condition values; one kind
 `attach!`/`detach!`-while-running — closing the kind [D-106][d-106]'s gating text
 lacked.
 
+Annotation (2026-10-20): the precondition the Position gives `capture` is
+`checkpoint`'s since [D-273][d-273] and [D-274][d-274]. `checkpoint(sim)` is legal in
+`initialized` and `stopped`, and `linearize`'s default operating point is the
+checkpoint of the simulation as it stands ([D-274][d-274]).
+
 **Rejected.**
 - *Folding `MissingInit` into `ServiceLifecycle`:* distinct cases: a
   missing prior step pointing forward to `init!` vs. an operation illegal in
@@ -3918,6 +3965,9 @@ order (the decisions rule, [D-069][d-069]).
 `TrimProblemInvalid`, discharging [D-113][d-113]'s pre-staged clause. A worked
 three-equation C172 cruise problem was added to [§14.7][s14-7].
 
+Annotation (2026-10-20): the field set closes at nine since [D-262][d-262], which adds
+`checks` and `check_tolerances`.
+
 **Rejected.**
 - *Vector-returning residuals:* [§14.8][s14-8]'s failure reports name unbalanced
   equations — names must exist; packing is the service's job on both ends of
@@ -4054,6 +4104,10 @@ surface untouched, freeze vocabulary. Recording registers → recorders and the
 kept: *boundary zero* (a hyponym — it IS a step boundary, [§14.5][s14-5]'s whole point),
 *frame* both senses (loop frame ~40 entrenched sites vs. kinematic reference
 frames — compound discipline instead), *entry* (always compounded).
+
+Annotation (2026-10-20): only `trim!` takes the `baseline` keyword now. The
+clause held when written, the spec at `8e2505c` reading "the `baseline` keyword
+`init!`/`trim!` take", and `init!` lost the keyword later.
 
 **Rejected.**
 - *Renaming the entrenched owners instead:* condition algebra, write surface,
@@ -4996,6 +5050,9 @@ holding the handle value applies to isbits handles only. A handle that
 references bulk data cannot be a root input ([D-237][d-237]), and a rig holds it in a
 constant source instead.
 
+Annotation (2026-10-20): the by-name rejection of init as a third scheduled
+sweep is [D-064][d-064]'s; [§14.2][s14-2] never stated it.
+
 **Rejected.**
 - *Widening the condition signature to `condition(d, baseline)` so the math
   reads the handle out of the baseline:* single-sources the handle in a rig,
@@ -5660,6 +5717,10 @@ totality check is structurally unfailable *through the trim path* — it remains
 as the shared `init!`-boundary defense, no `TrimReport` committed flag exists
 or is needed, and [§14.8][s14-8]'s no-throw doctrine holds without exception. [§14.6][s14-6]'s
 no-third-branch ban on `probe_value` is untouched.
+
+Annotation (2026-10-20): the list lags the governing principle. Linearization's
+operating condition under `about`, applied to its own fresh scratch, is a fourth
+such application, and [§14.6][s14-6] and [§14.10][s14-10] name it.
 
 **Rejected.**
 - *`probe_value`-filling the scratch slots:* the [§14.6][s14-6] ban stands — it would
@@ -8821,7 +8882,7 @@ termination record, nothing published, `init!` and `replay!` legal again.
 - An interrupt inside boundary zero moves the lifecycle to `built` and
   propagates raw; a service has no stop path.
 
-**Spec.** [§12.6][s12-6], [§13.4][s13-4]
+**Spec.** [§12.6][s12-6], [§13.4][s13-4], [§14.8][s14-8]
 
 **Rationale.** Boundary zero runs the loop's user-code surfaces with the cursor
 maintained through them, so the frame naming the failing component and
@@ -9202,7 +9263,7 @@ and Stratum A is the structure step ([D-259][d-259]).
 states — `built`, `initialized`, `stopped` — is exhaustive. The stopped-sim
 reads stay admitted there: post-mortem inspection is reading.
 
-**Spec.** [§11.3][s11-3], [§13.6][s13-6], [Appendix B][sB]
+**Spec.** [§11.3][s11-3], [§13.6][s13-6], [§14][s14], [Appendix B][sB]
 
 **Rationale.** The implementation gated the roster operations and the log
 reader behind one check that refused only `running`, and called admitting
@@ -10209,7 +10270,7 @@ Annotation (2026-10-13): the dev-mode note is [§11.2][s11-2]'s.
   fixes both the structure and the `Float64` typing, and no activation step
   runs at `Float64`.
 
-**Spec.** [§9.1][s9-1], [§9.2][s9-2], [§9.3][s9-3], [§9.4][s9-4], [§9.7][s9-7], [§13.3][s13-3], [§13.4][s13-4], [§13.7][s13-7], [§14.1][s14-1], [§14.4][s14-4]
+**Spec.** [§9.1][s9-1], [§9.2][s9-2], [§9.3][s9-3], [§9.4][s9-4], [§9.7][s9-7], [§13.3][s13-3], [§13.4][s13-4], [§13.7][s13-7], [§14.3][s14-3], [§14.4][s14-4]
 
 **Rationale.** A step is well-defined when it consumes one new piece of
 information and fixes everything that piece determines. Stratum A consumes
@@ -11840,6 +11901,10 @@ address, `get_state("p", "q[1]")`, and the tap rule reads "a tap's leaf
 address resolves to one scalar"; a tap resolving to a vector or a bundle is
 what resolution refuses.
 
+Annotation (2026-10-20): the default operating point is the checkpoint of the
+simulation as it stands ([D-274][d-274]), which carries its own time. `capture` no longer
+produces a condition ([D-273][d-273]).
+
 ### D-273 — A condition is an initial condition: `capture` leaves the algebra
 
 **Status.** ratified
@@ -11866,7 +11931,7 @@ algebra.
   from a chosen instant is an authored condition, which a checkpoint's
   read-only view lets the author copy from.
 
-**Spec.** [§12.6][s12-6], [§14.1][s14-1], [§14.5][s14-5], [§14.9][s14-9], [§14.10][s14-10], [Appendix B][sB]
+**Spec.** [§12.6][s12-6], [§14][s14], [§14.1][s14-1], [§14.5][s14-5], [§14.8][s14-8], [§14.9][s14-9], [§14.10][s14-10], [Appendix B][sB]
 
 **Rationale.** Capture then apply was not the identity on a sampled model.
 An ordinary boundary at `t_k` publishes a discrete component's outputs
@@ -12201,7 +12266,7 @@ resolvers run.
   on a tap set lifts its three lists.
 - A refusal spells the selector as authored and names the mount.
 
-**Spec.** [§13.3][s13-3], [§14.4][s14-4], [§14.9][s14-9], [§14.10][s14-10]
+**Spec.** [§13.3][s13-3], [§14.4][s14-4], [§14.7][s14-7], [§14.9][s14-9], [§14.10][s14-10]
 
 **Rationale.** [D-071][d-071] had the read set reuse the `Scoped` node. `Scoped` is
 a member of the condition-node union with its payload unconstrained, so a
@@ -12601,7 +12666,7 @@ conformance check holds it to its word at every activation.
   and strips inside the stage.
 - Stripping mid-expression at an unpinned leaf remains legal.
 
-**Spec.** [§8.2][s8-2], [§9.5][s9-5]
+**Spec.** [§8.2][s8-2], [§9.5][s9-5], [§14.10][s14-10]
 
 **Rationale.** [D-238][d-238]'s relation lifts a `Float64` position only where the
 declaration has `T`, so every other leaf is exact (as recorded in [D-238][d-238]),
@@ -12958,7 +13023,7 @@ recorded in [D-019][d-019]'s Rejected list.
 - Event/tick fixed-point iteration is structurally unnecessary, because a
   tick's `s⁺` is invisible until the next tick decode.
 
-**Spec.** [§5.3][s5-3], [§10.6][s10-6]
+**Spec.** [§5.3][s5-3], [§10.6][s10-6], [§14.5][s14-5]
 
 **Rationale.** Each bullet restates what an existing entry recorded outside
 its Position. The registers were recorded in [D-181][d-181]'s Rationale, and the
@@ -13106,7 +13171,7 @@ state are fixed here.
 - Publicity is never implicit. A leaf's port and an assembly's face are
   public only by declaration.
 
-**Spec.** [§5.2][s5-2], [§8.1][s8-1], [§8.2][s8-2], [§8.3][s8-3], [§8.6][s8-6]
+**Spec.** [§5.2][s5-2], [§8.1][s8-1], [§8.2][s8-2], [§8.3][s8-3], [§8.6][s8-6], [§14.10][s14-10]
 
 **Rationale.** Each bullet restates what an existing entry recorded outside
 its Position. Contracts by type, with the workspace's exemption, were
@@ -13429,7 +13494,7 @@ fixed here.
 - Double-buffered mutable discrete state is deferred, for its publication
   races.
 
-**Spec.** [§7.3][s7-3]
+**Spec.** [§7.3][s7-3], [§14.1][s14-1]
 
 **Rationale.** Each bullet restates what an existing entry recorded outside a
 Position. The workspace's exclusion from conditions was recorded in [D-077][d-077]'s
@@ -14124,7 +14189,8 @@ bullet. The materialization, the buffers and the frame's cell are now the
 `Model`'s, and the two counters the run's. [D-260][d-260]'s clause that the clock
 holds `t₀` stands.
 
-**Spec.** [§9.1][s9-1], [§9.2][s9-2], [§9.4][s9-4], [§11.5][s11-5], [§11.8][s11-8], [§12.1][s12-1], [§12.6][s12-6], [§13.4][s13-4], [§13.5][s13-5], [§14.5][s14-5], [Appendix C][sC]
+**Spec.** [§9.1][s9-1], [§9.2][s9-2], [§9.4][s9-4], [§11.5][s11-5], [§11.8][s11-8], [§12.1][s12-1], [§12.6][s12-6], [§13.4][s13-4], [§13.5][s13-5], [§14.5][s14-5], [§14.8][s14-8],
+[Appendix C][sC]
 
 **Rationale.** A `Simulation` built at any scalar other than `Float64` ran
 without discrete ticks and without state events. Two rules in `build.jl` do
@@ -14235,7 +14301,7 @@ the model once, and a claimed model is never shared.
   `:consistent` last. The simulation's `restore!` and `replay!` open the run
   before they call it.
 
-**Spec.** [§9.2][s9-2], [§12.6][s12-6], [Appendix C][sC]
+**Spec.** [§9.2][s9-2], [§12.6][s12-6], [§14][s14], [§14.8][s14-8], [Appendix C][sC]
 
 **Rationale.** The review of the split found that `Simulation(model)`
 accepted a model at any status, and that `lifecycle(sim)` read the model's
@@ -14996,7 +15062,7 @@ bulk-data obligation was recorded in [D-139][d-139]'s Rationale.
 handle is isbits. A handle that references bulk data enters the rig through a
 constant source holding it, never as a root input ([§4.4][s4-4], [§14.9][s14-9], [D-237][d-237]).
 
-**Spec.** [§4.4][s4-4], [§8.2][s8-2], [§13.7][s13-7], [§14.9][s14-9]
+**Spec.** [§4.4][s4-4], [§8.2][s8-2], [§13.7][s13-7], [§14.1][s14-1], [§14.9][s14-9]
 
 **Rationale.** Root inputs are a run's primary data, the one part of the
 signal table no sweep recomputes. The trace header holds them as values, and
@@ -15355,7 +15421,7 @@ so admission has two parts. The entry decides nothing new.
 **Position.** The services own root-input initial values. Neither export
 entries nor face declarations carry root-input defaults.
 
-**Spec.** [§11.3][s11-3]
+**Spec.** [§11.3][s11-3], [§14.6][s14-6]
 
 **Rationale.** This restates the reasons of two rejections that no Position
 states. [D-047][d-047]'s Rejected list refuses initial values as export-entry
@@ -16207,7 +16273,7 @@ use ([§11.2][s11-2], [§13.1][s13-1], [§14.4][s14-4]). The bundled rulings:
 - A read refusal at attach carries the read's label and not the device. The
   `attach!` call names the device and the binding (amends [D-216][d-216]).
 
-**Spec.** [§11.2][s11-2], [§11.6][s11-6], [§13.3][s13-3], [§13.5][s13-5], [§14.4][s14-4], [§14.7][s14-7], [Appendix C][sC]
+**Spec.** [§11.2][s11-2], [§11.6][s11-6], [§13.3][s13-3], [§13.5][s13-5], [§14.4][s14-4], [§14.7][s14-7], [§14.8][s14-8], [§14.10][s14-10], [Appendix C][sC]
 
 **Rationale.** The family is closed, one address space for every reader of
 the model, and it splits by source and not by client ([§14.4][s14-4]). Attach
@@ -16273,7 +16339,7 @@ boundary ordinals ([§11.2][s11-2], [Appendix B][sB]). The bundled rulings:
 - The names `series` and `Series` are provisional until the export audit
   ([D-226][d-226]).
 
-**Spec.** [§11.2][s11-2], [§13.3][s13-3], [Appendix B][sB]
+**Spec.** [§11.2][s11-2], [§13.3][s13-3], [§14.4][s14-4], [Appendix B][sB]
 
 **Rationale.** The log is a vector of snapshots, and a comprehension over
 `port(snapshot, path, name)` extracts a signal. Three things made that less
@@ -16349,13 +16415,18 @@ sim task, and no entry carried them. The entry decides nothing new.
 the contract, while inspection observation sees everything, [§6.1][s6-1]'s knowledge
 rule applied to reads.
 
-**Spec.** [§13.5][s13-5]
+**Spec.** [§13.5][s13-5], [§14.1][s14-1]
 
 **Rationale.** This restates the ground of [D-060][d-060]'s rejection of observation
 by path, which its Position does not state. [D-083][d-083]'s Position states the
 inspection half for output-device reads alone, and [D-129][d-129]'s has service reads
 speak the contract and inspection reads speak structure. The entry decides
 nothing new.
+
+Annotation (2026-10-20): the service half bears on the reads a run acts on, as
+[§13.5][s13-5] frames the rejection. Since [D-414][d-414] the locality law is authoring guidance,
+not a framework check, and `get_face` remains the read for a consumer meant to
+outlive the build.
 
 **Rejected.** None beyond [D-060][d-060]'s list.
 
@@ -16431,7 +16502,7 @@ Position and is not restated. The entry decides nothing new.
 - A `t_end` that is not a non-negative real is refused as `ArgumentInvalid`,
   reason `:range`, before the ignore list is read.
 
-**Spec.** [§13.5][s13-5]
+**Spec.** [§13.5][s13-5], [§14.5][s14-5]
 
 **Rationale.** Both bullets record what the code does and [§13.5][s13-5] states.
 `_advance!` in `src/sim.jl` calls `_stop_hit` on the latest snapshot before
