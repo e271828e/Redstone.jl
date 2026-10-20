@@ -256,10 +256,12 @@ function Base.showerror(io::IO, carrier::StepError)
     end
     print(io, _phase_text(cursor), " of the frame from boundary ", carrier.boundary,
           " (t = ", carrier.t, "):\n  ")
-    # The recipe follows the host (§13.4, D-274). A boundary-zero throw leaves
-    # no trace, so `init!` reproduces it. A frame's throw takes the halt then
-    # `step!` at every pointer, 0 included: the halt restores the header and
-    # runs no boundary zero, so frame one's record is still ahead.
+    # The recipe follows the host (§13.4, D-274, D-429). A boundary-zero throw
+    # leaves no trace, so `init!` reproduces it, and an overlay's leaves no
+    # header, so `overlay!` on the same stopped state does. A frame's throw
+    # takes the halt then `step!` at every pointer, 0 included: the halt
+    # restores the header and runs no boundary zero, so frame one's record is
+    # still ahead.
     carrier.host === :boundary_zero ?
         print(io, "init!(sim2, condition) under the same condition reproduces it") :
     carrier.host === :overlay ?

@@ -186,7 +186,7 @@ function init!(model::Model{T}, plan::ConditionPlan; t0::Real = 0.0,
     exec.clock.t₀ = Float64(t0)       # exact: the clock's origin is a `Float64` too
     fill!(exec.events.prior, false)   # every prior not-holding (§10.6)
     try
-        _settle!(model; fresh = true)   # boundary zero (§14.5)
+        boundary_zero!(model)
     catch err
         @atomic :release model.status = :built
         err isa InterruptException && rethrow()
@@ -214,7 +214,9 @@ The condition resolves against the build with `init!`'s diagnostics, a partial
 store entry merging onto the current store rather than the declared default
 (§14.3), and root-input entries write the table's root-input cells. No totality
 is asserted: every root input already holds a value. The plan method writes
-alone, so the simulation's `overlay!` can resolve before it touches its run.
+alone, so the simulation's `overlay!` can resolve before it touches its run,
+and a plan carries the merge base it was resolved with: one resolved with the
+default `bases` merges a partial store entry onto the declared default.
 
 A throw inside the settling takes the one `StepError` constructor with host
 `:overlay` and the frame the clock sits at, and writes the status back to

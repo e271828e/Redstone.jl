@@ -55,3 +55,51 @@ its reason, for the user's review. Nothing was pushed.
 - **The tests sit by property** in `discrete`, `events`, `trace`,
   `lifecycle` and `failures`, no new fixture, so `test_build.jl`'s Dual
   sweep count is untouched.
+
+## The arc
+
+Run on 2026-10-20 with the user away. The docs commit is 4f922f7, the brief
+c97b1ea, the code bc46043; the gate green at 6621 against 6550 before the
+new tests, the examples green at 73. Nothing was pushed.
+
+### The cold review
+
+Nothing blocking. The gate green at 6621 in the real tree on 1.13.1, the
+examples green. The brief's ten mutants and two extra ones (the periphery
+reset dropped, `_store_values` pairing each tag with the other store) all
+died on a scratch worktree. D-429's Position and every spec passage the
+brief names were probed and hold; the five choices were confirmed from the
+code, with `_settle!(fresh = true)` the old `boundary_zero!` body statement
+for statement. Edge cases probed and found sound: an overlay at frame 0, two
+in a row, overlay then checkpoint then restore on a twin, `log = false`,
+root inputs alone with no totality asked, a `Bool` root input, `trim!` and
+`linearize` after an overlay, a device across the door.
+
+Three findings ruled "fix", landed as 28b0031 (docs) and the fix commit
+after it:
+
+1. Appendix C's `StepError` row named two hosts; it names `:overlay` now.
+2. D-429's Rationale said the last three choices live in the settling
+   routine; the priors reset is at the doors, so it reads "the first three
+   … the last two", the notes' ruling above.
+3. `boundary_zero!`'s docstring said `init!` hosts it while `init!` called
+   `_settle!` directly; `init!` calls `boundary_zero!` again, the primitive
+   being the one-liner over `_settle!(fresh = true)`.
+
+Two informational items, both landed as docstring or comment edits: the plan
+form `overlay!(model, plan)` merges onto the base the plan was resolved with,
+which its docstring now says; and `showerror`'s recipe comment names the
+third host. `CheckpointMidFrame`'s message speaks of a checkpoint when
+`overlay!` raises it, a reuse the spec ruled; no change.
+
+### What the user should diff-verify
+
+The arc is 4f922f7, c97b1ea, bc46043, 28b0031 and the fix commit, unpushed,
+with another session's Appendix A commits interleaved above bc46043.
+
+- `git show bc46043 -- src/model.jl`: `_settle!` against the old
+  `boundary_zero!`, and `overlay!`'s two methods against `init!`'s.
+- `git show bc46043 -- src/sim.jl`: the door's order of checks and the
+  ordinal step-back, against `_enter_checkpoint!`.
+- `git show bc46043 -- src/conditions.jl`: the `bases` keyword.
+- The rulings above, the priors' placement and the stepper first.
