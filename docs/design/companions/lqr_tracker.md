@@ -181,7 +181,7 @@ transfer, and each has a counterpart the library already ships.
   port fed by an ordinary upstream component publishing `SMatrix` values. A
   linearization then sees the coupling through the schedule, which the
   overwritten version could not show, and a model that wants the schedule
-  frozen at its nominal value routes the port through `Freeze` ([§14.10][s14-10]).
+  frozen at its nominal value routes the port through `Freeze` ([§13.7][s13-7]).
 - **A reset on every mode change.** FlightPhysics re-initialized the
   incoming tracker's integrator and bumped the outer PIDs' integrators by
   hand, inside the control law's sequencing. The hold's `engaged` input

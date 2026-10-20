@@ -4687,9 +4687,10 @@ value like `t` and like any synthesized input. The probe checks types, not
 physics.
 
 `Simulation` must not reach its first [boundary](#g-boundary) with
-uninitialized root inputs. **Every complete-world application, namely
-`init!`, trim setup and trim commit, carries the pre-write
-`UninitializedInputs` check** ([§14.6][s14-6], [D-149][d-149]).
+uninitialized root inputs. Every complete-world application, namely
+`init!`, trim setup, trim commit and linearization's operating condition
+under `about`, carries the pre-write `UninitializedInputs` check
+([§14.6][s14-6], [D-149][d-149]).
 
 Silly values are acceptable *because* the author is obliged to accept them.
 That obligation is the author's side of the bargain. **Stage code must be
@@ -5110,9 +5111,10 @@ service loop and linearization in turn.
   gradient-based and runs on the `Dual` activation, with its decision
   variables seeded through the `T`-generic assignment (the user's function from
   decision variables to a condition) for exact residual Jacobians
-  ([§14.7][s14-7]). The derivative-free fallback runs the same loop
-  on the nominal `Float64` activation, with no new activation needed. The
-  always-on checks ride along either way. Decision variables stay opaque to
+  ([§14.7][s14-7]). The derivative-free fallback is designed and not yet
+  built, and `pending.md` lists it ([D-070][d-070]). It would run the same
+  loop on the nominal `Float64` activation, with no new activation needed.
+  The always-on checks ride along either way. Decision variables stay opaque to
   the framework, and only the assignment's *output* is framework vocabulary.
 - The generic service loop handles vectorization, optimizer setup, bounds
   packing and the solved-condition write-back, [root inputs](#g-root-input)
@@ -5120,9 +5122,8 @@ service loop and linearization in turn.
   write-back. A failed trim leaves the model's stores untouched ([D-070][d-070]).
 - Linearization is a `Dual` activation plus seeded sweeps
   ([§14.10][s14-10]). Gather and scatter over the canonical layout replace the
-  hand-written per-aircraft state-space mapping layer. That replacement
-  discharges the layer's deletion ([§7.1][s7-1]). Root inputs are the input
-  surface.
+  hand-written per-aircraft state-space mapping layer, so none remains
+  ([§7.1][s7-1], [D-072][d-072]). Root inputs are the input surface.
   Frozen discrete outputs are constants with zero partials, which is exactly
   "linearize with the discrete state held" ([§8.2][s8-2]).
 
@@ -7331,7 +7332,8 @@ it *solved for*, such as throttle and elevator. Export-entry defaults were
 rejected ([D-047][d-047]). `init!` establishes every root input, and the [trace header](#g-trace-header)
 (the trace's fixed preamble, a checkpoint `init!` takes) captures the result.
 Totality is enforced pre-write at every complete-world application, namely
-`init!`, trim setup and trim commit ([§14.6][s14-6], [D-149][d-149]).
+`init!`, trim setup, trim commit and linearization's operating condition
+under `about` ([§14.6][s14-6], [D-149][d-149]).
 
 #### The frozen roster
 
@@ -10136,9 +10138,10 @@ warning stays rejected ([§6.1][s6-1], [D-084][d-084]), so the *collected*-warni
 open and empty. A warnings-as-errors switch is rejected, since a warning is a
 fact about the model, not a defect ([D-250][d-250]).
 
-A stopped-sim service returns an artifact, so its warnings live on it. `trim!`
-returns a `TrimReport`, and `TrimCommitEvents`, `TrimCommitResiduals` and
-`TrimCommitChecks` are that report's fields ([§14.8][s14-8]). The line the call prints at
+A stopped-sim service returns an artifact, so the facts its warnings report
+live on it. `trim!` returns a `TrimReport`, which holds the fired events and
+both residual sets, and logs `TrimCommitEvents`, `TrimCommitResiduals` and
+`TrimCommitChecks` beside it ([§14.8][s14-8]). The line the call prints at
 return is presentation. `attach!` is the other side of the criterion. It mutates
 the [roster](#g-roster) (the list of attached device entries). `EmptyGreedyClaim` therefore
 lands in the roster entry's [diagnostic cell](#g-diagnostic-cell) (the per-writer cell for runtime
@@ -13196,9 +13199,9 @@ return law, [§5.2][s5-2]). There is no padding. `x` comes back complete, and
   least squares on the packed residuals with exact Dual Jacobians, against the
   problem's own `tolerances`. `residuals(reads, d) → NamedTuple` is packed in
   `tolerances`' field order, as decisions pack in `guess`'s. Names pair, and the
-  order is the declared side's. The problem itself closes at seven fields
+  order is the declared side's. The problem itself closes at nine fields
   ([§14.7][s14-7]). Setup and commit both carry the root-input-totality check ([§14.6][s14-6]).
-  The commit is `init!` with `override(baseline, solution)`, boundary zero
+  The commit is `init!` with `override(baseline, condition(solution))`, boundary zero
   anchored at `t0` and the recorders built anew ([§12.6][s12-6]). On a `Model{Float64}`,
   `trim!(model, problem; …)` is the same service, its commit the model's
   `init!` ([D-319][d-319]). `converged` is the service's
@@ -13209,7 +13212,7 @@ return law, [§5.2][s5-2]). There is no padding. `x` comes back complete, and
   `solve(backend, eval!, d0, lower, upper, tol) → (; d, status, n_evaluations, n_iterations)`.
   The in-place `eval!(r, J, d)` fills `J` only when it is not `nothing`, the
   packed vectors are in the declared orders, and `status` is an open `Symbol`
-  recorded verbatim. Non-convergence reports, never throws ([§14.7][s14-7], [§14.8][s14-8]).
+  recorded verbatim. Non-convergence reports, never throws ([§14.8][s14-8]).
 - `checkpoint(sim) → Checkpoint`. The `Model`'s state at a frame top beside
   the run's two counters, the frame index and the boundary ordinal. The state
   is a `ModelState`, as `checkpoint(model)` reads it, holding the flat
@@ -13720,7 +13723,7 @@ activation):
   name, or the bare position where the writer's schema has no name for it;
   frame ordinal, the trace's device tag, the root input-face list.
 - **`ArgumentInvalid`** ([§10.5][s10-5], [§11.6][s11-6], [§12.1][s12-1], [§12.4][s12-4],
-  [§12.6][s12-6], [§12.7][s12-7], [§13.5][s13-5], [§14.7][s14-7]). Error · service, or build in a `sample_times`
+  [§12.6][s12-6], [§12.7][s12-7], [§13.5][s13-5], [§14.8][s14-8], [§14.10][s14-10]). Error · service, or build in a `sample_times`
   declaration · fail-fast, but collected over a `TableBinding`'s entry table
   and over the `Model` and `Simulation` constructors' keywords and the claim
   on the model ([D-318][d-318]). The call
@@ -13732,7 +13735,7 @@ activation):
   `Float64` or a `ForwardDiff.Dual` raises it with reason `:scalar` ([D-320][d-320]).
   The twin of `DeploymentInvalid` for arguments that are not deployment
   parameters.
-- **`ReadSetMisuse`** ([§14.4][s14-4]). Error · service · fail-fast. The
+- **`ReadSetMisuse`** ([§14.9][s14-9]). Error · service · fail-fast. The
   offending argument's type, the selector kinds in hand. Or an empty prefix
   handed to `at` on a read set ([§14.9][s14-9]). The read side's twin of
   `ConditionNodeMisuse`.
@@ -14575,7 +14578,7 @@ devices ([§12.5][s12-5]).
 <a id="g-selector"></a>**selector (read-selector family)** — the closed set of deferred reads
 `get_state`/`get_deriv`/`get_output`/`get_input`/`get_face`, each naming one
 leaf by its leaf address. Each resolves
-against a source before any client policy applies. Table sources are a
+against a source. Table sources are a
 boundary snapshot or a service evaluation's scratch tables; the other source
 is the live stores ([§14.4][s14-4]).
 
@@ -14714,9 +14717,9 @@ linearization tap sets ([§14.2][s14-2], [§14.9][s14-9]). A read set keeps its
 prefixes as a chain and is not a condition node ([D-277][d-277]). An empty
 prefix is refused when `at` is called ([D-278][d-278]).
 
-<a id="g-baseline"></a>**baseline** — an aircraft-shipped, full-coverage condition function
-(`ready_for_taxi(ac)`, `cold_and_dark(ac)`), layered under tweaks by
-`override`. It is also the `baseline` keyword `init!`/`trim!` take
+<a id="g-baseline"></a>**baseline** — a full-coverage condition, such as an aircraft-shipped
+function (`ready_for_taxi(ac)`, `cold_and_dark(ac)`) returns, layered under
+tweaks by `override`. It is also the `baseline` keyword `trim!` takes
 ([§14.6][s14-6]). Not to be confused with an event *prior* ([§D.4][sD-4]).
 
 <a id="g-boundary-zero"></a>**boundary zero** — the initialization boundary: the ordinary
@@ -14769,7 +14772,8 @@ a layer remain errors. It is variadic ([§14.6][s14-6]).
 
 <a id="g-root-input-totality"></a>**root-input totality** — the pre-write requirement that an application
 establishing a complete world over virgin stores (`init!`, trim setup, trim
-commit) cover every root input. Conditions themselves are legitimately
+commit, linearization's operating condition under `about`) cover every root
+input. Conditions themselves are legitimately
 partial. A shortfall is `UninitializedInputs`, collected and
 declaration-ordered, leaving the simulation untouched ([§14.6][s14-6]).
 
@@ -14777,18 +14781,20 @@ declaration-ordered, leaving the simulation untouched ([§14.6][s14-6]).
 `running` / `stopped` / `errored` ([§12.6][s12-6]) and each service's
 legality against them, and on a `Model` the statuses `:built`, `:consistent` and
 `:inconsistent` that its own service forms gate on ([§14][s14], [D-319][d-319]). A violation is
-`ServiceLifecycle`, and `errored` is terminal for all four services ([§14][s14]).
+`ServiceLifecycle`, and `errored` is terminal for all five services ([§14][s14]).
 
 <a id="g-taps"></a>**taps** — the three selector lists (`x`, `u`, `y`), built by `taps`,
 declaring what linearization seeds and reports. Every tap names one scalar,
-by a leaf address resolving to one scalar leaf. Their selectors are validated
+by a leaf address resolving to one scalar leaf. A seeded tap, in the `x` or
+`u` list, reaches its scalar through one index step at most and never a
+`.name` step, and its leaf is exactly `Float64`. Their selectors are validated
 at resolution (`ReadResolution`), the tap set's own constraints beside them
 (`TapResolution`), and they are relocatable via `at` ([§14.10][s14-10]).
 
 <a id="g-trimproblem"></a>**`TrimProblem`** — the closed nine-field value
 `guess`/`lower`/`upper`/`condition`/`reads`/`residuals`/`tolerances`/`checks`/`check_tolerances`: an
 *implicitly specified* condition, solved as a square root-find over named
-residuals and committed as an `init!` of `override(baseline, solution)`
+residuals and committed as an `init!` of `override(baseline, condition(solution))`
 ([§14.7][s14-7], [§14.8][s14-8]).
 
 ### D.9 Error discipline and diagnostics
@@ -14901,7 +14907,7 @@ explainers are non-normative companions by their own preambles.
 <a id="g-recorded-not-built"></a>**recorded, not built** — the disposition of a worked-out extension
 deliberately left unimplemented, with its seams named so adoption is
 additive (the closed-loop trim, [§14.7][s14-7]; the sampled-data `Dual`
-activation and declarative non-participation, [§14.10][s14-10]).
+activation and the tooling over declared non-participation, [§14.10][s14-10]).
 
 <a id="g-state-single-owner"></a>**state** — the criterion's other word: a value with a single owner, mutated
 in place. The executor's buffers, the roster, the diagnostic cells, the live

@@ -490,7 +490,7 @@ one on the discrete tier, where a member traces structurally (section 9,
 [§13.8][s13-8]). One read from a state is fine. Under a `Dual` activation a
 scheduled gain carries partials, so a linearization sees the coupling
 through the schedule. A model that wants the gain frozen at its
-nominal value routes the port through `Freeze` ([§14.10][s14-10]).
+nominal value routes the port through `Freeze` ([§13.7][s13-7]).
 
 **The setpoint weights.** `b` weights the reference in the proportional term
 and `c` in the derivative term, with defaults `1` and `0`, which leave the
@@ -617,7 +617,6 @@ flight-stack precedents for a signed limit status reported up a cascade.
 [s10-5]: ../spec.md#105-multi-rate-tick-scheduling
 [s13-7]: ../spec.md#137-tooling-consequences-face-routes-and-the-component-library
 [s13-8]: ../spec.md#138-cycle-diagnosis-feedthrough-tracing
-[s14-10]: ../spec.md#1410-linearization-tap-selectors-one-seeded-pass-a-pure-query
 [s2-3]: ../spec.md#23-events-two-detection-policies
 [s5-3]: ../spec.md#53-structural-feedthrough-stage-roles-execution-order-and-step-boundaries
 [s5-4]: ../spec.md#54-artificial-loops-and-the-escape-hatch

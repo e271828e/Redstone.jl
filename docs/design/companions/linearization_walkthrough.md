@@ -367,11 +367,11 @@ tp = taps(x = (θ = get_state("c", :θ), ω = get_state("c", :ω)),
           y = (θ = get_face(:θ), u_eff = get_face(:u_eff)))
 ```
 
-The selectors are [§14.4][s14-4]'s closed family. `get_state(path, field[, i])` names
-a state leaf, with an optional component index for a vector leaf.
-`get_input(face[, i])` names a root input and `get_face(name[, i])` a
-root-exported output face, both with the same index since [D-271][d-271].
-`get_output(path, name[, i])` names a component's own output port. `taps`
+The selectors are [§14.4][s14-4]'s closed family. `get_state(path, leaf)` names
+a state leaf, and a leaf address such as `"q[1]"` picks one component of a
+vector leaf. `get_input(leaf)` names a root input and `get_face(leaf)` a
+root-exported output face, taking the same leaf address since [D-276][d-276].
+`get_output(path, leaf)` names a component's own output port. `taps`
 returns a `Taps` value holding three `Reads`, so a bare NamedTuple handed to
 `linearize` gets the same directive refusal `reads` gives (`ReadSetMisuse`).
 
