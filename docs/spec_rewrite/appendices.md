@@ -158,6 +158,35 @@ closes.
   rewriter caught it. Check every section number a brief's table names
   against the outline.
 
+## Lessons from Appendix B
+
+Landed 2026-10-20 in two units, B1 to the panel kit and B2 from the
+condition algebra on; the working files stay in `appB/`.
+
+- **Classify before the brief.** Four read-only Opus agents over bounded
+  ranges, one TSV row per sentence (`appB/classify_brief.md`), plus one
+  Sonnet agent checking every signature against `src/`. Of about 360 rows,
+  21 were stated nowhere else and 17 had drifted from their home. Every
+  stated-nowhere-else row turned out to be ruled by a log entry, so none
+  needed the owner but one.
+- **A dropped claim is checked where it lands.** Each claim the thin shape
+  drops is tag `M` with its home's own span, found in `appB/homes.md`: the
+  frozen spec at `e6a4fcb` with B cut out (`awk 'NR<13371 || NR>13846'`)
+  and the one move into §12.1 applied. The file is not committed; rebuild
+  it that way to re-run `check_unit.py appB`.
+- **Thinning drops names, and a name on B is public** (D-226). The first
+  drafts dropped eleven diagnostic kinds with the prose around them. A
+  script diffing the backticked names of `old.md` and `new.md` finds them
+  before the verifier does.
+- **Two units of one section need a link rule keyed on the new text.**
+  B2's rule, "link a term only if B1's old text never uses it", left five
+  terms unlinked once B1's new text dropped them.
+- **The glossary whitelist records deliberate unlinks.** `check_glossary.jl`
+  failed when B linked *derived-contract*, which the polysemy pass left
+  unlinked on purpose; the link went, not the whitelist entry.
+- **The signature checker's absences need a second grep.** It reported
+  `termination` absent, missing a one-line method definition.
+
 ## Sequencing
 
 - Working order: A whole, that is the harvest, the owner's pick, then the

@@ -1,0 +1,2175 @@
+{
+ "claims": [
+  {
+   "id": "C-001",
+   "old": "## Appendix B. API synopsis: the entry points",
+   "new": "## Appendix B. API synopsis: the entry points",
+   "where": "new",
+   "cites": [
+    "Appendix B"
+   ],
+   "tag": "X"
+  },
+  {
+   "id": "C-002",
+   "old": "The user-facing surface on one page, under the same rule as Appendix A: an index, not a second home.",
+   "new": "The user-facing surface on one page, under the same rule as Appendix A: an index, not a second home.",
+   "where": "new",
+   "cites": [
+    "Appendix A"
+   ],
+   "tag": "F",
+   "note": "index, not a second home linked to #g-normative at its first use in B (R12)"
+  },
+  {
+   "id": "C-003",
+   "old": "Each signature is normative only where its owning section settles it.",
+   "new": "Each signature is normative only where its owning section settles it.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-004",
+   "old": "Every name here is public by being here, reached by qualified name or by per-name `import`.",
+   "new": "Every name here is public by being here, reached by qualified name or by per-name `import` (D-226).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-226"
+   ],
+   "tag": "C",
+   "note": "R6, R1-04; D-226's Position states it"
+  },
+  {
+   "id": "C-005",
+   "old": "The module exports nothing until the exported-name audit (`pending.md`) fixes the list (D-226).",
+   "new": "The module exports nothing until the exported-name audit (`pending.md`) fixes the list (D-226).",
+   "where": "new",
+   "cites": [
+    "D-226"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-006",
+   "old": "The author-side declaration surface comes first, then the operator surface by lifecycle.",
+   "new": "The author-side declaration surface comes first, then the operator surface by lifecycle.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-007",
+   "old": "Authoring,",
+   "new": "#### Authoring",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R4"
+  },
+  {
+   "id": "C-008",
+   "old": "what a component or assembly defines (§8.2, §8.5–§8.7):",
+   "new": "What a component or assembly defines (§8.2, §8.5–§8.7):",
+   "where": "new",
+   "cites": [
+    "§8.2",
+    "§8.5",
+    "§8.7"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-009",
+   "old": "Continuous leaf. `x_init` (by value,",
+   "new": "Continuous leaf. `x_init` and `m_init` (by value)",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "the two by-value declarations share one parenthetical"
+  },
+  {
+   "id": "C-010",
+   "old": "mandatory, `(;)` when stateless)",
+   "new": "Every leaf declares exactly one of `x_init` and `s_init`, and a stateless leaf declares it empty (D-263)",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R1-08 and R1-15, both leaves; \"mandatory\" is §8.2's next sentence, \"It is therefore mandatory even when empty\""
+  },
+  {
+   "id": "C-011",
+   "old": "and `m_init` (by value),",
+   "new": "`x_init` and `m_init` (by value),",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-012",
+   "old": "`ws_init(::C, ::Type{T})` (by allocation),",
+   "new": "`ws_init(::C, ::Type{T})` (by allocation),",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-013",
+   "old": "`u_types` and `y_types` (by type,",
+   "new": "`u_types` and `y_types` (by type,",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-014",
+   "old": "walked,",
+   "new": "A by-type declaration walks by the same rule.",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R1-11"
+  },
+  {
+   "id": "C-015",
+   "old": "`Pinned{P}` marking a frozen leaf), and `state_events`.",
+   "new": "`Pinned{P}` marking a frozen leaf), and `state_events`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-016",
+   "old": "Its stage and event functions are `y_state`, `y_direct` and `x_deriv`, guard/handler pairs (`StateEvent(guard, handler)`",
+   "new": "Its stages are `y_state` and `y_direct`, its update law `x_deriv`, and its event functions guard/handler pairs (`StateEvent(guard, handler)`",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "coordinator 2026-10-20",
+   "note": "§5.2 (frozen 1040), every leaf provides exactly two output stages; §8.2 (frozen 2281), \"the stage and update-law names\""
+  },
+  {
+   "id": "C-017",
+   "old": "; the detection policy comes from the guard's return type, §10.4)",
+   "new": "The guard's return type declares its detection policy (D-179).",
+   "where": "homes.md",
+   "cites": [
+    "§10.4"
+   ],
+   "tag": "M",
+   "note": "R1, R1-14"
+  },
+  {
+   "id": "C-018",
+   "old": "and `x_projection`.",
+   "new": "and `x_projection`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-019",
+   "old": "Discrete leaf. `s_init` (by value,",
+   "new": "Discrete leaf. `s_init` (by value)",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-020",
+   "old": "`ws_init(::C, ::Type{T})` (always",
+   "new": "`ws_init(::C, ::Type{T})` and `u_types`/`y_types`",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "the discrete leaf's allocator; its parenthetical moves, next block"
+  },
+  {
+   "id": "C-021",
+   "old": "(always called at `Float64`)",
+   "new": "A discrete allocator receives `Float64` at every activation",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R1-16"
+  },
+  {
+   "id": "C-022",
+   "old": "and `u_types`/`y_types`",
+   "new": "`ws_init(::C, ::Type{T})` and `u_types`/`y_types`",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-023",
+   "old": "(pinned wholesale).",
+   "new": "The discrete side pins wholesale.",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R1-17"
+  },
+  {
+   "id": "C-024",
+   "old": "Its stages are `y_state`, `y_direct` and `s_update`.",
+   "new": "Its stages are `y_state` and `y_direct`, and its update law `s_update`.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "coordinator 2026-10-20",
+   "note": "§5.2 and §8.2, as for the continuous leaf"
+  },
+  {
+   "id": "C-025",
+   "old": "Assembly. `local_wires` (",
+   "new": "Assembly. `local_wires` (the class marker),",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-026",
+   "old": "(mandatory,",
+   "new": "`local_wires(::A)` is mandatory even when empty",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R1-19"
+  },
+  {
+   "id": "C-027",
+   "old": "the class marker),",
+   "new": "`local_wires` (the class marker),",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-028",
+   "old": "`input_wires`, `output_wires`, `sample_times` and `transparent_container` (optional, default `nothing`).",
+   "new": "`input_wires`, `output_wires` and `sample_times`, and the optional `transparent_container` (default `nothing`).",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "coordinator 2026-10-20",
+   "note": "§8.5 (frozen 3204–3206) gives the default `nothing` to `transparent_container` alone; the other three's defaults left unstated"
+  },
+  {
+   "id": "C-029",
+   "old": "Any component. `stop_reason` (optional, default `\"\"`), the reason its stop requests report (§13.5).",
+   "new": "Any component. `stop_reason` (optional, default `\"\"`), the reason its stop requests report (§8.2, D-316).",
+   "where": "new",
+   "cites": [
+    "§13.5"
+   ],
+   "newcites": [
+    "D-316",
+    "§8.2"
+   ],
+   "tag": "C",
+   "note": "coordinator 2026-10-20; §8.2 (frozen 2913), \"`stop_reason(c)` returns the `String` a component's stop requests report, and it defaults to `\"\"`\" (D-316); stop requests linked to #g-stop-request (R12)"
+  },
+  {
+   "id": "C-030",
+   "old": "Shipped conditions. `condition(::C; kw)`, methods of the framework's `condition` generic that return the component's fragment (§14.2).",
+   "new": "Shipped conditions. `condition(::C; kw)`, methods of the framework's `condition` generic that return the component's fragment (§14.2).",
+   "where": "new",
+   "cites": [
+    "§14.2"
+   ],
+   "tag": "F",
+   "note": "fragment linked to #g-fragment (R12)"
+  },
+  {
+   "id": "C-031",
+   "old": "Bundle contents by function family (the maximal legal sets, §5.2;",
+   "new": "Bundle contents by function family (the maximal legal sets, §5.2):",
+   "where": "new",
+   "cites": [
+    "§5.2"
+   ],
+   "tag": "F",
+   "note": "function family linked to #g-function-family (R12)"
+  },
+  {
+   "id": "C-032",
+   "old": "signatures destructure less at will):",
+   "new": "the destructuring narrows it further to actual reads",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R1-24"
+  },
+  {
+   "id": "C-033",
+   "old": "| function | tier | bundle fields | |---|---|---| | `y_state` | continuous | `x, m, t [, ws]` | | `y_direct` | continuous | `x, m, u, y_x, t [, ws]` | | `x_deriv` | continuous | `x, m, y, u, t [, ws]` | | `y_state` | discrete | `s, t, Δt [, ws]` | | `y_direct` | discrete | `s, u, y_s, t, Δt [, ws]` | | `s_update` | discrete | `s, y, u, t, Δt [, ws]` | | guard / handler | continuous | `x, m, y, u, t [, ws]` | | `x_projection` | continuous | positional `(comp, x)`, no bundle |",
+   "new": "| function | tier | bundle fields | |---|---|---| | `y_state` | continuous | `x, m, t [, ws]` | | `y_direct` | continuous | `x, m, u, y_x, t [, ws]` | | `x_deriv` | continuous | `x, m, y, u, t [, ws]` | | `y_state` | discrete | `s, t, Δt [, ws]` | | `y_direct` | discrete | `s, u, y_s, t, Δt [, ws]` | | `s_update` | discrete | `s, y, u, t, Δt [, ws]` | | guard / handler | continuous | `x, m, y, u, t [, ws]` | | `x_projection` | continuous | positional `(comp, x)`, no bundle |",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "R3, the table verbatim"
+  },
+  {
+   "id": "C-034",
+   "old": "Table footnotes, from the bundle law (§5.2).",
+   "new": "under the bundle law (§5.2).",
+   "where": "new",
+   "cites": [
+    "§5.2"
+   ],
+   "tag": "X",
+   "note": "R3, the footnote paragraph collapses to two sentences; bundle linked to #g-bundle"
+  },
+  {
+   "id": "C-035",
+   "old": "The sets above are maximal,",
+   "new": "the maximal legal sets",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "R1-34 repeats the table lead, which keeps it"
+  },
+  {
+   "id": "C-036",
+   "old": "and each field is present only if it exists for the component.",
+   "new": "Each field is present only if it exists for the component",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "R3"
+  },
+  {
+   "id": "C-037",
+   "old": "`u` is present iff the function family may see inputs and the component declares `u_types`.",
+   "new": "| `u` | the function family (which bundle fields a given function may legally receive) may see inputs and the component declares `u_types` |",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R3, R1-35"
+  },
+  {
+   "id": "C-038",
+   "old": "`y` is present iff the component declares `y_types`.",
+   "new": "| `y` | the component produces any table cell at all (it declares `y_types`) |",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R3, R1-36"
+  },
+  {
+   "id": "C-039",
+   "old": "`x`/`s`/`m` are present iff declared non-empty (D-297), and `ws` iff declared.",
+   "new": "| `x` | the component declares a non-empty `x_init` (continuous tier) (D-297) | | `s` | the component declares a non-empty `s_init` (discrete tier) (D-297) | | `m` | the component declares a non-empty `m_init` (D-297) | | `ws` | the component declares `ws_init` |",
+   "where": "homes.md",
+   "cites": [
+    "D-297"
+   ],
+   "tag": "M",
+   "note": "R3, R1-37"
+  },
+  {
+   "id": "C-040",
+   "old": "`y_x`/`y_s` are present iff the stage-1 return is non-empty (§5.2, D-285).",
+   "new": "| `y_x` / `y_s` | stage-1 ports exist, under the tier's own spelling |",
+   "where": "homes.md",
+   "cites": [
+    "D-285",
+    "§5.2"
+   ],
+   "tag": "M",
+   "note": "R3, R1-38; §5.2 adds \"A stage that exists produces at least one port (D-285)\""
+  },
+  {
+   "id": "C-041",
+   "old": "`Δt` is present on the discrete tier only.",
+   "new": "| `Δt` | the component is on the discrete tier |",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R3, R1-39"
+  },
+  {
+   "id": "C-042",
+   "old": "Returns follow three rules.",
+   "new": "Returns follow three rules, among them",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "R3"
+  },
+  {
+   "id": "C-043",
+   "old": "A stage returns a NamedTuple of port values (§4.3, §5.2).",
+   "new": "An output stage returns its port NamedTuple, `y`, and nothing else (D-194).",
+   "where": "homes.md",
+   "cites": [
+    "§4.3",
+    "§5.2"
+   ],
+   "tag": "M",
+   "note": "R3, R1-41"
+  },
+  {
+   "id": "C-044",
+   "old": "`x_deriv` returns the layout image of `X` (§7.1).",
+   "new": "`Ẋ` has exactly `X`'s shape at the activation scalar",
+   "where": "homes.md",
+   "cites": [
+    "§7.1"
+   ],
+   "tag": "M",
+   "note": "R3, R1-42; the §7.1 citation stays on the returns sentence"
+  },
+  {
+   "id": "C-045",
+   "old": "A handler returns `(; x, m)`",
+   "new": "the handler's `(; x, m)` under the return law (§5.2, §7.1, D-090)",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-090",
+    "§5.2",
+    "§7.1"
+   ],
+   "tag": "R",
+   "ruling": "R3",
+   "note": "R9, the return law cites D-090, whose Position states it; the bold goes (R3)"
+  },
+  {
+   "id": "C-046",
+   "old": "with each key present iff that store exists and the handler updates it",
+   "new": "A key is present iff the corresponding store exists on the component and the handler updates it.",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R3, R1-43"
+  },
+  {
+   "id": "C-047",
+   "old": "(the return law, §5.2).",
+   "new": "under the return law (§5.2, §7.1, D-090)",
+   "where": "new",
+   "cites": [
+    "§5.2"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-048",
+   "old": "There is no padding.",
+   "new": "An absent key is not an error and not a no-op to diagnose. It is the handler saying it does not touch that store.",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R3, R1-44"
+  },
+  {
+   "id": "C-049",
+   "old": "`x` comes back complete, and `m` may come back partial.",
+   "new": "`x` must be complete against the state field set, while `m` may be partial (D-053, D-287).",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R3, R1-45"
+  },
+  {
+   "id": "C-050",
+   "old": "Build.",
+   "new": "#### Build",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R4"
+  },
+  {
+   "id": "C-051",
+   "old": "- `build(world) → Build`.",
+   "new": "- `build(world; activations = ()) → Build`.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R1",
+   "note": "src/build.jl:572 gives `activations::Tuple = ()`; `world` kept as §9.2 spells it, src says `root` (rulings.md)"
+  },
+  {
+   "id": "C-052",
+   "old": "Standalone.",
+   "new": "Standalone.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-053",
+   "old": "It yields the inspectable derived-contract artifact, `Structure`",
+   "new": "It yields the inspectable derived-contract artifact, `Structure`, `Outputs`, `Events`, the activations and `warnings` (§9.2).",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "derived-contract, Structure, Outputs, Events and activations linked (R12); their glosses move, next three blocks"
+  },
+  {
+   "id": "C-054",
+   "old": "(the structure step's product, the components, wires, faces and tiers),",
+   "new": "`Structure` (the structure step's product, the components, wires and tiers)",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R7, R1-49 drifted (\"faces\"); dropped since the thin shape no longer needs the gloss"
+  },
+  {
+   "id": "C-055",
+   "old": "`Outputs` (the nominal evaluation's product, the port classes and the execution order),",
+   "new": "`Outputs` (the nominal evaluation's product, the port classes and the execution order)",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1; the name stays in the build entry"
+  },
+  {
+   "id": "C-056",
+   "old": "`Events` (the nominal evaluation's other product, the event names and policies), the activations and `warnings`",
+   "new": "`Events` — the nominal evaluation's other product, built last, after the nominal stage probes: per component the event names, their detection policies and the bundle names.",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, the gloss only; the name, the activations and `warnings` stay in the build entry"
+  },
+  {
+   "id": "C-057",
+   "old": "; the wire list per assembly and the root inputs are `Structure`'s,",
+   "new": "Its parts hold the wire list, per assembly and as declared, the root inputs and the execution order as plain printable data. The first two sit on `Structure`",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R1-50"
+  },
+  {
+   "id": "C-058",
+   "old": "the face table and the routes are functions over them,",
+   "new": "The face table is two-sided, and `Structure` answers it as a function over the declared wires",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R1-50; the routes are §13.7's, \"`show(::Structure)` derives each face's routing chain from the declared wires\""
+  },
+  {
+   "id": "C-059",
+   "old": "and the execution order is `Outputs`'s (§9.2).",
+   "new": "The last sits on `Outputs`",
+   "where": "homes.md",
+   "cites": [
+    "§9.2"
+   ],
+   "tag": "M",
+   "note": "R1, R1-50; the §9.2 citation stays on the build entry"
+  },
+  {
+   "id": "C-060",
+   "old": "`build(world; activations = (Float64, ProbeDual))` additionally pins activation invariants for CI",
+   "new": "`activations = (Float64, ProbeDual)` additionally pins activation invariants for CI",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "the keyword's value now hangs off the build signature above"
+  },
+  {
+   "id": "C-061",
+   "old": "(`ProbeDual` is the public canonical concrete probe scalar, §9.4),",
+   "new": "- `ProbeDual`. The public canonical concrete probe scalar (§9.4).",
+   "where": "new",
+   "cites": [
+    "§9.4"
+   ],
+   "tag": "F",
+   "note": "its own entry, linked to #g-probedual"
+  },
+  {
+   "id": "C-062",
+   "old": "and pre-materializes activations",
+   "new": "and pre-materializes activations for a parallel sweep (§11.1, §9.4).",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-063",
+   "old": "so a parallel sweep shares a fully immutable `Build` (§11.1, §9.4).",
+   "new": "The shared `Build` is then a fully immutable artifact, with no synchronization on any path.",
+   "where": "homes.md",
+   "cites": [
+    "§11.1",
+    "§9.4"
+   ],
+   "tag": "M",
+   "note": "R1, R1-54; both citations stay on the kept clause"
+  },
+  {
+   "id": "C-064",
+   "old": "- `resolve(assembly, path) → AbstractComponent`. Resolves an immediate child, a container element's key segment included.",
+   "new": "- `resolve(assembly, path) → AbstractComponent`. Resolves an immediate child, a container element's key segment included (§13.3).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§13.3"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-065",
+   "old": "Wiring resolution applies the one-level rule (§6.1).",
+   "new": "The first is the one-level rule (§6.1, D-207).",
+   "where": "homes.md",
+   "cites": [
+    "§6.1"
+   ],
+   "tag": "M",
+   "note": "R1, R1-57"
+  },
+  {
+   "id": "C-066",
+   "old": "The service walk follows the structure's children (§13.3).",
+   "new": "The service walk follows the structure's children and refuses no traversal past a generically held child (D-414).",
+   "where": "homes.md",
+   "cites": [
+    "§13.3"
+   ],
+   "tag": "M",
+   "note": "R1, R1-58"
+  },
+  {
+   "id": "C-067",
+   "old": "- `input_faces(c)` / `output_faces(c) → Vector{String}`. Declaration-ordered face names (§13.3).",
+   "new": "- `input_faces(c)` / `output_faces(c) → Vector{String}`. Declaration-ordered face names (§13.3).",
+   "where": "new",
+   "cites": [
+    "§13.3"
+   ],
+   "tag": "F",
+   "note": "face linked to #g-face"
+  },
+  {
+   "id": "C-068",
+   "old": "- `input_passthrough(assembly, path; prefix, sep, except, only, select)` / `output_passthrough(assembly, path; prefix, sep, except, only, select)`.",
+   "new": "- `input_passthrough(assembly, child_path; sep = \".\", prefix = replace(child_path, \"/\" => sep), except = (), only = (), select = nothing)` and `output_passthrough` with the same arguments.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R1",
+   "note": "spelled as src/assembly.jl:461 and :485 spell both, with every default; §8.8 names `child_path` too"
+  },
+  {
+   "id": "C-069",
+   "old": "The declaration-site helpers for computed interface connections.",
+   "new": "The declaration-site helpers for computed interface connections (§8.8).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§8.8"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-070",
+   "old": "`path` names an immediate child.",
+   "new": "Both helpers take `child_path` naming an immediate child, container key segments included (D-207).",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R1-63"
+  },
+  {
+   "id": "C-071",
+   "old": "`except`, `only` and `select` are exclusive, one per call;",
+   "new": "The selectors are exclusive (D-251). A call takes `except`, `only` or `select`, one of the three and no more.",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R1-64"
+  },
+  {
+   "id": "C-072",
+   "old": "`select` is a predicate over face names.",
+   "new": "`select` is a predicate over the child's face names, and the helper keeps the names it accepts.",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R1-64"
+  },
+  {
+   "id": "C-073",
+   "old": "More than one given is `UnknownFaceSelection` with reason `:multiple_selectors`,",
+   "new": "More than one selector given is `UnknownFaceSelection` with reason `:multiple_selectors`,",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "coordinator 2026-10-20",
+   "note": "the kind name stays on B (D-226); \"selector\" as §8.8 spells it, since the clause naming the three selectors moved"
+  },
+  {
+   "id": "C-074",
+   "old": "and a selector that keeps nothing warns `EmptyFaceSelection`",
+   "new": "and a selector that keeps nothing warns `EmptyFaceSelection` (§8.8).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§8.8"
+   ],
+   "tag": "R",
+   "ruling": "coordinator 2026-10-20",
+   "note": "the kind name stays on B (D-226)"
+  },
+  {
+   "id": "C-075",
+   "old": "on the `Build` (§8.8).",
+   "new": "A call that gives a selector and keeps nothing raises `EmptyFaceSelection`, a warning on the `Build`'s list (§9.2, D-251).",
+   "where": "homes.md",
+   "cites": [
+    "§8.8"
+   ],
+   "tag": "M",
+   "note": "one clause, no explanation the home gives; the §8.8 citation stays"
+  },
+  {
+   "id": "C-076",
+   "old": "Deployment.",
+   "new": "#### Deployment and the model",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R4"
+  },
+  {
+   "id": "C-077",
+   "old": "- `Deployment(build; algorithm = RK4, h, N_base = 1, Δt_base = nothing, localization_tol = 1e-6, localization_budget = 8, firing_budget = 4) → Deployment`.",
+   "new": "- `Deployment(build; h, N_base, Δt_base = nothing, algorithm = RK4, firing_budget = 4, localization_tol = 1e-6, localization_budget = 8) → Deployment`.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R8",
+   "note": "h and N_base without a default, the keyword order of src/deployment.jl:334"
+  },
+  {
+   "id": "C-078",
+   "old": "The artifact the grid parameters fix, scalar-free,",
+   "new": "The deployment (the scalar-free artifact the grid parameters fix),",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "merged with the old stop-policy paragraph's glossed first use, linked to #g-deployment"
+  },
+  {
+   "id": "C-079",
+   "old": "The deployment (the scalar-free artifact the grid parameters fix)",
+   "new": "The deployment (the scalar-free artifact the grid parameters fix)",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "moved up into the Deployment entry's gloss"
+  },
+  {
+   "id": "C-080",
+   "old": "carrying the `Schedule` (the typed per-component `(D, Φ, Δt)` tick table), the grid diagnostics and its `warnings` (§9.2).",
+   "new": "carrying the `Schedule` (the typed per-component `(D, Φ, Δt)` tick table), the grid diagnostics and its `warnings` (§9.2).",
+   "where": "new",
+   "cites": [
+    "§9.2"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-081",
+   "old": "| keyword | default | meaning | owning section | |---|---|---|---|",
+   "new": "| keyword | default | meaning | owning section | |---|---|---|---|",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "R2, the three keyword tables' header"
+  },
+  {
+   "id": "C-082",
+   "old": "| `algorithm` | `RK4` | the stepper,",
+   "new": "| `algorithm` | `RK4` | the stepper (`RK4` or `Heun`), bound against the state buffer at `Model` construction (D-227) | §10.2 |",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R10",
+   "note": "R10 names the shipped algorithms, §10.2 (frozen 5613, D-017); \"bound against the state buffer\" is §10.2's own verb, which cites B for it (frozen 5626); Model linked to #g-model"
+  },
+  {
+   "id": "C-083",
+   "old": "selected by type here",
+   "new": "The `algorithm` keyword selects the backend by type on the `Deployment`",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R2, the meaning cell kept to twelve words"
+  },
+  {
+   "id": "C-084",
+   "old": "and materialized against the state buffer at `Model` construction (D-227) | §10.2 |",
+   "new": "bound against the state buffer at `Model` construction (D-227) | §10.2 |",
+   "where": "new",
+   "cites": [
+    "D-227",
+    "§10.2"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-085",
+   "old": "| `h` | — | required.",
+   "new": "| `h` | — | required, refused as `DeploymentInvalid` when absent | §10.2 |",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R8",
+   "note": "src/deployment.jl:182 raises DeploymentInvalid(parameter = :h, reason = :missing)"
+  },
+  {
+   "id": "C-086",
+   "old": "A domain rate is not a framework default | §10.2 |",
+   "new": "A domain rate is not a framework default.",
+   "where": "homes.md",
+   "cites": [
+    "§10.2"
+   ],
+   "tag": "M",
+   "note": "R2; §10.2's own sentence"
+  },
+  {
+   "id": "C-087",
+   "old": "| `N_base` | `1` | steps per base tick.",
+   "new": "| `N_base` | — | steps per base tick, `1` absent `Δt_base` and derived otherwise | §9.2 |",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R8"
+  },
+  {
+   "id": "C-088",
+   "old": "Absent the `Δt_base` keyword, the `N_base·h` product is the base tick period (the default path).",
+   "new": "the `N_base·h` product when only `N_base` is given, with the default `N_base = 1`",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R2; the default 1 stays in the meaning cell"
+  },
+  {
+   "id": "C-089",
+   "old": "Given it, `N_base` is instead derived and validated an integer ≥ 1 | §9.2 |",
+   "new": "from which `N_base` is derived as `Δt_base/h` and validated an integer ≥ 1",
+   "where": "homes.md",
+   "cites": [
+    "§9.2"
+   ],
+   "tag": "M",
+   "note": "R2; \"derived otherwise\" stays in the meaning cell"
+  },
+  {
+   "id": "C-090",
+   "old": "| `Δt_base` | `nothing` | the base tick period as a `Rational`, `Period` or `Hz` value, or `:derive`",
+   "new": "| `Δt_base` | `nothing` | the base tick period (`Rational`, `Period` or `Hz`), or `:derive` | §9.2 |",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R2"
+  },
+  {
+   "id": "C-091",
+   "old": "to request GCD derivation (all-anchored models only); one of three binding sources | §9.2 |",
+   "new": "derivation, permitted only when every discrete component is anchored, that is, with anchor 0 unpopulated.",
+   "where": "homes.md",
+   "cites": [
+    "§9.2"
+   ],
+   "tag": "M",
+   "note": "R2; \"one of three binding sources\" is §9.2's \"`Δt_base` has exactly one of three sources\""
+  },
+  {
+   "id": "C-092",
+   "old": "| `localization_tol` | `1e-6` | the root-finder's relative bracket-width convergence test (`localization_tol · h`) | §10.4 |",
+   "new": "| `localization_tol` | `1e-6` | the root-finder's relative bracket-width convergence test (`localization_tol · h`) | §10.4 |",
+   "where": "new",
+   "cites": [
+    "§10.4"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-093",
+   "old": "| `localization_budget` | `8` | the per-frame localization allowance | §10.4 |",
+   "new": "| `localization_budget` | `8` | the per-frame localization allowance | §10.4 |",
+   "where": "new",
+   "cites": [
+    "§10.4"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-094",
+   "old": "| `firing_budget` | `4` | the per-event, per-boundary firing allowance",
+   "new": "| `firing_budget` | `4` | the per-event, per-boundary firing allowance, an integer ≥ 1;",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "firing_budget linked to #g-firing-budget"
+  },
+  {
+   "id": "C-095",
+   "old": "of the event iteration,",
+   "new": "It caps how many times each declared event may fire at one boundary.",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R2, the meaning cell kept to twelve words"
+  },
+  {
+   "id": "C-096",
+   "old": "an integer ≥ 1 | §10.6 |",
+   "new": "an integer ≥ 1; exhaustion warns `FiringBudget` | §10.6 |",
+   "where": "new",
+   "cites": [
+    "§10.6"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-097",
+   "old": "`Δt_base` binds from exactly one of three sources (§9.2).",
+   "new": "`Δt_base` has exactly one of three sources, cross-validated (D-283)",
+   "where": "homes.md",
+   "cites": [
+    "§9.2"
+   ],
+   "tag": "M",
+   "note": "R1, R1-77"
+  },
+  {
+   "id": "C-098",
+   "old": "The first is the `Δt_base` keyword, a `Rational`, `Period` or `Hz` value; `N_base` is then derived and validated an integer ≥ 1.",
+   "new": "the explicit keyword, a `Rational`, `Period` or `Hz` value, from which `N_base` is derived as `Δt_base/h` and validated an integer ≥ 1",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R1-78"
+  },
+  {
+   "id": "C-099",
+   "old": "The second is the `N_base·h` product when the keyword is absent (the default path).",
+   "new": "the `N_base·h` product when only `N_base` is given, with the default `N_base = 1`",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R1-79; \"what silence means\" is §9.2's next paragraph"
+  },
+  {
+   "id": "C-100",
+   "old": "The third, requested with `Δt_base = :derive` in a fully anchored model, is derivation from the constraint pool at the coarsest admissible value, printed with its drivers (§9.2).",
+   "new": "| the derived `Δt_base` | `gcd(pool)` itself, the coarsest admissible value |",
+   "where": "homes.md",
+   "cites": [
+    "§9.2"
+   ],
+   "tag": "M",
+   "note": "R1, R1-80; the request is §9.2's \"Derivation is requested explicitly\", the drivers its \"It always prints the derived value with its drivers\""
+  },
+  {
+   "id": "C-101",
+   "old": "binds no stop policy.",
+   "new": "The stop policy, with its `t_end` and ignored requesters, is the advance's argument",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R1-81"
+  },
+  {
+   "id": "C-102",
+   "old": "`t_end` and `ignore_stop_requests` are keywords of each advance (§12.6).",
+   "new": "`t_end` and `ignore_stop_requests` are keywords of `run!`, `replay!` and `step!`.",
+   "where": "homes.md",
+   "cites": [
+    "§12.6"
+   ],
+   "tag": "M",
+   "note": "R1, R1-82"
+  },
+  {
+   "id": "C-103",
+   "old": "A run ends at the first grid boundary reaching or exceeding `t_end`, whole frames only (§12.4).",
+   "new": "The run ends at the first grid boundary whose time reaches or exceeds `t_end` (D-133). The run takes whole frames only",
+   "where": "homes.md",
+   "cites": [
+    "§12.4"
+   ],
+   "tag": "M",
+   "note": "R1, R1-83"
+  },
+  {
+   "id": "C-104",
+   "old": "An unbounded run stays bounded in memory, since `log_max` keeps such a session from growing without limit (§11.2).",
+   "new": "The log takes a retention bound beside its switch and its stride (D-137). The bound is `log_max`, the maximum number of retained snapshot references.",
+   "where": "homes.md",
+   "cites": [
+    "§11.2"
+   ],
+   "tag": "M",
+   "note": "R7, R1-84 drifted (log_max bounds the log, not the session); dropped since the thin shape no longer needs it"
+  },
+  {
+   "id": "C-105",
+   "old": "An event that exhausts `firing_budget` at a boundary loses its further edges there,",
+   "new": "When an event has fired `firing_budget` times at a boundary, its further edges there are lost for the rest of that boundary.",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R1-85"
+  },
+  {
+   "id": "C-106",
+   "old": "under a `FiringBudget` warning (§10.6).",
+   "new": "exhaustion warns `FiringBudget` | §10.6 |",
+   "where": "new",
+   "cites": [
+    "§10.6"
+   ],
+   "tag": "R",
+   "ruling": "coordinator 2026-10-20",
+   "note": "the kind name stays on B (D-226), in the firing_budget row, whose owning section is §10.6"
+  },
+  {
+   "id": "C-107",
+   "old": "`localization_tol`, `localization_budget` and `firing_budget` are all three trajectory-determining like their siblings.",
+   "new": "All three are recorded (D-133, D-181), because they determine the trajectory.",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R1-86"
+  },
+  {
+   "id": "C-108",
+   "old": "So they are validated with them (`DeploymentInvalid`)",
+   "new": "The constructor validates them with the third such keyword, the `firing_budget` of §10.6, and failures are collected into `DeploymentInvalid`",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R1-87"
+  },
+  {
+   "id": "C-109",
+   "old": "and carried on the `Deployment` the trace header records, where replay compares the two deployments as values (§11.5, §12.7).",
+   "new": "They ride the `Deployment` in the trace header (the trace's fixed preamble, §11.5). They also join the set that replay compares up front",
+   "where": "homes.md",
+   "cites": [
+    "§11.5",
+    "§12.7"
+   ],
+   "tag": "M",
+   "note": "R1, R1-88; §9.2 has \"Two `Deployment`s compare as values, which is what replay's header check reads (§12.7)\""
+  },
+  {
+   "id": "C-110",
+   "old": "- `Model(deployment, T = Float64; chunk_size = 16) → Model{T}`. Materializes a deployment at a scalar type, allocating the buffers (§9.2, D-317).",
+   "new": "- `Model(deployment, T = Float64; chunk_size = 16) → Model{T}`. Materializes a deployment at a scalar type, allocating the buffers (§9.2, D-317).",
+   "where": "new",
+   "cites": [
+    "D-317",
+    "§9.2"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-111",
+   "old": "| `chunk_size` | `16` | the executor's unroll width, a performance knob that never moves the trajectory | §9.7, §12.6 |",
+   "new": "| `chunk_size` | `16` | the executor's unroll width, a performance knob that never moves the trajectory | §9.7, §12.6 |",
+   "where": "new",
+   "cites": [
+    "§12.6",
+    "§9.7"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-112",
+   "old": "- `Model`'s own doors,",
+   "new": "- `Model`'s own entry points,",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R9"
+  },
+  {
+   "id": "C-113",
+   "old": "for a model stepped on its own or used as a service's scratch (§9.2, D-317, D-318, D-319).",
+   "new": "for a model stepped on its own or used as a service's scratch (§9.2, D-317, D-318, D-319).",
+   "where": "new",
+   "cites": [
+    "D-317",
+    "D-318",
+    "D-319",
+    "§9.2"
+   ],
+   "tag": "F",
+   "note": "scratch linked to #g-scratch"
+  },
+  {
+   "id": "C-114",
+   "old": "Each writing door is refused on a model a simulation has claimed, as `ArgumentInvalid` with reason `:claimed`.",
+   "new": "Each is refused on a model a simulation has claimed, as `ArgumentInvalid` with reason `:claimed`.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R9"
+  },
+  {
+   "id": "C-115",
+   "old": "A writing door.",
+   "new": "The entry points below that write are `init!`, `frame!`, `restore!`, `overlay!` and `trim!`.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R9",
+   "note": "the five \"A writing door.\" sentences (init!, frame!, restore!, overlay!, trim!) gathered into one sentence that names the five"
+  },
+  {
+   "id": "C-116",
+   "old": "- `init!(model, condition; t0 = 0.0, hooks = NoHooks())`.",
+   "new": "- `init!(model, condition = set(); t0 = 0.0, hooks = NoHooks())`",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R8",
+   "note": "src/model.jl:170 gives `condition = set()`"
+  },
+  {
+   "id": "C-117",
+   "old": "The model's door into `:consistent`.",
+   "new": "The model's entry point into `:consistent` (D-317).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-317"
+   ],
+   "tag": "R",
+   "ruling": "R9",
+   "note": "R5 cites the ruling entry; D-317, the status \"written only by the model's own doors\""
+  },
+  {
+   "id": "C-118",
+   "old": "It checks root-input totality before any write",
+   "new": "Each compares the resolved plan's root-input coverage against the `Build`'s `input_faces` before writing anything.",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R2-08; §14.6 names `init!` first among the sites; the §14.6 citation goes with it"
+  },
+  {
+   "id": "C-119",
+   "old": "and runs boundary zero at `t0`,",
+   "new": "It runs boundary zero at `t0`,",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "boundary zero linked to #g-boundary-zero"
+  },
+  {
+   "id": "C-120",
+   "old": "which settles through the hooks (§14.5, §14.6).",
+   "new": "which settles through the hooks (§14.5, D-317).",
+   "where": "new",
+   "cites": [
+    "§14.5",
+    "§14.6"
+   ],
+   "newcites": [
+    "D-317",
+    "§14.5"
+   ],
+   "tag": "C",
+   "note": "R5, R2-10; D-317, \"init! on the model takes the hooks too, so boundary zero publishes through settled!\""
+  },
+  {
+   "id": "C-121",
+   "old": "- `frame!(model, k, hooks = NoHooks()) → Bool`.",
+   "new": "- `frame!(model, k, hooks = NoHooks()) → Bool`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-122",
+   "old": "Advances the model through frame `k` and settles its frame-top boundary (§10.4).",
+   "new": "Advances the model through frame `k` and settles its frame-top boundary (§13.4).",
+   "where": "new",
+   "cites": [
+    "§10.4"
+   ],
+   "newcites": [
+    "§13.4"
+   ],
+   "tag": "C",
+   "note": "§10.4 never names frame!; §13.4, \"The Model's frame! wraps each whole frame, every boundary it settles included\""
+  },
+  {
+   "id": "C-123",
+   "old": "It returns `true` when a hook abandoned the frame's remainder (§13.5).",
+   "new": "It returns `true` when a hook abandoned the frame's remainder (§13.5, D-317).",
+   "where": "new",
+   "cites": [
+    "§13.5"
+   ],
+   "newcites": [
+    "D-317",
+    "§13.5"
+   ],
+   "tag": "C",
+   "note": "D-317, \"A true from settled! abandons the frame's remainder and is frame!'s return\""
+  },
+  {
+   "id": "C-124",
+   "old": "`FrameHooks` is the hooks' contract.",
+   "new": "`FrameHooks` is the hooks' type.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "brief_common, reserved words (contract)",
+   "note": "R5, R2-15, cited with the next sentences to D-317"
+  },
+  {
+   "id": "C-125",
+   "old": "`frame_top!(hooks)` runs before the frame touches any state, and `settled!(hooks) → Bool` runs at every settled boundary.",
+   "new": "`frame_top!(hooks)` runs before the frame touches any state, and `settled!(hooks) → Bool` runs at every settled boundary.",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-317"
+   ],
+   "tag": "F",
+   "note": "R5, R2-16 and R2-17; D-317 cited at the next sentence's end"
+  },
+  {
+   "id": "C-126",
+   "old": "`NoHooks()` is the no-op, and its `settled!` returns `false`.",
+   "new": "`NoHooks()` is the no-op, and its `settled!` returns `false` (D-317).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-317"
+   ],
+   "tag": "C",
+   "note": "R5, R2-18; D-317, \"NoHooks does nothing and returns false\""
+  },
+  {
+   "id": "C-127",
+   "old": "- `port(model, path, name)`, `state(model, path)` and `modes(model, path)`.",
+   "new": "- `port(model, path, name)`, `state(model, path)` and `modes(model, path)`,",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-128",
+   "old": "The reads of a port's value, a component's state from whichever home owns it, and its modes (§7.3).",
+   "new": "The reads of a port's value, a component's state from whichever home owns it, and its modes (§7.3, D-317).",
+   "where": "new",
+   "cites": [
+    "§7.3"
+   ],
+   "newcites": [
+    "D-317",
+    "§7.3"
+   ],
+   "tag": "C",
+   "note": "R5, R2-21; D-317, \"The model's doors are … warnings, port, state and modes\""
+  },
+  {
+   "id": "C-129",
+   "old": "- `warnings(model) → Vector`. The build's list and the deployment's, concatenated (§9.2).",
+   "new": "- `warnings(model) → Vector`. The build's list and the deployment's, concatenated (§9.2, D-317).",
+   "where": "new",
+   "cites": [
+    "§9.2"
+   ],
+   "newcites": [
+    "D-317",
+    "§9.2"
+   ],
+   "tag": "C",
+   "note": "R5, R2-23; D-317 lists warnings among the model's doors"
+  },
+  {
+   "id": "C-130",
+   "old": "- `checkpoint(model) → ModelState`. The model's state alone,",
+   "new": "- `checkpoint(model) → ModelState`. The model's state alone (§12.6).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§12.6"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-131",
+   "old": "legal at `:consistent` with the clock on a grid top.",
+   "new": "It is legal at `:consistent` with the clock on a grid top.",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R2-25"
+  },
+  {
+   "id": "C-132",
+   "old": "Any other status is `ServiceLifecycle`,",
+   "new": "At a status other than `:consistent` it is `ServiceLifecycle` (§14, D-319).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-319",
+    "§14"
+   ],
+   "tag": "R",
+   "ruling": "coordinator 2026-10-20",
+   "note": "the kind name stays on B (D-226); §14, \"`checkpoint`, `overlay!` and the default `linearize` are legal at `:consistent`\", and Appendix D's service lifecycle entry, \"A violation is `ServiceLifecycle`\""
+  },
+  {
+   "id": "C-133",
+   "old": "and a clock off the grid is `CheckpointMidFrame` (§12.6).",
+   "new": "A clock off the grid is `CheckpointMidFrame` (D-319).",
+   "where": "new",
+   "cites": [
+    "§12.6"
+   ],
+   "newcites": [
+    "D-319"
+   ],
+   "tag": "C",
+   "note": "R5, R2-27; D-319, \"and with the clock off the grid as CheckpointMidFrame\"; the §12.6 citation stays on the gloss"
+  },
+  {
+   "id": "C-134",
+   "old": "- `restore!(model, model_state; hooks = NoHooks())`.",
+   "new": "- `restore!(model, model_state; hooks = NoHooks())`.",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-135",
+   "old": "Checks the state's fingerprint and deployment (`CheckpointMismatch`)",
+   "new": "A fingerprint or deployment mismatch is `CheckpointMismatch` (§12.6).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§12.6"
+   ],
+   "tag": "R",
+   "ruling": "coordinator 2026-10-20",
+   "note": "the kind name stays on B (D-226); §12.6, \"`restore!(model, model_state)` checks the state's fingerprint and deployment against the model, and a mismatch is `CheckpointMismatch`\""
+  },
+  {
+   "id": "C-136",
+   "old": "and its `t` against its grid (`CheckpointMidFrame`) before any write (§12.6).",
+   "new": "It also checks that the state's `t` is a grid time `t₀ + k·h` of the state's own origin and step, and a state off its grid is `CheckpointMidFrame`.",
+   "where": "homes.md",
+   "cites": [
+    "§12.6"
+   ],
+   "tag": "M",
+   "note": "R1, R2-29; §12.6 goes on, \"Every mismatch of either kind is collected into one throw before any write\""
+  },
+  {
+   "id": "C-137",
+   "old": "Copies the state back, settles through the hooks and writes `:consistent` last.",
+   "new": "Copies the state back, settles through the hooks and writes `:consistent` last (§12.6).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§12.6"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-138",
+   "old": "It takes no status gate (D-319).",
+   "new": "`init!`, `restore!`, `trim!` and `linearize` with an explicit `about` are legal at any status (D-425).",
+   "where": "homes.md",
+   "cites": [
+    "D-319"
+   ],
+   "tag": "M",
+   "note": "R1, R2-31; D-319 also states it, \"It has no status gate\""
+  },
+  {
+   "id": "C-139",
+   "old": "- `overlay!(model, condition; hooks = NoHooks())`.",
+   "new": "- `overlay!(model, condition = set(); hooks = NoHooks())`.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R8",
+   "note": "src/model.jl:223 gives `condition = set()`"
+  },
+  {
+   "id": "C-140",
+   "old": "Writes the condition onto the model at rest and settles the overlaid state with no discrete output stage and no update,",
+   "new": "Writes the condition onto the model at rest and settles the overlaid state with no discrete output stage and no update (§12.6).",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-141",
+   "old": "the clock and the priors kept (§12.6).",
+   "new": "Every other store, the clock, the sampling lattice and the guard priors (each event's stored predicate sample from the previous boundary) are kept.",
+   "where": "homes.md",
+   "cites": [
+    "§12.6"
+   ],
+   "tag": "M",
+   "note": "R1, R2-34; the §12.6 citation stays on the kept clause"
+  },
+  {
+   "id": "C-142",
+   "old": "Legal at `:consistent` with the clock on a frame top.",
+   "new": "`overlay!(model, condition; hooks)` is the model's form, legal at `:consistent` with the clock on a frame top.",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R2-35"
+  },
+  {
+   "id": "C-143",
+   "old": "- `trim!(model, problem; baseline, t0 = 0.0, backend) → TrimReport`.",
+   "new": "- `trim!(model, problem; baseline, t0 = 0.0, backend = LevenbergMarquardt()) → TrimReport`.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R8",
+   "note": "src/trim.jl:447 and §14.8 both give `backend = LevenbergMarquardt()`"
+  },
+  {
+   "id": "C-144",
+   "old": "The trim service on a `Model{Float64}`, committing through the model's `init!` (§14.8).",
+   "new": "The trim service on a `Model{Float64}`, committing through the model's `init!` (§14.8).",
+   "where": "new",
+   "cites": [
+    "§14.8"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-145",
+   "old": "- `linearize(model, taps; about, t0, width = 8) → Linearization`.",
+   "new": "- `linearize(model, taps; about = nothing, t0 = nothing, width = 8) → Linearization`.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R8",
+   "note": "src/linearize.jl:128; D-319 spells the same"
+  },
+  {
+   "id": "C-146",
+   "old": "The query on a `Model{Float64}`, its default operating point `checkpoint(model)` (§14.10).",
+   "new": "The query on a `Model{Float64}`, its default operating point `checkpoint(model)` (§14.10).",
+   "where": "new",
+   "cites": [
+    "§14.10"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-147",
+   "old": "`trim!` and `linearize` on a `Model` at another scalar are `ArgumentInvalid` with reason `:non_nominal`.",
+   "new": "A `Model` at another scalar is refused as `ArgumentInvalid` with reason `:non_nominal` (D-319).",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R2-42; §14.8 for trim!; Appendix C's ArgumentInvalid entry carries linearize, which §14.10 never states"
+  },
+  {
+   "id": "C-148",
+   "old": "The stepping primitives `evaluate!`, `integrate!`, `boundary!`, `offtick_boundary!` and `boundary_zero!` are framework internals the spec names only as mechanisms, outside this API and outside the claim's gate.",
+   "new": "The stepping primitives `evaluate!`, `integrate!`, `boundary!`, `offtick_boundary!` and `boundary_zero!` are framework internals, outside this API and outside the claim's gate (D-318).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-318"
+   ],
+   "tag": "R",
+   "ruling": "R5",
+   "note": "\"the spec names only as mechanisms\" goes; D-318, \"The stepping primitives evaluate!, integrate! and the boundary routines stay ungated internals that frame! and init! compose\""
+  },
+  {
+   "id": "C-149",
+   "old": "`apply!` is an internal outside this API too, and the claim's gate refuses it on a claimed model (D-318).",
+   "new": "`apply!` is an internal outside this API too, and the claim's gate refuses it on a claimed model (D-318, D-319).",
+   "where": "new",
+   "cites": [
+    "D-318"
+   ],
+   "newcites": [
+    "D-318",
+    "D-319"
+   ],
+   "tag": "C",
+   "note": "R5, R2-44; the API placement stands only in D-319's Rationale (rulings.md)"
+  },
+  {
+   "id": "C-150",
+   "old": "- `Simulation(model; join_timeout = 5.0) → Simulation`.",
+   "new": "- `Simulation(model::Model{Float64}; join_timeout = 5.0) → Simulation`.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R5",
+   "note": "the typed signature src/sim.jl:190 and D-317 spell, which carries the MethodError sentence"
+  },
+  {
+   "id": "C-151",
+   "old": "Runs a `Model{Float64}` beside the data plane, the control plane and the run, and offers the stopped-sim services.",
+   "new": "Runs a `Model{Float64}` beside the data plane, the control plane and the run, and offers the stopped-sim services.",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "control plane and run linked (R12)"
+  },
+  {
+   "id": "C-152",
+   "old": "A `Model` at another scalar is a `MethodError`,",
+   "new": "the constraint sits as a type on the one constructor that owns a loop",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R5",
+   "note": "the sentence goes; the typed signature above and §9.2 carry it"
+  },
+  {
+   "id": "C-153",
+   "old": "and one already claimed by a simulation or not at `:built` is `ArgumentInvalid`, reasons `:claimed` and `:not_built` (§9.2, D-318).",
+   "new": "A `Model` already claimed by a simulation or not at `:built` is `ArgumentInvalid`, reasons `:claimed` and `:not_built` (§9.2, D-318).",
+   "where": "new",
+   "cites": [
+    "D-318",
+    "§9.2"
+   ],
+   "tag": "F",
+   "note": "R5, R2-51; D-318 names both reasons"
+  },
+  {
+   "id": "C-154",
+   "old": "| `join_timeout` | `5.0` | the shutdown tail's join cap, in seconds of wall clock | §12.4 |",
+   "new": "| `join_timeout` | `5.0` | the shutdown tail's join cap, in seconds of wall clock | §12.4 |",
+   "where": "new",
+   "cites": [
+    "§12.4"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-155",
+   "old": "`join_timeout`, the shutdown tail's join cap, lives on `Control` rather than the deployment (§12.1).",
+   "new": "`join_timeout` is `Control`'s (§12.1).",
+   "where": "homes.md",
+   "cites": [
+    "§12.1"
+   ],
+   "tag": "M",
+   "note": "R1, R2-53"
+  },
+  {
+   "id": "C-156",
+   "old": "It moves no trajectory, so replay neither records nor compares it (§12.4).",
+   "new": "The cap is not trajectory-determining, because the trajectory has ended at the final snapshot before any join begins. So replay (the ordinary loop with the drain reading recorded batches) neither records nor compares the cap",
+   "where": "homes.md",
+   "cites": [
+    "§12.4"
+   ],
+   "tag": "M",
+   "note": "R1, R2-54"
+  },
+  {
+   "id": "C-157",
+   "old": "The four recording keywords are `init!`'s, `restore!`'s and `replay!`'s, the doors that build a run (below, D-261).",
+   "new": "The four recording keywords are `init!`'s, `overlay!`'s, `restore!`'s and `replay!`'s, the doors that build a run (below, D-261).",
+   "where": "new",
+   "cites": [
+    "D-261"
+   ],
+   "tag": "R",
+   "ruling": "R7",
+   "note": "R2-55; §12.6, \"there are four, init!, overlay!, restore! and replay!\""
+  },
+  {
+   "id": "C-158",
+   "old": "- `Simulation(deployment; kw...)`, `Simulation(build; kw...)` and `Simulation(world; kw...)`. The three convenience forms.",
+   "new": "- `Simulation(deployment; kw...)`, `Simulation(build; kw...)` and `Simulation(world; kw...)`. The three convenience forms (§9.2).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§9.2"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-159",
+   "old": "The first materializes a `Model{Float64}` from the deployment and runs it, the second composes the `Deployment` constructor with that, and the third calls `build` first.",
+   "new": "Simulation(deployment; kw...) # materializes a Float64 model and runs it Simulation(build; kw...) # composes the steps through a Float64 model Simulation(world; kw...) # calls build first",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R2-57"
+  },
+  {
+   "id": "C-160",
+   "old": "They take the `Model` and `Simulation` keywords above, the last two the deployment keywords as well (§9.2).",
+   "new": "They take the `Model` and `Simulation` keywords above, the last two the deployment keywords as well (D-317).",
+   "where": "new",
+   "cites": [
+    "§9.2"
+   ],
+   "newcites": [
+    "D-317"
+   ],
+   "tag": "C",
+   "note": "R5, R2-58; §9.2 does not state the pass-through; D-317 composes the three forms \"through a Float64 model\", and src/sim.jl:145 lists the keywords"
+  },
+  {
+   "id": "C-161",
+   "old": "- `attach!(sim, dev::AbstractDevice, binding::AbstractBinding; should_abort = false)`.",
+   "new": "- `attach!(sim, dev::AbstractDevice, new_binding::AbstractBinding; should_abort = false) → DeviceHandle`.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R8",
+   "note": "§11.6 spells `new_binding`; src/sim.jl's docstring returns the attachment's handle, a DeviceHandle"
+  },
+  {
+   "id": "C-162",
+   "old": "The roots are mandatory, and the signature is the gate.",
+   "new": "That is one mandatory word, and it costs nothing, because the periphery has no competing hierarchy to inherit from. What it buys is `attach!`'s dispatch gate (D-177).",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R2-60; the table rows keep \"the root type is mandatory\""
+  },
+  {
+   "id": "C-163",
+   "old": "| argument | default | meaning | owning section | |---|---|---|---|",
+   "new": "| argument | default | meaning | owning section | |---|---|---|---|",
+   "where": "new",
+   "cites": [],
+   "tag": "F"
+  },
+  {
+   "id": "C-164",
+   "old": "| `dev::AbstractDevice` | — | the device instance; the root type is mandatory | §11.6 |",
+   "new": "| `dev::AbstractDevice` | — | the device instance; the root type is mandatory | §11.6 |",
+   "where": "new",
+   "cites": [
+    "§11.6"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-165",
+   "old": "| `binding::AbstractBinding` | — | the binding value; the root type is mandatory | §11.6 |",
+   "new": "| `new_binding::AbstractBinding` | — | the binding value; the root type is mandatory | §11.6 |",
+   "where": "new",
+   "cites": [
+    "§11.6"
+   ],
+   "tag": "R",
+   "ruling": "R8"
+  },
+  {
+   "id": "C-166",
+   "old": "| `should_abort` | `false` | the per-attachment failure policy. Set, the device's departure also requests a sim stop.",
+   "new": "| `should_abort` | `false` | the per-attachment failure policy. Set, a departure also requests a sim stop | §11.6, §12.4 |",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R2",
+   "note": "the meaning cell kept to twelve words; should_abort linked to #g-should_abort"
+  },
+  {
+   "id": "C-167",
+   "old": "Clear, the run continues with the device absent and its claims held to run end | §11.6, §12.4 |",
+   "new": "With `should_abort` clear, a device's departure is reported and the run continues without it.",
+   "where": "homes.md",
+   "cites": [
+    "§11.6",
+    "§12.4"
+   ],
+   "tag": "M",
+   "note": "R2; claims to run end, §11.6's \"Claims and the roster entry persist to run end\""
+  },
+  {
+   "id": "C-168",
+   "old": "A departure is the loop body returning, a crash, or a failed `init!`.",
+   "new": "A departure is the loop body returning, a crash, or a failed `init!`.",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R2-64; §11.6's own sentence"
+  },
+  {
+   "id": "C-169",
+   "old": "Sides are declared by the binding's Bool traits, and each declared side carries its own methods:",
+   "new": "Sides are declared by the binding's Bool traits, and each declared side carries its own methods:",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "R4, the bold goes"
+  },
+  {
+   "id": "C-170",
+   "old": "| trait / method | default | meaning | owning section | |---|---|---|---| | `is_input(b)` | `false` on `AbstractBinding` | declares the input side | §11.6 | | `is_output(b)` | `false` on `AbstractBinding` | declares the output side | §11.6 | | `is_greedy(b)` | `false` on `AbstractBinding` | `true` switches the claim's source | §11.3, §11.6 | | `claims(b)` / `map_input(datum, b)` | — | the input side. The enumerated face set is the claim",
+   "new": "| trait / method | default | meaning | owning section | |---|---|---|---| | `is_input(b)` | `false` on `AbstractBinding` | declares the input side | §11.6 | | `is_output(b)` | `false` on `AbstractBinding` | declares the output side | §11.6 | | `is_greedy(b)` | `false` on `AbstractBinding` | `true` switches the claim's source | §11.3, §11.6 | | `claims(b)` / `map_input(datum, b)` | — | the input side. The enumerated face set is the claim",
+   "where": "new",
+   "cites": [
+    "§11.3",
+    "§11.6"
+   ],
+   "tag": "F",
+   "note": "claim linked to #g-claim"
+  },
+  {
+   "id": "C-171",
+   "old": ", what the device may write rather than what it will",
+   "new": "A device's claim is the set of faces (the names ports wear on their component's boundary) it may write.",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R2, the claims row's meaning cell kept to twelve words"
+  },
+  {
+   "id": "C-172",
+   "old": "| §11.3, §11.4 | | `reads(b)` / `map_output(nt, b)` | — | the output side | §14.4, §11.2, §11.6 |",
+   "new": "| §11.3, §11.4 | | `reads(b)` / `map_output(nt, b)` | — | the output side | §14.4, §11.2, §11.6 |",
+   "where": "new",
+   "cites": [
+    "§11.2",
+    "§11.3",
+    "§11.4",
+    "§11.6",
+    "§14.4"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-173",
+   "old": "The conformance check runs at attach, pairing each trait against its method.",
+   "new": "The attach runs a bidirectional conformance check over the pair (trait, method):",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R2-71"
+  },
+  {
+   "id": "C-174",
+   "old": "A declared side whose `claims`/`reads` was never written reaches the error fallback.",
+   "new": "A declared side whose method was never written therefore fails loudly at the attach point rather than degrading into silence.",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R2-72"
+  },
+  {
+   "id": "C-175",
+   "old": "A method defined under a false trait is detected by `which` against the fallback.",
+   "new": "Detecting it is one `which` against the fallback method.",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R2-73"
+  },
+  {
+   "id": "C-176",
+   "old": "Both are `BindingContractMismatch` (§11.6).",
+   "new": "A declared side without its method, or a method under a false trait, is `BindingContractMismatch` (§11.6).",
+   "where": "new",
+   "cites": [
+    "§11.6"
+   ],
+   "tag": "R",
+   "ruling": "coordinator 2026-10-20",
+   "note": "the kind name stays on B (D-226); \"both\" named by the two cases, whose detail (the error fallback, `which`) stays M; §11.6, \"Every violation in that list reports `BindingContractMismatch`\""
+  },
+  {
+   "id": "C-177",
+   "old": "A claim is registered with exclusivity enforced, and the staged shape and normalization shim are compiled (§11.4).",
+   "new": "Attach validation, claim registration and the staging-shape compilation (§11.4) all run at the attach point.",
+   "where": "homes.md",
+   "cites": [
+    "§11.4"
+   ],
+   "tag": "M",
+   "note": "R1, R2-75"
+  },
+  {
+   "id": "C-178",
+   "old": "The `reads` selectors are validated and compiled to one gather (§14.4, §11.2).",
+   "new": "`is_output` ⇒ `reads(b)` is called and the gather compiled.",
+   "where": "homes.md",
+   "cites": [
+    "§11.2",
+    "§14.4"
+   ],
+   "tag": "M",
+   "note": "R1, R2-76"
+  },
+  {
+   "id": "C-179",
+   "old": "Under `is_greedy(b) = true` the framework computes the unclaimed complement at attach instead of calling `claims`.",
+   "new": "`is_input && is_greedy` ⇒ the claim is computed (§11.3), and a `claims` method defined for this binding is an error.",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R2-77"
+  },
+  {
+   "id": "C-180",
+   "old": "Everything downstream is identical.",
+   "new": "past the attach point nothing tells a greedy claim from a returned one (§11.3)",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R2-78"
+  },
+  {
+   "id": "C-181",
+   "old": "An empty remainder is legal and reported (`EmptyGreedyClaim`),",
+   "new": "An empty greedy remainder is legal and reported as `EmptyGreedyClaim` (§11.6).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§11.6"
+   ],
+   "tag": "R",
+   "ruling": "coordinator 2026-10-20",
+   "note": "the kind name stays on B (D-226); \"greedy\" names the remainder, which the moved sentence before it set up; §11.6, \"The attach succeeds and records `EmptyGreedyClaim`\""
+  },
+  {
+   "id": "C-182",
+   "old": "and `is_greedy` without `is_input` is an error (§11.3, §11.6).",
+   "new": "`is_greedy` without `is_input` ⇒ error.",
+   "where": "homes.md",
+   "cites": [
+    "§11.3",
+    "§11.6"
+   ],
+   "tag": "M",
+   "note": "R1, R2-80"
+  },
+  {
+   "id": "C-183",
+   "old": "`TableBinding` is the shipped data-driven binding",
+   "new": "- `TableBinding`. The shipped data-driven binding (§11.6).",
+   "where": "new",
+   "cites": [],
+   "tag": "F",
+   "note": "its own entry; the §11.6 citation repeats"
+  },
+  {
+   "id": "C-184",
+   "old": "and the standard GUI binding is the greedy one (§11.6).",
+   "new": "The standard GUI binding is a greedy one.",
+   "where": "homes.md",
+   "cites": [
+    "§11.6"
+   ],
+   "tag": "M",
+   "note": "R1, R2-82"
+  },
+  {
+   "id": "C-185",
+   "old": "`attach!` is a stopped-sim operation.",
+   "new": "A stopped-sim operation that adds a device and its binding to the roster and returns the device's handle (§11.3, §11.6).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§11.3",
+    "§11.6"
+   ],
+   "tag": "F",
+   "note": "the entry's gloss; device, binding and roster linked; the return is src/sim.jl's docstring, \"Returns the attachment's handle\""
+  },
+  {
+   "id": "C-186",
+   "old": "It is legal in `built`, `initialized` and `stopped`.",
+   "new": "`attach!`/`detach!` are legal in the `built`, `initialized` and `stopped` states (§12.6) and an error while `running`.",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R2-84"
+  },
+  {
+   "id": "C-187",
+   "old": "It is an error while `running` and on an `errored` simulation (`ServiceLifecycle`;",
+   "new": "It is `ServiceLifecycle` while `running` and on an `errored` simulation.",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§11.3"
+   ],
+   "tag": "R",
+   "ruling": "coordinator 2026-10-20",
+   "note": "the kind name stays on B (D-226); §11.3 cited at the end of the next sentence"
+  },
+  {
+   "id": "C-188",
+   "old": "the roster freeze, §11.3, and the terminal state, §13.6).",
+   "new": "That error is `ServiceLifecycle` (Appendix C, D-108), the same kind that gates the §14 services. The list is exhaustive. An `errored` simulation refuses both with the same kind.",
+   "where": "homes.md",
+   "cites": [
+    "§11.3",
+    "§13.6"
+   ],
+   "tag": "M",
+   "note": "the two reasons stay in §11.3, which cites §13.6 for the terminal state"
+  },
+  {
+   "id": "C-189",
+   "old": "Admission checks identity and claims (§11.3).",
+   "new": "Admission is a two-part check at the attach point, in order (D-375):",
+   "where": "homes.md",
+   "cites": [
+    "§11.3"
+   ],
+   "tag": "M",
+   "note": "R1, R2-86"
+  },
+  {
+   "id": "C-190",
+   "old": "A second roster entry for one instance is `AlreadyAttached`,",
+   "new": "A second roster entry for one instance is `AlreadyAttached`,",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "coordinator 2026-10-20",
+   "note": "the kind name stays on B (D-226)"
+  },
+  {
+   "id": "C-191",
+   "old": "and rebinding is `detach!` + `attach!`.",
+   "new": "An already-rostered instance is rejected rather than silently absorbed, because rebinding has an explicit spelling, `detach!` then `attach!`, both legal at any stopped-sim point.",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R2-87"
+  },
+  {
+   "id": "C-192",
+   "old": "An overlapping claim is `ClaimConflict`.",
+   "new": "and an overlapping claim is `ClaimConflict` (§11.3).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§11.3"
+   ],
+   "tag": "R",
+   "ruling": "coordinator 2026-10-20",
+   "note": "the kind name stays on B (D-226)"
+  },
+  {
+   "id": "C-193",
+   "old": "`attach!` registers only. The task appears at the next `run!`.",
+   "new": "`attach!` while stopped only registers, and the task appears at the next `run!`.",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R2-89"
+  },
+  {
+   "id": "C-194",
+   "old": "- `detach!(sim, device)`. Removes the roster entry and releases the device's claims.",
+   "new": "- `detach!(sim, device)`. Removes the roster entry and releases the device's claims (§11.3).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§11.3"
+   ],
+   "tag": "F"
+  },
+  {
+   "id": "C-195",
+   "old": "Stopped-sim only, like `attach!`.",
+   "new": "Stopped-sim only, like `attach!`.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "coordinator 2026-10-20",
+   "note": "kept, so detach! carries attach!'s `ServiceLifecycle` clause by reference"
+  },
+  {
+   "id": "C-196",
+   "old": "A loop body's voluntary exit or crash mid-run does not detach.",
+   "new": "Device death does not detach (D-106, D-374). A mid-run crash, voluntary exit or unplug (§11.6, §12.4) ends the device's task.",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R2-93"
+  },
+  {
+   "id": "C-197",
+   "old": "The task dies, and the claims persist to run end (§11.3, §11.6, §12.4).",
+   "new": "the roster entry, claims included, persists to the end of the run",
+   "where": "homes.md",
+   "cites": [
+    "§11.3",
+    "§11.6",
+    "§12.4"
+   ],
+   "tag": "M",
+   "note": "R1, R2-94; the §11.3 citation repeats on the kept gloss"
+  },
+  {
+   "id": "C-198",
+   "old": "- The device contract.",
+   "new": "- Device authoring.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "brief_common, reserved words (contract)"
+  },
+  {
+   "id": "C-199",
+   "old": "`MyDevice <: AbstractDevice` plus `init!(dev)` / `loop(dev, handle)` / `shutdown!(dev)` and the optional `unblock!(dev)`.",
+   "new": "`MyDevice <: AbstractDevice` (an illustrative name), with `loop(dev, handle)` mandatory and `init!(dev)`, `shutdown!(dev)` and `unblock!(dev)` optional hooks (§11.6, D-366).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "D-366",
+    "§11.6"
+   ],
+   "tag": "R",
+   "ruling": "R7",
+   "note": "R2-95 drifted; §11.6, \"Of the four functions, only loop is mandatory (D-366). init!, shutdown! and unblock! are optional hooks\""
+  },
+  {
+   "id": "C-200",
+   "old": "Around those functions the framework runs a per-run `init!` on the calling task.",
+   "new": "init!(dev) # per-run resource acquisition — calling task, before spawn (§12.4)",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R2-96; §11.6's code block, then \"The framework owns everything around the four functions (D-102)\""
+  },
+  {
+   "id": "C-201",
+   "old": "That call is bracketed, so a throw there is `shutdown!` plus `DeviceCrash` by name,",
+   "new": "A throw in the per-run `init!(dev)` is `shutdown!` plus `DeviceCrash` (§11.6).",
+   "where": "new",
+   "cites": [],
+   "newcites": [
+    "§11.6"
+   ],
+   "tag": "R",
+   "ruling": "coordinator 2026-10-20",
+   "note": "the kind name stays on B (D-226); \"by name\" and the bracket stay at §11.6's code block, \"a throw # here is shutdown! + DeviceCrash by name\""
+  },
+  {
+   "id": "C-202",
+   "old": "and the device is dead from the run's first frame top (§12.4).",
+   "new": "No task is spawned for a failed device, so it is dead from the run's first frame top (D-138, D-396).",
+   "where": "homes.md",
+   "cites": [
+    "§12.4"
+   ],
+   "tag": "M",
+   "note": "R1, R2-98"
+  },
+  {
+   "id": "C-203",
+   "old": "The author-owned task body runs inside the framework's try/catch/finally wrapper",
+   "new": "The wrapper is the shutdown protocol (§12.4) made structural.",
+   "where": "homes.md",
+   "cites": [],
+   "tag": "M",
+   "note": "R1, R2-99; the wrapper's try/catch/finally is §11.6's next code block"
+  },
+  {
+   "id": "C-204",
+   "old": "and voluntary exit is returning (§11.6, §12.4).",
+   "new": "A window ✕ or peer EOT is the loop body returning, which is §12.4(6)'s case.",
+   "where": "homes.md",
+   "cites": [
+    "§11.6",
+    "§12.4"
+   ],
+   "tag": "M",
+   "note": "R1, R2-100"
+  },
+  {
+   "id": "C-205",
+   "old": "- The device handle. One type, with capabilities rather than a taxonomy:",
+   "new": "- The device handle, `DeviceHandle`. One type, with capabilities rather than a taxonomy:",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "coordinator 2026-10-20",
+   "note": "the type attach! returns (src/sim.jl:1949 docstring, src/devices.jl)"
+  },
+  {
+   "id": "C-206",
+   "old": "`running`, `latest`, `wait_next_snapshot` (§12.3), `stage!`, `binding`, `gather`, `report!` (§11.6),",
+   "new": "`latest(handle)`, `wait_next_snapshot(handle)` (§12.3), `running(handle)`, `stage!(handle, writes::Pair...)`, `binding(handle)`, `gather(handle, snapshot)`, `report!(handle, occurrence)` (§11.6),",
+   "where": "new",
+   "cites": [
+    "§11.6",
+    "§12.3"
+   ],
+   "tag": "R",
+   "ruling": "R1, coordinator 2026-10-20",
+   "note": "`running` moved off §12.3's citation to §11.6's (frozen 8024); each spelled as src/devices.jl spells it (signatures.tsv rows 94 to 100)"
+  },
+  {
+   "id": "C-207",
+   "old": "and `pending` (§11.7).",
+   "new": "`pending(handle, slot)`;",
+   "where": "new",
+   "cites": [
+    "§11.7"
+   ],
+   "newcites": [
+    "§11.7"
+   ],
+   "tag": "R",
+   "ruling": "R1, coordinator 2026-10-20",
+   "note": "moved into the panel-kit entry, §11.7 (frozen 8393–8398), whose citation leads the entry; spelled as src/devices.jl spells it"
+  },
+  {
+   "id": "C-208",
+   "old": "- The panel kit (§11.7). `port_views(handle)`, the baked table of port views; `peek(view, handle, snapshot)`;",
+   "new": "- The panel kit (§11.7). `port_views(handle)`, the baked table of port views; `pending(handle, slot)`; `peek(view, handle, snapshot)`;",
+   "where": "new",
+   "cites": [
+    "§11.7"
+   ],
+   "tag": "F",
+   "note": "peek linked to #g-peek"
+  },
+  {
+   "id": "C-209",
+   "old": "`incumbent_status(view, snapshot)`, with `orphaned` and `stale` on the record it returns.",
+   "new": "`incumbent_status(view, snapshot)`, with `orphaned(record)` and `stale(record; now = time())` reading the record it returns.",
+   "where": "new",
+   "cites": [],
+   "tag": "R",
+   "ruling": "R8",
+   "note": "functions on the record, src/devices.jl:363 and src/dataplane.jl:293"
+  }
+ ],
+ "added": [
+  "#### The simulation and its devices",
+  "- The root type. `AbstractComponent`, the one root of primitives and assemblies alike, with no `AbstractAssembly` beside it (§8.5, D-039).",
+  "- Sample-time entries. `Relative(K, Φ = 0)` in scope ticks and `Absolute(q, τ = 0)` in exact rational seconds, with `q` a quantity value, `Period(T)` or `Hz(frequency)` (§10.5, D-185).",
+  "with the `Simulation` forms `port(sim, path, name)`, `state(sim, path)` and `modes(sim, path)`.",
+  "- `Model(build, T = Float64; kw...)` and `Model(world, T = Float64; kw...)`. The two composed forms. The first composes the `Deployment` constructor with the materialization, and the second calls `build` first.",
+  "(`set`, under Condition algebra)",
+  "- `port(snapshot, path, name)`. A port's value off a published snapshot, addressed exactly as the live table.",
+  "and `stop!(handle)`, which requests a stop (§11.6, D-268)."
+ ]
+}

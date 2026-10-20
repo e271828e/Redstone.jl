@@ -46,11 +46,15 @@ item changes what the spec says, the spec edit is part of the item.
     (§14.2) are generic names that share a namespace with user domain code,
     and whether the condition algebra ships behind a submodule is the
     packaging question.
-  - **Appendix B's omissions.** Names the examples import that Appendix B
-    does not list although their sections make them public:
-    `AbstractComponent`, `Absolute`, `get_deriv`, `logged`, `termination`,
-    `EndTimeReached` and `ModelRequestedStop`. The audit lists them or
-    renames them.
+  - **What Appendix B's rewrite left for the audit.** B lists the names
+    the examples import, and some names no spec sentence spells:
+    `logged(sim)`, `termination(sim)`, `port(snapshot, path, name)`, the
+    `Simulation` forms of `port`, `state` and `modes`, and `Model(build)`
+    and `Model(world)`. `reads` is both the binding trait `reads(b)` and the
+    read-set constructor `reads(; selectors...)`, one name in two senses.
+    And D-226 makes a name public by standing on B, so a diagnostic kind is
+    public only where B names it; whether Appendix C's kind set is public
+    as a whole is the audit's to settle.
   - **Five boundary cases** the convention does not settle are flagged for
     the sweep, none a defect of its list:
     - `input_faces`/`output_faces` (§13.3), build primitives named by nouns
@@ -97,9 +101,9 @@ item changes what the spec says, the spec edit is part of the item.
   assigned to the client, and a ruling on §11.7's "assembly panels compose
   children by path", a constraint on that half with no entry (stage 4).
 - **The spec's readability rewrite.** Chapters 1 to 14, the front matter
-  and Appendix A are done. Appendices B, C and D remain, one treatment each
-  as `docs/spec_rewrite/appendices.md` plans, and that directory's README
-  tracks them. Until a part's turn comes, it keeps the old markers.
+  and Appendices A and B are done. Appendices C and D remain, one treatment
+  each as `docs/spec_rewrite/appendices.md` plans, and that directory's
+  README tracks them. Until a part's turn comes, it keeps the old markers.
 - **The user guide and the API reference.** The reference is a Documenter
   build over the API docstrings, which is why the docstrings precede the
   release and the build need not. The guide grows from the tutorial and the

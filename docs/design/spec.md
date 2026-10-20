@@ -8730,7 +8730,8 @@ the control plane for the same reason `pace` does. It tunes the wait, never the
 arithmetic, so retuning the coarse/spin split mid-run is safe by construction.
 `run!` and `replay!` take both as keywords and write them when called. Both are
 declared by the advance, as `t_end` is. `pace` defaults to `Inf` and `margin` to
-2 ms ([Appendix B][sB], [D-133][d-133]). `step!` takes neither and never waits on the pacer. A
+2 ms ([Appendix B][sB], [D-133][d-133]). A deviceless run is the harness and CI
+mode, and real time is `pace = 1` away ([D-269][d-269]). `step!` takes neither and never waits on the pacer. A
 stepping session is the harness mode ([§12.6][s12-6]), and its frames are bit-identical
 to `run!`'s by [§10.7][s10-7]'s invariant. `pace` is a positive real, `Inf` admitted, and
 `margin` a non-negative real, `Inf` admitted. The two setters and the two
@@ -13371,37 +13372,44 @@ For service users:
 ## Appendix B. API synopsis: the entry points
 
 The user-facing surface on one page, under the same rule as [Appendix A][sA]:
-an index, not a second home. Each signature is normative only where its
-owning section settles it. Every name here is public by being here, reached
-by qualified name or by per-name `import`. The module exports nothing until
-the exported-name audit (`pending.md`) fixes the list ([D-226][d-226]). The
-author-side declaration surface comes first, then the operator surface by
-lifecycle.
+an [index, not a second home](#g-normative). Each signature is normative only
+where its owning section settles it. Every name here is public by being here,
+reached by qualified name or by per-name `import` ([D-226][d-226]). The module
+exports nothing until the exported-name audit (`pending.md`) fixes the list
+([D-226][d-226]). The author-side declaration surface comes first, then the
+operator surface by lifecycle.
 
-**Authoring**, what a component or assembly defines ([§8.2][s8-2],
+#### Authoring
+
+What a [component](#g-component) or [assembly](#g-assembly) defines ([§8.2][s8-2],
 [§8.5][s8-5]–[§8.7][s8-7]):
 
-- Continuous leaf. `x_init` (by value, mandatory, `(;)` when stateless) and
-  `m_init` (by value), `ws_init(::C, ::Type{T})` (by allocation), `u_types` and
-  `y_types` (by type, walked, `Pinned{P}` marking a frozen leaf), and
-  `state_events`. Its stage and event functions are `y_state`,
-  `y_direct` and `x_deriv`, guard/handler pairs
-  (`StateEvent(guard, handler)`; the detection policy comes from the guard's
-  return type, [§10.4][s10-4]) and `x_projection`.
-- Discrete leaf. `s_init` (by value, mandatory, `(;)` when stateless),
-  `ws_init(::C, ::Type{T})` (always called at `Float64`) and
-  `u_types`/`y_types` (pinned wholesale). Its stages are
-  `y_state`, `y_direct` and `s_update`.
-- Assembly. `local_wires` (mandatory, the class marker),
-  `input_wires`, `output_wires`, `sample_times` and
-  `transparent_container` (optional, default `nothing`).
-- Any component. `stop_reason` (optional, default `""`), the reason its stop
-  requests report ([§13.5][s13-5]).
-- Shipped conditions. `condition(::C; kw)`, methods of the framework's
-  `condition` generic that return the component's fragment ([§14.2][s14-2]).
+- The root type. `AbstractComponent`, the one root of primitives and
+  assemblies alike, with no `AbstractAssembly` beside it ([§8.5][s8-5],
+  [D-039][d-039]).
+- Continuous leaf. `x_init` and `m_init` (by value), `ws_init(::C, ::Type{T})`
+  (by allocation), `u_types` and `y_types` (by type, `Pinned{P}` marking a
+  frozen leaf), and `state_events`. Its [stages](#g-stage-function) are
+  `y_state` and `y_direct`, its update law `x_deriv`, and its event functions
+  [guard](#g-guard)/handler pairs
+  ([`StateEvent(guard, handler)`](#g-state-event)) and `x_projection`.
+- Discrete leaf. `s_init` (by value), `ws_init(::C, ::Type{T})` and
+  `u_types`/`y_types`. Its stages are `y_state` and `y_direct`, and its
+  update law `s_update`.
+- Assembly. `local_wires` (the [class](#g-class) marker),
+  `input_wires`, `output_wires` and `sample_times`, and the optional
+  `transparent_container` (default `nothing`).
+- Sample-time entries. `Relative(K, Φ = 0)` in scope ticks and
+  `Absolute(q, τ = 0)` in exact rational seconds, with `q` a quantity value,
+  `Period(T)` or `Hz(frequency)` ([§10.5][s10-5], [D-185][d-185]).
+- Any component. `stop_reason` (optional, default `""`), the reason its
+  [stop requests](#g-stop-request) report ([§8.2][s8-2], [D-316][d-316]).
+- Shipped [conditions](#g-condition). `condition(::C; kw)`, methods of the framework's
+  `condition` generic that return the component's [fragment](#g-fragment)
+  ([§14.2][s14-2]).
 
-Bundle contents by function family (the maximal legal sets, [§5.2][s5-2];
-signatures destructure less at will):
+Bundle contents by [function family](#g-function-family) (the maximal legal
+sets, [§5.2][s5-2]):
 
 | function | tier | bundle fields |
 |---|---|---|
@@ -13414,180 +13422,150 @@ signatures destructure less at will):
 | guard / handler | continuous | `x, m, y, u, t [, ws]` |
 | `x_projection` | continuous | positional `(comp, x)`, no bundle |
 
-Table footnotes, from the bundle law ([§5.2][s5-2]). The sets above are
-maximal, and each field is present only if it exists for the component. `u`
-is present iff the function family may see inputs **and** the component
-declares `u_types`. `y` is present iff the component declares
-`y_types`. `x`/`s`/`m` are present iff
-declared non-empty ([D-297][d-297]), and `ws` iff declared. `y_x`/`y_s` are present iff the stage-1 *return* is non-empty
-([§5.2][s5-2], [D-285][d-285]). `Δt` is present
-on the discrete tier only. Returns follow three rules. A stage returns a
-NamedTuple of port values ([§4.3][s4-3], [§5.2][s5-2]). `x_deriv`
-returns the layout image of `X` ([§7.1][s7-1]). A **handler returns `(; x, m)`
-with each key present iff that store exists and the handler updates it** (the
-return law, [§5.2][s5-2]). There is no padding. `x` comes back complete, and
-`m` may come back partial.
+Each field is present only if it exists for the component, under the
+[bundle](#g-bundle) law ([§5.2][s5-2]). Returns follow three rules, among them
+the handler's `(; x, m)` under the return law ([§5.2][s5-2], [§7.1][s7-1],
+[D-090][d-090]).
 
-**Build.**
+#### Build
 
-- `build(world) → Build`. Standalone. It yields the inspectable derived-contract
-  artifact, [`Structure`](#g-structure) (the structure step's product, the components, wires,
-  faces and tiers), [`Outputs`](#g-outputs) (the nominal evaluation's product, the port classes and the execution order), [`Events`](#g-events) (the nominal evaluation's other product, the event
-  names and policies), the activations and `warnings`; the wire list per
-  assembly and the root inputs are `Structure`'s, the face table and the
-  routes are functions over them, and the execution order is `Outputs`'s
-  ([§9.2][s9-2]).
-  `build(world; activations = (Float64, ProbeDual))` additionally pins
-  activation invariants for CI (`ProbeDual` is the public canonical concrete
-  probe scalar, [§9.4][s9-4]), and pre-materializes activations so a parallel
-  sweep shares a fully immutable `Build` ([§11.1][s11-1], [§9.4][s9-4]).
+- `build(world; activations = ()) → Build`. Standalone. It yields the
+  inspectable derived-contract artifact,
+  [`Structure`](#g-structure), [`Outputs`](#g-outputs),
+  [`Events`](#g-events), the [activations](#g-activation) and `warnings`
+  ([§9.2][s9-2]). `activations = (Float64, ProbeDual)` additionally pins
+  activation invariants for CI, and pre-materializes activations for a
+  parallel sweep ([§11.1][s11-1], [§9.4][s9-4]).
+- [`ProbeDual`](#g-probedual). The public canonical concrete probe scalar
+  ([§9.4][s9-4]).
 - `resolve(assembly, path) → AbstractComponent`. Resolves an immediate child, a
-  container element's key segment included. Wiring resolution applies the
-  one-level rule ([§6.1][s6-1]). The service walk follows the structure's
-  children ([§13.3][s13-3]).
+  container element's key segment included ([§13.3][s13-3]).
 - `input_faces(c)` / `output_faces(c) → Vector{String}`. Declaration-ordered
-  face names ([§13.3][s13-3]).
-- `input_passthrough(assembly, path; prefix, sep, except, only, select)` /
-  `output_passthrough(assembly, path; prefix, sep, except, only, select)`. The
-  declaration-site helpers for computed interface connections. `path` names
-  an immediate child. `except`, `only` and `select` are exclusive, one per
-  call; `select` is a predicate over face names. More than one given is
-  `UnknownFaceSelection` with reason `:multiple_selectors`, and a selector
-  that keeps nothing warns `EmptyFaceSelection` on the `Build`
+  [face](#g-face) names ([§13.3][s13-3]).
+- `input_passthrough(assembly, child_path; sep = ".", prefix =
+  replace(child_path, "/" => sep), except = (), only = (), select = nothing)`
+  and `output_passthrough` with the same arguments. The declaration-site
+  helpers for computed interface connections ([§8.8][s8-8]). More than one
+  selector given is `UnknownFaceSelection` with reason `:multiple_selectors`,
+  and a selector that keeps nothing warns `EmptyFaceSelection`
   ([§8.8][s8-8]).
 
-**Deployment.**
+#### Deployment and the model
 
-- `Deployment(build; algorithm = RK4, h, N_base = 1, Δt_base = nothing,
-  localization_tol = 1e-6, localization_budget = 8,
-  firing_budget = 4) → Deployment`.
-  The artifact the grid parameters fix, scalar-free, carrying the
-  [`Schedule`](#g-schedule) (the typed per-component `(D, Φ, Δt)` tick table),
-  the grid diagnostics and its `warnings` ([§9.2][s9-2]).
+- `Deployment(build; h, N_base, Δt_base = nothing, algorithm = RK4,
+  firing_budget = 4, localization_tol = 1e-6, localization_budget = 8) →
+  Deployment`. The [deployment](#g-deployment) (the scalar-free artifact the
+  grid parameters fix), carrying the [`Schedule`](#g-schedule) (the typed
+  per-component `(D, Φ, Δt)` tick table), the grid diagnostics and its
+  `warnings` ([§9.2][s9-2]).
 
   | keyword | default | meaning | owning section |
   |---|---|---|---|
-  | `algorithm` | `RK4` | the stepper, selected by type here and materialized against the state buffer at `Model` construction ([D-227][d-227]) | [§10.2][s10-2] |
-  | `h` | — | required. A domain rate is not a framework default | [§10.2][s10-2] |
-  | `N_base` | `1` | steps per base tick. Absent the `Δt_base` keyword, the `N_base·h` product is the base tick period (the default path). Given it, `N_base` is instead derived and validated an integer ≥ 1 | [§9.2][s9-2] |
-  | `Δt_base` | `nothing` | the base tick period as a `Rational`, `Period` or `Hz` value, or `:derive` to request GCD derivation (all-anchored models only); one of three binding sources | [§9.2][s9-2] |
+  | `algorithm` | `RK4` | the stepper (`RK4` or `Heun`), bound against the state buffer at [`Model`](#g-model) construction ([D-227][d-227]) | [§10.2][s10-2] |
+  | `h` | — | required, refused as `DeploymentInvalid` when absent | [§10.2][s10-2] |
+  | `N_base` | — | steps per base tick, `1` absent `Δt_base` and derived otherwise | [§9.2][s9-2] |
+  | [`Δt_base`](#g-dt_base) | `nothing` | the base tick period (`Rational`, `Period` or `Hz`), or `:derive` | [§9.2][s9-2] |
   | `localization_tol` | `1e-6` | the root-finder's relative bracket-width convergence test (`localization_tol · h`) | [§10.4][s10-4] |
   | `localization_budget` | `8` | the per-frame localization allowance | [§10.4][s10-4] |
-  | `firing_budget` | `4` | the per-event, per-boundary firing allowance of the event iteration, an integer ≥ 1 | [§10.6][s10-6] |
+  | [`firing_budget`](#g-firing-budget) | `4` | the per-event, per-boundary firing allowance, an integer ≥ 1; exhaustion warns `FiringBudget` | [§10.6][s10-6] |
 
-  `Δt_base` binds from exactly one of three sources ([§9.2][s9-2]). The first
-  is the `Δt_base` keyword, a `Rational`, `Period` or `Hz` value; `N_base` is
-  then derived and validated an integer ≥ 1. The second is the `N_base·h`
-  product when the keyword is absent (the default path). The third,
-  requested with `Δt_base = :derive` in a fully anchored model, is derivation
-  from the constraint pool at the coarsest admissible value, printed with its
-  drivers ([§9.2][s9-2]).
-
-  The [deployment](#g-deployment) (the scalar-free artifact the grid parameters
-  fix) binds no stop policy. `t_end` and `ignore_stop_requests` are keywords of each advance
-  ([§12.6][s12-6]). A run ends at the first grid boundary
-  reaching or exceeding `t_end`, whole frames only ([§12.4][s12-4]). An
-  unbounded run stays bounded in memory, since `log_max` keeps such a session
-  from growing without limit ([§11.2][s11-2]).
-
-  An event that exhausts `firing_budget` at a boundary loses its further edges
-  there, under a `FiringBudget` warning ([§10.6][s10-6]). `localization_tol`,
-  `localization_budget` and `firing_budget` are all three
-  trajectory-determining like their siblings. So they are validated with them
-  (`DeploymentInvalid`) and carried on the `Deployment` the trace header
-  records, where replay compares the two deployments as values
-  ([§11.5][s11-5], [§12.7][s12-7]).
 - `Model(deployment, T = Float64; chunk_size = 16) → Model{T}`. Materializes a
   deployment at a scalar type, allocating the buffers ([§9.2][s9-2], [D-317][d-317]).
 
   | keyword | default | meaning | owning section |
   |---|---|---|---|
-  | `chunk_size` | `16` | the executor's unroll width, a performance knob that never moves the trajectory | [§9.7][s9-7], [§12.6][s12-6] |
+  | `chunk_size` | `16` | the [executor](#g-executor)'s unroll width, a performance knob that never moves the trajectory | [§9.7][s9-7], [§12.6][s12-6] |
 
-- `Model`'s own doors, for a model stepped on its own or used as a service's
-  scratch ([§9.2][s9-2], [D-317][d-317], [D-318][d-318], [D-319][d-319]). Each writing door is refused
-  on a model a simulation has claimed, as `ArgumentInvalid` with reason
+- `Model(build, T = Float64; kw...)` and `Model(world, T = Float64; kw...)`.
+  The two composed forms. The first composes the `Deployment` constructor
+  with the materialization, and the second calls `build` first.
+- `Model`'s own entry points, for a model stepped on its own or used as a
+  service's [scratch](#g-scratch) ([§9.2][s9-2], [D-317][d-317],
+  [D-318][d-318], [D-319][d-319]). The entry points below that write are
+  `init!`, `frame!`, `restore!`, `overlay!` and `trim!`. Each is refused on a
+  model a simulation has claimed, as `ArgumentInvalid` with reason
   `:claimed`.
 
-  - `init!(model, condition; t0 = 0.0, hooks = NoHooks())`. The model's door
-    into `:consistent`. It checks root-input totality before any write and
-    runs boundary zero at `t0`, which settles through the hooks
-    ([§14.5][s14-5], [§14.6][s14-6]). A writing door.
+  - `init!(model, condition = set(); t0 = 0.0, hooks = NoHooks())` (`set`,
+    under Condition algebra). The
+    model's entry point into `:consistent` ([D-317][d-317]). It runs
+    [boundary zero](#g-boundary-zero) at `t0`, which settles through the hooks
+    ([§14.5][s14-5], [D-317][d-317]).
   - `frame!(model, k, hooks = NoHooks()) → Bool`. Advances the model through
-    frame `k` and settles its frame-top boundary ([§10.4][s10-4]). It returns
-    `true` when a hook abandoned the frame's remainder ([§13.5][s13-5]).
-    `FrameHooks` is the hooks' contract. `frame_top!(hooks)` runs before the
-    frame touches any state, and `settled!(hooks) → Bool` runs at every
-    settled boundary. `NoHooks()` is the no-op, and its `settled!` returns
-    `false`. A writing door.
-  - `port(model, path, name)`, `state(model, path)` and `modes(model, path)`.
-    The reads of a port's value, a component's state from whichever home
-    owns it, and its modes ([§7.3][s7-3]).
-  - `warnings(model) → Vector`. The build's list and the deployment's,
-    concatenated ([§9.2][s9-2]).
-  - `checkpoint(model) → ModelState`. The model's state alone, legal at
-    `:consistent` with the clock on a grid top. Any other status is
-    `ServiceLifecycle`, and a clock off the grid is `CheckpointMidFrame`
+    [frame](#g-frame) `k` and settles its frame-top [boundary](#g-boundary) ([§13.4][s13-4]). It returns
+    `true` when a hook abandoned the frame's remainder ([§13.5][s13-5],
+    [D-317][d-317]). `FrameHooks` is the hooks' type. `frame_top!(hooks)` runs
+    before the frame touches any state, and `settled!(hooks) → Bool` runs at
+    every settled boundary. `NoHooks()` is the no-op, and its `settled!`
+    returns `false` ([D-317][d-317]).
+  - `port(model, path, name)`, `state(model, path)` and `modes(model, path)`,
+    with the `Simulation` forms `port(sim, path, name)`, `state(sim, path)`
+    and `modes(sim, path)`. The reads of a [port](#g-port)'s value, a component's state
+    from whichever home owns it, and its modes ([§7.3][s7-3], [D-317][d-317]).
+  - `port(snapshot, path, name)`. A port's value off a published
+    [snapshot](#g-snapshot), addressed exactly as the live table.
+  - `warnings(model) → Vector`. The [build](#g-build)'s list and the deployment's,
+    concatenated ([§9.2][s9-2], [D-317][d-317]).
+  - `checkpoint(model) → ModelState`. The model's state alone
+    ([§12.6][s12-6]). At a status other than `:consistent` it is
+    `ServiceLifecycle` ([§14][s14], [D-319][d-319]). A clock off the grid is
+    `CheckpointMidFrame` ([D-319][d-319]).
+  - `restore!(model, model_state; hooks = NoHooks())`. Copies the state back,
+    settles through the hooks and writes `:consistent` last ([§12.6][s12-6]).
+    A fingerprint or deployment mismatch is `CheckpointMismatch`
     ([§12.6][s12-6]).
-  - `restore!(model, model_state; hooks = NoHooks())`. Checks the state's
-    fingerprint and deployment (`CheckpointMismatch`) and its `t` against
-    its grid (`CheckpointMidFrame`) before any write ([§12.6][s12-6]).
-    Copies the state back, settles through the hooks and writes
-    `:consistent` last. It takes no status gate ([D-319][d-319]). A writing
-    door.
-  - `overlay!(model, condition; hooks = NoHooks())`. Writes the condition
-    onto the model at rest and settles the overlaid state with no discrete
-    output stage and no update, the clock and the priors kept ([§12.6][s12-6]).
-    Legal at `:consistent` with the clock on a frame top. A writing door.
-  - `trim!(model, problem; baseline, t0 = 0.0, backend) → TrimReport`. The
-    trim service on a `Model{Float64}`, committing through the model's
-    `init!` ([§14.8][s14-8]). A writing door.
-  - `linearize(model, taps; about, t0, width = 8) → Linearization`. The
-    query on a `Model{Float64}`, its default operating point
-    `checkpoint(model)` ([§14.10][s14-10]).
+  - `overlay!(model, condition = set(); hooks = NoHooks())`. Writes the
+    condition onto the model at rest and settles the overlaid state with no
+    discrete output stage and no update ([§12.6][s12-6]).
+  - `trim!(model, problem; baseline, t0 = 0.0, backend =
+    LevenbergMarquardt()) → TrimReport`. The trim service on a
+    `Model{Float64}`, committing through the model's `init!`
+    ([§14.8][s14-8]).
+  - `linearize(model, taps; about = nothing, t0 = nothing, width = 8) →
+    Linearization`. The query on a `Model{Float64}`, its default operating
+    point `checkpoint(model)` ([§14.10][s14-10]).
 
-  `trim!` and `linearize` on a `Model` at another scalar are
-  `ArgumentInvalid` with reason `:non_nominal`. The stepping primitives
-  `evaluate!`, `integrate!`, `boundary!`, `offtick_boundary!` and
-  `boundary_zero!` are framework internals the spec names only as
-  mechanisms, outside this API and outside the claim's gate. `apply!` is an
-  internal outside this API too, and the claim's gate refuses it on a
-  claimed model ([D-318][d-318]).
+  The stepping primitives `evaluate!`, `integrate!`, `boundary!`,
+  `offtick_boundary!` and `boundary_zero!` are framework internals, outside
+  this API and outside the claim's gate ([D-318][d-318]). `apply!` is an
+  internal outside this API too, and the claim's gate refuses it on a claimed
+  model ([D-318][d-318], [D-319][d-319]).
 
-- `Simulation(model; join_timeout = 5.0) → Simulation`. Runs a
-  `Model{Float64}` beside the data plane, the control plane and the run, and
-  offers the stopped-sim services. A `Model` at another scalar is a
-  `MethodError`, and one already claimed by a simulation or not at `:built`
-  is `ArgumentInvalid`, reasons `:claimed` and `:not_built` ([§9.2][s9-2],
-  [D-318][d-318]).
+#### The simulation and its devices
+
+- `Simulation(model::Model{Float64}; join_timeout = 5.0) → Simulation`. Runs
+  a `Model{Float64}` beside the data plane, the
+  [control plane](#g-control-plane) and the [run](#g-run), and offers the
+  stopped-sim services. A `Model` already claimed by a simulation or not at
+  `:built` is `ArgumentInvalid`, reasons `:claimed` and `:not_built`
+  ([§9.2][s9-2], [D-318][d-318]).
 
   | keyword | default | meaning | owning section |
   |---|---|---|---|
   | `join_timeout` | `5.0` | the shutdown tail's join cap, in seconds of wall clock | [§12.4][s12-4] |
 
-  `join_timeout`, the shutdown tail's join cap, lives on `Control` rather than
-  the deployment ([§12.1][s12-1]). It moves no trajectory, so replay neither
-  records nor compares it ([§12.4][s12-4]). The four recording keywords are
-  `init!`'s, `restore!`'s and `replay!`'s, the doors that build a run (below,
-  [D-261][d-261]).
+  The four recording keywords are `init!`'s, `overlay!`'s, `restore!`'s and
+  `replay!`'s, the doors that build a run (below, [D-261][d-261]).
 - `Simulation(deployment; kw...)`, `Simulation(build; kw...)` and
-  `Simulation(world; kw...)`. The three convenience forms. The first
-  materializes a `Model{Float64}` from the deployment and runs it, the second
-  composes the `Deployment` constructor with that, and the third calls
-  `build` first. They take the `Model` and `Simulation` keywords above, the
-  last two the deployment keywords as well ([§9.2][s9-2]).
-- `attach!(sim, dev::AbstractDevice, binding::AbstractBinding; should_abort = false)`.
-  The roots are mandatory, and the signature is the gate.
+  `Simulation(world; kw...)`. The three convenience forms ([§9.2][s9-2]).
+  They take the `Model` and `Simulation` keywords above, the last two the
+  deployment keywords as well ([D-317][d-317]).
+- `attach!(sim, dev::AbstractDevice, new_binding::AbstractBinding;
+  should_abort = false) → DeviceHandle`. A stopped-sim operation that adds a
+  [device](#g-device) and its [binding](#g-binding) to the
+  [roster](#g-roster) and returns the device's handle ([§11.3][s11-3],
+  [§11.6][s11-6]). It is `ServiceLifecycle` while `running` and on an
+  `errored` simulation. A second roster entry for one instance is
+  `AlreadyAttached`, and an overlapping claim is `ClaimConflict`
+  ([§11.3][s11-3]).
 
   | argument | default | meaning | owning section |
   |---|---|---|---|
   | `dev::AbstractDevice` | — | the device instance; the root type is mandatory | [§11.6][s11-6] |
-  | `binding::AbstractBinding` | — | the binding value; the root type is mandatory | [§11.6][s11-6] |
-  | `should_abort` | `false` | the per-attachment failure policy. Set, the device's departure also requests a sim stop. Clear, the run continues with the device absent and its claims held to run end | [§11.6][s11-6], [§12.4][s12-4] |
+  | `new_binding::AbstractBinding` | — | the binding value; the root type is mandatory | [§11.6][s11-6] |
+  | [`should_abort`](#g-should_abort) | `false` | the per-attachment failure policy. Set, a departure also requests a sim stop | [§11.6][s11-6], [§12.4][s12-4] |
 
-  A departure is the loop body returning, a crash, or a failed `init!`.
-
-  **Sides are declared** by the binding's Bool traits, and each declared side
+  Sides are declared by the binding's Bool traits, and each declared side
   carries its own methods:
 
   | trait / method | default | meaning | owning section |
@@ -13595,253 +13573,180 @@ return law, [§5.2][s5-2]). There is no padding. `x` comes back complete, and
   | `is_input(b)` | `false` on `AbstractBinding` | declares the input side | [§11.6][s11-6] |
   | `is_output(b)` | `false` on `AbstractBinding` | declares the output side | [§11.6][s11-6] |
   | `is_greedy(b)` | `false` on `AbstractBinding` | `true` switches the claim's *source* | [§11.3][s11-3], [§11.6][s11-6] |
-  | `claims(b)` / `map_input(datum, b)` | — | the input side. The enumerated face set *is* the claim, what the device may write rather than what it will | [§11.3][s11-3], [§11.4][s11-4] |
+  | `claims(b)` / `map_input(datum, b)` | — | the input side. The enumerated face set *is* the [claim](#g-claim) | [§11.3][s11-3], [§11.4][s11-4] |
   | `reads(b)` / `map_output(nt, b)` | — | the output side | [§14.4][s14-4], [§11.2][s11-2], [§11.6][s11-6] |
 
-  The conformance check runs at attach, pairing each trait against its
-  method. A declared side whose `claims`/`reads` was never written reaches
-  the error fallback. A method defined under a false trait is detected by
-  `which` against the fallback. Both are `BindingContractMismatch`
-  ([§11.6][s11-6]). A claim is registered with exclusivity enforced, and the
-  staged shape and normalization shim are compiled ([§11.4][s11-4]). The
-  `reads` selectors are validated and compiled to one gather
-  ([§14.4][s14-4], [§11.2][s11-2]). Under `is_greedy(b) = true` the framework
-  computes the unclaimed complement at attach instead of calling `claims`.
-  Everything downstream is identical. An empty remainder is legal and
-  reported (`EmptyGreedyClaim`), and `is_greedy` without `is_input` is an
-  error ([§11.3][s11-3], [§11.6][s11-6]). `TableBinding` is the shipped
-  data-driven binding, and the standard GUI binding is the greedy one
-  ([§11.6][s11-6]).
+  A declared side without its method, or a method under a false trait, is
+  `BindingContractMismatch` ([§11.6][s11-6]). An empty greedy remainder is
+  legal and reported as `EmptyGreedyClaim` ([§11.6][s11-6]).
 
-  `attach!` is a stopped-sim operation. It is legal in `built`, `initialized`
-  and `stopped`. It is an error while `running` and on an `errored`
-  simulation (`ServiceLifecycle`; the roster freeze, [§11.3][s11-3], and the
-  terminal state, [§13.6][s13-6]). Admission checks identity and claims
-  ([§11.3][s11-3]). A second roster entry for one instance is
-  `AlreadyAttached`, and rebinding is `detach!` + `attach!`. An overlapping
-  claim is `ClaimConflict`. `attach!` registers only. The task appears at the
-  next `run!`.
+- `TableBinding`. The shipped data-driven binding ([§11.6][s11-6]).
 - `detach!(sim, device)`. Removes the roster entry and releases the device's
-  claims. Stopped-sim only, like `attach!`. A loop body's voluntary exit or
-  crash mid-run does *not* detach. The task dies, and the claims persist to
-  run end ([§11.3][s11-3], [§11.6][s11-6], [§12.4][s12-4]).
-- The device contract. `MyDevice <: AbstractDevice` plus `init!(dev)` /
-  `loop(dev, handle)` / `shutdown!(dev)` and the optional `unblock!(dev)`.
-  Around those functions the framework runs a per-run `init!` on the calling task. That
-  call is bracketed, so a throw there is `shutdown!` plus `DeviceCrash` by
-  name, and the device is dead from the run's first frame top ([§12.4][s12-4]). The
-  author-owned task body runs inside the framework's try/catch/finally
-  wrapper, and voluntary exit is returning ([§11.6][s11-6], [§12.4][s12-4]).
-- The device handle. One type, with capabilities rather than a taxonomy:
-  `running`, `latest`, `wait_next_snapshot` ([§12.3][s12-3]), `stage!`,
-  `binding`, `gather`, `report!` ([§11.6][s11-6]), and `pending` ([§11.7][s11-7]).
+  claims ([§11.3][s11-3]). Stopped-sim only, like `attach!`.
+- Device authoring. `MyDevice <: AbstractDevice` (an illustrative name), with
+  `loop(dev, handle)` mandatory and `init!(dev)`, `shutdown!(dev)` and
+  `unblock!(dev)` optional hooks ([§11.6][s11-6], [D-366][d-366]). A throw
+  in the per-run `init!(dev)` is `shutdown!` plus `DeviceCrash`
+  ([§11.6][s11-6]).
+- The device handle, `DeviceHandle`. One type, with capabilities rather than
+  a taxonomy: `latest(handle)`, `wait_next_snapshot(handle)`
+  ([§12.3][s12-3]), `running(handle)`, `stage!(handle, writes::Pair...)`,
+  `binding(handle)`, `gather(handle, snapshot)`, `report!(handle, occurrence)`
+  ([§11.6][s11-6]), and `stop!(handle)`, which requests a stop
+  ([§11.6][s11-6], [D-268][d-268]).
 - The panel kit ([§11.7][s11-7]). `port_views(handle)`, the baked table of port
-  views; `peek(view, handle, snapshot)`; `incumbent_status(view,
-  snapshot)`, with `orphaned` and `stale` on the record it returns.
+  views; `pending(handle, slot)`; [`peek(view, handle, snapshot)`](#g-peek); `incumbent_status(view,
+  snapshot)`, with `orphaned(record)` and `stale(record; now = time())`
+  reading the record it returns.
 
-**Condition algebra** ([§14.1][s14-1]–[§14.6][s14-6]).
+#### Condition algebra
 
-- `set(; x, s, m, u)`. The leaf, a fragment: self-vocabulary payloads at
-  the authoring level. `u` names faces of that level's contract.
-- `at(prefix, node)`. Scoping. It stores, never applies. It also lifts whole
-  `TrimProblem`s and linearization tap sets ([§14.9][s14-9],
-  [§14.10][s14-10]). An empty prefix is refused ([§14.2][s14-2]).
+- `set(; x = (;), s = (;), m = (;), u = (;))`. The leaf, a fragment of
+  self-vocabulary payloads at the authoring level ([§14.2][s14-2]).
+- `at(prefix, node)`. Scoping. It stores, never applies. It also lifts a
+  whole [`TrimProblem`](#g-trimproblem) (the closed nine-field value a trim
+  solves) and a linearization [tap set](#g-taps) ([§14.2][s14-2],
+  [§14.9][s14-9], [§14.10][s14-10]).
 - `combine(nodes...)`. Symmetric collection. Duplicate leaves error with both
-  origins. Blending a node with a bare NamedTuple is a directive error
-  method ([§14.2][s14-2]).
-- `override(base, patches...)`. Ordered layering. The patch wins, and
-  the origin keeps both ([§14.6][s14-6]).
-- `condition(comp; kw)`. The shipped condition-method idiom. Aircraft
-  baselines (`ready_for_taxi(ac)`, `cold_and_dark(ac)`) are its
-  full-coverage instances.
+  origins ([§14.2][s14-2]).
+- `override(base, patches...)`. Ordered layering. The patch wins, and the
+  origin keeps both ([§14.6][s14-6]).
+- `condition(comp; kw)`. The shipped condition-method idiom ([§14.2][s14-2]).
 
-**Stopped-sim services** ([§14][s14]).
+#### Stopped-sim services
 
-- `init!(sim, condition; t0 = 0.0, trace = true, log = true, log_every = 1,
-  log_max = 65536)`. `t0` is any real, held as a `Float64`
-  origin ([D-260][d-260]). Root-input totality is checked
-  pre-write ([§14.6][s14-6]). Then boundary zero runs: project, sweep, events,
-  the due `s_update` calls, then the first snapshot, and the checkpoint that
-  is the run's trace header ([§11.5][s11-5], [§14.5][s14-5]).
+- `init!(sim, condition = set(); t0::Real = 0.0, trace = true, log = true,
+  log_every = 1, log_max = 65536)`.
+  [Root-input totality](#g-root-input-totality) is checked pre-write
+  ([§14.6][s14-6]). Then boundary zero runs at `t0`, held as a `Float64`
+  origin, and the [checkpoint](#g-checkpoint) that is the run's
+  [trace header](#g-trace-header) follows ([§11.5][s11-5], [§14.5][s14-5],
+  [D-260][d-260]).
 
   | keyword | default | meaning | owning section |
   |---|---|---|---|
-  | `trace` | `true` | the input trace's plain kill switch | [§11.5][s11-5] |
-  | `log` | `true` | the snapshot log's plain kill switch | [§11.2][s11-2] |
-  | `log_every` | `1` | the log's keep-every-kth decimation | [§11.2][s11-2] |
-  | `log_max` | `65536` | the maximum number of retained snapshots, finite by default with `Inf` the opt-out | [§11.2][s11-2] |
+  | `trace` | `true` | the input [trace](#g-trace)'s plain kill switch | [§11.5][s11-5] |
+  | `log` | `true` | the snapshot [log](#g-log)'s plain kill switch | [§11.2][s11-2] |
+  | `log_every` | `1` | the log's keep-every-kth [decimation](#g-decimation) | [§11.2][s11-2] |
+  | `log_max` | `65536` | the maximum number of retained snapshots, `Inf` the opt-out | [§11.2][s11-2] |
 
   Recording. The four keywords configure the run this call builds, with its
-  log and trace ([§12.6][s12-6], [D-261][d-261]); `restore!` and `replay!`
-  take the same four. `log_every` is admissible on the derived artifact
-  only, never on the trace ([§11.2][s11-2], [§11.5][s11-5], [D-029][d-029]). When the log fills,
-  the retention stride doubles, so the whole run stays covered at coarsening
-  density. The run's first and terminal snapshots are retained
-  unconditionally and outside the bound ([§11.2][s11-2]). All four are view
-  policies, not trajectory-determining. Replay neither records nor compares
-  them.
-- `trim!(sim, problem; baseline, t0 = 0.0, backend) → TrimReport`. Nonlinear
-  least squares on the packed residuals with exact Dual Jacobians, against the
-  problem's own `tolerances`. `residuals(reads, d) → NamedTuple` is packed in
-  `tolerances`' field order, as decisions pack in `guess`'s. Names pair, and the
-  order is the declared side's. The problem itself closes at nine fields
-  ([§14.7][s14-7]). Setup and commit both carry the root-input-totality check ([§14.6][s14-6]).
-  The commit is `init!` with `override(baseline, condition(solution))`, boundary zero
-  anchored at `t0` and the recorders built anew ([§12.6][s12-6]). On a `Model{Float64}`,
-  `trim!(model, problem; …)` is the same service, its commit the model's
-  `init!` ([D-319][d-319]). `converged` is the service's
-  per-residual box test at the backend's returned point. It is
-  backend-independent and the commit's gate, and the backend's status and counts
-  are recorded diagnostically. The backend seam is a pinned one-method
-  signature,
-  `solve(backend, eval!, d0, lower, upper, tol) → (; d, status, n_evaluations, n_iterations)`.
-  The in-place `eval!(r, J, d)` fills `J` only when it is not `nothing`, the
-  packed vectors are in the declared orders, and `status` is an open `Symbol`
-  recorded verbatim. Non-convergence reports, never throws ([§14.8][s14-8]).
-- `checkpoint(sim) → Checkpoint`. The `Model`'s state at a frame top beside
-  the run's two counters, the frame index and the boundary ordinal. The state
-  is a `ModelState`, as `checkpoint(model)` reads it, holding the flat
-  buffer, the `s` and `m` stores, the whole signal table, the guard priors,
-  `t` and `t₀`, the fingerprint and the deployment. Legal in `initialized`
-  and `stopped`, refused after a `t*` stop and after an abandoned frame
-  (`CheckpointMidFrame`). A checkpoint is not a condition and has no algebra
-  ([§14.1][s14-1], [D-274][d-274], [D-319][d-319]).
+  log and trace ([§12.6][s12-6], [D-261][d-261]). `overlay!`, `restore!` and
+  `replay!` take the same four.
+- `trim!(sim, problem; baseline, t0::Real = 0.0,
+  backend = LevenbergMarquardt()) → TrimReport`. It solves against the
+  problem's own `tolerances`, by default as nonlinear least squares on the
+  packed residuals with exact Dual Jacobians ([§14.7][s14-7]).
+  `LevenbergMarquardt()`, the default backend, is an in-house dense
+  Levenberg–Marquardt ([§14.8][s14-8], [D-070][d-070]). The commit is `init!` with
+  `override(baseline, condition(solution))`, gated on the report's
+  `converged` ([§14.8][s14-8]).
+- `solve(backend, eval!, d0, lower, upper, tol) → (; d, status,
+  n_evaluations, n_iterations)`. The backend [seam](#g-seam), a pinned
+  one-method signature ([§14.8][s14-8]).
+- `checkpoint(sim) → Checkpoint`. A checkpoint holds the `Model`'s state at
+  a frame top, with `t₀`, the fingerprint and the deployment, beside the run's two counters, the frame index and the boundary
+  ordinal ([§12.6][s12-6], [D-274][d-274]).
 - `restore!(sim, cp; trace = true, log = true, log_every = 1,
-  log_max = 65536)`. A door beside `init!` and `replay!`, legal where `init!`
-  is. It checks the checkpoint's fingerprint and deployment
-  (`CheckpointMismatch`) and its
-  `t` against its grid (`CheckpointMidFrame`). It copies the state back,
-  builds a fresh run with the checkpoint as its trace header
-  and publishes one snapshot at the checkpoint's `t`. It runs no boundary
-  zero, and the boundary ordinal continues. The warm restart is
-  `checkpoint` → `restore!` → `run!` ([§12.6][s12-6], [D-274][d-274]).
-
-  `restore!(sim, model_state; kw...)` takes a `ModelState` prepared on a
-  standalone model, with the same keywords and the same fingerprint and deployment check. A
-  state off the grid is `CheckpointMidFrame`. It opens a fresh trajectory at
-  the state's frame, and the restored boundary publishes under ordinal 0
-  ([§9.2][s9-2], [§12.6][s12-6], [D-319][d-319]).
-- `overlay!(sim, condition; trace = true, log = true, log_every = 1,
+  log_max = 65536)`. A door beside `init!`, `overlay!` and `replay!`, legal
+  where `init!` is. It checks the checkpoint's fingerprint and deployment
+  (`CheckpointMismatch`) and its `t` against its grid (`CheckpointMidFrame`).
+  The warm restart is `checkpoint` → `restore!` → `run!`
+  ([§12.6][s12-6], [D-274][d-274]).
+- `restore!(sim, model_state; trace = true, log = true, log_every = 1,
+  log_max = 65536)`. Takes a `ModelState` prepared on a standalone model,
+  with the same fingerprint and deployment check (`CheckpointMismatch`). A
+  state off the grid is `CheckpointMidFrame`. It opens a fresh trajectory at the state's frame, and the restored boundary
+  publishes under ordinal 0 ([§9.2][s9-2], [§12.6][s12-6], [D-319][d-319]).
+- `overlay!(sim, condition = set(); trace = true, log = true, log_every = 1,
   log_max = 65536)`. The state what-if. The condition's stores are written
-  onto a stopped run's own, the clock, the lattice and the priors are kept,
-  the overlaid state settles with no discrete output stage and no update, and
-  a fresh run opens whose header is the checkpoint taken after the settling.
-  A partial store entry merges onto the current store, and a root-input entry
-  writes its cell with no totality asked. Legal where `checkpoint` is, with the
-  four recording keywords ([§12.6][s12-6], [§14.1][s14-1], [D-429][d-429]).
-- `linearize(sim, taps; about, t0, width = 8) → Linearization`. A pure
-  query, seeded Dual passes on scratch, `width` directions per pass. The
-  operating point defaults to the checkpoint of the simulation, restored
-  with no boundary zero, and `about` with `t0` (default `0.0`) places it
-  anywhere else. `t0` is admitted only beside `about`, never silently
-  ignored. On a `Model{Float64}`, `linearize(model, taps; …)` is the same
-  query, its default point `checkpoint(model)` ([D-319][d-319]).
-  `taps(x = (…), u = (…), y = (…))` builds the tap set, three
-  labeled selector lists with closed membership (`x`: `get_state`; `u`:
-  `get_input`; `y`: `get_output`, `get_face`), every tap a
-  [leaf address](#g-leaf-address) resolving to one scalar
-  ([§14.4][s14-4], [§14.10][s14-10], [D-272][d-272], [D-276][d-276]).
+  onto a stopped run's own, and a fresh run opens whose header is the
+  checkpoint taken after the settling ([§12.6][s12-6], [§14.1][s14-1],
+  [D-429][d-429]).
+- `linearize(sim, taps; about = nothing, t0 = nothing, width = 8) →
+  Linearization`. A pure query. The operating point defaults to the
+  checkpoint of the simulation, and `about` with `t0` (default `0.0`) places
+  it anywhere else ([§14.10][s14-10]).
+- `get_state(path, leaf)`, `get_deriv(path, leaf)`, `get_output(path, leaf)`,
+  `get_input(leaf)` and `get_face(leaf)`. The closed
+  [read-selector](#g-selector) family, one
+  address space for every reader that takes a selector ([§14.4][s14-4]).
+- `taps(; x = (;), u = (;), y = (;))`. Builds the tap set, three labeled
+  selector lists with closed membership, every tap a
+  [leaf address](#g-leaf-address) resolving to one scalar ([§14.4][s14-4],
+  [§14.10][s14-10], [D-272][d-272], [D-276][d-276]).
 
-**Running.**
+#### Running
 
-- `run!(sim; pace = Inf, margin = 0.002, t_end = Inf, ignore_stop_requests = ())`. `run!` blocks until the run ends. Deviceless, it
-  is fully synchronous on the calling task. `init!` is required first
-  ([§12.6][s12-6]). Paced and unpaced runs are bit-identical ([§10.7][s10-7]).
+- `run!(sim; pace = Inf, margin = 0.002, t_end = Inf, ignore_stop_requests = ())`.
+  `run!` blocks until the run ends. Deviceless, it is fully synchronous on
+  the [calling task](#g-calling-task) ([§11.1][s11-1], [§12.6][s12-6]).
 
   | keyword | default | meaning | owning section |
   |---|---|---|---|
-  | `pace` | `Inf` | the run's pacing rate; `Inf` is pacer-off, `1` real time | [§10.7][s10-7] |
+  | `pace` | `Inf` | the run's [pacing](#g-pacing) rate; `Inf` is pacer-off, `1` real time | [§10.7][s10-7] |
   | `margin` | `0.002` | the single pacing knob, in seconds | [§10.7][s10-7] |
-  | `t_end` | `Inf` | the run's end time, declared for **this advance**, validated per call | [§12.6][s12-6], [§13.5][s13-5] |
-  | `ignore_stop_requests` | `()` | the stop requesters **this advance** does not honour: `:all`, or their component paths, validated against the `Build`'s requester roster per call | [§13.5][s13-5] |
+  | `t_end` | `Inf` | the run's end time, declared for this advance, validated per call | [§12.6][s12-6], [§13.5][s13-5] |
+  | `ignore_stop_requests` | `()` | the requesters this advance ignores, `:all` or paths in the [requester roster](#g-requester-roster) | [§13.5][s13-5] |
 
-  `pace` defaults to `Inf`, pacer-off. A deviceless run is the harness and
-  CI mode, and real time is `pace = 1` away ([D-269][d-269]). `margin` defaults to 2
-  ms, the sleep primitive's granularity plus its measured overshoot. The
-  values `0`, 2 ms and `∞` span the design space ([§10.7][s10-7]). Each
-  advance builds a [`StopPolicy`](#g-stop-policy) (the
-  immutable `t_end`-plus-ignored-requesters value an advance declares) from its
-  `t_end` and `ignore_stop_requests`. It passes that policy to the loop, and the value
-  lives as long as the call. The termination record carries the policy that
-  ended the run, and nothing else keeps one ([§12.6][s12-6], [§13.5][s13-5], [D-260][d-260]). `t_end = Inf` with no honoured
-  stop request is an unbounded run, allowed, with `UnboundedRun` raised into the
-  loop's diagnostic cell ([§11.8][s11-8]).
-- `step!(sim; frames = 1, t_end = Inf, ignore_stop_requests = ()) → frames_advanced`. A
-  synchronous partial advance through the ordinary frame sequence,
-  bit-identical to the same frames under `run!`. It never waits ([D-269][d-269]).
-  `t_plus = <duration>` is the
-  mutually exclusive duration spelling
-  (whole frames until the boundary time covers that duration). It returns the
-  frames *actually* advanced, fewer than requested when `t_end` or a
-  stop request ended the run inside the call. Between calls the simulation
-  reports `initialized`. `run!` may follow, and it continues from the current
-  boundary. A stepping session is deviceless. Write via `stage!` and read via
-  `latest` ([§12.6][s12-6]).
-- `stage!(sim, "face" => value, …)`. Staging from any task, the calling
-  task included, into the harness writer ([§11.3][s11-3]). Its surface is the currently
-  unclaimed faces. The batch is traced, drained last at the next frame top,
-  and surface-checked exactly as any device's (the harness cell,
-  [§11.3][s11-3]). It is legal under `run!` and `step!` alike
-  ([§12.6][s12-6]).
+  Each advance builds a [`StopPolicy`](#g-stop-policy) from its `t_end` and
+  `ignore_stop_requests` ([§13.5][s13-5], [D-260][d-260]). `t_end = Inf` with
+  no honoured stop request is an unbounded run, allowed, with `UnboundedRun`
+  raised into the loop's [diagnostic cell](#g-diagnostic-cell) in `:live`
+  only ([§11.8][s11-8], [§13.5][s13-5]).
+- `step!(sim; frames = 1, t_plus = nothing, t_end = Inf,
+  ignore_stop_requests = ()) → frames_advanced`. A synchronous partial
+  advance through the ordinary frame sequence, bit-identical to the same
+  frames under `run!`. `t_plus = <duration>` is the mutually exclusive
+  duration spelling ([§12.6][s12-6]).
+- `stage!(sim, "face" => value, …)`. Staging from any task, the calling task
+  included, into the [harness writer](#g-harness-writer). Its surface is the
+  currently unclaimed faces ([§11.3][s11-3]).
 - `latest(sim) → snapshot`. The current published snapshot, the same
-  immutable value device handles read ([§11.2][s11-2]). It is the assertion
-  and inspection accessor of the harness and REPL modes ([§12.6][s12-6]).
+  immutable value device handles read ([§11.2][s11-2]).
 - `phase_bodies(sim) → named callables`. The compiled phase bodies of the
   nominal activation, bound over the simulation's own buffers. They are the
-  four blocks (`rhs`, `sweep_1`, `sweep_2`, `ticks`), with the sweeps in both
-  arities, zero-arg interior and tick-indexed boundary, and `ticks` taking
-  the tick index. Per-event guards/handlers and per-component
-  `x_projection` come with them, keyed by the model's roster. This is the
-  [§9.8][s9-8] allocation seam. Warm, then `@ballocated(body()) == 0` per
-  body. It is an inspection-only surface, and its one promise is identity with
-  what the loop runs. An isolated invocation leaves buffers valid but
-  off-trajectory. Re-run `init!` to continue ([§9.7][s9-7]).
-- Control plane. Pause/un-pause, pace and `margin` changes, and stop all
-  sit on a separate atomic surface, never staged ([§12.1][s12-1]). Pacing sits
-  outside the semantics, so pace and `margin` are both safe to change live.
-  `pause!(sim)`, `resume!(sim)` and `stop!(sim)` are the calling code's
-  spellings and `paused(sim)` the read; `pace!(sim, p)` and
-  `margin!(sim, m)` set the two knobs and `pace(sim)` and `margin(sim)` read
-  them ([D-269][d-269]); a device stops through `stop!(handle)` ([§11.6][s11-6]). The
-  tail clears the pause, never a run's start ([D-268][d-268]).
+  [§9.8][s9-8] [measurement seam](#g-measurement-seam) ([§9.7][s9-7]).
+- Control plane. `pause!(sim)`, `resume!(sim)` and `stop!(sim)` are the
+  calling code's spellings and `paused(sim)` the read ([§12.1][s12-1],
+  [D-268][d-268]). `pace!(sim, p)` and `margin!(sim, m)` set the two knobs
+  and `pace(sim)` and `margin(sim)` read them ([D-269][d-269]). A device
+  stops through `stop!(handle)` ([§11.6][s11-6], [D-268][d-268]).
 - Termination. The model's state ends a run via stop requests, `StopFlag`
   ports read at every published boundary unless the advance ignores them
-  ([§13.5][s13-5]). Shutdown completes a boundary,
-  publishes the final snapshot, then joins ([§12.4][s12-4]).
-- Post-run. The log is the retained snapshots. `series(sim, read_set) →
-  ts` gathers them into labeled columns through the read-selector
-  family, one typed vector per entry beside `t`, frame and boundary
-  ([§11.2][s11-2], [D-407][d-407]). `trace(sim) → trc` retrieves
-  the always-on input trace.
-  `replay!(sim2, trc; to_boundary = k, pace = Inf, margin = 0.002,
-  t_end = Inf, ignore_stop_requests = (), restore = true)`, taking `init!`'s four
-  recording keywords as well ([D-261][d-261]), re-drives
-  a fresh `Simulation(world)` bit-identically through the ordinary loop. It
-  restores the trace's checkpoint and feeds the drain by frame ordinal from
-  the frame after the header's; `restore = false` feeds the simulation as it
-  stands. A halt names a frame from the one the feed starts from through the
-  recording's last. It ends
-  `initialized`. `to_time = t` is the mutually exclusive time spelling
-  of the halt, floored to the last frame top at or before `t`. Inspect via
-  `latest` or the live stores, advance via `step!`, continue via `run!`.
-  Replay is the state-trajectory inspector and the `StepError` reproduction
-  tool ([§11.2][s11-2], [§11.5][s11-5], [§12.7][s12-7]; on-disk persistence
-  is deferred, `pending.md`).
+  ([§13.5][s13-5]).
+- `termination(sim)`. The current run's
+  [termination record](#g-termination-record), whose source is a typed value
+  such as `EndTimeReached` or `ModelRequestedStop` ([§13.5][s13-5],
+  [D-203][d-203]).
+- `logged(sim)`. The log is the retained snapshots, and `logged` returns them
+  ([§11.2][s11-2]).
+- `reads(; selectors...)`. Builds a read set, the value `series` takes and
+  `at` mounts ([§11.2][s11-2], [D-407][d-407]).
+- `series(sim, read_set) → ts`. Gathers the retained snapshots into labeled
+  columns through the read-selector family, one typed vector per labeled
+  entry beside `t`, frame and boundary ([§11.2][s11-2], [D-407][d-407]).
+- `trace(sim) → trc`. Retrieves the input trace, on by default
+  ([§11.5][s11-5]).
+- `replay!(sim2, trc; to_boundary = nothing, to_time = nothing, pace = Inf,
+  margin = 0.002, t_end = Inf, ignore_stop_requests = (), trace = true,
+  log = true, log_every = 1, log_max = 65536, restore = true)`. Re-drives a
+  fresh `Simulation(world)` bit-identically through the ordinary loop,
+  taking `init!`'s four recording keywords as well ([D-261][d-261]). Replay
+  is the state-trajectory inspector and the `StepError` reproduction tool
+  ([§11.2][s11-2], [§11.5][s11-5], [§12.7][s12-7]).
 - `warnings(x) → Vector`. The artifact's warning list, on `Build` and
   `Deployment`, and on `Simulation` as the concatenation of its artifacts'
   lists ([§9.2][s9-2], [§13.2][s13-2]).
 - `closed(run) → Bool`. True once the loop's tail has written the run's
   termination record ([§12.6][s12-6]).
-- `mode(sim) → :live | :replay`. The input mode, read beside the lifecycle
-  state. It says where the next frame's drain takes its batches from, the
-  staging cells or an attached `replay!` recording ([§12.6][s12-6],
-  [§12.7][s12-7]).
-- `live!(sim)`. Detaches the remainder of an attached recording and sets the
-  mode to `:live`, touching neither the trajectory nor the trace. The next
-  `run!` or `step!` then continues live from the replayed boundary and
-  re-records onto the replayed prefix. Stopped-sim only. It is legal on an
-  `initialized` simulation in `:replay`, and an already live one refuses
+- `mode(sim) → :live | :replay`. The [input mode](#g-input-mode), read beside
+  the lifecycle state. It says where the next frame's [drain](#g-drain) takes
+  its [batches](#g-batch) from, the [staging cells](#g-staging-cell) or an attached `replay!` recording
   ([§12.6][s12-6], [§12.7][s12-7]).
+- `live!(sim)`. Detaches the remainder of an attached recording and sets the
+  mode to `:live`, touching neither the trajectory nor the trace
+  ([§12.7][s12-7]).
 
 ---
 

@@ -1,0 +1,89 @@
+id	spec_line	class	excerpt	home	home_line	decision	note
+R1-01	13371	X	## Appendix B. API synopsis: the entry points				
+R1-02	13373	2	The user-facing surface on one page, under the same rule as [Appendix A][sA]: an index, not a second home.	Appendices preamble	13036		"Neither is a second home" (13036-13037). Glossary term "index, not a second home" used unlinked; anchor #g-normative.
+R1-03	13374	2	Each signature is normative only where its owning section settles it.	Appendices preamble	13037		Preamble: "Each item is normative only where its owning section settles it."
+R1-04	13375	3	Every name here is public by being here, reached by qualified name or by per-name `import`.	§8.1	2308	no	Home: §8.1 "Names", beside "Which names the module exports is a separate question." D-226 Position carries it: "A framework name is public by standing on [Appendix B][sB]'s surface, reached by qualified name or per-name `import`." No citation on this sentence; D-226 sits on the next one.
+R1-05	13376	2d	The module exports nothing until the exported-name audit (`pending.md`) fixes the list ([D-226][d-226]).	§8.1	2308		B: "The module exports nothing until the exported-name audit ... fixes the list." §8.1: "Which names the module exports is a separate question. It stays open until the exported-name audit in `pending.md` runs." B is stronger: it states the interim fact (nothing exported); §8.1 states only that the list is open (and, at 2196, that the authoring declarations are unexported, D-117). D-226 carries B's version: "until then the module exports nothing".
+R1-06	13378	X	The author-side declaration surface comes first, then the operator surface by lifecycle.				
+R1-07	13381	X	**Authoring**, what a component or assembly defines ([§8.2][s8-2], [§8.5][s8-5]–[§8.7][s8-7]):				Bold is a run-in heading, no D-citation needed.
+R1-08	13384	2	Continuous leaf. `x_init` (by value, mandatory, `(;)` when stateless)	§8.2	2402		§8.2 2388 (by value, D-033), 2402-2412 (exactly one of x_init/s_init, empty when stateless, mandatory as the tier marker, D-263).
+R1-09	13385	2	and `m_init` (by value)	§8.2	2388		
+R1-10	13385	2	`ws_init(::C, ::Type{T})` (by allocation)	§8.2	2435		§8.2 2426 "A workspace is declared by allocation" (D-077); 2435 signature (D-263).
+R1-11	13385	2	`u_types` and `y_types` (by type, walked, `Pinned{P}` marking a frozen leaf)	§8.2	2371		"walked" unlinked; anchors #g-walked, #g-leaf-walk.
+R1-12	13387	1	and `state_events`.				
+R1-13	13387	1	Its stage and event functions are `y_state`, `y_direct` and `x_deriv`, guard/handler pairs (`StateEvent(guard, handler)`;				"stage and event functions" lumps the update law x_deriv and the projection hook with the stages (§5.2 1040: exactly two output stages). Guard and StateEvent unlinked; anchors #g-guard, #g-state-event.
+R1-14	13389	2	the detection policy comes from the guard's return type, [§10.4][s10-4]	§10.4	5708		"The guard's return type declares its detection policy" (D-179).
+R1-15	13391	2	Discrete leaf. `s_init` (by value, mandatory, `(;)` when stateless)	§8.2	2402		
+R1-16	13392	2	`ws_init(::C, ::Type{T})` (always called at `Float64`)	§8.2	2436		"A discrete allocator receives `Float64` at every activation" (2436-2438).
+R1-17	13393	2	and `u_types`/`y_types` (pinned wholesale).	§7.2	1924		Also §8.2 2529 (u_types) and 2753 (y_types).
+R1-18	13393	1	Its stages are `y_state`, `y_direct` and `s_update`.				s_update is the update law, not a stage (§5.2 1040; §8.2 2280 "the stage and update-law names").
+R1-19	13395	2	Assembly. `local_wires` (mandatory, the class marker)	§8.5	3218		"`local_wires` is the marker, mandatory even when empty" (D-039).
+R1-20	13395	1	`input_wires`, `output_wires`, `sample_times` and				The parenthetical "(optional, default `nothing`)" after transparent_container can be read as covering all four. §8.5 3206 gives that default to transparent_container alone; src/declare.jl defaults input_wires/output_wires to `()` (109, 115) and sample_times to `(;)` (199).
+R1-21	13397	2	`transparent_container` (optional, default `nothing`).	§8.5	3206		"One more is optional, `transparent_container(::A)`, with default `nothing`."
+R1-22	13398	2	Any component. `stop_reason` (optional, default `""`), the reason its stop requests report ([§13.5][s13-5]).	§8.2	2913		Owning section is §8.2 ("returns the `String` a component's stop requests report, and it defaults to `""`", D-316); B cites §13.5, which restates it at 10676-10677. "stop requests" unlinked; anchor #g-stop-request.
+R1-23	13400	2	Shipped conditions. `condition(::C; kw)`, methods of the framework's `condition` generic that return the component's fragment ([§14.2][s14-2]).	§14.2	11481		"fragment" unlinked; anchor #g-fragment. No D-citation; §14.2 rules it by D-064, D-405.
+R1-24	13403	2	Bundle contents by function family (the maximal legal sets, [§5.2][s5-2]; signatures destructure less at will):	§5.2	1146		§5.2 1146-1150 (maximal legal set; bundle narrows, destructuring narrows further). "function family" and "bundle" unlinked; anchors #g-function-family, #g-bundle.
+R1-25	13408	2	| `y_state` | continuous | `x, m, t [, ws]` |	§5.2	1047		
+R1-26	13409	2	| `y_direct` | continuous | `x, m, u, y_x, t [, ws]` |	§5.2	1048		
+R1-27	13410	2	| `x_deriv` | continuous | `x, m, y, u, t [, ws]` |	§5.2	1049		
+R1-28	13411	2	| `y_state` | discrete | `s, t, Δt [, ws]` |	§5.2	1052		
+R1-29	13412	2	| `y_direct` | discrete | `s, u, y_s, t, Δt [, ws]` |	§5.2	1053		
+R1-30	13413	2	| `s_update` | discrete | `s, y, u, t, Δt [, ws]` |	§5.2	1054		
+R1-31	13414	2	| guard / handler | continuous | `x, m, y, u, t [, ws]` |	§5.2	1059		
+R1-32	13415	2	| `x_projection` | continuous | positional `(comp, x)`, no bundle |	§5.2	1061		Also §5.2 1071-1072 and §8.2 2940 (D-074).
+R1-33	13417	X	Table footnotes, from the bundle law ([§5.2][s5-2]).				
+R1-34	13417	2	The sets above are maximal, and each field is present only if it exists for the component.	§5.2	1104		Also repeats B's own table lead (13403).
+R1-35	13418	2	`u` is present iff the function family may see inputs **and** the component declares `u_types`.	§5.2	1112		Bold with no D-citation in its sentence; the bundle law is D-074, D-341.
+R1-36	13420	2	`y` is present iff the component declares `y_types`.	§5.2	1113		
+R1-37	13421	2	`x`/`s`/`m` are present iff declared non-empty ([D-297][d-297]), and `ws` iff declared.	§5.2	1107		§5.2 table rows 1107-1110.
+R1-38	13422	2	`y_x`/`y_s` are present iff the stage-1 *return* is non-empty ([§5.2][s5-2], [D-285][d-285]).	§5.2	1119		§5.2's table says "stage-1 ports exist" (1114); equivalent, since a stage that exists produces at least one port (1151, D-285).
+R1-39	13423	2	`Δt` is present on the discrete tier only.	§5.2	1116		
+R1-40	13424	X	Returns follow three rules.				
+R1-41	13425	2	A stage returns a NamedTuple of port values ([§4.3][s4-3], [§5.2][s5-2]).	§5.2	1147		D-194.
+R1-42	13425	2	`x_deriv` returns the layout image of `X` ([§7.1][s7-1]).	§7.1	1860		§7.1: "`Ẋ` has exactly `X`'s shape at the activation scalar." "layout image" is coined here only.
+R1-43	13426	2	A **handler returns `(; x, m)` with each key present iff that store exists and the handler updates it** (the return law, [§5.2][s5-2]).	§5.2	1162		Bold with no D-citation; D-090 rules it (the carried fix). D-287 for the per-key semantics.
+R1-44	13428	2	There is no padding.	§9.5	5068		Restates the iff of 1163; §9.5 5068-5069: "An absent key is not an error ... It is the handler saying it does not touch that store." "padding" is not defined anywhere.
+R1-45	13428	2	`x` comes back complete, and `m` may come back partial.	§5.2	1169		§5.2 1169-1174 (D-287); also §9.5 5062.
+R1-46	13431	X	**Build.**				
+R1-47	13433	1	`build(world) → Build`.				
+R1-48	13433	2	Standalone.	§9.2	4312		D-049.
+R1-49	13433	2d	It yields the inspectable derived-contract artifact, [`Structure`](#g-structure) (the structure step's product, the components, wires, faces and tiers), [`Outputs`](#g-outputs) (the nominal evaluat...	§9.2	4317		B glosses Structure as "the components, wires, faces and tiers"; §9.2 4363-4365: "the structure step's product, the components, wires and tiers", and 4370 (D-315) makes the face table a function over the wires, not stored. B adds "faces". Rest matches 4317 (D-253) and 4359. "derived-contract" and "activations" unlinked; anchors #g-derived-contract, #g-activation. "contract" here is not a component's declared interface (reserved word), but the glossary term covers it.
+R1-50	13436	2	the wire list per assembly and the root inputs are `Structure`'s, the face table and the routes are functions over them, and the execution order is `Outputs`'s ([§9.2][s9-2]).	§9.2	4360		§9.2 4360-4367 and 4370-4378. "root inputs", "face", "execution order" unlinked; anchors #g-root-input, #g-face, #g-execution-order.
+R1-51	13440	1	`build(world; activations = (Float64, ProbeDual))`				
+R1-52	13440	2	additionally pins activation invariants for CI	§9.4	4823		§9.4 4823-4832 (D-280, D-275).
+R1-53	13441	2	(`ProbeDual` is the public canonical concrete probe scalar, [§9.4][s9-4])	§9.4	4841		D-099. ProbeDual unlinked; anchor #g-probedual.
+R1-54	13442	2	and pre-materializes activations so a parallel sweep shares a fully immutable `Build` ([§11.1][s11-1], [§9.4][s9-4]).	§9.4	4836		Also §11.1 6913-6918 (D-282, D-135).
+R1-55	13444	1	`resolve(assembly, path) → AbstractComponent`.				§13.3 10274 types it `path::String`.
+R1-56	13444	2	Resolves an immediate child, a container element's key segment included.	§13.3	10274		D-061.
+R1-57	13445	2	Wiring resolution applies the one-level rule ([§6.1][s6-1]).	§13.3	10284		D-207.
+R1-58	13446	2	The service walk follows the structure's children ([§13.3][s13-3]).	§13.3	10291		D-414. B drops "and refuses no traversal past a generically held child"; a narrower gloss, not a different claim.
+R1-59	13448	1	`input_faces(c)` / `output_faces(c) → Vector{String}`.				
+R1-60	13448	2	Declaration-ordered face names ([§13.3][s13-3]).	§13.3	10276		§13.3 10276-10281. For a leaf they return the u_types/y_types keys, which B folds into "face names".
+R1-61	13450	1	`input_passthrough(assembly, path; prefix, sep, except, only, select)` / `output_passthrough(assembly, path; prefix, sep, except, only, select)`.				§8.8 3858 names the positional `child_path`.
+R1-62	13452	2	The declaration-site helpers for computed interface connections.	§8.8	3838		§8.8 3838-3846 (D-043, D-171, D-209).
+R1-63	13452	2	`path` names an immediate child.	§8.8	3964		D-207.
+R1-64	13453	2	`except`, `only` and `select` are exclusive, one per call; `select` is a predicate over face names.	§8.8	3912		D-251.
+R1-65	13454	2	More than one given is `UnknownFaceSelection` with reason `:multiple_selectors`,	§8.8	3915		D-251.
+R1-66	13455	2	and a selector that keeps nothing warns `EmptyFaceSelection` on the `Build` ([§8.8][s8-8]).	§8.8	3919		D-251.
+R1-67	13459	X	**Deployment.**				
+R1-68	13461	1	`Deployment(build; algorithm = RK4, h, N_base = 1, Δt_base = nothing, localization_tol = 1e-6, localization_budget = 8, firing_budget = 4) → Deployment`.				src/deployment.jl:334 has `N_base = nothing`, not `1`; the effective default 1 is §9.2 4425's ("with the default `N_base = 1`"). Keyword order differs from the code (cosmetic).
+R1-69	13464	2	The artifact the grid parameters fix, scalar-free, carrying the [`Schedule`](#g-schedule) (the typed per-component `(D, Φ, Δt)` tick table), the grid diagnostics and its `warnings` ([§9.2][s9-2]).	§9.2	4410		§9.2 4410-4418 (D-254); grid diagnostics 4549.
+R1-70	13470	2	| `algorithm` | `RK4` | the stepper, selected by type here and materialized against the state buffer at `Model` construction ([D-227][d-227]) | [§10.2][s10-2] |	§10.2	5622		
+R1-71	13471	2	| `h` | — | required. A domain rate is not a framework default | [§10.2][s10-2] |	§10.2	5625		
+R1-72	13472	2	| `N_base` | `1` | steps per base tick. Absent the `Δt_base` keyword, the `N_base·h` product is the base tick period (the default path). Given it, `N_base` is instead derived and validated an integ...	§9.2	4423		"steps per base tick" is §10.5 6074. Default `1` is the semantic default; the code's keyword default is `nothing` (see the signature row).
+R1-73	13473	2	| `Δt_base` | `nothing` | the base tick period as a `Rational`, `Period` or `Hz` value, or `:derive` to request GCD derivation (all-anchored models only); one of three binding sources |	§9.2	4420		§9.2 4420-4434 (D-283).
+R1-74	13474	2	| `localization_tol` | `1e-6` | the root-finder's relative bracket-width convergence test (`localization_tol · h`) | [§10.4][s10-4] |	§10.4	5901		D-133, D-256.
+R1-75	13475	2	| `localization_budget` | `8` | the per-frame localization allowance | [§10.4][s10-4] |	§10.4	6016		D-133, D-181.
+R1-76	13476	2	| `firing_budget` | `4` | the per-event, per-boundary firing allowance of the event iteration, an integer ≥ 1 | [§10.6][s10-6] |	§10.6	6428		firing_budget unlinked; anchor #g-firing-budget.
+R1-77	13478	2	`Δt_base` binds from exactly one of three sources ([§9.2][s9-2]).	§9.2	4420		D-283. This paragraph also repeats B's own N_base and Δt_base rows.
+R1-78	13478	2	The first is the `Δt_base` keyword, a `Rational`, `Period` or `Hz` value; `N_base` is then derived and validated an integer ≥ 1.	§9.2	4423		
+R1-79	13480	2	The second is the `N_base·h` product when the keyword is absent (the default path).	§9.2	4425		Also 4441-4442 ("the `N_base·h` path stays what silence means").
+R1-80	13481	2	The third, requested with `Δt_base = :derive` in a fully anchored model, is derivation from the constraint pool at the coarsest admissible value, printed with its drivers ([§9.2][s9-2]).	§9.2	4427		§9.2 4427-4434, 4462 (coarsest), 4572-4573 (printed with its drivers).
+R1-81	13486	2	The [deployment](#g-deployment) (the scalar-free artifact the grid parameters fix) binds no stop policy.	§12.6	9415		§12.6 9415-9416: "The stop policy ... is the advance's argument"; 9408-9411 lists what is the deployment's. "stop policy" unlinked; anchor #g-stop-policy.
+R1-82	13487	2	`t_end` and `ignore_stop_requests` are keywords of each advance ([§12.6][s12-6]).	§12.6	9653		D-255, D-316.
+R1-83	13488	2	A run ends at the first grid boundary reaching or exceeding `t_end`, whole frames only ([§12.4][s12-4]).	§12.4	9008		D-133.
+R1-84	13489	2d	An unbounded run stays bounded in memory, since `log_max` keeps such a session from growing without limit ([§11.2][s11-2]).	§11.2	7053		B: the session "stays bounded in memory". §11.2 7053-7055 bounds the log only ("The log takes a retention bound", default 65536, `Inf` the opt-out, D-137, D-368). The trace still grows: §11.5 7854-7858, "tens of MB per hour ... There is no sampling and no rolling window", with a kill switch for marathon sessions (7846). B widens the scope from the log to the session.
+R1-85	13493	2	An event that exhausts `firing_budget` at a boundary loses its further edges there, under a `FiringBudget` warning ([§10.6][s10-6]).	§10.6	6615		D-181, D-292.
+R1-86	13494	2	`localization_tol`, `localization_budget` and `firing_budget` are all three trajectory-determining like their siblings.	§10.4	6047		D-133, D-181.
+R1-87	13496	2	So they are validated with them (`DeploymentInvalid`)	§10.4	6043		Also §9.2 4466-4481 (D-229). "So" makes validation follow from being trajectory-determining; neither section gives that reason.
+R1-88	13497	2	and carried on the `Deployment` the trace header records, where replay compares the two deployments as values ([§11.5][s11-5], [§12.7][s12-7]).	§10.4	6049		§10.4 6049-6051; §12.7 9917; §9.2 4418. "trace header" unlinked; anchor #g-trace-header.

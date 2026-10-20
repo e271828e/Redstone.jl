@@ -39,7 +39,7 @@ readability with no loss of content. The steps are in
 | 13. Error discipline | done | `3d4cb27` | `ae63ca9` |
 | 14. Stopped-sim services | done | `fe29f36` | `133b58d` |
 | Appendix A. Taught contracts | done | `630e58e` | `appA/` |
-| Appendix B. API synopsis | not started | | |
+| Appendix B. API synopsis | done | | `appB/` |
 | Appendix C. Diagnostic kind set | not started | | |
 | Appendix D. Glossary | not started | | |
 
@@ -52,11 +52,6 @@ chapter's rewrite settles its own:
   near the dead-slider fight; chapter 12's R2 wording ("a front end's")
   applies (chapter 12's B85). Chapter 11 is done, so this lands as a loose
   fix.
-- **Appendix B.** The `Model`'s rows still call its entry points "doors";
-  chapter 12's R14 reserves *door* for an entry point that builds a run
-  (B29).
-- **Appendix B.** "Requester roster" is unlinked; chapter 13's track 2
-  added `#g-requester-roster`.
 - **Companions.** `frame_walkthrough.md`'s sketches lag the code: they name
   `sim.jl`, `sim.exec` and `event_phase!(sim, …)` where `src/` now has the
   `Model`'s `event_phase!(model, tick)` (chapter 13's track 2).
@@ -65,11 +60,10 @@ chapter's rewrite settles its own:
   §14.10's checkpoint restored into the scratch world; reword both together
   (chapter 14's B79). `tools/gloss_table.md` row 202 glosses `TrimProblem`
   as seven-field, where §14.7 says nine (B80).
-- **Appendix B.** The handler return law is bold with no D-citation; §5.2
-  bolds it (D-090).
-- **Appendix B.** It lists only `port(model, path, name)`; the code also
-  has `port(snapshot, path, name)` (`src/dataplane.jl`), which §14.4 now
-  names for snapshot inspection (chapter 14's B76).
+- **Appendix C.** `ArgumentInvalid` cites [Appendix B] for "the `Model` and
+  `Simulation` constructors' keywords validate under `ArgumentInvalid`",
+  which B never said; §12.4 says it of `join_timeout`. Its reasons lack
+  `:not_built`, which D-318 rules and B now lists (Appendix B's B1 rulings).
 - **Appendix C.** `TwoProducers` says "sibling wire", which D-314 makes
   "local wire".
 - **Appendix C.** Rows chapter 14 found stale (its B75). `ConditionResolution`

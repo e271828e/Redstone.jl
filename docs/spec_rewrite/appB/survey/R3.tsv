@@ -1,0 +1,84 @@
+id	spec_line	class	excerpt	home	home_line	decision	note
+R3-01	13642	X	**Condition algebra** ([§14.1][s14-1]–[§14.6][s14-6]).				Bold group label with no D-citation; a heading, not a claim, so no entry rules it.
+R3-02	13644	1	`set(; x, s, m, u)`.				
+R3-03	13644	2	The leaf, a fragment: self-vocabulary payloads at the authoring level.	§14.2	11513		Also the Fragment comment at 11534 and glossary 15249. 'fragment' unlinked (#g-fragment).
+R3-04	13645	2	`u` names faces of that level's contract.	§14.2	11515		'contract' in its reserved sense; fine.
+R3-05	13646	1	`at(prefix, node)`.				
+R3-06	13646	2	Scoping. It stores, never applies.	§14.2	11535		The Scoped comment 'stores, never applies' and 11531 'No path arithmetic happens at composition'.
+R3-07	13646	2	It also lifts whole `TrimProblem`s and linearization tap sets ([§14.9][s14-9], [§14.10][s14-10]).	§14.9	12648		Tap sets at §14.10 12812. 'TrimProblem' and 'tap set' unlinked (#g-trimproblem, #g-taps).
+R3-08	13648	2	An empty prefix is refused ([§14.2][s14-2]).	§14.2	11552		
+R3-09	13649	1	`combine(nodes...)`.				
+R3-10	13649	2	Symmetric collection.	§14.2	11529		
+R3-11	13649	2	Duplicate leaves error with both origins.	§14.2	11584		11584-11586: collisions are errors at resolution, DuplicateConditionLeaf reports both origins.
+R3-12	13650	2	Blending a node with a bare NamedTuple is a directive error method ([§14.2][s14-2]).	§14.2	11596		
+R3-13	13652	1	`override(base, patches...)`.				
+R3-14	13652	2	Ordered layering.	§14.6	12043		
+R3-15	13652	2	The patch wins, and the origin keeps both ([§14.6][s14-6]).	§14.6	12045		
+R3-16	13654	1	`condition(comp; kw)`.				
+R3-17	13654	2	The shipped condition-method idiom.	§14.2	11481		Bullet carries no citation of its own; §14.2 and D-405 own it.
+R3-18	13654	2d	Aircraft baselines (`ready_for_taxi(ac)`, `cold_and_dark(ac)`) are its full-coverage instances.	§14.6	12036		§14.6: 'Baselines are aircraft-shipped condition functions ... such as ready_for_taxi(ac) or cold_and_dark(ac), returning full-coverage conditions'. §14.2 11481 makes the idiom 'a method of the framework's condition generic ... dispatched on the component, returning the component's own fragment'. B makes the baselines instances of that idiom; the spec makes them separately named functions, not condition methods. Name/scope differ. 'baseline' unlinked (#g-baseline).
+R3-19	13658	X	**Stopped-sim services** ([§14][s14]).				Bold group label with no D-citation; a heading, not a claim.
+R3-20	13660	1	`init!(sim, condition; t0 = 0.0, trace = true, log = true, log_every = 1, log_max = 65536)`.				Matches §11.2 7059 and §14.5. src/sim.jl:591 has `condition = set()` (optional) and `t0::Real`; B shows condition as required.
+R3-21	13661	3	`t0` is any real	§12.6	9388	no	Sits beside 'It is a `Float64`, as `h` and `t_end` are'; or doc:init! (src/sim.jl:591, `t0::Real`, converted at src/model.jl:185). Spec says only that the origin is Float64. D-260 Rationale: 'A `Float64` origin also lets `init!` take `t0 = 0.25` on a `Dual` simulation, which a `T`-typed keyword refused.'
+R3-22	13661	2	held as a `Float64` origin ([D-260][d-260]).	§12.6	9388		
+R3-23	13662	2	Root-input totality is checked pre-write ([§14.6][s14-6]).	§14.6	12005		Pre-write at 12014-12019. 'root-input totality' unlinked (#g-root-input-totality).
+R3-24	13663	2	Then boundary zero runs: project, sweep, events, the due `s_update` calls, then the first snapshot, and the checkpoint that is the run's trace header ([§11.5][s11-5], [§14.5][s14-5]).	§14.5	11881		Header capture at §14.5 11887 and §11.5 7771. 'boundary zero', 'checkpoint', 'trace header' unlinked (#g-boundary-zero, #g-checkpoint, #g-trace-header).
+R3-25	13667	X	| keyword | default | meaning | owning section |				Table header row.
+R3-26	13669	2	| `trace` | `true` | the input trace's plain kill switch | [§11.5][s11-5] |	§11.5	7844		Default at 7844, kill switch at 7846.
+R3-27	13670	2	| `log` | `true` | the snapshot log's plain kill switch | [§11.2][s11-2] |	§11.2	7036		Default at 7047.
+R3-28	13671	2	| `log_every` | `1` | the log's keep-every-kth decimation | [§11.2][s11-2] |	§11.2	7037		Default at 7047. 'decimation' unlinked (#g-decimation).
+R3-29	13672	2	| `log_max` | `65536` | the maximum number of retained snapshots, finite by default with `Inf` the opt-out | [§11.2][s11-2] |	§11.2	7054		Default and opt-out at 7055.
+R3-30	13674	X	Recording.				Run-in label.
+R3-31	13674	2	The four keywords configure the run this call builds, with its log and trace ([§12.6][s12-6], [D-261][d-261])	§12.6	9368		
+R3-32	13675	2	`restore!` and `replay!` take the same four.	§12.6	9368		'The door that builds the run takes the four recording keywords'; restore! at 9582, replay! at §12.7 9944. B omits overlay!, but its own overlay! bullet says so.
+R3-33	13676	2	`log_every` is admissible on the derived artifact only, never on the trace ([§11.2][s11-2], [§11.5][s11-5], [D-029][d-029]).	§11.2	7039		
+R3-34	13677	2	When the log fills, the retention stride doubles, so the whole run stays covered at coarsening density.	§11.2	7075		
+R3-35	13679	2	The run's first and terminal snapshots are retained unconditionally and outside the bound ([§11.2][s11-2]).	§11.2	7089		Outside the bound at 7093.
+R3-36	13680	2d	All four are view policies, not trajectory-determining.	§11.2	7124		§11.2: '`log_max` is a view policy, not a trajectory-determining one ... Like `log` and `log_every` it stays out of the trace header's Deployment'. That covers three keywords. B widens it to four, taking in `trace`, whose switch §11.5 (7848-7850) frames as the kill switch of the primary record, not of a view. Scope differs: three versus four, and 'view policy' misfits `trace`.
+R3-37	13681	2d	Replay neither records nor compares them.	§11.2	7126		§11.2: 'replay neither records nor compares it', said of `log_max` beside `log` and `log_every`. B extends it to `trace`, which no spec sentence covers. Scope differs, as in the row before.
+R3-38	13683	2d	`trim!(sim, problem; baseline, t0 = 0.0, backend) → TrimReport`.	§14.8	12275		§14.8: `trim!(model, problem; baseline, t0 = 0.0, backend = LevenbergMarquardt())`. B drops the backend default, so `backend` reads as a required keyword. src/sim.jl:812 and src/trim.jl:448 carry the default. Same drift in B's Model row at 13542.
+R3-39	13683	2d	Nonlinear least squares on the packed residuals with exact Dual Jacobians, against the problem's own `tolerances`.	§14.7	12231		§14.7: 'The *default* is nonlinear least squares on r(d) with exact AD Jacobians'. B states it unconditionally as what trim! does. The backend seam admits a Jacobian-free backend (§14.8 12300-12302). Strength differs: default versus always.
+R3-40	13685	2	`residuals(reads, d) → NamedTuple` is packed in `tolerances`' field order, as decisions pack in `guess`'s.	§14.7	12178		Decisions at §14.7 12112.
+R3-41	13686	2	Names pair, and the order is the declared side's.	§14.7	12183		'the declared side again' at 12178.
+R3-42	13687	2	The problem itself closes at nine fields ([§14.7][s14-7]).	§14.9	12628		§14.7 12062 says the field set is closed but gives no count. The count 'nine' is at §14.9 12628 and glossary 15291, so the §14.7 citation carries 'closed' only.
+R3-43	13688	2	Setup and commit both carry the root-input-totality check ([§14.6][s14-6]).	§14.6	12011		
+R3-44	13689	2	The commit is `init!` with `override(baseline, condition(solution))`, boundary zero anchored at `t0` and the recorders built anew ([§12.6][s12-6]).	§14.8	12448		Recorders at 12456. The §12.6 citation carries only the recorders' restart; the commit-as-init! claim is §14.8's and goes uncited. 'recorders' unlinked (#g-recorders).
+R3-45	13690	2	On a `Model{Float64}`, `trim!(model, problem; …)` is the same service, its commit the model's `init!` ([D-319][d-319]).	§14.5	11968		Also §14.8 12275. Lowercase 'model' (reserved): 'the model's `init!`'.
+R3-46	13692	2	`converged` is the service's per-residual box test at the backend's returned point.	§14.8	12325		
+R3-47	13693	2	It is backend-independent and the commit's gate, and the backend's status and counts are recorded diagnostically.	§14.8	12328		
+R3-48	13695	2	The backend seam is a pinned one-method signature,	§14.8	12292		'seam' in its reserved sense; unlinked (#g-seam).
+R3-49	13697	1	`solve(backend, eval!, d0, lower, upper, tol) → (; d, status, n_evaluations, n_iterations)`.				Matches §14.8 12296.
+R3-50	13698	2	The in-place `eval!(r, J, d)` fills `J` only when it is not `nothing`, the packed vectors are in the declared orders, and `status` is an open `Symbol` recorded verbatim.	§14.8	12300		Packed orders at 12304, open status at 12315.
+R3-51	13700	2	Non-convergence reports, never throws ([§14.8][s14-8]).	§14.8	12547		
+R3-52	13701	1	`checkpoint(sim) → Checkpoint`.				
+R3-53	13701	2	The `Model`'s state at a frame top beside the run's two counters, the frame index and the boundary ordinal.	§12.6	9559		'checkpoint' unlinked (#g-checkpoint).
+R3-54	13702	2	The state is a `ModelState`, as `checkpoint(model)` reads it, holding the flat buffer, the `s` and `m` stores, the whole signal table, the guard priors, `t` and `t₀`, the fingerprint and the deploymen	§12.6	9560		
+R3-55	13705	2	Legal in `initialized` and `stopped`, refused after a `t*` stop and after an abandoned frame (`CheckpointMidFrame`).	§12.6	9567		Also the §14 table, 11369.
+R3-56	13707	2	A checkpoint is not a condition and has no algebra ([§14.1][s14-1], [D-274][d-274], [D-319][d-319]).	§14.1	11435		Also §14 intro 11343, which cites D-273. D-319 (the state/cursor split) does not carry this claim; D-273 does.
+R3-57	13709	1	`restore!(sim, cp; trace = true, log = true, log_every = 1, log_max = 65536)`.				
+R3-58	13710	2	A door beside `init!` and `replay!`, legal where `init!` is.	§12.6	9544		Legality in the §14 table, 11370-11372. 'door' in its reserved sense (builds a run); fine.
+R3-59	13711	2	It checks the checkpoint's fingerprint and deployment (`CheckpointMismatch`) and its `t` against its grid (`CheckpointMidFrame`).	§12.6	9585		
+R3-60	13713	2	It copies the state back, builds a fresh run with the checkpoint as its trace header and publishes one snapshot at the checkpoint's `t`.	§12.6	9587		
+R3-61	13715	2	It runs no boundary zero, and the boundary ordinal continues.	§12.6	9592		No boundary zero at 9544.
+R3-62	13716	2	The warm restart is `checkpoint` → `restore!` → `run!` ([§12.6][s12-6], [D-274][d-274]).	§12.6	9542		
+R3-63	13719	1	`restore!(sim, model_state; kw...)`				
+R3-64	13719	2	takes a `ModelState` prepared on a standalone model, with the same keywords and the same fingerprint and deployment check.	§12.6	9598		Lowercase 'model' (reserved): 'a standalone model'; §12.6 9598 uses the same words.
+R3-65	13720	2	A state off the grid is `CheckpointMidFrame`.	§12.6	9601		
+R3-66	13721	2	It opens a fresh trajectory at the state's frame, and the restored boundary publishes under ordinal 0 ([§9.2][s9-2], [§12.6][s12-6], [D-319][d-319]).	§12.6	9602		
+R3-67	13724	1	`overlay!(sim, condition; trace = true, log = true, log_every = 1, log_max = 65536)`.				src/sim.jl:690 has `condition = set()` (optional).
+R3-68	13725	2	The state what-if.	§12.6	9610		
+R3-69	13725	2	The condition's stores are written onto a stopped run's own, the clock, the lattice and the priors are kept,	§12.6	9612		Kept items at 9613-9615.
+R3-70	13727	2	the overlaid state settles with no discrete output stage and no update,	§12.6	9618		
+R3-71	13727	2	and a fresh run opens whose header is the checkpoint taken after the settling.	§12.6	9627		Fresh trajectory at 9609-9610.
+R3-72	13729	2	A partial store entry merges onto the current store, and a root-input entry writes its cell with no totality asked.	§12.6	9615		No totality at 9616-9617.
+R3-73	13730	2	Legal where `checkpoint` is, with the four recording keywords ([§12.6][s12-6], [§14.1][s14-1], [D-429][d-429]).	§12.6	9629		Keywords at 9624.
+R3-74	13732	1	`linearize(sim, taps; about, t0, width = 8) → Linearization`.				src/sim.jl:834 has `about = nothing, t0 = nothing`; B shows both bare, so they read as required. D-319 (log 14431) spells `about = nothing, t0 = nothing`. No spec sentence outside B gives the full signature.
+R3-75	13732	2	A pure query, seeded Dual passes on scratch, `width` directions per pass.	§14.10	12818		Width at 12848. 'scratch' unlinked (#g-scratch).
+R3-76	13733	2	The operating point defaults to the checkpoint of the simulation, restored with no boundary zero,	§14.10	12826		Restored with no boundary zero at 12829-12830.
+R3-77	13735	2	and `about` with `t0` (default `0.0`) places it anywhere else.	§14.10	12838		The parenthetical default is split out as the next row, a 3.
+R3-78	13735	3	(default `0.0`)	§14.10	12838	yes	Sits beside '`about = <condition>`, with `t0` beside it, linearizes anywhere else'. §14.5 11964 gives `t0` default 0.0 only for the init-service entry points, init! and trim!'s commit; D-272 and D-420 place `t0` beside `about` with no default. Code already defaults it (`something(t0, 0.0)`, src/linearize.jl:175) behind a `t0 = nothing` signature, so the ruling would only confirm it.
+R3-79	13736	2	`t0` is admitted only beside `about`, never silently ignored.	§14.10	12840		
+R3-80	13737	2	On a `Model{Float64}`, `linearize(model, taps; …)` is the same query, its default point `checkpoint(model)` ([D-319][d-319]).	§14.10	12829		
+R3-81	13739	1	`taps(x = (…), u = (…), y = (…))`				
+R3-82	13739	2	builds the tap set, three labeled selector lists with closed membership (`x`: `get_state`; `u`: `get_input`; `y`: `get_output`, `get_face`),	§14.10	12776		Membership at 12777-12779. 'tap set' unlinked (#g-taps).
+R3-83	13741	2	every tap a [leaf address](#g-leaf-address) resolving to one scalar ([§14.4][s14-4], [§14.10][s14-10], [D-272][d-272], [D-276][d-276]).	§14.10	12782		
