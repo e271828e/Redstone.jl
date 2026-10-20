@@ -12839,7 +12839,8 @@ before the first evaluation, with the checkpoint as the origin. After a
 is about the trim point with nothing re-specified. **`about = <condition>`, with `t0`
 beside it, linearizes anywhere else without touching the sim**, the condition's
 coverage checked as [§14.6][s14-6] requires ([D-272][d-272]). `t0` is admitted only there, and a `t0`
-passed without `about` is an `ArgumentInvalid` ([D-420][d-420]).
+passed without `about` is an `ArgumentInvalid` ([D-420][d-420]). There it defaults to
+`0.0`, the init-service entry points' default ([§14.5][s14-5], [D-430][d-430]).
 
 #### The seeded pass
 
@@ -13666,7 +13667,7 @@ the handler's `(; x, m)` under the return law ([§5.2][s5-2], [§7.1][s7-1],
 - `linearize(sim, taps; about = nothing, t0 = nothing, width = 8) →
   Linearization`. A pure query. The operating point defaults to the
   checkpoint of the simulation, and `about` with `t0` (default `0.0`) places
-  it anywhere else ([§14.10][s14-10]).
+  it anywhere else ([§14.10][s14-10], [D-430][d-430]).
 - `get_state(path, leaf)`, `get_deriv(path, leaf)`, `get_output(path, leaf)`,
   `get_input(leaf)` and `get_face(leaf)`. The closed
   [read-selector](#g-selector) family, one
@@ -15705,6 +15706,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-427]: decisions.md#d-427--refuse-a-condition-entry-naming-an-internally-wired-input-at-resolution-with-its-producer
 [d-428]: decisions.md#d-428--refuse-a-root-input-whose-type-does-not-convert-at-linearizes-default-operating-point
 [d-429]: decisions.md#d-429--write-a-condition-onto-a-stopped-run-through-overlay
+[d-430]: decisions.md#d-430--default-linearizes-t0-beside-about-to-00
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop

@@ -204,6 +204,8 @@ Frozen sentences citing Appendix B for B2's content, all still carried:
   keeps "`about` with `t0` (default `0.0`)". `src/` already defaults it
   (`something(t0, 0.0)`, src/linearize.jl:175); no spec section or entry
   states the default (D-272 and D-420 place `t0` beside `about` with none).
+  Ruled by the owner on 2026-10-20: the default stands, as D-430, stated
+  in §14.10 and cited on B's `linearize(sim, …)` entry.
 - Glossary links left to B1 under R12, because `units/B1/old.md` uses the term:
   boundary zero, condition, fragment, stop request,
   control plane, scratch, replay,
