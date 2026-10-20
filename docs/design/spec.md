@@ -14943,10 +14943,11 @@ and `m` fields plus root inputs by face, never outputs and never workspace
 ([§14.1][s14-1]). [§14][s14] owns the word. A guard defines a *predicate*
 ([§D.4][sD-4]).
 
-<a id="g-design_world"></a>**`design_world`** — the shipped thin world (aircraft +
-`SimpleAtmosphere(wind = NoWind())` + `HorizontalTerrain`) that mounts an
-aircraft for trim and linearization. "Aircraft as root" is the shallowest
-world, not a special case ([§14.9][s14-9]).
+<a id="g-design_world"></a>**`design_world`** — the rig this design records for design-time
+work, aircraft + `SimpleAtmosphere(wind = NoWind())` + `HorizontalTerrain`,
+which mounts an aircraft for trim and linearization. `SimpleAtmosphere` and
+`NoWind` are FlightPhysics' atmosphere types. "Aircraft as root" is the
+shallowest world, not a special case ([§14.9][s14-9]).
 
 <a id="g-fragment"></a>**fragment** — the leaf node of the condition algebra, built by
 `set(; x, s, m, u)`. Its payloads speak only about the component at the
