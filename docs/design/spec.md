@@ -8279,9 +8279,9 @@ statically and exactly. *Is this port transitively driven by a root input, and
 which one?* Every input port has exactly one source ([§6.1][s6-1]), so the resolution is
 total, with two outcomes.
 
-- If the port is root-driven within the GUI's [claim](#g-claim) (the set of faces a device
-  *may* write), its widget is live. It [peeks](#g-peek) (the GUI display rule, specified
-  below) and stages the resolved root input through the GUI's own [staging cell](#g-staging-cell)
+- If the port is root-driven within a front end's [claim](#g-claim) (the set of faces a device
+  *may* write), its widget is live ([D-310][d-310]). It [peeks](#g-peek) (the GUI display rule, specified
+  below) and stages the resolved root input through the front end's own [staging cell](#g-staging-cell)
   (the per-device atomic holding place for pending writes).
 - If the port is component-driven, or root-driven under the claim of another
   [device](#g-device) (any attached participant in the periphery), its widget is a read-only
@@ -8298,7 +8298,7 @@ cycle, so who commands what lives in the user's head. User-commandability is a
 wiring decision made where configurations are made. Command-plus-manual-override
 is a mux component with a root-wired select. That is explicit structure, not two
 writers racing (the same race as the drag phase in the worked example of [§11.4][s11-4],
-ruled out the same way). This places one obligation on the GUI. Read-only
+ruled out the same way). This places one obligation on a front end. Read-only
 rendering is first-class, not an error state, because the author of
 `input_slider!` (an illustrative widget function) cannot know at authoring time
 whether it will be live ([D-026][d-026]).
@@ -8306,7 +8306,7 @@ whether it will be live ([D-026][d-026]).
 Liveness is a [derived property](#g-derived-liveness) (the rule computing a widget's liveness from
 wiring and claims), and resolution is transitive ([D-045][d-045]). A widget is live iff
 two things hold. Its port's feed chain terminates in a root input, *and* that
-root input lies inside the GUI's own claim ([D-174][d-174], [D-370][d-370]) in the run's frozen
+root input lies inside the front end's own claim ([D-174][d-174], [D-370][d-370]) in the run's frozen
 surface partition (root-input exclusivity, [§11.3][s11-3]). The feed chain is walked
 through [local wires](#g-local-wire) (wires with both ends inside one assembly) and interface
 connections across *all* levels, not just the local assembly. The claim may have
@@ -8404,7 +8404,7 @@ incumbent_status(view, snapshot)
 index ([D-270][d-270]). A view carries the port's terminal producer (`("", face)` when
 root-driven), the liveness verdict, the port's position in the handle's staging
 schema when live, the producer's cell address, and the incumbent writer of a
-root-driven port the GUI does not command. The GUI's loop body builds the table
+root-driven port the front end does not command. The front end's loop body builds the table
 once at its top. That point is after the roster freeze, so the incumbents are
 the run's, and nothing at render resolves a name. The handle carries the build's
 `Structure` and the nominal `Layout` by reference for this, the two things the
@@ -8413,7 +8413,7 @@ itself as producer, so a generated panel reads every face through one lookup.
 
 | the port resolves to | live | slot | incumbent |
 |---|---|---|---|
-| a root input inside the GUI's claim | yes | its position | the GUI |
+| a root input inside the front end's claim | yes | its position | the front end |
 | a root input in another device's claim | no | none | that device |
 | a root input no device claims | no | none | the harness |
 | another component's port, or its own output | no | none | none |

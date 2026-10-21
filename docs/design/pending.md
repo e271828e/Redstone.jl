@@ -171,15 +171,6 @@ breaking user code, and each may benefit from user feedback first.
   break, a candidate design and its open questions are
   `docs/reports/20261016_ctrlc_julia_114/report.md`. It is taken up when 1.14
   branches or its cancellation names become public, whichever comes first.
-- **Docs fixes the readability rewrite carried** (its report is
-  `docs/reports/20261021_spec_rewrite/report.md`). §11.7 still shows the
-  parked GUI as live, in the present tense, near the dead-slider fight;
-  chapter 12's "a front end's" wording applies. `frame_walkthrough.md`'s
-  sketches name `sim.jl`, `sim.exec` and `event_phase!(sim, …)` where `src/`
-  now has the `Model`'s `event_phase!(model, tick)`.
-  `linearization_walkthrough.md` says "`sim.exec` was never touched", stale
-  since D-317, and its "no restore step" sits beside §14.10's checkpoint
-  restored into the scratch world; the two are reworded together.
 - **The library's remaining candidates.** Whatever of the inventory in
   `docs/design/companions/library_inventory.md` is unbuilt, each block
   built when wanted (§13.7, D-313).

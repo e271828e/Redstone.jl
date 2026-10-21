@@ -568,9 +568,10 @@ end
 ```
 
 **Step 7: return, and nothing else.** Both scratch executors are locals and
-die with the call. `sim.exec` was never touched, and the sim's lifecycle is
-what it was. This is [§14.10][s14-10]'s "pure query": no commit, no boundary zero, no
-restore step. The return is a `Linearization` value holding the four vectors
+die with the call. The simulation's own `Model` was never touched, and the
+sim's lifecycle is what it was. This is [§14.10][s14-10]'s "pure query": no commit
+and no boundary zero. The default form's restore, in step 2, goes into the
+scratch executor, and nothing is restored into the simulation. The return is a `Linearization` value holding the four vectors
 as NamedTuples under the tap labels, the four matrices, and the three label
 tuples so a consumer can slice by name.
 
