@@ -1,9 +1,10 @@
 # Render the design documents to PDF. Run `make` here or from a git hook.
 # Requires pandoc and typst (brew install pandoc typst).
-# The default target is design.pdf, the spec and the decision log in one
-# document, so that every cross-reference is an internal link. `make pair`
-# renders the two separately; their cross-document links do not work in
-# Preview. Settings live in pdf.yaml and style.typ. THEME selects the code
+# The default target renders three documents. spec-decisions.pdf holds the
+# spec and the decision log in one document, so that every cross-reference is
+# an internal link. spec.pdf and decisions.pdf render each alone; their
+# cross-document links do not work in Preview. `make pair` renders only those
+# two. Settings live in pdf.yaml and style.typ. THEME selects the code
 # color theme; `make gallery` renders sample code under every theme in
 # gallery/themes/; `make shades` renders lighter and darker variants of one color.
 
@@ -11,9 +12,9 @@ THEME = gallery/themes/redstone.tmTheme
 STYLE = pdf.yaml pdflinks.lua tablewidths.lua inlinecode.lua style.typ julia.sublime-syntax $(THEME) Makefile
 PANDOC = pandoc -d pdf.yaml --pdf-engine-opt=--input=theme=$(THEME)
 
-pdf: ../design.pdf
+pdf: ../spec-decisions.pdf pair
 
-../design.pdf: ../spec.md ../decisions.md $(STYLE)
+../spec-decisions.pdf: ../spec.md ../decisions.md $(STYLE)
 	$(PANDOC) -M combined=true ../spec.md ../decisions.md -o $@
 
 pair: ../spec.pdf ../decisions.pdf
