@@ -28,7 +28,7 @@ field values, share an entry type, and compile to **one** body. A store
 enumerating every cell in its own type, addressed by index in the type
 domain, compiles one body per instance and grows the store type with the
 model. The choice was measured rather than argued ([D-162][d-162],
-`prototypes/cellstore_bench`).
+`design/prototypes/cellstore_bench`).
 
 **[Phase bodies](#g-measurement-seam) are the outer decomposition, and they are semantically
 forced.** The [boundary sweep](#g-sweep)'s stage-1 block, both tiers' `y_state`

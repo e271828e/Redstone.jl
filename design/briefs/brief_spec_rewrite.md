@@ -121,7 +121,7 @@ user diff-reviews the Part, push. Same pipeline as an increment.
 - The 110 `####` headings: unnumbered and linked from nowhere. Free to
   retitle.
 - Glossary anchors: no file outside the spec links to a `#g-` anchor.
-- `prototypes/`: section numbers only, hand-verified in their headers.
+- `design/prototypes/`: section numbers only, hand-verified in their headers.
 - The PDF build: pandoc over the two files, no text dependency.
 
 **Tracked per section:**

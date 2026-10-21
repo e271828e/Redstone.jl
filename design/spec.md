@@ -5181,7 +5181,7 @@ share an entry type, and compile to *one* body.
 By contrast, a store enumerating every cell in its own type, addressed by
 index in the type domain, compiles one body per instance. It also grows the
 store type with the model. The choice was measured rather than argued
-([D-162][d-162], `prototypes/cellstore_bench`).
+([D-162][d-162], `design/prototypes/cellstore_bench`).
 
 An [opaque leaf](#g-opaque-leaf) ([§4.3][s4-3]), such as a field handle, is stored whole in its
 element type's block, references included. Julia keeps an immutable struct

@@ -172,10 +172,11 @@ flag it for discussion instead of guessing.
   `[§14.8][s14-8]`, not `§14.8`. It reads every file and asserts every match
   before it opens any file for writing. Check `git diff --stat` before
   committing.
-- **The `.jl` sketches under `prototypes/` sit outside the rosters.** Every `§`
-  in them is hand-verified prose that rots silently at each renumbering. A
-  sketch carries its verification state in its own header; a renumbering that
-  re-verifies or strands one updates that header, not this file.
+- **The `.jl` sketches under `design/prototypes/` sit outside the rosters.**
+  Every `§` in them is hand-verified prose that rots silently at each
+  renumbering. A sketch carries its verification state in its own header; a
+  renumbering that re-verifies or strands one updates that header, not this
+  file.
 
 ## Document structure — settled, not open
 

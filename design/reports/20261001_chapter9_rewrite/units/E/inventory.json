@@ -173,8 +173,8 @@
   },
   {
    "id": "E-020",
-   "old": "The choice was measured rather than argued (D-162, `prototypes/cellstore_bench`).",
-   "new": "The choice was measured rather than argued (D-162, `prototypes/cellstore_bench`).",
+   "old": "The choice was measured rather than argued (D-162, `design/prototypes/cellstore_bench`).",
+   "new": "The choice was measured rather than argued (D-162, `design/prototypes/cellstore_bench`).",
    "where": "new",
    "cites": [
     "D-162"

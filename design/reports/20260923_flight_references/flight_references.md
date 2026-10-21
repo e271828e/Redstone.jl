@@ -84,8 +84,8 @@ deliberate.
 
 ## 6. Prototypes
 
-- `prototypes/sketch_decoder.jl` — pre-design sketch: `Cessna172X{K, A}`, airframe mass, "the migration's" (36, 218, 259).
-- `prototypes/cellstore_bench/README.md:76` — "C172X-scale model" as a benchmark size.
+- `design/prototypes/sketch_decoder.jl` — pre-design sketch: `Cessna172X{K, A}`, airframe mass, "the migration's" (36, 218, 259).
+- `design/prototypes/cellstore_bench/README.md:76` — "C172X-scale model" as a benchmark size.
 
 ## 7. Historical records (frozen)
 
@@ -184,12 +184,12 @@ design/briefs/spec_rewrite_pilot.md:188:**Why iterate.** Under a single pass, a 
 design/briefs/brief_increment_21.md:4:> below are the old layout: the worktree `~/.julia/dev/Flight.jl-core-redesign-2`
 design/briefs/brief_increment_21.md:11:`/Users/miguel/.julia/dev/Flight.jl-core-redesign-2/prototypes/kernel` (a git
 design/briefs/brief_increment_21.md:12:worktree, branch `core-redesign-2`; never `cd` elsewhere — `cd` is aliased to
-prototypes/cellstore_bench/README.md:76:  C172X-scale model both land in single-digit seconds, which makes §9.7's
-prototypes/sketch_decoder.jl:52:    q_eb   = RQuat{Float64},
-prototypes/sketch_decoder.jl:129:init_x(::WA) = (q_wb = RQuat(), q_ew = RQuat(), h_e = HEllip())
-prototypes/sketch_decoder.jl:137:    q_wb = RQuat{Float64}, q_ew = RQuat{Float64}, q_nw = RQuat{Float64},
-prototypes/sketch_decoder.jl:138:    q_nb = RQuat{Float64}, q_eb = RQuat{Float64}, e_nb = REuler{Float64},
-prototypes/sketch_decoder.jl:259:#A parametric child field (sys::S, today's Cessna172X{K, A} shape) is the
+design/prototypes/cellstore_bench/README.md:76:  C172X-scale model both land in single-digit seconds, which makes §9.7's
+design/prototypes/sketch_decoder.jl:52:    q_eb   = RQuat{Float64},
+design/prototypes/sketch_decoder.jl:129:init_x(::WA) = (q_wb = RQuat(), q_ew = RQuat(), h_e = HEllip())
+design/prototypes/sketch_decoder.jl:137:    q_wb = RQuat{Float64}, q_ew = RQuat{Float64}, q_nw = RQuat{Float64},
+design/prototypes/sketch_decoder.jl:138:    q_nb = RQuat{Float64}, q_eb = RQuat{Float64}, e_nb = REuler{Float64},
+design/prototypes/sketch_decoder.jl:259:#A parametric child field (sys::S, today's Cessna172X{K, A} shape) is the
 design/companions/trim_environment_walkthrough.md:22:Today, `Model{<:Aircraft}`'s `f_ode!` and `f_init!` take the atmosphere and
 design/companions/trim_environment_walkthrough.md:27:The C172's trim assignment is where this bites hardest
 design/companions/trim_environment_walkthrough.md:28:(`lib/FlightApps/src/c172/c172.jl:825-854`). `Kinematics.Initializer` — the

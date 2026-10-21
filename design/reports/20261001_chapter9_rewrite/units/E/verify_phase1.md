@@ -29,7 +29,7 @@ Cell storage
 - V22. Two instances of one component type differ only in field values, share an entry type, compile to one body.
 - V23. A store enumerating every cell in its own type, indexed in the type domain, compiles one body per instance.
 - V24. It also grows the store type with the model.
-- V25. The choice was measured, not argued. [D-162, prototypes/cellstore_bench]
+- V25. The choice was measured, not argued. [D-162, design/prototypes/cellstore_bench]
 
 Phase bodies, arities and seams
 - V26. (bold) Phase bodies are the outer decomposition, and are semantically forced. [D-086]

@@ -292,7 +292,7 @@ alternatives; `pending.md` is a transactional deviation register;
 consistent. Invariants other frameworks state as goals are tests here: zero
 allocation per phase body, type stability, a Dual sweep,
 tolerance-not-equality correctness. The executor's representation was chosen
-by measurement (`prototypes/cellstore_bench`). Weaknesses: v0.1 exporting
+by measurement (`design/prototypes/cellstore_bench`). Weaknesses: v0.1 exporting
 nothing, no CI workflow in the repository, no docs site, no library, heavy
 specialization that costs seconds of compile per model type, large files
 (`build.jl` 1.5k lines, `sim.jl` and `diagnostics.jl` 1.6k), comment density

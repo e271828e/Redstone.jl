@@ -6159,7 +6159,7 @@ token's parameter** ([§9.7][s9-7] amended).
 **Spec.** [§7.1][s7-1], [§9.7][s9-7]
 
 **Rationale.** Kernel prototype increment 1 — the parked f.3 cell-store
-representation bench (`prototypes/cellstore_bench`, 2026-08-08; Apple Silicon,
+representation bench (`design/prototypes/cellstore_bench`, 2026-08-08; Apple Silicon,
 Julia 1.12.6, chunk 16, one cold process per point). Gate 1 (mandatory) tied —
 both candidates zero-allocation, sweep and snapshot, at every N. Gate 2 decided
 it: C1's cold sweep compile ran 0.60 s → 56.2 s over N = 1 → 400 identical
@@ -6199,7 +6199,7 @@ accumulates.
 **Spec.** [§6.2][s6-2], [§9.8][s9-8]
 
 **Rationale.** Increment-1 observation promoted to doctrine; measured in
-`prototypes/cellstore_bench`'s `check.jl`, same class as the main line's
+`design/prototypes/cellstore_bench`'s `check.jl`, same class as the main line's
 3945596. Two consequences past test hygiene: [§9.7][s9-7]'s chunk size remains a
 genuine implementation freedom only while no test asserts bit-exactness across
 chunk sizes, and the FlightCore value comparison in `migration_outline.md` is a tolerance comparison by

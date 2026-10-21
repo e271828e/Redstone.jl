@@ -2,7 +2,7 @@
 
 The implementation of the framework in `spec.md`, grown one increment at a
 time (increment 1, the cell-store bench, is frozen in
-`prototypes/cellstore_bench`; D-162 cites its numbers). Spec and code are
+`design/prototypes/cellstore_bench`; D-162 cites its numbers). Spec and code are
 peers: neither is subservient, and both are kept in agreement. This file is
 the map, the traps and the naming rules; `pending.md` is what the code still owes the spec. Why
 a given test asserts what it does is carried by the suite itself: every
