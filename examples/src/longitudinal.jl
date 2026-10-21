@@ -1,7 +1,7 @@
 # The longitudinal aircraft: a three-degree-of-freedom point mass with pitch,
 # its trim problem, its tap set, its gain design, the closed loop and the
 # descent the tutorial's layers walk through. The physics and the control design
-# are `docs/design/companions/longitudinal_aircraft.md`.
+# are `design/companions/longitudinal_aircraft.md`.
 
 """The gravitational acceleration, in m/s², constant over a flat earth."""
 const g = 9.81

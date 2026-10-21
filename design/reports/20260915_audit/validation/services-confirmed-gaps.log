@@ -1,0 +1,9 @@
+Command: julia --project=test design/reports/20260915_audit/probes/services_confirmed_gaps.jl
+Exit: 0
+
+relocate TrimProblem: DiagnosticError{Redstone.ConditionNodeMisuse} carried=Redstone.ConditionNodeMisuse
+relocate Reads: DiagnosticError{Redstone.ConditionNodeMisuse} carried=Redstone.ConditionNodeMisuse
+out-of-range compiled read: BoundsError carried=none
+non-callable trim condition: MethodError carried=none
+interrupt during condition conversion: DiagnosticError{Vector{Redstone.Diagnostic}} carried=Vector{Redstone.Diagnostic}
+linearize defined: false

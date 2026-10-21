@@ -1,0 +1,220 @@
+# Spec style guide
+
+The rules `spec.md` is written to. Consulted before editing the spec
+so its register stays consistent across sessions: **rigorous but pedagogical,
+economical but not terse**. Growth in word count is acceptable; a norm buried
+in pedagogy is not.
+
+## Sentences
+
+- **One burden per sentence.** A sentence states a rule, *or* qualifies it,
+  *or* explains it, *or* cites. Prefer two short sentences over one loaded one.
+- **Short sentences in the active voice.** Name who does what.
+- No em-dashes. At most one parenthetical per sentence, used for a gloss;
+  never nested. No colons as mid-sentence connectors.
+- Plain vocabulary where it suffices. Unwind nominalizations and metaphors
+  into the verb that states the fact.
+- **Topic sentences are findable claims, not aphorisms.** A returning reader
+  skims each paragraph's first sentence; it must state the paragraph's content.
+  - Bad: "The absolute register anchors, and anchoring severs."
+  - Good: "An `Absolute` entry detaches its child from the enclosing scope's
+    grid."
+- **No possessive citations.** Spell out what the cited section provides when
+  the dependency is load-bearing; a bare "([§12.7][s12-7])" is fine as a
+  pointer.
+  - Bad: "The arity distinction that carries it into the phase-body surface —
+    zero-arg interior, tick-indexed boundary — is §12.7's."
+  - Good: "The two sweep variants surface in the phase-body signatures:
+    interior bodies take no arguments, boundary bodies take the tick index
+    ([§12.7][s12-7])."
+
+## Terms
+
+- **First use per section: gloss + glossary link; bare term afterward.** The
+  gloss is 5–10 words, parenthesized: "the [drain][g-drain] (the frame-top
+  swap that publishes staged device writes into the root inputs)". Every
+  section must be locally re-readable by a reader arriving cold. A term takes
+  one glossary link per section, tables included. So does a glossary anchor:
+  where an entry bolds several names, as *sweep* bolds interior sweep and
+  boundary sweep, only the first of them in a section is linked.
+- **Introduce every reader-cold name.** A name the spec uses without
+  introducing it is one of three kinds. Flight.jl machinery used as if known
+  moves to a companion, or the spec says what it is. An aerospace example
+  gets one introducing clause that claims nothing its source does not.
+  FlightCore named as the predecessor needs nothing.
+- **`Model` is the type; the authored tree is "the component tree" or "the
+  root".** Lowercase "model" names a `Model` or the modeled system as a whole
+  ("model code", "model state", "a model with no continuous state"). A sentence
+  about declaring, wiring, building or checking what the user wrote says the
+  component tree or the root, since `build` takes the tree and a `Model` is
+  downstream of it (D-317). FlightCore's and Flight.jl's own `Model` keeps its
+  spelling, with its owner named at first use in a section.
+- Coinages are governed by `tools/coinage_inventory.md`: a term used in three
+  or more places, or far from its definition, gets a glossary entry; a local
+  one- or two-use coinage gets an inline gloss only. New coinages join the
+  inventory.
+- Link plumbing is deliberately asymmetric: section citations are
+  reference-style (`[§9.4][s9-4]`, linkify-managed) because section numbers can
+  change; glossary links are inline (`[drain](#g-drain)`) because glossary
+  anchor ids are names, never renumbered, so the indirection would buy
+  nothing. Not a defect; do not flag or convert.
+- **The wrap target is 80 columns of *rendered* text**, link markup collapsed.
+  A source line carrying citations runs longer than 80 and is not a defect:
+  `[contract](#g-contract)` is 24 source characters for 8 rendered ones.
+- One standing glossary-link trap: §3.4's "two-class taxonomy" and "two leaf
+  classes" name the continuous-vs-discrete taxonomy, not the
+  primitive-vs-assembly status of `#g-class` — they take no glossary link.
+  `check_glossary.jl`'s WHITELIST is the record of anchors adjudicated as
+  legitimately unlinked; consult it before "fixing" an unlinked term.
+
+## Section template
+
+Content order within a section, mirroring how a reader reasons into the
+problem:
+
+1. **Context** — what problem this section exists to solve; the background a
+   cold reader needs. Comes first, before any rule.
+2. **Rule** — the normative content, its rulings in bold (next section).
+3. **Mechanism / example** — how it plays out; a small code sketch wherever
+   prose runs long (sketches may be simplified or incomplete).
+4. **Consequences and pointers** — implications, interactions, where the
+   machinery lives.
+
+- **Subheadings only for entry points**, as topic labels, in an order where
+  nothing is used before it is defined. A section without them ends its
+  context paragraph with one sentence naming its parts in order.
+- **Display code** for what a reader would type or copy: a call, a
+  definition, a signature. Identifiers stay inline. Quoted diagnostic
+  messages stay verbatim.
+
+## Marking rulings
+
+Chapters the readability rewrite has not reached keep the old **Rule.** /
+**Why.** / **Example.** labels. An edit there follows the chapter's own
+markers. `pending.md` tracks the rewrite.
+
+- **No labels.** No **Rule.**, **Why.** or **Example.** A reason follows its
+  rule with a plain connective.
+- **Bold marks a ruling, once, on its headline clause.** The headline clause
+  is the shortest clause that states what is decided, subject and verb
+  included. Its D-citation follows in the same sentence. Bold marks nothing
+  else: not lead-ins, terms, definitions, consequences, recommendations or
+  labels.
+- **One bold per ruling, by a mechanical test.** A Position's rulings are its
+  sentences and its bullets. In old entries that chain parallel rulings with
+  semicolons, each chained ruling counts as a bullet. Clauses that elaborate
+  one ruling share one bold. Where two sentences state one ruling, the first
+  in reading order keeps the bold.
+- **Bold where the section states what the entry decides.** A ruling about
+  when a check runs is bold where the run is described, even if the check's
+  rule lives in another chapter. Each ruling is bold in one place only.
+- **Cite the entry that rules.** Prefer an entry whose Position states the
+  ruling. If only a Rationale, a Rejected list or an annotation states it,
+  cite that entry, keep the bold, and flag the log as owing a Position that
+  states it. Never cite a superseded entry.
+- **Rule first, reason after.** A "so" or "by construction" before a rule
+  demotes it to a consequence.
+- **Bold weight is measured in words, not spans.** A whole sentence in bold
+  where its headline clause would do adds weight and no ruling.
+- **An unmarked sentence settles nothing.** A spec sentence with neither
+  marker nor an entry behind it may describe a shape inherited from
+  FlightCore. Before ruling by a sentence, find its marker or its entry. If
+  neither exists, say so and propose a new ruling with its rejected
+  alternatives. A count, such as "a struct of four fields", is never an
+  argument for where new state lives.
+
+## Rationale
+
+- **Constructive rationale stays** (why the rule is shaped as it is — what
+  makes it believable and memorable). It follows its rule.
+- **Adversarial rationale goes** (why alternative X loses). It lives in
+  `decisions.md`, cited as "(D-nnn)". Before deleting an inline
+  argument, verify the entry carries it; enrich the entry first if the inline
+  version is richer.
+- **Worked-example measurements are exempt.** A worked example's comparison
+  (the concrete, measured cost of a losing candidate, as in §11.4's staging
+  example) is evidence, not litigation, and stays at full resolution.
+  Verdict-only prose (a sentence whose content is "and therefore X loses")
+  still reduces to its entry. Every exempt comparative passage must cite its
+  entry: the log stays the decision of record, the example its evidence. The
+  case studies grounded in Flight.jl live in
+  `companions/flight_case_studies.md`, outside the spec.
+
+## Content preservation
+
+Style edits never change what the spec norms. Every section rewrite follows the
+claim-inventory procedure: extract normative claims before, verify each survives
+after, diff decision citations and glossary links. When a sentence resists
+rewriting because its meaning is unclear, that is a finding, not an obstacle —
+flag it for discussion instead of guessing.
+
+## The battery, and what it does not reach
+
+- **The battery is the acceptance test**, exactly as for the log
+  (`decisions_style.md` rule 6): `check_refs.jl`, `check_rows.jl`,
+  `check_glossary.jl --strict`, `check_bold.jl`, and `linkify.jl` as a no-op
+  on re-run — after every edit, before every commit.
+- **`§` is reserved for spec citations.** Companions cite their own sections
+  as "section N.N", which is what keeps every `§` in the corpus checkable
+  against the spec's outline.
+- **A new file registers in both check tools' rosters** — `ROSTER` in
+  `check_refs.jl`, `FILES` in `check_rows.jl` — or its citations are silently
+  unchecked. Membership is about being checked, never about living in
+  `companions/`: `decisions.md`, `extensions.md` and `implementation.md` are
+  all members. `linkify.jl` keeps a third roster, also `ROSTER`, naming the
+  files it rewrites besides `spec.md`: `decisions.md`, `extensions.md` and
+  the companions. A file checked but not linkified keeps plain citations, as
+  `implementation.md` and `pending.md` do.
+- **`linkify.jl` owns everything after the `<!-- citation link definitions`
+  marker** in a file it rewrites. New text, a new log entry included, goes
+  before it.
+- **A scripted edit to a rostered file matches the linkified spelling**,
+  `[§14.8][s14-8]`, not `§14.8`. It reads every file and asserts every match
+  before it opens any file for writing. Check `git diff --stat` before
+  committing.
+- **The `.jl` sketches under `prototypes/` sit outside the rosters.** Every `§`
+  in them is hand-verified prose that rots silently at each renumbering. A
+  sketch carries its verification state in its own header; a renumbering that
+  re-verifies or strands one updates that header, not this file.
+
+## Document structure — settled, not open
+
+The part order is Foundations, Authoring and build, Execution, and Failure and
+services, with the appendices as back matter. It rests on conceptual
+dependency — a reader meets how a model is authored before how it executes —
+and deliberately *not* on forward-reference count: measured at the 2026-08-15
+swap, cross-part citation traffic between Authoring and Execution ran 30 one way
+against 31 the other, so the order trades one set of forward references for a
+set the same size. The Part roadmaps carry what remains. Stopped-sim services
+stay after Execution: §14.5 defines boundary zero in terms of §10.6's boundary
+machinery.
+
+## Part I's depth — settled, not open
+
+Part I says what a model computes. Parts II to IV say how it is written and
+checked, how it runs, and how it fails. A reader who knows hybrid systems but
+not the API reads Part I alone. The owner ruled this on 2026-10-13, read
+strictly; `design/reports/20261013_part1_depth/` holds the audits and the pass
+that applied it.
+
+- **Meaning, not spelling.** Part I may use an API name as a label for a
+  concept it defines. It states no rule about the spelling itself: return
+  types, keywords, encodings, or why a name was chosen. If renaming or
+  re-encoding the API would change a sentence, the sentence belongs in
+  Part II.
+- **Laws, not enforcement.** Part I states each law. Which step checks it,
+  the diagnostic it raises and its enforcement edge cases live where the
+  check runs.
+- **Mechanisms by name only.** Part I names an algorithm and cites it.
+  Root-finding, bookkeeping, buffer layout and budgets are described where
+  they run. A law says that a parameter exists and what it does; its default
+  value lives with the mechanism.
+- **Short rationale.** A reason argues a Part I claim in Part I terms. Case
+  studies and worked domain examples go to the section that works them, to a
+  companion or to the log, leaving a one-paragraph summary and a pointer.
+- **Pointers, not prerequisites.** Every Part I sentence reads without
+  following its forward citations.
+- **Complete at its level.** Every semantic law Parts II to IV mechanize is
+  stated in Part I: anything that changes the values a well-formed model
+  produces, or which runs are equivalent. A new decision that adds such a law
+  lands its statement in Part I and its mechanism where it runs.

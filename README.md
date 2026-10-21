@@ -114,10 +114,10 @@ ERROR: DiagnosticError: 1 diagnostics
 
 Redstone has no user manual yet. Its design is written down in full:
 
-- `docs/design/spec.md` is the normative specification.
-- `docs/design/decisions.md` records every design decision and the
+- `design/spec.md` is the normative specification.
+- `design/decisions.md` records every design decision and the
   alternatives it rejected.
-- `docs/design/companions/` holds worked explainers, among them
+- `design/companions/` holds worked explainers, among them
   `library_inventory.md`, the block library and its admission rule.
-- `docs/design/pending.md` is the work order toward the first release.
+- `design/pending.md` is the work order toward the first release.
 

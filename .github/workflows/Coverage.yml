@@ -2,9 +2,9 @@ name: Coverage
 on:
   push:
     branches: [master]
-    paths-ignore: ['docs/**', '**.md']
+    paths-ignore: ['docs/**', 'design/**', '**.md']
   pull_request:
-    paths-ignore: ['docs/**', '**.md']
+    paths-ignore: ['docs/**', 'design/**', '**.md']
   workflow_dispatch:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
