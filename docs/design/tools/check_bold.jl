@@ -12,7 +12,8 @@
 # bold span is a ruling, or the right one; the rewrite's verifiers judge that.
 # It prints each chapter's bold weight in words as an advisory.
 #
-# A chapter joins `REWRITTEN` when its rewrite lands (docs/spec_rewrite/).
+# A chapter joined `REWRITTEN` when its rewrite landed. The rewrite closed on
+# 2026-10-21; its record is docs/reports/20261021_spec_rewrite/.
 #
 # Usage:  julia docs/design/tools/check_bold.jl
 

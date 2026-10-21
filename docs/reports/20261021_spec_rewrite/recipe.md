@@ -1,10 +1,16 @@
 # Rewriting a spec chapter for readability: the recipe
 
-This is the living recipe for rewriting a chapter of `docs/design/spec.md`
-for readability with no loss of content. It began as chapter 9's report,
+This is the recipe the readability rewrite of `docs/design/spec.md` ran on,
+from chapter 9 on 2026-10-01 to Appendix D on 2026-10-21, with no loss of
+content. It began as chapter 9's report,
 `docs/reports/20261001_chapter9_rewrite/report.md`, which stays frozen as
-that run's evidence. This copy changes: each chapter adds its lessons here,
-next to the step they changed, before its directory is deleted.
+that run's evidence. Each later chapter added its lessons here, next to the
+step they changed. The rewrite closed on 2026-10-21, and this copy is now
+frozen too, beside `report.md` in the same directory.
+
+Paths below are relative to the retired `docs/spec_rewrite/`. Its
+`checks/` scripts sit beside this file, and every other file it names comes
+back with `git show` from the commits `report.md` lists.
 
 The convention the rewrite writes to is `docs/design/tools/spec_style.md`,
 "Marking rulings" and the rest. Briefs cite it and never restate it.
@@ -709,11 +715,33 @@ From chapter 14:
 ### The appendices
 
 Appendix A is an index, B an API synopsis, C a table of diagnostic kinds and
-D the glossary. The chapter recipe does not transfer to them. Each gets a
-treatment of its own, planned in `appendices.md`: A is rewritten as one
-unit after a harvest of new entries, B is thinned to signatures and
-citations, C is audited against the code, and D has its citations, gaps and
-entry lengths checked.
+D the glossary. The chapter recipe does not transfer to them. Each got a
+treatment of its own, planned in `appendices.md`, with one brief per
+appendix, the battery after each landing, and rulings recorded with their
+reasons in `appX/`:
+
+- **A, rewritten as one unit after a harvest.** One read-only Opus agent
+  harvested candidate entries from what accrued after A was written: the
+  log from D-162 on, the companions written since, the briefs' notes and the
+  chapters' escalations. The owner picked, and one rewriter and one blind
+  verifier ran the ordinary steps 3 and 4 over the whole appendix.
+- **B, thinned rather than polished.** Four read-only Opus agents classed
+  every sentence as a name, a duplicate of its owning section, or a claim
+  stated nowhere else, and one Sonnet agent checked every signature
+  against `src/`. The duplicates collapsed to one line per entry, a
+  signature, a gloss and a citation. Each stated-nowhere-else claim moved
+  to its home or was ruled.
+- **C, audited against the code.** A script diffed the kind set against
+  the structs under `Diagnostic` both ways. Five read-only Sonnet agents
+  checked each kind's payload, severity, raise sites and policy, one TSV
+  row per aspect. Findings landed as fixes, and a difference of behavior
+  went to the owner.
+- **D, checked for citations, gaps and length.** Seven read-only Opus
+  agents checked every entry's citations against its owning section and
+  proposed a replacement for each entry with a finding. Five Sonnet agents
+  swept the chapters for coined terms with no entry. An assembler merged
+  the proposals under the rulings, an agent linked the new terms from the
+  body, and a fresh verifier checked every changed sentence.
 
 ### The 2026-10-14 revision and its validation
 
@@ -1215,6 +1243,41 @@ From chapter 14, which held 455 rules:
 79. A home ruling names every unit that states the claim.
 80. Track 2's first agent writes a classification plan and stops for the
     orchestrator's review.
+
+81. Probe a companion's behavioral claim before it grounds a spec sentence
+    (Appendix A).
+82. Decide how the unit checker treats an index's bold labels before the
+    rewriter starts.
+83. When a unit adds many entries, the verifier checks every added sentence
+    against the frozen line it rests on.
+84. Check every section number a brief's table names against the outline.
+
+85. For a thinning, classify every sentence before the brief (Appendix B).
+86. A dropped claim is checked where it lands, against its home's own span.
+87. Thinning drops names, and a name on B is public: diff the backticked
+    names of the old and new text.
+88. Two units of one section need a link rule keyed on the new text.
+89. A glossary whitelist entry records a deliberate unlink; the link goes,
+    not the entry.
+90. A signature checker's absences need a second grep.
+
+91. Payload drift is the main drift in a kind table: spell every `reason`
+    with its full value set (Appendix C).
+92. A field set on one reason only is not a field of the kind; name the
+    reason that carries it.
+93. A section that mentions a kind is not its owner.
+94. A policy mismatch can be a missed conformance: date the code against
+    the entry before deciding which side moves.
+
+95. Ask a surveyor for the replacement text with its findings, so assembly
+    is a merge (Appendix D).
+96. A gap sweep counts uses by section, not by occurrence, and folds a
+    candidate into the entry that already owns it.
+97. A new glossary entry is also a body edit: a link at its first use in
+    each section, found by script and judged by sense.
+98. A dropped claim can drop a log entry's last spec citation;
+    `check_rows.jl` catches it.
+99. New text is where a verifier finds errors, not trimmed text.
 
 ## 6. A chapter's files
 

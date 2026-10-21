@@ -438,7 +438,7 @@ semantics is a ruling and not a description:
   stopped run.
 - **The rest-reading sentence** of section 1, in [§14.5][s14-5] beside the
   interval-alignment table, citing [D-273][d-273]. It is independent of the door
-  and is planned with [Appendix A][sA]'s rewrite (`docs/spec_rewrite/appA/`).
+  and landed with [Appendix A][sA]'s rewrite (`630e58e`).
 - **[Appendix B][sB]** gains the door, and section 6's loose end lands with it.
 
 ### 7.6 Points settled with the owner
