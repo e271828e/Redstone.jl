@@ -41,7 +41,7 @@ readability with no loss of content. The steps are in
 | Appendix A. Taught contracts | done | `630e58e` | `appA/` |
 | Appendix B. API synopsis | done | `98d457e` | `appB/` |
 | Appendix C. Diagnostic kind set | done | `7b99064` | `appC/` |
-| Appendix D. Glossary | done | | `appD/` |
+| Appendix D. Glossary | done | `23541eb` | `appD/` |
 
 ## Carried to later chapters
 
