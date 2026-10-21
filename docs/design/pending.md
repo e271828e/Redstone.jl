@@ -100,10 +100,11 @@ item changes what the spec says, the spec edit is part of the item.
   a panel description, with the GUI package's half of D-270's convention
   assigned to the client, and a ruling on §11.7's "assembly panels compose
   children by path", a constraint on that half with no entry (stage 4).
-- **The spec's readability rewrite.** Chapters 1 to 14, the front matter
-  and Appendices A, B and C are done. Appendix D remains, treated as
-  `docs/spec_rewrite/appendices.md` plans, and that directory's README
-  tracks it. Until its turn comes, it keeps the old markers.
+- **The spec's readability rewrite.** Every part is done: chapters 1 to 14,
+  the front matter and the four appendices. What remains is closing
+  `docs/spec_rewrite/`, as its README says: the appendices' lessons go into
+  the recipe, one report goes to `docs/reports/`, and the directory is
+  deleted.
 - **The user guide and the API reference.** The reference is a Documenter
   build over the API docstrings, which is why the docstrings precede the
   release and the build need not. The guide grows from the tutorial and the

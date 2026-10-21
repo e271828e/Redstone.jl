@@ -41,7 +41,7 @@ readability with no loss of content. The steps are in
 | Appendix A. Taught contracts | done | `630e58e` | `appA/` |
 | Appendix B. API synopsis | done | `98d457e` | `appB/` |
 | Appendix C. Diagnostic kind set | done | `7b99064` | `appC/` |
-| Appendix D. Glossary | not started | | |
+| Appendix D. Glossary | done | | `appD/` |
 
 ## Carried to later chapters
 
@@ -58,13 +58,7 @@ chapter's rewrite settles its own:
 - **Companions.** `linearization_walkthrough.md` 572 says "`sim.exec` was
   never touched", stale since D-317, and its "no restore step" sits beside
   §14.10's checkpoint restored into the scratch world; reword both together
-  (chapter 14's B79). `tools/gloss_table.md` row 202 glosses `TrimProblem`
-  as seven-field, where §14.7 says nine (B80).
-- **Appendix D.** *generic holding* cites §6.1, which no longer states it,
-  and *local wire* cites §6.1 for "one end on the boundary", which D-314's
-  Rationale states. `#g-entry` lacks the wiring entry that §6.1 and §13.3 use
-  (chapter 13's B81), and the condition entry, input entry and tap that
-  chapter 14 uses (its B78).
+  (chapter 14's B79).
 
 Chapter 9 predates this directory. Its files stay in its report, with the
 §9.4 trial in `docs/reports/20261001_spec_rewrite_sample/`.

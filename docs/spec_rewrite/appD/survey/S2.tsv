@@ -1,0 +1,93 @@
+anchor	check	verdict	cites	entry_says	spec_says	home	note
+g-buffer	cite	ok	§7.1	buffer authoritative, typed values ephemeral reconstructions			
+g-buffer	cite	ok	§13.6	integration intermediates live in framework-owned integrator buffers			
+g-buffer	accuracy	ok		Vector{T} laid out at build time; ẋ vectors the integrator fills			
+g-bundle	cite	ok	§5.2	name present iff store or fact exists; undeclared stores absent			
+g-bundle	accuracy	ok					
+g-cell	cite	ok	§4.1	one cell per output port, read by gatherers			
+g-cell	cite	ok	§8.3	every cell public, no private intermediates			
+g-cell	cite	wrong	§D.6	See staging cell (§D.6)	staging cell is in §D.2, not §D.6	§D.2:14560	Replace the §D.6 citation with inline links to #g-staging-cell and #g-store.
+g-cell	accuracy	ok					
+g-constant-source	cite	ok	§13.7	Constant{V}; zero-contributor spelling and rig stub; value is instance data, not a default			
+g-constant-source	cite	ok	§6.2	zero-contributor spelling; not the banned default			
+g-constant-source	accuracy	ok					
+g-entry	cite	ok	§8.2	input entry	§8.2 calls u_types and y_types items entries		
+g-entry	cite	ok	§9.7	executor entry	§9.7 calls execution-form items entries		
+g-entry	cite	ok	§11.3	roster entry			
+g-entry	cite	ok	§11.3	batch entry			
+g-entry	cite	ok	§14.3	condition entry			
+g-entry	accuracy	stale		never used bare; list of compounds	§8.2 and §9.7 use bare "entry" in context (An entry states...; An entry carries...); §8.2 entries cover both contracts and include the abstract entry (§D.1)	§8.2:2532;§9.7:5160	Drop "never used bare", call the §8.2 compound a contract entry and link abstract entry.
+g-face	cite	ok	§8.6	face names, two invariants, type from endpoint, direction by method, write side speaks face names			
+g-face	cite	ok	§11.2	read side uses face names (get_face)			
+g-face	cite	ok	§14.4	service reads by face name			
+g-face	accuracy	ok		read side speaks them wherever it wants contract rather than structure	§8.6 says wherever it wants meaning that outlives the build; same sense via the two-notation rule		
+g-face	length	over		91 words		§8.6:3463 (two invariants);§8.6:3452 (type from endpoint);§8.6:3442 (direction by method);§8.6:3479 (read side)	Keep the gloss, opacity and write-side clause; drop the invariants, type, direction and read-side clauses.
+g-feedthrough	cite	ok	§5.3	fixed by producing stage; stage-2 outputs presumed dependent on every wired input			
+g-feedthrough	accuracy	ok					
+g-field-handle	cite	ok	§4.4	immutable query object on ordinary port; frozen bulk references; no mutable cache			
+g-field-handle	accuracy	ok		ISAField, TerrainField	illustrative names in §4.4		
+g-immutable-value-semantics	cite	ok	§4.1	immutability plus frozen references; no aliasing, safe concurrent reads, per-cell freshness			
+g-immutable-value-semantics	accuracy	ok					
+g-one-home-per-datum	cite	ok	§5.2	buffer holds x, stores s and m, table produced signals; no store mirrors another			
+g-one-home-per-datum	cite	ok	§7.1	no state cells beyond declared ports			
+g-one-home-per-datum	accuracy	ok					
+g-port	cite	ok	§4.2	addressable unit; stage invisible outside the component			
+g-port	cite	ok	§4.3	wiring port-granular; unit of every external read and write			
+g-port	accuracy	ok		one root input, staged write, claim, trace address, GUI liveness verdict	write-side granularity in §4.3, claims §11.3, liveness §11.7		
+g-root-input	cite	ok	§11.3	produced by no component, constant within a frame, only thing the periphery may write			
+g-root-input	cite	ok	§8.2	primitive root supplies u_types keys			
+g-root-input	cite	ok	§8.6	assembly input_wires keys or primitive u_types keys			
+g-root-input	accuracy	ok					
+g-scratch	cite	ok	§7.3	workspace is mutable scratch			
+g-scratch	cite	ok	§10.3	table transiently integrator scratch mid-step			
+g-scratch	cite	moved	§10.4	the integrator's buffers and the mid-step table	§10.4 covers trial evaluations and says nothing of scratch; integrator buffers are stated in §13.6 and §13.4	§13.6:10878;§13.4:10582	Cite §13.6 in place of §10.4.
+g-scratch	cite	ok	§9.4	every service invocation owns the scratch set it instantiates from the layouts			
+g-scratch	cite	ok	§14.8	trim scratch stores built from the activation layout, die with the call			
+g-scratch	accuracy	ok		Scratch names the role, not the type	§14.8 applies it to a scratch Model, §7.3 to the workspace		
+g-scratch	length	over		82 words		§13.4:10582 (no boundary-consistent fact read from it);§9.4:4863 (simulation buffer set has the same shape; one owner per buffer set);§14.8:12386 (scratch is a role: a scratch Model)	Drop the no-boundary-fact sentence, shorten the neighbor clause to one sentence and drop the role-not-type note.
+g-signal-table	cite	ok	§10.3	consistency a boundary property; transiently integrator scratch			
+g-signal-table	accuracy	ok					
+g-staging-cell	cite	ok	§11.4	per-device atomic holding place; mutated frame by frame, outside publish-once discipline			
+g-staging-cell	cite	ok	§4.1	bare cell is the table entry only			
+g-staging-cell	accuracy	ok					
+g-store	cite	ok	§7.3	s and m stores isbits or Symbol, overwritten on update or handler return, no arithmetic			
+g-store	cite	ok	§4.1	x store is a range of the buffer; stores are not cells			
+g-store	cite	ok	§11.2	root inputs are source cells of the table	§11.2 says source cells, not state stores		
+g-store	accuracy	stale		It is never arithmetic-touched and is snapshot-free to copy	no section says snapshot-free; §7.3 says copying a store copies bits and a checkpoint copies them wholesale	§7.3:1979	Drop the snapshot-free clause.
+g-store	length	over		80 words		§7.3:1962 (never arithmetic-touched);§7.3:1979 (copy);§11.2:6987 and §4.1:808 (root inputs are source cells)	Drop the arithmetic and copy clauses and the root-input contrast.
+g-summing-junction	cite	ok	§6.2	no framework aggregation mechanism; fold order positional			
+g-summing-junction	cite	moved	§6.2	SumJunction{V, N}, the generic Junction at +, or a named site-specific variant	§6.2 shows SumJunction only in use; the alias and the named variant are stated in §13.7	§13.7:11029;§13.7:11039	Add a §13.7 citation to the spelling list.
+g-summing-junction	accuracy	ok					
+g-value-level-constructor	cite	ok	§8.2	plain public function (component, input values) to handle; stage is a one-line call to it			
+g-value-level-constructor	cite	ok	§14.1	condition math builds the handle outside any sweep			
+g-value-level-constructor	accuracy	ok					
+g-view	cite	ok	§7.1	state views are zero-copy reconstructions of a store; value-identical within a sweep			
+g-view	cite	moved	§5.2	It materializes in the caller's frame for the duration of the call	§5.2 and §7.1 say only that a view exists for the call; the caller's-frame clause is §9.7	§9.7:5254	Cite §9.7 for the materialization clause.
+g-view	accuracy	unclear		a zero-copy reconstruction of a store	§5.2 calls every bundle field a view, y and u gathered from cells included; §7.1 and §5.3 call state views reconstructions of a store	§5.2:1071;§7.1:1820	Gloss view as a bundle field and state view as the store reconstruction; the spec uses the word both ways.
+g-algebraic-loop	cite	moved	§5.5	a build error naming the path in canonical slash form	§5.5 says build error only; the slash-form naming is §13.8 Detection and naming	§13.8:11231	Cite §13.8 for the naming.
+g-algebraic-loop	cite	ok	D-348	UnitDelay samples the signal on the discrete tier			
+g-algebraic-loop	cite	ok	§5.4	artificial loop port-level acyclic, stage-level cyclic; three-rung ladder			
+g-algebraic-loop	accuracy	ok			§13.7:11078 requires the UnitDelay tier caveat wherever the remedy is recommended, so it stays		
+g-algebraic-loop	length	over		78 words		§5.4:1446 (the ladder rungs)	Replace the ladder list with the §5.4 citation; keep the UnitDelay caveat, which §13.7 requires.
+g-execution-order	cite	wrong	D-258	It is carried by the Outputs artifact, and "ordering" names the activity	D-258 says "carried by the `Dataflow` artifact"; the spec names Outputs	§9.1:4249	Cite §9.1 for Outputs and drop D-258.
+g-execution-order	cite	ok	§5.1	static order computed once at build time; no runtime graph logic			
+g-execution-order	cite	ok	§9.7	flat list of (component, stage) pairs			
+g-execution-order	accuracy	stale		"ordering" names the activity	stated only in D-258, nowhere in chapters 1-14 or Appendices A-C; the stage sequence itself is §5.3	§5.3:1290	Drop the ordering clause and cite §5.3 for the stage sequence.
+g-execution-order	length	over		65 words		§5.1:1034 (zero runtime graph logic)	Drop the log-only clause and the graph-logic restatement.
+g-flow	cite	ok	D-220	f stays the symbol for the derivative function	D-220 maps f to state_derivative, since renamed x_deriv; the symbol rule stands, also §5.3:1193		
+g-flow	cite	ok	§5.3	RHS means running the sweep			
+g-flow	cite	ok	§10.3	no incremental x_deriv-only re-evaluation			
+g-flow	accuracy	ok					
+g-frame	cite	ok	§10.1	frame one grid step, unit of scheduling, distinct from boundary			
+g-frame	cite	ok	§11.1	one iteration of the loop; what step! counts; trace ordinal; reference frames compounded			
+g-frame	cite	ok	§D.4	boundary entry sits in D.4			
+g-frame	accuracy	ok					
+g-projection	cite	ok	§5.3	runs after integration and after a handler x-reset, the only two positions			
+g-projection	cite	ok	§2	cheap end of geometric integration projection methods			
+g-projection	accuracy	ok					
+g-sweep	cite	ok	§5.3	one pass against the current state			
+g-sweep	cite	ok	§10.3	mid-step table is integrator scratch; boundary sweep restores consistency			
+g-sweep	cite	ok	§10.5	two variants from one entry list; interior continuous only; boundary gated by counter modulo; fixed due set			
+g-sweep	cite	ok	§10.6	event phase re-sweeps to quiescence			
+g-sweep	accuracy	unclear		interior sweep and boundary sweep	§10.4 links "arrival sweep" to this entry but the entry never names it, and the spec does not say which variant the arrival sweep is	§10.4:5702	Add the arrival sweep as a sub-term; whether it is an interior or boundary sweep needs a ruling.
+g-sweep	length	over		98 words		§10.3:5670 (mid-step sweeps are scratch);§10.3:5671 (boundary sweep restores consistency);§10.5:6133 (re-sweeps against fixed due set);§10.6:6432 (iteration to quiescence);§10.5:6119 (counter modulo)	Keep the two variants and their runners; drop the scratch, consistency and quiescence clauses.

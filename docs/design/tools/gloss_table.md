@@ -13,7 +13,8 @@ first, rewrote the second and retired `capture` (D-273, D-274). No other row
 was recounted then. The `local wire` row was counted on 2026-10-02, when
 D-303 added the entry, and the `stop request` row on 2026-10-08, when D-316
 replaced `stop_on`'s. The `requester roster` row was counted on 2026-10-19,
-when chapter 13's rewrite added the entry.
+when chapter 13's rewrite added the entry. The twenty rows Appendix D's
+rewrite added were counted on 2026-10-21; no other row was recounted then.
 
 ## D.1 Component model and declaration layer
 
@@ -21,6 +22,9 @@ when chapter 13's rewrite added the entry.
 |---|---|---|---|---|
 | abstract entry | g-abstract-entry | 4 | A | an `u_types` entry admitting any concrete producer face |
 | assembly | g-assembly | 21 | B | a component that only composes children, with no dynamics |
+| auto-bubbling | g-auto-bubbling | 3 | A | promoting an unconnected input automatically to a root input |
+| bound law / walk clause | g-bound-law | 4 | A | the two clauses that type-check a wire |
+| branch-shape rule | g-branch-shape-rule | 3 | A | a stage returns one `NamedTuple` shape on every branch |
 | class | g-class | 7 | A | a component's primitive-vs-assembly status, read off its declarations |
 | component | g-component | 65 | B | a leaf primitive or an assembly of components |
 | container children | g-container-children | 3 | A | a tuple field contributing its component elements as children |
@@ -28,10 +32,12 @@ when chapter 13's rewrite added the entry.
 | contract | g-contract | 32 | B | a component's declared `u_types` and `y_types` |
 | declaration inventory | g-declaration-inventory | 0 | — | the closed set of well-known functions a component defines |
 | derived contract | g-derived-contract | 0 | — | the checkable surface an assembly or the `Build` derives instead of declaring |
+| export chain | g-export-chain | 5 | A | the faces under which the assemblies above surface a port |
 | function family | g-function-family | 1 | A | which bundle fields a given function may legally receive |
 | generic holding | g-generic-holding | 2 | A | a parent holding a child through a non-concrete field type |
 | hybrid causal system | g-hybrid-causal-system | 1 | B | continuous flow, discrete dynamics, events and injected inputs |
 | local wire | g-local-wire | 6 | B | a `local_wires` entry, with both ends inside the assembly's boundary |
+| locality law / one-level rule | g-locality-law | 5 | A | each wire endpoint names an immediate child and its face |
 | the letters | g-the-letters | 0 | — | *(resists compression: the entry is a naming table)* |
 | periodic discrete component | g-periodic-discrete-component | 0 | — | a leaf updating at a declared rate, holding between ticks |
 | rate scope | g-rate-scope | 4 | A | an assembly's `sample_times` declaration against the enclosing scope |
@@ -48,12 +54,13 @@ when chapter 13's rewrite added the entry.
 | bundle | g-bundle | 13 | A | the NamedTuple of zero-copy views a component function receives |
 | cell | g-cell | 33 | B | one typed entry of the signal table, one per port |
 | constant source | g-constant-source | 1 | B | a library component publishing a value its instance holds |
-| entry | g-entry | 0 | — | *(resists compression: a disambiguation entry, never used bare)* |
+| entry | g-entry | 0 | — | *(resists compression: a disambiguation entry listing the compounds)* |
 | face | g-face | 48 | B | the name a port wears on its component's boundary |
 | feedthrough | g-feedthrough | 14 | B | an instantaneous input→output dependence |
 | field handle / function-valued signal | g-field-handle | 5 | A | an immutable query object consumers evaluate at their own arguments |
 | immutable value semantics | g-immutable-value-semantics | 0 | — | immutability plus frozen references, so concurrent reads are safe |
 | one home per datum | g-one-home-per-datum | 2 | A | each datum lives in exactly one store, mirrored nowhere |
+| opaque leaf | g-opaque-leaf | 7 | A | a non-isbits immutable the leaf walk stores whole |
 | port | g-port | 39 | B | the addressable unit of the model: one name, one cell |
 | root input | g-root-input | 40 | B | the root component's own input face, the only thing the periphery writes |
 | signal table | g-signal-table | 12 | B | the framework-owned collection of cells holding every produced signal |
@@ -61,7 +68,7 @@ when chapter 13's rewrite added the entry.
 | store | g-store | 8 | B | the home of one of a component's state letters, `x`, `s` or `m` |
 | summing junction | g-summing-junction | 2 | B | a library component doing N-to-1 aggregation through explicit wires |
 | value-level constructor | g-value-level-constructor | 4 | A | the plain exported function building a field handle from the component and input values |
-| view | g-view | 4 | B | a zero-copy reconstruction of a store handed through the bundle |
+| view | g-view | 4 | B | a named, zero-copy value a function receives through its bundle |
 
 ## D.3 Evaluation and scheduling
 
@@ -71,8 +78,11 @@ when chapter 13's rewrite added the entry.
 | execution order | g-execution-order | 17 | B | the order in which the stage functions run, fixed at build time from the feedthrough graph |
 | flow / RHS | g-flow | 11 | B | `x_deriv`, the continuous derivative function, `f` in the formulas |
 | frame | g-frame | 7 | A | one iteration of the loop: drain, integrate, boundary, publication |
+| fused idiom | g-fused-idiom | 3 | A | compute a law once in a stage, then copy it from `y` |
+| hand-down | g-hand-down | 4 | A | the component's own stage-1 ports, as `y_direct` receives them |
+| hop / dead hop | g-hop | 2 | A | a cycle step through one member, from face to port |
 | projection | g-projection | 11 | B | the optional per-component hook `x ← x_projection(x)` |
-| sweep | g-sweep | 39 | B | one pass through the execution order against the current state |
+| sweep | g-sweep | 39 | B | one pass through the execution order, in one of two variants |
 
 ## D.4 Time and events
 
@@ -80,8 +90,10 @@ when chapter 13's rewrite added the entry.
 |---|---|---|---|---|
 | anchor | g-anchor | 3 | A | the exact `(T, τ)` pair an `Absolute` entry establishes |
 | boundary | g-boundary | 39 | B | a published consistency point where a snapshot goes out |
+| boundary sequence / macro-sequence | g-boundary-sequence | 23 | B | integrate, project, iterate events to quiescence, then due updates |
 | boundary-detected | g-boundary-detected | 8 | A | checked for edges at step boundaries only, no root-finding |
 | chattering / localization budget | g-chattering | 4 | A | the bounded per-frame localization allowance, exhaustion degrading rather than throwing |
+| trial evaluation | g-trial-evaluation | 3 | A | a guard's value at one instant inside the step |
 | `Δt_base` | g-dt_base | 1 | A | the base tick period, an integer multiple `n·h` |
 | due | g-due | 5 | A | admitted at this boundary by its compiled `(D, Φ)` pair |
 | edge semantics / holding | g-edge-semantics | 7 | A | firing on not-holding → holding transitions, never bare sign changes |
@@ -109,11 +121,11 @@ when chapter 13's rewrite added the entry.
 | term | anchor | n | class | gloss |
 |---|---|---|---|---|
 | activation | g-activation | 27 | A | the build's typed products at a given scalar type |
-| always-on conformance check | g-always-on-conformance-check | 0 | — | one type test of a stage return at the table-write point |
+| always-on conformance check | g-always-on-conformance-check | 0 | — | the probe's comparison of each function's return, left permanently in place |
 | `Build` | g-build | 1 | B | the bundle of the three steps' products, the activations and the build's warnings |
 | chunking | g-chunking | 2 | A | splitting a large phase body into statically typed chunks |
 | `Deployment` | g-deployment | 1 | A | the scalar-free artifact the grid parameters fix, carrying the `Schedule` |
-| `Events` | g-events | 1 | A | the nominal evaluation's other product: per component the event names, policies and bundle names |
+| `Events` | g-events | 1 | A | a product of the nominal evaluation: per component the event names, policies and bundle names |
 | executable set | g-executable-set | 1 | A | the function set an activation can actually run, hence probes |
 | executor | g-executor | 10 | A | the compiled form of the stage execution order |
 | leaf walk | g-leaf-walk | 1 | A | the derivation of per-activation types from a declared nominal type |
@@ -121,11 +133,12 @@ when chapter 13's rewrite added the entry.
 | measurement seam / phase bodies | g-measurement-seam | 2 | A | `phase_bodies(sim)`, the compiled bodies bound over the simulation's buffers |
 | nominal | g-nominal | 2 | A | the `Float64` activation, and a declaration's `Float64` face |
 | `Outputs` | g-outputs | 1 | A | the nominal evaluation's product: per component the output names each stage produces, and the execution order |
-| probe | g-probe | 20 | B | the build's single evaluation of a user function with real values |
+| probe | g-probe | 20 | B | the build's evaluation of a user function with real values |
 | probe value / input synthesis | g-probe-value | 2 | A | fabricated build-time values, synthesized at producerless root inputs and flowing the probe chain |
 | `ProbeDual` | g-probedual | 1 | B | the exported canonical concrete probe scalar |
 | schema vs. layout | g-schema-vs-layout | 0 | — | *(resists compression: the entry contrasts a pair)* |
-| `Structure` | g-structure | 1 | A | the structure step's product: components, wires, faces, tiers, rate chains and scope triples |
+| shadowing check | g-shadowing-check | 5 | A | the structural walk's check for a module shadowing a declaration |
+| `Structure` | g-structure | 1 | A | the structure step's product: components, tiers, assembly rows, root inputs, rate chains and scope triples |
 | walked / pinned / exempt | g-walked | 21 | A | the eltype-genericity classes: follow the activation scalar, stay `Float64`, exempt |
 
 ## D.6 Runtime periphery
@@ -139,29 +152,33 @@ when chapter 13's rewrite added the entry.
 | calling task | g-calling-task | 8 | A | the task that invoked `run!` |
 | claim | g-claim | 14 | B | the set of faces a device may write |
 | coalescing | g-coalescing | 4 | A | the CAS merge keeping one pending batch per device |
-| control plane | g-control-plane | 6 | A | the separate atomic surface carrying pause, pace, stop, the lifecycle and the wait |
+| control plane | g-control-plane | 6 | A | the separate atomic surface carrying pause, pace, stop and the other `Control` fields |
 | derived liveness | g-derived-liveness | 1 | A | widget liveness derived from the feed chain, never marked per port |
 | device | g-device | 35 | B | any attached participant in the periphery |
 | diagnostic cell | g-diagnostic-cell | 9 | A | the single-writer ring each writer owns for diagnostics and heartbeat |
+| door | g-door | 5 | A | an entry point that builds a run |
 | drain | g-drain | 20 | A | the frame-top swap that publishes staged device writes into the root inputs |
 | framework status | g-framework-status | 5 | A | the frozen diagnostics value each snapshot carries beside the table |
 | greedy claim | g-greedy-claim | 3 | A | the unclaimed complement, computed by the framework instead of returned |
 | harness cell | g-harness-cell | 4 | A | the always-present staging cell of the harness writer |
 | harness writer | g-harness-writer | 1 | A | the framework-owned `stage!` write path of the calling task |
+| heartbeat | g-heartbeat | 9 | B | the atomic liveness timestamp in a device's diagnostic cell |
+| inspection read / integration read | g-inspection-read | 5 | A | a deep-path read versus a curated, meaning-stable face read |
 | `latest` | g-latest | 1 | B | the atomic reference a published snapshot is stored into |
+| levels doctrine | g-levels-doctrine | 3 | A | staged values are levels, never deltas |
 | next-snapshot wait | g-next-snapshot-wait | 0 | — | the boundary counter plus one condition variable |
 | operator interrupt | g-operator-interrupt | 3 | A | Ctrl-C read as a control-plane stop rather than a failure |
 | orphaned claims | g-orphaned-claims | 1 | A | the claims of a device whose task died mid-run |
 | peek | g-peek | 6 | A | showing a widget's own pending write, else the snapshot value |
 | periphery | g-periphery | 13 | B | everything outside the loop that exchanges data with it |
 | roster | g-roster | 15 | B | the list of attached device entries, read once at `run!` |
-| `Run` | g-run | 1 | A | the state one run owns: `t₀`, mode, log, trace, policy, frames, termination |
+| `Run` | g-run | 1 | A | the state one run owns: log, trace, `feed`, `termination` and counters |
 | scenario component | g-scenario-component | 4 | A | an ordinary periodic discrete component holding a sim-time script |
-| selector (read-selector family) | g-selector | 7 | A | the closed family of deferred reads resolving against a source |
 | `should_abort` | g-should_abort | 1 | B | whether a device's departure also requests a stop |
 | snapshot | g-snapshot | 30 | B | the immutable per-boundary publication of the signal table |
 | stage-on-interaction | g-stage-on-interaction | 2 | A | widgets stage on edit or activation, never per render pass |
 | `StopPolicy` | g-stop-policy | 1 | A | the immutable `t_end`-plus-ignored-requesters value one advance declares |
+| tail | g-tail | 9 | A | the ordered shutdown sequence every stop takes |
 | unattended run | g-unattended-run | 6 | A | a run with empty staging and no snapshot readers |
 | write surface | g-write-surface | 2 | A | the set of faces a writer's batch entries may reach |
 
@@ -169,15 +186,16 @@ when chapter 13's rewrite added the entry.
 
 | term | anchor | n | class | gloss |
 |---|---|---|---|---|
-| checkpoint | g-checkpoint | 11 | A | the executor's state at a frame top, as one value |
+| checkpoint | g-checkpoint | 11 | A | the `Model`'s state at a frame top, as one value |
 | decimation | g-decimation | 2 | A | the log's keep-every-kth retention policy |
+| fingerprint | g-fingerprint | 4 | A | the structural layout a checkpoint carries and replay checks |
 | frame ordinal | g-frame-ordinal | 1 | A | the trace's key, the frame index a batch replays at |
 | log | g-log | 1 | B | the retained sequence of published snapshots |
 | recorders | g-recorders | 2 | B | the trace and the log jointly |
 | replay | g-replay | 23 | B | the ordinary loop re-driven from the trace |
 | run metadata | g-run-metadata | 1 | B | the trace header's `Deployment` and `t₀`, carrying no stop policy |
 | trace | g-trace | 27 | B | the primary record: drained, device-tagged batches per frame |
-| trace header | g-trace-header | 10 | B | the trace's fixed preamble: the checkpoint `init!` takes after the first snapshot |
+| trace header | g-trace-header | 10 | B | the trace's fixed preamble: the checkpoint the run's door writes once |
 | trace record | g-trace-record | 0 | — | the retained form of a drained batch |
 | what-if replay | g-what-if-replay | 2 | A | replaying a trace against the same structure with changed parameters |
 
@@ -196,10 +214,13 @@ when chapter 13's rewrite added the entry.
 | fragment tree | g-fragment-tree | 0 | — | the inert, lazy composition of condition nodes |
 | mounting | g-mounting | 2 | A | relocating a whole problem or tap set with `at(prefix, …)` |
 | override | g-override | 1 | B | the ordered, asymmetric layering combinator: the patch wins |
+| read set | g-read-set | 6 | A | a `Reads` value of named selectors, carrying its mount chain |
 | root-input totality | g-root-input-totality | 4 | A | the requirement that an application establishing a complete world cover every root input |
+| selector (read-selector family) | g-selector | 7 | A | the closed family of deferred reads resolving against a source |
 | service lifecycle | g-service-lifecycle | 0 | — | the `Simulation` states and each service's legality against them |
+| stopped-sim | g-stopped-sim | 22 | B | legal only on a simulation that is not running |
 | taps | g-taps | 3 | A | the three selector lists declaring what linearization seeds and reports |
-| `TrimProblem` | g-trimproblem | 1 | B | the closed seven-field value specifying a trim |
+| `TrimProblem` | g-trimproblem | 1 | B | the closed nine-field value specifying a trim |
 
 ## D.9 Error discipline and diagnostics
 
@@ -321,3 +342,24 @@ blessed, chattering, container children, derived liveness, executable set,
 harness writer, input epoch, measurement seam, one home per datum, operator
 interrupt, orphaned claims, probe value, remainder step, the freeze,
 walked/pinned/exempt.
+
+Appendix D's rewrite (2026-10-21) added twenty entries and applied 38 glosses
+for its class-A terms, listed below. The figures above were not recounted.
+
+| gloss | sites |
+|---|---|
+| auto-bubbling | §6.1, §8.8 |
+| branch-shape rule | §9.1, §9.3 |
+| door | §9.2, §13.4 |
+| export chain | §11.7, §13.3, §14.2, §14.4 |
+| fingerprint | §14, Appendix B, Appendix C |
+| fused idiom | §14.7 |
+| hand-down | §13.8 |
+| inspection read / integration read | §8.6, §13.3, §14.4 |
+| levels doctrine | §11.7, §12.5 |
+| locality law / one-level rule | §14.2, §14.4 |
+| opaque leaf | §7.3, §9.5 |
+| read set | §8.1, §11.6, §14.7, §14.8, Appendix C |
+| shadowing check | §8.2, §9.1, §11.6, §14.2 |
+| tail | §11.8, §12.7, §13, §13.5 |
+| trial evaluation | §10.5 |

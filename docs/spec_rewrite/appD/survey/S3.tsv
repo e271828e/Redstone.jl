@@ -1,0 +1,83 @@
+anchor	check	verdict	cites	entry_says	spec_says	home	note
+g-anchor	cite	ok	§10.5	the (T, τ) pair an Absolute entry establishes; severs its subtree; relatives compose against it			
+g-anchor	cite	ok	§9.2	Anchor 0 is the base grid itself; anchors join the deployment constraint pool			
+g-anchor	accuracy	ok					
+g-boundary	cite	ok	§10.6	where the §10.6 macro-sequence completes			
+g-boundary	cite	ok	§10.1	t* and boundary zero are boundaries that are not frame tops			
+g-boundary	cite	ok	§14.5	Boundary zero ... an ordinary boundary whose incoming transitions are authored			
+g-boundary	cite	ok	§D.8	Boundary zero (§D.8)			D.8 holds g-boundary-zero.
+g-boundary	cite	ok	§8.6	Boundary in the structural sense (a component's boundary, its boundary declarations)			
+g-boundary	accuracy	ok					
+g-boundary	length	over		78 words		§14.5:11887; §8.6:3395	Drop the boundary-zero gloss (rule 3, link g-boundary-zero instead) and the structural-sense list item "the interface connections crossing it" (rule 2).
+g-boundary-detected	cite	moved	§10.4	with no root-finding and no step rejection. The handler fires at the first boundary that observes the edge, which is the step's end or an earlier localized event time	§10.4 states boundary-only checking and the exactness; "no step rejection" and the firing boundary are stated in §2.3	§2.3:395	Cite §2.3 for the checking clause and keep §10.4 for the exactness.
+g-boundary-detected	accuracy	ok					
+g-boundary-detected	length	over		75 words		§2.3:395; §2.3:395	Drop "no step rejection" and the sentence on which boundary fires the handler (rule 1).
+g-chattering	cite	ok	§10.4	localization_budget defaulting to 8; exhaustion degrades; ChatteringBudget warning naming the event			
+g-chattering	accuracy	ok					
+g-dt_base	cite	ok	§10.5	integer multiple N_base·h; every discrete period an integer multiple of it			
+g-dt_base	cite	ok	§9.2	bound at the Deployment constructor from one of three sources			
+g-dt_base	accuracy	ok					
+g-due	cite	ok	§10.5	(tick − Φ) % D == 0; due set fixed for the boundary; per-boundary-kind due sets			
+g-due	cite	ok	§10.6	s_update calls run after quiescence			
+g-due	accuracy	ok					
+g-due	length	over		98 words		§10.5:6113; §10.5:6140	Drop "(never the interior one)" (rule 1) and the enumeration of due sets per kind of boundary, citing §10.5 instead (rule 2).
+g-edge-semantics	cite	ok	§2.3	fires on not-holding → holding; opposite direction is a second event with the negated guard			
+g-edge-semantics	cite	ok	§10.6	never on a bare sign change			
+g-edge-semantics	accuracy	ok					
+g-firing-budget	cite	ok	§10.6	at most firing_budget times per boundary, integer ≥ 1 defaulting to 4; FiringBudget warning			
+g-firing-budget	accuracy	ok					
+g-firing-budget	length	over		65 words		§10.6:6460	Drop the last-observed-sample eligibility sentence (rule 1).
+g-guard	cite	moved	§10.4	It is evaluated against the fresh boundary table	§10.4 states the return-type policy; guard evaluation against each round's boundary sweep is stated in §10.6, and §10.4 adds trial and arrival evaluations	§10.6:6412	Drop the evaluation clause, since it names only one of the sites where a guard is evaluated.
+g-guard	cite	ok	§8.2	paired with a handler in an ordered, named state_events collection			
+g-guard	accuracy	ok					
+g-harmonic-grid	cite	moved	§10.5	and every anchor period and offset likewise	§10.5 defines the harmonic grid as discrete periods over Δt_base and Δt_base over h; anchor divisibility is §9.2's check, listed apart from the harmonic-grid violation	§9.2:4463	Move the anchor clause to its own sentence citing §9.2.
+g-harmonic-grid	cite	ok	§10.4	Grid times are indexed from the frame count, never accumulated			
+g-harmonic-grid	accuracy	ok					
+g-input-epoch	cite	ok	§11.4	delimited by the frame-top drains			§11.4 backs the drain; the epoch itself is defined in §10.4:5851.
+g-input-epoch	cite	ok	§10.4	θ = 0 validation; trajectory-caused vs epoch-caused; discarded, no budget, no warning			
+g-input-epoch	accuracy	ok					
+g-input-epoch	length	over		108 words		§10.4:5847; §10.4:5866; §10.4:5872	Drop the left-bracket clause, the root-finding of a trajectory-caused edge, and the discard mechanics of an epoch-caused edge (rule 1); keep the θ = 0 validation as a short sub-term gloss.
+g-interpolant	cite	ok	§10.4	lazily built cubic Hermite extension; built after θ = 0 validation; invalidated at t*			
+g-interpolant	accuracy	ok					
+g-localized	cite	ok	§10.7	runs identically paced or unpaced			
+g-localized	cite	ok	§10.4	derivative-free root-finding; localization_tol · h, default 1e-6; only the sign form			
+g-localized	accuracy	ok					
+g-pacing	cite	ok	§10.7	waits between completed frames; debt; forgiven by re-anchor plus warning			
+g-pacing	accuracy	ok					
+g-phase	cite	ok	§10.5	scope ticks for Relative, rational seconds for Absolute; 0 ≤ Φ < D; shifts instants, never the period			
+g-phase	accuracy	ok					
+g-predicate	cite	ok	§2.3	Bool form or sign of a continuous function, holds when σ ≥ 0			
+g-predicate	cite	ok	§14	the condition, the value that sets a build's state			
+g-predicate	cite	ok	§D.8	(§D.8)			D.8 holds g-condition.
+g-predicate	cite	ok	§11.6	the device loop's running check			
+g-predicate	cite	ok	§12.3	the device loop's running check			
+g-predicate	cite	ok	§9.5	structural conformance predicates			
+g-predicate	accuracy	ok					
+g-prior	cite	ok	§10.6	sample at the previous boundary's quiescence; honest; first round; boundary zero sets not-holding			
+g-prior	accuracy	stale		it is held in loop state, never in a state store	no section says loop state; §10.6 calls the registers detection bookkeeping absent from every state store, and the checkpoint carries the prior	§10.6:6501	Replace "held in loop state" with "detection bookkeeping" and name the checkpoint that carries it.
+g-prior	length	over		62 words		§10.6:6460	Drop "(later rounds test the last-observed sample)" (rule 1).
+g-quiescence	cite	ok	§10.6	rounds iterate until a round fires nothing; then priors update and due s_update calls run			
+g-quiescence	accuracy	ok					
+g-remainder-step	cite	ok	§10.4	t* to the grid target, h′ derived at use; re-checked under the localization budget			
+g-remainder-step	accuracy	ok					
+g-schedule	cite	ok	§9.2	rows, rate-scope rows, triples derived; grid diagnostics; hyperperiod chart			
+g-schedule	cite	ok	§10.5	single source of truth for Δt			
+g-schedule	cite	ok	D-261	per-component triples derived from the rows			
+g-schedule	accuracy	ok					
+g-schedule	length	over		68 words		§9.2:4492; §9.2:4494	Drop "with anchor and rate-chain columns" and the clause on triples derived from the rows (rule 1).
+g-state-event	cite	ok	§2.3	instant unknown, must be detected; detection versus scheduling; guard over an input			
+g-state-event	cite	ok	§8.2	StateEvent(guard, handler) under state_events			
+g-state-event	accuracy	ok					
+g-t	cite	ok	§10.4	holding endpoint of the final bracket, strictly later than tₙ; no ticks due, no drain			
+g-t	accuracy	ok					
+g-tick	cite	ok	§10.5	gated by counter modulo inside the boundary sweep; different subsets per boundary			
+g-tick	accuracy	ok					
+g-tick-index	cite	ok	§10.5	tick = k ÷ N_base; off-tick frame top and t* have none			
+g-tick-index	accuracy	ok					
+g-tier	cite	ok	§8.2	read off the state declaration, x_init or s_init, empty when stateless			
+g-tier	cite	ok	§8.5	DeclarationOnWrongTier names a violation			
+g-tier	cite	ok	§D.5	walked / pinned / exempt (§D.5)			D.5 holds g-walked.
+g-tier	accuracy	ok					
+g-time-event	cite	ok	§2.3	discrete tier's ticks, declared by sample_times; counterpart of a state event			
+g-time-event	cite	ok	§10.5	gated by the harmonic grid			
+g-time-event	accuracy	ok					

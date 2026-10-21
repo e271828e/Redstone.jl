@@ -1,0 +1,71 @@
+anchor	check	verdict	cites	entry_says	spec_says	home	note
+g-activation	cite	ok	§9.1	nominal Float64 activation is the nominal evaluation's product; any other derived on request from it, the Structure and the Outputs			
+g-activation	cite	ok	§9.4	Non-nominal activations are lazy, with an opt-in exhaustive set for CI			
+g-activation	accuracy	stale		producer-fed ones by evaluating the producer's output declaration at T, root inputs by evaluating the consuming u_types entry at T	cells are re-typed by walking the output declaration, or the consuming u_types entry, at T	§9.4:4761	Say the cells are re-typed by the leaf walk; 'evaluating at T' echoes the retired Type{T} signatures of D-166/D-167, superseded by D-263.
+g-activation	length	over		106 words		§9.4:4761;§9.4:4765;§9.4:4768;§9.4:4784;§9.4:4811;§9.4:4824;§9.1:4287	Drop the per-cell re-typing detail, the T-independence of Structure and Outputs, the laziness and CI clauses, and the list of inputs a derived activation takes.
+g-always-on-conformance-check	cite	ok	§9.5	key-set and per-field comparison ... decided when the table write's method is generated; names pair, order carries no semantics			
+g-always-on-conformance-check	cite	ok	D-235	decided when the write's method is generated over the two types; conformant return generates straight stores			
+g-always-on-conformance-check	accuracy	stale		the key-set and per-field comparison of a stage return against the type of the cells it writes	The check is uniform across all probed functions. Each function is checked against its own predicate.	§9.5:5036	Widen the definition to every probed function's return against its own predicate, a stage's being its cells' types.
+g-always-on-conformance-check	length	over		63 words		§9.5:4937;§9.5:4920	Compress the pairing parenthetical to 'fields pair by name' and drop 'the straight stores'.
+g-build	cite	moved	§9.2	what attach!, ignore_stop_requests, replay and condition resolution all validate against	§9.2 states only attach!; the other three are stated elsewhere	§12.7:9863;§13.5:10846;§14.3:11650	Keep §9.2 for attach! and cite §12.7 (fingerprint against the Build), §13.5 (ignore list addresses the Build's requester roster) and §14.3 (the Build supplies two lookup families).
+g-build	accuracy	ok					
+g-chunking	cite	ok	§9.7	barriers by reference; event-set walks chunk the same way; only representation freedom; superlinear to linear			
+g-chunking	accuracy	ok					
+g-deployment	cite	ok	§9.2	build plus grid parameters, algorithm, three event parameters, Schedule, grid diagnostics, warnings; scalar-free; compares as a value			
+g-deployment	cite	ok	D-254	the build plus h, N_base, Δt_base, the algorithm and the three event parameters			
+g-deployment	cite	ok	D-317	a Model materializes it at a scalar type			
+g-deployment	accuracy	ok					
+g-events	cite	ok	§9.1	built last, after the stage probes; event names, policies, bundle names; separate from Outputs			
+g-events	cite	ok	D-253	Events is the nominal evaluation's product, separate from Outputs			
+g-events	accuracy	stale		the nominal evaluation's other product	it returns three artifacts, Outputs, Events and the nominal Float64 activation	§9.1:4244	Say 'a product of the nominal evaluation', since 'other' implies two products and the nominal activation is the third.
+g-executable-set	cite	ok	§9.4	a Dual activation sees only the continuous output stages and x_deriv			
+g-executable-set	accuracy	ok					
+g-executor	cite	ok	§9.7	concretely typed tuple of entries, compile-time-unrolled walk, code-selecting facts in type parameters			
+g-executor	accuracy	ok					
+g-leaf-walk	cite	ok	§8.2	Float64 leaves and parameters follow; Pinned{P} yields P; everything else pins; m_init, s_init and the discrete contracts pin wholesale			
+g-leaf-walk	cite	ok	D-263	one walk rule over by-value and by-type declarations, the Pinned marker			
+g-leaf-walk	cite	ok	§9.4	applied at activation			
+g-leaf-walk	accuracy	ok					
+g-leaf-walk	length	over		99 words		§8.2:2751;§9.4:4765;§8.2:2759	Drop the output-cell and root-input-cell sentence and the per-leaf authoring clause, which §8.2 and §9.4 state.
+g-lens	cite	ok	§14.3	position tuple lifted to a type parameter, type-stable navigation			
+g-lens	accuracy	ok					
+g-measurement-seam	cite	ok	§9.8	the allocation assertions			
+g-measurement-seam	cite	ok	§9.7	phase_bodies(sim) returns the nominal bodies bound over the simulation's buffers; identity with what the loop runs			
+g-measurement-seam	accuracy	ok					
+g-measurement-seam	length	over		62 words		§9.7:5208	Drop the parenthetical on the sweeps' two arities.
+g-model	cite	ok	§9.2	a Simulation runs only a Model{Float64}; another scalar is a service's scratch; claimed and never shared			
+g-model	cite	ok	§12.6	the deployment, its executor, a status of :built, :consistent or :inconsistent, and the diagnostic cell			
+g-model	cite	ok	D-317	Model holds the deployment, executor, status and diagnostic cell; only Model{Float64} runs			
+g-model	cite	ok	D-318	A Simulation claims it at construction and never shares it			
+g-model	cite	ok	Appendix B	Its entry points are listed in the Model block of Appendix B			
+g-model	accuracy	stale		the Model block of [Appendix B]	Appendix B's block is headed 'Deployment and the model'	AppB:13465	Name the block 'Deployment and the model'.
+g-model	length	over		86 words		§12.6:9442;§9.2:4337;§9.2:4343	Drop the three status values, 'written to, evaluated and stepped frame by frame', 'with no ticks and no events' and 'never shares it'.
+g-nominal	cite	ok	§9.4	the Float64 activation			
+g-nominal	cite	ok	§9.5	only activation that runs in real time; exact type match			
+g-nominal	cite	ok	§9.2	Only a Model{Float64} can be run			
+g-nominal	cite	ok	D-317	a Model at another scalar is a service's scratch			
+g-nominal	accuracy	ok					
+g-nominal	length	over		62 words		§9.2:4337	Drop 'a Model at another scalar is a service's scratch', which the Model entry carries.
+g-outputs	cite	ok	§9.1	stage-1 and stage-2 names, execution order; feedthrough graph derived, never carried			
+g-outputs	cite	ok	D-253	the nominal evaluation's product			
+g-outputs	cite	ok	D-261	feedthrough graph derived where shown, never carried			
+g-outputs	accuracy	ok					
+g-probe	cite	ok	§9.3	every user function probed once at the initial state; shape and type conformance; only that state's branch			
+g-probe	accuracy	stale		the build's single evaluation of a user function	each activation probes its executable set, and the probe chain runs again	§9.4:4782;§9.4:4789	Say the nominal evaluation probes every function once and every other activation re-runs the probe chain over its executable set.
+g-probe-value	cite	ok	§13.1	they flow the probe chain			
+g-probe-value	cite	ok	§14.6	the probe-value barrier is structural			
+g-probe-value	cite	ok	§9.3	probe_value(::Type), zero/false/first enum/T(), overridable, strictly probe-scoped			
+g-probe-value	accuracy	ok					
+g-probedual	cite	ok	§9.4	const ProbeDual = ForwardDiff.Dual{ProbeTag, Float64, 1}; width arbitrary			
+g-probedual	accuracy	ok					
+g-schema-vs-layout	cite	ok	§14.3	schema is the authority on writability and leaf type; layout is buffer ranges, store and root-input indices			
+g-schema-vs-layout	accuracy	ok					
+g-structure	cite	ok	D-315	face table and routing chains are functions over the wires			
+g-structure	cite	ok	§9.1	the listed contents; nothing depends on a scalar type			
+g-structure	cite	ok	D-253	the structure step's product			
+g-structure	accuracy	stale		the root inputs with their types	§9.1 lists 'the root inputs'; only D-315 says 'with their types'	§9.1:4224	Drop 'with their types', which no section states.
+g-structure	length	over		85 words		§9.1:4224	Name the list's items briefly and drop 'by path', 'in declaration order', the Relative/Absolute links and the sample_times qualifier.
+g-walked	cite	ok	§7.2	walked, pinned, exempt classes			
+g-walked	cite	ok	§8.2	one walk over state and contracts; Pinned{P} marker in y_types and u_types			
+g-walked	accuracy	ok					
+g-walked	length	over		73 words		§8.2:2742;§8.2:2532	Drop the clause on what Pinned means in y_types and in u_types.

@@ -1,0 +1,102 @@
+anchor	action	source	note
+(lead)	unchanged-but-bold	R4	Only the bold on "the owning section wins" went.
+g-bundle	unchanged-but-bold	R4	Only the bold on "iff" went.
+g-class	replaced	S1:accuracy,length	
+g-component	replaced	S1:accuracy; R2	Kept the primitive/leaf usage note the proposal dropped.
+g-continuous-component	replaced	S1:accuracy	
+g-contract	replaced	S1:cite §10.6,accuracy,length	
+g-declaration-inventory	replaced	S1:cite §8.2	
+g-derived-contract	replaced	S1:accuracy,length	
+g-function-family	replaced	brief (§D.n link rule)	Only the §D.9 citation became a link to kind.
+g-generic-holding	replaced	override	Only the §6.1 citation went; the survey rows were all ok.
+g-hybrid-causal-system	replaced	S1:accuracy	
+g-local-wire	replaced	S1:accuracy	
+g-the-letters	replaced	S1:accuracy,length; R3; override	Dropped the D-173 history and the D-220 cite, grounded the z⁻¹ clause in §3.4 and §10.6, and replaced the bundle-letter list with its §5.2 citation to fit the cap.
+g-cell	replaced	S2:cite §D.6	
+g-entry	subterm	S2:accuracy; R7; override	Kept "input entry", the spec's word, over the proposal's "contract entry", which the spec never uses, and dropped the abstract-entry link for length.
+g-face	replaced	S2:length	
+g-scratch	replaced	S2:cite §10.4,length	
+g-store	replaced	S2:accuracy,length	
+g-summing-junction	replaced	S2:cite §6.2	
+g-view	replaced	S2:cite §5.2,accuracy; R9	The materialization clause now speaks of an isbits state view, as §9.7:5254 does.
+g-algebraic-loop	replaced	S2:cite §5.5,length	
+g-execution-order	replaced	S2:cite D-258,accuracy,length	Kept "entries" over the proposal's "pairs", as §9.7 says.
+g-frame	subterm	R7; brief (§D.n link rule)	Added frame top from §2.1 and made the §D.4 citation a link to boundary.
+g-sweep	subterm	S2:accuracy,length; R8	Named the arrival sweep unclassed and dropped "against the current state" and "the boundary's" to fit the cap.
+g-boundary	replaced	S3:length	
+g-boundary-detected	replaced	S3:cite §10.4,length	
+g-due	replaced	S3:length	
+g-firing-budget	replaced	S3:length	Replaced the proposal's "can thus fire again" with §10.6:6592's own statement that the budget lets a re-enabled event fire at its true boundary.
+g-guard	replaced	S3:cite §10.4	
+g-harmonic-grid	replaced	S3:cite §10.5	
+g-input-epoch	replaced	S3:length	
+g-predicate	replaced	brief (§D.n link rule)	Only the §D.8 citation became a link to condition.
+g-prior	replaced	S3:accuracy,length	
+g-quiescence	subterm	R7	Added event round, citing §2.4 for the unpublished rounds.
+g-schedule	replaced	S3:length	
+g-tier	replaced	R2; brief (§D.n link rule)	Only the §D.5 citation became a link to walked; the usage note stays.
+g-activation	replaced	S4:accuracy,length	
+g-always-on-conformance-check	replaced	S4:accuracy,length	Folded the dangling "Fields pair by name" into the §9.5 sentence.
+g-build	replaced	S4:cite §9.2	
+g-events	replaced	S4:accuracy	
+g-leaf-walk	replaced	S4:length	Kept the frozen "applies to the type derived from x_init" over the proposal's "each activation walks x_init", and dropped the mutable-type clause for the cap.
+g-measurement-seam	replaced	S4:length	
+g-model	replaced	S4:accuracy,length	
+g-nominal	subterm	S4:length; R7	Added nominal evaluation from §9.1 and §9.3 and dropped the Model{Float64} sentence, which g-model carries.
+g-probe	subterm	S4:accuracy; R7	Added probe chain from §9.1 and §9.3 and dropped "and discarding the result" for the cap.
+g-structure	replaced	S4:accuracy,length	Gathered the citations at the end, D-315 included, since §9.1 states the face-table clause too.
+g-walked	replaced	S4:length	
+g-batch	replaced	brief (§D.n link rule)	Only the §D.9 citation became a link to collect the checks.
+g-binding	replaced	S5:length	
+g-boundary-counter	subterm	R7	Named the published-boundary ordinal from §12.3.
+g-control-plane	replaced	S5:length	
+g-diagnostic-cell	replaced	S5:length	Linked heartbeat to its new entry.
+g-operator-interrupt	replaced	S5:length	Linked the graceful tail to its new entry.
+g-run	replaced	S5:accuracy,length	Linked the four doors to the new entry.
+g-should_abort	replaced	S5:length	
+g-snapshot	subterm	R7	Added terminal snapshot from §12.4 and §13.5.
+g-stop-policy	replaced	S5:length	
+g-stop-word	replaced	brief (§D.n link rule)	Only the §D.9 citation became a link to stop request.
+g-write-surface	replaced	S5:cite §11.6	
+g-selector	moved	R5	Text unchanged, now in D.8.
+g-leaf-address	moved	S5:accuracy,length; R5	Moved to D.8 with the S5 proposal applied.
+g-checkpoint	replaced	S6:length	
+g-decimation	replaced	S6:length	
+g-recorders	replaced	S6:accuracy	Named the four doors by a link to the new entry instead of listing them.
+g-trace-header	replaced	S6:accuracy	Linked door to its new entry.
+g-at	replaced	S6:length	
+g-baseline	replaced	S6:cite §14.6; brief (§D.n link rule)	Made the §D.4 citation a link to prior.
+g-condition	replaced	S6:accuracy; brief (§D.n link rule)	Made the §D.4 citation a link to predicate.
+g-service-lifecycle	replaced	S6:accuracy	
+g-taps	replaced	S6:length	
+g-trimproblem	replaced	S6:cite §14.7	Follows §14.9:12648 in calling it not a condition but an implicitly specified one.
+g-collect-the-checks-fail-the-evaluations-fast	replaced	S7:cite Appendix C,accuracy	
+g-error-locality	replaced	S7:cite §8.4	
+g-kind	replaced	brief (§D.n link rule)	Only the two §D.1 citations became links to class and function family.
+g-species	replaced	S7:accuracy	
+g-stop-request	replaced	S7:length	
+g-artifact	replaced	S7:accuracy	
+g-row	replaced	S7:accuracy; R2	
+g-guarded-addition	replaced	S7:accuracy; override	Added one clause naming recorded, not built, its close neighbor, without redefining it.
+g-normative	replaced	S7:accuracy	Cut to the cap by folding the index sentences and naming Appendix C without "the exception".
+g-recorded-not-built	replaced	override	Text kept, with one clause naming guarded addition added.
+g-auto-bubbling	added	rulings table; G2	Defined from §13.7:10941, the only sentence that says what auto-bubbling is.
+g-bound-law	added	rulings table; G2	Dropped "a discrete consumer takes the bound law alone" for the cap, since "for a continuous consumer only" implies it.
+g-branch-shape-rule	added	rulings table; G2/G3	
+g-export-chain	added	rulings table; G5	The spec never defines the chain in one sentence; the gloss is assembled from §11.7, §14.2, §14.4 and §14.9.
+g-locality-law	added	rulings table; G1/G5	
+g-opaque-leaf	added	rulings table; G1/G2	
+g-fused-idiom	added	rulings table; G1	
+g-hand-down	added	rulings table; G1	
+g-hop	added	rulings table; G1/G5	Cites §13.8 for its use in the cycle diagnosis.
+g-boundary-sequence	added	rulings table; G1/G3	
+g-trial-evaluation	added	rulings table; G3	
+g-shadowing-check	added	rulings table; G2	
+g-door	added	rulings table; G4	
+g-heartbeat	added	rulings table; G4	
+g-inspection-read	added	rulings table; G4	
+g-levels-doctrine	added	rulings table; G4	
+g-tail	added	rulings table; G4/G5; override	Folds in graceful and abnormal entry from §13.6 as sub-terms.
+g-fingerprint	added	rulings table; G4	
+g-read-set	added	rulings table; G5	
+g-stopped-sim	added	rulings table; G4/G5	

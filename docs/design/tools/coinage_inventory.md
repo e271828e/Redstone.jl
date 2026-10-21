@@ -29,9 +29,14 @@ owning entry's anchor; no new entries needed.
 | frozen roster | roster |
 | stepper seam, backend seam | seam |
 | honest priors | prior |
-| epoch rule | input epoch (verify the rule text lives there when linking) |
-| levels doctrine | the levels-never-deltas doctrine — verify owning entry; D-024 carries it |
-| interior sweep, boundary sweep | sweep (both variants are bold-defined inside that one entry; such in-entry sub-terms could be given their own anchors) |
+| interior sweep, boundary sweep, arrival sweep | sweep (each is bold-defined inside that one entry) |
+| frame top | frame (a sub-term of the entry) |
+| event round | quiescence (a sub-term of the entry) |
+| terminal snapshot | snapshot (a sub-term of the entry) |
+| probe chain | probe (a sub-term of the entry) |
+| nominal evaluation | nominal (a sub-term of the entry) |
+| published-boundary ordinal | boundary counter (a sub-term of the entry) |
+| graceful entry, abnormal entry | tail (sub-terms of the entry) |
 | bundle law | bundle (the entry states the law: a name is present iff the store exists) |
 | name-transparent container | container children (the entry states the naming opt-out `transparent_container` declares) |
 
@@ -57,6 +62,7 @@ context wants.
 | `StopPolicy` | — | D-255's per-advance policy value; Appendix D entry `g-stop-policy`, bucket A |
 | leaf address | 7 | D-276's selector argument; §4.2, §4.3, §14.4, §14.7, §14.10, Appendix B; Appendix D entry `g-leaf-address`, bucket A from here on |
 | local wire | 11 | D-303's child-to-child wire, named by D-314, defined in §6.1; nine body uses in §3.3, §6.1, §8.6, §8.8, §11.7 and §14.2, two in Appendix D; Appendix D entry `g-local-wire`, bucket A from here on |
+| Appendix D's gap check | — | promoted by Appendix D's gap check of 2026-10-21, each a coined name used in three or more sections: auto-bubbling, bound law / walk clause, branch-shape rule, export chain, locality law / one-level rule, opaque leaf, fused idiom, hand-down, hop / dead hop, boundary sequence / macro-sequence, trial evaluation, shadowing check, door, heartbeat, inspection read / integration read, levels doctrine, tail, fingerprint, read set, stopped-sim; bucket A from here on |
 | artifact | — | D-250's criterion word; Appendix D entry `g-artifact` in D.10, bucket A |
 | state | — | D-250's other criterion word; Appendix D entry `g-state-single-owner` in D.10, bucket A |
 
@@ -81,6 +87,16 @@ this row is the record of the promotion.
 
 ## D. Low-frequency coinages — inline gloss only
 
-One or two uses each; promote to bucket C only if usage grows: arrival sweep, post-transition sweep, sampling seam, getfield walk,
-branch-shape rule, locality law, active-widget contract, the by-allocation
-convention, misplaced pin.
+One or two uses each; promote to bucket C only if usage grows:
+post-transition sweep, sampling seam, getfield walk, active-widget contract,
+the by-allocation convention, misplaced pin, and the epoch rule (§10.6's,
+which is not the input epoch). Appendix D's gap check of 2026-10-21 left
+these here too, each local to one or two sections: the gate form, blocked
+event, constraint pool, canonical residue, grid diagnostics, pairing by name,
+convert-on-write, store form, probe-scoped, deliberate stripping, hybrid
+sleep-then-spin, event registers, the FFI door, fan-out meet, step barrier,
+framing, service walk, guarded sequence, pre-sweep doctrine, probe-value
+barrier, committed-state residuals, shim, port view, unmask point, state
+what-if, tail residue, run's-end sweep, sticky stopped status and the
+re-anchor; and the remedy ladder and the granularity guideline, at three uses
+each.

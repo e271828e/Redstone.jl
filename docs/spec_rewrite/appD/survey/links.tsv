@@ -1,0 +1,161 @@
+anchor	line	section	action	note
+g-auto-bubbling	1626	6.1	link+gloss	
+g-auto-bubbling	3941	8.8	link+gloss	
+g-auto-bubbling	10940	13.7	link	link only; next sentence defines it, and the sentence already holds the blessed gloss
+g-bound-law	1593	6.1	link	link only; the sentence before glosses it
+g-bound-law	2588	8.2	link	link only; the next sentence defines it
+g-bound-law	4168	9.1	link	link only; the sentence glosses it
+g-bound-law	11132	13.7	link	link only; the sentence glosses it
+g-boundary-sequence	1306	5.3	link	
+g-boundary-sequence	1825	7.1	link	
+g-boundary-sequence	3742	8.6	link	
+g-boundary-sequence	5050	9.5	link	
+g-boundary-sequence	5461	9.8	link	
+g-boundary-sequence	5536	10.1	link	
+g-boundary-sequence	5679	10.3	link	
+g-boundary-sequence	5814	10.4	link	
+g-boundary-sequence	6121	10.5	link	
+g-boundary-sequence	6407	10.6	link	
+g-boundary-sequence	6857	11.1	link	
+g-boundary-sequence	6964	11.2	link	
+g-boundary-sequence	8948	12.4	link	
+g-boundary-sequence	9388	12.6	link	
+g-boundary-sequence	9843	12.7	link	
+g-boundary-sequence	10368	13.4	link	
+g-boundary-sequence	11767	14.4	link	
+g-boundary-sequence	11891	14.5	link	
+g-boundary-sequence	12012	14.6	link	
+g-boundary-sequence	12206	14.7	link	
+g-boundary-sequence	12400	14.8	link	
+g-boundary-sequence	12654	14.9	link	
+g-boundary-sequence	12832	14.10	link	
+g-branch-shape-rule	3128	8.3	link	link only; the sentence defines it
+g-branch-shape-rule	4276	9.1	link+gloss	
+g-branch-shape-rule	4679	9.3	link+gloss	
+g-door	2117	8.1	skip	idiom (the door stays open)
+g-door	2553	8.2	skip	FFI door / freeze door, another sense
+g-door	4346	9.2	link+gloss	
+g-door	7820	11.5	link	link only; the sentence glosses it
+g-door	8224	11.6	skip	idiom (back door)
+g-door	9356	12.6	link	link only; defined here
+g-door	9944	12.7	link	link only; the sentence glosses it
+g-door	10543	13.4	link+gloss	
+g-door	11127	13.7	skip	idiom (back-door)
+g-door	12995	14.10	skip	freeze door / FFI door, another sense
+g-door	13560	Appendix B	link	link only; the sentence glosses it
+g-export-chain	8324	11.7	link+gloss	
+g-export-chain	10327	13.3	link+gloss	
+g-export-chain	11528	14.2	link+gloss	
+g-export-chain	11844	14.4	link+gloss	
+g-export-chain	12693	14.9	link	gloss skipped; the sentence already holds a root-input gloss
+g-fingerprint	7777	11.5	link	link only; already glossed
+g-fingerprint	9563	12.6	link	link only; already glossed
+g-fingerprint	9862	12.7	link	link only; already glossed
+g-fingerprint	11384	14	link+gloss	
+g-fingerprint	13527	Appendix B	link+gloss	restructured: A fingerprint or deployment mismatch -> A mismatch of fingerprint ... or deployment
+g-fingerprint	14194	Appendix C	link+gloss	
+g-fused-idiom	1251	5.3	link	link only; the next sentences define it
+g-fused-idiom	2031	7.4	link	link only; the sentence glosses it
+g-fused-idiom	12162	14.7	link+gloss	
+g-hand-down	1119	5.2	link	link only; the sentence defines it
+g-hand-down	1238	5.3	link	link only; the next sentence defines it
+g-hand-down	4625	9.3	link	link only; appositive glosses it
+g-hand-down	11259	13.8	link+gloss	
+g-heartbeat	7392	11.3	link	
+g-heartbeat	7889	11.6	link	
+g-heartbeat	8374	11.7	link	
+g-heartbeat	8459	11.8	link	
+g-heartbeat	8655	12	link	
+g-heartbeat	8757	12.2	link	
+g-heartbeat	9065	12.4	link	
+g-heartbeat	10230	13.2	link	
+g-heartbeat	10594	13.4	link	
+g-heartbeat	13272	Appendix A	link	
+g-hop	1452	5.4	link	link only; the next sentences define it
+g-hop	10954	13.7	skip	routing-chain step, not a cycle hop
+g-hop	11299	13.8	link	link only; the sentence defines it
+g-hop	13989	Appendix C	link	gloss skipped; the sentence holds two parentheticals already
+g-inspection-read	3405	8.6	link+gloss	
+g-inspection-read	6959	11.2	link	gloss skipped; the sentence already holds the calling-task gloss
+g-inspection-read	7227	11.3	link	link only; the sentence glosses it
+g-inspection-read	10332	13.3	skip	verb use (Inspection reads the address table); linked 10339
+g-inspection-read	10339	13.3	link+gloss	first hit at line 10332 is a verb use (Inspection reads the address table); linked the next use
+g-inspection-read	11816	14.4	link+gloss	
+g-inspection-read	13307	Appendix A	link	link only; the sentence defines it
+g-levels-doctrine	7488	11.4	link	link only; defined here
+g-levels-doctrine	8353	11.7	link+gloss	
+g-levels-doctrine	9321	12.5	link+gloss	
+g-locality-law	1550	6.1	link	link only; the sentence before defines it
+g-locality-law	10297	13.3	link	link only; the next sentence defines it
+g-locality-law	11454	14.1	link	link only; the sentence glosses it
+g-locality-law	11491	14.2	link+gloss	
+g-locality-law	11842	14.4	link+gloss	
+g-opaque-leaf	900	4.3	link	link only; defined here
+g-opaque-leaf	1607	6.1	link	link only; appositive glosses it
+g-opaque-leaf	1972	7.3	link+gloss	
+g-opaque-leaf	2600	8.2	link	link only; appositive glosses it
+g-opaque-leaf	4978	9.5	link+gloss	
+g-opaque-leaf	5184	9.7	link	link only; the sentence glosses it
+g-opaque-leaf	11793	14.4	link	link only; the sentence glosses it
+g-opaque-leaf	13973	Appendix C	link	gloss skipped; the use sits inside a reason-code gloss
+g-read-set	2302	8.1	link+gloss	
+g-read-set	7131	11.2	link	link only; appositive glosses it
+g-read-set	8126	11.6	link+gloss	
+g-read-set	12082	14.7	link+gloss	
+g-read-set	12567	14.8	link+gloss	
+g-read-set	12643	14.9	link	gloss skipped; the sentence already holds the thin-rig gloss
+g-read-set	13736	Appendix B	link	link only; appositive glosses it
+g-read-set	14251	Appendix C	link+gloss	restructured: a read set entry -> an entry of a read set
+g-shadowing-check	2211	8.1	link	link only; the next sentence defines it
+g-shadowing-check	2918	8.2	link+gloss	
+g-shadowing-check	4139	9.1	link+gloss	
+g-shadowing-check	8162	11.6	link+gloss	
+g-shadowing-check	11500	14.2	link+gloss	
+g-stopped-sim	178	1	link	
+g-stopped-sim	1402	5.3	link	
+g-stopped-sim	2082	8	link	
+g-stopped-sim	4085	9	link	
+g-stopped-sim	5111	9.6	link	
+g-stopped-sim	5450	9.8	link	
+g-stopped-sim	6908	11.1	link	
+g-stopped-sim	7325	11.3	link	
+g-stopped-sim	7590	11.4	link	
+g-stopped-sim	7802	11.5	skip	only use is inside the termination-record gloss (stopped-sim value)
+g-stopped-sim	8163	11.6	link	
+g-stopped-sim	8319	11.7	link	
+g-stopped-sim	8610	11.8	skip	only use is inside the termination-record gloss
+g-stopped-sim	8694	12.1	skip	only use is inside the termination-record gloss
+g-stopped-sim	8977	12.4	skip	termination-record gloss; linked the later use at 9174
+g-stopped-sim	9174	12.4	link	
+g-stopped-sim	9326	12.5	link	
+g-stopped-sim	9418	12.6	skip	termination-record gloss; linked the later use at 9504
+g-stopped-sim	9504	12.6	link	
+g-stopped-sim	9795	12.7	link	
+g-stopped-sim	10213	13.2	link	
+g-stopped-sim	10518	13.4	link	
+g-stopped-sim	10700	13.5	skip	termination-record gloss; linked the later use at 10847
+g-stopped-sim	10847	13.5	link	
+g-stopped-sim	10902	13.6	skip	termination-record gloss; linked the later use at 10918
+g-stopped-sim	10918	13.6	link	
+g-stopped-sim	11350	14	link	
+g-stopped-sim	11751	14.4	link	
+g-stopped-sim	12391	14.8	link	
+g-stopped-sim	13551	Appendix B	link	
+g-stopped-sim	13798	Appendix C	link	
+g-tail	7973	11.6	link	link only; the sentence glosses it
+g-tail	8606	11.8	link+gloss	restructured: the tail's own DeviceJoinTimeout -> the DeviceJoinTimeout raised by the tail
+g-tail	8693	12.1	link	link only; the sentence glosses it
+g-tail	8928	12.4	link	link only; defined here
+g-tail	9970	12.7	link+gloss	
+g-tail	9998	13	link+gloss	
+g-tail	10490	13.4	link	gloss skipped; the sentence already holds the unattended-run gloss
+g-tail	10778	13.5	skip	tail residue is its own compound; linked the later use at 10798
+g-tail	10798	13.5	link+gloss	
+g-tail	10860	13.6	link	gloss skipped; the sentence already holds the snapshot gloss
+g-tail	13557	Appendix B	link	gloss skipped; table cell, 'shutdown' glosses it
+g-tail	13836	Appendix C	skip	tail residue is its own compound; linked the later use at 14292
+g-tail	14292	Appendix C	link	gloss skipped; terse kind-header line
+g-trial-evaluation	5579	10.2	link	gloss skipped; the use sits inside a localized gloss
+g-trial-evaluation	5698	10.4	link	gloss skipped; flow diagram in a blockquote
+g-trial-evaluation	5714	10.4	skip	not linked; the first use is the blockquote diagram at 5698
+g-trial-evaluation	6113	10.5	link+gloss	

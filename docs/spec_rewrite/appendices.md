@@ -207,6 +207,28 @@ Landed 2026-10-21 as an audit, with D-431; the working files stay in
   collection predated D-229 by a week and was never conformed. Date the code
   against the entry before deciding which side moves.
 
+## Lessons from Appendix D
+
+Landed 2026-10-21 as three checks; the working files stay in `appD/`.
+
+- **Ask the surveyor for the replacement text.** Each citation agent wrote
+  a proposal for every entry with a finding, so assembly was a merge, not
+  a rewrite. The assembler rejected four of 66 proposals.
+- **A Sonnet gap sweep over-proposes.** Five sweeps returned 89 entry
+  candidates, and 20 became entries. Counting uses by section rather than
+  by occurrence, and folding a candidate into the entry that already owns
+  it, did most of the triage.
+- **A new entry is also a body edit.** The strict glossary check needs a
+  body link to every anchor, and the style gives a link at the first use in
+  each section. Twenty entries came to 143 links and 38 glosses. A script
+  that lists the first use per section, with an agent judging the sense of
+  each hit, does it in one pass.
+- **A dropped claim can drop a ruling's last citation.** `check_rows.jl`
+  caught two entries the glossary alone cited. One was a ratified naming
+  ruling and came back, and one was superseded and left the baseline.
+- **New text is where the errors are.** The verifier's one wrong claim and
+  most of its miscitations sat in added sentences, not trimmed ones.
+
 ## Sequencing
 
 - Working order: A whole, that is the harvest, the owner's pick, then the

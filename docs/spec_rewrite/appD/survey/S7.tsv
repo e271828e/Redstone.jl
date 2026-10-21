@@ -1,0 +1,78 @@
+anchor	check	verdict	cites	entry_says	spec_says	home	note
+g-carrier-exception	cite	ok	§13.2	DiagnosticError holds one diagnostic at a fail-fast site or the collection at a step barrier; type parameter tells which; diagnostics are plain values			
+g-carrier-exception	cite	ok	§13.4	StepError takes a single diagnostic over as its cause and carries the cause's type as its parameter			
+g-carrier-exception	accuracy	ok		DiagnosticError, StepError, cause			At 60 words, on the cap.
+g-collect-the-checks-fail-the-evaluations-fast	cite	ok	§13.1	declarative passes return their full violation list; first user-code exception aborts the phase; steps are barriers			
+g-collect-the-checks-fail-the-evaluations-fast	cite	wrong	Appendix C	the site column spells the collecting case "build (collected)"	Appendix C has no site column; it places each kind by severity, raised and policy fields, spelled "Error · build · collected"	Appendix C:13788; Appendix C:13804; Appendix C:13848	Say the policy field spells the collecting case `collected`.
+g-collect-the-checks-fail-the-evaluations-fast	accuracy	stale		"site column", "build (collected)"	retired column name and spelling; policy is its own field	Appendix C:13788	Replace with the policy field and the value `collected`.
+g-did-you-mean	cite	ok	§13.2	offending name plus the list-in-hand, carried as payload rather than message text			
+g-did-you-mean	accuracy	ok		required shape of any name-shaped failure			
+g-error-locality	cite	ok	§8.4	the five walkthroughs are its grounding cases			
+g-error-locality	cite	moved	§8.4	the five walkthroughs are the acceptance tests (§8.4)	§8.4 does not say the walkthroughs run as acceptance tests; §13.2 does ("the §8.4 walkthroughs, run as acceptance tests")	§13.2:10095	Cite §13.2 for the acceptance-test clause.
+g-error-locality	accuracy	ok		a mistake fails at the site of the mistake, not later and inside correct code			
+g-execution-cursor	cite	ok	§13.4	plain mutable field; component by index, function running, boundary phase; one cheap store per dispatch, no handlers			
+g-execution-cursor	accuracy	ok		three facts; cursor frame			At 60 words, on the cap.
+g-feedthrough-tracer	cite	ok	§5.5	classifies a rejected cycle; diagnostic only, never an input to the ordering			
+g-feedthrough-tracer	cite	ok	§13.8	global value-blind or sampled primal-carrying set-tracer			
+g-feedthrough-tracer	accuracy	ok		two modes; real or artificial			
+g-kind	cite	ok	Appendix C	closed set with payload fields, owning section, severity, where raised and under which policy			
+g-kind	cite	ok	§13.2	tests match on kind plus payload, never on message text			
+g-kind	cite	ok	§D.1	not a component class			g-class sits in D.1.
+g-kind	cite	ok	§D.1	not a function family			g-function-family sits in D.1.
+g-kind	accuracy	ok		closed set, Appendix C fields			
+g-payload	cite	ok	§13.2	paths and names as strings, never instances or component types; expected/observed port types; the list-in-hand			
+g-payload	cite	ok	Appendix C	payload fields per kind			
+g-payload	accuracy	ok		severity is the kind's, not the payload's			
+g-requester-roster	cite	ok	§13.5	one Requester(path, port, reason) per StopFlag output port, in build order			
+g-requester-roster	accuracy	ok		`Requester(path, port, reason)`, `StopFlag`			
+g-species	cite	ok	§13.4	catch site unwraps a single-diagnostic DiagnosticError; species rule			
+g-species	cite	ok	D-225	StepError{Kind} by type			
+g-species	accuracy	stale		DiagnosticError thrown inside the frame	the catch site unwraps one thrown "inside the guarded sequence", which also covers boundary zero under init! and the overlay! settling	§13.4:10438	Say "inside the guarded sequence" instead of "inside the frame".
+g-stop-request	cite	ok	§13.5	StopFlag port anywhere; scan after every published boundary; honoured unless ignored; build rosters requests; StopRequest library spelling			
+g-stop-request	cite	ok	D-316	StopFlag port ends the run unless the advance ignores it			
+g-stop-request	accuracy	ok		`StopFlag`, `STOP_REQUESTED`, `ignore_stop_requests`, `StopRequest`			
+g-stop-request	length	over		75 words		§13.5:10623; §13.5:10722; §13.5:10704; §13.5:10683	Drop "detection is ordinary event machinery", the scan-after-every-boundary clause, the ignore_stop_requests spelling and "the build rosters the requests"; proposal is 53 words.
+g-termination-record	cite	ok	§12.6	lives on the Run			"never on the control plane" is stated at §12.1:8744, which cites §12.6.
+g-termination-record	cite	ok	§13.5	final boundary time, StopPolicy, typed source with payload, tail residue; requester's path, port and reason			
+g-termination-record	accuracy	ok		`StopPolicy`, `Run`			
+g-artifact	cite	ok	§13.2	immutable pure function of its inputs; a warning raised producing one lives on it			
+g-artifact	cite	ok	D-250	warning lives on the artifact			
+g-artifact	cite	ok	§9.2	holds declared facts; a consumer compiles what it needs at one home			
+g-artifact	cite	ok	D-261	holds declared facts; one home			
+g-artifact	accuracy	stale		list: Structure, Outputs, Events, an activation, the Build, the Deployment, the Schedule, a condition plan, a trim report and the trace header	no section calls the Schedule or a condition plan an artifact; the others are (Structure 4222, Outputs 4249, Events 4256, activation 4245, Build and Deployment 4297, trace header 7821, a service's return 10213)	§9.1:4222; §9.1:4245; §9.2:4297; §11.5:7821; §13.2:10213	Drop the Schedule and the condition plan and mark the list as examples.
+g-blessed	cite	ok	§8.2	derivation from other declarations			§8.2:2456 "Deriving from another declaration is sound"; §8.6 and §8.8 call it blessed.
+g-blessed	cite	ok	§9.1	the one spot where evaluation feeds structure			
+g-blessed	cite	ok	§8.2	workspace-plus-snapshot idiom for zero-allocation ticks			
+g-blessed	accuracy	ok		explicitly sanctioned where a neighbor is forbidden			
+g-row	cite	ok	§1	cited as linked D-nnn; one settled decision with alternatives; numbers stable and never reused			
+g-row	accuracy	stale		each entry states its current position; a superseded one is marked `superseded → D-nnn` in its Status line rather than rewritten	stated nowhere in chapters 1 to 14 or Appendices A to C	none (a decisions.md convention)	Drop the sentence, since the glossary is no home for log conventions.
+g-the-freeze	cite	ok	§11.3	attach!/detach! stopped-sim; roster, claims and the partition into write surfaces are static, inspectable facts of the run			
+g-the-freeze	cite	ok	D-106	freeze the roster per run			
+g-the-freeze	accuracy	ok		`attach!`/`detach!`			
+g-guarded-addition	cite	ok	§1	weighed against the design criteria			
+g-guarded-addition	cite	ok	§4.3	field-addressed staging			
+g-guarded-addition	cite	ok	§11.3	mid-run reader attach			
+g-guarded-addition	accuracy	stale		recorded with its shape so adoption stays additive	some are on record with a shape (§11.2:7010, §12.5:9328), but no section says a guarded addition's adoption stays additive; "additive" is said of recorded-not-built extensions (§14.10:12961, 13041)	§14.10:12961	Drop "recorded with its shape so adoption stays additive".
+g-normative	cite	ok	Appendix A	each recall line's normative statement stays in the owning section			
+g-normative	accuracy	stale		appendices are indices; the same rule for Appendices B, C and D; the design directory's walkthrough explainers are non-normative companions by their own preambles	Appendix C is the exception, its kind set made normative; the glossary is non-normative, not an index; the explainers live in `companions/` and §1 makes them non-normative	Appendices preamble:13051; Appendix C:13767; §1:216; §1:225	Name Appendix C as the normative exception and cite §1 for the spec's status and for `companions/`.
+g-recorded-not-built	cite	ok	§14.7	the closed-loop trim			
+g-recorded-not-built	cite	ok	§14.10	sampled-data Dual activation; tooling over declared non-participation; additive			
+g-recorded-not-built	accuracy	ok		worked-out extension left unimplemented, seams named			
+g-state-single-owner	cite	ok	§13.2	single owner, mutated in place; a warning raised mutating one lives in its status			
+g-state-single-owner	cite	ok	D-250	state is single-owner and mutated in place			
+g-state-single-owner	accuracy	ok		executor's buffers, roster, diagnostic cells, live log and trace, Run			§11.3:7372 calls the roster "a plain immutable value" while §13.2:10217 says attach! mutates it.
+g-seam	cite	ok	§10.2	stepper seam			
+g-seam	cite	ok	§14.8	backend seam			
+g-seam	cite	ok	§9.7	measurement seam			
+g-seam	cite	ok	§9.7	phase-body seams of the compiled executor			
+g-seam	cite	ok	§8.8	generic seams of an assembly tree			
+g-seam	accuracy	ok		narrow, named interface kept thin			
+g-torture-test	cite	ok	§11.4	filter, joystick and GUI against the staging shapes			
+g-torture-test	cite	ok	§8.6	strapdown IMU against the leaf split			
+g-torture-test	cite	ok	§13.7	standard component library as standing ergonomics torture test			
+g-torture-test	accuracy	ok		maximally awkward case spelled against a mechanism			
+g-worked	cite	ok	§8.6	IMU assembly; its leaves are the boundary-sampling example			
+g-worked	cite	ok	Appendix A	Appendix A points at the boundary-sampling example			
+g-worked	cite	ok	§11.4	staging example			
+g-worked	cite	ok	§14.7	worked C172 cruise problem			
+g-worked	accuracy	ok		full spelling against a concrete case			
