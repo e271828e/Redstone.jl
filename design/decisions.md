@@ -431,6 +431,7 @@ were derived.
 | [D-430][d-430] | Default `linearize`'s `t0` beside `about` to `0.0` | ratified |
 | [D-431][d-431] | Collect a stopping check over its own unit | ratified |
 | [D-432][d-432] | Render an artifact to data through `descriptor` | ratified |
+| [D-433][d-433] | The descriptor writer's readings | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -17247,6 +17248,10 @@ The carrier field follows `warnings`' pattern on the same exception
 site fills it, the build's door, so no probe or cycle site changes, and
 [§13.2][s13-2]'s one-carrier rule holds.
 
+Annotation (2026-10-26): [D-433][d-433] adds a row to the marker's table, a
+function type and a field handle opaque ahead of the `struct` row, and settles
+the readings the writer makes where this entry's bundle stops short.
+
 **Rejected.**
 - *Reading the descriptor as [D-257][d-257]'s rejected accessor:* an accessor binds
   the artifact's fields; the descriptor binds a format.
@@ -17277,6 +17282,79 @@ site fills it, the build's door, so no probe or cycle site changes, and
 - *Deferring the `Structure`'s timing rows to a later bump:* the core tier
   colors blocks by rate, and the rows are in the artifact the section
   mirrors.
+
+### D-433 — The descriptor writer's readings
+
+**Status.** ratified
+
+**Position.** The descriptor's writer reads [§13.9][s13-9] and [D-432][d-432] as follows where
+they stop short, each reading settled with the increment that built it:
+
+- The kind marker's `struct` row is a value the leaf walk opens, an isbits
+  `NamedTuple` or struct with fields, and `fields` is the walk's first level.
+  A field handle, a concrete immutable type that is not isbits ([D-237][d-237]), is
+  opaque, as is a function type, by exception even where the walk would open
+  its captures. Both are tested ahead of the `struct` row.
+- An abstract declaration takes the first row it matches, `AbstractFloat`
+  the `float` row; one no row matches is opaque, with `Any` and `String`.
+- The qualified base name keeps the full parent module, submodules
+  included: `Redstone.Blocks.PID`.
+- A node's signature and a face's type are display text, printed as the
+  REPL prints a type from `Main`; the base name is the identity.
+- A root input's `pinned` is false in version one, the wire pass having
+  stripped the marker when it fixed the type ([D-236][d-236]); the leaf-face shape
+  is kept.
+- A type's docstring is the one written on the type itself, the docsystem's
+  `Union{}` entry for the binding, else the first the binding holds.
+- The root node carries neither `field` nor `key`, and a primitive root is
+  one leaf node at path `""` with no wires.
+- Three additive proposals from the rendering spike wait as minor bumps, on
+  the record's pending list: an optional node `alias` for the `const`
+  binding a block was built from, an optional envelope `name` the inspector
+  package writes and `descriptor` never does, and a type and kind on an
+  assembly face if the visual grammar styles wires by kind.
+
+**Spec.** [§13.9][s13-9]
+
+**Rationale.** The prototype of increment 81 met each case in the fixtures
+and the rendering spike met the first and the last on the longitudinal
+example (`design/prototypes/render_spike/report.md`). The marker's table as
+[D-432][d-432] wrote it would call a closure a struct, its captures being fields, and
+on Julia 1.11 and later `Array` too, which is a struct with `ref` and
+`size`; and it could not tell a terrain handle from a `Pose`, since both are
+concrete structs with fields, while the record's answer 6 meant handles to
+be opaque. The leaf walk already makes the cut the marker needs: it opens an
+isbits value and stores a handle whole ([§4.3][s4-3], [§4.4][s4-4], [D-237][d-237]), so the marker's
+`struct` is what the walk opens and `fields` is what it finds, one rule in
+two places. A function is the one exception, because its captures are no
+value a widget edits.
+
+The base name is the key the docsystem and the declaration methods attach
+to, and `parentmodule` of a type a submodule defines is that submodule, so
+stripping it would make the lookup fail and let a user's own `Blocks.PID`
+collide. The record's examples, written `Redstone.PID`, were illustrative
+and are corrected. Qualifying every printed type from the top gives
+`Core.Float64`, unreadable for the one job the string has. A root input's
+type is the meet the wire pass fixes, marker stripped, so the flag cannot be
+true; a third face shape for one dead field was not worth its definition.
+The docstring on the type is the one that says what the component is; a
+constructor's docstring documents a call.
+
+**Rejected.**
+- *The table read literally, a closure and an `Array` as `struct`:* captures
+  and an array's buffer are implementation, no value a widget edits.
+- *A handle test of the marker's own:* the leaf walk's isbits cut is the
+  rule already in force, and a second rule would drift from it.
+- *Every abstract declaration opaque:* an `AbstractFloat` face is a float
+  whatever the activation gives it, and the row says so.
+- *The base name with its submodule stripped:* the lookup fails and names
+  collide.
+- *Printed types qualified from the top:* `Core.Float64`.
+- *A root-face shape without `pinned`:* a third definition for one field.
+- *Every docstring of the binding joined, as `?PID` prints:* a user
+  inspecting a component wants the type's own, not each constructor's.
+- *A primitive root spelled as an assembly node:* the artifact holds a leaf,
+  and the client's special case exists either way.
 
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
@@ -17685,6 +17763,7 @@ site fills it, the build's door, so no probe or cycle site changes, and
 [d-430]: #d-430--default-linearizes-t0-beside-about-to-00
 [d-431]: #d-431--collect-a-stopping-check-over-its-own-unit
 [d-432]: #d-432--render-an-artifact-to-data-through-descriptor
+[d-433]: #d-433--the-descriptor-writers-readings
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property

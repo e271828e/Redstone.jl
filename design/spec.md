@@ -11405,12 +11405,16 @@ inputs):
   qualified base name with the full printed type beside it, and its faces. A
   leaf's [face](#g-face) (the name a port wears on its component's boundary)
   carries its printed type, its kind marker and whether it is pinned; an
-  assembly's faces are names alone. An assembly node carries its level's
+  assembly's faces are names alone. The root node carries no field and no
+  key, and a primitive root is one leaf node ([D-433][d-433]). An assembly
+  node carries its level's
   wires verbatim, producer to consumer in declaration order, each endpoint a
   full path and a port, the level's own path on a boundary face and `""` for
   a [root input](#g-root-input) (one of the root component's own input
   faces). `root_inputs`, `anchors` and `scopes` project the remaining rows,
-  and a `types` table describes each type once.
+  and a `types` table describes each type once. A root input is a leaf face
+  whose `pinned` is false in version one, the wire pass having stripped the
+  marker when it fixed the type ([D-236][d-236], [D-433][d-433]).
 - `outputs` projects [`Outputs`](#g-outputs) (the execution order and each
   port's stage): the order as paths, and per leaf its stage-1 and stage-2
   port names.
@@ -11442,17 +11446,26 @@ matches, tested in this order because `Bool` and every `Enum` are
 | `T <: AbstractFloat` | `{"kind": "float"}` |
 | `T <: Real` | `{"kind": "number"}` |
 | `T <: StaticArray` | `{"kind": "vector", "shape": […], "element": …}`, the element's marker recursing |
-| a `NamedTuple` or a concrete struct with fields | `{"kind": "struct", "fields": […]}`, the field names |
+| `T <: Function`, or a field handle, a concrete immutable type that is not isbits ([D-237][d-237]) | `{"kind": "opaque"}` |
+| an isbits `NamedTuple` or struct with fields | `{"kind": "struct", "fields": […]}`, the field names |
 | anything else | `{"kind": "opaque"}` |
 
-The function-valued signals and field handles of [§4.4][s4-4] are opaque, and
-so are `String`, abstract and `Any` declarations.
+The `struct` row is a value the leaf walk opens ([§4.3][s4-3]), and `fields` is
+its first level; the function-valued signals and field handles of [§4.4][s4-4]
+are opaque by the row above it, the walk's own cut, a function type by
+exception even where the walk would open its captures ([D-433][d-433]). `String`,
+`Any` and an abstract declaration no row matches are opaque too, and an
+abstract declaration a row matches, `AbstractFloat`, takes that row.
 
 **A type is described once, by its qualified base name, and an instance by
-a parameter summary** ([D-432][d-432]). The name joins the type's module and its
-unparameterized name, `Redstone.PID`, which is what its docstring and
-declaration methods attach to; a `const` alias is reported as the type it
-aliases. The `types` row holds the docstring as Markdown source and the
+a parameter summary** ([D-432][d-432]). The name joins the type's parent module,
+submodules included, and its unparameterized name, `Redstone.Blocks.PID`,
+which is what its docstring and declaration methods attach to; a `const`
+alias is reported as the type it aliases. The printed types beside it, the
+node's signature and a face's type, are display text as the REPL prints them,
+and the base name is the identity ([D-433][d-433]). The docstring is the one
+written on the type itself, or, when the type has none, the first its binding
+holds ([D-433][d-433]). The `types` row holds the docstring as Markdown source and the
 source locations of the declaration methods the type defines, `u_types`,
 `y_types`, `x_init`, `s_init`, `m_init`, `sample_times`, the three wire
 declarations, `stop_reason` and `transparent_container`, each as the file
@@ -16075,6 +16088,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-430]: decisions.md#d-430--default-linearizes-t0-beside-about-to-00
 [d-431]: decisions.md#d-431--collect-a-stopping-check-over-its-own-unit
 [d-432]: decisions.md#d-432--render-an-artifact-to-data-through-descriptor
+[d-433]: decisions.md#d-433--the-descriptor-writers-readings
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop

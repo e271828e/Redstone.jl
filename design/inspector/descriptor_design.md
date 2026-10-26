@@ -35,6 +35,13 @@ Left open on purpose, each with the bump or the axis that owns it.
 - **Locations beyond the declarations.** The stage functions, `y_state`,
   `y_direct`, `x_deriv`, `s_update` and the event functions, among a type's
   source locations, additive when a reader wants them.
+- **The drawing's additive proposals.** From axis 4's spike
+  (`design/prototypes/render_spike/report.md`, section 2), each a minor
+  bump (D-433): an optional node `alias`, the qualified name of the `const`
+  binding a block was built from, since the closed loop's six junctions
+  read alike; an optional envelope `name` the inspector package writes and
+  `descriptor` never does; and a type and kind on an assembly face, if
+  axis 3 styles wires by kind.
 - **The schema's `$id`.** The URL it carries once the inspector has a home
   on GitHub Pages; the file ships before the URL resolves.
 - **The exact fixture set in the core's suite.** Which models of
@@ -79,7 +86,7 @@ Left open on purpose, each with the bump or the axis that owns it.
    subset rule to maintain. *Rejected:* flat concept sections at the body
    level, with the failure body copying a subset.
 3. **Type identity: the qualified base name.** A node's `type` is
-   `parentmodule` and `typename` joined, `Redstone.PID`,
+   `parentmodule` and `typename` joined, `Redstone.Blocks.PID`,
    `RedstoneExamples.Longitudinal`, `Main.Aircraft` for a REPL definition.
    It keys the `types` table, labels the diagram by its last segment and
    matches answer 15's icons. Beside it each node carries `signature`, the
@@ -99,7 +106,7 @@ Left open on purpose, each with the bump or the axis that owns it.
    {"path": "aircraft/loops/l1", "field": "loops", "key": "l1",
     "class": "leaf", "tier": "continuous",
     "timing": {"anchor": 0, "m": 4, "c": 1},
-    "type": "Redstone.PID", "signature": "PID{Float64, …}",
+    "type": "Redstone.Blocks.PID", "signature": "PID{Float64, …}",
     "inputs":  [{"name": "r", "type": "Float64",
                  "kind": {"kind": "float"}, "pinned": false}, …],
     "outputs": [{"name": "u", "type": "Float64",
@@ -175,6 +182,9 @@ Left open on purpose, each with the bump or the axis that owns it.
    enum's instance names; `element` recurses. `opaque` holds the
    function-valued signals and field handles of §4.4, `String`, abstract or
    `Any` declarations, and whatever the struct test rejects.
+   *Amended 2026-10-26 (D-433):* the `struct` row is an isbits value, what
+   the leaf walk opens, and a field handle or a function type is opaque
+   ahead of it; an abstract declaration takes the first row it matches.
    *Why the marker exists at all:* the type string stays beside it, but a
    client cannot evaluate `Angle <: Real`, reflect `fieldnames(Pose)` or
    call `instances(FlightPhase)`, and printed type names are not stable
@@ -359,7 +369,9 @@ This session closed axes 1 and 2. What it hands on, in working order:
    as test dependencies. Briefed under `brief_lessons.md`'s rules.
 3. **Axis 4's spike**, beside the increment, on the hand-written fixture of
    answer 16. What the drawing finds missing reaches the schema before
-   version one freezes with the increment's commit.
+   version one freezes with the increment's commit. Run on 2026-10-26; its
+   record is `design/prototypes/render_spike/report.md`: hand-rolled SVG
+   over ELK.js, two findings taken into the schema, three deferred above.
 4. **Axis 3**, over the real schema: what it draws is on the node (class,
    tier, timing, faces with markers, `field` and `key` for container
    groups) and on the assembly node's wires; port classes join from
