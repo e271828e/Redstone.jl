@@ -23,6 +23,23 @@ item changes what the spec says, the spec edit is part of the item.
   `design/inspector/initial_design.md` (not normative), which carries each
   stage's answered questions and open list. The later stages stand after
   the release, below.
+- **`closed_loop` as a hierarchy.** The example's closed loop is one flat
+  `Group` of 27 library blocks and 55 wires, written so to show the library
+  composing without a named assembly, and it draws as a tangle at any
+  layout (`design/prototypes/render_spike/report.md`). The wiring already
+  falls into groups: sensing, the references, the cascade with its `free`
+  code, the tracker with its packs, command selection with the mode, the
+  switches and the delays, and the actuators, beside the plant. The
+  refactor makes each a child `Group`, seven blocks at the root and four to
+  six per level, the cross-group signals becoming boundary faces, the
+  outer loops' hold on the inner `saturated`, the delayed selected
+  commands and the negated flag among them, with `input_passthrough` where
+  a group forwards a face set whole (§8.8, §13.7). It reaches the examples'
+  tests, which pin the loop by path, `companions/longitudinal_aircraft.md`
+  section 4 and the README's diagram, and it precedes the tutorial because
+  the tutorial's chapters follow the model's layers. The inspector draws one
+  level at a time, so the refactored loop is also the first real model
+  with a nested level to open.
 - **The tutorial and the README.** The tutorial takes a newcomer from a
   component to a run and a plot, one chapter per layer of the example
   model. The README keeps its quick start, shows three of the layers
