@@ -75,6 +75,8 @@ item changes what the spec says, the spec edit is part of the item.
     `Simulation` forms of `port`, `state` and `modes`, and `Model(build)`
     and `Model(world)`. `reads` is both the binding trait `reads(b)` and the
     read-set constructor `reads(; selectors...)`, one name in two senses.
+    `lifecycle(sim)` is the reverse case: §12.6 spells it and `closed`'s
+    docstring sends the reader to it, but B does not list it.
     And D-226 makes a name public by standing on B, so a diagnostic kind is
     public only where B names it; whether Appendix C's kind set is public
     as a whole is the audit's to settle.
@@ -108,10 +110,10 @@ item changes what the spec says, the spec edit is part of the item.
   where a doctest is cheap, and `[`name`](@ref)` cross-references, with no
   citation of the spec or the log. The citations move to a `# Design:`
   comment under the docstring, where a diff review still sees them.
-  Unexported names keep their docstrings as they are. A short style sheet
-  beside `design/tools/spec_style.md` fixes the convention before the
-  rewrite runs, one source file per agent with a cold review after. It
-  follows the audit because the audit decides the set.
+  Unexported names keep their docstrings as they are. The style sheet
+  `design/tools/docstring_style.md` fixes the convention; the rewrite runs
+  one source file per agent with a cold review after. It follows the audit
+  because the audit decides the set.
 - **The first release.** Registration in General, the tag, and the
   announcement, in that order. Registration is quiet and the announcement
   is the public moment, so the announcement waits for everything above.
