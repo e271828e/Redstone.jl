@@ -1,0 +1,78 @@
+Build: 27 components (17 continuous, 10 discrete); activations: Float64; no warnings
+  Structure: 27 components, 10 anchors, no rate scopes; root inputs: none
+    components:
+      path             tier        anchor  m  c  rates
+      h_ref            continuous  A₀      1  0  —
+      V_ref            continuous  A₀      1  0  —
+      mode             continuous  A₀      1  0  —
+      plant            continuous  A₀      1  0  —
+      noise            discrete    A₁      1  0  noise = Absolute(1//50, 0//1)
+      h_meas           continuous  A₀      1  0  —
+      h_ctl            discrete    A₂      1  0  h_ctl = Absolute(1//50, 0//1)
+      θ_ctl            discrete    A₃      1  0  θ_ctl = Absolute(1//50, 0//1)
+      q_ctl            discrete    A₄      1  0  q_ctl = Absolute(1//50, 0//1)
+      V_ctl            discrete    A₅      1  0  V_ctl = Absolute(1//50, 0//1)
+      tracker          discrete    A₆      1  0  tracker = Absolute(1//50, 0//1)
+      state_pack       continuous  A₀      1  0  —
+      z_pack           continuous  A₀      1  0  —
+      z_ref_pack       continuous  A₀      1  0  —
+      tracker_u        continuous  A₀      1  0  —
+      select_δe        continuous  A₀      1  0  —
+      select_δt        continuous  A₀      1  0  —
+      command_δe       discrete    A₇      1  0  command_δe = Absolute(1//50, 0//1)
+      command_δt       discrete    A₈      1  0  command_δt = Absolute(1//50, 0//1)
+      command_pack     continuous  A₀      1  0  —
+      tracker_engaged  continuous  A₀      1  0  —
+      free             continuous  A₀      1  0  —
+      free_pair        continuous  A₀      1  0  —
+      δe_limiter       discrete    A₉      1  0  δe_limiter = Absolute(1//50, 0//1)
+      δe_lag           continuous  A₀      1  0  —
+      δt_limiter       discrete    A₁₀     1  0  δt_limiter = Absolute(1//50, 0//1)
+      δt_lag           continuous  A₀      1  0  —
+    anchors:
+      anchor  T        τ     scope  key
+      A₀      Δt_base  0//1  —      —
+      A₁      1//50    0//1  root   noise
+      A₂      1//50    0//1  root   h_ctl
+      A₃      1//50    0//1  root   θ_ctl
+      A₄      1//50    0//1  root   q_ctl
+      A₅      1//50    0//1  root   V_ctl
+      A₆      1//50    0//1  root   tracker
+      A₇      1//50    0//1  root   command_δe
+      A₈      1//50    0//1  root   command_δt
+      A₉      1//50    0//1  root   δe_limiter
+      A₁₀     1//50    0//1  root   δt_limiter
+  Outputs: execution order over 27 components
+    component        stage 1           stage 2
+    h_ref            out               —
+    V_ref            out               —
+    mode             out               —
+    plant            V, γ, θ, q, h, α  —
+    noise            out               —
+    h_meas           —                 out
+    V_ctl            saturated         u, u_raw
+    state_pack       —                 out
+    z_ref_pack       —                 out
+    command_δe       out               —
+    command_δt       out               —
+    command_pack     —                 out
+    tracker_engaged  —                 out
+    free             out               —
+    free_pair        out               —
+    δe_lag           out               —
+    δt_lag           out               —
+    z_pack           —                 out
+    h_ctl            saturated         u, u_raw
+    tracker          saturated         u, u_raw
+    θ_ctl            saturated         u, u_raw
+    tracker_u        —                 out1, out2
+    q_ctl            saturated         u, u_raw
+    select_δt        —                 out
+    select_δe        —                 out
+    δt_limiter       —                 out
+    δe_limiter       —                 out
+  feedthrough: h_meas.out → z_pack.in1, h_meas.out → h_ctl.y, state_pack.out → tracker.x, z_pack.out → tracker.z, z_ref_pack.out → tracker.z_ref, tracker_engaged.out → tracker.engaged, command_pack.out → tracker.v, h_ctl.u → θ_ctl.r, tracker.u → tracker_u.in, θ_ctl.u → q_ctl.r, V_ctl.u → select_δt.in1, tracker_u.out2 → select_δt.in2, q_ctl.u → select_δe.in1, tracker_u.out1 → select_δe.in2, select_δt.out → δt_limiter.in, select_δe.out → δe_limiter.in
+  Events: 1 event over 27 components
+    component  events             bundle
+    h_ref      fire => localized  (m, y, t)
+  warnings: none

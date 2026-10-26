@@ -1,0 +1,79 @@
+{
+ "browser": "Chrome 155.0.8059.85 (headless, Playwright)",
+ "loads": 5,
+ "warm": 5,
+ "rows": [
+  {
+   "fixture": "descent",
+   "canvas": "svg",
+   "blocks": 5,
+   "wires": 4,
+   "layoutColdMs": 31.899999856948853,
+   "layoutWarmMs": 12.299999952316284,
+   "sizeMs": 1.7000000476837158,
+   "domMs": 1.9000000953674316,
+   "renderMs": 13.400000095367432,
+   "renderMaxMs": 17.700000047683716
+  },
+  {
+   "fixture": "descent",
+   "canvas": "flow",
+   "blocks": 5,
+   "wires": 4,
+   "layoutColdMs": 31.200000047683716,
+   "layoutWarmMs": 12,
+   "sizeMs": 1.7000000476837158,
+   "domMs": 7.8999998569488525,
+   "renderMs": 10.899999856948853,
+   "renderMaxMs": 11.099999904632568
+  },
+  {
+   "fixture": "closed_loop",
+   "canvas": "svg",
+   "blocks": 27,
+   "wires": 55,
+   "layoutColdMs": 76.39999985694885,
+   "layoutWarmMs": 35.09999990463257,
+   "sizeMs": 2.0999999046325684,
+   "domMs": 3.6000001430511475,
+   "renderMs": 5.8999998569488525,
+   "renderMaxMs": 11.700000047683716
+  },
+  {
+   "fixture": "closed_loop",
+   "canvas": "flow",
+   "blocks": 27,
+   "wires": 55,
+   "layoutColdMs": 75.5,
+   "layoutWarmMs": 35.09999990463257,
+   "sizeMs": 2.0999999046325684,
+   "domMs": 11.699999809265137,
+   "renderMs": 19.200000047683716,
+   "renderMaxMs": 20.90000009536743
+  },
+  {
+   "fixture": "synthetic_150",
+   "canvas": "svg",
+   "blocks": 156,
+   "wires": 300,
+   "layoutColdMs": 165,
+   "layoutWarmMs": 94.79999995231628,
+   "sizeMs": 2.3999998569488525,
+   "domMs": 10.400000095367432,
+   "renderMs": 17.5,
+   "renderMaxMs": 19.399999856948853
+  },
+  {
+   "fixture": "synthetic_150",
+   "canvas": "flow",
+   "blocks": 156,
+   "wires": 300,
+   "layoutColdMs": 166.5,
+   "layoutWarmMs": 96.39999985694885,
+   "sizeMs": 2.5,
+   "domMs": 27.200000047683716,
+   "renderMs": 50.5,
+   "renderMaxMs": 51
+  }
+ ]
+}

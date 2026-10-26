@@ -1,0 +1,316 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Redstone descriptor",
+  "description": "The projection of a Build or a Deployment to data (spec §13.9, D-432). Version 1.0. The writer is `descriptor` in src/descriptor.jl; this file is the shape of record, strict about the writer's output: every object closes with additionalProperties false, and a field that does not apply is omitted, never null. The design record is design/inspector/descriptor_design.md.",
+  "type": "object",
+  "properties": {
+    "format_version": { "$ref": "#/definitions/FormatVersion" },
+    "redstone_version": { "type": "string" },
+    "kind": { "type": "string", "enum": ["build", "deployment"] },
+    "build": { "$ref": "#/definitions/BuildBody" },
+    "deployment": { "$ref": "#/definitions/DeploymentBody" }
+  },
+  "required": ["format_version", "redstone_version", "kind"],
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "properties": { "kind": { "const": "build" }, "build": true },
+      "required": ["build"],
+      "not": { "required": ["deployment"] }
+    },
+    {
+      "properties": { "kind": { "const": "deployment" }, "deployment": true },
+      "required": ["deployment"],
+      "not": { "required": ["build"] }
+    }
+  ],
+  "definitions": {
+    "FormatVersion": {
+      "description": "The format's own version, independent of Redstone's. A minor bump only adds fields; a major bump may break readers.",
+      "type": "object",
+      "properties": {
+        "major": { "type": "integer", "const": 1 },
+        "minor": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["major", "minor"],
+      "additionalProperties": false
+    },
+    "DeploymentBody": {
+      "description": "The deployment's body: in version one, the build body alone. The schedule rows, the concrete Δt values, the hyperperiod and the grid report wait for a minor bump.",
+      "type": "object",
+      "properties": {
+        "build": { "$ref": "#/definitions/BuildBody" }
+      },
+      "required": ["build"],
+      "additionalProperties": false
+    },
+    "BuildBody": {
+      "description": "The build's body, one section per artifact: `structure` projects the Structure, `outputs` projects the Outputs.",
+      "type": "object",
+      "properties": {
+        "structure": { "$ref": "#/definitions/StructureSection" },
+        "outputs": { "$ref": "#/definitions/OutputsSection" }
+      },
+      "required": ["structure", "outputs"],
+      "additionalProperties": false
+    },
+    "StructureSection": {
+      "description": "The Structure's projection: every component as a node in walk order, the root's input faces typed, the anchors, the keyed rate scopes, and one row per type.",
+      "type": "object",
+      "properties": {
+        "nodes": { "type": "array", "items": { "$ref": "#/definitions/Node" } },
+        "root_inputs": { "type": "array", "items": { "$ref": "#/definitions/LeafFace" } },
+        "anchors": { "type": "array", "items": { "$ref": "#/definitions/Anchor" } },
+        "scopes": { "type": "array", "items": { "$ref": "#/definitions/Scope" } },
+        "types": { "type": "array", "items": { "$ref": "#/definitions/TypeRow" } }
+      },
+      "required": ["nodes", "root_inputs", "anchors", "scopes", "types"],
+      "additionalProperties": false
+    },
+    "Node": {
+      "description": "One component of the walk, keyed by its path. `class` says which of the two shapes the node takes.",
+      "oneOf": [
+        { "$ref": "#/definitions/LeafNode" },
+        { "$ref": "#/definitions/AssemblyNode" }
+      ]
+    },
+    "NodeIdentity": {
+      "description": "The fields both classes share. `path` is the full path, \"\" for the root. `field` is the field that contributed the node to its parent and `key`, present for a container element alone, its key within the container, a string even when the container is a vector; the root has neither. No `key` is a component field; a `key` with the path's last segment `field/key` is a keyed container; a `key` equal to the last segment is a name-transparent container. `type` is the qualified base name, the key into the `types` table; `signature` the full printed concrete type.",
+      "type": "object",
+      "properties": {
+        "path": { "type": "string" },
+        "field": { "type": "string" },
+        "key": { "type": "string" },
+        "type": { "type": "string" },
+        "signature": { "type": "string" },
+        "parameters": { "type": "array", "items": { "$ref": "#/definitions/Parameter" } }
+      },
+      "dependencies": { "key": ["field"] }
+    },
+    "LeafNode": {
+      "allOf": [
+        { "$ref": "#/definitions/NodeIdentity" },
+        {
+          "type": "object",
+          "properties": {
+            "path": true,
+            "field": true,
+            "key": true,
+            "type": true,
+            "signature": true,
+            "parameters": true,
+            "class": { "const": "leaf" },
+            "tier": { "type": "string", "enum": ["continuous", "discrete"] },
+            "timing": { "$ref": "#/definitions/Timing" },
+            "inputs": { "type": "array", "items": { "$ref": "#/definitions/LeafFace" } },
+            "outputs": { "type": "array", "items": { "$ref": "#/definitions/LeafFace" } }
+          },
+          "required": ["path", "class", "tier", "timing", "type", "signature", "inputs", "outputs", "parameters"],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "AssemblyNode": {
+      "description": "An assembly node carries its level's wires verbatim and name-only faces. No tier, no timing.",
+      "allOf": [
+        { "$ref": "#/definitions/NodeIdentity" },
+        {
+          "type": "object",
+          "properties": {
+            "path": true,
+            "field": true,
+            "key": true,
+            "type": true,
+            "signature": true,
+            "parameters": true,
+            "class": { "const": "assembly" },
+            "inputs": { "type": "array", "items": { "$ref": "#/definitions/AssemblyFace" } },
+            "outputs": { "type": "array", "items": { "$ref": "#/definitions/AssemblyFace" } },
+            "wires": { "type": "array", "items": { "$ref": "#/definitions/Wire" } }
+          },
+          "required": ["path", "class", "type", "signature", "inputs", "outputs", "wires", "parameters"],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "LeafFace": {
+      "description": "A leaf's face: its name, the declared type as printed, the kind marker, and whether the declaration was wrapped in Pinned.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string" },
+        "kind": { "$ref": "#/definitions/KindMarker" },
+        "pinned": { "type": "boolean" }
+      },
+      "required": ["name", "type", "kind", "pinned"],
+      "additionalProperties": false
+    },
+    "AssemblyFace": {
+      "description": "An assembly's face: its name alone, as an object so a later bump can add fields.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" }
+      },
+      "required": ["name"],
+      "additionalProperties": false
+    },
+    "KindMarker": {
+      "description": "What a face's type is, for a client with no Julia: the first row of §13.9's table that matches the declared type.",
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "type": "string", "enum": ["boolean", "symbol", "integer", "float", "number", "opaque"] }
+          },
+          "required": ["kind"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "enum" },
+            "values": { "type": "array", "items": { "type": "string" } }
+          },
+          "required": ["kind", "values"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "vector" },
+            "shape": { "type": "array", "items": { "type": "integer", "minimum": 0 }, "minItems": 1 },
+            "element": { "$ref": "#/definitions/KindMarker" }
+          },
+          "required": ["kind", "shape", "element"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "struct" },
+            "fields": { "type": "array", "items": { "type": "string" } }
+          },
+          "required": ["kind", "fields"],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Wire": {
+      "description": "One wire of an assembly's level, producer to consumer, verbatim from the level row. A boundary face is spelled with the level's own path, and a root input is a producer at path \"\". A consumer has one producer and an input entry fanning out is one wire per target, so `to` is unique within a level and keys the wire.",
+      "type": "object",
+      "properties": {
+        "from": { "$ref": "#/definitions/Endpoint" },
+        "to": { "$ref": "#/definitions/Endpoint" }
+      },
+      "required": ["from", "to"],
+      "additionalProperties": false
+    },
+    "Endpoint": {
+      "type": "object",
+      "properties": {
+        "path": { "type": "string" },
+        "port": { "type": "string" }
+      },
+      "required": ["path", "port"],
+      "additionalProperties": false
+    },
+    "Timing": {
+      "description": "The anchor a leaf or a scope hangs from (0 the base grid), its period multiple and its phase in that anchor's ticks.",
+      "type": "object",
+      "properties": {
+        "anchor": { "type": "integer", "minimum": 0 },
+        "m": { "type": "integer", "minimum": 1 },
+        "c": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["anchor", "m", "c"],
+      "additionalProperties": false
+    },
+    "Rational": {
+      "type": "object",
+      "properties": {
+        "num": { "type": "integer" },
+        "den": { "type": "integer", "minimum": 1 }
+      },
+      "required": ["num", "den"],
+      "additionalProperties": false
+    },
+    "Anchor": {
+      "description": "One Absolute anchor, numbered from 1 by position; anchor 0, the base grid, has no row. `scope` is the declaring assembly's path, \"\" for the root.",
+      "type": "object",
+      "properties": {
+        "T": { "$ref": "#/definitions/Rational" },
+        "tau": { "$ref": "#/definitions/Rational" },
+        "scope": { "type": "string" },
+        "key": { "type": "string" }
+      },
+      "required": ["T", "tau", "scope", "key"],
+      "additionalProperties": false
+    },
+    "Scope": {
+      "description": "One keyed rate scope: the assembly whose sample_times names the key, and the scope's own timing.",
+      "type": "object",
+      "properties": {
+        "path": { "type": "string" },
+        "key": { "type": "string" },
+        "timing": { "$ref": "#/definitions/Timing" }
+      },
+      "required": ["path", "key", "timing"],
+      "additionalProperties": false
+    },
+    "TypeRow": {
+      "description": "One row per qualified base name: the docstring as Markdown source, absent when the type has none, and the locations of the declaration methods the type defines.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "docstring": { "type": "string" },
+        "locations": { "type": "array", "items": { "$ref": "#/definitions/Location" } }
+      },
+      "required": ["name", "locations"],
+      "additionalProperties": false
+    },
+    "Location": {
+      "type": "object",
+      "properties": {
+        "function": {
+          "type": "string",
+          "enum": ["u_types", "y_types", "x_init", "s_init", "m_init", "sample_times",
+                   "local_wires", "input_wires", "output_wires", "stop_reason", "transparent_container"]
+        },
+        "file": { "type": "string" },
+        "line": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["function", "file", "line"],
+      "additionalProperties": false
+    },
+    "Parameter": {
+      "description": "One inert field of an instance as display text: repr under :compact and :limit, cut at 80 characters with an ellipsis.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "value": { "type": "string" }
+      },
+      "required": ["name", "value"],
+      "additionalProperties": false
+    },
+    "OutputsSection": {
+      "description": "The Outputs' projection: the execution order as leaf paths, and per leaf the port names each stage produces.",
+      "type": "object",
+      "properties": {
+        "order": { "type": "array", "items": { "type": "string" } },
+        "components": { "type": "array", "items": { "$ref": "#/definitions/ComponentOutputs" } }
+      },
+      "required": ["order", "components"],
+      "additionalProperties": false
+    },
+    "ComponentOutputs": {
+      "type": "object",
+      "properties": {
+        "path": { "type": "string" },
+        "stage1": { "type": "array", "items": { "type": "string" } },
+        "stage2": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["path", "stage1", "stage2"],
+      "additionalProperties": false
+    }
+  }
+}

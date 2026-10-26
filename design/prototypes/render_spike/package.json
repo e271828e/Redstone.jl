@@ -1,0 +1,30 @@
+{
+  "name": "render-spike",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "fixtures": "node scripts/transcribe.mjs && node scripts/synthetic.mjs",
+    "validate": "node scripts/validate.mjs",
+    "measure": "node scripts/measure.mjs",
+    "drag": "node scripts/drag.mjs"
+  },
+  "dependencies": {
+    "@xyflow/svelte": "1.7.0",
+    "elkjs": "0.12.0"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "7.3.1",
+    "@tsconfig/svelte": "5.0.8",
+    "ajv": "8.20.0",
+    "playwright": "1.64.1",
+    "svelte": "5.57.2",
+    "svelte-check": "4.7.7",
+    "typescript": "6.0.3",
+    "vite": "8.3.5"
+  }
+}

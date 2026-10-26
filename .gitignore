@@ -7,3 +7,4 @@ Manifest.toml
 .vscode/
 .zed/
 design/**/*.pdf
+node_modules/

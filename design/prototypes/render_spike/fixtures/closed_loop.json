@@ -1,0 +1,2853 @@
+{
+ "format_version": {
+  "major": 1,
+  "minor": 0
+ },
+ "redstone_version": "0.3.1",
+ "kind": "build",
+ "build": {
+  "structure": {
+   "nodes": [
+    {
+     "path": "",
+     "class": "assembly",
+     "type": "Redstone.Blocks.Group",
+     "signature": "Redstone.Blocks.Group{@NamedTuple{h_ref, V_ref, mode, plant, noise, h_meas, h_ctl, θ_ctl, q_ctl, V_ctl, tracker, state_pack, z_pack, z_ref_pack, tracker_u, select_δe, select_δt, command_δe, command_δt, command_pack, tracker_engaged, free, free_pair, δe_limiter, δe_lag, δt_limiter, δt_lag}, …}",
+     "inputs": [],
+     "outputs": [],
+     "wires": [
+      {
+       "from": {
+        "path": "h_ref",
+        "port": "out"
+       },
+       "to": {
+        "path": "z_ref_pack",
+        "port": "in1"
+       }
+      },
+      {
+       "from": {
+        "path": "V_ref",
+        "port": "out"
+       },
+       "to": {
+        "path": "z_ref_pack",
+        "port": "in2"
+       }
+      },
+      {
+       "from": {
+        "path": "plant",
+        "port": "h"
+       },
+       "to": {
+        "path": "h_meas",
+        "port": "in1"
+       }
+      },
+      {
+       "from": {
+        "path": "noise",
+        "port": "out"
+       },
+       "to": {
+        "path": "h_meas",
+        "port": "in2"
+       }
+      },
+      {
+       "from": {
+        "path": "h_ref",
+        "port": "out"
+       },
+       "to": {
+        "path": "h_ctl",
+        "port": "r"
+       }
+      },
+      {
+       "from": {
+        "path": "h_meas",
+        "port": "out"
+       },
+       "to": {
+        "path": "h_ctl",
+        "port": "y"
+       }
+      },
+      {
+       "from": {
+        "path": "plant",
+        "port": "θ"
+       },
+       "to": {
+        "path": "h_ctl",
+        "port": "v"
+       }
+      },
+      {
+       "from": {
+        "path": "θ_ctl",
+        "port": "saturated"
+       },
+       "to": {
+        "path": "h_ctl",
+        "port": "saturation"
+       }
+      },
+      {
+       "from": {
+        "path": "mode",
+        "port": "out"
+       },
+       "to": {
+        "path": "h_ctl",
+        "port": "engaged"
+       }
+      },
+      {
+       "from": {
+        "path": "h_ctl",
+        "port": "u"
+       },
+       "to": {
+        "path": "θ_ctl",
+        "port": "r"
+       }
+      },
+      {
+       "from": {
+        "path": "plant",
+        "port": "θ"
+       },
+       "to": {
+        "path": "θ_ctl",
+        "port": "y"
+       }
+      },
+      {
+       "from": {
+        "path": "plant",
+        "port": "q"
+       },
+       "to": {
+        "path": "θ_ctl",
+        "port": "v"
+       }
+      },
+      {
+       "from": {
+        "path": "q_ctl",
+        "port": "saturated"
+       },
+       "to": {
+        "path": "θ_ctl",
+        "port": "saturation"
+       }
+      },
+      {
+       "from": {
+        "path": "mode",
+        "port": "out"
+       },
+       "to": {
+        "path": "θ_ctl",
+        "port": "engaged"
+       }
+      },
+      {
+       "from": {
+        "path": "θ_ctl",
+        "port": "u"
+       },
+       "to": {
+        "path": "q_ctl",
+        "port": "r"
+       }
+      },
+      {
+       "from": {
+        "path": "plant",
+        "port": "q"
+       },
+       "to": {
+        "path": "q_ctl",
+        "port": "y"
+       }
+      },
+      {
+       "from": {
+        "path": "command_δe",
+        "port": "out"
+       },
+       "to": {
+        "path": "q_ctl",
+        "port": "v"
+       }
+      },
+      {
+       "from": {
+        "path": "free",
+        "port": "out"
+       },
+       "to": {
+        "path": "q_ctl",
+        "port": "saturation"
+       }
+      },
+      {
+       "from": {
+        "path": "mode",
+        "port": "out"
+       },
+       "to": {
+        "path": "q_ctl",
+        "port": "engaged"
+       }
+      },
+      {
+       "from": {
+        "path": "V_ref",
+        "port": "out"
+       },
+       "to": {
+        "path": "V_ctl",
+        "port": "r"
+       }
+      },
+      {
+       "from": {
+        "path": "plant",
+        "port": "V"
+       },
+       "to": {
+        "path": "V_ctl",
+        "port": "y"
+       }
+      },
+      {
+       "from": {
+        "path": "command_δt",
+        "port": "out"
+       },
+       "to": {
+        "path": "V_ctl",
+        "port": "v"
+       }
+      },
+      {
+       "from": {
+        "path": "free",
+        "port": "out"
+       },
+       "to": {
+        "path": "V_ctl",
+        "port": "saturation"
+       }
+      },
+      {
+       "from": {
+        "path": "mode",
+        "port": "out"
+       },
+       "to": {
+        "path": "V_ctl",
+        "port": "engaged"
+       }
+      },
+      {
+       "from": {
+        "path": "plant",
+        "port": "V"
+       },
+       "to": {
+        "path": "state_pack",
+        "port": "in1"
+       }
+      },
+      {
+       "from": {
+        "path": "plant",
+        "port": "γ"
+       },
+       "to": {
+        "path": "state_pack",
+        "port": "in2"
+       }
+      },
+      {
+       "from": {
+        "path": "plant",
+        "port": "θ"
+       },
+       "to": {
+        "path": "state_pack",
+        "port": "in3"
+       }
+      },
+      {
+       "from": {
+        "path": "plant",
+        "port": "q"
+       },
+       "to": {
+        "path": "state_pack",
+        "port": "in4"
+       }
+      },
+      {
+       "from": {
+        "path": "plant",
+        "port": "h"
+       },
+       "to": {
+        "path": "state_pack",
+        "port": "in5"
+       }
+      },
+      {
+       "from": {
+        "path": "state_pack",
+        "port": "out"
+       },
+       "to": {
+        "path": "tracker",
+        "port": "x"
+       }
+      },
+      {
+       "from": {
+        "path": "h_meas",
+        "port": "out"
+       },
+       "to": {
+        "path": "z_pack",
+        "port": "in1"
+       }
+      },
+      {
+       "from": {
+        "path": "plant",
+        "port": "V"
+       },
+       "to": {
+        "path": "z_pack",
+        "port": "in2"
+       }
+      },
+      {
+       "from": {
+        "path": "z_pack",
+        "port": "out"
+       },
+       "to": {
+        "path": "tracker",
+        "port": "z"
+       }
+      },
+      {
+       "from": {
+        "path": "z_ref_pack",
+        "port": "out"
+       },
+       "to": {
+        "path": "tracker",
+        "port": "z_ref"
+       }
+      },
+      {
+       "from": {
+        "path": "command_δe",
+        "port": "out"
+       },
+       "to": {
+        "path": "command_pack",
+        "port": "in1"
+       }
+      },
+      {
+       "from": {
+        "path": "command_δt",
+        "port": "out"
+       },
+       "to": {
+        "path": "command_pack",
+        "port": "in2"
+       }
+      },
+      {
+       "from": {
+        "path": "command_pack",
+        "port": "out"
+       },
+       "to": {
+        "path": "tracker",
+        "port": "v"
+       }
+      },
+      {
+       "from": {
+        "path": "free_pair",
+        "port": "out"
+       },
+       "to": {
+        "path": "tracker",
+        "port": "saturation"
+       }
+      },
+      {
+       "from": {
+        "path": "mode",
+        "port": "out"
+       },
+       "to": {
+        "path": "tracker_engaged",
+        "port": "in1"
+       }
+      },
+      {
+       "from": {
+        "path": "tracker_engaged",
+        "port": "out"
+       },
+       "to": {
+        "path": "tracker",
+        "port": "engaged"
+       }
+      },
+      {
+       "from": {
+        "path": "tracker",
+        "port": "u"
+       },
+       "to": {
+        "path": "tracker_u",
+        "port": "in"
+       }
+      },
+      {
+       "from": {
+        "path": "q_ctl",
+        "port": "u"
+       },
+       "to": {
+        "path": "select_δe",
+        "port": "in1"
+       }
+      },
+      {
+       "from": {
+        "path": "tracker_u",
+        "port": "out1"
+       },
+       "to": {
+        "path": "select_δe",
+        "port": "in2"
+       }
+      },
+      {
+       "from": {
+        "path": "mode",
+        "port": "out"
+       },
+       "to": {
+        "path": "select_δe",
+        "port": "select"
+       }
+      },
+      {
+       "from": {
+        "path": "V_ctl",
+        "port": "u"
+       },
+       "to": {
+        "path": "select_δt",
+        "port": "in1"
+       }
+      },
+      {
+       "from": {
+        "path": "tracker_u",
+        "port": "out2"
+       },
+       "to": {
+        "path": "select_δt",
+        "port": "in2"
+       }
+      },
+      {
+       "from": {
+        "path": "mode",
+        "port": "out"
+       },
+       "to": {
+        "path": "select_δt",
+        "port": "select"
+       }
+      },
+      {
+       "from": {
+        "path": "select_δe",
+        "port": "out"
+       },
+       "to": {
+        "path": "command_δe",
+        "port": "in"
+       }
+      },
+      {
+       "from": {
+        "path": "select_δt",
+        "port": "out"
+       },
+       "to": {
+        "path": "command_δt",
+        "port": "in"
+       }
+      },
+      {
+       "from": {
+        "path": "select_δe",
+        "port": "out"
+       },
+       "to": {
+        "path": "δe_limiter",
+        "port": "in"
+       }
+      },
+      {
+       "from": {
+        "path": "δe_limiter",
+        "port": "out"
+       },
+       "to": {
+        "path": "δe_lag",
+        "port": "in"
+       }
+      },
+      {
+       "from": {
+        "path": "δe_lag",
+        "port": "out"
+       },
+       "to": {
+        "path": "plant",
+        "port": "δe"
+       }
+      },
+      {
+       "from": {
+        "path": "select_δt",
+        "port": "out"
+       },
+       "to": {
+        "path": "δt_limiter",
+        "port": "in"
+       }
+      },
+      {
+       "from": {
+        "path": "δt_limiter",
+        "port": "out"
+       },
+       "to": {
+        "path": "δt_lag",
+        "port": "in"
+       }
+      },
+      {
+       "from": {
+        "path": "δt_lag",
+        "port": "out"
+       },
+       "to": {
+        "path": "plant",
+        "port": "δt"
+       }
+      }
+     ],
+     "parameters": [
+      {
+       "name": "local_wires",
+       "value": "(\"h_ref/out\" => \"z_ref_pack/in1\", \"V_ref/out\" => \"z_ref_pack/in2\", \"plant/h\" =>…"
+      },
+      {
+       "name": "input_wires",
+       "value": "()"
+      },
+      {
+       "name": "output_wires",
+       "value": "()"
+      },
+      {
+       "name": "sample_times",
+       "value": "(noise = Absolute(1//50, 0//1), h_ctl = Absolute(1//50, 0//1), θ_ctl = Absolute…"
+      }
+     ]
+    },
+    {
+     "path": "h_ref",
+     "field": "children",
+     "key": "h_ref",
+     "class": "leaf",
+     "tier": "continuous",
+     "timing": {
+      "anchor": 0,
+      "m": 1,
+      "c": 0
+     },
+     "type": "Redstone.Blocks.Step",
+     "signature": "Redstone.Blocks.Step{Float64, true}",
+     "inputs": [],
+     "outputs": [
+      {
+       "name": "out",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": true
+      }
+     ],
+     "parameters": [
+      {
+       "name": "before",
+       "value": "1000.0"
+      },
+      {
+       "name": "after",
+       "value": "1050.0"
+      },
+      {
+       "name": "t_step",
+       "value": "5.0"
+      }
+     ]
+    },
+    {
+     "path": "V_ref",
+     "field": "children",
+     "key": "V_ref",
+     "class": "leaf",
+     "tier": "continuous",
+     "timing": {
+      "anchor": 0,
+      "m": 1,
+      "c": 0
+     },
+     "type": "Redstone.Blocks.Constant",
+     "signature": "Redstone.Blocks.Constant{Float64}",
+     "inputs": [],
+     "outputs": [
+      {
+       "name": "out",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": true
+      }
+     ],
+     "parameters": [
+      {
+       "name": "value",
+       "value": "50.0"
+      }
+     ]
+    },
+    {
+     "path": "mode",
+     "field": "children",
+     "key": "mode",
+     "class": "leaf",
+     "tier": "continuous",
+     "timing": {
+      "anchor": 0,
+      "m": 1,
+      "c": 0
+     },
+     "type": "Redstone.Blocks.Source",
+     "signature": "Redstone.Blocks.Source{Bool, RedstoneExamples.var\"#closed_loop##0#closed_loop##1\"}",
+     "inputs": [],
+     "outputs": [
+      {
+       "name": "out",
+       "type": "Bool",
+       "kind": {
+        "kind": "boolean"
+       },
+       "pinned": true
+      }
+     ],
+     "parameters": [
+      {
+       "name": "f",
+       "value": "#closed_loop##0"
+      }
+     ]
+    },
+    {
+     "path": "plant",
+     "field": "children",
+     "key": "plant",
+     "class": "leaf",
+     "tier": "continuous",
+     "timing": {
+      "anchor": 0,
+      "m": 1,
+      "c": 0
+     },
+     "type": "RedstoneExamples.Longitudinal",
+     "signature": "RedstoneExamples.Longitudinal",
+     "inputs": [
+      {
+       "name": "δe",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "δt",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      }
+     ],
+     "outputs": [
+      {
+       "name": "V",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "γ",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "θ",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "q",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "h",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "α",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      }
+     ],
+     "parameters": [
+      {
+       "name": "m",
+       "value": "1000.0"
+      },
+      {
+       "name": "S",
+       "value": "16.0"
+      },
+      {
+       "name": "c̄",
+       "value": "1.5"
+      },
+      {
+       "name": "Iyy",
+       "value": "1800.0"
+      },
+      {
+       "name": "T_max",
+       "value": "2500.0"
+      },
+      {
+       "name": "ρ",
+       "value": "1.225"
+      },
+      {
+       "name": "CL0",
+       "value": "0.3"
+      },
+      {
+       "name": "CLα",
+       "value": "5.0"
+      },
+      {
+       "name": "CD0",
+       "value": "0.03"
+      },
+      {
+       "name": "k",
+       "value": "0.05"
+      },
+      {
+       "name": "Cm0",
+       "value": "0.05"
+      },
+      {
+       "name": "Cmα",
+       "value": "-1.0"
+      },
+      {
+       "name": "Cmq",
+       "value": "-12.0"
+      },
+      {
+       "name": "Cmδe",
+       "value": "-1.2"
+      }
+     ]
+    },
+    {
+     "path": "noise",
+     "field": "children",
+     "key": "noise",
+     "class": "leaf",
+     "tier": "discrete",
+     "timing": {
+      "anchor": 1,
+      "m": 1,
+      "c": 0
+     },
+     "type": "Redstone.Blocks.GaussianWhiteNoise",
+     "signature": "Redstone.Blocks.GaussianWhiteNoise{Float64}",
+     "inputs": [],
+     "outputs": [
+      {
+       "name": "out",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      }
+     ],
+     "parameters": [
+      {
+       "name": "seed",
+       "value": "0x0000000000000007"
+      },
+      {
+       "name": "μ",
+       "value": "0.0"
+      },
+      {
+       "name": "σ",
+       "value": "0.3"
+      },
+      {
+       "name": "density",
+       "value": "false"
+      }
+     ]
+    },
+    {
+     "path": "h_meas",
+     "field": "children",
+     "key": "h_meas",
+     "class": "leaf",
+     "tier": "continuous",
+     "timing": {
+      "anchor": 0,
+      "m": 1,
+      "c": 0
+     },
+     "type": "Redstone.Blocks.Junction",
+     "signature": "Redstone.Blocks.Junction{Float64, Float64, 2, typeof(+)}",
+     "inputs": [
+      {
+       "name": "in1",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "in2",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      }
+     ],
+     "outputs": [
+      {
+       "name": "out",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      }
+     ],
+     "parameters": [
+      {
+       "name": "f",
+       "value": "+"
+      }
+     ]
+    },
+    {
+     "path": "h_ctl",
+     "field": "children",
+     "key": "h_ctl",
+     "class": "leaf",
+     "tier": "discrete",
+     "timing": {
+      "anchor": 2,
+      "m": 1,
+      "c": 0
+     },
+     "type": "Redstone.Blocks.DiscretePID",
+     "signature": "Redstone.Blocks.DiscretePID{Float64, true, true, @NamedTuple{Kp::Float64, Ki::Float64, Kd::Float64, τd::Float64, Tt::Float64, u_min::Float64, u_max::Float64, b::Float64, c::Float64}}",
+     "inputs": [
+      {
+       "name": "r",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "y",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "saturation",
+       "type": "Int8",
+       "kind": {
+        "kind": "integer"
+       },
+       "pinned": false
+      },
+      {
+       "name": "engaged",
+       "type": "Bool",
+       "kind": {
+        "kind": "boolean"
+       },
+       "pinned": false
+      },
+      {
+       "name": "v",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      }
+     ],
+     "outputs": [
+      {
+       "name": "u",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "u_raw",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "saturated",
+       "type": "Int8",
+       "kind": {
+        "kind": "integer"
+       },
+       "pinned": false
+      }
+     ],
+     "parameters": [
+      {
+       "name": "fixed",
+       "value": "(Kp = 0.01, Ki = 0.001, Kd = 0.0, τd = 0.1, Tt = 0.02, u_min = -0.26, u_max = 0…"
+      }
+     ]
+    },
+    {
+     "path": "θ_ctl",
+     "field": "children",
+     "key": "θ_ctl",
+     "class": "leaf",
+     "tier": "discrete",
+     "timing": {
+      "anchor": 3,
+      "m": 1,
+      "c": 0
+     },
+     "type": "Redstone.Blocks.DiscretePID",
+     "signature": "Redstone.Blocks.DiscretePID{Float64, true, true, @NamedTuple{Kp::Float64, Ki::Float64, Kd::Float64, τd::Float64, Tt::Float64, u_min::Float64, u_max::Float64, b::Float64, c::Float64}}",
+     "inputs": [
+      {
+       "name": "r",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "y",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "saturation",
+       "type": "Int8",
+       "kind": {
+        "kind": "integer"
+       },
+       "pinned": false
+      },
+      {
+       "name": "engaged",
+       "type": "Bool",
+       "kind": {
+        "kind": "boolean"
+       },
+       "pinned": false
+      },
+      {
+       "name": "v",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      }
+     ],
+     "outputs": [
+      {
+       "name": "u",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "u_raw",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "saturated",
+       "type": "Int8",
+       "kind": {
+        "kind": "integer"
+       },
+       "pinned": false
+      }
+     ],
+     "parameters": [
+      {
+       "name": "fixed",
+       "value": "(Kp = 2.0, Ki = 0.5, Kd = 0.0, τd = 0.1, Tt = 0.02, u_min = -0.5, u_max = 0.5, …"
+      }
+     ]
+    },
+    {
+     "path": "q_ctl",
+     "field": "children",
+     "key": "q_ctl",
+     "class": "leaf",
+     "tier": "discrete",
+     "timing": {
+      "anchor": 4,
+      "m": 1,
+      "c": 0
+     },
+     "type": "Redstone.Blocks.DiscretePID",
+     "signature": "Redstone.Blocks.DiscretePID{Float64, true, true, @NamedTuple{Kp::Float64, Ki::Float64, Kd::Float64, τd::Float64, Tt::Float64, u_min::Float64, u_max::Float64, b::Float64, c::Float64}}",
+     "inputs": [
+      {
+       "name": "r",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "y",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "saturation",
+       "type": "Int8",
+       "kind": {
+        "kind": "integer"
+       },
+       "pinned": false
+      },
+      {
+       "name": "engaged",
+       "type": "Bool",
+       "kind": {
+        "kind": "boolean"
+       },
+       "pinned": false
+      },
+      {
+       "name": "v",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      }
+     ],
+     "outputs": [
+      {
+       "name": "u",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "u_raw",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "saturated",
+       "type": "Int8",
+       "kind": {
+        "kind": "integer"
+       },
+       "pinned": false
+      }
+     ],
+     "parameters": [
+      {
+       "name": "fixed",
+       "value": "(Kp = -0.2, Ki = -0.4, Kd = 0.0, τd = 0.1, Tt = 0.02, u_min = -0.5, u_max = 0.5…"
+      }
+     ]
+    },
+    {
+     "path": "V_ctl",
+     "field": "children",
+     "key": "V_ctl",
+     "class": "leaf",
+     "tier": "discrete",
+     "timing": {
+      "anchor": 5,
+      "m": 1,
+      "c": 0
+     },
+     "type": "Redstone.Blocks.DiscretePID",
+     "signature": "Redstone.Blocks.DiscretePID{Float64, true, true, @NamedTuple{Kp::Float64, Ki::Float64, Kd::Float64, τd::Float64, Tt::Float64, u_min::Float64, u_max::Float64, b::Float64, c::Float64}}",
+     "inputs": [
+      {
+       "name": "r",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "y",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "saturation",
+       "type": "Int8",
+       "kind": {
+        "kind": "integer"
+       },
+       "pinned": false
+      },
+      {
+       "name": "engaged",
+       "type": "Bool",
+       "kind": {
+        "kind": "boolean"
+       },
+       "pinned": false
+      },
+      {
+       "name": "v",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      }
+     ],
+     "outputs": [
+      {
+       "name": "u",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "u_raw",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "saturated",
+       "type": "Int8",
+       "kind": {
+        "kind": "integer"
+       },
+       "pinned": false
+      }
+     ],
+     "parameters": [
+      {
+       "name": "fixed",
+       "value": "(Kp = 0.2, Ki = 0.05, Kd = 0.0, τd = 0.1, Tt = 0.02, u_min = 0.0, u_max = 1.0, …"
+      }
+     ]
+    },
+    {
+     "path": "tracker",
+     "field": "children",
+     "key": "tracker",
+     "class": "leaf",
+     "tier": "discrete",
+     "timing": {
+      "anchor": 6,
+      "m": 1,
+      "c": 0
+     },
+     "type": "Redstone.Blocks.DiscreteLQRTracker",
+     "signature": "Redstone.Blocks.DiscreteLQRTracker{5, 2, 2, true, true, @NamedTuple{K_fbk::StaticArraysCore.SMatrix{2, 5, Float64, 10}, …}}",
+     "inputs": [
+      {
+       "name": "x",
+       "type": "StaticArraysCore.SVector{5, Float64}",
+       "kind": {
+        "kind": "vector",
+        "shape": [
+         5
+        ],
+        "element": {
+         "kind": "float"
+        }
+       },
+       "pinned": false
+      },
+      {
+       "name": "z",
+       "type": "StaticArraysCore.SVector{2, Float64}",
+       "kind": {
+        "kind": "vector",
+        "shape": [
+         2
+        ],
+        "element": {
+         "kind": "float"
+        }
+       },
+       "pinned": false
+      },
+      {
+       "name": "z_ref",
+       "type": "StaticArraysCore.SVector{2, Float64}",
+       "kind": {
+        "kind": "vector",
+        "shape": [
+         2
+        ],
+        "element": {
+         "kind": "float"
+        }
+       },
+       "pinned": false
+      },
+      {
+       "name": "saturation",
+       "type": "StaticArraysCore.SVector{2, Int8}",
+       "kind": {
+        "kind": "vector",
+        "shape": [
+         2
+        ],
+        "element": {
+         "kind": "integer"
+        }
+       },
+       "pinned": false
+      },
+      {
+       "name": "engaged",
+       "type": "StaticArraysCore.SVector{2, Bool}",
+       "kind": {
+        "kind": "vector",
+        "shape": [
+         2
+        ],
+        "element": {
+         "kind": "boolean"
+        }
+       },
+       "pinned": false
+      },
+      {
+       "name": "v",
+       "type": "StaticArraysCore.SVector{2, Float64}",
+       "kind": {
+        "kind": "vector",
+        "shape": [
+         2
+        ],
+        "element": {
+         "kind": "float"
+        }
+       },
+       "pinned": false
+      }
+     ],
+     "outputs": [
+      {
+       "name": "u",
+       "type": "StaticArraysCore.SVector{2, Float64}",
+       "kind": {
+        "kind": "vector",
+        "shape": [
+         2
+        ],
+        "element": {
+         "kind": "float"
+        }
+       },
+       "pinned": false
+      },
+      {
+       "name": "u_raw",
+       "type": "StaticArraysCore.SVector{2, Float64}",
+       "kind": {
+        "kind": "vector",
+        "shape": [
+         2
+        ],
+        "element": {
+         "kind": "float"
+        }
+       },
+       "pinned": false
+      },
+      {
+       "name": "saturated",
+       "type": "StaticArraysCore.SVector{2, Int8}",
+       "kind": {
+        "kind": "vector",
+        "shape": [
+         2
+        ],
+        "element": {
+         "kind": "integer"
+        }
+       },
+       "pinned": false
+      }
+     ],
+     "parameters": [
+      {
+       "name": "fixed",
+       "value": "(K_fbk = [0.0123 -1.97 2.41 0.613 -0.0101; 0.0612 0.0745 -0.0212 -0.00311 0.002…"
+      }
+     ]
+    },
+    {
+     "path": "state_pack",
+     "field": "children",
+     "key": "state_pack",
+     "class": "leaf",
+     "tier": "continuous",
+     "timing": {
+      "anchor": 0,
+      "m": 1,
+      "c": 0
+     },
+     "type": "Redstone.Blocks.Junction",
+     "signature": "Redstone.Blocks.Junction{Float64, StaticArraysCore.SVector{5, Float64}, 5, typeof(Redstone.Blocks.pack)}",
+     "inputs": [
+      {
+       "name": "in1",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "in2",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "in3",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "in4",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "in5",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      }
+     ],
+     "outputs": [
+      {
+       "name": "out",
+       "type": "StaticArraysCore.SVector{5, Float64}",
+       "kind": {
+        "kind": "vector",
+        "shape": [
+         5
+        ],
+        "element": {
+         "kind": "float"
+        }
+       },
+       "pinned": false
+      }
+     ],
+     "parameters": [
+      {
+       "name": "f",
+       "value": "pack"
+      }
+     ]
+    },
+    {
+     "path": "z_pack",
+     "field": "children",
+     "key": "z_pack",
+     "class": "leaf",
+     "tier": "continuous",
+     "timing": {
+      "anchor": 0,
+      "m": 1,
+      "c": 0
+     },
+     "type": "Redstone.Blocks.Junction",
+     "signature": "Redstone.Blocks.Junction{Float64, StaticArraysCore.SVector{2, Float64}, 2, typeof(Redstone.Blocks.pack)}",
+     "inputs": [
+      {
+       "name": "in1",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "in2",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      }
+     ],
+     "outputs": [
+      {
+       "name": "out",
+       "type": "StaticArraysCore.SVector{2, Float64}",
+       "kind": {
+        "kind": "vector",
+        "shape": [
+         2
+        ],
+        "element": {
+         "kind": "float"
+        }
+       },
+       "pinned": false
+      }
+     ],
+     "parameters": [
+      {
+       "name": "f",
+       "value": "pack"
+      }
+     ]
+    },
+    {
+     "path": "z_ref_pack",
+     "field": "children",
+     "key": "z_ref_pack",
+     "class": "leaf",
+     "tier": "continuous",
+     "timing": {
+      "anchor": 0,
+      "m": 1,
+      "c": 0
+     },
+     "type": "Redstone.Blocks.Junction",
+     "signature": "Redstone.Blocks.Junction{Float64, StaticArraysCore.SVector{2, Float64}, 2, typeof(Redstone.Blocks.pack)}",
+     "inputs": [
+      {
+       "name": "in1",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "in2",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      }
+     ],
+     "outputs": [
+      {
+       "name": "out",
+       "type": "StaticArraysCore.SVector{2, Float64}",
+       "kind": {
+        "kind": "vector",
+        "shape": [
+         2
+        ],
+        "element": {
+         "kind": "float"
+        }
+       },
+       "pinned": false
+      }
+     ],
+     "parameters": [
+      {
+       "name": "f",
+       "value": "pack"
+      }
+     ]
+    },
+    {
+     "path": "tracker_u",
+     "field": "children",
+     "key": "tracker_u",
+     "class": "leaf",
+     "tier": "continuous",
+     "timing": {
+      "anchor": 0,
+      "m": 1,
+      "c": 0
+     },
+     "type": "Redstone.Blocks.Unpack",
+     "signature": "Redstone.Blocks.Unpack{Float64, 2}",
+     "inputs": [
+      {
+       "name": "in",
+       "type": "StaticArraysCore.SVector{2, Float64}",
+       "kind": {
+        "kind": "vector",
+        "shape": [
+         2
+        ],
+        "element": {
+         "kind": "float"
+        }
+       },
+       "pinned": false
+      }
+     ],
+     "outputs": [
+      {
+       "name": "out1",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "out2",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      }
+     ],
+     "parameters": []
+    },
+    {
+     "path": "select_δe",
+     "field": "children",
+     "key": "select_δe",
+     "class": "leaf",
+     "tier": "continuous",
+     "timing": {
+      "anchor": 0,
+      "m": 1,
+      "c": 0
+     },
+     "type": "Redstone.Blocks.Switch",
+     "signature": "Redstone.Blocks.Switch{Float64}",
+     "inputs": [
+      {
+       "name": "in1",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "in2",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "select",
+       "type": "Bool",
+       "kind": {
+        "kind": "boolean"
+       },
+       "pinned": false
+      }
+     ],
+     "outputs": [
+      {
+       "name": "out",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      }
+     ],
+     "parameters": []
+    },
+    {
+     "path": "select_δt",
+     "field": "children",
+     "key": "select_δt",
+     "class": "leaf",
+     "tier": "continuous",
+     "timing": {
+      "anchor": 0,
+      "m": 1,
+      "c": 0
+     },
+     "type": "Redstone.Blocks.Switch",
+     "signature": "Redstone.Blocks.Switch{Float64}",
+     "inputs": [
+      {
+       "name": "in1",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "in2",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "select",
+       "type": "Bool",
+       "kind": {
+        "kind": "boolean"
+       },
+       "pinned": false
+      }
+     ],
+     "outputs": [
+      {
+       "name": "out",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      }
+     ],
+     "parameters": []
+    },
+    {
+     "path": "command_δe",
+     "field": "children",
+     "key": "command_δe",
+     "class": "leaf",
+     "tier": "discrete",
+     "timing": {
+      "anchor": 7,
+      "m": 1,
+      "c": 0
+     },
+     "type": "Redstone.Blocks.UnitDelay",
+     "signature": "Redstone.Blocks.UnitDelay{Float64}",
+     "inputs": [
+      {
+       "name": "in",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      }
+     ],
+     "outputs": [
+      {
+       "name": "out",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      }
+     ],
+     "parameters": [
+      {
+       "name": "v0",
+       "value": "-0.0262"
+      }
+     ]
+    },
+    {
+     "path": "command_δt",
+     "field": "children",
+     "key": "command_δt",
+     "class": "leaf",
+     "tier": "discrete",
+     "timing": {
+      "anchor": 8,
+      "m": 1,
+      "c": 0
+     },
+     "type": "Redstone.Blocks.UnitDelay",
+     "signature": "Redstone.Blocks.UnitDelay{Float64}",
+     "inputs": [
+      {
+       "name": "in",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      }
+     ],
+     "outputs": [
+      {
+       "name": "out",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      }
+     ],
+     "parameters": [
+      {
+       "name": "v0",
+       "value": "0.2481"
+      }
+     ]
+    },
+    {
+     "path": "command_pack",
+     "field": "children",
+     "key": "command_pack",
+     "class": "leaf",
+     "tier": "continuous",
+     "timing": {
+      "anchor": 0,
+      "m": 1,
+      "c": 0
+     },
+     "type": "Redstone.Blocks.Junction",
+     "signature": "Redstone.Blocks.Junction{Float64, StaticArraysCore.SVector{2, Float64}, 2, typeof(Redstone.Blocks.pack)}",
+     "inputs": [
+      {
+       "name": "in1",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "in2",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      }
+     ],
+     "outputs": [
+      {
+       "name": "out",
+       "type": "StaticArraysCore.SVector{2, Float64}",
+       "kind": {
+        "kind": "vector",
+        "shape": [
+         2
+        ],
+        "element": {
+         "kind": "float"
+        }
+       },
+       "pinned": false
+      }
+     ],
+     "parameters": [
+      {
+       "name": "f",
+       "value": "pack"
+      }
+     ]
+    },
+    {
+     "path": "tracker_engaged",
+     "field": "children",
+     "key": "tracker_engaged",
+     "class": "leaf",
+     "tier": "continuous",
+     "timing": {
+      "anchor": 0,
+      "m": 1,
+      "c": 0
+     },
+     "type": "Redstone.Blocks.Junction",
+     "signature": "Redstone.Blocks.Junction{Bool, StaticArraysCore.SVector{2, Bool}, 1, RedstoneExamples.var\"#closed_loop##2#closed_loop##3\"}",
+     "inputs": [
+      {
+       "name": "in1",
+       "type": "Bool",
+       "kind": {
+        "kind": "boolean"
+       },
+       "pinned": false
+      }
+     ],
+     "outputs": [
+      {
+       "name": "out",
+       "type": "StaticArraysCore.SVector{2, Bool}",
+       "kind": {
+        "kind": "vector",
+        "shape": [
+         2
+        ],
+        "element": {
+         "kind": "boolean"
+        }
+       },
+       "pinned": false
+      }
+     ],
+     "parameters": [
+      {
+       "name": "f",
+       "value": "#closed_loop##2"
+      }
+     ]
+    },
+    {
+     "path": "free",
+     "field": "children",
+     "key": "free",
+     "class": "leaf",
+     "tier": "continuous",
+     "timing": {
+      "anchor": 0,
+      "m": 1,
+      "c": 0
+     },
+     "type": "Redstone.Blocks.Constant",
+     "signature": "Redstone.Blocks.Constant{Int8}",
+     "inputs": [],
+     "outputs": [
+      {
+       "name": "out",
+       "type": "Int8",
+       "kind": {
+        "kind": "integer"
+       },
+       "pinned": true
+      }
+     ],
+     "parameters": [
+      {
+       "name": "value",
+       "value": "0"
+      }
+     ]
+    },
+    {
+     "path": "free_pair",
+     "field": "children",
+     "key": "free_pair",
+     "class": "leaf",
+     "tier": "continuous",
+     "timing": {
+      "anchor": 0,
+      "m": 1,
+      "c": 0
+     },
+     "type": "Redstone.Blocks.Constant",
+     "signature": "Redstone.Blocks.Constant{StaticArraysCore.SVector{2, Int8}}",
+     "inputs": [],
+     "outputs": [
+      {
+       "name": "out",
+       "type": "StaticArraysCore.SVector{2, Int8}",
+       "kind": {
+        "kind": "vector",
+        "shape": [
+         2
+        ],
+        "element": {
+         "kind": "integer"
+        }
+       },
+       "pinned": true
+      }
+     ],
+     "parameters": [
+      {
+       "name": "value",
+       "value": "Int8[0, 0]"
+      }
+     ]
+    },
+    {
+     "path": "δe_limiter",
+     "field": "children",
+     "key": "δe_limiter",
+     "class": "leaf",
+     "tier": "discrete",
+     "timing": {
+      "anchor": 9,
+      "m": 1,
+      "c": 0
+     },
+     "type": "Redstone.Blocks.RateLimiter",
+     "signature": "Redstone.Blocks.RateLimiter{Float64}",
+     "inputs": [
+      {
+       "name": "in",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      }
+     ],
+     "outputs": [
+      {
+       "name": "out",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      }
+     ],
+     "parameters": [
+      {
+       "name": "rising",
+       "value": "1.0"
+      },
+      {
+       "name": "falling",
+       "value": "-1.0"
+      },
+      {
+       "name": "s0",
+       "value": "-0.0262"
+      }
+     ]
+    },
+    {
+     "path": "δe_lag",
+     "field": "children",
+     "key": "δe_lag",
+     "class": "leaf",
+     "tier": "continuous",
+     "timing": {
+      "anchor": 0,
+      "m": 1,
+      "c": 0
+     },
+     "type": "Redstone.Blocks.FirstOrderLag",
+     "signature": "Redstone.Blocks.FirstOrderLag{Float64}",
+     "inputs": [
+      {
+       "name": "in",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      }
+     ],
+     "outputs": [
+      {
+       "name": "out",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      }
+     ],
+     "parameters": [
+      {
+       "name": "x0",
+       "value": "-0.0262"
+      },
+      {
+       "name": "τ",
+       "value": "0.05"
+      }
+     ]
+    },
+    {
+     "path": "δt_limiter",
+     "field": "children",
+     "key": "δt_limiter",
+     "class": "leaf",
+     "tier": "discrete",
+     "timing": {
+      "anchor": 10,
+      "m": 1,
+      "c": 0
+     },
+     "type": "Redstone.Blocks.RateLimiter",
+     "signature": "Redstone.Blocks.RateLimiter{Float64}",
+     "inputs": [
+      {
+       "name": "in",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      }
+     ],
+     "outputs": [
+      {
+       "name": "out",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      }
+     ],
+     "parameters": [
+      {
+       "name": "rising",
+       "value": "0.5"
+      },
+      {
+       "name": "falling",
+       "value": "-0.5"
+      },
+      {
+       "name": "s0",
+       "value": "0.2481"
+      }
+     ]
+    },
+    {
+     "path": "δt_lag",
+     "field": "children",
+     "key": "δt_lag",
+     "class": "leaf",
+     "tier": "continuous",
+     "timing": {
+      "anchor": 0,
+      "m": 1,
+      "c": 0
+     },
+     "type": "Redstone.Blocks.FirstOrderLag",
+     "signature": "Redstone.Blocks.FirstOrderLag{Float64}",
+     "inputs": [
+      {
+       "name": "in",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      }
+     ],
+     "outputs": [
+      {
+       "name": "out",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      }
+     ],
+     "parameters": [
+      {
+       "name": "x0",
+       "value": "0.2481"
+      },
+      {
+       "name": "τ",
+       "value": "0.5"
+      }
+     ]
+    }
+   ],
+   "root_inputs": [],
+   "anchors": [
+    {
+     "T": {
+      "num": 1,
+      "den": 50
+     },
+     "tau": {
+      "num": 0,
+      "den": 1
+     },
+     "scope": "",
+     "key": "noise"
+    },
+    {
+     "T": {
+      "num": 1,
+      "den": 50
+     },
+     "tau": {
+      "num": 0,
+      "den": 1
+     },
+     "scope": "",
+     "key": "h_ctl"
+    },
+    {
+     "T": {
+      "num": 1,
+      "den": 50
+     },
+     "tau": {
+      "num": 0,
+      "den": 1
+     },
+     "scope": "",
+     "key": "θ_ctl"
+    },
+    {
+     "T": {
+      "num": 1,
+      "den": 50
+     },
+     "tau": {
+      "num": 0,
+      "den": 1
+     },
+     "scope": "",
+     "key": "q_ctl"
+    },
+    {
+     "T": {
+      "num": 1,
+      "den": 50
+     },
+     "tau": {
+      "num": 0,
+      "den": 1
+     },
+     "scope": "",
+     "key": "V_ctl"
+    },
+    {
+     "T": {
+      "num": 1,
+      "den": 50
+     },
+     "tau": {
+      "num": 0,
+      "den": 1
+     },
+     "scope": "",
+     "key": "tracker"
+    },
+    {
+     "T": {
+      "num": 1,
+      "den": 50
+     },
+     "tau": {
+      "num": 0,
+      "den": 1
+     },
+     "scope": "",
+     "key": "command_δe"
+    },
+    {
+     "T": {
+      "num": 1,
+      "den": 50
+     },
+     "tau": {
+      "num": 0,
+      "den": 1
+     },
+     "scope": "",
+     "key": "command_δt"
+    },
+    {
+     "T": {
+      "num": 1,
+      "den": 50
+     },
+     "tau": {
+      "num": 0,
+      "den": 1
+     },
+     "scope": "",
+     "key": "δe_limiter"
+    },
+    {
+     "T": {
+      "num": 1,
+      "den": 50
+     },
+     "tau": {
+      "num": 0,
+      "den": 1
+     },
+     "scope": "",
+     "key": "δt_limiter"
+    }
+   ],
+   "scopes": [],
+   "types": [
+    {
+     "name": "Redstone.Blocks.Group",
+     "docstring": "    Group(children; local_wires, input_wires, output_wires, sample_times)\n\nThe ad-hoc assembly.",
+     "locations": [
+      {
+       "function": "sample_times",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 1620
+      },
+      {
+       "function": "local_wires",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 1617
+      },
+      {
+       "function": "input_wires",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 1618
+      },
+      {
+       "function": "output_wires",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 1619
+      },
+      {
+       "function": "transparent_container",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 1621
+      }
+     ]
+    },
+    {
+     "name": "Redstone.Blocks.Step",
+     "docstring": "    Step(; t_step, before = 0.0, after = 1.0, localized = true)\n\nA step from `before` to `after` at `t_step`.",
+     "locations": [
+      {
+       "function": "x_init",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 826
+      },
+      {
+       "function": "m_init",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 827
+      },
+      {
+       "function": "y_types",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 828
+      }
+     ]
+    },
+    {
+     "name": "Redstone.Blocks.Constant",
+     "docstring": "    Constant(value)\n\nA constant output, pinned.",
+     "locations": [
+      {
+       "function": "x_init",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 137
+      },
+      {
+       "function": "y_types",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 138
+      }
+     ]
+    },
+    {
+     "name": "Redstone.Blocks.Source",
+     "docstring": "    Source{V}(f)\n\nThe output `f(t)`, pinned.",
+     "locations": [
+      {
+       "function": "x_init",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 406
+      },
+      {
+       "function": "y_types",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 407
+      }
+     ]
+    },
+    {
+     "name": "RedstoneExamples.Longitudinal",
+     "docstring": "A rigid aircraft in its plane of symmetry, with three degrees of freedom.",
+     "locations": [
+      {
+       "function": "u_types",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/examples/src/longitudinal.jl",
+       "line": 45
+      },
+      {
+       "function": "y_types",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/examples/src/longitudinal.jl",
+       "line": 46
+      },
+      {
+       "function": "x_init",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/examples/src/longitudinal.jl",
+       "line": 44
+      }
+     ]
+    },
+    {
+     "name": "Redstone.Blocks.GaussianWhiteNoise",
+     "docstring": "    GaussianWhiteNoise(; seed, μ, σ, psd)\n\nDiscrete white noise.",
+     "locations": [
+      {
+       "function": "y_types",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 378
+      },
+      {
+       "function": "s_init",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 377
+      }
+     ]
+    },
+    {
+     "name": "Redstone.Blocks.Junction",
+     "docstring": "    Junction{In, Out, N}(f)\n\nA memoryless fold of `N` inputs.",
+     "locations": [
+      {
+       "function": "u_types",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 78
+      },
+      {
+       "function": "y_types",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 80
+      },
+      {
+       "function": "x_init",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 77
+      }
+     ]
+    },
+    {
+     "name": "Redstone.Blocks.DiscretePID",
+     "docstring": "    DiscretePID(; Kp, Ki, Kd, τd, Tt, u_min, u_max, b, c, hold, tracking)\n\nThe discrete PID.",
+     "locations": [
+      {
+       "function": "u_types",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 1103
+      },
+      {
+       "function": "y_types",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 1300
+      },
+      {
+       "function": "s_init",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 1299
+      }
+     ]
+    },
+    {
+     "name": "Redstone.Blocks.DiscreteLQRTracker",
+     "docstring": "    DiscreteLQRTracker(; K_fbk, K_fwd, K_int, …)\n\nThe discrete LQR tracker.",
+     "locations": [
+      {
+       "function": "u_types",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 1348
+      },
+      {
+       "function": "y_types",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 1557
+      },
+      {
+       "function": "s_init",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 1555
+      }
+     ]
+    },
+    {
+     "name": "Redstone.Blocks.Unpack",
+     "docstring": "    Unpack{V, N}()\n\nThe inverse of `Pack`.",
+     "locations": [
+      {
+       "function": "u_types",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 97
+      },
+      {
+       "function": "y_types",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 98
+      },
+      {
+       "function": "x_init",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 96
+      }
+     ]
+    },
+    {
+     "name": "Redstone.Blocks.Switch",
+     "docstring": "    Switch{V}()\n\nSelects `in1` while `select` holds.",
+     "locations": [
+      {
+       "function": "u_types",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 117
+      },
+      {
+       "function": "y_types",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 118
+      },
+      {
+       "function": "x_init",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 116
+      }
+     ]
+    },
+    {
+     "name": "Redstone.Blocks.UnitDelay",
+     "docstring": "    UnitDelay(v0)\n\nOne tick of delay.",
+     "locations": [
+      {
+       "function": "u_types",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 156
+      },
+      {
+       "function": "y_types",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 157
+      },
+      {
+       "function": "s_init",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 155
+      }
+     ]
+    },
+    {
+     "name": "Redstone.Blocks.RateLimiter",
+     "docstring": "    RateLimiter(; rising, falling, s0)\n\nA discrete rate limiter.",
+     "locations": [
+      {
+       "function": "u_types",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 316
+      },
+      {
+       "function": "y_types",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 317
+      },
+      {
+       "function": "s_init",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 315
+      }
+     ]
+    },
+    {
+     "name": "Redstone.Blocks.FirstOrderLag",
+     "docstring": "    FirstOrderLag(; τ, x0)\n\nA first-order lag.",
+     "locations": [
+      {
+       "function": "u_types",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 450
+      },
+      {
+       "function": "y_types",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 451
+      },
+      {
+       "function": "x_init",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 449
+      }
+     ]
+    }
+   ]
+  },
+  "outputs": {
+   "order": [
+    "h_ref",
+    "V_ref",
+    "mode",
+    "plant",
+    "noise",
+    "h_meas",
+    "V_ctl",
+    "state_pack",
+    "z_ref_pack",
+    "command_δe",
+    "command_δt",
+    "command_pack",
+    "tracker_engaged",
+    "free",
+    "free_pair",
+    "δe_lag",
+    "δt_lag",
+    "z_pack",
+    "h_ctl",
+    "tracker",
+    "θ_ctl",
+    "tracker_u",
+    "q_ctl",
+    "select_δt",
+    "select_δe",
+    "δt_limiter",
+    "δe_limiter"
+   ],
+   "components": [
+    {
+     "path": "h_ref",
+     "stage1": [
+      "out"
+     ],
+     "stage2": []
+    },
+    {
+     "path": "V_ref",
+     "stage1": [
+      "out"
+     ],
+     "stage2": []
+    },
+    {
+     "path": "mode",
+     "stage1": [
+      "out"
+     ],
+     "stage2": []
+    },
+    {
+     "path": "plant",
+     "stage1": [
+      "V",
+      "γ",
+      "θ",
+      "q",
+      "h",
+      "α"
+     ],
+     "stage2": []
+    },
+    {
+     "path": "noise",
+     "stage1": [
+      "out"
+     ],
+     "stage2": []
+    },
+    {
+     "path": "h_meas",
+     "stage1": [],
+     "stage2": [
+      "out"
+     ]
+    },
+    {
+     "path": "V_ctl",
+     "stage1": [
+      "saturated"
+     ],
+     "stage2": [
+      "u",
+      "u_raw"
+     ]
+    },
+    {
+     "path": "state_pack",
+     "stage1": [],
+     "stage2": [
+      "out"
+     ]
+    },
+    {
+     "path": "z_ref_pack",
+     "stage1": [],
+     "stage2": [
+      "out"
+     ]
+    },
+    {
+     "path": "command_δe",
+     "stage1": [
+      "out"
+     ],
+     "stage2": []
+    },
+    {
+     "path": "command_δt",
+     "stage1": [
+      "out"
+     ],
+     "stage2": []
+    },
+    {
+     "path": "command_pack",
+     "stage1": [],
+     "stage2": [
+      "out"
+     ]
+    },
+    {
+     "path": "tracker_engaged",
+     "stage1": [],
+     "stage2": [
+      "out"
+     ]
+    },
+    {
+     "path": "free",
+     "stage1": [
+      "out"
+     ],
+     "stage2": []
+    },
+    {
+     "path": "free_pair",
+     "stage1": [
+      "out"
+     ],
+     "stage2": []
+    },
+    {
+     "path": "δe_lag",
+     "stage1": [
+      "out"
+     ],
+     "stage2": []
+    },
+    {
+     "path": "δt_lag",
+     "stage1": [
+      "out"
+     ],
+     "stage2": []
+    },
+    {
+     "path": "z_pack",
+     "stage1": [],
+     "stage2": [
+      "out"
+     ]
+    },
+    {
+     "path": "h_ctl",
+     "stage1": [
+      "saturated"
+     ],
+     "stage2": [
+      "u",
+      "u_raw"
+     ]
+    },
+    {
+     "path": "tracker",
+     "stage1": [
+      "saturated"
+     ],
+     "stage2": [
+      "u",
+      "u_raw"
+     ]
+    },
+    {
+     "path": "θ_ctl",
+     "stage1": [
+      "saturated"
+     ],
+     "stage2": [
+      "u",
+      "u_raw"
+     ]
+    },
+    {
+     "path": "tracker_u",
+     "stage1": [],
+     "stage2": [
+      "out1",
+      "out2"
+     ]
+    },
+    {
+     "path": "q_ctl",
+     "stage1": [
+      "saturated"
+     ],
+     "stage2": [
+      "u",
+      "u_raw"
+     ]
+    },
+    {
+     "path": "select_δt",
+     "stage1": [],
+     "stage2": [
+      "out"
+     ]
+    },
+    {
+     "path": "select_δe",
+     "stage1": [],
+     "stage2": [
+      "out"
+     ]
+    },
+    {
+     "path": "δt_limiter",
+     "stage1": [],
+     "stage2": [
+      "out"
+     ]
+    },
+    {
+     "path": "δe_limiter",
+     "stage1": [],
+     "stage2": [
+      "out"
+     ]
+    }
+   ]
+  }
+ }
+}

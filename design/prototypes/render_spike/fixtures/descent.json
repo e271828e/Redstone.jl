@@ -1,0 +1,474 @@
+{
+ "format_version": {
+  "major": 1,
+  "minor": 0
+ },
+ "redstone_version": "0.3.1",
+ "kind": "build",
+ "build": {
+  "structure": {
+   "nodes": [
+    {
+     "path": "",
+     "class": "assembly",
+     "type": "Redstone.Blocks.Group",
+     "signature": "Redstone.Blocks.Group{@NamedTuple{plant, gear, stop}, …}",
+     "inputs": [
+      {
+       "name": "δe"
+      },
+      {
+       "name": "δt"
+      }
+     ],
+     "outputs": [],
+     "wires": [
+      {
+       "from": {
+        "path": "plant",
+        "port": "h"
+       },
+       "to": {
+        "path": "gear",
+        "port": "h"
+       }
+      },
+      {
+       "from": {
+        "path": "gear",
+        "port": "contact"
+       },
+       "to": {
+        "path": "stop",
+        "port": "request"
+       }
+      },
+      {
+       "from": {
+        "path": "",
+        "port": "δe"
+       },
+       "to": {
+        "path": "plant",
+        "port": "δe"
+       }
+      },
+      {
+       "from": {
+        "path": "",
+        "port": "δt"
+       },
+       "to": {
+        "path": "plant",
+        "port": "δt"
+       }
+      }
+     ],
+     "parameters": [
+      {
+       "name": "local_wires",
+       "value": "(\"plant/h\" => \"gear/h\", \"gear/contact\" => \"stop/request\")"
+      },
+      {
+       "name": "input_wires",
+       "value": "(\"δe\" => \"plant/δe\", \"δt\" => \"plant/δt\")"
+      },
+      {
+       "name": "output_wires",
+       "value": "()"
+      },
+      {
+       "name": "sample_times",
+       "value": "(;)"
+      }
+     ]
+    },
+    {
+     "path": "plant",
+     "field": "children",
+     "key": "plant",
+     "class": "leaf",
+     "tier": "continuous",
+     "timing": {
+      "anchor": 0,
+      "m": 1,
+      "c": 0
+     },
+     "type": "RedstoneExamples.Longitudinal",
+     "signature": "RedstoneExamples.Longitudinal",
+     "inputs": [
+      {
+       "name": "δe",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "δt",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      }
+     ],
+     "outputs": [
+      {
+       "name": "V",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "γ",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "θ",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "q",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "h",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      },
+      {
+       "name": "α",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      }
+     ],
+     "parameters": [
+      {
+       "name": "m",
+       "value": "1000.0"
+      },
+      {
+       "name": "S",
+       "value": "16.0"
+      },
+      {
+       "name": "c̄",
+       "value": "1.5"
+      },
+      {
+       "name": "Iyy",
+       "value": "1800.0"
+      },
+      {
+       "name": "T_max",
+       "value": "2500.0"
+      },
+      {
+       "name": "ρ",
+       "value": "1.225"
+      },
+      {
+       "name": "CL0",
+       "value": "0.3"
+      },
+      {
+       "name": "CLα",
+       "value": "5.0"
+      },
+      {
+       "name": "CD0",
+       "value": "0.03"
+      },
+      {
+       "name": "k",
+       "value": "0.05"
+      },
+      {
+       "name": "Cm0",
+       "value": "0.05"
+      },
+      {
+       "name": "Cmα",
+       "value": "-1.0"
+      },
+      {
+       "name": "Cmq",
+       "value": "-12.0"
+      },
+      {
+       "name": "Cmδe",
+       "value": "-1.2"
+      }
+     ]
+    },
+    {
+     "path": "gear",
+     "field": "children",
+     "key": "gear",
+     "class": "leaf",
+     "tier": "continuous",
+     "timing": {
+      "anchor": 0,
+      "m": 1,
+      "c": 0
+     },
+     "type": "RedstoneExamples.GroundContact",
+     "signature": "RedstoneExamples.GroundContact",
+     "inputs": [
+      {
+       "name": "h",
+       "type": "Float64",
+       "kind": {
+        "kind": "float"
+       },
+       "pinned": false
+      }
+     ],
+     "outputs": [
+      {
+       "name": "contact",
+       "type": "Bool",
+       "kind": {
+        "kind": "boolean"
+       },
+       "pinned": false
+      }
+     ],
+     "parameters": [
+      {
+       "name": "h_ground",
+       "value": "0.0"
+      }
+     ]
+    },
+    {
+     "path": "stop",
+     "field": "children",
+     "key": "stop",
+     "class": "leaf",
+     "tier": "continuous",
+     "timing": {
+      "anchor": 0,
+      "m": 1,
+      "c": 0
+     },
+     "type": "Redstone.Blocks.StopRequest",
+     "signature": "Redstone.Blocks.StopRequest",
+     "inputs": [
+      {
+       "name": "request",
+       "type": "Bool",
+       "kind": {
+        "kind": "boolean"
+       },
+       "pinned": false
+      }
+     ],
+     "outputs": [
+      {
+       "name": "flag",
+       "type": "Redstone.StopFlag",
+       "kind": {
+        "kind": "enum",
+        "values": [
+         "NO_STOP",
+         "STOP_REQUESTED"
+        ]
+       },
+       "pinned": false
+      }
+     ],
+     "parameters": [
+      {
+       "name": "reason",
+       "value": "\"touchdown\""
+      }
+     ]
+    }
+   ],
+   "root_inputs": [
+    {
+     "name": "δe",
+     "type": "Float64",
+     "kind": {
+      "kind": "float"
+     },
+     "pinned": false
+    },
+    {
+     "name": "δt",
+     "type": "Float64",
+     "kind": {
+      "kind": "float"
+     },
+     "pinned": false
+    }
+   ],
+   "anchors": [],
+   "scopes": [],
+   "types": [
+    {
+     "name": "Redstone.Blocks.Group",
+     "docstring": "    Group(children; local_wires, input_wires, output_wires, sample_times)\n\nThe ad-hoc assembly.",
+     "locations": [
+      {
+       "function": "sample_times",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 1620
+      },
+      {
+       "function": "local_wires",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 1617
+      },
+      {
+       "function": "input_wires",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 1618
+      },
+      {
+       "function": "output_wires",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 1619
+      },
+      {
+       "function": "transparent_container",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 1621
+      }
+     ]
+    },
+    {
+     "name": "RedstoneExamples.Longitudinal",
+     "docstring": "A rigid aircraft in its plane of symmetry, with three degrees of freedom.",
+     "locations": [
+      {
+       "function": "u_types",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/examples/src/longitudinal.jl",
+       "line": 45
+      },
+      {
+       "function": "y_types",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/examples/src/longitudinal.jl",
+       "line": 46
+      },
+      {
+       "function": "x_init",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/examples/src/longitudinal.jl",
+       "line": 44
+      }
+     ]
+    },
+    {
+     "name": "RedstoneExamples.GroundContact",
+     "docstring": "The ground under the aircraft.",
+     "locations": [
+      {
+       "function": "u_types",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/examples/src/longitudinal.jl",
+       "line": 92
+      },
+      {
+       "function": "y_types",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/examples/src/longitudinal.jl",
+       "line": 93
+      },
+      {
+       "function": "x_init",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/examples/src/longitudinal.jl",
+       "line": 90
+      },
+      {
+       "function": "m_init",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/examples/src/longitudinal.jl",
+       "line": 91
+      }
+     ]
+    },
+    {
+     "name": "Redstone.Blocks.StopRequest",
+     "docstring": "    StopRequest(; reason = \"\")\n\nRequests a stop when `request` holds.",
+     "locations": [
+      {
+       "function": "u_types",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 193
+      },
+      {
+       "function": "y_types",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 194
+      },
+      {
+       "function": "x_init",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 192
+      },
+      {
+       "function": "stop_reason",
+       "file": "/Users/miguel/.julia/dev/Redstone.jl/src/blocks.jl",
+       "line": 196
+      }
+     ]
+    }
+   ]
+  },
+  "outputs": {
+   "order": [
+    "plant",
+    "gear",
+    "stop"
+   ],
+   "components": [
+    {
+     "path": "plant",
+     "stage1": [
+      "V",
+      "γ",
+      "θ",
+      "q",
+      "h",
+      "α"
+     ],
+     "stage2": []
+    },
+    {
+     "path": "gear",
+     "stage1": [
+      "contact"
+     ],
+     "stage2": []
+    },
+    {
+     "path": "stop",
+     "stage1": [],
+     "stage2": [
+      "flag"
+     ]
+    }
+   ]
+  }
+ }
+}

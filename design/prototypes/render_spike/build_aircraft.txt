@@ -1,0 +1,17 @@
+Build: 1 component (1 continuous, 0 discrete); activations: Float64; no warnings
+  Structure: 1 component, no anchors, no rate scopes; root inputs: δe, δt
+    components:
+      path   tier        anchor  m  c  rates
+      plant  continuous  A₀      1  0  —
+    anchors:
+      anchor  T        τ     scope  key
+      A₀      Δt_base  0//1  —      —
+    input routes:
+      δe → plant/δe
+      δt → plant/δt
+  Outputs: execution order over 1 component
+    component  stage 1           stage 2
+    plant      V, γ, θ, q, h, α  —
+  feedthrough: none
+  Events: no events over 1 component
+  warnings: none

@@ -1,0 +1,23 @@
+Build: 3 components (3 continuous, 0 discrete); activations: Float64; no warnings
+  Structure: 3 components, no anchors, no rate scopes; root inputs: δe, δt
+    components:
+      path   tier        anchor  m  c  rates
+      plant  continuous  A₀      1  0  —
+      gear   continuous  A₀      1  0  —
+      stop   continuous  A₀      1  0  —
+    anchors:
+      anchor  T        τ     scope  key
+      A₀      Δt_base  0//1  —      —
+    input routes:
+      δe → plant/δe
+      δt → plant/δt
+  Outputs: execution order over 3 components
+    component  stage 1           stage 2
+    plant      V, γ, θ, q, h, α  —
+    gear       contact           —
+    stop       —                 flag
+  feedthrough: none
+  Events: 1 event over 3 components
+    component  events                  bundle
+    gear       touchdown => localized  (m, u, y, t)
+  warnings: none
