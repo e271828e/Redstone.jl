@@ -155,7 +155,7 @@
       "additionalProperties": false
     },
     "KindMarker": {
-      "description": "What a face's type is, for a client with no Julia: the first row of §13.9's table that matches the declared type. `struct` is a value the leaf walk opens, an isbits struct or NamedTuple, with its field names; a handle, a function, a string, an abstract or Any declaration is opaque.",
+      "description": "What a face's type is, for a client with no Julia: the first row of §13.9's table that matches the declared type. `struct` is a value the leaf walk opens, an isbits struct, NamedTuple or tuple, with its field names (a tuple's are its positions); a handle, a function, a string, a static array of free size, an abstract or Any declaration is opaque.",
       "oneOf": [
         {
           "type": "object",
