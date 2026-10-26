@@ -133,11 +133,20 @@ struct ScopeEntry
     Φ::Int
 end
 
+# Design: §9.2, §10.5, D-254, D-261. The per-component `(D, Φ, Δt)` the
+# executor compiles over are derived from the rows at `compile`, never stored
+# beside them (D-261).
 """
-The typed schedule (§9.2, §10.5, D-254): one row per discrete component in walk
-order, and the rate-scope rows. The single source of truth for `Δt` (§10.5). The
-per-component `(D, Φ, Δt)` the executor compiles over are derived from the rows
-at `compile`, never stored beside them (D-261).
+    Schedule
+
+The deployment's tick table: one row per discrete component, in walk order,
+and one per rate scope (an assembly whose `sample_times` opened a rate of its
+own).
+
+A component row holds the component's path, the anchor it resolved against,
+its tick divisor `D` and phase `Φ` in base ticks, and its period `Δt` in
+seconds. [`Deployment`](@ref) builds the schedule and carries it, and every
+`Δt` a run uses is read from it.
 """
 struct Schedule
     rows::Vector{ScheduleEntry}
@@ -278,44 +287,55 @@ end
 
 # --- the artifact (§9.1, §9.2, D-254) -------------------------------------------
 
+# Design: §9.1, §9.2, §10.2, §10.4, §10.6, §12.7, D-227, D-254.
+# `Δt_base` has exactly one of three cross-validated sources (§9.1): explicit,
+# the `N_base·h` product, or GCD derivation over the anchors' constraint pool.
+# `h` is required because a domain rate is not a framework default. The
+# algorithm and the three event parameters are trajectory-determining and
+# grid-independent: validated here beside `h` and `N_base`, they enter none of
+# the grid arithmetic (§10.2, D-227). The defaults: a legitimate re-enable is
+# one or two firings deep and a toggling FSM pair chatters without bound, so 4
+# separates them; the event time is only as accurate as the O(h⁴) interpolant,
+# so a tolerance tighter than 1e-6 buys nothing while each trial evaluation
+# costs a full sweep; a multi-event frame needs three or four localizations and
+# chattering needs tens, so 8.
 """
-    Deployment(build::Build; h, N_base = nothing, Δt_base = nothing, algorithm = RK4,
+    Deployment(build; h, N_base = nothing, Δt_base = nothing, algorithm = RK4,
                firing_budget = 4, localization_tol = 1e-6, localization_budget = 8)
 
-The artifact the grid parameters fix (§9.1, §9.2, D-254): the build plus the
-grid parameters, the algorithm and the three event parameters, scalar-free,
-carrying the `Schedule` the constructor built, the grid attribution of §9.2 and
-its own `warnings`.
-A `Model` materializes it at a scalar type, and one deployment backs many
-(§9.2). Two deployments compare as values, which is what replay's header check
-reads (§12.7).
+The build fixed to a grid: the continuous step, the base tick and the event
+parameters, with no scalar type chosen yet.
 
-`Δt_base` has exactly one of three cross-validated sources (§9.1): explicit (a
-`Rational` or `Period`/`Hz` value), the `N_base·h` product (the default path),
-or GCD derivation over the anchors' constraint pool, requested as
-`Δt_base = :derive` and permitted only with every discrete component anchored.
-`h` is required — a domain rate is not a framework default.
+A deployment carries the build, the grid it settled, the schedule (the typed
+tick table, one row per discrete component) and the warnings its construction
+raised, read with [`warnings`](@ref). [`Model`](@ref) materializes it at a
+scalar type, and one deployment backs many models. Two deployments compare as
+values, which is what [`replay!`](@ref) checks before re-driving a recording.
 
-`algorithm` selects the integration backend across the stepper seam (§10.2): a
-stepper type — `RK4`, the default, or `Heun` — selected here and materialized
-against the flat buffer at `Model` construction (D-227). The algorithm is
-trajectory-determining and grid-independent, exactly like the keywords below;
-nothing outside the backend's own struct knows which one ran.
+# Keywords
 
-`firing_budget` is §10.6's: how many times each declared event may fire at one
-boundary, an integer ≥ 1 defaulting to 4 — a legitimate re-enable is one or two
-firings deep, a toggling FSM pair chatters without bound, and 4 separates them
-without ever binding on a healthy model.
+- `h`: the continuous step, in seconds. Required; a missing `h` is refused as
+  `DeploymentInvalid`.
+- `N_base`: steps per base tick. Defaults to `1` when `Δt_base` is absent, and
+  is derived from `Δt_base` otherwise.
+- `Δt_base`: the base tick period, as a `Rational`, a `Period` or an `Hz`
+  value. Defaults to `N_base * h`. `Δt_base = :derive` derives it from the
+  discrete components' sample times, and is allowed only when every discrete
+  component is anchored by an [`Absolute`](@ref) entry.
+- `algorithm`: the stepper, `RK4` or `Heun`. It is bound to the state buffer
+  when the `Model` is built.
+- `firing_budget`: how many times one event may fire at one boundary, an
+  integer of at least 1. Exhaustion warns `FiringBudget`.
+- `localization_tol`: the relative bracket width, as a fraction of `h`, at
+  which event localization stops. Positive.
+- `localization_budget`: how many event localizations one frame admits, an
+  integer of at least 1.
 
-`localization_tol` and `localization_budget` are §10.4's: the relative bracket
-width at which root-finding stops (positive, defaulting to 1e-6 — the event
-time can only ever be as accurate as the `O(h⁴)` interpolant, so anything
-tighter buys nothing while every trial evaluation costs a full sweep), and how
-many localizations one frame admits (an integer ≥ 1 defaulting to 8 — a
-legitimate multi-event frame needs three or four, chattering needs tens). All
-three are trajectory-determining and grid-independent: they stand beside `h`
-and `N_base`, validated here with their siblings, and enter none of the grid
-arithmetic.
+Every keyword outside its range is refused as `DeploymentInvalid`, all of them
+in one throw. A derived `Δt_base` finer than the fastest declared sample time
+warns `GridUtilization`.
+
+See also [`build`](@ref), [`Model`](@ref), [`Simulation`](@ref).
 """
 struct Deployment
     build::Build
@@ -396,11 +416,16 @@ Base.hash(deployment::Deployment, seed::UInt) =
             hash(deployment.algorithm, hash(deployment.Δt_base,
                 hash(deployment.N_base, hash(deployment.h, seed))))))))
 
+# Design: §9.2, D-250. The constructor produces an artifact, so its warnings
+# live on it; the log line each one got at return is presentation, never the
+# home.
 """
-    warnings(deployment::Deployment) → Vector{Diagnostic}
+    warnings(deployment) -> Vector
 
-The warnings the `Deployment` constructor raised (§9.2, D-250). The constructor
-produces an artifact, so its warnings live on it; the log line each one got at
-return is presentation, never the home.
+Return the warnings raised while the deployment was constructed.
+
+Each warning was also logged once when the constructor returned. The list on
+the deployment is where they stay, so a caller never has to capture the log.
+For a build's or a simulation's list, see the other methods of `warnings`.
 """
 warnings(deployment::Deployment) = deployment.warnings

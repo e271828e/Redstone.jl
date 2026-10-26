@@ -22,10 +22,13 @@ are examples of what a docstring must not contain.
 - **One template, the manual's.** Indented signature lines first, a blank
   line, a one-sentence summary, elaboration in short paragraphs, an optional
   `# Keywords` or `# Arguments` list, an optional `# Examples` block, and a
-  `See also` line of [`name`](@ref) links. Under the closing quotes and
-  before the definition, a `# Design:` comment carries the citations.
+  `See also` line of [`name`](@ref) links. Above the opening quotes, a
+  `# Design:` comment carries the citations. It cannot sit between the
+  closing quotes and the definition: Julia attaches a docstring only to the
+  expression that immediately follows it, and a comment there detaches it.
 
 ```julia
+# Design: §12.6, §13.5.
 """
     closed(run) -> Bool
 
@@ -34,7 +37,6 @@ Return `true` once the run has ended and its termination record is written.
 `closed` answers whether the run itself is over. For why it ended, see
 [`termination`](@ref).
 """
-# Design: §12.6, §13.5.
 closed(run::Run) = run.termination !== nothing
 ```
 
@@ -95,7 +97,7 @@ closed(run::Run) = run.termination !== nothing
 ## What moves and what stays
 
 - **Nothing is deleted.** Every sentence of the old docstring either stays,
-  rewritten for the reader, or moves under the `# Design:` comment.
+  rewritten for the reader, or moves into the `# Design:` comment.
 - **Every citation moves to the comment.** The comment's first line lists the
   sections and entries the docstring cited. Maintainer prose with content of
   its own, such as which policy an advance declares and where it lives

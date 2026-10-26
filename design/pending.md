@@ -109,7 +109,7 @@ item changes what the spec says, the spec edit is part of the item.
   one-sentence summary, the elaboration in short paragraphs, `# Examples`
   where a doctest is cheap, and `[`name`](@ref)` cross-references, with no
   citation of the spec or the log. The citations move to a `# Design:`
-  comment under the docstring, where a diff review still sees them.
+  comment above the docstring, where a diff review still sees them.
   Unexported names keep their docstrings as they are. The style sheet
   `design/tools/docstring_style.md` fixes the convention; the rewrite runs
   one source file per agent with a cold review after. It follows the audit
@@ -131,10 +131,10 @@ item changes what the spec says, the spec edit is part of the item.
   a panel description, with the GUI package's half of D-270's convention
   assigned to the client, and a ruling on §11.7's "assembly panels compose
   children by path", a constraint on that half with no entry (stage 4).
-- **The user guide and the API reference.** The reference is a Documenter
-  build over the API docstrings, which is why the docstrings precede the
-  release and the build need not. The guide grows from the tutorial and the
-  companions.
+- **The user guide and the API reference.** The reference is the Documenter
+  build under `docs/`, deployed from master and already live over the
+  current docstrings, which is why the docstrings precede the release. The
+  guide grows from the tutorial and the companions.
 
 ## Unordered
 

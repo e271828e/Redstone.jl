@@ -13651,7 +13651,7 @@ the handler's `(; x, m)` under the return law ([§5.2][s5-2], [§7.1][s7-1],
 
 #### Deployment and the model
 
-- `Deployment(build; h, N_base, Δt_base = nothing, algorithm = RK4,
+- `Deployment(build; h, N_base = nothing, Δt_base = nothing, algorithm = RK4,
   firing_budget = 4, localization_tol = 1e-6, localization_budget = 8) →
   Deployment`. The [deployment](#g-deployment) (the scalar-free artifact the
   grid parameters fix), carrying the [`Schedule`](#g-schedule) (the typed
