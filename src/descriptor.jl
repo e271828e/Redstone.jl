@@ -123,9 +123,9 @@ function _leaf_faces(fn, @nospecialize(instance))
     NamedTuple[_leaf_face(name, P) for (name, P) in pairs(decl)]
 end
 
-function _leaf_face(name::Symbol, @nospecialize(entry::Type))
-    pinned = _is_marker(entry)
-    face_type = pinned ? entry.parameters[1] : entry
+function _leaf_face(name::Symbol, @nospecialize(declared::Type))
+    pinned = _is_marker(declared)
+    face_type = pinned ? declared.parameters[1] : declared
     (name = String(name), type = _type_string(face_type), kind = _kind_marker(face_type), pinned = pinned)
 end
 
@@ -152,10 +152,15 @@ function _kind_marker(@nospecialize(face_type::Type))
     fields === nothing ? (kind = "opaque",) : (kind = "struct", fields = fields)
 end
 
-# A static array's shape as integers, or `nothing` where a dimension is a free
+# A static array's shape as integers, read off its `StaticArray` supertype so a
+# `FieldVector` subtype answers too, or `nothing` where a dimension is a free
 # parameter, as in a bare `StaticVector` declaration.
 function _static_shape(@nospecialize(face_type::Type))
-    sizes = Base.unwrap_unionall(face_type).parameters[1]
+    array_type = Base.unwrap_unionall(face_type)
+    while array_type.name !== Base.typename(StaticArray)
+        array_type = supertype(array_type)
+    end
+    sizes = array_type.parameters[1]
     sizes isa DataType && all(n -> n isa Int, sizes.parameters) || return nothing
     collect(Int, sizes.parameters)
 end
@@ -176,7 +181,7 @@ _qualified_name(@nospecialize(component_type::Type)) =
 
 # A type printed in full, parameters included, as the REPL would print it. It is
 # display text: the stable identity is the qualified base name.
-_type_string(@nospecialize(component_type::Type)) = string(component_type)
+_type_string(@nospecialize(printed_type::Type)) = string(printed_type)
 
 # The inert fields of an instance (§8.5): those the walk classifies as neither a
 # component nor a container of components, as `repr` text cut at 80 characters.

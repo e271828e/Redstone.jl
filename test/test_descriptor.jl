@@ -31,7 +31,7 @@ kinds_model() =
              mat = Constant(SMatrix{2,2}(1.0, 2.0, 3.0, 4.0)), nt = Constant((a = 1.0, b = 2.0)),
              g = GearMode(), s = PhaseSelector(), p = PhaseReader(),
              stub = Constant(height_field(Terrain(h0 = 1.5))), dut = TerrainGain(),
-             fn = Constant(let k = 2.0; x -> k * x end), tup = TupleOut(1.0), free = FreeSizeIn());
+             fn = Constant(let k = 2.0; x -> k * x end), tup = TupleOut(1.0), free = FreeSizeIn(), pose = PoseOut());
           local_wires = ("s/phase" => "p/phase", "stub/out" => "dut/terrain", "v/out" => "free/v"),
           input_wires = ("dut.k" => "dut/k",))
 
@@ -137,6 +137,7 @@ function test_descriptor()
         @test marker("fn", "out") == (kind = "opaque",)         # a closure with a capture
         @test marker("tup", "out") == (kind = "struct", fields = ["1", "2"])
         @test face_of(node_at(body, "free"), :inputs, "v").kind == (kind = "opaque",)   # size left free
+        @test marker("pose", "pose") == (kind = "vector", shape = [3], element = (kind = "float",))   # a FieldVector
         @test face_of(node_at(body, "dut"), :inputs, "terrain").kind == (kind = "opaque",)
         # the pinned flag reads the declaration, and the type string is the leaf's
         @test face_of(node_at(body, "i"), :outputs, "out").pinned

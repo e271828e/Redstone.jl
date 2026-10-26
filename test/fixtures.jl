@@ -1732,13 +1732,10 @@ local_wires(::KeyedGains) = ("gains/a/out" => "gains/b/e", "gains/b/out" => "pai
 input_wires(::KeyedGains) = ("u" => "gains/a/e",)
 output_wires(::KeyedGains) = ("pair/1/out" => "y",)
 
-"""
-    LateDoc()
-
-A leaf whose constructor docstring is registered before the type's own, so
-the `types` row must pick the type's (D-433): the docsystem's `Union{}`
-entry, not the first in registration order.
-"""
+# `LateDoc()`: a leaf whose constructor docstring is registered before the
+# type's own, so the `types` row must pick the type's (D-433), the docsystem's
+# `Union{}` entry, not the first in registration order. A docstring here would
+# register the `Union{}` entry first and hide the case.
 struct LateDoc <: AbstractComponent end
 "The constructor's docstring, registered first."
 LateDoc(k::Real) = LateDoc()
@@ -1780,7 +1777,7 @@ y_direct(::FreeSizeIn, (; u)) = (n = float(length(u.v)),)
     GreekGains()
 
 `KeyedGains` with a non-ASCII container field, `ωs`, so a key is cut from its
-segment by the field's characters, not its bytes (D-433).
+segment by the field's characters, not its bytes.
 """
 struct GreekGains <: AbstractComponent
     ωs::NamedTuple{(:a,), Tuple{Gain}}
@@ -1790,10 +1787,33 @@ local_wires(::GreekGains) = ()
 input_wires(::GreekGains) = ("u" => "ωs/a/e",)
 output_wires(::GreekGains) = ("ωs/a/out" => "y",)
 
-const SUMMARY_CUT = 80
+const INTERPOLATED_WIDTH = 80
 
-"""Cut at $(SUMMARY_CUT) characters."""
+"""Cut at $(INTERPOLATED_WIDTH) characters."""
 struct Interpolated <: AbstractComponent end
 x_init(::Interpolated) = (;)
 y_types(::Interpolated) = (out = Float64,)
 y_state(::Interpolated, _) = (out = 0.0,)
+
+"""
+    Pose3
+
+A `FieldVector` pose, the usual way a StaticArrays user writes one: a static
+array by supertype, with no parameter of its own, whose kind marker reads its
+shape off that supertype (D-433).
+"""
+struct Pose3 <: FieldVector{3, Float64}
+    x::Float64
+    y::Float64
+    z::Float64
+end
+
+"""
+    PoseOut()
+
+A leaf emitting a `Pose3` port.
+"""
+struct PoseOut <: AbstractComponent end
+x_init(::PoseOut) = (;)
+y_types(::PoseOut) = (pose = Pose3,)
+y_state(::PoseOut, _) = (pose = Pose3(1.0, 2.0, 3.0),)
