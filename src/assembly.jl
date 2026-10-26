@@ -845,7 +845,7 @@ instance alone fixes, nothing in it depending on a scalar type, held as rows
 (D-261). One `ComponentEntry` per primitive in walk order, and one `Anchor` per
 `Absolute` entry, the exact `(T, τ)` with the declaring scope and key. Beside
 them each keyed scope's own timing and the root's input faces (the
-[root inputs](§11.3)) with the types the wire pass fixed. One `LevelEntry` per
+root inputs (§11.3)) with the types the wire pass fixed. One `LevelEntry` per
 assembly, in the walk's pre-order with the root first, holds its children and
 the wires it declares. The first row's instance is the root, which the service
 walk resolves against (§13.3); a primitive root's row has no children and no

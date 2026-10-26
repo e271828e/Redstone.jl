@@ -113,7 +113,13 @@ item changes what the spec says, the spec edit is part of the item.
   Unexported names keep their docstrings as they are. The style sheet
   `design/tools/docstring_style.md` fixes the convention; the rewrite runs
   one source file per agent with a cold review after. It follows the audit
-  because the audit decides the set.
+  because the audit decides the set. The reference page `docs/src/api.md`
+  lists B's names under B's headings, less the 24 that have no docstring of
+  their own as of 2026-10-26 and rejoin it when documented:
+  `AbstractComponent`, the stage family `y_state`/`y_direct`/`x_deriv`/
+  `s_update`, `Hz`, `frame_top!`/`settled!`, `port`, `AbstractBinding`,
+  `is_output`/`is_greedy`, `loop`/`shutdown!`/`unblock!`, the five `get_`
+  selectors and `taps`, and the three termination sources.
 - **The first release.** Registration in General, the tag, and the
   announcement, in that order. Registration is quiet and the announcement
   is the public moment, so the announcement waits for everything above.

@@ -1,0 +1,34 @@
+name: Documenter
+on:
+  push:
+    branches: [master]
+    tags: ['*']
+    paths-ignore: ['design/**']
+  pull_request:
+    paths-ignore: ['design/**']
+  workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+jobs:
+  docs:
+    name: Documenter - Julia 1.13 - ubuntu-latest
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:  # deploy to gh-pages, and let julia-actions/cache delete old caches
+      actions: write
+      contents: write
+      pull-requests: read
+      statuses: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: julia-actions/setup-julia@v3
+        with:
+          version: '1.13'
+      - uses: julia-actions/cache@v3
+      - name: Instantiate the docs environment
+        run: julia --project=docs -e 'using Pkg; Pkg.instantiate()'
+      - name: Build and deploy the docs
+        run: julia --project=docs docs/make.jl
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
