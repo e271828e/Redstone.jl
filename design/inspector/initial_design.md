@@ -20,8 +20,12 @@ the third session and it: the refactor itself (D-315), the structural stop
 requests (D-316), the `Model` split (D-317 to D-320) and the block library
 (D-311 to D-313). The split leaves the descriptor's sources as they were: a
 `Model` is a mutable materialization of a `Deployment`, not an artifact of
-its own. An earlier inspector proposal, deleted in commit 084d6f0, was left
-out of all four. The built-in
+its own. A fifth, on 2026-10-26, read the record against the 254 commits
+since the fourth, D-321 to D-431 among them: the artifacts, `show`, the
+carrier exception and every cited section stand as the record has them, no
+answer moved, and the facts worth carrying were added to the axes and the
+stages' lists, each marked with that date. An earlier inspector proposal,
+deleted in commit 084d6f0, was left out of all five. The built-in
 Julia GUI the second session designed was parked on 2026-10-05 (D-310).
 Its reasons are in that entry, and its record last stands at commit
 b6f08b1.
@@ -320,7 +324,11 @@ cited by number. Couplings are named where they exist.
    encoded. It also covers the JSON Schema, the minor and major bump rules,
    and a set of fixture descriptors. Three details to absorb: the requester
    roster, the anchor and component tables in rational form, and state
-   events among the derived facts. *Builds on* answers 4 to 7, 13, 16, 17
+   events among the derived facts. A fourth, added 2026-10-26: a face name
+   is any string without `/`, so it may hold `.` or `[`, and every reader
+   matches a name against the face list rather than parsing it (§8.6,
+   D-418); the schema treats names as opaque strings, and so must the
+   client when it composes a selector. *Builds on* answers 4 to 7, 13, 16, 17
    and 18. *Coupled to* axis 3, which says what the drawing needs, and to
    stage 2, which extends the schema.
 2. **Core integration.** The spec work answer 13 calls for: a section for
@@ -331,13 +339,18 @@ cited by number. Couplings are named where they exist.
    the `Structure` holds no face types except the root inputs'; a leaf's
    declared types live in the nominal activation's declaration tables,
    `build.activations[Float64].decls`, and `descriptor` reads them there.
+   The requester roster of D-316 lives beside them, in the same activation's
+   layout, not in the `Structure` (added 2026-10-26).
    *Builds on* answers 5, 6 and 13. *Coupled to* axis 1.
 3. **Visual grammar.** How each model concept is drawn. This covers blocks;
    faces as ports; an opened assembly's boundary faces inside the subsystem;
    fan-out; container children and name-transparent containers; root inputs;
    tier and rate colors, or rate scopes drawn as regions; wire styles and
    type labels; library icons; and the diagnostics overlay with loop wires
-   and dead hops. *Builds on* answers 6, 9 and 15. *Coupled to* axis 4.
+   and dead hops. One fact added 2026-10-26: a bulk-data handle enters a
+   model through a `Constant` and is an opaque leaf (D-344, D-364), so
+   answer 15's `Constant` icon shows the value only where the marker is not
+   opaque. *Builds on* answers 6, 9 and 15. *Coupled to* axis 4.
 4. **Layout and rendering.** ELK configuration: one level at a time, model
    order, port constraints, right-angle routing, and stability hints across
    pushes. It also covers the rendering spike, hand-rolled SVG against Svelte
@@ -359,7 +372,9 @@ cited by number. Couplings are named where they exist.
    builds the bundle, attaches it to the release, updates `Artifacts.toml`
    and publishes to GitHub Pages. It also covers the fixture pipeline against
    a pinned Redstone, front-end tests, the no-CDN rule and the privacy
-   statement. *Builds on* answers 10, 11 and 14.
+   statement. The fixture source is the examples package at `examples/` in
+   the core repo, with the longitudinal aircraft, so the pin covers it
+   (added 2026-10-26). *Builds on* answers 10, 11 and 14.
 
 **Working order.** Step zero, the `Structure` refactor, landed as
 increment 67 on 2026-10-08 (D-315): the artifact keeps the declared wiring
@@ -434,15 +449,34 @@ stage 1 built can follow a running simulation and, in stage 4, command it.
   tail accessor, with its torn-free guarantee against the loop's append and
   compaction (§11.2). Whether the compiled `Reader` of §14.4 is the right
   per-snapshot extractor, and what it costs to hold one per subscribed
-  path. The spec home is §11.2.
+  path. The spec home is §11.2. Added 2026-10-26: every reader now resolves
+  through one resolver, and `series(sim, read_set)` reads the log as typed
+  columns, a mask over `t` standing in for a window (D-406, D-407, D-414);
+  §14.4 names snapshot inspection and log extraction among the readers. A
+  subscription is then a read set resolved once at subscription time, the
+  inspection route D-409 keeps open, and the history message is the bridge's
+  form of `series`.
+- The index the value and history messages key on. §11.2 names a post-run
+  inspector among the holders that index a snapshot by its
+  published-boundary ordinal, reset per trajectory, and the log is bounded
+  by count with a doubling stride and kept endpoints (D-368, D-377). Added
+  2026-10-26.
 - Control from a device. §12.1 rules that the handle carries no pause, and
   the device must issue pause, resume, pace and margin from a client
   message. Either the handle gains the four verbs, a few lines since it
   holds the control block by reference, or the device holds the
   simulation, against the handle-only rule. Stop is already an operator
-  channel from a handle.
+  channel from a handle. Added 2026-10-26: `overlay!(sim, condition)`
+  writes a condition onto a stopped run and continues it (D-429), a fifth
+  verb on the simulation and not the handle, for the same question.
+- `inspect(sim)` called twice. Identity is the instance and a second
+  `attach!` is `AlreadyAttached` (D-375), so the sugar reads the roster
+  before attaching; while stopped, `attach!` only registers, and the task
+  appears at the next `run!` (D-389). Added 2026-10-26.
 - Several clients at once with disjoint claims (§11.6), and one client with
-  several tabs.
+  several tabs. D-370 makes several front ends with explicit disjoint claims
+  legal at the framework level; what remains is the bridge's own
+  multiplexing (added 2026-10-26).
 - Transport and security assumptions: `localhost` first, nothing else
   promised.
 - The protocol document's home and its versioning against the descriptor's.
@@ -472,9 +506,14 @@ the run appears on it.
   scope.
 - The status marks on the tree: orphaned inputs, dead device tasks, build
   and deployment warnings, diagnostic counters (§11.8). An orphan reads its
-  label from the incumbent's writer record, as §11.7 rules.
+  label from the incumbent's writer record, as §11.7 rules. A dead device
+  stays rostered to run end with its claims, an `init!` failure included
+  (D-374, D-396), and the heartbeat is advisory, never a kill trigger
+  (D-395). Added 2026-10-26.
 - The roster panel with liveness: each writer's heartbeat, task state and
-  claim.
+  claim. The published status carries, per writer, `recent`, `suppressed`,
+  `totals` and `heartbeat` (D-369); a device id is monotonic per
+  `Simulation` (D-375); liveness is run-scoped (D-389). Added 2026-10-26.
 - The run-control panel: pause, resume, stop, pace, margin; whether partial
   advance (§12.6) is exposed as a step control. It waits on stage 2's
   control question.
@@ -511,7 +550,8 @@ Panels over the bridge, so that the page commands the model it shows.
   generic panels share one look and one liveness handling.
 - **Plots read the log.** A plot walks the log's tail through stage 2's
   history message, at boundary-rate fidelity, and says so when the log is
-  off or the window is sparse. uPlot on a canvas is the candidate renderer.
+  off or the window is sparse. In process the same read is `series`
+  (D-407). uPlot on a canvas is the candidate renderer.
 - **Workspace.** A docking layout over the stage 1 page, the model tree as
   the navigator, and the fixed framework panels of stage 3. Authored panels
   are content inside a dock node the client owns.
