@@ -1,5 +1,6 @@
 # Redstone.jl
 
+[![Documentation](https://img.shields.io/badge/docs-dev-blue.svg)](https://e271828e.github.io/Redstone.jl/dev/)
 [![CI](https://github.com/e271828e/Redstone.jl/actions/workflows/CI.yml/badge.svg?branch=master)](https://github.com/e271828e/Redstone.jl/actions/workflows/CI.yml)
 [![Coverage](https://codecov.io/gh/e271828e/Redstone.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/e271828e/Redstone.jl)
 
