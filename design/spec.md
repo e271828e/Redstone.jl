@@ -11434,8 +11434,7 @@ what a face's type is) exists because a client cannot evaluate
 `Angle <: Real`, read `fieldnames(Pose)` or call `instances(FlightPhase)`,
 and printed type names are not stable keys. A `Pinned` entry unwraps to its
 leaf and sets the face's `pinned` flag. The marker is the first row that
-matches, tested in this order because `Bool` and every `Enum` are
-`Integer`s:
+matches, tested in this order because `Bool` is an `Integer`:
 
 | the declared type `T` | marker |
 |---|---|
