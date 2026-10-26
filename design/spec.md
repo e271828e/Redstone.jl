@@ -11454,7 +11454,12 @@ its first level; the function-valued signals and field handles of [§4.4][s4-4]
 are opaque by the row above it, the walk's own cut, a function type by
 exception even where the walk would open its captures ([D-433][d-433]). `String`,
 `Any` and an abstract declaration no row matches are opaque too, and an
-abstract declaration a row matches, `AbstractFloat`, takes that row.
+abstract declaration a row matches, `AbstractFloat`, takes that row. Three
+edges of the table ([D-433][d-433]): a tuple is a struct whose `fields` are its
+positions, `"1"`, `"2"`; a static array whose size is a free parameter and an
+abstract `Enum` are opaque, having no shape and no instances to carry; and a
+type's locations include a declaration method it inherits from an abstract
+supertype, the method that applies.
 
 **A type is described once, by its qualified base name, and an instance by
 a parameter summary** ([D-432][d-432]). The name joins the type's parent module,

@@ -17340,6 +17340,15 @@ true; a third face shape for one dead field was not worth its definition.
 The docstring on the type is the one that says what the component is; a
 constructor's docstring documents a call.
 
+Annotation (2026-10-26): increment 81's review met three edges the bullets
+do not spell, read the same way: a tuple is a struct whose `fields` are its
+positions, `"1"`, `"2"`, since the leaf walk opens tuples as it opens structs;
+a static array whose size is a free parameter, a bare `StaticVector`
+declaration, and an abstract `Enum` are opaque, having no shape and no
+instances to carry; and a type's locations include a declaration method it
+inherits from an abstract supertype, the method that applies and the one a
+reader opens ([§13.9][s13-9]).
+
 **Rejected.**
 - *The table read literally, a closure and an `Array` as `struct`:* captures
   and an array's buffer are implementation, no value a widget edits.
