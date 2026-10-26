@@ -1712,3 +1712,22 @@ struct PassthroughOverForgotten <: AbstractComponent
 end
 local_wires(::PassthroughOverForgotten) = ()
 input_wires(a::PassthroughOverForgotten) = input_passthrough(a, "kid")
+
+# --- the descriptor's coverage set (§13.9) ---------------------------------------
+
+"""
+    KeyedGains()
+
+Two gains in a keyed container field, `gains/a` and `gains/b`, and a third in
+a tuple container, `pair/1` (§8.5): the two container memberships the
+descriptor spells with `field` and `key` beside the name-transparent one a
+`Group` exercises (§13.9).
+"""
+struct KeyedGains <: AbstractComponent
+    gains::NamedTuple{(:a, :b), Tuple{Gain, Gain}}
+    pair::Tuple{Gain}
+end
+KeyedGains() = KeyedGains((a = Gain(2.0), b = Gain(3.0)), (Gain(4.0),))
+local_wires(::KeyedGains) = ("gains/a/out" => "gains/b/e", "gains/b/out" => "pair/1/e")
+input_wires(::KeyedGains) = ("u" => "gains/a/e",)
+output_wires(::KeyedGains) = ("pair/1/out" => "y",)

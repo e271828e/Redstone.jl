@@ -16,13 +16,16 @@ item changes what the spec says, the spec edit is part of the item.
   Its first session, the descriptor's schema and `descriptor` together, ran
   on 2026-10-26; the record is `design/inspector/descriptor_design.md`,
   whose "Design axes" lists what follows in order. The docs commit landed
-  (§13.9, D-432, the carrier field recorded in §13.2); next is the
-  increment (the schema file, `src/descriptor.jl`, its tests), beside
-  axis 4's rendering spike. The
-  built-in Julia GUI is parked (D-310). The stage's record is
-  `design/inspector/initial_design.md` (not normative), which carries each
-  stage's answered questions and open list. The later stages stand after
-  the release, below.
+  (§13.9, D-432, the carrier field recorded in §13.2), then the increment
+  (`schema/descriptor.json`, `src/descriptor.jl`, its tests) beside axis
+  4's rendering spike, whose record is
+  `design/prototypes/render_spike/report.md`: hand-rolled SVG over ELK.js,
+  with the schema findings it hands to the bumps. Next is axis 3, the
+  visual grammar, over the real schema, then axes 5 to 7 and the minor
+  bumps the record lists. The built-in Julia GUI is parked (D-310). The
+  stage's record is `design/inspector/initial_design.md` (not normative),
+  which carries each stage's answered questions and open list. The later
+  stages stand after the release, below.
 - **`closed_loop` as a hierarchy.** The example's closed loop is one flat
   `Group` of 27 library blocks and 55 wires, written so to show the library
   composing without a named assembly, and it draws as a tangle at any

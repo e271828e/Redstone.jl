@@ -45,8 +45,8 @@ user material inside the package, with no property of its own to own it.
 The package module: the dependencies and the include order the other files load
 in: leaves, diagnostics, declare, assembly, store, executor, build, tracer,
 readers, deployment, dataplane, checkpoint, trace, roster, bindings, control,
-devices, conditions, model, stepper, frame, trim, linearize, sim, show, blocks,
-precompile.
+devices, conditions, model, stepper, frame, trim, linearize, sim, show,
+descriptor, blocks, precompile.
 The model layer sits between the executor layer and the runtime, by the rule
 in the `src/model.jl` entry.
 
@@ -398,6 +398,29 @@ D-179, D-185, D-195, D-211, D-246, D-248, D-263, D-289, D-316.
 
 Spec: §9.2, §10.5, §12.7, Appendix B, Appendix C, D-187, D-227, D-229,
 D-250, D-254, D-256, D-261.
+
+### `src/descriptor.jl`
+
+- `descriptor` on a `Build` and on a `Deployment`, the artifact rendered to
+  data under the format `schema/descriptor.json` fixes (§13.9, D-432): the
+  envelope `_envelope` with `DESCRIPTOR_FORMAT`, the build body's two
+  sections `_structure_section` and `_outputs_section`, and the deployment
+  body embedding the build's.
+- The node walk `_nodes`, a pre-order over the level rows' children with the
+  leaves read off `components`, and the node's `field` and `key` from
+  `membership` on the `Child`.
+- The leaf faces `_leaf_faces`, read off the declarations as written with a
+  `Pinned` entry unwrapped and flagged, and the kind marker `_kind_marker`,
+  §13.9's table in test order, its `struct` row the leaf walk's isbits cut
+  (D-433).
+- The instance context: `_qualified_name`, `_type_string`, the parameter
+  summary `_parameters` cut at 80 characters, the `types` rows `_type_rows`
+  with `_docstring` off the docsystem's meta and `_locations` over
+  `LOCATED_DECLARATIONS`.
+- Nothing here encodes text. `test_descriptor.jl` holds the round trip, with
+  JSON and JSONSchema as the suite's dependencies alone.
+
+Spec: §8.5, §9.1, §9.2, §13.9, D-211, D-237, D-418, D-432, D-433.
 
 ### `src/devices.jl`
 
@@ -1294,6 +1317,7 @@ override:
 | a new `AbstractComponent` fixture in any test file | add `build`, since `test_build.jl`'s Dual-activation sweep pins the skipped count |
 | `blocks` | `blocks build` |
 | `show` | `show` |
+| `descriptor`, or `schema/descriptor.json` | `descriptor` |
 | `precompile` | `precompile` |
 | `sim`, `model`, `deployment`, `store`, `leaves`, `Redstone`, or `diagnostics.jl` beyond a new kind | all of it |
 

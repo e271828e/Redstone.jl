@@ -38,6 +38,7 @@ include("test_diagnostics.jl")
 include("test_failures.jl")
 include("test_lifecycle.jl")
 include("test_show.jl")
+include("test_descriptor.jl")
 include("test_precompile.jl")
 
 """
@@ -84,6 +85,7 @@ function runall()
         live("failures",     test_failures)
         live("lifecycle",    test_lifecycle)
         live("show",         test_show)
+        live("descriptor",   test_descriptor)
         live("precompile",   test_precompile)
     end
 end
