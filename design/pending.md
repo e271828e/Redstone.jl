@@ -12,14 +12,17 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
-- **The inspector, stage 1**: the static inspector over the descriptor,
-  whose first session is the descriptor's schema and `descriptor` together,
-  at the tip of increment 67's `Structure` refactor (the record's "Working
-  order"). The built-in Julia GUI is parked (D-310). The record is
-  `design/inspector/initial_design.md` (not normative), which carries
-  each stage's answered questions and open list. What the spec owes at this
-  stage, ruled when it is reached: `descriptor` and the carrier change. The
-  later stages stand after the release, below.
+- **The inspector, stage 1**: the static inspector over the descriptor.
+  Its first session, the descriptor's schema and `descriptor` together, ran
+  on 2026-10-26; the record is `design/inspector/descriptor_design.md`,
+  whose "Design axes" lists what follows in order: the docs commit (a last
+  section for chapter 13, one log entry, the carrier field in §13.2), then
+  the increment (the schema file, `src/descriptor.jl`, its tests), beside
+  axis 4's rendering spike. The
+  built-in Julia GUI is parked (D-310). The stage's record is
+  `design/inspector/initial_design.md` (not normative), which carries each
+  stage's answered questions and open list. The later stages stand after
+  the release, below.
 - **The tutorial and the README.** The tutorial takes a newcomer from a
   component to a run and a plot, one chapter per layer of the example
   model. The README keeps its quick start, shows three of the layers

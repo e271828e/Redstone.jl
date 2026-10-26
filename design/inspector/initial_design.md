@@ -338,8 +338,10 @@ cited by number. Couplings are named where they exist.
    and the truncation rule for parameter summaries. One fact to carry in:
    the `Structure` holds no face types except the root inputs'; a leaf's
    declared types live in the nominal activation's declaration tables,
-   `build.activations[Float64].decls`, and `descriptor` reads them there.
-   The requester roster of D-316 lives beside them, in the same activation's
+   `build.activations[Float64].decls`. Corrected 2026-10-26: `descriptor`
+   reads them off the instance through the tier reader at `Float64`
+   instead, so a failure descriptor has them too (`descriptor_design.md`,
+   answer 2). The requester roster of D-316 lives in the activation's
    layout, not in the `Structure` (added 2026-10-26).
    *Builds on* answers 5, 6 and 13. *Coupled to* axis 1.
 3. **Visual grammar.** How each model concept is drawn. This covers blocks;
@@ -388,7 +390,10 @@ with class and path, faces with type, tier and kind marker, wires, root
 inputs, the execution order with port classes, and the three pieces of
 instance context. The deployment overlay, the timing tables, state events
 and the failure descriptor follow as minor bumps, each its own short
-session. Axis 4's rendering spike runs beside the first session, on a
+session. That session ran on 2026-10-26 and its record is
+`descriptor_design.md`, which widens the scope in one place, carrying the
+`Structure`'s own timing rows in version one, and hands on the bumps in
+order. Axis 4's rendering spike runs beside the first session, on a
 hand-written fixture descriptor, so the drawing's needs reach the schema
 before version one is frozen and the canvas choice is made before anything
 depends on it. Then axes 3 and 5 over the real schema, axis 6 when there is
