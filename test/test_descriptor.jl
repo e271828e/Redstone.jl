@@ -31,14 +31,15 @@ kinds_model() =
              mat = Constant(SMatrix{2,2}(1.0, 2.0, 3.0, 4.0)), nt = Constant((a = 1.0, b = 2.0)),
              g = GearMode(), s = PhaseSelector(), p = PhaseReader(),
              stub = Constant(height_field(Terrain(h0 = 1.5))), dut = TerrainGain(),
-             fn = Constant(let k = 2.0; x -> k * x end));
-          local_wires = ("s/phase" => "p/phase", "stub/out" => "dut/terrain"),
+             fn = Constant(let k = 2.0; x -> k * x end), tup = TupleOut(1.0), free = FreeSizeIn());
+          local_wires = ("s/phase" => "p/phase", "stub/out" => "dut/terrain", "v/out" => "free/v"),
           input_wires = ("dut.k" => "dut/k",))
 
 function test_descriptor()
     @testset "every fixture's descriptor validates after the round trip and mirrors the artifacts (§13.9)" begin
         for model in (Plant(), fed(PinnedGain(), "e"), Vehicle(), FannedLoops(2), MultiRate(),
-                      routed_pair(), TerrainRig(), KeyedGains(), kinds_model())
+                      routed_pair(), TerrainRig(), KeyedGains(), GreekGains(), single(LateDoc()),
+                      kinds_model())
             built = build(model)
             value = descriptor(built)
             round_trip(value)
@@ -71,6 +72,8 @@ function test_descriptor()
             # the outputs section mirrors the `Outputs`
             @test value.build.outputs.order == [built.outputs.components[ci].path for ci in built.outputs.order]
             @test [row.path for row in value.build.outputs.components] == paths(built.structure)
+            @test [(row.stage1, row.stage2) for row in value.build.outputs.components] ==
+                  [(String.(row.stage1), String.(row.stage2)) for row in built.outputs.components]
             # the root inputs mirror the structure's, typed
             @test [face.name for face in value.build.structure.root_inputs] ==
                   String.(built.structure.root_inputs)
@@ -107,6 +110,8 @@ function test_descriptor()
         @test transparent.field == "children" && transparent.key == "pair"
         component_field = node_at(descriptor(build(Vehicle())).build, "loop")
         @test component_field.field == "loop" && !haskey(component_field, :key)
+        greek = node_at(descriptor(build(GreekGains())).build, "ωs/a")
+        @test greek.field == "ωs" && greek.key == "a"
         # an assembly's faces are names alone, in the level's order, and its
         # wires are the level's, producer to consumer with full paths
         @test root.inputs == [(name = "u",)] && root.outputs == [(name = "y",)]
@@ -130,6 +135,8 @@ function test_descriptor()
         @test marker("p", "armed") == (kind = "boolean",)
         @test marker("stub", "out") == (kind = "opaque",)       # a handle, not isbits
         @test marker("fn", "out") == (kind = "opaque",)         # a closure with a capture
+        @test marker("tup", "out") == (kind = "struct", fields = ["1", "2"])
+        @test face_of(node_at(body, "free"), :inputs, "v").kind == (kind = "opaque",)   # size left free
         @test face_of(node_at(body, "dut"), :inputs, "terrain").kind == (kind = "opaque",)
         # the pinned flag reads the declaration, and the type string is the leaf's
         @test face_of(node_at(body, "i"), :outputs, "out").pinned
@@ -170,6 +177,13 @@ function test_descriptor()
         undocumented = only(row for row in descriptor(build(single(GearStateSource()))).build.structure.types
                             if row.name == "Main.RedstoneTests.GearStateSource")
         @test !haskey(undocumented, :docstring)
+        # a type documented on a constructor first still reports its own docstring
+        late = only(row for row in descriptor(build(single(LateDoc()))).build.structure.types
+                    if row.name == "Main.RedstoneTests.LateDoc")
+        @test late.docstring == "The type's own docstring, registered second."
+        # an interpolated docstring joins its parts
+        @test only(row for row in descriptor(build(single(Interpolated()))).build.structure.types
+                   if row.name == "Main.RedstoneTests.Interpolated").docstring == "Cut at 80 characters."
         # the node's summary lists the inert fields alone, children left out
         @test node_at(body, "loop/plant").parameters ==
               [(name = "ω", value = "2.0"), (name = "ζ", value = "0.1"), (name = "q₀", value = "[0.0, 0.0]")]

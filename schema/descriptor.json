@@ -16,12 +16,12 @@
     {
       "properties": { "kind": { "const": "build" }, "build": true },
       "required": ["build"],
-      "not": { "required": ["deployment"] }
+      "not": { "properties": { "deployment": true }, "required": ["deployment"] }
     },
     {
       "properties": { "kind": { "const": "deployment" }, "deployment": true },
       "required": ["deployment"],
-      "not": { "required": ["build"] }
+      "not": { "properties": { "build": true }, "required": ["build"] }
     }
   ],
   "definitions": {

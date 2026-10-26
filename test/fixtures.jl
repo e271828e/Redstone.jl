@@ -1731,3 +1731,69 @@ KeyedGains() = KeyedGains((a = Gain(2.0), b = Gain(3.0)), (Gain(4.0),))
 local_wires(::KeyedGains) = ("gains/a/out" => "gains/b/e", "gains/b/out" => "pair/1/e")
 input_wires(::KeyedGains) = ("u" => "gains/a/e",)
 output_wires(::KeyedGains) = ("pair/1/out" => "y",)
+
+"""
+    LateDoc()
+
+A leaf whose constructor docstring is registered before the type's own, so
+the `types` row must pick the type's (D-433): the docsystem's `Union{}`
+entry, not the first in registration order.
+"""
+struct LateDoc <: AbstractComponent end
+"The constructor's docstring, registered first."
+LateDoc(k::Real) = LateDoc()
+@doc "The type's own docstring, registered second." LateDoc
+x_init(::LateDoc) = (;)
+y_types(::LateDoc) = (out = Float64,)
+y_state(::LateDoc, _) = (out = 1.0,)
+
+"""
+    TupleOut(k)
+
+A leaf emitting a tuple port, `Tuple{Float64, Float64}`, whose kind marker is
+a `struct` with the positions `"1"` and `"2"` as its fields (D-433). It takes
+an argument to stay out of the `Dual` sweep: the activation rebuilds a tuple
+leaf group through its type's constructor, which a `Tuple` type has not, so a
+tuple port builds at nominal alone today.
+"""
+struct TupleOut <: AbstractComponent
+    k::Float64
+end
+x_init(::TupleOut) = (;)
+y_types(::TupleOut) = (out = Tuple{Float64, Float64},)
+y_state(tuple_out::TupleOut, _) = (out = (tuple_out.k, 2.0),)
+
+"""
+    FreeSizeIn()
+
+A leaf declaring a bare `StaticVector` input, its size a free parameter, which
+a producer of any length satisfies (§8.2) and whose kind marker is opaque
+(D-433).
+"""
+struct FreeSizeIn <: AbstractComponent end
+x_init(::FreeSizeIn) = (;)
+u_types(::FreeSizeIn) = (v = StaticVector,)
+y_types(::FreeSizeIn) = (n = Float64,)
+y_direct(::FreeSizeIn, (; u)) = (n = float(length(u.v)),)
+
+"""
+    GreekGains()
+
+`KeyedGains` with a non-ASCII container field, `ωs`, so a key is cut from its
+segment by the field's characters, not its bytes (D-433).
+"""
+struct GreekGains <: AbstractComponent
+    ωs::NamedTuple{(:a,), Tuple{Gain}}
+end
+GreekGains() = GreekGains((a = Gain(2.0),))
+local_wires(::GreekGains) = ()
+input_wires(::GreekGains) = ("u" => "ωs/a/e",)
+output_wires(::GreekGains) = ("ωs/a/out" => "y",)
+
+const SUMMARY_CUT = 80
+
+"""Cut at $(SUMMARY_CUT) characters."""
+struct Interpolated <: AbstractComponent end
+x_init(::Interpolated) = (;)
+y_types(::Interpolated) = (out = Float64,)
+y_state(::Interpolated, _) = (out = 0.0,)

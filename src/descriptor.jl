@@ -40,7 +40,7 @@ _build_body(build::Build) =
 # --- the structure section ------------------------------------------------------
 
 function _structure_section(structure::Structure)
-    nodes, instances = _nodes(structure)
+    nodes, node_instances = _nodes(structure)
     (nodes = nodes,
      root_inputs = [_leaf_face(face, T) for (face, T) in zip(structure.root_inputs, structure.root_types)],
      anchors = [(T = _rational(anchor.T), tau = _rational(anchor.τ),
@@ -48,7 +48,7 @@ function _structure_section(structure::Structure)
                 for anchor in structure.anchors],
      scopes = [(path = scope.path, key = String(scope.key), timing = scope.timing)
                for scope in structure.scopes],
-     types = _type_rows(instances))
+     types = _type_rows(node_instances))
 end
 
 _rational(x::Rational{Int}) = (num = numerator(x), den = denominator(x))
@@ -59,25 +59,25 @@ _rational(x::Rational{Int}) = (num = numerator(x), den = denominator(x))
 function _nodes(structure::Structure)
     levels = Dict(level.path => level for level in structure.levels)
     leaves = Dict(entry.path => entry for entry in structure.components)
-    nodes, instances = NamedTuple[], Any[]
-    _push_nodes!(nodes, instances, levels, leaves, "", (path = "",))
-    nodes, instances
+    nodes, node_instances = NamedTuple[], Any[]
+    _push_nodes!(nodes, node_instances, levels, leaves, "", (path = "",))
+    nodes, node_instances
 end
 
-function _push_nodes!(nodes::Vector{NamedTuple}, instances::Vector{Any},
+function _push_nodes!(nodes::Vector{NamedTuple}, node_instances::Vector{Any},
                       levels::Dict{String,LevelEntry}, leaves::Dict{String,ComponentEntry},
                       path::String, identity::NamedTuple)
     if haskey(leaves, path)
         push!(nodes, _leaf_node(identity, leaves[path]))
-        push!(instances, leaves[path].instance)
+        push!(node_instances, leaves[path].instance)
         return
     end
     level = levels[path]
     push!(nodes, _assembly_node(identity, level))
-    push!(instances, level.instance)
+    push!(node_instances, level.instance)
     for child in level.children
         child_path = isempty(path) ? child.segment : path * "/" * child.segment
-        _push_nodes!(nodes, instances, levels, leaves, child_path, _identity(child_path, child))
+        _push_nodes!(nodes, node_instances, levels, leaves, child_path, _identity(child_path, child))
     end
 end
 
@@ -85,9 +85,9 @@ end
 # key beside it for a container element (§8.5, D-211).
 function _identity(path::String, child::Child)
     field = String(child.field)
-    kind = membership(child)
-    kind === :field && return (path = path, field = field)
-    key = kind === :container ? child.segment[length(field)+2:end] : child.segment
+    joined = membership(child)
+    joined === :field && return (path = path, field = field)
+    key = joined === :container ? chopprefix(child.segment, field * "/") : child.segment
     (path = path, field = field, key = key)
 end
 
@@ -123,47 +123,60 @@ function _leaf_faces(fn, @nospecialize(instance))
     NamedTuple[_leaf_face(name, P) for (name, P) in pairs(decl)]
 end
 
-function _leaf_face(name::Symbol, @nospecialize(P::Type))
-    pinned = _is_marker(P)
-    T = pinned ? P.parameters[1] : P
-    (name = String(name), type = _type_string(T), kind = _kind_marker(T), pinned = pinned)
+function _leaf_face(name::Symbol, @nospecialize(entry::Type))
+    pinned = _is_marker(entry)
+    face_type = pinned ? entry.parameters[1] : entry
+    (name = String(name), type = _type_string(face_type), kind = _kind_marker(face_type), pinned = pinned)
 end
 
-# §13.9's table: the first row that matches, tested in order because `Bool` and
-# every `Enum` are `Integer`s. The `struct` row is a value the leaf walk opens,
-# an isbits value with fields; a handle the walk stores whole is opaque, and so
-# is a function type whatever its captures (D-237, D-433).
-function _kind_marker(@nospecialize(T::Type))
-    T <: Bool && return (kind = "boolean",)
-    T <: Enum && isconcretetype(T) &&
-        return (kind = "enum", values = [string(v) for v in instances(T)])
-    T <: Symbol && return (kind = "symbol",)
-    T <: Integer && return (kind = "integer",)
-    T <: AbstractFloat && return (kind = "float",)
-    T <: Real && return (kind = "number",)
-    T <: StaticArray && return (kind = "vector", shape = collect(Int, size(T)),
-                                element = _kind_marker(eltype(T)))
-    T <: Function && return (kind = "opaque",)
-    fields = _struct_fields(T)
+# §13.9's table: the first row that matches, tested in order because `Bool` is
+# an `Integer`. The `struct` row is a value the leaf walk opens, an isbits value
+# with fields, a tuple's fields its positions; a handle the walk stores whole is
+# opaque, and so is a function type whatever its captures, and a static array
+# whose size is left free (D-237, D-433).
+function _kind_marker(@nospecialize(face_type::Type))
+    face_type <: Bool && return (kind = "boolean",)
+    face_type <: Enum && isconcretetype(face_type) &&
+        return (kind = "enum", values = [string(v) for v in instances(face_type)])
+    face_type <: Symbol && return (kind = "symbol",)
+    face_type <: Integer && return (kind = "integer",)
+    face_type <: AbstractFloat && return (kind = "float",)
+    face_type <: Real && return (kind = "number",)
+    if face_type <: StaticArray
+        shape = _static_shape(face_type)
+        shape === nothing && return (kind = "opaque",)
+        return (kind = "vector", shape = shape, element = _kind_marker(eltype(face_type)))
+    end
+    face_type <: Function && return (kind = "opaque",)
+    fields = _struct_fields(face_type)
     fields === nothing ? (kind = "opaque",) : (kind = "struct", fields = fields)
 end
 
-# The field names of an isbits `NamedTuple` or struct with fields, what the leaf
-# walk opens; `nothing` for anything else, a handle or an abstract type included.
-function _struct_fields(@nospecialize(T::Type))
-    T isa DataType && isbitstype(T) && fieldcount(T) > 0 || return nothing
-    [String(name) for name in fieldnames(T)]
+# A static array's shape as integers, or `nothing` where a dimension is a free
+# parameter, as in a bare `StaticVector` declaration.
+function _static_shape(@nospecialize(face_type::Type))
+    sizes = Base.unwrap_unionall(face_type).parameters[1]
+    sizes isa DataType && all(n -> n isa Int, sizes.parameters) || return nothing
+    collect(Int, sizes.parameters)
+end
+
+# The field names of an isbits `NamedTuple`, tuple or struct with fields, what
+# the leaf walk opens; `nothing` for anything else, a handle or an abstract type
+# included.
+function _struct_fields(@nospecialize(face_type::Type))
+    face_type isa DataType && isbitstype(face_type) && fieldcount(face_type) > 0 || return nothing
+    [string(name) for name in fieldnames(face_type)]
 end
 
 # --- type identity and the instance context -------------------------------------
 
 # The qualified base name (§13.9): the type's module and its unparameterized name.
-_qualified_name(@nospecialize(T::Type)) =
-    string(parentmodule(T), ".", nameof(T))
+_qualified_name(@nospecialize(component_type::Type)) =
+    string(parentmodule(component_type), ".", nameof(component_type))
 
 # A type printed in full, parameters included, as the REPL would print it. It is
 # display text: the stable identity is the qualified base name.
-_type_string(@nospecialize(T::Type)) = string(T)
+_type_string(@nospecialize(component_type::Type)) = string(component_type)
 
 # The inert fields of an instance (§8.5): those the walk classifies as neither a
 # component nor a container of components, as `repr` text cut at 80 characters.
@@ -181,15 +194,15 @@ function _parameters(@nospecialize(instance))
 end
 
 # One row per qualified base name, in first-appearance order over the nodes.
-function _type_rows(instances::Vector{Any})
+function _type_rows(node_instances::Vector{Any})
     rows = NamedTuple[]
     seen = Set{String}()
-    for instance in instances
-        T = typeof(instance)
-        name = _qualified_name(T)
+    for instance in node_instances
+        component_type = typeof(instance)
+        name = _qualified_name(component_type)
         name in seen && continue
         push!(seen, name)
-        docstring = _docstring(T)
+        docstring = _docstring(component_type)
         row = (name = name,)
         docstring === nothing || (row = merge(row, (docstring = docstring,)))
         push!(rows, merge(row, (locations = _locations(instance),)))
@@ -198,14 +211,14 @@ function _type_rows(instances::Vector{Any})
 end
 
 # The type's docstring as its Markdown source, `nothing` when it has none.
-function _docstring(@nospecialize(T::Type))
-    binding = Base.Docs.Binding(parentmodule(T), nameof(T))
-    meta = Base.Docs.meta(parentmodule(T); autoinit = false)
+function _docstring(@nospecialize(component_type::Type))
+    doc_binding = Base.Docs.Binding(parentmodule(component_type), nameof(component_type))
+    meta = Base.Docs.meta(parentmodule(component_type); autoinit = false)
     meta === nothing && return nothing
-    haskey(meta, binding) || return nothing
-    multidoc = meta[binding]
+    haskey(meta, doc_binding) || return nothing
+    multidoc = meta[doc_binding]
     signature = haskey(multidoc.docs, Union{}) ? Union{} : first(multidoc.order)
-    join(String.(multidoc.docs[signature].text))
+    join(multidoc.docs[signature].text)    # an interpolated docstring holds the values among its parts
 end
 
 # The declaration methods the type defines, by the fixed order of

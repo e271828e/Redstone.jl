@@ -412,7 +412,7 @@ D-250, D-254, D-256, D-261.
 - The leaf faces `_leaf_faces`, read off the declarations as written with a
   `Pinned` entry unwrapped and flagged, and the kind marker `_kind_marker`,
   §13.9's table in test order, its `struct` row the leaf walk's isbits cut
-  (D-433).
+  and its `vector` row over `_static_shape` (D-433).
 - The instance context: `_qualified_name`, `_type_string`, the parameter
   summary `_parameters` cut at 80 characters, the `types` rows `_type_rows`
   with `_docstring` off the docsystem's meta and `_locations` over
@@ -1309,7 +1309,7 @@ override:
 
 | touched in `src/` | run |
 | --- | --- |
-| `declare`, `assembly`, `build`, `tracer`, or a new kind in `diagnostics.jl` | `declare assembly build diagnostics leaves show`; a change in `build.jl`'s `compile` half adds the next row |
+| `declare`, `assembly`, `build`, `tracer`, or a new kind in `diagnostics.jl` | `declare assembly build diagnostics leaves show descriptor`; a change in `build.jl`'s `compile` half adds the next row |
 | `executor`, `stepper`, `frame` | `executor stepper continuous discrete events localization failures` |
 | `dataplane`, `roster`, `bindings`, `control`, `devices`, `trace` | `dataplane roster bindings devices trace lifecycle log` |
 | `checkpoint` | the row above, plus `discrete events linearize` |
