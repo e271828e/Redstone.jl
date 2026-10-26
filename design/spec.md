@@ -91,6 +91,7 @@
     - [13.6 Abnormal shutdown: one tail, two entries](#136-abnormal-shutdown-one-tail-two-entries)
     - [13.7 Tooling consequences: face routes and the component library](#137-tooling-consequences-face-routes-and-the-component-library)
     - [13.8 Cycle diagnosis: feedthrough tracing](#138-cycle-diagnosis-feedthrough-tracing)
+    - [13.9 The descriptor: an artifact rendered to data](#139-the-descriptor-an-artifact-rendered-to-data)
   - [14. Stopped-sim services](#14-stopped-sim-services)
     - [14.1 Conditions are path-addressed overlays on the declared defaults](#141-conditions-are-path-addressed-overlays-on-the-declared-defaults)
     - [14.2 Fragment composition: locality without schema](#142-fragment-composition-locality-without-schema)
@@ -4536,7 +4537,9 @@ divisor is `D = m·D₁`, with `D₁ = T₁/Δt_base = (1//50)/(1//500) = 10`.
   from the structure's connections and the producers' stage-2 names
   ([D-261][d-261]).
 
-A REPL user gets each table by evaluating the value.
+A REPL user gets each table by evaluating the value. A client outside the
+process gets the same facts as data: `descriptor` renders a `Build` or a
+`Deployment` under a published format, beside `show` ([§13.9][s13-9], [D-432][d-432]).
 
 The chart's pattern repeats with period `lcm(Dᵢ)` base ticks, and the gate
 (`(tick − Φ) % D == 0`, [§9.7][s9-7]) is pure modulo arithmetic. So one
@@ -10000,7 +10003,9 @@ scoped by client; [§13.4][s13-4] how a runtime failure is caught, carried and r
 [§13.5][s13-5] the distinction between "the model reached a terminal state" and "the run
 should end"; [§13.6][s13-6] abnormal shutdown, one [tail](#g-tail) (the ordered shutdown sequence
 every stop takes) with two entries; [§13.7][s13-7] the tooling and component library that
-follow; and [§13.8][s13-8] the diagnosis of a rejected cycle. Two lessons FlightCore paid
+follow; [§13.8][s13-8] the diagnosis of a rejected cycle; and [§13.9][s13-9] the
+descriptor, the artifacts rendered to data for a client outside the
+process. Two lessons FlightCore paid
 for ground this chapter. The first is the compact-backtrace discipline, needed
 because parameterized model types make rendered output unreadable. The second is
 the `SimulationTermination` machinery, which [§13.5][s13-5] replaces.
@@ -10142,6 +10147,10 @@ struct DiagnosticError{P <: Union{Diagnostic, Vector{Diagnostic}}} <: Exception
     warnings::Vector{Diagnostic}   # the build's warnings so far, rendered with the throw
 end
 ```
+
+The carrier is to gain a `structure` field, the complete `Structure` when a
+throw leaves the nominal evaluation, recorded and unbuilt until the failure
+descriptor consumes it ([§13.9][s13-9], [D-432][d-432]).
 
 Two rendering rules are doctrine, not style ([D-058][d-058]).
 
@@ -11345,6 +11354,151 @@ the hop onto the path ([§8.6][s8-6], [§13.2][s13-2]).
 If a member's evaluation itself throws, the diagnostic ships with its members
 and wires alone, unclassified. Classification is a bonus on the cycle error,
 never its precondition ([D-012][d-012]).
+
+### 13.9 The descriptor: an artifact rendered to data
+
+A client outside the Julia process can neither evaluate `show`'s tables nor
+reach an artifact's fields. The browser inspector is the first such client,
+and the bridge that will serve a running simulation over a socket is the
+second. Both read the same thing, a [descriptor](#g-descriptor) (a serialized
+projection of a [`Build`](#g-build) (the deployment-free product of the build
+pipeline) or a [`Deployment`](#g-deployment) (the scalar-free artifact the
+grid parameters fix) under a published format). This section covers, in
+order, what the descriptor is beside `show`, the envelope and its
+versioning, what version one carries, the kind marker, the instance context,
+the value the core returns, the schema and its test, and the carrier field
+the failure descriptor will need. The design record is
+`design/inspector/descriptor_design.md`, which is not normative.
+
+**`descriptor` renders a `Build` or a `Deployment` to data under a
+published, versioned format**, beside `show`'s rendering to text ([D-432][d-432]).
+[§9.2][s9-2] rejects accessors over the artifacts because an accessor returns
+their internals for a program to navigate, which binds the fields the
+artifact rule keeps free ([D-257][d-257], [D-261][d-261]). The descriptor binds
+none of them. It is a projection under a contract of its own, and its
+stability is the format's, so the core reshapes the artifacts freely as long
+as the projection still conforms. The writer lives in the core, beside the
+artifacts, so the core's own suite catches a refactor that would break it.
+
+**Every descriptor is one object with a header and one body** ([D-432][d-432]). The
+header holds `format_version`, an object `{"major": 1, "minor": 0}`
+independent of Redstone's version; `redstone_version`, a string for
+information only; and `kind`, `"build"` or `"deployment"`, with `"failure"`
+reserved. The body sits under the key the kind names. A deployment body
+embeds the build body whole under `build`, so one definition of the build
+body serves both places and a file always opens on its own. **A minor bump
+only adds fields, and a major bump may break readers** ([D-432][d-432]). A reader
+ignores fields it does not know and refuses a major version it does not
+know.
+
+**Version one carries what a client needs to draw and explain the component
+tree, and no internals** ([D-432][d-432]). The build body has two sections, each the
+projection of one [artifact](#g-artifact) (an immutable pure function of its
+inputs):
+
+- `structure` projects the [`Structure`](#g-structure) (the structure step's
+  declared facts). `nodes` lists every [component](#g-component) (a leaf or
+  an assembly of components) in walk order, assemblies included, each keyed
+  by its path with its [class](#g-class) (assembly or leaf), the field that
+  contributed it and, for a container element, its key, its
+  [tier](#g-tier) (continuous or discrete) and timing when a leaf, its type's
+  qualified base name with the full printed type beside it, and its faces. A
+  leaf's [face](#g-face) (the name a port wears on its component's boundary)
+  carries its printed type, its kind marker and whether it is pinned; an
+  assembly's faces are names alone. An assembly node carries its level's
+  wires verbatim, producer to consumer in declaration order, each endpoint a
+  full path and a port, the level's own path on a boundary face and `""` for
+  a [root input](#g-root-input) (one of the root component's own input
+  faces). `root_inputs`, `anchors` and `scopes` project the remaining rows,
+  and a `types` table describes each type once.
+- `outputs` projects [`Outputs`](#g-outputs) (the execution order and each
+  port's stage): the order as paths, and per leaf its stage-1 and stage-2
+  port names.
+
+Nothing resolved is carried. The client resolves every face to its terminal
+producer once on load, the derivation `face_routes` performs
+([§13.7][s13-7]), and derives the feedthrough edges from the stage lists.
+Initial states, cell layouts and compiled forms stay out, so an
+implementation change is never a format change. Faces come from the
+declaration reader at `Float64`, which takes an instance and its tier, both
+in the `Structure`, so a failure after the structure step can still carry
+them. Port classes come from probing and live in `outputs` for that reason.
+
+**Each leaf face carries a kind marker computed in the core** ([D-432][d-432]). The
+[kind marker](#g-kind-marker) (a small object telling a client with no Julia
+what a face's type is) exists because a client cannot evaluate
+`Angle <: Real`, read `fieldnames(Pose)` or call `instances(FlightPhase)`,
+and printed type names are not stable keys. A `Pinned` entry unwraps to its
+leaf and sets the face's `pinned` flag. The marker is the first row that
+matches, tested in this order because `Bool` and every `Enum` are
+`Integer`s:
+
+| the declared type `T` | marker |
+|---|---|
+| `T <: Bool` | `{"kind": "boolean"}` |
+| `T <: Enum` | `{"kind": "enum", "values": […]}`, the instance names |
+| `T <: Symbol` | `{"kind": "symbol"}` |
+| `T <: Integer` | `{"kind": "integer"}` |
+| `T <: AbstractFloat` | `{"kind": "float"}` |
+| `T <: Real` | `{"kind": "number"}` |
+| `T <: StaticArray` | `{"kind": "vector", "shape": […], "element": …}`, the element's marker recursing |
+| a `NamedTuple` or a concrete struct with fields | `{"kind": "struct", "fields": […]}`, the field names |
+| anything else | `{"kind": "opaque"}` |
+
+The function-valued signals and field handles of [§4.4][s4-4] are opaque, and
+so are `String`, abstract and `Any` declarations.
+
+**A type is described once, by its qualified base name, and an instance by
+a parameter summary** ([D-432][d-432]). The name joins the type's module and its
+unparameterized name, `Redstone.PID`, which is what its docstring and
+declaration methods attach to; a `const` alias is reported as the type it
+aliases. The `types` row holds the docstring as Markdown source and the
+source locations of the declaration methods the type defines, `u_types`,
+`y_types`, `x_init`, `s_init`, `m_init`, `sample_times`, the three wire
+declarations, `stop_reason` and `transparent_container`, each as the file
+and line Julia reports, since Julia records no location for a `struct`
+itself. The node's summary lists each inert field as `repr` text under
+`:compact` and `:limit`, cut at 80 characters, so a `Constant` holding a
+lookup table never swells the file. The summary is for a human to read,
+never for a program to rebuild values from.
+
+**`descriptor` returns a tree of `NamedTuple`s, vectors, strings, numbers
+and Booleans, and the core takes no JSON dependency** ([D-432][d-432]). Encoding to
+text is the consumer's job. Two conventions make the tree the format. A
+field that does not apply is omitted, never `null`, so presence is the test.
+A collection keyed by data, the `types` table among them, is an array of
+objects each carrying `name`. Every object then has the fixed key set the
+schema names, and the file's key order is the field order, which any
+encoder preserves, so two descriptors diff as two structures.
+
+```julia
+descriptor(build)       # the build envelope
+descriptor(deployment)  # the deployment envelope, its body embedding the build's
+```
+
+**The schema of record is `schema/descriptor.json`, shipped with the
+package, and the core's suite validates `descriptor`'s output against it
+after a round trip through JSON text** ([D-432][d-432]). The schema is JSON Schema
+draft 7, strict about the writer's output, with `additionalProperties:
+false` on every object and `required` per class. Validation is a contract
+check at CI time, here and in a client's own pipeline against the Redstone
+it pins, never a runtime gate. The test encodes the value to text, parses
+the text back into generic dictionaries and validates those, so that the
+bytes a client reads are what conforms. JSON and JSONSchema are test
+dependencies only.
+
+**The carrier gains a `structure` field holding the complete `Structure`
+when a throw leaves the nominal evaluation** ([D-432][d-432]). The field is `nothing`
+on every other throw, and the build's door fills it in one place, by
+rethrowing the [carrier exception](#g-carrier-exception) (the single
+exception diagnostics travel in) with the structure attached
+([§13.2][s13-2]). It is recorded here and unbuilt. The failure descriptor,
+which draws the whole diagram and marks the error on it, is its first
+consumer and builds it. Carrying the structure keeps [§13.1][s13-1]'s rule,
+since it is a complete artifact of an earlier step and never a partial one.
+
+**The name `descriptor` is provisional until the export audit** ([D-432][d-432]), as
+`series` is ([D-226][d-226]).
 
 ---
 
@@ -13459,6 +13613,11 @@ the handler's `(; x, m)` under the return law ([§5.2][s5-2], [§7.1][s7-1],
   ([§9.2][s9-2]). `activations = (Float64, ProbeDual)` additionally pins
   activation invariants for CI, and pre-materializes activations for a
   parallel sweep ([§11.1][s11-1], [§9.4][s9-4]).
+- `descriptor(build)` / `descriptor(deployment) → NamedTuple`. The
+  [descriptor](#g-descriptor) (a serialized projection of the artifact under
+  a published format): a tree of `NamedTuple`s and vectors the consumer
+  encodes, with the deployment's body embedding the build's ([§13.9][s13-9]).
+  Provisional name until the export audit ([D-226][d-226]).
 - [`ProbeDual`](#g-probedual). The public canonical concrete probe scalar
   ([§9.4][s9-4]).
 - `resolve(assembly, path) → AbstractComponent`. Resolves an immediate child, a
@@ -15404,6 +15563,18 @@ collection at a step barrier, and its type parameter tells which.
 `cause` and carries the cause's type as its parameter. Diagnostics
 themselves are plain values ([§13.2][s13-2], [§13.4][s13-4]).
 
+<a id="g-descriptor"></a>**descriptor** — a serialized projection of a `Build`
+or a `Deployment` under a published, versioned format, for a client outside
+the process. `descriptor` renders it as plain data beside `show`'s rendering
+to text. The artifact stays the truth, and a descriptor is one consumer's
+reading of it ([§13.9][s13-9], [D-432][d-432]).
+
+<a id="g-kind-marker"></a>**kind marker** — the small object beside a leaf
+face's printed type in a descriptor, telling a client with no Julia what the
+type is: boolean, enum, symbol, integer, float, number, vector, struct or
+opaque, each with the fields it needs ([§13.9][s13-9]). Not a diagnostic's
+[kind](#g-kind).
+
 <a id="g-collect-the-checks-fail-the-evaluations-fast"></a>**collect the checks,
 fail the evaluations fast** — the reporting policy. Declarative passes over
 collected structure return their full violation list, while the first user-code
@@ -15903,6 +16074,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-429]: decisions.md#d-429--write-a-condition-onto-a-stopped-run-through-overlay
 [d-430]: decisions.md#d-430--default-linearizes-t0-beside-about-to-00
 [d-431]: decisions.md#d-431--collect-a-stopping-check-over-its-own-unit
+[d-432]: decisions.md#d-432--render-an-artifact-to-data-through-descriptor
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop
@@ -15938,6 +16110,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [s13-6]: #136-abnormal-shutdown-one-tail-two-entries
 [s13-7]: #137-tooling-consequences-face-routes-and-the-component-library
 [s13-8]: #138-cycle-diagnosis-feedthrough-tracing
+[s13-9]: #139-the-descriptor-an-artifact-rendered-to-data
 [s14]: #14-stopped-sim-services
 [s14-1]: #141-conditions-are-path-addressed-overlays-on-the-declared-defaults
 [s14-10]: #1410-linearization-tap-selectors-one-seeded-pass-a-pure-query

@@ -61,6 +61,8 @@ context wants.
 | `Run` | — | D-255's run state; Appendix D entry `g-run`, bucket A from here on |
 | `StopPolicy` | — | D-255's per-advance policy value; Appendix D entry `g-stop-policy`, bucket A |
 | leaf address | 7 | D-276's selector argument; §4.2, §4.3, §14.4, §14.7, §14.10, Appendix B; Appendix D entry `g-leaf-address`, bucket A from here on |
+| descriptor | — | D-432's rendering of an artifact to data; §9.2, §13.9, Appendix B; Appendix D entry `g-descriptor`, bucket A from here on |
+| kind marker | — | D-432's per-face marker in a descriptor; §13.9; Appendix D entry `g-kind-marker`, bucket A from here on |
 | local wire | 11 | D-303's child-to-child wire, named by D-314, defined in §6.1; nine body uses in §3.3, §6.1, §8.6, §8.8, §11.7 and §14.2, two in Appendix D; Appendix D entry `g-local-wire`, bucket A from here on |
 | Appendix D's gap check | — | promoted by Appendix D's gap check of 2026-10-21, each a coined name used in three or more sections: auto-bubbling, bound law / walk clause, branch-shape rule, export chain, locality law / one-level rule, opaque leaf, fused idiom, hand-down, hop / dead hop, boundary sequence / macro-sequence, trial evaluation, shadowing check, door, heartbeat, inspection read / integration read, levels doctrine, tail, fingerprint, read set, stopped-sim; bucket A from here on |
 | artifact | — | D-250's criterion word; Appendix D entry `g-artifact` in D.10, bucket A |

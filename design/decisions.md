@@ -430,6 +430,7 @@ were derived.
 | [D-429][d-429] | Write a condition onto a stopped run through `overlay!` | ratified |
 | [D-430][d-430] | Default `linearize`'s `t0` beside `about` to `0.0` | ratified |
 | [D-431][d-431] | Collect a stopping check over its own unit | ratified |
+| [D-432][d-432] | Render an artifact to data through `descriptor` | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -10587,6 +10588,11 @@ Annotation (2026-10-07): the routing chain is no longer recorded.
 `show(::Structure)` derives each root face's route from the declared wires
 through `face_routes` ([D-315][d-315]); the printed form is unchanged.
 
+Annotation (2026-10-26): the rejection of accessors does not reach
+`descriptor`, the rendering to data ([D-432][d-432]). An accessor returns the
+artifact's internals, where the descriptor returns a projection under a
+versioned format of its own.
+
 ### D-258 — "Schedule" is the tick timing and "execution order" the stage sequence
 
 **Status.** ratified
@@ -17148,6 +17154,130 @@ ruled on 2026-10-21 to describe the code.
   scope with structural sentinels, a skip arm at every reader of the
   failed unit.
 
+### D-432 — Render an artifact to data through `descriptor`
+
+**Status.** ratified
+
+**Position.** `descriptor` renders a `Build` or a `Deployment` to data under
+a published, versioned format, beside `show`'s rendering to text, and a
+rendering to data is not the accessor [D-257][d-257] rejects ([§9.2][s9-2], [§13.9][s13-9]). The
+bundled rulings:
+
+- Every descriptor is one object with a header, `format_version` as a
+  `{major, minor}` object independent of Redstone's version,
+  `redstone_version` for information, and `kind`, and one body under the
+  key the kind names. The kinds are `build` and `deployment`, with
+  `failure` reserved. A deployment body embeds the build body whole.
+- A minor bump only adds fields and a reader ignores fields it does not
+  know. A major bump may break readers, and a reader refuses a major it
+  does not know.
+- Version one carries what a client draws and explains: in `structure`, the
+  nodes in walk order with class, field and key, tier and timing, type
+  identity and faces, the assembly nodes' wires verbatim per level with
+  full-path endpoints, the root inputs, the anchors, the rate scopes and a
+  `types` table; in `outputs`, the execution order and each leaf's stage
+  lists. Nothing resolved and no internals. Faces come from the
+  declaration reader at `Float64` over the `Structure`'s instances, and
+  port classes from probing.
+- Each leaf face carries a kind marker computed in the core by one
+  classification in test order: `Bool`, `Enum` with its instance names,
+  `Symbol`, `Integer`, `AbstractFloat`, the other `Real`s, `StaticArray`
+  with its shape and element marker, a `NamedTuple` or a concrete struct
+  with its field names, and opaque for the rest. A `Pinned` entry unwraps
+  and sets a `pinned` flag.
+- A type is described once in the `types` table by its qualified base name,
+  module and unparameterized name, with its docstring as Markdown source and
+  the locations of the declaration methods it defines. An instance carries
+  its full printed type and a parameter summary, each inert field as
+  `repr` text cut at 80 characters.
+- `descriptor` returns a tree of `NamedTuple`s, vectors, strings, numbers
+  and Booleans, with no JSON dependency in the core. A field that does not
+  apply is omitted, never `null`, and a collection keyed by data is an array
+  of objects carrying `name`.
+- The schema of record is `schema/descriptor.json`, JSON Schema draft 7,
+  shipped with the package and strict about the writer's output. The core's
+  suite validates the output after a round trip through JSON text, with
+  JSON and JSONSchema as test dependencies only. Validation is a CI-time
+  contract check, never a runtime gate.
+- `DiagnosticError` gains a `structure` field, the complete `Structure` when
+  a throw leaves the nominal evaluation and `nothing` otherwise, filled at
+  the build's door alone. Recorded and unbuilt until the failure descriptor
+  consumes it ([§13.2][s13-2]).
+- The name is provisional until the export audit ([D-226][d-226]).
+
+**Spec.** [§9.2][s9-2], [§13.2][s13-2], [§13.9][s13-9], [Appendix B][sB]
+
+**Rationale.** The inspector's design record (`design/inspector/`) settled
+on 2026-09-28 that the core renders descriptors itself, extending [D-257][d-257]'s
+idea that an artifact renders itself: `show` to text, `descriptor` to data.
+[D-257][d-257] rejected accessor functions as a second API for what `show` already
+is, and the artifact rule ([D-261][d-261]) keeps the fields free. The descriptor
+binds no field: it is a projection under a contract of its own, so its
+stability is the format's, and the writer sits in the core so the core's
+own suite catches a refactor that breaks it. The session of 2026-10-26
+fixed the format's shape, recorded in
+`design/inspector/descriptor_design.md`.
+
+The envelope-and-body shape follows from embedding. A deployment descriptor
+embeds its build descriptor whole, so the embedded thing must be a body that
+is the same object whether it stands alone or nested, and one schema
+definition serves both places. The body's sections mirror the build's own
+steps, so what a failure descriptor can carry after the structure step is
+what the schema says it carries, with no subset rule. That is also why the
+port classes, which only probing yields, stay in `outputs` rather than on
+the faces.
+
+The kind marker exists because the type string is not enough for a client
+with no Julia: it cannot evaluate `Angle <: Real`, reflect `fieldnames` or
+call `instances`, and printed type names are neither stable nor
+alias-free. The marker splits the reals once, into integers, floats and the
+rest, since those are the cuts a widget or a wire style acts on; finer
+kinds would restate the type string. A `symbol` kind is included because a
+mode signal spelled as a `Symbol` is already in use.
+
+`NamedTuple`s give the file a fixed key order, which a structural `git
+diff` needs, with no dependency. The price is that every object has a fixed
+key set, which JSON Schema prefers anyway, `items` and `required` over
+`additionalProperties` patterns. The schema lives with the writer because
+the two must change in the same commit. The round trip validates the bytes
+a client reads, so an encoder's mistake fails in the core's suite.
+
+The carrier field follows `warnings`' pattern on the same exception
+([D-250][d-250]): a step that throws has no artifact to carry its context on. One
+site fills it, the build's door, so no probe or cycle site changes, and
+[§13.2][s13-2]'s one-carrier rule holds.
+
+**Rejected.**
+- *Reading the descriptor as [D-257][d-257]'s rejected accessor:* an accessor binds
+  the artifact's fields; the descriptor binds a format.
+- *A flat, kind-tagged envelope:* the embedded build would carry a second
+  version stamp or no header.
+- *Three unrelated schemas:* no shared version check for the bridge.
+- *Level-relative endpoints such as `engine.thrust`:* a face name may
+  contain a dot ([D-418][d-418]), and the client rebuilds full paths anyway.
+- *A separate `levels` section:* it would key by the assembly's path and
+  hold nothing the assembly node does not.
+- *The port class on the face:* present only when the build completed, a
+  subset rule in miniature.
+- *Carrying the feedthrough edges:* a derived table, the redundancy the
+  design record rejected for wires.
+- *One `number` kind with an `integer` flag, or a kind per `Real` subtype:*
+  the first makes every reader test two fields; the second restates the
+  type string.
+- *`OrderedDict` for key order:* a dependency for what `NamedTuple` gives.
+- *`Dict` sorted at encoding:* every encoder would own the order.
+- *The schema in the inspector's repo:* a format break would surface when
+  the pin moves, in the wrong repo.
+- *Validating the Julia value without the round trip:* leaves the encoder's
+  rendering unchecked.
+- *A wrapper exception for build failures:* a second exception type against
+  [§13.2][s13-2].
+- *A build door returning the structure on failure:* a second calling
+  convention for one step.
+- *Deferring the `Structure`'s timing rows to a later bump:* the core tier
+  colors blocks by rate, and the rows are in the artifact the section
+  mirrors.
+
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
 [d-002]: #d-002--adopt-the-causal-port-based-paradigm
@@ -17554,6 +17684,7 @@ ruled on 2026-10-21 to describe the code.
 [d-429]: #d-429--write-a-condition-onto-a-stopped-run-through-overlay
 [d-430]: #d-430--default-linearizes-t0-beside-about-to-00
 [d-431]: #d-431--collect-a-stopping-check-over-its-own-unit
+[d-432]: #d-432--render-an-artifact-to-data-through-descriptor
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property
@@ -17586,6 +17717,7 @@ ruled on 2026-10-21 to describe the code.
 [s13-6]: spec.md#136-abnormal-shutdown-one-tail-two-entries
 [s13-7]: spec.md#137-tooling-consequences-face-routes-and-the-component-library
 [s13-8]: spec.md#138-cycle-diagnosis-feedthrough-tracing
+[s13-9]: spec.md#139-the-descriptor-an-artifact-rendered-to-data
 [s14]: spec.md#14-stopped-sim-services
 [s14-1]: spec.md#141-conditions-are-path-addressed-overlays-on-the-declared-defaults
 [s14-10]: spec.md#1410-linearization-tap-selectors-one-seeded-pass-a-pure-query

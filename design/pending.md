@@ -15,9 +15,9 @@ item changes what the spec says, the spec edit is part of the item.
 - **The inspector, stage 1**: the static inspector over the descriptor.
   Its first session, the descriptor's schema and `descriptor` together, ran
   on 2026-10-26; the record is `design/inspector/descriptor_design.md`,
-  whose "Design axes" lists what follows in order: the docs commit (a last
-  section for chapter 13, one log entry, the carrier field in §13.2), then
-  the increment (the schema file, `src/descriptor.jl`, its tests), beside
+  whose "Design axes" lists what follows in order. The docs commit landed
+  (§13.9, D-432, the carrier field recorded in §13.2); next is the
+  increment (the schema file, `src/descriptor.jl`, its tests), beside
   axis 4's rendering spike. The
   built-in Julia GUI is parked (D-310). The stage's record is
   `design/inspector/initial_design.md` (not normative), which carries each
