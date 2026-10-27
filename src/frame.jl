@@ -11,25 +11,35 @@
 # published consistency point. Every `t*` produced here is a boundary that is
 # not a frame top, and it goes to `settled!` as the frame top's does (D-317).
 
+# Design: §10.4, §13.4, §13.5, D-261, D-268, D-317.
+# The cursor's `:drain` phase is written first. A model with no localized
+# events, every non-nominal activation included since its events compiled out,
+# takes the bare step: no arrival machinery, no extra sweep. The whole frame is
+# §13.4's one `try`, and the `StepError` is the one constructor's.
 """
-    frame!(model, k, hooks = NoHooks()) → Bool
+    frame!(model::Model, k::Int, hooks::FrameHooks = NoHooks()) -> Bool
 
-Advance through the frame `[tₖ₋₁, tₖ]` and settle its frame-top boundary
-(§10.4, D-317). The cursor's `:drain` phase is written first, then
-`frame_top!(hooks)` runs before the model touches any state, then the frame
-integrates. A model with no localized events (every non-nominal activation
-included, its events having compiled out) takes the bare step: no arrival
-machinery, no extra sweep. The clock is stamped at the indexed frame top, the
-boundary there runs, a base tick at `k % N_base == 0` and the off-tick
-sequence otherwise, and `settled!(hooks)` follows it, as it follows every `t*`
-boundary. Returns whether `settled!` asked to abandon the frame. A `true` at a
-`t*` boundary leaves the frame's remainder unrun, the clock at `t*` where the
-stores are, and the frame top never stamped (§13.5, D-261).
+Advance the model through frame `k`, from `tₖ₋₁` to `tₖ`, and settle its
+frame-top boundary.
 
-The whole frame is the one `try` of §13.4: a throw writes the status
-`:inconsistent` and arrives as the `StepError` the one constructor builds, its
-pointer the frame-entry boundary `k - 1` and its host `:loop`. An
-`InterruptException` is never wrapped and writes no status (D-268).
+A frame (one iteration of the loop) starts with `frame_top!(hooks)`, before the
+model touches any state, and then integrates. A localized event (one whose
+crossing instant is root-found inside the frame) adds a boundary at its time
+`t*`. The clock is then set to the frame top `tₖ`, computed from `k` and never
+accumulated, and the boundary there runs. When `k` is a multiple of `N_base` it
+is a base tick (an instant of the base grid), and the due discrete updates run
+in it. `settled!(hooks)` follows every boundary, each `t*`'s and the frame
+top's.
+
+`frame!` returns whether `settled!` asked to abandon the frame. A `true` at a
+`t*` boundary leaves the rest of the frame unrun, with the clock at `t*` where
+the stores are, and the frame top never reached. See [`FrameHooks`](@ref) for
+the hooks, and [`NoHooks`](@ref) for a model stepped on its own.
+
+A model claimed by a [`Simulation`](@ref) is refused as `ArgumentInvalid`. A
+throw inside the frame writes the status `:inconsistent` and arrives as a
+`StepError` with host `:loop`. Its pointer is `k - 1`, the boundary the frame
+started from. An `InterruptException` is never wrapped and writes no status.
 """
 function frame!(model::Model{T}, k::Int, hooks::FrameHooks = NoHooks()) where {T}
     _claimed_gate(model, hooks, :frame!)
