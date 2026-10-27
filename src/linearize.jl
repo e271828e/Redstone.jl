@@ -26,10 +26,10 @@ The tap set: the three read sets that linearization seeds and reads.
 
 [`taps`](@ref) returns it, [`linearize`](@ref) takes it, and [`at`](@ref)
 mounts it below a prefix. A tap set (the three selector lists that declare what
-linearization seeds and reads) holds them as the fields `x`, `u` and `y`, each
-a [`Reads`](@ref). `x` names the continuous state leaves to seed, `u` the root
-inputs to seed, and `y` the outputs to read. Their labels become the axes of
-the matrices `linearize` returns.
+linearization seeds and reads) holds the three lists given as `x`, `u` and `y`,
+each a [`Reads`](@ref). The `x` list names the continuous state leaves to seed,
+the `u` list the root inputs to seed, and the `y` list the outputs to read.
+Their labels become the axes of the matrices `linearize` returns.
 """
 struct Taps{X<:Reads,U<:Reads,Y<:Reads}
     x::X
@@ -170,20 +170,20 @@ nothing. It runs no boundary zero (the initialization boundary) and never
 writes the model.
 
 By default the operating point is `checkpoint(model)`, the model's state at the
-frame top its clock rests on, at that clock's time. `about`, a condition (the datum
-that says "set this build to this state"), places the operating point anywhere
-else, at time `t0`. The condition is applied over the declared defaults, and
-one sweep with every discrete output stage run then sets the discrete outputs.
+frame top its clock rests on, at that clock's time. `about`, a condition (the
+datum that says "set this build to this state"), places the operating point
+anywhere else, at time `t0`. The condition is applied over the declared
+defaults, and one sweep with every discrete output stage run then sets the
+discrete outputs.
 
 The tap set, built by [`taps`](@ref), names the axes. It is three lists of
 selectors (deferred reads, each naming one leaf), declaring what linearization
-seeds and reads. `linearize` seeds one
-direction per `x` tap and per `u` tap, and evaluates the model with dual
-numbers. The value parts give `ẋ₀` and `y₀`. The partials give `A` and `B` read
-at the state derivative, and `C` and `D` read at the `y` taps. States and root
-inputs (the root component's own input faces) that no tap names sit constant at
-the operating point. The discrete tier (the discrete side of the hybrid model)
-is held.
+seeds and reads. `linearize` seeds one direction per `x` tap and per `u` tap,
+and evaluates the model with dual numbers. The value parts give `ẋ₀` and `y₀`.
+The partials give `A` and `B` read at the state derivative, and `C` and `D`
+read at the `y` taps. States and root inputs (the root component's own input
+faces) that no tap names sit constant at the operating point. The discrete tier
+(the discrete side of the hybrid model) is held.
 
 # Keywords
 
@@ -200,9 +200,8 @@ The default form is legal only while the model's status is `:consistent`, and is
 refused as `ServiceLifecycle` otherwise. It is refused as `CheckpointMidFrame`
 with the clock off a frame top, as [`checkpoint`](@ref) is. A root input whose
 value does not convert to the seeded scalar is refused as `ConditionResolution`.
-The
-`about` form is legal at any status. Under it, a condition that does not resolve
-is refused with the diagnostics resolution raises: `ConditionResolution`,
+The `about` form is legal at any status. Under it, a condition that does not
+resolve is refused with the diagnostics resolution raises: `ConditionResolution`,
 `PathResolution`, `DuplicateConditionLeaf` or `ConditionNodeMisuse`. A root
 input it leaves without a value is refused as `UninitializedInputs`. A model a
 [`Simulation`](@ref) has claimed still answers, since the query only reads it.

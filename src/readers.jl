@@ -43,9 +43,10 @@ The selector that reads one leaf of a component's state.
 
 [`get_state`](@ref) returns it, and a read set (a [`Reads`](@ref) value naming
 each selector it reads) labels it. A selector (a deferred read, inert until a
-reader resolves it) holds its address as authored: the component's `path` and
-its `leaf`, a leaf address (the field name, then `.name` and `[k]` or `[k,l]`
-steps in any order). A bare `Symbol` is the short form of a plain name. The
+reader resolves it) holds its address as authored. The address is the
+component's path and a leaf address (a name in the state, then `.name` and
+`[k]` or `[k,l]` steps in any order). A bare `Symbol` is the short form of a
+plain name. The
 address is parsed, and each step checked against the declared type, when a
 reader resolves the selector.
 
@@ -66,10 +67,10 @@ The selector that reads one leaf of a continuous component's state derivative.
 
 [`get_deriv`](@ref) returns it, and a read set (a [`Reads`](@ref) value naming
 each selector it reads) labels it. A selector (a deferred read, inert until a
-reader resolves it) holds its address as authored: the component's `path` and
-its `leaf`, a leaf address (the field name, then `[k]` or `[k,l]` steps) into
-the continuous state. The address is parsed and checked when a reader resolves
-the selector.
+reader resolves it) holds its address as authored. The address is the
+component's path and a leaf address (a name in the continuous state, then `[k]`
+or `[k,l]` steps). The address is parsed and checked when a reader resolves the
+selector.
 
 `GetDeriv` is a store selector, like [`GetState`](@ref): it reads the live
 stores, and a reader over published snapshots refuses it as `ReadResolution`.
@@ -87,10 +88,10 @@ The selector that reads one leaf of a component's declared output port.
 
 [`get_output`](@ref) returns it, and a read set (a [`Reads`](@ref) value naming
 each selector it reads) labels it. A selector (a deferred read, inert until a
-reader resolves it) holds its address as authored: the component's `path` and
-its `leaf`, a leaf address (the port name, then `.name` and `[k]` or `[k,l]`
-steps in any order). The address is parsed and checked when a reader resolves
-the selector.
+reader resolves it) holds its address as authored. The address is the
+component's path and a leaf address (the port name, then `.name` and `[k]` or
+`[k,l]` steps in any order). The address is parsed and checked when a reader
+resolves the selector.
 
 `GetOutput` is a table selector, resolved against the signal table or a
 published snapshot alike. It is an inspection read: a component's own declared
@@ -110,9 +111,9 @@ The selector that reads one leaf of a root input's value back.
 
 [`get_input`](@ref) returns it, and a read set (a [`Reads`](@ref) value naming
 each selector it reads) labels it. A selector (a deferred read, inert until a
-reader resolves it) holds its `leaf` as authored, a leaf address (the face name,
-then `.name` and `[k]` or `[k,l]` steps in any order). The address is parsed and
-checked when a reader resolves the selector.
+reader resolves it) holds its address as authored. The address is a leaf
+address (the face name, then `.name` and `[k]` or `[k,l]` steps in any order).
+It is parsed and checked when a reader resolves the selector.
 
 `GetInput` is a table selector, resolved against the signal table or a
 published snapshot alike. It reads back the value of a root input (one of the
@@ -130,9 +131,9 @@ The selector that reads one leaf of an exported output face.
 
 [`get_face`](@ref) returns it, and a read set (a [`Reads`](@ref) value naming
 each selector it reads) labels it. A selector (a deferred read, inert until a
-reader resolves it) holds its `leaf` as authored, a leaf address (the face name,
-then `.name` and `[k]` or `[k,l]` steps in any order). The address is parsed and
-checked when a reader resolves the selector.
+reader resolves it) holds its address as authored. The address is a leaf
+address (the face name, then `.name` and `[k]` or `[k,l]` steps in any order).
+It is parsed and checked when a reader resolves the selector.
 
 `GetFace` is a table selector, resolved against the signal table or a
 published snapshot alike. It is an integration read: the face is named and
@@ -459,11 +460,11 @@ The read set: labeled selectors in one value, with the mount chain they
 resolve under.
 
 [`reads`](@ref) returns it, [`at`](@ref) mounts it below a prefix, and
-[`series`](@ref) takes it, as do a [`TrimProblem`](@ref)'s `reads` field and
+[`series`](@ref) takes it, as do a [`TrimProblem`](@ref)'s `reads` keyword and
 each list of a tap set from [`taps`](@ref). A read set (a `Reads` value naming
-each selector it reads) holds `selectors`, the labeled selectors as a
-`NamedTuple` in the order written, and `prefixes`, the mount chain `at` builds,
-outermost first and empty at the root. A service that takes it walks the chain
+each selector it reads) holds the labeled selectors as a `NamedTuple` in the
+order written. It also holds the mount chain `at` builds, outermost first and
+empty at the root. A service that takes it walks the chain
 from the root and resolves each selector there.
 
 Every selector (a deferred read of one leaf) is one of a closed family of five:

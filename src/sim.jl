@@ -165,11 +165,11 @@ with an empty run, so every read finds one, and [`lifecycle`](@ref) says
 whether that run ever started.
 
 The run's contents are read through the simulation. [`logged`](@ref) returns
-the log (the retained sequence of published snapshots), [`trace`](@ref) a copy
-of the trace (the primary record of a session), and [`termination`](@ref) the
-record of how the run ended. [`mode`](@ref) says whether a recording is
-attached. The two counters are the frame index and the boundary ordinal, which
-[`checkpoint`](@ref) returns beside the model's state.
+the log (the retained sequence of published snapshots). [`trace`](@ref) returns
+a copy of the trace (the primary record of a session), and
+[`termination`](@ref) the record of how the run ended. [`mode`](@ref) says
+whether a recording is attached. The two counters are the frame index and the
+boundary ordinal, which [`checkpoint`](@ref) returns beside the model's state.
 """
 mutable struct Run
     const log::SnapshotLog                        # §11.2's retained snapshots
@@ -1389,11 +1389,10 @@ second is an honoured stop request holding in a published snapshot. A stop
 request is a `StopFlag` output port reading `STOP_REQUESTED`. The third is a
 stop through the control plane (the separate few-word atomic surface carrying
 pause, pace and stop), seen at a frame top. A frame top is the start of a
-frame. A stop request
-ends the run at the boundary that published it, an event boundary inside a frame
-included, and that snapshot is the final one. `t_end` ends the run at the first
-frame top at or past it, in whole frames from `t₀`. `run!` blocks its caller
-until the run ends.
+frame. A stop request ends the run at the boundary that published it, an event
+boundary inside a frame included, and that snapshot is the final one. `t_end`
+ends the run at the first frame top at or past it, in whole frames from `t₀`.
+`run!` blocks its caller until the run ends.
 
 Each rostered device is initialized and given a task of its own as the run
 starts, and shut down as it ends; the loop itself runs on the calling task. The

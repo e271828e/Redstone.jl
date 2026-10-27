@@ -218,10 +218,10 @@ end
 The status record of one writer, as one snapshot publishes it.
 
 A snapshot's framework status (the per-writer diagnostics and liveness each
-snapshot carries) holds one record per writer: each rostered device in
-attachment order, then the harness writer (the framework-owned write path
-`stage!(sim, …)`), then the loop. [`incumbent_status`](@ref) returns the record
-of the writer behind a [`PortView`](@ref), and [`orphaned`](@ref) and
+snapshot carries) holds one record per writer. The writers are each rostered
+device in attachment order, then the harness writer (the framework-owned write
+path `stage!(sim, …)`), then the loop. [`incumbent_status`](@ref) returns the
+record of the writer behind a [`PortView`](@ref), and [`orphaned`](@ref) and
 [`stale`](@ref) read it. A record holds these fields.
 
 - `who`: the writer's name, as a port view's `incumbent` holds it.

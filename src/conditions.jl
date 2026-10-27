@@ -21,10 +21,10 @@ vocabulary.
 
 [`set`](@ref) returns it as the leaf of a condition (the datum that says "set
 this build to this state"), and [`at`](@ref), [`combine`](@ref) and
-[`override`](@ref) take it. It holds the four payloads `set` was given. `x`,
-`s` and `m` name fields of the component at the authoring level, and `u` names
-that level's own input faces. It holds no path, since addressing a child is
-`at`'s job alone.
+[`override`](@ref) take it. It holds the four payloads `set` was given. The
+`x`, `s` and `m` payloads name the declared state and modes of the component
+at the authoring level, and the `u` payload names that level's own input
+faces. It holds no path, since addressing a child is `at`'s job alone.
 
 See also [`ConditionNode`](@ref).
 """
@@ -44,7 +44,7 @@ yet applied.
 
 [`at`](@ref) returns it from a node of a condition (the datum that says "set
 this build to this state"), and `at`, [`combine`](@ref) and [`override`](@ref)
-take it. It holds the `prefix` and the `node` as given. `at` stores the prefix
+take it. It holds the prefix and the node `at` was given. `at` stores the prefix
 and never applies it: the paths join when a service resolves the condition
 against its build.
 
@@ -64,7 +64,7 @@ at most one.
 
 [`combine`](@ref) returns it, and [`at`](@ref), `combine` and
 [`override`](@ref) take it as a node of a condition (the datum that says "set
-this build to this state"). It holds the `nodes` in the order given, an order
+this build to this state"). It holds the nodes in the order given, an order
 that matters only to diagnostics. Two nodes that set one leaf are refused as
 `DuplicateConditionLeaf` when a service resolves the condition, and the
 diagnostic names where each was authored.
@@ -84,7 +84,7 @@ shared leaf.
 
 [`override`](@ref) returns it, and [`at`](@ref), [`combine`](@ref) and
 `override` take it as a node of a condition (the datum that says "set this
-build to this state"). It holds the `layers`, the base first and each patch
+build to this state"). It holds the layers, the base first and each patch
 after it. A leaf set in several layers takes the last layer's value, and the
 origin its diagnostics report names both layers. Two entries on one leaf
 within one layer are still refused as `DuplicateConditionLeaf`.
