@@ -12,10 +12,21 @@
 # Every node is isbits except the prefix strings: a `Fragment`'s payloads are
 # the author's own values, and the combinators hold their operands in tuples.
 
+# Design: §14.2, Appendix B.
 """
-Self-vocabulary payloads at one authoring level (§14.2): `x`, `s` and `m`
-fields of the component addressed there, and `u` naming faces of *that
-level's* contract. No paths — addressing children is exclusively `at`'s job.
+    Fragment
+
+The condition node that sets values at one authoring level, in that level's own
+vocabulary.
+
+[`set`](@ref) returns it as the leaf of a condition (the datum that says "set
+this build to this state"), and [`at`](@ref), [`combine`](@ref) and
+[`override`](@ref) take it. It holds the four payloads `set` was given. `x`,
+`s` and `m` name fields of the component at the authoring level, and `u` names
+that level's own input faces. It holds no path, since addressing a child is
+`at`'s job alone.
+
+See also [`ConditionNode`](@ref).
 """
 struct Fragment{X,S,M,L}
     x::X
@@ -24,29 +35,79 @@ struct Fragment{X,S,M,L}
     u::L
 end
 
-"""`at(prefix, node)`: scoping. Stores the prefix, never applies it (§14.2)."""
+# Design: §14.2, §14.3, Appendix B.
+"""
+    Scoped
+
+The condition node that holds another node under a path prefix, stored and not
+yet applied.
+
+[`at`](@ref) returns it from a node of a condition (the datum that says "set
+this build to this state"), and `at`, [`combine`](@ref) and [`override`](@ref)
+take it. It holds the `prefix` and the `node` as given. `at` stores the prefix
+and never applies it: the paths join when a service resolves the condition
+against its build.
+
+See also [`ConditionNode`](@ref).
+"""
 struct Scoped{N}
     prefix::String
     node::N
 end
 
+# Design: §14.2, Appendix B.
 """
-`combine(nodes...)`: symmetric collection. Order is diagnostics only, and a
-duplicate leaf is an error at resolution with both origins (§14.2).
+    Combined
+
+The condition node that collects sibling nodes symmetrically, each leaf set by
+at most one.
+
+[`combine`](@ref) returns it, and [`at`](@ref), `combine` and
+[`override`](@ref) take it as a node of a condition (the datum that says "set
+this build to this state"). It holds the `nodes` in the order given, an order
+that matters only to diagnostics. Two nodes that set one leaf are refused as
+`DuplicateConditionLeaf` when a service resolves the condition, and the
+diagnostic names where each was authored.
+
+See also [`ConditionNode`](@ref).
 """
 struct Combined{T<:Tuple}
     nodes::T
 end
 
+# Design: §14.6, Appendix B. The fourth node kind; layering is variadic.
 """
-`override(base, patches...)`: ordered layering, the fourth node kind (§14.6).
-The patch wins on a shared leaf and the origin records both layers; collisions
-*within* one layer remain errors, and layering is variadic.
+    Override
+
+The condition node that layers nodes in order, the last layer winning on a
+shared leaf.
+
+[`override`](@ref) returns it, and [`at`](@ref), [`combine`](@ref) and
+`override` take it as a node of a condition (the datum that says "set this
+build to this state"). It holds the `layers`, the base first and each patch
+after it. A leaf set in several layers takes the last layer's value, and the
+origin its diagnostics report names both layers. Two entries on one leaf
+within one layer are still refused as `DuplicateConditionLeaf`.
+
+See also [`ConditionNode`](@ref).
 """
 struct Override{T<:Tuple}
     layers::T
 end
 
+# Design: §14.2, §14.6, Appendix B.
+"""
+    ConditionNode
+
+The union of the four condition node types, the type every combinator takes.
+
+A condition (the datum that says "set this build to this state") is a tree of
+nodes. [`set`](@ref) returns its leaf, a [`Fragment`](@ref). [`at`](@ref)
+returns a [`Scoped`](@ref), [`combine`](@ref) a [`Combined`](@ref) and
+[`override`](@ref) an [`Override`](@ref). `at`, `combine` and `override` take
+any `ConditionNode`, and a service such as [`init!`](@ref) takes the root node
+and resolves the tree against its build.
+"""
 const ConditionNode = Union{Fragment,Scoped,Combined,Override}
 
 # Design: §8.1, §14.2, Appendix B, D-246.
@@ -127,11 +188,11 @@ beside the node and applies nothing. The paths join when a service resolves the
 condition against its build, and a path the build does not have is refused
 there as `PathResolution`.
 
-On a read set (a `Reads` value, built by [`reads`](@ref)), `at` adds `prefix` to
-the front of the set's mount chain, the prefixes it is mounted under. A service
-walks the chain from the root, and rebases every selector (a deferred read of
-one leaf) onto it. Other methods of `at` scope a [`TrimProblem`](@ref) and a tap
-set from [`taps`](@ref) the same way.
+On a read set (a [`Reads`](@ref) value, built by [`reads`](@ref)), `at` adds
+`prefix` to the front of the set's mount chain, the prefixes it is mounted
+under. A service walks the chain from the root, and rebases every selector (a
+deferred read of one leaf) onto it. Other methods of `at` scope a
+[`TrimProblem`](@ref) and a tap set from [`taps`](@ref) the same way.
 
 An empty prefix names no child, and is refused when `at` is called: as
 `ConditionNodeMisuse` on a condition node, and as `ReadSetMisuse` on a read set.

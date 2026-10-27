@@ -18,6 +18,19 @@
 
 # --- the tap set (§14.10) ------------------------------------------------------
 
+# Design: §14.4, §14.10, Appendix B, D-272.
+"""
+    Taps
+
+The tap set: the three read sets that linearization seeds and reads.
+
+[`taps`](@ref) returns it, [`linearize`](@ref) takes it, and [`at`](@ref)
+mounts it below a prefix. A tap set (the three selector lists that declare what
+linearization seeds and reads) holds them as the fields `x`, `u` and `y`, each
+a [`Reads`](@ref). `x` names the continuous state leaves to seed, `u` the root
+inputs to seed, and `y` the outputs to read. Their labels become the axes of
+the matrices `linearize` returns.
+"""
 struct Taps{X<:Reads,U<:Reads,Y<:Reads}
     x::X
     u::U

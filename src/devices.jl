@@ -380,7 +380,7 @@ last frame top. The cell keeps 16 values per frame and counts the excess by
 kind, so a peer flooding malformed data costs sixteen retained values and a
 counter, whatever it sends.
 
-`report!` is not a general diagnostics channel. `MalformedDatum(cause)` is the
+`report!` is not a general diagnostics channel. [`MalformedDatum`](@ref) is the
 one kind a device may report, and any exception the loop does not classify as a
 malformed datum reaches the framework as the `DeviceCrash` it is. After
 [`detach!`](@ref), the call is refused as `DeviceContractMismatch`.
@@ -435,14 +435,31 @@ end
 
 # --- the panel kit (§11.7, D-270) ----------------------------------------------
 
+# Design: §11.7, Appendix B.
+# The port's terminal producer, baked with the producer's cell address for the
+# snapshot read. Built by `port_views`, once per run; nothing here resolves a
+# name at render.
 """
-§11.7's baked verdict for one port: the port's terminal producer (`("",
-face)` when root-driven), whether this handle commands it, the position in
-the handle's schema when it does (`0` otherwise), the producer's cell address
-for the snapshot read, and the incumbent writer of a root-driven port the
-handle does not command — another device's `who`, `"harness"` for a face no
-device claims, `""` for a port no device writes. Built by `port_views`, once
-per run; nothing here resolves a name at render.
+    PortView
+
+The view of one port, settled once per run: its producer, whether the device
+commands it, and its writer.
+
+[`port_views`](@ref) returns a table of them, one per port of the build, and
+[`peek`](@ref) and [`incumbent_status`](@ref) take one. A port view (one port's
+verdict, settled once per run) holds these fields, beside the producer's
+address that `peek` reads.
+
+- `path` and `port`: the port the view describes.
+- `source`: its producer, the output or root input that ultimately feeds it,
+  as `(path, port)`, with `("", face)` for a root input.
+- `live`: `true` when the producer is a root input inside the device's claim
+  (the set of faces a device may write), so the device commands the port.
+- `slot`: that root input's position in the claim, as [`pending`](@ref) takes
+  it, or `0` when the view is not live.
+- `incumbent`: the writer of the root input that drives the port. It is this
+  device's name when live, another device's name, `"harness"` for a face no
+  device claims, or `""` when no root input drives the port.
 """
 struct PortView
     path::String

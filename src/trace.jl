@@ -36,24 +36,39 @@ Base.:(==)(a::TraceBatch, b::TraceBatch) =
 Base.hash(record::TraceBatch, seed::UInt) =
     hash(record.entries, hash(record.writer, hash(record.frame, seed)))
 
+# Design: §11.5, §11.8, §12.7, Appendix B, D-255, D-260, D-274, D-317, D-319.
+# The header is `nothing` only between the run's opening and boundary zero's
+# first publication, where `init!` writes it; `restore!` and `replay!` open
+# their run with the checkpoint they restore (D-274). `Run.trace` is the live
+# one, `nothing` under the kill switch; `trace(sim)` hands back a detached value
+# of the same type, which no drain ever advances. Replay does not reconstruct
+# claims (§12.7). The tags are §11.8's own writer names, `_who(entry)` and
+# `"harness"`. The recording is the nominal simulation's, and a `Checkpoint` is
+# nominal by type (D-317, D-319).
 """
-The trace (§11.5, D-255): a header written once and never again, plus two
-append-only lists — the writers' schemas, grown at every roster change, and the
-sparse records, one per drained batch — and its length, the frame ordinal of the
-last drain, which is also the ordinal each record carries (D-260). The header is
-a `Checkpoint` (D-274): `init!` writes it after boundary zero's first
-publication, so it is `nothing` only between the run's opening and that
-publication, and `restore!` and `replay!` open their run with the checkpoint
-they restore. The length starts at the header's frame index, so a trace opened
-by a restore keys its records by the trajectory's own frames. `Run.trace` is
-the live one, `nothing` under the kill switch; `trace(sim)` hands back a
-detached value of the same type, which no drain ever advances.
+    Trace
 
-A record is meaningless without its schema entry: the positions are against
-`schemas[batch.writer]`, and replay does not reconstruct claims (§12.7). The
-tags are §11.8's own writer names, `_who(entry)` and `"harness"`. The
-recording is the nominal simulation's, and a `Checkpoint` is nominal by type
-(D-317, D-319).
+The input recording of a run: the checkpoint it opened from and every batch
+the loop applied since.
+
+[`trace`](@ref) returns a copy of the current run's trace (the primary record of
+a session), and [`replay!`](@ref) takes one to re-drive a simulation. The copy
+is detached, so later frames never reach it. A trace holds these fields.
+
+- `header`: the [`Checkpoint`](@ref) the run opened from, written once by the
+  call that opened it and never again.
+- `schemas`: each writer's face names by position, as `writer => faces` pairs.
+  One is appended at every change to the roster (the list of attached device
+  entries), and the list only grows. A writer is named as in a
+  [`WriterStatus`](@ref), and the harness writer is `"harness"`.
+- `batches`: one record per drained batch (a staged set of face ⇒ value
+  writes), in drain order, by frame and then by writer. Each record holds its
+  frame, its writer's index into `schemas` and its entries by position, so it
+  reads only through its own schema entry.
+- `frames`: the frame index of the last drain, which is the frame every record
+  of that drain carries. It starts at the header's frame index, so a trace
+  opened from a restored checkpoint keys its records by the trajectory's own
+  frames.
 """
 mutable struct Trace
     header::Union{Nothing,Checkpoint}             # written once, by the door (D-274)

@@ -90,19 +90,39 @@ struct StopPolicy
     ignored::Vector{String}   # requester paths not honoured, in the order given
 end
 
+# Design: §9.4, §12.6, §13.5, Appendix B, D-201, D-203, D-233, D-255, D-260,
+# D-317.
+# The run's *outcome*, and the policy of the advance that ended it, so a
+# stopped simulation answers "why did it stop?", and "how did the stop go?",
+# without its consumer reconstructing either from the clock or the log stream
+# (D-203). `t` is a `Float64` since only a nominal model runs (§9.4, D-317),
+# always present since boundary zero precedes every record (D-233). `policy` is
+# the terminating advance's `StopPolicy`, so `EndTimeReached`'s bound is read off
+# the record rather than off a constructor default that no longer exists
+# (D-255). `source` is the typed source above. `residue` is what the run's-end
+# sweep collected, recorded here and presented through the logging backend,
+# never published (D-201, D-203). The record lives on the `Run`, written once by
+# the loop's tail, so a fresh run starts without one (§12.6, D-255), and it is
+# the policy's one lasting home (D-260).
 """
-§13.5's termination record: the run's *outcome*, and the policy of the advance
-that ended it — so a stopped simulation answers "why did it stop?", and "how
-did the stop go?", without its consumer reconstructing either from the clock or
-the log stream (D-203). `t` is the final snapshot's boundary time, a `Float64`
-since only a nominal model runs (§9.4, D-317), always present since boundary
-zero precedes every record (D-233); `policy` is the terminating advance's `StopPolicy`, so
-`EndTimeReached`'s bound is read off the record rather than off a constructor
-default that no longer exists (D-255); `source` is the typed source above;
-`residue` is what the run's-end sweep collected — recorded here and presented
-through the logging backend, never published (D-201, D-203). It lives on the
-`Run`, written once by the loop's tail, so a fresh run starts without one
-(§12.6, D-255), and it is the policy's one lasting home (D-260).
+    TerminationRecord
+
+The record of how a run ended: its final time, its stop policy, its source and
+its residue.
+
+[`termination`](@ref) returns it once the run has ended. The termination record
+(the stopped-sim value naming how the run ended) is written once, as the run
+ends, and every call that opens a run starts it without one. A record holds
+these fields.
+
+- `t`: the boundary time of the run's final snapshot (the immutable
+  per-boundary publication), as a `Float64`.
+- `policy`: the stop policy (the value one advance declares, `t_end` plus the
+  requester paths it ignores) of the advance that ended the run.
+- `source`: the typed source that ended the run, such as
+  [`EndTimeReached`](@ref) or [`ModelRequestedStop`](@ref) with its payload.
+- `residue`: the diagnostics the writers reported after the final snapshot,
+  collected as the run ended. They are logged, and never published.
 """
 struct TerminationRecord
     t::Float64
@@ -111,30 +131,45 @@ struct TerminationRecord
     residue::Vector{ResidueRecord}
 end
 
+# Design: §11.5, §12.6, Appendix B, D-218, D-255, D-260, D-261, D-317.
+# The state one run owns: what lasts from one door to the next and the state
+# that evolves in between, and nothing else. The log and the trace are fixed by
+# the constructing entry point. Four fields evolve: the attached recording, the
+# termination record the loop's tail writes once, and the trajectory's two
+# counters, which the door sets as it builds the run and the loop advances
+# (D-317). `init!`, `restore!` and `replay!` construct one and rebind `sim.run`;
+# nothing else rebinds it. A change of mode is a *write* to the run, not a
+# change of run: `live!`, and the flip at a recording's end, both clear `feed`
+# (D-218, D-260).
+#
+# The input mode is read, never stored: `mode(sim)` is `:replay` while a feed is
+# attached and `:live` otherwise, so the two can never disagree. The trace is
+# `nothing` under §11.5's kill switch, which is where that switch now rides.
+#
+# The origin and the stop policy are not fields here (D-260). The clock holds
+# `t₀`, which `init!` sets and a checkpoint carries; the policy is the advance's
+# argument, carried from the call to the record's assembly and dropped there.
+#
+# A `Simulation` is built with a placeholder run, an empty log, no trace, no
+# feed and no termination. It carries no configuration: the recording keywords
+# are the doors' (D-261).
 """
-The state one run owns (§12.6, D-255, D-260): what lasts from one door to the
-next and the state that evolves in between, and nothing else — the log and the
-trace, fixed by the constructing entry point, and four fields that evolve, the
-attached recording, the termination record the loop's tail writes once, and the
-trajectory's two counters, the frame index and the boundary ordinal, which the
-door sets as it builds the run and the loop advances (D-317).
-`init!`, `restore!` and `replay!` construct one and rebind `sim.run`; nothing
-else rebinds it. A change of mode is a *write* to the run, not a change of run — `live!`,
-and the flip at a recording's end, both clear `feed` (D-218, D-260).
+    Run
 
-The input mode is read, never stored: `mode(sim)` is `:replay` while a feed is
-attached and `:live` otherwise, so the two can never disagree. The trace is
-`nothing` under §11.5's kill switch, which is where that switch now rides.
+The state of one run: its log, its trace, its outcome and its two counters.
 
-The origin and the stop policy are not fields here (D-260). The clock holds
-`t₀`, which `init!` sets and a checkpoint carries; the policy is the
-advance's argument, carried from the call to the record's assembly and dropped
-there.
+A simulation's current run is `sim.run`, and [`closed`](@ref) takes it.
+[`init!`](@ref), [`overlay!`](@ref), [`restore!`](@ref) and [`replay!`](@ref)
+each replace it with a fresh one, and nothing else does. A simulation starts
+with an empty run, so every read finds one, and [`lifecycle`](@ref) says
+whether that run ever started.
 
-A `Simulation` is built with a placeholder run — an empty log, no trace, no
-feed, no termination — so every accessor has a run to read; `lifecycle(sim)`
-is what says whether that run ever started. It carries no configuration: the
-recording keywords are the doors' (D-261).
+The run's contents are read through the simulation. [`logged`](@ref) returns
+the log (the retained sequence of published snapshots), [`trace`](@ref) a copy
+of the trace (the primary record of a session), and [`termination`](@ref) the
+record of how the run ended. [`mode`](@ref) says whether a recording is
+attached. The two counters are the frame index and the boundary ordinal, which
+[`checkpoint`](@ref) returns beside the model's state.
 """
 mutable struct Run
     const log::SnapshotLog                        # §11.2's retained snapshots
@@ -153,7 +188,7 @@ Return `true` once the run has ended and its termination record is written.
 
 `sim.run` holds the state of the current run: its log, its trace and its
 outcome. `closed(sim.run)` answers whether the run itself is over, while
-`lifecycle(sim)` answers for the simulation. For why it ended, see
+[`lifecycle`](@ref) answers for the simulation. For why it ended, see
 [`termination`](@ref).
 """
 closed(run::Run) = run.termination !== nothing
@@ -370,23 +405,35 @@ function _bind_policy(sim::Simulation, t_end, ignore_stop_requests, site::Symbol
     (StopPolicy(bound, ignored), ignore_mask)
 end
 
+# Design: §11.3, §12.6, §13.4, §13.6, Appendix B, D-223, D-317.
+# `:built` is the cold state (§13.4, D-223). Derived, never stored (D-317): a
+# set running flag reads `:running`; with it clear, the model's `:built` reads
+# `:built`, its `:inconsistent` reads `:errored`, and its `:consistent` reads
+# `:initialized` while the run is open and `:stopped` once it is closed. The
+# flag and the status are acquire loads, and every writer stores the run's
+# termination and the model's status before it clears the flag.
 """
-    lifecycle(sim)
+    lifecycle(sim::Simulation) -> Symbol
 
-§12.6's five-state lifecycle: `:built` — stores allocated, boundary zero not
-completed — the cold state, and where a throw inside boundary zero returns the
-simulation to (§13.4, D-223); `:initialized` — boundary-consistent and ready to
-advance, the state `init!` establishes and a completed `step!` returns to;
-`:running` — `run!` or `step!` holds the loop, and the §11.3 freeze with it; and
-the two terminal states, `:stopped` and `:errored` (§13.6). Readable from any
-task.
+Return the simulation's lifecycle state, one of five symbols.
 
-Derived, never stored (D-317): a set running flag reads `:running`; with it
-clear, the model's `:built` reads `:built`, its `:inconsistent` reads
-`:errored`, and its `:consistent` reads `:initialized` while the run is open
-and `:stopped` once it is closed. The flag and the status are acquire loads,
-and every writer stores the run's termination and the model's status before it
-clears the flag.
+The state is derived at each read and never stored, and any task may read it.
+The five states are these.
+
+- `:built`: the buffers are allocated and boundary zero (the initialization
+  boundary) has not completed. A throw inside boundary zero returns the
+  simulation here.
+- `:initialized`: consistent at a boundary and ready to advance.
+  [`init!`](@ref) establishes it, and a completed [`step!`](@ref) returns to
+  it.
+- `:running`: [`run!`](@ref) or `step!` holds the loop. The roster (the list of
+  attached device entries) is frozen with it.
+- `:stopped`: the run has ended, and its termination record (the value naming
+  how the run ended) is written.
+- `:errored`: a failure inside the loop left the model's state inconsistent.
+
+`:stopped` and `:errored` are the two terminal states. [`mode`](@ref) reads the
+input mode beside it.
 """
 function lifecycle(sim::Simulation)
     (@atomic :acquire sim.control.running) && return :running
@@ -2666,10 +2713,23 @@ function logged(sim::Simulation)
     retained
 end
 
+# Design: §11.2, Appendix B, D-407.
 """
-What `series` returns (§11.2, D-407): the retained snapshots' stamps, oldest
-first, and one column per labeled entry of the read set, a plain vector of
-that entry's leaf type, keyed as the set labels it.
+    Series
+
+The log gathered into columns: the snapshots' stamps and one typed vector per
+labeled read.
+
+[`series`](@ref) returns it, gathered over the snapshots (each the immutable
+per-boundary publication) that [`logged`](@ref) returns, oldest first. A series
+holds these fields, each vector with one entry per snapshot.
+
+- `t`: the snapshots' boundary times.
+- `frame`: their frame indices.
+- `boundary`: their boundary ordinals.
+- `columns`: a `NamedTuple` keyed as the read set (a [`Reads`](@ref) value
+  naming each selector it reads) labels its entries, each column a plain
+  vector of the entry's leaf type.
 """
 struct Series{NT<:NamedTuple}
     t::Vector{Float64}
@@ -2690,13 +2750,14 @@ end
 Gather the log's retained snapshots into one typed column per entry of a read
 set.
 
-The read set (a `Reads` value, built by `reads(name = selector, ...)`) comes
-from [`reads`](@ref), or mounted under a prefix with [`at`](@ref). It resolves
-against the build, and each entry is gathered over the snapshots
-[`logged`](@ref) returns into a plain vector of the entry's type. The returned
-`Series` holds the snapshots' `t`, `frame` and `boundary` beside `columns`, a
-`NamedTuple` keyed as the read set labels its entries. A new set of labels costs
-no compilation; only a new leaf type does.
+The read set (a [`Reads`](@ref) value, built by
+`reads(name = selector, ...)`) comes from [`reads`](@ref), or mounted under a
+prefix with [`at`](@ref). It resolves against the build, and each entry is
+gathered over the snapshots [`logged`](@ref) returns into a plain vector of the
+entry's type. The returned [`Series`](@ref) holds the snapshots' `t`, `frame`
+and `boundary` beside `columns`, a `NamedTuple` keyed as the read set labels
+its entries. A new set of labels costs no compilation; only a new leaf type
+does.
 
 `series` is refused as `ServiceLifecycle` while `running`, as `logged` is.
 Before anything is published the columns are empty, typed all the same. A bare

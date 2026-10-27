@@ -17,9 +17,18 @@
 # `EmptyGreedyClaim`; the cells that carry them, and the closed set `KINDS`
 # they form, are `src/dataplane.jl`'s.
 
+# Design: §13.2, Appendix B, Appendix C.
+# The root of the closed kind set. Every kind is an immutable struct under it,
+# with three methods: `severity(d)`, `path(d)` and `message(d)`.
 """
-The root of the closed kind set (§13.2, Appendix C). Every kind is an immutable
-struct under it, with three methods: `severity(d)`, `path(d)` and `message(d)`.
+    Diagnostic
+
+The abstract type of every diagnostic, the plain value a refusal or a warning
+carries.
+
+Each kind (a diagnostic's identity, carried by its type) is a struct under
+`Diagnostic`, and the struct's fields are its payload. [`warnings`](@ref)
+returns a `Vector{Diagnostic}`.
 """
 abstract type Diagnostic end
 
@@ -1419,33 +1428,41 @@ message(d::EmptyGreedyClaim) =
 # The members of dataplane.jl's `KINDS` beside `EmptyGreedyClaim` above: what a
 # diagnostic cell holds and `report_cell!` admits.
 
+# Design: §10.4, §10.6, §10.7, §11.3, §11.4, §11.6, §11.8, §12.4, §13.2,
+# Appendix B, Appendix C, D-203, D-250, D-317.
+# The closed kind set for the runtime warning stream (§13.2, Appendix C): each
+# kind is a Julia type, its identity, and its payload is plain data — paths and
+# names as strings and symbols, never component instances; the declared/observed
+# *port* types are the payload exception, and they are small. `EmptyGreedyClaim`,
+# declared just above, is raised by `attach!` into the roster entry's own cell
+# (§11.3, D-250); the set's one home, `KINDS`, is dataplane.jl's. Writer
+# attribution is never a payload field: the channel is per-writer, so the cell
+# supplies it (§11.8, §12.4: no call passes a device id). `DeviceJoinTimeout`'s
+# `who` is not that attribution — it is the payload's subject per Appendix C,
+# the abandoned device; the *writer* is the loop, whose own cell carries it
+# (§12.4, D-203).
+#
+# `MalformedDatum` is the author's kind (§11.6). The rest are the framework's:
+# the three staging kinds (§11.4 — the write-surface and entry violations, every
+# check at staging), the two budget degradations (§10.4, §10.6, on the model's
+# frame cell, which the loop's account folds, D-317), the pacer's forgiveness
+# (§10.7, on the loop's own cell), and the device crash (§12.4, from the wrapper
+# on the device's task, or from the calling task at the init bracket).
 """
-The closed kind set for the runtime warning stream (§13.2,
-Appendix C): each kind is a Julia type, its identity, and its payload is
-plain data — paths and names as strings and symbols, never component
-instances; the declared/observed *port* types are the payload exception, and
-they are small. `EmptyGreedyClaim`, declared just above, is raised by `attach!`
-into the roster entry's own cell (§11.3, D-250); the set's one home, `KINDS`,
-is dataplane.jl's.
-Writer attribution is never a payload field: the channel is per-writer, so
-the cell supplies it (§11.8, §12.4: no call passes a device id).
-`DeviceJoinTimeout`'s `who` is not that attribution — it is the payload's
-subject per Appendix C, the abandoned device; the *writer* is the loop,
-whose own cell carries it (§12.4, D-203).
+    MalformedDatum(cause) -> MalformedDatum
 
-`MalformedDatum` is the author's kind: a datum that could not be mapped for
-environmental reasons — a truncated datagram, malformed JSON, an
-out-of-range field — reported by the author's own loop body via
-`report!(handle, MalformedDatum(cause))` after catching its own parser error
-(§11.6: catch, stage nothing, report, continue). The classification is the
-author's — only they know their parser — and any *other* exception
-propagates to the wrapper as the `DeviceCrash` it is. The rest are the
-framework's: the three staging kinds (§11.4 — the write-surface and entry
-violations, every check at staging), the two budget degradations (§10.4,
-§10.6, on the model's frame cell, which the loop's account folds, D-317), the
-pacer's forgiveness (§10.7, on the loop's own cell), and the device crash
-(§12.4, from the
-wrapper on the device's task, or from the calling task at the init bracket).
+The diagnostic a device reports for a datum it could not map.
+
+A device's [`loop`](@ref) builds one after catching its own parser error, for a
+datum that failed for reasons outside the framework, such as a truncated
+datagram, malformed JSON or an out-of-range field. It passes the diagnostic to
+[`report!`](@ref) and goes on: catch, stage nothing, report, continue. `cause`
+is any value the device chooses to record, such as the caught exception. The
+classification is the device's, since only its author knows its parser, and
+any other exception reaches the framework as the `DeviceCrash` it is.
+
+`MalformedDatum` is a warning, which never throws. The report is counted in the
+reporting device's [`WriterStatus`](@ref) in the next snapshot.
 """
 struct MalformedDatum <: Diagnostic
     cause::Any

@@ -204,21 +204,40 @@ function _fold!(account::WriterAccount, cell::DiagCell)
     nothing
 end
 
+# Design: §11.8, §12.2, Appendix B, D-193.
+# `recent` is the ring the frame's drain took, at most `DIAG_RING` entries.
+# `totals` is monotone across snapshots, so log decimation loses *which*
+# boundary an occurrence fell on, never *how many*. `task_state` is read off the
+# run's `Task` handle at publication (D-193); `:done` without a live task covers
+# a failed `init!` and a returned inline body. The records render inside their
+# `FrameworkStatus`'s `show` (show.jl), each kind in full up to `STATUS_MAXLOG`
+# cumulative occurrences and count-only past it (§11.8).
 """
-One writer's record in the published framework status (§11.8): `recent` — the
-ring the frame's drain took, at most `DIAG_RING` entries, riding exactly one
-snapshot; `suppressed` — the per-kind counts the ring refused alongside them;
-`totals` — the cumulative account since the run began, monotone across
-snapshots (so log decimation loses *which* boundary an occurrence fell on,
-never *how many*); and, for a rostered device, the liveness `heartbeat`
-(§12.2) beside the `task_state` the loop reads off the run's `Task` handle at
-publication (D-193) — `:none` outside a run; inside one `:running` while the
-device's task lives and `:done` once it has ended, or when the device has no
-live task of its own (a failed `init!`, a returned inline body). The harness
-writer's and the loop's own records carry `nothing` for both: no task of
-their own to be alive or dead. The records render inside their `FrameworkStatus`'s `show`
-(show.jl), each kind in full up to `STATUS_MAXLOG` cumulative occurrences and
-count-only past it (§11.8).
+    WriterStatus
+
+The status record of one writer, as one snapshot publishes it.
+
+A snapshot's framework status (the per-writer diagnostics and liveness each
+snapshot carries) holds one record per writer: each rostered device in
+attachment order, then the harness writer (the framework-owned write path
+`stage!(sim, …)`), then the loop. [`incumbent_status`](@ref) returns the record
+of the writer behind a [`PortView`](@ref), and [`orphaned`](@ref) and
+[`stale`](@ref) read it. A record holds these fields.
+
+- `who`: the writer's name, as a port view's `incumbent` holds it.
+- `recent`: the diagnostics the writer reported since the previous frame top,
+  at most 16, carried by this snapshot alone.
+- `suppressed`: the counts by kind of the diagnostics dropped past those 16.
+- `totals`: the counts by kind since the run began, which never decrease from
+  one snapshot to the next.
+- `heartbeat`: a rostered device's heartbeat (the timestamp its task stores on
+  every loop pass), in seconds as `time()` gives them.
+- `task_state`: a rostered device's task, `:none` outside a run. Inside one it
+  is `:running` while the task lives, and `:done` once it has ended or when the
+  device has no live task of its own.
+
+The harness writer and the loop have no task of their own, so their records
+hold `nothing` in `heartbeat` and `task_state`.
 """
 struct WriterStatus
     who::String
@@ -470,18 +489,38 @@ end
 
 # --- publication (§11.2) -------------------------------------------------------
 
+# Design: §11.2, §11.8, §12.3, Appendix B.
+# The counter-home rule: the index rides *in* the snapshot, so any holder of
+# one — the log, a post-run inspector — indexes it without consulting the loop.
+# The framework status is the per-writer diagnostic account, frozen. Built in
+# private memory by copying the cell buffers, then handed out through one
+# release-store; nothing reachable from a published snapshot is ever written
+# again, which is what makes the lock-free read sound. The state stores (`x`,
+# `s`, `m`) are deliberately not carried (§11.2).
 """
-A snapshot (§11.2): the boundary-consistent signal table — the *whole* table,
-root inputs riding along as the source cells they are — with `t`, the frame
-ordinal and the §12.3 boundary ordinal, the counter-home rule: the index
-rides *in* the snapshot, so any holder of one — the log, a post-run
-inspector — indexes it without consulting the loop. The framework status
-rides beside the table (§11.8): the per-writer diagnostic account, frozen.
-Built in private memory by copying the cell buffers, then handed out through
-one release-store; nothing reachable from a published snapshot is ever
-written again, which is what makes the lock-free read sound. The state
-stores (`x`, `s`, `m`) are deliberately not carried (§11.2). Read it with
-`port(snapshot, path, name)`, addressed exactly as the live table.
+    Snapshot
+
+The immutable publication of one settled boundary: the signal table, its time
+and its counters.
+
+[`latest`](@ref) returns the newest snapshot, [`wait_next_snapshot`](@ref) the
+next one and [`logged`](@ref) the retained ones. A snapshot (the immutable
+per-boundary publication) holds the whole signal table at its boundary, root
+inputs included, and no state. Read a port off it with
+`port(snapshot, path, name)`, a method of [`port`](@ref) addressed exactly as
+the live table, and a device's read set with [`gather`](@ref). Nothing in a
+published snapshot is ever written again, so a reader on any task may hold one
+for as long as it likes.
+
+A snapshot holds these fields, beside the table that `port` reads.
+
+- `t`: the boundary time.
+- `frame`: the number of frames completed since the run's origin.
+- `boundary`: the boundary ordinal, counting the trajectory's published
+  boundaries from `0` at boundary zero.
+- `status`: the framework status (the per-writer diagnostics and liveness each
+  snapshot carries). `status.writers` holds one [`WriterStatus`](@ref) per
+  writer, and `status.pacer` the pacer's record.
 """
 struct Snapshot{T,S<:StoreBundle}
     t::T

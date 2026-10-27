@@ -102,6 +102,9 @@ peek
 incumbent_status
 orphaned
 stale
+PortView
+WriterStatus
+MalformedDatum
 ```
 
 ## Condition algebra
@@ -112,6 +115,11 @@ at
 combine
 override
 condition
+Fragment
+Scoped
+Combined
+Override
+ConditionNode
 ```
 
 ## Stopped-sim services
@@ -135,6 +143,13 @@ get_output
 get_input
 get_face
 taps
+GetState
+GetDeriv
+GetOutput
+GetInput
+GetFace
+Taps
+Reads
 ```
 
 ## Running
@@ -165,8 +180,15 @@ trace
 replay!
 warnings
 closed
+lifecycle
 mode
 live!
+Snapshot
+Run
+TerminationRecord
+Trace
+Series
+Diagnostic
 ```
 
 ## The component library

@@ -54,8 +54,8 @@ the two check keywords default to no checks.
   matter.
 - `condition`: a function of the decisions `d` that returns a condition.
   Everything fixed for the problem is closed over, and `d` is the one argument.
-- `reads`: the read set (a `Reads` value, built by [`reads`](@ref)) gathered
-  after each evaluation.
+- `reads`: the read set (a [`Reads`](@ref) value, built by [`reads`](@ref))
+  gathered after each evaluation.
 - `residuals`: `residuals(reads::NamedTuple, d::NamedTuple) -> NamedTuple`, the
   residual system as named equations, never a scalar cost.
 - `tolerances`: a `NamedTuple` of `Float64` with the residuals' names, each
@@ -104,9 +104,9 @@ Scope a trim problem under `prefix`, so that its paths resolve below that path.
 
 `at` lifts the [`TrimProblem`](@ref) field by field. The `condition` function is
 wrapped, so that each condition it returns is scoped under `prefix`. The `reads`
-field is a read set (a `Reads` value naming each selector it reads). It takes
-`prefix` at the front of its mount chain, the prefixes it is mounted under.
-Every other field holds no path and passes through, the two check fields
+field is a read set (a [`Reads`](@ref) value naming each selector it reads). It
+takes `prefix` at the front of its mount chain, the prefixes it is mounted
+under. Every other field holds no path and passes through, the two check fields
 included.
 
 A `reads` field that is not a read set passes through untouched, so that
