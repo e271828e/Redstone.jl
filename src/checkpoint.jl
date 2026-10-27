@@ -26,22 +26,39 @@ struct Fingerprint
     events::Vector{Tuple{String,Symbol}}
 end
 
+# Design: §12.6, D-038, D-273, D-274, D-319, D-429.
+# The priors are the one event register that crosses a boundary: `last` equals
+# them at rest. What every frame rewrites before reading it, the derivative
+# buffer, the arrival pair and the localization samples, stays out.
 """
-A model's state as one value (§12.6, D-274, D-319): the flat buffer, the `s` and
-`m` stores (`nothing` where a component owns none), the whole signal table with
-every cell buffer copied, the guard priors, the clock's `t` and `t₀`, and the
-fingerprint, the `Deployment` and the structural layout. The priors are the one
-event register that crosses a boundary: `last` equals them at rest. What every
-frame rewrites before reading it, the derivative buffer, the arrival pair and
-the localization samples, stays out. The frame index and the boundary ordinal
-are the run's, and a `Checkpoint` carries them beside the state. `t` is an
-indexed grid time, `t₀ + k·h` as the clock writes it, so a hand-typed decimal
-can miss the grid by an ulp and be refused.
+    ModelState{T}
 
-The table holds the root-input cells as values, never the authored overlay
-(D-038). A model's state is not a condition: it enters no condition expression
-and yields none, where a condition can be overlaid on a model at rest (D-273,
-D-429). `==` is identity: compare one field by field.
+A model's state at the start of a frame as one value, at the scalar type `T`.
+
+[`checkpoint`](@ref) takes it from a [`Model`](@ref), and [`restore!`](@ref)
+puts it back, into a model or, at `Float64`, into a [`Simulation`](@ref). Its
+fields hold the state.
+
+- `x`: the flat state buffer.
+- `s` and `m`: each component's discrete state and modes, `nothing` where the
+  component has none.
+- `table`: the whole signal table (the cells holding every produced signal),
+  every cell buffer copied. The root inputs are held as values, never as the
+  condition that set them.
+- `prior`: the event priors (each event's stored sample of its predicate).
+- `t` and `t₀`: the clock's time and origin.
+- `deployment`: the [`Deployment`](@ref), compared as a value on restore.
+- `layout`: the fingerprint (the structural layout a checkpoint carries),
+  compared against the target's on restore.
+
+The frame index and the boundary ordinal belong to a run, so a
+[`Checkpoint`](@ref) carries them beside the state. `t` is a grid time,
+`t₀ + k·h` as the clock writes it, so a hand-typed decimal can miss the grid by
+an ulp and be refused as `CheckpointMidFrame`.
+
+A model's state is not a condition: it enters no condition expression and
+yields none. To write a condition onto a model at rest, use [`overlay!`](@ref).
+`==` compares identity, so compare two states field by field.
 """
 struct ModelState{T}
     x::Vector{T}                     # the flat buffer
@@ -55,12 +72,20 @@ struct ModelState{T}
     layout::Fingerprint              # compared against the `Build`
 end
 
+# Design: §12.6, D-274, D-319.
+# It has no scalar parameter, because a cursor belongs to a trajectory and only
+# a nominal model has one.
 """
-A nominal model's state at a frame top beside the trajectory's two counters, the
-frame index and the boundary ordinal (§12.6, D-274, D-319): the value
-`checkpoint(sim)` returns and a trace's header holds. It has no scalar
-parameter, because a cursor belongs to a trajectory and only a nominal model
-has one, so the state is a `ModelState{Float64}` by type.
+    Checkpoint
+
+A `Float64` model's state at the start of a frame, beside the run's frame index
+and boundary ordinal.
+
+`checkpoint(sim)` returns it, and a trace's header (the trace's fixed preamble)
+holds one. [`restore!`](@ref) and [`replay!`](@ref) put it back. Its fields are
+`state`, a `Float64` [`ModelState`](@ref), and `frame` and `boundary`, the
+run's two counters. The state is always `Float64`, since only a simulation's
+model has a run, and a simulation runs only a `Model{Float64}`.
 """
 struct Checkpoint
     state::ModelState{Float64}       # the model's state
