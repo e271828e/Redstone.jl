@@ -7,7 +7,7 @@ using Test, LinearAlgebra, BenchmarkTools
 using Statistics: std
 using Redstone, RedstoneExamples
 import Redstone: Build, ProbeDual, Simulation, build, init!, run!, step!, stage!, trim!, linearize, state, modes,
-    series, reads, get_output, get_face, termination, phase_bodies, set, at, combine, override, condition, EndTimeReached,
+    series, reads, get_output, get_face, get_input, termination, phase_bodies, set, at, combine, override, condition, EndTimeReached,
     ModelRequestedStop
 import RedstoneExamples: Longitudinal, aircraft, level_flight, longitudinal_taps, lqr_gains, closed_loop,
     trimmed, descent
@@ -54,7 +54,7 @@ function fly_closed_loop(solution, gains; cascade = true, switch_at = nothing, h
     h = 1//200
     frame(t) = round(Int, t / h)
     sim = Simulation(closed_loop(solution, gains; noise_σ); h)
-    init!(sim, override(trimmed(solution), set(u = (mode = cascade,))))
+    init!(sim, cascade ? trimmed(solution) : override(trimmed(solution), set(u = (mode = false,))))
     step!(sim; frames = frame(5.0) - 1)
     stage!(sim, "h_ref" => 1000.0 + h_step)
     if switch_at !== nothing
@@ -136,6 +136,16 @@ end
             switch_at_10 = fly_closed_loop(solution, gains; switch_at = 10.0),
             hand_back_at_10 = fly_closed_loop(solution, gains; cascade = false, switch_at = 10.0))
 
+    @testset "the staged reference and mode land on their ticks (§11.3)" begin
+        # Snapshot k + 1 is the frame top t = k h, so the step lands at snapshot 1001 and the
+        # switches at snapshots 12001 and 2001.
+        staged(sim) = series(sim, reads(h_ref = get_input("h_ref"), mode = get_input("mode"))).columns
+        @test findfirst(==(1050.0), staged(runs.cascade).h_ref) == 1001
+        @test all(staged(runs.cascade).mode)
+        @test findfirst(!, staged(runs.switch_at_60).mode) == 12001
+        @test findfirst(identity, staged(runs.hand_back_at_10).mode) == 2001
+    end
+
     @testset "either controller holds the altitude step (§13.7, D-385)" begin
         # The probe's largest errors after 80 s, in h and V: 0.064 and 0.015 under the cascade,
         # 0.022 and 0.0008 under the tracker, 0.021 and 0.0018 and 0.019 and 0.0004 under the
@@ -152,22 +162,23 @@ end
     end
 
     @testset "the controller not in command tracks the one that is (§13.7, D-385)" begin
-        # The probe's largest gaps over [12, 60): 0.0151 for the standby tracker, and 0.0101,
-        # 0.0021, 0.0134 and 0.0374 for the standby cascade's pitch-rate, airspeed, altitude and
-        # attitude loops. The window opens after the climb's transient, which the standby
-        # attitude loop leaves between 9 and 11 s depending on the noise's alignment with the
-        # step; from 12 s on, every gap is the same under any alignment.
+        # The probe's largest gaps over [15, 60): 0.0078 for the standby tracker, and 0.0101,
+        # 0.0020, 0.0134 and 0.0374 for the standby cascade's pitch-rate, airspeed, altitude and
+        # attitude loops. The window opens after the climb's transient, whose end moves with the
+        # noise's alignment with the step: over 25 alignments of the step, 5.00 to 5.48 s, the
+        # standby attitude loop's gap last exceeds 0.08 between 8.6 and 14.0 s, and from 15 s on
+        # every gap reads the same under all 25.
         cascade, tracker = runs.cascade, runs.tracker
         @test largest_gap(logged_face(cascade, "lqr_controller", :δe), logged_face(cascade, "selection", :δe),
-                          cascade, 12, 60) <= 0.04
+                          cascade, 15, 60) <= 0.04
         @test largest_gap(logged_face(tracker, "pid_controller", :δe), logged_face(tracker, "selection", :δe),
-                          tracker, 12, 60) <= 0.03
+                          tracker, 15, 60) <= 0.03
         @test largest_gap(logged_face(tracker, "pid_controller", :δt), logged_face(tracker, "selection", :δt),
-                          tracker, 12, 60) <= 0.005
+                          tracker, 15, 60) <= 0.005
         @test largest_gap(logged_port(tracker, "pid_controller/h_ctl", :u), logged_port(tracker, "plant", :θ),
-                          tracker, 12, 60) <= 0.03
+                          tracker, 15, 60) <= 0.03
         @test largest_gap(logged_port(tracker, "pid_controller/θ_ctl", :u), logged_port(tracker, "plant", :q),
-                          tracker, 12, 60) <= 0.08
+                          tracker, 15, 60) <= 0.08
     end
 
     @testset "the switch is bumpless in steady flight and nearly so in the climb (§13.7, D-385)" begin

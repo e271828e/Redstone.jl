@@ -36,8 +36,10 @@ item changes what the spec says, the spec edit is part of the item.
   model. The README keeps its quick start, shows three of the layers
   condensed with the plot and the diagram, and links to the tutorial; the
   interactive part is the binding's few lines until the live inspector
-  gives a recording. Writing the tutorial is what finds the API's friction,
-  which is why it precedes the audit.
+  gives a recording. The closed loop's references are root inputs, so the
+  tutorial can also linearize from `h_ref` to the altitude. Writing the
+  tutorial is what finds the API's friction, which is why it precedes the
+  audit.
 - **The exported-name audit.** The export list is to be decided deliberately
   rather than by accident, and until the audit runs the module exports
   nothing (D-226). The audit is a full-surface sweep under the four-class

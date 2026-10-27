@@ -161,9 +161,9 @@ rides 46 m above and back.
 ## 4. The closed loop
 
 The tutorial's fifth layer closes the loop with library blocks alone
-([§13.7][s13-7]), in a `Group` of five groups beside the plant, under the root
-inputs `h_ref`, `V_ref` and `mode`: `sensing`, `pid_controller`,
-`lqr_controller`, `selection` and `actuators`. Each group exports the signals
+([§13.7][s13-7]), in a `Group` of five groups beside the plant, `sensing`,
+`pid_controller`, `lqr_controller`, `selection` and `actuators`, under the
+root inputs `h_ref`, `V_ref` and `mode`. Each group exports the signals
 that cross its boundary as faces and keeps the rest inside, so the root level
 reads as the loop's block diagram and each group as one of its boxes.
 Everything discrete runs at 50 Hz under a plant step of 5 ms, each group
@@ -297,11 +297,11 @@ second to catch up.
 
 **What the loop does.** The references and the mode are root inputs, so the
 scenario belongs to the run, not to the model: the testset's helper steps the
-simulation to 5 s, stages `h_ref` at 1050 m, steps on to the switch time if
-there is one, stages `mode`, and runs to 120 s. A staged batch applies at the
-top of the next frame, and the ticks at a boundary settle in the frame that
-reaches it, so the helper stages each write one frame before the tick that is
-to see it, which puts the step on the 5 s tick exactly. From trim, a 50 m
+simulation to one frame before 5 s, stages `h_ref` at 1050 m, steps on to one
+frame before the switch time if there is one, stages `mode`, and runs to
+120 s. A staged batch applies at the top of the next frame, and the ticks at a
+boundary settle in the frame that reaches it, so staging one frame before a
+tick is what puts the write on that tick. From trim, a 50 m
 step in the altitude reference at
 `t = 5 s` is held within 0.1 m by `t = 80 s` by either controller, the
 cascade with no overshoot and the tracker with about 2 m. During the climb

@@ -84,10 +84,12 @@ is why the actuators take `δe_cmd` and publish `δe`.
 - **The tracking pins' window was fragile.** It opened at 10 s, inside the
   transient whose end moves with the noise's alignment, so it pinned a
   realization rather than the companion's claim about the settled climb.
-  The five gaps now read over `[12, 60)`, where every one is the same under
-  both alignments and equal to the old probe values: 0.0151 for the standby
-  tracker, and 0.0101, 0.0021, 0.0134 and 0.0374 for the standby cascade's
-  pitch-rate, airspeed, altitude and attitude loops.
+  The five gaps now read over `[15, 60)`. The review swept the step over 25
+  tick alignments, 5.00 to 5.48 s: the standby attitude loop's transient
+  ends anywhere between 8.6 and 14.0 s, three alignments fail a `[12, 60)`
+  window, and from 15 s on every gap reads the same under all 25: 0.0078
+  for the standby tracker, and 0.0101, 0.0020, 0.0134 and 0.0374 for the
+  standby cascade's pitch-rate, airspeed, altitude and attitude loops.
 - **`combine` refuses a second write to `mode`**, so the helper layers the
   mode over `trimmed(solution)` with `override`.
 - **A level's face is read with `get_face` mounted at the level**,
@@ -124,3 +126,35 @@ is why the actuators take `δe_cmd` and publish `δe`.
   `stage!` lands on the tick it is meant for.
 - The pinned probes: unchanged by the measurement above, re-read against
   the new reads.
+
+## Review (2026-10-27, one cold Opus reviewer over both commits)
+
+No correctness defect. The reviewer walked the flat loop's 55 wires through
+the faces by hand and by flattening both descriptors to leaf-to-leaf wires,
+with an empty set difference both ways; ran the five scenarios old against
+new, within 6e-9 on the tracker run and 2.4e-8 on the hand-back run's
+altitude; reproduced every pinned probe value; and ran 24 mutants. Four
+findings, all on tests and wording, fixed in the increment's fix commit:
+
+- No pin checked that the staged `mode` write took effect: a mutant staging
+  the current value survived, since `stage!` reports a misspelled face to
+  the harness writer's diagnostic cell, not to the caller. A testset now
+  reads the root inputs back with `get_input` and pins the snapshot at
+  which `h_ref` steps and `mode` flips, which also guards the frame
+  arithmetic directly, where before only the hand-back jump pin caught a
+  write one frame late.
+- The `[12, 60)` window's comment claimed more than held; the window moved
+  to `[15, 60)` on the sweep above.
+- `trimmed`'s "cascade in command" was unpinned because the helper always
+  overrode `mode`; the helper now uses `trimmed` alone when the cascade
+  flies.
+- Two wordings in the companion's section 4, and the closed-loop
+  linearization from `h_ref` recorded on the tutorial's pending bullet.
+
+Accepted survivors: the tracker's `z` reading the true altitude instead of
+the measurement, within the pins' bounds as in the old suite; `h_ctl`
+holding on the wrong `saturated`, unreachable since the scenario never hits
+a limit; the first gap pin reading `δe_prev`, one tick inside the pin's
+headroom; `sensing` dropping its rate, which the noise σ pin cannot see, an
+existing gap; and `selection` dropping its rate, an equivalent mutant since
+the delays' rate is inferred.
