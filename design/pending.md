@@ -25,7 +25,10 @@ item changes what the spec says, the spec edit is part of the item.
   `alias` and `name` fields it asked for landed the same day. Axis 5 ran
   on 2026-10-27 too; its record is `design/inspector/workspace.md`, whose
   "Design axes" hands on what remains: axis 6, the live session, with the
-  tabs by name, axis 7, and the inherited bumps.
+  tabs by name, axis 7, and the inherited bumps. Axis 6 reads
+  `design/inspector/initial_design.md`'s axis 6 paragraph and stage 2's
+  settled list, `descriptor_design.md`'s answer 13, and the hand-ons of
+  `visual_grammar.md` and `workspace.md`.
   The built-in Julia GUI is parked (D-310). The
   stage's record is `design/inspector/initial_design.md` (not normative),
   which carries each stage's answered questions and open list. The later
