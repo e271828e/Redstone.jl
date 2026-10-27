@@ -9057,7 +9057,9 @@ The holder types are public as a group too. A type that a call listed on
 [Appendix B][sB] returns or takes, and that a user never constructs by name, is
 public by standing under its owner's heading there; [Appendix B][sB]'s opening
 records it. `lifecycle(sim)` is public by standing under [Appendix B][sB]'s
-Running heading ([§12.6][s12-6]).
+Running heading ([§12.6][s12-6]). `TerminationSource`, the parent of the four termination
+sources, and `LoopError`, the abnormal one of [§13.6][s13-6], are public by standing
+under that heading too.
 
 ### D-227 — Select the stepper by type under the `algorithm` keyword
 

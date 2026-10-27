@@ -1025,7 +1025,7 @@ out of scope.
 
 ## 10. Left for the user
 
-The rulings settle every friction above except these. The first three are
+The rulings settle every friction above except these. The first two are
 the export audit's questions, which the sweep surfaced.
 
 - **Appendix C's kind set.** Ruling 13 makes `Diagnostic` public, the root
@@ -1036,19 +1036,17 @@ the export audit's questions, which the sweep surfaced.
   has the field-list form, and the three docstrings list their fields by
   name. Whether the names are public surface stays the audit's question.
   `TrimReport` and `Linearization` list theirs the same way.
-- **`TerminationSource` and `LoopError`.** W1 writes them as code. Neither is
-  on Appendix B or among ruling 13's holder types, while the three other
-  sources are on the page.
-- **`_no_checks` and `LINEARIZE_WIDTH` in signature lines.** The methods
-  write them as defaults, so the lines do too (W6 item 4). Appendix B
-  writes `width = 8`. No ruling covers an unexported constant in a default.
+- **`TerminationSource` and `LoopError`.** Settled 2026-10-27. Both are
+  public under Appendix B's Running, and the next docstring commit
+  documents them.
+- **`_no_checks` and `LINEARIZE_WIDTH` in signature lines.** Settled
+  2026-10-27. The sheet writes such a default by value or in the prose, and
+  the next docstring commit applies it.
 - **The `LoopHooks` question.** Nothing remains. Ruling 3 turns the two
   methods' docstrings into comments, and the conformance commit applies it.
-- **Optional edits the triage proposed.** The docs commit did not take them,
-  since no ruling asked for them. Appendix B's `linearize` could say "`t0`
-  (default `0.0` beside `about`)". §8.5's leaf list could name `y_state`
-  and `y_direct` after "any stage". `TrimProblem`'s comment could cite §14.7
-  before §9.5.
+- **Optional edits the triage proposed.** Settled 2026-10-27. Appendix B's
+  `t0` and §8.5's stages land in the spec, and the next docstring commit
+  reorders `TrimProblem`'s citations.
 
 ## 11. The cold review
 

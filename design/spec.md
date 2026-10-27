@@ -3225,7 +3225,8 @@ Class is declared instead by *which* well-known declarations a type defines.
 **`local_wires` is the marker**, mandatory even when empty, and defining
 it makes an assembly ([D-039][d-039]). Any leaf declaration makes a primitive.
 The leaf declarations are `x_init`/`s_init`/`m_init`, `ws_init`,
-`u_types`/`y_types`, `state_events`, and any stage, `x_deriv`, `s_update` or
+`u_types`/`y_types`, `state_events`, and any stage (`y_state`, `y_direct`),
+`x_deriv`, `s_update` or
 `x_projection` method.
 
 The rule is total. A `<: AbstractComponent` type declaring neither family has no
@@ -13892,7 +13893,8 @@ assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
   [D-429][d-429]).
 - `linearize(sim, taps; about = nothing, t0 = nothing, width = 8) →
   Linearization`. A pure query. The operating point defaults to the
-  checkpoint of the simulation, and `about` with `t0` (default `0.0`) places
+  checkpoint of the simulation, and `about` with `t0` (default `0.0` beside
+  `about`) places
   it anywhere else ([§14.10][s14-10], [D-430][d-430]).
 - `get_state(path, leaf)`, `get_deriv(path, leaf)`, `get_output(path, leaf)`,
   `get_input(leaf)` and `get_face(leaf)`. The closed
@@ -13949,9 +13951,11 @@ assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
   ports read at every published boundary unless the advance ignores them
   ([§13.5][s13-5]).
 - `termination(sim)`. The current run's
-  [termination record](#g-termination-record), whose source is a typed value
-  such as `EndTimeReached` or `ModelRequestedStop` ([§13.5][s13-5],
-  [D-203][d-203]). It is `nothing` until the run ends.
+  [termination record](#g-termination-record), whose source is a typed value,
+  `EndTimeReached`, `ModelRequestedStop`, `ControlRequestedStop` or
+  `LoopError` ([§13.5][s13-5], [D-203][d-203]). `LoopError` is the abnormal end of [§13.6][s13-6],
+  and `TerminationSource` is the four sources' abstract parent. The record
+  is `nothing` until the run ends.
 - `logged(sim)`. The log is the retained snapshots, and `logged` returns them
   ([§11.2][s11-2]).
 - `reads(; selectors...)`. Builds a [read set](#g-read-set), the value `series` takes and

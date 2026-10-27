@@ -86,6 +86,10 @@ closed(run::Run) = run.termination !== nothing
   required.** `Deployment` declares `h = nothing` so that a missing `h` is
   refused as `DeploymentInvalid` rather than a `MethodError`; its signature
   line writes `h` with no default, and the keyword list says it is required.
+- **A default that is an unexported constant is written as its value.**
+  `width::Int = LINEARIZE_WIDTH` is written `width::Int = 8`, and a default
+  with no literal value, such as `_no_checks`, is left off the line and
+  stated in the prose.
 - **A signature that disagrees with Appendix B is a finding against B.** The
   rewrite reports it and the spec is corrected. The docstring is never bent
   to match the appendix.
@@ -195,6 +199,8 @@ The reviewer's checklist, one line per rule:
 16. Public fields listed under a lead sentence.
 17. A glossary term in the summary glossed in the body.
 18. No companion `*.md` pointer inside the quotes.
+19. An unexported-constant default written as its value, or stated in the
+    prose.
 
 ## The battery
 
