@@ -144,3 +144,87 @@ closed
 mode
 live!
 ```
+
+## The component library
+
+```@meta
+CurrentModule = Redstone.Blocks
+```
+
+The standard library, `Redstone.Blocks`, grouped as the inventory in
+`companions/library_inventory.md` groups it. Every block is reached by import
+from the submodule.
+
+### Structure
+
+```@docs
+Junction
+SumJunction
+Or
+And
+Pack
+Unpack
+Group
+Switch
+StopRequest
+```
+
+### Sources
+
+```@docs
+Constant
+Step
+Source
+GaussianWhiteNoise
+```
+
+### Continuous dynamics
+
+```@docs
+Integrator
+LimitedIntegrator
+FirstOrderLag
+LinearBlock
+StateSpace
+TransferFunction
+```
+
+### Discontinuities
+
+```@docs
+Relay
+```
+
+### Discrete tier
+
+```@docs
+UnitDelay
+Delay
+DiscreteIntegrator
+DiscreteLimitedIntegrator
+RateLimiter
+DiscreteLinearBlock
+DiscreteStateSpace
+DiscreteTransferFunction
+DiscretizedStateSpace
+DiscretizedTransferFunction
+```
+
+### Stop-gradient
+
+```@docs
+Freeze
+```
+
+### Controllers
+
+```@docs
+AsPort
+ControllerBlock
+PIDBlock
+PID
+DiscretePID
+LQRTrackerBlock
+LQRTracker
+DiscreteLQRTracker
+```

@@ -26,6 +26,30 @@ item changes what the spec says, the spec edit is part of the item.
   stage's record is `design/inspector/initial_design.md` (not normative),
   which carries each stage's answered questions and open list. The later
   stages stand after the release, below.
+- **The API docstrings.** The docstrings are written for the maintainer:
+  nearly all cite spec sections or log entries, and many open with a design
+  note where the manual asks for a signature. A user reads them through
+  `?name` and the API reference, and understands neither a section mark nor
+  a decision number. Every docstring of a name the audit confirms as API is
+  rewritten to the manual's conventions: the indented signature, a
+  one-sentence summary, the elaboration in short paragraphs, `# Examples`
+  where a doctest is cheap, and `[`name`](@ref)` cross-references, with no
+  citation of the spec or the log. The citations move to a `# Design:`
+  comment above the docstring, where a diff review still sees them.
+  Unexported names keep their docstrings as they are. The style sheet
+  `design/tools/docstring_style.md` fixes the convention; the sweep runs
+  one source file per agent with a cold review after, under
+  `design/briefs/brief_docstring_sweep.md`. It runs ahead of the tutorial
+  and the audit (ruled 2026-10-27), since a rename costs a signature line
+  and the Documenter build catches a stale link: an examples pass follows
+  the tutorial, and a signature-and-link pass follows the audit's renames.
+  The reference page `docs/src/api.md`
+  lists B's names under B's headings, less the 24 that have no docstring of
+  their own as of 2026-10-26 and rejoin it when documented:
+  `AbstractComponent`, the stage family `y_state`/`y_direct`/`x_deriv`/
+  `s_update`, `Hz`, `frame_top!`/`settled!`, `port`, `AbstractBinding`,
+  `is_output`/`is_greedy`, `loop`/`shutdown!`/`unblock!`, the five `get_`
+  selectors and `taps`, and the three termination sources.
 - **`closed_loop` as a hierarchy.** The example's closed loop is one flat
   `Group` of 27 library blocks and 55 wires, written so to show the library
   composing without a named assembly, and it draws as a tangle at any
@@ -100,26 +124,6 @@ item changes what the spec says, the spec edit is part of the item.
       with a public Base name when the spec's verb is that word, reached by
       qualified name or explicit import; `peek` (§11.7, D-270) is the first
       instance, the panel kit's verb beside `Base.peek`.
-- **The API docstrings.** The docstrings are written for the maintainer:
-  nearly all cite spec sections or log entries, and many open with a design
-  note where the manual asks for a signature. A user reads them through
-  `?name` and the API reference, and understands neither a section mark nor
-  a decision number. Every docstring of a name the audit confirms as API is
-  rewritten to the manual's conventions: the indented signature, a
-  one-sentence summary, the elaboration in short paragraphs, `# Examples`
-  where a doctest is cheap, and `[`name`](@ref)` cross-references, with no
-  citation of the spec or the log. The citations move to a `# Design:`
-  comment above the docstring, where a diff review still sees them.
-  Unexported names keep their docstrings as they are. The style sheet
-  `design/tools/docstring_style.md` fixes the convention; the rewrite runs
-  one source file per agent with a cold review after. It follows the audit
-  because the audit decides the set. The reference page `docs/src/api.md`
-  lists B's names under B's headings, less the 24 that have no docstring of
-  their own as of 2026-10-26 and rejoin it when documented:
-  `AbstractComponent`, the stage family `y_state`/`y_direct`/`x_deriv`/
-  `s_update`, `Hz`, `frame_top!`/`settled!`, `port`, `AbstractBinding`,
-  `is_output`/`is_greedy`, `loop`/`shutdown!`/`unblock!`, the five `get_`
-  selectors and `taps`, and the three termination sources.
 - **The first release.** Registration in General, the tag, and the
   announcement, in that order. Registration is quiet and the announcement
   is the public moment, so the announcement waits for everything above.

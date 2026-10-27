@@ -17,7 +17,10 @@ makedocs(;
         "Home" => "index.md",
         "API" => "api.md",
     ],
-    format = Documenter.HTML(; prettyurls = get(ENV, "CI", nothing) == "true"),
+    format = Documenter.HTML(;
+        prettyurls = get(ENV, "CI", nothing) == "true",
+        size_threshold_ignore = ["api.md"],  # one page for the whole surface
+    ),
 )
 
 deploydocs(; repo = "github.com/e271828e/Redstone.jl.git")
