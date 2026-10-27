@@ -78,6 +78,9 @@ claims
 map_input
 map_output
 TableBinding
+loop
+shutdown!
+unblock!
 DeviceHandle
 wait_next_snapshot
 running

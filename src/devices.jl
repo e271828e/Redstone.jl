@@ -14,30 +14,51 @@
 # surface (`attach!`, `stop!(sim)`); nothing here names a `Simulation`, so the
 # file precedes sim.jl.
 
+# Design: §11.6, §11.7, §12.3, §12.4, D-244, D-261, D-270.
+# What a device may touch is what the handle holds, so it deliberately does not
+# hold the `Simulation`. Of the plane it holds the exclusivity index alone, the
+# `Dict` `stage!` checks a face against, never the plane itself (D-261). The
+# stable device id is the roster entry's (§12.4), and the handle's `who`
+# renders it. `last_seen` is the §12.3 waiter's private register, refreshed at
+# spawn so a run's first wait observes that run's boundaries. `detached` is
+# D-244's flag, set by `detach!`: one atomic load per stage, no roster scan.
+# The handle holds the build's `Structure` and the nominal `Layout` by
+# reference, like the index, for the panel kit's bake alone: `port_views` reads
+# the wiring, the claim, the exclusivity index and the addresses off the handle
+# (§11.7, D-270). The type's second parameter is the gatherer's, the compiled
+# reads.
 """
-The handle (§11.6): the one object every attached device receives, carrying
-exactly the primitive capabilities — read (`latest`, `wait_next_snapshot`),
-stage (`stage!`) and control access (`running`, `stop!`) — and deliberately
-*not* the `Simulation`: what a device may touch is what the handle holds.
-Of the plane it holds the exclusivity index alone, the `Dict` `stage!` checks
-a face against, never the plane itself (D-261). `attach!` constructs it and
-returns it, and the same handle is what the wrapper passes to
-`loop(dev, handle)` on the device's task. It also carries the attachment's
-binding, read back by `binding(handle)`: the loop's own
-`map_input`/`map_output` calls take it from the handle instead of the device
-carrying its configuration (§11.6). The stable device id is the roster
-entry's (§12.4); the handle's `who` renders it. `last_seen` is the §12.3
-waiter's private register, refreshed at spawn so a run's first wait observes
-that run's boundaries. `detached` is D-244's flag: the handle outlives its
-roster entry as an object only, and `detach!` sets the flag so that the two
-write primitives, `stage!` and `report!`, refuse by name instead of landing
-in a cell no drain reads — one atomic load per stage, no roster scan. The
-reads stay legal. It holds the build's `Structure` and the nominal `Layout`
-by reference, like the index, for the panel kit's bake alone: `port_views`
-reads the wiring, the claim, the exclusivity index and the addresses off the
-handle (§11.7, D-270). Its type carries the binding's and the gatherer's
-types, so `binding(handle)` and `gather(handle, snapshot)` are statically
-typed inside a device's `loop` and allocate nothing.
+    DeviceHandle
+
+The one object every attached device receives, carrying what the device may
+read, stage and control.
+
+[`attach!`](@ref) returns the handle, and the framework passes the same handle
+to the device's [`loop`](@ref) on the device's own task. It carries capabilities,
+not the simulation.
+
+- Read: [`latest`](@ref) and [`wait_next_snapshot`](@ref) return snapshots (the
+  immutable per-boundary publications), and [`gather`](@ref) runs the binding's
+  reads over one.
+- Stage: [`stage!`](@ref) writes root inputs inside the device's claim (the set
+  of faces a device may write), and [`report!`](@ref) reports a malformed datum.
+- Control: [`running`](@ref) says whether the run goes on, and
+  [`stop!`](@ref) requests a stop.
+
+The handle also carries the attachment's binding (the value passed at `attach!`
+that makes a device framework-legible), read back with [`binding`](@ref). The
+loop's [`map_input`](@ref) and [`map_output`](@ref) calls take it from the
+handle, so the device need not carry its configuration. The panel kit's reads,
+[`port_views`](@ref), [`pending`](@ref) and [`peek`](@ref), take the handle too.
+
+A handle outlives its roster entry (the device's record in the list of attached
+devices) as an object only. After [`detach!`](@ref), the two write primitives,
+`stage!` and `report!`, are refused as `DeviceContractMismatch` instead of
+landing in a cell nothing reads. The reads stay legal.
+
+The handle's type carries the binding's type and the type of its compiled
+reads, so `binding(handle)` and `gather(handle, snapshot)` are type-stable
+inside a device's `loop` and allocate nothing.
 """
 mutable struct DeviceHandle{B<:AbstractBinding,G<:Union{Nothing,Reader}}
     const who::String
@@ -61,87 +82,212 @@ _assert_attached(handle::DeviceHandle) =
 
 # --- the authoring contract (§11.6) --------------------------------------------
 
+# Design: §11.6, §12.4, §12.4(3), Appendix C, D-366.
+# The authoring contract opens here, its four functions in a row: `loop` is the
+# one mandatory function, and `init!`, `shutdown!` and `unblock!` are optional
+# hooks with no-op defaults, since a stub device holds nothing (D-366).
+# `unblock!` is §12.4(3)'s hook, and `attach!` refuses a device with no `loop`
+# (Appendix C); each of the three carries its own docstring below. `init!` and
+# `shutdown!` are the per-run resource bracket, and `init!` runs in §12.4's
+# pre-spawn bracket on the calling task.
 """
-The authoring contract: four functions, one optional. `init!` and `shutdown!` are the per-run
-resource bracket, with no-op defaults — a stub device holds nothing — and
-`shutdown!` must tolerate a partially initialized device: it is guaranteed
-on every exit path, the failed-`init!` bracket included. `unblock!` is
-§12.4(3)'s optional hook, default no-op: an override makes the device's own
-blocking call return. `loop` is the one mandatory function — the
-author-owned task body, looping on `running(handle)` with interruptible
-blocking. A device whose loop was never written would otherwise present as
-"attached, nothing happens", the hidden-bug class §11.6 tolerates nowhere, so
-`attach!` refuses it by name (`check_device`, roster.jl) before it is ever
-rostered — `DeviceContractMismatch`, service, fail-fast (Appendix C). This
-fallback exists only as the comparison target `which` needs to detect a
-device with no method of its own; it is unreachable, `attach!` having already
-refused, and its own throw says so.
+    init!(dev::AbstractDevice) -> Nothing
+
+Initialize the device's resources at the start of each run, before the device's
+task starts.
+
+`init!` is one of a device's three optional hooks, beside [`shutdown!`](@ref)
+and [`unblock!`](@ref). The default does nothing, so a device that holds no
+resources defines no method. [`run!`](@ref) and [`replay!`](@ref) call it once
+per attached device, in attachment order, before any device's [`loop`](@ref)
+starts. It acquires what the run needs, such as a socket or a file, and need not
+clean up after a throw, since `shutdown!` does that.
+
+A throw inside `init!` is reported as `DeviceCrash` into the device's diagnostic
+cell (the per-writer cell holding runtime diagnostics), and `shutdown!` then runs
+on the partially initialized device. The run goes on without the device, unless
+its attachment set `should_abort`, in which case the failure also requests a
+stop.
 """
 init!(::AbstractDevice) = nothing
+
+# Design: §11.6, §12.4, D-138, D-268, D-372.
+# The release is guaranteed on every exit path, the failed-`init!` bracket
+# included. A throw out of it is caught by `_shutdown!` below, so it cannot
+# wreck the bracket or the tail around it.
+"""
+    shutdown!(dev::AbstractDevice) -> Nothing
+
+Release the device's resources at the end of each run, whichever way the run
+ends.
+
+`shutdown!` is one of a device's three optional hooks, beside [`init!`](@ref)
+and [`unblock!`](@ref), and the default does nothing. The framework calls it
+after the device's [`loop`](@ref) returns or throws, and after an `init!` that
+threw. It must therefore tolerate a partially initialized device, closing only
+what is open. A `shutdown!` written that way is also safe when an interrupt
+(Ctrl-C) at the wrong moment calls it twice, or with no `init!` before it.
+
+A throw inside `shutdown!` is logged as a warning that the device's resources
+may leak, and the run's shutdown goes on.
+"""
 shutdown!(::AbstractDevice) = nothing
+
+# Design: §11.6, §12.4, §12.4(3), D-402.
+# Tail step (3), after step (2) has woken every framework wait. The wrapper
+# reads an override as `_unblocks` does, against the default method.
+"""
+    unblock!(dev::AbstractDevice) -> Nothing
+
+Make the device's loop return from its own blocking call once the run is
+stopping.
+
+`unblock!` is one of a device's three optional hooks, beside [`init!`](@ref) and
+[`shutdown!`](@ref), and the default does nothing. The framework calls it as the
+run shuts down, after the final snapshot (the immutable per-boundary
+publication) is published and every [`wait_next_snapshot`](@ref) has returned.
+A device whose [`loop`](@ref) blocks in a call of its own, such as a socket
+read, overrides it to make that call return, for example by closing the socket.
+
+A throw the override provokes in the loop, once the run is stopping, is treated
+as shutdown, not reported as `DeviceCrash`. A device that does not override
+`unblock!` has nothing to provoke a throw, so any throw from its loop is a
+crash. A throw inside `unblock!` itself is logged as a warning, and the device's
+task can then end only through the `join_timeout` of its
+[`Simulation`](@ref).
+"""
 unblock!(::AbstractDevice) = nothing
+
+# Design: §11.6, §12.4, Appendix C, D-102, D-366.
+# A device whose loop was never written would otherwise present as "attached,
+# nothing happens", the hidden-bug class §11.6 tolerates nowhere, so `attach!`
+# refuses it by name (`check_device`, roster.jl) before it is ever rostered:
+# `DeviceContractMismatch`, service, fail-fast (Appendix C). This fallback
+# exists only as the comparison target `which` needs to detect a device with no
+# method of its own. It is unreachable, `attach!` having already refused, and
+# its own throw says so.
+"""
+    loop(dev::AbstractDevice, handle)
+
+Run the device's own body on its task for one run, the one function every
+device must define.
+
+A device type defines `loop(dev::MyDevice, handle)`. Each run calls it once, on
+a task of its own, after every device's [`init!`](@ref) has returned, and passes
+it the [`DeviceHandle`](@ref) that [`attach!`](@ref) returned. The body is the
+device's own code: it reads, waits and stages through the handle, and loops
+while [`running`](@ref) returns `true`, checking it between blocking calls. Each
+blocking call must be one a stop can interrupt. [`wait_next_snapshot`](@ref)
+returns at a stop, and [`unblock!`](@ref) makes the device's own blocking calls
+return.
+
+Whenever the body returns or throws, the framework runs [`shutdown!`](@ref). A
+throw is reported as `DeviceCrash` into the device's diagnostic cell (the
+per-writer cell holding runtime diagnostics), and the run goes on without the
+device's task. If the attachment set `should_abort`, the body's end, by return
+or by throw, also requests a stop. An interrupt (Ctrl-C) inside the body is a
+stop, not a crash.
+
+`attach!` refuses a device with no `loop` method of its own as
+`DeviceContractMismatch`.
+"""
 loop(dev::AbstractDevice, handle) =
     throw(InternalInvariant("unreachable: attach! refuses a device with no loop method"))
 
 # --- the handle primitives (§11.6) ---------------------------------------------
 
+# Design: §11.6, §11.8, §12.2, §12.4.
+# §12.4's exit predicate. Tail step (1) sets the sticky stopped status after
+# the final snapshot. Every handle primitive a loop pass touches, this one,
+# `latest`, `pending`, `stage!`, `wait_next_snapshot`, `gather` and `report!`,
+# stores the liveness heartbeat on its way through (§11.8, §12.2): the
+# framework observes activity without owning the loop body.
 """
-    running(handle)
+    running(handle::DeviceHandle) -> Bool
 
-§12.4's exit predicate: true from a run's start until tail step (1) sets the
-sticky stopped status — after the final snapshot, so a body observing false
-may still read a complete final world. The author's loop obligation is to
-check it between blocking points (§11.6).
+Return `true` from the start of a run until the run stops, and `false`
+otherwise.
 
-Every handle primitive that a loop pass touches — this one, `latest`,
-`pending`, `stage!`, `wait_next_snapshot`, `gather`, `report!` — stores the
-liveness heartbeat on its way through (§11.8, §12.2): the framework observes
-activity without owning the loop body, and there is no separate liveness
-channel to remember to feed.
+A device's [`loop`](@ref) checks `running(handle)` between its blocking calls,
+and returns once it reads `false`. It turns `false` only after the run's final
+snapshot (the immutable per-boundary publication) is published, so a loop that
+reads `false` may still read a complete final snapshot.
+
+Each call refreshes the device's heartbeat (the liveness timestamp the framework
+reads to judge a device alive), as every handle primitive a loop calls does. A
+loop that calls the primitives needs no separate liveness signal.
 """
 running(handle::DeviceHandle) =
     (_beat!(handle.diag_cell); !(@atomic handle.control.stopped))
 
+# Design: §12.1, §12.4, D-203.
+# The device's spelling of `stop!(sim)`, the device's name riding as the issuer.
+# A second request loses the first-wins CAS.
 """
-    stop!(handle)
+    stop!(handle::DeviceHandle) -> Nothing
 
-Request a control-plane stop (§12.1): sets the stop word from any task, the
-device's name riding as its issuer into the termination record (D-203); the
-loop observes it at the next frame top, completes that boundary, publishes,
-and enters the tail (§12.4). Idempotent — a second request loses the CAS and
-changes nothing — and inert while already stopped.
+Request a stop of the running loop, issued by the device, from any task.
+
+`stop!` sets the stop word (the control plane's stop command, one atomic word
+holding its issuer), with the device's name as the issuer. The loop sees it at
+the next frame top (the start of a frame), completes that boundary, publishes
+and shuts the run down. The source of the termination record (the value naming
+how the run ended) is then a `ControlRequestedStop` naming the device. The
+calling code issues the same stop with `stop!(sim)`.
+
+The first issuer wins, so a later stop changes nothing. On a run that has
+already stopped, `stop!` has no effect.
 """
 stop!(handle::DeviceHandle) = _request_stop!(handle.control, handle.who)
 
+# Design: §11.6.
+# The handle carrying the binding is what keeps the device struct free of its
+# per-deployment configuration.
 """
-    binding(handle)
+    binding(handle::DeviceHandle) -> AbstractBinding
 
-The attachment's binding (§11.6), for the author-owned loop idiom —
+Return the binding the device was attached under.
+
+The binding (the value passed at `attach!` that makes a device
+framework-legible) is an argument of [`attach!`](@ref), never a field of the
+device. A device's [`loop`](@ref) reads it here to map its data, as in
 `stage!(handle, map_input(datum, binding(handle))...)`. The framework never
-calls `map_input`/`map_output` itself: they are conventions of the loop
-body, and the handle carrying the binding is what keeps the device struct
-free of its per-deployment configuration (the binding stays an `attach!`
-argument, never a device field).
+calls [`map_input`](@ref) or [`map_output`](@ref) itself: they are the loop's
+own calls.
 """
 binding(handle::DeviceHandle) = handle.b
 
+# Design: §11.6.
+# An acquire load of the holder `latest(sim)` reads, through the capability the
+# handle carries.
 """
-    latest(handle)
+    latest(handle::DeviceHandle) -> Union{Nothing,Snapshot}
 
-The handle's primitive read (§11.6): acquire-load the most recently published
-snapshot — exactly `latest(sim)`, through the capability the handle carries.
+Return the most recently published snapshot, or `nothing` before anything is
+published.
+
+The snapshot (the immutable per-boundary publication) is exactly the value
+`latest(sim)` returns, read through the handle. To block until a newer one is
+published, use [`wait_next_snapshot`](@ref).
 """
 latest(handle::DeviceHandle) = (_beat!(handle.diag_cell); @atomic :acquire handle.published.latest)
 
+# Design: §11.7, D-244.
+# One acquire load of the staging cell, never a take. A batch is never mutated
+# after it is published into the cell, since the CAS merge builds a new one, so
+# the load sees a complete batch or none.
 """
-    pending(handle, slot) → Some(value) | nothing
+    pending(handle::DeviceHandle, slot::Int) -> Union{Nothing,Some}
 
-The handle's own staged value at `slot`, a position in its schema (§11.7):
-one acquire load of the staging cell, never a take. A batch is never mutated
-after it is published into the cell — the CAS merge builds a new one — so
-the load sees a complete batch or none. `Some` keeps "nothing pending" apart
-from a pending `nothing`. A read, so it stays legal on a detached handle
-(D-244).
+Return the device's own staged value at `slot`, wrapped in `Some`, or `nothing`
+when none is pending.
+
+`slot` is a face's position in the device's claim (the set of faces a device may
+write), as the `slot` field of a view from [`port_views`](@ref) gives it. The
+read takes nothing: the value stays in the staging cell (the holding place where
+a pending batch waits) until the next frame top drains it. `Some` keeps "nothing
+pending" apart from a pending value that is itself `nothing`. As a read,
+`pending` stays legal after [`detach!`](@ref).
 """
 function pending(handle::DeviceHandle, slot::Int)
     _beat!(handle.diag_cell)
@@ -150,16 +296,30 @@ function pending(handle::DeviceHandle, slot::Int)
     held[].mask[slot] ? Some(held[].staged[slot]) : nothing
 end
 
+# Design: §11.4, §11.6, D-244.
+# The same compiled shim, CAS merge and per-face newest-wins as every writer's,
+# against this attachment's claim set, with every check at staging.
 """
-    stage!(handle, "face" => value, ...)
+    stage!(handle::DeviceHandle, writes::Pair...) -> Nothing
 
-The handle's stage primitive (§11.6, §11.4): the same compiled shim, CAS
-merge and per-face newest-wins as every writer's, against this attachment's
-claim set — every check at staging, an out-of-claim face discarded under
-`OutOfClaimEntry` naming the incumbent, the rest of the batch standing. From
-any task, at any wall-clock moment; the batch lands at the top of the next
-frame `run!` advances. On a handle whose device was detached the call is a
-contract misuse and throws by name (D-244).
+Stage a batch of root-input writes through the device's handle, from any task
+at any moment.
+
+Each write is a `"face" => value` pair naming a root input (the root component's
+own input face) inside the device's claim (the set of faces a device may write).
+The batch waits in the device's staging cell (the holding place where a pending
+batch waits) and is applied at the top of the next frame [`run!`](@ref)
+advances. Batches merge, the newest value winning per face, so a face not staged
+again keeps its pending value. A loop usually stages what [`map_input`](@ref)
+returns.
+
+A face outside the claim is discarded as `OutOfClaimEntry`, which names the
+device that claims it, if any. A value that does not convert to the face's type
+is discarded as `EntryTypeMismatch`. The rest of the batch stands, and the
+findings go to the device's diagnostic cell (the per-writer cell holding runtime
+diagnostics), not to the caller. After [`detach!`](@ref), the call is refused as
+`DeviceContractMismatch`. The calling code stages through the harness writer
+with `stage!(sim, …)`.
 """
 function stage!(handle::DeviceHandle, writes::Pair...)
     _assert_attached(handle)
@@ -169,17 +329,24 @@ function stage!(handle::DeviceHandle, writes::Pair...)
     nothing
 end
 
+# Design: §11.2, §11.6, §12.3.
+# The compiled reads run over the frozen store.
 """
-    gather(handle, snapshot)
+    gather(handle::DeviceHandle, snapshot::Snapshot) -> NamedTuple
 
-The output side's read (§11.2, §11.6): run the attachment's compiled gather —
-`reads(b)`, resolved at attach — over a snapshot, returning the labeled
-NamedTuple `map_output` receives. The loop idiom is
-`send(dev.socket, map_output(gather(handle, snapshot), binding(handle)))`, on the
-device's own task, against the snapshot §12.3's wait handed it: the compiled
-reads run over the frozen store, so no name is resolved per datum and nothing
-here touches the running loop. On a handle whose binding declares no output
-side the call is a contract misuse, and throws by name.
+Return the binding's read set gathered from a snapshot, as the labeled
+`NamedTuple` `map_output` receives.
+
+The read set (the labeled selectors the binding's [`reads`](@ref) returns) is
+resolved once, at [`attach!`](@ref), and `gather` runs it over the snapshot (the
+immutable per-boundary publication). The loop idiom is
+`send(dev.socket, map_output(gather(handle, snapshot), binding(handle)))`, on
+the device's own task, against the snapshot [`wait_next_snapshot`](@ref)
+returned. No name is resolved per call, and nothing here touches the running
+loop.
+
+On a handle whose binding declares no output side, the call is refused as
+`DeviceContractMismatch`.
 """
 function gather(handle::DeviceHandle, snapshot::Snapshot)
     _beat!(handle.diag_cell)
@@ -188,51 +355,63 @@ function gather(handle::DeviceHandle, snapshot::Snapshot)
     gather_reads(handle.gatherer, snapshot)
 end
 
+# Design: §11.6, §11.8.
+# The single-writer entry point into the device's own diagnostic cell, bounded
+# by `DIAG_RING`. No writer can starve another, since the cells are disjoint.
+# The status record is delta plus totals (§11.8), and the run's-end sweep takes
+# whatever landed past the last frame top.
 """
-    report!(handle, MalformedDatum(cause))
+    report!(handle::DeviceHandle, occurrence::MalformedDatum) -> Nothing
 
-The bad-datum channel (§11.6, §11.8): the single-writer entry point into the
-device's own diagnostic cell, from the author's loop body after catching its
-own parser error — catch, stage nothing, report, continue. The tolerance is
-bounded by the cell (`DIAG_RING` retained values per frame, the excess a
-per-kind count), so a peer flooding malformed datagrams costs sixteen
-retained values and an integer increment, whatever it does, and no writer can
-starve another — the cells are disjoint. This is not a general
-user-diagnostics channel: `MalformedDatum` is the one thing the *author* may
-put in it, and any exception the loop does *not* classify as a bad datum
-propagates to the wrapper as the `DeviceCrash` it is. The loop drains the
-cell at frame top, folding it into the published framework status —
-device-attributed, delta plus totals (§11.8) — and sweeps it once more at the
-run's end for whatever landed past the last frame top.
+Report a malformed datum into the device's diagnostic cell, and let the loop
+continue.
+
+A device's [`loop`](@ref) calls it after catching its own parser error: catch,
+stage nothing, report, continue. The report lands in the device's diagnostic
+cell (the per-writer cell holding runtime diagnostics). The next frame top folds
+it into the framework status (the per-writer record each snapshot carries),
+attributed to the device, and the run's end collects whatever lands after the
+last frame top. The cell keeps 16 values per frame and counts the excess by
+kind, so a peer flooding malformed data costs sixteen retained values and a
+counter, whatever it sends.
+
+`report!` is not a general diagnostics channel. `MalformedDatum(cause)` is the
+one kind a device may report, and any exception the loop does not classify as a
+malformed datum reaches the framework as the `DeviceCrash` it is. After
+[`detach!`](@ref), the call is refused as `DeviceContractMismatch`.
 """
 report!(handle::DeviceHandle, occurrence::MalformedDatum) =
     (_assert_attached(handle); _beat!(handle.diag_cell);
      report_cell!(handle.diag_cell, occurrence))
 
-"""
-    report!(entry, DeviceCrash(cause, abort))
-
-The framework's crash report, addressed by the roster entry (§12.4). The
-pre-spawn bracket holds no handle, and the wrapper writes the same cell. The
-report lands in the entry's own diagnostic cell. It asserts no attachment and
-beats no heartbeat: the device did not run or has just died, and a beat would
-claim life. `DeviceCrash` is the one kind filed this way.
-"""
+# Design: §12.4.
+# `report!(entry, DeviceCrash(cause, abort))`, the framework's crash report,
+# addressed by the roster entry. `RosterEntry` is internal, so the method has no
+# docstring on the public `report!` page. The pre-spawn bracket holds no handle,
+# and the wrapper writes the same cell. The report lands in the entry's own
+# diagnostic cell. It asserts no attachment and beats no heartbeat: the device
+# did not run or has just died, and a beat would claim life. `DeviceCrash` is
+# the one kind filed this way.
 report!(entry::RosterEntry, occurrence::DeviceCrash) =
     report_cell!(_handle(entry).diag_cell, occurrence)
 
+# Design: §12.3.
+# The predicate loop is the canonical idiom: the condition carries no facts, and
+# the two that matter, the counter and the stopped status, are re-tested at
+# every wake. That is what makes shutdown work: tail step (2) wakes every waiter
+# and the predicate routes it out.
 """
-    wait_next_snapshot(handle)
+    wait_next_snapshot(handle::DeviceHandle) -> Union{Nothing,Snapshot}
 
-§12.3's next-snapshot wait: block until a boundary this waiter has not seen
-is published, or until the run stops, and return the latest snapshot — at
-least the boundary whose publication woke the wait, newest-wins beyond it (a
-slow consumer skips boundaries and always receives the current world). The
-predicate loop is the canonical idiom: the condition carries no facts, and
-the two that matter — the counter and the stopped status — are re-tested at
-every wake, which is what makes shutdown work: tail step (2) wakes every
-waiter and the predicate routes it out. After a stop return the author's
-loop re-checks `running(handle)`, exactly as after any blocking call.
+Block until an unseen boundary is published or the run stops, then return the
+latest snapshot.
+
+The snapshot (the immutable per-boundary publication) returned is at least the
+one whose publication woke the wait. Beyond it the newest wins, so a slow
+consumer skips boundaries and always receives the current one. A stop wakes the
+wait too, so the device's [`loop`](@ref) checks [`running`](@ref) after it
+returns, as after any blocking call. The call returns `nothing` only where
+[`latest`](@ref) does, before anything is published.
 """
 function wait_next_snapshot(handle::DeviceHandle)
     _beat!(handle.diag_cell)
@@ -270,24 +449,44 @@ struct PortView
     incumbent::String
 end
 
+# Design: §11.7, D-270, D-315.
+# An input face's producer is the terminal one off `terminal_producer` (D-315).
+# The loop's top is after the roster freeze, so the incumbents read off the
+# exclusivity index are the run's. At `attach!` a face a later attach claims
+# would still name the harness, and repairing that at render means reading the
+# index at render, which §11.7 forbids (D-270).
 """
-    port_views(handle) → Dict{Tuple{String,Symbol},PortView}
+    port_views(handle::DeviceHandle) -> Dict{Tuple{String,Symbol},PortView}
 
-§11.7's port table, keyed by `(path, port)`: one view per input face at
-every level, the root inputs and the endpoints of every level's wires, its
-producer the terminal one off `terminal_producer` (D-315), and
-one per produced cell — each primitive's outputs and every exported output
-face, the root's included — with itself as producer. An assembly's input face
-shares its producer with the ports behind it, and a root input's own view has
-itself as producer. A port is live when its producer is a root input inside
-the handle's claim, and its slot is that face's position in the handle's
-schema.
+Return the device's table of port views, one per port of the build, keyed by
+`(path, port)`.
 
-The GUI's loop body calls it once, at its top (§11.7). That point is after
-the roster freeze, so the incumbents read off the exclusivity index are the
-run's; at `attach!` a face a later attach claims would still name the
-harness, and repairing that at render means reading the index at render,
-which §11.7 forbids (D-270).
+A port view (one port's verdict, settled once per run) records the port's
+producer, whether the device commands it, and who writes it otherwise. The table
+holds one view per input face at every level, the root inputs and both ends of
+every wire, and one per produced output: each component's outputs and every
+exported output face, the root's included. An input face's producer is the
+output or root input that ultimately feeds it, so an assembly's input face
+shares its producer with the ports behind it. A root input and a produced output
+are their own producers.
+
+Each view carries these fields, beside the producer's address that
+[`peek`](@ref) reads.
+
+- `path` and `port`: the port the view describes.
+- `source`: its producer, as `(path, port)`, with `("", face)` for a root input.
+- `live`: `true` when the producer is a root input inside the device's claim
+  (the set of faces a device may write), so the device commands the port.
+- `slot`: that root input's position in the claim, as [`pending`](@ref) takes
+  it, or `0` when the view is not live.
+- `incumbent`: the writer of the root input that drives the port. It is this
+  device's name when live, another device's name, `"harness"` for a face no
+  device claims, or `""` when no root input drives the port.
+
+A panel's loop calls `port_views` once, at its top, after the run has fixed the
+roster (the list of attached device entries). Nothing is resolved by name
+afterwards: [`peek`](@ref) and [`incumbent_status`](@ref) read a view and a
+snapshot.
 """
 function port_views(handle::DeviceHandle)
     faces = handle.writer.faces
@@ -322,13 +521,21 @@ function port_views(handle::DeviceHandle)
     views
 end
 
+# Design: §11.7, D-270.
+# §11.7's peek rule. The window after the drain is the rule's own consequence
+# (D-270).
 """
-    peek(view, handle, snapshot)
+    peek(view::PortView, handle::DeviceHandle, snapshot::Snapshot)
 
-§11.7's peek rule: a live view's own pending value when one is touched, else
-the producer's cell off `snapshot`; a read-only view reads the cell alone.
-The window between a frame's drain and its publication shows the previous
-snapshot's value, the rule's own consequence (D-270).
+Return the value a panel shows for a port: the device's own pending write if
+any, else the snapshot's.
+
+A live view (one whose port the device commands) shows the device's own staged
+value, read with [`pending`](@ref), while one is pending, and the producer's
+value in the snapshot (the immutable per-boundary publication) otherwise. A view
+that is not live reads the snapshot alone. Between a frame's drain (the
+frame-top point that applies the staged writes) and its publication, a view
+shows the previous snapshot's value.
 """
 function peek(view::PortView, handle::DeviceHandle, snapshot::Snapshot)
     if view.live
@@ -338,12 +545,18 @@ function peek(view::PortView, handle::DeviceHandle, snapshot::Snapshot)
     gather_cell(snapshot.store, view.addr)
 end
 
+# Design: §11.7, §11.8, §12.2.
 """
-    incumbent_status(view, snapshot) → WriterStatus | nothing
+    incumbent_status(view::PortView, snapshot::Snapshot) -> Union{Nothing,WriterStatus}
 
-The incumbent's record in `snapshot`'s status, by `who`, or `nothing` for a
-port no device writes (§11.7, §11.8). `orphaned` on the record is a task
-that returned or crashed; `stale` is §12.2's silent heartbeat.
+Return the status record of the writer that drives a view's port, or `nothing`
+when no writer does.
+
+The record is the incumbent's entry in the snapshot's framework status (the
+per-writer diagnostics and liveness each snapshot carries), found by the view's
+`incumbent` name. Read it with [`orphaned`](@ref), true when the incumbent's
+task returned or crashed, and [`stale`](@ref), true when its heartbeat (the
+liveness timestamp its handle calls refresh) has gone silent.
 """
 function incumbent_status(view::PortView, snapshot::Snapshot)
     isempty(view.incumbent) && return nothing
@@ -351,14 +564,18 @@ function incumbent_status(view::PortView, snapshot::Snapshot)
     i === nothing ? nothing : snapshot.status.writers[i]
 end
 
+# Design: §11.7, §12.2.
+# The record's `task_state` reads `:done`. `:none` outside a run is not
+# orphaned, nor the harness's or the loop's `nothing`.
 """
-    orphaned(record::WriterStatus)
+    orphaned(record::WriterStatus) -> Bool
 
-§11.7's orphan fact: the record reads `:done`, a device with no live task
-inside a run (§12.2) — its loop returned or crashed, or its `init!` threw.
-The record's `DeviceCrash` count tells a crash from
-a return. `:none` outside a run is not orphaned, nor the harness's or the
-loop's `nothing`.
+Return `true` when the record's device has no live task inside a run.
+
+A device is orphaned when its loop returned or crashed, or its `init!` threw.
+The record's `DeviceCrash` count tells a crash from a return. Outside a run a
+device has no task and is not orphaned, and the records of the harness writer
+and of the loop are never orphaned.
 """
 orphaned(record::WriterStatus) = record.task_state === :done
 
