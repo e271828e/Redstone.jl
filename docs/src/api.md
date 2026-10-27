@@ -129,6 +129,11 @@ restore!
 overlay!
 linearize
 Linearization
+get_state
+get_deriv
+get_output
+get_input
+get_face
 ```
 
 ## Running

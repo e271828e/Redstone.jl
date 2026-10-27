@@ -84,13 +84,119 @@ const StoreSelector = Union{GetState,GetDeriv}
 _authored_leaf(leaf::Symbol) = leaf
 _authored_leaf(leaf::AbstractString) = String(leaf)
 
+# Design: §14.4, D-276, D-406.
+"""
+    get_state(path::AbstractString, leaf::Union{Symbol,AbstractString}) -> GetState
+
+Return a selector that reads one leaf of a component's state.
+
+A selector (a deferred read, inert until a reader resolves it) is labeled in a
+read set built with [`reads`](@ref). `path` names the component, and `leaf` is
+a leaf address (the field name, then `.name` and `[k]` or `[k,l]` steps in any
+order), as in `get_state("plant", "q[2]")`. A bare `Symbol` is the short form
+of a plain field name. The field is read from a continuous component's
+continuous state, or from a discrete component's discrete state.
+
+`get_state` reads the live stores, so a service that evaluates the model, such
+as [`trim!`](@ref), resolves it. A reader over published snapshots, such as
+[`series`](@ref) or a binding's [`reads`](@ref), refuses it as
+`ReadResolution`. A path that names an assembly, a field the component does not
+declare, or a step the field's type cannot take is refused as `ReadResolution`
+when the read set is resolved.
+
+See also [`get_deriv`](@ref), [`get_output`](@ref), [`get_input`](@ref),
+[`get_face`](@ref).
+"""
 get_state(path::AbstractString, leaf::Union{Symbol,AbstractString}) =
     GetState(String(path), _authored_leaf(leaf))
+
+# Design: §14.4, D-276, D-406.
+"""
+    get_deriv(path::AbstractString, leaf::Union{Symbol,AbstractString}) -> GetDeriv
+
+Return a selector that reads one leaf of a continuous component's state
+derivative.
+
+A selector (a deferred read, inert until a reader resolves it) is labeled in a
+read set built with [`reads`](@ref). `path` names the component, and `leaf` is
+a leaf address (the field name, then `[k]` or `[k,l]` steps) into its
+continuous state, as for [`get_state`](@ref). The value read is the derivative
+of that leaf, which has the state's own shape.
+
+Like `get_state`, `get_deriv` reads the live stores, and a reader over
+published snapshots refuses it as `ReadResolution`. A discrete component has no
+derivative, so a path that names one is refused as `ReadResolution`, as are an
+undeclared field and a step the field's type cannot take.
+
+See also [`get_output`](@ref), [`get_input`](@ref), [`get_face`](@ref).
+"""
 get_deriv(path::AbstractString, leaf::Union{Symbol,AbstractString}) =
     GetDeriv(String(path), _authored_leaf(leaf))
+
+# Design: §11.2, §14.4, D-276.
+"""
+    get_output(path::AbstractString, leaf::Union{Symbol,AbstractString}) -> GetOutput
+
+Return a selector that reads one leaf of a component's declared output port.
+
+A selector (a deferred read, inert until a reader resolves it) is labeled in a
+read set built with [`reads`](@ref). `path` names the component, and `leaf` is
+a leaf address (the port name, then `.name` and `[k]` or `[k,l]` steps in any
+order), as in `get_output("plant", "pose.q_eb[2]")`.
+
+`get_output` is an inspection read, a component's own port addressed by its
+path, and it resolves against the signal table or a published snapshot alike.
+For a named output the root exports, which keeps its meaning when the
+component behind it is replaced, use [`get_face`](@ref). A path that names an
+assembly, a port the component does not declare, or a step the port's type
+cannot take is refused as `ReadResolution`.
+
+See also [`get_state`](@ref), [`get_input`](@ref).
+"""
 get_output(path::AbstractString, leaf::Union{Symbol,AbstractString}) =
     GetOutput(String(path), _authored_leaf(leaf))
+
+# Design: §14.4, §14.9, D-276, D-277.
+"""
+    get_input(leaf::Union{Symbol,AbstractString}) -> GetInput
+
+Return a selector that reads one leaf of a root input's value back.
+
+A selector (a deferred read, inert until a reader resolves it) is labeled in a
+read set built with [`reads`](@ref). `leaf` is a leaf address (the face name,
+then `.name` and `[k]` or `[k,l]` steps in any order), where a face is the
+name a port wears on its component's boundary. At the root, the face is a root
+input. In a read set mounted below the root with [`at`](@ref), it is an input
+face of the mounted level that reaches a root input.
+
+`get_input` resolves against the signal table or a published snapshot alike. A
+face that names no input there is refused as `ReadResolution`, and so is an
+input face a component feeds, since only a root input is read back.
+
+See also [`get_face`](@ref), [`get_output`](@ref).
+"""
 get_input(leaf::Union{Symbol,AbstractString}) = GetInput(_authored_leaf(leaf))
+
+# Design: §11.2, §14.4, §14.9, D-276, D-277.
+"""
+    get_face(leaf::Union{Symbol,AbstractString}) -> GetFace
+
+Return a selector that reads one leaf of an exported output face.
+
+A selector (a deferred read, inert until a reader resolves it) is labeled in a
+read set built with [`reads`](@ref). `leaf` is a leaf address (the face name,
+then `.name` and `[k]` or `[k,l]` steps in any order), where a face is the
+name a port wears on its component's boundary. At the root, the face is one
+the root exports. In a read set mounted below the root with [`at`](@ref), it
+is an output face of the mounted level.
+
+`get_face` is an integration read: the face is named and curated, and keeps its
+meaning when the component that produces it is replaced. It resolves against
+the signal table or a published snapshot alike. A name that is no output face
+there, including an input face, is refused as `ReadResolution`.
+
+See also [`get_output`](@ref), [`get_input`](@ref).
+"""
 get_face(leaf::Union{Symbol,AbstractString}) = GetFace(_authored_leaf(leaf))
 
 # The selector as authored, for the diagnostics: a refusal names the read the
@@ -288,13 +394,25 @@ struct Reads{NT<:NamedTuple}
     selectors::NT
 end
 
+# Design: §9.5, §14.7.
 """
-    reads(; label = selector, …)
+    reads(; selectors...) -> Reads
 
-The read set a service declares: the labels are the names the gathered
-NamedTuple carries, and the names a trim problem's residual function
-destructures (§14.7). Order is the declared side's own, as everywhere at an
-author↔framework NamedTuple seam (§9.5).
+Return the read set of the labeled selectors given, which a service such as
+`series` gathers.
+
+A read set names each selector (a deferred read, such as
+[`get_output`](@ref)) under a label: `reads(speed = get_output("plant", :v))`.
+The labels are the names the gathered `NamedTuple` carries, and the names a
+trim problem's residual function destructures. The order is the one written
+here, as everywhere a `NamedTuple` passes between the author and the
+framework.
+
+[`series`](@ref) takes a read set, a trim problem holds one, and [`at`](@ref)
+mounts one below the root. A value that is not a selector is refused as
+`ReadSetMisuse`. Each selector is resolved, and refused as `ReadResolution`
+when it does not resolve, by the service that takes the set. For the read set
+of a device's output side, see the binding method of `reads`.
 """
 reads(; selectors...) = _reads(NamedTuple(selectors))
 
