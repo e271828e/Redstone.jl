@@ -25,7 +25,7 @@ item changes what the spec says, the spec edit is part of the item.
   bumps `workspace.md`'s "Design axes" lists. The built-in Julia GUI is
   parked (D-310). The later stages stand after the release, below.
 - **The API docstrings' two later passes.** The sweep to the manual's
-  conventions landed (commits `84ece6b` to `a317978`, record
+  conventions landed (commits `84ece6b` to `b1d9ae3`, record
   `design/briefs/notes_docstring_sweep.md`, convention
   `design/tools/docstring_style.md`). Two passes remain: an examples pass
   after the tutorial, and a signature-and-link pass after the audit's
