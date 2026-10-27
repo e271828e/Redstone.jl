@@ -161,14 +161,27 @@ rides 46 m above and back.
 ## 4. The closed loop
 
 The tutorial's fifth layer closes the loop with library blocks alone
-([§13.7][s13-7]). Everything discrete runs at 50 Hz under a plant step of 5 ms.
+([§13.7][s13-7]), in a `Group` of five groups beside the plant, under the root
+inputs `h_ref`, `V_ref` and `mode`: `sensing`, `pid_controller`,
+`lqr_controller`, `selection` and `actuators`. Each group exports the signals
+that cross its boundary as faces and keeps the rest inside, so the root level
+reads as the loop's block diagram and each group as one of its boxes.
+Everything discrete runs at 50 Hz under a plant step of 5 ms, each group
+declaring its own rates.
 
-**The actuators.** Each control passes through a discrete `RateLimiter` and
-a continuous `FirstOrderLag`: the elevator at 1 rad/s and 50 ms, the
-throttle at 0.5 /s and 0.5 s. Their initial values are the trim's.
+**The actuators**, `actuators`. Each control passes through a discrete
+`RateLimiter` and a continuous `FirstOrderLag`: the elevator at 1 rad/s and
+50 ms, the throttle at 0.5 /s and 0.5 s. Their initial values are the trim's.
+The group takes `δe_cmd` and `δt_cmd` and publishes `δe` and `δt`.
 
-**The cascade.** Four `DiscretePID` blocks, each with the hold and the
-tracking axis (`pid_anti_windup.md`, section 4):
+**The sensing**, `sensing`. The altitude both controllers read is the
+plant's plus Gaussian white noise of 0.3 m standard deviation per sample from a
+`GaussianWhiteNoise` at the controllers' rate, summed by the `altimeter`
+junction and published as `h_meas`, so the plots show a measurement rather
+than a state.
+
+**The PID cascade**, `pid_controller`. Four `DiscretePID` blocks, each with
+the hold and the tracking axis (`pid_anti_windup.md`, section 4):
 
 | Loop | Reads | Commands | `Kp`, `Ki` | Limits |
 |---|---|---|---|---|
@@ -183,20 +196,21 @@ short period's frequency, where `|24.5 Kp| ≈ 5 rad/s`, and each outer loop
 is slower by a factor of three to ten, the usual spacing that lets each be
 designed as if the loop inside it were ideal. The altitude loop closes
 through `ḣ ≈ V γ`, so one metre of error asks for 0.01 rad of pitch and
-the loop's bandwidth is about 0.5 rad/s. The altitude the controller reads
-carries Gaussian white noise of 0.3 m standard deviation per sample from a
-`GaussianWhiteNoise` at the same rate, so the plots show a measurement
-rather than a state.
+the loop's bandwidth is about 0.5 rad/s.
 
 Each block's hold input is wired from the block inside it: the attitude
 loop reads the rate loop's `saturated` code and the altitude loop the
 attitude loop's, so an outer integrator stops winding when the inner
 command is on its limit. The two innermost blocks read a constant zero code
-and back-calculate against their own limits.
+and back-calculate against their own limits. The chain stays inside the
+group: what crosses its boundary is the references, the measurements, the
+mode, the delayed commands it tracks, and the two commands it publishes as
+`δe` and `δt`.
 
 **The initial condition.** `trimmed(solution)` writes the plant's trim
-pitch angle beside its level state and seeds the stores of three of the
-four PID blocks through `at` and `set(s = …)`. A `DiscretePID`'s store
+pitch angle beside its level state, the root inputs at the trim references
+with the cascade in command, and seeds the stores of three of the four PID
+blocks through `at` and `set(s = …)`. A `DiscretePID`'s store
 is `(q, yf, saturated)`, the integral term, the derivative filter's state
 and the clamp code, all zero by default. At trim every loop's error is
 zero: `h_ref = h`, the attitude reference is the altitude loop's output,
@@ -229,9 +243,13 @@ few hundredths of a radian off whatever `Tt` is. A block in command
 back-calculates against its limits, and at one period it pulls a limited
 integrator back within a tick.
 
-**The LQR tracker.** A `DiscreteLQRTracker` over the full state
-`x = (V, γ, θ, q, h)` commanding both controls, with the command vector
-`z = (h, V)`, designed by `lqr_tracker.md`'s sections 2 and 3. The state is
+**The LQR tracker**, `lqr_controller`. A `DiscreteLQRTracker` over the full
+state `x = (V, γ, θ, q, h)` commanding both controls, with the command vector
+`z = (h, V)`, designed by `lqr_tracker.md`'s sections 2 and 3. The group
+packs the state, the measurement and the reference vectors from the scalar
+faces it takes, unpacks the command into `δe` and `δt`, and negates `mode`
+into the tracker's `engaged` vector, so the tracker's vector shape never
+crosses a boundary. The state is
 augmented with the integrals of both command errors, and the gain comes
 from `ControlSystemsBase`'s `lqr` with diagonal weights by Bryson's rule, an
 acceptable excursion per state and per input:
@@ -246,13 +264,14 @@ needs `A⁻¹`, which the zero altitude eigenvalue denies. The trim triple is
 the linearization's operating point. The tracker's own limits are the
 actuators' ranges, and its hold input reads a zero code.
 
-**The switch and the bumpless engage.** A `Switch` per control selects the
-cascade's command while a pinned `Source{Bool}` over a predicate of time,
-`cascade(t)`, holds, and the tracker's otherwise. Both controllers run all
-the time, and the one not in command tracks the one that is
-(`pid_anti_windup.md`, section 11): the engaged flags are the switch's
-selector and its negation, and each innermost block reads the selected
-command, one tick old through a `UnitDelay`, as its tracking input. The two
+**The selection and the bumpless engage**, `selection`. A `Switch` per
+control selects the cascade's command while the root input `mode` holds, and
+the tracker's otherwise. Both controllers run all the time, and the one not
+in command tracks the one that is (`pid_anti_windup.md`, section 11): `mode`
+is the cascade's `engaged` input and, negated, the tracker's, and the selected
+commands leave the group twice, as they are for the actuators and one tick
+old through a `UnitDelay` as `δe_prev` and `δt_prev`, which each innermost
+block of the cascade and the tracker read as their tracking input. The two
 outer loops of the cascade track the measured variable of the loop inside
 them, pitch attitude for the altitude loop and pitch rate for the attitude
 loop, so when the cascade is re-engaged every integrator holds nearly the
@@ -276,7 +295,14 @@ standby having sat 0.15 rad behind a command slewing at up to about
 4 rad/s, and the actuator's rate limit would take about a tenth of a
 second to catch up.
 
-**What the loop does.** From trim, a 50 m step in the altitude reference at
+**What the loop does.** The references and the mode are root inputs, so the
+scenario belongs to the run, not to the model: the testset's helper steps the
+simulation to 5 s, stages `h_ref` at 1050 m, steps on to the switch time if
+there is one, stages `mode`, and runs to 120 s. A staged batch applies at the
+top of the next frame, and the ticks at a boundary settle in the frame that
+reaches it, so the helper stages each write one frame before the tick that is
+to see it, which puts the step on the 5 s tick exactly. From trim, a 50 m
+step in the altitude reference at
 `t = 5 s` is held within 0.1 m by `t = 80 s` by either controller, the
 cascade with no overshoot and the tracker with about 2 m. During the climb
 the airspeed strays from 50 m/s by up to about 4 m/s under the cascade and

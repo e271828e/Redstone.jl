@@ -166,10 +166,12 @@ functions the tutorial's layers call, each the subject of one chapter:
   and the outputs `h` and `V`;
 - `lqr_gains(linearization; qx, qξ, r)`, the tracker's three gains from a
   linearization, by `lqr_tracker.md`'s sections 2 and 3;
-- `closed_loop(solution, gains; cascade, h_step, noise_σ)`, layer 5's
-  model, and `trimmed(solution)`, its initial condition, which seeds the
-  three integrators whose trim value is not zero through `set(s = …)`
-  beside the plant's state;
+- `closed_loop(solution, gains; noise_σ)`, layer 5's model, a `Group` of
+  five groups beside the plant under the root inputs `h_ref`, `V_ref` and
+  `mode`, and `trimmed(solution)`, its initial condition, which holds the
+  trim references with the cascade in command and seeds the three
+  integrators whose trim value is not zero through `set(s = …)` beside the
+  plant's state;
 - `descent()`, the aircraft with the gear and the stop request.
 
 **The layers.** The tutorial peels the one model in order, each chapter
@@ -185,14 +187,14 @@ the tutorial for the rest.
 4. Linearize at the trim, print the eigenvalues, name the short period and
    the phugoid, design gains from the matrices. The tracker's "gains
    designed outside" workflow, demonstrated.
-5. Close the loop with library blocks in a group: a rate limiter and a
-   first-order lag as each actuator, a discrete cascade at 50 Hz under a
-   faster plant step, pitch rate inside, pitch attitude outside, altitude
-   outermost, airspeed through throttle, a step reference, white noise on
-   the sensed altitude, and a switch between the PID cascade and the LQR
-   tracker on a pinned `Source{Bool}` over a predicate of time for a
-   bumpless engage. The static
-   inspector's diagram and the README's second picture.
+5. Close the loop with library blocks in a group of groups: a rate limiter
+   and a first-order lag as each actuator, a discrete cascade at 50 Hz under
+   a faster plant step, pitch rate inside, pitch attitude outside, altitude
+   outermost, airspeed through throttle, white noise on the sensed altitude,
+   and a switch between the PID cascade and the LQR tracker for a bumpless
+   engage, with the references and the mode as root inputs the run stages.
+   The static inspector's diagram, one level at a time, and the README's
+   second picture.
 6. Fly a descent to touchdown: a localized gear-contact guard and a stop
    request ([§13.5][s13-5]), the termination record and its reason.
 7. Replay from the recorded trace, bit-identical.
