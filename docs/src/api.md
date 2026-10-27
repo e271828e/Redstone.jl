@@ -57,7 +57,10 @@ Heun
 Model
 FrameHooks
 NoHooks
+frame_top!
+settled!
 frame!
+port
 state
 modes
 ModelState
@@ -133,6 +136,9 @@ margin!
 pace
 margin
 termination
+EndTimeReached
+ModelRequestedStop
+ControlRequestedStop
 StopFlag
 logged
 reads
