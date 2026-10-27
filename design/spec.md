@@ -16,7 +16,7 @@
     - [3.1 Continuous component (the hybrid primitive)](#31-continuous-component-the-hybrid-primitive)
     - [3.2 Periodic discrete component](#32-periodic-discrete-component)
     - [3.3 Assembly](#33-assembly)
-    - [3.4 Why two leaf classes, not one hybrid primitive](#34-why-two-leaf-classes-not-one-hybrid-primitive)
+    - [3.4 Why two tiers, not one hybrid primitive](#34-why-two-tiers-not-one-hybrid-primitive)
   - [4. Ports and signals](#4-ports-and-signals)
     - [4.1 Immutable value semantics](#41-immutable-value-semantics)
     - [4.2 Consumers see ports, not stages](#42-consumers-see-ports-not-stages)
@@ -131,10 +131,10 @@ and its boundaries, integration and inputs, the two event-detection policies,
 what a run is from its start to its end, and the exclusions taken
 deliberately. [§3][s3] and [§4][s4]
 introduce the two objects every later part manipulates. [§3][s3] gives the component
-taxonomy, with two leaf classes and the assembly that composes them. [§4][s4] gives
+taxonomy, with two primitive tiers and the assembly that composes them. [§4][s4] gives
 the port, the addressable unit through which components exchange immutable
 values. [§5][s5] is the central chapter. It fixes two output stages per
-leaf, what each stage may see, and how those signatures alone yield a
+primitive, what each stage may see, and how those signatures alone yield a
 static execution order. It also fixes the boundary sequence, the rule by which
 events fire, and boundary zero. [§6][s6] lifts composition from a single
 component to a hierarchy of them. [§7][s7] fixes where data lives, on both tiers
@@ -593,7 +593,7 @@ compiled at another optimization level agrees with it only to round-off
   framework guarantee, deterministic [replay](#g-replay) (re-running the ordinary loop on a
   recorded input trace, [§2.4][s2-4], [D-101][d-101]). RNG state lives in
   the discrete state `s` of a [component](#g-component) (the unit of
-  modeling, leaf or assembly), never in ambient globals. The same seed
+  modeling, primitive or assembly), never in ambient globals. The same seed
   therefore gives a bit-identical trajectory ([D-231][d-231]).
 - No unconditional per-step hook, because its semantics depend on the step
   size ([D-001][d-001]). The uses of such a hook decompose into projection and
@@ -611,7 +611,7 @@ Two of them are [primitives](#g-primitive), with crisp, closed semantics, and
 one is an [assembly](#g-assembly). [§3.1][s3-1] describes the continuous
 component, [§3.2][s3-2] the
 periodic discrete component and [§3.3][s3-3] the assembly, and [§3.4][s3-4]
-justifies the two-leaf split.
+justifies the two-tier split.
 
 ### 3.1 Continuous component (the hybrid primitive)
 
@@ -696,17 +696,17 @@ the argument of the [flow](#g-flow) map under `f`, and `s` is the argument of
 the jump map under `g`. The two are different objects. `x` has a derivative and
 lives in the flat [buffer](#g-buffer). `s` has none and is latched in a
 [store](#g-store) (the framework-owned home of a state letter) between
-ticks. A leaf is strictly one tier ([D-056][d-056]), and no
+ticks. A primitive is strictly one tier ([D-056][d-056]), and no
 [component](#g-component) ever reads another's state. A discrete component's
 `s` influences continuous dynamics only through signals ([D-056][d-056]).
 Those outputs are held zero-order between ticks ([D-019][d-019]).
 
-A stateless discrete leaf, one whose `s` is empty, still computes its outputs
+A stateless discrete primitive, one whose `s` is empty, still computes its outputs
 only at its ticks and at boundary zero ([§5.3][s5-3], [D-205][d-205]). It
 holds them in between. A
-stateless continuous leaf recomputes them at every [sweep](#g-sweep) (one pass
-through the execution order). The tier of a stateless leaf therefore changes
-its values ([§8.2][s8-2], [D-019][d-019], [D-263][d-263]).
+stateless continuous primitive recomputes them at every [sweep](#g-sweep) (one pass
+through the execution order). The tier of a stateless primitive therefore
+changes its values ([§8.2][s8-2], [D-019][d-019], [D-263][d-263]).
 
 **`m` is continuous-only** ([D-231][d-231], [D-249][d-249], [D-362][d-362]). A
 discrete component has no mode store. Its finite-state machine (FSM) enums,
@@ -722,7 +722,7 @@ An [assembly](#g-assembly) is a component built from child components. It
 holds those children, [local wires](#g-local-wire) and boundary [faces](#g-face) (the names ports
 wear on a component's boundary). It has no dynamics of its own. Hybridness
 emerges at the assembly level. An aircraft is continuous vehicle parts plus
-discrete avionics parts. The two-leaf split was upheld against the
+discrete avionics parts. The two-tier split was upheld against the
 integrate-and-dump challenge ([§3.4][s3-4], [D-056][d-056]). Assemblies are
 flattened away for ordering ([D-019][d-019]). They are retained as the
 navigation and introspection hierarchy (GUI, logging, paths) and as
@@ -738,17 +738,17 @@ the tree, periods multiplying and phases adding. Each discrete component
 therefore ends with one period and one phase on the base grid
 ([§10.5][s10-5], [D-291][d-291]).
 
-### 3.4 Why two leaf classes, not one hybrid primitive
+### 3.4 Why two tiers, not one hybrid primitive
 
 One all-in-one primitive could carry continuous state, modes *and* discrete
-state together. The design rejects it, and every leaf belongs to exactly one
-[tier](#g-tier) (the continuous or the discrete side of the formalism,
+state together. The design rejects it, and every primitive belongs to exactly
+one [tier](#g-tier) (the continuous or the discrete side of the formalism,
 [D-056][d-056], [D-263][d-263]).
 
 **The split is between *time bases*, not state classes** ([D-056][d-056]).
 The [continuous component](#g-continuous-component) is already hybrid. It
 carries modes `m`, [guards](#g-guard) (functions that define an event's
-predicate) and handlers ([§3.1][s3-1]). What separates the two leaf classes is
+predicate) and handlers ([§3.1][s3-1]). What separates the two tiers is
 [sweep](#g-sweep)-driven versus [tick](#g-tick)-driven execution. A sweep is
 one pass through the execution order against the current state. A tick is an
 instant at which a discrete component's stages and update run.
@@ -796,7 +796,7 @@ granularity; and [§4.4][s4-4] function-valued signals for environment access.
 (floats, `SVector`s, enums, nested immutables). The framework owns a [signal table](#g-signal-table),
 with one concretely typed [cell](#g-cell) per output port in the flattened model. A
 producer's output [stage function](#g-stage-function) (`y_state`/`y_direct`, the two output stages every
-leaf provides, on either [tier](#g-tier), continuous or discrete) returns a NamedTuple
+primitive provides, on either [tier](#g-tier), continuous or discrete) returns a NamedTuple
 of fresh values. The framework writes each of those values into its cell, and
 consumers read cells.
 
@@ -855,7 +855,7 @@ the parties that write it.
 
 A component's ports are its signal endpoints, one cell and one producer each.
 **Its [faces](#g-face) are the names those ports wear on the component's
-boundary** ([D-172][d-172]). For a leaf the two coincide. For an
+boundary** ([D-172][d-172]). For a primitive the two coincide. For an
 [assembly](#g-assembly) (a component that holds and wires child components) every face
 aliases an interior port through its boundary declarations ([§8.6][s8-6]) and
 never creates an endpoint. The distinction is [class](#g-class)-blind ([D-172][d-172]).
@@ -935,7 +935,7 @@ names. An `output_wires` entry sources a face from an immediate child's face
 ([§6.1][s6-1]). `RQuat` is a rotation-quaternion type ([§7.1][s7-1]).
 
 ```julia
-#a continuous leaf: one bundle port and the hot field published loose — two cells
+#a continuous primitive: one bundle port and the hot field published loose — two cells
 y_types(::Kinematics) = (pose = KinPose{Float64}, q_eb = RQuat{Float64})
 
 #the enclosing assembly: each face aliases an interior port, creating no endpoint
@@ -968,7 +968,7 @@ at the vehicle pose. **Ordinary [ports](#g-port) carry them as immutable query o
 called [field handles](#g-field-handle), because of that shape ([D-008][d-008]). A port is one declared name
 with its cell.
 
-- An environment [component](#g-component) (the unit of modeling, leaf or
+- An environment [component](#g-component) (the unit of modeling, primitive or
   assembly) emits a field value, such as the illustrative
   `ISAField(T_sl, p_sl, wind)` or `TerrainField(…)`. Consumers receive it
   through ordinary input ports. Inside their own
@@ -1018,7 +1018,7 @@ its component's boundary). That is structural substitutability ([§8.2][s8-2],
 
 ## 5. Evaluation order and feedthrough
 
-This chapter fixes two output stages per leaf, what each stage may see, and
+This chapter fixes two output stages per primitive, what each stage may see, and
 how those signatures alone yield a static execution order. The build derives
 that order from declared feedthrough and rejects algebraic loops by naming the
 cycle. [§5.1][s5-1] states the ordering problem; [§5.2][s5-2] the two output stages, their
@@ -1039,7 +1039,7 @@ while the model runs ([§9.7][s9-7]). A cyclic graph is the subject of
 
 ### 5.2 Two-stage outputs: signatures, bundles and the hand-off laws
 
-**Every leaf provides exactly two output stages** ([D-006][d-006]). [Feedthrough](#g-feedthrough) (an
+**Every primitive provides exactly two output stages** ([D-006][d-006]). [Feedthrough](#g-feedthrough) (an
 instantaneous input→output dependence) is declared structurally, by function
 signature. There are no dependency annotations anywhere in the design ([D-006][d-006],
 [D-341][d-341]). `y_state` is stage 1 and `y_direct` is stage 2.
@@ -1216,8 +1216,8 @@ definition site. Modes count as state for that split ([D-075][d-075],
 The update law carries the [tier](#g-tier) (the continuous or discrete side of the hybrid
 formalism) in its name, `x_deriv` versus `s_update`. The two output stages do
 not. One pair of names serves both tiers, over each tier's own state letter
-([D-220][d-220]). A stateful leaf's declarations must agree on one tier throughout ([§8.2][s8-2],
-[D-112][d-112]).
+([D-220][d-220]). A stateful primitive's declarations must agree on one tier throughout
+([§8.2][s8-2], [D-112][d-112]).
 
 #### Stage roles: what each stage may see
 
@@ -1446,7 +1446,7 @@ graph is a different case, the [algebraic loop](#g-algebraic-loop) of [§5.5][s5
 loop in this domain is rigid-body dynamics. Velocity out is pure state, and
 acceleration out is feedthrough from total force. **The remedy ladder for
 artificial loops has three rungs** ([D-140][d-140]). The [two-stage split](#g-stage-function) (the two output
-stages every leaf provides) resolves the rigid-body case, and it is the
+stages every primitive provides) resolves the rigid-body case, and it is the
 rung that absorbs most artificial loops.
 
 What survives the split is the case where a single component's stage-2 outputs
@@ -1522,11 +1522,11 @@ structural two-stage split.
 
 ## 6. Composition: connections, aggregation and hierarchy
 
-[Components](#g-component) (the units of modeling, leaf or assembly) become a
+[Components](#g-component) (the units of modeling, primitive or assembly) become a
 system through wiring. Connections route signals across the hierarchy of
 [assemblies](#g-assembly) (components that only hold and wire children, with
-no dynamics of their own). Ordinary junction components sit wherever several signals must
-combine into one. [§6.1][s6-1] gives the connection and hierarchy rules.
+no dynamics of their own). Ordinary junction components sit wherever several
+signals must combine into one. [§6.1][s6-1] gives the connection and hierarchy rules.
 [§6.2][s6-2] gives the aggregation idiom they force.
 
 ### 6.1 Connections and hierarchy
@@ -1598,8 +1598,8 @@ scalar), the producer's declared type must be a subtype of the consumer's
 input entry, and equal to it for a concrete entry ([D-078][d-078]).
 
 The second is the walk clause, for a continuous consumer only. A
-[walking](#g-walked) producer leaf, one whose type follows the activation
-scalar, requires an unpinned entry. A pinned producer leaf, one declared
+[walking](#g-walked) producer primitive, one whose type follows the activation
+scalar, requires an unpinned entry. A pinned producer primitive, one declared
 `Pinned`, satisfies either entry, because frozen values embed upward under any
 activation. A discrete consumer takes the bound law alone, so a continuous
 producer feeding a discrete consumer is unconditionally legal. The discrete
@@ -1955,7 +1955,7 @@ workspace's rules, then the two laws that join the two homes.
 
 #### Stores: discrete state and modes
 
-**Discrete state, a discrete leaf's `s`, and the modes `m` live in typed stores**,
+**Discrete state, a discrete primitive's `s`, and the modes `m` live in typed stores**,
 apart from the buffer that holds `x` ([§7.1][s7-1], [D-013][d-013], [D-302][d-302]). The framework
 overwrites an `s` or `m` store when an update or a handler returns a new value.
 
@@ -2023,7 +2023,7 @@ there, not less.
 
 Heavy algorithms do their in-place math in the workspace and return an isbits
 snapshot as the new state ([D-013][d-013]). Snapshot values are for storage,
-never arithmetic. In a discrete leaf drawing random numbers, **a generator
+never arithmetic. In a discrete primitive drawing random numbers, **a generator
 object such as `Xoshiro` lives in the workspace, and the values that determine
 its next draw are state in `s`** ([D-231][d-231]). Keeping them in `s` is what
 makes replay deterministic ([§2.5][s2-5]). [§8.2][s8-2] spells both idioms.
@@ -2089,7 +2089,7 @@ near-final in shape but still illustrative in spelling.
 
 A [component](#g-component) is authored in ordinary Julia. Its
 [stage functions](#g-stage-function) are ordinary multiple-dispatch methods.
-They are `y_state` and `y_direct`, the two output stages every leaf
+They are `y_state` and `y_direct`, the two output stages every primitive
 provides on either [tier](#g-tier) (the continuous or discrete side of the
 hybrid formalism). The methods follow the `GUI.draw!` precedent, the
 per-component panel extensions in FlightCore's style ([§11.7][s11-7]). A
@@ -2142,7 +2142,7 @@ execution, and conformance by comparison.
 
 #### Contracts are functions of the type
 
-**A leaf's contract declarations must be determined by the component's
+**A primitive's contract declarations must be determined by the component's
 type**, its type parameters included, and never by its field *values*
 ([D-033][d-033], [D-297][d-297]). Those declarations are `u_types`, `y_types` and
 `state_events`, and the shapes of `x_init`/`s_init`/`m_init`.
@@ -2314,8 +2314,8 @@ the exported-name audit in `pending.md` runs ([D-226][d-226]).
 ### 8.2 The declaration inventory
 
 This section takes the declarations of a [component](#g-component) (the unit of
-modeling, leaf or assembly) one by one, and records where each schema fact gets
-its authority. One continuous primitive, declared end to end, shows them
+modeling, primitive or assembly) one by one, and records where each schema fact
+gets its authority. One continuous primitive, declared end to end, shows them
 together:
 
 ```julia
@@ -2402,27 +2402,27 @@ path-addressed sparse overlay that sets a build's state, merges on it ([§14.1][
 Readers and the trace spell it ([§14.4][s14-4]). The name a one-state component is asked
 for is the name every service then uses.
 
-**Every leaf declares exactly one of `x_init` and `s_init`**, and a stateless
-leaf declares it empty ([D-263][d-263]):
+**Every primitive declares exactly one of `x_init` and `s_init`**, and a stateless
+primitive declares it empty ([D-263][d-263]):
 
 ```julia
 x_init(::Gain) = (;)
 s_init(::Sampler) = (;)
 ```
 
-This [state declaration](#g-state-declaration) (a leaf's `x_init` or `s_init`) is the tier marker. It is
-therefore mandatory even when empty, exactly as `local_wires` is mandatory
+This [state declaration](#g-state-declaration) (a primitive's `x_init` or `s_init`) is the tier marker. It
+is therefore mandatory even when empty, exactly as `local_wires` is mandatory
 even when empty because it is the class marker ([§8.5][s8-5], [D-263][d-263]). A primitive
 declaring neither is `TierUnreadable`, and its message spells the empty form. An
 empty state declaration owes no update law, since it has nothing to integrate or
 advance. It puts no letter in the bundle ([§5.2][s5-2]).
 
 A continuous component's state may be empty ([§3.1][s3-1]), so a stateless
-continuous leaf is honestly a continuous leaf with zero state fields. Spelling
-that out puts every leaf's tier on the page in one place, stateful or not, with
-no tier by omission. It also closes a trap. A state declaration lost to a local
-scope or to a forgotten import ([§8.1][s8-1]) fails loud as a leaf declaring none,
-where an optional marker would have dropped silently.
+continuous primitive is honestly a continuous primitive with zero state fields.
+Spelling that out puts every primitive's tier on the page in one place, stateful
+or not, with no tier by omission. It also closes a trap. A state declaration
+lost to a local scope or to a forgotten import ([§8.1][s8-1]) fails loud as a primitive
+declaring none, where an optional marker would have dropped silently.
 
 Because the type is derived from the value, there is no second artifact to drift
 and no separate type declaration to check. The workspace is the exception to
@@ -2485,7 +2485,7 @@ does the in-place math on the workspace, with `mul!`, `cholesky!` or BLAS. At
 the end, it snapshots into an isbits container and returns it, as in
 `s = KFState(SVector{20}(ws.x̂), SMatrix{20,20}(ws.P))`.
 
-A PRNG in a discrete leaf keeps its generator object, such as `Xoshiro`, in
+A PRNG in a discrete primitive keeps its generator object, such as `Xoshiro`, in
 the workspace, and the values that determine its next draw in `s`
 ([D-231][d-231]). The generator is mutable, so it is scratch, allocated once.
 The values are immutable, so they are state. The tick loads them into the
@@ -2589,11 +2589,12 @@ to exact equality for a concrete entry, because concrete types are final. A
 violation is `WireTypeMismatch`.
 
 Beside it sits the tier-scoped [walk-compatibility clause](#g-bound-law), the walk clause for
-short. For a *continuous* consumer, a walking producer leaf (one the producer
-left unpinned) requires an unpinned entry. A pinned producer leaf satisfies
-either, because frozen values embed upward. Both sides are plain declarations
-the walk retypes. The clause is therefore decidable in the structure step by
-retyping them at a marker scalar. No user stage code runs ([§9.1][s9-1]).
+short. For a *continuous* consumer, a walking producer primitive (one the
+producer left unpinned) requires an unpinned entry. A pinned producer primitive
+satisfies either, because frozen values embed upward. Both sides are plain
+declarations the walk retypes. The clause is therefore decidable in the
+structure step by retyping them at a marker scalar. No user stage code runs
+([§9.1][s9-1]).
 
 An abstract entry's leaves cannot be enumerated. **The walk clause decides an
 abstract entry on the whole declaration** ([D-236][d-236]). The producer's
@@ -2674,7 +2675,7 @@ input must therefore resolve to a concrete declaration, which
 the trace header is the trace's fixed preamble.
 
 **Abstract-at-root is a build error** ([D-236][d-236]). The uniform root doctrine
-below does not relax it ([D-208][d-208]). A leaf declaring an abstract entry
+below does not relax it ([D-208][d-208]). A primitive declaring an abstract entry
 (`terrain = AbstractTerrainField`) still cannot be built bare. `AbstractAtRoot`
 names the face and the remedy, which is to wire a concrete producer, or a stub
 child in a test rig. The [component test rig](#g-component-test-rig) (a one-child wrapper
@@ -2711,8 +2712,8 @@ Two consumers of one root input may agree at nominal and still differ in
 tolerance. `SVector{3, Float64}` and `Pinned{SVector{3, Float64}}` are one
 type at nominal. The root input *type* is therefore unambiguous while the
 entries disagree about partials. That mixture is a legitimate model rather
-than a mistake. A command consumed by a promoting aerodynamics leaf and by an
-AD-opaque table is the FFI door in use.
+than a mistake. A command consumed by a promoting aerodynamics primitive and by
+an AD-opaque table is the FFI door in use.
 
 The direction of the meet is forced by embedding. A pinned root-input cell
 feeds an unpinned entry lawfully, because frozen values embed upward as
@@ -2729,9 +2730,9 @@ rather than the face alone ([§14.10][s14-10], [D-168][d-168], [D-296][d-296]).
 the root's own input faces** ([D-208][d-208]). For an
 [assembly](#g-assembly) (a component that holds and wires children) those are the faces
 declared through `input_wires`, each traced through the face chain
-([§6.1][s6-1], [§11.3][s11-3]) to the leaf entries consuming it. For a
-primitive they are its `u_types` keys directly, because a leaf's faces are its
-own port names ([§8.6][s8-6]). Each is then its own consuming entry. The type
+([§6.1][s6-1], [§11.3][s11-3]) to the primitive entries consuming it. For a
+primitive they are its `u_types` keys directly, because a primitive's faces are
+its own port names ([§8.6][s8-6]). Each is then its own consuming entry. The type
 derivation is one rule across both cases, the tight bound at the ultimate
 consuming entry, above. At the root the two contract declarations share one
 face namespace, so a key declared in both is a build error ([§8.6][s8-6],
@@ -2754,9 +2755,9 @@ y_types(::Engine) = (M_shaft = Float64, P = Float64, ω = Float64)
 The cell types at an activation are that declaration retyped at the
 activation's `T` by the leaf walk ([D-079][d-079], [D-263][d-263]). On a
 discrete producer the same spelling pins wholesale. That is the discrete
-exemption ([§7.2][s7-2]), enforced by tier. The leaf's tier decides which
+exemption ([§7.2][s7-2]), enforced by tier. The primitive's tier decides which
 reading applies, never the contract's shape. The tier is declared by the
-leaf's state declaration (above and below).
+primitive's state declaration (above and below).
 
 Semantics are literal once the walk has run. The cell type is the retyped
 declaration, with nothing inferred. Participation is therefore authored per
@@ -3004,7 +3005,7 @@ contract, preserving [§4.2][s4-2]. Moving a port between stages is
 non-breaking for consumers.
 
 **Stages are discovered by method existence** ([D-350][d-350]). An output
-stage exists when the leaf defines its method, and the build reads which
+stage exists when the primitive defines its method, and the build reads which
 stages exist without evaluating anything.
 
 The derivation has no chicken-and-egg. Stage-1 functions (`y_state`)
@@ -3014,7 +3015,7 @@ probes the stage-2 chain in topological order with real upstream values. The
 property that stage 1 takes no inputs is exactly what makes the derivation
 well-founded.
 
-A leaf's declarations do carry its tier ([D-195][d-195], [D-220][d-220]), and
+A primitive's declarations do carry its tier ([D-195][d-195], [D-220][d-220]), and
 that is a different fact. The tag refused here is the *stage* tag on a port,
 which stays invisible either way.
 
@@ -3046,7 +3047,7 @@ otherwise hide the omission indefinitely. An entry that is not a `StateEvent` is
 
 Tier is declared by the state declaration, as "State and mode declarations"
 above states ([D-195][d-195], [D-263][d-263]). A
-stateful leaf announces it in the update law as well, `x_deriv` beside `x_init`
+stateful primitive announces it in the update law as well, `x_deriv` beside `x_init`
 and `s_update` beside `s_init`. The two output stages are one pair of names shared
 by both tiers, so they announce nothing and cast no vote ([D-220][d-220]).
 
@@ -3058,26 +3059,27 @@ because the discrete tier pins wholesale and the marker there says nothing. No
 arity carries a tier (above).
 
 Disagreement is `DeclarationOnWrongTier` ([Appendix C][sC]). It is reported as the
-offending declaration, with the tier the leaf's other declarations announce. It
-covers declaring both `x_deriv` and `s_update`, a `Pinned` entry on a discrete leaf,
-and the mixed cases that the split state letters (`x` for continuous state, `s` for
-discrete, [D-195][d-195]) restore. Those are both state declarations on one leaf, an
-`x_init` on a leaf whose update law is `s_update`, and an `s_init` on one whose update
-law is `x_deriv`.
+offending declaration, with the tier the primitive's other declarations
+announce. It covers declaring both `x_deriv` and `s_update`, a `Pinned` entry on a
+discrete primitive, and the mixed cases that the split state letters (`x` for
+continuous state, `s` for discrete, [D-195][d-195]) restore. Those are both state
+declarations on one primitive, an `x_init` on a primitive whose update law is
+`s_update`, and an `s_init` on one whose update law is `x_deriv`.
 
-A stateless leaf is a leaf whose state declaration is empty, and it declares its
-tier the same way. `x_init(::C) = (;)` makes it continuous, the tier [§13.7][s13-7] steers
-stateless leaves to. `s_init(::C) = (;)` makes it discrete, one that runs at its
-ticks and holds its outputs between them.
+A stateless primitive is a primitive whose state declaration is empty, and it
+declares its tier the same way. `x_init(::C) = (;)` makes it continuous, the tier
+[§13.7][s13-7] steers stateless primitives to. `s_init(::C) = (;)` makes it discrete, one
+that runs at its ticks and holds its outputs between them.
 
-`y_types` stays mandatory on a stateless leaf. A leaf with an empty state
-declaration and no output contract produces nothing and stores nothing, and it
-is refused as `StatelessWithoutOutputs` ([Appendix C][sC], [D-263][d-263]). The stage bundles
-follow the tier like any other leaf's, with no `x` or `s` field, because the bundle
-law puts a state declaration's letter in the bundle only when it is non-empty
-([§5.2][s5-2]). [§13.7][s13-7] records why one stateless continuous leaf already serves consumers
-on both tiers. A type declaring both the leaf and the assembly families of
-declarations, or neither, meets the class errors of [§8.5][s8-5].
+`y_types` stays mandatory on a stateless primitive. A primitive with an empty
+state declaration and no output contract produces nothing and stores nothing,
+and it is refused as `StatelessWithoutOutputs` ([Appendix C][sC], [D-263][d-263]). The stage
+bundles follow the tier like any other primitive's, with no `x` or `s` field,
+because the bundle law puts a state declaration's letter in the bundle only when
+it is non-empty ([§5.2][s5-2]). [§13.7][s13-7] records why one stateless continuous primitive
+already serves consumers on both tiers. A type declaring both the primitive and
+the assembly families of declarations, or neither, meets the class errors of
+[§8.5][s8-5].
 
 ### 8.3 Visibility: the contract is the interface
 
@@ -3091,7 +3093,7 @@ checks that hold stage returns and declarations to each other.
 - a field returned in `y` (a stage's own published signals) and declared
   nowhere is a build error;
 - a component with no `y_types(::C)` method has no outputs, and a stateless
-  leaf without one is refused as `StatelessWithoutOutputs` ([§8.2][s8-2],
+  primitive without one is refused as `StatelessWithoutOutputs` ([§8.2][s8-2],
   [D-263][d-263]).
 
 That is the same move as class-by-declaration-shape ([§8.5][s8-5]). [Ports](#g-port) in the
@@ -3224,8 +3226,8 @@ implementation detail behind the [contract](#g-contract) (a component's declared
 
 Class is declared instead by *which* well-known declarations a type defines.
 **`local_wires` is the marker**, mandatory even when empty, and defining
-it makes an assembly ([D-039][d-039]). Any leaf declaration makes a primitive.
-The leaf declarations are `x_init`/`s_init`/`m_init`, `ws_init`,
+it makes an assembly ([D-039][d-039]). Any primitive declaration makes a primitive.
+The primitive declarations are `x_init`/`s_init`/`m_init`, `ws_init`,
 `u_types`/`y_types`, `state_events`, and any stage (`y_state`, `y_direct`),
 `x_deriv`, `s_update` or
 `x_projection` method.
@@ -3236,7 +3238,7 @@ rather than a silence that fails later and elsewhere. When the type has
 component-typed fields, that error sharpens into a [did-you-mean](#g-did-you-mean) (the offending
 name plus the list-in-hand it should have matched). Its message reads "holds
 components but declares no `local_wires`". `local_wires` plus any
-leaf declaration on one type is a build error as well, `ClassMixed`.
+primitive declaration on one type is a build error as well, `ClassMixed`.
 
 Assemblies have no state of their own, which is the no-atomic-assemblies rule
 at declaration time ([§10.5][s10-5]). They have no contract of their own
@@ -3251,10 +3253,10 @@ inference-by-evaluation ([§8.1][s8-1]).
 
 Class fixes *which* declarations a type may define, and nothing about their
 shape. Every declaration of a structural fact takes the component alone, on a
-leaf of either [tier](#g-tier) (continuous or discrete) and on an assembly alike ([D-263][d-263],
-[D-279][d-279]). The one exception, the allocator's scalar, is the same on both tiers
-([§7.3][s7-3], [D-263][d-263]). The tier is read from the state declaration every leaf makes
-([§8.2][s8-2]). That section states the arity rule and tier agreement in full. A
+primitive of either [tier](#g-tier) (continuous or discrete) and on an assembly alike
+([D-263][d-263], [D-279][d-279]). The one exception, the allocator's scalar, is the same on both
+tiers ([§7.3][s7-3], [D-263][d-263]). The tier is read from the state declaration every primitive
+makes ([§8.2][s8-2]). That section states the arity rule and tier agreement in full. A
 declaration on the wrong tier is `DeclarationOnWrongTier` ([Appendix C][sC]).
 
 #### Container children
@@ -3402,7 +3404,7 @@ wires its children and names its boundary with strings. A [face](#g-face) is the
 section fixes the path form, the three wiring declarations and the direction
 invariant they share, face names, [root inputs](#g-root-input) (the root component's own input
 faces), and face uniqueness at the root. It then spells out a worked assembly,
-the strapdown IMU, and its leaves. It closes with the boundary-sampling
+the strapdown IMU, and its primitives. It closes with the boundary-sampling
 contract.
 
 **Paths are slash-separated strings**, relative to the assembly or the root they
@@ -3497,8 +3499,8 @@ component's primitive-versus-assembly status. An assembly root supplies its
 `input_wires` keys, and a primitive root its `u_types` keys ([§8.2][s8-2]). Nothing
 downstream distinguishes the two. The whole-tree obligation model ([§6.1][s6-1])
 states the complementary error rule. An assembly never declares its external
-connections. Those live in the parent that instantiates it, exactly as a leaf's
-do.
+connections. Those live in the parent that instantiates it, exactly as a
+primitive's do.
 
 **At the root the uniqueness invariant follows the root's class**
 ([D-210][d-210]). A primitive root declares no boundary methods. Its face set
@@ -3507,12 +3509,12 @@ both is the same build error a duplicate face name is. The root is where those
 two declarations first share an address space. A root input places a cell the
 periphery writes ([§11.3][s11-3]), so a collision would put two cells at one
 name. Below the root nothing collides, because a primitive's input faces alias
-their producers' cells and place nothing. Non-root leaves are left alone.
+their producers' cells and place nothing. Non-root primitives are left alone.
 
 #### A worked assembly: the strapdown IMU
 
 A strapdown inertial measurement unit (IMU) is the strongest challenge
-mounted against the two-leaf split of [§3.4][s3-4]. It is spelled here in
+mounted against the two-tier split of [§3.4][s3-4]. It is spelled here in
 full, as a [worked](#g-worked) example (a full spelling of a mechanism against
 a concrete case). It is a mixed-tier assembly. It exercises paths, faces and
 sample times together:
@@ -3563,7 +3565,7 @@ arrives from the enclosing scope at deployment ([§8.7][s8-7]). The latch-back w
 sampler's published latch, would join `local_wires` as one more ordinary
 pair.
 
-#### The leaves: integrate-and-difference
+#### The primitives: integrate-and-difference
 
 The IMU's direct formulation is integrate-and-dump. It integrates raw
 increments continuously, as `ẋ.ϑ_c = ω_ic_c`, `ẋ.υ_c = f_c_c`, the coning
@@ -3579,14 +3581,14 @@ $= q_{c_{k-1} \to c(t)}$ runs from identity, and `υ_c_sc`
 $= \int_{t_{k-1}}^{t_k} R^{c_{k-1}}_{c} f^{c} \, dt$ has its rotation
 anchored at the interval start.
 
-The reset is what neither leaf class can spell. It is a discrete-tier write
+The reset is what neither tier can spell. It is a discrete-tier write
 into continuous state, and only handlers write `x` ([§3.4][s3-4],
 [D-362][d-362]). It is periodic rather than predicate-triggered, so events are
 the wrong mechanism ([D-362][d-362]). Integrate-and-dump is tightly coupled
 continuous and periodic dynamics in one physical instrument, and it falls
-squarely into the crack between the two leaf classes.
+squarely into the crack between the two tiers.
 
-The IMU's leaves carry the idiom that answers it. Algebra can eliminate that
+The IMU's primitives carry the idiom that answers it. Algebra can eliminate that
 reset, with no approximation. **Every interval-relative integral becomes a
 *cumulative* one** ([D-056][d-056]). The sampler differences against the previous sample,
 held in its `s`. That is the textbook sampled-data latch. It is the only new
@@ -3653,7 +3655,7 @@ of order $10^{-11}\ \mathrm{m/s}$ per sample against
 $10^{4}\ \mathrm{m/s}$ totals. That is six-plus orders below any error model
 worth simulating.
 
-#### The leaves in code
+#### The primitives in code
 
 A few names in the code below need an introduction. `RQuat` is the domain
 wrapper an attitude `SVector{4}` is cast to where rotation semantics are wanted
@@ -3724,7 +3726,7 @@ consistency point), run at `t₀`. There the sampler's
 obligation on the author of the [condition](#g-condition) (the datum that
 sets a build to a state) under trim ([§14.5][s14-5]).
 
-The two-leaf form is *less* code than the direct formulation. It keeps the
+The two-tier form is *less* code than the direct formulation. It keeps the
 same thirteen integral scalars and the same math, minus the reset block. It
 also brings three structural gains ([D-056][d-056]).
 
@@ -3869,7 +3871,7 @@ function input_passthrough(assembly, child_path::AbstractString;
                      select = nothing)                      # predicate over face names
 
     child = resolve(assembly, child_path)      # getfield walk along "/" segments
-    names = input_faces(child)            # the leaf's u_types keys,
+    names = input_faces(child)            # the primitive's u_types keys,
                                           # entries of input_wires(c) for an assembly
     given = !isempty(except) + !isempty(only) + (select !== nothing)
     given ≤ 1 ||
@@ -4135,11 +4137,11 @@ The step is a tree walk from the root instance, in this order:
 1. [Components](#g-component) are collected by path.
 2. Each component's [class](#g-class) (its primitive-vs-assembly status) is
    read off declaration shape ([§8.5][s8-5]).
-3. Leaf contracts are collected: `u_types`, `y_types`, `*_init` values,
+3. Primitive contracts are collected: `u_types`, `y_types`, `*_init` values,
    `state_events`.
 4. Face derivation runs bottom-up. It records at every level the input and
    output faces it declares and the chain each one routes through.
-5. Global wiring resolution then runs, resolving wires to absolute leaf
+5. Global wiring resolution then runs, resolving wires to absolute primitive
    terminals.
 
 Before a component's class is read, the walk runs the [shadowing check](#g-shadowing-check) (its check
@@ -4194,10 +4196,10 @@ input faces ([D-208][d-208], [§8.2][s8-2]).
 The step also checks the declaration-completeness rules ([§8.2][s8-2]):
 
 - a store without its update;
-- a leaf declaring no store;
+- a primitive declaring no store;
 - an event missing a [guard](#g-guard) or handler method;
-- a leaf mixing tier families;
-- a stateless leaf with no output contract.
+- a primitive mixing tier families;
+- a stateless primitive with no output contract.
 
 **`sample_times` validation is the structure step's too** ([D-185][d-185]). It
 has two parts. The first is per-entry validity against the constraints of
@@ -4982,7 +4984,7 @@ The error can afford to be didactic, as in "field `M_shaft`: expected
 `Float64`, got `Int64` — return `zero(x.ω)`, not `0`".
 
 Under a non-nominal activation (the build's typed products at a given scalar
-type), the two leaf kinds the declaration ([§8.2][s8-2]) distinguishes,
+type), the two tiers the declaration ([§8.2][s8-2]) distinguishes,
 walking and pinned, are checked differently. An [opaque leaf](#g-opaque-leaf) (a non-isbits
 immutable the leaf walk stores whole) has a rule of its own. **A walking leaf, one
 the author left unpinned, accepts exactly two types**, the activation scalar or
@@ -5049,7 +5051,7 @@ function is checked against its own predicate.
   `SArray` at `T` ([§7.1][s7-1]). Its predicate is "every field scatters into
   its field's block at `T`". That predicate is what makes derivative
   completeness structural rather than a matter of author discipline.
-- `s_update` checks against its leaf's `s` shape.
+- `s_update` checks against its primitive's `s` shape.
 - Handlers check against the [§5.2][s5-2] return law, key by key.
 - [Guards](#g-guard) check against their probe-derived
   [predicate](#g-predicate) form (below).
@@ -7733,8 +7735,8 @@ holding place where a device's pending batch waits between drains. Its masked
 (touched) batch entries are recorded as (position ⇒ value) pairs, against the
 writer's [face](#g-face)-name → position schema in the `schemas` list (below). A face is
 the name a port wears on its [component](#g-component)'s boundary. A component is the unit of
-modeling, a leaf or an assembly. The recording is an O(surface-width) scan and
-one small allocation per drained batch, plus the values boxed into that
+modeling, a primitive or an assembly. The recording is an O(surface-width) scan
+and one small allocation per drained batch, plus the values boxed into that
 allocation.
 
 The rule is uniform because the *width* of a [claim](#g-claim) (the set of faces a device
@@ -8276,7 +8278,7 @@ framework's half of the panel convention.
 
 #### Port resolution and derived liveness
 
-Panels remain extensions per [component](#g-component) (the unit of modeling, a leaf or an
+Panels remain extensions per [component](#g-component) (the unit of modeling, a primitive or an
 assembly) in FlightCore's style, such as `GUI.draw!(ctx, ::LowPassFilter)`. They
 are discovered by walking the [assembly](#g-assembly) (whose component-typed
 fields are its children). However, **widgets name the component's own ports,
@@ -10301,8 +10303,8 @@ enforces, which client each duty binds and why, and the standing of
 - `resolve(assembly, path::String) → AbstractComponent` resolves an immediate
   child, a container element's key segment included.
 - `input_faces(c)` / `output_faces(c) → Vector{String}` return the stringified keys
-  of a leaf's `u_types` / `y_types` (the key set is `T`-independent). For an [assembly](#g-assembly)
-  they return the [face](#g-face) names (the names ports wear on their component's
+  of a primitive's `u_types` / `y_types` (the key set is `T`-independent). For an
+  [assembly](#g-assembly) they return the [face](#g-face) names (the names ports wear on their component's
   boundary) of `input_wires(c)` / `output_wires(c)`. Declaration order is preserved,
   which gives deterministic printouts and stable diagnostics.
 - `resolve_terminal(assembly, path) → (component, name)` splits off a terminal
@@ -10396,10 +10398,10 @@ calls the hook functions `frame_top!` before the frame touches any state and
 `settled!` at every boundary it settles ([D-317][d-317]). The code inside the `Model`'s
 `try` is the guarded sequence. A boundary's macro-sequence runs integrate →
 project → event iteration → [ticks](#g-tick) → publication. Ticks are the instants at which
-discrete leaves run their stages and update. **`frame!` never wraps per stage or per
-[component](#g-component)** (the unit of modeling, a leaf or an assembly of components) ([D-059][d-059]).
-The loop wraps each frame in a `try` of its own, which decides the failure's
-disposition (below) and builds no carrier ([D-317][d-317]).
+discrete primitives run their stages and update. **`frame!` never wraps per stage or
+per [component](#g-component)** (the unit of modeling, a primitive or an assembly of components)
+([D-059][d-059]). The loop wraps each frame in a `try` of its own, which decides the
+failure's disposition (below) and builds no carrier ([D-317][d-317]).
 
 Where execution stood does not need to be *caught* into existence. The [executor](#g-executor)
 (the compiled form of the stage [execution order](#g-execution-order)) maintains an [execution cursor](#g-execution-cursor),
@@ -10662,11 +10664,11 @@ ownership idiom, [§6.2][s6-2]; the library, [§13.7][s13-7]). It wires the resu
 because the loop reads the request where it is.
 
 **The library spelling is `StopRequest`** ([D-316][d-316]). It is a stateless
-continuous leaf in the mould of `Constant` ([§13.7][s13-7]). Its one input is
+continuous primitive in the mould of `Constant` ([§13.7][s13-7]). Its one input is
 the stop's `Bool`, its one output the flag, and its reason is instance data.
 
 ```julia
-# StopRequest — a stateless continuous leaf; its reason is instance data
+# StopRequest — a stateless continuous primitive; its reason is instance data
 struct StopRequest <: AbstractComponent
     reason::String
 end
@@ -10681,11 +10683,12 @@ stop_reason(c::StopRequest) = c.reason
 Its output is consumed by nobody, which [§6.1][s6-1] allows silently ([D-084][d-084]).
 `StopRequest` is continuous, so it refreshes at every boundary, `t*` included
 ([§10.4][s10-4], [D-316][d-316]). Assemblies are virtual for execution and rate scopes touch
-discrete children only, so one leaf sits anywhere in the tree ([§10.5][s10-5], [D-019][d-019]).
-Fed by a discrete detector, it sees the tick at the tick's own boundary, because
-the boundary sweep walks the full execution order in topological order ([§10.5][s10-5],
-[D-147][d-147]). The block holds no privilege. Any [component](#g-component) (the unit of modeling, a
-leaf or an assembly of components) may publish a `StopFlag` port directly.
+discrete children only, so one primitive sits anywhere in the tree ([§10.5][s10-5],
+[D-019][d-019]). Fed by a discrete detector, it sees the tick at the tick's own boundary,
+because the boundary sweep walks the full execution order in topological order
+([§10.5][s10-5], [D-147][d-147]). The block holds no privilege. Any [component](#g-component) (the unit of
+modeling, a primitive or an assembly of components) may publish a `StopFlag` port
+directly.
 
 #### Placement and requesters
 
@@ -10895,12 +10898,12 @@ The abnormal path is safe because the boundary is all-or-nothing outside the
 loop ([D-030][d-030]). That is why a `StepError` cannot break [§12.4][s12-4]. [Sweeps](#g-sweep) (passes
 through the execution order) write into table blocks. Integration intermediates
 live in framework-owned integrator buffers, never in the scratch of a [component](#g-component)
-(the unit of modeling, a leaf or an assembly of components). That scratch is its
-[workspace](#g-workspace) (declared by allocation and excluded from state semantics), as [§7.3][s7-3]
-defines it. The only externally visible act is snapshot publication at the very
-end of the sequence. A boundary that throws has published nothing. The last
-*published* snapshot is a complete, consistent boundary by construction, and it is
-still the newest thing any device, logger or waiter has seen.
+(the unit of modeling, a primitive or an assembly of components). That scratch
+is its [workspace](#g-workspace) (declared by allocation and excluded from state semantics), as
+[§7.3][s7-3] defines it. The only externally visible act is snapshot publication at the
+very end of the sequence. A boundary that throws has published nothing. The last
+*published* snapshot is a complete, consistent boundary by construction, and it
+is still the newest thing any device, logger or waiter has seen.
 
 ```
   graceful entry                      abnormal entry
@@ -10947,8 +10950,9 @@ prominent in this section. [D-062][d-062] makes three tooling commitments for th
 namely the passthrough helpers' predicate, the routes `show(::Structure)` prints
 for each root [face](#g-face) (the name a port wears on its component's boundary), and a
 standard library of [components](#g-component). Components are the units of modeling, each a
-leaf or an assembly of components. The section covers the predicate and the face
-routes first, then the standard component library and the component test rig.
+primitive or an assembly of components. The section covers the predicate and the
+face routes first, then the standard component library and the component test
+rig.
 
 The passthrough helpers take a predicate. `select` is the third
 selector beside `except` and `only`, on `input_passthrough` and
@@ -11051,7 +11055,7 @@ parametrized by its scalar type as a walked type of [§7.2][s7-2].
 weighted blend or a mass-properties composition, is written at the site as
 `Junction{In, Out, N}(f)`, which infers `F`.
 
-The junction is a continuous leaf, so its contract is written at nominal
+The junction is a continuous primitive, so its contract is written at nominal
 `Float64` and the [leaf walk](#g-leaf-walk) (the framework's derivation of per-activation types
 from a declared nominal type) retypes it ([§8.2][s8-2], [D-263][d-263]). An input entry at
 `Wrench{Float64}` is the tolerant form a promoting consumer writes. Walking,
@@ -11084,13 +11088,13 @@ discrete signals held by a zero-order hold, its output therefore changes only at
 [ticks](#g-tick) (the instants at which a discrete component's stages and update run). No
 tier-neutral variant is needed.
 
-`UnitDelay{V}` is a discrete leaf at `K = 1`. It is the tier's native
+`UnitDelay{V}` is a discrete primitive at `K = 1`. It is the tier's native
 `z⁻¹` ([§10.6][s10-6]), the shape an anti-windup chain's previous-saturation
 port hand-writes (`companions/pid_anti_windup.md`). It needs no framework
 support.
 
 ```julia
-# UnitDelay{V} — a discrete leaf at K = 1; its initial value is instance data
+# UnitDelay{V} — a discrete primitive at K = 1; its initial value is instance data
 struct UnitDelay{V} <: AbstractComponent
     v0::V
 end
@@ -11117,7 +11121,7 @@ says so rather than offering the remedy as free.
 the instance holds ([D-143][d-143]).
 
 ```julia
-# Constant{V} — a stateless continuous leaf; its value is instance data
+# Constant{V} — a stateless continuous primitive; its value is instance data
 struct Constant{V} <: AbstractComponent
     value::V
 end
@@ -11126,9 +11130,9 @@ y_types(::Constant{V}) where {V} = (out = Pinned{V},)
 y_state(c::Constant, _) = (out = c.value,)     # the value the instance holds
 ```
 
-`Constant` is a stateless continuous leaf, so the tier-transparency argument
+`Constant` is a stateless continuous primitive, so the tier-transparency argument
 above already covers discrete consumers. No discrete variant is needed
-([D-143][d-143]). **The leaf is deliberately [pinned](#g-walked) at that
+([D-143][d-143]). **The primitive is deliberately [pinned](#g-walked) at that
 value's own type** ([D-312][d-312]), because the block's output *is* its
 stored value. A `Constant{Float64}` declares a `Pinned{Float64}` port and
 means it. A constant is never seeded, so it carries zero partials under any
@@ -11154,7 +11158,7 @@ instance holds) instead ([§14.9][s14-9], [D-364][d-364]).
 ([§6.1][s6-1]) otherwise refuses ([D-266][d-266]).
 
 ```julia
-# Freeze{V} — a stateless continuous leaf; tolerant in, pinned out
+# Freeze{V} — a stateless continuous primitive; tolerant in, pinned out
 struct Freeze{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: AbstractComponent end
 x_init(::Freeze) = (;)
 u_types(::Freeze{V}) where {V} = (in = V,)
@@ -11176,15 +11180,16 @@ rule ([§14.10][s14-10]) is the answer, not this block.
 
 #### The component test rig
 
-The [component test rig](#g-component-test-rig) is the library's companion idiom. Exercising a leaf alone
-needs no rig of its own. Any component may be the root of a build, and its input
-faces then become the model's root inputs ([§8.2][s8-2], [D-208][d-208]). Ordinary [conditions](#g-condition)
-(path-addressed sparse overlays that set a build's state) feed them. So do
-[devices](#g-device) (attached participants in the periphery). Every output is observable in
-the table of each [snapshot](#g-snapshot), the immutable per-boundary publication. The rig is a
-one-child assembly whose `input_wires` surface the child's entire input face
-set, as `input_passthrough(rig, "child")` verbatim ([§8.8][s8-8]). What it buys is a
-place to wire something *beside* the component under test.
+The [component test rig](#g-component-test-rig) is the library's companion idiom. Exercising a primitive
+alone needs no rig of its own. Any component may be the root of a build, and its
+input faces then become the model's root inputs ([§8.2][s8-2], [D-208][d-208]). Ordinary
+[conditions](#g-condition) (path-addressed sparse overlays that set a build's state) feed them.
+So do [devices](#g-device) (attached participants in the periphery). Every output is
+observable in the table of each [snapshot](#g-snapshot), the immutable per-boundary
+publication. The rig is a one-child assembly whose `input_wires` surface the
+child's entire input face set, as `input_passthrough(rig, "child")` verbatim
+([§8.8][s8-8]). What it buys is a place to wire something *beside* the component under
+test.
 
 The demonstrated need is the root-input rule ([§8.2][s8-2]). An [abstract entry](#g-abstract-entry) (an
 `u_types` entry admitting any concrete producer face), such as the illustrative
@@ -11338,7 +11343,7 @@ declarations admit no tracer scalar ([D-012][d-012]). **The remedy hint is
 offered only for continuous members** ([D-140][d-140], [D-343][d-343]),
 because structural tracing is sound as a may-depend answer but never sharp.
 **The hops through a continuous face or port declared with no
-[walking](#g-walked) leaf trace structurally too** ([D-245][d-245],
+[walking](#g-walked) primitive trace structurally too** ([D-245][d-245],
 [D-343][d-343]), because such a face or port admits no tracer scalar either.
 A walking leaf is one whose type follows the activation scalar.
 
@@ -11407,27 +11412,27 @@ projection of one [artifact](#g-artifact) (an immutable pure function of its
 inputs):
 
 - `structure` projects the [`Structure`](#g-structure) (the structure step's
-  declared facts). `nodes` lists every [component](#g-component) (a leaf or
+  declared facts). `nodes` lists every [component](#g-component) (a primitive or
   an assembly of components) in walk order, assemblies included, each keyed
-  by its path with its [class](#g-class) (assembly or leaf), the field that
+  by its path with its [class](#g-class) (assembly or primitive), the field that
   contributed it and, for a container element, its key, its
-  [tier](#g-tier) (continuous or discrete) and timing when a leaf, its type's
+  [tier](#g-tier) (continuous or discrete) and timing when a primitive, its type's
   qualified base name with the full printed type beside it, its alias when a
   `const` of its own module binds a parameterization of its type, and its
-  faces. A leaf's [face](#g-face) (the name a port wears on its component's boundary)
+  faces. A primitive's [face](#g-face) (the name a port wears on its component's boundary)
   carries its printed type, its kind marker and whether it is pinned; an
   assembly's faces are names alone. The root node carries no field and no
-  key, and a primitive root is one leaf node ([D-433][d-433]). An assembly
+  key, and a primitive root is one primitive node ([D-433][d-433]). An assembly
   node carries its level's
   wires verbatim, producer to consumer in declaration order, each endpoint a
   full path and a port, the level's own path on a boundary face and `""` for
   a [root input](#g-root-input) (one of the root component's own input
   faces). `root_inputs`, `anchors` and `scopes` project the remaining rows,
-  and a `types` table describes each type once. A root input is a leaf face
+  and a `types` table describes each type once. A root input is a primitive face
   whose `pinned` is false in version one, the wire pass having stripped the
   marker when it fixed the type ([D-236][d-236], [D-433][d-433]).
 - `outputs` projects [`Outputs`](#g-outputs) (the execution order and each
-  port's stage): the order as paths, and per leaf its stage-1 and stage-2
+  port's stage): the order as paths, and per primitive its stage-1 and stage-2
   port names.
 
 Nothing resolved is carried. The client resolves every face to its terminal
@@ -11439,12 +11444,12 @@ declaration reader at `Float64`, which takes an instance and its tier, both
 in the `Structure`, so a failure after the structure step can still carry
 them. Port classes come from probing and live in `outputs` for that reason.
 
-**Each leaf face carries a kind marker computed in the core** ([D-432][d-432]). The
+**Each primitive face carries a kind marker computed in the core** ([D-432][d-432]). The
 [kind marker](#g-kind-marker) (a small object telling a client with no Julia
 what a face's type is) exists because a client cannot evaluate
 `Angle <: Real`, read `fieldnames(Pose)` or call `instances(FlightPhase)`,
 and printed type names are not stable keys. A `Pinned` entry unwraps to its
-leaf and sets the face's `pinned` flag. The marker is the first row that
+primitive and sets the face's `pinned` flag. The marker is the first row that
 matches, tested in this order because `Bool` is an `Integer`:
 
 | the declared type `T` | marker |
@@ -11943,9 +11948,9 @@ is therefore resolve-once/execute-many.
 Which of the two a service uses is internal, never user-facing API.
 
 The per-iteration ledger for trim has four terms. They are the user [fragment](#g-fragment)
-math, the leaf stores, the folded shape check and the [sweep](#g-sweep) (one pass through
-the execution order against the current state). A fragment is the leaf node of
-the condition algebra, built by `set`. The fragment math is the domain
+math, the primitives' stores, the folded shape check and the [sweep](#g-sweep) (one pass
+through the execution order against the current state). A fragment is the leaf
+node of the condition algebra, built by `set`. The fragment math is the domain
 computations, unchanged from Flight.jl's, plus building the tree, which with
 literal prefixes allocates nothing ([§14.2][s14-2]). The sweep dominates, exactly as
 `f_ode!` does in FlightCore, where it is the continuous-dynamics function a
@@ -12142,8 +12147,8 @@ boundary, the ordinary macro-sequence with an empty integrate) means for trim.
 
   | tier | `t₋₁` | `t₀` (boundary zero) | `t₁` |
   |---|---|---|---|
-  | discrete | the `s_update` that would have produced a discrete leaf's `s(0)` never ran; the condition authored `s(0)` | `s_update` consumes the `t₀` samples and produces `s(1)` | the gated stages read `s(1)` |
-  | continuous | the integration over `[t_{-1}, t_0]` that would have produced a continuous leaf's `x(0)` never ran; the condition authored `x(0)` | the authored `x(0)` is the initial condition of the outgoing integrate, $t_0 \to t_0 + h$ | |
+  | discrete | the `s_update` that would have produced a discrete primitive's `s(0)` never ran; the condition authored `s(0)` | `s_update` consumes the `t₀` samples and produces `s(1)` | the gated stages read `s(1)` |
+  | continuous | the integration over `[t_{-1}, t_0]` that would have produced a continuous primitive's `x(0)` never ran; the condition authored `x(0)` | the authored `x(0)` is the initial condition of the outgoing integrate, $t_0 \to t_0 + h$ | |
 
   The outgoing work all runs, and `t₀`'s `s_update` has its only
   opportunity. `s(1)` must sit in the store before `t₁`'s gated stages read
@@ -13409,7 +13414,7 @@ For component authors:
   the build does not look inside a field handle. The bulk data a handle
   references stays read-only for the duration of the run.
 - **Contracts by type** ([§8.1][s8-1], [§9.7][s9-7]; [D-297][d-297]). A
-  leaf's [contract](#g-contract) declarations must be determined by the
+  primitive's [contract](#g-contract) declarations must be determined by the
   component's type, its type parameters included, and never by its field
   values. Those declarations are `u_types`, `y_types` and `state_events`, and
   the shapes of `x_init`/`s_init`/`m_init`. A contract that genuinely varies
@@ -13596,13 +13601,13 @@ What a [component](#g-component) or [assembly](#g-assembly) defines ([§8.2][s8-
 - The root type. `AbstractComponent`, the one root of primitives and
   assemblies alike, with no `AbstractAssembly` beside it ([§8.5][s8-5],
   [D-039][d-039]).
-- Continuous leaf. `x_init` and `m_init` (by value), `ws_init(::C, ::Type{T})`
+- Continuous primitive. `x_init` and `m_init` (by value), `ws_init(::C, ::Type{T})`
   (by allocation), `u_types` and `y_types` (by type, `Pinned{P}` marking a
   frozen leaf), and `state_events`. Its [stages](#g-stage-function) are
   `y_state` and `y_direct`, its update law `x_deriv`, and its event functions
   [guard](#g-guard)/handler pairs
   ([`StateEvent(guard, handler)`](#g-state-event)) and `x_projection`.
-- Discrete leaf. `s_init` (by value), `ws_init(::C, ::Type{T})` and
+- Discrete primitive. `s_init` (by value), `ws_init(::C, ::Type{T})` and
   `u_types`/`y_types`. Its stages are `y_state` and `y_direct`, and its
   update law `s_update`.
 - Assembly. `local_wires` (the [class](#g-class) marker),
@@ -14087,7 +14092,7 @@ collection ([§9.2][s9-2], [D-250][d-250]).
   entry, that end's path as resolved and as written, the unknown port name,
   that end's port list (did-you-mean).
 - **`UnconnectedInput`** ([§6.1][s6-1], [§8.4][s8-4] w2, [§9.1][s9-1]). Error · build ·
-  collected. Leaf path, input name, declared entry type, the faces
+  collected. Primitive path, input name, declared entry type, the faces
   `input_wires` entries handed it up through, innermost first, the last being
   the outermost face nobody wired.
 - **`TwoProducers`** ([§6.1][s6-1], [§8.8][s8-8], [§9.1][s9-1]). Error · build · collected.
@@ -14111,8 +14116,8 @@ collection ([§9.2][s9-2], [D-250][d-250]).
   `:reaches_past` path goes past the immediate child, and it carries the
   level it stopped at and whether the path ends in a port name.
 - **`AbstractAtRoot`** ([§8.2][s8-2]). Error · build · collected. Face name,
-  the consuming leaf paths, their abstract entries; a remedy hint (wire a concrete
-  producer, or in a rig a stub child, [§13.7][s13-7]).
+  the consuming primitive paths, their abstract entries; a remedy hint (wire a
+  concrete producer, or in a rig a stub child, [§13.7][s13-7]).
 - **`RootInputTypeConflict`** ([§8.2][s8-2]). Error · build · collected. Face
   name, the consuming paths, their conflicting concrete declarations at
   nominal. A tolerance difference is not a conflict (the meet,
@@ -14141,7 +14146,7 @@ collection ([§9.2][s9-2], [D-250][d-250]).
   path, type, declarations found, both family lists; did-you-mean when the
   type holds component-typed fields.
 - **`ClassMixed`** ([§8.5][s8-5]). Error · build · fail-fast. Component path,
-  the `local_wires` declaration and the offending leaf declarations.
+  the `local_wires` declaration and the offending primitive declarations.
 - **`ContainerMixed`** ([§8.5][s8-5]). Error · build · collected over the
   component's child-naming pass, thrown at once ([D-431][d-431]). Container
   field path, offending element keys/indices, their types.
@@ -14154,10 +14159,10 @@ collection ([§9.2][s9-2], [D-250][d-250]).
   a `reason`. Reason `:tier_form` covers `x_deriv`/`s_update`, a store from
   the wrong family (`x_init` against `s_init`, [D-195][d-195]),
   `state_events` and `m_init`. It carries the tier the declaration is
-  written in and the tier the leaf's other declarations announce. A `Pinned` entry on a discrete leaf is reason
-  `:pinned_entry`, the entry named with its contract ([D-263][d-263]).
-  `x_projection` is reason `:continuous_only` on a discrete leaf and
-  `:no_manifold` on a leaf with an empty `x_init`.
+  written in and the tier the primitive's other declarations announce. A `Pinned`
+  entry on a discrete primitive is reason `:pinned_entry`, the entry named with
+  its contract ([D-263][d-263]). `x_projection` is reason `:continuous_only` on a discrete
+  primitive and `:no_manifold` on a primitive with an empty `x_init`.
 - **`FaceNameIllegal`** ([§8.6][s8-6]). Error · build · collected. Assembly
   path, face name, the violated invariant (contains `/`).
 - **`FaceNameCollision`** ([§8.6][s8-6]). Error · build · collected. Assembly
@@ -14196,12 +14201,12 @@ collection ([§9.2][s9-2], [D-250][d-250]).
   `transparent_container` names, the type's container fields (the
   list-in-hand).
 - **`TierUnreadable`** ([§8.2][s8-2]). Error · build ·
-  collected. Component path, type, the leaf declarations found. A primitive
+  collected. Component path, type, the primitive declarations found. A primitive
   declaring neither `x_init` nor `s_init`; the message spells the empty form a
-  stateless leaf writes ([D-263][d-263]).
+  stateless primitive writes ([D-263][d-263]).
 - **`StatelessWithoutOutputs`** ([§8.2][s8-2], [§8.3][s8-3]). Error · build ·
   collected. Component path, type, the declarations found (no `y_types`,
-  an empty store). A leaf that produces nothing and stores nothing ([D-263][d-263]).
+  an empty store). A primitive that produces nothing and stores nothing ([D-263][d-263]).
 - **`IllegalPortType`** ([§4.3][s4-3], [§8.2][s8-2]). Error · build ·
   collected. Component path, the site at fault (`:face` for `u_types`,
   `:port` for `y_types`, or `:root_input`), port name, the offending type,
@@ -14260,9 +14265,9 @@ activation):
   event name, observed probe return type, both admissible forms.
 - **`BundleFieldError`** ([§5.2][s5-2], [§13.2][s13-2]). Error · build, at
   probe; runtime thereafter · fail-fast, a `StepError` species at runtime.
-  Component path, function family, the leaf's tier, requested field, the legal field set,
-  classification (undeclared store / wrong-tier fact / illegal for this
-  function family).
+  Component path, function family, the primitive's tier, requested field, the
+  legal field set, classification (undeclared store / wrong-tier fact / illegal
+  for this function family).
 - **`HandlerReturnKey`** ([§5.2][s5-2], [§9.5][s9-5]). Error · build ·
   collected over the handler's return, with its `ConformanceFailure`s,
   thrown at once ([D-431][d-431]). Component path, event name, offending key, the legal set
@@ -14336,7 +14341,7 @@ activation):
 - **`ConditionResolution`** ([§14.1][s14-1], [§14.2][s14-2], [§14.3][s14-3], [§14.9][s14-9], [§14.10][s14-10]). Error · service
   · collected. Entry path, store and field (or the root-input face the entry
   addresses), the offending value with its type, declared leaf type, the
-  activation where the seeded activation refuses, the leaf's tier
+  activation where the seeded activation refuses, the primitive's tier
   and role where the refusal is tier-bound, the producer where a face is
   fed, candidates where a list is in hand, the origin. The origin is the
   condition tree's chain, or the checkpoint where `linearize`'s default
@@ -14597,7 +14602,7 @@ lacks ([§13.7][s13-7], [D-062][d-062]).
 type-check a wire. The bound law requires the producer's declared type at
 nominal to be a subtype of the consumer's input entry, and equal to it for a
 concrete entry. The walk clause, for a continuous consumer only, requires an
-unpinned entry for a [walking](#g-walked) producer leaf ([§6.1][s6-1],
+unpinned entry for a [walking](#g-walked) producer primitive ([§6.1][s6-1],
 [§8.2][s8-2]).
 
 <a id="g-branch-shape-rule"></a>**branch-shape rule** — a stage's return must
@@ -14611,8 +14616,7 @@ branch fails at that branch's first execution, under the always-on check
 off *which* well-known declarations its type defines. `local_wires` makes an
 assembly, any of the primitive declarations makes a primitive, and neither is
 `ClassUnreadable` ([§8.5][s8-5]). Class is neither a [tier](#g-tier) nor a
-diagnostic [kind](#g-kind). The phrase "two leaf classes" names the tiers in
-ordinary English ([§3.4][s3-4]).
+diagnostic [kind](#g-kind).
 
 <a id="g-component"></a>**component** — the unit of modeling. It is a
 [primitive](#g-primitive) or an [assembly](#g-assembly) of components
@@ -15653,7 +15657,7 @@ the process. `descriptor` renders it as plain data beside `show`'s rendering
 to text. The artifact stays the truth, and a descriptor is one consumer's
 reading of it ([§13.9][s13-9], [D-432][d-432]).
 
-<a id="g-kind-marker"></a>**kind marker** — the small object beside a leaf
+<a id="g-kind-marker"></a>**kind marker** — the small object beside a primitive
 face's printed type in a descriptor, telling a client with no Julia what the
 type is: boolean, enum, symbol, integer, float, number, vector, struct or
 opaque, each with the fields it needs ([§13.9][s13-9]). Not a diagnostic's
@@ -15778,12 +15782,12 @@ that state's status ([§13.2][s13-2], [D-250][d-250]).
 <a id="g-torture-test"></a>**torture test** — a maximally awkward case spelled against a proposed
 mechanism to validate it before adoption: the filter, joystick and GUI against
 the [§11][s11] staging shapes ([§11.4][s11-4]), the strapdown IMU against the
-leaf split ([§8.6][s8-6]). The standard component library is the standing
+primitive split ([§8.6][s8-6]). The standard component library is the standing
 ergonomics one ([§13.7][s13-7]).
 
 <a id="g-worked"></a>**worked (example)** — a full spelling of a mechanism against a concrete
 case, carried in the spec rather than left to the reader: the IMU assembly of
-[§8.6][s8-6], whose leaves are also the boundary-sampling example
+[§8.6][s8-6], whose primitives are also the boundary-sampling example
 [Appendix A][sA] points at, the staging example of [§11.4][s11-4], and the
 worked C172 cruise problem of [§14.7][s14-7].
 
@@ -16218,7 +16222,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [s3-1]: #31-continuous-component-the-hybrid-primitive
 [s3-2]: #32-periodic-discrete-component
 [s3-3]: #33-assembly
-[s3-4]: #34-why-two-leaf-classes-not-one-hybrid-primitive
+[s3-4]: #34-why-two-tiers-not-one-hybrid-primitive
 [s4]: #4-ports-and-signals
 [s4-1]: #41-immutable-value-semantics
 [s4-2]: #42-consumers-see-ports-not-stages

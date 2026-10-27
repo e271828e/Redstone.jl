@@ -17844,7 +17844,7 @@ and kind are closed, the client resolving (its answer 4).
 [s3-1]: spec.md#31-continuous-component-the-hybrid-primitive
 [s3-2]: spec.md#32-periodic-discrete-component
 [s3-3]: spec.md#33-assembly
-[s3-4]: spec.md#34-why-two-leaf-classes-not-one-hybrid-primitive
+[s3-4]: spec.md#34-why-two-tiers-not-one-hybrid-primitive
 [s4-1]: spec.md#41-immutable-value-semantics
 [s4-2]: spec.md#42-consumers-see-ports-not-stages
 [s4-3]: spec.md#43-table-mechanics-and-port-granularity

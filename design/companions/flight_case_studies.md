@@ -488,7 +488,7 @@ ladder. The items below take the three claims in turn.
 [s14-8]: ../spec.md#148-the-trim-service-solver-seam-scratch-stores-commit-and-report
 [s14-9]: ../spec.md#149-mounting-problems-as-relocatable-values
 [s2-5]: ../spec.md#25-exclusions-deliberate
-[s3-4]: ../spec.md#34-why-two-leaf-classes-not-one-hybrid-primitive
+[s3-4]: ../spec.md#34-why-two-tiers-not-one-hybrid-primitive
 [s4-4]: ../spec.md#44-function-valued-signals-environment-access
 [s5]: ../spec.md#5-evaluation-order-and-feedthrough
 [s5-2]: ../spec.md#52-two-stage-outputs-signatures-bundles-and-the-hand-off-laws
