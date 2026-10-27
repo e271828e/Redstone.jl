@@ -46,13 +46,19 @@ closed(run::Run) = run.termination !== nothing
 
 ## Signatures
 
-- **The signature lines copy Appendix B's spelling**, one line per method,
-  with the return type after `->`. Appendix B writes `→` as typography; a
-  docstring writes `->`, the manual's spelling, which every Julia user has
-  seen.
-- **A signature that disagrees with Appendix B is a finding, not a fix.** The
-  rewrite reports it and the spec resolves it. Neither the docstring nor the
-  appendix is edited to match the other silently.
+- **The signature line mirrors the method.** One line per method, with the
+  type annotations on its positional arguments and the keyword defaults as
+  the definition writes them, then the return type after `->`. The code is
+  what a user calls; Appendix B is the inventory of names in scope, not a
+  source of spelling, and it writes `→` as typography where a docstring
+  writes `->`.
+- **A sentinel default that exists only to raise a diagnostic is shown as
+  required.** `Deployment` declares `h = nothing` so that a missing `h` is
+  refused as `DeploymentInvalid` rather than a `MethodError`; its signature
+  line writes `h` with no default, and the keyword list says it is required.
+- **A signature that disagrees with Appendix B is a finding against B.** The
+  rewrite reports it and the spec is corrected. The docstring is never bent
+  to match the appendix.
 
 ## The summary sentence
 
@@ -133,7 +139,7 @@ closed(run::Run) = run.termination !== nothing
 
 The reviewer's checklist, one line per rule:
 
-1. Signature lines match Appendix B, `->` for the return type.
+1. Signature lines mirror the method, `->` for the return type.
 2. One summary sentence, under twenty words, imperative or noun phrase.
 3. No `§`, `D-`, FlightCore or Flight.jl inside the quotes.
 4. Every old citation appears in the `# Design:` comment.

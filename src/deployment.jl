@@ -300,7 +300,7 @@ end
 # costs a full sweep; a multi-event frame needs three or four localizations and
 # chattering needs tens, so 8.
 """
-    Deployment(build; h, N_base = nothing, Δt_base = nothing, algorithm = RK4,
+    Deployment(build::Build; h, N_base = nothing, Δt_base = nothing, algorithm = RK4,
                firing_budget = 4, localization_tol = 1e-6, localization_budget = 8)
 
 The build fixed to a grid: the continuous step, the base tick and the event
@@ -420,7 +420,7 @@ Base.hash(deployment::Deployment, seed::UInt) =
 # live on it; the log line each one got at return is presentation, never the
 # home.
 """
-    warnings(deployment) -> Vector
+    warnings(deployment::Deployment) -> Vector{Diagnostic}
 
 Return the warnings raised while the deployment was constructed.
 
