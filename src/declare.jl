@@ -207,7 +207,7 @@ It is a type-level marker, never instantiated.
 
 A marker below the top of an entry, in a type parameter, is refused as
 `IllegalPortType` on both [tiers](@ref g-tier). The marker is continuous-only: a
-discrete [primitive](@ref g-component)'s entries never follow the scalar, so a
+discrete [primitive](@ref g-primitive)'s entries never follow the scalar, so a
 `Pinned` entry there is refused as `DeclarationOnWrongTier`.
 """
 Pinned

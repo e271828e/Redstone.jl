@@ -18,7 +18,7 @@ import ForwardDiff
 """
     Junction{In, Out, N}(f) -> Junction{In, Out, N}
 
-A continuous [primitive](@ref g-component) that publishes a fold of its `N`
+A continuous [primitive](@ref g-primitive) that publishes a fold of its `N`
 inputs as its one output.
 
 The inputs `in1` to `inN` are typed `In`, and the output `out` is typed `Out`,
@@ -45,7 +45,7 @@ end
 """
     SumJunction{V, N}() -> SumJunction{V, N}
 
-A continuous [primitive](@ref g-component) that publishes the sum of its `N`
+A continuous [primitive](@ref g-primitive) that publishes the sum of its `N`
 inputs.
 
 It is the [`Junction`](@ref) at `+`, with the inputs `in1` to `inN` and the
@@ -57,7 +57,7 @@ const SumJunction{V, N} = Junction{V, V, N, typeof(+)}
 """
     Or{N}() -> Or{N}
 
-A continuous [primitive](@ref g-component) that publishes the logical or of its
+A continuous [primitive](@ref g-primitive) that publishes the logical or of its
 `N` `Bool` inputs.
 
 It is the [`Junction`](@ref) at `|`, with the inputs `in1` to `inN` and the
@@ -72,7 +72,7 @@ const Or{N}  = Junction{Bool, Bool, N, typeof(|)}
 """
     And{N}() -> And{N}
 
-A continuous [primitive](@ref g-component) that publishes the logical and of its
+A continuous [primitive](@ref g-primitive) that publishes the logical and of its
 `N` `Bool` inputs.
 
 It is the [`Junction`](@ref) at `&`, with the inputs `in1` to `inN` and the
@@ -91,7 +91,7 @@ pack(args...) = SVector(args)
 """
     Pack{V, N}() -> Pack{V, N}
 
-A continuous [primitive](@ref g-component) that publishes its `N` inputs packed
+A continuous [primitive](@ref g-primitive) that publishes its `N` inputs packed
 into one static vector.
 
 It is the [`Junction`](@ref) at the fold `pack`, with the inputs `in1` to `inN`
@@ -122,7 +122,7 @@ y_direct(j::Junction, (; u)) = (out = j.f(u...),)
 """
     Unpack{V, N}() -> Unpack{V, N}
 
-A continuous [primitive](@ref g-component) that publishes the `N` elements of
+A continuous [primitive](@ref g-primitive) that publishes the `N` elements of
 its static-vector input as `N` outputs.
 
 The one input `in` is an `SVector{N, V}`, and the outputs `out1` to `outN` are
@@ -139,7 +139,7 @@ y_direct(::Unpack{V, N}, (; u)) where {V, N} = NamedTuple{unpack_names(Val(N))}(
 """
     Switch{V}() -> Switch{V}
 
-A continuous [primitive](@ref g-component) that publishes one of its two inputs,
+A continuous [primitive](@ref g-primitive) that publishes one of its two inputs,
 picked by a `Bool` input.
 
 The inputs `in1` and `in2` are typed `V` and `select` is a `Bool`. The one
@@ -168,7 +168,7 @@ y_direct(::Switch, (; u)) = (out = ifelse(u.select, u.in1, u.in2),)
 """
     Constant(value) -> Constant
 
-A continuous [primitive](@ref g-component) that publishes a fixed value, with no
+A continuous [primitive](@ref g-primitive) that publishes a fixed value, with no
 inputs and no state.
 
 The output `out` publishes `value` from [stage 1](@ref g-stage-function). The
@@ -194,7 +194,7 @@ y_state(c::Constant, _) = (out = c.value,)
 """
     UnitDelay(v0) -> UnitDelay
 
-A discrete [primitive](@ref g-component) that publishes its input from the
+A discrete [primitive](@ref g-primitive) that publishes its input from the
 previous [tick](@ref g-tick).
 
 The [block](@ref g-block) is a discrete primitive, the native `z⁻¹` of the
@@ -222,7 +222,7 @@ s_update(::UnitDelay, (; u)) = (v = u.in,)
 """
     Freeze{V}() -> Freeze{V}
 
-A continuous [primitive](@ref g-component) that publishes its input with its
+A continuous [primitive](@ref g-primitive) that publishes its input with its
 partials dropped, so no derivative passes through it.
 
 The [block](@ref g-block) is the declared stop-gradient. `out` is `in` with its
@@ -246,7 +246,7 @@ y_direct(::Freeze, (; u)) = (out = ForwardDiff.value.(u.in),)
 """
     StopRequest(; reason = "") -> StopRequest
 
-A continuous [primitive](@ref g-component) that publishes a
+A continuous [primitive](@ref g-primitive) that publishes a
 [stop request](@ref g-stop-request) while its `Bool` input holds.
 
 The output `flag`, a [`StopFlag`](@ref), publishes `STOP_REQUESTED` while the
@@ -276,7 +276,7 @@ stop_reason(c::StopRequest) = c.reason
 """
     Delay(; K::Int, v0 = 0.0) -> Delay
 
-A discrete [primitive](@ref g-component) that publishes its input from `K`
+A discrete [primitive](@ref g-primitive) that publishes its input from `K`
 [ticks](@ref g-tick) before.
 
 The [block](@ref g-block) is the delay line, the `z⁻ᴷ` of the discrete
@@ -319,7 +319,7 @@ s_update(::Delay{V, K}, (; s, u)) where {V, K} =
 """
     DiscreteIntegrator(; s0 = 0.0) -> DiscreteIntegrator
 
-A discrete [primitive](@ref g-component) that publishes the forward-Euler
+A discrete [primitive](@ref g-primitive) that publishes the forward-Euler
 integral of its input.
 
 The [block](@ref g-block) holds one [store](@ref g-store) field `q` from `s0`.
@@ -352,7 +352,7 @@ s_update(::DiscreteIntegrator, (; s, u, Δt)) = (q = s.q + Δt * u.in,)
 """
     DiscreteLimitedIntegrator(; lower, upper, s0 = zero(lower)) -> DiscreteLimitedIntegrator
 
-A discrete [primitive](@ref g-component) that publishes the forward-Euler
+A discrete [primitive](@ref g-primitive) that publishes the forward-Euler
 integral of its input, held between two limits.
 
 Each [tick](@ref g-tick) advances the one [store](@ref g-store) field `q` from
@@ -400,7 +400,7 @@ s_update(c::DiscreteLimitedIntegrator, (; s, u, Δt)) = (q = clamp.(s.q + Δt * 
 """
     RateLimiter(; rising, falling = rising, s0 = 0.0) -> RateLimiter
 
-A discrete [primitive](@ref g-component) that publishes its input with its rate
+A discrete [primitive](@ref g-primitive) that publishes its input with its rate
 of change bounded per [tick](@ref g-tick).
 
 `out` follows `in`, moving at most `rising Δt` up and `falling Δt` down per
@@ -447,7 +447,7 @@ s_update(::RateLimiter, (; y)) = (v = y.out,)
 """
     GaussianWhiteNoise(; seed, μ = nothing, σ = nothing, psd = nothing) -> GaussianWhiteNoise
 
-A discrete [primitive](@ref g-component) that publishes a seeded Gaussian white
+A discrete [primitive](@ref g-primitive) that publishes a seeded Gaussian white
 noise sample at each [tick](@ref g-tick).
 
 The [block](@ref g-block) is a discrete Gaussian white noise process. At each
@@ -525,7 +525,7 @@ s_update(::GaussianWhiteNoise, (; s)) = (k = s.k + 1,)
     Source{V}(f) -> Source{V}
     Source(f) -> Source{Float64}
 
-A continuous [primitive](@ref g-component) that publishes a function of time,
+A continuous [primitive](@ref g-primitive) that publishes a function of time,
 with no inputs and no state.
 
 The output `out` publishes `f(t)` from [stage 1](@ref g-stage-function).
@@ -556,7 +556,7 @@ y_state(c::Source, (; t)) = (out = c.f(ForwardDiff.value(t)),)
 """
     Integrator(; x0 = 0.0) -> Integrator
 
-A continuous [primitive](@ref g-component) that publishes the time integral of
+A continuous [primitive](@ref g-primitive) that publishes the time integral of
 its input.
 
 The [block](@ref g-block) holds one continuous state `q`, starting at `x0`, with
@@ -588,7 +588,7 @@ x_deriv(::Integrator, (; u)) = (q = u.in,)
 """
     FirstOrderLag(; τ, x0 = 0.0) -> FirstOrderLag
 
-A continuous [primitive](@ref g-component) that publishes its input through a
+A continuous [primitive](@ref g-primitive) that publishes its input through a
 first-order lag of time constant `τ`.
 
 The [block](@ref g-block) holds one continuous state `q` from `x0`, with
@@ -677,7 +677,7 @@ end
                D::AbstractMatrix = zeros(size(C, 1), size(B, 2)),
                x0 = zeros(size(A, 1))) -> StateSpace
 
-A continuous [primitive](@ref g-component) that runs a linear system given in
+A continuous [primitive](@ref g-primitive) that runs a linear system given in
 state-space form.
 
 The [block](@ref g-block) holds one continuous state `q` from `x0`:
@@ -773,7 +773,7 @@ end
 """
     TransferFunction(; num, den, u0 = 0.0) -> TransferFunction
 
-A continuous [primitive](@ref g-component) that runs a single-input,
+A continuous [primitive](@ref g-primitive) that runs a single-input,
 single-output linear system given by its transfer function in `s`.
 
 The transfer function is
@@ -880,7 +880,7 @@ end
                        D::AbstractMatrix = zeros(size(C, 1), size(B, 2)),
                        x0 = zeros(size(A, 1))) -> DiscreteStateSpace
 
-A discrete [primitive](@ref g-component) that runs a linear system given in
+A discrete [primitive](@ref g-primitive) that runs a linear system given in
 discrete state-space form.
 
 The [block](@ref g-block) holds one [store](@ref g-store) field `q` from `x0`,
@@ -922,7 +922,7 @@ realization(c::DiscreteStateSpace, _) = c
 """
     DiscreteTransferFunction(; num, den, u0 = 0.0) -> DiscreteTransferFunction
 
-A discrete [primitive](@ref g-component) that runs a single-input, single-output
+A discrete [primitive](@ref g-primitive) that runs a single-input, single-output
 linear system given by its transfer function in `z`.
 
 The transfer function is
@@ -980,7 +980,7 @@ realization(c::DiscreteTransferFunction, _) = c.realization
                           D::AbstractMatrix = zeros(size(C, 1), size(B, 2)),
                           x0 = zeros(size(A, 1))) -> DiscretizedStateSpace
 
-A discrete [primitive](@ref g-component) that runs a continuous state-space
+A discrete [primitive](@ref g-primitive) that runs a continuous state-space
 system through a zero-order hold at each [tick](@ref g-tick).
 
 The [block](@ref g-block) runs the [`StateSpace`](@ref) `continuous`, or the one
@@ -1023,7 +1023,7 @@ end
 """
     DiscretizedTransferFunction(; num, den, u0 = 0.0) -> DiscretizedTransferFunction
 
-A discrete [primitive](@ref g-component) that runs a continuous transfer
+A discrete [primitive](@ref g-primitive) that runs a continuous transfer
 function through a zero-order hold at each [tick](@ref g-tick).
 
 The [block](@ref g-block) takes the transfer function in `s` of
@@ -1058,7 +1058,7 @@ realization(c::DiscretizedTransferFunction, Δt) = realization(c.realization, Δ
 """
     Step(; t_step, before = 0.0, after = 1.0, localized::Bool = true) -> Step
 
-A continuous [primitive](@ref g-component) that publishes one value before a
+A continuous [primitive](@ref g-primitive) that publishes one value before a
 given time and another from then on.
 
 `out` publishes `before` until `t_step` and `after` from then on. The
@@ -1122,7 +1122,7 @@ saturation_type(::Type{V}) where {V} = channel_type(V, Int8)
 """
     LimitedIntegrator(; lower, upper, x0 = zero(lower), localized::Bool = true) -> LimitedIntegrator
 
-A continuous [primitive](@ref g-component) that publishes the time integral of
+A continuous [primitive](@ref g-primitive) that publishes the time integral of
 its input, held between two limits.
 
 The [block](@ref g-block) holds one continuous state `q`, with `q̇ = in` while
@@ -1256,7 +1256,7 @@ end
 """
     Relay(; lower, upper, off = zero(lower), on = one.(lower)) -> Relay
 
-A continuous [primitive](@ref g-component) that publishes one of two values,
+A continuous [primitive](@ref g-primitive) that publishes one of two values,
 switched by its input with hysteresis.
 
 `out` publishes `off` or `on` by the mode `state`, from
@@ -1464,7 +1464,7 @@ end
     PID(; Kp, Ki = 0.0, Kd = 0.0, τd = 0.1, Tt = Inf, u_min = -Inf, u_max = Inf,
           b = 1.0, c = 0.0, hold::Bool = false, tracking::Bool = false) -> PID
 
-A continuous [primitive](@ref g-component) that runs a PID controller with
+A continuous [primitive](@ref g-primitive) that runs a PID controller with
 anti-windup.
 
 The inputs are `r` and `y`, with the error `e = r - y`. The two outputs come
@@ -1581,7 +1581,7 @@ end
     DiscretePID(; Kp, Ki = 0.0, Kd = 0.0, τd = 0.1, Tt = Inf, u_min = -Inf, u_max = Inf,
                   b = 1.0, c = 0.0, hold::Bool = false, tracking::Bool = false) -> DiscretePID
 
-A discrete [primitive](@ref g-component) that runs a PID controller with
+A discrete [primitive](@ref g-primitive) that runs a PID controller with
 anti-windup.
 
 The [block](@ref g-block) takes the parameters, defaults, [ports](@ref g-port)
@@ -1786,7 +1786,7 @@ end
                            z_trim = zero(SVector{NZ, Float64}), Tt = Inf, u_min = -Inf, u_max = Inf,
                            hold::Bool = false, tracking::Bool = false) -> LQRTracker{NX, NU, NZ}
 
-A continuous [primitive](@ref g-component) that runs an LQR tracker about a trim
+A continuous [primitive](@ref g-primitive) that runs an LQR tracker about a trim
 point, with anti-windup.
 
 The inputs are `x`, the plant state, `z`, the command variables, and `z_ref`,
@@ -1918,7 +1918,7 @@ end
                                    z_trim = zero(SVector{NZ, Float64}), Tt = Inf, u_min = -Inf, u_max = Inf,
                                    hold::Bool = false, tracking::Bool = false) -> DiscreteLQRTracker{NX, NU, NZ}
 
-A discrete [primitive](@ref g-component) that runs an LQR tracker about a trim
+A discrete [primitive](@ref g-primitive) that runs an LQR tracker about a trim
 point, with anti-windup.
 
 The [block](@ref g-block) takes the parameters, defaults, [ports](@ref g-port),
