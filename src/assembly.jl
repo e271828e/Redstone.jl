@@ -342,14 +342,24 @@ end
 # file, is *the service walk*, entered by the services with an entry to
 # attribute the refusal to.
 
+# Design: §6.1, D-207, D-211.
 """
-    resolve(assembly, path) → AbstractComponent
+    resolve(assembly, path::AbstractString) -> AbstractComponent
 
-The declared-field walk along `/` segments, container children included under
-their D-211 naming (bare keys for a name-transparent container). One level
-(§6.1, D-207): `path` names an **immediate child** — one child segment, plus the
-key segment where the child is a container element — and anything deeper is a
-build error naming the child it reaches past.
+Return the immediate child of an assembly that `path` names.
+
+`resolve` walks the assembly's declared fields along the `/` segments of
+`path`. The path names one child: its field's name, plus a key segment where
+the child is an element of a container field (a `Tuple` or `NamedTuple` field
+whose elements are all components), as in `"units/1"` or `"units/left"`. The
+elements of a container declared name-transparent with
+[`transparent_container`](@ref) go by their bare keys, `"1"` or `"left"`.
+Declaration bodies such as [`input_wires`](@ref) call it to compute entries
+from a child's contract.
+
+Resolution goes one level only. A path that reaches past the child it names is
+refused as `PathResolution`, naming that child. An empty path, and a segment
+that names no child, are refused as `PathResolution` too.
 """
 function resolve(@nospecialize(assembly), path::AbstractString)
     who = "`resolve` on `$(nameof(typeof(assembly)))`"
@@ -387,28 +397,50 @@ end
 _contract(fn, @nospecialize(comp)) =
     _declares(fn, comp) ? map(P -> retype_entry(Float64, P), invoke_declaration(fn, comp)) : NamedTuple()
 
+# Design: §13.3, Appendix C.
+# Inside a walk the walk has already evaluated the body once and this primitive
+# does not evaluate it again; standalone the primitive evaluates it. A leaf's
+# keys are asked at the nominal `Float64`.
 """
-    input_faces(comp) → Vector{String}
+    input_faces(comp) -> Vector{String}
 
-A leaf's `u_types` keys — asked at the nominal `Float64`, the key set being
-`T`-independent — or an assembly's `input_wires` face names. Declaration
-order is preserved: deterministic printouts, stable diagnostics (§13.3). Inside a
-walk the walk has already evaluated the body once and this primitive does not
-evaluate it again (Appendix C); standalone the primitive evaluates it. Either way
-the list returned is a fresh vector, the caller's to mutate.
+Return the component's input face names, in declaration order.
+
+A face is the name a port wears on its component's boundary. For a leaf the
+input faces are the keys of its [`u_types`](@ref), which do not depend on the
+scalar type. For an assembly they are the face names its
+[`input_wires`](@ref) declares. Declaration order is kept, so printouts are
+deterministic and diagnostics stable.
+
+Called from a declaration body during a build, `input_faces` reuses the build's
+evaluation of the child's declaration rather than evaluating it again. Either
+way the vector returned is a fresh one, the caller's to change.
+
+See [`output_faces`](@ref) for the output side, and
+[`input_passthrough`](@ref) for the helper built on it.
 """
 input_faces(@nospecialize(comp)) = classify("", comp) === PRIMITIVE ?
                  String[String(k) for k in keys(_contract(u_types, comp))] :
                  _walked_faces(comp, 1, input_wires, first)
 
+# Design: §13.3, Appendix C.
+# Inside a walk the walk has already evaluated the body once and this primitive
+# does not evaluate it again; standalone the primitive evaluates it.
 """
-    output_faces(comp) → Vector{String}
+    output_faces(comp) -> Vector{String}
 
-`input_faces`' mirror: a leaf's `y_types` keys, or an assembly's
-`output_wires` face names, in declaration order (§13.3). Inside a walk the
-walk has already evaluated the body once and this primitive does not evaluate it
-again (Appendix C); standalone the primitive evaluates it. Either way the list
-returned is a fresh vector, the caller's to mutate.
+Return the component's output face names, in declaration order.
+
+A face is the name a port wears on its component's boundary. For a leaf the
+output faces are the keys of its [`y_types`](@ref). For an assembly they are
+the face names its [`output_wires`](@ref) declares.
+
+Called from a declaration body during a build, `output_faces` reuses the
+build's evaluation of the child's declaration rather than evaluating it again.
+Either way the vector returned is a fresh one, the caller's to change.
+
+See [`input_faces`](@ref), the mirror on the input side, and
+[`output_passthrough`](@ref) for the helper built on it.
 """
 output_faces(@nospecialize(comp)) = classify("", comp) === PRIMITIVE ?
                   String[String(k) for k in keys(_contract(y_types, comp))] :
@@ -439,24 +471,45 @@ end
 # they return are ordinary pairs, mixing freely with hand-written ones, and
 # every check that meets them is the build's own.
 
+# Design: §8.8, §9.1, D-251.
 """
-    input_passthrough(assembly, child_path; sep = ".",
-                      prefix = replace(child_path, "/" => sep),
-                      except = (), only = (), select = nothing)
+    input_passthrough(assembly, child_path::AbstractString; sep::AbstractString = ".",
+                      prefix::AbstractString = replace(child_path, "/" => sep),
+                      except::Tuple = (), only::Tuple = (), select = nothing) -> Tuple
 
-Every input face of `child_path` the assembly does not feed, exposed on its own
-boundary under `prefix * sep * face` — splatted into `input_wires` (§8.8).
-The default `prefix` folds the path's slash into `sep`, so an undeclared
-container element (`"units/1"`) labels its faces `"units.1.…"` — a legal face
-name — by default; an explicit `prefix` is used verbatim, and `prefix = ""`
-drops the prefixing entirely. `except`, `only` and `select` filter face names
-within the child's set and are exclusive, one selector per call (D-251):
-`select` is a predicate over face names, receiving each as a `String` and
-keeping the ones it accepts. A selector that keeps nothing warns
-`EmptyFaceSelection` on the `Build` (§9.1), while a bare call over a faceless
-child is silent. `child_path` names an immediate child (a bare key where the
-container is name-transparent); a deeper path meets `resolve`'s one-level
-rejection like any other wiring endpoint.
+Return input wire entries that expose a child's input faces on the assembly's
+own boundary.
+
+A face is the name a port wears on its component's boundary. The helper serves
+the pass-through case, where an assembly hands up the inputs of a child it does
+not feed itself. Its entries are splatted into the assembly's
+[`input_wires`](@ref), and mix freely with hand-written ones:
+`input_wires(w::World) = (input_passthrough(w, "aircraft"; except = ("atm",))...,)`.
+Each face of the child, as [`input_faces`](@ref) lists it, becomes the pair
+`prefix * sep * face => child_path * "/" * face`.
+
+`child_path` names an immediate child, a bare key where the container is
+name-transparent. A deeper path is refused as [`resolve`](@ref) refuses it.
+
+# Keywords
+
+- `sep`: the separator between the prefix and the face name.
+- `prefix`: the label in front of each face. The default folds the path's `/`
+  into `sep`, so a container element `"units/1"` labels its faces
+  `"units.1.…"`, a legal face name. An explicit `prefix` is used verbatim, and
+  `prefix = ""` drops the prefixing entirely.
+- `except`: the face names to leave out.
+- `only`: the face names to keep.
+- `select`: a predicate that receives each face name as a `String` and keeps
+  the ones it accepts.
+
+The three selectors are exclusive, one per call. More than one is refused as
+`UnknownFaceSelection` with reason `:multiple_selectors`, and an `except` or
+`only` name the child does not have as `UnknownFaceSelection` with the child's
+faces listed. A selector that keeps nothing warns `EmptyFaceSelection` on the
+build, while a call with no selector over a child without faces is silent.
+
+See also [`output_passthrough`](@ref).
 """
 function input_passthrough(@nospecialize(assembly), child_path::AbstractString;
                            sep::AbstractString = ".",
@@ -467,20 +520,31 @@ function input_passthrough(@nospecialize(assembly), child_path::AbstractString;
     Tuple(_labelled(prefix, sep, n) => string(child_path, "/", n) for n in wanted)
 end
 
+# Design: §6.1, §8.8, D-209, D-251.
+# Its consumer is one-level routing: every level re-exports the outputs it
+# surfaces, so the output side needs the computed spelling the input side
+# already has.
 """
-    output_passthrough(assembly, child_path; sep = ".",
-                       prefix = replace(child_path, "/" => sep),
-                       except = (), only = (), select = nothing)
+    output_passthrough(assembly, child_path::AbstractString; sep::AbstractString = ".",
+                       prefix::AbstractString = replace(child_path, "/" => sep),
+                       except::Tuple = (), only::Tuple = (), select = nothing) -> Tuple
 
-`input_passthrough`'s sibling on the outward boundary (D-209), splatted into
-`output_wires`: the same surface over `output_faces` — the same folded
-default `prefix` included, and the same three exclusive selectors, one per
-call, `select` accepting face names and an empty selection warning
-`EmptyFaceSelection` (§8.8, D-251) — its pairs reading along the flow —
-internal source => face name — as every pair in that declaration does. Its
-consumer is one-level routing (§6.1): every level re-exports the outputs it
-surfaces, so the output side needs the computed spelling the input side
-already has.
+Return output wire entries that expose a child's output faces on the
+assembly's own boundary.
+
+`output_passthrough` is [`input_passthrough`](@ref)'s sibling on the outward
+boundary, and its entries are splatted into the assembly's
+[`output_wires`](@ref). It takes the same keywords over the faces
+[`output_faces`](@ref) lists, with the same folded default `prefix` and the
+same three exclusive selectors, one per call, `select` receiving face names.
+Its pairs read along the flow, `child_path * "/" * face => prefix * sep * face`,
+internal source to face name, as every pair in that declaration does.
+
+Each level re-exports the outputs it surfaces, so an output deep in the tree
+reaches the root only through one entry per level, which this helper computes.
+Its refusals are `input_passthrough`'s: more than one selector, or an unknown
+name, is refused as `UnknownFaceSelection`, and a selector that keeps nothing
+warns `EmptyFaceSelection` on the build.
 """
 function output_passthrough(@nospecialize(assembly), child_path::AbstractString;
                             sep::AbstractString = ".",
@@ -839,27 +903,40 @@ struct LevelEntry
     wires::Vector{Pair{Tuple{String,Symbol},Tuple{String,Symbol}}}   # producer => consumer
 end
 
+# Design: §9.1, §11.3, §13.3, D-210, D-253, D-261, D-315.
+# The first row's instance is the root, which the service walk resolves
+# against. No resolved table lives here: `terminal_producer` and `face_routes`
+# resolve any face at any level over the level rows' wires, where the face is
+# read. The activation's cell layout is the one home for addresses: it aliases
+# each assembly output face onto its terminal producer's cell, and a primitive
+# input face's address is read through `terminal_producer`, nothing being
+# stored under a primitive's or an assembly's input face. The component index
+# `ci` is the position in `components`; nothing pushes into a `Structure`'s
+# vectors after construction.
 """
-The structure step's product (§9.1, D-253): the declared facts the root
-instance alone fixes, nothing in it depending on a scalar type, held as rows
-(D-261). One `ComponentEntry` per primitive in walk order, and one `Anchor` per
-`Absolute` entry, the exact `(T, τ)` with the declaring scope and key. Beside
-them each keyed scope's own timing and the root's input faces (the
-root inputs (§11.3)) with the types the wire pass fixed. One `LevelEntry` per
-assembly, in the walk's pre-order with the root first, holds its children and
-the wires it declares. The first row's instance is the root, which the service
-walk resolves against (§13.3); a primitive root's row has no children and no
-wires.
+    Structure
 
-No resolved table lives here (D-315). `terminal_producer` and `face_routes`
-resolve any face at any level over the level rows' wires, where the face is
-read. The activation's cell layout is the one home for addresses (D-261): it
-aliases each assembly output face onto its terminal producer's cell, and a
-primitive input face's address is read through `terminal_producer`, nothing
-being stored under a primitive's or an assembly's input face (D-210).
+The structure step's product, the declared facts the component tree alone
+fixes, held as rows.
 
-The component index `ci` is the position in `components`; nothing pushes into a
-`Structure`'s vectors after construction.
+`Structure` is read off a [`Build`](@ref) as `build.structure`. Nothing in it
+depends on a scalar type, and its rows hold paths, names and rationals the
+REPL prints as they are.
+
+- `components`: one entry per leaf, in the order the build walks the tree.
+- `anchors`: one entry per [`Absolute`](@ref) declaration, the exact `(T, τ)`
+  pair (period and offset in rational seconds) with the declaring scope and
+  key.
+- `scopes`: the timing of each keyed rate scope (an assembly's `sample_times`
+  declaration).
+- `root_inputs` and `root_types`: the root inputs (the root component's own
+  input faces), in order, with the types the wire check fixed for them.
+- `levels`: one entry per assembly, in pre-order with the root first, holding
+  its children and the wires it declares. A leaf root's entry has no children
+  and no wires.
+
+No table of resolved faces is stored. A face at any level is resolved over the
+`levels` wires when it is read.
 """
 struct Structure
     components::Vector{ComponentEntry}     # in walk order; the index is `ci` everywhere
