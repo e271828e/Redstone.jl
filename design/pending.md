@@ -43,7 +43,16 @@ item changes what the spec says, the spec edit is part of the item.
   and the audit (ruled 2026-10-27), since a rename costs a signature line
   and the Documenter build catches a stale link: an examples pass follows
   the tutorial, and a signature-and-link pass follows the audit's renames.
-  The reference page `docs/src/api.md`
+  Appendix B and the library inventory are the sweep's lists of names and
+  never a source of spelling; a signature mirrors its method. The library,
+  public as a group (D-226), is the last wave.
+  State: the brief is committed, the pilot is `src/deployment.jl`, and no
+  wave has run. Next: wave 1 of 7, `sim.jl`, one Opus agent per wave in
+  sequence under the brief's "Waves" and "Every wave prompt says"; after
+  wave 7, one Opus cold reviewer against the sheet's checklist, a fixer,
+  then `design/briefs/notes_docstring_sweep.md` from the handoffs and the
+  Appendix B findings as one docs commit, which also retires the next
+  sentence. The reference page `docs/src/api.md`
   lists B's names under B's headings, less the 24 that have no docstring of
   their own as of 2026-10-26 and rejoin it when documented:
   `AbstractComponent`, the stage family `y_state`/`y_direct`/`x_deriv`/
