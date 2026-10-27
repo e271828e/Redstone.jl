@@ -10985,9 +10985,9 @@ a cell, a gather and a scatter ([§9.7][s9-7]). Domain components, such as aerod
 engines or sensors, belong in separate packages built on the framework.
 Simulink's library is a language, while this is a toolbox.
 
-The starting inventory holds the `Junction`, with `SumJunction{V, N}`, `Or{N}`
-and `And{N}` as its named forms, `UnitDelay{V}`, `Constant{V}`, `Freeze{V}` and
-`StopRequest`. The full inventory, and the Simulink mapping that prunes it, live
+The spec names a block where a ruling spells it: the `Junction`, with
+`SumJunction{V, N}`, `Or{N}` and `And{N}` as its named forms, `UnitDelay{V}`,
+`Constant{V}`, `Freeze{V}` and `StopRequest`. The full inventory, and the Simulink mapping that prunes it, live
 in `companions/library_inventory.md`. `UnitDelay` is the spelling the second
 loop-breaking remedy ([§5.5][s5-5]) needs. `Constant{V}` is the source block ([D-143][d-143]).
 `Freeze{V}` is the declared stop-gradient ([D-266][d-266]). `StopRequest` is the library
@@ -13620,6 +13620,16 @@ Each field is present only if it exists for the component, under the
 [bundle](#g-bundle) law ([§5.2][s5-2]). Returns follow three rules, among them
 the handler's `(; x, m)` under the return law ([§5.2][s5-2], [§7.1][s7-1],
 [D-090][d-090]).
+
+#### The component library
+
+The standard library is the submodule `Redstone.Blocks`, and it is public as a
+whole. Every block in the inventory of `companions/library_inventory.md`,
+section 3, is reached by import from the submodule, as the examples do
+([§13.7][s13-7], [D-313][d-313]). The inventory, not this appendix, is the list, since a listed
+block is built whenever wanted, and the API reference renders it. The spec
+names a block only where a ruling spells it ([§13.7][s13-7]). `Group`, the on-the-fly
+assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
 
 #### Build
 

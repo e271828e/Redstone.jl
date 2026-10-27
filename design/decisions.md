@@ -9048,6 +9048,12 @@ developer's session pays one `-L` flag.
 - *A re-export submodule for the operator verbs:* the packaging `pending.md` lists as
   open, half-decided.
 
+Annotation (2026-10-27): the standard library is public as a group. A name is
+public by standing on [Appendix B][sB] or in the inventory of
+`companions/library_inventory.md`, section 3, reached by import from
+`Redstone.Blocks` ([§13.7][s13-7], [D-313][d-313]); [Appendix B][sB]'s library paragraph records it.
+The inventory is the list because a listed block is built whenever wanted.
+
 ### D-227 — Select the stepper by type under the `algorithm` keyword
 
 **Status.** ratified
