@@ -3,9 +3,9 @@ on:
   push:
     branches: [master]
     tags: ['*']
-    paths-ignore: ['design/**']
+    paths: ['**', '!design/**', 'design/spec.md']
   pull_request:
-    paths-ignore: ['design/**']
+    paths: ['**', '!design/**', 'design/spec.md']
   workflow_dispatch:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
