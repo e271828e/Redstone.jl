@@ -97,9 +97,9 @@ end
 
 The symmetry is the point, and worth stating as the mental model: **both forms
 are the same pair — (period, phase) — expressed in different unit systems, and the
-type name declares the unit system.** `Relative(K, Φ)` is period and phase in *scope
+type name declares the unit system.** `Relative(K, φ)` is period and phase in *scope
 ticks*; `Absolute(q, τ)` is period and phase in *seconds*. Even the validity
-constraint has the same shape in both: `0 ≤ phase < period` (`0 ≤ Φ < K` and
+constraint has the same shape in both: `0 ≤ phase < period` (`0 ≤ φ < K` and
 `0 ≤ τ < T` respectively).
 
 Design notes, each with its reason:

@@ -9053,6 +9053,11 @@ public by standing on [Appendix B][sB] or in the inventory of
 `companions/library_inventory.md`, section 3, reached by import from
 `Redstone.Blocks` ([§13.7][s13-7], [D-313][d-313]); [Appendix B][sB]'s library paragraph records it.
 The inventory is the list because a listed block is built whenever wanted.
+The holder types are public as a group too. A type that a call listed on
+[Appendix B][sB] returns or takes, and that a user never constructs by name, is
+public by standing under its owner's heading there; [Appendix B][sB]'s opening
+records it. `lifecycle(sim)` is public by standing under [Appendix B][sB]'s
+Running heading ([§12.6][s12-6]).
 
 ### D-227 — Select the stepper by type under the `algorithm` keyword
 

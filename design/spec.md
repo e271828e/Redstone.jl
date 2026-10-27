@@ -3437,7 +3437,8 @@ immediate children takes a tuple of paths instead, as in
 `"trn" => ("left/trn_field", "right/trn_field", …)`. This is fan-out through
 the boundary. **Every entry routes to at least one internal endpoint**
 ([D-210][d-210]). An empty tuple is a declaration error, because a face
-feeding nothing declares nothing ([D-210][d-210]). `output_wires(::A)` runs the
+feeding nothing declares nothing ([D-210][d-210]). The build refuses it as `UnknownPort`
+with `endpoint = :connection`. `output_wires(::A)` runs the
 other way, internal source path => face name (`"aircraft/pose" => "view_pose"`),
 so that its pairs, like every other pair in the three declarations, read along
 the flow.
@@ -6204,7 +6205,7 @@ time, in different units.
 
 | entry | unit system | tick instants | constraints |
 |---|---|---|---|
-| `Relative(K, Φ = 0)` | scope ticks | every `K`-th tick of the enclosing scope, starting from its `Φ`-th | `K ≥ 1`, `0 ≤ Φ < K` |
+| `Relative(K, φ = 0)` | scope ticks | every `K`-th tick of the enclosing scope, starting from its `φ`-th | `K ≥ 1`, `0 ≤ φ < K` |
 | `Absolute(q, τ = 0)` | seconds | `t = τ + k·T`, with `T = period(q)` | `T > 0`, `0 ≤ τ < T` |
 
 `K = 1` therefore admits no stagger ([D-185][d-185], [D-291][d-291]). Two same-rate siblings
@@ -6224,7 +6225,7 @@ anchored child (one declared `Absolute`, below) always appears explicitly.
 
 Validation belongs to the structure step (the build's declaration-reading
 step), which collects it with path attribution ([§9.1][s9-1], [§13.1][s13-1],
-[D-185][d-185]). It covers `K ≥ 1`, `0 ≤ Φ < K`, `T > 0`, `0 ≤ τ < T`, and
+[D-185][d-185]). It covers `K ≥ 1`, `0 ≤ φ < K`, `T > 0`, `0 ≤ τ < T`, and
 keys naming discrete or scope children. The constructors themselves are plain
 data carriers, with no checks of their own.
 
@@ -10388,7 +10389,9 @@ failures.
 
 The [`Model`](#g-model) is the deployment and its executor at one scalar. **The `Model`'s `frame!`
 wraps each whole frame, every boundary it settles included, in a single `try`**, and
-its `init!` wraps boundary zero the same way ([D-317][d-317]). The code inside the `Model`'s
+its `init!` wraps boundary zero the same way ([D-317][d-317]). Inside that `try`, `frame!`
+calls the hook functions `frame_top!` before the frame touches any state and
+`settled!` at every boundary it settles ([D-317][d-317]). The code inside the `Model`'s
 `try` is the guarded sequence. A boundary's macro-sequence runs integrate →
 project → event iteration → [ticks](#g-tick) → publication. Ticks are the instants at which
 discrete leaves run their stages and update. **`frame!` never wraps per stage or per
@@ -13567,8 +13570,12 @@ For service users:
 
 The user-facing surface on one page, under the same rule as [Appendix A][sA]:
 an [index, not a second home](#g-normative). Each signature is normative only
-where its owning section settles it. Every name here is public by being here,
-reached by qualified name or by per-name `import` ([D-226][d-226]). The module
+where its owning section settles it. A signature here may leave out argument
+annotations and return types, and may name a type by its family. Every name
+here is public by being here, reached by qualified name or by per-name
+`import` ([D-226][d-226]). The holder types are public as a group, the way the library
+is ([D-226][d-226]). They are the values a listed call returns or takes and a user
+never constructs by name, and each heading below names its own. The module
 exports nothing until the exported-name audit (`pending.md`) fixes the list
 ([D-226][d-226]). The author-side declaration surface comes first, then the
 operator surface by lifecycle.
@@ -13593,9 +13600,10 @@ What a [component](#g-component) or [assembly](#g-assembly) defines ([§8.2][s8-
 - Assembly. `local_wires` (the [class](#g-class) marker),
   `input_wires`, `output_wires` and `sample_times`, and the optional
   `transparent_container` (default `nothing`).
-- Sample-time entries. `Relative(K, Φ = 0)` in scope ticks and
+- Sample-time entries. `Relative(K, φ = 0)` in scope ticks and
   `Absolute(q, τ = 0)` in exact rational seconds, with `q` a quantity value,
-  `Period(T)` or `Hz(frequency)` ([§10.5][s10-5], [D-185][d-185]).
+  `Period(T)` or `Hz(frequency)` ([§10.5][s10-5], [D-185][d-185]). The `φ = 0` is shorthand for
+  `Relative(K)`, a method of its own.
 - Any component. `stop_reason` (optional, default `""`), the reason its
   [stop requests](#g-stop-request) report ([§8.2][s8-2], [D-316][d-316]).
 - Shipped [conditions](#g-condition). `condition(::C; kw)`, methods of the framework's
@@ -13633,7 +13641,7 @@ assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
 
 #### Build
 
-- `build(world; activations = ()) → Build`. Standalone. It yields the
+- `build(root; activations = ()) → Build`. Standalone. It yields the
   inspectable derived-contract artifact,
   [`Structure`](#g-structure), [`Outputs`](#g-outputs),
   [`Events`](#g-events), the [activations](#g-activation) and `warnings`
@@ -13644,7 +13652,6 @@ assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
   [descriptor](#g-descriptor) (a serialized projection of the artifact under
   a published format): a tree of `NamedTuple`s and vectors the consumer
   encodes, with the deployment's body embedding the build's ([§13.9][s13-9]).
-  Provisional name until the export audit ([D-226][d-226]).
 - [`ProbeDual`](#g-probedual). The public canonical concrete probe scalar
   ([§9.4][s9-4]).
 - `resolve(assembly, path) → AbstractComponent`. Resolves an immediate child, a
@@ -13685,7 +13692,7 @@ assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
   |---|---|---|---|
   | `chunk_size` | `16` | the [executor](#g-executor)'s unroll width, a performance knob that never moves the trajectory | [§9.7][s9-7], [§12.6][s12-6] |
 
-- `Model(build, T = Float64; kw...)` and `Model(world, T = Float64; kw...)`.
+- `Model(build, T = Float64; kw...)` and `Model(root, T = Float64; kw...)`.
   The two composed forms. The first composes the `Deployment` constructor
   with the materialization, and the second calls `build` first.
 - `Model`'s own entry points, for a model stepped on its own or used as a
@@ -13756,7 +13763,7 @@ assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
   The four recording keywords are `init!`'s, `overlay!`'s, `restore!`'s and
   `replay!`'s, the [doors](#g-door) that build a run (below, [D-261][d-261]).
 - `Simulation(deployment; kw...)`, `Simulation(build; kw...)` and
-  `Simulation(world; kw...)`. The three convenience forms ([§9.2][s9-2]).
+  `Simulation(root; kw...)`. The three convenience forms ([§9.2][s9-2]).
   They take the `Model` and `Simulation` keywords above, the last two the
   deployment keywords as well ([D-317][d-317]).
 - `attach!(sim, dev::AbstractDevice, new_binding::AbstractBinding;
@@ -13790,7 +13797,7 @@ assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
   legal and reported as `EmptyGreedyClaim` ([§11.6][s11-6]).
 
 - `TableBinding`. The shipped data-driven binding ([§11.6][s11-6]).
-- `detach!(sim, device)`. Removes the roster entry and releases the device's
+- `detach!(sim, dev)`. Removes the roster entry and releases the device's
   claims ([§11.3][s11-3]). Stopped-sim only, like `attach!`.
 - Device authoring. `MyDevice <: AbstractDevice` (an illustrative name), with
   `loop(dev, handle)` mandatory and `init!(dev)`, `shutdown!(dev)` and
@@ -13802,11 +13809,16 @@ assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
   ([§12.3][s12-3]), `running(handle)`, `stage!(handle, writes::Pair...)`,
   `binding(handle)`, `gather(handle, snapshot)`, `report!(handle, occurrence)`
   ([§11.6][s11-6]), and `stop!(handle)`, which requests a stop
-  ([§11.6][s11-6], [D-268][d-268]).
+  ([§11.6][s11-6], [D-268][d-268]). `latest(handle)` and `wait_next_snapshot(handle)`
+  return `nothing` before the first publication.
 - The panel kit ([§11.7][s11-7]). `port_views(handle)`, the baked table of port
   views; `pending(handle, slot)`; [`peek(view, handle, snapshot)`](#g-peek); `incumbent_status(view,
   snapshot)`, with `orphaned(record)` and `stale(record; now = time())`
   reading the record it returns.
+- Holder types. `PortView` is an entry of the table `port_views` returns,
+  the view `peek` and `incumbent_status` take. `WriterStatus` is the record
+  `incumbent_status` returns. `MalformedDatum` is the occurrence `report!`
+  takes.
 
 #### Condition algebra
 
@@ -13814,13 +13826,16 @@ assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
   self-vocabulary payloads at the authoring level ([§14.2][s14-2]).
 - `at(prefix, node)`. Scoping. It stores, never applies. It also lifts a
   whole [`TrimProblem`](#g-trimproblem) (the closed nine-field value a trim
-  solves) and a linearization [tap set](#g-taps) ([§14.2][s14-2],
+  solves), a read set and a linearization [tap set](#g-taps) ([§14.2][s14-2],
   [§14.9][s14-9], [§14.10][s14-10]).
 - `combine(nodes...)`. Symmetric collection. Duplicate leaves error with both
   origins ([§14.2][s14-2]).
 - `override(base, patches...)`. Ordered layering. The patch wins, and the
   origin keeps both ([§14.6][s14-6]).
 - `condition(comp; kw)`. The shipped condition-method idiom ([§14.2][s14-2]).
+- Holder types. `Fragment`, `Scoped`, `Combined` and `Override` are what
+  `set`, `at`, `combine` and `override` return, and `ConditionNode`, their
+  union, is what each combinator takes.
 
 #### Stopped-sim services
 
@@ -13884,6 +13899,10 @@ assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
   selector lists with closed membership, every tap a
   [leaf address](#g-leaf-address) resolving to one scalar ([§14.4][s14-4],
   [§14.10][s14-10], [D-272][d-272], [D-276][d-276]).
+- Holder types. `GetState`, `GetDeriv`, `GetOutput`, `GetInput` and
+  `GetFace` are what the five selectors return. `Taps` is what `taps`
+  returns and `linearize` takes, and `Reads` is what `reads(; selectors...)`
+  returns and `series` takes.
 
 #### Running
 
@@ -13903,18 +13922,20 @@ assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
   no honoured stop request is an unbounded run, allowed, with `UnboundedRun`
   raised into the loop's [diagnostic cell](#g-diagnostic-cell) in `:live`
   only ([§11.8][s11-8], [§13.5][s13-5]).
-- `step!(sim; frames = 1, t_plus = nothing, t_end = Inf,
+- `step!(sim; frames = nothing, t_plus = nothing, t_end = Inf,
   ignore_stop_requests = ()) → frames_advanced`. A synchronous partial
   advance through the ordinary frame sequence, bit-identical to the same
   frames under `run!`. `t_plus = <duration>` is the mutually exclusive
-  duration spelling ([§12.6][s12-6]).
+  duration spelling ([§12.6][s12-6]). Neither given advances one frame.
 - `stage!(sim, "face" => value, …)`. Staging from any task, the calling task
   included, into the [harness writer](#g-harness-writer). Its surface is the
   currently unclaimed faces ([§11.3][s11-3]).
 - `latest(sim) → snapshot`. The current published snapshot, the same
-  immutable value device handles read ([§11.2][s11-2]).
-- `phase_bodies(sim) → named callables`. The compiled phase bodies of the
-  nominal activation, bound over the simulation's own buffers. They are the
+  immutable value device handles read, or `nothing` before the first
+  publication ([§11.2][s11-2]).
+- `phase_bodies(model)` and `phase_bodies(sim) → named callables`. The
+  compiled phase bodies of the model's activation, bound over its own
+  buffers. A simulation's are its model's, the nominal activation's. They are the
   [§9.8][s9-8] [measurement seam](#g-measurement-seam) ([§9.7][s9-7]).
 - Control plane. `pause!(sim)`, `resume!(sim)` and `stop!(sim)` are the
   calling code's spellings and `paused(sim)` the read ([§12.1][s12-1],
@@ -13927,7 +13948,7 @@ assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
 - `termination(sim)`. The current run's
   [termination record](#g-termination-record), whose source is a typed value
   such as `EndTimeReached` or `ModelRequestedStop` ([§13.5][s13-5],
-  [D-203][d-203]).
+  [D-203][d-203]). It is `nothing` until the run ends.
 - `logged(sim)`. The log is the retained snapshots, and `logged` returns them
   ([§11.2][s11-2]).
 - `reads(; selectors...)`. Builds a [read set](#g-read-set), the value `series` takes and
@@ -13940,7 +13961,7 @@ assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
 - `replay!(sim2, trc; to_boundary = nothing, to_time = nothing, pace = Inf,
   margin = 0.002, t_end = Inf, ignore_stop_requests = (), trace = true,
   log = true, log_every = 1, log_max = 65536, restore = true)`. Re-drives a
-  fresh `Simulation(world)` bit-identically through the ordinary loop,
+  fresh `Simulation(root)` bit-identically through the ordinary loop,
   taking `init!`'s four recording keywords as well ([D-261][d-261]). Replay
   is the state-trajectory inspector and the `StepError` reproduction tool
   ([§11.2][s11-2], [§11.5][s11-5], [§12.7][s12-7]).
@@ -13949,6 +13970,9 @@ assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
   lists ([§9.2][s9-2], [§13.2][s13-2]).
 - `closed(run) → Bool`. True once the loop's tail has written the run's
   termination record ([§12.6][s12-6]).
+- `lifecycle(sim) → Symbol`. The simulation's lifecycle state, one of
+  `:built`, `:initialized`, `:running`, `:stopped` and `:errored`, derived
+  at each read and never stored ([§12.6][s12-6], [D-317][d-317]).
 - `mode(sim) → :live | :replay`. The [input mode](#g-input-mode), read beside
   the lifecycle state. It says where the next frame's [drain](#g-drain) takes
   its [batches](#g-batch) from, the [staging cells](#g-staging-cell) or an attached `replay!` recording
@@ -13956,6 +13980,11 @@ assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
 - `live!(sim)`. Detaches the remainder of an attached recording and sets the
   mode to `:live`, touching neither the trajectory nor the trace
   ([§12.7][s12-7]).
+- Holder types. `Snapshot` is what `latest` returns and `port(snapshot,
+  path, name)` and `gather` read. `Run` is `sim.run`, the run `closed`
+  takes. `TerminationRecord` is what `termination` returns, `Trace` what
+  `trace` returns and `replay!` takes, and `Series` what `series` returns.
+  `Diagnostic` is the element type of the list `warnings` returns.
 
 ---
 

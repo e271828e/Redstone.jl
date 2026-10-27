@@ -47,20 +47,17 @@ item changes what the spec says, the spec edit is part of the item.
   the tutorial, and a signature-and-link pass follows the audit's renames.
   Appendix B and the library inventory are the sweep's lists of names and
   never a source of spelling; a signature mirrors its method. The library,
-  public as a group (D-226), is the last wave.
-  State: the brief is committed, the pilot is `src/deployment.jl`, and no
-  wave has run. Next: wave 1 of 7, `sim.jl`, one Opus agent per wave in
-  sequence under the brief's "Waves" and "Every wave prompt says"; after
-  wave 7, one Opus cold reviewer against the sheet's checklist, a fixer,
-  then `design/briefs/notes_docstring_sweep.md` from the handoffs and the
-  Appendix B findings as one docs commit, which also retires the next
-  sentence. The reference page `docs/src/api.md`
-  lists B's names under B's headings, less the 24 that have no docstring of
-  their own as of 2026-10-26 and rejoin it when documented:
-  `AbstractComponent`, the stage family `y_state`/`y_direct`/`x_deriv`/
-  `s_update`, `Hz`, `frame_top!`/`settled!`, `port`, `AbstractBinding`,
-  `is_output`/`is_greedy`, `loop`/`shutdown!`/`unblock!`, the five `get_`
-  selectors and `taps`, and the three termination sources.
+  public as a group (D-226), is wave 7, and the holder types, public as a
+  group the same way, are wave 8.
+  State: waves 1 to 7 landed (`84ece6b` to `f8663ce`), the cold review's
+  findings are fixed (`8e78b72`), and the user ruled on sixteen questions.
+  The docs commit after the fix landed the rulings in the sheet, Appendix B,
+  the inventory and D-226, and recorded the run in
+  `design/briefs/notes_docstring_sweep.md`. Next: wave 8, the docstrings
+  and page lines of the 21 holder types and `lifecycle`; then the
+  conformance commit, which brings the swept files to the rulings and moves
+  the citations the notes list; then the reviewer's verification and the
+  push.
 - **`closed_loop` as a hierarchy.** The example's closed loop is one flat
   `Group` of 27 library blocks and 55 wires, written so to show the library
   composing without a named assembly, and it draws as a tangle at any
