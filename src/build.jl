@@ -484,14 +484,27 @@ end
 "The output port names in the products' order (§8.3): stage 1, then stage 2."
 _ports(entry::ComponentOutputs) = vcat(entry.stage1, entry.stage2)
 
+# Design: §9.1, D-253, D-261.
 """
-The nominal evaluation's product (§9.1, D-253, D-261): per component, in walk
-order, the output ports each stage produces, and the execution order over the
-component indices. Structural and `T`-independent, names only, which is why a
-reader wanting a name list takes it from here rather than from a scalar-typed
-activation. The feedthrough graph the order was computed over is not carried;
-where it is shown it is derived from the structure's connections and the
-producers' `stage2`.
+    Outputs
+
+The output port names each component's stages produce, and the order the
+components run in.
+
+`Outputs` is a product of the nominal evaluation (the build's one probing pass
+at `Float64`), read off a [`Build`](@ref) as `build.outputs`. Its `components`
+field holds one entry per component, in the order the build walks the tree.
+Each entry carries the component's `path`, the ports [`y_state`](@ref) returns
+as `stage1`, in the return's order, and the declared remainder, in
+[`y_types`](@ref) order, as `stage2`. Their concatenation is the order of the
+component's products. The `order` field is the execution order (the order the
+stage functions run in) over the indices of `components`.
+
+`Outputs` holds names only and does not depend on the scalar type, so a reader
+that wants a list of port names takes it from here rather than from an
+activation (the build's typed products at one scalar type). The feedthrough
+graph the order was computed over is not carried. Where it is shown, it is
+derived from the [`Structure`](@ref)'s connections and the producers' `stage2`.
 """
 struct Outputs
     components::Vector{ComponentOutputs}   # in walk order; the index is `ci`
@@ -509,31 +522,62 @@ struct ComponentEvents
     bundle::Tuple
 end
 
+# Design: §9.1, D-253.
+# Built last, after the stage probes. It is separate from `Outputs` because a
+# different input fixes it, the event declarations, read after the probes, so a
+# consumer of the execution order never carries the event tables.
 """
-The nominal evaluation's other product (§9.1, D-253), built last, after the
-stage probes: one row per component in walk order, the index being `ci`. It is
-structural and `T`-independent like the `Outputs`, and separate from it because
-a different input fixes it, the event declarations, read after the probes, so
-a consumer of the execution order never carries the event tables.
+    Events
+
+The detection policy of each component's events, and the field names of its
+event bundle.
+
+`Events` is the other product of the nominal evaluation (the build's one
+probing pass at `Float64`), read off a [`Build`](@ref) as `build.events`. Its
+`components` field holds one entry per component, in the order the build walks
+the tree, so one index addresses it and [`Outputs`](@ref) alike. Each entry
+carries the component's `path`, its `policies` and its `bundle`.
+
+- `policies`: a `NamedTuple` from each event name, in declaration order, to the
+  detection policy its guard's return form fixes, `:boundary` for a `Bool`
+  guard checked at step boundaries only, or `:localized` for a real guard whose
+  crossing is located in time.
+- `bundle`: the field names of the event bundle (the `NamedTuple` of views a
+  guard or handler receives), `()` where the component declares no events.
+
+Like `Outputs`, `Events` holds names only and does not depend on the scalar
+type.
 """
 struct Events
     components::Vector{ComponentEvents}
 end
 
+# Design: §9.1, §9.2, §9.4.
+# The activations are one dictionary keyed by scalar type, the nominal
+# `Float64` entry included like any other, and the lock makes its insertion
+# torn-state-free. The schedule the structure carries is anchor-relative, each
+# component entry's `timing` against `structure.anchors`, because final
+# divisors for anchored entries do not exist until `Δt_base` binds.
 """
-The deployment-free product of the build pipeline (§9.2): structure, outputs,
-events, the activations and `warnings`, the first three being what §9.1's three
-steps produce. Everything here is settled before `Δt_base` exists, and the first
-three are `T`-independent by construction (§9.1). The activations are one
-dictionary keyed by scalar type, the nominal `Float64` entry included like any
-other; the rest are derived at first request (§9.4). The schedule the structure
-carries is anchor-relative — each component entry's `timing` against
-`structure.anchors` — because final divisors for anchored entries do not exist
-until `Δt_base` binds.
-The `Build` is immutable and backs any number of deployments and `Model`s,
-each materializing its own stores and buffers, so nothing writable lives here;
-the one mutable thing is the activation dictionary, whose insertion the lock
-makes torn-state-free (§9.4).
+    Build
+
+The artifact [`build`](@ref) produces, the checked contract of a component tree
+before any grid is fixed.
+
+A build holds the [`Structure`](@ref), the [`Outputs`](@ref) and the
+[`Events`](@ref), which the build's steps produce, then its activations (the
+build's typed products at one scalar type) and the warnings its construction
+raised, read with [`warnings`](@ref). The first three do not depend on the
+scalar type, by construction. The nominal `Float64` activation is made by the
+build, and any other is derived at first request and kept.
+
+Everything in a build is settled before `Δt_base` exists: `h`, `N_base` and
+`Δt_base` are the [`Deployment`](@ref)'s. A build is immutable apart from its
+activation cache, whose insertion is safe across tasks. One build backs any
+number of deployments and [`Model`](@ref)s, concurrently, each materializing
+its own stores and buffers.
+
+See also [`descriptor`](@ref).
 """
 struct Build
     structure::Structure
@@ -547,27 +591,53 @@ end
 "The probe scalar's own tag (§9.4): what keeps a probe activation distinguishable from trim's (`TrimTag`) and from a user's own."
 struct ProbeTag end
 
+# Design: §9.4, §14.10, D-166, D-272.
+# `LinearizeDual` is the scalar of `linearize`'s default width.
 """
-The framework's public canonical probe scalar (§9.4, D-166): the one concrete
-`Dual` a CI activation list spells, `build(world; activations = (Float64,
-ProbeDual))`. An activation is keyed by a concrete scalar, and the bare `Dual`
-`UnionAll` can key none. The width is one because what CI pins is genericity,
-not any particular Jacobian; §14.10's width is `linearize`'s own keyword, and
-`LinearizeDual` is its default's scalar (D-272).
+    ProbeDual
+
+The framework's public canonical probe scalar, the concrete
+`ForwardDiff.Dual{ProbeTag,Float64,1}`.
+
+`ProbeDual` is the one concrete `Dual` a test lists to check that a component
+tree types at a dual number, as in
+`build(root; activations = (Float64, ProbeDual))`. An activation (the build's
+typed products at one scalar type) is keyed by a concrete scalar, and the bare
+`Dual`, a `UnionAll`, can key none.
+
+Its width is one because the check pins genericity, the tree's types following
+the scalar, and not any particular Jacobian. [`linearize`](@ref) sets its own
+width with its `width` keyword.
 """
 const ProbeDual = ForwardDiff.Dual{ProbeTag,Float64,1}
 
+# Design: §9.1, §9.4, D-253, D-259.
+# The nominal activation is the nominal evaluation's own product, never a
+# separate pass. `activations` is the opt-in exhaustive mode.
 """
-    build(root; activations = ()) → Build
+    build(root::AbstractComponent; activations::Tuple = ()) -> Build
 
-The structure step, the nominal evaluation and the eager activations (§9.1). The
-structure step flattens, classifies and type-checks the wires into the
-`Structure`; the nominal evaluation probes at `Float64` and returns the
-`Outputs`, the `Events` and the nominal activation, which is its own product and
-never a separate pass (D-253, D-259). Nothing here needs `Δt_base`, `h` or
-`N_base` — those are the `Deployment`'s. `activations` is §9.4's opt-in exhaustive
-mode: each listed scalar's activation is materialized eagerly instead of at first
-request.
+Check a component tree and return its [`Build`](@ref), with no grid chosen yet.
+
+`build` runs the structure step, the nominal evaluation and the eager
+activations. The structure step flattens the tree, classifies its components
+and type-checks the wires into the [`Structure`](@ref). The nominal evaluation
+(the build's one probing pass at `Float64`) probes every user function and
+returns the [`Outputs`](@ref), the [`Events`](@ref) and the nominal activation
+(the build's typed products at one scalar type). Nothing here needs `h`,
+`N_base` or `Δt_base`, which are the [`Deployment`](@ref)'s.
+
+# Keywords
+
+- `activations`: the scalar types whose activations are made at once instead
+  of at first request, such as `(Float64, ProbeDual)` in a test that checks the
+  tree types at a dual number. See [`ProbeDual`](@ref).
+
+A tree the build rejects is refused as one `DiagnosticError` that carries every
+diagnostic the failing step found, and the warnings raised so far. A build that
+succeeds logs each warning once and keeps it, read with [`warnings`](@ref).
+
+See also [`descriptor`](@ref), [`Model`](@ref), [`Simulation`](@ref).
 """
 Base.@nospecializeinfer function build(@nospecialize(root::AbstractComponent);
                                        activations::Tuple = ())
@@ -770,13 +840,19 @@ function activation(build::Build, ::Type{T}) where {T}
     (@lock build.lock get!(build.activations, T, derived))::Activation{T}
 end
 
+# Design: §9.2, D-250. The build produces artifacts, so its warnings live on
+# them; the log line each one got at return is presentation, never the home.
+# `Deployment`, `Model` and `Simulation` answer the same generic
+# (`deployment.jl`, `model.jl`, `sim.jl`).
 """
-    warnings(build::Build) → Vector{Diagnostic}
+    warnings(build::Build) -> Vector{Diagnostic}
 
-The warnings the build raised (§9.2, D-250). The build produces artifacts, so
-its warnings live on them; the log line each one got at return is presentation,
-never the home. `Deployment`, `Model` and `Simulation` answer the same generic
-(`deployment.jl`, `model.jl`, `sim.jl`).
+Return the warnings raised while the build was constructed.
+
+Each warning was also logged once when [`build`](@ref) returned. The list on
+the build is where they stay, so a caller never has to capture the log. For a
+deployment's, a model's or a simulation's list, see the other methods of
+`warnings`.
 """
 warnings(build::Build) = build.warnings
 
