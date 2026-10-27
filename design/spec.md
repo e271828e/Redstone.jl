@@ -10977,7 +10977,9 @@ endpoints in the same slash form.
 A standard component library makes good on the junction promise
 ([§6.2][s6-2]). That promise rests on explicit junctions being *cheap*. A
 junction hand-written per arity per type is not cheap. The junctions, summing
-junctions and Bool gates alike, are the library's seed ([D-062][d-062]).
+junctions and Bool gates alike, are the library's seed ([D-062][d-062]). The
+library's components are [blocks](#g-block) (components the standard library
+ships, with no privilege of their own).
 
 **A block joins the library's inventory by judgement against three guidelines**
 ([D-313][d-313]). The guidelines ask whether a block is domain-agnostic and generally
@@ -14567,8 +14569,8 @@ with" clause wherever a neighboring term is genuinely close.*
 
 <a id="g-abstract-entry"></a>**abstract entry** — an `u_types` entry whose declared type is abstract.
 It states **structural substitutability**: any concrete producer face below
-the bound wires to it (the field handles, [§4.4][s4-4], are the demonstrated
-client). It is never needed for eltype genericity, and it is illegal where
+the bound wires to it. The field handles are the demonstrated client
+([§4.4][s4-4]). It is never needed for eltype genericity, and it is illegal where
 the face surfaces as a root input (`AbstractAtRoot`) ([§8.2][s8-2]).
 
 <a id="g-assembly"></a>**assembly** — pure composition. Its component-typed fields are its children,
@@ -14583,6 +14585,10 @@ automatically to a [root input](#g-root-input) ([§13.7][s13-7]). The framework
 never does it, and an unconnected input port is a build error ([§6.1][s6-1]).
 Deriving a passthrough's `except` from the assembly's own wire list would be
 auto-bubbling under another name ([§8.8][s8-8]).
+
+<a id="g-block"></a>**block** — a component the standard library ships. The word
+carries no framework meaning, and a block has no privilege a user's component
+lacks ([§13.7][s13-7], [D-062][d-062]).
 
 <a id="g-bound-law"></a>**bound law / walk clause** — the two clauses that
 type-check a wire. The bound law requires the producer's declared type at
@@ -14599,15 +14605,15 @@ branch fails at that branch's first execution, under the always-on check
 
 <a id="g-class"></a>**class** — a component's primitive-vs-assembly status, read
 off *which* well-known declarations its type defines. `local_wires` makes an
-assembly, any leaf declaration makes a primitive, and neither is
+assembly, any of the primitive declarations makes a primitive, and neither is
 `ClassUnreadable` ([§8.5][s8-5]). Class is neither a [tier](#g-tier) nor a
-diagnostic [kind](#g-kind). The "two leaf classes" of [§3.4][s3-4] are the
-tiers, named in ordinary English.
+diagnostic [kind](#g-kind). The phrase "two leaf classes" names the tiers in
+ordinary English ([§3.4][s3-4]).
 
-<a id="g-component"></a>**component** — the unit of modeling. It is a leaf,
-either a continuous or a periodic discrete component, or an assembly of
-components ([§3][s3]). "Primitive" and "leaf" are used interchangeably for the
-two leaf categories.
+<a id="g-component"></a>**component** — the unit of modeling. It is a
+**primitive**, either a continuous or a periodic discrete component, or an
+assembly of components ([§3][s3]). The spec body says "leaf" for a primitive
+as well.
 
 <a id="g-container-children"></a>**container children** — a `Tuple`/`NamedTuple` field whose elements are all
 components. It contributes them as children path-named `"field/1"` or
@@ -14632,7 +14638,8 @@ the device authoring contract ([§11.6][s11-6]), are distinct senses.
 <a id="g-declaration-inventory"></a>**declaration inventory** — the closed set
 of well-known functions a component or assembly defines, each declared in a
 stated source of authority, by value, by type or by allocation ([§8.2][s8-2]).
-The set is the import list of [§8.1][s8-1]. It holds `x_init`/`s_init`/`m_init`,
+The set is the per-name `import` list a component's module writes
+([§8.1][s8-1]). It holds `x_init`/`s_init`/`m_init`,
 `ws_init`, `u_types`/`y_types`, `state_events`, the stages,
 `x_deriv`/`s_update`/`x_projection`,
 `local_wires`/`input_wires`/`output_wires`/`sample_times`/`transparent_container`,
@@ -14687,7 +14694,7 @@ faces. Routing across levels is therefore declared level by level, each assembly
 speaking only of its own children. That is the locality law ([§6.1][s6-1]).
 Condition fragments follow it as unchecked guidance ([§14.2][s14-2]).
 
-<a id="g-periodic-discrete-component"></a>**periodic discrete component** — a leaf with state `s`, update `s_update`
+<a id="g-periodic-discrete-component"></a>**periodic discrete component** — a primitive with state `s`, update `s_update`
 at a declared rate, and two output stages whose cells hold zero-order between
 ticks. It has no `m` store, and its `s` reaches others only through signals
 ([§3.2][s3-2]).
@@ -14703,18 +14710,18 @@ evaluation only *checks* conformance against them, never the reverse. Types
 come by declaration, values by execution, conformance by comparison
 ([§8.1][s8-1]).
 
-<a id="g-stage-function"></a>**stage function / two-stage outputs** — every leaf provides exactly two
+<a id="g-stage-function"></a>**stage function / two-stage outputs** — every primitive provides exactly two
 output stages, `y_state` (no `u` in the bundle, hence structurally no
 feedthrough) and `y_direct`. One pair of names serves both tiers, and
 each name's legal bundle set is tier-dependent ([D-220][d-220]). Feedthrough
 is thereby declared by signature, with no dependency annotations anywhere
 ([§5.2][s5-2]).
 
-<a id="g-state-declaration"></a>**state declaration** — a leaf's `x_init` or `s_init`, declaring its
-continuous or discrete state by initial value. Every leaf makes exactly one,
-empty when stateless, and it marks the leaf's tier. A non-empty one owes its
-update law, `x_deriv` or `s_update`, and it seeds the leaf's `x` or `s`
-store ([§8.2][s8-2]).
+<a id="g-state-declaration"></a>**state declaration** — a primitive's `x_init` or `s_init`, declaring its
+continuous or discrete state by initial value. Every primitive makes exactly
+one, empty when stateless, and it marks the primitive's tier. A non-empty one
+owes its update law, `x_deriv` or `s_update`, and it seeds the primitive's `x`
+or `s` store ([§8.2][s8-2]).
 
 <a id="g-workspace"></a>**workspace** — component-declared mutable scratch, declared *by allocation*
 (`ws_init(::C, ::Type{T})` on both tiers, a discrete allocator always
@@ -14757,7 +14764,7 @@ entry ([§10.5][s10-5]); executor entry ([§9.7][s9-7]); roster entry and batch
 entry ([§11.3][s11-3]); and condition entry ([§14.3][s14-3]).
 
 <a id="g-face"></a>**face** — the name a port wears on its component's boundary.
-For a leaf it is the port's own name. For an assembly it is a name declared in
+For a primitive it is the port's own name. For an assembly it is a name declared in
 `input_wires` or `output_wires`, aliasing an interior port. Face names are
 opaque tokens, and the periphery's write side speaks only face names
 ([§8.6][s8-6], [§11.2][s11-2], [§14.4][s14-4]).
@@ -14798,8 +14805,8 @@ no component, constant within a frame, and the only thing the periphery may
 write ([§11.3][s11-3], [§8.2][s8-2], [§8.6][s8-6]).
 
 <a id="g-scratch"></a>**scratch** — mutable working storage whose contents are
-never authoritative. There are three kinds. One is a component's workspace
-(`ws`, [§7.3][s7-3]). Another is the integrator's buffers and the mid-step table
+never authoritative. There are three kinds. One is a component's workspace,
+`ws` ([§7.3][s7-3]). Another is the integrator's buffers and the mid-step table
 ([§10.3][s10-3], [§13.6][s13-6]). The third is the store set a service
 invocation instantiates from the activation's layout and discards with the call
 ([§9.4][s9-4], [§14.8][s14-8]). The simulation's own buffer set is the
@@ -14822,16 +14829,16 @@ fields. The framework overwrites it when a handler or update returns a new value
 ([§7.3][s7-3]). A store is never a [cell](#g-cell) ([§4.1][s4-1]).
 
 <a id="g-summing-junction"></a>**summing junction** — an ordinary library
-component performing N-to-1 aggregation through explicit wires (`SumJunction{V,
-N}`, the generic `Junction` at `+`, or a named site-specific variant,
-[§13.7][s13-7]). There is no framework aggregation mechanism, and fold order is
+component performing N-to-1 aggregation through explicit wires. It is
+`SumJunction{V, N}`, the generic `Junction` at `+`, or a named site-specific
+variant ([§13.7][s13-7]). There is no framework aggregation mechanism, and fold order is
 the junction's positional input order ([§6.2][s6-2]).
 
 <a id="g-value-level-constructor"></a>**value-level constructor** — the plain public function from (component,
 input values) to field handle that every field-emitting component is obliged
 to provide. Its own swept output stage is a one-line call to it. It is the
-device by which [§14.1][s14-1] condition math queries the environment before
-any sweep exists ([§8.2][s8-2]).
+device by which condition math queries the environment before any sweep
+exists ([§8.2][s8-2], [§14.1][s14-1]).
 
 <a id="g-view"></a>**view** — any named, zero-copy value a function receives
 through its [bundle](#g-bundle), such as `x`, `y` or `u` ([§5.2][s5-2]). A
@@ -14905,11 +14912,12 @@ constraint pool, and relative declarations below one compose against it
 exactly as against the root grid ([§10.5][s10-5], [§9.2][s9-2]).
 
 <a id="g-boundary"></a>**boundary** — a published consistency point, where the
-[§10.6][s10-6] macro-sequence completes and a snapshot goes out. Every grid
+boundary's macro-sequence completes and a snapshot goes out ([§10.6][s10-6]).
+Every grid
 point is a boundary. A localized event time `t*` and [boundary
 zero](#g-boundary-zero) ([§14.5][s14-5]) are boundaries but not frame tops
 ([§10.1][s10-1]). The structural sense, a component's boundary and its boundary
-declarations ([§8.6][s8-6]), is ordinary English, never linked here.
+declarations, is ordinary English, never linked here ([§8.6][s8-6]).
 
 <a id="g-boundary-detected"></a>**boundary-detected** — the detection policy a
 `Bool`-returning guard declares. The framework checks the guard for a
@@ -14942,7 +14950,8 @@ integer multiple of it ([§10.5][s10-5], [§9.2][s9-2]).
 `(D, Φ)` pair admits that boundary's [tick index](#g-tick-index), `(tick − Φ) %
 D == 0` ([§10.5][s10-5]). A due component runs its stages in the boundary sweep
 and its `s_update` after quiescence ([§10.6][s10-6]). The due set is fixed for
-the boundary's event iteration. [§10.5][s10-5] gives it per kind of boundary.
+the boundary's event iteration and is given per kind of boundary
+([§10.5][s10-5]).
 
 <a id="g-edge-semantics"></a>**edge semantics / holding** — an event fires on a transition of its
 predicate from not-holding to holding, never on a bare sign change. The
@@ -15053,7 +15062,7 @@ boundary gate reads. An off-tick frame top and a `t*` boundary have none
 ([§10.5][s10-5]).
 
 <a id="g-tier"></a>**tier** — the continuous or discrete side of the hybrid
-formalism, read off the state declaration every leaf makes, `x_init` or
+formalism, read off the state declaration every primitive makes, `x_init` or
 `s_init`, empty when stateless (`DeclarationOnWrongTier` names a violation)
 ([§8.2][s8-2], [§8.5][s8-5]). Bare "tier" means only this. The genericity
 classes are [walked / pinned / exempt](#g-walked) and the detection policies
@@ -15125,7 +15134,7 @@ plain data in fields ([§9.7][s9-7]).
 per-activation types from a declared nominal type. `Float64` leaves and
 `Float64` type parameters follow the activation scalar, a `Pinned{P}` leaf
 yields `P`, and everything else pins ([§8.2][s8-2], [D-263][d-263]). It applies
-to the type derived from `x_init` and to a continuous leaf's contracts alike
+to the type derived from `x_init` and to a continuous primitive's contracts alike
 ([§9.4][s9-4]). `m_init`, `s_init` and the discrete tier's contracts pin
 wholesale ([§8.2][s8-2]).
 
@@ -15145,7 +15154,7 @@ one scalar type. It holds the deployment, its [executor](#g-executor), its
 status and its diagnostic cell ([§12.6][s12-6]). A `Simulation` runs only a
 `Model{Float64}`, and claims it at construction ([§9.2][s9-2], [D-317][d-317],
 [D-318][d-318]). A `Model` at another scalar is a service's scratch. Its entry
-points are listed under "Deployment and the model" in [Appendix B][sB].
+points are listed under "Deployment and the model" ([Appendix B][sB]).
 
 <a id="g-nominal"></a>**nominal** — the `Float64` activation, and of a
 declaration its `Float64` face (for a continuous producer's output declaration,
@@ -15172,8 +15181,8 @@ runs on. `probe_value(::Type)` synthesizes them at the one kind of terminal
 with no producer, root inputs (`zero(T)`/`false`/first enum/`T()`,
 overridable). From there they flow the probe chain as the probed stages' own
 returns ([§13.1][s13-1]). They are strictly probe-scoped, never an initial
-root-input value, which [§14.6][s14-6] makes a structural barrier
-([§9.3][s9-3]).
+root-input value, and a structural barrier keeps the two apart ([§9.3][s9-3],
+[§14.6][s14-6]).
 
 <a id="g-probedual"></a>**`ProbeDual`** — the framework's public canonical concrete probe scalar
 (`ForwardDiff.Dual{ProbeTag, Float64, 1}`), which keys the CI activation
@@ -15200,10 +15209,10 @@ over its wires. Nothing in it depends on a scalar type ([§9.1][s9-1],
 [D-253][d-253], [D-315][d-315]).
 
 <a id="g-walked"></a>**walked / pinned / exempt** — the eltype-genericity
-classes. Walked payload/value types follow the activation scalar, pinned
-parameters and definitions stay `Float64`, and the discrete side is exempt
-([§7.2][s7-2]). One [leaf walk](#g-leaf-walk) reads a continuous leaf's state
-and contracts alike. A contract leaf opts out of walking with the `Pinned{P}`
+classes. Walked payload/value types follow the activation scalar, a pinned
+entry keeps its declared type under every activation, and the discrete side
+is exempt ([§7.2][s7-2], [§9.4][s9-4], [D-266][d-266]). One [leaf walk](#g-leaf-walk) reads a
+continuous primitive's state and contracts alike. A contract leaf opts out of walking with the `Pinned{P}`
 marker ([§8.2][s8-2]).
 
 ### D.6 Runtime periphery
@@ -15526,7 +15535,7 @@ blending a node with a bare `NamedTuple` is a directive error method
 ([§14.2][s14-2]).
 
 <a id="g-component-test-rig"></a>**component test rig** — a one-child assembly exporting the child's entire
-input face set. It is the idiom for exercising a leaf that needs something
+input face set. It is the idiom for exercising a primitive that needs something
 wired beside it. An abstract entry is satisfied *inside* the rig by a
 concrete **stub child** wired to that face ([§13.7][s13-7]).
 
@@ -15534,7 +15543,8 @@ concrete **stub child** wired to that face ([§13.7][s13-7]).
 this state". It is a path-addressed sparse overlay, on the declared defaults
 under `init!` and on a stopped run's stores under `overlay!`. It covers `x`, `s`
 and `m` fields plus root inputs by face, never outputs and never workspace
-([§14.1][s14-1]). [§14][s14] owns the word. A guard defines a
+([§14.1][s14-1]). The stopped-sim services own the word ([§14][s14]). A guard
+defines a
 [predicate](#g-predicate).
 
 <a id="g-design_world"></a>**`design_world`** — the rig this design records for design-time
@@ -15562,7 +15572,8 @@ state leaf. It is the field or face name followed by `.name` and `[k]` or
 <a id="g-mounting"></a>**mounting** — relocating a whole problem or tap set with `at(prefix, …)`.
 Each field is condition-producing (path-relative, post-composed), a read set
 carrying its mount chain, or path-free, so the service never knows where its
-paths sit ([§14.9][s14-9]).
+paths sit ([§14.9][s14-9]). A read set's **mount chain** is the prefixes it is
+mounted under, root first ([§14.9][s14-9], [D-277][d-277]).
 The read side rebases every selector to the root at resolution
 ([§14.9][s14-9]).
 
@@ -15641,8 +15652,9 @@ opaque, each with the fields it needs ([§13.9][s13-9]). Not a diagnostic's
 <a id="g-collect-the-checks-fail-the-evaluations-fast"></a>**collect the checks,
 fail the evaluations fast** — the reporting policy. Declarative passes over
 collected structure return their full violation list, while the first user-code
-exception aborts the phase. The build's steps are barriers, and the policy field
-of [Appendix C][sC] spells the collecting case `collected` ([§13.1][s13-1]).
+exception aborts the phase. The build's steps are barriers, and a diagnostic
+kind's policy field spells the collecting case `collected` ([§13.1][s13-1],
+[Appendix C][sC]).
 
 <a id="g-did-you-mean"></a>**did-you-mean** — the required shape of any name-shaped failure: the
 offending name plus the list-in-hand it should have matched, carried as
@@ -15665,9 +15677,9 @@ value-blind, or sampled primal-carrying) used to classify a
 rejected cycle as real or artificial. It is diagnostic only, never an input
 to the ordering ([§5.5][s5-5], [§13.8][s13-8]).
 
-<a id="g-kind"></a>**kind** — a diagnostic's identity in the closed set
-enumerated normatively in [Appendix C][sC], with payload fields, owning section,
-severity, where it is raised and under which policy. Tests match on kind plus
+<a id="g-kind"></a>**kind** — a diagnostic's identity in a closed, normatively
+enumerated set, with payload fields, owning section, severity, where it is
+raised and under which policy ([Appendix C][sC]). Tests match on kind plus
 payload, never on message text ([§13.2][s13-2]). Not a component
 [class](#g-class) or a [function family](#g-function-family).
 

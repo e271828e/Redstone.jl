@@ -38,7 +38,8 @@ are examples of what a docstring must not contain.
 """
     closed(run::Run) -> Bool
 
-Return `true` once the run has ended and its termination record is written.
+Return `true` once the run has ended and its
+[termination record](@ref g-termination-record) is written.
 
 `closed` answers whether the run itself is over. For why it ended, see
 [`termination`](@ref).
@@ -103,6 +104,10 @@ closed(run::Run) = run.termination !== nothing
 - **No citation, no history, no defense.** The summary names no section, no
   entry, no predecessor and no alternative. "This is not a defect" is a
   sentence for the log.
+- **A library block's summary names its class and tier.** It opens "A
+  continuous primitive that …" or "A discrete primitive that …", and
+  `Group`'s opens "An assembly …". The abstract parents and `AsPort` keep
+  their own forms.
 
 ## Elaboration
 
@@ -122,13 +127,23 @@ closed(run::Run) = run.termination !== nothing
 
 ## Vocabulary
 
-- **Glossary terms are allowed, each glossed at first use.** The gloss is the
-  spec's, 5 to 10 words, in the sentence that first uses the term: "the
-  snapshot (the immutable published value of one boundary)". A docstring is
-  read alone, so each one is its own section for this rule.
-- **The summary is exempt from glossing.** A glossary term in the summary is
-  glossed at its first use in the body, since a summary under twenty words
-  has no room for a gloss.
+- **The first mention of a glossary term links to the glossary page.** The
+  link is `[term](@ref g-id)`, with Appendix D's anchor id, as in "the
+  [snapshot](@ref g-snapshot)". A docstring is read alone, so each one links
+  its own first mentions, the summary included. The page is generated from
+  Appendix D, so the link resolves where the definition lives.
+- **A docstring never defines a term inline.** The glossary page carries the
+  definition. A term with no entry is written in plain words, as the coinage
+  rule below says.
+- **A code-named entry is linked through its API link only.** `Model`,
+  `TrimProblem` and `at` take [`Model`](@ref) and the like, never a glossary
+  link. Prose "build", "deployment", "model" and "run" take no glossary link.
+- **The spec keeps its glosses.** Its readers arrive at a section or a line
+  range and cannot follow a link, while a docstring's reader is one link from
+  the glossary page.
+- **Primitive or assembly names the class, continuous or discrete the
+  tier.** "Block" means only that the standard library ships the component.
+  "Leaf" names only a leaf of a store or a leaf address, never a component.
 - **No `§`, no `D-nnn`, no FlightCore, no Flight.jl.** A docstring never
   cites the spec, the log or the predecessor. Those go to the `# Design:`
   comment.
@@ -183,7 +198,8 @@ The reviewer's checklist, one line per rule:
 2. One summary sentence, under twenty words, imperative or noun phrase.
 3. No `§`, `D-`, FlightCore or Flight.jl inside the quotes.
 4. Every old citation appears in the `# Design:` comment.
-5. Each glossary term glossed at first use in the docstring.
+5. Each glossary term's first mention linked as `[term](@ref g-id)`, no
+   inline definition.
 6. Keywords as a list, each with its meaning in one sentence.
 7. Every refusal names its diagnostic kind.
 8. Cross-references as [`name`](@ref), siblings not explained.
@@ -197,7 +213,8 @@ The reviewer's checklist, one line per rule:
 15. A keyword block in its keyword form only, a forwarded `kw...` as the
     callee's keywords.
 16. Public fields listed under a lead sentence.
-17. A glossary term in the summary glossed in the body.
+17. Primitive, assembly, continuous, discrete, block and leaf as the
+    vocabulary rule says, and library summaries in their forms.
 18. No companion `*.md` pointer inside the quotes.
 19. An unexported-constant default written as its value, or stated in the
     prose.

@@ -1,6 +1,7 @@
 Manifest.toml
 docs/build/
 docs/src/index.md
+docs/src/glossary.md
 *.jl.cov
 *.jl.*.cov
 *.jl.mem

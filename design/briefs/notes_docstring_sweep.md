@@ -1205,3 +1205,36 @@ Left for later, from wave 8's handoff: `termination` and `port_views` still
 list the fields that `TerminationRecord` and `PortView` now list, and could
 shrink to a link; the hook functions' comments could cite §13.4 now that it
 names them.
+
+## 15. The glossary page and the vocabulary
+
+The user ruled three questions on 2026-10-27. This docs commit lands the
+generator, Appendix D's edits and the sheet's rules. The docstring commit
+after it applies them to the swept files.
+
+**Inline glosses become links.** A docstring's first mention of a glossary
+term links to a glossary page generated from Appendix D, and no docstring
+defines a term inline. The glosses had grown into the sweep's largest
+friction: the review counted 46 sentences carrying two or more, and the
+classifier found 482 glosses in the page's 210 docstrings. A link costs
+one span and keeps one definition. The trade is accepted knowingly: `?name` in the
+REPL renders a link as bare text, so a REPL reader sees the term without
+its definition. The generator drops the spec's citations, so every
+citation in Appendix D now stands as a trailing parenthetical, and it
+skips D.10, which defines the spec's own conventions.
+
+**The spec keeps its glosses.** The spec's readers arrive by section or by
+line range, often an agent reading a slice, and cannot follow a link. A
+gloss at each section's first use keeps every section readable on its
+own. A docstring's reader is one link from the page, so the two forms
+differ on purpose.
+
+**Primitive, block and leaf.** "Leaf" had four senses in the docstrings:
+a component of the primitive kind, a leaf of a store value, a leaf of a
+condition and a node the leaf walk reaches. "Primitive" has one, the
+component kind, so the documentation says "primitive" for it and keeps
+"leaf" for a leaf of a store and a leaf address. "Block" now means only
+that the standard library ships the component, with no privilege a user's
+component lacks, and Appendix D gains an entry for it. The library's
+summaries open "A continuous primitive that …", "A discrete primitive
+that …" or, for `Group`, "An assembly …".

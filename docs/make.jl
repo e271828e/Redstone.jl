@@ -4,6 +4,11 @@ using Documenter, Redstone
 cp(joinpath(@__DIR__, "..", "README.md"), joinpath(@__DIR__, "src", "index.md");
    force = true)
 
+# The glossary page is generated from the spec's Appendix D.
+include("glossary.jl")
+write_glossary(joinpath(@__DIR__, "..", "design", "spec.md"),
+               joinpath(@__DIR__, "src", "glossary.md"))
+
 DocMeta.setdocmeta!(Redstone, :DocTestSetup, :(using Redstone); recursive = true)
 
 makedocs(;
@@ -16,6 +21,7 @@ makedocs(;
     pages = [
         "Home" => "index.md",
         "API" => "api.md",
+        "Glossary" => "glossary.md",
     ],
     format = Documenter.HTML(;
         prettyurls = get(ENV, "CI", nothing) == "true",

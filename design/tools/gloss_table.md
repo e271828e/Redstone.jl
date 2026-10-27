@@ -15,6 +15,7 @@ D-303 added the entry, and the `stop request` row on 2026-10-08, when D-316
 replaced `stop_on`'s. The `requester roster` row was counted on 2026-10-19,
 when chapter 13's rewrite added the entry. The twenty rows Appendix D's
 rewrite added were counted on 2026-10-21; no other row was recounted then.
+The `block` row was counted on 2026-10-27, when the entry was added.
 
 ## D.1 Component model and declaration layer
 
@@ -23,6 +24,7 @@ rewrite added were counted on 2026-10-21; no other row was recounted then.
 | abstract entry | g-abstract-entry | 4 | A | an `u_types` entry admitting any concrete producer face |
 | assembly | g-assembly | 21 | B | a component that only composes children, with no dynamics |
 | auto-bubbling | g-auto-bubbling | 3 | A | promoting an unconnected input automatically to a root input |
+| block | g-block | 1 | A | a component the standard library ships, with no privilege of its own |
 | bound law / walk clause | g-bound-law | 4 | A | the two clauses that type-check a wire |
 | branch-shape rule | g-branch-shape-rule | 3 | A | a stage returns one `NamedTuple` shape on every branch |
 | class | g-class | 7 | A | a component's primitive-vs-assembly status, read off its declarations |
@@ -139,7 +141,7 @@ rewrite added were counted on 2026-10-21; no other row was recounted then.
 | schema vs. layout | g-schema-vs-layout | 0 | — | *(resists compression: the entry contrasts a pair)* |
 | shadowing check | g-shadowing-check | 5 | A | the structural walk's check for a module shadowing a declaration |
 | `Structure` | g-structure | 1 | A | the structure step's product: components, tiers, assembly rows, root inputs, rate chains and scope triples |
-| walked / pinned / exempt | g-walked | 21 | A | the eltype-genericity classes: follow the activation scalar, stay `Float64`, exempt |
+| walked / pinned / exempt | g-walked | 21 | A | the eltype-genericity classes: follow the activation scalar, keep the declared type, exempt |
 
 ## D.6 Runtime periphery
 
