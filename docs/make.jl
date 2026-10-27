@@ -25,7 +25,8 @@ makedocs(;
     ],
     format = Documenter.HTML(;
         prettyurls = get(ENV, "CI", nothing) == "true",
-        size_threshold_ignore = ["api.md"],  # one page for the whole surface
+        # one page for the whole surface, and one for the whole glossary
+        size_threshold_ignore = ["api.md", "glossary.md"],
     ),
 )
 
