@@ -13,51 +13,24 @@ is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
 - **The inspector, stage 1**: the static inspector over the descriptor.
-  Its first session, the descriptor's schema and `descriptor` together, ran
-  on 2026-10-26; the record is `design/inspector/descriptor_design.md`,
-  whose "Design axes" lists what follows in order. The docs commit landed
-  (§13.9, D-432, the carrier field recorded in §13.2), then the increment
-  (`schema/descriptor.json`, `src/descriptor.jl`, its tests) beside axis
-  4's rendering spike, whose record is
-  `design/prototypes/render_spike/report.md`: hand-rolled SVG over ELK.js,
-  with the schema findings it hands to the bumps. Axis 3 ran on
-  2026-10-27; its record is `design/inspector/visual_grammar.md`, and the
-  `alias` and `name` fields it asked for landed the same day. Axis 5 ran
-  on 2026-10-27 too; its record is `design/inspector/workspace.md`, whose
-  "Design axes" hands on what remains: axis 6, the live session, with the
-  tabs by name, axis 7, and the inherited bumps. Axis 6 reads
-  `design/inspector/initial_design.md`'s axis 6 paragraph and stage 2's
-  settled list, `descriptor_design.md`'s answer 13, and the hand-ons of
-  `visual_grammar.md` and `workspace.md`.
-  The built-in Julia GUI is parked (D-310). The
-  stage's record is `design/inspector/initial_design.md` (not normative),
-  which carries each stage's answered questions and open list. The later
-  stages stand after the release, below.
-- **The API docstrings.** The docstrings are written for the maintainer:
-  nearly all cite spec sections or log entries, and many open with a design
-  note where the manual asks for a signature. A user reads them through
-  `?name` and the API reference, and understands neither a section mark nor
-  a decision number. Every docstring of a name the audit confirms as API is
-  rewritten to the manual's conventions: the indented signature, a
-  one-sentence summary, the elaboration in short paragraphs, `# Examples`
-  where a doctest is cheap, and `[`name`](@ref)` cross-references, with no
-  citation of the spec or the log. The citations move to a `# Design:`
-  comment above the docstring, where a diff review still sees them.
-  Unexported names keep their docstrings as they are. The style sheet
-  `design/tools/docstring_style.md` fixes the convention; the sweep runs
-  one source file per agent with a cold review after, under
-  `design/briefs/brief_docstring_sweep.md`. It runs ahead of the tutorial
-  and the audit (ruled 2026-10-27), since a rename costs a signature line
-  and the Documenter build catches a stale link: an examples pass follows
-  the tutorial, and a signature-and-link pass follows the audit's renames.
-  Appendix B and the library inventory are the sweep's lists of names and
-  never a source of spelling; a signature mirrors its method. The library,
-  public as a group (D-226), is wave 7, and the holder types, public as a
-  group the same way, are wave 8.
-  The sweep landed as the commits from `84ece6b` to `a317978`, with its
-  record in `design/briefs/notes_docstring_sweep.md`, and what remains is
-  the examples pass after the tutorial and the signature-and-link pass
-  after the audit.
+  The stage's record is `design/inspector/initial_design.md` (not
+  normative), with one record per axis session beside it:
+  `descriptor_design.md` for axes 1 and 2, landed as §13.9, D-432 and
+  increment 81; `design/prototypes/render_spike/report.md` for axis 4,
+  hand-rolled SVG over ELK.js; `visual_grammar.md` for axis 3;
+  `workspace.md` for axis 5. Next is axis 6, the live session, which reads
+  `initial_design.md`'s axis 6 paragraph and stage 2's settled list,
+  `descriptor_design.md`'s answer 13, and the hand-ons of
+  `visual_grammar.md` and `workspace.md`; then axis 7, and the inherited
+  bumps `workspace.md`'s "Design axes" lists. The built-in Julia GUI is
+  parked (D-310). The later stages stand after the release, below.
+- **The API docstrings' two later passes.** The sweep to the manual's
+  conventions landed (commits `84ece6b` to `a317978`, record
+  `design/briefs/notes_docstring_sweep.md`, convention
+  `design/tools/docstring_style.md`). Two passes remain: an examples pass
+  after the tutorial, and a signature-and-link pass after the audit's
+  renames, since a rename costs a signature line and the Documenter build
+  catches a stale link. Unexported names keep their docstrings as they are.
 - **`closed_loop` as a hierarchy.** The example's closed loop is one flat
   `Group` of 27 library blocks and 55 wires, written so to show the library
   composing without a named assembly, and it draws as a tangle at any
