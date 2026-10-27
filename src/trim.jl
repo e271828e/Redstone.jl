@@ -68,9 +68,11 @@ the two check keywords default to no checks.
   check outside its tolerance warns `TrimCommitChecks`.
 
 Constructing a problem validates nothing, since most of what it needs is only
-checkable against a build: a selector resolves against a model, and the residual
-and check names are observed at one evaluation at the guess. `trim!` checks the
-whole problem in one collecting pass, and refuses it as `TrimProblemInvalid`.
+checkable against a build: a selector (a deferred read naming one leaf) resolves
+against a model, and the residual and check names are observed at one
+evaluation at the guess. `trim!` checks the problem in two collecting passes,
+and refuses it as `TrimProblemInvalid`. The first runs before any evaluation,
+and the second checks the residual and check returns at the guess evaluation.
 A check whose names depend on values, or that throws, fails at the commit after
 the simulation has moved, as a residual does.
 """
@@ -102,13 +104,14 @@ Scope a trim problem under `prefix`, so that its paths resolve below that path.
 
 `at` lifts the [`TrimProblem`](@ref) field by field. The `condition` function is
 wrapped, so that each condition it returns is scoped under `prefix`. The `reads`
-read set takes `prefix` at the front of its mount chain, the prefixes it is
-mounted under. Every other field holds no path and passes through, the two
-check fields included.
+field is a read set (a `Reads` value naming each selector it reads). It takes
+`prefix` at the front of its mount chain, the prefixes it is mounted under.
+Every other field holds no path and passes through, the two check fields
+included.
 
 A `reads` field that is not a read set passes through untouched, so that
-`trim!`'s setup names it. The lift refuses only an empty prefix, as
-`ReadSetMisuse` from `at` on the read set.
+`trim!`'s setup names it. When `reads` is a read set, the lift refuses only an
+empty prefix, as `ReadSetMisuse` from `at` on the read set.
 """
 at(prefix::AbstractString, problem::TrimProblem) = TrimProblem(
     guess = problem.guess, lower = problem.lower, upper = problem.upper,
@@ -242,8 +245,9 @@ result.
 
 The solver stops with status `:converged` when every residual is within its
 tolerance, `all(abs.(r) .≤ tol)`. It stops with `:maxiter` after `maxiter`
-iterations, and with `:stalled` when a step falls below the rounding scale of
-the decisions it would move.
+iterations. It stops with `:stalled` when no step lowers the residual norm: the
+step is not finite, it falls below the rounding scale of the decisions it would
+move, or every trial is rejected until the damping passes its ceiling.
 
 # Keywords
 
@@ -467,12 +471,15 @@ Solve a trim problem on the model, and commit the solution through `init!`.
 `trim!` searches the [`TrimProblem`](@ref)'s decisions for a point where every
 residual sits within its tolerance. Every evaluation runs on scratch stores
 (working storage the call creates and discards), so the search never writes the
-model. Setup applies `override(baseline, problem.condition(guess))` and runs one
-establishment round: the sweep of boundary zero (the initialization boundary),
-with every discrete output stage run and no projection, events or discrete
-update. Each iteration then writes the decisions, sweeps the continuous chain
-and reads the residuals, with no boundaries and no events. The discrete tier
-does not run during the search, so its outputs hold the values the
+model. Setup layers the problem's condition (the datum that says "set this build
+to this state") at the guess over the baseline, as
+`override(baseline, problem.condition(guess))`. It then runs one establishment
+round: the sweep of boundary zero (the initialization boundary), with every
+discrete output stage run and no projection, events or discrete update. Each
+iteration then writes the decisions, sweeps the continuous chain and reads the
+residuals, with no boundaries and no events. The discrete tier (the discrete
+side of the hybrid model) does not run during the search, so its outputs hold
+the values the
 establishment round gave them. The Jacobian is exact, carried by dual numbers
 through the same evaluation.
 
@@ -502,15 +509,18 @@ commits as usual when it is.
 
 - `baseline`: the baseline (a full-coverage condition, layered under tweaks)
   the problem's condition is layered over, at setup and at the commit. Required.
-  It must give every root input (the root component's own input faces) a value.
+  Together with the problem's condition at the guess, it must give every root
+  input (the root component's own input faces) a value.
 - `t0`: the start time of the committing boundary zero, any real, held as a
   `Float64` origin.
 - `backend`: the solver, any value with a [`solve`](@ref) method.
   [`LevenbergMarquardt`](@ref) is the default.
 
-The problem is checked before any evaluation, and its faults are refused
-together as `TrimProblemInvalid`, with the read set's own `ReadResolution`
-failures beside them. A root input the baseline and the guess's condition leave
+The problem is checked in two collecting passes, each refused as
+`TrimProblemInvalid`. The first runs before any evaluation, with the read set's
+own `ReadResolution` failures beside the problem's faults. The second checks
+the residual and check returns at the guess evaluation, and again at the first
+seeded one. A root input the baseline and the guess's condition leave
 without a value is refused as `UninitializedInputs`. A model a
 [`Simulation`](@ref) has claimed is refused as `ArgumentInvalid`, before any
 check. So is a second argument that is not a `TrimProblem`, and a model at a

@@ -42,14 +42,15 @@ scalar leaf.
 # Keywords
 
 - `x`: the continuous state leaves to seed, as [`get_state`](@ref) selectors.
-- `u`: the root inputs to seed, as [`get_input`](@ref) selectors.
+- `u`: the root inputs (the root component's own input faces) to seed, as
+  [`get_input`](@ref) selectors.
 - `y`: the outputs to read, as [`get_output`](@ref) or [`get_face`](@ref)
   selectors.
 
 `taps` checks only that each list is a `NamedTuple` of selectors, and refuses
 anything else as `ReadSetMisuse`. `linearize` checks membership and the rest
 when it resolves the taps against its build, and refuses them as
-`TapResolution`.
+`TapResolution`, beside the selectors' own `ReadResolution` failures.
 """
 taps(; x = (;), u = (;), y = (;)) = Taps(_tap_list(:x, x), _tap_list(:u, u), _tap_list(:y, y))
 
@@ -98,8 +99,8 @@ labeled by the taps.
 selector lists that declare what linearization seeds and reads), and a
 `Linearization` holds these fields.
 
-- `x₀`, `u₀`: the seeded states and root inputs at the operating point, as
-  `NamedTuple`s under the `x` and `u` labels.
+- `x₀`, `u₀`: the seeded states and root inputs (the root component's own input
+  faces) at the operating point, as `NamedTuple`s under the `x` and `u` labels.
 - `ẋ₀`: the state derivative at the operating point, under the `x` labels.
 - `y₀`: the outputs read at the operating point, under the `y` labels.
 - `A`, `B`, `C`, `D`: the Jacobians of `ẋ` and `y` with respect to `x` and
@@ -151,23 +152,25 @@ Return the linearization of the model at an operating point.
 
 `linearize` returns the Jacobians `A`, `B`, `C` and `D` of the model about an
 operating point, as a [`Linearization`](@ref). It is a pure query. It works on
-scratch stores (working storage the call creates and discards), commits
-nothing, runs no boundary zero (the initialization boundary) and never writes
-the model.
+scratch stores (working storage the call creates and discards) and commits
+nothing. It runs no boundary zero (the initialization boundary) and never
+writes the model.
 
 By default the operating point is `checkpoint(model)`, the model's state at the
-start of the current frame, with its own clock. `about`, a condition (the datum
+frame top its clock rests on, at that clock's time. `about`, a condition (the datum
 that says "set this build to this state"), places the operating point anywhere
 else, at time `t0`. The condition is applied over the declared defaults, and
 one sweep with every discrete output stage run then sets the discrete outputs.
 
-The tap set (the three selector lists that declare what linearization seeds and
-reads), built by [`taps`](@ref), names the axes. `linearize` seeds one
+The tap set, built by [`taps`](@ref), names the axes. It is three lists of
+selectors (deferred reads, each naming one leaf), declaring what linearization
+seeds and reads. `linearize` seeds one
 direction per `x` tap and per `u` tap, and evaluates the model with dual
 numbers. The value parts give `ẋ₀` and `y₀`. The partials give `A` and `B` read
 at the state derivative, and `C` and `D` read at the `y` taps. States and root
-inputs that no tap names sit constant at the operating point, and the discrete
-tier is held.
+inputs (the root component's own input faces) that no tap names sit constant at
+the operating point. The discrete tier (the discrete side of the hybrid model)
+is held.
 
 # Keywords
 
@@ -181,13 +184,15 @@ tier is held.
   tap set with no compile at the keyboard.
 
 The default form is legal only while the model's status is `:consistent`, and is
-refused as `ServiceLifecycle` otherwise, and as `CheckpointMidFrame` with the
-clock inside a frame, as [`checkpoint`](@ref) is. A root input whose value does
-not convert to the seeded scalar is refused as `ConditionResolution`. The
+refused as `ServiceLifecycle` otherwise. It is refused as `CheckpointMidFrame`
+with the clock off a frame top, as [`checkpoint`](@ref) is. A root input whose
+value does not convert to the seeded scalar is refused as `ConditionResolution`.
+The
 `about` form is legal at any status. Under it, a condition that does not resolve
-is refused as `ConditionResolution`, and a root input it leaves without a value
-as `UninitializedInputs`. A model a [`Simulation`](@ref) has claimed still
-answers, since the query only reads it.
+is refused with the diagnostics resolution raises: `ConditionResolution`,
+`PathResolution`, `DuplicateConditionLeaf` or `ConditionNodeMisuse`. A root
+input it leaves without a value is refused as `UninitializedInputs`. A model a
+[`Simulation`](@ref) has claimed still answers, since the query only reads it.
 
 The taps resolve in one collecting pass, and their faults are refused together
 as `TapResolution`, beside the selectors' own `ReadResolution` failures: a

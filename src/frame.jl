@@ -27,9 +27,10 @@ model touches any state, and then integrates. A localized event (one whose
 crossing instant is root-found inside the frame) adds a boundary at its time
 `t*`. The clock is then set to the frame top `tₖ`, computed from `k` and never
 accumulated, and the boundary there runs. When `k` is a multiple of `N_base` it
-is a base tick (an instant of the base grid), and the due discrete updates run
-in it. `settled!(hooks)` follows every boundary, each `t*`'s and the frame
-top's.
+is a base tick (an instant of the base grid). The discrete components due there,
+those whose sample time admits that tick, run their stages and updates in it. Any
+other `k` runs an off-tick boundary, with no discrete update. `settled!(hooks)`
+follows every boundary, each `t*`'s and the frame top's.
 
 `frame!` returns whether `settled!` asked to abandon the frame. A `true` at a
 `t*` boundary leaves the rest of the frame unrun, with the clock at `t*` where

@@ -16,9 +16,9 @@
 The abstract type every component subtypes, primitive and assembly alike.
 
 A component, the unit of modeling, is a plain struct,
-`MyComp <: AbstractComponent`, whose other fields are inert parameters. Its
-class (a component's primitive-vs-assembly status) is read off which
-declarations its type defines. Defining [`local_wires`](@ref) makes it an
+`MyComp <: AbstractComponent`, whose fields are inert parameters or child
+components. Its class (a component's primitive-vs-assembly status) is read off
+which declarations its type defines. Defining [`local_wires`](@ref) makes it an
 assembly (a component of pure composition), whose component-typed fields are
 its children. Defining any leaf declaration, such as [`x_init`](@ref),
 [`u_types`](@ref) or the stage [`y_direct`](@ref), makes it a primitive. There
@@ -51,8 +51,8 @@ values.
 A continuous leaf declares its state by value, written with `Float64` values,
 as in `x_init(::Engine) = (ω = 0.0,)`. The state's type is derived from the
 value, and its real values follow the scalar of each activation (the build's
-typed products at a given scalar type). Each field is one real scalar or one
-static array of reals. Integers, `Bool`s and enums belong in [`m_init`](@ref).
+typed products at a given scalar type). Each field is one `Float64` or one
+static array of `Float64`. Integers, `Bool`s and enums belong in [`m_init`](@ref).
 
 Every leaf defines exactly one of `x_init` and [`s_init`](@ref), and the one it
 defines makes it continuous or discrete. A stateless continuous leaf declares
@@ -105,9 +105,10 @@ for [`s_init`](@ref). Event handlers write the modes, and nothing else may. A
 leaf may declare modes that no event of its own changes.
 
 Modes are continuous-only, because the event system is continuous-side only.
-The build refuses `m_init` on a discrete leaf as `DeclarationOnWrongTier`, a
-value that is not a `NamedTuple` as `StoreNotNamedTuple`, and a field that is
-neither isbits nor a `Symbol` as `IllegalStoreField`.
+The build refuses a non-empty `m_init` on a discrete leaf as
+`DeclarationOnWrongTier`, a value that is not a `NamedTuple` as
+`StoreNotNamedTuple`, and a field that is neither isbits nor a `Symbol` as
+`IllegalStoreField`.
 """
 m_init(::Any) = NamedTuple()
 
@@ -151,7 +152,7 @@ The default declares no inputs.
 
 An entry states what the component allows to arrive. An unwrapped `Float64`
 leaf tolerates both the activation scalar and a frozen `Float64`, and a
-`Pinned` entry demands a frozen arrival, one that never carries partials.
+`Pinned` entry demands an arriving value that never carries partials.
 
 The build refuses a wire whose producer type does not fit the entry as
 `WireTypeMismatch`, and a producer that follows the scalar at a `Pinned` entry
@@ -201,7 +202,7 @@ scalar the model runs at.
 `Pinned{Float64}` or `Pinned{SVector{3,Float64}}`, to say the leaf never
 follows the scalar of an activation (the build's typed products at a given
 scalar type). On an output the port's value is a `P` at every activation. On an
-input the entry demands a frozen arrival, one that never carries partials. The
+input the entry demands an arriving value that never carries partials. The
 build strips the marker at `Float64`, so no value, layout or message carries the
 wrapper itself. It is a type-level marker, never instantiated.
 
@@ -227,8 +228,8 @@ Pinned
 Return the assembly's internal wires, an ordered collection of
 `"child/face" => "child/face"` pairs.
 
-Every pair runs from one child's output face to another child's input face, and
-its arrow reads along the signal flow. A face is the name a port wears on its
+Every pair runs from a child's output face to a child's input face, and its
+arrow reads along the signal flow. A face is the name a port wears on its
 component's boundary. Both endpoints are relative to the declaring assembly (a
 component of pure composition), each one an immediate child and one of its
 faces, so `"aircraft/2/face"` names a container element's face in one level.
@@ -336,9 +337,9 @@ stop_reason(::Any) = ""
 """
     Period(T::Union{Integer,Rational{<:Integer}}) -> Period
 
-A quantity value given by its period `T`, in exact rational seconds.
+A time period `T`, in exact rational seconds.
 
-A quantity value is what [`Absolute`](@ref) and the `Δt_base` keyword of
+A `Period` is what [`Absolute`](@ref) and the `Δt_base` keyword of
 [`Deployment`](@ref) take. `Period(1//50)` and `Hz(50)` are the same value, a
 spelling choice: both are normalized to the exact rational period at
 construction. See [`Hz`](@ref) for the frequency spelling.
@@ -358,8 +359,7 @@ end
 """
     Hz(frequency::Union{Integer,Rational{<:Integer}}) -> Period
 
-Return the quantity value of a frequency, the [`Period`](@ref) of
-`1 // frequency` seconds.
+Return the [`Period`](@ref) of a frequency, `1 // frequency` seconds.
 
 `Hz(50)` and `Period(1//50)` are the same value, and either may be given to
 [`Absolute`](@ref) or as the `Δt_base` keyword of [`Deployment`](@ref). A float
@@ -382,12 +382,12 @@ the `φ`-th.
 
 A [`sample_times`](@ref) entry `Relative(K, φ)` runs its child at every `K`-th
 tick (an instant at which a discrete component runs) of the enclosing rate
-scope (an assembly's `sample_times` declaration against the enclosing scope),
-starting from its `φ`-th, and `φ` defaults to `0`. Scope ticks are the unit
-system, so relative entries compose affinely down the tree. Under a scope that
-ticks every `D_s` base ticks at phase `Φ_s`, the child ticks every `K·D_s` base
-ticks at phase `Φ_s + φ·D_s`. A base tick is the period `Δt_base` that every
-discrete period is a multiple of.
+scope, starting from its `φ`-th, and `φ` defaults to `0`. A rate scope is an
+assembly's `sample_times` declaration against the enclosing scope. Scope ticks
+are the unit system, so relative entries compose affinely down the tree. Under
+a scope that ticks every `D_s` base ticks at phase `Φ_s`, the child ticks every
+`K·D_s` base ticks at phase `Φ_s + φ·D_s`. A base tick is the period `Δt_base`
+that every discrete period is a multiple of.
 
 `K = 1` admits no stagger. Two same-rate siblings are staggered one level down
 instead: declare their scope at twice their rate, and give them
@@ -408,18 +408,18 @@ Relative(K::Integer) = Relative(K, 0)
 
 A sample time in exact rational seconds, with ticks at `t = τ + k·T`.
 
-`q` is a quantity value of period `T`, built with [`Period`](@ref) or
-[`Hz`](@ref), and `τ` is the offset in seconds. The entry is an anchor (the
-exact period and offset an `Absolute` entry establishes). It severs its child
-from the enclosing scope's grid, so the child may tick faster than its scope.
+`q` is a period `T`, built with [`Period`](@ref) or [`Hz`](@ref), and `τ` is
+the offset in seconds. The entry is an anchor (the exact period and offset an
+`Absolute` entry establishes). It severs its child from the enclosing scope's
+grid, so the child may tick faster than its scope.
 The child's ticks (the instants at which a discrete component runs) are counted
-in base ticks only once a [`Deployment`](@ref) fixes `Δt_base`, the base tick
-period every discrete period is a multiple of. Anchor periods and nonzero
-offsets constrain that grid together, and an offset of `T/1000` can cost a grid
-1000 times finer.
+in base ticks only once a [`Deployment`](@ref) fixes `Δt_base`. `Δt_base` is
+the base tick period every discrete period is a multiple of. Anchor periods and
+nonzero offsets constrain that grid together, and an offset of `T/1000` can
+cost a grid 1000 times finer.
 
 A float offset is refused as `ArgumentInvalid`, and so is a bare number in place
-of a quantity: write `Absolute(Hz(50), 1//500)`. The build refuses a period
+of a `Period`: write `Absolute(Hz(50), 1//500)`. The build refuses a period
 that is not positive, or an offset outside `0 ≤ τ < T`, as `RatesViolation`.
 """
 struct Absolute
@@ -468,11 +468,11 @@ One event of a [`state_events`](@ref) declaration: a guard and its handler, and
 nothing else.
 
 The guard (the declared function defining an event's predicate) and the
-handler both take the component and its bundle (the `NamedTuple` of views a
-component function receives), which may carry `x`, `m`, `y`, `u`, `t` and
+handler both take the component and its bundle. The bundle (the `NamedTuple` of
+views a component function receives) may carry `x`, `m`, `y`, `u`, `t` and
 `ws`. There is no detection keyword, because the guard's return type declares
 the policy. A `Bool` guard is boundary-detected, checked for a false-to-true
-edge at step boundaries only. A guard returning a real sign value is
+edge at step boundaries only. A guard returning a `Float64` is
 localized: the event holds where the value is `≥ 0`, and root-finding brackets
 the instant it crosses.
 
@@ -504,8 +504,8 @@ until none fires, so the guards are decided again after each firing. Nothing
 here is inferred, and the default declares no events.
 
 Events are continuous-only, like [`m_init`](@ref), because the event system is
-continuous-side only. The build refuses `state_events` on a discrete leaf as
-`DeclarationOnWrongTier`, and an entry that is not a `StateEvent` as
+continuous-side only. The build refuses a non-empty `state_events` on a discrete
+leaf as `DeclarationOnWrongTier`, and an entry that is not a `StateEvent` as
 `EventHalfMissing`.
 """
 state_events(::Any) = (;)
@@ -563,9 +563,10 @@ alone.
 the component's type, as in `y_state(::Engine, (; x)) = (; ω = x.ω)`. Its
 bundle (the `NamedTuple` of views a component function receives) carries no
 inputs, so a stage-1 port never depends instantly on an input and breaks
-would-be feedback loops. On the continuous tier (the continuous or discrete side
-of the hybrid formalism) the bundle may carry `x`, `m`, `t` and `ws`, and on the
-discrete tier `s`, `t`, `Δt` and `ws`, each only if the component has it.
+would-be feedback loops. A leaf sits on one tier, the continuous or the discrete
+side of the hybrid formalism. On the continuous tier the bundle may carry `x`,
+`m`, `t` and `ws`, and on the discrete tier `s`, `t`, `Δt` and `ws`, each only
+if the component has it.
 
 The stage returns a `NamedTuple` of port values at their [`y_types`](@ref)
 types. [`y_direct`](@ref) receives the return as `y_x`, or `y_s` on the
@@ -590,8 +591,9 @@ Return the component's stage-2 outputs, the ports that need its inputs.
 `y_direct` is the second of a leaf's two output stages, as in
 `y_direct(eng::Engine, (; x, m, u)) = (; M_shaft = ..., P = ...)`. Beside the
 state, its bundle (the `NamedTuple` of views a component function receives)
-carries the inputs `u` and the return of [`y_state`](@ref) as `y_x`, or `y_s`
-on the discrete tier (the continuous or discrete side of the hybrid formalism).
+carries the inputs `u` and the return of [`y_state`](@ref) as `y_x`. A leaf sits
+on one tier, the continuous or the discrete side of the hybrid formalism, and a
+discrete leaf receives that return as `y_s`.
 On the continuous tier the bundle may carry `x`, `m`, `u`, `y_x`, `t` and `ws`,
 and on the discrete tier `s`, `u`, `y_s`, `t`, `Δt` and `ws`, each only if the
 component has it.

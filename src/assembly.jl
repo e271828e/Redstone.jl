@@ -920,15 +920,15 @@ The structure step's product, the declared facts the component tree alone
 fixes, held as rows.
 
 `Structure` is read off a [`Build`](@ref) as `build.structure`. Nothing in it
-depends on a scalar type, and its rows hold paths, names and rationals the
-REPL prints as they are.
+depends on a scalar type. Its rows hold the component instances, and paths,
+names and rationals the REPL prints as they are.
 
 - `components`: one entry per leaf, in the order the build walks the tree.
 - `anchors`: one entry per [`Absolute`](@ref) declaration, the exact `(T, τ)`
   pair (period and offset in rational seconds) with the declaring scope and
   key.
-- `scopes`: the timing of each keyed rate scope (an assembly's `sample_times`
-  declaration).
+- `scopes`: one entry per assembly a `sample_times` key names, with its path,
+  the key and the timing the build derived for it.
 - `root_inputs` and `root_types`: the root inputs (the root component's own
   input faces), in order, with the types the wire check fixed for them.
 - `levels`: one entry per assembly, in pre-order with the root first, holding

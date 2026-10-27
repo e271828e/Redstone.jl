@@ -171,19 +171,20 @@ closed(run::Run) = run.termination !== nothing
 """
     Simulation{E}
 
-The runtime that drives a `Model{Float64}`, beside its data plane, its control
-plane and its current run.
+The runtime that drives a `Model{Float64}`, exchanges data with its devices and
+records its current run.
 
 A simulation holds four values, each a field.
 
 - `model`: the [`Model`](@ref) it runs, with its deployment and its build. `E`
   is the type of the model's compiled executor.
-- `plane`: the data plane, which holds the roster (the list of attached device
-  entries), the paths that write the model's inputs, and the latest snapshot
-  (the immutable per-boundary publication).
+- `plane`: the state through which the loop and the devices exchange data. It
+  holds the roster (the list of attached device entries) and the paths that
+  write the model's inputs. It also holds the latest snapshot (the immutable
+  per-boundary publication).
 - `control`: the control plane (the separate few-word atomic surface carrying
-  pause, pace and stop), which [`pause!`](@ref), [`pace!`](@ref),
-  [`margin!`](@ref) and [`stop!`](@ref) write from any task.
+  pause, pace and stop). [`pause!`](@ref), [`resume!`](@ref), [`pace!`](@ref),
+  [`margin!`](@ref) and [`stop!`](@ref) write it from any task.
 - `run`: the current run, with its log, its trace and its outcome. Only
   [`init!`](@ref), [`overlay!`](@ref), [`restore!`](@ref) and [`replay!`](@ref)
   replace it, each with a fresh one.
@@ -221,10 +222,12 @@ end
                localization_budget = 8, kw...) -> Simulation
     Simulation(root::AbstractComponent; kw...) -> Simulation
 
-Construct a simulation around a `Model{Float64}`, with its data plane, its
-control plane and an empty run.
+Construct a simulation around a `Model{Float64}`, with no device attached and an
+empty run.
 
-A simulation claims its model once and never shares it. A model at any other
+The simulation also owns a fresh control plane (the separate few-word atomic
+surface carrying pause, pace and stop). A simulation claims its model once and
+never shares it. A model at any other
 scalar type is a `MethodError` here. A model already claimed by a simulation, or
 whose status is not `:built`, is refused as `ArgumentInvalid` before anything is
 allocated.
@@ -236,7 +239,8 @@ The other three forms compose through a `Float64` model.
 `Simulation(Deployment(build; grid keywords...); other keywords...)`, and
 `Simulation(root; kw...)` calls [`build`](@ref) first. The grid, algorithm and
 event keywords are [`Deployment`](@ref)'s, documented and refused as
-`DeploymentInvalid` there, and `chunk_size` is [`Model`](@ref)'s.
+`DeploymentInvalid` there, and `chunk_size` is [`Model`](@ref)'s. `h` is
+required, as for [`Deployment`](@ref).
 
 # Keywords
 
@@ -411,9 +415,11 @@ the lifecycle state (`:built`, `:initialized`, `:running`, `:stopped` or
 
 While the mode is `:replay`, the recording bounds every advance: no advance runs
 past its last frame, and the mode returns to `:live` when an advance halts
-there. [`init!`](@ref) and a fresh `replay!` reset the mode with the trajectory,
-and [`live!`](@ref) changes it alone. In a terminal state the mode does not
-matter, since nothing advances until one of those three calls.
+there. Every call that opens a run resets the mode with the trajectory:
+[`init!`](@ref), [`overlay!`](@ref), [`restore!`](@ref) and a fresh `replay!`.
+[`live!`](@ref) changes it alone, and only while the simulation may advance. In
+a terminal state the mode does not matter, since nothing advances until a call
+opens a new run.
 """
 mode(sim::Simulation) = sim.run.feed === nothing ? :live : :replay
 
@@ -651,13 +657,14 @@ such an event fires again at the new `t0`.
 
 `init!` opens a fresh run, with a new log and a new trace rather than cleared
 ones, and the input mode (where the frame's inputs come from) back at `:live`.
-It clears the stop word (the control plane's stop command) and drops every batch
-(a staged set of face ⇒ value writes) still waiting, so nothing staged earlier
-reaches the new trajectory. Stage after `init!` and before [`run!`](@ref), and
-the batch waits for the first frame (one iteration of the loop). The diagnostic
-cells (the per-writer cells holding runtime diagnostics) are not cleared, so a
-rejection recorded while stopped still reaches the status of the next run's
-first snapshot (the immutable per-boundary publication). The trace header (the
+It clears the stop word (the control plane's stop command). It also drops every
+batch (a staged set of face ⇒ value writes) still waiting, so nothing staged
+earlier reaches the new trajectory. Stage after `init!` and before
+[`run!`](@ref), and the batch waits for the first frame (one iteration of the
+loop). The diagnostic cells (the per-writer cells holding runtime diagnostics)
+are not cleared. A rejection recorded while stopped therefore still reaches the
+status of the next run's first snapshot (the immutable per-boundary
+publication). The trace header (the
 trace's fixed preamble, a checkpoint) is the checkpoint taken after boundary
 zero publishes, and [`replay!`](@ref) restores it rather than running boundary
 zero again.
@@ -665,8 +672,8 @@ zero again.
 `init!` is the only call that runs boundary zero, and a completed boundary zero
 is what [`run!`](@ref) and [`step!`](@ref) need. [`restore!`](@ref) and
 [`replay!`](@ref) are the alternatives, which start from a checkpoint in the
-condition's place. The warm restart is [`checkpoint`](@ref), then `restore!`,
-then `run!`.
+condition's place. To start again from a saved state, call
+[`checkpoint`](@ref), then `restore!`, then `run!`.
 
 # Keywords
 
@@ -679,8 +686,10 @@ then `run!`.
   this run.
 - `log_every`: keep every `log_every`-th published boundary in the log, an
   integer of at least 1.
-- `log_max`: the most snapshots the log retains, an integer of at least 1, or
-  `Inf` for no bound.
+- `log_max`: the most snapshots the log keeps between its first and latest, an
+  integer of at least 1, or `Inf` for no bound. The first and the latest
+  snapshots are always kept, and at the bound the log thins its middle by
+  doubling its stride.
 
 The four recording keywords never change the trajectory: two runs that differ
 only in them produce bitwise-identical trajectories. Each configures the run
@@ -731,22 +740,24 @@ end
 """
     checkpoint(sim::Simulation) -> Checkpoint
 
-Return the simulation's state at the start of the current frame, with the run's
-frame index and boundary ordinal.
+Return the simulation's state at the frame top its clock rests on, with the
+run's two counters.
 
 A checkpoint (the `Model`'s state at a frame top, the start of a frame) holds
-the state buffer, the `s` and `m` stores, the whole signal table, the event
-priors (each event's stored sample of its predicate), the clock's `t` and `t₀`,
-and the fingerprint (the structural layout a checkpoint carries). Beside it are
-the run's frame index and boundary ordinal. [`restore!`](@ref) puts it back. A
+the state buffer, the `s` and `m` stores and the whole signal table. The signal
+table is the framework-owned collection of cells holding every produced signal.
+The checkpoint also holds the event priors (each event's stored sample of its
+predicate) and the clock's `t` and `t₀`. Last, it holds the fingerprint (the
+structural layout a checkpoint carries). Beside it are the run's two counters,
+its frame index and its boundary ordinal. [`restore!`](@ref) puts it back. A
 checkpoint is not a condition and enters no condition expression; to write a
 condition onto a stopped run, use [`overlay!`](@ref).
 
 `checkpoint` is legal while the simulation is `initialized` or `stopped`, its
 stores committed and consistent, and refused as `ServiceLifecycle` while it is
-`built`, `running` or `errored`. It is refused as `CheckpointMidFrame` when the
-simulation stopped short of a published frame top. A stop at a localized event
-time `t*` leaves the clock inside the frame. A frame an interrupt from model
+`built`, `running` or `errored`. It is refused as `CheckpointMidFrame` with the
+clock off a frame top, or with that frame top unpublished. A stop at a localized
+event time `t*` leaves the clock inside the frame. A frame an interrupt from model
 code abandoned may leave the stores mid-boundary, whatever the clock reads.
 """
 function checkpoint(sim::Simulation)
@@ -787,12 +798,13 @@ end
     overlay!(sim::Simulation, condition = set(); trace = true, log = true,
              log_every = 1, log_max = 65536) -> Nothing
 
-Write a condition onto the stopped simulation's state, and open a fresh run from
+Write a condition onto the simulation's state at rest, and open a fresh run from
 the result.
 
 The condition (the datum that says "set this build to this state") overwrites
-the stores it names. Every other store, the clock, the sample-time lattice and
-the event priors (each event's stored sample of its predicate) are kept. A
+the stores it names. Every other store, the clock and the event priors (each
+event's stored sample of its predicate) are kept. The harmonic grid (the rule
+that every discrete period is an integer multiple of `Δt_base`) is kept too. A
 partial store entry merges onto the current store, and root-input entries are
 allowed, with no need to cover every root input. The overlaid state then
 settles: the components' `x_projection` hooks run and events fire until none is
@@ -807,14 +819,19 @@ checkpoint) is the checkpoint taken after it, so [`replay!`](@ref) reproduces
 the overlaid trajectory with no record of the overlay. To change the inputs
 rather than the state, use [`restore!`](@ref) followed by [`stage!`](@ref).
 
+Like `restore!`, `overlay!` drops every batch (a staged set of face ⇒ value
+writes) still waiting, so nothing staged before it reaches the new run. It also
+clears the stop word (the control plane's stop command).
+
 The four recording keywords are [`init!`](@ref)'s, and configure the run this
 call opens.
 
 `overlay!` is legal where [`checkpoint`](@ref) is: the simulation `initialized`
 or `stopped`, its clock on a published frame top (the start of a frame).
-Otherwise it is refused as `ServiceLifecycle` or `CheckpointMidFrame`. The
-condition resolves before anything is written, and one that does not resolve is
-refused as `ConditionResolution`. A throw inside the settling arrives as a
+Otherwise it is refused as `ServiceLifecycle` or `CheckpointMidFrame`. A
+recording keyword out of range is refused as `ArgumentInvalid`. The condition
+resolves before anything is written, and one that does not resolve is refused
+as `ConditionResolution`. A throw inside the settling arrives as a
 `StepError` with host `:overlay`, and leaves the simulation `built` with no
 trace header, as a failed boundary zero (the initialization boundary) does.
 """
@@ -878,11 +895,12 @@ end
 
 Restore a checkpoint into the simulation, and open a fresh run from it.
 
-`restore!` is the warm restart: [`checkpoint`](@ref), then `restore!`, then
-[`run!`](@ref). It drops every batch (a staged set of face ⇒ value writes) still
-waiting, opens a fresh run with the checkpoint as its trace header (the trace's
-fixed preamble), copies the state back and publishes one snapshot (the immutable
-per-boundary publication) at the checkpoint's `t`. No boundary zero (the
+`restore!` starts again from a saved state: [`checkpoint`](@ref), then
+`restore!`, then [`run!`](@ref). It drops every batch (a staged set of face ⇒
+value writes) still waiting. It opens a fresh run with the checkpoint as its
+trace header (the trace's fixed preamble), and copies the state back. It then
+publishes one snapshot (the immutable per-boundary publication) at the
+checkpoint's `t`. No boundary zero (the
 initialization boundary) runs, so an event holding at the checkpoint does not
 fire again. The clock comes with the checkpoint, so the next frame is the
 original's next frame and the boundary ordinal continues the original's count.
@@ -987,17 +1005,19 @@ trim!(sim::Simulation, other; kw...) = trim!(sim.model, other; kw...)
 
 Return the linearization of the simulation's model at an operating point.
 
-By default the operating point is `checkpoint(sim)`, the simulation's current
-state. `about`, a condition with `t0` beside it, places the operating point
+By default the operating point is `checkpoint(sim)`, the simulation's state at
+the frame top its clock rests on. `about`, a condition with `t0` beside it,
+places the operating point
 anywhere else. The query runs the model's method over that point and writes
 nothing on the simulation. The keywords mean what they mean on the model's
 method.
 
 The default form is legal where [`checkpoint`](@ref) is: refused as
-`ServiceLifecycle` unless the simulation is `initialized` or `stopped`, and as
-`CheckpointMidFrame` short of a published frame top. The `about` form is legal
-where [`init!`](@ref) is. A second argument that is not a tap set is refused as
-`ArgumentInvalid`.
+`ServiceLifecycle` unless the simulation is `initialized` or `stopped`. It is
+refused as `CheckpointMidFrame` with the clock off a frame top, or with that
+frame top unpublished. The `about` form is legal where [`init!`](@ref) is. A
+second argument that is not a tap set from [`taps`](@ref) is refused as
+`ArgumentInvalid`, and so are a `width` below 1 and a `t0` without `about`.
 """
 function linearize(sim::Simulation, tap_set::Taps; about = nothing,
                    t0 = nothing, width::Int = LINEARIZE_WIDTH)
@@ -1097,13 +1117,13 @@ supplying every frame's inputs.
 
 Replay (the ordinary loop with one substitution: the drain reads the trace)
 differs from [`run!`](@ref) in two places only. It starts from the trace's
-header (the checkpoint the recording opened from) as [`restore!`](@ref) does, so
-no boundary zero (the initialization boundary) runs and nothing is applied
+header (the checkpoint the recording opened from) as [`restore!`](@ref) does.
+No boundary zero (the initialization boundary) runs, so nothing is applied
 twice. At each frame top (the start of a frame), it applies the recording's
-batches (staged sets of face ⇒ value writes) for that frame verbatim, and drops
-whatever sits in the live staging cells (the per-device holding places where
-pending writes wait) with a `ReplayDiscardedStaging` warning. The replayed
-trajectory is bit-identical to the recorded one.
+batches for that frame verbatim. A batch is a staged set of face ⇒ value
+writes. It drops whatever sits in the live staging cells (the per-device
+holding places where pending writes wait) with a `ReplayDiscardedStaging`
+warning. The replayed trajectory is bit-identical to the recorded one.
 
 The replay halts at the recording's end, or earlier at `to_boundary` or
 `to_time`, always at a frame top. A replay that halts there ends `initialized`,
@@ -1315,13 +1335,15 @@ end
 Advance the simulation frame by frame until a termination source ends the run.
 
 A frame (one iteration of the loop: drain, integrate, boundary sequence,
-publication) applies the staged inputs at its top, integrates one step, settles
-every boundary it reaches and publishes a snapshot (the immutable per-boundary
-publication) at each. The run ends when one of three sources fires: the frame
-that reaches `t_end` completes, a published snapshot shows an honoured stop
-request (a `StopFlag` output port reading `STOP_REQUESTED`) holding, or a stop
-through the control plane (the separate few-word atomic surface carrying pause,
-pace and stop) is seen at a frame top (the start of a frame). A stop request
+publication) applies the staged inputs at its top, integrates one step and
+settles every boundary it reaches. It publishes a snapshot (the immutable
+per-boundary publication) at each. The run ends when one of three sources
+fires. The first is `t_end`, when the frame that reaches it completes. The
+second is an honoured stop request holding in a published snapshot. A stop
+request is a `StopFlag` output port reading `STOP_REQUESTED`. The third is a
+stop through the control plane (the separate few-word atomic surface carrying
+pause, pace and stop), seen at a frame top. A frame top is the start of a
+frame. A stop request
 ends the run at the boundary that published it, an event boundary inside a frame
 included, and that snapshot is the final one. `t_end` ends the run at the first
 frame top at or past it, in whole frames from `t₀`. `run!` blocks its caller
@@ -1330,8 +1352,11 @@ until the run ends.
 Each rostered device is initialized and given a task of its own as the run
 starts, and shut down as it ends; the loop itself runs on the calling task. The
 run leaves the simulation `stopped`, with the record that says why readable
-through [`termination`](@ref). A failure inside the loop leaves it `errored`
-instead, the cause kept on the record. With no device rostered, `run!` then
+through [`termination`](@ref). In the `:replay` input mode (where the frame's
+inputs come from) the recording also bounds the run. A run that consumes the
+last record halts there `initialized`, with no termination record, and the mode
+turns `:live`. A failure inside the loop leaves it `errored` instead, the cause
+kept on the record. With no device rostered, `run!` then
 rethrows the failure; with one or more, it logs the failure and returns. Ctrl-C
 is a stop, never a failure: caught at a frame top or during a pause, it ends the
 run `stopped` with `ControlRequestedStop(:interrupt)`.
@@ -1817,9 +1842,10 @@ frame touches any state.
 A simulation passes its model a `LoopHooks`, its own [`FrameHooks`](@ref), and
 the model's frame calls `frame_top!` first. This method runs the drain (the
 single point at the top of each frame where the loop takes the staged inputs).
-It applies the batch waiting in each staging cell (the per-device holding place
-where pending writes wait), or under replay the recording's batches for the
-frame. See [`settled!`](@ref) for the other hook.
+It applies the batch waiting in each staging cell, or under replay the
+recording's batches for the frame. A batch is a staged set of face ⇒ value
+writes. A staging cell is the per-device holding place where pending writes
+wait. See [`settled!`](@ref) for the other hook.
 """
 frame_top!(hooks::LoopHooks) = drain!(hooks.sim, hooks.roster)
 
@@ -1834,10 +1860,11 @@ Publish the settled boundary's snapshot, and return whether an honoured stop
 request holds in it.
 
 The model calls `settled!` at every settled boundary before integration resumes:
-each localized event boundary, the frame top's and that of boundary zero (the
-initialization boundary). This method publishes the snapshot (the immutable
-per-boundary publication), then reads its stop requests (the `StopFlag` output
-ports), skipping those the advance ignores. A `true` makes the frame abandon its
+each localized event boundary, the frame top's, that of boundary zero (the
+initialization boundary), and the boundary `overlay!` or `restore!` settles.
+This method publishes the snapshot (the immutable per-boundary publication).
+It then reads the snapshot's stop requests, the `StopFlag` output ports,
+skipping those the advance ignores. A `true` makes the frame abandon its
 remainder, and the run ends with this snapshot as its final one. See
 [`frame_top!`](@ref) for the other hook.
 """
@@ -1981,7 +2008,7 @@ Each frame (one iteration of the loop) runs exactly as under [`run!`](@ref), so
 a stepped simulation is bit-identical to the same frames under `run!`. The
 staged inputs still apply at each frame's top, so `stage!(sim, …)`, then
 `step!`, then `latest(sim)` drives a model and checks its response one step at a
-time. `step!` never waits, whatever the pace, and the pacer record of its
+time. `step!` never waits for the pacer, and the pacer record of its
 snapshots (the immutable per-boundary publications) reads `Inf` and zeros. It
 spawns no device task and initializes no device, but a batch (a staged set of
 face ⇒ value writes) staged into a rostered device's cell while stopped is
@@ -2104,7 +2131,10 @@ then `ControlRequestedStop(:code)`. A device issues the same stop through its
 
 The first issuer wins, so a later stop changes nothing. On a `stopped`
 simulation `stop!` has no effect, since the word is cleared before the next run
-starts.
+starts. A stop issued before [`run!`](@ref) is dropped too, since `run!` clears
+the word as it starts. One issued before [`step!`](@ref) ends that call at once,
+with 0 frames advanced and the simulation `stopped`, since `step!` never clears
+the word.
 """
 stop!(sim::Simulation) = _request_stop!(sim.control, :code)
 
@@ -2235,10 +2265,10 @@ margin(sim::Simulation) = @atomic sim.control.margin
 
 Add a device to the roster under a binding, and return the device's handle.
 
-The roster (the list of attached device entries) is fixed for each run, so
-`attach!` is a stopped-sim operation (legal only on a simulation that is not
-running). It registers the device and spawns nothing: the device's task starts
-with the next [`run!`](@ref).
+The roster (the list of attached device entries) is fixed for each run.
+`attach!` is therefore a stopped-sim operation (legal only on a simulation that
+is not running). It registers the device and spawns nothing: the device's task
+starts with the next [`run!`](@ref).
 
 The binding (the value passed at `attach!` that makes a device
 framework-legible) declares the device's sides. On the input side, the device's
@@ -2269,8 +2299,9 @@ the same handle.
 since no run follows an errored simulation. A binding or device that breaks its
 contract is refused as `BindingContractMismatch` or `DeviceContractMismatch`,
 and a device instance already on the roster as `AlreadyAttached`; to rebind one,
-[`detach!`](@ref) it first. A face another device already claims is refused as
-`ClaimConflict`, and reads that do not resolve as `ReadResolution`.
+[`detach!`](@ref) it first. A claimed name that is not a root input face is
+refused as `AttachUnknownFace`. A face another device already claims is refused
+as `ClaimConflict`, and reads that do not resolve as `ReadResolution`.
 """
 function attach!(sim::Simulation, dev::AbstractDevice, new_binding::AbstractBinding;
                  should_abort::Bool = false)
@@ -2331,9 +2362,9 @@ Remove a device from the roster and release its claim.
 
 The faces the device claimed (the set of faces it may write) return to the faces
 `stage!(sim, …)` may write. A batch (a staged set of face ⇒ value writes) the
-device staged and the loop has not yet applied is discarded, while the root
-inputs (the root component's own input faces) it fed keep their last applied
-values. The device's id retires with its entry and is never reused.
+device staged and the loop has not yet applied is discarded. The root inputs
+(the root component's own input faces) it fed keep their last applied values.
+The device's id retires with its entry and is never reused.
 
 The handle [`attach!`](@ref) returned stays valid for reads only: its `stage!`
 and `report!` are refused as `DeviceContractMismatch` from here on.
@@ -2367,10 +2398,11 @@ Stage a batch of root-input writes through the harness writer, from any task at
 any moment.
 
 Each write is a `"face" => value` pair naming a root input (the root component's
-own input face). The harness writer (the framework-owned write path
-`stage!(sim, …)`) never touches a live root input: the batch waits in its
-staging cell (the holding place where a pending batch waits) and is applied at
-the top of the next frame the loop advances. Batches merge, the newest value
+own input face). Together the writes form a batch (a staged set of face ⇒ value
+writes). The harness writer (the framework-owned write path `stage!(sim, …)`)
+never touches a live root input. The batch waits in its staging cell (the
+holding place where a pending batch waits) and is applied at the top of the next
+frame the loop advances. Batches merge, the newest value
 winning per face, so a face not staged again keeps its pending value.
 
 A face outside the harness writer's surface (the faces its batches may reach,
@@ -2592,8 +2624,9 @@ Return the most recently published snapshot, or `nothing` before anything is
 published.
 
 A snapshot (the immutable per-boundary publication) is a coherent view of the
-signal table (the framework-owned collection of cells holding every produced
-signal) at one boundary. A reader on any task may hold it for as long as it
+signal table at one boundary. The signal table is the framework-owned
+collection of cells holding every produced signal. A reader on any task may
+hold it for as long as it
 likes without coordinating with the loop, since nothing in it is ever written
 again. Read a port off it with `port(snapshot, path, name)`, one of the methods
 of [`port`](@ref).
@@ -2707,10 +2740,11 @@ end
 Return a copy of the current run's input trace, the value [`replay!`](@ref)
 takes.
 
-The trace (the primary record of a session) holds its header, the checkpoint
-(the model's state at a frame top) the run opened from, and a sparse record of
-every batch (a staged set of face ⇒ value writes) the loop applied since, with
-the frame ordinal (the trace's key) of the last. The state trajectory, the log
+The trace (the primary record of a session) holds its header and a sparse
+record. The header is the checkpoint the run opened from, a checkpoint being
+the model's state at a frame top. The record keeps every batch the loop applied
+since. A batch is a staged set of face ⇒ value writes. The trace also holds the
+frame ordinal (the trace's key) of the last. The state trajectory, the log
 included, is derived from it, never the reverse. The copy is detached from the
 run, so later frames never reach it.
 
@@ -2731,6 +2765,7 @@ function trace(sim::Simulation)
 end
 
 # The table's reads on the simulation, each forwarded to its model (model.jl, D-317).
+
 # Design: §7.3, D-317.
 """
     port(sim::Simulation, path::String, name::Symbol)
@@ -2739,10 +2774,10 @@ Return a port's current value in the simulation's signal table.
 
 The signal table is the framework-owned collection of cells holding every
 produced signal. A port (the addressable unit of the model: one declared name,
-one cell) is addressed by its component's path and its name, and an assembly's
-own path addresses its faces. The read is the model's,
-`port(sim.model, path, name)`. To read a port off a published snapshot instead,
-use `port(snapshot, path, name)`.
+one cell) is addressed by its component's path and its name. An assembly's own
+path addresses its output faces, and the empty path the root inputs. The read
+is its model's, as `port(model, path, name)` gives it. To read a port off a
+published snapshot instead, use `port(snapshot, path, name)`.
 """
 port(sim::Simulation, path::String, name::Symbol) = port(sim.model, path, name)
 state(sim::Simulation, path::String) = state(sim.model, path)

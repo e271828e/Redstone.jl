@@ -125,13 +125,13 @@ as `"pwp/engine"`. On a node of a condition (the datum that says "set this build
 to this state"), built by [`set`](@ref) or a combinator, `at` stores the prefix
 beside the node and applies nothing. The paths join when a service resolves the
 condition against its build, and a path the build does not have is refused
-there.
+there as `PathResolution`.
 
 On a read set (a `Reads` value, built by [`reads`](@ref)), `at` adds `prefix` to
 the front of the set's mount chain, the prefixes it is mounted under. A service
 walks the chain from the root, and rebases every selector (a deferred read of
 one leaf) onto it. Other methods of `at` scope a [`TrimProblem`](@ref) and a tap
-set the same way.
+set from [`taps`](@ref) the same way.
 
 An empty prefix names no child, and is refused when `at` is called: as
 `ConditionNodeMisuse` on a condition node, and as `ReadSetMisuse` on a read set.

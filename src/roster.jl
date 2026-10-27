@@ -28,10 +28,11 @@ added to a simulation with [`attach!`](@ref). It defines [`loop`](@ref), the
 one mandatory function, and optionally the hooks [`init!`](@ref),
 [`shutdown!`](@ref) and [`unblock!`](@ref).
 
-A device's identity is its instance. The same object (`===`) may hold at most
-one roster entry (the device's record in the list of attached devices), and two
-instances of one type, such as two joysticks, are two devices. Two immutable
-instances with equal fields are `===`, so they count as one device.
+A device's identity is its instance, compared by `===`. One object may hold at
+most one roster entry (the device's record in the list of attached devices).
+Two instances of one type, such as two joysticks, are two devices. Two immutable
+instances whose fields are themselves `===` are `===`, so they count as one
+device.
 
 The device is attached under a binding (the value passed at `attach!` that
 makes a device framework-legible), which stays an `attach!` argument and is

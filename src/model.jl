@@ -47,7 +47,7 @@ anything is compiled.
 `Model(build; kw...)` is `Model(Deployment(build; grid keywords...), T;
 chunk_size)`, and `Model(root; kw...)` calls [`build`](@ref) first. The grid,
 algorithm and event keywords are `Deployment`'s, documented and refused as
-`DeploymentInvalid` there.
+`DeploymentInvalid` there. `h` is required, as for [`Deployment`](@ref).
 
 A model holds five values, each a field.
 
@@ -60,8 +60,8 @@ A model holds five values, each a field.
   model's own calls write it.
 - `claimed`: set once a `Simulation` takes the model, and never cleared, so a
   simulation owns its model and never shares it. The model's own
-  [`init!`](@ref), [`frame!`](@ref), [`restore!`](@ref), [`overlay!`](@ref) and
-  [`trim!`](@ref) refuse a claimed model as `ArgumentInvalid`.
+  [`init!`](@ref), [`frame!`](@ref), [`restore!`](@ref), [`overlay!`](@ref),
+  `apply!` and [`trim!`](@ref) refuse a claimed model as `ArgumentInvalid`.
 - `frame_diag`: the frame's own diagnostic cell (a cell holding runtime
   diagnostics), where the chattering and firing-budget reports go. A simulation
   collects it at each frame top (the start of a frame) beside its own.
@@ -150,12 +150,13 @@ settled boundary.
 [`init!`](@ref), [`restore!`](@ref) and [`overlay!`](@ref), and calls two
 functions on it.
 
-- [`frame_top!`](@ref) runs first, before the frame touches any state. It is
-  where external inputs arrive.
+- [`frame_top!`](@ref) runs first, before the frame (one iteration of the loop)
+  touches any state. It is where external inputs arrive.
 - [`settled!`](@ref) runs at every settled boundary before integration resumes:
   each localized event time `t*`, the frame-top boundary that ends the frame,
-  and boundary zero (the initialization boundary) under `init!`. It returns
-  whether to abandon the frame's remainder, and a `true` is `frame!`'s return.
+  boundary zero (the initialization boundary) under `init!`, and the boundary
+  `overlay!` or `restore!` settles. It returns whether to abandon the frame's
+  remainder, and a `true` is `frame!`'s return.
 
 A subtype defines a method of each. Every boundary publishes before integration
 resumes, so a subtype that publishes snapshots (the immutable per-boundary
@@ -175,7 +176,8 @@ frame.
 `NoHooks()` is the default `hooks` of [`frame!`](@ref) and of the model's
 [`init!`](@ref), [`restore!`](@ref) and [`overlay!`](@ref). Its
 [`frame_top!`](@ref) does nothing and its [`settled!`](@ref) returns `false`, so
-a frame stepped with it always runs to its end and publishes nothing. See
+a frame (one iteration of the loop) stepped with it always runs to its end and
+publishes nothing. See
 [`FrameHooks`](@ref) for what hooks do.
 """
 struct NoHooks <: FrameHooks end
@@ -186,8 +188,9 @@ struct NoHooks <: FrameHooks end
 
 Do nothing at the top of a model's frame, before the frame touches any state.
 
-A model stepped on its own takes no staged inputs, so its frame starts from the
-state as it stands. See [`FrameHooks`](@ref) for the contract every method
+A model stepped on its own takes no staged inputs, so its frame (one iteration
+of the loop) starts from the state as it stands. See [`FrameHooks`](@ref) for
+the contract every method
 keeps, and [`settled!`](@ref) for the other hook.
 """
 frame_top!(::NoHooks) = nothing
@@ -199,8 +202,9 @@ frame_top!(::NoHooks) = nothing
 Publish nothing at a settled boundary of a model's frame, and return `false`.
 
 A model stepped on its own publishes no snapshot (the immutable per-boundary
-publication) and never abandons a frame's remainder, so [`frame!`](@ref) runs
-every frame to its end. See [`FrameHooks`](@ref) for the contract every method
+publication). It never abandons the remainder of a frame (one iteration of the
+loop), so [`frame!`](@ref) runs every frame to its end. See
+[`FrameHooks`](@ref) for the contract every method
 keeps, and [`frame_top!`](@ref) for the other hook.
 """
 settled!(::NoHooks) = false
@@ -669,7 +673,8 @@ Return a port's current value in the model's signal table.
 The signal table is the framework-owned collection of cells holding every
 produced signal. A port (the addressable unit of the model: one declared name,
 one cell) is addressed by its component's path and its name. An assembly's own
-path addresses its faces, which resolve to the cells they derive from. A
+path addresses its output faces, which resolve to the cells they derive from,
+and the empty path the root inputs. A
 simulation's `port(sim, path, name)` reads its model's. To read a port off a
 published snapshot instead, use `port(snapshot, path, name)`.
 """
@@ -804,11 +809,12 @@ end
 """
     checkpoint(model::Model{T}) -> ModelState{T}
 
-Return the model's state at the start of the current frame.
+Return the model's state at the frame top its clock rests on.
 
 The state, a [`ModelState`](@ref), holds the flat state buffer, the `s` and `m`
-stores, the whole signal table and the event priors (each event's stored sample
-of its predicate). It also holds the clock's `t` and `t₀`, and the fingerprint
+stores and the whole signal table (the framework-owned cells holding every
+produced signal). It also holds the event priors (each event's stored sample of
+its predicate). It holds the clock's `t` and `t₀`, and the fingerprint
 (the structural layout a checkpoint carries). The stores are copied by value.
 `checkpoint(sim)` wraps the same state with the run's frame index and boundary
 ordinal.
@@ -819,8 +825,8 @@ a model at rest.
 
 `checkpoint` is legal while the model is `:consistent`, after [`init!`](@ref) or
 a restore and before any throw. It is refused as `ServiceLifecycle` at `:built`
-or `:inconsistent`. A clock off the grid of frame tops is refused as
-`CheckpointMidFrame`, naming the frame the clock sits inside. A frame abandoned
+or `:inconsistent`. It is refused as `CheckpointMidFrame` with the clock off a
+frame top, naming the frame the clock sits inside. A frame abandoned
 at a localized event time `t*` leaves the clock there.
 """
 function checkpoint(model::Model{T}) where {T}
@@ -922,8 +928,8 @@ the hooks.
 
 `restore!` puts back a state that [`checkpoint`](@ref) took. It copies the state
 back, settles the restored boundary through `settled!(hooks)`, and writes the
-status `:consistent` last. No boundary zero (the initialization boundary) runs,
-and no event prior (each event's stored sample of its predicate) resets. The
+status `:consistent` last. No boundary zero (the initialization boundary) runs.
+No event prior (each event's stored sample of its predicate) resets either. The
 call accepts any status, so a fresh `:built` model of the same deployment can
 take a state another model produced.
 

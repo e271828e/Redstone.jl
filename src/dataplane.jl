@@ -293,8 +293,9 @@ liveness read. The threshold is deliberately loose, so a device parked in a
 blocking read between rare data is not stale. A starved, blocked or crashed
 device then shows as a stale heartbeat with a name on it, not as physics that
 froze for no visible reason. A device that has not beaten since attach reads
-stale whatever `now` is. The records of the harness writer and of the loop have
-no heartbeat to judge, and return `false`.
+stale whatever `now` is. The records of the harness writer (the framework-owned
+write path `stage!(sim, …)`) and of the loop have no heartbeat to judge, and
+return `false`.
 
 # Keywords
 
@@ -302,7 +303,7 @@ no heartbeat to judge, and return `false`.
   `time()` gives them.
 
 See [`orphaned`](@ref) for a device whose task has ended, and
-[`incumbent_status`](@ref) for the record a panel reads.
+[`incumbent_status`](@ref) for the record a GUI device reads.
 """
 stale(record::WriterStatus; now::Float64 = time()) =
     record.heartbeat !== nothing && now - record.heartbeat > STALE_S
@@ -499,11 +500,13 @@ Return a port's value in the snapshot's signal table, as published at its
 boundary.
 
 A snapshot (the immutable per-boundary publication) carries the whole signal
-table, the framework-owned collection of cells holding every produced signal,
-root inputs included. A port (the addressable unit of the model: one declared
-name, one cell) is addressed exactly as in the live table, by its component's
-path and its name, and an assembly's own path addresses its faces. Nothing in a
-published snapshot is written again, so the read is safe from any task.
+table, root inputs included. The signal table is the framework-owned collection
+of cells holding every produced signal. A port (the addressable unit of the
+model: one declared name, one cell) is addressed exactly as in the live table,
+by its component's path and its name. An assembly's own path addresses its
+output faces, and the empty path the root inputs (the root component's own
+input faces). Nothing in a published snapshot is written again,
+so the read is safe from any task.
 
 A snapshot carries no state, only ports. For a port's live value, see
 `port(sim, path, name)` and `port(model, path, name)`, and for snapshots

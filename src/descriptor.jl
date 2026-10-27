@@ -25,7 +25,8 @@ format.
 The descriptor (a serialized projection of the artifact under a published
 format) is an envelope with the fields `format_version`, `redstone_version`
 and `kind`, and the body under the key the kind names, `build` or
-`deployment`. A deployment's body embeds the build's whole.
+`deployment`. A deployment's body embeds the build's whole. The artifact, a
+`Build` or a `Deployment`, is an immutable pure function of its inputs.
 
 The value is a tree of `NamedTuple`s and vectors, ready for any JSON encoder,
 and conforms to the schema the package ships as `schema/descriptor.json`.

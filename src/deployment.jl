@@ -301,7 +301,8 @@ end
 # chattering needs tens, so 8.
 """
     Deployment(build::Build; h, N_base = nothing, Δt_base = nothing, algorithm = RK4,
-               firing_budget = 4, localization_tol = 1e-6, localization_budget = 8)
+               firing_budget = 4, localization_tol = 1e-6,
+               localization_budget = 8) -> Deployment
 
 The build fixed to a grid: the continuous step, the base tick and the event
 parameters, with no scalar type chosen yet.
@@ -426,6 +427,7 @@ Return the warnings raised while the deployment was constructed.
 
 Each warning was also logged once when the constructor returned. The list on
 the deployment is where they stay, so a caller never has to capture the log.
-For a build's or a simulation's list, see the other methods of `warnings`.
+For a build's, a model's or a simulation's list, see the other methods of
+`warnings`.
 """
 warnings(deployment::Deployment) = deployment.warnings

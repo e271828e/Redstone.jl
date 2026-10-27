@@ -40,16 +40,18 @@ not the simulation.
 - Read: [`latest`](@ref) and [`wait_next_snapshot`](@ref) return snapshots (the
   immutable per-boundary publications), and [`gather`](@ref) runs the binding's
   reads over one.
-- Stage: [`stage!`](@ref) writes root inputs inside the device's claim (the set
-  of faces a device may write), and [`report!`](@ref) reports a malformed datum.
+- Stage: [`stage!`](@ref) writes root inputs (the root component's own input
+  faces) inside the device's claim. The claim is the set of faces a device may
+  write. [`report!`](@ref) reports a malformed datum.
 - Control: [`running`](@ref) says whether the run goes on, and
   [`stop!`](@ref) requests a stop.
 
 The handle also carries the attachment's binding (the value passed at `attach!`
 that makes a device framework-legible), read back with [`binding`](@ref). The
 loop's [`map_input`](@ref) and [`map_output`](@ref) calls take it from the
-handle, so the device need not carry its configuration. The panel kit's reads,
-[`port_views`](@ref), [`pending`](@ref) and [`peek`](@ref), take the handle too.
+handle, so the device need not carry its configuration. The reads a GUI device
+uses to show its widgets, [`port_views`](@ref), [`pending`](@ref) and
+[`peek`](@ref), take the handle too.
 
 A handle outlives its roster entry (the device's record in the list of attached
 devices) as an object only. After [`detach!`](@ref), the two write primitives,
@@ -145,7 +147,7 @@ stopping.
 `unblock!` is one of a device's three optional hooks, beside [`init!`](@ref) and
 [`shutdown!`](@ref), and the default does nothing. The framework calls it as the
 run shuts down, after the final snapshot (the immutable per-boundary
-publication) is published and every [`wait_next_snapshot`](@ref) has returned.
+publication) is published and every [`wait_next_snapshot`](@ref) has been woken.
 A device whose [`loop`](@ref) blocks in a call of its own, such as a socket
 read, overrides it to make that call return, for example by closing the socket.
 
@@ -184,8 +186,10 @@ return.
 Whenever the body returns or throws, the framework runs [`shutdown!`](@ref). A
 throw is reported as `DeviceCrash` into the device's diagnostic cell (the
 per-writer cell holding runtime diagnostics), and the run goes on without the
-device's task. If the attachment set `should_abort`, the body's end, by return
-or by throw, also requests a stop. An interrupt (Ctrl-C) inside the body is a
+device's task. A device that overrides [`unblock!`](@ref) may throw once the run
+is stopping, and that throw counts as shutdown, not a crash. If the attachment
+set `should_abort`, the body's end, by return or by throw, also requests a
+stop. An interrupt (Ctrl-C) inside the body is a
 stop, not a crash.
 
 `attach!` refuses a device with no `loop` method of its own as
@@ -306,12 +310,13 @@ Stage a batch of root-input writes through the device's handle, from any task
 at any moment.
 
 Each write is a `"face" => value` pair naming a root input (the root component's
-own input face) inside the device's claim (the set of faces a device may write).
-The batch waits in the device's staging cell (the holding place where a pending
-batch waits) and is applied at the top of the next frame [`run!`](@ref)
-advances. Batches merge, the newest value winning per face, so a face not staged
-again keeps its pending value. A loop usually stages what [`map_input`](@ref)
-returns.
+own input face) inside the device's claim. The claim is the set of faces a
+device may write. The pairs form one batch (a device's staged set of face ⇒
+value writes). The batch waits in the device's staging cell (the holding place
+where a pending batch waits) and is applied at the top of the next frame
+[`run!`](@ref) advances. Batches merge, the newest value winning per face, so a
+face not staged again keeps its pending value. A loop usually stages what
+[`map_input`](@ref) returns.
 
 A face outside the claim is discarded as `OutOfClaimEntry`, which names the
 device that claims it, if any. A value that does not convert to the face's type
@@ -338,7 +343,7 @@ Return the binding's read set gathered from a snapshot, as the labeled
 `NamedTuple` `map_output` receives.
 
 The read set (the labeled selectors the binding's [`reads`](@ref) returns) is
-resolved once, at [`attach!`](@ref), and `gather` runs it over the snapshot (the
+resolved once, at [`attach!`](@ref). `gather` runs it over the snapshot (the
 immutable per-boundary publication). The loop idiom is
 `send(dev.socket, map_output(gather(handle, snapshot), binding(handle)))`, on
 the device's own task, against the snapshot [`wait_next_snapshot`](@ref)
@@ -463,9 +468,10 @@ Return the device's table of port views, one per port of the build, keyed by
 
 A port view (one port's verdict, settled once per run) records the port's
 producer, whether the device commands it, and who writes it otherwise. The table
-holds one view per input face at every level, the root inputs and both ends of
-every wire, and one per produced output: each component's outputs and every
-exported output face, the root's included. An input face's producer is the
+holds one view per input face at every level, the root inputs (the root
+component's own input faces) and both ends of every wire, and one per produced
+output: each component's outputs and every exported output face, the root's
+included. An input face's producer is the
 output or root input that ultimately feeds it, so an assembly's input face
 shares its producer with the ports behind it. A root input and a produced output
 are their own producers.
@@ -483,8 +489,8 @@ Each view carries these fields, beside the producer's address that
   device's name when live, another device's name, `"harness"` for a face no
   device claims, or `""` when no root input drives the port.
 
-A panel's loop calls `port_views` once, at its top, after the run has fixed the
-roster (the list of attached device entries). Nothing is resolved by name
+A GUI device's loop calls `port_views` once, at its top, after the run has fixed
+the roster (the list of attached device entries). Nothing is resolved by name
 afterwards: [`peek`](@ref) and [`incumbent_status`](@ref) read a view and a
 snapshot.
 """
@@ -527,13 +533,13 @@ end
 """
     peek(view::PortView, handle::DeviceHandle, snapshot::Snapshot)
 
-Return the value a panel shows for a port: the device's own pending write if
+Return the value a widget shows for a port: the device's own pending write if
 any, else the snapshot's.
 
 A live view (one whose port the device commands) shows the device's own staged
-value, read with [`pending`](@ref), while one is pending, and the producer's
-value in the snapshot (the immutable per-boundary publication) otherwise. A view
-that is not live reads the snapshot alone. Between a frame's drain (the
+value, read with [`pending`](@ref), while one is pending. Otherwise it shows the
+producer's value in the snapshot (the immutable per-boundary publication). A
+view that is not live reads the snapshot alone. Between a frame's drain (the
 frame-top point that applies the staged writes) and its publication, a view
 shows the previous snapshot's value.
 """

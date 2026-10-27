@@ -540,8 +540,8 @@ carries the component's `path`, its `policies` and its `bundle`.
 
 - `policies`: a `NamedTuple` from each event name, in declaration order, to the
   detection policy its guard's return form fixes, `:boundary` for a `Bool`
-  guard checked at step boundaries only, or `:localized` for a real guard whose
-  crossing is located in time.
+  guard checked at step boundaries only, or `:localized` for a guard returning a
+  `Float64`, whose crossing is located in time.
 - `bundle`: the field names of the event bundle (the `NamedTuple` of views a
   guard or handler receives), `()` where the component declares no events.
 
@@ -622,7 +622,7 @@ Check a component tree and return its [`Build`](@ref), with no grid chosen yet.
 `build` runs the structure step, the nominal evaluation and the eager
 activations. The structure step flattens the tree, classifies its components
 and type-checks the wires into the [`Structure`](@ref). The nominal evaluation
-(the build's one probing pass at `Float64`) probes every user function and
+(the build's one probing pass at `Float64`) probes every user function. It
 returns the [`Outputs`](@ref), the [`Events`](@ref) and the nominal activation
 (the build's typed products at one scalar type). Nothing here needs `h`,
 `N_base` or `Δt_base`, which are the [`Deployment`](@ref)'s.
