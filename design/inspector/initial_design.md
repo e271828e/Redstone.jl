@@ -363,7 +363,8 @@ cited by number. Couplings are named where they exist.
    search; selection; view state kept by path across pushes; the analysis
    views (execution order, anchor and component tables, schedule and
    hyperperiod chart, root inputs); face-route highlighting; the help page.
-   *Builds on* answers 8, 9 and 15.
+   Ran on 2026-10-27; its record is `workspace.md`. *Builds on* answers 8, 9
+   and 15.
 6. **Julia package and live session.** The `inspect` and `write_descriptor`
    API, and the server's life in the REPL: a background task, port choice,
    opening the browser, binding to `localhost` only. It also covers the page
@@ -397,7 +398,7 @@ session. That session ran on 2026-10-26 and its record is
 order. Axis 4's rendering spike runs beside the first session, on a
 hand-written fixture descriptor, so the drawing's needs reach the schema
 before version one is frozen and the canvas choice is made before anything
-depends on it. Then axes 3 and 5 over the real schema, axis 3 having run on
+depends on it. Then axes 3 and 5 over the real schema, both run on
 2026-10-27, axis 6 when there is
 a descriptor to push to a tab, designed with the bridge's device side in
 view, and axis 7 last.

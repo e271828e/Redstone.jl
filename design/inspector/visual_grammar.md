@@ -289,8 +289,9 @@ Left open on purpose, each with the axis or the bump that owns it.
     legibility floor the levels drop in order, face names first, then the
     display name with its icon, the segment last; wires and port squares
     never drop. Paths print in slash form verbatim; the root's label is the
-    envelope's `name` when present, else the root type's display name,
-    which asks for the envelope `name` bump, written by `inspect` and
+    envelope's `name` when present, else the root type's display name
+    (axis 5 puts a dropped file's name between the two, `workspace.md`,
+    answer 10), which asks for the envelope `name` bump, written by `inspect` and
     `write_descriptor` and never by `descriptor`. Rationals print as
     `1/10 s`, multiples and phases as integers. Every element carries a
     hover title with its full text.
@@ -309,7 +310,8 @@ which now points here.
 1. **The wire key.** Already in place: increment 81 wrote the sentence in
    the schema's `Wire` description, consumer endpoints are unique within a
    level, and asserts it in the descriptor suite (answer 4). Nothing to do.
-2. **The `alias` and `name` fields.** The optional node `alias` with answer
+2. **The `alias` and `name` fields.** Landed on 2026-10-27, commit 86ff8cc.
+   The optional node `alias` with answer
    7's writer rule, the most specific `const` type binding in the type's own
    parent module, and the optional envelope `name` of answer 10, which the
    inspector package writes and `descriptor` never does. They join version

@@ -21,9 +21,11 @@ item changes what the spec says, the spec edit is part of the item.
   4's rendering spike, whose record is
   `design/prototypes/render_spike/report.md`: hand-rolled SVG over ELK.js,
   with the schema findings it hands to the bumps. Axis 3 ran on
-  2026-10-27; its record is `design/inspector/visual_grammar.md`, whose
-  "Design axes" is the working list: the `alias` and `name` fields, then
-  axis 5, axes 6 and 7, and the inherited bumps.
+  2026-10-27; its record is `design/inspector/visual_grammar.md`, and the
+  `alias` and `name` fields it asked for landed the same day. Axis 5 ran
+  on 2026-10-27 too; its record is `design/inspector/workspace.md`, whose
+  "Design axes" hands on what remains: axis 6, the live session, with the
+  tabs by name, axis 7, and the inherited bumps.
   The built-in Julia GUI is parked (D-310). The
   stage's record is `design/inspector/initial_design.md` (not normative),
   which carries each stage's answered questions and open list. The later
