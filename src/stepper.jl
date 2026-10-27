@@ -44,12 +44,17 @@ the model's state has no field for it; a multistep backend would add one.
 checkpoint_stepper(::AbstractStepper) = nothing
 restore_stepper!(::AbstractStepper, model_state) = nothing
 
+# Design: §10.2.
 """
-    RK4(T, n_x)
+    RK4(::Type{T}, n_x::Int) -> RK4{T}
 
-The classical fourth-order Runge–Kutta method over a flat buffer of `n_x`
-scalars of type `T` — the default backend (§10.2). Owns exactly its own
-scratch: the segment-start state and the four stage derivatives.
+The classical fourth-order Runge–Kutta method, the default stepper.
+
+It is chosen with `algorithm = RK4`, the default of
+[`Deployment`](@ref). Building a [`Model`](@ref) constructs it over the model's
+flat state buffer of `n_x` scalars of type `T`. It owns exactly its own scratch,
+the state at the start of the step and the four stage derivatives. For the
+second-order method, see [`Heun`](@ref).
 """
 struct RK4{T} <: AbstractStepper
     x₀::Vector{T}
@@ -82,12 +87,18 @@ end
 
 startpoint(stepper::RK4) = (stepper.x₀, stepper.k₁)
 
+# Design: §10.2.
 """
-    Heun(T, n_x)
+    Heun(::Type{T}, n_x::Int) -> Heun{T}
 
-Heun's second-order method (explicit trapezoidal) over a flat buffer of `n_x`
-scalars of type `T` — the other first-cut backend (§10.2). Owns exactly its
-own scratch: the segment-start state and the two stage derivatives.
+Heun's second-order method, the explicit trapezoidal rule, the other built-in
+stepper.
+
+It is chosen with `algorithm = Heun` on [`Deployment`](@ref). Building a
+[`Model`](@ref) constructs it over the model's flat state buffer of `n_x`
+scalars of type `T`. It owns exactly its own scratch, the state at the start of
+the step and the two stage derivatives. For the default fourth-order method, see
+[`RK4`](@ref).
 """
 struct Heun{T} <: AbstractStepper
     x₀::Vector{T}
