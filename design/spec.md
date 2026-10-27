@@ -935,7 +935,8 @@ names. An `output_wires` entry sources a face from an immediate child's face
 ([§6.1][s6-1]). `RQuat` is a rotation-quaternion type ([§7.1][s7-1]).
 
 ```julia
-#a continuous primitive: one bundle port and the hot field published loose — two cells
+# a continuous primitive: one bundle port and the hot field published loose,
+# two cells
 y_types(::Kinematics) = (pose = KinPose{Float64}, q_eb = RQuat{Float64})
 
 #the enclosing assembly: each face aliases an interior port, creating no endpoint
@@ -11094,7 +11095,8 @@ port hand-writes (`companions/pid_anti_windup.md`). It needs no framework
 support.
 
 ```julia
-# UnitDelay{V} — a discrete primitive at K = 1; its initial value is instance data
+# UnitDelay{V} — a discrete primitive at K = 1; its initial value is instance
+# data
 struct UnitDelay{V} <: AbstractComponent
     v0::V
 end
