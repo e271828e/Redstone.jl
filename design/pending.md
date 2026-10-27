@@ -49,10 +49,10 @@ item changes what the spec says, the spec edit is part of the item.
   never a source of spelling; a signature mirrors its method. The library,
   public as a group (D-226), is wave 7, and the holder types, public as a
   group the same way, are wave 8.
-  The sweep landed as the commits from `84ece6b` to the conformance commit
-  after wave 8, with its record in `design/briefs/notes_docstring_sweep.md`,
-  and what remains is the examples pass after the tutorial and the
-  signature-and-link pass after the audit.
+  The sweep landed as the commits from `84ece6b` to `a317978`, with its
+  record in `design/briefs/notes_docstring_sweep.md`, and what remains is
+  the examples pass after the tutorial and the signature-and-link pass
+  after the audit.
 - **`closed_loop` as a hierarchy.** The example's closed loop is one flat
   `Group` of 27 library blocks and 55 wires, written so to show the library
   composing without a named assembly, and it draws as a tangle at any
