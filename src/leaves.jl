@@ -245,14 +245,24 @@ _is_marker(::Type{P}) where {P} = P isa DataType && P.name === Base.typename(Pin
 _holds_marker(::Type{P}) where {P} =
     P isa DataType && any(p isa Type && (_is_marker(p) || _holds_marker(p)) for p in P.parameters)
 
+# Design: §13.5, D-316.
 """
     StopFlag
 
-The stop-request vocabulary (§13.5, D-316): `NO_STOP` or `STOP_REQUESTED`. An
-output port declared exactly `StopFlag` is a stop request, whoever publishes
-it, and the build rosters it per port. A `StopFlag` nested in a port of another
-type, and a root input carrying one, are refused as `IllegalPortType`. An input
-port of this type is an ordinary input.
+The stop-request vocabulary, an enum with the values `NO_STOP` and
+`STOP_REQUESTED`.
+
+An output port declared exactly `StopFlag` is a stop request (a port that ends
+the run when it reads `STOP_REQUESTED`), whoever publishes it. The build enters
+each such port in the requester roster (the build's list of stop requests, one
+per port). The loop reads every request at each published boundary, unless the
+advance ignores it through its `ignore_stop_requests` keyword, and a run that a
+request ends carries a [`ModelRequestedStop`](@ref) source with the
+component's [`stop_reason`](@ref).
+
+A `StopFlag` nested in a port of another type, and a root input carrying one,
+are refused as `IllegalPortType`. An input port of this type is an ordinary
+input.
 """
 @enum StopFlag NO_STOP STOP_REQUESTED
 
