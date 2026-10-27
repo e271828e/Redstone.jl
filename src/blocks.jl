@@ -14,58 +14,84 @@ import ForwardDiff
 
 # --- the junction (§13.7, D-311) -------------------------------------------------
 
+# Design: §2.3, §6.2.
 """
-    Junction{In, Out, N}(f)
+    Junction{In, Out, N}(f) -> Junction{In, Out, N}
 
-The N-to-1 block (§6.2): inputs `in1` to `inN` at `In`, one output `out` at
-`Out`, and `out = f(in1, …, inN)`, the fold applied in positional order. A
-stateless continuous leaf. The fold is instance data and `F` is inferred from
-it. A custom fold, a weighted blend or a mass-properties composition, is written
-at the site.
+The block that publishes a fold of its `N` inputs as its one output.
+
+The inputs `in1` to `inN` are typed `In`, and the output `out` is typed `Out`,
+with `out = f(in1, …, inN)`, the fold applied in positional order. The block is
+a stateless continuous leaf. The fold `f` is instance data, and the type
+parameter `F` is inferred from it. A custom fold, such as a weighted blend or a
+mass-properties composition, is written at the site.
 
 The fold is stateless and declares no events, so a discontinuity written into
-it lands wherever it lands inside a step (§2.3). A clamp is fine, since its
-kink is second-order downstream, and so is a branch on a `Bool` that flips at a
-boundary, as a saturation code does. A branch on a continuous quantity is a
-mode made silently, which the moded blocks exist to declare.
+it lands wherever it lands inside a step. A clamp is fine, since its kink is
+second-order downstream. So is a branch on a `Bool` that flips at a boundary, as
+a saturation code does. A branch on a continuous quantity makes a mode silently,
+which the moded blocks such as [`Relay`](@ref) exist to declare.
+
+See also [`SumJunction`](@ref), [`Or`](@ref), [`And`](@ref), [`Pack`](@ref).
 """
 struct Junction{In, Out, N, F} <: AbstractComponent
     f::F
 end
 (::Type{Junction{In, Out, N}})(f) where {In, Out, N} = Junction{In, Out, N, typeof(f)}(f)
 
+# Design: §6.2.
 """
-    SumJunction{V, N}()
+    SumJunction{V, N}() -> SumJunction{V, N}
 
-The summing junction: the `Junction` at `+`, `N` inputs and the output at
-`V` (§6.2).
+The block that publishes the sum of its `N` inputs.
+
+It is the [`Junction`](@ref) at `+`, with the inputs `in1` to `inN` and the
+output `out` all typed `V`.
 """
 const SumJunction{V, N} = Junction{V, V, N, typeof(+)}
 
+# Design: §13.7.
 """
-    Or{N}()
+    Or{N}() -> Or{N}
 
-The `Bool` gate at `|` over `N` inputs (§13.7): one consolidated `Bool` for a
-consumer that wants one.
+The block that publishes the logical or of its `N` `Bool` inputs.
+
+It is the [`Junction`](@ref) at `|`, with the inputs `in1` to `inN` and the
+output `out` all `Bool`. It gives one consolidated `Bool` to a consumer that
+wants one.
+
+See also [`And`](@ref).
 """
 const Or{N}  = Junction{Bool, Bool, N, typeof(|)}
 
+# Design: §13.7.
 """
-    And{N}()
+    And{N}() -> And{N}
 
-The `Bool` gate at `&` over `N` inputs (§13.7).
+The block that publishes the logical and of its `N` `Bool` inputs.
+
+It is the [`Junction`](@ref) at `&`, with the inputs `in1` to `inN` and the
+output `out` all `Bool`.
+
+See also [`Or`](@ref).
 """
 const And{N} = Junction{Bool, Bool, N, typeof(&)}
 
 pack(args...) = SVector(args)
 
+# Design: §13.7.
+# The fold is the named function `pack` and not `SVector`, whose type is a
+# `UnionAll` that fixes no method, so the sweep would dispatch on it at every
+# call and allocate.
 """
-    Pack{V, N}()
+    Pack{V, N}() -> Pack{V, N}
 
-The pack: the `Junction` at `pack`, `N` inputs at `V` and the output at
-`SVector{N, V}` (§13.7). The fold is the named function `pack` and not
-`SVector`, whose type is a `UnionAll` that fixes no method, so the sweep would
-dispatch on it at every call and allocate.
+The block that publishes its `N` inputs packed into one static vector.
+
+It is the [`Junction`](@ref) at the fold `pack`, with the inputs `in1` to `inN`
+typed `V` and the output `out` an `SVector{N, V}`.
+
+See also [`Unpack`](@ref).
 """
 const Pack{V, N} = Junction{V, SVector{N, V}, N, typeof(pack)}
 
@@ -84,13 +110,18 @@ y_direct(j::Junction, (; u)) = (out = j.f(u...),)
 
 @generated unpack_names(::Val{N}) where {N} = ntuple(i -> Symbol(:out, i), N)
 
+# Design: The output names come from the generated `unpack_names`, which hands
+# the body a constant tuple, where names built in the body would allocate at
+# every sweep.
 """
-    Unpack{V, N}()
+    Unpack{V, N}() -> Unpack{V, N}
 
-The inverse of `Pack`: one input `in` at `SVector{N, V}`, and `N` outputs `out1`
-to `outN` at `V`, `outi = in[i]`. A stateless continuous leaf. The output names
-come from the generated `unpack_names`, which hands the body a constant tuple,
-where names built in the body would allocate at every sweep.
+The block that publishes the `N` elements of its static-vector input as `N`
+outputs.
+
+The one input `in` is an `SVector{N, V}`, and the outputs `out1` to `outN` are
+typed `V`, with `outi = in[i]`. The block is a stateless continuous leaf, and
+the inverse of [`Pack`](@ref).
 """
 struct Unpack{V, N} <: AbstractComponent end
 x_init(::Unpack) = (;)
@@ -98,19 +129,25 @@ u_types(::Unpack{V, N}) where {V, N} = (in = SVector{N, V},)
 y_types(::Unpack{V, N}) where {V, N} = NamedTuple{unpack_names(Val(N))}(ntuple(_ -> V, N))
 y_direct(::Unpack{V, N}, (; u)) where {V, N} = NamedTuple{unpack_names(Val(N))}(Tuple(u.in))
 
+# Design: §2.3, §5.3, D-179.
 """
-    Switch{V}()
+    Switch{V}() -> Switch{V}
 
-The switch: inputs `in1` and `in2` at `V` and `select` at `Bool`, and one
-output `out` at `V`, which is `in1` while `select` holds and `in2` otherwise. A
-stateless continuous leaf. `out` reads all three inputs, so a selector wired
-from a memoryless function of `out` closes an algebraic cycle (§5.3).
+The block that publishes one of its two inputs, picked by a `Bool` input.
+
+The inputs `in1` and `in2` are typed `V` and `select` is a `Bool`. The one
+output `out`, typed `V`, is `in1` while `select` holds and `in2` otherwise. The
+block is a stateless continuous leaf. `out` reads all three inputs, so a
+selector wired from a memoryless function of `out` closes an algebraic loop (a
+cycle of instantaneous dependences), which the build refuses as
+`AlgebraicCycle`.
 
 The block declares no event, so the jump in `out` lands where `select` flips. A
-`select` published from a mode, or held between ticks, flips on a boundary and
-the jump is clean. One computed from a continuous quantity inside a stage body
-flips inside a step and smears that step, a mode made silently, which the moded
-blocks exist to declare (§2.3, D-179).
+`select` published from a mode, or held between ticks (the instants at which a
+discrete component runs), flips on a boundary and the jump is clean. One
+computed from a continuous quantity inside a stage body flips inside a step and
+smears that step. That is a mode made silently, which the moded blocks such as
+[`Relay`](@ref) exist to declare.
 """
 struct Switch{V} <: AbstractComponent end
 x_init(::Switch) = (;)
@@ -120,16 +157,25 @@ y_direct(::Switch, (; u)) = (out = ifelse(u.select, u.in1, u.in2),)
 
 # --- the leaf blocks (§13.7, D-312) ---------------------------------------------
 
+# Design: §11.3, §13.7.
 """
-    Constant(value)
+    Constant(value) -> Constant
 
-The source block: no inputs, no state, and `out` publishes `value` from stage 1.
-A stateless continuous leaf, so discrete consumers read it as well (§13.7).
+The block that publishes a fixed value, with no inputs and no state.
 
-`out` is pinned at `V`: a constant is never seeded, so it carries zero partials
-under every `Dual` activation, and a tolerant consumer accepts it as a frozen
-arrival. The value is instance data, not an overridable default; a source set
-from outside is a root input (§11.3).
+The output `out` publishes `value` from stage 1 (`y_state`, the output stage
+that reads no input). The block is a stateless continuous leaf, so discrete
+consumers read it as well.
+
+`out` is pinned at `V`, the type of `value`: it keeps that type whatever scalar
+the model runs at. A constant is never seeded, so it carries zero partials under
+every `Dual` activation (the build's typed products at a given scalar type),
+and a tolerant consumer accepts it as a frozen arrival, one that never carries
+partials. The value is instance data, not an overridable default. A source set
+from outside is a root input (an input of the root component, produced by no
+component).
+
+See also [`Source`](@ref), [`Step`](@ref).
 """
 struct Constant{V} <: AbstractComponent
     value::V
@@ -138,16 +184,24 @@ x_init(::Constant) = (;)
 y_types(::Constant{V}) where {V} = (out = Pinned{V},)
 y_state(c::Constant, _) = (out = c.value,)
 
+# Design: §5.5, §10.6, D-231.
 """
-    UnitDelay(v0)
+    UnitDelay(v0) -> UnitDelay
 
-A discrete leaf, the tier's native `z⁻¹` (§10.6). `out` publishes the stored
-value from stage 1, `v0` at the first publication, and each tick stores `in` for
-the next one. Its store is isbits (D-231), which bounds `V`.
+The discrete block that publishes its input from the previous tick.
 
-It breaks an algebraic loop (§5.5), and that is a modelling decision: placed
-in a continuous loop it moves the signal onto the discrete tier and inserts a
-`Δt_base`-scale zero-order hold.
+The block is a discrete leaf, the native `z⁻¹` of the discrete tier (the
+discrete side of the hybrid formalism). `out` publishes the stored value from
+stage 1 (`y_state`, the output stage that reads no input), `v0` at the first
+publication, and each tick (an instant at which a discrete component runs)
+stores `in` for the next one. The store is isbits, which bounds `V`.
+
+It breaks an algebraic loop (a cycle of instantaneous dependences), and that is
+a modelling decision. Placed in a continuous loop, it moves the signal onto the
+discrete tier and inserts a zero-order hold at the scale of `Δt_base`, the base
+tick period.
+
+See also [`Delay`](@ref).
 """
 struct UnitDelay{V} <: AbstractComponent
     v0::V
@@ -158,14 +212,22 @@ y_types(::UnitDelay{V}) where {V} = (out = V,)
 y_state(::UnitDelay, (; s)) = (out = s.v,)
 s_update(::UnitDelay, (; u)) = (v = u.in,)
 
+# Design: §13.7.
 """
-    Freeze{V}()
+    Freeze{V}() -> Freeze{V}
 
-The declared stop-gradient (§13.7): `out` is `in` with its partials dropped,
-pinned at `V`, so a walking producer may feed a pinned entry through it. At
-nominal it is the identity. Every Jacobian along the path then reads a zero
-coupling, which is the modelling decision it states. `V` is a `Real` or a
-`StaticArray` of them; any other `V` is refused at the spelling.
+The block that publishes its input with its partials dropped, so no derivative
+passes through it.
+
+The block is the declared stop-gradient. `out` is `in` with its partials
+dropped, pinned at `V`: it keeps that type whatever scalar the model runs at. A
+producer that walks, following that scalar, may therefore feed a
+[`Pinned`](@ref) input entry through it. At nominal, the plain `Float64`
+evaluation, it is the identity. Every Jacobian along the path then reads a zero
+coupling, which is the modelling decision the block states.
+
+`V` is a `Real` or a `StaticArray` of them. Any other `V` is refused as a
+`TypeError` where `Freeze{V}` is written.
 """
 struct Freeze{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: AbstractComponent end
 x_init(::Freeze) = (;)
@@ -175,15 +237,23 @@ y_direct(::Freeze, (; u)) = (out = ForwardDiff.value.(u.in),)
 
 # --- the stop request (§13.5, §13.7, D-316) -------------------------------------
 
+# Design: §13.5, D-316.
 """
-    StopRequest(; reason = "")
+    StopRequest(; reason = "") -> StopRequest
 
-The library's spelling of a stop request (§13.5, D-316): `flag` publishes
-`STOP_REQUESTED` while the `Bool` input `request` holds and `NO_STOP`
-otherwise. A stateless continuous leaf, so it refreshes at every boundary and
-sits anywhere in the tree. `reason` is instance data, which `stop_reason`
-reports. The block holds no privilege: the request is the port's type, and any
-component may publish one.
+The block that publishes a stop request while its `Bool` input holds.
+
+A stop request is a port that ends the run when it reads `STOP_REQUESTED`. The
+output `flag`, a [`StopFlag`](@ref), publishes `STOP_REQUESTED` while the input
+`request` holds and `NO_STOP` otherwise. The block is a stateless continuous
+leaf, so it refreshes at every boundary and sits anywhere in the tree. It holds
+no privilege: the request is the port's type, and any component may publish
+one.
+
+# Keywords
+
+- `reason`: the reason the block's requests report, read by
+  [`stop_reason`](@ref). It is instance data.
 """
 struct StopRequest <: AbstractComponent
     reason::String
@@ -197,21 +267,33 @@ stop_reason(c::StopRequest) = c.reason
 
 # --- the discrete tier (§7.3, §10.5, D-313) -------------------------------------
 
+# Design: §5.5, §10.5.
 """
-    Delay(; K, v0 = 0.0)
+    Delay(; K::Int, v0 = 0.0) -> Delay
 
-The delay line, the tier's `z⁻ᴷ`: `out` publishes `in` from `K` ticks ago, from
-stage 1, and `v0` at the first `K` publications. `K ≥ 1` counts ticks of the
-component's own period (§10.5), so the model picks it from the rate it declares,
-and `K = 1` is `UnitDelay` in keyword spelling. The store is a ring of `K`
-values and a cursor: the slot under the cursor holds the value from `K` ticks
-ago, and each tick overwrites it with `in` and advances, with no shift of the
-other slots. `V` is `Float64` or a static array of `Float64`, taken from
-`float(v0)`, so an integer `v0` qualifies.
+The discrete block that publishes its input from `K` ticks before.
 
-It breaks an algebraic loop as `UnitDelay` does (§5.5), and that is a modelling
-decision: placed in a continuous loop it moves the signal onto the discrete tier
-and inserts a `Δt_base`-scale zero-order hold.
+The block is the delay line, the `z⁻ᴷ` of the discrete tier (the discrete side
+of the hybrid formalism). `out` publishes `in` from `K` ticks (the instants at
+which a discrete component runs) ago, from stage 1 (`y_state`, the output stage
+that reads no input), and `v0` at the first `K` publications. The store is a
+ring of `K` values and a cursor. The slot under the cursor holds the value from
+`K` ticks ago, and each tick overwrites it with `in` and advances, with no shift
+of the other slots.
+
+It breaks an algebraic loop (a cycle of instantaneous dependences) as
+[`UnitDelay`](@ref) does, and that is a modelling decision. Placed in a
+continuous loop, it moves the signal onto the discrete tier and inserts a
+zero-order hold at the scale of `Δt_base`, the base tick period.
+
+# Keywords
+
+- `K`: the delay in ticks of the component's own period, at least 1, so the
+  model picks it from the rate it declares. `K = 1` is `UnitDelay` in keyword
+  spelling, and a smaller `K` is refused as an `ArgumentError`.
+- `v0`: the value published before `K` ticks have passed. `V` is `Float64` or
+  a static array of `Float64`, taken from `float(v0)`, so an integer `v0`
+  qualifies.
 """
 struct Delay{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, K} <: AbstractComponent
     v0::V
@@ -228,16 +310,29 @@ y_state(::Delay, (; s)) = (out = s.ring[s.cursor],)
 s_update(::Delay{V, K}, (; s, u)) where {V, K} =
     (ring = Base.setindex(s.ring, u.in, s.cursor), cursor = s.cursor == K ? 1 : s.cursor + 1)
 
+# Design: §5.5, §9.4, §10.5, D-263.
 """
-    DiscreteIntegrator(; s0 = 0.0)
+    DiscreteIntegrator(; s0 = 0.0) -> DiscreteIntegrator
 
-The discrete integrator: one store field `q` from `s0`, advanced each tick by
-forward Euler, `q⁺ = q + Δt in`, and `out` publishing `q` from stage 1, so the
-block breaks an algebraic loop as `UnitDelay` does (§5.5). `Δt` is the
-component's own period (§10.5), so the integral is per second at any rate. `V`
-is `Float64` or a static array of `Float64`, taken from `float(s0)`, so an
-integer `s0` qualifies. The tier pins wholesale (D-263): under a `Dual`
-activation the block holds its last value (§9.4).
+The discrete block that publishes the forward-Euler integral of its input.
+
+The block holds one store field `q` from `s0`. Each tick (an instant at which a
+discrete component runs) advances it by forward Euler, `q⁺ = q + Δt in`, and
+`out` publishes `q` from stage 1 (`y_state`, the output stage that reads no
+input). The block therefore breaks an algebraic loop (a cycle of instantaneous
+dependences) as [`UnitDelay`](@ref) does. `Δt` is the component's own period,
+so the integral is per second at any rate.
+
+The discrete tier never follows the scalar of an activation (the build's typed
+products at a given scalar type), so under a `Dual` activation the block holds
+its last value.
+
+# Keywords
+
+- `s0`: the initial value of `q`. `V` is `Float64` or a static array of
+  `Float64`, taken from `float(s0)`, so an integer `s0` qualifies.
+
+See also [`DiscreteLimitedIntegrator`](@ref), [`Integrator`](@ref).
 """
 struct DiscreteIntegrator{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: AbstractComponent
     s0::V
@@ -250,21 +345,34 @@ y_state(::DiscreteIntegrator, (; s)) = (out = s.q,)
 s_update(::DiscreteIntegrator, (; s, u, Δt)) = (q = s.q + Δt * u.in,)
 
 """
-    DiscreteLimitedIntegrator(; lower, upper, s0 = zero(lower))
+    DiscreteLimitedIntegrator(; lower, upper, s0 = zero(lower)) -> DiscreteLimitedIntegrator
 
-The discrete integrator held between `lower` and `upper`: `q⁺ = clamp(q + Δt in,
-lower, upper)` from `s0`, and `out` publishing `q` from stage 1. The continuous
-`LimitedIntegrator`'s mode and four events are this one `clamp`, with no mode
-store and no localization. A second output, `saturation`, publishes the same
-`Int8` code read off the state, also from stage 1: `1` at `upper`, `-1` at
-`lower` and `0` between. At a limit with the input already pointing inward, the
-code reads saturated until the next tick moves the state off.
+The discrete block that publishes the forward-Euler integral of its input, held
+between two limits.
+
+Each tick (an instant at which a discrete component runs) advances the one store
+field `q` from `s0` as `q⁺ = clamp(q + Δt in, lower, upper)`, and `out`
+publishes `q` from stage 1 (`y_state`, the output stage that reads no input).
+The mode and four events of the continuous [`LimitedIntegrator`](@ref) are this
+one `clamp`, with no mode store and no localization.
+
+A second output, `saturation`, publishes the same `Int8` code, read off the
+state, also from stage 1: `1` at `upper`, `-1` at `lower` and `0` between. At a
+limit with the input already pointing inward, the code reads saturated until the
+next tick moves the state off.
 
 Over a static vector, the limits and the codes are componentwise, and
-`saturation` publishes a static vector of `Int8`. `lower < upper`,
-componentwise over a vector. `s0`, `lower` and `upper` are promoted to one `V`,
-which is `Float64` or a static array of `Float64`, and taken by `float`, so
-integer values qualify.
+`saturation` publishes a static vector of `Int8`.
+
+# Keywords
+
+- `lower`: the lower limit, below `upper`, componentwise over a vector.
+- `upper`: the upper limit.
+- `s0`: the initial value of `q`. `s0`, `lower` and `upper` are promoted to one
+  `V`, which is `Float64` or a static array of `Float64`, and taken by `float`,
+  so integer values qualify.
+
+See also [`DiscreteIntegrator`](@ref).
 """
 struct DiscreteLimitedIntegrator{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: AbstractComponent
     s0::V
@@ -283,25 +391,36 @@ y_state(c::DiscreteLimitedIntegrator, (; s)) =
     (out = s.q, saturation = saturation_code.(s.q, c.lower, c.upper))
 s_update(c::DiscreteLimitedIntegrator, (; s, u, Δt)) = (q = clamp.(s.q + Δt * u.in, c.lower, c.upper),)
 
+# Design: §5.3, §5.5, §10.5.
 """
-    RateLimiter(; rising, falling = rising, s0 = 0.0)
+    RateLimiter(; rising, falling = rising, s0 = 0.0) -> RateLimiter
 
-The rate limiter: `out` follows `in`, moving at most `rising Δt` up and
-`falling Δt` down per tick. `Δt` is the component's own period (§10.5), so both
-rates are per second, positive and pinned at `Float64`. One store field `v`
-holds the previous output, and each tick stores `out`:
+The discrete block that publishes its input with its rate of change bounded per
+tick.
+
+`out` follows `in`, moving at most `rising Δt` up and `falling Δt` down per tick
+(an instant at which a discrete component runs). `Δt` is the component's own
+period. One store field `v` holds the previous output, and each tick stores
+`out`:
 
     out = v + clamp(in - v, -falling Δt, rising Δt)
 
-`s0` is the previous output at the first tick, so the output at `t₀` is already
-one slew step from it.
+`out` reads `in`, so the block has feedthrough (an instantaneous dependence of
+an output on an input). A loop closed on it through a memoryless path is
+refused as `AlgebraicCycle`. A form publishing the stored value from stage 1
+(`y_state`, the output stage that reads no input) would break that loop, but it
+lags its input by one tick at every rate. It is this block followed by a
+[`UnitDelay`](@ref), a modelling decision the model makes by placing the delay.
+Over a vector the slew is componentwise.
 
-`out` reads `in`, so the block is feedthrough (§5.3), and a loop closed on it
-through a memoryless path is refused. A form publishing the stored value from
-stage 1 would break that loop, but it lags its input by one tick at every rate:
-it is this block followed by a `UnitDelay`, a modelling decision (§5.5) the
-model makes by placing the delay. `V` is `Float64` or a static array of
-`Float64`, taken from `float(s0)`, and over a vector the slew is componentwise.
+# Keywords
+
+- `rising`: the largest rise per second, positive, and kept a `Float64` whatever
+  scalar the model runs at.
+- `falling`: the largest fall per second, positive, and kept a `Float64` likewise.
+- `s0`: the previous output at the first tick, so the output at `t₀` is already
+  one slew step from it. `V` is `Float64` or a static array of `Float64`, taken
+  from `float(s0)`.
 """
 struct RateLimiter{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: AbstractComponent
     rising::Float64
@@ -320,25 +439,38 @@ s_update(::RateLimiter, (; y)) = (v = y.out,)
 
 # --- the noise source (§7.3, §2.5, D-231, D-313) --------------------------------
 
+# Design: §2.4, §2.5, §10.5, D-231.
 """
-    GaussianWhiteNoise(; seed, μ = nothing, σ = nothing, psd = nothing)
+    GaussianWhiteNoise(; seed, μ = nothing, σ = nothing, psd = nothing) -> GaussianWhiteNoise
 
-A discrete Gaussian white noise process: at each tick `out` publishes an
-independent sample of mean `μ` and standard deviation `σ`, from stage 1. The
-sample is a pure function of `seed` and the tick count `k`, the one store field
-(D-231), so the stage draws, no generator or workspace is needed, and replay
-reproduces the stream (§2.4, §2.5). After a tick the store holds the next sample's
-index, so `k` reads `N + 1` once the block has ticked `N` times past `t₀`. Two
-blocks with one seed publish one stream, so independent sources take distinct
-seeds.
+The discrete block that publishes a seeded Gaussian white noise sample at each
+tick.
 
-Exactly one of `σ` and `psd` is given. `σ` is the standard deviation per
-sample, at any period. `psd` is the two-sided intensity `Q` of the white noise
-the samples stand for, with `σ² = Q/Δt` at the component's own period `Δt`
-(§10.5), and a one-sided density is halved before being passed. `μ` left at
-`nothing` is zero in the scale's shape. `μ` and the scale are broadcast to one
-`V`, `Float64` or an `SVector` of `Float64`, so a scalar pairs with a vector,
-and over a vector the components are independent.
+The block is a discrete Gaussian white noise process. At each tick (an instant
+at which a discrete component runs), `out` publishes an independent sample of
+mean `μ` and standard deviation `σ`, from stage 1 (`y_state`, the output stage
+that reads no input). The sample is a pure function of `seed` and the tick count
+`k`, the one store field. The stage therefore draws, no generator or workspace
+is needed, and replay reproduces the stream. After a tick the store holds the
+next sample's index, so `k` reads `N + 1` once the block has ticked `N` times
+past `t₀`. Two blocks with one seed publish one stream, so independent sources
+take distinct seeds.
+
+`μ` and the scale are broadcast to one `V`, `Float64` or an `SVector` of
+`Float64`, so a scalar pairs with a vector, and over a vector the components
+are independent.
+
+# Keywords
+
+- `seed`: the integer the stream is drawn from. It is instance data.
+- `μ`: the mean. Left at `nothing`, it is zero in the scale's shape.
+- `σ`: the standard deviation per sample, at any period.
+- `psd`: the two-sided intensity `Q` of the white noise the samples stand for,
+  with `σ² = Q/Δt` at the component's own period `Δt`. A one-sided density is
+  halved before being passed.
+
+Exactly one of `σ` and `psd` is given. Neither or both is refused as an
+`ArgumentError`.
 """
 struct GaussianWhiteNoise{V <: Union{Float64, SVector{<:Any, Float64}}} <: AbstractComponent
     seed::UInt64
@@ -384,19 +516,26 @@ s_update(::GaussianWhiteNoise, (; s)) = (k = s.k + 1,)
 
 # --- the time source (§13.7, D-313) ---------------------------------------------
 
+# Design: §11.3, D-312.
 """
-    Source{V}(f)
-    Source(f)
+    Source{V}(f) -> Source{V}
+    Source(f) -> Source{Float64}
 
-The time source: no inputs, no state, and `out` publishes `f(t)` from stage 1.
-`Source(f)` is `Source{Float64}(f)`. `f` receives the nominal `Float64` time
-under every activation, so it need not be generic, and it returns a `V`. Nothing
-converts, so a value of another type is refused at build.
+The block that publishes a function of time, with no inputs and no state.
 
-`out` is pinned at `V` (D-312): the time is stripped of its partials before `f`
-sees it, so `out` depends on neither state nor a walking input and carries zero
-partials under every activation. A source set from outside is a root input
-(§11.3).
+The output `out` publishes `f(t)` from stage 1 (`y_state`, the output stage that
+reads no input). `Source(f)` is `Source{Float64}(f)`. `f` receives the plain
+`Float64` time under every activation (the build's typed products at a given
+scalar type), so it need not be generic, and it returns a `V`. Nothing converts,
+so a value of another type is refused at build as `ConformanceFailure`.
+
+`out` is pinned at `V`: it keeps that type whatever scalar the model runs at.
+The time is stripped of its partials before `f` sees it, so `out` depends on
+neither state nor an input that follows the scalar, and carries zero partials
+under every activation. A source set from outside is a root input (an input of
+the root component, produced by no component).
+
+See also [`Constant`](@ref), [`Step`](@ref).
 """
 struct Source{V, F} <: AbstractComponent
     f::F
@@ -409,14 +548,25 @@ y_state(c::Source, (; t)) = (out = c.f(ForwardDiff.value(t)),)
 
 # --- the continuous dynamics (§13.7, D-313) -------------------------------------
 
+# Design: §5.3, §7.2.
 """
-    Integrator(; x0 = 0.0)
+    Integrator(; x0 = 0.0) -> Integrator
 
-The integrator: one continuous state `q`, starting at `x0`, with `q̇ = in`, and
-`out` publishing `q` from stage 1, so the block has no feedthrough (§5.3). `V`
-is `Float64` or a static array of `Float64`, taken from `float(x0)`, so an
-integer `x0` qualifies. A `Float64` state walks under a `Dual` activation
-(§7.2), so the block linearizes as it integrates.
+The block that publishes the time integral of its input.
+
+The block holds one continuous state `q`, starting at `x0`, with `q̇ = in`.
+`out` publishes `q` from stage 1 (`y_state`, the output stage that reads no
+input), so the block has no feedthrough (instantaneous dependence of an output
+on an input). A `Float64` state follows the scalar of a `Dual` activation (the
+build's typed products at a given scalar type), so the block linearizes as it
+integrates.
+
+# Keywords
+
+- `x0`: the initial value of `q`. `V` is `Float64` or a static array of
+  `Float64`, taken from `float(x0)`, so an integer `x0` qualifies.
+
+See also [`LimitedIntegrator`](@ref), [`DiscreteIntegrator`](@ref).
 """
 struct Integrator{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: AbstractComponent
     x0::V
@@ -428,15 +578,33 @@ y_types(::Integrator{V}) where {V} = (out = V,)
 y_state(::Integrator, (; x)) = (out = x.q,)
 x_deriv(::Integrator, (; u)) = (q = u.in,)
 
+# Design: §7.2, D-313, commit `9c75324`.
+# The sentence on the scalar case is the user's ruling of 2026-10-27, which
+# landed as the inventory's `FirstOrderLag` row in `9c75324`.
 """
-    FirstOrderLag(; τ, x0 = 0.0)
+    FirstOrderLag(; τ, x0 = 0.0) -> FirstOrderLag
 
-The first-order lag: `q̇ = (in - q) / τ` from `q = x0`, and `out` publishing `q`
-from stage 1. The time constant `τ` is positive, and it is instance data pinned
-at `Float64`. The state walks under a `Dual` activation (§7.2), so the lag
-linearizes to `A = -1/τ` and `B = 1/τ`; a hand-written lag whose scratch is
-pinned at `Float64` fails there instead (D-313). `V` is `Float64` or a static
-array of `Float64`, taken from `float(x0)`, so an integer `x0` qualifies.
+The block that publishes its input through a first-order lag of time constant
+`τ`.
+
+The block holds one continuous state `q` from `x0`, with `q̇ = (in - q) / τ`, and
+`out` publishes `q` from stage 1 (`y_state`, the output stage that reads no
+input). The state follows the scalar of a `Dual` activation (the build's typed
+products at a given scalar type), so the lag linearizes to `A = -1/τ` and
+`B = 1/τ`. A hand-written lag whose scratch is kept at `Float64` fails there
+instead.
+
+# Keywords
+
+- `τ`: the time constant, positive. It is instance data, kept a `Float64`
+  whatever scalar the model runs at.
+- `x0`: the initial value of `q`.
+
+`V` is `Float64` or a static array of `Float64`, taken from `float(x0)`, so an
+integer `x0` qualifies. For a scalar signal it is
+[`TransferFunction`](@ref)`(num = (1,), den = (τ, 1), u0 = x0)`; the block stays
+for static-array signals, for `x0` in the signal's own coordinates and for the
+spelling.
 """
 struct FirstOrderLag{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: AbstractComponent
     x0::V
@@ -454,13 +622,23 @@ x_deriv(c::FirstOrderLag, (; x, u)) = (q = (u.in - x.q) / c.τ,)
 
 # --- the linear blocks (§13.7, §5.3, D-313) -------------------------------------
 
+# Design: §5.3.
+# Every stage is defined here, once, over the block's `realization`.
 """
     LinearBlock{FT}
 
-The supertype of the linear blocks. `FT` is the feedthrough class: `false` when
-the direct term is zero and `out` comes from stage 1, `true` when it is not and
-`out` comes from stage 2 (§5.3). Every stage is defined here, once, over the
-block's `realization`, so no linear block declares a stage of its own.
+The abstract parent of the continuous linear blocks, which carries their stages
+and their feedthrough class.
+
+`FT` is the feedthrough class, whether an output depends instantaneously on the
+input. It is `false` when the direct term is zero and `out` comes from stage 1
+(`y_state`, the output stage that reads no input). It is `true` when the direct
+term is nonzero and `out` comes from stage 2 (`y_direct`, the output stage that
+reads the inputs). The stages are defined once on the parent, over each block's
+state-space realization, so no linear block declares a stage of its own.
+
+See also [`StateSpace`](@ref), [`TransferFunction`](@ref),
+[`DiscreteLinearBlock`](@ref).
 """
 abstract type LinearBlock{FT} <: AbstractComponent end
 
@@ -485,32 +663,51 @@ function y_direct(c::LinearBlock{true}, (; x, u))
     (out = as_port(C * x.q + D * as_vector(u.in)),)
 end
 
+# Design: §5.3, §5.5, §7.2.
+# `linear_blocks.md` gives the reasoning: the storage, the realization a
+# transfer function goes through, and why the name is the one
+# ControlSystemsBase exports. The positional method over static matrices is
+# the struct's own, which `TransferFunction` calls.
 """
-    StateSpace(; A, B, C, D = zeros(n_y, n_u), x0 = zeros(n_x))
+    StateSpace(; A::AbstractMatrix, B::AbstractMatrix, C::AbstractMatrix,
+               D::AbstractMatrix = zeros(size(C, 1), size(B, 2)),
+               x0 = zeros(size(A, 1))) -> StateSpace
 
-The linear system in state-space form, one continuous state `q` from `x0`:
+The block that runs a linear system given in state-space form.
+
+The block holds one continuous state `q` from `x0`:
 
     q̇   = A q + B in
     out = C q + D in
 
-`A` is `n_x × n_x`, `B` is `n_x × n_u`, `C` is `n_y × n_x` and `D` is
-`n_y × n_u`. Each is any `AbstractMatrix` of reals, stored at full shape as a
-static matrix of `Float64`, so integer entries qualify; a matrix that does not
-fit the others is refused, and so is an `A` of size zero, since a block with no
-state is a gain. `x0` is in the coordinates of `A`, a vector of length
-`n_x`, or a real when `n_x` is one. The state is an `SVector` at every size. `in`
-is a `Float64` when `n_u` is one and an `SVector{n_u, Float64}` otherwise, and
-`out` likewise by `n_y`.
+The state is an `SVector` at every size. `in` is a `Float64` when `n_u` is one
+and an `SVector{n_u, Float64}` otherwise, and `out` likewise by `n_y`.
 
-The type parameter `FT` is the feedthrough class, and `D` picks it. A zero `D`
-publishes `out` from stage 1, so the block breaks an algebraic loop as the lag
-does. A nonzero `D` publishes it from stage 2, so a loop closed on the block
-through a memoryless path is refused (§5.3, §5.5). The matrices are pinned at
-`Float64`, and the state and the ports walk under a `Dual` activation (§7.2), so
-the block linearizes to its own matrices.
+The type parameter `FT` is the feedthrough class of [`LinearBlock`](@ref), and
+`D` picks it. A zero `D` publishes `out` from stage 1 (`y_state`, the output
+stage that reads no input), so the block breaks an algebraic loop (a cycle of
+instantaneous dependences) as the lag does. A nonzero `D` publishes it from
+stage 2 (`y_direct`, the output stage that reads the inputs), so a loop closed
+on the block through a memoryless path is refused as `AlgebraicCycle`. The
+matrices are kept at `Float64`, and the state and the ports follow the scalar of
+a `Dual` activation (the build's typed products at a given scalar type), so the
+block linearizes to its own matrices.
 
-`linear_blocks.md` gives the reasoning: the storage, the realization a transfer
-function goes through, and why the name is the one ControlSystemsBase exports.
+# Keywords
+
+- `A`: the `n_x × n_x` state matrix.
+- `B`: the `n_x × n_u` input matrix.
+- `C`: the `n_y × n_x` output matrix.
+- `D`: the `n_y × n_u` direct matrix, zero by default.
+- `x0`: the initial state, in the coordinates of `A`, a vector of length `n_x`,
+  or a real when `n_x` is one.
+
+Each matrix is any `AbstractMatrix` of reals, stored at full shape as a static
+matrix of `Float64`, so integer entries qualify. A matrix that does not fit the
+others is refused as an `ArgumentError`, and so is an `x0` of the wrong length.
+An `A` of size zero is refused likewise, since a block with no state is a gain.
+
+See also [`TransferFunction`](@ref), [`DiscretizedStateSpace`](@ref).
 """
 struct StateSpace{NX, NU, NY, FT, LA, LB, LC, LD} <: LinearBlock{FT}
     A::SMatrix{NX, NX, Float64, LA}
@@ -566,35 +763,49 @@ function realize(num, den)
     (; A, B, C, D)
 end
 
+# Design: §5.3.
+# `linear_blocks.md` gives the realization in section 2 and the initial
+# condition in section 5.
 """
-    TransferFunction(; num, den, u0 = 0.0)
+    TransferFunction(; num, den, u0 = 0.0) -> TransferFunction
 
-The linear system of one input and one output given by its transfer function,
+The block that runs a single-input, single-output linear system given by its
+transfer function in `s`.
+
+The transfer function is
 
     G(s) = (num[1] sᵐ + … + num[end]) / (den[1] sⁿ + … + den[end])
 
-the coefficients highest power first, as tuples or vectors of reals. `in` and
-`out` are `Float64`. The block keeps the coefficients and holds their
-realization in controllable canonical form, a `StateSpace` whose stages it
-shares.
+with `in` and `out` both `Float64`. The block keeps the coefficients and holds
+their realization in controllable canonical form, a [`StateSpace`](@ref) whose
+stages it shares.
 
 There is no `x0`, because a realization's state means nothing to a user who
 knows only `G(s)`. The block starts at rest, or, with `u0` given, at the steady
 state for the constant input `u0`, where `out` is `G(0) u0`.
 
-The type parameter `FT` is the feedthrough class, and the degrees pick it. A
-numerator of lower degree than the denominator publishes `out` from stage 1, so
-the block breaks an algebraic loop, and one of equal degree publishes it from
-stage 2 (§5.3).
+The type parameter `FT` is the feedthrough class of [`LinearBlock`](@ref), and
+the degrees pick it. A numerator of lower degree than the denominator publishes
+`out` from stage 1 (`y_state`, the output stage that reads no input), so the
+block breaks an algebraic loop (a cycle of instantaneous dependences). One of
+equal degree publishes it from stage 2 (`y_direct`, the output stage that reads
+the inputs).
 
-Four spellings are refused with an `ArgumentError`: a denominator of fewer
-than two coefficients, whose order of zero makes a gain; a numerator longer
-than the denominator, which is improper; a leading denominator coefficient of
-zero; and a nonzero `u0` over a denominator whose constant coefficient is zero,
-a pole at the origin, which has no steady state.
+# Keywords
 
-`linear_blocks.md` gives the realization in section 2 and the initial condition
-in section 5.
+- `num`: the numerator's coefficients, highest power first, as a tuple or a
+  vector of reals.
+- `den`: the denominator's coefficients, highest power first, likewise.
+- `u0`: the constant input whose steady state the block starts at, `0.0` for
+  rest.
+
+Four spellings are refused as an `ArgumentError`: a denominator of fewer than
+two coefficients, whose order of zero makes a gain; a numerator longer than the
+denominator, which is improper; a leading denominator coefficient of zero; and
+a nonzero `u0` over a denominator whose constant coefficient is zero, a pole at
+the origin, which has no steady state.
+
+See also [`DiscreteTransferFunction`](@ref), [`DiscretizedTransferFunction`](@ref).
 """
 struct TransferFunction{N, FT, M, K, LA} <: LinearBlock{FT}
     num::NTuple{M, Float64}
@@ -621,17 +832,29 @@ realization(c::TransferFunction) = c.realization
 
 # --- the discrete linear blocks (§13.7, §5.3, D-313) ----------------------------
 
+# Design: §5.3.
+# Two accessors serve every stage, defined here once: `held(c)` returns the
+# stored system, whose shapes, `C`, `D` and `x0` do not depend on the period,
+# and `realization(c, Δt)` returns the update matrices at the period `Δt`. Only
+# the update discretizes, so the declarations and the output read `held` alone.
 """
     DiscreteLinearBlock{FT}
 
-The supertype of the discrete linear blocks, the linear blocks' twin on the
-discrete tier. `FT` is the feedthrough class, as on `LinearBlock`: `false` when
-the direct term is zero and `out` comes from stage 1, `true` when it is not and
-`out` comes from stage 2 (§5.3). Two accessors serve every stage, defined here
-once: `held(c)` returns the stored system, whose shapes, `C`, `D` and `x0` do
-not depend on the period, and `realization(c, Δt)` returns the update matrices
-at the period `Δt`. Only the update discretizes, so the declarations and the
-output read `held` alone.
+The abstract parent of the discrete linear blocks, which carries their stages
+and their feedthrough class.
+
+The discrete linear blocks are the twins of the [`LinearBlock`](@ref) family on
+the discrete tier (the discrete side of the hybrid formalism). `FT` is the
+feedthrough class, as on `LinearBlock`, whether an output depends
+instantaneously on the input. It is `false` when the direct term is zero and
+`out` comes from stage 1 (`y_state`, the output stage that reads no input). It
+is `true` when the direct term is nonzero and `out` comes from stage 2
+(`y_direct`, the output stage that reads the inputs). The stages are defined
+once on the parent, so no discrete linear block declares a stage of its own.
+Only the state update depends on the period.
+
+See also [`DiscreteStateSpace`](@ref), [`DiscreteTransferFunction`](@ref),
+[`DiscretizedStateSpace`](@ref), [`DiscretizedTransferFunction`](@ref).
 """
 abstract type DiscreteLinearBlock{FT} <: AbstractComponent end
 
@@ -648,25 +871,34 @@ function y_direct(c::DiscreteLinearBlock{true}, (; s, u))
     (out = as_port(C * s.q + D * as_vector(u.in)),)
 end
 
+# Design: §5.3, §5.5, §9.4, §10.5, D-263.
+# `linear_blocks.md`, section 9, gives the reasoning.
 """
-    DiscreteStateSpace(; A, B, C, D = zeros(n_y, n_u), x0 = zeros(n_x))
+    DiscreteStateSpace(; A::AbstractMatrix, B::AbstractMatrix, C::AbstractMatrix,
+                       D::AbstractMatrix = zeros(size(C, 1), size(B, 2)),
+                       x0 = zeros(size(A, 1))) -> DiscreteStateSpace
 
-The linear system in discrete state-space form, one store field `q` from `x0`,
-advanced once per tick:
+The discrete block that runs a linear system given in discrete state-space form.
+
+The block holds one store field `q` from `x0`, advanced once per tick (an
+instant at which a discrete component runs):
 
     q⁺  = A q + B in
     out = C q + D in
 
-The shapes, the storage, the ports and the refusals are `StateSpace`'s, and so
-is the class: a zero `D` publishes `out` from stage 1, so the block breaks an
-algebraic loop, and a nonzero `D` publishes it from stage 2 (§5.3, §5.5). The
-tier pins wholesale (D-263): under a `Dual` activation the block holds its last
-value (§9.4).
+The keywords, the shapes, the storage, the ports and the refusals are those of
+[`StateSpace`](@ref), and so is the class of [`DiscreteLinearBlock`](@ref). A
+zero `D` publishes `out` from stage 1 (`y_state`, the output stage that reads no
+input), so the block breaks an algebraic loop (a cycle of instantaneous
+dependences). A nonzero `D` publishes it from stage 2 (`y_direct`, the output
+stage that reads the inputs). The discrete tier never follows the scalar of an
+activation (the build's typed products at a given scalar type), so under a
+`Dual` activation the block holds its last value.
 
 The matrices presuppose the period they were designed at. That period is the
-scope's, bound at deployment after the block is built (§10.5), so the block
-cannot check it. A system that should follow its period is a
-`DiscretizedStateSpace`. `linear_blocks.md`, section 9, gives the reasoning.
+one the block's rate scope (an assembly's `sample_times` declaration) gives it,
+bound at deployment after the block is built, so the block cannot check it. A system that should follow its period is a
+[`DiscretizedStateSpace`](@ref).
 """
 struct DiscreteStateSpace{NX, NU, NY, FT, LA, LB, LC, LD} <: DiscreteLinearBlock{FT}
     A::SMatrix{NX, NX, Float64, LA}
@@ -685,28 +917,35 @@ held(c::DiscreteStateSpace) = c
 realization(c::DiscreteStateSpace, _) = c
 
 """
-    DiscreteTransferFunction(; num, den, u0 = 0.0)
+    DiscreteTransferFunction(; num, den, u0 = 0.0) -> DiscreteTransferFunction
 
-The linear system of one input and one output given by its transfer function in
-`z`,
+The discrete block that runs a single-input, single-output linear system given
+by its transfer function in `z`.
+
+The transfer function is
 
     G(z) = (num[1] zᵐ + … + num[end]) / (den[1] zⁿ + … + den[end])
 
-the coefficients highest power of `z` first, as `TransferFunction` takes them in
-`s`. This is not the `z⁻¹` convention of `filter(b, a)`, which agrees with it
-only when the degrees are equal. The block keeps the coefficients and holds
-their realization in controllable canonical form, a `DiscreteStateSpace` whose
-stages it shares, and the degrees pick the class as for `TransferFunction`.
+with the coefficients highest power of `z` first, as [`TransferFunction`](@ref)
+takes them in `s`. This is not the `z⁻¹` convention of `filter(b, a)`, which
+agrees with it only when the degrees are equal. The block keeps the
+coefficients and holds their realization in controllable canonical form, a
+[`DiscreteStateSpace`](@ref) whose stages it shares. The degrees pick the class
+of [`DiscreteLinearBlock`](@ref) as for `TransferFunction`.
 
 The block starts at rest, or, with `u0` given, at the steady state for the
-constant input `u0`, where `(I - A) q = B u0` and `out` is `G(1) u0`. The
-refusals are `TransferFunction`'s, save that the pole with no steady state is at
-`z = 1`: a nonzero `u0` is refused over a denominator whose coefficients sum to
-zero within `1e-12` of the sum of their magnitudes, since a designed denominator
-such as `(1, -0.7, -0.3)` misses an exact zero by rounding.
+constant input `u0`, where `(I - A) q = B u0` and `out` is `G(1) u0`.
+
+The keywords and the refusals are those of `TransferFunction`, save that the
+pole with no steady state is at `z = 1`. A nonzero `u0` is refused as an
+`ArgumentError` over a denominator whose coefficients sum to zero within `1e-12`
+of the sum of their magnitudes, since a designed denominator such as
+`(1, -0.7, -0.3)` misses an exact zero by rounding.
 
 The coefficients presuppose the period they were designed at, which the block
 cannot check, as for `DiscreteStateSpace`.
+
+See also [`DiscretizedTransferFunction`](@ref).
 """
 struct DiscreteTransferFunction{N, FT, M, K, LA} <: DiscreteLinearBlock{FT}
     num::NTuple{M, Float64}
@@ -730,12 +969,21 @@ end
 held(c::DiscreteTransferFunction) = c.realization
 realization(c::DiscreteTransferFunction, _) = c.realization
 
+# Design: §9.4, §10.5, D-263.
+# `linear_blocks.md`, section 9.2, gives the reasoning.
 """
-    DiscretizedStateSpace(sys::StateSpace)
-    DiscretizedStateSpace(; A, B, C, D = zeros(n_y, n_u), x0 = zeros(n_x))
+    DiscretizedStateSpace(continuous::StateSpace) -> DiscretizedStateSpace
+    DiscretizedStateSpace(; A::AbstractMatrix, B::AbstractMatrix, C::AbstractMatrix,
+                          D::AbstractMatrix = zeros(size(C, 1), size(B, 2)),
+                          x0 = zeros(size(A, 1))) -> DiscretizedStateSpace
 
-The continuous `StateSpace` `sys`, or the one the keywords build, run on the
-discrete tier through a zero-order hold taken at each tick:
+The discrete block that runs a continuous state-space system through a
+zero-order hold at each tick.
+
+The block runs the [`StateSpace`](@ref) `continuous`, or the one its keywords
+build, on the discrete tier (the discrete side of the hybrid formalism). At each
+tick (an instant at which a discrete component runs) it takes the zero-order
+hold
 
     A_d = e^{A Δt}        B_d = (∫₀^Δt e^{Aτ} dτ) B
 
@@ -743,12 +991,15 @@ with `C` and `D` unchanged. `A_d` and `B_d` are the top row of one exponential
 of the augmented matrix `[A B; 0 0] Δt`. The hold is exact for an input held
 constant over each period, so the samples are the continuous system's own.
 
-`Δt` is the component's own period (§10.5), so the block follows its scope's
-rate and carries no period of its own, where a `DiscreteStateSpace` presupposes
-one. The class, the ports and `x0` are the continuous block's, `x0` in its
-coordinates. The tier pins wholesale (D-263): under a `Dual` activation the
-block holds its last value (§9.4). `linear_blocks.md`, section 9.2, gives the
-reasoning.
+`Δt` is the component's own period, so the block follows the rate its rate
+scope (an assembly's `sample_times` declaration) gives it, and carries no period
+of its own, where a [`DiscreteStateSpace`](@ref) presupposes one. The keywords and their refusals are those of `StateSpace`. The
+class, the ports and `x0` are the continuous block's, `x0` in its coordinates.
+The discrete tier never follows the scalar of an activation (the build's typed
+products at a given scalar type), so under a `Dual` activation the block holds
+its last value.
+
+See also [`DiscretizedTransferFunction`](@ref), [`DiscreteLinearBlock`](@ref).
 """
 struct DiscretizedStateSpace{NX, NU, NY, FT, LA, LB, LC, LD} <: DiscreteLinearBlock{FT}
     continuous::StateSpace{NX, NU, NY, FT, LA, LB, LC, LD}
@@ -764,19 +1015,26 @@ function realization(c::DiscretizedStateSpace{NX, NU}, Δt) where {NX, NU}
     (; A = exponential[SOneTo(NX), SOneTo(NX)], B = exponential[SOneTo(NX), SUnitRange(NX + 1, NX + NU)], C, D)
 end
 
+# Design: §10.5.
+# `linear_blocks.md`, section 9.2, gives the reasoning.
 """
-    DiscretizedTransferFunction(; num, den, u0 = 0.0)
+    DiscretizedTransferFunction(; num, den, u0 = 0.0) -> DiscretizedTransferFunction
 
-The transfer function in `s` of `TransferFunction`, with its keywords, its
-refusals and its start at rest or at `G(0) u0`, run on the discrete tier
-through the zero-order hold of `DiscretizedStateSpace`, taken at each tick's
-`Δt` (§10.5). The block keeps the coefficients and holds the realization
-wrapped for the hold, and the degrees pick the class as for `TransferFunction`.
+The discrete block that runs a continuous transfer function through a zero-order
+hold at each tick.
+
+The block takes the transfer function in `s` of [`TransferFunction`](@ref),
+with its keywords, its refusals and its start at rest or at `G(0) u0`. It runs
+it on the discrete tier (the discrete side of the hybrid formalism) through the
+zero-order hold of [`DiscretizedStateSpace`](@ref), taken at each tick's `Δt`,
+the component's own period. The block keeps the coefficients and holds the
+realization wrapped for the hold, and the degrees pick the class of
+[`DiscreteLinearBlock`](@ref) as for `TransferFunction`.
 
 The hold keeps the class and matches the step response at the samples, where
-Tustin's method would make every block feedthrough. A design that wants Tustin's
-frequency response discretizes externally and uses `DiscreteTransferFunction`.
-`linear_blocks.md`, section 9.2, gives the reasoning.
+Tustin's method would give every block feedthrough (an instantaneous dependence
+of an output on an input). A design that wants Tustin's frequency response
+discretizes externally and uses [`DiscreteTransferFunction`](@ref).
 """
 struct DiscretizedTransferFunction{N, FT, M, K, LA} <: DiscreteLinearBlock{FT}
     num::NTuple{M, Float64}
@@ -792,27 +1050,42 @@ realization(c::DiscretizedTransferFunction, Δt) = realization(c.realization, Δ
 
 # --- the step (§2.3, §10.4, D-313) ----------------------------------------------
 
+# Design: §2.3, §10.6, D-179, D-312.
 """
-    Step(; t_step, before = 0.0, after = 1.0, localized = true)
+    Step(; t_step, before = 0.0, after = 1.0, localized::Bool = true) -> Step
 
-The step source: `out` publishes `before` until `t_step` and `after` from then
-on. A mode-only leaf with no inputs: the mode `fired` picks the value, and one
-state event, `fire`, sets it once `t` reaches `t_step`. `before` and `after`
-are promoted to one `V`, `Float64` or a static array of `Float64`, and taken by
-`float`, so integer values qualify; `t_step` is any time. `out` is pinned at
-`V` (D-312): the value depends on neither state nor a walking input, so it
-carries zero partials under every activation, as a `Constant`'s does.
+The block that publishes one value before a given time and another from then on.
 
-`localized` picks the detection policy (§2.3). Localized, the guard is the sign
-form `t - t_step`: the step ends at the crossing and the jump lands there.
-Boundary-detected, the guard is the `Bool` `t ≥ t_step`: the event fires at the
-end of the step in which it was first observed, so the jump lands on the first
-boundary at or after `t_step`, never inside a step. The policy is the type
-parameter `L` rather than a field because the build reads it off the guard's
-return type (D-179).
+`out` publishes `before` until `t_step` and `after` from then on. The block is a
+mode-only leaf with no inputs. The mode `fired` picks the value, and one state
+event, `fire`, sets it once `t` reaches `t_step`. `out` is pinned at `V`: it
+keeps that type whatever scalar the model runs at. The value depends on neither
+state nor an input that follows the scalar, so it carries zero partials under
+every activation (the build's typed products at a given scalar type), as a
+[`Constant`](@ref)'s does.
 
-Boundary zero sets every prior to not-holding (§10.6), so a `t_step` at or
-before `t₀` fires there and `out` publishes `after` from the start.
+`localized` picks the detection policy. Localized, with the crossing instant
+found by root-finding, the guard (the function that defines an event's
+predicate) is the sign form `t - t_step`: the step ends at the crossing and the
+jump lands there. Boundary-detected, checked at boundaries only, the guard is
+the `Bool` `t ≥ t_step`. The event then fires at the end of the step in which
+it was first observed, so the jump lands on the first boundary at or after
+`t_step`, never inside a step. The policy is the type parameter `L` rather than
+a field because the build reads it off the guard's return type.
+
+Boundary zero (the initialization boundary at `t₀`) sets every prior (each
+event's sample of its guard at the previous boundary) to not-holding. A
+`t_step` at or before `t₀` therefore fires there, and `out` publishes `after`
+from the start.
+
+# Keywords
+
+- `t_step`: the time of the step, any time.
+- `before`: the value before `t_step`.
+- `after`: the value from `t_step` on. `before` and `after` are promoted to one
+  `V`, `Float64` or a static array of `Float64`, and taken by `float`, so
+  integer values qualify.
+- `localized`: `true` for a localized step, `false` for a boundary-detected one.
 """
 struct Step{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, L} <: AbstractComponent
     before::V
@@ -840,47 +1113,66 @@ channel_type(::Type{V}, ::Type{T}) where {V <: Real, T} = T
 channel_type(::Type{V}, ::Type{T}) where {V <: StaticArray, T} = similar_type(V, T)
 saturation_type(::Type{V}) where {V} = channel_type(V, Int8)
 
+# Design: §2.3, §10.4, §10.6, D-179.
+# `limited_integrator_variants.md` gives the reasoning.
 """
-    LimitedIntegrator(; lower, upper, x0 = zero(lower), localized = true)
+    LimitedIntegrator(; lower, upper, x0 = zero(lower), localized::Bool = true) -> LimitedIntegrator
 
-The integrator held between `lower` and `upper`: one continuous state `q`, with
-`q̇ = in` while free and `q̇ = 0` while saturated, and `out` publishing `q` from
-stage 1. It is not a clamp. The mode `saturation` is read by the derivative,
-and four state events move it. It is a signed `Int8` code, the sign of the
-limit in force: `-1` at `lower`, `0` free and `+1` at `upper`.
-`hit_upper` and `hit_lower` fire when `q` reaches a limit; their handlers write
-`q` to the limit exactly and saturate. `leave_upper` and `leave_lower` fire
-when `in` turns strictly back into the range, and free it; an input of exactly
-zero at a limit keeps the mode saturated. The hit events are localized.
+The block that publishes the time integral of its input, held between two
+limits.
+
+The block holds one continuous state `q`, with `q̇ = in` while free and `q̇ = 0`
+while saturated, and `out` publishes `q` from stage 1 (`y_state`, the output
+stage that reads no input). It is not a clamp. The mode `saturation` is read by
+the derivative, and four state events move it. It is a signed `Int8` code, the
+sign of the limit in force: `-1` at `lower`, `0` free and `+1` at `upper`.
+`hit_upper` and `hit_lower` fire when `q` reaches a limit, and their handlers
+write `q` to the limit exactly and saturate. `leave_upper` and `leave_lower`
+fire when `in` turns strictly back into the range, and free it. An input of
+exactly zero at a limit keeps the mode saturated. The hit events are localized,
+their crossing instant found by root-finding.
 
 A second output, also `saturation`, publishes the code from stage 1, so it has
-no feedthrough. It serves an anti-windup consumer, such as a controller that
-gates its integrator on the code, which flips only when an event fires and so
-only on a declared boundary.
+no feedthrough (instantaneous dependence of an output on an input). It serves
+an anti-windup consumer, such as a controller that gates its integrator on the
+code. The code flips only when an event fires, and so only on a declared
+boundary.
 
-`localized` picks the detection policy of the leave events (§2.3). Localized,
-the guards are gated in §10.4's sign form, and the departure ends the step at
-the input's zero crossing. Boundary-detected, the guards are the `Bool`
-predicates, and the departure fires at the end of the step in which `in` first
+`localized` picks the detection policy of the leave events. Localized, the
+guards (the functions that define the events' predicates) are sign forms gated
+by the mode, and the departure ends the step at the input's zero crossing.
+Boundary-detected, checked at boundaries only, the guards are the `Bool`
+predicates. The departure then fires at the end of the step in which `in` first
 pointed back into the range, so `q` is held on the limit for the rest of that
-step and carries an offset of at most `a h² / 2` from then on, `a` the input's
+step. It carries an offset of at most `a h² / 2` from then on, `a` the input's
 slope at its zero crossing. What the cheap form buys is that a departure costs
 no root-finding and splits no step, where a localized one pays about 22 trial
-sweeps and a boundary. The policy is the type parameter `L` rather than a
-field because the build reads it off the guard's return type (D-179).
-`limited_integrator_variants.md` gives the reasoning.
+sweeps (passes through the execution order) and a boundary. The policy is the
+type parameter `L` rather than a field because the build reads it off the
+guard's return type.
 
 Over a static vector, the limits and the codes are componentwise, and
 `saturation` publishes a static vector of `Int8`. The block declares `N` copies
 of the scalar events, one per component, named `hit_upper_1` to `hit_upper_N`,
-then `hit_lower_i`, `leave_upper_i` and `leave_lower_i`: each guard reads its
+then `hit_lower_i`, `leave_upper_i` and `leave_lower_i`. Each guard reads its
 one component and each handler writes it.
 
-`lower < upper`, componentwise over a vector. `x0`, `lower` and `upper` are
-promoted to one `V`, which is `Float64` or a static array of `Float64`, and
-taken by `float`, so integer values qualify. Boundary zero sets every prior to
-not-holding (§10.6), so an `x0` outside the limits is clamped there, and the
-initial mode agrees with the initial input.
+Boundary zero (the initialization boundary at `t₀`) sets every prior (each
+event's sample of its guard at the previous boundary) to not-holding. An `x0`
+outside the limits is therefore clamped there, and the initial mode agrees with
+the initial input.
+
+# Keywords
+
+- `lower`: the lower limit, below `upper`, componentwise over a vector.
+- `upper`: the upper limit.
+- `x0`: the initial value of `q`. `x0`, `lower` and `upper` are promoted to one
+  `V`, which is `Float64` or a static array of `Float64`, and taken by `float`,
+  so integer values qualify.
+- `localized`: `true` for localized leave events, `false` for boundary-detected
+  ones.
+
+See also [`DiscreteLimitedIntegrator`](@ref), [`Integrator`](@ref).
 """
 struct LimitedIntegrator{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, L} <: AbstractComponent
     x0::V
@@ -958,30 +1250,48 @@ function state_events(::LimitedIntegrator{V, L}) where {V <: StaticArray, L}
     NamedTuple{names}((hit_upper..., hit_lower..., leave_upper..., leave_lower...))
 end
 
+# Design: §5.3, §10.4, §10.6, D-312.
 """
-    Relay(; lower, upper, off = zero(lower), on = one.(lower))
+    Relay(; lower, upper, off = zero(lower), on = one.(lower)) -> Relay
 
-The relay with hysteresis: `out` publishes `off` or `on` by the mode `state`,
-from stage 1. The mode is an `Int8` code, `0` off and `1` on. Two state events
-move it. `switch_on` fires when `in` rises to `upper` while off, and
-`switch_off` when `in` falls to `lower` while on. Both guards are sign forms
-gated by the mode in §10.4's form, so both are localized.
+The block that publishes one of two values, switched by its input with
+hysteresis.
 
-`out` reads no input, so the block has no feedthrough (§5.3), and a relay
-closing a feedback loop makes no algebraic loop. It is the library's reference
-mode-switching leaf. `lower < upper`. The four values are promoted to one `V`,
-which is `Float64` or a static array of `Float64`, and taken by `float`, so
-integer values qualify. `out` is pinned at `V` (D-312): it depends on the mode
-and the instance alone, so it carries zero partials under every activation.
+`out` publishes `off` or `on` by the mode `state`, from stage 1 (`y_state`, the
+output stage that reads no input). The mode is an `Int8` code, `0` off and `1`
+on. Two state events move it. `switch_on` fires when `in` rises to `upper`
+while off, and `switch_off` when `in` falls to `lower` while on. Both guards
+(the functions that define the events' predicates) are sign forms gated by the
+mode, so both are localized, their crossing instants found by root-finding.
+
+`out` reads no input, so the block has no feedthrough (instantaneous dependence
+of an output on an input), and a relay closing a feedback loop makes no
+algebraic loop (a cycle of instantaneous dependences). It is the library's
+reference mode-switching leaf. `out` is
+pinned at `V`: it keeps that type whatever scalar the model runs at. It depends
+on the mode and the instance alone, so it carries zero partials under every
+activation (the build's typed products at a given scalar type).
 
 Over a static vector, the thresholds, the values and the codes are
 componentwise. The block declares `N` copies of the two events, one per
-component, named `switch_on_1` to `switch_on_N`, then `switch_off_i`: each
+component, named `switch_on_1` to `switch_on_N`, then `switch_off_i`. Each
 guard reads its one component and each handler writes it.
 
-The relay starts off. Boundary zero sets every prior to not-holding (§10.6), so
-an input already at or above `upper` at `t₀` turns it on there, and an input
-between the thresholds leaves it off, which is the hysteresis itself.
+The relay starts off. Boundary zero (the initialization boundary at `t₀`) sets
+every prior (each event's sample of its guard at the previous boundary) to
+not-holding. An input already at or above `upper` at `t₀` therefore turns the
+relay on there, and an input between the thresholds leaves it off, which is the
+hysteresis itself.
+
+# Keywords
+
+- `lower`: the threshold `in` falls to for the relay to switch off, below
+  `upper`.
+- `upper`: the threshold `in` rises to for the relay to switch on.
+- `off`: the value `out` publishes while off.
+- `on`: the value `out` publishes while on. The four values are promoted to one
+  `V`, which is `Float64` or a static array of `Float64`, and taken by `float`,
+  so integer values qualify.
 """
 struct Relay{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: AbstractComponent
     lower::V      # switch off when `in` falls to it
@@ -1020,12 +1330,17 @@ end
 # --- the controller (§13.7, §5.4, D-313) ----------------------------------------
 
 """
-    AsPort()
+    AsPort() -> AsPort
 
-The marker a controller keyword takes to make its parameter an input port of
-the block in place of a field, `PID(Kp = AsPort(), Ki = 0.5)`. The port is named
-for the parameter and typed as the field would be, and it takes no part in the
-keywords' shape or sizes.
+The marker that makes a controller's parameter an input port of the block in
+place of a field.
+
+A controller keyword takes it as its value, as in `PID(Kp = AsPort(), Ki = 0.5)`.
+The port is named for the parameter and typed as the field would be, and it
+takes no part in the keywords' shape or sizes.
+
+See also [`PID`](@ref), [`DiscretePID`](@ref), [`LQRTracker`](@ref),
+[`DiscreteLQRTracker`](@ref).
 """
 struct AsPort end
 
@@ -1035,13 +1350,16 @@ const PID_PARAMETERS = (:Kp, :Ki, :Kd, :τd, :Tt, :u_min, :u_max, :b, :c)
 """
     ControllerBlock{Hold, Track}
 
-The supertype of the controller families `PIDBlock` and `LQRTrackerBlock`,
-under `AbstractComponent`. Its two parameters are the anti-windup axes, each
-adding inputs at the block's output shape: `Hold` the code `saturation` and
-the flag `engaged`, `Track` the reference `v`. Each block's law moves its
-integral term through two slots, `ε`, its integrator's input `e` as the axes
-pass it, and `ref`, the correction's reference, filled channel by channel over
-the channel's condition:
+The abstract parent of the controller blocks, which carries their two
+anti-windup axes.
+
+`ControllerBlock` subtypes `AbstractComponent`, and the two controller
+families, [`PIDBlock`](@ref) and [`LQRTrackerBlock`](@ref), subtype it. Its two
+parameters are the anti-windup axes, each adding inputs at the block's output
+shape: `Hold` the code `saturation` and the flag `engaged`, `Track` the
+reference `v`. Each block's law moves its integral term through two slots: `ε`,
+its integrator's input `e` as the axes pass it, and `ref`, the correction's
+reference. They are filled channel by channel over the channel's condition:
 
 | condition      | `ε`       | `ref`, `Track = false` | `ref`, `Track = true` |
 |:-------------- |:--------- |:---------------------- |:--------------------- |
@@ -1054,9 +1372,9 @@ A channel is free with a zero code while engaged, limited with a nonzero code
 while engaged, and not engaged while its `engaged` is false, which takes
 precedence over the code. `gate(e) = saturation == sign(e) ? 0 : e`.
 
-It carries what reads the axes alone, the axis ports, the gate on the
-integrator's input and the correction's reference, while each family carries
-its signal ports, its parameters and its blocks' stages.
+The parent carries what reads the axes alone: the axis ports, the gate on the
+integrator's input and the correction's reference. Each family carries its
+signal ports, its parameters and its blocks' stages.
 """
 abstract type ControllerBlock{Hold, Track} <: AbstractComponent end
 
@@ -1082,17 +1400,24 @@ correction_reference(::ControllerBlock{false, true}, u, y) = u.v
 correction_reference(::ControllerBlock{true, true}, u, y) =
     ifelse.(u.engaged .&& u.saturation .== 0, y.u, u.v)
 
+# Design: The parameter order is the roster `PID_PARAMETERS`.
 """
     PIDBlock{V, Hold, Track, Fixed}
 
-The supertype of the two PID blocks, `PID` on the continuous tier and
-`DiscretePID` on the discrete one, a `ControllerBlock` over the two axes. It
-carries what their law shares past the gate and the reference: the ports
-picked by the axes and by the scheduled parameters, the outputs and the
-parameters' fetch, while each block carries its field `fixed`, its store and
-its stages. `V` is the type of the parameters and the signals, a `Real` or a
-static array of them. `Fixed` is the `NamedTuple` type of the parameters given
-as values, in `PID_PARAMETERS` order.
+The abstract parent of the two PID blocks, which carries their shared ports,
+outputs and parameters.
+
+The two blocks are [`PID`](@ref) on the continuous tier and
+[`DiscretePID`](@ref) on the discrete one (the two sides of the hybrid
+formalism). `PIDBlock` is a [`ControllerBlock`](@ref) over the two anti-windup
+axes. It carries what their law shares past the gate and the reference: the
+ports picked by the axes and by the scheduled parameters, the outputs and the
+parameters' fetch. Each block carries its field `fixed`, its store and its
+stages.
+
+`V` is the type of the parameters and the signals, a `Real` or a static array
+of them. `Fixed` is the `NamedTuple` type of the parameters given as values, in
+the order `Kp`, `Ki`, `Kd`, `τd`, `Tt`, `u_min`, `u_max`, `b`, `c`.
 """
 abstract type PIDBlock{V, Hold, Track, Fixed} <: ControllerBlock{Hold, Track} end
 
@@ -1133,20 +1458,26 @@ function check_tracking(tracking, Tt)
     nothing
 end
 
+# Design: §5.4.
+# `pid_anti_windup.md` gives the reasoning, its section 4 the two axes and its
+# section 11 standby.
 """
     PID(; Kp, Ki = 0.0, Kd = 0.0, τd = 0.1, Tt = Inf, u_min = -Inf, u_max = Inf,
-          b = 1.0, c = 0.0, hold = false, tracking = false)
+          b = 1.0, c = 0.0, hold::Bool = false, tracking::Bool = false) -> PID
 
-The PID controller with anti-windup. Inputs `r` and `y`, the error `e = r - y`,
-and two outputs from stage 2: `u_raw = Kp (b r - y) + q - Kd (w - yf) / τd`, and
-`u`, its clamp to `[u_min, u_max]`. Two continuous states: `q`, the integral
+The block that runs a PID controller with anti-windup.
+
+The inputs are `r` and `y`, with the error `e = r - y`. The two outputs come
+from stage 2 (`y_direct`, the output stage that reads the inputs):
+`u_raw = Kp (b r - y) + q - Kd (w - yf) / τd`, and `u`, its clamp to
+`[u_min, u_max]`. The block holds two continuous states: `q`, the integral
 term, and `yf`, the weighted measurement `w = y - c r` through a lag,
 `ẏf = (w - yf) / τd`. One law moves the integral term,
 
     q̇ = Ki ε + (ref - u_raw) / Tt
 
 and two independent type parameters, each adding inputs, fill its slots `ε` and
-`ref` over the error `e` by the table of `ControllerBlock`.
+`ref` over the error `e` by the table of [`ControllerBlock`](@ref).
 
 `hold = true`, the parameter `Hold`, adds two inputs. `saturation` is an `Int8`
 code such as a `LimitedIntegrator` publishes for the path downstream, and gates
@@ -1162,7 +1493,7 @@ not engaged, and `u` while it is free, so a block not in command follows the
 selected command at rate `1/Tt` and engages without a bump. It chases a moving
 `v` with lag `Tt`, so a block out of command wants a short `Tt`. The default
 `Tt = Inf` follows nothing, so `tracking = true` with a `Tt` given as a value and
-infinite in any channel is refused with an `ArgumentError`: tracking needs `Tt`
+infinite in any channel is refused as an `ArgumentError`: tracking needs `Tt`
 spelled, or given as `AsPort()`, which leaves it to the model to keep finite.
 
 `q` holds the integral term in output units, with `Ki` inside the integral, so
@@ -1170,34 +1501,53 @@ a change in `Ki` alters only future accumulation. The setpoint weights `b` and
 `c` multiply `r` alone, `b` in the proportional term and `c` in the derivative's
 weighted measurement, and the integral's error stays `e`. Their defaults, `b = 1`
 and `c = 0`, put the derivative on the measurement, so a step in `r` makes no
-kick; `c = 1` puts it on the error. `τd` is positive. The defaults make the
-plain spelling a P controller: `Ki = Kd = 0`, `Tt = Inf`, which switches the
-correction off, and infinite limits.
+kick; `c = 1` puts it on the error. The defaults make the plain spelling a P
+controller: `Ki = Kd = 0`, `Tt = Inf`, which switches the correction off, and
+infinite limits.
 
 `V` is `Float64` or a static array of `Float64`. Over a static vector the law
 is componentwise: the parameters, `r`, `y`, `v`, the outputs and the states are
 each a `V`, and `saturation` and `engaged` are static vectors of `Int8` and of
-`Bool`. The nine keywords given as values broadcast to one
-`V`, whose shape is the sum of their `zero`s, so a scalar pairs with a vector
-and integer values qualify. A vector PID with
-uniform gains spells at least one keyword as a vector, `Kp = @SVector fill(2.0, 3)`.
+`Bool`. The nine keywords given as values broadcast to one `V`, whose shape is
+the sum of their `zero`s, so a scalar pairs with a vector and integer values
+qualify. A vector PID with uniform gains spells at least one keyword as a
+vector, `Kp = @SVector fill(2.0, 3)`.
 
 Any of the nine parameters may be an input port in place of a field, spelled
-`Kp = AsPort()`. The port is named for the parameter and typed `V`, and it takes
-no part in the shape, so when every value-carrying keyword is a port, `V` is
-`Float64`. Under a `Dual` activation a scheduled parameter carries partials, so
-a linearization sees the coupling through the schedule; a model that wants it
-frozen at its nominal value routes the port through `Freeze`.
+`Kp = AsPort()` with [`AsPort`](@ref). The port is named for the parameter and
+typed `V`, and it takes no part in the shape, so when every value-carrying
+keyword is a port, `V` is `Float64`. Under a `Dual` activation (the build's
+typed products at a given scalar type), a scheduled parameter carries partials,
+so a linearization sees the coupling through the schedule. A model that wants
+it frozen at its plain `Float64` value routes the port through
+[`Freeze`](@ref).
 
-`u` is a stage-2 output, so every input makes a feedthrough edge, whether
-`y_direct` reads it or not. A tracking input wired from a memoryless clamp of
-the block's own `u` is refused as an `AlgebraicCycle` classified artificial
-(§5.4). That is why the limits live inside the block. `v` serves a value
-published from state, such as a stateful actuator's position. A scheduled
-parameter computed memorylessly from `u` closes a cycle too, artificial for `Ki`
-and `Tt`, which only the derivative reads, and real for the others. One read
-from a state is fine. `pid_anti_windup.md` gives the reasoning, its section 4
-the two axes and its section 11 standby.
+`u` is a stage-2 output, so every input makes a feedthrough edge (an
+instantaneous dependence of an output on an input), whether `y_direct` reads it
+or not. A tracking input wired from a memoryless clamp of the block's own `u` is
+refused as an `AlgebraicCycle` classified artificial (acyclic between ports but
+cyclic between stages). That is why the limits live inside the block. `v`
+serves a value published from state, such as a stateful actuator's position. A
+scheduled parameter computed memorylessly from `u` closes a cycle too,
+artificial for `Ki` and `Tt`, which only the derivative reads, and real for the
+others. One read from a state is fine.
+
+# Keywords
+
+- `Kp`: the proportional gain.
+- `Ki`: the integral gain, inside the integral.
+- `Kd`: the derivative gain.
+- `τd`: the time constant of the derivative's lag, positive.
+- `Tt`: the time constant of the correction, `Inf` to switch it off.
+- `u_min`: the lower limit of `u`.
+- `u_max`: the upper limit of `u`.
+- `b`: the setpoint weight in the proportional term.
+- `c`: the setpoint weight in the derivative's weighted measurement.
+- `hold`: `true` to add the inputs `saturation` and `engaged`, the parameter
+  `Hold`.
+- `tracking`: `true` to add the input `v`, the parameter `Track`.
+
+See also [`DiscretePID`](@ref), [`PIDBlock`](@ref), [`LQRTracker`](@ref).
 """
 struct PID{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, Hold, Track, Fixed} <:
        PIDBlock{V, Hold, Track, Fixed}
@@ -1225,43 +1575,52 @@ function x_deriv(c::PID, (; x, u, y))
      yf = (u.y - p.c .* u.r - x.yf) ./ p.τd)
 end
 
+# Design: §10.5, §13.8.
+# `pid_anti_windup.md`, sections 9 to 11, gives the reasoning.
 """
     DiscretePID(; Kp, Ki = 0.0, Kd = 0.0, τd = 0.1, Tt = Inf, u_min = -Inf, u_max = Inf,
-                  b = 1.0, c = 0.0, hold = false, tracking = false)
+                  b = 1.0, c = 0.0, hold::Bool = false, tracking::Bool = false) -> DiscretePID
 
-The PID controller with anti-windup on the discrete tier: `PID`'s parameters,
-defaults, ports and law, with two store fields in place of its continuous
-states, `q`, the integral term, and `yf`, the weighted measurement `w = y - c r`
-through a lag, and a third, `saturated`, holding its code. `Δt` is the
-component's own period (§10.5). Inputs `r` and `y`, the error `e = r - y`, and
-two outputs from stage 2:
-`u_raw = Kp (b r - y) + q - Kd (w - yf) / (τd + Δt)`, and `u`, its clamp to
-`[u_min, u_max]`. Each tick moves the lag by backward Euler,
+The discrete block that runs a PID controller with anti-windup.
+
+The block takes the parameters, defaults, ports and law of [`PID`](@ref) to the
+discrete tier (the discrete side of the hybrid formalism). Two store fields
+stand in for its continuous states: `q`, the integral term, and `yf`, the
+weighted measurement `w = y - c r` through a lag. A third, `saturated`, holds
+its code. `Δt` is the component's own period. The inputs are `r` and `y`, with
+the error `e = r - y`. The two outputs come from stage 2 (`y_direct`, the output
+stage that reads the inputs): `u_raw = Kp (b r - y) + q - Kd (w - yf) / (τd + Δt)`,
+and `u`, its clamp to `[u_min, u_max]`. Each tick (an instant at which a
+discrete component runs) moves the lag by backward Euler,
 `yf⁺ = yf + Δt (w - yf) / (τd + Δt)`, and the integral term by forward Euler
 and the correction's exact step,
 
     q⁺ = q + Δt Ki ε + β (ref - u_raw),    β = 1 - exp(-Δt / Tt)
 
-with its slots `ε` and `ref` filled over `PID`'s two type parameters by the
-table of `ControllerBlock`. `hold` adds the inputs `saturation` and `engaged`,
-and a block not engaged without tracking freezes; `tracking` adds the input `v`,
-with the hold the reference falls back to `u` while the block is free, and a
-`Tt` given infinite in any channel is refused with it; all as in `PID`.
-The setpoint weights `b` and `c` multiply `r` alone, as in `PID`, and the
-integral's error stays `e`.
+with its slots `ε` and `ref` filled over the two type parameters of `PID` by
+the table of [`ControllerBlock`](@ref).
+
+`hold` adds the inputs `saturation` and `engaged`, and a block not engaged
+without tracking freezes. `tracking` adds the input `v`. With the hold, the
+reference falls back to `u` while the block is free, and a `Tt` given infinite
+in any channel is refused with it as an `ArgumentError`. All of this is as in
+`PID`. The setpoint weights `b` and `c` multiply `r` alone, as in `PID`, and
+the integral's error stays `e`.
 
 `V` is `Float64` or a static array of `Float64`, and over a static vector the
 law is componentwise, as in `PID`. The nine keywords given as values broadcast
-to one `V` by `PID`'s rule, the shape the sum of their `zero`s, so a scalar
-pairs with a vector, and a uniform vector gain spells one keyword as a vector,
-`Kp = @SVector fill(2.0, 3)`. Any parameter may be an input port, spelled
-`Kp = AsPort()`, typed `V` and outside the shape; it carries partials under a
-`Dual` activation, and `Freeze` holds it at its nominal value, as in `PID`.
+to one `V` by the rule of `PID`, the shape the sum of their `zero`s. A scalar
+therefore pairs with a vector, and a uniform vector gain spells one keyword as a
+vector, `Kp = @SVector fill(2.0, 3)`. Any parameter may be an input port,
+spelled `Kp = AsPort()` with [`AsPort`](@ref), typed `V` and outside the shape.
+It carries partials under a `Dual` activation (the build's typed products at a
+given scalar type), and [`Freeze`](@ref) holds it at its plain `Float64` value,
+as in `PID`.
 
 The backward Euler lag is stable at every period, and `τd = 0` is legal: `yf`
 is then the previous weighted measurement, and the D term the backward
 difference `(w - yf) / Δt`. `β` is the exact step of the correction's relaxation
-over one period, so every `Tt` is stable: `Tt = Inf` switches the correction
+over one period, so every `Tt` is stable. `Tt = Inf` switches the correction
 off, and `Tt = 0` is legal and brings `u_raw` to the reference by the next
 tick, the clamping scheme as the limit of tracking. Not engaged with tracking,
 `Tt = 0` follows `v` exactly.
@@ -1269,19 +1628,38 @@ tick, the clamping scheme as the limit of tracking. Not engaged with tracking,
 A third output, `saturated`, publishes the `Int8` code of the block's own
 clamp: `1` with `u_raw` at or above `u_max`, `-1` at or below `u_min` and `0`
 between, a static vector of `Int8` over a vector. `s_update` writes it to the
-store from `u_raw` at the tick, and `y_state` publishes it from stage 1 at the
-next, so it is one tick stale and flips only on a tick boundary. It serves the
-hold of an outer block in a cascade, wired to its input `saturation`, whose
-integrator takes one extra step before the hold engages, and as a stage-1 port
-it closes no cycle through the outer block's `u`. The block never reads its own
-code, since its own windup is the correction's. `PID` publishes no code, since
-a continuous one would need a mode and events.
+store from `u_raw` at the tick, and `y_state` publishes it from stage 1 (the
+output stage that reads no input) at the next. It is therefore one tick stale,
+and flips only on a tick boundary. It serves the hold of an outer block in a
+cascade, wired to its input `saturation`, whose integrator takes one extra step
+before the hold engages. As a stage-1 port it closes no cycle through the outer
+block's `u`. The block never reads its own code, since its own windup is the
+correction's. `PID` publishes no code, since a continuous one would need a mode
+and events.
 
 A tracking input wired from a memoryless clamp of the block's own `u` is
 refused as an `AlgebraicCycle`, as for `PID`, but classified real: a discrete
-member traces structurally (§13.8), so no hop is named dead. A scheduled
-parameter computed memorylessly from `u` closes a cycle likewise.
-`pid_anti_windup.md`, sections 9 to 11, gives the reasoning.
+member's dependences are traced from its structure, so no hop (a step of the
+cycle through one member) is named dead. A scheduled parameter computed memorylessly from `u` closes a cycle likewise.
+
+# Keywords
+
+- `Kp`: the proportional gain.
+- `Ki`: the integral gain, inside the integral.
+- `Kd`: the derivative gain.
+- `τd`: the time constant of the derivative's lag, `0` for the backward
+  difference.
+- `Tt`: the time constant of the correction, `Inf` to switch it off and `0` to
+  correct within one tick.
+- `u_min`: the lower limit of `u`.
+- `u_max`: the upper limit of `u`.
+- `b`: the setpoint weight in the proportional term.
+- `c`: the setpoint weight in the derivative's weighted measurement.
+- `hold`: `true` to add the inputs `saturation` and `engaged`, the parameter
+  `Hold`.
+- `tracking`: `true` to add the input `v`, the parameter `Track`.
+
+See also [`PIDBlock`](@ref), [`DiscreteLQRTracker`](@ref).
 """
 struct DiscretePID{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, Hold, Track, Fixed} <:
        PIDBlock{V, Hold, Track, Fixed}
@@ -1318,17 +1696,25 @@ end
 # The tracker's parameters, in the order `Fixed` and `parameters` lay them out.
 const LQR_PARAMETERS = (:K_fbk, :K_fwd, :K_int, :x_trim, :u_trim, :z_trim, :Tt, :u_min, :u_max)
 
+# Design: The parameter order is the roster `LQR_PARAMETERS`.
 """
     LQRTrackerBlock{NX, NU, NZ, Hold, Track, Fixed}
 
-The supertype of the two LQR trackers, `LQRTracker` on the continuous tier and
-`DiscreteLQRTracker` on the discrete one, a `ControllerBlock` over the two
-axes. `NX`, `NU` and `NZ` are the sizes of the plant state, the control input
-and the command variables. It carries what their law shares past the gate and
-the reference: the ports picked by the axes and by the scheduled parameters,
-the outputs and the parameters' fetch, while each block carries its field
-`fixed`, its store and its stages. `Fixed` is the `NamedTuple` type of the
-parameters given as values, in `LQR_PARAMETERS` order.
+The abstract parent of the two LQR trackers, which carries their shared ports,
+outputs and parameters.
+
+The two trackers are [`LQRTracker`](@ref) on the continuous tier and
+[`DiscreteLQRTracker`](@ref) on the discrete one (the two sides of the hybrid
+formalism). `LQRTrackerBlock` is a [`ControllerBlock`](@ref) over the two
+anti-windup axes. It carries what their law shares past the gate and the
+reference: the ports picked by the axes and by the scheduled parameters, the
+outputs and the parameters' fetch. Each block carries its field `fixed`, its
+store and its stages.
+
+`NX`, `NU` and `NZ` are the sizes of the plant state, the control input and the
+command variables. `Fixed` is the `NamedTuple` type of the parameters given as
+values, in the order `K_fbk`, `K_fwd`, `K_int`, `x_trim`, `u_trim`, `z_trim`,
+`Tt`, `u_min`, `u_max`.
 """
 abstract type LQRTrackerBlock{NX, NU, NZ, Hold, Track, Fixed} <: ControllerBlock{Hold, Track} end
 
@@ -1386,26 +1772,32 @@ function check_shapes(types, given)
     nothing
 end
 
+# Design: `lqr_tracker.md` gives the derivation and the reasoning. The keyword
+# order is the roster `LQR_PARAMETERS`.
 """
-    LQRTracker(; K_fbk, K_fwd, K_int = zeros, x_trim = zeros, u_trim = zeros, z_trim = zeros,
-                 Tt = Inf, u_min = -Inf, u_max = Inf, hold = false, tracking = false)
-    LQRTracker{NX, NU, NZ}(; K_fbk, K_fwd, …)
+    LQRTracker(; K_fbk, K_fwd, kw...) -> LQRTracker
+    LQRTracker{NX, NU, NZ}(; K_fbk, K_fwd, K_int = zero(SMatrix{NU, NZ, Float64}),
+                           x_trim = zero(SVector{NX, Float64}), u_trim = zero(SVector{NU, Float64}),
+                           z_trim = zero(SVector{NZ, Float64}), Tt = Inf, u_min = -Inf, u_max = Inf,
+                           hold::Bool = false, tracking::Bool = false) -> LQRTracker{NX, NU, NZ}
 
-The LQR tracker about a trim point, with anti-windup. Inputs `x`, the plant
-state, `z`, the command variables, and `z_ref`, their reference, and two
-outputs from stage 2,
+The block that runs an LQR tracker about a trim point, with anti-windup.
+
+The inputs are `x`, the plant state, `z`, the command variables, and `z_ref`,
+their reference. The two outputs come from stage 2 (`y_direct`, the output
+stage that reads the inputs),
 
     u_raw = u_trim + K_fwd (z_ref - z_trim) - K_fbk (x - x_trim) + q
 
-and `u`, its clamp to `[u_min, u_max]` per channel. One continuous state, `q`,
-the integral term in output units, one channel per control input. One law
-moves it,
+and `u`, its clamp to `[u_min, u_max]` per channel. The block holds one
+continuous state, `q`, the integral term in output units, one channel per
+control input. One law moves it,
 
     q̇ = ε + (ref - u_raw) / Tt
 
-and `PID`'s two type parameters, each adding inputs, fill its slots `ε` and
-`ref` over the integrator input `e = K_int (z_ref - z)`, channel by channel, by
-the table of `ControllerBlock`.
+and the two type parameters of [`PID`](@ref), each adding inputs, fill its
+slots `ε` and `ref` over the integrator input `e = K_int (z_ref - z)`, channel
+by channel, by the table of [`ControllerBlock`](@ref).
 
 `hold = true`, the parameter `Hold`, adds two inputs. `saturation`, a code per
 channel from the path downstream, gates each channel whose code agrees with the
@@ -1414,51 +1806,72 @@ sign of its integrator input: `gate(e) = saturation == sign(e) ? 0 : e`.
 input of a channel not engaged whatever its code. Without tracking, a channel
 not engaged freezes, its own clamp's correction alone moving it.
 `tracking = true`, the parameter `Track`, adds the input `v` as the
-correction's reference in place of the own `u`; with the hold, `v` is the
+correction's reference in place of the own `u`. With the hold, `v` is the
 reference in a channel only while it is limited or not engaged, so a channel
 not engaged converges to `v` at rate `1/Tt` and engagement is bumpless. The own
-clamp is the correction's, and `Tt = Inf` switches it off; tracking with a `Tt`
-given as a value and infinite in any channel is refused with an
-`ArgumentError`, as for `PID`.
+clamp is the correction's, and `Tt = Inf` switches it off. Tracking with a `Tt`
+given as a value and infinite in any channel is refused as an `ArgumentError`,
+as for `PID`.
 
 The ports are static vectors at every size: `x` at `SVector{NX, Float64}`, `z`
 and `z_ref` at `SVector{NZ, Float64}`, `u`, `u_raw` and `v` at
 `SVector{NU, Float64}`, `saturation` at `SVector{NU, Int8}`, and `engaged` at
 `SVector{NU, Bool}`.
 
-The nine parameters, in `LQR_PARAMETERS` order: `K_fbk`, `NU × NX`, and `K_fwd`
-and `K_int`, `NU × NZ`, each any `AbstractMatrix` of reals stored as a static
-matrix of `Float64`; `x_trim`, `u_trim` and `z_trim`, vectors of length `NX`,
-`NU` and `NZ`; and `Tt`, `u_min` and `u_max` per channel, each a real broadcast
-to an `SVector{NU, Float64}` or a vector of length `NU`. Integer entries
-qualify. `K_int` and the trims default to zero, and a zero `K_int` is the
-tracker without integral action. Any of the nine may be an input port in place
-of a field, spelled `K_fbk = AsPort()` and typed as the field would be, an
+Any of the nine parameters may be an input port in place of a field, spelled
+`K_fbk = AsPort()` with [`AsPort`](@ref) and typed as the field would be, an
 `SMatrix{NU, NX, Float64, NU * NX}` for `K_fbk`. That is how a gain schedule
-reaches the block: under a `Dual` activation the port carries partials, and a
-model that wants it frozen at its nominal value routes it through `Freeze`.
+reaches the block. Under a `Dual` activation (the build's typed products at a
+given scalar type), the port carries partials, and a model that wants it frozen
+at its plain `Float64` value routes it through [`Freeze`](@ref).
 
-The keyword constructor reads `NX`, `NU` and `NZ` off the values given,
-`K_fbk` first, then `K_fwd`, `K_int` and the trims, and refuses with an
-`ArgumentError` a matrix or a vector that does not fit the sizes read. A size
-no value carries, every carrier a port or left at its default, is refused
-likewise, naming the explicit spelling `LQRTracker{NX, NU, NZ}(; …)`, which
-takes the sizes and the same keywords.
+The first form reads `NX`, `NU` and `NZ` off the values given, `K_fbk` first,
+then `K_fwd`, `K_int` and the trims, and passes `kw...` on to the second, the
+explicit spelling, which takes the sizes and the same keywords. A matrix or a
+vector that does not fit the sizes read is refused as an `ArgumentError`. A
+size no value carries, every carrier a port or left at its default, is refused
+likewise, naming the explicit spelling.
 
-`u` is a stage-2 output, so every input makes a feedthrough edge, whether
-`y_direct` reads it or not. An `x` assembled from what the plant publishes from
-state, and a `z` selected from the same, close no loop. A `z_ref` computed
-memorylessly from the block's own `u` closes an `AlgebraicCycle` classified
-real, since the direct law reads it. A tracking input wired from a memoryless
-clamp of `u` closes one classified artificial, since only the derivative reads
-it, which is why the limits live inside the block. A scheduled parameter
-computed memorylessly from `u` closes a cycle too, artificial for `K_int` and
-`Tt` and real for the others.
+`u` is a stage-2 output, so every input makes a feedthrough edge (an
+instantaneous dependence of an output on an input), whether `y_direct` reads it
+or not. An `x` assembled from what the plant publishes from state, and a `z`
+selected from the same, close no loop. A `z_ref` computed memorylessly from the
+block's own `u` closes an `AlgebraicCycle` classified real, since the direct
+law reads it. A tracking input wired from a memoryless clamp of `u` closes one
+classified artificial (acyclic between ports but cyclic between stages), since
+only the derivative reads it, which is why the limits live inside the block. A
+scheduled parameter computed memorylessly from `u` closes a cycle too,
+artificial for `K_int` and `Tt` and real for the others.
 
 The block publishes no saturation code, since a continuous one would need a
 mode and events per channel for a consumer that does not exist. The gains are
-designed outside, from `trim!` and `linearize`. `lqr_tracker.md` gives the
-derivation and the reasoning.
+designed outside, from [`trim!`](@ref Redstone.trim!) and
+[`linearize`](@ref Redstone.linearize).
+
+# Keywords
+
+The nine parameters come in this order.
+
+- `K_fbk`: the `NU × NX` feedback gain, any `AbstractMatrix` of reals stored as
+  a static matrix of `Float64`.
+- `K_fwd`: the `NU × NZ` feedforward gain, stored likewise.
+- `K_int`: the `NU × NZ` integral gain, stored likewise. A zero `K_int` is the
+  tracker without integral action.
+- `x_trim`: the plant state at trim, a vector of length `NX`.
+- `u_trim`: the control input at trim, a vector of length `NU`.
+- `z_trim`: the command variables at trim, a vector of length `NZ`.
+- `Tt`: the time constant of the correction per channel, `Inf` to switch it off.
+- `u_min`: the lower limit of `u` per channel.
+- `u_max`: the upper limit of `u` per channel.
+- `hold`: `true` to add the inputs `saturation` and `engaged`, the parameter
+  `Hold`.
+- `tracking`: `true` to add the input `v`, the parameter `Track`.
+
+`K_int` and the trims default to zero. `Tt`, `u_min` and `u_max` are each a real
+broadcast to an `SVector{NU, Float64}`, or a vector of length `NU`. Integer
+entries qualify.
+
+See also [`DiscreteLQRTracker`](@ref), [`LQRTrackerBlock`](@ref).
 """
 struct LQRTracker{NX, NU, NZ, Hold, Track, Fixed} <: LQRTrackerBlock{NX, NU, NZ, Hold, Track, Fixed}
     fixed::Fixed      # the parameters that are not ports, each at its type, in roster order
@@ -1487,54 +1900,82 @@ function x_deriv(c::LQRTracker, (; x, u, y))
     (q = gated_error(c, p.K_int * (u.z_ref - u.z), u) + (correction_reference(c, u, y) - y.u_raw) ./ p.Tt,)
 end
 
+# Design: §10.5, §13.8.
+# `lqr_tracker.md`, sections 4, 6 and 7, gives the reasoning.
 """
-    DiscreteLQRTracker(; K_fbk, K_fwd, K_int = zeros, x_trim = zeros, u_trim = zeros, z_trim = zeros,
-                         Tt = Inf, u_min = -Inf, u_max = Inf, hold = false, tracking = false)
-    DiscreteLQRTracker{NX, NU, NZ}(; K_fbk, K_fwd, …)
+    DiscreteLQRTracker(; K_fbk, K_fwd, kw...) -> DiscreteLQRTracker
+    DiscreteLQRTracker{NX, NU, NZ}(; K_fbk, K_fwd, K_int = zero(SMatrix{NU, NZ, Float64}),
+                                   x_trim = zero(SVector{NX, Float64}), u_trim = zero(SVector{NU, Float64}),
+                                   z_trim = zero(SVector{NZ, Float64}), Tt = Inf, u_min = -Inf, u_max = Inf,
+                                   hold::Bool = false, tracking::Bool = false) -> DiscreteLQRTracker{NX, NU, NZ}
 
-The LQR tracker on the discrete tier: `LQRTracker`'s parameters, defaults,
-ports, outputs and law, with a store field `q` in place of its continuous
-state, and a second, `saturated`, holding its code. `Δt` is the component's own
-period (§10.5). Inputs `x`, `z` and `z_ref`, and two outputs from stage 2,
+The discrete block that runs an LQR tracker about a trim point, with anti-windup.
+
+The block takes the parameters, defaults, ports, outputs and law of
+[`LQRTracker`](@ref) to the discrete tier (the discrete side of the hybrid
+formalism). A store field `q` stands in for its continuous state, and a second,
+`saturated`, holds its code. `Δt` is the component's own period. The inputs are
+`x`, `z` and `z_ref`, and the two outputs come from stage 2 (`y_direct`, the
+output stage that reads the inputs),
 
     u_raw = u_trim + K_fwd (z_ref - z_trim) - K_fbk (x - x_trim) + q
 
-and `u`, its clamp to `[u_min, u_max]` per channel. Each tick moves the
-integral term by forward Euler and the correction's exact step,
+and `u`, its clamp to `[u_min, u_max]` per channel. Each tick (an instant at
+which a discrete component runs) moves the integral term by forward Euler and
+the correction's exact step,
 
     q⁺ = q + Δt ε + β (ref - u_raw),    β = 1 - exp(-Δt / Tt)
 
 with its slots `ε` and `ref` filled over the two type parameters and the
 integrator input `e = K_int (z_ref - z)`, channel by channel, by the table of
-`ControllerBlock`. `hold` adds the inputs `saturation` and `engaged`, and a
-channel not engaged without tracking freezes; `tracking` adds the input `v`,
-with the hold the reference falls back to `u` in each channel that is free, and
-a `Tt` given infinite in any channel is refused with it; all as in
-`LQRTracker`. Every `Tt` is stable: `Tt = Inf` switches the correction off, and
-`Tt = 0` is legal and brings `u_raw` to the reference by the next tick, so a
-channel not engaged with tracking follows `v` exactly.
+[`ControllerBlock`](@ref).
 
-The ports, the nine parameters and their types, the `AsPort()` spelling, the
-size inference and the explicit spelling `DiscreteLQRTracker{NX, NU, NZ}(; …)`
-are `LQRTracker`'s, and so are the refusals.
+`hold` adds the inputs `saturation` and `engaged`, and a channel not engaged
+without tracking freezes. `tracking` adds the input `v`. With the hold, the
+reference falls back to `u` in each channel that is free, and a `Tt` given
+infinite in any channel is refused with it as an `ArgumentError`. All of this
+is as in `LQRTracker`. Every `Tt` is stable: `Tt = Inf` switches the correction
+off, and `Tt = 0` is legal and brings `u_raw` to the reference by the next
+tick, so a channel not engaged with tracking follows `v` exactly.
+
+The ports, the nine parameters and their types, the [`AsPort`](@ref) spelling,
+the size inference and the explicit spelling, the second form, are those of
+`LQRTracker`, and so are the refusals.
 
 A third output, `saturated`, publishes the `Int8` code of the block's own clamp
 per channel at `SVector{NU, Int8}`: `1` with `u_raw` at or above `u_max`, `-1`
 at or below `u_min` and `0` between. `s_update` writes it to the store from
-`u_raw` at the tick, and `y_state` publishes it from stage 1 at the next, so it
-is one tick stale and flips only on a tick boundary. It serves the hold of an
-outer block in a cascade, wired to its input `saturation`, each channel
-reaching a scalar consumer through `Unpack{Int8, NU}`; the outer integrator
-takes one extra step before the hold engages, and as a stage-1 port the code
-closes no cycle through the outer block's `u`. The block never reads its own
-code, since its own windup is the correction's.
+`u_raw` at the tick, and `y_state` publishes it from stage 1 (the output stage
+that reads no input) at the next. It is therefore one tick stale, and flips only
+on a tick boundary. It serves the hold of an outer block in a cascade, wired to
+its input `saturation`, each channel reaching a scalar consumer through
+[`Unpack`](@ref)`{Int8, NU}`. The outer integrator takes one extra step before
+the hold engages, and as a stage-1 port the code closes no cycle through the
+outer block's `u`. The block never reads its own code, since its own windup is
+the correction's.
 
-`u` is a stage-2 output, so every input makes a feedthrough edge, as for
-`LQRTracker`. A `z_ref` or a tracking input computed memorylessly from the
-block's own `u` is refused as an `AlgebraicCycle` classified real: a discrete
-member traces structurally (§13.8), so no hop is named dead. A scheduled
-parameter computed memorylessly from `u` closes a cycle likewise.
-`lqr_tracker.md`, sections 4, 6 and 7, gives the reasoning.
+`u` is a stage-2 output, so every input makes a feedthrough edge (an
+instantaneous dependence of an output on an input), as for `LQRTracker`. A
+`z_ref` or a tracking input computed memorylessly from the block's own `u` is
+refused as an `AlgebraicCycle` classified real: a discrete member's dependences
+are traced from its structure, so no hop (a step of the cycle through one
+member) is named dead. A scheduled parameter computed memorylessly from `u`
+closes a cycle likewise.
+
+# Keywords
+
+The keywords are those of `LQRTracker`, with the same meanings and defaults.
+
+- `K_fbk`, `K_fwd`, `K_int`: the feedback, feedforward and integral gains.
+- `x_trim`, `u_trim`, `z_trim`: the trim point.
+- `Tt`: the time constant of the correction per channel, `Inf` to switch it off
+  and `0` to correct within one tick.
+- `u_min`, `u_max`: the limits of `u` per channel.
+- `hold`: `true` to add the inputs `saturation` and `engaged`, the parameter
+  `Hold`.
+- `tracking`: `true` to add the input `v`, the parameter `Track`.
+
+See also [`LQRTrackerBlock`](@ref), [`DiscretePID`](@ref).
 """
 struct DiscreteLQRTracker{NX, NU, NZ, Hold, Track, Fixed} <: LQRTrackerBlock{NX, NU, NZ, Hold, Track, Fixed}
     fixed::Fixed      # the parameters that are not ports, each at its type, in roster order
@@ -1571,23 +2012,32 @@ end
 
 # --- the anonymous assembly (§8.5, D-211) -------------------------------------
 
+# Design: D-211.
+# It needs no new rule: the container-children rule makes the `children`
+# field's elements children of the `Group` itself.
 """
-`Group`: the library's on-the-fly assembly, whose *values* are the ad-hoc
-topologies. It needs no new rule — the container-children rule makes the
-`children` field's elements children of the `Group` itself, and the four
-declarations are ordinary functions of the instance, free to read its fields.
+    Group
 
-The one declaration it adds is `transparent_container` (D-211): `children` is
-name-transparent, so its elements go by **bare key** everywhere a child name
-appears — `"ctl/out" => "plant/u"` for a wire, `(ctl = Relative(2),)` for a rate,
-`at("ctl", …)` for a condition prefix, `"plant/y"` for a read path. A `Group`'s
-declarations are then textually identical to a named assembly's; the rate
-declaration's field-name sugar, keying on the field rather than on a path
+The library's on-the-fly assembly, whose values are the ad-hoc topologies.
+
+A `Group` is an assembly (a component of pure composition) that holds its
+children and its declarations as field values. The elements of its `children`
+field, a `NamedTuple` of components, are its children. Its
+[`local_wires`](@ref), [`input_wires`](@ref), [`output_wires`](@ref) and
+[`sample_times`](@ref) are ordinary functions of the instance, which return its
+fields.
+
+The one declaration it adds is [`transparent_container`](@ref): `children` is
+name-transparent, so its elements go by bare key everywhere a child name
+appears. That is `"ctl/out" => "plant/u"` for a wire, `(ctl = Relative(2),)` for
+a rate, `at("ctl", …)` for a condition prefix and `"plant/y"` for a read path. A
+`Group`'s declarations are then textually identical to a named assembly's. The
+rate declaration's field-name sugar, keying on the field rather than on a path
 segment, keeps working as `(children = Relative(2),)` for the uniform case.
 
-The type parameters carry the children's concrete types, so the executor's
-specialization is unchanged; what is given up against a named type is dispatch,
-which exploratory composition does not want.
+The type parameters carry the children's concrete types, so the executor
+specializes on them as on a named assembly. What a `Group` gives up against a
+named type is dispatch, which exploratory composition does not want.
 """
 struct Group{C <: NamedTuple, W, I, O, R <: NamedTuple} <: AbstractComponent
     children::C       # component-typed elements → children by the container rule
@@ -1599,12 +2049,24 @@ end
 
 """
     Group(children; local_wires = (), input_wires = (), output_wires = (),
-          sample_times = (;))
+          sample_times = (;)) -> Group
 
-The convenience form. Each keyword takes the name of the declaration it feeds.
-A bare `Pair` passed for `local_wires`, `input_wires` or `output_wires` is the
-one-entry tuple — the declarations are ordered collections of pairs, and a
-single wire should not have to be written `("a/x" => "b/y",)`.
+Return a `Group` over `children`, with each assembly declaration given by the
+keyword of its name.
+
+This is the convenience form. A bare `Pair` passed for `local_wires`,
+`input_wires` or `output_wires` is the one-entry tuple. The declarations are
+ordered collections of pairs, and a single wire should not have to be written
+`("a/x" => "b/y",)`.
+
+# Keywords
+
+- `local_wires`: the wires between children, as [`local_wires`](@ref) returns
+  them.
+- `input_wires`: the inward boundary, as [`input_wires`](@ref) returns it.
+- `output_wires`: the outward boundary, as [`output_wires`](@ref) returns it.
+- `sample_times`: the rates of the children, keyed by bare child name, as
+  [`sample_times`](@ref) returns them.
 """
 Group(children; local_wires = (), input_wires = (), output_wires = (),
       sample_times = (;)) =
