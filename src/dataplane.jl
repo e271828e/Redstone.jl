@@ -280,15 +280,29 @@ end
 "§12.2's staleness threshold, in seconds of wall clock: advisory, a display rule, never a kill trigger."
 const STALE_S = 2.0
 
+# Design: §12.2. The never-heartbeated cell holds `0.0`, which reads stale
+# unconditionally.
 """
-    stale(record::WriterStatus; now = time())
+    stale(record::WriterStatus; now::Float64 = time()) -> Bool
 
-§12.2's liveness read: a device whose heartbeat is more than `STALE_S` behind
-wall clock — deliberately loose, tolerating a device legitimately parked in a
-blocking read between rare data. A starved, blocked or crashed device shows
-as a stale heartbeat with a name on it, not as mysteriously frozen physics;
-the never-heartbeated cell's `0.0` reads stale unconditionally. `false` for
-the harness's and the loop's records, which have no heartbeat to judge.
+Return `true` when the record's device heartbeat lags the wall clock by more
+than `STALE_S`, two seconds.
+
+The heartbeat (the timestamp a device's task stores on every loop pass) is the
+liveness read. The threshold is deliberately loose, so a device parked in a
+blocking read between rare data is not stale. A starved, blocked or crashed
+device then shows as a stale heartbeat with a name on it, not as physics that
+froze for no visible reason. A device that has not beaten since attach reads
+stale whatever `now` is. The records of the harness writer and of the loop have
+no heartbeat to judge, and return `false`.
+
+# Keywords
+
+- `now`: the wall-clock time the heartbeat is judged against, in seconds as
+  `time()` gives them.
+
+See [`orphaned`](@ref) for a device whose task has ended, and
+[`incumbent_status`](@ref) for the record a panel reads.
 """
 stale(record::WriterStatus; now::Float64 = time()) =
     record.heartbeat !== nothing && now - record.heartbeat > STALE_S
@@ -477,6 +491,24 @@ struct Snapshot{T,S<:StoreBundle}
     status::FrameworkStatus
 end
 
+# Design: §11.2.
+"""
+    port(snapshot::Snapshot, path::String, name::Symbol)
+
+Return a port's value in the snapshot's signal table, as published at its
+boundary.
+
+A snapshot (the immutable per-boundary publication) carries the whole signal
+table, the framework-owned collection of cells holding every produced signal,
+root inputs included. A port (the addressable unit of the model: one declared
+name, one cell) is addressed exactly as in the live table, by its component's
+path and its name, and an assembly's own path addresses its faces. Nothing in a
+published snapshot is written again, so the read is safe from any task.
+
+A snapshot carries no state, only ports. For a port's live value, see
+`port(sim, path, name)` and `port(model, path, name)`, and for snapshots
+themselves, [`latest`](@ref) and [`logged`](@ref).
+"""
 port(snapshot::Snapshot, path::String, name::Symbol) =
     gather_cell(snapshot.store, snapshot.layout.addr[(path, name)])
 
