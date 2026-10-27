@@ -488,23 +488,23 @@ _ports(entry::ComponentOutputs) = vcat(entry.stage1, entry.stage2)
 """
     Outputs
 
-The output port names each component's stages produce, and the order the
-components run in.
+The output [port](@ref g-port) names each [component](@ref g-component)'s stages
+produce, and the order the components run in.
 
-`Outputs` is a product of the nominal evaluation (the build's one probing pass
-at `Float64`), read off a [`Build`](@ref) as `build.outputs`. Its `components`
-field holds one entry per component, in the order the build walks the tree.
-Each entry carries the component's `path`, the ports [`y_state`](@ref) returns
-as `stage1`, in the return's order, and the declared remainder, in
-[`y_types`](@ref) order, as `stage2`. Their concatenation is the order of the
-component's products. The `order` field is the execution order (the order the
-stage functions run in) over the indices of `components`.
+`Outputs` is a product of the [nominal evaluation](@ref g-nominal), read off a
+[`Build`](@ref) as `build.outputs`. Its `components` field holds one entry per
+component, in the order the build walks the tree. Each entry carries the
+component's `path`, the ports [`y_state`](@ref) returns as `stage1`, in the
+return's order, and the declared remainder, in [`y_types`](@ref) order, as
+`stage2`. Their concatenation is the order of the component's products. The
+`order` field is the [execution order](@ref g-execution-order) over the indices
+of `components`.
 
 `Outputs` holds names only and does not depend on the scalar type, so a reader
 that wants a list of port names takes it from here rather than from an
-activation (the build's typed products at one scalar type). The feedthrough
-graph the order was computed over is not carried. Where it is shown, it is
-derived from the [`Structure`](@ref)'s connections and the producers' `stage2`.
+[activation](@ref g-activation). The [feedthrough](@ref g-feedthrough) graph the
+order was computed over is not carried. Where it is shown, it is derived from
+the [`Structure`](@ref)'s connections and the producers' `stage2`.
 """
 struct Outputs
     components::Vector{ComponentOutputs}   # in walk order; the index is `ci`
@@ -529,21 +529,22 @@ end
 """
     Events
 
-The detection policy of each component's events, and the field names of its
-event bundle.
+The detection policy of each [component](@ref g-component)'s events, and the
+field names of its event [bundle](@ref g-bundle).
 
-`Events` is the other product of the nominal evaluation (the build's one
-probing pass at `Float64`), read off a [`Build`](@ref) as `build.events`. Its
-`components` field holds one entry per component, in the order the build walks
-the tree, so one index addresses it and [`Outputs`](@ref) alike. Each entry
-carries the component's `path`, its `policies` and its `bundle`.
+`Events` is the other product of the [nominal evaluation](@ref g-nominal), read
+off a [`Build`](@ref) as `build.events`. Its `components` field holds one entry
+per component, in the order the build walks the tree, so one index addresses it
+and [`Outputs`](@ref) alike. Each entry carries the component's `path`, its
+`policies` and its `bundle`.
 
 - `policies`: a `NamedTuple` from each event name, in declaration order, to the
-  detection policy its guard's return form fixes, `:boundary` for a `Bool`
-  guard checked at step boundaries only, or `:localized` for a guard returning a
-  `Float64`, whose crossing is located in time.
-- `bundle`: the field names of the event bundle (the `NamedTuple` of views a
-  guard or handler receives), `()` where the component declares no events.
+  detection policy its [guard](@ref g-guard)'s return form fixes, `:boundary`
+  for a `Bool` guard checked at step [boundaries](@ref g-boundary) only, or
+  `:localized` for a guard returning a `Float64`, whose crossing is located in
+  time.
+- `bundle`: the field names of the event bundle, `()` where the component
+  declares no events.
 
 Like `Outputs`, `Events` holds names only and does not depend on the scalar
 type.
@@ -561,21 +562,21 @@ end
 """
     Build
 
-The artifact [`build`](@ref) produces, the checked contract of a component tree
-before any grid is fixed.
+The artifact [`build`](@ref) produces, the checked contract of a
+[component](@ref g-component) tree before any grid is fixed.
 
 A build holds the [`Structure`](@ref), the [`Outputs`](@ref) and the
-[`Events`](@ref), which the build's steps produce, then its activations (the
-build's typed products at one scalar type) and the warnings its construction
-raised, read with [`warnings`](@ref). The first three do not depend on the
-scalar type, by construction. The nominal `Float64` activation is made by the
+[`Events`](@ref), which the build's steps produce, then its
+[activations](@ref g-activation) and the warnings its construction raised, read
+with [`warnings`](@ref). The first three do not depend on the scalar type, by
+construction. The [nominal](@ref g-nominal) `Float64` activation is made by the
 build, and any other is derived at first request and kept.
 
-Everything in a build is settled before `Δt_base` exists: `h`, `N_base` and
-`Δt_base` are the [`Deployment`](@ref)'s. A build is immutable apart from its
-activation cache, whose insertion is safe across tasks. One build backs any
-number of deployments and [`Model`](@ref)s, concurrently, each materializing
-its own stores and buffers.
+Everything in a build is settled before [`Δt_base`](@ref g-dt_base) exists: `h`,
+`N_base` and `Δt_base` are the [`Deployment`](@ref)'s. A build is immutable
+apart from its activation cache, whose insertion is safe across tasks. One build
+backs any number of deployments and [`Model`](@ref)s, concurrently, each
+materializing its own [stores](@ref g-store) and [buffers](@ref g-buffer).
 
 See also [`descriptor`](@ref).
 """
@@ -596,18 +597,18 @@ struct ProbeTag end
 """
     ProbeDual
 
-The framework's public canonical probe scalar, the concrete
+The framework's public canonical [probe](@ref g-probe) scalar, the concrete
 `ForwardDiff.Dual{ProbeTag,Float64,1}`.
 
-`ProbeDual` is the one concrete `Dual` a test lists to check that a component
-tree types at a dual number, as in
-`build(root; activations = (Float64, ProbeDual))`. An activation (the build's
-typed products at one scalar type) is keyed by a concrete scalar, and the bare
+`ProbeDual` is the one concrete `Dual` a test lists to check that a
+[component](@ref g-component) tree types at a dual number, as in
+`build(root; activations = (Float64, ProbeDual))`. An
+[activation](@ref g-activation) is keyed by a concrete scalar, and the bare
 `Dual`, a `UnionAll`, can key none.
 
-Its width is one because the check pins genericity, the tree's types following
-the scalar, and not any particular Jacobian. [`linearize`](@ref) sets its own
-width with its `width` keyword.
+Its width is one because the check tests that the tree's types follow the
+scalar, not any particular Jacobian. [`linearize`](@ref) sets its own width with
+its `width` keyword.
 """
 const ProbeDual = ForwardDiff.Dual{ProbeTag,Float64,1}
 
@@ -617,15 +618,16 @@ const ProbeDual = ForwardDiff.Dual{ProbeTag,Float64,1}
 """
     build(root::AbstractComponent; activations::Tuple = ()) -> Build
 
-Check a component tree and return its [`Build`](@ref), with no grid chosen yet.
+Check a [component](@ref g-component) tree and return its [`Build`](@ref), with
+no grid chosen yet.
 
-`build` runs the structure step, the nominal evaluation and the eager
-activations. The structure step flattens the tree, classifies its components
-and type-checks the wires into the [`Structure`](@ref). The nominal evaluation
-(the build's one probing pass at `Float64`) probes every user function. It
-returns the [`Outputs`](@ref), the [`Events`](@ref) and the nominal activation
-(the build's typed products at one scalar type). Nothing here needs `h`,
-`N_base` or `Δt_base`, which are the [`Deployment`](@ref)'s.
+`build` runs the structure step, the [nominal evaluation](@ref g-nominal) and
+the eager [activations](@ref g-activation). The structure step flattens the
+tree, classifies its components and type-checks the wires into the
+[`Structure`](@ref). The nominal evaluation [probes](@ref g-probe) every user
+function. It returns the [`Outputs`](@ref), the [`Events`](@ref) and the nominal
+activation. Nothing here needs `h`, `N_base` or [`Δt_base`](@ref g-dt_base),
+which are the [`Deployment`](@ref)'s.
 
 # Keywords
 

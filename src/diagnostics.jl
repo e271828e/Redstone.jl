@@ -26,9 +26,9 @@
 The abstract type of every diagnostic, the plain value a refusal or a warning
 carries.
 
-Each kind (a diagnostic's identity, carried by its type) is a struct under
-`Diagnostic`, and the struct's fields are its payload. [`warnings`](@ref)
-returns a `Vector{Diagnostic}`.
+Each [kind](@ref g-kind) is a struct under `Diagnostic`, and the struct's fields
+are its [payload](@ref g-payload). [`warnings`](@ref) returns a
+`Vector{Diagnostic}`.
 """
 abstract type Diagnostic end
 
@@ -1451,7 +1451,7 @@ message(d::EmptyGreedyClaim) =
 """
     MalformedDatum(cause) -> MalformedDatum
 
-The diagnostic a device reports for a datum it could not map.
+The diagnostic a [device](@ref g-device) reports for a datum it could not map.
 
 A device's [`loop`](@ref) builds one after catching its own parser error, for a
 datum that failed for reasons outside the framework, such as a truncated
@@ -1462,7 +1462,8 @@ classification is the device's, since only its author knows its parser, and
 any other exception reaches the framework as the `DeviceCrash` it is.
 
 `MalformedDatum` is a warning, which never throws. The report is counted in the
-reporting device's [`WriterStatus`](@ref) in the next snapshot.
+reporting device's [`WriterStatus`](@ref) in the next
+[snapshot](@ref g-snapshot).
 """
 struct MalformedDatum <: Diagnostic
     cause::Any

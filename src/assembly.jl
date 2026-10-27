@@ -346,16 +346,15 @@ end
 """
     resolve(assembly, path::AbstractString) -> AbstractComponent
 
-Return the immediate child of an assembly that `path` names.
+Return the immediate child of an [assembly](@ref g-assembly) that `path` names.
 
 `resolve` walks the assembly's declared fields along the `/` segments of
 `path`. The path names one child: its field's name, plus a key segment where
-the child is an element of a container field (a `Tuple` or `NamedTuple` field
-whose elements are all components), as in `"units/1"` or `"units/left"`. The
-elements of a container declared name-transparent with
-[`transparent_container`](@ref) go by their bare keys, `"1"` or `"left"`.
-Declaration bodies such as [`input_wires`](@ref) call it to compute entries
-from a child's contract.
+the child is an element of a [container field](@ref g-container-children), as in
+`"units/1"` or `"units/left"`. The elements of a container declared
+name-transparent with [`transparent_container`](@ref) go by their bare keys,
+`"1"` or `"left"`. Declaration bodies such as [`input_wires`](@ref) call it to
+compute entries from a child's [contract](@ref g-contract).
 
 Resolution goes one level only. A path that reaches past the child it names is
 refused as `PathResolution`, naming that child. An empty path, and a segment
@@ -404,13 +403,13 @@ _contract(fn, @nospecialize(comp)) =
 """
     input_faces(comp) -> Vector{String}
 
-Return the component's input face names, in declaration order.
+Return the [component](@ref g-component)'s input [face](@ref g-face) names, in
+declaration order.
 
-A face is the name a port wears on its component's boundary. For a leaf the
-input faces are the keys of its [`u_types`](@ref), which do not depend on the
-scalar type. For an assembly they are the face names its
-[`input_wires`](@ref) declares. Declaration order is kept, so printouts are
-deterministic and diagnostics stable.
+For a primitive the input faces are the keys of its [`u_types`](@ref), which do
+not depend on the scalar type. For an [assembly](@ref g-assembly) they are the
+face names its [`input_wires`](@ref) declares. Declaration order is kept, so
+printouts are deterministic and diagnostics stable.
 
 Called from a declaration body during a build, `input_faces` reuses the build's
 evaluation of the child's declaration rather than evaluating it again. Either
@@ -429,11 +428,12 @@ input_faces(@nospecialize(comp)) = classify("", comp) === PRIMITIVE ?
 """
     output_faces(comp) -> Vector{String}
 
-Return the component's output face names, in declaration order.
+Return the [component](@ref g-component)'s output [face](@ref g-face) names, in
+declaration order.
 
-A face is the name a port wears on its component's boundary. For a leaf the
-output faces are the keys of its [`y_types`](@ref). For an assembly they are
-the face names its [`output_wires`](@ref) declares.
+For a primitive the output faces are the keys of its [`y_types`](@ref). For an
+[assembly](@ref g-assembly) they are the face names its [`output_wires`](@ref)
+declares.
 
 Called from a declaration body during a build, `output_faces` reuses the
 build's evaluation of the child's declaration rather than evaluating it again.
@@ -477,12 +477,11 @@ end
                       prefix::AbstractString = replace(child_path, "/" => sep),
                       except::Tuple = (), only::Tuple = (), select = nothing) -> Tuple
 
-Return input wire entries that expose a child's input faces on the assembly's
-own boundary.
+Return input wire [entries](@ref g-entry) that expose a child's input
+[faces](@ref g-face) on the [assembly](@ref g-assembly)'s own boundary.
 
-A face is the name a port wears on its component's boundary. The helper serves
-the pass-through case, where an assembly hands up the inputs of a child it does
-not feed itself. Its entries are splatted into the assembly's
+The helper serves the pass-through case, where an assembly hands up the inputs
+of a child it does not feed itself. Its entries are splatted into the assembly's
 [`input_wires`](@ref), and mix freely with hand-written ones:
 `input_wires(w::World) = (input_passthrough(w, "aircraft"; except = ("atm",))...,)`.
 Each face of the child, as [`input_faces`](@ref) lists it, becomes the pair
@@ -530,8 +529,8 @@ end
                        prefix::AbstractString = replace(child_path, "/" => sep),
                        except::Tuple = (), only::Tuple = (), select = nothing) -> Tuple
 
-Return output wire entries that expose a child's output faces on the
-assembly's own boundary.
+Return output wire [entries](@ref g-entry) that expose a child's output
+[faces](@ref g-face) on the [assembly](@ref g-assembly)'s own boundary.
 
 `output_passthrough` is [`input_passthrough`](@ref)'s sibling on the outward
 boundary, and its entries are splatted into the assembly's
@@ -917,27 +916,27 @@ end
 """
     Structure
 
-The structure step's product, the declared facts the component tree alone
-fixes, held as rows.
+The structure step's product, the declared facts the
+[component](@ref g-component) tree alone fixes, held as rows.
 
 `Structure` is read off a [`Build`](@ref) as `build.structure`. Nothing in it
 depends on a scalar type. Its rows hold the component instances, and paths,
 names and rationals the REPL prints as they are.
 
-- `components`: one entry per leaf, in the order the build walks the tree.
+- `components`: one entry per primitive, in the order the build walks the tree.
 - `anchors`: one entry per [`Absolute`](@ref) declaration, the exact `(T, τ)`
   pair (period and offset in rational seconds) with the declaring scope and
   key.
-- `scopes`: one entry per assembly a `sample_times` key names, with its path,
-  the key and the timing the build derived for it.
-- `root_inputs` and `root_types`: the root inputs (the root component's own
-  input faces), in order, with the types the wire check fixed for them.
+- `scopes`: one entry per [assembly](@ref g-assembly) a `sample_times` key
+  names, with its path, the key and the timing the build derived for it.
+- `root_inputs` and `root_types`: the [root inputs](@ref g-root-input), in
+  order, with the types the wire check fixed for them.
 - `levels`: one entry per assembly, in pre-order with the root first, holding
-  its children and the wires it declares. A leaf root's entry has no children
-  and no wires.
+  its children and the wires it declares. A primitive root's entry has no
+  children and no wires.
 
-No table of resolved faces is stored. A face at any level is resolved over the
-`levels` wires when it is read.
+No table of resolved [faces](@ref g-face) is stored. A face at any level is
+resolved over the `levels` wires when it is read.
 """
 struct Structure
     components::Vector{ComponentEntry}     # in walk order; the index is `ci` everywhere

@@ -249,20 +249,20 @@ _holds_marker(::Type{P}) where {P} =
 """
     StopFlag
 
-The stop-request vocabulary, an enum with the values `NO_STOP` and
-`STOP_REQUESTED`.
+The [stop-request](@ref g-stop-request) vocabulary, an enum with the values
+`NO_STOP` and `STOP_REQUESTED`.
 
-An output port declared exactly `StopFlag` is a stop request (a port that ends
-the run when it reads `STOP_REQUESTED`), whoever publishes it. The build enters
-each such port in the requester roster (the build's list of stop requests, one
-per port). The loop reads every request at each published boundary, unless the
-advance ignores it through its `ignore_stop_requests` keyword, and a run that a
-request ends carries a [`ModelRequestedStop`](@ref) source with the
-component's [`stop_reason`](@ref).
+An output [port](@ref g-port) declared exactly `StopFlag` is a stop request,
+whoever publishes it. The build enters each such port in the
+[requester roster](@ref g-requester-roster). The loop reads every request at
+each published [boundary](@ref g-boundary), unless the advance ignores it
+through its `ignore_stop_requests` keyword, and a run that a request ends
+carries a [`ModelRequestedStop`](@ref) source with the
+[component](@ref g-component)'s [`stop_reason`](@ref).
 
-A `StopFlag` nested in a port of another type, and a root input carrying one,
-are refused as `IllegalPortType`. An input port of this type is an ordinary
-input.
+A `StopFlag` nested in a port of another type, and a
+[root input](@ref g-root-input) carrying one, are refused as `IllegalPortType`.
+An input port of this type is an ordinary input.
 """
 @enum StopFlag NO_STOP STOP_REQUESTED
 

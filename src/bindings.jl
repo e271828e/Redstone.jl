@@ -22,16 +22,14 @@
 """
     TableBinding(; entries...) -> TableBinding
 
-The shipped data-driven binding: a table from channel names to the root-input
-faces they write.
+The shipped data-driven [binding](@ref g-binding): a table from channel names to
+the [root-input](@ref g-root-input) [faces](@ref g-face) they write.
 
-A binding (the value passed at `attach!` that makes a device framework-legible)
-of this type is built per pairing of device and deployment, where configurations
-are made. Each keyword is a channel, the name a device's datum uses, and its
-value is a `NamedTuple` entry with these fields.
+A binding of this type is built per pairing of [device](@ref g-device) and
+deployment, where configurations are made. Each keyword is a channel, the name a
+device's datum uses, and its value is a `NamedTuple` entry with these fields.
 
-- `face`: the root input (the root component's own input face) the channel
-  writes, a string or a symbol. Required.
+- `face`: the root input the channel writes, a string or a symbol. Required.
 - `deadzone`: the band around zero that reads as zero, in `[0, 1)`. The rest of
   the range is rescaled so that `±1` stays fixed.
 - `expo`: the blend from a linear toward a cubic response, in `[0, 1]`, with
@@ -41,9 +39,9 @@ A channel that declares `deadzone` or `expo` has its value clamped to `[-1, 1]`
 and conditioned. A channel that declares neither passes its value through
 untouched.
 
-The binding declares the input side ([`is_input`](@ref)). Its claim (the set of
-faces a device may write) is the table's face set, which [`claims`](@ref)
-derives, so what the binding may write is exactly what its entries name. Its
+The binding declares the input side ([`is_input`](@ref)). Its
+[claim](@ref g-claim) is the table's face set, which [`claims`](@ref) derives,
+so what the binding may write is exactly what its entries name. Its
 [`map_input`](@ref) maps a datum through the table. A code-driven binding looks
 the same to the framework, for example a JSON telecommand peer whose `claims`
 returns its vocabulary and whose `map_input` parses bytes.
@@ -105,14 +103,14 @@ claims(b::TableBinding) = String[String(e.face) for e in values(b.table)]
 Return the `"face" => value` writes a datum maps to through the table, one per
 datum field.
 
-The datum is whatever the device's loop assembled, one field per channel it
-touched. `map_input` returns a pair for exactly those, as a tuple in the datum's
-field order, each value conditioned by its channel's `deadzone` and `expo`. A
-sparse datum therefore stages a sparse batch (a staged set of face ⇒ value
-writes), and the merge with what is already pending does the rest. The loop
-idiom is `stage!(handle, map_input(datum, binding(handle))...)`, on the device's
-own task. Building the tuple allocates nothing when the table's faces are
-`String`s, however many fields the datum carries.
+The datum is whatever the [device](@ref g-device)'s loop assembled, one field
+per channel it touched. `map_input` returns a pair for exactly those, as a tuple
+in the datum's field order, each value conditioned by its channel's `deadzone`
+and `expo`. A sparse datum therefore stages a sparse [batch](@ref g-batch), and
+the merge with what is already pending does the rest. The loop idiom is
+`stage!(handle, map_input(datum, binding(handle))...)`, on the device's own
+task. Building the tuple allocates nothing when the table's [faces](@ref g-face)
+are `String`s, however many fields the datum carries.
 
 Staged values are levels, never deltas. State across data, such as press
 counters or edge detection, lives in the device struct, maintained by the loop,
@@ -181,16 +179,17 @@ end
 """
     map_output(nt, b)
 
-Return the datum an output binding sends for one gathered `NamedTuple`, by the
-binding's own method.
+Return the datum an output [binding](@ref g-binding) sends for one gathered
+`NamedTuple`, by the binding's own method.
 
 An output-side binding defines `map_output` for its type. The method receives
 exactly the labeled `NamedTuple` that [`gather`](@ref) returns, keyed by the
 labels of the binding's [`reads`](@ref), and what it returns for the wire is the
 peer's business. The loop idiom is
 `send(dev.socket, map_output(gather(handle, snapshot), binding(handle)))`, on
-the device's own task. The framework never calls `map_output` and ships no
-method. A binding that sends the values as they are returns `nt` itself.
+the [device](@ref g-device)'s own task. The framework never calls `map_output`
+and ships no method. A binding that sends the values as they are returns `nt`
+itself.
 """
 function map_output end
 

@@ -35,11 +35,11 @@
 A deployment materialized at one scalar type `T`, ready to be written, evaluated
 and stepped.
 
-It carries the [`Deployment`](@ref) and the executor (the compiled form of
-the stage execution order) built from it at `T`, with its buffers. It runs
-nothing in real time, talks to no device and records nothing. A
-[`Simulation`](@ref) does that around a `Model{Float64}`. One deployment backs
-many models, and each model owns its buffers alone.
+It carries the [`Deployment`](@ref) and the [executor](@ref g-executor) built
+from it at `T`, with its [buffers](@ref g-buffer). It runs nothing in real time,
+talks to no [device](@ref g-device) and records nothing. A [`Simulation`](@ref)
+does that around a `Model{Float64}`. One deployment backs many models, and each
+model owns its buffers alone.
 
 `T` is `Float64` or a `ForwardDiff.Dual`, into which a `Float64` embeds exactly.
 Any other `T` is refused as `ArgumentInvalid` with reason `:scalar`, before
@@ -54,19 +54,18 @@ A model holds five values, each a field.
 
 - `deployment`: the deployment it materializes, and through it the build.
 - `exec`: the executor this model owns, with its stepper and its buffers.
-- `status`: `:built` until boundary zero (the initialization boundary)
-  completes, and `:consistent` once it has completed or a state has been
-  restored. A throw inside a frame (one iteration of the loop) writes
-  `:inconsistent`, and a throw inside boundary zero writes `:built`. Only the
-  model's own calls write it.
+- `status`: `:built` until [boundary zero](@ref g-boundary-zero) completes, and
+  `:consistent` once it has completed or a state has been restored. A throw
+  inside a [frame](@ref g-frame) writes `:inconsistent`, and a throw inside
+  boundary zero writes `:built`. Only the model's own calls write it.
 - `claimed`: set once a `Simulation` takes the model, and never cleared, so a
   simulation owns its model and never shares it. The model's own calls that
   write, such as [`init!`](@ref), [`frame!`](@ref), [`restore!`](@ref),
   [`overlay!`](@ref) and [`trim!`](@ref), refuse a claimed model as
   `ArgumentInvalid`.
-- `frame_diag`: the frame's own diagnostic cell (a cell holding runtime
-  diagnostics), where the chattering and firing-budget reports go. A simulation
-  collects it at each frame top (the start of a frame) beside its own.
+- `frame_diag`: the frame's own [diagnostic cell](@ref g-diagnostic-cell), where
+  the [chattering](@ref g-chattering) and [firing-budget](@ref g-firing-budget)
+  reports go. A simulation collects it at each frame top beside its own.
 
 # Keywords
 
@@ -145,27 +144,27 @@ end
 """
     FrameHooks
 
-The abstract type of the hooks a model's frame calls at its top and at each
-settled boundary.
+The abstract type of the hooks a model's [frame](@ref g-frame) calls at its top
+and at each settled [boundary](@ref g-boundary).
 
 [`frame!`](@ref) takes one `FrameHooks` value, as do the model's
 [`init!`](@ref), [`restore!`](@ref) and [`overlay!`](@ref), and calls two
 functions on it.
 
-- [`frame_top!`](@ref) runs first, before the frame (one iteration of the loop)
-  touches any state. It is where external inputs arrive.
+- [`frame_top!`](@ref) runs first, before the frame touches any state. It is
+  where external inputs arrive.
 - [`settled!`](@ref) runs at every settled boundary before integration resumes:
-  each localized event time `t*`, the frame-top boundary that ends the frame,
-  boundary zero (the initialization boundary) under `init!`, and the boundary
-  `overlay!` or `restore!` settles. It returns whether to abandon the frame's
-  remainder, and a `true` is `frame!`'s return.
+  each [localized](@ref g-localized) event time [`t*`](@ref g-t), the frame-top
+  boundary that ends the frame, [boundary zero](@ref g-boundary-zero) under
+  `init!`, and the boundary `overlay!` or `restore!` settles. It returns whether
+  to abandon the frame's remainder, and a `true` is `frame!`'s return.
 
 A subtype defines a method of each. Every boundary publishes before integration
-resumes, so a subtype that publishes snapshots (the immutable per-boundary
-publications) does it in `settled!`. [`NoHooks`](@ref) does nothing and never
-abandons, for a model stepped on its own. A [`Simulation`](@ref) passes hooks of
-its own, which apply the staged input batches (sets of face ⇒ value writes) at
-the frame top and publish a snapshot at each settled boundary.
+resumes, so a subtype that publishes [snapshots](@ref g-snapshot) does it in
+`settled!`. [`NoHooks`](@ref) does nothing and never abandons, for a model
+stepped on its own. A [`Simulation`](@ref) passes hooks of its own, which apply
+the staged input [batches](@ref g-batch) at the frame top and publish a snapshot
+at each settled boundary.
 """
 abstract type FrameHooks end
 
@@ -174,13 +173,12 @@ abstract type FrameHooks end
     NoHooks() -> NoHooks
 
 The hooks of a model stepped on its own, which do nothing and never abandon a
-frame.
+[frame](@ref g-frame).
 
 `NoHooks()` is the default `hooks` of [`frame!`](@ref) and of the model's
 [`init!`](@ref), [`restore!`](@ref) and [`overlay!`](@ref). Its
 [`frame_top!`](@ref) does nothing and its [`settled!`](@ref) returns `false`, so
-a frame (one iteration of the loop) stepped with it always runs to its end and
-publishes nothing. See
+a frame stepped with it always runs to its end and publishes nothing. See
 [`FrameHooks`](@ref) for what hooks do.
 """
 struct NoHooks <: FrameHooks end
@@ -189,11 +187,11 @@ struct NoHooks <: FrameHooks end
 """
     frame_top!(::NoHooks) -> Nothing
 
-Do nothing at the top of a model's frame, before the frame touches any state.
+Do nothing at the top of a model's [frame](@ref g-frame), before the frame
+touches any state.
 
-A model stepped on its own takes no staged inputs, so its frame (one iteration
-of the loop) starts from the state as it stands. See [`FrameHooks`](@ref) for
-the contract every method
+A model stepped on its own takes no staged inputs, so its frame starts from the
+state as it stands. See [`FrameHooks`](@ref) for the contract every method
 keeps, and [`settled!`](@ref) for the other hook.
 """
 frame_top!(::NoHooks) = nothing
@@ -202,13 +200,13 @@ frame_top!(::NoHooks) = nothing
 """
     settled!(::NoHooks) -> Bool
 
-Publish nothing at a settled boundary of a model's frame, and return `false`.
+Publish nothing at a settled [boundary](@ref g-boundary) of a model's
+[frame](@ref g-frame), and return `false`.
 
-A model stepped on its own publishes no snapshot (the immutable per-boundary
-publication). It never abandons the remainder of a frame (one iteration of the
-loop), so [`frame!`](@ref) runs every frame to its end. See
-[`FrameHooks`](@ref) for the contract every method
-keeps, and [`frame_top!`](@ref) for the other hook.
+A model stepped on its own publishes no [snapshot](@ref g-snapshot). It never
+abandons the remainder of a frame, so [`frame!`](@ref) runs every frame to its
+end. See [`FrameHooks`](@ref) for the contract every method keeps, and
+[`frame_top!`](@ref) for the other hook.
 """
 settled!(::NoHooks) = false
 
@@ -230,19 +228,17 @@ _claimed_gate(model::Model, ::FrameHooks, call::Symbol) =
     init!(model::Model, condition = set(); t0::Real = 0.0,
           hooks::FrameHooks = NoHooks()) -> Nothing
 
-Initialize the model from a condition on the declared defaults, and run boundary
-zero at `t0`.
+Initialize the model from a [condition](@ref g-condition) on the declared
+defaults, and run [boundary zero](@ref g-boundary-zero) at `t0`.
 
 `init!` resets the state to the declared defaults, applies the condition's
-overrides and sets the clock to `t0`. It sets every event prior (each event's
-stored sample of its predicate) to not holding. It then runs boundary zero (the
-initialization boundary, an ordinary one with an empty integrate), which settles
-through `settled!(hooks)`, and the model's status becomes `:consistent`.
+overrides and sets the clock to `t0`. It sets every event [prior](@ref g-prior)
+to not [holding](@ref g-edge-semantics). It then runs boundary zero, which
+settles through `settled!(hooks)`, and the model's status becomes `:consistent`.
 
-The condition (the datum that says "set this build to this state") is built with
-[`set`](@ref) and its combinators. Root inputs (the root component's own input
-faces) have no declared default, so the condition must give every one of them a
-value.
+The condition is built with [`set`](@ref) and its combinators.
+[Root inputs](@ref g-root-input) have no declared default, so the condition must
+give every one of them a value.
 
 # Keywords
 
@@ -256,7 +252,8 @@ condition that does not resolve against the build is refused as
 `UninitializedInputs`. A model claimed by a [`Simulation`](@ref) is refused as
 `ArgumentInvalid`. A throw inside boundary zero arrives as a `StepError` at
 `t0`, with pointer 0 and host `:boundary_zero`, and writes the status back to
-`:built`. An interrupt writes `:built` too, and propagates unwrapped.
+`:built`. An [interrupt](@ref g-operator-interrupt) writes `:built` too, and
+propagates unwrapped.
 """
 function init!(model::Model{T}, condition = set(); kw...) where {T}
     _claimed_gate(model, get(kw, :hooks, NoHooks()), :init!)       # the claim is said first (D-318)
@@ -299,22 +296,24 @@ end
     overlay!(model::Model, condition = set();
              hooks::FrameHooks = NoHooks()) -> Nothing
 
-Write a condition onto the model's state at rest, and settle the result through
-the hooks.
+Write a [condition](@ref g-condition) onto the model's state at rest, and settle
+the result through the hooks.
 
-The condition (the datum that says "set this build to this state") overwrites
-the stores it names. Every other store, the clock and the event priors (each
-event's stored sample of its predicate) are kept. A partial store entry merges
-onto the current store rather than the declared default. Root-input entries
-write the root inputs' cells, and none is required, since every root input
-already holds a value.
+The condition overwrites the [stores](@ref g-store) it names. Every other store,
+the clock and the event [priors](@ref g-prior) are kept. A partial store entry
+merges onto the current store rather than the declared default.
+[Root-input](@ref g-root-input) entries write the root inputs'
+[cells](@ref g-cell), and none is required, since every root input already holds
+a value.
 
 The overlaid state then settles. An overlaid `x` is projected and events fire
 until none is left to fire, but no discrete output stage and no `s_update` runs.
-An overlaid discrete store is therefore the state of the component's next tick
-(the next instant its update runs), and its held output stays until that tick.
-An event the overlay moves into holding fires at once. The settled boundary
-goes through `settled!(hooks)`, and the status returns to `:consistent`.
+An overlaid discrete store is therefore the state of the
+[component](@ref g-component)'s next [tick](@ref g-tick), and its held output
+stays until that tick. An event the overlay moves into
+[holding](@ref g-edge-semantics) fires at once. The settled
+[boundary](@ref g-boundary) goes through `settled!(hooks)`, and the status
+returns to `:consistent`.
 
 # Keywords
 
@@ -322,14 +321,14 @@ goes through `settled!(hooks)`, and the status returns to `:consistent`.
   [`NoHooks`](@ref) for a model stepped on its own.
 
 `overlay!` asks what [`checkpoint`](@ref) asks: the model `:consistent`, its
-clock on a frame top (the start of a frame). Otherwise it is refused as
+clock on a [frame top](@ref g-frame). Otherwise it is refused as
 `ServiceLifecycle` or `CheckpointMidFrame`. The condition resolves against the
 build with [`init!`](@ref)'s diagnostics, so one that does not resolve is
 refused as `ConditionResolution`. A model claimed by a [`Simulation`](@ref) is
 refused as `ArgumentInvalid`. A throw inside the settling arrives as a
 `StepError` with host `:overlay` and the frame the clock sits at. It writes the
-status back to `:built`, with the stores partly written as a failed boundary
-zero (the initialization boundary) leaves them.
+status back to `:built`, with the stores partly written as a failed
+[boundary zero](@ref g-boundary-zero) leaves them.
 """
 function overlay!(model::Model{T}, condition = set(); kw...) where {T}
     _claimed_gate(model, get(kw, :hooks, NoHooks()), :overlay!)
@@ -375,17 +374,18 @@ _apply_plan!(model::Model, plan::ConditionPlan) = apply!(model.exec, plan)
     phase_bodies(model::Model) -> NamedTuple
     phase_bodies(sim::Simulation) -> NamedTuple
 
-Return the compiled phase bodies the loop runs, bound over the model's own
-buffers.
+Return the compiled [phase bodies](@ref g-measurement-seam) the loop runs, bound
+over the model's own [buffers](@ref g-buffer).
 
 The bodies are the ones the loop runs, not copies, so an allocation measurement
 over them measures the loop itself. A simulation's are its model's. The named
-tuple holds four blocks, `sweep_1`, `sweep_2`, `rhs` and `ticks`, and two
+tuple holds four bodies, `sweep_1`, `sweep_2`, `rhs` and `ticks`, and two
 dictionaries of zero-argument callables over the same buffers. `events` holds
-the guard and the handler of each event, keyed by `(path, name)`, and
-`projections` the `x_projection` call of each component, keyed by path. The set
-is fixed: a model with no discrete components still gets `ticks`, which does
-nothing, so code over the bodies needs no branch per model.
+the [guard](@ref g-guard) and the handler of each event, keyed by
+`(path, name)`, and `projections` the `x_projection` call of each
+[component](@ref g-component), keyed by path. The set is fixed: a model with no
+discrete components still gets `ticks`, which does nothing, so code over the
+bodies needs no branch per model.
 """
 phase_bodies(model::Model) = model.exec.bodies
 
@@ -656,8 +656,8 @@ constructed.
 
 The list is the build's warnings followed by the deployment's, and a
 simulation's list is its model's. A warning raised while a run changes state
-goes to the status each snapshot carries, so nothing raised at run time is
-listed here.
+goes to the status each [snapshot](@ref g-snapshot) carries, so nothing raised
+at run time is listed here.
 """
 warnings(model::Model) = vcat(warnings(model.deployment.build), warnings(model.deployment))
 
@@ -671,15 +671,15 @@ warnings(model::Model) = vcat(warnings(model.deployment.build), warnings(model.d
 """
     port(model::Model, path::String, name::Symbol)
 
-Return a port's current value in the model's signal table.
+Return a [port](@ref g-port)'s current value in the model's
+[signal table](@ref g-signal-table).
 
-The signal table is the framework-owned collection of cells holding every
-produced signal. A port (the addressable unit of the model: one declared name,
-one cell) is addressed by its component's path and its name. An assembly's own
-path addresses its output faces, which resolve to the cells they derive from,
-and the empty path the root inputs. A
-simulation's `port(sim, path, name)` reads its model's. To read a port off a
-published snapshot instead, use `port(snapshot, path, name)`.
+A port is addressed by its [component](@ref g-component)'s path and its name. An
+[assembly](@ref g-assembly)'s own path addresses its output
+[faces](@ref g-face), which resolve to the [cells](@ref g-cell) they derive
+from, and the empty path the [root inputs](@ref g-root-input). A simulation's
+`port(sim, path, name)` reads its model's. To read a port off a published
+[snapshot](@ref g-snapshot) instead, use `port(snapshot, path, name)`.
 """
 port(model::Model, path::String, name::Symbol) =
     gather_cell(model.exec.store, model.exec.act.layout.addr[(path, name)])
@@ -689,12 +689,13 @@ port(model::Model, path::String, name::Symbol) =
     state(model::Model, path::String)
     state(sim::Simulation, path::String)
 
-Return the state of the component at `path`, from whichever store holds it.
+Return the state of the [component](@ref g-component) at `path`, from whichever
+[store](@ref g-store) holds it.
 
-A continuous component's state is its `x`, read from the model's flat state
-buffer. A discrete component's is its `s`, read from its own store (the
-framework-owned home of one of a component's state letters). A simulation's
-state is its model's. For a component's modes, see [`modes`](@ref).
+A [continuous component](@ref g-continuous-component)'s state is its `x`, read
+from the model's flat state [buffer](@ref g-buffer). A discrete component's is
+its `s`, read from its own store. A simulation's state is its model's. For a
+component's modes, see [`modes`](@ref).
 """
 function state(model::Model{T}, path::String) where {T}
     ci = index_of(model.deployment.build.structure, path)
@@ -713,7 +714,8 @@ end
     modes(model::Model, path::String)
     modes(sim::Simulation, path::String)
 
-Return the modes of the component at `path`, from its `m` store.
+Return the modes of the [component](@ref g-component) at `path`, from its `m`
+[store](@ref g-store).
 
 The read changes nothing: only the component's event handlers write its modes.
 A simulation's modes are its model's. For the rest of a component's state, see
@@ -812,25 +814,26 @@ end
 """
     checkpoint(model::Model{T}) -> ModelState{T}
 
-Return the model's state at the frame top its clock rests on.
+Return the model's state at the [frame top](@ref g-frame) its clock rests on.
 
-The state, a [`ModelState`](@ref), holds the flat state buffer, the `s` and `m`
-stores and the whole signal table (the framework-owned cells holding every
-produced signal). It also holds the event priors (each event's stored sample of
-its predicate). It holds the clock's `t` and `t₀`, and the fingerprint
-(the structural layout a checkpoint carries). The stores are copied by value.
-`checkpoint(sim)` wraps the same state with the run's frame index and boundary
-ordinal.
+The state, a [`ModelState`](@ref), holds the flat state [buffer](@ref g-buffer),
+the `s` and `m` [stores](@ref g-store) and the whole
+[signal table](@ref g-signal-table). It also holds the event
+[priors](@ref g-prior). It holds the clock's `t` and `t₀`, and the
+[fingerprint](@ref g-fingerprint). The stores are copied by value.
+`checkpoint(sim)` wraps the same state with the run's frame index and
+[boundary](@ref g-boundary) ordinal.
 
-A model's state is not a condition and enters no condition expression.
-[`restore!`](@ref) puts it back, and [`overlay!`](@ref) writes a condition onto
-a model at rest.
+A model's state is not a [condition](@ref g-condition) and enters no condition
+expression. [`restore!`](@ref) puts it back, and [`overlay!`](@ref) writes a
+condition onto a model at rest.
 
 `checkpoint` is legal while the model is `:consistent`, after [`init!`](@ref) or
 a restore and before any throw. It is refused as `ServiceLifecycle` at `:built`
 or `:inconsistent`. It is refused as `CheckpointMidFrame` with the clock off a
 frame top, naming the frame the clock sits inside. A frame abandoned at a
-localized event time `t*` leaves the clock there.
+[localized](@ref g-localized) event time [`t*`](@ref g-t) leaves the clock
+there.
 """
 function checkpoint(model::Model{T}) where {T}
     _assert_at_rest(model, :checkpoint)
@@ -926,27 +929,27 @@ end
     restore!(model::Model{T}, model_state::ModelState{T};
              hooks::FrameHooks = NoHooks()) -> Nothing
 
-Restore a model state into the model, and settle the restored boundary through
-the hooks.
+Restore a model state into the model, and settle the restored
+[boundary](@ref g-boundary) through the hooks.
 
 `restore!` puts back a state that [`checkpoint`](@ref) took. It copies the state
 back, settles the restored boundary through `settled!(hooks)`, and writes the
-status `:consistent` last. No boundary zero (the initialization boundary) runs.
-No event prior (each event's stored sample of its predicate) resets either. The
-call accepts any status, so a fresh `:built` model of the same deployment can
-take a state another model produced.
+status `:consistent` last. No [boundary zero](@ref g-boundary-zero) runs. No
+event [prior](@ref g-prior) resets either. The call accepts any status, so a
+fresh `:built` model of the same deployment can take a state another model
+produced.
 
 # Keywords
 
 - `hooks`: the [`FrameHooks`](@ref) the restored boundary settles through,
   [`NoHooks`](@ref) for a model stepped on its own.
 
-A state whose fingerprint (the structural layout a checkpoint carries) or
-deployment does not match this model is refused as `CheckpointMismatch`. One
-whose clock is off its own grid is refused as `CheckpointMidFrame`, and all the
-mismatches come in one throw before any write. A state taken at another scalar
-type is refused as `CheckpointMismatch` too. A model claimed by a
-[`Simulation`](@ref) is refused as `ArgumentInvalid`.
+A state whose [fingerprint](@ref g-fingerprint) or deployment does not match
+this model is refused as `CheckpointMismatch`. One whose clock is off its own
+grid is refused as `CheckpointMidFrame`, and all the mismatches come in one
+throw before any write. A state taken at another scalar type is refused as
+`CheckpointMismatch` too. A model claimed by a [`Simulation`](@ref) is refused
+as `ArgumentInvalid`.
 """
 function restore!(model::Model{T}, model_state::ModelState{T};
                   hooks::FrameHooks = NoHooks()) where {T}

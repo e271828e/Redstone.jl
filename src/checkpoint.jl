@@ -33,26 +33,27 @@ end
 """
     ModelState{T}
 
-A model's state at the start of a frame as one value, at the scalar type `T`.
+A model's state at the start of a [frame](@ref g-frame) as one value, at the
+scalar type `T`.
 
 [`checkpoint`](@ref) takes it from a [`Model`](@ref), and [`restore!`](@ref)
 puts it back, into a model or, at `Float64`, into a [`Simulation`](@ref). Its
 fields hold the state.
 
-- `x`: the flat state buffer.
-- `s` and `m`: each component's discrete state and modes, `nothing` where the
-  component has none.
-- `table`: the whole signal table (the cells holding every produced signal),
-  every cell buffer copied. The root inputs are held as values, never as the
-  condition that set them.
-- `prior`: the event priors (each event's stored sample of its predicate).
+- `x`: the flat state [buffer](@ref g-buffer).
+- `s` and `m`: each [component](@ref g-component)'s discrete state and modes,
+  `nothing` where the component has none.
+- `table`: the whole [signal table](@ref g-signal-table), every
+  [cell](@ref g-cell) buffer copied. The [root inputs](@ref g-root-input) are
+  held as values, never as the [condition](@ref g-condition) that set them.
+- `prior`: the event [priors](@ref g-prior).
 - `t` and `t₀`: the clock's time and origin.
 - `deployment`: the [`Deployment`](@ref), compared as a value on restore.
-- `layout`: the fingerprint (the structural layout a checkpoint carries),
-  compared against the target's on restore.
+- `layout`: the [fingerprint](@ref g-fingerprint), compared against the target's
+  on restore.
 
-The frame index and the boundary ordinal belong to a run, so a
-[`Checkpoint`](@ref) carries them beside the state. `t` is a grid time,
+The frame index and the [boundary](@ref g-boundary) ordinal belong to a run, so
+a [`Checkpoint`](@ref) carries them beside the state. `t` is a grid time,
 `t₀ + k·h` as the clock writes it, so a hand-typed decimal can miss the grid by
 an ulp and be refused as `CheckpointMidFrame`.
 
@@ -78,11 +79,11 @@ end
 """
     Checkpoint
 
-A `Float64` model's state at the start of a frame, beside the run's frame index
-and boundary ordinal.
+A `Float64` model's state at the start of a [frame](@ref g-frame), beside the
+run's frame index and [boundary](@ref g-boundary) ordinal.
 
-`checkpoint(sim)` returns it, and a trace's header (the trace's fixed preamble)
-holds one. [`restore!`](@ref) and [`replay!`](@ref) put it back. Its fields are
+`checkpoint(sim)` returns it, and a [trace's header](@ref g-trace-header) holds
+one. [`restore!`](@ref) and [`replay!`](@ref) put it back. Its fields are
 `state`, a `Float64` [`ModelState`](@ref), and `frame` and `boundary`, the
 run's two counters. The state is always `Float64`, since only a simulation's
 model has a run, and a simulation runs only a `Model{Float64}`.

@@ -19,23 +19,23 @@
 """
     frame!(model::Model, k::Int, hooks::FrameHooks = NoHooks()) -> Bool
 
-Advance the model through frame `k`, from `tₖ₋₁` to `tₖ`, and settle its
-frame-top boundary.
+Advance the model through [frame](@ref g-frame) `k`, from `tₖ₋₁` to `tₖ`, and
+settle its frame-top [boundary](@ref g-boundary).
 
-A frame (one iteration of the loop) starts with `frame_top!(hooks)`, before the
-model touches any state, and then integrates. A localized event (one whose
-crossing instant is root-found inside the frame) adds a boundary at its time
-`t*`. The clock is then set to the frame top `tₖ`, computed from `k` and never
-accumulated, and the boundary there runs. When `k` is a multiple of `N_base` it
-is a base tick (an instant of the base grid). The discrete components due there,
-those whose sample time admits that tick, run their stages and updates in it. Any
-other `k` runs an off-tick boundary, with no discrete update. `settled!(hooks)`
-follows every boundary, each `t*`'s and the frame top's.
+A frame starts with `frame_top!(hooks)`, before the model touches any state, and
+then integrates. A [localized](@ref g-localized) event adds a boundary at its
+time [`t*`](@ref g-t). The clock is then set to the frame top `tₖ`, computed
+from `k` and never accumulated, and the boundary there runs. When `k` is a
+multiple of `N_base` it is a [base tick](@ref g-tick). The discrete
+[components](@ref g-component) [due](@ref g-due) there run their stages and
+updates in it. Any other `k` runs an off-tick boundary, with no discrete update.
+`settled!(hooks)` follows every boundary, each `t*`'s and the frame top's.
 
 `frame!` returns whether `settled!` asked to abandon the frame. A `true` at a
 `t*` boundary leaves the rest of the frame unrun, with the clock at `t*` where
-the stores are, and the frame top never reached. See [`FrameHooks`](@ref) for
-the hooks, and [`NoHooks`](@ref) for a model stepped on its own.
+the [stores](@ref g-store) are, and the frame top never reached. See
+[`FrameHooks`](@ref) for the hooks, and [`NoHooks`](@ref) for a model stepped on
+its own.
 
 A model claimed by a [`Simulation`](@ref) is refused as `ArgumentInvalid`. A
 throw inside the frame writes the status `:inconsistent` and arrives as a

@@ -215,23 +215,25 @@ end
 """
     WriterStatus
 
-The status record of one writer, as one snapshot publishes it.
+The status record of one writer, as one [snapshot](@ref g-snapshot) publishes
+it.
 
-A snapshot's framework status (the per-writer diagnostics and liveness each
-snapshot carries) holds one record per writer. The writers are each rostered
-device in attachment order, then the harness writer (the framework-owned write
-path `stage!(sim, …)`), then the loop. [`incumbent_status`](@ref) returns the
-record of the writer behind a [`PortView`](@ref), and [`orphaned`](@ref) and
-[`stale`](@ref) read it. A record holds these fields.
+A snapshot's [framework status](@ref g-framework-status) holds one record per
+writer. The writers are each rostered [device](@ref g-device) in attachment
+order, then the [harness writer](@ref g-harness-writer), then the loop.
+[`incumbent_status`](@ref) returns the record of the writer behind a
+[`PortView`](@ref), and [`orphaned`](@ref) and [`stale`](@ref) read it. A record
+holds these fields.
 
 - `who`: the writer's name, as a port view's `incumbent` holds it.
-- `recent`: the diagnostics the writer reported since the previous frame top,
-  at most 16, carried by this snapshot alone.
-- `suppressed`: the counts by kind of the diagnostics dropped past those 16.
+- `recent`: the diagnostics the writer reported since the previous
+  [frame top](@ref g-frame), at most 16, carried by this snapshot alone.
+- `suppressed`: the counts by [kind](@ref g-kind) of the diagnostics dropped
+  past those 16.
 - `totals`: the counts by kind since the run began, which never decrease from
   one snapshot to the next.
-- `heartbeat`: a rostered device's heartbeat (the timestamp its task stores on
-  every loop pass), in seconds as `time()` gives them.
+- `heartbeat`: a rostered device's [heartbeat](@ref g-heartbeat), in seconds as
+  `time()` gives them.
 - `task_state`: a rostered device's task, `:none` outside a run. Inside one it
   is `:running` while the task lives, and `:done` once it has ended or when the
   device has no live task of its own.
@@ -304,17 +306,17 @@ const STALE_S = 2.0
 """
     stale(record::WriterStatus; now::Float64 = time()) -> Bool
 
-Return `true` when the record's device heartbeat lags the wall clock by more
-than `STALE_S`, two seconds.
+Return `true` when the record's [device](@ref g-device)
+[heartbeat](@ref g-heartbeat) lags the wall clock by more than `STALE_S`, two
+seconds.
 
-The heartbeat (the timestamp a device's task stores on every loop pass) is the
-liveness read. The threshold is deliberately loose, so a device parked in a
-blocking read between rare data is not stale. A starved, blocked or crashed
-device then shows as a stale heartbeat with a name on it, not as physics that
-froze for no visible reason. A device that has not beaten since attach reads
-stale whatever `now` is. The records of the harness writer (the framework-owned
-write path `stage!(sim, …)`) and of the loop have no heartbeat to judge, and
-return `false`.
+The heartbeat is the liveness read. The threshold is deliberately loose, so a
+device parked in a blocking read between rare data is not stale. A starved,
+blocked or crashed device then shows as a stale heartbeat with a name on it, not
+as physics that froze for no visible reason. A device that has not beaten since
+attach reads stale whatever `now` is. The records of the
+[harness writer](@ref g-harness-writer) and of the loop have no heartbeat to
+judge, and return `false`.
 
 # Keywords
 
@@ -500,27 +502,29 @@ end
 """
     Snapshot
 
-The immutable publication of one settled boundary: the signal table, its time
-and its counters.
+The immutable publication of one settled [boundary](@ref g-boundary): the
+[signal table](@ref g-signal-table), its time and its counters.
 
-[`latest`](@ref) returns the newest snapshot, [`wait_next_snapshot`](@ref) the
-next one and [`logged`](@ref) the retained ones. A snapshot (the immutable
-per-boundary publication) holds the whole signal table at its boundary, root
-inputs included, and no state. Read a port off it with
-`port(snapshot, path, name)`, a method of [`port`](@ref) addressed exactly as
-the live table, and a device's read set with [`gather`](@ref). Nothing in a
-published snapshot is ever written again, so a reader on any task may hold one
-for as long as it likes.
+[`latest`](@ref) returns the newest [snapshot](@ref g-snapshot),
+[`wait_next_snapshot`](@ref) the next one and [`logged`](@ref) the retained
+ones. A snapshot holds the whole signal table at its boundary,
+[root inputs](@ref g-root-input) included, and no state. Read a
+[port](@ref g-port) off it with `port(snapshot, path, name)`, a method of
+[`port`](@ref) addressed exactly as the live table, and a
+[device](@ref g-device)'s [read set](@ref g-read-set) with [`gather`](@ref).
+Nothing in a published snapshot is ever written again, so a reader on any task
+may hold one for as long as it likes.
 
 A snapshot holds these fields, beside the table that `port` reads.
 
 - `t`: the boundary time.
-- `frame`: the number of frames completed since the run's origin.
+- `frame`: the number of [frames](@ref g-frame) completed since the run's
+  origin.
 - `boundary`: the boundary ordinal, counting the trajectory's published
-  boundaries from `0` at boundary zero.
-- `status`: the framework status (the per-writer diagnostics and liveness each
-  snapshot carries). `status.writers` holds one [`WriterStatus`](@ref) per
-  writer, and `status.pacer` the pacer's record.
+  boundaries from `0` at [boundary zero](@ref g-boundary-zero).
+- `status`: the [framework status](@ref g-framework-status). `status.writers`
+  holds one [`WriterStatus`](@ref) per writer, and `status.pacer` the pacer's
+  record.
 """
 struct Snapshot{T,S<:StoreBundle}
     t::T
@@ -535,17 +539,16 @@ end
 """
     port(snapshot::Snapshot, path::String, name::Symbol)
 
-Return a port's value in the snapshot's signal table, as published at its
-boundary.
+Return a [port](@ref g-port)'s value in the [snapshot](@ref g-snapshot)'s
+[signal table](@ref g-signal-table), as published at its
+[boundary](@ref g-boundary).
 
-A snapshot (the immutable per-boundary publication) carries the whole signal
-table, root inputs included. The signal table is the framework-owned collection
-of cells holding every produced signal. A port (the addressable unit of the
-model: one declared name, one cell) is addressed exactly as in the live table,
-by its component's path and its name. An assembly's own path addresses its
-output faces, and the empty path the root inputs (the root component's own
-input faces). Nothing in a published snapshot is written again,
-so the read is safe from any task.
+A snapshot carries the whole signal table, [root inputs](@ref g-root-input)
+included. A port is addressed exactly as in the live table, by its
+[component](@ref g-component)'s path and its name. An
+[assembly](@ref g-assembly)'s own path addresses its output
+[faces](@ref g-face), and the empty path the root inputs. Nothing in a published
+snapshot is written again, so the read is safe from any task.
 
 A snapshot carries no state, only ports. For a port's live value, see
 `port(sim, path, name)` and `port(model, path, name)`, and for snapshots
