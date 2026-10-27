@@ -11386,8 +11386,10 @@ artifacts, so the core's own suite catches a refactor that would break it.
 **Every descriptor is one object with a header and one body** ([D-432][d-432]). The
 header holds `format_version`, an object `{"major": 1, "minor": 0}`
 independent of Redstone's version; `redstone_version`, a string for
-information only; and `kind`, `"build"` or `"deployment"`, with `"failure"`
-reserved. The body sits under the key the kind names. A deployment body
+information only; `kind`, `"build"` or `"deployment"`, with `"failure"`
+reserved; and optionally `name`, a label for the model that a writer outside
+the core supplies and `descriptor` never writes. The body sits under the key
+the kind names. A deployment body
 embeds the build body whole under `build`, so one definition of the build
 body serves both places and a file always opens on its own. **A minor bump
 only adds fields, and a major bump may break readers** ([D-432][d-432]). A reader
@@ -11405,8 +11407,9 @@ inputs):
   by its path with its [class](#g-class) (assembly or leaf), the field that
   contributed it and, for a container element, its key, its
   [tier](#g-tier) (continuous or discrete) and timing when a leaf, its type's
-  qualified base name with the full printed type beside it, and its faces. A
-  leaf's [face](#g-face) (the name a port wears on its component's boundary)
+  qualified base name with the full printed type beside it, its alias when a
+  `const` of its own module binds a parameterization of its type, and its
+  faces. A leaf's [face](#g-face) (the name a port wears on its component's boundary)
   carries its printed type, its kind marker and whether it is pinned; an
   assembly's faces are names alone. The root node carries no field and no
   key, and a primitive root is one leaf node ([D-433][d-433]). An assembly

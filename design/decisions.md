@@ -17360,6 +17360,12 @@ instances to carry; and a type's locations include a declaration method it
 inherits from an abstract supertype, the method that applies and the one a
 reader opens ([§13.9][s13-9]).
 
+Annotation (2026-10-27): of the three spike proposals, the node `alias` and
+the envelope `name` joined version one's shape with the visual grammar
+(`design/inspector/visual_grammar.md`, answers 7 and 10), the package being
+unreleased and the format having no reader to protect; the assembly-face type
+and kind are closed, the client resolving (its answer 4).
+
 **Rejected.**
 - *The table read literally, a closure and an `Array` as `struct`:* captures
   and an array's buffer are implementation, no value a widget edits.

@@ -413,7 +413,8 @@ D-250, D-254, D-256, D-261.
   `Pinned` entry unwrapped and flagged, and the kind marker `_kind_marker`,
   §13.9's table in test order, its `struct` row the leaf walk's isbits cut
   and its `vector` row over `_static_shape` (D-433).
-- The instance context: `_qualified_name`, `_type_string`, the parameter
+- The instance context: `_qualified_name`, `_alias` over the parent module's
+  constant bindings, `_type_string`, the parameter
   summary `_parameters` cut at 80 characters, the `types` rows `_type_rows`
   with `_docstring` off the docsystem's meta and `_locations` over
   `LOCATED_DECLARATIONS`.

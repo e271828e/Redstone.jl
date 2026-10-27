@@ -306,16 +306,16 @@ This session closed axis 3. What it hands on, in working order; this list
 supersedes the bumps' entries on `descriptor_design.md`'s pending list,
 which now points here.
 
-1. **The wire-key commit.** One sentence in the schema's `Wire` description,
-   consumer endpoints are unique within a level, and one content assertion
-   in the core's descriptor suite (answer 4). Documentation and a test, no
-   shape change and no version bump.
-2. **Format 1.1: `alias` and `name`.** One minor bump (D-433) carrying the
-   optional node `alias` with answer 7's writer rule, the most specific
-   `const` type binding in the type's own parent module, and the optional
-   envelope `name` of answer 10, which the inspector package writes and
-   `descriptor` never does. Schema, writer, a fixture with a `SumJunction`
-   and a `Pack`, the §13.9 sentence, docs commit first.
+1. **The wire key.** Already in place: increment 81 wrote the sentence in
+   the schema's `Wire` description, consumer endpoints are unique within a
+   level, and asserts it in the descriptor suite (answer 4). Nothing to do.
+2. **The `alias` and `name` fields.** The optional node `alias` with answer
+   7's writer rule, the most specific `const` type binding in the type's own
+   parent module, and the optional envelope `name` of answer 10, which the
+   inspector package writes and `descriptor` never does. They join version
+   one's shape with no version bump, the package being unreleased: schema,
+   writer, a fixture with a `SumJunction` and a `Pack`, two clauses in
+   §13.9, docs commit first.
 3. **Axis 5**, workspace and interaction, over this grammar: the tree, the
    breadcrumb, the detail pane and the drawer, search, selection and focus,
    view state by path across pushes, the analysis views, the help page.
