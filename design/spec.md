@@ -15053,8 +15053,9 @@ boundary runs there, but no ticks are due and no staged inputs are drained
 
 <a id="g-tick"></a>**tick** — an instant at which a discrete component's stages and update run,
 gated by counter modulo against the harmonic grid inside the boundary sweep.
-Different boundaries therefore run different subsets of the execution order
-([§10.5][s10-5]).
+Different boundaries therefore run different subsets of the execution order.
+A **base tick** is a tick of the base grid, the instant every `N_base` frame
+tops; its period is `Δt_base` ([§10.5][s10-5]).
 
 <a id="g-tick-index"></a>**tick index** — the count of base ticks, `tick = k ÷ N_base` at the frame
 top of frame `k` when `k` is a multiple of `N_base`. It is the index the
