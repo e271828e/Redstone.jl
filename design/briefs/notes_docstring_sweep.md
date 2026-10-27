@@ -1238,3 +1238,17 @@ that the standard library ships the component, with no privilege a user's
 component lacks, and Appendix D gains an entry for it. The library's
 summaries open "A continuous primitive that …", "A discrete primitive
 that …" or, for `Group`, "An assembly …".
+
+**What landed.** The docs commit `929f415` carried the generator, the
+sheet's rules and Appendix D's edits. The docstring commit `361e530`
+applied the rulings from a classification pass over 210 docstrings: 476
+inline glosses became links, 986 glossary links over 98 entries landed at
+first mentions, 47 "leaf" uses became "primitive", and 33 library summaries
+took the ruled form. The reviewer read about 150 links against Appendix D
+and found one wrong-sense family, five "payload" links where the word was
+not the diagnostic's; `b1d9ae3` dropped them, linked three summaries the
+pass had left bare, reworded "handle primitives" for the vocabulary rule
+and linked the descriptor docstring, whose file another session had held.
+`1547176` named the base tick as an instant in the glossary's `tick` entry,
+since "base tick" carried both a period and an instant and only the period
+was defined.
