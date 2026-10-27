@@ -607,8 +607,9 @@ compiled at another optimization level agrees with it only to round-off
 ## 3. Component taxonomy
 
 **The taxonomy has three categories of [component](#g-component)** ([D-003][d-003]).
-Two of them are leaves with crisp, closed semantics, and one is pure
-composition. [§3.1][s3-1] describes the continuous component, [§3.2][s3-2] the
+Two of them are [primitives](#g-primitive), with crisp, closed semantics, and
+one is an [assembly](#g-assembly). [§3.1][s3-1] describes the continuous
+component, [§3.2][s3-2] the
 periodic discrete component and [§3.3][s3-3] the assembly, and [§3.4][s3-4]
 justifies the two-leaf split.
 
@@ -14605,7 +14606,8 @@ types that depend on input values ([§9.3][s9-3]). A port missing from an untake
 branch fails at that branch's first execution, under the always-on check
 ([§8.3][s8-3]).
 
-<a id="g-class"></a>**class** — a component's primitive-vs-assembly status, read
+<a id="g-class"></a>**class** — a component's
+[primitive](#g-primitive)-vs-[assembly](#g-assembly) status, read
 off *which* well-known declarations its type defines. `local_wires` makes an
 assembly, any of the primitive declarations makes a primitive, and neither is
 `ClassUnreadable` ([§8.5][s8-5]). Class is neither a [tier](#g-tier) nor a
@@ -14613,9 +14615,8 @@ diagnostic [kind](#g-kind). The phrase "two leaf classes" names the tiers in
 ordinary English ([§3.4][s3-4]).
 
 <a id="g-component"></a>**component** — the unit of modeling. It is a
-**primitive**, either a continuous or a periodic discrete component, or an
-assembly of components ([§3][s3]). The spec body says "leaf" for a primitive
-as well.
+[primitive](#g-primitive) or an [assembly](#g-assembly) of components
+([§3][s3]).
 
 <a id="g-container-children"></a>**container children** — a `Tuple`/`NamedTuple` field whose elements are all
 components. It contributes them as children path-named `"field/1"` or
@@ -14700,6 +14701,12 @@ Condition fragments follow it as unchecked guidance ([§14.2][s14-2]).
 at a declared rate, and two output stages whose cells hold zero-order between
 ticks. It has no `m` store, and its `s` reaches others only through signals
 ([§3.2][s3-2]).
+
+<a id="g-primitive"></a>**primitive** — a component with dynamics of its own
+and no children: a [continuous component](#g-continuous-component) or a
+[periodic discrete component](#g-periodic-discrete-component), one per
+[tier](#g-tier). It makes the primitive declarations, `x_init` or `s_init`
+among them, and its faces are its own ports ([§3][s3], [§8.5][s8-5]).
 
 <a id="g-rate-scope"></a>**rate scope** — an assembly's `sample_times` declaration, mapping an
 immediate child name to a `Relative` or `Absolute` declaration against the
