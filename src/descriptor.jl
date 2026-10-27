@@ -104,18 +104,18 @@ end
 function _leaf_node(identity::NamedTuple, entry::ComponentEntry)
     instance = entry.instance
     merge(identity,
-          (class = "leaf", tier = tier_word(entry.tier), timing = entry.timing,
-           type = _qualified_name(typeof(instance)), signature = _type_string(typeof(instance)),
-           inputs = _leaf_faces(u_types, instance), outputs = _leaf_faces(y_types, instance),
+          (class = "leaf", tier = tier_word(entry.tier), timing = entry.timing),
+          _type_identity(typeof(instance)),
+          (inputs = _leaf_faces(u_types, instance), outputs = _leaf_faces(y_types, instance),
            parameters = _parameters(instance)))
 end
 
 function _assembly_node(identity::NamedTuple, level::LevelEntry)
     instance = level.instance
     merge(identity,
-          (class = "assembly",
-           type = _qualified_name(typeof(instance)), signature = _type_string(typeof(instance)),
-           inputs = [(name = String(face),) for face in _boundary_inputs(level)],
+          (class = "assembly",),
+          _type_identity(typeof(instance)),
+          (inputs = [(name = String(face),) for face in _boundary_inputs(level)],
            outputs = [(name = String(face),) for face in _boundary_outputs(level)],
            wires = [(from = _endpoint(producer), to = _endpoint(consumer))
                     for (producer, consumer) in level.wires],
@@ -185,9 +185,45 @@ end
 
 # --- type identity and the instance context -------------------------------------
 
+# A node's `type`, `alias` when the type has one, and `signature` (§13.9).
+function _type_identity(@nospecialize(component_type::Type))
+    alias = _alias(component_type)
+    identity = (type = _qualified_name(component_type),)
+    alias === nothing || (identity = merge(identity, (alias = alias,)))
+    merge(identity, (signature = _type_string(component_type),))
+end
+
 # The qualified base name (§13.9): the type's module and its unparameterized name.
 _qualified_name(@nospecialize(component_type::Type)) =
     string(parentmodule(component_type), ".", nameof(component_type))
+
+# The qualified name of the most specific `const` of the type's own module that
+# binds a parameterization of it, `SumJunction` for a `Junction` at `+`, or
+# `nothing`: the base binding itself never counts, and neither does a supertype.
+function _alias(@nospecialize(component_type::Type))
+    mod = parentmodule(component_type)
+    base = Base.unwrap_unionall(component_type)
+    matches = Pair{Symbol,Type}[]
+    for name in names(mod; all = true)
+        bound = _constant(mod, name)
+        bound isa DataType || bound isa UnionAll || continue
+        Base.unwrap_unionall(bound).name === base.name && bound !== base.name.wrapper &&
+            component_type <: bound && push!(matches, name => bound)
+    end
+    isempty(matches) && return nothing
+    sort!(matches; by = first)
+    narrowest = [m for m in matches if all(m.second <: n.second for n in matches)]
+    string(mod, ".", first(isempty(narrowest) ? matches : narrowest).first)
+end
+
+# A module's constant binding by name, or `nothing` for anything else; a binding
+# that is declared but unassigned makes `isconst` throw.
+_constant(mod::Module, name::Symbol) =
+    try
+        isconst(mod, name) ? getfield(mod, name) : nothing
+    catch
+        nothing
+    end
 
 # A type printed in full, parameters included, as the REPL would print it. It is
 # display text: the stable identity is the qualified base name.

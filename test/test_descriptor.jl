@@ -35,11 +35,19 @@ kinds_model() =
           local_wires = ("s/phase" => "p/phase", "stub/out" => "dut/terrain", "v/out" => "free/v"),
           input_wires = ("dut.k" => "dut/k",))
 
+# The junction aliases beside a junction over a user function, all fed by one
+# constant: the first three carry their `const` as `alias`, the last none.
+aliases_model() =
+    Group((; k = Constant(1.0), sum = SumJunction{Float64, 2}(), pack = Pack{Float64, 2}(),
+             diff = Junction{Float64, Float64, 2}(-));
+          local_wires = ("k/out" => "sum/in1", "k/out" => "sum/in2", "k/out" => "pack/in1",
+                         "k/out" => "pack/in2", "k/out" => "diff/in1", "k/out" => "diff/in2"))
+
 function test_descriptor()
     @testset "every fixture's descriptor validates after the round trip and mirrors the artifacts (§13.9)" begin
         for model in (Plant(), fed(PinnedGain(), "e"), Vehicle(), FannedLoops(2), MultiRate(),
                       routed_pair(), TerrainRig(), KeyedGains(), GreekGains(), single(LateDoc()),
-                      kinds_model())
+                      kinds_model(), aliases_model())
             built = build(model)
             value = descriptor(built)
             round_trip(value)
@@ -161,6 +169,21 @@ function test_descriptor()
         @test body.structure.scopes == [(path = "fcs", key = "fcs", timing = (anchor = 0, m = 1, c = 0))]
     end
 
+    @testset "a node carries its alias when a const binds its type, and the envelope admits a name (§13.9)" begin
+        value = descriptor(build(aliases_model()))
+        body = value.build
+        @test node_at(body, "sum").alias == "Redstone.Blocks.SumJunction"
+        @test node_at(body, "pack").alias == "Redstone.Blocks.Pack"
+        @test !haskey(node_at(body, "diff"), :alias)    # a `Junction` over a user function
+        @test !haskey(node_at(body, "k"), :alias)
+        @test !haskey(node_at(body, ""), :alias)
+        @test keys(node_at(body, "sum"))[end-5:end-3] == (:type, :alias, :signature)
+        # `descriptor` never writes `name`; a writer outside the core may
+        @test !haskey(value, :name)
+        parsed = round_trip(value)
+        parsed["name"] = "aliases"
+        @test JSONSchema.validate(DESCRIPTOR_SCHEMA, parsed) === nothing
+    end
     @testset "a type is described once, with its docstring and locations, and an instance by its summary (§13.9)" begin
         body = descriptor(build(Vehicle())).build
         rows = body.structure.types

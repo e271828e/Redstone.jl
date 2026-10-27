@@ -1,12 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Redstone descriptor",
-  "description": "The projection of a Build or a Deployment to data (spec §13.9, D-432). Version 1.0. The writer is `descriptor` in src/descriptor.jl; this file is the shape of record, strict about the writer's output: every object closes with additionalProperties false, and a field that does not apply is omitted, never null. The design record is design/inspector/descriptor_design.md.",
+  "description": "The projection of a Build or a Deployment to data (spec §13.9, D-432). Version 1.0. The writer is `descriptor` in src/descriptor.jl; this file is the shape of record, strict about the writer's output: every object closes with additionalProperties false, and a field that does not apply is omitted, never null. The design record is design/inspector/descriptor_design.md. `name` is optional, a label for the model that a writer outside the core supplies; `descriptor` never writes it.",
   "type": "object",
   "properties": {
     "format_version": { "$ref": "#/definitions/FormatVersion" },
     "redstone_version": { "type": "string" },
     "kind": { "type": "string", "enum": ["build", "deployment"] },
+    "name": { "type": "string" },
     "build": { "$ref": "#/definitions/BuildBody" },
     "deployment": { "$ref": "#/definitions/DeploymentBody" }
   },
@@ -75,13 +76,14 @@
       ]
     },
     "NodeIdentity": {
-      "description": "The fields both classes share. `path` is the full path, \"\" for the root. `field` is the field that contributed the node to its parent and `key`, present for a container element alone, its key within the container, a string even when the container is a vector; the root has neither. No `key` is a component field; a `key` with the path's last segment `field/key` is a keyed container; a `key` equal to the last segment is a name-transparent container. `type` is the qualified base name, parent module and all, the key into the `types` table; `signature` the full printed concrete type, display text as the REPL prints it.",
+      "description": "The fields both classes share. `path` is the full path, \"\" for the root. `field` is the field that contributed the node to its parent and `key`, present for a container element alone, its key within the container, a string even when the container is a vector; the root has neither. No `key` is a component field; a `key` with the path's last segment `field/key` is a keyed container; a `key` equal to the last segment is a name-transparent container. `type` is the qualified base name, parent module and all, the key into the `types` table; `alias`, present when a `const` of the type's own module binds a parameterization of it, is the qualified name of the most specific such binding, `Redstone.Blocks.SumJunction` for a `Junction` at `+`, the label and icon key ahead of `type`; `signature` the full printed concrete type, display text as the REPL prints it.",
       "type": "object",
       "properties": {
         "path": { "type": "string" },
         "field": { "type": "string" },
         "key": { "type": "string" },
         "type": { "type": "string" },
+        "alias": { "type": "string" },
         "signature": { "type": "string" },
         "parameters": { "type": "array", "items": { "$ref": "#/definitions/Parameter" } }
       },
@@ -97,6 +99,7 @@
             "field": true,
             "key": true,
             "type": true,
+            "alias": true,
             "signature": true,
             "parameters": true,
             "class": { "const": "leaf" },
@@ -121,6 +124,7 @@
             "field": true,
             "key": true,
             "type": true,
+            "alias": true,
             "signature": true,
             "parameters": true,
             "class": { "const": "assembly" },
