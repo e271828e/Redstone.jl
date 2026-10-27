@@ -717,8 +717,8 @@ under another name.
 
 ### 3.3 Assembly
 
-An [assembly](#g-assembly) is pure composition. It holds child components,
-[local wires](#g-local-wire) and boundary [faces](#g-face) (the names ports
+An [assembly](#g-assembly) is a component built from child components. It
+holds those children, [local wires](#g-local-wire) and boundary [faces](#g-face) (the names ports
 wear on a component's boundary). It has no dynamics of its own. Hybridness
 emerges at the assembly level. An aircraft is continuous vehicle parts plus
 discrete avionics parts. The two-leaf split was upheld against the
@@ -855,7 +855,7 @@ the parties that write it.
 A component's ports are its signal endpoints, one cell and one producer each.
 **Its [faces](#g-face) are the names those ports wear on the component's
 boundary** ([D-172][d-172]). For a leaf the two coincide. For an
-[assembly](#g-assembly) (pure composition of child components) every face
+[assembly](#g-assembly) (a component that holds and wires child components) every face
 aliases an interior port through its boundary declarations ([§8.6][s8-6]) and
 never creates an endpoint. The distinction is [class](#g-class)-blind ([D-172][d-172]).
 Wiring and the [periphery](#g-periphery) (everything outside the loop that
@@ -1523,8 +1523,8 @@ structural two-stage split.
 
 [Components](#g-component) (the units of modeling, leaf or assembly) become a
 system through wiring. Connections route signals across the hierarchy of
-[assemblies](#g-assembly) (components of pure composition, with no dynamics of
-their own). Ordinary junction components sit wherever several signals must
+[assemblies](#g-assembly) (components that only hold and wire children, with
+no dynamics of their own). Ordinary junction components sit wherever several signals must
 combine into one. [§6.1][s6-1] gives the connection and hierarchy rules.
 [§6.2][s6-2] gives the aggregation idiom they force.
 
@@ -1540,7 +1540,7 @@ becomes of the ports left unconnected.
 
 #### How far a path may reach
 
-An [assembly](#g-assembly) (a [component](#g-component) of pure composition) has three wiring declarations
+An [assembly](#g-assembly) (a [component](#g-component) that holds and wires children) has three wiring declarations
 ([§8.6][s8-6]). A `local_wires` pair wires one child's [face](#g-face) (the name a port wears on
 its component's boundary) to another's. An `input_wires` entry routes a face to
 an immediate child's face. An `output_wires` entry sources a face from an
@@ -2726,7 +2726,7 @@ rather than the face alone ([§14.10][s14-10], [D-168][d-168], [D-296][d-296]).
 
 **Any component may be the root of a build, and the model's root inputs are
 the root's own input faces** ([D-208][d-208]). For an
-[assembly](#g-assembly) (a component of pure composition) those are the faces
+[assembly](#g-assembly) (a component that holds and wires children) those are the faces
 declared through `input_wires`, each traced through the face chain
 ([§6.1][s6-1], [§11.3][s11-3]) to the leaf entries consuming it. For a
 primitive they are its `u_types` keys directly, because a leaf's faces are its
@@ -3192,7 +3192,7 @@ under inference-by-evaluation too, and in every case the failure surfaced inside
 
 ### 8.5 Assembly declaration: type-based, class by declaration shape
 
-This section states how an [assembly](#g-assembly) (a [component](#g-component) of pure composition) is
+This section states how an [assembly](#g-assembly) (a [component](#g-component) that holds and wires children) is
 declared, how a type's declarations mark it as an assembly or a primitive, what
 arity those declarations take, how container fields contribute children, and how
 `Group` assembles components on the fly.
@@ -3395,7 +3395,7 @@ face, with no `children/` boilerplate.
 
 ### 8.6 Paths, wiring and faces
 
-An [assembly](#g-assembly) (a [component](#g-component) of pure composition, with no dynamics of its own)
+An [assembly](#g-assembly) (a [component](#g-component) built from children, with no dynamics of its own)
 wires its children and names its boundary with strings. A [face](#g-face) is the name a
 [port](#g-port) (one declared input or output) wears on its component's boundary. This
 section fixes the path form, the three wiring declarations and the direction
@@ -3795,7 +3795,7 @@ case needs it ([D-056][d-056]).
 
 ### 8.7 Rate scopes
 
-An [assembly](#g-assembly) (a [component](#g-component) of pure composition) schedules its children through one
+An [assembly](#g-assembly) (a [component](#g-component) that holds and wires children) schedules its children through one
 declaration, `sample_times`, its [rate scope](#g-rate-scope). This section gives its spelling and
 its keys, then what it never holds and why it belongs to the type.
 
@@ -3851,7 +3851,7 @@ through a non-concrete field type), in that order.
 #### The passthrough helpers
 
 The framework helper `input_passthrough` is sketched below. The sketch ends with
-a `World` [assembly](#g-assembly), a [component](#g-component) of pure composition. It passes up the input
+a `World` [assembly](#g-assembly), a [component](#g-component) that holds and wires children. It passes up the input
 [faces](#g-face) (the names [ports](#g-port) wear on component boundaries) of its `aircraft` and
 `atmosphere` children.
 
@@ -8277,7 +8277,7 @@ framework's half of the panel convention.
 
 Panels remain extensions per [component](#g-component) (the unit of modeling, a leaf or an
 assembly) in FlightCore's style, such as `GUI.draw!(ctx, ::LowPassFilter)`. They
-are discovered by walking the [assembly](#g-assembly) (pure composition, whose component-typed
+are discovered by walking the [assembly](#g-assembly) (whose component-typed
 fields are its children). However, **widgets name the component's own ports,
 never root inputs** ([D-026][d-026]). The build-time wiring answers one question
 statically and exactly. *Is this port transitively driven by a root input, and
@@ -8332,7 +8332,7 @@ faces under which the assemblies above surface a port) is the marking, written
 by the one author entitled to write it. A component's ports become
 GUI-commandable exactly when the assemblies above surface them. The switch
 between "driven by its own panel" and "driven by an external provider" is
-therefore automatic. `World` is the example assembly of pure composition that [§8.8][s8-8]
+therefore automatic. `World` is the example assembly that [§8.8][s8-8]
 introduces. At build time the switch follows the wiring archetype, where a
 scripted `World` wires a [scenario component](#g-scenario-component) into the same faces the interactive
 `World` exports to root. A scenario component is the home of a sim-time script. At
@@ -10030,8 +10030,8 @@ evaluation fails fast** ([D-057][d-057]).
   set of* inputs whose obligation chain never terminates. Reporting every
   violation is the natural output of such a pass, and truncating to the first
   would be extra work. These failures also cluster in practice. A freshly
-  written [assembly](#g-assembly) (pure composition, with no dynamics of its
-  own) has five unwired inputs, and a renamed [port](#g-port) breaks three
+  written [assembly](#g-assembly) (a component built from children, with no
+  dynamics of its own) has five unwired inputs, and a renamed [port](#g-port) breaks three
   wires. Each of these passes returns its full violation list.
 - User code runs in the build's first three steps ([§9.1][s9-1]). The structure step
   reads the declaration bodies, interface-connection bodies among them. The
@@ -11006,7 +11006,8 @@ is ([D-313][d-313]). A workspace sub-package or a separate repository is an
 after-release question.
 
 One member is admitted by persona. `Group` is the on-the-fly
-[assembly](#g-assembly) (pure composition, with no dynamics of its own), and
+[assembly](#g-assembly) (a component built from children, with no dynamics of
+its own), and
 its declaration-layer treatment lives in [§8.5][s8-5] ([D-184][d-184]). `Group`
 serves the model assembler, for whom topology is data rather than a named
 type. It needs no rule the declaration layer does not already have.
@@ -14573,10 +14574,11 @@ the bound wires to it. The field handles are the demonstrated client
 ([§4.4][s4-4]). It is never needed for eltype genericity, and it is illegal where
 the face surfaces as a root input (`AbstractAtRoot`) ([§8.2][s8-2]).
 
-<a id="g-assembly"></a>**assembly** — pure composition. Its component-typed fields are its children,
-and it declares `local_wires` (mandatory, the class marker),
+<a id="g-assembly"></a>**assembly** — a component that holds child components and wires them
+together. It has no dynamics of its own. Its component-typed fields are its
+children, and it declares `local_wires` (mandatory, the class marker),
 `input_wires`, `output_wires`, `sample_times` and the optional
-`transparent_container`. It has no dynamics of its own. It is flattened away
+`transparent_container`. It is flattened away
 for ordering, and retained as the navigation hierarchy and as
 declaration-level rate scopes ([§3.3][s3-3], [§8.5][s8-5]).
 
