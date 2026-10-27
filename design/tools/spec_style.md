@@ -37,6 +37,10 @@ in pedagogy is not.
   one glossary link per section, tables included. So does a glossary anchor:
   where an entry bolds several names, as *sweep* bolds interior sweep and
   boundary sweep, only the first of them in a section is linked.
+- **Glossary entries link, never gloss.** Inside Appendix D the first mention
+  of another entry's term, in that entry's sense, is a link; later mentions
+  stay bare, and no gloss follows, since the target entry is the gloss. No
+  entry links into D.10, because the docs generator drops that group.
 - **Introduce every reader-cold name.** A name the spec uses without
   introducing it is one of three kinds. Flight.jl machinery used as if known
   moves to a companion, or the spec says what it is. An aerospace example
