@@ -135,7 +135,7 @@ defines no method.
 """
 function ws_init end
 
-# Design: D-167, D-263.
+# Design: D-263.
 """
     u_types(c) -> NamedTuple
 

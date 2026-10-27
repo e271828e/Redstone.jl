@@ -139,7 +139,7 @@ end
 
 # --- the service (§14.10) -------------------------------------------------------
 
-# Design: §9.7, §13.1, §14.6, §14.10, Appendix B, D-167, D-168, D-197, D-213,
+# Design: §9.7, §13.1, §14.6, §14.10, Appendix B, D-168, D-197, D-213, D-263,
 # D-272, D-274, D-319, D-406, D-428.
 # A pure query on scratch buffers. On a simulation the default operating point
 # is `checkpoint(sim)`, through sim.jl's method. The nominal half is a
@@ -154,8 +154,8 @@ end
 # the call, with no commit and no boundary zero. `t0` is admitted only beside
 # `about`, never silently ignored (Appendix B). The query is a read, so a model
 # a simulation has claimed still answers it (D-319). The tap set's refusals:
-# no discrete store in `x` (D-197), no unseedable root input in `u` (D-167,
-# D-168), no two seeds at one site (D-272), with the reads' own refusals beside
+# no discrete store in `x` (D-197), no unseedable root input in `u` (D-168,
+# D-263), no two seeds at one site (D-272), with the reads' own refusals beside
 # them (D-406).
 """
     linearize(model::Model{Float64}, tap_set::Taps; about = nothing, t0 = nothing,

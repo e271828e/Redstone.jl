@@ -304,8 +304,8 @@ end
                firing_budget = 4, localization_tol = 1e-6,
                localization_budget = 8) -> Deployment
 
-The build fixed to a grid: the continuous step, the base tick and the event
-parameters, with no scalar type chosen yet.
+The build fixed to a grid: its continuous step, base tick and event parameters,
+with no scalar type yet.
 
 A deployment carries the build, the grid it settled, the schedule (the typed
 tick table, one row per discrete component) and the warnings its construction

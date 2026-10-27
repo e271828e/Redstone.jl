@@ -479,9 +479,8 @@ discrete output stage run and no projection, events or discrete update. Each
 iteration then writes the decisions, sweeps the continuous chain and reads the
 residuals, with no boundaries and no events. The discrete tier (the discrete
 side of the hybrid model) does not run during the search, so its outputs hold
-the values the
-establishment round gave them. The Jacobian is exact, carried by dual numbers
-through the same evaluation.
+the values the establishment round gave them. The Jacobian is exact, carried by
+dual numbers through the same evaluation.
 
 The verdict is `trim!`'s own. After the backend returns, `trim!` evaluates once
 more at the returned point and tests each residual against its tolerance, in the

@@ -591,7 +591,7 @@ end
 "The probe scalar's own tag (§9.4): what keeps a probe activation distinguishable from trim's (`TrimTag`) and from a user's own."
 struct ProbeTag end
 
-# Design: §9.4, §14.10, D-166, D-272.
+# Design: §9.4, §14.10, D-099, D-272.
 # `LinearizeDual` is the scalar of `linearize`'s default width.
 """
     ProbeDual

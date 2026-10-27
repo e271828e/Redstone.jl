@@ -503,11 +503,12 @@ name-transparent. A deeper path is refused as [`resolve`](@ref) refuses it.
 - `select`: a predicate that receives each face name as a `String` and keeps
   the ones it accepts.
 
-The three selectors are exclusive, one per call. More than one is refused as
-`UnknownFaceSelection` with reason `:multiple_selectors`, and an `except` or
-`only` name the child does not have as `UnknownFaceSelection` with the child's
-faces listed. A selector that keeps nothing warns `EmptyFaceSelection` on the
-build, while a call with no selector over a child without faces is silent.
+The three selection keywords are exclusive, one per call. More than one is
+refused as `UnknownFaceSelection` with reason `:multiple_selectors`, and an
+`except` or `only` name the child does not have as `UnknownFaceSelection` with
+the child's faces listed. A selection keyword that keeps nothing warns
+`EmptyFaceSelection` on the build, while a call with no selection keyword over a
+child without faces is silent.
 
 See also [`output_passthrough`](@ref).
 """
@@ -535,16 +536,16 @@ assembly's own boundary.
 `output_passthrough` is [`input_passthrough`](@ref)'s sibling on the outward
 boundary, and its entries are splatted into the assembly's
 [`output_wires`](@ref). It takes the same keywords over the faces
-[`output_faces`](@ref) lists, with the same folded default `prefix` and the
-same three exclusive selectors, one per call, `select` receiving face names.
+[`output_faces`](@ref) lists, with the same folded default `prefix` and the same
+three exclusive selection keywords, one per call, `select` receiving face names.
 Its pairs read along the flow, `child_path * "/" * face => prefix * sep * face`,
 internal source to face name, as every pair in that declaration does.
 
 Each level re-exports the outputs it surfaces, so an output deep in the tree
 reaches the root only through one entry per level, which this helper computes.
-Its refusals are `input_passthrough`'s: more than one selector, or an unknown
-name, is refused as `UnknownFaceSelection`, and a selector that keeps nothing
-warns `EmptyFaceSelection` on the build.
+Its refusals are `input_passthrough`'s: more than one selection keyword, or an
+unknown name, is refused as `UnknownFaceSelection`, and a selection keyword that
+keeps nothing warns `EmptyFaceSelection` on the build.
 """
 function output_passthrough(@nospecialize(assembly), child_path::AbstractString;
                             sep::AbstractString = ".",

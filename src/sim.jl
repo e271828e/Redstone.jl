@@ -1054,10 +1054,9 @@ Return the linearization of the simulation's model at an operating point.
 
 By default the operating point is `checkpoint(sim)`, the simulation's state at
 the frame top its clock rests on. `about`, a condition with `t0` beside it,
-places the operating point
-anywhere else. The query runs the model's method over that point and writes
-nothing on the simulation. The keywords mean what they mean on the model's
-method.
+places the operating point anywhere else. The query runs the model's method over
+that point and writes nothing on the simulation. The keywords mean what they
+mean on the model's method.
 
 The default form is legal where [`checkpoint`](@ref) is: refused as
 `ServiceLifecycle` unless the simulation is `initialized` or `stopped`. It is
@@ -1403,10 +1402,10 @@ through [`termination`](@ref). In the `:replay` input mode (where the frame's
 inputs come from) the recording also bounds the run. A run that consumes the
 last record halts there `initialized`, with no termination record, and the mode
 turns `:live`. A failure inside the loop leaves it `errored` instead, the cause
-kept on the record. With no device rostered, `run!` then
-rethrows the failure; with one or more, it logs the failure and returns. Ctrl-C
-is a stop, never a failure: caught at a frame top or during a pause, it ends the
-run `stopped` with `ControlRequestedStop(:interrupt)`.
+kept on the record. With no device rostered, `run!` then rethrows the failure;
+with one or more, it logs the failure and returns. Ctrl-C is a stop, never a
+failure: caught at a frame top or during a pause, it ends the run `stopped` with
+`ControlRequestedStop(:interrupt)`.
 
 # Keywords
 
@@ -1879,42 +1878,32 @@ end
 _claimed_gate(::Model, ::LoopHooks, ::Symbol) = nothing
 
 # Design: §11.2, §11.4, §13.5, D-317.
-# The top hook is the drain.
-"""
-    frame_top!(hooks::LoopHooks) -> Nothing
-
-Apply the staged input batches at the top of a simulation's frame, before the
-frame touches any state.
-
-A simulation passes its model a `LoopHooks`, its own [`FrameHooks`](@ref), and
-the model's frame calls `frame_top!` first. This method runs the drain (the
-single point at the top of each frame where the loop takes the staged inputs).
-It applies the batch waiting in each staging cell, or under replay the
-recording's batches for the frame. A batch is a staged set of face ⇒ value
-writes. A staging cell is the per-device holding place where pending writes
-wait. See [`settled!`](@ref) for the other hook.
-"""
+# The top hook is the drain. `LoopHooks` is internal, so the method has no
+# docstring on the public `frame_top!` page. It applies the staged input batches
+# at the top of a simulation's frame, before the frame touches any state. A
+# simulation passes its model a `LoopHooks`, its own `FrameHooks`, and the
+# model's frame calls `frame_top!` first. This method runs the drain (the single
+# point at the top of each frame where the loop takes the staged inputs). It
+# applies the batch waiting in each staging cell, or under replay the
+# recording's batches for the frame. A batch is a staged set of face ⇒ value
+# writes. A staging cell is the per-device holding place where pending writes
+# wait. See `settled!` for the other hook.
 frame_top!(hooks::LoopHooks) = drain!(hooks.sim, hooks.roster)
 
 # Design: §11.2, §11.4, §13.5, D-317.
 # The settled hook publishes the boundary, then samples the stop requests off
 # that snapshot. Which request holds is the loop's to read again; the model
-# learns only whether one does.
-"""
-    settled!(hooks::LoopHooks) -> Bool
-
-Publish the settled boundary's snapshot, and return whether an honoured stop
-request holds in it.
-
-The model calls `settled!` at every settled boundary before integration resumes:
-each localized event boundary, the frame top's, that of boundary zero (the
-initialization boundary), and the boundary `overlay!` or `restore!` settles.
-This method publishes the snapshot (the immutable per-boundary publication).
-It then reads the snapshot's stop requests, the `StopFlag` output ports,
-skipping those the advance ignores. A `true` makes the frame abandon its
-remainder, and the run ends with this snapshot as its final one. See
-[`frame_top!`](@ref) for the other hook.
-"""
+# learns only whether one does. `LoopHooks` is internal, so the method has no
+# docstring on the public `settled!` page. It publishes the settled boundary's
+# snapshot, and returns whether an honoured stop request holds in it. The model
+# calls `settled!` at every settled boundary before integration resumes: each
+# localized event boundary, the frame top's, that of boundary zero (the
+# initialization boundary), and the boundary `overlay!` or `restore!` settles.
+# This method publishes the snapshot (the immutable per-boundary publication).
+# It then reads the snapshot's stop requests, the `StopFlag` output ports,
+# skipping those the advance ignores. A `true` makes the frame abandon its
+# remainder, and the run ends with this snapshot as its final one. See
+# `frame_top!` for the other hook.
 settled!(hooks::LoopHooks) =
     (publish!(hooks.sim, hooks.roster, hooks.pacer);
      _stop_hit(hooks.sim, hooks.ignore_mask) !== nothing)

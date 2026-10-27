@@ -49,15 +49,10 @@ item changes what the spec says, the spec edit is part of the item.
   never a source of spelling; a signature mirrors its method. The library,
   public as a group (D-226), is wave 7, and the holder types, public as a
   group the same way, are wave 8.
-  State: waves 1 to 7 landed (`84ece6b` to `f8663ce`), the cold review's
-  findings are fixed (`8e78b72`), and the user ruled on sixteen questions.
-  The docs commit after the fix landed the rulings in the sheet, Appendix B,
-  the inventory and D-226, and recorded the run in
-  `design/briefs/notes_docstring_sweep.md`. Next: wave 8, the docstrings
-  and page lines of the 21 holder types and `lifecycle`; then the
-  conformance commit, which brings the swept files to the rulings and moves
-  the citations the notes list; then the reviewer's verification and the
-  push.
+  The sweep landed as the commits from `84ece6b` to the conformance commit
+  after wave 8, with its record in `design/briefs/notes_docstring_sweep.md`,
+  and what remains is the examples pass after the tutorial and the
+  signature-and-link pass after the audit.
 - **`closed_loop` as a hierarchy.** The example's closed loop is one flat
   `Group` of 27 library blocks and 55 wires, written so to show the library
   composing without a named assembly, and it draws as a tangle at any
@@ -105,10 +100,8 @@ item changes what the spec says, the spec edit is part of the item.
     the examples import, and some names no spec sentence spells:
     `logged(sim)`, `termination(sim)`, `port(snapshot, path, name)`, the
     `Simulation` forms of `port`, `state` and `modes`, and `Model(build)`
-    and `Model(world)`. `reads` is both the binding trait `reads(b)` and the
+    and `Model(root)`. `reads` is both the binding trait `reads(b)` and the
     read-set constructor `reads(; selectors...)`, one name in two senses.
-    `lifecycle(sim)` is the reverse case: §12.6 spells it and `closed`'s
-    docstring sends the reader to it, but B does not list it.
     And D-226 makes a name public by standing on B, so a diagnostic kind is
     public only where B names it; whether Appendix C's kind set is public
     as a whole is the audit's to settle.

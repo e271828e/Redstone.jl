@@ -23,7 +23,8 @@
 # `lifecycle(sim)` reads it (§12.6, D-317). `claimed` is set by
 # `Simulation(model)` through a compare-and-swap (§9.2, §12.6, D-318). A
 # simulation's drain folds `frame_diag` into the loop's account beside the
-# loop's own cell (§11.8, D-317).
+# loop's own cell (§11.8, D-317). The claim's gate refuses the internal `apply!`
+# on a claimed model as well.
 """
     Model(deployment::Deployment, ::Type{T} = Float64; chunk_size = 16) -> Model{T}
     Model(build::Build, ::Type{T} = Float64; h, N_base = nothing, Δt_base = nothing,
@@ -59,9 +60,10 @@ A model holds five values, each a field.
   `:inconsistent`, and a throw inside boundary zero writes `:built`. Only the
   model's own calls write it.
 - `claimed`: set once a `Simulation` takes the model, and never cleared, so a
-  simulation owns its model and never shares it. The model's own
-  [`init!`](@ref), [`frame!`](@ref), [`restore!`](@ref), [`overlay!`](@ref),
-  `apply!` and [`trim!`](@ref) refuse a claimed model as `ArgumentInvalid`.
+  simulation owns its model and never shares it. The model's own calls that
+  write, such as [`init!`](@ref), [`frame!`](@ref), [`restore!`](@ref),
+  [`overlay!`](@ref) and [`trim!`](@ref), refuse a claimed model as
+  `ArgumentInvalid`.
 - `frame_diag`: the frame's own diagnostic cell (a cell holding runtime
   diagnostics), where the chattering and firing-budget reports go. A simulation
   collects it at each frame top (the start of a frame) beside its own.
@@ -162,7 +164,8 @@ A subtype defines a method of each. Every boundary publishes before integration
 resumes, so a subtype that publishes snapshots (the immutable per-boundary
 publications) does it in `settled!`. [`NoHooks`](@ref) does nothing and never
 abandons, for a model stepped on its own. A [`Simulation`](@ref) passes hooks of
-its own, which apply the staged inputs and publish every boundary.
+its own, which apply the staged input batches (sets of face ⇒ value writes) at
+the frame top and publish a snapshot at each settled boundary.
 """
 abstract type FrameHooks end
 
@@ -681,7 +684,7 @@ published snapshot instead, use `port(snapshot, path, name)`.
 port(model::Model, path::String, name::Symbol) =
     gather_cell(model.exec.store, model.exec.act.layout.addr[(path, name)])
 
-# Design: §7.3.
+# Design: §7.3, D-317.
 """
     state(model::Model, path::String)
     state(sim::Simulation, path::String)
@@ -705,7 +708,7 @@ function state(model::Model{T}, path::String) where {T}
     reconstruct(typeof(_decls(ci).x), model.exec.xbuf, x_offset)
 end
 
-# Design: §7.3.
+# Design: §7.3, D-317.
 """
     modes(model::Model, path::String)
     modes(sim::Simulation, path::String)
@@ -826,8 +829,8 @@ a model at rest.
 `checkpoint` is legal while the model is `:consistent`, after [`init!`](@ref) or
 a restore and before any throw. It is refused as `ServiceLifecycle` at `:built`
 or `:inconsistent`. It is refused as `CheckpointMidFrame` with the clock off a
-frame top, naming the frame the clock sits inside. A frame abandoned
-at a localized event time `t*` leaves the clock there.
+frame top, naming the frame the clock sits inside. A frame abandoned at a
+localized event time `t*` leaves the clock there.
 """
 function checkpoint(model::Model{T}) where {T}
     _assert_at_rest(model, :checkpoint)

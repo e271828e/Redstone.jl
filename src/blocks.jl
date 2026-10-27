@@ -172,9 +172,8 @@ the model runs at. A constant is never seeded, so it carries zero partials under
 every `Dual` activation (the build's typed products at a given scalar type). A
 consumer input declared plain `Float64`, which admits a value with or without
 partials, accepts it as a value that never carries partials. The value is
-instance data, not an overridable default. A
-source set from outside is a root input (an input of the root component,
-produced by no component).
+instance data, not an overridable default. A source set from outside is a root
+input (an input of the root component, produced by no component).
 
 See also [`Source`](@ref), [`Step`](@ref).
 """
@@ -888,14 +887,14 @@ instant at which a discrete component runs):
     out = C q + D in
 
 The keywords, the shapes, the storage, the ports and the refusals are those of
-[`StateSpace`](@ref), and so is the feedthrough class of
-[`DiscreteLinearBlock`](@ref). A zero `D` publishes `out` from stage 1
-(`y_state`, the output stage that reads no input). The block then breaks an
-algebraic loop (a cycle of instantaneous dependences). A nonzero `D` publishes
-it from stage 2 (`y_direct`, the output stage that reads the inputs). The
-discrete tier is the discrete side of the hybrid formalism. It never follows
-the scalar of an activation (the build's typed products at a given scalar
-type), so under a `Dual` activation the block holds its last value.
+[`StateSpace`](@ref), and so is the feedthrough class of [`DiscreteLinearBlock`](@ref).
+A zero `D` publishes `out` from stage 1 (`y_state`, the output stage that reads
+no input). The block then breaks an algebraic loop (a cycle of instantaneous
+dependences). A nonzero `D` publishes it from stage 2 (`y_direct`, the output
+stage that reads the inputs). The discrete tier is the discrete side of the
+hybrid formalism. It never follows the scalar of an activation (the build's
+typed products at a given scalar type), so under a `Dual` activation the block
+holds its last value.
 
 The matrices presuppose the period they were designed at. That period is the
 one the block's rate scope (an assembly's `sample_times` declaration) gives it,
@@ -1780,9 +1779,13 @@ function check_shapes(types, given)
 end
 
 # Design: `lqr_tracker.md` gives the derivation and the reasoning. The keyword
-# order is the roster `LQR_PARAMETERS`.
+# order is the roster `LQR_PARAMETERS`. The sizeless method forwards `kw...`,
+# so its line shows the sized method's keywords.
 """
-    LQRTracker(; K_fbk, K_fwd, kw...) -> LQRTracker
+    LQRTracker(; K_fbk, K_fwd, K_int = zero(SMatrix{NU, NZ, Float64}),
+               x_trim = zero(SVector{NX, Float64}), u_trim = zero(SVector{NU, Float64}),
+               z_trim = zero(SVector{NZ, Float64}), Tt = Inf, u_min = -Inf, u_max = Inf,
+               hold::Bool = false, tracking::Bool = false) -> LQRTracker
     LQRTracker{NX, NU, NZ}(; K_fbk, K_fwd, K_int = zero(SMatrix{NU, NZ, Float64}),
                            x_trim = zero(SVector{NX, Float64}), u_trim = zero(SVector{NU, Float64}),
                            z_trim = zero(SVector{NZ, Float64}), Tt = Inf, u_min = -Inf, u_max = Inf,
@@ -1833,9 +1836,9 @@ given scalar type), the port carries partials, and a model that wants it frozen
 at its plain `Float64` value routes it through [`Freeze`](@ref).
 
 The first form reads `NX`, `NU` and `NZ` off the values given, `K_fbk` first,
-then `K_fwd`, `K_int` and the trims, and passes `kw...` on to the second, the
-explicit spelling, which takes the sizes and the same keywords. A matrix or a
-vector that does not fit the sizes read is refused as an `ArgumentError`. A
+then `K_fwd`, `K_int` and the trims, and passes every keyword on to the second,
+the explicit spelling, which takes the sizes and the same keywords. A matrix or
+a vector that does not fit the sizes read is refused as an `ArgumentError`. A
 size no value carries, every carrier a port or left at its default, is refused
 likewise, naming the explicit spelling.
 
@@ -1908,9 +1911,13 @@ function x_deriv(c::LQRTracker, (; x, u, y))
 end
 
 # Design: §10.5, §13.8.
-# `lqr_tracker.md`, sections 4, 6 and 7, gives the reasoning.
+# `lqr_tracker.md`, sections 4, 6 and 7, gives the reasoning. The sizeless
+# method forwards `kw...`, so its line shows the sized method's keywords.
 """
-    DiscreteLQRTracker(; K_fbk, K_fwd, kw...) -> DiscreteLQRTracker
+    DiscreteLQRTracker(; K_fbk, K_fwd, K_int = zero(SMatrix{NU, NZ, Float64}),
+                       x_trim = zero(SVector{NX, Float64}), u_trim = zero(SVector{NU, Float64}),
+                       z_trim = zero(SVector{NZ, Float64}), Tt = Inf, u_min = -Inf, u_max = Inf,
+                       hold::Bool = false, tracking::Bool = false) -> DiscreteLQRTracker
     DiscreteLQRTracker{NX, NU, NZ}(; K_fbk, K_fwd, K_int = zero(SMatrix{NU, NZ, Float64}),
                                    x_trim = zero(SVector{NX, Float64}), u_trim = zero(SVector{NU, Float64}),
                                    z_trim = zero(SVector{NZ, Float64}), Tt = Inf, u_min = -Inf, u_max = Inf,
