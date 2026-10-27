@@ -1352,7 +1352,10 @@ tests run from the repository root with
 
     julia --project=examples -e 'using Pkg; Pkg.test()'
 
-and CI runs them as a third workflow (`.github/workflows/Examples.yml`), on
+or, for one example's file, `julia --project=examples/test
+examples/test/runtests.jl longitudinal`: the tests are one `test_<example>.jl`
+per example over the helpers of `examples/test/utils.jl`, and `runtests.jl`
+is the driver. CI runs them as a third workflow (`.github/workflows/Examples.yml`), on
 Linux, on the same triggers. The gate never installs or loads the examples'
 dependencies, which is why the environment is separate. A change under
 `examples/` runs that runner; so does a commit in the table's last row, and
