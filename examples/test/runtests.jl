@@ -6,8 +6,8 @@
 using Test, LinearAlgebra, BenchmarkTools
 using Statistics: std
 using Redstone, RedstoneExamples
-import Redstone: Build, ProbeDual, Simulation, build, init!, run!, trim!, linearize, state, modes,
-    series, reads, get_output, termination, phase_bodies, set, at, combine, condition, EndTimeReached,
+import Redstone: Build, ProbeDual, Simulation, build, init!, run!, step!, stage!, trim!, linearize, state, modes,
+    series, reads, get_output, get_face, termination, phase_bodies, set, at, combine, override, condition, EndTimeReached,
     ModelRequestedStop
 import RedstoneExamples: Longitudinal, aircraft, level_flight, longitudinal_taps, lqr_gains, closed_loop,
     trimmed, descent
@@ -25,9 +25,10 @@ end
 at_trim(solution, plant_state; δt = solution.δt) =
     combine(at("plant", plant_state), set(u = (δe = solution.δe, δt = δt)))
 
-# A port's value over the logged snapshots, beside their times.
+# A port's or a level's exported face's value over the logged snapshots, beside their times.
 logged_times(sim) = series(sim, reads()).t
 logged_port(sim, path, name) = series(sim, reads(y = get_output(path, name))).columns.y
+logged_face(sim, path, name) = series(sim, at(path, reads(y = get_face(name)))).columns.y
 
 # The times at which `values` crosses `level`, at the snapshot after each crossing.
 crossings(times, values, level) =
@@ -36,21 +37,30 @@ crossings(times, values, level) =
 # The snapshots of `sim` in `[t_from, t_to)`, as a mask.
 window(sim, t_from, t_to) = (times = logged_times(sim); (times .>= t_from) .& (times .< t_to))
 
-# The largest frame-to-frame change of a port over the snapshots in `[t_from, t_to)`.
-largest_jump(sim, path, name, t_from, t_to) =
-    maximum(abs, diff(logged_port(sim, path, name)[window(sim, t_from, t_to)]))
+# The largest frame-to-frame change of a logged signal over the snapshots in `[t_from, t_to)`.
+largest_jump(signal, sim, t_from, t_to) = maximum(abs, diff(signal[window(sim, t_from, t_to)]))
 
-# The largest gap between the ports `follower` and `leader`, each a `(path, name)` pair,
-# over the snapshots in `[t_from, t_to)`.
-function largest_gap(sim, follower, leader, t_from, t_to)
-    gaps = logged_port(sim, follower...) .- logged_port(sim, leader...)
-    maximum(abs, gaps[window(sim, t_from, t_to)])
-end
+# The largest gap between the logged signals `follower` and `leader` over the snapshots in
+# `[t_from, t_to)`.
+largest_gap(follower, leader, sim, t_from, t_to) =
+    maximum(abs, (follower .- leader)[window(sim, t_from, t_to)])
 
-# The closed loop flown from the trim at the deployment's step.
-function fly_closed_loop(solution, gains; cascade, h_step = 50.0, noise_σ = 0.3, t_end = 120.0)
-    sim = Simulation(closed_loop(solution, gains; cascade, h_step, noise_σ); h = 1//200)
-    init!(sim, trimmed(solution))
+# The closed loop flown from the trim, the cascade or the tracker in command, the altitude
+# reference stepped at 5 s and command handed to the other controller at `switch_at`. A staged
+# batch applies at the top of the next frame, and the ticks at a boundary settle in the frame
+# that reaches it, so a write meant for the tick at `t` is staged one frame before `t`.
+function fly_closed_loop(solution, gains; cascade = true, switch_at = nothing, h_step = 50.0,
+                         noise_σ = 0.3, t_end = 120.0)
+    h = 1//200
+    frame(t) = round(Int, t / h)
+    sim = Simulation(closed_loop(solution, gains; noise_σ); h)
+    init!(sim, override(trimmed(solution), set(u = (mode = cascade,))))
+    step!(sim; frames = frame(5.0) - 1)
+    stage!(sim, "h_ref" => 1000.0 + h_step)
+    if switch_at !== nothing
+        step!(sim; frames = frame(switch_at) - frame(5.0))
+        stage!(sim, "mode" => !cascade)
+    end
     run!(sim; t_end)
     sim
 end
@@ -111,7 +121,7 @@ end
     end
 
     @testset "the closed loop rests at the trim under either controller (§14.5)" begin
-        for cascade in (t -> true, t -> false)
+        for cascade in (true, false)
             resting = fly_closed_loop(solution, gains; cascade, h_step = 0.0, noise_σ = 0.0, t_end = 60.0)
             # The probe's largest drift: 2.6e-10 m, 3.8e-11 m/s and 3.7e-12 rad.
             @test all(h -> abs(h - 1000) <= 1e-6, logged_port(resting, "plant", :h))
@@ -120,11 +130,11 @@ end
         end
     end
 
-    runs = (cascade = fly_closed_loop(solution, gains; cascade = t -> true),
-            tracker = fly_closed_loop(solution, gains; cascade = t -> false),
-            switch_at_60 = fly_closed_loop(solution, gains; cascade = t -> t < 60.0),
-            switch_at_10 = fly_closed_loop(solution, gains; cascade = t -> t < 10.0),
-            hand_back_at_10 = fly_closed_loop(solution, gains; cascade = t -> t >= 10.0))
+    runs = (cascade = fly_closed_loop(solution, gains),
+            tracker = fly_closed_loop(solution, gains; cascade = false),
+            switch_at_60 = fly_closed_loop(solution, gains; switch_at = 60.0),
+            switch_at_10 = fly_closed_loop(solution, gains; switch_at = 10.0),
+            hand_back_at_10 = fly_closed_loop(solution, gains; cascade = false, switch_at = 10.0))
 
     @testset "either controller holds the altitude step (§13.7, D-385)" begin
         # The probe's largest errors after 80 s, in h and V: 0.064 and 0.015 under the cascade,
@@ -142,14 +152,22 @@ end
     end
 
     @testset "the controller not in command tracks the one that is (§13.7, D-385)" begin
-        # The probe's largest gaps over [10, 60): 0.0151 for the standby tracker, and 0.0102,
+        # The probe's largest gaps over [12, 60): 0.0151 for the standby tracker, and 0.0101,
         # 0.0021, 0.0134 and 0.0374 for the standby cascade's pitch-rate, airspeed, altitude and
-        # attitude loops.
-        @test largest_gap(runs.cascade, ("tracker_u", :out1), ("select_δe", :out), 10, 60) <= 0.04
-        @test largest_gap(runs.tracker, ("q_ctl", :u), ("select_δe", :out), 10, 60) <= 0.03
-        @test largest_gap(runs.tracker, ("V_ctl", :u), ("select_δt", :out), 10, 60) <= 0.005
-        @test largest_gap(runs.tracker, ("h_ctl", :u), ("plant", :θ), 10, 60) <= 0.03
-        @test largest_gap(runs.tracker, ("θ_ctl", :u), ("plant", :q), 10, 60) <= 0.08
+        # attitude loops. The window opens after the climb's transient, which the standby
+        # attitude loop leaves between 9 and 11 s depending on the noise's alignment with the
+        # step; from 12 s on, every gap is the same under any alignment.
+        cascade, tracker = runs.cascade, runs.tracker
+        @test largest_gap(logged_face(cascade, "lqr_controller", :δe), logged_face(cascade, "selection", :δe),
+                          cascade, 12, 60) <= 0.04
+        @test largest_gap(logged_face(tracker, "pid_controller", :δe), logged_face(tracker, "selection", :δe),
+                          tracker, 12, 60) <= 0.03
+        @test largest_gap(logged_face(tracker, "pid_controller", :δt), logged_face(tracker, "selection", :δt),
+                          tracker, 12, 60) <= 0.005
+        @test largest_gap(logged_port(tracker, "pid_controller/h_ctl", :u), logged_port(tracker, "plant", :θ),
+                          tracker, 12, 60) <= 0.03
+        @test largest_gap(logged_port(tracker, "pid_controller/θ_ctl", :u), logged_port(tracker, "plant", :q),
+                          tracker, 12, 60) <= 0.08
     end
 
     @testset "the switch is bumpless in steady flight and nearly so in the climb (§13.7, D-385)" begin
@@ -158,16 +176,17 @@ end
         # the command before the rate limiter, which caps the actuator's change at about 5.8e-3
         # whatever happens upstream: the probe's command jumps 1.13e-2 at the switch at 10 s and
         # 2.26e-3 at the hand-back at 10 s.
-        steady_jump = largest_jump(runs.switch_at_60, "δe_lag", :out, 59.5, 61)
+        steady_jump = largest_jump(logged_face(runs.switch_at_60, "actuators", :δe), runs.switch_at_60, 59.5, 61)
         @test steady_jump < 1e-3
-        @test steady_jump < largest_jump(runs.cascade, "δe_lag", :out, 90, 100)
-        @test largest_jump(runs.switch_at_10, "select_δe", :out, 9.9, 10.1) < 0.03
-        @test largest_jump(runs.hand_back_at_10, "select_δe", :out, 9.9, 10.1) < 0.005
+        @test steady_jump < largest_jump(logged_face(runs.cascade, "actuators", :δe), runs.cascade, 90, 100)
+        @test largest_jump(logged_face(runs.switch_at_10, "selection", :δe), runs.switch_at_10, 9.9, 10.1) < 0.03
+        @test largest_jump(logged_face(runs.hand_back_at_10, "selection", :δe), runs.hand_back_at_10, 9.9, 10.1) <
+              0.005
     end
 
     @testset "the sensed altitude carries white noise of the declared deviation (§7.3)" begin
         # The probe's standard deviation: 0.2981.
-        noise = logged_port(runs.cascade, "h_meas", :out) .- logged_port(runs.cascade, "plant", :h)
+        noise = logged_face(runs.cascade, "sensing", :h_meas) .- logged_port(runs.cascade, "plant", :h)
         @test isapprox(std(noise), 0.3; rtol = 0.1)
     end
 
@@ -186,7 +205,7 @@ end
     end
 
     @testset "the closed loop's phase bodies allocate nothing (§9.8)" begin
-        bodies = phase_bodies(Simulation(closed_loop(solution, gains; cascade = t -> t < 60.0); h = 1//200))
+        bodies = phase_bodies(Simulation(closed_loop(solution, gains); h = 1//200))
         for name in (:sweep_1, :sweep_2, :rhs, :ticks)
             body = bodies[name]
             body(); body(0)

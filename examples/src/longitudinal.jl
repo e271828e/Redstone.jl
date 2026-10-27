@@ -173,104 +173,130 @@ function lqr_gains(linearization; qx = 1 ./ [5.0, 0.05, 0.05, 0.2, 20.0] .^ 2,
 end
 
 """
-    closed_loop(solution, gains; cascade = t -> true, h_step = 50.0, noise_σ = 0.3)
+    closed_loop(solution, gains; noise_σ = 0.3)
 
 The aircraft under two controllers and a switch between them, library blocks
-alone in one flat `Group` (§13.7). `solution` is the trim triple `(θ, δe, δt)`
-of `level_flight()` and `gains` the triple of `lqr_gains`.
+alone in a `Group` of `Group`s (§13.7), under the root inputs `h_ref`, `V_ref`
+and `mode`. `solution` is the trim triple `(θ, δe, δt)` of `level_flight()` and
+`gains` the triple of `lqr_gains`. The root holds the plant beside five groups:
+`sensing`, `pid_controller`, `lqr_controller`, `selection` and `actuators`.
 
-Each control passes through a `RateLimiter` and a `FirstOrderLag`, the elevator
-at 1 rad/s and 50 ms, the throttle at 0.5 /s and 0.5 s, starting at the trim. A
-cascade of four `DiscretePID` blocks flies pitch rate through the elevator,
-pitch attitude through pitch rate, altitude through pitch attitude and airspeed
-through the throttle; each outer block holds on the `saturated` code of the
-block inside it, and the two innermost read a constant zero code. A
-`DiscreteLQRTracker` flies the full state `(V, γ, θ, q, h)`, packed by a
-`Pack{Float64, 5}`, with the command vector `(h, V)`. The altitude both
-controllers read carries Gaussian white noise of `noise_σ` per sample, and the
-altitude reference steps by `h_step` at `t = 5 s` from 1000 m, the airspeed
-reference held at 50 m/s.
+`actuators` passes each control through a `RateLimiter` and a `FirstOrderLag`,
+the elevator at 1 rad/s and 50 ms, the throttle at 0.5 /s and 0.5 s, starting
+at the trim. `pid_controller` is a cascade of four `DiscretePID` blocks that
+flies pitch rate through the elevator, pitch attitude through pitch rate,
+altitude through pitch attitude and airspeed through the throttle; each outer
+block holds on the `saturated` code of the block inside it, and the two
+innermost read a constant zero code. `lqr_controller` is a `DiscreteLQRTracker`
+over the full state `(V, γ, θ, q, h)`, packed by a `Pack{Float64, 5}`, with the
+command vector `(h, V)`. `sensing` adds Gaussian white noise of `noise_σ` per
+sample to the altitude both controllers read, published as `h_meas`.
 
-A `Switch` per control selects the cascade while `cascade(t)` holds, and the
-tracker otherwise, through the pinned `Source{Bool}(cascade)`. The default
-flies the cascade throughout, `t -> false` flies the tracker throughout, and
-`t -> t < 60.0` hands command to the tracker at 60 s. The flag is the cascade's
-`engaged` input and its negation the tracker's. Both controllers run all the
-time, and the one not in command tracks the one that is: each innermost block
-and the tracker read the selected command one tick old through a `UnitDelay`,
-and each outer block of the cascade reads the measured variable of the loop
-inside it (`pid_anti_windup.md`, section 11). Every `Tt` is one period, 0.02 s.
-A block not in command lags the selected command by an amount that grows with
-`Tt` and with the rate at which its own law moves, and a block in command
-pulls a limited integrator back within a tick. The switch is therefore
-bumpless in steady flight. During a maneuver the standby lags the command by
-a few hundredths of a radian, and the switch jumps by that lag. Every discrete
-block runs at 50 Hz. The gains, the limits and the wiring are
-`longitudinal_aircraft.md` section 4.
+`selection` holds a `Switch` per control, which selects the cascade's command
+while `mode` holds and the tracker's otherwise, and a `UnitDelay` per control
+that holds the selected command one tick old. `mode` is also the cascade's
+`engaged` input and, negated inside `lqr_controller`, the tracker's. Both
+controllers run all the time, and the one not in command tracks the one that
+is: each innermost block of the cascade and the tracker read the delayed
+command as their tracking input, and each outer block of the cascade reads the
+measured variable of the loop inside it (`pid_anti_windup.md`, section 11).
+Every `Tt` is one period, 0.02 s. A block not in command lags the selected
+command by an amount that grows with `Tt` and with the rate at which its own
+law moves, and a block in command pulls a limited integrator back within a
+tick. The switch is therefore bumpless in steady flight. During a maneuver the
+standby lags the command by a few hundredths of a radian, and the switch jumps
+by that lag. Every discrete block runs at 50 Hz.
+
+The references and the mode are root inputs, so the run drives them:
+`trimmed(solution)` holds the trim references with the cascade in command, and
+`stage!(sim, "h_ref" => 1050.0)` or `stage!(sim, "mode" => false)` between
+steps moves a reference or hands command over. The gains, the limits and the
+wiring are `longitudinal_aircraft.md` section 4.
 """
-function closed_loop(solution, gains; cascade = t -> true, h_step = 50.0, noise_σ = 0.3)
+function closed_loop(solution, gains; noise_σ = 0.3)
     (; θ, δe, δt) = solution
     rate = Absolute(Hz(50))
-    blocks = (
-        h_ref = Step(t_step = 5.0, before = 1000.0, after = 1000.0 + h_step),
-        V_ref = Constant(50.0),
-        mode = Source{Bool}(cascade),
-        plant = Longitudinal(),
-        noise = GaussianWhiteNoise(seed = 7, σ = noise_σ),
-        h_meas = SumJunction{Float64, 2}(),
-        h_ctl = DiscretePID(Kp = 0.01, Ki = 0.001, u_min = -0.26, u_max = 0.26, Tt = 0.02,
-                            hold = true, tracking = true),
-        θ_ctl = DiscretePID(Kp = 2.0, Ki = 0.5, u_min = -0.5, u_max = 0.5, Tt = 0.02, hold = true, tracking = true),
-        q_ctl = DiscretePID(Kp = -0.2, Ki = -0.4, u_min = -0.5, u_max = 0.5, Tt = 0.02, hold = true, tracking = true),
-        V_ctl = DiscretePID(Kp = 0.2, Ki = 0.05, u_min = 0.0, u_max = 1.0, Tt = 0.02, hold = true, tracking = true),
-        tracker = DiscreteLQRTracker(; gains..., x_trim = SVector(50.0, 0.0, θ, 0.0, 1000.0), u_trim = SVector(δe, δt),
-                                     z_trim = SVector(1000.0, 50.0), Tt = 0.02, u_min = SVector(-0.5, 0.0),
-                                     u_max = SVector(0.5, 1.0), hold = true, tracking = true),
-        state_pack = Pack{Float64, 5}(),
-        z_pack = Pack{Float64, 2}(), z_ref_pack = Pack{Float64, 2}(), tracker_u = Unpack{Float64, 2}(),
-        select_δe = Switch{Float64}(), select_δt = Switch{Float64}(),
-        command_δe = UnitDelay(δe), command_δt = UnitDelay(δt), command_pack = Pack{Float64, 2}(),
-        tracker_engaged = Junction{Bool, SVector{2, Bool}, 1}(engaged -> SVector(!engaged, !engaged)),
-        free = Constant(Int8(0)), free_pair = Constant(SVector{2, Int8}(0, 0)),
-        δe_limiter = RateLimiter(rising = 1.0, s0 = δe), δe_lag = FirstOrderLag(τ = 0.05, x0 = δe),
-        δt_limiter = RateLimiter(rising = 0.5, s0 = δt), δt_lag = FirstOrderLag(τ = 0.5, x0 = δt))
-    wires = (
-        "h_ref/out" => "z_ref_pack/in1", "V_ref/out" => "z_ref_pack/in2",
-        "plant/h" => "h_meas/in1", "noise/out" => "h_meas/in2",
-        # the cascade, outermost first, each block's hold reading the block inside it
-        "h_ref/out" => "h_ctl/r", "h_meas/out" => "h_ctl/y", "plant/θ" => "h_ctl/v",
-        "θ_ctl/saturated" => "h_ctl/saturation", "mode/out" => "h_ctl/engaged",
-        "h_ctl/u" => "θ_ctl/r", "plant/θ" => "θ_ctl/y", "plant/q" => "θ_ctl/v",
-        "q_ctl/saturated" => "θ_ctl/saturation", "mode/out" => "θ_ctl/engaged",
-        "θ_ctl/u" => "q_ctl/r", "plant/q" => "q_ctl/y", "command_δe/out" => "q_ctl/v",
-        "free/out" => "q_ctl/saturation", "mode/out" => "q_ctl/engaged",
-        "V_ref/out" => "V_ctl/r", "plant/V" => "V_ctl/y", "command_δt/out" => "V_ctl/v",
-        "free/out" => "V_ctl/saturation", "mode/out" => "V_ctl/engaged",
-        # the tracker
-        "plant/V" => "state_pack/in1", "plant/γ" => "state_pack/in2", "plant/θ" => "state_pack/in3",
-        "plant/q" => "state_pack/in4", "plant/h" => "state_pack/in5", "state_pack/out" => "tracker/x",
-        "h_meas/out" => "z_pack/in1", "plant/V" => "z_pack/in2", "z_pack/out" => "tracker/z",
-        "z_ref_pack/out" => "tracker/z_ref",
-        "command_δe/out" => "command_pack/in1", "command_δt/out" => "command_pack/in2",
-        "command_pack/out" => "tracker/v", "free_pair/out" => "tracker/saturation",
-        "mode/out" => "tracker_engaged/in1", "tracker_engaged/out" => "tracker/engaged",
-        "tracker/u" => "tracker_u/in",
-        # the switch, the selected commands one tick old, and the actuators
-        "q_ctl/u" => "select_δe/in1", "tracker_u/out1" => "select_δe/in2", "mode/out" => "select_δe/select",
-        "V_ctl/u" => "select_δt/in1", "tracker_u/out2" => "select_δt/in2", "mode/out" => "select_δt/select",
-        "select_δe/out" => "command_δe/in", "select_δt/out" => "command_δt/in",
-        "select_δe/out" => "δe_limiter/in", "δe_limiter/out" => "δe_lag/in", "δe_lag/out" => "plant/δe",
-        "select_δt/out" => "δt_limiter/in", "δt_limiter/out" => "δt_lag/in", "δt_lag/out" => "plant/δt")
-    Group(blocks; local_wires = wires,
-          sample_times = (noise = rate, h_ctl = rate, θ_ctl = rate, q_ctl = rate, V_ctl = rate, tracker = rate,
-                          command_δe = rate, command_δt = rate, δe_limiter = rate, δt_limiter = rate))
+    pid(; kwargs...) = DiscretePID(; kwargs..., Tt = 0.02, hold = true, tracking = true)
+    sensing = Group((; noise = GaussianWhiteNoise(seed = 7, σ = noise_σ), altimeter = SumJunction{Float64, 2}());
+                    input_wires = ("h" => "altimeter/in1",),
+                    local_wires = ("noise/out" => "altimeter/in2",),
+                    output_wires = ("altimeter/out" => "h_meas",),
+                    sample_times = (noise = rate,))
+    pid_controller = Group((; h_ctl = pid(Kp = 0.01, Ki = 0.001, u_min = -0.26, u_max = 0.26),
+                              θ_ctl = pid(Kp = 2.0, Ki = 0.5, u_min = -0.5, u_max = 0.5),
+                              q_ctl = pid(Kp = -0.2, Ki = -0.4, u_min = -0.5, u_max = 0.5),
+                              V_ctl = pid(Kp = 0.2, Ki = 0.05, u_min = 0.0, u_max = 1.0),
+                              free = Constant(Int8(0)));
+                           # outermost first, each block's hold reading the block inside it
+                           input_wires = ("h_ref" => "h_ctl/r", "h_meas" => "h_ctl/y",
+                                          "θ" => ("h_ctl/v", "θ_ctl/y"), "q" => ("θ_ctl/v", "q_ctl/y"),
+                                          "δe_prev" => "q_ctl/v",
+                                          "V_ref" => "V_ctl/r", "V" => "V_ctl/y", "δt_prev" => "V_ctl/v",
+                                          "mode" => ("h_ctl/engaged", "θ_ctl/engaged", "q_ctl/engaged", "V_ctl/engaged")),
+                           local_wires = ("h_ctl/u" => "θ_ctl/r", "θ_ctl/u" => "q_ctl/r",
+                                          "θ_ctl/saturated" => "h_ctl/saturation",
+                                          "q_ctl/saturated" => "θ_ctl/saturation",
+                                          "free/out" => "q_ctl/saturation", "free/out" => "V_ctl/saturation"),
+                           output_wires = ("q_ctl/u" => "δe", "V_ctl/u" => "δt"),
+                           sample_times = (h_ctl = rate, θ_ctl = rate, q_ctl = rate, V_ctl = rate))
+    lqr_controller = Group((; tracker = DiscreteLQRTracker(; gains..., x_trim = SVector(50.0, 0.0, θ, 0.0, 1000.0),
+                                                           u_trim = SVector(δe, δt), z_trim = SVector(1000.0, 50.0),
+                                                           Tt = 0.02, u_min = SVector(-0.5, 0.0),
+                                                           u_max = SVector(0.5, 1.0), hold = true, tracking = true),
+                              state_pack = Pack{Float64, 5}(), z_pack = Pack{Float64, 2}(),
+                              z_ref_pack = Pack{Float64, 2}(), command_pack = Pack{Float64, 2}(),
+                              u_unpack = Unpack{Float64, 2}(), free_pair = Constant(SVector{2, Int8}(0, 0)),
+                              engaged = Junction{Bool, SVector{2, Bool}, 1}(mode -> SVector(!mode, !mode)));
+                           input_wires = ("V" => ("state_pack/in1", "z_pack/in2"), "γ" => "state_pack/in2",
+                                          "θ" => "state_pack/in3", "q" => "state_pack/in4", "h" => "state_pack/in5",
+                                          "h_meas" => "z_pack/in1",
+                                          "h_ref" => "z_ref_pack/in1", "V_ref" => "z_ref_pack/in2",
+                                          "δe_prev" => "command_pack/in1", "δt_prev" => "command_pack/in2",
+                                          "mode" => "engaged/in1"),
+                           local_wires = ("state_pack/out" => "tracker/x", "z_pack/out" => "tracker/z",
+                                          "z_ref_pack/out" => "tracker/z_ref", "command_pack/out" => "tracker/v",
+                                          "free_pair/out" => "tracker/saturation", "engaged/out" => "tracker/engaged",
+                                          "tracker/u" => "u_unpack/in"),
+                           output_wires = ("u_unpack/out1" => "δe", "u_unpack/out2" => "δt"),
+                           sample_times = (tracker = rate,))
+    selection = Group((; select_δe = Switch{Float64}(), select_δt = Switch{Float64}(),
+                         command_δe = UnitDelay(δe), command_δt = UnitDelay(δt));
+                      input_wires = ("δe_pid" => "select_δe/in1", "δe_lqr" => "select_δe/in2",
+                                     "δt_pid" => "select_δt/in1", "δt_lqr" => "select_δt/in2",
+                                     "mode" => ("select_δe/select", "select_δt/select")),
+                      local_wires = ("select_δe/out" => "command_δe/in", "select_δt/out" => "command_δt/in"),
+                      output_wires = ("select_δe/out" => "δe", "select_δt/out" => "δt",
+                                      "command_δe/out" => "δe_prev", "command_δt/out" => "δt_prev"),
+                      sample_times = (command_δe = rate, command_δt = rate))
+    actuators = Group((; δe_limiter = RateLimiter(rising = 1.0, s0 = δe), δe_lag = FirstOrderLag(τ = 0.05, x0 = δe),
+                         δt_limiter = RateLimiter(rising = 0.5, s0 = δt), δt_lag = FirstOrderLag(τ = 0.5, x0 = δt));
+                      input_wires = ("δe_cmd" => "δe_limiter/in", "δt_cmd" => "δt_limiter/in"),
+                      local_wires = ("δe_limiter/out" => "δe_lag/in", "δt_limiter/out" => "δt_lag/in"),
+                      output_wires = ("δe_lag/out" => "δe", "δt_lag/out" => "δt"),
+                      sample_times = (δe_limiter = rate, δt_limiter = rate))
+    Group((; plant = Longitudinal(), sensing, pid_controller, lqr_controller, selection, actuators);
+          input_wires = ("h_ref" => ("pid_controller/h_ref", "lqr_controller/h_ref"),
+                         "V_ref" => ("pid_controller/V_ref", "lqr_controller/V_ref"),
+                         "mode" => ("pid_controller/mode", "lqr_controller/mode", "selection/mode")),
+          local_wires = ("plant/h" => "sensing/h",
+                         "sensing/h_meas" => "pid_controller/h_meas", "sensing/h_meas" => "lqr_controller/h_meas",
+                         "plant/θ" => "pid_controller/θ", "plant/q" => "pid_controller/q", "plant/V" => "pid_controller/V",
+                         "plant/V" => "lqr_controller/V", "plant/γ" => "lqr_controller/γ", "plant/θ" => "lqr_controller/θ",
+                         "plant/q" => "lqr_controller/q", "plant/h" => "lqr_controller/h",
+                         "pid_controller/δe" => "selection/δe_pid", "pid_controller/δt" => "selection/δt_pid",
+                         "lqr_controller/δe" => "selection/δe_lqr", "lqr_controller/δt" => "selection/δt_lqr",
+                         "selection/δe_prev" => "pid_controller/δe_prev", "selection/δt_prev" => "pid_controller/δt_prev",
+                         "selection/δe_prev" => "lqr_controller/δe_prev", "selection/δt_prev" => "lqr_controller/δt_prev",
+                         "selection/δe" => "actuators/δe_cmd", "selection/δt" => "actuators/δt_cmd",
+                         "actuators/δe" => "plant/δe", "actuators/δt" => "plant/δt"))
 end
 
 """
     trimmed(solution)
 
 The initial condition of `closed_loop` at the trim triple `solution`: the
-plant's pitch angle beside its default level state, and the stores of the three
+plant's pitch angle beside its default level state, the root inputs at the trim
+references with the cascade in command, and the stores of the three
 `DiscretePID` blocks whose integral terms are not zero at trim. Every loop has
 zero error at trim and `Kd = 0`, so a block's output is its integral term
 alone, and the term must hold the trim value of what the block commands: the
@@ -282,10 +308,11 @@ the measurement, which with `Kd = 0` changes nothing. A store overlay merges
 onto `s_init`, so `set(s = (q = solution.θ,))` alone would do; the full
 stores are written for clarity. `longitudinal_aircraft.md`, section 4.
 """
-trimmed(solution) = combine(at("plant", condition(Longitudinal(); θ = solution.θ)),
-                            at("h_ctl", set(s = (q = solution.θ, yf = 1000.0, saturated = Int8(0)))),
-                            at("q_ctl", set(s = (q = solution.δe, yf = 0.0, saturated = Int8(0)))),
-                            at("V_ctl", set(s = (q = solution.δt, yf = 50.0, saturated = Int8(0)))))
+trimmed(solution) = combine(set(u = (h_ref = 1000.0, V_ref = 50.0, mode = true)),
+                            at("plant", condition(Longitudinal(); θ = solution.θ)),
+                            at("pid_controller/h_ctl", set(s = (q = solution.θ, yf = 1000.0, saturated = Int8(0)))),
+                            at("pid_controller/q_ctl", set(s = (q = solution.δe, yf = 0.0, saturated = Int8(0)))),
+                            at("pid_controller/V_ctl", set(s = (q = solution.δt, yf = 50.0, saturated = Int8(0)))))
 
 """
     descent()
