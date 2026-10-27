@@ -9,81 +9,207 @@
 # field declared `E <: AbstractEngine` accepts either, and class is read off
 # declaration shape (`src/assembly.jl`).
 
+# Design: §8.1, §8.5, D-039, D-117, D-246.
+"""
+    AbstractComponent
+
+The abstract type every component subtypes, primitive and assembly alike.
+
+A component, the unit of modeling, is a plain struct,
+`MyComp <: AbstractComponent`, whose other fields are inert parameters. Its
+class (a component's primitive-vs-assembly status) is read off which
+declarations its type defines. Defining [`local_wires`](@ref) makes it an
+assembly (a component of pure composition), whose component-typed fields are
+its children. Defining any leaf declaration, such as [`x_init`](@ref),
+[`u_types`](@ref) or the stage [`y_direct`](@ref), makes it a primitive. There
+is no separate assembly type, so a field typed by a domain supertype accepts a
+primitive and an assembly alike.
+
+A component's module extends the declarations it defines, importing each one by
+name, as in `import Redstone: x_init, y_types, y_direct`, and defines them at
+module top level.
+
+The build refuses a type that defines neither family as `ClassUnreadable`, and
+one that defines both as `ClassMixed`. A module that binds a declaration name
+to a function of its own, the sign of a missing import, is refused as
+`DeclarationShadowed`.
+"""
 abstract type AbstractComponent end
 
 # --- what an author declares --------------------------------------------------
 
+# Design: §7.1, §8.2, §8.5, D-263.
+# The store is the tier marker, as `local_wires` is the class marker. The
+# fallback serves the value readers; the classifier asks whether the method is
+# declared.
 """
-Continuous state, **by value**, at nominal `Float64`; leaves drawn from §7.1's
-closed vocabulary, and its *types* walk by rule. Mandatory on every continuous
-leaf, `x_init(::C) = (;)` when stateless: the store is the tier marker, as
-`local_wires` is the class marker (§8.2, §8.5, D-263). The fallback
-serves the value readers; the classifier asks whether the method is declared.
+    x_init(c) -> NamedTuple
+
+Return the component's initial continuous state, as a `NamedTuple` of named
+values.
+
+A continuous leaf declares its state by value, written with `Float64` values,
+as in `x_init(::Engine) = (ω = 0.0,)`. The state's type is derived from the
+value, and its real values follow the scalar of each activation (the build's
+typed products at a given scalar type). Each field is one real scalar or one
+static array of reals. Integers, `Bool`s and enums belong in [`m_init`](@ref).
+
+Every leaf defines exactly one of `x_init` and [`s_init`](@ref), and the one it
+defines makes it continuous or discrete. A stateless continuous leaf declares
+`x_init(::C) = (;)`. A non-empty state needs an [`x_deriv`](@ref) method.
+
+The build refuses a value that is not a `NamedTuple` as `StoreNotNamedTuple`,
+and a field outside the state vocabulary as `IllegalStateLeaf`. A non-empty
+state with no `x_deriv` is refused as `StoreWithoutUpdate`, a leaf that
+defines neither `x_init` nor `s_init` as `TierUnreadable`, and one that defines
+both as `DeclarationOnWrongTier`.
 """
 x_init(::Any) = NamedTuple()
 
+# Design: §8.2, D-195, D-231, D-263.
+# `s` is the discrete tier's own letter (D-195). The store is the tier marker,
+# and it is disjoint from `x_init`. The fallback serves the value readers; the
+# classifier asks whether the method is declared.
 """
-Discrete state, **by value**, and the discrete tier's own letter (D-195): every
-field isbits or a `Symbol` (D-231), pinned wholesale. Mandatory on every
-discrete leaf, `s_init(::C) = (;)` when stateless: the store is the tier
-marker, and it is disjoint from `x_init` (§8.2, D-263). The fallback serves the
-value readers; the classifier asks whether the method is declared.
+    s_init(c) -> NamedTuple
+
+Return the component's initial discrete state, as a `NamedTuple` of named values.
+
+A discrete leaf declares its state by value, as in `s_init(::Counter) = (n = 0,)`.
+Every field is isbits or a `Symbol`, and the field types stay as written at
+every activation (the build's typed products at a given scalar type). Text and
+bulk data belong on the component instance.
+
+Every leaf defines exactly one of [`x_init`](@ref) and `s_init`, and the one it
+defines makes it continuous or discrete. A stateless discrete leaf declares
+`s_init(::C) = (;)`, and holds its outputs between its ticks (the instants at
+which a discrete component runs). A non-empty state needs an
+[`s_update`](@ref) method.
+
+The build refuses a value that is not a `NamedTuple` as `StoreNotNamedTuple`,
+and a field that is neither isbits nor a `Symbol` as `IllegalStoreField`. A
+non-empty state with no `s_update` is refused as `StoreWithoutUpdate`, and a
+leaf that also defines `x_init` as `DeclarationOnWrongTier`.
 """
 s_init(::Any) = NamedTuple()
 
+# Design: §8.2, D-231.
 """
-Modes, **by value**, continuous-only: the event system is continuous-side only,
-so declaring `m_init` announces the continuous tier (§8.2). Fields isbits or
-`Symbol`, as for `s_init` (D-231). Mode stores are written by handlers; nothing
-else may.
+    m_init(c) -> NamedTuple
+
+Return the component's initial modes, as a `NamedTuple` of named values.
+
+A continuous leaf declares its modes by value, as in
+`m_init(::Engine) = (phase = off,)`. Every field is isbits or a `Symbol`, as
+for [`s_init`](@ref). Event handlers write the modes, and nothing else may. A
+leaf may declare modes that no event of its own changes.
+
+Modes are continuous-only, because the event system is continuous-side only.
+The build refuses `m_init` on a discrete leaf as `DeclarationOnWrongTier`, a
+value that is not a `NamedTuple` as `StoreNotNamedTuple`, and a field that is
+neither isbits nor a `Symbol` as `IllegalStoreField`.
 """
 m_init(::Any) = NamedTuple()
 
+# Design: §8.2, D-077, D-263.
 """
-Mutable scratch, instantiated by the framework and arriving as the bundle's
-`ws` field (§8.2). Declaration *is* allocation, so it is the one declaration
-taking the scalar, `ws_init(::C, ::Type{T})`, on both tiers: sizes from
-the instance, eltypes from the activation, and a discrete allocator always
-receives `Float64` (D-077, D-263). No fallback: absence is how a component
-declares no scratch.
+    ws_init(c, ::Type{T})
+
+Allocate the component's workspace (component-declared mutable scratch) at the
+scalar type `T`.
+
+The framework calls the allocator and hands its result to the component's
+functions as the `ws` field of their bundle (the `NamedTuple` of views a
+component function receives). Declaring is allocating, so `ws_init` is the one
+declaration that takes the scalar. Sizes come from the instance and eltypes
+from `T`, as in
+`ws_init(c::KF, ::Type{T}) where {T} = (P = Matrix{T}(undef, c.n, c.n),)`.
+
+The allocator takes `T` on both tiers (the continuous and the discrete side of
+the hybrid formalism). A continuous allocator is called at the scalar of each
+activation (the build's typed products at a given scalar type), and a discrete
+one always receives `Float64`. The contents at each call are unspecified, and
+the framework never reads or writes them. A component that needs no scratch
+defines no method.
 """
 function ws_init end
 
+# Design: D-167, D-263.
 """
-Input faces: name => type, at nominal `Float64`, taking the component alone on
-both tiers (D-263). On a continuous consumer the declaration is walked: every
-`Float64` position follows the activation scalar, a `Pinned` leaf does not. On
-a discrete consumer it pins wholesale. Entries are read permissively (D-167):
-an unpinned leaf is tolerant, a `Pinned` one demands a frozen arrival.
+    u_types(c) -> NamedTuple
+
+Return the types the component accepts on its inputs, a `NamedTuple` of input
+name => type.
+
+The entries are written at `Float64` and take the component alone on both
+tiers (the continuous and the discrete side of the hybrid formalism), as in
+`u_types(::Engine) = (throttle = Float64, starter = Bool)`. On a continuous
+leaf every `Float64` position follows the scalar of each activation (the
+build's typed products at a given scalar type), and an entry wrapped in
+[`Pinned`](@ref) does not. On a discrete leaf every entry stays as written.
+The default declares no inputs.
+
+An entry states what the component allows to arrive. An unwrapped `Float64`
+leaf tolerates both the activation scalar and a frozen `Float64`, and a
+`Pinned` entry demands a frozen arrival, one that never carries partials.
+
+The build refuses a wire whose producer type does not fit the entry as
+`WireTypeMismatch`, and a producer that follows the scalar at a `Pinned` entry
+as `WalkingFaceAtFrozenEntry`. A `Pinned` marker below the top of an entry is
+refused as `IllegalPortType`, and a `Pinned` entry on a discrete leaf as
+`DeclarationOnWrongTier`.
 """
 u_types(::Any) = NamedTuple()
 
+# Design: §8.2, §9.3, D-263.
 """
-Output ports: name => type, at nominal `Float64`, taking the component alone on
-both tiers (D-263). Semantics are literal — a continuous producer's cell type at
-an activation *is* this declaration walked at that activation's `T`: a
-`Float64` leaf (alone or as a parameter) participates, a `Pinned` leaf is
-deliberately pinned. A discrete producer's declaration pins wholesale.
+    y_types(c) -> NamedTuple
 
-One declaration for both stages — there are no stage tags anywhere (§8.2);
-which stage produces a port is *discovered* by the build probe (§9.3), and the
-declaration is what the probe checks against.
+Return the types of the component's output ports, a `NamedTuple` of port name
+=> type.
+
+The entries are written at `Float64` and take the component alone on both
+tiers (the continuous and the discrete side of the hybrid formalism), as in
+`y_types(::Engine) = (M_shaft = Float64, P = Float64)`. The declaration is read
+literally. On a continuous leaf, a port's value at each activation (the build's
+typed products at a given scalar type) has the declared type with every
+`Float64` position, alone or as a type parameter, at that activation's scalar.
+An entry wrapped in [`Pinned`](@ref) keeps its type at every activation. On a
+discrete leaf every entry stays as written.
+
+One declaration covers both output stages, [`y_state`](@ref) and
+[`y_direct`](@ref), and no port names its stage. The build finds which stage
+produces each port by its probe (the build's checking evaluation of a user
+function), and checks each return against this declaration.
+
+A leaf with an empty state and no `y_types` is refused as
+`StatelessWithoutOutputs`. A declared port no stage returns is refused as
+`DeclaredNotProduced`, a returned name the declaration lacks as
+`UndeclaredReturnField`, and a port both stages return as `ProducedByTwoStages`.
 """
 y_types(::Any) = NamedTuple()
 
+# Design: §8.2, D-263, D-265.
+# Defined in `leaves.jl` beside the entry walk that dispatches on it.
 """
     Pinned{P}
 
-The contract marker (§8.2, D-263): wraps one leaf type in an `u_types` or
-`y_types` entry, `Pinned{Float64}` or `Pinned{SVector{3,Float64}}`, to say
-the leaf never follows the activation scalar. On an output the cell is `P` at
-every activation; on an input the entry demands a frozen arrival. The walk
-strips it at nominal, so no layout, probe or message sees it. It wraps the
-whole entry: a marker below the top, in a type parameter, is `IllegalPortType`
-on both tiers (D-265). Continuous-only: the discrete tier pins wholesale, and
-a `Pinned` entry there is `DeclarationOnWrongTier`. A type-level marker, never
-instantiated; defined in `leaves.jl` beside the entry walk that dispatches on
-it.
+The marker that keeps one `u_types` or `y_types` entry at type `P`, whatever
+scalar the model runs at.
+
+`Pinned` wraps a whole entry of [`u_types`](@ref) or [`y_types`](@ref), as in
+`Pinned{Float64}` or `Pinned{SVector{3,Float64}}`, to say the leaf never
+follows the scalar of an activation (the build's typed products at a given
+scalar type). On an output the port's value is a `P` at every activation. On an
+input the entry demands a frozen arrival, one that never carries partials. The
+build strips the marker at `Float64`, so no value, layout or message carries the
+wrapper itself. It is a type-level marker, never instantiated.
+
+A marker below the top of an entry, in a type parameter, is refused as
+`IllegalPortType` on both tiers (the continuous and the discrete side of the
+hybrid formalism). The marker is continuous-only: a discrete leaf's entries
+never follow the scalar, so a `Pinned` entry there is refused as
+`DeclarationOnWrongTier`.
 """
 Pinned
 
@@ -92,46 +218,107 @@ Pinned
 # along the signal flow. Direction is declared by the method, never inferred: the
 # resolved endpoints only cross-check it.
 
+# Design: §8.5, §8.6, D-170.
+# Defining it is the assembly class marker, which is why it has no fallback to
+# match.
 """
-Wires: `"src/path/port" => "dst/path/port"`, strictly child endpoint => child
-endpoint, relative to the declaring assembly.
+    local_wires(c)
 
-**Mandatory even when empty**, because defining it *is* the assembly class
-marker (§8.5) — which is why it has no fallback to match.
+Return the assembly's internal wires, an ordered collection of
+`"child/face" => "child/face"` pairs.
+
+Every pair runs from one child's output face to another child's input face, and
+its arrow reads along the signal flow. A face is the name a port wears on its
+component's boundary. Both endpoints are relative to the declaring assembly (a
+component of pure composition), each one an immediate child and one of its
+faces, so `"aircraft/2/face"` names a container element's face in one level.
+
+Defining `local_wires` is what makes a component an assembly, so an assembly
+defines it even with no wires, as `local_wires(::A) = ()`. The assembly's own
+boundary is declared by [`input_wires`](@ref) and [`output_wires`](@ref).
+
+The build refuses an endpoint whose port has the wrong direction as
+`FaceDirectionConflict`, an input fed twice as `TwoProducers`, and a component
+that defines `local_wires` beside any leaf declaration as `ClassMixed`.
 """
 function local_wires end
 
+# Design: §8.6, D-170, D-210.
 """
-The boundary, inward: face name => internal endpoint path, or a tuple of paths
-for an input face fanning out through the boundary. Absence declares no input
-face.
+    input_wires(c)
+
+Return the assembly's inward boundary, an ordered collection of input name =>
+internal endpoint path pairs.
+
+Each input name is a face (the name a port wears on its component's boundary),
+and it routes inward to an input of an immediate child, as in `"throttle" => "engine/throttle"`. A
+face that feeds several children takes a tuple of paths,
+`"trn" => ("left/trn", "right/trn")`, fanning out through the boundary. The
+default declares no input face. At the root of a build these faces are the root
+inputs (the root component's own input faces, produced by no component).
+
+Face names contain no `/`, and are unique across `input_wires` and
+[`output_wires`](@ref) together. The build refuses a face name holding `/` as
+`FaceNameIllegal`, a name declared twice as `FaceNameCollision`, an endpoint
+that resolves to an output as `FaceDirectionConflict`, and an empty tuple of
+paths as `UnknownPort`.
 """
 input_wires(::Any) = ()
 
+# Design: §8.6, D-170.
 """
-The boundary, outward: internal source path => face name, so that its pairs, like
-every other pair in the three declarations, read along the flow.
+    output_wires(c)
+
+Return the assembly's outward boundary, an ordered collection of internal
+source path => output name pairs.
+
+Each output name is a face (the name a port wears on its component's boundary),
+and it exposes an output of an immediate child, as in `"aircraft/pose" => "view_pose"`. The
+source comes first, so the pairs read along the signal flow, like every pair of
+[`local_wires`](@ref) and [`input_wires`](@ref). The default declares no output
+face.
+
+The build refuses a face name holding `/` as `FaceNameIllegal`, a name declared
+twice across the two boundary declarations as `FaceNameCollision`, and a source
+that resolves to an input as `FaceDirectionConflict`.
 """
 output_wires(::Any) = ()
 
+# Design: §8.5, D-211.
+# "At most one" is unrepresentable otherwise here: the return is one `Symbol`
+# or `nothing`.
 """
-The one optional declaration (§8.5, D-211): a component may declare **at most
-one** of its container fields name-transparent by returning that field's
-`Symbol`. Its elements are then contributed as children under their bare keys —
-`"key"` and `"1"` in place of `"field/key"` and `"field/1"` — everywhere a child
-name appears: wiring endpoints, `sample_times` keys, read paths, `at` prefixes,
-diagnostics. Naming is the only thing it changes; the container keeps its
-transparency of contract. "At most one" is unrepresentable otherwise here: the
-return is one `Symbol` or `nothing`, and `nothing` — undeclared containers
-keeping their key segment — is the default.
+    transparent_container(c) -> Union{Symbol,Nothing}
+
+Return the name of the one container field whose children go by bare key, or
+`nothing`.
+
+A container field is a `Tuple` or `NamedTuple` field whose elements are all
+components. Its elements are children of the component, named `"field/key"` or
+`"field/1"`. Returning that field's `Symbol` names them `"key"` and `"1"`
+instead, everywhere a child name appears: wiring endpoints,
+[`sample_times`](@ref) keys, read paths, [`at`](@ref) prefixes and diagnostics.
+Naming is the only thing it changes, and the container still has no wires,
+faces or rate of its own.
+
+The declaration is optional, and a component may name at most one field. The
+default, `nothing`, keeps every container's key segment. The build refuses a
+name that matches no container field as `TransparentContainerUnknown`, and a
+bare key that collides with a sibling child's name as `ChildNameCollision`.
 """
 transparent_container(::Any) = nothing
 
+# Design: §8.2, §13.5, D-316.
 """
-The reason a component's stop requests report (§8.2, §13.5, D-316), optional,
-default `""`. The build reads it for every component that publishes a
-`StopFlag` port, and all of a component's requests share it. It is instance
-data, never a port value.
+    stop_reason(c) -> String
+
+Return the reason the component's stop requests report, `""` by default.
+
+A stop request (a port that ends the run when it reads `STOP_REQUESTED`) is an
+output port of type [`StopFlag`](@ref). The build reads `stop_reason` for every
+component that publishes such a port, and all of the component's requests share
+the reason. It is instance data, never a port value. A run that a request ends
+carries the reason on its [`ModelRequestedStop`](@ref) source.
 """
 stop_reason(::Any) = ""
 
@@ -145,10 +332,20 @@ stop_reason(::Any) = ""
 # floats, so every period and offset is an exact `Rational{Int}` and a float
 # argument throws the teaching error naming the exact spelling.
 
+# Design: §10.5.
 """
-A quantity value for `Absolute` and for the `Δt_base` deployment keyword:
-`Period(1//50)` or `Hz(50)` — a spelling choice, both normalized to the exact
-rational period at construction (§10.5).
+    Period(T::Union{Integer,Rational{<:Integer}}) -> Period
+
+A quantity value given by its period `T`, in exact rational seconds.
+
+A quantity value is what [`Absolute`](@ref) and the `Δt_base` keyword of
+[`Deployment`](@ref) take. `Period(1//50)` and `Hz(50)` are the same value, a
+spelling choice: both are normalized to the exact rational period at
+construction. See [`Hz`](@ref) for the frequency spelling.
+
+A float is refused as `ArgumentInvalid`, because the base grid is derived by
+GCD arithmetic, which is ill-defined over floats. Write `Period(1//50)`, not
+`Period(0.02)`.
 """
 struct Period
     T::Rational{Int}
@@ -157,16 +354,47 @@ struct Period
         throw(DiagnosticError(ArgumentInvalid(call = :Period, reason = :inexact, value = T)))
 end
 
+# Design: §10.5, D-185.
+"""
+    Hz(frequency::Union{Integer,Rational{<:Integer}}) -> Period
+
+Return the quantity value of a frequency, the [`Period`](@ref) of
+`1 // frequency` seconds.
+
+`Hz(50)` and `Period(1//50)` are the same value, and either may be given to
+[`Absolute`](@ref) or as the `Δt_base` keyword of [`Deployment`](@ref). A float
+is refused as `ArgumentInvalid`, because the grid arithmetic is exact: write
+`Hz(1//2)` for 0.5 Hz, not `Hz(0.5)`.
+"""
 Hz(frequency::Union{Integer,Rational{<:Integer}}) = Period(1 // frequency)
 Hz(frequency::AbstractFloat) =
     throw(DiagnosticError(ArgumentInvalid(call = :Hz, reason = :inexact, value = frequency)))
 
 period(q::Period) = q.T
 
+# Design: §10.5.
 """
-`Relative(K, φ = 0)`: every `K`-th tick of the enclosing scope, starting from
-its `φ`-th — scope ticks as the unit system, composing affinely down the tree
-(§10.5). `K = 1` admits no stagger; same-rate siblings stagger one level down.
+    Relative(K, φ) -> Relative
+    Relative(K::Integer) -> Relative
+
+A sample time in ticks of the enclosing scope: every `K`-th tick, starting from
+the `φ`-th.
+
+A [`sample_times`](@ref) entry `Relative(K, φ)` runs its child at every `K`-th
+tick (an instant at which a discrete component runs) of the enclosing rate
+scope (an assembly's `sample_times` declaration against the enclosing scope),
+starting from its `φ`-th, and `φ` defaults to `0`. Scope ticks are the unit
+system, so relative entries compose affinely down the tree. Under a scope that
+ticks every `D_s` base ticks at phase `Φ_s`, the child ticks every `K·D_s` base
+ticks at phase `Φ_s + φ·D_s`. A base tick is the period `Δt_base` that every
+discrete period is a multiple of.
+
+`K = 1` admits no stagger. Two same-rate siblings are staggered one level down
+instead: declare their scope at twice their rate, and give them
+`Relative(2, 0)` and `Relative(2, 1)`.
+
+The constructor checks nothing. The build refuses `K < 1`, or a `φ` outside
+`0 ≤ φ < K`, as `RatesViolation`.
 """
 struct Relative
     K::Int
@@ -174,10 +402,25 @@ struct Relative
 end
 Relative(K::Integer) = Relative(K, 0)
 
+# Design: §9.1, §10.5, D-186.
 """
-`Absolute(q, τ = 0)`: tick instants `t = τ + k·period(q)`, in exact rational
-seconds — an anchor, severing its child from the enclosing scope's grid; the
-final divisor does not exist until deployment binds `Δt_base` (§10.5, §9.1).
+    Absolute(q::Period, τ::Union{Integer,Rational{<:Integer}} = 0) -> Absolute
+
+A sample time in exact rational seconds, with ticks at `t = τ + k·T`.
+
+`q` is a quantity value of period `T`, built with [`Period`](@ref) or
+[`Hz`](@ref), and `τ` is the offset in seconds. The entry is an anchor (the
+exact period and offset an `Absolute` entry establishes). It severs its child
+from the enclosing scope's grid, so the child may tick faster than its scope.
+The child's ticks (the instants at which a discrete component runs) are counted
+in base ticks only once a [`Deployment`](@ref) fixes `Δt_base`, the base tick
+period every discrete period is a multiple of. Anchor periods and nonzero
+offsets constrain that grid together, and an offset of `T/1000` can cost a grid
+1000 times finer.
+
+A float offset is refused as `ArgumentInvalid`, and so is a bare number in place
+of a quantity: write `Absolute(Hz(50), 1//500)`. The build refuses a period
+that is not positive, or an offset outside `0 ≤ τ < T`, as `RatesViolation`.
 """
 struct Absolute
     T::Rational{Int}
@@ -189,43 +432,103 @@ struct Absolute
         throw(DiagnosticError(ArgumentInvalid(call = :Absolute, reason = :not_a_quantity, value = q)))
 end
 
+# Design: §8.7, §10.5.
 """
-Rate scope (§8.7): immediate child name => `Relative` or `Absolute`. Optional,
-and so is any key — an unlisted discrete child defaults to `Relative(1)`, so
-only multiplied, phased or anchored children appear. The declaration belongs to
-the assembly type; a deployment-preference multiplier is exposed as a
-constructor parameter and read off the instance here (§10.5).
+    sample_times(c) -> NamedTuple
+
+Return the assembly's sample times, a `NamedTuple` of immediate child name =>
+[`Relative`](@ref) or [`Absolute`](@ref).
+
+A rate scope (an assembly's `sample_times` declaration against the enclosing
+scope) schedules the assembly's discrete children and sub-assemblies, as in
+`sample_times(::A) = (nav = Relative(5), gnss = Absolute(Hz(10)))`. The
+declaration is optional, and so is every key: an unlisted discrete child
+defaults to `Relative(1)`, so only multiplied, phased or anchored children
+appear. A container field's bare name keys one entry for all its elements.
+
+The rates belong to the assembly type, as design ratios or a modeled
+instrument's own rate. A rate that is a deployment preference is exposed as a
+constructor parameter, and read off the instance here.
+
+The build refuses a value that is not such a `NamedTuple`, a bare number in
+place of a wrapper, a key that names no immediate child, and a key on a
+continuous child, each as `RatesViolation`.
 """
 sample_times(::Any) = (;)
 
 # --- state events (§2.3, §8.2) -------------------------------------------------
 
+# Design: §5.2, §10.4, D-090, D-179.
+# The policy is read off the probe the build already runs, so the illegal
+# form/policy pairing is unrepresentable rather than merely diagnosed.
 """
-One guard/handler pair, and nothing else: `StateEvent(guard, handler)` carries
-no detection keyword. Detection policy is declared by the guard's *return
-type* — a `Bool` guard is boundary-detected, a sign-form guard is localized —
-read off the probe it already runs (§10.4, D-179), so the illegal form/policy
-pairing is unrepresentable rather than merely diagnosed.
+    StateEvent(guard, handler) -> StateEvent
+
+One event of a [`state_events`](@ref) declaration: a guard and its handler, and
+nothing else.
+
+The guard (the declared function defining an event's predicate) and the
+handler both take the component and its bundle (the `NamedTuple` of views a
+component function receives), which may carry `x`, `m`, `y`, `u`, `t` and
+`ws`. There is no detection keyword, because the guard's return type declares
+the policy. A `Bool` guard is boundary-detected, checked for a false-to-true
+edge at step boundaries only. A guard returning a real sign value is
+localized: the event holds where the value is `≥ 0`, and root-finding brackets
+the instant it crosses.
+
+The handler returns a `NamedTuple` of the stores it writes, such as
+`(; m = (; phase = running))`. A present `x` replaces the whole continuous
+state, and a present `m` merges into the modes.
+
+The build refuses a guard that returns neither form as `GuardForm`, a missing
+guard or handler method as `EventHalfMissing`, and a handler key that names no
+store of the component as `HandlerReturnKey`.
 """
 struct StateEvent{G,H}
     guard::G
     handler::H
 end
 
+# Design: §5.2, §8.2, §10.6.
 """
-The ordered, named guard/handler collection (§8.2): `name = StateEvent(guard,
-handler)` entries. Order is semantics — declaration order is priority with
-re-decision at the boundary iteration (§10.6). Continuous-only, like `m_init`:
-the event system is continuous-side only (§5.2). Nothing here is inferrable.
+    state_events(c) -> NamedTuple
+
+Return the component's events, a `NamedTuple` of name => [`StateEvent`](@ref),
+in priority order.
+
+A continuous leaf declares its events as named entries,
+`state_events(::Engine) = (start = StateEvent(start_guard, start_handler),)`.
+Order is semantics. At a boundary a component fires at most one event per
+round, the first eligible one in declaration order, and the rounds repeat
+until none fires, so the guards are decided again after each firing. Nothing
+here is inferred, and the default declares no events.
+
+Events are continuous-only, like [`m_init`](@ref), because the event system is
+continuous-side only. The build refuses `state_events` on a discrete leaf as
+`DeclarationOnWrongTier`, and an entry that is not a `StateEvent` as
+`EventHalfMissing`.
 """
 state_events(::Any) = (;)
 
+# Design: §5.3, §8.2, §9.3.
+# It runs between a state write and its decode, and its return is written back
+# to the buffer wholesale, so the probe holds it complete against the state
+# shape.
 """
-Manifold projection (§8.2): one store in, the same store out, which is why it
-alone stays positional. It runs between a state write and its decode — after
-integration and after each handler firing (§5.3) — and its return is written
-back to the buffer wholesale, so the probe holds it complete against the state
-shape (§9.3).
+    x_projection(c, x) -> NamedTuple
+
+Return the continuous state `x` projected back onto the component's manifold.
+
+`x_projection` takes the state alone, not a bundle: one store in, the same
+store out, which is why it alone stays positional. An attitude model might
+declare `x_projection(c::Attitude, x) = (; q = normalize(x.q))`. It runs after
+each integration step and after each event handler fires. Its return replaces
+the whole continuous state, so it carries every state field at the state's
+type.
+
+The method is optional and continuous-only. The build refuses it on a discrete
+leaf, or on one with an empty state, as `DeclarationOnWrongTier`, and a return
+whose fields or types differ from the state's as `ConformanceFailure`.
 """
 function x_projection end
 
@@ -249,9 +552,107 @@ _holding(σ) = σ ≥ 0
 # and it is a question about method existence, not a declaration the author
 # repeats — the definition site is the single source of truth.
 
+# Design: §5.2, §5.3, §8.2, §10.5, D-220, D-252.
+"""
+    y_state(c, bundle) -> NamedTuple
+
+Return the component's stage-1 outputs, the ports it computes from its state
+alone.
+
+`y_state` is the first of a leaf's two output stages, defined by a method for
+the component's type, as in `y_state(::Engine, (; x)) = (; ω = x.ω)`. Its
+bundle (the `NamedTuple` of views a component function receives) carries no
+inputs, so a stage-1 port never depends instantly on an input and breaks
+would-be feedback loops. On the continuous tier (the continuous or discrete side
+of the hybrid formalism) the bundle may carry `x`, `m`, `t` and `ws`, and on the
+discrete tier `s`, `t`, `Δt` and `ws`, each only if the component has it.
+
+The stage returns a `NamedTuple` of port values at their [`y_types`](@ref)
+types. [`y_direct`](@ref) receives the return as `y_x`, or `y_s` on the
+discrete tier, so an intermediate both stages need is computed once. A
+component exposes a state or mode field by returning it here. A discrete
+leaf's stages run only at its ticks (the instants at which a discrete component
+runs), and its ports hold their values in between.
+
+The stage is optional, and a component with no stage-1 ports defines no method.
+The build refuses a read outside the bundle as `BundleFieldError`, a return of
+bare `(;)` as `DeadStage`, and a returned name `y_types` lacks as
+`UndeclaredReturnField`.
+"""
 function y_state end
+
+# Design: §5.2, §5.3, §8.2, D-006, D-220, D-252.
+"""
+    y_direct(c, bundle) -> NamedTuple
+
+Return the component's stage-2 outputs, the ports that need its inputs.
+
+`y_direct` is the second of a leaf's two output stages, as in
+`y_direct(eng::Engine, (; x, m, u)) = (; M_shaft = ..., P = ...)`. Beside the
+state, its bundle (the `NamedTuple` of views a component function receives)
+carries the inputs `u` and the return of [`y_state`](@ref) as `y_x`, or `y_s`
+on the discrete tier (the continuous or discrete side of the hybrid formalism).
+On the continuous tier the bundle may carry `x`, `m`, `u`, `y_x`, `t` and `ws`,
+and on the discrete tier `s`, `u`, `y_s`, `t`, `Δt` and `ws`, each only if the
+component has it.
+
+Every stage-2 port is taken to depend on every wired input. The stage returns a
+`NamedTuple` of port values at their [`y_types`](@ref) types, and the two
+stages together produce each declared port exactly once.
+
+The stage is optional. The build refuses a read outside the bundle as
+`BundleFieldError`, a port that both stages return as `ProducedByTwoStages`,
+and a returned name `y_types` lacks as `UndeclaredReturnField`.
+"""
 function y_direct end
+
+# Design: §5.2, §5.3, §8.2, D-015, D-220.
+"""
+    x_deriv(c, bundle) -> NamedTuple
+
+Return the time derivative of the component's continuous state.
+
+`x_deriv` is the continuous leaf's update law, its flow (the continuous
+derivative function), as in
+`x_deriv(eng::Engine, (; x, y, u)) = (ω = (y.M_shaft - u.M_load) / eng.J,)`.
+It runs after the output stages, when every port is fresh, so it reads the
+component's own outputs `y` instead of computing them again. Its bundle (the
+`NamedTuple` of views a component function receives) may carry `x`, `m`, `y`,
+`u`, `t` and `ws`, each only if the component has it.
+
+The return has exactly the fields of [`x_init`](@ref), each at the state's
+type. A continuous leaf with a non-empty state must define it.
+
+The build refuses a non-empty `x_init` with no `x_deriv` as
+`StoreWithoutUpdate`, a return whose fields or types differ from the state's
+as `ConformanceFailure`, and a read outside the bundle as `BundleFieldError`.
+A leaf that also defines [`s_update`](@ref) or [`s_init`](@ref) is refused as
+`DeclarationOnWrongTier`.
+"""
 function x_deriv end
+
+# Design: §5.2, §5.3, §8.2, §10.5, D-195, D-220.
+"""
+    s_update(c, bundle) -> NamedTuple
+
+Return the component's discrete state after one tick.
+
+`s_update` is the discrete leaf's update law, as in
+`s_update(::Counter, (; s)) = (n = s.n + 1,)`. It runs at each of the
+component's ticks (the instants at which a discrete component runs), once the
+boundary's outputs and events have settled. Its bundle (the `NamedTuple` of
+views a component function receives) may carry `s`, `y`, `u`, `t`, `Δt` and
+`ws`, each only if the component has it, and `Δt` is the component's own tick
+period.
+
+The return replaces the whole state, so it has exactly the type of the value
+[`s_init`](@ref) returns. A discrete leaf with a non-empty state must define it.
+
+The build refuses a non-empty `s_init` with no `s_update` as
+`StoreWithoutUpdate`, a return of another type as `ConformanceFailure`, and a
+read outside the bundle as `BundleFieldError`. A leaf that also defines
+[`x_deriv`](@ref) or [`x_init`](@ref) is refused as `DeclarationOnWrongTier`.
+"""
 function s_update end
 
 # --- the family, and the forgotten import (§8.1, D-246) -----------------------

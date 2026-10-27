@@ -9,15 +9,20 @@ The entry points, grouped as the specification's Appendix B groups them.
 ## Authoring
 
 ```@docs
+AbstractComponent
 x_init
 m_init
 ws_init
 u_types
 y_types
 state_events
+y_state
+y_direct
+x_deriv
 StateEvent
 x_projection
 s_init
+s_update
 local_wires
 input_wires
 output_wires
@@ -26,6 +31,7 @@ transparent_container
 Relative
 Absolute
 Period
+Hz
 stop_reason
 Pinned
 ```
