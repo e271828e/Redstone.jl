@@ -1745,20 +1745,15 @@ y_types(::LateDoc) = (out = Float64,)
 y_state(::LateDoc, _) = (out = 1.0,)
 
 """
-    TupleOut(k)
+    TupleOut()
 
-A leaf emitting a tuple port, `Tuple{Float64, Float64}`, whose kind marker is
-a `struct` with the positions `"1"` and `"2"` as its fields (D-433). It takes
-an argument to stay out of the `Dual` sweep: the activation rebuilds a tuple
-leaf group through its type's constructor, which a `Tuple` type has not, so a
-tuple port builds at nominal alone today.
+A primitive emitting a tuple port, `Tuple{Float64, Float64}`, whose kind
+marker is a `struct` with the positions `"1"` and `"2"` as its fields (D-433).
 """
-struct TupleOut <: AbstractComponent
-    k::Float64
-end
+struct TupleOut <: AbstractComponent end
 x_init(::TupleOut) = (;)
 y_types(::TupleOut) = (out = Tuple{Float64, Float64},)
-y_state(tuple_out::TupleOut, _) = (out = (tuple_out.k, 2.0),)
+y_state(::TupleOut, _) = (out = (1.0, 2.0),)
 
 """
     FreeSizeIn()

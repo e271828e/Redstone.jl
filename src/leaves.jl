@@ -133,7 +133,9 @@ function _reconstruct_expr(::Type{P}, base::Int) where {P}
             child_expr, next_base = _reconstruct_expr(field_type, next_base)
             push!(args, child_expr)
         end
-        # NamedTuples take their fields as one tuple; everything else positionally
+        # A tuple is its own literal, a NamedTuple takes its fields as one
+        # tuple, and everything else takes them positionally.
+        P <: Tuple && return Expr(:tuple, args...), next_base
         P <: NamedTuple && return Expr(:call, P, Expr(:tuple, args...)), next_base
         return Expr(:call, P, args...), next_base
     end
@@ -182,6 +184,7 @@ function _mreconstruct_expr(::Type{P}, eltypes::Vector, bases::Vector{Int}) wher
                                                             $(bases[eltype_index])])
     else
         args = [_mreconstruct_expr(field_type, eltypes, bases) for field_type in fieldtypes(P)]
+        P <: Tuple && return Expr(:tuple, args...)
         P <: NamedTuple && return Expr(:call, P, Expr(:tuple, args...))
         return Expr(:call, P, args...)
     end

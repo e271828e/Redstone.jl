@@ -170,15 +170,6 @@ breaking user code, and each may benefit from user feedback first.
   break, a candidate design and its open questions are
   `design/reports/20261016_ctrlc_julia_114/report.md`. It is taken up when 1.14
   branches or its cancellation names become public, whichever comes first.
-- **Tuple-typed ports at a second activation.** A port declared
-  `Tuple{Float64, Float64}` builds at nominal and fails the `Dual`
-  activation (§9.4): the leaf walk rebuilds a tuple leaf group through its
-  type's constructor (§7.2), and a `Tuple` type has none, so the probe
-  raises a `MethodError` past the diagnostic channel. Found by increment
-  81's review; `TupleOut` in `test/fixtures.jl` takes an argument to stay out
-  of `test_build.jl`'s `Dual` sweep until this is fixed. The fix is a tuple
-  arm in the reconstruct, or, if tuple ports are not wanted, a refusal at
-  the structure step as `IllegalPortType` (§4.3, §8.2).
 - **The library's remaining candidates.** Whatever of the inventory in
   `design/companions/library_inventory.md` is unbuilt, each block
   built when wanted (§13.7, D-313).

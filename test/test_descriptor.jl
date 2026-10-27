@@ -31,7 +31,7 @@ kinds_model() =
              mat = Constant(SMatrix{2,2}(1.0, 2.0, 3.0, 4.0)), nt = Constant((a = 1.0, b = 2.0)),
              g = GearMode(), s = PhaseSelector(), p = PhaseReader(),
              stub = Constant(height_field(Terrain(h0 = 1.5))), dut = TerrainGain(),
-             fn = Constant(let k = 2.0; x -> k * x end), tup = TupleOut(1.0), free = FreeSizeIn(), pose = PoseOut());
+             fn = Constant(let k = 2.0; x -> k * x end), tup = TupleOut(), free = FreeSizeIn(), pose = PoseOut());
           local_wires = ("s/phase" => "p/phase", "stub/out" => "dut/terrain", "v/out" => "free/v"),
           input_wires = ("dut.k" => "dut/k",))
 

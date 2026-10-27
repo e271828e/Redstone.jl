@@ -210,6 +210,9 @@ function leaves_roundtrip()
         # A NamedTuple takes its fields as one tuple rather than positionally,
         # which is its own branch of the reconstruct builder.
         roundtrip((q = 1.0, v = SVector(2.0, 3.0, 4.0)), 3)
+        # A tuple is rebuilt as a literal, since a `Tuple` type has no
+        # positional constructor: the third branch of the builder.
+        roundtrip((1.0, SVector(2.0, 3.0), (q = 4.0, w = 5.0)), 1)
 
         # An opaque leaf makes the round trip whole: `===` on the reconstructed
         # `Framed` is `===` on the handle, which is `===` on the one `Matrix`
@@ -253,6 +256,9 @@ function leaves_mixed()
         # The NamedTuple branch of the same builder.
         namedtuple_gather, _ = mgather(@NamedTuple{a::Float64, n::Int})
         @test namedtuple_gather([9.5], [4], (0, 0)) === (a = 9.5, n = 4)
+        # The tuple branch, over the same two buffers.
+        tuple_gather, _ = mgather(Tuple{Float64, Int, Float64})
+        @test tuple_gather([9.5, 8.5], [4], (0, 0)) === (9.5, 4, 8.5)
         # An enum is its own eltype, so it binds its own buffer.
         enum_gather, _ = mgather(@NamedTuple{g::Gear, x::Float64})
         @test enum_gather([down], [9.5], (0, 0)) === (g = down, x = 9.5)
