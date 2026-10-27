@@ -41,7 +41,9 @@ Left open on purpose, each with the bump or the axis that owns it.
   binding a block was built from, since the closed loop's six junctions
   read alike; an optional envelope `name` the inspector package writes and
   `descriptor` never does; and a type and kind on an assembly face, if
-  axis 3 styles wires by kind.
+  axis 3 styles wires by kind. Settled by axis 3 on 2026-10-27: `alias` and
+  `name` go as format 1.1 and the assembly-face fields are closed; the
+  bumps' working list is now `visual_grammar.md`'s "Design axes".
 - **The schema's `$id`.** The URL it carries once the inspector has a home
   on GitHub Pages; the file ships before the URL resolves.
 - **The exact fixture set in the core's suite.** Which models of

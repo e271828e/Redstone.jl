@@ -20,9 +20,11 @@ item changes what the spec says, the spec edit is part of the item.
   (`schema/descriptor.json`, `src/descriptor.jl`, its tests) beside axis
   4's rendering spike, whose record is
   `design/prototypes/render_spike/report.md`: hand-rolled SVG over ELK.js,
-  with the schema findings it hands to the bumps. Next is axis 3, the
-  visual grammar, over the real schema, then axes 5 to 7 and the minor
-  bumps the record lists. The built-in Julia GUI is parked (D-310). The
+  with the schema findings it hands to the bumps. Axis 3 ran on
+  2026-10-27; its record is `design/inspector/visual_grammar.md`, whose
+  "Design axes" is the working list: the wire-key commit, format 1.1 with
+  `alias` and `name`, then axis 5, axes 6 and 7, and the inherited bumps.
+  The built-in Julia GUI is parked (D-310). The
   stage's record is `design/inspector/initial_design.md` (not normative),
   which carries each stage's answered questions and open list. The later
   stages stand after the release, below.

@@ -352,7 +352,8 @@ cited by number. Couplings are named where they exist.
    and dead hops. One fact added 2026-10-26: a bulk-data handle enters a
    model through a `Constant` and is an opaque leaf (D-344, D-364), so
    answer 15's `Constant` icon shows the value only where the marker is not
-   opaque. *Builds on* answers 6, 9 and 15. *Coupled to* axis 4.
+   opaque. Ran on 2026-10-27; its record is `visual_grammar.md`. *Builds on*
+   answers 6, 9 and 15. *Coupled to* axis 4.
 4. **Layout and rendering.** ELK configuration: one level at a time, model
    order, port constraints, right-angle routing, and stability hints across
    pushes. It also covers the rendering spike, hand-rolled SVG against Svelte
@@ -396,7 +397,8 @@ session. That session ran on 2026-10-26 and its record is
 order. Axis 4's rendering spike runs beside the first session, on a
 hand-written fixture descriptor, so the drawing's needs reach the schema
 before version one is frozen and the canvas choice is made before anything
-depends on it. Then axes 3 and 5 over the real schema, axis 6 when there is
+depends on it. Then axes 3 and 5 over the real schema, axis 3 having run on
+2026-10-27, axis 6 when there is
 a descriptor to push to a tab, designed with the bridge's device side in
 view, and axis 7 last.
 
