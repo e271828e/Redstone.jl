@@ -24,47 +24,55 @@
 
 # --- the problem (§14.7) --------------------------------------------------------
 
+# Design: §9.5, §14.4, §14.7, §14.8, §14.9, D-262.
+# What the aircraft author ships. The field set is normative and closed
+# (§14.7): there is no defaulting a half-specified problem into a solve. Order
+# carries no semantics (§9.5), so a permuted bound spelling is a non-event
+# rather than one variable's bound silently applied to another. `condition` is
+# condition-valued (§14.9): a problem is an implicitly specified condition, and
+# solving makes it explicit. The tolerances ride in the problem because a
+# relocated problem carries its own convergence test (§14.7). Setup observes the
+# check return's shape at the guess evaluation and can catch no more than that.
 """
     TrimProblem(; guess, lower, upper, condition, reads, residuals, tolerances,
-                checks = _no_checks, check_tolerances = (;))
+                checks = _no_checks, check_tolerances = (;)) -> TrimProblem
 
-What the aircraft author ships: what the solver may vary, what those decisions
-make of the model, what to read back after each evaluation, and which equations
-the readings must satisfy. The field set is **normative and closed** (§14.7).
-The first seven fields are required — there is no defaulting a half-specified
-problem into a solve — and the two check fields default to empty.
+The value a trim solves: the decisions to vary, the condition they set, and the
+equations to satisfy.
 
-- `guess`, `lower`, `upper` — same-*named* all-`Float64` NamedTuples. The names
-  are the pairing and order carries no semantics (§9.5): the bounds are
-  canonicalized to `guess`'s field order at setup, so a permuted spelling is a
-  non-event rather than one variable's bound silently applied to another.
-- `condition` — the condition-*valued* function over the decisions (§14.9): a
-  problem is an implicitly specified condition, and solving makes it explicit.
-  Everything fixed per problem is closed over; `d` is the one value that cannot
-  be.
-- `reads` — the declared read set (`reads(…)`, §14.4), gathered after each
-  evaluation.
-- `residuals` — `residuals(reads::NamedTuple, d::NamedTuple) → NamedTuple`, the
-  residual *system* as named equations, never a scalar cost.
-- `tolerances` — an all-`Float64` NamedTuple, same-named as the residual return.
-  It rides *in the problem* because a relocated problem carries its own
-  convergence test (§14.7).
-- `checks` — `checks(reads::NamedTuple, d::NamedTuple) → NamedTuple`, equations
-  the service reports once, at the committed state, and never solves; setup
-  observes the return's shape at the guess evaluation. Their reads join
-  `reads`. `_no_checks` returns `(;)`.
-- `check_tolerances` — an all-`Float64` NamedTuple, same-named as the check
-  return. A check outside its tolerance raises `TrimCommitChecks` (§14.8,
-  D-262).
+A trim problem is a condition (the datum that says "set this build to this
+state") given implicitly, as a function of decisions. [`trim!`](@ref) searches
+the decisions for the point where every residual sits within its tolerance, and
+commits the condition at that point. The first seven keywords are required, and
+the two check keywords default to no checks.
 
-The value is inert: nothing is validated here, because most of what §14.7
-requires is only checkable against a build — a selector resolves against a
-model, and the residual and check key sets are observed at the setup guess
-evaluation.
-`trim!` runs the whole list in one collecting pass (`TrimProblemInvalid`).
-A check whose key set depends on values, or that throws, fails at the commit
-after the simulation has moved, exactly as a residual does; setup observes the
-shape at the guess and can catch no more than that.
+# Keywords
+
+- `guess`, `lower`, `upper`: the decisions' starting point and bounds, as
+  `NamedTuple`s of `Float64` with one set of names. The names pair them, and
+  setup reorders the bounds to `guess`'s order, so their spelling order does not
+  matter.
+- `condition`: a function of the decisions `d` that returns a condition.
+  Everything fixed for the problem is closed over, and `d` is the one argument.
+- `reads`: the read set (a `Reads` value, built by [`reads`](@ref)) gathered
+  after each evaluation.
+- `residuals`: `residuals(reads::NamedTuple, d::NamedTuple) -> NamedTuple`, the
+  residual system as named equations, never a scalar cost.
+- `tolerances`: a `NamedTuple` of `Float64` with the residuals' names, each
+  finite and positive. The problem carries its own convergence test, so the test
+  moves with it when [`at`](@ref) scopes it.
+- `checks`: `checks(reads::NamedTuple, d::NamedTuple) -> NamedTuple`, equations
+  reported once at the committed state and never solved. The reads they use come
+  from `reads`. The default returns `(;)`.
+- `check_tolerances`: a `NamedTuple` of `Float64` with the checks' names. A
+  check outside its tolerance warns `TrimCommitChecks`.
+
+Constructing a problem validates nothing, since most of what it needs is only
+checkable against a build: a selector resolves against a model, and the residual
+and check names are observed at one evaluation at the guess. `trim!` checks the
+whole problem in one collecting pass, and refuses it as `TrimProblemInvalid`.
+A check whose names depend on values, or that throws, fails at the commit after
+the simulation has moved, as a residual does.
 """
 struct TrimProblem{G,L,U,C,R,F,T,K,V}
     guess::G
@@ -86,15 +94,21 @@ TrimProblem(; guess, lower, upper, condition, reads, residuals, tolerances,
     TrimProblem(guess, lower, upper, condition, reads, residuals, tolerances, checks,
                 check_tolerances)
 
+# Design: §14.9, D-277, D-278.
 """
-    at(prefix, problem::TrimProblem)
+    at(prefix::AbstractString, problem::TrimProblem) -> TrimProblem
 
-Mount a problem under `prefix` (§14.9, D-277), field by field: `condition` is
-post-composed so each tree it returns is scoped, `reads` joins the prefix to
-its mount chain, and every path-free field passes through, the two check
-fields included. A `reads` that is no read set passes through untouched, so
-`trim!`'s setup names it; the lift raises only on an empty prefix, through the
-read set's own `at` (D-278).
+Scope a trim problem under `prefix`, so that its paths resolve below that path.
+
+`at` lifts the [`TrimProblem`](@ref) field by field. The `condition` function is
+wrapped, so that each condition it returns is scoped under `prefix`. The `reads`
+read set takes `prefix` at the front of its mount chain, the prefixes it is
+mounted under. Every other field holds no path and passes through, the two
+check fields included.
+
+A `reads` field that is not a read set passes through untouched, so that
+`trim!`'s setup names it. The lift refuses only an empty prefix, as
+`ReadSetMisuse` from `at` on the read set.
 """
 at(prefix::AbstractString, problem::TrimProblem) = TrimProblem(
     guess = problem.guess, lower = problem.lower, upper = problem.upper,
@@ -113,35 +127,45 @@ struct TrimTag end
 
 # --- the report (§14.8) ---------------------------------------------------------
 
+# Design: §14.5, §14.8, D-070, D-158, D-262.
+# Non-convergence is an expected outcome: hitting the infeasible edge of an
+# envelope is information, so it is reported, not thrown. There is no
+# `committed` flag: a converged solve is always committable (§14.8), so the
+# absence of the commit is the absence of `committed_residuals`. `saturated` is
+# the classic CG-limit diagnostic (D-070). The backend's counts are
+# authoritative over nothing (D-158).
 """
-What `trim!` returns: a value to read, never an exception to catch (§14.8).
-Non-convergence is an expected *outcome* — hitting the infeasible edge of an
-envelope is information — so it is reported, not thrown; a malformed problem is
-the different case, and that one throws at setup.
+    TrimReport
 
-- `converged` — **the service's** per-residual box test at the point the backend
-  returned, evaluated in the residuals' own physical units. That verdict, and
-  nothing else, gates the commit (§14.8).
-- `solution` — guess-shaped, hence warm-startable by `merge`.
-- `residuals`, `tolerances` — the solved-point numbers the verdict was read off,
-  beside the thresholds they were read against.
-- `committed_residuals` — the same residuals re-gathered from the boundary-zero
-  world after the commit, or `nothing` when there was no commit. There is no
-  `committed` flag: a converged solve is always committable (§14.8), so the
-  absence of the commit *is* the absence of these numbers.
-- `committed_checks` — the check function's return at the committed state,
-  gathered from the same sweep as `committed_residuals`. It is `(;)` when the
-  problem declares no checks and `nothing` when there was no commit. A check
-  outside its tolerance raises `TrimCommitChecks` (§14.8, D-262).
-- `status`, `n_evaluations`, `n_iterations` — the backend's, verbatim and
-  authoritative over nothing (D-158). `:bypassed` is the zero-decision
-  problem's, where there was no backend call at all.
-- `saturated` — the decisions sitting at a bound at the returned point, as
-  `(name, :lower | :upper)`: the classic CG-limit diagnostic (D-070).
-- `fired_events` — the events boundary zero fired at the commit, as
-  `(path, name)`; non-empty means the committed stores sit at the post-handler
-  point rather than the reported solution, and it raises `TrimCommitEvents`
-  beside this field (§14.5, §14.8).
+The outcome of a trim: the verdict, the solution, and the numbers the verdict
+was read off.
+
+[`trim!`](@ref) returns a report, a value to read and never an exception to
+catch. A solve that does not converge returns one too. A malformed problem is a
+different case, and `trim!` refuses it at setup. A report holds these fields.
+
+- `converged`: whether every residual sits within its tolerance at the returned
+  point, tested by `trim!` in the residuals' own units. This verdict alone
+  gates the commit.
+- `solution`: the decisions at the returned point, shaped as `guess`, so the
+  next problem can start from it through `merge`.
+- `residuals`, `tolerances`: the residuals at the returned point, beside the
+  tolerances they were tested against.
+- `committed_residuals`: the residuals read again at the committed state, or
+  `nothing` when nothing was committed. A converged solve always commits, so
+  this field also tells whether the commit happened.
+- `committed_checks`: the checks at the committed state, read from the same
+  sweep. It is `(;)` when the problem declares no checks, and `nothing` when
+  nothing was committed. A check outside its tolerance warns `TrimCommitChecks`.
+- `status`, `n_evaluations`, `n_iterations`: the backend's own, recorded
+  verbatim and deciding nothing. `:bypassed` is the status of a problem with no
+  decisions, which makes no backend call.
+- `saturated`: the decisions sitting at a bound at the returned point, as
+  `(name, :lower)` or `(name, :upper)`.
+- `fired_events`: the events boundary zero (the initialization boundary) fired
+  at the commit, as `(path, name)`. A non-empty list means the committed stores
+  sit past the events' handlers rather than at the reported solution, and a
+  `TrimCommitEvents` warning comes with it.
 """
 struct TrimReport
     converged::Bool
@@ -159,52 +183,74 @@ end
 
 # --- the backend seam (§14.8) ---------------------------------------------------
 
+# Design: §14.8.
+# A pinned signature, value-passed. The backend sees vectors and never names:
+# the declared side is canonical on both ends and the service has canonicalized
+# before packing, so the solution unpacks by the order it was given. The
+# Jacobian is requested by argument, so a Jacobian-free backend always passes
+# `nothing` and there is still exactly one evaluation method to implement.
 """
-    solve(backend, eval!, d0, lower, upper, tol) →
-        (; d, status, n_evaluations, n_iterations)
+    solve(backend, eval!, d0, lower, upper, tol) -> NamedTuple
 
-The backend seam: a **pinned signature, value-passed**, one required method per
-backend (§14.8). The backend sees vectors and never names — the declared side is
-canonical on both ends and the service has canonicalized before packing — so the
-solution it returns unpacks by the order it was given.
+Run the backend's search over packed decision vectors, and return the point it
+reaches.
 
-`eval!(r, J, d)` is in-place, always fills `r` — the residual vector in
-`tolerances`' field order — and fills `J` **iff `J !== nothing`**. The Jacobian
-is requested by argument, so a Jacobian-free backend simply always passes
-`nothing` and there is still exactly one evaluation method to implement.
+`solve` is the backend seam (the one method a trim solver implements). A new
+backend type adds one method, `solve(backend::MyBackend, eval!, d0, lower,
+upper, tol)`, and [`trim!`](@ref) calls it with vectors, never names. The
+decisions are packed in `guess`'s order and the residuals in `tolerances`'
+order, and the returned point unpacks by that order.
 
-`d0`, `lower` and `upper` are packed in `guess`'s field order, `±Inf` meaning
-unbounded; a backend that ignores bounds ignores two vectors rather than a
-missing argument. `tol` is in `tolerances`' order and is data the backend *may*
-stop on, decisive of nothing: the convergence verdict is the service's, re-read
-at the returned point (§14.8).
+`eval!(r, J, d)` evaluates the problem at the decisions `d`, in place. It always
+fills the residual vector `r`, and fills the Jacobian `J` only when
+`J !== nothing`. A backend that needs no Jacobian always passes `nothing`.
 
-`status` comes from a deliberately **open** set and is recorded verbatim in the
-report.
+`d0`, `lower` and `upper` are `Vector{Float64}`s in `guess`'s order, with `±Inf`
+for an unbounded side, and `d0` already lies within the bounds. A backend that
+ignores bounds ignores the two vectors. `tol` holds the tolerances in
+`tolerances`' order. A backend may stop on it, but it decides nothing: `trim!`
+tests convergence itself at the returned point.
+
+The method returns `(; d, status, n_evaluations, n_iterations)`: the point
+reached, a status symbol and the two counts. The status set is open, and the
+[`TrimReport`](@ref) records it verbatim.
 """
 function solve end
 
+# Design: §10.2, §14.8.
+# In-house, dense, about 100 lines: the §10.2 stepper precedent applied to the
+# solver (a tiny needed core against a heavy dependency), sharpened by the fact
+# that the per-residual physical tolerances are a convergence test no external
+# package spells natively. Under this view "the tolerances are the stopping
+# criterion" (§14.8), so the damping loop tests exactly what the service will
+# re-test. A raw `norm(r)` sums forces against moments, and on a problem whose
+# residuals differ by orders of magnitude in physical scale it can reject every
+# projected step short of a point the box test would accept.
 """
-    LevenbergMarquardt(; maxiter = 100, λ₀ = 1e-3)
+    LevenbergMarquardt(; maxiter::Integer = 100,
+                       λ₀::Real = 1e-3) -> LevenbergMarquardt
 
-The default backend (§14.8): in-house, dense, ~100 lines — the §10.2 stepper
-precedent applied to the solver (a tiny needed core against a heavy dependency),
-sharpened by the fact that the per-residual physical tolerances are a
-convergence test no external package spells natively.
+The default trim backend, a dense Levenberg–Marquardt solver that stops on the
+problem's own tolerances.
 
-A damping loop on `(JᵀJ + λ·diag(JᵀJ)) δ = −Jᵀr`, accept/reject on the
-**normalized** residual norm `‖r ./ tol‖` with `λ` scaled down by 10 on an
-accepted step and up by 10 on a rejected one, each step **projected onto the
-box** (§14.8's bound treatment), stopping when `all(abs.(r) .≤ tol)` — the
-per-residual test in the service's own units — or at `maxiter`, or when a step
-stalls below the `eps` scale of the decisions it would move.
+Each iteration solves `(JᵀJ + λ·diag(JᵀJ)) δ = −Jᵀr` for a step, and projects
+the step onto the bounds. A step is accepted when it lowers the normalized
+residual norm `‖r ./ tol‖`. `λ` then shrinks by a factor of 10, and a rejected
+step grows it by 10. The descent test and the stopping rule both measure the
+residuals in their tolerances' units, the test [`trim!`](@ref) applies to the
+result.
 
-Descent test and stopping rule are measured in the same units on purpose.
-Under this view, "the tolerances *are* the stopping criterion" (§14.8), so LM's
-damping loop tests exactly what the service will re-test: a raw `norm(r)` sums
-forces against moments, and on a problem whose residuals differ by orders of
-magnitude in physical scale it can reject every projected step short of a point
-the box test would accept.
+The solver stops with status `:converged` when every residual is within its
+tolerance, `all(abs.(r) .≤ tol)`. It stops with `:maxiter` after `maxiter`
+iterations, and with `:stalled` when a step falls below the rounding scale of
+the decisions it would move.
+
+# Keywords
+
+- `maxiter`: the most iterations the solver runs.
+- `λ₀`: the starting damping factor.
+
+See also [`solve`](@ref).
 """
 struct LevenbergMarquardt
     maxiter::Int
@@ -393,56 +439,82 @@ end
 
 # --- the service (§14.8) ---------------------------------------------------------
 
+# Design: §9.4, §14.5, §14.6, §14.7, §14.8, D-205, D-213, D-318, D-319.
+# The scratch world comes in two halves (D-213). Every invocation instantiates
+# its own executors from the build's cached layouts and discards them with the
+# call. Setup checks §14.6's root-input totality against the build's faces
+# before any evaluation. The establishment round is boundary zero's sweep with
+# every discrete output stage admitted, due or not (D-205), with no projection,
+# no guards and no `s_update`. The seeded set is written by the specialized
+# `apply!`, and its frozen cells are copied from the nominal set as zero-partial
+# constants: at the seeded activation the discrete tier never runs (§9.4), so
+# nothing there can derive a discrete output cell from the authored `s`, and
+# without the copy those cells would hold the build probe's synthesized values,
+# a fabricated zero being a fine probe input and a terrible flight condition
+# (§14.6's barrier, reaching the scratch world). The iterations are raw write,
+# sweep and read cycles at the seeded activation, the continuous chain and
+# `x_deriv` alone, with no boundaries and no events (§14.5). The commit is the
+# same composite over the same baseline as setup, so its totality is setup's and
+# the check is structurally unfailable through this path. The zero-decision
+# problem is free (§14.8). The commit is the model's own `init!`, so the claim
+# is checked first (D-318, D-319).
 """
-    trim!(model, problem; baseline, t0 = 0.0, backend = LevenbergMarquardt()) → TrimReport
+    trim!(model::Model{Float64}, problem::TrimProblem; baseline, t0::Real = 0.0,
+          backend = LevenbergMarquardt()) -> TrimReport
 
-Solve `problem` over `baseline` and, on convergence, commit the solution through
-boundary zero. Returns a [`TrimReport`](@ref); non-convergence never throws.
+Solve a trim problem on the model, and commit the solution through `init!`.
 
-**The scratch world, in two halves (D-213).** Every invocation instantiates its
-own executors from the build's cached layouts and discards them with the call.
-Setup applies `override(baseline, condition(guess))` to a *nominal* set by the
-dynamic walk, checks §14.6's root-input totality against the build's faces
-before any evaluation (`UninitializedInputs`, all-or-nothing), and runs one
-**establishment round** — boundary zero's sweep with every discrete output
-stage admitted, due or not (D-205), with no projection, no guards and no
-`s_update`.
-The seeded set is then written by the specialized `apply!`, and its **frozen
-cells are copied from the nominal set** as zero-partial constants: at the
-seeded activation the discrete tier never runs (§9.4), so nothing there can
-derive a discrete output cell from the authored `s`, and without the copy those
-cells would hold the build probe's synthesized values — a fabricated zero being
-a fine probe input and a terrible flight condition (§14.6's barrier, reaching
-the scratch world). The iterations themselves are untouched: raw write → sweep
-→ read cycles at the seeded activation, the continuous chain and
-`x_deriv` alone, no boundaries and no events (§14.5).
+`trim!` searches the [`TrimProblem`](@ref)'s decisions for a point where every
+residual sits within its tolerance. Every evaluation runs on scratch stores
+(working storage the call creates and discards), so the search never writes the
+model. Setup applies `override(baseline, problem.condition(guess))` and runs one
+establishment round: the sweep of boundary zero (the initialization boundary),
+with every discrete output stage run and no projection, events or discrete
+update. Each iteration then writes the decisions, sweeps the continuous chain
+and reads the residuals, with no boundaries and no events. The discrete tier
+does not run during the search, so its outputs hold the values the
+establishment round gave them. The Jacobian is exact, carried by dual numbers
+through the same evaluation.
 
-**The verdict is the service's, uniformly.** After the backend returns, the
-service evaluates once more at the returned point and reads `converged` off the
-per-residual box test in the residuals' own units. That, and never a backend's
-`status`, gates the commit (§14.8). No convergence means no commit, and no
-commit means the model is bit-for-bit untouched, status included: a `:built`
-model stays `:built`.
+The verdict is `trim!`'s own. After the backend returns, `trim!` evaluates once
+more at the returned point and tests each residual against its tolerance, in the
+residuals' own units. That test sets the report's `converged`, whatever status
+the backend gave. A solve that does not converge commits nothing and leaves the
+model as it was, its status included: a `:built` model stays `:built`.
+Non-convergence is reported in the [`TrimReport`](@ref), never thrown.
 
-**The commit is literally an `init!`** — `init!(model, override(baseline,
-condition(solution)); t0)`, the same composite over the same baseline, so its
-totality is setup's and the check is structurally unfailable through this path.
-Boundary zero's `x_projection` and any guard already holding then move the committed
-stores off the solved point; both movers are surfaced rather than left silent,
-as the report's fired-event list with `TrimCommitEvents` beside it, and as the
-committed-state residuals with `TrimCommitResiduals` when they leave the box.
-The checks are gathered from the same boundary-zero sweep, and
-`TrimCommitChecks` names the ones outside their tolerances.
+A converged solve commits through the model's own [`init!`](@ref), as
+`init!(model, override(baseline, problem.condition(solution)); t0)`. Boundary
+zero can then move the committed stores off the solved point, through
+`x_projection` or an event whose guard already holds. `trim!` surfaces both: the
+events fired, in the report's `fired_events` with a `TrimCommitEvents` warning,
+and the residuals read again at the committed state, with a
+`TrimCommitResiduals` warning when they leave their tolerances. The checks are
+read from the same boundary-zero sweep, and `TrimCommitChecks` warns of those
+outside their tolerances.
 
-**The zero-decision problem is legal** (§14.8): `guess = (;)` bypasses the
-solver outright — nothing to pack, no seeded activation, no backend call. The
-nominal half's establishment round is the one evaluation, the ordinary box test
-decides, and the commit runs as usual. That degenerate problem is the "is this
-operating point an equilibrium?" probe, useful in its own right and free.
+A problem with no decisions, `guess = (;)`, is legal. It skips the backend, its
+establishment round is its one evaluation, and the ordinary tolerance test
+decides. It answers whether the operating point is already an equilibrium, and
+commits as usual when it is.
 
-The commit is the model's own `init!`, so a model a simulation has claimed
-refuses the call as `ArgumentInvalid` `:claimed`, before any check (D-318,
-D-319).
+# Keywords
+
+- `baseline`: the baseline (a full-coverage condition, layered under tweaks)
+  the problem's condition is layered over, at setup and at the commit. Required.
+  It must give every root input (the root component's own input faces) a value.
+- `t0`: the start time of the committing boundary zero, any real, held as a
+  `Float64` origin.
+- `backend`: the solver, any value with a [`solve`](@ref) method.
+  [`LevenbergMarquardt`](@ref) is the default.
+
+The problem is checked before any evaluation, and its faults are refused
+together as `TrimProblemInvalid`, with the read set's own `ReadResolution`
+failures beside them. A root input the baseline and the guess's condition leave
+without a value is refused as `UninitializedInputs`. A model a
+[`Simulation`](@ref) has claimed is refused as `ArgumentInvalid`, before any
+check. So is a second argument that is not a `TrimProblem`, and a model at a
+scalar type other than `Float64`.
 """
 function trim!(model::Model{Float64}, problem::TrimProblem; baseline,
                t0::Real = 0.0, backend = LevenbergMarquardt())
