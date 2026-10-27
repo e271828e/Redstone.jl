@@ -13818,7 +13818,7 @@ assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
 - Holder types. `PortView` is an entry of the table `port_views` returns,
   the view `peek` and `incumbent_status` take. `WriterStatus` is the record
   `incumbent_status` returns. `MalformedDatum` is the occurrence `report!`
-  takes.
+  takes, which a device builds as `MalformedDatum(cause)`.
 
 #### Condition algebra
 

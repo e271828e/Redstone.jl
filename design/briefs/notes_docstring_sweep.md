@@ -1186,3 +1186,24 @@ The coordinator's calls:
 - The conformance commit moves citations: D-167 to D-263 for `u_types` and
   `linearize`, D-166 to D-099 and §9.4 for `ProbeDual`, and D-317 added for
   the hook functions and for `port`, `state` and `modes`.
+
+## 14. Wave 8 and the closing commits
+
+The rulings landed as the docs commit `09185f6`. Wave 8, one Opus agent,
+then rewrote the 21 holder types' and `lifecycle`'s docstrings and put
+them on the page (`c3bfde0`), and the same agent landed the conformance
+commit (`33110a5`): the `LoopHooks` docstrings became comments with one
+sentence under `FrameHooks`, the two LQR trackers show the sized form's
+keywords, the citations moved, the review's nits and "selection keywords"
+landed, and the pending bullets were corrected. The reviewer verified both
+and found seven stacked glosses and ten holder docstrings naming fields in
+prose; the fixer landed them as `d184617`. The ruling on fields: a field
+the user reads is listed, a field the user never reads is not named, so
+the condition nodes, the selectors, `Reads` and `Taps` describe their
+contents in prose. B's holder bullet for `MalformedDatum` gained the clause
+that a device builds it, since the holder framing did not fit that type.
+
+Left for later, from wave 8's handoff: `termination` and `port_views` still
+list the fields that `TerminationRecord` and `PortView` now list, and could
+shrink to a link; the hook functions' comments could cite §13.4 now that it
+names them.
