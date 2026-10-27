@@ -169,9 +169,11 @@ margin!
 pace
 margin
 termination
+TerminationSource
 EndTimeReached
 ModelRequestedStop
 ControlRequestedStop
+LoopError
 StopFlag
 logged
 reads

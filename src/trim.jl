@@ -24,7 +24,7 @@
 
 # --- the problem (§14.7) --------------------------------------------------------
 
-# Design: §9.5, §14.4, §14.7, §14.8, §14.9, D-262.
+# Design: §14.7, §9.5, §14.4, §14.8, §14.9, D-262.
 # What the aircraft author ships. The field set is normative and closed
 # (§14.7): there is no defaulting a half-specified problem into a solve. Order
 # carries no semantics (§9.5), so a permuted bound spelling is a non-event
@@ -35,7 +35,7 @@
 # check return's shape at the guess evaluation and can catch no more than that.
 """
     TrimProblem(; guess, lower, upper, condition, reads, residuals, tolerances,
-                checks = _no_checks, check_tolerances = (;)) -> TrimProblem
+                checks, check_tolerances = (;)) -> TrimProblem
 
 The value a trim solves: the decisions to vary, the condition they set, and the
 equations to satisfy.
@@ -63,7 +63,7 @@ the two check keywords default to no checks.
   moves with it when [`at`](@ref) scopes it.
 - `checks`: `checks(reads::NamedTuple, d::NamedTuple) -> NamedTuple`, equations
   reported once at the committed state and never solved. The reads they use come
-  from `reads`. The default returns `(;)`.
+  from `reads`. The default runs no checks.
 - `check_tolerances`: a `NamedTuple` of `Float64` with the checks' names. A
   check outside its tolerance warns `TrimCommitChecks`.
 

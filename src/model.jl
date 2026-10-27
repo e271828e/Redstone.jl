@@ -185,7 +185,7 @@ publishes nothing. See
 """
 struct NoHooks <: FrameHooks end
 
-# Design: §10.4, D-317.
+# Design: §10.4, §13.4, D-317.
 """
     frame_top!(::NoHooks) -> Nothing
 
@@ -198,7 +198,7 @@ keeps, and [`settled!`](@ref) for the other hook.
 """
 frame_top!(::NoHooks) = nothing
 
-# Design: §10.4, D-317.
+# Design: §10.4, §13.4, D-317.
 """
     settled!(::NoHooks) -> Bool
 

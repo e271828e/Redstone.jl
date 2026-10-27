@@ -159,7 +159,7 @@ end
 # them (D-406).
 """
     linearize(model::Model{Float64}, tap_set::Taps; about = nothing, t0 = nothing,
-              width::Int = LINEARIZE_WIDTH) -> Linearization
+              width::Int = 8) -> Linearization
 
 Return the linearization of the model at an operating point.
 

@@ -3,23 +3,42 @@
 # is "advance the continuous state from `t` by `h`", across the stepper seam
 # (§10.2) that model.jl holds beside the phase-body accessor (§9.7).
 
+# Design: §11.6, §12.4, §13.4, §13.5, §13.6, Appendix B, D-203, D-268, D-316.
+# §13.5's termination sources (D-203): the diagnostic convention applied to the
+# run's outcome — each kind is its identity, its payload plain data — without
+# joining Appendix C's diagnostic set, the record being outcome, not warning.
+# `EndTimeReached` carries nothing: the record's own `t` is the fact, and the
+# configured bound lives with the policy. `ModelRequestedStop` carries the
+# requester that ended the run, its component path, port and reason: the first
+# honoured request read holding, in roster order (D-316). `ControlRequestedStop`
+# carries its issuer — `:code` from `stop!(sim)`, the requesting device's name
+# from `stop!(handle)`, or `:interrupt`, the operator's stop (§12.4, D-268),
+# requested at one of the frame loop's unmask points, by the init bracket or
+# §11.6's wrapper when one leaves a device's `init!` or loop body, or by §13.4's
+# defensive carve-out when one reaches the catch site — through the same
+# first-writer-wins word, so an earlier issuer keeps it. `LoopError` is §13.6's
+# abnormal entry, `exception` the retained cause — a `StepError` from the frame
+# loop's one catch site (§13.4), which carries the raw cause in turn.
 """
-§13.5's termination sources (D-203): the diagnostic convention applied to the
-run's outcome — each kind is its identity, its payload plain data — without
-joining Appendix C's diagnostic set, the record being outcome, not warning.
-`EndTimeReached` carries nothing: the record's own `t` is the fact, and the
-configured bound lives with the policy. `ModelRequestedStop` carries the
-requester that ended the run, its component path, port and reason: the first
-honoured request read holding, in roster order (D-316).
-`ControlRequestedStop` carries its issuer — `:code` from `stop!(sim)`, the
-requesting device's name from `stop!(handle)`, or `:interrupt`, the operator's
-stop (§12.4, D-268), requested at one of the frame loop's unmask points, by the
-init bracket or §11.6's wrapper when one leaves a device's `init!` or loop
-body, or by §13.4's defensive carve-out when one reaches the catch site —
-through the same first-writer-wins word, so an earlier issuer keeps it.
-`LoopError` is §13.6's abnormal entry, `exception` the retained
-cause — a `StepError` from the frame loop's one catch site (§13.4), which
-carries the raw cause in turn.
+    TerminationSource
+
+The abstract type of the typed source that ended a run.
+
+A [`TerminationRecord`](@ref), which [`termination`](@ref) returns, holds one
+in its `source` field. Each source is a struct whose fields are its payload,
+and there are four.
+
+- [`EndTimeReached`](@ref): the run completed the frame that reached its
+  `t_end`.
+- [`ModelRequestedStop`](@ref): an honoured stop request ended the run, and the
+  source names the requester.
+- [`ControlRequestedStop`](@ref): the calling code, a device or Ctrl-C stopped
+  the run, and the source names the issuer.
+- [`LoopError`](@ref): a failure inside the loop aborted the run, and the
+  source holds the failure.
+
+A caller tells them apart by type, as in
+`termination(sim).source isa EndTimeReached`.
 """
 abstract type TerminationSource end
 
@@ -70,6 +89,24 @@ struct ControlRequestedStop <: TerminationSource
     issuer::Union{Symbol,String}
 end
 
+# Design: §12.4, §13.4, §13.5, §13.6, Appendix B, D-203.
+# The failed boundary is discarded by construction: publication is a boundary's
+# last act, so it published nothing and the previous snapshot is already final.
+"""
+    LoopError
+
+The termination source of a run aborted by a failure inside the loop.
+
+`LoopError` is the abnormal source. A run ends with it when a frame throws,
+which leaves the simulation `errored`, and the previous snapshot is the run's
+final one. `exception` holds the failure as the loop caught it: a wrapper whose
+`cause` is the raw error, beside the time and the place in the frame where it
+was thrown.
+
+By the time a caller can read the source, the tail (the ordered shutdown
+sequence every stop takes) has already run. [`run!`](@ref) says how a failed
+run ends, and [`termination`](@ref) how its record is read.
+"""
 struct LoopError <: TerminationSource
     exception::Any
 end
@@ -479,19 +516,9 @@ mode(sim::Simulation) = sim.run.feed === nothing ? :live : :replay
 
 Return the current run's termination record, or `nothing` while the run is open.
 
-The termination record (the stopped-sim value naming how the run ended) has four
-fields.
-
-- `t`: the time of the run's final snapshot (the immutable per-boundary
-  publication).
-- `policy`: the stop policy (the value one advance declares, `t_end` plus the
-  requester paths it ignores) of the advance that ended the run.
-- `source`: the typed source that ended the run. It is [`EndTimeReached`](@ref),
-  [`ModelRequestedStop`](@ref) with the requester,
-  [`ControlRequestedStop`](@ref) with its issuer, or `LoopError` with the
-  failure's cause.
-- `residue`: the diagnostics that writers reported after the final snapshot,
-  collected as the run ended.
+The termination record (the stopped-sim value naming how the run ended) is a
+[`TerminationRecord`](@ref), and its `source` field holds the
+[`TerminationSource`](@ref) that ended the run.
 
 The record is written once, as the run ends, and `closed(sim.run)` turns `true`
 with it. Each call that opens a run starts it without a record, so a record of
@@ -1048,7 +1075,7 @@ trim!(sim::Simulation, other; kw...) = trim!(sim.model, other; kw...)
 # Design: §14, §14.10, D-319.
 """
     linearize(sim::Simulation, tap_set::Taps; about = nothing, t0 = nothing,
-              width::Int = LINEARIZE_WIDTH) -> Linearization
+              width::Int = 8) -> Linearization
 
 Return the linearization of the simulation's model at an operating point.
 
@@ -1876,7 +1903,7 @@ end
 # The simulation's own doors pass the claim's gate, which is model.jl's (D-318).
 _claimed_gate(::Model, ::LoopHooks, ::Symbol) = nothing
 
-# Design: §11.2, §11.4, §13.5, D-317.
+# Design: §11.2, §11.4, §13.4, §13.5, D-317.
 # The top hook is the drain. `LoopHooks` is internal, so the method has no
 # docstring on the public `frame_top!` page. It applies the staged input batches
 # at the top of a simulation's frame, before the frame touches any state. A
@@ -1889,7 +1916,7 @@ _claimed_gate(::Model, ::LoopHooks, ::Symbol) = nothing
 # wait. See `settled!` for the other hook.
 frame_top!(hooks::LoopHooks) = drain!(hooks.sim, hooks.roster)
 
-# Design: §11.2, §11.4, §13.5, D-317.
+# Design: §11.2, §11.4, §13.4, §13.5, D-317.
 # The settled hook publishes the boundary, then samples the stop requests off
 # that snapshot. Which request holds is the loop's to read again; the model
 # learns only whether one does. `LoopHooks` is internal, so the method has no

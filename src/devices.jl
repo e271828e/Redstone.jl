@@ -483,8 +483,9 @@ end
 Return the device's table of port views, one per port of the build, keyed by
 `(path, port)`.
 
-A port view (one port's verdict, settled once per run) records the port's
-producer, whether the device commands it, and who writes it otherwise. The table
+A port view (one port's verdict, settled once per run) is a
+[`PortView`](@ref). It records the port's producer, whether the device commands
+it, and who writes it otherwise. The table
 holds one view per input face at every level, the root inputs (the root
 component's own input faces) and both ends of every wire, and one per produced
 output: each component's outputs and every exported output face, the root's
@@ -492,19 +493,6 @@ included. An input face's producer is the
 output or root input that ultimately feeds it, so an assembly's input face
 shares its producer with the ports behind it. A root input and a produced output
 are their own producers.
-
-Each view carries these fields, beside the producer's address that
-[`peek`](@ref) reads.
-
-- `path` and `port`: the port the view describes.
-- `source`: its producer, as `(path, port)`, with `("", face)` for a root input.
-- `live`: `true` when the producer is a root input inside the device's claim
-  (the set of faces a device may write), so the device commands the port.
-- `slot`: that root input's position in the claim, as [`pending`](@ref) takes
-  it, or `0` when the view is not live.
-- `incumbent`: the writer of the root input that drives the port. It is this
-  device's name when live, another device's name, `"harness"` for a face no
-  device claims, or `""` when no root input drives the port.
 
 A GUI device's loop calls `port_views` once, at its top, after the run has fixed
 the roster (the list of attached device entries). Nothing is resolved by name
