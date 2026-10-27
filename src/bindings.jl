@@ -16,22 +16,42 @@
 # declared sides, `claims`/`reads` and the conformance check — lives in
 # roster.jl.
 
+# Design: §11.6.
+# The framework writes `map_input` once for every table. The entry tuple rides
+# in the type, so the mapping specializes per table with no dynamic dispatch.
 """
-    TableBinding(; channel = (face = "...", deadzone = ..., expo = ...), ...)
+    TableBinding(; entries...) -> TableBinding
 
-The shipped data-driven binding (§11.6): the framework writes its `map_input`
-once, and a table value — channel name => entry — is constructed per
-device × deployment pairing, where configurations are made. Each entry names
-the root input face its channel writes (`face`, mandatory) and optionally the
-conditioning parameters the generic `map_input` applies (`deadzone`, `expo`);
-any other key is a typo caught here, at construction. The entry tuple rides
-in the type, so the mapping specializes per table with no dynamic dispatch.
+The shipped data-driven binding: a table from channel names to the root-input
+faces they write.
 
-The input side is declared (`is_input`), and the claim is the table's face
-set — `claims` derives it, so what the binding may write is exactly what its
-entries name. A *code-driven* binding looks identical to the framework: a
-JSON telecommand peer whose `claims` returns the vocabulary and whose
-`map_input` parses bytes.
+A binding (the value passed at `attach!` that makes a device framework-legible)
+of this type is built per pairing of device and deployment, where configurations
+are made. Each keyword is a channel, the name a device's datum uses, and its
+value is a `NamedTuple` entry with these fields.
+
+- `face`: the root input (the root component's own input face) the channel
+  writes, a string or a symbol. Required.
+- `deadzone`: the band around zero that reads as zero, in `[0, 1)`. The rest of
+  the range is rescaled so that `±1` stays fixed.
+- `expo`: the blend from a linear toward a cubic response, in `[0, 1]`, with
+  `±1` again fixed.
+
+A channel that declares `deadzone` or `expo` has its value clamped to `[-1, 1]`
+and conditioned. A channel that declares neither passes its value through
+untouched.
+
+The binding declares the input side ([`is_input`](@ref)). Its claim (the set of
+faces a device may write) is the table's face set, which [`claims`](@ref)
+derives, so what the binding may write is exactly what its entries name. Its
+[`map_input`](@ref) maps a datum through the table. A code-driven binding looks
+the same to the framework, for example a JSON telecommand peer whose `claims`
+returns its vocabulary and whose `map_input` parses bytes.
+
+An entry that is not a `NamedTuple`, has no `face`, names its face by anything
+but a string or a symbol, carries any other field, or sets `deadzone` or `expo`
+out of range is refused at construction as `ArgumentInvalid`, every such entry
+in one throw.
 """
 struct TableBinding{T<:NamedTuple} <: AbstractBinding
     table::T
@@ -74,24 +94,32 @@ end
 is_input(::TableBinding) = true
 claims(b::TableBinding) = String[String(e.face) for e in values(b.table)]
 
+# Design: §11.4, §11.6.
+# `TableBinding`'s generic mapping, the shared pure conditioning helper with an
+# owner. A datum field naming no table channel is configuration drift, not a
+# bad datum: the mapping and the datum are written by the same author, so the
+# throw is deliberate.
 """
-    map_input(datum::NamedTuple, b::TableBinding) -> ("face" => value, ...)
+    map_input(datum::NamedTuple, b::TableBinding) -> Tuple
 
-`TableBinding`'s generic mapping — the shared pure conditioning helper, with
-an owner (§11.4, §11.6). The datum is whatever the author's loop assembled,
-one field per *touched* channel: `map_input` returns face ⇒ value pairs for
-exactly those, so a sparse datum stages a sparse batch and merge does the
-rest (§11.4). The idiom is `stage!(handle, map_input(datum, binding(handle))...)`,
-on the device's own task. The pairs come back as a tuple in the datum's field
-order. Building it allocates nothing when the table's faces are `String`s,
-however many fields the datum carries.
+Return the `"face" => value` writes a datum maps to through the table, one per
+datum field.
 
-A datum field naming no table channel is configuration drift, not a bad
-datum: the mapping and the datum are written by the same author, so the
-throw is deliberate — it lands in the wrapper as the `DeviceCrash` it is
-(§11.6). Cross-datum state — press counters, edge detection — lives in the
-device struct, maintained by the loop, and arrives *inside* the datum:
-`map_input` stays pure, and staged values are levels, never deltas (§11.4).
+The datum is whatever the device's loop assembled, one field per channel it
+touched. `map_input` returns a pair for exactly those, as a tuple in the datum's
+field order, each value conditioned by its channel's `deadzone` and `expo`. A
+sparse datum therefore stages a sparse batch (a staged set of face ⇒ value
+writes), and the merge with what is already pending does the rest. The loop
+idiom is `stage!(handle, map_input(datum, binding(handle))...)`, on the device's
+own task. Building the tuple allocates nothing when the table's faces are
+`String`s, however many fields the datum carries.
+
+Staged values are levels, never deltas. State across data, such as press
+counters or edge detection, lives in the device struct, maintained by the loop,
+and arrives inside the datum, so `map_input` stays pure.
+
+A datum field naming no channel of the table throws an `ErrorException`, which
+reaches the framework from the device's loop as the `DeviceCrash` it is.
 """
 @generated map_input(datum::NamedTuple{K}, b::TableBinding) where {K} =
     _unrolled_tuple(i -> :(_map_channel(datum, b, $(QuoteNode(K[i])))), length(K))
@@ -147,15 +175,22 @@ function _compile_binding_reads(selectors, binding_type::Type, build::Build)
     _compile_reads(Reads((), selectors), build, Float64; source = :table)
 end
 
+# Design: §11.6.
+# The output side's convention name, declared here for the loop idiom and never
+# called by the framework.
 """
-    map_output(nt, b) -> wire datum
+    map_output(nt, b)
 
-The output side's convention name (§11.6), declared here for the loop idiom —
-`send(dev.socket, map_output(gather(handle, snapshot), binding(handle)))` — and
-never called by the framework: it receives exactly the compiled gather's
-labeled NamedTuple, and what it puts on the wire is the peer's business. An
-output binding defines its own method; the identity one returns the NamedTuple
-itself.
+Return the datum an output binding sends for one gathered `NamedTuple`, by the
+binding's own method.
+
+An output-side binding defines `map_output` for its type. The method receives
+exactly the labeled `NamedTuple` that [`gather`](@ref) returns, keyed by the
+labels of the binding's [`reads`](@ref), and what it returns for the wire is the
+peer's business. The loop idiom is
+`send(dev.socket, map_output(gather(handle, snapshot), binding(handle)))`, on
+the device's own task. The framework never calls `map_output` and ships no
+method. A binding that sends the values as they are returns `nt` itself.
 """
 function map_output end
 
