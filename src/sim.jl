@@ -25,8 +25,8 @@
 The abstract type of the typed source that ended a run.
 
 A [`TerminationRecord`](@ref), which [`termination`](@ref) returns, holds one
-in its `source` field. Each source is a struct whose fields are its
-[payload](@ref g-payload), and there are four.
+in its `source` field. Each source is a struct whose fields say how the run
+ended, and there are four.
 
 - [`EndTimeReached`](@ref): the run completed the [frame](@ref g-frame) that
   reached its `t_end`.
@@ -49,7 +49,7 @@ abstract type TerminationSource end
 The termination source of a run that completed the [frame](@ref g-frame)
 reaching its `t_end`.
 
-It carries no [payload](@ref g-payload). The
+It carries no fields. The
 [termination record](@ref g-termination-record)'s own `t` is the time reached,
 and the bound is the record's `policy.t_end`. Read the record with
 [`termination`](@ref).
@@ -160,7 +160,7 @@ these fields.
 - `policy`: the stop policy of the advance that ended the run.
 - `source`: the typed source that ended the run, such as
   [`EndTimeReached`](@ref) or [`ModelRequestedStop`](@ref) with its
-  [payload](@ref g-payload).
+  fields.
 - `residue`: the diagnostics the writers reported after the final snapshot,
   collected as the run ended. They are logged, and never published.
 """

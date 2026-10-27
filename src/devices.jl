@@ -52,7 +52,7 @@ reads a GUI device uses to show its widgets, [`port_views`](@ref),
 [`pending`](@ref) and [`peek`](@ref), take the handle too.
 
 A handle outlives its [roster](@ref g-roster) entry as an object only. After
-[`detach!`](@ref), the two write primitives, `stage!` and `report!`, are refused
+[`detach!`](@ref), the two write calls, `stage!` and `report!`, are refused
 as `DeviceContractMismatch` instead of landing in a [cell](@ref g-cell) nothing
 reads. The reads stay legal.
 
@@ -217,7 +217,7 @@ the run's final [snapshot](@ref g-snapshot) is published, so a loop that reads
 `false` may still read a complete final snapshot.
 
 Each call refreshes the device's [heartbeat](@ref g-heartbeat), as every handle
-primitive a loop calls does. A loop that calls the primitives needs no separate
+call a loop makes does. A loop that makes these calls needs no separate
 liveness signal.
 """
 running(handle::DeviceHandle) =

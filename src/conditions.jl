@@ -21,7 +21,7 @@ in that level's own vocabulary.
 
 [`set`](@ref) returns it as the leaf of a condition, and [`at`](@ref),
 [`combine`](@ref) and [`override`](@ref) take it. It holds the four
-[payloads](@ref g-payload) `set` was given. The `x`, `s` and `m` payloads name
+payloads `set` was given. The `x`, `s` and `m` payloads name
 the declared state and modes of the [component](@ref g-component) at the
 authoring level, and the `u` payload names that level's own input
 [faces](@ref g-face). It holds no path, since addressing a child is `at`'s job
@@ -137,7 +137,7 @@ function condition end
 Return the leaf of a [condition](@ref g-condition), setting values on the
 [component](@ref g-component) it is authored for.
 
-A condition is a tree, and `set` builds its leaf. Each [payload](@ref g-payload)
+A condition is a tree, and `set` builds its leaf. Each payload
 is a `NamedTuple` in the vocabulary of the component at the authoring level, and
 names none of its children. [`at`](@ref) scopes a leaf to a child, and
 [`combine`](@ref) and [`override`](@ref) compose leaves.

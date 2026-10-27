@@ -22,11 +22,11 @@
 """
     Taps
 
-The tap set: the three [read sets](@ref g-read-set) that linearization seeds and
-reads.
+The [tap set](@ref g-taps): the three [read sets](@ref g-read-set) that
+linearization seeds and reads.
 
 [`taps`](@ref) returns it, [`linearize`](@ref) takes it, and [`at`](@ref)
-mounts it below a prefix. A [tap set](@ref g-taps) holds the three lists given
+mounts it below a prefix. A tap set holds the three lists given
 as `x`, `u` and `y`, each a [`Reads`](@ref). The `x` list names the continuous
 state leaves to seed, the `u` list the [root inputs](@ref g-root-input) to seed,
 and the `y` list the outputs to read. Their labels become the axes of the
@@ -44,10 +44,10 @@ end
 """
     taps(; x = (;), u = (;), y = (;)) -> Taps
 
-Return the tap set a linearization seeds and reads, built from three labeled
-[selector](@ref g-selector) lists.
+Return the [tap set](@ref g-taps) a linearization seeds and reads, built from
+three labeled [selector](@ref g-selector) lists.
 
-A [tap set](@ref g-taps) is what [`linearize`](@ref) takes. Each list is a
+A tap set is what [`linearize`](@ref) takes. Each list is a
 `NamedTuple` of selectors, and its labels become the axes of the returned
 matrices. Membership is closed per list, and every tap names one scalar leaf.
 
@@ -70,9 +70,10 @@ taps(; x = (;), u = (;), y = (;)) = Taps(_tap_list(:x, x), _tap_list(:u, u), _ta
 """
     at(prefix::AbstractString, tap_set::Taps) -> Taps
 
-Scope a tap set under `prefix`, so that its paths resolve below that path.
+Scope a [tap set](@ref g-taps) under `prefix`, so that its paths resolve below
+that path.
 
-A [tap set](@ref g-taps) is built by [`taps`](@ref). Each of its lists takes
+A tap set is built by [`taps`](@ref). Each of its lists takes
 `prefix` at the front of its [mount chain](@ref g-mounting), and the labels are
 unchanged. An empty prefix is refused as `ReadSetMisuse`, from `at` on the
 lists.
