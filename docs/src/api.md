@@ -73,7 +73,10 @@ Simulation
 attach!
 detach!
 AbstractDevice
+AbstractBinding
 is_input
+is_output
+is_greedy
 claims
 map_input
 map_output

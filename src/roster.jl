@@ -11,49 +11,177 @@
 # the staging entry points live in sim.jl, beside the loop whose frames they
 # configure.
 
+# Design: §11.3, §11.6.
+# The periphery's two roots, one mandatory word each, buying `attach!`'s
+# dispatch gate. The library's stub devices are mutable structs because an
+# immutable stub would be egal to its field-for-field twin, and `===` would
+# stop meaning identity.
 """
-The periphery's two roots (§11.6): a device is a user type subtyping
-`AbstractDevice`, a binding a value subtyping `AbstractBinding` — one
-mandatory word each, buying `attach!`'s dispatch gate. Device identity is the
-*instance*: the same object (`===`) may occupy at most one roster entry, and
-two instances of one type — two joysticks — are two devices. (Which is why
-the library's stub devices are mutable structs: an immutable stub would be
-egal to its field-for-field twin, and `===` would stop meaning identity.)
-The binding stays an `attach!` argument, never a device field: the same
-device binds differently per deployment, and narrowing the binding narrows
-the claim (§11.3).
+    AbstractDevice
+
+The abstract type every device subtypes, the root of the device authoring
+contract.
+
+A device (any attached participant in the periphery, the code outside the loop
+that exchanges data with it) is a user type, `MyDevice <: AbstractDevice`,
+added to a simulation with [`attach!`](@ref). It defines [`loop`](@ref), the
+one mandatory function, and optionally the hooks [`init!`](@ref),
+[`shutdown!`](@ref) and [`unblock!`](@ref).
+
+A device's identity is its instance. The same object (`===`) may hold at most
+one roster entry (the device's record in the list of attached devices), and two
+instances of one type, such as two joysticks, are two devices. Two immutable
+instances with equal fields are `===`, so they count as one device.
+
+The device is attached under a binding (the value passed at `attach!` that
+makes a device framework-legible), which stays an `attach!` argument and is
+never a device field. The same device binds differently per deployment, and
+narrowing the binding narrows the claim (the set of faces a device may write).
+See [`AbstractBinding`](@ref).
 """
 abstract type AbstractDevice end
+
+# Design: §11.3, §11.6.
+"""
+    AbstractBinding
+
+The abstract type every binding subtypes, the value that makes a device
+framework-legible.
+
+A binding is a value of a user type, `MyBinding <: AbstractBinding`, passed to
+[`attach!`](@ref) beside the device. It declares the device's sides with two
+`Bool` traits, [`is_input`](@ref) and [`is_output`](@ref), both `false` by
+default, and each declared side carries its own methods.
+
+- The input side: [`claims`](@ref) names the faces the device may write, or
+  [`is_greedy`](@ref) asks for every face still unclaimed. The loop's
+  [`map_input`](@ref) turns a datum into writes.
+- The output side: [`reads`](@ref) names what the device reads from each
+  snapshot (the immutable per-boundary publication). The loop's
+  [`map_output`](@ref) turns the gathered values into the device's output.
+
+The binding stays an `attach!` argument, never a device field, so the same
+device binds differently per deployment, and narrowing the binding narrows the
+claim (the set of faces a device may write). [`TableBinding`](@ref) is the
+shipped data-driven binding.
+
+`attach!` checks the traits against the methods. A binding that declares
+neither side, a declared side without its method, or a method under a `false`
+trait is refused as `BindingContractMismatch`.
+"""
 abstract type AbstractBinding end
 
+# Design: §11.3, §11.6.
+# The declared sides and the claim source. Sides are declared, never inferred:
+# the root carries the false defaults, so silence means absent. `is_greedy`
+# selects the computed claim source within the input side (§11.3), and has its
+# own docstring below.
 """
-The declared sides and the claim source (§11.6): sides are *declared*, never
-inferred — the root carries the false defaults, so silence = absent — and
-`is_greedy` selects the computed claim source *within* the input side (§11.3).
+    is_input(b::AbstractBinding) -> Bool
+
+Return whether the binding declares the input side, `false` unless its type
+defines a method.
+
+A binding with an input side defines `is_input(::MyBinding) = true`, and a
+[`claims`](@ref) method naming the faces it may write unless it declares
+[`is_greedy`](@ref). Sides are declared, never inferred: a binding whose type
+defines no `is_input` method has no input side, whatever else it defines.
+
+[`attach!`](@ref) refuses a binding that defines `claims` without declaring the
+input side as `BindingContractMismatch`. See [`is_output`](@ref) for the output
+side.
 """
 is_input(::AbstractBinding) = false
+
+# Design: §11.6.
+"""
+    is_output(b::AbstractBinding) -> Bool
+
+Return whether the binding declares the output side, `false` unless its type
+defines a method.
+
+A binding with an output side defines `is_output(::MyBinding) = true` and a
+[`reads`](@ref) method naming what it reads from each snapshot (the immutable
+per-boundary publication). Sides are declared, never inferred: a binding whose
+type defines no `is_output` method has no output side, whatever else it
+defines.
+
+[`attach!`](@ref) refuses a binding that defines `reads` without declaring the
+output side as `BindingContractMismatch`. See [`is_input`](@ref) for the input
+side.
+"""
 is_output(::AbstractBinding) = false
+
+# Design: §11.3, §11.6.
+"""
+    is_greedy(b::AbstractBinding) -> Bool
+
+Return whether the binding claims every face still unclaimed at attach, `false`
+by default.
+
+`is_greedy` selects where an input-side binding's claim (the set of faces a
+device may write) comes from. A greedy binding's claim is computed by
+[`attach!`](@ref): every root input no device already attached has claimed. It
+is computed once and never recomputed, so attachment order decides it, and a
+greedy device is best attached last. An empty remainder is legal and warns
+`EmptyGreedyClaim`.
+
+A greedy binding declares [`is_input`](@ref) and defines no [`claims`](@ref)
+method. `attach!` refuses a greedy binding without the input side, or one that
+also defines `claims`, as `BindingContractMismatch`.
+"""
 is_greedy(::AbstractBinding) = false
 
+# Design: §11.6.
+# The enumeration contract. The root's fallback is error-throwing, so a declared
+# side whose method was never written fails loudly at the attach point rather
+# than degrading into silence. The enumeration contract has one meaning and the
+# `is_greedy` trait carries the other, so the maximal surface stays reachable
+# only through an explicit declaration.
 """
-The enumeration contract (§11.6): an input-side binding's `claims(b)` is
-called once at attach, and what it names is staked. The root's fallback is
-error-throwing, so a declared side whose method was never written fails
-loudly at the attach point rather than degrading into silence. `claims` never
-returns a sentinel meaning "compute it for me": the enumeration contract has
-one meaning and the `is_greedy` trait carries the other, so the maximal
-surface stays reachable only through an explicit declaration.
+    claims(b::AbstractBinding)
+
+Return the root-input faces an input-side binding may write, called once at
+attach.
+
+A binding that declares [`is_input`](@ref) defines `claims` for its type,
+returning the face names as strings or symbols. [`attach!`](@ref) calls it once
+and stakes what it names as the device's claim (the set of faces a device may
+write). Duplicates collapse, and an empty collection is a legal claim to write
+nothing. `claims` never returns a value meaning "every remaining face": a
+binding declares [`is_greedy`](@ref) for that.
+
+A binding that declares the input side, is not greedy and defines no `claims`
+method is refused at attach as `BindingContractMismatch`. A face that names no
+root input is refused as `AttachUnknownFace`, and a face another device already
+claims as `ClaimConflict`.
 """
 claims(b::AbstractBinding) = throw(DiagnosticError(
     BindingContractMismatch(binding = _typename(b), reason = :claims_missing)))
 
+# Design: §11.6, §14.4.
+# The output side's enumeration, compiled at attach to one gather. The root's
+# fallback is error-throwing for the same reason `claims`'s is: a declared side
+# whose method was never written fails loudly at the attach point rather than
+# degrading into silence.
 """
-The output side's enumeration (§11.6, §14.4): an output-side binding's
-`reads(b)` is called once at attach and compiled to one gather — the labeled
-NamedTuple of selectors that fixes what `map_output` receives. The root's
-fallback is error-throwing for the same reason `claims`'s is: a declared side
-whose method was never written fails loudly at the attach point rather than
-degrading into silence.
+    reads(b::AbstractBinding) -> NamedTuple
+
+Return the read set the binding's output side gathers from each snapshot.
+
+A binding that declares [`is_output`](@ref) defines `reads` for its type. Its
+read set is a `NamedTuple` of labeled selectors, such as
+`(; speed = get_output("plant", :v))`, and the labels key the `NamedTuple` that
+[`gather`](@ref) returns and [`map_output`](@ref) receives. [`attach!`](@ref)
+calls it once and resolves it against the build, so a binding that no longer
+matches its model fails at attach rather than sending wrong values.
+
+A binding that declares the output side and defines no `reads` method is
+refused at attach as `BindingContractMismatch`, as is a value that is not a
+`NamedTuple` of selectors. A selector that does not resolve is refused as
+`ReadResolution`, or as `PathResolution` when its path names no component. The
+keyword method, `reads(; selectors...)`, builds the read set a service such as
+[`series`](@ref) takes.
 """
 reads(b::AbstractBinding) = throw(DiagnosticError(
     BindingContractMismatch(binding = _typename(b), reason = :reads_missing)))
