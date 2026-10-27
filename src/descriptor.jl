@@ -14,15 +14,24 @@ const LOCATED_DECLARATIONS = (u_types, y_types, x_init, s_init, m_init, sample_t
                               local_wires, input_wires, output_wires, stop_reason,
                               transparent_container)
 
+# Design: §13.9, D-432.
 """
-    descriptor(build)
-    descriptor(deployment)
+    descriptor(build::Build) -> NamedTuple
+    descriptor(deployment::Deployment) -> NamedTuple
 
-The artifact rendered to data under the published format (§13.9, D-432): the
-envelope with its `format_version`, `redstone_version` and `kind`, and the
-body under the key the kind names. A deployment's body embeds the build's
-whole. The value is a tree of `NamedTuple`s and vectors, ready for any JSON
-encoder, and conforms to `schema/descriptor.json`.
+Return the artifact's descriptor, its rendering to data under the published
+format.
+
+The descriptor (a serialized projection of the artifact under a published
+format) is an envelope with the fields `format_version`, `redstone_version`
+and `kind`, and the body under the key the kind names, `build` or
+`deployment`. A deployment's body embeds the build's whole.
+
+The value is a tree of `NamedTuple`s and vectors, ready for any JSON encoder,
+and conforms to the schema the package ships as `schema/descriptor.json`.
+Encoding it is the caller's job.
+
+See also [`Build`](@ref), [`Deployment`](@ref).
 """
 descriptor(build::Build) = _envelope("build", _build_body(build))
 descriptor(deployment::Deployment) =
