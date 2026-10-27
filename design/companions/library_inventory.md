@@ -137,7 +137,7 @@ from pinned data alone need no parameter.
 |---|---|---|
 | `Integrator{V}` | shipped | walks under `Dual` |
 | `LimitedIntegrator{V, L}` over `Real` or a `StaticArray` | shipped | a mode the derivative reads, and four events, the leave pair gated by the mode and strictly inward input; departures localized or boundary-detected, by `L` ([D-179][d-179]); modes as `Int8` codes, `4N` per-component events over a vector; `saturation` published |
-| `FirstOrderLag{V}`, time constant as instance data | shipped | the actuator model and [§5.5][s5-5]'s α-filter idiom |
+| `FirstOrderLag{V}`, time constant as instance data | shipped | the actuator model and [§5.5][s5-5]'s α-filter idiom; for a scalar signal it is the lag form of `TransferFunction`, and the block stays for static-array signals, for `x0` in the signal's own coordinates and for the spelling |
 | a continuous rate limiter | not admitted | `q̇ = clamp((in - q) / τ, -R, R)` is one line, its kinks are second-order and its offsets decay; the discrete form is the block |
 | `StateSpace` holding `A`, `B`, `C`, `D` as static matrices, scalar or `SVector` ports by the matrix shapes | shipped | `D` picks the stage, so the feedthrough class is a type parameter; `x0` in the user's coordinates; `linear_blocks.md` |
 | `TransferFunction` from coefficient tuples, one input and one output | shipped | realized to a `StateSpace` at construction, the stage arms shared through the abstract `LinearBlock{FT}`; the class from the numerator's degree; started at rest or at the steady state for `u0`, never from an `x0`; `linear_blocks.md` |
