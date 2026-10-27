@@ -282,8 +282,15 @@ retype(::Type{T}, ::Type{Float64}) where {T} = T
 function retype(::Type{T}, ::Type{P}) where {T,P}
     P === T && return P
     P isa DataType && !isempty(P.parameters) && !ismutabletype(P) || return P
-    P.name.wrapper{(p isa Type ? retype(T, p) : p for p in P.parameters)...}
+    P.name.wrapper{(_retype_parameter(T, p) for p in P.parameters)...}
 end
+
+_retype_parameter(::Type{T}, p::Type) where {T} = retype(T, p)
+# A variadic tuple's tail, `Vararg{Float64}` or `Vararg{Float64, N}`, is no
+# type but carries one, which follows the scalar like any parameter.
+_retype_parameter(::Type{T}, p::Core.TypeofVararg) where {T} =
+    isdefined(p, :N) ? Vararg{retype(T, p.T), p.N} : Vararg{retype(T, p.T)}
+_retype_parameter(::Type{T}, p) where {T} = p
 
 """
     retype_entry(T, P)

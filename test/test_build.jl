@@ -604,6 +604,14 @@ u_types(::BundleA) = (q = @NamedTuple{a::Float64},)
 y_types(::BundleA) = (y = Float64,)
 y_direct(::BundleA, (; u)) = (y = u.q.a,)
 
+# An abstract entry spelled as an open tuple: its `Vararg` tail is no type, so
+# the activation walk lifts the type it carries (§8.2).
+struct VariadicReader <: AbstractComponent end
+x_init(::VariadicReader) = (;)
+u_types(::VariadicReader) = (pair = Tuple{Vararg{Float64}},)
+y_types(::VariadicReader) = (n = Float64,)
+y_direct(::VariadicReader, (; u)) = (n = sum(u.pair),)
+
 function build_wire_clauses()
     @testset "an abstract entry takes any concrete producer below it (§4.4, §8.2, D-236)" begin
         for (src, want) in ((FieldSourceA(), 2.0), (FieldSourceB(), 3.0))
@@ -638,6 +646,13 @@ function build_wire_clauses()
             dual_model = Model(build(model), D8; h = 1//100)
             @test port(dual_model, "r", :n) isa D8
         end
+
+        # An open tuple entry follows the scalar through its `Vararg` tail, so a
+        # walking tuple producer feeds it at both scalars.
+        variadic_build = build(Group((; s = TupleOut(), r = VariadicReader());
+                                     local_wires = ("s/out" => "r/pair",)))
+        @test variadic_build isa Build
+        @test port(Model(variadic_build, D8; h = 1//100), "r", :n) isa D8
     end
 
     @testset "a root input with no concrete entry is refused (§8.2, D-236)" begin

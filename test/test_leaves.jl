@@ -293,6 +293,11 @@ function leaves_retype()
         @test retype(D8, Tagged{D8}) === Tagged{D8}
         @test retype(D8, AbstractVector) == AbstractVector
         @test retype(D8, Union{Float64,Int}) === Union{Float64,Int}
+        # A variadic tuple's tail is no type, but the type it carries follows
+        # the scalar, with its count where it has one; an `Int` tail pins.
+        @test retype(D8, Tuple{Vararg{Float64}}) === Tuple{Vararg{D8}}
+        @test retype(D8, Tuple{Int,Vararg{Float64,2}}) === Tuple{Int,D8,D8}
+        @test retype(D8, Tuple{Vararg{Int}}) === Tuple{Vararg{Int}}
 
         # The contract marker and the mutable rule (D-263, D-265): `Pinned{P}` at
         # the top of an entry yields `P` at any scalar, which is also how it is
