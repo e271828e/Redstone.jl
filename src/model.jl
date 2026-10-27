@@ -6,50 +6,73 @@
 # model_state)`. Every door that writes the model's status lives here; the one
 # other writer is `frame!`'s catch site (frame.jl).
 
+# Design: §9.1, §9.2, §9.4, §9.5, §9.7, §11.8, §12.1, §12.6, §14.3, Appendix C,
+# D-254, D-256, D-317, D-318, D-320.
+# Deploying and materializing are two steps (D-254). The scalar picks the
+# activation the entries compile over, through `activation(deployment.build,
+# T)`, which serves the nominal `Float64` entry the build inserted and derives
+# and caches any other (§9.4). Any other `T` is refused before an activation is
+# read (§9.2, §9.5, D-320). `chunk_size` is the unroll width `compile` takes,
+# refused with reason `:range` (Appendix C). The two other forms are defined as
+# the compositions. The deployment is held once, and through it the build, the
+# schema authority a condition resolves against (§9.1, §14.3): a second
+# reference would be an invariant with no enforcer (§12.1, D-256). Every buffer
+# set has exactly one owner, so a service invocation instantiates an executor
+# of its own from the same cached layouts rather than writing through this one
+# (§9.2, §9.7). Only the model's own doors and catch sites write `status`, and
+# `lifecycle(sim)` reads it (§12.6, D-317). `claimed` is set by
+# `Simulation(model)` through a compare-and-swap (§9.2, §12.6, D-318). A
+# simulation's drain folds `frame_diag` into the loop's account beside the
+# loop's own cell (§11.8, D-317).
 """
-    Model(deployment::Deployment, T = Float64; chunk_size = 16)
-    Model(build::Build, T = Float64; h, N_base = nothing, Δt_base = nothing,
+    Model(deployment::Deployment, ::Type{T} = Float64; chunk_size = 16) -> Model{T}
+    Model(build::Build, ::Type{T} = Float64; h, N_base = nothing, Δt_base = nothing,
           algorithm = RK4, firing_budget = 4, localization_tol = 1e-6,
-          localization_budget = 8, chunk_size = 16)
-    Model(root, T = Float64; …)
+          localization_budget = 8, kw...) -> Model{T}
+    Model(root::AbstractComponent, ::Type{T} = Float64; kw...) -> Model{T}
 
-A deployment materialized at one scalar `T` (§9.2, D-317): the `Deployment` and
-the `Executor` compiled from it, the activation that can be written to,
-evaluated and stepped. It runs nothing in real time, talks to no device and
-records nothing; a `Simulation` does that around a `Model{Float64}`.
+A deployment materialized at one scalar type `T`, ready to be written, evaluated
+and stepped.
 
-Deploying and materializing are two steps (D-254). The `Deployment` is
-scalar-free and one backs many models; this call fixes the scalar, allocating
-the buffers. It admits `Float64` and a `ForwardDiff.Dual`, into which a
-`Float64` embeds exactly, and refuses any other `T` as `ArgumentInvalid`
-`:scalar` before it reads an activation (§9.2, §9.5, D-320). The scalar picks
-the activation the entries compile over, through
-`activation(deployment.build, T)`, which serves the nominal `Float64` entry the
-build inserted and derives and caches any other (§9.4). `chunk_size` is the
-unroll width `compile` takes, an integer ≥ 1, refused otherwise as
-`ArgumentInvalid` `:range` (Appendix C). The two other forms are
-*defined as* the compositions: `Model(build; kw…)` is `Model(Deployment(build;
-grid kw…), T; chunk_size)`, and `Model(root; kw…)` calls `build` first.
+It carries the [`Deployment`](@ref) and the executor (the compiled form of
+the stage execution order) built from it at `T`, with its buffers. It runs
+nothing in real time, talks to no device and records nothing. A
+[`Simulation`](@ref) does that around a `Model{Float64}`. One deployment backs
+many models, and each model owns its buffers alone.
 
-- `deployment`: what the grid parameters fixed (§9.1, D-254), and through it
-  the build, the schema authority a condition resolves against (§14.3). Held
-  once: a second reference would be an invariant with no enforcer (§12.1,
-  D-256).
-- `exec`: the executor this model owns (§9.2, §9.7), with its stepper,
-  arrival buffers and `chunk_size`. Every buffer set has exactly one owner, so
-  a service invocation instantiates an executor of its own from the same
-  cached layouts rather than writing through this one.
-- `status`: `:built` until boundary zero completes, `:consistent` once it has
-  completed or a checkpoint has been restored, and `:inconsistent` after a
-  throw inside a frame. A throw inside boundary zero writes `:built`. Only the
-  model's own doors and catch sites write it, and `lifecycle(sim)` reads it
-  (§12.6, D-317).
-- `claimed`: set once by `Simulation(model)` through a compare-and-swap and
-  never cleared, so a simulation owns its model and never shares it (§9.2,
-  §12.6, D-318).
-- `frame_diag`: the frame's own diagnostic cell, where the chattering and
-  firing-budget reports go. A simulation's drain folds it into the loop's
-  account beside the loop's own cell (§11.8, D-317).
+`T` is `Float64` or a `ForwardDiff.Dual`, into which a `Float64` embeds exactly.
+Any other `T` is refused as `ArgumentInvalid` with reason `:scalar`, before
+anything is compiled.
+
+`Model(build; kw...)` is `Model(Deployment(build; grid keywords...), T;
+chunk_size)`, and `Model(root; kw...)` calls [`build`](@ref) first. The grid,
+algorithm and event keywords are `Deployment`'s, documented and refused as
+`DeploymentInvalid` there.
+
+A model holds five values, each a field.
+
+- `deployment`: the deployment it materializes, and through it the build.
+- `exec`: the executor this model owns, with its stepper and its buffers.
+- `status`: `:built` until boundary zero (the initialization boundary)
+  completes, and `:consistent` once it has completed or a state has been
+  restored. A throw inside a frame (one iteration of the loop) writes
+  `:inconsistent`, and a throw inside boundary zero writes `:built`. Only the
+  model's own calls write it.
+- `claimed`: set once a `Simulation` takes the model, and never cleared, so a
+  simulation owns its model and never shares it. The model's own
+  [`init!`](@ref), [`frame!`](@ref), [`restore!`](@ref), [`overlay!`](@ref) and
+  [`trim!`](@ref) refuse a claimed model as `ArgumentInvalid`.
+- `frame_diag`: the frame's own diagnostic cell (a cell holding runtime
+  diagnostics), where the chattering and firing-budget reports go. A simulation
+  collects it at each frame top (the start of a frame) beside its own.
+
+# Keywords
+
+- `chunk_size`: the executor's unroll width, an integer of at least 1, refused
+  as `ArgumentInvalid` otherwise. It never changes the trajectory.
+
+See also [`Deployment`](@ref), [`Simulation`](@ref), [`init!`](@ref),
+[`frame!`](@ref).
 """
 mutable struct Model{T,E}
     const deployment::Deployment
@@ -113,33 +136,73 @@ function _establish_frozen!(seeded_exec::Executor, act::Activation{T},
     nothing
 end
 
+# Design: §10.4, §11.2, D-317.
+# A subtype is a struct with concrete fields, built once per advance. §11.2's
+# rule that every boundary publishes before integration resumes is a contract
+# on `settled!`. The simulation's hooks are `LoopHooks` (sim.jl).
 """
     FrameHooks
-    frame_top!(hooks)
-    settled!(hooks) → Bool
 
-What a model's frame calls out to (§10.4, §11.2, D-317). `frame!(model, k,
-hooks)` and the model's `init!` take one value of a `FrameHooks` subtype, a
-struct with concrete fields built once per advance, and call two generic
-functions on it:
+The abstract type of the hooks a model's frame calls at its top and at each
+settled boundary.
 
-- `frame_top!(hooks)` runs first, before the model touches any state. It is
+[`frame!`](@ref) takes one `FrameHooks` value, as do the model's
+[`init!`](@ref), [`restore!`](@ref) and [`overlay!`](@ref), and calls two
+functions on it.
+
+- [`frame_top!`](@ref) runs first, before the frame touches any state. It is
   where external inputs arrive.
-- `settled!(hooks)` runs at every settled boundary before integration resumes:
-  the `t*` boundaries, the frame top's and, in `init!`, boundary zero's. It
-  returns whether to abandon the frame's remainder, and a `true` is `frame!`'s
-  return. §11.2's rule that every boundary publishes before integration
-  resumes is a contract on it.
+- [`settled!`](@ref) runs at every settled boundary before integration resumes:
+  each localized event time `t*`, the frame-top boundary that ends the frame,
+  and boundary zero (the initialization boundary) under `init!`. It returns
+  whether to abandon the frame's remainder, and a `true` is `frame!`'s return.
 
-`NoHooks()` does nothing and returns `false`, for a model stepped on its own;
-the simulation's are `LoopHooks` (sim.jl).
+A subtype defines a method of each. Every boundary publishes before integration
+resumes, so a subtype that publishes snapshots (the immutable per-boundary
+publications) does it in `settled!`. [`NoHooks`](@ref) does nothing and never
+abandons, for a model stepped on its own. A [`Simulation`](@ref) passes hooks of
+its own, which apply the staged inputs and publish every boundary.
 """
 abstract type FrameHooks end
 
-"The hooks of a model stepped on its own: nothing at the top, never an abandon (D-317)."
+# Design: D-317.
+"""
+    NoHooks() -> NoHooks
+
+The hooks of a model stepped on its own, which do nothing and never abandon a
+frame.
+
+`NoHooks()` is the default `hooks` of [`frame!`](@ref) and of the model's
+[`init!`](@ref), [`restore!`](@ref) and [`overlay!`](@ref). Its
+[`frame_top!`](@ref) does nothing and its [`settled!`](@ref) returns `false`, so
+a frame stepped with it always runs to its end and publishes nothing. See
+[`FrameHooks`](@ref) for what hooks do.
+"""
 struct NoHooks <: FrameHooks end
 
+# Design: §10.4, D-317.
+"""
+    frame_top!(::NoHooks) -> Nothing
+
+Do nothing at the top of a model's frame, before the frame touches any state.
+
+A model stepped on its own takes no staged inputs, so its frame starts from the
+state as it stands. See [`FrameHooks`](@ref) for the contract every method
+keeps, and [`settled!`](@ref) for the other hook.
+"""
 frame_top!(::NoHooks) = nothing
+
+# Design: §10.4, D-317.
+"""
+    settled!(::NoHooks) -> Bool
+
+Publish nothing at a settled boundary of a model's frame, and return `false`.
+
+A model stepped on its own publishes no snapshot (the immutable per-boundary
+publication) and never abandons a frame's remainder, so [`frame!`](@ref) runs
+every frame to its end. See [`FrameHooks`](@ref) for the contract every method
+keeps, and [`frame_top!`](@ref) for the other hook.
+"""
 settled!(::NoHooks) = false
 
 # The claim's gate at the top of each model door (D-318): a claimed model
@@ -149,23 +212,44 @@ _claimed_gate(model::Model, ::FrameHooks, call::Symbol) =
     (@atomic :acquire model.claimed) && throw(DiagnosticError(ArgumentInvalid(
         call = call, reason = :claimed, argument = :model)))
 
+# Design: §13.4, §14.3, §14.5, §14.6, D-223, D-317.
+# The model's door into `:consistent`. The plan method, `init!(model,
+# plan::ConditionPlan; t0, hooks)`, does the writes alone, so the simulation's
+# `init!` can resolve before it touches its run. It hosts §13.4's catch around
+# boundary zero (D-223), where a throw takes the one `StepError` constructor
+# with the frame from the cursor. Nothing reads the return of `settled!(hooks)`
+# here. An interrupt is not model code failing, and has no stop path here.
 """
-    init!(model, condition = set(); t0 = 0.0, hooks = NoHooks())
-    init!(model, plan::ConditionPlan; t0 = 0.0, hooks = NoHooks())
+    init!(model::Model, condition = set(); t0::Real = 0.0,
+          hooks::FrameHooks = NoHooks()) -> Nothing
 
-The model's door into `:consistent` (§14.5, D-317): the state at the declared
-defaults with the condition's overrides applied, the clock at `t₀`, every
-event prior not-holding, and boundary zero run. The condition resolves and its
-root-input totality is checked before any write (§14.3, §14.6). The plan method
-does the writes alone, so the simulation's `init!` can resolve before it
-touches its run. Boundary zero settles through `settled!(hooks)`, whose return
-nothing reads here.
+Initialize the model from a condition on the declared defaults, and run boundary
+zero at `t0`.
 
-The plan method hosts §13.4's catch around boundary zero (D-223): a throw
-inside it takes the one `StepError` constructor, with the frame from the
-cursor, `t₀`, pointer 0 and host `:boundary_zero`, and writes the status back
-to `:built`. An interrupt is not model code failing and has no stop path here,
-so it writes the status and propagates raw.
+`init!` resets the state to the declared defaults, applies the condition's
+overrides and sets the clock to `t0`. It sets every event prior (each event's
+stored sample of its predicate) to not holding. It then runs boundary zero (the
+initialization boundary, an ordinary one with an empty integrate), which settles
+through `settled!(hooks)`, and the model's status becomes `:consistent`.
+
+The condition (the datum that says "set this build to this state") is built with
+[`set`](@ref) and its combinators. Root inputs (the root component's own input
+faces) have no declared default, so the condition must give every one of them a
+value.
+
+# Keywords
+
+- `t0`: the start time, any real, held as a `Float64` origin.
+- `hooks`: the [`FrameHooks`](@ref) boundary zero settles through,
+  [`NoHooks`](@ref) for a model stepped on its own.
+
+The condition resolves, and its root inputs are checked, before any write. A
+condition that does not resolve against the build is refused as
+`ConditionResolution`, and a root input it leaves without a value as
+`UninitializedInputs`. A model claimed by a [`Simulation`](@ref) is refused as
+`ArgumentInvalid`. A throw inside boundary zero arrives as a `StepError` at
+`t0`, with pointer 0 and host `:boundary_zero`, and writes the status back to
+`:built`. An interrupt writes `:built` too, and propagates unwrapped.
 """
 function init!(model::Model{T}, condition = set(); kw...) where {T}
     _claimed_gate(model, get(kw, :hooks, NoHooks()), :init!)       # the claim is said first (D-318)
@@ -197,30 +281,48 @@ function init!(model::Model{T}, plan::ConditionPlan; t0::Real = 0.0,
     nothing
 end
 
+# Design: §12.6, §14.1, §14.3, D-429.
+# The state what-if on a model at rest, settled by boundary zero's tail with the
+# discrete stages and updates skipped (`_settle!`). The plan method,
+# `overlay!(model, plan::ConditionPlan; hooks)`, writes alone, so the
+# simulation's `overlay!` can resolve before it touches its run. A plan carries
+# the merge base it was resolved with: one resolved with the default `bases`
+# merges a partial store entry onto the declared default.
 """
-    overlay!(model, condition; hooks = NoHooks())
-    overlay!(model, plan::ConditionPlan; hooks = NoHooks())
+    overlay!(model::Model, condition = set();
+             hooks::FrameHooks = NoHooks()) -> Nothing
 
-The state what-if on a model at rest (§12.6, §14.1, D-429): the condition's
-stores overwritten on the model's own, every other store, the clock and the
-guard priors kept, and the overlaid state settled by boundary zero's tail with
-the discrete stages and updates skipped (`_settle!`). An overlaid discrete store
-is the next tick's state, so its held cell stays until that tick; an overlaid
-`x` is projected, and a guard the overlay moves into holding fires now. The
-model must be `:consistent` with its clock on a frame top, as `checkpoint`
-asks, or the call is `ServiceLifecycle` or `CheckpointMidFrame`.
+Write a condition onto the model's state at rest, and settle the result through
+the hooks.
 
-The condition resolves against the build with `init!`'s diagnostics, a partial
-store entry merging onto the current store rather than the declared default
-(§14.3), and root-input entries write the table's root-input cells. No totality
-is asserted: every root input already holds a value. The plan method writes
-alone, so the simulation's `overlay!` can resolve before it touches its run,
-and a plan carries the merge base it was resolved with: one resolved with the
-default `bases` merges a partial store entry onto the declared default.
+The condition (the datum that says "set this build to this state") overwrites
+the stores it names. Every other store, the clock and the event priors (each
+event's stored sample of its predicate) are kept. A partial store entry merges
+onto the current store rather than the declared default. Root-input entries
+write the root inputs' cells, and none is required, since every root input
+already holds a value.
 
-A throw inside the settling takes the one `StepError` constructor with host
-`:overlay` and the frame the clock sits at, and writes the status back to
-`:built`, the stores partly written as a failed boundary zero leaves them.
+The overlaid state then settles. An overlaid `x` is projected and events fire
+until none is left to fire, but no discrete output stage and no `s_update` runs.
+An overlaid discrete store is therefore the state of the component's next tick
+(the next instant its update runs), and its held output stays until that tick.
+An event the overlay moves into holding fires at once. The settled boundary
+goes through `settled!(hooks)`, and the status returns to `:consistent`.
+
+# Keywords
+
+- `hooks`: the [`FrameHooks`](@ref) the settled boundary goes through,
+  [`NoHooks`](@ref) for a model stepped on its own.
+
+`overlay!` asks what [`checkpoint`](@ref) asks: the model `:consistent`, its
+clock on a frame top (the start of a frame). Otherwise it is refused as
+`ServiceLifecycle` or `CheckpointMidFrame`. The condition resolves against the
+build with [`init!`](@ref)'s diagnostics, so one that does not resolve is
+refused as `ConditionResolution`. A model claimed by a [`Simulation`](@ref) is
+refused as `ArgumentInvalid`. A throw inside the settling arrives as a
+`StepError` with host `:overlay` and the frame the clock sits at. It writes the
+status back to `:built`, with the stores partly written as a failed boundary
+zero (the initialization boundary) leaves them.
 """
 function overlay!(model::Model{T}, condition = set(); kw...) where {T}
     _claimed_gate(model, get(kw, :hooks, NoHooks()), :overlay!)
@@ -258,19 +360,25 @@ apply!(model::Model, plan::ConditionPlan) =
     (_claimed_gate(model, NoHooks(), :apply!); _apply_plan!(model, plan))
 _apply_plan!(model::Model, plan::ConditionPlan) = apply!(model.exec, plan)
 
+# Design: §9.8.
+# These are the bodies the loop runs, not re-derivations, which is what makes
+# the §9.8 measurement honest. The empty `ticks` compiles to a no-op whose
+# `@ballocated` assertion passes vacuously.
 """
-    phase_bodies(model)
-    phase_bodies(sim)
+    phase_bodies(model::Model) -> NamedTuple
+    phase_bodies(sim::Simulation) -> NamedTuple
 
-The compiled bodies of the model's activation, bound over its own buffers, and
-a simulation's are its nominal model's — **these are the bodies the loop runs**, not re-derivations, which is
-what makes the §9.8 measurement honest. The roster is fixed and total: a model
-with no discrete components still gets `ticks`, empty, compiling to a no-op
-whose `@ballocated` assertion passes vacuously, so consumers iterate uniformly
-with no per-model branching. Beside the four blocks ride `events`, the guard
-and handler per event keyed by `(path, name)`, and `projections`, the
-`x_projection` call per component keyed by path — each a zero-argument
-callable over the same buffers.
+Return the compiled phase bodies the loop runs, bound over the model's own
+buffers.
+
+The bodies are the ones the loop runs, not copies, so an allocation measurement
+over them measures the loop itself. A simulation's are its model's. The named
+tuple holds four blocks, `sweep_1`, `sweep_2`, `rhs` and `ticks`, and two
+dictionaries of zero-argument callables over the same buffers. `events` holds
+the guard and the handler of each event, keyed by `(path, name)`, and
+`projections` the `x_projection` call of each component, keyed by path. The set
+is fixed: a model with no discrete components still gets `ticks`, which does
+nothing, so code over the bodies needs no branch per model.
 """
 phase_bodies(model::Model) = model.exec.bodies
 
@@ -531,14 +639,18 @@ end
         boundary = round(Int, (_seconds(exec.clock.t) - exec.clock.t₀) / model.deployment.h) - 1)))
 end
 
+# Design: §9.2, §11.8, D-250.
 """
-    warnings(model::Model) → Vector{Diagnostic}
-    warnings(sim::Simulation) → Vector{Diagnostic}
+    warnings(model::Model) -> Vector{Diagnostic}
+    warnings(sim::Simulation) -> Vector{Diagnostic}
 
-The concatenation of the model's artifacts' lists, the build's first and
-the deployment's second (§9.2, D-250); a simulation's are its model's.
-Warnings raised while *mutating state* live in that state's status record
-instead (§11.8), so nothing runtime reaches here.
+Return the warnings raised while the model's build and deployment were
+constructed.
+
+The list is the build's warnings followed by the deployment's, and a
+simulation's list is its model's. A warning raised while a run changes state
+goes to the status each snapshot carries, so nothing raised at run time is
+listed here.
 """
 warnings(model::Model) = vcat(warnings(model.deployment.build), warnings(model.deployment))
 
@@ -548,12 +660,33 @@ warnings(model::Model) = vcat(warnings(model.deployment.build), warnings(model.d
 # §8.6's canonical strings, and an assembly's own path addresses its faces —
 # which resolve to the cells they derive from.
 
+# Design: §7.3, D-317.
+"""
+    port(model::Model, path::String, name::Symbol)
+
+Return a port's current value in the model's signal table.
+
+The signal table is the framework-owned collection of cells holding every
+produced signal. A port (the addressable unit of the model: one declared name,
+one cell) is addressed by its component's path and its name. An assembly's own
+path addresses its faces, which resolve to the cells they derive from. A
+simulation's `port(sim, path, name)` reads its model's. To read a port off a
+published snapshot instead, use `port(snapshot, path, name)`.
+"""
 port(model::Model, path::String, name::Symbol) =
     gather_cell(model.exec.store, model.exec.act.layout.addr[(path, name)])
 
+# Design: §7.3.
 """
-State at `path`, from whichever home owns it: `x` in the flat buffer on the
-continuous tier, `s` in the component's own store on the discrete one (§7.3).
+    state(model::Model, path::String)
+    state(sim::Simulation, path::String)
+
+Return the state of the component at `path`, from whichever store holds it.
+
+A continuous component's state is its `x`, read from the model's flat state
+buffer. A discrete component's is its `s`, read from its own store (the
+framework-owned home of one of a component's state letters). A simulation's
+state is its model's. For a component's modes, see [`modes`](@ref).
 """
 function state(model::Model{T}, path::String) where {T}
     ci = index_of(model.deployment.build.structure, path)
@@ -567,7 +700,17 @@ function state(model::Model{T}, path::String) where {T}
     reconstruct(typeof(_decls(ci).x), model.exec.xbuf, x_offset)
 end
 
-"""Modes at `path` (§7.3). Read-only here: modes are written by handlers alone."""
+# Design: §7.3.
+"""
+    modes(model::Model, path::String)
+    modes(sim::Simulation, path::String)
+
+Return the modes of the component at `path`, from its `m` store.
+
+The read changes nothing: only the component's event handlers write its modes.
+A simulation's modes are its model's. For the rest of a component's state, see
+[`state`](@ref).
+"""
 modes(model::Model, path::String) =
     model.exec.mstores[index_of(model.deployment.build.structure, path)][]
 
@@ -654,22 +797,31 @@ function _fingerprint(model::Model)
                 copy(exec.events.names))   # the priors' own index, empty off the nominal activation
 end
 
+# Design: §12.6, D-231, D-273, D-274, D-319, D-429.
+# The stores are copied by value, being isbits (D-231). A `t*` abandon leaves
+# the clock inside the frame, and the model steps whole frames, so a state taken
+# there would have no next frame to continue on.
 """
-    checkpoint(model) → ModelState
+    checkpoint(model::Model{T}) -> ModelState{T}
 
-The model's state at a frame top as one value (§12.6, D-274, D-319): the flat
-buffer, the `s` and `m` stores, the whole signal table, the guard priors, the
-clock's `t` and `t₀`, and the fingerprint. The stores are copied by value,
-being isbits (D-231). Legal at `:consistent`, after `init!` or a restore and
-before any throw; `:built` and `:inconsistent` are one `ServiceLifecycle`. A
-clock off the grid is refused too (`CheckpointMidFrame`, naming the frame the
-clock sits inside). A `t*` abandon leaves the clock inside the frame, and the
-model steps whole frames, so a state taken there would have no next frame to
-continue on. `checkpoint(sim)` wraps this state with the run's two counters.
+Return the model's state at the start of the current frame.
 
-A model's state is not a condition and enters no condition expression (D-273);
-`restore!` puts it back, and `overlay!` writes a condition onto a model at rest
-(D-429).
+The state, a [`ModelState`](@ref), holds the flat state buffer, the `s` and `m`
+stores, the whole signal table and the event priors (each event's stored sample
+of its predicate). It also holds the clock's `t` and `t₀`, and the fingerprint
+(the structural layout a checkpoint carries). The stores are copied by value.
+`checkpoint(sim)` wraps the same state with the run's frame index and boundary
+ordinal.
+
+A model's state is not a condition and enters no condition expression.
+[`restore!`](@ref) puts it back, and [`overlay!`](@ref) writes a condition onto
+a model at rest.
+
+`checkpoint` is legal while the model is `:consistent`, after [`init!`](@ref) or
+a restore and before any throw. It is refused as `ServiceLifecycle` at `:built`
+or `:inconsistent`. A clock off the grid of frame tops is refused as
+`CheckpointMidFrame`, naming the frame the clock sits inside. A frame abandoned
+at a localized event time `t*` leaves the clock there.
 """
 function checkpoint(model::Model{T}) where {T}
     _assert_at_rest(model, :checkpoint)
@@ -758,18 +910,34 @@ function _check_grid!(diags::Vector{Diagnostic}, model_state::ModelState)
     k
 end
 
+# Design: §12.6, D-318, D-319.
+# The mismatches are collected into one throw before any write. A state taken at
+# another scalar is refused by dispatch.
 """
-    restore!(model, model_state; hooks = NoHooks())
+    restore!(model::Model{T}, model_state::ModelState{T};
+             hooks::FrameHooks = NoHooks()) -> Nothing
 
-The model's door back to a state `checkpoint(model)` took (§12.6, D-318, D-319).
-A claimed model refuses it as `ArgumentInvalid` `:claimed`. The state's
-fingerprint is checked against this model and its clock against its own grid,
-the mismatches, `CheckpointMismatch` and `CheckpointMidFrame`, collected into
-one throw before any write. Then the state is copied back, the
-restored boundary settles through `settled!(hooks)`, and the status is written
-`:consistent` last. No boundary zero runs and no prior resets. The door has no
-status gate, since restoring into a `:built` twin is its use. A state taken at
-another scalar is refused by dispatch with the same kind.
+Restore a model state into the model, and settle the restored boundary through
+the hooks.
+
+`restore!` puts back a state that [`checkpoint`](@ref) took. It copies the state
+back, settles the restored boundary through `settled!(hooks)`, and writes the
+status `:consistent` last. No boundary zero (the initialization boundary) runs,
+and no event prior (each event's stored sample of its predicate) resets. The
+call accepts any status, so a fresh `:built` model of the same deployment can
+take a state another model produced.
+
+# Keywords
+
+- `hooks`: the [`FrameHooks`](@ref) the restored boundary settles through,
+  [`NoHooks`](@ref) for a model stepped on its own.
+
+A state whose fingerprint (the structural layout a checkpoint carries) or
+deployment does not match this model is refused as `CheckpointMismatch`. One
+whose clock is off its own grid is refused as `CheckpointMidFrame`, and all the
+mismatches come in one throw before any write. A state taken at another scalar
+type is refused as `CheckpointMismatch` too. A model claimed by a
+[`Simulation`](@ref) is refused as `ArgumentInvalid`.
 """
 function restore!(model::Model{T}, model_state::ModelState{T};
                   hooks::FrameHooks = NoHooks()) where {T}
