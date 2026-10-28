@@ -584,9 +584,12 @@ function _passthrough_faces(who::String, child_path::AbstractString,
     # cannot see; a bare call over a faceless child asked for nothing and is
     # silent. `only` cannot reach here — a non-empty `only` of known names keeps
     # them all — so only `except` has names to carry.
+    # The path is the child's full path: the owner's, bound by its component
+    # frame, joined with the child's. A bare call outside a build names the child.
     if length(given) == 1 && isempty(wanted)
         selector = given[1]
-        _warn!(EmptyFaceSelection(who = who, path = String(child_path), selector = selector,
+        _warn!(EmptyFaceSelection(who = who, path = _join(COMPONENT_PATH[], String(child_path)),
+                                  selector = selector,
                                   names = selector === :except ?
                                           String[String(n) for n in except_faces] : String[],
                                   candidates = names))

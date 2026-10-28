@@ -666,7 +666,7 @@ message(d::UnknownFaceSelection) =
 "§8.8, D-251: a passthrough selector that kept no face of the child."
 Base.@kwdef struct EmptyFaceSelection <: Diagnostic
     who::String                              # the calling helper
-    path::String                             # the child path
+    path::String                             # the child's full path
     # `:only` is in the vocabulary but never constructed by the helper: a
     # non-empty `only` of known names keeps them all (`_passthrough_faces`).
     selector::Symbol                         # :except | :only | :select

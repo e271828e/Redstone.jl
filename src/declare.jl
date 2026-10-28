@@ -879,13 +879,20 @@ function _inputs_spelling(bundle::NamedTuple)
 end
 
 """
+The path of the component whose frame is running (§13.2): `at_component` binds
+it around its thunk, so a helper called inside a declaration body can name a
+child by its full path. The root's path, `""`, outside any frame.
+"""
+const COMPONENT_PATH = ScopedValue{String}("")
+
+"""
 The component frame (§13.2, D-248): runs `thunk()` for the component at `path`
-and fills the path into a `UserCodeFraming` an accessor raised without one.
-Every other throw passes.
+with `COMPONENT_PATH` bound to it, and fills the path into a `UserCodeFraming`
+an accessor raised without one. Every other throw passes.
 """
 function at_component(thunk, path::String)
     try
-        thunk()
+        with(thunk, COMPONENT_PATH => path)
     catch err
         if err isa DiagnosticError{UserCodeFraming} && isempty(err.carried.path)
             framing = err.carried

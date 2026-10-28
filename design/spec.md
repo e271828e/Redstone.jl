@@ -14214,8 +14214,8 @@ collection ([§9.2][s9-2], [D-250][d-250]).
   helper, the child path, reason (unknown names / more than one selector given), the
   offending names or the selectors given, the child's face list.
 - **`EmptyFaceSelection`** ([§8.8][s8-8]). Warning · build · logged, on the
-  `Build`'s warnings. The helper, the child path, the selector given and its
-  names, the child's face list. A selector was given and nothing survived it;
+  `Build`'s warnings. The helper, the child's full path, the selector given
+  and its names, the child's face list. A selector was given and nothing survived it;
   a bare call over a faceless child raises nothing.
 - **`RatesViolation`** ([§10.5][s10-5], [§8.7][s8-7]). Error · build ·
   collected. Assembly path, offending key and value, the immediate child

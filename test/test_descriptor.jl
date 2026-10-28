@@ -201,10 +201,10 @@ function test_descriptor()
         value = descriptor(err)
         round_trip(value)
         @test value.failure.policy == "fail-fast" && haskey(value.failure, :structure)
-        # the helper raised it inside `s`'s declaration body, so its path is the
-        # child's name as the helper saw it, not the child's full path
+        # the helper raised it inside `s`'s declaration body, and its path is the
+        # child's full path
         @test [(w.kind, w.severity, w.path) for w in value.failure.warnings] ==
-              [("EmptyFaceSelection", "warning", "g")]
+              [("EmptyFaceSelection", "warning", "s/g")]
         @test only(value.failure.warnings).message == message(only(err.warnings))
     end
 

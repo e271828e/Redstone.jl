@@ -2149,6 +2149,8 @@ function build_warnings()
             EmptySelectionParent(EmptySelection(Gain(2.0), Gain(3.0))))
         @test length(warnings(parent_build)) == 1 &&
               only(warnings(parent_build)) isa EmptyFaceSelection
+        # Nested, the path is the child's full path, not its name in the owner.
+        @test only(warnings(parent_build)).path == "kid/g"
     end
 
     @testset "warnings(sim) concatenates its artifacts' lists (§9.2, D-250)" begin
