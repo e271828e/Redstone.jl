@@ -370,8 +370,9 @@ cited by number. Couplings are named where they exist.
    opening the browser, binding to `localhost` only. It also covers the page
    protocol (a greeting that checks `format_version`, then descriptor
    pushes), the failure path of answer 6, and the standalone export
-   candidate. *Builds on* answers 8, 10 and 13. *Coupled to* stage 2, which
-   gives the same server a device side.
+   candidate. Ran on 2026-10-28; its record is `live_session.md`. *Builds
+   on* answers 8, 10 and 13. *Coupled to* stage 2, which gives the same
+   server a device side.
 7. **Build, release and verification.** The repo layout, and a CI that
    builds the bundle, attaches it to the release, updates `Artifacts.toml`
    and publishes to GitHub Pages. It also covers the fixture pipeline against
@@ -399,9 +400,8 @@ order. Axis 4's rendering spike runs beside the first session, on a
 hand-written fixture descriptor, so the drawing's needs reach the schema
 before version one is frozen and the canvas choice is made before anything
 depends on it. Then axes 3 and 5 over the real schema, both run on
-2026-10-27, axis 6 when there is
-a descriptor to push to a tab, designed with the bridge's device side in
-view, and axis 7 last.
+2026-10-27, axis 6 on 2026-10-28, designed with the bridge's device side
+in view, its record `live_session.md`, and axis 7 last.
 
 ## Stage 2: the bridge
 

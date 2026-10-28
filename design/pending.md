@@ -18,12 +18,12 @@ item changes what the spec says, the spec edit is part of the item.
   `descriptor_design.md` for axes 1 and 2, landed as §13.9, D-432 and
   increment 81; `design/prototypes/render_spike/report.md` for axis 4,
   hand-rolled SVG over ELK.js; `visual_grammar.md` for axis 3;
-  `workspace.md` for axis 5. Next is axis 6, the live session, which reads
-  `initial_design.md`'s axis 6 paragraph and stage 2's settled list,
-  `descriptor_design.md`'s answer 13, and the hand-ons of
-  `visual_grammar.md` and `workspace.md`; then axis 7, and the inherited
-  bumps `workspace.md`'s "Design axes" lists. The built-in Julia GUI is
-  parked (D-310). The later stages stand after the release, below.
+  `workspace.md` for axis 5; `live_session.md` for axis 6, the Julia
+  package and the live session. Next, in `live_session.md`'s "Design axes"
+  order: the schema's move to `src/descriptor.json`, the failure bump, axis
+  7, the package's increment; the deployment overlay's bump stands as
+  `visual_grammar.md` hands it on. The built-in Julia GUI is parked
+  (D-310). The later stages stand after the release, below.
 - **The API docstrings' two later passes.** The sweep to the manual's
   conventions landed (commits `84ece6b` to `b1d9ae3`, record
   `design/briefs/notes_docstring_sweep.md`, convention

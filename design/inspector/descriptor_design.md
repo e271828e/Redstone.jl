@@ -53,7 +53,9 @@ Left open on purpose, each with the bump or the axis that owns it.
   as `series` is.
 - **Pretty-printing.** Indentation and line breaks in the file are the
   inspector package's encoder settings (axis 6), not the format's; the
-  format fixes key order only.
+  format fixes key order only. Settled by axis 6 on 2026-10-28: JSON.jl at
+  two spaces with a trailing newline, for the file and the push alike
+  (`live_session.md`, answer 2).
 
 ## Answered questions
 
@@ -379,7 +381,9 @@ This session closed axes 1 and 2. What it hands on, in working order:
    groups) and on the assembly node's wires; port classes join from
    `outputs` by path.
 5. **Axes 6 and 7.** The encoder's indentation, the fixture generation and
-   the TypeScript types from the schema file.
+   the TypeScript types from the schema file. Axis 6 ran on 2026-10-28
+   (`live_session.md`): the indentation and the fixture script are its, the
+   types' generation is axis 7's.
 6. **The minor bumps**, each a short session: the deployment overlay with
    the rates chain, state events, the failure descriptor with the carrier
    field built, then stage 2's extensions.

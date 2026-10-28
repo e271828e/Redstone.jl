@@ -303,7 +303,8 @@ Handed on by this session, in working order:
   server its name on reconnect; closing a tab frees the name (answer 9).
   Beside it the open-in-editor request behind a location click (answer 4),
   and printing the Vimium exclusion pattern once when the browser opens
-  (answer 11).
+  (answer 11). Ran on 2026-10-28; its record is `live_session.md`, which
+  names the server-side record a channel and keeps "tab" for the browser's.
 - **Axis 4: the hints.** Previous positions as ELK hints on a relayout after
   a push, keyed by node path, the dragged position among them (answer 9);
   the spike left ELK's interactive options untested.
