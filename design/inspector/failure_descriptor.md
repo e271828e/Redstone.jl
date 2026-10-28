@@ -49,11 +49,13 @@ and only a nested carrier, an `InternalInvariant` and an
    `UserCodeFraming`'s cause included as its second line. Three optional
    fields are written by the kinds whose payload holds the fact: `function`,
    the user method at fault, for `UserCodeFraming`, `ConformanceFailure`,
-   `DeadStage`, `UndeclaredReturnField` and `GuardForm`; `marks`, endpoints
-   `{"path", "port"}` and wires `{"from", "to"}` the kind names beyond its
-   path, `UnconnectedInput`'s input, `TwoProducers`' destination and both
-   producers' wires, `WireTypeMismatch`'s and `WalkingFaceAtFrozenEntry`'s
-   consumer and producer-to-consumer wire; and `cycle`, for
+   `DeadStage` and `UndeclaredReturnField`, `GuardForm`'s payload naming no
+   method; `marks`, an object of two arrays, `ports` as endpoints `{"path",
+   "port"}` and `wires` as `{"from", "to"}`, the kind names beyond its path,
+   `UnconnectedInput`'s input, `TwoProducers`' destination, whose producers
+   the payload spells as text and not as endpoints, `WireTypeMismatch`'s and
+   `WalkingFaceAtFrozenEntry`'s consumer and producer-to-consumer wire; and
+   `cycle`, for
    `AlgebraicCycle` alone, with `members`, `wires` as terminal pairs,
    `classification` when present, `dead` as `{"path", "input", "output"}`
    and `traced` as `{"path", "mode"}`. `UnknownPort` names a port that does
@@ -143,8 +145,8 @@ What this bump hands on, in working order:
   where it sits.
 - **Failure body.** The object under `failure`: `policy`, `structure` when
   held, `diagnostics` and `warnings`.
-- **Mark.** An endpoint or a wire a diagnostic names beyond its path, where
-  the overlay draws.
+- **Mark.** A port or a wire a diagnostic names beyond its path, where the
+  overlay draws; `marks` holds them as two arrays.
 - **Policy.** `fail-fast` or `collected`, the carrier's type parameter read
   out: whether the list is the first failure alone or everything a step
   found.

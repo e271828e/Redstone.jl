@@ -1,0 +1,506 @@
+diff --git a/src/build.jl b/src/build.jl
+index c426f9c..4eefbdd 100644
+--- a/src/build.jl
++++ b/src/build.jl
+@@ -649,6 +649,9 @@ Base.@nospecializeinfer function build(@nospecialize(root::AbstractComponent);
+     # inside a declaration body appends to it without knowing the build, the
+     # completed `Build` carries it, and a throw leaving the build takes it along.
+     raised_warnings = Diagnostic[]
++    # The structure, hoisted out of the closure so the catch below can attach it
++    # to a carrier leaving past the structure step (§13.9, D-434).
++    structure = nothing
+     built = try
+         with(BUILD_WARNINGS => raised_warnings) do
+             diags = Diagnostic[]
+@@ -676,9 +679,11 @@ Base.@nospecializeinfer function build(@nospecialize(root::AbstractComponent);
+     catch err
+         # The rewrap sits here, not at each barrier: a barrier throws the
+         # collection its own passes produced and stays ignorant of the channel,
+-        # and only the entry point knows the whole build's warnings (D-250).
+-        (err isa DiagnosticError && !isempty(raised_warnings)) &&
+-            throw(DiagnosticError(err.carried, raised_warnings))
++        # and only the entry point knows the whole build's warnings (D-250) and
++        # whether the structure step completed (D-434). A requested activation
++        # throws past that step too, so its carrier takes the structure as well.
++        err isa DiagnosticError &&
++            throw(DiagnosticError(err.carried, raised_warnings, structure))
+         rethrow()
+     end
+     # The completed build carries the record; the entry point logs each warning
+diff --git a/src/descriptor.jl b/src/descriptor.jl
+index f7ec4c5..0119b22 100644
+--- a/src/descriptor.jl
++++ b/src/descriptor.jl
+@@ -1,6 +1,6 @@
+-# --- the descriptor (§13.9, D-432) --------------------------------------------
+-# `descriptor` renders a `Build` or a `Deployment` to data, beside `show`'s
+-# rendering to text: a tree of `NamedTuple`s, vectors, strings, numbers and
++# --- the descriptor (§13.9, D-432, D-434) ---------------------------------------
++# `descriptor` renders a `Build`, a `Deployment` or a failed build's carrier to
++# data, beside `show`'s rendering to text: a tree of `NamedTuple`s, vectors, strings, numbers and
+ # Booleans whose shape `src/descriptor.json` fixes. A field that does not
+ # apply is omitted, never `nothing`, and a collection keyed by data is a vector
+ # of objects carrying `name`. The core encodes nothing to text; the consumer
+@@ -14,27 +14,32 @@ const LOCATED_DECLARATIONS = (u_types, y_types, x_init, s_init, m_init, sample_t
+                               local_wires, input_wires, output_wires, stop_reason,
+                               transparent_container)
+ 
+-# Design: §13.9, D-432.
++# Design: §13.9, D-432, D-434.
+ """
+     descriptor(build::Build) -> NamedTuple
+     descriptor(deployment::Deployment) -> NamedTuple
++    descriptor(err::DiagnosticError) -> NamedTuple
+ 
+ Return the artifact's [descriptor](@ref g-descriptor), its rendering to data.
+ 
+ The descriptor is an envelope with the fields `format_version`,
+ `redstone_version` and `kind`, and the body under the key the kind names,
+-`build` or `deployment`. A deployment's body embeds the build's whole. The
+-artifact is a `Build` or a `Deployment`.
++`build`, `deployment` or `failure`. A deployment's body embeds the build's
++whole. A failure's body holds the carrier's diagnostics and warnings, each as
++its kind, severity, path and rendered message, and the complete `Structure`
++when the build failed past the structure step, so a client can draw the model
++with the error marked on it.
+ 
+ The value is a tree of `NamedTuple`s and vectors, ready for any JSON encoder,
+ and conforms to the schema the package ships as `src/descriptor.json`.
+ Encoding it is the caller's job.
+ 
+-See also [`Build`](@ref), [`Deployment`](@ref).
++See also [`Build`](@ref), [`Deployment`](@ref), [`DiagnosticError`](@ref).
+ """
+ descriptor(build::Build) = _envelope("build", _build_body(build))
+ descriptor(deployment::Deployment) =
+     _envelope("deployment", (build = _build_body(deployment.build),))
++descriptor(err::DiagnosticError) = _envelope("failure", _failure_body(err))
+ 
+ _envelope(kind::String, body) =
+     (; format_version = DESCRIPTOR_FORMAT,
+@@ -43,7 +48,72 @@ _envelope(kind::String, body) =
+        NamedTuple{(Symbol(kind),)}((body,))...)
+ 
+ _build_body(build::Build) =
+-    (structure = _structure_section(build.structure), outputs = _outputs_section(build.outputs))
++    (structure = _structure_section(build.structure), outputs = _outputs_section(build.outputs),
++     warnings = [_diagnostic(d) for d in build.warnings])
++
++# --- the failure body (D-434) ---------------------------------------------------
++
++# The policy off the type parameter, the structure when the carrier holds one,
++# then the diagnostics and the warnings. The carried value is one diagnostic or
++# the collection; either way the body lists it.
++function _failure_body(err::DiagnosticError)
++    body = (policy = err.carried isa Diagnostic ? "fail-fast" : "collected",)
++    err.structure === nothing ||
++        (body = merge(body, (structure = _structure_section(err.structure),)))
++    carried = err.carried isa Diagnostic ? [err.carried] : err.carried
++    merge(body, (diagnostics = [_diagnostic(d) for d in carried],
++                 warnings = [_diagnostic(d) for d in err.warnings]))
++end
++
++# A diagnostic as its rendering plus the marks a drawing needs, never its payload
++# (§13.9, D-434): the four fields every kind carries, then `function`, `marks`
++# and `cycle` from the kinds whose payload holds the fact.
++function _diagnostic(d::Diagnostic)
++    row = (kind = string(nameof(typeof(d))), severity = string(severity(d)),
++           path = path(d), message = message(d))
++    fn = _function(d)
++    fn === nothing || (row = merge(row, (var"function" = fn,)))
++    ports, wires = _marks(d)
++    isempty(ports) && isempty(wires) || (row = merge(row, (marks = (ports = ports, wires = wires),)))
++    d isa AlgebraicCycle ? merge(row, (cycle = _cycle(d),)) : row
++end
++
++# The user method at fault, for the probe-chain kinds.
++_function(::Diagnostic) = nothing
++_function(d::UserCodeFraming) = d.fn
++_function(d::ConformanceFailure) = d.what
++_function(d::DeadStage) = d.stage
++_function(d::UndeclaredReturnField) = d.stage
++
++# The endpoints and wires a kind names beyond its path: the consumer's input as
++# a port, and the producer-to-consumer wire where the payload holds both ends.
++# `TwoProducers` spells its producers as text, so it marks its destination alone.
++_marks(::Diagnostic) = (NamedTuple[], NamedTuple[])
++_marks(d::UnconnectedInput) = ([_endpoint((d.path, d.face))], NamedTuple[])
++_marks(d::TwoProducers) = ([_endpoint((d.path, d.port))], NamedTuple[])
++_marks(d::WireTypeMismatch) = _consumer_wire(d)
++_marks(d::WalkingFaceAtFrozenEntry) = _consumer_wire(d)
++_consumer_wire(d) =
++    ([_endpoint((d.path, d.face))],
++     [(from = _endpoint((d.producer_path, d.producer_port)), to = _endpoint((d.path, d.face)))])
++
++# The cluster as data: members, wires as terminal pairs, the verdict when the
++# trace reached one, the dead hops and each member's tracing mode (§13.8).
++function _cycle(d::AlgebraicCycle)
++    cycle = (members = d.members,
++             wires = [(from = _terminal_endpoint(p), to = _terminal_endpoint(c)) for (p, c) in d.wires])
++    d.classification === nothing ||
++        (cycle = merge(cycle, (classification = string(d.classification),)))
++    merge(cycle, (dead = [(path = m, input = String(f), output = String(o)) for (m, f, o) in d.dead],
++                  traced = [(path = m, mode = string(t)) for (m, t) in d.traced]))
++end
++
++# A cycle wire's end, `path/port` with the port after the last slash; a primitive
++# root's terminal is `/port`.
++function _terminal_endpoint(terminal::String)
++    i = findlast('/', terminal)
++    (path = terminal[1:prevind(terminal, i)], port = terminal[nextind(terminal, i):end])
++end
+ 
+ # --- the structure section ------------------------------------------------------
+ 
+diff --git a/src/descriptor.json b/src/descriptor.json
+index 1775284..5b266af 100644
+--- a/src/descriptor.json
++++ b/src/descriptor.json
+@@ -1,15 +1,16 @@
+ {
+   "$schema": "http://json-schema.org/draft-07/schema#",
+   "title": "Redstone descriptor",
+-  "description": "The projection of a Build or a Deployment to data (spec §13.9, D-432). Version 1.0. The writer is `descriptor` in src/descriptor.jl; this file is the shape of record, strict about the writer's output: every object closes with additionalProperties false, and a field that does not apply is omitted, never null. The design record is design/inspector/descriptor_design.md. `name` is optional, a label for the model that a writer outside the core supplies; `descriptor` never writes it.",
++  "description": "The projection of a Build, a Deployment or a failed build's carrier to data (spec §13.9, D-432, D-434). Version 1.0. The writer is `descriptor` in src/descriptor.jl; this file is the shape of record, strict about the writer's output: every object closes with additionalProperties false, and a field that does not apply is omitted, never null. The design record is design/inspector/descriptor_design.md. `name` is optional, a label for the model that a writer outside the core supplies; `descriptor` never writes it.",
+   "type": "object",
+   "properties": {
+     "format_version": { "$ref": "#/definitions/FormatVersion" },
+     "redstone_version": { "type": "string" },
+-    "kind": { "type": "string", "enum": ["build", "deployment"] },
++    "kind": { "type": "string", "enum": ["build", "deployment", "failure"] },
+     "name": { "type": "string" },
+     "build": { "$ref": "#/definitions/BuildBody" },
+-    "deployment": { "$ref": "#/definitions/DeploymentBody" }
++    "deployment": { "$ref": "#/definitions/DeploymentBody" },
++    "failure": { "$ref": "#/definitions/FailureBody" }
+   },
+   "required": ["format_version", "redstone_version", "kind"],
+   "additionalProperties": false,
+@@ -17,12 +18,17 @@
+     {
+       "properties": { "kind": { "const": "build" }, "build": true },
+       "required": ["build"],
+-      "not": { "properties": { "deployment": true }, "required": ["deployment"] }
++      "not": { "anyOf": [{ "required": ["deployment"] }, { "required": ["failure"] }] }
+     },
+     {
+       "properties": { "kind": { "const": "deployment" }, "deployment": true },
+       "required": ["deployment"],
+-      "not": { "properties": { "build": true }, "required": ["build"] }
++      "not": { "anyOf": [{ "required": ["build"] }, { "required": ["failure"] }] }
++    },
++    {
++      "properties": { "kind": { "const": "failure" }, "failure": true },
++      "required": ["failure"],
++      "not": { "anyOf": [{ "required": ["build"] }, { "required": ["deployment"] }] }
+     }
+   ],
+   "definitions": {
+@@ -46,13 +52,84 @@
+       "additionalProperties": false
+     },
+     "BuildBody": {
+-      "description": "The build's body, one section per artifact: `structure` projects the Structure, `outputs` projects the Outputs.",
++      "description": "The build's body, one section per artifact, `structure` projects the Structure and `outputs` projects the Outputs, and the warnings the build kept, each a Diagnostic, an empty array when none.",
+       "type": "object",
+       "properties": {
+         "structure": { "$ref": "#/definitions/StructureSection" },
+-        "outputs": { "$ref": "#/definitions/OutputsSection" }
++        "outputs": { "$ref": "#/definitions/OutputsSection" },
++        "warnings": { "type": "array", "items": { "$ref": "#/definitions/Diagnostic" } }
++      },
++      "required": ["structure", "outputs", "warnings"],
++      "additionalProperties": false
++    },
++    "FailureBody": {
++      "description": "A carrier exception's body (D-434). `policy` is the carrier's type parameter read out: `fail-fast` lists the one diagnostic that stopped the build, nothing else having been gathered; `collected` lists everything the step found. `structure` is present only when the throw left the build's door past the structure step, and is then the complete Structure, so a client draws the whole model with the error marked on it; without it, the diagnostics are a list. `warnings` are the build's warnings so far.",
++      "type": "object",
++      "properties": {
++        "policy": { "type": "string", "enum": ["fail-fast", "collected"] },
++        "structure": { "$ref": "#/definitions/StructureSection" },
++        "diagnostics": { "type": "array", "items": { "$ref": "#/definitions/Diagnostic" } },
++        "warnings": { "type": "array", "items": { "$ref": "#/definitions/Diagnostic" } }
++      },
++      "required": ["policy", "diagnostics", "warnings"],
++      "additionalProperties": false
++    },
++    "Diagnostic": {
++      "description": "A diagnostic as its rendering plus the marks a drawing needs, never its payload (§13.9, D-434). `kind` is the diagnostic's type name, Appendix C's closed set; `severity` is `error` or `warning`; `path` is the component the diagnostic is attributed to, \"\" for the root; `message` is the text `showerror` renders, a UserCodeFraming's cause on its second line. The optional fields are written by the kinds whose payload holds the fact: `function` is the user method at fault for the probe-chain kinds (UserCodeFraming, ConformanceFailure, DeadStage, UndeclaredReturnField); `marks` holds the ports and wires the kind names beyond its path (UnconnectedInput's and TwoProducers' consumer port; WireTypeMismatch's and WalkingFaceAtFrozenEntry's consumer port and producer-to-consumer wire); `cycle` is AlgebraicCycle's cluster.",
++      "type": "object",
++      "properties": {
++        "kind": { "type": "string" },
++        "severity": { "type": "string", "enum": ["error", "warning"] },
++        "path": { "type": "string" },
++        "message": { "type": "string" },
++        "function": { "type": "string" },
++        "marks": { "$ref": "#/definitions/Marks" },
++        "cycle": { "$ref": "#/definitions/Cycle" }
++      },
++      "required": ["kind", "severity", "path", "message"],
++      "additionalProperties": false
++    },
++    "Marks": {
++      "description": "Where the overlay draws beyond the node `path` names: port squares as endpoints, and wires as endpoint pairs, declared endpoints as the diagnostic's payload spells them.",
++      "type": "object",
++      "properties": {
++        "ports": { "type": "array", "items": { "$ref": "#/definitions/Endpoint" } },
++        "wires": { "type": "array", "items": { "$ref": "#/definitions/Wire" } }
++      },
++      "required": ["ports", "wires"],
++      "additionalProperties": false
++    },
++    "Cycle": {
++      "description": "An AlgebraicCycle's cluster (§13.8): `members` are component paths in walk order; `wires` the cluster's own wires as terminal pairs, leaf output to leaf input; `classification`, `real` or `artificial`, is absent when a member's evaluation threw; `dead` lists every hop the trace found unrouted; `traced` records each member's tracing mode.",
++      "type": "object",
++      "properties": {
++        "members": { "type": "array", "items": { "type": "string" } },
++        "wires": { "type": "array", "items": { "$ref": "#/definitions/Wire" } },
++        "classification": { "type": "string", "enum": ["real", "artificial"] },
++        "dead": { "type": "array", "items": { "$ref": "#/definitions/DeadHop" } },
++        "traced": { "type": "array", "items": { "$ref": "#/definitions/TracedMember" } }
++      },
++      "required": ["members", "wires", "dead", "traced"],
++      "additionalProperties": false
++    },
++    "DeadHop": {
++      "description": "A hop the trace found unrouted: the member, the input face entering it and the output port that does not route that face.",
++      "type": "object",
++      "properties": {
++        "path": { "type": "string" },
++        "input": { "type": "string" },
++        "output": { "type": "string" }
++      },
++      "required": ["path", "input", "output"],
++      "additionalProperties": false
++    },
++    "TracedMember": {
++      "type": "object",
++      "properties": {
++        "path": { "type": "string" },
++        "mode": { "type": "string", "enum": ["global", "sampled", "structural"] }
+       },
+-      "required": ["structure", "outputs"],
++      "required": ["path", "mode"],
+       "additionalProperties": false
+     },
+     "StructureSection": {
+diff --git a/src/diagnostics.jl b/src/diagnostics.jl
+index 2ca4110..b153931 100644
+--- a/src/diagnostics.jl
++++ b/src/diagnostics.jl
+@@ -91,17 +91,25 @@ and the catch site's species rule dispatch on it.
+ step that throws renders its warnings with the collection it throws, because the
+ artifact that would have carried them never returned (§9.1, D-250). A warning
+ joins no collection, so `diagnostic`, `diagnostics` and `kinds` never see one.
++
++`structure` is the complete `Structure` when the throw left the build's door
++past the structure step, and `nothing` on every other throw (§13.9, D-434). The
++door fills it where it rewraps the carrier with the warnings, and the failure
++descriptor is its consumer. It is typed `Any` because `Structure` is declared
++after the carrier.
+ """
+ struct DiagnosticError{P <: Union{Diagnostic, Vector{Diagnostic}}} <: Exception
+     carried::P
+     warnings::Vector{Diagnostic}
++    structure::Any
+ end
+ 
+-DiagnosticError(d::Diagnostic, warning_list::Vector{Diagnostic} = Diagnostic[]) =
+-    DiagnosticError{typeof(d)}(d, warning_list)
++DiagnosticError(d::Diagnostic, warning_list::Vector{Diagnostic} = Diagnostic[],
++                structure = nothing) =
++    DiagnosticError{typeof(d)}(d, warning_list, structure)
+ DiagnosticError(diags::AbstractVector{<:Diagnostic},
+-                warning_list::Vector{Diagnostic} = Diagnostic[]) =
+-    DiagnosticError{Vector{Diagnostic}}(Vector{Diagnostic}(diags), warning_list)
++                warning_list::Vector{Diagnostic} = Diagnostic[], structure = nothing) =
++    DiagnosticError{Vector{Diagnostic}}(Vector{Diagnostic}(diags), warning_list, structure)
+ 
+ "The one diagnostic a fail-fast throw, or a `StepError` species, carries."
+ diagnostic(carrier::DiagnosticError{<:Diagnostic}) = carrier.carried
+diff --git a/test/test_build.jl b/test/test_build.jl
+index 85cba85..32d8e47 100644
+--- a/test/test_build.jl
++++ b/test/test_build.jl
+@@ -1621,6 +1621,36 @@ function build_store_form()
+     end
+ end
+ 
++function build_carrier_structure()
++    @testset "a carrier leaving the door past the structure step holds the complete structure (§13.2, §13.9, D-434)" begin
++        # A loop is found by the nominal evaluation, so the structure is complete.
++        model = feedback_model(feedback_port = "power")
++        err = failure(() -> build(model))
++        @test err isa DiagnosticError{Vector{Diagnostic}}
++        @test err.structure isa Structure
++        @test paths(err.structure) == paths(build(feedback_model(feedback_port = "y")).structure)
++        # A probe throw too, fail-fast.
++        err = failure(() -> build(single(Thrower())))
++        @test err isa DiagnosticError{UserCodeFraming} && err.structure isa Structure
++        # A structure-step failure carries nothing: the step never completed.
++        err = failure(() -> build(merged_failures()))
++        @test err.structure === nothing
++        # A throw from a requested activation runs past the step and carries it:
++        # `TypedGain` passes the nominal probe and throws at the dual.
++        @test build(fed(TypedGain(), "e")).structure isa Structure
++        err = failure(() -> build(fed(TypedGain(), "e"); activations = (ProbeDual,)))
++        @test err isa DiagnosticError && err.structure isa Structure
++        # The rewrap keeps the warnings and the structure together.
++        err = failure(() -> build(Group((s = SelectedNothing(Gain(2.0), Gain(3.0)), t = Thrower());
++                                        input_wires = ("in" => "s/in",))))
++        @test err isa DiagnosticError{UserCodeFraming}
++        @test only(err.warnings) isa EmptyFaceSelection && err.structure isa Structure
++        # The two-argument constructors still default the field.
++        @test DiagnosticError(UnknownPort(entry = "e", endpoint = :source)).structure === nothing
++        @test DiagnosticError(Diagnostic[], Diagnostic[]).structure === nothing
++    end
++end
++
+ function build_barrier()
+     @testset "every structure-step pass that ran merges into one throw (§13.1, D-229)" begin
+         # The wiring walk, the obligation check, tier classification, the event
+@@ -2164,6 +2194,7 @@ function test_build()
+     build_store_form()
+     build_state_leaves()
+     build_barrier()
++    build_carrier_structure()
+     build_embed_accept()
+     build_activations()
+     build_specializations()
+diff --git a/test/test_descriptor.jl b/test/test_descriptor.jl
+index f484f79..88a182a 100644
+--- a/test/test_descriptor.jl
++++ b/test/test_descriptor.jl
+@@ -18,6 +18,9 @@ function round_trip(value)
+     parsed
+ end
+ 
++# The structure section a carrier's `Structure` renders to, for comparison.
++_structure_of(err) = Redstone._structure_section(err.structure)
++
+ # The node at `path`, and a face of it by name.
+ node_at(body, path) = only(node for node in body.structure.nodes if node.path == path)
+ face_of(node, side, name) = only(face for face in getfield(node, side) if face.name == name)
+@@ -87,7 +90,122 @@ function test_descriptor()
+                   String.(built.structure.root_inputs)
+             @test [face.type for face in value.build.structure.root_inputs] ==
+                   string.(built.structure.root_types)
++            # a clean build's warnings are an empty array, never omitted
++            @test value.build.warnings == []
++        end
++    end
++
++    @testset "a build's warnings ride the build body, encoded as diagnostics (§13.9, D-434)" begin
++        built = @test_logs (:warn, r"^EmptyFaceSelection") build(SelectedNothing(Gain(2.0), Gain(3.0)))
++        value = descriptor(built)
++        round_trip(value)
++        @test keys(value.build) == (:structure, :outputs, :warnings)
++        @test [(d.kind, d.severity, d.path) for d in value.build.warnings] == [("EmptyFaceSelection", "warning", "g")]
++        @test only(value.build.warnings).message == message(only(warnings(built)))
++        # the deployment's embedded body carries them too
++        deployed = descriptor(Deployment(built; h = 1//100))
++        round_trip(deployed)
++        @test deployed.deployment.build.warnings == value.build.warnings
++    end
++
++    @testset "a structure-step failure is a failure descriptor with the list alone (§13.9, D-434)" begin
++        err = failure(() -> build(merged_failures()))
++        value = descriptor(err)
++        round_trip(value)
++        @test keys(value) == (:format_version, :redstone_version, :kind, :failure)
++        @test value.kind == "failure"
++        body = value.failure
++        @test keys(body) == (:policy, :diagnostics, :warnings)     # no structure before the step completes
++        @test body.policy == "collected"
++        @test length(body.diagnostics) == length(diagnostics(err))
++        @test [d.kind for d in body.diagnostics] == [string(nameof(typeof(d))) for d in diagnostics(err)]
++        @test [d.message for d in body.diagnostics] == message.(diagnostics(err))
++        @test [d.path for d in body.diagnostics] == path.(diagnostics(err))
++        @test all(d.severity == "error" for d in body.diagnostics)
++        @test body.warnings == []
++        # the unfed input marks its port; the unknown port marks nothing beyond its node
++        unfed = only(d for d in body.diagnostics if d.kind == "UnconnectedInput")
++        source = only(d for d in diagnostics(err) if d isa UnconnectedInput)
++        @test unfed.marks == (ports = [(path = source.path, port = String(source.face))], wires = [])
++        unknown = only(d for d in body.diagnostics if d.kind == "UnknownPort")
++        @test !haskey(unknown, :marks) && !haskey(unknown, :function) && !haskey(unknown, :cycle)
++    end
++
++    @testset "a failure past the structure step carries the whole structure and the cycle as data (§13.8, §13.9, D-434)" begin
++        # A real loop: the structure section is the one a clean build of the same
++        # tree would give, and every cycle path names one of its nodes.
++        model = feedback_model(feedback_port = "power")
++        err = failure(() -> build(model))
++        value = descriptor(err)
++        round_trip(value)
++        body = value.failure
++        @test keys(body) == (:policy, :structure, :diagnostics, :warnings)
++        @test body.policy == "collected"
++        @test body.structure == _structure_of(err)
++        node_paths = Set(node.path for node in body.structure.nodes)
++        cycle = only(body.diagnostics).cycle
++        d = only(diagnostics(err))
++        @test cycle.members == d.members && all(m in node_paths for m in cycle.members)
++        @test cycle.classification == "real" && cycle.dead == []
++        @test cycle.traced == [(path = m, mode = string(t)) for (m, t) in d.traced]
++        for wire in cycle.wires, endpoint in (wire.from, wire.to)
++            @test endpoint.path in node_paths
++            node = only(node for node in body.structure.nodes if node.path == endpoint.path)
++            @test any(face.name == endpoint.port for face in vcat(node.inputs, node.outputs))
+         end
++        @test [(w.from.path * "/" * w.from.port, w.to.path * "/" * w.to.port) for w in cycle.wires] ==
++              [(p, c) for (p, c) in d.wires]
++        # An artificial loop with a dead hop and a sampled member.
++        err = failure(() -> build(
++            Group((m = Piecewise(), g1 = Gain(1.0), g2 = Gain(1.0));
++                  local_wires = ("m/F" => "g2/e", "g2/out" => "m/g", "g1/out" => "m/v"),
++                  input_wires = ("r" => "g1/e", "f" => "m/f"))))
++        cycle = only(descriptor(err).failure.diagnostics).cycle
++        @test cycle.classification == "artificial"
++        @test cycle.dead == [(path = "m", input = "g", output = "F")]
++        @test cycle.traced == [(path = "m", mode = "global"), (path = "g2", mode = "global")]
++        round_trip(descriptor(err))
++        # A member that throws ships the cluster unclassified: no `classification` key.
++        err = failure(() -> build(Group((a = TypedGain(), b = TypedGain());
++                                        local_wires = ("a/out" => "b/e", "b/out" => "a/e"))))
++        cycle = only(descriptor(err).failure.diagnostics).cycle
++        @test !haskey(cycle, :classification) && cycle.dead == [] && cycle.traced == []
++        round_trip(descriptor(err))
++    end
++
++    @testset "a probe throw is fail-fast with the function and the cause's line (§13.2, §13.9, D-434)" begin
++        err = failure(() -> build(single(Thrower())))
++        value = descriptor(err)
++        round_trip(value)
++        body = value.failure
++        @test body.policy == "fail-fast"
++        @test haskey(body, :structure)
++        d = only(body.diagnostics)
++        @test d.kind == "UserCodeFraming" && d.path == "c" && d.var"function" == "y_state"
++        @test occursin("\n  cause: boom", d.message)
++        @test !haskey(d, :marks)
++    end
++
++    @testset "a wire type mismatch marks its consumer port and its wire (§13.9, D-434)" begin
++        err = failure(() -> build(Group((a = FieldReader(), b = RealEntry());
++                                        input_wires = ("in" => ("a/f", "b/u"),))))
++        value = descriptor(err)
++        round_trip(value)
++        d = only(value.failure.diagnostics)
++        @test d.kind == "WireTypeMismatch"
++        @test d.marks == (ports = [(path = "a", port = "f")],
++                          wires = [(from = (path = "", port = "in"), to = (path = "a", port = "f"))])
++        @test !haskey(value.failure, :structure)
++    end
++
++    @testset "a service's carrier is a failure descriptor with the list alone (§13.9, D-434)" begin
++        anchored_build = build(AnchoredBank((TickCounter(), TickCounter()), TickCounter()))
++        err = failure(() -> Deployment(anchored_build; h = 1//500))
++        value = descriptor(err)
++        round_trip(value)
++        @test value.failure.policy == "collected"
++        @test !haskey(value.failure, :structure)
++        @test [d.kind for d in value.failure.diagnostics] == ["DeploymentInvalid"]
+     end
+ 
+     @testset "the deployment envelope embeds the build body whole (§13.9)" begin

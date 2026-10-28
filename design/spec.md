@@ -11549,10 +11549,9 @@ fields: `kind`, its type's name; `severity`; `path`, the attribution
 renders for it, a `UserCodeFraming`'s cause included as its second line.
 Three optional fields are written by the kinds whose payload holds the fact:
 `function`, the user method at fault, for the probe-chain kinds; `marks`,
-the endpoints and wires a kind names beyond its path, `UnconnectedInput`'s
-input, `TwoProducers`' destination and its two producers' wires,
-`WireTypeMismatch`'s and `WalkingFaceAtFrozenEntry`'s consumer and
-producer-to-consumer wire; and `cycle`, for `AlgebraicCycle` alone, the
+the ports and wires a kind names beyond its path, `UnconnectedInput`'s
+input, `TwoProducers`' destination, `WireTypeMismatch`'s and
+`WalkingFaceAtFrozenEntry`'s consumer and producer-to-consumer wire; and `cycle`, for `AlgebraicCycle` alone, the
 members, the wires as terminal pairs, the classification when present, the
 dead hops and each member's tracing mode. [Appendix C][sC]'s payloads stay
 the test contract and are not exported: the format binds none of their
