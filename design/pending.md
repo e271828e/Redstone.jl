@@ -181,3 +181,17 @@ introducing a deviation adds its bullet, and the one retiring it deletes it.
 Where the code's shape is coherent and the spec may be what moves, the call
 is the user's; a ruling lands docs-commit-first, then the bullet retires or
 the code conforms.
+
+- **`EmptyFaceSelection`'s path is the child's name, not its full path**
+  (§8.8, §13.2, D-250). The passthrough helper raises the warning inside the
+  author's `input_wires` body with the child's name within that component,
+  `g`, where §13.2's `path(d)` is the full slash path, `s/g`. The REPL line
+  reads "at `g`" with no owner in a nested model, and a reader of the
+  descriptor's `warnings` (§13.9, D-434) resolves it against the wrong node
+  or none. The fix: the component frame `at_component` binds a scoped value
+  holding the component's path around the thunk, as the door binds the
+  warning list, and the helper joins it with the child's name, so a build
+  gives the full path and a bare call at the REPL the child's name as now;
+  one test on a nested `SelectedNothing`; Appendix C's "the child path"
+  clarified to the full path. Conformance to the stated rule, no entry. Found
+  by increment 82's tests on 2026-10-28.
