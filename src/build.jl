@@ -649,6 +649,9 @@ Base.@nospecializeinfer function build(@nospecialize(root::AbstractComponent);
     # inside a declaration body appends to it without knowing the build, the
     # completed `Build` carries it, and a throw leaving the build takes it along.
     raised_warnings = Diagnostic[]
+    # The structure, hoisted out of the closure so the catch below can attach it
+    # to a carrier leaving past the structure step (§13.9, D-434).
+    structure = nothing
     built = try
         with(BUILD_WARNINGS => raised_warnings) do
             diags = Diagnostic[]
@@ -676,9 +679,11 @@ Base.@nospecializeinfer function build(@nospecialize(root::AbstractComponent);
     catch err
         # The rewrap sits here, not at each barrier: a barrier throws the
         # collection its own passes produced and stays ignorant of the channel,
-        # and only the entry point knows the whole build's warnings (D-250).
-        (err isa DiagnosticError && !isempty(raised_warnings)) &&
-            throw(DiagnosticError(err.carried, raised_warnings))
+        # and only the entry point knows the whole build's warnings (D-250) and
+        # whether the structure step completed (D-434). A requested activation
+        # throws past that step too, so its carrier takes the structure as well.
+        err isa DiagnosticError &&
+            throw(DiagnosticError(err.carried, raised_warnings, structure))
         rethrow()
     end
     # The completed build carries the record; the entry point logs each warning

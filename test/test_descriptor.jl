@@ -18,6 +18,9 @@ function round_trip(value)
     parsed
 end
 
+# The structure section a carrier's `Structure` renders to, for comparison.
+_structure_of(err) = Redstone._structure_section(err.structure)
+
 # The node at `path`, and a face of it by name.
 node_at(body, path) = only(node for node in body.structure.nodes if node.path == path)
 face_of(node, side, name) = only(face for face in getfield(node, side) if face.name == name)
@@ -87,7 +90,122 @@ function test_descriptor()
                   String.(built.structure.root_inputs)
             @test [face.type for face in value.build.structure.root_inputs] ==
                   string.(built.structure.root_types)
+            # a clean build's warnings are an empty array, never omitted
+            @test value.build.warnings == []
         end
+    end
+
+    @testset "a build's warnings ride the build body, encoded as diagnostics (§13.9, D-434)" begin
+        built = @test_logs (:warn, r"^EmptyFaceSelection") build(SelectedNothing(Gain(2.0), Gain(3.0)))
+        value = descriptor(built)
+        round_trip(value)
+        @test keys(value.build) == (:structure, :outputs, :warnings)
+        @test [(d.kind, d.severity, d.path) for d in value.build.warnings] == [("EmptyFaceSelection", "warning", "g")]
+        @test only(value.build.warnings).message == message(only(warnings(built)))
+        # the deployment's embedded body carries them too
+        deployed = descriptor(Deployment(built; h = 1//100))
+        round_trip(deployed)
+        @test deployed.deployment.build.warnings == value.build.warnings
+    end
+
+    @testset "a structure-step failure is a failure descriptor with the list alone (§13.9, D-434)" begin
+        err = failure(() -> build(merged_failures()))
+        value = descriptor(err)
+        round_trip(value)
+        @test keys(value) == (:format_version, :redstone_version, :kind, :failure)
+        @test value.kind == "failure"
+        body = value.failure
+        @test keys(body) == (:policy, :diagnostics, :warnings)     # no structure before the step completes
+        @test body.policy == "collected"
+        @test length(body.diagnostics) == length(diagnostics(err))
+        @test [d.kind for d in body.diagnostics] == [string(nameof(typeof(d))) for d in diagnostics(err)]
+        @test [d.message for d in body.diagnostics] == message.(diagnostics(err))
+        @test [d.path for d in body.diagnostics] == path.(diagnostics(err))
+        @test all(d.severity == "error" for d in body.diagnostics)
+        @test body.warnings == []
+        # the unfed input marks its port; the unknown port marks nothing beyond its node
+        unfed = only(d for d in body.diagnostics if d.kind == "UnconnectedInput")
+        source = only(d for d in diagnostics(err) if d isa UnconnectedInput)
+        @test unfed.marks == (ports = [(path = source.path, port = String(source.face))], wires = [])
+        unknown = only(d for d in body.diagnostics if d.kind == "UnknownPort")
+        @test !haskey(unknown, :marks) && !haskey(unknown, :function) && !haskey(unknown, :cycle)
+    end
+
+    @testset "a failure past the structure step carries the whole structure and the cycle as data (§13.8, §13.9, D-434)" begin
+        # A real loop: the structure section is the one a clean build of the same
+        # tree would give, and every cycle path names one of its nodes.
+        model = feedback_model(feedback_port = "power")
+        err = failure(() -> build(model))
+        value = descriptor(err)
+        round_trip(value)
+        body = value.failure
+        @test keys(body) == (:policy, :structure, :diagnostics, :warnings)
+        @test body.policy == "collected"
+        @test body.structure == _structure_of(err)
+        node_paths = Set(node.path for node in body.structure.nodes)
+        cycle = only(body.diagnostics).cycle
+        d = only(diagnostics(err))
+        @test cycle.members == d.members && all(m in node_paths for m in cycle.members)
+        @test cycle.classification == "real" && cycle.dead == []
+        @test cycle.traced == [(path = m, mode = string(t)) for (m, t) in d.traced]
+        for wire in cycle.wires, endpoint in (wire.from, wire.to)
+            @test endpoint.path in node_paths
+            node = only(node for node in body.structure.nodes if node.path == endpoint.path)
+            @test any(face.name == endpoint.port for face in vcat(node.inputs, node.outputs))
+        end
+        @test [(w.from.path * "/" * w.from.port, w.to.path * "/" * w.to.port) for w in cycle.wires] ==
+              [(p, c) for (p, c) in d.wires]
+        # An artificial loop with a dead hop and a sampled member.
+        err = failure(() -> build(
+            Group((m = Piecewise(), g1 = Gain(1.0), g2 = Gain(1.0));
+                  local_wires = ("m/F" => "g2/e", "g2/out" => "m/g", "g1/out" => "m/v"),
+                  input_wires = ("r" => "g1/e", "f" => "m/f"))))
+        cycle = only(descriptor(err).failure.diagnostics).cycle
+        @test cycle.classification == "artificial"
+        @test cycle.dead == [(path = "m", input = "g", output = "F")]
+        @test cycle.traced == [(path = "m", mode = "global"), (path = "g2", mode = "global")]
+        round_trip(descriptor(err))
+        # A member that throws ships the cluster unclassified: no `classification` key.
+        err = failure(() -> build(Group((a = TypedGain(), b = TypedGain());
+                                        local_wires = ("a/out" => "b/e", "b/out" => "a/e"))))
+        cycle = only(descriptor(err).failure.diagnostics).cycle
+        @test !haskey(cycle, :classification) && cycle.dead == [] && cycle.traced == []
+        round_trip(descriptor(err))
+    end
+
+    @testset "a probe throw is fail-fast with the function and the cause's line (§13.2, §13.9, D-434)" begin
+        err = failure(() -> build(single(Thrower())))
+        value = descriptor(err)
+        round_trip(value)
+        body = value.failure
+        @test body.policy == "fail-fast"
+        @test haskey(body, :structure)
+        d = only(body.diagnostics)
+        @test d.kind == "UserCodeFraming" && d.path == "c" && d.var"function" == "y_state"
+        @test occursin("\n  cause: boom", d.message)
+        @test !haskey(d, :marks)
+    end
+
+    @testset "a wire type mismatch marks its consumer port and its wire (§13.9, D-434)" begin
+        err = failure(() -> build(Group((a = FieldReader(), b = RealEntry());
+                                        input_wires = ("in" => ("a/f", "b/u"),))))
+        value = descriptor(err)
+        round_trip(value)
+        d = only(value.failure.diagnostics)
+        @test d.kind == "WireTypeMismatch"
+        @test d.marks == (ports = [(path = "a", port = "f")],
+                          wires = [(from = (path = "", port = "in"), to = (path = "a", port = "f"))])
+        @test !haskey(value.failure, :structure)
+    end
+
+    @testset "a service's carrier is a failure descriptor with the list alone (§13.9, D-434)" begin
+        anchored_build = build(AnchoredBank((TickCounter(), TickCounter()), TickCounter()))
+        err = failure(() -> Deployment(anchored_build; h = 1//500))
+        value = descriptor(err)
+        round_trip(value)
+        @test value.failure.policy == "collected"
+        @test !haskey(value.failure, :structure)
+        @test [d.kind for d in value.failure.diagnostics] == ["DeploymentInvalid"]
     end
 
     @testset "the deployment envelope embeds the build body whole (§13.9)" begin

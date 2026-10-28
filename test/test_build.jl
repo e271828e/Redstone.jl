@@ -1621,6 +1621,36 @@ function build_store_form()
     end
 end
 
+function build_carrier_structure()
+    @testset "a carrier leaving the door past the structure step holds the complete structure (§13.2, §13.9, D-434)" begin
+        # A loop is found by the nominal evaluation, so the structure is complete.
+        model = feedback_model(feedback_port = "power")
+        err = failure(() -> build(model))
+        @test err isa DiagnosticError{Vector{Diagnostic}}
+        @test err.structure isa Structure
+        @test paths(err.structure) == paths(build(feedback_model(feedback_port = "y")).structure)
+        # A probe throw too, fail-fast.
+        err = failure(() -> build(single(Thrower())))
+        @test err isa DiagnosticError{UserCodeFraming} && err.structure isa Structure
+        # A structure-step failure carries nothing: the step never completed.
+        err = failure(() -> build(merged_failures()))
+        @test err.structure === nothing
+        # A throw from a requested activation runs past the step and carries it:
+        # `TypedGain` passes the nominal probe and throws at the dual.
+        @test build(fed(TypedGain(), "e")).structure isa Structure
+        err = failure(() -> build(fed(TypedGain(), "e"); activations = (ProbeDual,)))
+        @test err isa DiagnosticError && err.structure isa Structure
+        # The rewrap keeps the warnings and the structure together.
+        err = failure(() -> build(Group((s = SelectedNothing(Gain(2.0), Gain(3.0)), t = Thrower());
+                                        input_wires = ("in" => "s/in",))))
+        @test err isa DiagnosticError{UserCodeFraming}
+        @test only(err.warnings) isa EmptyFaceSelection && err.structure isa Structure
+        # The two-argument constructors still default the field.
+        @test DiagnosticError(UnknownPort(entry = "e", endpoint = :source)).structure === nothing
+        @test DiagnosticError(Diagnostic[], Diagnostic[]).structure === nothing
+    end
+end
+
 function build_barrier()
     @testset "every structure-step pass that ran merges into one throw (§13.1, D-229)" begin
         # The wiring walk, the obligation check, tier classification, the event
@@ -2164,6 +2194,7 @@ function test_build()
     build_store_form()
     build_state_leaves()
     build_barrier()
+    build_carrier_structure()
     build_embed_accept()
     build_activations()
     build_specializations()

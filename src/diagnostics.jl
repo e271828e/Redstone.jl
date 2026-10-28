@@ -91,17 +91,25 @@ and the catch site's species rule dispatch on it.
 step that throws renders its warnings with the collection it throws, because the
 artifact that would have carried them never returned (§9.1, D-250). A warning
 joins no collection, so `diagnostic`, `diagnostics` and `kinds` never see one.
+
+`structure` is the complete `Structure` when the throw left the build's door
+past the structure step, and `nothing` on every other throw (§13.9, D-434). The
+door fills it where it rewraps the carrier with the warnings, and the failure
+descriptor is its consumer. It is typed `Any` because `Structure` is declared
+after the carrier.
 """
 struct DiagnosticError{P <: Union{Diagnostic, Vector{Diagnostic}}} <: Exception
     carried::P
     warnings::Vector{Diagnostic}
+    structure::Any
 end
 
-DiagnosticError(d::Diagnostic, warning_list::Vector{Diagnostic} = Diagnostic[]) =
-    DiagnosticError{typeof(d)}(d, warning_list)
+DiagnosticError(d::Diagnostic, warning_list::Vector{Diagnostic} = Diagnostic[],
+                structure = nothing) =
+    DiagnosticError{typeof(d)}(d, warning_list, structure)
 DiagnosticError(diags::AbstractVector{<:Diagnostic},
-                warning_list::Vector{Diagnostic} = Diagnostic[]) =
-    DiagnosticError{Vector{Diagnostic}}(Vector{Diagnostic}(diags), warning_list)
+                warning_list::Vector{Diagnostic} = Diagnostic[], structure = nothing) =
+    DiagnosticError{Vector{Diagnostic}}(Vector{Diagnostic}(diags), warning_list, structure)
 
 "The one diagnostic a fail-fast throw, or a `StepError` species, carries."
 diagnostic(carrier::DiagnosticError{<:Diagnostic}) = carrier.carried

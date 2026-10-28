@@ -12,8 +12,9 @@ wrong at the keyboard, stop and report rather than deviate silently.
 `prototype_increment_82.patch`, beside this brief, is the reference
 implementation, taken at 848d527 on a scratch worktree where the routed
 subset (`descriptor build declare assembly diagnostics leaves show`) ran
-green at 2397 assertions and the full gate ran green; the figures are
-below. Six files, 332 insertions, 23 deletions.
+green at 2397 assertions and the full gate at 7145, in 21 minutes. Six
+files, 332 insertions, 23 deletions. The three readings below landed as
+dfe7d7c before the code commit.
 
 ## What is settled
 
@@ -67,8 +68,8 @@ D-434's bundle and §13.9, as 848d527 leaves them:
 
 ## Three readings the prototype took where the docs stop short or overstate
 
-Each is a one-line docs correction, to land docs-commit-first before the
-code commit, or a ruling the other way:
+Each a one-line docs correction, accepted on 2026-10-28 and landed as
+dfe7d7c before the code commit:
 
 1. **`marks` is an object `{ports, wires}`**, two typed arrays, rather than
    one array mixing endpoints and wires. §13.9 says "the endpoints and

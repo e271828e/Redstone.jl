@@ -1,6 +1,6 @@
-# --- the descriptor (§13.9, D-432) --------------------------------------------
-# `descriptor` renders a `Build` or a `Deployment` to data, beside `show`'s
-# rendering to text: a tree of `NamedTuple`s, vectors, strings, numbers and
+# --- the descriptor (§13.9, D-432, D-434) ---------------------------------------
+# `descriptor` renders a `Build`, a `Deployment` or a failed build's carrier to
+# data, beside `show`'s rendering to text: a tree of `NamedTuple`s, vectors, strings, numbers and
 # Booleans whose shape `src/descriptor.json` fixes. A field that does not
 # apply is omitted, never `nothing`, and a collection keyed by data is a vector
 # of objects carrying `name`. The core encodes nothing to text; the consumer
@@ -14,27 +14,32 @@ const LOCATED_DECLARATIONS = (u_types, y_types, x_init, s_init, m_init, sample_t
                               local_wires, input_wires, output_wires, stop_reason,
                               transparent_container)
 
-# Design: §13.9, D-432.
+# Design: §13.9, D-432, D-434.
 """
     descriptor(build::Build) -> NamedTuple
     descriptor(deployment::Deployment) -> NamedTuple
+    descriptor(err::DiagnosticError) -> NamedTuple
 
 Return the artifact's [descriptor](@ref g-descriptor), its rendering to data.
 
 The descriptor is an envelope with the fields `format_version`,
 `redstone_version` and `kind`, and the body under the key the kind names,
-`build` or `deployment`. A deployment's body embeds the build's whole. The
-artifact is a `Build` or a `Deployment`.
+`build`, `deployment` or `failure`. A deployment's body embeds the build's
+whole. A failure's body holds the carrier's diagnostics and warnings, each as
+its kind, severity, path and rendered message, and the complete `Structure`
+when the build failed past the structure step, so a client can draw the model
+with the error marked on it.
 
 The value is a tree of `NamedTuple`s and vectors, ready for any JSON encoder,
 and conforms to the schema the package ships as `src/descriptor.json`.
 Encoding it is the caller's job.
 
-See also [`Build`](@ref), [`Deployment`](@ref).
+See also [`Build`](@ref), [`Deployment`](@ref), [`DiagnosticError`](@ref).
 """
 descriptor(build::Build) = _envelope("build", _build_body(build))
 descriptor(deployment::Deployment) =
     _envelope("deployment", (build = _build_body(deployment.build),))
+descriptor(err::DiagnosticError) = _envelope("failure", _failure_body(err))
 
 _envelope(kind::String, body) =
     (; format_version = DESCRIPTOR_FORMAT,
@@ -43,7 +48,72 @@ _envelope(kind::String, body) =
        NamedTuple{(Symbol(kind),)}((body,))...)
 
 _build_body(build::Build) =
-    (structure = _structure_section(build.structure), outputs = _outputs_section(build.outputs))
+    (structure = _structure_section(build.structure), outputs = _outputs_section(build.outputs),
+     warnings = [_diagnostic(d) for d in build.warnings])
+
+# --- the failure body (D-434) ---------------------------------------------------
+
+# The policy off the type parameter, the structure when the carrier holds one,
+# then the diagnostics and the warnings. The carried value is one diagnostic or
+# the collection; either way the body lists it.
+function _failure_body(err::DiagnosticError)
+    body = (policy = err.carried isa Diagnostic ? "fail-fast" : "collected",)
+    err.structure === nothing ||
+        (body = merge(body, (structure = _structure_section(err.structure),)))
+    carried = err.carried isa Diagnostic ? [err.carried] : err.carried
+    merge(body, (diagnostics = [_diagnostic(d) for d in carried],
+                 warnings = [_diagnostic(d) for d in err.warnings]))
+end
+
+# A diagnostic as its rendering plus the marks a drawing needs, never its payload
+# (§13.9, D-434): the four fields every kind carries, then `function`, `marks`
+# and `cycle` from the kinds whose payload holds the fact.
+function _diagnostic(d::Diagnostic)
+    row = (kind = string(nameof(typeof(d))), severity = string(severity(d)),
+           path = path(d), message = message(d))
+    fn = _function(d)
+    fn === nothing || (row = merge(row, (var"function" = fn,)))
+    ports, wires = _marks(d)
+    isempty(ports) && isempty(wires) || (row = merge(row, (marks = (ports = ports, wires = wires),)))
+    d isa AlgebraicCycle ? merge(row, (cycle = _cycle(d),)) : row
+end
+
+# The user method at fault, for the probe-chain kinds.
+_function(::Diagnostic) = nothing
+_function(d::UserCodeFraming) = d.fn
+_function(d::ConformanceFailure) = d.what
+_function(d::DeadStage) = d.stage
+_function(d::UndeclaredReturnField) = d.stage
+
+# The endpoints and wires a kind names beyond its path: the consumer's input as
+# a port, and the producer-to-consumer wire where the payload holds both ends.
+# `TwoProducers` spells its producers as text, so it marks its destination alone.
+_marks(::Diagnostic) = (NamedTuple[], NamedTuple[])
+_marks(d::UnconnectedInput) = ([_endpoint((d.path, d.face))], NamedTuple[])
+_marks(d::TwoProducers) = ([_endpoint((d.path, d.port))], NamedTuple[])
+_marks(d::WireTypeMismatch) = _consumer_wire(d)
+_marks(d::WalkingFaceAtFrozenEntry) = _consumer_wire(d)
+_consumer_wire(d) =
+    ([_endpoint((d.path, d.face))],
+     [(from = _endpoint((d.producer_path, d.producer_port)), to = _endpoint((d.path, d.face)))])
+
+# The cluster as data: members, wires as terminal pairs, the verdict when the
+# trace reached one, the dead hops and each member's tracing mode (§13.8).
+function _cycle(d::AlgebraicCycle)
+    cycle = (members = d.members,
+             wires = [(from = _terminal_endpoint(p), to = _terminal_endpoint(c)) for (p, c) in d.wires])
+    d.classification === nothing ||
+        (cycle = merge(cycle, (classification = string(d.classification),)))
+    merge(cycle, (dead = [(path = m, input = String(f), output = String(o)) for (m, f, o) in d.dead],
+                  traced = [(path = m, mode = string(t)) for (m, t) in d.traced]))
+end
+
+# A cycle wire's end, `path/port` with the port after the last slash; a primitive
+# root's terminal is `/port`.
+function _terminal_endpoint(terminal::String)
+    i = findlast('/', terminal)
+    (path = terminal[1:prevind(terminal, i)], port = terminal[nextind(terminal, i):end])
+end
 
 # --- the structure section ------------------------------------------------------
 

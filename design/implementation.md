@@ -176,8 +176,9 @@ Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §8.5, §10.4, §13.5, §13.7, D-179, D
 
 - `build` owns the structure step's one throw.
 - `build` binds the warning channel once around its three steps (D-250):
-  - a `DiagnosticError` leaving the build is rewrapped with the warning list,
-    and any other throw passes unchanged;
+  - a `DiagnosticError` leaving the build is rewrapped with the warning list
+    and with the `Structure` when the throw left past the structure step, a
+    requested activation's included (D-434); any other throw passes unchanged;
   - a completed build logs each warning once at return.
 - `build` and the probes take components and the root unspecialized, and
   each per-component frame reads the instance inside rather than capture it,
@@ -401,11 +402,18 @@ D-250, D-254, D-256, D-261.
 
 ### `src/descriptor.jl`
 
-- `descriptor` on a `Build` and on a `Deployment`, the artifact rendered to
-  data under the format `src/descriptor.json` fixes (§13.9, D-432): the
-  envelope `_envelope` with `DESCRIPTOR_FORMAT`, the build body's two
-  sections `_structure_section` and `_outputs_section`, and the deployment
-  body embedding the build's.
+- `descriptor` on a `Build`, on a `Deployment` and on a `DiagnosticError`,
+  the artifact or the carrier rendered to data under the format
+  `src/descriptor.json` fixes (§13.9, D-432, D-434): the envelope
+  `_envelope` with `DESCRIPTOR_FORMAT`, the build body's two sections
+  `_structure_section` and `_outputs_section` with its `warnings`, the
+  deployment body embedding the build's, and the failure body
+  `_failure_body` with `policy` off the type parameter and `structure` when
+  the carrier holds one.
+- A diagnostic as data `_diagnostic`: kind, severity, path and the rendered
+  message, then `_function` for the probe-chain kinds, `_marks` as ports and
+  wires for the kinds naming a face or a wire, and `_cycle` over
+  `_terminal_endpoint` for `AlgebraicCycle`; never the payload (D-434).
 - The node walk `_nodes`, a pre-order over the level rows' children with the
   leaves read off `components`, and the node's `field` and `key` from
   `membership` on the `Child`.
@@ -421,7 +429,8 @@ D-250, D-254, D-256, D-261.
 - Nothing here encodes text. `test_descriptor.jl` holds the round trip, with
   JSON and JSONSchema as the suite's dependencies alone.
 
-Spec: §8.5, §9.1, §9.2, §13.9, D-211, D-237, D-418, D-432, D-433.
+Spec: §8.5, §9.1, §9.2, §13.2, §13.8, §13.9, D-211, D-237, D-418, D-432, D-433,
+D-434.
 
 ### `src/devices.jl`
 
@@ -475,8 +484,10 @@ D-256, D-261, D-268, D-270, D-315.
   `ReplayDiscardedStaging` (§12.7). `EmptyGreedyClaim` is reported by
   `attach!` into the roster entry's own cell (§11.6, D-250).
 - `_typename`.
-- The `DiagnosticError` carrier and its `warnings` (D-250), with
-  `diagnostic`, `diagnostics`, `kinds` and the two renderings.
+- The `DiagnosticError` carrier, its `warnings` (D-250) and its `structure`,
+  typed `Any` since `Structure` is declared later and filled by the build's
+  door alone (D-434), with `diagnostic`, `diagnostics`, `kinds` and the two
+  renderings.
 - `logline`.
 - The build's warning channel `BUILD_WARNINGS` and `_warn!` (D-250).
 - The grid records `GridEntry` and `GridReport`, and `_anchor_label`.
