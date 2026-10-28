@@ -13696,10 +13696,13 @@ assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
   ([§9.2][s9-2]). `activations = (Float64, ProbeDual)` additionally pins
   activation invariants for CI, and pre-materializes activations for a
   parallel sweep ([§11.1][s11-1], [§9.4][s9-4]).
-- `descriptor(build)` / `descriptor(deployment) → NamedTuple`. The
-  [descriptor](#g-descriptor) (a serialized projection of the artifact under
-  a published format): a tree of `NamedTuple`s and vectors the consumer
-  encodes, with the deployment's body embedding the build's ([§13.9][s13-9]).
+- `descriptor(build)` / `descriptor(deployment)` / `descriptor(err) → NamedTuple`.
+  The [descriptor](#g-descriptor) (a serialized projection of the artifact
+  under a published format): a tree of `NamedTuple`s and vectors the consumer
+  encodes, with the deployment's body embedding the build's. The third method
+  takes a [carrier exception](#g-carrier-exception) and renders a failure: its
+  diagnostics, its warnings, and the structure when the throw left the door
+  past the structure step ([§13.9][s13-9], [D-434][d-434]).
 - [`ProbeDual`](#g-probedual). The public canonical concrete probe scalar
   ([§9.4][s9-4]).
 - `resolve(assembly, path) → AbstractComponent`. Resolves an immediate child, a

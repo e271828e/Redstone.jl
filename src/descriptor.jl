@@ -34,7 +34,8 @@ The value is a tree of `NamedTuple`s and vectors, ready for any JSON encoder,
 and conforms to the schema the package ships as `src/descriptor.json`.
 Encoding it is the caller's job.
 
-See also [`Build`](@ref), [`Deployment`](@ref), [`DiagnosticError`](@ref).
+See also [`Build`](@ref), [`Deployment`](@ref), and the
+[carrier exception](@ref g-carrier-exception) `DiagnosticError`.
 """
 descriptor(build::Build) = _envelope("build", _build_body(build))
 descriptor(deployment::Deployment) =
