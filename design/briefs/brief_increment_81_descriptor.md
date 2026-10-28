@@ -41,7 +41,7 @@ D-432's bundle and §13.9, as 811713b leaves them, with D-433's readings:
   field that does not apply is omitted, never `nothing`; a collection keyed
   by data is an array of objects carrying `name`. No JSON dependency in the
   core.
-- `schema/descriptor.json`, draft 7, strict, is the shape of record; the
+- `src/descriptor.json`, draft 7, strict, is the shape of record; the
   suite validates the round trip through JSON text, with JSON and
   JSONSchema as test dependencies.
 - The carrier's `structure` field stays unbuilt; the failure descriptor's
@@ -49,7 +49,7 @@ D-432's bundle and §13.9, as 811713b leaves them, with D-433's readings:
 
 ## The shape, as the patch has it
 
-- `schema/descriptor.json`: the envelope with a `oneOf` per kind, and the
+- `src/descriptor.json`: the envelope with a `oneOf` per kind, and the
   definitions `BuildBody`, `DeploymentBody`, `StructureSection`, `Node` as
   `LeafNode` or `AssemblyNode` over the shared `NodeIdentity`, `LeafFace`,
   `AssemblyFace`, `KindMarker`, `Wire`, `Endpoint`, `Timing`, `Rational`,
@@ -139,10 +139,10 @@ the prototype and ruled on 2026-10-26, docs-commit-first, as D-433 with its
 
 - `design/implementation.md`: the `src/Redstone.jl` entry's include list
   gains `descriptor` after `show`; a `src/descriptor.jl` entry; the routing
-  table gains the row `descriptor`, or `schema/descriptor.json` → `descriptor`.
+  table gains the row `descriptor`, or `src/descriptor.json` → `descriptor`.
 - `design/pending.md`: the stage-1 bullet records the increment and the
   spike as landed and names axis 3 as next.
-- Files to commit: `schema/descriptor.json`, `src/descriptor.jl`,
+- Files to commit: `src/descriptor.json`, `src/descriptor.jl`,
   `src/Redstone.jl`, `test/test_descriptor.jl`, `test/fixtures.jl`,
   `test/imports.jl`, `test/RedstoneTests.jl`, `test/Project.toml`,
   `design/implementation.md`, `design/pending.md`. Never a

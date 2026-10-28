@@ -71,7 +71,7 @@ Two findings about tooling rather than the drawing:
 - **ajv strict mode refuses the schema.** With `strict: true`, ajv fails with `strictRequired` on the envelope's `oneOf`. Its branches require `build` or `deployment` without declaring them in a local `properties`. With ajv's default options the schema compiles, and `scripts/validate.mjs` uses those. *Proposed:* repeat `"build": true` or `"deployment": true` under `properties` in each branch, or record that the pipeline runs ajv at default strictness. **Neither; the same instances validate.**
 - **Noisy errors from `Node`'s `oneOf`.** One wrong field in a leaf node (a `timing.anchor` written as an object while transcribing) gave 30 ajv errors, most from the assembly branch the node was never meant to match. *Proposed:* discriminate on `class` with `if`/`then`/`else`. Weigh this against axis 7's TypeScript generation, which may handle `oneOf` better. **Neither; the same instances validate.**
 
-Divergence from the increment's schema: none learned. `schema/descriptor.json` does not exist in the repository yet.
+Divergence from the increment's schema: none learned. `src/descriptor.json` does not exist in the repository yet.
 
 Fixture notes. `fixtures/closed_loop.json` and `fixtures/descent.json` are written by `scripts/transcribe.mjs` from the source and the `Build` renderings, by hand. The wires are the source's verbatim. The trim values in the parameters (`θ`, `δe`, `δt`), the tracker's gains, the signatures, the docstrings and the line numbers are approximate. Anchor scopes at the root are written `""`, where the `Build` rendering prints `root`. The schema's `Anchor` description does not say how the root is spelled, and it could.
 

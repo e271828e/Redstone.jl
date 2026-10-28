@@ -11511,7 +11511,7 @@ descriptor(build)       # the build envelope
 descriptor(deployment)  # the deployment envelope, its body embedding the build's
 ```
 
-**The schema of record is `schema/descriptor.json`, shipped with the
+**The schema of record is `src/descriptor.json`, shipped with the
 package, and the core's suite validates `descriptor`'s output against it
 after a round trip through JSON text** ([D-432][d-432]). The schema is JSON Schema
 draft 7, strict about the writer's output, with `additionalProperties:

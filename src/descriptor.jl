@@ -1,7 +1,7 @@
 # --- the descriptor (§13.9, D-432) --------------------------------------------
 # `descriptor` renders a `Build` or a `Deployment` to data, beside `show`'s
 # rendering to text: a tree of `NamedTuple`s, vectors, strings, numbers and
-# Booleans whose shape `schema/descriptor.json` fixes. A field that does not
+# Booleans whose shape `src/descriptor.json` fixes. A field that does not
 # apply is omitted, never `nothing`, and a collection keyed by data is a vector
 # of objects carrying `name`. The core encodes nothing to text; the consumer
 # does, and the suite validates the round trip (`test_descriptor.jl`).
@@ -27,7 +27,7 @@ The descriptor is an envelope with the fields `format_version`,
 artifact is a `Build` or a `Deployment`.
 
 The value is a tree of `NamedTuple`s and vectors, ready for any JSON encoder,
-and conforms to the schema the package ships as `schema/descriptor.json`.
+and conforms to the schema the package ships as `src/descriptor.json`.
 Encoding it is the caller's job.
 
 See also [`Build`](@ref), [`Deployment`](@ref).

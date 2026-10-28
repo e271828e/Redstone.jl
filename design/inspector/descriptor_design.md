@@ -275,7 +275,7 @@ Left open on purpose, each with the bump or the axis that owns it.
     a dozen fixed shapes built once per call at the REPL. The question was
     reopened once and kept, on the dependency alone.
 12. **The schema: home, dialect, strictness, test.**
-    - *Home.* `schema/descriptor.json` at the repo root, shipped with the
+    - *Home.* `src/descriptor.json`, beside the writer, shipped with the
       package, read by the inspector from `pkgdir(Redstone)` with no
       accessor function. A minor bump edits it in place; a major bump, if
       one ever comes, adds a second file beside it.
@@ -324,7 +324,7 @@ Left open on purpose, each with the bump or the axis that owns it.
     round-trip test, the `NamedTuple` shape with the named-array rule, the
     kind marker's table, the instance context's three rules, the carrier
     field, and the name provisional. D-257 gets an annotation. The section
-    states what each kind carries and the rules; `schema/descriptor.json`
+    states what each kind carries and the rules; `src/descriptor.json`
     is the shape of record, cited from it, and the spec carries no
     field-by-field prose.
     *Why:* chapter 13 holds the tooling contracts with external clients and
@@ -368,7 +368,7 @@ This session closed axes 1 and 2. What it hands on, in working order:
 1. **The docs commit.** §13.9 and the §9.2 sentence, D-432 with its
    bundle, the `structure` field in §13.2 as recorded and unbuilt, D-257's
    annotation, and `initial_design.md`'s pointer here.
-2. **The increment.** `schema/descriptor.json`, `src/descriptor.jl` with the
+2. **The increment.** `src/descriptor.json`, `src/descriptor.jl` with the
    two methods, `test_descriptor.jl` with its fixtures, JSON and JSONSchema
    as test dependencies. Briefed under `brief_lessons.md`'s rules.
 3. **Axis 4's spike**, beside the increment, on the hand-written fixture of
@@ -430,7 +430,7 @@ This session closed axes 1 and 2. What it hands on, in working order:
 - **Round trip.** The core test's path: the Julia value encoded to JSON text,
   parsed back into generic dictionaries, and validated, so that the bytes a
   client reads are what conforms.
-- **Schema of record.** `schema/descriptor.json`, shipped with the package:
+- **Schema of record.** `src/descriptor.json`, shipped with the package:
   the exact shape of the format, draft 7, strict about the writer's output,
   cited from §13.9 and never restated field by field in prose.
 - **Section.** A top-level key of a body: `structure` and `outputs` in the

@@ -17208,7 +17208,7 @@ bundled rulings:
   and Booleans, with no JSON dependency in the core. A field that does not
   apply is omitted, never `null`, and a collection keyed by data is an array
   of objects carrying `name`.
-- The schema of record is `schema/descriptor.json`, JSON Schema draft 7,
+- The schema of record is `src/descriptor.json`, JSON Schema draft 7,
   shipped with the package and strict about the writer's output. The core's
   suite validates the output after a round trip through JSON text, with
   JSON and JSONSchema as test dependencies only. Validation is a CI-time

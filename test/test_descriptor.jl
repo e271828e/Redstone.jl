@@ -6,7 +6,7 @@
 
 using JSON, JSONSchema
 
-const DESCRIPTOR_SCHEMA = Schema(JSON.parsefile(joinpath(pkgdir(Redstone), "schema", "descriptor.json")))
+const DESCRIPTOR_SCHEMA = Schema(JSON.parsefile(joinpath(pkgdir(Redstone), "src", "descriptor.json")))
 
 # The round trip: the text a client would read, validated, with no `null` in it
 # (the omission rule), returned parsed.

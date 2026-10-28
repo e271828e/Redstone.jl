@@ -402,7 +402,7 @@ D-250, D-254, D-256, D-261.
 ### `src/descriptor.jl`
 
 - `descriptor` on a `Build` and on a `Deployment`, the artifact rendered to
-  data under the format `schema/descriptor.json` fixes (§13.9, D-432): the
+  data under the format `src/descriptor.json` fixes (§13.9, D-432): the
   envelope `_envelope` with `DESCRIPTOR_FORMAT`, the build body's two
   sections `_structure_section` and `_outputs_section`, and the deployment
   body embedding the build's.
@@ -1318,7 +1318,7 @@ override:
 | a new `AbstractComponent` fixture in any test file | add `build`, since `test_build.jl`'s Dual-activation sweep pins the skipped count |
 | `blocks` | `blocks build` |
 | `show` | `show` |
-| `descriptor`, or `schema/descriptor.json` | `descriptor` |
+| `descriptor`, or `src/descriptor.json` | `descriptor` |
 | `precompile` | `precompile` |
 | `sim`, `model`, `deployment`, `store`, `leaves`, `Redstone`, or `diagnostics.jl` beyond a new kind | all of it |
 

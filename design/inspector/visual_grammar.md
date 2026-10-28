@@ -2,7 +2,7 @@
 
 The record of one session, on 2026-10-27, that fixed how each model
 concept is drawn, over
-the real schema of `schema/descriptor.json`, after axis 4's spike chose the
+the real schema of `src/descriptor.json`, after axis 4's spike chose the
 canvas (`design/prototypes/render_spike/report.md`). It builds on
 `initial_design.md`'s answers 6, 9 and 15 and on `descriptor_design.md`,
 and never restates them; where it amends one, it says so. Like its parents
