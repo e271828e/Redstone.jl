@@ -1,5 +1,5 @@
 # --- the descriptor (§13.9, D-432, D-434) ---------------------------------------
-# `descriptor` renders a `Build`, a `Deployment` or a failed build's carrier to
+# `descriptor` renders a `Build`, a `Deployment` or a carrier exception to
 # data, beside `show`'s rendering to text: a tree of `NamedTuple`s, vectors, strings, numbers and
 # Booleans whose shape `src/descriptor.json` fixes. A field that does not
 # apply is omitted, never `nothing`, and a collection keyed by data is a vector
@@ -105,11 +105,10 @@ function _cycle(d::AlgebraicCycle)
     d.classification === nothing ||
         (cycle = merge(cycle, (classification = string(d.classification),)))
     merge(cycle, (dead = [(path = m, input = String(f), output = String(o)) for (m, f, o) in d.dead],
-                  traced = [(path = m, mode = string(t)) for (m, t) in d.traced]))
+                  traced = [(path = m, mode = string(mode)) for (m, mode) in d.traced]))
 end
 
-# A cycle wire's end, `path/port` with the port after the last slash; a primitive
-# root's terminal is `/port`.
+# A cycle wire's end, `path/port` with the port after the last slash.
 function _terminal_endpoint(terminal::String)
     i = findlast('/', terminal)
     (path = terminal[1:prevind(terminal, i)], port = terminal[nextind(terminal, i):end])

@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Redstone descriptor",
-  "description": "The projection of a Build, a Deployment or a failed build's carrier to data (spec §13.9, D-432, D-434). Version 1.0. The writer is `descriptor` in src/descriptor.jl; this file is the shape of record, strict about the writer's output: every object closes with additionalProperties false, and a field that does not apply is omitted, never null. The design record is design/inspector/descriptor_design.md. `name` is optional, a label for the model that a writer outside the core supplies; `descriptor` never writes it.",
+  "description": "The projection of a Build, a Deployment or a carrier exception, a failed build's or a service's, to data (spec §13.9, D-432, D-434). Version 1.0. The writer is `descriptor` in src/descriptor.jl; this file is the shape of record, strict about the writer's output: every object closes with additionalProperties false, and a field that does not apply is omitted, never null. The design record is design/inspector/descriptor_design.md. `name` is optional, a label for the model that a writer outside the core supplies; `descriptor` never writes it.",
   "type": "object",
   "properties": {
     "format_version": { "$ref": "#/definitions/FormatVersion" },
@@ -63,7 +63,7 @@
       "additionalProperties": false
     },
     "FailureBody": {
-      "description": "A carrier exception's body (D-434). `policy` is the carrier's type parameter read out: `fail-fast` lists the one diagnostic that stopped the build, nothing else having been gathered; `collected` lists everything the step found. `structure` is present only when the throw left the build's door past the structure step, and is then the complete Structure, so a client draws the whole model with the error marked on it; without it, the diagnostics are a list. `warnings` are the build's warnings so far.",
+      "description": "A carrier exception's body (D-434). `policy` is the carrier's type parameter read out: `fail-fast` lists the one diagnostic that stopped the build, nothing else having been gathered; `collected` lists everything the step found. `structure` is present only when the throw left the build's door past the structure step, and is then the complete Structure, so a client draws the whole model with the error marked on it; without it, the diagnostics are a list. `warnings` are the carrier's: a build's warnings so far, none on a service's.",
       "type": "object",
       "properties": {
         "policy": { "type": "string", "enum": ["fail-fast", "collected"] },
@@ -100,7 +100,7 @@
       "additionalProperties": false
     },
     "Cycle": {
-      "description": "An AlgebraicCycle's cluster (§13.8): `members` are component paths in walk order; `wires` the cluster's own wires as terminal pairs, leaf output to leaf input; `classification`, `real` or `artificial`, is absent when a member's evaluation threw; `dead` lists every hop the trace found unrouted; `traced` records each member's tracing mode.",
+      "description": "An AlgebraicCycle's cluster (§13.8): `members` are component paths in the order the diagnostic lists them; `wires` the cluster's own wires as terminal pairs, leaf output to leaf input; `classification`, `real` or `artificial`, is absent when a member's evaluation threw; `dead` lists every hop the trace found unrouted; `traced` records each member's tracing mode.",
       "type": "object",
       "properties": {
         "members": { "type": "array", "items": { "type": "string" } },

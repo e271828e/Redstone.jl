@@ -100,7 +100,7 @@ function test_descriptor()
         value = descriptor(built)
         round_trip(value)
         @test keys(value.build) == (:structure, :outputs, :warnings)
-        @test [(d.kind, d.severity, d.path) for d in value.build.warnings] == [("EmptyFaceSelection", "warning", "g")]
+        @test [(row.kind, row.severity, row.path) for row in value.build.warnings] == [("EmptyFaceSelection", "warning", "g")]
         @test only(value.build.warnings).message == message(only(warnings(built)))
         # the deployment's embedded body carries them too
         deployed = descriptor(Deployment(built; h = 1//100))
@@ -118,16 +118,16 @@ function test_descriptor()
         @test keys(body) == (:policy, :diagnostics, :warnings)     # no structure before the step completes
         @test body.policy == "collected"
         @test length(body.diagnostics) == length(diagnostics(err))
-        @test [d.kind for d in body.diagnostics] == [string(nameof(typeof(d))) for d in diagnostics(err)]
-        @test [d.message for d in body.diagnostics] == message.(diagnostics(err))
-        @test [d.path for d in body.diagnostics] == path.(diagnostics(err))
-        @test all(d.severity == "error" for d in body.diagnostics)
+        @test [row.kind for row in body.diagnostics] == [string(nameof(typeof(d))) for d in diagnostics(err)]
+        @test [row.message for row in body.diagnostics] == message.(diagnostics(err))
+        @test [row.path for row in body.diagnostics] == path.(diagnostics(err))
+        @test all(row.severity == "error" for row in body.diagnostics)
         @test body.warnings == []
         # the unfed input marks its port; the unknown port marks nothing beyond its node
-        unfed = only(d for d in body.diagnostics if d.kind == "UnconnectedInput")
+        unfed = only(row for row in body.diagnostics if row.kind == "UnconnectedInput")
         source = only(d for d in diagnostics(err) if d isa UnconnectedInput)
         @test unfed.marks == (ports = [(path = source.path, port = String(source.face))], wires = [])
-        unknown = only(d for d in body.diagnostics if d.kind == "UnknownPort")
+        unknown = only(row for row in body.diagnostics if row.kind == "UnknownPort")
         @test !haskey(unknown, :marks) && !haskey(unknown, :function) && !haskey(unknown, :cycle)
     end
 
@@ -144,17 +144,27 @@ function test_descriptor()
         @test body.structure == _structure_of(err)
         node_paths = Set(node.path for node in body.structure.nodes)
         cycle = only(body.diagnostics).cycle
-        d = only(diagnostics(err))
-        @test cycle.members == d.members && all(m in node_paths for m in cycle.members)
+        source = only(diagnostics(err))
+        @test cycle.members == source.members && all(m in node_paths for m in cycle.members)
         @test cycle.classification == "real" && cycle.dead == []
-        @test cycle.traced == [(path = m, mode = string(t)) for (m, t) in d.traced]
+        @test cycle.traced == [(path = m, mode = string(mode)) for (m, mode) in source.traced]
         for wire in cycle.wires, endpoint in (wire.from, wire.to)
             @test endpoint.path in node_paths
             node = only(node for node in body.structure.nodes if node.path == endpoint.path)
             @test any(face.name == endpoint.port for face in vcat(node.inputs, node.outputs))
         end
         @test [(w.from.path * "/" * w.from.port, w.to.path * "/" * w.to.port) for w in cycle.wires] ==
-              [(p, c) for (p, c) in d.wires]
+              [(p, c) for (p, c) in source.wires]
+        # A loop one level down: a wire's end splits at the last slash, so the
+        # path keeps its own slashes.
+        err = failure(() -> build(Group((; loop = Group((a = Gain(1.0), b = Gain(1.0));
+                                                        local_wires = ("a/out" => "b/e", "b/out" => "a/e"))))))
+        nested = descriptor(err)
+        round_trip(nested)
+        cycle = only(nested.failure.diagnostics).cycle
+        @test cycle.members == ["loop/a", "loop/b"]
+        @test cycle.wires == [(from = (path = "loop/a", port = "out"), to = (path = "loop/b", port = "e")),
+                              (from = (path = "loop/b", port = "out"), to = (path = "loop/a", port = "e"))]
         # An artificial loop with a dead hop and a sampled member.
         err = failure(() -> build(
             Group((m = Piecewise(), g1 = Gain(1.0), g2 = Gain(1.0));
@@ -180,10 +190,36 @@ function test_descriptor()
         body = value.failure
         @test body.policy == "fail-fast"
         @test haskey(body, :structure)
-        d = only(body.diagnostics)
-        @test d.kind == "UserCodeFraming" && d.path == "c" && d.var"function" == "y_state"
-        @test occursin("\n  cause: boom", d.message)
-        @test !haskey(d, :marks)
+        row = only(body.diagnostics)
+        @test row.kind == "UserCodeFraming" && row.path == "c" && row.var"function" == "y_state"
+        @test occursin("\n  cause: boom", row.message)
+        @test !haskey(row, :marks)
+        # The carrier's warnings ride the failure body: a selection that kept
+        # nothing beside the throwing probe.
+        err = failure(() -> build(Group((s = SelectedNothing(Gain(2.0), Gain(3.0)), t = Thrower());
+                                        input_wires = ("in" => "s/in",))))
+        value = descriptor(err)
+        round_trip(value)
+        @test value.failure.policy == "fail-fast" && haskey(value.failure, :structure)
+        # the helper raised it inside `s`'s declaration body, so its path is the
+        # child's name as the helper saw it, not the child's full path
+        @test [(w.kind, w.severity, w.path) for w in value.failure.warnings] ==
+              [("EmptyFaceSelection", "warning", "g")]
+        @test only(value.failure.warnings).message == message(only(err.warnings))
+    end
+
+    @testset "the optional fields on the remaining kinds that write them (§13.9, D-434)" begin
+        function_of(model) = only(descriptor(failure(() -> build(model))).failure.diagnostics).var"function"
+        @test function_of(single(DeadStateStage())) == "y_state"
+        @test function_of(single(BadDerivative())) == "x_deriv"
+        err = failure(() -> build(single(Undeclared())))
+        @test function_of(single(Undeclared())) == only(diagnostics(err)).stage
+        marks_of(model) = only(descriptor(failure(() -> build(model))).failure.diagnostics).marks
+        @test marks_of(DoubleFed(SampledLoop(), ModedSource(), ModedSource())) ==
+              (ports = [(path = "loop/sum", port = "a")], wires = [])
+        @test marks_of(Group((; src = NomSource(), c = FrozenEntry()); local_wires = ("src/val" => "c/u",))) ==
+              (ports = [(path = "c", port = "u")],
+               wires = [(from = (path = "src", port = "val"), to = (path = "c", port = "u"))])
     end
 
     @testset "a wire type mismatch marks its consumer port and its wire (§13.9, D-434)" begin
@@ -191,9 +227,9 @@ function test_descriptor()
                                         input_wires = ("in" => ("a/f", "b/u"),))))
         value = descriptor(err)
         round_trip(value)
-        d = only(value.failure.diagnostics)
-        @test d.kind == "WireTypeMismatch"
-        @test d.marks == (ports = [(path = "a", port = "f")],
+        row = only(value.failure.diagnostics)
+        @test row.kind == "WireTypeMismatch"
+        @test row.marks == (ports = [(path = "a", port = "f")],
                           wires = [(from = (path = "", port = "in"), to = (path = "a", port = "f"))])
         @test !haskey(value.failure, :structure)
     end
@@ -205,7 +241,7 @@ function test_descriptor()
         round_trip(value)
         @test value.failure.policy == "collected"
         @test !haskey(value.failure, :structure)
-        @test [d.kind for d in value.failure.diagnostics] == ["DeploymentInvalid"]
+        @test [row.kind for row in value.failure.diagnostics] == ["DeploymentInvalid"]
     end
 
     @testset "the deployment envelope embeds the build body whole (§13.9)" begin
