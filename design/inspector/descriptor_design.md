@@ -21,7 +21,11 @@ Left open on purpose, each with the bump or the axis that owns it.
 - **The failure descriptor's bump.** Its body, the encoding of a diagnostic
   as data, whether a raw user exception escaping a probe is wrapped into the
   carrier or shown as diagnostics alone, and the carrier field (answer 15)
-  built at the same time.
+  built at the same time. Settled on 2026-10-28 (`failure_descriptor.md`,
+  §13.9, D-434): the body is `policy`, `structure` when held, `diagnostics`
+  and `warnings`; a diagnostic is four fields with `function`, `marks` and
+  `cycle` optional; and D-248 frames every user throw, so nothing raw
+  escapes.
 - **The deployment overlay's bump.** The schedule rows, concrete `Δt`
   values, the hyperperiod and the grid report beside `build` in the
   deployment body. With it, or in a bump of its own, the per-component chain

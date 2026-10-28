@@ -19,10 +19,11 @@ item changes what the spec says, the spec edit is part of the item.
   increment 81; `design/prototypes/render_spike/report.md` for axis 4,
   hand-rolled SVG over ELK.js; `visual_grammar.md` for axis 3;
   `workspace.md` for axis 5; `live_session.md` for axis 6, the Julia
-  package and the live session. Next, in `live_session.md`'s "Design axes"
-  order: the schema's move to `src/descriptor.json`, the failure bump, axis
-  7, the package's increment; the deployment overlay's bump stands as
-  `visual_grammar.md` hands it on. The built-in Julia GUI is parked
+  package and the live session; `failure_descriptor.md` for the failure
+  bump, whose docs commit landed as §13.9 and D-434. Next: the failure
+  bump's increment, then axis 7 and the package's increment in
+  `live_session.md`'s "Design axes" order; the deployment overlay's bump
+  stands as `visual_grammar.md` hands it on. The built-in Julia GUI is parked
   (D-310). The later stages stand after the release, below.
 - **The API docstrings' two later passes.** The sweep to the manual's
   conventions landed (commits `84ece6b` to `b1d9ae3`, record

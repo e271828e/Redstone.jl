@@ -432,6 +432,7 @@ were derived.
 | [D-431][d-431] | Collect a stopping check over its own unit | ratified |
 | [D-432][d-432] | Render an artifact to data through `descriptor` | ratified |
 | [D-433][d-433] | The descriptor writer's readings | ratified |
+| [D-434][d-434] | The failure descriptor and a diagnostic as data | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -17265,6 +17266,10 @@ Annotation (2026-10-26): [D-433][d-433] adds a row to the marker's table, a
 function type and a field handle opaque ahead of the `struct` row, and settles
 the readings the writer makes where this entry's bundle stops short.
 
+Annotation (2026-10-28): the carrier field landed with [D-434][d-434], which
+widens its trigger to any throw leaving the door past the structure step, a
+requested activation's included, and types it `Any` for the include order.
+
 **Rejected.**
 - *Reading the descriptor as [D-257][d-257]'s rejected accessor:* an accessor binds
   the artifact's fields; the descriptor binds a format.
@@ -17383,6 +17388,69 @@ and kind are closed, the client resolving (its answer 4).
   inspecting a component wants the type's own, not each constructor's.
 - *A primitive root spelled as an assembly node:* the artifact holds a leaf,
   and the client's special case exists either way.
+
+### D-434 — The failure descriptor and a diagnostic as data
+
+**Status.** ratified
+
+**Position.** `descriptor` renders a carrier exception to a failure
+descriptor, and a diagnostic is encoded as its rendering plus the marks a
+drawing needs, never as its payload ([§13.2][s13-2], [§13.9][s13-9]). The bundled rulings:
+
+- The envelope's third kind is `failure`, no longer reserved. The failure
+  body holds `policy`, `fail-fast` or `collected` from the carrier's type
+  parameter; `structure`, the build body's own section, present only when
+  the carrier holds one; `diagnostics`; and `warnings`.
+- `descriptor(err::DiagnosticError)` takes any carrier, a build's or a
+  service's; the runtime carrier `StepError` stays out.
+- Every diagnostic carries `kind`, the type's name; `severity`; `path`, with
+  `""` the root; and `message`, as `showerror` renders it. Three optional
+  fields are written by the kinds whose payload holds the fact: `function`
+  for the probe-chain kinds, `marks` as endpoints and wires for the kinds
+  naming a face or a wire beyond their path, and `cycle` for
+  `AlgebraicCycle`.
+- The build body gains `warnings`, the `Build`'s warnings encoded the same
+  way, an empty array when none.
+- The carrier's `structure` field is built: typed `Any`, since the carrier
+  is declared before `Structure`; `nothing` by default in both constructors;
+  filled at the door's one rewrap site whenever a throw leaves the door past
+  the structure step, a requested activation's included (amends [D-432][d-432]'s
+  trigger).
+- No version bump: the additions join version one's shape while the package
+  is unreleased, as [D-433][d-433]'s annotation did for `alias` and `name`.
+
+**Spec.** [§13.2][s13-2], [§13.9][s13-9]
+
+**Rationale.** The grammar record's overlay
+(`design/inspector/visual_grammar.md`, answer 8) names what it draws from a
+failure: a halo on a node, a mark on a port square, a heavier wire, and for
+a loop its members, wires, verdict, dead hops and tracing modes, none of
+which message text gives back. The full payload would have exported fifty
+kinds' fields, `Any`-typed types and values among them, under a strict
+schema, and made every payload change a format change, for a few fields of
+a few kinds. Four generic fields and three optional additions serve the
+drawing whole. The message stays what the user reads, so the didactic style
+reaches the page unchanged, and a `UserCodeFraming`'s cause reaches it as
+the message's second line, since [D-248][d-248] frames every user method the build
+invokes and nothing raw escapes. `policy` says whether the list is complete,
+as `showerror` says by rendering one line against a group. Warnings join
+both bodies because the encoder exists and the grammar reserved amber for
+them. The `with` block hides the structure local from the door's catch, so
+the binding is hoisted and the one catch rebuilds the carrier with warnings
+and structure together; the requested activations run inside the same block
+after the `Build` exists, so their throw carries the complete structure as
+well. The session's record is `design/inspector/failure_descriptor.md`.
+
+**Rejected.**
+- *Message and attribution only:* the overlay cannot read a port, a wire or
+  a loop's members out of text.
+- *The full payload of every kind:* fifty schema definitions for a few
+  needed fields, and a format change on every payload change.
+- *A version bump to 1.1:* no reader to protect while unreleased.
+- *Warnings in a bump of their own:* nothing left to design once the
+  encoder exists.
+- *`Union{Nothing, Structure}` on the carrier:* `Structure` is declared
+  after the carrier, and `declare.jl` throws it before any artifact exists.
 
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
@@ -17792,6 +17860,7 @@ and kind are closed, the client resolving (its answer 4).
 [d-431]: #d-431--collect-a-stopping-check-over-its-own-unit
 [d-432]: #d-432--render-an-artifact-to-data-through-descriptor
 [d-433]: #d-433--the-descriptor-writers-readings
+[d-434]: #d-434--the-failure-descriptor-and-a-diagnostic-as-data
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property

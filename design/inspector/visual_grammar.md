@@ -34,7 +34,8 @@ Left open on purpose, each with the axis or the bump that owns it.
   the wires as endpoint pairs in the format's `{"path", "port"}` objects,
   the verdict when present, the dead hops as `{"path", "input", "output"}`
   and the tracing mode per member; for a probe failure the function name
-  (answer 8).
+  (answer 8). Settled on 2026-10-28 (`failure_descriptor.md`, answer 2):
+  `marks`, `cycle` and `function` carry exactly this.
 
 ## Answered questions
 
@@ -328,7 +329,8 @@ which now points here.
 5. **The inherited bumps**, each a short session, with what this session
    added to it:
    - *The failure descriptor*, with the carrier field built: it carries
-     what the pending list above asks for the overlay (answer 8).
+     what the pending list above asks for the overlay (answer 8). Ran on
+     2026-10-28; its record is `failure_descriptor.md`.
    - *The deployment overlay*, with the rates chain and state events: its
      schedule rows feed the legend's concrete `Δt` and `(D, Φ)` per color
      (answer 6).

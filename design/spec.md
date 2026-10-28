@@ -10151,12 +10151,15 @@ end
 struct DiagnosticError{P <: Union{Diagnostic, Vector{Diagnostic}}} <: Exception
     carried::P
     warnings::Vector{Diagnostic}   # the build's warnings so far, rendered with the throw
+    structure::Any                 # the complete `Structure`, or `nothing` (§13.9)
 end
 ```
 
-The carrier is to gain a `structure` field, the complete `Structure` when a
-throw leaves the nominal evaluation, recorded and unbuilt until the failure
-descriptor consumes it ([§13.9][s13-9], [D-432][d-432]).
+The carrier's `structure` field holds the complete `Structure` when a throw
+leaves the build's door past the structure step, and `nothing` on every
+other throw; the door fills it where it rewraps the carrier with the build's
+warnings, and the failure descriptor consumes it ([§13.9][s13-9],
+[D-432][d-432], [D-434][d-434]).
 
 Two rendering rules are doctrine, not style ([D-058][d-058]).
 
@@ -11377,12 +11380,12 @@ reach an artifact's fields. The browser inspector is the first such client,
 and the bridge that will serve a running simulation over a socket is the
 second. Both read the same thing, a [descriptor](#g-descriptor) (a serialized
 projection of a [`Build`](#g-build) (the deployment-free product of the build
-pipeline) or a [`Deployment`](#g-deployment) (the scalar-free artifact the
-grid parameters fix) under a published format). This section covers, in
-order, what the descriptor is beside `show`, the envelope and its
-versioning, what version one carries, the kind marker, the instance context,
-the value the core returns, the schema and its test, and the carrier field
-the failure descriptor will need. The design record is
+pipeline), a [`Deployment`](#g-deployment) (the scalar-free artifact the
+grid parameters fix) or a failed build under a published format). This
+section covers, in order, what the descriptor is beside `show`, the envelope
+and its versioning, what version one carries, the kind marker, the instance
+context, the value the core returns, the schema and its test, the failure
+descriptor, and the carrier field it reads. The design record is
 `design/inspector/descriptor_design.md`, which is not normative.
 
 **`descriptor` renders a `Build` or a `Deployment` to data under a
@@ -11398,8 +11401,8 @@ artifacts, so the core's own suite catches a refactor that would break it.
 **Every descriptor is one object with a header and one body** ([D-432][d-432]). The
 header holds `format_version`, an object `{"major": 1, "minor": 0}`
 independent of Redstone's version; `redstone_version`, a string for
-information only; `kind`, `"build"` or `"deployment"`, with `"failure"`
-reserved; and optionally `name`, a label for the model that a writer outside
+information only; `kind`, `"build"`, `"deployment"` or `"failure"`
+([D-434][d-434]); and optionally `name`, a label for the model that a writer outside
 the core supplies and `descriptor` never writes. The body sits under the key
 the kind names. A deployment body
 embeds the build body whole under `build`, so one definition of the build
@@ -11411,7 +11414,7 @@ know.
 **Version one carries what a client needs to draw and explain the component
 tree, and no internals** ([D-432][d-432]). The build body has two sections, each the
 projection of one [artifact](#g-artifact) (an immutable pure function of its
-inputs):
+inputs), and the build's warnings:
 
 - `structure` projects the [`Structure`](#g-structure) (the structure step's
   declared facts). `nodes` lists every [component](#g-component) (a primitive or
@@ -11436,6 +11439,9 @@ inputs):
 - `outputs` projects [`Outputs`](#g-outputs) (the execution order and each
   port's stage): the order as paths, and per primitive its stage-1 and stage-2
   port names.
+- `warnings` lists the warnings the build kept ([§9.2][s9-2]), each encoded
+  as the failure descriptor encodes a diagnostic, an empty array when there
+  are none ([D-434][d-434]).
 
 Nothing resolved is carried. The client resolves every face to its terminal
 producer once on load, the derivation `face_routes` performs
@@ -11522,15 +11528,43 @@ the text back into generic dictionaries and validates those, so that the
 bytes a client reads are what conforms. JSON and JSONSchema are test
 dependencies only.
 
-**The carrier gains a `structure` field holding the complete `Structure`
-when a throw leaves the nominal evaluation** ([D-432][d-432]). The field is `nothing`
-on every other throw, and the build's door fills it in one place, by
-rethrowing the [carrier exception](#g-carrier-exception) (the single
-exception diagnostics travel in) with the structure attached
-([§13.2][s13-2]). It is recorded here and unbuilt. The failure descriptor,
-which draws the whole diagram and marks the error on it, is its first
-consumer and builds it. Carrying the structure keeps [§13.1][s13-1]'s rule,
-since it is a complete artifact of an earlier step and never a partial one.
+**A failure descriptor projects a carrier exception: its diagnostics, its
+warnings, and the structure when the throw left the door past the structure
+step** ([D-434][d-434]). `descriptor(err::DiagnosticError)` takes any
+[carrier exception](#g-carrier-exception) (the single exception diagnostics
+travel in), a build's or a service's. The failure body holds `policy`,
+`"fail-fast"` or `"collected"`, read off the carrier's type parameter, so a
+reader knows whether the list is everything a step found or the first
+failure alone; `structure`, the same section the build body carries, present
+only when the carrier holds one; `diagnostics`; and `warnings`. A
+structure-step failure has no structure and is shown as a list. A failure
+past it draws the whole diagram with the error marked on it, which keeps
+[§13.1][s13-1]'s rule, since the structure is a complete artifact of an
+earlier step and never a partial one.
+
+**A diagnostic is encoded as its rendering plus the marks a drawing needs,
+never as its payload** ([D-434][d-434]). Every diagnostic carries four
+fields: `kind`, its type's name; `severity`; `path`, the attribution
+`path(d)` answers, `""` for the root; and `message`, the text `showerror`
+renders for it, a `UserCodeFraming`'s cause included as its second line.
+Three optional fields are written by the kinds whose payload holds the fact:
+`function`, the user method at fault, for the probe-chain kinds; `marks`,
+the endpoints and wires a kind names beyond its path, `UnconnectedInput`'s
+input, `TwoProducers`' destination and its two producers' wires,
+`WireTypeMismatch`'s and `WalkingFaceAtFrozenEntry`'s consumer and
+producer-to-consumer wire; and `cycle`, for `AlgebraicCycle` alone, the
+members, the wires as terminal pairs, the classification when present, the
+dead hops and each member's tracing mode. [Appendix C][sC]'s payloads stay
+the test contract and are not exported: the format binds none of their
+fields, as it binds none of the artifacts'.
+
+**The carrier's `structure` field holds the complete `Structure` when a
+throw leaves the build's door past the structure step** ([D-432][d-432],
+[D-434][d-434]). The field is `nothing` on every other throw, typed `Any`
+because the carrier is declared before the artifact, and the door fills it
+in one place, where it rewraps the carrier with the build's warnings
+([§13.2][s13-2]); a throw from an activation requested at build runs past
+that step and carries it too.
 
 **The name `descriptor` is provisional until the export audit** ([D-432][d-432]), as
 `series` is ([D-226][d-226]).
@@ -15653,9 +15687,9 @@ collection at a step barrier, and its type parameter tells which.
 `cause` and carries the cause's type as its parameter. Diagnostics
 themselves are plain values ([§13.2][s13-2], [§13.4][s13-4]).
 
-<a id="g-descriptor"></a>**descriptor** — a serialized projection of a `Build`
-or a `Deployment` under a published, versioned format, for a client outside
-the process. `descriptor` renders it as plain data beside `show`'s rendering
+<a id="g-descriptor"></a>**descriptor** — a serialized projection of a `Build`,
+a `Deployment` or a failed build under a published, versioned format, for a
+client outside the process. `descriptor` renders it as plain data beside `show`'s rendering
 to text. The artifact stays the truth, and a descriptor is one consumer's
 reading of it ([§13.9][s13-9], [D-432][d-432]).
 
@@ -16167,6 +16201,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-431]: decisions.md#d-431--collect-a-stopping-check-over-its-own-unit
 [d-432]: decisions.md#d-432--render-an-artifact-to-data-through-descriptor
 [d-433]: decisions.md#d-433--the-descriptor-writers-readings
+[d-434]: decisions.md#d-434--the-failure-descriptor-and-a-diagnostic-as-data
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop
