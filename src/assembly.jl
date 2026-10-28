@@ -564,17 +564,21 @@ _labelled(prefix, sep, n) = isempty(prefix) ? String(n) : string(prefix, sep, n)
 # selector that kept nothing raises (D-251).
 function _passthrough_faces(who::String, child_path::AbstractString,
                             names::Vector{String}, except_faces::Tuple, only_faces::Tuple, select)
+    # The diagnostics name the child by its full path: the owner's, bound by its
+    # component frame, joined with the child's. A bare call outside a build names
+    # the child alone.
+    at = _join(COMPONENT_PATH[], String(child_path))
     given = Symbol[]
     isempty(except_faces) || push!(given, :except)
     isempty(only_faces) || push!(given, :only)
     select === nothing || push!(given, :select)
     length(given) ≤ 1 ||
-        throw(DiagnosticError(UnknownFaceSelection(who = who, path = String(child_path),
+        throw(DiagnosticError(UnknownFaceSelection(who = who, path = at,
                                               reason = :multiple_selectors,
                                               names = String[String(g) for g in given])))
     unknown = [String(n) for n in (except_faces..., only_faces...) if !(String(n) in names)]
     isempty(unknown) ||
-        throw(DiagnosticError(UnknownFaceSelection(who = who, path = String(child_path),
+        throw(DiagnosticError(UnknownFaceSelection(who = who, path = at,
                                               reason = :unknown_names, names = unknown,
                                               candidates = names)))
     wanted = !isempty(only_faces) ? String[String(n) for n in only_faces] :
@@ -584,12 +588,9 @@ function _passthrough_faces(who::String, child_path::AbstractString,
     # cannot see; a bare call over a faceless child asked for nothing and is
     # silent. `only` cannot reach here — a non-empty `only` of known names keeps
     # them all — so only `except` has names to carry.
-    # The path is the child's full path: the owner's, bound by its component
-    # frame, joined with the child's. A bare call outside a build names the child.
     if length(given) == 1 && isempty(wanted)
         selector = given[1]
-        _warn!(EmptyFaceSelection(who = who, path = _join(COMPONENT_PATH[], String(child_path)),
-                                  selector = selector,
+        _warn!(EmptyFaceSelection(who = who, path = at, selector = selector,
                                   names = selector === :except ?
                                           String[String(n) for n in except_faces] : String[],
                                   candidates = names))

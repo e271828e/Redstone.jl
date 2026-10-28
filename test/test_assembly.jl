@@ -1316,6 +1316,9 @@ function assembly_primitives()
         @test d.who == "input_passthrough" && d.path == "aero" &&
               d.reason === :unknown_names && d.names == ["ee"] &&
               d.candidates == ["e", "a", "r", "alpha"]
+        # Nested, the path is the child's full path, not its name in the owner.
+        err = failure(() -> build(Group((; sys = Systems{:typo}(ldg())))))
+        @test err isa DiagnosticError{UnknownFaceSelection} && diagnostic(err).path == "sys/aero"
     end
 end
 

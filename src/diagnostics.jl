@@ -649,7 +649,7 @@ message(d::FaceDirectionConflict) =
 "§8.8: a passthrough filter naming faces the child does not have, or giving more than one selector."
 Base.@kwdef struct UnknownFaceSelection <: Diagnostic
     who::String                              # the calling helper
-    path::String                             # the child path
+    path::String                             # the child's full path
     reason::Symbol                           # :multiple_selectors | :unknown_names
     names::Vector{String} = String[]         # the offending names, or the selectors given
     candidates::Vector{String} = String[]    # the child's face list

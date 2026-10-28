@@ -3933,8 +3933,8 @@ selectors given.
 **A call that gives a selector and keeps nothing raises
 `EmptyFaceSelection`**, a warning on the `Build`'s list ([§9.2][s9-2],
 [D-251][d-251]). A bare call over a faceless child is silent, because passing
-nothing through is what it asked for. The payload names the helper, the child
-path, the selector given with its names, and the child's face list.
+nothing through is what it asked for. The payload names the helper, the child's
+full path, the selector given with its names, and the child's face list.
 
 The warning exists because an empty selection is almost always a typo the
 unknown-names check cannot see. An `only` may name faces that exist while a
@@ -14211,7 +14211,7 @@ collection ([§9.2][s9-2], [D-250][d-250]).
   child it resolved to, the resolved port's actual direction, the side the
   entry requires (`:producer` or `:consumer`).
 - **`UnknownFaceSelection`** ([§8.8][s8-8]). Error · build · fail-fast. The
-  helper, the child path, reason (unknown names / more than one selector given), the
+  helper, the child's full path, reason (unknown names / more than one selector given), the
   offending names or the selectors given, the child's face list.
 - **`EmptyFaceSelection`** ([§8.8][s8-8]). Warning · build · logged, on the
   `Build`'s warnings. The helper, the child's full path, the selector given
