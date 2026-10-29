@@ -20,7 +20,11 @@ item changes what the spec says, the spec edit is part of the item.
   its "Seam inventory, contracts half" the checklist. Two arms the stores half
   left for it: `get_output(path, "")` arrives as `ReadResolution`
   `:undeclared` at `BARE`, and the `(path, name)` renderer `_named` already
-  drops an empty face. The stores half landed as D-435 and increment 83
+  drops an empty face. When the library's contracts go bare, the docstrings
+  of the integrating and linear blocks rename the port names `in` and `out`
+  to `u` and `y`, the textbook form `ẋ = A x + B u`, `y = C x + D u`, and
+  `s⁺ = A s + B u` on the discrete tier; the state letters `x` and `s` are
+  already in place. The stores half landed as D-435 and increment 83
   (`design/briefs/brief_increment_83_bare_stores.md`), docs first, then the
   code; this half repeats the sequence: docs commit, prototype, brief,
   pipeline.

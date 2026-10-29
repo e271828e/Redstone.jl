@@ -22,9 +22,9 @@ what the episode says about the framework.
 
 ## 1. The block
 
-One continuous state `q`, one mode `saturation` in `:free`, `:upper` or
-`:lower`, and a derivative that reads the mode: `q̇ = in` while free and
-`q̇ = 0` while saturated. Four state events move the mode. A sign-form
+One continuous state `x`, one mode `saturation` in `:free`, `:upper` or
+`:lower`, and a derivative that reads the mode: `ẋ = in` while free and
+`ẋ = 0` while saturated. Four state events move the mode. A sign-form
 guard returns a scalar σ, the predicate holds when `σ ≥ 0`, and an event
 fires on an edge, the transition from not-holding to holding, which the
 framework detects against the guard's prior, its value at the last
@@ -38,7 +38,7 @@ leave_handler(c, _)         = (m = :free,)
 ```
 
 The hit guards are deliberately ungated. Gated on `:free`, a hit guard
-would read `-1` while saturated and `q - upper = 0` the instant a leave
+would read `-1` while saturated and `x - upper = 0` the instant a leave
 handler frees the mode. That is an edge, so it fires and saturates the
 block again, and the leave guard, which read `-1` while the mode was free,
 now sees an edge of its own. Each handler hands the other guard a fresh
@@ -56,12 +56,12 @@ Let the block be saturated at `upper` and let the input fall to exactly
 `0.0`. The first leave guard computes `-u.in`, which is `-0.0`, and in IEEE
 arithmetic `-0.0 ≥ 0` is true because `-0.0 == 0.0`. The predicate holds,
 its prior was not-holding, and the leave event fires: the mode is `:free`
-with `q` sitting exactly on the limit.
+with `x` sitting exactly on the limit.
 
-Now the hit guard reads `q - upper = 0`, which holds, and it has held since
-the hit fired. When a later input pushes outward, `q` rises, σ turns
+Now the hit guard reads `x - upper = 0`, which holds, and it has held since
+the hit fired. When a later input pushes outward, `x` rises, σ turns
 positive, and the predicate is still holding. There is no edge, the hit
-event never fires again, and `q` passes the limit with nothing to stop it.
+event never fires again, and `x` passes the limit with nothing to stop it.
 The reviewer's scenario stepped the input from `1` to `0` at `t = 1.05`
 and back to `1` at `t = 2.05` into a block limited at `0.5`; by `t = 3` the
 state read `1.45`, mode `:free`. The mirror case at the lower limit reads
@@ -70,7 +70,7 @@ not-holding ([§10.6][s10-6]): an `x0` on the limit with a zero input frees ther
 overshoots later.
 
 The root cause is that edge semantics cannot re-detect a predicate that
-never stopped holding, and freeing the mode with `q` on the limit is
+never stopped holding, and freeing the mode with `x` on the limit is
 exactly the state in which the hit predicate holds without an edge.
 
 ## 3. Why no continuous guard can repair it
@@ -79,12 +79,12 @@ Two facts hold for any design that keeps a latched mode read by the
 derivative, whatever continuous σ its guards compute.
 
 - **The hit predicate cannot re-arm at the rest point.** To be safe, "hit
-  upper" must hold whenever `q > upper`, for every input. Approach the rest
-  point `(q, in) = (upper, 0)` along `q ↓ upper` with `in = 0`: σ is
+  upper" must hold whenever `x > upper`, for every input. Approach the rest
+  point `(x, in) = (upper, 0)` along `x ↓ upper` with `in = 0`: σ is
   positive all the way, so by continuity `σ(upper, 0) ≥ 0`, which holds.
   Whenever the block is free at the rest point, the hit predicate is already
   holding and can produce no edge. This is true of any continuous σ, in
-  whatever mixture of `q` and `in`.
+  whatever mixture of `x` and `in`.
 - **So the block must never be free at the rest point**, which means
   "leave" must require `in < 0` strictly. No continuous σ satisfies
   `σ ≥ 0 ⟺ in < 0`: at `in = 0` it would have to be negative and the limit
@@ -105,7 +105,7 @@ leave_lower_guard(c, (; m, u)) = m === :lower && u.in > 0 ?  u.in : -one(u.in)
 ```
 
 An input of exactly zero at a limit now keeps the mode saturated, which
-changes nothing observable in `q`, since the derivative is zero in both
+changes nothing observable in `x`, since the derivative is zero in both
 modes at zero input. The gate `u.in < 0` reads a wired signal that varies
 within a step, so [§10.4][s10-4]'s soundness argument, that gates stay fixed through
 a localization, does not cover it. Across a bracket σ is `-1` on one side
@@ -138,7 +138,7 @@ trick is cryptic.
 
 **The computed clamp with a release event, rejected.** Give up the latch
 and let the derivative decide saturation from the current state and input,
-with events only to localize the kinks and clamp `q` exactly:
+with events only to localize the kinks and clamp `x` exactly:
 
 ```julia
 x_deriv(c, (; x, u)) = (x >= c.upper && u.in > 0) || (x <= c.lower && u.in < 0) ?
@@ -162,7 +162,7 @@ being the modes-and-events demonstrator, and a saturation flag would become
 a `y_direct` output with feedthrough from `in`.
 
 **The computed clamp without a release event.** Keep only the arrival event.
-Departures then cost nothing, and the kink in `q̇` at a departure lands
+Departures then cost nothing, and the kink in `ẋ` at a departure lands
 inside a step. Section 5 shows that this kink is mild, so the error is a
 one-time offset of order `a h²`. This is the cheapest form, but it declares
 no departure, loses the mode, and is dominated by the next one.
@@ -189,12 +189,12 @@ The arrival and the departure are different kinds of kink, and the
 difference decides which event may be cheap.
 
 **At an arrival** the derivative jumps from `in > 0` to `0`: a discontinuity
-in `q̇` itself. Stepping over it costs an error of order `h` and leaves `q`
+in `ẋ` itself. Stepping over it costs an error of order `h` and leaves `x`
 past the limit, so the arrival stays localized in every variant, and its
-handler writes `q` to the limit exactly.
+handler writes `x` to the limit exactly.
 
-**At a departure** the input passes *through* zero, so `q̇` goes from `0` to
-`0⁻` continuously and only `q̈` jumps. `q` stays once differentiable through
+**At a departure** the input passes *through* zero, so `ẋ` goes from `0` to
+`0⁻` continuously and only `ẍ` jumps. `x` stays once differentiable through
 the departure, and a one-step method misses far less. A discontinuous input
 would make the departure a first-order kink too, but in this framework such
 an input carries its own event, `Step` localized or boundary-aligned, and a
@@ -205,18 +205,18 @@ crossing zero at `tₙ + θh` with slope `-a`, so `in(t) = -a (t - t_c)`. The
 exact state at the end of the step is
 
 ```
-q(tₙ + h) = upper - a (1 - θ)² h² / 2
+x(tₙ + h) = upper - a (1 - θ)² h² / 2
 ```
 
 The boundary-detected policy holds the mode to the end of the step, keeps
-`q̇ = 0` throughout and lands exactly on `upper`. Its error is
+`ẋ = 0` throughout and lands exactly on `upper`. Its error is
 `a (1 - θ)² h² / 2`, at most `a h² / 2`. The computed clamp without a
 release event switches the derivative inside the step, and RK4 sees the
 negative input in some of its stages; for `θ < 1/2` its error works out to
 `a h² θ (1 - 3θ) / 6`, the same order with a smaller constant. Both are
 one-time errors paid once per departure, and two things matter about them.
 They persist, since an integrator has no restoring dynamics, so the offset
-stays in `q` until feedback elsewhere removes it. And they are small: with
+stays in `x` until feedback elsewhere removes it. And they are small: with
 an input slope of 1 per second, the bound is 5e-5 at `h = 0.01` and 5e-3 at
 `h = 0.1`, where the localized policy lands within the root-finder's
 tolerance, about 1e-8 in time.
@@ -252,7 +252,7 @@ labels.
 The convention that a predicate holds at `σ ≥ 0`, with edges detected
 against a prior, is what makes boundary-detected and localized events share
 one declaration ([§2.3][s2-3]), and it is what made the rest point a trap: at
-`(upper, 0)` both "`q` has reached the limit" and "`in` has stopped pushing"
+`(upper, 0)` both "`x` has reached the limit" and "`in` has stopped pushing"
 hold, and neither can produce an edge from there. Any block that latches a
 mode on one continuous quantity reaching zero and releases it on another
 reaching zero meets the same corner, and the strict gate on the releasing
@@ -266,8 +266,8 @@ would break the events the design is built around, the ones in which a
 quantity reaches a level: the touchdown archetype and the stop requests of
 [§13.5][s13-5], a `Step` at `t_step = t₀`, a relay fed exactly its threshold, and
 every state initialized exactly on a level, which fires at boundary zero
-today and never would. It would also make the sign form `q - upper` and the
-`Bool` form `q >= upper` disagree at the limit, where [D-179][d-179]'s cast
+today and never would. It would also make the sign form `x - upper` and the
+`Bool` form `x >= upper` disagree at the limit, where [D-179][d-179]'s cast
 `σ ≥ 0` is what makes them one predicate. Strictness is a property of the
 predicate, not of the framework: a reach predicate holds at equality and a
 release predicate does not, and one global convention cannot serve both.
