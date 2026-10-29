@@ -271,7 +271,7 @@ were derived.
 | [D-244][d-244] | Refuse the write primitives of a detached handle by name | ratified |
 | [D-245][d-245] | Classify a cycle cluster by a surviving traced cycle and carry each member's tracing mode | ratified |
 | [D-246][d-246] | Diagnose a foreign declaration binding as its own fail-fast kind | ratified |
-| [D-247][d-247] | Accept the `NamedTuple` as the only store declaration form | ratified |
+| [D-247][d-247] | Accept the `NamedTuple` as the only store declaration form | superseded → [D-435][d-435] |
 | [D-248][d-248] | Frame every user-authored method the build invokes, declarations included | ratified |
 | [D-249][d-249] | Settle three payload columns: contract arity, runtime time and face routes | ratified |
 | [D-250][d-250] | Warnings live where the artifact criterion puts them | ratified |
@@ -433,6 +433,7 @@ were derived.
 | [D-432][d-432] | Render an artifact to data through `descriptor` | ratified |
 | [D-433][d-433] | The descriptor writer's readings | ratified |
 | [D-434][d-434] | The failure descriptor and a diagnostic as data | ratified |
+| [D-435][d-435] | Admit a bare leaf as a store declaration, addressed by the component path | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -3109,6 +3110,11 @@ would materialize without invariants, but the condition algebra and the
 readers address an `init_x` field as one leaf ([§14.3][s14-3], [§14.4][s14-4]), and structure is
 the component tree's to express; the check that enforces the vocabulary
 refuses nesting with the rest.
+
+Annotation (2026-10-29): the flat declaration admits a bare leaf. A
+declaration that is not a `NamedTuple` is one leaf with no field name,
+checked against the same vocabulary and addressed by the component path
+alone ([D-435][d-435]).
 
 **Rejected.**
 - *Invariant-carrying leaves with constructors run on read:*
@@ -9931,7 +9937,7 @@ spells resolves that case too.
 
 ### D-247 — Accept the `NamedTuple` as the only store declaration form
 
-**Status.** ratified
+**Status.** superseded → [D-435][d-435]
 
 **Position.** Every by-value store declaration, `init_x`, `init_s` and
 `init_m`, returns a `NamedTuple` with one named field per leaf, and no other
@@ -9976,6 +9982,13 @@ own value and keeps reading as "declares nothing".
 
 Annotation (2026-09-25): the empty store `(;)` is a `NamedTuple` and admitted; it
 is the stateless leaf's mandatory tier marker ([D-263][d-263]).
+
+Annotation (2026-10-29): superseded by [D-435][d-435], which admits the bare leaf
+under the headless form. Two of the three grounds below lapsed, auto-publication
+with [D-252][d-252] and "no grounding model wants it" against the library; the third,
+a second shape at every name-keyed seam, is the cost [D-435][d-435] accepts, carrying
+the bare shape first-class in the executor's artifacts and one reserved empty
+name in the string-keyed bookkeeping.
 
 **Rejected.**
 - *A single leaf as a second store form, addressed as the store itself:* a
@@ -11127,6 +11140,13 @@ is admitted at a tolerant entry ([D-264][d-264]); the marker's meaning is "carri
 partials", and an AD-opaque implementation that must participate supplies a
 local rule under a tolerant entry ([D-266][d-266]).
 
+Annotation (2026-10-29): the stateless spelling is `nothing`,
+`x_init(::C) = nothing` or `s_init(::C) = nothing`, and the empty
+`NamedTuple` is refused ([D-435][d-435]). The store stays the mandatory tier marker on
+the grounds above; the rejection of `nothing` below rested on
+`StoreNotNamedTuple`, which [D-435][d-435] retires, and on a sentinel's silence, which
+a mandatory declaration does not have.
+
 **Rejected.**
 - *Superseded position — the mandated two-argument forms on the continuous
   tier ([D-166][d-166], [D-167][d-167]):* ceremony on every continuous leaf for a per-leaf
@@ -12216,6 +12236,12 @@ followed by `.name` and `[k]` or `[k,l]` steps in any order.
   `a` and `a.b` both exist the longest wins, and a build warning for a face
   name that is also an address into another face stays addable after a
   release, which a reservation does not.
+
+  Annotation (2026-10-29): the leaf address has a headless form for a bare
+  store, one declared as a single leaf with no field name. The address is
+  empty, or begins at its index step, and the store selectors' leaf argument
+  defaults to it ([D-435][d-435]).
+
 - Each step is checked at resolution against the type resolved so far. A
   `.name` step needs an isbits struct with that field. An index step needs an
   `SArray`, with one index (linear) or one per dimension. A step never enters
@@ -17452,6 +17478,126 @@ well. The session's record is `design/inspector/failure_descriptor.md`.
 - *`Union{Nothing, Structure}` on the carrier:* `Structure` is declared
   after the carrier, and `declare.jl` throws it before any artifact exists.
 
+### D-435 — Admit a bare leaf as a store declaration, addressed by the component path
+
+**Status.** ratified
+
+**Position.** A store declaration, `x_init`, `s_init` or `m_init`, returns a
+`NamedTuple` with one named field per leaf, or one bare leaf, which the
+framework addresses by the component path alone ([§7.1][s7-1], [§8.2][s8-2], [§14.1][s14-1], [§14.4][s14-4]).
+The bundled rulings:
+
+- A bare store is anything the declaration returns that is not a
+  `NamedTuple`, read as one leaf against the tier's vocabulary: a real or an
+  `SArray` of reals for `x` ([D-094][d-094]), an isbits value or a `Symbol` for `s`
+  and `m` ([D-231][d-231]). A leaf outside the vocabulary is `IllegalStateLeaf` or
+  `IllegalStoreField` with no field name. `StoreNotNamedTuple` retires. The
+  shape is decided per declaration, independently across the three; `ws_init`
+  and the contracts are untouched.
+- The stateless spelling is `nothing`, `x_init(::C) = nothing` or
+  `s_init(::C) = nothing`. It is a store of zero leaves and the undeclared
+  fallback, and it is the one spelling of "no state". The empty `NamedTuple`,
+  `(;)`, is refused as `EmptyStore`, collected, with a message naming
+  `nothing`. The bundle law's presence test is "the store is not `nothing`".
+  [D-263][d-263]'s mandatory marker stands.
+- The declared shape decides the law a return is held to. `x_deriv`,
+  `x_projection` and a handler's `x` key return the leaf itself for a bare
+  `x`, `s_update` the leaf for a bare `s`, and a handler's `m` key or a
+  condition's `m` payload replaces a bare `m` whole, there being nothing to
+  merge ([§9.5][s9-5], [§14.3][s14-3]).
+- The leaf address gains a headless form ([D-276][d-276]). On a bare store the field
+  name is absent, so `get_state("integrator")` reads the leaf,
+  `get_state("integrator", "[2]")` indexes an `SArray` leaf, and the store
+  selectors' `leaf` defaults to the empty address. A condition sets a bare
+  store with a bare payload, `at("integrator", set(x = 1.0))`, checked at
+  resolution; a bare payload against a named store, or a named payload
+  against a bare store, is `ConditionResolution` with reason `:store_shape`.
+- The framework keys its `(path, name)` bookkeeping on one reserved empty
+  name for a bare declaration, and every such pair renders through one
+  renderer that drops the empty name, so a bare leaf of `plant` reads `plant`
+  wherever a user sees it, never `plant/` or `plant.`.
+- An assembly face is never bare. The contracts, `u_types` and `y_types`,
+  keep the `NamedTuple` form under this entry; the bare contract is a later
+  ruling's, with the one-segment wiring endpoint and the descriptor bump it
+  needs ([D-036][d-036], [D-040][d-040], [D-210][d-210], [D-276][d-276]).
+
+**Spec.** [§3.1][s3-1], [§5.2][s5-2], [§7.1][s7-1], [§7.3][s7-3], [§8.2][s8-2], [§9.1][s9-1], [§9.5][s9-5], [§13.5][s13-5], [§13.7][s13-7], [§14.1][s14-1],
+[§14.3][s14-3], [§14.4][s14-4], [Appendix B][sB], [Appendix C][sC], [Appendix D][sD]
+
+**Rationale.** [D-247][d-247] refused the bare form on three grounds, and two have
+lapsed. Auto-publication, which needed a state field name to match a port,
+went with [D-252][d-252]. "No grounding model wants it" is contradicted by the
+library: two dozen blocks spell `(in = V,)`, `(out = V,)` and `(q = c.x0,)`,
+and the `Integrator` reads `x_init(c) = (q = c.x0,)`,
+`y_state(::Integrator, (; x)) = (out = x.q,)` and
+`x_deriv(::Integrator, (; u)) = (q = u.in,)`, a label that does no work,
+costs a field access at every read and a one-field tuple at every return,
+and shows the reader a name the author never wanted. The third ground, a
+second store shape at every name-keyed seam, is real, and this entry accepts
+it knowing where the cost falls.
+
+The field name does two jobs for a store. It pairs returns with declared
+fields, and it addresses a leaf from outside: a condition's merge key, a
+reader's leaf-address head, linearization's `x` list, the `field` payload of
+diagnostics. Nothing in the hot path needs it. The executor's `x` view is
+reconstructed from the flat buffer under the declared state type, and that
+type can be `Float64` as readily as a one-field `NamedTuple` type; the leaf
+walk, the flat buffer and the embed-accept relation already take any leaf
+type. So the typed artifacts the executor runs carry the bare shape
+first-class, with no wrap at the gather and no unwrap at the return check,
+which is the bijection [D-247][d-247] found owed at every seam under
+canonicalization. The string-keyed bookkeeping, keyed `(path, Symbol)` in
+the layout, the feedthrough graph, the outputs' name lists and the
+diagnostic payloads, keeps one reserved empty name, so that half runs
+unchanged. The author-facing seams, conditions, readers and renderers, each
+gain one check for "no name". Three layers, each treated the way it is
+cheapest.
+
+The headless form was chosen over a fixed default face. A default name such
+as `in`, `out` or `value`, with only the bundle unwrapped, costs nothing in
+the path grammar, the descriptor or the periphery, but it shows the author a
+name they never wrote, in wiring, in conditions and in the inspector, which
+is half of what the change removes. Addressing by the component path alone
+is what the author of a one-state component means.
+
+`nothing` replaces `(;)` because the empty `NamedTuple` is the named form's
+empty case and the bare form has none. Once a store may be a value,
+"declares no state" needs a spelling that is a value of neither shape, and
+`nothing` is the undeclared fallback already. [D-263][d-263] rejected `nothing` as a
+sentinel return of the class [D-178][d-178] refuses, and as a spelling
+`StoreNotNamedTuple` already rejected. The second ground goes with the kind.
+The first does not reach a mandatory declaration: a lost
+`x_init(::C) = nothing` fails loud as a primitive declaring no store,
+exactly as a lost `(;)` did. One canonical form remains, so `(;)` is
+refused rather than tolerated.
+
+The stores half and the contracts half are independent and land as two
+increments, stores first; the midpoint, bare stores with named contracts, is
+a consistent design. The analysis is recorded in
+`design/reports/20261029_bare_declarations/README.md`.
+
+**Rejected.**
+- *Superseded position — the `NamedTuple` as the only store form ([D-247][d-247]):*
+  two of its three grounds lapsed with [D-252][d-252] and the library; the third is
+  the cost accepted above.
+- *A fixed default face (`in`, `out`, `value`) with the bundle unwrapped:* no
+  change to the path grammar or the descriptor, but a name the author never
+  wrote shown in wiring, conditions and the inspector.
+- *Canonicalizing a bare value into a one-field `NamedTuple`:* the bijection
+  owed at every seam, [D-247][d-247]'s own rejection, which carrying the bare shape
+  first-class avoids.
+- *Keeping `(;)` beside `nothing` as the stateless spelling:* two spellings
+  of one fact; the empty `NamedTuple` is the named form's degenerate case and
+  says nothing about the bare one.
+- *A bare `NamedTuple` value as a bare store:* no ambiguity to resolve, since
+  [§7.1][s7-1] forbids a `NamedTuple` leaf inside `x` and a `NamedTuple` return is
+  the named form by definition.
+- *Merging a bare `m` payload:* nothing to merge into; the whole value is the
+  only write.
+- *Landing both halves in one increment:* the contracts half changes the
+  path grammar and the descriptor format, the stores half neither; the
+  midpoint is consistent.
+
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
 [d-002]: #d-002--adopt-the-causal-port-based-paradigm
@@ -17861,6 +18007,7 @@ well. The session's record is `design/inspector/failure_descriptor.md`.
 [d-432]: #d-432--render-an-artifact-to-data-through-descriptor
 [d-433]: #d-433--the-descriptor-writers-readings
 [d-434]: #d-434--the-failure-descriptor-and-a-diagnostic-as-data
+[d-435]: #d-435--admit-a-bare-leaf-as-a-store-declaration-addressed-by-the-component-path
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property

@@ -18,10 +18,13 @@ item changes what the spec says, the spec edit is part of the item.
   is `design/reports/20261029_bare_declarations/README.md` (not normative):
   the seam inventory, the representation, the defaults and the plan. The
   stores half lands first: `x_init`, `s_init` and `m_init` bare, `nothing`
-  as the stateless marker in place of `(;)`, the headless leaf address, and
-  the library's single-state blocks rewritten; docs commit first, superseding
-  D-247 against §7.1, §8.2, §14.1 and §14.4, then the prototype, the brief
-  and the pipeline. The contracts half follows as its own increment once
+  as the stateless spelling in place of `(;)`, the headless leaf address, and
+  the library's single-state blocks rewritten. The docs landed first as
+  D-435, superseding D-247, with `EmptyStore` for a declared `(;)` and
+  `ConditionResolution` `:store_shape` for a payload of the wrong shape; the
+  block companions (`linear_blocks.md`, `limited_integrator_variants.md`)
+  move with the code. Next the prototype's brief, then the pipeline. The
+  contracts half follows as its own increment once
   this one is pushed: `u_types` and `y_types` bare, the one-segment wiring
   endpoint (§8.6), the descriptor bump (§13.9), amending D-036, D-040,
   D-210 and D-276.
