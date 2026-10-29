@@ -28,8 +28,8 @@ A finite-dimensional linear time-invariant system is written either as the
 state-space model
 
 ```
-q̇ = A q + B u        A: NX×NX   B: NX×NU
-y  = C q + D u        C: NY×NX   D: NY×NU
+ẋ = A x + B u        A: NX×NX   B: NX×NU
+y  = C x + D u        C: NY×NX   D: NY×NU
 ```
 
 or, for one input and one output, as the transfer function
@@ -110,8 +110,8 @@ constructor sets it, from `iszero(D)` for the matrices and from the degree
 comparison for a transfer function. The two arms are
 
 ```julia
-y_state(c::LinearBlock{false}, (; x))     = (out = C q,)
-y_direct(c::LinearBlock{true}, (; x, u))  = (out = C q + D u,)
+y_state(c::LinearBlock{false}, (; x))     = (out = C x,)
+y_direct(c::LinearBlock{true}, (; x, u))  = (out = C x + D u,)
 ```
 
 on the abstract supertype section 6 introduces, and `x_deriv` is one method
