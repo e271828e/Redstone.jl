@@ -3492,8 +3492,11 @@ contract on that side is a [bare contract](#g-bare-contract) (one type, a
 port with no face, [§8.2][s8-2]), **the endpoint is the child segment alone**,
 as in `"gain" => "integrator"` ([D-436][d-436]). A one-segment endpoint at a
 child whose side is named, or at an assembly, is `UnknownPort` with the
-child's face list in hand. A two-segment endpoint at a bare side is the same
-kind, and its message spells the one-segment form. A container
+child's face list in hand. One at a child with no contract on that side and
+a bare contract on the other is `FaceDirectionConflict`, the kind a face
+wired against its direction raises. A two-segment endpoint at a bare side is
+the same kind as the named case, `UnknownPort`, and its message spells the
+one-segment form. A container
 child keeps its key segment as part of that child segment, so
 `"aircraft/2/face"` is one level and not two. The read side
 walks the full depth, as `"systems/ldg/left/trn"` does in a [snapshot](#g-snapshot) (the
@@ -12141,8 +12144,9 @@ reads the one output and `get_output("integrator", "[2]")` one component of
 it, with `leaf` defaulting to the empty address, and `get_face("")` reads the
 headless output face of a primitive root. A named head against a bare port,
 or a headless address against a named one, is `ReadResolution` with reason
-`:port_shape`. `get_input` names a root input, which a bare port never is
-([§8.2][s8-2]). A face name is an arbitrary string and may
+`:port_shape`. At the root, `get_input` names a root input, which a bare port
+never is ([§8.2][s8-2]). At a mount level, a headless `get_input` names a
+bare input and follows its export chain ([§14.9][s14-9]). A face name is an arbitrary string and may
 contain a dot ([§8.6][s8-6]), so on `get_input` and `get_face` the head is matched
 rather than parsed ([D-418][d-418]). The head is the longest declared face name that is a
 prefix of the address and is followed by the end, a `.` or a `[`. A `Symbol` leaf
@@ -14360,7 +14364,9 @@ collection ([§9.2][s9-2], [D-250][d-250]).
 - **`FaceDirectionConflict`** ([§8.6][s8-6]). Error · build · collected.
   The declaring method and offending entry, the endpoint as written, the
   child it resolved to, the resolved port's actual direction, the side the
-  entry requires (`:producer` or `:consumer`).
+  entry requires (`:producer` or `:consumer`). A one-segment endpoint at a
+  child whose only contract is a bare one on the other side is this kind
+  ([D-436][d-436]).
 - **`UnknownFaceSelection`** ([§8.8][s8-8]). Error · build · fail-fast. The
   helper, the child's full path, reason (unknown names / more than one selector given), the
   offending names or the selectors given, the child's face list.

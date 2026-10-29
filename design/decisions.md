@@ -17650,9 +17650,11 @@ component path alone ([§4.3][s4-3], [§5.2][s5-2], [§8.2][s8-2], [§8.6][s8-6]
 - A wiring endpoint may be the child segment alone where the child's
   contract on that side is bare, `"gain" => "integrator"` ([§6.1][s6-1], [§8.6][s8-6]). A
   one-segment endpoint at a child whose side is named, or at an assembly, is
-  `UnknownPort` with an empty port name and the child's face list in hand. A
-  two-segment endpoint at a bare side is the same kind, its message spelling
-  the one-segment form.
+  `UnknownPort` with an empty port name and the child's face list in hand;
+  one at a child with no contract on that side and a bare contract on the
+  other is `FaceDirectionConflict`, as a face wired against its direction is.
+  A two-segment endpoint at a bare side is `UnknownPort`, its message
+  spelling the one-segment form.
 - An assembly face is never bare, and a face name is never empty ([§8.6][s8-6]). An
   empty assembly face or an empty contract key is `FaceNameIllegal`.
   `input_faces` and `output_faces` list a bare contract as one empty name,
@@ -17673,8 +17675,9 @@ component path alone ([§4.3][s4-3], [§5.2][s5-2], [§8.2][s8-2], [§8.6][s8-6]
   with the name defaulting likewise. `get_face("")` reads the headless output
   face of a primitive root. A named head against a bare port, or a headless
   address against a named one, is `ReadResolution` with reason `:port_shape`.
-  `get_input` never meets a bare port, since it names a root input and a
-  bare `u_types` is never one.
+  At the root, `get_input` never meets a bare port, since it names a root
+  input and a bare `u_types` is never one; at a mount level, a headless
+  `get_input` names a bare input and follows its export chain ([§14.9][s14-9]).
 - The descriptor spells a bare face's `name` and a bare endpoint's `port` as
   the empty string, as it spells the root's `path`, and the `outputs` stage
   lists likewise; the format stays at version one ([§13.9][s13-9]).
