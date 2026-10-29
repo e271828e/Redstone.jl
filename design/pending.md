@@ -12,6 +12,19 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
+- **Bare declarations, the stores half.** A store or contract declaration
+  may be one bare leaf instead of a `NamedTuple`, addressed by the component
+  path alone, the headless form the user ruled for on 2026-10-29. The record
+  is `design/reports/20261029_bare_declarations/README.md` (not normative):
+  the seam inventory, the representation, the defaults and the plan. The
+  stores half lands first: `x_init`, `s_init` and `m_init` bare, `nothing`
+  as the stateless marker in place of `(;)`, the headless leaf address, and
+  the library's single-state blocks rewritten; docs commit first, superseding
+  D-247 against §7.1, §8.2, §14.1 and §14.4, then the prototype, the brief
+  and the pipeline. The contracts half follows as its own increment once
+  this one is pushed: `u_types` and `y_types` bare, the one-segment wiring
+  endpoint (§8.6), the descriptor bump (§13.9), amending D-036, D-040,
+  D-210 and D-276.
 - **The inspector, stage 1**: the static inspector over the descriptor.
   The stage's record is `design/inspector/initial_design.md` (not
   normative), with one record per axis session beside it:
