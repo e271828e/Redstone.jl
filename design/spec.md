@@ -11133,9 +11133,9 @@ support.
 # UnitDelay{V} — a discrete primitive at K = 1; its initial value is instance
 # data
 struct UnitDelay{V} <: AbstractComponent
-    v0::V
+    s0::V
 end
-s_init(d::UnitDelay) = d.v0                   # one bare leaf, addressed by the component path (§8.2)
+s_init(d::UnitDelay) = d.s0                   # one bare leaf, addressed by the component path (§8.2)
 u_types(::UnitDelay{V}) where {V} = (in = V,)
 y_types(::UnitDelay{V}) where {V} = (out = V,)
 y_state(::UnitDelay, (; s)) = (out = s,)      # publishes the stored value
@@ -11143,7 +11143,7 @@ s_update(::UnitDelay, (; u)) = u.in           # stores the incoming one
 ```
 
 **The delay holds its initial value as instance data** ([D-312][d-312]), so
-`UnitDelay(v0)` needs no `zero` method on `V`. The store is isbits by rule
+`UnitDelay(s0)` needs no `zero` method on `V`. The store is isbits by rule
 ([D-231][d-231]), which bounds `V`.
 
 `UnitDelay`'s tier semantics are the point, and they must be stated wherever the
