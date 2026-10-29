@@ -17,10 +17,20 @@ item changes what the spec says, the spec edit is part of the item.
   `u_types` and `y_types` bare, the one-segment wiring endpoint (§8.6), the
   descriptor bump (§13.9), amending D-036, D-040, D-210 and D-276. The record
   is `design/reports/20261029_bare_declarations/README.md` (not normative),
-  its "Seam inventory, contracts half" the checklist. Two arms the stores half
-  left for it: `get_output(path, "")` arrives as `ReadResolution`
-  `:undeclared` at `BARE`, and the `(path, name)` renderer `_named` already
-  drops an empty face. When the library's contracts go bare, the docstrings
+  its "Seam inventory, contracts half" the checklist. Where the stores half
+  leaves it: a bare `u_types` or `y_types` fails today as a raw
+  `MethodError` on `keys(::Type)`, not as a diagnostic; `get_output(path,
+  "")` arrives as `ReadResolution` `:undeclared` at `BARE`; and the
+  `(path, name)` renderer `_named` drops an empty name, but most port
+  renderings still interpolate the pair and must be routed through it. The
+  prototype proves: the one-segment endpoint wired both ways and refused
+  where the child's side is not bare; the two root refusals (a bare
+  `u_types` at a primitive root, both contracts bare under D-210); the
+  feedthrough graph, the layout and the trace on the `BARE` key; the single-
+  cell gather and scatter at zero allocation with the check folded; the
+  `Dual` sweep over a bare-contract `Integrator`; the descriptor's bump
+  validating; no stray `/` in any rendering at depth; and the library and
+  examples churn. When the library's contracts go bare, the docstrings
   of the integrating and linear blocks rename the port names `in` and `out`
   to `u` and `y`, the textbook form `ẋ = A x + B u`, `y = C x + D u`, and
   `s⁺ = A s + B u` on the discrete tier; the state letters `x` and `s` are
