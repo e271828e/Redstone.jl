@@ -560,15 +560,15 @@ y_state(c::Source, (; t)) = (out = c.f(ForwardDiff.value(t)),)
 A continuous [primitive](@ref g-primitive) that publishes the time integral of
 its input.
 
-The [block](@ref g-block) holds one continuous state `q`, starting at `x0`, with
-`q̇ = in`. `out` publishes `q` from [stage 1](@ref g-stage-function). The block
+The [block](@ref g-block) holds one continuous state `x`, starting at `x0`, with
+`ẋ = in`. `out` publishes `x` from [stage 1](@ref g-stage-function). The block
 therefore has no [feedthrough](@ref g-feedthrough). A `Float64` state follows
 the scalar of a `Dual` [activation](@ref g-activation), so the block linearizes
 as it integrates.
 
 # Keywords
 
-- `x0`: the initial value of `q`. `V` is `Float64` or a static array of
+- `x0`: the initial value of `x`. `V` is `Float64` or a static array of
   `Float64`, taken from `float(x0)`, so an integer `x0` qualifies.
 
 See also [`LimitedIntegrator`](@ref), [`DiscreteIntegrator`](@ref).
@@ -592,8 +592,8 @@ x_deriv(::Integrator, (; u)) = u.in
 A continuous [primitive](@ref g-primitive) that publishes its input through a
 first-order lag of time constant `τ`.
 
-The [block](@ref g-block) holds one continuous state `q` from `x0`, with
-`q̇ = (in - q) / τ`, and `out` publishes `q` from
+The [block](@ref g-block) holds one continuous state `x` from `x0`, with
+`ẋ = (in - x) / τ`, and `out` publishes `x` from
 [stage 1](@ref g-stage-function). The state follows the scalar of a `Dual`
 [activation](@ref g-activation), so the lag linearizes to `A = -1/τ` and
 `B = 1/τ`. A hand-written lag whose [scratch](@ref g-scratch) is kept at
@@ -609,7 +609,7 @@ spelling.
 
 - `τ`: the time constant, positive. It is instance data, kept a `Float64`
   whatever scalar the model runs at.
-- `x0`: the initial value of `q`.
+- `x0`: the initial value of `x`.
 """
 struct FirstOrderLag{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: AbstractComponent
     x0::V
@@ -681,10 +681,10 @@ end
 A continuous [primitive](@ref g-primitive) that runs a linear system given in
 state-space form.
 
-The [block](@ref g-block) holds one continuous state `q` from `x0`:
+The [block](@ref g-block) holds one continuous state `x` from `x0`:
 
-    q̇   = A q + B in
-    out = C q + D in
+    ẋ   = A x + B in
+    out = C x + D in
 
 The state is an `SVector` at every size. `in` is a `Float64` when `n_u` is one
 and an `SVector{n_u, Float64}` otherwise, and `out` likewise by `n_y`.
@@ -1126,14 +1126,14 @@ saturation_type(::Type{V}) where {V} = channel_type(V, Int8)
 A continuous [primitive](@ref g-primitive) that publishes the time integral of
 its input, held between two limits.
 
-The [block](@ref g-block) holds one continuous state `q`, with `q̇ = in` while
-free and `q̇ = 0` while saturated, and `out` publishes `q` from
+The [block](@ref g-block) holds one continuous state `x`, with `ẋ = in` while
+free and `ẋ = 0` while saturated, and `out` publishes `x` from
 [stage 1](@ref g-stage-function). It is not a clamp. The bare mode, `saturation`
 below, is read by the derivative, and four [state events](@ref g-state-event) move
 it. It
 is a signed `Int8` code, the sign of the limit in force: `-1` at `lower`, `0`
-free and `+1` at `upper`. `hit_upper` and `hit_lower` fire when `q` reaches a
-limit, and their handlers write `q` to the limit exactly and saturate.
+free and `+1` at `upper`. `hit_upper` and `hit_lower` fire when `x` reaches a
+limit, and their handlers write `x` to the limit exactly and saturate.
 `leave_upper` and `leave_lower` fire when `in` turns strictly back into the
 range, and free it. An input of exactly zero at a limit keeps the mode
 saturated. The hit events are [localized](@ref g-localized).
@@ -1148,7 +1148,7 @@ event fires, and so only on a declared [boundary](@ref g-boundary).
 the step at the input's zero crossing.
 [Boundary-detected](@ref g-boundary-detected), the guards are the `Bool`
 [predicates](@ref g-predicate). The departure then fires at the end of the step
-in which `in` first pointed back into the range, so `q` is held on the limit for
+in which `in` first pointed back into the range, so `x` is held on the limit for
 the rest of that step. It carries an offset of at most `a h² / 2` from then on,
 `a` the input's slope at its zero crossing. What the cheap form buys is that a
 departure costs no root-finding and splits no step, where a localized one pays
@@ -1170,7 +1170,7 @@ initial mode agrees with the initial input.
 
 - `lower`: the lower limit, below `upper`, componentwise over a vector.
 - `upper`: the upper limit.
-- `x0`: the initial value of `q`. `x0`, `lower` and `upper` are promoted to one
+- `x0`: the initial value of `x`. `x0`, `lower` and `upper` are promoted to one
   `V`, which is `Float64` or a static array of `Float64`, and taken by `float`,
   so integer values qualify.
 - `localized`: `true` for localized leave events, `false` for boundary-detected
@@ -1199,7 +1199,7 @@ x_deriv(::LimitedIntegrator, (; u, m)) = ifelse.(m .== 0, u.in, zero(u.in))
 hit_upper_guard(c::LimitedIntegrator, (; x)) = x - c.upper
 hit_lower_guard(c::LimitedIntegrator, (; x)) = c.lower - x
 # The leave guards gate on strictly inward input. Gated on the mode alone, an
-# input of exactly zero reads `-0.0`, which holds, and frees the mode with `q`
+# input of exactly zero reads `-0.0`, which holds, and frees the mode with `x`
 # on the limit. The gate `u.in < 0` reads a wired signal, so §10.4's argument
 # that gates stay fixed through a localization does not cover it: σ jumps from
 # `-1` to a small positive value at the input's zero crossing. The bracket still
