@@ -1,0 +1,3547 @@
+diff --git a/README.md b/README.md
+index ddd8ecf..8d606dd 100644
+--- a/README.md
++++ b/README.md
+@@ -75,12 +75,12 @@ struct PI <: AbstractComponent
+     k_i::Float64
+ end
+ 
+-s_init(::PI) = (integral = 0.0,)
++s_init(::PI) = 0.0                                   # one state, declared bare
+ u_types(::PI) = (ref = Float64, y = Float64)
+ y_types(::PI) = (u = Float64,)
+ 
+-y_direct(c::PI, (; s, u)) = (u = c.k_p * (u.ref - u.y) + s.integral,)
+-s_update(c::PI, (; s, u, Δt)) = (integral = s.integral + c.k_i * Δt * (u.ref - u.y),)
++y_direct(c::PI, (; s, u)) = (u = c.k_p * (u.ref - u.y) + s,)
++s_update(c::PI, (; s, u, Δt)) = s + c.k_i * Δt * (u.ref - u.y)
+ 
+ loop(feedback) = Group((plant = Plant(2.0, 0.3), ctl = PI(3.0, 2.0));
+     local_wires = ("ctl/u" => "plant/u", "plant/$feedback" => "ctl/y"),
+diff --git a/examples/src/longitudinal.jl b/examples/src/longitudinal.jl
+index 1963727..70f93c2 100644
+--- a/examples/src/longitudinal.jl
++++ b/examples/src/longitudinal.jl
+@@ -87,7 +87,7 @@ struct GroundContact <: AbstractComponent
+ end
+ GroundContact(; h_ground = 0.0) = GroundContact(h_ground)
+ 
+-x_init(::GroundContact) = (;)
++x_init(::GroundContact) = nothing
+ m_init(::GroundContact) = (contact = false,)
+ u_types(::GroundContact) = (h = Float64,)
+ y_types(::GroundContact) = (contact = Bool,)
+diff --git a/src/assembly.jl b/src/assembly.jl
+index b6abaf5..bc73a4f 100644
+--- a/src/assembly.jl
++++ b/src/assembly.jl
+@@ -709,7 +709,7 @@ end
+ # Tier is declared by the store every leaf declares, `x_init` continuous against
+ # `s_init` discrete, the two disjoint (D-195), and empty on a stateless leaf
+ # (D-263). The declaration is asked for by method existence, never by
+-# emptiness: a declared `(;)` and the fallback are the same value. A stateful
++# emptiness: a declared `nothing` and the fallback are the same value. A stateful
+ # leaf announces its tier in the update law as well, and the update law decides
+ # where there is one; the output stages are one pair of names shared by both
+ # tiers (D-220) and cast no vote, and no arity carries a tier. Every other
+@@ -722,10 +722,19 @@ end
+ # The classifier sees primitives only: a component that declares nothing at all
+ # has no *class* to read, which §8.5 settles before this runs.
+ 
+-# §7.1, §8.2, D-094: every `x_init` field is a `Float64` or an `SArray` of them,
+-# and the declaration is flat. The arm names where the value belongs instead.
++"""
++The `name => value` pairs of a store value, the one shape reading of §8.2: a
++`NamedTuple`'s own fields, one `BARE` pair for a bare value, none for `nothing`.
++"""
++store_fields(contents::NamedTuple) = pairs(contents)
++store_fields(::Nothing) = ()
++store_fields(contents) = (BARE => contents,)
++
++# §7.1, §8.2, D-094: every `x_init` field, or the bare value, is a `Float64` or
++# an `SArray` of them, and the declaration is flat. The arm names where the
++# value belongs instead.
+ function check_state_leaves(path::String, @nospecialize(comp), diags::Vector{Diagnostic})
+-    for (name, value) in pairs(invoke_declaration(x_init, comp))
++    for (name, value) in store_fields(invoke_declaration(x_init, comp))
+         leaf_eltype = value isa SArray ? eltype(value) : typeof(value)
+         leaf_eltype === Float64 && continue
+         reason = value isa NamedTuple ? :nested :
+@@ -736,25 +745,25 @@ function check_state_leaves(path::String, @nospecialize(comp), diags::Vector{Dia
+     end
+ end
+ 
+-# §8.2, D-247: every by-value store is a `NamedTuple`, and the classifier and
+-# the two field checks below read it as one. Returns whether this primitive
+-# can be read further; the fallbacks return `NamedTuple()` and pass.
++# §8.2: `(;)` no longer spells the empty store, `nothing` does, and the presence
++# tests below read the old spelling as a store. Returns whether this primitive
++# can be read further.
+ function check_store_form(path::String, @nospecialize(comp), diags::Vector{Diagnostic})
+     readable = true
+     for (name, fn) in ((:x_init, x_init), (:s_init, s_init), (:m_init, m_init))
+-        contents = invoke_declaration(fn, comp)
+-        contents isa NamedTuple && continue
+-        push!(diags, StoreNotNamedTuple(path = path, store = name, declared = typeof(contents)))
++        invoke_declaration(fn, comp) === (;) || continue
++        push!(diags, EmptyStore(path = path, store = name))
+         readable = false
+     end
+     readable
+ end
+ 
+-# §7.3, D-231: every store field is isbits or a `Symbol`, checked on both stores.
++# §7.3, D-231: every store field, or the bare value, is isbits or a `Symbol`,
++# checked on both stores.
+ function check_stores(path::String, @nospecialize(comp), diags::Vector{Diagnostic})
+     for (store, contents) in ((:s_init, invoke_declaration(s_init, comp)),
+                               (:m_init, invoke_declaration(m_init, comp)))
+-        for (name, value) in pairs(contents)
++        for (name, value) in store_fields(contents)
+             isbits(value) || value isa Symbol ||
+                 push!(diags, IllegalStoreField(path = path, store = store,
+                                                name = name, declared = typeof(value)))
+@@ -772,7 +781,7 @@ function classify_tier(path::String, @nospecialize(comp), diags::Vector{Diagnost
+     has_stage(s_update, comp) && push!(votes, (:s_update, DISCRETE))
+     _declares(x_init, comp) && push!(votes, (:x_init, CONTINUOUS))
+     _declares(s_init, comp) && push!(votes, (:s_init, DISCRETE))
+-    !isempty(invoke_declaration(m_init, comp)) && push!(votes, (:m_init, CONTINUOUS))
++    invoke_declaration(m_init, comp) !== nothing && push!(votes, (:m_init, CONTINUOUS))
+     !isempty(invoke_declaration(state_events, comp)) && push!(votes, (:state_events, CONTINUOUS))
+ 
+     # The store is mandatory, empty when stateless (§8.2, D-263).
+@@ -781,8 +790,8 @@ function classify_tier(path::String, @nospecialize(comp), diags::Vector{Diagnost
+                                    declarations = leaf_declarations(comp)))
+         return nothing
+     end
+-    state_store = !isempty(invoke_declaration(x_init, comp)) ? :x_init :
+-                  !isempty(invoke_declaration(s_init, comp)) ? :s_init : nothing
++    state_store = invoke_declaration(x_init, comp) !== nothing ? :x_init :
++                  invoke_declaration(s_init, comp) !== nothing ? :s_init : nothing
+     update_vote = findfirst(v -> first(v) === :x_deriv || first(v) === :s_update,
+                             votes)
+     if state_store !== nothing && update_vote === nothing
+@@ -1263,9 +1272,8 @@ Base.@nospecializeinfer function _walk!(draft::StructureDraft, path::String,
+             push!(draft.instances, comp)
+             push!(draft.timings, scope)
+             push!(draft.rates, _extend(chain, link))
+-            # The store-form check (§8.2, D-247) gates the rest: the tier classifier
+-            # and the two field checks read a store value as a `NamedTuple`, so a
+-            # primitive that fails the form is read no further. The one tier
++            # The store-form check (§8.2) gates the rest: the tier classifier reads
++            # `(;)` as a store, so a primitive that spells it is read no further. The one tier
+             # classification (§8.2) follows: a failure is recorded and the walk
+             # carries `nothing` where the tier would be.
+             if check_store_form(path, comp, diags)
+@@ -1273,7 +1281,7 @@ Base.@nospecializeinfer function _walk!(draft::StructureDraft, path::String,
+                 check_stores(path, comp, diags)
+                 check_state_leaves(path, comp, diags)
+             else
+-                tier = nothing                      # D-247: read no further
++                tier = nothing                      # read no further
+             end
+             push!(draft.tiers, tier)
+             # A primitive at the root: its `u_types` keys are the model's root
+diff --git a/src/blocks.jl b/src/blocks.jl
+index b3e90f1..2f5cd31 100644
+--- a/src/blocks.jl
++++ b/src/blocks.jl
+@@ -106,7 +106,7 @@ const Pack{V, N} = Junction{V, SVector{N, V}, N, typeof(pack)}
+ (::Type{And{N}})() where {N} = And{N}(&)
+ (::Type{Pack{V, N}})() where {V, N} = Pack{V, N}(pack)
+ 
+-x_init(::Junction) = (;)
++x_init(::Junction) = nothing
+ u_types(::Junction{In, Out, N}) where {In, Out, N} =
+     NamedTuple{ntuple(i -> Symbol(:in, i), N)}(ntuple(_ -> In, N))
+ y_types(::Junction{In, Out}) where {In, Out} = (out = Out,)
+@@ -130,7 +130,7 @@ typed `V`, with `outi = in[i]`. The [block](@ref g-block) is stateless, and the
+ inverse of [`Pack`](@ref).
+ """
+ struct Unpack{V, N} <: AbstractComponent end
+-x_init(::Unpack) = (;)
++x_init(::Unpack) = nothing
+ u_types(::Unpack{V, N}) where {V, N} = (in = SVector{N, V},)
+ y_types(::Unpack{V, N}) where {V, N} = NamedTuple{unpack_names(Val(N))}(ntuple(_ -> V, N))
+ y_direct(::Unpack{V, N}, (; u)) where {V, N} = NamedTuple{unpack_names(Val(N))}(Tuple(u.in))
+@@ -157,7 +157,7 @@ step. That is a mode made silently, which the moded blocks such as
+ [`Relay`](@ref) exist to declare.
+ """
+ struct Switch{V} <: AbstractComponent end
+-x_init(::Switch) = (;)
++x_init(::Switch) = nothing
+ u_types(::Switch{V}) where {V} = (in1 = V, in2 = V, select = Bool)
+ y_types(::Switch{V}) where {V} = (out = V,)
+ y_direct(::Switch, (; u)) = (out = ifelse(u.select, u.in1, u.in2),)
+@@ -186,7 +186,7 @@ See also [`Source`](@ref), [`Step`](@ref).
+ struct Constant{V} <: AbstractComponent
+     value::V
+ end
+-x_init(::Constant) = (;)
++x_init(::Constant) = nothing
+ y_types(::Constant{V}) where {V} = (out = Pinned{V},)
+ y_state(c::Constant, _) = (out = c.value,)
+ 
+@@ -212,11 +212,11 @@ See also [`Delay`](@ref).
+ struct UnitDelay{V} <: AbstractComponent
+     v0::V
+ end
+-s_init(delay::UnitDelay) = (v = delay.v0,)
++s_init(delay::UnitDelay) = delay.v0
+ u_types(::UnitDelay{V}) where {V} = (in = V,)
+ y_types(::UnitDelay{V}) where {V} = (out = V,)
+-y_state(::UnitDelay, (; s)) = (out = s.v,)
+-s_update(::UnitDelay, (; u)) = (v = u.in,)
++y_state(::UnitDelay, (; s)) = (out = s,)
++s_update(::UnitDelay, (; u)) = u.in
+ 
+ # Design: §13.7.
+ """
+@@ -235,7 +235,7 @@ reads a zero coupling, which is the modelling decision the block states.
+ `TypeError` where `Freeze{V}` is written.
+ """
+ struct Freeze{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: AbstractComponent end
+-x_init(::Freeze) = (;)
++x_init(::Freeze) = nothing
+ u_types(::Freeze{V}) where {V} = (in = V,)
+ y_types(::Freeze{V}) where {V} = (out = Pinned{V},)
+ y_direct(::Freeze, (; u)) = (out = ForwardDiff.value.(u.in),)
+@@ -264,7 +264,7 @@ struct StopRequest <: AbstractComponent
+     reason::String
+ end
+ StopRequest(; reason = "") = StopRequest(reason)
+-x_init(::StopRequest) = (;)
++x_init(::StopRequest) = nothing
+ u_types(::StopRequest) = (request = Bool,)
+ y_types(::StopRequest) = (flag = StopFlag,)
+ y_direct(::StopRequest, (; u)) = (flag = u.request ? STOP_REQUESTED : NO_STOP,)
+@@ -322,7 +322,7 @@ s_update(::Delay{V, K}, (; s, u)) where {V, K} =
+ A discrete [primitive](@ref g-primitive) that publishes the forward-Euler
+ integral of its input.
+ 
+-The [block](@ref g-block) holds one [store](@ref g-store) field `q` from `s0`.
++The [block](@ref g-block) holds one bare [store](@ref g-store) value `q` from `s0`.
+ Each [tick](@ref g-tick) advances it by forward Euler, `q⁺ = q + Δt in`. `out`
+ publishes `q` from [stage 1](@ref g-stage-function). The block therefore breaks
+ an [algebraic loop](@ref g-algebraic-loop) as [`UnitDelay`](@ref) does. `Δt` is
+@@ -343,11 +343,11 @@ struct DiscreteIntegrator{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: Abs
+     s0::V
+ end
+ DiscreteIntegrator(; s0 = 0.0) = DiscreteIntegrator(float(s0))
+-s_init(c::DiscreteIntegrator) = (q = c.s0,)
++s_init(c::DiscreteIntegrator) = c.s0
+ u_types(::DiscreteIntegrator{V}) where {V} = (in = V,)
+ y_types(::DiscreteIntegrator{V}) where {V} = (out = V,)
+-y_state(::DiscreteIntegrator, (; s)) = (out = s.q,)
+-s_update(::DiscreteIntegrator, (; s, u, Δt)) = (q = s.q + Δt * u.in,)
++y_state(::DiscreteIntegrator, (; s)) = (out = s,)
++s_update(::DiscreteIntegrator, (; s, u, Δt)) = s + Δt * u.in
+ 
+ """
+     DiscreteLimitedIntegrator(; lower, upper, s0 = zero(lower)) -> DiscreteLimitedIntegrator
+@@ -355,7 +355,7 @@ s_update(::DiscreteIntegrator, (; s, u, Δt)) = (q = s.q + Δt * u.in,)
+ A discrete [primitive](@ref g-primitive) that publishes the forward-Euler
+ integral of its input, held between two limits.
+ 
+-Each [tick](@ref g-tick) advances the one [store](@ref g-store) field `q` from
++Each [tick](@ref g-tick) advances the one bare [store](@ref g-store) value `q` from
+ `s0` as `q⁺ = clamp(q + Δt in, lower, upper)`. `out` publishes `q` from
+ [stage 1](@ref g-stage-function). The mode and four events of the continuous
+ [`LimitedIntegrator`](@ref) are this one `clamp`, with no mode store and no
+@@ -389,12 +389,12 @@ function DiscreteLimitedIntegrator(; lower, upper, s0 = zero(lower))
+     DiscreteLimitedIntegrator(s0, lower, upper)
+ end
+ saturation_code(q, lower, upper) = q >= upper ? Int8(1) : q <= lower ? Int8(-1) : Int8(0)
+-s_init(c::DiscreteLimitedIntegrator) = (q = c.s0,)
++s_init(c::DiscreteLimitedIntegrator) = c.s0
+ u_types(::DiscreteLimitedIntegrator{V}) where {V} = (in = V,)
+ y_types(::DiscreteLimitedIntegrator{V}) where {V} = (out = V, saturation = saturation_type(V))
+ y_state(c::DiscreteLimitedIntegrator, (; s)) =
+-    (out = s.q, saturation = saturation_code.(s.q, c.lower, c.upper))
+-s_update(c::DiscreteLimitedIntegrator, (; s, u, Δt)) = (q = clamp.(s.q + Δt * u.in, c.lower, c.upper),)
++    (out = s, saturation = saturation_code.(s, c.lower, c.upper))
++s_update(c::DiscreteLimitedIntegrator, (; s, u, Δt)) = clamp.(s + Δt * u.in, c.lower, c.upper)
+ 
+ # Design: §5.3, §5.5, §10.5.
+ """
+@@ -404,7 +404,7 @@ A discrete [primitive](@ref g-primitive) that publishes its input with its rate
+ of change bounded per [tick](@ref g-tick).
+ 
+ `out` follows `in`, moving at most `rising Δt` up and `falling Δt` down per
+-tick. `Δt` is the component's own period. One [store](@ref g-store) field `v`
++tick. `Δt` is the component's own period. One bare [store](@ref g-store) value `v`
+ holds the previous output, and each tick stores `out`:
+ 
+     out = v + clamp(in - v, -falling Δt, rising Δt)
+@@ -435,11 +435,11 @@ function RateLimiter(; rising, falling = rising, s0 = 0.0)
+     s0 = float(s0)
+     RateLimiter{typeof(s0)}(rising, falling, s0)
+ end
+-s_init(c::RateLimiter) = (v = c.s0,)
++s_init(c::RateLimiter) = c.s0
+ u_types(::RateLimiter{V}) where {V} = (in = V,)
+ y_types(::RateLimiter{V}) where {V} = (out = V,)
+-y_direct(c::RateLimiter, (; s, u, Δt)) = (out = s.v + clamp.(u.in - s.v, -c.falling * Δt, c.rising * Δt),)
+-s_update(::RateLimiter, (; y)) = (v = y.out,)
++y_direct(c::RateLimiter, (; s, u, Δt)) = (out = s + clamp.(u.in - s, -c.falling * Δt, c.rising * Δt),)
++s_update(::RateLimiter, (; y)) = y.out
+ 
+ # --- the noise source (§7.3, §2.5, D-231, D-313) --------------------------------
+ 
+@@ -453,7 +453,7 @@ noise sample at each [tick](@ref g-tick).
+ The [block](@ref g-block) is a discrete Gaussian white noise process. At each
+ tick, `out` publishes an independent sample of mean `μ` and standard deviation
+ `σ`. It publishes from [stage 1](@ref g-stage-function). The sample is a pure
+-function of `seed` and the tick count `k`, the one [store](@ref g-store) field.
++function of `seed` and the tick count `k`, the one bare [store](@ref g-store) value.
+ The stage therefore draws, no generator or [workspace](@ref g-workspace) is
+ needed, and [replay](@ref g-replay) reproduces the stream. After a tick the
+ store holds the next sample's index, so `k` reads `N + 1` once the block has
+@@ -510,13 +510,13 @@ gaussian(seed, k, ::Type{Float64}) = gaussian(seed, k)
+ gaussian(seed, k, ::Type{SVector{N, Float64}}) where {N} =
+     SVector(ntuple(i -> gaussian(seed, k * N + i - 1), Val(N)))
+ 
+-s_init(::GaussianWhiteNoise) = (k = UInt64(0),)
++s_init(::GaussianWhiteNoise) = UInt64(0)
+ y_types(::GaussianWhiteNoise{V}) where {V} = (out = V,)
+ function y_state(c::GaussianWhiteNoise{V}, (; s, Δt)) where {V}
+     scale = c.density ? c.σ ./ sqrt(Δt) : c.σ
+-    (out = c.μ .+ scale .* gaussian(c.seed, s.k, V),)
++    (out = c.μ .+ scale .* gaussian(c.seed, s, V),)
+ end
+-s_update(::GaussianWhiteNoise, (; s)) = (k = s.k + 1,)
++s_update(::GaussianWhiteNoise, (; s)) = s + 1
+ 
+ # --- the time source (§13.7, D-313) ---------------------------------------------
+ 
+@@ -546,7 +546,7 @@ struct Source{V, F} <: AbstractComponent
+ end
+ (::Type{Source{V}})(f) where {V} = Source{V, typeof(f)}(f)
+ Source(f) = Source{Float64}(f)
+-x_init(::Source) = (;)
++x_init(::Source) = nothing
+ y_types(::Source{V}) where {V} = (out = Pinned{V},)
+ y_state(c::Source, (; t)) = (out = c.f(ForwardDiff.value(t)),)
+ 
+@@ -576,11 +576,11 @@ struct Integrator{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: AbstractCom
+     x0::V
+ end
+ Integrator(; x0 = 0.0) = Integrator(float(x0))
+-x_init(c::Integrator) = (q = c.x0,)
++x_init(c::Integrator) = c.x0
+ u_types(::Integrator{V}) where {V} = (in = V,)
+ y_types(::Integrator{V}) where {V} = (out = V,)
+-y_state(::Integrator, (; x)) = (out = x.q,)
+-x_deriv(::Integrator, (; u)) = (q = u.in,)
++y_state(::Integrator, (; x)) = (out = x,)
++x_deriv(::Integrator, (; u)) = u.in
+ 
+ # Design: §7.2, D-313, commit `9c75324`.
+ # The sentence on the scalar case is the user's ruling of 2026-10-27, which
+@@ -618,11 +618,11 @@ function FirstOrderLag(; τ, x0 = 0.0)
+     x0 = float(x0)
+     FirstOrderLag{typeof(x0)}(x0, τ)
+ end
+-x_init(c::FirstOrderLag) = (q = c.x0,)
++x_init(c::FirstOrderLag) = c.x0
+ u_types(::FirstOrderLag{V}) where {V} = (in = V,)
+ y_types(::FirstOrderLag{V}) where {V} = (out = V,)
+-y_state(::FirstOrderLag, (; x)) = (out = x.q,)
+-x_deriv(c::FirstOrderLag, (; x, u)) = (q = (u.in - x.q) / c.τ,)
++y_state(::FirstOrderLag, (; x)) = (out = x,)
++x_deriv(c::FirstOrderLag, (; x, u)) = (u.in - x) / c.τ
+ 
+ # --- the linear blocks (§13.7, §5.3, D-313) -------------------------------------
+ 
+@@ -654,17 +654,17 @@ as_vector(v::SVector) = v
+ as_port(v::SVector{1}) = v[1]
+ as_port(v::SVector) = v
+ 
+-x_init(c::LinearBlock) = (q = realization(c).x0,)
++x_init(c::LinearBlock) = realization(c).x0
+ u_types(c::LinearBlock) = (in = port_type(size(realization(c).B, 2)),)
+ y_types(c::LinearBlock) = (out = port_type(size(realization(c).C, 1)),)
+ function x_deriv(c::LinearBlock, (; x, u))
+     (; A, B) = realization(c)
+-    (q = A * x.q + B * as_vector(u.in),)
++    A * x + B * as_vector(u.in)
+ end
+-y_state(c::LinearBlock{false}, (; x)) = (out = as_port(realization(c).C * x.q),)
++y_state(c::LinearBlock{false}, (; x)) = (out = as_port(realization(c).C * x),)
+ function y_direct(c::LinearBlock{true}, (; x, u))
+     (; C, D) = realization(c)
+-    (out = as_port(C * x.q + D * as_vector(u.in)),)
++    (out = as_port(C * x + D * as_vector(u.in)),)
+ end
+ 
+ # Design: §5.3, §5.5, §7.2.
+@@ -860,17 +860,17 @@ See also [`DiscreteStateSpace`](@ref), [`DiscreteTransferFunction`](@ref),
+ """
+ abstract type DiscreteLinearBlock{FT} <: AbstractComponent end
+ 
+-s_init(c::DiscreteLinearBlock)  = (q = held(c).x0,)
++s_init(c::DiscreteLinearBlock)  = held(c).x0
+ u_types(c::DiscreteLinearBlock) = (in = port_type(size(held(c).B, 2)),)
+ y_types(c::DiscreteLinearBlock) = (out = port_type(size(held(c).C, 1)),)
+ function s_update(c::DiscreteLinearBlock, (; s, u, Δt))
+     (; A, B) = realization(c, Δt)
+-    (q = A * s.q + B * as_vector(u.in),)
++    A * s + B * as_vector(u.in)
+ end
+-y_state(c::DiscreteLinearBlock{false}, (; s)) = (out = as_port(held(c).C * s.q),)
++y_state(c::DiscreteLinearBlock{false}, (; s)) = (out = as_port(held(c).C * s),)
+ function y_direct(c::DiscreteLinearBlock{true}, (; s, u))
+     (; C, D) = held(c)
+-    (out = as_port(C * s.q + D * as_vector(u.in)),)
++    (out = as_port(C * s + D * as_vector(u.in)),)
+ end
+ 
+ # Design: §5.3, §5.5, §9.4, §10.5, D-263.
+@@ -883,7 +883,7 @@ end
+ A discrete [primitive](@ref g-primitive) that runs a linear system given in
+ discrete state-space form.
+ 
+-The [block](@ref g-block) holds one [store](@ref g-store) field `q` from `x0`,
++The [block](@ref g-block) holds one bare [store](@ref g-store) value `q` from `x0`,
+ advanced once per [tick](@ref g-tick):
+ 
+     q⁺  = A q + B in
+@@ -1062,8 +1062,8 @@ A continuous [primitive](@ref g-primitive) that publishes one value before a
+ given time and another from then on.
+ 
+ `out` publishes `before` until `t_step` and `after` from then on. The
+-[block](@ref g-block) is a mode-only primitive with no inputs. The mode `fired`
+-picks the value, and one [state event](@ref g-state-event), `fire`, sets it once
++[block](@ref g-block) is a mode-only primitive with no inputs. Its one bare mode,
++`fired`, picks the value, and one [state event](@ref g-state-event), `fire`, sets it once
+ `t` reaches `t_step`. `out` is [pinned](@ref g-walked) at `V`. The value depends
+ on neither state nor an input that follows the scalar, so it carries zero
+ partials under every [activation](@ref g-activation), as a [`Constant`](@ref)'s
+@@ -1100,13 +1100,13 @@ function Step(; t_step, before = 0.0, after = 1.0, localized::Bool = true)
+     before, after = float.(promote(before, after))
+     Step{typeof(before), localized}(before, after, t_step)
+ end
+-x_init(::Step) = (;)
+-m_init(::Step) = (fired = false,)
++x_init(::Step) = nothing
++m_init(::Step) = false                                           # fired
+ y_types(::Step{V}) where {V} = (out = Pinned{V},)
+-y_state(c::Step, (; m)) = (out = m.fired ? c.after : c.before,)
++y_state(c::Step, (; m)) = (out = m ? c.after : c.before,)
+ step_guard(c::Step{V, true}, (; t)) where {V} = t - c.t_step     # sign form: localized
+ step_guard(c::Step{V, false}, (; t)) where {V} = t >= c.t_step   # Bool form: boundary-detected
+-step_handler(::Step, _) = (m = (fired = true,),)
++step_handler(::Step, _) = (m = true,)
+ state_events(::Step) = (fire = StateEvent(step_guard, step_handler),)
+ 
+ # --- the moded blocks (§10.4, §10.6, D-313) -------------------------------------
+@@ -1127,7 +1127,7 @@ its input, held between two limits.
+ 
+ The [block](@ref g-block) holds one continuous state `q`, with `q̇ = in` while
+ free and `q̇ = 0` while saturated, and `out` publishes `q` from
+-[stage 1](@ref g-stage-function). It is not a clamp. The mode `saturation` is
++[stage 1](@ref g-stage-function). It is not a clamp. The bare mode `saturation` is
+ read by the derivative, and four [state events](@ref g-state-event) move it. It
+ is a signed `Int8` code, the sign of the limit in force: `-1` at `lower`, `0`
+ free and `+1` at `upper`. `hit_upper` and `hit_lower` fire when `q` reaches a
+@@ -1185,17 +1185,17 @@ function LimitedIntegrator(; lower, upper, x0 = zero(lower), localized::Bool = t
+     x0, lower, upper = float.(promote(x0, lower, upper))
+     LimitedIntegrator{typeof(x0), localized}(x0, lower, upper)
+ end
+-x_init(c::LimitedIntegrator) = (q = c.x0,)
+-m_init(c::LimitedIntegrator) = (saturation = Int8.(zero(c.x0)),)    # -1 lower, 0 free, +1 upper
++x_init(c::LimitedIntegrator) = c.x0
++m_init(c::LimitedIntegrator) = Int8.(zero(c.x0))    # the saturation: -1 lower, 0 free, +1 upper
+ u_types(::LimitedIntegrator{V}) where {V} = (in = V,)
+ y_types(::LimitedIntegrator{V}) where {V} = (out = V, saturation = saturation_type(V))
+-y_state(::LimitedIntegrator, (; x, m)) = (out = x.q, saturation = m.saturation)
+-x_deriv(::LimitedIntegrator, (; u, m)) = (q = ifelse.(m.saturation .== 0, u.in, zero(u.in)),)
++y_state(::LimitedIntegrator, (; x, m)) = (out = x, saturation = m)
++x_deriv(::LimitedIntegrator, (; u, m)) = ifelse.(m .== 0, u.in, zero(u.in))
+ # The hit guards are not gated by the free code on purpose. Gated, a hit guard
+ # would read `0` the instant a leave handler frees the mode, present a fresh
+ # edge and saturate the block again.
+-hit_upper_guard(c::LimitedIntegrator, (; x)) = x.q - c.upper
+-hit_lower_guard(c::LimitedIntegrator, (; x)) = c.lower - x.q
++hit_upper_guard(c::LimitedIntegrator, (; x)) = x - c.upper
++hit_lower_guard(c::LimitedIntegrator, (; x)) = c.lower - x
+ # The leave guards gate on strictly inward input. Gated on the mode alone, an
+ # input of exactly zero reads `-0.0`, which holds, and frees the mode with `q`
+ # on the limit. The gate `u.in < 0` reads a wired signal, so §10.4's argument
+@@ -1204,18 +1204,18 @@ hit_lower_guard(c::LimitedIntegrator, (; x)) = c.lower - x.q
+ # converges on that crossing, since only the sign drives it, but ITP falls back
+ # to bisection's count, about 15 extra interior sweeps per leave.
+ leave_upper_guard(::LimitedIntegrator{V, true}, (; m, u)) where {V} =
+-    m.saturation == 1 && u.in < 0 ? -u.in : -one(u.in)
++    m == 1 && u.in < 0 ? -u.in : -one(u.in)
+ leave_lower_guard(::LimitedIntegrator{V, true}, (; m, u)) where {V} =
+-    m.saturation == -1 && u.in > 0 ? u.in : -one(u.in)
++    m == -1 && u.in > 0 ? u.in : -one(u.in)
+ # The `Bool` forms are the same predicates, boundary-detected and strict by
+ # construction.
+ leave_upper_guard(::LimitedIntegrator{V, false}, (; m, u)) where {V} =
+-    m.saturation == 1 && u.in < 0
++    m == 1 && u.in < 0
+ leave_lower_guard(::LimitedIntegrator{V, false}, (; m, u)) where {V} =
+-    m.saturation == -1 && u.in > 0
+-hit_upper_handler(c::LimitedIntegrator, _) = (x = (q = c.upper,), m = (saturation = Int8(1),))
+-hit_lower_handler(c::LimitedIntegrator, _) = (x = (q = c.lower,), m = (saturation = Int8(-1),))
+-leave_handler(::LimitedIntegrator, _) = (m = (saturation = Int8(0),),)
++    m == -1 && u.in > 0
++hit_upper_handler(c::LimitedIntegrator, _) = (x = c.upper, m = Int8(1))
++hit_lower_handler(c::LimitedIntegrator, _) = (x = c.lower, m = Int8(-1))
++leave_handler(::LimitedIntegrator, _) = (m = Int8(0),)
+ state_events(::LimitedIntegrator{V}) where {V <: Real} =
+     (hit_upper = StateEvent(hit_upper_guard, hit_upper_handler),
+      hit_lower = StateEvent(hit_lower_guard, hit_lower_handler),
+@@ -1228,24 +1228,24 @@ state_events(::LimitedIntegrator{V}) where {V <: Real} =
+ function state_events(::LimitedIntegrator{V, L}) where {V <: StaticArray, L}
+     N = length(V)
+     hit_upper = ntuple(N) do i
+-        StateEvent((c, (; x)) -> x.q[i] - c.upper[i],
+-                   (c, (; x, m)) -> (x = (q = Base.setindex(x.q, c.upper[i], i),),
+-                                     m = (saturation = Base.setindex(m.saturation, Int8(1), i),)))
++        StateEvent((c, (; x)) -> x[i] - c.upper[i],
++                   (c, (; x, m)) -> (x = Base.setindex(x, c.upper[i], i),
++                                     m = Base.setindex(m, Int8(1), i)))
+     end
+     hit_lower = ntuple(N) do i
+-        StateEvent((c, (; x)) -> c.lower[i] - x.q[i],
+-                   (c, (; x, m)) -> (x = (q = Base.setindex(x.q, c.lower[i], i),),
+-                                     m = (saturation = Base.setindex(m.saturation, Int8(-1), i),)))
++        StateEvent((c, (; x)) -> c.lower[i] - x[i],
++                   (c, (; x, m)) -> (x = Base.setindex(x, c.lower[i], i),
++                                     m = Base.setindex(m, Int8(-1), i)))
+     end
+     leave_upper = ntuple(N) do i
+-        guard = L ? ((c, (; m, u)) -> m.saturation[i] == 1 && u.in[i] < 0 ? -u.in[i] : -one(u.in[i])) :
+-                    ((c, (; m, u)) -> m.saturation[i] == 1 && u.in[i] < 0)
+-        StateEvent(guard, (c, (; m)) -> (m = (saturation = Base.setindex(m.saturation, Int8(0), i),),))
++        guard = L ? ((c, (; m, u)) -> m[i] == 1 && u.in[i] < 0 ? -u.in[i] : -one(u.in[i])) :
++                    ((c, (; m, u)) -> m[i] == 1 && u.in[i] < 0)
++        StateEvent(guard, (c, (; m)) -> (m = Base.setindex(m, Int8(0), i),))
+     end
+     leave_lower = ntuple(N) do i
+-        guard = L ? ((c, (; m, u)) -> m.saturation[i] == -1 && u.in[i] > 0 ? u.in[i] : -one(u.in[i])) :
+-                    ((c, (; m, u)) -> m.saturation[i] == -1 && u.in[i] > 0)
+-        StateEvent(guard, (c, (; m)) -> (m = (saturation = Base.setindex(m.saturation, Int8(0), i),),))
++        guard = L ? ((c, (; m, u)) -> m[i] == -1 && u.in[i] > 0 ? u.in[i] : -one(u.in[i])) :
++                    ((c, (; m, u)) -> m[i] == -1 && u.in[i] > 0)
++        StateEvent(guard, (c, (; m)) -> (m = Base.setindex(m, Int8(0), i),))
+     end
+     names = (ntuple(i -> Symbol(:hit_upper_, i), N)..., ntuple(i -> Symbol(:hit_lower_, i), N)...,
+              ntuple(i -> Symbol(:leave_upper_, i), N)..., ntuple(i -> Symbol(:leave_lower_, i), N)...)
+@@ -1259,7 +1259,7 @@ end
+ A continuous [primitive](@ref g-primitive) that publishes one of two values,
+ switched by its input with hysteresis.
+ 
+-`out` publishes `off` or `on` by the mode `state`, from
++`out` publishes `off` or `on` by the bare mode `state`, from
+ [stage 1](@ref g-stage-function). The mode is an `Int8` code, `0` off and `1`
+ on. Two [state events](@ref g-state-event) move it. `switch_on` fires when `in`
+ rises to `upper` while off, and `switch_off` when `in` falls to `lower` while
+@@ -1301,27 +1301,27 @@ struct Relay{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: AbstractComponen
+ end
+ Relay(; lower, upper, off = zero(lower), on = one.(lower)) =
+     Relay(float.(promote(lower, upper, off, on))...)
+-x_init(::Relay) = (;)
+-m_init(c::Relay) = (state = Int8.(zero(c.lower)),)    # 0 off, 1 on
++x_init(::Relay) = nothing
++m_init(c::Relay) = Int8.(zero(c.lower))    # the state: 0 off, 1 on
+ u_types(::Relay{V}) where {V} = (in = V,)
+ y_types(::Relay{V}) where {V} = (out = Pinned{V},)
+-y_state(c::Relay, (; m)) = (out = ifelse.(m.state .== 1, c.on, c.off),)
+-switch_on_guard(c::Relay, (; m, u)) = m.state == 0 ? u.in - c.upper : -one(u.in)
+-switch_off_guard(c::Relay, (; m, u)) = m.state == 1 ? c.lower - u.in : -one(u.in)
+-switch_on_handler(::Relay, _) = (m = (state = Int8(1),),)
+-switch_off_handler(::Relay, _) = (m = (state = Int8(0),),)
++y_state(c::Relay, (; m)) = (out = ifelse.(m .== 1, c.on, c.off),)
++switch_on_guard(c::Relay, (; m, u)) = m == 0 ? u.in - c.upper : -one(u.in)
++switch_off_guard(c::Relay, (; m, u)) = m == 1 ? c.lower - u.in : -one(u.in)
++switch_on_handler(::Relay, _) = (m = Int8(1),)
++switch_off_handler(::Relay, _) = (m = Int8(0),)
+ state_events(::Relay{V}) where {V <: Real} =
+     (switch_on = StateEvent(switch_on_guard, switch_on_handler),
+      switch_off = StateEvent(switch_off_guard, switch_off_handler))
+ function state_events(::Relay{V}) where {V <: StaticArray}
+     N = length(V)
+     switch_on = ntuple(N) do i
+-        StateEvent((c, (; m, u)) -> m.state[i] == 0 ? u.in[i] - c.upper[i] : -one(u.in[i]),
+-                   (c, (; m)) -> (m = (state = Base.setindex(m.state, Int8(1), i),),))
++        StateEvent((c, (; m, u)) -> m[i] == 0 ? u.in[i] - c.upper[i] : -one(u.in[i]),
++                   (c, (; m)) -> (m = Base.setindex(m, Int8(1), i),))
+     end
+     switch_off = ntuple(N) do i
+-        StateEvent((c, (; m, u)) -> m.state[i] == 1 ? c.lower[i] - u.in[i] : -one(u.in[i]),
+-                   (c, (; m)) -> (m = (state = Base.setindex(m.state, Int8(0), i),),))
++        StateEvent((c, (; m, u)) -> m[i] == 1 ? c.lower[i] - u.in[i] : -one(u.in[i]),
++                   (c, (; m)) -> (m = Base.setindex(m, Int8(0), i),))
+     end
+     names = (ntuple(i -> Symbol(:switch_on_, i), N)..., ntuple(i -> Symbol(:switch_off_, i), N)...)
+     NamedTuple{names}((switch_on..., switch_off...))
+@@ -1894,15 +1894,15 @@ end
+ LQRTracker(; K_fbk, K_fwd, kw...) =
+     LQRTracker{tracker_sizes("LQRTracker", (; K_fbk, K_fwd, kw...))...}(; K_fbk, K_fwd, kw...)
+ 
+-x_init(::LQRTracker{NX, NU}) where {NX, NU} = (q = zero(SVector{NU, Float64}),)
++x_init(::LQRTracker{NX, NU}) where {NX, NU} = zero(SVector{NU, Float64})
+ function y_direct(c::LQRTracker, (; x, u))
+     p = parameters(c, u)
+-    u_raw = p.u_trim + p.K_fwd * (u.z_ref - p.z_trim) - p.K_fbk * (u.x - p.x_trim) + x.q
++    u_raw = p.u_trim + p.K_fwd * (u.z_ref - p.z_trim) - p.K_fbk * (u.x - p.x_trim) + x
+     (u = clamp.(u_raw, p.u_min, p.u_max), u_raw = u_raw)
+ end
+ function x_deriv(c::LQRTracker, (; x, u, y))
+     p = parameters(c, u)
+-    (q = gated_error(c, p.K_int * (u.z_ref - u.z), u) + (correction_reference(c, u, y) - y.u_raw) ./ p.Tt,)
++    gated_error(c, p.K_int * (u.z_ref - u.z), u) + (correction_reference(c, u, y) - y.u_raw) ./ p.Tt
+ end
+ 
+ # Design: §10.5, §13.8.
+diff --git a/src/build.jl b/src/build.jl
+index 4eefbdd..f28d345 100644
+--- a/src/build.jl
++++ b/src/build.jl
+@@ -16,13 +16,13 @@
+ # --- 1. declarations at the activation scalar ---------------------------------
+ 
+ struct Decls
+-    x::NamedTuple          # continuous state, walked to the activation scalar
+-    s::NamedTuple          # discrete state, pinned wholesale (D-195)
++    x::Any                 # continuous state, walked to the activation scalar; `nothing` if none
++    s::Any                 # discrete state, pinned wholesale (D-195); `nothing` if none
+     ins::NamedTuple        # face => type, retyped at the activation scalar (D-263)
+     outs::NamedTuple       # port => type, retyped at the activation scalar (D-263)
+ end
+ 
+-"""The tier's own state register: exactly one of the two is ever populated."""
++"""The tier's own state register: at most one of the two is ever other than `nothing`."""
+ state_decls(decl::Decls, tier::Tier) = tier === CONTINUOUS ? decl.x : decl.s
+ 
+ # One walk on the continuous tier (D-263): `x_init` by value and the contracts by
+@@ -32,9 +32,9 @@ state_decls(decl::Decls, tier::Tier) = tier === CONTINUOUS ? decl.x : decl.s
+ # contracts are read as written.
+ function declarations(@nospecialize(comp), tier::Tier, ::Type{T}) where {T}
+     tier === CONTINUOUS ?
+-        Decls(retype_value(T, invoke_declaration(x_init, comp)), NamedTuple(),
++        Decls(retype_value(T, invoke_declaration(x_init, comp)), nothing,
+               declared_at(u_types, comp, tier, T), declared_at(y_types, comp, tier, T)) :
+-        Decls(NamedTuple(), invoke_declaration(s_init, comp),
++        Decls(nothing, invoke_declaration(s_init, comp),
+               declared_at(u_types, comp, tier), declared_at(y_types, comp, tier))
+ end
+ 
+@@ -140,14 +140,20 @@ _embed_ports(y::NamedTuple, outs::NamedTuple, ::Type{T}) where {T} =
+ 
+ """
+ The tier's state homes, in merge order: `x` then `m` on the continuous tier, `s`
+-on the discrete (§5.3, §7.1, §7.3). `m` arrives as the probe-scoped `Ref`, or `nothing`
+-where the component declares no modes.
++on the discrete (§5.3, §7.1, §7.3), each `nothing` where the component has none.
++`m` arrives as the probe-scoped `Ref`, or `nothing` where the component declares
++no modes.
+ """
+ _homes(decl::Decls, tier::Tier, m) =
+-    tier === CONTINUOUS ? (x = decl.x, m = m === nothing ? NamedTuple() : m[]) : (s = decl.s,)
++    tier === CONTINUOUS ? (x = decl.x, m = m === nothing ? nothing : m[]) : (s = decl.s,)
+ 
+-"""The tier's store field names, for `DeclaredNotProduced`'s list-in-hand (§8.3)."""
+-_state_fields(homes::NamedTuple) = Symbol[keys(merge(values(homes)...))...]
++"""
++The tier's store field names, for `DeclaredNotProduced`'s list-in-hand (§8.3). A
++bare store has no field name, so its letter stands for the whole value.
++"""
++_state_fields(homes::NamedTuple) =
++    Symbol[(name === BARE ? letter : name)
++           for (letter, home) in pairs(homes) for (name, _) in store_fields(home)]
+ 
+ # --- 3. the nominal evaluation's products -------------------------------------
+ 
+@@ -917,7 +923,7 @@ end
+ # component frame (§13.2, D-248).
+ _mstores(structure::Structure) =
+     Any[at_component(() -> (m = invoke_declaration(m_init, entry.instance);
+-                            isempty(m) ? nothing : Ref(m)), entry.path)
++                            m === nothing ? nothing : Ref(m)), entry.path)
+         for entry in structure.components]
+ 
+ # Declaration by allocation (§8.2, D-077): sizes from the instance, eltypes from
+@@ -997,7 +1003,7 @@ function probe_stage2(structure::Structure, decls::Vector{Decls},
+     empty!(diags)
+     for (ci, entry) in enumerate(structure.components)
+         path, decl, tier = entry.path, decls[ci], entry.tier
+-        (isempty(state_decls(decl, tier)) || _frozen(tier, T)) && continue
++        (state_decls(decl, tier) === nothing || _frozen(tier, T)) && continue
+         at_component(path) do
+             comp = entry.instance                  # read here, not captured: see `probe_stage1`
+             update = update_of(tier)
+@@ -1028,7 +1034,7 @@ function probe_stage2(structure::Structure, decls::Vector{Decls},
+                                                reason = :continuous_only))
+             continue                               # no manifold to run it against
+         end
+-        if isempty(decl.x)
++        if decl.x === nothing
+             push!(diags, DeclarationOnWrongTier(path = path, declaration = :x_projection,
+                                                reason = :no_manifold))
+             continue
+@@ -1088,8 +1094,14 @@ end
+ # `x_projection` pass and the handler check — can put it under their own
+ # barrier (§13.1). The two shape checks are sequential: neither later one is
+ # meaningful once an earlier one fails.
+-function _check_state_write(path, what, x⁺, x::NamedTuple, ::Type{T};
+-                            event = nothing) where {T}
++function _check_state_write(path, what, x⁺, x, ::Type{T}; event = nothing) where {T}
++    # The declared shape picks the law: a bare state is one arrival at its type.
++    x isa NamedTuple ||
++        return _accepts(typeof(x), typeof(x⁺), T) ? Diagnostic[] :
++               Diagnostic[ConformanceFailure(path = path, what = what, event = event,
++                                             reason = :field_type, shape = :state, field = BARE,
++                                             observed = typeof(x⁺), declared = typeof(x),
++                                             activation = T)]
+     x⁺ isa NamedTuple ||
+         return Diagnostic[ConformanceFailure(path = path, what = what, event = event,
+                                              reason = :return_type, shape = :state,
+@@ -1179,8 +1191,8 @@ function _check_handler(path, name, returned, decl::Decls, @nospecialize(comp))
+                                             shape = :stores, observed = typeof(returned))))
+     m₀ = invoke_declaration(m_init, comp)
+     stores = Symbol[]
+-    isempty(decl.x) || push!(stores, :x)
+-    isempty(m₀) || push!(stores, :m)
++    decl.x === nothing || push!(stores, :x)
++    m₀ === nothing || push!(stores, :m)
+     diags = Diagnostic[]
+     for key in keys(returned)
+         key in stores ||
+@@ -1193,7 +1205,14 @@ function _check_handler(path, name, returned, decl::Decls, @nospecialize(comp))
+         append!(diags, _check_state_write(path, "$what `x`", returned.x, decl.x, Float64;
+                                           event = name))
+     if haskey(returned, :m) && :m in stores
+-        if !(returned.m isa NamedTuple)
++        if !(m₀ isa NamedTuple)
++            # A bare mode store is written whole, at its own type exactly.
++            typeof(returned.m) === typeof(m₀) ||
++                push!(diags, ConformanceFailure(path = path, what = "$what `m`", event = name,
++                                               reason = :field_type, shape = :mode, field = BARE,
++                                               observed = typeof(returned.m),
++                                               declared = typeof(m₀)))
++        elseif !(returned.m isa NamedTuple)
+             push!(diags, ConformanceFailure(path = path, what = "$what `m`", event = name,
+                                            reason = :return_type, shape = :mode,
+                                            observed = typeof(returned.m)))
+@@ -1321,7 +1340,7 @@ function compile(build::Build, act::Activation{T}, schedule; chunk_size::Int = 1
+     # buffer for continuous `x`, one store per discrete `s`, one per mode set.
+     # A store's *type* is shared by every instance of a component type, so
+     # instances still compile to one body; only the reference varies.
+-    sstores = Any[entry.tier === DISCRETE && !isempty(decl.s) ? Ref(decl.s) : nothing
++    sstores = Any[entry.tier === DISCRETE && decl.s !== nothing ? Ref(decl.s) : nothing
+                   for (decl, entry) in zip(decls, components)]
+     mstores = _mstores(structure)
+     workspaces = _workspaces(structure, T)
+@@ -1399,7 +1418,7 @@ function compile(build::Build, act::Activation{T}, schedule; chunk_size::Int = 1
+     # read the complete fresh table.
+     for (ci, entry) in enumerate(components)
+         comp, path, decl, tier = entry.instance, entry.path, decls[ci], entry.tier
+-        (isempty(state_decls(decl, tier)) || frozen(ci)) && continue
++        (state_decls(decl, tier) === nothing || frozen(ci)) && continue
+         update = update_of(tier)
+         bundle_fields = bundle_names(update, comp, tier, tuple(outputs.components[ci].stage1...))
+         output_addrs, input_addrs =
+@@ -1516,7 +1535,14 @@ end
+ 
+ # §7.1: `Ẋ` has exactly `X`'s shape at the activation scalar. Checked
+ # structurally here so the runtime `flatten!` into the derivative block is safe.
+-function _check_derivative(path, ẋ, x::NamedTuple, ::Type{T}) where {T}
++function _check_derivative(path, ẋ, x, ::Type{T}) where {T}
++    # The declared shape picks the law: a bare state's derivative is one value.
++    x isa NamedTuple ||
++        return _accepts(typeof(x), typeof(ẋ), T) ? Diagnostic[] :
++               Diagnostic[ConformanceFailure(path = path, what = "x_deriv",
++                                             reason = :field_type, shape = :x_init, field = BARE,
++                                             observed = typeof(ẋ), declared = typeof(x),
++                                             activation = T)]
+     ẋ isa NamedTuple ||
+         return Diagnostic[ConformanceFailure(path = path, what = "x_deriv",
+                                              reason = :return_type,
+@@ -1544,7 +1570,12 @@ end
+ # returns, so the successor must be the store's own type exactly. The discrete
+ # world is pinned — no walk, no embedding — which makes the store assignment
+ # type-stable and the ban on arithmetic over stores enforceable by construction.
+-function _check_update(path, s⁺, s::NamedTuple)
++function _check_update(path, s⁺, s)
++    s isa NamedTuple ||
++        return typeof(s⁺) === typeof(s) ? Diagnostic[] :
++               Diagnostic[ConformanceFailure(path = path, what = "s_update",
++                                             reason = :field_type, shape = :s_init, field = BARE,
++                                             observed = typeof(s⁺), declared = typeof(s))]
+     s⁺ isa NamedTuple ||
+         return Diagnostic[ConformanceFailure(path = path, what = "s_update",
+                                              reason = :return_type,
+diff --git a/src/conditions.jl b/src/conditions.jl
+index d5abf75..8725f34 100644
+--- a/src/conditions.jl
++++ b/src/conditions.jl
+@@ -139,32 +139,33 @@ Return the leaf of a [condition](@ref g-condition), setting values on the
+ 
+ A condition is a tree, and `set` builds its leaf. Each payload
+ is a `NamedTuple` in the vocabulary of the component at the authoring level, and
+-names none of its children. [`at`](@ref) scopes a leaf to a child, and
++names none of its children. A store declared bare takes a bare payload, its
++whole value, as in `set(x = 1.0)`. [`at`](@ref) scopes a leaf to a child, and
+ [`combine`](@ref) and [`override`](@ref) compose leaves.
+ 
+ # Keywords
+ 
+-- `x`: continuous state fields, by name.
+-- `s`: discrete state fields, by name.
+-- `m`: modes, which only a [continuous component](@ref g-continuous-component)
+-  has.
++- `x`: continuous state fields, by name, or a bare state's value.
++- `s`: discrete state fields, by name, or a bare state's value.
++- `m`: modes, by name, or a bare mode store's value. Only a
++  [continuous component](@ref g-continuous-component) has modes.
+ - `u`: [root input](@ref g-root-input) values, named by the authoring level's
+   own input [faces](@ref g-face).
+ 
+ A condition sets state, modes and root inputs only. It never sets outputs, and
+-never [workspace](@ref g-workspace). A payload that is not a `NamedTuple` is
++never [workspace](@ref g-workspace). A `u` payload that is not a `NamedTuple` is
+ refused as `ConditionNodeMisuse` when `set` is called. A field the component
+-does not declare is refused as `ConditionResolution` when a service resolves the
++does not declare, and a bare payload for a named store or a named one for a
++bare store, are refused as `ConditionResolution` when a service resolves the
+ condition against its build.
+ """
+ function set(; x = (;), s = (;), m = (;), u = (;))
+-    _payload(:x, x); _payload(:s, s); _payload(:m, m); _payload(:u, u)
++    _payload(:u, u)
+     Fragment(x, s, m, u)
+ end
+ 
+-# One call per payload rather than a loop over the four: a loop over a
+-# heterogeneous tuple is not unrolled and boxes its elements, which is what made
+-# tree construction allocate (§14.2).
++# A store payload may be bare, its shape known only against a build, so it is
++# checked at resolution (§14.3). A `u` payload names faces, and is checked here.
+ _payload(name, p) = p isa NamedTuple || throw(DiagnosticError(ConditionNodeMisuse(
+     observed = typeof(p), reason = :set_payload, payload = name)))
+ 
+@@ -309,9 +310,12 @@ function _flat(node::Fragment, path::String, level, origin::String, tree_positio
+     out = CEntry[]
+     for (store, name, payload) in ((:x, :x, node.x), (:s, :s, node.s),
+                                    (:m, :m, node.m), (:input, :u, node.u))
+-        for (field, v) in pairs(payload)
+-            entry = CEntry(path, store, field, v, _step(origin, "set($name).$field"),
+-                           nothing, (tree_position..., name, field))
++        # A bare store payload is one entry under `BARE`, its tree position the
++        # payload itself.
++        for (field, v) in (store === :input ? pairs(payload) : store_fields(payload))
++            entry = CEntry(path, store, field, v, _step(origin, _named("set($name)", field)),
++                           nothing, field === BARE ? (tree_position..., name) :
++                                                     (tree_position..., name, field))
+             store === :input &&
+                 (entry = CEntry(entry.path, entry.store, entry.field, entry.value, entry.origin,
+                                 _root_input(structure, decls, entry, diags), entry.position))
+@@ -452,7 +456,7 @@ function resolve_condition(node::ConditionNode, build::Build, ::Type{T} = Float6
+     for (store, ci, base) in (bases === nothing ? _store_bases(build, act) : bases)
+         overlay = get(overlays, (store, ci), nothing)
+         overlay === nothing && continue
+-        push!(stores, (store, ci, convert(typeof(base), merge(base, (; overlay...)))))
++        push!(stores, (store, ci, convert(typeof(base), _store_overlay(base, (; overlay...)))))
+     end
+     ConditionPlan{T}(xs, stores, inputs, faces)
+ end
+@@ -503,13 +507,18 @@ function _resolve_entries(node::ConditionNode, build::Build, ::Type{T}) where {T
+         comp_entry = structure.components[ci]
+         comp, tier, decl = comp_entry.instance, comp_entry.tier, decls[ci]
+         declared = entry.store === :x ? decl.x : entry.store === :s ? decl.s : m_init(comp)
+-        if isempty(declared)
++        if declared === nothing
+             push!(diags, _no_store(entry, tier))
+             continue
+         end
+-        haskey(declared, entry.field) ||
++        # The declared shape and the payload's agree, bare against bare.
++        (declared isa NamedTuple) == (entry.field !== BARE) ||
++            (push!(diags, _condition_violation(entry, :store_shape;
++                candidates = declared isa NamedTuple ? collect(keys(declared)) : Symbol[]));
++             continue)
++        declared isa NamedTuple && !haskey(declared, entry.field) &&
+             (push!(diags, _undeclared(entry, comp, tier, declared, T)); continue)
+-        leaf_type = typeof(declared[entry.field])
++        leaf_type = typeof(declared isa NamedTuple ? declared[entry.field] : declared)
+         (ok, v) = _convert(leaf_type, entry.value)
+         ok || (push!(diags, _unconvertible(entry, entry.value, leaf_type, T)); continue)
+         push!(out, Resolved(entry,
+@@ -531,6 +540,13 @@ _store_bases(build::Build, act::Activation) =
+ # and a bare NamedTuple handed to `init!` is exactly the slip it addresses.
+ resolve_condition(other, ::Build, ::Type = Float64; bases = nothing) = _node_misuse(other, ())
+ 
++# A store's `merge(defaults, overlay)`: field by field for a named store, the
++# overlay's one value for a bare one (§14.1, §14.3).
++_store_overlay(defaults::NamedTuple, overlay::NamedTuple) = merge(defaults, overlay)
++_store_overlay(defaults, overlay::NamedTuple) = only(overlay)
++
++# A leaf's offset in its component's `x` block; a bare state is the block itself.
++_leaf_offset(x, ::Symbol) = 0
+ function _leaf_offset(x::NamedTuple, field::Symbol)
+     offset = 0
+     for (k, v) in pairs(x)
+@@ -725,10 +741,11 @@ end
+ 
+ # The `s`/`m` fork (§14.3): the store's write is one whole value,
+ # `merge(defaults, overlay)`, with the base baked and the overlay's fields read
+-# through their lenses. `K` is `:s` or `:m` and `S` the store's value type, both
+-# in the type — `S` because the stores are held in a `Vector{Any}` and the
+-# assertion has to go on the *reference*: asserting the dereferenced value
+-# instead leaves the `[]` a dynamic call, which boxes.
++# through their lenses; a bare store's overlay is the value itself. `K` is `:s`
++# or `:m` and `S` the store's value type, both in the type — `S` because the
++# stores are held in a `Vector{Any}` and the assertion has to go on the
++# *reference*: asserting the dereferenced value instead leaves the `[]` a
++# dynamic call, which boxes.
+ struct StoreWrite{K,S,F,A<:Tuple}
+     ci::Int
+     defaults::S
+@@ -747,7 +764,7 @@ StoreWrite{K,S,F}(ci::Int, defaults::S, authored::A) where {K,S,F,A<:Tuple} =
+ @inline function _write!(w::StoreWrite{K,S,F}, exec::Executor, tree) where {K,S,F}
+     overlay = NamedTuple{F}(_authored_values(w.authored, tree))
+     ((K === :s ? exec.sstores : exec.mstores)[w.ci]::Base.RefValue{S})[] =
+-        convert(S, merge(w.defaults, overlay))
++        convert(S, _store_overlay(w.defaults, overlay))
+     nothing
+ end
+ 
+diff --git a/src/declare.jl b/src/declare.jl
+index f3add20..072369f 100644
+--- a/src/declare.jl
++++ b/src/declare.jl
+@@ -42,76 +42,80 @@ abstract type AbstractComponent end
+ # fallback serves the value readers; the classifier asks whether the method is
+ # declared.
+ """
+-    x_init(c) -> NamedTuple
++    x_init(c)
+ 
+ Return the [component](@ref g-component)'s initial continuous state, as a
+-`NamedTuple` of named values.
++`NamedTuple` of named values or as one bare value.
+ 
+ A continuous primitive declares its state by value, written with `Float64`
+-values, as in `x_init(::Engine) = (ω = 0.0,)`. The state's type is derived from
+-the value, and its real values follow the scalar of each
+-[activation](@ref g-activation). Each field is one `Float64` or one static array
+-of `Float64`. Integers, `Bool`s and enums belong in [`m_init`](@ref).
++values, as in `x_init(::Engine) = (ω = 0.0,)`. A state of one leaf may be that
++leaf alone, as in `x_init(c::Integrator) = c.x0`, and the component's functions
++then receive it bare. The state's type is derived from the value, and its real
++values follow the scalar of each [activation](@ref g-activation). Each field, or
++the bare value, is one `Float64` or one static array of `Float64`. Integers,
++`Bool`s and enums belong in [`m_init`](@ref).
+ 
+ Every primitive defines exactly one of `x_init` and [`s_init`](@ref), and the
+ one it defines makes it continuous or discrete. A stateless continuous primitive
+-declares `x_init(::C) = (;)`. A non-empty state needs an [`x_deriv`](@ref)
++declares `x_init(::C) = nothing`. A non-empty state needs an [`x_deriv`](@ref)
+ method.
+ 
+-The build refuses a value that is not a `NamedTuple` as `StoreNotNamedTuple`,
+-and a field outside the state vocabulary as `IllegalStateLeaf`. A non-empty
+-state with no `x_deriv` is refused as `StoreWithoutUpdate`, a primitive that
+-defines neither `x_init` nor `s_init` as `TierUnreadable`, and one that defines
+-both as `DeclarationOnWrongTier`.
++The build refuses `(;)` as `EmptyStore`, and a field or bare value outside the
++state vocabulary as `IllegalStateLeaf`. A non-empty state with no `x_deriv` is
++refused as `StoreWithoutUpdate`, a primitive that defines neither `x_init` nor
++`s_init` as `TierUnreadable`, and one that defines both as
++`DeclarationOnWrongTier`.
+ """
+-x_init(::Any) = NamedTuple()
++x_init(::Any) = nothing
+ 
+ # Design: §8.2, D-195, D-231, D-263.
+ # `s` is the discrete tier's own letter (D-195). The store is the tier marker,
+ # and it is disjoint from `x_init`. The fallback serves the value readers; the
+ # classifier asks whether the method is declared.
+ """
+-    s_init(c) -> NamedTuple
++    s_init(c)
+ 
+ Return the [component](@ref g-component)'s initial discrete state, as a
+-`NamedTuple` of named values.
++`NamedTuple` of named values or as one bare value.
+ 
+ A discrete primitive declares its state by value, as in
+-`s_init(::Counter) = (n = 0,)`. Every field is isbits or a `Symbol`, and the
+-field types stay as written at every [activation](@ref g-activation). Text and
+-bulk data belong on the component instance.
++`s_init(::Counter) = (n = 0,)`, or `s_init(::Counter) = 0` for the bare form.
++Every field, or the bare value, is isbits or a `Symbol`, and its type stays as
++written at every [activation](@ref g-activation). Text and bulk data belong on
++the component instance.
+ 
+ Every primitive defines exactly one of [`x_init`](@ref) and `s_init`, and the
+ one it defines makes it continuous or discrete. A stateless discrete primitive
+-declares `s_init(::C) = (;)`, and holds its outputs between its
++declares `s_init(::C) = nothing`, and holds its outputs between its
+ [ticks](@ref g-tick). A non-empty state needs an [`s_update`](@ref) method.
+ 
+-The build refuses a value that is not a `NamedTuple` as `StoreNotNamedTuple`,
+-and a field that is neither isbits nor a `Symbol` as `IllegalStoreField`. A
+-non-empty state with no `s_update` is refused as `StoreWithoutUpdate`, and a
+-primitive that also defines `x_init` as `DeclarationOnWrongTier`.
++The build refuses `(;)` as `EmptyStore`, and a field or bare value that is
++neither isbits nor a `Symbol` as `IllegalStoreField`. A non-empty state with no
++`s_update` is refused as `StoreWithoutUpdate`, and a primitive that also defines
++`x_init` as `DeclarationOnWrongTier`.
+ """
+-s_init(::Any) = NamedTuple()
++s_init(::Any) = nothing
+ 
+ # Design: §8.2, D-231.
+ """
+-    m_init(c) -> NamedTuple
++    m_init(c)
+ 
+ Return the [component](@ref g-component)'s initial modes, as a `NamedTuple` of
+-named values.
++named values or as one bare value.
+ 
+ A continuous primitive declares its modes by value, as in
+-`m_init(::Engine) = (phase = off,)`. Every field is isbits or a `Symbol`, as for
++`m_init(::Engine) = (phase = off,)`, or `m_init(::Switch) = false` for the bare
++form. Every field, or the bare value, is isbits or a `Symbol`, as for
+ [`s_init`](@ref). Event handlers write the modes, and nothing else may. A
+-primitive may declare modes that no event of its own changes.
++primitive may declare modes that no event of its own changes. A primitive
++without modes defines no method.
+ 
+ Modes are continuous-only, because the event system is continuous-side only.
+-The build refuses a non-empty `m_init` on a discrete primitive as
+-`DeclarationOnWrongTier`, a value that is not a `NamedTuple` as
+-`StoreNotNamedTuple`, and a field that is neither isbits nor a `Symbol` as
+-`IllegalStoreField`.
++The build refuses modes declared on a discrete primitive as
++`DeclarationOnWrongTier`, `(;)` as `EmptyStore`, and a field or bare value that
++is neither isbits nor a `Symbol` as `IllegalStoreField`.
+ """
+-m_init(::Any) = NamedTuple()
++m_init(::Any) = nothing
+ 
+ # Design: §8.2, D-077, D-263.
+ """
+@@ -472,7 +476,8 @@ where the value is `≥ 0`.
+ 
+ The handler returns a `NamedTuple` of the [stores](@ref g-store) it writes, such
+ as `(; m = (; phase = running))`. A present `x` replaces the whole continuous
+-state, and a present `m` merges into the modes.
++state, and a present `m` merges into the modes. Against a bare mode store, `m`
++is one value at its type and replaces it whole.
+ 
+ The build refuses a guard that returns neither form as `GuardForm`, a missing
+ guard or handler method as `EventHalfMissing`, and a handler key that names no
+@@ -509,7 +514,7 @@ state_events(::Any) = (;)
+ # to the buffer wholesale, so the probe holds it complete against the state
+ # shape.
+ """
+-    x_projection(c, x) -> NamedTuple
++    x_projection(c, x)
+ 
+ Return the continuous state `x` projected back onto the
+ [component](@ref g-component)'s manifold.
+@@ -519,7 +524,8 @@ Return the continuous state `x` projected back onto the
+ positional. An attitude model might declare
+ `x_projection(c::Attitude, x) = (; q = normalize(x.q))`. It runs after each
+ integration step and after each event handler fires. Its return replaces the
+-whole continuous state, so it carries every state field at the state's type.
++whole continuous state, so it carries every state field at the state's type,
++or for a bare state one value at its type.
+ 
+ The method is optional and continuous-only. The build refuses it on a discrete
+ primitive, or on one with an empty state, as `DeclarationOnWrongTier`, and a
+@@ -616,7 +622,9 @@ reads the component's own outputs `y` instead of computing them again. Its
+ the component has it.
+ 
+ The return has exactly the fields of [`x_init`](@ref), each at the state's
+-type. A continuous primitive with a non-empty state must define it.
++type, and for a bare state it is one value at the state's type, as in
++`x_deriv(::Integrator, (; u)) = u.in`. A continuous primitive with a non-empty
++state must define it.
+ 
+ The build refuses a non-empty `x_init` with no `x_deriv` as
+ `StoreWithoutUpdate`, a return whose fields or types differ from the state's
+@@ -734,10 +742,10 @@ function bundle_names(fn, @nospecialize(comp), tier::Tier, stage1_ports::Tuple)
+     update = update_of(tier)
+     bundle_fields = Symbol[]
+     if tier === CONTINUOUS
+-        !isempty(invoke_declaration(x_init, comp)) && push!(bundle_fields, :x)
+-        !isempty(invoke_declaration(m_init, comp)) && push!(bundle_fields, :m)
++        invoke_declaration(x_init, comp) !== nothing && push!(bundle_fields, :x)
++        invoke_declaration(m_init, comp) !== nothing && push!(bundle_fields, :m)
+     else
+-        !isempty(invoke_declaration(s_init, comp)) && push!(bundle_fields, :s)
++        invoke_declaration(s_init, comp) !== nothing && push!(bundle_fields, :s)
+     end
+     if fn === y_direct || fn === update
+         !isempty(declared_at(u_types, comp, tier)) && push!(bundle_fields, :u)
+@@ -763,8 +771,8 @@ distinction: guards and handlers run against the complete fresh table.
+ """
+ function event_bundle_names(@nospecialize(comp))
+     bundle_fields = Symbol[]
+-    !isempty(invoke_declaration(x_init, comp)) && push!(bundle_fields, :x)
+-    !isempty(invoke_declaration(m_init, comp)) && push!(bundle_fields, :m)
++    invoke_declaration(x_init, comp) !== nothing && push!(bundle_fields, :x)
++    invoke_declaration(m_init, comp) !== nothing && push!(bundle_fields, :m)
+     !isempty(declared_at(u_types, comp, CONTINUOUS)) && push!(bundle_fields, :u)
+     !isempty(declared_at(y_types, comp, CONTINUOUS)) && push!(bundle_fields, :y)
+     _declares_workspace(comp) && push!(bundle_fields, :ws)
+diff --git a/src/diagnostics.jl b/src/diagnostics.jl
+index 1ea923a..4cd89eb 100644
+--- a/src/diagnostics.jl
++++ b/src/diagnostics.jl
+@@ -78,6 +78,17 @@ _faceset(list) = isempty(list) ? "empty" : "{$(join(list, ", "))}"
+ _plainlist(list) = join(list, ", ")
+ _symtuple(list) = "(" * join((":$n" for n in list), ", ") * (length(list) == 1 ? ",)" : ")")
+ 
++# Design: §7.1, §7.3, §8.2.
++# A bare store's reserved name wherever bookkeeping keys a leaf by a `Symbol`: a
++# store declared as one value, not a `NamedTuple`, has no field name of its own.
++# Nothing else spells the empty symbol.
++const BARE = Symbol("")
++
++# The one spelling of a `(prefix, name)` pair, `x.q` or `plant/out`: a bare name
++# drops with its separator, so a bare leaf reads as the prefix alone.
++_named(prefix, name::Symbol, sep::AbstractString = ".") =
++    name === BARE ? string(prefix) : string(prefix, sep, name)
++
+ # --- the carrier (§13.1, §13.2, D-058) ----------------------------------------
+ 
+ """
+@@ -301,7 +312,7 @@ catch site makes it a `StepError` species.
+ """
+ Base.@kwdef struct NonfiniteState <: Diagnostic
+     path::String
+-    leaf::String     # the leaf's dotted spelling within the state, `"q"` or `"v[2]"`
++    leaf::String     # the leaf's dotted spelling within the state, `"q"`, `"v[2]"`, `""` for a bare scalar
+     value::Any       # the offending value: NaN, Inf or -Inf
+     t::Float64       # the frame-top time the integrate landed on
+     boundary::Int    # the frame-entry boundary index, as the carrier's
+@@ -309,7 +320,8 @@ end
+ 
+ path(d::NonfiniteState) = d.path
+ message(d::NonfiniteState) = string(
+-    _at_path(d.path), ": state leaf `", d.leaf, "` is ", d.value, " at the frame top t = ",
++    _at_path(d.path), ": ", isempty(d.leaf) ? "the state" : "state leaf `$(d.leaf)`", " is ",
++    d.value, " at the frame top t = ",
+     d.t, " (from boundary ", d.boundary, ") — the model diverged; replay to ",
+     d.boundary, " and step! to inspect the frame")
+ 
+@@ -790,8 +802,8 @@ end
+ path(d::TierUnreadable) = d.path
+ message(d::TierUnreadable) =
+     "$(_at_path(d.path)) (`$(d.type)`) declares no store — every leaf declares its tier by its " *
+-    "store, mandatory even when empty: a stateless leaf writes `x_init(::C) = (;)` or " *
+-    "`s_init(::C) = (;)`. Its leaf declarations are $(_namelist(d.declarations)) (§8.2)"
++    "store, mandatory even when empty: a stateless leaf writes `x_init(::C) = nothing` or " *
++    "`s_init(::C) = nothing`. Its leaf declarations are $(_namelist(d.declarations)) (§8.2)"
+ 
+ "§8.2, §8.3, D-263: a leaf with an empty store and no `y_types`, which produces nothing and stores nothing."
+ Base.@kwdef struct StatelessWithoutOutputs <: Diagnostic
+@@ -842,31 +854,29 @@ function message(d::IllegalPortType)
+     "$(_at_path(d.path)): $site `$(d.name)` declares $(d.declared), which has no leaves"
+ end
+ 
+-"§8.2, D-247: a store declaration returning something other than a `NamedTuple`, the one admitted form."
+-Base.@kwdef struct StoreNotNamedTuple <: Diagnostic
++"§8.2: a store declared `(;)`, a retired spelling of the empty store."
++Base.@kwdef struct EmptyStore <: Diagnostic
+     path::String
+     store::Symbol                            # :x_init | :s_init | :m_init
+-    declared::Any                            # the observed type
+-end
+-path(d::StoreNotNamedTuple) = d.path
+-function message(d::StoreNotNamedTuple)
+-    wrap = d.store === :x_init ? "(; ω = 0.0)" :
+-           d.store === :s_init ? "(; n = 0)" : "(; phase = :idle)"
+-    "$(_at_path(d.path)): `$(d.store)` returns `$(d.declared)`, not a `NamedTuple` — a " *
+-    "store is declared by initial value as named fields, one leaf per field, " *
+-    "`$(d.store)(::C) = $wrap` (§8.2)"
+ end
++path(d::EmptyStore) = d.path
++message(d::EmptyStore) =
++    "$(_at_path(d.path)): `$(d.store)` returns `(;)`, a retired spelling — " *
++    (d.store === :m_init ? "a primitive without modes defines no `m_init`, or returns `nothing`" :
++     "a stateless primitive writes `$(d.store)(::C) = nothing`") * " (§8.2)"
+ 
+-"§7.1, §8.2, D-094: an `x_init` field outside the closed vocabulary — a mode value, a real off the common eltype, a nested `NamedTuple`, or a wrapper type."
++"§7.1, §8.2, D-094: an `x_init` field, or a bare `x_init` value, outside the closed vocabulary — a mode value, a real off the common eltype, a nested `NamedTuple`, or a wrapper type."
+ Base.@kwdef struct IllegalStateLeaf <: Diagnostic
+     path::String
+-    name::Symbol
++    name::Symbol                             # the field, `BARE` for a bare value
+     declared::Any                            # the offending field type
+     reason::Symbol                           # :mode_value | :eltype | :nested | :wrapper
+ end
+ path(d::IllegalStateLeaf) = d.path
+ function message(d::IllegalStateLeaf)
+-    head = "$(_at_path(d.path)): `x_init` field `$(d.name)::$(d.declared)`"
++    head = "$(_at_path(d.path)): `x_init` " *
++           (d.name === BARE ? "returns `$(d.declared)`, which" :
++                              "field `$(d.name)::$(d.declared)`")
+     d.reason === :mode_value &&
+         return "$head is not a continuous state — integers, `Bool`s and enums belong in " *
+                "`m_init` (§7.1, §8.2)"
+@@ -880,18 +890,20 @@ function message(d::IllegalStateLeaf)
+     "semantics are wanted (§7.1)"
+ end
+ 
+-"§7.3, §8.2, D-231: a store field that is neither isbits nor a `Symbol`."
++"§7.3, §8.2, D-231: a store field, or a bare store value, that is neither isbits nor a `Symbol`."
+ Base.@kwdef struct IllegalStoreField <: Diagnostic
+     path::String
+     store::Symbol                            # :s_init | :m_init
+-    name::Symbol
++    name::Symbol                             # the field, `BARE` for a bare value
+     declared::Any                            # the offending field type
+ end
+ path(d::IllegalStoreField) = d.path
+ message(d::IllegalStoreField) =
+-    "$(_at_path(d.path)): `$(d.store)` field `$(d.name)::$(d.declared)` is not a store " *
+-    "value — store fields are isbits or `Symbol`s; text and bulk data belong on the " *
+-    "component instance (§7.3)"
++    "$(_at_path(d.path)): `$(d.store)` " *
++    (d.name === BARE ? "returns `$(d.declared)`, which" :
++                       "field `$(d.name)::$(d.declared)`") *
++    " is not a store value — store values are isbits or `Symbol`s; text and bulk data " *
++    "belong on the component instance (§7.3)"
+ 
+ # ==============================================================================
+ # The nominal evaluation and activation — schedule and contract conformance
+@@ -1022,7 +1034,7 @@ Base.@kwdef struct ConformanceFailure <: Diagnostic
+     shape::Symbol                            # :ports|:namedtuple|:state|:x_init|:s_init|:stores|:mode
+     observed::Any = nothing
+     declared::Any = nothing
+-    field::Union{Nothing,Symbol} = nothing
++    field::Union{Nothing,Symbol} = nothing   # `BARE` where the declared shape is a bare value
+     observed_fields::Vector{Symbol} = Symbol[]
+     declared_fields::Vector{Symbol} = Symbol[]
+     activation::Any = nothing                # the activation scalar, for the pin hint
+@@ -1075,6 +1087,14 @@ function message(d::ConformanceFailure)
+                "state has $(_symtuple(d.declared_fields)) — a state write-back is complete " *
+                "against the field set (§9.3, §9.5)"
+     end
++    # A bare declaration is one value, so its one type mismatch names no field.
++    d.field === BARE &&
++        return "`$(d.path)`: $(_conformance_what(d)) returns $(d.observed), the " *
++               (d.shape === :s_init ? "state store" : d.shape === :mode ? "mode store" : "state") *
++               " is $(d.declared)" *
++               (d.shape === :s_init ? " — a discrete successor is the store's own type exactly (§9.5)" :
++                d.shape === :mode ? " — a mode store is written whole at its own type (§5.2)" :
++                _pin(d))
+     d.shape === :ports &&
+         return "`$(d.path)`: $(_conformance_what(d)) returns `$(d.field)`::$(d.observed), " *
+                "declared $(d.declared)" * _pin(d)
+@@ -1753,6 +1773,16 @@ function message(d::ReadResolution)
+         return _read_message(d, "$(_at_path(d.path)) is a discrete component — a discrete `s` " *
+                            "has no derivative, and `ẋ` exists on the continuous tier alone",
+                            "§7.1, §14.4, D-195")
++    # A headless address against a named or empty state, and a named one against
++    # a bare state, whose one name in hand is `BARE`.
++    d.reason === :undeclared && d.field === BARE &&
++        return _read_message(d, "$(_at_path(d.path)) declares no bare " *
++                           "$(_declares_noun(d.declares)), which a headless address reads — its " *
++                           "$(_declares_noun(d.declares)) names are $(_namelist(d.candidates))")
++    d.reason === :undeclared && d.candidates == [BARE] &&
++        return _read_message(d, "$(_at_path(d.path)) declares one bare state value, with no " *
++                           "field `$(d.field)` — read it by the headless address, which " *
++                           "names no field")
+     d.reason === :undeclared &&
+         return _read_message(d, "$(_at_path(d.path)) declares no $(_declares_noun(d.declares)) " *
+                            "`$(d.field)` — its $(_declares_noun(d.declares)) names are " *
+@@ -1786,9 +1816,10 @@ const CHECKPOINT_ORIGIN = "checkpoint"
+ Base.@kwdef struct ConditionResolution <: Diagnostic
+     path::String = ""
+     store::Symbol = :input                   # :x | :s | :m | :input
+-    field::Symbol
++    field::Symbol                            # `BARE` for a bare payload
+     reason::Symbol   # :assembly_path|:unexported_face|:no_input_face|
+-                     # :internally_wired|:no_store|:undeclared_field|:unconvertible
++                     # :internally_wired|:no_store|:undeclared_field|:unconvertible|
++                     # :store_shape
+     face::Union{Nothing,Symbol} = nothing    # the root input the chain lands on
+     origin::String = ""                      # the tree's chain to this value
+     candidates::Vector{Symbol} = Symbol[]
+@@ -1804,7 +1835,7 @@ path(d::ConditionResolution) = d.path
+ 
+ _cleaf(d) = d.face !== nothing ? "root input `$(d.face)`" :
+             d.store === :input ? "input face `$(d.field)` of $(_at_path(d.path))" :
+-                                 "`$(d.store).$(d.field)` at $(_at_path(d.path))"
++                                 "`$(_named(d.store, d.field))` at $(_at_path(d.path))"
+ _ctail(d) = " (§14.3) [$(d.origin)]"
+ _role_word(role) = role === :output_port ? "an output port" :
+                 role === :input_face  ? "an input face" : "a workspace entry"
+@@ -1838,6 +1869,13 @@ function message(d::ConditionResolution)
+                 d.store === :m ?
+                 "; modes are declared by `m_init`, continuous-only (§3.2)" : "") *
+                _ctail(d)
++    d.reason === :store_shape && d.field === BARE &&
++        return "$(_cleaf(d)) is set whole, and `$(d.store)_init` at $(_at_path(d.path)) " *
++               "declares the fields $(_namelist(d.candidates)) — name the fields it sets, " *
++               "`set($(d.store) = ($(first(d.candidates)) = …,))`" * _ctail(d)
++    d.reason === :store_shape &&
++        return "$(_cleaf(d)) names a field, and `$(d.store)_init` at $(_at_path(d.path)) " *
++               "declares one bare value — set it whole, `set($(d.store) = …)`" * _ctail(d)
+     d.reason === :undeclared_field &&
+         return "$(_cleaf(d)) is not declared — `$(d.store)_init` at " *
+                "$(_at_path(d.path)) " *
+@@ -1884,8 +1922,8 @@ message(d::ConditionNodeMisuse) =
+     "`at` was given an empty prefix, which names no child — a node meant for the level " *
+     "where it is authored stays unwrapped (§14.2)" :
+     d.reason === :set_payload ?
+-    "`set`'s `$(d.payload)` payload is $(d.observed) — every payload is a NamedTuple " *
+-    "of the authoring level's own names (§14.2)" :
++    "`set`'s `$(d.payload)` payload is $(d.observed) — a `u` payload is a NamedTuple " *
++    "of the authoring level's own input faces (§14.2)" :
+     "$(d.observed) is not a condition node" *
+     (isempty(d.in_hand) ? "" :
+      ", and the node kind(s) in hand are $(_plainlist(d.in_hand))") *
+diff --git a/src/executor.jl b/src/executor.jl
+index d178b8d..5b26b6c 100644
+--- a/src/executor.jl
++++ b/src/executor.jl
+@@ -382,21 +382,35 @@ end
+ end
+ 
+ # §9.5: a discrete successor is the store's own type exactly — the assignment
+-# that would convert is refused at generation instead (D-235).
++# that would convert is refused at generation instead (D-235). The declared
++# shape names the half that failed: a bare store's one type, a named store's
++# field set or return type.
+ @inline _store_successor!(sstore::Base.RefValue{S}, s⁺::S, path, what) where {S} =
+     (sstore[] = s⁺; nothing)
+ _store_successor!(sstore::Base.RefValue{S}, s⁺, path, what) where {S} =
+     throw(DiagnosticError(ConformanceFailure(path = path, what = String(what),
+-                                             reason = s⁺ isa NamedTuple ? :field_set : :return_type,
++                                             reason = !(S <: NamedTuple) ? :field_type :
++                                                      s⁺ isa NamedTuple ? :field_set : :return_type,
+                                              shape = :s_init, observed = typeof(s⁺),
+-                                             declared = S)))
+-
+-# §9.5's partial-`m` predicate at the write: every written mode exists and keeps
+-# its type, decided at generation like the port write.
+-@generated function _merge_modes!(mstore::Base.RefValue{M}, m::NamedTuple{Ms},
+-                                  path::String, what::Symbol,
+-                                  event::Union{Nothing,Symbol}) where {M,Ms}
+-    for mode_field in Ms
++                                             declared = S,
++                                             field = S <: NamedTuple ? nothing : BARE)))
++
++# §9.5's `m` predicate at the write, decided at generation like the port write.
++# A named store takes a partial write: every written mode exists and keeps its
++# type. A bare store is replaced whole, at its own type exactly. The declared
++# shape decides which, never the return's.
++@generated function _merge_modes!(mstore::Base.RefValue{M}, m, path::String, what::Symbol,
++                                  event::Union{Nothing,Symbol}) where {M}
++    M <: NamedTuple ||
++        return m === M ? :(mstore[] = m; nothing) :
++               :(throw(DiagnosticError(ConformanceFailure(
++                   path = path, what = String(what), event = event, reason = :field_type,
++                   shape = :mode, field = BARE, observed = $m, declared = $M))))
++    m <: NamedTuple ||
++        return :(throw(DiagnosticError(ConformanceFailure(
++            path = path, what = String(what), event = event, reason = :return_type,
++            shape = :mode, observed = $m))))
++    for mode_field in fieldnames(m)
+         hasfield(M, mode_field) ||
+             return :(throw(DiagnosticError(ConformanceFailure(
+                 path = path, what = String(what), event = event, reason = :field_set,
+@@ -412,12 +426,6 @@ _store_successor!(sstore::Base.RefValue{S}, s⁺, path, what) where {S} =
+     :(mstore[] = merge(mstore[], m); nothing)
+ end
+ 
+-# A non-NamedTuple `m` is the law's first clause failing, as the probe reports it.
+-_merge_modes!(mstore::Base.RefValue{M}, m, path, what, event) where {M} =
+-    throw(DiagnosticError(ConformanceFailure(path = path, what = String(what), event = event,
+-                                             reason = :return_type, shape = :mode,
+-                                             observed = typeof(m))))
+-
+ @inline function _fire_project!(entry::EventEntry{G,H,P,Comp,XT}, xbuf) where {G,H,P,Comp,XT}
+     P === Nothing && return nothing
+     entry.cursor.fn = :x_projection # the component is the handler's own
+diff --git a/src/leaves.jl b/src/leaves.jl
+index 6cd7052..68f260e 100644
+--- a/src/leaves.jl
++++ b/src/leaves.jl
+@@ -396,9 +396,11 @@ end
+ The wholesale state write with §9.5's always-on check decided at generation
+ (D-235): `value`'s key set must equal the state's, and each field must be a lawful
+ arrival at the state's field type under embed-accept. Fields pair by name,
+-never by position. `shape` is the diagnostic's shape: `:x_init` for a
+-derivative, `:state` for a projection or a handler's `x` key. `event` names the
+-event on a handler's write and is `nothing` everywhere else (D-249).
++never by position. A bare state, an `XT` that is no `NamedTuple`, takes the
++whole return as one arrival at `XT`, whatever the return's type. `shape` is the
++diagnostic's shape: `:x_init` for a derivative, `:state` for a projection or a
++handler's `x` key. `event` names the event on a handler's write and is
++`nothing` everywhere else (D-249).
+ """
+ @generated function flatten_state!(buffer::AbstractVector, offset::Int, value::NamedTuple{Vs},
+                                    ::Type{XT}, ::Type{T}, path::String, what::Symbol,
+@@ -429,9 +431,25 @@ event on a handler's write and is `nothing` everywhere else (D-249).
+     end
+ end
+ 
+-# A non-NamedTuple return is the law's first clause failing.
+-flatten_state!(buffer, offset, value, ::Type{XT}, ::Type{T}, path, what, shape,
+-               event) where {XT,T} =
+-    throw(DiagnosticError(ConformanceFailure(path = path, what = String(what), event = event,
+-                                             reason = :return_type, shape = shape,
+-                                             observed = typeof(value))))
++# The declared shape picks the law. Against a named state a return that is no
++# NamedTuple is the law's first clause failing; a bare state is one arrival,
++# decided at generation like the named fields.
++@generated function flatten_state!(buffer::AbstractVector, offset::Int, value::V,
++                                   ::Type{XT}, ::Type{T}, path::String, what::Symbol,
++                                   shape::Symbol,
++                                   event::Union{Nothing,Symbol}) where {V,XT,T}
++    XT <: NamedTuple &&
++        return :(throw(DiagnosticError(ConformanceFailure(
++            path = path, what = String(what), event = event, reason = :return_type,
++            shape = shape, observed = $V))))
++    _accepts(XT, V, T) ||
++        return :(throw(DiagnosticError(ConformanceFailure(
++            path = path, what = String(what), event = event, reason = :field_type,
++            shape = shape, field = BARE, observed = $V, declared = $XT, activation = $T))))
++    block, _ = _flatten_expr(XT, :value, 0)
++    quote
++        $(Expr(:meta, :inline))
++        $block
++        nothing
++    end
++end
+diff --git a/src/model.jl b/src/model.jl
+index 754fe28..51916c2 100644
+--- a/src/model.jl
++++ b/src/model.jl
+@@ -798,7 +798,7 @@ function _fingerprint(model::Model)
+     Fingerprint(copy(layout.sizes),
+                 Symbol[f for (f, _) in layout.root_inputs],
+                 String[entry.path for entry in model.deployment.build.structure.components],
+-                Any[isempty(decl.x) ? nothing : typeof(decl.x) for decl in exec.act.decls],
++                Any[decl.x === nothing ? nothing : typeof(decl.x) for decl in exec.act.decls],
+                 Any[st === nothing ? nothing : typeof(st[]) for st in exec.sstores],
+                 Any[st === nothing ? nothing : typeof(st[]) for st in exec.mstores],
+                 sort!(Pair{Tuple{String,Symbol},Tuple{Any,Tuple}}[
+diff --git a/src/precompile.jl b/src/precompile.jl
+index 54c2e2d..03af32a 100644
+--- a/src/precompile.jl
++++ b/src/precompile.jl
+@@ -50,11 +50,11 @@ function workload()
+     trim!(trim_sim, TrimProblem(
+         guess = (d = 0.3,), lower = (d = -1.0,), upper = (d = 1.0,),
+         condition = d -> set(u = (disturbance = d.d,)),
+-        reads = reads(q̇₂ = get_deriv("plant", "q[2]")),
++        reads = reads(q̇₂ = get_deriv("plant", "[2]")),
+         residuals = (derivatives, d) -> (q̇₂ = derivatives.q̇₂,),
+         tolerances = (q̇₂ = 1e-9,)); baseline = set(u = (disturbance = 0.0,)))
+     linearize(trim_sim, taps(
+-        x = (q₁ = get_state("plant", "q[1]"), q₂ = get_state("plant", "q[2]")),
++        x = (q₁ = get_state("plant", "[1]"), q₂ = get_state("plant", "[2]")),
+         u = (d = get_input(:disturbance),), y = (y = get_output("plant", :out),)))
+     nothing
+ end
+diff --git a/src/readers.jl b/src/readers.jl
+index cb90f23..f583dc8 100644
+--- a/src/readers.jl
++++ b/src/readers.jl
+@@ -156,7 +156,7 @@ _authored_leaf(leaf::AbstractString) = String(leaf)
+ 
+ # Design: §14.4, D-276, D-406.
+ """
+-    get_state(path::AbstractString, leaf::Union{Symbol,AbstractString}) -> GetState
++    get_state(path::AbstractString, leaf::Union{Symbol,AbstractString} = "") -> GetState
+ 
+ Return a [selector](@ref g-selector) that reads one leaf of a
+ [component](@ref g-component)'s state.
+@@ -165,7 +165,9 @@ A selector is labeled in a [read set](@ref g-read-set) built with
+ [`reads`](@ref). `path` names the component, and `leaf` is a
+ [leaf address](@ref g-leaf-address) that starts with the field name, as in
+ `get_state("plant", "q[2]")`. A bare `Symbol` is the short form of a plain field
+-name. The field is read from a
++name. A state declared bare has no field name, and its address is headless:
++`get_state("integrator")` reads it whole, and `get_state("integrator", "[2]")`
++one component of a static-vector state. The field is read from a
+ [continuous component](@ref g-continuous-component)'s continuous state, or from
+ a discrete component's discrete state.
+ 
+@@ -180,12 +182,12 @@ when the read set is resolved.
+ See also [`get_deriv`](@ref), [`get_output`](@ref), [`get_input`](@ref),
+ [`get_face`](@ref).
+ """
+-get_state(path::AbstractString, leaf::Union{Symbol,AbstractString}) =
++get_state(path::AbstractString, leaf::Union{Symbol,AbstractString} = "") =
+     GetState(String(path), _authored_leaf(leaf))
+ 
+ # Design: §14.4, D-276, D-406.
+ """
+-    get_deriv(path::AbstractString, leaf::Union{Symbol,AbstractString}) -> GetDeriv
++    get_deriv(path::AbstractString, leaf::Union{Symbol,AbstractString} = "") -> GetDeriv
+ 
+ Return a [selector](@ref g-selector) that reads one leaf of a
+ [continuous component](@ref g-continuous-component)'s state derivative.
+@@ -193,8 +195,8 @@ Return a [selector](@ref g-selector) that reads one leaf of a
+ A selector is labeled in a [read set](@ref g-read-set) built with
+ [`reads`](@ref). `path` names the [component](@ref g-component), and `leaf` is a
+ [leaf address](@ref g-leaf-address) into its continuous state, with `[k]` or
+-`[k,l]` steps only, as for [`get_state`](@ref). The value read is the derivative
+-of that leaf, which has the state's own shape.
++`[k,l]` steps only, as for [`get_state`](@ref), headless for a bare state. The
++value read is the derivative of that leaf, which has the state's own shape.
+ 
+ Like `get_state`, `get_deriv` reads the live [stores](@ref g-store), and a
+ reader over published [snapshots](@ref g-snapshot) refuses it as
+@@ -204,7 +206,7 @@ field's type cannot take.
+ 
+ See also [`get_output`](@ref), [`get_input`](@ref), [`get_face`](@ref).
+ """
+-get_deriv(path::AbstractString, leaf::Union{Symbol,AbstractString}) =
++get_deriv(path::AbstractString, leaf::Union{Symbol,AbstractString} = "") =
+     GetDeriv(String(path), _authored_leaf(leaf))
+ 
+ # Design: §11.2, §14.4, D-276.
+@@ -278,9 +280,11 @@ get_face(leaf::Union{Symbol,AbstractString}) = GetFace(_authored_leaf(leaf))
+ 
+ # The selector as authored, for the diagnostics: a refusal names the read the
+ # way its author wrote it, which is what makes a collected list readable. A
+-# `Symbol` leaf prints as `:θ`, a string one in quotes.
+-_spell(selector::GetState) = "get_state(\"$(selector.path)\", $(repr(selector.leaf)))"
+-_spell(selector::GetDeriv) = "get_deriv(\"$(selector.path)\", $(repr(selector.leaf)))"
++# `Symbol` leaf prints as `:θ`, a string one in quotes, and the headless one is
++# left out, as its author wrote it.
++_spell(selector::GetState) = "get_state(\"$(selector.path)\"$(_spell_leaf(selector.leaf)))"
++_spell(selector::GetDeriv) = "get_deriv(\"$(selector.path)\"$(_spell_leaf(selector.leaf)))"
++_spell_leaf(leaf) = isempty(String(leaf)) ? "" : ", $(repr(leaf))"
+ _spell(selector::GetOutput) = "get_output(\"$(selector.path)\", $(repr(selector.leaf)))"
+ _spell(selector::GetInput) = "get_input($(repr(selector.leaf)))"
+ _spell(selector::GetFace) = "get_face($(repr(selector.leaf)))"
+@@ -326,18 +330,18 @@ _name_end(leaf::String, start::Int) =
+ Split a leaf address into its head name and its steps, `"pose.q_eb[2,3]"` into
+ `(:pose, [:q_eb, (2, 3)])`. A `Symbol` is its string. A name is a Julia
+ identifier; an index step is one or more decimal integers of at least one,
+-separated by `,`. Anything else is `:leaf_syntax` with the fragment it stopped
+-at.
++separated by `,`. The headless address of a bare state has no name, its head
++`BARE`: `""` is `(BARE, [])` and `"[2]"` is `(BARE, [(2,)])`. Anything else is
++`:leaf_syntax` with the fragment it stopped at.
+ """
+ parse_leaf(leaf::Symbol) = parse_leaf(String(leaf))
+ 
+ function parse_leaf(leaf::String)
+     stop = _name_end(leaf, 1)
+     head = leaf[1:prevind(leaf, stop)]
+-    Base.isidentifier(head) || return LeafRefusal(:leaf_syntax,
+-        isempty(head) ? leaf[1:min(stop, ncodeunits(leaf))] : head)
++    isempty(head) || Base.isidentifier(head) || return LeafRefusal(:leaf_syntax, head)
+     steps = parse_steps(leaf, stop)
+-    steps isa LeafRefusal ? steps : (Symbol(head), steps)
++    steps isa LeafRefusal ? steps : (isempty(head) ? BARE : Symbol(head), steps)
+ end
+ 
+ # The steps from `start` to the end of the address, as `parse_leaf` reads them
+@@ -557,6 +561,9 @@ end
+ # the dereferenced value instead leaves the `[]` a dynamic call, which boxes.
+ @inline _read(entry::StoreRead{S,F,C}, exec::Executor) where {S,F,C} =
+     walk_steps(getfield((exec.sstores[entry.ci]::Base.RefValue{S})[], F), Val(C))
++# A bare store is read whole before the chain.
++@inline _read(entry::StoreRead{S,BARE,C}, exec::Executor) where {S,C} =
++    walk_steps((exec.sstores[entry.ci]::Base.RefValue{S})[], Val(C))
+ # The signal table's read is store-level, so every gather over a table shares it.
+ @inline _read(entry::CellRead{A,C}, store::StoreBundle) where {A,C} =
+     walk_steps(gather_cell(store, entry.addr), Val(C))
+@@ -871,9 +878,18 @@ function _leaf_chain(read::MountedRead, ::Type{P}, diags::Vector{Diagnostic}) wh
+     nothing
+ end
+ 
+-_undeclared_violation(read::MountedRead, declares::Symbol, declared::NamedTuple) =
++# A store's names in hand: a named store's fields, `BARE` alone for a bare one,
++# none for `nothing`.
++_undeclared_violation(read::MountedRead, declares::Symbol, declared) =
+     _reader_violation(read, :undeclared; declares = declares,
+-                      candidates = collect(keys(declared)))
++                      candidates = Symbol[first(f) for f in store_fields(declared)])
++
++# The declared type a store read's head lands on, or `nothing` where the store
++# has no such head: a named store by field, a bare one by the headless address.
++_store_field_type(declared::NamedTuple, head::Symbol) =
++    haskey(declared, head) ? typeof(declared[head]) : nothing
++_store_field_type(::Nothing, ::Symbol) = nothing
++_store_field_type(declared, head::Symbol) = head === BARE ? typeof(declared) : nothing
+ 
+ # The port list in hand is the `Outputs`' row concatenated by `_ports`, a fresh
+ # vector the payload is free to hold (D-253).
+@@ -887,13 +903,13 @@ function _resolve_selector(selector::GetState, read::MountedRead, build::Build,
+     head = read.head
+     decl, tier = act.decls[ci], build.structure.components[ci].tier
+     declared = state_decls(decl, tier)
+-    haskey(declared, head) ||
++    field_type = _store_field_type(declared, head)
++    field_type === nothing &&
+         (push!(diags, _undeclared_violation(read, :state_field, declared));
+          return nothing)
+     # A continuous field is flat, a scalar or an `SArray` (§7.1), so a `.name`
+     # step falls out of the walk as `:no_such_field`. A discrete `s` field is any
+     # isbits value and takes the full chain (§14.4, D-276).
+-    field_type = typeof(declared[head])
+     chain = _leaf_chain(read, field_type, diags)
+     chain === nothing && return nothing
+     tier === CONTINUOUS ?
+@@ -911,10 +927,10 @@ function _resolve_selector(selector::GetDeriv, read::MountedRead, build::Build,
+         push!(diags, _reader_violation(read, :discrete_deriv))
+         return nothing
+     end
+-    haskey(decl.x, head) ||
++    field_type = _store_field_type(decl.x, head)
++    field_type === nothing &&
+         (push!(diags, _undeclared_violation(read, :state_field, decl.x));
+          return nothing)
+-    field_type = typeof(decl.x[head])
+     chain = _leaf_chain(read, field_type, diags)
+     chain === nothing && return nothing
+     # `ẋ` has `x`'s shape at the activation scalar (§7.1), so the derivative of
+diff --git a/test/fixtures.jl b/test/fixtures.jl
+index 397a80e..ba10a4f 100644
+--- a/test/fixtures.jl
++++ b/test/fixtures.jl
+@@ -32,6 +32,51 @@ function x_deriv(c::Plant, (; x, u))
+     (q = SVector(q[2], -ω^2 * q[1] - 2ζ * ω * q[2] + u.u),)
+ end
+ 
++# --- bare stores (§7.1, §7.3, §8.2) --------------------------------------------
++# One store per letter declared as one value, not a `NamedTuple`: the bundle
++# hands it bare, and a return is one value at its type. `Negator` is a
++# stateless leaf, its store marked `nothing`.
++
++"A bare continuous state relaxing to its input, `ẋ = u - x`, published from stage 1."
++struct BareAccumulator <: AbstractComponent end
++x_init(::BareAccumulator) = 1.0
++u_types(::BareAccumulator) = (u = Float64,)
++y_types(::BareAccumulator) = (y = Float64,)
++y_state(::BareAccumulator, (; x)) = (y = x,)
++x_deriv(::BareAccumulator, (; x, u)) = u.u - x
++
++"A bare discrete state, the count of its ticks."
++struct BareTicker <: AbstractComponent end
++s_init(::BareTicker) = 0
++y_types(::BareTicker) = (n = Int,)
++y_state(::BareTicker, (; s)) = (n = s,)
++s_update(::BareTicker, (; s)) = s + 1
++
++"A bare mode beside a bare `SVector` state: a latch its one event sets as `x[1]` reaches 1."
++struct BareLatch <: AbstractComponent end
++x_init(::BareLatch) = SVector(0.0, 1.0)
++m_init(::BareLatch) = false
++y_types(::BareLatch) = (y = Float64, latched = Bool)
++y_state(::BareLatch, (; x, m)) = (y = x[1], latched = m)
++x_deriv(::BareLatch, (; x)) = SVector(x[2], 0.0)
++latch_guard(::BareLatch, (; x)) = x[1] - 1.0
++latch_handler(::BareLatch, (; x)) = (x = SVector(1.0, -x[2]), m = true)
++state_events(::BareLatch) = (latch = StateEvent(latch_guard, latch_handler),)
++
++"A stateless leaf, `x_init` marked `nothing`."
++struct Negator <: AbstractComponent end
++x_init(::Negator) = nothing
++u_types(::Negator) = (u = Float64,)
++y_types(::Negator) = (y = Float64,)
++y_direct(::Negator, (; u)) = (y = -u.u,)
++
++# The four beside a named store: `acc` fed by the root input `u`, `neg` by
++# `acc`, and `plant`, whose `x` is a `NamedTuple`, by the root input `p`.
++bare_world() = Group((; acc = BareAccumulator(), tick = BareTicker(), latch = BareLatch(),
++                        neg = Negator(), plant = Plant());
++                     local_wires = ("acc/y" => "neg/u",),
++                     input_wires = ("u" => "acc/u", "p" => "plant/u"))
++
+ # --- §5.3's stage-1 return of exposed state ------------------------------------
+ # Components exposing a state or mode field by returning it from `y_state`,
+ # plus the refusal fixtures that declare one and return it from no stage (D-252).
+@@ -90,7 +135,7 @@ struct StateFeedback <: AbstractComponent
+     k::Float64
+ end
+ 
+-x_init(::StateFeedback) = (;)
++x_init(::StateFeedback) = nothing
+ u_types(::StateFeedback) = (q = SVector{2,Float64},)
+ y_types(::StateFeedback) = (u = Float64,)
+ 
+@@ -147,7 +192,7 @@ struct Gain <: AbstractComponent
+     k::Float64
+ end
+ 
+-x_init(::Gain) = (;)
++x_init(::Gain) = nothing
+ u_types(::Gain) = (e = Float64,)
+ y_types(::Gain) = (out = Float64,)
+ 
+@@ -164,7 +209,7 @@ end
+ 
+ Sum(; sa = 1.0, sb = -1.0) = Sum(sa, sb)
+ 
+-x_init(::Sum) = (;)
++x_init(::Sum) = nothing
+ u_types(::Sum) = (a = Float64, b = Float64)
+ y_types(::Sum) = (e = Float64,)
+ 
+@@ -221,7 +266,7 @@ Stateless discrete leaf: its empty store alone declares the tier.
+ """
+ struct DiscreteMap <: AbstractComponent end
+ 
+-s_init(::DiscreteMap) = (;)
++s_init(::DiscreteMap) = nothing
+ u_types(::DiscreteMap) = (a = Int,)
+ y_types(::DiscreteMap) = (b = Int,)
+ 
+@@ -275,7 +320,7 @@ struct WorkGain <: AbstractComponent
+     k::Float64
+ end
+ 
+-x_init(::WorkGain) = (;)
++x_init(::WorkGain) = nothing
+ u_types(::WorkGain) = (in = Float64,)
+ y_types(::WorkGain) = (out = Float64,)
+ ws_init(::WorkGain, ::Type{T}) where {T <: Real} = (tmp = Vector{T}(undef, 1),)
+@@ -294,7 +339,7 @@ idiom (D-166).
+ struct ModedSource <: AbstractComponent end
+ 
+ m_init(::ModedSource) = (phase = :idle,)
+-x_init(::ModedSource) = (;)
++x_init(::ModedSource) = nothing
+ y_types(::ModedSource) = (out = Float64,)
+ 
+ y_state(::ModedSource, (; m)) = (out = m.phase === :idle ? 0.0 : 1.0,)
+@@ -324,7 +369,7 @@ struct Trigger <: AbstractComponent
+ end
+ 
+ m_init(::Trigger) = (state = :armed, count = 0)
+-x_init(::Trigger) = (;)
++x_init(::Trigger) = nothing
+ u_types(::Trigger) = (sig = Float64,)
+ y_types(::Trigger) = (on = Bool,)
+ 
+@@ -342,7 +387,7 @@ settled within one boundary, one iteration round per link, independent of `h`.
+ struct Follower <: AbstractComponent end
+ 
+ m_init(::Follower) = (state = :idle,)
+-x_init(::Follower) = (;)
++x_init(::Follower) = nothing
+ u_types(::Follower) = (go = Bool,)
+ y_types(::Follower) = (on = Bool,)
+ 
+@@ -411,7 +456,7 @@ iterates untouched. `flips` counts every firing.
+ struct Chatterer <: AbstractComponent end
+ 
+ m_init(::Chatterer) = (v = false, flips = 0)
+-x_init(::Chatterer) = (;)
++x_init(::Chatterer) = nothing
+ y_types(::Chatterer) = (v = Bool,)
+ 
+ y_state(::Chatterer, (; m)) = (v = m.v,)
+@@ -430,7 +475,7 @@ by declaration order, and the second is eligible but blocked — its sample is
+ struct TwoShot <: AbstractComponent end
+ 
+ m_init(::TwoShot) = (a = false, b = false)
+-x_init(::TwoShot) = (;)
++x_init(::TwoShot) = nothing
+ u_types(::TwoShot) = (sig = Float64,)
+ y_types(::TwoShot) = (a = Bool,)
+ 
+@@ -451,7 +496,7 @@ fires, where a within-round sequence would have fired it on the stale premise.
+ struct Preempted <: AbstractComponent end
+ 
+ m_init(::Preempted) = (a = false, b = false)
+-x_init(::Preempted) = (;)
++x_init(::Preempted) = nothing
+ u_types(::Preempted) = (sig = Float64,)
+ y_types(::Preempted) = (a = Bool,)
+ 
+@@ -479,7 +524,7 @@ struct Stamper <: AbstractComponent
+ end
+ 
+ m_init(::Stamper) = (t_fired = -1.0, count = 0)
+-x_init(::Stamper) = (;)
++x_init(::Stamper) = nothing
+ u_types(::Stamper) = (sig = Float64,)
+ y_types(::Stamper) = (armed = Bool,)
+ 
+@@ -502,7 +547,7 @@ struct GatedStamper <: AbstractComponent
+ end
+ 
+ m_init(::GatedStamper) = (t_fired = -1.0, count = 0)
+-x_init(::GatedStamper) = (;)
++x_init(::GatedStamper) = nothing
+ u_types(::GatedStamper) = (sig = Float64, gate = Bool)
+ y_types(::GatedStamper) = (armed = Bool,)
+ 
+@@ -577,7 +622,7 @@ struct Overload <: AbstractComponent
+ end
+ 
+ m_init(::Overload) = (tripped = false,)
+-x_init(::Overload) = (;)
++x_init(::Overload) = nothing
+ u_types(::Overload) = (sig = Float64,)
+ y_types(::Overload) = (tripped = Bool,)
+ 
+@@ -630,7 +675,7 @@ struct UnreturnedMode <: AbstractComponent
+ end
+ 
+ m_init(::UnreturnedMode) = (tripped = false,)
+-x_init(::UnreturnedMode) = (;)
++x_init(::UnreturnedMode) = nothing
+ u_types(::UnreturnedMode) = (sig = Float64,)
+ y_types(::UnreturnedMode) = (tripped = Bool,)
+ 
+@@ -688,7 +733,7 @@ Mine: a `Bool` input and a predicate-form event whose handler throws
+ struct Mine <: AbstractComponent end
+ 
+ m_init(::Mine) = (blown = false,)
+-x_init(::Mine) = (;)
++x_init(::Mine) = nothing
+ u_types(::Mine) = (sig = Bool,)
+ y_types(::Mine) = (blown = Bool,)
+ 
+@@ -919,7 +964,7 @@ x_deriv(::DerivativeFed, (; u)) = (q = u.b,)
+ """`Gain` with both ends pinned `Float64`: no tracer scalar can enter, so its hops trace structurally."""
+ struct PinnedGain <: AbstractComponent end
+ 
+-x_init(::PinnedGain) = (;)
++x_init(::PinnedGain) = nothing
+ u_types(::PinnedGain) = (e = Pinned{Float64},)
+ y_types(::PinnedGain) = (out = Pinned{Float64},)
+ y_direct(::PinnedGain, (; u)) = (out = 2u.e,)
+@@ -927,7 +972,7 @@ y_direct(::PinnedGain, (; u)) = (out = 2u.e,)
+ """`Gain` asserting its return `Float64`: fine at the nominal probe, a throw at any other scalar."""
+ struct TypedGain <: AbstractComponent end
+ 
+-x_init(::TypedGain) = (;)
++x_init(::TypedGain) = nothing
+ u_types(::TypedGain) = (e = Float64,)
+ y_types(::TypedGain) = (out = Float64,)
+ y_direct(::TypedGain, (; u)) = (out = (2u.e)::Float64,)
+@@ -1194,7 +1239,7 @@ deterministic aging of a stagger are directly observable through cell reads.
+ """
+ struct ZOH <: AbstractComponent end
+ 
+-s_init(::ZOH) = (;)
++s_init(::ZOH) = nothing
+ u_types(::ZOH) = (in = Float64,)
+ y_types(::ZOH) = (out = Float64,)
+ y_direct(::ZOH, (; u)) = (out = u.in,)
+@@ -1204,7 +1249,7 @@ struct Ramp <: AbstractComponent
+     c₀::Float64
+ end
+ 
+-x_init(::Ramp) = (;)
++x_init(::Ramp) = nothing
+ y_types(::Ramp) = (out = Float64,)
+ y_state(c::Ramp, (; t)) = (out = c.c₀ + t,)
+ 
+@@ -1285,14 +1330,14 @@ sweep. `Terrain` takes no inputs, so the component is the whole domain.
+ """
+ height_field(c::Terrain) = HeightField(c.z, c.h0)
+ 
+-s_init(::Terrain) = (;)
++s_init(::Terrain) = nothing
+ y_types(::Terrain) = (terrain = HeightField,)
+ y_direct(c::Terrain, args) = (terrain = height_field(c),)
+ 
+ """The consumer: it evaluates the handle inside its own stage, at its own arguments."""
+ struct Query <: AbstractComponent end
+ 
+-x_init(::Query) = (;)
++x_init(::Query) = nothing
+ u_types(::Query) = (terrain = HeightField,)
+ y_types(::Query) = (h = Float64,)
+ y_direct(::Query, (; u)) = (h = u.terrain.h0 + size(u.terrain.z, 1),)
+@@ -1300,7 +1345,7 @@ y_direct(::Query, (; u)) = (h = u.terrain.h0 + size(u.terrain.z, 1),)
+ """The same consumer behind an abstract entry: structural substitutability (§8.2)."""
+ struct AbstractTerrainQuery <: AbstractComponent end
+ 
+-x_init(::AbstractTerrainQuery) = (;)
++x_init(::AbstractTerrainQuery) = nothing
+ u_types(::AbstractTerrainQuery) = (terrain = AbstractTerrain,)
+ y_types(::AbstractTerrainQuery) = (h = Float64,)
+ y_direct(::AbstractTerrainQuery, (; u)) = (h = u.terrain.h0 + size(u.terrain.z, 1),)
+@@ -1312,14 +1357,14 @@ end
+ 
+ struct MutableSource <: AbstractComponent end
+ 
+-s_init(::MutableSource) = (;)
++s_init(::MutableSource) = nothing
+ y_types(::MutableSource) = (c = Cache,)
+ y_direct(::MutableSource, args) = (c = Cache(0.0),)
+ 
+ """A mutable array declared as an entry, to surface as a root input."""
+ struct MatrixEntry <: AbstractComponent end
+ 
+-x_init(::MatrixEntry) = (;)
++x_init(::MatrixEntry) = nothing
+ u_types(::MatrixEntry) = (m = Matrix{Float64},)
+ y_types(::MatrixEntry) = (n = Float64,)
+ y_direct(::MatrixEntry, (; u)) = (n = float(length(u.m)),)
+@@ -1343,7 +1388,7 @@ struct OffsetAtT <: AbstractComponent
+ end
+ OffsetAtT() = OffsetAtT(zeros(2, 2))
+ 
+-x_init(::OffsetAtT) = (;)
++x_init(::OffsetAtT) = nothing
+ y_types(::OffsetAtT) = (terrain = OffsetField{Float64},)
+ y_direct(c::OffsetAtT, (; t)) = (terrain = OffsetField(t + 1.0, c.z),)
+ 
+@@ -1353,7 +1398,7 @@ struct OffsetAtLiteral <: AbstractComponent
+ end
+ OffsetAtLiteral() = OffsetAtLiteral(zeros(2, 2))
+ 
+-x_init(::OffsetAtLiteral) = (;)
++x_init(::OffsetAtLiteral) = nothing
+ y_types(::OffsetAtLiteral) = (terrain = OffsetField{Float64},)
+ y_direct(c::OffsetAtLiteral, (; t)) = (terrain = OffsetField(1.0, c.z),)
+ 
+@@ -1363,7 +1408,7 @@ struct PinnedOffsetSource <: AbstractComponent
+ end
+ PinnedOffsetSource() = PinnedOffsetSource(zeros(2, 2))
+ 
+-x_init(::PinnedOffsetSource) = (;)
++x_init(::PinnedOffsetSource) = nothing
+ y_types(::PinnedOffsetSource) = (terrain = Pinned{OffsetField{Float64}},)
+ y_direct(c::PinnedOffsetSource, (; t)) = (terrain = OffsetField(1.0, c.z),)
+ 
+@@ -1373,13 +1418,13 @@ struct DiscreteOffsetSource <: AbstractComponent
+ end
+ DiscreteOffsetSource() = DiscreteOffsetSource(zeros(2, 2))
+ 
+-s_init(::DiscreteOffsetSource) = (;)
++s_init(::DiscreteOffsetSource) = nothing
+ y_types(::DiscreteOffsetSource) = (terrain = OffsetField{Float64},)
+ y_direct(c::DiscreteOffsetSource, (; t)) = (terrain = OffsetField(1.0, c.z),)
+ 
+ struct OffsetQuery <: AbstractComponent end
+ 
+-x_init(::OffsetQuery) = (;)
++x_init(::OffsetQuery) = nothing
+ u_types(::OffsetQuery) = (terrain = OffsetField{Float64},)
+ y_types(::OffsetQuery) = (h = Float64,)
+ y_direct(::OffsetQuery, (; u)) = (h = 2 * u.terrain.h0,)
+@@ -1390,7 +1435,7 @@ offset_model(src) = Group((; src = src, q = OffsetQuery());
+ """Pins the handle entry, so a walking handle producer fails the walk clause."""
+ struct PinnedOffsetQuery <: AbstractComponent end
+ 
+-x_init(::PinnedOffsetQuery) = (;)
++x_init(::PinnedOffsetQuery) = nothing
+ u_types(::PinnedOffsetQuery) = (terrain = Pinned{OffsetField{Float64}},)
+ y_types(::PinnedOffsetQuery) = (h = Float64,)
+ y_direct(::PinnedOffsetQuery, (; u)) = (h = 2 * u.terrain.h0,)
+@@ -1403,7 +1448,7 @@ of a build alone (§8.2): `h` is the handle's `h0` scaled by `k`.
+ """
+ struct TerrainGain <: AbstractComponent end
+ 
+-x_init(::TerrainGain) = (;)
++x_init(::TerrainGain) = nothing
+ u_types(::TerrainGain) = (terrain = AbstractTerrain, k = Float64)
+ y_types(::TerrainGain) = (h = Float64,)
+ y_direct(::TerrainGain, (; u)) = (h = u.terrain.h0 * u.k,)
+@@ -1451,7 +1496,7 @@ end
+ 
+ struct GearStateSource <: AbstractComponent end
+ 
+-x_init(::GearStateSource) = (;)
++x_init(::GearStateSource) = nothing
+ y_types(::GearStateSource) = (gs = GearState{Float64},)
+ y_direct(::GearStateSource, (; t)) = (gs = GearState(1.0, down),)
+ 
+@@ -1462,7 +1507,7 @@ tell which instance arrived.
+ """
+ struct GearReader <: AbstractComponent end
+ 
+-x_init(::GearReader) = (;)
++x_init(::GearReader) = nothing
+ u_types(::GearReader) = (gear = Gear, x = Float64)
+ y_types(::GearReader) = (drag = Float64, code = Int)
+ 
+@@ -1477,7 +1522,7 @@ delivers.
+ struct GearMode <: AbstractComponent end
+ 
+ m_init(::GearMode) = (gear = up,)
+-x_init(::GearMode) = (;)
++x_init(::GearMode) = nothing
+ y_types(::GearMode) = (gear = Gear, y = Float64)
+ 
+ y_state(::GearMode, (; m)) = (gear = m.gear, y = m.gear === up ? 0.0 : 1.0)
+@@ -1494,7 +1539,7 @@ s_update(::PhaseSelector, (; s)) = (n = s.n + 1,)
+ """A consumer of a `Symbol` entry; alone under a root, that entry is a root input."""
+ struct PhaseReader <: AbstractComponent end
+ 
+-x_init(::PhaseReader) = (;)
++x_init(::PhaseReader) = nothing
+ u_types(::PhaseReader) = (phase = Symbol,)
+ y_types(::PhaseReader) = (armed = Bool,)
+ 
+@@ -1507,7 +1552,7 @@ idiomatic label.
+ struct PhaseMode <: AbstractComponent end
+ 
+ m_init(::PhaseMode) = (phase = :idle,)
+-x_init(::PhaseMode) = (;)
++x_init(::PhaseMode) = nothing
+ y_types(::PhaseMode) = (phase = Symbol, y = Float64)
+ 
+ y_state(::PhaseMode, (; m)) = (phase = m.phase, y = m.phase === :idle ? 0.0 : 1.0)
+@@ -1694,7 +1739,7 @@ end
+ module Reason
+ using Redstone
+ struct Leaf <: Redstone.AbstractComponent end
+-Redstone.x_init(::Leaf) = (;)
++Redstone.x_init(::Leaf) = nothing
+ Redstone.y_types(::Leaf) = (flag = Redstone.StopFlag,)
+ Redstone.y_state(::Leaf, _) = (flag = Redstone.NO_STOP,)
+ stop_reason(::Leaf) = "overload"
+@@ -1740,7 +1785,7 @@ struct LateDoc <: AbstractComponent end
+ "The constructor's docstring, registered first."
+ LateDoc(k::Real) = LateDoc()
+ @doc "The type's own docstring, registered second." LateDoc
+-x_init(::LateDoc) = (;)
++x_init(::LateDoc) = nothing
+ y_types(::LateDoc) = (out = Float64,)
+ y_state(::LateDoc, _) = (out = 1.0,)
+ 
+@@ -1751,7 +1796,7 @@ A primitive emitting a tuple port, `Tuple{Float64, Float64}`, whose kind
+ marker is a `struct` with the positions `"1"` and `"2"` as its fields (D-433).
+ """
+ struct TupleOut <: AbstractComponent end
+-x_init(::TupleOut) = (;)
++x_init(::TupleOut) = nothing
+ y_types(::TupleOut) = (out = Tuple{Float64, Float64},)
+ y_state(::TupleOut, _) = (out = (1.0, 2.0),)
+ 
+@@ -1763,7 +1808,7 @@ a producer of any length satisfies (§8.2) and whose kind marker is opaque
+ (D-433).
+ """
+ struct FreeSizeIn <: AbstractComponent end
+-x_init(::FreeSizeIn) = (;)
++x_init(::FreeSizeIn) = nothing
+ u_types(::FreeSizeIn) = (v = StaticVector,)
+ y_types(::FreeSizeIn) = (n = Float64,)
+ y_direct(::FreeSizeIn, (; u)) = (n = float(length(u.v)),)
+@@ -1786,7 +1831,7 @@ const INTERPOLATED_WIDTH = 80
+ 
+ """Cut at $(INTERPOLATED_WIDTH) characters."""
+ struct Interpolated <: AbstractComponent end
+-x_init(::Interpolated) = (;)
++x_init(::Interpolated) = nothing
+ y_types(::Interpolated) = (out = Float64,)
+ y_state(::Interpolated, _) = (out = 0.0,)
+ 
+@@ -1809,6 +1854,6 @@ end
+ A leaf emitting a `Pose3` port.
+ """
+ struct PoseOut <: AbstractComponent end
+-x_init(::PoseOut) = (;)
++x_init(::PoseOut) = nothing
+ y_types(::PoseOut) = (pose = Pose3,)
+ y_state(::PoseOut, _) = (pose = Pose3(1.0, 2.0, 3.0),)
+diff --git a/test/imports.jl b/test/imports.jl
+index 4e75118..e81c4fd 100644
+--- a/test/imports.jl
++++ b/test/imports.jl
+@@ -4,7 +4,7 @@
+ # imports into `RedstoneTests` and into `Main`.
+ import Redstone: ASSEMBLY, Absolute, AbstractBinding, AbstractComponent,
+     AbstractDevice, AlgebraicCycle, AlreadyAttached, Anchor, ArgumentInvalid,
+-    AbstractAtRoot, AttachUnknownFace, Authored, BUILD_WARNINGS, BindingContractMismatch,
++    AbstractAtRoot, AttachUnknownFace, Authored, BARE, BUILD_WARNINGS, BindingContractMismatch,
+     Build, BundleFieldError,
+     CHECKPOINT_ORIGIN, CONTINUOUS, ChatteringBudget, Checkpoint, CheckpointMidFrame,
+     CheckpointMismatch, Child, ChildNameCollision,
+@@ -16,7 +16,7 @@ import Redstone: ASSEMBLY, Absolute, AbstractBinding, AbstractComponent,
+     DeclarationOnWrongTier, DeclarationShadowed, DeclaredNotProduced,
+     Deployment, DeploymentInvalid, DeviceContractMismatch, DeviceCrash, DeviceHandle,
+     DebtReanchor, DeviceJoinTimeout, DiagCell, Diagnostic, DiagnosticError,
+-    DuplicateConditionLeaf, EMPTY_DIAG, EmptyFaceSelection, EmptyGreedyClaim,
++    DuplicateConditionLeaf, EMPTY_DIAG, EmptyFaceSelection, EmptyGreedyClaim, EmptyStore,
+     EndTimeReached, EntryTypeMismatch, EventHalfMissing, Events,
+     Executor, FaceDirectionConflict, FaceNameCollision, FaceNameIllegal,
+     FiringBudget, Fragment, FrameHooks, FrameworkStatus, Gated, GetDeriv, GridEntry, GridReport, GridUtilization,
+@@ -35,7 +35,7 @@ import Redstone: ASSEMBLY, Absolute, AbstractBinding, AbstractComponent,
+     ServiceLifecycle, Simulation, Snapshot,
+     SpecializedPlan, StageEntry, StateEvent, StatelessWithoutOutputs, StepError,
+     StopFlag, StopRequestInvalid, StoreBundle,
+-    StoreNotNamedTuple, StoreWithoutUpdate, Structure, StructureDraft, TableBinding, TapResolution,
++    StoreWithoutUpdate, Structure, StructureDraft, TableBinding, TapResolution,
+     Taps, TerminationRecord, Tier,
+     ThreadBudget, TierUnreadable, Trace, TraceBatch, Tracer,
+     TransparentContainerUnknown,
+diff --git a/test/test_assembly.jl b/test/test_assembly.jl
+index 7f2dab9..2212262 100644
+--- a/test/test_assembly.jl
++++ b/test/test_assembly.jl
+@@ -30,12 +30,12 @@ struct BothFamilies <: AbstractComponent         # assembly marker beside a cont
+     inner::Gain
+ end
+ local_wires(::BothFamilies) = ()
+-x_init(::BothFamilies) = (;)
++x_init(::BothFamilies) = nothing
+ y_types(::BothFamilies) = (a = Float64,)
+ y_state(::BothFamilies, (; t)) = (a = 1.0,)
+ 
+ struct EmptyStoreOnly <: AbstractComponent end     # an empty store and nothing else
+-x_init(::EmptyStoreOnly) = (;)
++x_init(::EmptyStoreOnly) = nothing
+ 
+ function assembly_class()
+     @testset "class is read off the declaration shape (§8.5)" begin
+@@ -454,7 +454,7 @@ output_wires(::SlashedFace) = ("a/out" => "sensors/out",)
+ 
+ struct RootCollision <: AbstractComponent        # one key in both contracts
+ end
+-x_init(::RootCollision) = (;)
++x_init(::RootCollision) = nothing
+ u_types(::RootCollision) = (u = Float64,)
+ y_types(::RootCollision) = (u = Float64, v = Float64)
+ y_direct(::RootCollision, (; u)) = (u = 2u.u, v = 1.0)
+@@ -1016,7 +1016,7 @@ under the first feed list — an unconnected output, and legal (§6.1, D-084).
+ """
+ struct Actuator <: AbstractComponent end
+ 
+-x_init(::Actuator) = (;)
++x_init(::Actuator) = nothing
+ u_types(::Actuator) = (cmd = Float64,)
+ y_types(::Actuator) =
+     (e = Float64, a = Float64, r = Float64, brake_left = Float64, brake_right = Float64)
+@@ -1030,7 +1030,7 @@ input face surface.
+ """
+ struct Aero <: AbstractComponent end
+ 
+-x_init(::Aero) = (;)
++x_init(::Aero) = nothing
+ u_types(::Aero) = (e = Float64, a = Float64, r = Float64, alpha = Float64)
+ y_types(::Aero) = (wrench = Float64,)
+ y_direct(::Aero, (; u)) = (wrench = u.e + u.a + u.r + u.alpha,)
+diff --git a/test/test_blocks.jl b/test/test_blocks.jl
+index 22df349..6113a60 100644
+--- a/test/test_blocks.jl
++++ b/test/test_blocks.jl
+@@ -184,7 +184,7 @@ step_events(model) = only(row for row in build(model).events.components if row.p
+ block_linearization(comp) =
+     (sim = Simulation(fed(comp, "in"); h = 1//100);
+      init!(sim, set(u = (in = 0.0,)));
+-     linearize(sim, taps(x = (q = get_state("c", :q),), u = (in = get_input(:in),))))
++     linearize(sim, taps(x = (q = get_state("c"),), u = (in = get_input(:in),))))
+ 
+ # A limited integrator fed by a step from `1` down to `-1`.
+ limited_model(localized) =
+@@ -505,7 +505,7 @@ function tracker_loop(controller; disturbance = SVector(0.0, 0.0), stepped = tru
+ end
+ 
+ # A loop's plant state at `t_end`, run at `h = 1//100`.
+-plant_state(model, t_end) = last(loop_samples(sim -> state(sim, "plant").q, model, t_end))
++plant_state(model, t_end) = last(loop_samples(sim -> state(sim, "plant"), model, t_end))
+ 
+ # `tracker_loop` without the step, linearized about the origin at the states
+ # `state_taps` and the root input `z_ref`.
+@@ -664,7 +664,7 @@ function test_blocks()
+         sim = Simulation(fed_by(Source(sin), Integrator()); h = 1//100)
+         init!(sim, set())
+         step!(sim; t_plus = 1)
+-        @test state(sim, "c").q ≈ 1 - cos(1) atol = 1e-10
++        @test state(sim, "c") ≈ 1 - cos(1) atol = 1e-10
+         @test port(sim, "k", :out) == sin(1.0)    # a frame-top stamp of the grid time
+         @test y_types(Source(sin)) == (out = Pinned{Float64},)
+         @test typeof(Source(sin)) === Source{Float64, typeof(sin)}
+@@ -672,7 +672,7 @@ function test_blocks()
+         vector_sim = Simulation(vector_source_model(); h = 1//100)
+         init!(vector_sim, set())
+         step!(vector_sim; t_plus = 1)
+-        @test isapprox(state(vector_sim, "c").q, SVector(1 - cos(1), sin(1)); atol = 1e-10)
++        @test isapprox(state(vector_sim, "c"), SVector(1 - cos(1), sin(1)); atol = 1e-10)
+         @test build(vector_source_model(); activations = (Float64, LinearizeDual)) isa Build
+         start_sim = Simulation(single(Source(t -> 2t)); h = 1//10)
+         init!(start_sim, set(); t0 = 1.0)
+@@ -859,7 +859,7 @@ function test_blocks()
+         samples = [(step!(sim; t_plus = 1//100); port(sim, "c", :out)) for _ in 1:1000]
+         @test samples == [Redstone.Blocks.gaussian(42, k) for k in 1:1000]
+         # The store counts the ticks run, `t₀`'s included: the next sample's index.
+-        @test state(sim, "c").k === UInt64(1001)
++        @test state(sim, "c") === UInt64(1001)
+         sample_moments = moments(samples)
+         @test abs(sample_moments.mean) < 0.1
+         @test 0.9 < sqrt(sample_moments.variance) < 1.1
+@@ -1000,12 +1000,12 @@ function test_blocks()
+         sim = Simulation(integrator_model(1.0, 2.0); h = 1//100)
+         init!(sim, set())
+         step!(sim; t_plus = 0.5)
+-        @test state(sim, "i").q ≈ 2.0 atol = 1e-12
+-        @test port(sim, "i", :out) == state(sim, "i").q
++        @test state(sim, "i") ≈ 2.0 atol = 1e-12
++        @test port(sim, "i", :out) == state(sim, "i")
+         vector_sim = Simulation(integrator_model(SVector(0.0, 1.0), SVector(1.0, -1.0)); h = 1//100)
+         init!(vector_sim, set())
+         step!(vector_sim; t_plus = 0.5)
+-        @test isapprox(state(vector_sim, "i").q, SVector(0.5, 0.5); atol = 1e-12)
++        @test isapprox(state(vector_sim, "i"), SVector(0.5, 0.5); atol = 1e-12)
+         linearization = block_linearization(Integrator())
+         @test isapprox(linearization.A, [0.0;;]; atol = 1e-12)
+         @test isapprox(linearization.B, [1.0;;]; atol = 1e-12)
+@@ -1015,12 +1015,12 @@ function test_blocks()
+         sim = Simulation(lag_model(1.0); h = 1//100)
+         init!(sim, set())
+         step!(sim; t_plus = 1.0)
+-        @test state(sim, "l").q ≈ 1 - exp(-2) rtol = 1e-7
+-        @test port(sim, "l", :out) == state(sim, "l").q
++        @test state(sim, "l") ≈ 1 - exp(-2) rtol = 1e-7
++        @test port(sim, "l", :out) == state(sim, "l")
+         vector_sim = Simulation(lag_model(SVector(1.0, -2.0)); h = 1//100)
+         init!(vector_sim, set())
+         step!(vector_sim; t_plus = 1.0)
+-        @test isapprox(state(vector_sim, "l").q, (1 - exp(-2)) * SVector(1.0, -2.0); rtol = 1e-7)
++        @test isapprox(state(vector_sim, "l"), (1 - exp(-2)) * SVector(1.0, -2.0); rtol = 1e-7)
+         linearization = block_linearization(FirstOrderLag(τ = 0.5))
+         @test isapprox(linearization.A, [-2.0;;]; atol = 1e-12)
+         @test isapprox(linearization.B, [2.0;;]; atol = 1e-12)
+@@ -1032,7 +1032,7 @@ function test_blocks()
+         sim = Simulation(linear_root_model(two_state_block()); h = 1//100)
+         init!(sim, set(u = (in = SVector(1.0, -1.0),)))
+         step!(sim; t_plus = 0.3)
+-        linearization = linearize(sim, taps(x = (q1 = get_state("c", "q[1]"), q2 = get_state("c", "q[2]")),
++        linearization = linearize(sim, taps(x = (q1 = get_state("c", "[1]"), q2 = get_state("c", "[2]")),
+                                             u = (in1 = get_input("in[1]"), in2 = get_input("in[2]")),
+                                             y = (out1 = get_face("out[1]"), out2 = get_face("out[2]"))))
+         @test isapprox(linearization.A, [-1 0.5; 0 -2]; atol = 1e-12)
+@@ -1043,7 +1043,7 @@ function test_blocks()
+         # an index step.
+         scalar_sim = Simulation(fed(StateSpace(A = [-2.0;;], B = [3.0;;], C = [1.0;;]), "in"); h = 1//100)
+         init!(scalar_sim, set(u = (in = 0.0,)))
+-        scalar_linearization = linearize(scalar_sim, taps(x = (q = get_state("c", "q[1]"),),
++        scalar_linearization = linearize(scalar_sim, taps(x = (q = get_state("c", "[1]"),),
+                                                           u = (in = get_input(:in),)))
+         @test isapprox(scalar_linearization.A, [-2.0;;]; atol = 1e-12)
+         @test isapprox(scalar_linearization.B, [3.0;;]; atol = 1e-12)
+@@ -1071,8 +1071,8 @@ function test_blocks()
+         sim = Simulation(scalar_model; h = 1//100)
+         init!(sim, set())
+         step!(sim; t_plus = 1.0)
+-        @test state(sim, "c").q[1] ≈ 1 + exp(-1) rtol = 1e-7
+-        @test port(sim, "c", :out) == state(sim, "c").q[1]
++        @test state(sim, "c")[1] ≈ 1 + exp(-1) rtol = 1e-7
++        @test port(sim, "c", :out) == state(sim, "c")[1]
+         @test build(scalar_model; activations = (Float64, LinearizeDual)) isa Build
+         @test build(fed_by(Constant(SVector(1.0, -1.0)), two_state_block()); activations = (Float64, LinearizeDual)) isa Build
+         @test build(linear_root_model(two_state_block()); activations = (Float64, LinearizeDual)) isa Build
+@@ -1102,14 +1102,14 @@ function test_blocks()
+         step!(sim; t_plus = 0.7)
+         @test port(sim, "tf", :out) ≈ port(sim, "l", :out) rtol = 1e-12
+         # The realized state is the lag's scaled by `τ`.
+-        @test state(sim, "tf").q[1] ≈ 0.5 * state(sim, "l").q rtol = 1e-12
++        @test state(sim, "tf")[1] ≈ 0.5 * state(sim, "l") rtol = 1e-12
+         @test build(lag_pair_model(); activations = (Float64, LinearizeDual)) isa Build
+     end
+ 
+     @testset "the lead-lag and the second-order system linearize to their transfer functions (§14.10, D-313)" begin
+         sim = Simulation(linear_root_model(lead_lag()); h = 1//100)
+         init!(sim, set(u = (in = 0.0,)))
+-        linearization = linearize(sim, taps(x = (q = get_state("c", "q[1]"),), u = (in = get_input(:in),),
++        linearization = linearize(sim, taps(x = (q = get_state("c", "[1]"),), u = (in = get_input(:in),),
+                                             y = (out = get_face(:out),)))
+         @test isapprox(linearization.A, [-5.0;;]; atol = 1e-12)
+         @test isapprox(linearization.B, [1.0;;]; atol = 1e-12)
+@@ -1117,7 +1117,7 @@ function test_blocks()
+         @test isapprox(linearization.D, [1.0;;]; atol = 1e-12)
+         second_sim = Simulation(linear_root_model(second_order()); h = 1//100)
+         init!(second_sim, set(u = (in = 0.0,)))
+-        (; A, B, C, D) = linearize(second_sim, taps(x = (q1 = get_state("c", "q[1]"), q2 = get_state("c", "q[2]")),
++        (; A, B, C, D) = linearize(second_sim, taps(x = (q1 = get_state("c", "[1]"), q2 = get_state("c", "[2]")),
+                                                     u = (in = get_input(:in),), y = (out = get_face(:out),)))
+         for s in (0, im, 2im, 1 + 3im)
+             H = (C * ((s * I - A) \ B) + D)[1]
+@@ -1292,10 +1292,10 @@ function test_blocks()
+         sim = Simulation(step_model(Step(t_step = 0.25)); h = 1//10)
+         init!(sim, set())
+         step!(sim; t_plus = 0.2)
+-        @test port(sim, "s", :out) == 0.0 && state(sim, "i").q == 0.0
++        @test port(sim, "s", :out) == 0.0 && state(sim, "i") == 0.0
+         step!(sim; t_plus = 0.1)
+         bracket_width = sim.model.deployment.localization_tol * sim.model.deployment.h    # in time (§10.4)
+-        @test state(sim, "i").q ≈ 0.05 atol = bracket_width
++        @test state(sim, "i") ≈ 0.05 atol = bracket_width
+         @test port(sim, "s", :out) == 1.0
+         @test step_events(step_model(Step(t_step = 0.25))).policies === (fire = :localized,)
+     end
+@@ -1306,10 +1306,10 @@ function test_blocks()
+         step!(sim; t_plus = 0.2)
+         @test port(sim, "s", :out) == 0.0
+         step!(sim; t_plus = 0.1)
+-        @test state(sim, "i").q == 0.0    # nothing lands inside the step
++        @test state(sim, "i") == 0.0    # nothing lands inside the step
+         @test port(sim, "s", :out) == 1.0
+         step!(sim; t_plus = 0.1)
+-        @test state(sim, "i").q ≈ 0.1 atol = 1e-12
++        @test state(sim, "i") ≈ 0.1 atol = 1e-12
+         @test step_events(step_model(Step(t_step = 0.25, localized = false))).policies === (fire = :boundary,)
+     end
+ 
+@@ -1317,7 +1317,7 @@ function test_blocks()
+         for localized in (true, false), t_step in (0.0, -1.0)
+             sim = Simulation(single(Step(t_step = t_step, localized = localized)); h = 1//10)
+             init!(sim, set())
+-            @test modes(sim, "c").fired && port(sim, "c", :out) == 1.0
++            @test modes(sim, "c") && port(sim, "c", :out) == 1.0
+         end
+     end
+ 
+@@ -1358,32 +1358,32 @@ function test_blocks()
+             sim = Simulation(limited_model(localized); h = 1//10)
+             init!(sim, set())
+             step!(sim; t_plus = 0.7)
+-            @test state(sim, "li").q == 0.5 && modes(sim, "li").saturation === Int8(1)
+-            @test port(sim, "li", :saturation) === modes(sim, "li").saturation
++            @test state(sim, "li") == 0.5 && modes(sim, "li") === Int8(1)
++            @test port(sim, "li", :saturation) === modes(sim, "li")
+             step!(sim; t_plus = 1.3)
+             bracket_width = sim.model.deployment.localization_tol * sim.model.deployment.h    # in time (§10.4)
+-            @test state(sim, "li").q ≈ -0.45 atol = bracket_width
+-            @test modes(sim, "li").saturation === Int8(0)
+-            @test port(sim, "li", :saturation) === modes(sim, "li").saturation
++            @test state(sim, "li") ≈ -0.45 atol = bracket_width
++            @test modes(sim, "li") === Int8(0)
++            @test port(sim, "li", :saturation) === modes(sim, "li")
+             step!(sim; t_plus = 1.0)
+-            @test state(sim, "li").q == -1.0 && modes(sim, "li").saturation === Int8(-1)
+-            @test port(sim, "li", :saturation) === modes(sim, "li").saturation
++            @test state(sim, "li") == -1.0 && modes(sim, "li") === Int8(-1)
++            @test port(sim, "li", :saturation) === modes(sim, "li")
+         end
+         # The derivative reads the mode, so the Jacobian does too.
+         @test isapprox(block_linearization(LimitedIntegrator(lower = -1.0, upper = 0.5)).B, [1.0;;]; atol = 1e-12)
+         rig = Simulation(fed(LimitedIntegrator(lower = -1.0, upper = 0.5), "in"); h = 1//10)
+         init!(rig, set(u = (in = 1.0,)))
+         step!(rig; t_plus = 0.7)
+-        @test state(rig, "c").q == 0.5 && modes(rig, "c").saturation === Int8(1)
+-        linearization = linearize(rig, taps(x = (q = get_state("c", :q),), u = (in = get_input(:in),)))
++        @test state(rig, "c") == 0.5 && modes(rig, "c") === Int8(1)
++        linearization = linearize(rig, taps(x = (q = get_state("c"),), u = (in = get_input(:in),)))
+         @test isapprox(linearization.B, [0.0;;]; atol = 1e-12)
+         # An `x0` outside the limits is clamped at boundary zero (§10.6).
+         clamped = Simulation(fed(LimitedIntegrator(x0 = 2.0, lower = -1.0, upper = 0.5), "in"); h = 1//10)
+         init!(clamped, set(u = (in = 1.0,)))
+-        @test state(clamped, "c").q == 0.5 && modes(clamped, "c").saturation === Int8(1)
++        @test state(clamped, "c") == 0.5 && modes(clamped, "c") === Int8(1)
+         clamped_lower = Simulation(fed(LimitedIntegrator(x0 = -2.0, lower = -1.0, upper = 0.5), "in"); h = 1//10)
+         init!(clamped_lower, set(u = (in = -1.0,)))
+-        @test state(clamped_lower, "c").q == -1.0 && modes(clamped_lower, "c").saturation === Int8(-1)
++        @test state(clamped_lower, "c") == -1.0 && modes(clamped_lower, "c") === Int8(-1)
+         @test LimitedIntegrator(lower = -1, upper = 0.5) isa LimitedIntegrator{Float64}
+         @test LimitedIntegrator(lower = -1, upper = 0.5).x0 === 0.0
+     end
+@@ -1396,7 +1396,7 @@ function test_blocks()
+             sim = Simulation(zero_input_model(level, lower, upper, localized); h = 1//10)
+             init!(sim, set())
+             step!(sim; t_plus = 3.0)
+-            @test state(sim, "li").q == limit && modes(sim, "li").saturation === saturation
++            @test state(sim, "li") == limit && modes(sim, "li") === saturation
+         end
+     end
+ 
+@@ -1410,24 +1410,24 @@ function test_blocks()
+             sim = Simulation(vector_limited_model(localized); h = 1//10)
+             init!(sim, set())
+             step!(sim; t_plus = 0.4)
+-            @test state(sim, "li").q[1] ≈ 0.4 atol = 1e-12
+-            @test state(sim, "li").q[2] == 0.8
+-            @test modes(sim, "li").saturation == SVector{2, Int8}(0, 1)
+-            @test port(sim, "li", :saturation) === modes(sim, "li").saturation
++            @test state(sim, "li")[1] ≈ 0.4 atol = 1e-12
++            @test state(sim, "li")[2] == 0.8
++            @test modes(sim, "li") == SVector{2, Int8}(0, 1)
++            @test port(sim, "li", :saturation) === modes(sim, "li")
+             step!(sim; t_plus = 0.3)
+-            @test state(sim, "li").q == SVector(0.5, 0.8)
+-            @test modes(sim, "li").saturation == SVector{2, Int8}(1, 1)
+-            @test port(sim, "li", :saturation) === modes(sim, "li").saturation
++            @test state(sim, "li") == SVector(0.5, 0.8)
++            @test modes(sim, "li") == SVector{2, Int8}(1, 1)
++            @test port(sim, "li", :saturation) === modes(sim, "li")
+             step!(sim; t_plus = 1.3)
+             bracket_width = sim.model.deployment.localization_tol * sim.model.deployment.h    # in time (§10.4)
+-            @test state(sim, "li").q[1] ≈ -0.45 atol = bracket_width
+-            @test state(sim, "li").q[2] == 0.8
+-            @test modes(sim, "li").saturation == SVector{2, Int8}(0, 1)
+-            @test port(sim, "li", :saturation) === modes(sim, "li").saturation
++            @test state(sim, "li")[1] ≈ -0.45 atol = bracket_width
++            @test state(sim, "li")[2] == 0.8
++            @test modes(sim, "li") == SVector{2, Int8}(0, 1)
++            @test port(sim, "li", :saturation) === modes(sim, "li")
+             step!(sim; t_plus = 1.0)
+-            @test state(sim, "li").q == SVector(-1.0, 0.8)
+-            @test modes(sim, "li").saturation == SVector{2, Int8}(-1, 1)
+-            @test port(sim, "li", :saturation) === modes(sim, "li").saturation
++            @test state(sim, "li") == SVector(-1.0, 0.8)
++            @test modes(sim, "li") == SVector{2, Int8}(-1, 1)
++            @test port(sim, "li", :saturation) === modes(sim, "li")
+         end
+         @test y_types(LimitedIntegrator(lower = SVector(-1.0, -1.0), upper = SVector(0.5, 0.8))) ==
+               (out = SVector{2, Float64}, saturation = SVector{2, Int8})
+@@ -1439,7 +1439,7 @@ function test_blocks()
+         rig = Simulation(fed(LimitedIntegrator(lower = SVector(-1.0, -1.0), upper = SVector(0.5, 0.8)), "in"); h = 1//10)
+         init!(rig, set(u = (in = SVector(1.0, 0.0),)))
+         step!(rig; t_plus = 0.7)
+-        linearization = linearize(rig, taps(x = (q1 = get_state("c", "q[1]"), q2 = get_state("c", "q[2]")),
++        linearization = linearize(rig, taps(x = (q1 = get_state("c", "[1]"), q2 = get_state("c", "[2]")),
+                                             u = (in1 = get_input("in[1]"), in2 = get_input("in[2]"))))
+         @test isapprox(linearization.A, zeros(2, 2); atol = 1e-12)
+         @test isapprox(linearization.B, diagm([0.0, 1.0]); atol = 1e-12)
+@@ -1469,12 +1469,12 @@ function test_blocks()
+         init!(localized_sim, set())
+         step!(localized_sim; t_plus = 3.0)
+         bracket_width = localized_sim.model.deployment.localization_tol * localized_sim.model.deployment.h    # in time (§10.4)
+-        @test state(localized_sim, "li").q ≈ 0.4 - 1.95^2 / 2 atol = bracket_width
++        @test state(localized_sim, "li") ≈ 0.4 - 1.95^2 / 2 atol = bracket_width
+         boundary_sim = Simulation(ramp_limited_model(false); h = 1//10)
+         init!(boundary_sim, set())
+         step!(boundary_sim; t_plus = 3.0)
+-        @test state(boundary_sim, "li").q ≈ -1.5 atol = 1e-12    # RK4 is exact on the quadratic
+-        @test 0 < state(boundary_sim, "li").q - state(localized_sim, "li").q ≤ 0.1^2 / 2
++        @test state(boundary_sim, "li") ≈ -1.5 atol = 1e-12    # RK4 is exact on the quadratic
++        @test 0 < state(boundary_sim, "li") - state(localized_sim, "li") ≤ 0.1^2 / 2
+     end
+ 
+     @testset "the relay switches with hysteresis, from boundary zero on (§10.4, §10.6, D-313)" begin
+@@ -1485,14 +1485,14 @@ function test_blocks()
+         for (t_plus, out, relay_state) in ((0.5, 0.0, Int8(0)), (0.4, 1.0, Int8(1)), (0.6, 1.0, Int8(1)),
+                                             (0.4, 0.0, Int8(0)))
+             step!(sim; t_plus = t_plus)
+-            @test port(sim, "r", :out) == out && modes(sim, "r").state === relay_state
++            @test port(sim, "r", :out) == out && modes(sim, "r") === relay_state
+         end
+         for (value, relay_state) in ((1.0, Int8(1)), (0.5, Int8(0)))
+             model = Group((; k = Constant(value), r = Relay(lower = 0.2, upper = 0.8));
+                           local_wires = ("k/out" => "r/in",))
+             constant_sim = Simulation(model; h = 1//10)
+             init!(constant_sim, set())
+-            @test modes(constant_sim, "r").state === relay_state
++            @test modes(constant_sim, "r") === relay_state
+         end
+     end
+ 
+@@ -1507,13 +1507,13 @@ function test_blocks()
+                                            (0.6, SVector(1.0, 0.0), SVector{2, Int8}(1, 0)),
+                                            (0.4, SVector(0.0, 0.0), SVector{2, Int8}(0, 0)))
+             step!(sim; t_plus = t_plus)
+-            @test port(sim, "r", :out) == out && modes(sim, "r").state == relay_state
++            @test port(sim, "r", :out) == out && modes(sim, "r") == relay_state
+         end
+         model = Group((; k = Constant(SVector(1.0, 0.5)), r = Relay(lower = SVector(0.2, 0.2), upper = SVector(0.8, 0.8)));
+                       local_wires = ("k/out" => "r/in",))
+         constant_sim = Simulation(model; h = 1//10)
+         init!(constant_sim, set())
+-        @test modes(constant_sim, "r").state == SVector{2, Int8}(1, 0)
++        @test modes(constant_sim, "r") == SVector{2, Int8}(1, 0)
+     end
+ 
+     @testset "the PID's ports follow its two axes (§13.7, D-313, D-385)" begin
+@@ -1717,7 +1717,7 @@ function test_blocks()
+         init!(sim, set())
+         step!(sim; t_plus = 5.0)
+         bracket_width = sim.model.deployment.localization_tol * sim.model.deployment.h    # in time, at slope 1
+-        @test 0.2 - bracket_width ≤ state(sim, "integrator").q ≤ 0.8 + bracket_width
++        @test 0.2 - bracket_width ≤ state(sim, "integrator") ≤ 0.8 + bracket_width
+     end
+ 
+     @testset "the servo loop saturates its controller, leaves the limit and settles on its reference (§13.7)" begin
+@@ -1729,8 +1729,8 @@ function test_blocks()
+         for (t_plus, saturation) in ((1.0, Int8(0)), (1.0, Int8(0)), (0.5, Int8(1)), (1.5, Int8(0)),
+                                      (1.0, Int8(0)), (5.0, Int8(0)), (30.0, Int8(0)))
+             step!(sim; t_plus = t_plus)
+-            @test state(sim, "controller").q ≤ 1.2
+-            @test modes(sim, "controller").saturation === saturation
++            @test state(sim, "controller") ≤ 1.2
++            @test modes(sim, "controller") === saturation
+         end
+         @test port(sim, "plant", :out) ≈ 1.0 atol = 1e-3
+         # Boundary-detected, the departure moves by up to one step.
+@@ -1765,7 +1765,7 @@ function test_blocks()
+                                                  q = state(sim, "controller").q),
+                                          pid_single_loop(PID(; gains..., Tt = Tt)), 40)
+             assembly_samples = loop_samples(sim -> (y = port(sim, "", :y), u = port(sim, "controller", :u),
+-                                                    q = state(sim, "controller/int").q),
++                                                    q = state(sim, "controller/int")),
+                                             pid_single_loop(pid_assembly(; gains..., Tt = Tt)), 40)
+             for name in (:y, :u, :q)
+                 @test maximum(abs(getfield(block_sample, name) - getfield(assembly_sample, name))
+@@ -1776,7 +1776,7 @@ function test_blocks()
+         plain_matrices = (A = [0.0 0.0; 0.0 -10.0], B = [0.5 -0.5; 0.0 10.0], C = [1.0 2.0], D = [1.0 -3.0])
+         for (model, state_taps) in
+                 ((pid_root_model(pid_controller(false, false)), (q = get_state("controller", :q), yf = get_state("controller", :yf))),
+-                 (pid_assembly(; gains...), (q = get_state("int", :q), yf = get_state("lag", :q))))
++                 (pid_assembly(; gains...), (q = get_state("int"), yf = get_state("lag"))))
+             @test build(model; activations = (Float64, LinearizeDual)) isa Build
+             sim = Simulation(model; h = 1//100)
+             init!(sim, set(u = (r = 0.0, y = 0.0)))
+@@ -2058,7 +2058,7 @@ function test_blocks()
+         gains = merge(tracker_gains(), (Tt = 2.0, u_min = -0.7))
+         signals = (x = SVector(0.3, 0.1), z = SVector(0.4, 0.7), z_ref = SVector(0.9, 0.2))
+         v = SVector(0.2, -0.3)
+-        x = (q = SVector(0.05, -0.05),)
++        x = SVector(0.05, -0.05)
+         s = (q = SVector(0.05, -0.05), saturated = zero(SVector{2, Int8}))
+         Δt = 0.01
+         engaged, not_engaged = SVector(true, true), SVector(false, false)
+@@ -2093,7 +2093,7 @@ function test_blocks()
+             outputs = y_direct(controller, (; x, u))
+             @test outputs.u_raw ≈ SVector(0.95, -0.75) atol = 1e-12
+             @test outputs.u ≈ SVector(0.95, -0.7) atol = 1e-12
+-            @test x_deriv(controller, (; x, u, y = outputs)).q ≈ q_deriv atol = 1e-12
++            @test x_deriv(controller, (; x, u, y = outputs)) ≈ q_deriv atol = 1e-12
+             controller = DiscreteLQRTracker(; gains..., scheduled..., hold, tracking)
+             outputs = y_direct(controller, (; s, u, Δt))
+             @test outputs.u_raw ≈ SVector(0.95, -0.75) atol = 1e-12
+@@ -2121,13 +2121,13 @@ function test_blocks()
+         @test plant_state(tracker_loop(LQRTracker(; plain...); disturbance), 20) ≈
+               SVector(1.1166666666666667, 0.4166666666666667) atol = 1e-6
+         @test plant_state(tracker_loop(LQRTracker(; integral...); disturbance), 200) ≈ target atol = 1e-6
+-        plant_taps = (x1 = get_state("plant", "q[1]"), x2 = get_state("plant", "q[2]"))
++        plant_taps = (x1 = get_state("plant", "[1]"), x2 = get_state("plant", "[2]"))
+         linearization = tracker_linearization(LQRTracker(; plain...), plant_taps)
+         @test isapprox(linearization.A, [-1.0 1.0; -2.0 -4.0]; atol = 1e-12)
+         @test isapprox(linearization.B, [1.0 -1.0; 2.0 4.0]; atol = 1e-12)
+         linearization = tracker_linearization(LQRTracker(; integral...),
+-                                              merge(plant_taps, (q1 = get_state("controller", "q[1]"),
+-                                                                 q2 = get_state("controller", "q[2]"))))
++                                              merge(plant_taps, (q1 = get_state("controller", "[1]"),
++                                                                 q2 = get_state("controller", "[2]"))))
+         @test isapprox(linearization.A, [-1.0 1.0 1.0 0.0; -2.0 -4.0 0.0 1.0; -0.5 0.0 0.0 0.0; 0.0 -0.25 0.0 0.0];
+                        atol = 1e-12)
+         @test isapprox(linearization.B, [1.0 -1.0; 2.0 4.0; 0.5 0.0; 0.0 0.25]; atol = 1e-12)
+diff --git a/test/test_build.jl b/test/test_build.jl
+index 9feab9a..0816fca 100644
+--- a/test/test_build.jl
++++ b/test/test_build.jl
+@@ -10,12 +10,12 @@
+ # would dispatch on the untouched global and silently see the fallback
+ # declarations instead.
+ struct Undeclared <: AbstractComponent end
+-x_init(::Undeclared) = (;)
++x_init(::Undeclared) = nothing
+ y_types(::Undeclared) = (a = Float64,)
+ y_state(::Undeclared, (; t)) = (a = 1.0, b = 2.0)
+ 
+ struct Unproduced <: AbstractComponent end
+-x_init(::Unproduced) = (;)
++x_init(::Unproduced) = nothing
+ y_types(::Unproduced) = (a = Float64, b = Float64)
+ y_state(::Unproduced, (; t)) = (a = 1.0,)
+ 
+@@ -431,21 +431,21 @@ end
+ 
+ struct RealEntry <: AbstractComponent            # an unpinned entry: follows the activation
+ end
+-x_init(::RealEntry) = (;)
++x_init(::RealEntry) = nothing
+ u_types(::RealEntry) = (u = Float64,)
+ y_types(::RealEntry) = (y = Float64,)
+ y_direct(::RealEntry, (; u)) = (y = u.u,)
+ 
+ struct BoolEntry <: AbstractComponent            # ...against a `Bool` at the same face
+ end
+-x_init(::BoolEntry) = (;)
++x_init(::BoolEntry) = nothing
+ u_types(::BoolEntry) = (u = Bool,)
+ y_types(::BoolEntry) = (y = Float64,)
+ y_direct(::BoolEntry, (; u)) = (y = u.u ? 1.0 : 0.0,)
+ 
+ struct PinnedEntry <: AbstractComponent          # ...against a pinned `Float64`
+ end
+-x_init(::PinnedEntry) = (;)
++x_init(::PinnedEntry) = nothing
+ u_types(::PinnedEntry) = (u = Pinned{Float64},)
+ y_types(::PinnedEntry) = (y = Float64,)
+ y_direct(::PinnedEntry, (; u)) = (y = u.u,)
+@@ -511,17 +511,17 @@ field_scalar(f::FieldB) = sum(f.b)
+ # Stage-1 sources naming the concrete type. The value is a constant: a `Dual`
+ # `t` would not convert into the pinned field.
+ struct FieldSourceA <: AbstractComponent end
+-x_init(::FieldSourceA) = (;)
++x_init(::FieldSourceA) = nothing
+ y_types(::FieldSourceA) = (fld = FieldA,)
+ y_state(::FieldSourceA, (; t)) = (fld = FieldA(2.0),)
+ 
+ struct FieldSourceB <: AbstractComponent end
+-x_init(::FieldSourceB) = (;)
++x_init(::FieldSourceB) = nothing
+ y_types(::FieldSourceB) = (fld = FieldB,)
+ y_state(::FieldSourceB, (; t)) = (fld = FieldB(SVector(1.0, 2.0)),)
+ 
+ struct FieldReader <: AbstractComponent end
+-x_init(::FieldReader) = (;)
++x_init(::FieldReader) = nothing
+ u_types(::FieldReader) = (f = AbstractField,)
+ y_types(::FieldReader) = (out = Float64,)
+ y_direct(::FieldReader, (; u)) = (out = field_scalar(u.f),)
+@@ -529,44 +529,44 @@ y_direct(::FieldReader, (; u)) = (out = field_scalar(u.f),)
+ # An abstract *numeric* entry: `Real` admits the activation scalar and a frozen
+ # `Float64` alike, and it has no leaves to enumerate.
+ struct RealReader <: AbstractComponent end
+-x_init(::RealReader) = (;)
++x_init(::RealReader) = nothing
+ u_types(::RealReader) = (u = Real,)
+ y_types(::RealReader) = (out = Float64,)
+ y_direct(::RealReader, (; u)) = (out = 2 * u.u,)
+ 
+ # An abstract container entry against a walking and a pinned producer.
+ struct VecReader <: AbstractComponent end
+-x_init(::VecReader) = (;)
++x_init(::VecReader) = nothing
+ u_types(::VecReader) = (v = AbstractVector{Float64},)
+ y_types(::VecReader) = (n = Float64,)
+ y_direct(::VecReader, (; u)) = (n = sum(u.v),)
+ 
+ struct VecSource <: AbstractComponent end
+-x_init(::VecSource) = (;)
++x_init(::VecSource) = nothing
+ y_types(::VecSource) = (v = SVector{3,Float64},)
+ y_state(::VecSource, (; t)) = (v = SVector(1.0, 2.0, 3.0),)
+ 
+ struct PinnedVecSource <: AbstractComponent end
+-x_init(::PinnedVecSource) = (;)
++x_init(::PinnedVecSource) = nothing
+ y_types(::PinnedVecSource) = (v = Pinned{SVector{3,Float64}},)
+ y_state(::PinnedVecSource, (; t)) = (v = SVector(1.0, 2.0, 3.0),)
+ 
+ # The concrete co-consumers the abstract container entry fans out beside.
+ struct SVecEntry <: AbstractComponent end
+-x_init(::SVecEntry) = (;)
++x_init(::SVecEntry) = nothing
+ u_types(::SVecEntry) = (v = SVector{3,Float64},)
+ y_types(::SVecEntry) = (y = Float64,)
+ y_direct(::SVecEntry, (; u)) = (y = sum(u.v),)
+ 
+ struct PinnedSVecEntry <: AbstractComponent end
+-x_init(::PinnedSVecEntry) = (;)
++x_init(::PinnedSVecEntry) = nothing
+ u_types(::PinnedSVecEntry) = (v = Pinned{SVector{3,Float64}},)
+ y_types(::PinnedSVecEntry) = (y = Float64,)
+ y_direct(::PinnedSVecEntry, (; u)) = (y = sum(u.v),)
+ 
+ # A pin written at an entry its producer walks (§8.2's failure asymmetry).
+ struct FrozenEntry <: AbstractComponent end
+-x_init(::FrozenEntry) = (;)
++x_init(::FrozenEntry) = nothing
+ u_types(::FrozenEntry) = (u = Pinned{Float64},)
+ y_types(::FrozenEntry) = (y = Float64,)
+ y_direct(::FrozenEntry, (; u)) = (y = u.u,)
+@@ -579,12 +579,12 @@ struct Frame{T}
+ end
+ 
+ struct FrameSource <: AbstractComponent end
+-x_init(::FrameSource) = (;)
++x_init(::FrameSource) = nothing
+ y_types(::FrameSource) = (f = Frame{Float64},)
+ y_state(::FrameSource, (; t)) = (f = Frame(SVector(1.0, 2.0, 3.0), 7),)
+ 
+ struct FrameReader <: AbstractComponent end
+-x_init(::FrameReader) = (;)
++x_init(::FrameReader) = nothing
+ u_types(::FrameReader) = (f = Pinned{Frame{Float64}},)
+ y_types(::FrameReader) = (y = Float64,)
+ y_direct(::FrameReader, (; u)) = (y = sum(u.f.p),)
+@@ -594,12 +594,12 @@ _fanned_v(a, b) = Group((a = a, b = b); input_wires = ("in" => ("a/v", "b/v"),))
+ # A bundle's field names are type parameters, not leaves (D-238): these two
+ # declarations carry one `T` leaf each and name it differently.
+ struct BundleB <: AbstractComponent end
+-x_init(::BundleB) = (;)
++x_init(::BundleB) = nothing
+ y_types(::BundleB) = (q = @NamedTuple{b::Float64},)
+ y_state(::BundleB, (; t)) = (q = (b = 1.0 + t,),)
+ 
+ struct BundleA <: AbstractComponent end
+-x_init(::BundleA) = (;)
++x_init(::BundleA) = nothing
+ u_types(::BundleA) = (q = @NamedTuple{a::Float64},)
+ y_types(::BundleA) = (y = Float64,)
+ y_direct(::BundleA, (; u)) = (y = u.q.a,)
+@@ -607,7 +607,7 @@ y_direct(::BundleA, (; u)) = (y = u.q.a,)
+ # An abstract entry spelled as an open tuple: its `Vararg` tail is no type, so
+ # the activation walk lifts the type it carries (§8.2).
+ struct VariadicReader <: AbstractComponent end
+-x_init(::VariadicReader) = (;)
++x_init(::VariadicReader) = nothing
+ u_types(::VariadicReader) = (pair = Tuple{Vararg{Float64}},)
+ y_types(::VariadicReader) = (n = Float64,)
+ y_direct(::VariadicReader, (; u)) = (n = sum(u.pair),)
+@@ -803,7 +803,7 @@ struct NoDefault{T}
+     b::T
+ end
+ struct Unsynthesized <: AbstractComponent end
+-x_init(::Unsynthesized) = (;)
++x_init(::Unsynthesized) = nothing
+ u_types(::Unsynthesized) = (q = NoDefault{Float64},)
+ y_types(::Unsynthesized) = (s = Float64,)
+ y_direct(::Unsynthesized, (; u)) = (s = u.q.a + u.q.b,)
+@@ -814,7 +814,7 @@ struct WithProbe{T}
+ end
+ probe_value(::Type{WithProbe{T}}) where {T} = WithProbe(zero(T), one(T))
+ struct Synthesized <: AbstractComponent end
+-x_init(::Synthesized) = (;)
++x_init(::Synthesized) = nothing
+ u_types(::Synthesized) = (q = WithProbe{Float64},)
+ y_types(::Synthesized) = (s = Float64,)
+ y_direct(::Synthesized, (; u)) = (s = u.q.a + u.q.b,)
+@@ -826,7 +826,7 @@ struct BrokenProbe{T}
+ end
+ probe_value(::Type{BrokenProbe{T}}) where {T} = BrokenProbe(sqrt("one"))
+ struct Misprobed <: AbstractComponent end
+-x_init(::Misprobed) = (;)
++x_init(::Misprobed) = nothing
+ u_types(::Misprobed) = (q = BrokenProbe{Float64},)
+ y_types(::Misprobed) = (s = Float64,)
+ y_direct(::Misprobed, (; u)) = (s = u.q.a,)
+@@ -834,19 +834,19 @@ y_direct(::Misprobed, (; u)) = (s = u.q.a,)
+ # A stop request out of place (§13.5, D-316): a `StopFlag` nested in a port of
+ # another type, and a consumer whose `StopFlag` input surfaces as a root input.
+ struct NestedRequest <: AbstractComponent end
+-x_init(::NestedRequest) = (;)
++x_init(::NestedRequest) = nothing
+ y_types(::NestedRequest) = (status = @NamedTuple{flag::StopFlag, x::Float64},)
+ y_state(::NestedRequest, _) = (status = (flag = NO_STOP, x = 0.0),)
+ 
+ struct FlagReader <: AbstractComponent end
+-x_init(::FlagReader) = (;)
++x_init(::FlagReader) = nothing
+ u_types(::FlagReader) = (flag = StopFlag,)
+ y_types(::FlagReader) = (stopped = Bool,)
+ y_direct(::FlagReader, (; u)) = (stopped = u.flag === STOP_REQUESTED,)
+ 
+ # A consumer whose input nests a `StopFlag`, surfacing as a root input.
+ struct NestedReader <: AbstractComponent end
+-x_init(::NestedReader) = (;)
++x_init(::NestedReader) = nothing
+ u_types(::NestedReader) = (status = @NamedTuple{flag::StopFlag, x::Float64},)
+ y_types(::NestedReader) = (stopped = Bool,)
+ y_direct(::NestedReader, (; u)) = (stopped = u.status.flag === STOP_REQUESTED,)
+@@ -955,7 +955,7 @@ end
+ 
+ # A component publishing a request directly, with no `stop_reason`.
+ struct DirectRequester <: AbstractComponent end
+-x_init(::DirectRequester) = (;)
++x_init(::DirectRequester) = nothing
+ y_types(::DirectRequester) = (halt = StopFlag,)
+ y_state(::DirectRequester, _) = (halt = NO_STOP,)
+ 
+@@ -1018,7 +1018,7 @@ x_deriv(::Thrower, (; x)) = (; a = 0.0)
+ # The same throw with a non-empty `u`: one input face, fed from a root input, so
+ # the frame carries the synthesized inputs as a spelling.
+ struct ThrowingDirect <: AbstractComponent end
+-x_init(::ThrowingDirect) = (;)
++x_init(::ThrowingDirect) = nothing
+ u_types(::ThrowingDirect) = (in = Float64,)
+ y_types(::ThrowingDirect) = (p = Float64,)
+ y_direct(::ThrowingDirect, (; u)) = error("direct boom")
+@@ -1148,7 +1148,7 @@ x_deriv(::OwnFieldMiss, (; x)) = (; a = 0.0)
+ struct CarrierInside <: AbstractComponent end
+ x_init(::CarrierInside) = (; a = 0.0)
+ y_types(::CarrierInside) = (p = Float64,)
+-y_state(::CarrierInside, (; x)) = (set(x = 1.0); (p = x.a,))
++y_state(::CarrierInside, (; x)) = (set(u = 1.0); (p = x.a,))
+ x_deriv(::CarrierInside, (; x)) = (; a = 0.0)
+ 
+ struct InterruptInside <: AbstractComponent end
+@@ -1281,7 +1281,7 @@ s_update(::BothUpdates, (; x)) = (q = x.q,)
+ 
+ struct BothStores <: AbstractComponent        # an empty `x_init` beside `s_init` and `s_update`
+ end
+-x_init(::BothStores) = (;)
++x_init(::BothStores) = nothing
+ s_init(::BothStores) = (n = 0,)
+ y_types(::BothStores) = (a = Float64,)
+ y_state(::BothStores, (; s)) = (a = 1.0,)
+@@ -1297,7 +1297,7 @@ s_update(::ModesOnDiscrete, (; s)) = (n = s.n,)
+ 
+ struct PinnedOnDiscrete <: AbstractComponent  # `Pinned` where every leaf pins
+ end
+-s_init(::PinnedOnDiscrete) = (;)
++s_init(::PinnedOnDiscrete) = nothing
+ y_types(::PinnedOnDiscrete) = (a = Pinned{Float64},)
+ y_state(::PinnedOnDiscrete, (; t)) = (a = 1.0,)
+ 
+@@ -1305,20 +1305,20 @@ y_state(::PinnedOnDiscrete, (; t)) = (a = 1.0,)
+ # on a discrete leaf, and as the parameter-position pin D-263 rejected.
+ struct NestedPinSource <: AbstractComponent
+ end
+-x_init(::NestedPinSource) = (;)
++x_init(::NestedPinSource) = nothing
+ y_types(::NestedPinSource) = (v = SVector{2,Pinned{Float64}},)
+ y_state(::NestedPinSource, (; t)) = (v = SVector(1.0, 2.0),)
+ 
+ struct NestedPinEntry <: AbstractComponent
+ end
+-x_init(::NestedPinEntry) = (;)
++x_init(::NestedPinEntry) = nothing
+ u_types(::NestedPinEntry) = (v = SVector{2,Pinned{Float64}},)
+ y_types(::NestedPinEntry) = (s = Float64,)
+ y_direct(::NestedPinEntry, (; u)) = (s = sum(u.v),)
+ 
+ struct DiscreteNestedPin <: AbstractComponent
+ end
+-s_init(::DiscreteNestedPin) = (;)
++s_init(::DiscreteNestedPin) = nothing
+ y_types(::DiscreteNestedPin) = (v = SVector{2,Pinned{Float64}},)
+ y_state(::DiscreteNestedPin, (; t)) = (v = SVector(1.0, 2.0),)
+ 
+@@ -1329,13 +1329,13 @@ end
+ 
+ struct MixedPinSource <: AbstractComponent
+ end
+-x_init(::MixedPinSource) = (;)
++x_init(::MixedPinSource) = nothing
+ y_types(::MixedPinSource) = (m = MixedParams{Float64,Pinned{Float64}},)
+ y_state(::MixedPinSource, (; t)) = (m = MixedParams(1.0, 2.0),)
+ 
+ struct EmptyNoOutputs <: AbstractComponent    # an empty store and no contract
+ end
+-x_init(::EmptyNoOutputs) = (;)
++x_init(::EmptyNoOutputs) = nothing
+ y_state(::EmptyNoOutputs, (; t)) = (;)
+ 
+ # --- enum- and Symbol-valued ports (§4.1, §4.3, §8.2, §9.3) --------------------
+@@ -1510,19 +1510,19 @@ end
+ 
+ # One failure from each of the step's passes, in one model: a wire typo'd on
+ # the producer's port, the input it leaves unfed, a store with no update law, an
+-# event missing its handler and a store that is not a `NamedTuple`. `HalfEvent`
++# event missing its handler and a store spelled `(;)`. `HalfEvent`
+ # is `test_events.jl`'s, which this file precedes, so the children are a
+ # `Group`'s values rather than a struct's declared fields.
+ merged_failures() = Group((; g = Gain(1.0), s = Sum(), n = NoFlow(), h = HalfEvent(),
+-                             f = BareState());
++                             f = TupleState());
+                           local_wires = ("g/ot" => "s/a",),
+                           input_wires = ("e" => "g/e", "b" => "s/b"))
+ 
+-# A store that is not a `NamedTuple` (§8.2, D-247), one per store. `BareVector`
+-# is the value that segfaulted the generated `reconstruct` before the check;
+-# `BareModes` is the one that built silently, and it carries a vocabulary fault
+-# in its other store: the only finding is still the form, because the field
+-# checks do not read a primitive the form check refused.
++# A bare store (§8.2): one value, checked as one leaf against its tier's
++# vocabulary. `BareVector` is the value that segfaulted the generated
++# `reconstruct` before any check; `BareLabel` holds text in a bare `s`, and
++# `BareModeLabel` in a bare `m`. `BareState`, `BareDiscrete` and `BareModes`
++# are lawful bare stores, one per letter.
+ struct BareState <: AbstractComponent end
+ x_init(::BareState) = zeros(SVector{3})
+ x_deriv(::BareState, (; x)) = zeros(SVector{3})
+@@ -1538,9 +1538,60 @@ y_state(::BareDiscrete, (; s)) = (a = s,)
+ s_update(::BareDiscrete, (; s)) = s
+ 
+ struct BareModes <: AbstractComponent end
+-x_init(::BareModes) = (gear_count = 3,)      # `IllegalStateLeaf`, were it read
++x_init(::BareModes) = 0.0
+ m_init(::BareModes) = 1
+-x_deriv(::BareModes, (; x)) = (gear_count = 0,)
++x_deriv(::BareModes, (; x)) = 0.0
++
++struct BareLabel <: AbstractComponent end
++s_init(::BareLabel) = "armed"
++y_types(::BareLabel) = (a = Int,)
++y_state(::BareLabel, _) = (a = 0,)
++s_update(::BareLabel, (; s)) = s
++
++struct BareModeLabel <: AbstractComponent end
++x_init(::BareModeLabel) = 1
++m_init(::BareModeLabel) = "idle"
++x_deriv(::BareModeLabel, _) = 0
++
++# The return laws against a bare declaration (§9.5): the declared shape, never
++# the return's, picks the law, so a `NamedTuple` against a bare state, a
++# successor off the store's type and a mode of the wrong type are each one
++# wrong type with no field.
++struct BareNamedDeriv <: AbstractComponent end
++x_init(::BareNamedDeriv) = 0.0
++x_deriv(::BareNamedDeriv, _) = (q = 0.0,)
++
++struct BareWrongUpdate <: AbstractComponent end
++s_init(::BareWrongUpdate) = 0
++y_types(::BareWrongUpdate) = (a = Int,)
++y_state(::BareWrongUpdate, (; s)) = (a = s,)
++s_update(::BareWrongUpdate, _) = 0.5
++
++struct BareWrongModes <: AbstractComponent end
++x_init(::BareWrongModes) = 0.0
++m_init(::BareWrongModes) = false
++x_deriv(::BareWrongModes, _) = 1.0
++bare_wrong_guard(::BareWrongModes, (; x)) = x - 0.5
++bare_wrong_handler(::BareWrongModes, _) = (x = (q = 0.0,), m = 1)
++state_events(::BareWrongModes) = (flip = StateEvent(bare_wrong_guard, bare_wrong_handler),)
++
++# `(;)`, the retired spelling of the empty store, one per store. `TupleModes`
++# carries a vocabulary fault in its other store: the only finding is still the
++# spelling, because the field checks do not read a primitive the form refused.
++struct TupleState <: AbstractComponent end
++x_init(::TupleState) = (;)
++y_types(::TupleState) = (a = Float64,)
++y_state(::TupleState, _) = (a = 0.0,)
++
++struct TupleDiscrete <: AbstractComponent end
++s_init(::TupleDiscrete) = (;)
++y_types(::TupleDiscrete) = (a = Float64,)
++y_state(::TupleDiscrete, _) = (a = 0.0,)
++
++struct TupleModes <: AbstractComponent end
++x_init(::TupleModes) = (gear_count = 3,)     # `IllegalStateLeaf`, were it read
++m_init(::TupleModes) = (;)
++x_deriv(::TupleModes, (; x)) = (gear_count = 0,)
+ 
+ struct LabelInStore <: AbstractComponent end   # a `String` in `s_init` (D-231)
+ s_init(::LabelInStore) = (n = 0, phase = :armed, label = "armed")
+@@ -1605,19 +1656,41 @@ function build_store_values()
+ end
+ 
+ function build_store_form()
+-    @testset "a store declaration is a NamedTuple, checked before the stores are read (§8.2, §9.1, D-247)" begin
+-        # One throw for the model, each bare store named with the store at fault
+-        # and the type it returned. `BareModes`' `gear_count` raises no
+-        # `IllegalStateLeaf`: the form check refused the primitive, and the
+-        # vocabulary check never read it.
+-        err = failure(() -> build(Group((; a = BareState(), b = BareVector(),
+-                                          c = BareDiscrete(), d = BareModes()))))
++    @testset "a bare store is one leaf, checked against its tier's vocabulary (§7.1, §7.3, §8.2)" begin
++        # One lawful bare store per letter builds, and a bare value outside the
++        # vocabulary is refused by the field checks with no field name.
++        @test build(Group((; a = BareState(), b = BareDiscrete(), c = BareModes()))) isa Build
++        err = failure(() -> build(Group((; a = BareVector(), b = BareLabel(),
++                                          c = BareModeLabel()))))
+         diags = diagnostics(err)
+-        @test all(d -> d isa StoreNotNamedTuple, diags)
+-        @test Set(kinds(err)) == Set([StoreNotNamedTuple])
+-        @test Set((d.path, d.store, d.declared) for d in diags) ==
+-              Set([("a", :x_init, SVector{3,Float64}), ("b", :x_init, Vector{Float64}),
+-                   ("c", :s_init, Float64), ("d", :m_init, Int)])
++        @test Set(kinds(err)) == Set([IllegalStateLeaf, IllegalStoreField])
++        @test Set((d.path, d.name, d.declared, d.reason)
++                  for d in diags if d isa IllegalStateLeaf) ==
++              Set([("a", BARE, Vector{Float64}, :wrapper), ("c", BARE, Int, :mode_value)])
++        @test Set((d.path, d.store, d.name, d.declared)
++                  for d in diags if d isa IllegalStoreField) ==
++              Set([("b", :s_init, BARE, String), ("c", :m_init, BARE, String)])
++    end
++    @testset "a bare declaration's return is held to its own type (§9.5)" begin
++        diags = diagnostics(failure(() -> build(Group((; a = BareNamedDeriv(), b = BareWrongUpdate())))))
++        @test all(d -> d isa ConformanceFailure && d.reason === :field_type && d.field === BARE, diags)
++        @test Set((d.path, d.what, d.shape, d.observed, d.declared) for d in diags) ==
++              Set([("a", "x_deriv", :x_init, @NamedTuple{q::Float64}, Float64),
++                   ("b", "s_update", :s_init, Float64, Int)])
++        diags = diagnostics(failure(() -> build(single(BareWrongModes()))))
++        @test Set((d.what, d.shape, d.field, d.observed, d.declared) for d in diags) ==
++              Set([("handler `x`", :state, BARE, @NamedTuple{q::Float64}, Float64),
++                   ("handler `m`", :mode, BARE, Int, Bool)])
++    end
++    @testset "`(;)` is no store spelling, refused before the stores are read (§8.2, §9.1)" begin
++        # One throw for the model, each store named. `TupleModes`' `gear_count`
++        # raises no `IllegalStateLeaf`: the form check refused the primitive.
++        err = failure(() -> build(Group((; a = TupleState(), b = TupleDiscrete(),
++                                          c = TupleModes()))))
++        diags = diagnostics(err)
++        @test Set(kinds(err)) == Set([EmptyStore])
++        @test Set((d.path, d.store) for d in diags) ==
++              Set([("a", :x_init), ("b", :s_init), ("c", :m_init)])
+     end
+ end
+ 
+@@ -1659,7 +1732,7 @@ function build_barrier()
+         err = failure(() -> build(merged_failures()))
+         @test Set(kinds(err)) ==
+               Set([UnknownPort, UnconnectedInput, StoreWithoutUpdate, EventHalfMissing,
+-                   StoreNotNamedTuple])
++                   EmptyStore])
+     end
+ end
+ 
+@@ -1670,14 +1743,14 @@ end
+ # A `Dual` arriving at a deliberately pinned leaf: the one honest cause, and the
+ # one that earns the didactic hint.
+ struct PinnedGetsDual <: AbstractComponent end
+-x_init(::PinnedGetsDual) = (;)
++x_init(::PinnedGetsDual) = nothing
+ y_types(::PinnedGetsDual) = (frozen = Pinned{Float64},)
+ y_state(::PinnedGetsDual, (; t)) = (frozen = t,)
+ 
+ # The constant-branch idiom (D-166): a literal `Float64` returned into a
+ # walking port is a lawful arrival, embedded as a zero-partial.
+ struct ConstantBranch <: AbstractComponent end
+-x_init(::ConstantBranch) = (;)
++x_init(::ConstantBranch) = nothing
+ u_types(::ConstantBranch) = (in = Float64,)
+ y_types(::ConstantBranch) = (out = Float64, vec = SVector{2,Float64})
+ y_direct(::ConstantBranch, (; u)) = (out = u.in > 0 ? u.in : 0.0, vec = SVector(0.0, 1.0))
+@@ -1720,25 +1793,25 @@ end
+ # component's products are carried across from the nominal activation rather
+ # than probed or synthesized.
+ struct NomSource <: AbstractComponent end
+-x_init(::NomSource) = (;)
++x_init(::NomSource) = nothing
+ y_types(::NomSource) = (val = Float64,)
+ y_state(::NomSource, (; t)) = (val = 3.0 + t,)
+ 
+ struct FrozenReader <: AbstractComponent end
+-s_init(::FrozenReader) = (;)
++s_init(::FrozenReader) = nothing
+ u_types(::FrozenReader) = (in = Float64,)
+ y_types(::FrozenReader) = (out = Float64,)
+ y_direct(::FrozenReader, (; u)) = (out = 2.0 * u.in,)
+ 
+ struct ClockStamp <: AbstractComponent end
+-s_init(::ClockStamp) = (;)
++s_init(::ClockStamp) = nothing
+ y_types(::ClockStamp) = (stamp = Float64,)
+ y_state(::ClockStamp, (; t)) = (stamp = t,)
+ 
+ # A discrete allocator recording the scalar it receives (§8.2, D-263).
+ const DISCRETE_SCRATCH_SCALAR = Ref{Any}(nothing)
+ struct DiscreteScratch <: AbstractComponent end
+-s_init(::DiscreteScratch) = (;)
++s_init(::DiscreteScratch) = nothing
+ y_types(::DiscreteScratch) = (y = Float64,)
+ ws_init(::DiscreteScratch, ::Type{T}) where {T} =
+     (DISCRETE_SCRATCH_SCALAR[] = T; (tmp = Vector{T}(undef, 1),))
+diff --git a/test/test_conditions.jl b/test/test_conditions.jl
+index ebc3669..eacc2e5 100644
+--- a/test/test_conditions.jl
++++ b/test/test_conditions.jl
+@@ -137,14 +137,16 @@ function conditions_algebra()
+                      () -> combine(set(), set(), (q = 1.0,)),   # at any arity
+                      () -> at("plant", (q = 1.0,)),
+                      () -> override(set(), (q = 1.0,)),
+-                     () -> set(x = 3.0))                      # and a non-NamedTuple payload
++                     () -> set(u = 3.0))                      # and a non-NamedTuple `u` payload
+             err = failure(case)
+             @test err isa DiagnosticError && diagnostic(err) isa ConditionNodeMisuse
+         end
+         d = carried(@test_throws DiagnosticError{ConditionNodeMisuse} combine(set(), (q = 1.0,)))
+         @test d.observed === NamedTuple{(:q,),Tuple{Float64}} && d.in_hand == [:Fragment]
+-        d = carried(@test_throws DiagnosticError{ConditionNodeMisuse} set(x = 3.0))
+-        @test d.reason === :set_payload
++        d = carried(@test_throws DiagnosticError{ConditionNodeMisuse} set(u = 3.0))
++        @test d.reason === :set_payload && d.payload === :u
++        # A store payload may be bare, its shape checked against a build (§14.3).
++        @test set(x = 3.0) isa Fragment && set(s = 1, m = :idle) isa Fragment
+         # And the service entry point itself: a bare NamedTuple where a condition
+         # belongs gets the directive, never a `MethodError`.
+         @test_throws DiagnosticError{ConditionNodeMisuse} init!(Simulation(tri(); h = 1//10), (u = 1.0, e = 2.0))
+@@ -647,8 +649,54 @@ function conditions_specialized_apply()
+     end
+ end
+ 
++function conditions_bare_stores()
++    @testset "a bare store takes a bare payload whole, at either way of applying it (§14.1, §14.3, §14.4)" begin
++        model = Model(bare_world(); h = 1//10)
++        roots = set(u = (u = 0.0, p = 0.0))
++        tree = combine(roots, at("acc", set(x = 2.5)), at("tick", set(s = 7)),
++                       at("latch", set(x = SVector(0.5, 2.0), m = true)))
++        init!(model, tree)
++        @test state(model, "acc") === 2.5
++        @test state(model, "tick") === 8                  # `t₀`'s boundary ticks once
++        @test state(model, "latch") === SVector(0.5, 2.0) && modes(model, "latch") === true
++        # A payload that converts is converted, as a named leaf's is.
++        init!(model, combine(roots, at("acc", set(x = 1)), at("tick", set(s = Int8(3)))))
++        @test state(model, "acc") === 1.0 && state(model, "tick") === 4
++        @test modes(model, "latch") === false             # `init!` starts from the defaults
++        # The specialized apply writes the same stores through its lenses, a bare
++        # mode store replaced whole, with no allocation.
++        plan = compile_plan(tree, model.deployment.build)
++        apply!(model.exec, plan, tree)
++        @test state(model, "acc") === 2.5 && state(model, "tick") === 7
++        @test modes(model, "latch") === true
++        @test @allocated(apply!(model.exec, plan, tree)) == 0
++    end
++
++    @testset "a bare payload against a named store, or the reverse, is refused by shape (§14.3)" begin
++        world_build = build(bare_world())
++        err = failure(() -> resolve_condition(
++            combine(at("plant", set(x = SVector(1.0, 0.0))), at("acc", set(x = (q = 1.0,))),
++                    at("latch", set(m = (latched = true,)))), world_build))
++        diags = diagnostics(err)
++        @test all(d -> d isa ConditionResolution && d.reason === :store_shape, diags)
++        @test Set((d.path, d.store, d.field, d.candidates) for d in diags) ==
++              Set([("plant", :x, BARE, [:q]), ("acc", :x, :q, Symbol[]),
++                   ("latch", :m, :latched, Symbol[])])
++        # The origin spells a bare payload without a field.
++        @test only(d.origin for d in diags if d.path == "plant") ==
++              "combine[1] → at(\"plant\") → set(x)"
++        # A bare payload for a store the component lacks is the store's refusal.
++        d = only(diagnostics(failure(() -> resolve_condition(at("neg", set(x = 1.0)), world_build))))
++        @test d.reason === :no_store && d.field === BARE
++        # And one that does not convert is the converter's, with no field.
++        d = only(diagnostics(failure(() -> resolve_condition(at("acc", set(x = "a")), world_build))))
++        @test d.reason === :unconvertible && d.field === BARE && d.declared === Float64
++    end
++end
++
+ function test_conditions()
+     conditions_algebra()
+     conditions_service_walk()
+     conditions_specialized_apply()
++    conditions_bare_stores()
+ end
+diff --git a/test/test_declare.jl b/test/test_declare.jl
+index 691451e..33e31fd 100644
+--- a/test/test_declare.jl
++++ b/test/test_declare.jl
+@@ -41,7 +41,7 @@ function test_declare()
+         @test bundle_names(y_direct, Gain(1.0), CONTINUOUS, ()) === (:u, :t)
+ 
+         # A declared empty store puts no letter in the bundle (§5.2, D-263):
+-        # `Gain` declares `x_init(::Gain) = (;)`, and no bundle of it carries `x`.
++        # `Gain` declares `x_init(::Gain) = nothing`, and no bundle of it carries `x`.
+         @test :x_init in leaf_declarations(Gain(1.0))
+         @test bundle_names(y_state, Gain(1.0), CONTINUOUS, ()) === (:t,)
+ 
+diff --git a/test/test_diagnostics.jl b/test/test_diagnostics.jl
+index a6cc6d1..b21037d 100644
+--- a/test/test_diagnostics.jl
++++ b/test/test_diagnostics.jl
+@@ -356,8 +356,11 @@ function diagnostics_kind_set()
+                             declared = @NamedTuple{flag::StopFlag, x::Float64}, reason = :stop_flag_nested),
+             IllegalPortType(path = "", site = :root_input, name = :stop, declared = StopFlag,
+                             reason = :stop_flag_at_root),
+-            StoreNotNamedTuple(path = "a/b", store = :x_init, declared = Float64),
++            EmptyStore(path = "a/b", store = :x_init),
++            EmptyStore(path = "a/b", store = :m_init),
+             IllegalStoreField(path = "a/b", store = :s_init, name = :label, declared = String),
++            IllegalStoreField(path = "a/b", store = :m_init, name = BARE, declared = String),
++            IllegalStateLeaf(path = "a/b", name = BARE, declared = Int, reason = :mode_value),
+             IllegalStateLeaf(path = "a/b", name = :gear_count, declared = Int, reason = :mode_value),
+             IllegalStateLeaf(path = "a/b", name = :q, declared = Float32, reason = :eltype),
+             IllegalStateLeaf(path = "a/b", name = :pose, declared = NamedTuple, reason = :nested),
+@@ -398,6 +401,13 @@ function diagnostics_kind_set()
+             ConformanceFailure(path = "a/b", what = "handler `x`", event = :e,
+                                reason = :field_set, shape = :state,
+                                observed_fields = [:p], declared_fields = [:q]),
++            ConformanceFailure(path = "a/b", what = "x_deriv", reason = :field_type, shape = :x_init,
++                               field = BARE, observed = Int, declared = Float64,
++                               activation = Float64),
++            ConformanceFailure(path = "a/b", what = "s_update", reason = :field_type, shape = :s_init,
++                               field = BARE, observed = Float64, declared = Int),
++            ConformanceFailure(path = "a/b", what = "handler `m`", event = :e, reason = :field_type,
++                               shape = :mode, field = BARE, observed = Int, declared = Bool),
+             GuardForm(path = "a/b", event = :snap, observed = Int),
+             BundleFieldError(path = "a/b", family = "y_state", tier = :continuous,
+                              field = :m, legal = [:x, :t], reason = :undeclared),
+@@ -460,6 +470,10 @@ function diagnostics_kind_set()
+                                 candidates = [:p], role = :output_port, origin = "set"),
+             ConditionResolution(path = "a/b", store = :x, field = :p, reason = :unconvertible,
+                                 declared = Float64, observed = String, value = "x", origin = "set"),
++            ConditionResolution(path = "a/b", store = :x, field = BARE, reason = :store_shape,
++                                candidates = [:q], origin = "set(x)"),
++            ConditionResolution(path = "a/b", store = :m, field = :fired, reason = :store_shape,
++                                origin = "set(m).fired"),
+             ConditionResolution(field = :p, face = :p, reason = :unconvertible, declared = Float64,
+                                 observed = String, value = "x", origin = CHECKPOINT_ORIGIN),
+             DuplicateConditionLeaf(path = "a/b", store = :x, field = :p,
+@@ -474,6 +488,10 @@ function diagnostics_kind_set()
+                            reason = :store_selector, path = "a/b", field = :q),
+             ReadResolution(label = :r, selector = "get_state(\"a/b\", :q)", reason = :undeclared,
+                            path = "a/b", field = :q, declares = :state_field, candidates = [:p]),
++            ReadResolution(label = :r, selector = "get_state(\"a/b\")", reason = :undeclared,
++                           path = "a/b", field = BARE, declares = :state_field, candidates = [:p]),
++            ReadResolution(label = :r, selector = "get_state(\"a/b\", :q)", reason = :undeclared,
++                           path = "a/b", field = :q, declares = :state_field, candidates = [BARE]),
+             ReadResolution(label = :r, selector = "get_deriv(\"a/b\", :q)",
+                            reason = :discrete_deriv, path = "a/b", field = :q),
+             ReadResolution(label = :r, selector = "get_input(:q)", reason = :unknown_root_input,
+@@ -644,6 +662,7 @@ function diagnostics_kind_set()
+             ReplayUnknownFace(face = :z, frame = 1, writer = "device 1 (Pad)", faces = [:a, :b]),
+             # §13.4's runtime species, the one kind a `StepError` carries as its cause
+             NonfiniteState(path = "a/b", leaf = "v[2]", value = NaN, t = 0.14, boundary = 6),
++            NonfiniteState(path = "a/b", leaf = "", value = NaN, t = 0.14, boundary = 6),
+             # the runtime stream's nine, re-parented (§11.8)
+             MalformedDatum(ArgumentError("bad")),
+             OutOfClaimEntry(:a, 1.0, [:b], "device 1 (Pad)"),
+@@ -883,16 +902,66 @@ function diagnostics_kind_set()
+                                                names = [:x_init, :y_types]))
+         @test occursin("import Redstone: x_init, y_types", rendered)
+ 
+-        # A bare store value (§8.2, D-247) spells the wrap for the store at fault.
+-        rendered = message(StoreNotNamedTuple(path = "a/b", store = :x_init,
+-                                               declared = Float64))
+-        @test occursin("x_init(::C) = (; ω = 0.0)", rendered)
+-        rendered = message(StoreNotNamedTuple(path = "a/b", store = :s_init,
+-                                               declared = Float64))
+-        @test occursin("s_init(::C) = (; n = 0)", rendered)
+-        rendered = message(StoreNotNamedTuple(path = "a/b", store = :m_init,
+-                                               declared = Int))
+-        @test occursin("m_init(::C) = (; phase = :idle)", rendered)
++        # `(;)` as a store (§8.2) names the new spelling for the store at fault.
++        rendered = message(EmptyStore(path = "a/b", store = :x_init))
++        @test occursin("`x_init` returns `(;)`, a retired spelling", rendered)
++        @test occursin("x_init(::C) = nothing", rendered)
++        @test occursin("s_init(::C) = nothing", message(EmptyStore(path = "a/b", store = :s_init)))
++        @test occursin("defines no `m_init`, or returns `nothing`",
++                       message(EmptyStore(path = "a/b", store = :m_init)))
++
++        # A bare store has no field name, and no rendering spells an empty one: the
++        # renderer drops it with its separator (§8.2).
++        bare_renderings = [
++            message(IllegalStateLeaf(path = "a/b", name = BARE, declared = Int,
++                                     reason = :mode_value)),
++            message(IllegalStoreField(path = "a/b", store = :s_init, name = BARE,
++                                      declared = String)),
++            message(ConformanceFailure(path = "a/b", what = "x_deriv", reason = :field_type,
++                                       shape = :x_init, field = BARE, observed = Int,
++                                       declared = Float64, activation = Float64)),
++            message(ConformanceFailure(path = "a/b", what = "s_update", reason = :field_type,
++                                       shape = :s_init, field = BARE, observed = Float64,
++                                       declared = Int)),
++            message(ConditionResolution(path = "a/b", store = :x, field = BARE,
++                                        reason = :unconvertible, declared = Float64,
++                                        observed = String, value = "x", origin = "set(x)")),
++            message(NonfiniteState(path = "a/b", leaf = "", value = NaN, t = 0.1, boundary = 2)),
++        ]
++        @test !any(r -> occursin("``", r) || occursin("x.`", r) || occursin("b/`", r),
++                   bare_renderings)
++        @test startswith(bare_renderings[1], "`a/b`: `x_init` returns `Int64`, which is not a " *
++                                             "continuous state")
++        @test startswith(bare_renderings[2], "`a/b`: `s_init` returns `String`, which is not a store value")
++        @test occursin("x_deriv returns Int64, the state is Float64 — an integer literal",
++                       bare_renderings[3])
++        @test occursin("s_update returns Float64, the state store is Int64", bare_renderings[4])
++        @test startswith(bare_renderings[5], "`x` at `a/b` takes Float64")
++        @test startswith(bare_renderings[6], "`a/b`: the state is NaN")
++
++        # A payload's shape against the store's (§14.3): each direction states the
++        # spelling the store takes.
++        rendered = message(ConditionResolution(path = "a/b", store = :x, field = BARE,
++                                               reason = :store_shape, candidates = [:q, :v],
++                                               origin = "set(x)"))
++        @test occursin("`x` at `a/b` is set whole, and `x_init` at `a/b` declares the fields " *
++                       "`q`, `v` — name the fields it sets, `set(x = (q = …,))`", rendered)
++        rendered = message(ConditionResolution(path = "a/b", store = :m, field = :fired,
++                                               reason = :store_shape, origin = "set(m).fired"))
++        @test occursin("`m.fired` at `a/b` names a field, and `m_init` at `a/b` declares one " *
++                       "bare value — set it whole, `set(m = …)`", rendered)
++
++        # The headless address against a named state, and a named one against a
++        # bare state (§14.4).
++        rendered = message(ReadResolution(label = :q, selector = "get_state(\"p\")",
++                                          reason = :undeclared, path = "p", field = BARE,
++                                          declares = :state_field, candidates = [:q]))
++        @test occursin("`p` declares no bare state field, which a headless address reads — " *
++                       "its state field names are `q`", rendered)
++        rendered = message(ReadResolution(label = :q, selector = "get_state(\"p\", :q)",
++                                          reason = :undeclared, path = "p", field = :q,
++                                          declares = :state_field, candidates = [BARE]))
++        @test occursin("`p` declares one bare state value, with no field `q`", rendered)
+ 
+         # The walk clause's hint on the input side (§8.2, D-236, D-263)
+         # states the fix by name.
+diff --git a/test/test_events.jl b/test/test_events.jl
+index b9cf4d1..e603d16 100644
+--- a/test/test_events.jl
++++ b/test/test_events.jl
+@@ -3,7 +3,7 @@
+ # Malformed event and projection declarations, at top level per D-164.
+ struct HalfEvent <: AbstractComponent end
+ m_init(::HalfEvent) = (s = :a,)
+-x_init(::HalfEvent) = (;)
++x_init(::HalfEvent) = nothing
+ y_types(::HalfEvent) = (o = Float64,)
+ y_state(::HalfEvent, (; m)) = (o = 1.0,)
+ halfevent_guard(::HalfEvent, (; m)) = m.s === :a
+@@ -12,14 +12,14 @@ state_events(::HalfEvent) = (go = StateEvent(halfevent_guard, halfevent_handler)
+ 
+ struct NotAnEvent <: AbstractComponent end
+ m_init(::NotAnEvent) = (s = :a,)
+-x_init(::NotAnEvent) = (;)
++x_init(::NotAnEvent) = nothing
+ y_types(::NotAnEvent) = (o = Float64,)
+ y_state(::NotAnEvent, (; m)) = (o = 1.0,)
+ state_events(::NotAnEvent) = (go = 5,)
+ 
+ struct BadGuardForm <: AbstractComponent end
+ m_init(::BadGuardForm) = (s = :a,)
+-x_init(::BadGuardForm) = (;)
++x_init(::BadGuardForm) = nothing
+ y_types(::BadGuardForm) = (o = Float64,)
+ y_state(::BadGuardForm, (; m)) = (o = 1.0,)
+ badguard_guard(::BadGuardForm, (; m)) = "high"
+@@ -28,7 +28,7 @@ state_events(::BadGuardForm) = (go = StateEvent(badguard_guard, badguard_handler
+ 
+ struct BadHandlerKey <: AbstractComponent end    # writes `x`, owns only modes
+ m_init(::BadHandlerKey) = (s = :a,)
+-x_init(::BadHandlerKey) = (;)
++x_init(::BadHandlerKey) = nothing
+ y_types(::BadHandlerKey) = (o = Float64,)
+ y_state(::BadHandlerKey, (; m)) = (o = 1.0,)
+ badkey_guard(::BadHandlerKey, (; m)) = m.s === :a
+@@ -61,7 +61,7 @@ s_update(::ProjectOnDiscrete, (; s)) = (n = s.n + 1,)
+ x_projection(::ProjectOnDiscrete, x) = x
+ 
+ struct ProjectNoState <: AbstractComponent end   # nothing to project onto
+-x_init(::ProjectNoState) = (;)
++x_init(::ProjectNoState) = nothing
+ y_types(::ProjectNoState) = (o = Float64,)
+ y_state(::ProjectNoState, (; t)) = (o = 1.0,)
+ x_projection(::ProjectNoState, x) = x
+@@ -393,4 +393,17 @@ function test_events()
+         @test state(sim, "c").r ≈ SVector(1.0, 0.0) atol = 1e-15
+         @test port(sim, "c", :c) == 1.0
+     end
++
++    @testset "a handler's `x` and `m` replace a bare state and a bare mode store whole (§5.2, §9.5)" begin
++        # `x[1] = t` reaches 1 at `t = 1`, and the handler reflects the rate and
++        # latches the mode, so `x[1] = 2 - t` after it.
++        sim = Simulation(single(BareLatch()); h = 1//10)
++        init!(sim)
++        step!(sim; t_plus = 0.5)
++        @test modes(sim, "c") === false && port(sim, "c", :latched) === false
++        step!(sim; t_plus = 1.0)
++        @test modes(sim, "c") === true && port(sim, "c", :latched) === true
++        @test state(sim, "c") ≈ SVector(0.5, -1.0) atol = 1e-9
++        @test build(single(BareLatch()); activations = (Float64, LinearizeDual)) isa Build
++    end
+ end
+diff --git a/test/test_executor.jl b/test/test_executor.jl
+index a09cb82..4fae84d 100644
+--- a/test/test_executor.jl
++++ b/test/test_executor.jl
+@@ -159,4 +159,31 @@ function test_executor()
+             @test @ballocated($f()) == 0
+         end
+     end
++
++    @testset "a bare store's write replaces it whole, its law the declared shape's (§9.5, §9.8, D-235)" begin
++        mode_store = Ref(false)
++        Redstone._merge_modes!(mode_store, true, "p", :handler, :e)
++        @test mode_store[] === true
++        d = diagnostic(failure(() -> Redstone._merge_modes!(mode_store, 1, "p", :handler, :e)))
++        @test d isa ConformanceFailure && d.reason === :field_type && d.shape === :mode &&
++              d.field === BARE && d.observed === Int && d.declared === Bool
++        d = diagnostic(failure(() -> Redstone._merge_modes!(mode_store, (fired = true,), "p",
++                                                            :handler, :e)))
++        @test d.field === BARE && d.observed === @NamedTuple{fired::Bool}
++        d = diagnostic(failure(() -> Redstone._store_successor!(Ref(0), 0.5, "p", :s_update)))
++        @test d.reason === :field_type && d.shape === :s_init && d.field === BARE &&
++              d.observed === Float64 && d.declared === Int
++        # Over bare stores, and a stateless leaf marked `nothing`, the phase
++        # bodies allocate nothing, the always-on check folded away.
++        sim = Simulation(bare_world(); h = 1//100)
++        init!(sim, set(u = (u = 0.5, p = 0.0)))
++        step!(sim)
++        bodies = phase_bodies(sim)
++        for name in BLOCKS
++            body = bodies[name]
++            body(); body(0)
++            @test @ballocated($body()) == 0
++            @test @ballocated($body(0)) == 0
++        end
++    end
+ end
+diff --git a/test/test_failures.jl b/test/test_failures.jl
+index 3598be9..bbe546f 100644
+--- a/test/test_failures.jl
++++ b/test/test_failures.jl
+@@ -88,30 +88,30 @@ settled!(::ThrowingTop) = false
+ # the generated write refuses.
+ 
+ struct LateInteger <: AbstractComponent end
+-x_init(::LateInteger) = (;)
++x_init(::LateInteger) = nothing
+ y_types(::LateInteger) = (q = Float64,)
+ y_state(::LateInteger, (; t)) = (q = t < 0.05 ? 1.0 : 0,)
+ 
+ # An array's mutability is a type parameter, not a leaf (D-238): the leafwise
+ # relation converted this write silently.
+ struct LateMutable <: AbstractComponent end
+-x_init(::LateMutable) = (;)
++x_init(::LateMutable) = nothing
+ y_types(::LateMutable) = (v = SVector{2,Float64},)
+ y_state(::LateMutable, (; t)) = (v = t < 0.05 ? SVector(1.0, 2.0) : MVector(1.0, 2.0),)
+ 
+ struct LateExtraPort <: AbstractComponent end
+-x_init(::LateExtraPort) = (;)
++x_init(::LateExtraPort) = nothing
+ y_types(::LateExtraPort) = (q = Float64,)
+ y_state(::LateExtraPort, (; t)) = t < 0.05 ? (q = 1.0,) : (q = 1.0, extra = 2.0)
+ 
+ struct LateMissingPort <: AbstractComponent end
+-x_init(::LateMissingPort) = (;)
++x_init(::LateMissingPort) = nothing
+ y_types(::LateMissingPort) = (a = Float64, b = Float64)
+ y_state(::LateMissingPort, (; t)) = t < 0.05 ? (a = 1.0, b = 2.0) : (a = 1.0,)
+ 
+ # The names are the pairing: the same return in another order, at both seams.
+ struct ScrambledPorts <: AbstractComponent end
+-x_init(::ScrambledPorts) = (;)
++x_init(::ScrambledPorts) = nothing
+ y_types(::ScrambledPorts) = (a = Float64, b = Float64)
+ y_state(::ScrambledPorts, (; t)) = (b = 2.0, a = 1.0)
+ 
+@@ -151,7 +151,7 @@ s_update(::LateSuccessor, (; s, t)) = (n = t < 0.05 ? s.n + 1.0 : 0,)
+ # The probe sees the first firing; the second writes `k` at another type.
+ struct LateMode <: AbstractComponent end
+ m_init(::LateMode) = (k = 0,)
+-x_init(::LateMode) = (;)
++x_init(::LateMode) = nothing
+ y_types(::LateMode) = (k = Int,)
+ y_state(::LateMode, (; m)) = (k = m.k,)
+ late_mode_guard(::LateMode, (; m, t)) = t - 0.05 * (m.k + 1)
+@@ -161,7 +161,7 @@ state_events(::LateMode) = (fire = StateEvent(late_mode_guard, late_mode_handler
+ # The probe sees the first firing; the second writes `m` as a scalar, not a NamedTuple.
+ struct LateModeScalar <: AbstractComponent end
+ m_init(::LateModeScalar) = (k = 0,)
+-x_init(::LateModeScalar) = (;)
++x_init(::LateModeScalar) = nothing
+ y_types(::LateModeScalar) = (k = Int,)
+ y_state(::LateModeScalar, (; m)) = (k = m.k,)
+ late_mode_guard(::LateModeScalar, (; m, t)) = t - 0.05 * (m.k + 1)
+diff --git a/test/test_leaves.jl b/test/test_leaves.jl
+index 5f5551d..a2a1e08 100644
+--- a/test/test_leaves.jl
++++ b/test/test_leaves.jl
+@@ -386,7 +386,38 @@ function leaves_wire_relation()
+     end
+ end
+ 
++function leaves_bare_state_write()
++    @testset "a bare state is one arrival at its type, decided at generation (§9.5, D-235)" begin
++        write!(buffer, value, XT, T) =
++            Redstone.flatten_state!(buffer, 0, value, XT, T, "p", :x_deriv, :x_init, nothing)
++        buffer = zeros(2)
++        write!(buffer, 2.5, Float64, Float64)
++        @test buffer[1] === 2.5
++        write!(buffer, SVector(1.0, -1.0), SVector{2,Float64}, Float64)
++        @test buffer == [1.0, -1.0]
++        # A `Float64` embeds at a `Dual` state as a zero-partial constant.
++        dual_buffer = zeros(D8, 1)
++        write!(dual_buffer, 3.0, D8, D8)
++        @test ForwardDiff.value(dual_buffer[1]) === 3.0 && iszero(ForwardDiff.partials(dual_buffer[1]))
++        # The declared shape picks the law: a `NamedTuple` against a bare state is
++        # one wrong type, and a bare value against a named state the law's first clause.
++        d = diagnostic(failure(() -> write!(buffer, (q = 1.0,), Float64, Float64)))
++        @test d isa ConformanceFailure && d.reason === :field_type && d.field === BARE &&
++              d.observed === @NamedTuple{q::Float64} && d.declared === Float64
++        d = diagnostic(failure(() -> write!(buffer, 1, Float64, Float64)))
++        @test d.reason === :field_type && d.field === BARE && d.observed === Int
++        d = diagnostic(failure(() -> write!(buffer, 1.0, @NamedTuple{q::Float64}, Float64)))
++        @test d.reason === :return_type && d.field === nothing
++    end
++    @testset "a bare state's leaves are named by their index steps alone (§13.4)" begin
++        @test leaf_names(Float64) == [""]
++        @test leaf_names(SVector{2,Float64}) == ["[1]", "[2]"]
++        @test leaf_names(Nothing) == String[]
++    end
++end
++
+ function test_leaves()
++    leaves_bare_state_write()
+     leaves_shape()
+     leaves_names()
+     leaves_roundtrip()
+diff --git a/test/test_lifecycle.jl b/test/test_lifecycle.jl
+index 7aa5ecb..a5658d2 100644
+--- a/test/test_lifecycle.jl
++++ b/test/test_lifecycle.jl
+@@ -20,7 +20,7 @@ two_ramps_swapped(level_a, level_b) =
+ # Two requests on one component, both holding from boundary zero: one path
+ # owns two roster entries (§13.5, D-316).
+ struct TwoFlags <: AbstractComponent end
+-x_init(::TwoFlags) = (;)
++x_init(::TwoFlags) = nothing
+ y_types(::TwoFlags) = (fa = StopFlag, fb = StopFlag)
+ y_state(::TwoFlags, _) = (fa = STOP_REQUESTED, fb = STOP_REQUESTED)
+ stop_reason(::TwoFlags) = "two"
+diff --git a/test/test_precompile.jl b/test/test_precompile.jl
+index 848d52e..988a0e3 100644
+--- a/test/test_precompile.jl
++++ b/test/test_precompile.jl
+@@ -29,11 +29,11 @@ trim_sim = Simulation(loop_build; h = 1//1000)
+ trim!(trim_sim, TrimProblem(
+     guess = (d = 0.3,), lower = (d = -1.0,), upper = (d = 1.0,),
+     condition = d -> set(u = (disturbance = d.d,)),
+-    reads = reads(q̇₂ = get_deriv("plant", "q[2]")),
++    reads = reads(q̇₂ = get_deriv("plant", "[2]")),
+     residuals = (derivatives, d) -> (q̇₂ = derivatives.q̇₂,),
+     tolerances = (q̇₂ = 1e-9,)); baseline = set(u = (disturbance = 0.0,)))
+ linearize(trim_sim, taps(
+-    x = (q₁ = get_state("plant", "q[1]"), q₂ = get_state("plant", "q[2]")),
++    x = (q₁ = get_state("plant", "[1]"), q₂ = get_state("plant", "[2]")),
+     u = (d = get_input(:disturbance),), y = (y = get_output("plant", :out),)))
+ println(Base.cumulative_compile_time_ns()[1] - compile_ns)
+ """
+diff --git a/test/test_readers.jl b/test/test_readers.jl
+index 8e96762..fb00039 100644
+--- a/test/test_readers.jl
++++ b/test/test_readers.jl
+@@ -572,4 +572,38 @@ function test_readers()
+         @test seeded.exec.clock.t₀ === 0.25
+         @test seeded.exec.clock.t isa D8 && ForwardDiff.value(seeded.exec.clock.t) === 0.25
+     end
++
++    @testset "a bare state's address is headless, its head `BARE` (§14.4, D-276)" begin
++        # The parse: no head where the state has no name, then the usual steps.
++        @test Redstone.parse_leaf("") == (BARE, Redstone.AccessStep[])
++        @test Redstone.parse_leaf("[2]") == (BARE, Redstone.AccessStep[(2,)])
++        @test Redstone.parse_leaf("q[2]") == (:q, Redstone.AccessStep[(2,)])
++        @test get_state("acc") == get_state("acc", "") && get_deriv("acc").leaf == ""
++
++        model = Model(bare_world(); h = 1//10)
++        init!(model, combine(set(u = (u = 0.5, p = 0.0)), at("tick", set(s = 4))))
++        evaluate!(model.exec)
++        r = _compile_reads(reads(acc = get_state("acc"), acc_rate = get_deriv("acc"),
++                                 rate = get_state("latch", "[2]"), latch = get_state("latch"),
++                                 tick = get_state("tick"), q = get_state("plant", :q)),
++                           model.deployment.build, Float64)
++        v = gather_reads(r, model.exec)
++        @test v.acc === 1.0 && v.acc_rate === -0.5              # `ẋ = u - x` at `x = 1`
++        @test v.rate === 1.0 && v.latch === SVector(0.0, 1.0)
++        @test v.tick === 5                     # a bare discrete store, read whole, past `t₀`'s tick
++        @test v.q === SVector(0.0, 0.0)
++
++        # A headless address against a named state, a named one against a bare
++        # state, and a step a bare scalar cannot take.
++        err = failure(() -> _compile_reads(reads(a = get_state("plant"), b = get_state("acc", :q),
++                                                 c = get_deriv("acc", "[2]"),
++                                                 d = get_state("neg")),
++                                           model.deployment.build))
++        (a, b_, c, d) = diagnostics(err)
++        @test a.reason === :undeclared && a.field === BARE && a.candidates == [:q]
++        @test b_.reason === :undeclared && b_.field === :q && b_.candidates == [BARE]
++        @test c.reason === :not_indexable && c.step == "[2]" && c.declared === Float64
++        @test d.reason === :undeclared && d.field === BARE && isempty(d.candidates)
++        @test a.selector == "get_state(\"plant\")"             # spelled as authored
++    end
+ end
+diff --git a/test/test_store.jl b/test/test_store.jl
+index caa0aa5..1a680d5 100644
+--- a/test/test_store.jl
++++ b/test/test_store.jl
+@@ -10,7 +10,7 @@
+ # A deliberately pinned leaf (D-263): `frozen` is declared `Pinned{Float64}`, so
+ # it must not follow the activation scalar.
+ struct PinnedLeaf <: AbstractComponent end
+-x_init(::PinnedLeaf) = (;)
++x_init(::PinnedLeaf) = nothing
+ y_types(::PinnedLeaf) = (a = Float64, frozen = Pinned{Float64})
+ y_state(::PinnedLeaf, (; t)) = (a = t, frozen = 2.0)
+ 
+@@ -40,7 +40,7 @@ struct TaggedValue{T}
+     n::Int
+ end
+ struct MixedCell <: AbstractComponent end
+-x_init(::MixedCell) = (;)
++x_init(::MixedCell) = nothing
+ y_types(::MixedCell) = (out = TaggedValue{Float64},)
+ y_state(::MixedCell, (; t)) = (out = TaggedValue(t, 1),)
+ 
+@@ -49,7 +49,7 @@ struct PinnedPair{T}
+     ref::Float64
+ end
+ struct PinnedInside <: AbstractComponent end
+-x_init(::PinnedInside) = (;)
++x_init(::PinnedInside) = nothing
+ y_types(::PinnedInside) = (out = PinnedPair{Float64},)
+ y_state(::PinnedInside, (; t)) = (out = PinnedPair(t, 2.0),)
+ 
