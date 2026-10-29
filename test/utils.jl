@@ -26,8 +26,10 @@ end
 # a named face; a bare leaf builds too (D-208).
 single(c) = Group((; c = c))
 
-# The same, with the component's one input face handed up to a root input `in`.
+# The same, with the component's one input face handed up to a root input `in`,
+# or its bare input, which the child segment alone names (D-436).
 fed(c, face) = Group((; c = c); input_wires = ("in" => "c/$face",))
+fed(c) = Group((; c = c); input_wires = ("in" => "c",))
 
 # The drain's counterfactual: the same value written straight into a root
 # input's cell at a stopped point, reaching under the data plane on purpose.

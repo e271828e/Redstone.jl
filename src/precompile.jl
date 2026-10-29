@@ -20,11 +20,11 @@ workload_loop() = Blocks.Group((
         force = Blocks.SumJunction{Float64, 2}(),
         plant = Blocks.TransferFunction(num = (1.0,), den = (1.0, 0.6, 1.0)),
         integral = Blocks.LimitedIntegrator(lower = -0.5, upper = 0.5));
-    local_wires = ("reference/out" => "controller/r", "plant/out" => "controller/y",
-                   "controller/u" => "actuator/in", "actuator/out" => "force/in1",
-                   "force/out" => "plant/in", "plant/out" => "integral/in"),
+    local_wires = ("reference" => "controller/r", "plant" => "controller/y",
+                   "controller/u" => "actuator", "actuator" => "force/in1",
+                   "force" => "plant", "plant" => "integral"),
     input_wires = ("disturbance" => "force/in2",),
-    output_wires = ("plant/out" => "y",),
+    output_wires = ("plant" => "y",),
     sample_times = (controller = Absolute(Hz(50)),))
 
 """
@@ -42,9 +42,9 @@ function workload()
     init!(sim, set(u = (disturbance = 0.0,)))
     step!(sim)
     run!(sim; t_end = 0.1)
-    port(sim, "plant", :out)
+    port(sim, "plant")
     state(sim, "plant")
-    series(sim, reads(y = get_output("plant", :out)))
+    series(sim, reads(y = get_output("plant")))
     restore!(sim, checkpoint(sim))
     trim_sim = Simulation(loop_build; h = 1//1000)
     trim!(trim_sim, TrimProblem(
@@ -55,7 +55,7 @@ function workload()
         tolerances = (q̇₂ = 1e-9,)); baseline = set(u = (disturbance = 0.0,)))
     linearize(trim_sim, taps(
         x = (q₁ = get_state("plant", "[1]"), q₂ = get_state("plant", "[2]")),
-        u = (d = get_input(:disturbance),), y = (y = get_output("plant", :out),)))
+        u = (d = get_input(:disturbance),), y = (y = get_output("plant"),)))
     nothing
 end
 

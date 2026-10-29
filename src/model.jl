@@ -669,19 +669,21 @@ warnings(model::Model) = vcat(warnings(model.deployment.build), warnings(model.d
 
 # Design: §7.3, D-317.
 """
-    port(model::Model, path::String, name::Symbol)
+    port(model::Model, path::String[, name::Symbol])
 
 Return a [port](@ref g-port)'s current value in the model's
 [signal table](@ref g-signal-table).
 
-A port is addressed by its [component](@ref g-component)'s path and its name. An
+A port is addressed by its [component](@ref g-component)'s path and its name,
+and a bare port, which has none, by the path alone: the name defaults to the
+empty one. An
 [assembly](@ref g-assembly)'s own path addresses its output
 [faces](@ref g-face), which resolve to the [cells](@ref g-cell) they derive
 from, and the empty path the [root inputs](@ref g-root-input). A simulation's
 `port(sim, path, name)` reads its model's. To read a port off a published
 [snapshot](@ref g-snapshot) instead, use `port(snapshot, path, name)`.
 """
-port(model::Model, path::String, name::Symbol) =
+port(model::Model, path::String, name::Symbol = BARE) =
     gather_cell(model.exec.store, model.exec.act.layout.addr[(path, name)])
 
 # Design: §7.3, D-317.

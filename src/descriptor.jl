@@ -102,15 +102,19 @@ _consumer_wire(d) =
 # trace reached one, the dead hops and each member's tracing mode (§13.8).
 function _cycle(d::AlgebraicCycle)
     cycle = (members = d.members,
-             wires = [(from = _terminal_endpoint(p), to = _terminal_endpoint(c)) for (p, c) in d.wires])
+             wires = [(from = _terminal_endpoint(p, d.members), to = _terminal_endpoint(c, d.members))
+                      for (p, c) in d.wires])
     d.classification === nothing ||
         (cycle = merge(cycle, (classification = string(d.classification),)))
     merge(cycle, (dead = [(path = m, input = String(f), output = String(o)) for (m, f, o) in d.dead],
                   traced = [(path = m, mode = string(mode)) for (m, mode) in d.traced]))
 end
 
-# A cycle wire's end, `path/port` with the port after the last slash.
-function _terminal_endpoint(terminal::String)
+# A cycle wire's end, `path/port`, or a member's path alone for a bare port
+# (D-436). Every end is a member's, and a member is a primitive, with no
+# children, so the one member the end equals or starts with is its path.
+function _terminal_endpoint(terminal::String, members::Vector{String})
+    terminal in members && return (path = terminal, port = "")
     i = findlast('/', terminal)
     (path = terminal[1:prevind(terminal, i)], port = terminal[nextind(terminal, i):end])
 end
@@ -194,11 +198,12 @@ _endpoint((path, port)::Tuple{String,Symbol}) = (path = path, port = String(port
 
 # --- faces and the kind marker --------------------------------------------------
 
-# A leaf's faces as declared, a `Pinned` entry unwrapped and flagged (§13.9).
+# A leaf's faces as declared, a `Pinned` entry unwrapped and flagged, a bare
+# contract's one face named `""` (§13.9, D-436).
 function _leaf_faces(fn, @nospecialize(instance))
     _declares(fn, instance) || return NamedTuple[]
     decl = invoke_declaration(fn, instance)
-    NamedTuple[_leaf_face(name, P) for (name, P) in pairs(decl)]
+    NamedTuple[_leaf_face(name, P) for (name, P) in pairs(_keyed(decl))]
 end
 
 function _leaf_face(name::Symbol, @nospecialize(declared::Type))

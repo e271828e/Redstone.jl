@@ -33,7 +33,7 @@ quiescent boundary ([§2.3][s2-3], [§10.6][s10-6]).
 ```julia
 hit_upper_guard(c, (; x))   = x - c.upper                          # ungated
 hit_upper_handler(c, _)     = (x = c.upper, m = :upper)
-leave_upper_guard(c, (; m, u)) = m === :upper ? -u.in : -one(u.in)   # the first form
+leave_upper_guard(c, (; m, u)) = m === :upper ? -u : -one(u)   # the first form
 leave_handler(c, _)         = (m = :free,)
 ```
 
@@ -53,7 +53,7 @@ constant through a localization.
 ## 2. The defect
 
 Let the block be saturated at `upper` and let the input fall to exactly
-`0.0`. The first leave guard computes `-u.in`, which is `-0.0`, and in IEEE
+`0.0`. The first leave guard computes `-u`, which is `-0.0`, and in IEEE
 arithmetic `-0.0 ≥ 0` is true because `-0.0 == 0.0`. The predicate holds,
 its prior was not-holding, and the leave event fires: the mode is `:free`
 with `x` sitting exactly on the limit.
@@ -84,7 +84,7 @@ derivative, whatever continuous σ its guards compute.
   positive all the way, so by continuity `σ(upper, 0) ≥ 0`, which holds.
   Whenever the block is free at the rest point, the hit predicate is already
   holding and can produce no edge. This is true of any continuous σ, in
-  whatever mixture of `x` and `in`.
+  whatever mixture of `x` and `u`.
 - **So the block must never be free at the rest point**, which means
   "leave" must require `in < 0` strictly. No continuous σ satisfies
   `σ ≥ 0 ⟺ in < 0`: at `in = 0` it would have to be negative and the limit
@@ -100,13 +100,13 @@ discontinuity, or whether to give up the latch.
 as well as on the mode:
 
 ```julia
-leave_upper_guard(c, (; m, u)) = m === :upper && u.in < 0 ? -u.in : -one(u.in)
-leave_lower_guard(c, (; m, u)) = m === :lower && u.in > 0 ?  u.in : -one(u.in)
+leave_upper_guard(c, (; m, u)) = m === :upper && u < 0 ? -u : -one(u)
+leave_lower_guard(c, (; m, u)) = m === :lower && u > 0 ?  u : -one(u)
 ```
 
 An input of exactly zero at a limit now keeps the mode saturated, which
 changes nothing observable in `x`, since the derivative is zero in both
-modes at zero input. The gate `u.in < 0` reads a wired signal that varies
+modes at zero input. The gate `u < 0` reads a wired signal that varies
 within a step, so [§10.4][s10-4]'s soundness argument, that gates stay fixed through
 a localization, does not cover it. Across a bracket σ is `-1` on one side
 and a small positive `-in` on the other, a jump rather than a crossing. The
@@ -119,8 +119,8 @@ the default tolerance. On a `cos(t)` input into `[-0.5, 0.5]` over 20 s,
 seven hits and six leaves cost 177 trial sweeps against 87 before the
 gate, about 15 extra interior sweeps per leave.
 
-**The `±1` gate, equivalent and not chosen.** Writing `one(u.in)` instead
-of `-u.in` on the holding side defines the same predicate and converges at
+**The `±1` gate, equivalent and not chosen.** Writing `one(u)` instead
+of `-u` on the holding side defines the same predicate and converges at
 the same bisection count, because both ends of the bracket are then fake
 constants. It states more plainly that the gate alone decides the predicate.
 It was not chosen because it teaches a pattern the design forbids: a `Bool`
@@ -130,7 +130,7 @@ factor, and its continuous atom `-in` is still the quantity whose zero is
 the event.
 
 **A `floatmin` nudge, rejected.** Replacing an exact `-0.0` by
-`-floatmin(u.in)` gives the same strict predicate, keeps the 87 trials and
+`-floatmin(u)` gives the same strict predicate, keeps the 87 trials and
 the original leave instants, and every routed test stays green. It was
 rejected because `floatmin` has no method for a `Dual`, so it works only
 because events compile out at non-nominal activations, and because the
@@ -141,10 +141,10 @@ and let the derivative decide saturation from the current state and input,
 with events only to localize the kinks and clamp `x` exactly:
 
 ```julia
-x_deriv(c, (; x, u)) = (x >= c.upper && u.in > 0) || (x <= c.lower && u.in < 0) ?
-                           zero(u.in) : u.in
+x_deriv(c, (; x, u)) = (x >= c.upper && u > 0) || (x <= c.lower && u < 0) ?
+                           zero(u) : u
 hit_upper_guard(c, (; x)) = x - c.upper       # localizes the arrival, clamps exactly
-release_guard(c, (; u))   = -u.in             # localizes the input's zero crossing
+release_guard(c, (; u))   = -u             # localizes the input's zero crossing
 ```
 
 Every guard is continuous and the corner disappears, because nothing is
@@ -159,7 +159,7 @@ continuously under any dither, while the latched block sits idle. Each
 spurious firing also ends the step at the crossing ([§10.4][s10-4]), fragmenting the
 grid with boundaries every component pays for. The block would also stop
 being the modes-and-events demonstrator, and a saturation flag would become
-a `y_direct` output with feedthrough from `in`.
+a `y_direct` output with feedthrough from `u`.
 
 **The computed clamp without a release event.** Keep only the arrival event.
 Departures then cost nothing, and the kink in `ẋ` at a departure lands
@@ -173,7 +173,7 @@ instead of the sign value. Here that rewrite does two things at once:
 
 ```julia
 leave_upper_guard(c::LimitedIntegrator{V, false}, (; m, u)) where {V} =
-    m === :upper && u.in < 0
+    m === :upper && u < 0
 ```
 
 A `Bool` predicate is strict by construction, so the exact-zero corner is
@@ -252,7 +252,7 @@ labels.
 The convention that a predicate holds at `σ ≥ 0`, with edges detected
 against a prior, is what makes boundary-detected and localized events share
 one declaration ([§2.3][s2-3]), and it is what made the rest point a trap: at
-`(upper, 0)` both "`x` has reached the limit" and "`in` has stopped pushing"
+`(upper, 0)` both "`x` has reached the limit" and "`u` has stopped pushing"
 hold, and neither can produce an edge from there. Any block that latches a
 mode on one continuous quantity reaching zero and releases it on another
 reaching zero meets the same corner, and the strict gate on the releasing

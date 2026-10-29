@@ -21,9 +21,9 @@ sim = Simulation(loop_build; h = 1//1000)
 init!(sim, set(u = (disturbance = 0.0,)))
 step!(sim)
 run!(sim; t_end = 0.1)
-port(sim, "plant", :out)
+port(sim, "plant")
 state(sim, "plant")
-series(sim, reads(y = get_output("plant", :out)))
+series(sim, reads(y = get_output("plant")))
 restore!(sim, checkpoint(sim))
 trim_sim = Simulation(loop_build; h = 1//1000)
 trim!(trim_sim, TrimProblem(
@@ -34,7 +34,7 @@ trim!(trim_sim, TrimProblem(
     tolerances = (q̇₂ = 1e-9,)); baseline = set(u = (disturbance = 0.0,)))
 linearize(trim_sim, taps(
     x = (q₁ = get_state("plant", "[1]"), q₂ = get_state("plant", "[2]")),
-    u = (d = get_input(:disturbance),), y = (y = get_output("plant", :out),)))
+    u = (d = get_input(:disturbance),), y = (y = get_output("plant"),)))
 println(Base.cumulative_compile_time_ns()[1] - compile_ns)
 """
 

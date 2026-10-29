@@ -475,7 +475,7 @@ function _seeded_tap(::Val{:u}, entry::CellRead{A,C}, ::GetInput, read::MountedR
     walked_type = retype(T, root_type)
     pinning = Tuple{String,Symbol,Any}[
         (consumer.path, Symbol(tier_word(consumer.tier)),
-         invoke_declaration(u_types, consumer.instance)[consumer_face])
+         _keyed(invoke_declaration(u_types, consumer.instance))[consumer_face])
         for (ci, consumer) in enumerate(structure.components)
         for consumer_face in keys(act.decls[ci].ins)
         if terminal_producer(structure, (consumer.path, consumer_face)) == ("", face) &&

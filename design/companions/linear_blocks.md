@@ -100,7 +100,7 @@ package's job, not a block constructor's.
 [§5.3][s5-3]'s rule is that an output computed as `h(x)` comes from `y_state` and
 one computed as `h(x, u)` from `y_direct`, and that the stage's name is the
 feedthrough declaration the loop checker reads. A strictly proper system,
-`D = 0`, publishes `out` from stage 1 and breaks algebraic loops as the lag
+`D = 0`, publishes `y` from stage 1 and breaks algebraic loops as the lag
 does. A proper one, `D ≠ 0`, publishes from stage 2, participates in
 feedthrough, and cannot close a loop on itself through a memoryless path.
 
@@ -110,8 +110,8 @@ constructor sets it, from `iszero(D)` for the matrices and from the degree
 comparison for a transfer function. The two arms are
 
 ```julia
-y_state(c::LinearBlock{false}, (; x))     = (out = C x,)
-y_direct(c::LinearBlock{true}, (; x, u))  = (out = C x + D u,)
+y_state(c::LinearBlock{false}, (; x))     = C x
+y_direct(c::LinearBlock{true}, (; x, u))  = C x + D u
 ```
 
 on the abstract supertype section 6 introduces, and `x_deriv` is one method
@@ -218,8 +218,8 @@ realization(c::StateSpace) = c
 realization(c::TransferFunction) = c.realization
 
 x_deriv(c::LinearBlock, (; x, u))        = (s = realization(c); s.A * x + s.B * u)
-y_state(c::LinearBlock{false}, (; x))    = (out = realization(c).C * x,)
-y_direct(c::LinearBlock{true}, (; x, u)) = (s = realization(c); (out = s.C * x + s.D * u,))
+y_state(c::LinearBlock{false}, (; x))    = realization(c).C * x
+y_direct(c::LinearBlock{true}, (; x, u)) = (s = realization(c); s.C * x + s.D * u)
 ```
 
 Nothing is forwarded and no `Group` wraps a leaf, so the transfer function
@@ -237,7 +237,7 @@ every transfer function. A probe followed the three steps an author would
 take from there. The generic pair builds nothing, since the arm the inner
 block lacks surfaces as a `UserCodeFraming` around a `MethodError`. The
 natural repair, an inner `y_direct` for every class with `D` taken as zero,
-is refused as `ProducedByTwoStages` on `out` ([§8.3][s8-3]). The next repair,
+is refused as `ProducedByTwoStages` on the bare port ([§8.3][s8-3]). The next repair,
 dropping `y_state` so `y_direct` is the only producer, builds and silently
 makes a strictly proper block a feedthrough block, which only the loop test
 of section 3 catches. The supertype removes the forwarding, and with it the
@@ -296,7 +296,7 @@ against the tree at 0571605 and probed at `h = 1//100`:
 | the same loop with `D = 1` | `AlgebraicCycle`, classification `:real` |
 | `TransferFunction(num = (1,), den = (0.5, 1))` beside `FirstOrderLag(τ = 0.5)`, both from a unit constant, at `t = 1` | outputs equal to the last bit, `0.8646647163964265`; the realized state `0.4323…`, half the lag's |
 | the strictly proper transfer function in the unit-feedback loop; the lead-lag in the same loop | builds; `AlgebraicCycle`, classification `:real` |
-| generic two-stage forwarding; an inner `y_direct` for every class; `y_direct` as the only producer of a `D = 0` block | `UserCodeFraming`; `ProducedByTwoStages` on `out`; builds, and the loop is refused |
+| generic two-stage forwarding; an inner `y_direct` for every class; `y_direct` as the only producer of a `D = 0` block | `UserCodeFraming`; `ProducedByTwoStages` on the bare port; builds, and the loop is refused |
 | `TransferFunction(num = (1, 2), den = (1, 5))` | type `{1, true, …}`; linearizes to `A = -5`, `B = 1`, `C = -3`, `D = 1` |
 | `TransferFunction(num = (4,), den = (1, 1.2, 4))` linearized, `C (sI - A)⁻¹ B + D` against `G(s)` at `s = 0, i, 2i, 1 + 3i` | agreement to `2.3e-16` or better |
 | `TransferFunction(num = (1,), den = (0.5, 1), u0 = 3)` fed `3` | output `3.0` at start and after one second |
@@ -322,16 +322,16 @@ only the update discretizes, because the hold of section 9.2 leaves `C` and
 abstract type DiscreteLinearBlock{FT} <: AbstractComponent end
 
 s_init(c::DiscreteLinearBlock)  = initial_state(held(c))
-u_types(c::DiscreteLinearBlock) = (in = port_type(size(held(c).B, 2)),)
-y_types(c::DiscreteLinearBlock) = (out = port_type(size(held(c).C, 1)),)
+u_types(c::DiscreteLinearBlock) = port_type(size(held(c).B, 2))
+y_types(c::DiscreteLinearBlock) = port_type(size(held(c).C, 1))
 function s_update(c::DiscreteLinearBlock, (; s, u, Δt))
     (; A, B) = realization(c, Δt)
-    A * s + B * as_vector(u.in)
+    A * s + B * as_vector(u)
 end
-y_state(c::DiscreteLinearBlock{false}, (; s)) = (out = as_port(held(c).C * s),)
+y_state(c::DiscreteLinearBlock{false}, (; s)) = as_port(held(c).C * s)
 function y_direct(c::DiscreteLinearBlock{true}, (; s, u))
     (; C, D) = held(c)
-    (out = as_port(C * s + D * as_vector(u.in)),)
+    as_port(C * s + D * as_vector(u))
 end
 ```
 
@@ -361,7 +361,7 @@ run-time refusal of a deployment fact, and a declared period would need a
 hook that `sample_times` deliberately denies instances ([D-042][d-042]). The
 docstring states the dependence, and section 9.2 is the mitigation.
 
-The steady state for `u0` is `(I - A) q0 = B u0`, so `out` starts at
+The steady state for `u0` is `(I - A) q0 = B u0`, so `y` starts at
 `G(1) u0`. The pole with no steady state is now at `z = 1`, whose exact test
 is the denominator summing to zero, and unlike the continuous test on the
 constant coefficient this one is floating. A designed denominator such as
@@ -405,7 +405,7 @@ is defined for every matrix and period, so the probe's placeholder `Δt`
 
 The initial conditions do not depend on the period. `I - A_d` is
 `A⁻¹`-commuting times `e^{AΔt} - I`, so the discrete steady state for `u0`
-is the continuous one, `q0 = -A⁻¹ B u0`, `out` starts at `G(0) u0`, and the
+is the continuous one, `q0 = -A⁻¹ B u0`, `y` starts at `G(0) u0`, and the
 refusal is the continuous one, a zero constant coefficient, with no
 tolerance question. The solve runs once at construction from the
 continuous matrices.

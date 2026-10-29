@@ -2833,18 +2833,19 @@ end
 
 # Design: §7.3, D-317.
 """
-    port(sim::Simulation, path::String, name::Symbol)
+    port(sim::Simulation, path::String[, name::Symbol])
 
 Return a [port](@ref g-port)'s current value in the simulation's
 [signal table](@ref g-signal-table).
 
-A port is addressed by its [component](@ref g-component)'s path and its name. An
+A port is addressed by its [component](@ref g-component)'s path and its name,
+and a bare port by the path alone, the name defaulting to the empty one. An
 [assembly](@ref g-assembly)'s own path addresses its output
 [faces](@ref g-face), and the empty path the [root inputs](@ref g-root-input).
 The read is its model's, as `port(model, path, name)` gives it. To read a port
 off a published [snapshot](@ref g-snapshot) instead, use
 `port(snapshot, path, name)`.
 """
-port(sim::Simulation, path::String, name::Symbol) = port(sim.model, path, name)
+port(sim::Simulation, path::String, name::Symbol = BARE) = port(sim.model, path, name)
 state(sim::Simulation, path::String) = state(sim.model, path)
 modes(sim::Simulation, path::String) = modes(sim.model, path)

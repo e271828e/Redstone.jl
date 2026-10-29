@@ -138,16 +138,19 @@ framework never reads or writes them. A component that needs no
 """
 function ws_init end
 
-# Design: D-263.
+# Design: D-263, D-436.
 """
-    u_types(c) -> NamedTuple
+    u_types(c) -> NamedTuple or Type
 
 Return the types the [component](@ref g-component) accepts on its inputs, a
-`NamedTuple` of input name => type.
+`NamedTuple` of input name => type, or one type for one input with no name.
 
 The entries are written at `Float64` and take the component alone on both
 [tiers](@ref g-tier), as in
-`u_types(::Engine) = (throttle = Float64, starter = Bool)`. On a continuous
+`u_types(::Engine) = (throttle = Float64, starter = Bool)`. A component with one
+input may declare it bare, as in `u_types(::Integrator{V}) where {V} = V`: the
+input then has no [face](@ref g-face), a wire names it by the component's path
+alone, and the [bundle](@ref g-bundle)'s `u` is its value. On a continuous
 primitive every `Float64` position follows the scalar of each
 [activation](@ref g-activation), and an entry wrapped in [`Pinned`](@ref) does
 not. On a discrete primitive every entry stays as written. The default declares
@@ -161,16 +164,19 @@ The build refuses a wire whose producer type does not fit the entry as
 `WireTypeMismatch`, and a producer that follows the scalar at a `Pinned` entry
 as `WalkingFaceAtFrozenEntry`. A `Pinned` marker below the top of an entry is
 refused as `IllegalPortType`, and a `Pinned` entry on a discrete primitive as
-`DeclarationOnWrongTier`.
+`DeclarationOnWrongTier`. An empty entry name is refused as `FaceNameIllegal`,
+and a bare `u_types` on the root component as `IllegalPortType`, since a root
+input is written by name.
 """
 u_types(::Any) = NamedTuple()
 
-# Design: §8.2, §9.3, D-263.
+# Design: §8.2, §9.3, D-263, D-436.
 """
-    y_types(c) -> NamedTuple
+    y_types(c) -> NamedTuple or Type
 
 Return the types of the [component](@ref g-component)'s output
-[ports](@ref g-port), a `NamedTuple` of port name => type.
+[ports](@ref g-port), a `NamedTuple` of port name => type, or one type for one
+port with no name.
 
 The entries are written at `Float64` and take the component alone on both
 [tiers](@ref g-tier), as in
@@ -181,6 +187,12 @@ position, alone or as a type parameter, at that activation's scalar. An entry
 wrapped in [`Pinned`](@ref) keeps its type at every activation. On a discrete
 primitive every entry stays as written.
 
+A component with one output may declare it bare, as in
+`y_types(::Integrator{V}) where {V} = V`. The port then has no
+[face](@ref g-face): a wire names it by the component's path alone, a reader by
+the path and the headless address, and the stage that produces it returns its
+value rather than a `NamedTuple`.
+
 One declaration covers both output stages, [`y_state`](@ref) and
 [`y_direct`](@ref), and no port names its stage. The build finds which stage
 produces each port by its [probe](@ref g-probe), and checks each return against
@@ -190,6 +202,7 @@ A primitive with an empty state and no `y_types` is refused as
 `StatelessWithoutOutputs`. A declared port no stage returns is refused as
 `DeclaredNotProduced`, a returned name the declaration lacks as
 `UndeclaredReturnField`, and a port both stages return as `ProducedByTwoStages`.
+An empty entry name is refused as `FaceNameIllegal`.
 """
 y_types(::Any) = NamedTuple()
 
@@ -569,8 +582,10 @@ carry `x`, `m`, `t` and `ws`, and on the discrete tier `s`, `t`, `Δt` and `ws`,
 each only if the component has it.
 
 The stage returns a `NamedTuple` of port values at their [`y_types`](@ref)
-types. [`y_direct`](@ref) receives the return as `y_x`, or `y_s` on the
-discrete tier, so an intermediate both stages need is computed once. A
+types, or the port's value itself under a bare `y_types`, as in
+`y_state(::Integrator, (; x)) = x`. [`y_direct`](@ref) receives the return as
+`y_x`, or `y_s` on the discrete tier, so an intermediate both stages need is
+computed once. A
 component exposes a state or mode field by returning it here. A discrete
 primitive's stages run only at its [ticks](@ref g-tick), and its ports hold
 their values in between.
@@ -592,14 +607,17 @@ Return the [component](@ref g-component)'s
 `y_direct` is the second of a primitive's two output stages, as in
 `y_direct(eng::Engine, (; x, m, u)) = (; M_shaft = ..., P = ...)`. Beside the
 state, its [bundle](@ref g-bundle) carries the inputs `u` and the return of
-[`y_state`](@ref) as `y_x`. A primitive sits on one [tier](@ref g-tier), and a
+[`y_state`](@ref) as `y_x`. Under a bare [`u_types`](@ref) the bundle's `u` is
+the one input's value. A primitive sits on one [tier](@ref g-tier), and a
 discrete primitive receives that return as `y_s`. On the continuous tier the
 bundle may carry `x`, `m`, `u`, `y_x`, `t` and `ws`, and on the discrete tier
 `s`, `u`, `y_s`, `t`, `Δt` and `ws`, each only if the component has it.
 
 Every stage-2 [port](@ref g-port) is taken to depend on every wired input. The
 stage returns a `NamedTuple` of port values at their [`y_types`](@ref) types,
-and the two stages together produce each declared port exactly once.
+or the port's value itself under a bare `y_types`, as in
+`y_direct(g::Gain, (; u)) = g.k * u`, and the two stages together produce each
+declared port exactly once.
 
 The stage is optional. The build refuses a read outside the bundle as
 `BundleFieldError`, a port that both stages return as `ProducedByTwoStages`,
@@ -623,7 +641,8 @@ the component has it.
 
 The return has exactly the fields of [`x_init`](@ref), each at the state's
 type, and for a bare state it is one value at the state's type, as in
-`x_deriv(::Integrator, (; u)) = u.in`. A continuous primitive with a non-empty
+`x_deriv(::Integrator, (; u)) = u`, where a bare [`u_types`](@ref) makes `u`
+the one input's value. A continuous primitive with a non-empty
 state must define it.
 
 The build refuses a non-empty `x_init` with no `x_deriv` as
@@ -706,13 +725,27 @@ tier_word(tier::Tier) = tier === CONTINUOUS ? "continuous" : "discrete"
 A contract declaration `fn` as the tier reads it (D-263): on the continuous tier
 walked at `S`, a `Pinned` entry yielding its type (D-265); on the discrete
 tier as written. `S` is `Float64` for every reader but the structure step's
-wire pass, which also reads it at the marker.
+wire pass, which also reads it at the marker. It is keyed by `_keyed`, a bare
+contract under `BARE`, so it serves the bookkeeping past the structure step's
+first barrier, which refuses an empty entry name (D-436).
 """
 function declared_at(fn, @nospecialize(comp), tier::Tier, ::Type{S} = Float64) where {S}
     _declares(fn, comp) || return NamedTuple()
-    decl = invoke_declaration(fn, comp)
+    decl = _keyed(invoke_declaration(fn, comp))
     tier === CONTINUOUS ? map(P -> retype_entry(S, P), decl) : decl
 end
+
+# A contract in the bookkeeping's keyed form (§8.2, D-436): a `NamedTuple` as
+# declared, a bare contract as its one entry under `BARE`.
+_keyed(decl::NamedTuple) = decl
+_keyed(decl) = NamedTuple{(BARE,)}((decl,))
+
+"""
+Is a keyed contract, or a keyed product, bare (D-436)? The one key `BARE` says
+so once the structure step has refused an empty entry name, the one other way
+a contract could hold it.
+"""
+is_bare(contract::NamedTuple) = keys(contract) === (BARE,)
 
 # The tier's own update law (D-195). Everything downstream asks for it
 # *through* the tier, so no code path ever holds a name that serves both; the

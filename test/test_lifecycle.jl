@@ -8,7 +8,7 @@
 # the boundary-detected request.
 ramp_request(level, reason) =
     Group((; src = Ramp(0.0), trig = Trigger(level), stop = StopRequest(reason = reason));
-          local_wires = ("src/out" => "trig/sig", "trig/on" => "stop/request"))
+          local_wires = ("src/out" => "trig/sig", "trig/on" => "stop"))
 monitored() = ramp_request(0.35, "ramp at level")
 
 # Two monitored ramps, `a` first in build order.
@@ -27,7 +27,7 @@ stop_reason(::TwoFlags) = "two"
 
 # A root-input-fed trigger feeding a stop request: the boundary-zero stop's model.
 armed() = Group((; c = Trigger(0.5), stop = StopRequest(reason = "input at level"));
-                input_wires = ("in" => "c/sig",), local_wires = ("c/on" => "stop/request",))
+                input_wires = ("in" => "c/sig",), local_wires = ("c/on" => "stop",))
 
 # The hooked interrupter beside a request that never holds: a requester
 # honoured, or ignored, while only a control-plane stop can end the run.
@@ -128,7 +128,7 @@ function test_lifecycle()
         @test run_diagnostic.op === :run! &&
               run_diagnostic.status === :running
         @test lifecycle(sim) === :stopped
-        @test termination(sim).source === ModelRequestedStop("stop", :flag, "input at level")
+        @test termination(sim).source === ModelRequestedStop("stop", BARE, "input at level")
     end
 
     @testset "`lifecycle(sim)` is derived from the model's status, the running flag and the closed run (§12.6, D-317)" begin
@@ -281,7 +281,7 @@ function test_lifecycle()
         unbound = Simulation(monitored(); h = 1//10)
         init!(unbound)
         run!(unbound)
-        @test termination(unbound).source === ModelRequestedStop("stop", :flag, "ramp at level")
+        @test termination(unbound).source === ModelRequestedStop("stop", BARE, "ramp at level")
         lifted = Simulation(monitored(); h = 1//10)
         init!(lifted)
         run!(lifted; t_end = 0.2)
@@ -344,7 +344,7 @@ function test_lifecycle()
         run!(sim; t_end = 5.0)
         record = termination(sim)
         # kind + payload, one typed value (D-203)
-        @test record.source === ModelRequestedStop("stop", :flag, "ramp at level")
+        @test record.source === ModelRequestedStop("stop", BARE, "ramp at level")
         @test record.t == 4 * sim.model.deployment.h                # the sweep at boundary 4 saw 0.4 ≥ 0.35
         @test sim.run.frame == 4                       # the run ended there, not at t_end
         # that snapshot is the final one
@@ -357,7 +357,7 @@ function test_lifecycle()
         #                                                boundary zero derives the firing (§10.6)
         run!(sim; t_end = 5.0)
         record = termination(sim)
-        @test record.source === ModelRequestedStop("stop", :flag, "input at level") && record.t == 0.0
+        @test record.source === ModelRequestedStop("stop", BARE, "input at level") && record.t == 0.0
         @test sim.run.frame == 0             # zero frames: the check precedes the first step
     end
 
@@ -366,7 +366,7 @@ function test_lifecycle()
         init!(sim)
         run!(sim; t_end = 5.0)
         record = termination(sim)
-        @test record.source === ModelRequestedStop("stop", :flag, "overload tripped")
+        @test record.source === ModelRequestedStop("stop", BARE, "overload tripped")
         @test record.t ≈ 0.315 atol = 1e-6                    # the analytic crossing, not a frame top
         @test record.t == sim.model.exec.clock.t                         # the frame's remainder was abandoned
         @test latest(sim).t === record.t
@@ -388,14 +388,14 @@ function test_lifecycle()
         sim = Simulation(two_ramps(0.15, 0.35); h = 1//10)
         init!(sim)
         run!(sim; t_end = 1.0)
-        @test termination(sim).source === ModelRequestedStop("a/stop", :flag, "a at level")
+        @test termination(sim).source === ModelRequestedStop("a/stop", BARE, "a at level")
         @test sim.run.frame == 2
         init!(sim)
         run!(sim; t_end = 1.0, ignore_stop_requests = ("a/stop",))
-        @test termination(sim).source === ModelRequestedStop("b/stop", :flag, "b at level")
+        @test termination(sim).source === ModelRequestedStop("b/stop", BARE, "b at level")
         @test sim.run.frame == 4
         # the ignored request is still a cell in the snapshot
-        @test port(latest(sim), "a/stop", :flag) === STOP_REQUESTED
+        @test port(latest(sim), "a/stop") === STOP_REQUESTED
         init!(sim)
         run!(sim; t_end = 1.0, ignore_stop_requests = ("b/stop", "a/stop"))
         @test termination(sim).source === EndTimeReached() && termination(sim).t == 1.0
@@ -410,15 +410,15 @@ function test_lifecycle()
         sim = Simulation(two_ramps(0.35, 0.35); h = 1//10)
         init!(sim)
         run!(sim; t_end = 1.0)
-        @test termination(sim).source === ModelRequestedStop("a/stop", :flag, "a at level")
+        @test termination(sim).source === ModelRequestedStop("a/stop", BARE, "a at level")
         @test sim.run.frame == 4
-        @test port(latest(sim), "b/stop", :flag) === STOP_REQUESTED     # both hold there
+        @test port(latest(sim), "b/stop") === STOP_REQUESTED     # both hold there
         # The declaration order swapped, the roster and the record follow it.
         swapped = Simulation(two_ramps_swapped(0.35, 0.35); h = 1//10)
         init!(swapped)
         run!(swapped; t_end = 1.0)
         @test [r.path for r in swapped.model.exec.act.layout.requesters] == ["b/stop", "a/stop"]
-        @test termination(swapped).source === ModelRequestedStop("b/stop", :flag, "b at level")
+        @test termination(swapped).source === ModelRequestedStop("b/stop", BARE, "b at level")
         @test swapped.run.frame == 4
     end
 
@@ -451,14 +451,14 @@ function test_lifecycle()
         first_alarm = findfirst(snapshot -> port(snapshot, "counter", :alarm), snapshots)
         tick = snapshots[first_alarm]
         @test tick.frame == 9
-        @test port(tick, "stop", :flag) === STOP_REQUESTED
-        @test port(snapshots[first_alarm - 1], "stop", :flag) === NO_STOP
+        @test port(tick, "stop") === STOP_REQUESTED
+        @test port(snapshots[first_alarm - 1], "stop") === NO_STOP
         # Honoured, the run ends at that boundary, not one later.
         sim = Simulation(tick_alarmed(); h = 1//10)
         init!(sim)
         run!(sim; t_end = 5.0)
         record = termination(sim)
-        @test record.source === ModelRequestedStop("stop", :flag, "three ticks counted")
+        @test record.source === ModelRequestedStop("stop", BARE, "three ticks counted")
         @test record.t === tick.t && sim.run.frame == 9
     end
 
@@ -608,7 +608,7 @@ function test_lifecycle()
         # the request holds at boundary 4
         @test step!(sim; frames = 10, t_end = 5.0) == 2
         @test lifecycle(sim) === :stopped
-        @test termination(sim).source === ModelRequestedStop("stop", :flag, "ramp at level")
+        @test termination(sim).source === ModelRequestedStop("stop", BARE, "ramp at level")
     end
 
     @testset "§13.6: a loop-side throw discards the failed boundary and promotes the last one" begin

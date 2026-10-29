@@ -83,8 +83,10 @@ Status is one of *shipped*, *candidate* (listed, built when wanted), or
 proves standard). A block is generic over its port type `V`, in the
 [D-263][d-263] spelling, unless its ports are fixed by what it is: the `Bool`
 gates and the linear blocks, whose ports follow their matrix shapes. The
-port names are `in`, `in1…inN` and `out`, and `out1…outN` where a block
-splits one port into `N` ports alike.
+one input or one output a block has is a bare contract, one port with no
+name that a wire addresses by the block's path alone ([D-436][d-436]); a side
+with several ports names them `in1…inN`, and `out1…outN` where a block splits
+one port into `N` ports alike. The bundle reads a bare side as `u` or `y`.
 
 A block with a defaulted parameter, or with more than one, gets a
 hand-written keyword constructor, as in `Integrator(; x0 = 0.0)` and
@@ -155,8 +157,8 @@ from pinned data alone need no parameter.
 | Block | Status | Mechanism |
 |---|---|---|
 | `UnitDelay{V}` | shipped | the tier's native `z⁻¹` ([§10.6][s10-6]) |
-| `DiscreteIntegrator{V}` | shipped | tier semantics; forward Euler, `out` the state from `s0`, so it breaks a loop as `UnitDelay` does; no gain and no limits, as `Integrator` has none |
-| `RateLimiter{V}` | shipped | tier semantics; feedthrough, `out` following `in` within `rising Δt` up and `falling Δt` down per tick from `s0`; its `s_update` stores `y.out` |
+| `DiscreteIntegrator{V}` | shipped | tier semantics; forward Euler, its bare output the state from `s0`, so it breaks a loop as `UnitDelay` does; no gain and no limits, as `Integrator` has none |
+| `RateLimiter{V}` | shipped | tier semantics; feedthrough, its bare output following its bare input within `rising Δt` up and `falling Δt` down per tick from `s0`; its `s_update` stores `y` |
 | `DiscreteStateSpace` and `DiscreteTransferFunction`, the pair in `z` | shipped | the continuous pair mirrored over `DiscreteLinearBlock{FT}`, `s_update` for `x_deriv`; the period is the scope's and the block cannot check it; `linear_blocks.md`, section 9 |
 | `DiscretizedStateSpace` and `DiscretizedTransferFunction`, from a continuous system | shipped | the zero-order hold taken per tick at the bundle's `Δt`, so the class and the initial condition are the continuous ones; `linear_blocks.md`, section 9 |
 | `DiscreteLimitedIntegrator{V}` | shipped | tier semantics by contrast: the continuous block's mode and four events are one `clamp` in `s_update`, with no mode store and no localization; `LimitedIntegrator`'s interface, `lower`, `upper`, `s0` and the `Int8` `saturation` code, the code read off the state from stage 1 |
@@ -217,6 +219,7 @@ qualifies the two they share, `StateSpace` and `TransferFunction`.
 [d-313]: ../decisions.md#d-313--admit-a-library-block-by-judgement-against-three-guidelines
 [d-316]: ../decisions.md#d-316--stop-requests-are-structural-a-stopflag-port-ends-the-run-unless-the-advance-ignores-it
 [d-384]: ../decisions.md#d-384--publish-the-discrete-controllers-saturation-code-as-saturated
+[d-436]: ../decisions.md#d-436--admit-a-bare-contract-a-port-with-no-face-addressed-by-the-component-path
 [s10-5]: ../spec.md#105-multi-rate-tick-scheduling
 [s10-6]: ../spec.md#106-event-iteration-at-boundaries-to-quiescence-budgeted
 [s13-5]: ../spec.md#135-termination-is-a-state-not-an-exception

@@ -21,9 +21,10 @@ import ForwardDiff
 A continuous [primitive](@ref g-primitive) that publishes a fold of its `N`
 inputs as its one output.
 
-The inputs `in1` to `inN` are typed `In`, and the output `out` is typed `Out`,
-with `out = f(in1, …, inN)`, the fold applied in positional order. The
-[block](@ref g-block) is stateless. The fold `f` is instance data, and the type
+The inputs `in1` to `inN` are typed `In`, and the one output, bare, is typed
+`Out`, with `y = f(in1, …, inN)`, the fold applied in positional order. A wire
+names the output by the block's path alone. The [block](@ref g-block) is
+stateless. The fold `f` is instance data, and the type
 parameter `F` is inferred from it. A custom fold, such as a weighted blend or a
 mass-properties composition, is written at the site.
 
@@ -49,7 +50,7 @@ A continuous [primitive](@ref g-primitive) that publishes the sum of its `N`
 inputs.
 
 It is the [`Junction`](@ref) at `+`, with the inputs `in1` to `inN` and the
-output `out` all typed `V`.
+bare output all typed `V`.
 """
 const SumJunction{V, N} = Junction{V, V, N, typeof(+)}
 
@@ -61,7 +62,7 @@ A continuous [primitive](@ref g-primitive) that publishes the logical or of its
 `N` `Bool` inputs.
 
 It is the [`Junction`](@ref) at `|`, with the inputs `in1` to `inN` and the
-output `out` all `Bool`. It gives one consolidated `Bool` to a consumer that
+bare output all `Bool`. It gives one consolidated `Bool` to a consumer that
 wants one.
 
 See also [`And`](@ref).
@@ -76,7 +77,7 @@ A continuous [primitive](@ref g-primitive) that publishes the logical and of its
 `N` `Bool` inputs.
 
 It is the [`Junction`](@ref) at `&`, with the inputs `in1` to `inN` and the
-output `out` all `Bool`.
+bare output all `Bool`.
 
 See also [`Or`](@ref).
 """
@@ -95,7 +96,7 @@ A continuous [primitive](@ref g-primitive) that publishes its `N` inputs packed
 into one static vector.
 
 It is the [`Junction`](@ref) at the fold `pack`, with the inputs `in1` to `inN`
-typed `V` and the output `out` an `SVector{N, V}`.
+typed `V` and the bare output an `SVector{N, V}`.
 
 See also [`Unpack`](@ref).
 """
@@ -109,8 +110,8 @@ const Pack{V, N} = Junction{V, SVector{N, V}, N, typeof(pack)}
 x_init(::Junction) = nothing
 u_types(::Junction{In, Out, N}) where {In, Out, N} =
     NamedTuple{ntuple(i -> Symbol(:in, i), N)}(ntuple(_ -> In, N))
-y_types(::Junction{In, Out}) where {In, Out} = (out = Out,)
-y_direct(j::Junction, (; u)) = (out = j.f(u...),)
+y_types(::Junction{In, Out}) where {In, Out} = Out
+y_direct(j::Junction, (; u)) = j.f(u...)
 
 # --- the structure blocks (§13.7, D-313) ----------------------------------------
 
@@ -125,15 +126,16 @@ y_direct(j::Junction, (; u)) = (out = j.f(u...),)
 A continuous [primitive](@ref g-primitive) that publishes the `N` elements of
 its static-vector input as `N` outputs.
 
-The one input `in` is an `SVector{N, V}`, and the outputs `out1` to `outN` are
-typed `V`, with `outi = in[i]`. The [block](@ref g-block) is stateless, and the
-inverse of [`Pack`](@ref).
+The one input, bare, is an `SVector{N, V}`, and the outputs `out1` to `outN`
+are typed `V`, with `outi = u[i]`. A wire names the input by the block's path
+alone. The [block](@ref g-block) is stateless, and the inverse of
+[`Pack`](@ref).
 """
 struct Unpack{V, N} <: AbstractComponent end
 x_init(::Unpack) = nothing
-u_types(::Unpack{V, N}) where {V, N} = (in = SVector{N, V},)
+u_types(::Unpack{V, N}) where {V, N} = SVector{N, V}
 y_types(::Unpack{V, N}) where {V, N} = NamedTuple{unpack_names(Val(N))}(ntuple(_ -> V, N))
-y_direct(::Unpack{V, N}, (; u)) where {V, N} = NamedTuple{unpack_names(Val(N))}(Tuple(u.in))
+y_direct(::Unpack{V, N}, (; u)) where {V, N} = NamedTuple{unpack_names(Val(N))}(Tuple(u))
 
 # Design: §2.3, §5.3, D-179.
 """
@@ -143,13 +145,14 @@ A continuous [primitive](@ref g-primitive) that publishes one of its two inputs,
 picked by a `Bool` input.
 
 The inputs `in1` and `in2` are typed `V` and `select` is a `Bool`. The one
-output `out`, typed `V`, is `in1` while `select` holds and `in2` otherwise. The
-[block](@ref g-block) is stateless. `out` reads all three inputs, so a selector
-wired from a memoryless function of `out` closes an
+output, bare and typed `V`, is `in1` while `select` holds and `in2` otherwise.
+The [block](@ref g-block) is stateless. The output reads all three inputs, so a
+selector wired from a memoryless function of it closes an
 [algebraic loop](@ref g-algebraic-loop), which the build refuses as
 `AlgebraicCycle`.
 
-The block declares no event, so the jump in `out` lands where `select` flips. A
+The block declares no event, so the jump in the output lands where `select`
+flips. A
 `select` published from a mode, or held between [ticks](@ref g-tick), flips on a
 [boundary](@ref g-boundary) and the jump is clean. One computed from a
 continuous quantity inside a stage body flips inside a step and smears that
@@ -159,8 +162,8 @@ step. That is a mode made silently, which the moded blocks such as
 struct Switch{V} <: AbstractComponent end
 x_init(::Switch) = nothing
 u_types(::Switch{V}) where {V} = (in1 = V, in2 = V, select = Bool)
-y_types(::Switch{V}) where {V} = (out = V,)
-y_direct(::Switch, (; u)) = (out = ifelse(u.select, u.in1, u.in2),)
+y_types(::Switch{V}) where {V} = V
+y_direct(::Switch, (; u)) = ifelse(u.select, u.in1, u.in2)
 
 # --- the leaf blocks (§13.7, D-312) ---------------------------------------------
 
@@ -171,10 +174,10 @@ y_direct(::Switch, (; u)) = (out = ifelse(u.select, u.in1, u.in2),)
 A continuous [primitive](@ref g-primitive) that publishes a fixed value, with no
 inputs and no state.
 
-The output `out` publishes `value` from [stage 1](@ref g-stage-function). The
-[block](@ref g-block) is stateless, so discrete consumers read it as well.
+Its one output, bare, publishes `value` from [stage 1](@ref g-stage-function).
+The [block](@ref g-block) is stateless, so discrete consumers read it as well.
 
-`out` is [pinned](@ref g-walked) at `V`, the type of `value`. A constant is
+The output is [pinned](@ref g-walked) at `V`, the type of `value`. A constant is
 never seeded, so it carries zero partials under every `Dual`
 [activation](@ref g-activation). A consumer input declared plain `Float64`,
 which admits a value with or without partials, accepts it as a value that never
@@ -187,8 +190,8 @@ struct Constant{V} <: AbstractComponent
     value::V
 end
 x_init(::Constant) = nothing
-y_types(::Constant{V}) where {V} = (out = Pinned{V},)
-y_state(c::Constant, _) = (out = c.value,)
+y_types(::Constant{V}) where {V} = Pinned{V}
+y_state(c::Constant, _) = c.value
 
 # Design: §5.5, §10.6, D-231.
 """
@@ -198,10 +201,11 @@ A discrete [primitive](@ref g-primitive) that publishes its input from the
 previous [tick](@ref g-tick).
 
 The [block](@ref g-block) is a discrete primitive, the native `z⁻¹` of the
-discrete [tier](@ref g-tier). `out` publishes the stored value `s` from
-[stage 1](@ref g-stage-function), and `s0` at the first publication. Each tick
-stores `in` for the next one. The [store](@ref g-store) is isbits, which bounds
-`V`.
+discrete [tier](@ref g-tier). Its input `u` and its output `y` are bare, so a
+wire names each by the block's path alone. The output publishes the stored value
+`s` from [stage 1](@ref g-stage-function), `y = s`, and `s0` at the first
+publication. Each tick stores the input for the next one, `s⁺ = u`. The
+[store](@ref g-store) is isbits, which bounds `V`.
 
 It breaks an [algebraic loop](@ref g-algebraic-loop), and that is a modelling
 decision. Placed in a continuous loop, it moves the signal onto the discrete
@@ -213,10 +217,10 @@ struct UnitDelay{V} <: AbstractComponent
     s0::V
 end
 s_init(delay::UnitDelay) = delay.s0
-u_types(::UnitDelay{V}) where {V} = (in = V,)
-y_types(::UnitDelay{V}) where {V} = (out = V,)
-y_state(::UnitDelay, (; s)) = (out = s,)
-s_update(::UnitDelay, (; u)) = u.in
+u_types(::UnitDelay{V}) where {V} = V
+y_types(::UnitDelay{V}) where {V} = V
+y_state(::UnitDelay, (; s)) = s
+s_update(::UnitDelay, (; u)) = u
 
 # Design: §13.7.
 """
@@ -225,8 +229,9 @@ s_update(::UnitDelay, (; u)) = u.in
 A continuous [primitive](@ref g-primitive) that publishes its input with its
 partials dropped, so no derivative passes through it.
 
-The [block](@ref g-block) is the declared stop-gradient. `out` is `in` with its
-partials dropped, [pinned](@ref g-walked) at `V`. A producer that walks may
+The [block](@ref g-block) is the declared stop-gradient. Its input `u` and its
+output `y` are bare, and `y` is `u` with its partials dropped,
+[pinned](@ref g-walked) at `V`. A producer that walks may
 therefore feed a [`Pinned`](@ref) input [entry](@ref g-entry) through it. At
 [nominal](@ref g-nominal) it is the identity. Every Jacobian along the path then
 reads a zero coupling, which is the modelling decision the block states.
@@ -236,9 +241,9 @@ reads a zero coupling, which is the modelling decision the block states.
 """
 struct Freeze{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: AbstractComponent end
 x_init(::Freeze) = nothing
-u_types(::Freeze{V}) where {V} = (in = V,)
-y_types(::Freeze{V}) where {V} = (out = Pinned{V},)
-y_direct(::Freeze, (; u)) = (out = ForwardDiff.value.(u.in),)
+u_types(::Freeze{V}) where {V} = V
+y_types(::Freeze{V}) where {V} = Pinned{V}
+y_direct(::Freeze, (; u)) = ForwardDiff.value.(u)
 
 # --- the stop request (§13.5, §13.7, D-316) -------------------------------------
 
@@ -249,8 +254,9 @@ y_direct(::Freeze, (; u)) = (out = ForwardDiff.value.(u.in),)
 A continuous [primitive](@ref g-primitive) that publishes a
 [stop request](@ref g-stop-request) while its `Bool` input holds.
 
-The output `flag`, a [`StopFlag`](@ref), publishes `STOP_REQUESTED` while the
-input `request` holds and `NO_STOP` otherwise. The [block](@ref g-block) is
+Its one output, a bare [`StopFlag`](@ref), publishes `STOP_REQUESTED` while its
+one input, a bare `Bool`, holds and `NO_STOP` otherwise. A wire names either by
+the block's path alone. The [block](@ref g-block) is
 stateless, so it refreshes at every [boundary](@ref g-boundary) and sits
 anywhere in the tree. It holds no privilege: the request is the
 [port](@ref g-port)'s type, and any component may publish one.
@@ -265,9 +271,9 @@ struct StopRequest <: AbstractComponent
 end
 StopRequest(; reason = "") = StopRequest(reason)
 x_init(::StopRequest) = nothing
-u_types(::StopRequest) = (request = Bool,)
-y_types(::StopRequest) = (flag = StopFlag,)
-y_direct(::StopRequest, (; u)) = (flag = u.request ? STOP_REQUESTED : NO_STOP,)
+u_types(::StopRequest) = Bool
+y_types(::StopRequest) = StopFlag
+y_direct(::StopRequest, (; u)) = u ? STOP_REQUESTED : NO_STOP
 stop_reason(c::StopRequest) = c.reason
 
 # --- the discrete tier (§7.3, §10.5, D-313) -------------------------------------
@@ -280,11 +286,12 @@ A discrete [primitive](@ref g-primitive) that publishes its input from `K`
 [ticks](@ref g-tick) before.
 
 The [block](@ref g-block) is the delay line, the `z⁻ᴷ` of the discrete
-[tier](@ref g-tier). `out` publishes `in` from `K` ticks ago, and `v0` at the
-first `K` publications. It publishes from [stage 1](@ref g-stage-function). The
-[store](@ref g-store) is a ring of `K` values and a cursor. The slot under the
-cursor holds the value from `K` ticks ago, and each tick overwrites it with `in`
-and advances, with no shift of the other slots.
+[tier](@ref g-tier). Its input `u` and its output `y` are bare. The output
+publishes the input from `K` ticks ago, and `v0` at the first `K` publications.
+It publishes from [stage 1](@ref g-stage-function). The [store](@ref g-store) is
+a ring of `K` values and a cursor. The slot under the cursor holds the value
+from `K` ticks ago, and each tick overwrites it with `u` and advances, with no
+shift of the other slots.
 
 It breaks an [algebraic loop](@ref g-algebraic-loop) as [`UnitDelay`](@ref)
 does, and that is a modelling decision. Placed in a continuous loop, it moves
@@ -310,11 +317,11 @@ function Delay(; K::Int, v0 = 0.0)
     Delay{typeof(v0), K}(v0)
 end
 s_init(c::Delay{V, K}) where {V, K} = (ring = SVector{K, V}(ntuple(_ -> c.v0, K)), cursor = 1)
-u_types(::Delay{V}) where {V} = (in = V,)
-y_types(::Delay{V}) where {V} = (out = V,)
-y_state(::Delay, (; s)) = (out = s.ring[s.cursor],)
+u_types(::Delay{V}) where {V} = V
+y_types(::Delay{V}) where {V} = V
+y_state(::Delay, (; s)) = s.ring[s.cursor]
 s_update(::Delay{V, K}, (; s, u)) where {V, K} =
-    (ring = Base.setindex(s.ring, u.in, s.cursor), cursor = s.cursor == K ? 1 : s.cursor + 1)
+    (ring = Base.setindex(s.ring, u, s.cursor), cursor = s.cursor == K ? 1 : s.cursor + 1)
 
 # Design: §5.5, §9.4, §10.5, D-263.
 """
@@ -325,8 +332,9 @@ integral of its input.
 
 The [block](@ref g-block) holds one bare [store](@ref g-store) value from `s0`, `s`
 below, addressed by the path alone.
-Each [tick](@ref g-tick) advances it by forward Euler, `s⁺ = s + Δt in`. `out`
-publishes `s` from [stage 1](@ref g-stage-function). The block therefore breaks
+Its input `u` and its output `y` are bare. Each [tick](@ref g-tick) advances
+the store by forward Euler, `s⁺ = s + Δt u`, and the output publishes `y = s`
+from [stage 1](@ref g-stage-function). The block therefore breaks
 an [algebraic loop](@ref g-algebraic-loop) as [`UnitDelay`](@ref) does. `Δt` is
 the component's own period, so the integral is per second at any rate.
 
@@ -346,10 +354,10 @@ struct DiscreteIntegrator{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: Abs
 end
 DiscreteIntegrator(; s0 = 0.0) = DiscreteIntegrator(float(s0))
 s_init(c::DiscreteIntegrator) = c.s0
-u_types(::DiscreteIntegrator{V}) where {V} = (in = V,)
-y_types(::DiscreteIntegrator{V}) where {V} = (out = V,)
-y_state(::DiscreteIntegrator, (; s)) = (out = s,)
-s_update(::DiscreteIntegrator, (; s, u, Δt)) = s + Δt * u.in
+u_types(::DiscreteIntegrator{V}) where {V} = V
+y_types(::DiscreteIntegrator{V}) where {V} = V
+y_state(::DiscreteIntegrator, (; s)) = s
+s_update(::DiscreteIntegrator, (; s, u, Δt)) = s + Δt * u
 
 """
     DiscreteLimitedIntegrator(; lower, upper, s0 = zero(lower)) -> DiscreteLimitedIntegrator
@@ -357,8 +365,9 @@ s_update(::DiscreteIntegrator, (; s, u, Δt)) = s + Δt * u.in
 A discrete [primitive](@ref g-primitive) that publishes the forward-Euler
 integral of its input, held between two limits.
 
-Each [tick](@ref g-tick) advances the one bare [store](@ref g-store) value, `s` below, from
-`s0` as `s⁺ = clamp(s + Δt in, lower, upper)`. `out` publishes `s` from
+Its input `u` is bare. Each [tick](@ref g-tick) advances the one bare
+[store](@ref g-store) value, `s` below, from `s0` as
+`s⁺ = clamp(s + Δt u, lower, upper)`. The output `out` publishes `s` from
 [stage 1](@ref g-stage-function). The mode and four events of the continuous
 [`LimitedIntegrator`](@ref) are this one `clamp`, with no mode store and no
 localization.
@@ -392,11 +401,11 @@ function DiscreteLimitedIntegrator(; lower, upper, s0 = zero(lower))
 end
 saturation_code(q, lower, upper) = q >= upper ? Int8(1) : q <= lower ? Int8(-1) : Int8(0)
 s_init(c::DiscreteLimitedIntegrator) = c.s0
-u_types(::DiscreteLimitedIntegrator{V}) where {V} = (in = V,)
+u_types(::DiscreteLimitedIntegrator{V}) where {V} = V
 y_types(::DiscreteLimitedIntegrator{V}) where {V} = (out = V, saturation = saturation_type(V))
 y_state(c::DiscreteLimitedIntegrator, (; s)) =
     (out = s, saturation = saturation_code.(s, c.lower, c.upper))
-s_update(c::DiscreteLimitedIntegrator, (; s, u, Δt)) = clamp.(s + Δt * u.in, c.lower, c.upper)
+s_update(c::DiscreteLimitedIntegrator, (; s, u, Δt)) = clamp.(s + Δt * u, c.lower, c.upper)
 
 # Design: §5.3, §5.5, §10.5.
 """
@@ -405,13 +414,14 @@ s_update(c::DiscreteLimitedIntegrator, (; s, u, Δt)) = clamp.(s + Δt * u.in, c
 A discrete [primitive](@ref g-primitive) that publishes its input with its rate
 of change bounded per [tick](@ref g-tick).
 
-`out` follows `in`, moving at most `rising Δt` up and `falling Δt` down per
-tick. `Δt` is the component's own period. One bare [store](@ref g-store) value, `s` below,
-holds the previous output, and each tick stores `out`:
+Its input `u` and its output `y` are bare. The output follows the input, moving
+at most `rising Δt` up and `falling Δt` down per tick. `Δt` is the component's
+own period. One bare [store](@ref g-store) value, `s` below, holds the previous
+output, and each tick stores `y`:
 
-    out = s + clamp(in - s, -falling Δt, rising Δt)
+    y = s + clamp(u - s, -falling Δt, rising Δt)
 
-`out` reads `in`, so the [block](@ref g-block) has
+`y` reads `u`, so the [block](@ref g-block) has
 [feedthrough](@ref g-feedthrough). A loop closed on it through a memoryless path
 is refused as `AlgebraicCycle`. A form publishing the stored value from
 [stage 1](@ref g-stage-function) would break that loop, but it lags its input by
@@ -438,10 +448,10 @@ function RateLimiter(; rising, falling = rising, s0 = 0.0)
     RateLimiter{typeof(s0)}(rising, falling, s0)
 end
 s_init(c::RateLimiter) = c.s0
-u_types(::RateLimiter{V}) where {V} = (in = V,)
-y_types(::RateLimiter{V}) where {V} = (out = V,)
-y_direct(c::RateLimiter, (; s, u, Δt)) = (out = s + clamp.(u.in - s, -c.falling * Δt, c.rising * Δt),)
-s_update(::RateLimiter, (; y)) = y.out
+u_types(::RateLimiter{V}) where {V} = V
+y_types(::RateLimiter{V}) where {V} = V
+y_direct(c::RateLimiter, (; s, u, Δt)) = s + clamp.(u - s, -c.falling * Δt, c.rising * Δt)
+s_update(::RateLimiter, (; y)) = y
 
 # --- the noise source (§7.3, §2.5, D-231, D-313) --------------------------------
 
@@ -453,8 +463,8 @@ A discrete [primitive](@ref g-primitive) that publishes a seeded Gaussian white
 noise sample at each [tick](@ref g-tick).
 
 The [block](@ref g-block) is a discrete Gaussian white noise process. At each
-tick, `out` publishes an independent sample of mean `μ` and standard deviation
-`σ`. It publishes from [stage 1](@ref g-stage-function). The sample is a pure
+tick, its one output, bare, publishes an independent sample of mean `μ` and
+standard deviation `σ`. It publishes from [stage 1](@ref g-stage-function). The sample is a pure
 function of `seed` and the tick count, the one bare [store](@ref g-store) value, `k` below.
 The stage therefore draws, no generator or [workspace](@ref g-workspace) is
 needed, and [replay](@ref g-replay) reproduces the stream. After a tick the
@@ -513,10 +523,10 @@ gaussian(seed, k, ::Type{SVector{N, Float64}}) where {N} =
     SVector(ntuple(i -> gaussian(seed, k * N + i - 1), Val(N)))
 
 s_init(::GaussianWhiteNoise) = UInt64(0)
-y_types(::GaussianWhiteNoise{V}) where {V} = (out = V,)
+y_types(::GaussianWhiteNoise{V}) where {V} = V
 function y_state(c::GaussianWhiteNoise{V}, (; s, Δt)) where {V}
     scale = c.density ? c.σ ./ sqrt(Δt) : c.σ
-    (out = c.μ .+ scale .* gaussian(c.seed, s, V),)
+    c.μ .+ scale .* gaussian(c.seed, s, V)
 end
 s_update(::GaussianWhiteNoise, (; s)) = s + 1
 
@@ -530,15 +540,16 @@ s_update(::GaussianWhiteNoise, (; s)) = s + 1
 A continuous [primitive](@ref g-primitive) that publishes a function of time,
 with no inputs and no state.
 
-The output `out` publishes `f(t)` from [stage 1](@ref g-stage-function).
+Its one output, bare, publishes `f(t)` from [stage 1](@ref g-stage-function).
 `Source(f)` is `Source{Float64}(f)`. `f` receives the plain `Float64` time under
 every [activation](@ref g-activation), so it need not be generic, and it returns
 a `V`. Nothing converts, so a value of another type is refused at build as
 `ConformanceFailure`.
 
-`out` is [pinned](@ref g-walked) at `V`. The time is stripped of its partials
-before `f` sees it, so `out` depends on neither state nor an input that follows
-the scalar, and carries zero partials under every activation. A source set from
+The output is [pinned](@ref g-walked) at `V`. The time is stripped of its
+partials before `f` sees it, so the output depends on neither state nor an
+input that follows the scalar, and carries zero partials under every
+activation. A source set from
 outside is a [root input](@ref g-root-input).
 
 See also [`Constant`](@ref), [`Step`](@ref).
@@ -549,8 +560,8 @@ end
 (::Type{Source{V}})(f) where {V} = Source{V, typeof(f)}(f)
 Source(f) = Source{Float64}(f)
 x_init(::Source) = nothing
-y_types(::Source{V}) where {V} = (out = Pinned{V},)
-y_state(c::Source, (; t)) = (out = c.f(ForwardDiff.value(t)),)
+y_types(::Source{V}) where {V} = Pinned{V}
+y_state(c::Source, (; t)) = c.f(ForwardDiff.value(t))
 
 # --- the continuous dynamics (§13.7, D-313) -------------------------------------
 
@@ -561,8 +572,10 @@ y_state(c::Source, (; t)) = (out = c.f(ForwardDiff.value(t)),)
 A continuous [primitive](@ref g-primitive) that publishes the time integral of
 its input.
 
-The [block](@ref g-block) holds one continuous state `x`, starting at `x0`, with
-`ẋ = in`. `out` publishes `x` from [stage 1](@ref g-stage-function). The block
+The [block](@ref g-block) holds one continuous state `x`, starting at `x0`. Its
+input `u` and its output `y` are bare, so a wire names each by the block's path
+alone, with `ẋ = u` and `y = x`, published from
+[stage 1](@ref g-stage-function). The block
 therefore has no [feedthrough](@ref g-feedthrough). A `Float64` state follows
 the scalar of a `Dual` [activation](@ref g-activation), so the block linearizes
 as it integrates.
@@ -579,10 +592,10 @@ struct Integrator{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: AbstractCom
 end
 Integrator(; x0 = 0.0) = Integrator(float(x0))
 x_init(c::Integrator) = c.x0
-u_types(::Integrator{V}) where {V} = (in = V,)
-y_types(::Integrator{V}) where {V} = (out = V,)
-y_state(::Integrator, (; x)) = (out = x,)
-x_deriv(::Integrator, (; u)) = u.in
+u_types(::Integrator{V}) where {V} = V
+y_types(::Integrator{V}) where {V} = V
+y_state(::Integrator, (; x)) = x
+x_deriv(::Integrator, (; u)) = u
 
 # Design: §7.2, D-313, commit `9c75324`.
 # The sentence on the scalar case is the user's ruling of 2026-10-27, which
@@ -593,9 +606,9 @@ x_deriv(::Integrator, (; u)) = u.in
 A continuous [primitive](@ref g-primitive) that publishes its input through a
 first-order lag of time constant `τ`.
 
-The [block](@ref g-block) holds one continuous state `x` from `x0`, with
-`ẋ = (in - x) / τ`, and `out` publishes `x` from
-[stage 1](@ref g-stage-function). The state follows the scalar of a `Dual`
+The [block](@ref g-block) holds one continuous state `x` from `x0`. Its input
+`u` and its output `y` are bare, with `ẋ = (u - x) / τ` and `y = x`, published
+from [stage 1](@ref g-stage-function). The state follows the scalar of a `Dual`
 [activation](@ref g-activation), so the lag linearizes to `A = -1/τ` and
 `B = 1/τ`. A hand-written lag whose [scratch](@ref g-scratch) is kept at
 `Float64` fails there instead.
@@ -621,10 +634,10 @@ function FirstOrderLag(; τ, x0 = 0.0)
     FirstOrderLag{typeof(x0)}(x0, τ)
 end
 x_init(c::FirstOrderLag) = c.x0
-u_types(::FirstOrderLag{V}) where {V} = (in = V,)
-y_types(::FirstOrderLag{V}) where {V} = (out = V,)
-y_state(::FirstOrderLag, (; x)) = (out = x,)
-x_deriv(c::FirstOrderLag, (; x, u)) = (u.in - x) / c.τ
+u_types(::FirstOrderLag{V}) where {V} = V
+y_types(::FirstOrderLag{V}) where {V} = V
+y_state(::FirstOrderLag, (; x)) = x
+x_deriv(c::FirstOrderLag, (; x, u)) = (u - x) / c.τ
 
 # --- the linear blocks (§13.7, §5.3, D-313) -------------------------------------
 
@@ -638,10 +651,11 @@ carries their stages and their feedthrough class.
 
 `FT` is the feedthrough class, whether the block has
 [feedthrough](@ref g-feedthrough). It is `false` when the direct term is zero
-and `out` comes from [stage 1](@ref g-stage-function). It is `true` when the
-direct term is nonzero and `out` comes from stage 2. The stages are defined once
-on the parent, over each block's state-space realization, so no linear block
-declares a stage of its own.
+and the output comes from [stage 1](@ref g-stage-function). It is `true` when
+the direct term is nonzero and the output comes from stage 2. The stages are
+defined once on the parent, over each block's state-space realization, so no
+linear block declares a stage of its own. Every linear block declares its input
+`u` and its output `y` bare.
 
 See also [`StateSpace`](@ref), [`TransferFunction`](@ref),
 [`DiscreteLinearBlock`](@ref).
@@ -657,16 +671,16 @@ as_port(v::SVector{1}) = v[1]
 as_port(v::SVector) = v
 
 x_init(c::LinearBlock) = realization(c).x0
-u_types(c::LinearBlock) = (in = port_type(size(realization(c).B, 2)),)
-y_types(c::LinearBlock) = (out = port_type(size(realization(c).C, 1)),)
+u_types(c::LinearBlock) = port_type(size(realization(c).B, 2))
+y_types(c::LinearBlock) = port_type(size(realization(c).C, 1))
 function x_deriv(c::LinearBlock, (; x, u))
     (; A, B) = realization(c)
-    A * x + B * as_vector(u.in)
+    A * x + B * as_vector(u)
 end
-y_state(c::LinearBlock{false}, (; x)) = (out = as_port(realization(c).C * x),)
+y_state(c::LinearBlock{false}, (; x)) = as_port(realization(c).C * x)
 function y_direct(c::LinearBlock{true}, (; x, u))
     (; C, D) = realization(c)
-    (out = as_port(C * x + D * as_vector(u.in)),)
+    as_port(C * x + D * as_vector(u))
 end
 
 # Design: §5.3, §5.5, §7.2.
@@ -682,16 +696,17 @@ end
 A continuous [primitive](@ref g-primitive) that runs a linear system given in
 state-space form.
 
-The [block](@ref g-block) holds one continuous state `x` from `x0`:
+The [block](@ref g-block) holds one continuous state `x` from `x0`, and its
+input `u` and its output `y` are bare:
 
-    ẋ   = A x + B in
-    out = C x + D in
+    ẋ = A x + B u
+    y = C x + D u
 
-The state is an `SVector` at every size. `in` is a `Float64` when `n_u` is one
-and an `SVector{n_u, Float64}` otherwise, and `out` likewise by `n_y`.
+The state is an `SVector` at every size. `u` is a `Float64` when `n_u` is one
+and an `SVector{n_u, Float64}` otherwise, and `y` likewise by `n_y`.
 
 The type parameter `FT` is the feedthrough class of [`LinearBlock`](@ref), and
-`D` picks it. A zero `D` publishes `out` from [stage 1](@ref g-stage-function).
+`D` picks it. A zero `D` publishes `y` from [stage 1](@ref g-stage-function).
 The block then breaks an [algebraic loop](@ref g-algebraic-loop) as the lag
 does. A nonzero `D` publishes it from stage 2, so a loop closed on the block
 through a memoryless path is refused as `AlgebraicCycle`. The matrices are kept
@@ -783,17 +798,17 @@ The transfer function is
 
     G(s) = (num[1] sᵐ + … + num[end]) / (den[1] sⁿ + … + den[end])
 
-with `in` and `out` both `Float64`. The [block](@ref g-block) keeps the
-coefficients and holds their realization in controllable canonical form, a
-[`StateSpace`](@ref) whose stages it shares.
+from the input `u` to the output `y`, both bare and `Float64`. The
+[block](@ref g-block) keeps the coefficients and holds their realization in
+controllable canonical form, a [`StateSpace`](@ref) whose stages it shares.
 
 There is no `x0`, because a realization's state means nothing to a user who
 knows only `G(s)`. The block starts at rest, or, with `u0` given, at the steady
-state for the constant input `u0`, where `out` is `G(0) u0`.
+state for the constant input `u0`, where `y` is `G(0) u0`.
 
 The type parameter `FT` is the feedthrough class of [`LinearBlock`](@ref), and
 the degrees pick it. A numerator of lower degree than the denominator publishes
-`out` from [stage 1](@ref g-stage-function). The block then breaks an
+`y` from [stage 1](@ref g-stage-function). The block then breaks an
 [algebraic loop](@ref g-algebraic-loop). One of equal degree publishes it from
 stage 2.
 
@@ -852,11 +867,12 @@ their stages and their feedthrough class.
 The discrete linear blocks are the twins of the [`LinearBlock`](@ref) family on
 the discrete [tier](@ref g-tier). `FT` is the feedthrough class, as on
 `LinearBlock`, whether the block has [feedthrough](@ref g-feedthrough). It is
-`false` when the direct term is zero and `out` comes from
+`false` when the direct term is zero and the output comes from
 [stage 1](@ref g-stage-function). It is `true` when the direct term is nonzero
-and `out` comes from stage 2. The stages are defined once on the parent, so no
-discrete linear block declares a stage of its own. Only the state update depends
-on the period.
+and the output comes from stage 2. The stages are defined once on the parent,
+so no discrete linear block declares a stage of its own. Only the state update
+depends on the period. Every discrete linear block declares its input `u` and
+its output `y` bare.
 
 See also [`DiscreteStateSpace`](@ref), [`DiscreteTransferFunction`](@ref),
 [`DiscretizedStateSpace`](@ref), [`DiscretizedTransferFunction`](@ref).
@@ -864,16 +880,16 @@ See also [`DiscreteStateSpace`](@ref), [`DiscreteTransferFunction`](@ref),
 abstract type DiscreteLinearBlock{FT} <: AbstractComponent end
 
 s_init(c::DiscreteLinearBlock)  = initial_state(held(c))
-u_types(c::DiscreteLinearBlock) = (in = port_type(size(held(c).B, 2)),)
-y_types(c::DiscreteLinearBlock) = (out = port_type(size(held(c).C, 1)),)
+u_types(c::DiscreteLinearBlock) = port_type(size(held(c).B, 2))
+y_types(c::DiscreteLinearBlock) = port_type(size(held(c).C, 1))
 function s_update(c::DiscreteLinearBlock, (; s, u, Δt))
     (; A, B) = realization(c, Δt)
-    A * s + B * as_vector(u.in)
+    A * s + B * as_vector(u)
 end
-y_state(c::DiscreteLinearBlock{false}, (; s)) = (out = as_port(held(c).C * s),)
+y_state(c::DiscreteLinearBlock{false}, (; s)) = as_port(held(c).C * s)
 function y_direct(c::DiscreteLinearBlock{true}, (; s, u))
     (; C, D) = held(c)
-    (out = as_port(C * s + D * as_vector(u.in)),)
+    as_port(C * s + D * as_vector(u))
 end
 
 # Design: §5.3, §5.5, §9.4, §10.5, D-263.
@@ -887,15 +903,16 @@ A discrete [primitive](@ref g-primitive) that runs a linear system given in
 discrete state-space form.
 
 The [block](@ref g-block) holds one bare [store](@ref g-store) value from `s0`, `s` below,
-advanced once per [tick](@ref g-tick):
+advanced once per [tick](@ref g-tick), and its input `u` and its output `y` are
+bare:
 
-    s⁺  = A s + B in
-    out = C s + D in
+    s⁺ = A s + B u
+    y  = C s + D u
 
 The keywords, the shapes, the storage, the [ports](@ref g-port) and the refusals
 are those of [`StateSpace`](@ref), with `s0` in place of its `x0`, and so is the
 feedthrough class of
-[`DiscreteLinearBlock`](@ref). A zero `D` publishes `out` from
+[`DiscreteLinearBlock`](@ref). A zero `D` publishes `y` from
 [stage 1](@ref g-stage-function). The block then breaks an
 [algebraic loop](@ref g-algebraic-loop). A nonzero `D` publishes it from stage
 2. The discrete [tier](@ref g-tier) never follows the scalar of an
@@ -945,7 +962,7 @@ the coefficients and holds their realization in controllable canonical form, a
 feedthrough class of [`DiscreteLinearBlock`](@ref) as for `TransferFunction`.
 
 The block starts at rest, or, with `u0` given, at the steady state for the
-constant input `u0`, where `(I - A) s = B u0` and `out` is `G(1) u0`.
+constant input `u0`, where `(I - A) s = B u0` and `y` is `G(1) u0`.
 
 The keywords and the refusals are those of `TransferFunction`, save that the
 pole with no steady state is at `z = 1`. A nonzero `u0` is refused as an
@@ -1069,10 +1086,10 @@ realization(c::DiscretizedTransferFunction, Δt) = realization(c.realization, Δ
 A continuous [primitive](@ref g-primitive) that publishes one value before a
 given time and another from then on.
 
-`out` publishes `before` until `t_step` and `after` from then on. The
-[block](@ref g-block) is a mode-only primitive with no inputs. Its one bare mode, `fired`
+Its one output, bare, publishes `before` until `t_step` and `after` from then
+on. The [block](@ref g-block) is a mode-only primitive with no inputs. Its one bare mode, `fired`
 below, picks the value, and one [state event](@ref g-state-event), `fire`, sets it once
-`t` reaches `t_step`. `out` is [pinned](@ref g-walked) at `V`. The value depends
+`t` reaches `t_step`. The output is [pinned](@ref g-walked) at `V`. The value depends
 on neither state nor an input that follows the scalar, so it carries zero
 partials under every [activation](@ref g-activation), as a [`Constant`](@ref)'s
 does.
@@ -1087,7 +1104,7 @@ observed, so the jump lands on the first [boundary](@ref g-boundary) at or after
 a field because the build reads it off the guard's return type.
 
 [Boundary zero](@ref g-boundary-zero) sets every [prior](@ref g-prior) to
-not-holding. A `t_step` at or before `t₀` therefore fires there, and `out`
+not-holding. A `t_step` at or before `t₀` therefore fires there, and the output
 publishes `after` from the start.
 
 # Keywords
@@ -1110,8 +1127,8 @@ function Step(; t_step, before = 0.0, after = 1.0, localized::Bool = true)
 end
 x_init(::Step) = nothing
 m_init(::Step) = false                                           # fired
-y_types(::Step{V}) where {V} = (out = Pinned{V},)
-y_state(c::Step, (; m)) = (out = m ? c.after : c.before,)
+y_types(::Step{V}) where {V} = Pinned{V}
+y_state(c::Step, (; m)) = m ? c.after : c.before
 step_guard(c::Step{V, true}, (; t)) where {V} = t - c.t_step     # sign form: localized
 step_guard(c::Step{V, false}, (; t)) where {V} = t >= c.t_step   # Bool form: boundary-detected
 step_handler(::Step, _) = (m = true,)
@@ -1133,15 +1150,15 @@ saturation_type(::Type{V}) where {V} = channel_type(V, Int8)
 A continuous [primitive](@ref g-primitive) that publishes the time integral of
 its input, held between two limits.
 
-The [block](@ref g-block) holds one continuous state `x`, with `ẋ = in` while
-free and `ẋ = 0` while saturated, and `out` publishes `x` from
-[stage 1](@ref g-stage-function). It is not a clamp. The bare mode, `saturation`
+The [block](@ref g-block) holds one continuous state `x`. Its one input `u` is
+bare, with `ẋ = u` while free and `ẋ = 0` while saturated, and the output
+`out` publishes `x` from [stage 1](@ref g-stage-function). It is not a clamp. The bare mode, `saturation`
 below, is read by the derivative, and four [state events](@ref g-state-event) move
 it. It
 is a signed `Int8` code, the sign of the limit in force: `-1` at `lower`, `0`
 free and `+1` at `upper`. `hit_upper` and `hit_lower` fire when `x` reaches a
 limit, and their handlers write `x` to the limit exactly and saturate.
-`leave_upper` and `leave_lower` fire when `in` turns strictly back into the
+`leave_upper` and `leave_lower` fire when `u` turns strictly back into the
 range, and free it. An input of exactly zero at a limit keeps the mode
 saturated. The hit events are [localized](@ref g-localized).
 
@@ -1155,7 +1172,7 @@ event fires, and so only on a declared [boundary](@ref g-boundary).
 the step at the input's zero crossing.
 [Boundary-detected](@ref g-boundary-detected), the guards are the `Bool`
 [predicates](@ref g-predicate). The departure then fires at the end of the step
-in which `in` first pointed back into the range, so `x` is held on the limit for
+in which `u` first pointed back into the range, so `x` is held on the limit for
 the rest of that step. It carries an offset of at most `a h² / 2` from then on,
 `a` the input's slope at its zero crossing. What the cheap form buys is that a
 departure costs no root-finding and splits no step, where a localized one pays
@@ -1196,10 +1213,10 @@ function LimitedIntegrator(; lower, upper, x0 = zero(lower), localized::Bool = t
 end
 x_init(c::LimitedIntegrator) = c.x0
 m_init(c::LimitedIntegrator) = Int8.(zero(c.x0))    # the saturation: -1 lower, 0 free, +1 upper
-u_types(::LimitedIntegrator{V}) where {V} = (in = V,)
+u_types(::LimitedIntegrator{V}) where {V} = V
 y_types(::LimitedIntegrator{V}) where {V} = (out = V, saturation = saturation_type(V))
 y_state(::LimitedIntegrator, (; x, m)) = (out = x, saturation = m)
-x_deriv(::LimitedIntegrator, (; u, m)) = ifelse.(m .== 0, u.in, zero(u.in))
+x_deriv(::LimitedIntegrator, (; u, m)) = ifelse.(m .== 0, u, zero(u))
 # The hit guards are not gated by the free code on purpose. Gated, a hit guard
 # would read `0` the instant a leave handler frees the mode, present a fresh
 # edge and saturate the block again.
@@ -1207,21 +1224,21 @@ hit_upper_guard(c::LimitedIntegrator, (; x)) = x - c.upper
 hit_lower_guard(c::LimitedIntegrator, (; x)) = c.lower - x
 # The leave guards gate on strictly inward input. Gated on the mode alone, an
 # input of exactly zero reads `-0.0`, which holds, and frees the mode with `x`
-# on the limit. The gate `u.in < 0` reads a wired signal, so §10.4's argument
+# on the limit. The gate `u < 0` reads a wired signal, so §10.4's argument
 # that gates stay fixed through a localization does not cover it: σ jumps from
 # `-1` to a small positive value at the input's zero crossing. The bracket still
 # converges on that crossing, since only the sign drives it, but ITP falls back
 # to bisection's count, about 15 extra interior sweeps per leave.
 leave_upper_guard(::LimitedIntegrator{V, true}, (; m, u)) where {V} =
-    m == 1 && u.in < 0 ? -u.in : -one(u.in)
+    m == 1 && u < 0 ? -u : -one(u)
 leave_lower_guard(::LimitedIntegrator{V, true}, (; m, u)) where {V} =
-    m == -1 && u.in > 0 ? u.in : -one(u.in)
+    m == -1 && u > 0 ? u : -one(u)
 # The `Bool` forms are the same predicates, boundary-detected and strict by
 # construction.
 leave_upper_guard(::LimitedIntegrator{V, false}, (; m, u)) where {V} =
-    m == 1 && u.in < 0
+    m == 1 && u < 0
 leave_lower_guard(::LimitedIntegrator{V, false}, (; m, u)) where {V} =
-    m == -1 && u.in > 0
+    m == -1 && u > 0
 hit_upper_handler(c::LimitedIntegrator, _) = (x = c.upper, m = Int8(1))
 hit_lower_handler(c::LimitedIntegrator, _) = (x = c.lower, m = Int8(-1))
 leave_handler(::LimitedIntegrator, _) = (m = Int8(0),)
@@ -1247,13 +1264,13 @@ function state_events(::LimitedIntegrator{V, L}) where {V <: StaticArray, L}
                                      m = Base.setindex(m, Int8(-1), i)))
     end
     leave_upper = ntuple(N) do i
-        guard = L ? ((c, (; m, u)) -> m[i] == 1 && u.in[i] < 0 ? -u.in[i] : -one(u.in[i])) :
-                    ((c, (; m, u)) -> m[i] == 1 && u.in[i] < 0)
+        guard = L ? ((c, (; m, u)) -> m[i] == 1 && u[i] < 0 ? -u[i] : -one(u[i])) :
+                    ((c, (; m, u)) -> m[i] == 1 && u[i] < 0)
         StateEvent(guard, (c, (; m)) -> (m = Base.setindex(m, Int8(0), i),))
     end
     leave_lower = ntuple(N) do i
-        guard = L ? ((c, (; m, u)) -> m[i] == -1 && u.in[i] > 0 ? u.in[i] : -one(u.in[i])) :
-                    ((c, (; m, u)) -> m[i] == -1 && u.in[i] > 0)
+        guard = L ? ((c, (; m, u)) -> m[i] == -1 && u[i] > 0 ? u[i] : -one(u[i])) :
+                    ((c, (; m, u)) -> m[i] == -1 && u[i] > 0)
         StateEvent(guard, (c, (; m)) -> (m = Base.setindex(m, Int8(0), i),))
     end
     names = (ntuple(i -> Symbol(:hit_upper_, i), N)..., ntuple(i -> Symbol(:hit_lower_, i), N)...,
@@ -1268,17 +1285,17 @@ end
 A continuous [primitive](@ref g-primitive) that publishes one of two values,
 switched by its input with hysteresis.
 
-`out` publishes `off` or `on` by the bare mode, `state` below, from
-[stage 1](@ref g-stage-function). The mode is an `Int8` code, `0` off and `1`
-on. Two [state events](@ref g-state-event) move it. `switch_on` fires when `in`
-rises to `upper` while off, and `switch_off` when `in` falls to `lower` while
-on. Both [guards](@ref g-guard) are sign forms gated by the mode, so both are
+Its input `u` and its output `y` are bare. The output publishes `off` or `on`
+by the bare mode, `state` below, from [stage 1](@ref g-stage-function). The mode
+is an `Int8` code, `0` off and `1` on. Two [state events](@ref g-state-event)
+move it. `switch_on` fires when `u` rises to `upper` while off, and `switch_off`
+when `u` falls to `lower` while on. Both [guards](@ref g-guard) are sign forms gated by the mode, so both are
 [localized](@ref g-localized).
 
-`out` reads no input, so the [block](@ref g-block) has no
+`y` reads no input, so the [block](@ref g-block) has no
 [feedthrough](@ref g-feedthrough). A relay closing a feedback loop therefore
 makes no [algebraic loop](@ref g-algebraic-loop). It is the library's reference
-mode-switching primitive. `out` is [pinned](@ref g-walked) at `V`. It depends on
+mode-switching primitive. `y` is [pinned](@ref g-walked) at `V`. It depends on
 the mode and the instance alone, so it carries zero partials under every
 [activation](@ref g-activation).
 
@@ -1294,29 +1311,29 @@ leaves it off, which is the hysteresis itself.
 
 # Keywords
 
-- `lower`: the threshold `in` falls to for the relay to switch off, below
+- `lower`: the threshold `u` falls to for the relay to switch off, below
   `upper`.
-- `upper`: the threshold `in` rises to for the relay to switch on.
-- `off`: the value `out` publishes while off.
-- `on`: the value `out` publishes while on. The four values are promoted to one
+- `upper`: the threshold `u` rises to for the relay to switch on.
+- `off`: the value `y` publishes while off.
+- `on`: the value `y` publishes while on. The four values are promoted to one
   `V`, which is `Float64` or a static array of `Float64`, and taken by `float`,
   so integer values qualify.
 """
 struct Relay{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: AbstractComponent
-    lower::V      # switch off when `in` falls to it
-    upper::V      # switch on when `in` rises to it
-    off::V        # `out` while off
-    on::V         # `out` while on
+    lower::V      # switch off when `u` falls to it
+    upper::V      # switch on when `u` rises to it
+    off::V        # `y` while off
+    on::V         # `y` while on
 end
 Relay(; lower, upper, off = zero(lower), on = one.(lower)) =
     Relay(float.(promote(lower, upper, off, on))...)
 x_init(::Relay) = nothing
 m_init(c::Relay) = Int8.(zero(c.lower))    # the state: 0 off, 1 on
-u_types(::Relay{V}) where {V} = (in = V,)
-y_types(::Relay{V}) where {V} = (out = Pinned{V},)
-y_state(c::Relay, (; m)) = (out = ifelse.(m .== 1, c.on, c.off),)
-switch_on_guard(c::Relay, (; m, u)) = m == 0 ? u.in - c.upper : -one(u.in)
-switch_off_guard(c::Relay, (; m, u)) = m == 1 ? c.lower - u.in : -one(u.in)
+u_types(::Relay{V}) where {V} = V
+y_types(::Relay{V}) where {V} = Pinned{V}
+y_state(c::Relay, (; m)) = ifelse.(m .== 1, c.on, c.off)
+switch_on_guard(c::Relay, (; m, u)) = m == 0 ? u - c.upper : -one(u)
+switch_off_guard(c::Relay, (; m, u)) = m == 1 ? c.lower - u : -one(u)
 switch_on_handler(::Relay, _) = (m = Int8(1),)
 switch_off_handler(::Relay, _) = (m = Int8(0),)
 state_events(::Relay{V}) where {V <: Real} =
@@ -1325,11 +1342,11 @@ state_events(::Relay{V}) where {V <: Real} =
 function state_events(::Relay{V}) where {V <: StaticArray}
     N = length(V)
     switch_on = ntuple(N) do i
-        StateEvent((c, (; m, u)) -> m[i] == 0 ? u.in[i] - c.upper[i] : -one(u.in[i]),
+        StateEvent((c, (; m, u)) -> m[i] == 0 ? u[i] - c.upper[i] : -one(u[i]),
                    (c, (; m)) -> (m = Base.setindex(m, Int8(1), i),))
     end
     switch_off = ntuple(N) do i
-        StateEvent((c, (; m, u)) -> m[i] == 1 ? c.lower[i] - u.in[i] : -one(u.in[i]),
+        StateEvent((c, (; m, u)) -> m[i] == 1 ? c.lower[i] - u[i] : -one(u[i]),
                    (c, (; m)) -> (m = Base.setindex(m, Int8(0), i),))
     end
     names = (ntuple(i -> Symbol(:switch_on_, i), N)..., ntuple(i -> Symbol(:switch_off_, i), N)...)

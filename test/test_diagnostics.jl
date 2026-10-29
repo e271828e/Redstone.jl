@@ -272,7 +272,7 @@ function diagnostics_kind_set()
             UnconnectedInput(path = "a/b", face = :u, declared = Float64, handed = [("a", :v)]),
             TwoProducers(path = "a/b", port = :u, incumbent = "a sibling wire",
                          entry = "an interface connection",
-                         incumbent_producer = "`a/c`.y", producer = "root input `u`"),
+                         incumbent_producer = "`a/c/y`", producer = "root input `u`"),
             WireTypeMismatch(path = "a/b", face = :u, declared = Float64, producer_path = "a/c",
                              producer_port = :y, observed = Bool),
             WalkingFaceAtFrozenEntry(path = "a/b", face = :u, producer_path = "a/c",
@@ -743,8 +743,8 @@ function diagnostics_kind_set()
         @test kinds(carrier) == [UnconnectedInput, FaceNameIllegal]
         lines = split(sprint(showerror, carrier), '\n')
         @test lines[1] == "DiagnosticError: 4 diagnostics"
-        @test startswith(lines[2], "  UnconnectedInput: `a`.v")
-        @test startswith(lines[3], "  UnconnectedInput: `b`.u")
+        @test startswith(lines[2], "  UnconnectedInput: `a/v`")
+        @test startswith(lines[3], "  UnconnectedInput: `b/u`")
         @test startswith(lines[4], "  FaceNameIllegal: ") && occursin("`r/s`", lines[4])
         @test startswith(lines[5], "  FaceNameIllegal: ") && occursin("`p/q`", lines[5])
 
@@ -765,8 +765,73 @@ function diagnostics_kind_set()
         # nobody wired.
         @test startswith(message(UnconnectedInput(path = "i/j/a", face = :e, declared = Float64,
                                                   handed = [("i/j", :f), ("i", :g)])),
-                         "`i/j/a`.e declared Float64 is fed by nothing, handed up through " *
-                         "`i/j`.f, `i`.g and fed by nothing there — ")
+                         "`i/j/a/e` declared Float64 is fed by nothing, handed up through " *
+                         "`i/j/f`, `i/g` and fed by nothing there — ")
+
+        # A bare port renders by its component's path alone, every port in slash
+        # form, and each refusal of the bare contract states its remedy (D-436).
+        wire = "local_wires at the root component, entry `\"p\" => \"s\"`"
+        @test message(UnknownPort(entry = wire, endpoint = :source, path = "p", spelling = "p",
+                                  port = BARE, candidates = [:y, :power])) ==
+              "$wire: `p` names `p` alone, which addresses a bare output, and its output " *
+              "faces are named, y, power (§6.1, §8.6)"
+        @test message(UnknownPort(entry = wire, endpoint = :destination, path = "l", spelling = "l",
+                                  port = BARE)) ==
+              "$wire: `l` names `l` alone, which addresses a bare input, and it has no input face (§6.1, §8.6)"
+        @test message(UnknownPort(entry = wire, endpoint = :source, path = "a/r", spelling = "a/r/out",
+                                  port = :out, candidates = [BARE])) ==
+              "$wire: `a/r/out` names `out` on `a/r`, whose output is bare, one port with no face " *
+              "— write the endpoint as the child segment alone, `a/r` (§6.1, §8.6)"
+        @test startswith(message(UnconnectedInput(path = "plant/integrator", face = BARE,
+                                                  declared = Float64)),
+                         "`plant/integrator` declared Float64 is fed by nothing — ")
+        @test startswith(message(TwoProducers(path = "a/s", port = BARE, incumbent = "e1", entry = "e2",
+                                              incumbent_producer = "`a/r`", producer = "root input `u`")),
+                         "`a/s` is fed twice: from `a/r` by e1, and from root input `u` by e2")
+        @test message(WireTypeMismatch(path = "a/s", face = BARE, declared = Float64,
+                                       producer_path = "a/r", producer_port = BARE, observed = Bool)) ==
+              "`a/s` declared Float64, fed from `a/r`::Bool"
+        @test message(IllegalPortType(path = "", site = :root_input, name = BARE, declared = Float64,
+                                      reason = :bare_at_root)) ==
+              "the root component: `u_types` declares Float64 bare, one input with no face, and a " *
+              "root input is a face the periphery writes by name — name the entry, or test the " *
+              "component in a rig that wires its input (§8.2, §11.3, §13.7, D-436)"
+        @test message(IllegalPortType(path = "a", site = :port, name = BARE, declared = Vector{Float64},
+                                      reason = :mutable, position = "")) ==
+              "`a`: bare port declares Vector{Float64}, which is mutable — a port value is " *
+              "immutable, bulk data rides behind an immutable handle (§4.4)"
+        @test message(FaceNameIllegal(path = "e", face = "", invariant = :empty)) ==
+              "`e`: a face name is empty — a face name is never empty, and a bare port is spelled " *
+              "by omitting the name, one type as the whole `u_types` or `y_types` (§8.6, D-436)"
+        @test startswith(message(FaceNameCollision(path = "", faces = [""], site = :root)),
+                         "the root component: `u_types` and `y_types` are both bare — ")
+        @test startswith(message(ProducedByTwoStages(path = "c", ports = [BARE])),
+                         "`c`: the bare port is returned by `y_state` and by `y_direct` — ")
+        @test startswith(message(DeclaredNotProduced(path = "", ports = [BARE])),
+                         "the root component: the bare port `y_types` declares is produced by no stage — ")
+        @test message(ConformanceFailure(path = "g", what = "y_state", reason = :field_type,
+                                         shape = :ports, field = BARE, observed = Int,
+                                         declared = Float64)) ==
+              "`g`: y_state returns Int64, and the bare port is declared Float64 — an integer " *
+              "literal where a real was declared: return `zero(…)` of a value at the activation, not `0`"
+        @test occursin("`m`'s bare output does not route its bare input",
+                       message(AlgebraicCycle(members = ["a", "m"], wires = ["a" => "m", "m" => "a"],
+                                              classification = :artificial, dead = [("m", BARE, BARE)])))
+        @test startswith(message(DeclarationOnWrongTier(path = "d", declaration = :u_types,
+                                                        reason = :pinned_entry, entry = BARE)),
+                         "`d`: the bare `u_types` is declared `Pinned`, ")
+        @test occursin("cell of `p`'s bare port", message(CheckpointMismatch(what = :store, path = "p",
+                                                                             name = Symbol("port."))))
+        shape(field, candidates) = message(ReadResolution(label = :a, selector = "get_output(\"p\")",
+                                                          reason = :port_shape, path = "p", field = field,
+                                                          declares = :output_port, candidates = candidates))
+        @test shape(BARE, [:y, :power]) ==
+              "the read labeled `a` is get_output(\"p\"), and `p`'s output ports are named, `y`, " *
+              "`power`, and a headless address reads a bare port — name the port at the head of " *
+              "the address (§14.4, D-436)"
+        @test shape(:y, [BARE]) ==
+              "the read labeled `a` is get_output(\"p\"), and `p` declares one bare output port, " *
+              "with no name `y` — read it by the headless address, which names no port (§14.4, D-436)"
 
         # An unconvertible value names its author: the condition tree, or the
         # checkpoint at `linearize`'s default operating point (D-428).

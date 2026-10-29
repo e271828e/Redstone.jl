@@ -72,7 +72,8 @@ end
 
 # Address groups are NamedTuples — `face => address` — so the name binding the
 # wiring established is carried in the type and the gather reassembles the
-# bundle the author destructures.
+# bundle the author destructures. A bare side is one address, no group: its
+# bundle field is the cell's value and its stage returns that value (D-436).
 
 @generated function gather_group(addrs::NamedTuple{Ns}, store) where {Ns}
     args = [:(gather_cell(store, addrs[$i])) for i in 1:length(Ns)]
@@ -81,6 +82,11 @@ end
         NamedTuple{$Ns}(($(args...),))
     end
 end
+
+# One bundle field off its side's addresses: a named side's `NamedTuple`, a bare
+# side's value itself (§5.2, D-436).
+@inline gather_input(addrs::NamedTuple, store) = gather_group(addrs, store)
+@inline gather_input(addr::CellAddr, store) = gather_cell(store, addr)
 
 # §9.5's always-on check, decided at generation (D-235): the key sets must agree
 # as sets, and each returned field must be a lawful arrival at its cell under
@@ -107,6 +113,21 @@ end
     quote
         $(Expr(:meta, :inline))
         $(statements...)
+        nothing
+    end
+end
+
+# Its single-cell twin, a bare port's write (D-436): the return is the port's
+# value, held to the cell's type by the same relation and decided at generation.
+@generated function scatter_group!(store, addr::CellAddr{P,K}, y, ::Type{T}, path::String,
+                                   what::Symbol) where {P,K,T}
+    _accepts(P, y, T) ||
+        return :(throw(DiagnosticError(ConformanceFailure(
+            path = path, what = String(what), reason = :field_type, shape = :ports,
+            field = BARE, observed = $y, declared = $P, activation = $T))))
+    quote
+        $(Expr(:meta, :inline))
+        scatter_cell!(store, addr, y)
         nothing
     end
 end

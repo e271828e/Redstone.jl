@@ -219,8 +219,8 @@ function closed_loop(solution, gains; noise_σ = 0.3)
     pid(; kwargs...) = DiscretePID(; kwargs..., Tt = 0.02, hold = true, tracking = true)
     sensing = Group((; noise = GaussianWhiteNoise(seed = 7, σ = noise_σ), altimeter = SumJunction{Float64, 2}());
                     input_wires = ("h" => "altimeter/in1",),
-                    local_wires = ("noise/out" => "altimeter/in2",),
-                    output_wires = ("altimeter/out" => "h_meas",),
+                    local_wires = ("noise" => "altimeter/in2",),
+                    output_wires = ("altimeter" => "h_meas",),
                     sample_times = (noise = rate,))
     pid_controller = Group((; h_ctl = pid(Kp = 0.01, Ki = 0.001, u_min = -0.26, u_max = 0.26),
                               θ_ctl = pid(Kp = 2.0, Ki = 0.5, u_min = -0.5, u_max = 0.5),
@@ -236,7 +236,7 @@ function closed_loop(solution, gains; noise_σ = 0.3)
                            local_wires = ("h_ctl/u" => "θ_ctl/r", "θ_ctl/u" => "q_ctl/r",
                                           "θ_ctl/saturated" => "h_ctl/saturation",
                                           "q_ctl/saturated" => "θ_ctl/saturation",
-                                          "free/out" => "q_ctl/saturation", "free/out" => "V_ctl/saturation"),
+                                          "free" => "q_ctl/saturation", "free" => "V_ctl/saturation"),
                            output_wires = ("q_ctl/u" => "δe", "V_ctl/u" => "δt"),
                            sample_times = (h_ctl = rate, θ_ctl = rate, q_ctl = rate, V_ctl = rate))
     lqr_controller = Group((; tracker = DiscreteLQRTracker(; gains..., x_trim = SVector(50.0, 0.0, θ, 0.0, 1000.0),
@@ -253,10 +253,10 @@ function closed_loop(solution, gains; noise_σ = 0.3)
                                           "h_ref" => "z_ref_pack/in1", "V_ref" => "z_ref_pack/in2",
                                           "δe_prev" => "command_pack/in1", "δt_prev" => "command_pack/in2",
                                           "mode" => "engaged/in1"),
-                           local_wires = ("state_pack/out" => "tracker/x", "z_pack/out" => "tracker/z",
-                                          "z_ref_pack/out" => "tracker/z_ref", "command_pack/out" => "tracker/v",
-                                          "free_pair/out" => "tracker/saturation", "engaged/out" => "tracker/engaged",
-                                          "tracker/u" => "u_unpack/in"),
+                           local_wires = ("state_pack" => "tracker/x", "z_pack" => "tracker/z",
+                                          "z_ref_pack" => "tracker/z_ref", "command_pack" => "tracker/v",
+                                          "free_pair" => "tracker/saturation", "engaged" => "tracker/engaged",
+                                          "tracker/u" => "u_unpack"),
                            output_wires = ("u_unpack/out1" => "δe", "u_unpack/out2" => "δt"),
                            sample_times = (tracker = rate,))
     selection = Group((; select_δe = Switch{Float64}(), select_δt = Switch{Float64}(),
@@ -264,15 +264,15 @@ function closed_loop(solution, gains; noise_σ = 0.3)
                       input_wires = ("δe_pid" => "select_δe/in1", "δe_lqr" => "select_δe/in2",
                                      "δt_pid" => "select_δt/in1", "δt_lqr" => "select_δt/in2",
                                      "mode" => ("select_δe/select", "select_δt/select")),
-                      local_wires = ("select_δe/out" => "command_δe/in", "select_δt/out" => "command_δt/in"),
-                      output_wires = ("select_δe/out" => "δe", "select_δt/out" => "δt",
-                                      "command_δe/out" => "δe_prev", "command_δt/out" => "δt_prev"),
+                      local_wires = ("select_δe" => "command_δe", "select_δt" => "command_δt"),
+                      output_wires = ("select_δe" => "δe", "select_δt" => "δt",
+                                      "command_δe" => "δe_prev", "command_δt" => "δt_prev"),
                       sample_times = (command_δe = rate, command_δt = rate))
     actuators = Group((; δe_limiter = RateLimiter(rising = 1.0, s0 = δe), δe_lag = FirstOrderLag(τ = 0.05, x0 = δe),
                          δt_limiter = RateLimiter(rising = 0.5, s0 = δt), δt_lag = FirstOrderLag(τ = 0.5, x0 = δt));
-                      input_wires = ("δe_cmd" => "δe_limiter/in", "δt_cmd" => "δt_limiter/in"),
-                      local_wires = ("δe_limiter/out" => "δe_lag/in", "δt_limiter/out" => "δt_lag/in"),
-                      output_wires = ("δe_lag/out" => "δe", "δt_lag/out" => "δt"),
+                      input_wires = ("δe_cmd" => "δe_limiter", "δt_cmd" => "δt_limiter"),
+                      local_wires = ("δe_limiter" => "δe_lag", "δt_limiter" => "δt_lag"),
+                      output_wires = ("δe_lag" => "δe", "δt_lag" => "δt"),
                       sample_times = (δe_limiter = rate, δt_limiter = rate))
     Group((; plant = Longitudinal(), sensing, pid_controller, lqr_controller, selection, actuators);
           input_wires = ("h_ref" => ("pid_controller/h_ref", "lqr_controller/h_ref"),
@@ -324,4 +324,4 @@ touchdown's boundary with that reason in the termination record (§13.5).
 """
 descent() = Group((; plant = Longitudinal(), gear = GroundContact(), stop = StopRequest(reason = "touchdown"));
                   input_wires = ("δe" => "plant/δe", "δt" => "plant/δt"),
-                  local_wires = ("plant/h" => "gear/h", "gear/contact" => "stop/request"))
+                  local_wires = ("plant/h" => "gear/h", "gear/contact" => "stop"))

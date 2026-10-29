@@ -77,6 +77,70 @@ bare_world() = Group((; acc = BareAccumulator(), tick = BareTicker(), latch = Ba
                      local_wires = ("acc/y" => "neg/u",),
                      input_wires = ("u" => "acc/u", "p" => "plant/u"))
 
+# --- bare contracts (§8.2, §8.6, D-436) ----------------------------------------
+# A contract declared as one type: one port with no face, wired by the child
+# segment alone and read headless. The bundle's `u` and `y` carry the values
+# themselves, and a stage over a bare `y_types` returns the port's value. At a
+# root both contracts bare collide, so the four with a bare input build below one.
+
+"A stateless bare gain, `y = -2u`, its one port produced by stage 2."
+struct BareScale <: AbstractComponent end
+x_init(::BareScale) = nothing
+u_types(::BareScale) = Float64
+y_types(::BareScale) = Float64
+y_direct(::BareScale, (; u)) = -2.0 * u
+
+"A bare integrator, `ẋ = u`, publishing its state from stage 1."
+struct BareFlow <: AbstractComponent end
+x_init(::BareFlow) = 1.0
+u_types(::BareFlow) = Float64
+y_types(::BareFlow) = Float64
+y_state(::BareFlow, (; x)) = x
+x_deriv(::BareFlow, (; u)) = u
+
+"A bare rotation, `ẋ = u (-x₂, x₁)`, its one port the state vector."
+struct BareSpin <: AbstractComponent end
+x_init(::BareSpin) = SVector(1.0, 0.0)
+u_types(::BareSpin) = Float64
+y_types(::BareSpin) = SVector{2,Float64}
+y_state(::BareSpin, (; x)) = x
+x_deriv(::BareSpin, (; x, u)) = u * SVector(-x[2], x[1])
+
+"A bare discrete sum, `s⁺ = y + u`, its update reading its own bare port."
+struct BareSummer <: AbstractComponent end
+s_init(::BareSummer) = 0.0
+u_types(::BareSummer) = Float64
+y_types(::BareSummer) = Float64
+y_state(::BareSummer, (; s)) = s
+s_update(::BareSummer, (; y, u)) = y + u
+
+"A bare source with no input, `ẋ = 1`: at the root its one output face is headless."
+struct BareRamp <: AbstractComponent end
+x_init(::BareRamp) = 0.0
+y_types(::BareRamp) = Float64
+y_state(::BareRamp, (; x)) = x
+x_deriv(::BareRamp, _) = 1.0
+
+# A bare loop, `ẋ = -2x` from `x(0) = 1`: `flow` feeds `scale` and `scale` feeds
+# `flow` back, each endpoint the child segment alone. `echo` reads `scale`, a
+# stage-2 port, so the feedthrough graph has one edge between two bare ports.
+bare_loop() = Group((; flow = BareFlow(), scale = BareScale(), echo = BareScale());
+                    local_wires = ("flow" => "scale", "scale" => "flow", "scale" => "echo"),
+                    output_wires = ("flow" => "x",))
+
+# The bare ports two levels down: `plant/loop/flow` and its peers, `plant/spin`
+# driven by the loop's face, and `plant/summer` by the root input `u` through
+# the face `plant/u`; `ramp` beside them. The root exports `summer` and `ramp`.
+bare_ports_world() = Group((; plant = Group((; loop = bare_loop(), spin = BareSpin(),
+                                               summer = BareSummer());
+                                            local_wires = ("loop/x" => "spin",),
+                                            input_wires = ("u" => "summer",),
+                                            output_wires = ("summer" => "total",
+                                                            "spin" => "spin")),
+                              ramp = BareRamp());
+                           input_wires = ("u" => "plant/u",),
+                           output_wires = ("plant/total" => "total", "ramp" => "ramp"))
+
 # --- §5.3's stage-1 return of exposed state ------------------------------------
 # Components exposing a state or mode field by returning it from `y_state`,
 # plus the refusal fixtures that declare one and return it from no stage (D-252).
@@ -640,7 +704,7 @@ requests localizes to the crossing's `t*` boundary (§13.5).
 """
 overloaded() = Group((; src = Sawtooth(1.0), mon = Overload(0.315),
                         stop = StopRequest(reason = "overload tripped"));
-                     local_wires = ("src/q" => "mon/sig", "mon/tripped" => "stop/request"))
+                     local_wires = ("src/q" => "mon/sig", "mon/tripped" => "stop"))
 
 """
 Tick alarm: a discrete counter whose `alarm` holds once its store has counted
@@ -662,7 +726,7 @@ which the continuous request publishes at the tick's own boundary (§10.5, §13.
 """
 tick_alarmed() = Group((; counter = TickAlarm(),
                           stop = StopRequest(reason = "three ticks counted"));
-                       local_wires = ("counter/alarm" => "stop/request",),
+                       local_wires = ("counter/alarm" => "stop",),
                        sample_times = (; counter = Relative(3)))
 
 """
@@ -1464,7 +1528,7 @@ end
 
 TerrainRig() = TerrainRig(TerrainGain(), Constant(height_field(Terrain(h0 = 1.5))))
 
-local_wires(::TerrainRig) = ("stub/out" => "dut/terrain",)
+local_wires(::TerrainRig) = ("stub" => "dut/terrain",)
 input_wires(rig::TerrainRig) = (input_passthrough(rig, "dut"; except = ("terrain",))...,)
 
 # --- the label port coverage set (§4.1, §4.3, §8.2, §9.3) -----------------------

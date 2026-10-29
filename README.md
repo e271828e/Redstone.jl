@@ -62,13 +62,13 @@ struct Plant <: AbstractComponent
 end
 
 x_init(::Plant) = (q = 0.0, v = 0.0)
-u_types(::Plant) = (u = Float64,)
+u_types(::Plant) = Float64                           # one input, declared bare
 y_types(::Plant) = (y = Float64, power = Float64)
 
 y_state(::Plant, (; x)) = (y = x.q,)                 # stage 1: state only
-y_direct(::Plant, (; x, u)) = (power = u.u * x.v,)   # stage 2: reads inputs
+y_direct(::Plant, (; x, u)) = (power = u * x.v,)     # stage 2: reads inputs
 x_deriv(p::Plant, (; x, u)) =
-    (q = x.v, v = -p.ω^2 * x.q - 2p.ζ * p.ω * x.v + u.u)
+    (q = x.v, v = -p.ω^2 * x.q - 2p.ζ * p.ω * x.v + u)
 
 struct PI <: AbstractComponent
     k_p::Float64
@@ -77,13 +77,13 @@ end
 
 s_init(::PI) = 0.0                                   # one state, declared bare
 u_types(::PI) = (ref = Float64, y = Float64)
-y_types(::PI) = (u = Float64,)
+y_types(::PI) = Float64                              # one output, declared bare
 
-y_direct(c::PI, (; s, u)) = (u = c.k_p * (u.ref - u.y) + s,)
+y_direct(c::PI, (; s, u)) = c.k_p * (u.ref - u.y) + s
 s_update(c::PI, (; s, u, Δt)) = s + c.k_i * Δt * (u.ref - u.y)
 
 loop(feedback) = Group((plant = Plant(2.0, 0.3), ctl = PI(3.0, 2.0));
-    local_wires = ("ctl/u" => "plant/u", "plant/$feedback" => "ctl/y"),
+    local_wires = ("ctl" => "plant", "plant/$feedback" => "ctl/y"),
     input_wires = "ref" => "ctl/ref",
     output_wires = "plant/y" => "y",
     sample_times = (ctl = Absolute(Hz(50)),))
@@ -108,7 +108,7 @@ closes an algebraic loop, and the build refuses the tree:
 ```
 julia> build(loop("power"))
 ERROR: DiagnosticError: 1 diagnostics
-  AlgebraicCycle: algebraic loop among `plant`, `ctl`: plant/power → ctl/y, ctl/u → plant/u — real: a loop survives the trace (`ctl` structurally, the rest globally); break it with a state, a stage-1 (`y_state`) port, or a `UnitDelay`, which moves the signal onto the discrete tier and inserts a Δt_base-scale zero-order hold (§5.5)
+  AlgebraicCycle: algebraic loop among `plant`, `ctl`: plant/power → ctl/y, ctl → plant — real: a loop survives the trace (`ctl` structurally, the rest globally); break it with a state, a stage-1 (`y_state`) port, or a `UnitDelay`, which moves the signal onto the discrete tier and inserts a Δt_base-scale zero-order hold (§5.5)
 ```
 
 ## Documentation

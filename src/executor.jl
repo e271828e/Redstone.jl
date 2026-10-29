@@ -42,12 +42,16 @@ end
 # (§9.7): the state store is a `Ref` whose *type* is shared by every instance of
 # a component type, so two instances still compile to one body.
 
-struct StageEntry{F,Comp,XT,BN,IA<:NamedTuple,YA<:NamedTuple,OA<:NamedTuple,CL,SS,MS,WS}
+# A side's addresses are a `NamedTuple` group, or one `CellAddr` where the side is
+# bare (D-436).
+const SideAddrs = Union{NamedTuple,CellAddr}
+
+struct StageEntry{F,Comp,XT,BN,IA<:SideAddrs,YA<:NamedTuple,OA<:SideAddrs,CL,SS,MS,WS}
     fn::F
     comp::Comp
-    inputs::IA      # input face => cell address (the wiring's name binding)
+    inputs::IA      # input face => cell address (the wiring's name binding), or a bare input's one
     y1::YA          # own stage-1 port => cell address (`y_x`, `y_s` on the discrete tier)
-    outputs::OA     # port this entry writes => cell address
+    outputs::OA     # port this entry writes => cell address, or a bare port's one
     x_off::Int      # continuous state offset into the flat buffer
     clock::CL
     sstore::SS      # discrete state store, or nothing on the continuous tier
@@ -60,7 +64,7 @@ struct StageEntry{F,Comp,XT,BN,IA<:NamedTuple,YA<:NamedTuple,OA<:NamedTuple,CL,S
     cursor::ExecutionCursor
 end
 
-struct RHSEntry{Comp,XT,BN,IA<:NamedTuple,YA<:NamedTuple,CL,MS,WS}
+struct RHSEntry{Comp,XT,BN,IA<:SideAddrs,YA<:SideAddrs,CL,MS,WS}
     comp::Comp
     inputs::IA
     y::YA           # every own port — `x_deriv` reads the complete fresh table (§5.3)
@@ -73,7 +77,7 @@ struct RHSEntry{Comp,XT,BN,IA<:NamedTuple,YA<:NamedTuple,CL,MS,WS}
     cursor::ExecutionCursor
 end
 
-struct UpdateEntry{Comp,BN,IA<:NamedTuple,YA<:NamedTuple,CL,SS,WS}
+struct UpdateEntry{Comp,BN,IA<:SideAddrs,YA<:SideAddrs,CL,SS,WS}
     comp::Comp
     inputs::IA
     y::YA           # every own port — `s_update` reads the complete fresh table too
@@ -109,16 +113,17 @@ UpdateEntry{BN}(comp, inputs, y, clock, sstore, ws, Δt, path, ci, cursor) where
 # fails at the destructuring (§5.2). The two state letters name the two homes
 # outright (D-195): `x` reconstructs from the flat buffer, `s` reads the
 # component's own store, and no name selects a home by tier at compile time
-# because the tier already picked the name.
+# because the tier already picked the name. A bare side's field is its one cell's
+# value, `gather_input` dispatching on the address (D-436).
 function _bundle_expr(BN, XT)
     args = map(BN) do field
         field === :x   ? :(reconstruct($XT, xbuf, entry.x_off)) :
         field === :s   ? :(entry.sstore[]) :
         field === :m   ? :(entry.mstore[]) :
-        field === :u   ? :(gather_group(entry.inputs, store)) :
-        field === :y_x ? :(gather_group(entry.y1, store)) :
-        field === :y_s ? :(gather_group(entry.y1, store)) :
-        field === :y   ? :(gather_group(entry.y, store)) :
+        field === :u   ? :(gather_input(entry.inputs, store)) :
+        field === :y_x ? :(gather_input(entry.y1, store)) :
+        field === :y_s ? :(gather_input(entry.y1, store)) :
+        field === :y   ? :(gather_input(entry.y, store)) :
         field === :ws  ? :(entry.ws) :
         field === :t   ? :(entry.clock.t) :
         field === :Δt  ? :(entry.Δt) :
@@ -183,7 +188,7 @@ end
 # deterministic. Bundles are built exactly like every other entry's, from the
 # event name set the law fixed at build time (`x, m, u, y, ws, t`, §5.2).
 
-struct EventEntry{G,H,P,Comp,XT,BN,IA<:NamedTuple,YA<:NamedTuple,CL,MS,WS}
+struct EventEntry{G,H,P,Comp,XT,BN,IA<:SideAddrs,YA<:SideAddrs,CL,MS,WS}
     guard::G
     handler::H
     projection::P   # the component's `x_projection`, or nothing

@@ -12,54 +12,6 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
-- **Bare declarations, the contracts half.** A contract declaration may be
-  one bare leaf, a port with no face, addressed by the component path alone.
-  The docs landed as D-436 (amending D-036, D-040, D-046, D-207, D-210,
-  D-276 and D-435; spec §4.3, §5.2, §6.1, §8.2, §8.6, §8.8, §9.1, §9.3,
-  §9.5, §11.3, §13.3, §13.5, §13.7, §13.9, §14.4, Appendices B, C, D).
-  Next: the prototype, delegated to one Opus agent in a scratch worktree
-  whose prompt carries D-436's Position, this bullet and the report's
-  "Seam inventory, contracts half" as the checklist, the worktree mechanics
-  and measurement rules of `brief_lessons.md`, the proof list below, the
-  stop rule (a seam the docs leave unruled is listed with its interim
-  choice, and the agent is resumed with the ruling, not replaced) and the
-  reporting rule (the agent hands back its report text and `git diff`, in
-  parts if long, since the harness refuses its write of a report file);
-  then the brief, drafted by the main session from the patch and the
-  report with every count re-checked; then the pipeline, as increment 83
-  did for the stores half
-  (`design/briefs/brief_increment_83_bare_stores.md` is the template). The
-  record is `design/reports/20261029_bare_declarations/README.md` (not
-  normative), its "Seam inventory, contracts half" the checklist; the
-  rulings D-436 adds beyond it, all in the entry's Position: the
-  one-segment endpoint's refusals are `UnknownPort` with an empty name
-  and the list in hand; `input_faces`/`output_faces` list a bare contract
-  as one empty name and the passthrough label is the prefix alone; a face
-  name is never empty (`FaceNameIllegal`, contract keys included); the
-  root refusals are `FaceNameCollision` at `:root` and `IllegalPortType`
-  `:bare_at_root`; `get_output` and `port` default to the headless
-  address, `get_face("")` reads a primitive root's bare output, and the
-  shape mismatch is `ReadResolution` `:port_shape`; the descriptor writes
-  `""` for a bare face name and endpoint port at format 1.0. Where the
-  stores half leaves it: a bare `u_types` or `y_types` fails today as a
-  raw `MethodError` on `keys(::Type)`, not as a diagnostic; `get_output(path,
-  "")` arrives as `ReadResolution` `:undeclared` at `BARE`; and the
-  `(path, name)` renderer `_named` drops an empty name, but most port
-  renderings still interpolate the pair and must be routed through it. The
-  prototype proves: the one-segment endpoint wired both ways and refused
-  where the child's side is not bare; the two root refusals; the
-  feedthrough graph, the layout and the trace on the `BARE` key; the single-
-  cell gather and scatter at zero allocation with the check folded; the
-  `Dual` sweep over a bare-contract `Integrator`; the descriptor validating
-  against the unchanged schema with `""` names; no stray `/` in any
-  rendering at depth; and the library and examples churn. When the
-  library's contracts go bare, the docstrings of the integrating and linear
-  blocks rename the port names `in` and `out` to `u` and `y`, the textbook
-  form `ẋ = A x + B u`, `y = C x + D u`, and `s⁺ = A s + B u` on the
-  discrete tier; the state letters `x` and `s` are already in place. The
-  block companions and `library_inventory.md` move with the code, as they
-  did for the stores. An explicitly empty contract key, `(var"" = V,)`,
-  must be refused rather than read as bare, a pin for the brief.
 - **The inspector, stage 1**: the static inspector over the descriptor.
   The stage's record is `design/inspector/initial_design.md` (not
   normative), with one record per axis session beside it:
@@ -218,6 +170,11 @@ breaking user code, and each may benefit from user feedback first.
   break, a candidate design and its open questions are
   `design/reports/20261016_ctrlc_julia_114/report.md`. It is taken up when 1.14
   branches or its cancellation names become public, whichever comes first.
+- **A contract entry that is not a type.** A `u_types` or `y_types` entry
+  holding a value that is no type, a tuple of types or a number, named or
+  bare, fails late as a raw error, since the walk never checks that an entry
+  is a type (§8.2). The fix is a loose one: the walk refuses it as
+  `IllegalPortType` under a reason of its own, with its Appendix C row.
 - **The library's remaining candidates.** Whatever of the inventory in
   `design/companions/library_inventory.md` is unbuilt, each block
   built when wanted (§13.7, D-313).

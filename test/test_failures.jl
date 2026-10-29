@@ -32,7 +32,7 @@ hooked_interrupted(c) = Group((c = c, trig = Trigger(0.15));
 # at frame 3's publication, the frame whose integration sent the signal.
 interrupter_watched() = Group((c = SelfInterrupter(0.22), trig = Trigger(0.25),
                                stop = StopRequest(reason = "ramp at level"));
-                              local_wires = ("c/q" => "trig/sig", "trig/on" => "stop/request"))
+                              local_wires = ("c/q" => "trig/sig", "trig/on" => "stop"))
 
 # A frame failing on a bundle field its law does not give: the species rule's
 # lookup (§13.2, D-248) re-invokes `x_init`, which, armed by that failing
@@ -398,7 +398,7 @@ function failures_runtime()
             sim = Simulation(interrupter_watched(); h = 1//10)
             init!(sim)
             run!(sim; t_end = 5.0)
-            @test termination(sim).source === ModelRequestedStop("stop", :flag, "ramp at level")
+            @test termination(sim).source === ModelRequestedStop("stop", BARE, "ramp at level")
             @test latest(sim).frame == 3 && !sigint_pending()
             # With the request ignored the same frame ends on the interrupt.
             unwatched = Simulation(interrupter_watched(); h = 1//10)

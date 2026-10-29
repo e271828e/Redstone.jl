@@ -186,4 +186,28 @@ function test_executor()
             @test @ballocated($body(0)) == 0
         end
     end
+
+    @testset "a bare side is one cell, gathered and written as its value (§5.2, §9.5, §9.8, D-436)" begin
+        store = StoreBundle(NamedTuple{(_cell_key(Float64),)}((Redstone.CellStore(zeros(2)),)))
+        addr = Redstone.CellAddr{Float64,1}((1,))
+        Redstone.scatter_group!(store, addr, 2.5, Float64, "p", :y_state)
+        @test Redstone.gather_input(addr, store) === 2.5
+        @test Redstone.gather_input((; a = addr), store) === (a = 2.5,)
+        d = diagnostic(failure(() -> Redstone.scatter_group!(store, addr, 1, Float64, "p", :y_state)))
+        @test d isa ConformanceFailure && d.reason === :field_type && d.shape === :ports &&
+              d.field === BARE && d.observed === Int && d.declared === Float64
+        # Over bare contracts at depth, under a `Dual` activation too, the phase
+        # bodies allocate nothing, the check folded away.
+        for T in (Float64, LinearizeDual)
+            model = Model(bare_ports_world(), T; h = 1//100)
+            init!(model, set(u = (u = 0.5,)))
+            bodies = phase_bodies(model)
+            for name in BLOCKS
+                body = bodies[name]
+                body(); body(0)
+                @test @ballocated($body()) == 0
+                @test @ballocated($body(0)) == 0
+            end
+        end
+    end
 end

@@ -92,8 +92,8 @@ The [selector](@ref g-selector) that reads one leaf of a
 [`get_output`](@ref) returns it, and [`reads`](@ref) labels it in a
 [read set](@ref g-read-set). A selector holds its address as authored. The
 address is the component's path and a [leaf address](@ref g-leaf-address) that
-starts with the port name. The address is parsed and checked when a reader
-resolves the selector.
+starts with the port name, or headless for a bare port. The address is parsed
+and checked when a reader resolves the selector.
 
 `GetOutput` resolves against the [signal table](@ref g-signal-table) or a
 published [snapshot](@ref g-snapshot) alike. It is an
@@ -211,7 +211,7 @@ get_deriv(path::AbstractString, leaf::Union{Symbol,AbstractString} = "") =
 
 # Design: §11.2, §14.4, D-276.
 """
-    get_output(path::AbstractString, leaf::Union{Symbol,AbstractString}) -> GetOutput
+    get_output(path::AbstractString, leaf::Union{Symbol,AbstractString} = "") -> GetOutput
 
 Return a [selector](@ref g-selector) that reads one leaf of a
 [component](@ref g-component)'s declared output [port](@ref g-port).
@@ -219,7 +219,9 @@ Return a [selector](@ref g-selector) that reads one leaf of a
 A selector is labeled in a [read set](@ref g-read-set) built with
 [`reads`](@ref). `path` names the component, and `leaf` is a
 [leaf address](@ref g-leaf-address) that starts with the port name, as in
-`get_output("plant", "pose.q_eb[2]")`.
+`get_output("plant", "pose.q_eb[2]")`. A port declared bare has no name, and
+its address is headless: `get_output("integrator")` reads it whole, and
+`get_output("integrator", "[2]")` one component of a static-vector port.
 
 `get_output` is an [inspection read](@ref g-inspection-read), and it resolves
 against the [signal table](@ref g-signal-table) or a published
@@ -227,11 +229,12 @@ against the [signal table](@ref g-signal-table) or a published
 keeps its meaning when the component behind it is replaced, use
 [`get_face`](@ref). A path that names an [assembly](@ref g-assembly), a port the
 component does not declare, or a step the port's type cannot take is refused as
-`ReadResolution`.
+`ReadResolution`, and so are a named head against a bare port and a headless
+address against named ones.
 
 See also [`get_state`](@ref), [`get_input`](@ref).
 """
-get_output(path::AbstractString, leaf::Union{Symbol,AbstractString}) =
+get_output(path::AbstractString, leaf::Union{Symbol,AbstractString} = "") =
     GetOutput(String(path), _authored_leaf(leaf))
 
 # Design: §14.4, §14.9, D-276, D-277.
@@ -271,8 +274,9 @@ level.
 
 `get_face` is an [integration read](@ref g-inspection-read). It resolves against
 the [signal table](@ref g-signal-table) or a published
-[snapshot](@ref g-snapshot) alike. A name that is no output face there,
-including an input face, is refused as `ReadResolution`.
+[snapshot](@ref g-snapshot) alike. At a primitive root the faces are its own
+ports, and a bare one is read headless, `get_face("")`. A name that is no output
+face there, including an input face, is refused as `ReadResolution`.
 
 See also [`get_output`](@ref), [`get_input`](@ref).
 """
@@ -285,7 +289,7 @@ get_face(leaf::Union{Symbol,AbstractString}) = GetFace(_authored_leaf(leaf))
 _spell(selector::GetState) = "get_state(\"$(selector.path)\"$(_spell_leaf(selector.leaf)))"
 _spell(selector::GetDeriv) = "get_deriv(\"$(selector.path)\"$(_spell_leaf(selector.leaf)))"
 _spell_leaf(leaf) = isempty(String(leaf)) ? "" : ", $(repr(leaf))"
-_spell(selector::GetOutput) = "get_output(\"$(selector.path)\", $(repr(selector.leaf)))"
+_spell(selector::GetOutput) = "get_output(\"$(selector.path)\"$(_spell_leaf(selector.leaf)))"
 _spell(selector::GetInput) = "get_input($(repr(selector.leaf)))"
 _spell(selector::GetFace) = "get_face($(repr(selector.leaf)))"
 
@@ -380,7 +384,9 @@ Match a face selector's address against the faces it may name (§14.4, D-276). A
 face name is an arbitrary string and may hold a dot (§8.6), so the head is not
 parsed: it is the longest name in `faces` the address starts with, followed by
 the end, a `.` or a `[`, and the steps after it parse as `parse_leaf`'s. A
-`Symbol` names a face whole, with no steps. `nothing` where no face matches.
+`Symbol` names a face whole, with no steps. A bare port in `faces`, the name
+`BARE`, takes a headless address, one empty or starting at its first step
+(D-436). `nothing` where no face matches.
 """
 function match_leaf(leaf::Union{Symbol,String}, faces)
     head = match_face(leaf, faces)
@@ -400,8 +406,13 @@ function match_face(leaf::String, faces)
         ncodeunits(name) > ncodeunits(matched) && startswith(leaf, name) &&
             (stop > ncodeunits(leaf) || leaf[stop] in ('.', '[')) && (matched = name)
     end
-    isempty(matched) ? nothing : Symbol(matched)
+    isempty(matched) || return Symbol(matched)
+    BARE in faces && _headless(leaf) ? BARE : nothing
 end
+
+# Does the address start at its first step, naming no face or port (D-436)?
+_headless(leaf::Symbol) = leaf === BARE
+_headless(leaf::String) = isempty(leaf) || first(leaf) in ('.', '[')
 
 """
     resolve_leaf(P, steps) → (chain, leaf_type) | LeafRefusal
@@ -763,19 +774,26 @@ end
 
 # `get_face` names an output face of the mount level and reads its producer's
 # port (§14.9, D-277): an assembly's face through `terminal_producer`, whose
-# answer is a primitive's port, and a primitive's own port directly. At the
-# root the faces are the root-exported ones, as ever.
+# answer is a primitive's port, and a primitive's own port directly. At an
+# assembly root the faces are the root-exported ones, and at a primitive root
+# its own ports, a bare one read headless (§8.6, D-436).
 function _rebase(authored::GetFace, label::Symbol, mount::String, level, build::Build,
                  diags::Vector{Diagnostic})
     structure = build.structure
-    ci = isempty(mount) ? nothing :
-         findfirst(component -> component.path == mount, structure.components)
+    ci = findfirst(component -> component.path == mount, structure.components)
     faces = ci === nothing ? _exported_faces(structure, mount) :
                              _ports(build.outputs.components[ci])
     matched = match_leaf(authored.leaf, faces)
     if matched isa LeafRefusal
         push!(diags, _leaf_violation(label, authored, mount, matched;
                                      field = _field(authored, faces)))
+        return nothing
+    elseif matched === nothing && ci !== nothing && !isempty(faces) &&
+           (faces == [BARE]) != _headless(authored.leaf)
+        push!(diags, _reader_violation(label, authored, mount, :port_shape;
+                                       field = _headless(authored.leaf) ? BARE :
+                                               _field(authored, faces),
+                                       declares = :output_port, candidates = faces))
         return nothing
     elseif matched === nothing
         inputs = _input_faces_at(structure, activation(build, Float64).decls, mount)
@@ -945,9 +963,15 @@ function _resolve_selector(selector::GetOutput, read::MountedRead, build::Build,
     head = read.head
     decl = act.decls[ci]
     ports = _ports(build.outputs.components[ci])
-    head in ports ||
-        (push!(diags, _undeclared_violation(read, :output_port, ports));
-         return nothing)
+    # A bare port takes the headless address and a named one its name, so a
+    # mismatch of the two is the shape's, not a missing name (D-436).
+    if !(head in ports)
+        push!(diags, !isempty(ports) && (ports == [BARE]) != (head === BARE) ?
+                     _reader_violation(read, :port_shape; declares = :output_port,
+                                       candidates = ports) :
+                     _undeclared_violation(read, :output_port, ports))
+        return nothing
+    end
     # The port's *type* is the activation's, a type being no name list (D-253).
     chain = _leaf_chain(read, decl.outs[head], diags)
     chain === nothing && return nothing

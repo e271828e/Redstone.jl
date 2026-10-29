@@ -796,7 +796,7 @@ function assembly_obligations()
         @test err isa DiagnosticError
         d = only(diagnostics(err))
         @test d isa TwoProducers && d.path == "loop/sum" && d.port === :a
-        @test d.incumbent_producer == "`src`.out" && d.producer == "`src2`.out"
+        @test d.incumbent_producer == "`src/out`" && d.producer == "`src2/out`"
 
         # The same rule one level down: the sub-assembly's own wire against its
         # `input_wires` entry onto the same port, refused where both are declared,
@@ -809,7 +809,7 @@ function assembly_obligations()
         @test d isa TwoProducers && d.path == "loop/g" && d.port === :e
         @test startswith(d.incumbent, "local_wires at `loop`") &&
               startswith(d.entry, "input_wires at `loop`")
-        @test d.incumbent_producer == "`loop/s`.out" && d.producer == "`loop`.in"
+        @test d.incumbent_producer == "`loop/s/out`" && d.producer == "`loop/in`"
 
         # The double declaration is refused whether or not a parent wires the face.
         inner = Group((; a = ModedSource(), b = Gain(1.0)); local_wires = ("a/out" => "b/e",),
@@ -819,7 +819,7 @@ function assembly_obligations()
         @test d isa TwoProducers && d.path == "inner/b" && d.port === :e
         @test startswith(d.incumbent, "local_wires at `inner`") &&
               startswith(d.entry, "input_wires at `inner`")
-        @test d.incumbent_producer == "`inner/a`.out" && d.producer == "`inner`.u"
+        @test d.incumbent_producer == "`inner/a/out`" && d.producer == "`inner/u`"
 
         # So is a port the level hands up twice, through one entry or two, and the
         # parent's wires into the faces claim nothing more.
@@ -829,7 +829,7 @@ function assembly_obligations()
         d = only(diagnostics(err))
         @test d isa TwoProducers && d.path == "i/a" && d.port === :e
         @test d.incumbent == d.entry && startswith(d.entry, "input_wires at `i`")
-        @test d.incumbent_producer == d.producer == "`i`.f"
+        @test d.incumbent_producer == d.producer == "`i/f`"
         twice = Group((; a = Gain(1.0)); input_wires = ("f" => "a/e", "g" => "a/e"))
         err = failure(() -> build(Group((; src = ModedSource(), i = twice);
                                         local_wires = ("src/out" => "i/f", "src/out" => "i/g"))))
@@ -837,7 +837,7 @@ function assembly_obligations()
         @test d isa TwoProducers && d.path == "i/a" && d.port === :e
         @test startswith(d.incumbent, "input_wires at `i`, entry `\"f\"") &&
               startswith(d.entry, "input_wires at `i`, entry `\"g\"")
-        @test d.incumbent_producer == "`i`.f" && d.producer == "`i`.g"
+        @test d.incumbent_producer == "`i/f`" && d.producer == "`i/g`"
 
         # §13.1's worked example (D-229): the typo'd wire is recorded and claims
         # nothing, so the same throw carries the unknown port *and* the input it
@@ -1240,7 +1240,7 @@ function assembly_primitives()
         @test d isa TwoProducers && startswith(d.incumbent, "local_wires") &&
               startswith(d.entry, "input_wires")
         # The root's own face is the second producer, and spells as one.
-        @test d.incumbent_producer == "`trim`.out" && d.producer == "root input `inner.a`"
+        @test d.incumbent_producer == "`trim/out`" && d.producer == "root input `inner.a`"
     end
 
     @testset "the helpers address a transparent container's child by bare key (D-211)" begin
@@ -1372,6 +1372,97 @@ function assembly_child_lists()
     end
 end
 
+# --- bare contracts (§6.1, §8.6, §8.8, §13.3, D-436) ----------------------------
+# A bare input beside a named output, and an empty contract key, which is
+# refused as a face name rather than read as bare.
+struct BareSink <: AbstractComponent end
+x_init(::BareSink) = nothing
+u_types(::BareSink) = Float64
+y_types(::BareSink) = (y = Float64,)
+y_direct(::BareSink, (; u)) = (y = u,)
+
+struct EmptyKeyed <: AbstractComponent end
+x_init(::EmptyKeyed) = nothing
+u_types(::EmptyKeyed) = (var"" = Float64,)
+y_types(::EmptyKeyed) = (y = Float64,)
+y_direct(::EmptyKeyed, (; u)) = (y = u[BARE],)
+
+function assembly_bare_contracts()
+    @testset "the child segment alone is a bare port's endpoint, both ways (§6.1, §8.6, D-436)" begin
+        pair = Group((; r = BareRamp(), s = BareScale()); local_wires = ("r" => "s",),
+                     output_wires = ("s" => "y",))
+        structure = build(pair).structure
+        @test only(structure.levels).wires == [("r", BARE) => ("s", BARE), ("s", BARE) => ("", :y)]
+        @test resolve_terminal(pair, "s") === (pair.children.s, "")
+        @test input_faces(BareScale()) == [""] && output_faces(BareScale()) == [""]
+        @test input_faces(BareRamp()) == String[] && output_faces(BareSink()) == ["y"]
+        @test input_faces(EmptyKeyed()) == [""]      # the empty key lists as it is
+    end
+    @testset "an endpoint whose form disagrees with its side's shape is refused with the list in hand (§8.6, D-436)" begin
+        # One segment at a named side, a producer and a consumer.
+        diags = diagnostics(failure(() -> build(Group((; p = Plant(), s = BareScale());
+                                                      local_wires = ("p" => "s", "s" => "p")))))
+        unknown = [d for d in diags if d isa UnknownPort]
+        @test Set((d.endpoint, d.path, d.spelling, d.port, d.candidates) for d in unknown) ==
+              Set([(:source, "p", "p", BARE, [:y, :power]), (:destination, "p", "p", BARE, [:u])])
+        # One segment at an assembly, whose faces are never bare.
+        d = first(d for d in diagnostics(failure(() -> build(Group((; l = bare_loop(), s = BareScale());
+                                                                   local_wires = ("l" => "s",)))))
+                  if d isa UnknownPort)
+        @test (d.endpoint, d.path, d.port, d.candidates) == (:source, "l", BARE, [:x])
+        # Two segments at a bare side: the name against a list of one empty name.
+        d = first(d for d in diagnostics(failure(() -> build(Group((; r = BareRamp(), s = BareScale());
+                                                                   local_wires = ("r/out" => "s",)))))
+                  if d isa UnknownPort)
+        @test (d.endpoint, d.path, d.spelling, d.port, d.candidates) == (:source, "r", "r/out", :out, [BARE])
+        # One segment naming the bare port of the other side is a direction conflict.
+        d = first(d for d in diagnostics(failure(() -> build(Group((; k = BareSink(), s = BareScale());
+                                                                   local_wires = ("k" => "s",)))))
+                  if !(d isa UnconnectedInput))
+        @test d isa FaceDirectionConflict && d.found === :input && d.wanted === :producer
+        # An empty endpoint, or one ending in `/`, names no terminal.
+        diags = diagnostics(failure(() -> build(Group((; r = BareRamp(), s = BareScale());
+                                                      local_wires = ("r/" => "s", "" => "s")))))
+        @test count(d -> d isa PathResolution && d.reason === :not_a_terminal, diags) == 2
+    end
+    @testset "a face name is never empty, an empty contract key included (§8.6, D-436)" begin
+        diags = diagnostics(failure(() -> build(Group((; r = BareRamp(), e = EmptyKeyed());
+                                                      local_wires = ("r" => "e",)))))
+        @test any(d -> d isa FaceNameIllegal && d.path == "e" && d.face == "" && d.invariant === :empty,
+                  diags)
+        # Never read as bare: the child segment alone finds no bare input there.
+        @test any(d -> d isa UnknownPort && d.path == "e" && d.port === BARE, diags)
+        d = only(diagnostics(failure(() -> build(Group((; s = BareScale()); input_wires = ("" => "s",),
+                                                       output_wires = ("s" => "y",))))))
+        @test d isa FaceNameIllegal && d.path == "" && d.invariant === :empty
+    end
+    @testset "the passthrough labels a bare face with the prefix alone and routes it to the child (§8.8, D-436)" begin
+        world = Group((; gain = BareScale(), loop = Group((; flow = BareFlow());
+                                                          input_wires = ("u" => "flow",))))
+        @test input_passthrough(world, "gain") == ("gain" => "gain",)
+        @test output_passthrough(world, "gain"; prefix = "k") == ("gain" => "k",)
+        @test input_passthrough(world, "gain"; prefix = "") == ("" => "gain",)
+        @test input_passthrough(world, "loop") == ("loop.u" => "loop/u",)
+        rig = Group((; gain = BareScale()); input_wires = input_passthrough(Group((; gain = BareScale())), "gain"),
+                    output_wires = output_passthrough(Group((; gain = BareScale())), "gain"; prefix = "y"))
+        @test build(rig).structure.root_inputs == [:gain]
+        d = only(diagnostics(failure(() -> build(Group((; gain = BareScale());
+            input_wires = input_passthrough(Group((; gain = BareScale())), "gain"; prefix = ""),
+            output_wires = ("gain" => "y",))))))
+        @test d isa FaceNameIllegal && d.invariant === :empty
+    end
+    @testset "at a primitive root, two bare contracts collide and a bare input has no face (§8.2, §8.6, D-210, D-436)" begin
+        d = only(diagnostics(failure(() -> build(BareScale()))))
+        @test d isa FaceNameCollision && d.site === :root && d.faces == [""]
+        d = only(diagnostics(failure(() -> build(BareSink()))))
+        @test d isa IllegalPortType && d.site === :root_input && d.name === BARE &&
+              d.reason === :bare_at_root && d.declared === Float64 && path(d) == ""
+        # A bare output at the root is legal, its face headless.
+        root = build(BareRamp())
+        @test isempty(root.structure.root_inputs) && haskey(activation(root, Float64).layout.addr, ("", BARE))
+    end
+end
+
 function test_assembly()
     assembly_class()
     assembly_container_children()
@@ -1384,4 +1475,5 @@ function test_assembly()
     assembly_obligations()
     assembly_primitives()
     assembly_child_lists()
+    assembly_bare_contracts()
 end

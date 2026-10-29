@@ -606,4 +606,36 @@ function test_readers()
         @test d.reason === :undeclared && d.field === BARE && isempty(d.candidates)
         @test a.selector == "get_state(\"plant\")"             # spelled as authored
     end
+    @testset "a bare port is read by the headless address, and a shape mismatch is refused (§14.4, D-436)" begin
+        model = Model(bare_ports_world(); h = 1//100)
+        init!(model, set(u = (u = 0.5,)))
+        r = _compile_reads(reads(spin = get_output("plant/spin"), y = get_output("plant/spin", "[2]"),
+                                 flow = get_output("plant/loop/flow"), total = get_face("total"),
+                                 ramp = get_face("ramp")), model.deployment.build)
+        v = gather_reads(r, model.exec)
+        @test v.spin == SVector(1.0, 0.0) && v.y === 0.0 && v.flow === 1.0 && v.ramp === 0.0
+        @test v.total === port(model, "plant/summer") === port(model, "", :total)
+        @test port(model, "plant/loop/flow") === 1.0
+        err = failure(() -> _compile_reads(reads(a = get_output("plant/spin", "y"),
+                                                 b = get_output("plant/loop"),
+                                                 c = get_output("plant/spin", "[3]")),
+                                           model.deployment.build))
+        (a, b_, c) = diagnostics(err)
+        @test a.reason === :port_shape && a.field === :y && a.candidates == [BARE]
+        @test b_.reason === :assembly_path
+        @test c.reason === :index_bounds && c.step == "[3]"
+        # A headless address against named ports.
+        named = Model(bare_world(); h = 1//100)
+        d = only(diagnostics(failure(() -> _compile_reads(reads(a = get_output("plant")),
+                                                          named.deployment.build))))
+        @test d.reason === :port_shape && d.field === BARE && d.candidates == [:y, :power]
+        @test d.selector == "get_output(\"plant\")"
+        # At a primitive root its ports are its faces, a bare one headless.
+        root = Model(BareRamp(); h = 1//10)
+        init!(root)
+        @test gather_reads(_compile_reads(reads(a = get_face("")), root.deployment.build), root.exec).a === 0.0
+        d = only(diagnostics(failure(() -> _compile_reads(reads(a = get_face("x")), root.deployment.build))))
+        @test d.reason === :port_shape && d.field === :x && d.candidates == [BARE]
+        @test port(root, "") === 0.0
+    end
 end

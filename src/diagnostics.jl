@@ -78,16 +78,22 @@ _faceset(list) = isempty(list) ? "empty" : "{$(join(list, ", "))}"
 _plainlist(list) = join(list, ", ")
 _symtuple(list) = "(" * join((":$n" for n in list), ", ") * (length(list) == 1 ? ",)" : ")")
 
-# Design: §7.1, §7.3, §8.2.
-# A bare store's reserved name wherever bookkeeping keys a leaf by a `Symbol`: a
-# store declared as one value, not a `NamedTuple`, has no field name of its own.
-# Nothing else spells the empty symbol.
+# Design: §7.1, §7.3, §8.2, D-435, D-436.
+# The reserved name wherever bookkeeping keys a leaf or a port by a `Symbol`: a
+# store declared as one value, or a contract declared as one type, has no name
+# of its own. Nothing else spells the empty symbol.
 const BARE = Symbol("")
 
 # The one spelling of a `(prefix, name)` pair, `x.q` or `plant/out`: a bare name
 # drops with its separator, so a bare leaf reads as the prefix alone.
 _named(prefix, name::Symbol, sep::AbstractString = ".") =
     name === BARE ? string(prefix) : string(prefix, sep, name)
+
+# A port or face in a message, `plant/integrator/out` in backticks: a bare one
+# reads as its component, and one of the root by its name alone.
+_at_port(path::AbstractString, name::Symbol) =
+    isempty(path) ? (name === BARE ? _at_path(path) : "`$name`") :
+                    "`$(_named(path, name, "/"))`"
 
 # --- the carrier (§13.1, §13.2, D-058) ----------------------------------------
 
@@ -351,12 +357,24 @@ Base.@kwdef struct UnknownPort <: Diagnostic
     candidates::Vector{Symbol} = Symbol[]    # that end's port list, the did-you-mean
 end
 path(d::UnknownPort) = d.path
-message(d::UnknownPort) =
-    d.endpoint === :connection ?
-    "$(d.entry): the entry routes to no internal endpoint — every `input_wires` " *
-    "entry routes to at least one, a face feeding nothing declaring nothing (§8.6)" :
+function message(d::UnknownPort)
+    d.endpoint === :connection &&
+        return "$(d.entry): the entry routes to no internal endpoint — every `input_wires` " *
+               "entry routes to at least one, a face feeding nothing declaring nothing (§8.6)"
+    side = d.endpoint === :source ? "output" : "input"
+    # The child segment alone addresses a bare side, and a face name a named one (D-436).
+    d.port === BARE &&
+        return "$(d.entry): `$(d.spelling)` names $(_at_path(d.path)) alone, which addresses " *
+               "a bare $side, and " *
+               (isempty(d.candidates) ? "it has no $side face" :
+                "its $side faces are named, $(_plainlist(d.candidates))") * " (§6.1, §8.6)"
+    d.candidates == [BARE] &&
+        return "$(d.entry): `$(d.spelling)` names `$(d.port)` on $(_at_path(d.path)), whose " *
+               "$side is bare, one port with no face — write the endpoint as the child " *
+               "segment alone, `$(first(rsplit(d.spelling, '/'; limit = 2)))` (§6.1, §8.6)"
     "$(d.entry): `$(d.spelling)` names no `$(d.port)` on $(_at_path(d.path)) — its " *
     "faces are $(_plainlist(d.candidates))"
+end
 
 "§6.1, §8.4 w2: an input no local wire and no `input_wires` chain feeds."
 Base.@kwdef struct UnconnectedInput <: Diagnostic
@@ -369,9 +387,9 @@ Base.@kwdef struct UnconnectedInput <: Diagnostic
 end
 path(d::UnconnectedInput) = d.path
 message(d::UnconnectedInput) =
-    "`$(d.path)`.$(d.face) declared $(d.declared) is fed by nothing" *
+    "$(_at_port(d.path, d.face)) declared $(d.declared) is fed by nothing" *
     (isempty(d.handed) ? "" :
-     ", handed up through " * join(("`$p`.$f" for (p, f) in d.handed), ", ") *
+     ", handed up through " * join((_at_port(p, f) for (p, f) in d.handed), ", ") *
      " and fed by nothing there") *
     " — every input is fed exactly once, by a local wire or by an `input_wires` chain " *
     "ending at a root input face (§6.1)"
@@ -387,7 +405,7 @@ Base.@kwdef struct TwoProducers <: Diagnostic
 end
 path(d::TwoProducers) = d.path
 message(d::TwoProducers) =
-    "`$(d.path)`.$(d.port) is fed twice: from $(d.incumbent_producer) by $(d.incumbent), " *
+    "$(_at_port(d.path, d.port)) is fed twice: from $(d.incumbent_producer) by $(d.incumbent), " *
     "and from $(d.producer) by $(d.entry) — every input takes exactly one connection, " *
     "across levels included (§6.1)"
 
@@ -402,9 +420,9 @@ Base.@kwdef struct WireTypeMismatch <: Diagnostic
 end
 path(d::WireTypeMismatch) = d.path
 message(d::WireTypeMismatch) =
-    "`$(d.path)`.$(d.face) declared $(d.declared), fed from " *
+    "$(_at_port(d.path, d.face)) declared $(d.declared), fed from " *
     (isempty(d.producer_path) ? "root input `$(d.producer_port)`" :
-     "`$(d.producer_path)`.$(d.producer_port)") *
+     _at_port(d.producer_path, d.producer_port)) *
     "::$(d.observed)"
 
 "§6.1, §8.2: a walking producer leaf feeding a pinned entry leaf of a continuous consumer."
@@ -419,9 +437,9 @@ Base.@kwdef struct WalkingFaceAtFrozenEntry <: Diagnostic
 end
 path(d::WalkingFaceAtFrozenEntry) = d.path
 message(d::WalkingFaceAtFrozenEntry) =
-    "`$(d.path)`.$(d.face)" *
+    _at_port(d.path, d.face) *
     (d.leaf === nothing || isempty(d.leaf) ? "" : " at leaf `$(d.leaf)`") *
-    " is declared $(d.declared), frozen, but `$(d.producer_path)`.$(d.producer_port) " *
+    " is declared $(d.declared), frozen, but $(_at_port(d.producer_path, d.producer_port)) " *
     "declares $(d.observed) there, which walks with the activation — remove the entry's " *
     "`Pinned` if the consumer promotes; feed it from a non-walking source if the freeze " *
     "is genuine (§6.1, §8.2)"
@@ -610,7 +628,9 @@ message(d::DeclarationOnWrongTier) =
     "$(_at_path(d.path)) declares `$(d.declaration)` but no `x_init` — there is no state " *
     "manifold to project onto (§5.2)" :
     d.reason === :pinned_entry ?
-    "$(_at_path(d.path)): entry `$(d.entry)` is declared `Pinned` in `$(d.declaration)`, " *
+    "$(_at_path(d.path)): " *
+    (d.entry === BARE ? "the bare `$(d.declaration)` is declared `Pinned`, " :
+                        "entry `$(d.entry)` is declared `Pinned` in `$(d.declaration)`, ") *
     "but this leaf is discrete, where every leaf is pinned — drop the marker (§8.2, §8.5)" :
     "$(_at_path(d.path)): `$(d.declaration)` is declared in the $(d.found)-tier form, but this " *
     "component's other declarations announce the $(d.announced) tier (§8.2)"
@@ -619,14 +639,19 @@ message(d::DeclarationOnWrongTier) =
 Base.@kwdef struct FaceNameIllegal <: Diagnostic
     path::String
     face::String
-    invariant::Symbol                        # the invariant broken; :contains_slash is §8.6's
+    invariant::Symbol                        # the invariant broken: :contains_slash | :empty, §8.6's
 end
 path(d::FaceNameIllegal) = d.path
-message(d::FaceNameIllegal) =
-    d.invariant === :contains_slash ?
-    "$(_at_path(d.path)): face name `$(d.face)` contains `/`, which is reserved for " *
-    "structural paths (§8.6)" :
+function message(d::FaceNameIllegal)
+    d.invariant === :contains_slash &&
+        return "$(_at_path(d.path)): face name `$(d.face)` contains `/`, which is reserved " *
+               "for structural paths (§8.6)"
+    d.invariant === :empty &&
+        return "$(_at_path(d.path)): a face name is empty — a face name is never empty, and a " *
+               "bare port is spelled by omitting the name, one type as the whole `u_types` " *
+               "or `y_types` (§8.6, D-436)"
     "$(_at_path(d.path)): face name `$(d.face)` breaks the `$(d.invariant)` invariant (§8.6)"
+end
 
 "§8.6: one face name declared twice — across an assembly's two methods, or at a primitive root."
 Base.@kwdef struct FaceNameCollision <: Diagnostic
@@ -636,6 +661,10 @@ Base.@kwdef struct FaceNameCollision <: Diagnostic
 end
 path(d::FaceNameCollision) = d.path
 message(d::FaceNameCollision) =
+    d.site === :root && d.faces == [""] ?
+    "$(_at_path("")): `u_types` and `y_types` are both bare — at the root a primitive's " *
+    "faces are its two contracts' names together, and a bare contract takes the reserved " *
+    "empty name there, so the two collide; name one of them (§8.6, D-210, D-436)" :
     d.site === :root ?
     "$(_at_path("")): face name(s) $(_plainlist(d.faces)) appear twice — at the root a " *
     "primitive's faces are its `u_types` and `y_types` keys together, and a key " *
@@ -825,18 +854,25 @@ Base.@kwdef struct IllegalPortType <: Diagnostic
     name::Symbol
     declared::Any                            # the offending type
     reason::Symbol = :no_leaves              # :no_leaves | :mutable | :handle_at_root | :nested_marker |
-                                             # :stop_flag_nested | :stop_flag_at_root
+                                             # :stop_flag_nested | :stop_flag_at_root | :bare_at_root
     position::Any = nothing                  # :mutable — the dotted position of the mutable type, "" for the port itself
 end
 path(d::IllegalPortType) = d.path
 function message(d::IllegalPortType)
-    site = d.site === :root_input ? "root input" : d.site === :face ? "input face" : "port"
+    d.reason === :bare_at_root &&
+        return "$(_at_path(d.path)): `u_types` declares $(d.declared) bare, one input with no " *
+               "face, and a root input is a face the periphery writes by name — name the " *
+               "entry, or test the component in a rig that wires its input (§8.2, §11.3, " *
+               "§13.7, D-436)"
+    site = d.name === BARE ? (d.site === :face ? "bare input" : "bare port") :
+           (d.site === :root_input ? "root input" : d.site === :face ? "input face" : "port") *
+           " `$(d.name)`"
     d.reason === :nested_marker &&
-        return "$(_at_path(d.path)): $site `$(d.name)` declares $(d.declared), with the `Pinned` " *
+        return "$(_at_path(d.path)): $site declares $(d.declared), with the `Pinned` " *
                "marker below the top of the entry — the marker wraps a whole entry, and a field " *
                "that never follows the scalar is typed concretely in its struct (§8.2, D-265)"
     d.reason === :mutable &&
-        return "$(_at_path(d.path)): $site `$(d.name)` declares $(d.declared), which is " *
+        return "$(_at_path(d.path)): $site declares $(d.declared), which is " *
                "mutable$(d.position == "" ? "" : " at `$(d.position)`") — a port value is " *
                "immutable, bulk data rides behind an immutable handle (§4.4)"
     d.reason === :handle_at_root &&
@@ -844,14 +880,14 @@ function message(d::IllegalPortType)
                "leaf, which has no synthesis and no producer here — wire a component that " *
                "emits it, or a stub child in a rig (§8.2, §13.7, D-237, D-364)"
     d.reason === :stop_flag_nested &&
-        return "$(_at_path(d.path)): $site `$(d.name)` declares $(d.declared), which nests a " *
+        return "$(_at_path(d.path)): $site declares $(d.declared), which nests a " *
                "`StopFlag` — a stop request is a port of exactly `StopFlag`, rostered per port, " *
                "so publish the flag as a port of its own (§13.5, D-316)"
     d.reason === :stop_flag_at_root &&
         return "$(_at_path(d.path)): root input `$(d.name)` carries a `StopFlag`, and a stop request " *
                "is the model's, never an operator's — feed its consumers from a component's " *
                "`StopFlag` port, and stop a run from outside with `stop!` (§12.1, §13.5, D-316)"
-    "$(_at_path(d.path)): $site `$(d.name)` declares $(d.declared), which has no leaves"
+    "$(_at_path(d.path)): $site declares $(d.declared), which has no leaves"
 end
 
 "§8.2: a store declared `(;)`, a retired spelling of the empty store."
@@ -931,7 +967,9 @@ path(d::AlgebraicCycle) = first(d.members)
 # The cluster read out: its wires as one loop, a dead hop in the ladder's own
 # words, and the per-member tracing modes as one phrase (§13.8, D-245).
 _wirelist(wires) = join(("$p → $c" for (p, c) in wires), ", ")
-_hop((member, face, output_port)) = "`$member`'s `$output_port` does not route `$face`"
+_hop((member, face, output_port)) =
+    "`$member`'s " * (output_port === BARE ? "bare output" : "`$output_port`") *
+    " does not route " * (face === BARE ? "its bare input" : "`$face`")
 
 function _modes(traced)
     rest = ["`$member` " * (tracing === :sampled ? "at sampled states" : "structurally")
@@ -945,7 +983,9 @@ end
 _cycle_hint(dead) =
     join((let dead_faces = unique(face for (hop_member, face, _) in dead
                                   if hop_member == member)
-              "split `$member`, or narrow the neighbor's contract if $(_namelist(dead_faces)) " *
+              "split `$member`, or narrow the neighbor's contract if " *
+              join((face === BARE ? "its bare input" : "`$face`" for face in dead_faces), ", ") *
+              " " *
               (length(dead_faces) == 1 ? "is" : "are") *
               " consumed only in a fallback branch"
           end for member in unique(first.(dead))), "; ") * " (§5.4)"
@@ -979,6 +1019,9 @@ Base.@kwdef struct ProducedByTwoStages <: Diagnostic
 end
 path(d::ProducedByTwoStages) = d.path
 message(d::ProducedByTwoStages) =
+    d.ports == [BARE] ?
+    "$(_at_path(d.path)): the bare port is returned by `y_state` and by `y_direct` — a port " *
+    "is produced once, so one of the two stages returns it (§5.3, §8.3, D-436)" :
     "`$(d.path)`: " *
     join(("`$p` by `y_state` and by `y_direct`" for p in d.ports), ", ") *
     " — a port is produced once: drop it from `y_direct`, or from its stage-1 " *
@@ -993,6 +1036,10 @@ Base.@kwdef struct DeclaredNotProduced <: Diagnostic
 end
 path(d::DeclaredNotProduced) = d.path
 message(d::DeclaredNotProduced) =
+    d.ports == [BARE] ?
+    "$(_at_path(d.path)): the bare port `y_types` declares is produced by no stage — " *
+    "`y_state` or `y_direct` returns its value, or `y_types` drops it (§5.3, §8.3, D-436); " *
+    "the state fields are $(_namelist(d.state_fields))" :
     "`$(d.path)`: declared port(s) $(_plainlist(d.ports)) produced by no stage — " *
     "`y_state` returns them, or `y_types` drops them (§5.3, §8.3); the stages " *
     "return $(_namelist(d.products)); the state fields are $(_namelist(d.state_fields))"
@@ -1088,6 +1135,9 @@ function message(d::ConformanceFailure)
                "against the field set (§9.3, §9.5)"
     end
     # A bare declaration is one value, so its one type mismatch names no field.
+    d.field === BARE && d.shape === :ports &&
+        return "`$(d.path)`: $(_conformance_what(d)) returns $(d.observed), and the bare " *
+               "port is declared $(d.declared)" * _pin(d)
     d.field === BARE &&
         return "`$(d.path)`: $(_conformance_what(d)) returns $(d.observed), the " *
                (d.shape === :s_init ? "state store" : d.shape === :mode ? "mode store" : "state") *
@@ -1737,7 +1787,8 @@ Base.@kwdef struct ReadResolution <: Diagnostic
                      # :input_face_not_output|:unknown_output_face|
                      # the source rule's (§14.4): :store_selector|
                      # the leaf address's (§14.4, D-276): :leaf_syntax|:no_such_field|
-                     # :opaque_leaf|:not_indexable|:index_arity|:index_bounds
+                     # :opaque_leaf|:not_indexable|:index_arity|:index_bounds|
+                     # the port's shape against the head's (D-436): :port_shape
                      # A missing input face is :unknown_root_input at the root
                      # and :no_input_face at a mount. :input_face_not_output
                      # serves both levels.
@@ -1783,6 +1834,16 @@ function message(d::ReadResolution)
         return _read_message(d, "$(_at_path(d.path)) declares one bare state value, with no " *
                            "field `$(d.field)` — read it by the headless address, which " *
                            "names no field")
+    # A headless address against named ports, or a named head against the one
+    # bare port, whose name in hand is `BARE` (D-436).
+    d.reason === :port_shape && d.field === BARE &&
+        return _read_message(d, "$(_at_path(d.path))'s output ports are named, " *
+                           "$(_namelist(d.candidates)), and a headless address reads a bare " *
+                           "port — name the port at the head of the address", "§14.4, D-436")
+    d.reason === :port_shape &&
+        return _read_message(d, "$(_at_path(d.path)) declares one bare output port, with no " *
+                           "name `$(d.field)` — read it by the headless address, which " *
+                           "names no port", "§14.4, D-436")
     d.reason === :undeclared &&
         return _read_message(d, "$(_at_path(d.path)) declares no $(_declares_noun(d.declares)) " *
                            "`$(d.field)` — its $(_declares_noun(d.declares)) names are " *
@@ -1794,8 +1855,8 @@ function message(d::ReadResolution)
         return _read_message(d, "`$(d.field)` is no input face of $(_at_path(d.mount)) — its " *
                            "input faces are $(_namelist(d.candidates))", "§14.9, D-277")
     d.reason === :internally_wired &&
-        return _read_message(d, "`$(d.field)` is fed by `$(first(d.producer))/" *
-                           "$(last(d.producer))`, so no root input holds it — a mounted " *
+        return _read_message(d, "`$(d.field)` is fed by $(_at_port(d.producer...)), " *
+                           "so no root input holds it — a mounted " *
                            "problem or tap set reads and writes its level's faces through the export " *
                            "chain, and a face the world computes is not free", "§14.9")
     d.reason === :input_face_not_output &&
@@ -1854,8 +1915,7 @@ function message(d::ConditionResolution)
                "[$(d.origin)]"
     d.reason === :internally_wired &&
         return "$(_at_path(d.path))'s input face `$(d.field)` reaches no " *
-               "root input — it is wired internally, to `$(first(d.producer))`." *
-               "$(last(d.producer)), and " *
+               "root input — it is wired internally, to $(_at_port(d.producer...)), and " *
                "the first sweep overwrites it; unexported stays unpokeable (§14.2) " *
                "[$(d.origin)]"
     d.reason === :no_store &&
@@ -1992,7 +2052,7 @@ function _leaf_clause(d)
     d.reason === :leaf_syntax &&
         return (isempty(d.leaf) ? "its leaf address is empty" :
                 "its leaf address `$(d.leaf)` cannot be read at `$(d.step)`") *
-               " — an address is a name, or none on a bare store, followed by `.name` and " *
+               " — an address is a name, or none on a bare store or port, followed by `.name` and " *
                "`[k]` or `[k,l]` steps"
     d.reason === :no_such_field &&
         return "`$(d.step)` steps into `$(d.declared)`, which has no " *
@@ -2409,6 +2469,7 @@ _checkpoint_subject(d::CheckpointMismatch) =
     d.name === :paths ? "component-path list" :
     d.name === :sizes ? "cell-size list" :
     d.name === :events ? "event list, `(path, name)` in the priors' order," :
+    d.name === Symbol("port.") ? "cell of $(_at_path(d.path))'s bare port" :
     startswith(String(d.name), "port.") ?
     "cell of $(_at_path(d.path))'s port `$(chopprefix(String(d.name), "port."))`" :
     d.name === :x ? "$(_at_path(d.path))'s `x` type" :

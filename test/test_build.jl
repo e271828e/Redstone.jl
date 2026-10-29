@@ -961,7 +961,7 @@ y_state(::DirectRequester, _) = (halt = NO_STOP,)
 
 # A `StopRequest` fed by a constant, as one subtree.
 requested(value, reason) = Group((; src = Constant(value), stop = StopRequest(reason = reason));
-                                 local_wires = ("src/out" => "stop/request",))
+                                 local_wires = ("src" => "stop",))
 
 function build_stop_roster()
     @testset "the layout rosters every `StopFlag` port, aligned with its buffer, with its reason (§9.7, §13.5, D-316)" begin
@@ -971,7 +971,7 @@ function build_stop_roster()
                          d = DirectRequester()))
         layout = activation(build(model), Float64).layout
         @test [(r.path, r.port, r.reason) for r in layout.requesters] ==
-              [("a/stop", :flag, "a fell"), ("b/stop", :flag, "b done"), ("d", :halt, "")]
+              [("a/stop", BARE, "a fell"), ("b/stop", BARE, "b done"), ("d", :halt, "")]
         for (i, r) in enumerate(layout.requesters)
             @test layout.addr[(r.path, r.port)].offsets == (i - 1,)
         end
@@ -1627,6 +1627,88 @@ struct ShapedState <: AbstractComponent end
 x_init(::ShapedState) = (pose = (x = 0.0, v = 0.0), u = UnitVec(SVector(3.0, 4.0)), ω = 0.0)
 x_deriv(::ShapedState, (; x)) = (pose = (x = 0.0, v = 0.0), u = x.u, ω = 0.0)
 
+# --- bare contracts (§8.2, §9.3, §9.5, D-436) ----------------------------------
+# The return laws and the bookkeeping against a contract declared as one type:
+# the declared shape picks the law, so a `NamedTuple` against a bare port is one
+# wrong type with no field, and a bare port two stages return, or none, is named
+# by its component alone.
+struct BareWrongPort <: AbstractComponent end
+x_init(::BareWrongPort) = nothing
+y_types(::BareWrongPort) = Float64
+y_state(::BareWrongPort, _) = (y = 1.0,)
+
+struct BareTwice <: AbstractComponent end
+x_init(::BareTwice) = nothing
+u_types(::BareTwice) = Float64
+y_types(::BareTwice) = Float64
+y_state(::BareTwice, _) = 1.0
+y_direct(::BareTwice, (; u)) = u
+
+struct BareUnproduced <: AbstractComponent end
+x_init(::BareUnproduced) = 0.0
+y_types(::BareUnproduced) = Float64
+x_deriv(::BareUnproduced, _) = 0.0
+
+# A stage 2 that reads no input: a loop through it is artificial, its one hop dead.
+struct BareMute <: AbstractComponent end
+x_init(::BareMute) = nothing
+u_types(::BareMute) = Float64
+y_types(::BareMute) = Float64
+y_direct(::BareMute, _) = 1.0
+
+function build_bare_contracts()
+    @testset "a bare contract is one port keyed by the empty name in every pair (§8.2, §9.1, D-436)" begin
+        built = build(bare_ports_world(); activations = (Float64, ProbeDual, LinearizeDual))
+        @test built isa Build
+        structure = built.structure
+        loop_row = only(level for level in structure.levels if level.path == "plant/loop")
+        @test loop_row.wires == [("plant/loop/flow", BARE) => ("plant/loop/scale", BARE),
+                                 ("plant/loop/scale", BARE) => ("plant/loop/flow", BARE),
+                                 ("plant/loop/scale", BARE) => ("plant/loop/echo", BARE),
+                                 ("plant/loop/flow", BARE) => ("plant/loop", :x)]
+        @test terminal_producer(structure, ("plant/summer", BARE)) == ("", :u)
+        @test terminal_producer(structure, ("plant/spin", BARE)) == ("plant/loop/flow", BARE)
+        row(path) = built.outputs.components[index_of(structure, path)]
+        @test row("plant/loop/flow").stage1 == [BARE] && isempty(row("plant/loop/flow").stage2)
+        @test isempty(row("plant/loop/scale").stage1) && row("plant/loop/scale").stage2 == [BARE]
+        # Stage 2 on stage 2 is the one dependence: `scale` runs before `echo`.
+        order = [structure.components[ci].path for ci in built.outputs.order]
+        @test findfirst(==("plant/loop/scale"), order) < findfirst(==("plant/loop/echo"), order)
+        for T in (Float64, ProbeDual, LinearizeDual)
+            act = activation(built, T)
+            @test haskey(act.layout.addr, ("plant/loop/flow", BARE))
+            @test act.layout.addr[("plant", :total)] === act.layout.addr[("plant/summer", BARE)]
+            @test act.decls[index_of(structure, "plant/spin")].outs == NamedTuple{(BARE,)}((SVector{2,T},))
+            @test keys(act.products[index_of(structure, "plant/loop/flow")]) == (BARE,)
+        end
+        # The run: `ẋ = -2x` from 1, the summer counting `u` per tick.
+        sim = Simulation(built; h = 1//100)
+        init!(sim, set(u = (u = 0.5,)))
+        run!(sim; t_end = 1.0)
+        @test port(sim, "plant/loop/flow") ≈ exp(-2.0) rtol = 1e-8
+        @test port(sim, "plant/loop/echo") ≈ 4 * port(sim, "plant/loop/flow") rtol = 1e-12
+        @test port(sim, "", :total) === port(sim, "plant/summer")
+        @test state(sim, "plant/summer") ≈ port(sim, "plant/summer") + 0.5
+    end
+    @testset "a bare port's return is its value, held to its type alone (§9.3, §9.5, D-436)" begin
+        d = only(diagnostics(failure(() -> build(BareWrongPort()))))
+        @test d isa ConformanceFailure && d.reason === :field_type && d.shape === :ports &&
+              d.field === BARE && d.observed === @NamedTuple{y::Float64} && d.declared === Float64
+        d = diagnostic(failure(() -> build(fed(BareTwice()))))
+        @test d isa ProducedByTwoStages && d.path == "c" && d.ports == [BARE]
+        d = only(diagnostics(failure(() -> build(BareUnproduced()))))
+        @test d isa DeclaredNotProduced && d.path == "" && d.ports == [BARE] && isempty(d.products)
+    end
+    @testset "a loop through bare ports is traced on the empty name (§13.8, D-436)" begin
+        d = only(diagnostics(failure(() -> build(Group((; a = BareScale(), b = BareScale());
+                                                       local_wires = ("a" => "b", "b" => "a"))))))
+        @test d isa AlgebraicCycle && d.wires == ["a" => "b", "b" => "a"] && d.classification === :real
+        d = only(diagnostics(failure(() -> build(Group((; a = BareScale(), m = BareMute());
+                                                       local_wires = ("a" => "m", "m" => "a"))))))
+        @test d.classification === :artificial && d.dead == [("m", BARE, BARE)]
+    end
+end
+
 function build_state_leaves()
     @testset "an x_init field is a Float64 or an SArray of them, flat (§7.1, §8.2, D-094)" begin
         # One throw for the whole model, every offending field named with the
@@ -2267,6 +2349,7 @@ function test_build()
     build_tier()
     build_store_values()
     build_store_form()
+    build_bare_contracts()
     build_state_leaves()
     build_barrier()
     build_carrier_structure()

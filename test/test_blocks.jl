@@ -13,74 +13,74 @@
 # One gate over three `Constant` sources, at the given input values.
 gate_model(gate, (a, b, c)) =
     Group((; a = Constant(a), b = Constant(b), c = Constant(c), g = gate);
-          local_wires = ("a/out" => "g/in1", "b/out" => "g/in2", "c/out" => "g/in3"))
+          local_wires = ("a" => "g/in1", "b" => "g/in2", "c" => "g/in3"))
 
 # A sum over a walking source, a pinned source and a delayed copy of the first.
 blocks_sum_model() =
     Group((; r = Ramp(1.0), k = Constant(2.0), d = UnitDelay(0.5), s = SumJunction{Float64,3}());
-          local_wires = ("r/out" => "s/in1", "k/out" => "s/in2", "d/out" => "s/in3",
-                         "r/out" => "d/in"))
+          local_wires = ("r/out" => "s/in1", "k" => "s/in2", "d" => "s/in3",
+                         "r/out" => "d"))
 
 # A delay behind a tick counter: the counter's `n` is its tick index. The delay
 # line's `V` is a float, so a junction converts the count.
-delay_model(delay) = Group((; c = TickCounter(), d = delay); local_wires = ("c/n" => "d/in",))
+delay_model(delay) = Group((; c = TickCounter(), d = delay); local_wires = ("c/n" => "d",))
 delay_model(delay::Delay) = Group((; c = TickCounter(), f = Junction{Int, Float64, 1}(float), d = delay);
-                                  local_wires = ("c/n" => "f/in1", "f/out" => "d/in"))
+                                  local_wires = ("c/n" => "f/in1", "f" => "d"))
 
 # A block fed by a source, under the given rates.
 fed_by(src, c; sample_times = (;)) =
-    Group((; k = src, c = c); local_wires = ("k/out" => "c/in",), sample_times = sample_times)
+    Group((; k = src, c = c); local_wires = ("k" => "c",), sample_times = sample_times)
 
 # A pack over a walking source and a pinned one.
 pack_model(p) = Group((; a = Ramp(0.0), b = Constant(2.0), p = p);
-                      local_wires = ("a/out" => "p/in1", "b/out" => "p/in2"))
+                      local_wires = ("a/out" => "p/in1", "b" => "p/in2"))
 
 # A pack under the root inputs `a` and `b` and the root output `v`.
 pack_root_model() = Group((; p = Pack{Float64, 2}()); input_wires = ("a" => "p/in1", "b" => "p/in2"),
-                          output_wires = ("p/out" => "v",))
+                          output_wires = ("p" => "v",))
 
 # An unpack fed by a constant vector.
 unpack_model() = fed_by(Constant(SVector(1.0, -2.0, 3.5)), Unpack{Float64, 3}())
 
 # An unpack under the root input `v` and the root outputs `a` and `b`.
-unpack_root_model() = Group((; u = Unpack{Float64, 2}()); input_wires = ("v" => "u/in",),
+unpack_root_model() = Group((; u = Unpack{Float64, 2}()); input_wires = ("v" => "u",),
                             output_wires = ("u/out1" => "a", "u/out2" => "b"))
 
 # A pack into an unpack, over a walking source and a pinned one.
 round_trip_model() =
     Group((; a = Ramp(0.0), b = Constant(2.0), p = Pack{Float64, 2}(), u = Unpack{Float64, 2}());
-          local_wires = ("a/out" => "p/in1", "b/out" => "p/in2", "p/out" => "u/in"))
+          local_wires = ("a/out" => "p/in1", "b" => "p/in2", "p" => "u"))
 
 # A switch under the root inputs `in1`, `in2` and `select` and the root output
 # `out`.
 switch_root() =
     Group((; s = Switch{Float64}());
           input_wires = ("in1" => "s/in1", "in2" => "s/in2", "select" => "s/select"),
-          output_wires = ("s/out" => "out",))
+          output_wires = ("s" => "out",))
 
 # A switch between two constant vectors, selecting the second.
 vector_switch_model() =
     Group((; a = Constant(SVector(1.0, 2.0)), b = Constant(SVector(-1.0, -2.0)), k = Constant(false),
              s = Switch{SVector{2, Float64}}());
-          local_wires = ("a/out" => "s/in1", "b/out" => "s/in2", "k/out" => "s/select"))
+          local_wires = ("a" => "s/in1", "b" => "s/in2", "k" => "s/select"))
 
 # A switch between a walking source and a pinned one.
 mixed_switch_model() =
     Group((; r = Ramp(0.0), k = Constant(2.0), f = Constant(true), s = Switch{Float64}());
-          local_wires = ("r/out" => "s/in1", "k/out" => "s/in2", "f/out" => "s/select"))
+          local_wires = ("r/out" => "s/in1", "k" => "s/in2", "f" => "s/select"))
 
 # A switch whose selector is a memoryless function of its own output.
 switch_cycle_model() =
     Group((; s = Switch{Float64}(), a = Constant(1.0), b = Constant(-1.0),
              g = Junction{Float64, Bool, 1}(v -> v > 0));
-          local_wires = ("a/out" => "s/in1", "b/out" => "s/in2", "s/out" => "g/in1", "g/out" => "s/select"))
+          local_wires = ("a" => "s/in1", "b" => "s/in2", "s" => "g/in1", "g" => "s/select"))
 
 # A switch from `-1` to `1` at 0.5, its selector a source of `t`, into an
 # integrator.
 flip_model() =
     Group((; a = Constant(1.0), b = Constant(-1.0), k = Source{Bool}(t -> t >= 0.5), s = Switch{Float64}(),
              i = Integrator());
-          local_wires = ("a/out" => "s/in1", "b/out" => "s/in2", "k/out" => "s/select", "s/out" => "i/in"))
+          local_wires = ("a" => "s/in1", "b" => "s/in2", "k" => "s/select", "s" => "i"))
 
 # A vector source of `t` into a vector integrator.
 vector_source_model() =
@@ -103,7 +103,7 @@ noise_model(noise; sample_times = (;)) = Group((; c = noise); sample_times = sam
 function noise_samples(model, n)
     sim = Simulation(model; h = 1//100)
     init!(sim, set())
-    [(step!(sim; t_plus = 1//100); port(sim, "c", :out)) for _ in 1:n]
+    [(step!(sim; t_plus = 1//100); port(sim, "c")) for _ in 1:n]
 end
 
 # The mean of a sample, and its variance and kurtosis over its length.
@@ -116,34 +116,34 @@ end
 
 # A noise source driving an integrator.
 noise_integrator_model() =
-    Group((; n = GaussianWhiteNoise(seed = 1, σ = 1.0), i = Integrator()); local_wires = ("n/out" => "i/in",))
+    Group((; n = GaussianWhiteNoise(seed = 1, σ = 1.0), i = Integrator()); local_wires = ("n" => "i",))
 
 # The pendulum's angle leaving the root twice, once through a freeze.
 freeze_model() = Group((; p = Pendulum(), f = Freeze{Float64}());
-                       local_wires = ("p/θ" => "f/in",), input_wires = ("τ" => "p/u",),
-                       output_wires = ("p/θ" => "direct", "f/out" => "frozen"))
+                       local_wires = ("p/θ" => "f",), input_wires = ("τ" => "p/u",),
+                       output_wires = ("p/θ" => "direct", "f" => "frozen"))
 
 # An integrator from `x0` fed by a constant.
 integrator_model(x0, value) =
-    Group((; k = Constant(value), i = Integrator(x0 = x0)); local_wires = ("k/out" => "i/in",))
+    Group((; k = Constant(value), i = Integrator(x0 = x0)); local_wires = ("k" => "i",))
 
 # A lag at `τ = 0.5` from rest, fed by a constant.
 lag_model(value) =
     Group((; k = Constant(value), l = FirstOrderLag(τ = 0.5, x0 = zero(value)));
-          local_wires = ("k/out" => "l/in",))
+          local_wires = ("k" => "l",))
 
 # The two-state state space with two inputs and two outputs, strictly proper.
 two_state_block() = StateSpace(A = [-1 0.5; 0 -2], B = [1 0.5; 0 1], C = [1 2; 0 1])
 
 # A linear block under the root faces `in` and `out`.
 linear_root_model(block) =
-    Group((; c = block); input_wires = ("in" => "c/in",), output_wires = ("c/out" => "out",))
+    Group((; c = block); input_wires = ("in" => "c",), output_wires = ("c" => "out",))
 
 # A unit-feedback loop through a difference junction around a scalar linear
 # block, or around a scalar state space whose direct term is `D`.
 feedback_loop(plant) =
     Group((; r = Constant(1.0), e = Junction{Float64, Float64, 2}(-), p = plant);
-          local_wires = ("r/out" => "e/in1", "p/out" => "e/in2", "e/out" => "p/in"))
+          local_wires = ("r" => "e/in1", "p" => "e/in2", "e" => "p"))
 feedback_loop(D::Real) = feedback_loop(StateSpace(A = [-1.0;;], B = [1.0;;], C = [1.0;;], D = [D;;]))
 
 # The transfer functions: the lag `1/(0.5s + 1)`, the lead-lag `(s + 2)/(s + 5)`
@@ -156,14 +156,14 @@ second_order() = TransferFunction(num = (4,), den = (1, 1.2, 4))
 # constant.
 lag_pair_model() =
     Group((; k = Constant(1.0), tf = lag_form(), l = FirstOrderLag(τ = 0.5));
-          local_wires = ("k/out" => "tf/in", "k/out" => "l/in"))
+          local_wires = ("k" => "tf", "k" => "l"))
 
 # The lead-lag driving a lag plant in a unit-feedback loop.
 lead_lag_loop() =
     Group((; r = Constant(1.0), e = Junction{Float64, Float64, 2}(-), controller = lead_lag(),
              plant = FirstOrderLag(τ = 1.0));
-          local_wires = ("r/out" => "e/in1", "plant/out" => "e/in2", "e/out" => "controller/in",
-                         "controller/out" => "plant/in"))
+          local_wires = ("r" => "e/in1", "plant" => "e/in2", "e" => "controller",
+                         "controller" => "plant"))
 
 # The hold of the scalar lag `1/(s + 1)` from `x0`.
 scalar_hold(; x0 = 0.0) = DiscretizedStateSpace(A = [-1.0;;], B = [1.0;;], C = [1.0;;], x0 = x0)
@@ -172,17 +172,17 @@ scalar_hold(; x0 = 0.0) = DiscretizedStateSpace(A = [-1.0;;], B = [1.0;;], C = [
 # fed by one constant, under the given rates.
 hold_pair_model(num, den, continuous; sample_times = (;)) =
     Group((; k = Constant(1.0), d = DiscretizedTransferFunction(num = num, den = den), c = continuous);
-          local_wires = ("k/out" => "d/in", "k/out" => "c/in"), sample_times = sample_times)
+          local_wires = ("k" => "d", "k" => "c"), sample_times = sample_times)
 
 # A step into an integrator, which ramps from the instant the jump lands.
-step_model(source) = Group((; s = source, i = Integrator()); local_wires = ("s/out" => "i/in",))
+step_model(source) = Group((; s = source, i = Integrator()); local_wires = ("s" => "i",))
 
 # The step's row of the events product.
 step_events(model) = only(row for row in build(model).events.components if row.path == "s")
 
 # A block's one-state linearization through the root input `in`.
 block_linearization(comp) =
-    (sim = Simulation(fed(comp, "in"); h = 1//100);
+    (sim = Simulation(fed(comp); h = 1//100);
      init!(sim, set(u = (in = 0.0,)));
      linearize(sim, taps(x = (q = get_state("c"),), u = (in = get_input(:in),))))
 
@@ -190,14 +190,14 @@ block_linearization(comp) =
 limited_model(localized) =
     Group((; s = Step(t_step = 1.05, before = 1.0, after = -1.0),
              li = LimitedIntegrator(lower = -1.0, upper = 0.5, localized = localized));
-          local_wires = ("s/out" => "li/in",))
+          local_wires = ("s" => "li",))
 
 # A limited integrator fed by the ramp `1.05 - t`, which crosses zero at 1.05
 # with slope `-1`.
 ramp_limited_model(localized) =
     Group((; k = Constant(-1.0), ramp = Integrator(x0 = 1.05),
              li = LimitedIntegrator(lower = -2.0, upper = 0.4, localized = localized));
-          local_wires = ("k/out" => "ramp/in", "ramp/out" => "li/in"))
+          local_wires = ("k" => "ramp", "ramp" => "li"))
 
 # The limited integrator's row of the events product.
 limited_events(model) = only(row for row in build(model).events.components if row.path == "li")
@@ -209,14 +209,14 @@ zero_input_model(level, lower, upper, localized) =
              push = Step(t_step = 2.05, before = 0.0, after = level),
              input = SumJunction{Float64, 2}(),
              li = LimitedIntegrator(lower = lower, upper = upper, localized = localized));
-          local_wires = ("release/out" => "input/in1", "push/out" => "input/in2",
-                         "input/out" => "li/in"))
+          local_wires = ("release" => "input/in1", "push" => "input/in2",
+                         "input" => "li"))
 
 # A relay reading an integrator that a step drives up, then down.
 relay_model() =
     Group((; s = Step(t_step = 1.0, before = 1.0, after = -1.0), i = Integrator(),
              r = Relay(lower = 0.2, upper = 0.8));
-          local_wires = ("s/out" => "i/in", "i/out" => "r/in"))
+          local_wires = ("s" => "i", "i" => "r"))
 
 # A vector limited integrator fed by a step: component 2 saturates at 0.4 and
 # component 1 at 0.5; after 1.05 component 1 leaves and reaches its lower limit
@@ -225,7 +225,7 @@ vector_limited_model(localized) =
     Group((; s = Step(t_step = 1.05, before = SVector(1.0, 2.0), after = SVector(-1.0, 0.0)),
              li = LimitedIntegrator(lower = SVector(-1.0, -1.0), upper = SVector(0.5, 0.8),
                                     localized = localized));
-          local_wires = ("s/out" => "li/in",))
+          local_wires = ("s" => "li",))
 
 # A vector relay reading a vector integrator: component 1 is `relay_model`'s,
 # and component 2 climbs to 0.5 and never reaches its upper threshold.
@@ -233,7 +233,7 @@ vector_relay_model() =
     Group((; s = Step(t_step = 1.0, before = SVector(1.0, 0.5), after = SVector(-1.0, -0.5)),
              i = Integrator(x0 = SVector(0.0, 0.0)),
              r = Relay(lower = SVector(0.2, 0.2), upper = SVector(0.8, 0.8)));
-          local_wires = ("s/out" => "i/in", "i/out" => "r/in"))
+          local_wires = ("s" => "i", "i" => "r"))
 
 # The servo loop: a reference step, the error, a limited integrator as the
 # controller, a lag as the actuator and a lag as the plant, whose `out` leaves
@@ -242,15 +242,15 @@ servo_loop(localized) =
     Group((; reference = Step(t_step = 0.5), error = Junction{Float64, Float64, 2}(-),
              controller = LimitedIntegrator(lower = -1.2, upper = 1.2, localized = localized),
              actuator = FirstOrderLag(τ = 0.1), plant = FirstOrderLag(τ = 1.0));
-          local_wires = ("reference/out" => "error/in1", "plant/out" => "error/in2",
-                         "error/out" => "controller/in", "controller/out" => "actuator/in",
-                         "actuator/out" => "plant/in"),
-          output_wires = ("plant/out" => "out",))
+          local_wires = ("reference" => "error/in1", "plant" => "error/in2",
+                         "error" => "controller", "controller/out" => "actuator",
+                         "actuator" => "plant"),
+          output_wires = ("plant" => "out",))
 
 # The bang-bang loop: a relay switching an integrator's input on its output.
 bang_bang_loop() =
     Group((; integrator = Integrator(), relay = Relay(lower = 0.2, upper = 0.8, off = 1.0, on = -1.0));
-          local_wires = ("relay/out" => "integrator/in", "integrator/out" => "relay/in"))
+          local_wires = ("relay" => "integrator", "integrator" => "relay"))
 
 # The PID at the gains its direct calls and linearizations use, in one spelling.
 pid_controller(hold, tracking) =
@@ -284,10 +284,10 @@ function scheduled_pid_root(controller::PID{V}; frozen = false) where {V}
     port_names = keys(u_types(controller))
     scheduled = filter(∉((:r, :y, :saturation, :v)), port_names)
     freezes = NamedTuple{map(name -> Symbol(:freeze_, name), scheduled)}(map(_ -> Freeze{V}(), scheduled))
-    port_entry(name) = frozen && name in scheduled ? "freeze_$name/in" : "controller/$name"
+    port_entry(name) = frozen && name in scheduled ? "freeze_$name" : "controller/$name"
     Group(merge((; controller), frozen ? freezes : (;));
           input_wires = map(name -> String(name) => port_entry(name), port_names),
-          local_wires = frozen ? map(name -> "freeze_$name/out" => "controller/$name", scheduled) : (),
+          local_wires = frozen ? map(name -> "freeze_$name" => "controller/$name", scheduled) : (),
           output_wires = ("controller/u" => "u", "controller/u_raw" => "u_raw"))
 end
 
@@ -306,9 +306,9 @@ end
 pid_clamp_loop(controller = PID(Kp = 1.0, Ki = 0.5, Kd = 0.2, Tt = 1.0, tracking = true)) =
     Group((; reference = Step(t_step = 0.5, after = 5.0), controller = controller,
              sat = Junction{Float64, Float64, 1}(v -> clamp(v, -1.0, 1.0)), plant = Integrator());
-          local_wires = ("reference/out" => "controller/r", "plant/out" => "controller/y",
-                         "controller/u" => "sat/in1", "sat/out" => "controller/v",
-                         "sat/out" => "plant/in"))
+          local_wires = ("reference" => "controller/r", "plant" => "controller/y",
+                         "controller/u" => "sat/in1", "sat" => "controller/v",
+                         "sat" => "plant"))
 
 # A PID whose scheduled parameter `name`, `Kp` unless given, is a memoryless
 # function of its own `u`.
@@ -316,9 +316,9 @@ scheduled_pid_cycle(name = :Kp) =
     Group((; reference = Step(t_step = 0.5, after = 5.0),
              controller = PID(; merge((Kp = 1.0, Ki = 0.5, Kd = 0.2, Tt = 1.0), (; name => AsPort()))...),
              gain = Junction{Float64, Float64, 1}(abs), plant = Integrator());
-          local_wires = ("reference/out" => "controller/r", "plant/out" => "controller/y",
-                         "controller/u" => "gain/in1", "gain/out" => "controller/$name",
-                         "controller/u" => "plant/in"))
+          local_wires = ("reference" => "controller/r", "plant" => "controller/y",
+                         "controller/u" => "gain/in1", "gain" => "controller/$name",
+                         "controller/u" => "plant"))
 
 # The PID's first variant as library blocks, the inspector's example beside
 # the block: the integrator is what splits the stages (§5.4).
@@ -330,22 +330,22 @@ pid_assembly(; Kp, Ki, Kd, τd, Tt, u_min, u_max) = Group((
         raw = Junction{Float64, Float64, 3}((e, q, rate) -> Kp * e + q - Kd * rate),
         sat = Junction{Float64, Float64, 1}(v -> clamp(v, u_min, u_max)),
         aw  = Junction{Float64, Float64, 3}((e, u, u_raw) -> Ki * e + (u - u_raw) / Tt));
-      input_wires  = ("r" => "err/in1", "y" => ("err/in2", "lag/in", "der/in1")),
-      local_wires  = ("lag/out" => "der/in2",
-                      "err/out" => "raw/in1", "int/out" => "raw/in2", "der/out" => "raw/in3",
-                      "raw/out" => "sat/in1",
-                      "err/out" => "aw/in1", "sat/out" => "aw/in2", "raw/out" => "aw/in3",
-                      "aw/out" => "int/in"),
-      output_wires = ("sat/out" => "u", "raw/out" => "u_raw"))
+      input_wires  = ("r" => "err/in1", "y" => ("err/in2", "lag", "der/in1")),
+      local_wires  = ("lag" => "der/in2",
+                      "err" => "raw/in1", "int" => "raw/in2", "der" => "raw/in3",
+                      "raw" => "sat/in1",
+                      "err" => "aw/in1", "sat" => "aw/in2", "raw" => "aw/in3",
+                      "aw" => "int"),
+      output_wires = ("sat" => "u", "raw" => "u_raw"))
 
 # A single loop on the own limits: the controller drives an integrator plant,
 # continuous unless given, to a reference step to `level`.
 pid_single_loop(controller; plant = Integrator(), level = 5.0) = Group((
         reference = Step(t_step = 0.5, before = zero(level), after = level), controller = controller,
         plant = plant);
-      local_wires = ("reference/out" => "controller/r", "plant/out" => "controller/y",
-                     "controller/u" => "plant/in"),
-      output_wires = ("plant/out" => "y",))
+      local_wires = ("reference" => "controller/r", "plant" => "controller/y",
+                     "controller/u" => "plant"),
+      output_wires = ("plant" => "y",))
 
 # The single loop over two channels, one per gain set: channel 1 is the loop
 # above at `pid_controller`'s gains, channel 2 the second set's on a reference of 3.
@@ -357,23 +357,23 @@ scheduled_pid_loop() = Group((
         reference = Step(t_step = 0.5, before = 0.0, after = 5.0),
         controller = PID(Kp = AsPort(), Ki = 0.5, Kd = 0.2, τd = 0.1, Tt = 1.0, u_min = -1.0, u_max = 1.0),
         gain = Constant(1.0), plant = Integrator());
-      local_wires = ("reference/out" => "controller/r", "plant/out" => "controller/y",
-                     "gain/out" => "controller/Kp", "controller/u" => "plant/in"),
-      output_wires = ("plant/out" => "y",))
+      local_wires = ("reference" => "controller/r", "plant" => "controller/y",
+                     "gain" => "controller/Kp", "controller/u" => "plant"),
+      output_wires = ("plant" => "y",))
 
 # A servo loop: a first-order position servo limited at ±1 between the
 # controller and the plant, whose position a tracking controller tracks.
 function pid_servo_loop(controller)
     wires = Pair{String, String}[
-        "reference/out" => "controller/r", "plant/out" => "controller/y",
+        "reference" => "controller/r", "plant" => "controller/y",
         "controller/u" => "servo_error/in1", "servo/out" => "servo_error/in2",
-        "servo_error/out" => "servo/in"]
+        "servo_error" => "servo"]
     haskey(u_types(controller), :v) && push!(wires, "servo/out" => "controller/v")
-    push!(wires, "servo/out" => "plant/in")
+    push!(wires, "servo/out" => "plant")
     Group((reference = Step(t_step = 0.5, after = 5.0), controller = controller,
            servo_error = Junction{Float64, Float64, 2}(-),
            servo = LimitedIntegrator(lower = -1.0, upper = 1.0), plant = Integrator());
-          local_wires = Tuple(wires), output_wires = ("plant/out" => "y",))
+          local_wires = Tuple(wires), output_wires = ("plant" => "y",))
 end
 
 # A cascade: the controller sets a velocity servo's reference and reads the
@@ -382,17 +382,17 @@ end
 # `tracking` the velocity into `v`.
 function pid_cascade(controller; hold = false, tracking = false)
     wires = Pair{String, String}[
-        "reference/out" => "controller/r", "position/out" => "controller/y",
-        "controller/u" => "error/in1", "velocity/out" => "error/in2",
-        "error/out" => "inner/in", "inner/out" => "actuator/in",
-        "actuator/out" => "velocity/in", "velocity/out" => "position/in"]
-    hold && push!(wires, "inner/saturation" => "controller/saturation", "engaged/out" => "controller/engaged")
-    tracking && push!(wires, "velocity/out" => "controller/v")
+        "reference" => "controller/r", "position" => "controller/y",
+        "controller/u" => "error/in1", "velocity" => "error/in2",
+        "error" => "inner", "inner/out" => "actuator",
+        "actuator" => "velocity", "velocity" => "position"]
+    hold && push!(wires, "inner/saturation" => "controller/saturation", "engaged" => "controller/engaged")
+    tracking && push!(wires, "velocity" => "controller/v")
     blocks = (reference = Step(t_step = 0.5, after = 5.0), controller = controller,
               error = Junction{Float64, Float64, 2}(-), inner = LimitedIntegrator(lower = -1.2, upper = 1.2),
               actuator = FirstOrderLag(τ = 0.1), velocity = FirstOrderLag(τ = 1.0), position = Integrator())
     Group(merge(blocks, hold ? (engaged = Constant(true),) : (;));
-          local_wires = Tuple(wires), output_wires = ("position/out" => "y",))
+          local_wires = Tuple(wires), output_wires = ("position" => "y",))
 end
 
 # Two sibling controllers driving one plant through a `Switch` on the root input
@@ -402,13 +402,13 @@ end
 # a `UnitDelay` with `delay`.
 function standby_siblings(controller_a, controller_b, plant; delay)
     holding = haskey(u_types(controller_a), :engaged)
-    command = delay ? "delay/out" : "sel/out"
+    command = delay ? "delay" : "sel"
     wires = Pair{String, String}[
-        "ref_a/out" => "a/r", "ref_b/out" => "b/r", "plant/out" => "a/y", "plant/out" => "b/y",
-        "a/u" => "sel/in1", "b/u" => "sel/in2", "sel/out" => "plant/in"]
-    delay && push!(wires, "sel/out" => "delay/in")
+        "ref_a" => "a/r", "ref_b" => "b/r", "plant" => "a/y", "plant" => "b/y",
+        "a/u" => "sel/in1", "b/u" => "sel/in2", "sel" => "plant"]
+    delay && push!(wires, "sel" => "delay")
     haskey(u_types(controller_a), :v) && append!(wires, [command => "a/v", command => "b/v"])
-    holding && append!(wires, ["negate/out" => "b/engaged", "free/out" => "a/saturation", "free/out" => "b/saturation"])
+    holding && append!(wires, ["negate" => "b/engaged", "free" => "a/saturation", "free" => "b/saturation"])
     blocks = (ref_a = Step(t_step = 0.5, after = 5.0), ref_b = Constant(2.0), a = controller_a, b = controller_b,
               sel = Switch{Float64}(), plant = plant)
     Group(merge(blocks, holding ? (negate = Junction{Bool, Bool, 1}(!), free = Constant(Int8(0))) : (;),
@@ -423,9 +423,9 @@ end
 # `engaged`.
 function discrete_pid_cascade(; hold)
     wires = Pair{String, String}[
-        "reference/out" => "outer/r", "outer/u" => "inner/r", "inner/u" => "plant/in",
-        "plant/out" => "outer/y", "plant/out" => "inner/y"]
-    hold && push!(wires, "inner/saturated" => "outer/saturation", "engaged/out" => "outer/engaged")
+        "reference" => "outer/r", "outer/u" => "inner/r", "inner/u" => "plant",
+        "plant" => "outer/y", "plant" => "inner/y"]
+    hold && push!(wires, "inner/saturated" => "outer/saturation", "engaged" => "outer/engaged")
     blocks = (reference = Step(t_step = 0.5, after = 5.0), outer = DiscretePID(Kp = 0.5, Ki = 0.5, Tt = 1.0, hold = hold),
               inner = DiscretePID(Kp = 2.0, Ki = 1.0, Tt = 1.0, u_min = -1.0, u_max = 1.0), plant = DiscreteIntegrator())
     Group(merge(blocks, hold ? (engaged = Constant(true),) : (;)); local_wires = Tuple(wires))
@@ -436,9 +436,9 @@ end
 discrete_hold_loop(controller) = Group((
         reference = Step(t_step = 0.5, after = 5.0), controller = controller, engaged = Constant(true),
         actuator = DiscreteLimitedIntegrator(lower = -1.0, upper = 1.0), plant = DiscreteIntegrator());
-      local_wires = ("reference/out" => "controller/r", "plant/out" => "controller/y",
-                     "controller/u" => "actuator/in", "actuator/out" => "plant/in",
-                     "actuator/saturation" => "controller/saturation", "engaged/out" => "controller/engaged"))
+      local_wires = ("reference" => "controller/r", "plant" => "controller/y",
+                     "controller/u" => "actuator", "actuator/out" => "plant",
+                     "actuator/saturation" => "controller/saturation", "engaged" => "controller/engaged"))
 
 # A loop run at `h = 1//100` and sampled every 0.1 up to `t_end`: `read(sim)`
 # at each sample.
@@ -458,10 +458,10 @@ function switchover_bump(model)
     sim = Simulation(model; h = 1//100)
     init!(sim, set(u = (mode = false,)))
     step!(sim; frames = 200)
-    before = port(sim, "sel", :out)
+    before = port(sim, "sel")
     poke!(sim, "mode", true)
     step!(sim; frames = 1)
-    abs(port(sim, "sel", :out) - before)
+    abs(port(sim, "sel") - before)
 end
 
 # A cascade run `n` frames at `h = 1//100` from the root inputs `inputs`: after
@@ -495,9 +495,9 @@ end
 # the root input.
 function tracker_loop(controller; disturbance = SVector(0.0, 0.0), stepped = true)
     wires = Pair{String, String}[
-        "plant/out" => "controller/x", "plant/out" => "controller/z", "controller/u" => "sum/in1",
-        "disturbance/out" => "sum/in2", "sum/out" => "plant/in"]
-    stepped && push!(wires, "reference/out" => "controller/z_ref")
+        "plant" => "controller/x", "plant" => "controller/z", "controller/u" => "sum/in1",
+        "disturbance" => "sum/in2", "sum" => "plant"]
+    stepped && push!(wires, "reference" => "controller/z_ref")
     blocks = (controller = controller, disturbance = Constant(disturbance),
               sum = SumJunction{SVector{2, Float64}, 2}(), plant = tracker_plant())
     Group(merge(blocks, stepped ? (reference = Step(t_step = 0.5, before = SVector(0.0, 0.0), after = SVector(1.0, 0.5)),) : (;));
@@ -519,9 +519,9 @@ end
 # own `u`: the identity for `z_ref`, a clamp for `v`, with `z_ref` then constant.
 function tracker_cycle(controller, name)
     wires = Pair{String, String}[
-        "plant/out" => "controller/x", "plant/out" => "controller/z", "controller/u" => "plant/in",
-        "controller/u" => "feedback/in1", "feedback/out" => "controller/$name"]
-    name === :v && push!(wires, "reference/out" => "controller/z_ref")
+        "plant" => "controller/x", "plant" => "controller/z", "controller/u" => "plant",
+        "controller/u" => "feedback/in1", "feedback" => "controller/$name"]
+    name === :v && push!(wires, "reference" => "controller/z_ref")
     Group((plant = tracker_plant(), controller = controller, reference = Constant(SVector(1.0, 0.5)),
            feedback = Junction{SVector{2, Float64}, SVector{2, Float64}, 1}(name === :v ? (u -> clamp.(u, -1.0, 1.0)) : identity));
           local_wires = Tuple(wires))
@@ -534,16 +534,16 @@ end
 # a `UnitDelay`; with `hold` the tracker's channel 1 code reaches both
 # `saturation`, and without it the constant zero code `free` does.
 function tracker_cascade(; delay = true, hold = true)
-    command = delay ? "delay/out" : "sel/out"
+    command = delay ? "delay" : "sel"
     wires = Pair{String, String}[
-        "ref_a/out" => "a/r", "ref_b/out" => "b/r", "plant/out" => "measurement/in",
+        "ref_a" => "a/r", "ref_b" => "b/r", "plant" => "measurement",
         "measurement/out1" => "a/y", "measurement/out1" => "b/y", "a/u" => "sel/in1", "b/u" => "sel/in2",
-        command => "a/v", command => "b/v", "negate/out" => "b/engaged",
-        "sel/out" => "reference/in1", "level/out" => "reference/in2", "reference/out" => "inner/z_ref",
-        "plant/out" => "inner/x", "plant/out" => "inner/z", "inner/u" => "plant/in"]
-    delay && push!(wires, "sel/out" => "delay/in")
-    append!(wires, hold ? ["inner/saturated" => "code/in", "code/out1" => "a/saturation", "code/out1" => "b/saturation"] :
-                          ["free/out" => "a/saturation", "free/out" => "b/saturation"])
+        command => "a/v", command => "b/v", "negate" => "b/engaged",
+        "sel" => "reference/in1", "level" => "reference/in2", "reference" => "inner/z_ref",
+        "plant" => "inner/x", "plant" => "inner/z", "inner/u" => "plant"]
+    delay && push!(wires, "sel" => "delay")
+    append!(wires, hold ? ["inner/saturated" => "code", "code/out1" => "a/saturation", "code/out1" => "b/saturation"] :
+                          ["free" => "a/saturation", "free" => "b/saturation"])
     outer = DiscretePID(Kp = 0.5, Ki = 0.2, Tt = 0.1, hold = true, tracking = true)
     blocks = (ref_a = Step(t_step = 0.5, after = 1.5), ref_b = Constant(0.5), measurement = Unpack{Float64, 2}(),
               a = outer, b = outer, sel = Switch{Float64}(), negate = Junction{Bool, Bool, 1}(!),
@@ -557,16 +557,16 @@ end
 function test_blocks()
     @testset "the junction's arity and port types come from its type (§13.7, D-311)" begin
         @test u_types(Or{3}()) == (in1 = Bool, in2 = Bool, in3 = Bool)
-        @test y_types(Or{3}()) == (out = Bool,)
+        @test y_types(Or{3}()) == Bool
         @test u_types(SumJunction{Float64,2}()) == (in1 = Float64, in2 = Float64)
         @test Junction{Float64,Float64,3}(max) isa Junction{Float64,Float64,3,typeof(max)}
         @test Or{3}() isa Junction && And{2}() isa Junction
         @test typeof(Or{3}()) === Junction{Bool,Bool,3,typeof(|)}
         @test SumJunction{Float64,2}().f === +
-        @test y_direct(SumJunction{Float64,2}(), (; u = (in1 = 1.0, in2 = 2.5))) == (out = 3.5,)
+        @test y_direct(SumJunction{Float64,2}(), (; u = (in1 = 1.0, in2 = 2.5))) == 3.5
         # The fold takes the inputs in positional order (§6.2).
         positional = Junction{Float64,Float64,3}((a, b, c) -> 100a + 10b + c)
-        @test y_direct(positional, (; u = (in1 = 1.0, in2 = 2.0, in3 = 3.0))) == (out = 123.0,)
+        @test y_direct(positional, (; u = (in1 = 1.0, in2 = 2.0, in3 = 3.0))) == 123.0
     end
 
     @testset "the gates fold their inputs at `|` and `&` (§13.7, D-311)" begin
@@ -575,7 +575,7 @@ function test_blocks()
                        (false, false, false))
             sim = Simulation(gate_model(gate, inputs); h = 1//100)
             init!(sim, set())
-            @test port(sim, "g", :out) === truth(inputs)
+            @test port(sim, "g") === truth(inputs)
         end
     end
 
@@ -583,23 +583,23 @@ function test_blocks()
         sim = Simulation(blocks_sum_model(); h = 1//100)
         init!(sim, set())
         step!(sim; t_plus = 3//100)
-        cells = (port(sim, "r", :out), port(sim, "k", :out), port(sim, "d", :out))
-        @test port(sim, "s", :out) == +(cells...)
-        @test port(sim, "d", :out) ≈ 1.02 atol = 1e-12    # the ramp one tick back
+        cells = (port(sim, "r", :out), port(sim, "k"), port(sim, "d"))
+        @test port(sim, "s") == +(cells...)
+        @test port(sim, "d") ≈ 1.02 atol = 1e-12    # the ramp one tick back
         # The pinned producers feed the tolerant entries under a `Dual` activation.
         @test build(blocks_sum_model(); activations = (Float64, LinearizeDual)) isa Build
     end
 
     @testset "the pack is the junction at a static vector, and linearizes to the identity (§13.7, §14.10, D-311)" begin
         @test u_types(Pack{Float64, 3}()) == (in1 = Float64, in2 = Float64, in3 = Float64)
-        @test y_types(Pack{Float64, 3}()) == (out = SVector{3, Float64},)
+        @test y_types(Pack{Float64, 3}()) == SVector{3, Float64}
         @test typeof(Pack{Float64, 2}()) === Junction{Float64, SVector{2, Float64}, 2, typeof(Redstone.Blocks.pack)}
         @test Pack{Float64, 2}().f === Redstone.Blocks.pack
         @test Redstone.has_stage(y_direct, Pack{Float64, 2}()) && !Redstone.has_stage(y_state, Pack{Float64, 2}())
         sim = Simulation(pack_model(Pack{Float64, 2}()); h = 1//10)
         init!(sim, set())
         step!(sim; t_plus = 0.3)
-        @test isapprox(port(sim, "p", :out), SVector(0.3, 2.0); atol = 1e-12)
+        @test isapprox(port(sim, "p"), SVector(0.3, 2.0); atol = 1e-12)
         @test build(pack_model(Pack{Float64, 2}()); activations = (Float64, LinearizeDual)) isa Build
         root_sim = Simulation(pack_root_model(); h = 1//100)
         init!(root_sim, set(u = (a = 1.0, b = 2.0)))
@@ -633,7 +633,7 @@ function test_blocks()
         for (select, out, row) in ((true, 1.0, [1 0]), (false, -1.0, [0 1]))
             sim = Simulation(switch_root(); h = 1//100)
             init!(sim, set(u = (in1 = 1.0, in2 = -1.0, select = select)))
-            @test port(sim, "s", :out) == out
+            @test port(sim, "s") == out
             linearization = linearize(sim, taps(u = (in1 = get_input(:in1), in2 = get_input(:in2)),
                                                 y = (out = get_face(:out),)))
             @test isapprox(linearization.D, row; atol = 1e-12)
@@ -641,7 +641,7 @@ function test_blocks()
         @test build(switch_root(); activations = (Float64, LinearizeDual)) isa Build
         vector_sim = Simulation(vector_switch_model(); h = 1//10)
         init!(vector_sim, set())
-        @test port(vector_sim, "s", :out) == SVector(-1.0, -2.0)
+        @test port(vector_sim, "s") == SVector(-1.0, -2.0)
         @test u_types(Switch{SVector{2, Float64}}()) ==
               (in1 = SVector{2, Float64}, in2 = SVector{2, Float64}, select = Bool)
         @test build(vector_switch_model(); activations = (Float64, LinearizeDual)) isa Build
@@ -665,8 +665,8 @@ function test_blocks()
         init!(sim, set())
         step!(sim; t_plus = 1)
         @test state(sim, "c") ≈ 1 - cos(1) atol = 1e-10
-        @test port(sim, "k", :out) == sin(1.0)    # a frame-top stamp of the grid time
-        @test y_types(Source(sin)) == (out = Pinned{Float64},)
+        @test port(sim, "k") == sin(1.0)    # a frame-top stamp of the grid time
+        @test y_types(Source(sin)) == Pinned{Float64}
         @test typeof(Source(sin)) === Source{Float64, typeof(sin)}
         @test build(fed_by(Source(sin), Integrator()); activations = (Float64, LinearizeDual)) isa Build
         vector_sim = Simulation(vector_source_model(); h = 1//100)
@@ -676,13 +676,13 @@ function test_blocks()
         @test build(vector_source_model(); activations = (Float64, LinearizeDual)) isa Build
         start_sim = Simulation(single(Source(t -> 2t)); h = 1//10)
         init!(start_sim, set(); t0 = 1.0)
-        @test port(start_sim, "c", :out) == 2.0
+        @test port(start_sim, "c") == 2.0
         # The pinned source feeds a pinned entry, which a walking `out` could not.
-        model = Group((; s = Source(sin), e = PinnedEntry()); local_wires = ("s/out" => "e/u",))
+        model = Group((; s = Source(sin), e = PinnedEntry()); local_wires = ("s" => "e/u",))
         @test build(model; activations = (Float64, LinearizeDual)) isa Build
         integer_sim = Simulation(single(Source{Int}(t -> 1)); h = 1//10)
         init!(integer_sim, set())
-        @test port(integer_sim, "c", :out) === 1
+        @test port(integer_sim, "c") === 1
         @test Redstone.has_stage(y_state, Source(sin))
         @test !Redstone.has_stage(y_direct, Source(sin))
     end
@@ -713,10 +713,10 @@ function test_blocks()
     @testset "the delay publishes its input one tick late, and `v0` first (§13.7, D-312)" begin
         sim = Simulation(delay_model(UnitDelay(-1)); h = 1//100)
         init!(sim, set())
-        @test port(sim, "c", :n) == 0 && port(sim, "d", :out) == -1
+        @test port(sim, "c", :n) == 0 && port(sim, "d") == -1
         for k in 1:4
             step!(sim; t_plus = 1//100)
-            @test port(sim, "c", :n) == k && port(sim, "d", :out) == k - 1
+            @test port(sim, "c", :n) == k && port(sim, "d") == k - 1
         end
         # The store is isbits by rule (D-231), which bounds `V`.
         err = failure(() -> build(delay_model(UnitDelay([1.0]))))
@@ -726,28 +726,28 @@ function test_blocks()
     @testset "the delay line publishes its input `K` ticks late, `v0` before, from a ring (§7.3, §13.7, D-313)" begin
         sim = Simulation(delay_model(Delay(K = 3, v0 = -1)); h = 1//100)
         init!(sim, set())
-        @test port(sim, "c", :n) == 0 && port(sim, "d", :out) == -1
+        @test port(sim, "c", :n) == 0 && port(sim, "d") == -1
         # Past tick 5 the cursor has turned the three slots twice.
         for k in 1:8
             step!(sim; t_plus = 1//100)
-            @test port(sim, "c", :n) == k && port(sim, "d", :out) == (k < 3 ? -1 : k - 3)
+            @test port(sim, "c", :n) == k && port(sim, "d") == (k < 3 ? -1 : k - 3)
         end
         # `K = 1` is `UnitDelay` in keyword spelling.
         line_sim = Simulation(delay_model(Delay(K = 1, v0 = -1)); h = 1//100)
         unit_sim = Simulation(delay_model(UnitDelay(-1)); h = 1//100)
         init!(line_sim, set()); init!(unit_sim, set())
-        @test port(line_sim, "d", :out) == port(unit_sim, "d", :out)
+        @test port(line_sim, "d") == port(unit_sim, "d")
         for _ in 1:4
             step!(line_sim; t_plus = 1//100); step!(unit_sim; t_plus = 1//100)
-            @test port(line_sim, "d", :out) == port(unit_sim, "d", :out)
+            @test port(line_sim, "d") == port(unit_sim, "d")
         end
         vector_sim = Simulation(fed_by(Constant(SVector(1.0, -2.0)), Delay(K = 2, v0 = SVector(0.0, 0.0)));
                                 h = 1//100)
         init!(vector_sim, set())
-        @test port(vector_sim, "c", :out) == SVector(0.0, 0.0)
+        @test port(vector_sim, "c") == SVector(0.0, 0.0)
         for k in 1:4
             step!(vector_sim; t_plus = 1//100)
-            @test port(vector_sim, "c", :out) == (k < 2 ? SVector(0.0, 0.0) : SVector(1.0, -2.0))
+            @test port(vector_sim, "c") == (k < 2 ? SVector(0.0, 0.0) : SVector(1.0, -2.0))
         end
         # The store is isbits by rule (D-231), which the type bounds at the spelling.
         @test_throws TypeError Delay(K = 2, v0 = [1.0])
@@ -759,20 +759,20 @@ function test_blocks()
     @testset "the discrete integrator accumulates `Δt in` per tick from `s0`, at its own period, and breaks a loop from stage 1 (§7.3, §10.5, §5.5, D-313)" begin
         sim = Simulation(fed_by(Constant(1.0), DiscreteIntegrator()); h = 1//100)
         init!(sim, set())
-        @test port(sim, "c", :out) == 0.0
+        @test port(sim, "c") == 0.0
         step!(sim; t_plus = 1//10)
-        @test port(sim, "c", :out) ≈ 0.1 atol = 1e-12    # ten additions of 0.01
+        @test port(sim, "c") ≈ 0.1 atol = 1e-12    # ten additions of 0.01
         # `Δt` is the component's own period, so half the rate reaches the same value.
         halved = Simulation(fed_by(Constant(1.0), DiscreteIntegrator(); sample_times = (c = Relative(2),));
                             h = 1//100)
         init!(halved, set())
         step!(halved; t_plus = 1//10)
-        @test port(halved, "c", :out) ≈ 0.1 atol = 1e-12
+        @test port(halved, "c") ≈ 0.1 atol = 1e-12
         vector_model = fed_by(Constant(SVector(1.0, -2.0)), DiscreteIntegrator(s0 = SVector(0.0, 1.0)))
         vector_sim = Simulation(vector_model; h = 1//100)
         init!(vector_sim, set())
         step!(vector_sim; t_plus = 1//10)
-        @test isapprox(port(vector_sim, "c", :out), SVector(0.1, 0.8); atol = 1e-12)
+        @test isapprox(port(vector_sim, "c"), SVector(0.1, 0.8); atol = 1e-12)
         @test build(vector_model; activations = (Float64, LinearizeDual)) isa Build
         @test !Redstone.has_stage(y_direct, DiscreteIntegrator())
         @test Redstone.has_stage(y_state, DiscreteIntegrator())
@@ -780,7 +780,7 @@ function test_blocks()
         loop_sim = Simulation(feedback_loop(DiscreteIntegrator()); h = 1//100)
         init!(loop_sim, set())
         step!(loop_sim; t_plus = 1)
-        @test port(loop_sim, "p", :out) ≈ 1 - 0.99^100 rtol = 1e-12
+        @test port(loop_sim, "p") ≈ 1 - 0.99^100 rtol = 1e-12
     end
 
     @testset "the discrete limited integrator clamps in one line and publishes its code off the state (§7.3, §13.7, D-313)" begin
@@ -815,27 +815,27 @@ function test_blocks()
         rising_sim = Simulation(limiter_model(0.0, 1.0); h = 1//100)
         init!(rising_sim, set())
         step!(rising_sim; t_plus = 1//10)
-        @test port(rising_sim, "c", :out) == 0.02
+        @test port(rising_sim, "c") == 0.02
         step!(rising_sim; t_plus = 1//100)
-        @test port(rising_sim, "c", :out) == 0.04
+        @test port(rising_sim, "c") == 0.04
         step!(rising_sim; t_plus = 1//4)
-        @test port(rising_sim, "c", :out) ≈ 0.54 atol = 1e-12
+        @test port(rising_sim, "c") ≈ 0.54 atol = 1e-12
         step!(rising_sim; t_plus = 1//4)
-        @test port(rising_sim, "c", :out) == 1.0
+        @test port(rising_sim, "c") == 1.0
         falling_sim = Simulation(limiter_model(1.0, 0.0); h = 1//100)
         init!(falling_sim, set())
         step!(falling_sim; t_plus = 1//10)
-        @test port(falling_sim, "c", :out) == 0.95
+        @test port(falling_sim, "c") == 0.95
         step!(falling_sim; t_plus = 1//10)
-        @test port(falling_sim, "c", :out) ≈ 0.45 atol = 1e-12
+        @test port(falling_sim, "c") ≈ 0.45 atol = 1e-12
         step!(falling_sim; t_plus = 1//10)
-        @test port(falling_sim, "c", :out) == 0.0
+        @test port(falling_sim, "c") == 0.0
         # `s0` is the previous output at the first tick, so `t₀` is one slew in.
         startup_sim = Simulation(fed_by(Constant(10.0), RateLimiter(rising = 2.0)); h = 1//100)
         init!(startup_sim, set())
-        @test port(startup_sim, "c", :out) == 0.02
+        @test port(startup_sim, "c") == 0.02
         step!(startup_sim; t_plus = 1//100)
-        @test port(startup_sim, "c", :out) == 0.04
+        @test port(startup_sim, "c") == 0.04
         @test Redstone.has_stage(y_direct, RateLimiter(rising = 1.0))
         @test !Redstone.has_stage(y_state, RateLimiter(rising = 1.0))
         err = failure(() -> build(feedback_loop(RateLimiter(rising = 1.0))))
@@ -847,16 +847,16 @@ function test_blocks()
         vector_sim = Simulation(vector_model; h = 1//100)
         init!(vector_sim, set())
         step!(vector_sim; t_plus = 1//10)
-        @test isapprox(port(vector_sim, "c", :out), SVector(0.22, -0.55); atol = 1e-12)
+        @test isapprox(port(vector_sim, "c"), SVector(0.22, -0.55); atol = 1e-12)
         @test build(vector_model; activations = (Float64, LinearizeDual)) isa Build
     end
 
     @testset "the Gaussian white noise is a pure function of its seed and tick, with the moments it claims (§7.3, §2.5, D-231, D-313)" begin
         sim = Simulation(noise_model(GaussianWhiteNoise(seed = 42, σ = 1.0)); h = 1//100)
         init!(sim, set())
-        @test port(sim, "c", :out) == Redstone.Blocks.gaussian(42, 0)
+        @test port(sim, "c") == Redstone.Blocks.gaussian(42, 0)
         @test Redstone.Blocks.gaussian(42, 0) ≈ 0.882248906222269 atol = 1e-12
-        samples = [(step!(sim; t_plus = 1//100); port(sim, "c", :out)) for _ in 1:1000]
+        samples = [(step!(sim; t_plus = 1//100); port(sim, "c")) for _ in 1:1000]
         @test samples == [Redstone.Blocks.gaussian(42, k) for k in 1:1000]
         # The store counts the ticks run, `t₀`'s included: the next sample's index.
         @test state(sim, "c") === UInt64(1001)
@@ -869,15 +869,15 @@ function test_blocks()
         @test noise_samples(noise_model(GaussianWhiteNoise(seed = 43, σ = 1.0)), 10)[end] !=
               noise_samples(noise_model(GaussianWhiteNoise(seed = 42, σ = 1.0)), 10)[end]
         vector_noise = GaussianWhiteNoise(seed = 7, μ = SVector(1.0, -1.0), σ = SVector(1.0, 2.0))
-        @test y_types(vector_noise) == (out = SVector{2, Float64},)
+        @test y_types(vector_noise) == SVector{2, Float64}
         vector_sim = Simulation(noise_model(vector_noise); h = 1//100)
         init!(vector_sim, set())
-        @test isapprox(port(vector_sim, "c", :out), SVector(1.9884743323187353, -4.728511613462453); atol = 1e-12)
+        @test isapprox(port(vector_sim, "c"), SVector(1.9884743323187353, -4.728511613462453); atol = 1e-12)
         # Three ticks on, `out` is sample 3, read over the sub-counters 6 and 7.
         for _ in 1:3
             step!(vector_sim; t_plus = 1//100)
         end
-        @test port(vector_sim, "c", :out) ==
+        @test port(vector_sim, "c") ==
               SVector(1.0, -1.0) .+ SVector(1.0, 2.0) .* SVector(Redstone.Blocks.gaussian(7, 6), Redstone.Blocks.gaussian(7, 7))
         # A scalar pairs with a vector, `μ` defaults to the scale's zero, and
         # `Float32` widens.
@@ -945,7 +945,7 @@ function test_blocks()
     @testset "the freeze drops the partials, and nothing else (§13.7, D-312)" begin
         sim = Simulation(freeze_model(); h = 1//10)
         init!(sim, combine(at("p", condition(Pendulum(); θ = 0.3)), set(u = (τ = 0.0,))))
-        @test port(sim, "f", :out) == port(sim, "p", :θ) == 0.3
+        @test port(sim, "f") == port(sim, "p", :θ) == 0.3
         linearization = linearize(sim, taps(x = (θ = get_state("p", :θ), ω = get_state("p", :ω)),
                                             u = (τ = get_input(:τ),),
                                             y = (direct = get_face(:direct), frozen = get_face(:frozen))))
@@ -954,16 +954,16 @@ function test_blocks()
         @test iszero(linearization.C[2, :])
         # Its purpose (§13.7, D-266): unfrozen, this wire is refused with `WalkingFaceAtFrozenEntry`.
         model = Group((; p = Pendulum(), f = Freeze{Float64}(), e = PinnedEntry());
-                      local_wires = ("p/θ" => "f/in", "f/out" => "e/u"), input_wires = ("τ" => "p/u",))
+                      local_wires = ("p/θ" => "f", "f" => "e/u"), input_wires = ("τ" => "p/u",))
         @test build(model; activations = (Float64, LinearizeDual)) isa Build
         # `V` is a `Real` or a `StaticArray` of them, constrained at the type.
         @test_throws TypeError Freeze{HeightField}
     end
 
     @testset "a `Constant` spells the zero contributor into either entry (§6.2, D-312)" begin
-        @test y_types(Constant(0.0)) == (out = Pinned{Float64},)
+        @test y_types(Constant(0.0)) == Pinned{Float64}
         for consumer in (RealEntry(), PinnedEntry())
-            model = Group((; k = Constant(0.0), e = consumer); local_wires = ("k/out" => "e/u",))
+            model = Group((; k = Constant(0.0), e = consumer); local_wires = ("k" => "e/u",))
             @test build(model) isa Build
             @test build(model; activations = (Float64, LinearizeDual)) isa Build
         end
@@ -973,9 +973,9 @@ function test_blocks()
         for (value, flag) in ((true, STOP_REQUESTED), (false, NO_STOP))
             sim = Simulation(requested(value, "x"); h = 1//100)
             init!(sim, set())
-            @test port(sim, "stop", :flag) === flag
+            @test port(sim, "stop") === flag
             step!(sim; t_plus = 1//100)
-            @test port(sim, "stop", :flag) === flag
+            @test port(sim, "stop") === flag
         end
         @test stop_reason(StopRequest(reason = "x")) == "x"
         @test stop_reason(StopRequest()) == ""
@@ -1001,7 +1001,7 @@ function test_blocks()
         init!(sim, set())
         step!(sim; t_plus = 0.5)
         @test state(sim, "i") ≈ 2.0 atol = 1e-12
-        @test port(sim, "i", :out) == state(sim, "i")
+        @test port(sim, "i") == state(sim, "i")
         vector_sim = Simulation(integrator_model(SVector(0.0, 1.0), SVector(1.0, -1.0)); h = 1//100)
         init!(vector_sim, set())
         step!(vector_sim; t_plus = 0.5)
@@ -1016,7 +1016,7 @@ function test_blocks()
         init!(sim, set())
         step!(sim; t_plus = 1.0)
         @test state(sim, "l") ≈ 1 - exp(-2) rtol = 1e-7
-        @test port(sim, "l", :out) == state(sim, "l")
+        @test port(sim, "l") == state(sim, "l")
         vector_sim = Simulation(lag_model(SVector(1.0, -2.0)); h = 1//100)
         init!(vector_sim, set())
         step!(vector_sim; t_plus = 1.0)
@@ -1041,7 +1041,7 @@ function test_blocks()
         @test isapprox(linearization.D, zeros(2, 2); atol = 1e-12)
         # The state is an `SVector` at every size, so a scalar block's tap takes
         # an index step.
-        scalar_sim = Simulation(fed(StateSpace(A = [-2.0;;], B = [3.0;;], C = [1.0;;]), "in"); h = 1//100)
+        scalar_sim = Simulation(fed(StateSpace(A = [-2.0;;], B = [3.0;;], C = [1.0;;])); h = 1//100)
         init!(scalar_sim, set(u = (in = 0.0,)))
         scalar_linearization = linearize(scalar_sim, taps(x = (q = get_state("c", "[1]"),),
                                                           u = (in = get_input(:in),)))
@@ -1049,11 +1049,11 @@ function test_blocks()
         @test isapprox(scalar_linearization.B, [3.0;;]; atol = 1e-12)
         # The ports are scalars one wide and `SVector`s wider, by the matrix shapes.
         scalar_block = StateSpace(A = [-1.0;;], B = [1.0;;], C = [1.0;;])
-        @test u_types(scalar_block) == (in = Float64,) && y_types(scalar_block) == (out = Float64,)
-        @test u_types(two_state_block()) == (in = SVector{2, Float64},)
-        @test y_types(two_state_block()) == (out = SVector{2, Float64},)
+        @test u_types(scalar_block) == Float64 && y_types(scalar_block) == Float64
+        @test u_types(two_state_block()) == SVector{2, Float64}
+        @test y_types(two_state_block()) == SVector{2, Float64}
         single_output = StateSpace(A = [-1 0.5; 0 -2], B = [1 0.5; 0 1], C = [1 2])
-        @test u_types(single_output) == (in = SVector{2, Float64},) && y_types(single_output) == (out = Float64,)
+        @test u_types(single_output) == SVector{2, Float64} && y_types(single_output) == Float64
     end
 
     @testset "the direct term picks the stage: `D = 0` breaks the loop, `D ≠ 0` closes an algebraic cycle (§5.3, §5.5, D-313)" begin
@@ -1072,7 +1072,7 @@ function test_blocks()
         init!(sim, set())
         step!(sim; t_plus = 1.0)
         @test state(sim, "c")[1] ≈ 1 + exp(-1) rtol = 1e-7
-        @test port(sim, "c", :out) == state(sim, "c")[1]
+        @test port(sim, "c") == state(sim, "c")[1]
         @test build(scalar_model; activations = (Float64, LinearizeDual)) isa Build
         @test build(fed_by(Constant(SVector(1.0, -1.0)), two_state_block()); activations = (Float64, LinearizeDual)) isa Build
         @test build(linear_root_model(two_state_block()); activations = (Float64, LinearizeDual)) isa Build
@@ -1098,9 +1098,9 @@ function test_blocks()
         sim = Simulation(lag_pair_model(); h = 1//100)
         init!(sim, set())
         step!(sim; t_plus = 0.3)
-        @test port(sim, "tf", :out) ≈ port(sim, "l", :out) rtol = 1e-12
+        @test port(sim, "tf") ≈ port(sim, "l") rtol = 1e-12
         step!(sim; t_plus = 0.7)
-        @test port(sim, "tf", :out) ≈ port(sim, "l", :out) rtol = 1e-12
+        @test port(sim, "tf") ≈ port(sim, "l") rtol = 1e-12
         # The realized state is the lag's scaled by `τ`.
         @test state(sim, "tf")[1] ≈ 0.5 * state(sim, "l") rtol = 1e-12
         @test build(lag_pair_model(); activations = (Float64, LinearizeDual)) isa Build
@@ -1128,16 +1128,16 @@ function test_blocks()
     @testset "the transfer function starts at rest or at the steady state for `u0`, and refuses an improper function or an origin pole with `u0` (§13.7)" begin
         sim = Simulation(linear_root_model(TransferFunction(num = (1,), den = (0.5, 1), u0 = 3.0)); h = 1//100)
         init!(sim, set(u = (in = 3.0,)))
-        @test port(sim, "c", :out) == 3.0
+        @test port(sim, "c") == 3.0
         step!(sim; t_plus = 1.0)
-        @test port(sim, "c", :out) ≈ 3.0 rtol = 1e-12
+        @test port(sim, "c") ≈ 3.0 rtol = 1e-12
         # A pole at the origin starts at rest.
         origin_pole = TransferFunction(num = (1,), den = (1, 0))
         @test origin_pole isa TransferFunction{1, false}
         origin_sim = Simulation(fed_by(Constant(1.0), origin_pole); h = 1//100)
         init!(origin_sim, set())
         step!(origin_sim; t_plus = 1.0)
-        @test port(origin_sim, "c", :out) ≈ 1.0 rtol = 1e-12
+        @test port(origin_sim, "c") ≈ 1.0 rtol = 1e-12
         @test_throws ArgumentError TransferFunction(num = (1, 1, 1), den = (1, 1))
         @test_throws ArgumentError TransferFunction(num = (1,), den = (1, 0), u0 = 1.0)
         @test_throws ArgumentError TransferFunction(num = (1,), den = (0, 1))
@@ -1179,7 +1179,7 @@ function test_blocks()
         sim = Simulation(fed_by(Constant(1.0), block); h = 1//100)
         init!(sim, set())
         step!(sim; t_plus = 5//100)
-        @test port(sim, "c", :out) == 2(1 - 0.5^5)
+        @test port(sim, "c") == 2(1 - 0.5^5)
         @test build(fed_by(Constant(1.0), block); activations = (Float64, LinearizeDual)) isa Build
         @test build(feedback_loop(block)) isa Build
         err = failure(() -> build(feedback_loop(DiscreteStateSpace(A = [0.5;;], B = [1.0;;], C = [1.0;;], D = [1.0;;]))))
@@ -1191,12 +1191,12 @@ function test_blocks()
         @test_throws ArgumentError("`s0` has length 2 where `A` asks for 1") DiscreteStateSpace(
             A = [0.5;;], B = [1.0;;], C = [1.0;;], s0 = [1.0, 2.0])
         two_state = DiscreteStateSpace(A = [0.5 0.1; 0 0.8], B = [1 0; 0 1], C = [1 0; 0 1])
-        @test u_types(two_state) == (in = SVector{2, Float64},) && y_types(two_state) == (out = SVector{2, Float64},)
+        @test u_types(two_state) == SVector{2, Float64} && y_types(two_state) == SVector{2, Float64}
         two_state_model = fed_by(Constant(SVector(1.0, 1.0)), two_state)
         two_state_sim = Simulation(two_state_model; h = 1//100)
         init!(two_state_sim, set())
         step!(two_state_sim; t_plus = 3//100)
-        @test isapprox(port(two_state_sim, "c", :out), SVector(1.98, 2.44); atol = 1e-12)
+        @test isapprox(port(two_state_sim, "c"), SVector(1.98, 2.44); atol = 1e-12)
         @test build(two_state_model; activations = (Float64, LinearizeDual)) isa Build
     end
 
@@ -1208,29 +1208,29 @@ function test_blocks()
         sim = Simulation(fed_by(Constant(1.0), strict); h = 1//100)
         init!(sim, set())
         step!(sim; t_plus = 5//100)
-        @test port(sim, "c", :out) == 0.96875
+        @test port(sim, "c") == 0.96875
         @test build(fed_by(Constant(1.0), strict); activations = (Float64, LinearizeDual)) isa Build
         # The steady state solves `(I - A) q = B u0`, so `out` starts at `G(1) u0`.
         steady = DiscreteTransferFunction(num = (0.5,), den = (1, -0.5), u0 = 2.0)
         @test Redstone.Blocks.held(steady).s0 == SVector(4.0)
         steady_sim = Simulation(fed_by(Constant(2.0), steady); h = 1//100)
         init!(steady_sim, set())
-        @test port(steady_sim, "c", :out) == 2.0
+        @test port(steady_sim, "c") == 2.0
         step!(steady_sim; t_plus = 1)
-        @test port(steady_sim, "c", :out) == 2.0
+        @test port(steady_sim, "c") == 2.0
         # At this pole `I - A` differs from `A`, which the pole at 0.5 cannot show.
         slow = DiscreteTransferFunction(num = (0.2,), den = (1, -0.8), u0 = 2.0)
         @test isapprox(Redstone.Blocks.held(slow).s0, SVector(10.0); atol = 1e-12)
         slow_sim = Simulation(fed_by(Constant(2.0), slow); h = 1//100)
         init!(slow_sim, set())
-        @test port(slow_sim, "c", :out) ≈ 2.0 atol = 1e-12
+        @test port(slow_sim, "c") ≈ 2.0 atol = 1e-12
         proper = DiscreteTransferFunction(num = (1, -0.9), den = (1, -0.5))
         @test typeof(proper) === DiscreteTransferFunction{1, true, 2, 2, 1}
         # The third denominator sums to about 5.6e-17, which an exact test would pass.
         for den in ((1, -1), (1, -0.7, -0.3), (1, -1.5, 0.5))
             @test_throws ArgumentError DiscreteTransferFunction(num = (1,), den = den, u0 = 1.0)
         end
-        @test build(fed(DiscreteTransferFunction(num = (1,), den = (1, -1)), "in")) isa Build
+        @test build(fed(DiscreteTransferFunction(num = (1,), den = (1, -1)))) isa Build
         @test !Redstone.has_stage(y_direct, strict)
         @test !Redstone.has_stage(y_state, proper)
     end
@@ -1240,12 +1240,12 @@ function test_blocks()
             sim = Simulation(fed_by(Constant(1.0), scalar_hold(); sample_times); h = 1//100)
             init!(sim, set())
             step!(sim; t_plus = 1)
-            @test port(sim, "c", :out) ≈ 1 - exp(-1) atol = 1e-12
+            @test port(sim, "c") ≈ 1 - exp(-1) atol = 1e-12
         end
         from_x0 = Simulation(fed_by(Constant(1.0), scalar_hold(x0 = 2.0)); h = 1//100)
         init!(from_x0, set())
         step!(from_x0; t_plus = 1)
-        @test port(from_x0, "c", :out) ≈ 1 + exp(-1) atol = 1e-12
+        @test port(from_x0, "c") ≈ 1 + exp(-1) atol = 1e-12
         (; A, B) = Redstone.Blocks.realization(scalar_hold(), 0.01)
         @test A[1] ≈ exp(-0.01) && B[1] ≈ 1 - exp(-0.01)
         # The two-state hold against the continuous block it wraps, RK4 at the same h.
@@ -1256,27 +1256,27 @@ function test_blocks()
             init!(sim, set())
             step!(sim; t_plus = 3//10)
         end
-        @test isapprox(port(hold_sim, "c", :out), port(continuous_sim, "c", :out); atol = 1e-8)
+        @test isapprox(port(hold_sim, "c"), port(continuous_sim, "c"); atol = 1e-8)
         lag_sim = Simulation(hold_pair_model((1,), (0.5, 1), FirstOrderLag(τ = 0.5)); h = 1//100)
         init!(lag_sim, set())
         step!(lag_sim; t_plus = 1)
-        @test port(lag_sim, "d", :out) ≈ 1 - exp(-2) atol = 1e-12
-        @test port(lag_sim, "d", :out) ≈ port(lag_sim, "c", :out) atol = 1e-8
+        @test port(lag_sim, "d") ≈ 1 - exp(-2) atol = 1e-12
+        @test port(lag_sim, "d") ≈ port(lag_sim, "c") atol = 1e-8
         slow_sim = Simulation(hold_pair_model((1,), (0.5, 1), FirstOrderLag(τ = 0.5);
                                               sample_times = (d = Relative(5),)); h = 1//100)
         init!(slow_sim, set())
         step!(slow_sim; t_plus = 1)
-        @test port(slow_sim, "d", :out) ≈ 1 - exp(-2) atol = 1e-12
+        @test port(slow_sim, "d") ≈ 1 - exp(-2) atol = 1e-12
         steady_sim = Simulation(fed_by(Constant(3.0), DiscretizedTransferFunction(num = (1,), den = (0.5, 1), u0 = 3.0));
                                 h = 1//100)
         init!(steady_sim, set())
-        @test port(steady_sim, "c", :out) == 3.0
+        @test port(steady_sim, "c") == 3.0
         step!(steady_sim; t_plus = 1)
-        @test port(steady_sim, "c", :out) ≈ 3.0 rtol = 1e-12
+        @test port(steady_sim, "c") ≈ 3.0 rtol = 1e-12
         second_sim = Simulation(hold_pair_model((4,), (1, 1.2, 4), second_order()); h = 1//100)
         init!(second_sim, set())
         step!(second_sim; t_plus = 1)
-        @test port(second_sim, "d", :out) ≈ port(second_sim, "c", :out) atol = 1e-9
+        @test port(second_sim, "d") ≈ port(second_sim, "c") atol = 1e-9
         # The class is the continuous one: the lag breaks a loop, the lead-lag closes one.
         lag = DiscretizedTransferFunction(num = (1,), den = (0.5, 1))
         lead_lag_hold = DiscretizedTransferFunction(num = (1, 2), den = (1, 5))
@@ -1296,11 +1296,11 @@ function test_blocks()
         sim = Simulation(step_model(Step(t_step = 0.25)); h = 1//10)
         init!(sim, set())
         step!(sim; t_plus = 0.2)
-        @test port(sim, "s", :out) == 0.0 && state(sim, "i") == 0.0
+        @test port(sim, "s") == 0.0 && state(sim, "i") == 0.0
         step!(sim; t_plus = 0.1)
         bracket_width = sim.model.deployment.localization_tol * sim.model.deployment.h    # in time (§10.4)
         @test state(sim, "i") ≈ 0.05 atol = bracket_width
-        @test port(sim, "s", :out) == 1.0
+        @test port(sim, "s") == 1.0
         @test step_events(step_model(Step(t_step = 0.25))).policies === (fire = :localized,)
     end
 
@@ -1308,10 +1308,10 @@ function test_blocks()
         sim = Simulation(step_model(Step(t_step = 0.25, localized = false)); h = 1//10)
         init!(sim, set())
         step!(sim; t_plus = 0.2)
-        @test port(sim, "s", :out) == 0.0
+        @test port(sim, "s") == 0.0
         step!(sim; t_plus = 0.1)
         @test state(sim, "i") == 0.0    # nothing lands inside the step
-        @test port(sim, "s", :out) == 1.0
+        @test port(sim, "s") == 1.0
         step!(sim; t_plus = 0.1)
         @test state(sim, "i") ≈ 0.1 atol = 1e-12
         @test step_events(step_model(Step(t_step = 0.25, localized = false))).policies === (fire = :boundary,)
@@ -1321,18 +1321,18 @@ function test_blocks()
         for localized in (true, false), t_step in (0.0, -1.0)
             sim = Simulation(single(Step(t_step = t_step, localized = localized)); h = 1//10)
             init!(sim, set())
-            @test modes(sim, "c") && port(sim, "c", :out) == 1.0
+            @test modes(sim, "c") && port(sim, "c") == 1.0
         end
     end
 
     @testset "the step switches a vector, and its keywords promote (§13.7)" begin
-        @test y_types(Step(t_step = 1.0)) == (out = Pinned{Float64},)    # D-312
+        @test y_types(Step(t_step = 1.0)) == Pinned{Float64}    # D-312
         source = Step(t_step = 0.25, before = SVector(0.0, 0.0), after = SVector(1.0, -1.0))
         sim = Simulation(single(source); h = 1//10)
         init!(sim, set())
-        @test port(sim, "c", :out) == SVector(0.0, 0.0)
+        @test port(sim, "c") == SVector(0.0, 0.0)
         step!(sim; t_plus = 0.3)
-        @test port(sim, "c", :out) == SVector(1.0, -1.0)
+        @test port(sim, "c") == SVector(1.0, -1.0)
         @test Step(t_step = 0.25, after = 2) isa Step{Float64, true}
         @test build(step_model(Step(t_step = 0.25)); activations = (Float64, LinearizeDual)) isa Build
     end
@@ -1375,17 +1375,17 @@ function test_blocks()
         end
         # The derivative reads the mode, so the Jacobian does too.
         @test isapprox(block_linearization(LimitedIntegrator(lower = -1.0, upper = 0.5)).B, [1.0;;]; atol = 1e-12)
-        rig = Simulation(fed(LimitedIntegrator(lower = -1.0, upper = 0.5), "in"); h = 1//10)
+        rig = Simulation(fed(LimitedIntegrator(lower = -1.0, upper = 0.5)); h = 1//10)
         init!(rig, set(u = (in = 1.0,)))
         step!(rig; t_plus = 0.7)
         @test state(rig, "c") == 0.5 && modes(rig, "c") === Int8(1)
         linearization = linearize(rig, taps(x = (q = get_state("c"),), u = (in = get_input(:in),)))
         @test isapprox(linearization.B, [0.0;;]; atol = 1e-12)
         # An `x0` outside the limits is clamped at boundary zero (§10.6).
-        clamped = Simulation(fed(LimitedIntegrator(x0 = 2.0, lower = -1.0, upper = 0.5), "in"); h = 1//10)
+        clamped = Simulation(fed(LimitedIntegrator(x0 = 2.0, lower = -1.0, upper = 0.5)); h = 1//10)
         init!(clamped, set(u = (in = 1.0,)))
         @test state(clamped, "c") == 0.5 && modes(clamped, "c") === Int8(1)
-        clamped_lower = Simulation(fed(LimitedIntegrator(x0 = -2.0, lower = -1.0, upper = 0.5), "in"); h = 1//10)
+        clamped_lower = Simulation(fed(LimitedIntegrator(x0 = -2.0, lower = -1.0, upper = 0.5)); h = 1//10)
         init!(clamped_lower, set(u = (in = -1.0,)))
         @test state(clamped_lower, "c") == -1.0 && modes(clamped_lower, "c") === Int8(-1)
         @test LimitedIntegrator(lower = -1, upper = 0.5) isa LimitedIntegrator{Float64}
@@ -1440,7 +1440,7 @@ function test_blocks()
 
     @testset "the vector limited integrator linearizes each component by its own mode (§7.2, §14.10, D-276, D-313)" begin
         # At 0.7 component 1 is clamped at its upper limit and component 2 is free.
-        rig = Simulation(fed(LimitedIntegrator(lower = SVector(-1.0, -1.0), upper = SVector(0.5, 0.8)), "in"); h = 1//10)
+        rig = Simulation(fed(LimitedIntegrator(lower = SVector(-1.0, -1.0), upper = SVector(0.5, 0.8))); h = 1//10)
         init!(rig, set(u = (in = SVector(1.0, 0.0),)))
         step!(rig; t_plus = 0.7)
         linearization = linearize(rig, taps(x = (q1 = get_state("c", "[1]"), q2 = get_state("c", "[2]")),
@@ -1482,18 +1482,18 @@ function test_blocks()
     end
 
     @testset "the relay switches with hysteresis, from boundary zero on (§10.4, §10.6, D-313)" begin
-        @test y_types(Relay(lower = 0.0, upper = 1.0)) == (out = Pinned{Float64},)    # D-312
+        @test y_types(Relay(lower = 0.0, upper = 1.0)) == Pinned{Float64}    # D-312
         sim = Simulation(relay_model(); h = 1//10)
         init!(sim, set())
         # At t = 0.5, 0.9, 1.5 (inside the band, still on) and 1.9.
         for (t_plus, out, relay_state) in ((0.5, 0.0, Int8(0)), (0.4, 1.0, Int8(1)), (0.6, 1.0, Int8(1)),
                                             (0.4, 0.0, Int8(0)))
             step!(sim; t_plus = t_plus)
-            @test port(sim, "r", :out) == out && modes(sim, "r") === relay_state
+            @test port(sim, "r") == out && modes(sim, "r") === relay_state
         end
         for (value, relay_state) in ((1.0, Int8(1)), (0.5, Int8(0)))
             model = Group((; k = Constant(value), r = Relay(lower = 0.2, upper = 0.8));
-                          local_wires = ("k/out" => "r/in",))
+                          local_wires = ("k" => "r",))
             constant_sim = Simulation(model; h = 1//10)
             init!(constant_sim, set())
             @test modes(constant_sim, "r") === relay_state
@@ -1502,7 +1502,7 @@ function test_blocks()
 
     @testset "the vector relay switches each component with its own hysteresis (§10.4, §10.6, D-313)" begin
         @test y_types(Relay(lower = SVector(0.2, 0.2), upper = SVector(0.8, 0.8))) ==
-              (out = Pinned{SVector{2, Float64}},)    # D-312
+              Pinned{SVector{2, Float64}}    # D-312
         sim = Simulation(vector_relay_model(); h = 1//10)
         init!(sim, set())
         # At t = 0.5, 0.9, 1.5 and 1.9; component 2 never reaches 0.8.
@@ -1511,10 +1511,10 @@ function test_blocks()
                                            (0.6, SVector(1.0, 0.0), SVector{2, Int8}(1, 0)),
                                            (0.4, SVector(0.0, 0.0), SVector{2, Int8}(0, 0)))
             step!(sim; t_plus = t_plus)
-            @test port(sim, "r", :out) == out && modes(sim, "r") == relay_state
+            @test port(sim, "r") == out && modes(sim, "r") == relay_state
         end
         model = Group((; k = Constant(SVector(1.0, 0.5)), r = Relay(lower = SVector(0.2, 0.2), upper = SVector(0.8, 0.8)));
-                      local_wires = ("k/out" => "r/in",))
+                      local_wires = ("k" => "r",))
         constant_sim = Simulation(model; h = 1//10)
         init!(constant_sim, set())
         @test modes(constant_sim, "r") == SVector{2, Int8}(1, 0)
@@ -1642,7 +1642,7 @@ function test_blocks()
         d = only(diagnostics(err))
         @test d isa AlgebraicCycle && d.classification === :artificial
         @test d.dead == [("controller", :v, :u)]
-        @test d.wires == ["controller/u" => "sat/in1", "sat/out" => "controller/v"]
+        @test d.wires == ["controller/u" => "sat/in1", "sat" => "controller/v"]
     end
 
     @testset "a scheduled parameter is a port: it carries partials, freezes through `Freeze`, and closes a cycle from the own output (§13.7, §5.4, §14.10)" begin
@@ -1662,7 +1662,7 @@ function test_blocks()
         d = only(diagnostics(err))
         @test d isa AlgebraicCycle && d.classification === :real
         @test isempty(d.dead)
-        @test d.wires == ["controller/u" => "gain/in1", "gain/out" => "controller/Kp"]
+        @test d.wires == ["controller/u" => "gain/in1", "gain" => "controller/Kp"]
         # Only `x_deriv` reads `Ki`, so the hop is dead and the cycle artificial.
         err = failure(() -> build(scheduled_pid_cycle(:Ki)))
         @test err isa DiagnosticError
@@ -1736,12 +1736,12 @@ function test_blocks()
             @test state(sim, "controller") ≤ 1.2
             @test modes(sim, "controller") === saturation
         end
-        @test port(sim, "plant", :out) ≈ 1.0 atol = 1e-3
+        @test port(sim, "plant") ≈ 1.0 atol = 1e-3
         # Boundary-detected, the departure moves by up to one step.
         boundary_sim = Simulation(servo_loop(false); h = 1//100)
         init!(boundary_sim, set())
         step!(boundary_sim; t_plus = 40.0)
-        @test port(boundary_sim, "plant", :out) ≈ 1.0 atol = 1e-3
+        @test port(boundary_sim, "plant") ≈ 1.0 atol = 1e-3
     end
 
     @testset "the PID's correction against its own limits stops a single loop's windup (§13.7, D-313)" begin
@@ -1933,7 +1933,7 @@ function test_blocks()
         d = only(diagnostics(err))
         @test d isa AlgebraicCycle && d.classification === :real
         @test isempty(d.dead)
-        @test d.wires == ["controller/u" => "sat/in1", "sat/out" => "controller/v"]
+        @test d.wires == ["controller/u" => "sat/in1", "sat" => "controller/v"]
     end
 
     @testset "a tracking block not engaged follows the selected command through a delay and engages without a bump, and the switch without the delay is a cycle (§13.7, §5.4, §13.8, D-385)" begin
@@ -2160,12 +2160,12 @@ function test_blocks()
             d = only(diagnostics(failure(() -> build(tracker_cycle(block_type(; gains...), :z_ref)))))
             @test d isa AlgebraicCycle && d.classification === :real
             @test isempty(d.dead)
-            @test d.wires == ["controller/u" => "feedback/in1", "feedback/out" => "controller/z_ref"]
+            @test d.wires == ["controller/u" => "feedback/in1", "feedback" => "controller/z_ref"]
         end
         d = only(diagnostics(failure(() -> build(tracker_cycle(LQRTracker(; gains..., tracking = true), :v)))))
         @test d isa AlgebraicCycle && d.classification === :artificial
         @test d.dead == [("controller", :v, :u)]
-        @test d.wires == ["controller/u" => "feedback/in1", "feedback/out" => "controller/v"]
+        @test d.wires == ["controller/u" => "feedback/in1", "feedback" => "controller/v"]
         d = only(diagnostics(failure(() -> build(tracker_cycle(DiscreteLQRTracker(; gains..., tracking = true), :v)))))
         @test d isa AlgebraicCycle && d.classification === :real
         @test isempty(d.dead)
@@ -2178,7 +2178,7 @@ function test_blocks()
         d = only(diagnostics(failure(() -> build(tracker_cascade(delay = false)))))
         @test d isa AlgebraicCycle && d.classification === :real
         @test isempty(d.dead)
-        @test d.wires == ["a/u" => "sel/in1", "sel/out" => "a/v", "sel/out" => "b/v", "b/u" => "sel/in2"]
+        @test d.wires == ["a/u" => "sel/in1", "sel" => "a/v", "sel" => "b/v", "b/u" => "sel/in2"]
         model = tracker_cascade()
         @test build(model) isa Build
         @test build(model; activations = (Float64, LinearizeDual)) isa Build
@@ -2320,7 +2320,8 @@ function test_blocks()
                      Group((; k = Constant(1.0))))
             @test parentmodule(typeof(comp)) === Redstone.Blocks
             @test isempty(foreign_declarations(comp))
-            @test build(comp) isa Build
+            # A bare input is no root input, so its block builds under the rig (D-436).
+            @test build(u_types(comp) isa NamedTuple ? comp : fed(comp)) isa Build
         end
     end
 

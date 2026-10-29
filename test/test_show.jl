@@ -170,7 +170,7 @@ function test_show()
         # `fcs/inner` and `gnss` read `src.out`, a stage-1 port, so they add none.
         text = plain(multirate)
         @test occursin("\n" * join("  " .* split(MULTIRATE_OUTPUTS, '\n'), "\n") * "\n", text)
-        @test occursin("\n  feedthrough: gnss.out → fcs/outer.in\n", text)
+        @test occursin("\n  feedthrough: gnss/out → fcs/outer/in\n", text)
     end
 
     @testset "Events: one row per declaring component (§9.2, D-257)" begin
@@ -216,7 +216,7 @@ function test_show()
         @test endswith(text, "\n  Events: no events over 4 components\n  warnings: none")
         # The feedthrough line lists every edge, consumers in execution order,
         # or `none`.
-        @test occursin("\n  feedthrough: sum.e → ctl.e, ctl.out → plant.u\n", plain(build(feedback_model())))
+        @test occursin("\n  feedthrough: sum/e → ctl/e, ctl/out → plant/u\n", plain(build(feedback_model())))
         text = plain(pendulum)
         @test startswith(text, "Build: 1 component (1 continuous, 0 discrete); activations: Float64; no warnings\n")
         @test occursin("\n  feedthrough: none\n", text)
@@ -316,5 +316,12 @@ function test_show()
             @test !endswith(text, '\n')
             @test all(line == rstrip(line) for line in split(text, '\n'))
         end
+    end
+    @testset "a bare port reads as its component's path in every table (§9.2, D-436)" begin
+        text = plain(build(bare_ports_world()))
+        @test occursin("\n  feedthrough: plant/loop/scale → plant/loop/echo\n", text)
+        @test occursin("    plant/loop/flow   plant/loop/flow  —\n", text)
+        @test occursin("      u → plant/u → plant/summer\n", text)
+        @test !occursin("flow/", text) && !occursin("flow.", text) && !occursin("summer/", text)
     end
 end

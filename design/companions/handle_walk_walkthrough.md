@@ -181,8 +181,8 @@ on the page. The `Freeze` block ([§13.7][s13-7]) is that page:
 
 ```julia
 local_wires(::Rig) = (
-    "deck/terrain" => "freeze/in",
-    "freeze/out"   => "legacy/terrain",     # legacy declares Pinned{DeckField{Float64}}
+    "deck/terrain" => "freeze",
+    "freeze"       => "legacy/terrain",     # legacy declares Pinned{DeckField{Float64}}
 )
 ```
 
