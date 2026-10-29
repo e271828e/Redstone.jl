@@ -62,6 +62,7 @@ context wants.
 | `StopPolicy` | — | D-255's per-advance policy value; Appendix D entry `g-stop-policy`, bucket A |
 | leaf address | 7 | D-276's selector argument; §4.2, §4.3, §14.4, §14.7, §14.10, Appendix B; Appendix D entry `g-leaf-address`, bucket A from here on |
 | bare store | 11 | D-435's store declared as one leaf; §5.2, §7.1, §7.3, §8.2, §9.1, §9.5, §14.1, §14.3, §14.4, Appendix B, Appendix C; Appendix D entry `g-bare-store`, bucket A from here on |
+| bare contract | — | D-436's contract declared as one type; §4.3, §5.2, §6.1, §8.2, §8.6, §8.8, §9.1, §9.5, §13.3, §13.9, §14.4, Appendix B, Appendix C; Appendix D entry `g-bare-contract`, bucket A from here on |
 | descriptor | — | D-432's rendering of an artifact to data; §9.2, §13.9, Appendix B; Appendix D entry `g-descriptor`, bucket A from here on |
 | kind marker | — | D-432's per-face marker in a descriptor; §13.9; Appendix D entry `g-kind-marker`, bucket A from here on |
 | local wire | 11 | D-303's child-to-child wire, named by D-314, defined in §6.1; nine body uses in §3.3, §6.1, §8.6, §8.8, §11.7 and §14.2, two in Appendix D; Appendix D entry `g-local-wire`, bucket A from here on |

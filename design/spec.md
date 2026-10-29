@@ -858,7 +858,10 @@ A component's ports are its signal endpoints, one cell and one producer each.
 boundary** ([D-172][d-172]). For a primitive the two coincide. For an
 [assembly](#g-assembly) (a component that holds and wires child components) every face
 aliases an interior port through its boundary declarations ([§8.6][s8-6]) and
-never creates an endpoint. The distinction is [class](#g-class)-blind ([D-172][d-172]).
+never creates an endpoint. A primitive may declare a contract as one type
+instead of a `NamedTuple` ([§8.2][s8-2]). **Such a
+[bare contract](#g-bare-contract) is one port with no face, which wiring and
+the readers address by the component path alone** ([D-436][d-436]). The distinction is [class](#g-class)-blind ([D-172][d-172]).
 Wiring and the [periphery](#g-periphery) (everything outside the loop that
 exchanges data with it) address a child's faces without knowing whether it is
 primitive or composite.
@@ -883,13 +886,15 @@ stored object ([§9.7][s9-7]).
 
 #### What a port may hold
 
-**Stage returns are NamedTuples of port values, period** ([D-036][d-036]). **A custom struct is
+**Stage returns are NamedTuples of port values** ([D-036][d-036]), or the one
+port's value under a bare contract ([D-436][d-436]). **A custom struct is
 a first-class port value** ([D-036][d-036]). It is one field of the returned tuple, one
 declared port, one cell (`pose = KinPose{T}`, where `KinPose` is an illustrative
 struct). Nested fields get no cells of their own. A reader reaches a nested
 field through the port's [leaf address](#g-leaf-address), as in `"pose.q_eb"` ([§14.4][s14-4], [D-276][d-276]). A wired
 consumer takes the bundle (the struct-valued port) whole. Bare-struct returns
-are rejected ([D-036][d-036], [D-363][d-363]).
+are rejected ([D-036][d-036], [D-363][d-363]). A bare contract's return is one
+cell, never a splat ([D-436][d-436]).
 
 A port value's leaves are what the [leaf walk](#g-leaf-walk) (the framework's derivation of
 per-activation types) reaches through `Real`s, static arrays and isbits structs
@@ -1056,7 +1061,8 @@ y_s  = y_state(comp, args)       # s, t, Δt [, ws]
 y_su = y_direct(comp, args)      # s, u, y_s, t, Δt [, ws]
 s⁺   = s_update(comp, args)       # s, y, u, t, Δt [, ws]
 
-# every output stage returns its port NamedTuple — the return law below
+# every output stage returns its port NamedTuple, or the one port's value
+# under a bare contract — the return law below
 
 # event system (continuous side only) — same fresh table, same state views:
 σ        = guard(comp, args)        # x, m, y, u, t [, ws] — Bool or scalar sign value (§2.3)
@@ -1118,7 +1124,10 @@ corresponding store or fact exists for that component** ([D-074][d-074], [D-341]
 | `Δt` | the component is on the discrete tier |
 
 Undeclared stores are *absent*, never `nothing`-filled. A store declared
-`nothing`, the stateless form ([§8.2][s8-2]), is undeclared here.
+`nothing`, the stateless form ([§8.2][s8-2]), is undeclared here. Under a
+[bare contract](#g-bare-contract) (a `u_types` or `y_types` declared as one
+type, a port with no face) **the field carries the value itself**: `u` is the
+one input's value, and `y`, or `y_x`, the one output's ([D-436][d-436]).
 
 **The stage-1 [hand-down](#g-hand-down) carries the stage-1 *return*** ([D-285][d-285]).
 `y_x`, or `y_s` on the discrete tier, is what stage 1 returned in the same
@@ -1151,6 +1160,9 @@ owning neither `x` nor `m`.
 **An output stage returns its port NamedTuple, `y`, and nothing else**
 ([D-194][d-194]). `y` scatters into the component's declared cells as always,
 and every value a later function needs is one of those cells ([§8.3][s8-3]).
+Under a bare `y_types` the stage returns the port's value itself, and the
+declared shape decides which law the return is held to ([§9.5][s9-5],
+[D-436][d-436]).
 The stages' products partition the declared ports ([D-252][d-252]). A stage
 that exists produces at least one port ([D-285][d-285]).
 
@@ -1554,7 +1566,10 @@ immediate child's face. An entry of any of the three is a wire, and an entry of
 the first is a [local wire](#g-local-wire) ([D-303][d-303], [D-314][d-314]).
 
 **Every connection endpoint names an immediate child and one of its faces**
-([D-207][d-207]). The [one-level rule](#g-locality-law) covers all three wiring declarations.
+([D-207][d-207]). Where the child's contract on that side is a
+[bare contract](#g-bare-contract) (one type, a port with no face),
+**the endpoint is the child segment alone** ([§8.6][s8-6], [D-436][d-436]).
+The [one-level rule](#g-locality-law) covers all three wiring declarations.
 The elements of a [container](#g-container-children) (a `Tuple` or
 `NamedTuple` field holding only components) count as immediate children
 ([§8.5][s8-5]).
@@ -2542,11 +2557,22 @@ defensible. Beyond that, value semantics stop making sense.
 
 #### Input contracts: `u_types`
 
-A `u_types` declaration is a bare `NamedTuple` of types, written at nominal
-`Float64` and taking the component alone on both tiers ([D-263][d-263]). It
+A `u_types` declaration is a plain `NamedTuple` of types, written at nominal
+`Float64` and taking the component alone on both tiers ([D-263][d-263]).
+**It may instead be one type, a [bare contract](#g-bare-contract)**, one
+input port with no face, which wiring addresses by the component path alone
+([§8.6][s8-6], [D-436][d-436]). A one-input integrator may declare either way:
+
+```julia
+u_types(::Integrator{V}) where {V} = (in = V,)   # named: one entry, the face `in`
+u_types(::Integrator{V}) where {V} = V           # bare: one port, no face, addressed by the path
+```
+
+The shape is decided per declaration, so a bare `u_types` may sit beside a
+named `y_types`. The declaration
 admits two pieces of framework vocabulary. One is the `Pinned{P}` marker
-(above). It wraps the whole entry, and **a marker below the top of an entry
-is `IllegalPortType`** ([D-265][d-265]). The other is a `StopFlag` entry, which
+(above). It wraps the whole entry, a bare declaration whole, and **a marker
+below the top of an entry is `IllegalPortType`** ([D-265][d-265]). The other is a `StopFlag` entry, which
 places nothing and is left alone ([§13.5][s13-5]). A mutable type anywhere in
 an entry of either contract is `IllegalPortType` too ([§4.3][s4-3],
 [D-237][d-237]).
@@ -2756,7 +2782,11 @@ the root's own input faces** ([D-208][d-208]). For an
 declared through `input_wires`, each traced through the face chain
 ([§6.1][s6-1], [§11.3][s11-3]) to the primitive entries consuming it. For a
 primitive they are its `u_types` keys directly, because a primitive's faces are
-its own port names ([§8.6][s8-6]). Each is then its own consuming entry. The type
+its own port names ([§8.6][s8-6]). Each is then its own consuming entry. A bare
+`u_types` has no key, and **a primitive root declaring one is refused**,
+`IllegalPortType` with reason `:bare_at_root`, since a root input is a face
+the periphery writes by name ([§11.3][s11-3], [D-436][d-436]). The component
+test rig is the remedy, as for an abstract entry ([D-120][d-120]). The type
 derivation is one rule across both cases, the tight bound at the ultimate
 consuming entry, above. At the root the two contract declarations share one
 face namespace, so a key declared in both is a build error ([§8.6][s8-6],
@@ -2774,6 +2804,14 @@ On a continuous producer the declaration is spelled as follows.
 
 ```julia
 y_types(::Engine) = (M_shaft = Float64, P = Float64, ω = Float64)
+```
+
+A bare `y_types` is one type, one output port with no face, and its stage
+returns the value itself ([§5.2][s5-2], [D-436][d-436]):
+
+```julia
+y_types(::Integrator{V}) where {V} = V
+y_state(::Integrator, (; x)) = x
 ```
 
 The cell types at an activation are that declaration retyped at the
@@ -2956,7 +2994,9 @@ module shadowing a declaration) covers it.
 author destructures by name only what the body reads, as in
 `x_deriv(c::LowPassFilter, (; x, u)) = …` and `y_direct(c::PID, (; s, u, Δt)) = …`.
 Here `PID` names a proportional-integral-derivative controller. Which names a
-bundle holds is the bundle law of [§5.2][s5-2].
+bundle holds is the bundle law of [§5.2][s5-2]. Under a bare contract the
+bundle's `u` or `y` is the value itself, so the integrator above writes
+`x_deriv(::Integrator, (; u)) = u` ([D-436][d-436]).
 
 The rule exists so that the [executor](#g-executor) (the compiled form of
 the stage execution order) issues one fixed call shape, `fn(comp, args)`. Two
@@ -3447,7 +3487,13 @@ its own, and its elements go by bare key ([D-211][d-211]). Instance navigation, 
 symbols and dotted paths were all rejected ([D-040][d-040]).
 
 The three wiring declarations use only the short case of that form, one child
-segment and one face name ([§6.1][s6-1], [D-207][d-207]). A container
+segment and one face name ([§6.1][s6-1], [D-207][d-207]). Where the child's
+contract on that side is a [bare contract](#g-bare-contract) (one type, a
+port with no face, [§8.2][s8-2]), **the endpoint is the child segment alone**,
+as in `"gain" => "integrator"` ([D-436][d-436]). A one-segment endpoint at a
+child whose side is named, or at an assembly, is `UnknownPort` with the
+child's face list in hand. A two-segment endpoint at a bare side is the same
+kind, and its message spells the one-segment form. A container
 child keeps its key segment as part of that child segment, so
 `"aircraft/2/face"` is one level and not two. The read side
 walks the full depth, as `"systems/ldg/left/trn"` does in a [snapshot](#g-snapshot) (the
@@ -3496,10 +3542,13 @@ framework's derivation of per-activation types) on the continuous tier, and
 [pinned](#g-walked) on the discrete. Three alternative spellings are rejected ([D-041][d-041]).
 Publicity is never implicit ([§8.3][s8-3], [D-297][d-297]).
 
-**Face names are arbitrary strings with two build-checked invariants**
-([D-046][d-046]). The first is that a face name contains no `/`, which is
+**Face names are arbitrary strings with three build-checked invariants**
+([D-046][d-046], [D-436][d-436]). The first is that a face name contains no `/`, which is
 reserved for structural paths. The second is uniqueness across the union of
-the two boundary declarations' face names ([D-170][d-170]). Every other naming
+the two boundary declarations' face names ([D-170][d-170]). The third is that
+a face name is never empty. An assembly face is never bare, and an empty
+contract key is refused like an empty face, `FaceNameIllegal`, because a bare
+port is spelled by omitting the name, never by an empty one. Every other naming
 choice is author convention, not framework law. Separators and grouping
 prefixes like `"pilot.throttle_axis"` are such choices. The
 `input_passthrough` helper's defaults ([§8.8][s8-8]) document the house style
@@ -3533,7 +3582,12 @@ primitive's do.
 **At the root the uniqueness invariant follows the root's class**
 ([D-210][d-210]). A primitive root declares no boundary methods. Its face set
 is therefore the union of its `u_types` and `y_types` keys. A key declared in
-both is the same build error a duplicate face name is. The root is where those
+both is the same build error a duplicate face name is. A bare contract takes
+the reserved empty name in that set, so a primitive root with both contracts
+bare collides the same way, and one with a bare `u_types` alone is refused as
+a root input with no face ([§8.2][s8-2], [D-436][d-436]). A bare `y_types` at
+a primitive root is legal, and its output face is headless ([§14.4][s14-4]).
+The root is where those
 two declarations first share an address space. A root input places a cell the
 periphery writes ([§11.3][s11-3]), so a collision would put two cells at one
 name. Below the root nothing collides, because a primitive's input faces alias
@@ -3911,6 +3965,8 @@ function input_passthrough(assembly, child_path::AbstractString;
                                   setdiff(names, except)
     # `given == 1` with an empty `wanted` is EmptyFaceSelection, a build warning
     # through §9.2's channel; a bare call over a faceless child is silent
+    # a bare child lists one empty name: its label is `prefix` alone and its
+    # endpoint `child_path` alone (D-436)
     label(n) = isempty(prefix) ? n : string(prefix, sep, n)
     return Tuple(label(n) => string(child_path, "/", n) for n in wanted)
 end
@@ -3930,6 +3986,14 @@ problem ([§8.6][s8-6]) makes a path unrecoverable from an instance. A face
 name containing dots is a legal final path segment on the internal-endpoint
 side ([D-046][d-046]). That holds precisely because slash is the only structural
 separator.
+
+A child may declare the contract on the helper's side as a
+[bare contract](#g-bare-contract) (one type, a port with no face, [§8.2][s8-2]),
+which `input_faces` lists as one empty name ([§13.3][s13-3]). **The helper
+labels that face with the prefix alone and routes it to the child path
+alone** ([D-436][d-436]), so the default labels an `integrator` child's input
+`"integrator"`. An explicit `prefix = ""` over such a child yields an empty
+face name, which the build refuses ([§8.6][s8-6]).
 
 Computed entries mix freely with hand-written ones in either declaration
 ([D-043][d-043]).
@@ -4183,14 +4247,17 @@ Resolution runs these checks:
   raised as `UnknownPort`;
 - the two wiring type clauses ([§6.1][s6-1], [§8.2][s8-2]), stated below;
 - the whole-tree (unconnected-input) obligation check;
-- the store shape ([§8.2][s8-2]);
+- the store shape and the contract shape ([§8.2][s8-2]);
 - the closed leaf vocabulary ([§7.1][s7-1]).
 
 The store shape is that every `x_init`, `s_init` and `m_init` value is a
 `NamedTuple`, a [bare store](#g-bare-store) (a store declared as one leaf, with no field name), or `nothing` ([§8.2][s8-2]). The empty `NamedTuple` is
 `EmptyStore`. **The shape is read before the tier classifier and the
 vocabulary checks read the value** ([D-435][d-435]), and those checks take a bare
-store as its one leaf. The closed leaf vocabulary is
+store as its one leaf. The contract shape is that every `u_types` and
+`y_types` value is a `NamedTuple` of types or one type, a
+[bare contract](#g-bare-contract) (one port with no face), read the same way
+([§8.2][s8-2], [D-436][d-436]). The closed leaf vocabulary is
 checked on every `x_init`, because the walk in [§8.2][s8-2] rests on it. A
 leaf outside it is `IllegalStateLeaf`. `s_init` pins wholesale and answers to the isbits rule of [§7.3][s7-3] instead.
 **The isbits rule is checked on `s_init` and `m_init` field by field**
@@ -4679,7 +4746,9 @@ only the instance and the scalar ([D-077][d-077]) and derives nothing from
 layouts.
 
 Two checks ride the same pass. The first is the return's shape. A stage
-returning something other than a `NamedTuple` fails here. The second is the
+returning something other than its declared shape, a `NamedTuple` for a named
+contract and the one port's value for a bare one, fails here ([§9.5][s9-5],
+[D-436][d-436]). The second is the
 dead-stage rule. **A stage returning bare `(;)` produces no ports at all, and
 is `DeadStage`**, fail-fast ([D-194][d-194], [D-285][d-285]). Such a stage
 computes nothing any consumer can read. The rule is the inert-component check
@@ -4949,7 +5018,9 @@ table, it holds the complete expected return type at this
 [cells](#g-cell) this stage writes, as the probe fixed them at this
 activation. It is one concrete `NamedTuple` type per
 ([component](#g-component), stage), the stage's declared names at the types
-their cells hold ([§8.2][s8-2]). **The write is generated over that type and
+their cells hold, or the one cell's type under a
+[bare contract](#g-bare-contract) (a `y_types` declared as one type, a port
+with no face, [§8.2][s8-2]) ([D-436][d-436]). **The write is generated over that type and
 the return's type** ([D-235][d-235]). So the test is decided when the write's
 method is specialized, and no per-field instruction reaches the conformant
 path.
@@ -5081,9 +5152,10 @@ function is checked against its own predicate.
   its field's block at `T`". That predicate is what makes derivative
   completeness structural rather than a matter of author discipline.
 - `s_update` checks against its primitive's `s` shape.
-- **The declared shape decides the law a return is held to** ([D-435][d-435]). A
+- **The declared shape decides the law a return is held to** ([D-435][d-435], [D-436][d-436]). A
   [bare store](#g-bare-store) (a store declared as one leaf, with no field name) has one leaf, and `x_deriv`, `s_update`, `x_projection` and a
-  handler's `x` key return that leaf itself.
+  handler's `x` key return that leaf itself. A stage over a bare `y_types`
+  returns the port's value itself.
 - Handlers check against the [§5.2][s5-2] return law, key by key.
 - [Guards](#g-guard) check against their probe-derived
   [predicate](#g-predicate) form (below).
@@ -7250,7 +7322,9 @@ assembly's `input_wires` key or a primitive's `u_types` key ([§8.2][s8-2], [§8
 A component is the unit of modeling, and a face is the name a port wears on its
 component's boundary. A root input is routed inward to consumers and produced by
 no component. At every non-root level an input face is fed by the parent's wire,
-and at the root there is no parent. No dedicated vocabulary is needed.
+and at the root there is no parent. No dedicated vocabulary is needed. A bare
+`u_types`, one type with no key ([§8.2][s8-2]), has no face to write by, so a
+primitive root declaring one is refused ([§8.6][s8-6], [D-436][d-436]).
 
 A root input is usefully read as the output face of the one producer the build
 never sees, the periphery and the services. On that reading, root-input
@@ -10342,10 +10416,15 @@ enforces, which client each duty binds and why, and the standing of
   of a primitive's `u_types` / `y_types` (the key set is `T`-independent). For an
   [assembly](#g-assembly) they return the [face](#g-face) names (the names ports wear on their component's
   boundary) of `input_wires(c)` / `output_wires(c)`. Declaration order is preserved,
-  which gives deterministic printouts and stable diagnostics.
+  which gives deterministic printouts and stable diagnostics. **A
+  [bare contract](#g-bare-contract) (one type, a port with no face) lists as
+  one empty name**, so a child with no contract on that side still lists none
+  ([D-436][d-436]).
 - `resolve_terminal(assembly, path) → (component, name)` splits off a terminal
   path's final segment and resolves the prefix through `resolve`. The split is
   unambiguous because face names may contain dots but never slashes ([§8.6][s8-6]).
+  A one-segment path names a child alone, which is legal where the child's
+  contract on that side is bare ([§8.6][s8-6], [D-436][d-436]).
 
 Resolution enforces two duties, and they belong to different clients. The first
 is the [one-level rule](#g-locality-law) ([§6.1][s6-1], [D-207][d-207]). A connection endpoint resolves to an
@@ -10710,9 +10789,9 @@ struct StopRequest <: AbstractComponent
 end
 StopRequest(; reason = "") = StopRequest(reason)
 x_init(::StopRequest) = nothing
-u_types(::StopRequest) = (request = Bool,)
-y_types(::StopRequest) = (flag = StopFlag,)
-y_direct(::StopRequest, (; u)) = (flag = u.request ? STOP_REQUESTED : NO_STOP,)
+u_types(::StopRequest) = Bool                   # bare contracts: one port each, no face (§8.2)
+y_types(::StopRequest) = StopFlag
+y_direct(::StopRequest, (; u)) = u ? STOP_REQUESTED : NO_STOP
 stop_reason(c::StopRequest) = c.reason
 ```
 
@@ -10745,7 +10824,8 @@ port, in build order), and it names every request. The requester at index `i`
 owns the block's offset `i - 1`. The reason is the publishing component's
 `stop_reason`, an optional declaration with default `""` ([§8.2][s8-2]). One reason
 serves all of a component's requests. It is instance data on the component,
-never a port value.
+never a port value. A bare `StopFlag` port's requester carries the empty port
+name and renders by path alone ([D-436][d-436]).
 
 #### The policy per advance
 
@@ -11079,8 +11159,8 @@ const SumJunction{V, N} = Junction{V, V, N, typeof(+)}
 x_init(::Junction) = nothing          # stateless, continuous: the state declaration is the tier marker (§8.2)
 u_types(::Junction{In, Out, N}) where {In, Out, N} =
     NamedTuple{ntuple(i -> Symbol(:in, i), N)}(ntuple(_ -> In, N))
-y_types(::Junction{In, Out}) where {In, Out} = (out = Out,)
-y_direct(j::Junction, (; u)) = (out = j.f(u...),)
+y_types(::Junction{In, Out}) where {In, Out} = Out    # bare: one output, no face (§8.2)
+y_direct(j::Junction, (; u)) = j.f(u...)
 ```
 
 The parameters are the nominal port types and the arity, as in
@@ -11136,10 +11216,10 @@ struct UnitDelay{V} <: AbstractComponent
     s0::V
 end
 s_init(d::UnitDelay) = d.s0                   # one bare leaf, addressed by the component path (§8.2)
-u_types(::UnitDelay{V}) where {V} = (in = V,)
-y_types(::UnitDelay{V}) where {V} = (out = V,)
-y_state(::UnitDelay, (; s)) = (out = s,)      # publishes the stored value
-s_update(::UnitDelay, (; u)) = u.in           # stores the incoming one
+u_types(::UnitDelay{V}) where {V} = V         # bare contracts: one port each, no face (§8.2)
+y_types(::UnitDelay{V}) where {V} = V
+y_state(::UnitDelay, (; s)) = s               # publishes the stored value
+s_update(::UnitDelay, (; u)) = u              # stores the incoming one
 ```
 
 **The delay holds its initial value as instance data** ([D-312][d-312]), so
@@ -11163,8 +11243,8 @@ struct Constant{V} <: AbstractComponent
     value::V
 end
 x_init(::Constant) = nothing                   # `nothing` declares the tier (§8.2)
-y_types(::Constant{V}) where {V} = (out = Pinned{V},)
-y_state(c::Constant, _) = (out = c.value,)     # the value the instance holds
+y_types(::Constant{V}) where {V} = Pinned{V}   # bare and pinned: the marker wraps the declaration
+y_state(c::Constant, _) = c.value              # the value the instance holds
 ```
 
 `Constant` is a stateless continuous primitive, so the tier-transparency argument
@@ -11178,7 +11258,7 @@ scalar type), and the pinned port says so where a walking one would promote
 the value and declare less. The honest pin is spelled rather than inferred.
 The same holds for every library block whose output depends on neither its
 continuous state nor a walking input, such as a step source or a relay, and
-each declares its `out` pinned ([D-312][d-312], [D-411][d-411]).
+each declares its output pinned ([D-312][d-312], [D-411][d-411]).
 
 Two uses need `Constant` ([D-143][d-143], [D-410][d-410]), though a listed block needs none to be
 built ([D-313][d-313]). The zero-contributor configurations ([§6.2][s6-2]) are one. There, a
@@ -11198,9 +11278,9 @@ instance holds) instead ([§14.9][s14-9], [D-364][d-364]).
 # Freeze{V} — a stateless continuous primitive; tolerant in, pinned out
 struct Freeze{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: AbstractComponent end
 x_init(::Freeze) = nothing
-u_types(::Freeze{V}) where {V} = (in = V,)
-y_types(::Freeze{V}) where {V} = (out = Pinned{V},)
-y_direct(::Freeze, (; u)) = (out = ForwardDiff.value.(u.in),)   # leafwise strip, by broadcast
+u_types(::Freeze{V}) where {V} = V
+y_types(::Freeze{V}) where {V} = Pinned{V}
+y_direct(::Freeze, (; u)) = ForwardDiff.value.(u)   # leafwise strip, by broadcast
 ```
 
 At nominal the strip is the identity, so the block costs one gather and one
@@ -11458,7 +11538,10 @@ inputs), and the build's warnings:
   `const` of its own module binds a parameterization of its type, and its
   faces. A primitive's [face](#g-face) (the name a port wears on its component's boundary)
   carries its printed type, its kind marker and whether it is pinned; an
-  assembly's faces are names alone. The root node carries no field and no
+  assembly's faces are names alone. **A [bare contract](#g-bare-contract)
+  (one type, a port with no face) carries the empty string as its name**,
+  as a wire endpoint on it carries the empty string as its port and the root
+  carries it as its path, with no format bump ([D-436][d-436]). The root node carries no field and no
   key, and a primitive root is one primitive node ([D-433][d-433]). An assembly
   node carries its level's
   wires verbatim, producer to consumer in declaration order, each endpoint a
@@ -11470,7 +11553,7 @@ inputs), and the build's warnings:
   marker when it fixed the type ([D-236][d-236], [D-433][d-433]).
 - `outputs` projects [`Outputs`](#g-outputs) (the execution order and each
   port's stage): the order as paths, and per primitive its stage-1 and stage-2
-  port names.
+  port names, the empty string for a bare port.
 - `warnings` lists the warnings the build kept ([§9.2][s9-2]), each encoded
   as the failure descriptor encodes a diagnostic, an empty array when there
   are none ([D-434][d-434]).
@@ -12051,7 +12134,15 @@ steps in any order, as in `"pose.q_eb[2]"`, `"ω_eb_b[1]"` or `"J[1,3]"`. **A ba
 ([D-435][d-435]). `get_state("integrator")` reads the one leaf,
 `get_state("integrator", "[2]")` one component of an `SArray` leaf,
 `get_state("kf", ".P")` a field of a bare isbits struct in `s`, and the
-store selectors' `leaf` defaults to the empty address. A face name is an arbitrary string and may
+store selectors' `leaf` defaults to the empty address. A
+[bare contract](#g-bare-contract) (a `y_types` declared as one type, a port
+with no face) is read the same way ([D-436][d-436]). `get_output("integrator")`
+reads the one output and `get_output("integrator", "[2]")` one component of
+it, with `leaf` defaulting to the empty address, and `get_face("")` reads the
+headless output face of a primitive root. A named head against a bare port,
+or a headless address against a named one, is `ReadResolution` with reason
+`:port_shape`. `get_input` names a root input, which a bare port never is
+([§8.2][s8-2]). A face name is an arbitrary string and may
 contain a dot ([§8.6][s8-6]), so on `get_input` and `get_face` the head is matched
 rather than parsed ([D-418][d-418]). The head is the longest declared face name that is a
 prefix of the address and is followed by the end, a `.` or a `[`. A `Symbol` leaf
@@ -13682,7 +13773,8 @@ What a [component](#g-component) or [assembly](#g-assembly) defines ([§8.2][s8-
   [D-039][d-039]).
 - Continuous primitive. `x_init` and `m_init` (by value, a `NamedTuple` or a
   [bare store](#g-bare-store), one leaf with no field name, [§8.2][s8-2]), `ws_init(::C, ::Type{T})`
-  (by allocation), `u_types` and `y_types` (by type, `Pinned{P}` marking a
+  (by allocation), `u_types` and `y_types` (by type, a `NamedTuple` or one
+  type, a [bare contract](#g-bare-contract), [§8.2][s8-2]; `Pinned{P}` marking a
   frozen leaf), and `state_events`. Its [stages](#g-stage-function) are
   `y_state` and `y_direct`, its update law `x_deriv`, and its event functions
   [guard](#g-guard)/handler pairs
@@ -13753,7 +13845,7 @@ assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
 - `resolve(assembly, path) → AbstractComponent`. Resolves an immediate child, a
   container element's key segment included ([§13.3][s13-3]).
 - `input_faces(c)` / `output_faces(c) → Vector{String}`. Declaration-ordered
-  [face](#g-face) names ([§13.3][s13-3]).
+  [face](#g-face) names, a bare contract listing as one empty name ([§13.3][s13-3]).
 - `input_passthrough(assembly, child_path; sep = ".", prefix =
   replace(child_path, "/" => sep), except = (), only = (), select = nothing)`
   and `output_passthrough` with the same arguments. The declaration-site
@@ -13814,8 +13906,10 @@ assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
     with the `Simulation` forms `port(sim, path, name)`, `state(sim, path)`
     and `modes(sim, path)`. The reads of a [port](#g-port)'s value, a component's state
     from whichever home owns it, and its modes ([§7.3][s7-3], [D-317][d-317]).
+    The name defaults to the empty one, a bare output's ([D-436][d-436]).
   - `port(snapshot, path, name)`. A port's value off a published
-    [snapshot](#g-snapshot), addressed exactly as the live table.
+    [snapshot](#g-snapshot), addressed exactly as the live table, the same
+    default included.
   - `warnings(model) → Vector`. The [build](#g-build)'s list and the deployment's,
     concatenated ([§9.2][s9-2], [D-317][d-317]).
   - `checkpoint(model) → ModelState`. The model's state alone
@@ -13988,11 +14082,12 @@ assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
   checkpoint of the simulation, and `about` with `t0` (default `0.0` beside
   `about`) places
   it anywhere else ([§14.10][s14-10], [D-430][d-430]).
-- `get_state(path, leaf = "")`, `get_deriv(path, leaf = "")`, `get_output(path, leaf)`,
+- `get_state(path, leaf = "")`, `get_deriv(path, leaf = "")`, `get_output(path, leaf = "")`,
   `get_input(leaf)` and `get_face(leaf)`. The closed
   [read-selector](#g-selector) family, one
   address space for every reader that takes a selector ([§14.4][s14-4]). The
-  empty default is a bare store's headless address ([D-435][d-435]).
+  empty default is a bare store's or a bare output's headless address
+  ([D-435][d-435], [D-436][d-436]).
 - `taps(; x = (;), u = (;), y = (;))`. Builds the tap set, three labeled
   selector lists with closed membership, every tap a
   [leaf address](#g-leaf-address) resolving to one scalar ([§14.4][s14-4],
@@ -14174,9 +14269,12 @@ collection ([§9.2][s9-2], [D-250][d-250]).
   build · collected. The wire end (`source`/`destination`, or `connection` for an
   interface-connection entry's internal side, [D-210][d-210]), the declaring
   entry, that end's path as resolved and as written, the unknown port name,
-  that end's port list (did-you-mean).
+  that end's port list (did-you-mean). A one-segment endpoint at a named
+  side carries the empty port name, and a two-segment endpoint at a bare side
+  the name it wrote against a list of one empty name; the message spells the
+  one-segment form ([D-436][d-436]).
 - **`UnconnectedInput`** ([§6.1][s6-1], [§8.4][s8-4] w2, [§9.1][s9-1]). Error · build ·
-  collected. Primitive path, input name, declared entry type, the faces
+  collected. Primitive path, input name (empty on a bare contract), declared entry type, the faces
   `input_wires` entries handed it up through, innermost first, the last being
   the outermost face nobody wired.
 - **`TwoProducers`** ([§6.1][s6-1], [§8.8][s8-8], [§9.1][s9-1]). Error · build · collected.
@@ -14184,7 +14282,8 @@ collection ([§9.2][s9-2], [D-250][d-250]).
   / interface connection entry), each a terminal or the face an entry hands
   the input up through.
 - **`WireTypeMismatch`** ([§6.1][s6-1], [§8.2][s8-2], [§8.4][s8-4] w4). Error
-  · build · collected. Both endpoint paths, both face names, declared entry
+  · build · collected. Both endpoint paths, both face names (empty where a
+  side is bare), declared entry
   type, producer face type.
 - **`WalkingFaceAtFrozenEntry`** ([§6.1][s6-1], [§8.2][s8-2]). Error · build ·
   collected. Consumer path and entry name, producer path and face name, the
@@ -14248,12 +14347,14 @@ collection ([§9.2][s9-2], [D-250][d-250]).
   entry on a discrete primitive is reason `:pinned_entry`, the entry named with
   its contract ([D-263][d-263]). `x_projection` is reason `:continuous_only` on a discrete
   primitive and `:no_manifold` on a primitive with an empty `x_init`.
-- **`FaceNameIllegal`** ([§8.6][s8-6]). Error · build · collected. Assembly
-  path, face name, the violated invariant (contains `/`).
+- **`FaceNameIllegal`** ([§8.6][s8-6]). Error · build · collected. Component
+  path, face name, the violated invariant (contains `/`, or empty, a
+  primitive's contract key included, [D-436][d-436]).
 - **`FaceNameCollision`** ([§8.6][s8-6]). Error · build · collected. Assembly
   path, the colliding face names, the site. The site is `:assembly` for a
   name repeated among an assembly's input and output faces, and `:root` for
-  a primitive root whose `u_types` and `y_types` share a name ([D-210][d-210]). No
+  a primitive root whose `u_types` and `y_types` share a name, the reserved
+  empty name included when both are bare ([D-210][d-210], [D-436][d-436]). No
   per-entry declaration: a computed entry
   collides like a hand-written one ([§8.8][s8-8], [D-249][d-249]).
 - **`FaceDirectionConflict`** ([§8.6][s8-6]). Error · build · collected.
@@ -14294,10 +14395,13 @@ collection ([§9.2][s9-2], [D-250][d-250]).
   a state declaration of `nothing`). A primitive that produces nothing and stores nothing ([D-263][d-263]).
 - **`IllegalPortType`** ([§4.3][s4-3], [§8.2][s8-2]). Error · build ·
   collected. Component path, the site at fault (`:face` for `u_types`,
-  `:port` for `y_types`, or `:root_input`), port name, the offending type,
+  `:port` for `y_types`, or `:root_input`), port name (empty on a bare
+  contract), the offending type,
   and a `reason` against the leaf vocabulary ([§4.3][s4-3]). The reasons are
   `:no_leaves`, `:mutable` (with the dotted position of the mutable type),
-  `:handle_at_root` (an [opaque leaf](#g-opaque-leaf) at a root input) and `:nested_marker` (a
+  `:handle_at_root` (an [opaque leaf](#g-opaque-leaf) at a root input), `:bare_at_root` (a
+  bare `u_types` at a primitive root, a root input with no face,
+  [D-436][d-436]) and `:nested_marker` (a
   `Pinned` marker below the top of the entry, [D-265][d-265]). Two more reasons concern stop requests
   ([§13.5][s13-5], [D-316][d-316]): `:stop_flag_nested`, a `StopFlag` leaf inside a
   port whose type is not `StopFlag` itself, and `:stop_flag_at_root`, a root
@@ -14318,11 +14422,12 @@ activation):
   sampled or structural).
 - **`ProducedByTwoStages`** ([§8.3][s8-3]). Error · build ·
   fail-fast, with the probe chain ([D-229][d-229]). Component path, port
-  name. The two stages are the kind's own, so it carries no producer column
+  name (empty on a bare contract). The two stages are the kind's own, so it carries no producer column
   ([D-252][d-252]).
 - **`DeclaredNotProduced`** ([§8.3][s8-3]). Error · build · collected, by the
   completeness pass over the complete products, which runs only once every
-  port check has passed ([D-239][d-239]). Component path, declared name, the
+  port check has passed ([D-239][d-239]). Component path, declared name
+  (empty on a bare contract), the
   stage-product list and the state-field list, the latter as context. The
   remedy is returning the name from `y_state` ([§5.3][s5-3],
   [D-252][d-252]).
@@ -14338,8 +14443,9 @@ activation):
 - **`ConformanceFailure`** ([§9.5][s9-5]). Error · build, at probe; runtime
   thereafter · collected at probe over its unit and thrown at once (one
   stage's port check, one handler's return, or the update or projection
-  pass, [D-431][d-431]), but a return that is not a NamedTuple against a
-  named declaration throws alone.
+  pass, [D-431][d-431]), but a return whose shape is not the declared one, a
+  bare value against a named declaration or a NamedTuple against a bare one,
+  throws alone ([D-435][d-435], [D-436][d-436]).
   Fail-fast at runtime, a `StepError` species. Component path,
   function, the event name on a handler's occurrence, field-level diff
   (missing / unexpected / per-field expected-vs-observed, order-insensitive,
@@ -14464,7 +14570,9 @@ activation):
     `:no_such_field`, `:opaque_leaf`, `:not_indexable`, `:index_arity` or
     `:index_bounds`;
   - a store selector under a table source, `:store_selector` (the source
-    rule, [§14.4][s14-4]).
+    rule, [§14.4][s14-4]);
+  - a named head against a bare port, or a headless address against a named
+    one, `:port_shape` ([D-436][d-436]).
 
   Raised at trim, at linearization, at attach and at `series`, where the
   label names the read and the `attach!` call names the device
@@ -14724,7 +14832,8 @@ machine ([§3.1][s3-1]).
 
 <a id="g-contract"></a>**contract** — a [component's](#g-component) declared interface.
 `u_types` states its requirements, what each entry *allows* to arrive. `y_types`
-states its public [ports](#g-port), what each [cell](#g-cell) *carries* ([§8.2][s8-2]). A name
+states its public [ports](#g-port), what each [cell](#g-cell) *carries* ([§8.2][s8-2]).
+Either may be a [bare contract](#g-bare-contract), one type for one port. A name
 returned in `y` and declared nowhere is a build error ([§8.3][s8-3]). The
 [derived contract](#g-derived-contract) and the spec's other contracts, such as
 the [device](#g-device) authoring contract ([§11.6][s11-6]), are distinct senses.
@@ -14838,6 +14947,13 @@ framework addresses it by the [component](#g-component) path alone, a
 and a [condition](#g-condition) sets it with a bare payload ([§8.2][s8-2],
 [§14.1][s14-1], [§14.4][s14-4], [D-435][d-435]).
 
+<a id="g-bare-contract"></a>**bare contract** — a `u_types` or `y_types` declared as
+one type instead of a `NamedTuple`, as `y_types(::Integrator{V}) where {V} = V`.
+Its [port](#g-port) has no [face](#g-face), so a wire addresses it by the child
+segment alone, the [bundle](#g-bundle) carries its value itself, and a reader
+addresses a bare output by the [component](#g-component) path alone
+([§5.2][s5-2], [§8.2][s8-2], [§8.6][s8-6], [§14.4][s14-4], [D-436][d-436]).
+
 <a id="g-buffer"></a>**buffer** — the framework-owned contiguous `Vector{T}` backing all continuous
 state, laid out at build time, and the `ẋ` vectors the integrator fills. A
 [component's](#g-component) `x` [store](#g-store) is its range of the `x` buffer. The buffer is
@@ -14871,7 +14987,8 @@ entry ([§10.5][s10-5]); [executor](#g-executor) entry ([§9.7][s9-7]); [roster]
 entry ([§11.3][s11-3]); and [condition](#g-condition) entry ([§14.3][s14-3]).
 
 <a id="g-face"></a>**face** — the name a [port](#g-port) wears on its [component's](#g-component) boundary.
-For a [primitive](#g-primitive) it is the port's own name. For an [assembly](#g-assembly) it is a name declared in
+For a [primitive](#g-primitive) it is the port's own name, and a
+[bare contract's](#g-bare-contract) port has none. For an [assembly](#g-assembly) it is a name declared in
 `input_wires` or `output_wires`, aliasing an interior port. Face names are
 opaque tokens, and the [periphery's](#g-periphery) write side speaks only face names
 ([§8.6][s8-6], [§11.2][s11-2], [§14.4][s14-4]).
@@ -16261,6 +16378,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-433]: decisions.md#d-433--the-descriptor-writers-readings
 [d-434]: decisions.md#d-434--the-failure-descriptor-and-a-diagnostic-as-data
 [d-435]: decisions.md#d-435--admit-a-bare-leaf-as-a-store-declaration-addressed-by-the-component-path
+[d-436]: decisions.md#d-436--admit-a-bare-contract-a-port-with-no-face-addressed-by-the-component-path
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop
