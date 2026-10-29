@@ -322,10 +322,10 @@ s_update(::Delay{V, K}, (; s, u)) where {V, K} =
 A discrete [primitive](@ref g-primitive) that publishes the forward-Euler
 integral of its input.
 
-The [block](@ref g-block) holds one bare [store](@ref g-store) value from `s0`, `q`
+The [block](@ref g-block) holds one bare [store](@ref g-store) value from `s0`, `s`
 below, addressed by the path alone.
-Each [tick](@ref g-tick) advances it by forward Euler, `q⁺ = q + Δt in`. `out`
-publishes `q` from [stage 1](@ref g-stage-function). The block therefore breaks
+Each [tick](@ref g-tick) advances it by forward Euler, `s⁺ = s + Δt in`. `out`
+publishes `s` from [stage 1](@ref g-stage-function). The block therefore breaks
 an [algebraic loop](@ref g-algebraic-loop) as [`UnitDelay`](@ref) does. `Δt` is
 the component's own period, so the integral is per second at any rate.
 
@@ -335,7 +335,7 @@ its last value.
 
 # Keywords
 
-- `s0`: the initial value of `q`. `V` is `Float64` or a static array of
+- `s0`: the initial value of `s`. `V` is `Float64` or a static array of
   `Float64`, taken from `float(s0)`, so an integer `s0` qualifies.
 
 See also [`DiscreteLimitedIntegrator`](@ref), [`Integrator`](@ref).
@@ -356,8 +356,8 @@ s_update(::DiscreteIntegrator, (; s, u, Δt)) = s + Δt * u.in
 A discrete [primitive](@ref g-primitive) that publishes the forward-Euler
 integral of its input, held between two limits.
 
-Each [tick](@ref g-tick) advances the one bare [store](@ref g-store) value, `q` below, from
-`s0` as `q⁺ = clamp(q + Δt in, lower, upper)`. `out` publishes `q` from
+Each [tick](@ref g-tick) advances the one bare [store](@ref g-store) value, `s` below, from
+`s0` as `s⁺ = clamp(s + Δt in, lower, upper)`. `out` publishes `s` from
 [stage 1](@ref g-stage-function). The mode and four events of the continuous
 [`LimitedIntegrator`](@ref) are this one `clamp`, with no mode store and no
 localization.
@@ -374,7 +374,7 @@ Over a static vector, the limits and the codes are componentwise, and
 
 - `lower`: the lower limit, below `upper`, componentwise over a vector.
 - `upper`: the upper limit.
-- `s0`: the initial value of `q`. `s0`, `lower` and `upper` are promoted to one
+- `s0`: the initial value of `s`. `s0`, `lower` and `upper` are promoted to one
   `V`, which is `Float64` or a static array of `Float64`, and taken by `float`,
   so integer values qualify.
 
@@ -405,10 +405,10 @@ A discrete [primitive](@ref g-primitive) that publishes its input with its rate
 of change bounded per [tick](@ref g-tick).
 
 `out` follows `in`, moving at most `rising Δt` up and `falling Δt` down per
-tick. `Δt` is the component's own period. One bare [store](@ref g-store) value, `v` below,
+tick. `Δt` is the component's own period. One bare [store](@ref g-store) value, `s` below,
 holds the previous output, and each tick stores `out`:
 
-    out = v + clamp(in - v, -falling Δt, rising Δt)
+    out = s + clamp(in - s, -falling Δt, rising Δt)
 
 `out` reads `in`, so the [block](@ref g-block) has
 [feedthrough](@ref g-feedthrough). A loop closed on it through a memoryless path
@@ -728,9 +728,10 @@ StateSpace(; A::AbstractMatrix, B::AbstractMatrix, C::AbstractMatrix,
            D::AbstractMatrix = zeros(size(C, 1), size(B, 2)), x0 = zeros(size(A, 1))) =
     StateSpace(static_system(A, B, C, D, x0)...)
 
-# The keyword constructors' matrices and `x0`, checked against each other and
-# made static. `DiscreteStateSpace` shares it.
-function static_system(A, B, C, D, x0)
+# The keyword constructors' matrices and initial state, checked against each
+# other and made static. `DiscreteStateSpace` shares it, its initial state
+# keyword `s0`.
+function static_system(A, B, C, D, x0, initial_keyword = "x0")
     size(A, 1) == 0 && throw(ArgumentError(
         "a state space with no state is a gain, which is written in a stage body, not a block"))
     n_x, n_u, n_y = size(A, 1), size(B, 2), size(C, 1)
@@ -740,7 +741,7 @@ function static_system(A, B, C, D, x0)
             throw(ArgumentError("`$name` is $(join(size(matrix), '×')) where $(join(shape, '×')) is needed"))
     end
     x0 isa Real && n_x == 1 || x0 isa AbstractVector && length(x0) == n_x ||
-        throw(ArgumentError("`x0` has length $(length(x0)) where `A` asks for $n_x"))
+        throw(ArgumentError("`$initial_keyword` has length $(length(x0)) where `A` asks for $n_x"))
     (SMatrix{n_x, n_x, Float64}(A), SMatrix{n_x, n_u, Float64}(B), SMatrix{n_y, n_x, Float64}(C),
      SMatrix{n_y, n_u, Float64}(D), SVector{n_x, Float64}(x0...))
 end
@@ -838,8 +839,8 @@ realization(c::TransferFunction) = c.realization
 
 # Design: §5.3.
 # Two accessors serve every stage, defined here once: `held(c)` returns the
-# stored system, whose shapes, `C`, `D` and `x0` do not depend on the period,
-# and `realization(c, Δt)` returns the update matrices at the period `Δt`. Only
+# stored system, whose shapes, `C`, `D` and initial state do not depend on the
+# period, and `realization(c, Δt)` returns the update matrices at the period `Δt`. Only
 # the update discretizes, so the declarations and the output read `held` alone.
 """
     DiscreteLinearBlock{FT}
@@ -861,7 +862,7 @@ See also [`DiscreteStateSpace`](@ref), [`DiscreteTransferFunction`](@ref),
 """
 abstract type DiscreteLinearBlock{FT} <: AbstractComponent end
 
-s_init(c::DiscreteLinearBlock)  = held(c).x0
+s_init(c::DiscreteLinearBlock)  = initial_state(held(c))
 u_types(c::DiscreteLinearBlock) = (in = port_type(size(held(c).B, 2)),)
 y_types(c::DiscreteLinearBlock) = (out = port_type(size(held(c).C, 1)),)
 function s_update(c::DiscreteLinearBlock, (; s, u, Δt))
@@ -879,19 +880,20 @@ end
 """
     DiscreteStateSpace(; A::AbstractMatrix, B::AbstractMatrix, C::AbstractMatrix,
                        D::AbstractMatrix = zeros(size(C, 1), size(B, 2)),
-                       x0 = zeros(size(A, 1))) -> DiscreteStateSpace
+                       s0 = zeros(size(A, 1))) -> DiscreteStateSpace
 
 A discrete [primitive](@ref g-primitive) that runs a linear system given in
 discrete state-space form.
 
-The [block](@ref g-block) holds one bare [store](@ref g-store) value from `x0`, `q` below,
+The [block](@ref g-block) holds one bare [store](@ref g-store) value from `s0`, `s` below,
 advanced once per [tick](@ref g-tick):
 
-    q⁺  = A q + B in
-    out = C q + D in
+    s⁺  = A s + B in
+    out = C s + D in
 
 The keywords, the shapes, the storage, the [ports](@ref g-port) and the refusals
-are those of [`StateSpace`](@ref), and so is the feedthrough class of
+are those of [`StateSpace`](@ref), with `s0` in place of its `x0`, and so is the
+feedthrough class of
 [`DiscreteLinearBlock`](@ref). A zero `D` publishes `out` from
 [stage 1](@ref g-stage-function). The block then breaks an
 [algebraic loop](@ref g-algebraic-loop). A nonzero `D` publishes it from stage
@@ -909,14 +911,18 @@ struct DiscreteStateSpace{NX, NU, NY, FT, LA, LB, LC, LD} <: DiscreteLinearBlock
     B::SMatrix{NX, NU, Float64, LB}
     C::SMatrix{NY, NX, Float64, LC}
     D::SMatrix{NY, NU, Float64, LD}
-    x0::SVector{NX, Float64}
+    s0::SVector{NX, Float64}
 end
 DiscreteStateSpace(A::SMatrix{NX, NX, Float64}, B::SMatrix{NX, NU, Float64}, C::SMatrix{NY, NX, Float64},
-                   D::SMatrix{NY, NU, Float64}, x0::SVector{NX, Float64}) where {NX, NU, NY} =
-    DiscreteStateSpace{NX, NU, NY, !iszero(D), NX * NX, NX * NU, NY * NX, NY * NU}(A, B, C, D, x0)
+                   D::SMatrix{NY, NU, Float64}, s0::SVector{NX, Float64}) where {NX, NU, NY} =
+    DiscreteStateSpace{NX, NU, NY, !iszero(D), NX * NX, NX * NU, NY * NX, NY * NU}(A, B, C, D, s0)
 DiscreteStateSpace(; A::AbstractMatrix, B::AbstractMatrix, C::AbstractMatrix,
-                   D::AbstractMatrix = zeros(size(C, 1), size(B, 2)), x0 = zeros(size(A, 1))) =
-    DiscreteStateSpace(static_system(A, B, C, D, x0)...)
+                   D::AbstractMatrix = zeros(size(C, 1), size(B, 2)), s0 = zeros(size(A, 1))) =
+    DiscreteStateSpace(static_system(A, B, C, D, s0, "s0")...)
+
+# The initial state of a held system, under each tier's keyword.
+initial_state(system::DiscreteStateSpace) = system.s0
+initial_state(system::StateSpace) = system.x0
 held(c::DiscreteStateSpace) = c
 realization(c::DiscreteStateSpace, _) = c
 
@@ -938,7 +944,7 @@ the coefficients and holds their realization in controllable canonical form, a
 feedthrough class of [`DiscreteLinearBlock`](@ref) as for `TransferFunction`.
 
 The block starts at rest, or, with `u0` given, at the steady state for the
-constant input `u0`, where `(I - A) q = B u0` and `out` is `G(1) u0`.
+constant input `u0`, where `(I - A) s = B u0` and `out` is `G(1) u0`.
 
 The keywords and the refusals are those of `TransferFunction`, save that the
 pole with no steady state is at `z = 1`. A nonzero `u0` is refused as an
@@ -967,8 +973,8 @@ function DiscreteTransferFunction(; num, den, u0 = 0.0)
         throw(ArgumentError("`u0` is $u0 where `den` has a pole at `z = 1`, which has no steady state"))
     (; A, B, C, D) = realize(num, den)
     forced = B * SVector(float(u0))
-    x0 = iszero(u0) ? zero(forced) : (I - A) \ forced
-    DiscreteTransferFunction(Float64.(Tuple(num)), Float64.(Tuple(den)), DiscreteStateSpace(A, B, C, D, x0))
+    s0 = iszero(u0) ? zero(forced) : (I - A) \ forced
+    DiscreteTransferFunction(Float64.(Tuple(num)), Float64.(Tuple(den)), DiscreteStateSpace(A, B, C, D, s0))
 end
 held(c::DiscreteTransferFunction) = c.realization
 realization(c::DiscreteTransferFunction, _) = c.realization

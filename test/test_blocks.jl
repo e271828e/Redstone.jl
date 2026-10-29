@@ -1186,6 +1186,10 @@ function test_blocks()
         @test err isa DiagnosticError
         d = only(diagnostics(err))
         @test d isa AlgebraicCycle && d.classification === :real
+        # The initial state is `s0`, the discrete tier's letter, checked as `StateSpace`'s `x0` is.
+        @test s_init(DiscreteStateSpace(A = [0.5;;], B = [1.0;;], C = [1.0;;], s0 = 4)) === SVector(4.0)
+        @test_throws ArgumentError("`s0` has length 2 where `A` asks for 1") DiscreteStateSpace(
+            A = [0.5;;], B = [1.0;;], C = [1.0;;], s0 = [1.0, 2.0])
         two_state = DiscreteStateSpace(A = [0.5 0.1; 0 0.8], B = [1 0; 0 1], C = [1 0; 0 1])
         @test u_types(two_state) == (in = SVector{2, Float64},) && y_types(two_state) == (out = SVector{2, Float64},)
         two_state_model = fed_by(Constant(SVector(1.0, 1.0)), two_state)
@@ -1208,7 +1212,7 @@ function test_blocks()
         @test build(fed_by(Constant(1.0), strict); activations = (Float64, LinearizeDual)) isa Build
         # The steady state solves `(I - A) q = B u0`, so `out` starts at `G(1) u0`.
         steady = DiscreteTransferFunction(num = (0.5,), den = (1, -0.5), u0 = 2.0)
-        @test Redstone.Blocks.held(steady).x0 == SVector(4.0)
+        @test Redstone.Blocks.held(steady).s0 == SVector(4.0)
         steady_sim = Simulation(fed_by(Constant(2.0), steady); h = 1//100)
         init!(steady_sim, set())
         @test port(steady_sim, "c", :out) == 2.0
@@ -1216,7 +1220,7 @@ function test_blocks()
         @test port(steady_sim, "c", :out) == 2.0
         # At this pole `I - A` differs from `A`, which the pole at 0.5 cannot show.
         slow = DiscreteTransferFunction(num = (0.2,), den = (1, -0.8), u0 = 2.0)
-        @test isapprox(Redstone.Blocks.held(slow).x0, SVector(10.0); atol = 1e-12)
+        @test isapprox(Redstone.Blocks.held(slow).s0, SVector(10.0); atol = 1e-12)
         slow_sim = Simulation(fed_by(Constant(2.0), slow); h = 1//100)
         init!(slow_sim, set())
         @test port(slow_sim, "c", :out) ≈ 2.0 atol = 1e-12

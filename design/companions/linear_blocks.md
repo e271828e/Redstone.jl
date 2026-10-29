@@ -131,9 +131,9 @@ scalar input lifted to an `SVector{1}` by `as_vector` and a one-element
 result read out by `as_port`, with `port_type` naming the port for each
 width, so there is one layout and the scalar block is not a second
 implementation. The state is an `SVector` at every size for the same
-reason, so a one-state block's `q` reads as a one-element vector and is
-tapped as `"q[1]"` ([D-276][d-276]); a scalar state at `NX = 1` would be a second
-layout with its own arms. Stage 1 of the increment found this when the
+reason, so a one-state block's state reads as a one-element vector and is
+tapped as `"[1]"`, its headless address ([D-276][d-276], [D-435][d-435]); a
+scalar state at `NX = 1` would be a second layout with its own arms. Stage 1 of the increment found this when the
 scalar linearization's tap `:q` was refused, and kept the one layout.
 
 One trap was met and is recorded because it is silent. `SMatrix{N, N,
@@ -312,15 +312,16 @@ Every item section 6 listed as differing between the two spellings is about
 the user's boundary, not the tier, so the discrete tier gets the same pair,
 and a second pair beside it for a continuous system discretized at run time.
 The four share one abstract `DiscreteLinearBlock{FT}`. Two accessors serve
-it: `held(c)` returns the stored system, whose shapes and `x0` do not depend
-on the period, and `realization(c, Δt)` returns the discrete update matrices.
-The declarations and the output arms read `held(c)`, and only the update
-discretizes, because the hold of section 9.2 leaves `C` and `D` untouched.
+it: `held(c)` returns the stored system, whose shapes and initial state do
+not depend on the period, and `realization(c, Δt)` returns the discrete
+update matrices. The declarations and the output arms read `held(c)`, and
+only the update discretizes, because the hold of section 9.2 leaves `C` and
+`D` untouched.
 
 ```julia
 abstract type DiscreteLinearBlock{FT} <: AbstractComponent end
 
-s_init(c::DiscreteLinearBlock)  = held(c).x0
+s_init(c::DiscreteLinearBlock)  = initial_state(held(c))
 u_types(c::DiscreteLinearBlock) = (in = port_type(size(held(c).B, 2)),)
 y_types(c::DiscreteLinearBlock) = (out = port_type(size(held(c).C, 1)),)
 function s_update(c::DiscreteLinearBlock, (; s, u, Δt))
@@ -342,8 +343,9 @@ structure step reads tiers from declarations, never from fields.
 
 ### 9.1 The pair in `z`
 
-`DiscreteStateSpace` holds `A`, `B`, `C`, `D` and `x0` as the continuous
-block does, with `FT` from `iszero(D)`, and is its own `held` and
+`DiscreteStateSpace` holds `A`, `B`, `C` and `D` as the continuous block
+does, and its initial state as `s0`, the discrete tier's letter in place
+of `x0`, with `FT` from `iszero(D)`, and is its own `held` and
 `realization`. `DiscreteTransferFunction` takes its coefficients highest
 power of `z` first, the convention of MATLAB's `tf(num, den, Ts)` and of
 the continuous block, and holds the `DiscreteStateSpace` that `realize`
@@ -438,6 +440,7 @@ section 7 discussed, so none of the four new names collides.
 [d-263]: ../decisions.md#d-263--one-arity-on-both-tiers-plain-contracts-the-pinned-marker-and-the-mandatory-store
 [d-276]: ../decisions.md#d-276--address-a-leaf-inside-a-port-value-by-a-dotted-leaf-address
 [d-313]: ../decisions.md#d-313--admit-a-library-block-by-judgement-against-three-guidelines
+[d-435]: ../decisions.md#d-435--admit-a-bare-leaf-as-a-store-declaration-addressed-by-the-component-path
 [s13-7]: ../spec.md#137-tooling-consequences-face-routes-and-the-component-library
 [s14-10]: ../spec.md#1410-linearization-tap-selectors-one-seeded-pass-a-pure-query
 [s5-3]: ../spec.md#53-structural-feedthrough-stage-roles-execution-order-and-step-boundaries
