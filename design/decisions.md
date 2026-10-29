@@ -12239,8 +12239,9 @@ followed by `.name` and `[k]` or `[k,l]` steps in any order.
 
   Annotation (2026-10-29): the leaf address has a headless form for a bare
   store, one declared as a single leaf with no field name. The address is
-  empty, or begins at its index step, and the store selectors' leaf argument
-  defaults to it ([D-435][d-435]).
+  empty, or begins at its first step, `[2]` on a bare state leaf and `.P` on a
+  bare discrete struct, and the store selectors' leaf argument defaults to it
+  ([D-435][d-435]).
 
 - Each step is checked at resolution against the type resolved so far. A
   `.name` step needs an isbits struct with that field. An index step needs an

@@ -12047,9 +12047,10 @@ wears on its component's boundary), followed by `.name` and `[k]` or `[k,l]`
 steps in any order, as in `"pose.q_eb[2]"`, `"ω_eb_b[1]"` or `"J[1,3]"`. **A bare
 `Symbol` is the short form of a plain name**, so `get_state("kin", :θ)` reads
 `get_state("kin", "θ")` ([D-276][d-276]). A [bare store](#g-bare-store) (a store declared as one leaf, with no field name) has no name to head an address.
-**On a bare store the address is empty or begins at its index step**
+**On a bare store the address is empty or begins at its first step**
 ([D-435][d-435]). `get_state("integrator")` reads the one leaf,
-`get_state("integrator", "[2]")` one component of an `SArray` leaf, and the
+`get_state("integrator", "[2]")` one component of an `SArray` leaf,
+`get_state("kf", ".P")` a field of a bare isbits struct in `s`, and the
 store selectors' `leaf` defaults to the empty address. A face name is an arbitrary string and may
 contain a dot ([§8.6][s8-6]), so on `get_input` and `get_face` the head is matched
 rather than parsed ([D-418][d-418]). The head is the longest declared face name that is a
@@ -14832,7 +14833,7 @@ framework. Its contents at call entry are unspecified ([§7.3][s7-3]).
 <a id="g-bare-store"></a>**bare store** — a [store](#g-store) declared as one leaf instead of a
 `NamedTuple`, as `x_init(c::Integrator) = c.x0`. It has no field name, so the
 framework addresses it by the [component](#g-component) path alone, a
-[leaf address](#g-leaf-address) into it is empty or begins at its index step,
+[leaf address](#g-leaf-address) into it is empty or begins at its first step,
 and a [condition](#g-condition) sets it with a bare payload ([§8.2][s8-2],
 [§14.1][s14-1], [§14.4][s14-4], [D-435][d-435]).
 
@@ -15674,7 +15675,7 @@ iteration allocates nothing and does no path work ([§14.2][s14-2]).
 state leaf. It is the field or [face](#g-face) name followed by `.name` and `[k]` or
 `[k,l]` steps in any order, as in `"pose.q_eb[2]"` or `"J[1,3]"`. A bare
 `Symbol` is the short form of a plain name, and on a [bare store](#g-bare-store) the
-address is empty or begins at its index step ([§14.4][s14-4], [D-276][d-276], [D-435][d-435]).
+address is empty or begins at its first step ([§14.4][s14-4], [D-276][d-276], [D-435][d-435]).
 
 <a id="g-mounting"></a>**mounting** — relocating a whole problem or tap set with `at(prefix, …)`.
 Each field is [condition](#g-condition)-producing (path-relative, post-composed), a [read set](#g-read-set)
