@@ -17,8 +17,17 @@ item changes what the spec says, the spec edit is part of the item.
   The docs landed as D-436 (amending D-036, D-040, D-046, D-207, D-210,
   D-276 and D-435; spec §4.3, §5.2, §6.1, §8.2, §8.6, §8.8, §9.1, §9.3,
   §9.5, §11.3, §13.3, §13.5, §13.7, §13.9, §14.4, Appendices B, C, D).
-  Next: the prototype in a scratch worktree, then the brief, then the
-  pipeline, as increment 83 did for the stores half
+  Next: the prototype, delegated to one Opus agent in a scratch worktree
+  whose prompt carries D-436's Position, this bullet and the report's
+  "Seam inventory, contracts half" as the checklist, the worktree mechanics
+  and measurement rules of `brief_lessons.md`, the proof list below, the
+  stop rule (a seam the docs leave unruled is listed with its interim
+  choice, and the agent is resumed with the ruling, not replaced) and the
+  reporting rule (the agent hands back its report text and `git diff`, in
+  parts if long, since the harness refuses its write of a report file);
+  then the brief, drafted by the main session from the patch and the
+  report with every count re-checked; then the pipeline, as increment 83
+  did for the stores half
   (`design/briefs/brief_increment_83_bare_stores.md` is the template). The
   record is `design/reports/20261029_bare_declarations/README.md` (not
   normative), its "Seam inventory, contracts half" the checklist; the
