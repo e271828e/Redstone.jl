@@ -14338,7 +14338,8 @@ activation):
 - **`ConformanceFailure`** ([§9.5][s9-5]). Error · build, at probe; runtime
   thereafter · collected at probe over its unit and thrown at once (one
   stage's port check, one handler's return, or the update or projection
-  pass, [D-431][d-431]), but a return that is not a NamedTuple throws alone.
+  pass, [D-431][d-431]), but a return that is not a NamedTuple against a
+  named declaration throws alone.
   Fail-fast at runtime, a `StepError` species. Component path,
   function, the event name on a handler's occurrence, field-level diff
   (missing / unexpected / per-field expected-vs-observed, order-insensitive,
