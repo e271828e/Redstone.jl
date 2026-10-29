@@ -1236,8 +1236,9 @@ Traps the code does not warn about, each hit more than once while building:
 - **nothing outside `BARE`'s definition spells `Symbol("")`**, and a
   `(path, name)` pair renders through `_named`, which drops the empty name; a
   leak shows as `plant/` or `plant.`;
-- **`isempty` is no presence test for a store.** `isempty(0.0)` is `false`,
-  so a store is present iff it is not `nothing` (§5.2).
+- **`isempty` is no presence test for a store.** `isempty(nothing)` and
+  `isempty(:idle)` throw, and an empty `SVector` is a declared store, so a
+  store is present iff it is not `nothing` (§5.2).
 
 ## Naming
 

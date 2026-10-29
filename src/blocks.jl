@@ -322,7 +322,8 @@ s_update(::Delay{V, K}, (; s, u)) where {V, K} =
 A discrete [primitive](@ref g-primitive) that publishes the forward-Euler
 integral of its input.
 
-The [block](@ref g-block) holds one bare [store](@ref g-store) value `q` from `s0`.
+The [block](@ref g-block) holds one bare [store](@ref g-store) value from `s0`, `q`
+below, addressed by the path alone.
 Each [tick](@ref g-tick) advances it by forward Euler, `q⁺ = q + Δt in`. `out`
 publishes `q` from [stage 1](@ref g-stage-function). The block therefore breaks
 an [algebraic loop](@ref g-algebraic-loop) as [`UnitDelay`](@ref) does. `Δt` is
@@ -355,7 +356,7 @@ s_update(::DiscreteIntegrator, (; s, u, Δt)) = s + Δt * u.in
 A discrete [primitive](@ref g-primitive) that publishes the forward-Euler
 integral of its input, held between two limits.
 
-Each [tick](@ref g-tick) advances the one bare [store](@ref g-store) value `q` from
+Each [tick](@ref g-tick) advances the one bare [store](@ref g-store) value, `q` below, from
 `s0` as `q⁺ = clamp(q + Δt in, lower, upper)`. `out` publishes `q` from
 [stage 1](@ref g-stage-function). The mode and four events of the continuous
 [`LimitedIntegrator`](@ref) are this one `clamp`, with no mode store and no
@@ -404,7 +405,7 @@ A discrete [primitive](@ref g-primitive) that publishes its input with its rate
 of change bounded per [tick](@ref g-tick).
 
 `out` follows `in`, moving at most `rising Δt` up and `falling Δt` down per
-tick. `Δt` is the component's own period. One bare [store](@ref g-store) value `v`
+tick. `Δt` is the component's own period. One bare [store](@ref g-store) value, `v` below,
 holds the previous output, and each tick stores `out`:
 
     out = v + clamp(in - v, -falling Δt, rising Δt)
@@ -453,7 +454,7 @@ noise sample at each [tick](@ref g-tick).
 The [block](@ref g-block) is a discrete Gaussian white noise process. At each
 tick, `out` publishes an independent sample of mean `μ` and standard deviation
 `σ`. It publishes from [stage 1](@ref g-stage-function). The sample is a pure
-function of `seed` and the tick count `k`, the one bare [store](@ref g-store) value.
+function of `seed` and the tick count, the one bare [store](@ref g-store) value, `k` below.
 The stage therefore draws, no generator or [workspace](@ref g-workspace) is
 needed, and [replay](@ref g-replay) reproduces the stream. After a tick the
 store holds the next sample's index, so `k` reads `N + 1` once the block has
@@ -883,7 +884,7 @@ end
 A discrete [primitive](@ref g-primitive) that runs a linear system given in
 discrete state-space form.
 
-The [block](@ref g-block) holds one bare [store](@ref g-store) value `q` from `x0`,
+The [block](@ref g-block) holds one bare [store](@ref g-store) value from `x0`, `q` below,
 advanced once per [tick](@ref g-tick):
 
     q⁺  = A q + B in
@@ -1062,8 +1063,8 @@ A continuous [primitive](@ref g-primitive) that publishes one value before a
 given time and another from then on.
 
 `out` publishes `before` until `t_step` and `after` from then on. The
-[block](@ref g-block) is a mode-only primitive with no inputs. Its one bare mode,
-`fired`, picks the value, and one [state event](@ref g-state-event), `fire`, sets it once
+[block](@ref g-block) is a mode-only primitive with no inputs. Its one bare mode, `fired`
+below, picks the value, and one [state event](@ref g-state-event), `fire`, sets it once
 `t` reaches `t_step`. `out` is [pinned](@ref g-walked) at `V`. The value depends
 on neither state nor an input that follows the scalar, so it carries zero
 partials under every [activation](@ref g-activation), as a [`Constant`](@ref)'s
@@ -1127,8 +1128,9 @@ its input, held between two limits.
 
 The [block](@ref g-block) holds one continuous state `q`, with `q̇ = in` while
 free and `q̇ = 0` while saturated, and `out` publishes `q` from
-[stage 1](@ref g-stage-function). It is not a clamp. The bare mode `saturation` is
-read by the derivative, and four [state events](@ref g-state-event) move it. It
+[stage 1](@ref g-stage-function). It is not a clamp. The bare mode, `saturation`
+below, is read by the derivative, and four [state events](@ref g-state-event) move
+it. It
 is a signed `Int8` code, the sign of the limit in force: `-1` at `lower`, `0`
 free and `+1` at `upper`. `hit_upper` and `hit_lower` fire when `q` reaches a
 limit, and their handlers write `q` to the limit exactly and saturate.
@@ -1259,7 +1261,7 @@ end
 A continuous [primitive](@ref g-primitive) that publishes one of two values,
 switched by its input with hysteresis.
 
-`out` publishes `off` or `on` by the bare mode `state`, from
+`out` publishes `off` or `on` by the bare mode, `state` below, from
 [stage 1](@ref g-stage-function). The mode is an `Int8` code, `0` off and `1`
 on. Two [state events](@ref g-state-event) move it. `switch_on` fires when `in`
 rises to `upper` while off, and `switch_off` when `in` falls to `lower` while

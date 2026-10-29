@@ -613,7 +613,7 @@ function _solve_problem(model::Model{Float64}, problem::TrimProblem; baseline, b
             checked[] = true
             _report_trim!(_check_equations(:residuals, raw, tolerances))
         end
-        residuals = _named(residual_keys, raw)
+        residuals = _reordered(residual_keys, raw)
         for i in eachindex(r)
             residual = residuals[i]
             r[i] = ForwardDiff.value(residual)
@@ -660,7 +660,7 @@ _seeded(::Val{decision_names}, decisions,
                Val(N)))
 
 # A returned `NamedTuple` reordered to the names the type carries.
-_named(::Val{names}, values::NamedTuple) where {names} = NamedTuple{names}(values)
+_reordered(::Val{names}, values::NamedTuple) where {names} = NamedTuple{names}(values)
 
 # The decisions sitting at a bound at the returned point (§14.8): the comparison
 # is exact because the projection assigns the bound itself, and an infinite

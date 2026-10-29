@@ -1992,7 +1992,8 @@ function _leaf_clause(d)
     d.reason === :leaf_syntax &&
         return (isempty(d.leaf) ? "its leaf address is empty" :
                 "its leaf address `$(d.leaf)` cannot be read at `$(d.step)`") *
-               " — an address is a name followed by `.name` and `[k]` or `[k,l]` steps"
+               " — an address is a name, or none on a bare store, followed by `.name` and " *
+               "`[k]` or `[k,l]` steps"
     d.reason === :no_such_field &&
         return "`$(d.step)` steps into `$(d.declared)`, which has no " *
                (isempty(d.candidates) ? "fields" :
@@ -2019,7 +2020,8 @@ function message(d::TapResolution)
                            "§14.10, D-272")
     d.reason === :discrete_state &&
         return _read_message(d, "$(_at_path(d.path)) is a discrete component — the pass " *
-                           "holds the discrete tier frozen, so a tap on its store `$(d.field)` " *
+                           "holds the discrete tier frozen, so a tap on its store " *
+                           "`$(_named(:s, d.field))` " *
                            "could only yield a zero row and column; the recorded next move is " *
                            "the sampled-data step map Φ", "§14.10, D-197")
     d.reason === :vector_tap &&

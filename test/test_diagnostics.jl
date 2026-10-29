@@ -928,6 +928,8 @@ function diagnostics_kind_set()
                                         reason = :unconvertible, declared = Float64,
                                         observed = String, value = "x", origin = "set(x)")),
             message(NonfiniteState(path = "a/b", leaf = "", value = NaN, t = 0.1, boundary = 2)),
+            message(TapResolution(label = :r, selector = "get_state(\"a/b\")",
+                                  reason = :discrete_state, tap = :x, path = "a/b", field = BARE)),
         ]
         @test !any(r -> occursin("``", r) || occursin("x.`", r) || occursin("b/`", r),
                    bare_renderings)
@@ -939,6 +941,7 @@ function diagnostics_kind_set()
         @test occursin("s_update returns Float64, the state store is Int64", bare_renderings[4])
         @test startswith(bare_renderings[5], "`x` at `a/b` takes Float64")
         @test startswith(bare_renderings[6], "`a/b`: the state is NaN")
+        @test occursin("a tap on its store `s` could only", bare_renderings[7])
 
         # A payload's shape against the store's (§14.3): each direction states the
         # spelling the store takes.
