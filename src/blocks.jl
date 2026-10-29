@@ -192,14 +192,14 @@ y_state(c::Constant, _) = (out = c.value,)
 
 # Design: §5.5, §10.6, D-231.
 """
-    UnitDelay(v0) -> UnitDelay
+    UnitDelay(s0) -> UnitDelay
 
 A discrete [primitive](@ref g-primitive) that publishes its input from the
 previous [tick](@ref g-tick).
 
 The [block](@ref g-block) is a discrete primitive, the native `z⁻¹` of the
-discrete [tier](@ref g-tier). `out` publishes the stored value from
-[stage 1](@ref g-stage-function), and `v0` at the first publication. Each tick
+discrete [tier](@ref g-tier). `out` publishes the stored value `s` from
+[stage 1](@ref g-stage-function), and `s0` at the first publication. Each tick
 stores `in` for the next one. The [store](@ref g-store) is isbits, which bounds
 `V`.
 
@@ -210,9 +210,9 @@ tier and inserts a zero-order hold at the scale of [`Δt_base`](@ref g-dt_base).
 See also [`Delay`](@ref).
 """
 struct UnitDelay{V} <: AbstractComponent
-    v0::V
+    s0::V
 end
-s_init(delay::UnitDelay) = delay.v0
+s_init(delay::UnitDelay) = delay.s0
 u_types(::UnitDelay{V}) where {V} = (in = V,)
 y_types(::UnitDelay{V}) where {V} = (out = V,)
 y_state(::UnitDelay, (; s)) = (out = s,)
@@ -296,9 +296,10 @@ the signal onto the discrete tier and inserts a zero-order hold at the scale of
 - `K`: the delay in ticks of the component's own period, at least 1, so the
   model picks it from the rate it declares. `K = 1` is `UnitDelay` in keyword
   spelling, and a smaller `K` is refused as an `ArgumentError`.
-- `v0`: the value published before `K` ticks have passed. `V` is `Float64` or
-  a static array of `Float64`, taken from `float(v0)`, so an integer `v0`
-  qualifies.
+- `v0`: the value published before `K` ticks have passed. It is a value of the
+  signal, copied into every slot of the ring, and not the initial store, so it
+  is not `UnitDelay`'s `s0`. `V` is `Float64` or a static array of `Float64`,
+  taken from `float(v0)`, so an integer `v0` qualifies.
 """
 struct Delay{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, K} <: AbstractComponent
     v0::V
