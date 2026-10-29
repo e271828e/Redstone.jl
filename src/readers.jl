@@ -156,7 +156,7 @@ _authored_leaf(leaf::AbstractString) = String(leaf)
 
 # Design: §14.4, D-276, D-406.
 """
-    get_state(path::AbstractString, leaf::Union{Symbol,AbstractString}) -> GetState
+    get_state(path::AbstractString, leaf::Union{Symbol,AbstractString} = "") -> GetState
 
 Return a [selector](@ref g-selector) that reads one leaf of a
 [component](@ref g-component)'s state.
@@ -165,7 +165,9 @@ A selector is labeled in a [read set](@ref g-read-set) built with
 [`reads`](@ref). `path` names the component, and `leaf` is a
 [leaf address](@ref g-leaf-address) that starts with the field name, as in
 `get_state("plant", "q[2]")`. A bare `Symbol` is the short form of a plain field
-name. The field is read from a
+name. A state declared bare has no field name, and its address is headless:
+`get_state("integrator")` reads it whole, and `get_state("integrator", "[2]")`
+one component of a static-vector state. The field is read from a
 [continuous component](@ref g-continuous-component)'s continuous state, or from
 a discrete component's discrete state.
 
@@ -180,12 +182,12 @@ when the read set is resolved.
 See also [`get_deriv`](@ref), [`get_output`](@ref), [`get_input`](@ref),
 [`get_face`](@ref).
 """
-get_state(path::AbstractString, leaf::Union{Symbol,AbstractString}) =
+get_state(path::AbstractString, leaf::Union{Symbol,AbstractString} = "") =
     GetState(String(path), _authored_leaf(leaf))
 
 # Design: §14.4, D-276, D-406.
 """
-    get_deriv(path::AbstractString, leaf::Union{Symbol,AbstractString}) -> GetDeriv
+    get_deriv(path::AbstractString, leaf::Union{Symbol,AbstractString} = "") -> GetDeriv
 
 Return a [selector](@ref g-selector) that reads one leaf of a
 [continuous component](@ref g-continuous-component)'s state derivative.
@@ -193,8 +195,8 @@ Return a [selector](@ref g-selector) that reads one leaf of a
 A selector is labeled in a [read set](@ref g-read-set) built with
 [`reads`](@ref). `path` names the [component](@ref g-component), and `leaf` is a
 [leaf address](@ref g-leaf-address) into its continuous state, with `[k]` or
-`[k,l]` steps only, as for [`get_state`](@ref). The value read is the derivative
-of that leaf, which has the state's own shape.
+`[k,l]` steps only, as for [`get_state`](@ref), headless for a bare state. The
+value read is the derivative of that leaf, which has the state's own shape.
 
 Like `get_state`, `get_deriv` reads the live [stores](@ref g-store), and a
 reader over published [snapshots](@ref g-snapshot) refuses it as
@@ -204,7 +206,7 @@ field's type cannot take.
 
 See also [`get_output`](@ref), [`get_input`](@ref), [`get_face`](@ref).
 """
-get_deriv(path::AbstractString, leaf::Union{Symbol,AbstractString}) =
+get_deriv(path::AbstractString, leaf::Union{Symbol,AbstractString} = "") =
     GetDeriv(String(path), _authored_leaf(leaf))
 
 # Design: §11.2, §14.4, D-276.
@@ -278,9 +280,11 @@ get_face(leaf::Union{Symbol,AbstractString}) = GetFace(_authored_leaf(leaf))
 
 # The selector as authored, for the diagnostics: a refusal names the read the
 # way its author wrote it, which is what makes a collected list readable. A
-# `Symbol` leaf prints as `:θ`, a string one in quotes.
-_spell(selector::GetState) = "get_state(\"$(selector.path)\", $(repr(selector.leaf)))"
-_spell(selector::GetDeriv) = "get_deriv(\"$(selector.path)\", $(repr(selector.leaf)))"
+# `Symbol` leaf prints as `:θ`, a string one in quotes, and the headless one is
+# left out, as its author wrote it.
+_spell(selector::GetState) = "get_state(\"$(selector.path)\"$(_spell_leaf(selector.leaf)))"
+_spell(selector::GetDeriv) = "get_deriv(\"$(selector.path)\"$(_spell_leaf(selector.leaf)))"
+_spell_leaf(leaf) = isempty(String(leaf)) ? "" : ", $(repr(leaf))"
 _spell(selector::GetOutput) = "get_output(\"$(selector.path)\", $(repr(selector.leaf)))"
 _spell(selector::GetInput) = "get_input($(repr(selector.leaf)))"
 _spell(selector::GetFace) = "get_face($(repr(selector.leaf)))"
@@ -326,18 +330,18 @@ _name_end(leaf::String, start::Int) =
 Split a leaf address into its head name and its steps, `"pose.q_eb[2,3]"` into
 `(:pose, [:q_eb, (2, 3)])`. A `Symbol` is its string. A name is a Julia
 identifier; an index step is one or more decimal integers of at least one,
-separated by `,`. Anything else is `:leaf_syntax` with the fragment it stopped
-at.
+separated by `,`. The headless address of a bare state has no name, its head
+`BARE`: `""` is `(BARE, [])` and `"[2]"` is `(BARE, [(2,)])`. Anything else is
+`:leaf_syntax` with the fragment it stopped at.
 """
 parse_leaf(leaf::Symbol) = parse_leaf(String(leaf))
 
 function parse_leaf(leaf::String)
     stop = _name_end(leaf, 1)
     head = leaf[1:prevind(leaf, stop)]
-    Base.isidentifier(head) || return LeafRefusal(:leaf_syntax,
-        isempty(head) ? leaf[1:min(stop, ncodeunits(leaf))] : head)
+    isempty(head) || Base.isidentifier(head) || return LeafRefusal(:leaf_syntax, head)
     steps = parse_steps(leaf, stop)
-    steps isa LeafRefusal ? steps : (Symbol(head), steps)
+    steps isa LeafRefusal ? steps : (isempty(head) ? BARE : Symbol(head), steps)
 end
 
 # The steps from `start` to the end of the address, as `parse_leaf` reads them
@@ -557,6 +561,9 @@ end
 # the dereferenced value instead leaves the `[]` a dynamic call, which boxes.
 @inline _read(entry::StoreRead{S,F,C}, exec::Executor) where {S,F,C} =
     walk_steps(getfield((exec.sstores[entry.ci]::Base.RefValue{S})[], F), Val(C))
+# A bare store is read whole before the chain.
+@inline _read(entry::StoreRead{S,BARE,C}, exec::Executor) where {S,C} =
+    walk_steps((exec.sstores[entry.ci]::Base.RefValue{S})[], Val(C))
 # The signal table's read is store-level, so every gather over a table shares it.
 @inline _read(entry::CellRead{A,C}, store::StoreBundle) where {A,C} =
     walk_steps(gather_cell(store, entry.addr), Val(C))
@@ -871,9 +878,18 @@ function _leaf_chain(read::MountedRead, ::Type{P}, diags::Vector{Diagnostic}) wh
     nothing
 end
 
-_undeclared_violation(read::MountedRead, declares::Symbol, declared::NamedTuple) =
+# A store's names in hand: a named store's fields, `BARE` alone for a bare one,
+# none for `nothing`.
+_undeclared_violation(read::MountedRead, declares::Symbol, declared) =
     _reader_violation(read, :undeclared; declares = declares,
-                      candidates = collect(keys(declared)))
+                      candidates = Symbol[first(f) for f in store_fields(declared)])
+
+# The declared type a store read's head lands on, or `nothing` where the store
+# has no such head: a named store by field, a bare one by the headless address.
+_store_field_type(declared::NamedTuple, head::Symbol) =
+    haskey(declared, head) ? typeof(declared[head]) : nothing
+_store_field_type(::Nothing, ::Symbol) = nothing
+_store_field_type(declared, head::Symbol) = head === BARE ? typeof(declared) : nothing
 
 # The port list in hand is the `Outputs`' row concatenated by `_ports`, a fresh
 # vector the payload is free to hold (D-253).
@@ -887,13 +903,13 @@ function _resolve_selector(selector::GetState, read::MountedRead, build::Build,
     head = read.head
     decl, tier = act.decls[ci], build.structure.components[ci].tier
     declared = state_decls(decl, tier)
-    haskey(declared, head) ||
+    field_type = _store_field_type(declared, head)
+    field_type === nothing &&
         (push!(diags, _undeclared_violation(read, :state_field, declared));
          return nothing)
     # A continuous field is flat, a scalar or an `SArray` (§7.1), so a `.name`
     # step falls out of the walk as `:no_such_field`. A discrete `s` field is any
     # isbits value and takes the full chain (§14.4, D-276).
-    field_type = typeof(declared[head])
     chain = _leaf_chain(read, field_type, diags)
     chain === nothing && return nothing
     tier === CONTINUOUS ?
@@ -911,10 +927,10 @@ function _resolve_selector(selector::GetDeriv, read::MountedRead, build::Build,
         push!(diags, _reader_violation(read, :discrete_deriv))
         return nothing
     end
-    haskey(decl.x, head) ||
+    field_type = _store_field_type(decl.x, head)
+    field_type === nothing &&
         (push!(diags, _undeclared_violation(read, :state_field, decl.x));
          return nothing)
-    field_type = typeof(decl.x[head])
     chain = _leaf_chain(read, field_type, diags)
     chain === nothing && return nothing
     # `ẋ` has `x`'s shape at the activation scalar (§7.1), so the derivative of

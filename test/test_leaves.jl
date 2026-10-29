@@ -386,7 +386,38 @@ function leaves_wire_relation()
     end
 end
 
+function leaves_bare_state_write()
+    @testset "a bare state is one arrival at its type, decided at generation (§9.5, D-235)" begin
+        write!(buffer, value, XT, T) =
+            Redstone.flatten_state!(buffer, 0, value, XT, T, "p", :x_deriv, :x_init, nothing)
+        buffer = zeros(2)
+        write!(buffer, 2.5, Float64, Float64)
+        @test buffer[1] === 2.5
+        write!(buffer, SVector(1.0, -1.0), SVector{2,Float64}, Float64)
+        @test buffer == [1.0, -1.0]
+        # A `Float64` embeds at a `Dual` state as a zero-partial constant.
+        dual_buffer = zeros(D8, 1)
+        write!(dual_buffer, 3.0, D8, D8)
+        @test ForwardDiff.value(dual_buffer[1]) === 3.0 && iszero(ForwardDiff.partials(dual_buffer[1]))
+        # The declared shape picks the law: a `NamedTuple` against a bare state is
+        # one wrong type, and a bare value against a named state the law's first clause.
+        d = diagnostic(failure(() -> write!(buffer, (q = 1.0,), Float64, Float64)))
+        @test d isa ConformanceFailure && d.reason === :field_type && d.field === BARE &&
+              d.observed === @NamedTuple{q::Float64} && d.declared === Float64
+        d = diagnostic(failure(() -> write!(buffer, 1, Float64, Float64)))
+        @test d.reason === :field_type && d.field === BARE && d.observed === Int
+        d = diagnostic(failure(() -> write!(buffer, 1.0, @NamedTuple{q::Float64}, Float64)))
+        @test d.reason === :return_type && d.field === nothing
+    end
+    @testset "a bare state's leaves are named by their index steps alone (§13.4)" begin
+        @test leaf_names(Float64) == [""]
+        @test leaf_names(SVector{2,Float64}) == ["[1]", "[2]"]
+        @test leaf_names(Nothing) == String[]
+    end
+end
+
 function test_leaves()
+    leaves_bare_state_write()
     leaves_shape()
     leaves_names()
     leaves_roundtrip()

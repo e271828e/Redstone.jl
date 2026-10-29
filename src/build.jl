@@ -16,13 +16,13 @@
 # --- 1. declarations at the activation scalar ---------------------------------
 
 struct Decls
-    x::NamedTuple          # continuous state, walked to the activation scalar
-    s::NamedTuple          # discrete state, pinned wholesale (D-195)
+    x::Any                 # continuous state, walked to the activation scalar; `nothing` if none
+    s::Any                 # discrete state, pinned wholesale (D-195); `nothing` if none
     ins::NamedTuple        # face => type, retyped at the activation scalar (D-263)
     outs::NamedTuple       # port => type, retyped at the activation scalar (D-263)
 end
 
-"""The tier's own state register: exactly one of the two is ever populated."""
+"""The tier's own state register: at most one of the two is ever other than `nothing`."""
 state_decls(decl::Decls, tier::Tier) = tier === CONTINUOUS ? decl.x : decl.s
 
 # One walk on the continuous tier (D-263): `x_init` by value and the contracts by
@@ -32,9 +32,9 @@ state_decls(decl::Decls, tier::Tier) = tier === CONTINUOUS ? decl.x : decl.s
 # contracts are read as written.
 function declarations(@nospecialize(comp), tier::Tier, ::Type{T}) where {T}
     tier === CONTINUOUS ?
-        Decls(retype_value(T, invoke_declaration(x_init, comp)), NamedTuple(),
+        Decls(retype_value(T, invoke_declaration(x_init, comp)), nothing,
               declared_at(u_types, comp, tier, T), declared_at(y_types, comp, tier, T)) :
-        Decls(NamedTuple(), invoke_declaration(s_init, comp),
+        Decls(nothing, invoke_declaration(s_init, comp),
               declared_at(u_types, comp, tier), declared_at(y_types, comp, tier))
 end
 
@@ -140,14 +140,20 @@ _embed_ports(y::NamedTuple, outs::NamedTuple, ::Type{T}) where {T} =
 
 """
 The tier's state homes, in merge order: `x` then `m` on the continuous tier, `s`
-on the discrete (§5.3, §7.1, §7.3). `m` arrives as the probe-scoped `Ref`, or `nothing`
-where the component declares no modes.
+on the discrete (§5.3, §7.1, §7.3), each `nothing` where the component has none.
+`m` arrives as the probe-scoped `Ref`, or `nothing` where the component declares
+no modes.
 """
 _homes(decl::Decls, tier::Tier, m) =
-    tier === CONTINUOUS ? (x = decl.x, m = m === nothing ? NamedTuple() : m[]) : (s = decl.s,)
+    tier === CONTINUOUS ? (x = decl.x, m = m === nothing ? nothing : m[]) : (s = decl.s,)
 
-"""The tier's store field names, for `DeclaredNotProduced`'s list-in-hand (§8.3)."""
-_state_fields(homes::NamedTuple) = Symbol[keys(merge(values(homes)...))...]
+"""
+The tier's store field names, for `DeclaredNotProduced`'s list-in-hand (§8.3). A
+bare store has no field name, so its letter stands for the whole value.
+"""
+_state_fields(homes::NamedTuple) =
+    Symbol[(name === BARE ? letter : name)
+           for (letter, home) in pairs(homes) for (name, _) in store_fields(home)]
 
 # --- 3. the nominal evaluation's products -------------------------------------
 
@@ -917,7 +923,7 @@ end
 # component frame (§13.2, D-248).
 _mstores(structure::Structure) =
     Any[at_component(() -> (m = invoke_declaration(m_init, entry.instance);
-                            isempty(m) ? nothing : Ref(m)), entry.path)
+                            m === nothing ? nothing : Ref(m)), entry.path)
         for entry in structure.components]
 
 # Declaration by allocation (§8.2, D-077): sizes from the instance, eltypes from
@@ -997,7 +1003,7 @@ function probe_stage2(structure::Structure, decls::Vector{Decls},
     empty!(diags)
     for (ci, entry) in enumerate(structure.components)
         path, decl, tier = entry.path, decls[ci], entry.tier
-        (isempty(state_decls(decl, tier)) || _frozen(tier, T)) && continue
+        (state_decls(decl, tier) === nothing || _frozen(tier, T)) && continue
         at_component(path) do
             comp = entry.instance                  # read here, not captured: see `probe_stage1`
             update = update_of(tier)
@@ -1028,7 +1034,7 @@ function probe_stage2(structure::Structure, decls::Vector{Decls},
                                                reason = :continuous_only))
             continue                               # no manifold to run it against
         end
-        if isempty(decl.x)
+        if decl.x === nothing
             push!(diags, DeclarationOnWrongTier(path = path, declaration = :x_projection,
                                                reason = :no_manifold))
             continue
@@ -1088,8 +1094,14 @@ end
 # `x_projection` pass and the handler check — can put it under their own
 # barrier (§13.1). The two shape checks are sequential: neither later one is
 # meaningful once an earlier one fails.
-function _check_state_write(path, what, x⁺, x::NamedTuple, ::Type{T};
-                            event = nothing) where {T}
+function _check_state_write(path, what, x⁺, x, ::Type{T}; event = nothing) where {T}
+    # The declared shape picks the law: a bare state is one arrival at its type.
+    x isa NamedTuple ||
+        return _accepts(typeof(x), typeof(x⁺), T) ? Diagnostic[] :
+               Diagnostic[ConformanceFailure(path = path, what = what, event = event,
+                                             reason = :field_type, shape = :state, field = BARE,
+                                             observed = typeof(x⁺), declared = typeof(x),
+                                             activation = T)]
     x⁺ isa NamedTuple ||
         return Diagnostic[ConformanceFailure(path = path, what = what, event = event,
                                              reason = :return_type, shape = :state,
@@ -1179,8 +1191,8 @@ function _check_handler(path, name, returned, decl::Decls, @nospecialize(comp))
                                             shape = :stores, observed = typeof(returned))))
     m₀ = invoke_declaration(m_init, comp)
     stores = Symbol[]
-    isempty(decl.x) || push!(stores, :x)
-    isempty(m₀) || push!(stores, :m)
+    decl.x === nothing || push!(stores, :x)
+    m₀ === nothing || push!(stores, :m)
     diags = Diagnostic[]
     for key in keys(returned)
         key in stores ||
@@ -1193,7 +1205,14 @@ function _check_handler(path, name, returned, decl::Decls, @nospecialize(comp))
         append!(diags, _check_state_write(path, "$what `x`", returned.x, decl.x, Float64;
                                           event = name))
     if haskey(returned, :m) && :m in stores
-        if !(returned.m isa NamedTuple)
+        if !(m₀ isa NamedTuple)
+            # A bare mode store is written whole, at its own type exactly.
+            typeof(returned.m) === typeof(m₀) ||
+                push!(diags, ConformanceFailure(path = path, what = "$what `m`", event = name,
+                                               reason = :field_type, shape = :mode, field = BARE,
+                                               observed = typeof(returned.m),
+                                               declared = typeof(m₀)))
+        elseif !(returned.m isa NamedTuple)
             push!(diags, ConformanceFailure(path = path, what = "$what `m`", event = name,
                                            reason = :return_type, shape = :mode,
                                            observed = typeof(returned.m)))
@@ -1321,7 +1340,7 @@ function compile(build::Build, act::Activation{T}, schedule; chunk_size::Int = 1
     # buffer for continuous `x`, one store per discrete `s`, one per mode set.
     # A store's *type* is shared by every instance of a component type, so
     # instances still compile to one body; only the reference varies.
-    sstores = Any[entry.tier === DISCRETE && !isempty(decl.s) ? Ref(decl.s) : nothing
+    sstores = Any[entry.tier === DISCRETE && decl.s !== nothing ? Ref(decl.s) : nothing
                   for (decl, entry) in zip(decls, components)]
     mstores = _mstores(structure)
     workspaces = _workspaces(structure, T)
@@ -1399,7 +1418,7 @@ function compile(build::Build, act::Activation{T}, schedule; chunk_size::Int = 1
     # read the complete fresh table.
     for (ci, entry) in enumerate(components)
         comp, path, decl, tier = entry.instance, entry.path, decls[ci], entry.tier
-        (isempty(state_decls(decl, tier)) || frozen(ci)) && continue
+        (state_decls(decl, tier) === nothing || frozen(ci)) && continue
         update = update_of(tier)
         bundle_fields = bundle_names(update, comp, tier, tuple(outputs.components[ci].stage1...))
         output_addrs, input_addrs =
@@ -1516,7 +1535,14 @@ end
 
 # §7.1: `Ẋ` has exactly `X`'s shape at the activation scalar. Checked
 # structurally here so the runtime `flatten!` into the derivative block is safe.
-function _check_derivative(path, ẋ, x::NamedTuple, ::Type{T}) where {T}
+function _check_derivative(path, ẋ, x, ::Type{T}) where {T}
+    # The declared shape picks the law: a bare state's derivative is one value.
+    x isa NamedTuple ||
+        return _accepts(typeof(x), typeof(ẋ), T) ? Diagnostic[] :
+               Diagnostic[ConformanceFailure(path = path, what = "x_deriv",
+                                             reason = :field_type, shape = :x_init, field = BARE,
+                                             observed = typeof(ẋ), declared = typeof(x),
+                                             activation = T)]
     ẋ isa NamedTuple ||
         return Diagnostic[ConformanceFailure(path = path, what = "x_deriv",
                                              reason = :return_type,
@@ -1544,7 +1570,12 @@ end
 # returns, so the successor must be the store's own type exactly. The discrete
 # world is pinned — no walk, no embedding — which makes the store assignment
 # type-stable and the ban on arithmetic over stores enforceable by construction.
-function _check_update(path, s⁺, s::NamedTuple)
+function _check_update(path, s⁺, s)
+    s isa NamedTuple ||
+        return typeof(s⁺) === typeof(s) ? Diagnostic[] :
+               Diagnostic[ConformanceFailure(path = path, what = "s_update",
+                                             reason = :field_type, shape = :s_init, field = BARE,
+                                             observed = typeof(s⁺), declared = typeof(s))]
     s⁺ isa NamedTuple ||
         return Diagnostic[ConformanceFailure(path = path, what = "s_update",
                                              reason = :return_type,

@@ -10,7 +10,7 @@
 # A deliberately pinned leaf (D-263): `frozen` is declared `Pinned{Float64}`, so
 # it must not follow the activation scalar.
 struct PinnedLeaf <: AbstractComponent end
-x_init(::PinnedLeaf) = (;)
+x_init(::PinnedLeaf) = nothing
 y_types(::PinnedLeaf) = (a = Float64, frozen = Pinned{Float64})
 y_state(::PinnedLeaf, (; t)) = (a = t, frozen = 2.0)
 
@@ -40,7 +40,7 @@ struct TaggedValue{T}
     n::Int
 end
 struct MixedCell <: AbstractComponent end
-x_init(::MixedCell) = (;)
+x_init(::MixedCell) = nothing
 y_types(::MixedCell) = (out = TaggedValue{Float64},)
 y_state(::MixedCell, (; t)) = (out = TaggedValue(t, 1),)
 
@@ -49,7 +49,7 @@ struct PinnedPair{T}
     ref::Float64
 end
 struct PinnedInside <: AbstractComponent end
-x_init(::PinnedInside) = (;)
+x_init(::PinnedInside) = nothing
 y_types(::PinnedInside) = (out = PinnedPair{Float64},)
 y_state(::PinnedInside, (; t)) = (out = PinnedPair(t, 2.0),)
 

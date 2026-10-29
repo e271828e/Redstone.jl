@@ -106,7 +106,7 @@ const Pack{V, N} = Junction{V, SVector{N, V}, N, typeof(pack)}
 (::Type{And{N}})() where {N} = And{N}(&)
 (::Type{Pack{V, N}})() where {V, N} = Pack{V, N}(pack)
 
-x_init(::Junction) = (;)
+x_init(::Junction) = nothing
 u_types(::Junction{In, Out, N}) where {In, Out, N} =
     NamedTuple{ntuple(i -> Symbol(:in, i), N)}(ntuple(_ -> In, N))
 y_types(::Junction{In, Out}) where {In, Out} = (out = Out,)
@@ -130,7 +130,7 @@ typed `V`, with `outi = in[i]`. The [block](@ref g-block) is stateless, and the
 inverse of [`Pack`](@ref).
 """
 struct Unpack{V, N} <: AbstractComponent end
-x_init(::Unpack) = (;)
+x_init(::Unpack) = nothing
 u_types(::Unpack{V, N}) where {V, N} = (in = SVector{N, V},)
 y_types(::Unpack{V, N}) where {V, N} = NamedTuple{unpack_names(Val(N))}(ntuple(_ -> V, N))
 y_direct(::Unpack{V, N}, (; u)) where {V, N} = NamedTuple{unpack_names(Val(N))}(Tuple(u.in))
@@ -157,7 +157,7 @@ step. That is a mode made silently, which the moded blocks such as
 [`Relay`](@ref) exist to declare.
 """
 struct Switch{V} <: AbstractComponent end
-x_init(::Switch) = (;)
+x_init(::Switch) = nothing
 u_types(::Switch{V}) where {V} = (in1 = V, in2 = V, select = Bool)
 y_types(::Switch{V}) where {V} = (out = V,)
 y_direct(::Switch, (; u)) = (out = ifelse(u.select, u.in1, u.in2),)
@@ -186,7 +186,7 @@ See also [`Source`](@ref), [`Step`](@ref).
 struct Constant{V} <: AbstractComponent
     value::V
 end
-x_init(::Constant) = (;)
+x_init(::Constant) = nothing
 y_types(::Constant{V}) where {V} = (out = Pinned{V},)
 y_state(c::Constant, _) = (out = c.value,)
 
@@ -212,11 +212,11 @@ See also [`Delay`](@ref).
 struct UnitDelay{V} <: AbstractComponent
     v0::V
 end
-s_init(delay::UnitDelay) = (v = delay.v0,)
+s_init(delay::UnitDelay) = delay.v0
 u_types(::UnitDelay{V}) where {V} = (in = V,)
 y_types(::UnitDelay{V}) where {V} = (out = V,)
-y_state(::UnitDelay, (; s)) = (out = s.v,)
-s_update(::UnitDelay, (; u)) = (v = u.in,)
+y_state(::UnitDelay, (; s)) = (out = s,)
+s_update(::UnitDelay, (; u)) = u.in
 
 # Design: §13.7.
 """
@@ -235,7 +235,7 @@ reads a zero coupling, which is the modelling decision the block states.
 `TypeError` where `Freeze{V}` is written.
 """
 struct Freeze{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: AbstractComponent end
-x_init(::Freeze) = (;)
+x_init(::Freeze) = nothing
 u_types(::Freeze{V}) where {V} = (in = V,)
 y_types(::Freeze{V}) where {V} = (out = Pinned{V},)
 y_direct(::Freeze, (; u)) = (out = ForwardDiff.value.(u.in),)
@@ -264,7 +264,7 @@ struct StopRequest <: AbstractComponent
     reason::String
 end
 StopRequest(; reason = "") = StopRequest(reason)
-x_init(::StopRequest) = (;)
+x_init(::StopRequest) = nothing
 u_types(::StopRequest) = (request = Bool,)
 y_types(::StopRequest) = (flag = StopFlag,)
 y_direct(::StopRequest, (; u)) = (flag = u.request ? STOP_REQUESTED : NO_STOP,)
@@ -322,7 +322,7 @@ s_update(::Delay{V, K}, (; s, u)) where {V, K} =
 A discrete [primitive](@ref g-primitive) that publishes the forward-Euler
 integral of its input.
 
-The [block](@ref g-block) holds one [store](@ref g-store) field `q` from `s0`.
+The [block](@ref g-block) holds one bare [store](@ref g-store) value `q` from `s0`.
 Each [tick](@ref g-tick) advances it by forward Euler, `q⁺ = q + Δt in`. `out`
 publishes `q` from [stage 1](@ref g-stage-function). The block therefore breaks
 an [algebraic loop](@ref g-algebraic-loop) as [`UnitDelay`](@ref) does. `Δt` is
@@ -343,11 +343,11 @@ struct DiscreteIntegrator{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: Abs
     s0::V
 end
 DiscreteIntegrator(; s0 = 0.0) = DiscreteIntegrator(float(s0))
-s_init(c::DiscreteIntegrator) = (q = c.s0,)
+s_init(c::DiscreteIntegrator) = c.s0
 u_types(::DiscreteIntegrator{V}) where {V} = (in = V,)
 y_types(::DiscreteIntegrator{V}) where {V} = (out = V,)
-y_state(::DiscreteIntegrator, (; s)) = (out = s.q,)
-s_update(::DiscreteIntegrator, (; s, u, Δt)) = (q = s.q + Δt * u.in,)
+y_state(::DiscreteIntegrator, (; s)) = (out = s,)
+s_update(::DiscreteIntegrator, (; s, u, Δt)) = s + Δt * u.in
 
 """
     DiscreteLimitedIntegrator(; lower, upper, s0 = zero(lower)) -> DiscreteLimitedIntegrator
@@ -355,7 +355,7 @@ s_update(::DiscreteIntegrator, (; s, u, Δt)) = (q = s.q + Δt * u.in,)
 A discrete [primitive](@ref g-primitive) that publishes the forward-Euler
 integral of its input, held between two limits.
 
-Each [tick](@ref g-tick) advances the one [store](@ref g-store) field `q` from
+Each [tick](@ref g-tick) advances the one bare [store](@ref g-store) value `q` from
 `s0` as `q⁺ = clamp(q + Δt in, lower, upper)`. `out` publishes `q` from
 [stage 1](@ref g-stage-function). The mode and four events of the continuous
 [`LimitedIntegrator`](@ref) are this one `clamp`, with no mode store and no
@@ -389,12 +389,12 @@ function DiscreteLimitedIntegrator(; lower, upper, s0 = zero(lower))
     DiscreteLimitedIntegrator(s0, lower, upper)
 end
 saturation_code(q, lower, upper) = q >= upper ? Int8(1) : q <= lower ? Int8(-1) : Int8(0)
-s_init(c::DiscreteLimitedIntegrator) = (q = c.s0,)
+s_init(c::DiscreteLimitedIntegrator) = c.s0
 u_types(::DiscreteLimitedIntegrator{V}) where {V} = (in = V,)
 y_types(::DiscreteLimitedIntegrator{V}) where {V} = (out = V, saturation = saturation_type(V))
 y_state(c::DiscreteLimitedIntegrator, (; s)) =
-    (out = s.q, saturation = saturation_code.(s.q, c.lower, c.upper))
-s_update(c::DiscreteLimitedIntegrator, (; s, u, Δt)) = (q = clamp.(s.q + Δt * u.in, c.lower, c.upper),)
+    (out = s, saturation = saturation_code.(s, c.lower, c.upper))
+s_update(c::DiscreteLimitedIntegrator, (; s, u, Δt)) = clamp.(s + Δt * u.in, c.lower, c.upper)
 
 # Design: §5.3, §5.5, §10.5.
 """
@@ -404,7 +404,7 @@ A discrete [primitive](@ref g-primitive) that publishes its input with its rate
 of change bounded per [tick](@ref g-tick).
 
 `out` follows `in`, moving at most `rising Δt` up and `falling Δt` down per
-tick. `Δt` is the component's own period. One [store](@ref g-store) field `v`
+tick. `Δt` is the component's own period. One bare [store](@ref g-store) value `v`
 holds the previous output, and each tick stores `out`:
 
     out = v + clamp(in - v, -falling Δt, rising Δt)
@@ -435,11 +435,11 @@ function RateLimiter(; rising, falling = rising, s0 = 0.0)
     s0 = float(s0)
     RateLimiter{typeof(s0)}(rising, falling, s0)
 end
-s_init(c::RateLimiter) = (v = c.s0,)
+s_init(c::RateLimiter) = c.s0
 u_types(::RateLimiter{V}) where {V} = (in = V,)
 y_types(::RateLimiter{V}) where {V} = (out = V,)
-y_direct(c::RateLimiter, (; s, u, Δt)) = (out = s.v + clamp.(u.in - s.v, -c.falling * Δt, c.rising * Δt),)
-s_update(::RateLimiter, (; y)) = (v = y.out,)
+y_direct(c::RateLimiter, (; s, u, Δt)) = (out = s + clamp.(u.in - s, -c.falling * Δt, c.rising * Δt),)
+s_update(::RateLimiter, (; y)) = y.out
 
 # --- the noise source (§7.3, §2.5, D-231, D-313) --------------------------------
 
@@ -453,7 +453,7 @@ noise sample at each [tick](@ref g-tick).
 The [block](@ref g-block) is a discrete Gaussian white noise process. At each
 tick, `out` publishes an independent sample of mean `μ` and standard deviation
 `σ`. It publishes from [stage 1](@ref g-stage-function). The sample is a pure
-function of `seed` and the tick count `k`, the one [store](@ref g-store) field.
+function of `seed` and the tick count `k`, the one bare [store](@ref g-store) value.
 The stage therefore draws, no generator or [workspace](@ref g-workspace) is
 needed, and [replay](@ref g-replay) reproduces the stream. After a tick the
 store holds the next sample's index, so `k` reads `N + 1` once the block has
@@ -510,13 +510,13 @@ gaussian(seed, k, ::Type{Float64}) = gaussian(seed, k)
 gaussian(seed, k, ::Type{SVector{N, Float64}}) where {N} =
     SVector(ntuple(i -> gaussian(seed, k * N + i - 1), Val(N)))
 
-s_init(::GaussianWhiteNoise) = (k = UInt64(0),)
+s_init(::GaussianWhiteNoise) = UInt64(0)
 y_types(::GaussianWhiteNoise{V}) where {V} = (out = V,)
 function y_state(c::GaussianWhiteNoise{V}, (; s, Δt)) where {V}
     scale = c.density ? c.σ ./ sqrt(Δt) : c.σ
-    (out = c.μ .+ scale .* gaussian(c.seed, s.k, V),)
+    (out = c.μ .+ scale .* gaussian(c.seed, s, V),)
 end
-s_update(::GaussianWhiteNoise, (; s)) = (k = s.k + 1,)
+s_update(::GaussianWhiteNoise, (; s)) = s + 1
 
 # --- the time source (§13.7, D-313) ---------------------------------------------
 
@@ -546,7 +546,7 @@ struct Source{V, F} <: AbstractComponent
 end
 (::Type{Source{V}})(f) where {V} = Source{V, typeof(f)}(f)
 Source(f) = Source{Float64}(f)
-x_init(::Source) = (;)
+x_init(::Source) = nothing
 y_types(::Source{V}) where {V} = (out = Pinned{V},)
 y_state(c::Source, (; t)) = (out = c.f(ForwardDiff.value(t)),)
 
@@ -576,11 +576,11 @@ struct Integrator{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: AbstractCom
     x0::V
 end
 Integrator(; x0 = 0.0) = Integrator(float(x0))
-x_init(c::Integrator) = (q = c.x0,)
+x_init(c::Integrator) = c.x0
 u_types(::Integrator{V}) where {V} = (in = V,)
 y_types(::Integrator{V}) where {V} = (out = V,)
-y_state(::Integrator, (; x)) = (out = x.q,)
-x_deriv(::Integrator, (; u)) = (q = u.in,)
+y_state(::Integrator, (; x)) = (out = x,)
+x_deriv(::Integrator, (; u)) = u.in
 
 # Design: §7.2, D-313, commit `9c75324`.
 # The sentence on the scalar case is the user's ruling of 2026-10-27, which
@@ -618,11 +618,11 @@ function FirstOrderLag(; τ, x0 = 0.0)
     x0 = float(x0)
     FirstOrderLag{typeof(x0)}(x0, τ)
 end
-x_init(c::FirstOrderLag) = (q = c.x0,)
+x_init(c::FirstOrderLag) = c.x0
 u_types(::FirstOrderLag{V}) where {V} = (in = V,)
 y_types(::FirstOrderLag{V}) where {V} = (out = V,)
-y_state(::FirstOrderLag, (; x)) = (out = x.q,)
-x_deriv(c::FirstOrderLag, (; x, u)) = (q = (u.in - x.q) / c.τ,)
+y_state(::FirstOrderLag, (; x)) = (out = x,)
+x_deriv(c::FirstOrderLag, (; x, u)) = (u.in - x) / c.τ
 
 # --- the linear blocks (§13.7, §5.3, D-313) -------------------------------------
 
@@ -654,17 +654,17 @@ as_vector(v::SVector) = v
 as_port(v::SVector{1}) = v[1]
 as_port(v::SVector) = v
 
-x_init(c::LinearBlock) = (q = realization(c).x0,)
+x_init(c::LinearBlock) = realization(c).x0
 u_types(c::LinearBlock) = (in = port_type(size(realization(c).B, 2)),)
 y_types(c::LinearBlock) = (out = port_type(size(realization(c).C, 1)),)
 function x_deriv(c::LinearBlock, (; x, u))
     (; A, B) = realization(c)
-    (q = A * x.q + B * as_vector(u.in),)
+    A * x + B * as_vector(u.in)
 end
-y_state(c::LinearBlock{false}, (; x)) = (out = as_port(realization(c).C * x.q),)
+y_state(c::LinearBlock{false}, (; x)) = (out = as_port(realization(c).C * x),)
 function y_direct(c::LinearBlock{true}, (; x, u))
     (; C, D) = realization(c)
-    (out = as_port(C * x.q + D * as_vector(u.in)),)
+    (out = as_port(C * x + D * as_vector(u.in)),)
 end
 
 # Design: §5.3, §5.5, §7.2.
@@ -860,17 +860,17 @@ See also [`DiscreteStateSpace`](@ref), [`DiscreteTransferFunction`](@ref),
 """
 abstract type DiscreteLinearBlock{FT} <: AbstractComponent end
 
-s_init(c::DiscreteLinearBlock)  = (q = held(c).x0,)
+s_init(c::DiscreteLinearBlock)  = held(c).x0
 u_types(c::DiscreteLinearBlock) = (in = port_type(size(held(c).B, 2)),)
 y_types(c::DiscreteLinearBlock) = (out = port_type(size(held(c).C, 1)),)
 function s_update(c::DiscreteLinearBlock, (; s, u, Δt))
     (; A, B) = realization(c, Δt)
-    (q = A * s.q + B * as_vector(u.in),)
+    A * s + B * as_vector(u.in)
 end
-y_state(c::DiscreteLinearBlock{false}, (; s)) = (out = as_port(held(c).C * s.q),)
+y_state(c::DiscreteLinearBlock{false}, (; s)) = (out = as_port(held(c).C * s),)
 function y_direct(c::DiscreteLinearBlock{true}, (; s, u))
     (; C, D) = held(c)
-    (out = as_port(C * s.q + D * as_vector(u.in)),)
+    (out = as_port(C * s + D * as_vector(u.in)),)
 end
 
 # Design: §5.3, §5.5, §9.4, §10.5, D-263.
@@ -883,7 +883,7 @@ end
 A discrete [primitive](@ref g-primitive) that runs a linear system given in
 discrete state-space form.
 
-The [block](@ref g-block) holds one [store](@ref g-store) field `q` from `x0`,
+The [block](@ref g-block) holds one bare [store](@ref g-store) value `q` from `x0`,
 advanced once per [tick](@ref g-tick):
 
     q⁺  = A q + B in
@@ -1062,8 +1062,8 @@ A continuous [primitive](@ref g-primitive) that publishes one value before a
 given time and another from then on.
 
 `out` publishes `before` until `t_step` and `after` from then on. The
-[block](@ref g-block) is a mode-only primitive with no inputs. The mode `fired`
-picks the value, and one [state event](@ref g-state-event), `fire`, sets it once
+[block](@ref g-block) is a mode-only primitive with no inputs. Its one bare mode,
+`fired`, picks the value, and one [state event](@ref g-state-event), `fire`, sets it once
 `t` reaches `t_step`. `out` is [pinned](@ref g-walked) at `V`. The value depends
 on neither state nor an input that follows the scalar, so it carries zero
 partials under every [activation](@ref g-activation), as a [`Constant`](@ref)'s
@@ -1100,13 +1100,13 @@ function Step(; t_step, before = 0.0, after = 1.0, localized::Bool = true)
     before, after = float.(promote(before, after))
     Step{typeof(before), localized}(before, after, t_step)
 end
-x_init(::Step) = (;)
-m_init(::Step) = (fired = false,)
+x_init(::Step) = nothing
+m_init(::Step) = false                                           # fired
 y_types(::Step{V}) where {V} = (out = Pinned{V},)
-y_state(c::Step, (; m)) = (out = m.fired ? c.after : c.before,)
+y_state(c::Step, (; m)) = (out = m ? c.after : c.before,)
 step_guard(c::Step{V, true}, (; t)) where {V} = t - c.t_step     # sign form: localized
 step_guard(c::Step{V, false}, (; t)) where {V} = t >= c.t_step   # Bool form: boundary-detected
-step_handler(::Step, _) = (m = (fired = true,),)
+step_handler(::Step, _) = (m = true,)
 state_events(::Step) = (fire = StateEvent(step_guard, step_handler),)
 
 # --- the moded blocks (§10.4, §10.6, D-313) -------------------------------------
@@ -1127,7 +1127,7 @@ its input, held between two limits.
 
 The [block](@ref g-block) holds one continuous state `q`, with `q̇ = in` while
 free and `q̇ = 0` while saturated, and `out` publishes `q` from
-[stage 1](@ref g-stage-function). It is not a clamp. The mode `saturation` is
+[stage 1](@ref g-stage-function). It is not a clamp. The bare mode `saturation` is
 read by the derivative, and four [state events](@ref g-state-event) move it. It
 is a signed `Int8` code, the sign of the limit in force: `-1` at `lower`, `0`
 free and `+1` at `upper`. `hit_upper` and `hit_lower` fire when `q` reaches a
@@ -1185,17 +1185,17 @@ function LimitedIntegrator(; lower, upper, x0 = zero(lower), localized::Bool = t
     x0, lower, upper = float.(promote(x0, lower, upper))
     LimitedIntegrator{typeof(x0), localized}(x0, lower, upper)
 end
-x_init(c::LimitedIntegrator) = (q = c.x0,)
-m_init(c::LimitedIntegrator) = (saturation = Int8.(zero(c.x0)),)    # -1 lower, 0 free, +1 upper
+x_init(c::LimitedIntegrator) = c.x0
+m_init(c::LimitedIntegrator) = Int8.(zero(c.x0))    # the saturation: -1 lower, 0 free, +1 upper
 u_types(::LimitedIntegrator{V}) where {V} = (in = V,)
 y_types(::LimitedIntegrator{V}) where {V} = (out = V, saturation = saturation_type(V))
-y_state(::LimitedIntegrator, (; x, m)) = (out = x.q, saturation = m.saturation)
-x_deriv(::LimitedIntegrator, (; u, m)) = (q = ifelse.(m.saturation .== 0, u.in, zero(u.in)),)
+y_state(::LimitedIntegrator, (; x, m)) = (out = x, saturation = m)
+x_deriv(::LimitedIntegrator, (; u, m)) = ifelse.(m .== 0, u.in, zero(u.in))
 # The hit guards are not gated by the free code on purpose. Gated, a hit guard
 # would read `0` the instant a leave handler frees the mode, present a fresh
 # edge and saturate the block again.
-hit_upper_guard(c::LimitedIntegrator, (; x)) = x.q - c.upper
-hit_lower_guard(c::LimitedIntegrator, (; x)) = c.lower - x.q
+hit_upper_guard(c::LimitedIntegrator, (; x)) = x - c.upper
+hit_lower_guard(c::LimitedIntegrator, (; x)) = c.lower - x
 # The leave guards gate on strictly inward input. Gated on the mode alone, an
 # input of exactly zero reads `-0.0`, which holds, and frees the mode with `q`
 # on the limit. The gate `u.in < 0` reads a wired signal, so §10.4's argument
@@ -1204,18 +1204,18 @@ hit_lower_guard(c::LimitedIntegrator, (; x)) = c.lower - x.q
 # converges on that crossing, since only the sign drives it, but ITP falls back
 # to bisection's count, about 15 extra interior sweeps per leave.
 leave_upper_guard(::LimitedIntegrator{V, true}, (; m, u)) where {V} =
-    m.saturation == 1 && u.in < 0 ? -u.in : -one(u.in)
+    m == 1 && u.in < 0 ? -u.in : -one(u.in)
 leave_lower_guard(::LimitedIntegrator{V, true}, (; m, u)) where {V} =
-    m.saturation == -1 && u.in > 0 ? u.in : -one(u.in)
+    m == -1 && u.in > 0 ? u.in : -one(u.in)
 # The `Bool` forms are the same predicates, boundary-detected and strict by
 # construction.
 leave_upper_guard(::LimitedIntegrator{V, false}, (; m, u)) where {V} =
-    m.saturation == 1 && u.in < 0
+    m == 1 && u.in < 0
 leave_lower_guard(::LimitedIntegrator{V, false}, (; m, u)) where {V} =
-    m.saturation == -1 && u.in > 0
-hit_upper_handler(c::LimitedIntegrator, _) = (x = (q = c.upper,), m = (saturation = Int8(1),))
-hit_lower_handler(c::LimitedIntegrator, _) = (x = (q = c.lower,), m = (saturation = Int8(-1),))
-leave_handler(::LimitedIntegrator, _) = (m = (saturation = Int8(0),),)
+    m == -1 && u.in > 0
+hit_upper_handler(c::LimitedIntegrator, _) = (x = c.upper, m = Int8(1))
+hit_lower_handler(c::LimitedIntegrator, _) = (x = c.lower, m = Int8(-1))
+leave_handler(::LimitedIntegrator, _) = (m = Int8(0),)
 state_events(::LimitedIntegrator{V}) where {V <: Real} =
     (hit_upper = StateEvent(hit_upper_guard, hit_upper_handler),
      hit_lower = StateEvent(hit_lower_guard, hit_lower_handler),
@@ -1228,24 +1228,24 @@ state_events(::LimitedIntegrator{V}) where {V <: Real} =
 function state_events(::LimitedIntegrator{V, L}) where {V <: StaticArray, L}
     N = length(V)
     hit_upper = ntuple(N) do i
-        StateEvent((c, (; x)) -> x.q[i] - c.upper[i],
-                   (c, (; x, m)) -> (x = (q = Base.setindex(x.q, c.upper[i], i),),
-                                     m = (saturation = Base.setindex(m.saturation, Int8(1), i),)))
+        StateEvent((c, (; x)) -> x[i] - c.upper[i],
+                   (c, (; x, m)) -> (x = Base.setindex(x, c.upper[i], i),
+                                     m = Base.setindex(m, Int8(1), i)))
     end
     hit_lower = ntuple(N) do i
-        StateEvent((c, (; x)) -> c.lower[i] - x.q[i],
-                   (c, (; x, m)) -> (x = (q = Base.setindex(x.q, c.lower[i], i),),
-                                     m = (saturation = Base.setindex(m.saturation, Int8(-1), i),)))
+        StateEvent((c, (; x)) -> c.lower[i] - x[i],
+                   (c, (; x, m)) -> (x = Base.setindex(x, c.lower[i], i),
+                                     m = Base.setindex(m, Int8(-1), i)))
     end
     leave_upper = ntuple(N) do i
-        guard = L ? ((c, (; m, u)) -> m.saturation[i] == 1 && u.in[i] < 0 ? -u.in[i] : -one(u.in[i])) :
-                    ((c, (; m, u)) -> m.saturation[i] == 1 && u.in[i] < 0)
-        StateEvent(guard, (c, (; m)) -> (m = (saturation = Base.setindex(m.saturation, Int8(0), i),),))
+        guard = L ? ((c, (; m, u)) -> m[i] == 1 && u.in[i] < 0 ? -u.in[i] : -one(u.in[i])) :
+                    ((c, (; m, u)) -> m[i] == 1 && u.in[i] < 0)
+        StateEvent(guard, (c, (; m)) -> (m = Base.setindex(m, Int8(0), i),))
     end
     leave_lower = ntuple(N) do i
-        guard = L ? ((c, (; m, u)) -> m.saturation[i] == -1 && u.in[i] > 0 ? u.in[i] : -one(u.in[i])) :
-                    ((c, (; m, u)) -> m.saturation[i] == -1 && u.in[i] > 0)
-        StateEvent(guard, (c, (; m)) -> (m = (saturation = Base.setindex(m.saturation, Int8(0), i),),))
+        guard = L ? ((c, (; m, u)) -> m[i] == -1 && u.in[i] > 0 ? u.in[i] : -one(u.in[i])) :
+                    ((c, (; m, u)) -> m[i] == -1 && u.in[i] > 0)
+        StateEvent(guard, (c, (; m)) -> (m = Base.setindex(m, Int8(0), i),))
     end
     names = (ntuple(i -> Symbol(:hit_upper_, i), N)..., ntuple(i -> Symbol(:hit_lower_, i), N)...,
              ntuple(i -> Symbol(:leave_upper_, i), N)..., ntuple(i -> Symbol(:leave_lower_, i), N)...)
@@ -1259,7 +1259,7 @@ end
 A continuous [primitive](@ref g-primitive) that publishes one of two values,
 switched by its input with hysteresis.
 
-`out` publishes `off` or `on` by the mode `state`, from
+`out` publishes `off` or `on` by the bare mode `state`, from
 [stage 1](@ref g-stage-function). The mode is an `Int8` code, `0` off and `1`
 on. Two [state events](@ref g-state-event) move it. `switch_on` fires when `in`
 rises to `upper` while off, and `switch_off` when `in` falls to `lower` while
@@ -1301,27 +1301,27 @@ struct Relay{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: AbstractComponen
 end
 Relay(; lower, upper, off = zero(lower), on = one.(lower)) =
     Relay(float.(promote(lower, upper, off, on))...)
-x_init(::Relay) = (;)
-m_init(c::Relay) = (state = Int8.(zero(c.lower)),)    # 0 off, 1 on
+x_init(::Relay) = nothing
+m_init(c::Relay) = Int8.(zero(c.lower))    # the state: 0 off, 1 on
 u_types(::Relay{V}) where {V} = (in = V,)
 y_types(::Relay{V}) where {V} = (out = Pinned{V},)
-y_state(c::Relay, (; m)) = (out = ifelse.(m.state .== 1, c.on, c.off),)
-switch_on_guard(c::Relay, (; m, u)) = m.state == 0 ? u.in - c.upper : -one(u.in)
-switch_off_guard(c::Relay, (; m, u)) = m.state == 1 ? c.lower - u.in : -one(u.in)
-switch_on_handler(::Relay, _) = (m = (state = Int8(1),),)
-switch_off_handler(::Relay, _) = (m = (state = Int8(0),),)
+y_state(c::Relay, (; m)) = (out = ifelse.(m .== 1, c.on, c.off),)
+switch_on_guard(c::Relay, (; m, u)) = m == 0 ? u.in - c.upper : -one(u.in)
+switch_off_guard(c::Relay, (; m, u)) = m == 1 ? c.lower - u.in : -one(u.in)
+switch_on_handler(::Relay, _) = (m = Int8(1),)
+switch_off_handler(::Relay, _) = (m = Int8(0),)
 state_events(::Relay{V}) where {V <: Real} =
     (switch_on = StateEvent(switch_on_guard, switch_on_handler),
      switch_off = StateEvent(switch_off_guard, switch_off_handler))
 function state_events(::Relay{V}) where {V <: StaticArray}
     N = length(V)
     switch_on = ntuple(N) do i
-        StateEvent((c, (; m, u)) -> m.state[i] == 0 ? u.in[i] - c.upper[i] : -one(u.in[i]),
-                   (c, (; m)) -> (m = (state = Base.setindex(m.state, Int8(1), i),),))
+        StateEvent((c, (; m, u)) -> m[i] == 0 ? u.in[i] - c.upper[i] : -one(u.in[i]),
+                   (c, (; m)) -> (m = Base.setindex(m, Int8(1), i),))
     end
     switch_off = ntuple(N) do i
-        StateEvent((c, (; m, u)) -> m.state[i] == 1 ? c.lower[i] - u.in[i] : -one(u.in[i]),
-                   (c, (; m)) -> (m = (state = Base.setindex(m.state, Int8(0), i),),))
+        StateEvent((c, (; m, u)) -> m[i] == 1 ? c.lower[i] - u.in[i] : -one(u.in[i]),
+                   (c, (; m)) -> (m = Base.setindex(m, Int8(0), i),))
     end
     names = (ntuple(i -> Symbol(:switch_on_, i), N)..., ntuple(i -> Symbol(:switch_off_, i), N)...)
     NamedTuple{names}((switch_on..., switch_off...))
@@ -1894,15 +1894,15 @@ end
 LQRTracker(; K_fbk, K_fwd, kw...) =
     LQRTracker{tracker_sizes("LQRTracker", (; K_fbk, K_fwd, kw...))...}(; K_fbk, K_fwd, kw...)
 
-x_init(::LQRTracker{NX, NU}) where {NX, NU} = (q = zero(SVector{NU, Float64}),)
+x_init(::LQRTracker{NX, NU}) where {NX, NU} = zero(SVector{NU, Float64})
 function y_direct(c::LQRTracker, (; x, u))
     p = parameters(c, u)
-    u_raw = p.u_trim + p.K_fwd * (u.z_ref - p.z_trim) - p.K_fbk * (u.x - p.x_trim) + x.q
+    u_raw = p.u_trim + p.K_fwd * (u.z_ref - p.z_trim) - p.K_fbk * (u.x - p.x_trim) + x
     (u = clamp.(u_raw, p.u_min, p.u_max), u_raw = u_raw)
 end
 function x_deriv(c::LQRTracker, (; x, u, y))
     p = parameters(c, u)
-    (q = gated_error(c, p.K_int * (u.z_ref - u.z), u) + (correction_reference(c, u, y) - y.u_raw) ./ p.Tt,)
+    gated_error(c, p.K_int * (u.z_ref - u.z), u) + (correction_reference(c, u, y) - y.u_raw) ./ p.Tt
 end
 
 # Design: §10.5, §13.8.

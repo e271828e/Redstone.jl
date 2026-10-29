@@ -30,12 +30,12 @@ struct BothFamilies <: AbstractComponent         # assembly marker beside a cont
     inner::Gain
 end
 local_wires(::BothFamilies) = ()
-x_init(::BothFamilies) = (;)
+x_init(::BothFamilies) = nothing
 y_types(::BothFamilies) = (a = Float64,)
 y_state(::BothFamilies, (; t)) = (a = 1.0,)
 
 struct EmptyStoreOnly <: AbstractComponent end     # an empty store and nothing else
-x_init(::EmptyStoreOnly) = (;)
+x_init(::EmptyStoreOnly) = nothing
 
 function assembly_class()
     @testset "class is read off the declaration shape (§8.5)" begin
@@ -454,7 +454,7 @@ output_wires(::SlashedFace) = ("a/out" => "sensors/out",)
 
 struct RootCollision <: AbstractComponent        # one key in both contracts
 end
-x_init(::RootCollision) = (;)
+x_init(::RootCollision) = nothing
 u_types(::RootCollision) = (u = Float64,)
 y_types(::RootCollision) = (u = Float64, v = Float64)
 y_direct(::RootCollision, (; u)) = (u = 2u.u, v = 1.0)
@@ -1016,7 +1016,7 @@ under the first feed list — an unconnected output, and legal (§6.1, D-084).
 """
 struct Actuator <: AbstractComponent end
 
-x_init(::Actuator) = (;)
+x_init(::Actuator) = nothing
 u_types(::Actuator) = (cmd = Float64,)
 y_types(::Actuator) =
     (e = Float64, a = Float64, r = Float64, brake_left = Float64, brake_right = Float64)
@@ -1030,7 +1030,7 @@ input face surface.
 """
 struct Aero <: AbstractComponent end
 
-x_init(::Aero) = (;)
+x_init(::Aero) = nothing
 u_types(::Aero) = (e = Float64, a = Float64, r = Float64, alpha = Float64)
 y_types(::Aero) = (wrench = Float64,)
 y_direct(::Aero, (; u)) = (wrench = u.e + u.a + u.r + u.alpha,)

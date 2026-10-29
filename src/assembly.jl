@@ -709,7 +709,7 @@ end
 # Tier is declared by the store every leaf declares, `x_init` continuous against
 # `s_init` discrete, the two disjoint (D-195), and empty on a stateless leaf
 # (D-263). The declaration is asked for by method existence, never by
-# emptiness: a declared `(;)` and the fallback are the same value. A stateful
+# emptiness: a declared `nothing` and the fallback are the same value. A stateful
 # leaf announces its tier in the update law as well, and the update law decides
 # where there is one; the output stages are one pair of names shared by both
 # tiers (D-220) and cast no vote, and no arity carries a tier. Every other
@@ -722,10 +722,19 @@ end
 # The classifier sees primitives only: a component that declares nothing at all
 # has no *class* to read, which §8.5 settles before this runs.
 
-# §7.1, §8.2, D-094: every `x_init` field is a `Float64` or an `SArray` of them,
-# and the declaration is flat. The arm names where the value belongs instead.
+"""
+The `name => value` pairs of a store value, the one shape reading of §8.2: a
+`NamedTuple`'s own fields, one `BARE` pair for a bare value, none for `nothing`.
+"""
+store_fields(contents::NamedTuple) = pairs(contents)
+store_fields(::Nothing) = ()
+store_fields(contents) = (BARE => contents,)
+
+# §7.1, §8.2, D-094: every `x_init` field, or the bare value, is a `Float64` or
+# an `SArray` of them, and the declaration is flat. The arm names where the
+# value belongs instead.
 function check_state_leaves(path::String, @nospecialize(comp), diags::Vector{Diagnostic})
-    for (name, value) in pairs(invoke_declaration(x_init, comp))
+    for (name, value) in store_fields(invoke_declaration(x_init, comp))
         leaf_eltype = value isa SArray ? eltype(value) : typeof(value)
         leaf_eltype === Float64 && continue
         reason = value isa NamedTuple ? :nested :
@@ -736,25 +745,25 @@ function check_state_leaves(path::String, @nospecialize(comp), diags::Vector{Dia
     end
 end
 
-# §8.2, D-247: every by-value store is a `NamedTuple`, and the classifier and
-# the two field checks below read it as one. Returns whether this primitive
-# can be read further; the fallbacks return `NamedTuple()` and pass.
+# §8.2: `(;)` no longer spells the empty store, `nothing` does, and the presence
+# tests below read the old spelling as a store. Returns whether this primitive
+# can be read further.
 function check_store_form(path::String, @nospecialize(comp), diags::Vector{Diagnostic})
     readable = true
     for (name, fn) in ((:x_init, x_init), (:s_init, s_init), (:m_init, m_init))
-        contents = invoke_declaration(fn, comp)
-        contents isa NamedTuple && continue
-        push!(diags, StoreNotNamedTuple(path = path, store = name, declared = typeof(contents)))
+        invoke_declaration(fn, comp) === (;) || continue
+        push!(diags, EmptyStore(path = path, store = name))
         readable = false
     end
     readable
 end
 
-# §7.3, D-231: every store field is isbits or a `Symbol`, checked on both stores.
+# §7.3, D-231: every store field, or the bare value, is isbits or a `Symbol`,
+# checked on both stores.
 function check_stores(path::String, @nospecialize(comp), diags::Vector{Diagnostic})
     for (store, contents) in ((:s_init, invoke_declaration(s_init, comp)),
                               (:m_init, invoke_declaration(m_init, comp)))
-        for (name, value) in pairs(contents)
+        for (name, value) in store_fields(contents)
             isbits(value) || value isa Symbol ||
                 push!(diags, IllegalStoreField(path = path, store = store,
                                                name = name, declared = typeof(value)))
@@ -772,7 +781,7 @@ function classify_tier(path::String, @nospecialize(comp), diags::Vector{Diagnost
     has_stage(s_update, comp) && push!(votes, (:s_update, DISCRETE))
     _declares(x_init, comp) && push!(votes, (:x_init, CONTINUOUS))
     _declares(s_init, comp) && push!(votes, (:s_init, DISCRETE))
-    !isempty(invoke_declaration(m_init, comp)) && push!(votes, (:m_init, CONTINUOUS))
+    invoke_declaration(m_init, comp) !== nothing && push!(votes, (:m_init, CONTINUOUS))
     !isempty(invoke_declaration(state_events, comp)) && push!(votes, (:state_events, CONTINUOUS))
 
     # The store is mandatory, empty when stateless (§8.2, D-263).
@@ -781,8 +790,8 @@ function classify_tier(path::String, @nospecialize(comp), diags::Vector{Diagnost
                                    declarations = leaf_declarations(comp)))
         return nothing
     end
-    state_store = !isempty(invoke_declaration(x_init, comp)) ? :x_init :
-                  !isempty(invoke_declaration(s_init, comp)) ? :s_init : nothing
+    state_store = invoke_declaration(x_init, comp) !== nothing ? :x_init :
+                  invoke_declaration(s_init, comp) !== nothing ? :s_init : nothing
     update_vote = findfirst(v -> first(v) === :x_deriv || first(v) === :s_update,
                             votes)
     if state_store !== nothing && update_vote === nothing
@@ -1263,9 +1272,8 @@ Base.@nospecializeinfer function _walk!(draft::StructureDraft, path::String,
             push!(draft.instances, comp)
             push!(draft.timings, scope)
             push!(draft.rates, _extend(chain, link))
-            # The store-form check (§8.2, D-247) gates the rest: the tier classifier
-            # and the two field checks read a store value as a `NamedTuple`, so a
-            # primitive that fails the form is read no further. The one tier
+            # The store-form check (§8.2) gates the rest: the tier classifier reads
+            # `(;)` as a store, so a primitive that spells it is read no further. The one tier
             # classification (§8.2) follows: a failure is recorded and the walk
             # carries `nothing` where the tier would be.
             if check_store_form(path, comp, diags)
@@ -1273,7 +1281,7 @@ Base.@nospecializeinfer function _walk!(draft::StructureDraft, path::String,
                 check_stores(path, comp, diags)
                 check_state_leaves(path, comp, diags)
             else
-                tier = nothing                      # D-247: read no further
+                tier = nothing                      # read no further
             end
             push!(draft.tiers, tier)
             # A primitive at the root: its `u_types` keys are the model's root

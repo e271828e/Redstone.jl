@@ -88,30 +88,30 @@ settled!(::ThrowingTop) = false
 # the generated write refuses.
 
 struct LateInteger <: AbstractComponent end
-x_init(::LateInteger) = (;)
+x_init(::LateInteger) = nothing
 y_types(::LateInteger) = (q = Float64,)
 y_state(::LateInteger, (; t)) = (q = t < 0.05 ? 1.0 : 0,)
 
 # An array's mutability is a type parameter, not a leaf (D-238): the leafwise
 # relation converted this write silently.
 struct LateMutable <: AbstractComponent end
-x_init(::LateMutable) = (;)
+x_init(::LateMutable) = nothing
 y_types(::LateMutable) = (v = SVector{2,Float64},)
 y_state(::LateMutable, (; t)) = (v = t < 0.05 ? SVector(1.0, 2.0) : MVector(1.0, 2.0),)
 
 struct LateExtraPort <: AbstractComponent end
-x_init(::LateExtraPort) = (;)
+x_init(::LateExtraPort) = nothing
 y_types(::LateExtraPort) = (q = Float64,)
 y_state(::LateExtraPort, (; t)) = t < 0.05 ? (q = 1.0,) : (q = 1.0, extra = 2.0)
 
 struct LateMissingPort <: AbstractComponent end
-x_init(::LateMissingPort) = (;)
+x_init(::LateMissingPort) = nothing
 y_types(::LateMissingPort) = (a = Float64, b = Float64)
 y_state(::LateMissingPort, (; t)) = t < 0.05 ? (a = 1.0, b = 2.0) : (a = 1.0,)
 
 # The names are the pairing: the same return in another order, at both seams.
 struct ScrambledPorts <: AbstractComponent end
-x_init(::ScrambledPorts) = (;)
+x_init(::ScrambledPorts) = nothing
 y_types(::ScrambledPorts) = (a = Float64, b = Float64)
 y_state(::ScrambledPorts, (; t)) = (b = 2.0, a = 1.0)
 
@@ -151,7 +151,7 @@ s_update(::LateSuccessor, (; s, t)) = (n = t < 0.05 ? s.n + 1.0 : 0,)
 # The probe sees the first firing; the second writes `k` at another type.
 struct LateMode <: AbstractComponent end
 m_init(::LateMode) = (k = 0,)
-x_init(::LateMode) = (;)
+x_init(::LateMode) = nothing
 y_types(::LateMode) = (k = Int,)
 y_state(::LateMode, (; m)) = (k = m.k,)
 late_mode_guard(::LateMode, (; m, t)) = t - 0.05 * (m.k + 1)
@@ -161,7 +161,7 @@ state_events(::LateMode) = (fire = StateEvent(late_mode_guard, late_mode_handler
 # The probe sees the first firing; the second writes `m` as a scalar, not a NamedTuple.
 struct LateModeScalar <: AbstractComponent end
 m_init(::LateModeScalar) = (k = 0,)
-x_init(::LateModeScalar) = (;)
+x_init(::LateModeScalar) = nothing
 y_types(::LateModeScalar) = (k = Int,)
 y_state(::LateModeScalar, (; m)) = (k = m.k,)
 late_mode_guard(::LateModeScalar, (; m, t)) = t - 0.05 * (m.k + 1)

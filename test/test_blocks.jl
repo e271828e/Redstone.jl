@@ -184,7 +184,7 @@ step_events(model) = only(row for row in build(model).events.components if row.p
 block_linearization(comp) =
     (sim = Simulation(fed(comp, "in"); h = 1//100);
      init!(sim, set(u = (in = 0.0,)));
-     linearize(sim, taps(x = (q = get_state("c", :q),), u = (in = get_input(:in),))))
+     linearize(sim, taps(x = (q = get_state("c"),), u = (in = get_input(:in),))))
 
 # A limited integrator fed by a step from `1` down to `-1`.
 limited_model(localized) =
@@ -505,7 +505,7 @@ function tracker_loop(controller; disturbance = SVector(0.0, 0.0), stepped = tru
 end
 
 # A loop's plant state at `t_end`, run at `h = 1//100`.
-plant_state(model, t_end) = last(loop_samples(sim -> state(sim, "plant").q, model, t_end))
+plant_state(model, t_end) = last(loop_samples(sim -> state(sim, "plant"), model, t_end))
 
 # `tracker_loop` without the step, linearized about the origin at the states
 # `state_taps` and the root input `z_ref`.
@@ -664,7 +664,7 @@ function test_blocks()
         sim = Simulation(fed_by(Source(sin), Integrator()); h = 1//100)
         init!(sim, set())
         step!(sim; t_plus = 1)
-        @test state(sim, "c").q ≈ 1 - cos(1) atol = 1e-10
+        @test state(sim, "c") ≈ 1 - cos(1) atol = 1e-10
         @test port(sim, "k", :out) == sin(1.0)    # a frame-top stamp of the grid time
         @test y_types(Source(sin)) == (out = Pinned{Float64},)
         @test typeof(Source(sin)) === Source{Float64, typeof(sin)}
@@ -672,7 +672,7 @@ function test_blocks()
         vector_sim = Simulation(vector_source_model(); h = 1//100)
         init!(vector_sim, set())
         step!(vector_sim; t_plus = 1)
-        @test isapprox(state(vector_sim, "c").q, SVector(1 - cos(1), sin(1)); atol = 1e-10)
+        @test isapprox(state(vector_sim, "c"), SVector(1 - cos(1), sin(1)); atol = 1e-10)
         @test build(vector_source_model(); activations = (Float64, LinearizeDual)) isa Build
         start_sim = Simulation(single(Source(t -> 2t)); h = 1//10)
         init!(start_sim, set(); t0 = 1.0)
@@ -859,7 +859,7 @@ function test_blocks()
         samples = [(step!(sim; t_plus = 1//100); port(sim, "c", :out)) for _ in 1:1000]
         @test samples == [Redstone.Blocks.gaussian(42, k) for k in 1:1000]
         # The store counts the ticks run, `t₀`'s included: the next sample's index.
-        @test state(sim, "c").k === UInt64(1001)
+        @test state(sim, "c") === UInt64(1001)
         sample_moments = moments(samples)
         @test abs(sample_moments.mean) < 0.1
         @test 0.9 < sqrt(sample_moments.variance) < 1.1
@@ -1000,12 +1000,12 @@ function test_blocks()
         sim = Simulation(integrator_model(1.0, 2.0); h = 1//100)
         init!(sim, set())
         step!(sim; t_plus = 0.5)
-        @test state(sim, "i").q ≈ 2.0 atol = 1e-12
-        @test port(sim, "i", :out) == state(sim, "i").q
+        @test state(sim, "i") ≈ 2.0 atol = 1e-12
+        @test port(sim, "i", :out) == state(sim, "i")
         vector_sim = Simulation(integrator_model(SVector(0.0, 1.0), SVector(1.0, -1.0)); h = 1//100)
         init!(vector_sim, set())
         step!(vector_sim; t_plus = 0.5)
-        @test isapprox(state(vector_sim, "i").q, SVector(0.5, 0.5); atol = 1e-12)
+        @test isapprox(state(vector_sim, "i"), SVector(0.5, 0.5); atol = 1e-12)
         linearization = block_linearization(Integrator())
         @test isapprox(linearization.A, [0.0;;]; atol = 1e-12)
         @test isapprox(linearization.B, [1.0;;]; atol = 1e-12)
@@ -1015,12 +1015,12 @@ function test_blocks()
         sim = Simulation(lag_model(1.0); h = 1//100)
         init!(sim, set())
         step!(sim; t_plus = 1.0)
-        @test state(sim, "l").q ≈ 1 - exp(-2) rtol = 1e-7
-        @test port(sim, "l", :out) == state(sim, "l").q
+        @test state(sim, "l") ≈ 1 - exp(-2) rtol = 1e-7
+        @test port(sim, "l", :out) == state(sim, "l")
         vector_sim = Simulation(lag_model(SVector(1.0, -2.0)); h = 1//100)
         init!(vector_sim, set())
         step!(vector_sim; t_plus = 1.0)
-        @test isapprox(state(vector_sim, "l").q, (1 - exp(-2)) * SVector(1.0, -2.0); rtol = 1e-7)
+        @test isapprox(state(vector_sim, "l"), (1 - exp(-2)) * SVector(1.0, -2.0); rtol = 1e-7)
         linearization = block_linearization(FirstOrderLag(τ = 0.5))
         @test isapprox(linearization.A, [-2.0;;]; atol = 1e-12)
         @test isapprox(linearization.B, [2.0;;]; atol = 1e-12)
@@ -1032,7 +1032,7 @@ function test_blocks()
         sim = Simulation(linear_root_model(two_state_block()); h = 1//100)
         init!(sim, set(u = (in = SVector(1.0, -1.0),)))
         step!(sim; t_plus = 0.3)
-        linearization = linearize(sim, taps(x = (q1 = get_state("c", "q[1]"), q2 = get_state("c", "q[2]")),
+        linearization = linearize(sim, taps(x = (q1 = get_state("c", "[1]"), q2 = get_state("c", "[2]")),
                                             u = (in1 = get_input("in[1]"), in2 = get_input("in[2]")),
                                             y = (out1 = get_face("out[1]"), out2 = get_face("out[2]"))))
         @test isapprox(linearization.A, [-1 0.5; 0 -2]; atol = 1e-12)
@@ -1043,7 +1043,7 @@ function test_blocks()
         # an index step.
         scalar_sim = Simulation(fed(StateSpace(A = [-2.0;;], B = [3.0;;], C = [1.0;;]), "in"); h = 1//100)
         init!(scalar_sim, set(u = (in = 0.0,)))
-        scalar_linearization = linearize(scalar_sim, taps(x = (q = get_state("c", "q[1]"),),
+        scalar_linearization = linearize(scalar_sim, taps(x = (q = get_state("c", "[1]"),),
                                                           u = (in = get_input(:in),)))
         @test isapprox(scalar_linearization.A, [-2.0;;]; atol = 1e-12)
         @test isapprox(scalar_linearization.B, [3.0;;]; atol = 1e-12)
@@ -1071,8 +1071,8 @@ function test_blocks()
         sim = Simulation(scalar_model; h = 1//100)
         init!(sim, set())
         step!(sim; t_plus = 1.0)
-        @test state(sim, "c").q[1] ≈ 1 + exp(-1) rtol = 1e-7
-        @test port(sim, "c", :out) == state(sim, "c").q[1]
+        @test state(sim, "c")[1] ≈ 1 + exp(-1) rtol = 1e-7
+        @test port(sim, "c", :out) == state(sim, "c")[1]
         @test build(scalar_model; activations = (Float64, LinearizeDual)) isa Build
         @test build(fed_by(Constant(SVector(1.0, -1.0)), two_state_block()); activations = (Float64, LinearizeDual)) isa Build
         @test build(linear_root_model(two_state_block()); activations = (Float64, LinearizeDual)) isa Build
@@ -1102,14 +1102,14 @@ function test_blocks()
         step!(sim; t_plus = 0.7)
         @test port(sim, "tf", :out) ≈ port(sim, "l", :out) rtol = 1e-12
         # The realized state is the lag's scaled by `τ`.
-        @test state(sim, "tf").q[1] ≈ 0.5 * state(sim, "l").q rtol = 1e-12
+        @test state(sim, "tf")[1] ≈ 0.5 * state(sim, "l") rtol = 1e-12
         @test build(lag_pair_model(); activations = (Float64, LinearizeDual)) isa Build
     end
 
     @testset "the lead-lag and the second-order system linearize to their transfer functions (§14.10, D-313)" begin
         sim = Simulation(linear_root_model(lead_lag()); h = 1//100)
         init!(sim, set(u = (in = 0.0,)))
-        linearization = linearize(sim, taps(x = (q = get_state("c", "q[1]"),), u = (in = get_input(:in),),
+        linearization = linearize(sim, taps(x = (q = get_state("c", "[1]"),), u = (in = get_input(:in),),
                                             y = (out = get_face(:out),)))
         @test isapprox(linearization.A, [-5.0;;]; atol = 1e-12)
         @test isapprox(linearization.B, [1.0;;]; atol = 1e-12)
@@ -1117,7 +1117,7 @@ function test_blocks()
         @test isapprox(linearization.D, [1.0;;]; atol = 1e-12)
         second_sim = Simulation(linear_root_model(second_order()); h = 1//100)
         init!(second_sim, set(u = (in = 0.0,)))
-        (; A, B, C, D) = linearize(second_sim, taps(x = (q1 = get_state("c", "q[1]"), q2 = get_state("c", "q[2]")),
+        (; A, B, C, D) = linearize(second_sim, taps(x = (q1 = get_state("c", "[1]"), q2 = get_state("c", "[2]")),
                                                     u = (in = get_input(:in),), y = (out = get_face(:out),)))
         for s in (0, im, 2im, 1 + 3im)
             H = (C * ((s * I - A) \ B) + D)[1]
@@ -1292,10 +1292,10 @@ function test_blocks()
         sim = Simulation(step_model(Step(t_step = 0.25)); h = 1//10)
         init!(sim, set())
         step!(sim; t_plus = 0.2)
-        @test port(sim, "s", :out) == 0.0 && state(sim, "i").q == 0.0
+        @test port(sim, "s", :out) == 0.0 && state(sim, "i") == 0.0
         step!(sim; t_plus = 0.1)
         bracket_width = sim.model.deployment.localization_tol * sim.model.deployment.h    # in time (§10.4)
-        @test state(sim, "i").q ≈ 0.05 atol = bracket_width
+        @test state(sim, "i") ≈ 0.05 atol = bracket_width
         @test port(sim, "s", :out) == 1.0
         @test step_events(step_model(Step(t_step = 0.25))).policies === (fire = :localized,)
     end
@@ -1306,10 +1306,10 @@ function test_blocks()
         step!(sim; t_plus = 0.2)
         @test port(sim, "s", :out) == 0.0
         step!(sim; t_plus = 0.1)
-        @test state(sim, "i").q == 0.0    # nothing lands inside the step
+        @test state(sim, "i") == 0.0    # nothing lands inside the step
         @test port(sim, "s", :out) == 1.0
         step!(sim; t_plus = 0.1)
-        @test state(sim, "i").q ≈ 0.1 atol = 1e-12
+        @test state(sim, "i") ≈ 0.1 atol = 1e-12
         @test step_events(step_model(Step(t_step = 0.25, localized = false))).policies === (fire = :boundary,)
     end
 
@@ -1317,7 +1317,7 @@ function test_blocks()
         for localized in (true, false), t_step in (0.0, -1.0)
             sim = Simulation(single(Step(t_step = t_step, localized = localized)); h = 1//10)
             init!(sim, set())
-            @test modes(sim, "c").fired && port(sim, "c", :out) == 1.0
+            @test modes(sim, "c") && port(sim, "c", :out) == 1.0
         end
     end
 
@@ -1358,32 +1358,32 @@ function test_blocks()
             sim = Simulation(limited_model(localized); h = 1//10)
             init!(sim, set())
             step!(sim; t_plus = 0.7)
-            @test state(sim, "li").q == 0.5 && modes(sim, "li").saturation === Int8(1)
-            @test port(sim, "li", :saturation) === modes(sim, "li").saturation
+            @test state(sim, "li") == 0.5 && modes(sim, "li") === Int8(1)
+            @test port(sim, "li", :saturation) === modes(sim, "li")
             step!(sim; t_plus = 1.3)
             bracket_width = sim.model.deployment.localization_tol * sim.model.deployment.h    # in time (§10.4)
-            @test state(sim, "li").q ≈ -0.45 atol = bracket_width
-            @test modes(sim, "li").saturation === Int8(0)
-            @test port(sim, "li", :saturation) === modes(sim, "li").saturation
+            @test state(sim, "li") ≈ -0.45 atol = bracket_width
+            @test modes(sim, "li") === Int8(0)
+            @test port(sim, "li", :saturation) === modes(sim, "li")
             step!(sim; t_plus = 1.0)
-            @test state(sim, "li").q == -1.0 && modes(sim, "li").saturation === Int8(-1)
-            @test port(sim, "li", :saturation) === modes(sim, "li").saturation
+            @test state(sim, "li") == -1.0 && modes(sim, "li") === Int8(-1)
+            @test port(sim, "li", :saturation) === modes(sim, "li")
         end
         # The derivative reads the mode, so the Jacobian does too.
         @test isapprox(block_linearization(LimitedIntegrator(lower = -1.0, upper = 0.5)).B, [1.0;;]; atol = 1e-12)
         rig = Simulation(fed(LimitedIntegrator(lower = -1.0, upper = 0.5), "in"); h = 1//10)
         init!(rig, set(u = (in = 1.0,)))
         step!(rig; t_plus = 0.7)
-        @test state(rig, "c").q == 0.5 && modes(rig, "c").saturation === Int8(1)
-        linearization = linearize(rig, taps(x = (q = get_state("c", :q),), u = (in = get_input(:in),)))
+        @test state(rig, "c") == 0.5 && modes(rig, "c") === Int8(1)
+        linearization = linearize(rig, taps(x = (q = get_state("c"),), u = (in = get_input(:in),)))
         @test isapprox(linearization.B, [0.0;;]; atol = 1e-12)
         # An `x0` outside the limits is clamped at boundary zero (§10.6).
         clamped = Simulation(fed(LimitedIntegrator(x0 = 2.0, lower = -1.0, upper = 0.5), "in"); h = 1//10)
         init!(clamped, set(u = (in = 1.0,)))
-        @test state(clamped, "c").q == 0.5 && modes(clamped, "c").saturation === Int8(1)
+        @test state(clamped, "c") == 0.5 && modes(clamped, "c") === Int8(1)
         clamped_lower = Simulation(fed(LimitedIntegrator(x0 = -2.0, lower = -1.0, upper = 0.5), "in"); h = 1//10)
         init!(clamped_lower, set(u = (in = -1.0,)))
-        @test state(clamped_lower, "c").q == -1.0 && modes(clamped_lower, "c").saturation === Int8(-1)
+        @test state(clamped_lower, "c") == -1.0 && modes(clamped_lower, "c") === Int8(-1)
         @test LimitedIntegrator(lower = -1, upper = 0.5) isa LimitedIntegrator{Float64}
         @test LimitedIntegrator(lower = -1, upper = 0.5).x0 === 0.0
     end
@@ -1396,7 +1396,7 @@ function test_blocks()
             sim = Simulation(zero_input_model(level, lower, upper, localized); h = 1//10)
             init!(sim, set())
             step!(sim; t_plus = 3.0)
-            @test state(sim, "li").q == limit && modes(sim, "li").saturation === saturation
+            @test state(sim, "li") == limit && modes(sim, "li") === saturation
         end
     end
 
@@ -1410,24 +1410,24 @@ function test_blocks()
             sim = Simulation(vector_limited_model(localized); h = 1//10)
             init!(sim, set())
             step!(sim; t_plus = 0.4)
-            @test state(sim, "li").q[1] ≈ 0.4 atol = 1e-12
-            @test state(sim, "li").q[2] == 0.8
-            @test modes(sim, "li").saturation == SVector{2, Int8}(0, 1)
-            @test port(sim, "li", :saturation) === modes(sim, "li").saturation
+            @test state(sim, "li")[1] ≈ 0.4 atol = 1e-12
+            @test state(sim, "li")[2] == 0.8
+            @test modes(sim, "li") == SVector{2, Int8}(0, 1)
+            @test port(sim, "li", :saturation) === modes(sim, "li")
             step!(sim; t_plus = 0.3)
-            @test state(sim, "li").q == SVector(0.5, 0.8)
-            @test modes(sim, "li").saturation == SVector{2, Int8}(1, 1)
-            @test port(sim, "li", :saturation) === modes(sim, "li").saturation
+            @test state(sim, "li") == SVector(0.5, 0.8)
+            @test modes(sim, "li") == SVector{2, Int8}(1, 1)
+            @test port(sim, "li", :saturation) === modes(sim, "li")
             step!(sim; t_plus = 1.3)
             bracket_width = sim.model.deployment.localization_tol * sim.model.deployment.h    # in time (§10.4)
-            @test state(sim, "li").q[1] ≈ -0.45 atol = bracket_width
-            @test state(sim, "li").q[2] == 0.8
-            @test modes(sim, "li").saturation == SVector{2, Int8}(0, 1)
-            @test port(sim, "li", :saturation) === modes(sim, "li").saturation
+            @test state(sim, "li")[1] ≈ -0.45 atol = bracket_width
+            @test state(sim, "li")[2] == 0.8
+            @test modes(sim, "li") == SVector{2, Int8}(0, 1)
+            @test port(sim, "li", :saturation) === modes(sim, "li")
             step!(sim; t_plus = 1.0)
-            @test state(sim, "li").q == SVector(-1.0, 0.8)
-            @test modes(sim, "li").saturation == SVector{2, Int8}(-1, 1)
-            @test port(sim, "li", :saturation) === modes(sim, "li").saturation
+            @test state(sim, "li") == SVector(-1.0, 0.8)
+            @test modes(sim, "li") == SVector{2, Int8}(-1, 1)
+            @test port(sim, "li", :saturation) === modes(sim, "li")
         end
         @test y_types(LimitedIntegrator(lower = SVector(-1.0, -1.0), upper = SVector(0.5, 0.8))) ==
               (out = SVector{2, Float64}, saturation = SVector{2, Int8})
@@ -1439,7 +1439,7 @@ function test_blocks()
         rig = Simulation(fed(LimitedIntegrator(lower = SVector(-1.0, -1.0), upper = SVector(0.5, 0.8)), "in"); h = 1//10)
         init!(rig, set(u = (in = SVector(1.0, 0.0),)))
         step!(rig; t_plus = 0.7)
-        linearization = linearize(rig, taps(x = (q1 = get_state("c", "q[1]"), q2 = get_state("c", "q[2]")),
+        linearization = linearize(rig, taps(x = (q1 = get_state("c", "[1]"), q2 = get_state("c", "[2]")),
                                             u = (in1 = get_input("in[1]"), in2 = get_input("in[2]"))))
         @test isapprox(linearization.A, zeros(2, 2); atol = 1e-12)
         @test isapprox(linearization.B, diagm([0.0, 1.0]); atol = 1e-12)
@@ -1469,12 +1469,12 @@ function test_blocks()
         init!(localized_sim, set())
         step!(localized_sim; t_plus = 3.0)
         bracket_width = localized_sim.model.deployment.localization_tol * localized_sim.model.deployment.h    # in time (§10.4)
-        @test state(localized_sim, "li").q ≈ 0.4 - 1.95^2 / 2 atol = bracket_width
+        @test state(localized_sim, "li") ≈ 0.4 - 1.95^2 / 2 atol = bracket_width
         boundary_sim = Simulation(ramp_limited_model(false); h = 1//10)
         init!(boundary_sim, set())
         step!(boundary_sim; t_plus = 3.0)
-        @test state(boundary_sim, "li").q ≈ -1.5 atol = 1e-12    # RK4 is exact on the quadratic
-        @test 0 < state(boundary_sim, "li").q - state(localized_sim, "li").q ≤ 0.1^2 / 2
+        @test state(boundary_sim, "li") ≈ -1.5 atol = 1e-12    # RK4 is exact on the quadratic
+        @test 0 < state(boundary_sim, "li") - state(localized_sim, "li") ≤ 0.1^2 / 2
     end
 
     @testset "the relay switches with hysteresis, from boundary zero on (§10.4, §10.6, D-313)" begin
@@ -1485,14 +1485,14 @@ function test_blocks()
         for (t_plus, out, relay_state) in ((0.5, 0.0, Int8(0)), (0.4, 1.0, Int8(1)), (0.6, 1.0, Int8(1)),
                                             (0.4, 0.0, Int8(0)))
             step!(sim; t_plus = t_plus)
-            @test port(sim, "r", :out) == out && modes(sim, "r").state === relay_state
+            @test port(sim, "r", :out) == out && modes(sim, "r") === relay_state
         end
         for (value, relay_state) in ((1.0, Int8(1)), (0.5, Int8(0)))
             model = Group((; k = Constant(value), r = Relay(lower = 0.2, upper = 0.8));
                           local_wires = ("k/out" => "r/in",))
             constant_sim = Simulation(model; h = 1//10)
             init!(constant_sim, set())
-            @test modes(constant_sim, "r").state === relay_state
+            @test modes(constant_sim, "r") === relay_state
         end
     end
 
@@ -1507,13 +1507,13 @@ function test_blocks()
                                            (0.6, SVector(1.0, 0.0), SVector{2, Int8}(1, 0)),
                                            (0.4, SVector(0.0, 0.0), SVector{2, Int8}(0, 0)))
             step!(sim; t_plus = t_plus)
-            @test port(sim, "r", :out) == out && modes(sim, "r").state == relay_state
+            @test port(sim, "r", :out) == out && modes(sim, "r") == relay_state
         end
         model = Group((; k = Constant(SVector(1.0, 0.5)), r = Relay(lower = SVector(0.2, 0.2), upper = SVector(0.8, 0.8)));
                       local_wires = ("k/out" => "r/in",))
         constant_sim = Simulation(model; h = 1//10)
         init!(constant_sim, set())
-        @test modes(constant_sim, "r").state == SVector{2, Int8}(1, 0)
+        @test modes(constant_sim, "r") == SVector{2, Int8}(1, 0)
     end
 
     @testset "the PID's ports follow its two axes (§13.7, D-313, D-385)" begin
@@ -1717,7 +1717,7 @@ function test_blocks()
         init!(sim, set())
         step!(sim; t_plus = 5.0)
         bracket_width = sim.model.deployment.localization_tol * sim.model.deployment.h    # in time, at slope 1
-        @test 0.2 - bracket_width ≤ state(sim, "integrator").q ≤ 0.8 + bracket_width
+        @test 0.2 - bracket_width ≤ state(sim, "integrator") ≤ 0.8 + bracket_width
     end
 
     @testset "the servo loop saturates its controller, leaves the limit and settles on its reference (§13.7)" begin
@@ -1729,8 +1729,8 @@ function test_blocks()
         for (t_plus, saturation) in ((1.0, Int8(0)), (1.0, Int8(0)), (0.5, Int8(1)), (1.5, Int8(0)),
                                      (1.0, Int8(0)), (5.0, Int8(0)), (30.0, Int8(0)))
             step!(sim; t_plus = t_plus)
-            @test state(sim, "controller").q ≤ 1.2
-            @test modes(sim, "controller").saturation === saturation
+            @test state(sim, "controller") ≤ 1.2
+            @test modes(sim, "controller") === saturation
         end
         @test port(sim, "plant", :out) ≈ 1.0 atol = 1e-3
         # Boundary-detected, the departure moves by up to one step.
@@ -1765,7 +1765,7 @@ function test_blocks()
                                                  q = state(sim, "controller").q),
                                          pid_single_loop(PID(; gains..., Tt = Tt)), 40)
             assembly_samples = loop_samples(sim -> (y = port(sim, "", :y), u = port(sim, "controller", :u),
-                                                    q = state(sim, "controller/int").q),
+                                                    q = state(sim, "controller/int")),
                                             pid_single_loop(pid_assembly(; gains..., Tt = Tt)), 40)
             for name in (:y, :u, :q)
                 @test maximum(abs(getfield(block_sample, name) - getfield(assembly_sample, name))
@@ -1776,7 +1776,7 @@ function test_blocks()
         plain_matrices = (A = [0.0 0.0; 0.0 -10.0], B = [0.5 -0.5; 0.0 10.0], C = [1.0 2.0], D = [1.0 -3.0])
         for (model, state_taps) in
                 ((pid_root_model(pid_controller(false, false)), (q = get_state("controller", :q), yf = get_state("controller", :yf))),
-                 (pid_assembly(; gains...), (q = get_state("int", :q), yf = get_state("lag", :q))))
+                 (pid_assembly(; gains...), (q = get_state("int"), yf = get_state("lag"))))
             @test build(model; activations = (Float64, LinearizeDual)) isa Build
             sim = Simulation(model; h = 1//100)
             init!(sim, set(u = (r = 0.0, y = 0.0)))
@@ -2058,7 +2058,7 @@ function test_blocks()
         gains = merge(tracker_gains(), (Tt = 2.0, u_min = -0.7))
         signals = (x = SVector(0.3, 0.1), z = SVector(0.4, 0.7), z_ref = SVector(0.9, 0.2))
         v = SVector(0.2, -0.3)
-        x = (q = SVector(0.05, -0.05),)
+        x = SVector(0.05, -0.05)
         s = (q = SVector(0.05, -0.05), saturated = zero(SVector{2, Int8}))
         Δt = 0.01
         engaged, not_engaged = SVector(true, true), SVector(false, false)
@@ -2093,7 +2093,7 @@ function test_blocks()
             outputs = y_direct(controller, (; x, u))
             @test outputs.u_raw ≈ SVector(0.95, -0.75) atol = 1e-12
             @test outputs.u ≈ SVector(0.95, -0.7) atol = 1e-12
-            @test x_deriv(controller, (; x, u, y = outputs)).q ≈ q_deriv atol = 1e-12
+            @test x_deriv(controller, (; x, u, y = outputs)) ≈ q_deriv atol = 1e-12
             controller = DiscreteLQRTracker(; gains..., scheduled..., hold, tracking)
             outputs = y_direct(controller, (; s, u, Δt))
             @test outputs.u_raw ≈ SVector(0.95, -0.75) atol = 1e-12
@@ -2121,13 +2121,13 @@ function test_blocks()
         @test plant_state(tracker_loop(LQRTracker(; plain...); disturbance), 20) ≈
               SVector(1.1166666666666667, 0.4166666666666667) atol = 1e-6
         @test plant_state(tracker_loop(LQRTracker(; integral...); disturbance), 200) ≈ target atol = 1e-6
-        plant_taps = (x1 = get_state("plant", "q[1]"), x2 = get_state("plant", "q[2]"))
+        plant_taps = (x1 = get_state("plant", "[1]"), x2 = get_state("plant", "[2]"))
         linearization = tracker_linearization(LQRTracker(; plain...), plant_taps)
         @test isapprox(linearization.A, [-1.0 1.0; -2.0 -4.0]; atol = 1e-12)
         @test isapprox(linearization.B, [1.0 -1.0; 2.0 4.0]; atol = 1e-12)
         linearization = tracker_linearization(LQRTracker(; integral...),
-                                              merge(plant_taps, (q1 = get_state("controller", "q[1]"),
-                                                                 q2 = get_state("controller", "q[2]"))))
+                                              merge(plant_taps, (q1 = get_state("controller", "[1]"),
+                                                                 q2 = get_state("controller", "[2]"))))
         @test isapprox(linearization.A, [-1.0 1.0 1.0 0.0; -2.0 -4.0 0.0 1.0; -0.5 0.0 0.0 0.0; 0.0 -0.25 0.0 0.0];
                        atol = 1e-12)
         @test isapprox(linearization.B, [1.0 -1.0; 2.0 4.0; 0.5 0.0; 0.0 0.25]; atol = 1e-12)

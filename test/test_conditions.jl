@@ -137,14 +137,19 @@ function conditions_algebra()
                      () -> combine(set(), set(), (q = 1.0,)),   # at any arity
                      () -> at("plant", (q = 1.0,)),
                      () -> override(set(), (q = 1.0,)),
-                     () -> set(x = 3.0))                      # and a non-NamedTuple payload
+                     () -> set(u = 3.0))                      # and a non-NamedTuple `u` payload
             err = failure(case)
             @test err isa DiagnosticError && diagnostic(err) isa ConditionNodeMisuse
         end
         d = carried(@test_throws DiagnosticError{ConditionNodeMisuse} combine(set(), (q = 1.0,)))
         @test d.observed === NamedTuple{(:q,),Tuple{Float64}} && d.in_hand == [:Fragment]
-        d = carried(@test_throws DiagnosticError{ConditionNodeMisuse} set(x = 3.0))
-        @test d.reason === :set_payload
+        d = carried(@test_throws DiagnosticError{ConditionNodeMisuse} set(u = 3.0))
+        @test d.reason === :set_payload && d.payload === :u
+        # `nothing` as a store payload would set nothing, and is refused at the call.
+        d = carried(@test_throws DiagnosticError{ConditionNodeMisuse} set(m = nothing))
+        @test d.reason === :set_payload && d.payload === :m && d.observed === Nothing
+        # A store payload may be bare, its shape checked against a build (§14.3).
+        @test set(x = 3.0) isa Fragment && set(s = 1, m = :idle) isa Fragment
         # And the service entry point itself: a bare NamedTuple where a condition
         # belongs gets the directive, never a `MethodError`.
         @test_throws DiagnosticError{ConditionNodeMisuse} init!(Simulation(tri(); h = 1//10), (u = 1.0, e = 2.0))
@@ -647,8 +652,54 @@ function conditions_specialized_apply()
     end
 end
 
+function conditions_bare_stores()
+    @testset "a bare store takes a bare payload whole, at either way of applying it (§14.1, §14.3, §14.4)" begin
+        model = Model(bare_world(); h = 1//10)
+        roots = set(u = (u = 0.0, p = 0.0))
+        tree = combine(roots, at("acc", set(x = 2.5)), at("tick", set(s = 7)),
+                       at("latch", set(x = SVector(0.5, 2.0), m = true)))
+        init!(model, tree)
+        @test state(model, "acc") === 2.5
+        @test state(model, "tick") === 8                  # `t₀`'s boundary ticks once
+        @test state(model, "latch") === SVector(0.5, 2.0) && modes(model, "latch") === true
+        # A payload that converts is converted, as a named leaf's is.
+        init!(model, combine(roots, at("acc", set(x = 1)), at("tick", set(s = Int8(3)))))
+        @test state(model, "acc") === 1.0 && state(model, "tick") === 4
+        @test modes(model, "latch") === false             # `init!` starts from the defaults
+        # The specialized apply writes the same stores through its lenses, a bare
+        # mode store replaced whole, with no allocation.
+        plan = compile_plan(tree, model.deployment.build)
+        apply!(model.exec, plan, tree)
+        @test state(model, "acc") === 2.5 && state(model, "tick") === 7
+        @test modes(model, "latch") === true
+        @test @allocated(apply!(model.exec, plan, tree)) == 0
+    end
+
+    @testset "a bare payload against a named store, or the reverse, is refused by shape (§14.3)" begin
+        world_build = build(bare_world())
+        err = failure(() -> resolve_condition(
+            combine(at("plant", set(x = SVector(1.0, 0.0))), at("acc", set(x = (q = 1.0,))),
+                    at("latch", set(m = (latched = true,)))), world_build))
+        diags = diagnostics(err)
+        @test all(d -> d isa ConditionResolution && d.reason === :store_shape, diags)
+        @test Set((d.path, d.store, d.field, d.candidates) for d in diags) ==
+              Set([("plant", :x, BARE, [:q]), ("acc", :x, :q, Symbol[]),
+                   ("latch", :m, :latched, Symbol[])])
+        # The origin spells a bare payload without a field.
+        @test only(d.origin for d in diags if d.path == "plant") ==
+              "combine[1] → at(\"plant\") → set(x)"
+        # A bare payload for a store the component lacks is the store's refusal.
+        d = only(diagnostics(failure(() -> resolve_condition(at("neg", set(x = 1.0)), world_build))))
+        @test d.reason === :no_store && d.field === BARE
+        # And one that does not convert is the converter's, with no field.
+        d = only(diagnostics(failure(() -> resolve_condition(at("acc", set(x = "a")), world_build))))
+        @test d.reason === :unconvertible && d.field === BARE && d.declared === Float64
+    end
+end
+
 function test_conditions()
     conditions_algebra()
     conditions_service_walk()
     conditions_specialized_apply()
+    conditions_bare_stores()
 end

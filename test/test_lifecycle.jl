@@ -20,7 +20,7 @@ two_ramps_swapped(level_a, level_b) =
 # Two requests on one component, both holding from boundary zero: one path
 # owns two roster entries (§13.5, D-316).
 struct TwoFlags <: AbstractComponent end
-x_init(::TwoFlags) = (;)
+x_init(::TwoFlags) = nothing
 y_types(::TwoFlags) = (fa = StopFlag, fb = StopFlag)
 y_state(::TwoFlags, _) = (fa = STOP_REQUESTED, fb = STOP_REQUESTED)
 stop_reason(::TwoFlags) = "two"

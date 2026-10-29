@@ -12,22 +12,18 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
-- **Bare declarations, the stores half.** A store or contract declaration
-  may be one bare leaf instead of a `NamedTuple`, addressed by the component
-  path alone, the headless form the user ruled for on 2026-10-29. The record
-  is `design/reports/20261029_bare_declarations/README.md` (not normative):
-  the seam inventory, the representation, the defaults and the plan. The
-  stores half lands first: `x_init`, `s_init` and `m_init` bare, `nothing`
-  as the stateless spelling in place of `(;)`, the headless leaf address, and
-  the library's single-state blocks rewritten. The docs landed first as
-  D-435, superseding D-247, with `EmptyStore` for a declared `(;)` and
-  `ConditionResolution` `:store_shape` for a payload of the wrong shape; the
-  block companions (`linear_blocks.md`, `limited_integrator_variants.md`)
-  move with the code. Next the prototype's brief, then the pipeline. The
-  contracts half follows as its own increment once
-  this one is pushed: `u_types` and `y_types` bare, the one-segment wiring
-  endpoint (§8.6), the descriptor bump (§13.9), amending D-036, D-040,
-  D-210 and D-276.
+- **Bare declarations, the contracts half.** A contract declaration may be
+  one bare leaf, a port with no face, addressed by the component path alone:
+  `u_types` and `y_types` bare, the one-segment wiring endpoint (§8.6), the
+  descriptor bump (§13.9), amending D-036, D-040, D-210 and D-276. The record
+  is `design/reports/20261029_bare_declarations/README.md` (not normative),
+  its "Seam inventory, contracts half" the checklist. Two arms the stores half
+  left for it: `get_output(path, "")` arrives as `ReadResolution`
+  `:undeclared` at `BARE`, and the `(path, name)` renderer `_named` already
+  drops an empty face. The stores half landed as D-435 and increment 83
+  (`design/briefs/brief_increment_83_bare_stores.md`), docs first, then the
+  code; this half repeats the sequence: docs commit, prototype, brief,
+  pipeline.
 - **The inspector, stage 1**: the static inspector over the descriptor.
   The stage's record is `design/inspector/initial_design.md` (not
   normative), with one record per axis session beside it:

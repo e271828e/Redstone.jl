@@ -87,7 +87,7 @@ struct GroundContact <: AbstractComponent
 end
 GroundContact(; h_ground = 0.0) = GroundContact(h_ground)
 
-x_init(::GroundContact) = (;)
+x_init(::GroundContact) = nothing
 m_init(::GroundContact) = (contact = false,)
 u_types(::GroundContact) = (h = Float64,)
 y_types(::GroundContact) = (contact = Bool,)

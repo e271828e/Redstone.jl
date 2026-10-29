@@ -139,22 +139,24 @@ Return the leaf of a [condition](@ref g-condition), setting values on the
 
 A condition is a tree, and `set` builds its leaf. Each payload
 is a `NamedTuple` in the vocabulary of the component at the authoring level, and
-names none of its children. [`at`](@ref) scopes a leaf to a child, and
+names none of its children. A store declared bare takes a bare payload, its
+whole value, as in `set(x = 1.0)`. [`at`](@ref) scopes a leaf to a child, and
 [`combine`](@ref) and [`override`](@ref) compose leaves.
 
 # Keywords
 
-- `x`: continuous state fields, by name.
-- `s`: discrete state fields, by name.
-- `m`: modes, which only a [continuous component](@ref g-continuous-component)
-  has.
+- `x`: continuous state fields, by name, or a bare state's value.
+- `s`: discrete state fields, by name, or a bare state's value.
+- `m`: modes, by name, or a bare mode store's value. Only a
+  [continuous component](@ref g-continuous-component) has modes.
 - `u`: [root input](@ref g-root-input) values, named by the authoring level's
   own input [faces](@ref g-face).
 
 A condition sets state, modes and root inputs only. It never sets outputs, and
-never [workspace](@ref g-workspace). A payload that is not a `NamedTuple` is
+never [workspace](@ref g-workspace). A `u` payload that is not a `NamedTuple` is
 refused as `ConditionNodeMisuse` when `set` is called. A field the component
-does not declare is refused as `ConditionResolution` when a service resolves the
+does not declare, and a bare payload for a named store or a named one for a
+bare store, are refused as `ConditionResolution` when a service resolves the
 condition against its build.
 """
 function set(; x = (;), s = (;), m = (;), u = (;))
@@ -162,11 +164,12 @@ function set(; x = (;), s = (;), m = (;), u = (;))
     Fragment(x, s, m, u)
 end
 
-# One call per payload rather than a loop over the four: a loop over a
-# heterogeneous tuple is not unrolled and boxes its elements, which is what made
-# tree construction allocate (§14.2).
-_payload(name, p) = p isa NamedTuple || throw(DiagnosticError(ConditionNodeMisuse(
-    observed = typeof(p), reason = :set_payload, payload = name)))
+# A store payload may be bare, its shape known only against a build, so it is
+# checked at resolution (§14.3); `nothing` alone is refused here, since it
+# would set nothing. A `u` payload names faces, and is checked here.
+_payload(name, p) = (name === :u ? p isa NamedTuple : p !== nothing) ||
+    throw(DiagnosticError(ConditionNodeMisuse(
+        observed = typeof(p), reason = :set_payload, payload = name)))
 
 # Design: §14.2, §14.3, §14.9, D-277, D-278.
 # Nothing is concatenated here: the prefix is stored, and flattening at
@@ -309,9 +312,12 @@ function _flat(node::Fragment, path::String, level, origin::String, tree_positio
     out = CEntry[]
     for (store, name, payload) in ((:x, :x, node.x), (:s, :s, node.s),
                                    (:m, :m, node.m), (:input, :u, node.u))
-        for (field, v) in pairs(payload)
-            entry = CEntry(path, store, field, v, _step(origin, "set($name).$field"),
-                           nothing, (tree_position..., name, field))
+        # A bare store payload is one entry under `BARE`, its tree position the
+        # payload itself.
+        for (field, v) in (store === :input ? pairs(payload) : store_fields(payload))
+            entry = CEntry(path, store, field, v, _step(origin, _named("set($name)", field)),
+                           nothing, field === BARE ? (tree_position..., name) :
+                                                     (tree_position..., name, field))
             store === :input &&
                 (entry = CEntry(entry.path, entry.store, entry.field, entry.value, entry.origin,
                                 _root_input(structure, decls, entry, diags), entry.position))
@@ -452,7 +458,7 @@ function resolve_condition(node::ConditionNode, build::Build, ::Type{T} = Float6
     for (store, ci, base) in (bases === nothing ? _store_bases(build, act) : bases)
         overlay = get(overlays, (store, ci), nothing)
         overlay === nothing && continue
-        push!(stores, (store, ci, convert(typeof(base), merge(base, (; overlay...)))))
+        push!(stores, (store, ci, convert(typeof(base), _store_overlay(base, (; overlay...)))))
     end
     ConditionPlan{T}(xs, stores, inputs, faces)
 end
@@ -503,13 +509,18 @@ function _resolve_entries(node::ConditionNode, build::Build, ::Type{T}) where {T
         comp_entry = structure.components[ci]
         comp, tier, decl = comp_entry.instance, comp_entry.tier, decls[ci]
         declared = entry.store === :x ? decl.x : entry.store === :s ? decl.s : m_init(comp)
-        if isempty(declared)
+        if declared === nothing
             push!(diags, _no_store(entry, tier))
             continue
         end
-        haskey(declared, entry.field) ||
+        # The declared shape and the payload's agree, bare against bare.
+        (declared isa NamedTuple) == (entry.field !== BARE) ||
+            (push!(diags, _condition_violation(entry, :store_shape;
+                candidates = declared isa NamedTuple ? collect(keys(declared)) : Symbol[]));
+             continue)
+        declared isa NamedTuple && !haskey(declared, entry.field) &&
             (push!(diags, _undeclared(entry, comp, tier, declared, T)); continue)
-        leaf_type = typeof(declared[entry.field])
+        leaf_type = typeof(declared isa NamedTuple ? declared[entry.field] : declared)
         (ok, v) = _convert(leaf_type, entry.value)
         ok || (push!(diags, _unconvertible(entry, entry.value, leaf_type, T)); continue)
         push!(out, Resolved(entry,
@@ -531,6 +542,13 @@ _store_bases(build::Build, act::Activation) =
 # and a bare NamedTuple handed to `init!` is exactly the slip it addresses.
 resolve_condition(other, ::Build, ::Type = Float64; bases = nothing) = _node_misuse(other, ())
 
+# A store's `merge(defaults, overlay)`: field by field for a named store, the
+# overlay's one value for a bare one (§14.1, §14.3).
+_store_overlay(defaults::NamedTuple, overlay::NamedTuple) = merge(defaults, overlay)
+_store_overlay(defaults, overlay::NamedTuple) = only(overlay)
+
+# A leaf's offset in its component's `x` block; a bare state is the block itself.
+_leaf_offset(x, ::Symbol) = 0
 function _leaf_offset(x::NamedTuple, field::Symbol)
     offset = 0
     for (k, v) in pairs(x)
@@ -725,10 +743,11 @@ end
 
 # The `s`/`m` fork (§14.3): the store's write is one whole value,
 # `merge(defaults, overlay)`, with the base baked and the overlay's fields read
-# through their lenses. `K` is `:s` or `:m` and `S` the store's value type, both
-# in the type — `S` because the stores are held in a `Vector{Any}` and the
-# assertion has to go on the *reference*: asserting the dereferenced value
-# instead leaves the `[]` a dynamic call, which boxes.
+# through their lenses; a bare store's overlay is the value itself. `K` is `:s`
+# or `:m` and `S` the store's value type, both in the type — `S` because the
+# stores are held in a `Vector{Any}` and the assertion has to go on the
+# *reference*: asserting the dereferenced value instead leaves the `[]` a
+# dynamic call, which boxes.
 struct StoreWrite{K,S,F,A<:Tuple}
     ci::Int
     defaults::S
@@ -747,7 +766,7 @@ StoreWrite{K,S,F}(ci::Int, defaults::S, authored::A) where {K,S,F,A<:Tuple} =
 @inline function _write!(w::StoreWrite{K,S,F}, exec::Executor, tree) where {K,S,F}
     overlay = NamedTuple{F}(_authored_values(w.authored, tree))
     ((K === :s ? exec.sstores : exec.mstores)[w.ci]::Base.RefValue{S})[] =
-        convert(S, merge(w.defaults, overlay))
+        convert(S, _store_overlay(w.defaults, overlay))
     nothing
 end
 

@@ -29,11 +29,11 @@ trim_sim = Simulation(loop_build; h = 1//1000)
 trim!(trim_sim, TrimProblem(
     guess = (d = 0.3,), lower = (d = -1.0,), upper = (d = 1.0,),
     condition = d -> set(u = (disturbance = d.d,)),
-    reads = reads(q̇₂ = get_deriv("plant", "q[2]")),
+    reads = reads(q̇₂ = get_deriv("plant", "[2]")),
     residuals = (derivatives, d) -> (q̇₂ = derivatives.q̇₂,),
     tolerances = (q̇₂ = 1e-9,)); baseline = set(u = (disturbance = 0.0,)))
 linearize(trim_sim, taps(
-    x = (q₁ = get_state("plant", "q[1]"), q₂ = get_state("plant", "q[2]")),
+    x = (q₁ = get_state("plant", "[1]"), q₂ = get_state("plant", "[2]")),
     u = (d = get_input(:disturbance),), y = (y = get_output("plant", :out),)))
 println(Base.cumulative_compile_time_ns()[1] - compile_ns)
 """

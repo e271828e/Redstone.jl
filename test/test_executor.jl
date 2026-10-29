@@ -159,4 +159,31 @@ function test_executor()
             @test @ballocated($f()) == 0
         end
     end
+
+    @testset "a bare store's write replaces it whole, its law the declared shape's (§9.5, §9.8, D-235)" begin
+        mode_store = Ref(false)
+        Redstone._merge_modes!(mode_store, true, "p", :handler, :e)
+        @test mode_store[] === true
+        d = diagnostic(failure(() -> Redstone._merge_modes!(mode_store, 1, "p", :handler, :e)))
+        @test d isa ConformanceFailure && d.reason === :field_type && d.shape === :mode &&
+              d.field === BARE && d.observed === Int && d.declared === Bool
+        d = diagnostic(failure(() -> Redstone._merge_modes!(mode_store, (fired = true,), "p",
+                                                            :handler, :e)))
+        @test d.field === BARE && d.observed === @NamedTuple{fired::Bool}
+        d = diagnostic(failure(() -> Redstone._store_successor!(Ref(0), 0.5, "p", :s_update)))
+        @test d.reason === :field_type && d.shape === :s_init && d.field === BARE &&
+              d.observed === Float64 && d.declared === Int
+        # Over bare stores, and a stateless leaf marked `nothing`, the phase
+        # bodies allocate nothing, the always-on check folded away.
+        sim = Simulation(bare_world(); h = 1//100)
+        init!(sim, set(u = (u = 0.5, p = 0.0)))
+        step!(sim)
+        bodies = phase_bodies(sim)
+        for name in BLOCKS
+            body = bodies[name]
+            body(); body(0)
+            @test @ballocated($body()) == 0
+            @test @ballocated($body(0)) == 0
+        end
+    end
 end

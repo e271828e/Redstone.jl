@@ -396,9 +396,11 @@ end
 The wholesale state write with §9.5's always-on check decided at generation
 (D-235): `value`'s key set must equal the state's, and each field must be a lawful
 arrival at the state's field type under embed-accept. Fields pair by name,
-never by position. `shape` is the diagnostic's shape: `:x_init` for a
-derivative, `:state` for a projection or a handler's `x` key. `event` names the
-event on a handler's write and is `nothing` everywhere else (D-249).
+never by position. A bare state, an `XT` that is no `NamedTuple`, takes the
+whole return as one arrival at `XT`, whatever the return's type. `shape` is the
+diagnostic's shape: `:x_init` for a derivative, `:state` for a projection or a
+handler's `x` key. `event` names the event on a handler's write and is
+`nothing` everywhere else (D-249).
 """
 @generated function flatten_state!(buffer::AbstractVector, offset::Int, value::NamedTuple{Vs},
                                    ::Type{XT}, ::Type{T}, path::String, what::Symbol,
@@ -429,9 +431,25 @@ event on a handler's write and is `nothing` everywhere else (D-249).
     end
 end
 
-# A non-NamedTuple return is the law's first clause failing.
-flatten_state!(buffer, offset, value, ::Type{XT}, ::Type{T}, path, what, shape,
-               event) where {XT,T} =
-    throw(DiagnosticError(ConformanceFailure(path = path, what = String(what), event = event,
-                                             reason = :return_type, shape = shape,
-                                             observed = typeof(value))))
+# The declared shape picks the law. Against a named state a return that is no
+# NamedTuple is the law's first clause failing; a bare state is one arrival,
+# decided at generation like the named fields.
+@generated function flatten_state!(buffer::AbstractVector, offset::Int, value::V,
+                                   ::Type{XT}, ::Type{T}, path::String, what::Symbol,
+                                   shape::Symbol,
+                                   event::Union{Nothing,Symbol}) where {V,XT,T}
+    XT <: NamedTuple &&
+        return :(throw(DiagnosticError(ConformanceFailure(
+            path = path, what = String(what), event = event, reason = :return_type,
+            shape = shape, observed = $V))))
+    _accepts(XT, V, T) ||
+        return :(throw(DiagnosticError(ConformanceFailure(
+            path = path, what = String(what), event = event, reason = :field_type,
+            shape = shape, field = BARE, observed = $V, declared = $XT, activation = $T))))
+    block, _ = _flatten_expr(XT, :value, 0)
+    quote
+        $(Expr(:meta, :inline))
+        $block
+        nothing
+    end
+end

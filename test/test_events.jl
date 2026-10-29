@@ -3,7 +3,7 @@
 # Malformed event and projection declarations, at top level per D-164.
 struct HalfEvent <: AbstractComponent end
 m_init(::HalfEvent) = (s = :a,)
-x_init(::HalfEvent) = (;)
+x_init(::HalfEvent) = nothing
 y_types(::HalfEvent) = (o = Float64,)
 y_state(::HalfEvent, (; m)) = (o = 1.0,)
 halfevent_guard(::HalfEvent, (; m)) = m.s === :a
@@ -12,14 +12,14 @@ state_events(::HalfEvent) = (go = StateEvent(halfevent_guard, halfevent_handler)
 
 struct NotAnEvent <: AbstractComponent end
 m_init(::NotAnEvent) = (s = :a,)
-x_init(::NotAnEvent) = (;)
+x_init(::NotAnEvent) = nothing
 y_types(::NotAnEvent) = (o = Float64,)
 y_state(::NotAnEvent, (; m)) = (o = 1.0,)
 state_events(::NotAnEvent) = (go = 5,)
 
 struct BadGuardForm <: AbstractComponent end
 m_init(::BadGuardForm) = (s = :a,)
-x_init(::BadGuardForm) = (;)
+x_init(::BadGuardForm) = nothing
 y_types(::BadGuardForm) = (o = Float64,)
 y_state(::BadGuardForm, (; m)) = (o = 1.0,)
 badguard_guard(::BadGuardForm, (; m)) = "high"
@@ -28,7 +28,7 @@ state_events(::BadGuardForm) = (go = StateEvent(badguard_guard, badguard_handler
 
 struct BadHandlerKey <: AbstractComponent end    # writes `x`, owns only modes
 m_init(::BadHandlerKey) = (s = :a,)
-x_init(::BadHandlerKey) = (;)
+x_init(::BadHandlerKey) = nothing
 y_types(::BadHandlerKey) = (o = Float64,)
 y_state(::BadHandlerKey, (; m)) = (o = 1.0,)
 badkey_guard(::BadHandlerKey, (; m)) = m.s === :a
@@ -61,7 +61,7 @@ s_update(::ProjectOnDiscrete, (; s)) = (n = s.n + 1,)
 x_projection(::ProjectOnDiscrete, x) = x
 
 struct ProjectNoState <: AbstractComponent end   # nothing to project onto
-x_init(::ProjectNoState) = (;)
+x_init(::ProjectNoState) = nothing
 y_types(::ProjectNoState) = (o = Float64,)
 y_state(::ProjectNoState, (; t)) = (o = 1.0,)
 x_projection(::ProjectNoState, x) = x
@@ -392,5 +392,18 @@ function test_events()
         overlay!(sim, at("c", set(x = (r = SVector(3.0, 0.0),))))
         @test state(sim, "c").r ≈ SVector(1.0, 0.0) atol = 1e-15
         @test port(sim, "c", :c) == 1.0
+    end
+
+    @testset "a handler's `x` and `m` replace a bare state and a bare mode store whole (§5.2, §9.5)" begin
+        # `x[1] = t` reaches 1 at `t = 1`, and the handler reflects the rate and
+        # latches the mode, so `x[1] = 2 - t` after it.
+        sim = Simulation(single(BareLatch()); h = 1//10)
+        init!(sim)
+        step!(sim; t_plus = 0.5)
+        @test modes(sim, "c") === false && port(sim, "c", :latched) === false
+        step!(sim; t_plus = 1.0)
+        @test modes(sim, "c") === true && port(sim, "c", :latched) === true
+        @test state(sim, "c") ≈ SVector(0.5, -1.0) atol = 1e-9
+        @test build(single(BareLatch()); activations = (Float64, LinearizeDual)) isa Build
     end
 end

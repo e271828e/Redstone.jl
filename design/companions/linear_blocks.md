@@ -217,9 +217,9 @@ abstract type LinearBlock{FT} <: AbstractComponent end
 realization(c::StateSpace) = c
 realization(c::TransferFunction) = c.realization
 
-x_deriv(c::LinearBlock, (; x, u))        = (s = realization(c); (q = s.A * x.q + s.B * u,))
-y_state(c::LinearBlock{false}, (; x))    = (out = realization(c).C * x.q,)
-y_direct(c::LinearBlock{true}, (; x, u)) = (s = realization(c); (out = s.C * x.q + s.D * u,))
+x_deriv(c::LinearBlock, (; x, u))        = (s = realization(c); s.A * x + s.B * u)
+y_state(c::LinearBlock{false}, (; x))    = (out = realization(c).C * x,)
+y_direct(c::LinearBlock{true}, (; x, u)) = (s = realization(c); (out = s.C * x + s.D * u,))
 ```
 
 Nothing is forwarded and no `Group` wraps a leaf, so the transfer function
@@ -320,17 +320,17 @@ discretizes, because the hold of section 9.2 leaves `C` and `D` untouched.
 ```julia
 abstract type DiscreteLinearBlock{FT} <: AbstractComponent end
 
-s_init(c::DiscreteLinearBlock)  = (q = held(c).x0,)
+s_init(c::DiscreteLinearBlock)  = held(c).x0
 u_types(c::DiscreteLinearBlock) = (in = port_type(size(held(c).B, 2)),)
 y_types(c::DiscreteLinearBlock) = (out = port_type(size(held(c).C, 1)),)
 function s_update(c::DiscreteLinearBlock, (; s, u, Δt))
     (; A, B) = realization(c, Δt)
-    (q = A * s.q + B * as_vector(u.in),)
+    A * s + B * as_vector(u.in)
 end
-y_state(c::DiscreteLinearBlock{false}, (; s)) = (out = as_port(held(c).C * s.q),)
+y_state(c::DiscreteLinearBlock{false}, (; s)) = (out = as_port(held(c).C * s),)
 function y_direct(c::DiscreteLinearBlock{true}, (; s, u))
     (; C, D) = held(c)
-    (out = as_port(C * s.q + D * as_vector(u.in)),)
+    (out = as_port(C * s + D * as_vector(u.in)),)
 end
 ```
 

@@ -32,6 +32,51 @@ function x_deriv(c::Plant, (; x, u))
     (q = SVector(q[2], -ω^2 * q[1] - 2ζ * ω * q[2] + u.u),)
 end
 
+# --- bare stores (§7.1, §7.3, §8.2) --------------------------------------------
+# One store per letter declared as one value, not a `NamedTuple`: the bundle
+# hands it bare, and a return is one value at its type. `Negator` is a
+# stateless leaf, its store marked `nothing`.
+
+"A bare continuous state relaxing to its input, `ẋ = u - x`, published from stage 1."
+struct BareAccumulator <: AbstractComponent end
+x_init(::BareAccumulator) = 1.0
+u_types(::BareAccumulator) = (u = Float64,)
+y_types(::BareAccumulator) = (y = Float64,)
+y_state(::BareAccumulator, (; x)) = (y = x,)
+x_deriv(::BareAccumulator, (; x, u)) = u.u - x
+
+"A bare discrete state, the count of its ticks."
+struct BareTicker <: AbstractComponent end
+s_init(::BareTicker) = 0
+y_types(::BareTicker) = (n = Int,)
+y_state(::BareTicker, (; s)) = (n = s,)
+s_update(::BareTicker, (; s)) = s + 1
+
+"A bare mode beside a bare `SVector` state: a latch its one event sets as `x[1]` reaches 1."
+struct BareLatch <: AbstractComponent end
+x_init(::BareLatch) = SVector(0.0, 1.0)
+m_init(::BareLatch) = false
+y_types(::BareLatch) = (y = Float64, latched = Bool)
+y_state(::BareLatch, (; x, m)) = (y = x[1], latched = m)
+x_deriv(::BareLatch, (; x)) = SVector(x[2], 0.0)
+latch_guard(::BareLatch, (; x)) = x[1] - 1.0
+latch_handler(::BareLatch, (; x)) = (x = SVector(1.0, -x[2]), m = true)
+state_events(::BareLatch) = (latch = StateEvent(latch_guard, latch_handler),)
+
+"A stateless leaf, `x_init` marked `nothing`."
+struct Negator <: AbstractComponent end
+x_init(::Negator) = nothing
+u_types(::Negator) = (u = Float64,)
+y_types(::Negator) = (y = Float64,)
+y_direct(::Negator, (; u)) = (y = -u.u,)
+
+# The four beside a named store: `acc` fed by the root input `u`, `neg` by
+# `acc`, and `plant`, whose `x` is a `NamedTuple`, by the root input `p`.
+bare_world() = Group((; acc = BareAccumulator(), tick = BareTicker(), latch = BareLatch(),
+                        neg = Negator(), plant = Plant());
+                     local_wires = ("acc/y" => "neg/u",),
+                     input_wires = ("u" => "acc/u", "p" => "plant/u"))
+
 # --- §5.3's stage-1 return of exposed state ------------------------------------
 # Components exposing a state or mode field by returning it from `y_state`,
 # plus the refusal fixtures that declare one and return it from no stage (D-252).
@@ -90,7 +135,7 @@ struct StateFeedback <: AbstractComponent
     k::Float64
 end
 
-x_init(::StateFeedback) = (;)
+x_init(::StateFeedback) = nothing
 u_types(::StateFeedback) = (q = SVector{2,Float64},)
 y_types(::StateFeedback) = (u = Float64,)
 
@@ -147,7 +192,7 @@ struct Gain <: AbstractComponent
     k::Float64
 end
 
-x_init(::Gain) = (;)
+x_init(::Gain) = nothing
 u_types(::Gain) = (e = Float64,)
 y_types(::Gain) = (out = Float64,)
 
@@ -164,7 +209,7 @@ end
 
 Sum(; sa = 1.0, sb = -1.0) = Sum(sa, sb)
 
-x_init(::Sum) = (;)
+x_init(::Sum) = nothing
 u_types(::Sum) = (a = Float64, b = Float64)
 y_types(::Sum) = (e = Float64,)
 
@@ -221,7 +266,7 @@ Stateless discrete leaf: its empty store alone declares the tier.
 """
 struct DiscreteMap <: AbstractComponent end
 
-s_init(::DiscreteMap) = (;)
+s_init(::DiscreteMap) = nothing
 u_types(::DiscreteMap) = (a = Int,)
 y_types(::DiscreteMap) = (b = Int,)
 
@@ -275,7 +320,7 @@ struct WorkGain <: AbstractComponent
     k::Float64
 end
 
-x_init(::WorkGain) = (;)
+x_init(::WorkGain) = nothing
 u_types(::WorkGain) = (in = Float64,)
 y_types(::WorkGain) = (out = Float64,)
 ws_init(::WorkGain, ::Type{T}) where {T <: Real} = (tmp = Vector{T}(undef, 1),)
@@ -294,7 +339,7 @@ idiom (D-166).
 struct ModedSource <: AbstractComponent end
 
 m_init(::ModedSource) = (phase = :idle,)
-x_init(::ModedSource) = (;)
+x_init(::ModedSource) = nothing
 y_types(::ModedSource) = (out = Float64,)
 
 y_state(::ModedSource, (; m)) = (out = m.phase === :idle ? 0.0 : 1.0,)
@@ -324,7 +369,7 @@ struct Trigger <: AbstractComponent
 end
 
 m_init(::Trigger) = (state = :armed, count = 0)
-x_init(::Trigger) = (;)
+x_init(::Trigger) = nothing
 u_types(::Trigger) = (sig = Float64,)
 y_types(::Trigger) = (on = Bool,)
 
@@ -342,7 +387,7 @@ settled within one boundary, one iteration round per link, independent of `h`.
 struct Follower <: AbstractComponent end
 
 m_init(::Follower) = (state = :idle,)
-x_init(::Follower) = (;)
+x_init(::Follower) = nothing
 u_types(::Follower) = (go = Bool,)
 y_types(::Follower) = (on = Bool,)
 
@@ -411,7 +456,7 @@ iterates untouched. `flips` counts every firing.
 struct Chatterer <: AbstractComponent end
 
 m_init(::Chatterer) = (v = false, flips = 0)
-x_init(::Chatterer) = (;)
+x_init(::Chatterer) = nothing
 y_types(::Chatterer) = (v = Bool,)
 
 y_state(::Chatterer, (; m)) = (v = m.v,)
@@ -430,7 +475,7 @@ by declaration order, and the second is eligible but blocked — its sample is
 struct TwoShot <: AbstractComponent end
 
 m_init(::TwoShot) = (a = false, b = false)
-x_init(::TwoShot) = (;)
+x_init(::TwoShot) = nothing
 u_types(::TwoShot) = (sig = Float64,)
 y_types(::TwoShot) = (a = Bool,)
 
@@ -451,7 +496,7 @@ fires, where a within-round sequence would have fired it on the stale premise.
 struct Preempted <: AbstractComponent end
 
 m_init(::Preempted) = (a = false, b = false)
-x_init(::Preempted) = (;)
+x_init(::Preempted) = nothing
 u_types(::Preempted) = (sig = Float64,)
 y_types(::Preempted) = (a = Bool,)
 
@@ -479,7 +524,7 @@ struct Stamper <: AbstractComponent
 end
 
 m_init(::Stamper) = (t_fired = -1.0, count = 0)
-x_init(::Stamper) = (;)
+x_init(::Stamper) = nothing
 u_types(::Stamper) = (sig = Float64,)
 y_types(::Stamper) = (armed = Bool,)
 
@@ -502,7 +547,7 @@ struct GatedStamper <: AbstractComponent
 end
 
 m_init(::GatedStamper) = (t_fired = -1.0, count = 0)
-x_init(::GatedStamper) = (;)
+x_init(::GatedStamper) = nothing
 u_types(::GatedStamper) = (sig = Float64, gate = Bool)
 y_types(::GatedStamper) = (armed = Bool,)
 
@@ -577,7 +622,7 @@ struct Overload <: AbstractComponent
 end
 
 m_init(::Overload) = (tripped = false,)
-x_init(::Overload) = (;)
+x_init(::Overload) = nothing
 u_types(::Overload) = (sig = Float64,)
 y_types(::Overload) = (tripped = Bool,)
 
@@ -630,7 +675,7 @@ struct UnreturnedMode <: AbstractComponent
 end
 
 m_init(::UnreturnedMode) = (tripped = false,)
-x_init(::UnreturnedMode) = (;)
+x_init(::UnreturnedMode) = nothing
 u_types(::UnreturnedMode) = (sig = Float64,)
 y_types(::UnreturnedMode) = (tripped = Bool,)
 
@@ -688,7 +733,7 @@ Mine: a `Bool` input and a predicate-form event whose handler throws
 struct Mine <: AbstractComponent end
 
 m_init(::Mine) = (blown = false,)
-x_init(::Mine) = (;)
+x_init(::Mine) = nothing
 u_types(::Mine) = (sig = Bool,)
 y_types(::Mine) = (blown = Bool,)
 
@@ -919,7 +964,7 @@ x_deriv(::DerivativeFed, (; u)) = (q = u.b,)
 """`Gain` with both ends pinned `Float64`: no tracer scalar can enter, so its hops trace structurally."""
 struct PinnedGain <: AbstractComponent end
 
-x_init(::PinnedGain) = (;)
+x_init(::PinnedGain) = nothing
 u_types(::PinnedGain) = (e = Pinned{Float64},)
 y_types(::PinnedGain) = (out = Pinned{Float64},)
 y_direct(::PinnedGain, (; u)) = (out = 2u.e,)
@@ -927,7 +972,7 @@ y_direct(::PinnedGain, (; u)) = (out = 2u.e,)
 """`Gain` asserting its return `Float64`: fine at the nominal probe, a throw at any other scalar."""
 struct TypedGain <: AbstractComponent end
 
-x_init(::TypedGain) = (;)
+x_init(::TypedGain) = nothing
 u_types(::TypedGain) = (e = Float64,)
 y_types(::TypedGain) = (out = Float64,)
 y_direct(::TypedGain, (; u)) = (out = (2u.e)::Float64,)
@@ -1194,7 +1239,7 @@ deterministic aging of a stagger are directly observable through cell reads.
 """
 struct ZOH <: AbstractComponent end
 
-s_init(::ZOH) = (;)
+s_init(::ZOH) = nothing
 u_types(::ZOH) = (in = Float64,)
 y_types(::ZOH) = (out = Float64,)
 y_direct(::ZOH, (; u)) = (out = u.in,)
@@ -1204,7 +1249,7 @@ struct Ramp <: AbstractComponent
     c₀::Float64
 end
 
-x_init(::Ramp) = (;)
+x_init(::Ramp) = nothing
 y_types(::Ramp) = (out = Float64,)
 y_state(c::Ramp, (; t)) = (out = c.c₀ + t,)
 
@@ -1285,14 +1330,14 @@ sweep. `Terrain` takes no inputs, so the component is the whole domain.
 """
 height_field(c::Terrain) = HeightField(c.z, c.h0)
 
-s_init(::Terrain) = (;)
+s_init(::Terrain) = nothing
 y_types(::Terrain) = (terrain = HeightField,)
 y_direct(c::Terrain, args) = (terrain = height_field(c),)
 
 """The consumer: it evaluates the handle inside its own stage, at its own arguments."""
 struct Query <: AbstractComponent end
 
-x_init(::Query) = (;)
+x_init(::Query) = nothing
 u_types(::Query) = (terrain = HeightField,)
 y_types(::Query) = (h = Float64,)
 y_direct(::Query, (; u)) = (h = u.terrain.h0 + size(u.terrain.z, 1),)
@@ -1300,7 +1345,7 @@ y_direct(::Query, (; u)) = (h = u.terrain.h0 + size(u.terrain.z, 1),)
 """The same consumer behind an abstract entry: structural substitutability (§8.2)."""
 struct AbstractTerrainQuery <: AbstractComponent end
 
-x_init(::AbstractTerrainQuery) = (;)
+x_init(::AbstractTerrainQuery) = nothing
 u_types(::AbstractTerrainQuery) = (terrain = AbstractTerrain,)
 y_types(::AbstractTerrainQuery) = (h = Float64,)
 y_direct(::AbstractTerrainQuery, (; u)) = (h = u.terrain.h0 + size(u.terrain.z, 1),)
@@ -1312,14 +1357,14 @@ end
 
 struct MutableSource <: AbstractComponent end
 
-s_init(::MutableSource) = (;)
+s_init(::MutableSource) = nothing
 y_types(::MutableSource) = (c = Cache,)
 y_direct(::MutableSource, args) = (c = Cache(0.0),)
 
 """A mutable array declared as an entry, to surface as a root input."""
 struct MatrixEntry <: AbstractComponent end
 
-x_init(::MatrixEntry) = (;)
+x_init(::MatrixEntry) = nothing
 u_types(::MatrixEntry) = (m = Matrix{Float64},)
 y_types(::MatrixEntry) = (n = Float64,)
 y_direct(::MatrixEntry, (; u)) = (n = float(length(u.m)),)
@@ -1343,7 +1388,7 @@ struct OffsetAtT <: AbstractComponent
 end
 OffsetAtT() = OffsetAtT(zeros(2, 2))
 
-x_init(::OffsetAtT) = (;)
+x_init(::OffsetAtT) = nothing
 y_types(::OffsetAtT) = (terrain = OffsetField{Float64},)
 y_direct(c::OffsetAtT, (; t)) = (terrain = OffsetField(t + 1.0, c.z),)
 
@@ -1353,7 +1398,7 @@ struct OffsetAtLiteral <: AbstractComponent
 end
 OffsetAtLiteral() = OffsetAtLiteral(zeros(2, 2))
 
-x_init(::OffsetAtLiteral) = (;)
+x_init(::OffsetAtLiteral) = nothing
 y_types(::OffsetAtLiteral) = (terrain = OffsetField{Float64},)
 y_direct(c::OffsetAtLiteral, (; t)) = (terrain = OffsetField(1.0, c.z),)
 
@@ -1363,7 +1408,7 @@ struct PinnedOffsetSource <: AbstractComponent
 end
 PinnedOffsetSource() = PinnedOffsetSource(zeros(2, 2))
 
-x_init(::PinnedOffsetSource) = (;)
+x_init(::PinnedOffsetSource) = nothing
 y_types(::PinnedOffsetSource) = (terrain = Pinned{OffsetField{Float64}},)
 y_direct(c::PinnedOffsetSource, (; t)) = (terrain = OffsetField(1.0, c.z),)
 
@@ -1373,13 +1418,13 @@ struct DiscreteOffsetSource <: AbstractComponent
 end
 DiscreteOffsetSource() = DiscreteOffsetSource(zeros(2, 2))
 
-s_init(::DiscreteOffsetSource) = (;)
+s_init(::DiscreteOffsetSource) = nothing
 y_types(::DiscreteOffsetSource) = (terrain = OffsetField{Float64},)
 y_direct(c::DiscreteOffsetSource, (; t)) = (terrain = OffsetField(1.0, c.z),)
 
 struct OffsetQuery <: AbstractComponent end
 
-x_init(::OffsetQuery) = (;)
+x_init(::OffsetQuery) = nothing
 u_types(::OffsetQuery) = (terrain = OffsetField{Float64},)
 y_types(::OffsetQuery) = (h = Float64,)
 y_direct(::OffsetQuery, (; u)) = (h = 2 * u.terrain.h0,)
@@ -1390,7 +1435,7 @@ offset_model(src) = Group((; src = src, q = OffsetQuery());
 """Pins the handle entry, so a walking handle producer fails the walk clause."""
 struct PinnedOffsetQuery <: AbstractComponent end
 
-x_init(::PinnedOffsetQuery) = (;)
+x_init(::PinnedOffsetQuery) = nothing
 u_types(::PinnedOffsetQuery) = (terrain = Pinned{OffsetField{Float64}},)
 y_types(::PinnedOffsetQuery) = (h = Float64,)
 y_direct(::PinnedOffsetQuery, (; u)) = (h = 2 * u.terrain.h0,)
@@ -1403,7 +1448,7 @@ of a build alone (§8.2): `h` is the handle's `h0` scaled by `k`.
 """
 struct TerrainGain <: AbstractComponent end
 
-x_init(::TerrainGain) = (;)
+x_init(::TerrainGain) = nothing
 u_types(::TerrainGain) = (terrain = AbstractTerrain, k = Float64)
 y_types(::TerrainGain) = (h = Float64,)
 y_direct(::TerrainGain, (; u)) = (h = u.terrain.h0 * u.k,)
@@ -1451,7 +1496,7 @@ end
 
 struct GearStateSource <: AbstractComponent end
 
-x_init(::GearStateSource) = (;)
+x_init(::GearStateSource) = nothing
 y_types(::GearStateSource) = (gs = GearState{Float64},)
 y_direct(::GearStateSource, (; t)) = (gs = GearState(1.0, down),)
 
@@ -1462,7 +1507,7 @@ tell which instance arrived.
 """
 struct GearReader <: AbstractComponent end
 
-x_init(::GearReader) = (;)
+x_init(::GearReader) = nothing
 u_types(::GearReader) = (gear = Gear, x = Float64)
 y_types(::GearReader) = (drag = Float64, code = Int)
 
@@ -1477,7 +1522,7 @@ delivers.
 struct GearMode <: AbstractComponent end
 
 m_init(::GearMode) = (gear = up,)
-x_init(::GearMode) = (;)
+x_init(::GearMode) = nothing
 y_types(::GearMode) = (gear = Gear, y = Float64)
 
 y_state(::GearMode, (; m)) = (gear = m.gear, y = m.gear === up ? 0.0 : 1.0)
@@ -1494,7 +1539,7 @@ s_update(::PhaseSelector, (; s)) = (n = s.n + 1,)
 """A consumer of a `Symbol` entry; alone under a root, that entry is a root input."""
 struct PhaseReader <: AbstractComponent end
 
-x_init(::PhaseReader) = (;)
+x_init(::PhaseReader) = nothing
 u_types(::PhaseReader) = (phase = Symbol,)
 y_types(::PhaseReader) = (armed = Bool,)
 
@@ -1507,7 +1552,7 @@ idiomatic label.
 struct PhaseMode <: AbstractComponent end
 
 m_init(::PhaseMode) = (phase = :idle,)
-x_init(::PhaseMode) = (;)
+x_init(::PhaseMode) = nothing
 y_types(::PhaseMode) = (phase = Symbol, y = Float64)
 
 y_state(::PhaseMode, (; m)) = (phase = m.phase, y = m.phase === :idle ? 0.0 : 1.0)
@@ -1694,7 +1739,7 @@ end
 module Reason
 using Redstone
 struct Leaf <: Redstone.AbstractComponent end
-Redstone.x_init(::Leaf) = (;)
+Redstone.x_init(::Leaf) = nothing
 Redstone.y_types(::Leaf) = (flag = Redstone.StopFlag,)
 Redstone.y_state(::Leaf, _) = (flag = Redstone.NO_STOP,)
 stop_reason(::Leaf) = "overload"
@@ -1740,7 +1785,7 @@ struct LateDoc <: AbstractComponent end
 "The constructor's docstring, registered first."
 LateDoc(k::Real) = LateDoc()
 @doc "The type's own docstring, registered second." LateDoc
-x_init(::LateDoc) = (;)
+x_init(::LateDoc) = nothing
 y_types(::LateDoc) = (out = Float64,)
 y_state(::LateDoc, _) = (out = 1.0,)
 
@@ -1751,7 +1796,7 @@ A primitive emitting a tuple port, `Tuple{Float64, Float64}`, whose kind
 marker is a `struct` with the positions `"1"` and `"2"` as its fields (D-433).
 """
 struct TupleOut <: AbstractComponent end
-x_init(::TupleOut) = (;)
+x_init(::TupleOut) = nothing
 y_types(::TupleOut) = (out = Tuple{Float64, Float64},)
 y_state(::TupleOut, _) = (out = (1.0, 2.0),)
 
@@ -1763,7 +1808,7 @@ a producer of any length satisfies (§8.2) and whose kind marker is opaque
 (D-433).
 """
 struct FreeSizeIn <: AbstractComponent end
-x_init(::FreeSizeIn) = (;)
+x_init(::FreeSizeIn) = nothing
 u_types(::FreeSizeIn) = (v = StaticVector,)
 y_types(::FreeSizeIn) = (n = Float64,)
 y_direct(::FreeSizeIn, (; u)) = (n = float(length(u.v)),)
@@ -1786,7 +1831,7 @@ const INTERPOLATED_WIDTH = 80
 
 """Cut at $(INTERPOLATED_WIDTH) characters."""
 struct Interpolated <: AbstractComponent end
-x_init(::Interpolated) = (;)
+x_init(::Interpolated) = nothing
 y_types(::Interpolated) = (out = Float64,)
 y_state(::Interpolated, _) = (out = 0.0,)
 
@@ -1809,6 +1854,6 @@ end
 A leaf emitting a `Pose3` port.
 """
 struct PoseOut <: AbstractComponent end
-x_init(::PoseOut) = (;)
+x_init(::PoseOut) = nothing
 y_types(::PoseOut) = (pose = Pose3,)
 y_state(::PoseOut, _) = (pose = Pose3(1.0, 2.0, 3.0),)

@@ -10,12 +10,12 @@
 # would dispatch on the untouched global and silently see the fallback
 # declarations instead.
 struct Undeclared <: AbstractComponent end
-x_init(::Undeclared) = (;)
+x_init(::Undeclared) = nothing
 y_types(::Undeclared) = (a = Float64,)
 y_state(::Undeclared, (; t)) = (a = 1.0, b = 2.0)
 
 struct Unproduced <: AbstractComponent end
-x_init(::Unproduced) = (;)
+x_init(::Unproduced) = nothing
 y_types(::Unproduced) = (a = Float64, b = Float64)
 y_state(::Unproduced, (; t)) = (a = 1.0,)
 
@@ -431,21 +431,21 @@ end
 
 struct RealEntry <: AbstractComponent            # an unpinned entry: follows the activation
 end
-x_init(::RealEntry) = (;)
+x_init(::RealEntry) = nothing
 u_types(::RealEntry) = (u = Float64,)
 y_types(::RealEntry) = (y = Float64,)
 y_direct(::RealEntry, (; u)) = (y = u.u,)
 
 struct BoolEntry <: AbstractComponent            # ...against a `Bool` at the same face
 end
-x_init(::BoolEntry) = (;)
+x_init(::BoolEntry) = nothing
 u_types(::BoolEntry) = (u = Bool,)
 y_types(::BoolEntry) = (y = Float64,)
 y_direct(::BoolEntry, (; u)) = (y = u.u ? 1.0 : 0.0,)
 
 struct PinnedEntry <: AbstractComponent          # ...against a pinned `Float64`
 end
-x_init(::PinnedEntry) = (;)
+x_init(::PinnedEntry) = nothing
 u_types(::PinnedEntry) = (u = Pinned{Float64},)
 y_types(::PinnedEntry) = (y = Float64,)
 y_direct(::PinnedEntry, (; u)) = (y = u.u,)
@@ -511,17 +511,17 @@ field_scalar(f::FieldB) = sum(f.b)
 # Stage-1 sources naming the concrete type. The value is a constant: a `Dual`
 # `t` would not convert into the pinned field.
 struct FieldSourceA <: AbstractComponent end
-x_init(::FieldSourceA) = (;)
+x_init(::FieldSourceA) = nothing
 y_types(::FieldSourceA) = (fld = FieldA,)
 y_state(::FieldSourceA, (; t)) = (fld = FieldA(2.0),)
 
 struct FieldSourceB <: AbstractComponent end
-x_init(::FieldSourceB) = (;)
+x_init(::FieldSourceB) = nothing
 y_types(::FieldSourceB) = (fld = FieldB,)
 y_state(::FieldSourceB, (; t)) = (fld = FieldB(SVector(1.0, 2.0)),)
 
 struct FieldReader <: AbstractComponent end
-x_init(::FieldReader) = (;)
+x_init(::FieldReader) = nothing
 u_types(::FieldReader) = (f = AbstractField,)
 y_types(::FieldReader) = (out = Float64,)
 y_direct(::FieldReader, (; u)) = (out = field_scalar(u.f),)
@@ -529,44 +529,44 @@ y_direct(::FieldReader, (; u)) = (out = field_scalar(u.f),)
 # An abstract *numeric* entry: `Real` admits the activation scalar and a frozen
 # `Float64` alike, and it has no leaves to enumerate.
 struct RealReader <: AbstractComponent end
-x_init(::RealReader) = (;)
+x_init(::RealReader) = nothing
 u_types(::RealReader) = (u = Real,)
 y_types(::RealReader) = (out = Float64,)
 y_direct(::RealReader, (; u)) = (out = 2 * u.u,)
 
 # An abstract container entry against a walking and a pinned producer.
 struct VecReader <: AbstractComponent end
-x_init(::VecReader) = (;)
+x_init(::VecReader) = nothing
 u_types(::VecReader) = (v = AbstractVector{Float64},)
 y_types(::VecReader) = (n = Float64,)
 y_direct(::VecReader, (; u)) = (n = sum(u.v),)
 
 struct VecSource <: AbstractComponent end
-x_init(::VecSource) = (;)
+x_init(::VecSource) = nothing
 y_types(::VecSource) = (v = SVector{3,Float64},)
 y_state(::VecSource, (; t)) = (v = SVector(1.0, 2.0, 3.0),)
 
 struct PinnedVecSource <: AbstractComponent end
-x_init(::PinnedVecSource) = (;)
+x_init(::PinnedVecSource) = nothing
 y_types(::PinnedVecSource) = (v = Pinned{SVector{3,Float64}},)
 y_state(::PinnedVecSource, (; t)) = (v = SVector(1.0, 2.0, 3.0),)
 
 # The concrete co-consumers the abstract container entry fans out beside.
 struct SVecEntry <: AbstractComponent end
-x_init(::SVecEntry) = (;)
+x_init(::SVecEntry) = nothing
 u_types(::SVecEntry) = (v = SVector{3,Float64},)
 y_types(::SVecEntry) = (y = Float64,)
 y_direct(::SVecEntry, (; u)) = (y = sum(u.v),)
 
 struct PinnedSVecEntry <: AbstractComponent end
-x_init(::PinnedSVecEntry) = (;)
+x_init(::PinnedSVecEntry) = nothing
 u_types(::PinnedSVecEntry) = (v = Pinned{SVector{3,Float64}},)
 y_types(::PinnedSVecEntry) = (y = Float64,)
 y_direct(::PinnedSVecEntry, (; u)) = (y = sum(u.v),)
 
 # A pin written at an entry its producer walks (§8.2's failure asymmetry).
 struct FrozenEntry <: AbstractComponent end
-x_init(::FrozenEntry) = (;)
+x_init(::FrozenEntry) = nothing
 u_types(::FrozenEntry) = (u = Pinned{Float64},)
 y_types(::FrozenEntry) = (y = Float64,)
 y_direct(::FrozenEntry, (; u)) = (y = u.u,)
@@ -579,12 +579,12 @@ struct Frame{T}
 end
 
 struct FrameSource <: AbstractComponent end
-x_init(::FrameSource) = (;)
+x_init(::FrameSource) = nothing
 y_types(::FrameSource) = (f = Frame{Float64},)
 y_state(::FrameSource, (; t)) = (f = Frame(SVector(1.0, 2.0, 3.0), 7),)
 
 struct FrameReader <: AbstractComponent end
-x_init(::FrameReader) = (;)
+x_init(::FrameReader) = nothing
 u_types(::FrameReader) = (f = Pinned{Frame{Float64}},)
 y_types(::FrameReader) = (y = Float64,)
 y_direct(::FrameReader, (; u)) = (y = sum(u.f.p),)
@@ -594,12 +594,12 @@ _fanned_v(a, b) = Group((a = a, b = b); input_wires = ("in" => ("a/v", "b/v"),))
 # A bundle's field names are type parameters, not leaves (D-238): these two
 # declarations carry one `T` leaf each and name it differently.
 struct BundleB <: AbstractComponent end
-x_init(::BundleB) = (;)
+x_init(::BundleB) = nothing
 y_types(::BundleB) = (q = @NamedTuple{b::Float64},)
 y_state(::BundleB, (; t)) = (q = (b = 1.0 + t,),)
 
 struct BundleA <: AbstractComponent end
-x_init(::BundleA) = (;)
+x_init(::BundleA) = nothing
 u_types(::BundleA) = (q = @NamedTuple{a::Float64},)
 y_types(::BundleA) = (y = Float64,)
 y_direct(::BundleA, (; u)) = (y = u.q.a,)
@@ -607,7 +607,7 @@ y_direct(::BundleA, (; u)) = (y = u.q.a,)
 # An abstract entry spelled as an open tuple: its `Vararg` tail is no type, so
 # the activation walk lifts the type it carries (§8.2).
 struct VariadicReader <: AbstractComponent end
-x_init(::VariadicReader) = (;)
+x_init(::VariadicReader) = nothing
 u_types(::VariadicReader) = (pair = Tuple{Vararg{Float64}},)
 y_types(::VariadicReader) = (n = Float64,)
 y_direct(::VariadicReader, (; u)) = (n = sum(u.pair),)
@@ -803,7 +803,7 @@ struct NoDefault{T}
     b::T
 end
 struct Unsynthesized <: AbstractComponent end
-x_init(::Unsynthesized) = (;)
+x_init(::Unsynthesized) = nothing
 u_types(::Unsynthesized) = (q = NoDefault{Float64},)
 y_types(::Unsynthesized) = (s = Float64,)
 y_direct(::Unsynthesized, (; u)) = (s = u.q.a + u.q.b,)
@@ -814,7 +814,7 @@ struct WithProbe{T}
 end
 probe_value(::Type{WithProbe{T}}) where {T} = WithProbe(zero(T), one(T))
 struct Synthesized <: AbstractComponent end
-x_init(::Synthesized) = (;)
+x_init(::Synthesized) = nothing
 u_types(::Synthesized) = (q = WithProbe{Float64},)
 y_types(::Synthesized) = (s = Float64,)
 y_direct(::Synthesized, (; u)) = (s = u.q.a + u.q.b,)
@@ -826,7 +826,7 @@ struct BrokenProbe{T}
 end
 probe_value(::Type{BrokenProbe{T}}) where {T} = BrokenProbe(sqrt("one"))
 struct Misprobed <: AbstractComponent end
-x_init(::Misprobed) = (;)
+x_init(::Misprobed) = nothing
 u_types(::Misprobed) = (q = BrokenProbe{Float64},)
 y_types(::Misprobed) = (s = Float64,)
 y_direct(::Misprobed, (; u)) = (s = u.q.a,)
@@ -834,19 +834,19 @@ y_direct(::Misprobed, (; u)) = (s = u.q.a,)
 # A stop request out of place (§13.5, D-316): a `StopFlag` nested in a port of
 # another type, and a consumer whose `StopFlag` input surfaces as a root input.
 struct NestedRequest <: AbstractComponent end
-x_init(::NestedRequest) = (;)
+x_init(::NestedRequest) = nothing
 y_types(::NestedRequest) = (status = @NamedTuple{flag::StopFlag, x::Float64},)
 y_state(::NestedRequest, _) = (status = (flag = NO_STOP, x = 0.0),)
 
 struct FlagReader <: AbstractComponent end
-x_init(::FlagReader) = (;)
+x_init(::FlagReader) = nothing
 u_types(::FlagReader) = (flag = StopFlag,)
 y_types(::FlagReader) = (stopped = Bool,)
 y_direct(::FlagReader, (; u)) = (stopped = u.flag === STOP_REQUESTED,)
 
 # A consumer whose input nests a `StopFlag`, surfacing as a root input.
 struct NestedReader <: AbstractComponent end
-x_init(::NestedReader) = (;)
+x_init(::NestedReader) = nothing
 u_types(::NestedReader) = (status = @NamedTuple{flag::StopFlag, x::Float64},)
 y_types(::NestedReader) = (stopped = Bool,)
 y_direct(::NestedReader, (; u)) = (stopped = u.status.flag === STOP_REQUESTED,)
@@ -955,7 +955,7 @@ end
 
 # A component publishing a request directly, with no `stop_reason`.
 struct DirectRequester <: AbstractComponent end
-x_init(::DirectRequester) = (;)
+x_init(::DirectRequester) = nothing
 y_types(::DirectRequester) = (halt = StopFlag,)
 y_state(::DirectRequester, _) = (halt = NO_STOP,)
 
@@ -1018,7 +1018,7 @@ x_deriv(::Thrower, (; x)) = (; a = 0.0)
 # The same throw with a non-empty `u`: one input face, fed from a root input, so
 # the frame carries the synthesized inputs as a spelling.
 struct ThrowingDirect <: AbstractComponent end
-x_init(::ThrowingDirect) = (;)
+x_init(::ThrowingDirect) = nothing
 u_types(::ThrowingDirect) = (in = Float64,)
 y_types(::ThrowingDirect) = (p = Float64,)
 y_direct(::ThrowingDirect, (; u)) = error("direct boom")
@@ -1148,7 +1148,7 @@ x_deriv(::OwnFieldMiss, (; x)) = (; a = 0.0)
 struct CarrierInside <: AbstractComponent end
 x_init(::CarrierInside) = (; a = 0.0)
 y_types(::CarrierInside) = (p = Float64,)
-y_state(::CarrierInside, (; x)) = (set(x = 1.0); (p = x.a,))
+y_state(::CarrierInside, (; x)) = (set(u = 1.0); (p = x.a,))
 x_deriv(::CarrierInside, (; x)) = (; a = 0.0)
 
 struct InterruptInside <: AbstractComponent end
@@ -1281,7 +1281,7 @@ s_update(::BothUpdates, (; x)) = (q = x.q,)
 
 struct BothStores <: AbstractComponent        # an empty `x_init` beside `s_init` and `s_update`
 end
-x_init(::BothStores) = (;)
+x_init(::BothStores) = nothing
 s_init(::BothStores) = (n = 0,)
 y_types(::BothStores) = (a = Float64,)
 y_state(::BothStores, (; s)) = (a = 1.0,)
@@ -1297,7 +1297,7 @@ s_update(::ModesOnDiscrete, (; s)) = (n = s.n,)
 
 struct PinnedOnDiscrete <: AbstractComponent  # `Pinned` where every leaf pins
 end
-s_init(::PinnedOnDiscrete) = (;)
+s_init(::PinnedOnDiscrete) = nothing
 y_types(::PinnedOnDiscrete) = (a = Pinned{Float64},)
 y_state(::PinnedOnDiscrete, (; t)) = (a = 1.0,)
 
@@ -1305,20 +1305,20 @@ y_state(::PinnedOnDiscrete, (; t)) = (a = 1.0,)
 # on a discrete leaf, and as the parameter-position pin D-263 rejected.
 struct NestedPinSource <: AbstractComponent
 end
-x_init(::NestedPinSource) = (;)
+x_init(::NestedPinSource) = nothing
 y_types(::NestedPinSource) = (v = SVector{2,Pinned{Float64}},)
 y_state(::NestedPinSource, (; t)) = (v = SVector(1.0, 2.0),)
 
 struct NestedPinEntry <: AbstractComponent
 end
-x_init(::NestedPinEntry) = (;)
+x_init(::NestedPinEntry) = nothing
 u_types(::NestedPinEntry) = (v = SVector{2,Pinned{Float64}},)
 y_types(::NestedPinEntry) = (s = Float64,)
 y_direct(::NestedPinEntry, (; u)) = (s = sum(u.v),)
 
 struct DiscreteNestedPin <: AbstractComponent
 end
-s_init(::DiscreteNestedPin) = (;)
+s_init(::DiscreteNestedPin) = nothing
 y_types(::DiscreteNestedPin) = (v = SVector{2,Pinned{Float64}},)
 y_state(::DiscreteNestedPin, (; t)) = (v = SVector(1.0, 2.0),)
 
@@ -1329,13 +1329,13 @@ end
 
 struct MixedPinSource <: AbstractComponent
 end
-x_init(::MixedPinSource) = (;)
+x_init(::MixedPinSource) = nothing
 y_types(::MixedPinSource) = (m = MixedParams{Float64,Pinned{Float64}},)
 y_state(::MixedPinSource, (; t)) = (m = MixedParams(1.0, 2.0),)
 
 struct EmptyNoOutputs <: AbstractComponent    # an empty store and no contract
 end
-x_init(::EmptyNoOutputs) = (;)
+x_init(::EmptyNoOutputs) = nothing
 y_state(::EmptyNoOutputs, (; t)) = (;)
 
 # --- enum- and Symbol-valued ports (§4.1, §4.3, §8.2, §9.3) --------------------
@@ -1510,19 +1510,19 @@ end
 
 # One failure from each of the step's passes, in one model: a wire typo'd on
 # the producer's port, the input it leaves unfed, a store with no update law, an
-# event missing its handler and a store that is not a `NamedTuple`. `HalfEvent`
+# event missing its handler and a store spelled `(;)`. `HalfEvent`
 # is `test_events.jl`'s, which this file precedes, so the children are a
 # `Group`'s values rather than a struct's declared fields.
 merged_failures() = Group((; g = Gain(1.0), s = Sum(), n = NoFlow(), h = HalfEvent(),
-                             f = BareState());
+                             f = TupleState());
                           local_wires = ("g/ot" => "s/a",),
                           input_wires = ("e" => "g/e", "b" => "s/b"))
 
-# A store that is not a `NamedTuple` (§8.2, D-247), one per store. `BareVector`
-# is the value that segfaulted the generated `reconstruct` before the check;
-# `BareModes` is the one that built silently, and it carries a vocabulary fault
-# in its other store: the only finding is still the form, because the field
-# checks do not read a primitive the form check refused.
+# A bare store (§8.2): one value, checked as one leaf against its tier's
+# vocabulary. `BareVector` is the value that segfaulted the generated
+# `reconstruct` before any check; `BareLabel` holds text in a bare `s`, and
+# `BareModeLabel` in a bare `m`. `BareState`, `BareDiscrete` and `BareModes`
+# are lawful bare stores, one per letter.
 struct BareState <: AbstractComponent end
 x_init(::BareState) = zeros(SVector{3})
 x_deriv(::BareState, (; x)) = zeros(SVector{3})
@@ -1538,9 +1538,60 @@ y_state(::BareDiscrete, (; s)) = (a = s,)
 s_update(::BareDiscrete, (; s)) = s
 
 struct BareModes <: AbstractComponent end
-x_init(::BareModes) = (gear_count = 3,)      # `IllegalStateLeaf`, were it read
+x_init(::BareModes) = 0.0
 m_init(::BareModes) = 1
-x_deriv(::BareModes, (; x)) = (gear_count = 0,)
+x_deriv(::BareModes, (; x)) = 0.0
+
+struct BareLabel <: AbstractComponent end
+s_init(::BareLabel) = "armed"
+y_types(::BareLabel) = (a = Int,)
+y_state(::BareLabel, _) = (a = 0,)
+s_update(::BareLabel, (; s)) = s
+
+struct BareModeLabel <: AbstractComponent end
+x_init(::BareModeLabel) = 1
+m_init(::BareModeLabel) = "idle"
+x_deriv(::BareModeLabel, _) = 0
+
+# The return laws against a bare declaration (§9.5): the declared shape, never
+# the return's, picks the law, so a `NamedTuple` against a bare state, a
+# successor off the store's type and a mode of the wrong type are each one
+# wrong type with no field.
+struct BareNamedDeriv <: AbstractComponent end
+x_init(::BareNamedDeriv) = 0.0
+x_deriv(::BareNamedDeriv, _) = (q = 0.0,)
+
+struct BareWrongUpdate <: AbstractComponent end
+s_init(::BareWrongUpdate) = 0
+y_types(::BareWrongUpdate) = (a = Int,)
+y_state(::BareWrongUpdate, (; s)) = (a = s,)
+s_update(::BareWrongUpdate, _) = 0.5
+
+struct BareWrongModes <: AbstractComponent end
+x_init(::BareWrongModes) = 0.0
+m_init(::BareWrongModes) = false
+x_deriv(::BareWrongModes, _) = 1.0
+bare_wrong_guard(::BareWrongModes, (; x)) = x - 0.5
+bare_wrong_handler(::BareWrongModes, _) = (x = (q = 0.0,), m = 1)
+state_events(::BareWrongModes) = (flip = StateEvent(bare_wrong_guard, bare_wrong_handler),)
+
+# `(;)`, the retired spelling of the empty store, one per store. `TupleModes`
+# carries a vocabulary fault in its other store: the only finding is still the
+# spelling, because the field checks do not read a primitive the form refused.
+struct TupleState <: AbstractComponent end
+x_init(::TupleState) = (;)
+y_types(::TupleState) = (a = Float64,)
+y_state(::TupleState, _) = (a = 0.0,)
+
+struct TupleDiscrete <: AbstractComponent end
+s_init(::TupleDiscrete) = (;)
+y_types(::TupleDiscrete) = (a = Float64,)
+y_state(::TupleDiscrete, _) = (a = 0.0,)
+
+struct TupleModes <: AbstractComponent end
+x_init(::TupleModes) = (gear_count = 3,)     # `IllegalStateLeaf`, were it read
+m_init(::TupleModes) = (;)
+x_deriv(::TupleModes, (; x)) = (gear_count = 0,)
 
 struct LabelInStore <: AbstractComponent end   # a `String` in `s_init` (D-231)
 s_init(::LabelInStore) = (n = 0, phase = :armed, label = "armed")
@@ -1605,19 +1656,41 @@ function build_store_values()
 end
 
 function build_store_form()
-    @testset "a store declaration is a NamedTuple, checked before the stores are read (§8.2, §9.1, D-247)" begin
-        # One throw for the model, each bare store named with the store at fault
-        # and the type it returned. `BareModes`' `gear_count` raises no
-        # `IllegalStateLeaf`: the form check refused the primitive, and the
-        # vocabulary check never read it.
-        err = failure(() -> build(Group((; a = BareState(), b = BareVector(),
-                                          c = BareDiscrete(), d = BareModes()))))
+    @testset "a bare store is one leaf, checked against its tier's vocabulary (§7.1, §7.3, §8.2)" begin
+        # One lawful bare store per letter builds, and a bare value outside the
+        # vocabulary is refused by the field checks with no field name.
+        @test build(Group((; a = BareState(), b = BareDiscrete(), c = BareModes()))) isa Build
+        err = failure(() -> build(Group((; a = BareVector(), b = BareLabel(),
+                                          c = BareModeLabel()))))
         diags = diagnostics(err)
-        @test all(d -> d isa StoreNotNamedTuple, diags)
-        @test Set(kinds(err)) == Set([StoreNotNamedTuple])
-        @test Set((d.path, d.store, d.declared) for d in diags) ==
-              Set([("a", :x_init, SVector{3,Float64}), ("b", :x_init, Vector{Float64}),
-                   ("c", :s_init, Float64), ("d", :m_init, Int)])
+        @test Set(kinds(err)) == Set([IllegalStateLeaf, IllegalStoreField])
+        @test Set((d.path, d.name, d.declared, d.reason)
+                  for d in diags if d isa IllegalStateLeaf) ==
+              Set([("a", BARE, Vector{Float64}, :wrapper), ("c", BARE, Int, :mode_value)])
+        @test Set((d.path, d.store, d.name, d.declared)
+                  for d in diags if d isa IllegalStoreField) ==
+              Set([("b", :s_init, BARE, String), ("c", :m_init, BARE, String)])
+    end
+    @testset "a bare declaration's return is held to its own type (§9.5)" begin
+        diags = diagnostics(failure(() -> build(Group((; a = BareNamedDeriv(), b = BareWrongUpdate())))))
+        @test all(d -> d isa ConformanceFailure && d.reason === :field_type && d.field === BARE, diags)
+        @test Set((d.path, d.what, d.shape, d.observed, d.declared) for d in diags) ==
+              Set([("a", "x_deriv", :x_init, @NamedTuple{q::Float64}, Float64),
+                   ("b", "s_update", :s_init, Float64, Int)])
+        diags = diagnostics(failure(() -> build(single(BareWrongModes()))))
+        @test Set((d.what, d.shape, d.field, d.observed, d.declared) for d in diags) ==
+              Set([("handler `x`", :state, BARE, @NamedTuple{q::Float64}, Float64),
+                   ("handler `m`", :mode, BARE, Int, Bool)])
+    end
+    @testset "`(;)` is no store spelling, refused before the stores are read (§8.2, §9.1)" begin
+        # One throw for the model, each store named. `TupleModes`' `gear_count`
+        # raises no `IllegalStateLeaf`: the form check refused the primitive.
+        err = failure(() -> build(Group((; a = TupleState(), b = TupleDiscrete(),
+                                          c = TupleModes()))))
+        diags = diagnostics(err)
+        @test Set(kinds(err)) == Set([EmptyStore])
+        @test Set((d.path, d.store) for d in diags) ==
+              Set([("a", :x_init), ("b", :s_init), ("c", :m_init)])
     end
 end
 
@@ -1659,7 +1732,7 @@ function build_barrier()
         err = failure(() -> build(merged_failures()))
         @test Set(kinds(err)) ==
               Set([UnknownPort, UnconnectedInput, StoreWithoutUpdate, EventHalfMissing,
-                   StoreNotNamedTuple])
+                   EmptyStore])
     end
 end
 
@@ -1670,14 +1743,14 @@ end
 # A `Dual` arriving at a deliberately pinned leaf: the one honest cause, and the
 # one that earns the didactic hint.
 struct PinnedGetsDual <: AbstractComponent end
-x_init(::PinnedGetsDual) = (;)
+x_init(::PinnedGetsDual) = nothing
 y_types(::PinnedGetsDual) = (frozen = Pinned{Float64},)
 y_state(::PinnedGetsDual, (; t)) = (frozen = t,)
 
 # The constant-branch idiom (D-166): a literal `Float64` returned into a
 # walking port is a lawful arrival, embedded as a zero-partial.
 struct ConstantBranch <: AbstractComponent end
-x_init(::ConstantBranch) = (;)
+x_init(::ConstantBranch) = nothing
 u_types(::ConstantBranch) = (in = Float64,)
 y_types(::ConstantBranch) = (out = Float64, vec = SVector{2,Float64})
 y_direct(::ConstantBranch, (; u)) = (out = u.in > 0 ? u.in : 0.0, vec = SVector(0.0, 1.0))
@@ -1720,25 +1793,25 @@ end
 # component's products are carried across from the nominal activation rather
 # than probed or synthesized.
 struct NomSource <: AbstractComponent end
-x_init(::NomSource) = (;)
+x_init(::NomSource) = nothing
 y_types(::NomSource) = (val = Float64,)
 y_state(::NomSource, (; t)) = (val = 3.0 + t,)
 
 struct FrozenReader <: AbstractComponent end
-s_init(::FrozenReader) = (;)
+s_init(::FrozenReader) = nothing
 u_types(::FrozenReader) = (in = Float64,)
 y_types(::FrozenReader) = (out = Float64,)
 y_direct(::FrozenReader, (; u)) = (out = 2.0 * u.in,)
 
 struct ClockStamp <: AbstractComponent end
-s_init(::ClockStamp) = (;)
+s_init(::ClockStamp) = nothing
 y_types(::ClockStamp) = (stamp = Float64,)
 y_state(::ClockStamp, (; t)) = (stamp = t,)
 
 # A discrete allocator recording the scalar it receives (§8.2, D-263).
 const DISCRETE_SCRATCH_SCALAR = Ref{Any}(nothing)
 struct DiscreteScratch <: AbstractComponent end
-s_init(::DiscreteScratch) = (;)
+s_init(::DiscreteScratch) = nothing
 y_types(::DiscreteScratch) = (y = Float64,)
 ws_init(::DiscreteScratch, ::Type{T}) where {T} =
     (DISCRETE_SCRATCH_SCALAR[] = T; (tmp = Vector{T}(undef, 1),))

@@ -41,7 +41,7 @@ function test_declare()
         @test bundle_names(y_direct, Gain(1.0), CONTINUOUS, ()) === (:u, :t)
 
         # A declared empty store puts no letter in the bundle (§5.2, D-263):
-        # `Gain` declares `x_init(::Gain) = (;)`, and no bundle of it carries `x`.
+        # `Gain` declares `x_init(::Gain) = nothing`, and no bundle of it carries `x`.
         @test :x_init in leaf_declarations(Gain(1.0))
         @test bundle_names(y_state, Gain(1.0), CONTINUOUS, ()) === (:t,)
 

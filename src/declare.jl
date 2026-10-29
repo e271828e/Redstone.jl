@@ -42,76 +42,80 @@ abstract type AbstractComponent end
 # fallback serves the value readers; the classifier asks whether the method is
 # declared.
 """
-    x_init(c) -> NamedTuple
+    x_init(c)
 
 Return the [component](@ref g-component)'s initial continuous state, as a
-`NamedTuple` of named values.
+`NamedTuple` of named values or as one bare value.
 
 A continuous primitive declares its state by value, written with `Float64`
-values, as in `x_init(::Engine) = (ω = 0.0,)`. The state's type is derived from
-the value, and its real values follow the scalar of each
-[activation](@ref g-activation). Each field is one `Float64` or one static array
-of `Float64`. Integers, `Bool`s and enums belong in [`m_init`](@ref).
+values, as in `x_init(::Engine) = (ω = 0.0,)`. A state of one leaf may be that
+leaf alone, as in `x_init(c::Integrator) = c.x0`, and the component's functions
+then receive it bare. The state's type is derived from the value, and its real
+values follow the scalar of each [activation](@ref g-activation). Each field, or
+the bare value, is one `Float64` or one static array of `Float64`. Integers,
+`Bool`s and enums belong in [`m_init`](@ref).
 
 Every primitive defines exactly one of `x_init` and [`s_init`](@ref), and the
 one it defines makes it continuous or discrete. A stateless continuous primitive
-declares `x_init(::C) = (;)`. A non-empty state needs an [`x_deriv`](@ref)
+declares `x_init(::C) = nothing`. A non-empty state needs an [`x_deriv`](@ref)
 method.
 
-The build refuses a value that is not a `NamedTuple` as `StoreNotNamedTuple`,
-and a field outside the state vocabulary as `IllegalStateLeaf`. A non-empty
-state with no `x_deriv` is refused as `StoreWithoutUpdate`, a primitive that
-defines neither `x_init` nor `s_init` as `TierUnreadable`, and one that defines
-both as `DeclarationOnWrongTier`.
+The build refuses `(;)` as `EmptyStore`, and a field or bare value outside the
+state vocabulary as `IllegalStateLeaf`. A non-empty state with no `x_deriv` is
+refused as `StoreWithoutUpdate`, a primitive that defines neither `x_init` nor
+`s_init` as `TierUnreadable`, and one that defines both as
+`DeclarationOnWrongTier`.
 """
-x_init(::Any) = NamedTuple()
+x_init(::Any) = nothing
 
 # Design: §8.2, D-195, D-231, D-263.
 # `s` is the discrete tier's own letter (D-195). The store is the tier marker,
 # and it is disjoint from `x_init`. The fallback serves the value readers; the
 # classifier asks whether the method is declared.
 """
-    s_init(c) -> NamedTuple
+    s_init(c)
 
 Return the [component](@ref g-component)'s initial discrete state, as a
-`NamedTuple` of named values.
+`NamedTuple` of named values or as one bare value.
 
 A discrete primitive declares its state by value, as in
-`s_init(::Counter) = (n = 0,)`. Every field is isbits or a `Symbol`, and the
-field types stay as written at every [activation](@ref g-activation). Text and
-bulk data belong on the component instance.
+`s_init(::Counter) = (n = 0,)`, or `s_init(::Counter) = 0` for the bare form.
+Every field, or the bare value, is isbits or a `Symbol`, and its type stays as
+written at every [activation](@ref g-activation). Text and bulk data belong on
+the component instance.
 
 Every primitive defines exactly one of [`x_init`](@ref) and `s_init`, and the
 one it defines makes it continuous or discrete. A stateless discrete primitive
-declares `s_init(::C) = (;)`, and holds its outputs between its
+declares `s_init(::C) = nothing`, and holds its outputs between its
 [ticks](@ref g-tick). A non-empty state needs an [`s_update`](@ref) method.
 
-The build refuses a value that is not a `NamedTuple` as `StoreNotNamedTuple`,
-and a field that is neither isbits nor a `Symbol` as `IllegalStoreField`. A
-non-empty state with no `s_update` is refused as `StoreWithoutUpdate`, and a
-primitive that also defines `x_init` as `DeclarationOnWrongTier`.
+The build refuses `(;)` as `EmptyStore`, and a field or bare value that is
+neither isbits nor a `Symbol` as `IllegalStoreField`. A non-empty state with no
+`s_update` is refused as `StoreWithoutUpdate`, and a primitive that also defines
+`x_init` as `DeclarationOnWrongTier`.
 """
-s_init(::Any) = NamedTuple()
+s_init(::Any) = nothing
 
 # Design: §8.2, D-231.
 """
-    m_init(c) -> NamedTuple
+    m_init(c)
 
 Return the [component](@ref g-component)'s initial modes, as a `NamedTuple` of
-named values.
+named values or as one bare value.
 
 A continuous primitive declares its modes by value, as in
-`m_init(::Engine) = (phase = off,)`. Every field is isbits or a `Symbol`, as for
+`m_init(::Engine) = (phase = off,)`, or `m_init(::Switch) = false` for the bare
+form. Every field, or the bare value, is isbits or a `Symbol`, as for
 [`s_init`](@ref). Event handlers write the modes, and nothing else may. A
-primitive may declare modes that no event of its own changes.
+primitive may declare modes that no event of its own changes. A primitive
+without modes defines no method.
 
 Modes are continuous-only, because the event system is continuous-side only.
-The build refuses a non-empty `m_init` on a discrete primitive as
-`DeclarationOnWrongTier`, a value that is not a `NamedTuple` as
-`StoreNotNamedTuple`, and a field that is neither isbits nor a `Symbol` as
-`IllegalStoreField`.
+The build refuses modes declared on a discrete primitive as
+`DeclarationOnWrongTier`, `(;)` as `EmptyStore`, and a field or bare value that
+is neither isbits nor a `Symbol` as `IllegalStoreField`.
 """
-m_init(::Any) = NamedTuple()
+m_init(::Any) = nothing
 
 # Design: §8.2, D-077, D-263.
 """
@@ -472,7 +476,8 @@ where the value is `≥ 0`.
 
 The handler returns a `NamedTuple` of the [stores](@ref g-store) it writes, such
 as `(; m = (; phase = running))`. A present `x` replaces the whole continuous
-state, and a present `m` merges into the modes.
+state, and a present `m` merges into the modes. Against a bare mode store, `m`
+is one value at its type and replaces it whole.
 
 The build refuses a guard that returns neither form as `GuardForm`, a missing
 guard or handler method as `EventHalfMissing`, and a handler key that names no
@@ -509,7 +514,7 @@ state_events(::Any) = (;)
 # to the buffer wholesale, so the probe holds it complete against the state
 # shape.
 """
-    x_projection(c, x) -> NamedTuple
+    x_projection(c, x)
 
 Return the continuous state `x` projected back onto the
 [component](@ref g-component)'s manifold.
@@ -519,7 +524,8 @@ Return the continuous state `x` projected back onto the
 positional. An attitude model might declare
 `x_projection(c::Attitude, x) = (; q = normalize(x.q))`. It runs after each
 integration step and after each event handler fires. Its return replaces the
-whole continuous state, so it carries every state field at the state's type.
+whole continuous state, so it carries every state field at the state's type,
+or for a bare state one value at its type.
 
 The method is optional and continuous-only. The build refuses it on a discrete
 primitive, or on one with an empty state, as `DeclarationOnWrongTier`, and a
@@ -616,7 +622,9 @@ reads the component's own outputs `y` instead of computing them again. Its
 the component has it.
 
 The return has exactly the fields of [`x_init`](@ref), each at the state's
-type. A continuous primitive with a non-empty state must define it.
+type, and for a bare state it is one value at the state's type, as in
+`x_deriv(::Integrator, (; u)) = u.in`. A continuous primitive with a non-empty
+state must define it.
 
 The build refuses a non-empty `x_init` with no `x_deriv` as
 `StoreWithoutUpdate`, a return whose fields or types differ from the state's
@@ -734,10 +742,10 @@ function bundle_names(fn, @nospecialize(comp), tier::Tier, stage1_ports::Tuple)
     update = update_of(tier)
     bundle_fields = Symbol[]
     if tier === CONTINUOUS
-        !isempty(invoke_declaration(x_init, comp)) && push!(bundle_fields, :x)
-        !isempty(invoke_declaration(m_init, comp)) && push!(bundle_fields, :m)
+        invoke_declaration(x_init, comp) !== nothing && push!(bundle_fields, :x)
+        invoke_declaration(m_init, comp) !== nothing && push!(bundle_fields, :m)
     else
-        !isempty(invoke_declaration(s_init, comp)) && push!(bundle_fields, :s)
+        invoke_declaration(s_init, comp) !== nothing && push!(bundle_fields, :s)
     end
     if fn === y_direct || fn === update
         !isempty(declared_at(u_types, comp, tier)) && push!(bundle_fields, :u)
@@ -763,8 +771,8 @@ distinction: guards and handlers run against the complete fresh table.
 """
 function event_bundle_names(@nospecialize(comp))
     bundle_fields = Symbol[]
-    !isempty(invoke_declaration(x_init, comp)) && push!(bundle_fields, :x)
-    !isempty(invoke_declaration(m_init, comp)) && push!(bundle_fields, :m)
+    invoke_declaration(x_init, comp) !== nothing && push!(bundle_fields, :x)
+    invoke_declaration(m_init, comp) !== nothing && push!(bundle_fields, :m)
     !isempty(declared_at(u_types, comp, CONTINUOUS)) && push!(bundle_fields, :u)
     !isempty(declared_at(y_types, comp, CONTINUOUS)) && push!(bundle_fields, :y)
     _declares_workspace(comp) && push!(bundle_fields, :ws)

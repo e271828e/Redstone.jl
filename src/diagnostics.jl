@@ -78,6 +78,17 @@ _faceset(list) = isempty(list) ? "empty" : "{$(join(list, ", "))}"
 _plainlist(list) = join(list, ", ")
 _symtuple(list) = "(" * join((":$n" for n in list), ", ") * (length(list) == 1 ? ",)" : ")")
 
+# Design: §7.1, §7.3, §8.2.
+# A bare store's reserved name wherever bookkeeping keys a leaf by a `Symbol`: a
+# store declared as one value, not a `NamedTuple`, has no field name of its own.
+# Nothing else spells the empty symbol.
+const BARE = Symbol("")
+
+# The one spelling of a `(prefix, name)` pair, `x.q` or `plant/out`: a bare name
+# drops with its separator, so a bare leaf reads as the prefix alone.
+_named(prefix, name::Symbol, sep::AbstractString = ".") =
+    name === BARE ? string(prefix) : string(prefix, sep, name)
+
 # --- the carrier (§13.1, §13.2, D-058) ----------------------------------------
 
 """
@@ -301,7 +312,7 @@ catch site makes it a `StepError` species.
 """
 Base.@kwdef struct NonfiniteState <: Diagnostic
     path::String
-    leaf::String     # the leaf's dotted spelling within the state, `"q"` or `"v[2]"`
+    leaf::String     # the leaf's dotted spelling within the state, `"q"`, `"v[2]"`, `""` for a bare scalar
     value::Any       # the offending value: NaN, Inf or -Inf
     t::Float64       # the frame-top time the integrate landed on
     boundary::Int    # the frame-entry boundary index, as the carrier's
@@ -309,7 +320,8 @@ end
 
 path(d::NonfiniteState) = d.path
 message(d::NonfiniteState) = string(
-    _at_path(d.path), ": state leaf `", d.leaf, "` is ", d.value, " at the frame top t = ",
+    _at_path(d.path), ": ", isempty(d.leaf) ? "the state" : "state leaf `$(d.leaf)`", " is ",
+    d.value, " at the frame top t = ",
     d.t, " (from boundary ", d.boundary, ") — the model diverged; replay to ",
     d.boundary, " and step! to inspect the frame")
 
@@ -790,8 +802,8 @@ end
 path(d::TierUnreadable) = d.path
 message(d::TierUnreadable) =
     "$(_at_path(d.path)) (`$(d.type)`) declares no store — every leaf declares its tier by its " *
-    "store, mandatory even when empty: a stateless leaf writes `x_init(::C) = (;)` or " *
-    "`s_init(::C) = (;)`. Its leaf declarations are $(_namelist(d.declarations)) (§8.2)"
+    "store, mandatory even when empty: a stateless leaf writes `x_init(::C) = nothing` or " *
+    "`s_init(::C) = nothing`. Its leaf declarations are $(_namelist(d.declarations)) (§8.2)"
 
 "§8.2, §8.3, D-263: a leaf with an empty store and no `y_types`, which produces nothing and stores nothing."
 Base.@kwdef struct StatelessWithoutOutputs <: Diagnostic
@@ -842,31 +854,29 @@ function message(d::IllegalPortType)
     "$(_at_path(d.path)): $site `$(d.name)` declares $(d.declared), which has no leaves"
 end
 
-"§8.2, D-247: a store declaration returning something other than a `NamedTuple`, the one admitted form."
-Base.@kwdef struct StoreNotNamedTuple <: Diagnostic
+"§8.2: a store declared `(;)`, a retired spelling of the empty store."
+Base.@kwdef struct EmptyStore <: Diagnostic
     path::String
     store::Symbol                            # :x_init | :s_init | :m_init
-    declared::Any                            # the observed type
 end
-path(d::StoreNotNamedTuple) = d.path
-function message(d::StoreNotNamedTuple)
-    wrap = d.store === :x_init ? "(; ω = 0.0)" :
-           d.store === :s_init ? "(; n = 0)" : "(; phase = :idle)"
-    "$(_at_path(d.path)): `$(d.store)` returns `$(d.declared)`, not a `NamedTuple` — a " *
-    "store is declared by initial value as named fields, one leaf per field, " *
-    "`$(d.store)(::C) = $wrap` (§8.2)"
-end
+path(d::EmptyStore) = d.path
+message(d::EmptyStore) =
+    "$(_at_path(d.path)): `$(d.store)` returns `(;)`, a retired spelling — " *
+    (d.store === :m_init ? "a primitive without modes defines no `m_init`, or returns `nothing`" :
+     "a stateless primitive writes `$(d.store)(::C) = nothing`") * " (§8.2)"
 
-"§7.1, §8.2, D-094: an `x_init` field outside the closed vocabulary — a mode value, a real off the common eltype, a nested `NamedTuple`, or a wrapper type."
+"§7.1, §8.2, D-094: an `x_init` field, or a bare `x_init` value, outside the closed vocabulary — a mode value, a real off the common eltype, a nested `NamedTuple`, or a wrapper type."
 Base.@kwdef struct IllegalStateLeaf <: Diagnostic
     path::String
-    name::Symbol
+    name::Symbol                             # the field, `BARE` for a bare value
     declared::Any                            # the offending field type
     reason::Symbol                           # :mode_value | :eltype | :nested | :wrapper
 end
 path(d::IllegalStateLeaf) = d.path
 function message(d::IllegalStateLeaf)
-    head = "$(_at_path(d.path)): `x_init` field `$(d.name)::$(d.declared)`"
+    head = "$(_at_path(d.path)): `x_init` " *
+           (d.name === BARE ? "returns `$(d.declared)`, which" :
+                              "field `$(d.name)::$(d.declared)`")
     d.reason === :mode_value &&
         return "$head is not a continuous state — integers, `Bool`s and enums belong in " *
                "`m_init` (§7.1, §8.2)"
@@ -880,18 +890,20 @@ function message(d::IllegalStateLeaf)
     "semantics are wanted (§7.1)"
 end
 
-"§7.3, §8.2, D-231: a store field that is neither isbits nor a `Symbol`."
+"§7.3, §8.2, D-231: a store field, or a bare store value, that is neither isbits nor a `Symbol`."
 Base.@kwdef struct IllegalStoreField <: Diagnostic
     path::String
     store::Symbol                            # :s_init | :m_init
-    name::Symbol
+    name::Symbol                             # the field, `BARE` for a bare value
     declared::Any                            # the offending field type
 end
 path(d::IllegalStoreField) = d.path
 message(d::IllegalStoreField) =
-    "$(_at_path(d.path)): `$(d.store)` field `$(d.name)::$(d.declared)` is not a store " *
-    "value — store fields are isbits or `Symbol`s; text and bulk data belong on the " *
-    "component instance (§7.3)"
+    "$(_at_path(d.path)): `$(d.store)` " *
+    (d.name === BARE ? "returns `$(d.declared)`, which" :
+                       "field `$(d.name)::$(d.declared)`") *
+    " is not a store value — store values are isbits or `Symbol`s; text and bulk data " *
+    "belong on the component instance (§7.3)"
 
 # ==============================================================================
 # The nominal evaluation and activation — schedule and contract conformance
@@ -1022,7 +1034,7 @@ Base.@kwdef struct ConformanceFailure <: Diagnostic
     shape::Symbol                            # :ports|:namedtuple|:state|:x_init|:s_init|:stores|:mode
     observed::Any = nothing
     declared::Any = nothing
-    field::Union{Nothing,Symbol} = nothing
+    field::Union{Nothing,Symbol} = nothing   # `BARE` where the declared shape is a bare value
     observed_fields::Vector{Symbol} = Symbol[]
     declared_fields::Vector{Symbol} = Symbol[]
     activation::Any = nothing                # the activation scalar, for the pin hint
@@ -1075,6 +1087,14 @@ function message(d::ConformanceFailure)
                "state has $(_symtuple(d.declared_fields)) — a state write-back is complete " *
                "against the field set (§9.3, §9.5)"
     end
+    # A bare declaration is one value, so its one type mismatch names no field.
+    d.field === BARE &&
+        return "`$(d.path)`: $(_conformance_what(d)) returns $(d.observed), the " *
+               (d.shape === :s_init ? "state store" : d.shape === :mode ? "mode store" : "state") *
+               " is $(d.declared)" *
+               (d.shape === :s_init ? " — a discrete successor is the store's own type exactly (§9.5)" :
+                d.shape === :mode ? " — a mode store is written whole at its own type (§5.2)" :
+                _pin(d))
     d.shape === :ports &&
         return "`$(d.path)`: $(_conformance_what(d)) returns `$(d.field)`::$(d.observed), " *
                "declared $(d.declared)" * _pin(d)
@@ -1753,6 +1773,16 @@ function message(d::ReadResolution)
         return _read_message(d, "$(_at_path(d.path)) is a discrete component — a discrete `s` " *
                            "has no derivative, and `ẋ` exists on the continuous tier alone",
                            "§7.1, §14.4, D-195")
+    # A headless address against a named or empty state, and a named one against
+    # a bare state, whose one name in hand is `BARE`.
+    d.reason === :undeclared && d.field === BARE &&
+        return _read_message(d, "$(_at_path(d.path)) declares no bare " *
+                           "$(_declares_noun(d.declares)), which a headless address reads — its " *
+                           "$(_declares_noun(d.declares)) names are $(_namelist(d.candidates))")
+    d.reason === :undeclared && d.candidates == [BARE] &&
+        return _read_message(d, "$(_at_path(d.path)) declares one bare state value, with no " *
+                           "field `$(d.field)` — read it by the headless address, which " *
+                           "names no field")
     d.reason === :undeclared &&
         return _read_message(d, "$(_at_path(d.path)) declares no $(_declares_noun(d.declares)) " *
                            "`$(d.field)` — its $(_declares_noun(d.declares)) names are " *
@@ -1786,9 +1816,10 @@ const CHECKPOINT_ORIGIN = "checkpoint"
 Base.@kwdef struct ConditionResolution <: Diagnostic
     path::String = ""
     store::Symbol = :input                   # :x | :s | :m | :input
-    field::Symbol
+    field::Symbol                            # `BARE` for a bare payload
     reason::Symbol   # :assembly_path|:unexported_face|:no_input_face|
-                     # :internally_wired|:no_store|:undeclared_field|:unconvertible
+                     # :internally_wired|:no_store|:undeclared_field|:unconvertible|
+                     # :store_shape
     face::Union{Nothing,Symbol} = nothing    # the root input the chain lands on
     origin::String = ""                      # the tree's chain to this value
     candidates::Vector{Symbol} = Symbol[]
@@ -1804,7 +1835,7 @@ path(d::ConditionResolution) = d.path
 
 _cleaf(d) = d.face !== nothing ? "root input `$(d.face)`" :
             d.store === :input ? "input face `$(d.field)` of $(_at_path(d.path))" :
-                                 "`$(d.store).$(d.field)` at $(_at_path(d.path))"
+                                 "`$(_named(d.store, d.field))` at $(_at_path(d.path))"
 _ctail(d) = " (§14.3) [$(d.origin)]"
 _role_word(role) = role === :output_port ? "an output port" :
                 role === :input_face  ? "an input face" : "a workspace entry"
@@ -1838,6 +1869,13 @@ function message(d::ConditionResolution)
                 d.store === :m ?
                 "; modes are declared by `m_init`, continuous-only (§3.2)" : "") *
                _ctail(d)
+    d.reason === :store_shape && d.field === BARE &&
+        return "$(_cleaf(d)) is set whole, and `$(d.store)_init` at $(_at_path(d.path)) " *
+               "declares the fields $(_namelist(d.candidates)) — name the fields it sets, " *
+               "`set($(d.store) = ($(first(d.candidates)) = …,))`" * _ctail(d)
+    d.reason === :store_shape &&
+        return "$(_cleaf(d)) names a field, and `$(d.store)_init` at $(_at_path(d.path)) " *
+               "declares one bare value — set it whole, `set($(d.store) = …)`" * _ctail(d)
     d.reason === :undeclared_field &&
         return "$(_cleaf(d)) is not declared — `$(d.store)_init` at " *
                "$(_at_path(d.path)) " *
@@ -1883,9 +1921,12 @@ message(d::ConditionNodeMisuse) =
     d.reason === :empty_prefix ?
     "`at` was given an empty prefix, which names no child — a node meant for the level " *
     "where it is authored stays unwrapped (§14.2)" :
+    d.reason === :set_payload && d.observed === Nothing ?
+    "`set`'s `$(d.payload)` payload is `nothing`, which sets nothing — omit the keyword, " *
+    "or set the store's value (§14.2)" :
     d.reason === :set_payload ?
-    "`set`'s `$(d.payload)` payload is $(d.observed) — every payload is a NamedTuple " *
-    "of the authoring level's own names (§14.2)" :
+    "`set`'s `$(d.payload)` payload is $(d.observed) — a `u` payload is a NamedTuple " *
+    "of the authoring level's own input faces (§14.2)" :
     "$(d.observed) is not a condition node" *
     (isempty(d.in_hand) ? "" :
      ", and the node kind(s) in hand are $(_plainlist(d.in_hand))") *
@@ -2353,7 +2394,7 @@ Base.@kwdef struct CheckpointMismatch <: Diagnostic
                                              # | :clock
     path::String = ""                        # the component path: the per-component :store arms,
                                              # a :deployment schedule row and a rate scope (§12.7)
-    name::Symbol = Symbol("")                # :sizes|:paths|:events|:s|:m|:x or `port.name`, the
+    name::Symbol = BARE                      # :sizes|:paths|:events|:s|:m|:x or `port.name`, the
                                              # root-input face, the deployment parameter, a
                                              # schedule or `scope.` column, a list name:
                                              # :schedule, `scope.key`, or :clock's :t₀|:frame
@@ -2430,7 +2471,7 @@ message(d::CheckpointMismatch) =
     "recording's own $(d.expected) — a batch replays at the frame ordinal it was drained " *
     "at, and the trace's `frames` is how far the recording ran (§11.5, §12.7)" :
     d.what === :root_input ?
-    (d.name === Symbol("") ?
+    (d.name === BARE ?
      "the checkpoint records the root input-face list $(_faceset(d.expected)) and this " *
      "build's is $(_faceset(d.found)) — the checkpoint's table holds a cell per face, so " *
      "the two lists have to agree (§11.5, §12.7)" :

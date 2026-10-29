@@ -798,7 +798,7 @@ function _fingerprint(model::Model)
     Fingerprint(copy(layout.sizes),
                 Symbol[f for (f, _) in layout.root_inputs],
                 String[entry.path for entry in model.deployment.build.structure.components],
-                Any[isempty(decl.x) ? nothing : typeof(decl.x) for decl in exec.act.decls],
+                Any[decl.x === nothing ? nothing : typeof(decl.x) for decl in exec.act.decls],
                 Any[st === nothing ? nothing : typeof(st[]) for st in exec.sstores],
                 Any[st === nothing ? nothing : typeof(st[]) for st in exec.mstores],
                 sort!(Pair{Tuple{String,Symbol},Tuple{Any,Tuple}}[

@@ -382,21 +382,35 @@ end
 end
 
 # §9.5: a discrete successor is the store's own type exactly — the assignment
-# that would convert is refused at generation instead (D-235).
+# that would convert is refused at generation instead (D-235). The declared
+# shape names the half that failed: a bare store's one type, a named store's
+# field set or return type.
 @inline _store_successor!(sstore::Base.RefValue{S}, s⁺::S, path, what) where {S} =
     (sstore[] = s⁺; nothing)
 _store_successor!(sstore::Base.RefValue{S}, s⁺, path, what) where {S} =
     throw(DiagnosticError(ConformanceFailure(path = path, what = String(what),
-                                             reason = s⁺ isa NamedTuple ? :field_set : :return_type,
+                                             reason = !(S <: NamedTuple) ? :field_type :
+                                                      s⁺ isa NamedTuple ? :field_set : :return_type,
                                              shape = :s_init, observed = typeof(s⁺),
-                                             declared = S)))
+                                             declared = S,
+                                             field = S <: NamedTuple ? nothing : BARE)))
 
-# §9.5's partial-`m` predicate at the write: every written mode exists and keeps
-# its type, decided at generation like the port write.
-@generated function _merge_modes!(mstore::Base.RefValue{M}, m::NamedTuple{Ms},
-                                  path::String, what::Symbol,
-                                  event::Union{Nothing,Symbol}) where {M,Ms}
-    for mode_field in Ms
+# §9.5's `m` predicate at the write, decided at generation like the port write.
+# A named store takes a partial write: every written mode exists and keeps its
+# type. A bare store is replaced whole, at its own type exactly. The declared
+# shape decides which, never the return's.
+@generated function _merge_modes!(mstore::Base.RefValue{M}, m, path::String, what::Symbol,
+                                  event::Union{Nothing,Symbol}) where {M}
+    M <: NamedTuple ||
+        return m === M ? :(mstore[] = m; nothing) :
+               :(throw(DiagnosticError(ConformanceFailure(
+                   path = path, what = String(what), event = event, reason = :field_type,
+                   shape = :mode, field = BARE, observed = $m, declared = $M))))
+    m <: NamedTuple ||
+        return :(throw(DiagnosticError(ConformanceFailure(
+            path = path, what = String(what), event = event, reason = :return_type,
+            shape = :mode, observed = $m))))
+    for mode_field in fieldnames(m)
         hasfield(M, mode_field) ||
             return :(throw(DiagnosticError(ConformanceFailure(
                 path = path, what = String(what), event = event, reason = :field_set,
@@ -411,12 +425,6 @@ _store_successor!(sstore::Base.RefValue{S}, s⁺, path, what) where {S} =
     end
     :(mstore[] = merge(mstore[], m); nothing)
 end
-
-# A non-NamedTuple `m` is the law's first clause failing, as the probe reports it.
-_merge_modes!(mstore::Base.RefValue{M}, m, path, what, event) where {M} =
-    throw(DiagnosticError(ConformanceFailure(path = path, what = String(what), event = event,
-                                             reason = :return_type, shape = :mode,
-                                             observed = typeof(m))))
 
 @inline function _fire_project!(entry::EventEntry{G,H,P,Comp,XT}, xbuf) where {G,H,P,Comp,XT}
     P === Nothing && return nothing

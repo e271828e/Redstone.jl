@@ -73,15 +73,19 @@ in the `src/model.jl` entry.
   `terminal_producer`/`face_routes` over them (D-315).
 - The sample-time fold.
 - The shadowing check ahead of `classify` in the walk (D-246).
-- The store-form gate ahead of the classifier in the walk (D-247).
+- The store-shape read ahead of the classifier in the walk, `check_store_form`,
+  which refuses `(;)` as `EmptyStore` and reads that primitive no further
+  (§8.2, §9.1, D-435).
 - The tier classification `classify_tier` (§8.2), in its own section ahead
   of the walk. It records what it finds instead of throwing, the walk reads
   the tier beside the class, and the store decides the tier. It records
   `StatelessWithoutOutputs` and runs the pinned-entry check, both from D-263,
   and holds `IllegalPortType`'s nested-marker arm, on both tiers (D-265).
-- Beside it the store-form check `check_store_form` (§8.2, D-247), the store
-  isbits check `check_stores` (§7.3, D-231) and the state-leaf vocabulary
-  check `check_state_leaves` (§7.1, D-094), all taking the component
+- Beside it the shape helper `store_fields`, a `NamedTuple`'s pairs, one
+  `BARE` pair for a bare store and none for `nothing`, which build.jl,
+  conditions.jl and readers.jl reuse (D-435). The store isbits check
+  `check_stores` (§7.3, D-231) and the state-leaf vocabulary check
+  `check_state_leaves` (§7.1, D-094) iterate it, all taking the component
   unspecialized (D-289).
 - The component frame around the walk's two branches (D-248).
 - §13.3's `resolve`/`resolve_terminal`/face-list primitives `input_faces` and
@@ -109,8 +113,8 @@ in the `src/model.jl` entry.
 
 Spec: §6.1, §7.1, §7.3, §8.1, §8.2, §8.5–§8.8, §9.1, §9.2, §9.7, §13.1, §13.3,
 §13.7, §14.2, Appendix C, D-061, D-094, D-130, D-171, D-207–D-212, D-229,
-D-231, D-236, D-246, D-247, D-248, D-251, D-253, D-261, D-263, D-265, D-289,
-D-315.
+D-231, D-236, D-246, D-248, D-251, D-253, D-261, D-263, D-265, D-289,
+D-315, D-435.
 
 ### `src/bindings.jl`
 
@@ -165,12 +169,14 @@ The standard component library, the submodule `Redstone.Blocks`:
   over `DiscreteStateSpace`, `DiscreteTransferFunction`, `DiscretizedStateSpace`
   and `DiscretizedTransferFunction` (D-313).
 - The anonymous assembly `Group`, with `_entries` (D-184).
+- Every block with one state field or one mode declares it bare, and every
+  stateless block declares `nothing` (§8.2, D-435).
 
 It reaches the parent through its import list alone, as a user's component
 file does (D-313). Nothing in the package depends on it, so `src/Redstone.jl`
 includes it last.
 
-Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §8.5, §10.4, §13.5, §13.7, D-179, D-184, D-211, D-231, D-311, D-312, D-313, D-316, D-383, D-384, D-385.
+Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §8.5, §10.4, §13.5, §13.7, D-179, D-184, D-211, D-231, D-311, D-312, D-313, D-316, D-383, D-384, D-385, D-435.
 
 ### `src/build.jl`
 
@@ -192,6 +198,9 @@ Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §8.5, §10.4, §13.5, §13.7, D-179, D
 - `ProbeTag`/`ProbeDual`, the canonical probe scalar (§9.4).
 - The probe's embedding of products, `_embed`.
 - `_probe_direct!`, shared with the classifier's prefix probe.
+- The return checks `_check_derivative`, `_check_update`, `_check_state_write`
+  and `_check_handler` hold a return to the declared shape, bare or named
+  (§9.5, D-435).
 - The feedthrough graph, the builder's scratch. Each edge keeps its port and
   face.
 - Kahn's execution order, written into the `Outputs` (D-261):
@@ -227,7 +236,7 @@ Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §8.5, §10.4, §13.5, §13.7, D-179, D
 
 Spec: §5.3, §5.5, §13.8, §6.1, §7.1, §7.3, §8.2, §9.1–§9.4, §9.7, §10.4, §13.2,
 §13.5, D-012, D-051, D-166, D-179, D-208, D-210, D-229, D-235, D-236, D-237,
-D-247, D-248, D-250, D-252, D-253, D-256, D-261, D-263, D-289, D-315, D-316.
+D-248, D-250, D-252, D-253, D-256, D-261, D-263, D-289, D-315, D-316, D-435.
 
 ### `src/checkpoint.jl`
 
@@ -269,7 +278,8 @@ Spec: §11.5, §12.6, §12.7, §14.10, D-038, D-254, D-273, D-274, D-317, D-319.
 - One collecting pass behind both ways of applying a plan. Each `at` prefix is
   walked from its authoring level (§13.3). The two ways are:
   - `resolve_condition`, for values, its merge bases the declared defaults
-    or the stores a door hands it (D-429);
+    or the stores a door hands it (D-429), a bare store's base replaced whole
+    by `_store_overlay`, shared with `StoreWrite` (D-435);
   - `compile_plan`, with lenses run by `walk_steps` (readers.jl),
     `SpecializedPlan`, whose writes and prefixes `apply!` walks as generated
     unrolls, and `ConditionShapeDrift`.
@@ -278,7 +288,7 @@ Spec: §11.5, §12.6, §12.7, §14.10, D-038, D-254, D-273, D-274, D-317, D-319.
   method on the simulation is sim.jl's.
 
 Spec: §9.5, §13.1, §13.3, §14.1–§14.6, §14.9, Appendix B, D-063–D-068,
-D-117, D-130, D-204, D-205, D-207, D-226, D-277, D-315, D-429.
+D-117, D-130, D-204, D-205, D-207, D-226, D-277, D-315, D-429, D-435.
 
 ### `src/control.jl`
 
@@ -484,6 +494,9 @@ D-256, D-261, D-268, D-270, D-315.
   `ReplayDiscardedStaging` (§12.7). `EmptyGreedyClaim` is reported by
   `attach!` into the roster entry's own cell (§11.6, D-250).
 - `_typename`.
+- `BARE`, the reserved empty name a bare store takes in every `(path, name)`
+  key, spelled nowhere else, and `_named`, the one renderer of such a pair,
+  which drops it; `EmptyStore`, the refusal of `(;)` (§8.2, D-435).
 - The `DiagnosticError` carrier, its `warnings` (D-250) and its `structure`,
   typed `Any` since `Structure` is declared later and filled by the build's
   door alone (D-434), with `diagnostic`, `diagnostics`, `kinds` and the two
@@ -532,7 +545,7 @@ Spec: §9.1, §9.2, §10.4, §10.6, §10.7, §11.4, §11.6, §11.8, §12.2, §12
 Appendix C, D-027, D-058, D-059, D-157, D-187, D-203, D-214, D-215, D-222,
 D-225, D-250, D-255, D-256,
 D-261, D-262, D-263, D-272, D-274, D-276, D-277, D-316, D-318, D-319, D-320,
-D-406.
+D-406, D-435.
 
 ### `src/executor.jl`
 
@@ -551,6 +564,8 @@ D-406.
   tuples of one type and walks its interior at a boundary.
 - The `(tick − Φ) % D` gate `Gated`, with boundary zero's `ESTABLISH` beside
   it.
+- `_merge_modes!`, one generated method, which replaces a bare `m` whole and
+  merges a named one (§9.5, D-435).
 - The event set, with its registers. It is mutable, so the executor holds it
   by reference. Its `entries` and `projects` hold `EventChunk`s, each a
   mutable chunk of entries, so their `length` counts chunks.
@@ -562,7 +577,7 @@ D-406.
   `Bool` return (§13.5, D-261, D-317).
 
 Spec: §5.3, §9.5, §9.7, §10.4–§10.6, §13.4, §13.5, §14.5, D-059, D-205, D-235,
-D-249, D-255, D-261, D-289, D-317.
+D-249, D-255, D-261, D-289, D-317, D-435.
 
 ### `src/frame.jl`
 
@@ -601,10 +616,11 @@ D-260, D-261, D-317, D-318.
   type (D-238). At a store it accepts an opaque leaf by identity (D-237). At a
   wire it admits an opaque leaf as the producer's cell (D-264).
 - The wire relation `_accepts_wire`, with its abstract arm (D-236).
-- The checked state write `flatten_state!` (D-235).
+- The checked state write `flatten_state!` (D-235), with its bare arm decided
+  at generation for a bare `XT` (D-435).
 
 Spec: §4.1, §4.3, §4.4, §6.1, §7.1, §7.2, §8.2, §9.5, §13.4, §13.5, D-166,
-D-235, D-236, D-237, D-238, D-243, D-263, D-264, D-265, D-276, D-316.
+D-235, D-236, D-237, D-238, D-243, D-263, D-264, D-265, D-276, D-316, D-435.
 
 ### `src/linearize.jl`
 
@@ -755,7 +771,9 @@ Spec: §9.7, D-289.
 - The export chain's lookup, `_input_faces_at` and `_face_producer`, shared
   by `get_input`'s rebase and a condition's `u` entry in conditions.jl
   (D-277), over `terminal_producer` (D-315).
-- The leaf address (D-276). `parse_leaf` splits it at resolution. On a face
+- The leaf address (D-276). `parse_leaf` splits it at resolution, and a
+  headless address, empty or beginning at a step, heads at `BARE` for a bare
+  store (D-435). On a face
   selector `match_leaf` matches the head against the face list instead, since
   a face name may hold a dot. `resolve_leaf` checks each step against the declared type and returns the
   chain or a `LeafRefusal`, the six leaf reasons any kind wraps, and
@@ -782,7 +800,7 @@ Spec: §9.7, D-289.
   check on plans sits in conditions.jl's `apply!`.
 
 Spec: §11.2, §13.1, §13.3, §14.1, §14.4, §14.7, §14.9, §14.10, D-125, D-130, D-253,
-D-276, D-277, D-315, D-406, D-407.
+D-276, D-277, D-315, D-406, D-407, D-435.
 
 ### `src/roster.jl`
 
@@ -1033,6 +1051,8 @@ The suite's fixtures:
 - The `condition` methods, the condition-method idiom over the framework's
   generic. The generic lives in `src/conditions.jl`.
 - `Pendulum`.
+- The bare-store fixtures `BareAccumulator`, `BareTicker`, `BareLatch` and
+  `Negator`, with the assembly `bare_world()` (D-435).
 - `tick_alarmed`, the tick-detected stop request over `TickAlarm` (§10.5,
   §13.5, D-316).
 - The `ForgottenImport` module and the forgotten-import fixtures `Inventory`,
@@ -1212,7 +1232,12 @@ Traps the code does not warn about, each hit more than once while building:
   whose oracle shares the mutated code, such as a vector draw checked through
   the vector helper. Pick values that separate the expressions, and assert
   against the scalar form or probed literals. Sample times sit on the step
-  grid, since `step!` rounds up to the next frame.
+  grid, since `step!` rounds up to the next frame;
+- **nothing outside `BARE`'s definition spells `Symbol("")`**, and a
+  `(path, name)` pair renders through `_named`, which drops the empty name; a
+  leak shows as `plant/` or `plant.`;
+- **`isempty` is no presence test for a store.** `isempty(0.0)` is `false`,
+  so a store is present iff it is not `nothing` (§5.2).
 
 ## Naming
 

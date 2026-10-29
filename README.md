@@ -75,12 +75,12 @@ struct PI <: AbstractComponent
     k_i::Float64
 end
 
-s_init(::PI) = (integral = 0.0,)
+s_init(::PI) = 0.0                                   # one state, declared bare
 u_types(::PI) = (ref = Float64, y = Float64)
 y_types(::PI) = (u = Float64,)
 
-y_direct(c::PI, (; s, u)) = (u = c.k_p * (u.ref - u.y) + s.integral,)
-s_update(c::PI, (; s, u, Δt)) = (integral = s.integral + c.k_i * Δt * (u.ref - u.y),)
+y_direct(c::PI, (; s, u)) = (u = c.k_p * (u.ref - u.y) + s,)
+s_update(c::PI, (; s, u, Δt)) = s + c.k_i * Δt * (u.ref - u.y)
 
 loop(feedback) = Group((plant = Plant(2.0, 0.3), ctl = PI(3.0, 2.0));
     local_wires = ("ctl/u" => "plant/u", "plant/$feedback" => "ctl/y"),

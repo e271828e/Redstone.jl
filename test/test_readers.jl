@@ -572,4 +572,38 @@ function test_readers()
         @test seeded.exec.clock.t₀ === 0.25
         @test seeded.exec.clock.t isa D8 && ForwardDiff.value(seeded.exec.clock.t) === 0.25
     end
+
+    @testset "a bare state's address is headless, its head `BARE` (§14.4, D-276)" begin
+        # The parse: no head where the state has no name, then the usual steps.
+        @test Redstone.parse_leaf("") == (BARE, Redstone.AccessStep[])
+        @test Redstone.parse_leaf("[2]") == (BARE, Redstone.AccessStep[(2,)])
+        @test Redstone.parse_leaf("q[2]") == (:q, Redstone.AccessStep[(2,)])
+        @test get_state("acc") == get_state("acc", "") && get_deriv("acc").leaf == ""
+
+        model = Model(bare_world(); h = 1//10)
+        init!(model, combine(set(u = (u = 0.5, p = 0.0)), at("tick", set(s = 4))))
+        evaluate!(model.exec)
+        r = _compile_reads(reads(acc = get_state("acc"), acc_rate = get_deriv("acc"),
+                                 rate = get_state("latch", "[2]"), latch = get_state("latch"),
+                                 tick = get_state("tick"), q = get_state("plant", :q)),
+                           model.deployment.build, Float64)
+        v = gather_reads(r, model.exec)
+        @test v.acc === 1.0 && v.acc_rate === -0.5              # `ẋ = u - x` at `x = 1`
+        @test v.rate === 1.0 && v.latch === SVector(0.0, 1.0)
+        @test v.tick === 5                     # a bare discrete store, read whole, past `t₀`'s tick
+        @test v.q === SVector(0.0, 0.0)
+
+        # A headless address against a named state, a named one against a bare
+        # state, and a step a bare scalar cannot take.
+        err = failure(() -> _compile_reads(reads(a = get_state("plant"), b = get_state("acc", :q),
+                                                 c = get_deriv("acc", "[2]"),
+                                                 d = get_state("neg")),
+                                           model.deployment.build))
+        (a, b_, c, d) = diagnostics(err)
+        @test a.reason === :undeclared && a.field === BARE && a.candidates == [:q]
+        @test b_.reason === :undeclared && b_.field === :q && b_.candidates == [BARE]
+        @test c.reason === :not_indexable && c.step == "[2]" && c.declared === Float64
+        @test d.reason === :undeclared && d.field === BARE && isempty(d.candidates)
+        @test a.selector == "get_state(\"plant\")"             # spelled as authored
+    end
 end

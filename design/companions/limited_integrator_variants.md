@@ -31,10 +31,10 @@ framework detects against the guard's prior, its value at the last
 quiescent boundary ([§2.3][s2-3], [§10.6][s10-6]).
 
 ```julia
-hit_upper_guard(c, (; x))   = x.q - c.upper                        # ungated
-hit_upper_handler(c, _)     = (x = (q = c.upper,), m = (saturation = :upper,))
-leave_upper_guard(c, (; m, u)) = m.saturation === :upper ? -u.in : -one(u.in)   # the first form
-leave_handler(c, _)         = (m = (saturation = :free,),)
+hit_upper_guard(c, (; x))   = x - c.upper                          # ungated
+hit_upper_handler(c, _)     = (x = c.upper, m = :upper)
+leave_upper_guard(c, (; m, u)) = m === :upper ? -u.in : -one(u.in)   # the first form
+leave_handler(c, _)         = (m = :free,)
 ```
 
 The hit guards are deliberately ungated. Gated on `:free`, a hit guard
@@ -100,8 +100,8 @@ discontinuity, or whether to give up the latch.
 as well as on the mode:
 
 ```julia
-leave_upper_guard(c, (; m, u)) = m.saturation === :upper && u.in < 0 ? -u.in : -one(u.in)
-leave_lower_guard(c, (; m, u)) = m.saturation === :lower && u.in > 0 ?  u.in : -one(u.in)
+leave_upper_guard(c, (; m, u)) = m === :upper && u.in < 0 ? -u.in : -one(u.in)
+leave_lower_guard(c, (; m, u)) = m === :lower && u.in > 0 ?  u.in : -one(u.in)
 ```
 
 An input of exactly zero at a limit now keeps the mode saturated, which
@@ -141,9 +141,9 @@ and let the derivative decide saturation from the current state and input,
 with events only to localize the kinks and clamp `q` exactly:
 
 ```julia
-x_deriv(c, (; x, u)) = (q = (x.q >= c.upper && u.in > 0) || (x.q <= c.lower && u.in < 0) ?
-                            zero(u.in) : u.in,)
-hit_upper_guard(c, (; x)) = x.q - c.upper     # localizes the arrival, clamps exactly
+x_deriv(c, (; x, u)) = (x >= c.upper && u.in > 0) || (x <= c.lower && u.in < 0) ?
+                           zero(u.in) : u.in
+hit_upper_guard(c, (; x)) = x - c.upper       # localizes the arrival, clamps exactly
 release_guard(c, (; u))   = -u.in             # localizes the input's zero crossing
 ```
 
@@ -173,7 +173,7 @@ instead of the sign value. Here that rewrite does two things at once:
 
 ```julia
 leave_upper_guard(c::LimitedIntegrator{V, false}, (; m, u)) where {V} =
-    m.saturation === :upper && u.in < 0
+    m === :upper && u.in < 0
 ```
 
 A `Bool` predicate is strict by construction, so the exact-zero corner is

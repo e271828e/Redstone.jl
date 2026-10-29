@@ -356,8 +356,11 @@ function diagnostics_kind_set()
                             declared = @NamedTuple{flag::StopFlag, x::Float64}, reason = :stop_flag_nested),
             IllegalPortType(path = "", site = :root_input, name = :stop, declared = StopFlag,
                             reason = :stop_flag_at_root),
-            StoreNotNamedTuple(path = "a/b", store = :x_init, declared = Float64),
+            EmptyStore(path = "a/b", store = :x_init),
+            EmptyStore(path = "a/b", store = :m_init),
             IllegalStoreField(path = "a/b", store = :s_init, name = :label, declared = String),
+            IllegalStoreField(path = "a/b", store = :m_init, name = BARE, declared = String),
+            IllegalStateLeaf(path = "a/b", name = BARE, declared = Int, reason = :mode_value),
             IllegalStateLeaf(path = "a/b", name = :gear_count, declared = Int, reason = :mode_value),
             IllegalStateLeaf(path = "a/b", name = :q, declared = Float32, reason = :eltype),
             IllegalStateLeaf(path = "a/b", name = :pose, declared = NamedTuple, reason = :nested),
@@ -398,6 +401,13 @@ function diagnostics_kind_set()
             ConformanceFailure(path = "a/b", what = "handler `x`", event = :e,
                                reason = :field_set, shape = :state,
                                observed_fields = [:p], declared_fields = [:q]),
+            ConformanceFailure(path = "a/b", what = "x_deriv", reason = :field_type, shape = :x_init,
+                               field = BARE, observed = Int, declared = Float64,
+                               activation = Float64),
+            ConformanceFailure(path = "a/b", what = "s_update", reason = :field_type, shape = :s_init,
+                               field = BARE, observed = Float64, declared = Int),
+            ConformanceFailure(path = "a/b", what = "handler `m`", event = :e, reason = :field_type,
+                               shape = :mode, field = BARE, observed = Int, declared = Bool),
             GuardForm(path = "a/b", event = :snap, observed = Int),
             BundleFieldError(path = "a/b", family = "y_state", tier = :continuous,
                              field = :m, legal = [:x, :t], reason = :undeclared),
@@ -460,12 +470,17 @@ function diagnostics_kind_set()
                                 candidates = [:p], role = :output_port, origin = "set"),
             ConditionResolution(path = "a/b", store = :x, field = :p, reason = :unconvertible,
                                 declared = Float64, observed = String, value = "x", origin = "set"),
+            ConditionResolution(path = "a/b", store = :x, field = BARE, reason = :store_shape,
+                                candidates = [:q], origin = "set(x)"),
+            ConditionResolution(path = "a/b", store = :m, field = :fired, reason = :store_shape,
+                                origin = "set(m).fired"),
             ConditionResolution(field = :p, face = :p, reason = :unconvertible, declared = Float64,
                                 observed = String, value = "x", origin = CHECKPOINT_ORIGIN),
             DuplicateConditionLeaf(path = "a/b", store = :x, field = :p,
                                    origins = ["set", "at(\"a\") → set"]),
             ConditionNodeMisuse(observed = NamedTuple, in_hand = [:Fragment]),
             ConditionNodeMisuse(observed = Int, reason = :set_payload, payload = :x),
+            ConditionNodeMisuse(observed = Nothing, reason = :set_payload, payload = :m),
             ConditionNodeMisuse(observed = String, reason = :empty_prefix),
             UninitializedInputs(op = :init!, faces = [:a, :b]),
             ReadResolution(label = :r, selector = "get_state(\"a\", :x)", reason = :assembly_path,
@@ -474,6 +489,10 @@ function diagnostics_kind_set()
                            reason = :store_selector, path = "a/b", field = :q),
             ReadResolution(label = :r, selector = "get_state(\"a/b\", :q)", reason = :undeclared,
                            path = "a/b", field = :q, declares = :state_field, candidates = [:p]),
+            ReadResolution(label = :r, selector = "get_state(\"a/b\")", reason = :undeclared,
+                           path = "a/b", field = BARE, declares = :state_field, candidates = [:p]),
+            ReadResolution(label = :r, selector = "get_state(\"a/b\", :q)", reason = :undeclared,
+                           path = "a/b", field = :q, declares = :state_field, candidates = [BARE]),
             ReadResolution(label = :r, selector = "get_deriv(\"a/b\", :q)",
                            reason = :discrete_deriv, path = "a/b", field = :q),
             ReadResolution(label = :r, selector = "get_input(:q)", reason = :unknown_root_input,
@@ -644,6 +663,7 @@ function diagnostics_kind_set()
             ReplayUnknownFace(face = :z, frame = 1, writer = "device 1 (Pad)", faces = [:a, :b]),
             # §13.4's runtime species, the one kind a `StepError` carries as its cause
             NonfiniteState(path = "a/b", leaf = "v[2]", value = NaN, t = 0.14, boundary = 6),
+            NonfiniteState(path = "a/b", leaf = "", value = NaN, t = 0.14, boundary = 6),
             # the runtime stream's nine, re-parented (§11.8)
             MalformedDatum(ArgumentError("bad")),
             OutOfClaimEntry(:a, 1.0, [:b], "device 1 (Pad)"),
@@ -883,16 +903,66 @@ function diagnostics_kind_set()
                                                names = [:x_init, :y_types]))
         @test occursin("import Redstone: x_init, y_types", rendered)
 
-        # A bare store value (§8.2, D-247) spells the wrap for the store at fault.
-        rendered = message(StoreNotNamedTuple(path = "a/b", store = :x_init,
-                                               declared = Float64))
-        @test occursin("x_init(::C) = (; ω = 0.0)", rendered)
-        rendered = message(StoreNotNamedTuple(path = "a/b", store = :s_init,
-                                               declared = Float64))
-        @test occursin("s_init(::C) = (; n = 0)", rendered)
-        rendered = message(StoreNotNamedTuple(path = "a/b", store = :m_init,
-                                               declared = Int))
-        @test occursin("m_init(::C) = (; phase = :idle)", rendered)
+        # `(;)` as a store (§8.2) names the new spelling for the store at fault.
+        rendered = message(EmptyStore(path = "a/b", store = :x_init))
+        @test occursin("`x_init` returns `(;)`, a retired spelling", rendered)
+        @test occursin("x_init(::C) = nothing", rendered)
+        @test occursin("s_init(::C) = nothing", message(EmptyStore(path = "a/b", store = :s_init)))
+        @test occursin("defines no `m_init`, or returns `nothing`",
+                       message(EmptyStore(path = "a/b", store = :m_init)))
+
+        # A bare store has no field name, and no rendering spells an empty one: the
+        # renderer drops it with its separator (§8.2).
+        bare_renderings = [
+            message(IllegalStateLeaf(path = "a/b", name = BARE, declared = Int,
+                                     reason = :mode_value)),
+            message(IllegalStoreField(path = "a/b", store = :s_init, name = BARE,
+                                      declared = String)),
+            message(ConformanceFailure(path = "a/b", what = "x_deriv", reason = :field_type,
+                                       shape = :x_init, field = BARE, observed = Int,
+                                       declared = Float64, activation = Float64)),
+            message(ConformanceFailure(path = "a/b", what = "s_update", reason = :field_type,
+                                       shape = :s_init, field = BARE, observed = Float64,
+                                       declared = Int)),
+            message(ConditionResolution(path = "a/b", store = :x, field = BARE,
+                                        reason = :unconvertible, declared = Float64,
+                                        observed = String, value = "x", origin = "set(x)")),
+            message(NonfiniteState(path = "a/b", leaf = "", value = NaN, t = 0.1, boundary = 2)),
+        ]
+        @test !any(r -> occursin("``", r) || occursin("x.`", r) || occursin("b/`", r),
+                   bare_renderings)
+        @test startswith(bare_renderings[1], "`a/b`: `x_init` returns `Int64`, which is not a " *
+                                             "continuous state")
+        @test startswith(bare_renderings[2], "`a/b`: `s_init` returns `String`, which is not a store value")
+        @test occursin("x_deriv returns Int64, the state is Float64 — an integer literal",
+                       bare_renderings[3])
+        @test occursin("s_update returns Float64, the state store is Int64", bare_renderings[4])
+        @test startswith(bare_renderings[5], "`x` at `a/b` takes Float64")
+        @test startswith(bare_renderings[6], "`a/b`: the state is NaN")
+
+        # A payload's shape against the store's (§14.3): each direction states the
+        # spelling the store takes.
+        rendered = message(ConditionResolution(path = "a/b", store = :x, field = BARE,
+                                               reason = :store_shape, candidates = [:q, :v],
+                                               origin = "set(x)"))
+        @test occursin("`x` at `a/b` is set whole, and `x_init` at `a/b` declares the fields " *
+                       "`q`, `v` — name the fields it sets, `set(x = (q = …,))`", rendered)
+        rendered = message(ConditionResolution(path = "a/b", store = :m, field = :fired,
+                                               reason = :store_shape, origin = "set(m).fired"))
+        @test occursin("`m.fired` at `a/b` names a field, and `m_init` at `a/b` declares one " *
+                       "bare value — set it whole, `set(m = …)`", rendered)
+
+        # The headless address against a named state, and a named one against a
+        # bare state (§14.4).
+        rendered = message(ReadResolution(label = :q, selector = "get_state(\"p\")",
+                                          reason = :undeclared, path = "p", field = BARE,
+                                          declares = :state_field, candidates = [:q]))
+        @test occursin("`p` declares no bare state field, which a headless address reads — " *
+                       "its state field names are `q`", rendered)
+        rendered = message(ReadResolution(label = :q, selector = "get_state(\"p\", :q)",
+                                          reason = :undeclared, path = "p", field = :q,
+                                          declares = :state_field, candidates = [BARE]))
+        @test occursin("`p` declares one bare state value, with no field `q`", rendered)
 
         # The walk clause's hint on the input side (§8.2, D-236, D-263)
         # states the fix by name.
