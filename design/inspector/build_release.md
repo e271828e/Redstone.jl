@@ -22,9 +22,12 @@ Left open on purpose, each with its owner.
 - **The generator's output on the schema's idioms.** Whether
   `json-schema-to-typescript` resolves the `true` placeholders of the node
   branches to the identity's types, and narrows the envelope by `kind`
-  (answer 4). Checked in the package's increment; if either fails, the fix
-  is on the schema side and additive, spelling the shared fields in the
-  branch.
+  (answer 4). Checked by increment 2's brief on 2026-10-30: both failed,
+  `node.path` coming out `string | undefined` and `d.build` staying
+  optional under a `kind` branch, and the core's `778d6ee` spells the
+  shared fields in both node branches and the bodies in the envelope's
+  branches, after which the generated types are required and narrow by
+  `kind`; the same instances validate. Closed.
 - **A bare `@ref` to a name in a parent module.** The anchor rule of answer
   7 joins the docstring's own module with the name, so a `Blocks` docstring
   naming `Build` lands at the top of the API page. Revisited if it bites.
