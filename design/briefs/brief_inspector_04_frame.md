@@ -670,4 +670,18 @@ context rules as the builder. Dimensions:
   the system font; a selection made while the tree is collapsed does not
   scroll its row into view on expanding; a folder under a non-root node
   starts collapsed when its node expands; the favicon 404; increment 3's
-  items stand. The look-and-adjust pass is pending.
+  items stand.
+- **The look-and-adjust pass**: one finding, long docstrings filling the
+  pane, landed as a disclosure collapsed on each selection with the first
+  line as its summary (`e893fc1` after the rebase); the signature's
+  disclosure was keyed the same way (`9b6581d`). The pass also raised the
+  parameter summary's 80-character cut hiding a `DiscretePID`'s gains,
+  settled in the core as D-439 and taken up by the pin bump `d77cf55`.
+- **Landed** on 2026-10-30 at `13d1f4c` of `RedstoneInspector.jl`, nine
+  commits above `d77cf55`, merged by fast-forward and pushed. The first
+  CI run failed one browser check on Linux alone, the tracker's pane
+  scrolling sideways by 9 px under the runner's wider fonts with the face
+  name and kind cells `nowrap`; `13d1f4c` lets those cells and the
+  parameter cells wrap under pressure and pins the pane at its narrowest
+  width through the prefs, so the machine's fonts decide nothing;
+  CI green on all four jobs, the `frontend` job in 91 s.

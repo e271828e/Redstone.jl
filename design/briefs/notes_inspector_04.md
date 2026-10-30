@@ -110,5 +110,6 @@ Rulings made during the review: the drawer opens on load for
 diagnostics only, as answer 6 says, warnings staying in the tab's count;
 the signature disclosure is omitted when the signature equals the
 qualified type; a selected node that is the open level shows the level
-layout. Pending: the user's look-and-adjust pass, then the merge, the
-push and the CI run.
+layout. The look-and-adjust pass found one thing to change, the
+docstring's length, and one thing for the core, the parameter summary's
+cut (D-439); both landed. Merged and pushed at `13d1f4c`, CI green on all four jobs.

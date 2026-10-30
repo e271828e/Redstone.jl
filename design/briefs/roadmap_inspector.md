@@ -184,7 +184,35 @@ settle.*
 and assembly layouts, the drawer's tab strip, selection in sync across
 the three, the landing panel with the privacy statement, the status bar,
 the window's title. Visible: a page one can navigate. Draws on
-`workspace.md` answers 1 to 4 and 10.
+`workspace.md` answers 1 to 4 and 10. *Landed on 2026-10-30 at `13d1f4c`
+of `RedstoneInspector.jl`, nine commits above the pin bump `d77cf55`,
+CI green with the `frontend` job in 91 s; its brief, `brief_inspector_04_frame.md`, records the shape,
+the review, the look-and-adjust pass and the observations. Facts the next
+briefs take from it: the stores live in `src/state/`, `session.svelte.ts`
+for the per-tab state (the model, the open level, the selection as
+`{level, target}` with the kinds block, wire, port and folder, the tree's
+expansion set by path, the drawer's open state and tab) and
+`prefs.svelte.ts` for the per-browser state under the local-storage key
+`redstone-inspector/prefs` version 1 (the three splitter sizes and the
+collapsed side panes); `select` sets the level for every kind and `open`
+clears the selection; the panes live in `src/frame/` (`Frame.svelte` the
+grid, `Tree`, `Breadcrumb`, `Detail`, `Drawer`, `StatusBar`, `Landing`),
+the pure rows and facts in `src/lib/outline.ts` and `detail.ts`; the
+canvas takes `selected` as a prop; `App.svelte` handles Backspace,
+Alt-Up, Enter and Escape outside text fields, for increment 5's keyboard
+table to absorb; the map's "DOM contract" has a frame section and
+`data-level-path` sits on the breadcrumb; the checks are
+`landing`, `tree`, `detail` and `frame` beside the earlier six; the
+docstring and the signature are disclosures rebuilt on each selection,
+the docstring's summary its first line; the drawer opens on load for a
+diagnostic only, warnings counted in its tab; a selected node that is the
+open level shows the level layout; the core's parameter summary opens
+`NamedTuple` fields into dotted entries (D-439), so `DiscretePID` shows
+nine `fixed.*` rows. Open items: the chevron glyph reads small; a
+selection made while the tree is collapsed does not scroll into view on
+expanding; a folder under a non-root node starts collapsed; the favicon
+404; `closed_loop`'s root still tangled, ELK on the main thread, and
+`large`'s output pins stacked in reverse.*
 
 **Increment 5: interaction.** Search, the keyboard table, focus and Tab
 order, view state by path across a push with the previous positions as

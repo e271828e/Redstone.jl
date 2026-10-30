@@ -36,8 +36,13 @@ item changes what the spec says, the spec edit is part of the item.
   `frontend/PROTOCOL.md`. Its increment 3, the canvas, landed on
   2026-10-30 at `57eb335`, brief
   `design/briefs/brief_inspector_03_canvas.md`, CI green with the
-  `frontend` job's screenshots uploaded; next is its increment 4, the
-  frame. The deployment
+  `frontend` job's screenshots uploaded. Its increment 4, the frame,
+  landed on 2026-10-30 at `13d1f4c`, brief
+  `design/briefs/brief_inspector_04_frame.md`, CI green on all four jobs; the core's
+  parameter summary opens `NamedTuple` fields into dotted entries since
+  (D-439), and the inspector's pin stands at the core's `035aa95`. Next is
+  its increment 5, interaction, with increment 9's frontend piece, the
+  socket client, now unblocked by the status bar. The deployment
   overlay's bump stands as `visual_grammar.md` hands it on. The built-in Julia GUI is parked (D-310). The later stages
   stand after the release, below.
 - **The API docstrings' two later passes.** The sweep to the manual's
