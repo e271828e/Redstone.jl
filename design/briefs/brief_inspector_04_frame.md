@@ -626,3 +626,48 @@ context rules as the builder. Dimensions:
 - **The map** read against the tree: every file under `src/` named, the
   stores' section true to the code, every check's pins listed, the
   contract as implemented.
+
+## Built
+
+- **The commits** on `increment-4` of `RedstoneInspector.jl`, above
+  `57eb335`, not pushed: `b552de3` the frame, the outline and detail
+  facts, the two stores, the grid with its splitters, the tree, the
+  breadcrumb, the status bar and the landing panel; `5a83567` the detail
+  pane's seven layouts and the drawer's strip; `f10a114` the four check
+  files and the two amended; `53bad81` the map and the README; `4ce72c6`
+  the review fixes; `aea9d72` a map line. `npm run check` 337 files, 0
+  errors; `npm test` 223 tests in 12 files; `npm run e2e` 87 checks in
+  about 14 s.
+- **The builder's departures**, all held under review and recorded in
+  the map: `ancestors` includes the root; the default expansion is the
+  root and its folders; a folder row under the root is the field alone;
+  the selection types live in `detail.ts`; `select` sets the level for
+  every kind, so a producer or consumer link moves the canvas; a
+  refusal dropped over a model unloads it; a root row click selects the
+  root in place; Backspace and Alt-Up clear the selection, being opens;
+  the canvas's wrapper is `.viewport`; prefs are `{version, sizes,
+  collapsed}` with defaults 280, 360, 200; a location click copies
+  `file:line`; each side pane has a head row with its collapse button,
+  a collapsed pane a 24 px strip; `rows` and `status` in the harness
+  return locators; the wire helpers moved into `fixtures.ts`.
+- **One pin was the brief's error**: collapsing `sensing` after opening
+  `actuators` leaves 11 rows, not 8; the check pins the two rows removed.
+  The closed assembly's "3 wires" fact was struck from the brief.
+- **The review**: every check green from a clean install, the oracle
+  equal to the table and the DOM on every fixture, nineteen brief mutants
+  red and the named survivor accepted. Ten findings and one gap, landed
+  by the fixer and verified: no check clicked a producer link, pinned the
+  scroll-and-reveal on a block click, the opened row expanding, or the
+  drawer's remembered height; the drawer opened on warnings too, ruled to
+  diagnostics only with warnings kept in the tab's count; the port's
+  facts line lacked a space; the signature disclosure repeated the type
+  line, now omitted when equal; a root row click while the root is open
+  showed the assembly layout with an open button, now the level layout
+  for any node that is the open level; "1 children" and "1 wires";
+  sideways scroll on `tracker`'s long face types; and no check read what
+  a location click copies. Eight mutants re-run red after the fix.
+- **Observations for the next briefs**: the `▸` chevron reads small in
+  the system font; a selection made while the tree is collapsed does not
+  scroll its row into view on expanding; a folder under a non-root node
+  starts collapsed when its node expands; the favicon 404; increment 3's
+  items stand. The look-and-adjust pass is pending.

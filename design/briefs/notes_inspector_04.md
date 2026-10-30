@@ -103,4 +103,12 @@ One pin disagreed: the brief's tree check said collapsing `sensing`
 leaves 8 rows, the brief's own arithmetic error, since the double-click
 that opens `actuators` expands its row and the count is 11. Ruled: the
 check as built asserts that the collapse removes `sensing`'s two rows.
-The cold review is running.
+The cold review found ten findings and one gap, landed by the fixer at
+`4ce72c6` and verified; the brief's "Built" section carries the record.
+The branch stands at `aea9d72`, not pushed. No reading was struck.
+Rulings made during the review: the drawer opens on load for
+diagnostics only, as answer 6 says, warnings staying in the tab's count;
+the signature disclosure is omitted when the signature equals the
+qualified type; a selected node that is the open level shows the level
+layout. Pending: the user's look-and-adjust pass, then the merge, the
+push and the CI run.
