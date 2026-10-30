@@ -23,8 +23,12 @@ item changes what the spec says, the spec edit is part of the item.
   bump, landed as §13.9, D-434 and increment 82; `build_release.md` for
   axis 7, the repo, the pin, CI and the release, which closes the stage's
   design. The build is staged by `design/briefs/roadmap_inspector.md`,
-  ten increments on two tracks in a separate repo; next is its increment
-  1, the repo and the writing half of the package. The deployment
+  ten increments on two tracks in a separate repo. Its increment 1, the
+  repo and the writing half of the package, landed on 2026-10-30 as
+  `RedstoneInspector.jl` at `cbc4ff2` with a green CI, brief
+  `design/briefs/brief_inspector_01_repo_and_writer.md`; next are its
+  increments 2 and 9 in parallel, the frontend's pure foundation and the
+  server, after a pin bump to the core's tip. The deployment
   overlay's bump stands as `visual_grammar.md` hands it on. The built-in Julia GUI is parked (D-310). The later stages
   stand after the release, below.
 - **The API docstrings' two later passes.** The sweep to the manual's

@@ -118,7 +118,9 @@ increment 9. Visible: `frontend/fixtures/` holding one descriptor per
 model, and a green CI. Draws on `live_session.md` answers 2 and 10,
 `build_release.md` answers 2, 3 and 6. Ordinary Julia work; it precedes
 the frontend because the fixtures are its output, which corrects the
-hand-on order of `build_release.md`.
+hand-on order of `build_release.md`. *Landed on 2026-10-30 at `cbc4ff2`
+of `RedstoneInspector.jl`, pinned at the core's `dc5e833`; its brief's
+"Landed" section records the review and the first CI run.*
 
 **Increment 2: the foundation, pure half.** The Vite and Svelte project
 under `frontend/` with the spike's versions, `npm run types` from the
@@ -212,7 +214,8 @@ it enters a brief.
   `alias` and `name` fields, 28 definitions, `$id` naming the core's docs
   site. `descriptor` has three methods, `src/descriptor.jl:40` to `43`.
 - The examples' constructors, `examples/src/longitudinal.jl`:
-  `aircraft`, `descent`, `closed_loop(solution, gains)`, `trimmed`;
+  `aircraft`, `descent` and `closed_loop(solution, gains)`; `trimmed` is
+  a condition, not a model (corrected by increment 1's brief);
   `level_flight` and `lqr_gains` give the closed loop's arguments. The
   package reaches Redstone by qualified import only.
 - The pin check of 2026-10-29: a workspace root's `[sources]` entry for

@@ -441,6 +441,37 @@ comes after. Dimensions:
 
 ## Landed
 
-Filled after the push: the three commits' hashes, the review's findings
-and the fixer's commit if any, the first CI run's result, and the time the
-fixture script takes on the runner.
+- **The commits** on `master` of `RedstoneInspector.jl`: `1874375` the
+  package and its suite, `c6d9de8` the scripts, fixtures and schema copy,
+  `99677ca` CI, the README and the MIT license, `cbc4ff2` the review
+  fixes. Pushed on 2026-10-30; the first CI run was green on all three
+  jobs, the Windows suite in 3m16s, the Ubuntu suite in 2m58s, the
+  `fixtures` job in 2m38s, of which the script's step took 94 s.
+- **The builder's departures**, ten, all held under review. The one that
+  matters: with no manifest, `Pkg.instantiate()` from a workspace member
+  fails, and only the root instantiates; CI and the README do so, and
+  `build_release.md` answers 2 and 6 are amended. The large model's leaves
+  are two types, one per tier; every input is fed, 323 root wires and 43
+  anchors; the opaque face is a closure, a fieldless function being
+  refused as a port type; locals `envelope` and `root_build`.
+- **The review**: no defect in the writer, the fixtures or the pin; every
+  mutant of the brief red; six findings, all landed by the fixer and
+  verified: the pin bump deletes the manifest first and the script checks
+  the manifest's `repo-rev` against the pin; two assertions pinning the
+  root form's bytes and its `name`; the path form's argument typed so a
+  wrong argument fails before `open` truncates; the reason for
+  instantiating from the root corrected in the README and CI; the schema
+  copy written rather than `cp`'d, which carried the depot's read-only
+  mode; one index renamed. The suite stands at 39 assertions. Two
+  observations stay as notes: with no committed manifest a dependency
+  release can change fixture bytes and redden the drift job on an
+  unrelated commit, and the closure's type string in `kinds.json` comes
+  from lowering and could shift with a Julia patch release.
+- **Reading 7** held: every printed trim and gain float sits far from a
+  six-digit rounding boundary, and Ubuntu regenerated the fixtures
+  byte-identically.
+- **Side effect**: a reviewer's probe ran `Pkg.update()` in a scratch
+  copy, and Pkg's depot gc removed two older installed trees of Redstone
+  and the examples; the pinned trees and the dev checkout were untouched.
+- **The pin bump** to the core's commit after `dc5e833` follows as its own
+  commit once that commit is pushed.

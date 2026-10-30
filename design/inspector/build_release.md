@@ -108,7 +108,11 @@ Left open on purpose, each with its owner.
    dependency list. The revision is spelled twice because Pkg reads the
    `[sources]` of the workspace's own projects and ignores a dependency's,
    so Redstone cannot ride in through the examples' `path` entry; without
-   the root's entry instantiation fails from both projects. The fixture
+   the root's entry instantiation fails from both projects. *Amended
+   2026-10-30 (increment 1):* with no manifest, `Pkg.instantiate()` fails
+   from both members even with the root's entry, and only the root
+   instantiates, resolving the one manifest every member loads; CI and the
+   README instantiate from the root. The fixture
    script reads both files and refuses to run when the revisions differ.
    A pin bump is one commit: both revisions, the regenerated fixtures and
    schema copy, and whatever the inspector needs to follow the core. The
@@ -291,11 +295,12 @@ Left open on purpose, each with its owner.
      julia:      # the package suite, no browser and no bundle
        strategy: {matrix: {os: [ubuntu-latest, windows-latest]}}
        steps: checkout, setup-julia 1.13, julia-actions/cache,
-              instantiate test, run test/runtests.jl
+              instantiate from the root, run test/runtests.jl
      fixtures:   # the drift check
        steps: checkout, setup-julia, cache,
-              instantiate scripts, run scripts/fixtures.jl,
-              git diff --exit-code -- frontend/fixtures frontend/schema
+              instantiate from the root, run scripts/fixtures.jl,
+              git status --porcelain -- frontend/fixtures frontend/schema
+              must print nothing
      frontend:   # everything of answer 5
        steps: checkout, setup-node with npm cache, npm ci,
               npm run types, npm run check, npm test,
