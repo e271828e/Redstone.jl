@@ -49,7 +49,10 @@ Left open on purpose, each with the bump or the axis that owns it.
   `name` go as format 1.1 and the assembly-face fields are closed; the
   bumps' working list is now `visual_grammar.md`'s "Design axes".
 - **The schema's `$id`.** The URL it carries once the inspector has a home
-  on GitHub Pages; the file ships before the URL resolves.
+  on GitHub Pages; the file ships before the URL resolves. Settled by axis
+  7 on 2026-10-30 (`build_release.md`, answer 7): the core's docs site
+  serves the schema of record, and the `$id` names it,
+  `https://e271828e.github.io/Redstone.jl/stable/descriptor.json`.
 - **The exact fixture set in the core's suite.** Which models of
   `test/fixtures.jl` cover the cases answer 16 lists, and which small ones
   the increment adds.

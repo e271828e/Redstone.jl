@@ -20,10 +20,12 @@ item changes what the spec says, the spec edit is part of the item.
   hand-rolled SVG over ELK.js; `visual_grammar.md` for axis 3;
   `workspace.md` for axis 5; `live_session.md` for axis 6, the Julia
   package and the live session; `failure_descriptor.md` for the failure
-  bump, landed as §13.9, D-434 and increment 82. Next: axis 7, then the
-  package's increment, in `live_session.md`'s "Design axes" order; the
-  deployment overlay's bump stands as `visual_grammar.md` hands it on. The built-in Julia GUI is parked
-  (D-310). The later stages stand after the release, below.
+  bump, landed as §13.9, D-434 and increment 82; `build_release.md` for
+  axis 7, the repo, the pin, CI and the release, which closes the stage's
+  design. Next: the package's increment, in `build_release.md`'s "Design
+  axes" order; the deployment overlay's bump stands as `visual_grammar.md`
+  hands it on. The built-in Julia GUI is parked (D-310). The later stages
+  stand after the release, below.
 - **The API docstrings' two later passes.** The sweep to the manual's
   conventions landed (commits `84ece6b` to `b1d9ae3`, record
   `design/briefs/notes_docstring_sweep.md`, convention

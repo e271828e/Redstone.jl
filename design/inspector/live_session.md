@@ -318,7 +318,8 @@ This session closed axis 6. What it hands on, in working order:
    release and updates `Artifacts.toml`; the hosted copy's address, which
    fixes the schema's `$id` and the help page's second Vimium pattern; the
    Documenter `@ref` links of the detail pane; and the release checklist
-   that keeps one tag for the package and the bundle.
+   that keeps one tag for the package and the bundle. Ran on 2026-10-29
+   and 30; its record is `build_release.md`.
 4. **The package's increment**, after the frontend of axes 3 to 5 and the
    failure bump: the four `inspect` methods and `write_descriptor` with its
    `IO` primitive, the server with its channels, the protocol's stage 1

@@ -379,7 +379,8 @@ cited by number. Couplings are named where they exist.
    a pinned Redstone, front-end tests, the no-CDN rule and the privacy
    statement. The fixture source is the examples package at `examples/` in
    the core repo, with the longitudinal aircraft, so the pin covers it
-   (added 2026-10-26). *Builds on* answers 10, 11 and 14.
+   (added 2026-10-26). Ran on 2026-10-29 and 30; its record is
+   `build_release.md`. *Builds on* answers 10, 11 and 14.
 
 **Working order.** Step zero, the `Structure` refactor, landed as
 increment 67 on 2026-10-08 (D-315): the artifact keeps the declared wiring
@@ -401,7 +402,8 @@ hand-written fixture descriptor, so the drawing's needs reach the schema
 before version one is frozen and the canvas choice is made before anything
 depends on it. Then axes 3 and 5 over the real schema, both run on
 2026-10-27, axis 6 on 2026-10-28, designed with the bridge's device side
-in view, its record `live_session.md`, and axis 7 last.
+in view, its record `live_session.md`, and axis 7 last, on 2026-10-29 and
+30, its record `build_release.md`, which closes the stage's design.
 
 ## Stage 2: the bridge
 

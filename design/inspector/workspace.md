@@ -311,7 +311,8 @@ Handed on by this session, in working order:
 - **Axis 7: the docstring links.** A Documenter `@ref` link in a rendered
   docstring linking to the hosted documentation, which that axis knows the
   address of (answer 4). The bundled Markdown renderer is its dependency
-  to pick, offline and without a CDN.
+  to pick, offline and without a CDN. Ran on 2026-10-29 and 30; its
+  record is `build_release.md`.
 - **The bumps, as `visual_grammar.md` hands them on**, with this session's
   additions: the failure descriptor opens the drawer on its diagnostics
   (answer 10); the deployment overlay fills the timing tab's schedule rows
