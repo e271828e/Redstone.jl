@@ -468,8 +468,10 @@ for what they owe: open-mind stance, probe scripts in the scratchpad,
   ajv over every fixture, `a0221ff` the six modules with their tests,
   `27db12e` the map, the README section and the CI job, `7120790` the
   review fixes. `npm run check` 0 errors over 297 files, `npm test` 161
-  assertions in 7 files. The `frontend` CI job has not run, since nothing
-  is pushed.
+  assertions in 7 files. Merged by fast-forward and pushed on 2026-10-30
+  after the pin bump `ccbedf8` to the core's `abf1d81`; the first CI run
+  was green on all four jobs, the `frontend` job in 32 s, the suites in
+  2m23s and 3m39s, the `fixtures` job in 4m10s.
 - **The generator's two checks hold on the real output**: `node.path` a
   `string`, `node.tier` inside the leaf branch, `d.build` a `BuildBody`
   inside the build branch, and the negative probe gives the two expected

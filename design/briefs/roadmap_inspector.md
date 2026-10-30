@@ -138,7 +138,18 @@ routes, the feedthrough edges, the level's graph, each with unit tests
 over the fixtures, ajv over every fixture in the test run, and the map.
 No drawing. Visible: `npm test` and `npm run check` green. Draws on
 `initial_design.md` answers 17 and 18, `workspace.md` answer 10,
-`build_release.md` answers 4 and 5.
+`build_release.md` answers 4 and 5. *Landed on 2026-10-30 at `ccbedf8`
+of `RedstoneInspector.jl`, pinned at the core's `abf1d81`, which spells
+the schema's node and envelope branches (`778d6ee`) after both generator
+checks failed; its brief, `brief_inspector_02_foundation_pure.md`,
+records the modules, the review and the first run of the `frontend` CI
+job, 32 s. Facts the next briefs take from it: the map is
+`frontend/MAP.md`, cited by section; the test helper is
+`src/lib/fixtures.ts`; the module names are `loader`, `tree`, `resolve`,
+`feedthrough`, `level`, `model`; `elkGraph` takes sizes and runs no
+layout; the shell `App.svelte` prints the loader's outcome and is
+replaced by increment 3; the `frontend` CI job exists and increment 3
+extends it with the build, Playwright and the screenshots.*
 
 **Increment 3: the foundation, canvas.** The SVG canvas ported from the
 spike over the resolution modules: ELK per level with the spike's

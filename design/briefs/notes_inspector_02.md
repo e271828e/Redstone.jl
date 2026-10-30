@@ -122,3 +122,9 @@ stage-1 bullet and the roadmap's increment 2 entry gain "built on
 `increment-2` at `7120790`, awaiting merge and push". The merge and the
 pin bump are the steps under "For the user" above; the pin bump's hash is
 the core's tip after the push, `778d6ee` or later.
+
+The user returned the same day and asked for the steps above to be run:
+the core pushed at `abf1d81`, `increment-2` fast-forwarded onto master,
+the pin bumped to `abf1d81` as `ccbedf8` (102 depot slugs in eight
+fixtures, nothing else), pushed, CI green on all four jobs, the worktree
+and branch removed, and the pending bullet and roadmap entry written.

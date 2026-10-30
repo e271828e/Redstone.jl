@@ -26,9 +26,12 @@ item changes what the spec says, the spec edit is part of the item.
   ten increments on two tracks in a separate repo. Its increment 1, the
   repo and the writing half of the package, landed on 2026-10-30 as
   `RedstoneInspector.jl` at `cbc4ff2` with a green CI, brief
-  `design/briefs/brief_inspector_01_repo_and_writer.md`; next are its
-  increments 2 and 9 in parallel, the frontend's pure foundation and the
-  server, after a pin bump to the core's tip. The deployment
+  `design/briefs/brief_inspector_01_repo_and_writer.md`. Its increment 2,
+  the frontend's pure foundation, landed on 2026-10-30 at `ccbedf8`,
+  pinned at the core's `abf1d81`, with all four CI jobs green, brief
+  `design/briefs/brief_inspector_02_foundation_pure.md`; next are its
+  increment 3, the canvas, and increment 9, the server, in review on its
+  own branch. The deployment
   overlay's bump stands as `visual_grammar.md` hands it on. The built-in Julia GUI is parked (D-310). The later stages
   stand after the release, below.
 - **The API docstrings' two later passes.** The sweep to the manual's
