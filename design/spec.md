@@ -11612,8 +11612,11 @@ declarations, `stop_reason` and `transparent_container`, each as the file
 and line Julia reports, since Julia records no location for a `struct`
 itself. The node's summary lists each inert field as `repr` text under
 `:compact` and `:limit`, cut at 80 characters, so a `Constant` holding a
-lookup table never swells the file. The summary is for a human to read,
-never for a program to rebuild values from.
+lookup table never swells the file. An inert field holding a `NamedTuple`
+lists one entry per field instead, named by the dotted path, `fixed.Kp`,
+a nested `NamedTuple` opening in turn, so a `DiscretePID`'s gains read one
+per line where one cut entry would hide most of them ([D-439][d-439]). The summary
+is for a human to read, never for a program to rebuild values from.
 
 **`descriptor` returns a tree of `NamedTuple`s, vectors, strings, numbers
 and Booleans, and the core takes no JSON dependency** ([D-432][d-432]). Encoding to
@@ -16404,6 +16407,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-434]: decisions.md#d-434--the-failure-descriptor-and-a-diagnostic-as-data
 [d-437]: decisions.md#d-437--address-a-bare-contracts-port-by-the-default-face-u-or-y
 [d-438]: decisions.md#d-438--name-a-bare-stores-leaf-by-the-declarations-letter-x-s-or-m
+[d-439]: decisions.md#d-439--open-an-inert-namedtuple-field-in-the-parameter-summary
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop
