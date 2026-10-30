@@ -433,9 +433,10 @@ were derived.
 | [D-432][d-432] | Render an artifact to data through `descriptor` | ratified |
 | [D-433][d-433] | The descriptor writer's readings | ratified |
 | [D-434][d-434] | The failure descriptor and a diagnostic as data | ratified |
-| [D-435][d-435] | Admit a bare leaf as a store declaration, addressed by the component path | ratified |
+| [D-435][d-435] | Admit a bare leaf as a store declaration, addressed by the component path | superseded → [D-438][d-438] |
 | [D-436][d-436] | Admit a bare contract, a port with no face, addressed by the component path | superseded → [D-437][d-437] |
 | [D-437][d-437] | Address a bare contract's port by the default face `u` or `y` | ratified |
+| [D-438][d-438] | Name a bare store's leaf by the declaration's letter `x`, `s` or `m` | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -17513,7 +17514,7 @@ well. The session's record is `design/inspector/failure_descriptor.md`.
 
 ### D-435 — Admit a bare leaf as a store declaration, addressed by the component path
 
-**Status.** ratified
+**Status.** superseded → [D-438][d-438]
 
 **Position.** A store declaration, `x_init`, `s_init` or `m_init`, returns a
 `NamedTuple` with one named field per leaf, or one bare leaf, which the
@@ -17888,6 +17889,107 @@ wire has no default argument, so it stays two segments.
 - *Drawing the bare port without its label in the inspector:* hides the
   address every reader and condition uses, and the letters are short enough
   to draw.
+
+### D-438 — Name a bare store's leaf by the declaration's letter `x`, `s` or `m`
+
+**Status.** ratified
+
+**Position.** A store declaration, `x_init`, `s_init` or `m_init`, returns a
+`NamedTuple` with one named field per leaf, or one bare leaf, whose field is
+named by the declaration's letter, `x`, `s` or `m` ([§7.1][s7-1], [§8.2][s8-2], [§14.1][s14-1],
+[§14.4][s14-4]). The bundle carries the leaf itself, as [D-435][d-435] ruled, and every
+surface that addresses a leaf by name sees an ordinary field. The bundled
+rulings:
+
+- A bare store is anything the declaration returns that is not a
+  `NamedTuple`, read as one leaf against the tier's vocabulary: a real or an
+  `SArray` of reals for `x` ([D-094][d-094]), an isbits value or a `Symbol` for `s`
+  and `m` ([D-231][d-231]). A leaf outside the vocabulary is `IllegalStateLeaf` or
+  `IllegalStoreField` on the field `x`, `s` or `m`. `StoreNotNamedTuple`
+  stays retired. The shape is decided per declaration, independently across
+  the three and of the contracts ([D-437][d-437]).
+- The stateless spelling is `nothing`, the one spelling of "no state", the
+  undeclared fallback and the bundle law's presence test. `(;)` is refused
+  as `EmptyStore`, its message naming `nothing`. [D-263][d-263]'s mandatory marker
+  stands.
+- The bundle law stands. `x_deriv`, `x_projection` and a handler's `x` key
+  return the leaf itself for a bare `x`, `s_update` the leaf for a bare `s`,
+  and a handler's `m` key or a condition's `m` payload replaces a bare `m`
+  whole, there being nothing to merge ([§9.5][s9-5], [§14.3][s14-3]).
+- The field is the declaration's letter. A bare `x_init` declares the field
+  `x`, a bare `s_init` the field `s`, a bare `m_init` the field `m`. The
+  layout, linearization's state list, the trace, the log, the diagnostics'
+  `field` payload and the renderers carry it as any field, so a bare leaf
+  of `plant/integrator` reads `plant/integrator/x` wherever a user sees it.
+  The default applies to a bare declaration only; a named store may use the
+  letter as a field name, which is then the author's name like any other.
+- The readers accept the headless spelling where the declaration is bare.
+  When the addressed store is bare, a leaf with no head, empty or beginning
+  at a step, takes the letter as its head and is then resolved as any field:
+  `get_state("integrator")` reads the leaf, `get_state("integrator", "[2]")`
+  one component of an `SArray` leaf, `get_state("kf", ".P")` a field of a
+  bare isbits struct in `s`, and the store selectors' `leaf` defaults to the
+  empty address ([§14.4][s14-4]). A headless leaf against a named store is
+  `ReadResolution` with reason `:store_shape`, the field list in hand. A
+  named head against a bare store is the ordinary `:undeclared`, its
+  candidate the letter.
+- A bare payload names the bare leaf. `at("integrator", set(x = 1.0))` sets
+  the field `x`, checked at resolution. A bare payload against a named store
+  is `ConditionResolution` with reason `:store_shape`, the fields in hand. A
+  named payload against a bare store is the ordinary `:undeclared_field`,
+  its candidate the letter ([§14.3][s14-3]).
+- The reserved empty name retires from the bookkeeping. No `(path, name)`
+  pair carries it, and no renderer drops it. A headless leaf address is
+  parsed as an address with no head, which the shape then supplies or
+  refuses.
+- An assembly face is never bare, and the contracts are [D-437][d-437]'s.
+
+**Spec.** [§3.1][s3-1], [§3.2][s3-2], [§5.2][s5-2], [§7.1][s7-1], [§7.3][s7-3], [§8.2][s8-2], [§9.1][s9-1], [§9.5][s9-5], [§13.7][s13-7], [§14.1][s14-1],
+[§14.3][s14-3], [§14.4][s14-4], [Appendix B][sB], [Appendix C][sC], [Appendix D][sD]
+
+**Rationale.** [D-435][d-435] made the bare leaf's address the empty name on the
+ground that a store field is private, so a name the author never wrote would
+show nowhere that matters. [D-437][d-437] then named a bare port's face `u` or `y`,
+and the two rulings together left the code saying "bare" in two ways: a
+keyed name beside a flag for a port, a reserved empty key for a store, with
+its own arm in the layout, the readers, the conditions, the renderers and
+every store-side diagnostic. The field name is less private than [D-435][d-435]
+weighed it. The readers, the conditions, `show`, the log tree and any export
+address a store by it, and each of those is a by-name surface that would
+carry the empty-name arm forever, beside ports that carry none.
+
+The name the author never wrote is, as for the ports, one they write in
+every stage signature. `x_deriv(::Integrator, (; x, u)) = u` names the bare
+state `x`, and under a bare store the bundle field and the leaf's field
+coincide, as [D-437][d-437] made the bundle field and the face coincide for a bare
+port. The five letters `x`, `s`, `m`, `u`, `y` then name a bundle everywhere
+and, where the declaration is bare, the thing itself, under one rule and one
+mechanism. A default name also keeps addresses stable as a component grows:
+a bare `x_init` that becomes `(x = …, v = …)` keeps every reader and
+condition that named `x` valid, where the headless address broke them all.
+
+The headless spelling survives as sugar where a default argument already
+exists, the store selectors' `leaf` and the condition payload, triggered by
+the declared shape and never by the leaf count, so `get_state("integrator")`
+and `set(x = 1.0)` read as they did under [D-435][d-435].
+
+**Rejected.**
+- *Superseded position — the headless address ([D-435][d-435]):* the reserved empty
+  name in every store-side by-name surface, a second mechanism for "bare"
+  beside [D-437][d-437]'s, and addresses that break when a bare store grows a second
+  leaf; its spelling is kept as sugar.
+- *A neutral default such as `value` or `q`:* a name from nowhere in the
+  author's code, where the letter is in every stage signature and matches
+  the declaration's own name.
+- *Canonicalizing a bare value into a one-field `NamedTuple` in the
+  kernel:* the bijection owed at every seam, [D-247][d-247]'s own rejection, which
+  carrying the bare shape first-class avoids; the kernel is unchanged by
+  this entry.
+- *Triggering the headless default by leaf count rather than declared
+  shape:* a second leaf added later would silently move an address, and a
+  named field's name is the author's.
+- *Keeping the empty name for stores alone:* the dual mechanism above, paid
+  again by each future surface that lists state by name.
 
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
@@ -18301,6 +18403,7 @@ wire has no default argument, so it stays two segments.
 [d-435]: #d-435--admit-a-bare-leaf-as-a-store-declaration-addressed-by-the-component-path
 [d-436]: #d-436--admit-a-bare-contract-a-port-with-no-face-addressed-by-the-component-path
 [d-437]: #d-437--address-a-bare-contracts-port-by-the-default-face-u-or-y
+[d-438]: #d-438--name-a-bare-stores-leaf-by-the-declarations-letter-x-s-or-m
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property
