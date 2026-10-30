@@ -29,9 +29,11 @@ item changes what the spec says, the spec edit is part of the item.
   `design/briefs/brief_inspector_01_repo_and_writer.md`. Its increment 2,
   the frontend's pure foundation, landed on 2026-10-30 at `ccbedf8`,
   pinned at the core's `abf1d81`, with all four CI jobs green, brief
-  `design/briefs/brief_inspector_02_foundation_pure.md`; next are its
-  increment 3, the canvas, and increment 9, the server, in review on its
-  own branch. The deployment
+  `design/briefs/brief_inspector_02_foundation_pure.md`. Its increment 9,
+  the server, landed on 2026-10-30 at `38b8c8e`, brief
+  `design/briefs/brief_inspector_09_server.md`, with the page's socket
+  client due on the frontend track after increment 4 by
+  `frontend/PROTOCOL.md`; next is its increment 3, the canvas. The deployment
   overlay's bump stands as `visual_grammar.md` hands it on. The built-in Julia GUI is parked (D-310). The later stages
   stand after the release, below.
 - **The API docstrings' two later passes.** The sweep to the manual's

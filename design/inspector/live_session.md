@@ -20,10 +20,11 @@ Left open on purpose, each with its owner.
   answer 8, which needs a preference listing extra allowed origins and a
   forwarding entry in the Vite configuration. Taken up by whoever develops
   the frontend, when the rebuild-and-reload loop chafes.
-- **Zed in `edit`'s table.** Whether `InteractiveUtils.edit` passes a line
-  to Zed and what an `EDITOR` carrying `--wait` does there (answer 6). A
-  check for the package's increment; the fallback is a `define_editor` entry
-  in `startup.jl`.
+- **Zed in `edit`'s table.** Checked by increment 9: Zed is absent from
+  Julia 1.13.3's editor table, and the fallback runs `zed path` without
+  the line. The inspector's README gives the `InteractiveUtils.define_editor("zed")`
+  entry for `startup.jl`; the package carries no editor code (answer 6).
+  Proposing the entry upstream is open.
 - **A token in the URL.** Stage 2's, if commanding a run over the socket
   earns more than the `Origin` check (answer 6).
 - **A protocol version.** Stage 2's, needed only if a third client ever
@@ -41,7 +42,9 @@ Left open on purpose, each with its owner.
    `inspect(deployment::Deployment)` push the artifact's descriptor.
    `inspect(err::DiagnosticError)` pushes the failure descriptor of an
    error thrown elsewhere, which at the REPL is the `err` binding after a
-   failed `Model(root)`. Stage 2 adds `inspect(sim)`. Every method takes
+   failed `Model(root)`; `err` holds an exception stack, so the package
+   accepts a `Base.ExceptionStack` as a fifth form and takes the last
+   `DiagnosticError` in it (increment 9). Stage 2 adds `inspect(sim)`. Every method takes
    `name` and returns `nothing`. The root form builds a `Build` only; a
    user who wants concrete `Δt` builds the `Deployment` and passes it.
    *Why:* the root form serves the edit loop with one call per iteration,
@@ -224,8 +227,11 @@ Left open on purpose, each with its owner.
    *Rejected:* a preference for the hint; `println`.
 
 8. **The development loop: a `bundle_dir` preference, fixtures without
-   Julia.** The production server reads `artifact"bundle"`, the folder Pkg
-   unpacks on install from the release asset `Artifacts.toml` names. The
+   Julia.** The production server reads the `bundle` artifact, the folder
+   Pkg unpacks on install from the release asset `Artifacts.toml` names,
+   through `artifact_hash` and `artifact_path` at runtime, since the
+   `artifact"bundle"` macro refuses to load while the entry is absent
+   (increment 9). The
    preference `bundle_dir` makes it serve that directory instead, each
    file read from disk on every request, so `vite build --watch` in
    `frontend/` and a browser reload show an edit against the real server,

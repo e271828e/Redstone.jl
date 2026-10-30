@@ -203,7 +203,20 @@ the three preferences, `stop!`, the suite of `live_session.md`'s answer
 page's socket client with the status bar's connection state and the
 download, lands once increment 4 has the status bar and is the only
 point where the tracks touch. Visible: `inspect(model)` opens the page.
-Draws on `live_session.md` answers 1 and 3 to 8.
+Draws on `live_session.md` answers 1 and 3 to 8. *Landed on 2026-10-30 at
+`38b8c8e` of `RedstoneInspector.jl`, four commits on the Julia side only;
+its brief, `brief_inspector_09_server.md`, records the review and the
+readings, and `notes_inspector_09.md` their reasons. Facts the frontend
+takes from it, all in `frontend/PROTOCOL.md`: the page greets with
+`{"type": "hello", "channel": "<name>", "major": 1}` and asks for an
+editor with `{"type": "open_location", "file": "<path>", "line": <n>}`;
+the descriptor arrives as the pretty-printed envelope text in one text
+frame, told from a control message by `format_version` against `type`;
+binary frames are dropped; a second `hello` moves the socket to the new
+channel; the handshake is accepted only from `http://localhost:<port>`
+or `http://127.0.0.1:<port>`, the port 8601 or the next nine; the
+socket client, the connection state and the download wait for increment
+4's status bar.*
 
 **Increment 10: the release.** `scripts/release.jl`, the `release` job
 with the tag-absent rule, Pages, the `base` path, the version baked into
