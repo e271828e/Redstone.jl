@@ -381,7 +381,7 @@ The facts of `closed_loop`'s elements the detail checks pin:
   `Redstone.Blocks.Junction`, display name `SumJunction`; input `in1`'s
   terminal producer `plant` port `h`.
 - `sensing`, closed: display name `Group`, 2 children, faces `h` in and
-  `h_meas` out, 3 wires.
+  `h_meas` out.
 - The root wire into `sensing|in|h`: declared `plant/h` to `sensing/h`,
   terminal producer `plant/h`, terminal consumer `sensing/altimeter/in1`,
   `Float64` float, level `/`.
