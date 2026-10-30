@@ -1,5 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://e271828e.github.io/Redstone.jl/stable/descriptor.json",
   "title": "Redstone descriptor",
   "description": "The projection of a Build, a Deployment or a carrier exception, a failed build's or a service's, to data (spec §13.9, D-432, D-434). Version 1.0. The writer is `descriptor` in src/descriptor.jl; this file is the shape of record, strict about the writer's output: every object closes with additionalProperties false, and a field that does not apply is omitted, never null. The design record is design/inspector/descriptor_design.md. `name` is optional, a label for the model that a writer outside the core supplies; `descriptor` never writes it.",
   "type": "object",

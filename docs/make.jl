@@ -4,6 +4,10 @@ using Documenter, Redstone
 cp(joinpath(@__DIR__, "..", "README.md"), joinpath(@__DIR__, "src", "index.md");
    force = true)
 
+# The schema of record is served beside the pages, at the address its `$id` names.
+cp(joinpath(@__DIR__, "..", "src", "descriptor.json"), joinpath(@__DIR__, "src", "descriptor.json");
+   force = true)
+
 # The glossary page is generated from the spec's Appendix D.
 include("glossary.jl")
 write_glossary(joinpath(@__DIR__, "..", "design", "spec.md"),
