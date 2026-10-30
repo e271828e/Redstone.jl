@@ -20,11 +20,11 @@ workload_loop() = Blocks.Group((
         force = Blocks.SumJunction{Float64, 2}(),
         plant = Blocks.TransferFunction(num = (1.0,), den = (1.0, 0.6, 1.0)),
         integral = Blocks.LimitedIntegrator(lower = -0.5, upper = 0.5));
-    local_wires = ("reference" => "controller/r", "plant" => "controller/y",
-                   "controller/u" => "actuator", "actuator" => "force/in1",
-                   "force" => "plant", "plant" => "integral"),
+    local_wires = ("reference/y" => "controller/r", "plant/y" => "controller/y",
+                   "controller/u" => "actuator/u", "actuator/y" => "force/in1",
+                   "force/y" => "plant/u", "plant/y" => "integral/u"),
     input_wires = ("disturbance" => "force/in2",),
-    output_wires = ("plant" => "y",),
+    output_wires = ("plant/y" => "y",),
     sample_times = (controller = Absolute(Hz(50)),))
 
 """

@@ -32,7 +32,7 @@ hooked_interrupted(c) = Group((c = c, trig = Trigger(0.15));
 # at frame 3's publication, the frame whose integration sent the signal.
 interrupter_watched() = Group((c = SelfInterrupter(0.22), trig = Trigger(0.25),
                                stop = StopRequest(reason = "ramp at level"));
-                              local_wires = ("c/q" => "trig/sig", "trig/on" => "stop"))
+                              local_wires = ("c/q" => "trig/sig", "trig/on" => "stop/u"))
 
 # A frame failing on a bundle field its law does not give: the species rule's
 # lookup (§13.2, D-248) re-invokes `x_init`, which, armed by that failing
@@ -398,7 +398,7 @@ function failures_runtime()
             sim = Simulation(interrupter_watched(); h = 1//10)
             init!(sim)
             run!(sim; t_end = 5.0)
-            @test termination(sim).source === ModelRequestedStop("stop", BARE, "ramp at level")
+            @test termination(sim).source === ModelRequestedStop("stop", :y, "ramp at level")
             @test latest(sim).frame == 3 && !sigint_pending()
             # With the request ignored the same frame ends on the interrupt.
             unwatched = Simulation(interrupter_watched(); h = 1//10)
@@ -550,6 +550,11 @@ function failures_runtime()
         @test err.cursor.index == 0                     # the sweep is no stage, so no ordinal
         @test !(err.cause isa DomainError) && d.path != "con"
         @test lifecycle(sim) === :errored
+        # A bare state's leaf is named by its field `x` (D-438).
+        bare = Model(bare_world(); h = 1//10)
+        init!(bare, set(u = (u = NaN, p = 0.0)))
+        err = failure(() -> frames!(bare, 1))
+        @test err isa StepError{NonfiniteState} && err.cause.path == "acc" && err.cause.leaf == "x"
     end
 
     @testset "the sweep covers a localized frame's remainder segment (§13.4, D-157)" begin

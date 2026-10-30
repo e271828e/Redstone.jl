@@ -18,9 +18,14 @@
 struct Decls
     x::Any                 # continuous state, walked to the activation scalar; `nothing` if none
     s::Any                 # discrete state, pinned wholesale (D-195); `nothing` if none
-    ins::NamedTuple        # face => type, retyped at the activation scalar (D-263); keyed `BARE` when bare (D-436)
-    outs::NamedTuple       # port => type, retyped at the activation scalar (D-263); keyed `BARE` when bare (D-436)
+    ins::Any               # face => type, retyped at the activation scalar (D-263); one type when bare (D-437)
+    outs::Any              # port => type, retyped at the activation scalar (D-263); one type when bare (D-437)
 end
+
+# A row's contracts by name, a bare one's port under its default face (D-437);
+# `is_bare` reads the shape off the fields themselves.
+keyed_ins(decl::Decls) = _keyed(decl.ins, default_name(u_types))
+keyed_outs(decl::Decls) = _keyed(decl.outs, default_name(y_types))
 
 """The tier's own state register: at most one of the two is ever other than `nothing`."""
 state_decls(decl::Decls, tier::Tier) = tier === CONTINUOUS ? decl.x : decl.s
@@ -33,9 +38,9 @@ state_decls(decl::Decls, tier::Tier) = tier === CONTINUOUS ? decl.x : decl.s
 function declarations(@nospecialize(comp), tier::Tier, ::Type{T}) where {T}
     tier === CONTINUOUS ?
         Decls(retype_value(T, invoke_declaration(x_init, comp)), nothing,
-              declared_at(u_types, comp, tier, T), declared_at(y_types, comp, tier, T)) :
+              contract_at(u_types, comp, tier, T), contract_at(y_types, comp, tier, T)) :
         Decls(nothing, invoke_declaration(s_init, comp),
-              declared_at(u_types, comp, tier), declared_at(y_types, comp, tier))
+              contract_at(u_types, comp, tier), contract_at(y_types, comp, tier))
 end
 
 # --- 2. probing ---------------------------------------------------------------
@@ -69,7 +74,7 @@ function probe_stage1(structure::Structure, decls::Vector{Decls},
                                      _bundle_values(bundle_fields, decl, NamedTuple(), NamedTuple(),
                                                     T; ws = workspaces[ci], m = mstores[ci],
                                                     Δt = 1.0))
-            # The declared shape picks the law (§9.3, D-436): a named contract's
+            # The declared shape picks the law (§9.3, D-437): a named contract's
             # return is a `NamedTuple` of ports, a bare one's the port's value,
             # held to its type by the port check like any port.
             if !is_bare(decl.outs)
@@ -80,14 +85,14 @@ function probe_stage1(structure::Structure, decls::Vector{Decls},
                 isempty(returned) && throw(DiagnosticError(DeadStage(path = path, stage = stage)))
             end
             y = _keyed_return(decl.outs, returned)
-            _check_ports(path, stage, y, decl.outs, T)
-            _embed_ports(y, decl.outs, T)
+            _check_ports(path, stage, y, keyed_outs(decl), T)
+            _embed_ports(y, keyed_outs(decl), T)
         end
     end
 end
 
 # The probe bundle from keyed values: `u`, `y1` and `y` arrive keyed as the
-# products are, and a bare side's field carries its one value (§5.2, D-436).
+# products are, and a bare side's field carries its one value (§5.2, D-437).
 function _bundle_values(bundle_fields, decl::Decls, u, y1, ::Type{T}; y = NamedTuple(),
                         ws = nothing, m = nothing, Δt = 0.0) where {T}
     field_values = map(bundle_fields) do field
@@ -106,14 +111,14 @@ function _bundle_values(bundle_fields, decl::Decls, u, y1, ::Type{T}; y = NamedT
 end
 
 # A keyed side as its bundle field carries it: a bare side's one value, a named
-# side's `NamedTuple` (§5.2, D-436).
-_bundle_side(@nospecialize(contract::NamedTuple), side_values::NamedTuple) =
-    is_bare(contract) ? side_values[BARE] : side_values
+# side's `NamedTuple` (§5.2, D-437). The declared shape decides, never the keys.
+_bundle_side(@nospecialize(contract), side_values::NamedTuple) =
+    is_bare(contract) ? only(side_values) : side_values
 
-# A stage's return in the products' keyed form, a bare port's value under `BARE`
-# (D-436): the bookkeeping keys every port by name, the bare one by the empty one.
-_keyed_return(outs::NamedTuple, returned) =
-    is_bare(outs) ? NamedTuple{(BARE,)}((returned,)) : returned
+# A stage's return in the products' keyed form, a bare port's value under its
+# default face `y` (D-437): the bookkeeping keys every port by name.
+_keyed_return(@nospecialize(outs), returned) =
+    is_bare(outs) ? NamedTuple{(:y,)}((returned,)) : returned
 
 # The per-port loop collects (§13.1): a stage returning three wrong types names
 # all three.
@@ -167,12 +172,11 @@ _homes(decl::Decls, tier::Tier, m) =
     tier === CONTINUOUS ? (x = decl.x, m = m === nothing ? nothing : m[]) : (s = decl.s,)
 
 """
-The tier's store field names, for `DeclaredNotProduced`'s list-in-hand (§8.3). A
-bare store has no field name, so its letter stands for the whole value.
+The tier's store field names, for `DeclaredNotProduced`'s list-in-hand (§8.3), a
+bare store's field its letter (D-438).
 """
 _state_fields(homes::NamedTuple) =
-    Symbol[(name === BARE ? letter : name)
-           for (letter, home) in pairs(homes) for (name, _) in store_fields(home)]
+    Symbol[name for (letter, home) in pairs(homes) for (name, _) in store_fields(home, letter)]
 
 # --- 3. the nominal evaluation's products -------------------------------------
 
@@ -191,7 +195,7 @@ which Kahn itself discards.
 function _outputs(structure::Structure, decls::Vector{Decls},
                   stage1::Vector, mstores::Vector)
     n_components = length(structure.components)
-    ports = [Symbol[keys(decls[ci].outs)...] for ci in 1:n_components]
+    ports = [Symbol[keys(keyed_outs(decls[ci]))...] for ci in 1:n_components]
     stage1_names = [Symbol[keys(stage1[ci])...] for ci in 1:n_components]
     stage2_names = [filter(∉(stage1_names[ci]), ports[ci]) for ci in 1:n_components]
     dependencies = [Int[] for _ in 1:n_components]
@@ -199,7 +203,7 @@ function _outputs(structure::Structure, decls::Vector{Decls},
     edges = [Tuple{Int,Symbol,Symbol}[] for _ in 1:n_components]
     for (ci, entry) in enumerate(structure.components)
         has_stage(y_direct, entry.instance) || continue
-        for face in keys(decls[ci].ins)
+        for face in keys(keyed_ins(decls[ci]))
             (producer_path, producer_port) = terminal_producer(structure, (entry.path, face))
             isempty(producer_path) && continue           # a root input: no producer to wait for
             producer_ci = index_of(structure, producer_path)
@@ -267,7 +271,7 @@ function _cycle_diagnostics(structure::Structure, edges::Vector{Vector{Tuple{Int
         end
         sort!(wires)
         path_at(ci) = structure.components[ci].path
-        # Slash form, a bare port by its component alone (D-436).
+        # Slash form, `path/port`.
         cycle = AlgebraicCycle(members = String[path_at(ci) for ci in order],
                                wires = [_named(path_at(order[producer_position]), port_name, "/") =>
                                         _named(path_at(order[consumer_position]), face_name, "/")
@@ -354,6 +358,17 @@ struct Layout
     sizes::Vector{Pair{DataType,Int}}        # leaf eltype => buffer length, name-sorted
     xblocks::Vector{UnitRange{Int}}          # per component: its range in the flat `x` buffer, empty where it owns none
     requesters::Vector{Requester}            # entry `i` owns offset `i - 1` of the `StopFlag` buffer (§13.5, D-316)
+    bare_outputs::Set{String}                # the primitives whose `y_types` is bare, `port`'s default (D-437)
+end
+
+# The address `port` reads (§11.2, D-437): the port `name`, or where the name is
+# left out the bare output's face `y`, by the declared shape alone.
+function port_addr(layout::Layout, path::String, name::Union{Nothing,Symbol})
+    name === nothing || return layout.addr[(path, name)]
+    path in layout.bare_outputs ||
+        throw(ArgumentError("`$path` declares no bare output, whose face `y` a `port` read " *
+                            "with no name reads — name the port (§11.2, D-437)"))
+    layout.addr[(path, :y)]
 end
 
 function cell_layout(structure::Structure, decls::Vector{Decls}, ::Type{T}) where {T}
@@ -392,7 +407,7 @@ function cell_layout(structure::Structure, decls::Vector{Decls}, ::Type{T}) wher
         true
     end
     for (entry, decl) in zip(structure.components, decls)
-        for (port_name, P) in pairs(decl.outs)
+        for (port_name, P) in pairs(keyed_outs(decl))
             place!(entry.path, :port, port_name, P)
         end
     end
@@ -451,7 +466,7 @@ function cell_layout(structure::Structure, decls::Vector{Decls}, ::Type{T}) wher
     # the walk, so entry `i` owns offset `i - 1` of the buffer.
     requesters = Vector{Requester}(undef, get(offsets, StopFlag, 0))
     for (entry, decl) in zip(structure.components, decls)
-        flag_ports = Symbol[port_name for (port_name, P) in pairs(decl.outs) if P === StopFlag]
+        flag_ports = Symbol[port_name for (port_name, P) in pairs(keyed_outs(decl)) if P === StopFlag]
         isempty(flag_ports) && continue
         reason = at_component(() -> invoke_declaration(stop_reason, entry.instance), entry.path)
         for port_name in flag_ports
@@ -461,7 +476,9 @@ function cell_layout(structure::Structure, decls::Vector{Decls}, ::Type{T}) wher
     end
     all(i -> isassigned(requesters, i), eachindex(requesters)) ||
         throw(InternalInvariant("a `StopFlag` offset with no requester"))
-    Layout(addr, root_inputs, sizes, xblocks, requesters)
+    bare_outputs = Set{String}(entry.path for (entry, decl) in zip(structure.components, decls)
+                               if is_bare(decl.outs))
+    Layout(addr, root_inputs, sizes, xblocks, requesters, bare_outputs)
 end
 
 # A root input's cells at an activation: D-168's meet, at the level of the whole
@@ -473,9 +490,9 @@ function _root_input_cell(structure::Structure, decls::Vector{Decls}, root_index
                           ::Type{T}) where {T}
     P_F = structure.root_types[root_index]
     walked_type = retype(T, P_F)
-    consumer_types = (decls[ci].ins[consumer_face]
+    consumer_types = (keyed_ins(decls[ci])[consumer_face]
                       for (ci, entry) in enumerate(structure.components)
-                      for consumer_face in keys(decls[ci].ins)
+                      for consumer_face in keys(keyed_ins(decls[ci]))
                       if terminal_producer(structure, (entry.path, consumer_face)) == ("", face))
     all(input_type -> _accepts_wire(input_type, walked_type, T), consumer_types) ? walked_type : P_F
 end
@@ -491,7 +508,7 @@ constructed; the probe products are what a cell holds until first written
 """
 struct Activation{T}
     decls::Vector{Decls}
-    products::Vector{NamedTuple}   # complete probe products, per component, a bare port's keyed `BARE`
+    products::Vector{NamedTuple}   # complete probe products, per component, a bare port's keyed `y`
     layout::Layout
 end
 
@@ -772,7 +789,7 @@ function _check_wires(draft::StructureDraft, diags::Vector{Diagnostic})
     # none, and resolves through `terminal_producer` (D-315). By index: a closure
     # taking the instance would compile once per component type (D-289).
     conns = [[face => draft.feeds[(draft.paths[ci], face)]
-              for (face, _) in contract_fields(_contract(u_types, draft.instances[ci]))]
+              for face in keys(_contract(u_types, draft.instances[ci]))]
              for ci in eachindex(draft.paths)]
     contracts_at(fn, scalar) = [at_component(() -> declared_at(fn, draft.instances[ci],
                                                                draft.tiers[ci], scalar),
@@ -990,9 +1007,9 @@ function probe_stage2(structure::Structure, decls::Vector{Decls},
         _frozen(entry.tier, T) && (products[ci] = carry.products[ci])
     end
 
-    in_values(ci, decl) = NamedTuple{tuple(keys(decl.ins)...)}(tuple(
-        (_probe_input(structure, layout, products, ci, face, decl.ins[face], T)
-         for face in keys(decl.ins))...))
+    in_values(ci, decl) = NamedTuple{tuple(keys(keyed_ins(decl))...)}(tuple(
+        (_probe_input(structure, layout, products, ci, face, keyed_ins(decl)[face], T)
+         for face in keys(keyed_ins(decl)))...))
 
     for ci in order
         _probe_direct!(products, ci, structure, decls, stage1, layout,
@@ -1006,7 +1023,7 @@ function probe_stage2(structure::Structure, decls::Vector{Decls},
     # throws once for the whole model — as the two below it do.
     diags = Diagnostic[]
     for (ci, entry) in enumerate(structure.components)
-        missing_ports = setdiff(keys(decls[ci].outs), keys(products[ci]))
+        missing_ports = setdiff(keys(keyed_outs(decls[ci])), keys(products[ci]))
         isempty(missing_ports) ||
             push!(diags, DeclaredNotProduced(path = entry.path,
                                             ports = collect(missing_ports),
@@ -1083,13 +1100,13 @@ function _probe_direct!(products::Vector{NamedTuple}, ci::Int, structure::Struct
         comp, s1 = entry.instance, stage1[ci]      # read here, not captured: see `probe_stage1`
         stage = String(nameof(y_direct))
         bundle_fields = bundle_names(y_direct, comp, entry.tier, tuple(keys(s1)...))
-        u = NamedTuple{tuple(keys(decl.ins)...)}(tuple(
-            (_probe_input(structure, layout, products, ci, face, decl.ins[face], T)
-             for face in keys(decl.ins))...))
+        u = NamedTuple{tuple(keys(keyed_ins(decl))...)}(tuple(
+            (_probe_input(structure, layout, products, ci, face, keyed_ins(decl)[face], T)
+             for face in keys(keyed_ins(decl)))...))
         returned = invoke_probed(y_direct, :y_direct, path, comp, entry.tier,
                                  _bundle_values(bundle_fields, decl, u, s1, T;
                                                 ws = workspaces[ci], m = mstores[ci], Δt = 1.0))
-        # The declared shape picks the law, as in `probe_stage1` (§9.3, D-436).
+        # The declared shape picks the law, as in `probe_stage1` (§9.3, D-437).
         if !is_bare(decl.outs)
             returned isa NamedTuple ||
                 throw(DiagnosticError(ConformanceFailure(path = path, what = stage,
@@ -1098,13 +1115,13 @@ function _probe_direct!(products::Vector{NamedTuple}, ci::Int, structure::Struct
             isempty(returned) && throw(DiagnosticError(DeadStage(path = path, stage = stage)))
         end
         y2 = _keyed_return(decl.outs, returned)
-        _check_ports(path, stage, y2, decl.outs, T)
+        _check_ports(path, stage, y2, keyed_outs(decl), T)
         # Stage-1 position is the stage's: a stage-2 return of a port stage 1
         # already returned writes it twice (§5.3, §8.3).
         twice = intersect(keys(s1), keys(y2))
         isempty(twice) ||
             throw(DiagnosticError(ProducedByTwoStages(path = path, ports = collect(twice))))
-        products[ci] = merge(s1, _embed_ports(y2, decl.outs, T))
+        products[ci] = merge(s1, _embed_ports(y2, keyed_outs(decl), T))
     end
     nothing
 end
@@ -1119,10 +1136,10 @@ end
 # meaningful once an earlier one fails.
 function _check_state_write(path, what, x⁺, x, ::Type{T}; event = nothing) where {T}
     # The declared shape picks the law: a bare state is one arrival at its type.
-    x isa NamedTuple ||
+    is_bare(x) &&
         return _accepts(typeof(x), typeof(x⁺), T) ? Diagnostic[] :
                Diagnostic[ConformanceFailure(path = path, what = what, event = event,
-                                             reason = :field_type, shape = :state, field = BARE,
+                                             reason = :field_type, shape = :state, field = :x,
                                              observed = typeof(x⁺), declared = typeof(x),
                                              activation = T)]
     x⁺ isa NamedTuple ||
@@ -1169,9 +1186,9 @@ function probe_events(structure::Structure, act::Activation{Float64})
             declared_events = invoke_declaration(state_events, comp)
             isempty(declared_events) && return NamedTuple(), ()
             bundle_fields = event_bundle_names(comp)
-            u = NamedTuple{tuple(keys(decl.ins)...)}(tuple(
-                (_probe_input(structure, layout, products, ci, face, decl.ins[face], Float64)
-                 for face in keys(decl.ins))...))
+            u = NamedTuple{tuple(keys(keyed_ins(decl))...)}(tuple(
+                (_probe_input(structure, layout, products, ci, face, keyed_ins(decl)[face], Float64)
+                 for face in keys(keyed_ins(decl)))...))
             bundle = _bundle_values(bundle_fields, decl, u, NamedTuple(), Float64;
                                     y = products[ci], ws = workspaces[ci], m = mstores[ci])
             # A loop, not a `map` closure, which would capture the instance and its
@@ -1228,11 +1245,11 @@ function _check_handler(path, name, returned, decl::Decls, @nospecialize(comp))
         append!(diags, _check_state_write(path, "$what `x`", returned.x, decl.x, Float64;
                                           event = name))
     if haskey(returned, :m) && :m in stores
-        if !(m₀ isa NamedTuple)
+        if is_bare(m₀)
             # A bare mode store is written whole, at its own type exactly.
             typeof(returned.m) === typeof(m₀) ||
                 push!(diags, ConformanceFailure(path = path, what = "$what `m`", event = name,
-                                               reason = :field_type, shape = :mode, field = BARE,
+                                               reason = :field_type, shape = :mode, field = :m,
                                                observed = typeof(returned.m),
                                                declared = typeof(m₀)))
         elseif !(returned.m isa NamedTuple)
@@ -1383,13 +1400,16 @@ function compile(build::Build, act::Activation{T}, schedule; chunk_size::Int = 1
     addr_group(path, names) =
         NamedTuple{tuple(names...)}(tuple((layout.addr[(path, n)] for n in names)...))
     # What an entry gathers or writes on one side: a bare side's one address, read
-    # and written as the value itself, or a named side's group (§5.2, D-436).
-    entry_addrs(path, names) = names == [BARE] ? layout.addr[(path, BARE)] : addr_group(path, names)
+    # and written as the value itself, or a named side's group (§5.2, D-437). The
+    # declared shape decides, never the names.
+    entry_addrs(decl, path, names) =
+        is_bare(decl.outs) && !isempty(names) ? layout.addr[(path, only(names))] :
+                                                addr_group(path, names)
     # An input face's address is its terminal producer's, stored nowhere (D-315).
     input_addr(ci, face) = layout.addr[terminal_producer(structure, (components[ci].path, face))]
     in_group(ci, decl) =
-        is_bare(decl.ins) ? input_addr(ci, BARE) :
-        NamedTuple{tuple(keys(decl.ins)...)}(tuple((input_addr(ci, face) for face in keys(decl.ins))...))
+        is_bare(decl.ins) ? input_addr(ci, :u) :
+        NamedTuple{tuple(keys(keyed_ins(decl))...)}(tuple((input_addr(ci, face) for face in keys(keyed_ins(decl)))...))
 
     # A cell holds what the build probe populated until a sweep first writes it
     # (§10.5): this is the table's pre-`init!` content, and a frozen
@@ -1420,7 +1440,7 @@ function compile(build::Build, act::Activation{T}, schedule; chunk_size::Int = 1
         bundle_fields = bundle_names(y_state, comp, entry.tier, ())
         push!(stage1_entries, StageEntry{typeof(decl.x),bundle_fields}(
             y_state, comp, NamedTuple(), NamedTuple(),
-            entry_addrs(path, outputs.components[ci].stage1),
+            entry_addrs(decl, path, outputs.components[ci].stage1),
             x_offs[ci], clock, sstores[ci], mstores[ci], workspaces[ci], Δt_c[ci],
             path, ci, cursor))
         push!(stage1_gates, gate(ci))
@@ -1433,8 +1453,8 @@ function compile(build::Build, act::Activation{T}, schedule; chunk_size::Int = 1
         stage1_names = outputs.components[ci].stage1
         bundle_fields = bundle_names(y_direct, comp, entry.tier, tuple(stage1_names...))
         push!(stage2_entries, StageEntry{typeof(decl.x),bundle_fields}(
-            y_direct, comp, in_group(ci, decl), entry_addrs(path, stage1_names),
-            entry_addrs(path, outputs.components[ci].stage2), x_offs[ci], clock,
+            y_direct, comp, in_group(ci, decl), entry_addrs(decl, path, stage1_names),
+            entry_addrs(decl, path, outputs.components[ci].stage2), x_offs[ci], clock,
             sstores[ci], mstores[ci], workspaces[ci], Δt_c[ci], path, ci, cursor))
         push!(stage2_gates, gate(ci))
     end
@@ -1448,7 +1468,7 @@ function compile(build::Build, act::Activation{T}, schedule; chunk_size::Int = 1
         update = update_of(tier)
         bundle_fields = bundle_names(update, comp, tier, tuple(outputs.components[ci].stage1...))
         output_addrs, input_addrs =
-            entry_addrs(path, _ports(outputs.components[ci])), in_group(ci, decl)
+            entry_addrs(decl, path, _ports(outputs.components[ci])), in_group(ci, decl)
         if tier === CONTINUOUS
             push!(rhs_entries, RHSEntry{typeof(decl.x),bundle_fields}(
                 comp, input_addrs, output_addrs, x_offs[ci], clock, mstores[ci], workspaces[ci],
@@ -1487,7 +1507,7 @@ function compile(build::Build, act::Activation{T}, schedule; chunk_size::Int = 1
                 push!(event_entries, EventEntry{typeof(decl.x),bundle_fields}(
                     declared_events[name].guard, declared_events[name].handler, projection, comp,
                     length(event_entries) + 1,
-                    in_group(ci, decl), entry_addrs(path, _ports(outputs.components[ci])),
+                    in_group(ci, decl), entry_addrs(decl, path, _ports(outputs.components[ci])),
                     x_offs[ci], clock, mstores[ci], workspaces[ci], path, name, ci, cursor))
                 push!(event_owner, ci)
                 push!(event_names, (path, name))
@@ -1563,10 +1583,10 @@ end
 # structurally here so the runtime `flatten!` into the derivative block is safe.
 function _check_derivative(path, ẋ, x, ::Type{T}) where {T}
     # The declared shape picks the law: a bare state's derivative is one value.
-    x isa NamedTuple ||
+    is_bare(x) &&
         return _accepts(typeof(x), typeof(ẋ), T) ? Diagnostic[] :
                Diagnostic[ConformanceFailure(path = path, what = "x_deriv",
-                                             reason = :field_type, shape = :x_init, field = BARE,
+                                             reason = :field_type, shape = :x_init, field = :x,
                                              observed = typeof(ẋ), declared = typeof(x),
                                              activation = T)]
     ẋ isa NamedTuple ||
@@ -1597,10 +1617,10 @@ end
 # world is pinned — no walk, no embedding — which makes the store assignment
 # type-stable and the ban on arithmetic over stores enforceable by construction.
 function _check_update(path, s⁺, s)
-    s isa NamedTuple ||
+    is_bare(s) &&
         return typeof(s⁺) === typeof(s) ? Diagnostic[] :
                Diagnostic[ConformanceFailure(path = path, what = "s_update",
-                                             reason = :field_type, shape = :s_init, field = BARE,
+                                             reason = :field_type, shape = :s_init, field = :s,
                                              observed = typeof(s⁺), declared = typeof(s))]
     s⁺ isa NamedTuple ||
         return Diagnostic[ConformanceFailure(path = path, what = "s_update",

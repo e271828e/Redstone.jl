@@ -288,10 +288,9 @@ wiring resolution: an endpoint stops before any field it could traverse past
 several levels is declared level by level, each assembly speaking of its own
 children alone.
 
-The child segment alone is the endpoint of a bare port, one with no face
-(D-436), and resolves with the name `BARE`; the caller checks it against the
-child's contract on its side. An empty path, or an empty last segment, names
-no terminal.
+The child segment alone names a child and no port (D-437), and resolves with
+the name `nothing`, which the caller refuses with the child's faces in hand. An
+empty path, or an empty last segment, names no terminal.
 """
 function resolve_terminal(entry::String, base::String, @nospecialize(assembly), path::AbstractString,
                           diags::Vector{Diagnostic}; owner::String = _at_path(base))
@@ -308,7 +307,7 @@ function resolve_terminal(entry::String, base::String, @nospecialize(assembly), 
     resolved = _one_level(entry, base, assembly, path, segments, alone ? 0 : 1, diags; owner)
     resolved === nothing && return nothing
     kid, segment = resolved
-    kid, _join(base, segment), alone ? BARE : Symbol(segments[end])
+    kid, _join(base, segment), alone ? nothing : Symbol(segments[end])
 end
 
 # The child half of the rule, shared by both of §13.3's path primitives: `tail`
@@ -387,8 +386,8 @@ end
 
 The terminal split: the final segment is the port or face name, the prefix
 resolves through `resolve`. The split is unambiguous because face names may
-contain dots, never slashes (§8.6). A path naming a child alone is the endpoint
-of a bare port, and its name is the empty one (D-436).
+contain dots, never slashes (§8.6). A path naming a child alone names no port,
+and its name is the empty one (D-437).
 """
 function resolve_terminal(@nospecialize(assembly), path::AbstractString)
     diags = Diagnostic[]
@@ -397,27 +396,13 @@ function resolve_terminal(@nospecialize(assembly), path::AbstractString)
                                 owner = "the component in hand")
     resolved === nothing && throw(DiagnosticError(only(diags)))   # declaration code: fail-fast
     comp, _, name = resolved
-    comp, String(name)
+    comp, name === nothing ? "" : String(name)
 end
 
-# A contract declaration at nominal, whatever the tier, in its declared shape: the
-# keys are a tier-independent fact, and the walk at `Float64` strips every
-# `Pinned` (D-263). A bare contract is its one type (D-436).
-function _contract(fn, @nospecialize(comp))
-    _declares(fn, comp) || return NamedTuple()
-    decl = invoke_declaration(fn, comp)
-    decl isa NamedTuple ? map(P -> retype_entry(Float64, P), decl) : retype_entry(Float64, decl)
-end
-
-# The `name => type` pairs of a contract in its declared shape: a `NamedTuple`'s
-# own entries, one `BARE` pair for a bare contract (D-436).
-contract_fields(@nospecialize(decl)) = pairs(_keyed(decl))
-
-# Does a contract in its declared shape have the port an endpoint names? The
-# child segment alone names a bare contract's port, a face name a named one's
-# entry (D-436).
-_has_port(decl, name::Symbol) =
-    name === BARE ? !(decl isa NamedTuple) : decl isa NamedTuple && haskey(decl, name)
+# A contract declaration at nominal, whatever the tier, keyed: the keys are a
+# tier-independent fact, the walk at `Float64` strips every `Pinned` (D-263),
+# and a bare contract is its one entry under the default face (D-437).
+_contract(fn, @nospecialize(comp)) = declared_at(fn, comp, CONTINUOUS)
 
 # Design: §13.3, Appendix C.
 # Inside a walk the walk has already evaluated the body once and this primitive
@@ -430,7 +415,7 @@ Return the [component](@ref g-component)'s input [face](@ref g-face) names, in
 declaration order.
 
 For a primitive the input faces are the keys of its [`u_types`](@ref), which do
-not depend on the scalar type, and a bare `u_types` lists as one empty name. For
+not depend on the scalar type, and a bare `u_types` lists as its face `u`. For
 an [assembly](@ref g-assembly) they are the face names its
 [`input_wires`](@ref) declares. Declaration order is kept, so
 printouts are deterministic and diagnostics stable.
@@ -443,7 +428,7 @@ See [`output_faces`](@ref) for the output side, and
 [`input_passthrough`](@ref) for the helper built on it.
 """
 input_faces(@nospecialize(comp)) = classify("", comp) === PRIMITIVE ?
-                 String[String(k) for (k, _) in contract_fields(_contract(u_types, comp))] :
+                 String[String(k) for k in keys(_contract(u_types, comp))] :
                  _walked_faces(comp, 1, input_wires, first)
 
 # Design: §13.3, Appendix C.
@@ -456,7 +441,7 @@ Return the [component](@ref g-component)'s output [face](@ref g-face) names, in
 declaration order.
 
 For a primitive the output faces are the keys of its [`y_types`](@ref), and a
-bare `y_types` lists as one empty name. For an [assembly](@ref g-assembly) they
+bare `y_types` lists as its face `y`. For an [assembly](@ref g-assembly) they
 are the face names its [`output_wires`](@ref) declares.
 
 Called from a declaration body during a build, `output_faces` reuses the
@@ -467,7 +452,7 @@ See [`input_faces`](@ref), the mirror on the input side, and
 [`output_passthrough`](@ref) for the helper built on it.
 """
 output_faces(@nospecialize(comp)) = classify("", comp) === PRIMITIVE ?
-                  String[String(k) for (k, _) in contract_fields(_contract(y_types, comp))] :
+                  String[String(k) for k in keys(_contract(y_types, comp))] :
                   _walked_faces(comp, 2, output_wires, last)
 
 # The walk's list when the walk evaluated this assembly, the one body asked for
@@ -509,9 +494,8 @@ of a child it does not feed itself. Its entries are splatted into the assembly's
 [`input_wires`](@ref), and mix freely with hand-written ones:
 `input_wires(w::World) = (input_passthrough(w, "aircraft"; except = ("atm",))...,)`.
 Each face of the child, as [`input_faces`](@ref) lists it, becomes the pair
-`prefix * sep * face => child_path * "/" * face`. A bare input, listed as the
-empty name, becomes `prefix => child_path`, so the default labels it with the
-child's path.
+`prefix * sep * face => child_path * "/" * face`. A bare input is the face `u`,
+so the default labels an `integrator` child's bare input `"integrator.u"`.
 
 `child_path` names an immediate child, a bare key where the container is
 name-transparent. A deeper path is refused as [`resolve`](@ref) refuses it.
@@ -522,8 +506,7 @@ name-transparent. A deeper path is refused as [`resolve`](@ref) refuses it.
 - `prefix`: the label in front of each face. The default folds the path's `/`
   into `sep`, so a container element `"units/1"` labels its faces
   `"units.1.…"`, a legal face name. An explicit `prefix` is used verbatim, and
-  `prefix = ""` drops the prefixing entirely, which over a bare input leaves an
-  empty face name the build refuses as `FaceNameIllegal`.
+  `prefix = ""` drops the prefixing entirely, labelling a bare input `u`.
 - `except`: the face names to leave out.
 - `only`: the face names to keep.
 - `select`: a predicate that receives each face name as a `String` and keeps
@@ -544,7 +527,7 @@ function input_passthrough(@nospecialize(assembly), child_path::AbstractString;
                            except::Tuple = (), only::Tuple = (), select = nothing)
     names = input_faces(resolve(assembly, child_path))
     wanted = _passthrough_faces("input_passthrough", child_path, names, except, only, select)
-    Tuple(_labelled(prefix, sep, n) => _child_endpoint(child_path, n) for n in wanted)
+    Tuple(_labelled(prefix, sep, n) => string(child_path, "/", n) for n in wanted)
 end
 
 # Design: §6.1, §8.8, D-209, D-251.
@@ -566,7 +549,7 @@ boundary, and its entries are splatted into the assembly's
 three exclusive selection keywords, one per call, `select` receiving face names.
 Its pairs read along the flow, `child_path * "/" * face => prefix * sep * face`,
 internal source to face name, as every pair in that declaration does. A bare
-output becomes `child_path => prefix`, as on the input side.
+output is the face `y`, labelled `"integrator.y"` by default.
 
 Each level re-exports the outputs it surfaces, so an output deep in the tree
 reaches the root only through one entry per level, which this helper computes.
@@ -580,15 +563,10 @@ function output_passthrough(@nospecialize(assembly), child_path::AbstractString;
                             except::Tuple = (), only::Tuple = (), select = nothing)
     names = output_faces(resolve(assembly, child_path))
     wanted = _passthrough_faces("output_passthrough", child_path, names, except, only, select)
-    Tuple(_child_endpoint(child_path, n) => _labelled(prefix, sep, n) for n in wanted)
+    Tuple(string(child_path, "/", n) => _labelled(prefix, sep, n) for n in wanted)
 end
 
-# A face's label on the assembly, the prefix alone for a bare one (D-436).
-_labelled(prefix, sep, n) =
-    isempty(prefix) ? String(n) : isempty(n) ? String(prefix) : string(prefix, sep, n)
-
-# A child face's endpoint, the child path alone for a bare one (D-436).
-_child_endpoint(child_path, n) = isempty(n) ? String(child_path) : string(child_path, "/", n)
+_labelled(prefix, sep, n) = isempty(prefix) ? String(n) : string(prefix, sep, n)
 
 # Exclusivity is enforced, not documented, and a filter naming a face the child
 # does not have errors with the list in hand — the same did-you-mean shape every
@@ -648,8 +626,9 @@ function resolve_source(draft, entry::String, base::String, @nospecialize(assemb
     resolved = resolve_terminal(entry, base, assembly, path, diags)
     resolved === nothing && return nothing
     comp, comp_path, name = resolved
+    name === nothing && return _wrong_direction(entry, path, comp_path, name, comp, "producer", diags)
     if classify(comp_path, comp) === PRIMITIVE
-        _has_port(_contract(y_types, comp), name) && return Tuple{String,Symbol}[(comp_path, name)]
+        haskey(_contract(y_types, comp), name) && return Tuple{String,Symbol}[(comp_path, name)]
     else
         # Children are walked before wires, so the child's faces are already
         # resolved: an output face's route is its recorded row behind this hop, and
@@ -674,8 +653,12 @@ function resolve_dest(draft, entry::String, base::String, @nospecialize(assembly
     resolved = resolve_terminal(entry, base, assembly, path, diags)
     resolved === nothing && return Vector{Tuple{String,Symbol}}[]
     comp, comp_path, name = resolved
+    if name === nothing
+        _wrong_direction(entry, path, comp_path, name, comp, "consumer", diags)
+        return Vector{Tuple{String,Symbol}}[]
+    end
     if classify(comp_path, comp) === PRIMITIVE
-        _has_port(_contract(u_types, comp), name) && return [Tuple{String,Symbol}[(comp_path, name)]]
+        haskey(_contract(u_types, comp), name) && return [Tuple{String,Symbol}[(comp_path, name)]]
     else
         # Children are walked before wires, so the child's level wires are already
         # recorded: a face's routes are derived from them behind this hop, and a
@@ -721,23 +704,20 @@ end
 # Direction is declared by the method; the resolved endpoint only cross-checks it.
 # The mismatch is recorded, never thrown: the wire simply resolves to nothing. The
 # name is looked for on the other side alone, the endpoint's own side having
-# refused it. A bare side lists as one empty name, so the child segment alone at
-# a bare port of the other side is a direction conflict too. Where the endpoint's
-# form and its side's shape disagree, the payload holds that side's faces alone
-# (D-436).
+# refused it. The child segment alone names no port (D-437), refused with the
+# faces of the endpoint's side alone.
 function _wrong_direction(entry, path, comp_path, name, @nospecialize(comp), wanted, diags)
     input_names, output_names = input_faces(comp), output_faces(comp)
     side_names, other_names = wanted == "producer" ? (output_names, input_names) :
                                                      (input_names, output_names)
-    found = String(name) in other_names ? (wanted == "producer" ? "an input" : "an output") :
-            nothing
+    found = name !== nothing && String(name) in other_names ?
+            (wanted == "producer" ? "an input" : "an output") : nothing
     if found === nothing
         push!(diags, UnknownPort(entry = entry,
                                 endpoint = wanted == "producer" ? :source : :destination,
                                 path = comp_path, spelling = String(path), port = name,
-                                candidates = Symbol.(name === BARE || side_names == [""] ?
-                                                     side_names :
-                                                     filter(!isempty, vcat(input_names, output_names)))))
+                                candidates = Symbol.(name === nothing ? side_names :
+                                                     vcat(input_names, output_names))))
         return nothing
     end
     push!(diags, FaceDirectionConflict(entry = entry, path = comp_path,
@@ -766,17 +746,16 @@ end
 
 """
 The `name => value` pairs of a store value, the one shape reading of §8.2: a
-`NamedTuple`'s own fields, one `BARE` pair for a bare value, none for `nothing`.
+`NamedTuple`'s own fields, a bare value's one pair under the store's `letter`
+(D-438), none for `nothing`.
 """
-store_fields(contents::NamedTuple) = pairs(contents)
-store_fields(::Nothing) = ()
-store_fields(contents) = (BARE => contents,)
+store_fields(@nospecialize(contents), letter::Symbol) = pairs(_keyed(contents, letter))
 
 # §7.1, §8.2, D-094: every `x_init` field, or the bare value, is a `Float64` or
 # an `SArray` of them, and the declaration is flat. The arm names where the
 # value belongs instead.
 function check_state_leaves(path::String, @nospecialize(comp), diags::Vector{Diagnostic})
-    for (name, value) in store_fields(invoke_declaration(x_init, comp))
+    for (name, value) in store_fields(invoke_declaration(x_init, comp), :x)
         leaf_eltype = value isa SArray ? eltype(value) : typeof(value)
         leaf_eltype === Float64 && continue
         reason = value isa NamedTuple ? :nested :
@@ -800,12 +779,12 @@ function check_store_form(path::String, @nospecialize(comp), diags::Vector{Diagn
     readable
 end
 
-# §8.6, D-436: a contract entry's name is a face name, never empty. A bare port
-# omits the name, and an empty one is refused rather than read as bare.
+# §8.6, D-437: a contract entry's name is a face name, never empty. A bare port
+# omits the name, and an empty one is refused.
 function check_contract_names(path::String, @nospecialize(comp), diags::Vector{Diagnostic})
     for fn in (u_types, y_types)
         decl = invoke_declaration(fn, comp)
-        decl isa NamedTuple && haskey(decl, BARE) &&
+        decl isa NamedTuple && any(name -> isempty(String(name)), keys(decl)) &&
             push!(diags, FaceNameIllegal(path = path, face = "", invariant = :empty))
     end
 end
@@ -813,9 +792,9 @@ end
 # §7.3, D-231: every store field, or the bare value, is isbits or a `Symbol`,
 # checked on both stores.
 function check_stores(path::String, @nospecialize(comp), diags::Vector{Diagnostic})
-    for (store, contents) in ((:s_init, invoke_declaration(s_init, comp)),
-                              (:m_init, invoke_declaration(m_init, comp)))
-        for (name, value) in store_fields(contents)
+    for (store, letter, contents) in ((:s_init, :s, invoke_declaration(s_init, comp)),
+                                      (:m_init, :m, invoke_declaration(m_init, comp)))
+        for (name, value) in store_fields(contents, letter)
             isbits(value) || value isa Symbol ||
                 push!(diags, IllegalStoreField(path = path, store = store,
                                                name = name, declared = typeof(value)))
@@ -876,7 +855,7 @@ function classify_tier(path::String, @nospecialize(comp), diags::Vector{Diagnost
     # D-265), and a top marker says nothing where every leaf pins (§8.5, D-263).
     for (name, fn) in ((:u_types, u_types), (:y_types, y_types))
         _declares(fn, comp) || continue
-        for (entry_name, P) in contract_fields(invoke_declaration(fn, comp))
+        for (entry_name, P) in pairs(_keyed(invoke_declaration(fn, comp), default_name(fn)))
             _holds_marker(P) &&
                 push!(diags, IllegalPortType(path = path, site = name === :u_types ? :face : :port,
                                              name = entry_name, declared = P,
@@ -1231,9 +1210,7 @@ Base.@nospecializeinfer function flatten_tree!(draft::StructureDraft, @nospecial
     # By index: a closure capturing the instance would be a type per component type.
     for (ci, path) in enumerate(draft.paths)
         at_component(path) do
-            for (face, declared) in contract_fields(_contract(u_types, draft.instances[ci]))
-                # A bare input at a primitive root is refused as no root input (D-436).
-                isempty(path) && face === BARE && continue
+            for (face, declared) in pairs(_contract(u_types, draft.instances[ci]))
                 haskey(draft.feeds, (path, face)) ||
                     push!(diags, UnconnectedInput(path = path, face = face,
                                                  declared = declared,
@@ -1344,9 +1321,8 @@ Base.@nospecializeinfer function _walk!(draft::StructureDraft, path::String,
             # the same pseudo-producer an assembly root's faces get.
             if isempty(path)
                 _check_root_faces(comp, diags)
-                inputs = _contract(u_types, comp)
-                # A bare `u_types` is no root input, refused just above (D-436).
-                for face in (inputs isa NamedTuple ? keys(inputs) : ())
+                # A bare `u_types` is the root input `u` (D-437).
+                for face in keys(_contract(u_types, comp))
                     push!(draft.root_inputs, face)
                     _claim!(draft, (path, face), ("", face),
                             "the root component's `u_types` entry `$face`", diags)
@@ -1498,7 +1474,6 @@ function _check_face_names(path::String, input_entries, output_entries, diags::V
     for n in names
         occursin('/', n) &&
             push!(diags, FaceNameIllegal(path = path, face = n, invariant = :contains_slash))
-        # An assembly face is never bare (D-436).
         isempty(n) && push!(diags, FaceNameIllegal(path = path, face = n, invariant = :empty))
     end
     allunique(names) ||
@@ -1516,18 +1491,13 @@ end
 # primitive's input faces alias their producers' cells and place nothing — and
 # non-root leaves are left alone.
 #
-# A bare contract takes the reserved empty name in that set, so two bare
-# contracts collide. A bare `u_types` alone places no root input at all, the
-# write surface being spelled by name, and is refused as such (§8.2, D-436).
+# A bare contract takes its default face in that set, `u` or `y`, so two bare
+# contracts collide on nothing (§8.2, D-437).
 function _check_root_faces(@nospecialize(comp), diags::Vector{Diagnostic})
-    inputs = _contract(u_types, comp)
-    output_names = String[String(n) for (n, _) in contract_fields(_contract(y_types, comp))]
-    duplicates = [String(n) for (n, _) in contract_fields(inputs) if String(n) in output_names]
+    output_names = keys(_contract(y_types, comp))
+    duplicates = [String(n) for n in keys(_contract(u_types, comp)) if n in output_names]
     isempty(duplicates) ||
         push!(diags, FaceNameCollision(path = "", faces = duplicates, site = :root))
-    inputs isa NamedTuple || "" in output_names ||
-        push!(diags, IllegalPortType(path = "", site = :root_input, name = BARE,
-                                     declared = inputs, reason = :bare_at_root))
     nothing
 end
 

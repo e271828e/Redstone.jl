@@ -35,7 +35,7 @@ kinds_model() =
              g = GearMode(), s = PhaseSelector(), p = PhaseReader(),
              stub = Constant(height_field(Terrain(h0 = 1.5))), dut = TerrainGain(),
              fn = Constant(let k = 2.0; x -> k * x end), tup = TupleOut(), free = FreeSizeIn(), pose = PoseOut());
-          local_wires = ("s/phase" => "p/phase", "stub" => "dut/terrain", "v" => "free/v"),
+          local_wires = ("s/phase" => "p/phase", "stub/y" => "dut/terrain", "v/y" => "free/v"),
           input_wires = ("dut.k" => "dut/k",))
 
 # The junction aliases beside a junction over a user function, all fed by one
@@ -43,8 +43,8 @@ kinds_model() =
 aliases_model() =
     Group((; k = Constant(1.0), sum = SumJunction{Float64, 2}(), pack = Pack{Float64, 2}(),
              diff = Junction{Float64, Float64, 2}(-));
-          local_wires = ("k" => "sum/in1", "k" => "sum/in2", "k" => "pack/in1",
-                         "k" => "pack/in2", "k" => "diff/in1", "k" => "diff/in2"))
+          local_wires = ("k/y" => "sum/in1", "k/y" => "sum/in2", "k/y" => "pack/in1",
+                         "k/y" => "pack/in2", "k/y" => "diff/in1", "k/y" => "diff/in2"))
 
 function test_descriptor()
     @testset "every fixture's descriptor validates after the round trip and mirrors the artifacts (§13.9)" begin
@@ -286,24 +286,24 @@ function test_descriptor()
     @testset "a leaf face carries its type, kind marker and pinned flag (§13.9)" begin
         body = descriptor(build(kinds_model())).build
         marker(path, name) = face_of(node_at(body, path), :outputs, name).kind
-        @test marker("i", "") == (kind = "integer",)
-        @test marker("r", "") == (kind = "number",)
-        @test marker("v", "") == (kind = "vector", shape = [2], element = (kind = "float",))
-        @test marker("mat", "") == (kind = "vector", shape = [2, 2], element = (kind = "float",))
-        @test marker("nt", "") == (kind = "struct", fields = ["a", "b"])
+        @test marker("i", "y") == (kind = "integer",)
+        @test marker("r", "y") == (kind = "number",)
+        @test marker("v", "y") == (kind = "vector", shape = [2], element = (kind = "float",))
+        @test marker("mat", "y") == (kind = "vector", shape = [2, 2], element = (kind = "float",))
+        @test marker("nt", "y") == (kind = "struct", fields = ["a", "b"])
         @test marker("g", "gear") == (kind = "enum", values = ["up", "down"])
         @test marker("g", "y") == (kind = "float",)
         @test marker("s", "phase") == (kind = "symbol",)
         @test marker("p", "armed") == (kind = "boolean",)
-        @test marker("stub", "") == (kind = "opaque",)       # a handle, not isbits
-        @test marker("fn", "") == (kind = "opaque",)         # a closure with a capture
+        @test marker("stub", "y") == (kind = "opaque",)       # a handle, not isbits
+        @test marker("fn", "y") == (kind = "opaque",)         # a closure with a capture
         @test marker("tup", "out") == (kind = "struct", fields = ["1", "2"])
         @test face_of(node_at(body, "free"), :inputs, "v").kind == (kind = "opaque",)   # size left free
         @test marker("pose", "pose") == (kind = "vector", shape = [3], element = (kind = "float",))   # a FieldVector
         @test face_of(node_at(body, "dut"), :inputs, "terrain").kind == (kind = "opaque",)
         # the pinned flag reads the declaration, and the type string is the leaf's
-        @test face_of(node_at(body, "i"), :outputs, "").pinned
-        @test face_of(node_at(body, "i"), :outputs, "").type == "Int8"
+        @test face_of(node_at(body, "i"), :outputs, "y").pinned
+        @test face_of(node_at(body, "i"), :outputs, "y").type == "Int8"
         @test !face_of(node_at(body, "p"), :inputs, "phase").pinned
         pinned_gain = node_at(descriptor(build(fed(PinnedGain(), "e"))).build, "c")
         @test face_of(pinned_gain, :inputs, "e") == (name = "e", type = "Float64", kind = (kind = "float",), pinned = true)
@@ -375,23 +375,25 @@ function test_descriptor()
         @test summary.name == "value" && length(summary.value) == 81 && endswith(summary.value, "…")
         @test summary.value == first(repr(long.value; context = (:compact => true, :limit => true)), 80) * "…"
     end
-    @testset "a bare face's name and a bare endpoint's port are the empty string, at version one (§13.9, D-436)" begin
+    @testset "a bare face's name and a bare endpoint's port are `u` or `y`, at version one (§13.9, D-437)" begin
         value = descriptor(build(bare_ports_world()))
         round_trip(value)
         @test value.format_version == (major = 1, minor = 0)
         body = value.build
         flow = node_at(body, "plant/loop/flow")
-        @test [face.name for face in flow.inputs] == [""] && [face.name for face in flow.outputs] == [""]
+        @test [face.name for face in flow.inputs] == ["u"] && [face.name for face in flow.outputs] == ["y"]
         @test [face.name for face in node_at(body, "ramp").inputs] == String[]
         @test node_at(body, "plant").wires[1] == (from = (path = "plant/loop", port = "x"),
-                                                  to = (path = "plant/spin", port = ""))
-        @test only(c for c in body.outputs.components if c.path == "plant/loop/scale").stage2 == [""]
-        # A loop through bare ports: each end is its member's path alone.
+                                                  to = (path = "plant/spin", port = "u"))
+        @test only(c for c in body.outputs.components if c.path == "plant/loop/scale").stage2 == ["y"]
+        @test [face.name for face in node_at(body, "").outputs] == ["total", "ramp"]
+        @test node_at(body, "").wires[end] == (from = (path = "ramp", port = "y"), to = (path = "", port = "ramp"))
+        # A loop through bare ports: each end is its member's path and face.
         err = failure(() -> build(Group((; a = BareScale(), b = BareScale());
-                                        local_wires = ("a" => "b", "b" => "a"))))
+                                        local_wires = ("a/y" => "b/u", "b/y" => "a/u"))))
         round_trip(descriptor(err))
         cycle = only(descriptor(err).failure.diagnostics).cycle
-        @test cycle.wires == [(from = (path = "a", port = ""), to = (path = "b", port = "")),
-                              (from = (path = "b", port = ""), to = (path = "a", port = ""))]
+        @test cycle.wires == [(from = (path = "a", port = "y"), to = (path = "b", port = "u")),
+                              (from = (path = "b", port = "y"), to = (path = "a", port = "u"))]
     end
 end

@@ -73,32 +73,18 @@ path(::Diagnostic) = ""
 # path, a name list and a face set the same way.
 
 _at_path(path::AbstractString) = isempty(path) ? "the root component" : "`$path`"
-_namelist(list) = isempty(list) ? "none" :
-                  _bare_list(list) ? "one bare port, addressed by the path alone" :
-                  join(("`$n`" for n in list), ", ")
-_bare_list(list) = length(list) == 1 && isempty(string(first(list)))
-# A read's field: a face name, or the headless address on a bare port.
-_face_word(field) = field === BARE ? "the headless address" : "`$field`"
+_namelist(list) = isempty(list) ? "none" : join(("`$n`" for n in list), ", ")
 _faceset(list) = isempty(list) ? "empty" : "{$(join(list, ", "))}"
 _plainlist(list) = join(list, ", ")
 _symtuple(list) = "(" * join((":$n" for n in list), ", ") * (length(list) == 1 ? ",)" : ")")
 
-# Design: §7.1, §7.3, §8.2, D-435, D-436.
-# The reserved name wherever bookkeeping keys a leaf or a port by a `Symbol`: a
-# store declared as one value, or a contract declared as one type, has no name
-# of its own. Nothing else spells the empty symbol.
-const BARE = Symbol("")
+# The one spelling of a `(prefix, name)` pair, `x.q` or `plant/out`.
+_named(prefix, name::Symbol, sep::AbstractString = ".") = string(prefix, sep, name)
 
-# The one spelling of a `(prefix, name)` pair, `x.q` or `plant/out`: a bare name
-# drops with its separator, so a bare leaf reads as the prefix alone.
-_named(prefix, name::Symbol, sep::AbstractString = ".") =
-    name === BARE ? string(prefix) : string(prefix, sep, name)
-
-# A port or face in a message, `plant/integrator/out` in backticks: a bare one
-# reads as its component, and one of the root by its name alone.
+# A port or face in a message, `plant/integrator/out` in backticks, and one of
+# the root by its name alone.
 _at_port(path::AbstractString, name::Symbol) =
-    isempty(path) ? (name === BARE ? _at_path(path) : "`$name`") :
-                    "`$(_named(path, name, "/"))`"
+    isempty(path) ? "`$name`" : "`$(_named(path, name, "/"))`"
 
 # --- the carrier (§13.1, §13.2, D-058) ----------------------------------------
 
@@ -323,7 +309,7 @@ catch site makes it a `StepError` species.
 """
 Base.@kwdef struct NonfiniteState <: Diagnostic
     path::String
-    leaf::String     # the leaf's dotted spelling within the state, `"q"`, `"v[2]"`, `""` for a bare scalar
+    leaf::String     # the leaf's dotted spelling within the state, `"q"`, `"v[2]"`, `"x"` for a bare scalar (D-438)
     value::Any       # the offending value: NaN, Inf or -Inf
     t::Float64       # the frame-top time the integrate landed on
     boundary::Int    # the frame-entry boundary index, as the carrier's
@@ -331,7 +317,7 @@ end
 
 path(d::NonfiniteState) = d.path
 message(d::NonfiniteState) = string(
-    _at_path(d.path), ": ", isempty(d.leaf) ? "the state" : "state leaf `$(d.leaf)`", " is ",
+    _at_path(d.path), ": state leaf `", d.leaf, "` is ",
     d.value, " at the frame top t = ",
     d.t, " (from boundary ", d.boundary, ") — the model diverged; replay to ",
     d.boundary, " and step! to inspect the frame")
@@ -367,16 +353,13 @@ function message(d::UnknownPort)
         return "$(d.entry): the entry routes to no internal endpoint — every `input_wires` " *
                "entry routes to at least one, a face feeding nothing declaring nothing (§8.6)"
     side = d.endpoint === :source ? "output" : "input"
-    # The child segment alone addresses a bare side, and a face name a named one (D-436).
-    d.port === BARE &&
-        return "$(d.entry): `$(d.spelling)` names $(_at_path(d.path)) alone, which addresses " *
-               "a bare $side, and " *
+    # The child segment alone names a child and no port (D-437).
+    d.port === nothing &&
+        return "$(d.entry): `$(d.spelling)` names $(_at_path(d.path)) and no port — an " *
+               "endpoint is `path/face`, and " *
                (isempty(d.candidates) ? "it has no $side face" :
-                "its $side faces are named, $(_plainlist(d.candidates))") * " (§6.1, §8.6)"
-    d.candidates == [BARE] &&
-        return "$(d.entry): `$(d.spelling)` names `$(d.port)` on $(_at_path(d.path)), whose " *
-               "$side is bare, one port with no face — write the endpoint as the child " *
-               "segment alone, `$(first(rsplit(d.spelling, '/'; limit = 2)))` (§6.1, §8.6)"
+                "its $side faces are $(_plainlist(d.candidates))") *
+               (length(d.candidates) == 1 ? ", as in `$(d.spelling)/$(only(d.candidates))`" : "") * " (§6.1, §8.6)"
     "$(d.entry): `$(d.spelling)` names no `$(d.port)` on $(_at_path(d.path)) — its " *
     "faces are $(_plainlist(d.candidates))"
 end
@@ -633,9 +616,7 @@ message(d::DeclarationOnWrongTier) =
     "$(_at_path(d.path)) declares `$(d.declaration)` but no `x_init` — there is no state " *
     "manifold to project onto (§5.2)" :
     d.reason === :pinned_entry ?
-    "$(_at_path(d.path)): " *
-    (d.entry === BARE ? "the bare `$(d.declaration)` is declared `Pinned`, " :
-                        "entry `$(d.entry)` is declared `Pinned` in `$(d.declaration)`, ") *
+    "$(_at_path(d.path)): entry `$(d.entry)` is declared `Pinned` in `$(d.declaration)`, " *
     "but this leaf is discrete, where every leaf is pinned — drop the marker (§8.2, §8.5)" :
     "$(_at_path(d.path)): `$(d.declaration)` is declared in the $(d.found)-tier form, but this " *
     "component's other declarations announce the $(d.announced) tier (§8.2)"
@@ -654,7 +635,7 @@ function message(d::FaceNameIllegal)
     d.invariant === :empty &&
         return "$(_at_path(d.path)): a face name is empty — a face name is never empty, and a " *
                "bare port is spelled by omitting the name, one type as the whole `u_types` " *
-               "or `y_types` (§8.6, D-436)"
+               "or `y_types`, its face then `u` or `y` (§8.6, D-437)"
     "$(_at_path(d.path)): face name `$(d.face)` breaks the `$(d.invariant)` invariant (§8.6)"
 end
 
@@ -666,10 +647,6 @@ Base.@kwdef struct FaceNameCollision <: Diagnostic
 end
 path(d::FaceNameCollision) = d.path
 message(d::FaceNameCollision) =
-    d.site === :root && d.faces == [""] ?
-    "$(_at_path("")): `u_types` and `y_types` are both bare — at the root a primitive's " *
-    "faces are its two contracts' names together, and a bare contract takes the reserved " *
-    "empty name there, so the two collide; name one of them (§8.6, D-210, D-436)" :
     d.site === :root ?
     "$(_at_path("")): face name(s) $(_plainlist(d.faces)) appear twice — at the root a " *
     "primitive's faces are its `u_types` and `y_types` keys together, and a key " *
@@ -859,18 +836,12 @@ Base.@kwdef struct IllegalPortType <: Diagnostic
     name::Symbol
     declared::Any                            # the offending type
     reason::Symbol = :no_leaves              # :no_leaves | :mutable | :handle_at_root | :nested_marker |
-                                             # :stop_flag_nested | :stop_flag_at_root | :bare_at_root
+                                             # :stop_flag_nested | :stop_flag_at_root
     position::Any = nothing                  # :mutable — the dotted position of the mutable type, "" for the port itself
 end
 path(d::IllegalPortType) = d.path
 function message(d::IllegalPortType)
-    d.reason === :bare_at_root &&
-        return "$(_at_path(d.path)): `u_types` declares $(d.declared) bare, one input with no " *
-               "face, and a root input is a face the periphery writes by name — name the " *
-               "entry, or test the component in a rig that wires its input (§8.2, §11.3, " *
-               "§13.7, D-436)"
-    site = d.name === BARE ? (d.site === :face ? "bare input" : "bare port") :
-           (d.site === :root_input ? "root input" : d.site === :face ? "input face" : "port") *
+    site = (d.site === :root_input ? "root input" : d.site === :face ? "input face" : "port") *
            " `$(d.name)`"
     d.reason === :nested_marker &&
         return "$(_at_path(d.path)): $site declares $(d.declared), with the `Pinned` " *
@@ -909,15 +880,13 @@ message(d::EmptyStore) =
 "§7.1, §8.2, D-094: an `x_init` field, or a bare `x_init` value, outside the closed vocabulary — a mode value, a real off the common eltype, a nested `NamedTuple`, or a wrapper type."
 Base.@kwdef struct IllegalStateLeaf <: Diagnostic
     path::String
-    name::Symbol                             # the field, `BARE` for a bare value
+    name::Symbol                             # the field, `x` for a bare value (D-438)
     declared::Any                            # the offending field type
     reason::Symbol                           # :mode_value | :eltype | :nested | :wrapper
 end
 path(d::IllegalStateLeaf) = d.path
 function message(d::IllegalStateLeaf)
-    head = "$(_at_path(d.path)): `x_init` " *
-           (d.name === BARE ? "returns `$(d.declared)`, which" :
-                              "field `$(d.name)::$(d.declared)`")
+    head = "$(_at_path(d.path)): `x_init` field `$(d.name)::$(d.declared)`"
     d.reason === :mode_value &&
         return "$head is not a continuous state — integers, `Bool`s and enums belong in " *
                "`m_init` (§7.1, §8.2)"
@@ -935,15 +904,12 @@ end
 Base.@kwdef struct IllegalStoreField <: Diagnostic
     path::String
     store::Symbol                            # :s_init | :m_init
-    name::Symbol                             # the field, `BARE` for a bare value
+    name::Symbol                             # the field, `s` or `m` for a bare value (D-438)
     declared::Any                            # the offending field type
 end
 path(d::IllegalStoreField) = d.path
 message(d::IllegalStoreField) =
-    "$(_at_path(d.path)): `$(d.store)` " *
-    (d.name === BARE ? "returns `$(d.declared)`, which" :
-                       "field `$(d.name)::$(d.declared)`") *
-    " is not a store value — store values are isbits or `Symbol`s; text and bulk data " *
+    "$(_at_path(d.path)): `$(d.store)` field `$(d.name)::$(d.declared)` is not a store value — store values are isbits or `Symbol`s; text and bulk data " *
     "belong on the component instance (§7.3)"
 
 # ==============================================================================
@@ -972,9 +938,7 @@ path(d::AlgebraicCycle) = first(d.members)
 # The cluster read out: its wires as one loop, a dead hop in the ladder's own
 # words, and the per-member tracing modes as one phrase (§13.8, D-245).
 _wirelist(wires) = join(("$p → $c" for (p, c) in wires), ", ")
-_hop((member, face, output_port)) =
-    "`$member`'s " * (output_port === BARE ? "bare output" : "`$output_port`") *
-    " does not route " * (face === BARE ? "its bare input" : "`$face`")
+_hop((member, face, output_port)) = "`$member`'s `$output_port` does not route `$face`"
 
 function _modes(traced)
     rest = ["`$member` " * (tracing === :sampled ? "at sampled states" : "structurally")
@@ -989,7 +953,7 @@ _cycle_hint(dead) =
     join((let dead_faces = unique(face for (hop_member, face, _) in dead
                                   if hop_member == member)
               "split `$member`, or narrow the neighbor's contract if " *
-              join((face === BARE ? "its bare input" : "`$face`" for face in dead_faces), ", ") *
+              join(("`$face`" for face in dead_faces), ", ") *
               " " *
               (length(dead_faces) == 1 ? "is" : "are") *
               " consumed only in a fallback branch"
@@ -1024,10 +988,7 @@ Base.@kwdef struct ProducedByTwoStages <: Diagnostic
 end
 path(d::ProducedByTwoStages) = d.path
 message(d::ProducedByTwoStages) =
-    d.ports == [BARE] ?
-    "$(_at_path(d.path)): the bare port is returned by `y_state` and by `y_direct` — a port " *
-    "is produced once, so one of the two stages returns it (§5.3, §8.3, D-436)" :
-    "`$(d.path)`: " *
+    "$(_at_path(d.path)): " *
     join(("`$p` by `y_state` and by `y_direct`" for p in d.ports), ", ") *
     " — a port is produced once: drop it from `y_direct`, or from its stage-1 " *
     "producer (§5.3, §8.3)"
@@ -1041,11 +1002,7 @@ Base.@kwdef struct DeclaredNotProduced <: Diagnostic
 end
 path(d::DeclaredNotProduced) = d.path
 message(d::DeclaredNotProduced) =
-    d.ports == [BARE] ?
-    "$(_at_path(d.path)): the bare port `y_types` declares is produced by no stage — " *
-    "`y_state` or `y_direct` returns its value, or `y_types` drops it (§5.3, §8.3, D-436); " *
-    "the state fields are $(_namelist(d.state_fields))" :
-    "`$(d.path)`: declared port(s) $(_plainlist(d.ports)) produced by no stage — " *
+    "$(_at_path(d.path)): declared port(s) $(_plainlist(d.ports)) produced by no stage — " *
     "`y_state` returns them, or `y_types` drops them (§5.3, §8.3); the stages " *
     "return $(_namelist(d.products)); the state fields are $(_namelist(d.state_fields))"
 
@@ -1086,7 +1043,7 @@ Base.@kwdef struct ConformanceFailure <: Diagnostic
     shape::Symbol                            # :ports|:namedtuple|:state|:x_init|:s_init|:stores|:mode
     observed::Any = nothing
     declared::Any = nothing
-    field::Union{Nothing,Symbol} = nothing   # `BARE` where the declared shape is a bare value
+    field::Union{Nothing,Symbol} = nothing   # the field or port, a bare one's letter (D-437, D-438)
     observed_fields::Vector{Symbol} = Symbol[]
     declared_fields::Vector{Symbol} = Symbol[]
     activation::Any = nothing                # the activation scalar, for the pin hint
@@ -1139,17 +1096,6 @@ function message(d::ConformanceFailure)
                "state has $(_symtuple(d.declared_fields)) — a state write-back is complete " *
                "against the field set (§9.3, §9.5)"
     end
-    # A bare declaration is one value, so its one type mismatch names no field.
-    d.field === BARE && d.shape === :ports &&
-        return "`$(d.path)`: $(_conformance_what(d)) returns $(d.observed), and the bare " *
-               "port is declared $(d.declared)" * _pin(d)
-    d.field === BARE &&
-        return "`$(d.path)`: $(_conformance_what(d)) returns $(d.observed), the " *
-               (d.shape === :s_init ? "state store" : d.shape === :mode ? "mode store" : "state") *
-               " is $(d.declared)" *
-               (d.shape === :s_init ? " — a discrete successor is the store's own type exactly (§9.5)" :
-                d.shape === :mode ? " — a mode store is written whole at its own type (§5.2)" :
-                _pin(d))
     d.shape === :ports &&
         return "`$(d.path)`: $(_conformance_what(d)) returns `$(d.field)`::$(d.observed), " *
                "declared $(d.declared)" * _pin(d)
@@ -1793,7 +1739,7 @@ Base.@kwdef struct ReadResolution <: Diagnostic
                      # the source rule's (§14.4): :store_selector|
                      # the leaf address's (§14.4, D-276): :leaf_syntax|:no_such_field|
                      # :opaque_leaf|:not_indexable|:index_arity|:index_bounds|
-                     # the port's shape against the head's (D-436): :port_shape
+                     # a headless address against a declaration not bare (D-437, D-438): :port_shape|:store_shape
                      # A missing input face is :unknown_root_input at the root
                      # and :no_input_face at a mount. :input_face_not_output
                      # serves both levels.
@@ -1829,38 +1775,37 @@ function message(d::ReadResolution)
         return _read_message(d, "$(_at_path(d.path)) is a discrete component — a discrete `s` " *
                            "has no derivative, and `ẋ` exists on the continuous tier alone",
                            "§7.1, §14.4, D-195")
-    # A headless address against a named or empty state, and a named one against
-    # a bare state, whose one name in hand is `BARE`.
-    d.reason === :undeclared && d.field === BARE &&
-        return _read_message(d, "$(_at_path(d.path)) declares no bare " *
-                           "$(_declares_noun(d.declares)), which a headless address reads — its " *
-                           "$(_declares_noun(d.declares)) names are $(_namelist(d.candidates))")
-    d.reason === :undeclared && d.candidates == [BARE] &&
-        return _read_message(d, "$(_at_path(d.path)) declares one bare state value, with no " *
-                           "field `$(d.field)` — read it by the headless address, which " *
-                           "names no field")
-    # A headless address against named ports, or a named head against the one
-    # bare port, whose name in hand is `BARE` (D-436).
-    d.reason === :port_shape && d.field === BARE &&
-        return _read_message(d, "$(_at_path(d.path))'s output ports are named, " *
-                           "$(_namelist(d.candidates)), and a headless address reads a bare " *
-                           "port — name the port at the head of the address", "§14.4, D-436")
+    # A headless address, its head left to a bare declaration's letter, against a
+    # declaration that is not bare (D-437, D-438).
+    d.reason === :store_shape &&
+        return _read_message(d, "the address names no field, which only a bare store " *
+                           "leaves out, and $(_at_path(d.path))'s state is not bare — its state " *
+                           "field names are $(_namelist(d.candidates)); name the field at the " *
+                           "head of the address", "§14.4, D-438")
+    d.reason === :port_shape && d.declares === :assembly_face &&
+        return _read_message(d, "the address names no face, which only a primitive's bare " *
+                           "contract leaves out, and $(_at_path(d.path)) is an assembly, whose " *
+                           "faces are named — they are $(_namelist(d.candidates)); name the " *
+                           "face at the head of the address", "§14.9, D-437")
     d.reason === :port_shape &&
-        return _read_message(d, "$(_at_path(d.path)) declares one bare output port, with no " *
-                           "name `$(d.field)` — read it by the headless address, which " *
-                           "names no port", "§14.4, D-436")
+        return _read_message(d, "the address names no " *
+                           (d.declares === :input_face ? "input face" : "output port") *
+                           ", which only a bare contract leaves out, and " *
+                           "$(_at_path(d.path))'s are named, $(_namelist(d.candidates)); name " *
+                           "the " * (d.declares === :input_face ? "face" : "port") *
+                           " at the head of the address", "§14.4, D-437")
     d.reason === :undeclared &&
         return _read_message(d, "$(_at_path(d.path)) declares no $(_declares_noun(d.declares)) " *
                            "`$(d.field)` — its $(_declares_noun(d.declares)) names are " *
                            "$(_namelist(d.candidates))")
     d.reason === :unknown_root_input &&
-        return _read_message(d, "$(_face_word(d.field)) is no root input face — the root's inputs are " *
+        return _read_message(d, "$(`$(d.field)`) is no root input face — the root's inputs are " *
                            "$(_namelist(d.candidates))")
     d.reason === :no_input_face &&
-        return _read_message(d, "$(_face_word(d.field)) is no input face of $(_at_path(d.mount)) — its " *
+        return _read_message(d, "$(`$(d.field)`) is no input face of $(_at_path(d.mount)) — its " *
                            "input faces are $(_namelist(d.candidates))", "§14.9, D-277")
     d.reason === :internally_wired &&
-        return _read_message(d, "$(d.field === BARE ? "$(_at_path(d.mount))'s bare input" : "`$(d.field)`") " *
+        return _read_message(d, "`$(d.field)` " *
                            "is fed by $(_at_port(d.producer...)), " *
                            "so no root input holds it — a mounted " *
                            "problem or tap set reads and writes its level's faces through the export " *
@@ -1870,9 +1815,9 @@ function message(d::ReadResolution)
                            "`get_face` reads the output faces a level exports, and an input " *
                            "face is read back with `get_input`")
     isempty(d.mount) ||
-        return _read_message(d, "$(_face_word(d.field)) is no output face of `$(d.mount)` — its " *
+        return _read_message(d, "$(`$(d.field)`) is no output face of `$(d.mount)` — its " *
                            "output faces are $(_namelist(d.candidates))", "§14.4, D-277")
-    _read_message(d, "$(_face_word(d.field)) is no root-exported output face — the root exports " *
+    _read_message(d, "$(`$(d.field)`) is no root-exported output face — the root exports " *
                 "$(_namelist(d.candidates))")
 end
 
@@ -1883,10 +1828,10 @@ const CHECKPOINT_ORIGIN = "checkpoint"
 Base.@kwdef struct ConditionResolution <: Diagnostic
     path::String = ""
     store::Symbol = :input                   # :x | :s | :m | :input
-    field::Symbol                            # `BARE` for a bare payload
+    field::Union{Nothing,Symbol}             # `nothing` for a bare payload no bare declaration takes
     reason::Symbol   # :assembly_path|:unexported_face|:no_input_face|
                      # :internally_wired|:no_store|:undeclared_field|:unconvertible|
-                     # :store_shape
+                     # :store_shape|:port_shape
     face::Union{Nothing,Symbol} = nothing    # the root input the chain lands on
     origin::String = ""                      # the tree's chain to this value
     candidates::Vector{Symbol} = Symbol[]
@@ -1901,6 +1846,8 @@ end
 path(d::ConditionResolution) = d.path
 
 _cleaf(d) = d.face !== nothing ? "root input `$(d.face)`" :
+            d.field === nothing ? "the bare `$(d.store === :input ? :u : d.store)` payload at " *
+                                  _at_path(d.path) :
             d.store === :input ? "input face `$(d.field)` of $(_at_path(d.path))" :
                                  "`$(_named(d.store, d.field))` at $(_at_path(d.path))"
 _ctail(d) = " (§14.3) [$(d.origin)]"
@@ -1920,7 +1867,7 @@ function message(d::ConditionResolution)
                "— its input faces are $(_namelist(d.candidates)) (§14.2) " *
                "[$(d.origin)]"
     d.reason === :internally_wired &&
-        return "$(_at_path(d.path))'s $(d.field === BARE ? "bare input" : "input face `$(d.field)`") reaches no " *
+        return "$(_at_path(d.path))'s input face `$(d.field)` reaches no " *
                "root input — it is wired internally, to $(_at_port(d.producer...)), and " *
                "the first sweep overwrites it; unexported stays unpokeable (§14.2) " *
                "[$(d.origin)]"
@@ -1935,13 +1882,15 @@ function message(d::ConditionResolution)
                 d.store === :m ?
                 "; modes are declared by `m_init`, continuous-only (§3.2)" : "") *
                _ctail(d)
-    d.reason === :store_shape && d.field === BARE &&
-        return "$(_cleaf(d)) is set whole, and `$(d.store)_init` at $(_at_path(d.path)) " *
-               "declares the fields $(_namelist(d.candidates)) — name the fields it sets, " *
-               "`set($(d.store) = ($(first(d.candidates)) = …,))`" * _ctail(d)
     d.reason === :store_shape &&
-        return "$(_cleaf(d)) names a field, and `$(d.store)_init` at $(_at_path(d.path)) " *
-               "declares one bare value — set it whole, `set($(d.store) = …)`" * _ctail(d)
+        return "$(_cleaf(d)) names the field `$(d.store)` of a bare store, and " *
+               "`$(d.store)_init` there declares the fields $(_namelist(d.candidates)) — name " *
+               "the fields it sets, `set($(d.store) = ($(first(d.candidates)) = …,))`" *
+               " (§14.3, D-438) [$(d.origin)]"
+    d.reason === :port_shape &&
+        return "$(_cleaf(d)) names the face `u` of a primitive's bare `u_types`, and the " *
+               "input faces there are $(_namelist(d.candidates)) — name the faces it sets, " *
+               "`set(; u = (face = …,))` (§14.2, D-437) [$(d.origin)]"
     d.reason === :undeclared_field &&
         return "$(_cleaf(d)) is not declared — `$(d.store)_init` at " *
                "$(_at_path(d.path)) " *
@@ -1987,12 +1936,9 @@ message(d::ConditionNodeMisuse) =
     d.reason === :empty_prefix ?
     "`at` was given an empty prefix, which names no child — a node meant for the level " *
     "where it is authored stays unwrapped (§14.2)" :
-    d.reason === :set_payload && d.observed === Nothing ?
-    "`set`'s `$(d.payload)` payload is `nothing`, which sets nothing — omit the keyword, " *
-    "or set the store's value (§14.2)" :
     d.reason === :set_payload ?
-    "`set`'s `$(d.payload)` payload is $(d.observed) — a `u` payload is a NamedTuple " *
-    "of the authoring level's own input faces (§14.2)" :
+    "`set`'s `$(d.payload)` payload is `nothing`, which sets nothing — omit the keyword, " *
+    "or give the value it sets (§14.2)" :
     "$(d.observed) is not a condition node" *
     (isempty(d.in_hand) ? "" :
      ", and the node kind(s) in hand are $(_plainlist(d.in_hand))") *
@@ -2462,7 +2408,7 @@ Base.@kwdef struct CheckpointMismatch <: Diagnostic
                                              # | :clock
     path::String = ""                        # the component path: the per-component :store arms,
                                              # a :deployment schedule row and a rate scope (§12.7)
-    name::Symbol = BARE                      # :sizes|:paths|:events|:s|:m|:x or `port.name`, the
+    name::Union{Nothing,Symbol} = nothing    # :sizes|:paths|:events|:s|:m|:x or `port.name`, the
                                              # root-input face, the deployment parameter, a
                                              # schedule or `scope.` column, a list name:
                                              # :schedule, `scope.key`, or :clock's :t₀|:frame
@@ -2475,7 +2421,6 @@ _checkpoint_subject(d::CheckpointMismatch) =
     d.name === :paths ? "component-path list" :
     d.name === :sizes ? "cell-size list" :
     d.name === :events ? "event list, `(path, name)` in the priors' order," :
-    d.name === Symbol("port.") ? "cell of $(_at_path(d.path))'s bare port" :
     startswith(String(d.name), "port.") ?
     "cell of $(_at_path(d.path))'s port `$(chopprefix(String(d.name), "port."))`" :
     d.name === :x ? "$(_at_path(d.path))'s `x` type" :
@@ -2540,7 +2485,7 @@ message(d::CheckpointMismatch) =
     "recording's own $(d.expected) — a batch replays at the frame ordinal it was drained " *
     "at, and the trace's `frames` is how far the recording ran (§11.5, §12.7)" :
     d.what === :root_input ?
-    (d.name === BARE ?
+    (d.name === nothing ?
      "the checkpoint records the root input-face list $(_faceset(d.expected)) and this " *
      "build's is $(_faceset(d.found)) — the checkpoint's table holds a cell per face, so " *
      "the two lists have to agree (§11.5, §12.7)" :

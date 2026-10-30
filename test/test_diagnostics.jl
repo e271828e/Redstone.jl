@@ -359,8 +359,8 @@ function diagnostics_kind_set()
             EmptyStore(path = "a/b", store = :x_init),
             EmptyStore(path = "a/b", store = :m_init),
             IllegalStoreField(path = "a/b", store = :s_init, name = :label, declared = String),
-            IllegalStoreField(path = "a/b", store = :m_init, name = BARE, declared = String),
-            IllegalStateLeaf(path = "a/b", name = BARE, declared = Int, reason = :mode_value),
+            IllegalStoreField(path = "a/b", store = :m_init, name = :m, declared = String),
+            IllegalStateLeaf(path = "a/b", name = :x, declared = Int, reason = :mode_value),
             IllegalStateLeaf(path = "a/b", name = :gear_count, declared = Int, reason = :mode_value),
             IllegalStateLeaf(path = "a/b", name = :q, declared = Float32, reason = :eltype),
             IllegalStateLeaf(path = "a/b", name = :pose, declared = NamedTuple, reason = :nested),
@@ -402,12 +402,12 @@ function diagnostics_kind_set()
                                reason = :field_set, shape = :state,
                                observed_fields = [:p], declared_fields = [:q]),
             ConformanceFailure(path = "a/b", what = "x_deriv", reason = :field_type, shape = :x_init,
-                               field = BARE, observed = Int, declared = Float64,
+                               field = :x, observed = Int, declared = Float64,
                                activation = Float64),
             ConformanceFailure(path = "a/b", what = "s_update", reason = :field_type, shape = :s_init,
-                               field = BARE, observed = Float64, declared = Int),
+                               field = :s, observed = Float64, declared = Int),
             ConformanceFailure(path = "a/b", what = "handler `m`", event = :e, reason = :field_type,
-                               shape = :mode, field = BARE, observed = Int, declared = Bool),
+                               shape = :mode, field = :m, observed = Int, declared = Bool),
             GuardForm(path = "a/b", event = :snap, observed = Int),
             BundleFieldError(path = "a/b", family = "y_state", tier = :continuous,
                              field = :m, legal = [:x, :t], reason = :undeclared),
@@ -470,16 +470,18 @@ function diagnostics_kind_set()
                                 candidates = [:p], role = :output_port, origin = "set"),
             ConditionResolution(path = "a/b", store = :x, field = :p, reason = :unconvertible,
                                 declared = Float64, observed = String, value = "x", origin = "set"),
-            ConditionResolution(path = "a/b", store = :x, field = BARE, reason = :store_shape,
+            ConditionResolution(path = "a/b", store = :x, field = nothing, reason = :store_shape,
                                 candidates = [:q], origin = "set(x)"),
-            ConditionResolution(path = "a/b", store = :m, field = :fired, reason = :store_shape,
-                                origin = "set(m).fired"),
+            ConditionResolution(path = "a/b", store = :m, field = :fired, reason = :undeclared_field,
+                                candidates = [:m], origin = "set(m).fired"),
+            ConditionResolution(path = "a/b", field = nothing, reason = :port_shape,
+                                candidates = [:a, :b], origin = "set(u)"),
             ConditionResolution(field = :p, face = :p, reason = :unconvertible, declared = Float64,
                                 observed = String, value = "x", origin = CHECKPOINT_ORIGIN),
             DuplicateConditionLeaf(path = "a/b", store = :x, field = :p,
                                    origins = ["set", "at(\"a\") → set"]),
             ConditionNodeMisuse(observed = NamedTuple, in_hand = [:Fragment]),
-            ConditionNodeMisuse(observed = Int, reason = :set_payload, payload = :x),
+            ConditionNodeMisuse(observed = Nothing, reason = :set_payload, payload = :u),
             ConditionNodeMisuse(observed = Nothing, reason = :set_payload, payload = :m),
             ConditionNodeMisuse(observed = String, reason = :empty_prefix),
             UninitializedInputs(op = :init!, faces = [:a, :b]),
@@ -489,10 +491,16 @@ function diagnostics_kind_set()
                            reason = :store_selector, path = "a/b", field = :q),
             ReadResolution(label = :r, selector = "get_state(\"a/b\", :q)", reason = :undeclared,
                            path = "a/b", field = :q, declares = :state_field, candidates = [:p]),
-            ReadResolution(label = :r, selector = "get_state(\"a/b\")", reason = :undeclared,
-                           path = "a/b", field = BARE, declares = :state_field, candidates = [:p]),
+            ReadResolution(label = :r, selector = "get_state(\"a/b\")", reason = :store_shape,
+                           path = "a/b", declares = :state_field, candidates = [:p]),
             ReadResolution(label = :r, selector = "get_state(\"a/b\", :q)", reason = :undeclared,
-                           path = "a/b", field = :q, declares = :state_field, candidates = [BARE]),
+                           path = "a/b", field = :q, declares = :state_field, candidates = [:x]),
+            ReadResolution(label = :r, selector = "get_output(\"a/b\")", reason = :port_shape,
+                           path = "a/b", declares = :output_port, candidates = [:y, :power]),
+            ReadResolution(label = :r, selector = "get_input()", mount = "a", reason = :port_shape,
+                           path = "a", declares = :input_face, candidates = [:p, :q]),
+            ReadResolution(label = :r, selector = "get_face()", mount = "a", reason = :port_shape,
+                           path = "a", declares = :assembly_face, candidates = [:out]),
             ReadResolution(label = :r, selector = "get_deriv(\"a/b\", :q)",
                            reason = :discrete_deriv, path = "a/b", field = :q),
             ReadResolution(label = :r, selector = "get_input(:q)", reason = :unknown_root_input,
@@ -663,7 +671,7 @@ function diagnostics_kind_set()
             ReplayUnknownFace(face = :z, frame = 1, writer = "device 1 (Pad)", faces = [:a, :b]),
             # §13.4's runtime species, the one kind a `StepError` carries as its cause
             NonfiniteState(path = "a/b", leaf = "v[2]", value = NaN, t = 0.14, boundary = 6),
-            NonfiniteState(path = "a/b", leaf = "", value = NaN, t = 0.14, boundary = 6),
+            NonfiniteState(path = "a/b", leaf = "x", value = NaN, t = 0.14, boundary = 6),
             # the runtime stream's nine, re-parented (§11.8)
             MalformedDatum(ArgumentError("bad")),
             OutOfClaimEntry(:a, 1.0, [:b], "device 1 (Pad)"),
@@ -768,93 +776,95 @@ function diagnostics_kind_set()
                          "`i/j/a/e` declared Float64 is fed by nothing, handed up through " *
                          "`i/j/f`, `i/g` and fed by nothing there — ")
 
-        # A bare port renders by its component's path alone, every port in slash
-        # form, and each refusal of the bare contract states its remedy (D-436).
+        # A bare port renders by its default face as any port, in slash form, and
+        # each shape refusal states its remedy (D-437, D-438).
         wire = "local_wires at the root component, entry `\"p\" => \"s\"`"
         @test message(UnknownPort(entry = wire, endpoint = :source, path = "p", spelling = "p",
-                                  port = BARE, candidates = [:y, :power])) ==
-              "$wire: `p` names `p` alone, which addresses a bare output, and its output " *
-              "faces are named, y, power (§6.1, §8.6)"
+                                  port = nothing, candidates = [:y, :power])) ==
+              "$wire: `p` names `p` and no port — an endpoint is `path/face`, and its output " *
+              "faces are y, power (§6.1, §8.6)"
+        @test message(UnknownPort(entry = wire, endpoint = :destination, path = "s", spelling = "s",
+                                  port = nothing, candidates = [:u])) ==
+              "$wire: `s` names `s` and no port — an endpoint is `path/face`, and its input " *
+              "faces are u, as in `s/u` (§6.1, §8.6)"
         @test message(UnknownPort(entry = wire, endpoint = :destination, path = "l", spelling = "l",
-                                  port = BARE)) ==
-              "$wire: `l` names `l` alone, which addresses a bare input, and it has no input face (§6.1, §8.6)"
-        @test message(UnknownPort(entry = wire, endpoint = :source, path = "a/r", spelling = "a/r/out",
-                                  port = :out, candidates = [BARE])) ==
-              "$wire: `a/r/out` names `out` on `a/r`, whose output is bare, one port with no face " *
-              "— write the endpoint as the child segment alone, `a/r` (§6.1, §8.6)"
-        @test startswith(message(UnconnectedInput(path = "plant/integrator", face = BARE,
+                                  port = nothing)) ==
+              "$wire: `l` names `l` and no port — an endpoint is `path/face`, and it has no input " *
+              "face (§6.1, §8.6)"
+        @test startswith(message(UnconnectedInput(path = "plant/integrator", face = :u,
                                                   declared = Float64)),
-                         "`plant/integrator` declared Float64 is fed by nothing — ")
-        @test startswith(message(TwoProducers(path = "a/s", port = BARE, incumbent = "e1", entry = "e2",
-                                              incumbent_producer = "`a/r`", producer = "root input `u`")),
-                         "`a/s` is fed twice: from `a/r` by e1, and from root input `u` by e2")
-        @test message(WireTypeMismatch(path = "a/s", face = BARE, declared = Float64,
-                                       producer_path = "a/r", producer_port = BARE, observed = Bool)) ==
-              "`a/s` declared Float64, fed from `a/r`::Bool"
-        # A bare input met by a read or a condition at a mount level: the face
-        # list and the field spell the port, never an empty name.
-        @test endswith(message(ReadResolution(label = :r, selector = "get_input(:u)", mount = "p/s",
-                                              reason = :no_input_face, field = :u, candidates = [BARE])),
-                       "`u` is no input face of `p/s` — its input faces are one bare port, " *
-                       "addressed by the path alone (§14.9, D-277)")
-        @test endswith(message(ReadResolution(label = :r, selector = "get_input(\"\")", mount = "p/f",
-                                              reason = :internally_wired, field = BARE,
-                                              producer = ("p/g", BARE))),
-                       "`p/f`'s bare input is fed by `p/g`, so no root input holds it — a mounted " *
+                         "`plant/integrator/u` declared Float64 is fed by nothing — ")
+        @test message(WireTypeMismatch(path = "a/s", face = :u, declared = Float64,
+                                       producer_path = "a/r", producer_port = :y, observed = Bool)) ==
+              "`a/s/u` declared Float64, fed from `a/r/y`::Bool"
+        @test endswith(message(ReadResolution(label = :r, selector = "get_input()", mount = "p/f",
+                                              reason = :internally_wired, field = :u,
+                                              producer = ("p/g", :y))),
+                       "`u` is fed by `p/g/y`, so no root input holds it — a mounted " *
                        "problem or tap set reads and writes its level's faces through the export " *
                        "chain, and a face the world computes is not free (§14.9)")
-        @test endswith(message(ReadResolution(label = :r, selector = "get_input(\"\")",
-                                              reason = :unknown_root_input, field = BARE,
-                                              candidates = [:a])),
-                       "the headless address is no root input face — the root's inputs are `a` (§14.4)")
-        @test endswith(message(ReadResolution(label = :r, selector = "get_face(\"\")",
-                                              reason = :unknown_output_face, field = BARE,
-                                              candidates = [:total])),
-                       "the headless address is no root-exported output face — the root exports `total` (§14.4)")
-        @test startswith(message(ConditionResolution(path = "p/f", field = BARE, reason = :internally_wired,
-                                                     producer = ("p/g", BARE), origin = "set")),
-                         "`p/f`'s bare input reaches no root input — it is wired internally, to `p/g`, and ")
-        @test message(IllegalPortType(path = "", site = :root_input, name = BARE, declared = Float64,
-                                      reason = :bare_at_root)) ==
-              "the root component: `u_types` declares Float64 bare, one input with no face, and a " *
-              "root input is a face the periphery writes by name — name the entry, or test the " *
-              "component in a rig that wires its input (§8.2, §11.3, §13.7, D-436)"
-        @test message(IllegalPortType(path = "a", site = :port, name = BARE, declared = Vector{Float64},
+        @test startswith(message(ConditionResolution(path = "p/f", field = :u, reason = :internally_wired,
+                                                     producer = ("p/g", :y), origin = "set(u)")),
+                         "`p/f`'s input face `u` reaches no root input — it is wired internally, to `p/g/y`, and ")
+        @test message(IllegalPortType(path = "a", site = :port, name = :y, declared = Vector{Float64},
                                       reason = :mutable, position = "")) ==
-              "`a`: bare port declares Vector{Float64}, which is mutable — a port value is " *
+              "`a`: port `y` declares Vector{Float64}, which is mutable — a port value is " *
               "immutable, bulk data rides behind an immutable handle (§4.4)"
         @test message(FaceNameIllegal(path = "e", face = "", invariant = :empty)) ==
               "`e`: a face name is empty — a face name is never empty, and a bare port is spelled " *
-              "by omitting the name, one type as the whole `u_types` or `y_types` (§8.6, D-436)"
-        @test startswith(message(FaceNameCollision(path = "", faces = [""], site = :root)),
-                         "the root component: `u_types` and `y_types` are both bare — ")
-        @test startswith(message(ProducedByTwoStages(path = "c", ports = [BARE])),
-                         "`c`: the bare port is returned by `y_state` and by `y_direct` — ")
-        @test startswith(message(DeclaredNotProduced(path = "", ports = [BARE])),
-                         "the root component: the bare port `y_types` declares is produced by no stage — ")
+              "by omitting the name, one type as the whole `u_types` or `y_types`, its face then " *
+              "`u` or `y` (§8.6, D-437)"
+        @test startswith(message(FaceNameCollision(path = "", faces = ["u"], site = :root)),
+                         "the root component: face name(s) u appear twice — ")
+        @test startswith(message(ProducedByTwoStages(path = "c", ports = [:y])),
+                         "`c`: `y` by `y_state` and by `y_direct` — ")
+        @test startswith(message(DeclaredNotProduced(path = "", ports = [:y])),
+                         "the root component: declared port(s) y produced by no stage — ")
         @test message(ConformanceFailure(path = "g", what = "y_state", reason = :field_type,
-                                         shape = :ports, field = BARE, observed = Int,
+                                         shape = :ports, field = :y, observed = Int,
                                          declared = Float64)) ==
-              "`g`: y_state returns Int64, and the bare port is declared Float64 — an integer " *
+              "`g`: y_state returns `y`::Int64, declared Float64 — an integer " *
               "literal where a real was declared: return `zero(…)` of a value at the activation, not `0`"
-        @test occursin("`m`'s bare output does not route its bare input",
-                       message(AlgebraicCycle(members = ["a", "m"], wires = ["a" => "m", "m" => "a"],
-                                              classification = :artificial, dead = [("m", BARE, BARE)])))
+        @test occursin("`m`'s `y` does not route `u`",
+                       message(AlgebraicCycle(members = ["a", "m"], wires = ["a/y" => "m/u", "m/y" => "a/u"],
+                                              classification = :artificial, dead = [("m", :u, :y)])))
         @test startswith(message(DeclarationOnWrongTier(path = "d", declaration = :u_types,
-                                                        reason = :pinned_entry, entry = BARE)),
-                         "`d`: the bare `u_types` is declared `Pinned`, ")
-        @test occursin("cell of `p`'s bare port", message(CheckpointMismatch(what = :store, path = "p",
-                                                                             name = Symbol("port."))))
-        shape(field, candidates) = message(ReadResolution(label = :a, selector = "get_output(\"p\")",
-                                                          reason = :port_shape, path = "p", field = field,
-                                                          declares = :output_port, candidates = candidates))
-        @test shape(BARE, [:y, :power]) ==
-              "the read labeled `a` is get_output(\"p\"), and `p`'s output ports are named, `y`, " *
-              "`power`, and a headless address reads a bare port — name the port at the head of " *
-              "the address (§14.4, D-436)"
-        @test shape(:y, [BARE]) ==
-              "the read labeled `a` is get_output(\"p\"), and `p` declares one bare output port, " *
-              "with no name `y` — read it by the headless address, which names no port (§14.4, D-436)"
+                                                        reason = :pinned_entry, entry = :u)),
+                         "`d`: entry `u` is declared `Pinned` in `u_types`, ")
+        @test occursin("cell of `p`'s port `y`", message(CheckpointMismatch(what = :store, path = "p",
+                                                                           name = Symbol("port.y"))))
+        # A headless address against a declaration that is not bare: the store's
+        # fields, a named contract's faces, an assembly's faces (D-437, D-438).
+        @test message(ReadResolution(label = :a, selector = "get_state(\"p\")", reason = :store_shape,
+                                     path = "p", declares = :state_field, candidates = [:q, :v])) ==
+              "the read labeled `a` is get_state(\"p\"), and the address names no field, which only " *
+              "a bare store leaves out, and `p`'s state is not bare — its state field names are " *
+              "`q`, `v`; name the field at the head of the address (§14.4, D-438)"
+        @test message(ReadResolution(label = :a, selector = "get_output(\"p\")", reason = :port_shape,
+                                     path = "p", declares = :output_port, candidates = [:y, :power])) ==
+              "the read labeled `a` is get_output(\"p\"), and the address names no output port, " *
+              "which only a bare contract leaves out, and `p`'s are named, `y`, `power`; name the " *
+              "port at the head of the address (§14.4, D-437)"
+        @test message(ReadResolution(label = :a, selector = "get_face()", mount = "p",
+                                     reason = :port_shape, path = "p", declares = :assembly_face,
+                                     candidates = [:out])) ==
+              "the read labeled `a` is get_face(), mounted at `p`, and the address names no face, " *
+              "which only a primitive's bare contract leaves out, and `p` is an assembly, whose " *
+              "faces are named — they are `out`; name the face at the head of the address (§14.9, D-437)"
+        @test message(ConditionResolution(path = "a/b", store = :x, field = nothing,
+                                          reason = :store_shape, candidates = [:q],
+                                          origin = "set(x)")) ==
+              "the bare `x` payload at `a/b` names the field `x` of a bare store, and `x_init` " *
+              "there declares the fields `q` — name the fields it sets, `set(x = (q = …,))` " *
+              "(§14.3, D-438) [set(x)]"
+        @test message(ConditionResolution(path = "a/b", field = nothing, reason = :port_shape,
+                                          candidates = [:a, :b], origin = "set(u)")) ==
+              "the bare `u` payload at `a/b` names the face `u` of a primitive's bare `u_types`, " *
+              "and the input faces there are `a`, `b` — name the faces it sets, " *
+              "`set(; u = (face = …,))` (§14.2, D-437) [set(u)]"
+        @test message(ConditionNodeMisuse(observed = Nothing, reason = :set_payload, payload = :u)) ==
+              "`set`'s `u` payload is `nothing`, which sets nothing — omit the keyword, or give " *
+              "the value it sets (§14.2)"
 
         # An unconvertible value names its author: the condition tree, or the
         # checkpoint at `linearize`'s default operating point (D-428).
@@ -999,61 +1009,50 @@ function diagnostics_kind_set()
         @test occursin("defines no `m_init`, or returns `nothing`",
                        message(EmptyStore(path = "a/b", store = :m_init)))
 
-        # A bare store has no field name, and no rendering spells an empty one: the
-        # renderer drops it with its separator (§8.2).
+        # A bare store's field is its letter, rendered as any field (§8.2, D-438).
         bare_renderings = [
-            message(IllegalStateLeaf(path = "a/b", name = BARE, declared = Int,
+            message(IllegalStateLeaf(path = "a/b", name = :x, declared = Int,
                                      reason = :mode_value)),
-            message(IllegalStoreField(path = "a/b", store = :s_init, name = BARE,
+            message(IllegalStoreField(path = "a/b", store = :s_init, name = :s,
                                       declared = String)),
             message(ConformanceFailure(path = "a/b", what = "x_deriv", reason = :field_type,
-                                       shape = :x_init, field = BARE, observed = Int,
+                                       shape = :x_init, field = :x, observed = Int,
                                        declared = Float64, activation = Float64)),
             message(ConformanceFailure(path = "a/b", what = "s_update", reason = :field_type,
-                                       shape = :s_init, field = BARE, observed = Float64,
+                                       shape = :s_init, field = :s, observed = Float64,
                                        declared = Int)),
-            message(ConditionResolution(path = "a/b", store = :x, field = BARE,
+            message(ConditionResolution(path = "a/b", store = :x, field = :x,
                                         reason = :unconvertible, declared = Float64,
                                         observed = String, value = "x", origin = "set(x)")),
-            message(NonfiniteState(path = "a/b", leaf = "", value = NaN, t = 0.1, boundary = 2)),
+            message(NonfiniteState(path = "a/b", leaf = "x", value = NaN, t = 0.1, boundary = 2)),
             message(TapResolution(label = :r, selector = "get_state(\"a/b\")",
-                                  reason = :discrete_state, tap = :x, path = "a/b", field = BARE)),
+                                  reason = :discrete_state, tap = :x, path = "a/b", field = :s)),
         ]
         @test !any(r -> occursin("``", r) || occursin("x.`", r) || occursin("b/`", r),
                    bare_renderings)
-        @test startswith(bare_renderings[1], "`a/b`: `x_init` returns `Int64`, which is not a " *
+        @test startswith(bare_renderings[1], "`a/b`: `x_init` field `x::Int64` is not a " *
                                              "continuous state")
-        @test startswith(bare_renderings[2], "`a/b`: `s_init` returns `String`, which is not a store value")
-        @test occursin("x_deriv returns Int64, the state is Float64 — an integer literal",
+        @test startswith(bare_renderings[2], "`a/b`: `s_init` field `s::String` is not a store value")
+        @test occursin("derivative field `x` is Int64, state field is Float64 — an integer literal",
                        bare_renderings[3])
-        @test occursin("s_update returns Float64, the state store is Int64", bare_renderings[4])
-        @test startswith(bare_renderings[5], "`x` at `a/b` takes Float64")
-        @test startswith(bare_renderings[6], "`a/b`: the state is NaN")
-        @test occursin("a tap on its store `s` could only", bare_renderings[7])
+        @test occursin("s_update field `s` is Float64, state field is Int64", bare_renderings[4])
+        @test startswith(bare_renderings[5], "`x.x` at `a/b` takes Float64")
+        @test startswith(bare_renderings[6], "`a/b`: state leaf `x` is NaN")
+        @test occursin("a tap on its store `s.s` could only", bare_renderings[7])
 
-        # A payload's shape against the store's (§14.3): each direction states the
-        # spelling the store takes.
-        rendered = message(ConditionResolution(path = "a/b", store = :x, field = BARE,
-                                               reason = :store_shape, candidates = [:q, :v],
-                                               origin = "set(x)"))
-        @test occursin("`x` at `a/b` is set whole, and `x_init` at `a/b` declares the fields " *
-                       "`q`, `v` — name the fields it sets, `set(x = (q = …,))`", rendered)
+        # A named payload against a bare store is the ordinary undeclared field,
+        # its candidate the letter (§14.3, D-438).
         rendered = message(ConditionResolution(path = "a/b", store = :m, field = :fired,
-                                               reason = :store_shape, origin = "set(m).fired"))
-        @test occursin("`m.fired` at `a/b` names a field, and `m_init` at `a/b` declares one " *
-                       "bare value — set it whole, `set(m = …)`", rendered)
+                                               reason = :undeclared_field, candidates = [:m],
+                                               origin = "set(m).fired"))
+        @test occursin("`m.fired` at `a/b` is not declared — `m_init` at `a/b` declares `m`", rendered)
 
-        # The headless address against a named state, and a named one against a
-        # bare state (§14.4).
-        rendered = message(ReadResolution(label = :q, selector = "get_state(\"p\")",
-                                          reason = :undeclared, path = "p", field = BARE,
-                                          declares = :state_field, candidates = [:q]))
-        @test occursin("`p` declares no bare state field, which a headless address reads — " *
-                       "its state field names are `q`", rendered)
+        # A named head against a bare state is the ordinary miss, its candidate
+        # the letter (§14.4, D-438).
         rendered = message(ReadResolution(label = :q, selector = "get_state(\"p\", :q)",
                                           reason = :undeclared, path = "p", field = :q,
-                                          declares = :state_field, candidates = [BARE]))
-        @test occursin("`p` declares one bare state value, with no field `q`", rendered)
+                                          declares = :state_field, candidates = [:x]))
+        @test occursin("`p` declares no state field `q` — its state field names are `x`", rendered)
 
         # The walk clause's hint on the input side (§8.2, D-236, D-263)
         # states the fix by name.

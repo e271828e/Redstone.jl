@@ -165,9 +165,10 @@ A selector is labeled in a [read set](@ref g-read-set) built with
 [`reads`](@ref). `path` names the component, and `leaf` is a
 [leaf address](@ref g-leaf-address) that starts with the field name, as in
 `get_state("plant", "q[2]")`. A bare `Symbol` is the short form of a plain field
-name. A state declared bare has no field name, and its address is headless:
-`get_state("integrator")` reads it whole, and `get_state("integrator", "[2]")`
-one component of a static-vector state. The field is read from a
+name. A state declared bare has the field `x` or `s`, which an address may
+leave out: `get_state("integrator")` reads it whole, as `get_state("integrator",
+"x")` does, and `get_state("integrator", "[2]")` one component of a
+static-vector state. The field is read from a
 [continuous component](@ref g-continuous-component)'s continuous state, or from
 a discrete component's discrete state.
 
@@ -219,8 +220,8 @@ Return a [selector](@ref g-selector) that reads one leaf of a
 A selector is labeled in a [read set](@ref g-read-set) built with
 [`reads`](@ref). `path` names the component, and `leaf` is a
 [leaf address](@ref g-leaf-address) that starts with the port name, as in
-`get_output("plant", "pose.q_eb[2]")`. A port declared bare has no name, and
-its address is headless: `get_output("integrator")` reads it whole, and
+`get_output("plant", "pose.q_eb[2]")`. A port declared bare is the port `y`,
+which an address may leave out: `get_output("integrator")` reads it whole, and
 `get_output("integrator", "[2]")` one component of a static-vector port.
 
 `get_output` is an [inspection read](@ref g-inspection-read), and it resolves
@@ -229,8 +230,8 @@ against the [signal table](@ref g-signal-table) or a published
 keeps its meaning when the component behind it is replaced, use
 [`get_face`](@ref). A path that names an [assembly](@ref g-assembly), a port the
 component does not declare, or a step the port's type cannot take is refused as
-`ReadResolution`, and so are a named head against a bare port and a headless
-address against named ones.
+`ReadResolution`, and so is an address that leaves the port out where the
+ports are named.
 
 See also [`get_state`](@ref), [`get_input`](@ref).
 """
@@ -239,7 +240,7 @@ get_output(path::AbstractString, leaf::Union{Symbol,AbstractString} = "") =
 
 # Design: §14.4, §14.9, D-276, D-277.
 """
-    get_input(leaf::Union{Symbol,AbstractString}) -> GetInput
+    get_input(leaf::Union{Symbol,AbstractString} = "") -> GetInput
 
 Return a [selector](@ref g-selector) that reads one leaf of a
 [root input](@ref g-root-input)'s value back.
@@ -248,7 +249,9 @@ A selector is labeled in a [read set](@ref g-read-set) built with
 [`reads`](@ref). `leaf` is a [leaf address](@ref g-leaf-address) that starts
 with a [face](@ref g-face) name. At the root, the face is a root input. In a
 read set mounted below the root with [`at`](@ref), it is an input face of the
-mounted level that reaches a root input.
+mounted level that reaches a root input. Where that level is a primitive whose
+`u_types` is bare, the face `u` may be left out: `get_input()` reads it whole,
+and `get_input(".field")` one field of it.
 
 `get_input` resolves against the [signal table](@ref g-signal-table) or a
 published [snapshot](@ref g-snapshot) alike. A face that names no input there is
@@ -257,11 +260,11 @@ refused as `ReadResolution`, and so is an input face a
 
 See also [`get_face`](@ref), [`get_output`](@ref).
 """
-get_input(leaf::Union{Symbol,AbstractString}) = GetInput(_authored_leaf(leaf))
+get_input(leaf::Union{Symbol,AbstractString} = "") = GetInput(_authored_leaf(leaf))
 
 # Design: §11.2, §14.4, §14.9, D-276, D-277.
 """
-    get_face(leaf::Union{Symbol,AbstractString}) -> GetFace
+    get_face(leaf::Union{Symbol,AbstractString} = "") -> GetFace
 
 Return a [selector](@ref g-selector) that reads one leaf of an exported output
 [face](@ref g-face).
@@ -275,12 +278,13 @@ level.
 `get_face` is an [integration read](@ref g-inspection-read). It resolves against
 the [signal table](@ref g-signal-table) or a published
 [snapshot](@ref g-snapshot) alike. At a primitive root the faces are its own
-ports, and a bare one is read headless, `get_face("")`. A name that is no output
-face there, including an input face, is refused as `ReadResolution`.
+ports, and a bare one, the port `y`, may be left out, `get_face()` or
+`get_face("[1,2]")`. A name that is no output face there, including an input
+face, is refused as `ReadResolution`.
 
 See also [`get_output`](@ref), [`get_input`](@ref).
 """
-get_face(leaf::Union{Symbol,AbstractString}) = GetFace(_authored_leaf(leaf))
+get_face(leaf::Union{Symbol,AbstractString} = "") = GetFace(_authored_leaf(leaf))
 
 # The selector as authored, for the diagnostics: a refusal names the read the
 # way its author wrote it, which is what makes a collected list readable. A
@@ -290,8 +294,9 @@ _spell(selector::GetState) = "get_state(\"$(selector.path)\"$(_spell_leaf(select
 _spell(selector::GetDeriv) = "get_deriv(\"$(selector.path)\"$(_spell_leaf(selector.leaf)))"
 _spell_leaf(leaf) = isempty(String(leaf)) ? "" : ", $(repr(leaf))"
 _spell(selector::GetOutput) = "get_output(\"$(selector.path)\"$(_spell_leaf(selector.leaf)))"
-_spell(selector::GetInput) = "get_input($(repr(selector.leaf)))"
-_spell(selector::GetFace) = "get_face($(repr(selector.leaf)))"
+_spell(selector::GetInput) = "get_input($(_spell_head(selector.leaf)))"
+_spell(selector::GetFace) = "get_face($(_spell_head(selector.leaf)))"
+_spell_head(leaf) = isempty(String(leaf)) ? "" : repr(leaf)
 
 # The address as authored, without the quotes: the payloads' `leaf`.
 _leaf_string(selector) = String(selector.leaf)
@@ -334,8 +339,9 @@ _name_end(leaf::String, start::Int) =
 Split a leaf address into its head name and its steps, `"pose.q_eb[2,3]"` into
 `(:pose, [:q_eb, (2, 3)])`. A `Symbol` is its string. A name is a Julia
 identifier; an index step is one or more decimal integers of at least one,
-separated by `,`. The headless address of a bare state has no name, its head
-`BARE`: `""` is `(BARE, [])` and `"[2]"` is `(BARE, [(2,)])`. Anything else is
+separated by `,`. A headless address has no head, `nothing`: `""` is
+`(nothing, [])` and `"[2]"` is `(nothing, [(2,)])`, the head supplied at
+resolution where the store or port is bare (D-437, D-438). Anything else is
 `:leaf_syntax` with the fragment it stopped at.
 """
 parse_leaf(leaf::Symbol) = parse_leaf(String(leaf))
@@ -345,7 +351,7 @@ function parse_leaf(leaf::String)
     head = leaf[1:prevind(leaf, stop)]
     isempty(head) || Base.isidentifier(head) || return LeafRefusal(:leaf_syntax, head)
     steps = parse_steps(leaf, stop)
-    steps isa LeafRefusal ? steps : (isempty(head) ? BARE : Symbol(head), steps)
+    steps isa LeafRefusal ? steps : (isempty(head) ? nothing : Symbol(head), steps)
 end
 
 # The steps from `start` to the end of the address, as `parse_leaf` reads them
@@ -384,9 +390,7 @@ Match a face selector's address against the faces it may name (§14.4, D-276). A
 face name is an arbitrary string and may hold a dot (§8.6), so the head is not
 parsed: it is the longest name in `faces` the address starts with, followed by
 the end, a `.` or a `[`, and the steps after it parse as `parse_leaf`'s. A
-`Symbol` names a face whole, with no steps. A bare port in `faces`, the name
-`BARE`, takes a headless address, one empty or starting at its first step
-(D-436). `nothing` where no face matches.
+`Symbol` names a face whole, with no steps. `nothing` where no face matches.
 """
 function match_leaf(leaf::Union{Symbol,String}, faces)
     head = match_face(leaf, faces)
@@ -406,13 +410,18 @@ function match_face(leaf::String, faces)
         ncodeunits(name) > ncodeunits(matched) && startswith(leaf, name) &&
             (stop > ncodeunits(leaf) || leaf[stop] in ('.', '[')) && (matched = name)
     end
-    isempty(matched) || return Symbol(matched)
-    BARE in faces && _headless(leaf) ? BARE : nothing
+    isempty(matched) ? nothing : Symbol(matched)
 end
 
-# Does the address start at its first step, naming no face or port (D-436)?
-_headless(leaf::Symbol) = leaf === BARE
+# Does the address start at its first step, naming no field, face or port
+# (D-437, D-438)?
+_headless(leaf::Symbol) = _headless(String(leaf))
 _headless(leaf::String) = isempty(leaf) || first(leaf) in ('.', '[')
+
+# The head a headless address takes where the declaration it addresses is bare,
+# by the declared shape and never by the count of its names (D-437, D-438): the
+# declaration's letter, or `nothing` where the declaration is named.
+_supplied_head(declared, letter::Symbol) = is_bare(declared) ? letter : nothing
 
 """
     resolve_leaf(P, steps) → (chain, leaf_type) | LeafRefusal
@@ -570,10 +579,10 @@ end
 # type per component type, not per model — so the baked store type is what
 # keeps the read inferable. The assertion goes on the *reference*: asserting
 # the dereferenced value instead leaves the `[]` a dynamic call, which boxes.
-@inline _read(entry::StoreRead{S,F,C}, exec::Executor) where {S,F,C} =
+@inline _read(entry::StoreRead{S,F,C}, exec::Executor) where {S<:NamedTuple,F,C} =
     walk_steps(getfield((exec.sstores[entry.ci]::Base.RefValue{S})[], F), Val(C))
-# A bare store is read whole before the chain.
-@inline _read(entry::StoreRead{S,BARE,C}, exec::Executor) where {S,C} =
+# A bare store, its field `F` the letter, is read whole before the chain (D-438).
+@inline _read(entry::StoreRead{S,F,C}, exec::Executor) where {S,F,C} =
     walk_steps((exec.sstores[entry.ci]::Base.RefValue{S})[], Val(C))
 # The signal table's read is store-level, so every gather over a table shares it.
 @inline _read(entry::CellRead{A,C}, store::StoreBundle) where {A,C} =
@@ -698,7 +707,7 @@ struct MountedRead
     mount::String            # the joined mount path; "" at the root
     selector::ReadSelector   # root-authored: the path joined, the face resolved
     face::Union{Nothing,Symbol}  # the face a face selector matched; `nothing` for a path selector
-    head::Symbol             # the field, port or root input the read names
+    head::Union{Nothing,Symbol}  # the field, port or root input the read names; `nothing` headless
     steps::Vector{AccessStep}  # the leaf's steps after the head
 end
 
@@ -729,7 +738,8 @@ _mounted_path(mount::String, path::String) = isempty(path) ? mount : _join(mount
 
 # A path selector: its path is walked from the mount level (§13.3), the walk
 # owning the unknown-segment refusal, and its address is parsed. The rebased selector is the same kind at the joined path, the leaf
-# address as authored.
+# address as authored. A headless address takes its head here where the
+# declaration it reads is bare (D-437, D-438), so every later step reads a name.
 function _rebase(authored::Union{GetState,GetDeriv,GetOutput}, label::Symbol, mount::String,
                  level, build::Build, diags::Vector{Diagnostic})
     description = "the read labeled `$label`, $(_spell(authored))" *
@@ -740,9 +750,44 @@ function _rebase(authored::Union{GetState,GetDeriv,GetOutput}, label::Symbol, mo
     parsed isa LeafRefusal &&
         return (push!(diags, _leaf_violation(label, authored, mount, parsed)); nothing)
     head, steps = parsed
-    MountedRead(label, authored, mount,
-                typeof(authored)(_mounted_path(mount, authored.path), authored.leaf), nothing,
-                head, steps)
+    selector = typeof(authored)(_mounted_path(mount, authored.path), authored.leaf)
+    shape = head === nothing ? _read_shape(selector, build) : nothing
+    if shape !== nothing
+        declared, letter, reason, declares, names = shape
+        head = _supplied_head(declared, letter)
+        head === nothing &&
+            return (push!(diags, _reader_violation(label, authored, mount, reason;
+                                                   declares = declares, candidates = names));
+                    nothing)
+    end
+    MountedRead(label, authored, mount, selector, nothing, head, steps)
+end
+
+# What a headless path selector's head depends on (D-437, D-438): the declaration
+# it reads, its letter, and the shape refusal with the names in hand. `nothing`
+# where the resolver refuses the read first, at an assembly or for a discrete
+# component's derivative.
+function _read_shape(selector::GetState, build::Build)
+    ci = findfirst(component -> component.path == selector.path, build.structure.components)
+    ci === nothing && return nothing
+    tier = build.structure.components[ci].tier
+    declared = state_decls(activation(build, Float64).decls[ci], tier)
+    letter = tier === CONTINUOUS ? :x : :s
+    (declared, letter, :store_shape, :state_field, _store_names(declared, letter))
+end
+
+function _read_shape(selector::GetDeriv, build::Build)
+    ci = findfirst(component -> component.path == selector.path, build.structure.components)
+    (ci === nothing || build.structure.components[ci].tier !== CONTINUOUS) && return nothing
+    declared = activation(build, Float64).decls[ci].x
+    (declared, :x, :store_shape, :state_field, _store_names(declared, :x))
+end
+
+function _read_shape(selector::GetOutput, build::Build)
+    ci = findfirst(component -> component.path == selector.path, build.structure.components)
+    ci === nothing && return nothing
+    (activation(build, Float64).decls[ci].outs, :y, :port_shape, :output_port,
+     _ports(build.outputs.components[ci]))
 end
 
 # `get_input` names an input face of the mount level and follows the export
@@ -753,7 +798,11 @@ function _rebase(authored::GetInput, label::Symbol, mount::String, level, build:
                  diags::Vector{Diagnostic})
     structure, decls = build.structure, activation(build, Float64).decls
     faces = _input_faces_at(structure, decls, mount)
-    matched = match_leaf(authored.leaf, faces)
+    ci = findfirst(component -> component.path == mount, structure.components)
+    leaf = _face_leaf(authored, label, mount, ci === nothing ? nothing : decls[ci].ins, :u,
+                      :input_face, faces, diags)
+    leaf === nothing && return nothing
+    matched = match_leaf(leaf, faces)
     if matched isa LeafRefusal
         push!(diags, _leaf_violation(label, authored, mount, matched;
                                      field = _field(authored, faces)))
@@ -776,24 +825,21 @@ end
 # port (§14.9, D-277): an assembly's face through `terminal_producer`, whose
 # answer is a primitive's port, and a primitive's own port directly. At an
 # assembly root the faces are the root-exported ones, and at a primitive root
-# its own ports, a bare one read headless (§8.6, D-436).
+# its own ports, a bare one the port `y` (§8.6, D-437).
 function _rebase(authored::GetFace, label::Symbol, mount::String, level, build::Build,
                  diags::Vector{Diagnostic})
     structure = build.structure
     ci = findfirst(component -> component.path == mount, structure.components)
     faces = ci === nothing ? _exported_faces(structure, mount) :
                              _ports(build.outputs.components[ci])
-    matched = match_leaf(authored.leaf, faces)
+    leaf = _face_leaf(authored, label, mount,
+                      ci === nothing ? nothing : activation(build, Float64).decls[ci].outs, :y,
+                      :output_port, faces, diags)
+    leaf === nothing && return nothing
+    matched = match_leaf(leaf, faces)
     if matched isa LeafRefusal
         push!(diags, _leaf_violation(label, authored, mount, matched;
                                      field = _field(authored, faces)))
-        return nothing
-    elseif matched === nothing && ci !== nothing && !isempty(faces) &&
-           (faces == [BARE]) != _headless(authored.leaf)
-        push!(diags, _reader_violation(label, authored, mount, :port_shape;
-                                       field = _headless(authored.leaf) ? BARE :
-                                               _field(authored, faces),
-                                       declares = :output_port, candidates = faces))
         return nothing
     elseif matched === nothing
         inputs = _input_faces_at(structure, activation(build, Float64).decls, mount)
@@ -808,6 +854,21 @@ function _rebase(authored::GetFace, label::Symbol, mount::String, level, build::
     producer = ci === nothing ? terminal_producer(structure, (mount, face)) : (mount, face)
     MountedRead(label, authored, mount, GetOutput(first(producer), last(producer)), face,
                 last(producer), steps)
+end
+
+# A face selector's address with its head: as authored where it has one, and
+# where it is headless the default face `letter` of the primitive level's bare
+# `contract` (D-437). A headless address at a named contract, or at an assembly,
+# whose `contract` is `nothing`, is the shape's refusal, the faces in hand.
+function _face_leaf(authored::Union{GetInput,GetFace}, label::Symbol, mount::String, contract,
+                    letter::Symbol, declares::Symbol, faces, diags::Vector{Diagnostic})
+    _headless(authored.leaf) || return authored.leaf
+    head = contract === nothing ? nothing : _supplied_head(contract, letter)
+    head === nothing || return string(head, authored.leaf)
+    push!(diags, _reader_violation(label, authored, mount, :port_shape;
+                                   declares = contract === nothing ? :assembly_face : declares,
+                                   candidates = faces))
+    nothing
 end
 
 # The output faces the assembly at `path` exports, the names a `get_face` may
@@ -827,7 +888,7 @@ end
 function _input_faces_at(structure::Structure, decls::Vector{Decls}, path::String)
     isempty(path) && return structure.root_inputs
     ci = findfirst(entry -> entry.path == path, structure.components)
-    ci === nothing || return Symbol[keys(decls[ci].ins)...]
+    ci === nothing || return Symbol[keys(keyed_ins(decls[ci]))...]
     row = _level_index(structure, path)
     row === nothing ? Symbol[] : _boundary_inputs(structure.levels[row])
 end
@@ -860,7 +921,7 @@ end
 # observed.
 _reader_violation(read::MountedRead, reason::Symbol; kw...) =
     _reader_violation(read.label, read.authored, read.mount, reason;
-                      field = something(read.face, read.head), kw...)
+                      field = read.face === nothing ? read.head : read.face, kw...)
 
 # The mount step's form, before the selector is rebased: a path selector's path
 # below the mount, a face selector's the mount level itself.
@@ -896,18 +957,17 @@ function _leaf_chain(read::MountedRead, ::Type{P}, diags::Vector{Diagnostic}) wh
     nothing
 end
 
-# A store's names in hand: a named store's fields, `BARE` alone for a bare one,
-# none for `nothing`.
-_undeclared_violation(read::MountedRead, declares::Symbol, declared) =
-    _reader_violation(read, :undeclared; declares = declares,
-                      candidates = Symbol[first(f) for f in store_fields(declared)])
+# A store's names in hand: a named store's fields, its letter for a bare one,
+# none for `nothing` (D-438).
+_store_names(declared, letter::Symbol) = Symbol[keys(_keyed(declared, letter))...]
+
 
 # The declared type a store read's head lands on, or `nothing` where the store
-# has no such head: a named store by field, a bare one by the headless address.
-_store_field_type(declared::NamedTuple, head::Symbol) =
-    haskey(declared, head) ? typeof(declared[head]) : nothing
-_store_field_type(::Nothing, ::Symbol) = nothing
-_store_field_type(declared, head::Symbol) = head === BARE ? typeof(declared) : nothing
+# has no such field.
+function _store_field_type(declared, head::Symbol, letter::Symbol)
+    fields = _keyed(declared, letter)
+    haskey(fields, head) ? typeof(fields[head]) : nothing
+end
 
 # The port list in hand is the `Outputs`' row concatenated by `_ports`, a fresh
 # vector the payload is free to hold (D-253).
@@ -918,12 +978,15 @@ function _resolve_selector(selector::GetState, read::MountedRead, build::Build,
                            act::Activation, diags::Vector{Diagnostic})
     ci = _read_component(read, build.structure, diags)
     ci === nothing && return nothing
-    head = read.head
     decl, tier = act.decls[ci], build.structure.components[ci].tier
     declared = state_decls(decl, tier)
-    field_type = _store_field_type(declared, head)
+    letter = tier === CONTINUOUS ? :x : :s
+    names = _store_names(declared, letter)
+    head = read.head
+    field_type = _store_field_type(declared, head, letter)
     field_type === nothing &&
-        (push!(diags, _undeclared_violation(read, :state_field, declared));
+        (push!(diags, _reader_violation(read, :undeclared; declares = :state_field,
+                                        candidates = names));
          return nothing)
     # A continuous field is flat, a scalar or an `SArray` (§7.1), so a `.name`
     # step falls out of the walk as `:no_such_field`. A discrete `s` field is any
@@ -939,15 +1002,17 @@ function _resolve_selector(selector::GetDeriv, read::MountedRead, build::Build,
                            act::Activation, diags::Vector{Diagnostic})
     ci = _read_component(read, build.structure, diags)
     ci === nothing && return nothing
-    head = read.head
     decl, tier = act.decls[ci], build.structure.components[ci].tier
     if tier !== CONTINUOUS
         push!(diags, _reader_violation(read, :discrete_deriv))
         return nothing
     end
-    field_type = _store_field_type(decl.x, head)
+    names = _store_names(decl.x, :x)
+    head = read.head
+    field_type = _store_field_type(decl.x, head, :x)
     field_type === nothing &&
-        (push!(diags, _undeclared_violation(read, :state_field, decl.x));
+        (push!(diags, _reader_violation(read, :undeclared; declares = :state_field,
+                                        candidates = names));
          return nothing)
     chain = _leaf_chain(read, field_type, diags)
     chain === nothing && return nothing
@@ -960,20 +1025,15 @@ function _resolve_selector(selector::GetOutput, read::MountedRead, build::Build,
                            act::Activation, diags::Vector{Diagnostic})
     ci = _read_component(read, build.structure, diags)
     ci === nothing && return nothing
-    head = read.head
     decl = act.decls[ci]
     ports = _ports(build.outputs.components[ci])
-    # A bare port takes the headless address and a named one its name, so a
-    # mismatch of the two is the shape's, not a missing name (D-436).
+    head = read.head
     if !(head in ports)
-        push!(diags, !isempty(ports) && (ports == [BARE]) != (head === BARE) ?
-                     _reader_violation(read, :port_shape; declares = :output_port,
-                                       candidates = ports) :
-                     _undeclared_violation(read, :output_port, ports))
+        push!(diags, _undeclared_violation(read, :output_port, ports))
         return nothing
     end
     # The port's *type* is the activation's, a type being no name list (D-253).
-    chain = _leaf_chain(read, decl.outs[head], diags)
+    chain = _leaf_chain(read, keyed_outs(decl)[head], diags)
     chain === nothing && return nothing
     addr = act.layout.addr[(selector.path, head)]
     CellRead{typeof(addr),chain}(addr)

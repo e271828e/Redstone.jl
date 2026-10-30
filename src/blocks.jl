@@ -23,7 +23,7 @@ inputs as its one output.
 
 The inputs `in1` to `inN` are typed `In`, and the one output, bare, is typed
 `Out`, with `y = f(in1, …, inN)`, the fold applied in positional order. A wire
-names the output by the block's path alone. The [block](@ref g-block) is
+names the output `y`, as in `"sum/y"`. The [block](@ref g-block) is
 stateless. The fold `f` is instance data, and the type
 parameter `F` is inferred from it. A custom fold, such as a weighted blend or a
 mass-properties composition, is written at the site.
@@ -201,8 +201,8 @@ A discrete [primitive](@ref g-primitive) that publishes its input from the
 previous [tick](@ref g-tick).
 
 The [block](@ref g-block) is a discrete primitive, the native `z⁻¹` of the
-discrete [tier](@ref g-tier). Its input `u` and its output `y` are bare, so a
-wire names each by the block's path alone. The output publishes the stored value
+discrete [tier](@ref g-tier). Its input `u` and its output `y` are bare, and a
+wire names each by its face, `"delay/u"` and `"delay/y"`. The output publishes the stored value
 `s` from [stage 1](@ref g-stage-function), `y = s`, and `s0` at the first
 publication. Each tick stores the input for the next one, `s⁺ = u`. The
 [store](@ref g-store) is isbits, which bounds `V`.
@@ -255,8 +255,8 @@ A continuous [primitive](@ref g-primitive) that publishes a
 [stop request](@ref g-stop-request) while its `Bool` input holds.
 
 Its one output, a bare [`StopFlag`](@ref), publishes `STOP_REQUESTED` while its
-one input, a bare `Bool`, holds and `NO_STOP` otherwise. A wire names either by
-the block's path alone. The [block](@ref g-block) is
+one input, a bare `Bool`, holds and `NO_STOP` otherwise. A wire names them `u`
+and `y`. The [block](@ref g-block) is
 stateless, so it refreshes at every [boundary](@ref g-boundary) and sits
 anywhere in the tree. It holds no privilege: the request is the
 [port](@ref g-port)'s type, and any component may publish one.
@@ -331,7 +331,7 @@ A discrete [primitive](@ref g-primitive) that publishes the forward-Euler
 integral of its input.
 
 The [block](@ref g-block) holds one bare [store](@ref g-store) value from `s0`, `s`
-below, addressed by the path alone.
+below, the field `s`.
 Its input `u` and its output `y` are bare. Each [tick](@ref g-tick) advances
 the store by forward Euler, `s⁺ = s + Δt u`, and the output publishes `y = s`
 from [stage 1](@ref g-stage-function). The block therefore breaks
@@ -573,8 +573,8 @@ A continuous [primitive](@ref g-primitive) that publishes the time integral of
 its input.
 
 The [block](@ref g-block) holds one continuous state `x`, starting at `x0`. Its
-input `u` and its output `y` are bare, so a wire names each by the block's path
-alone, with `ẋ = u` and `y = x`, published from
+input `u` and its output `y` are bare, and a wire names each by its face, as in
+`"integrator/u"`, with `ẋ = u` and `y = x`, published from
 [stage 1](@ref g-stage-function). The block
 therefore has no [feedthrough](@ref g-feedthrough). A `Float64` state follows
 the scalar of a `Dual` [activation](@ref g-activation), so the block linearizes

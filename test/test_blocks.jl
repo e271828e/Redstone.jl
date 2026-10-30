@@ -13,74 +13,74 @@
 # One gate over three `Constant` sources, at the given input values.
 gate_model(gate, (a, b, c)) =
     Group((; a = Constant(a), b = Constant(b), c = Constant(c), g = gate);
-          local_wires = ("a" => "g/in1", "b" => "g/in2", "c" => "g/in3"))
+          local_wires = ("a/y" => "g/in1", "b/y" => "g/in2", "c/y" => "g/in3"))
 
 # A sum over a walking source, a pinned source and a delayed copy of the first.
 blocks_sum_model() =
     Group((; r = Ramp(1.0), k = Constant(2.0), d = UnitDelay(0.5), s = SumJunction{Float64,3}());
-          local_wires = ("r/out" => "s/in1", "k" => "s/in2", "d" => "s/in3",
-                         "r/out" => "d"))
+          local_wires = ("r/out" => "s/in1", "k/y" => "s/in2", "d/y" => "s/in3",
+                         "r/out" => "d/u"))
 
 # A delay behind a tick counter: the counter's `n` is its tick index. The delay
 # line's `V` is a float, so a junction converts the count.
-delay_model(delay) = Group((; c = TickCounter(), d = delay); local_wires = ("c/n" => "d",))
+delay_model(delay) = Group((; c = TickCounter(), d = delay); local_wires = ("c/n" => "d/u",))
 delay_model(delay::Delay) = Group((; c = TickCounter(), f = Junction{Int, Float64, 1}(float), d = delay);
-                                  local_wires = ("c/n" => "f/in1", "f" => "d"))
+                                  local_wires = ("c/n" => "f/in1", "f/y" => "d/u"))
 
 # A block fed by a source, under the given rates.
 fed_by(src, c; sample_times = (;)) =
-    Group((; k = src, c = c); local_wires = ("k" => "c",), sample_times = sample_times)
+    Group((; k = src, c = c); local_wires = ("k/y" => "c/u",), sample_times = sample_times)
 
 # A pack over a walking source and a pinned one.
 pack_model(p) = Group((; a = Ramp(0.0), b = Constant(2.0), p = p);
-                      local_wires = ("a/out" => "p/in1", "b" => "p/in2"))
+                      local_wires = ("a/out" => "p/in1", "b/y" => "p/in2"))
 
 # A pack under the root inputs `a` and `b` and the root output `v`.
 pack_root_model() = Group((; p = Pack{Float64, 2}()); input_wires = ("a" => "p/in1", "b" => "p/in2"),
-                          output_wires = ("p" => "v",))
+                          output_wires = ("p/y" => "v",))
 
 # An unpack fed by a constant vector.
 unpack_model() = fed_by(Constant(SVector(1.0, -2.0, 3.5)), Unpack{Float64, 3}())
 
 # An unpack under the root input `v` and the root outputs `a` and `b`.
-unpack_root_model() = Group((; u = Unpack{Float64, 2}()); input_wires = ("v" => "u",),
+unpack_root_model() = Group((; u = Unpack{Float64, 2}()); input_wires = ("v" => "u/u",),
                             output_wires = ("u/out1" => "a", "u/out2" => "b"))
 
 # A pack into an unpack, over a walking source and a pinned one.
 round_trip_model() =
     Group((; a = Ramp(0.0), b = Constant(2.0), p = Pack{Float64, 2}(), u = Unpack{Float64, 2}());
-          local_wires = ("a/out" => "p/in1", "b" => "p/in2", "p" => "u"))
+          local_wires = ("a/out" => "p/in1", "b/y" => "p/in2", "p/y" => "u/u"))
 
 # A switch under the root inputs `in1`, `in2` and `select` and the root output
 # `out`.
 switch_root() =
     Group((; s = Switch{Float64}());
           input_wires = ("in1" => "s/in1", "in2" => "s/in2", "select" => "s/select"),
-          output_wires = ("s" => "out",))
+          output_wires = ("s/y" => "out",))
 
 # A switch between two constant vectors, selecting the second.
 vector_switch_model() =
     Group((; a = Constant(SVector(1.0, 2.0)), b = Constant(SVector(-1.0, -2.0)), k = Constant(false),
              s = Switch{SVector{2, Float64}}());
-          local_wires = ("a" => "s/in1", "b" => "s/in2", "k" => "s/select"))
+          local_wires = ("a/y" => "s/in1", "b/y" => "s/in2", "k/y" => "s/select"))
 
 # A switch between a walking source and a pinned one.
 mixed_switch_model() =
     Group((; r = Ramp(0.0), k = Constant(2.0), f = Constant(true), s = Switch{Float64}());
-          local_wires = ("r/out" => "s/in1", "k" => "s/in2", "f" => "s/select"))
+          local_wires = ("r/out" => "s/in1", "k/y" => "s/in2", "f/y" => "s/select"))
 
 # A switch whose selector is a memoryless function of its own output.
 switch_cycle_model() =
     Group((; s = Switch{Float64}(), a = Constant(1.0), b = Constant(-1.0),
              g = Junction{Float64, Bool, 1}(v -> v > 0));
-          local_wires = ("a" => "s/in1", "b" => "s/in2", "s" => "g/in1", "g" => "s/select"))
+          local_wires = ("a/y" => "s/in1", "b/y" => "s/in2", "s/y" => "g/in1", "g/y" => "s/select"))
 
 # A switch from `-1` to `1` at 0.5, its selector a source of `t`, into an
 # integrator.
 flip_model() =
     Group((; a = Constant(1.0), b = Constant(-1.0), k = Source{Bool}(t -> t >= 0.5), s = Switch{Float64}(),
              i = Integrator());
-          local_wires = ("a" => "s/in1", "b" => "s/in2", "k" => "s/select", "s" => "i"))
+          local_wires = ("a/y" => "s/in1", "b/y" => "s/in2", "k/y" => "s/select", "s/y" => "i/u"))
 
 # A vector source of `t` into a vector integrator.
 vector_source_model() =
@@ -116,34 +116,34 @@ end
 
 # A noise source driving an integrator.
 noise_integrator_model() =
-    Group((; n = GaussianWhiteNoise(seed = 1, σ = 1.0), i = Integrator()); local_wires = ("n" => "i",))
+    Group((; n = GaussianWhiteNoise(seed = 1, σ = 1.0), i = Integrator()); local_wires = ("n/y" => "i/u",))
 
 # The pendulum's angle leaving the root twice, once through a freeze.
 freeze_model() = Group((; p = Pendulum(), f = Freeze{Float64}());
-                       local_wires = ("p/θ" => "f",), input_wires = ("τ" => "p/u",),
-                       output_wires = ("p/θ" => "direct", "f" => "frozen"))
+                       local_wires = ("p/θ" => "f/u",), input_wires = ("τ" => "p/u",),
+                       output_wires = ("p/θ" => "direct", "f/y" => "frozen"))
 
 # An integrator from `x0` fed by a constant.
 integrator_model(x0, value) =
-    Group((; k = Constant(value), i = Integrator(x0 = x0)); local_wires = ("k" => "i",))
+    Group((; k = Constant(value), i = Integrator(x0 = x0)); local_wires = ("k/y" => "i/u",))
 
 # A lag at `τ = 0.5` from rest, fed by a constant.
 lag_model(value) =
     Group((; k = Constant(value), l = FirstOrderLag(τ = 0.5, x0 = zero(value)));
-          local_wires = ("k" => "l",))
+          local_wires = ("k/y" => "l/u",))
 
 # The two-state state space with two inputs and two outputs, strictly proper.
 two_state_block() = StateSpace(A = [-1 0.5; 0 -2], B = [1 0.5; 0 1], C = [1 2; 0 1])
 
 # A linear block under the root faces `in` and `out`.
 linear_root_model(block) =
-    Group((; c = block); input_wires = ("in" => "c",), output_wires = ("c" => "out",))
+    Group((; c = block); input_wires = ("in" => "c/u",), output_wires = ("c/y" => "out",))
 
 # A unit-feedback loop through a difference junction around a scalar linear
 # block, or around a scalar state space whose direct term is `D`.
 feedback_loop(plant) =
     Group((; r = Constant(1.0), e = Junction{Float64, Float64, 2}(-), p = plant);
-          local_wires = ("r" => "e/in1", "p" => "e/in2", "e" => "p"))
+          local_wires = ("r/y" => "e/in1", "p/y" => "e/in2", "e/y" => "p/u"))
 feedback_loop(D::Real) = feedback_loop(StateSpace(A = [-1.0;;], B = [1.0;;], C = [1.0;;], D = [D;;]))
 
 # The transfer functions: the lag `1/(0.5s + 1)`, the lead-lag `(s + 2)/(s + 5)`
@@ -156,14 +156,14 @@ second_order() = TransferFunction(num = (4,), den = (1, 1.2, 4))
 # constant.
 lag_pair_model() =
     Group((; k = Constant(1.0), tf = lag_form(), l = FirstOrderLag(τ = 0.5));
-          local_wires = ("k" => "tf", "k" => "l"))
+          local_wires = ("k/y" => "tf/u", "k/y" => "l/u"))
 
 # The lead-lag driving a lag plant in a unit-feedback loop.
 lead_lag_loop() =
     Group((; r = Constant(1.0), e = Junction{Float64, Float64, 2}(-), controller = lead_lag(),
              plant = FirstOrderLag(τ = 1.0));
-          local_wires = ("r" => "e/in1", "plant" => "e/in2", "e" => "controller",
-                         "controller" => "plant"))
+          local_wires = ("r/y" => "e/in1", "plant/y" => "e/in2", "e/y" => "controller/u",
+                         "controller/y" => "plant/u"))
 
 # The hold of the scalar lag `1/(s + 1)` from `x0`.
 scalar_hold(; x0 = 0.0) = DiscretizedStateSpace(A = [-1.0;;], B = [1.0;;], C = [1.0;;], x0 = x0)
@@ -172,10 +172,10 @@ scalar_hold(; x0 = 0.0) = DiscretizedStateSpace(A = [-1.0;;], B = [1.0;;], C = [
 # fed by one constant, under the given rates.
 hold_pair_model(num, den, continuous; sample_times = (;)) =
     Group((; k = Constant(1.0), d = DiscretizedTransferFunction(num = num, den = den), c = continuous);
-          local_wires = ("k" => "d", "k" => "c"), sample_times = sample_times)
+          local_wires = ("k/y" => "d/u", "k/y" => "c/u"), sample_times = sample_times)
 
 # A step into an integrator, which ramps from the instant the jump lands.
-step_model(source) = Group((; s = source, i = Integrator()); local_wires = ("s" => "i",))
+step_model(source) = Group((; s = source, i = Integrator()); local_wires = ("s/y" => "i/u",))
 
 # The step's row of the events product.
 step_events(model) = only(row for row in build(model).events.components if row.path == "s")
@@ -190,14 +190,14 @@ block_linearization(comp) =
 limited_model(localized) =
     Group((; s = Step(t_step = 1.05, before = 1.0, after = -1.0),
              li = LimitedIntegrator(lower = -1.0, upper = 0.5, localized = localized));
-          local_wires = ("s" => "li",))
+          local_wires = ("s/y" => "li/u",))
 
 # A limited integrator fed by the ramp `1.05 - t`, which crosses zero at 1.05
 # with slope `-1`.
 ramp_limited_model(localized) =
     Group((; k = Constant(-1.0), ramp = Integrator(x0 = 1.05),
              li = LimitedIntegrator(lower = -2.0, upper = 0.4, localized = localized));
-          local_wires = ("k" => "ramp", "ramp" => "li"))
+          local_wires = ("k/y" => "ramp/u", "ramp/y" => "li/u"))
 
 # The limited integrator's row of the events product.
 limited_events(model) = only(row for row in build(model).events.components if row.path == "li")
@@ -209,14 +209,14 @@ zero_input_model(level, lower, upper, localized) =
              push = Step(t_step = 2.05, before = 0.0, after = level),
              input = SumJunction{Float64, 2}(),
              li = LimitedIntegrator(lower = lower, upper = upper, localized = localized));
-          local_wires = ("release" => "input/in1", "push" => "input/in2",
-                         "input" => "li"))
+          local_wires = ("release/y" => "input/in1", "push/y" => "input/in2",
+                         "input/y" => "li/u"))
 
 # A relay reading an integrator that a step drives up, then down.
 relay_model() =
     Group((; s = Step(t_step = 1.0, before = 1.0, after = -1.0), i = Integrator(),
              r = Relay(lower = 0.2, upper = 0.8));
-          local_wires = ("s" => "i", "i" => "r"))
+          local_wires = ("s/y" => "i/u", "i/y" => "r/u"))
 
 # A vector limited integrator fed by a step: component 2 saturates at 0.4 and
 # component 1 at 0.5; after 1.05 component 1 leaves and reaches its lower limit
@@ -225,7 +225,7 @@ vector_limited_model(localized) =
     Group((; s = Step(t_step = 1.05, before = SVector(1.0, 2.0), after = SVector(-1.0, 0.0)),
              li = LimitedIntegrator(lower = SVector(-1.0, -1.0), upper = SVector(0.5, 0.8),
                                     localized = localized));
-          local_wires = ("s" => "li",))
+          local_wires = ("s/y" => "li/u",))
 
 # A vector relay reading a vector integrator: component 1 is `relay_model`'s,
 # and component 2 climbs to 0.5 and never reaches its upper threshold.
@@ -233,7 +233,7 @@ vector_relay_model() =
     Group((; s = Step(t_step = 1.0, before = SVector(1.0, 0.5), after = SVector(-1.0, -0.5)),
              i = Integrator(x0 = SVector(0.0, 0.0)),
              r = Relay(lower = SVector(0.2, 0.2), upper = SVector(0.8, 0.8)));
-          local_wires = ("s" => "i", "i" => "r"))
+          local_wires = ("s/y" => "i/u", "i/y" => "r/u"))
 
 # The servo loop: a reference step, the error, a limited integrator as the
 # controller, a lag as the actuator and a lag as the plant, whose `out` leaves
@@ -242,15 +242,15 @@ servo_loop(localized) =
     Group((; reference = Step(t_step = 0.5), error = Junction{Float64, Float64, 2}(-),
              controller = LimitedIntegrator(lower = -1.2, upper = 1.2, localized = localized),
              actuator = FirstOrderLag(τ = 0.1), plant = FirstOrderLag(τ = 1.0));
-          local_wires = ("reference" => "error/in1", "plant" => "error/in2",
-                         "error" => "controller", "controller/out" => "actuator",
-                         "actuator" => "plant"),
-          output_wires = ("plant" => "out",))
+          local_wires = ("reference/y" => "error/in1", "plant/y" => "error/in2",
+                         "error/y" => "controller/u", "controller/out" => "actuator/u",
+                         "actuator/y" => "plant/u"),
+          output_wires = ("plant/y" => "out",))
 
 # The bang-bang loop: a relay switching an integrator's input on its output.
 bang_bang_loop() =
     Group((; integrator = Integrator(), relay = Relay(lower = 0.2, upper = 0.8, off = 1.0, on = -1.0));
-          local_wires = ("relay" => "integrator", "integrator" => "relay"))
+          local_wires = ("relay/y" => "integrator/u", "integrator/y" => "relay/u"))
 
 # The PID at the gains its direct calls and linearizations use, in one spelling.
 pid_controller(hold, tracking) =
@@ -284,10 +284,10 @@ function scheduled_pid_root(controller::PID{V}; frozen = false) where {V}
     port_names = keys(u_types(controller))
     scheduled = filter(∉((:r, :y, :saturation, :v)), port_names)
     freezes = NamedTuple{map(name -> Symbol(:freeze_, name), scheduled)}(map(_ -> Freeze{V}(), scheduled))
-    port_entry(name) = frozen && name in scheduled ? "freeze_$name" : "controller/$name"
+    port_entry(name) = frozen && name in scheduled ? "freeze_$name/u" : "controller/$name"
     Group(merge((; controller), frozen ? freezes : (;));
           input_wires = map(name -> String(name) => port_entry(name), port_names),
-          local_wires = frozen ? map(name -> "freeze_$name" => "controller/$name", scheduled) : (),
+          local_wires = frozen ? map(name -> "freeze_$name/y" => "controller/$name", scheduled) : (),
           output_wires = ("controller/u" => "u", "controller/u_raw" => "u_raw"))
 end
 
@@ -306,9 +306,9 @@ end
 pid_clamp_loop(controller = PID(Kp = 1.0, Ki = 0.5, Kd = 0.2, Tt = 1.0, tracking = true)) =
     Group((; reference = Step(t_step = 0.5, after = 5.0), controller = controller,
              sat = Junction{Float64, Float64, 1}(v -> clamp(v, -1.0, 1.0)), plant = Integrator());
-          local_wires = ("reference" => "controller/r", "plant" => "controller/y",
-                         "controller/u" => "sat/in1", "sat" => "controller/v",
-                         "sat" => "plant"))
+          local_wires = ("reference/y" => "controller/r", "plant/y" => "controller/y",
+                         "controller/u" => "sat/in1", "sat/y" => "controller/v",
+                         "sat/y" => "plant/u"))
 
 # A PID whose scheduled parameter `name`, `Kp` unless given, is a memoryless
 # function of its own `u`.
@@ -316,9 +316,9 @@ scheduled_pid_cycle(name = :Kp) =
     Group((; reference = Step(t_step = 0.5, after = 5.0),
              controller = PID(; merge((Kp = 1.0, Ki = 0.5, Kd = 0.2, Tt = 1.0), (; name => AsPort()))...),
              gain = Junction{Float64, Float64, 1}(abs), plant = Integrator());
-          local_wires = ("reference" => "controller/r", "plant" => "controller/y",
-                         "controller/u" => "gain/in1", "gain" => "controller/$name",
-                         "controller/u" => "plant"))
+          local_wires = ("reference/y" => "controller/r", "plant/y" => "controller/y",
+                         "controller/u" => "gain/in1", "gain/y" => "controller/$name",
+                         "controller/u" => "plant/u"))
 
 # The PID's first variant as library blocks, the inspector's example beside
 # the block: the integrator is what splits the stages (§5.4).
@@ -330,22 +330,22 @@ pid_assembly(; Kp, Ki, Kd, τd, Tt, u_min, u_max) = Group((
         raw = Junction{Float64, Float64, 3}((e, q, rate) -> Kp * e + q - Kd * rate),
         sat = Junction{Float64, Float64, 1}(v -> clamp(v, u_min, u_max)),
         aw  = Junction{Float64, Float64, 3}((e, u, u_raw) -> Ki * e + (u - u_raw) / Tt));
-      input_wires  = ("r" => "err/in1", "y" => ("err/in2", "lag", "der/in1")),
-      local_wires  = ("lag" => "der/in2",
-                      "err" => "raw/in1", "int" => "raw/in2", "der" => "raw/in3",
-                      "raw" => "sat/in1",
-                      "err" => "aw/in1", "sat" => "aw/in2", "raw" => "aw/in3",
-                      "aw" => "int"),
-      output_wires = ("sat" => "u", "raw" => "u_raw"))
+      input_wires  = ("r" => "err/in1", "y" => ("err/in2", "lag/u", "der/in1")),
+      local_wires  = ("lag/y" => "der/in2",
+                      "err/y" => "raw/in1", "int/y" => "raw/in2", "der/y" => "raw/in3",
+                      "raw/y" => "sat/in1",
+                      "err/y" => "aw/in1", "sat/y" => "aw/in2", "raw/y" => "aw/in3",
+                      "aw/y" => "int/u"),
+      output_wires = ("sat/y" => "u", "raw/y" => "u_raw"))
 
 # A single loop on the own limits: the controller drives an integrator plant,
 # continuous unless given, to a reference step to `level`.
 pid_single_loop(controller; plant = Integrator(), level = 5.0) = Group((
         reference = Step(t_step = 0.5, before = zero(level), after = level), controller = controller,
         plant = plant);
-      local_wires = ("reference" => "controller/r", "plant" => "controller/y",
-                     "controller/u" => "plant"),
-      output_wires = ("plant" => "y",))
+      local_wires = ("reference/y" => "controller/r", "plant/y" => "controller/y",
+                     "controller/u" => "plant/u"),
+      output_wires = ("plant/y" => "y",))
 
 # The single loop over two channels, one per gain set: channel 1 is the loop
 # above at `pid_controller`'s gains, channel 2 the second set's on a reference of 3.
@@ -357,23 +357,23 @@ scheduled_pid_loop() = Group((
         reference = Step(t_step = 0.5, before = 0.0, after = 5.0),
         controller = PID(Kp = AsPort(), Ki = 0.5, Kd = 0.2, τd = 0.1, Tt = 1.0, u_min = -1.0, u_max = 1.0),
         gain = Constant(1.0), plant = Integrator());
-      local_wires = ("reference" => "controller/r", "plant" => "controller/y",
-                     "gain" => "controller/Kp", "controller/u" => "plant"),
-      output_wires = ("plant" => "y",))
+      local_wires = ("reference/y" => "controller/r", "plant/y" => "controller/y",
+                     "gain/y" => "controller/Kp", "controller/u" => "plant/u"),
+      output_wires = ("plant/y" => "y",))
 
 # A servo loop: a first-order position servo limited at ±1 between the
 # controller and the plant, whose position a tracking controller tracks.
 function pid_servo_loop(controller)
     wires = Pair{String, String}[
-        "reference" => "controller/r", "plant" => "controller/y",
+        "reference/y" => "controller/r", "plant/y" => "controller/y",
         "controller/u" => "servo_error/in1", "servo/out" => "servo_error/in2",
-        "servo_error" => "servo"]
+        "servo_error/y" => "servo/u"]
     haskey(u_types(controller), :v) && push!(wires, "servo/out" => "controller/v")
-    push!(wires, "servo/out" => "plant")
+    push!(wires, "servo/out" => "plant/u")
     Group((reference = Step(t_step = 0.5, after = 5.0), controller = controller,
            servo_error = Junction{Float64, Float64, 2}(-),
            servo = LimitedIntegrator(lower = -1.0, upper = 1.0), plant = Integrator());
-          local_wires = Tuple(wires), output_wires = ("plant" => "y",))
+          local_wires = Tuple(wires), output_wires = ("plant/y" => "y",))
 end
 
 # A cascade: the controller sets a velocity servo's reference and reads the
@@ -382,17 +382,17 @@ end
 # `tracking` the velocity into `v`.
 function pid_cascade(controller; hold = false, tracking = false)
     wires = Pair{String, String}[
-        "reference" => "controller/r", "position" => "controller/y",
-        "controller/u" => "error/in1", "velocity" => "error/in2",
-        "error" => "inner", "inner/out" => "actuator",
-        "actuator" => "velocity", "velocity" => "position"]
-    hold && push!(wires, "inner/saturation" => "controller/saturation", "engaged" => "controller/engaged")
-    tracking && push!(wires, "velocity" => "controller/v")
+        "reference/y" => "controller/r", "position/y" => "controller/y",
+        "controller/u" => "error/in1", "velocity/y" => "error/in2",
+        "error/y" => "inner/u", "inner/out" => "actuator/u",
+        "actuator/y" => "velocity/u", "velocity/y" => "position/u"]
+    hold && push!(wires, "inner/saturation" => "controller/saturation", "engaged/y" => "controller/engaged")
+    tracking && push!(wires, "velocity/y" => "controller/v")
     blocks = (reference = Step(t_step = 0.5, after = 5.0), controller = controller,
               error = Junction{Float64, Float64, 2}(-), inner = LimitedIntegrator(lower = -1.2, upper = 1.2),
               actuator = FirstOrderLag(τ = 0.1), velocity = FirstOrderLag(τ = 1.0), position = Integrator())
     Group(merge(blocks, hold ? (engaged = Constant(true),) : (;));
-          local_wires = Tuple(wires), output_wires = ("position" => "y",))
+          local_wires = Tuple(wires), output_wires = ("position/y" => "y",))
 end
 
 # Two sibling controllers driving one plant through a `Switch` on the root input
@@ -402,13 +402,13 @@ end
 # a `UnitDelay` with `delay`.
 function standby_siblings(controller_a, controller_b, plant; delay)
     holding = haskey(u_types(controller_a), :engaged)
-    command = delay ? "delay" : "sel"
+    command = delay ? "delay/y" : "sel/y"
     wires = Pair{String, String}[
-        "ref_a" => "a/r", "ref_b" => "b/r", "plant" => "a/y", "plant" => "b/y",
-        "a/u" => "sel/in1", "b/u" => "sel/in2", "sel" => "plant"]
-    delay && push!(wires, "sel" => "delay")
+        "ref_a/y" => "a/r", "ref_b/y" => "b/r", "plant/y" => "a/y", "plant/y" => "b/y",
+        "a/u" => "sel/in1", "b/u" => "sel/in2", "sel/y" => "plant/u"]
+    delay && push!(wires, "sel/y" => "delay/u")
     haskey(u_types(controller_a), :v) && append!(wires, [command => "a/v", command => "b/v"])
-    holding && append!(wires, ["negate" => "b/engaged", "free" => "a/saturation", "free" => "b/saturation"])
+    holding && append!(wires, ["negate/y" => "b/engaged", "free/y" => "a/saturation", "free/y" => "b/saturation"])
     blocks = (ref_a = Step(t_step = 0.5, after = 5.0), ref_b = Constant(2.0), a = controller_a, b = controller_b,
               sel = Switch{Float64}(), plant = plant)
     Group(merge(blocks, holding ? (negate = Junction{Bool, Bool, 1}(!), free = Constant(Int8(0))) : (;),
@@ -423,9 +423,9 @@ end
 # `engaged`.
 function discrete_pid_cascade(; hold)
     wires = Pair{String, String}[
-        "reference" => "outer/r", "outer/u" => "inner/r", "inner/u" => "plant",
-        "plant" => "outer/y", "plant" => "inner/y"]
-    hold && push!(wires, "inner/saturated" => "outer/saturation", "engaged" => "outer/engaged")
+        "reference/y" => "outer/r", "outer/u" => "inner/r", "inner/u" => "plant/u",
+        "plant/y" => "outer/y", "plant/y" => "inner/y"]
+    hold && push!(wires, "inner/saturated" => "outer/saturation", "engaged/y" => "outer/engaged")
     blocks = (reference = Step(t_step = 0.5, after = 5.0), outer = DiscretePID(Kp = 0.5, Ki = 0.5, Tt = 1.0, hold = hold),
               inner = DiscretePID(Kp = 2.0, Ki = 1.0, Tt = 1.0, u_min = -1.0, u_max = 1.0), plant = DiscreteIntegrator())
     Group(merge(blocks, hold ? (engaged = Constant(true),) : (;)); local_wires = Tuple(wires))
@@ -436,9 +436,9 @@ end
 discrete_hold_loop(controller) = Group((
         reference = Step(t_step = 0.5, after = 5.0), controller = controller, engaged = Constant(true),
         actuator = DiscreteLimitedIntegrator(lower = -1.0, upper = 1.0), plant = DiscreteIntegrator());
-      local_wires = ("reference" => "controller/r", "plant" => "controller/y",
-                     "controller/u" => "actuator", "actuator/out" => "plant",
-                     "actuator/saturation" => "controller/saturation", "engaged" => "controller/engaged"))
+      local_wires = ("reference/y" => "controller/r", "plant/y" => "controller/y",
+                     "controller/u" => "actuator/u", "actuator/out" => "plant/u",
+                     "actuator/saturation" => "controller/saturation", "engaged/y" => "controller/engaged"))
 
 # A loop run at `h = 1//100` and sampled every 0.1 up to `t_end`: `read(sim)`
 # at each sample.
@@ -495,9 +495,9 @@ end
 # the root input.
 function tracker_loop(controller; disturbance = SVector(0.0, 0.0), stepped = true)
     wires = Pair{String, String}[
-        "plant" => "controller/x", "plant" => "controller/z", "controller/u" => "sum/in1",
-        "disturbance" => "sum/in2", "sum" => "plant"]
-    stepped && push!(wires, "reference" => "controller/z_ref")
+        "plant/y" => "controller/x", "plant/y" => "controller/z", "controller/u" => "sum/in1",
+        "disturbance/y" => "sum/in2", "sum/y" => "plant/u"]
+    stepped && push!(wires, "reference/y" => "controller/z_ref")
     blocks = (controller = controller, disturbance = Constant(disturbance),
               sum = SumJunction{SVector{2, Float64}, 2}(), plant = tracker_plant())
     Group(merge(blocks, stepped ? (reference = Step(t_step = 0.5, before = SVector(0.0, 0.0), after = SVector(1.0, 0.5)),) : (;));
@@ -519,9 +519,9 @@ end
 # own `u`: the identity for `z_ref`, a clamp for `v`, with `z_ref` then constant.
 function tracker_cycle(controller, name)
     wires = Pair{String, String}[
-        "plant" => "controller/x", "plant" => "controller/z", "controller/u" => "plant",
-        "controller/u" => "feedback/in1", "feedback" => "controller/$name"]
-    name === :v && push!(wires, "reference" => "controller/z_ref")
+        "plant/y" => "controller/x", "plant/y" => "controller/z", "controller/u" => "plant/u",
+        "controller/u" => "feedback/in1", "feedback/y" => "controller/$name"]
+    name === :v && push!(wires, "reference/y" => "controller/z_ref")
     Group((plant = tracker_plant(), controller = controller, reference = Constant(SVector(1.0, 0.5)),
            feedback = Junction{SVector{2, Float64}, SVector{2, Float64}, 1}(name === :v ? (u -> clamp.(u, -1.0, 1.0)) : identity));
           local_wires = Tuple(wires))
@@ -534,16 +534,16 @@ end
 # a `UnitDelay`; with `hold` the tracker's channel 1 code reaches both
 # `saturation`, and without it the constant zero code `free` does.
 function tracker_cascade(; delay = true, hold = true)
-    command = delay ? "delay" : "sel"
+    command = delay ? "delay/y" : "sel/y"
     wires = Pair{String, String}[
-        "ref_a" => "a/r", "ref_b" => "b/r", "plant" => "measurement",
+        "ref_a/y" => "a/r", "ref_b/y" => "b/r", "plant/y" => "measurement/u",
         "measurement/out1" => "a/y", "measurement/out1" => "b/y", "a/u" => "sel/in1", "b/u" => "sel/in2",
-        command => "a/v", command => "b/v", "negate" => "b/engaged",
-        "sel" => "reference/in1", "level" => "reference/in2", "reference" => "inner/z_ref",
-        "plant" => "inner/x", "plant" => "inner/z", "inner/u" => "plant"]
-    delay && push!(wires, "sel" => "delay")
-    append!(wires, hold ? ["inner/saturated" => "code", "code/out1" => "a/saturation", "code/out1" => "b/saturation"] :
-                          ["free" => "a/saturation", "free" => "b/saturation"])
+        command => "a/v", command => "b/v", "negate/y" => "b/engaged",
+        "sel/y" => "reference/in1", "level/y" => "reference/in2", "reference/y" => "inner/z_ref",
+        "plant/y" => "inner/x", "plant/y" => "inner/z", "inner/u" => "plant/u"]
+    delay && push!(wires, "sel/y" => "delay/u")
+    append!(wires, hold ? ["inner/saturated" => "code/u", "code/out1" => "a/saturation", "code/out1" => "b/saturation"] :
+                          ["free/y" => "a/saturation", "free/y" => "b/saturation"])
     outer = DiscretePID(Kp = 0.5, Ki = 0.2, Tt = 0.1, hold = true, tracking = true)
     blocks = (ref_a = Step(t_step = 0.5, after = 1.5), ref_b = Constant(0.5), measurement = Unpack{Float64, 2}(),
               a = outer, b = outer, sel = Switch{Float64}(), negate = Junction{Bool, Bool, 1}(!),
@@ -678,7 +678,7 @@ function test_blocks()
         init!(start_sim, set(); t0 = 1.0)
         @test port(start_sim, "c") == 2.0
         # The pinned source feeds a pinned entry, which a walking `out` could not.
-        model = Group((; s = Source(sin), e = PinnedEntry()); local_wires = ("s" => "e/u",))
+        model = Group((; s = Source(sin), e = PinnedEntry()); local_wires = ("s/y" => "e/u",))
         @test build(model; activations = (Float64, LinearizeDual)) isa Build
         integer_sim = Simulation(single(Source{Int}(t -> 1)); h = 1//10)
         init!(integer_sim, set())
@@ -954,7 +954,7 @@ function test_blocks()
         @test iszero(linearization.C[2, :])
         # Its purpose (§13.7, D-266): unfrozen, this wire is refused with `WalkingFaceAtFrozenEntry`.
         model = Group((; p = Pendulum(), f = Freeze{Float64}(), e = PinnedEntry());
-                      local_wires = ("p/θ" => "f", "f" => "e/u"), input_wires = ("τ" => "p/u",))
+                      local_wires = ("p/θ" => "f/u", "f/y" => "e/u"), input_wires = ("τ" => "p/u",))
         @test build(model; activations = (Float64, LinearizeDual)) isa Build
         # `V` is a `Real` or a `StaticArray` of them, constrained at the type.
         @test_throws TypeError Freeze{HeightField}
@@ -963,7 +963,7 @@ function test_blocks()
     @testset "a `Constant` spells the zero contributor into either entry (§6.2, D-312)" begin
         @test y_types(Constant(0.0)) == Pinned{Float64}
         for consumer in (RealEntry(), PinnedEntry())
-            model = Group((; k = Constant(0.0), e = consumer); local_wires = ("k" => "e/u",))
+            model = Group((; k = Constant(0.0), e = consumer); local_wires = ("k/y" => "e/u",))
             @test build(model) isa Build
             @test build(model; activations = (Float64, LinearizeDual)) isa Build
         end
@@ -1039,6 +1039,12 @@ function test_blocks()
         @test isapprox(linearization.B, [1 0.5; 0 1]; atol = 1e-12)
         @test isapprox(linearization.C, [1 2; 0 1]; atol = 1e-12)
         @test isapprox(linearization.D, zeros(2, 2); atol = 1e-12)
+        # The bare state's headless `"[1]"` is its field `x` stepped, the one site (D-438).
+        headed = linearize(sim, taps(x = (q1 = get_state("c", "x[1]"), q2 = get_state("c", "x[2]")),
+                                     u = (in1 = get_input("in[1]"), in2 = get_input("in[2]")),
+                                     y = (out1 = get_face("out[1]"), out2 = get_face("out[2]"))))
+        @test (headed.A, headed.B, headed.C, headed.D) ==
+              (linearization.A, linearization.B, linearization.C, linearization.D)
         # The state is an `SVector` at every size, so a scalar block's tap takes
         # an index step.
         scalar_sim = Simulation(fed(StateSpace(A = [-2.0;;], B = [3.0;;], C = [1.0;;])); h = 1//100)
@@ -1493,7 +1499,7 @@ function test_blocks()
         end
         for (value, relay_state) in ((1.0, Int8(1)), (0.5, Int8(0)))
             model = Group((; k = Constant(value), r = Relay(lower = 0.2, upper = 0.8));
-                          local_wires = ("k" => "r",))
+                          local_wires = ("k/y" => "r/u",))
             constant_sim = Simulation(model; h = 1//10)
             init!(constant_sim, set())
             @test modes(constant_sim, "r") === relay_state
@@ -1514,7 +1520,7 @@ function test_blocks()
             @test port(sim, "r") == out && modes(sim, "r") == relay_state
         end
         model = Group((; k = Constant(SVector(1.0, 0.5)), r = Relay(lower = SVector(0.2, 0.2), upper = SVector(0.8, 0.8)));
-                      local_wires = ("k" => "r",))
+                      local_wires = ("k/y" => "r/u",))
         constant_sim = Simulation(model; h = 1//10)
         init!(constant_sim, set())
         @test modes(constant_sim, "r") == SVector{2, Int8}(1, 0)
@@ -1642,7 +1648,7 @@ function test_blocks()
         d = only(diagnostics(err))
         @test d isa AlgebraicCycle && d.classification === :artificial
         @test d.dead == [("controller", :v, :u)]
-        @test d.wires == ["controller/u" => "sat/in1", "sat" => "controller/v"]
+        @test d.wires == ["controller/u" => "sat/in1", "sat/y" => "controller/v"]
     end
 
     @testset "a scheduled parameter is a port: it carries partials, freezes through `Freeze`, and closes a cycle from the own output (§13.7, §5.4, §14.10)" begin
@@ -1662,7 +1668,7 @@ function test_blocks()
         d = only(diagnostics(err))
         @test d isa AlgebraicCycle && d.classification === :real
         @test isempty(d.dead)
-        @test d.wires == ["controller/u" => "gain/in1", "gain" => "controller/Kp"]
+        @test d.wires == ["controller/u" => "gain/in1", "gain/y" => "controller/Kp"]
         # Only `x_deriv` reads `Ki`, so the hop is dead and the cycle artificial.
         err = failure(() -> build(scheduled_pid_cycle(:Ki)))
         @test err isa DiagnosticError
@@ -1933,7 +1939,7 @@ function test_blocks()
         d = only(diagnostics(err))
         @test d isa AlgebraicCycle && d.classification === :real
         @test isempty(d.dead)
-        @test d.wires == ["controller/u" => "sat/in1", "sat" => "controller/v"]
+        @test d.wires == ["controller/u" => "sat/in1", "sat/y" => "controller/v"]
     end
 
     @testset "a tracking block not engaged follows the selected command through a delay and engages without a bump, and the switch without the delay is a cycle (§13.7, §5.4, §13.8, D-385)" begin
@@ -2160,12 +2166,12 @@ function test_blocks()
             d = only(diagnostics(failure(() -> build(tracker_cycle(block_type(; gains...), :z_ref)))))
             @test d isa AlgebraicCycle && d.classification === :real
             @test isempty(d.dead)
-            @test d.wires == ["controller/u" => "feedback/in1", "feedback" => "controller/z_ref"]
+            @test d.wires == ["controller/u" => "feedback/in1", "feedback/y" => "controller/z_ref"]
         end
         d = only(diagnostics(failure(() -> build(tracker_cycle(LQRTracker(; gains..., tracking = true), :v)))))
         @test d isa AlgebraicCycle && d.classification === :artificial
         @test d.dead == [("controller", :v, :u)]
-        @test d.wires == ["controller/u" => "feedback/in1", "feedback" => "controller/v"]
+        @test d.wires == ["controller/u" => "feedback/in1", "feedback/y" => "controller/v"]
         d = only(diagnostics(failure(() -> build(tracker_cycle(DiscreteLQRTracker(; gains..., tracking = true), :v)))))
         @test d isa AlgebraicCycle && d.classification === :real
         @test isempty(d.dead)
@@ -2178,7 +2184,7 @@ function test_blocks()
         d = only(diagnostics(failure(() -> build(tracker_cascade(delay = false)))))
         @test d isa AlgebraicCycle && d.classification === :real
         @test isempty(d.dead)
-        @test d.wires == ["a/u" => "sel/in1", "sel" => "a/v", "sel" => "b/v", "b/u" => "sel/in2"]
+        @test d.wires == ["a/u" => "sel/in1", "sel/y" => "a/v", "sel/y" => "b/v", "b/u" => "sel/in2"]
         model = tracker_cascade()
         @test build(model) isa Build
         @test build(model; activations = (Float64, LinearizeDual)) isa Build

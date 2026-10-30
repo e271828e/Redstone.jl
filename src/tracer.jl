@@ -188,9 +188,9 @@ function _trace_direct(ci::Int, traced_decl::Decls, faces::Vector{Symbol},
                        products::Vector{NamedTuple}, cluster_set::Set{Int}, ::Type{T};
                        rng = nothing) where {T}
     comp, decl = structure.components[ci].instance, decls[ci]
-    u = NamedTuple{tuple(keys(decl.ins)...)}(tuple(
+    u = NamedTuple{tuple(keys(keyed_ins(decl))...)}(tuple(
         (_seed_face(ci, face, faces, face_traceable, structure, products, cluster_set, T, rng)
-         for face in keys(decl.ins))...))
+         for face in keys(keyed_ins(decl)))...))
     # The nominal `x` carries `Float64` leaves, which the sampled walk redraws;
     # `traced_decl.x` is the declared one, already at `T`.
     evaluation_decl = rng === nothing ? traced_decl :
@@ -253,7 +253,7 @@ function _seed_face(ci::Int, face::Symbol, faces::Vector{Symbol}, face_traceable
     producer_ci = index_of(structure, producer_path)
     producer = structure.components[producer_ci]
     declared() =
-        probe_value(declarations(producer.instance, producer.tier, T).outs[producer_port])
+        probe_value(keyed_outs(declarations(producer.instance, producer.tier, T))[producer_port])
     j = producer_ci in cluster_set ? findfirst(==(face), faces) : nothing
     if j !== nothing
         bit = face_traceable[j] ? UInt64(1) << (j - 1) : UInt64(0)
@@ -301,10 +301,10 @@ function _classify(cycle::AlgebraicCycle, scc::Vector{Int}, edges, placed::Vecto
 
         for (i, ci) in enumerate(scc)
             decl = decls[ci]
-            faces = Symbol[face for face in keys(decl.ins)
+            faces = Symbol[face for face in keys(keyed_ins(decl))
                            if any(edge -> edge[3] === face && edge[1] in cluster_set,
                                   edges[ci])]
-            ports = Symbol[q for q in keys(decl.outs)
+            ports = Symbol[q for q in keys(keyed_outs(decl))
                            if any(cj -> any(edge -> edge[1] == ci && edge[2] === q,
                                             edges[cj]),
                                   scc)]
@@ -316,9 +316,9 @@ function _classify(cycle::AlgebraicCycle, scc::Vector{Int}, edges, placed::Vecto
             traced_decl = structure.components[ci].tier === CONTINUOUS && length(faces) ≤ 64 ?
                  declarations(structure.components[ci].instance, CONTINUOUS, T) : nothing
             face_traceable = traced_decl === nothing ? falses(length(faces)) :
-                 Bool[T in leaf_types(traced_decl.ins[face]) for face in faces]
+                 Bool[T in leaf_types(keyed_ins(traced_decl)[face]) for face in faces]
             port_traceable = traced_decl === nothing ? falses(length(ports)) :
-                 Bool[T in leaf_types(traced_decl.outs[q]) for q in ports]
+                 Bool[T in leaf_types(keyed_outs(traced_decl)[q]) for q in ports]
 
             if !any(face_traceable) || !any(port_traceable)   # no traceable hop: structure alone
                 push!(trace_modes, :structural)

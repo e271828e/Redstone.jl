@@ -445,7 +445,7 @@ end
     _accepts(XT, V, T) ||
         return :(throw(DiagnosticError(ConformanceFailure(
             path = path, what = String(what), event = event, reason = :field_type,
-            shape = shape, field = BARE, observed = $V, declared = $XT, activation = $T))))
+            shape = shape, field = :x, observed = $V, declared = $XT, activation = $T))))
     block, _ = _flatten_expr(XT, :value, 0)
     quote
         $(Expr(:meta, :inline))

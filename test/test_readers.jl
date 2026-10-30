@@ -38,6 +38,15 @@ end
 # struct-typed root input.
 probe_value(::Type{LeafPose{T}}) where {T} = LeafPose(zero(SVector{3,T}), zero(SMatrix{2,2,T,4}))
 
+# Bare on all three declarations: a `LeafPose` store and input, a matrix output,
+# for the headless address's steps (§14.4, D-437, D-438).
+struct BarePoseHold <: AbstractComponent end
+s_init(::BarePoseHold) = LeafPose(SVector(1.0, 2.0, 3.0), SMatrix{2,2}(5.0, 6.0, 7.0, 8.0))
+u_types(::BarePoseHold) = LeafPose{Float64}
+y_types(::BarePoseHold) = SMatrix{2,2,Float64,4}
+y_state(::BarePoseHold, (; s)) = s.m
+s_update(::BarePoseHold, (; s)) = s
+
 struct PoseSource <: AbstractComponent end
 x_init(::PoseSource) = (q = SVector(0.5, -0.25),)
 y_types(::PoseSource) = (pose = LeafPose{Float64},)
@@ -573,69 +582,117 @@ function test_readers()
         @test seeded.exec.clock.t isa D8 && ForwardDiff.value(seeded.exec.clock.t) === 0.25
     end
 
-    @testset "a bare state's address is headless, its head `BARE` (§14.4, D-276)" begin
-        # The parse: no head where the state has no name, then the usual steps.
-        @test Redstone.parse_leaf("") == (BARE, Redstone.AccessStep[])
-        @test Redstone.parse_leaf("[2]") == (BARE, Redstone.AccessStep[(2,)])
+    @testset "a bare state's field is its letter, which a headless address supplies (§14.4, D-276, D-438)" begin
+        # The parse: no head where the address leaves the field out, then the steps.
+        @test Redstone.parse_leaf("") == (nothing, Redstone.AccessStep[])
+        @test Redstone.parse_leaf("[2]") == (nothing, Redstone.AccessStep[(2,)])
         @test Redstone.parse_leaf("q[2]") == (:q, Redstone.AccessStep[(2,)])
         @test get_state("acc") == get_state("acc", "") && get_deriv("acc").leaf == ""
 
         model = Model(bare_world(); h = 1//10)
         init!(model, combine(set(u = (u = 0.5, p = 0.0)), at("tick", set(s = 4))))
         evaluate!(model.exec)
-        r = _compile_reads(reads(acc = get_state("acc"), acc_rate = get_deriv("acc"),
-                                 rate = get_state("latch", "[2]"), latch = get_state("latch"),
-                                 tick = get_state("tick"), q = get_state("plant", :q)),
+        r = _compile_reads(reads(acc = get_state("acc"), acc_x = get_state("acc", "x"),
+                                 acc_rate = get_deriv("acc"), rate = get_state("latch", "[2]"),
+                                 rate_x = get_state("latch", "x[2]"), latch = get_state("latch"),
+                                 tick = get_state("tick"), tick_s = get_state("tick", :s),
+                                 q = get_state("plant", :q)),
                            model.deployment.build, Float64)
         v = gather_reads(r, model.exec)
-        @test v.acc === 1.0 && v.acc_rate === -0.5              # `ẋ = u - x` at `x = 1`
-        @test v.rate === 1.0 && v.latch === SVector(0.0, 1.0)
-        @test v.tick === 5                     # a bare discrete store, read whole, past `t₀`'s tick
+        @test v.acc === 1.0 === v.acc_x && v.acc_rate === -0.5     # `ẋ = u - x` at `x = 1`
+        @test v.rate === 1.0 === v.rate_x && v.latch === SVector(0.0, 1.0)
+        @test v.tick === 5 === v.tick_s        # a bare discrete store, read whole, past `t₀`'s tick
         @test v.q === SVector(0.0, 0.0)
+        # A field step into a bare isbits struct in `s`.
+        held = Model(Group((; hold = BarePoseHold()); input_wires = ("pose" => "hold/u",)); h = 1//10)
+        init!(held, set(u = (pose = LeafPose(SVector(0.1, 0.2, 0.3), SMatrix{2,2}(0.0, 0.0, 0.0, 0.0)),)))
+        r = _compile_reads(reads(v2 = get_state("hold", ".v[2]"), m = get_state("hold", "s.m[2,1]")),
+                           held.deployment.build)
+        @test gather_reads(r, held.exec) === (v2 = 2.0, m = 6.0)
 
-        # A headless address against a named state, a named one against a bare
-        # state, and a step a bare scalar cannot take.
+        # A headless address against a named state, an empty one, and a
+        # one-field named one, whatever its count of names (the shape triggers);
+        # a named head against a bare state is the ordinary miss; a step a
+        # bare scalar cannot take.
         err = failure(() -> _compile_reads(reads(a = get_state("plant"), b = get_state("acc", :q),
                                                  c = get_deriv("acc", "[2]"),
                                                  d = get_state("neg")),
                                            model.deployment.build))
         (a, b_, c, d) = diagnostics(err)
-        @test a.reason === :undeclared && a.field === BARE && a.candidates == [:q]
-        @test b_.reason === :undeclared && b_.field === :q && b_.candidates == [BARE]
+        @test a.reason === :store_shape && a.field === nothing && a.candidates == [:q]
+        @test b_.reason === :undeclared && b_.field === :q && b_.candidates == [:x]
         @test c.reason === :not_indexable && c.step == "[2]" && c.declared === Float64
-        @test d.reason === :undeclared && d.field === BARE && isempty(d.candidates)
+        @test d.reason === :store_shape && d.field === nothing && isempty(d.candidates)
         @test a.selector == "get_state(\"plant\")"             # spelled as authored
+        one_field = Model(single(Sawtooth(1.0)); h = 1//10)
+        d = only(diagnostics(failure(() -> _compile_reads(reads(a = get_state("c")),
+                                                          one_field.deployment.build))))
+        @test d.reason === :store_shape && d.candidates == [:q]
+        @test _compile_reads(reads(a = get_state("c", :q)), one_field.deployment.build) isa Reader
     end
-    @testset "a bare port is read by the headless address, and a shape mismatch is refused (§14.4, D-436)" begin
+    @testset "a bare port's face is `u` or `y`, which a headless address supplies (§14.4, §14.9, D-437)" begin
         model = Model(bare_ports_world(); h = 1//100)
         init!(model, set(u = (u = 0.5,)))
-        r = _compile_reads(reads(spin = get_output("plant/spin"), y = get_output("plant/spin", "[2]"),
+        r = _compile_reads(reads(spin = get_output("plant/spin"), spin_y = get_output("plant/spin", "y"),
+                                 y = get_output("plant/spin", "[2]"),
                                  flow = get_output("plant/loop/flow"), total = get_face("total"),
                                  ramp = get_face("ramp")), model.deployment.build)
         v = gather_reads(r, model.exec)
-        @test v.spin == SVector(1.0, 0.0) && v.y === 0.0 && v.flow === 1.0 && v.ramp === 0.0
+        @test v.spin == SVector(1.0, 0.0) == v.spin_y && v.y === 0.0 && v.flow === 1.0 && v.ramp === 0.0
         @test v.total === port(model, "plant/summer") === port(model, "", :total)
-        @test port(model, "plant/loop/flow") === 1.0
-        err = failure(() -> _compile_reads(reads(a = get_output("plant/spin", "y"),
+        # `port`'s name left out is the bare output's `y`, on all three homes.
+        @test port(model, "plant/loop/flow") === 1.0 === port(model, "plant/loop/flow", :y)
+        sim = Simulation(build(bare_ports_world()); h = 1//100)
+        init!(sim, set(u = (u = 0.5,)))
+        @test port(sim, "plant/spin") === port(sim, "plant/spin", :y) === SVector(1.0, 0.0)
+        @test port(latest(sim), "plant/spin") === port(latest(sim), "plant/spin", :y)
+        @test_throws ArgumentError port(model, "plant/loop")
+        err = failure(() -> _compile_reads(reads(a = get_output("plant/spin", "q"),
                                                  b = get_output("plant/loop"),
                                                  c = get_output("plant/spin", "[3]")),
                                            model.deployment.build))
         (a, b_, c) = diagnostics(err)
-        @test a.reason === :port_shape && a.field === :y && a.candidates == [BARE]
+        @test a.reason === :undeclared && a.field === :q && a.candidates == [:y]
         @test b_.reason === :assembly_path
         @test c.reason === :index_bounds && c.step == "[3]"
-        # A headless address against named ports.
+        # A headless address against named ports, one port or two: the shape triggers.
         named = Model(bare_world(); h = 1//100)
-        d = only(diagnostics(failure(() -> _compile_reads(reads(a = get_output("plant")),
-                                                          named.deployment.build))))
-        @test d.reason === :port_shape && d.field === BARE && d.candidates == [:y, :power]
+        (d, e) = diagnostics(failure(() -> _compile_reads(reads(a = get_output("plant"),
+                                                                b = get_output("acc")),
+                                                          named.deployment.build)))
+        @test d.reason === :port_shape && d.field === nothing && d.candidates == [:y, :power]
+        @test e.reason === :port_shape && e.candidates == [:y]
         @test d.selector == "get_output(\"plant\")"
-        # At a primitive root its ports are its faces, a bare one headless.
-        root = Model(BareRamp(); h = 1//10)
-        init!(root)
-        @test gather_reads(_compile_reads(reads(a = get_face("")), root.deployment.build), root.exec).a === 0.0
-        d = only(diagnostics(failure(() -> _compile_reads(reads(a = get_face("x")), root.deployment.build))))
-        @test d.reason === :port_shape && d.field === :x && d.candidates == [BARE]
-        @test port(root, "") === 0.0
+        @test_throws ArgumentError port(named, "acc")
+        # At a primitive mount and at a primitive root, the bare input and output.
+        held = Model(Group((; hold = BarePoseHold()); input_wires = ("pose" => "hold/u",)); h = 1//10)
+        init!(held, set(u = (pose = LeafPose(SVector(0.1, 0.2, 0.3), SMatrix{2,2}(0.0, 0.0, 0.0, 0.0)),)))
+        r = _compile_reads(at("hold", reads(u = get_input(), v1 = get_input(".v[1]"), y = get_face(),
+                                            m12 = get_face("[1,2]"), m12_y = get_face("y[1,2]"))),
+                           held.deployment.build)
+        v = gather_reads(r, held.exec)
+        @test v.u.v === SVector(0.1, 0.2, 0.3) && v.v1 === 0.1
+        @test v.y === SMatrix{2,2}(5.0, 6.0, 7.0, 8.0) && v.m12 === 7.0 === v.m12_y
+        root = Model(BareScale(); h = 1//10)
+        init!(root, set(u = (u = 1.5,)))
+        r = _compile_reads(reads(u = get_input(), y = get_face()), root.deployment.build)
+        @test gather_reads(r, root.exec) === (u = 1.5, y = -3.0)
+        @test port(root, "") === -3.0
+        # At an assembly, or at a primitive whose contract on that side is named,
+        # the headless address is the shape's, the faces in hand.
+        diags = diagnostics(failure(() -> _compile_reads(at("plant", reads(a = get_face(), b = get_input())),
+                                                         model.deployment.build)))
+        @test [(d.reason, d.declares, d.candidates) for d in diags] ==
+              [(:port_shape, :assembly_face, [:total, :spin]), (:port_shape, :assembly_face, [:u])]
+        d = only(diagnostics(failure(() -> _compile_reads(reads(c = get_input()), model.deployment.build))))
+        @test (d.reason, d.declares, d.candidates) == (:port_shape, :assembly_face, [:u])
+        diags = [only(diagnostics(failure(() -> _compile_reads(at(mount, reads(a = selector)),
+                                                               named.deployment.build))))
+                 for (mount, selector) in (("neg", get_input()), ("acc", get_face()))]
+        @test [(d.reason, d.declares, d.candidates) for d in diags] ==
+              [(:port_shape, :input_face, [:u]), (:port_shape, :output_port, [:y])]
+        d = only(diagnostics(failure(() -> _compile_reads(reads(a = get_face()),
+                                                          Model(Sawtooth(1.0); h = 1//10).deployment.build))))
+        @test (d.reason, d.declares, d.candidates) == (:port_shape, :output_port, [:q])
     end
 end

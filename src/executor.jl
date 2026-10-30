@@ -43,7 +43,7 @@ end
 # a component type, so two instances still compile to one body.
 
 # A side's addresses are a `NamedTuple` group, or one `CellAddr` where the side is
-# bare (D-436).
+# bare (D-437).
 const SideAddrs = Union{NamedTuple,CellAddr}
 
 struct StageEntry{F,Comp,XT,BN,IA<:SideAddrs,YA<:NamedTuple,OA<:SideAddrs,CL,SS,MS,WS}
@@ -114,7 +114,7 @@ UpdateEntry{BN}(comp, inputs, y, clock, sstore, ws, Δt, path, ci, cursor) where
 # outright (D-195): `x` reconstructs from the flat buffer, `s` reads the
 # component's own store, and no name selects a home by tier at compile time
 # because the tier already picked the name. A bare side's field is its one cell's
-# value, `gather_input` dispatching on the address (D-436).
+# value, `gather_input` dispatching on the address (D-437).
 function _bundle_expr(BN, XT)
     args = map(BN) do field
         field === :x   ? :(reconstruct($XT, xbuf, entry.x_off)) :
@@ -398,7 +398,7 @@ _store_successor!(sstore::Base.RefValue{S}, s⁺, path, what) where {S} =
                                                       s⁺ isa NamedTuple ? :field_set : :return_type,
                                              shape = :s_init, observed = typeof(s⁺),
                                              declared = S,
-                                             field = S <: NamedTuple ? nothing : BARE)))
+                                             field = S <: NamedTuple ? nothing : :s)))
 
 # §9.5's `m` predicate at the write, decided at generation like the port write.
 # A named store takes a partial write: every written mode exists and keeps its
@@ -410,7 +410,7 @@ _store_successor!(sstore::Base.RefValue{S}, s⁺, path, what) where {S} =
         return m === M ? :(mstore[] = m; nothing) :
                :(throw(DiagnosticError(ConformanceFailure(
                    path = path, what = String(what), event = event, reason = :field_type,
-                   shape = :mode, field = BARE, observed = $m, declared = $M))))
+                   shape = :mode, field = :m, observed = $m, declared = $M))))
     m <: NamedTuple ||
         return :(throw(DiagnosticError(ConformanceFailure(
             path = path, what = String(what), event = event, reason = :return_type,

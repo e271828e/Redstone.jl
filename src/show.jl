@@ -63,8 +63,8 @@ _structure_counts(structure::Structure) =
 
 Base.show(io::IO, structure::Structure) = print(io, "Structure(", _structure_counts(structure), ")")
 
-# A root face's route: its bare name, then each hop as `path/name`, a bare port
-# by its path alone, joined with ` → ` and ending at the terminal (§13.7, D-436).
+# A root face's route: its bare name, then each hop as `path/name`, joined with
+# ` → ` and ending at the terminal (§13.7).
 _route_label(face::Symbol, route::Vector{Tuple{String,Symbol}}) =
     join([String(face); [_named(path, name, "/") for (path, name) in route]], " → ")
 
@@ -116,14 +116,11 @@ Base.show(io::IO, outputs::Outputs) =
     print(io, "Outputs(", _count(length(outputs.order), "component"), ")")
 
 # One row per position in the execution order: the component at it, by its
-# path, with its stage-1 and stage-2 names, a bare port by its component's path
-# (D-436).
+# path, with its stage-1 and stage-2 names.
 function _lines(outputs::Outputs)
-    stage_label(path, names) =
-        _names_label([name === BARE ? _path_label(path) : String(name) for name in names])
     rows = [[_path_label(outputs.components[ci].path),
-             stage_label(outputs.components[ci].path, outputs.components[ci].stage1),
-             stage_label(outputs.components[ci].path, outputs.components[ci].stage2)]
+             _names_label(outputs.components[ci].stage1),
+             _names_label(outputs.components[ci].stage2)]
             for ci in outputs.order]
     vcat(["Outputs: execution order over " * _count(length(outputs.order), "component")],
          _table("  ", ["component", "stage 1", "stage 2"], rows))
@@ -220,13 +217,13 @@ Base.show(io::IO, build::Build) =
 # The feedthrough edges the execution order was computed over (§5.3, D-261),
 # derived rather than carried: a face of a component with a stage 2, fed by
 # another component's stage-2 port. A root input and a stage-1 port add none.
-# Each end is `path/name`, a bare one its path alone (D-436).
+# Each end is `path/name`.
 function _feedthrough(structure::Structure, outputs::Outputs, decls::Vector{Decls})
     edges = String[]
     for ci in outputs.order
         isempty(outputs.components[ci].stage2) && continue
         consumer = structure.components[ci]
-        for face in keys(decls[ci].ins)
+        for face in keys(keyed_ins(decls[ci]))
             (producer, port_name) = terminal_producer(structure, (consumer.path, face))
             isempty(producer) && continue
             port_name in outputs.components[index_of(structure, producer)].stage2 || continue

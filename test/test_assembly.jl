@@ -1372,9 +1372,9 @@ function assembly_child_lists()
     end
 end
 
-# --- bare contracts (§6.1, §8.6, §8.8, §13.3, D-436) ----------------------------
+# --- bare contracts (§6.1, §8.6, §8.8, §13.3, D-437) ----------------------------
 # A bare input beside a named output, and an empty contract key, which is
-# refused as a face name rather than read as bare.
+# refused as a face name.
 struct BareSink <: AbstractComponent end
 x_init(::BareSink) = nothing
 u_types(::BareSink) = Float64
@@ -1385,101 +1385,124 @@ struct EmptyKeyed <: AbstractComponent end
 x_init(::EmptyKeyed) = nothing
 u_types(::EmptyKeyed) = (var"" = Float64,)
 y_types(::EmptyKeyed) = (y = Float64,)
-y_direct(::EmptyKeyed, (; u)) = (y = u[BARE],)
+y_direct(::EmptyKeyed, (; u)) = (y = only(u),)
+
+# A bare input beside an output its author named `u`: at a root the two collide.
+struct UNamedOut <: AbstractComponent end
+x_init(::UNamedOut) = nothing
+u_types(::UNamedOut) = Float64
+y_types(::UNamedOut) = (u = Float64,)
+y_direct(::UNamedOut, (; u)) = (u = u,)
 # A container whose elements are bare on both sides, wired by their key segments.
 struct BareRoster{U <: Tuple} <: AbstractComponent
     units::U
 end
-local_wires(::BareRoster)  = ("units/1" => "units/2",)
-input_wires(::BareRoster)  = ("in" => "units/1",)
-output_wires(::BareRoster) = ("units/2" => "y",)
+local_wires(::BareRoster)  = ("units/1/y" => "units/2/u",)
+input_wires(::BareRoster)  = ("in" => "units/1/u",)
+output_wires(::BareRoster) = ("units/2/y" => "y",)
+# The same, its local wire's consumer the element alone.
+struct BareRosterAlone{U <: Tuple} <: AbstractComponent
+    units::U
+end
+local_wires(::BareRosterAlone)  = ("units/1/y" => "units/2",)
+input_wires(::BareRosterAlone)  = ("in" => "units/1/u",)
+output_wires(::BareRosterAlone) = ("units/2/y" => "y",)
 
 function assembly_bare_contracts()
-    @testset "the child segment alone is a bare port's endpoint, both ways (§6.1, §8.6, D-436)" begin
-        pair = Group((; r = BareRamp(), s = BareScale()); local_wires = ("r" => "s",),
-                     output_wires = ("s" => "y",))
+    @testset "a bare port's endpoint is `path/face`, the face `u` or `y` (§6.1, §8.6, D-437)" begin
+        pair = Group((; r = BareRamp(), s = BareScale()); local_wires = ("r/y" => "s/u",),
+                     output_wires = ("s/y" => "y",))
         structure = build(pair).structure
-        @test only(structure.levels).wires == [("r", BARE) => ("s", BARE), ("s", BARE) => ("", :y)]
+        @test only(structure.levels).wires == [("r", :y) => ("s", :u), ("s", :y) => ("", :y)]
+        @test resolve_terminal(pair, "s/u") === (pair.children.s, "u")
         @test resolve_terminal(pair, "s") === (pair.children.s, "")
-        @test input_faces(BareScale()) == [""] && output_faces(BareScale()) == [""]
+        @test input_faces(BareScale()) == ["u"] && output_faces(BareScale()) == ["y"]
         @test input_faces(BareRamp()) == String[] && output_faces(BareSink()) == ["y"]
         @test input_faces(EmptyKeyed()) == [""]      # the empty key lists as it is
-        # A container element's key segment is the child segment, so `units/1`
-        # is one level and addresses the element's bare port.
+        # A container element's key segment is the child segment, so
+        # `units/1/u` is one level and addresses the element's bare input.
         structure = build(BareRoster((BareScale(), BareScale()))).structure
-        @test only(structure.levels).wires == [("units/1", BARE) => ("units/2", BARE),
-                                               ("", :in) => ("units/1", BARE),
-                                               ("units/2", BARE) => ("", :y)]
-        @test terminal_producer(structure, ("units/1", BARE)) == ("", :in)
+        @test only(structure.levels).wires == [("units/1", :y) => ("units/2", :u),
+                                               ("", :in) => ("units/1", :u),
+                                               ("units/2", :y) => ("", :y)]
+        @test terminal_producer(structure, ("units/1", :u)) == ("", :in)
     end
-    @testset "an endpoint whose form disagrees with its side's shape is refused with the list in hand (§8.6, D-436)" begin
-        # One segment at a named side, a producer and a consumer.
+    @testset "a one-segment endpoint names no port, refused with its side's faces (§8.6, D-437)" begin
+        # At a bare child, a named child and an assembly, producer and consumer.
         diags = diagnostics(failure(() -> build(Group((; p = Plant(), s = BareScale());
-                                                      local_wires = ("p" => "s", "s" => "p")))))
+                                                      local_wires = ("p" => "s/u", "s" => "p/u",
+                                                                     "p/y" => "s", "s/y" => "p")))))
         unknown = [d for d in diags if d isa UnknownPort]
         @test Set((d.endpoint, d.path, d.spelling, d.port, d.candidates) for d in unknown) ==
-              Set([(:source, "p", "p", BARE, [:y, :power]), (:destination, "p", "p", BARE, [:u])])
-        # One segment at an assembly, whose faces are never bare.
+              Set([(:source, "p", "p", nothing, [:y, :power]), (:destination, "s", "s", nothing, [:u]),
+                   (:source, "s", "s", nothing, [:y]), (:destination, "p", "p", nothing, [:u])])
         d = first(d for d in diagnostics(failure(() -> build(Group((; l = bare_loop(), s = BareScale());
-                                                                   local_wires = ("l" => "s",)))))
+                                                                   local_wires = ("l" => "s/u",)))))
                   if d isa UnknownPort)
-        @test (d.endpoint, d.path, d.port, d.candidates) == (:source, "l", BARE, [:x])
-        # Two segments naming nothing at a child bare on the other side: the
-        # list in hand holds the named faces alone, never the empty name.
+        @test (d.endpoint, d.path, d.port, d.candidates) == (:source, "l", nothing, [:x])
+        # A container element's key segment alone names no port either.
+        d = first(d for d in diagnostics(failure(() -> build(BareRosterAlone((BareScale(), BareScale())))))
+                  if d isa UnknownPort)
+        @test (d.endpoint, d.path, d.spelling, d.port, d.candidates) ==
+              (:destination, "units/2", "units/2", nothing, [:u])
+        # Two segments naming nothing: the list in hand is both sides' faces.
         d = first(d for d in diagnostics(failure(() -> build(Group((; k = BareSink(), s = BareScale());
-                                                                   local_wires = ("k/zz" => "s",)))))
+                                                                   local_wires = ("k/zz" => "s/u",)))))
                   if d isa UnknownPort)
-        @test (d.path, d.spelling, d.port, d.candidates) == ("k", "k/zz", :zz, [:y])
-        # Two segments at a bare side: the name against a list of one empty name.
-        d = first(d for d in diagnostics(failure(() -> build(Group((; r = BareRamp(), s = BareScale());
-                                                                   local_wires = ("r/out" => "s",)))))
-                  if d isa UnknownPort)
-        @test (d.endpoint, d.path, d.spelling, d.port, d.candidates) == (:source, "r", "r/out", :out, [BARE])
-        # One segment naming the bare port of the other side is a direction conflict.
+        @test (d.path, d.spelling, d.port, d.candidates) == ("k", "k/zz", :zz, [:u, :y])
+        # The input face named as a producer is a direction conflict.
         d = first(d for d in diagnostics(failure(() -> build(Group((; k = BareSink(), s = BareScale());
-                                                                   local_wires = ("k" => "s",)))))
+                                                                   local_wires = ("s/u" => "k/u",)))))
                   if !(d isa UnconnectedInput))
         @test d isa FaceDirectionConflict && d.found === :input && d.wanted === :producer
         # An empty endpoint, or one ending in `/`, names no terminal.
         diags = diagnostics(failure(() -> build(Group((; r = BareRamp(), s = BareScale());
-                                                      local_wires = ("r/" => "s", "" => "s")))))
+                                                      local_wires = ("r/" => "s/u", "" => "s/u")))))
         @test count(d -> d isa PathResolution && d.reason === :not_a_terminal, diags) == 2
     end
-    @testset "a face name is never empty, an empty contract key included (§8.6, D-436)" begin
+    @testset "a face name is never empty, an empty contract key included (§8.6, D-437)" begin
         diags = diagnostics(failure(() -> build(Group((; r = BareRamp(), e = EmptyKeyed());
-                                                      local_wires = ("r" => "e",)))))
+                                                      local_wires = ("r/y" => "e/",)))))
         @test any(d -> d isa FaceNameIllegal && d.path == "e" && d.face == "" && d.invariant === :empty,
                   diags)
-        # Never read as bare: the child segment alone finds no bare input there.
-        @test any(d -> d isa UnknownPort && d.path == "e" && d.port === BARE, diags)
-        d = only(diagnostics(failure(() -> build(Group((; s = BareScale()); input_wires = ("" => "s",),
-                                                       output_wires = ("s" => "y",))))))
+        d = only(diagnostics(failure(() -> build(Group((; s = BareScale()); input_wires = ("" => "s/u",),
+                                                       output_wires = ("s/y" => "y",))))))
         @test d isa FaceNameIllegal && d.path == "" && d.invariant === :empty
     end
-    @testset "the passthrough labels a bare face with the prefix alone and routes it to the child (§8.8, D-436)" begin
+    @testset "the passthrough labels a bare face as any other (§8.8, D-437)" begin
         world = Group((; gain = BareScale(), loop = Group((; flow = BareFlow());
-                                                          input_wires = ("u" => "flow",))))
-        @test input_passthrough(world, "gain") == ("gain" => "gain",)
-        @test output_passthrough(world, "gain"; prefix = "k") == ("gain" => "k",)
-        @test input_passthrough(world, "gain"; prefix = "") == ("" => "gain",)
+                                                          input_wires = ("u" => "flow/u",))))
+        @test input_passthrough(world, "gain") == ("gain.u" => "gain/u",)
+        @test output_passthrough(world, "gain") == ("gain/y" => "gain.y",)
+        @test output_passthrough(world, "gain"; prefix = "k") == ("gain/y" => "k.y",)
+        @test input_passthrough(world, "gain"; prefix = "") == ("u" => "gain/u",)
+        @test output_passthrough(world, "gain"; prefix = "") == ("gain/y" => "y",)
         @test input_passthrough(world, "loop") == ("loop.u" => "loop/u",)
+        # Both helpers over one child bare on both sides collide on nothing.
         rig = Group((; gain = BareScale()); input_wires = input_passthrough(Group((; gain = BareScale())), "gain"),
-                    output_wires = output_passthrough(Group((; gain = BareScale())), "gain"; prefix = "y"))
-        @test build(rig).structure.root_inputs == [:gain]
-        d = only(diagnostics(failure(() -> build(Group((; gain = BareScale());
-            input_wires = input_passthrough(Group((; gain = BareScale())), "gain"; prefix = ""),
-            output_wires = ("gain" => "y",))))))
-        @test d isa FaceNameIllegal && d.invariant === :empty
+                    output_wires = output_passthrough(Group((; gain = BareScale())), "gain"))
+        @test build(rig).structure.root_inputs == [Symbol("gain.u")]
+        rig = Group((; gain = BareScale());
+                    input_wires = input_passthrough(Group((; gain = BareScale())), "gain"; prefix = ""),
+                    output_wires = output_passthrough(Group((; gain = BareScale())), "gain"; prefix = ""))
+        @test build(rig).structure.root_inputs == [:u]
     end
-    @testset "at a primitive root, two bare contracts collide and a bare input has no face (§8.2, §8.6, D-210, D-436)" begin
-        d = only(diagnostics(failure(() -> build(BareScale()))))
-        @test d isa FaceNameCollision && d.site === :root && d.faces == [""]
-        d = only(diagnostics(failure(() -> build(BareSink()))))
-        @test d isa IllegalPortType && d.site === :root_input && d.name === BARE &&
-              d.reason === :bare_at_root && d.declared === Float64 && path(d) == ""
-        # A bare output at the root is legal, its face headless.
+    @testset "at a primitive root, a bare input is the root input `u` and two bare contracts collide on nothing (§8.2, §8.6, D-210, D-437)" begin
+        root = build(BareSink())
+        @test root.structure.root_inputs == [:u]
+        @test haskey(activation(root, Float64).layout.addr, ("", :u))
+        root = build(BareScale())
+        @test root.structure.root_inputs == [:u]
+        @test Set(k for k in keys(activation(root, Float64).layout.addr)) == Set([("", :u), ("", :y)])
+        sim = Simulation(root; h = 1//100)
+        init!(sim, set(u = (u = 1.5,)))
+        @test port(sim, "") == -3.0 && port(sim, "", :u) == 1.5
+        # A named key `u` beside a bare `u_types` collides as any shared key.
+        d = only(diagnostics(failure(() -> build(UNamedOut()))))
+        @test d isa FaceNameCollision && d.site === :root && d.faces == ["u"]
+        # A bare output at the root is legal, its face `y`.
         root = build(BareRamp())
-        @test isempty(root.structure.root_inputs) && haskey(activation(root, Float64).layout.addr, ("", BARE))
+        @test isempty(root.structure.root_inputs) && haskey(activation(root, Float64).layout.addr, ("", :y))
     end
 end
 

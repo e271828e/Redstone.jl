@@ -166,12 +166,12 @@ function test_executor()
         @test mode_store[] === true
         d = diagnostic(failure(() -> Redstone._merge_modes!(mode_store, 1, "p", :handler, :e)))
         @test d isa ConformanceFailure && d.reason === :field_type && d.shape === :mode &&
-              d.field === BARE && d.observed === Int && d.declared === Bool
+              d.field === :m && d.observed === Int && d.declared === Bool
         d = diagnostic(failure(() -> Redstone._merge_modes!(mode_store, (fired = true,), "p",
                                                             :handler, :e)))
-        @test d.field === BARE && d.observed === @NamedTuple{fired::Bool}
+        @test d.field === :m && d.observed === @NamedTuple{fired::Bool}
         d = diagnostic(failure(() -> Redstone._store_successor!(Ref(0), 0.5, "p", :s_update)))
-        @test d.reason === :field_type && d.shape === :s_init && d.field === BARE &&
+        @test d.reason === :field_type && d.shape === :s_init && d.field === :s &&
               d.observed === Float64 && d.declared === Int
         # Over bare stores, and a stateless leaf marked `nothing`, the phase
         # bodies allocate nothing, the always-on check folded away.
@@ -195,7 +195,7 @@ function test_executor()
         @test Redstone.gather_input((; a = addr), store) === (a = 2.5,)
         d = diagnostic(failure(() -> Redstone.scatter_group!(store, addr, 1, Float64, "p", :y_state)))
         @test d isa ConformanceFailure && d.reason === :field_type && d.shape === :ports &&
-              d.field === BARE && d.observed === Int && d.declared === Float64
+              d.field === :y && d.observed === Int && d.declared === Float64
         # Over bare contracts at depth, under a `Dual` activation too, the phase
         # bodies allocate nothing, the check folded away.
         for T in (Float64, LinearizeDual)

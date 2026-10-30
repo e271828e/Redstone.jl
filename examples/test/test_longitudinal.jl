@@ -180,7 +180,7 @@ end
         @test record.t ≈ 17.670844829159307 atol = 1e-3
         @test record.source isa ModelRequestedStop
         @test record.source.path == "stop"
-        @test record.source.port === Symbol("")
+        @test record.source.port === :y
         @test record.source.reason == "touchdown"
         @test abs(state(flight, "plant").h) <= 1e-6
         @test modes(flight, "gear").contact === true

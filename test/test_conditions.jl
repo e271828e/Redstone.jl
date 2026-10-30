@@ -137,14 +137,14 @@ function conditions_algebra()
                      () -> combine(set(), set(), (q = 1.0,)),   # at any arity
                      () -> at("plant", (q = 1.0,)),
                      () -> override(set(), (q = 1.0,)),
-                     () -> set(u = 3.0))                      # and a non-NamedTuple `u` payload
+                     () -> set(u = nothing))                  # and a `u` payload of `nothing`
             err = failure(case)
             @test err isa DiagnosticError && diagnostic(err) isa ConditionNodeMisuse
         end
         d = carried(@test_throws DiagnosticError{ConditionNodeMisuse} combine(set(), (q = 1.0,)))
         @test d.observed === NamedTuple{(:q,),Tuple{Float64}} && d.in_hand == [:Fragment]
-        d = carried(@test_throws DiagnosticError{ConditionNodeMisuse} set(u = 3.0))
-        @test d.reason === :set_payload && d.payload === :u
+        d = carried(@test_throws DiagnosticError{ConditionNodeMisuse} set(u = nothing))
+        @test d.reason === :set_payload && d.payload === :u && d.observed === Nothing
         # `nothing` as a store payload would set nothing, and is refused at the call.
         d = carried(@test_throws DiagnosticError{ConditionNodeMisuse} set(m = nothing))
         @test d.reason === :set_payload && d.payload === :m && d.observed === Nothing
@@ -675,25 +675,65 @@ function conditions_bare_stores()
         @test @allocated(apply!(model.exec, plan, tree)) == 0
     end
 
-    @testset "a bare payload against a named store, or the reverse, is refused by shape (§14.3)" begin
+    @testset "a bare payload names the bare store's letter, and a named one names it too (§14.3, D-438)" begin
+        model = Model(bare_world(); h = 1//10)
+        roots = set(u = (u = 0.0, p = 0.0))
+        init!(model, combine(roots, at("acc", set(x = (x = 3.5,))), at("tick", set(s = (s = 2,))),
+                             at("latch", set(m = (m = true,)))))
+        @test state(model, "acc") === 3.5 && state(model, "tick") === 3 && modes(model, "latch") === true
+        # The two spellings of one leaf are one leaf, written twice.
+        d = only(diagnostics(failure(() -> resolve_condition(
+            combine(at("acc", set(x = 1.0)), at("acc", set(x = (x = 2.0,)))), model.deployment.build))))
+        @test d isa DuplicateConditionLeaf && d.path == "acc" && d.store === :x && d.field === :x
+        @test d.origins == ["combine[1] → at(\"acc\") → set(x)", "combine[2] → at(\"acc\") → set(x).x"]
+    end
+
+    @testset "a bare payload against a named store, or a named one against a bare store, is refused (§14.3, D-438)" begin
         world_build = build(bare_world())
         err = failure(() -> resolve_condition(
             combine(at("plant", set(x = SVector(1.0, 0.0))), at("acc", set(x = (q = 1.0,))),
                     at("latch", set(m = (latched = true,)))), world_build))
         diags = diagnostics(err)
-        @test all(d -> d isa ConditionResolution && d.reason === :store_shape, diags)
-        @test Set((d.path, d.store, d.field, d.candidates) for d in diags) ==
-              Set([("plant", :x, BARE, [:q]), ("acc", :x, :q, Symbol[]),
-                   ("latch", :m, :latched, Symbol[])])
+        @test Set((d.reason, d.path, d.store, d.field, d.candidates) for d in diags) ==
+              Set([(:store_shape, "plant", :x, nothing, [:q]),
+                   (:undeclared_field, "acc", :x, :q, [:x]),
+                   (:undeclared_field, "latch", :m, :latched, [:m])])
         # The origin spells a bare payload without a field.
         @test only(d.origin for d in diags if d.path == "plant") ==
               "combine[1] → at(\"plant\") → set(x)"
         # A bare payload for a store the component lacks is the store's refusal.
         d = only(diagnostics(failure(() -> resolve_condition(at("neg", set(x = 1.0)), world_build))))
-        @test d.reason === :no_store && d.field === BARE
-        # And one that does not convert is the converter's, with no field.
+        @test d.reason === :no_store && d.field === nothing
+        # And one that does not convert is the converter's, on the letter.
         d = only(diagnostics(failure(() -> resolve_condition(at("acc", set(x = "a")), world_build))))
-        @test d.reason === :unconvertible && d.field === BARE && d.declared === Float64
+        @test d.reason === :unconvertible && d.field === :x && d.declared === Float64
+    end
+
+    @testset "a bare `u` payload names a bare input's face `u` (§14.2, D-437)" begin
+        world_build = build(bare_ports_world())
+        model = Model(world_build; h = 1//100)
+        init!(model, at("plant/summer", set(u = 0.75)))
+        @test port(model, "", :u) === 0.75
+        init!(model, at("plant/summer", set(u = (u = 0.25,))))
+        @test port(model, "", :u) === 0.25
+        # At the root primitive the bare payload is the root input `u` itself.
+        root = Model(BareScale(); h = 1//10)
+        init!(root, set(u = 1.5))
+        @test port(root, "", :u) === 1.5 && port(root, "") === -3.0
+        # A bare payload at a named level or an assembly is the shape's refusal;
+        # a named one at a bare input is the ordinary missing face.
+        diags = diagnostics(failure(() -> resolve_condition(
+            combine(at("plant", set(u = 1.0)), set(u = 2.0), at("plant/summer", set(u = (zz = 1.0,)))),
+            world_build)))
+        @test Set((d.reason, d.path, d.field, d.candidates) for d in diags) ==
+              Set([(:port_shape, "plant", nothing, [:u]), (:port_shape, "", nothing, [:u]),
+                   (:no_input_face, "plant/summer", :zz, [:u])])
+        d = only(diagnostics(failure(() -> resolve_condition(at("neg", set(u = 1.0)), build(bare_world())))))
+        @test (d.reason, d.path, d.candidates, d.origin) == (:port_shape, "neg", [:u], "at(\"neg\") → set(u)")
+        # `nothing` alone sets nothing, for `u` as for the stores.
+        @test diagnostic(failure(() -> set(u = nothing))) isa ConditionNodeMisuse
+        @test diagnostic(failure(() -> set(u = nothing))).payload === :u
+        @test set(u = 1.0) isa Redstone.ConditionNode
     end
 end
 

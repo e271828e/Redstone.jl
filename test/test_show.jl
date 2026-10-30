@@ -317,11 +317,13 @@ function test_show()
             @test all(line == rstrip(line) for line in split(text, '\n'))
         end
     end
-    @testset "a bare port reads as its component's path in every table (§9.2, D-436)" begin
+    @testset "a bare port reads as its default face in every table (§9.2, D-437)" begin
         text = plain(build(bare_ports_world()))
-        @test occursin("\n  feedthrough: plant/loop/scale → plant/loop/echo\n", text)
-        @test occursin("    plant/loop/flow   plant/loop/flow  —\n", text)
-        @test occursin("      u → plant/u → plant/summer\n", text)
-        @test !occursin("flow/", text) && !occursin("flow.", text) && !occursin("summer/", text)
+        @test occursin("\n  feedthrough: plant/loop/scale/y → plant/loop/echo/u\n", text)
+        @test occursin("    plant/loop/flow   y        —\n", text)
+        @test occursin("      u → plant/u → plant/summer/u\n", text)
+        @test occursin("      total → plant/total → plant/summer/y\n", text)
+        @test occursin("      ramp → ramp/y\n", text)
+        @test !occursin(r"[a-z]/(\s|$)", text) && !occursin(r"[a-z]\.(\s|$)", text)
     end
 end

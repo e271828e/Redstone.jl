@@ -75,31 +75,31 @@ in the `src/model.jl` entry.
 - The shadowing check ahead of `classify` in the walk (D-246).
 - The store-shape read ahead of the classifier in the walk, `check_store_form`,
   which refuses `(;)` as `EmptyStore` and reads that primitive no further
-  (§8.2, §9.1, D-435).
+  (§8.2, §9.1, D-438).
 - The tier classification `classify_tier` (§8.2), in its own section ahead
   of the walk. It records what it finds instead of throwing, the walk reads
   the tier beside the class, and the store decides the tier. It records
   `StatelessWithoutOutputs` and runs the pinned-entry check, both from D-263,
   and holds `IllegalPortType`'s nested-marker arm, on both tiers (D-265).
-- Beside it the shape helper `store_fields`, a `NamedTuple`'s pairs, one
-  `BARE` pair for a bare store and none for `nothing`, which build.jl,
-  conditions.jl and readers.jl reuse (D-435). The store isbits check
+- Beside it the shape helper `store_fields`, a store's pairs in the keyed form,
+  a bare store's one pair under its letter `x`, `s` or `m` and none for
+  `nothing`, which build.jl reuses (D-438). The store isbits check
   `check_stores` (§7.3, D-231) and the state-leaf vocabulary check
   `check_state_leaves` (§7.1, D-094) iterate it, all taking the component
   unspecialized (D-289).
 - The component frame around the walk's two branches (D-248).
-- `_contract`, a contract at nominal in its declared shape, a bare contract its
-  one type, with `contract_fields`, its pairs with one `BARE` pair for a bare
-  contract, and `_has_port`, an endpoint's name against that shape: the child
-  segment alone names a bare port, a face name a named one (§8.6, D-436).
-  `check_contract_names` refuses an empty contract key as `FaceNameIllegal`
-  `:empty`, and `_check_face_names` an empty assembly face; the root check
-  `_check_root_faces` collides two bare contracts and refuses a bare
-  `u_types` alone as `IllegalPortType` `:bare_at_root` (D-210, D-436).
+- `_contract`, a contract at nominal in the keyed form, a bare contract's one
+  port under its default face `u` or `y`, read by `pairs` and `haskey` as any
+  contract (§8.6, D-437). `check_contract_names` refuses an empty contract key
+  as `FaceNameIllegal` `:empty`, and `_check_face_names` an empty assembly
+  face; the root check `_check_root_faces` collides the keyed names, so two
+  bare contracts collide on nothing, and the root claims a bare `u_types` as
+  the root input `u` (D-210, D-437).
 - §13.3's `resolve`/`resolve_terminal`/face-list primitives `input_faces` and
   `output_faces`. `resolve_terminal` reads the child segment alone, a
-  container element's included, as a bare endpoint under `BARE`, and the face
-  lists list a bare contract as one empty name (D-436). The walk records each assembly's evaluated face lists in
+  container element's included, as a child with no port, its name `nothing`,
+  which `resolve_source` and `resolve_dest` refuse as `UnknownPort` with that
+  side's faces; the face lists list a bare contract as `u` or `y` (D-437). The walk records each assembly's evaluated face lists in
   `StructureDraft.faces`, and `flatten_tree!` binds them as `WALK_FACES` around the
   walk, so the primitives read them once per call (Appendix C) and evaluate a
   body only outside a walk. Beside it `flatten_tree!` binds `WALK_CHILDREN`, a
@@ -113,8 +113,7 @@ in the `src/model.jl` entry.
   sits in the file's last section, after the `Structure` it reads.
 - §8.8's `input_passthrough`/`output_passthrough`, with the three exclusive
   selectors `except`, `only` and `select`, and `EmptyFaceSelection` through the
-  channel (D-251). `_labelled` and `_child_endpoint` give a bare face the
-  prefix alone and the child path alone (D-436).
+  channel (D-251). A bare face is labelled as any face (D-437).
 - The walk, the class and child readers, the resolvers and the build
   primitives take components, assemblies and the root unspecialized, and
   `_children` reads a container through `_elements` and `_element_keys`, so a
@@ -125,7 +124,7 @@ in the `src/model.jl` entry.
 Spec: §6.1, §7.1, §7.3, §8.1, §8.2, §8.5–§8.8, §9.1, §9.2, §9.7, §13.1, §13.3,
 §13.7, §14.2, Appendix C, D-061, D-094, D-130, D-171, D-207–D-212, D-229,
 D-231, D-236, D-246, D-248, D-251, D-253, D-261, D-263, D-265, D-289,
-D-315, D-435, D-436.
+D-315, D-437, D-438.
 
 ### `src/bindings.jl`
 
@@ -182,16 +181,17 @@ The standard component library, the submodule `Redstone.Blocks`:
   and `DiscretizedTransferFunction` (D-313).
 - The anonymous assembly `Group`, with `_entries` (D-184).
 - Every block with one state field or one mode declares it bare, and every
-  stateless block declares `nothing` (§8.2, D-435). Every block with one input
-  or one output declares that contract bare, the `Junction`'s output and the
-  inputs of `Unpack`, `LimitedIntegrator` and `DiscreteLimitedIntegrator`
-  included; a side with two or more ports stays named (§13.5, §13.7, D-436).
+  stateless block declares `nothing` (§8.2, D-438). Every block with one input
+  or one output declares that contract bare, its face `u` or `y`, the
+  `Junction`'s output and the inputs of `Unpack`, `LimitedIntegrator` and
+  `DiscreteLimitedIntegrator` included; a side with two or more ports stays
+  named (§13.5, §13.7, D-437).
 
 It reaches the parent through its import list alone, as a user's component
 file does (D-313). Nothing in the package depends on it, so `src/Redstone.jl`
 includes it last.
 
-Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §8.5, §10.4, §13.5, §13.7, D-179, D-184, D-211, D-231, D-311, D-312, D-313, D-316, D-383, D-384, D-385, D-435, D-436.
+Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §8.5, §10.4, §13.5, §13.7, D-179, D-184, D-211, D-231, D-311, D-312, D-313, D-316, D-383, D-384, D-385, D-437, D-438.
 
 ### `src/build.jl`
 
@@ -214,12 +214,15 @@ Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §8.5, §10.4, §13.5, §13.7, D-179, D
 - The probe's embedding of products, `_embed`.
 - `_probe_direct!`, shared with the classifier's prefix probe.
 - The return checks `_check_derivative`, `_check_update`, `_check_state_write`
-  and `_check_handler` hold a return to the declared shape, bare or named
-  (§9.5, D-435).
-- A bare contract in the bookkeeping: `Decls`' contracts and the products are
-  keyed, a bare port under `BARE`; `_keyed_return` keys a stage's bare return
-  and `_bundle_side` hands a bare side's bundle field its value, so the stage
-  probes hold a bare return to its port's type alone (§5.2, §9.3, D-436).
+  and `_check_handler` hold a return to the declared shape, bare or named,
+  a bare store's failure on its letter (§9.5, D-438).
+- A bare contract in the bookkeeping: `Decls` holds each contract in its
+  declared shape, a bare one its one type, which `is_bare` reads, and
+  `keyed_ins`/`keyed_outs` give the keyed form, a bare port under `u` or `y`.
+  The products are keyed; `_keyed_return` keys a stage's bare return by the
+  declared shape and `_bundle_side` hands a bare side's bundle field its
+  value, so the stage probes hold a bare return to its port's type alone
+  (§5.2, §9.3, D-437).
 - The feedthrough graph, the builder's scratch. Each edge keeps its port and
   face.
 - Kahn's execution order, written into the `Outputs` (D-261):
@@ -232,7 +235,9 @@ Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §8.5, §10.4, §13.5, §13.7, D-179, D
 - The layout, with the root-input meet (D-168, D-236), `IllegalPortType`'s
   three layout arms (D-237) and its two stop-request arms (D-316), and the flat
   `x` ranges every offset is read from (D-261). `Requester` is one entry of the
-  layout's `requesters`, the roster of the `StopFlag` buffer (D-316). Its alias
+  layout's `requesters`, the roster of the `StopFlag` buffer (D-316). The
+  layout's `bare_outputs` are the primitives whose `y_types` is bare, which
+  `port_addr` reads for `port`'s defaulted name (D-437). Its alias
   pass enters assembly output faces alone, from `terminal_producer`;
   `compile`'s input group reads a primitive input face's address as its
   terminal producer's (D-210, D-315).
@@ -253,12 +258,12 @@ Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §8.5, §10.4, §13.5, §13.7, D-179, D
     stepper from the `algorithm` keyword.
   - The event set takes the phase bodies' chunk size (D-289).
   - An entry's side is `entry_addrs`' one `CellAddr` where the side is bare,
-    a `NamedTuple` group otherwise (D-436).
+    by the declared shape, a `NamedTuple` group otherwise (D-437).
 
 Spec: §5.3, §5.5, §13.8, §6.1, §7.1, §7.3, §8.2, §9.1–§9.4, §9.7, §10.4, §13.2,
 §13.5, D-012, D-051, D-166, D-179, D-208, D-210, D-229, D-235, D-236, D-237,
-D-248, D-250, D-252, D-253, D-256, D-261, D-263, D-289, D-315, D-316, D-435,
-D-436.
+D-248, D-250, D-252, D-253, D-256, D-261, D-263, D-289, D-315, D-316, D-437,
+D-438.
 
 ### `src/checkpoint.jl`
 
@@ -301,16 +306,21 @@ Spec: §11.5, §12.6, §12.7, §14.10, D-038, D-254, D-273, D-274, D-317, D-319.
   walked from its authoring level (§13.3). The two ways are:
   - `resolve_condition`, for values, its merge bases the declared defaults
     or the stores a door hands it (D-429), a bare store's base replaced whole
-    by `_store_overlay`, shared with `StoreWrite` (D-435);
+    by `_store_overlay`, shared with `StoreWrite` (D-438);
   - `compile_plan`, with lenses run by `walk_steps` (readers.jl),
     `SpecializedPlan`, whose writes and prefixes `apply!` walks as generated
     unrolls, and `ConditionShapeDrift`.
+- A bare payload of any letter: `_payload` refuses `nothing` alone, and
+  `_flat` files a bare payload under the letter, by `_bare_field`, where the
+  store or input it names is bare, or under no field, which resolution
+  refuses as `:store_shape` and flattening as `:port_shape`, the names in hand
+  (§14.2, §14.3, D-437, D-438).
 - Root-input totality `assert_total`.
 - `apply!` and `init!` on a model are model.jl's, and `apply!`'s forwarding
   method on the simulation is sim.jl's.
 
 Spec: §9.5, §13.1, §13.3, §14.1–§14.6, §14.9, Appendix B, D-063–D-068,
-D-117, D-130, D-204, D-205, D-207, D-226, D-277, D-315, D-429, D-435.
+D-117, D-130, D-204, D-205, D-207, D-226, D-277, D-315, D-429, D-437, D-438.
 
 ### `src/control.jl`
 
@@ -380,10 +390,13 @@ D-027, D-038, D-137, D-203, D-250, D-255, D-269, D-316, D-317, D-406.
 The declaration layer:
 
 - Both tiers' name families.
-- `Pinned`'s docstring and the one-arity `declared_at`. `declared_at` walks a
-  continuous contract at its scalar and reads a discrete one as written
-  (D-263), keyed by `_keyed`, a bare contract as its one entry under `BARE`;
-  `is_bare` reads that shape off a keyed contract (D-436).
+- `Pinned`'s docstring and the one-arity `contract_at`, which walks a
+  continuous contract at its scalar and reads a discrete one as written in its
+  declared shape (D-263), with `declared_at`, its keyed form. The one
+  mechanism of the five letters: `default_name`, the letter a bare
+  declaration's entry takes, `_keyed`, a declaration's value keyed under it,
+  and `is_bare`, the shape read off the declared value, never off the keyed
+  names (§8.2, D-437, D-438).
 - The bundle law, with the legal bundle sets `LEGAL_BUNDLE` and
   `classify_bundle_field` (§5.2, Appendix B).
 - `probe_value`, with its enum arm (D-051).
@@ -400,7 +413,7 @@ The declaration layer:
   new component type compiles none of them again (§9.7, D-289).
 
 Spec: §2.3, §5.2, §8.1, §8.2, §8.5–§8.7, §9.3, §9.7, §13.5, Appendix B, D-051,
-D-179, D-185, D-195, D-211, D-246, D-248, D-263, D-289, D-316, D-436.
+D-179, D-185, D-195, D-211, D-246, D-248, D-263, D-289, D-316, D-437, D-438.
 
 ### `src/deployment.jl`
 
@@ -446,13 +459,14 @@ D-250, D-254, D-256, D-261.
 - A diagnostic as data `_diagnostic`: kind, severity, path and the rendered
   message, then `_function` for the probe-chain kinds, `_marks` as ports and
   wires for the kinds naming a face or a wire, and `_cycle` over
-  `_terminal_endpoint` for `AlgebraicCycle`, which reads a member's path
-  alone as a bare port's end; never the payload (D-434, D-436).
+  `_terminal_endpoint` for `AlgebraicCycle`, which splits each end at its last
+  `/` into path and port, a bare port's its face; never the payload (D-434,
+  D-437).
 - The node walk `_nodes`, a pre-order over the level rows' children with the
   leaves read off `components`, and the node's `field` and `key` from
   `membership` on the `Child`.
 - The leaf faces `_leaf_faces`, read off the declarations as written with a
-  `Pinned` entry unwrapped and flagged, and the kind marker `_kind_marker`,
+  `Pinned` entry unwrapped and flagged, a bare contract's face `u` or `y`, and the kind marker `_kind_marker`,
   §13.9's table in test order, its `struct` row the leaf walk's isbits cut
   and its `vector` row over `_static_shape` (D-433).
 - The instance context: `_qualified_name`, `_alias` over the parent module's
@@ -464,7 +478,7 @@ D-250, D-254, D-256, D-261.
   JSON and JSONSchema as the suite's dependencies alone.
 
 Spec: §8.5, §9.1, §9.2, §13.2, §13.8, §13.9, D-211, D-237, D-418, D-432, D-433,
-D-434, D-436.
+D-434, D-437.
 
 ### `src/devices.jl`
 
@@ -518,13 +532,14 @@ D-256, D-261, D-268, D-270, D-315.
   `ReplayDiscardedStaging` (§12.7). `EmptyGreedyClaim` is reported by
   `attach!` into the roster entry's own cell (§11.6, D-250).
 - `_typename`.
-- `BARE`, the reserved empty name a bare store or a bare contract takes in
-  every `(path, name)` key, spelled nowhere else, and `_named`, the one
-  renderer of such a pair, which drops it; `_at_port`, a port in a message in
-  slash form over it; `EmptyStore`, the refusal of `(;)` (§8.2, D-435, D-436).
-- The bare contract's arms: `UnknownPort`'s two shape arms, `IllegalPortType`'s
-  `:bare_at_root`, `FaceNameIllegal`'s `:empty`, `ReadResolution`'s
-  `:port_shape` (D-436).
+- `_named`, the one renderer of a `(path, name)` pair; `_at_port`, a port in a
+  message in slash form over it; `EmptyStore`, the refusal of `(;)` (§8.2).
+- The shape arms of the five letters: `UnknownPort`'s one-segment endpoint,
+  which names no port, `FaceNameIllegal`'s `:empty`, `ReadResolution`'s
+  `:store_shape` and `:port_shape` for a headless address against a named
+  store, a named contract or an assembly, and `ConditionResolution`'s
+  `:store_shape` and `:port_shape` for a bare payload against a named store,
+  a named contract or an assembly (D-437, D-438).
 - The `DiagnosticError` carrier, its `warnings` (D-250) and its `structure`,
   typed `Any` since `Structure` is declared later and filled by the build's
   door alone (D-434), with `diagnostic`, `diagnostics`, `kinds` and the two
@@ -550,7 +565,8 @@ D-256, D-261, D-268, D-270, D-315.
   `:internally_wired` and `:input_face_not_output` (D-277).
 - `TierUnreadable` and `StatelessWithoutOutputs` (D-263).
 - `InternalInvariant`.
-- §13.4's runtime trio `CursorFrame`, `StepError` and `NonfiniteState`.
+- §13.4's runtime trio `CursorFrame`, `StepError` and `NonfiniteState`, whose
+  leaf names a bare state's field `x` (D-438).
 - §12.7's replay trio `CheckpointMismatch`, `ReplaySchemaMismatch` and
   `ReplayUnknownFace` (D-255, D-274).
 - `CheckpointMidFrame` (D-274).
@@ -573,7 +589,7 @@ Spec: §9.1, §9.2, §10.4, §10.6, §10.7, §11.4, §11.6, §11.8, §12.2, §12
 Appendix C, D-027, D-058, D-059, D-157, D-187, D-203, D-214, D-215, D-222,
 D-225, D-250, D-255, D-256,
 D-261, D-262, D-263, D-272, D-274, D-276, D-277, D-316, D-318, D-319, D-320,
-D-406, D-435, D-436.
+D-406, D-437, D-438.
 
 ### `src/executor.jl`
 
@@ -581,7 +597,7 @@ D-406, D-435, D-436.
   `ProjectEntry`. Each carries its component's path, for the write's
   diagnostic, and an event entry carries its event name beside the path
   (D-249). A side's addresses are `SideAddrs`, a group or a bare side's one
-  `CellAddr`, which `_bundle_expr` gathers through `gather_input` (D-436).
+  `CellAddr`, which `_bundle_expr` gathers through `gather_input` (D-437).
 - The chunked walk `Chunk` and `chunked_body`. `Chunk` is mutable, so a
   phase body holds one pointer per chunk and a barrier call loads one
   pointer. Every tuple walk, over a chunk's entries, a body's chunks, or the
@@ -594,7 +610,7 @@ D-406, D-435, D-436.
 - The `(tick − Φ) % D` gate `Gated`, with boundary zero's `ESTABLISH` beside
   it.
 - `_merge_modes!`, one generated method, which replaces a bare `m` whole and
-  merges a named one (§9.5, D-435).
+  merges a named one, a bare one's failure on the field `m` (§9.5, D-438).
 - The event set, with its registers. It is mutable, so the executor holds it
   by reference. Its `entries` and `projects` hold `EventChunk`s, each a
   mutable chunk of entries, so their `length` counts chunks.
@@ -606,7 +622,7 @@ D-406, D-435, D-436.
   `Bool` return (§13.5, D-261, D-317).
 
 Spec: §5.3, §9.5, §9.7, §10.4–§10.6, §13.4, §13.5, §14.5, D-059, D-205, D-235,
-D-249, D-255, D-261, D-289, D-317, D-435, D-436.
+D-249, D-255, D-261, D-289, D-317, D-437, D-438.
 
 ### `src/frame.jl`
 
@@ -646,10 +662,10 @@ D-260, D-261, D-317, D-318.
   wire it admits an opaque leaf as the producer's cell (D-264).
 - The wire relation `_accepts_wire`, with its abstract arm (D-236).
 - The checked state write `flatten_state!` (D-235), with its bare arm decided
-  at generation for a bare `XT` (D-435).
+  at generation for a bare `XT`, its failure on the field `x` (D-438).
 
 Spec: §4.1, §4.3, §4.4, §6.1, §7.1, §7.2, §8.2, §9.5, §13.4, §13.5, D-166,
-D-235, D-236, D-237, D-238, D-243, D-263, D-264, D-265, D-276, D-316, D-435.
+D-235, D-236, D-237, D-238, D-243, D-263, D-264, D-265, D-276, D-316, D-438.
 
 ### `src/linearize.jl`
 
@@ -693,9 +709,13 @@ D-235, D-236, D-237, D-238, D-243, D-263, D-264, D-265, D-276, D-316, D-435.
   `.name` step is unseedable (D-036). The seed site is the leaf's linear
   place on the `x` and `u` lists alike, so `[k,l]` seeds the entry its
   linear `[k]` names and the two spellings are one site (D-276).
+- A headless tap on a bare store or port takes the letter as its head before
+  the site is resolved, so `"[1]"` on a bare `x` seeds `x[1]` (D-438). The
+  pinning meet reads the consumers' contracts keyed, a bare input under its
+  face `u` (D-437).
 
 Spec: §9.7, §14.4, §14.10, D-036, D-167, D-168, D-197, D-213, D-272, D-274,
-D-276, D-277, D-317, D-319, D-406, D-428.
+D-276, D-277, D-317, D-319, D-406, D-428, D-437, D-438.
 
 ### `src/model.jl`
 
@@ -800,14 +820,18 @@ Spec: §9.7, D-289.
 - The export chain's lookup, `_input_faces_at` and `_face_producer`, shared
   by `get_input`'s rebase and a condition's `u` entry in conditions.jl
   (D-277), over `terminal_producer` (D-315).
-- The leaf address (D-276). `parse_leaf` splits it at resolution, and a
-  headless address, empty or beginning at a step, heads at `BARE` for a bare
-  store or port (D-435, D-436), and `get_output`'s `leaf` defaults to it. On a
+- The leaf address (D-276). `parse_leaf` splits it at resolution, a headless
+  address, empty or beginning at a step, with no head, and every selector's
+  `leaf` defaults to the empty address. `_supplied_head` gives a headless
+  address the letter of a bare declaration, by its declared shape: a path
+  selector's at the rebase step, through `_read_shape`, and a face
+  selector's through `_face_leaf`, so every later step reads a name. A
+  headless address against a named store is `:store_shape`, against a named
+  contract or an assembly `:port_shape`, the names in hand (D-437, D-438). On a
   face selector `match_leaf` matches the head against the face list instead,
-  since a face name may hold a dot, and `match_face` takes a headless address
-  for a bare port. `get_face` at a primitive level, the root included, reads
-  its ports. A named head against a bare port, or a headless one against named
-  ports, is `:port_shape`. `resolve_leaf` checks each step against the declared type and returns the
+  since a face name may hold a dot. `get_face` at a primitive level, the root
+  included, reads its ports. `StoreRead`'s field is a bare store's letter, read
+  whole. `resolve_leaf` checks each step against the declared type and returns the
   chain or a `LeafRefusal`, the six leaf reasons any kind wraps, and
   `_resolved_type` reads the type a resolved chain lands on. `walk_steps`
   runs the chain as `getfield` and `getindex` calls unrolled at generation.
@@ -832,7 +856,7 @@ Spec: §9.7, D-289.
   check on plans sits in conditions.jl's `apply!`.
 
 Spec: §11.2, §13.1, §13.3, §14.1, §14.4, §14.7, §14.9, §14.10, D-125, D-130, D-253,
-D-276, D-277, D-315, D-406, D-407, D-435, D-436.
+D-276, D-277, D-315, D-406, D-407, D-437, D-438.
 
 ### `src/roster.jl`
 
@@ -875,8 +899,7 @@ D-261.
   - `_feedthrough` derives the line's edges from the structure's connections
     and the producers' stage-2 names;
   - every `(path, name)` pair, a feedthrough end or a route's hop, renders
-    through `_named` in slash form, and a bare port in a stage column reads as
-    its component's path (D-436).
+    through `_named` in slash form, a bare port by its face `u` or `y` (D-437).
 - The `Structure`'s `input routes:` and `output routes:` blocks after the
   anchors, one line per route of a root face, its hops joined with ` → `
   (§13.7), derived through `face_routes` over the root's level row (D-315).
@@ -889,7 +912,7 @@ D-261.
   writer × kind in full up to `STATUS_MAXLOG` cumulative occurrences, and
   count-only past it.
 
-Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315, D-436.
+Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315, D-437.
 
 ### `src/sim.jl`
 
@@ -1013,7 +1036,7 @@ Spec: §10.2, D-017.
   `scatter_cell!`/`scatter_group!`. The scatter's check is §9.5's always-on
   check, decided at generation (D-235). A bare side is one cell: `gather_input`
   reads a group or one cell, and `scatter_group!`'s `CellAddr` method writes a
-  bare port's value under the same check (D-436).
+  bare port's value under the same check, its failure on the port `y` (D-437).
 - `_cell_key`, and `STOP_FLAG_KEY`, the `StopFlag` buffer's key (D-316).
 - The `Clock` of `t` and `t₀`, the frame and boundary counters being the
   run's (D-260, D-317):
@@ -1021,7 +1044,7 @@ Spec: §10.2, D-017.
   - its origin `t₀` is a `Float64`;
   - the constructor takes `t₀` and converts it into `t`.
 
-Spec: §9.5, §9.7, §13.5, D-162, D-235, D-237, D-260, D-316, D-317, D-436.
+Spec: §9.5, §9.7, §13.5, D-162, D-235, D-237, D-260, D-316, D-317, D-437.
 
 ### `src/trace.jl`
 
@@ -1054,8 +1077,11 @@ D-254, D-255, D-260, D-261, D-274, D-317, D-319.
 - `_classify`, the schedule-free per-member trace at the probe point, with its
   prefix probe, D-245's port-graph verdict and the sampled fallback at a fixed
   seed.
+- The probe reads each contract keyed, a bare one's port under its face `u`
+  or `y`, and build.jl's `_keyed_return` keys a bare port's return by the
+  declared shape (D-437).
 
-Spec: §5.4, §13.8, §9.3, D-012, D-140, D-245.
+Spec: §5.4, §13.8, §9.3, D-012, D-140, D-245, D-437.
 
 ### `src/trim.jl`
 
@@ -1089,10 +1115,10 @@ The suite's fixtures:
   generic. The generic lives in `src/conditions.jl`.
 - `Pendulum`.
 - The bare-store fixtures `BareAccumulator`, `BareTicker`, `BareLatch` and
-  `Negator`, with the assembly `bare_world()` (D-435).
+  `Negator`, with the assembly `bare_world()` (D-438).
 - The bare-contract fixtures `BareScale`, `BareFlow`, `BareSpin`, `BareSummer`
   and `BareRamp`, with the assemblies `bare_loop()` and `bare_ports_world()`,
-  bare ports two levels down (D-436).
+  bare ports two levels down, wired by their faces `u` and `y` (D-437).
 - `tick_alarmed`, the tick-detected stop request over `TickAlarm` (§10.5,
   §13.5, D-316).
 - The `ForgottenImport` module and the forgotten-import fixtures `Inventory`,
@@ -1120,8 +1146,8 @@ The helpers shared across the test files, no model among them:
 - `frames!(model, n)`, a standalone model stepped `n` whole frames under
   `NoHooks` from the frame top its clock sits on (D-317).
 - `single` and `fed`, one component under a wrapper assembly, the second
-  with one input face, or with no face its bare input, handed up to a root
-  input `in` (D-208, D-436).
+  with one input face, by default the face `u` of a bare input, handed up to a
+  root input `in` (D-208, D-437).
 - `poke!`, the drain's counterfactual write into a root input's cell, not
   framework API; `same_table`, two signal tables buffer by buffer.
 - `paths`, a structure's component paths in walk order.
@@ -1274,15 +1300,18 @@ Traps the code does not warn about, each hit more than once while building:
   the vector helper. Pick values that separate the expressions, and assert
   against the scalar form or probed literals. Sample times sit on the step
   grid, since `step!` rounds up to the next frame;
-- **nothing outside `BARE`'s definition spells `Symbol("")`**, and a
-  `(path, name)` pair renders through `_named`, which drops the empty name; a
-  leak shows as `plant/` or `plant.`. A port renders in slash form,
-  `_named(path, port, "/")`, through `_at_port` in a message;
-- **a bare contract is a `Type`, not a `NamedTuple`**: `keys`, `pairs` and
-  `isempty` on a declaration throw on it. The walk reads a contract through
-  `_contract` and `contract_fields`, everything past the structure step
-  through the keyed `declared_at` and `Decls`, where `is_bare` is sound only
-  because the walk refused an empty key first;
+- **a bare declaration's shape is read off its declared value, never off the
+  keyed names**: a bare `y_types` and a named `(y = T,)` key alike, `(y = T,)`.
+  `is_bare` reads the declared value, a store's value or a contract's type,
+  which `Decls` keeps as declared; `keyed_ins`/`keyed_outs`, `declared_at`,
+  `_contract` and `store_fields` give the keyed form for everything that reads
+  by name. A bare contract is a `Type`, so `keys`, `pairs` and `isempty` on the
+  declared value throw on it;
+- **the headless sugar triggers on the declared shape, never on a name list
+  of length one.** A one-field named store and a primitive with one named
+  output refuse a headless address as `:store_shape` or `:port_shape`, and a
+  bare payload against them as the same; a test of `length(names) == 1` in
+  place of `is_bare` would read them as bare;
 - **`isempty` is no presence test for a store.** `isempty(nothing)` and
   `isempty(:idle)` throw, and an empty `SVector` is a declared store, so a
   store is present iff it is not `nothing` (§5.2).

@@ -634,7 +634,7 @@ end
     cursor = exec.cursor                    # the phase stays `:integrate`, but the sweep is the
     cursor.comp = owner; cursor.fn = :none  # framework's own act between the stages and the
     cursor.index = 0                        # boundary — no stage of its own, so no ordinal
-    x_leaf_names = leaf_names(typeof(exec.act.decls[owner].x))
+    x_leaf_names = leaf_names(typeof(_keyed(exec.act.decls[owner].x, default_name(x_init))))
     throw(DiagnosticError(NonfiniteState(
         path = model.deployment.build.structure.components[owner].path,
         leaf = x_leaf_names[flat_index - first(xblocks[owner]) + 1],
@@ -675,16 +675,16 @@ Return a [port](@ref g-port)'s current value in the model's
 [signal table](@ref g-signal-table).
 
 A port is addressed by its [component](@ref g-component)'s path and its name,
-and a bare port, which has none, by the path alone: the name defaults to the
-empty one. An
+and a bare port, the port `y`, by that name or by the path alone, with the name
+left out. An
 [assembly](@ref g-assembly)'s own path addresses its output
 [faces](@ref g-face), which resolve to the [cells](@ref g-cell) they derive
 from, and the empty path the [root inputs](@ref g-root-input). A simulation's
 `port(sim, path, name)` reads its model's. To read a port off a published
 [snapshot](@ref g-snapshot) instead, use `port(snapshot, path, name)`.
 """
-port(model::Model, path::String, name::Symbol = BARE) =
-    gather_cell(model.exec.store, model.exec.act.layout.addr[(path, name)])
+port(model::Model, path::String, name::Union{Nothing,Symbol} = nothing) =
+    gather_cell(model.exec.store, port_addr(model.exec.act.layout, path, name))
 
 # Design: §7.3, D-317.
 """

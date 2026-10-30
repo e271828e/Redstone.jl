@@ -350,7 +350,7 @@ _tap(::GetInput) = :u
 # refusal the read's own resolution raised stays its `ReadResolution`.
 _tap_violation(read::MountedRead, reason::Symbol; kw...) =
     _tap_violation(read.label, read.authored, read.mount, reason;
-                   field = something(read.face, read.head), kw...)
+                   field = read.face === nothing ? read.head : read.face, kw...)
 
 # The kind check's form, before the selector is rebased.
 _tap_violation(label::Symbol, authored, mount::String, reason::Symbol; kw...) =
@@ -475,11 +475,11 @@ function _seeded_tap(::Val{:u}, entry::CellRead{A,C}, ::GetInput, read::MountedR
     walked_type = retype(T, root_type)
     pinning = Tuple{String,Symbol,Any}[
         (consumer.path, Symbol(tier_word(consumer.tier)),
-         _keyed(invoke_declaration(u_types, consumer.instance))[consumer_face])
+         _keyed(invoke_declaration(u_types, consumer.instance), default_name(u_types))[consumer_face])
         for (ci, consumer) in enumerate(structure.components)
-        for consumer_face in keys(act.decls[ci].ins)
+        for consumer_face in keys(keyed_ins(act.decls[ci]))
         if terminal_producer(structure, (consumer.path, consumer_face)) == ("", face) &&
-           !_accepts_wire(act.decls[ci].ins[consumer_face], walked_type, T)]
+           !_accepts_wire(keyed_ins(act.decls[ci])[consumer_face], walked_type, T)]
     addr = act.layout.addr[("", face)]
     # The seeded cell's type is the meet's own witness.
     isempty(pinning) == (_port_type(addr) === walked_type) || throw(InternalInvariant(

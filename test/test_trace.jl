@@ -461,6 +461,24 @@ function recorded_run()
     (sim, trace(sim))
 end
 
+# The bare stores of `bare_world()` beside the bare ports of `bare_ports_world()`,
+# with the named stores and ports among them (D-437, D-438): a recording over
+# fourteen frames, the latch's reset inside, staged at frames 0 and 3.
+mixed_bare_model() =
+    Group((; stores = bare_world(), ports = bare_ports_world());
+          input_wires = ("u" => ("stores/u", "ports/u"), "p" => "stores/p"))
+
+function mixed_bare_run(; frames = 11)
+    sim = Simulation(mixed_bare_model(); h = 1//10)
+    init!(sim, set(u = (u = 0.5, p = 0.0)))
+    stage!(sim, "u" => 1.0)
+    step!(sim; frames = 3)
+    cp = checkpoint(sim)
+    stage!(sim, "p" => 1.0)
+    step!(sim; frames)
+    (sim, cp)
+end
+
 # A fresh target of that build, initialized from a *different* condition — so
 # nothing but the header can put it on the recorded trajectory. The keywords
 # are `init!`'s recording keywords, for this door alone (D-261).
@@ -1171,6 +1189,28 @@ function trace_checkpoints()
         untraced = Simulation(replay_model(); h = 1//10)
         restore!(untraced, cp; trace = false)
         @test untraced.run.trace === nothing && lifecycle(untraced) === :initialized
+    end
+
+    @testset "bare and named stores and ports checkpoint and replay bitwise (§12.6, §12.7, D-437, D-438)" begin
+        (sim, cp) = mixed_bare_run()
+        @test modes(sim, "stores/latch") === true      # the reset landed inside the recording
+        twin = Simulation(mixed_bare_model(); h = 1//10)
+        init!(twin, set(u = (u = 0.0, p = 0.0)))
+        replay!(twin, trace(sim))
+        @test same_trajectory(logged(twin), logged(sim))
+        @test (state(twin, "stores/acc"), state(twin, "stores/latch"), state(twin, "stores/tick")) ===
+              (state(sim, "stores/acc"), state(sim, "stores/latch"), state(sim, "stores/tick"))
+        @test state(twin, "stores/plant").q === state(sim, "stores/plant").q
+        @test (port(twin, "ports/plant/spin"), port(twin, "ports", :total)) ===
+              (port(sim, "ports/plant/spin"), port(sim, "ports", :total))
+        # Restored at frame 3 and fed the same, the run lands on the same cells.
+        restored = Simulation(mixed_bare_model(); h = 1//10)
+        restore!(restored, cp)
+        stage!(restored, "p" => 1.0)
+        step!(restored; frames = 11)
+        @test latest(restored).t === latest(sim).t && snap_cells(latest(restored)) == snap_cells(latest(sim))
+        @test state(restored, "stores/acc") === state(sim, "stores/acc") &&
+              modes(restored, "stores/latch") === modes(sim, "stores/latch")
     end
 
     @testset "the refusals of `checkpoint` and `restore!` (§12.6, D-274)" begin

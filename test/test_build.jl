@@ -961,7 +961,7 @@ y_state(::DirectRequester, _) = (halt = NO_STOP,)
 
 # A `StopRequest` fed by a constant, as one subtree.
 requested(value, reason) = Group((; src = Constant(value), stop = StopRequest(reason = reason));
-                                 local_wires = ("src" => "stop",))
+                                 local_wires = ("src/y" => "stop/u",))
 
 function build_stop_roster()
     @testset "the layout rosters every `StopFlag` port, aligned with its buffer, with its reason (§9.7, §13.5, D-316)" begin
@@ -971,7 +971,7 @@ function build_stop_roster()
                          d = DirectRequester()))
         layout = activation(build(model), Float64).layout
         @test [(r.path, r.port, r.reason) for r in layout.requesters] ==
-              [("a/stop", BARE, "a fell"), ("b/stop", BARE, "b done"), ("d", :halt, "")]
+              [("a/stop", :y, "a fell"), ("b/stop", :y, "b done"), ("d", :halt, "")]
         for (i, r) in enumerate(layout.requesters)
             @test layout.addr[(r.path, r.port)].offsets == (i - 1,)
         end
@@ -1148,7 +1148,7 @@ x_deriv(::OwnFieldMiss, (; x)) = (; a = 0.0)
 struct CarrierInside <: AbstractComponent end
 x_init(::CarrierInside) = (; a = 0.0)
 y_types(::CarrierInside) = (p = Float64,)
-y_state(::CarrierInside, (; x)) = (set(u = 1.0); (p = x.a,))
+y_state(::CarrierInside, (; x)) = (set(u = nothing); (p = x.a,))
 x_deriv(::CarrierInside, (; x)) = (; a = 0.0)
 
 struct InterruptInside <: AbstractComponent end
@@ -1657,55 +1657,72 @@ y_types(::BareMute) = Float64
 y_direct(::BareMute, _) = 1.0
 
 function build_bare_contracts()
-    @testset "a bare contract is one port keyed by the empty name in every pair (§8.2, §9.1, D-436)" begin
+    @testset "a bare contract is one port keyed by its default face in every pair (§8.2, §9.1, D-437)" begin
         built = build(bare_ports_world(); activations = (Float64, ProbeDual, LinearizeDual))
         @test built isa Build
         structure = built.structure
         loop_row = only(level for level in structure.levels if level.path == "plant/loop")
-        @test loop_row.wires == [("plant/loop/flow", BARE) => ("plant/loop/scale", BARE),
-                                 ("plant/loop/scale", BARE) => ("plant/loop/flow", BARE),
-                                 ("plant/loop/scale", BARE) => ("plant/loop/echo", BARE),
-                                 ("plant/loop/flow", BARE) => ("plant/loop", :x)]
-        @test terminal_producer(structure, ("plant/summer", BARE)) == ("", :u)
-        @test terminal_producer(structure, ("plant/spin", BARE)) == ("plant/loop/flow", BARE)
+        @test loop_row.wires == [("plant/loop/flow", :y) => ("plant/loop/scale", :u),
+                                 ("plant/loop/scale", :y) => ("plant/loop/flow", :u),
+                                 ("plant/loop/scale", :y) => ("plant/loop/echo", :u),
+                                 ("plant/loop/flow", :y) => ("plant/loop", :x)]
+        @test terminal_producer(structure, ("plant/summer", :u)) == ("", :u)
+        @test terminal_producer(structure, ("plant/spin", :u)) == ("plant/loop/flow", :y)
         row(path) = built.outputs.components[index_of(structure, path)]
-        @test row("plant/loop/flow").stage1 == [BARE] && isempty(row("plant/loop/flow").stage2)
-        @test isempty(row("plant/loop/scale").stage1) && row("plant/loop/scale").stage2 == [BARE]
+        @test row("plant/loop/flow").stage1 == [:y] && isempty(row("plant/loop/flow").stage2)
+        @test isempty(row("plant/loop/scale").stage1) && row("plant/loop/scale").stage2 == [:y]
         # Stage 2 on stage 2 is the one dependence: `scale` runs before `echo`.
         order = [structure.components[ci].path for ci in built.outputs.order]
         @test findfirst(==("plant/loop/scale"), order) < findfirst(==("plant/loop/echo"), order)
         for T in (Float64, ProbeDual, LinearizeDual)
             act = activation(built, T)
-            @test haskey(act.layout.addr, ("plant/loop/flow", BARE))
-            @test act.layout.addr[("plant", :total)] === act.layout.addr[("plant/summer", BARE)]
-            @test act.decls[index_of(structure, "plant/spin")].outs == NamedTuple{(BARE,)}((SVector{2,T},))
-            @test keys(act.products[index_of(structure, "plant/loop/flow")]) == (BARE,)
+            @test haskey(act.layout.addr, ("plant/loop/flow", :y))
+            @test act.layout.addr[("plant", :total)] === act.layout.addr[("plant/summer", :y)]
+            # The declared shape is kept, the keyed form read off it (D-437).
+            spin = act.decls[index_of(structure, "plant/spin")]
+            @test spin.outs === SVector{2,T} && is_bare(spin.outs) && is_bare(spin.ins)
+            @test keyed_outs(spin) == (y = SVector{2,T},) && keyed_ins(spin) == (u = T,)
+            @test keys(act.products[index_of(structure, "plant/loop/flow")]) == (:y,)
+            @test act.layout.bare_outputs ⊇ Set(["plant/loop/flow", "plant/spin", "ramp"])
         end
         # The run: `ẋ = -2x` from 1, the summer counting `u` per tick.
         sim = Simulation(built; h = 1//100)
         init!(sim, set(u = (u = 0.5,)))
         run!(sim; t_end = 1.0)
         @test port(sim, "plant/loop/flow") ≈ exp(-2.0) rtol = 1e-8
+        @test port(sim, "plant/loop/flow", :y) === port(sim, "plant/loop/flow")
         @test port(sim, "plant/loop/echo") ≈ 4 * port(sim, "plant/loop/flow") rtol = 1e-12
         @test port(sim, "", :total) === port(sim, "plant/summer")
         @test state(sim, "plant/summer") ≈ port(sim, "plant/summer") + 0.5
     end
-    @testset "a bare port's return is its value, held to its type alone (§9.3, §9.5, D-436)" begin
+    @testset "a bare port's return is its value, held to its type alone (§9.3, §9.5, D-437)" begin
         d = only(diagnostics(failure(() -> build(BareWrongPort()))))
         @test d isa ConformanceFailure && d.reason === :field_type && d.shape === :ports &&
-              d.field === BARE && d.observed === @NamedTuple{y::Float64} && d.declared === Float64
+              d.field === :y && d.observed === @NamedTuple{y::Float64} && d.declared === Float64
         d = diagnostic(failure(() -> build(fed(BareTwice()))))
-        @test d isa ProducedByTwoStages && d.path == "c" && d.ports == [BARE]
+        @test d isa ProducedByTwoStages && d.path == "c" && d.ports == [:y]
         d = only(diagnostics(failure(() -> build(BareUnproduced()))))
-        @test d isa DeclaredNotProduced && d.path == "" && d.ports == [BARE] && isempty(d.products)
+        @test d isa DeclaredNotProduced && d.path == "" && d.ports == [:y] &&
+              isempty(d.products) && d.state_fields == [:x]
     end
-    @testset "a loop through bare ports is traced on the empty name (§13.8, D-436)" begin
+    @testset "the shape, never the key, picks the law: a named `y` is the author's (D-437, D-438)" begin
+        # `Negator` declares `(y = Float64,)` and returns a `NamedTuple`; keyed
+        # alike, the two shapes differ in the declared value alone.
+        named, bare = build(fed(Negator())), build(BareRamp())
+        @test keyed_outs(only(activation(named, Float64).decls)) ==
+              keyed_outs(only(activation(bare, Float64).decls))
+        @test !is_bare(only(activation(named, Float64).decls).outs)
+        @test isempty(activation(named, Float64).layout.bare_outputs)
+        @test activation(bare, Float64).layout.bare_outputs == Set([""])
+    end
+    @testset "a loop through bare ports is traced on the default faces (§13.8, D-437)" begin
         d = only(diagnostics(failure(() -> build(Group((; a = BareScale(), b = BareScale());
-                                                       local_wires = ("a" => "b", "b" => "a"))))))
-        @test d isa AlgebraicCycle && d.wires == ["a" => "b", "b" => "a"] && d.classification === :real
+                                                       local_wires = ("a/y" => "b/u", "b/y" => "a/u"))))))
+        @test d isa AlgebraicCycle && d.wires == ["a/y" => "b/u", "b/y" => "a/u"] &&
+              d.classification === :real
         d = only(diagnostics(failure(() -> build(Group((; a = BareScale(), m = BareMute());
-                                                       local_wires = ("a" => "m", "m" => "a"))))))
-        @test d.classification === :artificial && d.dead == [("m", BARE, BARE)]
+                                                       local_wires = ("a/y" => "m/u", "m/y" => "a/u"))))))
+        @test d.classification === :artificial && d.dead == [("m", :u, :y)]
     end
 end
 
@@ -1740,7 +1757,7 @@ end
 function build_store_form()
     @testset "a bare store is one leaf, checked against its tier's vocabulary (§7.1, §7.3, §8.2)" begin
         # One lawful bare store per letter builds, and a bare value outside the
-        # vocabulary is refused by the field checks with no field name.
+        # vocabulary is refused by the field checks on the field `x`, `s` or `m`.
         @test build(Group((; a = BareState(), b = BareDiscrete(), c = BareModes()))) isa Build
         err = failure(() -> build(Group((; a = BareVector(), b = BareLabel(),
                                           c = BareModeLabel()))))
@@ -1748,21 +1765,24 @@ function build_store_form()
         @test Set(kinds(err)) == Set([IllegalStateLeaf, IllegalStoreField])
         @test Set((d.path, d.name, d.declared, d.reason)
                   for d in diags if d isa IllegalStateLeaf) ==
-              Set([("a", BARE, Vector{Float64}, :wrapper), ("c", BARE, Int, :mode_value)])
+              Set([("a", :x, Vector{Float64}, :wrapper), ("c", :x, Int, :mode_value)])
         @test Set((d.path, d.store, d.name, d.declared)
                   for d in diags if d isa IllegalStoreField) ==
-              Set([("b", :s_init, BARE, String), ("c", :m_init, BARE, String)])
+              Set([("b", :s_init, :s, String), ("c", :m_init, :m, String)])
     end
     @testset "a bare declaration's return is held to its own type (§9.5)" begin
         diags = diagnostics(failure(() -> build(Group((; a = BareNamedDeriv(), b = BareWrongUpdate())))))
-        @test all(d -> d isa ConformanceFailure && d.reason === :field_type && d.field === BARE, diags)
+        @test all(d -> d isa ConformanceFailure && d.reason === :field_type, diags)
+        @test Set((d.path, d.what, d.shape, d.field, d.observed, d.declared) for d in diags) ==
+              Set([("a", "x_deriv", :x_init, :x, @NamedTuple{q::Float64}, Float64),
+                   ("b", "s_update", :s_init, :s, Float64, Int)])
         @test Set((d.path, d.what, d.shape, d.observed, d.declared) for d in diags) ==
               Set([("a", "x_deriv", :x_init, @NamedTuple{q::Float64}, Float64),
                    ("b", "s_update", :s_init, Float64, Int)])
         diags = diagnostics(failure(() -> build(single(BareWrongModes()))))
         @test Set((d.what, d.shape, d.field, d.observed, d.declared) for d in diags) ==
-              Set([("handler `x`", :state, BARE, @NamedTuple{q::Float64}, Float64),
-                   ("handler `m`", :mode, BARE, Int, Bool)])
+              Set([("handler `x`", :state, :x, @NamedTuple{q::Float64}, Float64),
+                   ("handler `m`", :mode, :m, Int, Bool)])
     end
     @testset "`(;)` is no store spelling, refused before the stores are read (§8.2, §9.1)" begin
         # One throw for the model, each store named. `TupleModes`' `gear_count`

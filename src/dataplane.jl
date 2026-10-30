@@ -545,8 +545,8 @@ Return a [port](@ref g-port)'s value in the [snapshot](@ref g-snapshot)'s
 
 A snapshot carries the whole signal table, [root inputs](@ref g-root-input)
 included. A port is addressed exactly as in the live table, by its
-[component](@ref g-component)'s path and its name, a bare port by the path
-alone with the name defaulting to the empty one. An
+[component](@ref g-component)'s path and its name, a bare port, the port `y`,
+by that name or by the path alone. An
 [assembly](@ref g-assembly)'s own path addresses its output
 [faces](@ref g-face), and the empty path the root inputs. Nothing in a published
 snapshot is written again, so the read is safe from any task.
@@ -555,8 +555,8 @@ A snapshot carries no state, only ports. For a port's live value, see
 `port(sim, path, name)` and `port(model, path, name)`, and for snapshots
 themselves, [`latest`](@ref) and [`logged`](@ref).
 """
-port(snapshot::Snapshot, path::String, name::Symbol = BARE) =
-    gather_cell(snapshot.store, snapshot.layout.addr[(path, name)])
+port(snapshot::Snapshot, path::String, name::Union{Nothing,Symbol} = nothing) =
+    gather_cell(snapshot.store, port_addr(snapshot.layout, path, name))
 
 # A compiled read set's gather over a snapshot's store (§11.2, §14.4): a
 # binding's reads, compiled at attach for a table source, run per snapshot on

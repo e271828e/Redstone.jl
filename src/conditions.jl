@@ -139,8 +139,9 @@ Return the leaf of a [condition](@ref g-condition), setting values on the
 
 A condition is a tree, and `set` builds its leaf. Each payload
 is a `NamedTuple` in the vocabulary of the component at the authoring level, and
-names none of its children. A store declared bare takes a bare payload, its
-whole value, as in `set(x = 1.0)`. [`at`](@ref) scopes a leaf to a child, and
+names none of its children. A store declared bare has the field `x`, `s` or
+`m`, which a bare payload names, as in `set(x = 1.0)` for `set(x = (x = 1.0,))`.
+[`at`](@ref) scopes a leaf to a child, and
 [`combine`](@ref) and [`override`](@ref) compose leaves.
 
 # Keywords
@@ -150,24 +151,25 @@ whole value, as in `set(x = 1.0)`. [`at`](@ref) scopes a leaf to a child, and
 - `m`: modes, by name, or a bare mode store's value. Only a
   [continuous component](@ref g-continuous-component) has modes.
 - `u`: [root input](@ref g-root-input) values, named by the authoring level's
-  own input [faces](@ref g-face).
+  own input [faces](@ref g-face), or a bare input's value, the face `u`, at a
+  primitive level whose `u_types` is bare.
 
 A condition sets state, modes and root inputs only. It never sets outputs, and
-never [workspace](@ref g-workspace). A `u` payload that is not a `NamedTuple` is
-refused as `ConditionNodeMisuse` when `set` is called. A field the component
-does not declare, and a bare payload for a named store or a named one for a
-bare store, are refused as `ConditionResolution` when a service resolves the
-condition against its build.
+never [workspace](@ref g-workspace). A payload of `nothing` is refused as
+`ConditionNodeMisuse` when `set` is called. A field the component does not
+declare, and a bare payload where the store or the input is named, are refused
+as `ConditionResolution` when a service resolves the condition against its
+build.
 """
 function set(; x = (;), s = (;), m = (;), u = (;))
     _payload(:x, x); _payload(:s, s); _payload(:m, m); _payload(:u, u)
     Fragment(x, s, m, u)
 end
 
-# A store payload may be bare, its shape known only against a build, so it is
-# checked at resolution (§14.3); `nothing` alone is refused here, since it
-# would set nothing. A `u` payload names faces, and is checked here.
-_payload(name, p) = (name === :u ? p isa NamedTuple : p !== nothing) ||
+# A payload may be bare, its shape known only against a build, so it is checked
+# at resolution (§14.3, D-437, D-438); `nothing` alone is refused here, since it
+# would set nothing.
+_payload(name, p) = p !== nothing ||
     throw(DiagnosticError(ConditionNodeMisuse(
         observed = typeof(p), reason = :set_payload, payload = name)))
 
@@ -296,7 +298,7 @@ _node_misuse(v, in_hand) = throw(DiagnosticError(ConditionNodeMisuse(
 struct CEntry
     path::String
     store::Symbol        # :x | :s | :m | :input
-    field::Symbol
+    field::Union{Nothing,Symbol}   # `nothing`: a bare payload at a declaration not bare
     value::Any
     origin::String
     face::Union{Nothing,Symbol}   # input entries: the root input the chain lands on
@@ -312,12 +314,22 @@ function _flat(node::Fragment, path::String, level, origin::String, tree_positio
     out = CEntry[]
     for (store, name, payload) in ((:x, :x, node.x), (:s, :s, node.s),
                                    (:m, :m, node.m), (:input, :u, node.u))
-        # A bare store payload is one entry under `BARE`, its tree position the
-        # payload itself.
-        for (field, v) in (store === :input ? pairs(payload) : store_fields(payload))
-            entry = CEntry(path, store, field, v, _step(origin, _named("set($name)", field)),
-                           nothing, field === BARE ? (tree_position..., name) :
-                                                     (tree_position..., name, field))
+        # A bare payload is one entry, its tree position the payload itself, its
+        # field the letter where the declaration at `path` is bare (D-437, D-438)
+        # and `nothing` otherwise, for resolution to refuse with the names in hand.
+        bare = !(payload isa NamedTuple)
+        for (field, v) in (bare ? (_bare_field(structure, decls, path, store) => payload,) :
+                                  pairs(payload))
+            entry = CEntry(path, store, field, v,
+                           _step(origin, bare ? "set($name)" : _named("set($name)", field)),
+                           nothing, bare ? (tree_position..., name) :
+                                           (tree_position..., name, field))
+            if store === :input && field === nothing
+                push!(diags, _condition_violation(entry, :port_shape;
+                                                  candidates = _input_faces_at(structure, decls,
+                                                                               path)))
+                continue
+            end
             store === :input &&
                 (entry = CEntry(entry.path, entry.store, entry.field, entry.value, entry.origin,
                                 _root_input(structure, decls, entry, diags), entry.position))
@@ -371,6 +383,7 @@ end
 function _check_duplicates!(entries::Vector{CEntry}, diags::Vector{Diagnostic})
     seen = Dict{Tuple{String,Symbol,Symbol},CEntry}()
     for entry in entries
+        entry.field === nothing && continue      # a bare payload resolution refuses
         key = _key(entry)
         if haskey(seen, key)
             push!(diags, DuplicateConditionLeaf(path = entry.path, store = entry.store,
@@ -513,14 +526,15 @@ function _resolve_entries(node::ConditionNode, build::Build, ::Type{T}) where {T
             push!(diags, _no_store(entry, tier))
             continue
         end
-        # The declared shape and the payload's agree, bare against bare.
-        (declared isa NamedTuple) == (entry.field !== BARE) ||
+        # A bare payload found no bare store at flattening (D-438).
+        entry.field === nothing &&
             (push!(diags, _condition_violation(entry, :store_shape;
-                candidates = declared isa NamedTuple ? collect(keys(declared)) : Symbol[]));
+                                               candidates = collect(keys(declared))));
              continue)
-        declared isa NamedTuple && !haskey(declared, entry.field) &&
-            (push!(diags, _undeclared(entry, comp, tier, declared, T)); continue)
-        leaf_type = typeof(declared isa NamedTuple ? declared[entry.field] : declared)
+        fields = _keyed(declared, entry.store)
+        haskey(fields, entry.field) ||
+            (push!(diags, _undeclared(entry, comp, tier, fields, T)); continue)
+        leaf_type = typeof(fields[entry.field])
         (ok, v) = _convert(leaf_type, entry.value)
         ok || (push!(diags, _unconvertible(entry, entry.value, leaf_type, T)); continue)
         push!(out, Resolved(entry,
@@ -529,6 +543,17 @@ function _resolve_entries(node::ConditionNode, build::Build, ::Type{T}) where {T
                             leaf_type, v))
     end
     (out, diags, act)
+end
+
+# The field a bare payload names (D-437, D-438): the letter where the
+# declaration it addresses at `path` is bare, by the declared shape, or
+# `nothing` where it is named, absent, or the level an assembly.
+function _bare_field(structure::Structure, decls::Vector{Decls}, path::String, store::Symbol)
+    ci = findfirst(comp_entry -> comp_entry.path == path, structure.components)
+    ci === nothing && return nothing
+    declared = store === :x ? decls[ci].x : store === :s ? decls[ci].s :
+               store === :m ? m_init(structure.components[ci].instance) : decls[ci].ins
+    _supplied_head(declared, store === :input ? :u : store)
 end
 
 # The merge bases, in one order both walk: per component, the discrete

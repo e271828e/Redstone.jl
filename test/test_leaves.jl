@@ -402,10 +402,10 @@ function leaves_bare_state_write()
         # The declared shape picks the law: a `NamedTuple` against a bare state is
         # one wrong type, and a bare value against a named state the law's first clause.
         d = diagnostic(failure(() -> write!(buffer, (q = 1.0,), Float64, Float64)))
-        @test d isa ConformanceFailure && d.reason === :field_type && d.field === BARE &&
+        @test d isa ConformanceFailure && d.reason === :field_type && d.field === :x &&
               d.observed === @NamedTuple{q::Float64} && d.declared === Float64
         d = diagnostic(failure(() -> write!(buffer, 1, Float64, Float64)))
-        @test d.reason === :field_type && d.field === BARE && d.observed === Int
+        @test d.reason === :field_type && d.field === :x && d.observed === Int
         d = diagnostic(failure(() -> write!(buffer, 1.0, @NamedTuple{q::Float64}, Float64)))
         @test d.reason === :return_type && d.field === nothing
     end
