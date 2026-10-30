@@ -3491,10 +3491,11 @@ segment and one face name ([§6.1][s6-1], [D-207][d-207]). Where the child's
 contract on that side is a [bare contract](#g-bare-contract) (one type, a
 port with no face, [§8.2][s8-2]), **the endpoint is the child segment alone**,
 as in `"gain" => "integrator"` ([D-436][d-436]). A one-segment endpoint at a
-child whose side is named, or at an assembly, is `UnknownPort` with the
-child's face list in hand. One at a child with no contract on that side and
-a bare contract on the other is `FaceDirectionConflict`, the kind a face
-wired against its direction raises. A two-segment endpoint at a bare side is
+child whose contract on the other side is bare names that port against its
+direction, whatever this side declares, and is `FaceDirectionConflict`, the
+kind a face wired against its direction raises. One at a child with no bare
+contract on either side, or at an assembly, is `UnknownPort` with the
+child's face list in hand. A two-segment endpoint at a bare side is
 the same kind as the named case, `UnknownPort`, and its message spells the
 one-segment form. A container
 child keeps its key segment as part of that child segment, so
@@ -14365,8 +14366,8 @@ collection ([§9.2][s9-2], [D-250][d-250]).
   The declaring method and offending entry, the endpoint as written, the
   child it resolved to, the resolved port's actual direction, the side the
   entry requires (`:producer` or `:consumer`). A one-segment endpoint at a
-  child whose only contract is a bare one on the other side is this kind
-  ([D-436][d-436]).
+  child whose contract on the other side is bare is this kind, whatever the
+  endpoint's own side declares ([D-436][d-436]).
 - **`UnknownFaceSelection`** ([§8.8][s8-8]). Error · build · fail-fast. The
   helper, the child's full path, reason (unknown names / more than one selector given), the
   offending names or the selectors given, the child's face list.
