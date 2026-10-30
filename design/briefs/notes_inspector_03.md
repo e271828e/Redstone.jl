@@ -78,6 +78,6 @@ table.
 
 Built, reviewed and fixed, on `increment-3` at `3018d7c` in
 `~/.julia/dev/RedstoneInspector.jl-inc3`, not pushed. The brief's "Built"
-section carries the record. No reading was struck. Pending: the user's
-look-and-adjust pass, then the merge, the push and the first CI run of
-the extended `frontend` job.
+section carries the record. No reading was struck. The user's
+look-and-adjust pass found one thing, the cycle-breaking strategy, landed
+as `570252a`; merged and pushed at `57eb335`, CI green on all four jobs.

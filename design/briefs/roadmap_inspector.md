@@ -159,7 +159,26 @@ halo, the Playwright harness with one screenshot per fixture and level,
 the network check of the no-CDN rule, and the `frontend` CI job with
 its job outputs. Visible: every fixture drawn, the first look. Draws on
 `visual_grammar.md` answers 1 to 4 and 9, the spike's report, `build_release.md`
-answers 5 and 6.
+answers 5 and 6. *Landed on 2026-10-30 at `57eb335` of
+`RedstoneInspector.jl`, seven commits above `38b8c8e`, CI green with the
+`frontend` job running the build and the browser checks in 85 s; its
+brief, `brief_inspector_03_canvas.md`, records the shape, the review, the
+look-and-adjust pass and the observations. Facts the next briefs take
+from it: DOM-touching code lives under `src/canvas/` (`Canvas.svelte`,
+`size.ts`, `layout.ts`, `palette.ts`, the placeholder colors) and
+`src/lib/` stays pure, with the viewport math in `src/lib/view.ts`; the
+map's "DOM contract" section is what the browser checks select on; the
+harness is `frontend/e2e/`, one spec per concern, `e2e/fixtures.ts`
+dropping a fixture in the page, screenshots to
+`e2e/screenshots/<fixture>__<level>.png`; the shell `App.svelte` carries
+the level line, Backspace and Enter, and the loader outcome, all of
+which increment 4's frame replaces; `Canvas.svelte` takes `model` and
+`path` with `onopen` and `onselect` callbacks and owns the selection and
+the view, which increments 4 and 5 lift into stores; ELK runs on the main
+thread with `GREEDY_MODEL_ORDER` cycle breaking and components packed in
+model order; the fit scale is capped at 2; a primitive root's bold first
+line is blank, its segment being empty, for increment 4's labels to
+settle.*
 
 **Increment 4: the frame.** Tree, breadcrumb, detail pane with the leaf
 and assembly layouts, the drawer's tab strip, selection in sync across

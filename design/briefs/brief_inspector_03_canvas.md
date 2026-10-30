@@ -485,5 +485,21 @@ context rules as the builder. Dimensions:
   tangled as the spike found, no ELK option tuned; `selection` and
   `pid_controller` order some faces against declaration where crossings
   decide, accepted as crossing minimisation; ELK on the main thread
-  costs about 320 ms on `large`; Linux fonts are untested until the CI
-  run. The look-and-adjust pass is pending.
+  costs about 320 ms on `large`.
+- **The look-and-adjust pass**: the user found `lqr_controller` drawing
+  the tracker left of its six feeders, every feeder wire looping back.
+  `MODEL_ORDER` cycle breaking reverses every edge against model order,
+  cycle or not, so the spike report's description of it as a tie-break
+  was inaccurate; `570252a` sets `GREEDY_MODEL_ORDER`, which gives 0
+  backward wires there against 6, 2 against 4 at `pid_controller`, and
+  the closed loop's root unchanged, with a check that every wire at
+  `lqr_controller` runs left to right and the tracker sits between its
+  feeders and `u_unpack`, red against the old option; the fit check's
+  scale clause was dropped, the level now fitting at 1.3. One side
+  effect for the next look: `large`'s root stacks its two output pins in
+  reverse order, unchecked whether a tie or a crossing choice.
+- **Landed** on 2026-10-30 at `57eb335` of `RedstoneInspector.jl`, seven
+  commits above `38b8c8e`, merged by fast-forward and pushed; CI green on
+  all four jobs, the `frontend` job in 85 s with `screenshots` and `dist`
+  uploaded. Linux renders the same layout counts; its fonts are the CI
+  screenshots'.
