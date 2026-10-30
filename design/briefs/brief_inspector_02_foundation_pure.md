@@ -337,9 +337,11 @@ Every number below comes from the oracle over the committed fixtures;
   has 16 blocks and 22 wires, `lqr_controller` 21 and 21; `large`'s ten
   child assemblies each have 4 blocks and 3 wires; a boundary endpoint
   maps to the pin, a root input pin is flagged. `elkGraph` on
-  `descent`: 5 children, pins with `FIRST_SEPARATE` and `LAST_SEPARATE`,
-  every port `FIXED_POS` with its side, 4 edges whose sources and targets
-  are port ids.
+  `descent`: 5 blocks, its two input pins `FIRST_SEPARATE`, every port
+  `FIXED_POS` with its side, 4 edges whose sources and targets are port
+  ids; `descent`'s root has no output pins, so `LAST_SEPARATE` is pinned
+  on a level that has one, `containers`' root (the review's finding 1
+  corrected this bullet, which first named `descent` for both).
 - **Mutants a reviewer runs**, each turning a test red: the parent rule
   taking the first prefix instead of the longest; membership comparing
   the segment to `key` alone; the display name preferring `type` over
@@ -460,4 +462,43 @@ for what they owe: open-mind stance, probe scripts in the scratchpad,
 
 ## Built
 
-Filled when the increment is built and reviewed.
+- **The commits** on `increment-2` of `RedstoneInspector.jl`, not pushed:
+  `fdf70a2` the schema copy from the core's `778d6ee`, `0a36bf9` the
+  project, its configs, the text shell, the generated types' scripts and
+  ajv over every fixture, `a0221ff` the six modules with their tests,
+  `27db12e` the map, the README section and the CI job, `7120790` the
+  review fixes. `npm run check` 0 errors over 297 files, `npm test` 161
+  assertions in 7 files. The `frontend` CI job has not run, since nothing
+  is pushed.
+- **The generator's two checks hold on the real output**: `node.path` a
+  `string`, `node.tier` inside the leaf branch, `d.build` a `BuildBody`
+  inside the build branch, and the negative probe gives the two expected
+  errors; `NodeIdentity` has no index signature.
+- **The builder's departures**, nine, all held under review: `@types/node`
+  26.6.6 as a dev dependency with a triple-slash reference in the test
+  helper, since the spike's `tsconfig.json` is kept verbatim; a route
+  carries its producer and end, not its chain, so a wire's route equals
+  its producer face's; `model.test.ts` added; pins as two types, `InPin`
+  and `OutPin`; the README's layout list and CI line amended; the CI job's
+  30-minute timeout; the hop count defined as the length of the chain of
+  producer faces, an output face counting as its own first producer,
+  which is the oracle's count.
+- **The review**: every number of "What the tests pin" equal between the
+  oracle, a scratch Vitest file and the modules; every brief mutant red,
+  seventeen of twenty extra mutants red; the shell driven in a real
+  browser, `aircraft.json` labelling as `aircraft`, a `major: 2` copy
+  refused in words. Three findings, landed by the fixer and verified:
+  `LAST_SEPARATE` was never pinned, `descent`'s root having no output pin,
+  so a `containers` case was added and this brief's bullet corrected;
+  keying the resolution by side was not pinned, no fixture having an
+  assembly with an input and an output of one name, so an inline
+  synthetic structure pins it; a `null` body threw instead of refusing,
+  and a failure whose `structure` lacks `nodes` loaded, both now refused
+  in words. One acceptable survivor: the label falling back to the root's
+  type instead of its alias, no fixture having an aliased root.
+- **Observations kept as notes**: Vitest runs files in parallel, so ajv
+  runs within `npm test` rather than before it; purity of the modules is
+  held by convention and grep, the DOM lib and the Node types reaching the
+  whole program; at a primitive root a route from a root input has no
+  consumers, where the core counts the face as its own route, for
+  increment 3's status bar to word.

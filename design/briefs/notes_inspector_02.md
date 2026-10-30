@@ -99,3 +99,26 @@ session. The brief is `brief_inspector_02_foundation_pure.md`.
    the `frontend` job.
 4. The look-and-adjust pass has nothing to look at in this increment;
    the first look is increment 3's.
+
+## Outcome, 2026-10-30
+
+Built, reviewed and fixed, on `increment-2` at `7120790` in
+`~/.julia/dev/RedstoneInspector.jl-inc2`, not pushed. The brief's "Built"
+section carries the record: five commits, `npm run check` 0 errors,
+`npm test` 161 assertions, every pin equal between the oracle, the
+reviewer's scratch file and the modules, every brief mutant red, the shell
+driven in a real browser. Three findings landed by the fixer and verified
+by the reviewer: `LAST_SEPARATE` pinned on `containers`' root (the brief's
+bullet had named `descent`, which has no output pin, and is corrected),
+the resolution's side key pinned on an inline synthetic structure, and a
+`null` body or a failure `structure` without `nodes` refused in words
+instead of throwing. One acceptable survivor: the label falling back to
+the root's type instead of its alias, no fixture having an aliased root.
+Cosmetic: one line of `MAP.md`'s resolve.test clause runs long.
+
+The core's bookkeeping left for the user, since this session does not
+commit `pending.md` or the roadmap while increment 9's session may: the
+stage-1 bullet and the roadmap's increment 2 entry gain "built on
+`increment-2` at `7120790`, awaiting merge and push". The merge and the
+pin bump are the steps under "For the user" above; the pin bump's hash is
+the core's tip after the push, `778d6ee` or later.
