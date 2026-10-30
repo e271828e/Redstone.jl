@@ -398,7 +398,8 @@ _store_successor!(sstore::Base.RefValue{S}, s⁺, path, what) where {S} =
                                                       s⁺ isa NamedTuple ? :field_set : :return_type,
                                              shape = :s_init, observed = typeof(s⁺),
                                              declared = S,
-                                             field = S <: NamedTuple ? nothing : :s)))
+                                             field = S <: NamedTuple ? nothing :
+                                                     default_name(s_init))))
 
 # §9.5's `m` predicate at the write, decided at generation like the port write.
 # A named store takes a partial write: every written mode exists and keeps its
@@ -410,7 +411,8 @@ _store_successor!(sstore::Base.RefValue{S}, s⁺, path, what) where {S} =
         return m === M ? :(mstore[] = m; nothing) :
                :(throw(DiagnosticError(ConformanceFailure(
                    path = path, what = String(what), event = event, reason = :field_type,
-                   shape = :mode, field = :m, observed = $m, declared = $M))))
+                   shape = :mode, field = $(QuoteNode(default_name(m_init))), observed = $m,
+                   declared = $M))))
     m <: NamedTuple ||
         return :(throw(DiagnosticError(ConformanceFailure(
             path = path, what = String(what), event = event, reason = :return_type,

@@ -294,9 +294,9 @@ _spell(selector::GetState) = "get_state(\"$(selector.path)\"$(_spell_leaf(select
 _spell(selector::GetDeriv) = "get_deriv(\"$(selector.path)\"$(_spell_leaf(selector.leaf)))"
 _spell_leaf(leaf) = isempty(String(leaf)) ? "" : ", $(repr(leaf))"
 _spell(selector::GetOutput) = "get_output(\"$(selector.path)\"$(_spell_leaf(selector.leaf)))"
-_spell(selector::GetInput) = "get_input($(_spell_head(selector.leaf)))"
-_spell(selector::GetFace) = "get_face($(_spell_head(selector.leaf)))"
-_spell_head(leaf) = isempty(String(leaf)) ? "" : repr(leaf)
+_spell(selector::GetInput) = "get_input($(_spell_face_leaf(selector.leaf)))"
+_spell(selector::GetFace) = "get_face($(_spell_face_leaf(selector.leaf)))"
+_spell_face_leaf(leaf) = isempty(String(leaf)) ? "" : repr(leaf)
 
 # The address as authored, without the quotes: the payloads' `leaf`.
 _leaf_string(selector) = String(selector.leaf)
@@ -753,11 +753,11 @@ function _rebase(authored::Union{GetState,GetDeriv,GetOutput}, label::Symbol, mo
     selector = typeof(authored)(_mounted_path(mount, authored.path), authored.leaf)
     shape = head === nothing ? _read_shape(selector, build) : nothing
     if shape !== nothing
-        declared, letter, reason, declares, names = shape
+        declared, letter, reason, declares, candidates = shape
         head = _supplied_head(declared, letter)
         head === nothing &&
             return (push!(diags, _reader_violation(label, authored, mount, reason;
-                                                   declares = declares, candidates = names));
+                                                   declares = declares, candidates = candidates));
                     nothing)
     end
     MountedRead(label, authored, mount, selector, nothing, head, steps)
@@ -772,7 +772,7 @@ function _read_shape(selector::GetState, build::Build)
     ci === nothing && return nothing
     tier = build.structure.components[ci].tier
     declared = state_decls(activation(build, Float64).decls[ci], tier)
-    letter = tier === CONTINUOUS ? :x : :s
+    letter = tier === CONTINUOUS ? default_name(x_init) : default_name(s_init)
     (declared, letter, :store_shape, :state_field, _store_names(declared, letter))
 end
 
@@ -780,13 +780,14 @@ function _read_shape(selector::GetDeriv, build::Build)
     ci = findfirst(component -> component.path == selector.path, build.structure.components)
     (ci === nothing || build.structure.components[ci].tier !== CONTINUOUS) && return nothing
     declared = activation(build, Float64).decls[ci].x
-    (declared, :x, :store_shape, :state_field, _store_names(declared, :x))
+    letter = default_name(x_init)
+    (declared, letter, :store_shape, :state_field, _store_names(declared, letter))
 end
 
 function _read_shape(selector::GetOutput, build::Build)
     ci = findfirst(component -> component.path == selector.path, build.structure.components)
     ci === nothing && return nothing
-    (activation(build, Float64).decls[ci].outs, :y, :port_shape, :output_port,
+    (activation(build, Float64).decls[ci].outs, default_name(y_types), :port_shape, :output_port,
      _ports(build.outputs.components[ci]))
 end
 
@@ -799,8 +800,8 @@ function _rebase(authored::GetInput, label::Symbol, mount::String, level, build:
     structure, decls = build.structure, activation(build, Float64).decls
     faces = _input_faces_at(structure, decls, mount)
     ci = findfirst(component -> component.path == mount, structure.components)
-    leaf = _face_leaf(authored, label, mount, ci === nothing ? nothing : decls[ci].ins, :u,
-                      :input_face, faces, diags)
+    leaf = _face_leaf(authored, label, mount, ci === nothing ? nothing : decls[ci].ins,
+                      default_name(u_types), :input_face, faces, diags)
     leaf === nothing && return nothing
     matched = match_leaf(leaf, faces)
     if matched isa LeafRefusal
@@ -833,8 +834,8 @@ function _rebase(authored::GetFace, label::Symbol, mount::String, level, build::
     faces = ci === nothing ? _exported_faces(structure, mount) :
                              _ports(build.outputs.components[ci])
     leaf = _face_leaf(authored, label, mount,
-                      ci === nothing ? nothing : activation(build, Float64).decls[ci].outs, :y,
-                      :output_port, faces, diags)
+                      ci === nothing ? nothing : activation(build, Float64).decls[ci].outs,
+                      default_name(y_types), :output_port, faces, diags)
     leaf === nothing && return nothing
     matched = match_leaf(leaf, faces)
     if matched isa LeafRefusal
@@ -980,13 +981,13 @@ function _resolve_selector(selector::GetState, read::MountedRead, build::Build,
     ci === nothing && return nothing
     decl, tier = act.decls[ci], build.structure.components[ci].tier
     declared = state_decls(decl, tier)
-    letter = tier === CONTINUOUS ? :x : :s
-    names = _store_names(declared, letter)
+    letter = tier === CONTINUOUS ? default_name(x_init) : default_name(s_init)
+    candidates = _store_names(declared, letter)
     head = read.head
     field_type = _store_field_type(declared, head, letter)
     field_type === nothing &&
         (push!(diags, _reader_violation(read, :undeclared; declares = :state_field,
-                                        candidates = names));
+                                        candidates = candidates));
          return nothing)
     # A continuous field is flat, a scalar or an `SArray` (§7.1), so a `.name`
     # step falls out of the walk as `:no_such_field`. A discrete `s` field is any
@@ -1007,12 +1008,13 @@ function _resolve_selector(selector::GetDeriv, read::MountedRead, build::Build,
         push!(diags, _reader_violation(read, :discrete_deriv))
         return nothing
     end
-    names = _store_names(decl.x, :x)
+    letter = default_name(x_init)
+    candidates = _store_names(decl.x, letter)
     head = read.head
-    field_type = _store_field_type(decl.x, head, :x)
+    field_type = _store_field_type(decl.x, head, letter)
     field_type === nothing &&
         (push!(diags, _reader_violation(read, :undeclared; declares = :state_field,
-                                        candidates = names));
+                                        candidates = candidates));
          return nothing)
     chain = _leaf_chain(read, field_type, diags)
     chain === nothing && return nothing

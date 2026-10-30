@@ -781,16 +781,19 @@ function diagnostics_kind_set()
         wire = "local_wires at the root component, entry `\"p\" => \"s\"`"
         @test message(UnknownPort(entry = wire, endpoint = :source, path = "p", spelling = "p",
                                   port = nothing, candidates = [:y, :power])) ==
-              "$wire: `p` names `p` and no port — an endpoint is `path/face`, and its output " *
-              "faces are y, power (§6.1, §8.6)"
+              "$wire: `p` names a child and no port — an endpoint is `path/face`, and its " *
+              "output faces are y, power (§6.1, §8.6)"
         @test message(UnknownPort(entry = wire, endpoint = :destination, path = "s", spelling = "s",
                                   port = nothing, candidates = [:u])) ==
-              "$wire: `s` names `s` and no port — an endpoint is `path/face`, and its input " *
-              "faces are u, as in `s/u` (§6.1, §8.6)"
+              "$wire: `s` names a child and no port — an endpoint is `path/face`, and its " *
+              "input faces are u, as in `s/u` (§6.1, §8.6)"
         @test message(UnknownPort(entry = wire, endpoint = :destination, path = "l", spelling = "l",
                                   port = nothing)) ==
-              "$wire: `l` names `l` and no port — an endpoint is `path/face`, and it has no input " *
-              "face (§6.1, §8.6)"
+              "$wire: `l` names a child and no port — an endpoint is `path/face`, and it has no " *
+              "input face (§6.1, §8.6)"
+        @test occursin("`l` names `a/l` and no port",
+                       message(UnknownPort(entry = wire, endpoint = :destination, path = "a/l",
+                                           spelling = "l", port = nothing)))
         @test startswith(message(UnconnectedInput(path = "plant/integrator", face = :u,
                                                   declared = Float64)),
                          "`plant/integrator/u` declared Float64 is fed by nothing — ")
@@ -854,14 +857,25 @@ function diagnostics_kind_set()
         @test message(ConditionResolution(path = "a/b", store = :x, field = nothing,
                                           reason = :store_shape, candidates = [:q],
                                           origin = "set(x)")) ==
-              "the bare `x` payload at `a/b` names the field `x` of a bare store, and `x_init` " *
-              "there declares the fields `q` — name the fields it sets, `set(x = (q = …,))` " *
+              "the bare `x` payload at `a/b` names a bare store's field `x`, but `x_init` there " *
+              "is named, declaring `q` — name the fields it sets, `set(x = (q = …,))` " *
               "(§14.3, D-438) [set(x)]"
         @test message(ConditionResolution(path = "a/b", field = nothing, reason = :port_shape,
                                           candidates = [:a, :b], origin = "set(u)")) ==
               "the bare `u` payload at `a/b` names the face `u` of a primitive's bare `u_types`, " *
               "and the input faces there are `a`, `b` — name the faces it sets, " *
               "`set(; u = (face = …,))` (§14.2, D-437) [set(u)]"
+        @test message(ConditionResolution(path = "bp", field = nothing, reason = :port_shape,
+                                          candidates = [:a], role = :assembly_face,
+                                          origin = "at(\"bp\") → set(u)")) ==
+              "the bare `u` payload at `bp` names the face `u` of a primitive's bare `u_types`, " *
+              "and `bp` is an assembly, whose input faces are named — they are `a`; name the " *
+              "faces it sets, `set(; u = (face = …,))` (§14.2, D-437) [at(\"bp\") → set(u)]"
+        # A face name renders in backticks as spelled, never shell-quoted.
+        @test occursin("`thr[2]` is no root input face",
+                       message(ReadResolution(label = :a, selector = "get_input(\"thr[2]\")",
+                                              reason = :unknown_root_input,
+                                              field = Symbol("thr[2]"), candidates = [:thr])))
         @test message(ConditionNodeMisuse(observed = Nothing, reason = :set_payload, payload = :u)) ==
               "`set`'s `u` payload is `nothing`, which sets nothing — omit the keyword, or give " *
               "the value it sets (§14.2)"

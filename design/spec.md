@@ -14559,7 +14559,8 @@ activation):
   `reason` names the sub-kind: `:assembly_path`, `:undeclared_field`,
   `:no_store`, `:store_shape` (a bare payload against a named store,
   [D-438][d-438]), `:port_shape` (a bare `u` payload against a named
-  contract or at an assembly, [D-437][d-437]), `:unconvertible`, `:unexported_face`, `:no_input_face` or
+  contract or at an assembly, the role `:assembly_face` at an assembly,
+  [D-437][d-437]), `:unconvertible`, `:unexported_face`, `:no_input_face` or
   `:internally_wired` ([D-427][d-427]). An unknown path is
   `PathResolution`'s ([§13.3][s13-3]).
 - **`DuplicateConditionLeaf`** ([§14.2][s14-2]). Error · service ·

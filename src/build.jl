@@ -118,7 +118,7 @@ _bundle_side(@nospecialize(contract), side_values::NamedTuple) =
 # A stage's return in the products' keyed form, a bare port's value under its
 # default face `y` (D-437): the bookkeeping keys every port by name.
 _keyed_return(@nospecialize(outs), returned) =
-    is_bare(outs) ? NamedTuple{(:y,)}((returned,)) : returned
+    is_bare(outs) ? NamedTuple{(default_name(y_types),)}((returned,)) : returned
 
 # The per-port loop collects (§13.1): a stage returning three wrong types names
 # all three.
@@ -362,13 +362,15 @@ struct Layout
 end
 
 # The address `port` reads (§11.2, D-437): the port `name`, or where the name is
-# left out the bare output's face `y`, by the declared shape alone.
+# left out the bare output's face `y`, by the declared shape alone. A path with
+# no port at all is the named form's `KeyError`.
 function port_addr(layout::Layout, path::String, name::Union{Nothing,Symbol})
     name === nothing || return layout.addr[(path, name)]
-    path in layout.bare_outputs ||
-        throw(ArgumentError("`$path` declares no bare output, whose face `y` a `port` read " *
-                            "with no name reads — name the port (§11.2, D-437)"))
-    layout.addr[(path, :y)]
+    face = default_name(y_types)
+    path in layout.bare_outputs || !any(key -> first(key) == path, keys(layout.addr)) ||
+        throw(ArgumentError("$(_at_path(path)) declares no bare output, whose face `$face` a " *
+                            "`port` read with no name reads — name the port (§11.2, D-437)"))
+    layout.addr[(path, face)]
 end
 
 function cell_layout(structure::Structure, decls::Vector{Decls}, ::Type{T}) where {T}
@@ -1139,7 +1141,8 @@ function _check_state_write(path, what, x⁺, x, ::Type{T}; event = nothing) whe
     is_bare(x) &&
         return _accepts(typeof(x), typeof(x⁺), T) ? Diagnostic[] :
                Diagnostic[ConformanceFailure(path = path, what = what, event = event,
-                                             reason = :field_type, shape = :state, field = :x,
+                                             reason = :field_type, shape = :state,
+                                             field = default_name(x_init),
                                              observed = typeof(x⁺), declared = typeof(x),
                                              activation = T)]
     x⁺ isa NamedTuple ||
@@ -1249,7 +1252,8 @@ function _check_handler(path, name, returned, decl::Decls, @nospecialize(comp))
             # A bare mode store is written whole, at its own type exactly.
             typeof(returned.m) === typeof(m₀) ||
                 push!(diags, ConformanceFailure(path = path, what = "$what `m`", event = name,
-                                               reason = :field_type, shape = :mode, field = :m,
+                                               reason = :field_type, shape = :mode,
+                                               field = default_name(m_init),
                                                observed = typeof(returned.m),
                                                declared = typeof(m₀)))
         elseif !(returned.m isa NamedTuple)
@@ -1408,7 +1412,7 @@ function compile(build::Build, act::Activation{T}, schedule; chunk_size::Int = 1
     # An input face's address is its terminal producer's, stored nowhere (D-315).
     input_addr(ci, face) = layout.addr[terminal_producer(structure, (components[ci].path, face))]
     in_group(ci, decl) =
-        is_bare(decl.ins) ? input_addr(ci, :u) :
+        is_bare(decl.ins) ? input_addr(ci, default_name(u_types)) :
         NamedTuple{tuple(keys(keyed_ins(decl))...)}(tuple((input_addr(ci, face) for face in keys(keyed_ins(decl)))...))
 
     # A cell holds what the build probe populated until a sweep first writes it
@@ -1586,7 +1590,8 @@ function _check_derivative(path, ẋ, x, ::Type{T}) where {T}
     is_bare(x) &&
         return _accepts(typeof(x), typeof(ẋ), T) ? Diagnostic[] :
                Diagnostic[ConformanceFailure(path = path, what = "x_deriv",
-                                             reason = :field_type, shape = :x_init, field = :x,
+                                             reason = :field_type, shape = :x_init,
+                                             field = default_name(x_init),
                                              observed = typeof(ẋ), declared = typeof(x),
                                              activation = T)]
     ẋ isa NamedTuple ||
@@ -1620,7 +1625,8 @@ function _check_update(path, s⁺, s)
     is_bare(s) &&
         return typeof(s⁺) === typeof(s) ? Diagnostic[] :
                Diagnostic[ConformanceFailure(path = path, what = "s_update",
-                                             reason = :field_type, shape = :s_init, field = :s,
+                                             reason = :field_type, shape = :s_init,
+                                             field = default_name(s_init),
                                              observed = typeof(s⁺), declared = typeof(s))]
     s⁺ isa NamedTuple ||
         return Diagnostic[ConformanceFailure(path = path, what = "s_update",

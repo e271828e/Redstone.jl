@@ -664,6 +664,12 @@ function test_readers()
         @test e.reason === :port_shape && e.candidates == [:y]
         @test d.selector == "get_output(\"plant\")"
         @test_throws ArgumentError port(named, "acc")
+        # A path with no port is the named form's `KeyError`, and the refusal
+        # names a primitive root as every diagnostic does.
+        @test_throws KeyError(("zzz", :y)) port(named, "zzz")
+        @test_throws KeyError(("zzz", :y)) port(named, "zzz", :y)
+        acc_root = Model(BareAccumulator(); h = 1//10)
+        @test_throws "the root component declares no bare output" port(acc_root, "")
         # At a primitive mount and at a primitive root, the bare input and output.
         held = Model(Group((; hold = BarePoseHold()); input_wires = ("pose" => "hold/u",)); h = 1//10)
         init!(held, set(u = (pose = LeafPose(SVector(0.1, 0.2, 0.3), SMatrix{2,2}(0.0, 0.0, 0.0, 0.0)),)))

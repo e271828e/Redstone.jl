@@ -325,9 +325,11 @@ function _flat(node::Fragment, path::String, level, origin::String, tree_positio
                            nothing, bare ? (tree_position..., name) :
                                            (tree_position..., name, field))
             if store === :input && field === nothing
+                at_assembly = !any(comp_entry -> comp_entry.path == path, structure.components)
                 push!(diags, _condition_violation(entry, :port_shape;
                                                   candidates = _input_faces_at(structure, decls,
-                                                                               path)))
+                                                                               path),
+                                                  role = at_assembly ? :assembly_face : nothing))
                 continue
             end
             store === :input &&
@@ -531,7 +533,7 @@ function _resolve_entries(node::ConditionNode, build::Build, ::Type{T}) where {T
             (push!(diags, _condition_violation(entry, :store_shape;
                                                candidates = collect(keys(declared))));
              continue)
-        fields = _keyed(declared, entry.store)
+        fields = _keyed(declared, _store_letter(entry.store))
         haskey(fields, entry.field) ||
             (push!(diags, _undeclared(entry, comp, tier, fields, T)); continue)
         leaf_type = typeof(fields[entry.field])
@@ -553,8 +555,13 @@ function _bare_field(structure::Structure, decls::Vector{Decls}, path::String, s
     ci === nothing && return nothing
     declared = store === :x ? decls[ci].x : store === :s ? decls[ci].s :
                store === :m ? m_init(structure.components[ci].instance) : decls[ci].ins
-    _supplied_head(declared, store === :input ? :u : store)
+    _supplied_head(declared, _store_letter(store))
 end
+
+# The letter a bare declaration of the register `store` names its entry by, its
+# declaration's `default_name` (D-437, D-438).
+_store_letter(store::Symbol) = default_name(store === :x ? x_init : store === :s ? s_init :
+                                            store === :m ? m_init : u_types)
 
 # The merge bases, in one order both walk: per component, the discrete
 # store's declared defaults and then the mode store's (§14.3's fork).

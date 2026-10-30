@@ -755,7 +755,7 @@ store_fields(@nospecialize(contents), letter::Symbol) = pairs(_keyed(contents, l
 # an `SArray` of them, and the declaration is flat. The arm names where the
 # value belongs instead.
 function check_state_leaves(path::String, @nospecialize(comp), diags::Vector{Diagnostic})
-    for (name, value) in store_fields(invoke_declaration(x_init, comp), :x)
+    for (name, value) in store_fields(invoke_declaration(x_init, comp), default_name(x_init))
         leaf_eltype = value isa SArray ? eltype(value) : typeof(value)
         leaf_eltype === Float64 && continue
         reason = value isa NamedTuple ? :nested :
@@ -792,9 +792,8 @@ end
 # §7.3, D-231: every store field, or the bare value, is isbits or a `Symbol`,
 # checked on both stores.
 function check_stores(path::String, @nospecialize(comp), diags::Vector{Diagnostic})
-    for (store, letter, contents) in ((:s_init, :s, invoke_declaration(s_init, comp)),
-                                      (:m_init, :m, invoke_declaration(m_init, comp)))
-        for (name, value) in store_fields(contents, letter)
+    for (store, fn) in ((:s_init, s_init), (:m_init, m_init))
+        for (name, value) in store_fields(invoke_declaration(fn, comp), default_name(fn))
             isbits(value) || value isa Symbol ||
                 push!(diags, IllegalStoreField(path = path, store = store,
                                                name = name, declared = typeof(value)))

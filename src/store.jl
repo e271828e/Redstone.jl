@@ -124,7 +124,8 @@ end
     _accepts(P, y, T) ||
         return :(throw(DiagnosticError(ConformanceFailure(
             path = path, what = String(what), reason = :field_type, shape = :ports,
-            field = :y, observed = $y, declared = $P, activation = $T))))
+            field = $(QuoteNode(default_name(y_types))), observed = $y, declared = $P,
+            activation = $T))))
     quote
         $(Expr(:meta, :inline))
         scatter_cell!(store, addr, y)

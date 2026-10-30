@@ -728,8 +728,12 @@ function conditions_bare_stores()
         @test Set((d.reason, d.path, d.field, d.candidates) for d in diags) ==
               Set([(:port_shape, "plant", nothing, [:u]), (:port_shape, "", nothing, [:u]),
                    (:no_input_face, "plant/summer", :zz, [:u])])
+        # The role tells the assembly from the named primitive.
+        @test Set((d.path, d.role) for d in diags if d.reason === :port_shape) ==
+              Set([("plant", :assembly_face), ("", :assembly_face)])
         d = only(diagnostics(failure(() -> resolve_condition(at("neg", set(u = 1.0)), build(bare_world())))))
         @test (d.reason, d.path, d.candidates, d.origin) == (:port_shape, "neg", [:u], "at(\"neg\") → set(u)")
+        @test d.role === nothing
         # `nothing` alone sets nothing, for `u` as for the stores.
         @test diagnostic(failure(() -> set(u = nothing))) isa ConditionNodeMisuse
         @test diagnostic(failure(() -> set(u = nothing))).payload === :u

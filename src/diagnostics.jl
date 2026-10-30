@@ -355,7 +355,8 @@ function message(d::UnknownPort)
     side = d.endpoint === :source ? "output" : "input"
     # The child segment alone names a child and no port (D-437).
     d.port === nothing &&
-        return "$(d.entry): `$(d.spelling)` names $(_at_path(d.path)) and no port — an " *
+        return "$(d.entry): `$(d.spelling)` names " *
+               (d.spelling == d.path ? "a child" : _at_path(d.path)) * " and no port — an " *
                "endpoint is `path/face`, and " *
                (isempty(d.candidates) ? "it has no $side face" :
                 "its $side faces are $(_plainlist(d.candidates))") *
@@ -1751,7 +1752,7 @@ Base.@kwdef struct ReadResolution <: Diagnostic
     field::Union{Nothing,Symbol} = nothing
     leaf::String = ""                        # the leaf address as authored
     step::String = ""                        # the step at fault, as spelled
-    declares::Union{Nothing,Symbol} = nothing  # :state_field | :output_port
+    declares::Union{Nothing,Symbol} = nothing  # :state_field | :output_port | :input_face | :assembly_face
     declared::Any = nothing
     candidates::Vector{Symbol} = Symbol[]
     producer::Union{Nothing,Tuple{String,Symbol}} = nothing  # :internally_wired — the port feeding the face
@@ -1799,10 +1800,10 @@ function message(d::ReadResolution)
                            "`$(d.field)` — its $(_declares_noun(d.declares)) names are " *
                            "$(_namelist(d.candidates))")
     d.reason === :unknown_root_input &&
-        return _read_message(d, "$(`$(d.field)`) is no root input face — the root's inputs are " *
+        return _read_message(d, "`$(d.field)` is no root input face — the root's inputs are " *
                            "$(_namelist(d.candidates))")
     d.reason === :no_input_face &&
-        return _read_message(d, "$(`$(d.field)`) is no input face of $(_at_path(d.mount)) — its " *
+        return _read_message(d, "`$(d.field)` is no input face of $(_at_path(d.mount)) — its " *
                            "input faces are $(_namelist(d.candidates))", "§14.9, D-277")
     d.reason === :internally_wired &&
         return _read_message(d, "`$(d.field)` " *
@@ -1815,9 +1816,9 @@ function message(d::ReadResolution)
                            "`get_face` reads the output faces a level exports, and an input " *
                            "face is read back with `get_input`")
     isempty(d.mount) ||
-        return _read_message(d, "$(`$(d.field)`) is no output face of `$(d.mount)` — its " *
+        return _read_message(d, "`$(d.field)` is no output face of `$(d.mount)` — its " *
                            "output faces are $(_namelist(d.candidates))", "§14.4, D-277")
-    _read_message(d, "$(`$(d.field)`) is no root-exported output face — the root exports " *
+    _read_message(d, "`$(d.field)` is no root-exported output face — the root exports " *
                 "$(_namelist(d.candidates))")
 end
 
@@ -1839,7 +1840,7 @@ Base.@kwdef struct ConditionResolution <: Diagnostic
     observed::Any = nothing                  # the authored value's type
     value::Any = nothing
     tier::Union{Nothing,Symbol} = nothing
-    role::Union{Nothing,Symbol} = nothing    # :output_port | :input_face | :workspace
+    role::Union{Nothing,Symbol} = nothing    # :output_port | :input_face | :workspace | :assembly_face
     producer::Union{Nothing,Tuple{String,Symbol}} = nothing
     activation::Any = nothing                # set when this is the seeded activation's refusal
 end
@@ -1883,10 +1884,15 @@ function message(d::ConditionResolution)
                 "; modes are declared by `m_init`, continuous-only (§3.2)" : "") *
                _ctail(d)
     d.reason === :store_shape &&
-        return "$(_cleaf(d)) names the field `$(d.store)` of a bare store, and " *
-               "`$(d.store)_init` there declares the fields $(_namelist(d.candidates)) — name " *
-               "the fields it sets, `set($(d.store) = ($(first(d.candidates)) = …,))`" *
+        return "$(_cleaf(d)) names a bare store's field `$(d.store)`, but `$(d.store)_init` " *
+               "there is named, declaring $(_namelist(d.candidates)) — name the fields it " *
+               "sets, `set($(d.store) = ($(first(d.candidates)) = …,))`" *
                " (§14.3, D-438) [$(d.origin)]"
+    d.reason === :port_shape && d.role === :assembly_face &&
+        return "$(_cleaf(d)) names the face `u` of a primitive's bare `u_types`, and " *
+               "$(_at_path(d.path)) is an assembly, whose input faces are named — they are " *
+               "$(_namelist(d.candidates)); name the faces it sets, `set(; u = (face = …,))` " *
+               "(§14.2, D-437) [$(d.origin)]"
     d.reason === :port_shape &&
         return "$(_cleaf(d)) names the face `u` of a primitive's bare `u_types`, and the " *
                "input faces there are $(_namelist(d.candidates)) — name the faces it sets, " *

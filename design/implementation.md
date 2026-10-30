@@ -313,8 +313,9 @@ Spec: §11.5, §12.6, §12.7, §14.10, D-038, D-254, D-273, D-274, D-317, D-319.
 - A bare payload of any letter: `_payload` refuses `nothing` alone, and
   `_flat` files a bare payload under the letter, by `_bare_field`, where the
   store or input it names is bare, or under no field, which resolution
-  refuses as `:store_shape` and flattening as `:port_shape`, the names in hand
-  (§14.2, §14.3, D-437, D-438).
+  refuses as `:store_shape` and flattening as `:port_shape`, the names in hand,
+  the role `:assembly_face` at an assembly (§14.2, §14.3, D-437, D-438). The
+  letter is `_store_letter`'s, the register's declaration's `default_name`.
 - Root-input totality `assert_total`.
 - `apply!` and `init!` on a model are model.jl's, and `apply!`'s forwarding
   method on the simulation is sim.jl's.
