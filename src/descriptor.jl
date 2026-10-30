@@ -308,11 +308,23 @@ function _parameters(@nospecialize(instance))
         value = getfield(instance, name)
         value isa AbstractComponent && continue
         _is_container(value) && nfields(value) > 0 && continue
-        text = repr(value; context = (:compact => true, :limit => true))
-        length(text) > 80 && (text = first(text, 80) * "…")
-        push!(parameters, (name = String(name), value = text))
+        _summarize!(parameters, String(name), value)
     end
     parameters
+end
+
+# One entry of `repr` text cut at 80 characters, or, for a `NamedTuple`, one
+# entry per field named by the dotted path, a nested one opening in turn (D-439).
+function _summarize!(parameters::Vector{NamedTuple}, name::String, @nospecialize(value))
+    if value isa NamedTuple
+        for field in keys(value)
+            _summarize!(parameters, "$name.$field", value[field])
+        end
+    else
+        text = repr(value; context = (:compact => true, :limit => true))
+        length(text) > 80 && (text = first(text, 80) * "…")
+        push!(parameters, (name = name, value = text))
+    end
 end
 
 # One row per qualified base name, in first-appearance order over the nodes.

@@ -472,7 +472,9 @@ D-250, D-254, D-256, D-261.
   and its `vector` row over `_static_shape` (D-433).
 - The instance context: `_qualified_name`, `_alias` over the parent module's
   constant bindings, `_type_string`, the parameter
-  summary `_parameters` cut at 80 characters, the `types` rows `_type_rows`
+  summary `_parameters` over `_summarize!`, each inert field cut at 80
+  characters and a `NamedTuple` field opened into dotted entries (D-439),
+  the `types` rows `_type_rows`
   with `_docstring` off the docsystem's meta and `_locations` over
   `LOCATED_DECLARATIONS`.
 - Nothing here encodes text. `test_descriptor.jl` holds the round trip, with

@@ -370,9 +370,20 @@ function test_descriptor()
         @test node_at(body, "").signature == "Main.RedstoneTests.Vehicle"
         @test node_at(body, "loop").type == "Main.RedstoneTests.SampledLoop"
         # a long value is cut at 80 characters with an ellipsis
-        long = Constant((; (Symbol(:p, i) => float(i) for i in 1:20)...))
+        long = Constant(SVector{30}(1.0:30.0))
         summary = only(node_at(descriptor(build(single(long))).build, "c").parameters)
         @test summary.name == "value" && length(summary.value) == 81 && endswith(summary.value, "…")
+        # a `NamedTuple` field opens into one entry per field, named by the dotted path (D-439)
+        pid_root = Group((; c = Redstone.Blocks.DiscretePID(; Kp = 0.01, Ki = 0.001)); input_wires = ("r" => "c/r", "y" => "c/y"))
+        pid = node_at(descriptor(build(pid_root)).build, "c")
+        @test pid.parameters ==
+              [(name = "fixed.Kp", value = "0.01"), (name = "fixed.Ki", value = "0.001"), (name = "fixed.Kd", value = "0.0"),
+               (name = "fixed.τd", value = "0.1"), (name = "fixed.Tt", value = "Inf"), (name = "fixed.u_min", value = "-Inf"),
+               (name = "fixed.u_max", value = "Inf"), (name = "fixed.b", value = "1.0"), (name = "fixed.c", value = "0.0")]
+        # a nested `NamedTuple` opens in turn; a tuple and a struct stay one entry
+        nested = node_at(descriptor(build(single(Constant((; a = 1.0, b = (; c = 2.0, d = (3.0, 4.0))))))).build, "c")
+        @test nested.parameters ==
+              [(name = "value.a", value = "1.0"), (name = "value.b.c", value = "2.0"), (name = "value.b.d", value = "(3.0, 4.0)")]
         @test summary.value == first(repr(long.value; context = (:compact => true, :limit => true)), 80) * "…"
     end
     @testset "a bare face's name and a bare endpoint's port are `u` or `y`, at version one (§13.9, D-437)" begin

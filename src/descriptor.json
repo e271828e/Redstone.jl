@@ -365,7 +365,7 @@
       "additionalProperties": false
     },
     "Parameter": {
-      "description": "One inert field of an instance as display text: repr under :compact and :limit, cut at 80 characters with an ellipsis.",
+      "description": "One inert field of an instance as display text: repr under :compact and :limit, cut at 80 characters with an ellipsis. A NamedTuple field is opened into one entry per field, named by the dotted path, a nested NamedTuple in turn.",
       "type": "object",
       "properties": {
         "name": { "type": "string" },
