@@ -123,3 +123,43 @@ starts from the first's notes.
    `frontend/e2e/screenshots/`, and the live tab through `inspect` with
    `bundle_dir` set to the built `dist/`.
 3. The merge and the push; the worktrees of increments 3 and 4 to remove.
+
+## Build outcome, 2026-10-31
+
+Agent A built stages 1 and 2 on `increment-5` in
+`~/.julia/dev/RedstoneInspector.jl-inc5`, not pushed: `e40a42f` the view
+state, the hash, the rekeying, the drag and the keyboard; `2674659` the
+search; `e3c0ca7` a ruling applied. `npm run check` 351 files, 0 errors;
+`npm test` 262 tests in 16 files; `npm run e2e` 109 checks in about 15 s.
+
+Rulings made during the build, each the coordinating session's:
+
+- **Nodes before faces.** The brief's search check named the root's `h_ref`
+  face row as the first hit, against its own prose and answer 5's "grouped
+  under nodes and faces"; the agent followed the check. Ruled for the
+  record's order and the check rewritten (`e3c0ca7`): the first row is
+  `sensing/noise`, and selecting `selection/select_δe` expands `selection`.
+- **`search-under` from the marked set.** The brief's table read no
+  `search-under` block for `face:in1` because the oracle counted node hits
+  only, while the brief's `beneath` is defined over the marked set, face-hit
+  owners included. The code follows the definition: `face:in1` lights
+  `sensing`, `lqr_controller` and `selection`. The brief's error.
+- **`descent`'s drag pins.** The brief expected `gear|in|h` as a six-point
+  route after `plant` moves 120 down; ELK draws it straight and the drag
+  keeps it forward, four points. The check pins four points there and six
+  once `plant` is dragged past `gear`. The brief's error.
+- **Accepted departures of the builder**: the canvas exports `fit`,
+  `zoomBy`, `panBy`, `boxes` and `follow` through a handle, not an
+  `onfitrequest` prop; a drag selects the block itself on release, since
+  Chrome fires no click after the raise moves the element; the pointer is
+  captured only past the 3 px slop, since capturing at the press broke
+  port-square clicks; `follow` aligns the near edge of a box larger than
+  the viewport; a replacement keeps the drawer's state and opens it on a
+  new model's diagnostic; a fresh load resets the query; a fallen level's
+  stored view is dropped; a selection that changes the level rewrites the
+  hash with `replaceState`, no history entry; Tab cycles the regions from
+  inside the search field too; Ctrl-K focuses the search as Cmd-K does.
+
+Observations for the look pass: the canvas's focus ring shows after any
+mouse click on the canvas, since the press focuses `.viewport`; a
+`:focus-visible` rule would keep it for the keyboard.
