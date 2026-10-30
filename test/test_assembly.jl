@@ -1386,6 +1386,13 @@ x_init(::EmptyKeyed) = nothing
 u_types(::EmptyKeyed) = (var"" = Float64,)
 y_types(::EmptyKeyed) = (y = Float64,)
 y_direct(::EmptyKeyed, (; u)) = (y = u[BARE],)
+# A container whose elements are bare on both sides, wired by their key segments.
+struct BareRoster{U <: Tuple} <: AbstractComponent
+    units::U
+end
+local_wires(::BareRoster)  = ("units/1" => "units/2",)
+input_wires(::BareRoster)  = ("in" => "units/1",)
+output_wires(::BareRoster) = ("units/2" => "y",)
 
 function assembly_bare_contracts()
     @testset "the child segment alone is a bare port's endpoint, both ways (§6.1, §8.6, D-436)" begin
@@ -1397,6 +1404,13 @@ function assembly_bare_contracts()
         @test input_faces(BareScale()) == [""] && output_faces(BareScale()) == [""]
         @test input_faces(BareRamp()) == String[] && output_faces(BareSink()) == ["y"]
         @test input_faces(EmptyKeyed()) == [""]      # the empty key lists as it is
+        # A container element's key segment is the child segment, so `units/1`
+        # is one level and addresses the element's bare port.
+        structure = build(BareRoster((BareScale(), BareScale()))).structure
+        @test only(structure.levels).wires == [("units/1", BARE) => ("units/2", BARE),
+                                               ("", :in) => ("units/1", BARE),
+                                               ("units/2", BARE) => ("", :y)]
+        @test terminal_producer(structure, ("units/1", BARE)) == ("", :in)
     end
     @testset "an endpoint whose form disagrees with its side's shape is refused with the list in hand (§8.6, D-436)" begin
         # One segment at a named side, a producer and a consumer.
@@ -1410,6 +1424,12 @@ function assembly_bare_contracts()
                                                                    local_wires = ("l" => "s",)))))
                   if d isa UnknownPort)
         @test (d.endpoint, d.path, d.port, d.candidates) == (:source, "l", BARE, [:x])
+        # Two segments naming nothing at a child bare on the other side: the
+        # list in hand holds the named faces alone, never the empty name.
+        d = first(d for d in diagnostics(failure(() -> build(Group((; k = BareSink(), s = BareScale());
+                                                                   local_wires = ("k/zz" => "s",)))))
+                  if d isa UnknownPort)
+        @test (d.path, d.spelling, d.port, d.candidates) == ("k", "k/zz", :zz, [:y])
         # Two segments at a bare side: the name against a list of one empty name.
         d = first(d for d in diagnostics(failure(() -> build(Group((; r = BareRamp(), s = BareScale());
                                                                    local_wires = ("r/out" => "s",)))))

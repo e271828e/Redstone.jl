@@ -411,7 +411,7 @@ end
 
 # The `name => type` pairs of a contract in its declared shape: a `NamedTuple`'s
 # own entries, one `BARE` pair for a bare contract (D-436).
-contract_fields(decl) = pairs(_keyed(decl))
+contract_fields(@nospecialize(decl)) = pairs(_keyed(decl))
 
 # Does a contract in its declared shape have the port an endpoint names? The
 # child segment alone names a bare contract's port, a face name a named one's
@@ -737,7 +737,7 @@ function _wrong_direction(entry, path, comp_path, name, @nospecialize(comp), wan
                                 path = comp_path, spelling = String(path), port = name,
                                 candidates = Symbol.(name === BARE || side_names == [""] ?
                                                      side_names :
-                                                     vcat(input_names, output_names))))
+                                                     filter(!isempty, vcat(input_names, output_names)))))
         return nothing
     end
     push!(diags, FaceDirectionConflict(entry = entry, path = comp_path,

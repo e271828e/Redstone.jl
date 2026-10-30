@@ -462,4 +462,14 @@ function test_linearize()
         @test d isa TapResolution && d.reason === :tap_kind && d.mount == "c"
         @test d.list === :x && d.tap === :y
     end
+
+    @testset "a bare discrete consumer pins a root input by the meet, read in its declared shape (§14.10, D-436)" begin
+        pair = Group((; int = Integrator(), del = UnitDelay(0.0)); input_wires = ("u" => ("int", "del"),))
+        sim = Simulation(pair; h = 1//10)
+        init!(sim, set(u = (u = 0.0,)))
+        d = only(diagnostics(failure(() -> linearize(sim, taps(x = (x = get_state("int"),),
+                                                              u = (u = get_input(:u),))))))
+        @test d isa TapResolution && d.reason === :unseedable && d.field === :u
+        @test d.pinning == [("del", :discrete, Float64)]
+    end
 end

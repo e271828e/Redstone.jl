@@ -791,6 +791,25 @@ function diagnostics_kind_set()
         @test message(WireTypeMismatch(path = "a/s", face = BARE, declared = Float64,
                                        producer_path = "a/r", producer_port = BARE, observed = Bool)) ==
               "`a/s` declared Float64, fed from `a/r`::Bool"
+        # A bare input met by a read or a condition at a mount level: the face
+        # list and the field spell the port, never an empty name.
+        @test endswith(message(ReadResolution(label = :r, selector = "get_input(:u)", mount = "p/s",
+                                              reason = :no_input_face, field = :u, candidates = [BARE])),
+                       "`u` is no input face of `p/s` — its input faces are one bare port, " *
+                       "addressed by the path alone (§14.9, D-277)")
+        @test endswith(message(ReadResolution(label = :r, selector = "get_input(\"\")", mount = "p/f",
+                                              reason = :internally_wired, field = BARE,
+                                              producer = ("p/g", BARE))),
+                       "`p/f`'s bare input is fed by `p/g`, so no root input holds it — a mounted " *
+                       "problem or tap set reads and writes its level's faces through the export " *
+                       "chain, and a face the world computes is not free (§14.9)")
+        @test endswith(message(ReadResolution(label = :r, selector = "get_input(\"\")",
+                                              reason = :unknown_root_input, field = BARE,
+                                              candidates = [:a])),
+                       "the headless address is no root input face — the root's inputs are `a` (§14.4)")
+        @test startswith(message(ConditionResolution(path = "p/f", field = BARE, reason = :internally_wired,
+                                                     producer = ("p/g", BARE), origin = "set")),
+                         "`p/f`'s bare input reaches no root input — it is wired internally, to `p/g`, and ")
         @test message(IllegalPortType(path = "", site = :root_input, name = BARE, declared = Float64,
                                       reason = :bare_at_root)) ==
               "the root component: `u_types` declares Float64 bare, one input with no face, and a " *

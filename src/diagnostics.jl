@@ -73,7 +73,12 @@ path(::Diagnostic) = ""
 # path, a name list and a face set the same way.
 
 _at_path(path::AbstractString) = isempty(path) ? "the root component" : "`$path`"
-_namelist(list) = isempty(list) ? "none" : join(("`$n`" for n in list), ", ")
+_namelist(list) = isempty(list) ? "none" :
+                  _bare_list(list) ? "one bare port, addressed by the path alone" :
+                  join(("`$n`" for n in list), ", ")
+_bare_list(list) = length(list) == 1 && isempty(string(first(list)))
+# A read's field: a face name, or the headless address on a bare port.
+_face_word(field) = field === BARE ? "the headless address" : "`$field`"
 _faceset(list) = isempty(list) ? "empty" : "{$(join(list, ", "))}"
 _plainlist(list) = join(list, ", ")
 _symtuple(list) = "(" * join((":$n" for n in list), ", ") * (length(list) == 1 ? ",)" : ")")
@@ -1849,13 +1854,14 @@ function message(d::ReadResolution)
                            "`$(d.field)` — its $(_declares_noun(d.declares)) names are " *
                            "$(_namelist(d.candidates))")
     d.reason === :unknown_root_input &&
-        return _read_message(d, "`$(d.field)` is no root input face — the root's inputs are " *
+        return _read_message(d, "$(_face_word(d.field)) is no root input face — the root's inputs are " *
                            "$(_namelist(d.candidates))")
     d.reason === :no_input_face &&
-        return _read_message(d, "`$(d.field)` is no input face of $(_at_path(d.mount)) — its " *
+        return _read_message(d, "$(_face_word(d.field)) is no input face of $(_at_path(d.mount)) — its " *
                            "input faces are $(_namelist(d.candidates))", "§14.9, D-277")
     d.reason === :internally_wired &&
-        return _read_message(d, "`$(d.field)` is fed by $(_at_port(d.producer...)), " *
+        return _read_message(d, "$(d.field === BARE ? "$(_at_path(d.mount))'s bare input" : "`$(d.field)`") " *
+                           "is fed by $(_at_port(d.producer...)), " *
                            "so no root input holds it — a mounted " *
                            "problem or tap set reads and writes its level's faces through the export " *
                            "chain, and a face the world computes is not free", "§14.9")
@@ -1914,7 +1920,7 @@ function message(d::ConditionResolution)
                "— its input faces are $(_namelist(d.candidates)) (§14.2) " *
                "[$(d.origin)]"
     d.reason === :internally_wired &&
-        return "$(_at_path(d.path))'s input face `$(d.field)` reaches no " *
+        return "$(_at_path(d.path))'s $(d.field === BARE ? "bare input" : "input face `$(d.field)`") reaches no " *
                "root input — it is wired internally, to $(_at_port(d.producer...)), and " *
                "the first sweep overwrites it; unexported stays unpokeable (§14.2) " *
                "[$(d.origin)]"

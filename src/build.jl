@@ -107,7 +107,8 @@ end
 
 # A keyed side as its bundle field carries it: a bare side's one value, a named
 # side's `NamedTuple` (§5.2, D-436).
-_bundle_side(contract::NamedTuple, values::NamedTuple) = is_bare(contract) ? values[BARE] : values
+_bundle_side(@nospecialize(contract::NamedTuple), side_values::NamedTuple) =
+    is_bare(contract) ? side_values[BARE] : side_values
 
 # A stage's return in the products' keyed form, a bare port's value under `BARE`
 # (D-436): the bookkeeping keys every port by name, the bare one by the empty one.

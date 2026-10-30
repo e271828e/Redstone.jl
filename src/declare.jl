@@ -737,8 +737,8 @@ end
 
 # A contract in the bookkeeping's keyed form (§8.2, D-436): a `NamedTuple` as
 # declared, a bare contract as its one entry under `BARE`.
-_keyed(decl::NamedTuple) = decl
-_keyed(decl) = NamedTuple{(BARE,)}((decl,))
+_keyed(@nospecialize(decl::NamedTuple)) = decl
+_keyed(@nospecialize(decl)) = NamedTuple{(BARE,)}((decl,))
 
 """
 Is a keyed contract, or a keyed product, bare (D-436)? The one key `BARE` says
