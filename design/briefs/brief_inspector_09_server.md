@@ -238,7 +238,7 @@ locations it serves, `JULIA_EDITOR`, and the Zed entry for `startup.jl`:
 
 ```julia
 using InteractiveUtils
-define_editor("zed") do cmd, path, line, column
+InteractiveUtils.define_editor("zed") do cmd, path, line, column  # neither exported nor public
     line == 0 ? `$cmd $path` : column == 0 ? `$cmd $path:$line` : `$cmd $path:$line:$column`
 end
 ```
@@ -446,4 +446,44 @@ read for what they owe: open-mind stance, probe scripts in the scratchpad,
 
 ## Landed
 
-Filled when it has.
+- **The commits**, on `increment-9` of `RedstoneInspector.jl`, rebased onto
+  `master` at `ccbedf8` (increment 2 landed and the pin at the core's
+  `abf1d81`): `a2d14eb` the server, `inspect` and the live suite;
+  `ebcb652` the protocol document and the README; `e423b9c` the review's
+  twelve findings; `38b8c8e` the dead server closed before its
+  replacement. Not merged and not pushed, by the overnight rule; the
+  rebase met no conflict, the README's layout list merging on its own.
+  The gate stands at 128 assertions, green at `-t auto` and `-t 1` in
+  about 16 s of tests, with the manifest re-resolved at the new pin.
+- **HTTP.jl resolved to 2.14.0**, not the 2.6.7 routed; the builder read
+  the routed files in that version and every call it needed was there.
+- **The builder's departures**, nine, all held under review and listed
+  in `notes_inspector_09.md`: `import HTTP` for the naming rule; the
+  `Session` constructor; `_write_envelope` as the one encoding;
+  `pipeline(detach(cmd); ...)` for the browser, the brief's spelling being
+  a `MethodError`; `Base.invokelatest` on `edit` and the handlers; the
+  stream handler catching `WebSocketError`; a second `hello` moving the
+  socket; the spawned `edit` warning on failure; typed `open_location`
+  fields.
+- **The review**: no record sentence broken but two, 29 mutants with six
+  survivors, twelve findings. The defect: a dead serving task left
+  `isopen` true, so `_session` reused the dead server and `stop!` threw
+  before clearing the slot. The record gaps: `define_editor` is neither
+  exported nor public, and the REPL's `err` is a `Base.ExceptionStack`,
+  so `inspect` gained a method over it (reading 14). The rest: missing
+  tests for the deployment and failure location paths, the moving
+  `hello`, `atexit` once and a first call's `port`; `HTTP.escapeuri`;
+  binary frames dropped; `push!` renamed `push_descriptor!`, `listening`
+  renamed `listening_sockets`; two docs nits. The fixer landed all twelve
+  and the reviewer verified them, finding one more: the dead server was
+  replaced but never closed, so a tab connected before the death stayed on
+  an orphaned socket. Landed by this session as `38b8c8e`: `_session`
+  calls `stop!` on a dead session before `start!`, and the test holds a
+  socket across the death and sees it cut; the mutant dropping the close
+  fails four tests. A first version of that test hung the gate when the
+  mutant was applied, since a `receive` on a socket nobody closes never
+  returns; the assertion now reads through a spawned task under the
+  bounded wait.
+- **Not probed**: the browser itself and the `xdg-open` and `cmd /c
+  start` lines, the suite on CI's runners, and a natural death of the
+  serving task. The first CI run of the merged branch is the next check.

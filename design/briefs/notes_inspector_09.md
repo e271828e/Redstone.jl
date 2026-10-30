@@ -109,7 +109,134 @@ commits are local.
 
 - Whether to add the Zed `define_editor` to `~/.julia/config/startup.jl`
   (reading 8), and whether to propose it upstream.
-- The bookkeeping edits to `design/pending.md` and
-  `design/briefs/roadmap_inspector.md` are proposed at the end of this
-  file once the increment lands, since the frontend session edits the same
-  files in the shared tree.
+- The bookkeeping edits, proposed at the end of this file.
+
+## Facts from the increment 2 session, for the merge
+
+Received while the builder ran. Increment 2 is on the branch `increment-2`
+in `~/.julia/dev/RedstoneInspector.jl-inc2`, also off `f8f7a3b`; the main
+checkout is untouched by both sessions. Outside `frontend/` it edits only
+`README.md`, a "Frontend" section inserted after "Fixtures" with the
+layout list left to increment 9, and `.github/workflows/CI.yml`, a
+`frontend` job appended after `fixtures`. Under `frontend/` it replaces
+`schema/descriptor.json` with the core's edited schema and adds the Vite
+project. The core gained `778d6ee`, a change to `src/descriptor.json`
+alone, because both generator checks of `build_release.md`'s pending list
+failed on the schema as pinned; the next pin bump moves to `778d6ee` or
+later and the `fixtures` job's schema-copy check goes green only after
+that bump. Increment 9 needs nothing from it and keeps the pin at
+`4e51cbc`. The two branches touch no common file but `README.md`: the
+"Frontend" section is increment 2's alone, and the layout list is a
+two-sided hunk, increment 2 adding a `frontend/` line and renaming the
+`CI.yml` line for its job, increment 9 adding its four lines; whichever
+branch merges second rebases and keeps both sides.
+
+## The builder's departures, for adjudication
+
+The builder landed `1eb1414` (the server and its suite) and `390e85e`
+(the protocol document and the README) on `increment-9`, 733 insertions
+over nine files, 96 assertions, the gate green at `-t auto` and `-t 1` in
+about 17 s, every mutant of the brief red but the named survivor. HTTP.jl
+resolved to **2.14.0**, not the 2.6.7 the brief routed; the builder read
+the routed files in that version. Nine departures, each with the
+builder's reason; my view in brackets, the cold review pending.
+
+1. `import HTTP`, not `using HTTP`: HTTP 2 exports `port`, `request`,
+   `open`, `get`, and the brief's locals `port` and `request` would share
+   a name with a function the module sees. [Right under the naming rule.]
+2. `Session`'s fields reordered with an inner constructor leaving
+   `server` unset until the bind, since the handler closes over the
+   session. [Fine.]
+3. `_write_envelope(io, envelope)` as the one JSON encoding, shared by
+   `write_descriptor` and the push through `sprint`; the writer's bytes
+   unchanged. [Fine; the brief's `_envelope` plus this is the split it
+   asked for.]
+4. The browser launch is `pipeline(detach(cmd); stdout = devnull, stderr
+   = devnull)`; the brief's spelling was a `MethodError`. [The brief's
+   error.]
+5. `Base.invokelatest` on `edit` and on the two handler entries: an
+   editor defined after the server started was invisible from a socket
+   task ("method too new"), and the handlers' latest methods are what
+   Revise's loop needs. [Right; answer 8's Revise claim depends on it.]
+6. The stream handler catches `WebSocketError` only, so a refused
+   handshake or a dropped page logs no handler error. [Fine.]
+7. A second `hello` moves the socket to the new channel. [A reading the
+   brief should have taken; one socket, one channel.]
+8. The spawned `edit` is wrapped in try/catch with a `@warn`. [Fine.]
+9. `open_location` requires `file isa String && line isa Integer`, since
+   a JSON `2.0` would otherwise match line 2 through `isequal`. [Fine.]
+
+Two things the builder raised for the user: `inspect` is unexported like
+`write_descriptor`, while `live_session.md` answer 9 speaks of "a third
+exported function", so the records assumed exports and D-226's rule says
+otherwise; and `stop!` ends the server-side socket loops within about
+0.25 s while the client sees no close frame at once.
+
+## The cold review and its adjudication
+
+The reviewer (one Opus agent, scratch copies only) ran the gate at both
+thread counts (96 of 96, about 14 s of tests), 29 mutants, 13 of them its
+own, and probes over every routed answer; no sentence of the records was
+found broken but the two below, and no departure of the builder was judged
+wrong. Twelve findings, all landed by a fixer as one commit; my rulings:
+
+1. **F1, defect.** A dead serving task is not followed by a restart:
+   `isopen(server)` stays true, `_session` reuses the dead session, and
+   `stop!` throws from `forceclose` before clearing the slot. Fix: alive
+   means `isopen` and the serve task not done; `stop!` clears the slot
+   first and turns a `forceclose` error into a warning; a test kills the
+   task and checks the restart and the quiet `stop!`.
+2. **F2, docs.** `define_editor` is neither exported nor public from
+   `InteractiveUtils` on 1.13.3; the README's and the brief's Zed snippet
+   must qualify it.
+3. **F3, record and docs.** At the REPL `err` is a `Base.ExceptionStack`,
+   not the `DiagnosticError`, so `inspect(err)` as the record spells it is
+   a `MethodError`. *Reading 14:* a fifth method,
+   `inspect(stack::Base.ExceptionStack; name, port)`, takes the last
+   `DiagnosticError` in the stack and errors plainly when there is none,
+   so the record's gesture works as written; `live_session.md` answer 1's
+   sentence is amended in the bookkeeping to say the stack is accepted.
+4. **F4, F5, F6, missing tests**: the deployment and failure location
+   paths; a second `hello` moving the socket; `atexit` registered once
+   across restarts; `_session` honoring `port` on a first call. M22, a
+   socket kept after a failed send, is accepted as defensive code.
+5. **F7, F8**: `HTTP.escapeuri` for the deprecated `escape`; a binary
+   frame is dropped with a warning, since stage 1's frames are text.
+6. **F9, F10, naming.** `push!(session, name, envelope)` gave Base's
+   generic a second meaning and a misleading error on a `Symbol` name:
+   renamed `push_descriptor!`, and `inspect` takes `String(something(name,
+   ""))`. `listening` becomes `listening_sockets`.
+7. **F11, F12, nits**: the traversal test compares against the file the
+   path resolves to; the README says `force = true` re-sets a preference.
+
+## Outcome and the proposed bookkeeping
+
+The branch `increment-9` stands rebased on the inspector's `master`
+(`ccbedf8`), four commits, `a2d14eb`, `ebcb652`, `e423b9c` and `38b8c8e`,
+128 assertions green at both thread counts; the brief's "Landed" section
+has the arc. The worktree `~/.julia/dev/RedstoneInspector_inc9` can be
+removed after the merge (`git worktree remove`). To land: from the main
+checkout, `git merge --ff-only increment-9`, push, and watch the CI run,
+the first check of the suite on Ubuntu and Windows.
+
+*Reading 14*, taken at the review: `inspect(stack::Base.ExceptionStack;
+name, port)` pushes the last `DiagnosticError` in the stack, because the
+REPL's `err` is the stack and not the exception, so the record's gesture
+`inspect(err)` works as written.
+
+Proposed edits once merged, each a sentence:
+
+- `design/pending.md`, the stage-1 bullet: increment 9 landed at `<merge
+  hash>` with its brief; next is increment 3, the canvas, with the page's
+  socket client due after increment 4 by `frontend/PROTOCOL.md`.
+- `design/briefs/roadmap_inspector.md`, increment 9's entry: a landed
+  line with the hash, and the facts the frontend takes: the message keys
+  of reading 5, the `Origin` rule, the ten ports, the moving `hello`, the
+  binary frames dropped, and that the frontend half waits for increment
+  4.
+- `design/inspector/live_session.md`: answer 1's "the `err` binding after
+  a failed `Model(root)`" gains "which holds an exception stack, accepted
+  as a fifth form" (reading 14); answer 8's "reads `artifact"bundle"`"
+  becomes the runtime lookup through `artifact_hash` and `artifact_path`
+  (reading 2); the pending list's Zed entry closes with reading 8's
+  outcome. `build_release.md` answer 3 stands.
