@@ -83,10 +83,11 @@ Status is one of *shipped*, *candidate* (listed, built when wanted), or
 proves standard). A block is generic over its port type `V`, in the
 [D-263][d-263] spelling, unless its ports are fixed by what it is: the `Bool`
 gates and the linear blocks, whose ports follow their matrix shapes. The
-one input or one output a block has is a bare contract, one port with no
-name that a wire addresses by the block's path alone ([D-436][d-436]); a side
-with several ports names them `in1…inN`, and `out1…outN` where a block splits
-one port into `N` ports alike. The bundle reads a bare side as `u` or `y`.
+one input or one output a block has is a bare contract, one port whose face
+is the default `u` or `y`, which a wire addresses as `block/u` or `block/y`
+([D-437][d-437]); a side with several ports names them `in1…inN`, and `out1…outN`
+where a block splits one port into `N` ports alike. The bundle reads a bare
+side as `u` or `y`, the value itself.
 
 A block with a defaulted parameter, or with more than one, gets a
 hand-written keyword constructor, as in `Integrator(; x0 = 0.0)` and
@@ -221,7 +222,7 @@ qualifies the two they share, `StateSpace` and `TransferFunction`.
 [d-313]: ../decisions.md#d-313--admit-a-library-block-by-judgement-against-three-guidelines
 [d-316]: ../decisions.md#d-316--stop-requests-are-structural-a-stopflag-port-ends-the-run-unless-the-advance-ignores-it
 [d-384]: ../decisions.md#d-384--publish-the-discrete-controllers-saturation-code-as-saturated
-[d-436]: ../decisions.md#d-436--admit-a-bare-contract-a-port-with-no-face-addressed-by-the-component-path
+[d-437]: ../decisions.md#d-437--address-a-bare-contracts-port-by-the-default-face-u-or-y
 [s10-5]: ../spec.md#105-multi-rate-tick-scheduling
 [s10-6]: ../spec.md#106-event-iteration-at-boundaries-to-quiescence-budgeted
 [s13-5]: ../spec.md#135-termination-is-a-state-not-an-exception

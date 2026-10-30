@@ -434,7 +434,8 @@ were derived.
 | [D-433][d-433] | The descriptor writer's readings | ratified |
 | [D-434][d-434] | The failure descriptor and a diagnostic as data | ratified |
 | [D-435][d-435] | Admit a bare leaf as a store declaration, addressed by the component path | ratified |
-| [D-436][d-436] | Admit a bare contract, a port with no face, addressed by the component path | ratified |
+| [D-436][d-436] | Admit a bare contract, a port with no face, addressed by the component path | superseded → [D-437][d-437] |
+| [D-437][d-437] | Address a bare contract's port by the default face `u` or `y` | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -1433,6 +1434,8 @@ Annotation (2026-10-29): a wiring endpoint may be the child segment alone where
 the child's contract on that side is bare ([D-436][d-436]). The last segment is then
 the child, whose one port has no name. The slash form and the rejection of
 dotted paths stand.
+Annotation (2026-10-30): the one-segment endpoint fell with [D-437][d-437]. A bare
+port's face is `u` or `y`, and every endpoint is `path/face` again.
 
 ### D-041 — Dedicated `exports` for assembly faces
 
@@ -17630,10 +17633,13 @@ a consistent design. The analysis is recorded in
 
 Annotation (2026-10-29): the contracts half is [D-436][d-436], which keeps the
 descriptor format at version one.
+Annotation (2026-10-30): [D-437][d-437] supersedes [D-436][d-436] on the bare port's
+address, the default face `u` or `y`, and keeps the bundle law and the format
+at version one.
 
 ### D-436 — Admit a bare contract, a port with no face, addressed by the component path
 
-**Status.** ratified
+**Status.** superseded → [D-437][d-437]
 
 **Position.** A contract declaration, `u_types` or `y_types`, returns a
 `NamedTuple` of types with one named entry per port, or one type, a bare
@@ -17762,6 +17768,126 @@ one port. The package is unreleased, so no reader is affected either way.
 - *Landing the contracts with the stores:* the contracts half changes the
   path grammar, the stores half did not; the midpoint was consistent
   ([D-435][d-435]).
+
+### D-437 — Address a bare contract's port by the default face `u` or `y`
+
+**Status.** ratified
+
+**Position.** A bare contract, one type as the whole `u_types` or `y_types`,
+declares one port whose face is `u` or `y`, named after the declaration it
+came from ([§4.3][s4-3], [§5.2][s5-2], [§8.2][s8-2], [§8.6][s8-6], [§14.4][s14-4]). The bundle carries the port's
+value itself, as [D-436][d-436] ruled, and every surface that addresses a port by
+name sees an ordinary face. The bundled rulings:
+
+- The bundle law stands. Under a bare `u_types` the stage's `u` is the one
+  input's value, and under a bare `y_types` the stage returns the one
+  output's value, one cell, never a splat. The declared shape decides the law
+  a return is held to, per declaration, independently of the other contract
+  and of the stores ([§5.2][s5-2], [§9.3][s9-3], [§9.5][s9-5]).
+- The face is the declaration's letter. A bare `u_types` has the input face
+  `u` and a bare `y_types` the output face `y`. `input_faces` and
+  `output_faces` list it as any name ([§13.3][s13-3]). The default applies to a bare
+  declaration only; a named contract may use `u` or `y` as a key, which is
+  then the author's name like any other. A face name is never empty, since a
+  bare port is spelled by omitting the name ([§8.6][s8-6]).
+- Every wire endpoint is `path/face`, `"gain/y" => "integrator/u"` ([§6.1][s6-1],
+  [§8.6][s8-6]). A one-segment endpoint names a child and no port, and is
+  `UnknownPort` with the child's face list in hand. The passthrough helpers
+  treat the face as any other: the default label over a child `integrator`
+  is `integrator.u` or `integrator.y`, so both helpers over a child bare on
+  both sides collide on nothing, and `prefix = ""` labels the face `u` or
+  `y` ([§8.8][s8-8]).
+- A bare `u_types` at a primitive root is legal, the root input `u`,
+  claimed, staged and traced by that name. `IllegalPortType`'s reason
+  `:bare_at_root` retires. Both contracts bare at a primitive root are the
+  faces `u` and `y` and do not collide; a shared key collides as [D-210][d-210]
+  rules.
+- The readers accept the headless spelling where the declaration is bare.
+  When the addressed component's contract on the reader's side is bare, a
+  leaf with no head, empty or beginning at a step, takes the default face as
+  its head and is then matched as any face ([D-418][d-418]): `get_output("integrator")`,
+  `get_output("integrator", "[2]")`, `port(model, path)` and its `sim` and
+  `snapshot` forms with the name defaulted, and `get_input()` and
+  `get_face()`, whose `leaf` defaults to the empty address, with
+  `get_face("[1,2]")` and `get_input(".field")` reaching into the port
+  ([§14.4][s14-4], [§14.9][s14-9]). A headless leaf at a level whose contract on that side is
+  named, or at an assembly, is `ReadResolution` with reason `:port_shape`,
+  the face list in hand. A named head against a bare port is the ordinary
+  face miss, its candidate list `u` or `y`.
+- A bare `u` payload names the bare input. At an authoring level whose
+  `u_types` is bare, `set(; u = 1.0)` names the face `u` and follows its
+  export chain; `set` admits a bare `u` payload and refuses `nothing` alone,
+  as for the stores. A bare `u` payload at a level whose contract is named,
+  or at an assembly, is `ConditionResolution` with reason `:port_shape`, the
+  mirror of `:store_shape`, candidates in hand. A named payload against a
+  bare input is `:no_input_face` with the candidate `u` ([§14.2][s14-2]).
+- The descriptor spells the face `"u"` or `"y"` in `name` and in a wire
+  endpoint's `port`, an ordinary string in a required string field, so the
+  format stays at version one ([§13.9][s13-9]). The inspector draws the label `u` or
+  `y` beside the port square; the renderers print `plant/integrator/y`. A
+  bare `StopFlag` port's requester carries the port name `y` ([§13.5][s13-5]).
+- The library's declarations are unchanged. The single-port blocks keep
+  their bare contracts and their stage bodies; only the addresses in the
+  inventory and the companions move ([§13.7][s13-7]).
+
+**Spec.** [§4.3][s4-3], [§5.2][s5-2], [§6.1][s6-1], [§8.2][s8-2], [§8.6][s8-6], [§8.8][s8-8], [§9.1][s9-1], [§9.3][s9-3], [§9.5][s9-5], [§11.3][s11-3],
+[§13.3][s13-3], [§13.5][s13-5], [§13.7][s13-7], [§13.9][s13-9], [§14.2][s14-2], [§14.4][s14-4], [§14.9][s14-9], [Appendix B][sB], [Appendix C][sC],
+[Appendix D][sD]
+
+**Rationale.** [D-436][d-436] made the bare port's address the empty name, so that no
+name the author never wrote would appear in wiring or the inspector. A face
+is a public address, and every surface that addresses ports by name then
+needed an arm for the reserved empty name: the face lists, the passthrough
+helpers, the root's collision check, the readers, the conditions, the
+descriptor and the renderers, 81 sites across 13 source files at increment
+84. The first review of that increment found four consequences at once: the
+two default passthroughs over a child bare on both sides colliding on the
+child's label, an assembly face and a bare port printing alike, a named head
+against a bare input reported as a face miss where the output side reports a
+shape, and a condition unable to spell a bare input at all. Each later
+by-name surface, the bridge, the live inspector, the trace header and any
+export, would have added its own arm.
+
+The name the author never wrote turns out to be one they write constantly.
+`x_deriv(::Integrator, (; u)) = u` names the bare input `u` in its signature
+and returns it, and under a bare contract the bundle field and the face
+coincide, as a bare store's bundle `x` coincides with the value after [D-435][d-435].
+The letters `x`, `s`, `m`, `u`, `y` then name a bundle everywhere and, where
+the declaration is bare, the thing itself. The default also matches the
+declaration's own name, `u_types` and `y_types`, so the convention is
+learned from the code that declares it.
+
+The headless spelling survives where Julia already has a default argument:
+the readers' `leaf`, the `port` forms' name, and the condition payload, which
+[D-435][d-435] already lets be bare for a store. It is sugar over the face, triggered
+by the declared shape and never by the port count, and it keeps [D-435][d-435]'s
+reading symmetry, `get_state("kf")` beside `get_output("integrator")`. A
+wire has no default argument, so it stays two segments.
+
+**Rejected.**
+- *Superseded position — the headless address ([D-436][d-436]):* the reserved empty
+  name in every by-name surface, the four review consequences above, and one
+  more arm per future surface; its gains, the one-segment wire and nothing
+  invented, are kept in part by the headless sugar and answered by the
+  author's own `u` and `y`.
+- *`in` and `out` as the default faces:* `in` is a Julia keyword in every
+  highlighter even where it parses, neither name matches `u_types` or
+  `y_types`, and the bare input's condition would read
+  `set(; u = (; in = 1.0))`.
+- *Full sugar, the bare declaration rewritten to a one-entry `NamedTuple`
+  and the bundle wrapped:* saves the declaration line alone and keeps the
+  one-field tuple at every return and the field access at every read, half
+  of what the bare form removes.
+- *The one-segment wire endpoint as sugar for the default face:* a second
+  grammar inside a path string, with the three diagnostic variants [D-436][d-436]
+  needed to say what a one-segment endpoint means at a child that is not
+  bare.
+- *Triggering the headless default by port count rather than declared
+  shape:* a second port added later would silently move an address, and a
+  named port's name is the author's.
+- *Drawing the bare port without its label in the inspector:* hides the
+  address every reader and condition uses, and the letters are short enough
+  to draw.
 
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
@@ -18174,6 +18300,7 @@ one port. The package is unreleased, so no reader is affected either way.
 [d-434]: #d-434--the-failure-descriptor-and-a-diagnostic-as-data
 [d-435]: #d-435--admit-a-bare-leaf-as-a-store-declaration-addressed-by-the-component-path
 [d-436]: #d-436--admit-a-bare-contract-a-port-with-no-face-addressed-by-the-component-path
+[d-437]: #d-437--address-a-bare-contracts-port-by-the-default-face-u-or-y
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property

@@ -36,12 +36,12 @@ Left open on purpose, each with the axis or the bump that owns it.
   and the tracing mode per member; for a probe failure the function name
   (answer 8). Settled on 2026-10-28 (`failure_descriptor.md`, answer 2):
   `marks`, `cycle` and `function` carry exactly this.
-- **The bare port.** A bare contract (D-436, 2026-10-29) is one port with
-  no face, and the descriptor spells its face `name` and its wire endpoint's
-  `port` as the empty string, format unchanged. It draws as its port square
-  with no label beside it, which answer 10's legibility floor already
-  produces; the hover title and the detail pane spell the path alone, as the
-  core's renderers do. Nothing else in the grammar changes.
+- **The bare port.** A bare contract (D-437, 2026-10-30, superseding D-436)
+  is one port with the default face `u` or `y`, and the descriptor spells
+  that face in `name` and in a wire endpoint's `port` as any other, format
+  unchanged. It draws as any port, its square with the label `u` or `y`
+  beside it; the hover title and the detail pane spell `path/u` or `path/y`,
+  as the core's renderers do. Nothing else in the grammar changes.
 
 ## Answered questions
 
