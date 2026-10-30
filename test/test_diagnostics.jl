@@ -807,6 +807,10 @@ function diagnostics_kind_set()
                                               reason = :unknown_root_input, field = BARE,
                                               candidates = [:a])),
                        "the headless address is no root input face — the root's inputs are `a` (§14.4)")
+        @test endswith(message(ReadResolution(label = :r, selector = "get_face(\"\")",
+                                              reason = :unknown_output_face, field = BARE,
+                                              candidates = [:total])),
+                       "the headless address is no root-exported output face — the root exports `total` (§14.4)")
         @test startswith(message(ConditionResolution(path = "p/f", field = BARE, reason = :internally_wired,
                                                      producer = ("p/g", BARE), origin = "set")),
                          "`p/f`'s bare input reaches no root input — it is wired internally, to `p/g`, and ")

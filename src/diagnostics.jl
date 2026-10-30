@@ -1870,9 +1870,9 @@ function message(d::ReadResolution)
                            "`get_face` reads the output faces a level exports, and an input " *
                            "face is read back with `get_input`")
     isempty(d.mount) ||
-        return _read_message(d, "`$(d.field)` is no output face of `$(d.mount)` — its " *
+        return _read_message(d, "$(_face_word(d.field)) is no output face of `$(d.mount)` — its " *
                            "output faces are $(_namelist(d.candidates))", "§14.4, D-277")
-    _read_message(d, "`$(d.field)` is no root-exported output face — the root exports " *
+    _read_message(d, "$(_face_word(d.field)) is no root-exported output face — the root exports " *
                 "$(_namelist(d.candidates))")
 end
 

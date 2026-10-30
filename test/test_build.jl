@@ -2132,9 +2132,10 @@ function build_dual_sweep()
         # 90 covered on 2026-09-30, the 4 pinned fixtures among them; a floor, so
         # a new zero-argument fixture joins without an edit.
         @test length(covered) ≥ 90
-        # 62 argument-taking fixtures on 2026-10-30: a new one is classified
-        # here on purpose, by raising the count.
-        @test length(skipped) == 62
+        # 61 argument-taking fixtures on 2026-10-27: a new one is classified
+        # here on purpose, by raising the count. A parametric fixture such as
+        # `BareRoster{U}` is a `UnionAll` the sweep never sees, so it adds none.
+        @test length(skipped) == 61
     end
 end
 
