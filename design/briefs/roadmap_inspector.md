@@ -118,9 +118,16 @@ increment 9. Visible: `frontend/fixtures/` holding one descriptor per
 model, and a green CI. Draws on `live_session.md` answers 2 and 10,
 `build_release.md` answers 2, 3 and 6. Ordinary Julia work; it precedes
 the frontend because the fixtures are its output, which corrects the
-hand-on order of `build_release.md`. *Landed on 2026-10-30 at `cbc4ff2`
-of `RedstoneInspector.jl`, pinned at the core's `dc5e833`; its brief's
-"Landed" section records the review and the first CI run.*
+hand-on order of `build_release.md`. *Landed on 2026-10-30 at `f8f7a3b`
+of `RedstoneInspector.jl`, pinned at the core's `4e51cbc`; its brief,
+`brief_inspector_01_repo_and_writer.md`, records the repo's shape as
+built, the review and the two CI runs. Facts the next briefs take from
+it: the workspace instantiates from the root, never from a member; the
+fixtures are `aircraft`, `descent`, `closed_loop`,
+`closed_loop_deployment`, `large`, `containers`, `primitive`, `kinds`,
+`rates`, `failure_cycle` and `failure_structure`, every one but
+`aircraft` carrying `name`; a fixture's method locations are labels under
+`<depot>/` and `<repo>/`; the CI jobs are `julia` and `fixtures`.*
 
 **Increment 2: the foundation, pure half.** The Vite and Svelte project
 under `frontend/` with the spike's versions, `npm run types` from the

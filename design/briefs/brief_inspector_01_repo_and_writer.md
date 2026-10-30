@@ -473,5 +473,7 @@ comes after. Dimensions:
 - **Side effect**: a reviewer's probe ran `Pkg.update()` in a scratch
   copy, and Pkg's depot gc removed two older installed trees of Redstone
   and the examples; the pinned trees and the dev checkout were untouched.
-- **The pin bump** to the core's commit after `dc5e833` follows as its own
-  commit once that commit is pushed.
+- **The pin bump** landed as `f8f7a3b`, the pin at the core's `4e51cbc`,
+  which carries increment 85's review fixes; only the depot slug in the
+  method locations changed, 102 of them across eight fixtures, and the
+  suite and the drift check stayed green.
