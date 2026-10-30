@@ -22,9 +22,10 @@ item changes what the spec says, the spec edit is part of the item.
   package and the live session; `failure_descriptor.md` for the failure
   bump, landed as §13.9, D-434 and increment 82; `build_release.md` for
   axis 7, the repo, the pin, CI and the release, which closes the stage's
-  design. Next: the package's increment, in `build_release.md`'s "Design
-  axes" order; the deployment overlay's bump stands as `visual_grammar.md`
-  hands it on. The built-in Julia GUI is parked (D-310). The later stages
+  design. The build is staged by `design/briefs/roadmap_inspector.md`,
+  ten increments on two tracks in a separate repo; next is its increment
+  1, the repo and the writing half of the package. The deployment
+  overlay's bump stands as `visual_grammar.md` hands it on. The built-in Julia GUI is parked (D-310). The later stages
   stand after the release, below.
 - **The API docstrings' two later passes.** The sweep to the manual's
   conventions landed (commits `84ece6b` to `b1d9ae3`, record
