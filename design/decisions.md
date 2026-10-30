@@ -17793,7 +17793,8 @@ name sees an ordinary face. The bundled rulings:
   bare port is spelled by omitting the name ([§8.6][s8-6]).
 - Every wire endpoint is `path/face`, `"gain/y" => "integrator/u"` ([§6.1][s6-1],
   [§8.6][s8-6]). A one-segment endpoint names a child and no port, and is
-  `UnknownPort` with the child's face list in hand. The passthrough helpers
+  `UnknownPort` with the child's face list in hand and `nothing` as the
+  port, no empty name standing in. The passthrough helpers
   treat the face as any other: the default label over a child `integrator`
   is `integrator.u` or `integrator.y`, so both helpers over a child bare on
   both sides collide on nothing, and `prefix = ""` labels the face `u` or
@@ -17813,8 +17814,11 @@ name sees an ordinary face. The bundled rulings:
   `get_face("[1,2]")` and `get_input(".field")` reaching into the port
   ([§14.4][s14-4], [§14.9][s14-9]). A headless leaf at a level whose contract on that side is
   named, or at an assembly, is `ReadResolution` with reason `:port_shape`,
-  the face list in hand. A named head against a bare port is the ordinary
-  face miss, its candidate list `u` or `y`.
+  the face list in hand, the assembly case naming the family
+  `:assembly_face`. A named head against a bare port is the ordinary face
+  miss, its candidate list `u` or `y`. `port` with the name left out at a
+  component whose output contract is named throws `ArgumentError`, the
+  snapshot forms included, which read the shape off the layout.
 - A bare `u` payload names the bare input. At an authoring level whose
   `u_types` is bare, `set(; u = 1.0)` names the face `u` and follows its
   export chain; `set` admits a bare `u` payload and refuses `nothing` alone,
@@ -17930,12 +17934,14 @@ rulings:
   one component of an `SArray` leaf, `get_state("kf", ".P")` a field of a
   bare isbits struct in `s`, and the store selectors' `leaf` defaults to the
   empty address ([§14.4][s14-4]). A headless leaf against a named store is
-  `ReadResolution` with reason `:store_shape`, the field list in hand. A
-  named head against a bare store is the ordinary `:undeclared`, its
-  candidate the letter.
+  `ReadResolution` with reason `:store_shape`, the field list in hand, and
+  against a stateless component the same with no fields: anything not bare
+  refuses by shape. A named head against a bare store is the ordinary
+  `:undeclared`, its candidate the letter.
 - A bare payload names the bare leaf. `at("integrator", set(x = 1.0))` sets
   the field `x`, checked at resolution. A bare payload against a named store
-  is `ConditionResolution` with reason `:store_shape`, the fields in hand. A
+  is `ConditionResolution` with reason `:store_shape`, the fields in hand
+  and the field `nothing`. A
   named payload against a bare store is the ordinary `:undeclared_field`,
   its candidate the letter ([§14.3][s14-3]).
 - The reserved empty name retires from the bookkeeping. No `(path, name)`

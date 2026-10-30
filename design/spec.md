@@ -10786,7 +10786,7 @@ struct StopRequest <: AbstractComponent
 end
 StopRequest(; reason = "") = StopRequest(reason)
 x_init(::StopRequest) = nothing
-u_types(::StopRequest) = Bool                   # bare contracts: one port each, no face (§8.2)
+u_types(::StopRequest) = Bool                   # bare contracts: one port each, the faces u and y (§8.2)
 y_types(::StopRequest) = StopFlag
 y_direct(::StopRequest, (; u)) = u ? STOP_REQUESTED : NO_STOP
 stop_reason(c::StopRequest) = c.reason
@@ -11156,7 +11156,7 @@ const SumJunction{V, N} = Junction{V, V, N, typeof(+)}
 x_init(::Junction) = nothing          # stateless, continuous: the state declaration is the tier marker (§8.2)
 u_types(::Junction{In, Out, N}) where {In, Out, N} =
     NamedTuple{ntuple(i -> Symbol(:in, i), N)}(ntuple(_ -> In, N))
-y_types(::Junction{In, Out}) where {In, Out} = Out    # bare: one output, no face (§8.2)
+y_types(::Junction{In, Out}) where {In, Out} = Out    # bare: one output, the face y (§8.2)
 y_direct(j::Junction, (; u)) = j.f(u...)
 ```
 
@@ -11212,8 +11212,8 @@ support.
 struct UnitDelay{V} <: AbstractComponent
     s0::V
 end
-s_init(d::UnitDelay) = d.s0                   # one bare leaf, addressed by the component path (§8.2)
-u_types(::UnitDelay{V}) where {V} = V         # bare contracts: one port each, no face (§8.2)
+s_init(d::UnitDelay) = d.s0                   # one bare leaf, the field s (§8.2)
+u_types(::UnitDelay{V}) where {V} = V         # bare contracts: one port each, the faces u and y (§8.2)
 y_types(::UnitDelay{V}) where {V} = V
 y_state(::UnitDelay, (; s)) = s               # publishes the stored value
 s_update(::UnitDelay, (; u)) = u              # stores the incoming one
@@ -11550,7 +11550,7 @@ inputs), and the build's warnings:
   marker when it fixed the type ([D-236][d-236], [D-433][d-433]).
 - `outputs` projects [`Outputs`](#g-outputs) (the execution order and each
   port's stage): the order as paths, and per primitive its stage-1 and stage-2
-  port names, the empty string for a bare port.
+  port names, `y` for a bare port ([D-437][d-437]).
 - `warnings` lists the warnings the build kept ([§9.2][s9-2]), each encoded
   as the failure descriptor encodes a diagnostic, an empty array when there
   are none ([D-434][d-434]).
@@ -12142,9 +12142,10 @@ the store's letter as its head** ([D-438][d-438]), and is then resolved as any f
 "[2]")` one component of an `SArray` leaf, `get_state("kf", ".P")` a field
 of a bare isbits struct in `s`, and the store selectors' `leaf` defaults to
 the empty address. A headless address against a named store is
-`ReadResolution` with reason `:store_shape`, the fields in hand, and a named
-head against a bare store the ordinary `:undeclared`, its candidate the
-letter. A
+`ReadResolution` with reason `:store_shape`, the fields in hand, and against
+a stateless component the same with no fields, since anything not bare
+refuses by shape. A named head against a bare store is the ordinary
+`:undeclared`, its candidate the letter. A
 [bare contract](#g-bare-contract) (a `u_types` or `y_types` declared as one
 type, one port with the default face `u` or `y`) may be read the same way.
 **Where the addressed component's contract on the reader's side is bare, a
@@ -13922,8 +13923,9 @@ assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
     with the `Simulation` forms `port(sim, path, name)`, `state(sim, path)`
     and `modes(sim, path)`. The reads of a [port](#g-port)'s value, a component's state
     from whichever home owns it, and its modes ([§7.3][s7-3], [D-317][d-317]).
-    The name defaults to the empty one, which names a bare output's face `y`
-    ([D-437][d-437]).
+    The name may be left out, which names a bare output's face `y`; left
+    out at a component whose output contract is named, the call throws
+    `ArgumentError` ([D-437][d-437]).
   - `port(snapshot, path, name)`. A port's value off a published
     [snapshot](#g-snapshot), addressed exactly as the live table, the same
     default included.
@@ -14287,7 +14289,8 @@ collection ([§9.2][s9-2], [D-250][d-250]).
   interface-connection entry's internal side, [D-210][d-210]), the declaring
   entry, that end's path as resolved and as written, the unknown port name,
   that end's port list (did-you-mean). A one-segment endpoint carries
-  the empty port name against the child's face list ([D-437][d-437]).
+  `nothing` as the port against the child's face list, no empty name
+  standing in ([D-437][d-437]).
 - **`UnconnectedInput`** ([§6.1][s6-1], [§8.4][s8-4] w2, [§9.1][s9-1]). Error · build ·
   collected. Primitive path, input name, declared entry type, the faces
   `input_wires` entries handed it up through, innermost first, the last being
@@ -14410,8 +14413,8 @@ collection ([§9.2][s9-2], [D-250][d-250]).
   a state declaration of `nothing`). A primitive that produces nothing and stores nothing ([D-263][d-263]).
 - **`IllegalPortType`** ([§4.3][s4-3], [§8.2][s8-2]). Error · build ·
   collected. Component path, the site at fault (`:face` for `u_types`,
-  `:port` for `y_types`, or `:root_input`), port name (empty on a bare
-  contract), the offending type,
+  `:port` for `y_types`, or `:root_input`), port name (`u` or `y` on a bare
+  contract, [D-437][d-437]), the offending type,
   and a `reason` against the leaf vocabulary ([§4.3][s4-3]). The reasons are
   `:no_leaves`, `:mutable` (with the dotted position of the mutable type),
   `:handle_at_root` (an [opaque leaf](#g-opaque-leaf) at a root input) and
@@ -14436,12 +14439,12 @@ activation):
   sampled or structural).
 - **`ProducedByTwoStages`** ([§8.3][s8-3]). Error · build ·
   fail-fast, with the probe chain ([D-229][d-229]). Component path, port
-  name (empty on a bare contract). The two stages are the kind's own, so it carries no producer column
+  name (`y` on a bare contract, [D-437][d-437]). The two stages are the kind's own, so it carries no producer column
   ([D-252][d-252]).
 - **`DeclaredNotProduced`** ([§8.3][s8-3]). Error · build · collected, by the
   completeness pass over the complete products, which runs only once every
   port check has passed ([D-239][d-239]). Component path, declared name
-  (empty on a bare contract), the
+  (`y` on a bare contract, [D-437][d-437]), the
   stage-product list and the state-field list, the latter as context. The
   remedy is returning the name from `y_state` ([§5.3][s5-3],
   [D-252][d-252]).
@@ -14546,7 +14549,8 @@ activation):
   twin of `BindingContractMismatch`.
 - **`ConditionResolution`** ([§14.1][s14-1], [§14.2][s14-2], [§14.3][s14-3], [§14.9][s14-9], [§14.10][s14-10]). Error · service
   · collected. Entry path, store and field (or the root-input face the entry
-  addresses), the offending value with its type, declared leaf type, the
+  addresses; `nothing` for a bare payload the store or input did not take),
+  the offending value with its type, declared leaf type, the
   activation where the seeded activation refuses, the primitive's tier
   and role where the refusal is tier-bound, the producer where a face is
   fed, candidates where a list is in hand, the origin. The origin is the
@@ -14572,8 +14576,9 @@ activation):
   the leaf address and the offending step, candidates where a list is in
   hand, the producer for an internally wired face, and a `reason`. On
   `:undeclared` the payload names the family searched (`:state_field` or
-  `:output_port`), its names the candidates. On a leaf-step reason it
-  carries the type the step met.
+  `:output_port`), its names the candidates. On `:port_shape` it names the
+  side, `:input_face` or `:output_port`, or `:assembly_face` at an assembly.
+  On a leaf-step reason it carries the type the step met.
   The reasons are grouped by what failed:
   - an assembly path, `:assembly_path`;
   - an undeclared name, `:undeclared`, or `get_deriv` on a discrete
@@ -14587,8 +14592,8 @@ activation):
   - a store selector under a table source, `:store_selector` (the source
     rule, [§14.4][s14-4]);
   - a headless address against a named contract or at an assembly,
-    `:port_shape` ([D-437][d-437]), or against a named store, `:store_shape`
-    ([D-438][d-438]).
+    `:port_shape` ([D-437][d-437]), or against a named store or a stateless
+    component, `:store_shape` ([D-438][d-438]).
 
   Raised at trim, at linearization, at attach and at `series`, where the
   label names the read and the `attach!` call names the device
@@ -14720,8 +14725,9 @@ activation):
   the catch (`:loop`, `:boundary_zero` or `:overlay`), and the `cause`, a species'
   diagnostic or the original exception, its type the parameter.
 - **`NonfiniteState`** ([§13.4][s13-4]). Error · runtime · fail-fast.
-  Component path, the offending state leaf and its value, the frame-top time
-  and the frame-entry boundary index.
+  Component path, the offending state leaf (a bare leaf by its letter,
+  [D-438][d-438]) and its value, the frame-top time and the frame-entry
+  boundary index.
 - **`ChatteringBudget`** ([§10.4][s10-4]). Warning · runtime · rate-limited.
   Component path, event name, boundary time, the exhausted
   `localization_budget` and the frame's localization count.
