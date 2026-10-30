@@ -18002,10 +18002,11 @@ and `set(x = 1.0)` read as they did under [D-435][d-435].
 
 **Status.** ratified
 
-**Position.** An inert field holding a `NamedTuple` lists one summary entry
-per field, named by the dotted path `fixed.Kp`, a nested `NamedTuple`
-opening in turn, each entry's text `repr` cut at 80 characters as before
-([§13.9][s13-9]). Every other inert field keeps [D-432][d-432]'s one entry.
+**Position.** An inert field holding a `NamedTuple` with fields lists one
+summary entry per field, named by the dotted path `fixed.Kp`, a nested
+`NamedTuple` opening in turn, each entry's text `repr` cut at 80 characters
+as before ([§13.9][s13-9]). Every other inert field keeps [D-432][d-432]'s one entry, an
+empty `NamedTuple` included, so no field goes unlisted.
 
 **Spec.** [§13.9][s13-9]
 

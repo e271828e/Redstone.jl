@@ -11613,10 +11613,12 @@ and line Julia reports, since Julia records no location for a `struct`
 itself. The node's summary lists each inert field as `repr` text under
 `:compact` and `:limit`, cut at 80 characters, so a `Constant` holding a
 lookup table never swells the file. An inert field holding a `NamedTuple`
-lists one entry per field instead, named by the dotted path, `fixed.Kp`,
-a nested `NamedTuple` opening in turn, so a `DiscretePID`'s gains read one
-per line where one cut entry would hide most of them ([D-439][d-439]). The summary
-is for a human to read, never for a program to rebuild values from.
+with fields lists one entry per field instead, named by the dotted path,
+`fixed.Kp`, a nested `NamedTuple` opening in turn, so a `DiscretePID`'s
+gains read one per line where one cut entry would hide most of them; an
+empty `NamedTuple` keeps its one entry, so no field goes unlisted
+([D-439][d-439]). The summary is for a human to read, never for a program to
+rebuild values from.
 
 **`descriptor` returns a tree of `NamedTuple`s, vectors, strings, numbers
 and Booleans, and the core takes no JSON dependency** ([D-432][d-432]). Encoding to
