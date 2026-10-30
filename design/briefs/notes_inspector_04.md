@@ -90,3 +90,17 @@ pane's facts; its level numbers equal increment 3's table.
    worktree's `frontend/` on the fixtures, and the screenshots under
    `frontend/e2e/screenshots/`.
 3. The merge and the push.
+
+## Build outcome, 2026-10-30
+
+Built as four commits on `increment-4` at `53bad81` in
+`~/.julia/dev/RedstoneInspector.jl-inc4`, not pushed: `b552de3` the
+frame, `5a83567` the pane and the drawer, `f10a114` the checks,
+`53bad81` the map and the README. `npm run check` 337 files, 0 errors;
+`npm test` 220 tests in 11 files; `npm run e2e` 81 checks in about 14 s.
+
+One pin disagreed: the brief's tree check said collapsing `sensing`
+leaves 8 rows, the brief's own arithmetic error, since the double-click
+that opens `actuators` expands its row and the count is 11. Ruled: the
+check as built asserts that the collapse removes `sensing`'s two rows.
+The cold review is running.
