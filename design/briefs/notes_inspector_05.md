@@ -163,3 +163,18 @@ Rulings made during the build, each the coordinating session's:
 Observations for the look pass: the canvas's focus ring shows after any
 mouse click on the canvas, since the press focuses `.viewport`; a
 `:focus-visible` rule would keep it for the keyboard.
+
+Agent B built stages 3 and 4: `9775349` the live tab, `d90bb36` the map and
+the README; the tip is `d90bb36`. `npm run check` 356 files, 0 errors;
+`npm test` 270 tests in 17 files; `npm run e2e` 113 checks in about 15 s.
+Its readings, accepted: a status bar with the connection alone shows under
+the landing panel while connected or lost, answer 4's "landing panel
+staying up with the status bar reading"; the download exists only for a
+model that came over the socket, since a dropped file's bytes are not the
+socket's; the detail pane's `onlocation` returns whether it sent, and the
+pane copies otherwise; the bar reads "connected" once any descriptor text
+has arrived. `vite preview` refuses the `/ws` upgrade in about 25 ms, so
+every check without a mock runs as the hosted copy. Open items the map
+carries: a face hit found by a `type:` term alone shows no `mark`;
+`clearNote` is exported and unused; the drawer keeps its state on a
+replacement. The cold review follows.
