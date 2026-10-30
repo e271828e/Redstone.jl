@@ -313,10 +313,11 @@ function _parameters(@nospecialize(instance))
     parameters
 end
 
-# One entry of `repr` text cut at 80 characters, or, for a `NamedTuple`, one
-# entry per field named by the dotted path, a nested one opening in turn (D-439).
+# One entry of `repr` text cut at 80 characters, or, for a `NamedTuple` with
+# fields, one entry per field named by the dotted path, a nested one opening in
+# turn; an empty one keeps its entry, so no field goes unlisted (D-439).
 function _summarize!(parameters::Vector{NamedTuple}, name::String, @nospecialize(value))
-    if value isa NamedTuple
+    if value isa NamedTuple && !isempty(value)
         for field in keys(value)
             _summarize!(parameters, "$name.$field", value[field])
         end

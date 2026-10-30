@@ -384,6 +384,8 @@ function test_descriptor()
         nested = node_at(descriptor(build(single(Constant((; a = 1.0, b = (; c = 2.0, d = (3.0, 4.0))))))).build, "c")
         @test nested.parameters ==
               [(name = "value.a", value = "1.0"), (name = "value.b.c", value = "2.0"), (name = "value.b.d", value = "(3.0, 4.0)")]
+        # an empty `NamedTuple` keeps its one entry, so the field stays listed: `single`'s `Group` declares no sample times
+        @test (name = "sample_times", value = "NamedTuple()") in node_at(descriptor(build(single(long))).build, "").parameters
         @test summary.value == first(repr(long.value; context = (:compact => true, :limit => true)), 80) * "…"
     end
     @testset "a bare face's name and a bare endpoint's port are `u` or `y`, at version one (§13.9, D-437)" begin
