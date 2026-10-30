@@ -486,4 +486,6 @@ read for what they owe: open-mind stance, probe scripts in the scratchpad,
   bounded wait.
 - **Not probed**: the browser itself and the `xdg-open` and `cmd /c
   start` lines, the suite on CI's runners, and a natural death of the
-  serving task. The first CI run of the merged branch is the next check.
+  serving task. Merged into `master` as a fast-forward on 2026-10-30 and
+  pushed; the first CI run was green on all four jobs, the suite on
+  Ubuntu and Windows included.
