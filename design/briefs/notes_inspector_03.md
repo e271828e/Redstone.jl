@@ -73,3 +73,11 @@ table.
    worktree's `frontend/` on the fixtures, and the screenshots under
    `frontend/e2e/screenshots/`.
 3. The merge and the push.
+
+## Outcome, 2026-10-30
+
+Built, reviewed and fixed, on `increment-3` at `3018d7c` in
+`~/.julia/dev/RedstoneInspector.jl-inc3`, not pushed. The brief's "Built"
+section carries the record. No reading was struck. Pending: the user's
+look-and-adjust pass, then the merge, the push and the first CI run of
+the extended `frontend` job.

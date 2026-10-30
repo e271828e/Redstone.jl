@@ -441,3 +441,49 @@ context rules as the builder. Dimensions:
   every check's pins listed, the contract as implemented.
 - **The workflow file** read against the three jobs; it runs after the
   push.
+
+## Built
+
+- **The commits** on `increment-3` of `RedstoneInspector.jl`, above
+  `38b8c8e`, not pushed: `b70202d` the canvas drawing the open level laid
+  out by ELK, fitted on load, with the primitive root's pins and wires in
+  `levelOf`; `100d8f6` pan and zoom with the fit button, opening by
+  double-click and Enter, Backspace, selection and hover, the titles and
+  `data-ready`; `915fdf3` the Playwright harness over the built bundle
+  with its six check files; `9d549fd` the map, the README and the CI job;
+  `3018d7c` the review fixes. `npm run check` 0 errors over 319 files,
+  `npm test` 169 assertions in 8 files, `npm run e2e` 51 checks in about
+  13 s, 41 screenshots; `large`'s root lays out in about 315 ms on the
+  main thread.
+- **The builder's departures**, all held under review: a `View` as
+  `{x, y, scale}` with `viewRect` for the `viewBox`, since a pan in screen
+  pixels needs the scale; a `maxScale` cap of 2 on `fitView`, since
+  `primitive` and `kinds` fitted at 5x; the draw check pinning the root
+  tag's shape as a `path` against a capsule's `rect`, so the capsule
+  mutant dies; the non-draw checks' screenshots prefixed with the check's
+  name; a 6 px foot under a block's last face row; `user-select: none`;
+  the DOM contract's additions, `in` and `out` beside `pin`, `.shape` for
+  the outline, a transparent `path.wire-hit` taking the pointer over each
+  wire, casings as `path.casing[data-wire]` under the wires, `marked` on
+  the selected wire's port squares, `marked-hover` on the hovered one's;
+  the display name cut at 120 px.
+- **The review**: every check green from a clean install, every level's
+  counts equal between the oracle, the checks and the DOM, all twelve
+  brief mutants red. Six findings, landed by the fixer and verified: the
+  block title ran the path and the qualified name together, `&#10;` not
+  surviving Svelte's compile; `actuators` drew δt above δe, a pure tie
+  ELK broke by packing two disconnected components, fixed by
+  `considerModelOrder.components: MODEL_ORDER` and a check reading the
+  declared order from the fixture; a hovered wire got no `hover` and its
+  ports `marked` at full strength; no check pinned the fit on opening an
+  inner level nor Enter on a selected leaf; the Playwright config sat
+  outside the checker's include. Four acceptable survivors: no arrowhead,
+  no double border, no halo, hover at full strength, look properties the
+  screenshots show.
+- **Observations for the next briefs**: a primitive root's bold first
+  line is blank, its segment being empty; `closed_loop`'s root draws
+  tangled as the spike found, no ELK option tuned; `selection` and
+  `pid_controller` order some faces against declaration where crossings
+  decide, accepted as crossing minimisation; ELK on the main thread
+  costs about 320 ms on `large`; Linux fonts are untested until the CI
+  run. The look-and-adjust pass is pending.
