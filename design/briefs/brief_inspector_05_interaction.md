@@ -732,3 +732,52 @@ context rules as the builders. Dimensions:
 - **The map** read against the tree: every file under `src/` named, the
   stores' section true to the code, every check's pins listed, the
   contract as implemented.
+
+## Built
+
+- **The commits** on `increment-5` of `RedstoneInspector.jl`, above
+  `13d1f4c`, not pushed: `e40a42f` the view state, the hash, the rekeying,
+  the drag and the keyboard; `2674659` the search; `e3c0ca7` the search's
+  groups ordered nodes first, a ruling; `9775349` the live tab; `d90bb36`
+  the map and the README; `148bf39` the review fixes; `0e17c53` the map's
+  check descriptions after them. `npm run check` 356 files, 0 errors; `npm
+  test` 270 tests in 17 files; `npm run e2e` 113 checks in about 15 s.
+- **The builders' departures**, all held under review and recorded in the
+  map and in `notes_inspector_05.md`: the search check named a face row
+  first against the prose, ruled for the record's order; `search-under`
+  lights the owners of face hits too, the brief's `beneath` definition
+  against its own table; `descent`'s drag pins were the brief's error, the
+  wire straight and forward until `plant` passes `gear`; the canvas
+  exports `fit`, `zoomBy`, `panBy`, `boxes` and `follow` through a handle;
+  a drag selects on release, Chrome firing no click after the raise; the
+  pointer is captured past the slop; `follow` aligns the near edge of an
+  oversized box; a replacement keeps the drawer's state; a fresh load
+  resets the query; a fallen level's view is dropped; a level-changing
+  selection rewrites the hash without a history entry; Tab cycles the
+  regions from the search field too; Ctrl-K joins Cmd-K; a status bar with
+  the connection alone stands under the landing while connected or lost;
+  the download exists only for a model that came over the socket;
+  `onlocation` returns whether it sent and the pane copies otherwise; the
+  bar reads "connected" once any descriptor text arrived; `clearNote` was
+  dropped as unused.
+- **The review**: every check green from a clean install, the oracle equal
+  to the table and the code on sixteen queries, the reviewer's own
+  `nearest` and `follow` agreeing on forty presses, the live tab verified
+  against the real server with the download byte-equal to
+  `write_descriptor`'s file and the reconnect after a restart. No code
+  defect. Four check gaps, landed by the fixer at `148bf39` and verified,
+  each mutant red: the download check sends a 4-space re-indent so a
+  re-serialization differs; the `+` check rests the pointer off-center; the
+  hash is read empty after a climb to the root; the fallback check reads
+  the pane's "open level" facts. Of the brief's mutants two survive as
+  accepted: the swallowed keys' `preventDefault` and `popstate` pushing
+  again under the push guard; the backoff cap is caught by a unit test.
+- **Observations for the user and the next briefs**, in
+  `notes_inspector_05.md`: an unnamed `inspect` labels the tab `Group`; a
+  different model pushed over another inherits the root's view; a push
+  drops keyboard focus to the body; the landing's network sentence stands
+  in the live tab; the region-only Tab order against answer 11's "every
+  control"; a bare prefix lists everything; the live-look command needs
+  `RedstoneInspector.inspect` and `RedstoneInspector.Preferences`; the
+  canvas's focus ring shows after a mouse click; increment 4's items stand.
+- **Pending**: the user's look-and-adjust pass, the merge and the push.

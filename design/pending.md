@@ -40,9 +40,13 @@ item changes what the spec says, the spec edit is part of the item.
   landed on 2026-10-30 at `13d1f4c`, brief
   `design/briefs/brief_inspector_04_frame.md`, CI green on all four jobs; the core's
   parameter summary opens `NamedTuple` fields into dotted entries since
-  (D-439), and the inspector's pin stands at the core's `035aa95`. Next is
-  its increment 5, interaction, with increment 9's frontend piece, the
-  socket client, now unblocked by the status bar. The deployment
+  (D-439), and the inspector's pin stands at the core's `035aa95`. Its
+  increment 5, interaction with increment 9's frontend piece, the socket
+  client, stands built, reviewed and fixed on branch `increment-5` at
+  `0e17c53` of the worktree `RedstoneInspector.jl-inc5`, not pushed, brief
+  `design/briefs/brief_inspector_05_interaction.md` and the readings in
+  `notes_inspector_05.md`, awaiting the user's look-and-adjust pass, the
+  merge and the push; its reading 1 departs from answer 9's ELK hints. The deployment
   overlay's bump stands as `visual_grammar.md` hands it on. The built-in Julia GUI is parked (D-310). The later stages
   stand after the release, below.
 - **The API docstrings' two later passes.** The sweep to the manual's
