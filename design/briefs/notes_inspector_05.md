@@ -178,3 +178,52 @@ every check without a mock runs as the hosted copy. Open items the map
 carries: a face hit found by a `type:` term alone shows no `mark`;
 `clearNote` is exported and unused; the drawer keeps its state on a
 replacement. The cold review follows.
+
+## The cold review, 2026-10-31
+
+Every check green from a clean install: `npm run check` 356 files, 0
+errors; `npm test` 270 tests in 17 files; `npm run e2e` 113 checks in
+15 s. No defect against the records or the brief. The oracle equals the
+brief's table on every row and the code on all sixteen queries; the
+reviewer's own `nearest` and `follow` agreed with every key on forty
+presses. The live tab ran against the real server, `inspect(descent())`
+with `bundle_dir` on the built `dist/`: connected, the download byte-equal
+to `write_descriptor`'s file for `descent` and `aircraft`, a location click
+reaching the editor stub with the right file and line, a second `inspect`
+replacing the model with `plant` and the query kept, the server stopped
+and restarted with the page reconnecting after five refused retries.
+
+Four findings, all gaps in the checks and handed to the fixer: the
+download check cannot tell raw bytes from re-serialized JSON, every fixture
+being canonical already; the `+` check never moves the pointer, so a zoom
+about the pointer's last place passes; no check reads the empty hash after
+a climb to the root; a stale selection kept across a fallback is invisible
+to the canvas check. Plus the map's sentence on who touches the hash and
+the unused `clearNote`. Of the brief's mutants three survived: the two
+behind the findings and `popstate` pushing again, a no-op under the push
+guard, accepted; the backoff's cap is in fact caught by a unit test.
+
+Observations for the user, none a finding against the code:
+
+- An unnamed `inspect` labels the tab `Group` and downloads `Group.json`,
+  answer 10's label rule as written; the fixtures all carry `name`.
+- A different model pushed over another inherits the root's view, answer
+  9's "a surviving level keeps its view", so `descent` after `aircraft`
+  draws cut off until `0`. Whether a push of a different root type should
+  fit instead is a ruling to take.
+- A push rebuilds the canvas and drops keyboard focus to the body; the
+  keys still work.
+- The fallback note shows literal backticks, as the brief spelled it.
+- The landing's "loads nothing from the network" stands under "connected,
+  waiting for inspect" in the live tab.
+- Tab stops only at the four region roots, reading 9, so the buttons
+  inside them are mouse-only; answer 11's "every control is a real button
+  or link" reads uneasily beside it.
+- A bare `path:` or `face:` lists every node or face while typing.
+- The oracle's `containers` row miscounts folder members; the row is not
+  in the brief's table.
+- Outside this increment: `inspect` is unexported and `Preferences` is not
+  a dependency of the `scripts` project, so the brief's live-look command
+  needs `RedstoneInspector.inspect` and `RedstoneInspector.Preferences`.
+- Not verified on the real server: a fallback of the open level, since
+  the examples have no assembly at the root; a channel by name.
