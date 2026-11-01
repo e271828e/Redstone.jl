@@ -227,3 +227,40 @@ Observations for the user, none a finding against the code:
   needs `RedstoneInspector.inspect` and `RedstoneInspector.Preferences`.
 - Not verified on the real server: a fallback of the open level, since
   the examples have no assembly at the root; a channel by name.
+
+## The look-and-adjust pass, 2026-11-01
+
+The user tried the page and asked for changes, settled in discussion and
+landed in the records first (`45c5047`): the keymap's Shift row, back and
+forward with Shift+h and Shift+l, open and up with Shift+j and Shift+k, the
+arrows alone panning, `z` centring the selection, `n` and `N` walking the
+search's hits instead of a focusable results list; the tree's own `h j k
+l`, Yazi's; pins and root-input tags draggable; a view kept on a push only
+for a level whose blocks are unchanged; a prefix with no text as no term;
+the ring for keyboard focus only and focus kept across a push; a leave
+prompt while a file-loaded model is open, after the user hit the first
+entry with the mouse's back button; the landing's "nothing from any other
+site"; and the detail pane's top, Open beside Copy, labelled facts with
+titles, a rate phrase on discrete leaves only, titled disclosures. The
+continuous leaf's missing rate row stands on §8.7: a `sample_times` key on
+a continuous child is a build error.
+
+A Firefox probe of the leave prompt's activation rule could not run: the
+sandbox blocks Firefox's profile, and running it outside the sandbox was
+refused by the auto-mode classifier. Chromium shows no prompt without an
+interaction and one after a real click or key. The probe stays in the
+scratchpad for the user, and a real Finder drop and the mouse's back button
+stay a manual check.
+
+The fixer built the pass as `67f5977` the keys and focus, `95087ba` the
+drag, the view rule, the prompt and the landing, `953926c` the pane's top,
+`bf52830` the map and the README. `npm run check` 357 files, 0 errors;
+`npm test` 293 tests; `npm run e2e` 127 checks in about 16 s. Every change
+has a check a named mutant turned red. Its departures: Shift+l is bounded
+like Shift+h, so neither leaves the page; Enter with nothing to open no
+longer swallows the key; `j` and `k` in the tree with nothing selected both
+select the first row; the rate phrase reads the anchor's `T`, a non-zero
+`tau`, then the offset; the member row's kind word sits in its title; every
+block's cursor is `move`. Open items: a press on a canvas that already
+holds keyboard focus keeps the ring; at the pane's default width a leaf's
+faces table squeezes the kind cells, increment 4's table.
