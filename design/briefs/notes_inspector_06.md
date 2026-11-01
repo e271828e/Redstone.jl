@@ -137,3 +137,36 @@ share `Canvas.svelte` and so run one after the other, as increment 5's did.
    values, the glyphs, the thresholds and the ELK options are this pass's.
 3. The merge and the push; the Firefox step's first outcome; the
    worktrees of increments 4 and 5 to remove.
+
+## Build outcome, 2026-11-02
+
+Agent 0 built stages 1 and 2 on `increment-6` in
+`~/.julia/dev/RedstoneInspector.jl-inc6`, not pushed: `637b5f1` the
+`kinds` wiring, every root output building, its root now 18 blocks, 10
+wires and 9 output pins; `4b28f2a` the `library` fixture, all 31 shipped
+blocks plus a `Junction` over a user function, 33 nodes, 40 wires, 26 of
+the roster's 27 icon ids (`constant-opaque` stays `kinds`' alone). `npm
+run check` 357 files, 0 errors; `npm test` 304 tests in 17 files; `npm run
+e2e` 128 checks. A second regeneration left the tree clean; the other
+synthetic fixtures changed only in their method `line` values.
+
+Rulings made during the build, each the coordinating session's:
+
+- **The `Relative(2)` scope sits on a leaf at the root**, the fixture
+  being one flat `Group`, so its legend lines read `base grid × 2` and
+  `base grid × 2, phase 1` and it carries no `scopes` row; `rates` already
+  shows the nested form. Accepted: the brief asked for the `× 2` and the
+  `phase` lines, which these are.
+- **Anchor 1 is the slower one** (1/10 s against anchor 2's 1/50 s), the
+  builder's choice so that sorting by period differs from sorting by
+  anchor index on this fixture too. Accepted.
+- **The singular `1 wire` lost its pin**: `detail.spec.ts` read `kinds`'
+  level facts as `9 children · 1 wire` and no fixture level has one wire
+  now. Handed to agent A as a unit test over an inline one-wire
+  structure.
+- **`fixtures.test.ts` did need a change**, its fixture and structure
+  counts, against the brief's "needs no row". The brief's error.
+- **`MAP.md`'s "all eleven fixtures" and `kinds`' "1 wire"** are stale
+  until stage 9, which agent B's prompt names.
+
+Agent A, colors and wires, follows from `4b28f2a`.
