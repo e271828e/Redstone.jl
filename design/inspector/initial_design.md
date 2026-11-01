@@ -202,9 +202,10 @@ b6f08b1.
     ELK lays out one subsystem level at a time, with child assemblies drawn
     as closed blocks. Ties break by declaration order, the order of the
     struct's fields and of each connection list, so the code steers the
-    picture. When `inspect` pushes a new descriptor, the previous positions
-    go to ELK as hints, so surviving blocks keep their places. A user may
-    drag a block to untangle a view. The change lasts until the page reloads
+    picture. When `inspect` pushes a new descriptor, surviving blocks keep
+    their places by ELK's determinism and a dragged one keeps its dragged
+    place; ELK takes no position hints (amended 2026-11-01, `workspace.md`
+    answer 9). A user may drag a block or a pin to untangle a view. The change lasts until the page reloads
     and is never saved. Hand arrangement saved beside the code is refused for
     now. It could be added on top later.
     *Why:* a saved arrangement is a second file to version that drifts from
