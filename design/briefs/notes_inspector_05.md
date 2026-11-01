@@ -264,3 +264,12 @@ select the first row; the rate phrase reads the anchor's `T`, a non-zero
 block's cursor is `move`. Open items: a press on a canvas that already
 holds keyboard focus keeps the ring; at the pane's default width a leaf's
 faces table squeezes the kind cells, increment 4's table.
+
+The reviewer verified the pass at `bf52830`: the gate green from a clean
+install, 357 files, 293 tests, 127 browser checks; no finding against the
+code or the records; every rate phrase equal to its fixture's triple by
+§9.1's fold; the fixer's departures accepted. Of eleven mutants run, one
+survives: Shift+l unbounded, the fixer's own bound having no check. The
+`import.meta.env.DEV` skip of the leave prompt cannot be mutated against
+the preview build. Open with the user: where focus goes after a search
+hit, the tree, the canvas, or the detail pane for a face hit.
