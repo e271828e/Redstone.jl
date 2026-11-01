@@ -170,3 +170,42 @@ Rulings made during the build, each the coordinating session's:
   until stage 9, which agent B's prompt names.
 
 Agent A, colors and wires, follows from `4b28f2a`.
+
+Agent A built stages 3 and 4 from `4b28f2a`: `a56c2b3` the color modes,
+the palette, the badges, the legend, the tree's dots, the switch, the
+status bar's word and `r`; `e361671` the wire classes with the struct's
+core, the rate tint with per-color arrowheads, the junction dots, the
+type labels and `y`. `npm run check` 363 files, 0 errors; `npm test` 327
+tests in 19 files; `npm run e2e` 134 checks. Its departures, accepted and
+recorded in its notes for the map:
+
+- **The badge straddles the block's top edge at the right corner**
+  instead of sitting inside the frame, where it covered the segment on
+  every badged block of `closed_loop`'s root; answer 10 never truncates a
+  user name and sizing a block for the badge would make its size depend
+  on the mode. For the look pass; increment 8's top-left order badge
+  meets the same choice.
+- **The singular `1 wire` moved into `detail.ts`** as `levelLine`, so a
+  unit test can kill the plural mutant; the pane imports it.
+- **The brief's `2 rates` was a slip** for `2 clocks`; the checks read
+  `2 clocks`.
+- **The rate-tint wire checks sit in `wires.spec.ts`**, stage 4's, not
+  `colors.spec.ts`.
+- **`descent`'s one flag wire is `gear`'s `Bool` into `stop|in|u`**, not
+  the `StopFlag` enum, which no wire carries; the test pins both. The
+  brief's error.
+- **Arrowheads need `markerUnits="userSpaceOnUse"`**, else a vector's
+  arrow grows threefold; one `<marker>` per wire color, since
+  `context-stroke` on the struct's core would take the background color.
+- The wire helpers take a `Level` rather than a path; `cutName` and
+  `cutType` share `cutText`; a root whose triple no drawn block takes
+  falls back to the assembly gray for its tree dot.
+
+Its headed look, for the look pass: the badges, legend lines, steps and
+extras match the oracle on every level; the palette's first pass has pear
+and olive reading alike, pink, purple and reddish purple reading alike,
+and light cyan near the continuous blue; the fit ignores the legend,
+which crowds the bottom pin of `lqr_controller`; on `kinds` the short
+wires put the type labels across the output pins and under the `p`
+block. Agent B, shapes, the ELK pass, Firefox and the map, follows from
+`e361671`.
