@@ -780,4 +780,9 @@ context rules as the builders. Dimensions:
   control"; a bare prefix lists everything; the live-look command needs
   `RedstoneInspector.inspect` and `RedstoneInspector.Preferences`; the
   canvas's focus ring shows after a mouse click; increment 4's items stand.
-- **Pending**: the user's look-and-adjust pass, the merge and the push.
+- **The look-and-adjust pass**, recorded in `notes_inspector_05.md`: the
+  user's changes settled in discussion and amended into the records at
+  `45c5047`, built as `67f5977`, `95087ba`, `953926c` and `bf52830`,
+  verified by the reviewer with no finding.
+- **Landed** on 2026-11-01 at `bf52830` of `RedstoneInspector.jl`, eleven
+  commits above `13d1f4c`, merged by fast-forward and pushed; CI run 41358849311 green on all four jobs (frontend 119 s).

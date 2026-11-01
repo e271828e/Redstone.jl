@@ -219,6 +219,31 @@ order, view state by path across a push with the previous positions as
 ELK hints, drag with the local router, the URL's level hash. Visible: the
 keyboard section of the help page works before the page exists. Draws on
 `workspace.md` answers 5, 9 and 11, `initial_design.md` answer 12.
+*Landed on 2026-11-01 at `bf52830` of `RedstoneInspector.jl`, eleven
+commits above `13d1f4c`, with increment 9's frontend piece, CI run 41358849311 green on all four jobs (frontend 119 s);
+its brief, `brief_inspector_05_interaction.md`, and
+`notes_inspector_05.md` record the shape, the review, the look-and-adjust
+pass and the observations. The pass amended `workspace.md` answers 2, 4,
+5, 9, 10 and 11 and `initial_design.md` answer 12 (`45c5047`). Facts the
+next briefs take from it: ELK takes no position hints, the probe having
+shown they work only with the model-order steering off; each level's view
+and geometry are kept per path for the session, and a push keeps a view
+only for a level whose blocks are unchanged; blocks, pins and root tags
+drag with the local router in `src/canvas/router.ts`; the open level is the
+URL hash, the root the empty hash, with `history.state` carrying the load
+and depth that bound Shift+h and Shift+l; the keyboard table as built is
+the map's, the canvas's `h j k l` jumping, the arrows panning, Shift+h/l
+back and forward, Shift+j/k open and up, `0`, `z`, `n`, `N`, `d`, `/`, and
+`t`, `r`, `y`, `o`, `?` swallowed for increments 6 to 8; the tree has its
+own `h j k l` while focused; the four region roots take Tab and the ring
+shows under `:focus-visible`; the pure modules gained `navigate`,
+`search`, `rekey` and `protocol`, the live store and `src/live/socket.ts`
+the socket; the detail pane's top is a `dl.facts` of labelled rows; the
+leave prompt stands for a file-loaded model outside DEV. Open items: a
+press on a canvas holding keyboard focus keeps the ring; the faces table
+squeezes its kind cells at the pane's default width; an unnamed `inspect`
+labels the tab `Group`; the Shift+l bound has no check; increment 4's
+items stand.*
 
 **Increment 6: the grammar's finish.** Regions for keyed containers, tier
 and rate colors with the legend, wire styles by kind, the type-label
@@ -263,7 +288,8 @@ binary frames are dropped; a second `hello` moves the socket to the new
 channel; the handshake is accepted only from `http://localhost:<port>`
 or `http://127.0.0.1:<port>`, the port 8601 or the next nine; the
 socket client, the connection state and the download wait for increment
-4's status bar.*
+4's status bar. The frontend piece landed with increment 5 at `bf52830`,
+the reviewer driving the live tab against the real server.*
 
 **Increment 10: the release.** `scripts/release.jl`, the `release` job
 with the tag-absent rule, Pages, the `base` path, the version baked into
