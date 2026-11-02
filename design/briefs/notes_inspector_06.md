@@ -342,3 +342,31 @@ observations for the look pass: step 5's fill sits ΔE 6.1 from the root
 tag's fill under simulated deuteranopia, and the cyan fill reads loud.
 The increment is ready for the user's look-and-adjust pass; nothing is
 pushed.
+
+## The look-and-adjust pass, 2026-11-02
+
+The user tried the page and asked; the changes settled in discussion and
+landed in the records first (`visual_grammar.md` answers 4, 6 and 8,
+`workspace.md` answers 3 and 4):
+
+- **Type labels** drop their module qualifiers, sit on the longest
+  horizontal segment among the port's wires, cut to its length, drawn
+  above the blocks on a background halo, in a 9 px font.
+- **The palette** is searched again: the fills free of the hue bans, the
+  strokes keeping them, the fill-stroke hue pairing relaxed, distance
+  measured by CIEDE2000 under normal vision and the three simulations,
+  ΔE76 having overstated the greens' differences (the current fills' least
+  pairs read 13 to 14 in ΔE76 and 7.5 in CIEDE2000); fewer than eight
+  colored steps if eight cannot clear the bar.
+- **The legend** gains an unnumbered `continuous` line, last.
+- **A move to an ancestor selects the child on the path**, by Shift+k,
+  Backspace, Alt-Up, the breadcrumb or back.
+- **The member row writes the container's kind**, "transparent container
+  `children`, key `plant`" or "keyed container `gains`, key `a`".
+- **The docstring's summary is its title alone**; the call form stays in
+  the body.
+- **The parameters and faces stack** below a pane width of about 420 px,
+  a container query inside the detail pane.
+- **The root pins' declared order is given up** for the two crossings, as
+  answer 3's tie-break reads; no amendment.
+- **No `name:` search prefix**: offered, not taken.

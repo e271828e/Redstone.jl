@@ -125,9 +125,13 @@ Left open on purpose, each with the axis or the bump that owns it.
    trunk that branches, a filled dot at each branch; the mechanism, ELK's
    edge merging, is axis 4's. A feedback wire gets no special style, since
    the port glyph of answer 2 shows where the loop is legal. The type-label
-   toggle, off by default, writes the type string once per producer port,
-   cut with an ellipsis at a fixed width, the full string in the detail
-   pane; the kind marker is never written out. A wire's key is its
+   toggle, off by default, writes the type once per producer port with its
+   module qualifiers dropped, `SVector{5, Float64}` for
+   `StaticArraysCore.SVector{5, Float64}`, on the longest horizontal
+   segment among the port's wires, cut with an ellipsis to that segment's
+   length and drawn above the blocks on a background halo, the full string
+   in the hover title and the detail pane (amended 2026-11-02, increment
+   6's look pass); the kind marker is never written out. A wire's key is its
    consumer endpoint, unique within a level because a consumer port has one
    producer and a fan-out is one wire per target; the selection, ELK's
    position hints and the keyed loops use it across pushes.
@@ -178,10 +182,16 @@ Left open on purpose, each with the axis or the bump that owns it.
    leaf takes the continuous color. Wires take their terminal producer's
    color at a lighter tint, a root input pin leaving its wires neutral, so a
    rate transition shows as a color change at a block's input. A legend in
-   a canvas corner lists every triple visible on the open level, closed
-   assemblies included, each read out, "anchor 1 (1/10 s) × 2, phase 1";
-   the overlay bump adds the concrete `Δt` and `(D, Φ)` per line. The rate
-   palette avoids red and the halo hue.
+   a canvas corner lists every triple visible on the open level, on a
+   block, a closed assembly or a wire's tint, each read out, "anchor 1
+   (1/10 s) × 2, phase 1", then a line for the continuous color when a
+   continuous leaf, an assembly with no discrete leaf or a continuous
+   producer's wire is visible; the overlay bump adds the concrete `Δt` and
+   `(D, Φ)` per line. The rate palette's strokes, which also tint the
+   wires, avoid red, amber and the halo hue; its fills, light and never an
+   overlay's mark, may take any hue (the legend's wire and continuous
+   lines and the fills' freedom amended 2026-11-02, increment 6's look
+   pass).
    *Why:* two blocks under different anchors are two clocks by design, and
    a color keyed on the deployment's `(D, Φ)` would merge or split them per
    deployment. A scope triple is what the author declared at that level and
@@ -246,7 +256,8 @@ Left open on purpose, each with the axis or the bump that owns it.
    output square with a cross at its middle, shown under either verdict. No
    dimming by default; a dimmed state exists for axis 5's focus. Warnings
    take a second reserved hue, amber, same mechanics, once a descriptor
-   carries them. The rate palette avoids red, amber and the highlight hue.
+   carries them. The rate palette's strokes avoid red, amber and the
+   highlight hue (answer 6).
    A structure-step failure has no diagram, only the list (answer 6).
    *Why:* the two questions a loop raises, where it closes and which hop is
    false, become things seen rather than reconstructed from slash paths:

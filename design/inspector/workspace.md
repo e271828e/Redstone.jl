@@ -76,6 +76,9 @@ Left open on purpose, each with its owner.
    restores its own zoom and pan when revisited, kept per path for the
    session. The breadcrumb spells the open level's path as links, the root
    labelled as the tree labels it; Backspace or Alt-Up goes to the parent.
+   A move to an ancestor of the level left, by these keys, the breadcrumb
+   or back, selects the ancestor's child on the path, so the keyboard
+   continues from it (amended 2026-11-02, increment 6's look pass).
    The open level is the page's URL hash, `#level=aircraft/loops`, so back
    and forward move between levels, a reload reopens the level and a level
    is linkable in the hosted copy; the file is never in the URL. On load
@@ -101,20 +104,26 @@ Left open on purpose, each with its owner.
    class and tier, the rate read out as a phrase ("every 4th base tick,
    offset 1", "every tick of `q_ctl`, 1/50 s") with the anchor, `m` and
    `c` in its hover title and no row for a continuous leaf, which no rate
-   gates, and the membership when `key` is present; the signature wrapped
+   gates, and the membership when `key` is present, its container's kind
+   written out, "transparent container `children`, key `plant`" or "keyed
+   container `gains`, key `a`"; the signature wrapped
    in monospace and collapsed under the title "signature"; the docstring
-   collapsed under the title "docstring" with its first line beside it,
+   collapsed under the title "docstring" alone,
    then rendered from Markdown by a bundled renderer, a Documenter `@ref`
    link rendered as its code text, linking being axis 7's (the header's
    buttons, the labelled facts and the two titles amended 2026-11-01,
    increment 5's look pass); the locations one per
    declaration, a click opening the file in the editor through the server
    in the live session (axis 6) and copying the path in the hosted copy;
-   the parameters as a name and summary table; the faces, inputs then
+   the parameters as a name and summary table, each summary under its
+   name when the pane is narrow; the faces, inputs then
    outputs, each with name, type, the kind marker as a short phrase,
    "vector 3 of float", "struct {x, y}", the pinned mark and an output's
    stage, an input naming its terminal producer and an output its
-   consumers as clickable paths, a row click selecting the port. A closed
+   consumers as clickable paths, a row click selecting the port, each
+   face's facts stacked when the pane is narrow (the membership's kind,
+   the docstring's bare title and the narrow pane's stacked rows amended
+   2026-11-02, increment 6's look pass). A closed
    assembly shows the same without tier and timing, with its child count,
    its faces typed through the resolution and an open button; a folder its
    field, count and keys as links; a wire its declared endpoints, the
