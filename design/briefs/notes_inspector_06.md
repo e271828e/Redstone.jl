@@ -311,3 +311,23 @@ trunk; a dragged region member can pull its frame over a non-member; in
 rate mode the extras' light-gray tint and the root inputs' dark gray are
 both grays; the legend crowds the drawing's corner; `CONSTANT_WIDTH` cuts
 `a=1.0, b=2.0`.
+
+## The fix, 2026-11-02
+
+The fixer landed the five findings as `2af164b` "Fix increment 6's review
+findings": `npm run check` 373 files, 0 errors; `npm test` 340 tests;
+`npm run e2e -- --project=chromium` 142 checks. The palette came from an
+annealing search over the pair distances under normal vision and the
+three simulations, tighter than the ruling in two places (the hue bans
+applied to fills as well as strokes, each step's fill and stroke within
+20° of each other), with every fill pair at ΔE76 11.3 or more and every
+stroke pair at 11.7 or more under every vision; the bans leave greens,
+cyan and violet to magenta, so five of the eight steps are greens told
+apart by lightness, and step 3's fill is a saturated cyan 28° from the
+highlight's hue. **For the look pass**: whether the fills may take the
+hue bans off (the ruling asked them of strokes only), which would let the
+palette spread beyond green. The legend's wire rule recomputed the pins:
+`closed_loop`'s root lists steps 0, 4, 5, 7 and the extra #9,
+`pid_controller` 2 to 5, 7 and 8, `selection` 4, 5, 7, 8, `rates`' root
+its three triples. Each finding's mutant turns a check red; the map's
+check descriptions follow. The reviewer verifies the delta.
