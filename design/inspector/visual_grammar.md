@@ -175,7 +175,10 @@ Left open on purpose, each with the axis or the bump that owns it.
    color. The palette is categorical, at most eight steps, distinct under
    weak color vision, assigned fastest first with anchor 0 first, and a
    model with more triples than colors gets a text badge on the extra
-   blocks. A closed assembly takes the color of its scope triple, its
+   blocks, its number in the model's order; the first four extras take
+   colors distinct under normal vision only, the number telling them apart
+   for every reader, and the rest a shared neutral (the four colored
+   extras amended 2026-11-02, increment 6's look pass). A closed assembly takes the color of its scope triple, its
    `scopes` row or the enclosing scope composed by the client when it has
    none, with a multi-rate badge in one corner when the discrete leaves
    under it do not all tick on that clock; an assembly with no discrete

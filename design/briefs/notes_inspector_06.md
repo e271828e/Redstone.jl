@@ -386,3 +386,14 @@ landed in the records first (`visual_grammar.md` answers 4, 6 and 8,
 - **The zoom floors stand**: the builders judged them from headless
   screenshots at one device pixel per CSS pixel; on the user's screen
   `library` reads well at every level.
+- **Four colored extras.** The user asked whether lifting the ban admits
+  more than eight colors. A greedy pick of light fills over the sRGB grid
+  (`scratchpad/capacity/capacity.py`) keeps twelve at a least CIEDE2000
+  of 13.9 under normal vision, but only eight at 7.6 under the three
+  simulations as well: weak color vision, not the ban, caps the count.
+  Ruled: steps 1 to 8 stay distinct under all four visions; extras 9 to
+  12 take fills distinct under normal vision only and keep their numbered
+  badges, which carry the difference for every reader; gray and a number
+  past twelve. Built as a follow-up to the look-pass fixer's palette
+  commit, so the two searches do not collide; the checks' extra numbers
+  are unchanged.
