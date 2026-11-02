@@ -397,3 +397,39 @@ landed in the records first (`visual_grammar.md` answers 4, 6 and 8,
   past twelve. Built as a follow-up to the look-pass fixer's palette
   commit, so the two searches do not collide; the checks' extra numbers
   are unchanged.
+
+The look-pass fixer built the pass as six commits from `2af164b`:
+`569ca07` the palette and the legend's continuous line, `cc504f1` the
+type labels, `50ea1d2` the legend focus, `68f31e6` the climb's selection
+and the Shift drag, `8281ce2` the detail pane, `b599af4` the map and the
+README. `npm run check` 376 files, 0 errors; `npm test` 371 tests in 24
+files; `npm run e2e -- --project=chromium` 148 checks; every change's
+mutant red. The palette search, rewritten in Julia with CIEDE2000
+checked against Sharma's test pairs, landed eight steps at a least
+CIEDE2000 of 12.2 for the fills under normal vision and 10.1 under the
+simulations, 10.8 for the strokes under every vision, every pair at
+least 10.2 from the continuous, extra and root-tag pairs; the earlier
+palette scored 4.8 and 6.2 by the same measure. Its departures,
+accepted:
+
+- **The stroke ban is one arc**, 334° to 64° of HSV hue, since a ban of
+  22° round red and round amber each let a rust stroke through between
+  them; the strokes also keep clear of the wire gray.
+- **Fills go down to L\* 72**, contrast 7.8 with the text, above AAA's 7,
+  the only way to spread them beyond yellow-greens.
+- **"Relaxed pairing"** read as a stroke's LCh hue within 60° of its
+  fill's, or a neutral stroke.
+- **The climb's selection lives in `show`**, so forward and a tree
+  double-click landing on an ancestor select the child too, which the
+  record's "a move to an ancestor of the level left" already covers.
+- **Travel** read as the displacement since the press.
+- **The continuous color's tree marks** are the continuous leaves alone,
+  an assembly with no discrete leaf showing the assembly gray.
+- **The narrow pane is the default**: the pane's 360 px is under the
+  420 px query, so a first load shows the stacked rows.
+
+Open items it carries: the strokes still lean on greens and violets; the
+labels, now above the blocks with a title, could catch a block's click;
+the stacked parameter values sit at their names' indent; a focus held
+onto a level with no line of its color dims the whole level. The four
+colored extras follow as one more commit from `b599af4`.
