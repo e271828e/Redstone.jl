@@ -172,30 +172,44 @@ Left open on purpose, each with the axis or the bump that owns it.
    every deployment; the authored chain of `Relative` entries is not shown,
    and where an anchored clock lands on the base grid is the deployment
    overlay's fact, not the build's. Continuous leaves keep the continuous
-   color. The palette is categorical, at most eight steps, distinct under
-   weak color vision, assigned fastest first with anchor 0 first, and a
-   model with more triples than colors gets a text badge on the extra
-   blocks, its number in the model's order; the first four extras take
-   colors distinct under normal vision only, the number telling them apart
-   for every reader, and the rest a shared neutral (the four colored
-   extras amended 2026-11-02, increment 6's look pass). A closed assembly takes the color of its scope triple, its
-   `scopes` row or the enclosing scope composed by the client when it has
-   none, with a multi-rate badge in one corner when the discrete leaves
-   under it do not all tick on that clock; an assembly with no discrete
-   leaf takes the continuous color. Wires take their terminal producer's
-   color at a lighter tint, a root input pin leaving its wires neutral, so a
-   rate transition shows as a color change at a block's input. A legend in
-   a canvas corner lists every triple visible on the open level, on a
-   block, a closed assembly or a wire's tint, each read out, "anchor 1
-   (1/10 s) × 2, phase 1", then a line for the continuous color when a
+   color. The palette is categorical, at most eight steps, constructed rather than
+   searched: eight hues evenly spread round the OKLCh hue circle at one
+   chroma, the fills alternating two lightness bands by step and light
+   enough for the text at AA contrast, each stroke its fill's hue darkened,
+   step 0 a warm peach opposite the continuous blue; distinct under normal
+   vision, never identical under simulated weak color vision, the legend
+   focus telling any two apart (the construction and the bar amended
+   2026-11-02, increment 6's look pass, second round). It is assigned
+   fastest first with anchor 0 first, and a model with more triples than
+   colors gets a text badge on the extra blocks, its number in the model's
+   order; the first four extras take colors distinct under normal vision
+   only, the number telling them apart for every reader, and the rest a
+   shared neutral (the four colored extras amended 2026-11-02, increment
+   6's look pass). A closed assembly takes the one triple its discrete
+   leaves share, the assembly gray when they tick on several, and the
+   continuous color with none; whenever a discrete leaf lies beneath it, it
+   wears a clock-count badge in one corner, "1 clock" on a colored one, the
+   count on a gray one. Its `scopes` row colors nothing: an assembly ticks
+   on nothing, the row is the frame its `Relative` children compose
+   against, and the detail pane lists it (the assembly rule and the badge
+   amended 2026-11-02, increment 6's look pass, second round). Wires take
+   their terminal producer's fill, a continuous producer's wires a blue of
+   their own since the continuous fill is too pale for a line, a root input
+   pin leaving its wires neutral, so a rate transition shows as a color
+   change at a block's input and a wire names the block it leaves (the fill
+   amended 2026-11-02, increment 6's look pass, second round). A legend in
+   a canvas corner lists first a line for the continuous color when a
    continuous leaf, an assembly with no discrete leaf or a continuous
-   producer's wire is visible; the overlay bump adds the concrete `Δt` and
-   `(D, Φ)` per line. The rate palette's strokes, which also tint the
-   wires, avoid red, amber and the halo hue; its fills, light and never an
-   overlay's mark, may take any hue (the legend's wire and continuous
-   lines and the fills' freedom amended 2026-11-02, increment 6's look
-   pass). A click on a legend line focuses its triple, the continuous line
-   its color: the blocks on it, the closed assemblies with a leaf of it
+   producer's wire is visible, then every triple visible on the open level,
+   on a block or a wire, each read out, "anchor 1 (1/10 s) × 2, phase 1";
+   the overlay bump adds the concrete `Δt` and `(D, Φ)` per line. The rate
+   palette's fills, which also color the wires, keep their distance from
+   the error, warning and highlight colors and the wire gray under every
+   vision, and the strokes, borders only, follow their fills (the legend's
+   wire and continuous lines amended 2026-11-02, increment 6's look pass;
+   the continuous line first and the fills' part amended the same day,
+   second round). A click on a legend line focuses its triple, the
+   continuous line its color: the blocks on it, the closed assemblies with a leaf of it
    beneath and the wires it tints are lit, the rest dimmed as for a search,
    and the tree marks its rows with counts up collapsed ones; a second
    click, Escape or leaving rate mode clears it, and it holds across levels
@@ -205,11 +219,16 @@ Left open on purpose, each with the axis or the bump that owns it.
    6's look pass).
    *Why:* two blocks under different anchors are two clocks by design, and
    a color keyed on the deployment's `(D, Φ)` would merge or split them per
-   deployment. A scope triple is what the author declared at that level and
-   what a `Relative` beside it composes against, so a closed block shows it
-   and the badge says the inside differs; a hatch for "mixed" answered no
-   question. *Rejected:* rate scopes as regions, since a scope is declared
-   for one child key and its region would be that child's own block, and
+   deployment. An assembly ticks on nothing, so its scope row is a frame,
+   not a clock; coloring a closed box by its frame put two facts in one channel and left
+   the badge to patch the gap. A color now means one thing on every block,
+   every discrete tick beneath is on that triple, gray with a count means
+   several, and the count on every closed box tells a colored one from a
+   leaf. Eight light fills distinct under weak color vision do not exist,
+   the capacity search showed, so the bar is normal vision with the legend
+   focus as the guarantee, and nameable hues of even weight beat a palette
+   that clears a threshold everywhere and reads nowhere. *Rejected:* rate
+   scopes as regions, since a scope is declared for one child key and its region would be that child's own block, and
    the container case already has answer 5's region; keying color on the
    period alone with the phase as a mark, since phased blocks never share
    an instant.
@@ -267,8 +286,8 @@ Left open on purpose, each with the axis or the bump that owns it.
    output square with a cross at its middle, shown under either verdict. No
    dimming by default; a dimmed state exists for axis 5's focus. Warnings
    take a second reserved hue, amber, same mechanics, once a descriptor
-   carries them. The rate palette's strokes avoid red, amber and the
-   highlight hue (answer 6).
+   carries them. The rate palette's fills, the wires' colors too, keep
+   their distance from red, amber and the highlight hue (answer 6).
    A structure-step failure has no diagram, only the list (answer 6).
    *Why:* the two questions a loop raises, where it closes and which hop is
    false, become things seen rather than reconstructed from slash paths:
