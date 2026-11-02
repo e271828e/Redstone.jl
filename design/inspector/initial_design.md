@@ -205,7 +205,9 @@ b6f08b1.
     picture. When `inspect` pushes a new descriptor, surviving blocks keep
     their places by ELK's determinism and a dragged one keeps its dragged
     place; ELK takes no position hints (amended 2026-11-01, `workspace.md`
-    answer 9). A user may drag a block or a pin to untangle a view. The change lasts until the page reloads
+    answer 9). A user may drag a block or a pin to untangle a view, Shift held at any moment
+    keeping the move to the axis of greater travel (amended 2026-11-02,
+    increment 6's look pass). The change lasts until the page reloads
     and is never saved. Hand arrangement saved beside the code is refused for
     now. It could be added on top later.
     *Why:* a saved arrangement is a second file to version that drifts from

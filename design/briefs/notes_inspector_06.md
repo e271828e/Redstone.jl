@@ -370,3 +370,19 @@ landed in the records first (`visual_grammar.md` answers 4, 6 and 8,
 - **The root pins' declared order is given up** for the two crossings, as
   answer 3's tie-break reads; no amendment.
 - **No `name:` search prefix**: offered, not taken.
+- **Shift constrains a drag** to the axis of greater travel, at any moment
+  during the drag, re-applied on Shift's own key events
+  (`initial_design.md` answer 12).
+- **A legend line focuses its triple**, the continuous line its color: the
+  blocks, the closed assemblies with a leaf beneath and the tinted wires
+  lit, the rest dimmed through the search's mechanism, the tree's rows
+  marked with counts; cleared by a second click, Escape or tier mode;
+  kept across levels and across a push that keeps the triple; with a
+  query standing, the canvas shows the legend's focus and the tree the
+  search's markers. Escape's chain: route, legend focus, search,
+  selection (`visual_grammar.md` answers 6 and 9, `workspace.md` answer
+  11). Taken now rather than in increment 7, which would otherwise
+  generalize three focus states at once.
+- **The zoom floors stand**: the builders judged them from headless
+  screenshots at one device pixel per CSS pixel; on the user's screen
+  `library` reads well at every level.

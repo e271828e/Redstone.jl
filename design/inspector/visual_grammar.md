@@ -191,7 +191,15 @@ Left open on purpose, each with the axis or the bump that owns it.
    wires, avoid red, amber and the halo hue; its fills, light and never an
    overlay's mark, may take any hue (the legend's wire and continuous
    lines and the fills' freedom amended 2026-11-02, increment 6's look
-   pass).
+   pass). A click on a legend line focuses its triple, the continuous line
+   its color: the blocks on it, the closed assemblies with a leaf of it
+   beneath and the wires it tints are lit, the rest dimmed as for a search,
+   and the tree marks its rows with counts up collapsed ones; a second
+   click, Escape or leaving rate mode clears it, and it holds across levels
+   and across a push that keeps the triple; while a query also stands, the
+   canvas shows the legend's focus and the tree the search's markers
+   (amended 2026-11-02, increment
+   6's look pass).
    *Why:* two blocks under different anchors are two clocks by design, and
    a color keyed on the deployment's `(D, Φ)` would merge or split them per
    deployment. A scope triple is what the author declared at that level and
@@ -280,7 +288,7 @@ Left open on purpose, each with the axis or the bump that owns it.
    chain of answer 8 in the highlight hue: casings on the open level, the
    origin's halo, a badge on each closed child entered, the terminal port
    marked, a dot per level in the tree. Search hits take a dashed halo, the
-   selected hit the solid one. Focus on a diagnostic, a route or a search
+   selected hit the solid one. Focus on a diagnostic, a route, a legend line or a search
    dims everything uninvolved by opacity, never by color. Composition from
    bottom to top: dim, normal, route casing, selection halo, error overlay,
    so the error hue always wins; a dragged block draws above its neighbours

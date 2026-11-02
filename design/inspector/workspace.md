@@ -319,7 +319,7 @@ Left open on purpose, each with its owner.
     | `t` | trace the selected face or wire |
     | `r` `y` `o` | rate mode, type labels, order badges |
     | `d`, `?` | toggle the drawer, the help page |
-    | Escape | clear the route, then the search, then the selection |
+    | Escape | clear the route, then the legend's focus, then the search, then the selection |
     | Tab | move focus between the tree, the canvas, the detail pane and the drawer |
 
     Focus shows as the halo, for the keyboard only, and every control is a
