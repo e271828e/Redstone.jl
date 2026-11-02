@@ -433,3 +433,14 @@ labels, now above the blocks with a title, could catch a block's click;
 the stacked parameter values sit at their names' indent; a focus held
 onto a level with no line of its color dims the whole level. The four
 colored extras follow as one more commit from `b599af4`.
+
+The four colored extras landed as `bc28432`: a search with the eight
+steps fixed, under normal vision only, gave pale pink, mint, sky and
+salmon fills with magenta, teal green, dark teal and dusty mauve strokes,
+every fill and stroke at a least CIEDE2000 of 16.6 from the others, the
+eight steps and the continuous, extra and root-tag pairs; `stepPair` is
+the one reader, the steps, then the four extras, then the shared
+neutral from the thirteenth triple. `npm run check` 377 files; `npm
+test` 373 tests in 25 files; `npm run e2e -- --project=chromium` 148
+checks; both mutants red. The reviewer verifies the look pass from
+`2af164b` to `bc28432`.
