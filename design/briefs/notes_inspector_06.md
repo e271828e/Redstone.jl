@@ -465,3 +465,75 @@ observations, open with the user:
   longer names its producer's fill; the cost of the free fills.
 - **The base grid is olive-gold**, so on `closed_loop`'s root every
   assembly is olive.
+
+## The look pass, second round, 2026-11-02
+
+The user asked for an account of the palette's standing and the coordinating
+session read the fixer's palette against the simulations itself: the eight
+fills cleared the ruling's threshold pairwise and read as two families, four
+tans and three blue-grays under protan and deutan simulation; the wire tints,
+the strokes mixed 55% with white, sat at CIEDE2000 5.5 pairwise and 4.8 to
+6.9 from the continuous tint, below any bar; the reserved colors were banned
+by hue angle under normal vision while the pairs were measured by distance
+under simulation, the reviewer's finding 1 following from the mismatch; and
+eight light fills distinct under weak color vision do not exist in the sRGB
+slab the text contrast leaves, which the capacity script had already shown.
+The session's reading: the objective, not the optimizer, was wrong, and the
+closed loop's olive root was reading 7's fallback, not the palette's step 0.
+
+Settled in discussion and tried in the worktree before any record moved,
+each shown on the fixtures' screenshots:
+
+- **The palette is constructed.** Eight OKLCh hues evenly spread at one
+  chroma, the fills alternating two lightness bands by step, the strokes
+  the same hue darkened, step 0 a warm peach; a local search nudged the hue
+  positions and the bands only. Fills go down to about L* 66, AA contrast
+  against the text. The bar moved from "distinct under weak color vision"
+  to "distinct under normal vision, never identical under simulation, the
+  legend focus telling any two apart": fills 12.2 and up under normal
+  vision, about 4 under the simulations by Colors.jl's model, which gives
+  the fixer's palette 6.1 under deutan where its own search reported 10.1.
+- **Wires take their producer's fill**, the continuous producer a wire blue
+  of its own, the continuous fill being too pale for a line. The tint and
+  the stroke ban go; the fills keep their distance from the error, warning,
+  highlight and wire colors under every vision.
+- **The assembly rule.** The user's reading: an assembly ticks on nothing,
+  its `scopes` row is the frame its `Relative` children compose against,
+  so the row colors nothing. A closed assembly takes the one triple its
+  discrete leaves share, the assembly gray when they tick on several, the
+  continuous color with none. Reading 7 and its alternative are both
+  superseded; the `scopes` table's one reader is the detail pane.
+- **The clock badge on every closed assembly** with a discrete leaf beneath,
+  "1 clock" on a colored one, the count on a gray one, the user's call: a
+  colored closed box otherwise reads as a leaf, and a count that appears
+  only on gray boxes says nothing gray did not. Two pills per assembly once
+  increment 8's order badge lands; accepted.
+- **The continuous line first** in the legend, the user's call.
+- **The keyboard's cursor.** The user found `l` from `pid_controller` doing
+  nothing and `l` from `command_pack` landing on `u_unpack` past `tracker`;
+  the 90° cone from the origin's center excluded a neighbor in the next
+  layer whenever ELK had placed it high or low. `nearest` now takes the
+  boxes whose center lies beyond the origin's far edge, scored by the
+  facing-edge gap clamped at zero plus twice the perpendicular center
+  offset; checked against the live boxes, it changes seven of 27 moves on
+  the two levels, the user's two among them, `actuators`' `j` the one
+  debatable pick. The record's "nearest in that direction" stands; the map
+  holds the rule.
+
+A side effect for the records: no block of `closed_loop` ticks on the base
+grid, so the base grid leaves that model's palette order, anchor 1 takes the
+peach, and anchors 9 and 10 are its two extras.
+
+`visual_grammar.md` answer 6 amended at `28f5d72` of Redstone.jl. The
+landing agent (Opus) rewrote the pins and the map on `increment-6`:
+`5032ca1` the cursor rule, `915b27b` the palette, the wires, the assembly
+rule, the badge and the legend order, `2efa457` the map and the README;
+`npm run check` 377 files, 0 errors; `npm test` 378 tests in 25 files;
+`npm run e2e -- --project=chromium` 148 checks; 22 mutants red. Its
+departures, accepted: one more cursor test, the facing-edge mutant having
+survived; stale comments on removed mechanisms reworded; the oracle not
+rerun, the changed counts read by hand off the fixtures' timings and the
+tests saying so; the palette map trap keeping the first round's lesson and
+dropping the hex tables. Nothing is pushed. Open: the type labels'
+placement and the layer spacing, with ELK's edge labels as the candidate
+mechanism, probed next.
