@@ -250,3 +250,64 @@ about 4 px, something like 0.8, 0.6 and 0.4 being the pass's call; the
 feedback wires of `closed_loop`'s root still wrap over the top and right
 of the drawing under the chosen options; the trunk dots read as intended.
 The cold review follows at `9aa8874`.
+
+## The cold review, 2026-11-02
+
+Every check green from a clean install: `npm run check` 373 files, 0
+errors; `npm test` 340 tests in 23 files; `npm run e2e --
+--project=chromium` 142 checks in 18 s; the fixture regeneration left the
+tree clean. The oracle equals the brief's table on every row, and the
+reviewer's own third reading of the palette order, the legend texts and
+the wire classes agrees with it on every level of every fixture. No
+defect breaks a check or the build. Of 32 mutants, one survived as a
+missing check and two of the reviewer's own as missing pins; the rest
+died where the brief said.
+
+Findings, all handed to the fixer with the coordinating session's rulings:
+
+1. **The palette is not distinct under weak color vision**: under a
+   simulation the mint and pink fills sit at ΔE76 1.6 for deuteranopia,
+   the pear and yellow strokes at 0.5 for protanopia, and the yellow
+   stroke 7° of hue from the warning amber. Ruled a defect against
+   answer 6's clause, the values staying the look pass's: the fixer
+   respreads the eight steps by lightness as well as hue until every
+   pair clears about 10 under each simulation, no stroke within about 20°
+   of red or amber, no blue near the highlight.
+2. **The legend omits the triples the wire tints make visible**: `rates`'
+   root draws `outer`'s wire in step 1's tint with no `× 2` line. The
+   brief's `legend` definition, "each child's `blockTriple`", read answer
+   6 too narrowly; ruled that a wire drawn in a step's tint is visible,
+   so `legend` adds each level wire's `wireTriple`, the pins recomputed.
+   This supersedes the brief's table's legend column and refines reading 9.
+3. **`library` loads below a floor** (its fit scale 0.36 against
+   `FLOOR_NAMES` 0.4), so the coverage check counted icons nobody saw;
+   the check zooms in first, and the map gains the open item that a root
+   whose fit falls below a floor loads without its names, for the look
+   pass to settle through the floors or the fit.
+4. **Missing check**: an icon kept at `frames` survives; `zoom.spec.ts`
+   extends to that floor.
+5. **Missing pins**: an icon recolored in rate mode and the opaque wire
+   drawn dark both survive; two comparisons added.
+
+On the root input pins: the landed `thoroughness: 20` draws
+`closed_loop`'s root inputs `h_ref`, `mode`, `V_ref` top to bottom
+against the declared `h_ref`, `V_ref`, `mode`, for a gain of two
+crossings over increment 5's options (60 against 62; 622 against 663 on
+`large`). The reviewer measured that keeping the order costs the pass's
+whole gain (`crossingCounterNodeInfluence` 1 gives 62 and 712;
+`forceNodeModelOrder` alone 61 and 699) and judged it crossing
+minimization exercising its say, answer 3 making declaration order the
+tie-break, as increment 5 already did on `pid_controller`'s and
+`selection`'s pins. **Open with the user**: two crossings against the
+pins' declared order.
+
+Observations for the look pass, none a finding: the struct's line reads
+as a double line, two bands round a background core, where answer 4 says
+triple; the zoom floors read low; type labels collide (`Float64Float64`
+at `lqr_controller`'s `δe`, `kinds`' across its output pins and off the
+canvas, which the fit ignores) and keep the module name while losing the
+parameters; the trunk dots at radius 2.5 barely show on a 3 px vector
+trunk; a dragged region member can pull its frame over a non-member; in
+rate mode the extras' light-gray tint and the root inputs' dark gray are
+both grays; the legend crowds the drawing's corner; `CONSTANT_WIDTH` cuts
+`a=1.0, b=2.0`.
