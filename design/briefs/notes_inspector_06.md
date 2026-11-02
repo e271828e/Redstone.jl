@@ -444,3 +444,24 @@ neutral from the thirteenth triple. `npm run check` 377 files; `npm
 test` 373 tests in 25 files; `npm run e2e -- --project=chromium` 148
 checks; both mutants red. The reviewer verifies the look pass from
 `2af164b` to `bc28432`.
+
+The reviewer verified the look pass at `bc28432`: the gate green (377
+files, 373 tests, 148 checks), every amended sentence holding on the page
+by probe, its own CIEDE2000 equal to the fixer's tables, one mutant per
+commit red. No code defect; ready to merge. Two low findings and two
+observations, open with the user:
+
+1. **Two strokes near the reserved colors under simulated color
+   blindness**, the search having tested the reserved hues by angle under
+   normal vision only: step 0's stroke, the base grid's wire tint, sits
+   0.5 from the warning amber under protanopia and 6.0 from the error red
+   under deuteranopia; step 1's sits 2.8 from the highlight under
+   protanopia.
+2. **A type label is dropped when fewer than three characters would
+   remain**; `lqr_controller` draws 16 labels for 20 producer ports. The
+   map states the rule, no record does.
+- **Fill and stroke hues drift apart** by up to 83° (a pink block with
+  violet wires, a yellow one with green wires), so a wire's tint no
+  longer names its producer's fill; the cost of the free fills.
+- **The base grid is olive-gold**, so on `closed_loop`'s root every
+  assembly is olive.
