@@ -209,3 +209,44 @@ which crowds the bottom pin of `lqr_controller`; on `kinds` the short
 wires put the type labels across the output pins and under the `p`
 block. Agent B, shapes, the ELK pass, Firefox and the map, follows from
 `e361671`.
+
+Agent B built stages 5 to 9 from `e361671`: `516691a` the icons;
+`57b9e07` the regions; `c30a842` the text levels and the ELK pass;
+`aaf22dd` the Firefox project; `9aa8874` the map and the README. `npm run
+check` 373 files, 0 errors; `npm test` 340 tests in 23 files; `npm run
+e2e -- --project=chromium` 142 checks. Its departures, accepted and
+recorded in its notes for the map:
+
+- **`Delay`'s `K` is the second type parameter** (`Delay{Float64, 3}`);
+  `iconOf` takes the first integer among the top-level parameters, so
+  either order reads `z⁻³`. The brief's error.
+- **`a=1.0, b=2.0` is 64 px**, over `CONSTANT_WIDTH`, so it draws cut
+  with the whole value in the title; a `Constant`'s width term is the
+  larger of `ICON_WIDTH` and its cut text.
+- **The discrete integrators' staircase sits beside `1/s`**, not under
+  it, where the two overlapped in 12 px; artwork for the look pass.
+- **A click on a region frame's middle hits a wire**, whose hit path lies
+  over the frame; the check clicks the top edge and the caption.
+- **`sizeBlock` measures the member's label**, the key, not the segment
+  it no longer draws.
+- **The live hosted-copy check skips whole under Firefox**, its
+  no-connection and no-download parts with it.
+- **The ELK pass chose `elk.layered.thoroughness: 20` alone**: 62 to 60
+  crossings on `closed_loop`'s root, 663 to 622 on `large`'s, 6 kept on
+  `lqr_controller`, the order pins green; `NETWORK_SIMPLEX` beside it
+  saved two more at 222 more bends and twice the time on `large`. The
+  `large` output-pins check is dropped: only `forceNodeModelOrder` fixes
+  that order and it raises `large`'s crossings to 699. **Side effect for
+  the user**: both qualifying sets move `closed_loop`'s root input pins
+  out of declaration order, `h_ref`, `mode`, `V_ref` top to bottom; no
+  check pins that order; the reviewer is asked to measure it against
+  answer 3's "declaration order as the tie-break".
+- **Plain `npm run e2e` now starts Firefox too**; local runs use
+  `npm run e2e -- --project=chromium`.
+
+Its headed look, for the look pass: the floors read low, the display
+names at the `no-faces` floor about 6 px and the segments at `segments`
+about 4 px, something like 0.8, 0.6 and 0.4 being the pass's call; the
+feedback wires of `closed_loop`'s root still wrap over the top and right
+of the drawing under the chosen options; the trunk dots read as intended.
+The cold review follows at `9aa8874`.
