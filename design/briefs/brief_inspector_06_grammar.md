@@ -861,3 +861,44 @@ context rules as the builders; it never launches Firefox. Dimensions:
 - **The map** read against the tree: every file under `src/` named, the
   stores' section true to the code, every check's pins listed, the
   contract as implemented, the CI file as described.
+
+## Built
+
+- **The commits** on `increment-6` of `RedstoneInspector.jl`, above
+  `bf52830`, not pushed: `637b5f1` `kinds`' root outputs; `4b28f2a` the
+  `library` fixture; `a56c2b3` the color modes, palette, badges, legend,
+  tree dots, switch, status word and `r`; `e361671` the wire classes, the
+  rate tint, the junction dots and the type labels with `y`; `516691a`
+  the icons; `57b9e07` the regions; `c30a842` the text levels and the ELK
+  pass; `aaf22dd` the Firefox project; `9aa8874` the map and the README;
+  `2af164b` the review fixes. `npm run check` 373 files, 0 errors; `npm
+  test` 340 tests in 23 files; `npm run e2e -- --project=chromium` 142
+  checks in about 18 s; the fixture regeneration leaves the tree clean.
+- **The builders' departures**, all held under review and recorded in
+  the map and in `notes_inspector_06.md`: the `Relative(2)` scope on a
+  leaf at the root; `library`'s anchor 1 the slower; the singular `1
+  wire` moved into `detail.ts`; the badge straddling the block's top
+  edge; `descent`'s flag wire the `Bool`, not the enum; `markerUnits`
+  `userSpaceOnUse` with one marker per wire color; `Delay`'s `K` the
+  first integer parameter; `a=1.0, b=2.0` cut at 60 px; the staircase
+  beside `1/s`; the region clicked at its edge and caption; the ELK pass
+  landing `thoroughness: 20` alone, the `large` pins check dropped, and
+  `closed_loop`'s root inputs leaving declaration order for two crossings;
+  plain `npm run e2e` now starting Firefox.
+- **The review**: every check green from a clean install, the oracle and
+  the reviewer's third reading equal on every level, no check-breaking
+  defect; five findings landed by the fixer at `2af164b` and verified,
+  each mutant red: the palette respread for weak color vision, the legend
+  listing the triples the wire tints make visible (reading 9 refined), the
+  `library` coverage check zooming to `full`, the icon pinned hidden at
+  `frames`, the icon's color and the opaque wire's gray pinned. Of the
+  brief's mutants the three named survive as accepted.
+- **Observations for the user and the next briefs**, in
+  `notes_inspector_06.md`: the root pins' order against two crossings;
+  the palette's five greens and the fills' hue bans; the zoom floors
+  reading low and `library` fitting below one; the type labels colliding
+  and losing the parameters; the struct's double line; the trunk dots'
+  size; a dragged member's frame over a non-member; the legend over the
+  drawing; increment 5's items stand.
+- **Pending**: the user's look-and-adjust pass, the merge and the push
+  with the Firefox step's first outcome.

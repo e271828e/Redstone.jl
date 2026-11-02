@@ -331,3 +331,14 @@ palette spread beyond green. The legend's wire rule recomputed the pins:
 `pid_controller` 2 to 5, 7 and 8, `selection` 4, 5, 7, 8, `rates`' root
 its three triples. Each finding's mutant turns a check red; the map's
 check descriptions follow. The reviewer verifies the delta.
+
+The reviewer verified the delta at `2af164b`: its own `cvd.py` confirms
+the palette's minimums (fills 11.3 and up, strokes 11.7 and up under
+every vision, fills at least 31° and strokes at least 46° of hue from the
+error and warning hues), its own `third.py` extended by the wire rule
+equals every legend pin, the four mutants turn a check red, the amended
+specs and `npm test` green, the map true to the code. Two more
+observations for the look pass: step 5's fill sits ΔE 6.1 from the root
+tag's fill under simulated deuteranopia, and the cyan fill reads loud.
+The increment is ready for the user's look-and-adjust pass; nothing is
+pushed.
