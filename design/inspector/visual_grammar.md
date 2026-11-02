@@ -124,14 +124,16 @@ Left open on purpose, each with the axis or the bump that owns it.
    it, and `AssemblyFace` gains no `type` or `kind`. A fan-out draws as one
    trunk that branches, a filled dot at each branch; the mechanism, ELK's
    edge merging, is axis 4's. A feedback wire gets no special style, since
-   the port glyph of answer 2 shows where the loop is legal. The type-label
-   toggle, off by default, writes the type once per producer port with its
-   module qualifiers dropped, `SVector{5, Float64}` for
-   `StaticArraysCore.SVector{5, Float64}`, on the longest horizontal
-   segment among the port's wires, cut with an ellipsis to that segment's
-   length and drawn above the blocks on a background halo, the full string
-   in the hover title and the detail pane (amended 2026-11-02, increment
-   6's look pass); the kind marker is never written out. A wire's key is its
+   the port glyph of answer 2 shows where the loop is legal. The type-label toggle, off by default, writes the type once per producer
+   port with its module qualifiers dropped, `SVector{5, Float64}` for
+   `StaticArraysCore.SVector{5, Float64}`, uncut, at the port's own wire
+   start, just below the wire, the full string in the hover title and the
+   detail pane; the label is an ELK edge label placed at the tail and
+   present in every layout, overlay on or off, so the layout reserves its
+   room and no block moves with the toggle, at the cost of wider layer gaps
+   (the placement amended 2026-11-02, increment 6's look pass, and again
+   2026-11-03, ELK's labels replacing the longest-segment rule); the kind
+   marker is never written out. A wire's key is its
    consumer endpoint, unique within a level because a consumer port has one
    producer and a fan-out is one wire per target; the selection, ELK's
    position hints and the keyed loops use it across pushes.
