@@ -537,3 +537,46 @@ tests saying so; the palette map trap keeping the first round's lesson and
 dropping the hex tables. Nothing is pushed. Open: the type labels'
 placement and the layer spacing, with ELK's edge labels as the candidate
 mechanism, probed next.
+
+## The type labels, 2026-11-03
+
+The user found the look pass's longest-segment rule putting labels in the
+middle of long runs on `closed_loop`'s root and on 14 px stubs inside
+`lqr_controller`, cut to "Flo…" and run over the consumer's edge, and asked
+for them beside the producer, with wider spacing as one idea. Two routes
+were weighed: a producer-anchored label cut to the free run plus wider
+fixed layer spacing, two numbers; or ELK's own edge labels, placed at the
+tail and present in every layout so the toggle moves no block. The user
+asked for the principled one once the question "do blocks move with the
+toggle" was answered: only if the labels enter the graph with the toggle,
+which they do not.
+
+A probe agent (Opus) ran ELK in Node over seven levels with measured label
+sizes: every label at its port's point plus a small offset, uncut, below
+the wire (ELK's choice for east ports, no option moves it, accepted); no
+overlap with a block, a pin or another label; block positions identical
+across the toggle; crossings and the layer and pin order unchanged on every
+level; width up 12% (`pid_controller`) to 42% (`lqr_controller`),
+`closed_loop`'s root 888 to 1103, `large` 8207 to 10083; layout time
+unchanged. It then implemented it: `sizeLabels` in `size.ts`, `EdgeLabel`
+and `LABEL_OPTIONS` in `level.ts`, `Geometry.labels` as offsets from the
+port's point in `layout.ts`, the canvas drawing at the offset, the
+longest-segment code removed. elkjs facts kept in the map's traps: a label
+without `text` is silently ignored; no option moves a tail label to the
+wire's other side; label coordinates are the edge's container's; re-laying
+out an ELK output corrupts the routes.
+
+`visual_grammar.md` answer 4 amended at `7ef9404`. The landing agent (Opus)
+rewrote the two label checks and the scale-dependent frame-edge click, added
+five unit pins with their mutants, and mapped it: `2824f1f` on
+`increment-6`; `npm run check` 377 files, 0 errors; `npm test` 381 tests in
+25 files; `npm run e2e -- --project=chromium` 148 checks. Its departures,
+accepted: the frame-edge click aimed at the middle of the stroke's band
+rather than on the line, which missed at two of nine scales; the label
+checks asserting exactly one label per producer port. Open in the map: the
+local router's 12 px stub on a backward route after a drag can cross a
+label; the width cost lowers every fit scale, bearing on the zoom floors;
+`fit` does not cover the labels. Nothing is pushed.
+
+For the user: the merge of `increment-6` and the push, the Firefox step's
+first outcome, the worktrees of increments 4 and 5 to remove.

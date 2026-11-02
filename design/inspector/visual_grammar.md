@@ -124,8 +124,8 @@ Left open on purpose, each with the axis or the bump that owns it.
    it, and `AssemblyFace` gains no `type` or `kind`. A fan-out draws as one
    trunk that branches, a filled dot at each branch; the mechanism, ELK's
    edge merging, is axis 4's. A feedback wire gets no special style, since
-   the port glyph of answer 2 shows where the loop is legal. The type-label toggle, off by default, writes the type once per producer
-   port with its module qualifiers dropped, `SVector{5, Float64}` for
+   the port glyph of answer 2 shows where the loop is legal. The type-label
+   toggle, off by default, writes the type once per producer port with its module qualifiers dropped, `SVector{5, Float64}` for
    `StaticArraysCore.SVector{5, Float64}`, uncut, at the port's own wire
    start, just below the wire, the full string in the hover title and the
    detail pane; the label is an ELK edge label placed at the tail and
