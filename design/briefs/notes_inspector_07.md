@@ -284,3 +284,25 @@ its cross sits on the label column; a discrete leaf's orange dot beside
 an amber mark reads as two similar hues; a focused diagnostic attributed
 to the root or an unknown path lights nothing, so the whole level dims.
 The fixer follows at `a7f1986`.
+
+## The fix, 2026-11-03
+
+The fixer landed the four findings as `8f686ce`: `treeMarks` marking the
+root's own row, the unit pin amended and a browser pin on the synthetic
+root diagnostic (`s` reading "1 warning, beneath" beside it, beyond the
+brief and as the oracle reads); `effectiveOpacity` in `e2e/fixtures.ts`,
+the product of the computed opacities up to the svg, pinning `t`'s mark
+halo at 0.5 and its badge at 1 under the diagnostic focus and
+`pid_controller`'s route badge at 1 under the route focus, the surviving
+mutant confirmed red (0.15 and 0.3 read); each drawer row's content in a
+`button.row`, the `li` keeping the contract and `a.location` beside it;
+the README's sentence; the map amended, the open items gaining the
+drawer's missing keyboard path. `npm run check` 384 files, 0 errors; `npm
+test` 469 tests in 27 files; `npm run e2e -- --project=chromium` 175
+checks. Two notes from the fixer, for the user: `pre.message` inside the
+button is technically invalid HTML (a button allows inline content), which
+browsers render and Svelte does not flag, a `span` with `pre-wrap` being
+the valid form at the cost of the contract; and two clickable rows older
+than this increment are not buttons either, the tree's rows (which have
+`j` and `k`) and the pane's face rows. The reviewer verifies the delta
+next.
