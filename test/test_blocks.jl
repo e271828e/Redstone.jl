@@ -1803,6 +1803,17 @@ function test_blocks()
     @testset "the vector comparator switches each component on its own thresholds (§10.4, §10.6, D-179)" begin
         @test y_types(Comparator(threshold = SVector(0.0, 1.0))) == Pinned{SVector{2, Bool}}    # D-312
         h = 1//10
+        # A vector input exactly on a plain threshold reads above in every
+        # component, once: the per-component fall is strict.
+        for localized in (true, false)
+            on_sim = Simulation(constant_comparator(SVector(0.0, 0.5), Comparator(threshold = SVector(0.0, 0.5), localized = localized));
+                                h = h)
+            init!(on_sim, set())
+            step!(on_sim; t_plus = h)
+            @test port(on_sim, "c") === SVector(true, true)
+            @test modes(on_sim, "c") === SVector{2, Int8}(1, 1)
+            @test isempty(writer_status(latest(on_sim), "loop").recent)
+        end
         for localized in (true, false)
             sim = Simulation(vector_comparator_model(localized); h = h)
             init!(sim, set())
@@ -2577,6 +2588,9 @@ function test_blocks()
         @test_throws ArgumentError Sequence(times = (0.5, 0.25), values = (0, 1, 2))
         @test_throws ArgumentError Sequence(times = (0.25, 0.25), values = (0, 1, 2))
         @test_throws ArgumentError Sequence(times = (0.25, 0.5), values = (0, 1))
+        @test_throws ArgumentError Sequence(times = (0.25,), values = (0, 1, 2))
+        @test_throws ArgumentError Relay(lower = 1, upper = 0)
+        @test_throws ArgumentError Relay(lower = SVector(0, 1), upper = SVector(1, 0))
         @test_throws TypeError Comparator(threshold = 0, localized = 1)
         @test_throws ArgumentError Comparator()
         @test_throws ArgumentError Comparator(lower = 0)

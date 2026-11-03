@@ -572,9 +572,9 @@ y_state(c::Source, (; t)) = c.f(ForwardDiff.value(t))
 A continuous [primitive](@ref g-primitive) that publishes the time integral of
 its input.
 
-The [block](@ref g-block) holds one continuous state `x`, starting at `x0`. Its
-input `u` and its output `y` are bare, and a wire names each by its face, as in
-`"integrator/u"`, with `ẋ = u` and `y = x`, published from
+The [block](@ref g-block) holds one continuous state `x`, starting at `x0`. Without
+`reset`, its input `u` and its output `y` are bare, and a wire names each by its
+face, as in `"integrator/u"`, with `ẋ = u` and `y = x`, published from
 [stage 1](@ref g-stage-function). The block
 therefore has no [feedthrough](@ref g-feedthrough). A `Float64` state follows
 the scalar of a `Dual` [activation](@ref g-activation), so the block linearizes
@@ -1407,7 +1407,7 @@ leaves it off, which is the hysteresis itself.
 # Keywords
 
 - `lower`: the threshold `u` falls below for the relay to switch off, at
-  most `upper`.
+  most `upper`, or the constructor throws an `ArgumentError`.
 - `upper`: the threshold `u` rises to for the relay to switch on.
 - `off`: the value `y` publishes while off.
 - `on`: the value `y` publishes while on. The four values are promoted to one
@@ -1415,13 +1415,15 @@ leaves it off, which is the hysteresis itself.
   so integer values qualify.
 """
 struct Relay{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: AbstractComponent
-    lower::V      # switch off when `u` falls to it
+    lower::V      # switch off when `u` falls below it
     upper::V      # switch on when `u` rises to it
     off::V        # `y` while off
     on::V         # `y` while on
 end
-Relay(; lower, upper, off = zero(lower), on = one.(lower)) =
+function Relay(; lower, upper, off = zero(lower), on = one.(lower))
+    all(lower .<= upper) || throw(ArgumentError("the relay's `lower` must not exceed its `upper`"))
     Relay(float.(promote(lower, upper, off, on))...)
+end
 x_init(::Relay) = nothing
 m_init(c::Relay) = Int8.(zero(c.lower))    # the state: 0 off, 1 on
 u_types(::Relay{V}) where {V} = V

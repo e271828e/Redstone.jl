@@ -259,3 +259,24 @@ the scratchpad, "empty is acceptable". Dimensions:
   re-run plus any the reviewer adds. A surviving mutant is a missing test,
   or an acceptable survivor named with its reason.
 - The gate green on the Julia floor `Project.toml` declares.
+
+## The review's record
+
+The cold review of cfb0db0 ran on 2026-11-03 and 04: the gate green in
+both halves (3808 and 3890), every mutant on the brief's list killed, with
+37 mutants run as method overrides in fresh processes and one confirmed by
+a real edit, and every clause of the three rows holding of the code.
+Four findings, all accepted and landed as one fix commit: the vector
+`Comparator` had no on-threshold pin, so three vector strict-fall mutants
+survived (medium); `Sequence` refused too many `values` untested (low); a
+stale "falls to it" field comment on `Relay`; and the `Integrator`
+docstring calling its input bare without qualifying the reset form. Of its
+questions, one became a change: `Relay(lower = 1, upper = 0)` was accepted
+and chattered to the budget at `t₀`, and now refuses as the `Comparator`
+does, its docstring already saying "at most `upper`". The inventory's
+`Integrator` row no longer implies a `DiscreteIntegrator(; reset)` ships.
+Left as they are: the positional constructors `Integrator(1.0)` and
+`Integrator{Float64}(1.0)` no longer resolve, as `Step`'s do not, and no
+file called them; a `Float32` threshold builds and is refused as
+`GuardForm`, the library-wide `float` convention; the illustrations in
+`src/declare.jl` and the spec quoting `u_types(::Integrator{V})`.
