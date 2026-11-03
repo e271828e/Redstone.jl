@@ -152,3 +152,41 @@ session store with the others, so the serial order stands.
    help page from the landing and from a loaded model.
 4. The merge and the push; the Firefox project's `leave.spec.ts` item
    stands from increment 6.
+
+## Build outcome, 2026-11-04
+
+Agent A built stages 1 and 2 on `increment-8` in
+`~/.julia/dev/RedstoneInspector.jl-inc8`, not pushed: `50d1391`
+`analysis.ts` with its tests and `prefs.order`; `03e21df` the three tab
+components under `src/frame/tabs/`, the drawer hosting them through `onrow`,
+`analysis.spec.ts`, `frame.spec.ts`'s placeholder pin replaced. `npm run
+check` 390 files, 0 errors; `npm test` 489 tests in 28 files; `npm run e2e
+-- --project=chromium` 184 checks. Every oracle count matched. Its
+departures, accepted and recorded in its notes for the map:
+
+- **Every row carries a `kind`** (`order`, `edge`, `root-input`, `anchor`,
+  `scope`, `component`) so `rowTarget` tells rows apart; `ranges` is
+  exported.
+- **A structureless model** gets `[]` from every function and one `p.empty`
+  in the timing tab, "No timing: the descriptor carries no structure."
+- **A primitive root's input row selects its port** `|in|u` through
+  `faceSelection`, the brief's tag being the reading for an assembly root;
+  the reviewer checks what the primitive level draws for that face.
+- **The base grid's row** reads "0 base grid", `Δt`, "0", "—", "the
+  deployment's", the last in the key column; the look pass's.
+- **An anchor row whose scope is the root has no button**, as the brief's
+  reading 12 implies.
+- **The sort state lives in the drawer**, kept across a tab switch, no pref.
+- **The tab body scrolls to its top on a tab switch** and keeps its scroll
+  across a push, both pinned; the headed look found the timing tab opening
+  mid-scroll.
+- **Screenshots** `analysis-order` and `analysis-timing` of `closed_loop`'s
+  root at a 420 px drawer; an extra check pins a push keeping the open tab.
+- **A consumer separator** Svelte collapsed is pinned.
+
+Its headed look: the three tabs read cleanly on `closed_loop`, `rates` and
+`library`; stage-1 ports as open boxes, stage-2 filled; every row click
+landed where the brief says. Observations for the look pass: a row's click
+does not pan the canvas to a selected tag or port, as a tree click does
+not; a port selection does not expand the tree. Agent B, the badges and the
+docstrings, follows from `03e21df`.
