@@ -808,4 +808,40 @@ context rules as the builders; it never launches Firefox. Dimensions:
 
 ## Built
 
-Filled after the build.
+- **The commits** on `increment-7` of `RedstoneInspector.jl`, above
+  `2824f1f`, not merged, not pushed: `0714626` the four fixtures;
+  `db6b205` the overlay; `c42a412` the drawer's diagnostics tab and the
+  tree's marks; `21df84d` the routes, the trace action and the menu;
+  `f60ab61` the tree's route marks and the route across a push;
+  `a7f1986` the map and the README; `8f686ce` the review fixes. `npm run
+  check` 384 files, 0 errors; `npm test` 469 tests in 27 files; `npm run
+  e2e -- --project=chromium` 175 checks; the fixture regeneration leaves
+  the tree clean.
+- **The brief's errors**: `failure_nested`'s root draws five wires, not
+  four; `treeMarks` wanted `own` beside its counts; `routeDrawing` needs
+  the origin, which `routeOf` now returns with the route.
+- **The builders' departures**, all held under review and recorded in
+  the map and in `notes_inspector_07.md`: `litBy` and `routeLit` lighting
+  the level's own pins; a `focusKey` prop beside `focus`; a chain hop
+  carrying its faces; a port mark's side from the node's faces; the
+  filter shown only with rows; terminal ports marked only on crossed
+  levels; pin badges only below the root; a face with no producer not
+  traced; the tree's route marks exactly the crossed levels; the menu's
+  Escape taken in the capture phase.
+- **The review**: every check green from a clean install, the oracle and
+  the reviewer's third reading equal on every fixture, every cited answer
+  holding by probe; four low findings landed by the fixer at `8f686ce`
+  and verified, the mutant red: the root row's mark, the overlay pinned
+  undimmed through the effective opacity, the drawer's rows as buttons,
+  the README's pill sentence. Of the brief's mutants two are red in the
+  unit tests alone and accepted as such.
+- **Observations for the user and the next briefs**, in
+  `notes_inspector_07.md` and the map's open items: the halos' purple and
+  olive compositions; the incident casings under a focus; the wide amber
+  pill and its contrast; the chord over the face labels and the cross's
+  size; a loop row's location; the trunk casings' compounded opacity; the
+  terminal ports' faint stroke; the route pill on a short pin and a tall
+  block; the drawer's missing keyboard path and its `pre` inside a
+  button; the message column narrowed by the location link.
+- **Pending**: the user's reading of the readings (reading 1 first), the
+  look-and-adjust pass, the merge and the push.

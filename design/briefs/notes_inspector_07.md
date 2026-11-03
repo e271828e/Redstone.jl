@@ -306,3 +306,22 @@ the valid form at the cost of the contract; and two clickable rows older
 than this increment are not buttons either, the tree's rows (which have
 `j` and `k`) and the pane's face rows. The reviewer verifies the delta
 next.
+
+The reviewer, resumed, verified every fix at `8f686ce` and ran the gate
+again, green at the same tallies; its mutant turned both checks red. Its
+note that the oracle still skips the root read the canvas-side condition:
+the tree mark is added for any node the tree holds, the root included,
+and the synthetic root case reads the root's own mark. Its one look item
+from the delta: the message column in the drawer runs narrower beside the
+location link.
+
+## Closing state, 2026-11-03
+
+`increment-7` stands at `8f686ce`, seven commits above `2824f1f`, built,
+reviewed and fixed, not merged and not pushed, awaiting the user: the
+readings above, reading 1 first; the look-and-adjust pass as "For the
+user" lists it; then the merge (rebase onto `master`, fast-forward), the
+push and its CI run, and the roadmap's increment 7 line with the facts
+the next briefs take. Increment 6's roadmap line is also still to be
+written. The worktree is `~/.julia/dev/RedstoneInspector.jl-inc7`; no
+preview server is left running.
