@@ -1204,26 +1204,27 @@ the output starts at the value that follows them.
 - `localized`: `true` for localized breakpoints, `false` for boundary-detected
   ones.
 """
-struct Sequence{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, L, N, M} <: AbstractComponent
-    times::SVector{N, Float64}
-    values::SVector{M, V}
+struct Sequence{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, L} <: AbstractComponent
+    times::Vector{Float64}
+    values::Vector{V}
 end
+# The schedule's length is data, so the fields are plain vectors: indexing
+# allocates nothing, and a long schedule compiles no stage of its own.
 function Sequence(; times, values, localized::Bool = true)
     N = length(times)
     length(values) == N + 1 ||
         throw(ArgumentError("a sequence over $N breakpoints takes $(N + 1) values, not $(length(values))"))
     all(k -> times[k] < times[k + 1], 1:N - 1) ||
         throw(ArgumentError("the sequence's `times` must ascend strictly"))
-    converted = float.(promote(values...))
-    V = typeof(first(converted))
-    Sequence{V, localized, N, N + 1}(SVector{N, Float64}(times...), SVector{N + 1, V}(converted...))
+    V = typeof(float(zero(mapreduce(typeof, promote_type, values))))
+    Sequence{V, localized}(collect(Float64, times), V[float(v) for v in values])
 end
 x_init(::Sequence) = nothing
 m_init(::Sequence) = 0                                           # passed
 y_types(::Sequence{V}) where {V} = Pinned{V}
 y_state(c::Sequence, (; m)) = c.values[m + 1]
-advance_guard(c::Sequence{V, true, N}, (; t, m)) where {V, N} = m < N ? t - c.times[m + 1] : -one(t)
-advance_guard(c::Sequence{V, false, N}, (; t, m)) where {V, N} = m < N && t >= c.times[m + 1]
+advance_guard(c::Sequence{V, true}, (; t, m)) where {V} = m < length(c.times) ? t - c.times[m + 1] : -one(t)
+advance_guard(c::Sequence{V, false}, (; t, m)) where {V} = m < length(c.times) && t >= c.times[m + 1]
 advance_handler(c::Sequence, (; t)) = (m = searchsortedlast(c.times, t),)
 state_events(::Sequence) = (advance = StateEvent(advance_guard, advance_handler),)
 

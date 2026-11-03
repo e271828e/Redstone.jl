@@ -2532,9 +2532,9 @@ function test_blocks()
         @test Integrator(x0 = SVector(1, 2), reset = true) isa Integrator{SVector{2, Float64}, true}
         @test FirstOrderLag(τ = 1, x0 = 1) isa FirstOrderLag{Float64}
         @test Step(t_step = 0.25, before = 0, after = 2) isa Step{Float64, true}
-        @test Sequence(times = (1,), values = (0, 2)) isa Sequence{Float64, true, 1, 2}
+        @test Sequence(times = (1,), values = (0, 2)) isa Sequence{Float64, true}
         @test Sequence(times = [0, 1], values = [SVector(0, 1), SVector(1.0, 2), SVector(3, 4)], localized = false) isa
-              Sequence{SVector{2, Float64}, false, 2, 3}
+              Sequence{SVector{2, Float64}, false}
         @test LimitedIntegrator(lower = -1, upper = 1) isa LimitedIntegrator{Float64}
         @test LimitedIntegrator(lower = -1, upper = 1, localized = false) isa LimitedIntegrator{Float64, false}
         @test Relay(lower = 0, upper = 1) isa Relay{Float64}

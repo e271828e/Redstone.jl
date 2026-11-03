@@ -283,3 +283,7 @@ file called them; a `Float32` threshold builds and is refused as
 The reviewer verified the fix at 85a9448: the four survivors and an
 added mutant dropping the `Relay` refusal each turn a pin red, and the
 gate is green at 3817 and 3890.
+
+A loose fix after the review, on the user's question: `Sequence`'s `times`
+and `values` became plain vectors, since indexing allocates nothing and a
+schedule's length is data, so the parameters `N` and `M` went.
