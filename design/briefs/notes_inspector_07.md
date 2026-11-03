@@ -345,11 +345,13 @@ diagnostic dimming its level, and the terminal port's stroke. The gate at
 `63bc8b4`: `npm run check` 384 files, 0 errors; `npm test` 470 tests;
 `npm run e2e -- --project=chromium` 176 checks.
 
-## Closing state, 2026-11-03
+## Landed, 2026-11-03
 
-`increment-7` stands at `63bc8b4`, built, reviewed, fixed and through its
-look pass, not merged and not pushed. What remains: the merge (rebase onto
-`master`, fast-forward), the push and its CI run, and the roadmap's
-increment 7 line with the facts the next briefs take. Increment 6's
-roadmap line is also still to be written. The worktree is
-`~/.julia/dev/RedstoneInspector.jl-inc7`.
+`master` fast-forwarded to `63bc8b4`, no rebase being needed, and pushed.
+CI run 41724649421 green on all four jobs, the frontend job in 5 min 21 s.
+The non-blocking Firefox project passed 171 checks, skipped 3 and failed
+increment 6's two `leave.spec.ts` checks, nothing new. The roadmap carries
+the landed lines of increments 6 and 7, and increment 8's entry gains the
+feedthrough edges as rows labelled presumed. The worktree
+`~/.julia/dev/RedstoneInspector.jl-inc7` and its branch stand until the
+user has them removed.

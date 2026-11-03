@@ -250,18 +250,70 @@ and rate colors with the legend, wire styles by kind, the type-label
 toggle, library icons keyed on alias then type, fan-out trunks, the three
 text levels. The slice with the most looking; its brief budgets the
 look-and-adjust pass largest. Visible: the closed loop reads at a glance.
-Draws on `visual_grammar.md` answers 4 to 7 and 10.
+Draws on `visual_grammar.md` answers 4 to 7 and 10. *Landed on 2026-11-03
+at `2824f1f` of `RedstoneInspector.jl`, CI run 41549947096 green on all
+four jobs (frontend 3 min 27 s); its brief, `brief_inspector_06_grammar.md`,
+and `notes_inspector_06.md` record the shape, the review, the
+look-and-adjust pass in two rounds and the type labels' probe. The pass
+amended `visual_grammar.md` answers 4, 6, 8 and 9 and `workspace.md`
+answers 3, 4 and 11. Facts the next briefs take from it: the fixtures gain
+`library`, every shipped block, and `kinds` wired; the color mode is tier
+or rate, `r` toggling; the palette in `palette.ts` is constructed, eight
+OKLCh steps, four extras and a shared neutral read through `stepPair`; a
+wire takes its producer's fill; a closed assembly takes its discrete
+leaves' one triple or gray, with a clock badge; the badge straddles a
+block's top edge at the right, leaving the top-left for increment 8's
+order badge; a legend line focuses its triple through the search's
+dimming, and Escape's chain is route, legend focus, search, selection;
+type labels are ELK tail labels present in every layout (`sizeLabels`,
+`EdgeLabel`, `LABEL_OPTIONS`, `Geometry.labels`), `y` toggling them with no
+block moving; ELK runs with `thoroughness: 20`; a move to an ancestor
+selects the child left, in `show`; plain `npm run e2e` runs Chromium and
+the non-blocking Firefox project. Open items: Firefox fails the two
+`leave.spec.ts` checks, its `beforeunload` dialog never reaching Playwright
+on `goBack`; `closed_loop`'s root input pins sit out of declared order for
+two crossings; the labels widen levels 12% to 42%, lowering every fit
+scale; the fit covers neither the legend nor the labels; the router's 12 px
+stub after a drag can cross a label.*
 
 **Increment 7: overlays and routes.** The diagnostics overlay on
 `failure_cycle.json` and the list alone on `failure_structure.json`,
 warnings in amber, face routes across levels with the trace action, the
 feedthrough edges drawn. Visible: a failed build explained on the
 diagram. Draws on `visual_grammar.md` answer 8, `workspace.md` answers 6
-and 8, `failure_descriptor.md`.
+and 8, `failure_descriptor.md`. *Landed on 2026-11-03 at `63bc8b4` of
+`RedstoneInspector.jl`, CI run 41724649421 green on all four jobs (frontend 5 min 21 s), the
+non-blocking Firefox project failing only increment 6's two `leave.spec.ts`
+checks; its brief,
+`brief_inspector_07_overlays.md`, `notes_inspector_07.md` and the look
+pass's checklist, `look_inspector_07.md`, record the shape, the sixteen
+readings the user ratified, the review and the pass. The feedthrough edges
+were not drawn (reading 1): they move to increment 8's execution-order tab
+as rows labelled presumed, as `workspace.md`'s pending item now says. Facts
+the next briefs take from it: the fixtures gain `failure_nested`,
+`failure_dead`, `failure_probe` and `warning`, sixteen in all;
+`src/lib/diagnostics.ts` holds the drawer's rows, a loop's chain, each
+level's overlay, the tree's marks and a row's target; `src/lib/routes.ts`
+holds the trace, what a level draws of a route, the tree's route marks
+propagated to ancestors and the origin kept across a push; the session
+holds `diagnosticFocus` and `route`, and Escape's chain is route, focused
+diagnostic, legend focus, search, selection; one dimming focus stands at a
+time, route before diagnostic before legend, at a shared `palette.dim` of
+0.35; `g.overlay` is the canvas's last child and never dims; the
+diagnostic and route pills straddle a block's bottom edge at the right, a
+root tag's slot staying stage 2's; the trace action is `t`, the pane's
+button or the one-entry right-click menu; `effectiveOpacity` in
+`e2e/fixtures.ts` reads opacity through the ancestors. Open items: a
+loop's drawer row shows no location until the core's descriptor locates
+`y_direct` (`pending.md`); the drawer's rows and filter, the right-click
+menu, and the tree's and pane's face rows have no keyboard path; the
+status bar clips a long route line; a kept origin that no longer resolves
+stands undrawn.*
 
 **Increment 8: analysis views and the help page.** The drawer's tabs,
-execution order with the badges, root inputs, the anchor and component
-tables, the schedule and hyperperiod chart over the deployment fixture,
+execution order with the badges and the feedthrough edges as rows
+labelled presumed (increment 7's reading 1), root inputs, the anchor and
+component tables, the schedule and hyperperiod chart over the deployment fixture,
 and the help page's five sections with the docstring link rule and the
 bundled Markdown renderer. Visible: the static page complete. Draws on
 `workspace.md` answers 7 and 11, `build_release.md` answer 7.
