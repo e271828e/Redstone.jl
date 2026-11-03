@@ -152,11 +152,15 @@ The standard component library, the submodule `Redstone.Blocks`:
   `saturation_code`, and `RateLimiter` (D-313).
 - `GaussianWhiteNoise`, with the helpers `splitmix` and `gaussian` (D-231,
   D-313).
-- `Integrator`, `FirstOrderLag`, `Step`, `LimitedIntegrator` and `Relay` (D-313).
-  `Step` and `LimitedIntegrator` each ship two detection policies, localized
-  and boundary-detected, selected by the type parameter `L` (D-179).
-  `LimitedIntegrator` and `Relay` are over `Real` and static vectors, with
-  `Int8` modes and, over a vector, events generated per component.
+- `Integrator{V, R}`, its reset form `R = true` adding the `Bool` input
+  `reset` and one boundary-detected event (D-141), `FirstOrderLag`, `Step`,
+  `Sequence`, `LimitedIntegrator`, `Relay` and `Comparator` (D-313).
+  `Step`, `Sequence`, `LimitedIntegrator` and `Comparator` each ship two
+  detection policies, localized and boundary-detected, selected by the type
+  parameter `L` (D-179). `LimitedIntegrator`, `Relay` and `Comparator` are
+  over `Real` and static vectors, with `Int8` modes and, over a vector,
+  events generated per component; the fall of `Relay` and `Comparator` is
+  strict.
   `LimitedIntegrator` publishes its mode as the output `saturation`, typed by
   the helper `saturation_type`, shared with `DiscreteLimitedIntegrator` and the
   PID.
@@ -191,7 +195,7 @@ It reaches the parent through its import list alone, as a user's component
 file does (D-313). Nothing in the package depends on it, so `src/Redstone.jl`
 includes it last.
 
-Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §8.5, §10.4, §13.5, §13.7, D-179, D-184, D-211, D-231, D-311, D-312, D-313, D-316, D-383, D-384, D-385, D-437, D-438.
+Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §8.5, §10.4, §13.5, §13.7, D-141, D-179, D-184, D-211, D-231, D-311, D-312, D-313, D-316, D-383, D-384, D-385, D-437, D-438.
 
 ### `src/build.jl`
 
