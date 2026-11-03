@@ -202,7 +202,18 @@ breaking user code, and each may benefit from user feedback first.
   `IllegalPortType` under a reason of its own, with its Appendix C row.
 - **The library's remaining candidates.** Whatever of the inventory in
   `design/companions/library_inventory.md` is unbuilt, each block
-  built when wanted (§13.7, D-313).
+  built when wanted (§13.7, D-313). The order settled on 2026-11-03, four
+  increments by the mechanism each family exercises: first `Comparator`,
+  the `Integrator` reset and `Sequence`, one stage per block; then
+  `LimitedDoubleIntegrator` alone; then the structure blocks `Fn`,
+  `Select`, the unbundling component and the discrete backlash; then the
+  additions to shipped blocks, where three readings wait for the brief: a
+  second output on `Delay` names its output side, so the taps are a type
+  parameter keeping the bare spelling; Tustin gives a nonzero `D`, so the
+  discretized pair's class reads off the method; and scheduled limits move
+  `lower` and `upper` into the guards' `u` and take `x0`'s default with
+  them. `Freeze` over a struct is a framework seam, not a block, and stays
+  here after the four.
 
 ## Deviations
 
