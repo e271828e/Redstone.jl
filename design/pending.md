@@ -46,7 +46,7 @@ item changes what the spec says, the spec edit is part of the item.
   `design/briefs/brief_inspector_05_interaction.md` and the readings in
   `notes_inspector_05.md`, CI run 41358849311 green on all four jobs (frontend 119 s); its look-and-adjust pass amended
   `workspace.md` answers 2, 4, 5, 9, 10 and 11 (`45c5047`), ELK taking no
-  position hints. Its increment 6, the grammar's finish, stands built, reviewed, fixed and through three look-and-adjust rounds on branch `increment-6` at `2824f1f` of the worktree `RedstoneInspector.jl-inc6`, not pushed, brief `design/briefs/brief_inspector_06_grammar.md` and the readings, rulings and rounds in `notes_inspector_06.md`, the records amended through `7ef9404`; awaiting the merge, the push, the Firefox step's first outcome and the removal of increments 4 and 5's worktrees. The deployment
+  position hints. Its increment 6, the grammar's finish, landed on 2026-11-03 at `2824f1f`, brief `design/briefs/brief_inspector_06_grammar.md` and the readings, rulings and three look-and-adjust rounds in `notes_inspector_06.md`, the records amended through `7ef9404`, CI run 41549947096 green on all four jobs; the non-blocking Firefox project's first run passed 143 checks, skipped 3 and failed the two leave-prompt checks, whose `beforeunload` dialog Playwright's Firefox does not deliver on `goBack`, to be settled before Firefox turns blocking. The deployment
   overlay's bump stands as `visual_grammar.md` hands it on. The built-in Julia GUI is parked (D-310). The later stages
   stand after the release, below.
 - **The API docstrings' two later passes.** The sweep to the manual's

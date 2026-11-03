@@ -580,3 +580,17 @@ label; the width cost lowers every fit scale, bearing on the zoom floors;
 
 For the user: the merge of `increment-6` and the push, the Firefox step's
 first outcome, the worktrees of increments 4 and 5 to remove.
+
+## Landed, 2026-11-03
+
+`master` fast-forwarded to `2824f1f` and pushed; the `increment-6` worktree
+and branch removed, increments 4 and 5's already gone. CI run 41549947096
+green on all four jobs, the frontend job in 3 min 27 s. The Firefox
+project's first outcome, non-blocking by reading 18: 143 checks passed, 3
+skipped (the clipboard checks and the live hosted-copy check, by design),
+2 failed, both in `leave.spec.ts`: the leave prompt's `beforeunload`
+dialog never reaches Playwright under Firefox on `goBack`, so the dropped
+model's check sees no dialog and the pushed model's check never reaches
+`about:blank`. A harness difference, not a page defect on the evidence; to
+be settled, by a Firefox skip or another way of observing the prompt,
+before Firefox turns blocking. Not fixed here.
