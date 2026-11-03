@@ -243,3 +243,44 @@ does not cross dims that level whole; a kept origin that no longer
 resolves leaves the route standing undrawn; the menu has no keyboard
 path; the status bar clips on overflow. The cold review follows at
 `a7f1986`.
+
+## The cold review, 2026-11-03
+
+One Opus reviewer over `2824f1f..a7f1986`, every check green from a
+clean install (`npm run check` 384 files, `npm test` 469 tests in 27
+files, `npm run e2e -- --project=chromium` 174 checks, the regeneration
+clean), the oracle rerun byte-identical, its own third reading of the
+chains, the routes and the tree's counts (written from the records, not
+the oracle) agreeing on every fixture, answer 8 clause by clause, answer
+9's composition order, workspace 6 and 8 sentence by sentence all holding
+by probe. Four findings, all low, each ruled by the coordinating session:
+
+1. **A diagnostic attributed to the root leaves the root row unmarked**:
+   `treeMarks` skips `""`, and the oracle shared the slip. Reading 9
+   confines "marks nothing" to the canvas; answer 2's "a row whose
+   subtree holds a diagnostic" includes the root's own. Accepted: the row
+   marked, the unit pin amended, a browser pin on a synthetic root
+   diagnostic, the oracle corrected by the session (its outputs over the
+   committed fixtures unchanged; `oracle/synthetic/failure_probe_root.json`
+   is the synthetic case).
+2. **The overlay dimmed as a group survives the checks**, which read an
+   element's own opacity and not its ancestors'. Accepted as a missing
+   check: the effective opacity pinned under each focus for a mark halo,
+   a badge and a route badge.
+3. **The drawer's rows are not real buttons**, against answer 11's "every
+   control is a real button or link". Accepted: each row's content in a
+   `button`, the `li` keeping the contract, the location link beside it;
+   the drawer's rows and filter having no keyboard path from Tab's cycle
+   is an open item.
+4. **The README overstates a pill's click**, which focuses the row and
+   selects nothing. Accepted: the sentence amended.
+
+Of the sixteen mutants fifteen die and one survives, finding 2. Two are
+red in the unit tests alone and accepted as such: the status's singular
+(no browser status is singular) and the route's Escape step after the
+legend's (no check holds both). Observations for the look pass, new
+beside the map's: `failure_dead`'s chord crosses `m`'s face labels and
+its cross sits on the label column; a discrete leaf's orange dot beside
+an amber mark reads as two similar hues; a focused diagnostic attributed
+to the root or an unknown path lights nothing, so the whole level dims.
+The fixer follows at `a7f1986`.
