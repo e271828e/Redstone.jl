@@ -200,3 +200,46 @@ runs 190 px on a 130 px block and white on amber is the lowest-contrast
 text on the page; a loop row's location is `plant`'s type's `u_types`
 line, reading 16 as written. Agent B, routes, the trace action and the
 map, follows from `c42a412`.
+
+Agent B built stages 4 to 6 from `c42a412`: `21df84d` `routes.ts` with
+its tests, the session's route and `escape`'s first step, the canvas's
+route drawing and right-click menu, the pane's and the status bar's
+buttons, `t`, `routes.spec.ts`, the amended `keys.spec.ts` check;
+`f60ab61` the tree's route marks, the route across a push through
+`rekeyRoute`, the session tests; `a7f1986` the map and the README. `npm
+run check` 384 files, 0 errors; `npm test` 469 tests in 27 files; `npm run
+e2e -- --project=chromium` 174 checks. Its departures, accepted and
+recorded in its notes for the map:
+
+- **`routeOf` returns the route with its origin face**, since the drawing
+  needs the origin's port; `routeStatus` keeps its two arguments.
+- **Terminal ports are marked only on levels the route crosses**, as the
+  oracle lists them; `primitive`'s `u` has its tag as the origin and no
+  terminal.
+- **Pin badges draw only below the root**, a root face having no parent
+  to climb to; a root tag's slot never holds a badge.
+- **A pin badge's click is `onopen(parent)`**, which is `climb` by
+  definition, selecting the child left.
+- **A face with no producer is not traced**: the shell ignores it and the
+  pane shows no trace button, so no route is set that cannot draw; no
+  fixture has one.
+- **`span.route` holds its clear button.**
+- **The tree's route marks are exactly `routeLevels`**, the root included,
+  with no propagation: answer 2's blue dot is "a level a route passes",
+  and an ancestor the route does not cross is not one.
+- **The menu's Escape** is taken in the capture phase and never reaches
+  the shell's chain, so the route stands; a press outside, the wheel or a
+  level change closes it.
+
+Its headed look, for the look pass: every status line as the oracle gives
+it (`h_ref` 2 across 3, `mode` 7 across 4, `src/out` 3 across 4); the
+casings sharing a trunk add their opacity, so `mode`'s four-wire trunk
+reads as a dark band and its branches stay pale; the terminal ports' 6 px
+stroke barely shows, the casings' ends doing the work; the `route` pill
+covers most of a short pin's top edge and sits far from the entry port on
+a tall assembly; the menu and the pressed pane button read right. The map
+lists these with agent A's, and the edge cases: a route on a level it
+does not cross dims that level whole; a kept origin that no longer
+resolves leaves the route standing undrawn; the menu has no keyboard
+path; the status bar clips on overflow. The cold review follows at
+`a7f1986`.
