@@ -46,7 +46,7 @@ item changes what the spec says, the spec edit is part of the item.
   `design/briefs/brief_inspector_05_interaction.md` and the readings in
   `notes_inspector_05.md`, CI run 41358849311 green on all four jobs (frontend 119 s); its look-and-adjust pass amended
   `workspace.md` answers 2, 4, 5, 9, 10 and 11 (`45c5047`), ELK taking no
-  position hints. Its increment 6, the grammar's finish, landed on 2026-11-03 at `2824f1f`, brief `design/briefs/brief_inspector_06_grammar.md` and the readings, rulings and three look-and-adjust rounds in `notes_inspector_06.md`, the records amended through `7ef9404`, CI run 41549947096 green on all four jobs; the non-blocking Firefox project's first run passed 143 checks, skipped 3 and failed the two leave-prompt checks, whose `beforeunload` dialog Playwright's Firefox does not deliver on `goBack`, to be settled before Firefox turns blocking. Its increment 7, overlays and routes, stands built, reviewed and fixed on branch `increment-7` at `8f686ce` of the worktree `RedstoneInspector.jl-inc7`, not merged and not pushed, brief `design/briefs/brief_inspector_07_overlays.md` and the readings, rulings and build record in `notes_inspector_07.md`; it was delegated overnight on 2026-11-03, so the user's reading of its sixteen readings (reading 1, the feedthrough edges held back, first), the look-and-adjust pass, the merge, the push and the roadmap's lines for increments 6 and 7 are awaited. The deployment
+  position hints. Its increment 6, the grammar's finish, landed on 2026-11-03 at `2824f1f`, brief `design/briefs/brief_inspector_06_grammar.md` and the readings, rulings and three look-and-adjust rounds in `notes_inspector_06.md`, the records amended through `7ef9404`, CI run 41549947096 green on all four jobs; the non-blocking Firefox project's first run passed 143 checks, skipped 3 and failed the two leave-prompt checks, whose `beforeunload` dialog Playwright's Firefox does not deliver on `goBack`, to be settled before Firefox turns blocking. Its increment 7, overlays and routes, stands built, reviewed, fixed and through its look-and-adjust pass on branch `increment-7` at `63bc8b4` of the worktree `RedstoneInspector.jl-inc7`, not merged and not pushed, brief `design/briefs/brief_inspector_07_overlays.md`, the readings, rulings and build record in `notes_inspector_07.md` and the pass's checklist and rulings in `look_inspector_07.md`; the user ratified the sixteen readings on 2026-11-03, reading 1 included, so the merge, the push and the roadmap's lines for increments 6 and 7 remain. The deployment
   overlay's bump stands as `visual_grammar.md` hands it on. The built-in Julia GUI is parked (D-310). The later stages
   stand after the release, below.
 - **The API docstrings' two later passes.** The sweep to the manual's
@@ -214,6 +214,14 @@ breaking user code, and each may benefit from user feedback first.
   `lower` and `upper` into the guards' `u` and take `x0`'s default with
   them. `Freeze` over a struct is a framework seam, not a block, and stays
   here after the four.
+- **Stage-function locations in the descriptor** (§13.9, D-432). A `types`
+  row carries the source locations of the declaration methods alone, so the
+  inspector has no line to show for an algebraic loop, whose feedthrough is
+  in its members' `y_direct`; since increment 7's look pass its drawer shows
+  none for a loop. With `y_direct`'s location in the row, the loop's row
+  links one per member, under the message. A member traced structurally has
+  its dependence presumed, so its `y_direct` may not read the input, and the
+  row should say so. The spec edit and its log entry come first.
 
 ## Deviations
 

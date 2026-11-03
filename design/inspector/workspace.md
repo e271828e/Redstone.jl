@@ -19,6 +19,9 @@ Left open on purpose, each with its owner.
   `initial_design.md`'s answer 9 deferred, which needs the tracer's maps:
   this one is the build's presumed structure, not the traced one, and
   overstates dependences inside a block. Held until it can be labelled so.
+  Increment 7 drew no feedthrough edges for that reason; their home is the
+  execution-order tab, a row per edge labelled as presumed beside the stage
+  ports it lists (amended 2026-11-03, increment 7's look pass).
 
 ## Answered questions
 

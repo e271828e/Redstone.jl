@@ -315,13 +315,41 @@ and the synthetic root case reads the root's own mark. Its one look item
 from the delta: the message column in the drawer runs narrower beside the
 location link.
 
+## The look pass, 2026-11-03
+
+The user ratified the sixteen readings, reading 1 included, and ran the
+look-and-adjust pass by the checklist in `look_inspector_07.md`, which
+records every ruling beside its entry. The changes landed on `increment-7`
+one at a time, each with its check and a mutant that turns it red:
+
+- `3d970fc`: the drawer row's message a block `span` with `pre-wrap`, since
+  a button allows only inline content.
+- `0e044fd`: a loop's row carries no location, its feedthrough being in
+  its members' `y_direct`, which the format does not locate; the core's
+  `pending.md` holds the format's half.
+- `3d35c4b`: the shared dim at 0.35, for the search and every focus,
+  chosen by the user over 0.3 and 0.4.
+- `8baacdd`: a route's casings faded as one group, so a shared trunk reads
+  at the branches' opacity.
+- `624fb6d`: the tree's route marks propagate to every ancestor of a
+  crossed level, titled "on the route, beneath", as workspace answer 2
+  already asked; agent B's reading had confined them to the crossed levels.
+- `63bc8b4`: the map's open items for the tree and face rows that are not
+  buttons, and for the location link's later move under the message.
+
+Tried and reverted: the mark halo as a ring outside the selection halo,
+so a selected member would keep its hue. The two rings read worse than
+the composed halo. Left as built by ruling: the discrete dot beside an
+amber mark, the selected block's casings under a focus, a focused root
+diagnostic dimming its level, and the terminal port's stroke. The gate at
+`63bc8b4`: `npm run check` 384 files, 0 errors; `npm test` 470 tests;
+`npm run e2e -- --project=chromium` 176 checks.
+
 ## Closing state, 2026-11-03
 
-`increment-7` stands at `8f686ce`, seven commits above `2824f1f`, built,
-reviewed and fixed, not merged and not pushed, awaiting the user: the
-readings above, reading 1 first; the look-and-adjust pass as "For the
-user" lists it; then the merge (rebase onto `master`, fast-forward), the
-push and its CI run, and the roadmap's increment 7 line with the facts
-the next briefs take. Increment 6's roadmap line is also still to be
-written. The worktree is `~/.julia/dev/RedstoneInspector.jl-inc7`; no
-preview server is left running.
+`increment-7` stands at `63bc8b4`, built, reviewed, fixed and through its
+look pass, not merged and not pushed. What remains: the merge (rebase onto
+`master`, fast-forward), the push and its CI run, and the roadmap's
+increment 7 line with the facts the next briefs take. Increment 6's
+roadmap line is also still to be written. The worktree is
+`~/.julia/dev/RedstoneInspector.jl-inc7`.
