@@ -41,8 +41,8 @@ then drop fixtures from `frontend/fixtures/`.
   badge, so the reader climbs by the breadcrumb.
 - [x] **1.9** A selected `plant` under the red halo turns purple. Choose: the
   halos composing at 0.5, an opaque mark halo, or a mark halo just outside
-  the selection's. Ruling: the mark halo outside the selection's, two rings
-  each in its own hue.
+  the selection's. Ruling: the halos compose at 0.5, as built. Two rings
+  were tried and read worse.
 - [x] **1.10** Reading 16: the loop row's location is `plant`'s type's
   `u_types` line. Useful for a loop, or dropped for cycles? Ruling: dropped
   for loops now. Later the core's format may carry each member's `y_direct`
