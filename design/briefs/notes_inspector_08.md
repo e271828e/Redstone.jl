@@ -130,6 +130,19 @@ session store with the others, so the serial order stands.
 18. **The help links are plain hash links.** The history handler already
     reads every hash change; a handler of their own would push a second
     entry.
+19. **A clock pill that does not fit beside the order badge rides one row
+    higher** (ruled during the build, 2026-11-04). Agent B measured
+    `closed_loop`'s root in rate mode: on four of its five assemblies the
+    badge and the pill together need 10 to 34 world units more than the
+    block's width, so the brief's "not overlapping" pin cannot hold with
+    both straddling the edge. Reserving the badge's width in `sizeBlock`
+    would make a block's size depend on the toggle, which the rate pill's
+    trap already rejected; raising the badge breaks its spanning pin;
+    dropping the pin loses the clock count. The pill moves up one row on
+    those blocks alone, the badge keeps the edge, and the pin reads "not
+    overlapping, the pill raised above the badge's row when the block is
+    too narrow for both". For the user: a look-pass item, since where the
+    pill lands on a wide block and a narrow one now differs.
 
 ## For the user
 
