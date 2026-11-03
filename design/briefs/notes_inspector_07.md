@@ -131,4 +131,34 @@ the other.
 
 ## Build outcome, 2026-11-03
 
-Filled as the stages land.
+Agent 0 built stage 0 on `increment-7` in
+`~/.julia/dev/RedstoneInspector.jl-inc7`, not pushed: `0714626`, the four
+models with `Piecewise`, `SelectedNothing` and `Thrower` beside the
+existing helpers, `input_passthrough` imported by name since the pinned
+core does not export it, the four fixtures, the tests' rows, the README's
+paragraph. Every model built as the brief expected: `failure_nested` a
+real loop with members `plant` and `ctl/pi`, `plant` traced global and
+`ctl/pi` structural, its chain two wires at the root (`ctl|in|y`,
+`plant|in|u`) and two inside `ctl` (`ctl/pi|in|y`, `⟨out⟩u|in|u`);
+`failure_dead` artificial with the dead hop `(m, g, F)`, its chain
+`g2|in|e` and `m|in|g`; `failure_probe` fail-fast with the structure,
+`UserCodeFraming` at `t` with `y_state` and the warning at `s/g`;
+`warning` a build with its one warning at `g`. No existing fixture
+changed. `npm run check` 377 files, 0 errors; `npm test` 425 tests in 25
+files; `npm run e2e -- --project=chromium` 154 checks; a second
+regeneration left the tree clean. The oracles' outputs over the
+regenerated directory are `scratchpad/oracle/*.after0.out`.
+
+Rulings made during the build, each the coordinating session's:
+
+- **`failure_nested`'s root draws five wires**, not the brief's four: the
+  root inputs' two, the loop's two and the root output's one. The brief's
+  error; the draw row reads 5.
+- **`ctl` carries its own red mark** in the tree, as a level the chain
+  touches, beside the continuation badge; the brief's table lists only
+  `plant` among the root's marked blocks, which is the canvas's halo, not
+  the tree's mark. Both hold.
+- **The map's fixture counts** (twelve, eleven) and its `draw.spec.ts`
+  bullet are stale until stage 6, which agent B's prompt names.
+
+Agent A, the overlay, the drawer and the tree, follows from `0714626`.
