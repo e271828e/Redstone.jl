@@ -162,3 +162,41 @@ Rulings made during the build, each the coordinating session's:
   bullet are stale until stage 6, which agent B's prompt names.
 
 Agent A, the overlay, the drawer and the tree, follows from `0714626`.
+
+Agent A built stages 2 and 3 from `0714626`: `db6b205` `diagnostics.ts`
+with its tests, `Lit.ports`, the session's `diagnosticFocus` with its
+Escape step, the canvas's `g.overlay` and the three focus classes under
+one dim rule, the shell's precedence and `onbadge`, `overlay.spec.ts`;
+`c42a412` the drawer's diagnostics tab, the tree's `span.mark`, the
+shell's `ondiagnostic`, `drawer.spec.ts`. `npm run check` 381 files, 0
+errors; `npm test` 453 tests in 26 files; `npm run e2e --
+--project=chromium` 169 checks; no existing check amended. The oracle
+agreed on every fixture. Its departures, accepted and recorded in its
+notes for the map:
+
+- **`treeMarks` returns `own` beside the counts**, which the ", beneath"
+  title needs.
+- **`litBy` lights the level's own pins** a chain runs to or from, so
+  `failure_nested`'s `ctl` level keeps its `⟨in⟩y` and `⟨out⟩u` pins lit
+  with their wires; the route's `routeLit` does the same.
+- **A `focusKey` prop** carries `data-focus`'s value, the diagnostic's
+  index or the legend's key; `legendFocus` stays for the line's
+  `aria-pressed`.
+- **A chain hop carries its faces** beside `{level, wire}`, which the
+  continuation badge, the pins and the tree's levels read.
+- **The filter shows only when rows exist.**
+- **A port mark's side** is the face the node declares as an input, else
+  as an output, the format carrying none.
+- **Three `overlay.spec.ts` assertions landed with stage 3**, needing the
+  drawer's and the tree's DOM.
+
+Its headed look, for the look pass: the loop reads as a red ring through
+`plant` and `ctl`'s `loop` pill; a selected block under the red halo turns
+purple and under the amber one olive, the halos composing at 0.5 opacity
+(an opaque mark halo, or one just outside the selection's, is the pass's
+call); a selected block's incident casings stay full under a focus; the
+cross at ±3 px is small at the fit; `s/g`'s `EmptyFaceSelection` pill
+runs 190 px on a 130 px block and white on amber is the lowest-contrast
+text on the page; a loop row's location is `plant`'s type's `u_types`
+line, reading 16 as written. Agent B, routes, the trace action and the
+map, follows from `c42a412`.
