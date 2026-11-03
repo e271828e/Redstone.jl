@@ -280,3 +280,6 @@ Left as they are: the positional constructors `Integrator(1.0)` and
 file called them; a `Float32` threshold builds and is refused as
 `GuardForm`, the library-wide `float` convention; the illustrations in
 `src/declare.jl` and the spec quoting `u_types(::Integrator{V})`.
+The reviewer verified the fix at 85a9448: the four survivors and an
+added mutant dropping the `Relay` refusal each turn a pin red, and the
+gate is green at 3817 and 3890.
