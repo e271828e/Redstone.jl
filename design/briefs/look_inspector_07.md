@@ -88,7 +88,7 @@ then drop fixtures from `frontend/fixtures/`.
 - [x] **5.3** Escape peels the focuses one step at a time, in that order
   reversed.
 - [x] **5.4** A search's dim composes with a held legend line as before.
-- [x] **5.5** The dim's strength under each focus. Ruling: try 0.4.
+- [x] **5.5** The dim's strength under each focus. Ruling: 0.35, shared by the search and every focus, after trying several values.
 - [x] **5.6** A selected block's incident casings stay full under a focus.
   Ruling: they stay.
 - [x] **5.7** A focused row attributed to the root or an unknown path lights
