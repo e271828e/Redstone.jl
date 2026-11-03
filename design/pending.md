@@ -12,47 +12,24 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
-- **The inspector, stage 1**: the static inspector over the descriptor.
-  The stage's record is `design/inspector/initial_design.md` (not
-  normative), with one record per axis session beside it:
-  `descriptor_design.md` for axes 1 and 2, landed as §13.9, D-432 and
-  increment 81; `design/prototypes/render_spike/report.md` for axis 4,
-  hand-rolled SVG over ELK.js; `visual_grammar.md` for axis 3;
-  `workspace.md` for axis 5; `live_session.md` for axis 6, the Julia
-  package and the live session; `failure_descriptor.md` for the failure
-  bump, landed as §13.9, D-434 and increment 82; `build_release.md` for
-  axis 7, the repo, the pin, CI and the release, which closes the stage's
-  design. The build is staged by `design/briefs/roadmap_inspector.md`,
-  ten increments on two tracks in a separate repo. Its increment 1, the
-  repo and the writing half of the package, landed on 2026-10-30 as
-  `RedstoneInspector.jl` at `cbc4ff2` with a green CI, brief
-  `design/briefs/brief_inspector_01_repo_and_writer.md`. Its increment 2,
-  the frontend's pure foundation, landed on 2026-10-30 at `ccbedf8`,
-  pinned at the core's `abf1d81`, with all four CI jobs green, brief
-  `design/briefs/brief_inspector_02_foundation_pure.md`. Its increment 9,
-  the server, landed on 2026-10-30 at `38b8c8e`, brief
-  `design/briefs/brief_inspector_09_server.md`, with the page's socket
-  client due on the frontend track after increment 4 by
-  `frontend/PROTOCOL.md`. Its increment 3, the canvas, landed on
-  2026-10-30 at `57eb335`, brief
-  `design/briefs/brief_inspector_03_canvas.md`, CI green with the
-  `frontend` job's screenshots uploaded. Its increment 4, the frame,
-  landed on 2026-10-30 at `13d1f4c`, brief
-  `design/briefs/brief_inspector_04_frame.md`, CI green on all four jobs; the core's
-  parameter summary opens `NamedTuple` fields into dotted entries since
-  (D-439), and the inspector's pin stands at the core's `035aa95`. Its
-  increment 5, interaction with increment 9's frontend piece, the socket
-  client, landed on 2026-11-01 at `bf52830`, brief
-  `design/briefs/brief_inspector_05_interaction.md` and the readings in
-  `notes_inspector_05.md`, CI run 41358849311 green on all four jobs (frontend 119 s); its look-and-adjust pass amended
-  `workspace.md` answers 2, 4, 5, 9, 10 and 11 (`45c5047`), ELK taking no
-  position hints. Its increment 6, the grammar's finish, landed on 2026-11-03 at `2824f1f`, brief `design/briefs/brief_inspector_06_grammar.md` and the readings, rulings and three look-and-adjust rounds in `notes_inspector_06.md`, the records amended through `7ef9404`, CI run 41549947096 green on all four jobs; the non-blocking Firefox project's first run passed 143 checks, skipped 3 and failed the two leave-prompt checks, whose `beforeunload` dialog Playwright's Firefox does not deliver on `goBack`, to be settled before Firefox turns blocking. Its increment 7, overlays and routes, landed on 2026-11-03 at `63bc8b4`, brief `design/briefs/brief_inspector_07_overlays.md`, the readings, rulings and build record in `notes_inspector_07.md` and the look pass's checklist and rulings in `look_inspector_07.md`, CI run 41724649421 green on all four jobs; the Firefox project still fails increment 6's two leave-prompt checks. The deployment
-  overlay's bump stands as `visual_grammar.md` hands it on. The built-in Julia GUI is parked (D-310). The later stages
-  stand after the release, below.
+- **The inspector, stage 1**: the static inspector over the descriptor,
+  built in the separate repo `RedstoneInspector.jl`. Its records, none
+  normative, are `design/inspector/initial_design.md` and one per axis
+  beside it: `descriptor_design.md` (axes 1 and 2, §13.9, D-432),
+  `visual_grammar.md` (axis 3), `design/prototypes/render_spike/report.md`
+  (axis 4), `workspace.md` (axis 5), `live_session.md` (axis 6),
+  `failure_descriptor.md` (the failure bump, D-434) and `build_release.md`
+  (axis 7). `design/briefs/roadmap_inspector.md` stages the build in ten
+  increments and records each landed one with the facts the next briefs
+  take. Increments 1 to 7 and 9 have landed; 8, the analysis views and the
+  help page, is next, then 10, the release. Open across increments: the
+  non-blocking Firefox project fails the two leave-prompt checks, to be
+  settled before it turns blocking; the deployment overlay's bump stands as
+  `visual_grammar.md` hands it on. The built-in Julia GUI is parked
+  (D-310). The later stages stand after the release, below.
 - **The API docstrings' two later passes.** The sweep to the manual's
-  conventions landed (commits `84ece6b` to `b1d9ae3`, record
-  `design/briefs/notes_docstring_sweep.md`, convention
-  `design/tools/docstring_style.md`). Two passes remain: an examples pass
+  conventions landed (record `design/briefs/notes_docstring_sweep.md`,
+  convention `design/tools/docstring_style.md`). Two passes remain: an examples pass
   after the tutorial, and a signature-and-link pass after the audit's
   renames, since a rename costs a signature line and the Documenter build
   catches a stale link. Unexported names keep their docstrings as they are.
@@ -202,11 +179,9 @@ breaking user code, and each may benefit from user feedback first.
   `IllegalPortType` under a reason of its own, with its Appendix C row.
 - **The library's remaining candidates.** Whatever of the inventory in
   `design/companions/library_inventory.md` is unbuilt, each block
-  built when wanted (§13.7, D-313). The order settled on 2026-11-03, by the
-  mechanism each family exercises, after increment 86 shipped `Comparator`,
-  the `Integrator` reset and `Sequence`: `LimitedDoubleIntegrator` alone;
-  then the structure blocks `Fn`,
-  `Select`, the unbundling component and the discrete backlash; then the
+  built when wanted (§13.7, D-313). The order, by the mechanism each family
+  exercises: `LimitedDoubleIntegrator` alone; then the structure blocks
+  `Fn`, `Select`, the unbundling component and the discrete backlash; then the
   additions to shipped blocks, where three readings wait for the brief: a
   second output on `Delay` names its output side, so the taps are a type
   parameter keeping the bare spelling; Tustin gives a nonzero `D`, so the
