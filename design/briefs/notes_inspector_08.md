@@ -203,3 +203,36 @@ landed where the brief says. Observations for the look pass: a row's click
 does not pan the canvas to a selected tag or port, as a tree click does
 not; a port selection does not expand the tree. Agent B, the badges and the
 docstrings, follows from `03e21df`.
+
+Agent B stopped once, having committed nothing, on the badge and the clock
+pill not fitting side by side (reading 19), and was resumed with the ruling.
+It built stages 3 and 4 from `03e21df`: `8ed376f` the order badges with `o`
+and the breadcrumb's toggle, the rate pill riding one row above the badge
+on a block too narrow for both, `order.spec.ts`, `keys.spec.ts` amended;
+`fea2034` `marked` 18.1.3 pinned exactly, `docstring.ts` with eleven unit
+cases, the pane's rendered docstring, `detail.spec.ts` amended with the
+hostile copy of `primitive`. `npm run check` 0 errors; `npm test` 500 tests
+in 29 files; `npm run e2e -- --project=chromium` 188 checks; `npm ci` clean;
+`dist/` free of `javascript:`. Its departures, accepted and recorded in its
+notes for the map:
+
+- **One `orderWidth` helper** serves the badge and the fit test; the raised
+  pill sits `BADGE_GAP` above the badge's row.
+- **The reload and deployment pins** read `pid_controller/h_ctl`'s "15",
+  the hash keeping the open level across both.
+- **A click on the badge's lower half selects the block**, pinning "never
+  takes the pointer".
+- **Rendering uses its own `Marked` instance**; headings in a docstring
+  render at 13 px, lists with some padding; the pane's shared monospace
+  rule loses `pre`, now unused; `detail.spec.ts` carries its own copy of the
+  docs URL literal.
+
+Its headed look: `integrator`'s seven links and `lqr`'s fifteen in the
+highlight color, the signature forms wrapping inside their code blocks,
+`plant` with none; the badges legible at the fit, the four raised pills
+clear of the badges, two of them sitting on the wire along the drawing's
+top (a look item); inside `pid_controller` each badge just above the
+segment. Observations for the look pass: the root's pane shows the level
+layout and never its type's docstring, so a root `Group`'s docstring is
+unreachable; the 404 at load is the favicon's, an old item. Agent C, the
+help page and the map, follows from `fea2034`.
