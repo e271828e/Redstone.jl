@@ -4,11 +4,11 @@
 # switch, the source, the delay, the discrete integrators and the rate limiter,
 # the noise, the time source, the stop-gradient, the stop request, the
 # integrator, the lag, the state space, the transfer function, their discrete
-# twins, the step, the limited integrator, the relay, the PID and its discrete
-# twin, the PID assembled from blocks, the LQR tracker and its discrete twin,
-# and the loops built from them alone. The models are built at top level, like
-# the fixtures they reuse: `RealEntry`, `PinnedEntry` and `requested` are
-# test_build.jl's.
+# twins, the step, the sequence, the limited integrator, the relay, the
+# comparator, the PID and its discrete twin, the PID assembled from blocks, the
+# LQR tracker and its discrete twin, and the loops built from them alone. The
+# models are built at top level, like the fixtures they reuse: `RealEntry`,
+# `PinnedEntry` and `requested` are test_build.jl's.
 
 # One gate over three `Constant` sources, at the given input values.
 gate_model(gate, (a, b, c)) =
@@ -127,6 +127,19 @@ freeze_model() = Group((; p = Pendulum(), f = Freeze{Float64}());
 integrator_model(x0, value) =
     Group((; k = Constant(value), i = Integrator(x0 = x0)); local_wires = ("k/y" => "i/u",))
 
+# An integrator from 0.5 fed by `1`, its `reset` a comparator on three steps
+# summed: high from 0.25 to 0.55 and from 0.85 on.
+pulse_reset_model(localized) =
+    Group((; rise = Step(t_step = 0.25, localized = localized),
+             fall = Step(t_step = 0.55, after = -1.0, localized = localized),
+             again = Step(t_step = 0.85, localized = localized), pulse = SumJunction{Float64, 3}(),
+             c = Comparator(threshold = 0.5), k = Constant(1.0), i = Integrator(x0 = 0.5, reset = true));
+          local_wires = ("rise/y" => "pulse/in1", "fall/y" => "pulse/in2", "again/y" => "pulse/in3",
+                         "pulse/y" => "c/u", "c/y" => "i/reset", "k/y" => "i/u"))
+
+# A reset integrator under the root inputs `in` and `reset`.
+reset_root_model() = Group((; c = Integrator(reset = true)); input_wires = ("in" => "c/u", "reset" => "c/reset"))
+
 # A lag at `τ = 0.5` from rest, fed by a constant.
 lag_model(value) =
     Group((; k = Constant(value), l = FirstOrderLag(τ = 0.5, x0 = zero(value)));
@@ -234,6 +247,36 @@ vector_relay_model() =
              i = Integrator(x0 = SVector(0.0, 0.0)),
              r = Relay(lower = SVector(0.2, 0.2), upper = SVector(0.8, 0.8)));
           local_wires = ("s/y" => "i/u", "i/y" => "r/u"))
+
+# A comparator reading an integrator that a step drives up, then down: `u` is
+# `t` until 1 and `2 - t` after.
+comparator_model(comparator) =
+    Group((; s = Step(t_step = 1.0, before = 1.0, after = -1.0), i = Integrator(), c = comparator);
+          local_wires = ("s/y" => "i/u", "i/y" => "c/u"))
+
+# A comparator fed by a constant.
+constant_comparator(value, comparator) =
+    Group((; k = Constant(value), c = comparator); local_wires = ("k/y" => "c/u",))
+
+# A comparator on the ramp `t - 0.25` selecting a switch between `1` and `0`
+# into an integrator, which ramps from the instant the comparator switches.
+comparator_switch_model(localized) =
+    Group((; k = Constant(1.0), ramp = Integrator(x0 = -0.25), c = Comparator(threshold = 0.0, localized = localized),
+             a = Constant(1.0), b = Constant(0.0), s = Switch{Float64}(), i = Integrator());
+          local_wires = ("k/y" => "ramp/u", "ramp/y" => "c/u", "c/y" => "s/select",
+                         "a/y" => "s/in1", "b/y" => "s/in2", "s/y" => "i/u"))
+
+# A vector comparator reading a vector integrator: component 1 is
+# `comparator_model`'s `u`, with hysteresis between 0.25 and 0.75, and component
+# 2 is half of it, at the plain threshold 0.325.
+vector_comparator_model(localized) =
+    Group((; s = Step(t_step = 1.0, before = SVector(1.0, 0.5), after = SVector(-1.0, -0.5)),
+             i = Integrator(x0 = SVector(0.0, 0.0)),
+             c = Comparator(lower = SVector(0.25, 0.325), upper = SVector(0.75, 0.325), localized = localized));
+          local_wires = ("s/y" => "i/u", "i/y" => "c/u"))
+
+# The comparator's row of the events product.
+comparator_events(model) = only(row for row in build(model).events.components if row.path == "c")
 
 # The servo loop: a reference step, the error, a limited integrator as the
 # controller, a lag as the actuator and a lag as the plant, whose `out` leaves
@@ -1011,6 +1054,73 @@ function test_blocks()
         @test isapprox(linearization.B, [1.0;;]; atol = 1e-12)
     end
 
+    @testset "the integrator's reset form adds the `Bool` input `reset` beside `u` and declares one event, `reset` (§2.3, §3.1, §5.3, D-141, D-437)" begin
+        @test u_types(Integrator(reset = true)) == (u = Float64, reset = Bool)
+        @test u_types(Integrator()) == Float64
+        @test y_types(Integrator(reset = true)) == Float64
+        @test only(row for row in build(pulse_reset_model(true)).events.components if row.path == "i").policies ===
+              (reset = :boundary,)
+        @test m_init(Integrator(reset = true)) === nothing
+        @test only(row for row in build(integrator_model(1.0, 2.0)).events.components if row.path == "i").policies ===
+              NamedTuple()
+        @test m_init(Integrator()) === nothing
+        for localized in (true, false)
+            @test build(pulse_reset_model(localized); activations = (Float64, LinearizeDual, ProbeDual)) isa Build
+        end
+    end
+
+    @testset "a rising `reset` writes `x0` once, on the boundary the step's event makes, and again at the next rise (§3.1, §5.3, §10.6, D-141)" begin
+        h = 1//10
+        bracket_width = Simulation(pulse_reset_model(true); h = h).model.deployment.localization_tol * h    # in time (§10.4)
+        # At t = 0.2, 0.3, 0.5, 0.8 and 1.0: the localized steps reset at 0.25
+        # and 0.85, the boundary-detected ones at the boundaries 0.3 and 0.9.
+        for (localized, expected, atol) in ((true, (0.7, 0.55, 0.75, 1.05, 0.65), bracket_width),
+                                            (false, (0.7, 0.5, 0.7, 1.0, 0.6), 1e-12))
+            sim = Simulation(pulse_reset_model(localized); h = h)
+            init!(sim, set())
+            for (t_plus, x) in zip((2h, h, 2h, 3h, 2h), expected)
+                step!(sim; t_plus = t_plus)
+                @test state(sim, "i") ≈ x atol = atol
+            end
+        end
+        # A `reset` holding at t₀ fires at boundary zero, over the condition's
+        # state, and only there.
+        held = Simulation(Group((; k = Constant(1.0), r = Constant(true), i = Integrator(x0 = 0.5, reset = true));
+                                local_wires = ("k/y" => "i/u", "r/y" => "i/reset")); h = h)
+        init!(held, at("i", set(x = 2.0)))
+        @test state(held, "i") === 0.5
+        step!(held; t_plus = 3h)
+        @test state(held, "i") ≈ 0.8 atol = 1e-12
+    end
+
+    @testset "the reset form linearizes as the plain one about a held `reset`, which no tap can seed (§14.10, D-168)" begin
+        sim = Simulation(reset_root_model(); h = 1//100)
+        init!(sim, set(u = (in = 0.0, reset = false)))
+        linearization = linearize(sim, taps(x = (q = get_state("c"),), u = (in = get_input(:in),)))
+        @test isapprox(linearization.A, [0.0;;]; atol = 1e-12)
+        @test isapprox(linearization.B, [1.0;;]; atol = 1e-12)
+        d = only(diagnostics(failure(() -> linearize(sim, taps(x = (q = get_state("c"),),
+                                                              u = (in = get_input(:in), r = get_input(:reset)))))))
+        @test d isa TapResolution && d.reason === :unseedable && d.tap === :u && d.declared === Bool
+    end
+
+    @testset "the reset model's phase bodies and its quiet boundary allocate nothing (§9.8)" begin
+        for localized in (true, false)
+            sim = Simulation(pulse_reset_model(localized); h = 1//10)
+            bodies = phase_bodies(sim)
+            for name in (:sweep_1, :sweep_2, :rhs, :ticks)
+                body = bodies[name]
+                body(); body(0)
+                @test @ballocated($body()) == 0
+                @test @ballocated($body(1)) == 0
+            end
+            init!(sim, set())
+            boundary!(sim, 1); offtick_boundary!(sim)
+            @test @ballocated(boundary!($sim, 1)) == 0
+            @test @ballocated(offtick_boundary!($sim)) == 0
+        end
+    end
+
     @testset "the lag relaxes to its input at 1/τ, and linearizes to A = -1/τ, B = 1/τ (§13.7, §7.2)" begin
         sim = Simulation(lag_model(1.0); h = 1//100)
         init!(sim, set())
@@ -1360,6 +1470,97 @@ function test_blocks()
         end
     end
 
+    @testset "the sequence publishes its values between its breakpoints, each jump at its crossing or at the next boundary (§2.3, §10.4, D-179)" begin
+        @test y_types(Sequence(times = (0.25,), values = (0.0, 1.0))) == Pinned{Float64}    # D-312
+        h = 1//10
+        bracket_width = Simulation(step_model(Step(t_step = 0.25)); h = h).model.deployment.localization_tol * h    # in time (§10.4)
+        # The values 0, 1, -1 and 2, switching at 0.25, 0.45 and 0.75: the
+        # integral to 1.0 is 0.4 localized, and 0.3 from the boundaries 0.3, 0.5
+        # and 0.8.
+        for (localized, integral, atol) in ((true, 0.4, 3 * bracket_width), (false, 0.3, 1e-12))
+            sequence = Sequence(times = (0.25, 0.45, 0.75), values = (0, 1, -1, 2), localized = localized)
+            sim = Simulation(step_model(sequence); h = h)
+            init!(sim, set())
+            for (t_plus, out, passed) in ((2h, 0.0, 0), (h, 1.0, 1), (2h, -1.0, 2), (3h, 2.0, 3))
+                step!(sim; t_plus = t_plus)
+                @test port(sim, "s") === out && modes(sim, "s") === passed
+            end
+            step!(sim; t_plus = 2h)
+            @test state(sim, "i") ≈ integral atol = atol
+            @test step_events(step_model(sequence)).policies === (advance = localized ? :localized : :boundary,)
+            @test build(step_model(sequence); activations = (Float64, LinearizeDual, ProbeDual)) isa Build
+        end
+    end
+
+    @testset "breakpoints observed at one boundary advance together: two inside one step, and those at or before t₀ (§10.4, §10.6)" begin
+        h = 1//10
+        bracket_width = Simulation(step_model(Step(t_step = 0.25)); h = h).model.deployment.localization_tol * h    # in time (§10.4)
+        # The values 0, 1 and 3, switching at 0.23 and 0.27, inside the step
+        # from 0.2 to 0.3: localized, each lands at its crossing; boundary-detected,
+        # both land on the boundary 0.3.
+        for (localized, integral, atol) in ((true, 0.04 + 0.39, 2 * bracket_width), (false, 0.3, 1e-12))
+            sim = Simulation(step_model(Sequence(times = (0.23, 0.27), values = (0, 1, 3), localized = localized)); h = h)
+            init!(sim, set())
+            step!(sim; t_plus = 3h)
+            @test modes(sim, "s") === 2 && port(sim, "s") === 3.0
+            step!(sim; t_plus = h)
+            @test state(sim, "i") ≈ integral atol = atol
+        end
+        # The breakpoints -1 and 0 are passed at boundary zero, and 0.5 later; a
+        # lone breakpoint at t₀ is passed there too.
+        for localized in (true, false)
+            sim = Simulation(single(Sequence(times = (-1.0, 0.0, 0.5), values = (1, 2, 3, 4), localized = localized)); h = h)
+            init!(sim, set())
+            @test modes(sim, "c") === 2 && port(sim, "c") === 3.0
+            step!(sim; t_plus = 6h)
+            @test modes(sim, "c") === 3 && port(sim, "c") === 4.0
+            at_start = Simulation(single(Sequence(times = (0.0,), values = (1, 2), localized = localized)); h = h)
+            init!(at_start, set())
+            @test modes(at_start, "c") === 1 && port(at_start, "c") === 2.0
+        end
+    end
+
+    @testset "the sequence at one breakpoint is the step, and it switches a vector (§13.7)" begin
+        h = 1//10
+        for localized in (true, false)
+            step_sim = Simulation(step_model(Step(t_step = 0.25, localized = localized)); h = h)
+            sequence_sim = Simulation(step_model(Sequence(times = (0.25,), values = (0.0, 1.0), localized = localized)); h = h)
+            for sim in (step_sim, sequence_sim)
+                init!(sim, set())
+                step!(sim; t_plus = 5h)
+            end
+            @test state(sequence_sim, "i") === state(step_sim, "i")
+        end
+        sequence = Sequence(times = (0.25, 0.45), values = (SVector(0, 0), SVector(1.0, -1.0), SVector(2, 3)))
+        @test y_types(sequence) == Pinned{SVector{2, Float64}}
+        sim = Simulation(single(sequence); h = h)
+        init!(sim, set())
+        @test port(sim, "c") === SVector(0.0, 0.0)
+        for (t_plus, out) in ((3h, SVector(1.0, -1.0)), (2h, SVector(2.0, 3.0)))
+            step!(sim; t_plus = t_plus)
+            @test port(sim, "c") === out
+        end
+        @test build(single(sequence); activations = (Float64, LinearizeDual, ProbeDual)) isa Build
+    end
+
+    @testset "the sequence model's phase bodies and its quiet boundary allocate nothing (§9.8)" begin
+        for localized in (true, false)
+            sequence = Sequence(times = (0.25, 0.45, 0.75), values = (0, 1, -1, 2), localized = localized)
+            sim = Simulation(step_model(sequence); h = 1//10)
+            bodies = phase_bodies(sim)
+            for name in (:sweep_1, :sweep_2, :rhs, :ticks)
+                body = bodies[name]
+                body(); body(0)
+                @test @ballocated($body()) == 0
+                @test @ballocated($body(1)) == 0
+            end
+            init!(sim, set())
+            boundary!(sim, 1); offtick_boundary!(sim)
+            @test @ballocated(boundary!($sim, 1)) == 0
+            @test @ballocated(offtick_boundary!($sim)) == 0
+        end
+    end
+
     @testset "the limited integrator saturates exactly, frees on its input's sign, and linearizes by its mode (§10.4, §10.6, D-313)" begin
         @test y_types(LimitedIntegrator(lower = -1.0, upper = 0.5)) == (out = Float64, saturation = Int8)
         # The step's jump carries its own boundary, so the boundary-detected
@@ -1524,6 +1725,119 @@ function test_blocks()
         constant_sim = Simulation(model; h = 1//10)
         init!(constant_sim, set())
         @test modes(constant_sim, "r") == SVector{2, Int8}(1, 0)
+    end
+
+    @testset "the relay's fall is strict: at `lower == upper` an input on the threshold reads on, once (§10.6, D-181)" begin
+        h = 1//10
+        sim = Simulation(Group((; k = Constant(0.0), r = Relay(lower = 0, upper = 0)); local_wires = ("k/y" => "r/u",));
+                         h = h)
+        init!(sim, set())
+        @test modes(sim, "r") === Int8(1) && port(sim, "r") === 1.0
+        step!(sim; t_plus = 3h)
+        @test modes(sim, "r") === Int8(1) && port(sim, "r") === 1.0
+        @test isempty(writer_status(latest(sim), "loop").recent)
+        vector_sim = Simulation(Group((; k = Constant(SVector(0.0, 0.0)), r = Relay(lower = SVector(0, 0), upper = SVector(0, 0)));
+                                      local_wires = ("k/y" => "r/u",)); h = h)
+        init!(vector_sim, set())
+        step!(vector_sim; t_plus = 3h)
+        @test modes(vector_sim, "r") === SVector{2, Int8}(1, 1)
+        @test isempty(writer_status(latest(vector_sim), "loop").recent)
+    end
+
+    @testset "the comparator switches at its threshold, holds between `lower` and `upper`, and starts below (§10.4, §10.6, D-179)" begin
+        @test y_types(Comparator(threshold = 0.0)) == Pinned{Bool}    # D-312
+        h = 1//10
+        for localized in (true, false)
+            # The plain threshold: on at 0.45, off past 1.55. At 0.5, 1.5 and 1.6.
+            sim = Simulation(comparator_model(Comparator(threshold = 0.45, localized = localized)); h = h)
+            init!(sim, set())
+            for (t_plus, out) in ((4h, false), (h, true), (10h, true), (h, false))
+                step!(sim; t_plus = t_plus)
+                @test port(sim, "c") === out && modes(sim, "c") === Int8(out)
+            end
+            # Hysteresis: on at 0.75, off past 1.75. At 0.5, 0.9, 1.5 (inside
+            # the band, still on) and 1.9.
+            sim = Simulation(comparator_model(Comparator(lower = 0.25, upper = 0.75, localized = localized)); h = h)
+            init!(sim, set())
+            for (t_plus, out) in ((5h, false), (4h, true), (6h, true), (4h, false))
+                step!(sim; t_plus = t_plus)
+                @test port(sim, "c") === out && modes(sim, "c") === Int8(out)
+            end
+            # From boundary zero: above switches on, inside the band stays off.
+            for (value, out) in ((1.0, true), (0.5, false))
+                constant_sim = Simulation(constant_comparator(value, Comparator(lower = 0.25, upper = 0.75, localized = localized));
+                                          h = h)
+                init!(constant_sim, set())
+                @test port(constant_sim, "c") === out
+            end
+            # An input exactly on a plain threshold reads above, once: the fall
+            # is strict, so the two switches do not re-enable each other.
+            on_sim = Simulation(constant_comparator(0.0, Comparator(threshold = 0.0, localized = localized)); h = h)
+            init!(on_sim, set())
+            step!(on_sim; t_plus = h)
+            @test port(on_sim, "c") === true
+            @test isempty(writer_status(latest(on_sim), "loop").recent)
+        end
+    end
+
+    @testset "a comparator feeding a switch lands the jump on its own event, localized or at the boundary (§2.3, §10.4, §13.7, D-179)" begin
+        h = 1//10
+        localized_sim = Simulation(comparator_switch_model(true); h = h)
+        init!(localized_sim, set())
+        step!(localized_sim; t_plus = 5h)
+        bracket_width = localized_sim.model.deployment.localization_tol * localized_sim.model.deployment.h    # in time (§10.4)
+        @test state(localized_sim, "i") ≈ 0.25 atol = bracket_width    # switched at 0.25
+        boundary_sim = Simulation(comparator_switch_model(false); h = h)
+        init!(boundary_sim, set())
+        step!(boundary_sim; t_plus = 5h)
+        @test state(boundary_sim, "i") ≈ 0.2 atol = 1e-12    # switched at the boundary 0.3
+        @test comparator_events(comparator_switch_model(true)).policies ===
+              (switch_on = :localized, switch_off = :localized)
+        @test comparator_events(comparator_switch_model(false)).policies ===
+              (switch_on = :boundary, switch_off = :boundary)
+        for localized in (true, false)
+            @test build(comparator_switch_model(localized); activations = (Float64, LinearizeDual, ProbeDual)) isa Build
+        end
+    end
+
+    @testset "the vector comparator switches each component on its own thresholds (§10.4, §10.6, D-179)" begin
+        @test y_types(Comparator(threshold = SVector(0.0, 1.0))) == Pinned{SVector{2, Bool}}    # D-312
+        h = 1//10
+        for localized in (true, false)
+            sim = Simulation(vector_comparator_model(localized); h = h)
+            init!(sim, set())
+            # At t = 0.5, 0.7, 0.9, 1.5 and 1.9: component 2 switches at 0.65
+            # and past 1.35, component 1 at 0.75 and past 1.75.
+            for (t_plus, out) in ((5h, SVector(false, false)), (2h, SVector(false, true)), (2h, SVector(true, true)),
+                                  (6h, SVector(true, false)), (4h, SVector(false, false)))
+                step!(sim; t_plus = t_plus)
+                @test port(sim, "c") === out && modes(sim, "c") === Int8.(out)
+            end
+            @test build(vector_comparator_model(localized); activations = (Float64, LinearizeDual, ProbeDual)) isa Build
+        end
+        policy = (:boundary, :localized)
+        for localized in (true, false)
+            @test comparator_events(vector_comparator_model(localized)).policies ===
+                  NamedTuple{(:switch_on_1, :switch_on_2, :switch_off_1, :switch_off_2)}(ntuple(_ -> policy[1 + localized], 4))
+        end
+    end
+
+    @testset "the comparator models' phase bodies and their quiet boundaries allocate nothing (§9.8)" begin
+        for model in (comparator_switch_model(true), comparator_switch_model(false),
+                      vector_comparator_model(true), vector_comparator_model(false))
+            sim = Simulation(model; h = 1//10)
+            bodies = phase_bodies(sim)
+            for name in (:sweep_1, :sweep_2, :rhs, :ticks)
+                body = bodies[name]
+                body(); body(0)
+                @test @ballocated($body()) == 0
+                @test @ballocated($body(1)) == 0
+            end
+            init!(sim, set())
+            boundary!(sim, 1); offtick_boundary!(sim)
+            @test @ballocated(boundary!($sim, 1)) == 0
+            @test @ballocated(offtick_boundary!($sim)) == 0
+        end
     end
 
     @testset "the PID's ports follow its two axes (§13.7, D-313, D-385)" begin
@@ -2203,11 +2517,20 @@ function test_blocks()
 
     @testset "every keyword constructor builds a `Float64` block from integer keywords, and a flag keyword or a misfit shape refuses one (§7.2)" begin
         @test Integrator(x0 = 1) isa Integrator{Float64}
+        @test Integrator(x0 = 1) isa Integrator{Float64, false}
+        @test Integrator(x0 = SVector(1, 2), reset = true) isa Integrator{SVector{2, Float64}, true}
         @test FirstOrderLag(τ = 1, x0 = 1) isa FirstOrderLag{Float64}
         @test Step(t_step = 0.25, before = 0, after = 2) isa Step{Float64, true}
+        @test Sequence(times = (1,), values = (0, 2)) isa Sequence{Float64, true, 1, 2}
+        @test Sequence(times = [0, 1], values = [SVector(0, 1), SVector(1.0, 2), SVector(3, 4)], localized = false) isa
+              Sequence{SVector{2, Float64}, false, 2, 3}
         @test LimitedIntegrator(lower = -1, upper = 1) isa LimitedIntegrator{Float64}
         @test LimitedIntegrator(lower = -1, upper = 1, localized = false) isa LimitedIntegrator{Float64, false}
         @test Relay(lower = 0, upper = 1) isa Relay{Float64}
+        @test Comparator(threshold = 0) isa Comparator{Float64, true}
+        @test Comparator(lower = 0, upper = 1.0, localized = false) isa Comparator{Float64, false}
+        @test Comparator(lower = 0, upper = 1).upper === 1.0
+        @test Comparator(threshold = SVector(0, 1)) isa Comparator{SVector{2, Float64}, true}
         @test LimitedIntegrator(lower = SVector(-1, -1), upper = SVector(1, 1)) isa
               LimitedIntegrator{SVector{2, Float64}, true}
         @test Delay(K = 2, v0 = 1) isa Delay{Float64, 2}
@@ -2249,6 +2572,20 @@ function test_blocks()
         @test all(v -> v isa Float64, values(DiscretePID(Kp = 1).fixed))
         @test_throws TypeError Step(t_step = 0.25, localized = 1)
         @test_throws TypeError LimitedIntegrator(lower = -1, upper = 1, localized = 1)
+        @test_throws TypeError Integrator(reset = 1)
+        @test_throws TypeError Sequence(times = (1,), values = (0, 1), localized = 1)
+        @test_throws ArgumentError Sequence(times = (0.5, 0.25), values = (0, 1, 2))
+        @test_throws ArgumentError Sequence(times = (0.25, 0.25), values = (0, 1, 2))
+        @test_throws ArgumentError Sequence(times = (0.25, 0.5), values = (0, 1))
+        @test_throws TypeError Comparator(threshold = 0, localized = 1)
+        @test_throws ArgumentError Comparator()
+        @test_throws ArgumentError Comparator(lower = 0)
+        @test_throws ArgumentError Comparator(upper = 1)
+        @test_throws ArgumentError Comparator(threshold = 0, lower = -1)
+        @test_throws ArgumentError Comparator(threshold = 0, upper = 1)
+        @test_throws ArgumentError Comparator(threshold = 0, lower = -1, upper = 1)
+        @test_throws ArgumentError Comparator(lower = 1, upper = 0)
+        @test_throws ArgumentError Comparator(lower = SVector(0, 0), upper = SVector(-1, 1))
         @test_throws TypeError PID(Kp = 1, hold = 1)
         @test_throws TypeError PID(Kp = 1, tracking = 1)
         @test_throws TypeError PID(Kp = 1, Tt = 1, tracking = 1)
@@ -2296,13 +2633,17 @@ function test_blocks()
                      DiscreteIntegrator(), DiscreteLimitedIntegrator(lower = -1.0, upper = 1.0),
                      DiscreteLimitedIntegrator(lower = SVector(-1.0, -1.0), upper = SVector(1.0, 1.0)),
                      RateLimiter(rising = 1.0),
-                     Integrator(), FirstOrderLag(τ = 1.0), Step(t_step = 1.0),
-                     Step(t_step = 1.0, localized = false), LimitedIntegrator(lower = -1.0, upper = 1.0),
+                     Integrator(), Integrator(reset = true), FirstOrderLag(τ = 1.0), Step(t_step = 1.0),
+                     Step(t_step = 1.0, localized = false), Sequence(times = (1.0,), values = (0.0, 1.0)),
+                     Sequence(times = (0.0, 1.0), values = (SVector(0.0), SVector(1.0), SVector(2.0)), localized = false),
+                     LimitedIntegrator(lower = -1.0, upper = 1.0),
                      LimitedIntegrator(lower = -1.0, upper = 1.0, localized = false),
                      Relay(lower = 0.2, upper = 0.8),
                      LimitedIntegrator(lower = SVector(-1.0, -1.0), upper = SVector(1.0, 1.0)),
                      LimitedIntegrator(lower = SVector(-1.0, -1.0), upper = SVector(1.0, 1.0), localized = false),
                      Relay(lower = SVector(0.2, 0.2), upper = SVector(0.8, 0.8)),
+                     Comparator(threshold = 0.0), Comparator(lower = -1.0, upper = 0.0, localized = false),
+                     Comparator(threshold = SVector(0.0, 1.0)), Comparator(threshold = SVector(0.0, 1.0), localized = false),
                      PID(Kp = 1.0), PID(Kp = 1.0, hold = true), PID(Kp = 1.0, Tt = 1.0, tracking = true),
                      PID(Kp = 1.0, Tt = 1.0, hold = true, tracking = true),
                      StateSpace(A = [-1.0;;], B = [1.0;;], C = [1.0;;], D = [0.0;;]),

@@ -202,10 +202,10 @@ breaking user code, and each may benefit from user feedback first.
   `IllegalPortType` under a reason of its own, with its Appendix C row.
 - **The library's remaining candidates.** Whatever of the inventory in
   `design/companions/library_inventory.md` is unbuilt, each block
-  built when wanted (§13.7, D-313). The order settled on 2026-11-03, four
-  increments by the mechanism each family exercises: first `Comparator`,
-  the `Integrator` reset and `Sequence`, one stage per block; then
-  `LimitedDoubleIntegrator` alone; then the structure blocks `Fn`,
+  built when wanted (§13.7, D-313). The order settled on 2026-11-03, by the
+  mechanism each family exercises, after increment 86 shipped `Comparator`,
+  the `Integrator` reset and `Sequence`: `LimitedDoubleIntegrator` alone;
+  then the structure blocks `Fn`,
   `Select`, the unbundling component and the discrete backlash; then the
   additions to shipped blocks, where three readings wait for the brief: a
   second output on `Delay` names its output side, so the taps are a type

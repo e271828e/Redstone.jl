@@ -156,8 +156,8 @@ flips. A
 `select` published from a mode, or held between [ticks](@ref g-tick), flips on a
 [boundary](@ref g-boundary) and the jump is clean. One computed from a
 continuous quantity inside a stage body flips inside a step and smears that
-step. That is a mode made silently, which the moded blocks such as
-[`Relay`](@ref) exist to declare.
+step. That is a mode made silently, and a [`Comparator`](@ref) on the quantity,
+or a [`Relay`](@ref) beside it, is the declared way to produce `select`.
 """
 struct Switch{V} <: AbstractComponent end
 x_init(::Switch) = nothing
@@ -565,9 +565,9 @@ y_state(c::Source, (; t)) = c.f(ForwardDiff.value(t))
 
 # --- the continuous dynamics (§13.7, D-313) -------------------------------------
 
-# Design: §5.3, §7.2.
+# Design: §2.3, §3.1, §5.3, §7.2, §10.6, D-082, D-141, D-437.
 """
-    Integrator(; x0 = 0.0) -> Integrator
+    Integrator(; x0 = 0.0, reset::Bool = false) -> Integrator
 
 A continuous [primitive](@ref g-primitive) that publishes the time integral of
 its input.
@@ -580,22 +580,47 @@ therefore has no [feedthrough](@ref g-feedthrough). A `Float64` state follows
 the scalar of a `Dual` [activation](@ref g-activation), so the block linearizes
 as it integrates.
 
+With `reset`, the block gains a second input, the `Bool` `reset`, and its data
+input keeps the face `u`, as in `"integrator/u"` and `"integrator/reset"`. A
+rising edge of `reset` writes `x0` into `x`, through one
+[state event](@ref g-state-event), `reset`. Its [guard](@ref g-guard) is
+`reset` itself, a `Bool` [predicate](@ref g-predicate), so it is
+[boundary-detected](@ref g-boundary-detected), and the reset lands on the
+[boundary](@ref g-boundary) where `reset` rises. An event fires only when its
+predicate turns from not-holding to holding, which is
+[edge semantics](@ref g-edge-semantics). Holding `reset` therefore resets once,
+and a second rising edge resets again. A `reset` published from a mode rises
+only on a boundary, so no reset is late. A reset driven by a continuous
+quantity takes it through a [`Comparator`](@ref), which localizes the crossing.
+[Boundary zero](@ref g-boundary-zero) sets every [prior](@ref g-prior) to
+not-holding, so a `reset` already holding at `t₀` fires there.
+
 # Keywords
 
-- `x0`: the initial value of `x`. `V` is `Float64` or a static array of
-  `Float64`, taken from `float(x0)`, so an integer `x0` qualifies.
+- `x0`: the initial value of `x`, and the value a reset writes. `V` is
+  `Float64` or a static array of `Float64`, taken from `float(x0)`, so an
+  integer `x0` qualifies.
+- `reset`: `true` for the form with the `reset` input.
 
 See also [`LimitedIntegrator`](@ref), [`DiscreteIntegrator`](@ref).
 """
-struct Integrator{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: AbstractComponent
+struct Integrator{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, R} <: AbstractComponent
     x0::V
 end
-Integrator(; x0 = 0.0) = Integrator(float(x0))
+function Integrator(; x0 = 0.0, reset::Bool = false)
+    x0 = float(x0)
+    Integrator{typeof(x0), reset}(x0)
+end
 x_init(c::Integrator) = c.x0
-u_types(::Integrator{V}) where {V} = V
+u_types(::Integrator{V, false}) where {V} = V
+u_types(::Integrator{V, true}) where {V} = (u = V, reset = Bool)
 y_types(::Integrator{V}) where {V} = V
 y_state(::Integrator, (; x)) = x
-x_deriv(::Integrator, (; u)) = u
+x_deriv(::Integrator{V, false}, (; u)) where {V} = u
+x_deriv(::Integrator{V, true}, (; u)) where {V} = u.u
+reset_guard(::Integrator, (; u)) = u.reset
+reset_handler(c::Integrator, _) = (x = c.x0,)
+state_events(::Integrator{V, true}) where {V} = (reset = StateEvent(reset_guard, reset_handler),)
 
 # Design: §7.2, D-313, commit `9c75324`.
 # The sentence on the scalar case is the user's ruling of 2026-10-27, which
@@ -1134,6 +1159,74 @@ step_guard(c::Step{V, false}, (; t)) where {V} = t >= c.t_step   # Bool form: bo
 step_handler(::Step, _) = (m = true,)
 state_events(::Step) = (fire = StateEvent(step_guard, step_handler),)
 
+# Design: §2.3, §10.4, §10.6, D-179, D-312, D-362.
+# The handler counts every breakpoint at or before `t` rather than adding one.
+# Two breakpoints observed at one boundary, inside one boundary-detected step or
+# at or before `t₀`, would otherwise strand the count: the first firing leaves
+# the guard holding on the next breakpoint, so the next round sees no fresh edge
+# and the prior is written holding.
+"""
+    Sequence(; times, values, localized::Bool = true) -> Sequence
+
+A continuous [primitive](@ref g-primitive) that publishes a schedule of values,
+switching at each of its breakpoints.
+
+Its one output, bare, publishes `values[1]` before `times[1]`, `values[k + 1]`
+from `times[k]` until `times[k + 1]`, and the last value from the last
+breakpoint on. The [block](@ref g-block) is a mode-only primitive with no
+inputs, and a [`Step`](@ref) at one breakpoint. Its one bare mode, `passed`
+below, counts the breakpoints passed. One [state event](@ref g-state-event),
+`advance`, fires when `t` reaches the next breakpoint and sets the count to
+every breakpoint at or before `t`. The output is [pinned](@ref g-walked) at `V`,
+so it carries zero partials under every [activation](@ref g-activation).
+
+`localized` picks the detection policy. [Localized](@ref g-localized), the
+[guard](@ref g-guard) is the sign form `t - times[passed + 1]`, and each
+breakpoint ends the step at its crossing, so two breakpoints inside one step
+each land at their own time.
+[Boundary-detected](@ref g-boundary-detected), the guard is the `Bool`
+`t ≥ times[passed + 1]`. Each jump then lands on the first
+[boundary](@ref g-boundary) at or after its breakpoint, and breakpoints passed
+inside one step advance together there. The policy is the type parameter `L`
+rather than a field because the build reads it off the guard's return type.
+
+[Boundary zero](@ref g-boundary-zero) sets every [prior](@ref g-prior) to
+not-holding. The breakpoints at or before `t₀` are therefore passed there, and
+the output starts at the value that follows them.
+
+# Keywords
+
+- `times`: the `N` breakpoints, strictly ascending, any times.
+- `values`: the `N + 1` values. They are promoted to one `V`, `Float64` or a
+  static array of `Float64`, and taken by `float`, so integer values qualify.
+  `times` that do not ascend strictly, or a count of `values` other than
+  `N + 1`, are refused with an `ArgumentError`.
+- `localized`: `true` for localized breakpoints, `false` for boundary-detected
+  ones.
+"""
+struct Sequence{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, L, N, M} <: AbstractComponent
+    times::SVector{N, Float64}
+    values::SVector{M, V}
+end
+function Sequence(; times, values, localized::Bool = true)
+    N = length(times)
+    length(values) == N + 1 ||
+        throw(ArgumentError("a sequence over $N breakpoints takes $(N + 1) values, not $(length(values))"))
+    all(k -> times[k] < times[k + 1], 1:N - 1) ||
+        throw(ArgumentError("the sequence's `times` must ascend strictly"))
+    converted = float.(promote(values...))
+    V = typeof(first(converted))
+    Sequence{V, localized, N, N + 1}(SVector{N, Float64}(times...), SVector{N + 1, V}(converted...))
+end
+x_init(::Sequence) = nothing
+m_init(::Sequence) = 0                                           # passed
+y_types(::Sequence{V}) where {V} = Pinned{V}
+y_state(c::Sequence, (; m)) = c.values[m + 1]
+advance_guard(c::Sequence{V, true, N}, (; t, m)) where {V, N} = m < N ? t - c.times[m + 1] : -one(t)
+advance_guard(c::Sequence{V, false, N}, (; t, m)) where {V, N} = m < N && t >= c.times[m + 1]
+advance_handler(c::Sequence, (; t)) = (m = searchsortedlast(c.times, t),)
+state_events(::Sequence) = (advance = StateEvent(advance_guard, advance_handler),)
+
 # --- the moded blocks (§10.4, §10.6, D-313) -------------------------------------
 
 # The port type of a per-channel value of type `T` over `V`: one `T` per
@@ -1289,8 +1382,10 @@ Its input `u` and its output `y` are bare. The output publishes `off` or `on`
 by the bare mode, `state` below, from [stage 1](@ref g-stage-function). The mode
 is an `Int8` code, `0` off and `1` on. Two [state events](@ref g-state-event)
 move it. `switch_on` fires when `u` rises to `upper` while off, and `switch_off`
-when `u` falls to `lower` while on. Both [guards](@ref g-guard) are sign forms gated by the mode, so both are
-[localized](@ref g-localized).
+when `u` falls strictly below `lower` while on. Both [guards](@ref g-guard) are sign forms gated by the mode, so both are
+[localized](@ref g-localized). The fall is strict so that at `lower == upper` an
+input exactly on the threshold reads on, rather than switching back and forth
+until the [firing budget](@ref g-firing-budget) runs out.
 
 `y` reads no input, so the [block](@ref g-block) has no
 [feedthrough](@ref g-feedthrough). A relay closing a feedback loop therefore
@@ -1311,8 +1406,8 @@ leaves it off, which is the hysteresis itself.
 
 # Keywords
 
-- `lower`: the threshold `u` falls to for the relay to switch off, below
-  `upper`.
+- `lower`: the threshold `u` falls below for the relay to switch off, at
+  most `upper`.
 - `upper`: the threshold `u` rises to for the relay to switch on.
 - `off`: the value `y` publishes while off.
 - `on`: the value `y` publishes while on. The four values are promoted to one
@@ -1333,7 +1428,7 @@ u_types(::Relay{V}) where {V} = V
 y_types(::Relay{V}) where {V} = Pinned{V}
 y_state(c::Relay, (; m)) = ifelse.(m .== 1, c.on, c.off)
 switch_on_guard(c::Relay, (; m, u)) = m == 0 ? u - c.upper : -one(u)
-switch_off_guard(c::Relay, (; m, u)) = m == 1 ? c.lower - u : -one(u)
+switch_off_guard(c::Relay, (; m, u)) = m == 1 ? prevfloat(c.lower) - u : -one(u)    # `u < lower`, as the comparator's
 switch_on_handler(::Relay, _) = (m = Int8(1),)
 switch_off_handler(::Relay, _) = (m = Int8(0),)
 state_events(::Relay{V}) where {V <: Real} =
@@ -1346,8 +1441,110 @@ function state_events(::Relay{V}) where {V <: StaticArray}
                    (c, (; m)) -> (m = Base.setindex(m, Int8(1), i),))
     end
     switch_off = ntuple(N) do i
-        StateEvent((c, (; m, u)) -> m[i] == 1 ? c.lower[i] - u[i] : -one(u[i]),
+        StateEvent((c, (; m, u)) -> m[i] == 1 ? prevfloat(c.lower[i]) - u[i] : -one(u[i]),
                    (c, (; m)) -> (m = Base.setindex(m, Int8(0), i),))
+    end
+    names = (ntuple(i -> Symbol(:switch_on_, i), N)..., ntuple(i -> Symbol(:switch_off_, i), N)...)
+    NamedTuple{names}((switch_on..., switch_off...))
+end
+
+# Design: §2.3, §3.1, §10.4, §10.6, D-179, D-312.
+"""
+    Comparator(; threshold = nothing, lower = nothing, upper = nothing,
+               localized::Bool = true) -> Comparator
+
+A continuous [primitive](@ref g-primitive) that publishes whether its input has
+risen past a threshold, with optional hysteresis.
+
+Its input `u` is bare, and its one output, bare, is a `Bool` published from
+[stage 1](@ref g-stage-function) by the bare mode, `state` below. The mode is an
+`Int8` code, `0` below and `1` above, and two
+[state events](@ref g-state-event) move it. `switch_on` fires when `u` rises to
+`upper` while below, and `switch_off` when `u` falls strictly below `lower`
+while above. At `lower == upper` the block is a plain threshold and publishes
+`u ≥ threshold`. Between them it holds its last value, which is the hysteresis.
+
+The output is [pinned](@ref g-walked) at `Bool`, and it changes only when an
+event fires, so only on a [boundary](@ref g-boundary). It is the declared way to
+feed a [`Switch`](@ref)'s `select` from a continuous quantity, and the switch's
+jump then lands where the comparator's event lands. `y` reads no input, so the
+[block](@ref g-block) has no [feedthrough](@ref g-feedthrough).
+
+`localized` picks the detection policy. [Localized](@ref g-localized), the
+[guards](@ref g-guard) are sign forms gated by the mode, and each switch ends
+the step at the crossing. [Boundary-detected](@ref g-boundary-detected), they
+are the `Bool` [predicates](@ref g-predicate), and each switch lands on the
+first boundary that observes it. The policy is the type parameter `L` rather
+than a field because the build reads it off the guard's return type.
+
+Over a static vector, the thresholds and the codes are componentwise, and `y`
+is a static vector of `Bool`. The block declares `N` copies of the two events,
+one per component, named `switch_on_1` to `switch_on_N`, then `switch_off_i`.
+Each guard reads its one component and each handler writes it.
+
+The block starts below. [Boundary zero](@ref g-boundary-zero) sets every
+[prior](@ref g-prior) to not-holding. An input already at or above `upper` at
+`t₀` therefore switches the block on there.
+
+# Keywords
+
+- `threshold`: the threshold of a plain comparator, given alone. It sets both
+  `lower` and `upper`.
+- `lower`: the threshold `u` falls below for the output to turn `false`, at
+  most `upper`, componentwise over a vector.
+- `upper`: the threshold `u` rises to for the output to turn `true`. `lower`
+  and `upper` are given together and without `threshold`, for hysteresis. They
+  are promoted to one `V`, `Float64` or a static array of `Float64`, and taken
+  by `float`, so integer values qualify. Any other combination of the three
+  keywords, or a `lower` above `upper`, is refused with an `ArgumentError`.
+- `localized`: `true` for localized switches, `false` for boundary-detected
+  ones.
+
+See also [`Relay`](@ref), [`Switch`](@ref).
+"""
+struct Comparator{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, L} <: AbstractComponent
+    lower::V      # turn `false` when `u` falls below it
+    upper::V      # turn `true` when `u` rises to it
+end
+function Comparator(; threshold = nothing, lower = nothing, upper = nothing, localized::Bool = true)
+    if threshold !== nothing && lower === nothing && upper === nothing
+        lower = upper = threshold
+    elseif threshold !== nothing || lower === nothing || upper === nothing
+        throw(ArgumentError("a comparator takes `threshold` alone, or `lower` and `upper` together"))
+    end
+    lower, upper = float.(promote(lower, upper))
+    all(lower .<= upper) || throw(ArgumentError("the comparator's `lower` must not exceed its `upper`"))
+    Comparator{typeof(lower), localized}(lower, upper)
+end
+x_init(::Comparator) = nothing
+m_init(c::Comparator) = Int8.(zero(c.lower))    # the state: 0 below, 1 above
+u_types(::Comparator{V}) where {V} = V
+y_types(::Comparator{V}) where {V} = Pinned{channel_type(V, Bool)}
+y_state(::Comparator, (; m)) = m .== 1
+# The fall is strict. At `lower == upper` both non-strict predicates hold at an
+# input exactly on the threshold, and each switch would re-enable the other
+# until the firing budget runs out. `prevfloat(lower) - u ≥ 0` is `u < lower`
+# in sign form, continuous in `u`, so the bracket converges as on any crossing.
+switch_on_guard(c::Comparator{V, true}, (; m, u)) where {V} = m == 0 ? u - c.upper : -one(u)
+switch_off_guard(c::Comparator{V, true}, (; m, u)) where {V} = m == 1 ? prevfloat(c.lower) - u : -one(u)
+switch_on_guard(c::Comparator{V, false}, (; m, u)) where {V} = m == 0 && u >= c.upper
+switch_off_guard(c::Comparator{V, false}, (; m, u)) where {V} = m == 1 && u < c.lower
+switch_on_handler(::Comparator, _) = (m = Int8(1),)
+switch_off_handler(::Comparator, _) = (m = Int8(0),)
+state_events(::Comparator{V}) where {V <: Real} =
+    (switch_on = StateEvent(switch_on_guard, switch_on_handler),
+     switch_off = StateEvent(switch_off_guard, switch_off_handler))
+function state_events(::Comparator{V, L}) where {V <: StaticArray, L}
+    N = length(V)
+    switch_on = ntuple(N) do i
+        guard = L ? ((c, (; m, u)) -> m[i] == 0 ? u[i] - c.upper[i] : -one(u[i])) :
+                    ((c, (; m, u)) -> m[i] == 0 && u[i] >= c.upper[i])
+        StateEvent(guard, (c, (; m)) -> (m = Base.setindex(m, Int8(1), i),))
+    end
+    switch_off = ntuple(N) do i
+        guard = L ? ((c, (; m, u)) -> m[i] == 1 ? prevfloat(c.lower[i]) - u[i] : -one(u[i])) :
+                    ((c, (; m, u)) -> m[i] == 1 && u[i] < c.lower[i])
+        StateEvent(guard, (c, (; m)) -> (m = Base.setindex(m, Int8(0), i),))
     end
     names = (ntuple(i -> Symbol(:switch_on_, i), N)..., ntuple(i -> Symbol(:switch_off_, i), N)...)
     NamedTuple{names}((switch_on..., switch_off...))

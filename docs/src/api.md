@@ -222,6 +222,7 @@ StopRequest
 ```@docs
 Constant
 Step
+Sequence
 Source
 GaussianWhiteNoise
 ```
@@ -241,6 +242,7 @@ TransferFunction
 
 ```@docs
 Relay
+Comparator
 ```
 
 ### Discrete tier
