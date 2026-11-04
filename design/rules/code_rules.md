@@ -182,7 +182,29 @@ Traps the code does not warn about, each hit more than once while building:
   place of `is_bare` would read them as bare;
 - **`isempty` is no presence test for a store.** `isempty(nothing)` and
   `isempty(:idle)` throw, and an empty `SVector` is a declared store, so a
-  store is present iff it is not `nothing` (§5.2).
+  store is present iff it is not `nothing` (§5.2);
+- **a test's clock value is an indexed frame top**, `t₀ + k * h` bitwise,
+  never a decimal literal; a derived index takes the helper its sibling
+  door uses;
+- **a test that stages a root input reads it back with `get_input`** and
+  pins the snapshot where it changes: `stage!` reports a misspelled face
+  to the harness writer's diagnostic cell, never to the caller, and a
+  write staged after `step!` to a boundary reaches that boundary's tick
+  one frame late;
+- a refusal that becomes collected throws
+  `DiagnosticError{Vector{Diagnostic}}`, so `carried(@test_throws
+  DiagnosticError{K} …)` cannot match it;
+- **a specialization pin uses `test_build.jl`'s `specialization_counts`
+  and pins deltas across calls**, never absolute counts; a keyword
+  method's specializations sit on its body function, out of its reach;
+- a test that blocks on a read (a socket, a channel) waits through a
+  spawned task under the bounded wait; otherwise the mutant that drops
+  the close hangs the gate past its timeout instead of failing it;
+- **a new zero-argument fixture joins `test_build.jl`'s `Dual` sweep**, so
+  it must build at `ProbeDual`; a concrete one that cannot takes an
+  argument and raises the sweep's pinned skipped count. A fixture pinning
+  a docsystem rule carries no docstring above the struct, or it registers
+  the very entry.
 
 ## Naming
 

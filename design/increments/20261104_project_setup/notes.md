@@ -61,3 +61,28 @@ the diff.
   are rewritten relative to the new directory and frozen, with a note at
   its head and on the definitions block. Every citation of the old path,
   companions and records alike, now names the new one.
+
+## Step 5: the pipeline and the brief rules
+
+- `delegation.md` becomes `rules/increment_rules.md` in tool-neutral
+  terms: "the coordinating session" for the first person, "capable-tier"
+  and "mechanical-tier" agents for the model names, which the user's own
+  instructions map. Cut: the dates of rulings; the `filter-branch` trailer
+  repair, a one-off now that the harness stopped asking for trailers; the
+  harness mechanics (backgrounding, the refused `Write`, the 64k cap, the
+  context-watch recipe, the `eza` alias), which went to the user's global
+  instructions as a "Running Subagents" section. Added from today: stage
+  explicit paths only on a shared tree.
+- `brief_lessons.md` becomes `rules/brief_rules.md` with the template as
+  its last section, drawn from the latest core and inspector briefs. The
+  prototyping and probing rules moved to the increment rules. Cut: the
+  docstring route, which `AGENTS.md` carries; "`Step` publishes `Float64`",
+  generalized to checking a fixture's published type; the layout engine's
+  name in the untested-mechanism rule. The three event-design shapes under
+  "Library blocks" stay as one bullet; they would fit the inventory
+  companion better, a docs change for a later session.
+- Six test conventions that hold with or without a brief moved from the
+  lessons to `code_rules.md`'s authoring caveats: clock values as frame
+  tops, the `get_input` read-back, the carried `DiagnosticError` shape,
+  specialization pins as deltas, blocking reads under a spawned task, and
+  zero-argument fixtures in the `Dual` sweep.
