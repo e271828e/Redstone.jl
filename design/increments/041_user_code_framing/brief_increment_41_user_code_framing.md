@@ -34,7 +34,7 @@ totality paragraph (3330–3345). §13.1's user-code rule (7276–7283, D-057).
 §13.4's catch site and species rule (7576–7620). Appendix B's legal-set
 table (10419–10428). Appendix C's rows: `BundleFieldError` (10928–10932),
 `HandlerReturnKey` (10933–10935, the neighbour), `UserCodeFraming`
-(10936–10940). In `design/decisions.md`: **D-248 (the ruling, at the
+(10936–10940). In `design/log.md`: **D-248 (the ruling, at the
 end of the log before the link block)**, D-142 (4550–4590), D-221
 (7909–7986), D-225 (8052–8095), D-215 (7552, `InternalInvariant`).
 

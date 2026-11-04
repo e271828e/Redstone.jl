@@ -9,7 +9,7 @@ The list at the end names them.
 Locations are unit `new.md` lines as of 22:05 on 2026-10-01, after the
 chapter-pass editorial scripts (`units/*/chapter_fixes_*.py`) ran. `v4` means
 `design/reports/20261001_spec_rewrite_sample/versions/v4_flat.md`. `spec` and
-`log` mean `design/spec.md` and `design/decisions.md` at the working
+`log` mean `design/spec.md` and `design/log.md` at the working
 tree. `chapter_new.md` predates the editorial scripts, so its line numbers in
 the sources are off by a few lines.
 
@@ -891,7 +891,7 @@ F7 (R16) and F8 (R17) remain open.
   current.
 - **Recommendation:** discuss
 
-### R69. `decisions.md` log text that cites chapter 9
+### R69. `log.md` log text that cites chapter 9
 
 - **Rows:** 8294 and 8332 (D-229, deployment validation, §9.1 → §9.2); 6859
   (D-195 Rationale, the flat buffer); 4400 (D-139 Rationale, now in the
@@ -911,14 +911,14 @@ F7 (R16) and F8 (R17) remain open.
 - **Problem:** v4 cites D-280 (the CI `Dual` policy), D-281 (torn-state
   freedom) and D-282 (buffer ownership). They are drafted but not in the log.
 - **Evidence:** §9.4 trial report, "Before adopting it"; survey E15;
-  inbound_check ("drafts with no entry in `decisions.md` yet").
+  inbound_check ("drafts with no entry in `log.md` yet").
 - **Proposed:** Land them with the chapter. D-282 may also absorb D-135's
   immutability ruling (R75).
 - **Recommendation:** accept
 
 ### R71. Does rule 2's citation exception cover moved content?
 
-- **Problem:** `decisions_rules.md` rule 2's exception covers renumbering
+- **Problem:** `log_rules.md` rule 2's exception covers renumbering
   ("every entry … cites the CURRENT § numbering"). A content move is not a
   renumbering. Every Spec-field edit below, and the R69 log rows, wait on this.
 - **Evidence:** Survey part D; A2 inbound section; D inbound section.
@@ -1208,7 +1208,7 @@ Spec fields (all wait on R71):
 
 ### R102. `rules/spec_rules.md`, "The battery" (survey F26)
 
-- **Evidence:** It says `decisions.md` keeps plain citations. `decisions.md`
+- **Evidence:** It says `log.md` keeps plain citations. `log.md`
   is first in `linkify.jl`'s `ROSTER` (line 63) and carries reference links.
 - **Proposed:** Correct the sentence.
 - **Recommendation:** accept

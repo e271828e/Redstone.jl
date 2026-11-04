@@ -17,7 +17,7 @@ field, and §8.4's walkthrough 5.
 **Forbidden reads.** None. I read `design/spec.md` (my range plus the
 cited §5.2, §6.1, §7.1 passages for meaning), all of `src/` and `test/`, the
 "What is real here" file table in `design/implementation.md`, and the
-`D-167` and `D-168` entries of `design/decisions.md`.
+`D-167` and `D-168` entries of `design/log.md`.
 
 ## Summary
 

@@ -4,7 +4,7 @@ Scope: every edit logged in `chapter_fixes.md`, `trim_log.md`,
 `ruled_edits.md`, `rulings_applied_A.md`, `rulings_applied_B.md`,
 `units/S94/changes.md`, plus the orchestrator's GNSS edit. Each was checked
 against `chapter_new.md`, `chapter_old.md`, `design/spec.md` (by section)
-and `design/decisions.md`. Line numbers are `chapter_new.md` lines.
+and `design/log.md`. Line numbers are `chapter_new.md` lines.
 `chapter_new.md` equals a fresh concatenation of `units/*/new.md`. The frozen
 §9.7 block (1134–1167) equals spec 4247–4280 with `**` removed.
 

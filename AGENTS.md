@@ -13,10 +13,10 @@ spec change obliges the code to conform. Nothing deviates silently.
 | What | Where |
 |---|---|
 | the normative design | `design/spec.md`, read by section through its heading outline, never whole |
-| settled decisions and the alternatives they rejected | `design/decisions.md`; the log lags the spec, the spec wins, and the latest entry outranks an older one |
+| settled decisions and the alternatives they rejected | `design/log.md`; the log lags the spec, the spec wins, and the latest entry outranks an older one |
 | what the code owes the spec, the work order, open questions, deviations | `design/pending.md`, first bullet next; the state of an open task lives on its bullet, nowhere else |
 | the map of `src/` and `test/` | `design/code_map.md`, read whole before building: about 27k tokens, and a fix often reaches files a topic search would miss |
-| the rules each kind of file is written to | `design/rules/`: `spec_rules.md`, `decisions_rules.md`, `code_rules.md`, `docstring_rules.md`, `increment_rules.md`, `brief_rules.md` |
+| the rules each kind of file is written to | `design/rules/`: `spec_rules.md`, `log_rules.md`, `code_rules.md`, `docstring_rules.md`, `increment_rules.md`, `brief_rules.md` |
 | explanations, walkthroughs, the library inventory | `design/companions/`; the spec wins over them |
 | one folder per unit of work: its brief, notes and prototype patch | `design/increments/`; the live roadmaps sit at its top |
 | investigations, audits, frozen charters | `design/reports/`, dated |
@@ -47,7 +47,7 @@ never a restatement.
 ## Before editing
 
 - The spec: read `design/rules/spec_rules.md` first. The log:
-  `design/rules/decisions_rules.md`. Both name the battery (`linkify`,
+  `design/rules/log_rules.md`. Both name the battery (`linkify`,
   `check_refs`, `check_rows`, `check_glossary --strict`, `check_bold`,
   run from `design/`), which runs after every docs edit and before every
   commit; re-run `linkify.jl` after any move. They also say what an

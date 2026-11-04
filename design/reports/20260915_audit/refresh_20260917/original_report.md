@@ -47,7 +47,7 @@ reproduce a defect are evidence of that defect, not passing conformance tests.
   The curated findings use current locations. See [validation](../validation.md)
   for revision-specific hashes, logs and limitations.
 
-Only `src/`, `test/`, `spec.md`, `decisions.md`, and `implementation.md` informed
+Only `src/`, `test/`, `spec.md`, `log.md`, and `implementation.md` informed
 the audit. No previous audit or pending register was consulted. The audit changed
 only files in this report directory. See [method](../method.md),
 [coverage ledger](../coverage.md), and [final revision delta](../validation/final-revision-delta.patch).

@@ -39,7 +39,7 @@ here, follow the tree and say so in the report.
 - `design/spec.md` §12.4 (lines 7298–7640) for the shutdown protocol
   and the mask; §11.6 lines 6430–6470 for the wrapper and "every exit path";
   §11.1's topology table (lines 5500–5545). Read by line range, never whole.
-- `design/decisions.md` D-268 (lines 10497–10560).
+- `design/log.md` D-268 (lines 10497–10560).
 - `design/implementation.md`: the `src/sim.jl` row (lines 295–416,
   especially the publication paragraph at "The inline wrapper removes its
   entry" and the §12.4 bullet list under "the mask and the handling around

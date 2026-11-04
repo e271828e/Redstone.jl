@@ -13,7 +13,7 @@ wrong at the keyboard, stop and report rather than deviate silently.
 
 ## What is settled
 
-D-405, in `design/decisions.md` at 16023, and §14.2, §14.6, Appendix B
+D-405, in `design/log.md` at 16023, and §14.2, §14.6, Appendix B
 and Appendix D as 93ec0e0 leaves them:
 
 - The leaf constructor of the condition algebra is `set(; x = (;), s = (;),
@@ -38,7 +38,7 @@ Verified before writing: no `set` is defined in `Base`, `Core`, `Test`,
 
 ## Out of scope
 
-- `design/spec.md`, `decisions.md`, the companions and the tools:
+- `design/spec.md`, `log.md`, the companions and the tools:
   swept at 93ec0e0. A docs passage the code contradicts is a
   stop-and-report, not an edit.
 - `design/increments/`, `design/reports/` and `docs/spec_rewrite/`: records,
@@ -50,7 +50,7 @@ Verified before writing: no `set` is defined in `Base`, `Core`, `Test`,
 
 ## Reading, in order
 
-- `design/decisions.md` 16023 to the entry's end (D-405), and D-204
+- `design/log.md` 16023 to the entry's end (D-405), and D-204
   at 7797 for the precedent.
 - `design/spec.md` §14.2, 11234 to 11345; Appendix B's condition
   algebra, 13003 to 13020; Appendix D's `fragment` and `fragment tree`

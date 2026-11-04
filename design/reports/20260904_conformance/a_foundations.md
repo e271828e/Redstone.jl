@@ -15,7 +15,7 @@
 - **Forbidden reads**: none. I read the spec slice, `src/`, `test/`, the
   "What is real here" file table in `implementation.md` (rows 11–57 only,
   which carried the authoring-caveat block on the same screen), and the
-  `decisions.md` entries D-012, D-016, D-036, D-094, D-167, D-168, D-169,
+  `log.md` entries D-012, D-016, D-036, D-094, D-167, D-168, D-169,
   D-190 that my slice cites.
 
 ## 2. Summary
@@ -79,7 +79,7 @@ skipped.
 
 | § | claim | verdict | location | test | note |
 |---|---|---|---|---|---|
-| §1 (145–180) | purpose, ground rules, capability grounding, guarded additions, "all axes settled", `decisions.md` citation convention | n/a | — | — | rationale and method; no obligation on code |
+| §1 (145–180) | purpose, ground rules, capability grounding, guarded additions, "all axes settled", `log.md` citation convention | n/a | — | — | rationale and method; no obligation on code |
 | §2 (183) | continuous dynamics `ẋ = f(x, m, u, t)` with algebraic outputs | accurate | declare.jl:226, build.jl:959 | test_continuous.jl:4 | |
 | §2 (184–185) | multi-rate periodic discrete `s⁺ = g(s, u, t)` at declared rates, outputs held ZOH between ticks | accurate | declare.jl:227, executor.jl:160, executor.jl:445 | test_discrete.jl:11, test_discrete.jl:46 | ZOH by compile-time absence from the interior walk |
 | §2 (186) | zero-crossing guards with handlers under two detection policies | accurate | declare.jl:182, executor.jl:176 | test_events.jl:108 | |

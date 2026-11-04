@@ -7,7 +7,7 @@ brief. Line numbers for `src/sim.jl` are those of `296f4a0`. Every other
 reports' line numbers hold there. Never `cd` elsewhere (`cd` is aliased to
 zoxide in the user's shell; use absolute paths).
 
-**Standing.** D-261 (`decisions.md:9771`) states three ownership rules and
+**Standing.** D-261 (`log.md:9771`) states three ownership rules and
 settles twelve placements under them; the spec says so since `296f4a0`. The
 evidence is the data survey of 2026-09-21, `design/reports/20260921_data_survey/`:
 `merge.md` is the register (22 findings, ids A1–E1), and the five slice
@@ -70,7 +70,7 @@ policy paragraph, 8018–8030. Appendix B's constructor entry, 10807–10820,
 `init!`'s, 10907–10928, and the `replay!` synopsis, 11024–11036. The
 glossary's `Schedule` (11898), `Run` (12200), snapshot (12226),
 `StopPolicy` (12236), execution cursor (12429), artifact (12469). In
-`design/decisions.md`: **D-261 (9771–9880)**, D-254 (9380), D-255
+`design/log.md`: **D-261 (9771–9880)**, D-254 (9380), D-255
 (9431), D-256 (9513), D-260 (9687).
 
 **Routed reading in `design/implementation.md`** — do not read the

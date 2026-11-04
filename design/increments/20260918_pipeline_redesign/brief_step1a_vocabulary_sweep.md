@@ -83,7 +83,7 @@ leave it and flag it.
    sweep, phase, `Build`, executor, stratum, execution cursor, and the
    section-index row for "bound schedule" near line 250. Leave the `n`
    counts alone.
-6. **Not in scope.** `decisions.md` is history and keeps its wording;
+6. **Not in scope.** `log.md` is history and keeps its wording;
    `implementation.md`, `pending.md`, `reports/20260809_extensions_charter/report.md`, `companions/` and the
    older briefs are untouched. `spec_rewrite_pilot.md` carries one
    `#g-schedule` link; leave it. Count "schedule" in each out-of-scope

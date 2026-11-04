@@ -44,7 +44,7 @@ wrong at the keyboard, stop and report rather than deviate silently.
   the rig. §6.2, lines 1354 to 1504: the junction. §5.5, lines 1108 to 1127:
   the loop remedy. §8.1, lines 1993 to 2212: the import list a component
   file opens with. Never read the spec whole.
-- `design/decisions.md` D-311, D-312, D-313, and D-184 with its
+- `design/log.md` D-311, D-312, D-313, and D-184 with its
   annotations.
 - `design/implementation.md`: the head of "What is real here" down to
   its rule on deviations; the rows `### src/assembly.jl`,

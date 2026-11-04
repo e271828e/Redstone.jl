@@ -54,7 +54,7 @@ each passage by wording.
 - Appendix C, 11346–11351 (`ReadBindingUnresolved`) and 11367–11371
   (`TapResolution`): the payloads as now described.
 - Appendix D: `selector` (12237), `leaf address` (12244), `taps` (12430).
-- `decisions.md`: D-276 in full (11134–11223), D-271 (10822, superseded),
+- `log.md`: D-276 in full (11134–11223), D-271 (10822, superseded),
   D-272's 2026-09-30 annotation (10926–10930), D-036 (1069), D-094 (2655).
 - `implementation.md`: `leaves.jl` (21–42), `diagnostics.jl` (43–112),
   `readers.jl` (280–294), `bindings.jl` (598–608), `linearize.jl`

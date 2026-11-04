@@ -18,7 +18,7 @@ the patch's comments and docstrings are drafts.
 
 ## What is settled
 
-D-406, in `design/decisions.md` at 16082, with its annotation of
+D-406, in `design/log.md` at 16082, with its annotation of
 D-216 at 8334, and §11.2, §11.6, §14.4, §14.7 and Appendix C as 54fd2ba
 leaves them:
 
@@ -44,7 +44,7 @@ leaves them:
 
 ## Out of scope
 
-- `design/spec.md`, `decisions.md`, the companions and the tools:
+- `design/spec.md`, `log.md`, the companions and the tools:
   swept at 54fd2ba. A docs passage the code contradicts is a
   stop-and-report, not an edit. `implementation.md` and `pending.md` are
   the increment's bookkeeping and are edited as named below.
@@ -55,7 +55,7 @@ leaves them:
 
 ## Reading, in order
 
-- `design/decisions.md` 16082 to the entry's end (D-406); D-216 at
+- `design/log.md` 16082 to the entry's end (D-406); D-216 at
   8286 to its annotation at 8334; D-199 at 7597; D-277 at 12075 to its
   Position's end.
 - `design/spec.md` §11.2's output-device paragraph, 7094 to 7110;

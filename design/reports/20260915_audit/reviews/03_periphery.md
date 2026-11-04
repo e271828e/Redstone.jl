@@ -3,7 +3,7 @@
 ## Audit basis and limits
 
 - **Audited source baseline:** `865521a0f7be6894b1688925bb349dcbadd06539`. The coordinator verified that all permitted files remain byte-identical. Unowned out-of-scope working-tree changes were observed without inspecting their contents; no changed-HEAD claim is made.
-- **Normative inputs:** `design/spec.md`, with related ratified positions in `design/decisions.md`. `design/implementation.md` was read first as the requested source map.
+- **Normative inputs:** `design/spec.md`, with related ratified positions in `design/log.md`. `design/implementation.md` was read first as the requested source map.
 - **Source owned by this review:** `src/dataplane.jl`, `src/bindings.jl`, `src/roster.jl`, `src/devices.jl`, `src/trace.jl`, and the lifecycle/replay portions of `src/sim.jl`.
 - **Tests reviewed:** `test_dataplane.jl`, `test_roster.jl`, `test_bindings.jl`, `test_devices.jl`, `test_log.jl`, `test_trace.jl`, `test_lifecycle.jl`, `test_failures.jl`, and the fixtures those files use.
 - **Specification coverage:** §§11.1–11.8, 12.1–12.7, 13.5, and 13.6, with emphasis on the shutdown and concurrency contracts and malformed replay artifacts.
@@ -126,7 +126,7 @@ Current behavior differs in three related ways:
 
 **Severity: Medium. Source-level counterexample.**
 
-The ratified termination source order is control, then end time, then model stop face (`design/spec.md:7741-7762`; `design/decisions.md:7023-7053`, D-203). `_advance!` applies a different order:
+The ratified termination source order is control, then end time, then model stop face (`design/spec.md:7741-7762`; `design/log.md:7023-7053`, D-203). `_advance!` applies a different order:
 
 - `src/sim.jl:1059-1070` checks `_stop_hit` before the loop and checks control then `t_end` only after that early return.
 - `src/sim.jl:1078-1087` publishes a completed frame and immediately returns `ModelRequestedStop` when a stop face holds, before the next iteration can arbitrate control and `t_end` at that same boundary.

@@ -168,7 +168,7 @@ launch.
   `notes_increment_70.md` rulings 15 to 21 and the open points.
 - `design/pending.md` 16 to 32, as the commit after bd2d7ae left it;
   the one range here not from 6730b90.
-- `design/decisions.md` D-274 (11382 to 11475), D-282 (11841 to
+- `design/log.md` D-274 (11382 to 11475), D-282 (11841 to
   11871), D-317 (13467 to 13627), D-318 (13628 to 13698); the linkify
   marker is 13699.
 - `design/spec.md` §9.2's two rulings, 3988 to 4002; §9.6, 4747 to
@@ -181,7 +181,7 @@ launch.
   `CheckpointMismatch`, `CheckpointMidFrame` and `ArgumentInvalid` rows,
   12443 to 12482; the glossary entries `Model` 13111 and `checkpoint`
   13375. Never read the spec whole.
-- `design/rules/spec_rules.md` and `decisions_rules.md` whole, stage 0
+- `design/rules/spec_rules.md` and `log_rules.md` whole, stage 0
   only.
 - `design/implementation.md`: the head of "What is real here" (11 to
   41); the rows `### src/Redstone.jl` (43 to 50), `### src/checkpoint.jl`
@@ -212,12 +212,12 @@ launch.
 
 ### The shape
 
-One docs commit, written under `spec_rules.md` and `decisions_rules.md`
+One docs commit, written under `spec_rules.md` and `log_rules.md`
 read first. Three kinds of edit: a new log entry with its annotations, the
 spec sentences the code would otherwise falsify plus the Appendix B block
 the roadmap owes, and the queue bullet.
 
-**`design/decisions.md`, D-319**, after D-318's body and before the
+**`design/log.md`, D-319**, after D-318's body and before the
 linkify marker (13699). Title: "Split the checkpoint into the `Model`'s
 state and the run's cursor, and put the services on the `Model`". Position:
 a headline sentence, then one bullet per ruling under "What is settled":
@@ -339,7 +339,7 @@ diff --stat` before committing.
 ### Bookkeeping
 
 Nothing in `src/` or `test/`. The commit touches `spec.md`,
-`decisions.md` and `pending.md`, and nothing else.
+`log.md` and `pending.md`, and nothing else.
 
 ## Stage 1: the checkpoint split
 

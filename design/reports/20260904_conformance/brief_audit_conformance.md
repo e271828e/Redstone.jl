@@ -79,7 +79,7 @@ asymmetry as a finding.
 
 ## The decisions log
 
-`design/decisions.md` is 8073 lines, one `### D-nnn — Title` entry per
+`design/log.md` is 8073 lines, one `### D-nnn — Title` entry per
 decision. It frequently refines, narrows or supersedes the spec's letter, and
 the code cites `D-nnn` in comments at the sites where it does.
 

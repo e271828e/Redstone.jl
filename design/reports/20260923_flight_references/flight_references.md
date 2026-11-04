@@ -16,8 +16,8 @@ These tell the reader what Redstone *is*. They must be rewritten, not trimmed.
 - `spec.md:12495` glossary entry *guarded addition* — repeats "Flight.jl's fundamental strengths".
 - `spec.md` Part V intro (9641-9655) and §16 opening (10312) — "the migration of FlightPhysics and FlightApps".
 - `design/reports/20260809_extensions_charter/report.md` §1 (19-20) and §1.5 "The bias, named" (174-190) — the gap survey is framed as "how far did the FlightCore rewrite land from a general engine". §1.5 is *about* the inheritance, so it can't just be scrubbed.
-- `design/decisions.md:19-22` — says the design's full history lives in the git history of `framework_design.md` (a Flight.jl-era file).
-- `design/rules/decisions_rules.md:68-70` — style ruling: FlightCore is "the predecessor in-house framework", contrast with it is lineage and goes in Rationale.
+- `design/log.md:19-22` — says the design's full history lives in the git history of `framework_design.md` (a Flight.jl-era file).
+- `design/rules/log_rules.md:68-70` — style ruling: FlightCore is "the predecessor in-house framework", contrast with it is lineage and goes in Rationale.
 
 ## 2. Design rules that depend on the migration
 
@@ -28,7 +28,7 @@ Not mere mentions. These are rules whose justification is "the consumers need it
 - `spec.md` §16 "Log and trace persistence" (10519) — deferred "to migration, where the consumers exist".
 - `spec.md` §16 export surface (10430) — names clash "with FlightPhysics domain code".
 - `design/pending.md:18, 45` — §13.7 library deferred as "the spec's own migration deliverables" (M-B22).
-- Scattered "deferred to migration" / "when migration shows demand" lines in `spec.md` (1287, 1291, 3855, 6361, 10056) and `decisions.md` (D-140, D-141 and D-143 among them).
+- Scattered "deferred to migration" / "when migration shows demand" lines in `spec.md` (1287, 1291, 3855, 6361, 10056) and `log.md` (D-140, D-141 and D-143 among them).
 
 ## 3. Rationale by contrast with FlightCore (the bulk)
 
@@ -51,7 +51,7 @@ A standalone reader can't check the FlightCore evidence either way.
 | §13, §13.5 | 3 | "two lessons FlightCore paid for" |
 | §14.7, §14.8 trim | 9 | FlightCore formulation "survives verbatim", hand-scaled threshold |
 
-**decisions.md**: 44 of 261 entries carry at least one hit. Heaviest are
+**log.md**: 44 of 261 entries carry at least one hit. Heaviest are
 D-141 (6), D-140 (4), D-143 (4), D-069, D-093, D-105 and D-132 (3 each).
 Most sit in **Rationale** or **Rejected** items ("*Always-hot widgets:* FlightCore's
 dead slider", "*Framework-owned hook loop (FlightCore's shape)*"). Full list in
@@ -67,9 +67,9 @@ into a repo the reader doesn't have.
 - `spec.md` §15 (9659-10300) — all four case studies: `Vehicle` today (`aircraftbase.jl:142-170`), `PistonEngine` and the C172X FCS PID cascade, the interactive C172X/Xv1 demo (`FlightApps/demos/c172_demos.jl`), the strapdown IMU from `navsensors.jl`. This is Part V's whole content.
 - `spec.md` §12.5 (6996) — "What the consumers demonstrably mutate mid-run is surveyed here".
 - `spec.md` §7.1 (1337, 5 hits) — `RQuat`/`Ranged` state fields.
-- `decisions.md` D-132 cites `iodevices.jl:36`; D-141 cites line ranges (`:330-346`).
+- `log.md` D-132 cites `iodevices.jl:36`; D-141 cites line ranges (`:330-346`).
 - `trim_environment_walkthrough.md:28` — `lib/FlightApps/src/c172/c172.jl:825-854`.
-- The phrase "today's ..." (36 times in `spec.md`, 21 in `decisions.md`) often means "in Flight.jl today". Not every instance does.
+- The phrase "today's ..." (36 times in `spec.md`, 21 in `log.md`) often means "in Flight.jl today". Not every instance does.
 
 ## 5. Aerospace domain flavor (not Flight.jl references)
 
@@ -78,7 +78,7 @@ Flight.jl and make sense to a newcomer. Likely keep; listed so the choice is
 deliberate.
 
 - `src/trim.jl:1, 22` — "the aircraft author ships".
-- `src/trim.jl:354`, `src/conditions.jl:493` — "a terrible flight condition" (the same aphorism also in `spec.md:8893` and five times in `decisions.md`).
+- `src/trim.jl:354`, `src/conditions.jl:493` — "a terrible flight condition" (the same aphorism also in `spec.md:8893` and five times in `log.md`).
 - `design/tools/gloss_table.md:180, 186` — *baseline* and *`design_world`* glossed in aircraft terms.
 - ~50 "aircraft" mentions in `spec.md`, 28 in `trim_environment_walkthrough.md`.
 
@@ -111,71 +111,71 @@ Pattern covers the Flight.jl names, its subpackages, legacy code names (`f_ode!`
 README.md:5:being built to replace `FlightCore` as the substrate for `FlightPhysics` and
 README.md:6:`FlightApps` in Flight.jl, and it is not yet usable as a dependency: the
 README.md:183:The repository was spun off from Flight.jl's `core-redesign-2` branch on
-design/decisions.md:305:- *`f_step!`:* step-size-dependent semantics.
-design/decisions.md:586:  usage. The substrate rejection's evidence dossier, from FlightCore's own
-design/decisions.md:647:  the signal table; FlightCore's whole-tree atomicity was a call-tree artifact.
-design/decisions.md:679:  semantics, the [§2.2][s2-2] `f_step!` footgun class, made common by [§3.1][s3-1] externalized
-design/decisions.md:695:pure sleep, ∞ = pure busy-wait = FlightCore).
-design/decisions.md:819:- *Always-hot widgets:* FlightCore's dead slider — visually live, silently
-design/decisions.md:861:  no correct placement under asynchronous waiters; cf. FlightCore's `io_start`
-design/decisions.md:921:- *Retaining `user_callback!`:* the periphery's `f_step!` — unrecorded
-design/decisions.md:1095:- *FlightCore tree walks:* silent omission — the zero-edit convenience *is* the
-design/decisions.md:1207:- *Instance wrappers (`Subsampled`-style):* wraps the field type, pollutes
-design/decisions.md:1256:- *FlightCore-style concurrent multi-device writing of one input:* a bug
-design/decisions.md:1650:always abnormal; no `SimulationTermination` exception type.
-design/decisions.md:1875:  fabricated zero is a fine probe input and a terrible flight condition.
-design/decisions.md:1914:  diagnostics discarded — FlightCore's rational choice only because Jacobians
-design/decisions.md:1915:  through mutating `f_ode!` were unreachable.
-design/decisions.md:1939:- The C172 audit is Interpolations tables (prefer cubic knots), saturation
-design/decisions.md:1967:- The world-level `f_init!` wrapper dissolves into the `baseline` condition:
-design/decisions.md:2039:- *Split-form sketch files and separate `navsensors.jl`/`imu.md` notes:*
-design/decisions.md:2047:  (a fabricated zero is a fine probe input and a terrible flight condition —
-design/decisions.md:2596:acquisition per run — FlightCore's create-a-new-socket-each-`init!` in
-design/decisions.md:2619:- *`Event` start gate "as today":* [§12.3][s12-3]'s rejected primitive — the `io_start`
-design/decisions.md:2626:- *Always-spawned loop task FlightCore-style:* uniform topology whose only
-design/decisions.md:2646:semantics are explicit casts at the point of use (`RQuat(x.q, normalization =
-design/decisions.md:2647:false)` — today's `f_ode!`-over-raw-views pattern made immutable); invariants
-design/decisions.md:2905:- *Framework-owned hook loop (FlightCore's shape):* its eight hooks were never
-design/decisions.md:2994:**Rationale.** Classification is the author's, as FlightCore's
-design/decisions.md:2995:`InputMappingError` docstring already assigned it; `report(handle, …)` is
-design/decisions.md:3001:- *A marked exception type (`InputMappingError` successor):* vestigial under
-design/decisions.md:3035:join-a-running-session find a customer. Supporting fact: FlightCore has no
-design/decisions.md:3362:off-trajectory (re-`init!` to continue); [§16][s16]'s FlightCore allocation comparison
-design/decisions.md:3436:three-equation C172 cruise problem was added to [§14.7][s14-7].
-design/decisions.md:3650:outline. Grounding: the C172's engine-speed equilibrium
-design/decisions.md:3903:FlightCore's `interrupt!` (iodevices.jl:36, its one override closing UDPInput's
-design/decisions.md:3905:[§12.4][s12-4](3)'s `unblock!`, not of this path; FlightCore has no
-design/decisions.md:3918:  called `stop` anyway — the FlightCore name would also import an unrelated
-design/decisions.md:4251:  C172X scale and 50 Hz in the configuration [Appendix B][sB] calls the honest
-design/decisions.md:4406:  aircraft author has — the aero validity envelope is a box in (TAS, α, β) and
-design/decisions.md:4429:[§15.1][s15-1]'s `VehicleDynamics` instance is the canonical dissolution. (ii)
-design/decisions.md:4441:the strut's business, not the steering law's; re-factoring `AbstractSteering`
-design/decisions.md:4460:`VehicleDynamics`, with the split and its bundle port noted as the residual
-design/decisions.md:4461:remedy not taken; the `AbstractSteering` contract change is an
-design/decisions.md:4519:initialized on ground. `PistonEngine`'s two `PIVector` instances (`idle`,
-design/decisions.md:4520:`frc`) are verified reset-free in today's code (`piston.jl:295-449`: `f_ode!`
-design/decisions.md:4521:runs both in every engine state, `f_step!` does mode transitions only,
-design/decisions.md:4522:`f_init!` sets gains; windup across unused phases is already handled by the
-design/decisions.md:4524:their `f_init!` gain writes becoming construction-time parameters ([D-089][d-089]). The
-design/decisions.md:4659:(`aircraftbase.jl:27-35`) contributes zero to both external wrench and internal
-design/decisions.md:4660:angular momentum while `VehicleDynamics` requires both inputs unconditionally,
-design/decisions.md:4667:wrench ≡ 0" out loud — instead of FlightCore's silent identity methods, whose
-design/decisions.md:4684:- *A configuration-aware `VehicleDynamics` branching on whether contributors
-design/decisions.md:4786:as though the duplication stays small, when at C172X scale it is four
-design/decisions.md:4912:  correct one, so a C172X at `h = 0.02, n = 1` under a 50 Hz FCS simply flies a
-design/decisions.md:4935:authored `RQuat` of `Dual`s → the `SVector{4}` state leaf at `Dual`), partials
-design/decisions.md:5018:  fabricated zero is a fine probe input and a terrible flight condition.
-design/decisions.md:5050:place of FlightCore's hand-scaled absolute threshold, and a well-scaled valley
-design/decisions.md:5067:  [§14.7][s14-7] itself criticizes FlightCore for, and the finding's divergence follows
-design/decisions.md:5446:evaluator, a hand-rolled per-component check, today's FlightCore path in [§16][s16]'s
-design/decisions.md:5456:chunk sizes, and [§16][s16]'s FlightCore value comparison is a tolerance comparison by
-design/decisions.md:5556:*promote to output* (FlightCore precedent: intermediates were only ever
-design/decisions.md:6753:customer: the FlightCore lineage record is that intermediates were only ever
-design/decisions.md:6823:being legacy FlightCore's own discrete state field (`Model.s`), which [§12.5][s12-5]'s
-design/decisions.md:7182:a terrible flight condition — and [§10.5][s10-5]'s content defense ("what a tick at
-design/decisions.md:7511:  input and a terrible flight condition.
-design/decisions.md:8138:`fragment`, `at` and `combine` share a namespace with FlightPhysics domain
-design/decisions.md:9243:rather than "both". A predicate earns its place at C172X scale, where the
+design/log.md:305:- *`f_step!`:* step-size-dependent semantics.
+design/log.md:586:  usage. The substrate rejection's evidence dossier, from FlightCore's own
+design/log.md:647:  the signal table; FlightCore's whole-tree atomicity was a call-tree artifact.
+design/log.md:679:  semantics, the [§2.2][s2-2] `f_step!` footgun class, made common by [§3.1][s3-1] externalized
+design/log.md:695:pure sleep, ∞ = pure busy-wait = FlightCore).
+design/log.md:819:- *Always-hot widgets:* FlightCore's dead slider — visually live, silently
+design/log.md:861:  no correct placement under asynchronous waiters; cf. FlightCore's `io_start`
+design/log.md:921:- *Retaining `user_callback!`:* the periphery's `f_step!` — unrecorded
+design/log.md:1095:- *FlightCore tree walks:* silent omission — the zero-edit convenience *is* the
+design/log.md:1207:- *Instance wrappers (`Subsampled`-style):* wraps the field type, pollutes
+design/log.md:1256:- *FlightCore-style concurrent multi-device writing of one input:* a bug
+design/log.md:1650:always abnormal; no `SimulationTermination` exception type.
+design/log.md:1875:  fabricated zero is a fine probe input and a terrible flight condition.
+design/log.md:1914:  diagnostics discarded — FlightCore's rational choice only because Jacobians
+design/log.md:1915:  through mutating `f_ode!` were unreachable.
+design/log.md:1939:- The C172 audit is Interpolations tables (prefer cubic knots), saturation
+design/log.md:1967:- The world-level `f_init!` wrapper dissolves into the `baseline` condition:
+design/log.md:2039:- *Split-form sketch files and separate `navsensors.jl`/`imu.md` notes:*
+design/log.md:2047:  (a fabricated zero is a fine probe input and a terrible flight condition —
+design/log.md:2596:acquisition per run — FlightCore's create-a-new-socket-each-`init!` in
+design/log.md:2619:- *`Event` start gate "as today":* [§12.3][s12-3]'s rejected primitive — the `io_start`
+design/log.md:2626:- *Always-spawned loop task FlightCore-style:* uniform topology whose only
+design/log.md:2646:semantics are explicit casts at the point of use (`RQuat(x.q, normalization =
+design/log.md:2647:false)` — today's `f_ode!`-over-raw-views pattern made immutable); invariants
+design/log.md:2905:- *Framework-owned hook loop (FlightCore's shape):* its eight hooks were never
+design/log.md:2994:**Rationale.** Classification is the author's, as FlightCore's
+design/log.md:2995:`InputMappingError` docstring already assigned it; `report(handle, …)` is
+design/log.md:3001:- *A marked exception type (`InputMappingError` successor):* vestigial under
+design/log.md:3035:join-a-running-session find a customer. Supporting fact: FlightCore has no
+design/log.md:3362:off-trajectory (re-`init!` to continue); [§16][s16]'s FlightCore allocation comparison
+design/log.md:3436:three-equation C172 cruise problem was added to [§14.7][s14-7].
+design/log.md:3650:outline. Grounding: the C172's engine-speed equilibrium
+design/log.md:3903:FlightCore's `interrupt!` (iodevices.jl:36, its one override closing UDPInput's
+design/log.md:3905:[§12.4][s12-4](3)'s `unblock!`, not of this path; FlightCore has no
+design/log.md:3918:  called `stop` anyway — the FlightCore name would also import an unrelated
+design/log.md:4251:  C172X scale and 50 Hz in the configuration [Appendix B][sB] calls the honest
+design/log.md:4406:  aircraft author has — the aero validity envelope is a box in (TAS, α, β) and
+design/log.md:4429:[§15.1][s15-1]'s `VehicleDynamics` instance is the canonical dissolution. (ii)
+design/log.md:4441:the strut's business, not the steering law's; re-factoring `AbstractSteering`
+design/log.md:4460:`VehicleDynamics`, with the split and its bundle port noted as the residual
+design/log.md:4461:remedy not taken; the `AbstractSteering` contract change is an
+design/log.md:4519:initialized on ground. `PistonEngine`'s two `PIVector` instances (`idle`,
+design/log.md:4520:`frc`) are verified reset-free in today's code (`piston.jl:295-449`: `f_ode!`
+design/log.md:4521:runs both in every engine state, `f_step!` does mode transitions only,
+design/log.md:4522:`f_init!` sets gains; windup across unused phases is already handled by the
+design/log.md:4524:their `f_init!` gain writes becoming construction-time parameters ([D-089][d-089]). The
+design/log.md:4659:(`aircraftbase.jl:27-35`) contributes zero to both external wrench and internal
+design/log.md:4660:angular momentum while `VehicleDynamics` requires both inputs unconditionally,
+design/log.md:4667:wrench ≡ 0" out loud — instead of FlightCore's silent identity methods, whose
+design/log.md:4684:- *A configuration-aware `VehicleDynamics` branching on whether contributors
+design/log.md:4786:as though the duplication stays small, when at C172X scale it is four
+design/log.md:4912:  correct one, so a C172X at `h = 0.02, n = 1` under a 50 Hz FCS simply flies a
+design/log.md:4935:authored `RQuat` of `Dual`s → the `SVector{4}` state leaf at `Dual`), partials
+design/log.md:5018:  fabricated zero is a fine probe input and a terrible flight condition.
+design/log.md:5050:place of FlightCore's hand-scaled absolute threshold, and a well-scaled valley
+design/log.md:5067:  [§14.7][s14-7] itself criticizes FlightCore for, and the finding's divergence follows
+design/log.md:5446:evaluator, a hand-rolled per-component check, today's FlightCore path in [§16][s16]'s
+design/log.md:5456:chunk sizes, and [§16][s16]'s FlightCore value comparison is a tolerance comparison by
+design/log.md:5556:*promote to output* (FlightCore precedent: intermediates were only ever
+design/log.md:6753:customer: the FlightCore lineage record is that intermediates were only ever
+design/log.md:6823:being legacy FlightCore's own discrete state field (`Model.s`), which [§12.5][s12-5]'s
+design/log.md:7182:a terrible flight condition — and [§10.5][s10-5]'s content defense ("what a tick at
+design/log.md:7511:  input and a terrible flight condition.
+design/log.md:8138:`fragment`, `at` and `combine` share a namespace with FlightPhysics domain
+design/log.md:9243:rather than "both". A predicate earns its place at C172X scale, where the
 design/increments/023/brief_increment_23.md:4:> below are the old layout: the worktree `~/.julia/dev/Flight.jl-core-redesign-2`
 design/increments/023/brief_increment_23.md:10:Worktree `~/.julia/dev/Flight.jl-core-redesign-2`, branch `core-redesign-2`,
 design/increments/20260918_pipeline_redesign/draft_step1b_entries.md:96:rather than "both". A predicate earns its place at C172X scale, where the
@@ -212,7 +212,7 @@ design/reports/20260809_extensions_charter/report.md:174:Re-examination showed t
 design/reports/20260809_extensions_charter/report.md:176:explicitly identifies `Subsampled`'s parent-relative multipliers as a call-tree
 design/reports/20260809_extensions_charter/report.md:179:assemblies (a departure from FlightCore's execution-through-composition, coinciding
 design/reports/20260809_extensions_charter/report.md:182:Where the `FlightPhysics`/`FlightApps` assumption genuinely biased the design is the
-design/rules/decisions_rules.md:68:  not divergence — it stays where it is. Ruled 2026-08-14: FlightCore, the
+design/rules/log_rules.md:68:  not divergence — it stays where it is. Ruled 2026-08-14: FlightCore, the
 design/spec.md:1:# A Modeling & Simulation Framework for Flight.jl — Specification
 design/spec.md:104:    - [15.2 Torture tests for the §5.2 interfaces: `PistonEngine` and the FCS PID cascade](#152-torture-tests-for-the-52-interfaces-pistonengine-and-the-fcs-pid-cascade)
 design/spec.md:106:    - [15.4 The interactive C172X demo: the periphery under load](#154-the-interactive-c172x-demo-the-periphery-under-load)

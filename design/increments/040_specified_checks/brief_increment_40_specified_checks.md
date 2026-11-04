@@ -31,7 +31,7 @@ the didactic style", the example message). §5.2's two `DeadStage` sentences
 C's three rows: `MissingProbeValue` (10877–10878), `DeadStage`
 (10918–10920), `ReadBindingUnresolved` (10985–10989). §13.1's collected
 rule (7263–7273) and the didactic style (§13.2). In
-`design/decisions.md`: D-051 (1396–1418, the synthesis chain and the
+`design/log.md`: D-051 (1396–1418, the synthesis chain and the
 missing-method error), D-216 (7598–7640, the column is the design).
 
 **Routed reading in `design/implementation.md`** — do not read the

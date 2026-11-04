@@ -8,7 +8,7 @@ touching code, all in `design/spec.md`: §13.4 (lines ~7065–7175), §13.6
 (~7301–7354), §12.4's "The operator interrupt" subsection (~6416–6462), §12.7's
 "Termination and partial replay" bullet (~6688–6700), §13.2's rendering rules
 (~6914–6935), Appendix C rows `StepError` and `NonfiniteState` (~10114);
-decisions D-059, D-157, D-203 in `design/decisions.md`.
+decisions D-059, D-157, D-203 in `design/log.md`.
 
 **Stance: conservative reading.** Build what the spec and this brief say.
 Where the spec is silent, choose the simplest thing that does not foreclose

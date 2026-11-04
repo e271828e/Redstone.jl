@@ -98,7 +98,7 @@ this brief says a model's wiring changed.
 
 ## Reading, in order
 
-- `design/decisions.md` D-385 (15336 to the definitions marker) and
+- `design/log.md` D-385 (15336 to the definitions marker) and
   the three annotations at the end of D-383; D-383's Position (15209) for
   what stands.
 - `design/companions/pid_anti_windup.md` section 4 (130 to 208),

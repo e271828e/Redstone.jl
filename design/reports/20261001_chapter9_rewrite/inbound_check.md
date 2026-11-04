@@ -1,6 +1,6 @@
 # Inbound citations into chapter 9, checked against the rewrite
 
-Scope: the 274 rows of `inbound.tsv` that do not come from a `decisions.md`
+Scope: the 274 rows of `inbound.tsv` that do not come from a `log.md`
 **Spec.** field. Each row was judged by hand against `chapter_new.md`, with
 `chapter_old.md` consulted for every row the new text does not support. A
 script only grouped the rows by cited section and pulled spec context.
@@ -141,7 +141,7 @@ The old chapter did not state these either.
 
 ## Spec fields to revise
 
-These are the `decisions.md` entries whose **Spec.** field names a §9.x
+These are the `log.md` entries whose **Spec.** field names a §9.x
 section. The check compared each field with the sections that cite the entry
 in `chapter_new.md`, and with where the entry's content now sits.
 
@@ -185,4 +185,4 @@ section the field does not name.
 - D-078 (§9.1, N91), D-060 (§9.3, N585), D-099 (§9.4, N699) and D-157 (§9.5,
   N957) have Spec fields without a §9.x.
 - D-048, D-050 and D-070 have no **Spec.** field.
-- D-280, D-281 and D-282 (§9.4) are drafts with no entry in `decisions.md` yet.
+- D-280, D-281 and D-282 (§9.4) are drafts with no entry in `log.md` yet.

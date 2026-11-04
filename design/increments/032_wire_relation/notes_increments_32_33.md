@@ -2,7 +2,7 @@
 
 Working notes from the 2026-09-08 design session that ratified D-235–D-237,
 kept so the two later briefs can be written from a fresh context. The
-rulings themselves live in `decisions.md` (D-236, D-237) and the spec
+rulings themselves live in `log.md` (D-236, D-237) and the spec
 (§4.3, §6.1, §8.2, §9.1, §9.5, Appendix C); this file carries what the
 rulings do not: the code sites, the shapes the session settled, the claims
 already verified, the tests sketched, and the register bookkeeping. Line

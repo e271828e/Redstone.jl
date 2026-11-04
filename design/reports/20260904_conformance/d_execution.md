@@ -13,7 +13,7 @@
   `src/` and `test/` freely, the file table in `design/implementation.md`
   ("What is real here", lines 11–56, and the authoring caveats that follow it
   on the same screen), and the `D-017`, `D-018`, `D-021`, `D-133` entries in
-  `design/decisions.md`. I did not open `pending.md`, `increments/`, the
+  `design/log.md`. I did not open `pending.md`, `increments/`, the
   top-level `reports/`, or any other report in `design/reports/`.
 
 ## 2. Summary
@@ -335,7 +335,7 @@ The absence is documented at the two file headers that would own the feature:
 `dataplane.jl:8` ("what stands further out in the spec — the pacer diagnostics
 — is deliberately absent") and `devices.jl:6` ("pause, pacing and the operator
 interrupt are absent"). `dataplane.jl:36` names `DebtReanchor` as one of three
-diagnostic kinds absent with their features. D-021 (decisions.md:643) is
+diagnostic kinds absent with their features. D-021 (log.md:643) is
 ratified and specifies the whole design, so this is an unbuilt feature rather
 than a ratified departure from one.
 
@@ -349,7 +349,7 @@ against. Nothing is wrong today; the claim is simply untested by construction.
 
 Spec, §10.4 line 3971: "Localization stops once the bracket is narrower than
 `localization_tol · h`", and the sketch at line 3892 spells it out as
-"relative: bracket width (hi − lo)·h vs. tol·h". D-133 (decisions.md:3877)
+"relative: bracket width (hi − lo)·h vs. tol·h". D-133 (log.md:3877)
 repeats the same form: "localization converges when the bracket is narrower
 than `localization_tol · h`".
 

@@ -62,7 +62,7 @@ the `Simulation(deployment, T)` entry, 10755–10779, and the sugar forms,
 10780–10783. Appendix C's `logged` policy, 11042–11050, and the rows for
 `DeploymentInvalid` (11246–11252), `GridUtilization` (11317–11322) and
 `ArgumentInvalid` (11338–11343). The glossary entries at 11831–11836 and
-11908–11912. In `design/decisions.md`: **D-187 (6509–6550)**, D-250
+11908–11912. In `design/log.md`: **D-187 (6509–6550)**, D-250
 (9157–9218), **D-254 (9378–9427)**, **D-256 (9508–9551)**. In
 `design/companions/sample_time_proposal.md`: §7.4 and §8, 631–745,
 the worked case the numbers above come from; the spec wins where they

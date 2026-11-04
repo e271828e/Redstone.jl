@@ -7,7 +7,7 @@ run on the diagram, and ends as an interactive cockpit with panels over
 the bridge. This document records the questions that narrow the solution
 space, the answers, and the axes left for later sessions, stage by stage.
 It is not normative. Rulings that touch the framework land in `spec.md` and
-`decisions.md` first, and the spec wins wherever the two disagree.
+`log.md` first, and the spec wins wherever the two disagree.
 
 Two sessions on 2026-09-28 fed it: one on the inspector alone, whose
 answers stage 1 keeps whole, and one on the whole graphical layer, whose

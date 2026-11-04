@@ -2,7 +2,7 @@
 
 Three code stages, one cold review and a fixer if the review needs one. The
 docs arc is landed in d442223: D-315 and its
-annotations on D-207, D-257, D-261 and D-270 in `decisions.md`, the §9.1,
+annotations on D-207, D-257, D-261 and D-270 in `log.md`, the §9.1,
 §9.2, §13.7, Appendix B and glossary amendments in `spec.md`, and
 `pending.md`'s increment 67 bullet. Written at 90bf71d and rebased at e98faf3
 once increments 65 and 66 had landed: neither touched a source file, the
@@ -146,7 +146,7 @@ wrong at the keyboard, stop and report rather than deviate silently.
 ## Reading, in order
 
 - `design/pending.md`, the increment 67 bullet, lines 16 to 26.
-- `design/decisions.md` D-315 (line 13181), then D-261 (10121), D-207
+- `design/log.md` D-315 (line 13181), then D-261 (10121), D-207
   (7530), D-257 (9896), D-270 (11020) and D-289 (12125), each with its
   2026-10-07 annotation where one was added.
 - `design/spec.md` §9.1, lines 3739 to 3882, the structure step and

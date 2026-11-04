@@ -9,11 +9,11 @@
 #
 # Two citation classes, one mechanism. Section citations (`§N`, `§N.M`, `§X.N`,
 # `Appendix X`) are owned by spec.md and labelled `s9-4`; decision citations
-# (`D-037`) are owned by decisions.md and labelled `d-037`.
+# (`D-037`) are owned by log.md and labelled `d-037`.
 # Each label resolves against whichever document owns it — in-file when that is
 # the file being linked (`[s9-4]: #94-…` in the spec, `[d-037]: #d-037--…` in
-# the log), cross-file otherwise (`[d-037]: decisions.md#d-037--…`, or
-# `../decisions.md#…` from a companion, since the corpus spans two directories).
+# the log), cross-file otherwise (`[d-037]: log.md#d-037--…`, or
+# `../log.md#…` from a companion, since the corpus spans two directories).
 # A range links its endpoints, `D-166–D-168` becoming two links around the dash.
 #
 # Four jobs, all idempotent — re-run after any renumbering or renaming and the
@@ -41,7 +41,7 @@
 # tokens are left alone and warned about — the author resolves them by writing
 # an explicit in-file link, which then survives every later run untouched.
 #
-# decisions.md is processed like any other companion. Its earlier
+# log.md is processed like any other companion. Its earlier
 # exclusion was a property of its retired table form. Its `## Index` rows are
 # skipped by job 1 only because job 4 owns them outright.
 #
@@ -53,15 +53,15 @@ const DESIGN = normpath(joinpath(@__DIR__, ".."))
 # Every file name below is relative to DESIGN, `companions/` included, so the
 # link targets are computed rather than spelled (`linktarget` in slugs.jl).
 const SPEC = "spec.md"
-const DECISIONS = "decisions.md"
+const DECISIONS = "log.md"
 
 # Every file rewritten besides `spec.md`. The rewritten-file roster, not the
-# `companions/` taxonomy — `decisions.md` is a member.
+# `companions/` taxonomy — `log.md` is a member.
 # `code_map.md`, `rules/code_rules.md` and `pending.md` are deliberately
 # absent: they are checked by check_refs.jl and check_rows.jl, but their
 # citations stay plain
 # rather than becoming reference links.
-const ROSTER = ["decisions.md",
+const ROSTER = ["log.md",
                 "companions/event_visibility_walkthrough.md",
                 "companions/inbound_periphery_walkthrough.md",
                 "companions/trim_environment_walkthrough.md",

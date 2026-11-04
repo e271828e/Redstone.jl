@@ -16,7 +16,7 @@ ordinal across a warm restart (see 6), and the wrapper's classification of an
 glossary entries it links, and the cited §13.5/§14.5 sentences for meaning
 only), all of `src/` and `test/`, the "What is real here" file table in
 `design/implementation.md`, and the `D-027`/`D-028` entries in
-`design/decisions.md`.
+`design/log.md`.
 
 ## 2. Summary
 

@@ -5,7 +5,7 @@ the working tree of 2026-10-01 (tip `d598755`). The convention and method are
 those of `design/reports/20261001_spec_rewrite_sample/report.md`, "Conclusions".
 §9.4's future text is that report's `versions/v4_flat.md`.
 
-Line numbers are `spec.md` lines unless marked `log` (`decisions.md`). Entry
+Line numbers are `spec.md` lines unless marked `log` (`log.md`). Entry
 claims rest on the entry's Position as read, with its line given where the
 point sits outside the first sentence.
 
@@ -429,7 +429,7 @@ Three options:
 - **A (recommended).** Move all deployment content into §9.2 and retitle §9.2
   "The `Build` and `Deployment` artifacts". No renumbering. The retitle
   changes the slug `#92-the-build-artifact`. `linkify.jl` regenerates the
-  definitions in `spec.md`, `decisions.md`, `reports/20260809_extensions_charter/report.md` and the linkified
+  definitions in `spec.md`, `log.md`, `reports/20260809_extensions_charter/report.md` and the linkified
   companions, including `sample_time_proposal.md` (802). The Contents entry
   (line 50) changes by hand. Cost: about 30 inbound citations retarget from
   §9.1 to §9.2 (part D). §9.1 drops to about 1100 words, §9.2 rises to about
@@ -502,7 +502,7 @@ the log's visible "§9.x" text with them. Not worth it.
 
 The full list is `inbound.tsv` (beside this file): 389 rows, one per
 "§9.x" occurrence outside chapter 9 and outside the Contents block. By file:
-`decisions.md` 187 (Spec fields 115, Rationale 39, Position 19, Rejected 14),
+`log.md` 187 (Spec fields 115, Rationale 39, Position 19, Rejected 14),
 `spec.md` 141, `implementation.md` 26, `sample_time_proposal.md` 15,
 `handle_walk_walkthrough.md` 4, `reports/20260809_extensions_charter/report.md` 4,
 `trim_environment_walkthrough.md` 3, `pending.md` 3, two each in
@@ -584,7 +584,7 @@ keeps.
   its walk and conformance doctrine sit there.
 - Under M13: D-139 drops §9.6.
 
-Whether these Spec-field edits are licensed: `decisions_rules.md` rule 2's
+Whether these Spec-field edits are licensed: `log_rules.md` rule 2's
 citation exception covers renumbering ("every entry … cites the CURRENT §
 numbering"). A content move is not a renumbering. The rewrite needs a ruling
 that the exception extends to moved content.
@@ -756,8 +756,8 @@ Outside chapter 9, met while checking citations:
 25. `reports/20260809_extensions_charter/report.md` 191: "Stratum A flattens … absolute divisors", retired
     vocabulary and pre-anchor content.
 26. `rules/spec_rules.md`, "The battery": "a file checked but not linkified
-    keeps plain citations, as `decisions.md` and `implementation.md` do".
-    `decisions.md` is first in `linkify.jl`'s `ROSTER` (line 63) and carries
+    keeps plain citations, as `log.md` and `implementation.md` do".
+    `log.md` is first in `linkify.jl`'s `ROSTER` (line 63) and carries
     reference links.
 
 ## G. Rewrite difficulty

@@ -25,7 +25,7 @@ to a figure taken without it.
 ## What is settled
 
 §9.7's compile-cost subsection, 5264 to 5372 at cecb653, and D-289's Position, in
-`design/decisions.md` by heading: the generic machinery a cold process
+`design/log.md` by heading: the generic machinery a cold process
 pays is the same for every model, and a precompile workload bakes it into
 the package image. `pending.md` 15 to 22 scopes the workload: a closed loop
 of library blocks, since a workload exercises only what the package can
@@ -83,7 +83,7 @@ child with the coverage flag dropped, measured 0.023 s in the child.
 
 None is a design decision in the log's sense: the dependency, the
 workload's content and the test's form are implementation, and rule 9 of
-`rules/decisions_rules.md` gives them no entry. They are listed so the user
+`rules/log_rules.md` gives them no entry. They are listed so the user
 confirms them before the docs commit.
 
 1. **PrecompileTools as a dependency**, compat `"1"`. Its
@@ -161,7 +161,7 @@ edit, and the bullet elaborates it. The battery runs after the edit (`rules/spec
 - Any change to the examples, to `README.md`, or to
   `design/reports/20261001_compile_cost_reeval/`, whose harness stays as it
   drifted (`pending.md` 15 to 22); the corrected copy is the brief's.
-- `design/decisions.md` and the companions: swept at bcae783. A docs
+- `design/log.md` and the companions: swept at bcae783. A docs
   passage the code contradicts is a stop-and-report, not an edit.
   `implementation.md` and `pending.md` are the increment's bookkeeping.
 - `.github/workflows/`: nothing changes. The gate's `using Redstone`
@@ -172,7 +172,7 @@ edit, and the bullet elaborates it. The battery runs after the edit (`rules/spec
 
 - `design/spec.md` §9.7's compile-cost subsection, 5264 to 5372; the
   measurement seam, 5373 to 5427. Never read the spec whole.
-- `design/decisions.md` D-289, Position and Rationale, by heading.
+- `design/log.md` D-289, Position and Rationale, by heading.
 - `design/implementation.md`: the head of "What is real here" down to
   its rule on deviations; the entries `src/Redstone.jl` and `src/blocks.jl`;
   "Authoring caveats" whole; "Naming"; "Running the suite" whole.

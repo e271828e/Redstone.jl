@@ -2,7 +2,7 @@
 
 The vocabulary sweep D-259 records. Tip: the commit that adds this brief and
 D-259 (`git log -1`). Two commits: the docs sweep, then the code's comments.
-The decision entry is already in `decisions.md`; read it first.
+The decision entry is already in `log.md`; read it first.
 
 ## What changes
 
@@ -42,7 +42,7 @@ its sentence, apply the closest spelling and flag the line.
 
 - `design/rules/spec_rules.md`, whole. No em-dashes, one burden per
   sentence, content preservation, the battery, 80 rendered columns.
-- `decisions.md`, D-259 (the last entry) and D-253's fourth bullet.
+- `log.md`, D-259 (the last entry) and D-253's fourth bullet.
 - Every occurrence: `rg -n -i 'stratum|strata' design/spec.md`, 112
   lines. Read each in its paragraph before deciding.
 
@@ -213,7 +213,7 @@ half" paragraph whole):
 - **`design/implementation.md`**, rows 22 and 25: "Stratum A barrier"
   becomes "structure-step barrier", "Stratum A's one throw" becomes "the
   structure step's one throw"; grep the two rows for any other hit.
-- **Not in scope.** `decisions.md` keeps its vocabulary (rule 2; D-259 is
+- **Not in scope.** `log.md` keeps its vocabulary (rule 2; D-259 is
   already written). `companions/` and the briefs are untouched
   (`sample_time_proposal.md` has 10 hits, `trim_environment_walkthrough.md`
   one generated definition line); count them for the report.

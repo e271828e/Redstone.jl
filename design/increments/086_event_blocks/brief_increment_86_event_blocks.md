@@ -16,7 +16,7 @@ wrong at the keyboard, stop and report rather than deviate silently.
 
 The first of the four library increments `pending.md` orders, the three
 blocks whose rows the inventory recommended first. None earns a log entry
-(`decisions_rules.md` rule 9); the inventory carries the design, docs
+(`log_rules.md` rule 9); the inventory carries the design, docs
 commit first, and the code conforms. The user's rulings of 2026-11-03,
 made on the prototype's readings:
 

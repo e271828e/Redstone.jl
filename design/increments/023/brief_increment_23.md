@@ -15,7 +15,7 @@ in full before touching code: §11.5 (lines ~5345–5438 of
 capture placement), §12.6 (the lifecycle and its `replay!` sentence),
 Appendix C rows `ReplayHeaderMismatch`, `ReplaySchemaMismatch`,
 `ReplayUnknownFace`, `ReplayDiscardedStaging`; decisions D-029, D-038, D-101,
-D-176 in `framework_decisions.md`.
+D-176 in `framework_log.md`.
 
 Run the suite in the foreground with a 600 s timeout, never in the
 background: `julia --project=. test/runtests.jl` from `prototypes/kernel`.

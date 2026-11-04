@@ -7,9 +7,9 @@
 #   1. Citations — every `§N` / `§N.M` / `§X.N` / `Appendix X` names a heading
 #      that exists in spec.md. Citations inside fenced code blocks, code spans
 #      and headings count too: the phase-2/3 sweeps rewrote them, and
-#      decisions.md keeps all of its citations plain by design.
+#      log.md keeps all of its citations plain by design.
 #   2. Anchors — every markdown link target (`#slug` in-file, `spec.md#slug` or
-#      `decisions.md#slug` cross-file, `../` prefixed from a companion)
+#      `log.md#slug` cross-file, `../` prefixed from a companion)
 #      resolves to a real heading anchor. In-file anchors are checked against the
 #      file's own headings, which is what keeps the companions' self-references
 #      (a walkthrough citing its own `§N`) honest.
@@ -30,7 +30,7 @@
 # (§7). Anything beyond that line is new and needs the same hand check.
 #
 # Decision citations are ordinary links after the Pass B sweep — `D-037` is a
-# `[D-037][d-037]` reference resolving into decisions.md — so checks 2
+# `[D-037][d-037]` reference resolving into log.md — so checks 2
 # and 3 cover them with no special case. check_rows.jl remains the guard on
 # citation *existence* for both the `D-nnn` and the retired `row N` spellings.
 #
@@ -45,19 +45,19 @@ const DESIGN = normpath(joinpath(@__DIR__, ".."))
 # link target is resolved against the citing file's own directory before it is
 # compared (`resolve` in slugs.jl).
 const SPEC = "spec.md"
-const DECISIONS = "decisions.md"
+const DECISIONS = "log.md"
 
 # Every file scanned besides `spec.md`, which the loop below splices on. This
-# is the checked-file roster, not the `companions/` taxonomy: `decisions.md`,
+# is the checked-file roster, not the `companions/` taxonomy: `log.md`,
 # `code_map.md`, `rules/code_rules.md` and `pending.md` are members because
 # their own citations can dangle, and dropping one silently unchecks that
 # whole file.
-# `decisions.md` is also `DECISIONS` above, in the other role — the anchor pool
+# `log.md` is also `DECISIONS` above, in the other role — the anchor pool
 # a link *into* the log resolves against.
 const ROSTER = [DECISIONS,
                 # The code map and the code rules. Checked here and in
                 # check_rows.jl, but deliberately out of linkify.jl's roster,
-                # which rewrites decisions.md and the companions
+                # which rewrites log.md and the companions
                 # besides spec.md: their citations stay plain.
                 "code_map.md",
                 "rules/code_rules.md",

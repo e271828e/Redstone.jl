@@ -33,7 +33,7 @@ The material deviations are at the vocabulary and diagnostic boundaries:
 
 ### SD-01 — High — Mutable `Real` values bypass the port immutability gate and alias the live cell
 
-**Normative requirement.** Ports exchange immutable values (`design/spec.md:339-370`). The leaf-walk rule says a mutable type anywhere in a port value is refused (`:436-441`); D-237 repeats that rule (`design/decisions.md:8546-8556`).
+**Normative requirement.** Ports exchange immutable values (`design/spec.md:339-370`). The leaf-walk rule says a mutable type anywhere in a port value is refused (`:436-441`); D-237 repeats that rule (`design/log.md:8546-8556`).
 
 **Implementation.** `_mutable_position` returns `nothing` for every subtype of `Real` before asking `ismutabletype(P)` (`src/leaves.jl:84-95`). `cell_layout` trusts that result to decide whether to raise `IllegalPortType(:mutable)` (`src/build.jl:352-371`). The generated scatter stores the value directly (`src/leaves.jl:128-147`; `src/store.jl:55-67`), and gather returns that same object (`src/leaves.jl:102-123`; `src/store.jl:42-53`).
 
@@ -47,7 +47,7 @@ The material deviations are at the vocabulary and diagnostic boundaries:
 
 ### SD-02 — Medium — Probe-value synthesis violates the enum and missing-default contracts
 
-**Normative requirement.** Root-input synthesis has framework methods for `Real`, `Bool`, and enums (first instance), then `T()`; failure must be `MissingProbeValue` with face and type (`design/spec.md:3251-3266`; D-051 at `design/decisions.md:1390-1399`). Enums are also listed as ordinary immutable port values (`design/spec.md:339-343`).
+**Normative requirement.** Root-input synthesis has framework methods for `Real`, `Bool`, and enums (first instance), then `T()`; failure must be `MissingProbeValue` with face and type (`design/spec.md:3251-3266`; D-051 at `design/log.md:1390-1399`). Enums are also listed as ordinary immutable port values (`design/spec.md:339-343`).
 
 **Implementation.** The methods implement `Real`, `Bool`, `StaticArray`, and unguarded `P()` only; no enum method or exception translation exists (`src/declare.jl:326-334`). Layout rejects a type with no walked leaves before synthesis (`src/build.jl:352-398`). Thus an enum root input is diagnosed as `IllegalPortType(reason = :no_leaves)`. A leaf-bearing immutable type without a zero-argument constructor reaches `probe_value(P)` and leaks a raw `MethodError` (`src/build.jl:385-398`). `MissingProbeValue` has no source definition.
 
@@ -67,7 +67,7 @@ missing probe value raised raw MethodError
 Three related fail-fast contracts are missing:
 
 - A stage returning bare `(;)` must raise `DeadStage` (`design/spec.md:3241-3244`; Appendix C `:10849-10853`). `probe_stage1` and `probe_stage2` accept every `NamedTuple`, including the empty one (`src/build.jl:146-162,737-755`). `storage_diagnostic_gaps.jl:41-48` builds such a stage successfully.
-- Probe-time model exceptions must become `UserCodeFraming` with path, function, context, and cause (`design/spec.md:3286-3298,7221-7230`; Appendix C `:10866-10871`; D-058 `design/decisions.md:1569-1578`). Calls such as `output_state(...)` are made with no framing catch (`src/build.jl:146-160`); the probe's `ArgumentError` escapes unchanged (`storage_diagnostic_gaps.jl:50-57`). The same unframed pattern is visible at stage 2 and events (`src/build.jl:737-749,854-875`).
+- Probe-time model exceptions must become `UserCodeFraming` with path, function, context, and cause (`design/spec.md:3286-3298,7221-7230`; Appendix C `:10866-10871`; D-058 `design/log.md:1569-1578`). Calls such as `output_state(...)` are made with no framing catch (`src/build.jl:146-160`); the probe's `ArgumentError` escapes unchanged (`storage_diagnostic_gaps.jl:50-57`). The same unframed pattern is visible at stage 2 and events (`src/build.jl:737-749,854-875`).
 - An illegal requested bundle field must be `BundleFieldError` at probe and a `StepError` species later (`design/spec.md:7283-7287,10860-10865`). The legal field sets exist (`src/declare.jl:279-323`), but a destructuring request for an absent field is left to Julia dispatch. The probe gets raw `FieldError` (`storage_diagnostic_gaps.jl:59-67`).
 
 None of `DeadStage`, `UserCodeFraming`, or `BundleFieldError` is defined in `src/**`.
@@ -76,7 +76,7 @@ None of `DeadStage`, `UserCodeFraming`, or `BundleFieldError` is defined in `src
 
 ### SD-04 — Medium — Four additional Appendix C kinds are absent with their owning features
 
-Appendix C is a normative closed set (`design/spec.md:10659-10668`; D-092 at `design/decisions.md:2549-2557`). In addition to the four build kinds in SD-02/03, these source types do not exist:
+Appendix C is a normative closed set (`design/spec.md:10659-10668`; D-092 at `design/log.md:2549-2557`). In addition to the four build kinds in SD-02/03, these source types do not exist:
 
 - `GridUtilization`, required for derived-grid deployment binding (`design/spec.md:3215-3220,10953-10957`);
 - `DebtReanchor` (`:11001-11002`);

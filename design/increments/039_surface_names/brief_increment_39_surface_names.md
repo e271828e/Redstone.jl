@@ -43,7 +43,7 @@ sentences are 3411–3418). §8.1's "The namespace: declarations are extended,
 not called" (1780–1833), the import-list idiom this generic joins. §16's
 "The exported-name surface" (10120–10131), why nothing is exported.
 Appendix B's two lines (10406–10407, 10595–10597). In
-`design/decisions.md`: D-117 (3368–3401), D-226 (8096–8142), D-166
+`design/log.md`: D-117 (3368–3401), D-226 (8096–8142), D-166
 (5584–5676, the CI policy), D-246 (8909–8969, the shadowing check this
 generic stays out of).
 

@@ -5,7 +5,7 @@ One stage, then the cold review.
 
 ## What the spec now says
 
-Read D-263 in full (decisions.md:10031 onward) before coding; it carries the
+Read D-263 in full (log.md:10031 onward) before coding; it carries the
 rationale and every rejected shape. Then the spec by line range:
 
 - §6.1 "Type-checking a wire", spec.md:1267–1310: the two clauses, with

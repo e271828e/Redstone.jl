@@ -25,7 +25,7 @@ local-scope sibling (1836–1865, read for the distinction only: it is D-164's
 case, already built, and the check cannot reach it). §13.1's fail-fast
 paragraph (search "fail-fast" from 7242). Appendix C's row (10809–10812)
 and the two rows beside it (10802–10808, 10813–10815). In
-`design/decisions.md`: **D-246 (8908–8962)**, D-117 (3367–3400, with
+`design/log.md`: **D-246 (8908–8962)**, D-117 (3367–3400, with
 its annotation), D-220's first Rationale paragraph (7805–7860, why the names
 make the check decidable), D-229's second Position bullet (8214–8230, what a
 structural failure is).

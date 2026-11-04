@@ -79,7 +79,7 @@ Appendix C's rows for `StopFaceInvalid` (11249–11252), `EmptyGreedyClaim`
 (11270–11273), `ReplayHeaderMismatch` (11330–11337), `ArgumentInvalid`
 (11345–11352) and `UnboundedRun` (11406–11411). The glossary's `Run`
 (12141–12145), `StopPolicy` (12177–12182), termination record (12401–12404)
-and recorders (12223). In `design/decisions.md`: **D-255
+and recorders (12223). In `design/log.md`: **D-255
 (9429–9506)**, **D-256 (9508–9553)**, D-250 (9157–9218), D-203 (7047), D-218
 (7723), D-219 (7768).
 

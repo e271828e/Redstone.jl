@@ -235,7 +235,7 @@ Near-collisions avoided in the proposals: `lifecycle` (`src/sim.jl:323`, called 
 
 ## Questions
 
-- The rules say `d` is a diagnostic in `diagnostics.jl` "and nothing elsewhere", but §14.7 and §14.8 name the trim decision vector `d` (`residuals(reads, d)`, `eval!(r, J, d)`, D-213 era text, decisions.md line 6839). This report classifies every decision `d` as `keep:spec`; the rule's wording should admit it or the spec should change.
+- The rules say `d` is a diagnostic in `diagnostics.jl` "and nothing elsewhere", but §14.7 and §14.8 name the trim decision vector `d` (`residuals(reads, d)`, `eval!(r, J, d)`, D-213 era text, log.md line 6839). This report classifies every decision `d` as `keep:spec`; the rule's wording should admit it or the spec should change.
 - `TrimProblem`'s keywords `condition` and `reads` collide with package functions and are the normative field names (§14.7). The rules' one exception is `path`; `condition` and `reads` may need the same standing for keyword parameters that mirror a public field.
 - `A`/`g` → `JᵀJ`/`Jᵀr` uses Unicode modifier letters, legal in Julia and the docstring's own spelling. If the user prefers ASCII, `normal_matrix` and `gradient`.
 - `N` (line 401) is a local integer that becomes the `Dual`'s width parameter; classified `keep:typeparam`. The alternative is `n_decisions`, matching `solve`'s proposal, at the cost of a lowercase type argument.

@@ -9,7 +9,7 @@
 #   1. Validity — every `D-nnn` / `D-nnn–D-mmm` entry citation, and every
 #      citation still in the retired `row N` / `rows N–M` / `rows N and M`
 #      spelling, in every scanned file, names an entry that exists in
-#      decisions.md (`### D-nnn` headings; D-nnn preserves the
+#      log.md (`### D-nnn` headings; D-nnn preserves the
 #      retired table's row N). Pass B swept the corpus to the `D-nnn` form, so
 #      a surviving `row N` is a regression and fails the run — the retired
 #      spelling stays parsed only so the report can name it.
@@ -25,7 +25,7 @@
 
 const DESIGN = normpath(joinpath(@__DIR__, ".."))
 const SPEC = "spec.md"
-const DECISIONS = "decisions.md"
+const DECISIONS = "log.md"
 const BASELINE = joinpath(@__DIR__, "row_baseline.txt")
 
 const FILES = [SPEC,

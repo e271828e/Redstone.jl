@@ -8,7 +8,7 @@ user's shell; use absolute paths).
 carrier's type parameter the diagnostic's kind (D-222). No `src/` file
 changes. No design document changes. One stage, one commit.
 
-**Read:** `design/decisions.md` D-222 (7902–7939) for what the type
+**Read:** `design/log.md` D-222 (7902–7939) for what the type
 parameter means. In `design/implementation.md`, "Running the suite"
 (108–140) and **"Authoring caveats" in full (58–107)**. Nothing else.
 

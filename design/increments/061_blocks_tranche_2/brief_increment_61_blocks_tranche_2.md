@@ -78,7 +78,7 @@ wrong at the keyboard, stop and report rather than deviate silently.
   `state_events`. §10.4, lines 5205 to 5268: detection policy, the gate
   form `(gate) ? σ : -one(σ)`, and trial evaluations. §10.6, lines 5864 to
   5970: quiescence and the priors. Never read the spec whole.
-- `design/decisions.md` D-313, D-312, D-179, D-231 and D-290.
+- `design/log.md` D-313, D-312, D-179, D-231 and D-290.
 - `design/companions/library_inventory.md`, sections 2 and 3.
 - `design/implementation.md`: the head of "What is real here" down to
   its rule on deviations; the rows `### src/blocks.jl`,

@@ -6,7 +6,7 @@ Items reviewed: F-08, F-09, F-13, G-04–G-09, and G-12.
 
 ## Scope and worktree qualification
 
-This refresh used the current `spec.md`, `decisions.md`, `implementation.md`, and explicitly authorized `pending.md`, together with the relevant current source and focused tests. It did not use older audit reports. The old probes were not rerun.
+This refresh used the current `spec.md`, `log.md`, `implementation.md`, and explicitly authorized `pending.md`, together with the relevant current source and focused tests. It did not use older audit reports. The old probes were not rerun.
 
 The checkout was changing during review. `src/assembly.jl`, `src/build.jl`, `src/diagnostics.jl`, `test/test_assembly.jl`, `test/test_build.jl`, and `design/implementation.md` had uncommitted edits by the end of inspection. Retirement conclusions involving those files are therefore anchored to `git show 66c49f0:<path>`; line references to them below are labeled **HEAD**. The dirty edits add diagnostic payload work and related tests, but are provisional and are not needed for any retirement conclusion in this report. Clean-file references use the current worktree line numbers.
 
@@ -43,7 +43,7 @@ Focused tests assert the leaf operations and activation pinning (`test/test_leav
 
 ### F-13 — mutable numeric ports: still open
 
-The current design still promises immutable signals with no mutable aliasing (`spec.md:360-367`) and says a mutable type anywhere in a port value is refused (`spec.md:437-444`; D-237 at `decisions.md:8560-8570`). The implementation contradicts that rule for numeric types: `_mutable_position` returns `nothing` for every `P <: Real` before consulting `ismutabletype(P)` (`src/leaves.jl:95-100`). `cell_layout` relies on that answer for its `IllegalPortType(reason=:mutable)` arm (`HEAD:src/build.jl:558-563`). Existing tests reject ordinary mutable containers such as `Cache` and `Matrix`, but do not cover a mutable subtype of `Real` (`HEAD:test/test_build.jl:731-762`; `test/test_leaves.jl:163-169`).
+The current design still promises immutable signals with no mutable aliasing (`spec.md:360-367`) and says a mutable type anywhere in a port value is refused (`spec.md:437-444`; D-237 at `log.md:8560-8570`). The implementation contradicts that rule for numeric types: `_mutable_position` returns `nothing` for every `P <: Real` before consulting `ismutabletype(P)` (`src/leaves.jl:95-100`). `cell_layout` relies on that answer for its `IllegalPortType(reason=:mutable)` arm (`HEAD:src/build.jl:558-563`). Existing tests reject ordinary mutable containers such as `Cache` and `Matrix`, but do not cover a mutable subtype of `Real` (`HEAD:test/test_build.jl:731-762`; `test/test_leaves.jl:163-169`).
 
 Publication copies each leaf buffer only shallowly (`src/dataplane.jl:575-577`). The focused current-revision probe declared a mutable `RefreshMutableReal <: Real`, built a discrete source port of that type, initialized it, mutated the value returned from its snapshot, and observed:
 
@@ -61,7 +61,7 @@ The focused test constructs two disjoint cycles plus a downstream tail, asserts 
 
 ### G-05 — empty output stages: retired by implementation
 
-Bare `(;)` remains a fail-fast `DeadStage` requirement (`spec.md:684`, `spec.md:775`, `spec.md:3287-3290`; D-194 at `decisions.md:6724-6725`). The committed probe checks the return shape and then emptiness in both stage positions (`HEAD:src/build.jl:239-257`, `HEAD:src/build.jl:1052-1071`).
+Bare `(;)` remains a fail-fast `DeadStage` requirement (`spec.md:684`, `spec.md:775`, `spec.md:3287-3290`; D-194 at `log.md:6724-6725`). The committed probe checks the return shape and then emptiness in both stage positions (`HEAD:src/build.jl:239-257`, `HEAD:src/build.jl:1052-1071`).
 
 The tests isolate each position by producing the complete declared port set from the other stage, then assert singular `DiagnosticError{DeadStage}` with the correct stage name (`HEAD:test/test_build.jl:38-53`, `HEAD:test/test_build.jl:75-85`). This directly closes the baseline reproducer without relying on `DeclaredNotProduced`.
 
@@ -73,17 +73,17 @@ Tests cover one and two unavailable faces, a working custom override, and the en
 
 ### G-07 — probe/bundle framing: partially retired
 
-The original stage mechanisms are fixed. Committed HEAD routes declaration calls through `invoke_declaration` and bundle-taking probe calls through `invoke_probed`; the latter recognizes a `FieldError` against the supplied bundle as `BundleFieldError` and wraps other model exceptions as `UserCodeFraming`, while preserving framework carriers and interrupts (`HEAD:src/build.jl:16-63`). Focused tests cover all probed function families, declarations, correct bundle-field classification, a `FieldError` against the author's own type, and pass-through exceptions (`HEAD:test/test_build.jl:984-1055`). D-248 additionally specifies the runtime bundle-field species (`decisions.md:9033-9054`), implemented at the existing runtime catch site.
+The original stage mechanisms are fixed. Committed HEAD routes declaration calls through `invoke_declaration` and bundle-taking probe calls through `invoke_probed`; the latter recognizes a `FieldError` against the supplied bundle as `BundleFieldError` and wraps other model exceptions as `UserCodeFraming`, while preserving framework carriers and interrupts (`HEAD:src/build.jl:16-63`). Focused tests cover all probed function families, declarations, correct bundle-field classification, a `FieldError` against the author's own type, and pass-through exceptions (`HEAD:test/test_build.jl:984-1055`). D-248 additionally specifies the runtime bundle-field species (`log.md:9033-9054`), implemented at the existing runtime catch site.
 
 One framing seam remains. Section 13.2 says the framed set is “every user-authored method the build invokes” (`spec.md:7374-7387`), and §9.3 makes `probe_value` explicitly overridable (`spec.md:3297-3304`). Yet `cell_layout` calls `probe_value(P)` directly and rethrows an authored override's exception (`HEAD:src/build.jl:595-603`); the focused test requires the raw `MethodError` (`HEAD:test/test_build.jl:785-788`). The narrower D-248 bullet enumerates declarations and probed component functions, so the documents leave some room over whether the synthesis hook was intentionally excluded, but §13.2's universal sentence does not. On the current normative text, G-07 is only partially retired: bundle/stage/declaration framing is complete, while the custom synthesis seam still lacks path/face/function framing. Clarify the scope or route authored `probe_value` through a framing accessor.
 
 ### G-08 — canonical `ProbeDual`: retired by implementation
 
-The spec names the public concrete alias and its purpose (`spec.md:3408-3416`), and the decision fixes the exact type (`decisions.md:2779-2780`). Committed HEAD defines `ProbeTag` and `const ProbeDual = ForwardDiff.Dual{ProbeTag,Float64,1}` (`HEAD:src/build.jl:671-681`). Focused tests assert concreteness, subtype and width, cache materialization, and eager activation failure payloads using `ProbeDual` (`HEAD:test/test_build.jl:1479-1495`). The symbol is directly available as `Redstone.ProbeDual` and is included in the suite's explicit public import inventory (`test/imports.jl:24`).
+The spec names the public concrete alias and its purpose (`spec.md:3408-3416`), and the decision fixes the exact type (`log.md:2779-2780`). Committed HEAD defines `ProbeTag` and `const ProbeDual = ForwardDiff.Dual{ProbeTag,Float64,1}` (`HEAD:src/build.jl:671-681`). Focused tests assert concreteness, subtype and width, cache materialization, and eager activation failure payloads using `ProbeDual` (`HEAD:test/test_build.jl:1479-1495`). The symbol is directly available as `Redstone.ProbeDual` and is included in the suite's explicit public import inventory (`test/imports.jl:24`).
 
 ### G-09 — foreign declaration bindings: retired by design change and implementation
 
-The baseline row expected shadowing context on `StoreWithoutUpdate` or `ClassUnreadable`. Current D-246 supersedes that placement: every component is checked before classification, and a foreign family binding throws fail-fast `DeclarationShadowed` alone (`decisions.md:8911-8944`; current spec `spec.md:1811-1828`). This is a design change in diagnostic kind and timing, while preserving and broadening the original error-locality goal to optional declarations.
+The baseline row expected shadowing context on `StoreWithoutUpdate` or `ClassUnreadable`. Current D-246 supersedes that placement: every component is checked before classification, and a foreign family binding throws fail-fast `DeclarationShadowed` alone (`log.md:8911-8944`; current spec `spec.md:1811-1828`). This is a design change in diagnostic kind and timing, while preserving and broadening the original error-locality goal to optional declarations.
 
 The declaration layer inventories the full family and detects bindings distinct from Redstone's functions (`src/declare.jl:230-250`). The committed tree walk performs the check before `classify` (`HEAD:src/assembly.jl:830-846`). Tests cover the whole inventory, one required update declaration, optional events, assembly rates, and a passthrough parent, while declaration tests verify family order and sound-module negatives (`HEAD:test/test_assembly.jl:95-129`; `test/test_declare.jl:51-71`). G-09 is therefore retired under the ratified replacement design, rather than by adding the baseline report's proposed note fields.
 
@@ -129,7 +129,7 @@ No named build/storage finding changes status in this bounded reconciliation. Th
 
 ### Why auto-publication item 4 is now retired
 
-D-252 expressly removes auto-publishing and supersedes the prior publication decisions: a declared port must be returned by stage 1 or stage 2, with no framework-written third class (`design/decisions.md:9264-9276`). The current spec repeats that rule in §5.3 (`design/spec.md:774-778`) and §8.3 (`design/spec.md:2376-2383`). This resolves the earlier documentation tension structurally: there is no longer an automatic producer whose reservation could collide with stage 2.
+D-252 expressly removes auto-publishing and supersedes the prior publication decisions: a declared port must be returned by stage 1 or stage 2, with no framework-written third class (`design/log.md:9264-9276`). The current spec repeats that rule in §5.3 (`design/spec.md:774-778`) and §8.3 (`design/spec.md:2376-2383`). This resolves the earlier documentation tension structurally: there is no longer an automatic producer whose reservation could collide with stage 2.
 
 The implementation matches that design:
 

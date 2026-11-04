@@ -295,11 +295,11 @@ local never takes the name `children`, which is a package function.
 
 ## Stage 1: the docs
 
-One commit: `design/spec.md`, `design/decisions.md`,
+One commit: `design/spec.md`, `design/log.md`,
 `design/pending.md`.
 
 Read first, beyond the list above: `design/rules/spec_rules.md` and
-`design/rules/decisions_rules.md`; the chapter's rewrite recipe,
+`design/rules/log_rules.md`; the chapter's rewrite recipe,
 `design/reports/20261001_chapter9_rewrite/report.md`, which holds the
 convention chapter 9 is written in; that report's `rulings_batch.md`, items
 R29 (445–457) and R57 (756–762), the two rulings this stage closes; D-086 and

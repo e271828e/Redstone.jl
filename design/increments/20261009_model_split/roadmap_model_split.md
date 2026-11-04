@@ -213,7 +213,7 @@ field roster, §11.5 and §13.4 where `Run{T}` and the clock appear, §11.8's
 loop cell. One new decision entry states the split and supersedes the clauses
 of D-254, D-256, D-260 and D-282 that the split retires, because
 `spec_rules.md` has every bolded ruling cite the entry that rules it and
-`decisions_rules.md` rule 1 amends the log by a later entry; the entry lands
+`log_rules.md` rule 1 amends the log by a later entry; the entry lands
 docs-commit-first, in this increment's docs stage. The allocation canary
 guards the hooks.
 

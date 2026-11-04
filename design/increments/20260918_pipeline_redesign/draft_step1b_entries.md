@@ -1,8 +1,8 @@
 # Draft: step 1b's decision entries
 
-The nine entries the pipeline redesign adds to `decisions.md`, drafted for
+The nine entries the pipeline redesign adds to `log.md`, drafted for
 review before the spec is touched (`roadmap_pipeline_redesign.md`, step 1b).
-Written to `rules/decisions_rules.md`'s template; citations bare, linkified
+Written to `rules/log_rules.md`'s template; citations bare, linkified
 on landing. Each entry's rationale is the 2026-09-18 session's, as
 `notes_pipeline_redesign.md` settled it and as the 2026-09-18 probe and
 sweeps refined it. Status changes to older entries, and the spec edits the
@@ -460,7 +460,7 @@ used "dataflow" for it and read wrongly at most sites: a dataflow is a
 graph, and the spec speaks of positions in the order, subsets of it, and
 re-running it, none of which a graph has. The type keeps the name because it
 carries the graph. The log keeps its vocabulary of the day under
-`decisions_rules.md` rule 2; the sweep is the spec's and its companions'.
+`log_rules.md` rule 2; the sweep is the spec's and its companions'.
 
 **Rejected.**
 - *"Dataflow" for the order:* a graph has no positions.

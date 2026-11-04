@@ -32,7 +32,7 @@ register.
   scope (§6); deciding something the spec has not decided is not.
 - No renumbering, reordering or merging of sections. Heading *text* may
   change; heading *numbers* and their order may not.
-- No rewrite of `decisions.md` (67k words in the same voice), the companions,
+- No rewrite of `log.md` (67k words in the same voice), the companions,
   or the code. They are touched only where §5 below says a quote must be
   re-pointed.
 - No wrapping tool. Rewritten paragraphs are written wrapped at 80 rendered
@@ -98,7 +98,7 @@ session's.
    use in this section carries a gloss keeps that gloss text, or the table
    row is updated in the same commit.
 5. **Orphan grep.** Grep the section's phrases listed in §5 across
-   `decisions.md`, `reports/20260809_extensions_charter/report.md`, `companions/`, `src/`. Re-point or record
+   `log.md`, `reports/20260809_extensions_charter/report.md`, `companions/`, `src/`. Re-point or record
    per the table's action column.
 6. **Battery**: `check_refs.jl`, `check_rows.jl`, `check_glossary.jl
    --strict`, `linkify.jl` as a no-op.
@@ -136,13 +136,13 @@ user diff-reviews the Part, push. Same pipeline as an increment.
 
 | where | line | quote | action |
 |---|---|---|---|
-| decisions.md | 3516 | "one authoring contract, no taxonomy" | §11.6 title; keep if the title stays |
-| decisions.md | 3799 | "the one initialized datum without declared defaults" | leave |
-| decisions.md | 4091 | "rate-limited wherever its source can repeat" | leave |
-| decisions.md | 4737 | "structure kept in two artifacts" | leave |
-| decisions.md | 5592 | "if `F` participates in differentiation, declare it `T`" | leave |
-| decisions.md | 7466 | "gated off holding `Float64` values" | leave |
-| decisions.md | — | sentence "A name in the wrong register is a rename candidate on that ground alone." | leave |
+| log.md | 3516 | "one authoring contract, no taxonomy" | §11.6 title; keep if the title stays |
+| log.md | 3799 | "the one initialized datum without declared defaults" | leave |
+| log.md | 4091 | "rate-limited wherever its source can repeat" | leave |
+| log.md | 4737 | "structure kept in two artifacts" | leave |
+| log.md | 5592 | "if `F` participates in differentiation, declare it `T`" | leave |
+| log.md | 7466 | "gated off holding `Float64` values" | leave |
+| log.md | — | sentence "A name in the wrong register is a rename candidate on that ground alone." | leave |
 | companions/inbound_periphery_walkthrough.md | 106 | "claimed by `T16000M` — task dead" | re-point on §11.3 |
 | companions/sample_time_proposal.md | 409 | "at boundary zero everything is due" | re-point on §10.5 |
 | companions/sample_time_proposal.md | 732 | "grid is N× finer than the fastest declared work" | re-point on §10.5 |

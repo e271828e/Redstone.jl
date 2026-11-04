@@ -12,7 +12,7 @@ and nothing else. One stage, one commit.
 for the build carrier's rule; §13.4 from the species rule through the new
 sketch (7248–7281), the ruling's mechanism; Appendix C's `StepError` row
 (10345); the D.9 glossary entries *carrier exception* (11207–11211) and
-*species* (11249–11251). In `design/decisions.md`: D-225 in full
+*species* (11249–11251). In `design/log.md`: D-225 in full
 (8008–8052) — its Position is the shape, its Rejected list is what you must
 not build instead; D-221 and D-222 (7865–7942) for the species rule and the
 build carrier it mirrors.

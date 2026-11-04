@@ -28,7 +28,7 @@ per kind below. §8.5's tier paragraph (2308–2330) and its signature-shape
 passage (2611–2632), the home of the arity move. §9.5's failure payload
 (3576–3587). §6.1's obligation rule (1184–1190). §11.3's frozen roster
 (5345–5353). §12.6's legality table (8110–8120). §13.5's two binding sites
-(7772–7780). In `design/decisions.md`: **D-249 (9085, the ruling)**,
+(7772–7780). In `design/log.md`: **D-249 (9085, the ruling)**,
 D-216 (the column-is-the-design rule; grep `### D-216`), D-215
 (`InternalInvariant`; grep `### D-215`).
 

@@ -13,7 +13,7 @@ are examples of what a docstring must not contain.
     surface (the stage family, the binding traits, the device contract) with
     it. Unexported names keep their docstrings as they are.
 2. **The reader is at `?name` or on the reference page.** They know Julia and
-    hybrid simulation, have never opened `spec.md` or `decisions.md`, and do
+    hybrid simulation, have never opened `spec.md` or `log.md`, and do
     not know what `§12.6` or `D-255` means. Every rule below follows from that
     reader.
 3. **What a docstring may not carry goes to the `# Design:` comment above the

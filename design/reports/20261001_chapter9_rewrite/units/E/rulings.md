@@ -1,6 +1,6 @@
 # Unit E, §9.7: rulings
 
-Line numbers are `spec.md` lines unless marked `log` (`decisions.md`).
+Line numbers are `spec.md` lines unless marked `log` (`log.md`).
 
 ## Corrections proposed
 

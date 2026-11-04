@@ -5,7 +5,7 @@ schema (axis 1) and its core integration (axis 2) together, as the working
 order in `initial_design.md` asked. It builds on that record's answers 4 to
 7, 13 and 16 to 18 and never restates them; where it amends one, it says so.
 Like its parent it is not normative. What it rules for the framework lands in
-`spec.md` and `decisions.md` first, in one docs commit, and the code follows
+`spec.md` and `log.md` first, in one docs commit, and the code follows
 as an increment.
 
 The scope is version one of the format: what the core tier of the inspector

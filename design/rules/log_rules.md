@@ -1,6 +1,6 @@
 # Decision log style guide
 
-The rules `decisions.md` adheres to. Distilled from the brief that
+The rules `log.md` adheres to. Distilled from the brief that
 converted the log's retired table form into entries; consulted whenever an
 entry is added, amended or rewritten. The counterpart of `spec_rules.md`, which
 governs the spec.

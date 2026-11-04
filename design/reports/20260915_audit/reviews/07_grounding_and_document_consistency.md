@@ -34,7 +34,7 @@ FlightPhysics/FlightApps references and linked excluded documents were not opene
 
 - **Category:** document inconsistency, low priority, high confidence.
 - Spec §11.2:4990–4995 says the loop takes liveness timestamps at frame top.
-  §11.8:6193–6205 and D-240 (`decisions.md:8666–8688`) instead require reading
+  §11.8:6193–6205 and D-240 (`log.md:8666–8688`) instead require reading
   heartbeat at publication, beside task state. D-240 explicitly rejects a
   drain-side read because localized boundaries would publish stale timestamps.
 - `src/sim.jl:1520–1529` reads `_heartbeat` while assembling publication status,

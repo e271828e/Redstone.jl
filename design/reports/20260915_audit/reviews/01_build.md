@@ -42,7 +42,7 @@ The isolated reproducer has an empty `output_state` plus a valid `output_direct`
 
 ### 3. Algebraic-loop reporting uses the Kahn stall residue instead of SCCs
 
-**Severity: high.** Spec §5.6 requires strongly connected component decomposition after a topological-sort stall, one diagnostic per nontrivial SCC, exact member/wire reporting, and trace-based real-versus-artificial classification where available (`spec.md:972-1016`, especially `spec.md:980-987`). D-012 fixes that design (`decisions.md:443-467`).
+**Severity: high.** Spec §5.6 requires strongly connected component decomposition after a topological-sort stall, one diagnostic per nontrivial SCC, exact member/wire reporting, and trace-based real-versus-artificial classification where available (`spec.md:972-1016`, especially `spec.md:980-987`). D-012 fixes that design (`log.md:443-467`).
 
 `schedule_stage2` reports every vertex left in Kahn's `remaining` set as one `AlgebraicCycle` (`src/build.jl:221-253`). A downstream acyclic tail remains in that set, so it is falsely named as a cycle member. `AlgebraicCycle` also carries only `members`, with neither cycle wires nor classification (`src/diagnostics.jl:690-697`). Multiple disjoint cycles would be collapsed into one diagnostic.
 
@@ -50,7 +50,7 @@ The probe graph contains the SCC `{a,b}` and innocent downstream `c` (`probes/bu
 
 ### 4. Probe-time user exceptions bypass the specified diagnostic framing
 
-**Severity: high.** Spec §5.2 and §13.2 require a missing bundle field to become `BundleFieldError` and other user exceptions to become `UserCodeFraming` with component/stage context (`spec.md:638-652`, `spec.md:7316-7328`). §9.3 applies the same framing to probe execution (`spec.md:3286-3298`), and D-058 requires user exceptions to be wrapped (`decisions.md:1565-1580`).
+**Severity: high.** Spec §5.2 and §13.2 require a missing bundle field to become `BundleFieldError` and other user exceptions to become `UserCodeFraming` with component/stage context (`spec.md:638-652`, `spec.md:7316-7328`). §9.3 applies the same framing to probe execution (`spec.md:3286-3298`), and D-058 requires user exceptions to be wrapped (`log.md:1565-1580`).
 
 User declarations and stage functions are invoked directly without a framing boundary in stage 1 (`src/build.jl:146-162`), stage 2 and update probing (`src/build.jl:639-711`), and event probing (`src/build.jl:753-775`). Neither required diagnostic kind exists in `src/diagnostics.jl`.
 
@@ -66,7 +66,7 @@ User declarations and stage functions are invoked directly without a framing bou
 
 ### 6. Enum-valued ports have zero leaves and are rejected
 
-**Severity: medium.** The port contract expressly admits `Int`/`Bool`/enum leaves as pinned values (`spec.md:1993-1997`, `spec.md:2010-2017`, `spec.md:2135-2137`). This is separate from §7.1, which excludes enums only from continuous `x` and places them in modes (`spec.md:1320-1325`). D-237 does not close enums: it governs non-isbits immutable opaque handles, while enums are isbits primitive types (`decisions.md:8546-8556`).
+**Severity: medium.** The port contract expressly admits `Int`/`Bool`/enum leaves as pinned values (`spec.md:1993-1997`, `spec.md:2010-2017`, `spec.md:2135-2137`). This is separate from §7.1, which excludes enums only from continuous `x` and places them in modes (`spec.md:1320-1325`). D-237 does not close enums: it governs non-isbits immutable opaque handles, while enums are isbits primitive types (`log.md:8546-8556`).
 
 `leaf_types` has explicit arms only for `Real` and `StaticArray`; its fallback recursively walks `fieldtypes(P)` (`src/leaves.jl:35-39`). An enum has no fields, producing an empty leaf list. `cell_layout` rejects every empty list as `IllegalPortType` (`src/build.jl:283-300`).
 
@@ -74,7 +74,7 @@ The discrete enum output at `probes/build_confirmed_gaps.jl:71-75` is rejected w
 
 ### 7. Root probe-value synthesis lacks enum support and diagnostic conversion
 
-**Severity: medium.** Spec §9.3 requires framework synthesis for `Real`, `Bool`, and enum types, then `T()` as a fallback, with an unsatisfied fallback reported as `MissingProbeValue(face,type)` (`spec.md:3250-3266`). D-051 makes the seam and failure mode explicit (`decisions.md:1390-1399`).
+**Severity: medium.** Spec §9.3 requires framework synthesis for `Real`, `Bool`, and enum types, then `T()` as a fallback, with an unsatisfied fallback reported as `MissingProbeValue(face,type)` (`spec.md:3250-3266`). D-051 makes the seam and failure mode explicit (`log.md:1390-1399`).
 
 `probe_value` implements `Real`, `Bool`, `StaticArray`, and an unconditional `P()` fallback (`src/declare.jl:331-334`). There is no enum-first method and no catch that associates constructor failure with the root face. `MissingProbeValue` does not exist in `src/diagnostics.jl`.
 
@@ -88,7 +88,7 @@ The activation machinery itself accepts concrete scalar types and caches them co
 
 ### 9. Same-name foreign declaration bindings are not detected
 
-**Severity: medium.** Spec §8.1 requires the build to inspect the component's parent module when a required declaration appears absent and distinguish a same-name foreign binding: `StoreWithoutUpdate` gains that note, and otherwise the failure is `ClassUnreadable` (`spec.md:1791-1800`). D-117 records the diagnostic intent (`decisions.md:3372-3383`).
+**Severity: medium.** Spec §8.1 requires the build to inspect the component's parent module when a required declaration appears absent and distinguish a same-name foreign binding: `StoreWithoutUpdate` gains that note, and otherwise the failure is `ClassUnreadable` (`spec.md:1791-1800`). D-117 records the diagnostic intent (`log.md:3372-3383`).
 
 Class and tier detection query only Redstone's declaration generics (`src/assembly.jl:39-49`, `src/build.jl:86-113`). They never examine `parentmodule(typeof(c))` for a foreign binding. The associated diagnostic payloads have no shadowing provenance (`src/diagnostics.jl:393-429`). A Julia 1.12+ missing import can therefore present as an unrelated class/store failure rather than the required actionable diagnosis.
 

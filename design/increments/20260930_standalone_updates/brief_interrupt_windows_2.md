@@ -35,7 +35,7 @@ and say so in the report.
 - `design/spec.md` §12.4 (lines 7298–7640), the tail's steps and the
   collapse; §11.6's new paragraph "The same tolerance covers a second call"
   (around line 6478). Read by line range, never whole.
-- `design/decisions.md` D-268 (from line 10497), its position's last
+- `design/log.md` D-268 (from line 10497), its position's last
   bullet included.
 - `design/implementation.md`: the `src/sim.jl` row's §12.4 bullet list
   (grep "the mask and the handling around it"); "Authoring caveats";

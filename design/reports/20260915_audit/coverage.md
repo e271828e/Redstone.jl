@@ -7,7 +7,7 @@
 **Subsystem baseline:** `f941c504c90eadbad9950a182feafa96b300a642`
 **Final delta reconciled by primary reviewer:** `6986ad41b5f04c671fc6b321b4bab6df54520a40`  
 **Audit scope:** only `src/**`, `test/**`, `design/spec.md`,
-`design/decisions.md`, `design/implementation.md`, and the current
+`design/log.md`, `design/implementation.md`, and the current
 audit's seven detailed reviews. All added/changed test and source lines in the
 final path-resolution delta were inspected; historical line references remain
 anchored to their review's stated revision.

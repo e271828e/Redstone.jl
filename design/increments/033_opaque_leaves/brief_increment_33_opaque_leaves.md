@@ -13,7 +13,7 @@ commit**, suite green, `Pkg.test()` green.
 (414–428, the leaf-walk paragraph at 421–426); §4.4 in full (474–548, the
 handle pattern and the value-level constructor); Appendix C's
 `IllegalPortType` row (10412); the glossary's field-handle entry
-(10666–10669). In `design/decisions.md`: D-237 in full (8537–8573),
+(10666–10669). In `design/log.md`: D-237 in full (8537–8573),
 whose Rejected list names the built shape you are replacing. §7.1 (1298–1312)
 is the *state* vocabulary; handles never enter it.
 

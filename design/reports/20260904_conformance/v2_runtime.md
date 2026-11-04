@@ -3,7 +3,7 @@
 **Tip.** 70672d1, Julia 1.12.7, package precompiled.
 **Method.** Adversarial re-read of each cited report entry, of the code at the
 cited lines, of `spec.md` at the cited lines, and of `### D-133` in
-`decisions.md`. Three probes run in the foreground from the repository root
+`log.md`. Three probes run in the foreground from the repository root
 under `julia --project=.`, in
 `/private/tmp/claude-501/-Users-miguel--julia-dev-Redstone-jl/124e226d-cd72-4408-ae47-a86fb39129da/scratchpad/verify2/`:
 `p1.jl` (the `t_end` landing rule and the `t0` interaction), `p3.jl` (the
@@ -32,7 +32,7 @@ src/sim.jl:1133  t_end_frame = sim.t_end === nothing ? typemax(Int) : round(Int,
 Spec §12.4 (`design/spec.md:6324–6325`): "**`t_end` lands on the grid.**
 The run ends at the first grid boundary whose time reaches or exceeds `t_end`."
 Appendix B (`design/spec.md:9917–9918`) repeats it. D-133
-(`decisions.md`, §"Position", final sentence) states the same rule and its
+(`log.md`, §"Position", final sentence) states the same rule and its
 "Rejected" list names *"Ending at the last boundary before `t_end`"* explicitly
 as rejected. `ceil` is required; `round` is built.
 

@@ -99,7 +99,7 @@ wrong at the keyboard, stop and report rather than deviate silently.
   3492; §9.3, lines 4217 to 4359, the probe's placeholder `Δt`; §10.5,
   lines 5550 to 5885; §13.7, lines 9735 to 9963. Never read the spec
   whole.
-- `design/decisions.md` D-231, D-263, D-312 with its annotation, and
+- `design/log.md` D-231, D-263, D-312 with its annotation, and
   D-313.
 - `design/implementation.md`: the head of "What is real here" down to
   its rule on deviations; the rows `### src/blocks.jl`, `### test/fixtures.jl`

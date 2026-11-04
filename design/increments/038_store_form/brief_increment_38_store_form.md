@@ -34,7 +34,7 @@ state" (1961–1985): the rule with its new sentences and the *Why*
 (1963–1975). §9.1's Stratum A check list (2974–3010; the new bullet is
 2999–3002). §13.1's collected rule (7263–7273). Appendix C's row
 (10814–10817) and the two rows after it (10818–10820, 10889–10892). In
-`design/decisions.md`: **D-247 (8970–9030)**, D-231 (8309–8360, the
+`design/log.md`: **D-247 (8970–9030)**, D-231 (8309–8360, the
 sibling field check), D-229's Position (8215–8235, the barrier the check
 collects to).
 

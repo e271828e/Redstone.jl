@@ -134,7 +134,7 @@ wrong at the keyboard, stop and report rather than deviate silently.
   under "Stage roles"; §5.4, lines 1038 to 1107; §5.5, lines 1108 to 1127;
   §7.2, lines 1625 to 1694; §13.7, lines 9726 to 9954; §14.10, lines 11130
   to 11373. Never read the spec whole.
-- `design/decisions.md` D-226, D-263 and D-313.
+- `design/log.md` D-226, D-263 and D-313.
 - `design/implementation.md`: the head of "What is real here" down to
   its rule on deviations; the rows `### src/blocks.jl` and
   `### test/imports.jl`; "Authoring caveats", its first three bullets;

@@ -2,7 +2,7 @@
 
 ## Question
 
-Could `spec.md` and `decisions.md` be rewritten to read more easily, with no
+Could `spec.md` and `log.md` be rewritten to read more easily, with no
 loss of content? The trial took one dense, conceptually hard section, §9.4
 "Activations: executable sets, laziness, caching", and rewrote it five times.
 §9.4 had no context paragraph and packed three rules into three long
@@ -120,7 +120,7 @@ A rewrite under this convention is also an audit of the spec against the log.
 On §9.4 alone it found five uncited entries, one superseded citation, one
 factual error and three rulings with no Position. Budget for that work.
 
-The log gains less. `decisions_rules.md` rule 1 forbids retrofitting old
+The log gains less. `log_rules.md` rule 1 forbids retrofitting old
 entries, rule 2 keeps each entry's vocabulary of its day, and rule 8 forbids
 expanding the terse early ones.
 

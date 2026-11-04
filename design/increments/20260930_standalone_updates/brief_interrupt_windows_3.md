@@ -52,7 +52,7 @@ every exit path. Window 1 contradicts that.
   paragraphs); §12.4 "Initialization" (7480–7580) and "The operator
   interrupt" (7581–7667); §13.4's disposition and §13.6 by heading. Read by
   line range, never whole.
-- `design/decisions.md` D-268 (from line 10507), both amendments.
+- `design/log.md` D-268 (from line 10507), both amendments.
 - `design/implementation.md`: the `src/sim.jl` row's §12.4 bullet list
   (line 428, "§12.4's mask and the handling around it"); the
   `src/devices.jl` row's init bracket bullet (line 705); "Authoring

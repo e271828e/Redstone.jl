@@ -24,7 +24,7 @@ here, follow the tree and say so in the report.
 - `design/spec.md` §11.3, the paragraph "The roster is frozen per run"
   (lines 5934–5958). §12.6 for the advance entries and the doors, by line
   range (starts at 7712). Never the whole file.
-- `design/decisions.md` D-260 (from line 9762): the position's first
+- `design/log.md` D-260 (from line 9762): the position's first
   three bullets, which put the drain's bookkeeping *off* the `Run` and make
   the stop policy the advance's argument. That is why the copy is threaded,
   not stored.

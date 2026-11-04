@@ -45,7 +45,7 @@ Chapter 9 untouched.
 - Left as written: the section 5.2 rows (134, 266, 270 old), the §9.3 row
   (D-205) and the §9.2 bound-schedule row (D-254).
 
-## R69 — `decisions.md`
+## R69 — `log.md`
 
 - D-229 Position: "Deployment validation `([§9.1][s9-1])` runs" →
   `([§9.2][s9-2])`.
@@ -93,8 +93,8 @@ Chapter 9 untouched.
 
 - "`linkify.jl` keeps a third roster, also `ROSTER`, naming the files it
   rewrites; a file checked but not linkified keeps plain citations, as
-  `decisions.md` and `implementation.md` do." → "… naming the files it
-  rewrites besides `spec.md`: `decisions.md`, `reports/20260809_extensions_charter/report.md` and the
+  `log.md` and `implementation.md` do." → "… naming the files it
+  rewrites besides `spec.md`: `log.md`, `reports/20260809_extensions_charter/report.md` and the
   companions. A file checked but not linkified keeps plain citations, as
   `implementation.md` and `pending.md` do."
 
@@ -118,4 +118,4 @@ Chapter 9 untouched.
   defaulting to `1e-6`" (the convergence paragraph).
 - `spec.md` glossary, `Δt_base`: "It is bound at `Simulation` construction".
 - `tools/check_refs.jl` roster comment: "their citations stay plain, as
-  `decisions.md`'s do" (same error as R102).
+  `log.md`'s do" (same error as R102).

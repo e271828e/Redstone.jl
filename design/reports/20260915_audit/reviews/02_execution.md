@@ -40,7 +40,7 @@ Test comments were treated as claims to verify against code, not proof of behavi
 
 ### EXE-01 — High — Real-time pacing is absent from the runtime
 
-**Requirement.** Section 10.7 requires pacing outside trajectory semantics, waits between completed frames, a piecewise-affine wall-clock map, absolute deadlines with debt repayment, five-frame debt forgiveness and warning, explicit `pace = Inf` disablement, a sleep-then-spin wait with `margin`, and published pacer statistics (`design/spec.md:4744-4825`). The public API requires `run!(sim; gui=false, pace=1, margin=0.002, ...)` (`:10573-10584`, `:10598-10600`). D-021 ratifies the affine map and bounded debt (`design/decisions.md:664-681`); D-027 chooses task-yielding `sleep` (`:802-817`); D-080 and D-081 keep event detection pace-independent and preserve `t*` as a boundary (`:2232-2266`).
+**Requirement.** Section 10.7 requires pacing outside trajectory semantics, waits between completed frames, a piecewise-affine wall-clock map, absolute deadlines with debt repayment, five-frame debt forgiveness and warning, explicit `pace = Inf` disablement, a sleep-then-spin wait with `margin`, and published pacer statistics (`design/spec.md:4744-4825`). The public API requires `run!(sim; gui=false, pace=1, margin=0.002, ...)` (`:10573-10584`, `:10598-10600`). D-021 ratifies the affine map and bounded debt (`design/log.md:664-681`); D-027 chooses task-yielding `sleep` (`:802-817`); D-080 and D-081 keep event detection pace-independent and preserve `t*` as a boundary (`:2232-2266`).
 
 **Implementation evidence.** `Simulation` has no pacer state (`src/sim.jl:20-49`), its constructor has no pace or margin deployment (`:131-175`), and `run!` accepts only `t_end` and `stop_on` (`:912-923`). The frame loop only conditionally calls `yield()` when a device is rostered (`:1057-1078`); it computes no deadline, performs no wait, carries no debt, re-anchors nowhere, and emits no pacing status.
 
@@ -50,7 +50,7 @@ Test comments were treated as claims to verify against code, not proof of behavi
 
 ### EXE-02 — High — The loop catches asynchronous SIGINT after abandoning a possibly half-written boundary instead of masking it
 
-**Requirement.** The operator-interrupt rule requires `disable_sigint` across the complete boundary macro-sequence, with deferred delivery only at boundary-consistent unmask points. Ctrl-C must complete the current boundary, publish its final snapshot, and stop cleanly (`design/spec.md:6696-6730`). D-132 states that boundary masking is normative and that the ordinary runtime catch should never receive the operator interrupt in normal operation (`design/decisions.md:3837-3865`).
+**Requirement.** The operator-interrupt rule requires `disable_sigint` across the complete boundary macro-sequence, with deferred delivery only at boundary-consistent unmask points. Ctrl-C must complete the current boundary, publish its final snapshot, and stop cleanly (`design/spec.md:6696-6730`). D-132 states that boundary masking is normative and that the ordinary runtime catch should never receive the operator interrupt in normal operation (`design/log.md:3837-3865`).
 
 **Implementation evidence.** `_advance!` wraps the loop in an ordinary `try` (`src/sim.jl:1059-1089`) without `disable_sigint`. Its catch explicitly handles `InterruptException` by abandoning the unpublished frame and acknowledges that stores may be mid-boundary (`:1090-1097`). This is the exact inconsistent state the requirement says masking prevents.
 
@@ -60,7 +60,7 @@ Test comments were treated as claims to verify against code, not proof of behavi
 
 ### EXE-03 — High — A late handler can return an unknown top-level store key and the runtime silently discards it
 
-**Requirement.** The probe comparison must remain in force at runtime so a branch first reached later fails at its first execution (`design/spec.md:3403-3428`). The uniform rule explicitly includes handlers (`:3495-3506`), and handler return validation must check the returned `NamedTuple` key set first, rejecting unknown keys or stores the component does not declare (`:3508-3520`). D-053 and D-235 ratify always-on conformance at the generated write (`design/decisions.md:1434-1458`, `:8435-8449`).
+**Requirement.** The probe comparison must remain in force at runtime so a branch first reached later fails at its first execution (`design/spec.md:3403-3428`). The uniform rule explicitly includes handlers (`:3495-3506`), and handler return validation must check the returned `NamedTuple` key set first, rejecting unknown keys or stores the component does not declare (`:3508-3520`). D-053 and D-235 ratify always-on conformance at the generated write (`design/log.md:1434-1458`, `:8435-8449`).
 
 **Implementation evidence.** The build probe correctly validates the whole handler return: it requires a `NamedTuple`, enumerates every top-level key, and emits `HandlerReturnKey` for keys outside the component's `{x,m}` stores (`src/build.jl:787-827`). At runtime, `_fire_walk` passes the handler return to `_latch!` (`src/executor.jl:313-323`), but `_latch!` only looks for `:x` and `:m` and then returns (`:325-330`). It never compares the complete top-level key set. Its `ret::NamedTuple` method also means a late non-`NamedTuple` top-level return falls through to a raw `MethodError`, rather than the required located `ConformanceFailure`.
 

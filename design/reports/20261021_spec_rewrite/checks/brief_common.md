@@ -20,7 +20,7 @@ chapter's brief. "The brief" below means the chapter's.
    Part F's warnings apply to every unit.
 4. Your unit's `units/<U>/old.md`, the text you rewrite.
 
-Read `spec.md` and `decisions.md` only as the frozen copies the brief names,
+Read `spec.md` and `log.md` only as the frozen copies the brief names,
 never from the working tree: other sessions edit both while a chapter is in
 flight. Read the spec by section via its heading outline, never whole. Read
 a decision entry in full before you cite it or claim what it rules. Grep the

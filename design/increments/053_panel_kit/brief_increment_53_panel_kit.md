@@ -29,7 +29,7 @@ Read these by line range at `c56ad79`, not whole sections:
   argument; §11.8, 6908 on, the writer records the orphan fact reads.
 - Appendix B, 10723–10727: the handle row gains `pending`, and the panel kit
   row lists the new functions.
-- D-270, `decisions.md` 10693 on: the position's five bullets and the six
+- D-270, `log.md` 10693 on: the position's five bullets and the six
   rejections. The rationale's third paragraph is the peek's soundness and
   its fourth the bake site; the code's docstrings say the same in fewer
   words.

@@ -20,7 +20,7 @@ Its probe ran before increment 77's stage 1, so the refusals it prints as
 
 ## What is settled
 
-D-407, in `design/decisions.md` at 16153, D-406 at 16083, and §11.2's
+D-407, in `design/log.md` at 16153, D-406 at 16083, and §11.2's
 post-run paragraph at 7090 to 7102 and Appendix B's post-run row at 13185
 to 13189 as 06ed3bf leaves them:
 
@@ -59,7 +59,7 @@ to 13189 as 06ed3bf leaves them:
   D-407.
 - Any change to `logged`, `latest`, `trace` or the log's retention.
 - A mount for a binding's `reads`; any change to `attach!`.
-- `design/spec.md`, `decisions.md`, the companions and the tools:
+- `design/spec.md`, `log.md`, the companions and the tools:
   swept at 06ed3bf. A docs passage the code contradicts is a
   stop-and-report, not an edit. `implementation.md` and `pending.md` are
   the increment's bookkeeping and are edited as named below.
@@ -67,7 +67,7 @@ to 13189 as 06ed3bf leaves them:
 
 ## Reading, in order
 
-- `design/decisions.md` 16153 to the entry's end (D-407) and 16083
+- `design/log.md` 16153 to the entry's end (D-407) and 16083
   to the Position's end (D-406).
 - `design/spec.md` §11.2's log subsection, 6985 to 7102; Appendix B's
   post-run row, 13185 to 13200; §14.4's read-selector family, 11461 to

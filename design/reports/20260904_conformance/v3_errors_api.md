@@ -19,7 +19,7 @@
 The substance holds and is stronger than Agent G states; two details in the
 report are wrong.
 
-**What D-057 rejects** (`design/decisions.md`, D-057 "Rejected"):
+**What D-057 rejects** (`design/log.md`, D-057 "Rejected"):
 
 > - *Uniform fail-fast:* N build cycles for N clustered wiring errors.
 > - *Full compiler-style batching:* poisoned nodes, cascade suppression,
@@ -183,8 +183,8 @@ default |". Also `spec.md:9171`. So both the keyword name and the value's kind
 differ: the spec passes an instance, the code takes a `Type` and calls it as
 `method(T, n)`.
 
-`grep -n 'algorithm *=' design/decisions.md` and `grep -n 'method *='
-design/decisions.md` both return **nothing**. D-220 is the authoring-family
+`grep -n 'algorithm *=' design/log.md` and `grep -n 'method *='
+design/log.md` both return **nothing**. D-220 is the authoring-family
 rename (`state_derivative`, `output_state`, `state_events`, `init_workspace`,
 …); it never mentions `algorithm`, `method`, or the stepper keyword. **No
 decision ratifies the `method` spelling.**

@@ -1,6 +1,6 @@
 # A2 rulings: §9.2 "The `Build` and `Deployment` artifacts"
 
-Line numbers are `new.md` lines unless marked `log` (`decisions.md`) or
+Line numbers are `new.md` lines unless marked `log` (`log.md`) or
 `spec` (`spec.md`).
 
 ## Corrections proposed

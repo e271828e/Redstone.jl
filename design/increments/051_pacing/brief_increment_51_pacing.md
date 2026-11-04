@@ -42,7 +42,7 @@ Read these by line range at `4d50888`, not whole sections:
   `pace` default paragraph, `step!`, the control-plane entry, `replay!`.
 - Appendix C (from 10840): `DebtReanchor`, warning, runtime, rate-limited,
   its payload.
-- D-021, D-027 (`decisions.md` 693–712, 831–847) and D-269 (the log's last
+- D-021, D-027 (`log.md` 693–712, 831–847) and D-269 (the log's last
   entry): the rejections behind the map, the debt, the primitive, and the
   six rulings with their reasons.
 - `implementation.md`: the file-table rows at lines 28 (`sim.jl`), 31

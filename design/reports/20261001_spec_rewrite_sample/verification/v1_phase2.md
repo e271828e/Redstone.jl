@@ -29,4 +29,4 @@
 
 Checked and fine: c29/c30 against D-012 ("global + sampled-local" tracers; "schedule-free per-member local trace"), and N3 against glossary l.12036.
 
-Sources: spec.md §8.2 (l.2470–2486), glossary l.12036/12045; decisions.md D-012, D-253, D-275.
+Sources: spec.md §8.2 (l.2470–2486), glossary l.12036/12045; log.md D-012, D-253, D-275.

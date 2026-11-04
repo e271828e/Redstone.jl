@@ -245,7 +245,7 @@ The `block` row was counted on 2026-10-27, when the entry was added.
 |---|---|---|---|---|
 | artifact | g-artifact | 1 | A | an immutable pure function of its inputs |
 | blessed | g-blessed | 5 | A | the spec's marker for a practice it explicitly sanctions |
-| decision entry / `D-nnn` | g-row | 0 | — | a numbered entry of `decisions.md` |
+| decision entry / `D-nnn` | g-row | 0 | — | a numbered entry of `log.md` |
 | the freeze | g-the-freeze | 2 | A | the roster freeze: `attach!`/`detach!` are stopped-sim operations |
 | guarded addition | g-guarded-addition | 7 | A | a capability the design admits but does not build |
 | normative / index, not a second home | g-normative | 1 | B | the spec norms; its appendices are indices |

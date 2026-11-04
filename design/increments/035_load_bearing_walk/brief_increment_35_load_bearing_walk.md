@@ -24,7 +24,7 @@ at 7448–7452 and the two-reasons paragraph at 7453–7468 are the construct);
 (1092–1094); §8.5's container-concreteness bullet (2453–2457); the glossary's
 generic-holding entry (11139–11142); Appendix C's `PathResolution` row
 (10750–10754), `ConditionResolution` row (10922–10928; the sub-kind sentence at 10926–10928) and `TapResolution` row
-(10936–10939). In `design/decisions.md`: D-061 (1655–1675, the
+(10936–10939). In `design/log.md`: D-061 (1655–1675, the
 declared-type walk), D-130 (3755–3787, the register scoping — read the three
 rejections), D-125 (3603–3640, why a deep read past a generic seam is a
 `get_face`). Do not open §14.9 or §14.10; mounting and taps are not built and

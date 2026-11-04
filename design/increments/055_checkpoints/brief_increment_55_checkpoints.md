@@ -33,7 +33,7 @@ Read these by line range at `c39a37d`; the spec is unchanged since
 `73475cd`, the log gained D-273 and D-274 at its end. Every line stage 1
 rewrites is listed under "Stage 1"; this is the reading.
 
-- `decisions.md`: D-273 and D-274 in full (search `### D-273`); the
+- `log.md`: D-273 and D-274 in full (search `### D-273`); the
   Position fields of D-038 (primary trace header), D-063, D-067, D-101
   (replay's two substitutions), D-205, D-213 (the frozen tier's
   establishment), D-218 (input modes), D-223 (a throw inside boundary
@@ -58,7 +58,7 @@ rewrites is listed under "Stage 1"; this is the reading.
   (375–380), `diagnostics.jl` (43–95), the fixtures and repl entries
   (652–696); the authoring caveats (697–758) in full; "Naming" (759) and
   "Running the suite" (836), cited below and never restated.
-- `rules/spec_rules.md`, `rules/decisions_rules.md`, and the header of
+- `rules/spec_rules.md`, `rules/log_rules.md`, and the header of
   `tools/check_glossary.jl` before touching the spec, the log or the
   glossary.
 

@@ -58,7 +58,7 @@ rule and the build paragraph, 7616–7628. §13.4's cursor sentence naming the
 `Dataflow`, 7788. Appendix C's `logged` policy, 11040–11046, and the
 collected-warning slot, 11059–11062. The glossary entries `activation`
 (11868), `Build` (11886), `Dataflow` (11897), `Events` (11909), `Structure`
-(11976), `artifact` (12394). In `design/decisions.md`: **D-250
+(11976), `artifact` (12394). In `design/log.md`: **D-250
 (9157–9217)**, **D-253 (9311–9375)** with its amended fourth bullet, and **D-259
 (9621–9676)**, the step names.
 

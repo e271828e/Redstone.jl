@@ -71,7 +71,7 @@ Borderline items:
   `pending.md`, `reports/20260809_extensions_charter/report.md` or `docs/spec_rewrite/`; the orchestrator
   sweeps those.
 - **Read first.** `design/rules/spec_rules.md` and
-  `design/rules/decisions_rules.md`, in full. They bind every edit.
+  `design/rules/log_rules.md`, in full. They bind every edit.
   Chapters 1 to 10 have had their readability rewrite: no **Rule.**,
   **Why.** or **Example.** labels there, and bold marks a ruling once, with
   its D-citation in the same sentence. Each ruling is bold in one place only,

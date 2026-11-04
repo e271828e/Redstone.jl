@@ -147,7 +147,7 @@ a. **`log_switch`** (finding 4). It pairs with `trace_switch`, but the
 b. **`asm` on public signatures.** faa9f98 renamed `asm` to `assembly` in
    `resolve`, `resolve_terminal`, `input_passthrough` and
    `output_passthrough`, docstrings included. The spec spells it `asm`
-   (`spec.md` 3138, 8152, 8159, 10262, 10267; `decisions.md:1681`). R2 says
+   (`spec.md` 3138, 8152, 8159, 10262, 10267; `log.md:1681`). R2 says
    a public signature keeps the spec's spelling. The options are to revert,
    or to update the spec.
 c. **`attach!`'s binding parameter.** `sim.jl:1467` spells it `new_binding`.

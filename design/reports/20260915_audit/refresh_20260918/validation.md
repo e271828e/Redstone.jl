@@ -10,7 +10,7 @@ Target: **`2938a025c05bc136dd9f76f64cb42f89f4986d4c`**, following the completed
 reviews reconciled its effect on the original findings; the new pipeline design
 was not subjected to a new exhaustive audit.
 
-Only `src/**`, `test/**`, `spec.md`, `decisions.md`, `implementation.md` and the
+Only `src/**`, `test/**`, `spec.md`, `log.md`, `implementation.md` and the
 explicitly authorized `pending.md` were used as implementation/design inputs.
 Pipeline briefs, the roadmap and previous audits were not followed. All audit
 writes remain under `design/reports/20260915_audit/`.

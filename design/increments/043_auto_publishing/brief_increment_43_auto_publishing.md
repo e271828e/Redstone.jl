@@ -38,7 +38,7 @@ itself.
 771–775. §8.3, 2351–2405, its conformance bullet 2376–2391. §9.1's
 Stratum B, 3091–3125. Appendix C's rows for `ProducedByTwoStages` (11181),
 `DeclaredNotProduced` (11184–11189) and `ConformanceFailure` (11197). In
-`design/decisions.md`: **D-252 (9264–9307)**, the ruling and its
+`design/log.md`: **D-252 (9264–9307)**, the ruling and its
 rationale.
 
 **Routed reading in `design/implementation.md`** — do not read the

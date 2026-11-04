@@ -72,10 +72,10 @@ user reviews them in `notes_increment_72.md`.
   refuse "the model", the two collisions R2 closes. Two sentences.
 - **No new decision entry, and one style rule.** The roadmap says the
   entries are increment one's and two's. **(this brief)** A sweep that moves
-  no concept's boundary earns none (`decisions_rules.md` rule 2's "a rename
+  no concept's boundary earns none (`log_rules.md` rule 2's "a rename
   sweeps the spec and its companions, never the log"). The rule a future
   author needs lives in `rules/spec_rules.md`'s "Terms", one bullet (stage
-  0). The log is not swept: `decisions.md`'s 193 lowercase uses keep the
+  0). The log is not swept: `log.md`'s 193 lowercase uses keep the
   vocabulary of their day.
 - **"component tree" gets no glossary entry.** **(this brief)** It is plain
   English, not a coinage; `component` (12685) is the entry. A rewritten
@@ -108,7 +108,7 @@ user reviews them in `notes_increment_72.md`.
 
 ## Out of scope
 
-- The log, by `decisions_rules.md` rule 2. `reports/20260809_extensions_charter/report.md`'s nine uses
+- The log, by `log_rules.md` rule 2. `reports/20260809_extensions_charter/report.md`'s nine uses
   (113, 125, 138, 157, 162, 185, 193, 194, 362), all S2 or S6.
   `implementation.md`, `pending.md` beyond the queue bullet,
   `inspector/initial_design.md`, every report and brief, `docs/spec_rewrite/`.
@@ -131,8 +131,8 @@ user reviews them in `notes_increment_72.md`.
   `notes_increment_70.md`'s "Open points for the user" (the `Model` word
   hits bullet, last in the file).
 - `design/rules/spec_rules.md` whole (183 lines), stages 0 and 1;
-  `decisions_rules.md` rules 2 and 6 (stage 0).
-- `design/decisions.md` D-317 (13479 to 13646), D-318 (13647 to
+  `log_rules.md` rules 2 and 6 (stage 0).
+- `design/log.md` D-317 (13479 to 13646), D-318 (13647 to
   13721), D-319 (13722 to 13841); the linkify marker is 13842. Read, never
   edited.
 - `design/spec.md`: §1 (139 to 160); §9.2's constructor listing and

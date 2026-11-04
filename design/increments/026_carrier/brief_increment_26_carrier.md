@@ -14,7 +14,7 @@ the carrier sketch (6991–7042) — the carrier's definition and the type
 parameter's meaning; §13.4 "How handled" through the species-rule paragraph
 (7234–7270); Appendix C's *raised* and *policy* preamble (10165–10200); the
 D.9 glossary entries *carrier exception* and *species* (11148–11191). In
-`design/decisions.md`: D-221 and D-222 in full (7862–7939) — D-222 is
+`design/log.md`: D-221 and D-222 in full (7862–7939) — D-222 is
 the ruling this increment implements; its Position is the shape, its
 Rejected list is what you must not build instead.
 
@@ -236,7 +236,7 @@ retired at `98a2374`, and no bullet there names the carrier.
 ## Verification
 
 - `grep -rn BuildError src/ test/ design/implementation.md` is empty.
-  The design docs are not yours to sweep: `decisions.md` and the historical
+  The design docs are not yours to sweep: `log.md` and the historical
   briefs keep the old name by the log's own style rule.
 - `grep -rn "length(.*diagnostics)" src/` is empty.
 - Full suite green in the foreground, then `Pkg.test()` green.

@@ -58,7 +58,7 @@ one home of test policy; this brief does not restate it.
 (2881–2897), the feed-list idiom (2908–2960). §9.1's "Where a build warning
 lives", 3231–3240. §13.3's primitives and helpers, 10701–10714. Appendix C's
 `logged` policy, 11042–11047, and the rows for `UnknownFaceSelection` and
-`EmptyFaceSelection`, 11152–11158. In `design/decisions.md`: **D-250
+`EmptyFaceSelection`, 11152–11158. In `design/log.md`: **D-250
 (9157–9218)** and **D-251 (9220–9265)**.
 
 **Routed reading in `design/implementation.md`** — do not read the

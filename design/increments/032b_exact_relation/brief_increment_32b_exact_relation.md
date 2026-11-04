@@ -15,7 +15,7 @@ commit's relation admits. Suite green after each.
 paragraph (3447–3485), the D-238 sentence at 3460–3464; §6.1's bound-check
 paragraph (1089–1092); §8.5's "Contract signature shape follows the class"
 (2550–2569); Appendix C's rows `TierSignatureMismatch` (10402) and
-`DeclarationOnWrongTier` (10401). In `design/decisions.md`: D-238 in
+`DeclarationOnWrongTier` (10401). In `design/log.md`: D-238 in
 full (8575–8609) — its Position is the relation, its Rejected list names the
 built shape you are replacing; D-166's embed-accept paragraph (5585–5590)
 and its 2026-09-08 annotation (5633–5634); D-235's Position (8418–8430) for

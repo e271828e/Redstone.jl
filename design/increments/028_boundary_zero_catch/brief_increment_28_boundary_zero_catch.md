@@ -12,7 +12,7 @@ report, not something to paper over. One stage, one commit.
 
 **Read**, in this order and nothing else:
 
-- `design/decisions.md` D-223 (7941–7978).
+- `design/log.md` D-223 (7941–7978).
 - `design/spec.md` §13.4 (7211–7341), with the new paragraph at
   7275–7294; §12.6's opening and its Rule (6583–6608); §14.5 (8057–8151)
   for what boundary zero runs and where the header is captured.

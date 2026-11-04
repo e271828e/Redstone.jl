@@ -179,7 +179,7 @@ The user's ruling, 2026-10-08, to be recorded by stage 0 as D-316.
 
 - `design/pending.md`, the increment 68 bullet stage 0 adds, and the
   "Stop candidates" bullet it removes (lines 93 to 104).
-- `design/decisions.md` D-316 (stage 0's), then D-060 (line 1768),
+- `design/log.md` D-316 (stage 0's), then D-060 (line 1768),
   D-203 (7332), D-255 (9767), D-261 (10121), D-285 (11922), D-313 (13065),
   each with its 2026-10-08 annotation.
 - `design/spec.md` §13.5, lines 9524 to 9677, whole; §12.1, 7904 to
@@ -215,11 +215,11 @@ The user's ruling, 2026-10-08, to be recorded by stage 0 as D-316.
 
 ### The shape
 
-One docs commit, written under `design/rules/decisions_rules.md` and
+One docs commit, written under `design/rules/log_rules.md` and
 `spec_rules.md`, read first. Historical entries are annotated, never
 rewritten.
 
-- **D-316** in `design/decisions.md`, before the `<!-- citation link
+- **D-316** in `design/log.md`, before the `<!-- citation link
   definitions` marker (line 13289 at f851a51), after D-315. Title the topic,
   for instance "Stop requests are structural: a `StopFlag` port ends the run
   unless the advance ignores it". Position: every bullet of "What is

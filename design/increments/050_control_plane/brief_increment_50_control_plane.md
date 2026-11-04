@@ -31,7 +31,7 @@ Read these by line range at `73fc5ce`, not whole sections:
 - §13.5's consultation order, 8571–8574, which the face-first rule applies.
 - §13.6, 8675–8735: the abnormal entry the disposition change reports
   rather than rethrows.
-- D-268 in `decisions.md`: the five rulings, their rationale and the probe
+- D-268 in `log.md`: the five rulings, their rationale and the probe
   that confirmed the masking mechanism.
 - `implementation.md`: rows 29 (`sim.jl`), 33 (`dataplane.jl`), 37
   (`devices.jl`); the authoring caveats at 63–124 in full; the "Naming"

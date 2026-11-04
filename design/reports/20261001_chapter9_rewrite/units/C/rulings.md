@@ -1,6 +1,6 @@
 # Unit C (§9.5): rulings for the user
 
-Log line numbers are `decisions.md` lines at the working tree of 2026-10-01.
+Log line numbers are `log.md` lines at the working tree of 2026-10-01.
 Old-text line numbers are `units/C/old.md` lines.
 
 ## Corrections proposed

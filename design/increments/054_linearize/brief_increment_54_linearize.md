@@ -36,7 +36,7 @@ Read these by line range at `5b9cdd6`, not whole sections:
   pre-materialization idiom the `width` default serves.
 - Appendix B, 10814–10820, the `linearize` row; Appendix C, 11232–11235,
   the `TapResolution` row and its payload.
-- D-271, `decisions.md` 10808–10836; D-272, 10838–10898: the position's six
+- D-271, `log.md` 10808–10836; D-272, 10838–10898: the position's six
   bullets and the four rejections. D-197 (6900), D-213 (7510), D-167 (5716)
   and D-168 (5792) are the rulings the rejections and the frozen copy rest
   on; read their Position fields only.

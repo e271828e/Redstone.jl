@@ -22,7 +22,7 @@ row at 625 and the hand-down paragraph at 630–636); §9.1 Stratum B
 one-home-per-datum paragraph (1366–1373); §9.7's phase-body paragraphs
 (3600–3625); Appendix C's `ProducedByTwoStages` and `DeclaredNotProduced`
 rows (10840–10846); the glossary's auto-published-port entry (11066–11070);
-Appendix B's bundle footnote (10366–10373). In `design/decisions.md`:
+Appendix B's bundle footnote (10366–10373). In `design/log.md`:
 D-016 (517–545, the origin), D-154 (5153–5195, why the table is written by
 sweeps alone), D-169 (5782–5820, the hand-down exclusion).
 

@@ -61,7 +61,7 @@ diagnostic kinds excluded:
 3. Classify: clean, or one or more of the three smells, with the evidence
    (the grep and what it returned, in one line). A field the spec rosters
    by name in a decision or a section (grep `design/spec.md` and
-   `design/decisions.md` for the field name beside the struct name)
+   `design/log.md` for the field name beside the struct name)
    is reported the same way, with the citation, and marked **spec-rostered**:
    it is a ruling to raise, not a fix to make, and the user needs to know
    which.
@@ -75,7 +75,7 @@ diagnostic kinds excluded:
 
 Read the file rows for your slice in `design/implementation.md`'s
 file table (lines 20–41) and its "Authoring caveats" (62–112) before
-starting. Read `design/decisions.md`'s D-256 (grep `^### D-256`) and
+starting. Read `design/log.md`'s D-256 (grep `^### D-256`) and
 D-260 (grep `^### D-260`) for the ownership criterion in the framework's
 own words. Read spec sections only where a field's classification turns
 on what the spec says it is for; cite them by `§N.N`.

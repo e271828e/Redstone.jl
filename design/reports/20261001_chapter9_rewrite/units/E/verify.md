@@ -15,7 +15,7 @@ Verdict: acceptable. It breaks the brief's "verbatim" by 8 characters, but it is
 - E-033: D-147 moved from "`rhs` takes no index". D-147 still sits in that paragraph, on the `t*` sentence.
 - E-040: D-194 moved from the fusion sentence to E-037. Position bullet 3 covers both sentences.
 
-**Citations checked in decisions.md.**
+**Citations checked in log.md.**
 - Every added citation matches the field rulings.md names: D-086 Position (2449–2452), D-162 Position (5433–5436), D-147 Position (4896–4897, 4909–4910, and 4915–4916 for "each arity is asserted in its own right"), D-194 bullet 3 (6770–6772), D-116 Position (3374–3382) and D-156 Position (5296).
 - The Rationale-only cases are D-086 at 2456, 2463 and 2464 (plus Rejected at 2474), D-116 at 3388 and D-185 at 6468. All are confirmed, and all are listed in rulings.md.
 - No old citation is lost, and no glossary link is lost.

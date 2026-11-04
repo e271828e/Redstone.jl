@@ -118,7 +118,7 @@ fanning one root input into a `T` entry (`a`) and a `Float64` entry (`b`), at
 
 The two models differ only in field order and disagree on legality. In the
 first order the slot walks because one consumer tolerates — the join. D-168
-(`design/decisions.md`, status ratified) lists under **Rejected**: "*Join
+(`design/log.md`, status ratified) lists under **Rejected**: "*Join
 semantics (the slot walks if any consumer tolerates):* unsound in the direction
 that matters — it delivers `Dual`s to an entry that declared it cannot take
 them". Ratified position is the meet: "the slot's cells **pin at every

@@ -65,7 +65,7 @@ recount after every edit. Every line stage 1 rewrites is listed under
   11376–11380: the `TapResolution` row, which names the leaf address and
   the step (D-276). Appendix D: `at` / `Scoped` (12373–12376), `mounting`
   (12420–12422), `taps` (12439–12442).
-- `decisions.md`: D-071 in full (1967–2001); D-276 (11134–11240) with its
+- `log.md`: D-071 in full (1967–2001); D-276 (11134–11240) with its
   two annotations, the dotted face name (11148) and the continuous tier's
   flatness; D-262 (the check fields); D-272 (the tap set); D-207 (the
   input-side face graph is total under one-level routing); D-130 and
@@ -75,7 +75,7 @@ recount after every edit. Every line stage 1 rewrites is listed under
   (726–750), `diagnostics.jl` (44–112), `bindings.jl` (610–621); the
   authoring caveats (825–889) in full; "Naming" (890) and "Running the
   suite" (968), cited below and never restated.
-- `rules/spec_rules.md` and `rules/decisions_rules.md` before touching the
+- `rules/spec_rules.md` and `rules/log_rules.md` before touching the
   spec or the log; the header of `tools/check_glossary.jl` before the
   glossary.
 
@@ -377,7 +377,7 @@ definitions` marker (11241).
   resolution." add "A read set keeps its prefixes as a chain and is not a
   condition node (D-277)." 12420–12422 (`mounting`): add "The read side
   rebases every selector to the root at resolution (§14.9)."
-- `decisions.md`: D-277, the text below, verbatim but for the style
+- `log.md`: D-277, the text below, verbatim but for the style
   guide's wrap. D-071's second bullet ("inert selector data reusing the
   `Scoped` node") gets a trailing annotation in the log's own form, the
   one D-276 carries at 11148, "(amended by D-277: the read set carries

@@ -118,7 +118,7 @@ wrong at the keyboard, stop and report rather than deviate silently.
   the walk clause on pinned entries; §6.2, lines 1354 to 1504; §7.2, lines
   1625 to 1694; §7.5, lines 1894 to 1976; §13.7, lines 9735 to 9963; §14.10,
   lines 11139 to 11392. Never read the spec whole.
-- `design/decisions.md` D-179, D-263, D-311, D-312 with its annotation,
+- `design/log.md` D-179, D-263, D-311, D-312 with its annotation,
   and D-313.
 - `design/implementation.md`: the head of "What is real here" down to
   its rule on deviations; the rows `### src/blocks.jl` and

@@ -23,7 +23,7 @@ the diff.
   `docstring_style.md`) are swept in records too, since the file is the
   same file.
 - The log's citations of `implementation.md` and `decisions_style.md` are
-  substituted under `decisions_rules.md` rule 2's pure-substitution
+  substituted under `log_rules.md` rule 2's pure-substitution
   exception.
 
 ## Step 2: the PDF build under `tools/`
@@ -102,3 +102,15 @@ the diff.
   `MEMORY.md` left as a pointer to `AGENTS.md`.
 - A fresh headless session quoted `AGENTS.md` back, so it loads. Whether a
   subagent of a fresh session sees it is still to be checked.
+
+## The log's name
+
+- `decisions.md` becomes `log.md` and `decisions_rules.md` becomes
+  `log_rules.md`, the name the prose already uses. Every citation is swept,
+  the tools' `DECISIONS` constant with them; the PDFs become `log.pdf` and
+  `spec-log.pdf`; the hook follows. `audit_fragments.jl` keeps the old
+  paths in `RELPATHS` so it can still read the log at older revisions,
+  and it reports the five entries whose code spans changed from
+  `decisions_rules.md` to `log_rules.md`, a pure substitution under
+  `log_rules.md` rule 2. Patches, JSON baselines and a TSV in the records
+  keep the old name: they are data, hashed or diffed as they were.

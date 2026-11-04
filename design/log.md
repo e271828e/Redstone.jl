@@ -10673,7 +10673,7 @@ used "dataflow" for it and read wrongly at most sites: a dataflow is a
 graph, and the spec speaks of positions in the order, subsets of it, and
 re-running it, none of which a graph has. The type keeps the name because it
 carries the graph. The log keeps its vocabulary of the day under
-`decisions_rules.md` rule 2; the sweep is the spec's and its companions'.
+`log_rules.md` rule 2; the sweep is the spec's and its companions'.
 
 **Rejected.**
 - *"Dataflow" for the order:* a graph has no positions.
@@ -10704,7 +10704,7 @@ retires "stratum".
   type". "Stratum A" reads "the structure step", "Stratum B" "the nominal
   evaluation", "Stratum C" "activation"; [Appendix C][sC]'s group headings, [§9.6][s9-6]'s
   heading and the glossary follow.
-- The log keeps its vocabulary of the day (`decisions_rules.md` rule 2).
+- The log keeps its vocabulary of the day (`log_rules.md` rule 2).
   [D-253][d-253]'s fourth bullet is amended in place to the nominal evaluation's
   return.
 
@@ -11425,7 +11425,7 @@ defines no bundle field keeps its noun phrase.
 - [§8.1][s8-1]'s class 1 reads from here: a declaration is a noun phrase naming what
   it returns, prefixed by the bundle field it defines where one exists.
 - No aliases and no deprecation shims, on [D-220][d-220]'s terms. The log keeps the
-  old spellings under `decisions_rules.md`'s rule 2.
+  old spellings under `log_rules.md`'s rule 2.
 
 **Spec.** [§3.4][s3-4], [§4.1][s4-1], [§4.3][s4-3], [§4.4][s4-4], [§5.2][s5-2], [§5.3][s5-3], [§5.4][s5-4], [§6.2][s6-2], [§7.1][s7-1], [§7.2][s7-2], [§7.3][s7-3], [§8.1][s8-1],
 [§8.2][s8-2], [§8.3][s8-3], [§8.4][s8-4], [§8.5][s8-5], [§8.6][s8-6], [§8.8][s8-8], [§9.1][s9-1], [§9.3][s9-3], [§9.4][s9-4], [§9.5][s9-5], [§9.7][s9-7], [§9.8][s9-8],
@@ -12471,7 +12471,7 @@ on that ground or beside it.
   "the projection".
 - `deriv` joins `code_rules.md`'s abbreviation roster.
 - No aliases and no deprecation shims, on [D-220][d-220]'s terms. The log keeps the
-  old spellings under `decisions_rules.md`'s rule 2.
+  old spellings under `log_rules.md`'s rule 2.
 
 **Spec.** [§3.3][s3-3], [§3.4][s3-4], [§4.3][s4-3], [§5.2][s5-2], [§5.3][s5-3], [§5.4][s5-4], [§6.1][s6-1], [§6.2][s6-2], [§7.1][s7-1], [§8.1][s8-1],
 [§8.2][s8-2], [§8.5][s8-5], [§8.6][s8-6], [§8.8][s8-8], [§9.1][s9-1], [§9.2][s9-2], [§9.3][s9-3], [§9.4][s9-4], [§9.5][s9-5], [§9.7][s9-7], [§11.3][s11-3], [§13.1][s13-1],
@@ -13491,7 +13491,7 @@ declarations they feed.
   `input_passthrough`/`output_passthrough`, `x_deriv` and every diagnostic
   kind name.
 - No aliases and no deprecation shims, on [D-220][d-220]'s terms. The log keeps the
-  old spellings under `decisions_rules.md`'s rule 2.
+  old spellings under `log_rules.md`'s rule 2.
 
 **Spec.** [§3.3][s3-3], [§4.3][s4-3], [§6.1][s6-1], [§6.2][s6-2], [§8.1][s8-1], [§8.2][s8-2], [§8.5][s8-5], [§8.6][s8-6], [§8.8][s8-8], [§9.1][s9-1], [§11.3][s11-3],
 [§11.7][s11-7], [§13.1][s13-1], [§13.3][s13-3], [§13.5][s13-5], [§13.7][s13-7], [§14.1][s14-1], [§14.2][s14-2], [Appendix B][sB], [Appendix C][sC],

@@ -30,7 +30,7 @@ true of the `Model` as well as of the tree, so it stands.
    has the build refuse "the model", the two collisions R2 closes, on the
    first page a newcomer reads. Two sentences.
 3. **No new decision entry; one `spec_rules.md` bullet.** The roadmap says
-   the entries are increment one's and two's, and `decisions_rules.md` rule
+   the entries are increment one's and two's, and `log_rules.md` rule
    2 has a rename sweep the spec and the companions, never the log. The
    rule a future author needs (lowercase "model" names a `Model` or the
    modeled system; a sentence about declaring, wiring or building says the

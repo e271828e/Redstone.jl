@@ -6,7 +6,7 @@ brief. The line numbers cited are those of `142c00a`.
 Never `cd` elsewhere (`cd` is aliased to zoxide in the user's shell; use
 absolute paths).
 
-**Standing.** D-260 (`decisions.md:9686`) amends D-255: a `Run{T}` keeps
+**Standing.** D-260 (`log.md:9686`) amends D-255: a `Run{T}` keeps
 what lasts from one door to the next and the state that evolves in between,
 and nothing else. The spec says so since `142c00a`. The code still holds a
 six-field `Run{T}` (`sim.jl:82–89`) whose `t₀` no reader reads, whose
@@ -66,7 +66,7 @@ bullet, 7356–7359. §11.5's header bullet, 5818–5826, `Trace{T}` at
 Appendix B's `init!` entry, 10887–10891, and `mode`/`live!`, 11001–11010.
 The glossary's `Run` (12160), input mode (12231), recorders (12242), run
 metadata (12252) and termination record (12420). In
-`design/decisions.md`: **D-260 (9686–9760)**, D-255 (9430), D-256
+`design/log.md`: **D-260 (9686–9760)**, D-255 (9430), D-256
 (9512), D-218 (7724), D-219 (7769), D-060 (1640).
 
 **Routed reading in `design/implementation.md`** — do not read the

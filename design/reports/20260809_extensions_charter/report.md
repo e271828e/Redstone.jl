@@ -351,11 +351,11 @@ move; this heading remains so section 1.5's persona discussion keeps its
 pointer.
 
 <!-- citation link definitions, frozen when the charter moved to the reports on 2026-11-04 -->
-[d-018]: ../../decisions.md#d-018--tier-2-event-localization-via-dense-output-and-bracketed-root-finding
-[d-019]: ../../decisions.md#d-019--harmonic-tick-grid-with-virtual-assemblies-and-rate-scopes
-[d-184]: ../../decisions.md#d-184--fold-group-into-the-spec-as-an-ordinary-library-component
-[d-185]: ../../decisions.md#d-185--adopt-the-phased-two-form-sample-time-declaration
-[d-187]: ../../decisions.md#d-187--make-the-bound-schedule-a-named-artifact-with-exact-grid-diagnostics
+[d-018]: ../../log.md#d-018--tier-2-event-localization-via-dense-output-and-bracketed-root-finding
+[d-019]: ../../log.md#d-019--harmonic-tick-grid-with-virtual-assemblies-and-rate-scopes
+[d-184]: ../../log.md#d-184--fold-group-into-the-spec-as-an-ordinary-library-component
+[d-185]: ../../log.md#d-185--adopt-the-phased-two-form-sample-time-declaration
+[d-187]: ../../log.md#d-187--make-the-bound-schedule-a-named-artifact-with-exact-grid-diagnostics
 [s10-2]: ../../spec.md#102-the-stepper-seam
 [s10-4]: ../../spec.md#104-localization-mechanics
 [s10-5]: ../../spec.md#105-multi-rate-tick-scheduling

@@ -39,7 +39,7 @@ wrong at the keyboard, stop and report rather than deviate silently.
 - `design/companions/limited_integrator_variants.md` whole.
 - `design/spec.md` §2.1, lines 229 to 273; §10.4, lines 5205 to 5268;
   §10.6, lines 5864 to 5970. Never read the spec whole.
-- `design/decisions.md` D-179.
+- `design/log.md` D-179.
 - `design/implementation.md`: the head of "What is real here" down to
   its rule on deviations; the row `### src/blocks.jl`; "Authoring
   caveats", its first three bullets; "Naming"; "Running the suite". Never

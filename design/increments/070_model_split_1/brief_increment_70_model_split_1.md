@@ -153,7 +153,7 @@ both go into D-317.
 
 - `design/increments/20261009_model_split/roadmap_model_split.md` whole (240 lines).
 - `design/pending.md` 16 to 26.
-- `design/decisions.md` D-254 (9730 to 9780), D-256 (9868 to 9914),
+- `design/log.md` D-254 (9730 to 9780), D-256 (9868 to 9914),
   D-260 (10056 to 10139), D-261 (10140 to 10282), D-274 (11370 to 11462),
   D-282 (11829 to 11855), D-052 (1555 to 1577), D-268 (10815 to 10949).
 - `design/spec.md` §9.1's pipeline table, 3770 to 3778; §9.2's
@@ -164,7 +164,7 @@ both go into D-317.
   `Simulation` listing, 11762 to 11770; the glossary entries `executor`
   12996, `nominal` 13024, `Run` 13211, `checkpoint` 13278, `StopPolicy`
   13256, `execution cursor` 13457. Never read the spec whole.
-- `design/rules/spec_rules.md` and `decisions_rules.md` whole, stage 0
+- `design/rules/spec_rules.md` and `log_rules.md` whole, stage 0
   only.
 - `design/implementation.md`: the head of "What is real here" (11 to
   42) down to its rule on deviations (27 to 31); the rows `### src/sim.jl`
@@ -205,11 +205,11 @@ both go into D-317.
 
 ### The shape
 
-One docs commit, written under `spec_rules.md` and `decisions_rules.md`
+One docs commit, written under `spec_rules.md` and `log_rules.md`
 read first. Three kinds of edit: a new log entry, the spec sentences the
 code would otherwise falsify, and the queue bullet.
 
-**`design/decisions.md`, D-317**, after D-316's body (13449) and
+**`design/log.md`, D-317**, after D-316's body (13449) and
 before the linkify marker (13451). Title: "Split the `Model` from the
 `Simulation`, and run only the nominal one". Position: a headline
 sentence, then one bullet per ruling: the split and the four fields; only
@@ -318,7 +318,7 @@ diff --stat` before committing.
 ### Bookkeeping
 
 Nothing in `src/` or `test/`. The commit touches `spec.md`,
-`decisions.md` and `pending.md`, and nothing else.
+`log.md` and `pending.md`, and nothing else.
 
 ## Stage 1: the split
 

@@ -17,7 +17,7 @@ rewritten; §5.3's "Stage roles: the letters" and "what each stage may see"
 (1431–1498); §8.2's opening inventory and "State, modes, discrete state"
 (1779–1872); Appendix A (9623–9752), Appendix B (9753–10068), Appendix C
 (10069–10226) and Appendix D (10227–end) for the sweep. In
-`design/decisions.md`: D-074, D-075, D-077, D-173, D-195, D-196 — the
+`design/log.md`: D-074, D-075, D-077, D-173, D-195, D-196 — the
 last is the template for a rename entry.
 
 **Routed reading in `design/implementation.md`** — do not read the whole
@@ -207,7 +207,7 @@ policy).
 ## Spec and log edits (the docs stage)
 
 Read `rules/spec_rules.md` before touching the spec and
-`rules/decisions_rules.md` before touching the log.
+`rules/log_rules.md` before touching the log.
 
 1. **§5.2's signature block (542–557).** Rewrite with the new names. The
    block currently has one comment per tier stating each function's maximal
@@ -416,7 +416,7 @@ do not trust the suite alone, since several are printed, not compared.
    wrong-letter cases, which the report lists by name. Nothing else is added
    or removed.
 3. From the repository root, this returns hits **only** in
-   `design/decisions.md` (historical entries keep their vocabulary) and
+   `design/log.md` (historical entries keep their vocabulary) and
    in `design/increments/`:
 
    ```

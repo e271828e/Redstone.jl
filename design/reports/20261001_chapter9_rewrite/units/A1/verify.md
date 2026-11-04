@@ -20,7 +20,7 @@
 
 ## Citations
 
-I checked all 13 added or replaced citations against decisions.md. Every one sits in the field and on the words that rulings.md names.
+I checked all 13 added or replaced citations against log.md. Every one sits in the field and on the words that rulings.md names.
 - D-048 is still ratified, but its "deployment binding at `Simulation` construction only" is stale. rulings.md already notes this.
 - D-186 is cited from its Rationale only.
 - One older point, not drift: "comparing per leaf" (A1-054) is unconditional, while D-236 checks an abstract entry on the whole declaration.

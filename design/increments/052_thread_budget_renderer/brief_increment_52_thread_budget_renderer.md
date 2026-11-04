@@ -35,7 +35,7 @@ Read these by line range at `4821561`, not whole sections:
   compact form and the `text/plain` tables (D-257).
 - Appendix C, 11235–11236: `ThreadBudget`, warning, runtime, at `run!` or
   `replay!`, rate-limited; payload thread count and device-task count.
-- D-027 (`decisions.md` 832–851): the hard `nthreads` error rejected.
+- D-027 (`log.md` 832–851): the hard `nthreads` error rejected.
   D-136 (4124–4175): the cell, and the renderer's 25 as the `maxlog`
   successor. D-228 (8231): attribution by cell, never by payload. D-257
   (9616): each artifact renders itself.

@@ -5,7 +5,7 @@ launch `6cbbaea` plus the commit that adds this brief. Line numbers below
 are those of `6cbbaea`. Never `cd` elsewhere (`cd` is aliased to zoxide in
 the user's shell; use absolute paths).
 
-**Standing.** D-261's artifact rule (`decisions.md:9783–9807`) was extended
+**Standing.** D-261's artifact rule (`log.md:9783–9807`) was extended
 on 2026-09-21, in `6cbbaea`: the nominal evaluation's first product is
 `Outputs`, one `ComponentOutputs` per component in walk order with the
 execution order beside the rows as component indices; the old `ports` and
@@ -15,7 +15,7 @@ compiled state. The same commit renamed `Dataflow` to `Outputs` throughout
 the spec (§9.1's paragraph at 3107–3116, the glossary entry at 12020–12024,
 the artifact rosters) and recorded in D-261's supersession paragraph
 (`9836–9842`) why the log's D-253 and D-258 keep the old name: the log keeps
-the vocabulary of its day (`rules/decisions_rules.md`, rule 2). The code
+the vocabulary of its day (`rules/log_rules.md`, rule 2). The code
 still says `Dataflow`; this increment makes it conform. `pending.md:21–25`
 is the bullet it retires. Roadmap step 7b of
 `roadmap_pipeline_redesign.md` is written after landing.
@@ -76,7 +76,7 @@ does not restate it. The gate is the reviewer's.
 **Read, in `design/spec.md`:** §9.1's opening table and the nominal
 evaluation, 3004–3010 and 3105–3140; §9.2's rendering paragraph,
 3320–3332; the glossary entries for `Outputs`, `Events` and `Build`,
-12020–12024, 11977–11980, 11960–11964. In `design/decisions.md`:
+12020–12024, 11977–11980, 11960–11964. In `design/log.md`:
 **D-261 in full (9773–9842)**, D-257's first bullet (9560–9575), D-253's
 position (9315–9345, in its own vocabulary).
 

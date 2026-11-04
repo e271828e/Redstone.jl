@@ -14,7 +14,7 @@ frozen evidence and keep the word. This brief keeps it too.
 
 Design and code are peers. Nothing here moves a concept's boundary; every
 site is a word substitution or a one-sentence rewrite, so the log is swept
-too (`rules/decisions_rules.md`, rule 2's word-substitution exception, under
+too (`rules/log_rules.md`, rule 2's word-substitution exception, under
 rule 7's audit).
 
 ## The meanings and their words
@@ -70,7 +70,7 @@ These fit no meaning above and get the rewrite given, nothing more:
 - `companions/trim_environment_walkthrough.md:328`, "Only the rig and the
   provenance of `atm` changed" → "Only the rig and where `atm` comes from
   changed".
-- `rules/decisions_rules.md:54`, "No provenance — which review round or
+- `rules/log_rules.md:54`, "No provenance — which review round or
   finding raised a decision belongs to …" → "No history — which review round
   or finding raised a decision belongs to …".
 - `tools/gloss_table.md:120`, the `Structure` row, follows the spec glossary's
@@ -78,12 +78,12 @@ These fit no meaning above and get the rewrite given, nothing more:
 
 ## Stage A: the documents (Sonnet)
 
-Files: `design/spec.md`, `design/decisions.md`,
+Files: `design/spec.md`, `design/log.md`,
 `design/reports/20260809_extensions_charter/report.md`, `design/companions/*.md`,
-`design/tools/gloss_table.md`, `design/rules/decisions_rules.md`,
+`design/tools/gloss_table.md`, `design/rules/log_rules.md`,
 `design/implementation.md`, `design/pending.md`.
 
-Read first: `rules/spec_rules.md`, `rules/decisions_rules.md` (rules 2, 3 and
+Read first: `rules/spec_rules.md`, `rules/log_rules.md` (rules 2, 3 and
 7), and `implementation.md`'s "Authoring caveats". Read the spec by section
 via its heading outline, never whole; `rg -n -i provenance` gives the sites,
 and each site is read with its paragraph.

@@ -19,7 +19,7 @@ meet (2042–2079); §9.1's Stratum A (2920–2961), the two type clauses at
 paragraph (533–539); Appendix C's rows `WireTypeMismatch` (10385),
 `WalkingFaceAtFrozenEntry` (10386), `AbstractAtRoot` (10388),
 `RootInputTypeConflict` (10389); the glossary's *abstract entry*
-(10492–10496). In `design/decisions.md`: D-236 in full (8472–8528) —
+(10492–10496). In `design/log.md`: D-236 in full (8472–8528) —
 its Position is the shape, its Rationale records the one admitted limit, its
 Rejected list is what you must not build instead; D-167 (5652–5722) for the
 tier scope and the failure asymmetry; D-168 (5723–5760) for the meet, with

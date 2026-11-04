@@ -129,7 +129,7 @@ markers. `pending.md` tracks the rewrite.
 - **Constructive rationale stays** (why the rule is shaped as it is — what
   makes it believable and memorable). It follows its rule.
 - **Adversarial rationale goes** (why alternative X loses). It lives in
-  `decisions.md`, cited as "(D-nnn)". Before deleting an inline
+  `log.md`, cited as "(D-nnn)". Before deleting an inline
   argument, verify the entry carries it; enrich the entry first if the inline
   version is richer.
 - **Worked-example measurements are exempt.** A worked example's comparison
@@ -152,7 +152,7 @@ flag it for discussion instead of guessing.
 ## The battery, and what it does not reach
 
 - **The battery is the acceptance test**, exactly as for the log
-  (`decisions_rules.md` rule 6): `check_refs.jl`, `check_rows.jl`,
+  (`log_rules.md` rule 6): `check_refs.jl`, `check_rows.jl`,
   `check_glossary.jl --strict`, `check_bold.jl`, and `linkify.jl` as a no-op
   on re-run — after every edit, before every commit.
 - **`§` is reserved for spec citations.** Companions cite their own sections
@@ -161,9 +161,9 @@ flag it for discussion instead of guessing.
 - **A new file registers in both check tools' rosters** — `ROSTER` in
   `check_refs.jl`, `FILES` in `check_rows.jl` — or its citations are silently
   unchecked. Membership is about being checked, never about living in
-  `companions/`: `decisions.md`, `code_map.md` and `rules/code_rules.md` are
+  `companions/`: `log.md`, `code_map.md` and `rules/code_rules.md` are
   all members. `linkify.jl` keeps a third roster, also `ROSTER`, naming the
-  files it rewrites besides `spec.md`: `decisions.md` and the companions. A file checked but not linkified keeps plain citations, as
+  files it rewrites besides `spec.md`: `log.md` and the companions. A file checked but not linkified keeps plain citations, as
   `code_map.md`, `rules/code_rules.md` and `pending.md` do.
 - **`linkify.jl` owns everything after the `<!-- citation link definitions`
   marker** in a file it rewrites. New text, a new log entry included, goes

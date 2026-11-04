@@ -13,7 +13,7 @@ expected type (3405–3422), the names-are-the-pairing rule (3423–3441),
 exact-at-nominal and embed-accept (3442–3479), the uniformity paragraph
 (3480–3500) and the failure payload (3514–3522); §7.1's "What `Ẋ` is"
 (1317–1327); §13.4's species rule (7350–7375); Appendix C's
-`ConformanceFailure` row (10414). In `design/decisions.md`: D-235 in
+`ConformanceFailure` row (10414). In `design/log.md`: D-235 in
 full (8418–8471) — its Position is the shape, its Rejected list is what you
 must not build instead; D-053 (1430–1457) for the economics; D-166's
 embed-accept paragraph (5585–5588).

@@ -84,7 +84,7 @@ them verbatim. The one framework change they imply is none: nothing under
 ## Out of scope
 
 - Any change under `src/`, `test/`, `README.md` or `design/spec.md`
-  and `decisions.md`. The README's examples paragraph is the tutorial
+  and `log.md`. The README's examples paragraph is the tutorial
   item's.
 - The precompile workload, the measurement model, the tutorial scripts and
   a plotting dependency.

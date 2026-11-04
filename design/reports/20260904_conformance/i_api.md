@@ -15,7 +15,7 @@
   `fieldnames(TrimProblem)`. (3) A one-model run asserting the `t_end`
   rounding rule. Scripts are in the session scratchpad.
 - **Forbidden files opened**: none. I read `design/implementation.md`'s
-  "What is real here" table only, `design/decisions.md` only at `D-017`,
+  "What is real here" table only, `design/log.md` only at `D-017`,
   and the body sections Appendix A and B cite (§4.4, §5.3, §9.2, §13.3,
   §14.2) for meaning.
 

@@ -19,7 +19,7 @@ wrong at the keyboard, stop and report rather than deviate silently.
 
 The second of the four library increments `pending.md` orders, the one
 block the user set apart on 2026-11-03. No log entry
-(`decisions_rules.md` rule 9); the inventory carries the design, docs
+(`log_rules.md` rule 9); the inventory carries the design, docs
 commit first, and the code conforms. The rulings, made on the prototype's
 readings:
 

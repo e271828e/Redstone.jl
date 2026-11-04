@@ -1,14 +1,14 @@
 # Brief: step 1b, the spec conforms to D-250 through D-258
 
 Step 1b's second commit (`roadmap_pipeline_redesign.md`). Tip: `ea86ae8`,
-which added the nine entries to `decisions.md`. The spec now lags the log;
+which added the nine entries to `log.md`. The spec now lags the log;
 this commit makes the spec say what the entries decided. Docs only. One
 commit. The code lags both until increments 43–48; `pending.md` records
 that, not the spec.
 
 ## The authority
 
-The nine entries in `design/decisions.md`, D-250 through D-258, are the
+The nine entries in `design/log.md`, D-250 through D-258, are the
 positions the spec must state. Read them in full first. Where an entry's
 Position and the spec disagree, the entry wins. Where the entry is silent,
 the spec keeps its current text. Nothing in this commit decides anything
@@ -189,7 +189,7 @@ themes in one sentence each. Nothing else in `pending.md` changes.
 
 ## Not in scope
 
-`decisions.md`, `implementation.md`, `reports/20260809_extensions_charter/report.md`, `companions/`, the
+`log.md`, `implementation.md`, `reports/20260809_extensions_charter/report.md`, `companions/`, the
 briefs, the register, the roadmap, `src/`, `test/`. `linkify.jl` may
 regenerate definitions blocks in rostered files; those join the commit.
 

@@ -99,7 +99,7 @@ numbers are approximate; locate by the quoted text.
 
 ## Reviewer A: citations and back-pointers
 
-- **A1. decisions.md, D-141's annotation.** "§2.5 now states the gear's
+- **A1. log.md, D-141's annotation.** "§2.5 now states the gear's
   touchdown edge" → §5.3.
 - **A2. Position prose naming sections that no longer hold the ruling.**
   Update the citation, and the Spec field where it lags:

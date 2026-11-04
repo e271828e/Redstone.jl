@@ -41,7 +41,7 @@ Appendix C:
 >   check names with committed-state values and tolerances. A converged solve
 >   whose committed-state checks leave their tolerances.
 
-D-262 (decisions.md, last entry) carries the rationale and the rejected
+D-262 (log.md, last entry) carries the rationale and the rejected
 shapes. Read it in full before coding. The worked example is §14.7's cruise
 problem: `checks = (r, d) -> (EAS = r.EAS - params.EAS,)` with
 `check_tolerances = (EAS = 0.1,)` and `EAS = get_output(...)` added to the

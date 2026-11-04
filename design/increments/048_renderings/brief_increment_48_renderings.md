@@ -5,10 +5,10 @@ launch `4ac061c` plus the commit that adds this brief. Line numbers below
 are those of `4ac061c`. Never `cd` elsewhere (`cd` is aliased to zoxide in
 the user's shell; use absolute paths).
 
-**Standing.** D-257 (`decisions.md:9560`) says every build-side and
+**Standing.** D-257 (`log.md:9560`) says every build-side and
 deployment artifact renders itself through `show`, with no accessors, and
 fixes the hyperperiod chart's binary guard. Its first bullet was amended on
-2026-09-21 to add `Events`. D-261's artifact rule (`decisions.md:9785`) was
+2026-09-21 to add `Events`. D-261's artifact rule (`log.md:9785`) was
 amended the same day: an artifact holds its facts as rows, so `Structure`
 carries one `ComponentEntry` per component and one `Anchor` per anchor, as
 the `Schedule` carries `ScheduleEntry` and `ScopeEntry` rows, and the
@@ -95,7 +95,7 @@ step, 2991–3033; the fold table and the `Structure` paragraph, 3080–3105;
 §9.2 from the timing tables to the grid diagnostics, 3290–3343, and the
 worked example, 3344–3362; §13.7's first four paragraphs, 8205–8232;
 §10.5's assemblies subsection heading for the scope vocabulary, 4533. In
-`design/decisions.md`: **D-257 (9560–9600)**, D-261's first three
+`design/log.md`: **D-257 (9560–9600)**, D-261's first three
 bullets and the amendment (9773–9795), D-254 (9380), D-187's position
 (6512–6522).
 

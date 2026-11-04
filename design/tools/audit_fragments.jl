@@ -35,9 +35,10 @@
 # Exits nonzero if anything was lost.
 
 const DESIGN = normpath(joinpath(@__DIR__, ".."))
-const DECISIONS = "decisions.md"
-# The log's path at a revision: `design/` from 2026-10-21, `docs/design/` before.
-const RELPATHS = ("design/" * DECISIONS, "docs/design/" * DECISIONS)
+const DECISIONS = "log.md"
+# The log's path at a revision: `design/log.md` from 2026-11-04,
+# `design/decisions.md` from 2026-10-21, `docs/design/decisions.md` before.
+const RELPATHS = ("design/" * DECISIONS, "design/decisions.md", "docs/design/decisions.md")
 
 "The log's text at `rev`, at whichever path it had then."
 function at_rev(rev)

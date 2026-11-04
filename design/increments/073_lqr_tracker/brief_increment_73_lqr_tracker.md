@@ -154,7 +154,7 @@ committed first and the code conforms.
 
 - `design/pending.md`, the increment 73 bullet at the head of "Before
   the first release".
-- `design/decisions.md` D-383 (15207 to the definitions marker),
+- `design/log.md` D-383 (15207 to the definitions marker),
   D-313 (13379), D-263 (10614), D-289 (12434).
 - `design/companions/lqr_tracker.md` whole (346 lines);
   `design/companions/pid_anti_windup.md` 129 to 186 (section 4), 312

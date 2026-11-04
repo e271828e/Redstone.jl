@@ -26,7 +26,7 @@ the boundaries paragraph (1048–1058) its mechanism; §9.3's first two
 paragraphs (3242–3290, probe sourcing and `probe_value`); §9.4's tracer
 sentence (3356–3370, read for the distinction only: the tracer *activation*
 is not built here); Appendix C's `AlgebraicCycle` row (search
-"**`AlgebraicCycle`**"). In `design/decisions.md`: D-012 (447–472),
+"**`AlgebraicCycle`**"). In `design/log.md`: D-012 (447–472),
 D-140 (4397–4457, the ladder's rationale, read the three rejections), D-245
 (8861–8900, this increment's ruling on tangles and the mode field).
 

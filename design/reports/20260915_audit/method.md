@@ -3,7 +3,7 @@
 ## Scope
 
 This is an independent review of `src/`, `test/`, and only these design documents:
-`design/spec.md`, `design/decisions.md`, and
+`design/spec.md`, `design/log.md`, and
 `design/implementation.md`. No previous audit, pending register, other
 repository documentation, migration code, or external source supplies findings.
 References to excluded material inside the permitted documents are not followed.

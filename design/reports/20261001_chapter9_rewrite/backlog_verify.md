@@ -1,6 +1,6 @@
 # Backlog batch 2 — cold verification
 
-Scope: the uncommitted `decisions.md` and `spec.md` changes recorded in
+Scope: the uncommitted `log.md` and `spec.md` changes recorded in
 `backlog_applied_2.md` (R72–R85, R87–R93, R95–R96). Every cited source entry
 was read in full; chapter 9, §5.2, §8.2 and Appendices B and C were read by
 section. `check_refs.jl` and `check_rows.jl` pass.
@@ -105,7 +105,7 @@ Heading shape, Status, field order, sorted Spec fields and titles all PASS. No
 history in any Position.
 
 - **minor (template).** Four Rejected items read "*None recorded for …*"
-  (D-283, D-285, D-287, D-288). No rule in `decisions_rules.md` covers this,
+  (D-283, D-285, D-287, D-288). No rule in `log_rules.md` covers this,
   and no other entry uses it. Fix: add the convention to the style guide, or
   drop the items.
 

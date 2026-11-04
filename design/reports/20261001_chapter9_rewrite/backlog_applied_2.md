@@ -3,7 +3,7 @@
 Uncommitted. Battery green: `check_refs.jl`, `check_rows.jl`,
 `check_glossary.jl --strict` pass, and `linkify.jl` re-runs as a no-op.
 
-## New entries (`decisions.md`, after D-282)
+## New entries (`log.md`, after D-282)
 
 | entry | title | rulings | source fields |
 |---|---|---|---|
@@ -118,8 +118,8 @@ filled activation dictionary, and may back any number of deployments and
 - `spec.md` glossary, `Δt_base`: "It is bound at `Simulation` construction"
   → "It is bound at the `Deployment` constructor".
 - `tools/check_refs.jl` roster comment: "out of linkify.jl's roster: their
-  citations stay plain, as decisions.md's do." → "out of linkify.jl's
-  roster, which rewrites decisions.md, reports/20260809_extensions_charter/report.md and the companions
+  citations stay plain, as log.md's do." → "out of linkify.jl's
+  roster, which rewrites log.md, reports/20260809_extensions_charter/report.md and the companions
   besides spec.md: their citations stay plain."
 
 ## Fixes after verification

@@ -107,7 +107,7 @@ wrong at the keyboard, stop and report rather than deviate silently.
   to 1694; §7.3, lines 1695 to 1843; §8.5, lines 2886 to 3087; §10.4, lines
   5182 to 5540; §10.6, lines 5877 to 6153; §13.7, lines 9726 to 9954. Never
   read the spec whole.
-- `design/decisions.md` D-179, D-231, D-312 and D-313.
+- `design/log.md` D-179, D-231, D-312 and D-313.
 - `design/implementation.md`: the head of "What is real here" down to
   its rule on deviations; the rows `### src/blocks.jl` and
   `### test/imports.jl`; "Authoring caveats", its first three bullets;

@@ -85,7 +85,7 @@ each ruling with its reason. That covers:
   seven findings, and all seven were of this kind. Chapter 12's stopped run
   "resumable by the next `run!`" was settled by §12.6's bold and D-388, and
   the parked GUI's stop button by D-310;
-- a contradiction `decisions_rules.md` rule 10 settles, where the spec and
+- a contradiction `log_rules.md` rule 10 settles, where the spec and
   the latest entry beat an older entry that says otherwise in passing;
 - a consequence of a decision the owner already made;
 - log upkeep: annotations, and whether a ruling gets an entry (step 8);
@@ -665,7 +665,7 @@ From chapters 1 to 4:
 From chapter 12:
 
 - **A Rationale-only ruling gets a new entry, never new Position text in an
-  old one.** `decisions_rules.md` rules 1 and 10 say so; the evidence check
+  old one.** `log_rules.md` rules 1 and 10 say so; the evidence check
   found the batch proposing the old form for 23 items (its note N1).
 - **A consequence of a Position is not a new entry.** Chapter 12's track 2
   wrote 17 entries; its verifier dropped three that restated or followed

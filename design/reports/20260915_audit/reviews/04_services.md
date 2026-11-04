@@ -29,7 +29,7 @@ Severity means: **high** is a missing required service or relocation semantic; *
 
 ### 1. `TrimProblem` and read sets cannot be relocated with `at`
 
-**Severity: high.** Section 14.9 requires `at(prefix, p::TrimProblem)` to pass through path-free fields, wrap `p.condition(d)`, and scope `p.reads` (`spec.md:9015-9028`). Resolution must then prefix path selectors and resolve input faces outward from the mount point (`spec.md:9030-9040`). D-071 records the same five-line lift (`decisions.md:1930-1944`).
+**Severity: high.** Section 14.9 requires `at(prefix, p::TrimProblem)` to pass through path-free fields, wrap `p.condition(d)`, and scope `p.reads` (`spec.md:9015-9028`). Resolution must then prefix path selectors and resolve input faces outward from the mount point (`spec.md:9030-9040`). D-071 records the same five-line lift (`log.md:1930-1944`).
 
 The only `at` implementation accepts `ConditionNode`; every other value is routed to `ConditionNodeMisuse` (`src/conditions.jl:71-79`). Neither `src/readers.jl` nor `src/trim.jl` adds an overload for `Reads` or `TrimProblem`. Consequently a problem that works at its authored root cannot be mounted as a child, defeating the specified component-local reuse boundary.
 
@@ -37,7 +37,7 @@ The probe invokes both required halves (`probes/services_confirmed_gaps.jl:24-28
 
 ### 2. The required continuous linearization service is absent
 
-**Severity: high.** Section 14.10 specifies the main continuous linearization surface: three tap lists, validated/relocatable selectors, per-invocation scratch, chunked `Dual` seeding, simultaneous `A/B/C/D` and operating-point vectors, pure-query behavior, and labeled output (`spec.md:9088-9189`). D-072 ratifies that surface (`decisions.md:1965-1987`). The later sampled-data step-map extension alone is explicitly “recorded, not built” (`spec.md:9199-9204`); that qualification does not defer the continuous service.
+**Severity: high.** Section 14.10 specifies the main continuous linearization surface: three tap lists, validated/relocatable selectors, per-invocation scratch, chunked `Dual` seeding, simultaneous `A/B/C/D` and operating-point vectors, pure-query behavior, and labeled output (`spec.md:9088-9189`). D-072 ratifies that surface (`log.md:1965-1987`). The later sampled-data step-map extension alone is explicitly “recorded, not built” (`spec.md:9199-9204`); that qualification does not defer the continuous service.
 
 There is no `linearize`, taps value, linearization result, or subsystem/delete-vars implementation under `src/**`, and no linearization test under `test/**`. The shared lower-level pieces are present—condition plans, readers, activation-specific scratch executors—but the public service they are specified to support is missing. `isdefined(Redstone, :linearize)` is `false` in the probe (`probes/services_confirmed_gaps.jl:54`).
 

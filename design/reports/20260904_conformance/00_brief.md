@@ -53,7 +53,7 @@ companions in `design/companions/`.
 - The file table in `design/implementation.md` ("What is real here"),
   as a map of where to look. Every row there is a claim to check, not
   evidence. Do not read the rest of that file.
-- `design/decisions.md` only for the specific `D-nnn` entries your
+- `design/log.md` only for the specific `D-nnn` entries your
   slice cites. Grep for `### D-nnn` and read that entry. The log sometimes
   ratifies a shape the spec's prose does not spell out, or records a
   rejected alternative; a deviation the log ratifies is reported with its

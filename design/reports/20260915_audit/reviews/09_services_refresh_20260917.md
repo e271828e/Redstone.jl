@@ -60,7 +60,7 @@ The finding remains **open**. There is partial validation infrastructure, but th
 
 ### Current requirement and design nuance
 
-`TrimProblem.condition` is specified as a condition-valued function, and `residuals` as a residual function (`design/spec.md:8637-8651`; D-118 at `design/decisions.md:3404-3424`). The service describes malformed problems as collected `TrimProblemInvalid` setup failures, but the current enumerated malformed-case paragraph lists shape/type/key/read errors without explicitly naming non-callability (`design/spec.md:9026-9035`). The original report correctly identified both an implementation gap and this specification-list omission.
+`TrimProblem.condition` is specified as a condition-valued function, and `residuals` as a residual function (`design/spec.md:8637-8651`; D-118 at `design/log.md:3404-3424`). The service describes malformed problems as collected `TrimProblemInvalid` setup failures, but the current enumerated malformed-case paragraph lists shape/type/key/read errors without explicitly naming non-callability (`design/spec.md:9026-9035`). The original report correctly identified both an implementation gap and this specification-list omission.
 
 ### Current implementation
 
@@ -83,7 +83,7 @@ The finding remains **open**. A complete resolution should validate applicabilit
 
 ### Current requirement
 
-An `InterruptException` is control flow, not model/data failure (`design/spec.md:7684-7692`). For long-running trim, D-132 states that an interrupt unwinds the call over per-invocation scratch stores with no commit (`design/decisions.md:3881-3890`). The newer build framing decision also explicitly passes `InterruptException` through unwrapped, but that decision governs build invocation frames, not condition conversion (D-248, `design/decisions.md:9033-9052`).
+An `InterruptException` is control flow, not model/data failure (`design/spec.md:7684-7692`). For long-running trim, D-132 states that an interrupt unwinds the call over per-invocation scratch stores with no commit (`design/log.md:3881-3890`). The newer build framing decision also explicitly passes `InterruptException` through unwrapped, but that decision governs build invocation frames, not condition conversion (D-248, `design/log.md:9033-9052`).
 
 ### Current implementation
 
@@ -103,7 +103,7 @@ The finding remains **open**. The narrow repair is to rethrow `InterruptExceptio
 
 ### Current requirement
 
-§14.10 specifies the tap declaration, relocation, seeded scratch evaluation, and labeled result (`design/spec.md:9167-9235` and following). Lifecycle preconditions explicitly include both defaulted and explicit-about `linearize` calls (`:8115-8123`), and D-197 constrains the `x` tap set to continuous state (`design/decisions.md:6858-6869`).
+§14.10 specifies the tap declaration, relocation, seeded scratch evaluation, and labeled result (`design/spec.md:9167-9235` and following). Lifecycle preconditions explicitly include both defaulted and explicit-about `linearize` calls (`:8115-8123`), and D-197 constrains the `x` tap set to continuous state (`design/log.md:6858-6869`).
 
 ### Current implementation and tests
 
@@ -119,7 +119,7 @@ G-02 remains **open** in full. Current reader and scratch machinery reduce imple
 
 ### Current requirement
 
-§14.9 gives the concrete `at(prefix, p::TrimProblem)` lift, including post-composed condition and relocated reads (`design/spec.md:9081-9119`; D-071 at `design/decisions.md:1940-1958`; D-188 at `:6542-6550`). §14.10 requires whole tap-set relocation (`design/spec.md:9186-9196`).
+§14.9 gives the concrete `at(prefix, p::TrimProblem)` lift, including post-composed condition and relocated reads (`design/spec.md:9081-9119`; D-071 at `design/log.md:1940-1958`; D-188 at `:6542-6550`). §14.10 requires whole tap-set relocation (`design/spec.md:9186-9196`).
 
 ### Current implementation
 

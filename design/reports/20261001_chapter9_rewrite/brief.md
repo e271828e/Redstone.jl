@@ -25,7 +25,7 @@ Paths below are relative to this report directory,
 5. Your unit's `units/<U>/old.md`, the text you rewrite.
 
 Read `spec.md` by section via its heading outline, never whole. Read a
-decision entry in `design/decisions.md` in full before you cite it or
+decision entry in `design/log.md` in full before you cite it or
 claim what it rules.
 
 ## The convention
@@ -103,7 +103,7 @@ In `units/<U>/`:
   and `show-new <U>` to see both normalized texts, and copy spans from that
   output. `where` is `"new"` for your own text. For content held elsewhere it
   is the file path that holds it, and `new` is the span there. Use
-  `design/spec.md` or `design/decisions.md` for text outside the
+  `design/spec.md` or `design/log.md` for text outside the
   chapter, `units/<V>/old.md` for content another unit owns, and
   `design/reports/20261001_spec_rewrite_sample/versions/v4_flat.md` for §9.4.
   `cites` lists the citations inside the old span. `newcites` lists those
@@ -177,7 +177,7 @@ synchronization on any path".
 - M9: merge the `t` and `Δt` probe-value paragraphs, after root-input
   synthesis.
 - M10: delete the list of D-051's rejected alternatives (3862–3863). Map each
-  item to D-051's Rejected field in `design/decisions.md`.
+  item to D-051's Rejected field in `design/log.md`.
 - Keep the workspace-allocation passage. A1 maps to it.
 - Mind F11–F12.
 

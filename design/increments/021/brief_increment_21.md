@@ -43,7 +43,7 @@ reversed adjudications before.
    `UninitializedInputs`, `TrimProblemInvalid`, `TrimCommitEvents`,
    `TrimCommitResiduals`. Glossary entries `executor`, `scratch`, `lens`,
    `selector`, `capture`.
-4. Decision entries in `docs/notes/design/framework_decisions.md`: D-066,
+4. Decision entries in `docs/notes/design/framework_log.md`: D-066,
    D-205, D-213.
 5. Source: `src/conditions.jl` (all of it — the algebra, `resolve_condition`,
    `assert_total`, the dynamic-walk `apply!`), `src/sim.jl` (the `Simulation`

@@ -24,7 +24,7 @@ deployment validation passage (3027–3042) for the call scope; Appendix C's pol
 `collected` — and for `ClassUnreadable`, `ClassMixed`, `ContainerMixed`,
 `ChildNameCollision`, `TransparentContainerUnknown`, `UnknownFaceSelection`,
 `WireTypeMismatch`, `ProducedByTwoStages` — all `fail-fast`. In
-`design/decisions.md`: D-229 in full (8176–8231); its Rejected list is
+`design/log.md`: D-229 in full (8176–8231); its Rejected list is
 what you must not build instead. D-057 (the entry it narrows) and D-222 (the
 carrier's type parameter is the policy: a kind for fail-fast, `Vector{Diagnostic}`
 for collected).
