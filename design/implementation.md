@@ -170,6 +170,8 @@ The standard component library, the submodule `Redstone.Blocks`:
   `LimitedIntegrator` and `LimitedDoubleIntegrator` publish their mode as the
   output `saturation`, typed by the helper `saturation_type`, shared with
   `DiscreteLimitedIntegrator` and the PID.
+  Both read their keywords through the helper `promoted_keywords`, which
+  refuses a mix of shapes.
 - `ControllerBlock{Hold, Track}`, carrying `axis_ports`, `gated_error` and
   `correction_reference`, over `PIDBlock{V, Hold, Track, Fixed}` over `Real`
   and static vectors, carrying `signal_ports`, `u_types`, `y_types` and

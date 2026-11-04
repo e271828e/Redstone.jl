@@ -1266,6 +1266,14 @@ channel_type(::Type{V}, ::Type{T}) where {V <: Real, T} = T
 channel_type(::Type{V}, ::Type{T}) where {V <: StaticArray, T} = similar_type(V, T)
 saturation_type(::Type{V}) where {V} = channel_type(V, Int8)
 
+# The keywords of one `V`, promoted and made float. `promote` over a scalar and a
+# static array, or over two lengths, throws an `ErrorException` naming no keyword.
+function promoted_keywords(given::NamedTuple)
+    allequal(size, given) || throw(ArgumentError(
+        "the keywords $(join(keys(given), ", ")) must share one shape, not the sizes $(join(map(size, given), ", "))"))
+    float.(promote(given...))
+end
+
 # Design: §2.3, §10.4, §10.6, D-179.
 # `limited_integrator_variants.md` gives the reasoning.
 """
@@ -1328,7 +1336,9 @@ whatever the mode was.
 - `upper`: the upper limit.
 - `x0`: the initial value of `x`, and the value a reset writes, clamped. `x0`,
   `lower` and `upper` are promoted to one `V`, which is `Float64` or a static
-  array of `Float64`, and taken by `float`, so integer values qualify.
+  array of `Float64`, and taken by `float`, so integer values qualify. They
+  must share one shape: a scalar beside a static array, or two lengths, is
+  refused with an `ArgumentError`.
 - `localized`: `true` for localized leave events, `false` for boundary-detected
   ones.
 - `reset`: `true` to add the input `reset` and the event, the parameter `R`.
@@ -1341,7 +1351,7 @@ struct LimitedIntegrator{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, L, R} <
     upper::V
 end
 function LimitedIntegrator(; lower, upper, x0 = zero(lower), localized::Bool = true, reset::Bool = false)
-    x0, lower, upper = float.(promote(x0, lower, upper))
+    x0, lower, upper = promoted_keywords((; x0, lower, upper))
     LimitedIntegrator{typeof(x0), localized, reset}(x0, lower, upper)
 end
 x_init(c::LimitedIntegrator) = c.x0
@@ -1485,7 +1495,8 @@ there with `v` zeroed, and the initial mode agrees with the initial input.
 - `q0`: the initial value of `q`.
 - `v0`: the initial value of `v`. `q0`, `v0`, `lower` and `upper` are promoted
   to one `V`, which is `Float64` or a static array of `Float64`, and taken by
-  `float`, so integer values qualify.
+  `float`, so integer values qualify. They must share one shape: a scalar beside
+  a static array, or two lengths, is refused with an `ArgumentError`.
 - `localized`: `true` for localized leave events, `false` for boundary-detected
   ones.
 
@@ -1498,7 +1509,7 @@ struct LimitedDoubleIntegrator{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, L
     upper::V
 end
 function LimitedDoubleIntegrator(; lower, upper, q0 = zero(lower), v0 = zero(lower), localized::Bool = true)
-    q0, v0, lower, upper = float.(promote(q0, v0, lower, upper))
+    q0, v0, lower, upper = promoted_keywords((; q0, v0, lower, upper))
     LimitedDoubleIntegrator{typeof(q0), localized}(q0, v0, lower, upper)
 end
 x_init(c::LimitedDoubleIntegrator) = (q = c.q0, v = c.v0)
