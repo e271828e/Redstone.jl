@@ -1315,8 +1315,8 @@ not-holding. An `x0` outside the limits is therefore clamped there, and the
 initial mode agrees with the initial input.
 
 `reset = true`, the parameter `R`, adds the `Bool` input `reset` beside `u`,
-which then names the input side, and one more event, `reset`, one over the
-whole block whatever its width, the
+which then names the input side, and one more event, `reset`, a single event
+however wide the block is, the
 [`Integrator`](@ref)'s: boundary-detected on the flag, so it fires once per
 rising edge. Its handler writes `x0`, clamped to the limits, and the code `x0`
 earns, so a reset onto a limit lands saturated and a reset inside lands free,

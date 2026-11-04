@@ -1201,8 +1201,9 @@ function test_blocks()
             vector_sim = Simulation(held_reset_model(vector_block, SVector(1.0, 1.0)); h = h)
             init!(vector_sim, at("i", set(x = SVector(0.2, 0.2))))
             @test state(vector_sim, "i") === SVector(0.5, 1.0) && modes(vector_sim, "i") === SVector{2, Int8}(0, 1)
-            # An inward input frees the component its reset landed on the limit.
             step!(vector_sim; t_plus = h)
+            @test isapprox(state(vector_sim, "i"), SVector(0.6, 1.0); atol = 1e-12) && modes(vector_sim, "i") === SVector{2, Int8}(0, 1)
+            # An inward input frees the component its reset landed on the limit.
             inward = Simulation(held_reset_model(vector_block, SVector(1.0, -1.0)); h = h)
             init!(inward, at("i", set(x = SVector(0.2, 0.2))))
             @test modes(inward, "i") === SVector{2, Int8}(0, 0)
