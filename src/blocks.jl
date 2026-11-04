@@ -1297,9 +1297,11 @@ free and `+1` at `upper`. `hit_upper` and `hit_lower` fire when `x` reaches a
 limit, and their handlers write `x` to the limit exactly and saturate.
 `leave_upper` and `leave_lower` fire when `u` turns strictly back into the
 range, and free it. An input of exactly zero at a limit keeps the mode
-saturated. The hit events are [localized](@ref g-localized). On a limit their
-guards read `u` in place of the position, so a block freed there does not hold
-its hit [predicate](@ref g-predicate). An input that turns outward again, even
+saturated. The hit events are [localized](@ref g-localized). Their
+[guards](@ref g-guard) read the sign of the position error to leading order,
+`x - limit` when it is nonzero, else `u`, the first terms of the error's
+expansion a moment ahead. A block freed on a limit therefore does not hold its
+hit [predicate](@ref g-predicate). An input that turns outward again, even
 within the same step, then presents a fresh edge, and the block stops on the limit.
 
 A second output, also `saturation`, publishes the code from stage 1, so it has
@@ -1463,10 +1465,12 @@ keeps the mode saturated. The hit events are [localized](@ref g-localized).
 
 A block that reaches a limit while `u` already points back into the range
 saturates and frees at the same [boundary](@ref g-boundary), so it leaves the
-limit from rest. On a limit the hit [guards](@ref g-guard) read `v` in place of
-the position, and at rest `u`, so a block freed there does not hold its hit
-[predicate](@ref g-predicate). An input that turns outward again, even within
-the same step, then presents a fresh edge, and the block stops on the limit.
+limit from rest. The hit [guards](@ref g-guard) read the sign of the position
+error to leading order, `q - limit` when it is nonzero, else `v`, else `u`, the
+first terms of the error's expansion a moment ahead. A block freed on a limit
+therefore does not hold its hit [predicate](@ref g-predicate). An input that
+turns outward again, even within the same step, then presents a fresh edge, and
+the block stops on the limit.
 
 A third output, also `saturation`, publishes the code from stage 1, so it has
 no [feedthrough](@ref g-feedthrough). It serves an anti-windup consumer. The
