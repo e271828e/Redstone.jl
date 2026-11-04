@@ -259,6 +259,39 @@ vector_limited_model(localized) =
                                     localized = localized));
           local_wires = ("s/y" => "li/u",))
 
+# A limited double integrator fed by a step from `1` down to `-1`: it reaches
+# 0.5 at 1, leaves at 1.05 and reaches -1 at 1.05 + √3.
+double_limited_model(localized) =
+    Group((; s = Step(t_step = 1.05, before = 1.0, after = -1.0),
+             li = LimitedDoubleIntegrator(lower = -1.0, upper = 0.5, localized = localized));
+          local_wires = ("s/y" => "li/u",))
+
+# A limited double integrator fed by the ramp `1.05 - t`, which crosses zero
+# at 1.05 with slope `-1`, after the block reaches 0.15 near 0.6.
+ramp_double_limited_model(localized) =
+    Group((; k = Constant(-1.0), ramp = Integrator(x0 = 1.05),
+             li = LimitedDoubleIntegrator(lower = -2.0, upper = 0.15, localized = localized));
+          local_wires = ("k/y" => "ramp/u", "ramp/y" => "li/u"))
+
+# A limited double integrator whose input falls from `level` to exactly zero at
+# 1.05 and returns to `level` at 2.05.
+zero_input_double_model(level, lower, upper, localized) =
+    Group((; release = Step(t_step = 1.05, before = level, after = 0.0),
+             push = Step(t_step = 2.05, before = 0.0, after = level),
+             input = SumJunction{Float64, 2}(),
+             li = LimitedDoubleIntegrator(lower = lower, upper = upper, localized = localized));
+          local_wires = ("release/y" => "input/in1", "push/y" => "input/in2",
+                         "input/y" => "li/u"))
+
+# A vector limited double integrator fed by a step: component 2 reaches 0.8 at
+# √0.8 and component 1 0.5 at 1; after 1.05 component 1 leaves and reaches -1
+# at 1.05 + √3, while component 2's input is exactly zero and it stays saturated.
+vector_double_limited_model(localized) =
+    Group((; s = Step(t_step = 1.05, before = SVector(1.0, 2.0), after = SVector(-1.0, 0.0)),
+             li = LimitedDoubleIntegrator(lower = SVector(-1.0, -1.0), upper = SVector(0.5, 0.8),
+                                          localized = localized));
+          local_wires = ("s/y" => "li/u",))
+
 # A vector relay reading a vector integrator: component 1 is `relay_model`'s,
 # and component 2 climbs to 0.5 and never reaches its upper threshold.
 vector_relay_model() =
@@ -1801,6 +1834,148 @@ function test_blocks()
         @test 0 < state(boundary_sim, "li") - state(localized_sim, "li") ≤ 0.1^2 / 2
     end
 
+    @testset "the limited double integrator stops exactly, at rest, frees on its input's sign, and linearizes by its mode (§10.4, §10.6)" begin
+        @test y_types(LimitedDoubleIntegrator(lower = -1.0, upper = 0.5)) ==
+              (out = Float64, velocity = Float64, saturation = Int8)
+        # The step's jump carries its own boundary, so both policies leave at
+        # 1.05: q = 0.5 - (t - 1.05)² / 2 and v = -(t - 1.05) from there.
+        for localized in (true, false)
+            sim = Simulation(double_limited_model(localized); h = 1//10)
+            init!(sim, set())
+            step!(sim; t_plus = 1.0)
+            @test state(sim, "li") === (q = 0.5, v = 0.0) && modes(sim, "li") === Int8(1)
+            @test port(sim, "li", :velocity) === 0.0
+            @test port(sim, "li", :saturation) === modes(sim, "li")
+            step!(sim; t_plus = 1.0)
+            bracket_width = sim.model.deployment.localization_tol * sim.model.deployment.h    # in time (§10.4)
+            @test state(sim, "li").q ≈ 0.5 - 0.95^2 / 2 atol = bracket_width
+            @test state(sim, "li").v ≈ -0.95 atol = bracket_width
+            @test modes(sim, "li") === Int8(0)
+            @test port(sim, "li", :velocity) === state(sim, "li").v
+            step!(sim; t_plus = 1.0)
+            @test state(sim, "li") === (q = -1.0, v = 0.0) && modes(sim, "li") === Int8(-1)
+            @test port(sim, "li", :saturation) === modes(sim, "li")
+        end
+        # The derivative reads the mode, so the Jacobian does too.
+        double_taps = taps(x = (q = get_state("c", "q"), v = get_state("c", "v")), u = (in = get_input(:in),))
+        free_rig = Simulation(fed(LimitedDoubleIntegrator(lower = -1.0, upper = 0.5)); h = 1//10)
+        init!(free_rig, set(u = (in = 0.0,)))
+        free_linearization = linearize(free_rig, double_taps)
+        @test isapprox(free_linearization.A, [0.0 1.0; 0.0 0.0]; atol = 1e-12)
+        @test isapprox(free_linearization.B, [0.0; 1.0;;]; atol = 1e-12)
+        rig = Simulation(fed(LimitedDoubleIntegrator(lower = -1.0, upper = 0.5)); h = 1//10)
+        init!(rig, set(u = (in = 1.0,)))
+        step!(rig; t_plus = 1.5)
+        @test state(rig, "c") === (q = 0.5, v = 0.0) && modes(rig, "c") === Int8(1)
+        saturated_linearization = linearize(rig, double_taps)
+        @test isapprox(saturated_linearization.A, zeros(2, 2); atol = 1e-12)
+        @test isapprox(saturated_linearization.B, zeros(2, 1); atol = 1e-12)
+        # A `q0` outside the limits is clamped at boundary zero, `v0` zeroed (§10.6).
+        clamped = Simulation(fed(LimitedDoubleIntegrator(q0 = 2.0, v0 = 3.0, lower = -1.0, upper = 0.5)); h = 1//10)
+        init!(clamped, set(u = (in = 1.0,)))
+        @test state(clamped, "c") === (q = 0.5, v = 0.0) && modes(clamped, "c") === Int8(1)
+        clamped_lower = Simulation(fed(LimitedDoubleIntegrator(q0 = -2.0, v0 = -3.0, lower = -1.0, upper = 0.5)); h = 1//10)
+        init!(clamped_lower, set(u = (in = -1.0,)))
+        @test state(clamped_lower, "c") === (q = -1.0, v = 0.0) && modes(clamped_lower, "c") === Int8(-1)
+    end
+
+    @testset "the limited double integrator arriving against its input saturates and frees at one boundary (§10.6)" begin
+        # q = 2t - t² / 2 reaches 0.5 at 2 - √3 with v = √3 and u = -1: the hit
+        # fires in one round and the leave in the next, so the block leaves the
+        # limit from rest, q = 0.5 - (t - 2 + √3)² / 2.
+        for localized in (true, false)
+            rig = Simulation(fed(LimitedDoubleIntegrator(v0 = 2.0, lower = -1.0, upper = 0.5, localized = localized)); h = 1//10)
+            init!(rig, set(u = (in = -1.0,)))
+            step!(rig; t_plus = 1.0)
+            bracket_width = rig.model.deployment.localization_tol * rig.model.deployment.h    # in time (§10.4)
+            @test modes(rig, "c") === Int8(0)
+            @test state(rig, "c").q ≈ 0.5 - (sqrt(3) - 1)^2 / 2 atol = bracket_width
+            @test state(rig, "c").v ≈ 1 - sqrt(3) atol = bracket_width
+        end
+    end
+
+    @testset "an input of exactly zero at a limit keeps the limited double integrator saturated (§10.4)" begin
+        # Freed at the zero, `q` would pass the limit at the return with no edge.
+        for (level, lower, upper, limit, saturation) in ((1.0, -1.0, 0.5, 0.5, Int8(1)),
+                                                         (-1.0, -0.5, 1.0, -0.5, Int8(-1))),
+            localized in (true, false)
+            sim = Simulation(zero_input_double_model(level, lower, upper, localized); h = 1//10)
+            init!(sim, set())
+            step!(sim; t_plus = 3.0)
+            @test state(sim, "li") === (q = limit, v = 0.0) && modes(sim, "li") === saturation
+        end
+    end
+
+    @testset "the vector limited double integrator stops and frees each component on its own (§10.4, §10.6)" begin
+        # At 0.9 only component 2 is clamped, which tells a handler writing its
+        # one component from one writing them all; from 1.05 component 2's input
+        # is exactly zero, which tells a leave guard reading its own component
+        # from one reading the first.
+        for localized in (true, false)
+            sim = Simulation(vector_double_limited_model(localized); h = 1//10)
+            init!(sim, set())
+            step!(sim; t_plus = 0.9)
+            @test state(sim, "li").q[1] ≈ 0.405 atol = 1e-12
+            @test state(sim, "li").v[1] ≈ 0.9 atol = 1e-12
+            @test state(sim, "li").q[2] == 0.8 && state(sim, "li").v[2] == 0.0
+            @test modes(sim, "li") == SVector{2, Int8}(0, 1)
+            @test port(sim, "li", :saturation) === modes(sim, "li")
+            step!(sim; t_plus = 0.1)
+            @test state(sim, "li") === (q = SVector(0.5, 0.8), v = SVector(0.0, 0.0))
+            @test modes(sim, "li") == SVector{2, Int8}(1, 1)
+            step!(sim; t_plus = 1.0)
+            bracket_width = sim.model.deployment.localization_tol * sim.model.deployment.h    # in time (§10.4)
+            @test state(sim, "li").q[1] ≈ 0.5 - 0.95^2 / 2 atol = bracket_width
+            @test state(sim, "li").v[1] ≈ -0.95 atol = bracket_width
+            @test state(sim, "li").q[2] == 0.8 && state(sim, "li").v[2] == 0.0
+            @test modes(sim, "li") == SVector{2, Int8}(0, 1)
+            @test port(sim, "li", :velocity) === state(sim, "li").v
+            step!(sim; t_plus = 1.0)
+            @test state(sim, "li") === (q = SVector(-1.0, 0.8), v = SVector(0.0, 0.0))
+            @test modes(sim, "li") == SVector{2, Int8}(-1, 1)
+            @test port(sim, "li", :saturation) === modes(sim, "li")
+        end
+        @test y_types(LimitedDoubleIntegrator(lower = SVector(-1.0, -1.0), upper = SVector(0.5, 0.8))) ==
+              (out = SVector{2, Float64}, velocity = SVector{2, Float64}, saturation = SVector{2, Int8})
+        @test build(double_limited_model(true); activations = (Float64, LinearizeDual)) isa Build
+        @test build(vector_double_limited_model(true); activations = (Float64, LinearizeDual)) isa Build
+    end
+
+    @testset "the limited double integrator's departures follow `localized`, and its arrivals are localized (§2.3, §10.4, D-179)" begin
+        @test limited_events(double_limited_model(true)).policies ===
+              (hit_upper = :localized, hit_lower = :localized, leave_upper = :localized, leave_lower = :localized)
+        @test limited_events(double_limited_model(false)).policies ===
+              (hit_upper = :localized, hit_lower = :localized, leave_upper = :boundary, leave_lower = :boundary)
+        @test limited_events(vector_double_limited_model(true)).policies ===
+              (hit_upper_1 = :localized, hit_upper_2 = :localized, hit_lower_1 = :localized,
+               hit_lower_2 = :localized, leave_upper_1 = :localized, leave_upper_2 = :localized,
+               leave_lower_1 = :localized, leave_lower_2 = :localized)
+        @test limited_events(vector_double_limited_model(false)).policies ===
+              (hit_upper_1 = :localized, hit_upper_2 = :localized, hit_lower_1 = :localized,
+               hit_lower_2 = :localized, leave_upper_1 = :boundary, leave_upper_2 = :boundary,
+               leave_lower_1 = :boundary, leave_lower_2 = :boundary)
+    end
+
+    @testset "the limited double integrator's boundary-detected departure offsets `v` by `a δ² / 2` and `q` by `a δ² τ / 2 - a δ³ / 3` (§2.3, §10.4)" begin
+        # The input -a (t - t_c) crosses zero at t_c = 1.05 with a = 1, and the
+        # boundary-detected leave fires δ = (1 - θ) h = 0.05 later. Exact from
+        # t_c, v = -a τ² / 2 and q = 0.15 - a τ³ / 6, τ = t - t_c; freed at δ,
+        # v = -a (τ² - δ²) / 2, and q integrates the constant offset.
+        localized_sim = Simulation(ramp_double_limited_model(true); h = 1//10)
+        init!(localized_sim, set())
+        step!(localized_sim; t_plus = 3.0)
+        bracket_width = localized_sim.model.deployment.localization_tol * localized_sim.model.deployment.h    # in time (§10.4)
+        @test state(localized_sim, "li").q ≈ 0.15 - 1.95^3 / 6 atol = bracket_width
+        @test state(localized_sim, "li").v ≈ -1.95^2 / 2 atol = bracket_width
+        boundary_sim = Simulation(ramp_double_limited_model(false); h = 1//10)
+        init!(boundary_sim, set())
+        step!(boundary_sim; t_plus = 3.0)
+        δ, τ = 0.05, 1.95
+        @test state(boundary_sim, "li").v ≈ -1.9 atol = 1e-12    # RK4 is exact on the cubic
+        @test state(boundary_sim, "li").q ≈ 0.15 - 1.95^3 / 6 + δ^2 * τ / 2 - δ^3 / 3 atol = 1e-12
+        @test state(boundary_sim, "li").v - state(localized_sim, "li").v ≈ δ^2 / 2 atol = bracket_width
+    end
+
     @testset "the relay switches with hysteresis, from boundary zero on (§10.4, §10.6, D-313)" begin
         @test y_types(Relay(lower = 0.0, upper = 1.0)) == Pinned{Float64}    # D-312
         sim = Simulation(relay_model(); h = 1//10)
@@ -2650,6 +2825,13 @@ function test_blocks()
               Sequence{SVector{2, Float64}, false}
         @test LimitedIntegrator(lower = -1, upper = 1) isa LimitedIntegrator{Float64}
         @test LimitedIntegrator(lower = -1, upper = 1, localized = false) isa LimitedIntegrator{Float64, false}
+        @test LimitedDoubleIntegrator(lower = -1, upper = 1) isa LimitedDoubleIntegrator{Float64, true}
+        @test LimitedDoubleIntegrator(lower = -1, upper = 1, localized = false) isa LimitedDoubleIntegrator{Float64, false}
+        @test LimitedDoubleIntegrator(lower = -1, upper = 1, q0 = 0, v0 = 2).v0 === 2.0
+        @test LimitedDoubleIntegrator(lower = -1, upper = 1).q0 === 0.0
+        @test LimitedDoubleIntegrator(lower = SVector(-1, -1), upper = SVector(1, 1)) isa
+              LimitedDoubleIntegrator{SVector{2, Float64}, true}
+        @test LimitedDoubleIntegrator(lower = SVector(-1, -1), upper = SVector(1, 1), q0 = SVector(0, 1)).q0 === SVector(0.0, 1.0)
         @test Relay(lower = 0, upper = 1) isa Relay{Float64}
         @test Comparator(threshold = 0) isa Comparator{Float64, true}
         @test Comparator(lower = 0, upper = 1.0, localized = false) isa Comparator{Float64, false}
@@ -2701,6 +2883,7 @@ function test_blocks()
         @test all(v -> v isa Float64, values(DiscretePID(Kp = 1).fixed))
         @test_throws TypeError Step(t_step = 0.25, localized = 1)
         @test_throws TypeError LimitedIntegrator(lower = -1, upper = 1, localized = 1)
+        @test_throws TypeError LimitedDoubleIntegrator(lower = -1, upper = 1, localized = 1)
         @test_throws TypeError Integrator(reset = 1)
         @test_throws TypeError Sequence(times = (1,), values = (0, 1), localized = 1)
         @test_throws ArgumentError Sequence(times = (0.5, 0.25), values = (0, 1, 2))
@@ -2731,6 +2914,8 @@ function test_blocks()
     @testset "the loops' phase bodies and their quiet boundaries allocate nothing (§9.8)" begin
         for model in (servo_loop(true), servo_loop(false), bang_bang_loop(),
                       vector_limited_model(true), vector_limited_model(false), vector_relay_model(),
+                      double_limited_model(true), double_limited_model(false),
+                      vector_double_limited_model(true), vector_double_limited_model(false),
                       pid_single_loop(pid_controller(false, false)), vector_pid_loop(), scheduled_pid_loop(),
                       pid_single_loop(pid_assembly(Kp = 1.0, Ki = 0.5, Kd = 0.2, τd = 0.1, Tt = 1.0,
                                                    u_min = -1.0, u_max = 1.0)),
@@ -2775,6 +2960,10 @@ function test_blocks()
                      Relay(lower = 0.2, upper = 0.8),
                      LimitedIntegrator(lower = SVector(-1.0, -1.0), upper = SVector(1.0, 1.0)),
                      LimitedIntegrator(lower = SVector(-1.0, -1.0), upper = SVector(1.0, 1.0), localized = false),
+                     LimitedDoubleIntegrator(lower = -1.0, upper = 1.0),
+                     LimitedDoubleIntegrator(lower = -1.0, upper = 1.0, localized = false),
+                     LimitedDoubleIntegrator(lower = SVector(-1.0, -1.0), upper = SVector(1.0, 1.0)),
+                     LimitedDoubleIntegrator(lower = SVector(-1.0, -1.0), upper = SVector(1.0, 1.0), localized = false),
                      Relay(lower = SVector(0.2, 0.2), upper = SVector(0.8, 0.8)),
                      Comparator(threshold = 0.0), Comparator(lower = -1.0, upper = 0.0, localized = false),
                      Comparator(threshold = SVector(0.0, 1.0)), Comparator(threshold = SVector(0.0, 1.0), localized = false),

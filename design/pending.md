@@ -181,9 +181,8 @@ breaking user code, and each may benefit from user feedback first.
 - **The library's remaining candidates.** Whatever of the inventory in
   `design/companions/library_inventory.md` is unbuilt, each block
   built when wanted (§13.7, D-313). The order, by the mechanism each family
-  exercises: `LimitedDoubleIntegrator` alone; then the structure blocks
-  `Fn`, `Select`, the unbundling component and the discrete backlash; then the
-  additions to shipped blocks, where three readings wait for the brief: a
+  exercises: the structure blocks `Fn`, `Select`, the unbundling component
+  and the discrete backlash; then the additions to shipped blocks, where three readings wait for the brief: a
   second output on `Delay` names its output side, so the taps are a type
   parameter keeping the bare spelling; Tustin gives a nonzero `D`, so the
   discretized pair's class reads off the method; and scheduled limits move

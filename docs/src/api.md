@@ -232,6 +232,7 @@ GaussianWhiteNoise
 ```@docs
 Integrator
 LimitedIntegrator
+LimitedDoubleIntegrator
 FirstOrderLag
 LinearBlock
 StateSpace

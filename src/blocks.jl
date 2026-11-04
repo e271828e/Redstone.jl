@@ -1418,6 +1418,145 @@ function limit_events(::LimitedIntegrator{V, L}) where {V <: StaticArray, L}
     NamedTuple{names}((hit_upper..., hit_lower..., leave_upper..., leave_lower...))
 end
 
+# Design: §2.3, §10.4, §10.6, D-179.
+# `limited_integrator_variants.md` gives the reasoning, which carries over
+# from the single integrator.
+"""
+    LimitedDoubleIntegrator(; lower, upper, q0 = zero(lower), v0 = zero(lower), localized::Bool = true) -> LimitedDoubleIntegrator
+
+A continuous [primitive](@ref g-primitive) that publishes the double time
+integral of its input, its position held between two limits.
+
+The [block](@ref g-block) is a mechanical stop. It holds a named continuous
+state of two leaves, the position `q` and the velocity `v`. Its one input `u`
+is bare, the acceleration, with `q̇ = v` and `v̇ = u` while free and both zero
+while saturated. The output `out` publishes `q` and the output `velocity`
+publishes `v`, both from [stage 1](@ref g-stage-function). The bare mode,
+`saturation` below, is read by the derivative, and four
+[state events](@ref g-state-event) move it. It is a signed `Int8` code, the
+sign of the limit in force: `-1` at `lower`, `0` free and `+1` at `upper`.
+`hit_upper` and `hit_lower` fire when `q` reaches a limit. Their handlers
+write `q` to the limit exactly, zero `v` and saturate, so the stop absorbs
+the impact. `leave_upper` and `leave_lower` fire when `u` turns strictly back
+into the range, and free it from rest. An input of exactly zero at a limit
+keeps the mode saturated. The hit events are [localized](@ref g-localized).
+
+A block that reaches a limit while `u` already points back into the range
+saturates and frees at the same [boundary](@ref g-boundary), so it leaves the
+limit from rest.
+
+A third output, also `saturation`, publishes the code from stage 1, so it has
+no [feedthrough](@ref g-feedthrough). It serves an anti-windup consumer. The
+code flips only when an event fires, and so only on a declared boundary.
+
+`localized` picks the detection policy of the leave events. Localized, the
+[guards](@ref g-guard) are sign forms gated by the mode, and the departure ends
+the step at the input's zero crossing.
+[Boundary-detected](@ref g-boundary-detected), the guards are the `Bool`
+[predicates](@ref g-predicate). The departure then fires at the end of the step
+in which `u` first pointed back into the range, so `q` and `v` are held on the
+limit for the rest of that step. From then on `v` carries an offset of at most
+`a h² / 2`, `a` the input's slope at its zero crossing, and `q` an offset that
+grows by as much per unit time, until the next limit removes both. What the
+cheap form buys is that a departure costs no root-finding and splits no step.
+The policy is the type parameter `L` rather than a field because the build
+reads it off the guard's return type.
+
+Over a static vector, the limits, the leaves and the codes are componentwise,
+`velocity` publishes a static vector and `saturation` a static vector of
+`Int8`. The block declares `N` copies of the scalar events, one per component,
+named `hit_upper_1` to `hit_upper_N`, then `hit_lower_i`, `leave_upper_i` and
+`leave_lower_i`. Each guard reads its one component, and each handler writes
+its one component of `q`, `v` and the code.
+
+[Boundary zero](@ref g-boundary-zero) sets every [prior](@ref g-prior) to
+not-holding. A `q0` outside the limits is therefore clamped there with `v`
+zeroed, and the initial mode agrees with the initial input.
+
+# Keywords
+
+- `lower`: the lower limit on `q`, below `upper`, componentwise over a vector.
+- `upper`: the upper limit on `q`.
+- `q0`: the initial value of `q`.
+- `v0`: the initial value of `v`. `q0`, `v0`, `lower` and `upper` are promoted
+  to one `V`, which is `Float64` or a static array of `Float64`, and taken by
+  `float`, so integer values qualify.
+- `localized`: `true` for localized leave events, `false` for boundary-detected
+  ones.
+
+See also [`LimitedIntegrator`](@ref), [`Integrator`](@ref).
+"""
+struct LimitedDoubleIntegrator{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, L} <: AbstractComponent
+    q0::V
+    v0::V
+    lower::V
+    upper::V
+end
+function LimitedDoubleIntegrator(; lower, upper, q0 = zero(lower), v0 = zero(lower), localized::Bool = true)
+    q0, v0, lower, upper = float.(promote(q0, v0, lower, upper))
+    LimitedDoubleIntegrator{typeof(q0), localized}(q0, v0, lower, upper)
+end
+x_init(c::LimitedDoubleIntegrator) = (q = c.q0, v = c.v0)
+m_init(c::LimitedDoubleIntegrator) = Int8.(zero(c.q0))    # the saturation: -1 lower, 0 free, +1 upper
+u_types(::LimitedDoubleIntegrator{V}) where {V} = V
+y_types(::LimitedDoubleIntegrator{V}) where {V} = (out = V, velocity = V, saturation = saturation_type(V))
+y_state(::LimitedDoubleIntegrator, (; x, m)) = (out = x.q, velocity = x.v, saturation = m)
+# Saturated, `v` is already zero, so the mode on `q̇` shows only in the Jacobian.
+function x_deriv(::LimitedDoubleIntegrator, (; x, u, m))
+    free = m .== 0
+    (q = ifelse.(free, x.v, zero(x.v)), v = ifelse.(free, u, zero(u)))
+end
+# The guards are `LimitedIntegrator`'s on `q`, ungated, and on `u`, strict, for
+# its reasons. The hit handlers zero `v`: the stop is inelastic.
+hit_upper_guard(c::LimitedDoubleIntegrator, (; x)) = x.q - c.upper
+hit_lower_guard(c::LimitedDoubleIntegrator, (; x)) = c.lower - x.q
+leave_upper_guard(::LimitedDoubleIntegrator{V, true}, (; m, u)) where {V} =
+    m == 1 && u < 0 ? -u : -one(u)
+leave_lower_guard(::LimitedDoubleIntegrator{V, true}, (; m, u)) where {V} =
+    m == -1 && u > 0 ? u : -one(u)
+leave_upper_guard(::LimitedDoubleIntegrator{V, false}, (; m, u)) where {V} =
+    m == 1 && u < 0
+leave_lower_guard(::LimitedDoubleIntegrator{V, false}, (; m, u)) where {V} =
+    m == -1 && u > 0
+hit_upper_handler(c::LimitedDoubleIntegrator, _) = (x = (q = c.upper, v = zero(c.upper)), m = Int8(1))
+hit_lower_handler(c::LimitedDoubleIntegrator, _) = (x = (q = c.lower, v = zero(c.lower)), m = Int8(-1))
+leave_handler(::LimitedDoubleIntegrator, _) = (m = Int8(0),)
+state_events(c::LimitedDoubleIntegrator) = limit_events(c)
+limit_events(::LimitedDoubleIntegrator{V}) where {V <: Real} =
+    (hit_upper = StateEvent(hit_upper_guard, hit_upper_handler),
+     hit_lower = StateEvent(hit_lower_guard, hit_lower_handler),
+     leave_upper = StateEvent(leave_upper_guard, leave_handler),
+     leave_lower = StateEvent(leave_lower_guard, leave_handler))
+# Per component, as `LimitedIntegrator`'s, for the same reasons.
+function limit_events(::LimitedDoubleIntegrator{V, L}) where {V <: StaticArray, L}
+    N = length(V)
+    hit_upper = ntuple(N) do i
+        StateEvent((c, (; x)) -> x.q[i] - c.upper[i],
+                   (c, (; x, m)) -> (x = (q = Base.setindex(x.q, c.upper[i], i),
+                                          v = Base.setindex(x.v, zero(eltype(V)), i)),
+                                     m = Base.setindex(m, Int8(1), i)))
+    end
+    hit_lower = ntuple(N) do i
+        StateEvent((c, (; x)) -> c.lower[i] - x.q[i],
+                   (c, (; x, m)) -> (x = (q = Base.setindex(x.q, c.lower[i], i),
+                                          v = Base.setindex(x.v, zero(eltype(V)), i)),
+                                     m = Base.setindex(m, Int8(-1), i)))
+    end
+    leave_upper = ntuple(N) do i
+        guard = L ? ((c, (; m, u)) -> m[i] == 1 && u[i] < 0 ? -u[i] : -one(u[i])) :
+                    ((c, (; m, u)) -> m[i] == 1 && u[i] < 0)
+        StateEvent(guard, (c, (; m)) -> (m = Base.setindex(m, Int8(0), i),))
+    end
+    leave_lower = ntuple(N) do i
+        guard = L ? ((c, (; m, u)) -> m[i] == -1 && u[i] > 0 ? u[i] : -one(u[i])) :
+                    ((c, (; m, u)) -> m[i] == -1 && u[i] > 0)
+        StateEvent(guard, (c, (; m)) -> (m = Base.setindex(m, Int8(0), i),))
+    end
+    names = (ntuple(i -> Symbol(:hit_upper_, i), N)..., ntuple(i -> Symbol(:hit_lower_, i), N)...,
+             ntuple(i -> Symbol(:leave_upper_, i), N)..., ntuple(i -> Symbol(:leave_lower_, i), N)...)
+    NamedTuple{names}((hit_upper..., hit_lower..., leave_upper..., leave_lower...))
+end
+
 # Design: §5.3, §10.4, §10.6, D-312.
 """
     Relay(; lower, upper, off = zero(lower), on = one.(lower)) -> Relay
