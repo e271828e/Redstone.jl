@@ -8956,8 +8956,8 @@ from a return. `orphaned` on a record is exactly `:done` ([§11.7][s11-7],
 **Stale means a liveness timestamp more than 2 s behind wall clock**
 ([D-133][d-133]). The threshold is deliberately loose, because the heartbeat
 is advisory ([D-395][d-395]). It is a liveness display and a record, never a kill
-trigger, never a detach. It must also tolerate a device legitimately parked in a
-blocking read between rare data.
+trigger, never a detach. A device parked longer than that in a blocking read
+reads stale, and nothing follows from it.
 
 ### 12.3 The next-snapshot wait
 
