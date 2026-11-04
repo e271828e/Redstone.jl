@@ -127,22 +127,22 @@ freeze_model() = Group((; p = Pendulum(), f = Freeze{Float64}());
 integrator_model(x0, value) =
     Group((; k = Constant(value), i = Integrator(x0 = x0)); local_wires = ("k/y" => "i/u",))
 
-# An integrator from 0.5 fed by `1`, its `reset` a comparator on three steps
+# An integrator from 0.5 fed by `input`, its `reset` a comparator on three steps
 # summed: high from 0.25 to 0.55 and from 0.85 on.
-pulse_reset_model(localized; block = Integrator(x0 = 0.5, reset = true)) =
+pulse_reset_model(localized; block = Integrator(x0 = 0.5, reset = true), input = 1.0) =
     Group((; rise = Step(t_step = 0.25, localized = localized),
              fall = Step(t_step = 0.55, after = -1.0, localized = localized),
              again = Step(t_step = 0.85, localized = localized), pulse = SumJunction{Float64, 3}(),
-             c = Comparator(threshold = 0.5), k = Constant(1.0), i = block);
+             c = Comparator(threshold = 0.5), k = Constant(input), i = block);
           local_wires = ("rise/y" => "pulse/in1", "fall/y" => "pulse/in2", "again/y" => "pulse/in3",
                          "pulse/y" => "c/u", "c/y" => "i/reset", "k/y" => "i/u"))
 
-# A discrete block fed by `1`, its `reset` a comparator on two boundary-detected
+# A discrete block fed by `input`, its `reset` a comparator on two boundary-detected
 # steps summed: high from `5h` to `7h`.
-discrete_reset_model(block, h) =
+discrete_reset_model(block, h; input = 1.0) =
     Group((; rise = Step(t_step = 5h, localized = false), fall = Step(t_step = 7h, after = -1.0, localized = false),
              pulse = SumJunction{Float64, 2}(), c = Comparator(threshold = 0.5, localized = false),
-             k = Constant(1.0), d = block);
+             k = Constant(input), d = block);
           local_wires = ("rise/y" => "pulse/in1", "fall/y" => "pulse/in2", "pulse/y" => "c/u",
                          "c/y" => "d/reset", "k/y" => "d/u"))
 
@@ -164,8 +164,18 @@ lag_model(value) =
     Group((; k = Constant(value), l = FirstOrderLag(τ = 0.5, x0 = zero(value)));
           local_wires = ("k/y" => "l/u",))
 
-# The two-state state space with two inputs and two outputs, strictly proper.
-two_state_block() = StateSpace(A = [-1 0.5; 0 -2], B = [1 0.5; 0 1], C = [1 2; 0 1])
+# The two-state state space with two inputs and two outputs, strictly proper
+# unless given a direct term.
+two_state_block(; kwargs...) = StateSpace(A = [-1 0.5; 0 -2], B = [1 0.5; 0 1], C = [1 2; 0 1]; kwargs...)
+
+# Its discrete counterpart, a state space in `z`.
+two_state_discrete(; kwargs...) = DiscreteStateSpace(A = [0.5 0.1; 0 0.8], B = [1 0.5; 0 1], C = [1 2; 0 1]; kwargs...)
+
+# A direct term for either, every entry apart from the others.
+two_state_direct() = [1 0.5; 0.25 2]
+
+# A scalar state space's arguments, with a direct term.
+scalar_direct() = (A = [-0.5;;], B = [1.0;;], C = [1.0;;], D = [1.0;;])
 
 # A linear block under the root faces `in` and `out`.
 linear_root_model(block) =
@@ -207,7 +217,7 @@ hold_pair_model(num, den, continuous; sample_times = (;)) =
           local_wires = ("k/y" => "d/u", "k/y" => "c/u"), sample_times = sample_times)
 
 # A step into an integrator, which ramps from the instant the jump lands.
-step_model(source) = Group((; s = source, i = Integrator()); local_wires = ("s/y" => "i/u",))
+step_model(source; x0 = 0.0) = Group((; s = source, i = Integrator(x0 = x0)); local_wires = ("s/y" => "i/u",))
 
 # The step's row of the events product.
 step_events(model) = only(row for row in build(model).events.components if row.path == "s")
@@ -538,8 +548,18 @@ pid_single_loop(controller; plant = Integrator(), level = 5.0) = Group((
 
 # The single loop over two channels, one per gain set: channel 1 is the loop
 # above at `pid_controller`'s gains, channel 2 the second set's on a reference of 3.
-vector_pid_loop() = pid_single_loop(PID(; map(SVector, pid_gain_sets()...)...);
-                                    plant = Integrator(x0 = SVector(0.0, 0.0)), level = SVector(5.0, 3.0))
+vector_pid_loop(block_type = PID; plant = Integrator(x0 = SVector(0.0, 0.0))) =
+    pid_single_loop(block_type(; map(SVector, pid_gain_sets()...)...); plant = plant, level = SVector(5.0, 3.0))
+
+# `vector_pid_loop` with hold and tracking: `v` is the plant's output, both codes
+# are zero, and channel 1 is engaged while channel 2 is not.
+vector_standby_loop(block_type = PID; plant = Integrator(x0 = SVector(0.0, 0.0))) = Group((
+        reference = Step(t_step = 0.5, before = SVector(0.0, 0.0), after = SVector(5.0, 3.0)),
+        controller = block_type(; map(SVector, pid_gain_sets()...)..., hold = true, tracking = true),
+        free = Constant(SVector{2, Int8}(0, 0)), engaged = Constant(SVector(true, false)), plant = plant);
+      local_wires = ("reference/y" => "controller/r", "plant/y" => "controller/y", "plant/y" => "controller/v",
+                     "free/y" => "controller/saturation", "engaged/y" => "controller/engaged",
+                     "controller/u" => "plant/u"))
 
 # The single loop at `pid_controller`'s gains with `Kp` a port, fed by a constant.
 scheduled_pid_loop() = Group((
@@ -883,11 +903,17 @@ function test_blocks()
         end
     end
 
-    @testset "the structure blocks' and the time source's phase bodies allocate nothing (§9.8)" begin
-        for model in (pack_model(Pack{Float64, 2}()), unpack_model(), round_trip_model(),
-                      switch_root(), vector_switch_model(), fed_by(Source(sin), Integrator()),
+    @testset "the stateless blocks' phase bodies and their quiet boundaries allocate nothing (§9.8)" begin
+        for (model, inputs) in
+                (map(model -> (model, (;)),
+                     (gate_model(Or{3}(), (true, false, true)), gate_model(And{3}(), (true, false, true)),
+                      pack_model(Pack{Float64, 2}()), unpack_model(), round_trip_model(),
+                      vector_switch_model(), fed_by(Source(sin), Integrator()),
                       fed_by(Source(t -> 2 * sin(t)), Integrator()), vector_source_model(), flip_model(),
-                      requested(true, "x"))
+                      fed_by(Constant(1.0), Freeze{Float64}()),
+                      fed_by(Constant(SVector(1.0, -1.0)), Freeze{SVector{2, Float64}}()),
+                      requested(true, "x")))...,
+                 (switch_root(), (in1 = 1.0, in2 = -1.0, select = true)))
             sim = Simulation(model; h = 1//10)
             bodies = phase_bodies(sim)
             for name in (:sweep_1, :sweep_2, :rhs, :ticks)
@@ -896,6 +922,10 @@ function test_blocks()
                 @test @ballocated($body()) == 0
                 @test @ballocated($body(1)) == 0
             end
+            init!(sim, set(u = inputs))
+            boundary!(sim, 1); offtick_boundary!(sim)
+            @test @ballocated(boundary!($sim, 1)) == 0
+            @test @ballocated(offtick_boundary!($sim)) == 0
         end
     end
 
@@ -1131,13 +1161,36 @@ function test_blocks()
                       discrete_limited_model(), limiter_model(0.0, 1.0),
                       discrete_reset_model(DiscreteIntegrator(s0 = 0.5, reset = true), 1//100),
                       discrete_reset_model(DiscreteLimitedIntegrator(lower = 0, upper = 1, s0 = 0.5, reset = true), 1//100),
+                      fed_by(Constant(SVector(1.0, -1.0)), UnitDelay(SVector(0.0, 0.0))),
+                      fed_by(Constant(SVector(1.0, -1.0)), DiscreteIntegrator(s0 = SVector(0.0, 0.0))),
+                      fed_by(Step(t_step = 0.1, before = SVector(1.0, 0.5), after = SVector(-1.0, -0.5)),
+                             DiscreteLimitedIntegrator(lower = SVector(-0.03, -0.03), upper = SVector(0.05, 0.05))),
+                      fed_by(Step(t_step = 0.1, before = SVector(0.0, 1.0), after = SVector(1.0, 0.0)),
+                             RateLimiter(rising = 2.0, falling = 5.0, s0 = SVector(0.0, 1.0))),
+                      discrete_reset_model(DiscreteIntegrator(s0 = SVector(0.5, 0.5), reset = true), 1//100;
+                                           input = SVector(1.0, -1.0)),
+                      discrete_reset_model(DiscreteLimitedIntegrator(lower = SVector(0, 0), upper = SVector(1, 1),
+                                                                     s0 = SVector(0.5, 0.5), reset = true), 1//100;
+                                           input = SVector(1.0, -1.0)),
                       fed_by(Constant(1.0), Delay(K = 50, v0 = 0.0)),
+                      fed_by(Constant(SVector(1.0, -1.0)), Delay(K = 50, v0 = SVector(0.0, 0.0))),
                       fed_by(Constant(1.0), scalar_hold()),
+                      fed_by(Constant(1.0), DiscretizedStateSpace(; scalar_direct()...)),
                       fed_by(Constant(SVector(1.0, -1.0)), DiscretizedStateSpace(two_state_block())),
+                      fed_by(Constant(SVector(1.0, -1.0)), DiscretizedStateSpace(two_state_block(D = two_state_direct()))),
                       hold_pair_model((1,), (0.5, 1), FirstOrderLag(τ = 0.5)),
                       hold_pair_model((4,), (1, 1.2, 4), second_order()),
+                      hold_pair_model((1, 2), (1, 5), FirstOrderLag(τ = 0.5)),
+                      fed_by(Constant(1.0), DiscreteStateSpace(A = [0.5;;], B = [1.0;;], C = [1.0;;])),
+                      fed_by(Constant(1.0), DiscreteStateSpace(A = [0.5;;], B = [1.0;;], C = [1.0;;], D = [1.0;;])),
+                      fed_by(Constant(SVector(1.0, -1.0)), two_state_discrete()),
+                      fed_by(Constant(SVector(1.0, -1.0)), two_state_discrete(D = two_state_direct())),
+                      fed_by(Constant(1.0), DiscreteTransferFunction(num = (0.5,), den = (1, -0.5))),
+                      fed_by(Constant(1.0), DiscreteTransferFunction(num = (1, -0.9), den = (1, -0.5))),
                       pid_single_loop(DiscretePID(Kp = 1.0, Ki = 0.5, Kd = 0.2, τd = 0.1, Tt = 1.0,
                                                   u_min = -1.0, u_max = 1.0)),
+                      vector_pid_loop(DiscretePID; plant = DiscreteIntegrator(s0 = SVector(0.0, 0.0))),
+                      vector_standby_loop(DiscretePID; plant = DiscreteIntegrator(s0 = SVector(0.0, 0.0))),
                       pid_cascade(DiscretePID(Kp = 0.5, Ki = 0.1, Tt = 2.0, hold = true, tracking = true);
                                   hold = true, tracking = true),
                       discrete_pid_cascade(hold = true),
@@ -1343,10 +1396,15 @@ function test_blocks()
     end
 
     @testset "the reset model's phase bodies and its quiet boundary allocate nothing (§9.8)" begin
-        for localized in (true, false), block in (Integrator(x0 = 0.5, reset = true),
-                                                  LimitedIntegrator(lower = 0, upper = 1, x0 = 0.5, reset = true),
-                                                  LimitedIntegrator(lower = 0, upper = 1, x0 = 0.5, reset = true, localized = false))
-            sim = Simulation(pulse_reset_model(localized; block = block); h = 1//10)
+        vector_limits = (lower = SVector(0, 0), upper = SVector(1, 1), x0 = SVector(0.5, 0.5))
+        for localized in (true, false),
+            (block, input) in ((Integrator(x0 = 0.5, reset = true), 1.0),
+                               (LimitedIntegrator(lower = 0, upper = 1, x0 = 0.5, reset = true), 1.0),
+                               (LimitedIntegrator(lower = 0, upper = 1, x0 = 0.5, reset = true, localized = false), 1.0),
+                               (Integrator(x0 = SVector(0.5, 0.5), reset = true), SVector(1.0, -1.0)),
+                               (LimitedIntegrator(; vector_limits..., reset = true), SVector(1.0, -1.0)),
+                               (LimitedIntegrator(; vector_limits..., reset = true, localized = false), SVector(1.0, -1.0)))
+            sim = Simulation(pulse_reset_model(localized; block = block, input = input); h = 1//10)
             bodies = phase_bodies(sim)
             for name in (:sweep_1, :sweep_2, :rhs, :ticks)
                 body = bodies[name]
@@ -1514,9 +1572,11 @@ function test_blocks()
         @test !Redstone.has_stage(y_state, lead_lag())
     end
 
-    @testset "the linear blocks' phase bodies allocate nothing (§9.8)" begin
-        for model in (fed_by(Constant(SVector(1.0, -1.0)), two_state_block()), feedback_loop(0.0),
-                      fed_by(Constant(1.0), lag_form()), lead_lag_loop())
+    @testset "the linear blocks' phase bodies and their quiet boundaries allocate nothing (§9.8)" begin
+        for model in (fed_by(Constant(SVector(1.0, -1.0)), two_state_block()),
+                      fed_by(Constant(SVector(1.0, -1.0)), two_state_block(D = two_state_direct())),
+                      feedback_loop(0.0), fed_by(Constant(1.0), StateSpace(; scalar_direct()...)),
+                      fed_by(Constant(1.0), lag_form()), lead_lag_loop(), lag_model(SVector(1.0, -1.0)))
             @test build(model; activations = (Float64, LinearizeDual)) isa Build
             sim = Simulation(model; h = 1//100)
             bodies = phase_bodies(sim)
@@ -1526,6 +1586,10 @@ function test_blocks()
                 @test @ballocated($body()) == 0
                 @test @ballocated($body(1)) == 0
             end
+            init!(sim, set())
+            boundary!(sim, 1); offtick_boundary!(sim)
+            @test @ballocated(boundary!($sim, 1)) == 0
+            @test @ballocated(offtick_boundary!($sim)) == 0
         end
     end
 
@@ -1694,8 +1758,9 @@ function test_blocks()
     end
 
     @testset "the step model's phase bodies and its quiet boundary allocate nothing (§9.8)" begin
-        for localized in (true, false)
-            sim = Simulation(step_model(Step(t_step = 0.25, localized = localized)); h = 1//10)
+        for localized in (true, false), (before, after) in ((0.0, 1.0), (SVector(0.0, 0.0), SVector(1.0, -1.0)))
+            source = Step(t_step = 0.25, before = before, after = after, localized = localized)
+            sim = Simulation(step_model(source; x0 = zero(before)); h = 1//10)
             bodies = phase_bodies(sim)
             for name in (:sweep_1, :sweep_2, :rhs, :ticks)
                 body = bodies[name]
@@ -1784,9 +1849,10 @@ function test_blocks()
     end
 
     @testset "the sequence model's phase bodies and its quiet boundary allocate nothing (§9.8)" begin
-        for localized in (true, false)
-            sequence = Sequence(times = (0.25, 0.45, 0.75), values = (0, 1, -1, 2), localized = localized)
-            sim = Simulation(step_model(sequence); h = 1//10)
+        for localized in (true, false),
+            levels in ((0.0, 1.0, -1.0, 2.0), (SVector(0.0, 0.0), SVector(1.0, -1.0), SVector(-1.0, 1.0), SVector(2.0, 0.0)))
+            sequence = Sequence(times = (0.25, 0.45, 0.75), values = levels, localized = localized)
+            sim = Simulation(step_model(sequence; x0 = zero(first(levels))); h = 1//10)
             bodies = phase_bodies(sim)
             for name in (:sweep_1, :sweep_2, :rhs, :ticks)
                 body = bodies[name]
@@ -3172,8 +3238,8 @@ function test_blocks()
                       vector_double_limited_model(true), vector_double_limited_model(false),
                       lower_double_limited_model(true), lower_double_limited_model(false),
                       vector_lower_double_limited_model(true), vector_lower_double_limited_model(false),
-                      pid_single_loop(pid_controller(false, false)), vector_pid_loop(), scheduled_pid_loop(),
-                      pid_single_loop(pid_assembly(Kp = 1.0, Ki = 0.5, Kd = 0.2, τd = 0.1, Tt = 1.0,
+                      pid_single_loop(pid_controller(false, false)), vector_pid_loop(), vector_standby_loop(),
+                      scheduled_pid_loop(), pid_single_loop(pid_assembly(Kp = 1.0, Ki = 0.5, Kd = 0.2, τd = 0.1, Tt = 1.0,
                                                    u_min = -1.0, u_max = 1.0)),
                       pid_servo_loop(PID(Kp = 1.0, Ki = 0.5, Kd = 0.2, τd = 0.1, Tt = 1.0, tracking = true)),
                       pid_cascade(PID(Kp = 0.5, Ki = 0.1, Tt = 2.0, hold = true, tracking = true);
