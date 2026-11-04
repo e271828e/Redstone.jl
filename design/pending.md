@@ -189,6 +189,17 @@ breaking user code, and each may benefit from user feedback first.
   and scheduled limits move `lower` and `upper` into the guards' `u` and take
   `x0`'s default with them. `Freeze` over a struct is a framework seam, not a
   block, and stays here after the four.
+- **The limited double integrator's unseen return after the arrival
+  cascade.** A block that reaches a limit while its input already points
+  back saturates and frees in successive rounds of one boundary, then rests
+  free on the limit with the hit predicate holding, so an input turning
+  outward within the rest of that step carries `q` back past the limit as
+  two crossings §2.3 cannot see (§10.4, §10.6). Documented in the docstring
+  and the row by increment 87's review. The fix on the table is a hit guard
+  that reads `u` while the block rests exactly on the limit; it passed the
+  block's pins and the reviewer's scenario, and wants the vector form, the
+  exact-zero corner and the full gate checked before it lands.
+  `design/briefs/notes_increment_87.md`, item 7, carries the reasoning.
 - **Stage-function locations in the descriptor** (§13.9, D-432). A `types`
   row carries the source locations of the declaration methods alone, so the
   inspector has no line to show for an algebraic loop, whose feedthrough is
