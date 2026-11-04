@@ -180,8 +180,9 @@ inputs and no state.
 Its one output, `y`, publishes `value` from [stage 1](@ref g-stage-function).
 The [block](@ref g-block) is stateless, so discrete consumers read it as well.
 
-The output is [pinned](@ref g-walked) at `V`, the type of `value`. A constant is
-never seeded, so it carries zero partials under every `Dual`
+The output is [pinned](@ref g-walked) at the parameter `V`, the type of
+`value`. A constant is never seeded, so it carries zero partials under every
+`Dual`
 [activation](@ref g-activation). A consumer input declared plain `Float64`,
 which admits a value with or without partials, accepts it as a value that never
 carries partials. The value is instance data, not an overridable default. A
@@ -197,7 +198,6 @@ y_types(::Constant{V}) where {V} = Pinned{V}
 y_state(c::Constant, _) = c.value
 
 # Design: §5.5, §10.6, D-231, D-437.
-# `V` is `s0`'s type.
 """
     UnitDelay(s0) -> UnitDelay
 
@@ -210,8 +210,9 @@ The [block](@ref g-block) is the native `z⁻¹` of the discrete
 
 The output publishes the stored value `s` from
 [stage 1](@ref g-stage-function), `y = s`, and `s0` at the first publication.
-Each tick stores the input for the next one, `s⁺ = u`. The
-[store](@ref g-store) is isbits, which bounds the type of `s0`.
+Each tick stores the input for the next one, `s⁺ = u`. The store and both
+ports share one type, the parameter `V`, the type of `s0`, an isbits type as
+the [store](@ref g-store) requires.
 
 It breaks an [algebraic loop](@ref g-algebraic-loop), and that is a modelling
 decision. Placed in a continuous loop, it moves the signal onto the discrete
@@ -321,8 +322,9 @@ picks it from the rate it declares. `K = 1` is `UnitDelay` in keyword spelling.
 A smaller `K` is refused as an `ArgumentError`.
 
 `v0` is a value of the signal, copied into every slot of the ring. It is not the
-initial store, so it is not `UnitDelay`'s `s0`. `V` is a floating-point type or
-a static array of one, taken from `float(v0)`, so an integer `v0` qualifies.
+initial store, so it is not `UnitDelay`'s `s0`. The ring's values and both
+ports share one type, the parameter `V`, a floating-point type or a static
+array of one, taken from `float(v0)`, so an integer `v0` qualifies.
 
 # Keywords
 
@@ -375,7 +377,8 @@ The discrete [tier](@ref g-tier) never follows the scalar of an
 [activation](@ref g-activation), so under a `Dual` activation the block holds
 its last value.
 
-`V` is a floating-point type or a static array of one, taken from `float(s0)`,
+The state, the input `u` and the output `y` share one type, the parameter
+`V`, a floating-point type or a static array of one, taken from `float(s0)`,
 so an integer `s0` qualifies.
 
 # Keywords
@@ -428,8 +431,9 @@ Over a static vector, the limits and the codes are componentwise, and
 [`DiscreteIntegrator`](@ref). The update writes `s0`, clamped, at every tick
 where the flag reads true.
 
-`s0`, `lower` and `upper` are promoted to one `V`, a floating-point type or a
-static array of one, and taken by `float`, so integer values qualify. A `lower`
+`s0`, `lower` and `upper` are promoted to one type, the parameter `V`, a
+floating-point type or a static array of one, and taken by `float`, so integer
+values qualify. A `lower`
 not below `upper`, componentwise over a vector, is refused with an
 `ArgumentError`.
 
@@ -486,8 +490,9 @@ one tick at every rate. That form is this block followed by a
 [`UnitDelay`](@ref), a modelling decision the model makes by placing the delay.
 
 A `rising` or a `falling` that is not positive is refused with an
-`ArgumentError`. Both stay `Float64` whatever scalar the model runs at. `V` is a
-floating-point type or a static array of one, taken from `float(s0)`.
+`ArgumentError`. Both stay `Float64` whatever scalar the model runs at. The
+state and both ports share one type, the parameter `V`, a floating-point type
+or a static array of one, taken from `float(s0)`.
 
 # Keywords
 
@@ -536,9 +541,9 @@ past `t₀`.
 Two blocks with one seed publish one stream, so independent sources take
 distinct seeds.
 
-`μ` and the scale are broadcast to one `V`, `Float64` or an `SVector` of
-`Float64`, so a scalar pairs with a vector. Over a vector the components are
-independent.
+`μ` and the scale are broadcast to one type, the parameter `V` and the
+output's, `Float64` or an `SVector` of `Float64`, so a scalar pairs with a
+vector. Over a vector the components are independent.
 
 Exactly one of `σ` and `psd` is given. Neither or both is refused as an
 `ArgumentError`. A one-sided density is halved before being passed as `psd`.
@@ -661,7 +666,8 @@ which localizes the crossing. [Boundary zero](@ref g-boundary-zero) sets every
 [prior](@ref g-prior) to not-holding, so a `reset` already holding at `t₀` fires
 there.
 
-`V` is a floating-point type or a static array of one, taken from `float(x0)`,
+The state, the input `u` and the output `y` share one type, the parameter
+`V`, a floating-point type or a static array of one, taken from `float(x0)`,
 so an integer `x0` qualifies.
 
 # Keywords
@@ -707,7 +713,8 @@ For a scalar signal the block is
 for static-array signals, for `x0` in the signal's own coordinates and for the
 spelling.
 
-`V` is a floating-point type or a static array of one, taken from `float(x0)`,
+The state, the input `u` and the output `y` share one type, the parameter
+`V`, a floating-point type or a static array of one, taken from `float(x0)`,
 so an integer `x0` qualifies. `τ` is instance data, kept a `Float64` whatever
 scalar the model runs at.
 
@@ -1234,11 +1241,12 @@ on. The [block](@ref g-block) is a mode-only primitive with no inputs. Its one
 mode, the field `m`, written `fired` below, picks the value, and one
 [state event](@ref g-state-event), `fire`, sets it once `t` reaches `t_step`.
 
-`before` and `after` are promoted to one `V`, a floating-point type or a static
-array of one, and taken by `float`, so integer values qualify. The output is
-[pinned](@ref g-walked) at `V`. The value depends on neither state nor an input
-that follows the scalar, so it carries zero partials under every
-[activation](@ref g-activation), as a [`Constant`](@ref)'s does.
+`before` and `after` are promoted to one type, the parameter `V`, a
+floating-point type or a static array of one, and taken by `float`, so integer
+values qualify. The output is [pinned](@ref g-walked) at `V`. The value depends
+on neither state nor an input that follows the scalar, so it carries zero
+partials under every [activation](@ref g-activation), as a
+[`Constant`](@ref)'s does.
 
 `localized` picks the detection policy.
 [Localized](@ref g-localized), the step ends at the crossing and the jump lands
@@ -1300,10 +1308,10 @@ inputs, and a [`Step`](@ref) at one breakpoint.
 Its one mode, the field `m`, written `passed` below, counts the breakpoints
 passed. One [state event](@ref g-state-event), `advance`, fires when `t`
 reaches the next breakpoint and sets the count to every breakpoint at or before
-`t`. `values` are promoted to one `V`, a floating-point type or a static array
-of one, and taken by `float`, so integer values qualify. The output is
-[pinned](@ref g-walked) at `V`, so it carries zero partials under every
-[activation](@ref g-activation).
+`t`. `values` are promoted to one type, the parameter `V`, a floating-point
+type or a static array of one, and taken by `float`, so integer values qualify.
+The output is [pinned](@ref g-walked) at `V`, so it carries zero partials under
+every [activation](@ref g-activation).
 
 `localized` picks the detection policy.
 [Localized](@ref g-localized), each breakpoint ends the step at its crossing, so
@@ -1727,11 +1735,11 @@ out.
 
 `y` reads no input, so the [block](@ref g-block) has no
 [feedthrough](@ref g-feedthrough). A relay closing a feedback loop therefore
-makes no [algebraic loop](@ref g-algebraic-loop). The four values are promoted
-to one `V`, a floating-point type or a static array of one, and taken by
-`float`, so integer values qualify, and `y` is [pinned](@ref g-walked) at `V`.
-It depends on the mode and the instance alone, so it carries zero partials
-under every [activation](@ref g-activation).
+makes no [algebraic loop](@ref g-algebraic-loop). The four values and both
+ports share one type, the parameter `V`, a floating-point type or a static
+array of one, taken by `float`, so integer values qualify, and `y` is
+[pinned](@ref g-walked) at `V`. It depends on the mode and the instance alone,
+so it carries zero partials under every [activation](@ref g-activation).
 
 Over a static vector, the thresholds, the values and the codes are
 componentwise. The block declares `N` copies of the two events, one per
@@ -1833,8 +1841,9 @@ A plain comparator takes `threshold` alone. Hysteresis takes `lower` and `upper`
 together and without `threshold`. Any other combination of the three keywords,
 or a `lower` above `upper`, is refused with an `ArgumentError`.
 
-`lower` and `upper` are promoted to one `V`, a floating-point type or a static
-array of one, and taken by `float`, so integer values qualify.
+`lower` and `upper` are promoted to one type, the parameter `V`, which the
+input `u` shares, a floating-point type or a static array of one, and taken by
+`float`, so integer values qualify.
 
 # Keywords
 
@@ -2099,10 +2108,11 @@ the measurement, so a step in `r` makes no kick. `c = 1` puts it on the error.
 The defaults make the plain spelling a P controller, with `Ki = Kd = 0` and
 infinite limits. They also set `Tt = Inf`, which switches the correction off.
 
-`V` is `Float64` or a static array of `Float64`. Over a static vector the law is
-componentwise. The parameters, `r`, `y`, `v`, the outputs and the states are
-each a `V`, and `saturation` and `engaged` are static vectors of `Int8` and of
-`Bool`.
+The parameters, the inputs `r`, `y` and `v`, the outputs `u` and `u_raw` and
+the states share one type, the parameter `V`, `Float64` or a static array of
+`Float64`, the broadcast of the nine keywords given as values. Over a static
+vector the law is componentwise, and `saturation` and `engaged` are static
+vectors of `Int8` and of `Bool`.
 
 The nine keywords given as values broadcast to one `V`, whose shape is the sum
 of their `zero`s, so a scalar pairs with a vector and integer values qualify. A
@@ -2213,9 +2223,11 @@ integral's error stays `e`.
 `ArgumentError`, as in `PID`. So is a `u_min` above `u_max`, both given as
 values.
 
-`V` is `Float64` or a static array of `Float64`, and over a static vector the
-law is componentwise, as in `PID`. The nine keywords given as values broadcast
-to one `V` by the rule of `PID`, the shape the sum of their `zero`s. A scalar
+The parameters, the inputs, the outputs `u` and `u_raw` and the states share
+one type, the parameter `V`, `Float64` or a static array of `Float64`, and
+over a static vector the law is componentwise, as in `PID`. The nine keywords
+given as values broadcast to one `V` by the rule of `PID`, the shape the sum
+of their `zero`s. A scalar
 therefore pairs with a vector, and a uniform vector gain spells one keyword as a
 vector, `Kp = @SVector fill(2.0, 3)`.
 
