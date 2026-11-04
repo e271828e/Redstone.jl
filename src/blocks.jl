@@ -316,7 +316,7 @@ the signal onto the discrete tier and inserts a zero-order hold at the scale of
   spelling, and a smaller `K` is refused as an `ArgumentError`.
 - `v0`: the value published before `K` ticks have passed. It is a value of the
   signal, copied into every slot of the ring, and not the initial store, so it
-  is not `UnitDelay`'s `s0`. `V` is `Float64` or a static array of `Float64`,
+  is not `UnitDelay`'s `s0`. `V` is a floating-point type or a static array of one,
   taken from `float(v0)`, so an integer `v0` qualifies.
 """
 struct Delay{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, K} <: AbstractComponent
@@ -365,7 +365,7 @@ its last value.
 # Keywords
 
 - `s0`: the initial value of `s`, and the value a reset writes. `V` is
-  `Float64` or a static array of `Float64`, taken from `float(s0)`, so an
+  a floating-point type or a static array of one, taken from `float(s0)`, so an
   integer `s0` qualifies.
 - `reset`: `true` to add the input `reset`, the parameter `R`.
 
@@ -412,11 +412,12 @@ the update writing `s0`, clamped, at every tick where the flag reads true.
 
 # Keywords
 
-- `lower`: the lower limit, below `upper`, componentwise over a vector.
+- `lower`: the lower limit, below `upper` or refused with an `ArgumentError`,
+  componentwise over a vector.
 - `upper`: the upper limit.
 - `s0`: the initial value of `s`, and the value a reset writes, clamped. `s0`,
-  `lower` and `upper` are promoted to one `V`, which is `Float64` or a static
-  array of `Float64`, and taken by `float`, so integer values qualify.
+  `lower` and `upper` are promoted to one `V`, which is a floating-point type or a static
+  array of one, and taken by `float`, so integer values qualify.
 - `reset`: `true` to add the input `reset`, the parameter `R`.
 
 See also [`DiscreteIntegrator`](@ref).
@@ -428,6 +429,7 @@ struct DiscreteLimitedIntegrator{V <: Union{Real, StaticArray{<:Tuple, <:Real}},
 end
 function DiscreteLimitedIntegrator(; lower, upper, s0 = zero(lower), reset::Bool = false)
     s0, lower, upper = float.(promote(s0, lower, upper))
+    check_limits(lower, upper)
     DiscreteLimitedIntegrator{typeof(s0), reset}(s0, lower, upper)
 end
 saturation_code(q, lower, upper) = q >= upper ? Int8(1) : q <= lower ? Int8(-1) : Int8(0)
@@ -464,11 +466,11 @@ is componentwise.
 
 # Keywords
 
-- `rising`: the largest rise per second, positive, and kept a `Float64` whatever
-  scalar the model runs at.
-- `falling`: the largest fall per second, positive, and kept a `Float64` likewise.
+- `rising`: the largest rise per second, positive or refused with an
+  `ArgumentError`, and kept a `Float64` whatever scalar the model runs at.
+- `falling`: the largest fall per second, under the same conditions.
 - `s0`: the previous output at the first tick, so the output at `t₀` is already
-  one slew step from it. `V` is `Float64` or a static array of `Float64`, taken
+  one slew step from it. `V` is a floating-point type or a static array of one, taken
   from `float(s0)`.
 """
 struct RateLimiter{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: AbstractComponent
@@ -477,6 +479,8 @@ struct RateLimiter{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: AbstractCo
     s0::V
 end
 function RateLimiter(; rising, falling = rising, s0 = 0.0)
+    rising > 0 && falling > 0 || throw(ArgumentError(
+        "the rate limiter's `rising` and `falling` must be positive, not $rising and $falling"))
     s0 = float(s0)
     RateLimiter{typeof(s0)}(rising, falling, s0)
 end
@@ -631,7 +635,7 @@ not-holding, so a `reset` already holding at `t₀` fires there.
 # Keywords
 
 - `x0`: the initial value of `x`, and the value a reset writes. `V` is
-  `Float64` or a static array of `Float64`, taken from `float(x0)`, so an
+  a floating-point type or a static array of one, taken from `float(x0)`, so an
   integer `x0` qualifies.
 - `reset`: `true` for the form with the `reset` input.
 
@@ -668,7 +672,7 @@ from [stage 1](@ref g-stage-function). The state follows the scalar of a `Dual`
 `B = 1/τ`. A hand-written lag whose [scratch](@ref g-scratch) is kept at
 `Float64` fails there instead.
 
-`V` is `Float64` or a static array of `Float64`, taken from `float(x0)`, so an
+`V` is a floating-point type or a static array of one, taken from `float(x0)`, so an
 integer `x0` qualifies. For a scalar signal it is
 [`TransferFunction`](@ref)`(num = (1,), den = (τ, 1), u0 = x0)`; the block stays
 for static-array signals, for `x0` in the signal's own coordinates and for the
@@ -1167,7 +1171,7 @@ publishes `after` from the start.
 - `t_step`: the time of the step, any time.
 - `before`: the value before `t_step`.
 - `after`: the value from `t_step` on. `before` and `after` are promoted to one
-  `V`, `Float64` or a static array of `Float64`, and taken by `float`, so
+  `V`, a floating-point type or a static array of one, and taken by `float`, so
   integer values qualify.
 - `localized`: `true` for a localized step, `false` for a boundary-detected one.
 """
@@ -1227,8 +1231,8 @@ the output starts at the value that follows them.
 # Keywords
 
 - `times`: the `N` breakpoints, strictly ascending, any times.
-- `values`: the `N + 1` values. They are promoted to one `V`, `Float64` or a
-  static array of `Float64`, and taken by `float`, so integer values qualify.
+- `values`: the `N + 1` values. They are promoted to one `V`, a floating-point type or a
+  static array of one, and taken by `float`, so integer values qualify.
   `times` that do not ascend strictly, or a count of `values` other than
   `N + 1`, are refused with an `ArgumentError`.
 - `localized`: `true` for localized breakpoints, `false` for boundary-detected
@@ -1279,81 +1283,93 @@ function promoted_keywords(given::NamedTuple)
     float.(promote(given...))
 end
 
+# A limited integrator needs a range to move in, so equal limits are refused.
+check_limits(lower, upper) =
+    all(lower .< upper) || throw(ArgumentError("`lower` must be below `upper`, not $lower and $upper"))
+
 # Design: §2.3, §10.4, §10.6, D-179.
 # `limited_integrator_variants.md` gives the reasoning.
+# The bare mode is read by the derivative. The hit guards read the sign of the
+# position error to leading order, `x - limit` when it is nonzero, else `u`, the
+# first terms of the error's expansion a moment ahead. A block freed on a limit
+# therefore does not hold its hit predicate, and an outward input presents a
+# fresh edge. Localized leave guards are sign forms gated by the mode;
+# boundary-detected ones are the `Bool` predicates. A localized departure pays
+# about 22 trial sweeps and a boundary. The policy is the type parameter `L`
+# rather than a field because the build reads it off the guard's return type;
+# `R` is the reset form. Boundary zero sets every prior to not-holding, which is
+# why an out-of-limits `x0` is clamped there. `V` is the promoted keyword type.
 """
     LimitedIntegrator(; lower, upper, x0 = zero(lower), localized::Bool = true, reset::Bool = false) -> LimitedIntegrator
 
 A continuous [primitive](@ref g-primitive) that publishes the time integral of
 its input, held between two limits.
 
-The [block](@ref g-block) holds one continuous state `x`. Without `reset`, its
-one input `u` is bare, with `ẋ = u` while free and `ẋ = 0` while saturated, and the output
-`out` publishes `x` from [stage 1](@ref g-stage-function). It is not a clamp. The bare mode, `saturation`
-below, is read by the derivative, and four [state events](@ref g-state-event) move
-it. It
-is a signed `Int8` code, the sign of the limit in force: `-1` at `lower`, `0`
-free and `+1` at `upper`. `hit_upper` and `hit_lower` fire when `x` reaches a
-limit, and their handlers write `x` to the limit exactly and saturate.
-`leave_upper` and `leave_lower` fire when `u` turns strictly back into the
-range, and free it. An input of exactly zero at a limit keeps the mode
-saturated. The hit events are [localized](@ref g-localized). Their
-[guards](@ref g-guard) read the sign of the position error to leading order,
-`x - limit` when it is nonzero, else `u`, the first terms of the error's
-expansion a moment ahead. A block freed on a limit therefore does not hold its
-hit [predicate](@ref g-predicate). An input that turns outward again, even
-within the same step, then presents a fresh edge, and the block stops on the limit.
+The [block](@ref g-block) integrates its input `u` into one continuous state
+`x`, with `ẋ = u` while free and `ẋ = 0` while saturated. It stops integrating
+at a limit rather than clamping its output. Without `reset`, `u` is bare. The
+output `out` publishes `x` from [stage 1](@ref g-stage-function).
 
-A second output, also `saturation`, publishes the code from stage 1, so it has
-no [feedthrough](@ref g-feedthrough). It serves an anti-windup consumer, such as
-a controller that gates its integrator on the code. The code flips only when an
+Four [state events](@ref g-state-event) move a mode, a signed `Int8` code with
+the sign of the limit in force. The code is `-1` at `lower`, `0` free and `+1`
+at `upper`.
+
+- `hit_upper` and `hit_lower` fire when `x` reaches a limit. They are
+  [localized](@ref g-localized). They write `x` to the limit exactly and
+  saturate.
+- `leave_upper` and `leave_lower` fire when `u` turns strictly back into the
+  range, and they free the block. An input of exactly zero at a limit keeps it
+  saturated.
+
+An input that turns outward again after a leave, even within the same step,
+stops the block on the limit.
+
+The output `saturation` publishes the code from stage 1, so it has no
+[feedthrough](@ref g-feedthrough). It serves an anti-windup consumer, such as a
+controller that gates its integrator on the code. The code changes only when an
 event fires, and so only on a declared [boundary](@ref g-boundary).
 
-`localized` picks the detection policy of the leave events. Localized, the
-[guards](@ref g-guard) are sign forms gated by the mode, and the departure ends
-the step at the input's zero crossing.
-[Boundary-detected](@ref g-boundary-detected), the guards are the `Bool`
-[predicates](@ref g-predicate). The departure then fires at the end of the step
-in which `u` first pointed back into the range, so `x` is held on the limit for
-the rest of that step. It carries an offset of at most `a h² / 2` from then on,
-`a` the input's slope at its zero crossing. What the cheap form buys is that a
-departure costs no root-finding and splits no step, where a localized one pays
-about 22 trial [sweeps](@ref g-sweep) and a boundary. The policy is the type
-parameter `L` rather than a field because the build reads it off the guard's
-return type.
+`localized` picks how the leave events fire. With `true`, a departure ends the
+step at the input's zero crossing, at the cost of root-finding and a split step.
+With `false`, the leave events are
+[boundary-detected](@ref g-boundary-detected), and a departure costs neither. It
+fires at the first boundary after `u` points back into the range, at the latest
+the end of that step. `x` stays on the limit until then. It then carries an
+offset of at most `a h² / 2`, with `a` the input's slope at its zero crossing
+and `h` the step.
 
 Over a static vector, the limits and the codes are componentwise, and
-`saturation` publishes a static vector of `Int8`. The block declares `N` copies
-of the scalar events, one per component, named `hit_upper_1` to `hit_upper_N`,
-then `hit_lower_i`, `leave_upper_i` and `leave_lower_i`. Each guard reads its
-one component and each handler writes it.
+`saturation` publishes a static vector of `Int8`. The block declares one copy of
+each event per component, named `hit_upper_1` to `hit_upper_N`, then
+`hit_lower_i`, `leave_upper_i` and `leave_lower_i`. Each copy acts on its own
+component.
 
-[Boundary zero](@ref g-boundary-zero) sets every [prior](@ref g-prior) to
-not-holding. An `x0` outside the limits is therefore clamped there, and the
-initial mode agrees with the initial input.
+An `x0` outside the limits is clamped at [boundary zero](@ref g-boundary-zero),
+and the initial mode agrees with the initial input.
 
-`reset = true`, the parameter `R`, adds the `Bool` input `reset` beside `u`,
-which then names the input side, and one more event, `reset`, a single event
-however wide the block is, the
-[`Integrator`](@ref)'s: boundary-detected on the flag, so it fires once per
-rising edge. Its handler writes `x0`, clamped to the limits, and the code `x0`
-earns, so a reset onto a limit lands saturated and a reset inside lands free,
-whatever the mode was.
+`reset = true` adds the `Bool` input `reset`, so the inputs `u` and `reset` are
+named. It also adds one `reset` event, however wide the block is. As on the
+[`Integrator`](@ref), the event is boundary-detected on the flag, so it fires
+once per rising edge. Its handler writes `x0`, clamped to the limits, and the
+code that value earns. A reset onto a limit therefore lands saturated, and a
+reset inside lands free, whatever the mode was.
+
+`x0`, `lower` and `upper` are promoted to one floating-point type, or a static
+array of one, and taken by `float`, so integer values qualify. A `lower` not
+below `upper`, a scalar beside a static array and two lengths are each refused
+with an `ArgumentError`.
 
 # Keywords
 
-- `lower`: the lower limit, below `upper`, componentwise over a vector.
+- `lower`: the lower limit, below `upper`.
 - `upper`: the upper limit.
-- `x0`: the initial value of `x`, and the value a reset writes, clamped. `x0`,
-  `lower` and `upper` are promoted to one `V`, which is `Float64` or a static
-  array of `Float64`, and taken by `float`, so integer values qualify. They
-  must share one shape: a scalar beside a static array, or two lengths, is
-  refused with an `ArgumentError`.
+- `x0`: the initial value of `x`, and the value a reset writes.
 - `localized`: `true` for localized leave events, `false` for boundary-detected
   ones.
-- `reset`: `true` to add the input `reset` and the event, the parameter `R`.
+- `reset`: `true` to add the input `reset` and its event.
 
-See also [`DiscreteLimitedIntegrator`](@ref), [`Integrator`](@ref).
+See also [`LimitedDoubleIntegrator`](@ref), [`DiscreteLimitedIntegrator`](@ref),
+[`Integrator`](@ref).
 """
 struct LimitedIntegrator{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, L, R} <: AbstractComponent
     x0::V
@@ -1362,6 +1378,7 @@ struct LimitedIntegrator{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, L, R} <
 end
 function LimitedIntegrator(; lower, upper, x0 = zero(lower), localized::Bool = true, reset::Bool = false)
     x0, lower, upper = promoted_keywords((; x0, lower, upper))
+    check_limits(lower, upper)
     LimitedIntegrator{typeof(x0), localized, reset}(x0, lower, upper)
 end
 x_init(c::LimitedIntegrator) = c.x0
@@ -1443,6 +1460,15 @@ end
 # Design: §2.3, §10.4, §10.6, D-179.
 # `limited_integrator_variants.md` gives the reasoning, which carries over
 # from the single integrator.
+# The bare mode is read by the derivative. The hit guards read the sign of the
+# position error to leading order, `q - limit` when it is nonzero, else `v`, else
+# `u`, the first terms of the error's expansion a moment ahead. A block freed on
+# a limit therefore does not hold its hit predicate, and an outward input
+# presents a fresh edge. Localized leave guards are sign forms gated by the mode;
+# boundary-detected ones are the `Bool` predicates. The policy is the type
+# parameter `L` rather than a field because the build reads it off the guard's
+# return type. Boundary zero sets every prior to not-holding, which is why an
+# out-of-limits `q0` is clamped there. `V` is the promoted keyword type.
 """
     LimitedDoubleIntegrator(; lower, upper, q0 = zero(lower), v0 = zero(lower), localized::Bool = true) -> LimitedDoubleIntegrator
 
@@ -1450,68 +1476,63 @@ A continuous [primitive](@ref g-primitive) that publishes the double time
 integral of its input, its position held between two limits.
 
 The [block](@ref g-block) is a mechanical stop. It holds a named continuous
-state of two leaves, the position `q` and the velocity `v`. Its one input `u`
-is bare, the acceleration, with `q̇ = v` and `v̇ = u` while free and both zero
-while saturated. The output `out` publishes `q` and the output `velocity`
-publishes `v`, both from [stage 1](@ref g-stage-function). The bare mode,
-`saturation` below, is read by the derivative, and four
-[state events](@ref g-state-event) move it. It is a signed `Int8` code, the
-sign of the limit in force: `-1` at `lower`, `0` free and `+1` at `upper`.
-`hit_upper` and `hit_lower` fire when `q` reaches a limit. Their handlers
-write `q` to the limit exactly, zero `v` and saturate, so the stop absorbs
-the impact. `leave_upper` and `leave_lower` fire when `u` turns strictly back
-into the range, and free it from rest. An input of exactly zero at a limit
-keeps the mode saturated. The hit events are [localized](@ref g-localized).
+state of two leaves, the position `q` and the velocity `v`. Its one input `u` is
+bare, the acceleration, with `q̇ = v` and `v̇ = u` while free and both zero while
+saturated. The outputs `out` and `velocity` publish `q` and `v` from
+[stage 1](@ref g-stage-function).
+
+Four [state events](@ref g-state-event) move a mode, a signed `Int8` code with
+the sign of the limit in force. The code is `-1` at `lower`, `0` free and `+1`
+at `upper`.
+
+- `hit_upper` and `hit_lower` fire when `q` reaches a limit. They are
+  [localized](@ref g-localized). They write `q` to the limit exactly, zero `v`
+  and saturate, so the stop absorbs the impact.
+- `leave_upper` and `leave_lower` fire when `u` turns strictly back into the
+  range, and they free the block from rest. An input of exactly zero at a limit
+  keeps it saturated.
 
 A block that reaches a limit while `u` already points back into the range
 saturates and frees at the same [boundary](@ref g-boundary), so it leaves the
-limit from rest. The hit [guards](@ref g-guard) read the sign of the position
-error to leading order, `q - limit` when it is nonzero, else `v`, else `u`, the
-first terms of the error's expansion a moment ahead. A block freed on a limit
-therefore does not hold its hit [predicate](@ref g-predicate). An input that
-turns outward again, even within the same step, then presents a fresh edge, and
-the block stops on the limit.
+limit from rest. An input that turns outward again after a leave, even within
+the same step, stops the block on the limit.
 
-A third output, also `saturation`, publishes the code from stage 1, so it has
-no [feedthrough](@ref g-feedthrough). It serves an anti-windup consumer. The
-code flips only when an event fires, and so only on a declared boundary.
+The output `saturation` publishes the code from stage 1, so it has no
+[feedthrough](@ref g-feedthrough). It serves an anti-windup consumer. The code
+changes only when an event fires, and so only on a declared boundary.
 
-`localized` picks the detection policy of the leave events. Localized, the
-[guards](@ref g-guard) are sign forms gated by the mode, and the departure ends
-the step at the input's zero crossing.
-[Boundary-detected](@ref g-boundary-detected), the guards are the `Bool`
-[predicates](@ref g-predicate). The departure then fires at the first boundary
-after `u` first pointed back into the range, at the latest the end of that
-step, so `q` and `v` are held on the limit until then. From then on `v`
-carries an offset of at most `a h² / 2`, `a` the input's slope at its
-zero crossing, and `q` an offset that grows by as much per unit time, until the
-next limit removes both. What the
-cheap form buys is that a departure costs no root-finding and splits no step.
-The policy is the type parameter `L` rather than a field because the build
-reads it off the guard's return type.
+`localized` picks how the leave events fire. With `true`, a departure ends the
+step at the input's zero crossing, at the cost of root-finding and a split step.
+With `false`, the leave events are
+[boundary-detected](@ref g-boundary-detected), and a departure costs neither. It
+fires at the first boundary after `u` points back into the range, at the latest
+the end of that step. `q` and `v` stay on the limit until then. From then on `v`
+carries an offset of at most `a h² / 2`, with `a` the input's slope at its zero
+crossing and `h` the step. `q` carries an offset that grows by as much per unit
+time. The next limit removes both.
 
 Over a static vector, the limits, the leaves and the codes are componentwise,
-`velocity` publishes a static vector and `saturation` a static vector of
-`Int8`. The block declares `N` copies of the scalar events, one per component,
-named `hit_upper_1` to `hit_upper_N`, then `hit_lower_i`, `leave_upper_i` and
-`leave_lower_i`. Each guard reads its one component, each hit handler writes
-its one component of `q`, `v` and the code, and each leave handler its one
-code.
+`velocity` publishes a static vector and `saturation` a static vector of `Int8`.
+The block declares one copy of each event per component, named `hit_upper_1` to
+`hit_upper_N`, then `hit_lower_i`, `leave_upper_i` and `leave_lower_i`. Each
+copy acts on its own component.
 
-[Boundary zero](@ref g-boundary-zero) sets every [prior](@ref g-prior) to
-not-holding. A `q0` outside the limits is therefore clamped there with `v`
-zeroed. A `q0` on a limit with `v0` pointing back into the range starts free and
-keeps `v0`, and at rest there the initial mode agrees with the initial input.
+A `q0` outside the limits is clamped at [boundary zero](@ref g-boundary-zero)
+with `v` zeroed. A `q0` on a limit with `v0` pointing back into the range starts
+free and keeps `v0`. At rest there, the initial mode agrees with the initial
+input.
+
+`q0`, `v0`, `lower` and `upper` are promoted to one floating-point type, or a
+static array of one, and taken by `float`, so integer values qualify. A `lower`
+not below `upper`, a scalar beside a static array and two lengths are each
+refused with an `ArgumentError`.
 
 # Keywords
 
-- `lower`: the lower limit on `q`, below `upper`, componentwise over a vector.
+- `lower`: the lower limit on `q`, below `upper`.
 - `upper`: the upper limit on `q`.
 - `q0`: the initial value of `q`.
-- `v0`: the initial value of `v`. `q0`, `v0`, `lower` and `upper` are promoted
-  to one `V`, which is `Float64` or a static array of `Float64`, and taken by
-  `float`, so integer values qualify. They must share one shape: a scalar beside
-  a static array, or two lengths, is refused with an `ArgumentError`.
+- `v0`: the initial value of `v`.
 - `localized`: `true` for localized leave events, `false` for boundary-detected
   ones.
 
@@ -1525,6 +1546,7 @@ struct LimitedDoubleIntegrator{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, L
 end
 function LimitedDoubleIntegrator(; lower, upper, q0 = zero(lower), v0 = zero(lower), localized::Bool = true)
     q0, v0, lower, upper = promoted_keywords((; q0, v0, lower, upper))
+    check_limits(lower, upper)
     LimitedDoubleIntegrator{typeof(q0), localized}(q0, v0, lower, upper)
 end
 x_init(c::LimitedDoubleIntegrator) = (q = c.q0, v = c.v0)
@@ -1631,7 +1653,7 @@ leaves it off, which is the hysteresis itself.
 - `upper`: the threshold `u` rises to for the relay to switch on.
 - `off`: the value `y` publishes while off.
 - `on`: the value `y` publishes while on. The four values are promoted to one
-  `V`, which is `Float64` or a static array of `Float64`, and taken by `float`,
+  `V`, which is a floating-point type or a static array of one, and taken by `float`,
   so integer values qualify.
 """
 struct Relay{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: AbstractComponent
@@ -1716,7 +1738,7 @@ The block starts below. [Boundary zero](@ref g-boundary-zero) sets every
   most `upper`, componentwise over a vector.
 - `upper`: the threshold `u` rises to for the output to turn `true`. `lower`
   and `upper` are given together and without `threshold`, for hysteresis. They
-  are promoted to one `V`, `Float64` or a static array of `Float64`, and taken
+  are promoted to one `V`, a floating-point type or a static array of one, and taken
   by `float`, so integer values qualify. Any other combination of the three
   keywords, or a `lower` above `upper`, is refused with an `ArgumentError`.
 - `localized`: `true` for localized switches, `false` for boundary-detected
@@ -1902,6 +1924,14 @@ function check_tracking(tracking, Tt)
     nothing
 end
 
+# A limit given as `AsPort()` is the model's to keep ordered. Equal limits fix
+# the output, which `clamp` computes without trouble.
+function check_output_limits(u_min, u_max)
+    u_min === AsPort() || u_max === AsPort() || all(u_min .<= u_max) ||
+        throw(ArgumentError("`u_min` must not exceed `u_max`, not $u_min and $u_max"))
+    nothing
+end
+
 # Design: §5.4.
 # `pid_anti_windup.md` gives the reasoning, its section 4 the two axes and its
 # section 11 standby.
@@ -1941,6 +1971,8 @@ selected command at rate `1/Tt` and engages without a bump. It chases a moving
 `Tt = Inf` follows nothing, so `tracking = true` with a `Tt` given as a value and
 infinite in any channel is refused as an `ArgumentError`: tracking needs `Tt`
 spelled, or given as `AsPort()`, which leaves it to the model to keep finite.
+
+A `u_min` above `u_max`, both given as values, is refused as an `ArgumentError`.
 
 `q` holds the integral term in output units, with `Ki` inside the integral, so
 a change in `Ki` alters only future accumulation. The setpoint weights `b` and
@@ -2003,6 +2035,7 @@ function PID(; Kp, Ki = 0.0, Kd = 0.0, τd = 0.1, Tt = Inf, u_min = -Inf, u_max 
     check_tracking(tracking, Tt)
     given = (; Kp, Ki, Kd, τd, Tt, u_min, u_max, b, c)
     V = shape_type(given)
+    check_output_limits(u_min, u_max)
     fixed = fixed_parameters(given, map(_ -> V, given))
     PID{V, hold, tracking, typeof(fixed)}(fixed)
 end
@@ -2048,7 +2081,8 @@ of [`ControllerBlock`](@ref).
 
 `hold` adds the inputs `saturation` and `engaged`, and a block not engaged
 without tracking freezes. `tracking` adds the input `v`. `tracking = true` with
-a `Tt` given infinite in any channel is refused as an `ArgumentError`. With the
+a `Tt` given infinite in any channel is refused as an `ArgumentError`, and so is a
+`u_min` above `u_max`, both given as values. With the
 hold, the reference falls back to `u` while the block is free. All of this is
 as in `PID`. The setpoint weights `b` and `c` multiply `r` alone, as in `PID`,
 and the integral's error stays `e`.
@@ -2116,6 +2150,7 @@ function DiscretePID(; Kp, Ki = 0.0, Kd = 0.0, τd = 0.1, Tt = Inf, u_min = -Inf
     check_tracking(tracking, Tt)
     given = (; Kp, Ki, Kd, τd, Tt, u_min, u_max, b, c)
     V = shape_type(given)
+    check_output_limits(u_min, u_max)
     fixed = fixed_parameters(given, map(_ -> V, given))
     DiscretePID{V, hold, tracking, typeof(fixed)}(fixed)
 end
@@ -2263,6 +2298,8 @@ clamp is the correction's, and `Tt = Inf` switches it off. Tracking with a `Tt`
 given as a value and infinite in any channel is refused as an `ArgumentError`,
 as for `PID`.
 
+A `u_min` above `u_max`, both given as values, is refused as an `ArgumentError`.
+
 The [ports](@ref g-port) are static vectors at every size: `x` at
 `SVector{NX, Float64}`, `z` and `z_ref` at `SVector{NZ, Float64}`, `u`, `u_raw`
 and `v` at `SVector{NU, Float64}`, `saturation` at `SVector{NU, Int8}`, and
@@ -2333,6 +2370,7 @@ function LQRTracker{NX, NU, NZ}(; K_fbk, K_fwd, K_int = zero(SMatrix{NU, NZ, Flo
     check_tracking(tracking, Tt)
     types, given = parameter_types(NX, NU, NZ), (; K_fbk, K_fwd, K_int, x_trim, u_trim, z_trim, Tt, u_min, u_max)
     check_shapes(types, given)
+    check_output_limits(u_min, u_max)
     fixed = fixed_parameters(given, types)
     LQRTracker{NX, NU, NZ, hold, tracking, typeof(fixed)}(fixed)
 end
@@ -2386,7 +2424,8 @@ integrator input `e = K_int (z_ref - z)`, channel by channel, by the table of
 
 `hold` adds the inputs `saturation` and `engaged`, and a channel not engaged
 without tracking freezes. `tracking` adds the input `v`. `tracking = true` with
-a `Tt` given infinite in any channel is refused as an `ArgumentError`. With the
+a `Tt` given infinite in any channel is refused as an `ArgumentError`, and so is a
+`u_min` above `u_max`, both given as values. With the
 hold, the reference falls back to `u` in each channel that is free. All of this
 is as in `LQRTracker`. Every `Tt` is stable: `Tt = Inf` switches the correction
 off, and `Tt = 0` is legal and brings `u_raw` to the reference by the next
@@ -2445,6 +2484,7 @@ function DiscreteLQRTracker{NX, NU, NZ}(; K_fbk, K_fwd, K_int = zero(SMatrix{NU,
     check_tracking(tracking, Tt)
     types, given = parameter_types(NX, NU, NZ), (; K_fbk, K_fwd, K_int, x_trim, u_trim, z_trim, Tt, u_min, u_max)
     check_shapes(types, given)
+    check_output_limits(u_min, u_max)
     fixed = fixed_parameters(given, types)
     DiscreteLQRTracker{NX, NU, NZ, hold, tracking, typeof(fixed)}(fixed)
 end

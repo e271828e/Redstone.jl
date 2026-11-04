@@ -3210,6 +3210,26 @@ function test_blocks()
         @test_throws ArgumentError LimitedIntegrator(lower = SVector(-1, -1), upper = SVector(1, 1), x0 = 0.5)
         @test_throws ArgumentError LimitedDoubleIntegrator(lower = SVector(-1, -1), upper = SVector(1, 1), q0 = 0.5)
         @test_throws ArgumentError LimitedDoubleIntegrator(lower = SVector(-1, -1), upper = SVector(1, 1), v0 = 0.5)
+        for block in (LimitedIntegrator, LimitedDoubleIntegrator, DiscreteLimitedIntegrator)
+            @test_throws ArgumentError block(lower = 1, upper = -1)
+            @test_throws ArgumentError block(lower = 1, upper = 1)
+            @test_throws ArgumentError block(lower = SVector(-1, 1), upper = SVector(1, 0))
+            @test block(lower = SVector(-1, -1), upper = SVector(1, 1)) isa block
+        end
+        @test_throws ArgumentError RateLimiter(rising = 0)
+        @test_throws ArgumentError RateLimiter(rising = 1, falling = -1)
+        @test RateLimiter(rising = 1, falling = Inf).falling == Inf
+        for pid in (PID, DiscretePID)
+            @test_throws ArgumentError pid(Kp = 1.0, u_min = 1, u_max = -1)
+            @test_throws ArgumentError pid(Kp = SVector(1.0, 1.0), u_min = SVector(-1, 1), u_max = SVector(1, 0))
+            @test pid(Kp = 1.0, u_min = 1, u_max = 1) isa pid
+            @test pid(Kp = 1.0, u_min = AsPort(), u_max = -1) isa pid
+        end
+        for tracker in (LQRTracker, DiscreteLQRTracker)
+            @test_throws ArgumentError tracker(; tracker_gains()..., u_min = 1.0, u_max = -1.0)
+            @test_throws ArgumentError tracker(; tracker_gains()..., u_min = SVector(-1.0, 1.0), u_max = SVector(1.0, 0.0))
+            @test tracker(; tracker_gains()..., u_min = AsPort(), u_max = -1.0) isa tracker
+        end
         @test_throws ArgumentError Relay(lower = 1, upper = 0)
         @test_throws ArgumentError Relay(lower = SVector(0, 1), upper = SVector(1, 0))
         @test_throws TypeError Comparator(threshold = 0, localized = 1)

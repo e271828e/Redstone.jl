@@ -172,18 +172,21 @@ The standard component library, the submodule `Redstone.Blocks`:
   output `saturation`, typed by the helper `saturation_type`, shared with
   `DiscreteLimitedIntegrator` and the PID.
   Both read their keywords through the helper `promoted_keywords`, which
-  refuses a mix of shapes, and write their hit guards over `first_nonzero`.
+  refuses a mix of shapes, check their limits through `check_limits`, as
+  `DiscreteLimitedIntegrator` does, and write their hit guards over
+  `first_nonzero`.
 - `ControllerBlock{Hold, Track}`, carrying `axis_ports`, `gated_error` and
   `correction_reference`, over `PIDBlock{V, Hold, Track, Fixed}` over `Real`
   and static vectors, carrying `signal_ports`, `u_types`, `y_types` and
   `parameters`, over `PID` and `DiscretePID`, with the marker `AsPort`, the
   roster `PID_PARAMETERS` and the helpers `shape_type`, `fixed_parameters`,
-  `check_tracking` and `channel_type` (D-313, D-383, D-384, D-385).
+  `check_tracking`, `check_output_limits` and `channel_type` (D-313, D-383,
+  D-384, D-385).
 - `LQRTrackerBlock{NX, NU, NZ, Hold, Track, Fixed}`, a `ControllerBlock`,
   carrying `signal_ports`, `u_types`, `y_types` and `parameters`, over
   `LQRTracker` and `DiscreteLQRTracker`, with the roster `LQR_PARAMETERS`, the
   helpers `parameter_types`, `tracker_sizes` and `check_shapes`, and
-  `fixed_parameters` and `check_tracking` shared with the PID (D-383, D-384,
+  `fixed_parameters`, `check_tracking` and `check_output_limits` shared with the PID (D-383, D-384,
   D-385).
 - `StateSpace` with the helper `static_system`, over scalar or `SVector` ports
   by its matrix shapes, its feedthrough class the type parameter `FT`, and
