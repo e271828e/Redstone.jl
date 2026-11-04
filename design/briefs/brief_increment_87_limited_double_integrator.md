@@ -274,3 +274,7 @@ so the docstring's boundary-zero sentence changed. Reading 3 no longer
 stands for this block; the single integrator keeps the hole under its
 boundary-detected leave, on its own pending bullet. Reading 5's second question
 is unchanged, but a reset form should read the guard above first.
+
+A third, on the user's request the same day: 19d7cd0 closes the single
+integrator's hole with `x - limit`, then `u`, so its bullet is retired;
+`limited_integrator_variants.md`, section 8, records both guards.
