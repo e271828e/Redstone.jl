@@ -95,7 +95,7 @@ pack(args...) = SVector(args)
     Pack{V, N}() -> Pack{V, N}
 
 A continuous [primitive](@ref g-primitive) that publishes its `N` inputs packed
-into one static vector.
+into one `SVector`.
 
 It is the [`Junction`](@ref) at the fold `pack`, with the inputs `in1` to `inN`
 typed `V` and the output `y` an `SVector{N, V}`.
@@ -126,7 +126,7 @@ y_direct(j::Junction, (; u)) = j.f(u...)
     Unpack{V, N}() -> Unpack{V, N}
 
 A continuous [primitive](@ref g-primitive) that publishes the `N` elements of
-its static-vector input as `N` outputs.
+its `SVector` input as `N` outputs.
 
 The one input, `u`, is an `SVector{N, V}`, and the outputs `out1` to `outN`
 are typed `V`, with `outi = u[i]`. A wire names the input as in
@@ -423,8 +423,8 @@ A second output, `saturation`, publishes the `Int8` code of
 pointing inward, the code reads saturated until the next tick moves the state
 off.
 
-Over a static vector, the limits and the codes are componentwise, and
-`saturation` publishes a static vector of `Int8`.
+Over an `SVector`, the limits and the codes are componentwise, and `saturation`
+publishes an `SVector` of `Int8`.
 
 `reset = true` adds the `Bool` input `reset`, so the inputs
 `u` and `reset` are named. It is the level reset of
@@ -708,9 +708,9 @@ from [stage 1](@ref g-stage-function). The state follows the scalar of a `Dual`
 `Float64` fails there instead.
 
 For a scalar signal the block is
-[`TransferFunction`](@ref)`(num = (1,), den = (τ, 1), u0 = x0)`. The block stays
-for static-array signals, for `x0` in the signal's own coordinates and for the
-spelling.
+[`TransferFunction`](@ref)`(num = (1,), den = (τ, 1), u0 = x0)`. The block
+stays for `SArray` signals, for `x0` in the signal's own coordinates and for
+the spelling.
 
 The state, the input `u` and the output `y` share one type, the parameter `V`,
 `Float64` or an `SArray` of `Float64`, taken from `float(x0)`, so an integer
@@ -814,10 +814,11 @@ The matrices are kept at `Float64`, and the state and the [ports](@ref g-port)
 follow the scalar of a `Dual` [activation](@ref g-activation), so the block
 linearizes to its own matrices.
 
-Each matrix is any `AbstractMatrix` of reals, stored at full shape as a static
-matrix of `Float64`, so integer entries qualify. A matrix that does not fit the
-others is refused as an `ArgumentError`, and so is an `x0` of the wrong length.
-An `A` of size zero is refused likewise, since a block with no state is a gain.
+Each matrix is any `AbstractMatrix` of reals, stored at full shape as an
+`SMatrix` of `Float64`, so integer entries qualify. A matrix that does not fit
+the others is refused as an `ArgumentError`, and so is an `x0` of the wrong
+length. An `A` of size zero is refused likewise, since a block with no state is
+a gain.
 
 # Keywords
 
@@ -867,9 +868,9 @@ realization(c::StateSpace) = c
     realize(num, den)
 
 The controllable canonical form of the transfer function `num / den`, its
-coefficients highest power first and `num` no longer than `den`: the static
-matrices `(; A, B, C, D)` of `Float64`, the denominator made monic and the
-direct term split off. `linear_blocks.md`, section 2, derives it.
+coefficients highest power first and `num` no longer than `den`:
+`(; A, B, C, D)`, each an `SMatrix` of `Float64`, the denominator made monic
+and the direct term split off. `linear_blocks.md`, section 2, derives it.
 """
 function realize(num, den)
     order = length(den) - 1
@@ -1433,11 +1434,10 @@ the end of that step. `x` stays on the limit until then. It then carries an
 offset of at most `a h² / 2`, with `a` the input's slope at its zero crossing
 and `h` the step.
 
-Over a static vector, the limits and the codes are componentwise, and
-`saturation` publishes a static vector of `Int8`. The block declares one copy of
-each event per component, named `hit_upper_1` to `hit_upper_N`, then
-`hit_lower_i`, `leave_upper_i` and `leave_lower_i`. Each copy acts on its own
-component.
+Over an `SVector`, the limits and the codes are componentwise, and `saturation`
+publishes an `SVector` of `Int8`. The block declares one copy of each event per
+component, named `hit_upper_1` to `hit_upper_N`, then `hit_lower_i`,
+`leave_upper_i` and `leave_lower_i`. Each copy acts on its own component.
 
 An `x0` outside the limits is clamped at [boundary zero](@ref g-boundary-zero),
 and the initial mode agrees with the initial input.
@@ -1608,9 +1608,9 @@ carries an offset of at most `a h² / 2`, with `a` the input's slope at its zero
 crossing and `h` the step. `q` carries an offset that grows by as much per unit
 time. The next limit removes both.
 
-Over a static vector, the limits, the leaves and the codes are componentwise,
-`velocity` publishes a static vector and `saturation` a static vector of `Int8`.
-The block declares one copy of each event per component, named `hit_upper_1` to
+Over an `SVector`, the limits, the leaves and the codes are componentwise,
+`velocity` publishes an `SVector` and `saturation` an `SVector` of `Int8`. The
+block declares one copy of each event per component, named `hit_upper_1` to
 `hit_upper_N`, then `hit_lower_i`, `leave_upper_i` and `leave_lower_i`. Each
 copy acts on its own component.
 
@@ -1739,10 +1739,10 @@ taken by `float`, so integer values qualify, and `y` is [pinned](@ref g-walked)
 at `V`. It depends on the mode and the instance alone, so it carries zero
 partials under every [activation](@ref g-activation).
 
-Over a static vector, the thresholds, the values and the codes are
-componentwise. The block declares `N` copies of the two events, one per
-component, named `switch_on_1` to `switch_on_N`, then `switch_off_i`. Each
-[guard](@ref g-guard) reads its one component and each handler writes it.
+Over an `SVector`, the thresholds, the values and the codes are componentwise.
+The block declares `N` copies of the two events, one per component, named
+`switch_on_1` to `switch_on_N`, then `switch_off_i`. Each [guard](@ref g-guard)
+reads its one component and each handler writes it.
 
 The relay starts off. [Boundary zero](@ref g-boundary-zero) sets every
 [prior](@ref g-prior) to not-holding. An input already at or above `upper` at
@@ -1826,10 +1826,10 @@ jump then lands where the comparator's event lands. `y` reads no input, so the
 [Boundary-detected](@ref g-boundary-detected), each switch lands on the first
 boundary that observes it.
 
-Over a static vector, the thresholds and the codes are componentwise, and `y`
-is a static vector of `Bool`. The block declares `N` copies of the two events,
-one per component, named `switch_on_1` to `switch_on_N`, then `switch_off_i`.
-Each [guard](@ref g-guard) reads its one component and each handler writes it.
+Over an `SVector`, the thresholds and the codes are componentwise, and `y` is
+an `SVector{N, Bool}`. The block declares `N` copies of the two events, one per
+component, named `switch_on_1` to `switch_on_N`, then `switch_off_i`. Each
+[guard](@ref g-guard) reads its one component and each handler writes it.
 
 The block starts below. [Boundary zero](@ref g-boundary-zero) sets every
 [prior](@ref g-prior) to not-holding. An input already at or above `upper` at
@@ -2108,9 +2108,9 @@ infinite limits. They also set `Tt = Inf`, which switches the correction off.
 
 The parameters, the inputs `r`, `y` and `v`, the outputs `u` and `u_raw` and
 the states share one type, the parameter `V`, `Float64` or an `SArray` of
-`Float64`, the broadcast of the nine keywords given as values. Over a static
-vector the law is componentwise, and `saturation` and `engaged` are static
-vectors of `Int8` and of `Bool`.
+`Float64`, the broadcast of the nine keywords given as values. Over an
+`SVector` the law is componentwise, and `saturation` is an `SVector` of `Int8`
+and `engaged` one of `Bool`.
 
 The nine keywords given as values broadcast to one `V`, whose shape is the sum
 of their `zero`s, so a scalar pairs with a vector and integer values qualify. A
@@ -2222,8 +2222,8 @@ integral's error stays `e`.
 values.
 
 The parameters, the inputs, the outputs `u` and `u_raw` and the states share
-one type, the parameter `V`, `Float64` or an `SArray` of `Float64`, and over a
-static vector the law is componentwise, as in `PID`. The nine keywords given as
+one type, the parameter `V`, `Float64` or an `SArray` of `Float64`, and over an
+`SVector` the law is componentwise, as in `PID`. The nine keywords given as
 values broadcast to one `V` by the rule of `PID`, the shape the sum of their
 `zero`s. A scalar therefore pairs with a vector, and a uniform vector gain
 spells one keyword as a vector, `Kp = @SVector fill(2.0, 3)`.
@@ -2242,11 +2242,11 @@ then the previous weighted measurement, and the D term the backward difference
 brings `u_raw` to the reference by the next tick, the clamping scheme as the
 limit of tracking. Not engaged with tracking, `Tt = 0` follows `v` exactly.
 
-A third output, `saturated`, publishes the `Int8` code of the block's own clamp,
-a static vector of `Int8` over a vector. The code is `1` with `u_raw` at or
-above `u_max`, `-1` at or below `u_min` and `0` between. `s_update` writes it to
-the store from `u_raw` at the tick, and `y_state` publishes it from stage 1 at
-the next. It is therefore one tick stale, and flips only on a tick
+A third output, `saturated`, publishes the `Int8` code of the block's own
+clamp, an `SVector` of `Int8` over a vector. The code is `1` with `u_raw` at or
+above `u_max`, `-1` at or below `u_min` and `0` between. `s_update` writes it
+to the store from `u_raw` at the tick, and `y_state` publishes it from stage 1
+at the next. It is therefore one tick stale, and flips only on a tick
 [boundary](@ref g-boundary).
 
 The code serves the hold of an outer block in a cascade, wired to its input
@@ -2444,7 +2444,7 @@ Tracking with a `Tt` given as a value and infinite in any channel is refused as
 an `ArgumentError`, as for `PID`. A `u_min` above `u_max`, both given as values,
 is refused as an `ArgumentError`.
 
-The [ports](@ref g-port) are static vectors at every size. `x` is an
+The [ports](@ref g-port) are each an `SVector` at every size. `x` is an
 `SVector{NX, Float64}`, `z` and `z_ref` are `SVector{NZ, Float64}`, and `u`,
 `u_raw` and `v` are `SVector{NU, Float64}`. `saturation` is an
 `SVector{NU, Int8}` and `engaged` an `SVector{NU, Bool}`.
@@ -2486,7 +2486,7 @@ entries qualify.
 The nine parameters come in this order.
 
 - `K_fbk`: the `NU × NX` feedback gain, any `AbstractMatrix` of reals stored as
-  a static matrix of `Float64`.
+  an `SMatrix{NU, NX, Float64}`.
 - `K_fwd`: the `NU × NZ` feedforward gain, stored likewise.
 - `K_int`: the `NU × NZ` integral gain, stored likewise, zero for the tracker
   without integral action.

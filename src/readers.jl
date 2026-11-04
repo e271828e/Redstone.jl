@@ -171,8 +171,8 @@ a discrete component's discrete state.
 
 A state declared bare has the field `x` or `s`, which an address may leave out.
 `get_state("integrator")` reads it whole, as `get_state("integrator", "x")`
-does, and `get_state("integrator", "[2]")` reads one component of a
-static-vector state.
+does, and `get_state("integrator", "[2]")` reads one component of an `SVector`
+state.
 
 `get_state` reads the live [stores](@ref g-store), so a service that evaluates
 the model, such as [`trim!`](@ref), resolves it. A reader over published
@@ -221,11 +221,11 @@ Return a [selector](@ref g-selector) that reads one leaf of a
 [component](@ref g-component)'s declared output [port](@ref g-port).
 
 A selector is labeled in a [read set](@ref g-read-set) built with
-[`reads`](@ref). `path` names the component, and `leaf` is a
-[leaf address](@ref g-leaf-address) that starts with the port name, as in
+[`reads`](@ref). `path` names the component, and `leaf` is a [leaf
+address](@ref g-leaf-address) that starts with the port name, as in
 `get_output("plant", "pose.q_eb[2]")`. A port declared bare is the port `y`,
 which an address may leave out. `get_output("integrator")` reads it whole, and
-`get_output("integrator", "[2]")` reads one component of a static-vector port.
+`get_output("integrator", "[2]")` reads one component of an `SVector` port.
 
 `get_output` is an [inspection read](@ref g-inspection-read), and it resolves
 against the [signal table](@ref g-signal-table) or a published
@@ -433,9 +433,9 @@ _supplied_head(declared, letter::Symbol) = is_bare(declared) ? letter : nothing
 
 Walk the declared type `P` through the steps (§14.4, D-276). A `.name` step
 needs an isbits struct with that field and never enters an opaque leaf; an
-index step needs a static array, one index or one per dimension, within its
-size. The chain is the steps as a tuple, the baked read's type parameter;
-nothing is checked against a value.
+index step needs an `SArray`, one index or one per dimension, within its size.
+The chain is the steps as a tuple, the baked read's type parameter; nothing is
+checked against a value.
 """
 function resolve_leaf(::Type{P}, steps) where {P}
     in_hand = P

@@ -63,8 +63,8 @@ leaf_eltypes(::Type{P}) where {P} = unique(leaf_types(P))
 
 The dotted spelling of each leaf a value of type `P` occupies, in flat order:
 `"q"`, `"v[2]"`, `"m[1,2]"`, `"pose.x"`. The naming counterpart of
-`leaf_types`, walking the same fields and static-array lengths. Cold path only
-— §13.4's nonfinite sweep calls it once, at throw time, to name the offending
+`leaf_types`, walking the same fields and `SArray` lengths. Cold path only —
+§13.4's nonfinite sweep calls it once, at throw time, to name the offending
 state leaf.
 """
 leaf_names(::Type{P}) where {P} = _leaf_names!(String[], P, "")
