@@ -19,13 +19,14 @@ item changes what the spec says, the spec edit is part of the item.
   `visual_grammar.md` (axis 3), `design/prototypes/render_spike/report.md`
   (axis 4), `workspace.md` (axis 5), `live_session.md` (axis 6),
   `failure_descriptor.md` (the failure bump, D-434) and `build_release.md`
-  (axis 7). `design/briefs/roadmap_inspector.md` stages the build in ten
+  (axis 7). `design/briefs/roadmap_inspector.md` stages the build in eleven
   increments and records each landed one with the facts the next briefs
   take. Increments 1 to 7 and 9 have landed; 8, the analysis views and the
-  help page, is next, then 10, the release. Open across increments: the
-  non-blocking Firefox project fails the two leave-prompt checks, to be
-  settled before it turns blocking; the deployment overlay's bump stands as
-  `visual_grammar.md` hands it on. The built-in Julia GUI is parked
+  help page, is next; then 10, the deployment overlay on both tracks after
+  its design session, with the writer's qualified `@ref` links folded in;
+  then 11, the release. Open across increments: the non-blocking Firefox
+  project fails the two leave-prompt checks, to be settled before it turns
+  blocking. The built-in Julia GUI is parked
   (D-310). The later stages stand after the release, below.
 - **The API docstrings' two later passes.** The sweep to the manual's
   conventions landed (record `design/briefs/notes_docstring_sweep.md`,

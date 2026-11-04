@@ -1,7 +1,7 @@
 # The inspector: roadmap
 
 The staging of the inspector's stage 1, the static inspector over the
-descriptor, into ten increments on two tracks, and the delegation
+descriptor, into eleven increments on two tracks, and the delegation
 pipeline's adjustments for the half of it written in TypeScript. Grounded
 in the core's tree at `2072d41` and in the seven design records under
 `design/inspector/`, which hold every ruling; this file restates none and
@@ -99,10 +99,10 @@ increments run the pipeline unchanged.
 
 ## Staging
 
-Ten increments, each closer to increment 82's size than 84's, and a
+Eleven increments, each closer to increment 82's size than 84's, and a
 prototype that finds one too large splits it at the brief. Two tracks:
-the Julia track is increments 1 and 9, the frontend track 2 to 8, and 10
-closes both. Each entry names what it delivers, what is visible after it,
+the Julia track is increments 1 and 9, the frontend track 2 to 8, 10 runs
+on both after a design session, and 11 closes both. Each entry names what it delivers, what is visible after it,
 and the answers its brief draws on.
 
 **Increment 1: the repo and the writing half of the package.** The
@@ -343,7 +343,30 @@ socket client, the connection state and the download wait for increment
 4's status bar. The frontend piece landed with increment 5 at `bf52830`,
 the reviewer driving the live tab against the real server.*
 
-**Increment 10: the release.** `scripts/release.jl`, the `release` job
+**Increment 10: the deployment overlay.** On both tracks, after a design
+session that writes the eighth record, `design/inspector/deployment_overlay.md`
+(added 2026-11-04, the user's ruling after increment 8's reading 1): what
+the deployment body carries beyond the build, the base step, each leaf's
+concrete period and phase in base ticks, the hyperperiod and the grid
+report the bound schedule prints; how the timing tab's schedule rows and
+the hyperperiod chart draw, a timeline over one hyperperiod with a row per
+triple and a mark per firing; and the legend's lines gaining the concrete
+`Δt` and `(D, Φ)`. The core half: the format's minor bump to 1.1, a
+`schedule` section on the deployment body and nothing else, with the §13.9
+sentence and its log entry, `descriptor(deployment)`, the schema and the
+regenerated deployment fixture; folded in, the writer qualifies every bare
+`@ref` link whose binding it can resolve from the type's module
+(`which(mod, name)` giving the defining module), so `local_wires` in a
+`Blocks` docstring reaches `Redstone.local_wires` on the API page, which
+closes `build_release.md`'s pending note and amends `descriptor_design.md`'s
+answer 10, the docstring source carrying qualified refs. The inspector
+half: the pin bump, the timing tab's rows and chart, the legend's values,
+the page's link rule keeping its module-joining as the fallback for a ref
+the writer left bare. Visible: the deployment fixture's schedule on the
+timing tab. Draws on the new record, `workspace.md` answers 6 and 7,
+`visual_grammar.md` answer 6, `build_release.md` answer 7.
+
+**Increment 11: the release.** `scripts/release.jl`, the `release` job
 with the tag-absent rule, Pages, the `base` path, the version baked into
 the page, the Vimium patterns and the docs address constant, then the
 first release by the checklist. Visible: the hosted copy, and
