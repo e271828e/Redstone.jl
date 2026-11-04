@@ -1,7 +1,7 @@
 # Look pass: inspector increment 8
 
 The user's checklist for the look-and-adjust pass over `increment-8` at
-`226fb4b` (the review's fixes, if any, land above it), drawn from
+`bb2511f`, the review's fixes landed and verified, drawn from
 `notes_inspector_08.md`, the three builders' headed looks and the open
 items of `frontend/MAP.md`. Entries are numbered for discussion. The user's
 rulings from the pass follow their entries.

@@ -796,3 +796,38 @@ context rules as the builders; it never launches Firefox. Dimensions:
 - **The map** read against the tree: every file under `src/` named, the
   stores' section true to the code, every check's pins listed, the
   contract as implemented, the open items current.
+
+## Built
+
+- **The commits** on `increment-8` of `RedstoneInspector.jl`, above
+  `63bc8b4`, not merged, not pushed: `50d1391` the analysis module and the
+  order pref; `03e21df` the drawer's three tabs; `8ed376f` the order badges
+  with `o` and the breadcrumb's toggle; `fea2034` the docstrings rendered by
+  `marked`; `be046a3` the help page; `226fb4b` the map and the README;
+  `6dcf5d5` the review fixes; `bb2511f` three Cmd-K mentions. `npm run
+  check` 398 files, 0 errors; `npm test` 504 tests in 29 files; `npm run
+  e2e -- --project=chromium` 195 checks; `npm ci` clean; `dist/` free of
+  `javascript:`, each Vimium pattern and the docs constant once.
+- **The brief's errors**: the vocabulary count once read eleven; a
+  primitive root's level does draw its tags, so a root-input row selects
+  one there too (the review's finding 1 against agent A's departure); the
+  clock pill and the order badge do not both fit on four of `closed_loop`'s
+  assemblies (reading 19, ruled during the build).
+- **The builders' departures**, all held under review and recorded in the
+  map and in `notes_inspector_08.md`: row records with a `kind`; the tab
+  body's scroll reset; one `orderWidth` helper; `marked` on its own
+  instance; a `null`-state history entry stamped as a level entry; the nav
+  links not hash links; the Vimium patterns as literal strings; "format:
+  major 1".
+- **The review**: every check green from a clean install, the oracle
+  byte-identical and the reviewer's third reading equal on every fixture,
+  every cited answer holding by probe, 38 mutants with 33 red; seven low
+  findings landed by the fixer at `6dcf5d5` and verified: the primitive
+  root's tag, Ctrl-K, the format major from the define, two missing checks,
+  the badge taking the pointer for its title, the open item's number.
+- **Observations for the user**, in `look_inspector_08.md`: the raised
+  clock pills, the badges' size at the fit, the root's unreachable
+  docstring, the help page's empty first column and its agent-written
+  prose, the anchor table's cells and buttons, the long signatures' wrap.
+- **Pending**: the user's reading of the readings (1 to 4 and 19 first),
+  the look-and-adjust pass, the merge and the push, the roadmap's line.

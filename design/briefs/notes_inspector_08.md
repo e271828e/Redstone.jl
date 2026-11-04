@@ -343,3 +343,12 @@ put back the pointer check. Two notes from the fixer: `faceSelection` is
 unchanged, so a search hit on a primitive root's face still selects its
 port; two comments (`App.svelte`, `search.spec.ts`'s header) still say
 "`/` and Cmd-K" without Ctrl-K. The reviewer verifies the delta next.
+
+The reviewer, resumed, verified every fix at `6dcf5d5` and ran the gate
+again, green at the same tallies; its mutants 26 and 27 turned the new
+checks red, and `pointer-events: none` put back turned the pointer check
+red. One acceptable survivor of its own: Ctrl-K dropped from `KEYS`, since
+the help check counts the table's rows and not their keys. The coordinating
+session landed the three leftover "Cmd-K alone" mentions (the README, a
+comment in `App.svelte`, `search.spec.ts`'s header) as `bb2511f`, the type
+check green. The branch stands at `bb2511f` for the look pass.
