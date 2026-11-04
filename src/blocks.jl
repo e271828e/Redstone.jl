@@ -1443,7 +1443,10 @@ keeps the mode saturated. The hit events are [localized](@ref g-localized).
 
 A block that reaches a limit while `u` already points back into the range
 saturates and frees at the same [boundary](@ref g-boundary), so it leaves the
-limit from rest.
+limit from rest. It then rests free on the limit, its hit
+[predicate](@ref g-predicate) still holding. An input that turns outward again
+within the rest of that step carries `q` back past the limit unseen, since the
+predicate stops holding and holds again inside one step.
 
 A third output, also `saturation`, publishes the code from stage 1, so it has
 no [feedthrough](@ref g-feedthrough). It serves an anti-windup consumer. The
@@ -1453,11 +1456,12 @@ code flips only when an event fires, and so only on a declared boundary.
 [guards](@ref g-guard) are sign forms gated by the mode, and the departure ends
 the step at the input's zero crossing.
 [Boundary-detected](@ref g-boundary-detected), the guards are the `Bool`
-[predicates](@ref g-predicate). The departure then fires at the end of the step
-in which `u` first pointed back into the range, so `q` and `v` are held on the
-limit for the rest of that step. From then on `v` carries an offset of at most
-`a h² / 2`, `a` the input's slope at its zero crossing, and `q` an offset that
-grows by as much per unit time, until the next limit removes both. What the
+[predicates](@ref g-predicate). The departure then fires at the first boundary
+after `u` first pointed back into the range, at the latest the end of that
+step, so `q` and `v` are held on the limit for the rest of that step. From then
+on `v` carries an offset of at most `a h² / 2`, `a` the input's slope at its
+zero crossing, and `q` an offset that grows by as much per unit time, until the
+next limit removes both. What the
 cheap form buys is that a departure costs no root-finding and splits no step.
 The policy is the type parameter `L` rather than a field because the build
 reads it off the guard's return type.
@@ -1466,12 +1470,13 @@ Over a static vector, the limits, the leaves and the codes are componentwise,
 `velocity` publishes a static vector and `saturation` a static vector of
 `Int8`. The block declares `N` copies of the scalar events, one per component,
 named `hit_upper_1` to `hit_upper_N`, then `hit_lower_i`, `leave_upper_i` and
-`leave_lower_i`. Each guard reads its one component, and each handler writes
-its one component of `q`, `v` and the code.
+`leave_lower_i`. Each guard reads its one component, each hit handler writes
+its one component of `q`, `v` and the code, and each leave handler its one
+code.
 
 [Boundary zero](@ref g-boundary-zero) sets every [prior](@ref g-prior) to
-not-holding. A `q0` outside the limits is therefore clamped there with `v`
-zeroed, and the initial mode agrees with the initial input.
+not-holding. A `q0` outside or on a limit, whatever `v0`, is therefore clamped
+there with `v` zeroed, and the initial mode agrees with the initial input.
 
 # Keywords
 

@@ -182,13 +182,13 @@ breaking user code, and each may benefit from user feedback first.
   `design/companions/library_inventory.md` is unbuilt, each block
   built when wanted (§13.7, D-313). The order, by the mechanism each family
   exercises: the structure blocks `Fn`, `Select`, the unbundling component
-  and the discrete backlash; then the additions to shipped blocks, where three readings wait for the brief: a
-  second output on `Delay` names its output side, so the taps are a type
-  parameter keeping the bare spelling; Tustin gives a nonzero `D`, so the
-  discretized pair's class reads off the method; and scheduled limits move
-  `lower` and `upper` into the guards' `u` and take `x0`'s default with
-  them. `Freeze` over a struct is a framework seam, not a block, and stays
-  here after the four.
+  and the discrete backlash; then the additions to shipped blocks, where three
+  readings wait for the brief: a second output on `Delay` names its output
+  side, so the taps are a type parameter keeping the bare spelling; Tustin
+  gives a nonzero `D`, so the discretized pair's class reads off the method;
+  and scheduled limits move `lower` and `upper` into the guards' `u` and take
+  `x0`'s default with them. `Freeze` over a struct is a framework seam, not a
+  block, and stays here after the four.
 - **Stage-function locations in the descriptor** (§13.9, D-432). A `types`
   row carries the source locations of the declaration methods alone, so the
   inspector has no line to show for an algebraic loop, whose feedthrough is

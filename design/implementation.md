@@ -156,9 +156,9 @@ The standard component library, the submodule `Redstone.Blocks`:
 - `Integrator{V, R}` and `LimitedIntegrator{V, L, R}`, their reset form
   `R = true` adding the `Bool` input `reset` and one boundary-detected event
   (D-141), over the helpers `reset_ports` and `signal`, shared with the
-  discrete pair, and `reset_guard`; `LimitedDoubleIntegrator{V, L}`, the stop on the
-  double integral over the named state `(q, v)`, its four events under
-  `limit_events` as `LimitedIntegrator`'s; `FirstOrderLag`, `Step`,
+  discrete pair, and `reset_guard`; `LimitedDoubleIntegrator{V, L}`, the
+  stop on the double integral over the named state `(q, v)`, its four events
+  under `limit_events` as `LimitedIntegrator`'s; `FirstOrderLag`, `Step`,
   `Sequence`, `Relay` and `Comparator` (D-313).
   `Step`, `Sequence`, `LimitedIntegrator`, `LimitedDoubleIntegrator` and
   `Comparator` each ship two detection policies, localized and
@@ -194,8 +194,8 @@ The standard component library, the submodule `Redstone.Blocks`:
   stateless block declares `nothing` (§8.2, D-438). Every block with one input
   or one output declares that contract bare, its face `u` or `y`, the
   `Junction`'s output and the inputs of `Unpack`, `LimitedIntegrator`,
-  `LimitedDoubleIntegrator` and `DiscreteLimitedIntegrator` included; a side with two or more ports stays
-  named (§13.5, §13.7, D-437).
+  `LimitedDoubleIntegrator` and `DiscreteLimitedIntegrator` included; a side
+  with two or more ports stays named (§13.5, §13.7, D-437).
 
 It reaches the parent through its import list alone, as a user's component
 file does (D-313). Nothing in the package depends on it, so `src/Redstone.jl`

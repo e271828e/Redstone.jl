@@ -266,6 +266,13 @@ double_limited_model(localized) =
              li = LimitedDoubleIntegrator(lower = -1.0, upper = 0.5, localized = localized));
           local_wires = ("s/y" => "li/u",))
 
+# The mirror of `double_limited_model`, a step from `-1` up to `1`: it reaches
+# -0.5 at 1 and leaves at 1.05.
+lower_double_limited_model(localized) =
+    Group((; s = Step(t_step = 1.05, before = -1.0, after = 1.0),
+             li = LimitedDoubleIntegrator(lower = -0.5, upper = 1.0, localized = localized));
+          local_wires = ("s/y" => "li/u",))
+
 # A limited double integrator fed by the ramp `1.05 - t`, which crosses zero
 # at 1.05 with slope `-1`, after the block reaches 0.15 near 0.6.
 ramp_double_limited_model(localized) =
@@ -289,6 +296,14 @@ zero_input_double_model(level, lower, upper, localized) =
 vector_double_limited_model(localized) =
     Group((; s = Step(t_step = 1.05, before = SVector(1.0, 2.0), after = SVector(-1.0, 0.0)),
              li = LimitedDoubleIntegrator(lower = SVector(-1.0, -1.0), upper = SVector(0.5, 0.8),
+                                          localized = localized));
+          local_wires = ("s/y" => "li/u",))
+
+# `vector_double_limited_model` with component 2 driven to its lower limit:
+# it reaches -0.8 at √0.8 while component 1 is free, and stays there.
+vector_lower_double_limited_model(localized) =
+    Group((; s = Step(t_step = 1.05, before = SVector(1.0, -2.0), after = SVector(-1.0, 0.0)),
+             li = LimitedDoubleIntegrator(lower = SVector(-1.0, -0.8), upper = SVector(0.5, 1.0),
                                           localized = localized));
           local_wires = ("s/y" => "li/u",))
 
@@ -1879,6 +1894,22 @@ function test_blocks()
         @test state(clamped_lower, "c") === (q = -1.0, v = 0.0) && modes(clamped_lower, "c") === Int8(-1)
     end
 
+    @testset "the limited double integrator stops at its lower limit and frees from it on its input's sign (§10.4, §10.6)" begin
+        # Both policies leave at 1.05: q = -0.5 + (t - 1.05)² / 2 and
+        # v = t - 1.05 from there.
+        for localized in (true, false)
+            sim = Simulation(lower_double_limited_model(localized); h = 1//10)
+            init!(sim, set())
+            step!(sim; t_plus = 1.0)
+            @test state(sim, "li") === (q = -0.5, v = 0.0) && modes(sim, "li") === Int8(-1)
+            step!(sim; t_plus = 1.0)
+            bracket_width = sim.model.deployment.localization_tol * sim.model.deployment.h    # in time (§10.4)
+            @test state(sim, "li").q ≈ -0.5 + 0.95^2 / 2 atol = bracket_width
+            @test state(sim, "li").v ≈ 0.95 atol = bracket_width
+            @test modes(sim, "li") === Int8(0)
+        end
+    end
+
     @testset "the limited double integrator arriving against its input saturates and frees at one boundary (§10.6)" begin
         # q = 2t - t² / 2 reaches 0.5 at 2 - √3 with v = √3 and u = -1: the hit
         # fires in one round and the leave in the next, so the block leaves the
@@ -1934,6 +1965,29 @@ function test_blocks()
             @test state(sim, "li") === (q = SVector(-1.0, 0.8), v = SVector(0.0, 0.0))
             @test modes(sim, "li") == SVector{2, Int8}(-1, 1)
             @test port(sim, "li", :saturation) === modes(sim, "li")
+        end
+        # At 0.9 only component 2 is clamped, at its lower limit, while
+        # component 1 is free and checked.
+        for localized in (true, false)
+            sim = Simulation(vector_lower_double_limited_model(localized); h = 1//10)
+            init!(sim, set())
+            step!(sim; t_plus = 0.9)
+            @test state(sim, "li").q[1] ≈ 0.405 atol = 1e-12
+            @test state(sim, "li").v[1] ≈ 0.9 atol = 1e-12
+            @test state(sim, "li").q[2] == -0.8 && state(sim, "li").v[2] == 0.0
+            @test modes(sim, "li") == SVector{2, Int8}(0, -1)
+            step!(sim; t_plus = 0.1)
+            @test state(sim, "li") === (q = SVector(0.5, -0.8), v = SVector(0.0, 0.0))
+            @test modes(sim, "li") == SVector{2, Int8}(1, -1)
+            step!(sim; t_plus = 1.0)
+            bracket_width = sim.model.deployment.localization_tol * sim.model.deployment.h    # in time (§10.4)
+            @test state(sim, "li").q[1] ≈ 0.5 - 0.95^2 / 2 atol = bracket_width
+            @test state(sim, "li").v[1] ≈ -0.95 atol = bracket_width
+            @test state(sim, "li").q[2] == -0.8 && state(sim, "li").v[2] == 0.0
+            @test modes(sim, "li") == SVector{2, Int8}(0, -1)
+            step!(sim; t_plus = 1.0)
+            @test state(sim, "li") === (q = SVector(-1.0, -0.8), v = SVector(0.0, 0.0))
+            @test modes(sim, "li") == SVector{2, Int8}(-1, -1)
         end
         @test y_types(LimitedDoubleIntegrator(lower = SVector(-1.0, -1.0), upper = SVector(0.5, 0.8))) ==
               (out = SVector{2, Float64}, velocity = SVector{2, Float64}, saturation = SVector{2, Int8})
@@ -2916,6 +2970,8 @@ function test_blocks()
                       vector_limited_model(true), vector_limited_model(false), vector_relay_model(),
                       double_limited_model(true), double_limited_model(false),
                       vector_double_limited_model(true), vector_double_limited_model(false),
+                      lower_double_limited_model(true), lower_double_limited_model(false),
+                      vector_lower_double_limited_model(true), vector_lower_double_limited_model(false),
                       pid_single_loop(pid_controller(false, false)), vector_pid_loop(), scheduled_pid_loop(),
                       pid_single_loop(pid_assembly(Kp = 1.0, Ki = 0.5, Kd = 0.2, τd = 0.1, Tt = 1.0,
                                                    u_min = -1.0, u_max = 1.0)),
