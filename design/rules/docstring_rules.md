@@ -157,48 +157,54 @@ closed(run::Run) = run.termination !== nothing
     a design file such as `linear_blocks.md`. All of it goes to the comment.
 30. **`Model` is the type; the authored tree is the component tree or the
     root.** As in `spec_rules.md`.
+31. **A type parameter is named in prose only where the docstring defines it,
+    in the sentence that first uses it.** `V` enters as "promoted to one `V`,
+    a floating-point type or a static array of one", and a later sentence may
+    say "pinned at `V`". A parameter the user never writes, such as the `R`
+    that `reset = true` fixes, is mechanism under rule 22 and goes to the
+    comment; the prose names the keyword.
 
 ## What moves and what stays
 
-31. **An edit deletes nothing.** Every sentence it takes out of the docstring
+32. **An edit deletes nothing.** Every sentence it takes out of the docstring
     moves into the comment, rewritten or as it was.
-32. **Every citation moves to the comment**, whose first line lists the
+33. **Every citation moves to the comment**, whose first line lists the
     sections and entries the docstring cited. Maintainer prose with content of
     its own, such as which policy an advance declares and where it lives
     afterwards, follows on further lines.
-33. **The check is mechanical.** The set of `§` and `D-` citations before the
+34. **The check is mechanical.** The set of `§` and `D-` citations before the
     edit equals the set after it, the comment counted. A citation that vanished
     is a finding.
 
 ## Examples
 
-34. **A `jldoctest` block only where it shows the call's shape in a few lines
+35. **A `jldoctest` block only where it shows the call's shape in a few lines
     with stable output.** Under ten lines, a run of a few frames at most, and
     output that does not depend on timing or allocation.
-35. **Tiny inline components only, never the examples package**, which changes
+36. **Tiny inline components only, never the examples package**, which changes
     shape on its own schedule and rots any doctest that imports it.
-36. **`using Redstone` comes from the doctest setup, declared once** in the
+37. **`using Redstone` comes from the doctest setup, declared once** in the
     `DocTestSetup` meta of `docs/make.jl`, so no block repeats it.
-37. **One example per entry point at most, and none for a type.** A type's
+38. **One example per entry point at most, and none for a type.** A type's
     example is its constructor's.
 
 ## Procedure and review
 
-38. **A sweep is staffed one source file per agent, this sheet as the brief's
+39. **A sweep is staffed one source file per agent, this sheet as the brief's
     rule set, after a pilot file** on the stable core, whose lessons land here
     first. Each agent rewrites every docstring in scope in its file and reports
     every finding from the rules instead of resolving it. A cold review
     follows.
-39. **The reviewer's checklist is the numbered headlines, read in order.** A
+40. **The reviewer's checklist is the numbered headlines, read in order.** A
     rule is its headline, so the list cannot drift from the rules, and a brief
     cites a rule by its number.
 
 ## The battery
 
-40. **The Documenter build is the acceptance test.** `makedocs` with
+41. **The Documenter build is the acceptance test.** `makedocs` with
     `doctest = true` and `checkdocs = :exports`, green. A failing doctest or an
     exported name missing from the reference page fails the build.
-41. **The mechanical checks are the second test, over the API page's
+42. **The mechanical checks are the second test, over the API page's
     docstrings.** `§`, `D-[0-9]`, a predecessor's name and a companion pointer
     come back empty, and no summary reaches twenty words. After a rewrite,
     each file's citation set is unchanged with its comments counted, and its
