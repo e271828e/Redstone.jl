@@ -56,7 +56,7 @@ counts, and restates nothing a rules file says. The pipeline it feeds is
 - A fingerprint guards a copy by position: list what the positions depend
   on before calling it complete.
 - A vocabulary sweep is classified before the brief: parallel read-only
-  capable-tier agents over bounded ranges, one TSV row per occurrence with
+  high-tier agents over bounded ranges, one TSV row per occurrence with
   class, excerpt and proposed rewrite; the coordinator adjudicates the
   borderline rows; the stage reports a disagreement rather than deviating.
 
@@ -110,7 +110,7 @@ counts, and restates nothing a rules file says. The pipeline it feeds is
 
 - Proof-read prose handed over for a literal paste. Check an override or
   example against the rules it cites before launch; a fixer's prompt never
-  overrides a ruling. A mechanical-tier agent reads an example list as
+  overrides a ruling. A mid-tier agent reads an example list as
   exhaustive: state the principle and say "every instance". State a
   rewrap width in numbers.
 

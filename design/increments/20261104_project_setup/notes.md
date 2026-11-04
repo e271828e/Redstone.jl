@@ -65,8 +65,8 @@ the diff.
 ## Step 5: the pipeline and the brief rules
 
 - `delegation.md` becomes `rules/increment_rules.md` in tool-neutral
-  terms: "the coordinating session" for the first person, "capable-tier"
-  and "mechanical-tier" agents for the model names, which the user's own
+  terms: "the coordinating session" for the first person, "high-tier"
+  and "mid-tier" agents for the model names, which the user's own
   instructions map. Cut: the dates of rulings; the `filter-branch` trailer
   repair, a one-off now that the harness stopped asking for trailers; the
   harness mechanics (backgrounding, the refused `Write`, the 64k cap, the

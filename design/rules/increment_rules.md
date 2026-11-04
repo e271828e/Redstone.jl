@@ -9,7 +9,7 @@ the pipeline stops only for a design decision. The brief's rules are
 
 ## The pipeline
 
-1. **Prototype first.** A capable-tier agent prototypes the whole increment
+1. **Prototype first.** A high-tier agent prototypes the whole increment
    in a scratch worktree, by the rules below. The coordinator then drafts
    the brief from the prototype, shows it to the user before anything
    lands, and commits it to the increment's folder under
@@ -17,12 +17,12 @@ the pipeline stops only for a design decision. The brief's rules are
 2. **Who builds depends on size.** When the prototype is the
    implementation, the coordinator applies its patch to the real tree, runs
    the routed runners and commits, whatever its size; the brief keeps its
-   record half only. A multi-stage increment takes one fresh capable-tier
+   record half only. A multi-stage increment takes one fresh high-tier
    agent per stage, each prompt carrying the brief's path, the
    predecessors' handoff notes and the tip hash; one commit per stage,
    suite green. An agent that stopped on a design conflict having edited
    nothing is resumed with the ruling, its context intact, never replaced.
-3. **One cold review** by an independent capable-tier agent over the whole
+3. **One cold review** by an independent high-tier agent over the whole
    increment, whoever built it: an open-mind stance, probe scripts outside
    the tree, and "empty is acceptable". It runs the gate on the Julia floor
    `Project.toml` declares, and reverts each fix alone on a scratch copy to
@@ -81,7 +81,7 @@ the pipeline stops only for a design decision. The brief's rules are
   defers the item. It cites `code_rules.md` by path and restates nothing
   from it.
 - While an agent runs its gate on the real tree, nobody edits there.
-- A mechanical-tier agent reads a frozen copy (`git show <tip>:file`) of
+- A mid-tier agent reads a frozen copy (`git show <tip>:file`) of
   any file the coordinator is editing.
 - Several sessions may share one working tree: list the peers before
   launching, run arcs that touch the same files serially, and stage
