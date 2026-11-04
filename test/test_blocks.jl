@@ -308,6 +308,37 @@ vector_lower_double_limited_model(localized) =
                                           localized = localized));
           local_wires = ("s/y" => "li/u",))
 
+# The free flight under the ramp `u = t - 0.55` from `v0 = 1`. It reaches this
+# limit at 0.53 with `u` already inward, so the hit and the leave fire at one
+# boundary; `u` turns outward at 0.55, and the flight returns to the limit at 0.59.
+const CASCADE_LIMIT = 0.53 + (-0.02)^3 / 6 + 0.55^3 / 6 - 0.55^2 * 0.53 / 2
+
+# `side` is `1` for the upper limit and `-1` for the lower.
+cascade_return_model(side, localized) =
+    Group((; k = Constant(side * 1.0), ramp = Integrator(x0 = -side * 0.55),
+             li = LimitedDoubleIntegrator(lower = side > 0 ? -5.0 : -CASCADE_LIMIT,
+                                          upper = side > 0 ? CASCADE_LIMIT : 5.0,
+                                          v0 = side * 1.0, localized = localized));
+          local_wires = ("k/y" => "ramp/u", "ramp/y" => "li/u"))
+
+# The return in one component, `index`, with the other free under `u = side`.
+function vector_cascade_return_model(side, index, localized)
+    pick(here, there) = index == 1 ? SVector(here, there) : SVector(there, here)
+    Group((; k = Constant(pick(side * 1.0, 0.0)), ramp = Integrator(x0 = pick(-side * 0.55, side * 1.0)),
+             li = LimitedDoubleIntegrator(lower = pick(side > 0 ? -5.0 : -CASCADE_LIMIT, -5.0),
+                                          upper = pick(side > 0 ? CASCADE_LIMIT : 5.0, 5.0),
+                                          v0 = pick(side * 1.0, 0.0), localized = localized));
+          local_wires = ("k/y" => "ramp/u", "ramp/y" => "li/u"))
+end
+
+# A departure at 1 from `side * 1`, under a ramp so slow that `q` rounds back onto
+# the limit for many steps while `v` is already nonzero.
+slow_departure_model(side, localized) =
+    Group((; k = Constant(-side * 1e-10), ramp = Integrator(x0 = side * 1e-10),
+             li = LimitedDoubleIntegrator(lower = side > 0 ? -5.0 : -1.0, upper = side > 0 ? 1.0 : 5.0,
+                                          q0 = side * 1.0, localized = localized));
+          local_wires = ("k/y" => "ramp/u", "ramp/y" => "li/u"))
+
 # A vector relay reading a vector integrator: component 1 is `relay_model`'s,
 # and component 2 climbs to 0.5 and never reaches its upper threshold.
 vector_relay_model() =
@@ -1893,6 +1924,54 @@ function test_blocks()
         clamped_lower = Simulation(fed(LimitedDoubleIntegrator(q0 = -2.0, v0 = -3.0, lower = -1.0, upper = 0.5)); h = 1//10)
         init!(clamped_lower, set(u = (in = -1.0,)))
         @test state(clamped_lower, "c") === (q = -1.0, v = 0.0) && modes(clamped_lower, "c") === Int8(-1)
+    end
+
+    @testset "the limited double integrator's hit guards read `v` and `u` on the limit, so a return inside the leave's step stops it (§2.3, §10.4, §10.6)" begin
+        for localized in (true, false), side in (1, -1)
+            limit = side * CASCADE_LIMIT
+            code = Int8(side)
+            sim = Simulation(cascade_return_model(side, localized); h = 1//10)
+            init!(sim, set())
+            step!(sim; t_plus = 0.6)
+            @test state(sim, "li") === (q = limit, v = 0.0) && modes(sim, "li") === code
+            step!(sim; t_plus = 0.4)
+            @test state(sim, "li") === (q = limit, v = 0.0) && modes(sim, "li") === code
+            # Over a vector, each guard reads its own component.
+            for index in (1, 2)
+                other = 3 - index
+                vector_sim = Simulation(vector_cascade_return_model(side, index, localized); h = 1//10)
+                init!(vector_sim, set())
+                step!(vector_sim; t_plus = 1.0)
+                @test state(vector_sim, "li").q[index] === limit && state(vector_sim, "li").v[index] === 0.0
+                @test state(vector_sim, "li").q[other] ≈ side * 0.5 atol = 1e-12
+                @test state(vector_sim, "li").v[other] ≈ side * 1.0 atol = 1e-12
+                @test modes(vector_sim, "li")[index] === code && modes(vector_sim, "li")[other] === Int8(0)
+            end
+            # A slow departure: `q` rounds back onto the limit, and `v` keeps growing.
+            slow = Simulation(slow_departure_model(side, localized); h = 1//1000)
+            init!(slow, set())
+            step!(slow; t_plus = 2.0)
+            @test state(slow, "li").v ≈ -side * 5e-11 atol = 1e-13
+            @test modes(slow, "li") === Int8(0)
+        end
+    end
+
+    @testset "a limited double integrator started on a limit follows the first nonzero of `v0` and `u` (§10.6)" begin
+        for localized in (true, false), (limit, lower, upper, code) in ((0.5, -1.0, 0.5, Int8(1)), (-1.0, -1.0, 0.5, Int8(-1)))
+            side = Float64(code)
+            start(v0, input) = begin
+                rig = Simulation(fed(LimitedDoubleIntegrator(q0 = limit, v0 = v0, lower = lower, upper = upper, localized = localized)); h = 1//10)
+                init!(rig, set(u = (in = input,)))
+                (state(rig, "c"), modes(rig, "c"))
+            end
+            @test start(-side, 0.0) === ((q = limit, v = -side), Int8(0))
+            @test start(-side, side) === ((q = limit, v = -side), Int8(0))
+            @test start(side, 0.0) === ((q = limit, v = 0.0), code)
+            @test start(side, -side) === ((q = limit, v = 0.0), Int8(0))
+            @test start(0.0, 0.0) === ((q = limit, v = 0.0), code)
+            @test start(0.0, side) === ((q = limit, v = 0.0), code)
+            @test start(0.0, -side) === ((q = limit, v = 0.0), Int8(0))
+        end
     end
 
     @testset "the limited double integrator stops at its lower limit and frees from it on its input's sign (§10.4, §10.6)" begin

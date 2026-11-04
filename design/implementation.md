@@ -158,7 +158,8 @@ The standard component library, the submodule `Redstone.Blocks`:
   (D-141), over the helpers `reset_ports` and `signal`, shared with the
   discrete pair, and `reset_guard`; `LimitedDoubleIntegrator{V, L}`, the
   stop on the double integral over the named state `(q, v)`, its four events
-  under `limit_events` as `LimitedIntegrator`'s; `FirstOrderLag`, `Step`,
+  under `limit_events` as `LimitedIntegrator`'s, its hit guards over the
+  helper `first_nonzero`; `FirstOrderLag`, `Step`,
   `Sequence`, `Relay` and `Comparator` (D-313).
   `Step`, `Sequence`, `LimitedIntegrator`, `LimitedDoubleIntegrator` and
   `Comparator` each ship two detection policies, localized and

@@ -1453,10 +1453,10 @@ keeps the mode saturated. The hit events are [localized](@ref g-localized).
 
 A block that reaches a limit while `u` already points back into the range
 saturates and frees at the same [boundary](@ref g-boundary), so it leaves the
-limit from rest. It then rests free on the limit, its hit
-[predicate](@ref g-predicate) still holding. An input that turns outward again
-within the rest of that step carries `q` back past the limit unseen, since the
-predicate stops holding and holds again inside one step.
+limit from rest. On a limit the hit [guards](@ref g-guard) read `v` in place of
+the position, and at rest `u`, so a block freed there does not hold its hit
+[predicate](@ref g-predicate). An input that turns outward again, even within
+the same step, then presents a fresh edge, and the block stops on the limit.
 
 A third output, also `saturation`, publishes the code from stage 1, so it has
 no [feedthrough](@ref g-feedthrough). It serves an anti-windup consumer. The
@@ -1485,8 +1485,9 @@ its one component of `q`, `v` and the code, and each leave handler its one
 code.
 
 [Boundary zero](@ref g-boundary-zero) sets every [prior](@ref g-prior) to
-not-holding. A `q0` outside or on a limit, whatever `v0`, is therefore clamped
-there with `v` zeroed, and the initial mode agrees with the initial input.
+not-holding. A `q0` outside the limits is therefore clamped there with `v`
+zeroed. A `q0` on a limit with `v0` pointing back into the range starts free and
+keeps `v0`, and at rest there the initial mode agrees with the initial input.
 
 # Keywords
 
@@ -1524,8 +1525,15 @@ function x_deriv(::LimitedDoubleIntegrator, (; x, u, m))
 end
 # The guards are `LimitedIntegrator`'s on `q`, ungated, and on `u`, strict, for
 # its reasons. The hit handlers zero `v`: the stop is inelastic.
-hit_upper_guard(c::LimitedDoubleIntegrator, (; x)) = x.q - c.upper
-hit_lower_guard(c::LimitedDoubleIntegrator, (; x)) = c.lower - x.q
+# A hit guard takes the first nonzero of `q - limit`, `v` and `u`, the leading
+# term of the block's motion against the limit. Reading `q - limit` alone, a block
+# freed at rest on the limit holds at `0`, so a return inside one step shows no
+# edge and it runs past the stop. Reading `u` at rest but not `v`, a slow departure
+# whose `q` rounds back onto the limit holds at `0` with `v` nonzero, and the hit
+# re-fires each step, erasing `v`.
+first_nonzero(a, b, c) = a != 0 ? a : b != 0 ? b : c
+hit_upper_guard(c::LimitedDoubleIntegrator, (; x, u)) = first_nonzero(x.q - c.upper, x.v, u)
+hit_lower_guard(c::LimitedDoubleIntegrator, (; x, u)) = first_nonzero(c.lower - x.q, -x.v, -u)
 leave_upper_guard(::LimitedDoubleIntegrator{V, true}, (; m, u)) where {V} =
     m == 1 && u < 0 ? -u : -one(u)
 leave_lower_guard(::LimitedDoubleIntegrator{V, true}, (; m, u)) where {V} =
@@ -1547,13 +1555,13 @@ limit_events(::LimitedDoubleIntegrator{V}) where {V <: Real} =
 function limit_events(::LimitedDoubleIntegrator{V, L}) where {V <: StaticArray, L}
     N = length(V)
     hit_upper = ntuple(N) do i
-        StateEvent((c, (; x)) -> x.q[i] - c.upper[i],
+        StateEvent((c, (; x, u)) -> first_nonzero(x.q[i] - c.upper[i], x.v[i], u[i]),
                    (c, (; x, m)) -> (x = (q = Base.setindex(x.q, c.upper[i], i),
                                           v = Base.setindex(x.v, zero(eltype(V)), i)),
                                      m = Base.setindex(m, Int8(1), i)))
     end
     hit_lower = ntuple(N) do i
-        StateEvent((c, (; x)) -> c.lower[i] - x.q[i],
+        StateEvent((c, (; x, u)) -> first_nonzero(c.lower[i] - x.q[i], -x.v[i], -u[i]),
                    (c, (; x, m)) -> (x = (q = Base.setindex(x.q, c.lower[i], i),
                                           v = Base.setindex(x.v, zero(eltype(V)), i)),
                                      m = Base.setindex(m, Int8(-1), i)))
