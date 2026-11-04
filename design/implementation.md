@@ -16,8 +16,9 @@ sections it cites.
 
 An entry names constructs and cites their sections. It may also state a fact
 that spans files, which a reader of the one file cannot see. How a construct
-behaves belongs in its docstring or in a comment at the site, never here. An
-increment edits an entry only when a construct appears, moves or goes, or
+behaves belongs in its docstring or in a comment at the site, never here. A
+docstring of an exported name follows `tools/docstring_style.md`, whether new
+or edited. An increment edits an entry only when a construct appears, moves or goes, or
 when its citations change.
 
 Correctness is checked against analytically integrated references with a

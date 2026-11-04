@@ -1,7 +1,8 @@
 # Docstring style guide
 
-The rules the API docstrings are written to. Consulted before rewriting one,
-by the agent that rewrites a file and by the reviewer that checks it. Like
+The rules the API docstrings are written to. Read before writing or changing
+the docstring of an exported name, by the agent that does it and by the
+reviewer that checks it. Like
 `spec_style.md`, it is not in the check tools' rosters; the `§` marks below
 are examples of what a docstring must not contain.
 
@@ -121,6 +122,9 @@ closed(run::Run) = run.termination !== nothing
 - **Mechanism stays out unless the user needs it to use the call correctly.**
   How a run is paced belongs in `run!`'s docstring because `margin` is a
   keyword; how the pacer's wait is implemented does not.
+- **A correction or a review finding obeys the same test.** It enters the
+  docstring only if the user needs it to use the call correctly. Otherwise it
+  goes to the `# Design:` comment or the companion.
 - **A sibling's job is a cross-reference, not an explanation.** The docstring
   links the sibling with [`name`](@ref) and says in a clause why the reader
   would go there.
@@ -218,6 +222,11 @@ The reviewer's checklist, one line per rule:
 18. No companion `*.md` pointer inside the quotes.
 19. An unexported-constant default written as its value, or stated in the
     prose.
+20. Short paragraphs, one burden per sentence, active voice, no colon as a
+    mid-sentence connector.
+21. Each paragraph answers what the call needs, produces or refuses.
+22. Mechanism, a correction or a finding included, only where the user needs
+    it to use the call correctly.
 
 ## The battery
 
