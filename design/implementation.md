@@ -156,17 +156,20 @@ The standard component library, the submodule `Redstone.Blocks`:
 - `Integrator{V, R}` and `LimitedIntegrator{V, L, R}`, their reset form
   `R = true` adding the `Bool` input `reset` and one boundary-detected event
   (D-141), over the helpers `reset_ports` and `signal`, shared with the
-  discrete pair, and `reset_guard`; `FirstOrderLag`, `Step`, `Sequence`, `Relay` and
-  `Comparator` (D-313).
-  `Step`, `Sequence`, `LimitedIntegrator` and `Comparator` each ship two
-  detection policies, localized and boundary-detected, selected by the type
-  parameter `L` (D-179). `LimitedIntegrator`, `Relay` and `Comparator` are
-  over `Real` and static vectors, with `Int8` modes and, over a vector,
+  discrete pair, and `reset_guard`; `LimitedDoubleIntegrator{V, L}`, the stop on the
+  double integral over the named state `(q, v)`, its four events under
+  `limit_events` as `LimitedIntegrator`'s; `FirstOrderLag`, `Step`,
+  `Sequence`, `Relay` and `Comparator` (D-313).
+  `Step`, `Sequence`, `LimitedIntegrator`, `LimitedDoubleIntegrator` and
+  `Comparator` each ship two detection policies, localized and
+  boundary-detected, selected by the type parameter `L` (D-179).
+  `LimitedIntegrator`, `LimitedDoubleIntegrator`, `Relay` and `Comparator`
+  are over `Real` and static vectors, with `Int8` modes and, over a vector,
   events generated per component; the fall of `Relay` and `Comparator` is
   strict.
-  `LimitedIntegrator` publishes its mode as the output `saturation`, typed by
-  the helper `saturation_type`, shared with `DiscreteLimitedIntegrator` and the
-  PID.
+  `LimitedIntegrator` and `LimitedDoubleIntegrator` publish their mode as the
+  output `saturation`, typed by the helper `saturation_type`, shared with
+  `DiscreteLimitedIntegrator` and the PID.
 - `ControllerBlock{Hold, Track}`, carrying `axis_ports`, `gated_error` and
   `correction_reference`, over `PIDBlock{V, Hold, Track, Fixed}` over `Real`
   and static vectors, carrying `signal_ports`, `u_types`, `y_types` and
@@ -190,8 +193,8 @@ The standard component library, the submodule `Redstone.Blocks`:
 - Every block with one state field or one mode declares it bare, and every
   stateless block declares `nothing` (§8.2, D-438). Every block with one input
   or one output declares that contract bare, its face `u` or `y`, the
-  `Junction`'s output and the inputs of `Unpack`, `LimitedIntegrator` and
-  `DiscreteLimitedIntegrator` included; a side with two or more ports stays
+  `Junction`'s output and the inputs of `Unpack`, `LimitedIntegrator`,
+  `LimitedDoubleIntegrator` and `DiscreteLimitedIntegrator` included; a side with two or more ports stays
   named (§13.5, §13.7, D-437).
 
 It reaches the parent through its import list alone, as a user's component
