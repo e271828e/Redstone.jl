@@ -287,3 +287,79 @@ gate is green at 3817 and 3890.
 A loose fix after the review, on the user's question: `Sequence`'s `times`
 and `values` became plain vectors, since indexing allocates nothing and a
 schedule's length is data, so the parameters `N` and `M` went.
+
+## The coda: the reset keyword on the limited integrator and the discrete pair
+
+Proposed by the user on 2026-11-04 after the review, built by me on the
+real tree: the docs commit b5aff6b, the code commit 94a1bc2, routed
+subset `blocks build` green at 2264 and 436.
+
+**What is settled.** `LimitedIntegrator(; …, reset = false)` takes the
+`Integrator`'s reset form, `R` a third type parameter after `L`: the input
+side `(u, reset)`, one boundary-detected event `reset` on the shared guard,
+whose handler writes `x0` clamped to the limits and the code `x0` earns
+(`saturation_code`, componentwise). The handler writes the code itself
+because a reset onto a limit whose hit guard already holds presents that
+guard no fresh edge, so leaving the clamp to the hit event would strand `x`
+beyond the limit, free; and a reset inside from a saturated mode must free
+the mode or the derivative stays zero. `DiscreteIntegrator(; s0, reset)`
+and `DiscreteLimitedIntegrator(; lower, upper, s0, reset)` take the level
+form §5.3 names: at every tick where the flag reads true the update writes
+`s0`, clamped on the limited block, so the state lands at the next tick and
+the output at the reset tick is the stale integral. The same-tick spelling
+reads the flag in an output stage, which makes every input a feedthrough
+edge and costs the loop break, so it is not offered. The reset event is one
+per block over a vector, not per component, since the flag is one `Bool`.
+
+**The shape built.** A section "the reset form" before the discrete tier
+holds `reset_ports(V, Val(R))`, `signal(u)` reading the data port under
+either form (`u` itself, or `u.u` from the named side) and
+`reset_guard(_, (; u)) = u.reset`. `Integrator` moved onto the three, one
+`u_types` and one `x_deriv`. `LimitedIntegrator`'s guards and derivative
+read `signal(u)`, the per-component closures `signal(u)[i]`; its event
+tuples are `limit_events`, and `state_events` is that tuple, with `reset`
+appended under `R = true`. The discrete pair keep two `s_update` methods
+each, the plain one unchanged.
+
+**Measurements**, from a probe on the real tree before the tests were
+written. Discrete, `h = 1/100`, a boundary-detected step at `5h` through
+a comparator, `u = 1`, `s0 = 0.5`: the flag reads true at `5h` with the
+output `0.55`, `0.5` from `6h`; the same on the limited block. Continuous,
+the pulse model with `LimitedIntegrator(lower = 0, upper = 1, x0 = 0.5)`:
+boundary-detected `x` at `0.2, 0.3, 0.5, 0.8, 1.0` reads `0.7, 0.5, 0.7,
+1.0, 0.6`, saturated at `0.8` and free at `1.0`; localized `0.7, 0.55,
+0.75, 1.0, 0.65`. Held `reset` with `x0 = 1` and `x0 = 2` over a condition
+`x = 0.2` lands `x = 1`, code `1`, and stays under an outward input. The
+vector forms of all three build under `(Float64, LinearizeDual,
+ProbeDual)`. A vector component reset onto its limit under an inward input
+is freed by its leave event in the same boundary, which is the block's
+rule and what the test pins by choosing an outward input.
+
+**What the tests pin.** The three reset forms' input sides; the limited
+block's five event policies; the continuous timeline at both policies with
+the code at each reading; the reset onto and beyond a limit over a
+condition, scalar and the vector `(0.5, 2.0)` landing `(0.5, 1.0)` with
+codes `(0, 1)`; the discrete timeline for both blocks, the flag rising at
+`5h` and falling at `7h`, the output stale at `5h`, `s0` at `6h` and `7h`,
+summing again from `8h`; the limited block's `s0 = 2` landing clamped with
+code `1`; the vector builds; the type pins and the `TypeError` on a flag
+given as `1`; the reset models in both allocation sweeps.
+
+**Mutants for the review.** The limited handler not writing the code (the
+pulse's reading at `1.0` stays `0.5`); not clamping `x0` (`x0 = 2` lands
+`2`); writing code `0` with `x` on the limit (`x` grows past `1` under the
+outward input); the reset event dropped from `R = true`; `signal` returning
+`u.reset`; a leave guard reading `u` instead of `signal(u)` on the reset
+form (a `MethodError` at build); the discrete `ifelse` arms swapped; the
+discrete limited reset without the clamp; the flag read in `y_state`
+(feedthrough, the loop-breaking pin); `Integrator`'s `x_deriv` reading
+`u` whole on the reset form.
+
+**The cold review** of 94a1bc2 against b5aff6b: the docs against the tree
+for the three rows and the map's entry; the boundary cases, a reset
+coinciding with a hit or a leave in either order, under the
+blocked-events rule and within the firing budget (reset, hit and leave at
+one boundary are three rounds of four); the plain forms bitwise unchanged,
+`Integrator` included after its move onto the helpers; allocation on
+every reset model at `(Float64, LinearizeDual)`; the mutants above on a
+scratch copy; the gate.
