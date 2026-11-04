@@ -1,6 +1,6 @@
 # The examples' tests: one file per example, `test_<example>.jl`, each a testset pinning
 # what its companion claims over the helpers of `utils.jl`. Models and helpers live at top
-# level, for `implementation.md`'s local-scope reason. With no arguments every file runs;
+# level, for `code_rules.md`'s local-scope reason. With no arguments every file runs;
 # with names, `longitudinal`, only those.
 
 using Test, LinearAlgebra, BenchmarkTools

@@ -88,7 +88,7 @@ C, Appendix D. Appendix C: `logged` widens to any artifact-producing call;
 `EmptyGreedyClaim` moves to the roster entry's cell; `GridUtilization` moves
 to the deployment's warnings; `EmptyFaceSelection` gains a row;
 `DeclaredNotProduced`'s message and `UnknownFaceSelection`'s reason column
-change. Read `tools/spec_style.md` and `tools/decisions_style.md` first; run
+change. Read `rules/spec_rules.md` and `rules/decisions_rules.md` first; run
 the four tools after.
 
 Bookkeeping: `pending.md`'s first bullet becomes one umbrella bullet naming
@@ -417,7 +417,7 @@ Landed 2026-09-22: the docs amendment as `6cbbaea` (`Dataflow` renamed
 with the execution order beside them as component indices, the `ports` and
 `edges` columns derived facts and gone, `ComponentEvents` rows, `Activation{T}`
 exempt as compiled state; the log's D-253 and D-258 keep the old name by
-`decisions_style.md`'s rule 2), the brief as `1136482`
+`decisions_rules.md`'s rule 2), the brief as `1136482`
 (`brief_increment_48b_outputs_rows.md`), the increment as `b16a885` in one
 stage and the cold review's one prose fix as `250d2af`. The review found no
 defect. `_ports` is the one concatenation, stage 1 then stage 2, the

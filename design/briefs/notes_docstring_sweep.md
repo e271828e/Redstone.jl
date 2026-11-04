@@ -1058,7 +1058,7 @@ gate were green (7004/7004, 7 m 53 s). The findings fall in four groups.
 - **A. Wrong claims about the code, 22.** Listed below.
 - **B. More than one parenthetical in a sentence, 46 sentences.** The one
   systemic finding. The gloss form is a parenthetical, so a sentence with
-  two glossary terms breaks `spec_style.md`'s rule. Some sentences in
+  two glossary terms breaks `spec_rules.md`'s rule. Some sentences in
   `sim.jl` carry three or four glosses.
 - **C. Other rules broken, 14 items.** Five on glossary terms used bare,
   five on coinages outside the glossary, two on keyword lists and two on

@@ -40,7 +40,7 @@ its sentence, apply the closest spelling and flag the line.
 
 ## Reading
 
-- `design/tools/spec_style.md`, whole. No em-dashes, one burden per
+- `design/rules/spec_rules.md`, whole. No em-dashes, one burden per
   sentence, content preservation, the battery, 80 rendered columns.
 - `decisions.md`, D-259 (the last entry) and D-253's fourth bullet.
 - Every occurrence: `rg -n -i 'stratum|strata' design/spec.md`, 112

@@ -89,7 +89,7 @@ Chapter 9 untouched.
   triples, whose final divisors and schedule wait for `Δt_base` at deployment
   — so".
 
-## R102 — `tools/spec_style.md`, "The battery"
+## R102 — `rules/spec_rules.md`, "The battery"
 
 - "`linkify.jl` keeps a third roster, also `ROSTER`, naming the files it
   rewrites; a file checked but not linkified keeps plain citations, as

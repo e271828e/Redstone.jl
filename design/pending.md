@@ -51,7 +51,7 @@ item changes what the spec says, the spec edit is part of the item.
   (D-310). The later stages stand after the release, below.
 - **The API docstrings' two later passes.** The sweep to the manual's
   conventions landed (record `design/briefs/notes_docstring_sweep.md`,
-  convention `design/tools/docstring_style.md`). Two passes remain: an examples pass
+  convention `design/rules/docstring_rules.md`). Two passes remain: an examples pass
   after the tutorial, and a signature-and-link pass after the audit's
   renames, since a rename costs a signature line and the Documenter build
   catches a stale link. Unexported names keep their docstrings as they are.

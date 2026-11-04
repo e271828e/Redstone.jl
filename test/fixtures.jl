@@ -5,7 +5,7 @@
 #
 # Everything lives at top level because a declaration written in a local scope
 # binds a new local function rather than extending Redstone's generic (D-164,
-# implementation.md's authoring caveat).
+# code_rules.md's authoring caveat).
 
 """
 Damped second-order plant. Carries state, publishes a **stage-1** port (`y`,

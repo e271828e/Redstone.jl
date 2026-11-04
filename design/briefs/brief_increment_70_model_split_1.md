@@ -164,7 +164,7 @@ both go into D-317.
   `Simulation` listing, 11762 to 11770; the glossary entries `executor`
   12996, `nominal` 13024, `Run` 13211, `checkpoint` 13278, `StopPolicy`
   13256, `execution cursor` 13457. Never read the spec whole.
-- `design/tools/spec_style.md` and `decisions_style.md` whole, stage 0
+- `design/rules/spec_rules.md` and `decisions_rules.md` whole, stage 0
   only.
 - `design/implementation.md`: the head of "What is real here" (11 to
   42) down to its rule on deviations (27 to 31); the rows `### src/sim.jl`
@@ -205,7 +205,7 @@ both go into D-317.
 
 ### The shape
 
-One docs commit, written under `spec_style.md` and `decisions_style.md`
+One docs commit, written under `spec_rules.md` and `decisions_rules.md`
 read first. Three kinds of edit: a new log entry, the spec sentences the
 code would otherwise falsify, and the queue bullet.
 
@@ -240,7 +240,7 @@ in the log's existing form (13017 is one) and keep `ratified`.
 
 **`design/spec.md`.** Each passage keeps its claims and changes only
 what the split falsifies; the claim-inventory procedure of
-`spec_style.md` applies to every paragraph touched.
+`spec_rules.md` applies to every paragraph touched.
 
 - §9.1's table, 3776: materialization consumes "the `Deployment`, a
   scalar `T`" and produces `Model{T}`; a new last row, "the simulation",

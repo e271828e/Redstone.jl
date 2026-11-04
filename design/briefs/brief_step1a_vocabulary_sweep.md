@@ -40,7 +40,7 @@ leave it and flag it.
 
 ## Reading
 
-- `design/tools/spec_style.md`, whole. Especially: no em-dashes, one
+- `design/rules/spec_rules.md`, whole. Especially: no em-dashes, one
   burden per sentence, content preservation, the battery.
 - `notes_pipeline_redesign.md` item 31 and "The framing"; the roadmap's step
   1a.

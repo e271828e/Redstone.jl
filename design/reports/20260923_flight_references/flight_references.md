@@ -17,7 +17,7 @@ These tell the reader what Redstone *is*. They must be rewritten, not trimmed.
 - `spec.md` Part V intro (9641-9655) and §16 opening (10312) — "the migration of FlightPhysics and FlightApps".
 - `design/extensions.md` §1 (19-20) and §1.5 "The bias, named" (174-190) — the gap survey is framed as "how far did the FlightCore rewrite land from a general engine". §1.5 is *about* the inheritance, so it can't just be scrubbed.
 - `design/decisions.md:19-22` — says the design's full history lives in the git history of `framework_design.md` (a Flight.jl-era file).
-- `design/tools/decisions_style.md:68-70` — style ruling: FlightCore is "the predecessor in-house framework", contrast with it is lineage and goes in Rationale.
+- `design/rules/decisions_rules.md:68-70` — style ruling: FlightCore is "the predecessor in-house framework", contrast with it is lineage and goes in Rationale.
 
 ## 2. Design rules that depend on the migration
 
@@ -212,7 +212,7 @@ design/extensions.md:174:Re-examination showed the two decisions most suspected 
 design/extensions.md:176:explicitly identifies `Subsampled`'s parent-relative multipliers as a call-tree
 design/extensions.md:179:assemblies (a departure from FlightCore's execution-through-composition, coinciding
 design/extensions.md:182:Where the `FlightPhysics`/`FlightApps` assumption genuinely biased the design is the
-design/tools/decisions_style.md:68:  not divergence — it stays where it is. Ruled 2026-08-14: FlightCore, the
+design/rules/decisions_rules.md:68:  not divergence — it stays where it is. Ruled 2026-08-14: FlightCore, the
 design/spec.md:1:# A Modeling & Simulation Framework for Flight.jl — Specification
 design/spec.md:104:    - [15.2 Torture tests for the §5.2 interfaces: `PistonEngine` and the FCS PID cascade](#152-torture-tests-for-the-52-interfaces-pistonengine-and-the-fcs-pid-cascade)
 design/spec.md:106:    - [15.4 The interactive C172X demo: the periphery under load](#154-the-interactive-c172x-demo-the-periphery-under-load)

@@ -12,7 +12,7 @@ Paths below are relative to the retired `docs/spec_rewrite/`. Its
 `checks/` scripts sit beside this file, and every other file it names comes
 back with `git show` from the commits `report.md` lists.
 
-The convention the rewrite writes to is `design/tools/spec_style.md`,
+The convention the rewrite writes to is `design/rules/spec_rules.md`,
 "Marking rulings" and the rest. Briefs cite it and never restate it.
 
 ## 1. Setting up a chapter
@@ -85,7 +85,7 @@ each ruling with its reason. That covers:
   seven findings, and all seven were of this kind. Chapter 12's stopped run
   "resumable by the next `run!`" was settled by §12.6's bold and D-388, and
   the parked GUI's stop button by D-310;
-- a contradiction `decisions_style.md` rule 10 settles, where the spec and
+- a contradiction `decisions_rules.md` rule 10 settles, where the spec and
   the latest entry beat an older entry that says otherwise in passing;
 - a consequence of a decision the owner already made;
 - log upkeep: annotations, and whether a ruling gets an entry (step 8);
@@ -357,7 +357,7 @@ unit's `old.md`, which its own inventory guarantees.
 
 **From chapter 13, the brief should also:**
 
-- Write every dictation to `spec_style.md`. Two of chapter 13's carried a
+- Write every dictation to `spec_rules.md`. Two of chapter 13's carried a
   mid-sentence colon, and the rewriters had to split them.
 - Apply the one-bold test to its own bold table. R5 counted D-012's comma
   as two rulings and D-060's semicolon as one; two rulings after launch
@@ -583,7 +583,7 @@ an excerpt fails. Then, in this order:
    Spec fields the moves changed, in place, keeping each field's own order.
 4. Apply the companion additions and any other file edits the rulings name.
 5. Add the chapter to `REWRITTEN` in `design/tools/check_bold.jl`.
-6. Run `linkify.jl`, then the battery `spec_style.md` lists, and
+6. Run `linkify.jl`, then the battery `spec_rules.md` lists, and
    `linkify.jl` again as a no-op.
 7. Rebuild `design.pdf`, and commit in reviewable pieces.
 
@@ -665,7 +665,7 @@ From chapters 1 to 4:
 From chapter 12:
 
 - **A Rationale-only ruling gets a new entry, never new Position text in an
-  old one.** `decisions_style.md` rules 1 and 10 say so; the evidence check
+  old one.** `decisions_rules.md` rules 1 and 10 say so; the evidence check
   found the batch proposing the old form for 23 items (its note N1).
 - **A consequence of a Position is not a new entry.** Chapter 12's track 2
   wrote 17 entries; its verifier dropped three that restated or followed
@@ -1125,7 +1125,7 @@ From chapter 14, which held 455 rules:
 2. Rewrite incrementally from the source, never from a paraphrase (the §9.4
    trial, `design/reports/20261001_spec_rewrite_sample/`).
 3. Cut units by content; map claims another unit keeps to its `old.md`.
-4. One brief, checked for define-before-use and against `spec_style.md`.
+4. One brief, checked for define-before-use and against `spec_rules.md`.
 5. Scratch files in the agent's own unit directory.
 6. Every fix goes back to the verifier that found the problem.
 7. Factual problems stay as written until ruled; verifiers flag silent fixes.
@@ -1228,7 +1228,7 @@ From chapter 14, which held 455 rules:
 70. A ruling that moves a member between classes is ruled for every
     sentence that lists either class (chapter 13).
 71. Read in full the entry a dictation quotes, and check its scope.
-72. Dictations follow `spec_style.md`, and the brief's bold table passes
+72. Dictations follow `spec_rules.md`, and the brief's bold table passes
     the one-bold test.
 73. A pointer pair names both units' lines; a landing edit names its old
     text.

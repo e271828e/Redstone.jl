@@ -2,7 +2,7 @@
 
 The rules the API docstrings are written to, read before writing or changing
 one, by the agent that does it and by the reviewer that checks it. Like
-`spec_style.md`, it is not in the check tools' rosters; the `§` marks below
+`spec_rules.md`, it is not in the check tools' rosters; the `§` marks below
 are examples of what a docstring must not contain.
 
 ## Scope and reader
@@ -109,7 +109,7 @@ closed(run::Run) = run.termination !== nothing
 
 ## Elaboration
 
-20. **Short paragraphs in the spec's register.** `spec_style.md`'s sentence
+20. **Short paragraphs in the spec's register.** `spec_rules.md`'s sentence
     rules carry over: one burden per sentence, active voice, topic sentences
     that state the paragraph's content, no em-dashes, no colon as a
     mid-sentence connector, at most one parenthetical.
@@ -153,7 +153,7 @@ closed(run::Run) = run.termination !== nothing
     pointer.** A docstring cites neither the spec, the log, the predecessor nor
     a design file such as `linear_blocks.md`. All of it goes to the comment.
 30. **`Model` is the type; the authored tree is the component tree or the
-    root.** As in `spec_style.md`.
+    root.** As in `spec_rules.md`.
 
 ## What moves and what stays
 
@@ -201,5 +201,5 @@ closed(run::Run) = run.termination !== nothing
     each file's citation set is unchanged with its comments counted, and its
     AST with the docstrings stripped matches the base. `roster.jl` and
     `ast_check.jl` in `design/reports/20261104_docstring_audit/` run them. The
-    grep traps in `implementation.md` that read docstring text are re-checked
+    grep traps in `code_rules.md` that read docstring text are re-checked
     after a file's rewrite.

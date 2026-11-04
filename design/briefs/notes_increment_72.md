@@ -29,13 +29,13 @@ true of the `Model` as well as of the tree, so it stands.
    The README's line 4 defines a model as a tree of components and line 98
    has the build refuse "the model", the two collisions R2 closes, on the
    first page a newcomer reads. Two sentences.
-3. **No new decision entry; one `spec_style.md` bullet.** The roadmap says
-   the entries are increment one's and two's, and `decisions_style.md` rule
+3. **No new decision entry; one `spec_rules.md` bullet.** The roadmap says
+   the entries are increment one's and two's, and `decisions_rules.md` rule
    2 has a rename sweep the spec and the companions, never the log. The
    rule a future author needs (lowercase "model" names a `Model` or the
    modeled system; a sentence about declaring, wiring or building says the
    component tree or the root) is an authoring rule, so it lands in
-   `tools/spec_style.md`'s "Terms" rather than in the log or the glossary.
+   `rules/spec_rules.md`'s "Terms" rather than in the log or the glossary.
 4. **"component tree" is plain English, not a coinage**, so no glossary
    entry; `component` is the entry, linked where a rewrite creates a
    section's first use.
@@ -73,11 +73,11 @@ true of the `Model` as well as of the tree, so it stands.
    sits later at 4408. The brief's ruling asks for the link at first use;
    its appendix text has none, and the claim inventory forbids other gains.
    Ruled: the link moves to 4399 and leaves 4408, a move, not a gain, under
-   `spec_style.md`'s first-use rule. Lands with the review fix, or alone if
+   `spec_rules.md`'s first-use rule. Lands with the review fix, or alone if
    the review is empty.
 3. **No link in Part II's intro (1967).** A Part roadmap is not a section;
    it had no `component` link before, and §1 links the term. Nothing added.
-4. `spec_style.md`'s "Document structure" says "how a model is authored
+4. `spec_rules.md`'s "Document structure" says "how a model is authored
    before how it executes". That is the rule's own sense S2 ("a model is
    written as a tree"), so it stands.
 
@@ -89,7 +89,7 @@ true of the `Model` as well as of the tree, so it stands.
 2. The gloss sentence keeps its mid-sentence colon ("beside the run's two
    counters: the state holds …"), the brief's wording and the paragraph's
    own shape before the edit. Routed to the reviewer under
-   `spec_style.md`'s "Sentences".
+   `spec_rules.md`'s "Sentences".
 
 ## Stage 2 (f185ba9): accepted deviations
 

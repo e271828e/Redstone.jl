@@ -15,7 +15,7 @@ loop(dev::Nudge, handle) = (stage!(handle, dev.face => dev.v); nothing)
 # The header, the checkpoint `init!` takes at the end of boundary zero, and one
 # sparse record per drained batch behind it: what replay (§12.7) consumes, and
 # the primary record the log is derived from (D-038). The fixtures live at top
-# level for `implementation.md`'s local-scope reason.
+# level for `code_rules.md`'s local-scope reason.
 
 # Three root inputs, so a record's *position* against the writer's schema is a
 # fact worth asserting rather than a coincidence at width one.

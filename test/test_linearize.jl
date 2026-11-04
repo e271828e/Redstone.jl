@@ -2,7 +2,7 @@
 # The tap set, its collecting resolution with the four tap refusals, the seeded
 # passes of `width` directions over D-213's two-half scratch world, and the
 # returned value checked against the closed forms. The fixtures live at top
-# level for `implementation.md`'s local-scope reason; `PEND_G_L` and `PEND_C` are
+# level for `code_rules.md`'s local-scope reason; `PEND_G_L` and `PEND_C` are
 # test_trim.jl's, `resume_condition` test_lifecycle.jl's, `LeafPose`
 # test_readers.jl's.
 

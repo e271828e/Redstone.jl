@@ -200,7 +200,7 @@ abstract type" (82, a consequence of D-208/D-236's `AbstractAtRoot`, with its
 reason given); 3858–3862 "Physically silly values are acceptable by
 construction" (83, a consequence, argued). 3862–3863 lists the three rejected
 alternatives of D-051 (84); that is adversarial rationale, which
-`spec_style.md` "Rationale" sends to the log, and D-051's Rejected list holds
+`spec_rules.md` "Rationale" sends to the log, and D-051's Rejected list holds
 all three.
 
 Display-block candidates: the `probe_value` fallback methods (3843–3846); the
@@ -460,7 +460,7 @@ the log's visible "§9.x" text with them. Not worth it.
 | M10 | D-051's three rejected alternatives | §9.3 3862–3863 | deleted; D-051's Rejected list holds all three (needs the user's ruling) |
 | M11 | the chapter intro's §13.1 summary | 3398–3401 | one sentence and a pointer; the intro gains a roadmap sentence |
 | M12 | duplicated trim default | §9.6 4169–4170 | deleted; 4148–4150 states it |
-| M13 | Flight.jl comparisons | §9.6 4144–4146, 4154–4163, 4171–4175 | `companions/flight_case_studies.md`, per `spec_style.md` "Rationale" (needs the user's ruling; it moves D-139's §9.6 anchor) |
+| M13 | Flight.jl comparisons | §9.6 4144–4146, 4154–4163, 4171–4175 | `companions/flight_case_studies.md`, per `spec_rules.md` "Rationale" (needs the user's ruling; it moves D-139's §9.6 anchor) |
 
 ### Order within each section
 
@@ -584,7 +584,7 @@ keeps.
   its walk and conformance doctrine sit there.
 - Under M13: D-139 drops §9.6.
 
-Whether these Spec-field edits are licensed: `decisions_style.md` rule 2's
+Whether these Spec-field edits are licensed: `decisions_rules.md` rule 2's
 citation exception covers renumbering ("every entry … cites the CURRENT §
 numbering"). A content move is not a renumbering. The rewrite needs a ruling
 that the exception extends to moved content.
@@ -733,7 +733,7 @@ In chapter 9:
     asks for a ruling first. 4272 "Re-measurement … is pending" is half
     stale. D-162 Rationale log 5453 already called the ladder optional.
 18. 4144–4175: Flight.jl names (`c172.jl`, `f_ode!`, `f_init!`, NLopt) and
-    "today's" in normative text. `spec_style.md` "Rationale" puts Flight.jl
+    "today's" in normative text. `spec_rules.md` "Rationale" puts Flight.jl
     case studies in `companions/flight_case_studies.md`.
 19. 4151–4152: the activation gloss sits on "the nominal `Float64`
     activation", the term's second use in the bullet (first at 4149).
@@ -755,7 +755,7 @@ Outside chapter 9, met while checking citations:
     strata vocabulary D-259 retired.
 25. `extensions.md` 191: "Stratum A flattens … absolute divisors", retired
     vocabulary and pre-anchor content.
-26. `tools/spec_style.md`, "The battery": "a file checked but not linkified
+26. `rules/spec_rules.md`, "The battery": "a file checked but not linkified
     keeps plain citations, as `decisions.md` and `implementation.md` do".
     `decisions.md` is first in `linkify.jl`'s `ROSTER` (line 63) and carries
     reference links.

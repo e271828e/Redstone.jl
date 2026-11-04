@@ -181,7 +181,7 @@ launch.
   `CheckpointMismatch`, `CheckpointMidFrame` and `ArgumentInvalid` rows,
   12443 to 12482; the glossary entries `Model` 13111 and `checkpoint`
   13375. Never read the spec whole.
-- `design/tools/spec_style.md` and `decisions_style.md` whole, stage 0
+- `design/rules/spec_rules.md` and `decisions_rules.md` whole, stage 0
   only.
 - `design/implementation.md`: the head of "What is real here" (11 to
   41); the rows `### src/Redstone.jl` (43 to 50), `### src/checkpoint.jl`
@@ -212,7 +212,7 @@ launch.
 
 ### The shape
 
-One docs commit, written under `spec_style.md` and `decisions_style.md`
+One docs commit, written under `spec_rules.md` and `decisions_rules.md`
 read first. Three kinds of edit: a new log entry with its annotations, the
 spec sentences the code would otherwise falsify plus the Appendix B block
 the roadmap owes, and the queue bullet.
@@ -257,7 +257,7 @@ claim refuses). No supersession line: every clause the entry amends stays
 true of the simulation's doors.
 
 **`design/spec.md`.** Each passage keeps its claims and changes only
-what the split falsifies; the claim-inventory procedure of `spec_style.md`
+what the split falsifies; the claim-inventory procedure of `spec_rules.md`
 applies to every paragraph touched.
 
 - §12.6, 8772 to 8790: the bold ruling becomes **`checkpoint` and

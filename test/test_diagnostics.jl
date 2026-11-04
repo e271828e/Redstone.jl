@@ -2,7 +2,7 @@
 # report! from the author's loop body, the per-writer single-writer cells with
 # their ring-plus-counts bound, the frame-top fold beside the staging drain,
 # the published status — delta plus totals, heartbeat and task_state — and the
-# run's-end sweep. The devices below live at top level for `implementation.md`'s
+# run's-end sweep. The devices below live at top level for `code_rules.md`'s
 # local-scope reason.
 
 # A datum-stream parser: the §11.6 tolerance idiom verbatim — catch its own

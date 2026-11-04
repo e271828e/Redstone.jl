@@ -39,7 +39,7 @@ last bullet (`a85f5e5`).
    `StopPolicy` at their first prose use in §9.2 (3237, 3256, 3257, 3288),
    §9.7 (3731), §11.5 (5790), §12.6 (7026), §12.7 (7361), §13.4 (7755),
    §13.7 (8134), §14.1 (8496) and Appendix B. One link per type per
-   section, 5–10 word gloss, per `spec_style.md` "Terms".
+   section, 5–10 word gloss, per `spec_rules.md` "Terms".
 10. **§11.8 6329–6332.** Add the clause: the device's task does not exist
     until `run!`, so the cell has no other writer yet.
 11. **§12.4 6901–6903.** "A run with no finite `t_end` and no `stop_on`

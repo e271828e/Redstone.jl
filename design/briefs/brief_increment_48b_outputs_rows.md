@@ -15,7 +15,7 @@ compiled state. The same commit renamed `Dataflow` to `Outputs` throughout
 the spec (§9.1's paragraph at 3107–3116, the glossary entry at 12020–12024,
 the artifact rosters) and recorded in D-261's supersession paragraph
 (`9836–9842`) why the log's D-253 and D-258 keep the old name: the log keeps
-the vocabulary of its day (`tools/decisions_style.md`, rule 2). The code
+the vocabulary of its day (`rules/decisions_rules.md`, rule 2). The code
 still says `Dataflow`; this increment makes it conform. `pending.md:21–25`
 is the bullet it retires. Roadmap step 7b of
 `roadmap_pipeline_redesign.md` is written after landing.

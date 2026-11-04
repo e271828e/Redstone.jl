@@ -380,7 +380,7 @@ function leaves_wire_relation()
         # A declaration at the marker prints as its author wrote it, which is what
         # a `WalkingFaceAtFrozenEntry` message shows; the payload keeps the type.
         # (a parametric type's printed form carries its own module, so the
-        # containment rather than equality — implementation.md's caveat.)
+        # containment rather than equality — code_rules.md's caveat.)
         @test string(Marker) == "T"
         @test occursin("SVector{3, T}", string(SVector{3,Marker}))
     end

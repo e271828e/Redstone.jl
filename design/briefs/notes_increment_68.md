@@ -49,7 +49,7 @@ for the user. Nothing here is pushed.
    admits); §13.6 needs no edit; every `stop_on` hit the brief did not list
    is treated under the brief's "treat every hit"; log entries beyond the
    brief's six (D-081 … D-290, D-268 included) stay unannotated under
-   `decisions_style.md`'s rule 2, since D-268's rule carries over unchanged
+   `decisions_rules.md`'s rule 2, since D-268's rule carries over unchanged
    and the spec keeps citing it; §12.7's replay rewrite gains one sentence
    on replaying under the same `ignore_stop_requests`.
 
@@ -144,7 +144,7 @@ return) is equivalent, M12 (`unique!` dropped) survived.
 
 19. **D-316 edited in place**, not annotated: the entry landed today in
     this unpushed arc, and the edit narrows one clause's wording.
-    `decisions_style.md` rule 1 guards settled history.
+    `decisions_rules.md` rule 1 guards settled history.
 20. **The fixer's deviations accepted:** a `mutable_position(cell_type) ===
     nothing` guard ahead of the `leaf_types` walk at the root-input check
     (the same guard `:handle_at_root` uses; a self-referencing mutable type

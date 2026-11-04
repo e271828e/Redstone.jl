@@ -11,7 +11,7 @@ the four appendices. It worked in `docs/spec_rewrite/`, which closed on
   appendix's lessons in its section 5. It is frozen as of the close.
 - `checks/` holds the scripts the recipe names.
 
-The convention the rewrite wrote to is `design/tools/spec_style.md`,
+The convention the rewrite wrote to is `design/rules/spec_rules.md`,
 and it outlives the rewrite. `check_bold.jl` holds the rewritten chapters to
 its bold rule, and the rest of the battery checks every part.
 

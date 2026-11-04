@@ -212,8 +212,8 @@ pipeline table and `Simulation(deployment, T)` listing, §12.1 and §12.6's
 field roster, §11.5 and §13.4 where `Run{T}` and the clock appear, §11.8's
 loop cell. One new decision entry states the split and supersedes the clauses
 of D-254, D-256, D-260 and D-282 that the split retires, because
-`spec_style.md` has every bolded ruling cite the entry that rules it and
-`decisions_style.md` rule 1 amends the log by a later entry; the entry lands
+`spec_rules.md` has every bolded ruling cite the entry that rules it and
+`decisions_rules.md` rule 1 amends the log by a later entry; the entry lands
 docs-commit-first, in this increment's docs stage. The allocation canary
 guards the hooks.
 
@@ -260,7 +260,7 @@ brief re-checks them.
 under D-317, with no new entry: the spec, the companions and the README
 swept by the seven classes `brief_increment_72_model_vocabulary.md` states,
 the checkpoint gloss refreshed at every site, the glossary's `nominal`
-sentence, and the authoring rule in `tools/spec_style.md`. The sweep was
+sentence, and the authoring rule in `rules/spec_rules.md`. The sweep was
 smaller than R2 anticipated: nine spec sentences and two README sentences
 collided, and everything else read true of the `Model` as well. The
 rulings and the open points are `notes_increment_72.md`. The queue bullet

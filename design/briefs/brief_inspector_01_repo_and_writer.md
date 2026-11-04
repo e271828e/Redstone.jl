@@ -116,7 +116,7 @@ DiagnosticError, descriptor, build`. Four methods and the primitive:
   `open(io -> write_descriptor(io, x; name), path, "w")`. The root form's
   rethrow passes through `open`, which closes the file first.
 - One docstring on the function, in the core's docstring convention
-  (`design/tools/docstring_style.md` is not routed; the core's
+  (`design/rules/docstring_rules.md` is not routed; the core's
   `descriptor` docstring at `src/descriptor.jl:18` to `39` is the model),
   stating the four argument forms, the root form's rethrow, the encoder
   settings and that `name` is written only when given. Nothing is

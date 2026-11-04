@@ -26,7 +26,7 @@ The outcome, by the numbers:
 
 Do these once, not per chapter.
 
-- **The convention lives in `tools/spec_style.md`.** Section 3 below is its
+- **The convention lives in `rules/spec_rules.md`.** Section 3 below is its
   final form. Until it is written there, put it in the brief verbatim.
 - **Copy `checks/` into the new chapter's report directory.** The tools are
   generic: `check9.py` checks any unit, `boldcheck.py` any bold-only edit,
@@ -74,7 +74,7 @@ track); how many sentences get bold (answer: one per ruling).
 unit. It holds:
 
 - what to read first: the convention, the finished §9.4, the survey's parts
-  for the unit, `spec_style.md`;
+  for the unit, `spec_rules.md`;
 - the convention, with every ruling of checkpoint 1;
 - what may not change, and that factual problems stay as written and go to
   `rulings.md`;
@@ -92,7 +92,7 @@ follow each claim. A claim another unit keeps is mapped to that unit's
 - The subheading order came from the survey's labels and put "Rendering"
   before the `Schedule` it renders. Check every proposed order for
   define-before-use.
-- It said to keep every glossary link the old text had. `spec_style.md` links
+- It said to keep every glossary link the old text had. `spec_rules.md` links
   a term once per section, at first use; say that.
 - It allowed the citation within 40 characters of the bold. With bold on the
   headline clause, the citation follows anywhere in the same sentence.
@@ -229,7 +229,7 @@ This supersedes the trial report's list.
   Flight.jl machinery used as if known (move it to a companion, or say what it
   is), an aerospace example (one introducing clause, claiming nothing the
   source does not), or FlightCore named as the predecessor (fine).
-- **Sentences** as `spec_style.md` has them: short, active, one point each, no
+- **Sentences** as `spec_rules.md` has them: short, active, one point each, no
   em dashes, one parenthetical at most, no mid-sentence colon.
 
 Bold weight is measured in words, not spans. Here the span count stayed level
@@ -273,7 +273,7 @@ roughly 0.4M subagent tokens per 1,000 words of chapter.
    later cost rework.
 2. Rewrite incrementally from the source, never from a paraphrase (trial).
 3. Cut units by content; map claims another unit keeps to its `old.md`.
-4. One brief, checked for define-before-use and against `spec_style.md`.
+4. One brief, checked for define-before-use and against `spec_rules.md`.
 5. Scratch files in the agent's own unit directory.
 6. Every fix goes back to the verifier that found the problem.
 7. Factual problems stay as written until ruled; verifiers flag silent fixes.

@@ -1,7 +1,7 @@
 #!/usr/bin/env julia
 #
 # Bold-ruling checker for the chapters of spec.md the readability rewrite has
-# reached (`tools/spec_style.md`, "Marking rulings"). Over each chapter in
+# reached (`rules/spec_rules.md`, "Marking rulings"). Over each chapter in
 # `REWRITTEN` it errors on:
 #
 #   - an old **Rule.**, **Why.** or **Example.** label;

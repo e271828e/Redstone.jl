@@ -10673,7 +10673,7 @@ used "dataflow" for it and read wrongly at most sites: a dataflow is a
 graph, and the spec speaks of positions in the order, subsets of it, and
 re-running it, none of which a graph has. The type keeps the name because it
 carries the graph. The log keeps its vocabulary of the day under
-`decisions_style.md` rule 2; the sweep is the spec's and its companions'.
+`decisions_rules.md` rule 2; the sweep is the spec's and its companions'.
 
 **Rejected.**
 - *"Dataflow" for the order:* a graph has no positions.
@@ -10704,7 +10704,7 @@ retires "stratum".
   type". "Stratum A" reads "the structure step", "Stratum B" "the nominal
   evaluation", "Stratum C" "activation"; [Appendix C][sC]'s group headings, [§9.6][s9-6]'s
   heading and the glossary follow.
-- The log keeps its vocabulary of the day (`decisions_style.md` rule 2).
+- The log keeps its vocabulary of the day (`decisions_rules.md` rule 2).
   [D-253][d-253]'s fourth bullet is amended in place to the nominal evaluation's
   return.
 
@@ -11425,7 +11425,7 @@ defines no bundle field keeps its noun phrase.
 - [§8.1][s8-1]'s class 1 reads from here: a declaration is a noun phrase naming what
   it returns, prefixed by the bundle field it defines where one exists.
 - No aliases and no deprecation shims, on [D-220][d-220]'s terms. The log keeps the
-  old spellings under `decisions_style.md`'s rule 2.
+  old spellings under `decisions_rules.md`'s rule 2.
 
 **Spec.** [§3.4][s3-4], [§4.1][s4-1], [§4.3][s4-3], [§4.4][s4-4], [§5.2][s5-2], [§5.3][s5-3], [§5.4][s5-4], [§6.2][s6-2], [§7.1][s7-1], [§7.2][s7-2], [§7.3][s7-3], [§8.1][s8-1],
 [§8.2][s8-2], [§8.3][s8-3], [§8.4][s8-4], [§8.5][s8-5], [§8.6][s8-6], [§8.8][s8-8], [§9.1][s9-1], [§9.3][s9-3], [§9.4][s9-4], [§9.5][s9-5], [§9.7][s9-7], [§9.8][s9-8],
@@ -11448,7 +11448,7 @@ word prefixes `state_` and `output_`. One rule replaces them. Each
 declaration is named by the bundle field it defines, which is the left-hand
 side of its formula: ẋ gives `x_derivative`, s⁺ gives `s_update`, y gives
 `y_state` and `y_direct`, and the initial values give `x_init`, `s_init` and
-`m_init`. The rule is the subscript convention `implementation.md` already
+`m_init`. The rule is the subscript convention `code_rules.md` already
 codifies for locals, symbol first and qualifier after, as in `n_x`, `t_seg`
 and `y_x`. Tab completion then groups by what an author is writing, `x_`
 listing init, derivative and projection together.
@@ -11478,7 +11478,7 @@ error in a body that calls the declaration, and the suite names such locals
 `h_x` and `h_xu`, which read as partial derivatives; a word qualifier carries
 no such reading. `ws_init` takes the bundle field because the rule says so,
 and `x_derivative` spells its word in full beside `x_projection`, under
-`implementation.md`'s full-word rule.
+`code_rules.md`'s full-word rule.
 
 [D-076][d-076], [D-144][d-144] and [D-220][d-220] are annotated, not superseded. [D-076][d-076]'s `_types` suffix
 and its separation from `input_faces` survive, further apart than before.
@@ -12469,9 +12469,9 @@ on that ground or beside it.
   `input_passthrough`/`output_passthrough`, every `get_` selector and every
   diagnostic kind name. Prose keeps "root input", "the state derivative" and
   "the projection".
-- `deriv` joins `implementation.md`'s abbreviation roster.
+- `deriv` joins `code_rules.md`'s abbreviation roster.
 - No aliases and no deprecation shims, on [D-220][d-220]'s terms. The log keeps the
-  old spellings under `decisions_style.md`'s rule 2.
+  old spellings under `decisions_rules.md`'s rule 2.
 
 **Spec.** [§3.3][s3-3], [§3.4][s3-4], [§4.3][s4-3], [§5.2][s5-2], [§5.3][s5-3], [§5.4][s5-4], [§6.1][s6-1], [§6.2][s6-2], [§7.1][s7-1], [§8.1][s8-1],
 [§8.2][s8-2], [§8.5][s8-5], [§8.6][s8-6], [§8.8][s8-8], [§9.1][s9-1], [§9.2][s9-2], [§9.3][s9-3], [§9.4][s9-4], [§9.5][s9-5], [§9.7][s9-7], [§11.3][s11-3], [§13.1][s13-1],
@@ -12530,7 +12530,7 @@ rests on [§8.6][s8-6] alone, because its ground in the `u_connections` name is 
 - *`wires`:* the spec's everyday noun and `Group`'s field, but it drops the
   `_connections` suffix that ties the three declarations, and a package
   function of that name would take it from every `wires` local and from the
-  `Group` field under `implementation.md`'s naming rules.
+  `Group` field under `code_rules.md`'s naming rules.
 - *Keeping `child_connections` beside `u_connections` and `y_connections`:*
   the name discriminates nothing, since all three declarations connect child
   faces.
@@ -13028,7 +13028,7 @@ below are its measured instances.
   promises the outcome where it matters, [§14.4][s14-4]'s zero-allocation write path
   among them, so those walks are defects against their own sections and are
   fixed as such. The technique rests on compiler thresholds that can move
-  between Julia versions, so it is recorded in `implementation.md`'s
+  between Julia versions, so it is recorded in `code_rules.md`'s
   authoring caveats and not ruled.
 
 ### D-290 — Localization's exact detection, left-end discriminator, endpoint and `t*` boundary
@@ -13491,7 +13491,7 @@ declarations they feed.
   `input_passthrough`/`output_passthrough`, `x_deriv` and every diagnostic
   kind name.
 - No aliases and no deprecation shims, on [D-220][d-220]'s terms. The log keeps the
-  old spellings under `decisions_style.md`'s rule 2.
+  old spellings under `decisions_rules.md`'s rule 2.
 
 **Spec.** [§3.3][s3-3], [§4.3][s4-3], [§6.1][s6-1], [§6.2][s6-2], [§8.1][s8-1], [§8.2][s8-2], [§8.5][s8-5], [§8.6][s8-6], [§8.8][s8-8], [§9.1][s9-1], [§11.3][s11-3],
 [§11.7][s11-7], [§13.1][s13-1], [§13.3][s13-3], [§13.5][s13-5], [§13.7][s13-7], [§14.1][s14-1], [§14.2][s14-2], [Appendix B][sB], [Appendix C][sC],
@@ -13950,7 +13950,7 @@ question, whether the wire crosses the boundary and in which direction, and
 a scope word is the right answer to its first half.
 
 `local` is a Julia keyword, and `local_wires` is an ordinary identifier the
-parser never confuses with it. `implementation.md`'s naming rules use
+parser never confuses with it. `code_rules.md`'s naming rules use
 "a local" for a local variable, and "local wire" is always two words, so the
 two senses never meet in one phrase.
 

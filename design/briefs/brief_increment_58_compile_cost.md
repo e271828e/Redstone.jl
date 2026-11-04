@@ -298,8 +298,8 @@ local never takes the name `children`, which is a package function.
 One commit: `design/spec.md`, `design/decisions.md`,
 `design/pending.md`.
 
-Read first, beyond the list above: `design/tools/spec_style.md` and
-`design/tools/decisions_style.md`; the chapter's rewrite recipe,
+Read first, beyond the list above: `design/rules/spec_rules.md` and
+`design/rules/decisions_rules.md`; the chapter's rewrite recipe,
 `design/reports/20261001_chapter9_rewrite/report.md`, which holds the
 convention chapter 9 is written in; that report's `rulings_batch.md`, items
 R29 (445–457) and R57 (756–762), the two rulings this stage closes; D-086 and
@@ -363,7 +363,7 @@ them an entry to cite. This stage gives them one.
 
    And "The spec's readability rewrite" bullet loses its last sentence,
    "§9.7's compile-cost block waits on the compile-time ruling above."
-8. Run the battery `spec_style.md` names (lines 97–101): `check_refs.jl`,
+8. Run the battery `spec_rules.md` names (lines 97–101): `check_refs.jl`,
    `check_rows.jl`, `check_glossary.jl --strict`, and `linkify.jl` as a no-op
    on re-run. All green. The pandoc line after the commit is the
    post-commit hook rebuilding the PDFs.

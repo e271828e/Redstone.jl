@@ -215,8 +215,8 @@ The user's ruling, 2026-10-08, to be recorded by stage 0 as D-316.
 
 ### The shape
 
-One docs commit, written under `design/tools/decisions_style.md` and
-`spec_style.md`, read first. Historical entries are annotated, never
+One docs commit, written under `design/rules/decisions_rules.md` and
+`spec_rules.md`, read first. Historical entries are annotated, never
 rewritten.
 
 - **D-316** in `design/decisions.md`, before the `<!-- citation link

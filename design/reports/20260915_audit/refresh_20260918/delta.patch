@@ -509,7 +509,7 @@ index e8e0ee5..b0392ab 100644
 +graph, and the spec speaks of positions in the order, subsets of it, and
 +re-running it, none of which a graph has. The type keeps the name because it
 +carries the graph. The log keeps its vocabulary of the day under
-+`decisions_style.md` rule 2; the sweep is the spec's and its companions'.
++`decisions_rules.md` rule 2; the sweep is the spec's and its companions'.
 +
 +**Rejected.**
 +- *"Dataflow" for the order:* a graph has no positions.

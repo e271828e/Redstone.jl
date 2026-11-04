@@ -4,7 +4,7 @@ Tip at drafting: `f16981a`, the docs commit that made the component library
 public as a group (Appendix B's library paragraph, D-226's annotation),
 over `beda597`, which fixed the signature rule after the pilot. Written on
 2026-10-27. The rules are
-`design/tools/docstring_style.md`, whole (160 lines); the pilot that
+`design/rules/docstring_rules.md`, whole (160 lines); the pilot that
 calibrated them is `src/deployment.jl` at `c2c46fe` and `beda597`, three
 docstrings and their `# Design:` comments, which every agent reads as the
 worked example before touching its own file. This brief never restates the

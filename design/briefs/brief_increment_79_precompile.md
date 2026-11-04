@@ -83,7 +83,7 @@ child with the coverage flag dropped, measured 0.023 s in the child.
 
 None is a design decision in the log's sense: the dependency, the
 workload's content and the test's form are implementation, and rule 9 of
-`tools/decisions_style.md` gives them no entry. They are listed so the user
+`rules/decisions_rules.md` gives them no entry. They are listed so the user
 confirms them before the docs commit.
 
 1. **PrecompileTools as a dependency**, compat `"1"`. Its
@@ -145,7 +145,7 @@ confirms them before the docs commit.
   session tax into a CI artifact."
 
 No bold is added: the ruling is the bolded headline, at 5354 after the
-edit, and the bullet elaborates it. The battery runs after the edit (`tools/spec_style.md`,
+edit, and the bullet elaborates it. The battery runs after the edit (`rules/spec_rules.md`,
 "The battery").
 
 ## Out of scope

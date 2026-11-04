@@ -54,14 +54,14 @@ throughout:
 4. **Implicit subjects are made explicit.** Name who does what: "The frame
    falls through, and the boundary iteration detects and fires the event."
 
-Everything `spec_style.md` already fixes stays in force: `Rule.` / `Why.`
+Everything `spec_rules.md` already fixes stays in force: `Rule.` / `Why.`
 markers, first-use gloss + glossary link per section, section template,
 reference-style citations, constructive rationale in, adversarial rationale
 out. Word count is allowed to stay flat or grow slightly; the pilot ran
 +4%.
 
 **Step 0, docs-commit-first.** Fold the Language rules into
-`tools/spec_style.md` under "Sentences" before the first section is touched,
+`rules/spec_rules.md` under "Sentences" before the first section is touched,
 so every later edit by anyone is held to the same register. One small commit.
 
 ## 3. Unit of work and order
@@ -190,7 +190,7 @@ one that explains the budget's purpose.
 
 ## 7. Tooling proposed
 
-- `tools/check_linkset.jl` (or a shell one-liner in `spec_style.md`): given
+- `tools/check_linkset.jl` (or a shell one-liner in `spec_rules.md`): given
   a line range and a saved baseline, diff the three link sets. Joins the
   battery for the duration of the rewrite. Small; Sonnet can write it.
 - The claim-inventory files stay in the scratchpad per session and are

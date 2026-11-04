@@ -19,7 +19,7 @@ Paths below are relative to this report directory,
 3. `survey.md`: parts A, B, C, D and G for your unit's sections, and part F's
    items for them. It maps every rule to its entry, the overlaps, the moves,
    the inbound citations and the hazards.
-4. `design/tools/spec_style.md`, sections "Sentences", "Terms" and
+4. `design/rules/spec_rules.md`, sections "Sentences", "Terms" and
    "Rationale". Its "Section template" markers (**Rule.**, **Why.**,
    **Example.**) are superseded by the convention below.
 5. Your unit's `units/<U>/old.md`, the text you rewrite.

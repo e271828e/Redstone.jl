@@ -19,7 +19,7 @@ wrong at the keyboard, stop and report rather than deviate silently.
 
 The second of the four library increments `pending.md` orders, the one
 block the user set apart on 2026-11-03. No log entry
-(`decisions_style.md` rule 9); the inventory carries the design, docs
+(`decisions_rules.md` rule 9); the inventory carries the design, docs
 commit first, and the code conforms. The rulings, made on the prototype's
 readings:
 
@@ -220,7 +220,7 @@ for what they owe: open-mind stance, probe scripts in the scratchpad,
 - **The hot path.** `@ballocated` 0 on every phase body and quiet boundary
   of the test models at `(Float64, LinearizeDual)`.
 - **Naming** over every touched line, and the docstring against
-  `docstring_style.md`.
+  `docstring_rules.md`.
 - **Mutants on a scratch copy**, each named test going red, the list above
   re-run plus any the reviewer adds. A surviving mutant is a missing test,
   or an acceptable survivor named with its reason.

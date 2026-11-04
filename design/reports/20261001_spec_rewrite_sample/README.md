@@ -18,4 +18,4 @@ checks Version 4 against the original, and `checks/build_pdf.sh` renders
 every version with `design.pdf`'s settings into `samples.pdf` (untracked).
 
 The report is frozen evidence. The convention lands in
-`design/tools/spec_style.md` when a rewrite is adopted.
+`design/rules/spec_rules.md` when a rewrite is adopted.

@@ -75,7 +75,7 @@ recount after every edit. Every line stage 1 rewrites is listed under
   (726–750), `diagnostics.jl` (44–112), `bindings.jl` (610–621); the
   authoring caveats (825–889) in full; "Naming" (890) and "Running the
   suite" (968), cited below and never restated.
-- `tools/spec_style.md` and `tools/decisions_style.md` before touching the
+- `rules/spec_rules.md` and `rules/decisions_rules.md` before touching the
   spec or the log; the header of `tools/check_glossary.jl` before the
   glossary.
 
@@ -370,7 +370,7 @@ definitions` marker (11241).
   face, the internally wired input) as they are; they now read as
   consequences of the rule. One sentence on refusals: a refusal spells the
   selector as authored and names the mount. Every existing normative claim
-  of the section survives; run the claim inventory of `spec_style.md`.
+  of the section survives; run the claim inventory of `spec_rules.md`.
 - Appendix C, 11376–11380: the `TapResolution` row adds "the mount path;
   for an internally wired face at a mount, the producer".
 - Appendix D, 12373–12376: after "Path concatenation happens once, at

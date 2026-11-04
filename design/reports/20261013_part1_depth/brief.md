@@ -70,8 +70,8 @@ Borderline items:
   commit anything. Never touch `src/`, `test/`, `implementation.md`,
   `pending.md`, `extensions.md` or `docs/spec_rewrite/`; the orchestrator
   sweeps those.
-- **Read first.** `design/tools/spec_style.md` and
-  `design/tools/decisions_style.md`, in full. They bind every edit.
+- **Read first.** `design/rules/spec_rules.md` and
+  `design/rules/decisions_rules.md`, in full. They bind every edit.
   Chapters 1 to 10 have had their readability rewrite: no **Rule.**,
   **Why.** or **Example.** labels there, and bold marks a ruling once, with
   its D-citation in the same sentence. Each ruling is bold in one place only,

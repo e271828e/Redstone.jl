@@ -28,8 +28,8 @@ tree contradicts a claim made here, follow the tree and say so in the report.
   line range, never whole.
 - `design/decisions.md`: D-257 (lines 9621–9660), the third bullet of
   its position.
-- `design/tools/spec_style.md` before editing the spec,
-  `design/tools/decisions_style.md` before amending the log (the
+- `design/rules/spec_rules.md` before editing the spec,
+  `design/rules/decisions_rules.md` before amending the log (the
   amendment form is in there). The headers of `design/tools/check_refs.jl`,
   `check_rows.jl` and `linkify.jl` say what each checks and how to run it.
 - `design/implementation.md`: the rows for `src/assembly.jl` (lines
@@ -113,7 +113,7 @@ This brief says "chain" in prose only. No new abbreviation.
    terminal, one line per consumer where an input face fans out. Keep the
    D-257 citation.
 3. D-257's third bullet is amended in the log's amendment form (see
-   `decisions_style.md`), dated 2026-09-30, saying the printer is built and
+   `decisions_rules.md`), dated 2026-09-30, saying the printer is built and
    the pending bullet retired.
 4. Run `check_refs.jl`, `check_rows.jl`, `linkify.jl`; all green. Commit the
    spec and the log alone.

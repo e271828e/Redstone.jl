@@ -206,7 +206,7 @@ Nothing under `src/` or `test/` changes, so `Redstone`'s gate is not run.
 ### Bookkeeping, in the same commit
 
 - `design/companions/examples_inventory.md`: the inventory row's status
-  reads `shipped`. Run the docs battery (`tools/spec_style.md`, "The
+  reads `shipped`. Run the docs battery (`rules/spec_rules.md`, "The
   battery"): `linkify.jl`, `check_refs.jl`, `check_rows.jl`,
   `check_glossary.jl --strict`, `check_bold.jl`, `linkify.jl` again as a
   no-op.

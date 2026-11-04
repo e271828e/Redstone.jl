@@ -234,7 +234,7 @@ function arguments), §8.6, §8.8, §9.5, §11.3, §13.9, Appendix C; the
 descriptor format bump; the inspector's `visual_grammar.md` gets a note on the
 unlabeled port.
 
-Read `tools/spec_style.md` and `tools/decisions_style.md` before either, and
+Read `rules/spec_rules.md` and `rules/decisions_rules.md` before either, and
 run their batteries after.
 
 ## Plan for the next session

@@ -29,7 +29,7 @@ before and after.
    "the clock's step increments" to "the clock's frame increments". The
    agent judged that they name the field, and the coordinator agrees.
 7. **The log was not swept.** A rename applies forward
-   (`decisions_style.md`, rule 2).
+   (`decisions_rules.md`, rule 2).
 
 Left for the user:
 
@@ -261,7 +261,7 @@ went beyond the bullets' text are listed here.
    aircraft/monitor/out`): under §6.1's one-level rule a root face reaches a
    grandchild's port only through the child's face, so the two-hop form is
    the only one the printer can produce. The agent found no amendment
-   template in `decisions_style.md` and used the in-log "(Amended date: …)"
+   template in `decisions_rules.md` and used the in-log "(Amended date: …)"
    parenthetical. Left: `src/assembly.jl`'s pre-existing comments near lines
    944–965 say "chain" for the obligation chain, beside the new route
    vocabulary; D-257's amended bullet still calls the item the "Smaller"

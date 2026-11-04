@@ -20,7 +20,7 @@ workspace root of its own, with `examples/test` as its member, so
 root. It reaches `Redstone` through a `[sources]` entry with `path = ".."`,
 never through membership in the root workspace, and keeps its own manifest.
 `Redstone`'s manifest therefore never lists what only an example needs, and
-the gate (`implementation.md`, "Running the suite") installs and loads none
+the gate (`rules/code_rules.md`, "Running the suite") installs and loads none
 of it.
 
 Two placements were weighed before this one.

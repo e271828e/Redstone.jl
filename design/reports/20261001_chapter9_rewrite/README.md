@@ -17,4 +17,4 @@ section 7. From this directory:
   settings into `chapter9.pdf` (untracked).
 
 The report is frozen evidence of this run. The convention lands in
-`design/tools/spec_style.md`.
+`design/rules/spec_rules.md`.

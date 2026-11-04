@@ -206,8 +206,8 @@ policy).
 
 ## Spec and log edits (the docs stage)
 
-Read `tools/spec_style.md` before touching the spec and
-`tools/decisions_style.md` before touching the log.
+Read `rules/spec_rules.md` before touching the spec and
+`rules/decisions_rules.md` before touching the log.
 
 1. **§5.2's signature block (542–557).** Rewrite with the new names. The
    block currently has one comment per tier stating each function's maximal

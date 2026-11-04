@@ -15,7 +15,7 @@ wrong at the keyboard, stop and report rather than deviate silently.
 ## What is settled
 
 The user's rulings of 2026-10-08, all library content. None earns a log
-entry: `decisions_style.md` rule 9 keeps implementation policy out of the
+entry: `decisions_rules.md` rule 9 keeps implementation policy out of the
 log, D-313 says a listed block is built whenever wanted, and nothing in the
 spec names the PID's or the delay's shape (§13.7's starting inventory at
 9862 to 9875 lists neither; the `PID` spellings at spec lines 716 and 3071
@@ -262,9 +262,9 @@ the design, docs-commit-first, and the code conforms.
 
 ### The shape
 
-One docs commit, written under `design/tools/spec_style.md`'s
+One docs commit, written under `design/rules/spec_rules.md`'s
 battery section (144 on) read first; no spec or log edit, so
-`decisions_style.md` is not opened.
+`decisions_rules.md` is not opened.
 
 - **`design/companions/pid_anti_windup.md`.** Section 4's "The
   grouping" paragraph (168 to 174) gains the weighted law: `b` in the

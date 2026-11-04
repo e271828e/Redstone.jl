@@ -15,7 +15,7 @@ the spec keeps its current text. Nothing in this commit decides anything
 new: a place where you would have to invent a rule is a finding for the
 report, not an edit.
 
-Also read: `design/tools/spec_style.md` whole, especially "Content
+Also read: `design/rules/spec_rules.md` whole, especially "Content
 preservation" (the claim-inventory procedure) and "Terms";
 `design/briefs/notes_pipeline_redesign.md` whole (the register the
 entries came from); `roadmap_pipeline_redesign.md`, section "Decisions

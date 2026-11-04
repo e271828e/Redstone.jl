@@ -37,7 +37,7 @@ here, follow the tree and say so in the report.
   log paragraphs (lines 5655–5700 and 5715–5745), which already say the log
   holds the published snapshots themselves, by reference, with zero extra
   copies. Never the whole file.
-- `design/tools/spec_style.md` before editing the spec; the headers of
+- `design/rules/spec_rules.md` before editing the spec; the headers of
   `design/tools/check_refs.jl`, `check_rows.jl` and `linkify.jl`.
 - `design/implementation.md`: the `src/dataplane.jl` row (471–496) and
   the `src/sim.jl` row (295–416, the accessors bullet at its end);

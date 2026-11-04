@@ -50,7 +50,7 @@ No superseded entry was cited, and none is now.
   D-139, so the field would drop §9.6 (survey part D; needs the ruling on
   whether Spec-field edits cover moved content).
 - D-139 Rationale (log 4400) corrects §9.6's `Kinematics.Initializer` claim.
-  It stays as history (`decisions_style.md` rule 1).
+  It stays as history (`decisions_rules.md` rule 1).
 - `trim_environment_walkthrough.md` 502 ("§9.6 keeps per-residual scalings
   aircraft-side") now points at content in `flight_case_studies.md` section 4.
   Proposed retarget: that section, or §14.7 ("The FlightCore formulation's core

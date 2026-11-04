@@ -105,7 +105,7 @@ Heading shape, Status, field order, sorted Spec fields and titles all PASS. No
 history in any Position.
 
 - **minor (template).** Four Rejected items read "*None recorded for …*"
-  (D-283, D-285, D-287, D-288). No rule in `decisions_style.md` covers this,
+  (D-283, D-285, D-287, D-288). No rule in `decisions_rules.md` covers this,
   and no other entry uses it. Fix: add the convention to the style guide, or
   drop the items.
 

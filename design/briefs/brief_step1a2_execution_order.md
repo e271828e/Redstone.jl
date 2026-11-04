@@ -28,7 +28,7 @@ Two sites were about the graph all along and take **"feedthrough graph"** or
 
 ## Reading
 
-`design/tools/spec_style.md`, whole. Then the table below; read each
+`design/rules/spec_rules.md`, whole. Then the table below; read each
 site in its paragraph before applying the replacement, and rewrap the
 paragraph to 80 rendered columns where the new phrase changes line lengths.
 

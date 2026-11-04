@@ -8,7 +8,7 @@ chapter's brief. "The brief" below means the chapter's.
 
 ## Read first
 
-1. `design/tools/spec_style.md`, all of "Sentences", "Terms", "Section
+1. `design/rules/spec_rules.md`, all of "Sentences", "Terms", "Section
    template", "Marking rulings", "Rationale" and "Content preservation". It
    is the convention you write to. Neither this file nor the brief restates
    it.
@@ -45,7 +45,7 @@ log; never read it whole.
   stays, and the proposal goes in `rulings.md`.
 - **Factual problems you find** stay as written and go in `rulings.md` with
   evidence, unless a ruling covers them.
-- **Bold**: follow `spec_style.md`, "Marking rulings". Bold the headline
+- **Bold**: follow `spec_rules.md`, "Marking rulings". Bold the headline
   clause only; its D-citation may sit anywhere later in the same sentence.
   Every **Rule.**, **Why.** and **Doctrine:** label goes, and every bold
   lead-in becomes a `####` topic label, a plain topic sentence or a bold
@@ -64,7 +64,7 @@ log; never read it whole.
   text that defines it, unless a pointer says where. The brief says whether
   any `####` anchor of the chapter is linked from elsewhere.
 - **Glossary links**: one per term per section, at its first use, with the
-  gloss `spec_style.md` asks for. Not every link the old text had (part A
+  gloss `spec_rules.md` asks for. Not every link the old text had (part A
   lists the doubled and late links). A term whose first use moved needs its
   link at the new first use. Where a section spans two units, the brief
   assigns each term's first-use link; grep the sibling's `new.md` before

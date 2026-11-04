@@ -72,9 +72,9 @@ user reviews them in `notes_increment_72.md`.
   refuse "the model", the two collisions R2 closes. Two sentences.
 - **No new decision entry, and one style rule.** The roadmap says the
   entries are increment one's and two's. **(this brief)** A sweep that moves
-  no concept's boundary earns none (`decisions_style.md` rule 2's "a rename
+  no concept's boundary earns none (`decisions_rules.md` rule 2's "a rename
   sweeps the spec and its companions, never the log"). The rule a future
-  author needs lives in `tools/spec_style.md`'s "Terms", one bullet (stage
+  author needs lives in `rules/spec_rules.md`'s "Terms", one bullet (stage
   0). The log is not swept: `decisions.md`'s 193 lowercase uses keep the
   vocabulary of their day.
 - **"component tree" gets no glossary entry.** **(this brief)** It is plain
@@ -108,7 +108,7 @@ user reviews them in `notes_increment_72.md`.
 
 ## Out of scope
 
-- The log, by `decisions_style.md` rule 2. `extensions.md`'s nine uses
+- The log, by `decisions_rules.md` rule 2. `extensions.md`'s nine uses
   (113, 125, 138, 157, 162, 185, 193, 194, 362), all S2 or S6.
   `implementation.md`, `pending.md` beyond the queue bullet,
   `inspector/initial_design.md`, every report and brief, `docs/spec_rewrite/`.
@@ -118,7 +118,7 @@ user reviews them in `notes_increment_72.md`.
 - The `Float32` frame-slack open point of `notes_increment_71.md` 217 to
   224; the user's.
 - D-317's and D-319's `Spec` fields, and every annotation.
-- Any sentence's claims. The claim-inventory procedure of `spec_style.md`
+- Any sentence's claims. The claim-inventory procedure of `spec_rules.md`
   governs every paragraph touched: the same code spans, citations and
   glossary links before and after, except the two additions this brief
   names (the `Model` link in §1, `[D-317]` in `nominal`, `[D-319]` and
@@ -130,8 +130,8 @@ user reviews them in `notes_increment_72.md`.
   "Increment three" (243 to 246); `notes_increment_71.md` 198 to 224;
   `notes_increment_70.md`'s "Open points for the user" (the `Model` word
   hits bullet, last in the file).
-- `design/tools/spec_style.md` whole (183 lines), stages 0 and 1;
-  `decisions_style.md` rules 2 and 6 (stage 0).
+- `design/rules/spec_rules.md` whole (183 lines), stages 0 and 1;
+  `decisions_rules.md` rules 2 and 6 (stage 0).
 - `design/decisions.md` D-317 (13479 to 13646), D-318 (13647 to
   13721), D-319 (13722 to 13841); the linkify marker is 13842. Read, never
   edited.
@@ -154,7 +154,7 @@ user reviews them in `notes_increment_72.md`.
 ### The shape
 
 One docs commit touching `design/spec.md` and
-`design/tools/spec_style.md`. Chapters 7 to 10 carry the readability
+`design/rules/spec_rules.md`. Chapters 7 to 10 carry the readability
 rewrite's unlabeled form and the others the old **Rule.**/**Why.** markers;
 a rewording follows its chapter's markers and adds no bold. Every rewritten
 line is re-wrapped to 80 rendered columns, link markup collapsed. Four
@@ -187,7 +187,7 @@ kinds of edit:
    - The glossary's `nominal` (13221 to 13225) gains a closing sentence:
      "Only a `Model{Float64}` can be run, and a `Model` at another scalar is
      a service's scratch ([§9.2][s9-2], [D-317][d-317])."
-4. **`tools/spec_style.md`, "Terms"** (31 to 62): after the "Introduce every
+4. **`rules/spec_rules.md`, "Terms"** (31 to 62): after the "Introduce every
    reader-cold name" bullet, one bullet: "**`Model` is the type; the
    authored tree is "the component tree" or "the root".** Lowercase "model"
    names a `Model` or the modeled system as a whole ("model code", "model
@@ -213,7 +213,7 @@ not an error.
 ### Bookkeeping
 
 Nothing in `src/`, `test/` or the register. The commit touches `spec.md` and
-`tools/spec_style.md`, and nothing else.
+`rules/spec_rules.md`, and nothing else.
 
 ## Stage 1: the companions and the README
 
@@ -314,7 +314,7 @@ scripts in the scratchpad, "empty is acceptable". Dimensions:
   citations and `#g-` links before (`git show 7caec22:`) and after. Every
   loss or gain is listed; the only gains the brief allows are the `Model`
   link in §1 and the citations in `nominal` and `service lifecycle`.
-- **Style.** Each changed sentence against `spec_style.md`'s "Sentences":
+- **Style.** Each changed sentence against `spec_rules.md`'s "Sentences":
   one burden, active voice, no em-dash, no mid-sentence colon, a gloss of
   five to ten words, no second `#g-model` or `#g-component` link in a
   section that already had one, 80 rendered columns.

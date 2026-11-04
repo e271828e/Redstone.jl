@@ -1,7 +1,7 @@
 # --- the read-selector family and the compiled reader (§14.4; increment 21) ------
 # The five deferred reads, their resolution against a build in §13.1's
 # collecting form, and the gather twin of `apply!` over an executor. The fixtures
-# live at top level for `implementation.md`'s local-scope reason; `lin_vector`
+# live at top level for `code_rules.md`'s local-scope reason; `lin_vector`
 # and `lin_vector_point` are test_linearize.jl's.
 
 # Every home a read can come from, and nothing that fires: a continuous `x`

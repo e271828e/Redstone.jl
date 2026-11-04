@@ -58,7 +58,7 @@ rewrites is listed under "Stage 1"; this is the reading.
   (375–380), `diagnostics.jl` (43–95), the fixtures and repl entries
   (652–696); the authoring caveats (697–758) in full; "Naming" (759) and
   "Running the suite" (836), cited below and never restated.
-- `tools/spec_style.md`, `tools/decisions_style.md`, and the header of
+- `rules/spec_rules.md`, `rules/decisions_rules.md`, and the header of
   `tools/check_glossary.jl` before touching the spec, the log or the
   glossary.
 
@@ -278,7 +278,7 @@ checkpoint local everywhere, `header` the trace's field. No local named
 One commit. Rostered files use the linkified spelling; run `linkify.jl`,
 `check_refs.jl`, `check_rows.jl` and `check_glossary.jl --strict`, all
 green. A new glossary entry needs its `<a id="g-checkpoint">` anchor and
-the gloss-on-first-use rule of `spec_style.md`. Line numbers are
+the gloss-on-first-use rule of `spec_rules.md`. Line numbers are
 `c39a37d`'s; find each passage by wording and recount after every edit.
 
 - §11.5, 6333–6362: the header paragraph becomes "**The trace header is the

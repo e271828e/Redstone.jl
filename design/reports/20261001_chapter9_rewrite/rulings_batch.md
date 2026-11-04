@@ -918,7 +918,7 @@ F7 (R16) and F8 (R17) remain open.
 
 ### R71. Does rule 2's citation exception cover moved content?
 
-- **Problem:** `decisions_style.md` rule 2's exception covers renumbering
+- **Problem:** `decisions_rules.md` rule 2's exception covers renumbering
   ("every entry … cites the CURRENT § numbering"). A content move is not a
   renumbering. Every Spec-field edit below, and the R69 log rows, wait on this.
 - **Evidence:** Survey part D; A2 inbound section; D inbound section.
@@ -1206,7 +1206,7 @@ Spec fields (all wait on R71):
 - **Proposed:** Align it with R13's wording.
 - **Recommendation:** accept
 
-### R102. `tools/spec_style.md`, "The battery" (survey F26)
+### R102. `rules/spec_rules.md`, "The battery" (survey F26)
 
 - **Evidence:** It says `decisions.md` keeps plain citations. `decisions.md`
   is first in `linkify.jl`'s `ROSTER` (line 63) and carries reference links.

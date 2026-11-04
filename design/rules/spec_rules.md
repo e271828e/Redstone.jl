@@ -152,7 +152,7 @@ flag it for discussion instead of guessing.
 ## The battery, and what it does not reach
 
 - **The battery is the acceptance test**, exactly as for the log
-  (`decisions_style.md` rule 6): `check_refs.jl`, `check_rows.jl`,
+  (`decisions_rules.md` rule 6): `check_refs.jl`, `check_rows.jl`,
   `check_glossary.jl --strict`, `check_bold.jl`, and `linkify.jl` as a no-op
   on re-run — after every edit, before every commit.
 - **`§` is reserved for spec citations.** Companions cite their own sections
@@ -161,11 +161,11 @@ flag it for discussion instead of guessing.
 - **A new file registers in both check tools' rosters** — `ROSTER` in
   `check_refs.jl`, `FILES` in `check_rows.jl` — or its citations are silently
   unchecked. Membership is about being checked, never about living in
-  `companions/`: `decisions.md`, `extensions.md` and `implementation.md` are
+  `companions/`: `decisions.md`, `extensions.md`, `code_map.md` and `rules/code_rules.md` are
   all members. `linkify.jl` keeps a third roster, also `ROSTER`, naming the
   files it rewrites besides `spec.md`: `decisions.md`, `extensions.md` and
   the companions. A file checked but not linkified keeps plain citations, as
-  `implementation.md` and `pending.md` do.
+  `code_map.md`, `rules/code_rules.md` and `pending.md` do.
 - **`linkify.jl` owns everything after the `<!-- citation link definitions`
   marker** in a file it rewrites. New text, a new log entry included, goes
   before it.

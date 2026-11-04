@@ -2,7 +2,7 @@
 
 The rules `decisions.md` adheres to. Distilled from the brief that
 converted the log's retired table form into entries; consulted whenever an
-entry is added, amended or rewritten. The counterpart of `spec_style.md`, which
+entry is added, amended or rewritten. The counterpart of `spec_rules.md`, which
 governs the spec.
 
 The log's purpose sets its register: each entry records a **settled decision**

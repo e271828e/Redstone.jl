@@ -16,7 +16,7 @@ wrong at the keyboard, stop and report rather than deviate silently.
 
 The first of the four library increments `pending.md` orders, the three
 blocks whose rows the inventory recommended first. None earns a log entry
-(`decisions_style.md` rule 9); the inventory carries the design, docs
+(`decisions_rules.md` rule 9); the inventory carries the design, docs
 commit first, and the code conforms. The user's rulings of 2026-11-03,
 made on the prototype's readings:
 
@@ -254,7 +254,7 @@ the scratchpad, "empty is acceptable". Dimensions:
   `Integrator{Float64}` spelled anywhere in `src/`, `test/`, `examples/`,
   `README.md` and `docs/` still builds.
 - **Naming** over every touched line, and the docstrings against
-  `docstring_style.md`.
+  `docstring_rules.md`.
 - **Mutants on a scratch copy**, each named test going red, the list above
   re-run plus any the reviewer adds. A surviving mutant is a missing test,
   or an acceptable survivor named with its reason.

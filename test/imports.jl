@@ -1,5 +1,5 @@
 # The suite's `import Redstone:` list — the one place a framework name the tests
-# call or extend is admitted (implementation.md's authoring caveat). Shared with
+# call or extend is admitted (code_rules.md's authoring caveat). Shared with
 # `repl.jl`: `include` evaluates in the including module, so the same file
 # imports into `RedstoneTests` and into `Main`.
 import Redstone: ASSEMBLY, Absolute, AbstractBinding, AbstractComponent,

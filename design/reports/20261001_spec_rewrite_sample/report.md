@@ -120,7 +120,7 @@ A rewrite under this convention is also an audit of the spec against the log.
 On §9.4 alone it found five uncited entries, one superseded citation, one
 factual error and three rulings with no Position. Budget for that work.
 
-The log gains less. `decisions_style.md` rule 1 forbids retrofitting old
+The log gains less. `decisions_rules.md` rule 1 forbids retrofitting old
 entries, rule 2 keeps each entry's vocabulary of its day, and rule 8 forbids
 expanding the terse early ones.
 
@@ -171,7 +171,7 @@ rulings pooled for the user.
 
 ## Before adopting it
 
-- Write the convention into `tools/spec_style.md`, and move the bold check into
+- Write the convention into `rules/spec_rules.md`, and move the bold check into
   the battery.
 - Decide whether the spec's existing claim-style `####` headings become labels
   or go.

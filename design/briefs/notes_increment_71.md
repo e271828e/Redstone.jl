@@ -43,7 +43,7 @@ Stale sentences stage 0 left alone as out of scope:
   §14, §14.8 and §14.10 is looser than the glossary's `checkpoint` entry now.
   Candidate for increment 72's vocabulary sweep.
 - D-319's include-order and grid-helper bullets are arguably implementation
-  policy under `decisions_style.md` rule 9; they stand because the brief
+  policy under `decisions_rules.md` rule 9; they stand because the brief
   asked for them.
 
 ## Stage 1 (b1de9d4): accepted deviations
@@ -135,7 +135,7 @@ Probe scripts are in this session's scratchpad under `review/`.
    D-319's bullet is corrected in place in its own docs commit, since the
    entry is this unpushed increment's and the clause was found false the
    day it landed. **If the user prefers an annotation or a D-320 under
-   `decisions_style.md` rule 1, it is a one-bullet change before the push.**
+   `decisions_rules.md` rule 1, it is a one-bullet change before the push.**
 2. **The `CheckpointMidFrame` message named `checkpoint` for both callers**
    and advised stopping the run, wrong for a restore. Ruled: the message is
    reworded so every sentence holds for `checkpoint` on a run or a model
