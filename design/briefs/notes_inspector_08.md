@@ -236,3 +236,41 @@ segment. Observations for the look pass: the root's pane shows the level
 layout and never its type's docstring, so a root `Group`'s docstring is
 unreachable; the 404 at load is the favicon's, an old item. Agent C, the
 help page and the map, follows from `fea2034`.
+
+Agent C built stages 5 and 6 from `fea2034`: `be046a3` the help page with
+its eighteen terms and thirteen samples, the session's `help` state over
+the hash, `?`, the two links, the build-time defines, `help.spec.ts`,
+`keys.spec.ts`, `landing.spec.ts`, `frame.spec.ts` and `network.spec.ts`
+amended; `226fb4b` the map and the README. `npm run check` 398 files, 0
+errors; `npm test` 504 tests in 29 files; `npm run e2e -- --project=chromium`
+192 checks; `dist/` holds each Vimium pattern and the docs constant once
+and no `javascript:`. Its departures, accepted and held under review:
+
+- **A history entry with a `null` state is stamped one entry deeper** by
+  `openFromHistory`, since a hash link or a typed hash creates one; without
+  it a help page opened from a link closed by replacing its entry, leaving
+  two identical level entries and Shift-h dead. Side effect: Shift-h now
+  walks back from a typed level hash. The one behaviour change outside the
+  help page; the reviewer probes it.
+- **The nav links are not real hash links**, a real hash change closing
+  the page through the history handler.
+- **Stage 5 already amended the map's keyboard table**, since `help.spec.ts`
+  counts its rows against `table.keys`.
+- **The Vimium patterns are literal strings**, the minifier leaving a
+  template unfolded.
+- **The about section reads "format: major 1".**
+- **Extra checks**: Space scrolling the page, the about link keeping
+  `#help`, `goForward` after Escape pinning the close as a back, ArrowDown
+  inert, a drop under a page loaded at `/#help`.
+
+Its headed look: the samples read as the canvas's own marks at about 1:1,
+two fixes made during the look (the dimmed block's text, the hue swatches'
+spacing); the vocabulary, keys, Vimium paragraph and about read well at
+1600 and 700 px. For the look pass: the five terms without a drawing leave
+an empty first column; the tier and rate sample fills are close in hue; the
+vocabulary notes, section headings and Vimium wording are the agent's; the
+tag sample repeats `tagD` rather than sharing it; the frame unmounts under
+the help page, so focus falls to the body after the close. The map's open
+items name increment 10 for the release's items (the docs flip, the Vimium
+check), which the roadmap renumbered to 11 on 2026-11-04; the fixer amends
+them. The cold review follows at `226fb4b`.
