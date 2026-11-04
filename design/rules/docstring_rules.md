@@ -157,12 +157,15 @@ closed(run::Run) = run.termination !== nothing
     a design file such as `linear_blocks.md`. All of it goes to the comment.
 30. **`Model` is the type; the authored tree is the component tree or the
     root.** As in `spec_rules.md`.
-31. **A type parameter is named in prose only where the docstring defines it,
-    in the sentence that first uses it.** `V` enters as "promoted to one `V`,
-    a floating-point type or a static array of one", and a later sentence may
-    say "pinned at `V`". A parameter the user never writes, such as the `R`
-    that `reset = true` fixes, is mechanism under rule 22 and goes to the
-    comment; the prose names the keyword.
+31. **A type parameter is named in prose only where the docstring defines
+    it, in the sentence that first uses it.** The sentence says which values
+    share the type, that it is the block's parameter, and what it may be and
+    where it comes from: "the state and both ports share one type, the
+    parameter `V`, a floating-point type or a static array of one, taken
+    from `float(x0)`". A later sentence may then say "pinned at `V`". A
+    parameter the user never writes, such as the `R` that `reset = true`
+    fixes, is mechanism under rule 22 and goes to the comment; the prose
+    names the keyword.
 
 ## What moves and what stays
 
