@@ -4,9 +4,9 @@ One code commit, which I apply from the prototype, one cold review and a
 fixer if the review needs one. Written on 2026-10-26 at 811713b, the docs
 commit that landed D-433 over 600b9c3, the one that landed §13.9, D-432, the
 §9.2 sentence, the `structure` field in §13.2 and D-257's annotation. The
-design record is `design/inspector/descriptor_design.md`, not normative;
+design record is `RedstoneInspector.jl/design/descriptor_design.md`, not normative;
 axis 4's spike, run beside this increment, is
-`design/prototypes/render_spike/report.md`. Find passages in
+`RedstoneInspector.jl/design/prototypes/render_spike/report.md`. Find passages in
 `design/implementation.md` by heading.
 
 Design and code are peers, neither subservient. If a shape below proves

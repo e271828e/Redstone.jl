@@ -45,21 +45,11 @@ item changes what the spec says, the spec edit is part of the item.
   legal, since the audit of 2026-11-04 found `τ = 0` failing at the first
   step as `NonfiniteState` and `τ = -1` diverging silently.
 - **The inspector, stage 1**: the static inspector over the descriptor,
-  built in the separate repo `RedstoneInspector.jl`. Its records, none
-  normative, are `design/inspector/initial_design.md` and one per axis
-  beside it: `descriptor_design.md` (axes 1 and 2, §13.9, D-432),
-  `visual_grammar.md` (axis 3), `design/prototypes/render_spike/report.md`
-  (axis 4), `workspace.md` (axis 5), `live_session.md` (axis 6),
-  `failure_descriptor.md` (the failure bump, D-434) and `build_release.md`
-  (axis 7). `design/increments/roadmap_inspector.md` stages the build in eleven
-  increments and records each landed one with the facts the next briefs
-  take. Increments 1 to 7 and 9 have landed; 8, the analysis views and the
-  help page, is next; then 10, the deployment overlay on both tracks after
-  its design session, with the writer's qualified `@ref` links folded in;
-  then 11, the release. Open across increments: the non-blocking Firefox
-  project fails the two leave-prompt checks, to be settled before it turns
-  blocking. The built-in Julia GUI is parked
-  (D-310). The later stages stand after the release, below.
+  built in the separate repo `RedstoneInspector.jl`, whose
+  `design/pending.md` holds its work order and its open items, and whose
+  `design/roadmap.md` stages its eleven increments. What this repo owes it
+  is below: the stage-function locations in the descriptor, and the
+  later stages after the release.
 - **The API docstrings' two later passes.** The sweep to the manual's
   conventions landed (record `design/increments/20261027_docstring_sweep/notes_docstring_sweep.md`,
   convention `design/rules/docstring_rules.md`). Two passes remain: an examples pass

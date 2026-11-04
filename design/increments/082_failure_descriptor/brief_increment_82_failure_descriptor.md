@@ -3,7 +3,7 @@
 One code commit, which I apply from the prototype, one cold review and a
 fixer if the review needs one. Written on 2026-10-28 at 848d527, the docs
 commit that landed D-434, §13.2's carrier field as built, §13.9's failure
-paragraphs and the bump's record, `design/inspector/failure_descriptor.md`,
+paragraphs and the bump's record, `RedstoneInspector.jl/design/failure_descriptor.md`,
 not normative. Find passages in `design/implementation.md` by heading.
 
 Design and code are peers, neither subservient. If a shape below proves
@@ -131,7 +131,7 @@ dfe7d7c before the code commit:
   with the warning list and the structure.
 - `design/pending.md`: the stage-1 bullet records the increment as landed
   and names axis 7 as next.
-- `design/inspector/failure_descriptor.md`: answer 2 takes readings 1 to
+- `RedstoneInspector.jl/design/failure_descriptor.md`: answer 2 takes readings 1 to
   3; `design/spec.md` §13.9 and D-434 take reading 2, docs-commit-first.
 - Files to commit: `src/diagnostics.jl`, `src/build.jl`,
   `src/descriptor.jl`, `src/descriptor.json`, `test/test_build.jl`,

@@ -430,7 +430,7 @@ not `c`. One observable change beyond the renames: the `y` bundle handed to
 `state_derivative`, `state_update`, guards and handlers now carries its keys
 in the products' order rather than `output_types` order, so it matches the
 probe-time `y`; read by name per §8.3, no test pins either. Unrouted and
-left: `Dataflow` in `design/inspector/initial_design.md`; D-257's
+left: `Dataflow` in `RedstoneInspector.jl/design/initial_design.md`; D-257's
 amendment lists `show(::Build)`'s parts without the `feedthrough:` line,
 D-261's extension being its authority. Next: the naming sweep and the
 provenance sweep, `pending.md`'s two bullets after "Smaller".

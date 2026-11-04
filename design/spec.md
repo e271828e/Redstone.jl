@@ -11495,7 +11495,7 @@ section covers, in order, what the descriptor is beside `show`, the envelope
 and its versioning, what version one carries, the kind marker, the instance
 context, the value the core returns, the schema and its test, the failure
 descriptor, and the carrier field it reads. The design record is
-`design/inspector/descriptor_design.md`, which is not normative.
+`RedstoneInspector.jl/design/descriptor_design.md`, which is not normative.
 
 **`descriptor` renders a `Build` or a `Deployment` to data under a
 published, versioned format**, beside `show`'s rendering to text ([D-432][d-432]).

@@ -114,3 +114,11 @@ the diff.
   `decisions_rules.md` to `log_rules.md`, a pure substitution under
   `log_rules.md` rule 2. Patches, JSON baselines and a TSV in the records
   keep the old name: they are data, hashed or diffed as they were.
+
+## Step 7: the inspector's material to its repo
+
+- The seven records, the roadmap, the nine inspector increments and the
+  rendering spike move to `RedstoneInspector.jl` at its `2c3e499`, with
+  the "Frontend increments" rules and the stage 1 bullet; that repo's
+  `design/increments/20261104_design_move/notes.md` records the move and
+  the sweep on both sides.

@@ -113,7 +113,7 @@ is why the actuators take `δe_cmd` and publish `δe`.
 - The README's diagram, which does not exist yet; the tutorial bullet adds
   it.
 - A closed-loop linearization from `h_ref`, now possible, for the tutorial.
-- `design/prototypes/render_spike/` and its hand-transcribed fixtures,
+- `RedstoneInspector.jl/design/prototypes/render_spike/` and its hand-transcribed fixtures,
   frozen records.
 
 ## Review dimensions

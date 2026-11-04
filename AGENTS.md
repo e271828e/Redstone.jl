@@ -21,11 +21,17 @@ spec change obliges the code to conform. Nothing deviates silently.
 | one folder per unit of work: its brief, notes and prototype patch | `design/increments/`; the live roadmaps sit at its top |
 | investigations, audits, frozen charters | `design/reports/`, dated |
 | the check tools and the PDF build | `design/tools/` |
-| the inspector's design records | `design/inspector/`, for the separate repo `RedstoneInspector.jl` |
+| the inspector's design records, roadmap, work order and increments | `RedstoneInspector.jl/design/`, the separate repo, with its own `AGENTS.md` |
 
 `implementation.md`, which older briefs and reports cite, was split on
 2026-11-04 into `code_map.md` and `rules/code_rules.md`; `briefs/` became
-`increments/` the same day, file names unchanged.
+`increments/` the same day, file names unchanged. The inspector's
+records, roadmap, increments and rendering spike moved to
+`RedstoneInspector.jl` the same day, cited by older records as
+`design/inspector/`, `design/increments/roadmap_inspector.md` and
+`design/prototypes/render_spike/`. A bare path is this repo's; a path in
+the inspector repo carries its name as prefix, and the inspector cites this
+repo as `Redstone.jl/design/spec.md`.
 
 ## Where a new fact goes
 

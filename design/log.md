@@ -17284,7 +17284,7 @@ bundled rulings:
 
 **Spec.** [§9.2][s9-2], [§13.2][s13-2], [§13.9][s13-9], [Appendix B][sB]
 
-**Rationale.** The inspector's design record (`design/inspector/`) settled
+**Rationale.** The inspector's design record (`RedstoneInspector.jl/design/`) settled
 on 2026-09-28 that the core renders descriptors itself, extending [D-257][d-257]'s
 idea that an artifact renders itself: `show` to text, `descriptor` to data.
 [D-257][d-257] rejected accessor functions as a second API for what `show` already
@@ -17293,7 +17293,7 @@ binds no field: it is a projection under a contract of its own, so its
 stability is the format's, and the writer sits in the core so the core's
 own suite catches a refactor that breaks it. The session of 2026-10-26
 fixed the format's shape, recorded in
-`design/inspector/descriptor_design.md`.
+`RedstoneInspector.jl/design/descriptor_design.md`.
 
 The envelope-and-body shape follows from embedding. A deployment descriptor
 embeds its build descriptor whole, so the embedded thing must be a body that
@@ -17398,7 +17398,7 @@ they stop short, each reading settled with the increment that built it:
 
 **Rationale.** The prototype of increment 81 met each case in the fixtures
 and the rendering spike met the first and the last on the longitudinal
-example (`design/prototypes/render_spike/report.md`). The marker's table as
+example (`RedstoneInspector.jl/design/prototypes/render_spike/report.md`). The marker's table as
 [D-432][d-432] wrote it would call a closure a struct, its captures being fields, and
 on Julia 1.11 and later `Array` too, which is a struct with `ref` and
 `size`; and it could not tell a terrain handle from a `Pose`, since both are
@@ -17431,7 +17431,7 @@ reader opens ([§13.9][s13-9]).
 
 Annotation (2026-10-27): of the three spike proposals, the node `alias` and
 the envelope `name` joined version one's shape with the visual grammar
-(`design/inspector/visual_grammar.md`, answers 7 and 10), the package being
+(`RedstoneInspector.jl/design/visual_grammar.md`, answers 7 and 10), the package being
 unreleased and the format having no reader to protect; the assembly-face type
 and kind are closed, the client resolving (its answer 4).
 
@@ -17484,7 +17484,7 @@ drawing needs, never as its payload ([§13.2][s13-2], [§13.9][s13-9]). The bund
 **Spec.** [§13.2][s13-2], [§13.9][s13-9]
 
 **Rationale.** The grammar record's overlay
-(`design/inspector/visual_grammar.md`, answer 8) names what it draws from a
+(`RedstoneInspector.jl/design/visual_grammar.md`, answer 8) names what it draws from a
 failure: a halo on a node, a mark on a port square, a heavier wire, and for
 a loop its members, wires, verdict, dead hops and tracing modes, none of
 which message text gives back. The full payload would have exported fifty
@@ -17501,7 +17501,7 @@ them. The `with` block hides the structure local from the door's catch, so
 the binding is hoisted and the one catch rebuilds the carrier with warnings
 and structure together; the requested activations run inside the same block
 after the `Build` exists, so their throw carries the complete structure as
-well. The session's record is `design/inspector/failure_descriptor.md`.
+well. The session's record is `RedstoneInspector.jl/design/failure_descriptor.md`.
 
 **Rejected.**
 - *Message and attribution only:* the overlay cannot read a port, a wire or
