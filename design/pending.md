@@ -12,6 +12,17 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
+- **Tighten the blocks' `V` bound to what the build admits** (§7.1, §13.7,
+  D-094, D-320), a loose fix, ruled by the user on 2026-11-04. Fifteen blocks,
+  `Freeze` to `DiscretePID`, bound `V` as `Union{Real, StaticArray{<:Tuple,
+  <:Real}}`, so a `Float32` or an `MVector` passes the constructor and is
+  refused at build as `IllegalStateLeaf`, `IllegalStoreField` or
+  `ConformanceFailure`; a probe on 2026-11-04 tried six such variants and
+  every one was refused. The bound becomes `Union{Float64, SArray{<:Tuple,
+  Float64}}`, so the refusal is the constructor's `TypeError`, with one test
+  per tier. `GaussianWhiteNoise`'s `Union{Float64, SVector{<:Any, Float64}}`
+  already is, and the docstrings already say `Float64` or an `SArray` of
+  `Float64`.
 - **One broadcast convention for the blocks' keywords** (§13.7, D-313), a
   loose fix, ruled by the user on 2026-11-04. Keywords sharing `V` broadcast
   to one shape, as `PID`, `DiscretePID`, `GaussianWhiteNoise` and the trackers
@@ -26,8 +37,8 @@ item changes what the spec says, the spec edit is part of the item.
   `rising` and `falling` and `FirstOrderLag`'s `τ` widened from `Float64` to
   `V`. A length mismatch stays Julia's `DimensionMismatch`, as on `PID`. The
   widening carries `RateLimiter`'s positivity refusal to `all(rising .> 0)`,
-  and the helper restores the docstrings' `Float64` wording and retires the
-  limited integrators' sentence on refused mixes. `check_limits` stays. The
+  and the helper retires the limited integrators' sentence on refused
+  mixes. `check_limits` stays. The
   same commit refuses a non-positive `τ`, `τd` or `Tt` as `ArgumentError` in
   `FirstOrderLag`, `PID` and the trackers, over every component, skipping
   `AsPort()`, with `Tt = Inf` allowed and `DiscretePID`'s `τd = 0` kept
