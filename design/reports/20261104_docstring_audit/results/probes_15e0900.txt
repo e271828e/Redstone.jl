@@ -1,0 +1,127 @@
+=== probe1
+OK   Unpack wire UW1 => (1.0, 2.0)
+THROW Unpack wire UW2 => DiagnosticError{Vector{Diagnostic}} :: DiagnosticError: 2 diagnostics
+      kinds: DataType[UnknownPort, UnconnectedInput]
+THROW FirstOrderLag τ=0.0 => StepError{NonfiniteState} :: StepError: in `l`, integration of the frame from boundary 0 (t = 0.1):
+OK   FirstOrderLag τ=-1.0 => (:initialized, -0.3498584970625377)
+OK   FirstOrderLag τ=1.0 => (:initialized, 0.2591815779988223)
+THROW PID τd=0.0 Kd=0.0 => StepError{NonfiniteState} :: StepError: in `p`, integration of the frame from boundary 0 (t = 0.1):
+THROW PID τd=0.0 Kd=1.0 => StepError{NonfiniteState} :: StepError: in `p`, integration of the frame from boundary 0 (t = 0.1):
+OK   PID τd=-1.0 Kd=0.0 => (:initialized, 1.0, (q = 0.0, yf = 0.0))
+OK   PID τd=-0.05 Kd=1.0 => (:initialized, 1.0, (q = 0.0, yf = 0.0))
+OK   PID τd=0.1 Kd=1.0 => (:initialized, 1.0, (q = 0.0, yf = 0.0))
+THROW modes no-mode component => MethodError :: MethodError: no method matching getindex(::Nothing)
+THROW modes unknown path => InternalInvariant :: InternalInvariant: internal invariant violated: no component at path `nope`
+OK   state no-state component => nothing
+THROW state unknown path => InternalInvariant :: InternalInvariant: internal invariant violated: no component at path `nope`
+THROW port unknown path => KeyError :: KeyError: key ("nope", :y) not found
+THROW port unknown name => KeyError :: KeyError: key ("c", :nope) not found
+OK   port bare path => 1.0
+THROW port assembly no name => KeyError :: KeyError: key ("", :y) not found
+THROW port root path with name => KeyError :: KeyError: key ("", :nope) not found
+THROW sim modes no-mode => MethodError :: MethodError: no method matching getindex(::Nothing)
+THROW sim port unknown => KeyError :: KeyError: key ("nope", :y) not found
+THROW snapshot port unknown => KeyError :: KeyError: key ("nope", :y) not found
+THROW Step scalar+vec => ErrorException :: promotion of types Float64 and SVector{2, Float64} failed to change any arguments
+THROW DLI scalar+vec => ErrorException :: promotion of types Float64, Float64 and SVector{2, Float64} failed to change any arguments
+THROW DLI s0 vec => ErrorException :: promotion of types SVector{2, Float64}, Float64 and Float64 failed to change any arguments
+THROW DLI two lengths => ErrorException :: promotion of types SVector{1, Float64}, SVector{1, Float64} and SVector{2, Float64} failed to change any arguments
+THROW Relay scalar+vec => ErrorException :: promotion of types Float64, SVector{2, Float64}, Float64 and Float64 failed to change any arguments
+THROW Relay off/on => ErrorException :: promotion of types Float64, Float64, SVector{2, Float64} and SVector{2, Float64} failed to change any arguments
+THROW Comparator scalar+vec => ErrorException :: promotion of types Float64 and SVector{2, Float64} failed to change any arguments
+THROW Comparator two lengths => ErrorException :: promotion of types SVector{1, Float64} and SVector{2, Float64} failed to change any arguments
+THROW LI scalar+vec => ArgumentError :: ArgumentError: the keywords x0, lower, upper must share one shape, not the sizes (), (), (2,)
+OK   TimeTable => nothing
+THROW RateLimiter vec rate => MethodError :: MethodError: no method matching isless(::Int64, ::SVector{2, Float64})
+OK   RateLimiter vec s0 => RateLimiter{SVector{2, Float64}}(1.0, 1.0, [1.0, 2.0])
+OK   RateLimiter Inf => RateLimiter{Float64}(Inf, Inf, 0.0)
+THROW RateLimiter NaN => ArgumentError :: ArgumentError: the rate limiter's `rising` and `falling` must be positive, not NaN and NaN
+=== probe2
+OK   PID y=1 τd=-1.0 Kd=0.0 => (:initialized, 0.0, (q = 0.0, yf = -0.648720638596838))
+OK   PID y=1 τd=-0.05 Kd=1.0 => (:initialized, 336140.0, (q = 0.0, yf = -16806.0))
+OK   PID y=1 τd=0.1 Kd=1.0 => (:initialized, -0.07415771484375, (q = 0.0, yf = 0.992584228515625))
+THROW PID Tt=0.0 => StepError{NonfiniteState} :: StepError: in `p`, integration of the frame from boundary 0 (t = 0.1):
+OK   PID Tt=-1.0 => (:initialized, 1.324360319298419, (q = 0.324360319298419, yf = 0.0))
+THROW Step scalar+vec => ErrorException :: promotion of types Float64 and SVector{2, Float64} failed to change any arguments
+THROW Step two lengths => ErrorException :: promotion of types SVector{1, Float64} and SVector{2, Float64} failed to change any arguments
+THROW DLI scalar+vec => ErrorException :: promotion of types Float64, Float64 and SVector{2, Float64} failed to change any arguments
+THROW DLI s0 vec => ErrorException :: promotion of types SVector{2, Float64}, Float64 and Float64 failed to change any arguments
+THROW DLI two lengths => ErrorException :: promotion of types SVector{1, Float64}, SVector{1, Float64} and SVector{2, Float64} failed to change any arguments
+THROW Relay scalar+vec => ErrorException :: promotion of types Float64, SVector{2, Float64}, Float64 and Float64 failed to change any arguments
+THROW Relay off/on => ErrorException :: promotion of types Float64, Float64, SVector{2, Float64} and SVector{2, Float64} failed to change any arguments
+THROW Comparator scalar+vec => ErrorException :: promotion of types Float64 and SVector{2, Float64} failed to change any arguments
+THROW Comparator two lengths => ErrorException :: promotion of types SVector{1, Float64} and SVector{2, Float64} failed to change any arguments
+THROW LI scalar+vec => ArgumentError :: ArgumentError: the keywords x0, lower, upper must share one shape, not the sizes (), (), (2,)
+THROW LI lengths => ArgumentError :: ArgumentError: the keywords x0, lower, upper must share one shape, not the sizes (1,), (1,), (2,)
+THROW SteppedTable-ish Sequence => MethodError :: MethodError: no method matching zero(::Type{Any})
+THROW RateLimiter vec rate => MethodError :: MethodError: no method matching isless(::Int64, ::SVector{2, Float64})
+OK   RateLimiter vec s0 => RateLimiter{SVector{2, Float64}}(1.0, 1.0, [1.0, 2.0])
+OK   RateLimiter Inf => RateLimiter{Float64}(Inf, Inf, 0.0)
+THROW RateLimiter NaN => ArgumentError :: ArgumentError: the rate limiter's `rising` and `falling` must be positive, not NaN and NaN
+OK   DiscreteTF kw => DiscreteTransferFunction{1, false, 1, 2, 1}((1.0,), (1.0, -0.5), DiscreteStateSpace{1, 1, 1, false, 1, 1, 1, 1}([0.5;;], [1.0;;], [1.0;;], [0.0;;], [0.0]))
+OK   DiscretizedTF kw => DiscretizedTransferFunction{1, false, 1, 2, 1}((1.0,), (1.0, 1.0), DiscretizedStateSpace{1, 1, 1, false, 1, 1, 1, 1}(StateSpace{1, 1, 1, false, 1, 1, 1, 1}([-1.0;;], [1.0;;], 
+OK   DSS kw => DiscreteStateSpace{1, 1, 1, false, 1, 1, 1, 1}([0.5;;], [1.0;;], [1.0;;], [0.0;;], [0.5])
+OK   DiscretizedSS kw => DiscretizedStateSpace{1, 1, 1, false, 1, 1, 1, 1}(StateSpace{1, 1, 1, false, 1, 1, 1, 1}([-1.0;;], [1.0;;], [1.0;;], [0.0;;], [0.5]))
+OK   LQR state => [0.2]
+THROW LQR get_state q => DiagnosticError{Vector{Diagnostic}} :: DiagnosticError: 1 diagnostics
+      kinds: DataType[ReadResolution]
+THROW LQR get_state x => DiagnosticError{Vector{Diagnostic}} :: DiagnosticError: 1 diagnostics
+      kinds: DataType[ReadResolution]
+THROW LQR get_state bare => DiagnosticError{Vector{Diagnostic}} :: DiagnosticError: 1 diagnostics
+      kinds: DataType[ReadResolution]
+THROW LQR set q => DiagnosticError{Vector{Diagnostic}} :: DiagnosticError: 1 diagnostics
+      kinds: DataType[ConditionResolution]
+OK   LQR set bare => [1.0]
+OK   DLQR state => (q = [0.30000000000000004], saturated = Int8[0])
+THROW DLQR get_state q => DiagnosticError{Vector{Diagnostic}} :: DiagnosticError: 1 diagnostics
+      kinds: DataType[ReadResolution]
+schemas after init: ["harness" => [:a, :b]]
+frames=5 batches=[(1, 1)]
+OK   attach => DeviceHandle{Bnd, Nothing}("device 1 (Dev)", Bnd(), Redstone.Writer{Redstone.Batch{Tuple{Float64}, Tuple{Bool}}, Tuple{Redstone.CellAddr{Float64, 1}}}([:a], Any[Float64], (Redstone.Cell
+schemas after attach: ["harness" => [:a, :b], "device 1 (Dev)" => [:a], "harness" => [:b]]
+=== probe3
+THROW LQR Redstone.GetState("t", :q) :: DiagnosticError: 1 diagnostics
+  ReadResolution: the read labeled `v` is get_state("t", :q), and it is a *store* selector — the store selectors resolve only against live stores, and this reader reads a published snapshot, which del
+THROW LQR Redstone.GetState("t", :x) :: DiagnosticError: 1 diagnostics
+  ReadResolution: the read labeled `v` is get_state("t", :x), and it is a *store* selector — the store selectors resolve only against live stores, and this reader reads a published snapshot, which del
+THROW LQR Redstone.GetState("t", "") :: DiagnosticError: 1 diagnostics
+  ReadResolution: the read labeled `v` is get_state("t"), and it is a *store* selector — the store selectors resolve only against live stores, and this reader reads a published snapshot, which deliber
+THROW LQR Redstone.GetState("t", "[1]") :: DiagnosticError: 1 diagnostics
+  ReadResolution: the read labeled `v` is get_state("t", "[1]"), and it is a *store* selector — the store selectors resolve only against live stores, and this reader reads a published snapshot, which 
+THROW LQR Redstone.GetState("t", "q") :: DiagnosticError: 1 diagnostics
+  ReadResolution: the read labeled `v` is get_state("t", "q"), and it is a *store* selector — the store selectors resolve only against live stores, and this reader reads a published snapshot, which de
+THROW DLQR Redstone.GetState("t", :q) :: DiagnosticError: 1 diagnostics
+  ReadResolution: the read labeled `v` is get_state("t", :q), and it is a *store* selector — the store selectors resolve only against live stores, and this reader reads a published snapshot, which del
+THROW DLQR Redstone.GetState("t", "q[1]") :: DiagnosticError: 1 diagnostics
+  ReadResolution: the read labeled `v` is get_state("t", "q[1]"), and it is a *store* selector — the store selectors resolve only against live stores, and this reader reads a published snapshot, which
+THROW stale with heartbeat 0.0, now=1.0 :: MethodError: Cannot `convert` an object of type Int64 to an object of type KindCounts
+The function `convert` exists, but no method is defined for this combination of argument types.
+
+Closest candidates are:
+  KindCounts(::Int64, !Matched::Int64, !Matched::Int64, !Matched::Int64, !Matched::Int64, !Matched::Int64, !Matched::Int64, !Matched::Int64, !Matched::Int64, !Matched::Int64, !Matched::Int64, !Matched
+   @ Redstone ~/.julia/dev/Redstone.jl/src/dataplane.jl:51
+  KindCo
+=== probe4
+THROW LQR taps Redstone.GetState("t", :q) :: DiagnosticError: 1 diagnostics
+  ReadResolution: the read labeled `a` is get_state("t", :q), and `t` declares no state field `q` — its state field names are `x` (§14.4)
+THROW LQR taps Redstone.GetState("t", "q[1]") :: DiagnosticError: 1 diagnostics
+  ReadResolution: the read labeled `a` is get_state("t", "q[1]"), and `t` declares no state field `q` — its state field names are `x` (§14.4)
+OK LQR taps Redstone.GetState("t", "[1]") => [0.0;;]
+OK LQR taps Redstone.GetState("t", "x[1]") => [0.0;;]
+┌ Warning: unblock! of device 1 (PollDev) threw; its task can now exit only through the join timeout (§12.4)
+│   exception =
+│    boom in unblock!
+└ @ Redstone ~/.julia/dev/Redstone.jl/src/sim.jl:1858
+poll run took 0.84s; lifecycle=stopped
+  residue: Symbol[]
+┌ Warning: unblock! of device 1 (BlockDev) threw; its task can now exit only through the join timeout (§12.4)
+│   exception =
+│    boom in unblock!
+└ @ Redstone ~/.julia/dev/Redstone.jl/src/sim.jl:1858
+┌ Warning: DeviceJoinTimeout from loop, past the final snapshot's account: device 1 (BlockDev) did not join within 0.5s at t = 0.5 (boundary 5) — abandoned by name rather than hanging the shutdown tai
+└ @ Redstone ~/.julia/dev/Redstone.jl/src/sim.jl:1933
+blocked run took 0.6s; lifecycle=stopped
+  residue: [:ResidueRecord]
+  after put, chan len 0
+before run: heartbeat=0.0 stale now=1.0: false stale now=time(): true
+device parked in take! since t=0, at the end: lag=3.92 stale=true

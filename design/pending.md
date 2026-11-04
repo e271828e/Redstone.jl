@@ -214,6 +214,13 @@ breaking user code, and each may benefit from user feedback first.
   its dependence presumed, so its `y_direct` may not read the input, and the
   row should say so. The spec edit and its log entry come first.
 
+- **The docstring audit's open decisions.** The audit of 2026-11-04 left three
+  groups for the user, set out in
+  `design/reports/20261104_docstring_audit/report.md` section 5: nine false or
+  imprecise claims with drafted replacements, two code changes (unchecked time
+  constants, and value reads on a bad path), and rulings on the sheet. Each is
+  retired here as it is ruled.
+
 ## Deviations
 
 What is built in a shape the spec's is not. Transactional: the commit
