@@ -135,7 +135,8 @@ closed(run::Run) = run.termination !== nothing
   link is `[term](@ref g-id)`, with Appendix D's anchor id, as in "the
   [snapshot](@ref g-snapshot)". A docstring is read alone, so each one links
   its own first mentions, the summary included. The page is generated from
-  Appendix D, so the link resolves where the definition lives.
+  Appendix D, so the link resolves where the definition lives. It skips D's
+  meta-vocabulary group, so a term there, such as "artifact", takes no link.
 - **A docstring never defines a term inline.** The glossary page carries the
   definition. A term with no entry is written in plain words, as the coinage
   rule below says.

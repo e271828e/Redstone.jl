@@ -24,7 +24,10 @@ item changes what the spec says, the spec edit is part of the item.
   one shape, which replaces `promoted_keywords` and its refusal tests and may
   absorb `shape_type` and `GaussianWhiteNoise`'s idiom; then `RateLimiter`'s
   `rising` and `falling` and `FirstOrderLag`'s `τ` widened from `Float64` to
-  `V`. A length mismatch stays Julia's `DimensionMismatch`, as on `PID`.
+  `V`. A length mismatch stays Julia's `DimensionMismatch`, as on `PID`. The
+  widening carries `RateLimiter`'s positivity refusal to `all(rising .> 0)`,
+  and the helper restores the docstrings' `Float64` wording and retires the
+  limited integrators' sentence on refused mixes. `check_limits` stays.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`. Its records, none
   normative, are `design/inspector/initial_design.md` and one per axis
