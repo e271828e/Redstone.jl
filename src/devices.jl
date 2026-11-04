@@ -156,9 +156,9 @@ call return, for example by closing the socket.
 A throw the override provokes in the loop, once the run is stopping, is treated
 as shutdown, not reported as `DeviceCrash`. A device that does not override
 `unblock!` has nothing to provoke a throw, so any throw from its loop is a
-crash. A throw inside `unblock!` itself is logged as a warning, and the device's
-task can then end only through the `join_timeout` of its
-[`Simulation`](@ref).
+crash. A throw inside `unblock!` itself is logged as a warning. A loop still
+blocked then holds the shutdown until the `join_timeout` of its
+[`Simulation`](@ref), which abandons the task and reports `DeviceJoinTimeout`.
 """
 unblock!(::AbstractDevice) = nothing
 
@@ -221,9 +221,10 @@ blocking calls, and returns once it reads `false`. It turns `false` only after
 the run's final [snapshot](@ref g-snapshot) is published, so a loop that reads
 `false` may still read a complete final snapshot.
 
-Each call refreshes the device's [heartbeat](@ref g-heartbeat), as every handle
-call a loop makes does. A loop that makes these calls needs no separate
-liveness signal.
+Each call refreshes the device's [heartbeat](@ref g-heartbeat), as
+[`latest`](@ref), [`pending`](@ref), [`stage!`](@ref), [`gather`](@ref),
+[`report!`](@ref) and [`wait_next_snapshot`](@ref) do. A loop that makes these
+calls needs no separate liveness signal.
 """
 running(handle::DeviceHandle) =
     (_beat!(handle.diag_cell); !(@atomic handle.control.stopped))
@@ -619,6 +620,11 @@ function _shutdown!(entry::RosterEntry)
     nothing
 end
 
+# Does the device override `unblock!`? Read as `check_device` reads `loop`
+# (roster.jl): the default method is the comparison target.
+_unblocks(dev::AbstractDevice) =
+    which(unblock!, Tuple{typeof(dev)}) !== which(unblock!, Tuple{AbstractDevice})
+
 """
 The framework wrapper (§11.6): the author owns the loop body, the framework
 owns the bracket. Every exit path — voluntary return, a crash, the
@@ -630,11 +636,6 @@ claims held to run end. Death is marked nowhere beyond the record: the task has
 ended, `task_state` says so at the next publication, and the heartbeat goes
 stale (§12.2).
 """
-# Does the device override `unblock!`? Read as `check_device` reads `loop`
-# (roster.jl): the default method is the comparison target.
-_unblocks(dev::AbstractDevice) =
-    which(unblock!, Tuple{typeof(dev)}) !== which(unblock!, Tuple{AbstractDevice})
-
 function _wrap(entry::RosterEntry)
     try
         loop(entry.dev, entry.handle)

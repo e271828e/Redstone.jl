@@ -183,10 +183,10 @@ end
 # the constructing entry point. Four fields evolve: the attached recording, the
 # termination record the loop's tail writes once, and the trajectory's two
 # counters, which the door sets as it builds the run and the loop advances
-# (D-317). `init!`, `restore!` and `replay!` construct one and rebind `sim.run`;
-# nothing else rebinds it. A change of mode is a *write* to the run, not a
-# change of run: `live!`, and the flip at a recording's end, both clear `feed`
-# (D-218, D-260).
+# (D-317). `init!`, `overlay!`, `restore!` and `replay!` construct one and
+# rebind `sim.run`; nothing else rebinds it. A change of mode is a *write* to
+# the run, not a change of run: `live!`, and the flip at a recording's end, both
+# clear `feed` (D-218, D-260).
 #
 # The input mode is read, never stored: `mode(sim)` is `:replay` while a feed is
 # attached and `:live` otherwise, so the two can never disagree. The trace is
@@ -532,8 +532,8 @@ mode(sim::Simulation) = sim.run.feed === nothing ? :live : :replay
 
 # Design: §12.6, §13.5, D-203, D-255.
 # The record is the run's outcome. No lifecycle gate is needed for the
-# `nothing`: `init!`, `restore!` and `replay!` each build a fresh run, so no
-# record of a previous one is reachable here.
+# `nothing`: `init!`, `overlay!`, `restore!` and `replay!` each build a fresh
+# run, so no record of a previous one is reachable here.
 """
     termination(sim::Simulation) -> Union{Nothing,TerminationRecord}
 
@@ -2880,7 +2880,8 @@ Return a copy of the current run's input [trace](@ref g-trace), the value
 The trace holds its header and a sparse record. The header is the
 [checkpoint](@ref g-checkpoint) the run opened from. The record keeps every
 [batch](@ref g-batch) the loop applied since. The trace also holds the
-[frame ordinal](@ref g-frame-ordinal) of the last. The state trajectory, the
+[frame ordinal](@ref g-frame-ordinal) of the last drain, which every frame
+makes. The state trajectory, the
 [log](@ref g-log) included, is derived from it, never the reverse. The copy is
 detached from the run, so later [frames](@ref g-frame) never reach it.
 

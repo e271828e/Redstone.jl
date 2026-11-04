@@ -64,9 +64,10 @@ later [frames](@ref g-frame) never reach it. A trace holds these fields.
 - `frames`: the frame index of the last drain, which is the frame every record
   of that drain carries.
 
-One `schemas` pair is appended at every change to the [roster](@ref g-roster),
-and the list only grows. A writer is named as in a [`WriterStatus`](@ref), and
-the [harness writer](@ref g-harness-writer) is `"harness"`.
+Every change to the [roster](@ref g-roster) appends one `schemas` pair per
+current writer, and the list only grows. A writer is named as in a
+[`WriterStatus`](@ref), and the [harness writer](@ref g-harness-writer) is
+`"harness"`.
 
 Each `batches` record holds its frame, its writer's index into `schemas` and its
 entries by position, so it reads only through its own schema entry.

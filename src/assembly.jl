@@ -564,6 +564,17 @@ reaches the root only through one entry per level, which this helper computes.
 Its refusals are `input_passthrough`'s. More than one selection keyword, or an
 unknown name, is refused as `UnknownFaceSelection`, and a selection keyword that
 keeps nothing warns `EmptyFaceSelection` on the build.
+
+# Keywords
+
+- `sep`: the separator between the prefix and the face name.
+- `prefix`: the label in front of each face.
+- `except`: the face names to leave out.
+- `only`: the face names to keep.
+- `select`: a predicate that receives each face name as a `String` and keeps
+  the ones it accepts.
+
+See also [`input_passthrough`](@ref).
 """
 function output_passthrough(@nospecialize(assembly), child_path::AbstractString;
                             sep::AbstractString = ".",

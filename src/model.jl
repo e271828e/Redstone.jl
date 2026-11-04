@@ -258,6 +258,9 @@ condition that does not resolve against the build is refused as
 `UninitializedInputs`. A model claimed by a [`Simulation`](@ref) is refused as
 `ArgumentInvalid`.
 
+A second method takes the condition already resolved, and serves the
+simulation's own `init!`, which resolves before it opens its run.
+
 A throw inside boundary zero arrives as a `StepError` at `t0`, with pointer 0
 and host `:boundary_zero`. It writes the status back to `:built`. An
 [interrupt](@ref g-operator-interrupt) writes `:built` too, and propagates
@@ -335,6 +338,9 @@ its clock on a [frame top](@ref g-frame). Otherwise it is refused as
 build with [`init!`](@ref)'s diagnostics, so one that does not resolve is
 refused as `ConditionResolution`. A model claimed by a [`Simulation`](@ref) is
 refused as `ArgumentInvalid`.
+
+A second method takes the condition already resolved, and serves the
+simulation's own `overlay!`.
 
 A throw inside the settling arrives as a `StepError` with host `:overlay` and
 the frame the clock sits at. It writes the status back to `:built`, with the
@@ -669,8 +675,8 @@ end
     warnings(model::Model) -> Vector{Diagnostic}
     warnings(sim::Simulation) -> Vector{Diagnostic}
 
-Return the warnings raised while the model's build and deployment were
-constructed.
+Return the warnings that constructing the model's build and deployment
+raised.
 
 The list is the build's warnings followed by the deployment's, and a
 simulation's list is its model's. A warning raised while a run changes state

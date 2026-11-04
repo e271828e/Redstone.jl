@@ -312,12 +312,12 @@ const STALE_S = 2.0
     stale(record::WriterStatus; now::Float64 = time()) -> Bool
 
 Return `true` when the record's [device](@ref g-device)
-[heartbeat](@ref g-heartbeat) lags the wall clock by more than `STALE_S`, two
-seconds.
+[heartbeat](@ref g-heartbeat) lags the wall clock by more than two seconds.
 
-The threshold is deliberately loose, so a device parked in a blocking read
-between rare data is not stale. A device that has not beaten since attach reads
-stale whatever `now` is. The records of the
+The threshold is deliberately loose, so a device that returns to its handle
+within two seconds between blocking reads is not stale. A device parked longer
+reads stale, which is advisory and stops nothing. A device that has not beaten
+since attach reads stale whatever `now` is. The records of the
 [harness writer](@ref g-harness-writer) and of the loop have no heartbeat to
 judge, and return `false`.
 

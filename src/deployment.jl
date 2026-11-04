@@ -311,8 +311,9 @@ parameters, with no scalar type yet.
 A deployment carries the build, the grid it settled, the
 [schedule](@ref g-schedule) and the warnings its construction raised, read with
 [`warnings`](@ref). [`Model`](@ref) materializes it at a scalar type, and one
-deployment backs many models. Two deployments compare as values, which is what
-[`replay!`](@ref) checks before re-driving a recording.
+deployment backs many models. Two deployments compare equal when their step,
+base tick, algorithm, event parameters and schedule agree, whatever their
+builds, which is what [`replay!`](@ref) checks before re-driving a recording.
 
 `Δt_base = :derive` derives the base tick from the discrete
 [components](@ref g-component)' sample times. It is refused as
@@ -320,13 +321,16 @@ deployment backs many models. Two deployments compare as values, which is what
 [anchored](@ref g-anchor) by an [`Absolute`](@ref) entry. A derived `Δt_base`
 finer than the fastest declared sample time warns `GridUtilization`.
 
-Every keyword outside its range is refused as `DeploymentInvalid`, all of them
-in one throw. Exhausting `firing_budget` warns `FiringBudget`.
+A keyword outside its range is refused as `DeploymentInvalid`, and so is a
+`Δt_base` that is not a whole multiple of `h`, that disagrees with `N_base`, or
+that an anchor's period or offset does not divide. One throw reports the faults
+found together. Exhausting `firing_budget` warns `FiringBudget`.
 
 # Keywords
 
-- `h`: the continuous step in seconds, required and refused as
-  `DeploymentInvalid` when absent.
+- `h`: the continuous step in seconds, a `Rational`, an integer, a `Period` or
+  an `Hz` value, required and refused as `DeploymentInvalid` when absent or
+  given as a float.
 - `N_base`: steps per base tick, `1` when `Δt_base` is absent and derived from
   `Δt_base` otherwise.
 - `Δt_base`: the base tick period as a `Rational`, a `Period` or an `Hz` value,
@@ -427,9 +431,9 @@ Base.hash(deployment::Deployment, seed::UInt) =
 """
     warnings(deployment::Deployment) -> Vector{Diagnostic}
 
-Return the warnings raised while the deployment was constructed.
+Return the warnings the deployment's construction raised.
 
-Each warning was also logged once when the constructor returned. The list on
+The constructor also logged each warning once as it returned. The list on
 the deployment is where they stay, so a caller never has to capture the log.
 For a build's, a model's or a simulation's list, see the other methods of
 `warnings`.

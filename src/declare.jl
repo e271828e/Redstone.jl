@@ -133,8 +133,8 @@ Allocate the [component](@ref g-component)'s [workspace](@ref g-workspace) at
 the scalar type `T`.
 
 The framework calls the allocator and hands its result to the component's
-functions as the `ws` field of their [bundle](@ref g-bundle). Declaring is
-allocating, so `ws_init` is the one declaration that takes the scalar. Sizes
+functions as the `ws` field of their [bundle](@ref g-bundle). The declaration
+allocates, so `ws_init` is the one declaration that takes the scalar. Sizes
 come from the instance and eltypes from `T`, as in
 `ws_init(c::KF, ::Type{T}) where {T} = (P = Matrix{T}(undef, c.n, c.n),)`.
 
@@ -411,8 +411,8 @@ starting from the `φ`-th.
 
 A [`sample_times`](@ref) [entry](@ref g-entry) `Relative(K, φ)` runs its child
 at every `K`-th tick of the enclosing [rate scope](@ref g-rate-scope), starting
-from its `φ`-th, and `φ` defaults to `0`. Scope ticks are the unit system, so
-relative entries compose affinely down the tree. Under a scope that ticks every
+from its `φ`-th, and `φ` defaults to `0`. Relative entries count scope ticks, so
+they compose affinely down the tree. Under a scope that ticks every
 `D_s` [base ticks](@ref g-dt_base) at [phase](@ref g-phase) `Φ_s`, the child
 ticks every `K·D_s` base ticks at phase `Φ_s + φ·D_s`.
 

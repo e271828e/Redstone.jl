@@ -128,8 +128,8 @@ A continuous [primitive](@ref g-primitive) that publishes the `N` elements of
 its static-vector input as `N` outputs.
 
 The one input, bare, is an `SVector{N, V}`, and the outputs `out1` to `outN`
-are typed `V`, with `outi = u[i]`. A wire names the input by the block's path
-alone. The [block](@ref g-block) is stateless, and the inverse of
+are typed `V`, with `outi = u[i]`. A wire names the input `u`, as in
+`"unpack/u"`. The [block](@ref g-block) is stateless, and the inverse of
 [`Pack`](@ref).
 """
 struct Unpack{V, N} <: AbstractComponent end
@@ -2398,8 +2398,9 @@ and `u`, its clamp to `[u_min, u_max]` per channel:
 
     u_raw = u_trim + K_fwd (z_ref - z_trim) - K_fbk (x - x_trim) + q
 
-The [block](@ref g-block) holds one continuous state, `q`, the integral term in
-output units, one channel per control input. One law moves it:
+The [block](@ref g-block) holds one bare continuous state, written `q` below,
+the integral term in output units, one channel per control input. One law moves
+it:
 
     q̇ = ε + (ref - u_raw) / Tt
 

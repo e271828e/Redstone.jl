@@ -62,7 +62,7 @@ checkable against a build. A [selector](@ref g-selector) resolves against a
 model, and the residual and check names are observed at one evaluation at the
 guess. `trim!` refuses a malformed problem as `TrimProblemInvalid`. A check
 whose names depend on values, or that throws, fails at the commit after the
-simulation has moved, as a residual does.
+state has moved, as a residual does.
 
 # Keywords
 
@@ -77,7 +77,8 @@ simulation has moved, as a residual does.
   finite and positive.
 - `checks`: `checks(reads::NamedTuple, d::NamedTuple) -> NamedTuple`, equations
   reported once at the committed state and never solved.
-- `check_tolerances`: a `NamedTuple` of `Float64` with the checks' names.
+- `check_tolerances`: a `NamedTuple` of `Float64` with the checks' names, each
+  finite and positive.
 """
 struct TrimProblem{G,L,U,C,R,F,T,K,V}
     guess::G
@@ -519,7 +520,7 @@ usual when it is.
 `TrimProblemInvalid`. The first runs before any evaluation, with the
 [read set](@ref g-read-set)'s own `ReadResolution` failures beside the problem's
 faults. The second checks the residual and check returns at the guess
-evaluation, and again at the first seeded one.
+evaluation, and the residual return again at the first seeded one.
 
 The baseline and the problem's condition at the guess must give every
 [root input](@ref g-root-input) a value, and one left without a value is refused
