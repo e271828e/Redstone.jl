@@ -423,8 +423,8 @@ A second output, `saturation`, publishes the `Int8` code of
 pointing inward, the code reads saturated until the next tick moves the state
 off.
 
-Over an `SVector`, the limits and the codes are componentwise, and `saturation`
-publishes an `SVector` of `Int8`.
+Over an `SArray`, the limits and the codes are componentwise, and `saturation`
+publishes an `SArray` of `Int8` of `V`'s shape.
 
 `reset = true` adds the `Bool` input `reset`, so the inputs
 `u` and `reset` are named. It is the level reset of
@@ -433,8 +433,8 @@ where the flag reads true.
 
 `s0`, `lower` and `upper` are promoted to one type, the parameter `V`,
 `Float64` or an `SArray` of `Float64`, and taken by `float`, so integer values
-qualify. A `lower` not below `upper`, componentwise over a vector, is refused
-with an `ArgumentError`.
+qualify. A `lower` not below `upper`, componentwise over an `SArray`, is
+refused with an `ArgumentError`.
 
 # Keywords
 
@@ -479,7 +479,7 @@ output, and each tick stores `y`:
 
     y = s + clamp(u - s, -falling Δt, rising Δt)
 
-Over a vector the slew is componentwise.
+Over an `SArray` the slew is componentwise.
 
 `y` reads `u`, so the [block](@ref g-block) has
 [feedthrough](@ref g-feedthrough). A loop closed on it through a memoryless path
@@ -1435,10 +1435,11 @@ the end of that step. `x` stays on the limit until then. It then carries an
 offset of at most `a h² / 2`, with `a` the input's slope at its zero crossing
 and `h` the step.
 
-Over an `SVector`, the limits and the codes are componentwise, and `saturation`
-publishes an `SVector` of `Int8`. The block declares one copy of each event per
-component, named `hit_upper_1` to `hit_upper_N`, then `hit_lower_i`,
-`leave_upper_i` and `leave_lower_i`. Each copy acts on its own component.
+Over an `SArray`, the limits and the codes are componentwise, and `saturation`
+publishes an `SArray` of `Int8` of `V`'s shape. The block declares one copy of
+each event per component, named `hit_upper_1` to `hit_upper_N`, then
+`hit_lower_i`, `leave_upper_i` and `leave_lower_i`. Each copy acts on its own
+component.
 
 An `x0` outside the limits is clamped at [boundary zero](@ref g-boundary-zero),
 and the initial mode agrees with the initial input.
@@ -1452,8 +1453,8 @@ reset inside lands free, whatever the mode was.
 
 `x0`, `lower` and `upper` are promoted to one type, `Float64` or an `SArray` of
 `Float64`,, and taken by `float`, so integer values qualify. A `lower` not
-below `upper`, a scalar beside an `SArray` and two lengths are each refused
-with an `ArgumentError`.
+below `upper`, a scalar beside an `SArray` and two shapes are each refused with
+an `ArgumentError`.
 
 # Keywords
 
@@ -1609,9 +1610,9 @@ carries an offset of at most `a h² / 2`, with `a` the input's slope at its zero
 crossing and `h` the step. `q` carries an offset that grows by as much per unit
 time. The next limit removes both.
 
-Over an `SVector`, the limits, the leaves and the codes are componentwise,
-`velocity` publishes an `SVector` and `saturation` an `SVector` of `Int8`. The
-block declares one copy of each event per component, named `hit_upper_1` to
+Over an `SArray`, the limits, the leaves and the codes are componentwise,
+`velocity` publishes an `SArray` of `V`'s shape and `saturation` one of `Int8`.
+The block declares one copy of each event per component, named `hit_upper_1` to
 `hit_upper_N`, then `hit_lower_i`, `leave_upper_i` and `leave_lower_i`. Each
 copy acts on its own component.
 
@@ -1622,7 +1623,7 @@ input.
 
 `q0`, `v0`, `lower` and `upper` are promoted to one type, `Float64` or an
 `SArray` of `Float64`,, and taken by `float`, so integer values qualify. A
-`lower` not below `upper`, a scalar beside an `SArray` and two lengths are each
+`lower` not below `upper`, a scalar beside an `SArray` and two shapes are each
 refused with an `ArgumentError`.
 
 # Keywords
@@ -1740,7 +1741,7 @@ taken by `float`, so integer values qualify, and `y` is [pinned](@ref g-walked)
 at `V`. It depends on the mode and the instance alone, so it carries zero
 partials under every [activation](@ref g-activation).
 
-Over an `SVector`, the thresholds, the values and the codes are componentwise.
+Over an `SArray`, the thresholds, the values and the codes are componentwise.
 The block declares `N` copies of the two events, one per component, named
 `switch_on_1` to `switch_on_N`, then `switch_off_i`. Each [guard](@ref g-guard)
 reads its one component and each handler writes it.
@@ -1827,10 +1828,11 @@ jump then lands where the comparator's event lands. `y` reads no input, so the
 [Boundary-detected](@ref g-boundary-detected), each switch lands on the first
 boundary that observes it.
 
-Over an `SVector`, the thresholds and the codes are componentwise, and `y` is
-an `SVector{N, Bool}`. The block declares `N` copies of the two events, one per
-component, named `switch_on_1` to `switch_on_N`, then `switch_off_i`. Each
-[guard](@ref g-guard) reads its one component and each handler writes it.
+Over an `SArray`, the thresholds and the codes are componentwise, and `y` is an
+`SArray` of `Bool` of `V`'s shape. The block declares `N` copies of the two
+events, one per component, named `switch_on_1` to `switch_on_N`, then
+`switch_off_i`. Each [guard](@ref g-guard) reads its one component and each
+handler writes it.
 
 The block starts below. [Boundary zero](@ref g-boundary-zero) sets every
 [prior](@ref g-prior) to not-holding. An input already at or above `upper` at
@@ -1849,7 +1851,7 @@ so integer values qualify.
 - `threshold`: the threshold of a plain comparator, which sets both `lower` and
   `upper`.
 - `lower`: the threshold `u` falls below for the output to turn `false`, at most
-  `upper`, componentwise over a vector.
+  `upper`, componentwise over an `SArray`.
 - `upper`: the threshold `u` rises to for the output to turn `true`.
 - `localized`: `true` for localized switches, `false` for boundary-detected
   ones.
@@ -2109,9 +2111,9 @@ infinite limits. They also set `Tt = Inf`, which switches the correction off.
 
 The parameters, the inputs `r`, `y` and `v`, the outputs `u` and `u_raw` and
 the states share one type, the parameter `V`, `Float64` or an `SArray` of
-`Float64`, the broadcast of the nine keywords given as values. Over an
-`SVector` the law is componentwise, and `saturation` is an `SVector` of `Int8`
-and `engaged` one of `Bool`.
+`Float64`, the broadcast of the nine keywords given as values. Over an `SArray`
+the law is componentwise, and `saturation` is an `SArray` of `Int8` of `V`'s
+shape and `engaged` one of `Bool`.
 
 The nine keywords given as values broadcast to one `V`, whose shape is the sum
 of their `zero`s, so a scalar pairs with a vector and integer values qualify. A
@@ -2224,7 +2226,7 @@ values.
 
 The parameters, the inputs, the outputs `u` and `u_raw` and the states share
 one type, the parameter `V`, `Float64` or an `SArray` of `Float64`, and over an
-`SVector` the law is componentwise, as in `PID`. The nine keywords given as
+`SArray` the law is componentwise, as in `PID`. The nine keywords given as
 values broadcast to one `V` by the rule of `PID`, the shape the sum of their
 `zero`s. A scalar therefore pairs with a vector, and a uniform vector gain
 spells one keyword as a vector, `Kp = @SVector fill(2.0, 3)`.
@@ -2244,11 +2246,11 @@ brings `u_raw` to the reference by the next tick, the clamping scheme as the
 limit of tracking. Not engaged with tracking, `Tt = 0` follows `v` exactly.
 
 A third output, `saturated`, publishes the `Int8` code of the block's own
-clamp, an `SVector` of `Int8` over a vector. The code is `1` with `u_raw` at or
-above `u_max`, `-1` at or below `u_min` and `0` between. `s_update` writes it
-to the store from `u_raw` at the tick, and `y_state` publishes it from stage 1
-at the next. It is therefore one tick stale, and flips only on a tick
-[boundary](@ref g-boundary).
+clamp, an `SArray` of `Int8` of `V`'s shape over an array. The code is `1` with
+`u_raw` at or above `u_max`, `-1` at or below `u_min` and `0` between.
+`s_update` writes it to the store from `u_raw` at the tick, and `y_state`
+publishes it from stage 1 at the next. It is therefore one tick stale, and
+flips only on a tick [boundary](@ref g-boundary).
 
 The code serves the hold of an outer block in a cascade, wired to its input
 `saturation`. The outer block's integrator takes one extra step before the hold
