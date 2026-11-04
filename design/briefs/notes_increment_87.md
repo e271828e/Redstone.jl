@@ -61,3 +61,11 @@ arc's review. Nothing was pushed.
      bound (low): corrected. The inherited `Float64` wording shared by
      four docstrings and `LimitedIntegrator`'s departure sentence stay.
    - Three over-long lines (low): rewrapped.
+8. **The recommendation in item 7 was wrong, and 3d76179 corrects it.** The
+   guard reading `u` at rest and `q - limit` otherwise closes the probe's
+   scenario but re-fires on a slow departure: `q` rounds back onto the limit
+   with `v` nonzero, the guard holds at zero, and the handler erases `v`. On a
+   ramp of slope `1e-10` at `h = 1e-3` it fired about 9000 times and left `v`
+   at zero. The landed guard, the first nonzero of `q - limit`, `v` and `u`,
+   fired as the old one does and kept `v` exact. All thirteen mutants of it,
+   the recommended form among them, turn a pin red.

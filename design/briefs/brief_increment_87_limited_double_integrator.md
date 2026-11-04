@@ -262,3 +262,15 @@ turn a named pin red, the two vector ones on 8159e4d's assertions, and
 the gate is green on the floor at 4197 and 3890, 8087 in all. Its one
 wording nit, the departure sentence's "for the rest of that step",
 landed as "until then" in the closing commit.
+
+Two loose fixes after the review, on the user's rulings of 2026-11-04. A
+scalar beside a vector among the keywords refused by name at b51e3e5, which
+the single broadcast convention, first in the work order, then replaces. And
+the unseen return closed at 3d76179: a hit guard takes the first nonzero of
+`q - limit`, `v` and `u`, not the form the review sketched and the notes
+first recommended, which re-fired up to about 9000 times on a slow departure
+and erased `v`. This also lets a `q0` on a limit with an inward `v0` keep it,
+so the docstring's boundary-zero sentence changed. Reading 3 no longer
+stands for this block; the single integrator keeps the hole under its
+boundary-detected leave, on its own pending bullet. Reading 5's second question
+is unchanged, but a reset form should read the guard above first.
