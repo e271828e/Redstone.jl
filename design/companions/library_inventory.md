@@ -101,6 +101,15 @@ That is why `Step` is a block with a guard while a ramp is `Source{V}(f)`, and
 why the continuous rate limiter and the clamps stay out while a comparator
 that declares a crossing comes in.
 
+An event design is checked against [§10.6][s10-6]'s boundary bookkeeping before it
+enters a row, since three shapes have failed there. A handler that moves
+the guard onto a predicate already holding presents no fresh edge, so a
+mode meant to advance one step per firing sticks when two crossings are
+observed at one boundary, two inside a boundary-detected step or two at
+or before `t₀`. A latch mode around a `Bool`-form guard duplicates [§2.3][s2-3]'s
+edge rule, and no test tells the two apart. A threshold with non-strict
+guards on both sides chatters at `lower == upper`; one side is strict.
+
 ## 3. The inventory
 
 Status is one of *shipped*, *candidate* (listed, built when wanted), or

@@ -94,13 +94,8 @@ counts, and restates nothing a rules file says. The pipeline it feeds is
 ## Library blocks
 
 - An event design in an inventory row is probed against §10.6's
-  bookkeeping before the brief. Three shapes have failed there: a handler
-  that moves the guard onto a predicate already holding presents no fresh
-  edge, so a mode advancing one step per firing sticks when two crossings
-  are observed at one boundary; a latch mode around a `Bool`-form guard
-  duplicates §2.3's edge rule and its mutant survives; a threshold with
-  non-strict guards on both sides chatters at `lower == upper`, so one
-  side is strict.
+  bookkeeping before the brief; `companions/library_inventory.md` section
+  2 names the shapes that have failed there.
 - A fixture wired to a typed input is checked to publish that type. A
   brief that sends the builder to "the helper the neighbouring tests use"
   greps that the helper exists and names it.
