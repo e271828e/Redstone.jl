@@ -10,9 +10,9 @@ are examples of what a docstring must not contain.
 
 - **The sheet governs the docstrings of exported names.** The exported-name
   audit (`pending.md`) fixes that set. Until it runs, the provisional set is
-  Appendix B's surface less the extension-only surface (the stage family,
-  the binding traits, the device contract) and less the names the audit
-  flags. Unexported names keep their docstrings as they are.
+  the API page, `docs/src/api.md`, which lists Appendix B's surface and the
+  extension-only surface (the stage family, the binding traits, the device
+  contract) with it. Unexported names keep their docstrings as they are.
 - **An internal-type method of a public function carries a `# Design:`
   comment, not a docstring.** A docstring on it would render under the public
   name and show a type the reader cannot construct. The comment keeps its
@@ -49,8 +49,10 @@ closed(run::Run) = run.termination !== nothing
 ```
 
 - **Keywords and arguments are bulleted lists, not tables.** Appendix B uses
-  tables; the REPL renders a list and mangles a table. One bullet per name,
-  its default in the signature, its meaning in one sentence.
+  tables; a list reads in the REPL at any width, where a wide table wraps.
+  One bullet per name, its default in the signature, its meaning in one
+  sentence. A table that is not a keyword list, such as `ControllerBlock`'s
+  case table, stays where a list cannot carry it.
 - **A struct whose fields are public lists them under a lead sentence.** A
   sentence such as "A report holds these fields." opens one bullet per field,
   its meaning in one sentence. A struct with one public field names it in
@@ -63,7 +65,12 @@ closed(run::Run) = run.termination !== nothing
   the definition writes them, then the return type after `->`. The code is
   what a user calls; Appendix B is the inventory of names in scope, not a
   source of spelling, and it writes `→` as typography where a docstring
-  writes `->`.
+  writes `->`. A line longer than the width wraps at a keyword, the
+  continuation aligned under the first argument.
+- **A return type that is not one concrete type is written in words, or as
+  `Any`.** `x_init` returns `NamedTuple, value or nothing`, each member
+  named, and a read whose type is the cell's writes `-> Any`. `Any` is for a
+  return nothing narrower is true of.
 - **A fallback users extend names its argument.** Where users write methods
   of the function, or the prose refers to the argument, the line names it
   even where the method leaves it unnamed, as in
@@ -126,6 +133,11 @@ closed(run::Run) = run.termination !== nothing
 - **A correction or a review finding obeys the same test.** It enters the
   docstring only if the user needs it to use the call correctly. Otherwise it
   goes to the `# Design:` comment or the companion.
+- **A sentence that states a behaviour is checked against the code.** The
+  rules above govern form, and a rewrite that keeps every sentence keeps
+  every error in them. A claim the code does not show on its face is settled
+  by a probe. A false claim is a finding, reported with its replacement
+  drafted.
 - **A sibling's job is a cross-reference, not an explanation.** The docstring
   links the sibling with [`name`](@ref) and says in a clause why the reader
   would go there.
@@ -166,16 +178,16 @@ closed(run::Run) = run.termination !== nothing
 
 ## What moves and what stays
 
-- **Nothing is deleted.** Every sentence of the old docstring either stays,
-  rewritten for the reader, or moves into the `# Design:` comment.
+- **An edit deletes nothing.** Every sentence an edit takes out of the
+  docstring moves into the `# Design:` comment, rewritten or as it was.
 - **Every citation moves to the comment.** The comment's first line lists the
   sections and entries the docstring cited. Maintainer prose with content of
   its own, such as which policy an advance declares and where it lives
   afterwards, follows on further comment lines. A diff reviewer reads a
   comment as easily as a docstring.
-- **The check is mechanical.** The set of `§` and `D-` citations in the old
-  docstring equals the set in the new docstring plus its comment. A citation
-  that vanished is a finding.
+- **The check is mechanical.** The set of `§` and `D-` citations before the
+  edit equals the set after it, the comment counted. A citation that
+  vanished is a finding.
 
 ## Examples
 
@@ -193,13 +205,14 @@ closed(run::Run) = run.termination !== nothing
 
 ## Procedure and review
 
-- **The pilot file first.** One small file on the stable core, reviewed
-  against this sheet, before any agent is briefed. What the pilot teaches
-  lands here before the sweep starts.
-- **One source file per agent, this sheet as the brief's rule set.** The
-  agent rewrites every docstring in scope in its file and reports every
-  finding from the rules above instead of resolving it.
-- **A cold review after, by the checklist below.**
+- **A sweep is staffed one source file per agent, this sheet as the brief's
+  rule set, after a pilot file.** The pilot is one small file on the stable
+  core, reviewed against this sheet, and what it teaches lands here first.
+  Each agent rewrites every docstring in scope in its file and reports every
+  finding from the rules above instead of resolving it. A cold review
+  follows, by the checklist below.
+- **The checklist is the rules' index.** A rule added above gets its line
+  below in the same edit, since the reviewer works from the list.
 
 The reviewer's checklist, one line per rule:
 
@@ -233,12 +246,25 @@ The reviewer's checklist, one line per rule:
 22. Mechanism, a correction or a finding included, only where the user needs
     it to use the call correctly.
 23. Nothing after the `# Keywords` list but `# Examples` and `See also`.
+24. Each sentence stating a behaviour checked against the code, a probe where
+    the code does not show it.
+25. A sentinel default shown as required.
+26. A signature that disagrees with Appendix B reported as a finding against
+    B, never bent.
+27. No coinage outside the glossary.
+28. `Model` the type, the authored tree the component tree or the root.
+29. A return type that is not one concrete type written in words, or `Any`.
 
 ## The battery
 
 - **The Documenter build is the acceptance test.** `makedocs` with
   `doctest = true` and `checkdocs = :exports`, green. A failing doctest or an
   exported name missing from the reference page fails the build.
-- **A grep is the second test.** Over the docstrings of exported names, `§`
-  and `D-[0-9]` come back empty. The grep traps in `implementation.md` that
+- **The mechanical checks are the second test, over the API page's
+  docstrings.** `§`, `D-[0-9]`, a predecessor's name and a companion pointer
+  come back empty, and no summary reaches twenty words. After a rewrite,
+  each file's citation set is unchanged with its comments counted, and its
+  AST with the docstrings stripped matches the base.
+  `design/reports/20261104_docstring_audit/` holds `roster.jl` and
+  `ast_check.jl`, which run them. The grep traps in `implementation.md` that
   read docstring text are re-checked after a file's rewrite.
