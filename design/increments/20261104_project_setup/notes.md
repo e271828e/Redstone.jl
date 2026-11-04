@@ -86,3 +86,19 @@ the diff.
   tops, the `get_input` read-back, the carried `DiagnosticError` shape,
   specialization pins as deltas, blocking reads under a spawned task, and
   zero-argument fixtures in the `Dual` sweep.
+
+## Step 6: `AGENTS.md`, the settings, the memory repo
+
+- `AGENTS.md` carries the map, the routing table for new facts, the
+  reading routes and the conventions, in about 650 words. From the old
+  `project.md` it drops the closed review rounds, the closed readability
+  rewrite and the memory repo's own lines, all history or moot.
+- The user's settings gain `autoMemoryEnabled: false` and the
+  instruction-files option `claude-md-and-agents-md`, so a stray local
+  `CLAUDE.md` can never silence `AGENTS.md`. The user's global
+  instructions gain the "Running Subagents" section. Both edits sit
+  uncommitted in the dotfiles for review.
+- The memory repo's files are deleted in a final pushed commit, with
+  `MEMORY.md` left as a pointer to `AGENTS.md`.
+- A fresh headless session quoted `AGENTS.md` back, so it loads. Whether a
+  subagent of a fresh session sees it is still to be checked.

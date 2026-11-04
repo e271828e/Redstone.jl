@@ -148,8 +148,8 @@ omitted, not left empty. The latest landed brief shows the register.
 <The commits the arc makes. Drafted on <date> at <tip>, after the docs
 commit <hash>. Who prototyped, in which worktree, and the patch file
 beside this brief. Whether the user is away, and where the coordinator's
-rulings are. "Not normative; design and code are peers: if a shape below
-proves wrong at the keyboard, stop and report rather than deviate.">
+rulings are. "Not normative: if a shape below proves wrong at the
+keyboard, stop and report rather than deviate.">
 
 ## What is settled
 <The pending bullet or ruling this delivers. Each ruling with its reason.
