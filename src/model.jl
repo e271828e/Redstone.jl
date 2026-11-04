@@ -22,15 +22,18 @@
 # (§9.2, §9.7). Only the model's own doors and catch sites write `status`, and
 # `lifecycle(sim)` reads it (§12.6, D-317). `claimed` is set by
 # `Simulation(model)` through a compare-and-swap (§9.2, §12.6, D-318). A
-# simulation's drain folds `frame_diag` into the loop's account beside the
-# loop's own cell (§11.8, D-317). The claim's gate refuses the internal `apply!`
-# on a claimed model as well.
+# simulation's drain folds `frame_diag` into the loop's account at each frame
+# top, beside the loop's own cell (§11.8, D-317). The claim's gate refuses the
+# internal `apply!` on a claimed model as well.
 """
     Model(deployment::Deployment, ::Type{T} = Float64; chunk_size = 16) -> Model{T}
     Model(build::Build, ::Type{T} = Float64; h, N_base = nothing, Δt_base = nothing,
           algorithm = RK4, firing_budget = 4, localization_tol = 1e-6,
-          localization_budget = 8, kw...) -> Model{T}
-    Model(root::AbstractComponent, ::Type{T} = Float64; kw...) -> Model{T}
+          localization_budget = 8, chunk_size = 16) -> Model{T}
+    Model(root::AbstractComponent, ::Type{T} = Float64; h, N_base = nothing,
+          Δt_base = nothing, algorithm = RK4, firing_budget = 4,
+          localization_tol = 1e-6, localization_budget = 8,
+          chunk_size = 16) -> Model{T}
 
 A deployment materialized at one scalar type `T`, ready to be written, evaluated
 and stepped.
@@ -48,29 +51,37 @@ anything is compiled.
 `Model(build; kw...)` is `Model(Deployment(build; grid keywords...), T;
 chunk_size)`, and `Model(root; kw...)` calls [`build`](@ref) first. The grid,
 algorithm and event keywords are `Deployment`'s, documented and refused as
-`DeploymentInvalid` there. `h` is required, as for [`Deployment`](@ref).
+`DeploymentInvalid` there. `h` is required, as for [`Deployment`](@ref). A
+`chunk_size` that is not an integer of at least 1 is refused as
+`ArgumentInvalid`.
 
 A model holds five values, each a field.
 
 - `deployment`: the deployment it materializes, and through it the build.
 - `exec`: the executor this model owns, with its stepper and its buffers.
-- `status`: `:built` until [boundary zero](@ref g-boundary-zero) completes, and
-  `:consistent` once it has completed or a state has been restored. A throw
-  inside a [frame](@ref g-frame) writes `:inconsistent`, and a throw inside
-  boundary zero writes `:built`. Only the model's own calls write it.
-- `claimed`: set once a `Simulation` takes the model, and never cleared, so a
-  simulation owns its model and never shares it. The model's own calls that
-  write, such as [`init!`](@ref), [`frame!`](@ref), [`restore!`](@ref),
-  [`overlay!`](@ref) and [`trim!`](@ref), refuse a claimed model as
-  `ArgumentInvalid`.
-- `frame_diag`: the frame's own [diagnostic cell](@ref g-diagnostic-cell), where
-  the [chattering](@ref g-chattering) and [firing-budget](@ref g-firing-budget)
-  reports go. A simulation collects it at each frame top beside its own.
+- `status`: the model's lifecycle state, `:built`, `:consistent` or
+  `:inconsistent`.
+- `claimed`: whether a `Simulation` has taken the model.
+- `frame_diag`: the [frame](@ref g-frame)'s own
+  [diagnostic cell](@ref g-diagnostic-cell), where the
+  [chattering](@ref g-chattering) and [firing-budget](@ref g-firing-budget)
+  reports go.
+
+`status` is `:built` until [boundary zero](@ref g-boundary-zero) completes, and
+`:consistent` once it has completed or a state has been restored. A throw inside
+a frame writes `:inconsistent`, and a throw inside boundary zero writes
+`:built`. Only the model's own calls write it.
+
+`claimed` is set once a `Simulation` takes the model and is never cleared, so a
+simulation owns its model and never shares it. The model's own calls that write,
+such as [`init!`](@ref), [`frame!`](@ref), [`restore!`](@ref),
+[`overlay!`](@ref) and [`trim!`](@ref), refuse a claimed model as
+`ArgumentInvalid`.
 
 # Keywords
 
-- `chunk_size`: the executor's unroll width, an integer of at least 1, refused
-  as `ArgumentInvalid` otherwise. It never changes the trajectory.
+- `chunk_size`: the executor's unroll width, an integer of at least 1, which
+  never changes the trajectory.
 
 See also [`Deployment`](@ref), [`Simulation`](@ref), [`init!`](@ref),
 [`frame!`](@ref).
@@ -153,11 +164,12 @@ functions on it.
 
 - [`frame_top!`](@ref) runs first, before the frame touches any state. It is
   where external inputs arrive.
-- [`settled!`](@ref) runs at every settled boundary before integration resumes:
-  each [localized](@ref g-localized) event time [`t*`](@ref g-t), the frame-top
-  boundary that ends the frame, [boundary zero](@ref g-boundary-zero) under
-  `init!`, and the boundary `overlay!` or `restore!` settles. It returns whether
-  to abandon the frame's remainder, and a `true` is `frame!`'s return.
+- [`settled!`](@ref) runs at every settled boundary before integration resumes.
+  Those boundaries are each [localized](@ref g-localized) event time
+  [`t*`](@ref g-t), the frame-top boundary that ends the frame,
+  [boundary zero](@ref g-boundary-zero) under `init!`, and the boundary
+  `overlay!` or `restore!` settles. It returns whether to abandon the frame's
+  remainder, and `frame!` returns a `true`.
 
 A subtype defines a method of each. Every boundary publishes before integration
 resumes, so a subtype that publishes [snapshots](@ref g-snapshot) does it in
@@ -240,20 +252,22 @@ The condition is built with [`set`](@ref) and its combinators.
 [Root inputs](@ref g-root-input) have no declared default, so the condition must
 give every one of them a value.
 
+The condition resolves, and its root inputs are checked, before any write. A
+condition that does not resolve against the build is refused as
+`ConditionResolution`, and a root input it leaves without a value as
+`UninitializedInputs`. A model claimed by a [`Simulation`](@ref) is refused as
+`ArgumentInvalid`.
+
+A throw inside boundary zero arrives as a `StepError` at `t0`, with pointer 0
+and host `:boundary_zero`. It writes the status back to `:built`. An
+[interrupt](@ref g-operator-interrupt) writes `:built` too, and propagates
+unwrapped.
+
 # Keywords
 
 - `t0`: the start time, any real, held as a `Float64` origin.
 - `hooks`: the [`FrameHooks`](@ref) boundary zero settles through,
   [`NoHooks`](@ref) for a model stepped on its own.
-
-The condition resolves, and its root inputs are checked, before any write. A
-condition that does not resolve against the build is refused as
-`ConditionResolution`, and a root input it leaves without a value as
-`UninitializedInputs`. A model claimed by a [`Simulation`](@ref) is refused as
-`ArgumentInvalid`. A throw inside boundary zero arrives as a `StepError` at
-`t0`, with pointer 0 and host `:boundary_zero`, and writes the status back to
-`:built`. An [interrupt](@ref g-operator-interrupt) writes `:built` too, and
-propagates unwrapped.
 """
 function init!(model::Model{T}, condition = set(); kw...) where {T}
     _claimed_gate(model, get(kw, :hooks, NoHooks()), :init!)       # the claim is said first (D-318)
@@ -306,29 +320,31 @@ merges onto the current store rather than the declared default.
 [cells](@ref g-cell), and none is required, since every root input already holds
 a value.
 
-The overlaid state then settles. An overlaid `x` is projected and events fire
-until none is left to fire, but no discrete output stage and no `s_update` runs.
-An overlaid discrete store is therefore the state of the
-[component](@ref g-component)'s next [tick](@ref g-tick), and its held output
-stays until that tick. An event the overlay moves into
-[holding](@ref g-edge-semantics) fires at once. The settled
+The overlaid state then settles. An overlaid `x` is
+[projected](@ref g-projection), and events fire until none is left to fire. No
+discrete output stage and no `s_update` runs. An overlaid discrete store is
+therefore the state of the [component](@ref g-component)'s next
+[tick](@ref g-tick), and its held output stays until that tick. An event the
+overlay moves into [holding](@ref g-edge-semantics) fires at once. The settled
 [boundary](@ref g-boundary) goes through `settled!(hooks)`, and the status
 returns to `:consistent`.
+
+`overlay!` needs what [`checkpoint`](@ref) needs, the model `:consistent` and
+its clock on a [frame top](@ref g-frame). Otherwise it is refused as
+`ServiceLifecycle` or `CheckpointMidFrame`. The condition resolves against the
+build with [`init!`](@ref)'s diagnostics, so one that does not resolve is
+refused as `ConditionResolution`. A model claimed by a [`Simulation`](@ref) is
+refused as `ArgumentInvalid`.
+
+A throw inside the settling arrives as a `StepError` with host `:overlay` and
+the frame the clock sits at. It writes the status back to `:built`, with the
+stores partly written as a failed [boundary zero](@ref g-boundary-zero) leaves
+them.
 
 # Keywords
 
 - `hooks`: the [`FrameHooks`](@ref) the settled boundary goes through,
   [`NoHooks`](@ref) for a model stepped on its own.
-
-`overlay!` asks what [`checkpoint`](@ref) asks: the model `:consistent`, its
-clock on a [frame top](@ref g-frame). Otherwise it is refused as
-`ServiceLifecycle` or `CheckpointMidFrame`. The condition resolves against the
-build with [`init!`](@ref)'s diagnostics, so one that does not resolve is
-refused as `ConditionResolution`. A model claimed by a [`Simulation`](@ref) is
-refused as `ArgumentInvalid`. A throw inside the settling arrives as a
-`StepError` with host `:overlay` and the frame the clock sits at. It writes the
-status back to `:built`, with the stores partly written as a failed
-[boundary zero](@ref g-boundary-zero) leaves them.
 """
 function overlay!(model::Model{T}, condition = set(); kw...) where {T}
     _claimed_gate(model, get(kw, :hooks, NoHooks()), :overlay!)
@@ -378,14 +394,16 @@ Return the compiled [phase bodies](@ref g-measurement-seam) the loop runs, bound
 over the model's own [buffers](@ref g-buffer).
 
 The bodies are the ones the loop runs, not copies, so an allocation measurement
-over them measures the loop itself. A simulation's are its model's. The named
-tuple holds four bodies, `sweep_1`, `sweep_2`, `rhs` and `ticks`, and two
-dictionaries of zero-argument callables over the same buffers. `events` holds
-the [guard](@ref g-guard) and the handler of each event, keyed by
-`(path, name)`, and `projections` the `x_projection` call of each
-[component](@ref g-component), keyed by path. The set is fixed: a model with no
-discrete components still gets `ticks`, which does nothing, so code over the
-bodies needs no branch per model.
+over them measures the loop itself. A simulation's are its model's.
+
+The named tuple holds four bodies, `sweep_1`, `sweep_2`, `rhs` and `ticks`, and
+two dictionaries of zero-argument callables over the same buffers. `events`
+holds the [guard](@ref g-guard) and the handler of each event, keyed by
+`(path, name)`. `projections` holds the `x_projection` call of each
+[component](@ref g-component), keyed by path.
+
+The set is fixed. A model with no discrete components still gets `ticks`, which
+does nothing, so code over the bodies needs no branch per model.
 """
 phase_bodies(model::Model) = model.exec.bodies
 
@@ -669,27 +687,27 @@ warnings(model::Model) = vcat(warnings(model.deployment.build), warnings(model.d
 
 # Design: §7.3, D-317.
 """
-    port(model::Model, path::String[, name::Symbol])
+    port(model::Model, path::String, name::Union{Nothing,Symbol} = nothing) -> Any
 
 Return a [port](@ref g-port)'s current value in the model's
 [signal table](@ref g-signal-table).
 
-A port is addressed by its [component](@ref g-component)'s path and its name,
-and a bare port, the port `y`, by that name or by the path alone, with the name
-left out. An
+Address a port by its [component](@ref g-component)'s path and its name. Address
+a bare port, the port `y`, by that name or by the path alone. An
 [assembly](@ref g-assembly)'s own path addresses its output
 [faces](@ref g-face), which resolve to the [cells](@ref g-cell) they derive
-from, and the empty path the [root inputs](@ref g-root-input). A simulation's
-`port(sim, path, name)` reads its model's. To read a port off a published
-[snapshot](@ref g-snapshot) instead, use `port(snapshot, path, name)`.
+from. The empty path addresses the [root inputs](@ref g-root-input).
+
+A simulation's `port(sim, path, name)` reads its model's. To read a port off a
+published [snapshot](@ref g-snapshot) instead, use `port(snapshot, path, name)`.
 """
 port(model::Model, path::String, name::Union{Nothing,Symbol} = nothing) =
     gather_cell(model.exec.store, port_addr(model.exec.act.layout, path, name))
 
 # Design: §7.3, D-317.
 """
-    state(model::Model, path::String)
-    state(sim::Simulation, path::String)
+    state(model::Model, path::String) -> Any
+    state(sim::Simulation, path::String) -> Any
 
 Return the state of the [component](@ref g-component) at `path`, from whichever
 [store](@ref g-store) holds it.
@@ -713,13 +731,13 @@ end
 
 # Design: §7.3, D-317.
 """
-    modes(model::Model, path::String)
-    modes(sim::Simulation, path::String)
+    modes(model::Model, path::String) -> Any
+    modes(sim::Simulation, path::String) -> Any
 
 Return the modes of the [component](@ref g-component) at `path`, from its `m`
 [store](@ref g-store).
 
-The read changes nothing: only the component's event handlers write its modes.
+The read changes nothing. Only the component's event handlers write its modes.
 A simulation's modes are its model's. For the rest of a component's state, see
 [`state`](@ref).
 """
@@ -941,17 +959,17 @@ event [prior](@ref g-prior) resets either. The call accepts any status, so a
 fresh `:built` model of the same deployment can take a state another model
 produced.
 
+A state whose [fingerprint](@ref g-fingerprint) or deployment does not match
+this model is refused as `CheckpointMismatch`. One whose clock is off its own
+grid is refused as `CheckpointMidFrame`. All the mismatches come in one throw
+before any write. A state taken at another scalar type is refused as
+`CheckpointMismatch` too. A model claimed by a [`Simulation`](@ref) is refused
+as `ArgumentInvalid`.
+
 # Keywords
 
 - `hooks`: the [`FrameHooks`](@ref) the restored boundary settles through,
   [`NoHooks`](@ref) for a model stepped on its own.
-
-A state whose [fingerprint](@ref g-fingerprint) or deployment does not match
-this model is refused as `CheckpointMismatch`. One whose clock is off its own
-grid is refused as `CheckpointMidFrame`, and all the mismatches come in one
-throw before any write. A state taken at another scalar type is refused as
-`CheckpointMismatch` too. A model claimed by a [`Simulation`](@ref) is refused
-as `ArgumentInvalid`.
 """
 function restore!(model::Model{T}, model_state::ModelState{T};
                   hooks::FrameHooks = NoHooks()) where {T}

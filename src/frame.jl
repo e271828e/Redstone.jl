@@ -15,7 +15,8 @@
 # The cursor's `:drain` phase is written first. A model with no localized
 # events, every non-nominal activation included since its events compiled out,
 # takes the bare step: no arrival machinery, no extra sweep. The whole frame is
-# §13.4's one `try`, and the `StepError` is the one constructor's.
+# §13.4's one `try`, and the `StepError` is the one constructor's. The frame top
+# `tₖ` is computed from `k` and never accumulated.
 """
     frame!(model::Model, k::Int, hooks::FrameHooks = NoHooks()) -> Bool
 
@@ -24,16 +25,18 @@ settle its frame-top [boundary](@ref g-boundary).
 
 A frame starts with `frame_top!(hooks)`, before the model touches any state, and
 then integrates. A [localized](@ref g-localized) event adds a boundary at its
-time [`t*`](@ref g-t). The clock is then set to the frame top `tₖ`, computed
-from `k` and never accumulated, and the boundary there runs. When `k` is a
-multiple of `N_base` it is a [base tick](@ref g-tick). The discrete
-[components](@ref g-component) [due](@ref g-due) there run their stages and
-updates in it. Any other `k` runs an off-tick boundary, with no discrete update.
-`settled!(hooks)` follows every boundary, each `t*`'s and the frame top's.
+time [`t*`](@ref g-t). The clock is then set to the frame top `tₖ`, and the
+boundary there runs. `settled!(hooks)` follows every boundary, each `t*`'s and
+the frame top's.
+
+When `k` is a multiple of `N_base`, the frame top is a
+[base tick](@ref g-tick). The discrete [components](@ref g-component)
+[due](@ref g-due) there run their stages and updates in it. Any other `k` runs
+an off-tick boundary, with no discrete update.
 
 `frame!` returns whether `settled!` asked to abandon the frame. A `true` at a
-`t*` boundary leaves the rest of the frame unrun, with the clock at `t*` where
-the [stores](@ref g-store) are, and the frame top never reached. See
+`t*` boundary leaves the rest of the frame unrun. The clock stays at `t*`, where
+the [stores](@ref g-store) are, and the frame top is never reached. See
 [`FrameHooks`](@ref) for the hooks, and [`NoHooks`](@ref) for a model stepped on
 its own.
 

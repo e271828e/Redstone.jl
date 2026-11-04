@@ -259,9 +259,9 @@ An output [port](@ref g-port) declared exactly `StopFlag` is a stop request,
 whoever publishes it. The build enters each such port in the
 [requester roster](@ref g-requester-roster). The loop reads every request at
 each published [boundary](@ref g-boundary), unless the advance ignores it
-through its `ignore_stop_requests` keyword, and a run that a request ends
-carries a [`ModelRequestedStop`](@ref) source with the
-[component](@ref g-component)'s [`stop_reason`](@ref).
+through its `ignore_stop_requests` keyword. A run that a request ends carries a
+[`ModelRequestedStop`](@ref) source with the [component](@ref g-component)'s
+[`stop_reason`](@ref).
 
 A `StopFlag` nested in a port of another type, and a
 [root input](@ref g-root-input) carrying one, are refused as `IllegalPortType`.

@@ -139,15 +139,15 @@ end
 """
     Schedule
 
-The deployment's [tick](@ref g-tick) table: one row per discrete
+The deployment's [tick](@ref g-tick) table, with one row per discrete
 [component](@ref g-component), in walk order, and one per
 [rate scope](@ref g-rate-scope).
 
 A component row holds the component's path, the [anchor](@ref g-anchor) it
 resolved against, its tick divisor `D` and [phase](@ref g-phase) `Φ` in
 [base ticks](@ref g-dt_base), and its period `Δt` in seconds.
-[`Deployment`](@ref) builds the [schedule](@ref g-schedule) and carries it, and
-every `Δt` a run uses is read from it.
+[`Deployment`](@ref) builds the [schedule](@ref g-schedule) and carries it. A
+run reads every `Δt` it uses from it.
 """
 struct Schedule
     rows::Vector{ScheduleEntry}
@@ -305,8 +305,8 @@ end
                firing_budget = 4, localization_tol = 1e-6,
                localization_budget = 8) -> Deployment
 
-The build fixed to a grid: its continuous step, [base tick](@ref g-dt_base) and
-event parameters, with no scalar type yet.
+The build fixed to a continuous step, a [base tick](@ref g-dt_base) and event
+parameters, with no scalar type yet.
 
 A deployment carries the build, the grid it settled, the
 [schedule](@ref g-schedule) and the warnings its construction raised, read with
@@ -314,29 +314,31 @@ A deployment carries the build, the grid it settled, the
 deployment backs many models. Two deployments compare as values, which is what
 [`replay!`](@ref) checks before re-driving a recording.
 
-# Keywords
-
-- `h`: the continuous step, in seconds. Required; a missing `h` is refused as
-  `DeploymentInvalid`.
-- `N_base`: steps per base tick. Defaults to `1` when `Δt_base` is absent, and
-  is derived from `Δt_base` otherwise.
-- `Δt_base`: the base tick period, as a `Rational`, a `Period` or an `Hz`
-  value. Defaults to `N_base * h`. `Δt_base = :derive` derives it from the
-  discrete [components](@ref g-component)' sample times, and is allowed only
-  when every discrete component is anchored by an [`Absolute`](@ref) entry.
-- `algorithm`: the stepper, `RK4` or `Heun`. It is bound to the state
-  [buffer](@ref g-buffer) when the `Model` is built.
-- `firing_budget`: how many times one event may fire at one
-  [boundary](@ref g-boundary), an integer of at least 1. Exhaustion warns
-  `FiringBudget`.
-- `localization_tol`: the relative bracket width, as a fraction of `h`, at
-  which event localization stops. Positive.
-- `localization_budget`: how many event localizations one [frame](@ref g-frame)
-  admits, an integer of at least 1.
+`Δt_base = :derive` derives the base tick from the discrete
+[components](@ref g-component)' sample times. It is refused as
+`DeploymentInvalid` unless every discrete component is
+[anchored](@ref g-anchor) by an [`Absolute`](@ref) entry. A derived `Δt_base`
+finer than the fastest declared sample time warns `GridUtilization`.
 
 Every keyword outside its range is refused as `DeploymentInvalid`, all of them
-in one throw. A derived `Δt_base` finer than the fastest declared sample time
-warns `GridUtilization`.
+in one throw. Exhausting `firing_budget` warns `FiringBudget`.
+
+# Keywords
+
+- `h`: the continuous step in seconds, required and refused as
+  `DeploymentInvalid` when absent.
+- `N_base`: steps per base tick, `1` when `Δt_base` is absent and derived from
+  `Δt_base` otherwise.
+- `Δt_base`: the base tick period as a `Rational`, a `Period` or an `Hz` value,
+  `N_base * h` by default, or `:derive`.
+- `algorithm`: the stepper, `RK4` or `Heun`, bound to the state
+  [buffer](@ref g-buffer) when the `Model` is built.
+- `firing_budget`: how many times one event may fire at one
+  [boundary](@ref g-boundary), an integer of at least 1.
+- `localization_tol`: the positive relative bracket width, as a fraction of `h`,
+  at which event localization stops.
+- `localization_budget`: how many event localizations one [frame](@ref g-frame)
+  admits, an integer of at least 1.
 
 See also [`build`](@ref), [`Model`](@ref), [`Simulation`](@ref).
 """

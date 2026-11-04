@@ -44,8 +44,7 @@ fields hold the state.
 - `s` and `m`: each [component](@ref g-component)'s discrete state and modes,
   `nothing` where the component has none.
 - `table`: the whole [signal table](@ref g-signal-table), every
-  [cell](@ref g-cell) buffer copied. The [root inputs](@ref g-root-input) are
-  held as values, never as the [condition](@ref g-condition) that set them.
+  [cell](@ref g-cell) buffer copied.
 - `prior`: the event [priors](@ref g-prior).
 - `t` and `t₀`: the clock's time and origin.
 - `deployment`: the [`Deployment`](@ref), compared as a value on restore.
@@ -53,13 +52,16 @@ fields hold the state.
   on restore.
 
 The frame index and the [boundary](@ref g-boundary) ordinal belong to a run, so
-a [`Checkpoint`](@ref) carries them beside the state. `t` is a grid time,
-`t₀ + k·h` as the clock writes it, so a hand-typed decimal can miss the grid by
-an ulp and be refused as `CheckpointMidFrame`.
+a [`Checkpoint`](@ref) carries them beside the state.
 
-A model's state is not a condition: it enters no condition expression and
-yields none. To write a condition onto a model at rest, use [`overlay!`](@ref).
-`==` compares identity, so compare two states field by field.
+`t` is a grid time, `t₀ + k·h` as the clock writes it, so a hand-typed decimal
+can miss the grid by an ulp and be refused as `CheckpointMidFrame`.
+
+A model's state is not a [condition](@ref g-condition). It holds the
+[root inputs](@ref g-root-input) as values, never as the condition that set
+them. It enters no condition expression and yields none. To write a condition
+onto a model at rest, use [`overlay!`](@ref). `==` compares identity, so compare
+two states field by field.
 """
 struct ModelState{T}
     x::Vector{T}                     # the flat buffer
@@ -83,10 +85,15 @@ A `Float64` model's state at the start of a [frame](@ref g-frame), beside the
 run's frame index and [boundary](@ref g-boundary) ordinal.
 
 `checkpoint(sim)` returns it, and a [trace's header](@ref g-trace-header) holds
-one. [`restore!`](@ref) and [`replay!`](@ref) put it back. Its fields are
-`state`, a `Float64` [`ModelState`](@ref), and `frame` and `boundary`, the
-run's two counters. The state is always `Float64`, since only a simulation's
-model has a run, and a simulation runs only a `Model{Float64}`.
+one. [`restore!`](@ref) and [`replay!`](@ref) put it back. The state is always
+`Float64`, since only a simulation's model has a run, and a simulation runs only
+a `Model{Float64}`.
+
+A checkpoint holds these fields.
+
+- `state`: the model's state, a `Float64` [`ModelState`](@ref).
+- `frame`: the run's frame index.
+- `boundary`: the run's boundary ordinal.
 """
 struct Checkpoint
     state::ModelState{Float64}       # the model's state
