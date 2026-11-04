@@ -1427,9 +1427,10 @@ includes, the `import Redstone:` list (`imports.jl`), `runall()` and
 fixtures in `Main`. The tests are a workspace member (`[workspace]` in
 `Project.toml`), so one root `Manifest.toml`, never committed, resolves both.
 
-Run the suite in the foreground with a 600 s timeout, never in the
-background. The full run takes minutes, so run it only where the rules below
-call for it. A cold process pays its startup and any precompile once, and
+A run that fits the foreground timeout of 600 s runs there. A longer one, the
+full gate among them, runs in the background and is waited on through its
+completion notice, never by polling. The full run takes minutes, so run it
+only where the rules below call for it. A cold process pays its startup and any precompile once, and
 little per file after, so name a generous set rather than a minimal one.
 The package's precompile runs the workload in `src/precompile.jl`, which
 costs about 12 s more.
