@@ -14,7 +14,7 @@ It corrects several of that report's conclusions and supersedes its roadmap.
 - `patches/`: every variant, each a `diff -ru` against the `2556df4` export.
   `recommended.patch` is the stack the report recommends. The four
   `stage2` to `stage5` patches split it for landing, numbered by the brief's
-  stages; they apply in order and sum to it exactly; `design/briefs/brief_increment_58_compile_cost.md` is the
+  stages; they apply in order and sum to it exactly; `design/increments/058_compile_cost/brief_increment_58_compile_cost.md` is the
   brief that lands them.
 - `results/`: one line per run, the mechanism table, the gate log.
 - `agent_reports/`: the long tables of the four agents that wrote the larger

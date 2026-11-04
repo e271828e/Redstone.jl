@@ -2,7 +2,7 @@
 
 Tip `aa9162a`, 2026-09-21. Five slices, five reports in this directory,
 104 structs surveyed, 22 findings. The brief is
-`design/briefs/brief_data_survey.md`. Each row cites its slice's entry,
+`design/reports/20260921_data_survey/brief_data_survey.md`. Each row cites its slice's entry,
 which carries the evidence; this file classifies and sequences. "Rostered"
 means the spec or a decision names the field on that type, so the change is
 a ruling before it is a fix.

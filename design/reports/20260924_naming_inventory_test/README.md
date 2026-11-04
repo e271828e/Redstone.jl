@@ -1,7 +1,7 @@
 # Naming inventory of `test/`: the merge and the rulings
 
 Tip `0c0a899`. Twenty-seven reports, one per test file, from the brief
-`design/briefs/brief_naming_test_inventory.md`, eight Sonnet agents in
+`design/reports/20260924_naming_inventory_test/brief_naming_test_inventory.md`, eight Sonnet agents in
 parallel. This page merges their closing sections into the rulings the
 sweep needs. The coordinator ruled alone on 2026-09-24 under the user's
 delegation; each ruling states its reason so the user can overturn it.

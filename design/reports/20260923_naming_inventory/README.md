@@ -1,7 +1,7 @@
 # Naming inventory: the merge and the rulings
 
 Tip `f64b9f3`. Twenty reports, one per source file, from the brief
-`design/briefs/brief_naming_inventory.md`. This page merges their
+`design/reports/20260923_naming_inventory/brief_naming_inventory.md`. This page merges their
 closing sections into the rulings Step 3 needs. Each item states the
 question and a recommendation; the user's ruling replaces the
 recommendation in place.

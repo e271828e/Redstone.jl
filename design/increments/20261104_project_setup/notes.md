@@ -32,3 +32,23 @@ the diff.
   output paths gain one level, the outputs staying at `design/*.pdf`. The
   local post-commit hook is updated by hand (it is unversioned). Two
   records citing the old path are swept, a pure move.
+
+## Step 3: `increments/` from `briefs/`
+
+- Files keep their names; only the directory changes, so a record citing a
+  brief by bare name still finds it. Numbered core increments take
+  `NNN_slug/` from the brief's name, inspector increments
+  `inspector_NN_slug/`, and each notes, look and prototype file joins its
+  increment. A notes file spanning two increments sits with the first.
+- A named job whose record is a report puts its brief beside the report:
+  the conformance audit, the data survey, the two naming inventories, the
+  spec rewrite with its pilot. The remaining named jobs take a dated
+  folder from the brief's first commit; one campaign is one folder: the
+  naming sweep's three waves with their review and overnight notes, the
+  pipeline redesign's register, roadmap, step briefs, draft and review,
+  the standalone updates of 2026-09-30 with their notes, and the model
+  split's roadmap with the source-layout brief.
+- `roadmap_inspector.md`, the one live roadmap, sits at the top of
+  `increments/`. A closed roadmap sits in its campaign's folder.
+- The sweep rewrote 41 files. One `briefs/` survives, inside a verification
+  command a record quotes; it is the command as it ran.

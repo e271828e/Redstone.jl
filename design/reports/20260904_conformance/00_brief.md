@@ -62,7 +62,7 @@ companions in `design/companions/`.
 ## What you must not read
 
 `design/pending.md`, the top-level `reports/` directory, everything in
-`design/briefs/`, the other reports in this directory, and the rest of
+`design/increments/`, the other reports in this directory, and the rest of
 `design/implementation.md`. The audit's value is independence from the
 existing register. If you open one of these by accident, say so in your
 report's header.

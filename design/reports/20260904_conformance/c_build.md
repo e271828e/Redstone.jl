@@ -17,7 +17,7 @@
   overran into the start of its "Authoring caveats" section (about ten lines),
   which mentions in passing that `DeadStage` is not built. I had already read
   `src/` and reached that conclusion independently; no other part of that file
-  was read, and `pending.md`, the other reports and `briefs/` were not opened.
+  was read, and `pending.md`, the other reports and `increments/` were not opened.
 
 ## 2. Summary
 

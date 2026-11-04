@@ -13,7 +13,7 @@
   passages in §9.4, §10.6, §11.2, §11.5, §12.6 and §13.1 for meaning only, the
   "What is real here" file table in `design/implementation.md`, and all of
   `src/` and `test/`. I did not open `pending.md`, `reports/`,
-  `design/briefs/`, the rest of `implementation.md`, or any other agent's
+  `design/increments/`, the rest of `implementation.md`, or any other agent's
   report.
 
 ## 2. Summary

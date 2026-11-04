@@ -29,12 +29,12 @@
 # end a section: a `# comment` line in a sketch is not a heading.
 #
 # `--file <path>` overrides the file scanned (default: spec.md next to this
-# script) — e.g. to point at a pilot rewrite draft under design/briefs/
+# script) — e.g. to point at a pilot rewrite draft under design/increments/
 # for the same section before it lands.
 #
 # Usage:  julia design/tools/check_linkset.jl save  "### 10.4" baseline.txt
 #         julia design/tools/check_linkset.jl check "### 10.4" baseline.txt
-#         julia design/tools/check_linkset.jl check "### 10.4" baseline.txt --file design/briefs/spec_rewrite_pilot.md
+#         julia design/tools/check_linkset.jl check "### 10.4" baseline.txt --file design/reports/20261021_spec_rewrite/spec_rewrite_pilot.md
 # Exits nonzero (check mode) if any of the three sets changed.
 
 const DESIGN = normpath(joinpath(@__DIR__, ".."))

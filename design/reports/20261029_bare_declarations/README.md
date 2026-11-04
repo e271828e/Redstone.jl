@@ -240,7 +240,7 @@ run their batteries after.
 ## Plan for the next session
 
 1. Read this report, `brief_lessons.md`, the latest brief in
-   `design/briefs/` as the template, and the two style tools.
+   `design/increments/` as the template, and the two style tools.
 2. Delegate the stores prototype to one Opus agent on a scratch worktree,
    with this report as its brief. What it must prove, with measurements for
    the brief: `flatten_state!` and the executor bundle on a bare `XT`; the

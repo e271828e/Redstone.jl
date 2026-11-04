@@ -40,7 +40,7 @@ item changes what the spec says, the spec edit is part of the item.
   `visual_grammar.md` (axis 3), `design/prototypes/render_spike/report.md`
   (axis 4), `workspace.md` (axis 5), `live_session.md` (axis 6),
   `failure_descriptor.md` (the failure bump, D-434) and `build_release.md`
-  (axis 7). `design/briefs/roadmap_inspector.md` stages the build in eleven
+  (axis 7). `design/increments/roadmap_inspector.md` stages the build in eleven
   increments and records each landed one with the facts the next briefs
   take. Increments 1 to 7 and 9 have landed; 8, the analysis views and the
   help page, is next; then 10, the deployment overlay on both tracks after
@@ -50,7 +50,7 @@ item changes what the spec says, the spec edit is part of the item.
   blocking. The built-in Julia GUI is parked
   (D-310). The later stages stand after the release, below.
 - **The API docstrings' two later passes.** The sweep to the manual's
-  conventions landed (record `design/briefs/notes_docstring_sweep.md`,
+  conventions landed (record `design/increments/20261027_docstring_sweep/notes_docstring_sweep.md`,
   convention `design/rules/docstring_rules.md`). Two passes remain: an examples pass
   after the tutorial, and a signature-and-link pass after the audit's
   renames, since a rename costs a signature line and the Documenter build

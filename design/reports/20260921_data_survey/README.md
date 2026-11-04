@@ -2,7 +2,7 @@
 
 A read-only survey of every struct field in `src/` for three smells: dead,
 duplicate, misplaced. Five Opus agents, one slice each, at tip `aa9162a`.
-The brief is `design/briefs/brief_data_survey.md`.
+The brief is `design/reports/20260921_data_survey/brief_data_survey.md`.
 
 - `merge.md`: the register of the 22 findings, the grouping into plain fixes
   and rulings, a recommendation per ruling, the questions, the sequencing.

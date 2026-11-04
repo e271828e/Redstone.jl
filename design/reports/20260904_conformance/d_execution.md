@@ -13,7 +13,7 @@
   `src/` and `test/` freely, the file table in `design/implementation.md`
   ("What is real here", lines 11–56, and the authoring caveats that follow it
   on the same screen), and the `D-017`, `D-018`, `D-021`, `D-133` entries in
-  `design/decisions.md`. I did not open `pending.md`, `briefs/`, the
+  `design/decisions.md`. I did not open `pending.md`, `increments/`, the
   top-level `reports/`, or any other report in `design/reports/`.
 
 ## 2. Summary

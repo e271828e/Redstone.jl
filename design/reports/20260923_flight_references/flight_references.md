@@ -93,7 +93,7 @@ These record what happened, and rewriting them would falsify them.
 The choice is to keep them as history or leave them out of the release.
 
 - `design/reports/` — 4 report directories. 9 files mention Flight.
-- `design/briefs/` — 45 briefs. 14 mention Flight.
+- `design/increments/` — 45 briefs. 14 mention Flight.
 - `design/design.pdf` — built from the spec. It inherits whatever the spec says and needs a rebuild after any change.
 - Git history — 762 commits, starting in Flight.jl's `core-redesign-2` branch. The first ones talk about the Vehicle sketch and PistonEngine.
 
@@ -105,7 +105,7 @@ are clean.
 
 ## Appendix: raw hits in live files
 
-Pattern covers the Flight.jl names, its subpackages, legacy code names (`f_ode!`, `KinData`, `PistonEngine`, ...), the C172/Xv1 demos, and aerospace wording in `src/`. Historical records under `design/reports/` and `design/briefs/` are excluded.
+Pattern covers the Flight.jl names, its subpackages, legacy code names (`f_ode!`, `KinData`, `PistonEngine`, ...), the C172/Xv1 demos, and aerospace wording in `src/`. Historical records under `design/reports/` and `design/increments/` are excluded.
 
 ```
 README.md:5:being built to replace `FlightCore` as the substrate for `FlightPhysics` and
@@ -176,14 +176,14 @@ design/decisions.md:7182:a terrible flight condition — and [§10.5][s10-5]'s c
 design/decisions.md:7511:  input and a terrible flight condition.
 design/decisions.md:8138:`fragment`, `at` and `combine` share a namespace with FlightPhysics domain
 design/decisions.md:9243:rather than "both". A predicate earns its place at C172X scale, where the
-design/briefs/brief_increment_23.md:4:> below are the old layout: the worktree `~/.julia/dev/Flight.jl-core-redesign-2`
-design/briefs/brief_increment_23.md:10:Worktree `~/.julia/dev/Flight.jl-core-redesign-2`, branch `core-redesign-2`,
-design/briefs/draft_step1b_entries.md:96:rather than "both". A predicate earns its place at C172X scale, where the
-design/briefs/spec_rewrite_pilot.md:39:Most transitions in FlightPhysics mix input predicates with state thresholds, so this case matters in practice. The piston engine's `starting → running` fir
-design/briefs/spec_rewrite_pilot.md:188:**Why iterate.** Under a single pass, a cascade of N logically simultaneous transitions (supervisor FSM → subordinate FSM → …) takes N steps to complete, a
-design/briefs/brief_increment_21.md:4:> below are the old layout: the worktree `~/.julia/dev/Flight.jl-core-redesign-2`
-design/briefs/brief_increment_21.md:11:`/Users/miguel/.julia/dev/Flight.jl-core-redesign-2/prototypes/kernel` (a git
-design/briefs/brief_increment_21.md:12:worktree, branch `core-redesign-2`; never `cd` elsewhere — `cd` is aliased to
+design/increments/023/brief_increment_23.md:4:> below are the old layout: the worktree `~/.julia/dev/Flight.jl-core-redesign-2`
+design/increments/023/brief_increment_23.md:10:Worktree `~/.julia/dev/Flight.jl-core-redesign-2`, branch `core-redesign-2`,
+design/increments/20260918_pipeline_redesign/draft_step1b_entries.md:96:rather than "both". A predicate earns its place at C172X scale, where the
+design/reports/20261021_spec_rewrite/spec_rewrite_pilot.md:39:Most transitions in FlightPhysics mix input predicates with state thresholds, so this case matters in practice. The piston engine's `starting → running` fir
+design/reports/20261021_spec_rewrite/spec_rewrite_pilot.md:188:**Why iterate.** Under a single pass, a cascade of N logically simultaneous transitions (supervisor FSM → subordinate FSM → …) takes N steps to complete, a
+design/increments/021/brief_increment_21.md:4:> below are the old layout: the worktree `~/.julia/dev/Flight.jl-core-redesign-2`
+design/increments/021/brief_increment_21.md:11:`/Users/miguel/.julia/dev/Flight.jl-core-redesign-2/prototypes/kernel` (a git
+design/increments/021/brief_increment_21.md:12:worktree, branch `core-redesign-2`; never `cd` elsewhere — `cd` is aliased to
 design/prototypes/cellstore_bench/README.md:76:  C172X-scale model both land in single-digit seconds, which makes §9.7's
 design/prototypes/sketch_decoder.jl:52:    q_eb   = RQuat{Float64},
 design/prototypes/sketch_decoder.jl:129:init_x(::WA) = (q_wb = RQuat(), q_ew = RQuat(), h_e = HEllip())

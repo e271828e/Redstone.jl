@@ -7,7 +7,7 @@ from the repository root (allocation accounting at `publish!` and `drain!`).
 **Forbidden reads**: none. I read `design/spec.md` (my range and the
 passages it cites for meaning), all of `src/` and `test/`, and the
 "What is real here" file table in `design/implementation.md`. I did not
-open `pending.md`, `briefs/`, the top-level `reports/`, or any other report in
+open `pending.md`, `increments/`, the top-level `reports/`, or any other report in
 this directory.
 
 ## Summary
