@@ -1266,6 +1266,11 @@ channel_type(::Type{V}, ::Type{T}) where {V <: Real, T} = T
 channel_type(::Type{V}, ::Type{T}) where {V <: StaticArray, T} = similar_type(V, T)
 saturation_type(::Type{V}) where {V} = channel_type(V, Int8)
 
+# A hit guard reads the leading term of the motion against the limit: the first
+# nonzero of `q - limit`, then its time derivatives.
+first_nonzero(a, b) = a != 0 ? a : b
+first_nonzero(a, b, c) = first_nonzero(a, first_nonzero(b, c))
+
 # The keywords of one `V`, promoted and made float. `promote` over a scalar and a
 # static array, or over two lengths, throws an `ErrorException` naming no keyword.
 function promoted_keywords(given::NamedTuple)
@@ -1292,7 +1297,10 @@ free and `+1` at `upper`. `hit_upper` and `hit_lower` fire when `x` reaches a
 limit, and their handlers write `x` to the limit exactly and saturate.
 `leave_upper` and `leave_lower` fire when `u` turns strictly back into the
 range, and free it. An input of exactly zero at a limit keeps the mode
-saturated. The hit events are [localized](@ref g-localized).
+saturated. The hit events are [localized](@ref g-localized). On a limit their
+guards read `u` in place of the position, so a block freed there does not hold
+its hit [predicate](@ref g-predicate). An input that turns outward again, even
+within the same step, then presents a fresh edge, and the block stops on the limit.
 
 A second output, also `saturation`, publishes the code from stage 1, so it has
 no [feedthrough](@ref g-feedthrough). It serves an anti-windup consumer, such as
@@ -1362,9 +1370,11 @@ y_state(::LimitedIntegrator, (; x, m)) = (out = x, saturation = m)
 x_deriv(::LimitedIntegrator, (; u, m)) = (v = signal(u); ifelse.(m .== 0, v, zero(v)))
 # The hit guards are not gated by the free code on purpose. Gated, a hit guard
 # would read `0` the instant a leave handler frees the mode, present a fresh
-# edge and saturate the block again.
-hit_upper_guard(c::LimitedIntegrator, (; x)) = x - c.upper
-hit_lower_guard(c::LimitedIntegrator, (; x)) = c.lower - x
+# edge and saturate the block again. On the limit they read `u`. Reading `x - limit`
+# alone, a block freed on the limit holds at `0`, so a return within one step shows
+# no edge and it runs past the stop.
+hit_upper_guard(c::LimitedIntegrator, (; x, u)) = first_nonzero(x - c.upper, signal(u))
+hit_lower_guard(c::LimitedIntegrator, (; x, u)) = first_nonzero(c.lower - x, -signal(u))
 # The leave guards gate on strictly inward input. Gated on the mode alone, an
 # input of exactly zero reads `-0.0`, which holds, and frees the mode with `x`
 # on the limit. The gate `u < 0` reads a wired signal, so §10.4's argument
@@ -1404,12 +1414,12 @@ limit_events(::LimitedIntegrator{V}) where {V <: Real} =
 function limit_events(::LimitedIntegrator{V, L}) where {V <: StaticArray, L}
     N = length(V)
     hit_upper = ntuple(N) do i
-        StateEvent((c, (; x)) -> x[i] - c.upper[i],
+        StateEvent((c, (; x, u)) -> first_nonzero(x[i] - c.upper[i], signal(u)[i]),
                    (c, (; x, m)) -> (x = Base.setindex(x, c.upper[i], i),
                                      m = Base.setindex(m, Int8(1), i)))
     end
     hit_lower = ntuple(N) do i
-        StateEvent((c, (; x)) -> c.lower[i] - x[i],
+        StateEvent((c, (; x, u)) -> first_nonzero(c.lower[i] - x[i], -signal(u)[i]),
                    (c, (; x, m)) -> (x = Base.setindex(x, c.lower[i], i),
                                      m = Base.setindex(m, Int8(-1), i)))
     end
@@ -1525,13 +1535,9 @@ function x_deriv(::LimitedDoubleIntegrator, (; x, u, m))
 end
 # The guards are `LimitedIntegrator`'s on `q`, ungated, and on `u`, strict, for
 # its reasons. The hit handlers zero `v`: the stop is inelastic.
-# A hit guard takes the first nonzero of `q - limit`, `v` and `u`, the leading
-# term of the block's motion against the limit. Reading `q - limit` alone, a block
-# freed at rest on the limit holds at `0`, so a return inside one step shows no
-# edge and it runs past the stop. Reading `u` at rest but not `v`, a slow departure
-# whose `q` rounds back onto the limit holds at `0` with `v` nonzero, and the hit
-# re-fires each step, erasing `v`.
-first_nonzero(a, b, c) = a != 0 ? a : b != 0 ? b : c
+# On the limit a hit guard also reads `v` before `u`. Reading `u` at rest alone, a
+# slow departure whose `q` rounds back onto the limit holds at `0` with `v` nonzero,
+# and the hit re-fires each step, erasing `v`.
 hit_upper_guard(c::LimitedDoubleIntegrator, (; x, u)) = first_nonzero(x.q - c.upper, x.v, u)
 hit_lower_guard(c::LimitedDoubleIntegrator, (; x, u)) = first_nonzero(c.lower - x.q, -x.v, -u)
 leave_upper_guard(::LimitedDoubleIntegrator{V, true}, (; m, u)) where {V} =

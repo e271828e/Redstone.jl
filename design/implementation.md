@@ -158,8 +158,7 @@ The standard component library, the submodule `Redstone.Blocks`:
   (D-141), over the helpers `reset_ports` and `signal`, shared with the
   discrete pair, and `reset_guard`; `LimitedDoubleIntegrator{V, L}`, the
   stop on the double integral over the named state `(q, v)`, its four events
-  under `limit_events` as `LimitedIntegrator`'s, its hit guards over the
-  helper `first_nonzero`; `FirstOrderLag`, `Step`,
+  under `limit_events` as `LimitedIntegrator`'s; `FirstOrderLag`, `Step`,
   `Sequence`, `Relay` and `Comparator` (D-313).
   `Step`, `Sequence`, `LimitedIntegrator`, `LimitedDoubleIntegrator` and
   `Comparator` each ship two detection policies, localized and
@@ -172,7 +171,7 @@ The standard component library, the submodule `Redstone.Blocks`:
   output `saturation`, typed by the helper `saturation_type`, shared with
   `DiscreteLimitedIntegrator` and the PID.
   Both read their keywords through the helper `promoted_keywords`, which
-  refuses a mix of shapes.
+  refuses a mix of shapes, and write their hit guards over `first_nonzero`.
 - `ControllerBlock{Hold, Track}`, carrying `axis_ports`, `gated_error` and
   `correction_reference`, over `PIDBlock{V, Hold, Track, Fixed}` over `Real`
   and static vectors, carrying `signal_ports`, `u_types`, `y_types` and

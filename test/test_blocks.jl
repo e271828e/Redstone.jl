@@ -308,6 +308,53 @@ vector_lower_double_limited_model(localized) =
                                           localized = localized));
           local_wires = ("s/y" => "li/u",))
 
+# Saturated by 0.1 under `u = (t - 0.45)(t - 0.52)`, with the dip across the
+# boundary at 0.5, so a boundary-detected leave frees the block on the limit there
+# and `u` turns outward just after. `side` is `1` for the upper limit, `-1` the lower.
+dip_across_boundary_model(side, localized; reset = false) =
+    Group((; k = Constant(side * 2.0), r1 = Integrator(x0 = -side * 0.97), r2 = Integrator(x0 = side * 0.234),
+             flag = Constant(false),
+             li = LimitedIntegrator(lower = side > 0 ? -5.0 : -0.02, upper = side > 0 ? 0.02 : 5.0,
+                                    localized = localized, reset = reset));
+          local_wires = ("k/y" => "r1/u", "r1/y" => "r2/u", "r2/y" => "li/u",
+                         (reset ? ("flag/y" => "li/reset",) : ())...))
+
+# The dip `u = (t - 0.45)(t - 0.49)` inside one step of 1, with a `Step` at 0.47
+# ending the step where the leave is already observed, under either policy.
+dip_in_split_step_model(side, localized) =
+    Group((; k = Constant(side * 2.0), r1 = Integrator(x0 = -side * 0.94), r2 = Integrator(x0 = side * 0.2205),
+             split = Step(t_step = 0.47),
+             li = LimitedIntegrator(lower = side > 0 ? -5.0 : -0.02, upper = side > 0 ? 0.02 : 5.0,
+                                    localized = localized));
+          local_wires = ("k/y" => "r1/u", "r1/y" => "r2/u", "r2/y" => "li/u"))
+
+# The dip in one component, `index`, with the other free under `u = side`.
+function vector_dip_model(side, index, localized)
+    pick(here, there) = index == 1 ? SVector(here, there) : SVector(there, here)
+    Group((; k = Constant(pick(side * 2.0, 0.0)), r1 = Integrator(x0 = pick(-side * 0.97, 0.0)),
+             r2 = Integrator(x0 = pick(side * 0.234, side * 1.0)),
+             li = LimitedIntegrator(lower = pick(side > 0 ? -5.0 : -0.02, -5.0),
+                                    upper = pick(side > 0 ? 0.02 : 5.0, 5.0), localized = localized));
+          local_wires = ("k/y" => "r1/u", "r1/y" => "r2/u", "r2/y" => "li/u"))
+end
+
+# One component, `index`, reaches its limit at 0.2 and leaves it at the step's 1.05,
+# with the other free under `u = side` throughout.
+function vector_leave_model(side, index, localized)
+    pick(here, there) = index == 1 ? SVector(here, there) : SVector(there, here)
+    Group((; s = Step(t_step = 1.05, before = pick(side * 1.0, side * 1.0), after = pick(-side * 1.0, side * 1.0)),
+             li = LimitedIntegrator(lower = pick(side > 0 ? -5.0 : -0.02, -5.0),
+                                    upper = pick(side > 0 ? 0.02 : 5.0, 5.0), localized = localized));
+          local_wires = ("s/y" => "li/u",))
+end
+
+# A departure at 1 under a ramp so slow that `x` rounds back onto the limit.
+slow_single_departure_model(side, localized) =
+    Group((; k = Constant(-side * 1e-10), ramp = Integrator(x0 = side * 1e-10),
+             li = LimitedIntegrator(lower = side > 0 ? -5.0 : -1.0, upper = side > 0 ? 1.0 : 5.0,
+                                    x0 = side * 1.0, localized = localized));
+          local_wires = ("k/y" => "ramp/u", "ramp/y" => "li/u"))
+
 # The free flight under the ramp `u = t - 0.55` from `v0 = 1`. It reaches this
 # limit at 0.53 with `u` already inward, so the hit and the leave fire at one
 # boundary; `u` turns outward at 0.55, and the flight returns to the limit at 0.59.
@@ -1847,6 +1894,71 @@ function test_blocks()
                                             u = (in1 = get_input("in[1]"), in2 = get_input("in[2]"))))
         @test isapprox(linearization.A, zeros(2, 2); atol = 1e-12)
         @test isapprox(linearization.B, diagm([0.0, 1.0]); atol = 1e-12)
+    end
+
+    @testset "the limited integrator's hit guards read `u` on the limit, so a return after a leave stops it (§2.3, §10.4, §10.6)" begin
+        for localized in (true, false), side in (1, -1)
+            limit = side * 0.02
+            code = Int8(side)
+            for model in (dip_across_boundary_model(side, localized), dip_across_boundary_model(side, localized; reset = true))
+                sim = Simulation(model; h = 1//2)
+                init!(sim, set())
+                step!(sim; t_plus = 1.0)
+                @test state(sim, "li") === limit && modes(sim, "li") === code
+                step!(sim; t_plus = 1.0)
+                @test state(sim, "li") === limit && modes(sim, "li") === code
+            end
+            split = Simulation(dip_in_split_step_model(side, localized); h = 1//1)
+            init!(split, set())
+            step!(split; t_plus = 1.0)
+            @test state(split, "li") === limit && modes(split, "li") === code
+            # Over a vector, each guard reads its own component.
+            for index in (1, 2)
+                other = 3 - index
+                vector_sim = Simulation(vector_dip_model(side, index, localized); h = 1//2)
+                init!(vector_sim, set())
+                step!(vector_sim; t_plus = 0.5)
+                # The boundary-detected leave frees it on the limit at the boundary,
+                # with no event of its own at the input's zero.
+                @test modes(vector_sim, "li")[index] === Int8(0)
+                localized || @test state(vector_sim, "li")[index] === limit
+                step!(vector_sim; t_plus = 0.5)
+                @test state(vector_sim, "li")[index] === limit
+                @test state(vector_sim, "li")[other] ≈ side * 1.0 atol = 1e-12
+                @test modes(vector_sim, "li")[index] === code && modes(vector_sim, "li")[other] === Int8(0)
+            end
+            # A component freed from its limit stays free and leaves it.
+            for index in (1, 2)
+                other = 3 - index
+                leaving = Simulation(vector_leave_model(side, index, localized); h = 1//10)
+                init!(leaving, set())
+                step!(leaving; t_plus = 2.0)
+                bracket_width = leaving.model.deployment.localization_tol * leaving.model.deployment.h    # in time (§10.4)
+                @test state(leaving, "li")[index] ≈ side * (0.02 - 0.95) atol = bracket_width
+                @test state(leaving, "li")[other] ≈ side * 2.0 atol = bracket_width
+                @test modes(leaving, "li") == SVector{2, Int8}(0, 0)
+            end
+            # A slow departure: `x` rounds back onto the limit and keeps leaving.
+            slow = Simulation(slow_single_departure_model(side, localized); h = 1//1000)
+            init!(slow, set())
+            step!(slow; t_plus = 2.0)
+            @test state(slow, "li") - side * 1.0 ≈ -side * 1e-10 / 2 atol = 1e-13
+            @test modes(slow, "li") === Int8(0)
+        end
+    end
+
+    @testset "a limited integrator started on a limit follows the sign of `u` (§10.6)" begin
+        for localized in (true, false), (limit, lower, upper, code) in ((0.5, -1.0, 0.5, Int8(1)), (-1.0, -1.0, 0.5, Int8(-1)))
+            side = Float64(code)
+            start(input) = begin
+                rig = Simulation(fed(LimitedIntegrator(x0 = limit, lower = lower, upper = upper, localized = localized)); h = 1//10)
+                init!(rig, set(u = (in = input,)))
+                (state(rig, "c"), modes(rig, "c"))
+            end
+            @test start(side) === (limit, code)
+            @test start(0.0) === (limit, code)
+            @test start(-side) === (limit, Int8(0))
+        end
     end
 
     @testset "the limited integrator's departures follow `localized`, and its arrivals are localized (§2.3, §10.4, D-179)" begin
