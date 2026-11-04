@@ -20,22 +20,25 @@ const LOCATED_DECLARATIONS = (u_types, y_types, x_init, s_init, m_init, sample_t
     descriptor(deployment::Deployment) -> NamedTuple
     descriptor(err::DiagnosticError) -> NamedTuple
 
-Return the artifact's [descriptor](@ref g-descriptor), its rendering to data.
+Return the artifact's [descriptor](@ref g-descriptor), its
+rendering to data.
 
 The descriptor is an envelope with the fields `format_version`,
 `redstone_version` and `kind`, and the body under the key the kind names,
 `build`, `deployment` or `failure`. A deployment's body embeds the build's
-whole. A failure's body holds the carrier's diagnostics and warnings, each as
-its kind, severity, path and rendered message, and the complete `Structure`
-when the build failed past the structure step, so a client can draw the model
-with the error marked on it.
+whole.
+
+A failure's body holds the diagnostics and warnings of the
+[carrier exception](@ref g-carrier-exception), `DiagnosticError`, each as its
+[kind](@ref g-kind), severity, path and rendered message. It also holds the
+complete [`Structure`](@ref) when the build failed past the structure step, so a
+client can draw the model with the error marked on it.
 
 The value is a tree of `NamedTuple`s and vectors, ready for any JSON encoder,
 and conforms to the schema the package ships as `src/descriptor.json`.
 Encoding it is the caller's job.
 
-See also [`Build`](@ref), [`Deployment`](@ref), and the
-[carrier exception](@ref g-carrier-exception) `DiagnosticError`.
+See also [`Build`](@ref), [`Deployment`](@ref).
 """
 descriptor(build::Build) = _envelope("build", _build_body(build))
 descriptor(deployment::Deployment) =

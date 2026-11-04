@@ -529,26 +529,34 @@ end
 _ports(entry::ComponentOutputs) = vcat(entry.stage1, entry.stage2)
 
 # Design: §9.1, D-253, D-261.
+# The feedthrough graph the order was computed over is not carried. Where it is
+# shown, it is derived from the `Structure`'s connections and the producers'
+# `stage2`.
 """
     Outputs
 
 The output [port](@ref g-port) names each [component](@ref g-component)'s stages
 produce, and the order the components run in.
 
-`Outputs` is a product of the [nominal evaluation](@ref g-nominal), read off a
-[`Build`](@ref) as `build.outputs`. Its `components` field holds one entry per
-component, in the order the build walks the tree. Each entry carries the
-component's `path`, the ports [`y_state`](@ref) returns as `stage1`, in the
-return's order, and the declared remainder, in [`y_types`](@ref) order, as
-`stage2`. Their concatenation is the order of the component's products. The
-`order` field is the [execution order](@ref g-execution-order) over the indices
-of `components`.
+`Outputs` is a product of the [nominal evaluation](@ref g-nominal). Read it off
+a [`Build`](@ref) as `build.outputs`. It holds names only and does not depend on
+the scalar type, so a reader that wants a list of port names takes it from here
+rather than from an [activation](@ref g-activation).
 
-`Outputs` holds names only and does not depend on the scalar type, so a reader
-that wants a list of port names takes it from here rather than from an
-[activation](@ref g-activation). The [feedthrough](@ref g-feedthrough) graph the
-order was computed over is not carried. Where it is shown, it is derived from
-the [`Structure`](@ref)'s connections and the producers' `stage2`.
+An `Outputs` holds these fields.
+
+- `components`: one entry per component, in the order the build walks the tree.
+- `order`: the [execution order](@ref g-execution-order) over the indices of
+  `components`.
+
+Each entry holds these fields.
+
+- `path`: the component's path.
+- `stage1`: the ports [`y_state`](@ref) returns, in the return's order.
+- `stage2`: the declared remainder, in [`y_types`](@ref) order.
+
+The concatenation of `stage1` and `stage2` is the order of the component's
+products.
 """
 struct Outputs
     components::Vector{ComponentOutputs}   # in walk order; the index is `ci`
@@ -573,15 +581,22 @@ end
 """
     Events
 
-The detection policy of each [component](@ref g-component)'s events, and the
-field names of its event [bundle](@ref g-bundle).
+The detection policy of each [component](@ref g-component)'s
+[events](@ref g-state-event), and the field names of its event
+[bundle](@ref g-bundle).
 
-`Events` is the other product of the [nominal evaluation](@ref g-nominal), read
-off a [`Build`](@ref) as `build.events`. Its `components` field holds one entry
-per component, in the order the build walks the tree, so one index addresses it
-and [`Outputs`](@ref) alike. Each entry carries the component's `path`, its
-`policies` and its `bundle`.
+`Events` is the other product of the [nominal evaluation](@ref g-nominal). Read
+it off a [`Build`](@ref) as `build.events`. Like [`Outputs`](@ref), it holds
+names only and does not depend on the scalar type.
 
+An `Events` holds this field.
+
+- `components`: one entry per component, in the order the build walks the tree,
+  so one index addresses it and `Outputs` alike.
+
+Each entry holds these fields.
+
+- `path`: the component's path.
 - `policies`: a `NamedTuple` from each event name, in declaration order, to the
   detection policy its [guard](@ref g-guard)'s return form fixes, `:boundary`
   for a `Bool` guard checked at step [boundaries](@ref g-boundary) only, or
@@ -589,9 +604,6 @@ and [`Outputs`](@ref) alike. Each entry carries the component's `path`, its
   time.
 - `bundle`: the field names of the event bundle, `()` where the component
   declares no events.
-
-Like `Outputs`, `Events` holds names only and does not depend on the scalar
-type.
 """
 struct Events
     components::Vector{ComponentEvents}
@@ -606,21 +618,29 @@ end
 """
     Build
 
-The artifact [`build`](@ref) produces, the checked contract of a
-[component](@ref g-component) tree before any grid is fixed.
+The artifact [`build`](@ref) produces, the checked
+[contract](@ref g-contract) of a [component](@ref g-component) tree before any
+grid is fixed.
 
-A build holds the [`Structure`](@ref), the [`Outputs`](@ref) and the
-[`Events`](@ref), which the build's steps produce, then its
-[activations](@ref g-activation) and the warnings its construction raised, read
-with [`warnings`](@ref). The first three do not depend on the scalar type, by
-construction. The [nominal](@ref g-nominal) `Float64` activation is made by the
-build, and any other is derived at first request and kept.
+A build holds these fields, which the build's steps produce. They do not depend
+on the scalar type, by construction.
 
-Everything in a build is settled before [`Δt_base`](@ref g-dt_base) exists: `h`,
-`N_base` and `Δt_base` are the [`Deployment`](@ref)'s. A build is immutable
-apart from its activation cache, whose insertion is safe across tasks. One build
-backs any number of deployments and [`Model`](@ref)s, concurrently, each
-materializing its own [stores](@ref g-store) and [buffers](@ref g-buffer).
+- `structure`: the [`Structure`](@ref).
+- `outputs`: the [`Outputs`](@ref).
+- `events`: the [`Events`](@ref).
+
+A build also holds its [activations](@ref g-activation) and the warnings its
+construction raised, read with [`warnings`](@ref). `build` makes the
+[nominal](@ref g-nominal) `Float64` activation, and a build derives any other at
+first request and keeps it.
+
+Everything in a build is settled before [`Δt_base`](@ref g-dt_base) exists. `h`,
+`N_base` and `Δt_base` are the [`Deployment`](@ref)'s.
+
+A build is immutable apart from its activation cache, whose insertion is safe
+across tasks. One build backs any number of deployments and [`Model`](@ref)s,
+concurrently, each materializing its own [stores](@ref g-store) and
+[buffers](@ref g-buffer).
 
 See also [`descriptor`](@ref).
 """
@@ -646,9 +666,9 @@ The framework's public canonical [probe](@ref g-probe) scalar, the concrete
 
 `ProbeDual` is the one concrete `Dual` a test lists to check that a
 [component](@ref g-component) tree types at a dual number, as in
-`build(root; activations = (Float64, ProbeDual))`. An
-[activation](@ref g-activation) is keyed by a concrete scalar, and the bare
-`Dual`, a `UnionAll`, can key none.
+`build(root; activations = (Float64, ProbeDual))`. A concrete scalar keys an
+[activation](@ref g-activation), and the bare `Dual`, a `UnionAll`, can key
+none.
 
 Its width is one because the check tests that the tree's types follow the
 scalar, not any particular Jacobian. [`linearize`](@ref) sets its own width with
@@ -673,17 +693,18 @@ function. It returns the [`Outputs`](@ref), the [`Events`](@ref) and the nominal
 activation. Nothing here needs `h`, `N_base` or [`Δt_base`](@ref g-dt_base),
 which are the [`Deployment`](@ref)'s.
 
-# Keywords
-
-- `activations`: the scalar types whose activations are made at once instead
-  of at first request, such as `(Float64, ProbeDual)` in a test that checks the
-  tree types at a dual number. See [`ProbeDual`](@ref).
-
 A tree the build rejects is refused as one `DiagnosticError` that carries every
 diagnostic the failing step found, and the warnings raised so far. A build that
 succeeds logs each warning once and keeps it, read with [`warnings`](@ref).
 
-See also [`descriptor`](@ref), [`Model`](@ref), [`Simulation`](@ref).
+# Keywords
+
+- `activations`: the scalar types whose activations are made at once instead
+  of at first request, such as `(Float64, ProbeDual)` in a test that checks the
+  tree types at a dual number.
+
+See also [`ProbeDual`](@ref), [`descriptor`](@ref), [`Model`](@ref),
+[`Simulation`](@ref).
 """
 Base.@nospecializeinfer function build(@nospecialize(root::AbstractComponent);
                                        activations::Tuple = ())
