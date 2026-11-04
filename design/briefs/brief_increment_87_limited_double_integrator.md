@@ -229,4 +229,36 @@ for what they owe: open-mind stance, probe scripts in the scratchpad,
 
 ## The review's record
 
-Pending.
+The cold review of 1590a08 ran on 2026-11-04 on Julia 1.13.3, the floor:
+the gate green in both halves (4123 and 3890), 47 mutants run in an
+in-process harness over the increment's testsets, every mutant on the
+brief's list killed, and every clause of the row and the docstring
+probed. Two medium findings and four low. The first medium is a defect
+the hit guard's form leaves open: after the arrival cascade the block
+rests free on the limit with the hit predicate holding, so an input
+turning outward within the rest of that step carries `q` back past the
+limit as two crossings §2.3 cannot see; the single integrator has no
+counterpart, since it cannot arrive against its input. Landed as
+documentation in the docstring and the row; the guard that closes it,
+reading `u` while the block rests exactly on the limit, is the user's
+ruling, with the coordinator's recommendation in `notes_increment_87.md`.
+The second medium was a test gap: no test made `leave_lower` fire and the
+vector `hit_lower` was pinned on component 1 only, seven mutants
+surviving the real suite. Landed as a mirrored scalar testset and a
+vector case in which component 2 reaches `lower` first and leaves it.
+The lows, all landed: a `q0` on a limit with an inward `v0` loses `v0`
+at boundary zero, now in the docstring; the vector paragraph's handler
+sentence, the boundary-detected departure's "at the first boundary
+after", and the row's offset bound; three over-long lines rewrapped.
+Left as they are: the `Float64` wording four docstrings share, false for
+`Float32` keywords, and `LimitedIntegrator`'s identical departure
+sentence. The fixer landed the findings at 7bbf4b9 and, on its own
+mutant run, found two vector survivors left by the brief's first vector
+scenario, which never left the lower limit; 8159e4d changes the step so
+component 2 leaves, and both die. The routed subset reads blocks 2538 and
+build 436.
+The reviewer verified the delta at 8159e4d: the seven survivors each
+turn a named pin red, the two vector ones on 8159e4d's assertions, and
+the gate is green on the floor at 4197 and 3890, 8087 in all. Its one
+wording nit, the departure sentence's "for the rest of that step",
+landed as "until then" in the closing commit.

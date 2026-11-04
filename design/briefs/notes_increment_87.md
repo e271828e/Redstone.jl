@@ -34,3 +34,30 @@ arc's review. Nothing was pushed.
 6. **The prototype did not re-run its mutant sweep after the rename.** The
    assertion count held at 2837; the cold review re-runs the list against
    the landed code.
+7. **The review's findings, adjudicated.** Two medium and four low.
+   - *A return past the stop after the arrival cascade* (medium). After
+     the hit and the leave fire in successive rounds of one boundary, the
+     block rests free on the limit with the hit predicate holding, so an
+     input turning outward within the rest of that step carries `q` back
+     past the limit as two crossings §2.3 cannot see. Accepted as a defect
+     and landed as documentation only, in the docstring and the row. The
+     fix the reviewer sketched, a hit guard that reads `u` while the block
+     rests exactly on the limit, `x.q == c.upper && x.v == 0 ? u : x.q -
+     c.upper`, re-saturates the probe's scenario under both policies and
+     passes the increment's pins, but it changes the guard form the
+     companion weighed for the single integrator and it was not run on
+     the vector form, the full suite or the exact-zero corner. That is
+     the user's ruling. The coordinator recommends adopting it as a
+     loose fix after those three checks: the branch is taken only at the
+     exact rest the handler writes, so no localization bracket ever sees
+     it, and the hit's root-finding stays on `q - upper`.
+   - *No lower-side leave test and the vector `hit_lower` pinned on
+     component 1 only* (medium): seven survivors, landed as the mirrored
+     scalar and vector tests.
+   - A `q0` on a limit with an inward `v0` loses `v0` at boundary zero
+     (low): documented; the same rule reading 5 recommends for a reset.
+   - The docstring's vector-handler sentence, the boundary-detected
+     departure's "at the first boundary after", and the row's offset
+     bound (low): corrected. The inherited `Float64` wording shared by
+     four docstrings and `LimitedIntegrator`'s departure sentence stay.
+   - Three over-long lines (low): rewrapped.
