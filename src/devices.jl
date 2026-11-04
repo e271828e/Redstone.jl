@@ -26,7 +26,9 @@
 # reference, like the index, for the panel kit's bake alone: `port_views` reads
 # the wiring, the claim, the exclusivity index and the addresses off the handle
 # (§11.7, D-270). The type's second parameter is the gatherer's, the compiled
-# reads.
+# reads. The type carrying the binding's type and the type of its compiled reads
+# is what makes `binding(handle)` and `gather(handle, snapshot)` type-stable and
+# allocation-free inside a device's `loop`.
 """
     DeviceHandle
 
@@ -34,8 +36,8 @@ The one object every attached [device](@ref g-device) receives, carrying what
 the device may read, stage and control.
 
 [`attach!`](@ref) returns the handle, and the framework passes the same handle
-to the device's [`loop`](@ref) on the device's own task. It carries capabilities,
-not the simulation.
+to the device's [`loop`](@ref) on the device's own task. It carries
+capabilities, not the simulation.
 
 - Read: [`latest`](@ref) and [`wait_next_snapshot`](@ref) return
   [snapshots](@ref g-snapshot), and [`gather`](@ref) runs the
@@ -51,14 +53,13 @@ take it from the handle, so the device need not carry its configuration. The
 reads a GUI device uses to show its widgets, [`port_views`](@ref),
 [`pending`](@ref) and [`peek`](@ref), take the handle too.
 
-A handle outlives its [roster](@ref g-roster) entry as an object only. After
-[`detach!`](@ref), the two write calls, `stage!` and `report!`, are refused
-as `DeviceContractMismatch` instead of landing in a [cell](@ref g-cell) nothing
-reads. The reads stay legal.
+After [`detach!`](@ref) ends the [roster](@ref g-roster) entry, the handle still
+exists and its reads stay legal. Its two write calls, `stage!` and `report!`,
+are refused as `DeviceContractMismatch` instead of landing in a
+[cell](@ref g-cell) nothing reads.
 
-The handle's type carries the binding's type and the type of its compiled
-reads, so `binding(handle)` and `gather(handle, snapshot)` are type-stable
-inside a device's `loop` and allocate nothing.
+`binding(handle)` and `gather(handle, snapshot)` are type-stable inside a
+device's `loop` and allocate nothing.
 """
 mutable struct DeviceHandle{B<:AbstractBinding,G<:Union{Nothing,Reader}}
     const who::String
@@ -98,16 +99,18 @@ before the device's task starts.
 
 `init!` is one of a device's three optional hooks, beside [`shutdown!`](@ref)
 and [`unblock!`](@ref). The default does nothing, so a device that holds no
-resources defines no method. [`run!`](@ref) and [`replay!`](@ref) call it once
-per attached device, in attachment order, before any device's [`loop`](@ref)
-starts. It acquires what the run needs, such as a socket or a file, and need not
-clean up after a throw, since `shutdown!` does that.
+resources defines no method.
+
+[`run!`](@ref) and [`replay!`](@ref) call it once per attached device, in
+attachment order, before any device's [`loop`](@ref) starts. It acquires what
+the run needs, such as a socket or a file. It need not clean up after a throw,
+since `shutdown!` does that.
 
 A throw inside `init!` is reported as `DeviceCrash` into the device's
 [diagnostic cell](@ref g-diagnostic-cell), and `shutdown!` then runs on the
-partially initialized device. The run goes on without the device, unless its
-attachment set [`should_abort`](@ref g-should_abort), in which case the failure
-also requests a stop.
+partially initialized device. The run goes on without the device. If its
+attachment set [`should_abort`](@ref g-should_abort), the failure also requests
+a stop.
 """
 init!(::AbstractDevice) = nothing
 
@@ -174,22 +177,24 @@ Run the [device](@ref g-device)'s own body on its task for one run, the one
 function every device must define.
 
 A device type defines `loop(dev::MyDevice, handle)`. Each run calls it once, on
-a task of its own, after every device's [`init!`](@ref) has returned, and passes
-it the [`DeviceHandle`](@ref) that [`attach!`](@ref) returned. The body is the
-device's own code: it reads, waits and stages through the handle, and loops
-while [`running`](@ref) returns `true`, checking it between blocking calls. Each
-blocking call must be one a stop can interrupt. [`wait_next_snapshot`](@ref)
-returns at a stop, and [`unblock!`](@ref) makes the device's own blocking calls
-return.
+a task of its own, after every device's [`init!`](@ref) has returned. The call
+passes the [`DeviceHandle`](@ref) that [`attach!`](@ref) returned.
 
-Whenever the body returns or throws, the framework runs [`shutdown!`](@ref). A
-throw is reported as `DeviceCrash` into the device's
+The body is the device's own code. It reads, waits and stages through the
+handle. It loops while [`running`](@ref) returns `true`, checking it between
+blocking calls. Each blocking call must be one a stop can interrupt.
+[`wait_next_snapshot`](@ref) returns at a stop, and [`unblock!`](@ref) makes the
+device's own blocking calls return.
+
+Whenever the body returns or throws, the framework runs [`shutdown!`](@ref). If
+the attachment set [`should_abort`](@ref g-should_abort), the body's end, by
+return or by throw, also requests a stop.
+
+A throw is reported as `DeviceCrash` into the device's
 [diagnostic cell](@ref g-diagnostic-cell), and the run goes on without the
-device's task. A device that overrides [`unblock!`](@ref) may throw once the run
-is stopping, and that throw counts as shutdown, not a crash. If the attachment
-set [`should_abort`](@ref g-should_abort), the body's end, by return or by
-throw, also requests a stop. An [interrupt](@ref g-operator-interrupt) inside
-the body is a stop, not a crash.
+device's task. A device that overrides `unblock!` may throw once the run is
+stopping, and that throw counts as shutdown, not a crash. An
+[interrupt](@ref g-operator-interrupt) inside the body is a stop, not a crash.
 
 `attach!` refuses a device with no `loop` method of its own as
 `DeviceContractMismatch`.
@@ -255,7 +260,7 @@ under.
 The binding is an argument of [`attach!`](@ref), never a field of the device. A
 device's [`loop`](@ref) reads it here to map its data, as in
 `stage!(handle, map_input(datum, binding(handle))...)`. The framework never
-calls [`map_input`](@ref) or [`map_output`](@ref) itself: they are the loop's
+calls [`map_input`](@ref) or [`map_output`](@ref) itself. They are the loop's
 own calls.
 """
 binding(handle::DeviceHandle) = handle.b
@@ -287,7 +292,9 @@ Return the [device](@ref g-device)'s own staged value at `slot`, wrapped in
 
 `slot` is a [face](@ref g-face)'s position in the device's
 [claim](@ref g-claim), as the `slot` field of a view from [`port_views`](@ref)
-gives it. The read takes nothing: the value stays in the
+gives it.
+
+The read removes nothing. The value stays in the
 [staging cell](@ref g-staging-cell) until the next [frame top](@ref g-frame)
 [drains](@ref g-drain) it. `Some` keeps "nothing pending" apart from a pending
 value that is itself `nothing`. As a read, `pending` stays legal after
@@ -338,8 +345,8 @@ end
     gather(handle::DeviceHandle, snapshot::Snapshot) -> NamedTuple
 
 Return the [binding](@ref g-binding)'s [read set](@ref g-read-set) gathered from
-a [snapshot](@ref g-snapshot), as the labeled `NamedTuple` `map_output`
-receives.
+a [snapshot](@ref g-snapshot), as the labeled `NamedTuple`
+[`map_output`](@ref) receives.
 
 The binding's [`reads`](@ref) returns the read set, which is resolved once, at
 [`attach!`](@ref). `gather` runs it over the snapshot. The loop idiom is
@@ -362,24 +369,25 @@ end
 # The single-writer entry point into the device's own diagnostic cell, bounded
 # by `DIAG_RING`. No writer can starve another, since the cells are disjoint.
 # The status record is delta plus totals (§11.8), and the run's-end sweep takes
-# whatever landed past the last frame top.
+# whatever landed past the last frame top. A peer flooding malformed data costs
+# sixteen retained values and a counter, whatever it sends.
 """
     report!(handle::DeviceHandle, occurrence::MalformedDatum) -> Nothing
 
 Report a malformed datum into the [device](@ref g-device)'s
 [diagnostic cell](@ref g-diagnostic-cell), and let the loop continue.
 
-A device's [`loop`](@ref) calls it after catching its own parser error: catch,
-stage nothing, report, continue. The report lands in the device's diagnostic
-cell. The next [frame top](@ref g-frame) folds it into the
-[framework status](@ref g-framework-status), attributed to the device, and the
-run's end collects whatever lands after the last frame top. The cell keeps 16
-values per frame and counts the excess by [kind](@ref g-kind), so a peer
-flooding malformed data costs sixteen retained values and a counter, whatever it
-sends.
+A device's [`loop`](@ref) calls it after catching its own parser error. The
+pattern is catch, stage nothing, report, continue.
+
+The report lands in the device's diagnostic cell. The next
+[frame top](@ref g-frame) folds it into the
+[framework status](@ref g-framework-status), attributed to the device. The run's
+end collects whatever lands after the last frame top. The cell keeps 16 values
+per frame and counts the excess by [kind](@ref g-kind).
 
 `report!` is not a general diagnostics channel. [`MalformedDatum`](@ref) is the
-one kind a device may report, and any exception the loop does not classify as a
+one kind a device may report. Any exception the loop does not classify as a
 malformed datum reaches the framework as the `DeviceCrash` it is. After
 [`detach!`](@ref), the call is refused as `DeviceContractMismatch`.
 """
@@ -440,12 +448,12 @@ end
 """
     PortView
 
-The view of one [port](@ref g-port), settled once per run: its producer, whether
-the [device](@ref g-device) commands it, and its writer.
+The view of one [port](@ref g-port) for one run, with its producer, its writer
+and whether the [device](@ref g-device) commands it.
 
-[`port_views`](@ref) returns a table of them, one per port of the build, and
-[`peek`](@ref) and [`incumbent_status`](@ref) take one. Each view holds these
-fields, beside the producer's address that `peek` reads.
+[`port_views`](@ref) returns a table of them, one per port of the build, settled
+once per run. [`peek`](@ref) and [`incumbent_status`](@ref) take one. Each view
+holds these fields, beside the producer's address that `peek` reads.
 
 - `path` and `port`: the port the view describes.
 - `source`: its producer, the output or [root input](@ref g-root-input) that
@@ -454,10 +462,9 @@ fields, beside the producer's address that `peek` reads.
   [claim](@ref g-claim), so the device commands the port.
 - `slot`: that root input's position in the claim, as [`pending`](@ref) takes
   it, or `0` when the view is not live.
-- `incumbent`: the writer of the root input that drives the port. It is this
+- `incumbent`: the writer of the root input that drives the port, as this
   device's name when live, another device's name, `"harness"` for a
-  [face](@ref g-face) no device claims, or `""` when no root input drives the
-  port.
+  [face](@ref g-face) no device claims, or `""` when no root input drives it.
 """
 struct PortView
     path::String
@@ -482,17 +489,20 @@ Return the [device](@ref g-device)'s table of port views, one per
 [port](@ref g-port) of the build, keyed by `(path, port)`.
 
 Each view is a [`PortView`](@ref). It records the port's producer, whether the
-device commands it, and who writes it otherwise. The table holds one view per
-input [face](@ref g-face) at every level, the [root inputs](@ref g-root-input)
-and both ends of every wire, and one per produced output: each
+device commands it, and who writes it otherwise.
+
+The table holds one view per input [face](@ref g-face) at every level, which
+covers the [root inputs](@ref g-root-input) and both ends of every wire. It also
+holds one per produced output, which covers each
 [component](@ref g-component)'s outputs and every exported output face, the
-root's included. An input face's producer is the output or root input that
-ultimately feeds it, so an [assembly](@ref g-assembly)'s input face shares its
-producer with the ports behind it. A root input and a produced output are their
-own producers.
+root's included.
+
+An input face's producer is the output or root input that ultimately feeds it,
+so an [assembly](@ref g-assembly)'s input face shares its producer with the
+ports behind it. A root input and a produced output are their own producers.
 
 A GUI device's loop calls `port_views` once, at its top, after the run has fixed
-the [roster](@ref g-roster). Nothing is resolved by name afterwards:
+the [roster](@ref g-roster). Nothing is resolved by name afterwards.
 [`peek`](@ref) and [`incumbent_status`](@ref) read a view and a
 [snapshot](@ref g-snapshot).
 """
@@ -535,7 +545,7 @@ end
 """
     peek(view::PortView, handle::DeviceHandle, snapshot::Snapshot)
 
-Return the value a widget shows for a [port](@ref g-port): the
+Return the value a widget shows for a [port](@ref g-port), the
 [device](@ref g-device)'s own pending write if any, else the
 [snapshot](@ref g-snapshot)'s.
 
@@ -581,9 +591,9 @@ end
 Return `true` when the record's [device](@ref g-device) has no live task inside
 a run.
 
-A device is orphaned when its loop returned or crashed, or its `init!` threw.
-The record's `DeviceCrash` count tells a crash from a return. Outside a run a
-device has no task and is not orphaned, and the records of the
+A device is orphaned when its loop returned or crashed, or its [`init!`](@ref)
+threw. The record's `DeviceCrash` count tells a crash from a return. Outside a
+run a device has no task and is not orphaned, and the records of the
 [harness writer](@ref g-harness-writer) and of the loop are never orphaned.
 """
 orphaned(record::WriterStatus) = record.task_state === :done

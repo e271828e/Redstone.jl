@@ -81,7 +81,7 @@ unless its type defines a method.
 
 A binding with an input side defines `is_input(::MyBinding) = true`, and a
 [`claims`](@ref) method naming the [faces](@ref g-face) it may write unless it
-declares [`is_greedy`](@ref). Sides are declared, never inferred: a binding
+declares [`is_greedy`](@ref). Sides are declared, never inferred. A binding
 whose type defines no `is_input` method has no input side, whatever else it
 defines.
 
@@ -100,7 +100,7 @@ unless its type defines a method.
 
 A binding with an output side defines `is_output(::MyBinding) = true` and a
 [`reads`](@ref) method naming what it reads from each
-[snapshot](@ref g-snapshot). Sides are declared, never inferred: a binding whose
+[snapshot](@ref g-snapshot). Sides are declared, never inferred. A binding whose
 type defines no `is_output` method has no output side, whatever else it
 defines.
 
@@ -117,12 +117,12 @@ is_output(::AbstractBinding) = false
 Return whether the [binding](@ref g-binding) [claims](@ref g-claim) every
 [face](@ref g-face) still unclaimed at attach, `false` by default.
 
-`is_greedy` selects where an input-side binding's claim comes from. A greedy
-binding's claim is computed by [`attach!`](@ref): every
+`is_greedy` selects where an input-side binding's claim comes from.
+[`attach!`](@ref) computes a greedy binding's claim as every
 [root input](@ref g-root-input) no [device](@ref g-device) already attached has
-claimed. It is computed once and never recomputed, so attachment order decides
-it, and a greedy device is best attached last. An empty remainder is legal and
-warns `EmptyGreedyClaim`.
+claimed. It computes the claim once and never recomputes it, so attachment order
+decides it. A greedy device is best attached last. An empty remainder is legal
+and warns `EmptyGreedyClaim`.
 
 A greedy binding declares [`is_input`](@ref) and defines no [`claims`](@ref)
 method. `attach!` refuses a greedy binding without the input side, or one that
@@ -146,7 +146,7 @@ A binding that declares [`is_input`](@ref) defines `claims` for its type,
 returning the face names as strings or symbols. [`attach!`](@ref) calls it once
 and stakes what it names as the [device](@ref g-device)'s [claim](@ref g-claim).
 Duplicates collapse, and an empty collection is a legal claim to write nothing.
-`claims` never returns a value meaning "every remaining face": a binding
+`claims` never returns a value meaning "every remaining face". A binding
 declares [`is_greedy`](@ref) for that.
 
 A binding that declares the input side, is not greedy and defines no `claims`

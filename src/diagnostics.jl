@@ -1486,10 +1486,12 @@ The diagnostic a [device](@ref g-device) reports for a datum it could not map.
 A device's [`loop`](@ref) builds one after catching its own parser error, for a
 datum that failed for reasons outside the framework, such as a truncated
 datagram, malformed JSON or an out-of-range field. It passes the diagnostic to
-[`report!`](@ref) and goes on: catch, stage nothing, report, continue. `cause`
-is any value the device chooses to record, such as the caught exception. The
-classification is the device's, since only its author knows its parser, and
-any other exception reaches the framework as the `DeviceCrash` it is.
+[`report!`](@ref) and goes on. The pattern is catch, stage nothing, report,
+continue.
+
+`cause` is any value the device chooses to record, such as the caught exception.
+The classification is the device's, since only its author knows its parser. Any
+other exception reaches the framework as the `DeviceCrash` it is.
 
 `MalformedDatum` is a warning, which never throws. The report is counted in the
 reporting device's [`WriterStatus`](@ref) in the next

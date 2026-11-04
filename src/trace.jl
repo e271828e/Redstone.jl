@@ -48,8 +48,8 @@ Base.hash(record::TraceBatch, seed::UInt) =
 """
     Trace
 
-The input recording of a run: the [checkpoint](@ref g-checkpoint) it opened from
-and every [batch](@ref g-batch) the loop applied since.
+The input recording of a run, holding the [checkpoint](@ref g-checkpoint) it
+opened from and every [batch](@ref g-batch) the loop applied since.
 
 [`trace`](@ref) returns a copy of the current run's [trace](@ref g-trace), and
 [`replay!`](@ref) takes one to re-drive a simulation. The copy is detached, so
@@ -58,18 +58,21 @@ later [frames](@ref g-frame) never reach it. A trace holds these fields.
 - `header`: the [`Checkpoint`](@ref) the run opened from, written once by the
   call that opened it and never again.
 - `schemas`: each writer's [face](@ref g-face) names by position, as
-  `writer => faces` pairs. One is appended at every change to the
-  [roster](@ref g-roster), and the list only grows. A writer is named as in a
-  [`WriterStatus`](@ref), and the [harness writer](@ref g-harness-writer) is
-  `"harness"`.
+  `writer => faces` pairs.
 - `batches`: one record per drained batch, in [drain](@ref g-drain) order, by
-  frame and then by writer. Each record holds its frame, its writer's index into
-  `schemas` and its entries by position, so it reads only through its own schema
-  entry.
+  frame and then by writer.
 - `frames`: the frame index of the last drain, which is the frame every record
-  of that drain carries. It starts at the header's frame index, so a trace
-  opened from a restored checkpoint keys its records by the trajectory's own
-  frames.
+  of that drain carries.
+
+One `schemas` pair is appended at every change to the [roster](@ref g-roster),
+and the list only grows. A writer is named as in a [`WriterStatus`](@ref), and
+the [harness writer](@ref g-harness-writer) is `"harness"`.
+
+Each `batches` record holds its frame, its writer's index into `schemas` and its
+entries by position, so it reads only through its own schema entry.
+
+`frames` starts at the header's frame index, so a trace opened from a restored
+checkpoint keys its records by the trajectory's own frames.
 """
 mutable struct Trace
     header::Union{Nothing,Checkpoint}             # written once, by the door (D-274)
