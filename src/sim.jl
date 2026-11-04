@@ -265,12 +265,16 @@ A simulation holds four values, each a field.
 - `run`: the current run, with its [log](@ref g-log), its [trace](@ref g-trace)
   and its outcome.
 
-`E` is the type of the model's compiled [executor](@ref g-executor). `plane`
-holds the [roster](@ref g-roster) and the paths that write the model's inputs.
-It also holds the latest [snapshot](@ref g-snapshot). [`pause!`](@ref),
-[`resume!`](@ref), [`pace!`](@ref), [`margin!`](@ref) and [`stop!`](@ref) write
-`control` from any task. Only [`init!`](@ref), [`overlay!`](@ref),
-[`restore!`](@ref) and [`replay!`](@ref) replace `run`, each with a fresh one.
+`E` is the type of the model's compiled [executor](@ref g-executor).
+
+`plane` holds the [roster](@ref g-roster) and the paths that write the model's
+inputs. It also holds the latest [snapshot](@ref g-snapshot).
+
+[`pause!`](@ref), [`resume!`](@ref), [`pace!`](@ref), [`margin!`](@ref) and
+[`stop!`](@ref) write `control` from any task.
+
+Only [`init!`](@ref), [`overlay!`](@ref), [`restore!`](@ref) and
+[`replay!`](@ref) replace `run`, each with a fresh one.
 """
 mutable struct Simulation{E}
     const model::Model{Float64,E}
@@ -741,10 +745,11 @@ sparse overlay addressed by [component](@ref g-component) path, built with
 [`set`](@ref) and its combinators. [Root inputs](@ref g-root-input) have no
 declared default, so the condition must give every one of them a value.
 
-Boundary zero derives every output's value from the state. Every event starts as
-not [holding](@ref g-edge-semantics), so an event that already holds in the
-initialized state fires at `t0`. Calling `init!` again resets the state and the
-events from scratch, and such an event fires again at the new `t0`.
+Boundary zero derives every output's value from the state. Every
+[event](@ref g-state-event) starts as not [holding](@ref g-edge-semantics), so
+an event that already holds in the initialized state fires at `t0`. Calling
+`init!` again resets the state and the events from scratch, and such an event
+fires again at the new `t0`.
 
 `init!` opens a fresh run, with a new [log](@ref g-log) and a new
 [trace](@ref g-trace) rather than cleared ones, and the
@@ -767,10 +772,13 @@ is what [`run!`](@ref) and [`step!`](@ref) need. [`restore!`](@ref) and
 condition's place. To start again from a saved state, call
 [`checkpoint`](@ref), then `restore!`, then `run!`.
 
-Time is a keyword, never a condition [entry](@ref g-entry). Turn `trace` off
-only to save memory in a long session, since an untraced session can never be
-reproduced. The first and the latest snapshots are always kept, and at the bound
-the log thins its middle by doubling its stride.
+Time is a keyword, never a condition [entry](@ref g-entry).
+
+Turn `trace` off only to save memory in a long session, since an untraced
+session can never be reproduced.
+
+The first and the latest snapshots are always kept, and at `log_max` the log
+thins its middle by doubling its stride.
 
 The four recording keywords never change the trajectory. Two runs that differ
 only in them produce bitwise-identical trajectories. Each configures the run
@@ -902,12 +910,12 @@ onto the current store, and [root-input](@ref g-root-input) entries are allowed,
 with no need to cover every root input.
 
 The overlaid state then settles. The [components](@ref g-component)'
-`x_projection` hooks run and events fire until none is left to fire, but no
-discrete output stage and no `s_update` runs. An overlaid discrete store is
-therefore the state of the component's next [tick](@ref g-tick), and its held
-output stays until that tick. An event the overlay moves into
-[holding](@ref g-edge-semantics) fires at once, before the next integration
-step.
+`x_projection` hooks run and [events](@ref g-state-event) fire until none is
+left to fire, but no discrete output stage and no `s_update` runs. An overlaid
+discrete store is therefore the state of the component's next
+[tick](@ref g-tick), and its held output stays until that tick. An event the
+overlay moves into [holding](@ref g-edge-semantics) fires at once, before the
+next integration step.
 
 The settling publishes one [snapshot](@ref g-snapshot) at the stopped run's `t`.
 The new run's [trace header](@ref g-trace-header) is the
@@ -1237,7 +1245,7 @@ The recording stays attached after the call, in the `:replay`
 [input mode](@ref g-input-mode). A later `step!` or `run!` goes on consuming the
 records from the halt, and no advance runs past the recording's last frame. The
 mode returns to `:live`, the recording detaching with it, when an advance halts
-at that last frame; [`live!`](@ref) detaches it earlier.
+at that last frame. [`live!`](@ref) detaches it earlier.
 
 Replay records a new [trace](@ref g-trace) that inherits the old header, so its
 replayed prefix is bit-identical to the recording and a live continuation
@@ -1475,12 +1483,13 @@ failure. Caught at a frame top or during a pause, it ends the run `stopped` with
 
 A `pace` of `Inf`, the default, never waits, and `1` is real time.
 [`pace!`](@ref) and [`margin!`](@ref) retune the pace and the margin during the
-run. The default `ignore_stop_requests = ()` honours every request.
+run.
 
 `t_end` and `ignore_stop_requests` declare this call's
-[stop policy](@ref g-stop-policy) alone, validated per call. A live run with
-`t_end = Inf` and no honoured request ends only through the control plane,
-Ctrl-C included. It is allowed, and the loop reports `UnboundedRun` into its own
+[stop policy](@ref g-stop-policy) alone, validated per call. The default
+`ignore_stop_requests = ()` honours every request. A live run with `t_end = Inf`
+and no honoured request ends only through the control plane, Ctrl-C included. It
+is allowed, and the loop reports `UnboundedRun` into its own
 [diagnostic cell](@ref g-diagnostic-cell).
 
 The pace inserts wall time between frames and nothing else, so a paced run is
@@ -2118,8 +2127,8 @@ model and checks its response one step at a time.
 `step!` never waits for the pacer, and the pacer record of its
 [snapshots](@ref g-snapshot) reads `Inf` and zeros. It spawns no
 [device](@ref g-device) task and initializes no device, but a
-[batch](@ref g-batch) staged into a rostered device's cell while stopped is
-applied as usual.
+[batch](@ref g-batch) staged into a [rostered](@ref g-roster) device's cell
+while stopped is applied as usual.
 
 Between calls the simulation stays `initialized`, so [`attach!`](@ref) is legal
 there and `run!` may follow, continuing from the current
@@ -2403,14 +2412,14 @@ The returned [`DeviceHandle`](@ref) is named by the device's stable id, and
 carries what the device may do. It may read [snapshots](@ref g-snapshot), stage
 writes and control the run. The device's `loop` receives the same handle.
 
-With `should_abort` set, the device's loop returning, a crash or a failed
-`init!` requests a stop. With it clear, the run continues without the device's
-task, and its claim holds until the run ends.
+With [`should_abort`](@ref g-should_abort) set, the device's loop returning, a
+crash or a failed `init!` requests a stop. With it clear, the run continues
+without the device's task, and its claim holds until the run ends.
 
 `attach!` is refused as `ServiceLifecycle` while `running`, and once `errored`,
 since no run follows an errored simulation. A binding or device that breaks its
 contract is refused as `BindingContractMismatch` or `DeviceContractMismatch`,
-and a device instance already on the roster as `AlreadyAttached`; to rebind one,
+and a device instance already on the roster as `AlreadyAttached`. To rebind one,
 [`detach!`](@ref) it first. A claimed name that is not a
 [root input](@ref g-root-input) face is refused as `AttachUnknownFace`. A face
 another device already claims is refused as `ClaimConflict`, and reads that do
@@ -2418,7 +2427,7 @@ not resolve as `ReadResolution`.
 
 # Keywords
 
-- [`should_abort`](@ref g-should_abort): whether the device's departure also
+- `should_abort`: whether the device's departure also
   stops the run.
 """
 function attach!(sim::Simulation, dev::AbstractDevice, new_binding::AbstractBinding;
@@ -2901,13 +2910,13 @@ end
 Return a [port](@ref g-port)'s current value in the simulation's
 [signal table](@ref g-signal-table).
 
-A port is addressed by its [component](@ref g-component)'s path and its name,
-and a bare port, the port `y`, by that name or by the path alone. An
+Address a port by its [component](@ref g-component)'s path and its name. Address
+a bare port, the port `y`, by that name or by the path alone. An
 [assembly](@ref g-assembly)'s own path addresses its output
-[faces](@ref g-face), and the empty path the [root inputs](@ref g-root-input).
-The read is its model's, as `port(model, path, name)` gives it. To read a port
-off a published [snapshot](@ref g-snapshot) instead, use
-`port(snapshot, path, name)`.
+[faces](@ref g-face). The empty path addresses the
+[root inputs](@ref g-root-input). The read is its model's, as
+`port(model, path, name)` gives it. To read a port off a published
+[snapshot](@ref g-snapshot) instead, use `port(snapshot, path, name)`.
 """
 port(sim::Simulation, path::String, name::Union{Nothing,Symbol} = nothing) =
     port(sim.model, path, name)

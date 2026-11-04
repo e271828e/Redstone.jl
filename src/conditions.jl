@@ -228,7 +228,7 @@ diagnostic names where each was authored. To layer one node over another, use
 [`override`](@ref).
 
 `combine` is not `Base.merge` and does not extend it. A bare `NamedTuple` beside
-a node is refused as `ConditionNodeMisuse` when `combine` is called; wrap it in
+a node is refused as `ConditionNodeMisuse` when `combine` is called. Wrap it in
 `set(…)` first. Any other argument that is not a condition node is refused the
 same way.
 """

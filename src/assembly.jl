@@ -484,7 +484,9 @@ end
 
 # Design: §8.8, §9.1, D-251.
 """
-    input_passthrough(assembly, child_path::AbstractString; sep::AbstractString = ".", prefix::AbstractString = replace(child_path, "/" => sep), except::Tuple = (), only::Tuple = (), select = nothing) -> Tuple
+    input_passthrough(assembly, child_path::AbstractString; sep::AbstractString = ".",
+                      prefix::AbstractString = replace(child_path, "/" => sep),
+                      except::Tuple = (), only::Tuple = (), select = nothing) -> Tuple
 
 Return input wire [entries](@ref g-entry) that expose a child's input
 [faces](@ref g-face) on the [assembly](@ref g-assembly)'s own boundary.
@@ -539,7 +541,9 @@ end
 # surfaces, so the output side needs the computed spelling the input side
 # already has.
 """
-    output_passthrough(assembly, child_path::AbstractString; sep::AbstractString = ".", prefix::AbstractString = replace(child_path, "/" => sep), except::Tuple = (), only::Tuple = (), select = nothing) -> Tuple
+    output_passthrough(assembly, child_path::AbstractString; sep::AbstractString = ".",
+                       prefix::AbstractString = replace(child_path, "/" => sep),
+                       except::Tuple = (), only::Tuple = (), select = nothing) -> Tuple
 
 Return output wire [entries](@ref g-entry) that expose a child's output
 [faces](@ref g-face) on the [assembly](@ref g-assembly)'s own boundary.

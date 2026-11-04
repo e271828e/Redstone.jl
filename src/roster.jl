@@ -52,7 +52,8 @@ sides with two `Bool` traits, [`is_input`](@ref) and [`is_output`](@ref), both
 
 - The input side: [`claims`](@ref) names the [faces](@ref g-face) the device may
   write, or [`is_greedy`](@ref) asks for every face still unclaimed. The loop's
-  [`map_input`](@ref) turns a datum into writes.
+  [`map_input`](@ref) turns a datum into writes. A binding of your own defines
+  `map_input` for its type, for example to parse bytes.
 - The output side: [`reads`](@ref) names what the device reads from each
   [snapshot](@ref g-snapshot). The loop's [`map_output`](@ref) turns the
   gathered values into the device's output.

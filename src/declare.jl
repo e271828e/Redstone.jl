@@ -44,7 +44,7 @@ abstract type AbstractComponent end
 # fallback serves the value readers; the classifier asks whether the method is
 # declared.
 """
-    x_init(c) -> NamedTuple or value
+    x_init(c) -> NamedTuple, value or nothing
 
 Return the [component](@ref g-component)'s initial continuous state, as a
 `NamedTuple` of named values or as one bare value.
@@ -78,7 +78,7 @@ x_init(::Any) = nothing
 # and it is disjoint from `x_init`. The fallback serves the value readers; the
 # classifier asks whether the method is declared.
 """
-    s_init(c) -> NamedTuple or value
+    s_init(c) -> NamedTuple, value or nothing
 
 Return the [component](@ref g-component)'s initial discrete state, as a
 `NamedTuple` of named values or as one bare value.
@@ -104,7 +104,7 @@ s_init(::Any) = nothing
 
 # Design: §8.2, D-231.
 """
-    m_init(c) -> NamedTuple or value
+    m_init(c) -> NamedTuple, value or nothing
 
 Return the [component](@ref g-component)'s initial modes, as a `NamedTuple` of
 named values or as one bare value.
@@ -690,10 +690,10 @@ Return the [component](@ref g-component)'s discrete state after one
 
 `s_update` is the discrete [primitive](@ref g-primitive)'s update law, as in
 `s_update(::Counter, (; s)) = (n = s.n + 1,)`. It runs at each of the
-component's ticks, once the [boundary](@ref g-boundary)'s outputs and events
-have settled. Its [bundle](@ref g-bundle) may carry `s`, `y`, `u`, `t`, `Δt` and
-`ws`, each only if the component has it, and `Δt` is the component's own tick
-period.
+component's ticks, once the [boundary](@ref g-boundary)'s outputs and
+[events](@ref g-state-event) have settled. Its [bundle](@ref g-bundle) may carry
+`s`, `y`, `u`, `t`, `Δt` and `ws`, each only if the component has it, and `Δt`
+is the component's own tick period.
 
 The return replaces the whole state, so it has exactly the type of the value
 [`s_init`](@ref) returns, the one leaf itself for a bare state, the field `s`.

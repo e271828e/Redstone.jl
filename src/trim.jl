@@ -154,9 +154,9 @@ commits, so `committed_residuals` also tells whether the commit happened. A
 check outside its tolerance warns `TrimCommitChecks`.
 
 A non-empty `fired_events` means the committed [stores](@ref g-store) sit past
-the events' handlers rather than at the reported solution, and a
-`TrimCommitEvents` warning comes with it. `:bypassed` is the status of a problem
-with no decisions, which makes no backend call.
+the [events](@ref g-state-event)' handlers rather than at the reported solution,
+and a `TrimCommitEvents` warning comes with it. `:bypassed` is the status of a
+problem with no decisions, which makes no backend call.
 
 A report holds these fields.
 
@@ -485,10 +485,10 @@ evaluation.
 
 Setup layers the problem's [condition](@ref g-condition) at the guess over the
 [baseline](@ref g-baseline), as `override(baseline, problem.condition(guess))`.
-It then runs the [sweep](@ref g-sweep) of
-[boundary zero](@ref g-boundary-zero) once, with every discrete output stage run
-and no [projection](@ref g-projection), events or discrete update. Each
-iteration then sweeps only the continuous chain, with no
+It then runs the [sweep](@ref g-sweep) of [boundary zero](@ref g-boundary-zero)
+once, with every discrete output stage run and no
+[projection](@ref g-projection), [events](@ref g-state-event) or discrete
+update. Each iteration then sweeps only the continuous chain, with no
 [boundaries](@ref g-boundary) and no events. The discrete [tier](@ref g-tier)
 does not run during the search, so its outputs hold the values that first sweep
 gave them.

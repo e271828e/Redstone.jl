@@ -29,12 +29,12 @@ The [block](@ref g-block) is stateless. The fold `f` is instance data, and the
 constructor infers the type parameter `F` from it. A model writes a custom fold,
 such as a weighted blend or a mass-properties composition, at the site.
 
-The fold holds no state and declares no events. A discontinuity written into it
-therefore lands wherever it falls inside a step. A clamp is fine, since its kink
-is second-order downstream. So is a branch on a `Bool` that flips at a
-[boundary](@ref g-boundary), as a saturation code does. A branch on a continuous
-quantity makes a mode silently, and the moded blocks such as [`Relay`](@ref)
-exist to declare one.
+The fold holds no state and declares no [events](@ref g-state-event). A
+discontinuity written into it therefore lands wherever it falls inside a step. A
+clamp is fine, since its kink is second-order downstream. So is a branch on a
+`Bool` that flips at a [boundary](@ref g-boundary), as a saturation code does. A
+branch on a continuous quantity makes a mode silently, and the moded blocks such
+as [`Relay`](@ref) exist to declare one.
 
 See also [`SumJunction`](@ref), [`Or`](@ref), [`And`](@ref), [`Pack`](@ref).
 """
@@ -407,8 +407,8 @@ Without `reset`, its input `u` is bare. Each [tick](@ref g-tick) advances the
 one bare [store](@ref g-store) value, `s` below, from `s0` as
 `s⁺ = clamp(s + Δt u, lower, upper)`. The output `out` publishes `s` from
 [stage 1](@ref g-stage-function). This one `clamp` does the work of the mode and
-four events of the continuous [`LimitedIntegrator`](@ref), with no mode store
-and no localization.
+four [events](@ref g-state-event) of the continuous [`LimitedIntegrator`](@ref),
+with no mode store and no localization.
 
 A second output, `saturation`, publishes the `Int8` code of
 `LimitedIntegrator`, read off the state, also from stage 1. The code is `1` at
@@ -791,11 +791,12 @@ input `u` and its output `y` are bare:
 The state is an `SVector` at every size. `u` is a `Float64` when `n_u` is one
 and an `SVector{n_u, Float64}` otherwise, and `y` likewise by `n_y`.
 
-The type parameter `FT` is the feedthrough class of [`LinearBlock`](@ref), and
-`D` picks it. A zero `D` publishes `y` from [stage 1](@ref g-stage-function).
-The block then breaks an [algebraic loop](@ref g-algebraic-loop) as the lag
-does. A nonzero `D` publishes it from stage 2, so a loop closed on the block
-through a memoryless path is refused as `AlgebraicCycle`.
+The type parameter `FT` is the [feedthrough](@ref g-feedthrough) class of
+[`LinearBlock`](@ref), and `D` picks it. A zero `D` publishes `y` from
+[stage 1](@ref g-stage-function). The block then breaks an
+[algebraic loop](@ref g-algebraic-loop) as the lag does. A nonzero `D` publishes
+it from stage 2, so a loop closed on the block through a memoryless path is
+refused as `AlgebraicCycle`.
 
 The matrices are kept at `Float64`, and the state and the [ports](@ref g-port)
 follow the scalar of a `Dual` [activation](@ref g-activation), so the block
@@ -893,11 +894,11 @@ There is no `x0`, because a realization's state means nothing to a user who
 knows only `G(s)`. The block starts at rest, or, with `u0` given, at the steady
 state for the constant input `u0`, where `y` is `G(0) u0`.
 
-The type parameter `FT` is the feedthrough class of [`LinearBlock`](@ref), and
-the degrees pick it. A numerator of lower degree than the denominator publishes
-`y` from [stage 1](@ref g-stage-function). The block then breaks an
-[algebraic loop](@ref g-algebraic-loop). One of equal degree publishes it from
-stage 2.
+The type parameter `FT` is the [feedthrough](@ref g-feedthrough) class of
+[`LinearBlock`](@ref), and the degrees pick it. A numerator of lower degree than
+the denominator publishes `y` from [stage 1](@ref g-stage-function). The block
+then breaks an [algebraic loop](@ref g-algebraic-loop). One of equal degree
+publishes it from stage 2.
 
 Four spellings are refused as an `ArgumentError`. A denominator of fewer than
 two coefficients has order zero, which makes a gain. A numerator longer than the
@@ -1001,10 +1002,11 @@ output `y` are bare:
 The keywords, the shapes, the storage, the [ports](@ref g-port) and the refusals
 are those of [`StateSpace`](@ref), with `s0` in place of its `x0`.
 
-The feedthrough class of [`DiscreteLinearBlock`](@ref) is also that of
-`StateSpace`. A zero `D` publishes `y` from [stage 1](@ref g-stage-function).
-The block then breaks an [algebraic loop](@ref g-algebraic-loop). A nonzero `D`
-publishes it from stage 2.
+The [feedthrough](@ref g-feedthrough) class of [`DiscreteLinearBlock`](@ref) is
+also that of `StateSpace`. A zero `D` publishes `y` from
+[stage 1](@ref g-stage-function). The block then breaks an
+[algebraic loop](@ref g-algebraic-loop). A nonzero `D` publishes it from stage
+2.
 
 The discrete [tier](@ref g-tier) never follows the scalar of an
 [activation](@ref g-activation), so under a `Dual` activation the block holds
@@ -1059,7 +1061,8 @@ takes them in `s`. This is not the `z⁻¹` convention of `filter(b, a)`, which
 agrees with it only when the degrees are equal. The [block](@ref g-block) keeps
 the coefficients and holds their realization in controllable canonical form, a
 [`DiscreteStateSpace`](@ref) whose stages it shares. The degrees pick the
-feedthrough class of [`DiscreteLinearBlock`](@ref) as for `TransferFunction`.
+[feedthrough](@ref g-feedthrough) class of [`DiscreteLinearBlock`](@ref) as for
+`TransferFunction`.
 
 The block starts at rest, or, with `u0` given, at the steady state for the
 constant input `u0`, where `(I - A) s = B u0` and `y` is `G(1) u0`.
@@ -1376,6 +1379,7 @@ check_limits(lower, upper) =
 # rather than a field because the build reads it off the guard's return type;
 # `R` is the reset form. Boundary zero sets every prior to not-holding, which is
 # why an out-of-limits `x0` is clamped there. `V` is the promoted keyword type.
+# Each guard reads its one component and each handler writes it.
 """
     LimitedIntegrator(; lower, upper, x0 = zero(lower), localized::Bool = true, reset::Bool = false) -> LimitedIntegrator
 
@@ -1387,9 +1391,9 @@ The [block](@ref g-block) integrates its input `u` into one continuous state
 at a limit rather than clamping its output. Without `reset`, `u` is bare. The
 output `out` publishes `x` from [stage 1](@ref g-stage-function).
 
-Four [state events](@ref g-state-event) move a mode, a signed `Int8` code with
-the sign of the limit in force. The code is `-1` at `lower`, `0` free and `+1`
-at `upper`.
+Four [state events](@ref g-state-event) move the bare mode, a signed `Int8` code
+with the sign of the limit in force. The code is `-1` at `lower`, `0` free and
+`+1` at `upper`.
 
 - `hit_upper` and `hit_lower` fire when `x` reaches a limit. They are
   [localized](@ref g-localized). They write `x` to the limit exactly and
@@ -1546,6 +1550,8 @@ end
 # parameter `L` rather than a field because the build reads it off the guard's
 # return type. Boundary zero sets every prior to not-holding, which is why an
 # out-of-limits `q0` is clamped there. `V` is the promoted keyword type.
+# Each guard reads its one component, each hit handler writes its one component
+# of `q`, `v` and the code, and each leave handler its one code.
 """
     LimitedDoubleIntegrator(; lower, upper, q0 = zero(lower), v0 = zero(lower), localized::Bool = true) -> LimitedDoubleIntegrator
 
@@ -1558,9 +1564,9 @@ bare, the acceleration, with `q̇ = v` and `v̇ = u` while free and both zero wh
 saturated. The outputs `out` and `velocity` publish `q` and `v` from
 [stage 1](@ref g-stage-function).
 
-Four [state events](@ref g-state-event) move a mode, a signed `Int8` code with
-the sign of the limit in force. The code is `-1` at `lower`, `0` free and `+1`
-at `upper`.
+Four [state events](@ref g-state-event) move the bare mode, a signed `Int8` code
+with the sign of the limit in force. The code is `-1` at `lower`, `0` free and
+`+1` at `upper`.
 
 - `hit_upper` and `hit_lower` fire when `q` reaches a limit. They are
   [localized](@ref g-localized). They write `q` to the limit exactly, zero `v`
@@ -2387,11 +2393,10 @@ A continuous [primitive](@ref g-primitive) that runs an LQR tracker about a trim
 point, with anti-windup.
 
 The inputs are `x`, the plant state, `z`, the command variables, and `z_ref`,
-their reference. The two outputs come from [stage 2](@ref g-stage-function),
+their reference. Two outputs come from [stage 2](@ref g-stage-function), `u_raw`
+and `u`, its clamp to `[u_min, u_max]` per channel:
 
     u_raw = u_trim + K_fwd (z_ref - z_trim) - K_fbk (x - x_trim) + q
-
-and `u`, its clamp to `[u_min, u_max]` per channel.
 
 The [block](@ref g-block) holds one continuous state, `q`, the integral term in
 output units, one channel per control input. One law moves it:
@@ -2527,13 +2532,14 @@ outputs and law of [`LQRTracker`](@ref) to the discrete [tier](@ref g-tier). A
 second, `saturated`, holds its code. `Δt` is the
 [component](@ref g-component)'s own period.
 
-The inputs are `x`, `z` and `z_ref`, and the two outputs come from
-[stage 2](@ref g-stage-function),
+The inputs are `x`, `z` and `z_ref`. Two outputs come from
+[stage 2](@ref g-stage-function), `u_raw` and `u`, its clamp to
+`[u_min, u_max]` per channel:
 
     u_raw = u_trim + K_fwd (z_ref - z_trim) - K_fbk (x - x_trim) + q
 
-and `u`, its clamp to `[u_min, u_max]` per channel. Each [tick](@ref g-tick)
-moves the integral term by forward Euler and the correction's exact step:
+Each [tick](@ref g-tick) moves the integral term by forward Euler and the
+correction's exact step:
 
     q⁺ = q + Δt ε + β (ref - u_raw),    β = 1 - exp(-Δt / Tt)
 

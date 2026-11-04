@@ -48,12 +48,12 @@ model owns its buffers alone.
 Any other `T` is refused as `ArgumentInvalid` with reason `:scalar`, before
 anything is compiled.
 
-`Model(build; kw...)` is `Model(Deployment(build; grid keywords...), T;
-chunk_size)`, and `Model(root; kw...)` calls [`build`](@ref) first. The grid,
-algorithm and event keywords are `Deployment`'s, documented and refused as
-`DeploymentInvalid` there. `h` is required, as for [`Deployment`](@ref). A
-`chunk_size` that is not an integer of at least 1 is refused as
-`ArgumentInvalid`.
+`Model(build; kw...)` is
+`Model(Deployment(build; grid keywords...), T; chunk_size)`, and
+`Model(root; kw...)` calls [`build`](@ref) first. The grid, algorithm and event
+keywords are `Deployment`'s, documented and refused as `DeploymentInvalid`
+there. `h` is required, as for [`Deployment`](@ref). A `chunk_size` that is not
+an integer of at least 1 is refused as `ArgumentInvalid`.
 
 A model holds five values, each a field.
 
@@ -169,7 +169,7 @@ functions on it.
   [`t*`](@ref g-t), the frame-top boundary that ends the frame,
   [boundary zero](@ref g-boundary-zero) under `init!`, and the boundary
   `overlay!` or `restore!` settles. It returns whether to abandon the frame's
-  remainder, and `frame!` returns a `true`.
+  remainder, and `frame!` returns that value.
 
 A subtype defines a method of each. Every boundary publishes before integration
 resumes, so a subtype that publishes [snapshots](@ref g-snapshot) does it in
@@ -321,13 +321,13 @@ merges onto the current store rather than the declared default.
 a value.
 
 The overlaid state then settles. An overlaid `x` is
-[projected](@ref g-projection), and events fire until none is left to fire. No
-discrete output stage and no `s_update` runs. An overlaid discrete store is
-therefore the state of the [component](@ref g-component)'s next
-[tick](@ref g-tick), and its held output stays until that tick. An event the
-overlay moves into [holding](@ref g-edge-semantics) fires at once. The settled
-[boundary](@ref g-boundary) goes through `settled!(hooks)`, and the status
-returns to `:consistent`.
+[projected](@ref g-projection), and [events](@ref g-state-event) fire until none
+is left to fire. No discrete output stage and no `s_update` runs. An overlaid
+discrete store is therefore the state of the [component](@ref g-component)'s
+next [tick](@ref g-tick), and its held output stays until that tick. An event
+the overlay moves into [holding](@ref g-edge-semantics) fires at once. The
+settled [boundary](@ref g-boundary) goes through `settled!(hooks)`, and the
+status returns to `:consistent`.
 
 `overlay!` needs what [`checkpoint`](@ref) needs, the model `:consistent` and
 its clock on a [frame top](@ref g-frame). Otherwise it is refused as

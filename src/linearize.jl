@@ -73,7 +73,7 @@ taps(; x = (;), u = (;), y = (;)) = Taps(_tap_list(:x, x), _tap_list(:u, u), _ta
 Scope a [tap set](@ref g-taps) under `prefix`, so that its paths resolve below
 that path.
 
-A tap set is built by [`taps`](@ref). Each of its lists takes
+[`taps`](@ref) builds a tap set. Each of its lists takes
 `prefix` at the front of its [mount chain](@ref g-mounting), and the labels are
 unchanged. An empty prefix is refused as `ReadSetMisuse`, from `at` on the
 lists.
