@@ -300,9 +300,10 @@ vector_double_limited_model(localized) =
           local_wires = ("s/y" => "li/u",))
 
 # `vector_double_limited_model` with component 2 driven to its lower limit:
-# it reaches -0.8 at √0.8 while component 1 is free, and stays there.
+# it reaches -0.8 at √0.8 while component 1 is free, leaves it at 1.05 and
+# reaches 1.0 near 2.947.
 vector_lower_double_limited_model(localized) =
-    Group((; s = Step(t_step = 1.05, before = SVector(1.0, -2.0), after = SVector(-1.0, 0.0)),
+    Group((; s = Step(t_step = 1.05, before = SVector(1.0, -2.0), after = SVector(-1.0, 1.0)),
              li = LimitedDoubleIntegrator(lower = SVector(-1.0, -0.8), upper = SVector(0.5, 1.0),
                                           localized = localized));
           local_wires = ("s/y" => "li/u",))
@@ -1983,11 +1984,12 @@ function test_blocks()
             bracket_width = sim.model.deployment.localization_tol * sim.model.deployment.h    # in time (§10.4)
             @test state(sim, "li").q[1] ≈ 0.5 - 0.95^2 / 2 atol = bracket_width
             @test state(sim, "li").v[1] ≈ -0.95 atol = bracket_width
-            @test state(sim, "li").q[2] == -0.8 && state(sim, "li").v[2] == 0.0
-            @test modes(sim, "li") == SVector{2, Int8}(0, -1)
+            @test state(sim, "li").q[2] ≈ -0.34875 atol = bracket_width
+            @test state(sim, "li").v[2] ≈ 0.95 atol = bracket_width
+            @test modes(sim, "li") == SVector{2, Int8}(0, 0)
             step!(sim; t_plus = 1.0)
-            @test state(sim, "li") === (q = SVector(-1.0, -0.8), v = SVector(0.0, 0.0))
-            @test modes(sim, "li") == SVector{2, Int8}(-1, -1)
+            @test state(sim, "li") === (q = SVector(-1.0, 1.0), v = SVector(0.0, 0.0))
+            @test modes(sim, "li") == SVector{2, Int8}(-1, 1)
         end
         @test y_types(LimitedDoubleIntegrator(lower = SVector(-1.0, -1.0), upper = SVector(0.5, 0.8))) ==
               (out = SVector{2, Float64}, velocity = SVector{2, Float64}, saturation = SVector{2, Int8})
