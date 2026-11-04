@@ -1127,6 +1127,17 @@ function test_blocks()
         end
         @test port(vector_sim, "c") ==
               SVector(1.0, -1.0) .+ SVector(1.0, 2.0) .* SVector(Redstone.Blocks.gaussian(7, 6), Redstone.Blocks.gaussian(7, 7))
+        # A matrix is four components in column-major order: sample 3 reads the
+        # sub-counters 12 to 15.
+        matrix_noise = GaussianWhiteNoise(seed = 7, σ = SMatrix{2, 2}(1.0, 2.0, 3.0, 4.0))
+        @test y_types(matrix_noise) == SMatrix{2, 2, Float64, 4}
+        matrix_sim = Simulation(noise_model(matrix_noise); h = 1//100)
+        init!(matrix_sim, set())
+        for _ in 1:3
+            step!(matrix_sim; t_plus = 1//100)
+        end
+        @test port(matrix_sim, "c") ==
+              SMatrix{2, 2}(1.0, 2.0, 3.0, 4.0) .* SMatrix{2, 2}(ntuple(i -> Redstone.Blocks.gaussian(7, 11 + i), 4))
         # A scalar pairs with a vector, `μ` defaults to the scale's zero, and
         # `Float32` widens.
         @test GaussianWhiteNoise(seed = 1, σ = SVector(1.0, 2.0)) isa GaussianWhiteNoise{SVector{2, Float64}}

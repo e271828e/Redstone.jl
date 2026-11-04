@@ -33,8 +33,8 @@ item changes what the spec says, the spec edit is part of the item.
   `ConformanceFailure`; a probe on 2026-11-04 tried six such variants and
   every one was refused. The bound becomes `Union{Float64, SArray{<:Tuple,
   Float64}}`, so the refusal is the constructor's `TypeError`, with one test
-  per tier. `GaussianWhiteNoise`'s `Union{Float64, SVector{<:Any, Float64}}`
-  already is, and the docstrings already say `Float64` or an `SArray` of
+  per tier. `GaussianWhiteNoise` was widened from `SVector` to that bound on
+  2026-11-05, and the docstrings already say `Float64` or an `SArray` of
   `Float64`.
 - **One broadcast convention for the blocks' keywords** (§13.7, D-313), a
   loose fix, ruled by the user on 2026-11-04. Keywords sharing `V` broadcast

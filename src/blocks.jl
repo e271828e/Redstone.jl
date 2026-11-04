@@ -4,7 +4,7 @@ import ..Redstone: AbstractComponent, Pinned, StateEvent, StopFlag, NO_STOP, STO
     x_init, s_init, m_init, u_types, y_types, y_direct, y_state, x_deriv, s_update,
     state_events, local_wires, input_wires, output_wires, sample_times, transparent_container,
     stop_reason
-using StaticArrays: StaticArray, SMatrix, SVector, SOneTo, SUnitRange, similar_type
+using StaticArrays: StaticArray, SArray, SMatrix, SVector, SOneTo, SUnitRange, similar_type
 using LinearAlgebra: I
 import ForwardDiff
 
@@ -541,8 +541,8 @@ Two blocks with one seed publish one stream, so independent sources take
 distinct seeds.
 
 `μ` and the scale are broadcast to one type, the parameter `V` and the
-output's, `Float64` or an `SVector` of `Float64`, so a scalar pairs with a
-vector. Over a vector the components are independent.
+output's, `Float64` or an `SArray` of `Float64`, so a scalar pairs with an
+array. Over an `SArray` the components are independent.
 
 Exactly one of `σ` and `psd` is given. Neither or both is refused as an
 `ArgumentError`. A one-sided density is halved before being passed as `psd`.
@@ -555,7 +555,7 @@ Exactly one of `σ` and `psd` is given. Neither or both is refused as an
 - `psd`: the two-sided intensity `Q` of the white noise the samples stand for,
   with `σ² = Q/Δt` at the [component](@ref g-component)'s own period `Δt`.
 """
-struct GaussianWhiteNoise{V <: Union{Float64, SVector{<:Any, Float64}}} <: AbstractComponent
+struct GaussianWhiteNoise{V <: Union{Float64, SArray{<:Tuple, Float64}}} <: AbstractComponent
     seed::UInt64
     μ::V
     σ::V              # per sample, or `sqrt(psd)` with `density` set
@@ -585,9 +585,10 @@ function gaussian(seed, k)
     sqrt(-2 * log(u1)) * cospi(2 * u2)
 end
 gaussian(seed, k, ::Type{Float64}) = gaussian(seed, k)
-# Over a vector, component `i` reads the sub-counter `k N + i - 1`.
-gaussian(seed, k, ::Type{SVector{N, Float64}}) where {N} =
-    SVector(ntuple(i -> gaussian(seed, k * N + i - 1), Val(N)))
+# Over an array of `N` components, component `i` in column-major order reads the
+# sub-counter `k N + i - 1`.
+gaussian(seed, k, ::Type{V}) where {V <: SArray} =
+    V(ntuple(i -> gaussian(seed, k * length(V) + i - 1), Val(length(V))))
 
 s_init(::GaussianWhiteNoise) = UInt64(0)
 y_types(::GaussianWhiteNoise{V}) where {V} = V
