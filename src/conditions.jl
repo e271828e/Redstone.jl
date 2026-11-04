@@ -45,7 +45,7 @@ prefix, stored and not yet applied.
 
 [`at`](@ref) returns it from a node of a condition, and `at`, [`combine`](@ref)
 and [`override`](@ref) take it. It holds the prefix and the node `at` was given.
-`at` stores the prefix and never applies it: the paths join when a service
+`at` stores the prefix and never applies it. The paths join when a service
 resolves the condition against its build.
 
 See also [`ConditionNode`](@ref).
@@ -112,7 +112,7 @@ const ConditionNode = Union{Fragment,Scoped,Combined,Override}
 # The generic is framework-owned so that the owner's pull crosses a package
 # seam. D-246's shadowing check does not cover it.
 """
-    condition(c; kw...)
+    condition(c; kw...) -> ConditionNode
 
 Return the [component](@ref g-component)'s own [condition](@ref g-condition),
 built from keywords in its own vocabulary.
@@ -144,22 +144,23 @@ names none of its children. A store declared bare has the field `x`, `s` or
 [`at`](@ref) scopes a leaf to a child, and
 [`combine`](@ref) and [`override`](@ref) compose leaves.
 
+A condition sets state, modes and [root inputs](@ref g-root-input) only. It
+never sets outputs, and never [workspace](@ref g-workspace). Only a
+[continuous component](@ref g-continuous-component) has modes.
+
+A payload of `nothing` is refused as `ConditionNodeMisuse` when `set` is called.
+A field the component does not declare, and a bare payload where the store or
+the input is named, are refused as `ConditionResolution` when a service resolves
+the condition against its build.
+
 # Keywords
 
 - `x`: continuous state fields, by name, or a bare state's value.
 - `s`: discrete state fields, by name, or a bare state's value.
-- `m`: modes, by name, or a bare mode store's value. Only a
-  [continuous component](@ref g-continuous-component) has modes.
-- `u`: [root input](@ref g-root-input) values, named by the authoring level's
-  own input [faces](@ref g-face), or a bare input's value, the face `u`, at a
-  primitive level whose `u_types` is bare.
-
-A condition sets state, modes and root inputs only. It never sets outputs, and
-never [workspace](@ref g-workspace). A payload of `nothing` is refused as
-`ConditionNodeMisuse` when `set` is called. A field the component does not
-declare, and a bare payload where the store or the input is named, are refused
-as `ConditionResolution` when a service resolves the condition against its
-build.
+- `m`: modes, by name, or a bare mode store's value.
+- `u`: root input values, named by the authoring level's own input
+  [faces](@ref g-face), or a bare input's value, the face `u`, at a
+  [primitive](@ref g-primitive) level whose `u_types` is bare.
 """
 function set(; x = (;), s = (;), m = (;), u = (;))
     _payload(:x, x); _payload(:s, s); _payload(:m, m); _payload(:u, u)
@@ -194,8 +195,8 @@ On a read set, `at` adds `prefix` to the front of the set's
 rebases every [selector](@ref g-selector) onto it. Other methods of `at` scope a
 [`TrimProblem`](@ref) and a tap set from [`taps`](@ref) the same way.
 
-An empty prefix names no child, and is refused when `at` is called: as
-`ConditionNodeMisuse` on a condition node, and as `ReadSetMisuse` on a read set.
+An empty prefix names no child, and is refused when `at` is called. The refusal
+is `ConditionNodeMisuse` on a condition node, and `ReadSetMisuse` on a read set.
 A second argument of any other type is refused as `ConditionNodeMisuse`.
 """
 at(prefix::AbstractString, node::ConditionNode) =

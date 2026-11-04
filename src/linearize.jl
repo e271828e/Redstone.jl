@@ -22,7 +22,7 @@
 """
     Taps
 
-The [tap set](@ref g-taps): the three [read sets](@ref g-read-set) that
+The [tap set](@ref g-taps) of three [read sets](@ref g-read-set) that
 linearization seeds and reads.
 
 [`taps`](@ref) returns it, [`linearize`](@ref) takes it, and [`at`](@ref)
@@ -51,6 +51,11 @@ A tap set is what [`linearize`](@ref) takes. Each list is a
 `NamedTuple` of selectors, and its labels become the axes of the returned
 matrices. Membership is closed per list, and every tap names one scalar leaf.
 
+`taps` checks only that each list is a `NamedTuple` of selectors, and refuses
+anything else as `ReadSetMisuse`. `linearize` checks membership and the rest
+when it resolves the taps against its build, and refuses them as
+`TapResolution`, beside the selectors' own `ReadResolution` failures.
+
 # Keywords
 
 - `x`: the continuous state leaves to seed, as [`get_state`](@ref) selectors.
@@ -58,11 +63,6 @@ matrices. Membership is closed per list, and every tap names one scalar leaf.
   selectors.
 - `y`: the outputs to read, as [`get_output`](@ref) or [`get_face`](@ref)
   selectors.
-
-`taps` checks only that each list is a `NamedTuple` of selectors, and refuses
-anything else as `ReadSetMisuse`. `linearize` checks membership and the rest
-when it resolves the taps against its build, and refuses them as
-`TapResolution`, beside the selectors' own `ReadResolution` failures.
 """
 taps(; x = (;), u = (;), y = (;)) = Taps(_tap_list(:x, x), _tap_list(:u, u), _tap_list(:y, y))
 
@@ -104,8 +104,8 @@ const LinearizeDual = ForwardDiff.Dual{LinearizeTag,Float64,LINEARIZE_WIDTH}
 """
     Linearization
 
-The result of a linearization: the operating point and the four Jacobians,
-labeled by the [taps](@ref g-taps).
+The result of a linearization, holding the operating point and the four
+Jacobians, labeled by the [taps](@ref g-taps).
 
 [`linearize`](@ref) returns it. The labels are those of the tap set, and a
 `Linearization` holds these fields.
@@ -163,8 +163,9 @@ Return the linearization of the model at an operating point.
 
 `linearize` returns the Jacobians `A`, `B`, `C` and `D` of the model about an
 operating point, as a [`Linearization`](@ref). It is a pure query. It works on
-[scratch](@ref g-scratch) stores and commits nothing. It runs no
-[boundary zero](@ref g-boundary-zero) and never writes the model.
+[scratch](@ref g-scratch) [stores](@ref g-store) and commits nothing. It runs no
+[boundary zero](@ref g-boundary-zero) and never writes the model. A model a
+[`Simulation`](@ref) has claimed still answers, since the query only reads it.
 
 By default the operating point is `checkpoint(model)`, the model's state at the
 [frame top](@ref g-frame) its clock rests on, at that clock's time. `about`, a
@@ -173,43 +174,46 @@ By default the operating point is `checkpoint(model)`, the model's state at the
 [sweep](@ref g-sweep) with every discrete output stage run then sets the
 discrete outputs.
 
-The tap set, built by [`taps`](@ref), names the axes. It is three lists of
-[selectors](@ref g-selector), declaring what linearization seeds and reads.
-`linearize` seeds one direction per `x` tap and per `u` tap, and evaluates the
-model with dual numbers. The value parts give `ẋ₀` and `y₀`. The partials give
-`A` and `B` read at the state derivative, and `C` and `D` read at the `y`
-[taps](@ref g-taps). States and [root inputs](@ref g-root-input) that no tap
-names sit constant at the operating point. The discrete [tier](@ref g-tier) is
-held.
+The [tap set](@ref g-taps), built by [`taps`](@ref), names the axes. It is three
+lists of [selectors](@ref g-selector), declaring what linearization seeds and
+reads. `linearize` seeds one direction per `x` tap and per `u` tap, and
+evaluates the model with dual numbers. The value parts give `ẋ₀` and `y₀`. The
+partials give `A` and `B` read at the state derivative, and `C` and `D` read at
+the `y` taps. States and [root inputs](@ref g-root-input) that no tap names sit
+constant at the operating point. The discrete [tier](@ref g-tier) is held.
 
-# Keywords
-
-- `about`: a condition placing the operating point, or `nothing` for
-  `checkpoint(model)`.
-- `t0`: the time of the `about` operating point, `0.0` when `nothing`. It is
-  allowed only beside `about`.
-- `width`: how many directions one evaluation seeds, at least 1, by default 8.
-  The width changes the grouping, never the answer. The default width's scalar
-  is `LinearizeDual`, so a build that lists it in `activations` linearizes any
-  tap set with no compile at the keyboard.
+The `width` changes the grouping, never the answer. The default width's scalar
+is `LinearizeDual`, so a build that lists it in `activations` linearizes any tap
+set with no compile at the call.
 
 The default form is legal only while the model's status is `:consistent`, and is
 refused as `ServiceLifecycle` otherwise. It is refused as `CheckpointMidFrame`
 with the clock off a frame top, as [`checkpoint`](@ref) is. A root input whose
 value does not convert to the seeded scalar is refused as `ConditionResolution`.
-The `about` form is legal at any status. Under it, a condition that does not
-resolve is refused with the diagnostics resolution raises: `ConditionResolution`,
-`PathResolution`, `DuplicateConditionLeaf` or `ConditionNodeMisuse`. A root
-input it leaves without a value is refused as `UninitializedInputs`. A model a
-[`Simulation`](@ref) has claimed still answers, since the query only reads it.
 
-The taps resolve in one collecting pass, and their faults are refused together
-as `TapResolution`, beside the selectors' own `ReadResolution` failures: a
-member in the wrong list, a discrete state in `x`, a tap that is not one
-scalar, a root input that cannot be seeded, or a second tap on one seeded site.
+The `about` form is legal at any status. Under it, a condition that does not
+resolve is refused as `ConditionResolution`, `PathResolution`,
+`DuplicateConditionLeaf` or `ConditionNodeMisuse`, the diagnostics resolution
+raises. A root input it leaves without a value is refused as
+`UninitializedInputs`.
+
+`linearize` resolves the taps in one collecting pass, and refuses their faults
+together as `TapResolution`, beside the selectors' own `ReadResolution`
+failures. The faults are a member in the wrong list, a discrete state in `x`, a
+tap that is not one scalar, a root input that cannot be seeded, and a second tap
+on one seeded site.
+
 A `t0` without `about`, a `width` below 1, a second argument that is not a tap
 set, and a model at a scalar type other than `Float64` are refused as
 `ArgumentInvalid`.
+
+# Keywords
+
+- `about`: a condition placing the operating point, or `nothing` for
+  `checkpoint(model)`.
+- `t0`: the time of the `about` operating point, `0.0` when `nothing`, allowed
+  only beside `about`.
+- `width`: how many directions one evaluation seeds, at least 1, by default 8.
 """
 function linearize(model::Model{Float64}, tap_set::Taps; about = nothing,
                    t0 = nothing, width::Int = LINEARIZE_WIDTH)
