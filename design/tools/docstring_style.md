@@ -53,7 +53,8 @@ closed(run::Run) = run.termination !== nothing
   its default in the signature, its meaning in one sentence.
 - **A struct whose fields are public lists them under a lead sentence.** A
   sentence such as "A report holds these fields." opens one bullet per field,
-  its meaning in one sentence.
+  its meaning in one sentence. A struct with one public field names it in
+  prose.
 
 ## Signatures
 
@@ -143,12 +144,15 @@ closed(run::Run) = run.termination !== nothing
 - **A code-named entry is linked through its API link only.** `Model`,
   `TrimProblem` and `at` take [`Model`](@ref) and the like, never a glossary
   link. Prose "build", "deployment", "model" and "run" take no glossary link.
+  A code-named entry with no API link, such as `should_abort` or `t*`, keeps
+  its glossary link.
 - **The spec keeps its glosses.** Its readers arrive at a section or a line
   range and cannot follow a link, while a docstring's reader is one link from
   the glossary page.
 - **Primitive or assembly names the class, continuous or discrete the
   tier.** "Block" means only that the standard library ships the component.
-  "Leaf" names only a leaf of a store or a leaf address, never a component.
+  "Leaf" names only a leaf of a store, a leaf address or the leaf of a
+  condition, never a component.
 - **No `§`, no `D-nnn`, no FlightCore, no Flight.jl.** A docstring never
   cites the spec, the log or the predecessor. Those go to the `# Design:`
   comment.
@@ -228,6 +232,7 @@ The reviewer's checklist, one line per rule:
 21. Each paragraph answers what the call needs, produces or refuses.
 22. Mechanism, a correction or a finding included, only where the user needs
     it to use the call correctly.
+23. Nothing after the `# Keywords` list but `# Examples` and `See also`.
 
 ## The battery
 

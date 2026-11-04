@@ -214,12 +214,17 @@ breaking user code, and each may benefit from user feedback first.
   its dependence presumed, so its `y_direct` may not read the input, and the
   row should say so. The spec edit and its log entry come first.
 
-- **The docstring audit's open decisions.** The audit of 2026-11-04 left three
-  groups for the user, set out in
-  `design/reports/20261104_docstring_audit/report.md` section 5: nine false or
-  imprecise claims with drafted replacements, two code changes (unchecked time
-  constants, and value reads on a bad path), and rulings on the sheet. Each is
-  retired here as it is ruled.
+- **The docstring audit's open decisions.** The audit of 2026-11-04 left its
+  open points in `design/reports/20261104_docstring_audit/report.md` section 5.
+  The nine false claims, the plan methods' sentence, the smaller points and four
+  rulings folded into the sheet landed the same day. Still open: the two code
+  changes, the unchecked time constants `τ`, `τd` and `Tt`, and `port`, `state`
+  and `modes` on a bad path; which fields of `Model`, `Deployment` and
+  `Schedule` are public, a question for the exported-name audit; whether "bare"
+  and "entry" compounds link to the glossary; the mechanism sentences kept in
+  `LinearBlock`, `Group` and the discrete controllers; and §12.2's sentence
+  that `stale` tolerates a device parked in a blocking read, which a device
+  parked over two seconds does not bear out.
 
 ## Deviations
 
