@@ -49,16 +49,15 @@ const DECISIONS = "decisions.md"
 
 # Every file scanned besides `spec.md`, which the loop below splices on. This
 # is the checked-file roster, not the `companions/` taxonomy: `decisions.md`,
-# `extensions.md`, `code_map.md`, `rules/code_rules.md` and `pending.md` are members because
+# `code_map.md`, `rules/code_rules.md` and `pending.md` are members because
 # their own citations can dangle, and dropping one silently unchecks that
 # whole file.
 # `decisions.md` is also `DECISIONS` above, in the other role — the anchor pool
 # a link *into* the log resolves against.
 const ROSTER = [DECISIONS,
-                "extensions.md",
                 # The code map and the code rules. Checked here and in
                 # check_rows.jl, but deliberately out of linkify.jl's roster,
-                # which rewrites decisions.md, extensions.md and the companions
+                # which rewrites decisions.md and the companions
                 # besides spec.md: their citations stay plain.
                 "code_map.md",
                 "rules/code_rules.md",

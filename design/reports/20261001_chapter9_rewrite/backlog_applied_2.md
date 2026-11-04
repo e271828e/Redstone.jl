@@ -119,7 +119,7 @@ filled activation dictionary, and may back any number of deployments and
   → "It is bound at the `Deployment` constructor".
 - `tools/check_refs.jl` roster comment: "out of linkify.jl's roster: their
   citations stay plain, as decisions.md's do." → "out of linkify.jl's
-  roster, which rewrites decisions.md, extensions.md and the companions
+  roster, which rewrites decisions.md, reports/20260809_extensions_charter/report.md and the companions
   besides spec.md: their citations stay plain."
 
 ## Fixes after verification

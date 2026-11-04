@@ -26,7 +26,7 @@ Line numbers are `spec.md` lines (old.md line + 3390) unless marked `log`.
    which is deployment's. The build produces `(anchor, m, c)` triples. The
    flat state layout is likewise an activation's product. Proposed: "the
    anchor-relative rate triples" for "absolute rate divisors". Same staleness
-   as survey F25 in `extensions.md`.
+   as survey F25 in `reports/20260809_extensions_charter/report.md`.
 5. **The shadowing check is missing from the structure step.** Spec 1979
    says "a **shadowing check** in the structural walk (§9.1), run on every
    component before its class is read (D-246)". D-246 Position (log 8990, "The

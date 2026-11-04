@@ -98,7 +98,7 @@ session's.
    use in this section carries a gloss keeps that gloss text, or the table
    row is updated in the same commit.
 5. **Orphan grep.** Grep the section's phrases listed in §5 across
-   `decisions.md`, `extensions.md`, `companions/`, `src/`. Re-point or record
+   `decisions.md`, `reports/20260809_extensions_charter/report.md`, `companions/`, `src/`. Re-point or record
    per the table's action column.
 6. **Battery**: `check_refs.jl`, `check_rows.jl`, `check_glossary.jl
    --strict`, `linkify.jl` as a no-op.

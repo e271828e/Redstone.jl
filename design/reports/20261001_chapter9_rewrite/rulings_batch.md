@@ -259,7 +259,7 @@ F7 (R16) and F8 (R17) remain open.
   because `Δt_base` binds at deployment. The build produces `(anchor, m, c)`
   triples. "The flat state layout" is likewise an activation's product.
 - **Evidence:** A1 131–134; A2 69–83. A1 correction 4 notes that survey F25
-  (`extensions.md`) has the same staleness.
+  (`reports/20260809_extensions_charter/report.md`) has the same staleness.
 - **Proposed:** "the anchor-relative rate triples" for "absolute rate
   divisors". A1 proposes no wording for the state layout. Decide whether it
   changes too.
@@ -1199,7 +1199,7 @@ Spec fields (all wait on R71):
   evaluation".
 - **Recommendation:** accept
 
-### R101. `extensions.md` 191: "Stratum A flattens … absolute divisors" (survey F25)
+### R101. `reports/20260809_extensions_charter/report.md` 191: "Stratum A flattens … absolute divisors" (survey F25)
 
 - **Evidence:** Retired vocabulary and pre-anchor content. A1 correction 4 is
   the same staleness.

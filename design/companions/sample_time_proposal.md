@@ -4,7 +4,7 @@
 worked sample-time proposal for the framework: the declaration surface, compilation
 pipeline, runtime representation and diagnostics for **phase offsets** and **absolute
 rate declarations**. It supersedes section 2 of the extensions charter
-(`extensions.md`), which sketched the same territory before the pipeline was
+(`reports/20260809_extensions_charter/report.md`), which sketched the same territory before the pipeline was
 worked out. **Adopted 2026-08-12 as decision [D-185][d-185]–[D-187][d-187]**, with the section 9
 amendments applied ([§10.5][s10-5], [§8.7][s8-7], [§9.1][s9-1], [§9.2][s9-2], [§9.7][s9-7], [§14.5][s14-5], [§14.8][s14-8], Appendices B/C —
 the spec wins on any conflict) and two deltas from the proposal as written: the
@@ -17,7 +17,7 @@ match; quoted pre-adoption spec text keeps its original wording). What remains
 non-normative here is the exposition: the worked examples, timelines and derivations
 live only in this document. Everything below stays on the **static lattice**: tick
 instants remain build-time constants, and nothing from the closed tick-queue axis
-(`extensions.md` section 1.4) is dragged in.
+(`reports/20260809_extensions_charter/report.md` section 1.4) is dragged in.
 
 Source: the gap-analysis discussion of 2026-08-08/09 and the sample-time pipeline
 sessions of 2026-08-12.
@@ -432,7 +432,7 @@ recomputed mask** threads mutable state through the sweep for the privilege of
 replacing a subtraction and a remainder with a load. Both lose to the pure gate.
 
 The one place a materialized "due set as data" genuinely earns its way in is the
-extensions charter's triggered-updates item (`extensions.md` section 1.2,
+extensions charter's triggered-updates item (`reports/20260809_extensions_charter/report.md` section 1.2,
 item 7): a triggered entry's due-ness is *not* a function of the index — its gate
 would read a staged trigger flag instead of doing modulo. The gate-per-entry
 structure generalizes to that; a `(D, Φ)` table does not, and does not need to.

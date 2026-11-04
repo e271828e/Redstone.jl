@@ -56,13 +56,12 @@ const SPEC = "spec.md"
 const DECISIONS = "decisions.md"
 
 # Every file rewritten besides `spec.md`. The rewritten-file roster, not the
-# `companions/` taxonomy — `decisions.md` and `extensions.md` are members.
+# `companions/` taxonomy — `decisions.md` is a member.
 # `code_map.md`, `rules/code_rules.md` and `pending.md` are deliberately
 # absent: they are checked by check_refs.jl and check_rows.jl, but their
 # citations stay plain
 # rather than becoming reference links.
 const ROSTER = ["decisions.md",
-                "extensions.md",
                 "companions/event_visibility_walkthrough.md",
                 "companions/inbound_periphery_walkthrough.md",
                 "companions/trim_environment_walkthrough.md",

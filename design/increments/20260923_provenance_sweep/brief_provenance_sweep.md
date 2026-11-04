@@ -7,7 +7,7 @@ Tip at drafting: `8b1ba79`. The bullet retired: `pending.md`, "The
 
 The word "provenance" is obscure and means seven different things across the
 tree. Each meaning gets one plain replacement, fixed below, and the word
-leaves the live files: the spec, the log, `extensions.md`, the companions,
+leaves the live files: the spec, the log, `reports/20260809_extensions_charter/report.md`, the companions,
 the tools, `implementation.md`, `pending.md`, `src/` and `test/`. The reports
 under `design/reports/` and the other briefs under `design/increments/` are
 frozen evidence and keep the word. This brief keeps it too.
@@ -63,7 +63,7 @@ These fit no meaning above and get the rewrite given, nothing more:
   bare name's declaration evident".
 - log, D-106 near line 2454, "Device roster representation and provenance
   (§11.3)" → "Device roster representation and trace tags (§11.3)".
-- `extensions.md:13`, `:214` and `companions/sample_time_proposal.md:22`, the
+- `reports/20260809_extensions_charter/report.md:13`, `:214` and `companions/sample_time_proposal.md:22`, the
   header line "Provenance: distilled from …" → "Source: distilled from …".
 - `companions/sample_time_proposal.md:557`, the table header `provenance` →
   `rate chain`.
@@ -79,7 +79,7 @@ These fit no meaning above and get the rewrite given, nothing more:
 ## Stage A: the documents (Sonnet)
 
 Files: `design/spec.md`, `design/decisions.md`,
-`design/extensions.md`, `design/companions/*.md`,
+`design/reports/20260809_extensions_charter/report.md`, `design/companions/*.md`,
 `design/tools/gloss_table.md`, `design/rules/decisions_rules.md`,
 `design/implementation.md`, `design/pending.md`.
 

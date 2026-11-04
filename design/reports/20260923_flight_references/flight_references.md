@@ -15,7 +15,7 @@ These tell the reader what Redstone *is*. They must be rewritten, not trimmed.
 - `spec.md` §1 (148-175) — purpose, the three ground rules. "Capability grounding" defines requirements as what FlightPhysics/FlightApps *do*; "no interface compatibility" is about them; "guarded additions" are weighed against "the fundamental strengths of Flight.jl".
 - `spec.md:12495` glossary entry *guarded addition* — repeats "Flight.jl's fundamental strengths".
 - `spec.md` Part V intro (9641-9655) and §16 opening (10312) — "the migration of FlightPhysics and FlightApps".
-- `design/extensions.md` §1 (19-20) and §1.5 "The bias, named" (174-190) — the gap survey is framed as "how far did the FlightCore rewrite land from a general engine". §1.5 is *about* the inheritance, so it can't just be scrubbed.
+- `design/reports/20260809_extensions_charter/report.md` §1 (19-20) and §1.5 "The bias, named" (174-190) — the gap survey is framed as "how far did the FlightCore rewrite land from a general engine". §1.5 is *about* the inheritance, so it can't just be scrubbed.
 - `design/decisions.md:19-22` — says the design's full history lives in the git history of `framework_design.md` (a Flight.jl-era file).
 - `design/rules/decisions_rules.md:68-70` — style ruling: FlightCore is "the predecessor in-house framework", contrast with it is lineage and goes in Rationale.
 
@@ -206,12 +206,12 @@ design/tools/pdf/gallery/sample.jl:14:    q::RQuat{T}
 src/trim.jl:1:# The trim service (§14.7, §14.8): the problem value the aircraft author ships,
 src/trim.jl:22:What the aircraft author ships: what the solver may vary, what those decisions
 src/trim.jl:354:a fine probe input and a terrible flight condition (§14.6's barrier, reaching
-design/extensions.md:19:The framework began as a rewrite of `FlightCore`, and its early decisions were shaped
-design/extensions.md:20:by what porting `FlightPhysics` and `FlightApps` would need. The question this section
-design/extensions.md:174:Re-examination showed the two decisions most suspected of `FlightCore` inheritance
-design/extensions.md:176:explicitly identifies `Subsampled`'s parent-relative multipliers as a call-tree
-design/extensions.md:179:assemblies (a departure from FlightCore's execution-through-composition, coinciding
-design/extensions.md:182:Where the `FlightPhysics`/`FlightApps` assumption genuinely biased the design is the
+design/reports/20260809_extensions_charter/report.md:19:The framework began as a rewrite of `FlightCore`, and its early decisions were shaped
+design/reports/20260809_extensions_charter/report.md:20:by what porting `FlightPhysics` and `FlightApps` would need. The question this section
+design/reports/20260809_extensions_charter/report.md:174:Re-examination showed the two decisions most suspected of `FlightCore` inheritance
+design/reports/20260809_extensions_charter/report.md:176:explicitly identifies `Subsampled`'s parent-relative multipliers as a call-tree
+design/reports/20260809_extensions_charter/report.md:179:assemblies (a departure from FlightCore's execution-through-composition, coinciding
+design/reports/20260809_extensions_charter/report.md:182:Where the `FlightPhysics`/`FlightApps` assumption genuinely biased the design is the
 design/rules/decisions_rules.md:68:  not divergence — it stays where it is. Ruled 2026-08-14: FlightCore, the
 design/spec.md:1:# A Modeling & Simulation Framework for Flight.jl — Specification
 design/spec.md:104:    - [15.2 Torture tests for the §5.2 interfaces: `PistonEngine` and the FCS PID cascade](#152-torture-tests-for-the-52-interfaces-pistonengine-and-the-fcs-pid-cascade)

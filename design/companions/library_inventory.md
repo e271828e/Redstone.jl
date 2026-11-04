@@ -33,7 +33,7 @@ A second group disappears for structural reasons:
 - Zero-Order Hold and Rate Transition are what the tiers and
   `sample_times` already do ([§10.5][s10-5], [§8.7][s8-7]).
 - Enabled, triggered and resettable subsystems, If, Switch Case and Merge
-  are assemblies and modes (`extensions.md` items 5 and 7).
+  are assemblies and modes (`reports/20260809_extensions_charter/report.md` items 5 and 7).
 - Lookup tables are generic mathematics for a utility package, called from
   a stage body.
 - Clock is the bundle's `t`. Ramp, Sine Wave, Chirp, the interpolated
@@ -52,7 +52,7 @@ A second group disappears for structural reasons:
   and a `UnitDelay` with a `Junction` fold. On the continuous tier the edge
   belongs to the consumer that resets on it ([D-141][d-141]).
 - Data Store Memory, Algebraic Constraint and Descriptor State-Space are
-  closed axes (`extensions.md`, section 1.3).
+  closed axes (`reports/20260809_extensions_charter/report.md`, section 1.3).
 
 ## 2. The admission guidelines
 
@@ -173,7 +173,7 @@ from pinned data alone need no parameter.
 | a continuous rate limiter | not admitted | `q̇ = clamp((in - q) / τ, -R, R)` is one line, its kinks are second-order and its offsets decay; the discrete form is the block |
 | `StateSpace(; A, B, C, D, x0)` from any matrices, stored as static ones, scalar or `SVector` ports by the matrix shapes | shipped | `D` picks the stage, so the feedthrough class is a type parameter; `x0` in the user's coordinates; `linear_blocks.md` |
 | `TransferFunction(; num, den, u0)` from coefficient tuples or vectors, one input and one output | shipped | realized to a `StateSpace` at construction, the stage arms shared through the abstract `LinearBlock{FT}`; the class from the numerator's degree; started at rest or at the steady state for `u0`, never from an `x0`; `linear_blocks.md` |
-| a continuous transport delay | not admitted | a history buffer indexed by the step; `extensions.md` item 4 |
+| a continuous transport delay | not admitted | a history buffer indexed by the step; `reports/20260809_extensions_charter/report.md` item 4 |
 
 ### Discontinuities
 

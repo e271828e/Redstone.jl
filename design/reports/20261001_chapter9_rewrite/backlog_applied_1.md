@@ -80,7 +80,7 @@ Chapter 9 untouched.
   "The other two are the stage-1 probes and the probe chain of the nominal
   evaluation ([§9.1][s9-1])." The §9.1 pointer is added.
 
-## R101 — `extensions.md`
+## R101 — `reports/20260809_extensions_charter/report.md`
 
 - "**Stratum A flattens whatever was declared into the same `Build`
   artifact** (§9.1–§9.2) — resolved wires, absolute divisors, schedule — so"
@@ -94,7 +94,7 @@ Chapter 9 untouched.
 - "`linkify.jl` keeps a third roster, also `ROSTER`, naming the files it
   rewrites; a file checked but not linkified keeps plain citations, as
   `decisions.md` and `implementation.md` do." → "… naming the files it
-  rewrites besides `spec.md`: `decisions.md`, `extensions.md` and the
+  rewrites besides `spec.md`: `decisions.md`, `reports/20260809_extensions_charter/report.md` and the
   companions. A file checked but not linkified keeps plain citations, as
   `implementation.md` and `pending.md` do."
 

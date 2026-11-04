@@ -12,7 +12,7 @@ PathSim was read from source: `simulation.py`, `blocks/_block.py`,
 `utils/portreference.py`, the solver bases (`_solver.py`, `_rungekutta.py`),
 the event modules, the discrete, ODE and dynamical-system blocks, and
 `optim/operator.py`. Redstone was read from `spec.md` (§2–§7, §9.5, §9.7, §10,
-§11.1, §12.7, §13, §14.7–§14.10, §16), `implementation.md`, `extensions.md`
+§11.1, §12.7, §13, §14.7–§14.10, §16), `implementation.md`, `reports/20260809_extensions_charter/report.md`
 and `src/`. Both frameworks ran the same model on the same machine, and three
 PathSim behaviours were probed empirically. Every script is under `probes/`.
 
@@ -26,7 +26,7 @@ web editor (PathView), FMU import, a JOSS paper, 84 releases, one main author.
 Redstone is a Julia framework for hierarchical hybrid models with a build-time
 derived static schedule, immutable typed signals, a harmonic multi-rate grid, a
 formal event semantics, and a runtime periphery built for deterministic replay
-and zero-allocation real-time operation. Redstone's `extensions.md` positions it
+and zero-allocation real-time operation. Redstone's `reports/20260809_extensions_charter/report.md` positions it
 accurately: "Simulink's fixed-step, loop-free, harmonic-multirate causal
 subset, plus guarantees Simulink does not offer". PathSim is closer to
 Simulink's engine breadth.
@@ -46,8 +46,8 @@ Simulink's engine breadth.
 | Block library | ~35 modules: sources, filters, PID, LTI, continuous transport delay, lookup tables, logic, switches, relay, Kalman, noise, spectrum, scopes, FMU, RF | §13.7 library is a migration deliverable; today only test fixtures |
 | Plotting and recording | `Scope`, `Spectrum`, `RealtimePlotter`, `sim.plot()` | Snapshot log plus readers; no plotting |
 | GUI editor, notebooks | PathView web editor; 35 example notebooks; hosted docs | None |
-| Continuous transport delay | `Delay` block with interpolated history | A library extension (`extensions.md` item 4) |
-| Triggered discrete updates | `Schedule`, `ScheduleList`, `Condition` events; arbitrary float periods and offsets; time lists | Harmonic grid only; edge-triggered `state_update` is "real spec work" (`extensions.md` item 7) |
+| Continuous transport delay | `Delay` block with interpolated history | A library extension (`reports/20260809_extensions_charter/report.md` item 4) |
+| Triggered discrete updates | `Schedule`, `ScheduleList`, `Condition` events; arbitrary float periods and offsets; time lists | Harmonic grid only; edge-triggered `state_update` is "real spec work" (`reports/20260809_extensions_charter/report.md` item 7) |
 
 ### Redstone has, PathSim lacks
 
@@ -315,7 +315,7 @@ compile latency, the authoring discipline, and the parts still unbuilt.
 
 Two things PathSim does that Redstone could adopt through existing seams
 without touching the execution model: an adaptive stepper as a package
-extension (`extensions.md` item 1), and a checkpoint that serializes the trace
+extension (`reports/20260809_extensions_charter/report.md` item 1), and a checkpoint that serializes the trace
 header plus stores to disk (the §16 persistence question). Two things Redstone
 does that PathSim could not adopt without redesign: structural feedthrough and
 quiescence iteration, both of which its `Register`/`__len__`/single-pass

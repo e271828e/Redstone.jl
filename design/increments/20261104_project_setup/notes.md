@@ -52,3 +52,12 @@ the diff.
   `increments/`. A closed roadmap sits in its campaign's folder.
 - The sweep rewrote 41 files. One `briefs/` survives, inside a verification
   command a record quotes; it is the command as it ran.
+
+## Step 4: the extensions charter to the reports
+
+- `extensions.md` becomes `reports/20260809_extensions_charter/report.md`,
+  dated from the discussion it distilled. It leaves the four rosters
+  (`check_refs`, `check_rows`, `linkify`, `sweep_rows`); its citation links
+  are rewritten relative to the new directory and frozen, with a note at
+  its head and on the definitions block. Every citation of the old path,
+  companions and records alike, now names the new one.

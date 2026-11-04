@@ -119,7 +119,7 @@ generic.
   sweep, `Build`, executor, stratum and execution cursor rows take the new
   wording. Leave the `n` counts alone.
 - **Not in scope.** `decisions.md`, `implementation.md`, `pending.md`,
-  `extensions.md`, `companions/`, the briefs and the register. Renaming only;
+  `reports/20260809_extensions_charter/report.md`, `companions/`, the briefs and the register. Renaming only;
   no sentence gains or loses a norm. If a replacement reads badly in its
   sentence, apply the closest of the three spellings and flag the line.
 

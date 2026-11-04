@@ -189,7 +189,7 @@ themes in one sentence each. Nothing else in `pending.md` changes.
 
 ## Not in scope
 
-`decisions.md`, `implementation.md`, `extensions.md`, `companions/`, the
+`decisions.md`, `implementation.md`, `reports/20260809_extensions_charter/report.md`, `companions/`, the
 briefs, the register, the roadmap, `src/`, `test/`. `linkify.jl` may
 regenerate definitions blocks in rostered files; those join the commit.
 

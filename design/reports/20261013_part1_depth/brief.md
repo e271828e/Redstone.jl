@@ -68,7 +68,7 @@ Borderline items:
 - **The tip.** Start from `git rev-parse HEAD` and the working tree as you
   find it. Earlier stages leave uncommitted edits. Never revert, stash or
   commit anything. Never touch `src/`, `test/`, `implementation.md`,
-  `pending.md`, `extensions.md` or `docs/spec_rewrite/`; the orchestrator
+  `pending.md`, `reports/20260809_extensions_charter/report.md` or `docs/spec_rewrite/`; the orchestrator
   sweeps those.
 - **Read first.** `design/rules/spec_rules.md` and
   `design/rules/decisions_rules.md`, in full. They bind every edit.

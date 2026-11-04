@@ -30,7 +30,6 @@ const BASELINE = joinpath(@__DIR__, "row_baseline.txt")
 
 const FILES = [SPEC,
                DECISIONS,   # rows cite each other; those pointers dangle too
-               "extensions.md",
                "code_map.md",         # the code map, the code rules
                "rules/code_rules.md", # and the work order: plain
                "pending.md",          # citations, never linkified

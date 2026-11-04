@@ -271,10 +271,10 @@ Read `rules/spec_rules.md` before touching the spec and
    payloads carry a stage name as a string), **Appendix D** (glossary:
    entries for *flow*, *stage*, *bundle*, *function family*, *projection*,
    *auto-published port*; the new *state event* / *time event* entries).
-10. **Companions and `extensions.md`.** `companions/frozen_discrete_walkthrough.md`
+10. **Companions and `reports/20260809_extensions_charter/report.md`.** `companions/frozen_discrete_walkthrough.md`
     (9 hits), `companions/event_visibility_walkthrough.md` (6),
     `companions/trim_environment_walkthrough.md` (1),
-    `companions/sample_time_proposal.md` (1), `extensions.md` (4). Sweep the
+    `companions/sample_time_proposal.md` (1), `reports/20260809_extensions_charter/report.md` (4). Sweep the
     same way; the spec wins over them where they disagree.
 11. **D-220.** Title: "Rename the authoring family to words: stage, update,
     projection, event and workspace declarations". Position: the table
@@ -422,8 +422,8 @@ do not trust the suite alone, since several are printed, not compared.
    ```
    rg -n "\b(h_x|h_xu|h_s|h_su)\b" docs src test
    rg -n "\b(project|events|workspace)\(" src test
-   rg -n "\bEvent\b" design/spec.md design/companions design/extensions.md design/implementation.md src test
-   rg -n "\`(f|g|project|events|workspace)\`" design/spec.md design/companions design/extensions.md design/implementation.md
+   rg -n "\bEvent\b" design/spec.md design/companions design/reports/20260809_extensions_charter/report.md design/implementation.md src test
+   rg -n "\`(f|g|project|events|workspace)\`" design/spec.md design/companions design/reports/20260809_extensions_charter/report.md design/implementation.md
    ```
 
    The third command may leave prose hits for `f` and `g` that the policy
@@ -437,7 +437,7 @@ do not trust the suite alone, since several are printed, not compared.
 - **Stage 1 (Opus) — docs, first.** Doc amendments go docs-commit-first,
   then the increment conforms. Items 1–12 of *Spec and log edits*. No
   `src/` or `test/` edits. If the spec sweep alone fills the context, commit
-  the spec and the log and hand the companions, `extensions.md` and the
+  the spec and the log and hand the companions, `reports/20260809_extensions_charter/report.md` and the
   appendix re-check to a second Opus docs stage with the same brief; say so
   in the report. Commit: "Rename the authoring family to words and record
   the math-versus-API naming policy".

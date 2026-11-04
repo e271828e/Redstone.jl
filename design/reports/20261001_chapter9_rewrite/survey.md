@@ -429,7 +429,7 @@ Three options:
 - **A (recommended).** Move all deployment content into §9.2 and retitle §9.2
   "The `Build` and `Deployment` artifacts". No renumbering. The retitle
   changes the slug `#92-the-build-artifact`. `linkify.jl` regenerates the
-  definitions in `spec.md`, `decisions.md`, `extensions.md` and the linkified
+  definitions in `spec.md`, `decisions.md`, `reports/20260809_extensions_charter/report.md` and the linkified
   companions, including `sample_time_proposal.md` (802). The Contents entry
   (line 50) changes by hand. Cost: about 30 inbound citations retarget from
   §9.1 to §9.2 (part D). §9.1 drops to about 1100 words, §9.2 rises to about
@@ -504,7 +504,7 @@ The full list is `inbound.tsv` (beside this file): 389 rows, one per
 "§9.x" occurrence outside chapter 9 and outside the Contents block. By file:
 `decisions.md` 187 (Spec fields 115, Rationale 39, Position 19, Rejected 14),
 `spec.md` 141, `implementation.md` 26, `sample_time_proposal.md` 15,
-`handle_walk_walkthrough.md` 4, `extensions.md` 4,
+`handle_walk_walkthrough.md` 4, `reports/20260809_extensions_charter/report.md` 4,
 `trim_environment_walkthrough.md` 3, `pending.md` 3, two each in
 `frozen_discrete_walkthrough.md`, `linearization_walkthrough.md` and
 `migration_outline.md`. By section: §9.1 90, §9.5 87, §9.7 61, §9.2 54, §9.3
@@ -753,7 +753,7 @@ Outside chapter 9, met while checking citations:
     (§9.7)". The keyword is §9.4's.
 24. 8287–8288 (§13.1): "the stage-1 probes in B and the probe chain in C",
     strata vocabulary D-259 retired.
-25. `extensions.md` 191: "Stratum A flattens … absolute divisors", retired
+25. `reports/20260809_extensions_charter/report.md` 191: "Stratum A flattens … absolute divisors", retired
     vocabulary and pre-anchor content.
 26. `rules/spec_rules.md`, "The battery": "a file checked but not linkified
     keeps plain citations, as `decisions.md` and `implementation.md` do".

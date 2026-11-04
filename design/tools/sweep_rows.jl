@@ -34,7 +34,6 @@ const DESIGN = normpath(joinpath(@__DIR__, ".."))
 const DECISIONS = "decisions.md"
 
 const FILES = ["spec.md",
-               "extensions.md",
                "companions/sample_time_proposal.md",
                "companions/event_visibility_walkthrough.md",
                "companions/inbound_periphery_walkthrough.md",

@@ -108,7 +108,7 @@ user reviews them in `notes_increment_72.md`.
 
 ## Out of scope
 
-- The log, by `decisions_rules.md` rule 2. `extensions.md`'s nine uses
+- The log, by `decisions_rules.md` rule 2. `reports/20260809_extensions_charter/report.md`'s nine uses
   (113, 125, 138, 157, 162, 185, 193, 194, 362), all S2 or S6.
   `implementation.md`, `pending.md` beyond the queue bullet,
   `inspector/initial_design.md`, every report and brief, `docs/spec_rewrite/`.
