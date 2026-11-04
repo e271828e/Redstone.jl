@@ -25,3 +25,10 @@ the diff.
 - The log's citations of `implementation.md` and `decisions_style.md` are
   substituted under `decisions_rules.md` rule 2's pure-substitution
   exception.
+
+## Step 2: the PDF build under `tools/`
+
+- `design/pdf/` moves to `design/tools/pdf/`; the Makefile's source and
+  output paths gain one level, the outputs staying at `design/*.pdf`. The
+  local post-commit hook is updated by hand (it is unversioned). Two
+  records citing the old path are swept, a pure move.

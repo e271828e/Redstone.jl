@@ -73,7 +73,7 @@ for the user. Nothing here is pushed.
    refusal sits in `place!`, so a root input whose struct nests a `StopFlag`
    is refused `:stop_flag_nested` at site `:root_input`, untested; handed to
    the reviewer as a probe.
-8. **`design/pdf/gallery/sample.jl` keeps `stop_on = :quiescence`.**
+8. **`design/tools/pdf/gallery/sample.jl` keeps `stop_on = :quiescence`.**
    It is a highlighting sample under `pdf/`, not code, and reports and
    gallery material stay untouched before the first release.
 

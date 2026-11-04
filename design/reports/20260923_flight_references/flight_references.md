@@ -201,8 +201,8 @@ design/companions/trim_environment_walkthrough.md:485:aero model is a *box* in (
 design/companions/trim_environment_walkthrough.md:494:target set, any environment, with no closed-form work by the aircraft author.
 src/conditions.jl:493:fabricated zero is a fine probe input and a terrible flight condition.
 design/companions/inbound_periphery_walkthrough.md:15:feed values into a simulation that owns its data exclusively?** FlightCore's
-design/pdf/gallery/sample.jl:3:    (pose = KinPose{T}, q_eb = RQuat{T})
-design/pdf/gallery/sample.jl:14:    q::RQuat{T}
+design/tools/pdf/gallery/sample.jl:3:    (pose = KinPose{T}, q_eb = RQuat{T})
+design/tools/pdf/gallery/sample.jl:14:    q::RQuat{T}
 src/trim.jl:1:# The trim service (§14.7, §14.8): the problem value the aircraft author ships,
 src/trim.jl:22:What the aircraft author ships: what the solver may vary, what those decisions
 src/trim.jl:354:a fine probe input and a terrible flight condition (§14.6's barrier, reaching

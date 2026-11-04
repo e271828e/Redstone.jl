@@ -12,14 +12,14 @@ THEME = gallery/themes/redstone.tmTheme
 STYLE = pdf.yaml pdflinks.lua tablewidths.lua inlinecode.lua style.typ julia.sublime-syntax $(THEME) Makefile
 PANDOC = pandoc -d pdf.yaml --pdf-engine-opt=--input=theme=$(THEME)
 
-pdf: ../spec-decisions.pdf pair
+pdf: ../../spec-decisions.pdf pair
 
-../spec-decisions.pdf: ../spec.md ../decisions.md $(STYLE)
-	$(PANDOC) -M combined=true ../spec.md ../decisions.md -o $@
+../../spec-decisions.pdf: ../../spec.md ../../decisions.md $(STYLE)
+	$(PANDOC) -M combined=true ../../spec.md ../../decisions.md -o $@
 
-pair: ../spec.pdf ../decisions.pdf
+pair: ../../spec.pdf ../../decisions.pdf
 
-../%.pdf: ../%.md $(STYLE)
+../../%.pdf: ../../%.md $(STYLE)
 	$(PANDOC) $< -o $@
 
 gallery: gallery/gallery.pdf
