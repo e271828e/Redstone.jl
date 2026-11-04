@@ -12,6 +12,19 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
+- **One broadcast convention for the blocks' keywords** (§13.7, D-313), a
+  loose fix, ruled by the user on 2026-11-04. Keywords sharing `V` broadcast
+  to one shape, as `PID`, `DiscretePID`, `GaussianWhiteNoise` and the trackers
+  do; the promoting blocks are the older spelling, with no design reason
+  behind the difference. Only broadcasting can be universal, since `PID`'s
+  scalar defaults must sit beside a vector `Kp`. Three commits: the
+  inventory's sentence on promotion rewritten first; then `LimitedIntegrator`,
+  `LimitedDoubleIntegrator`, `DiscreteLimitedIntegrator`, `Step`, `Relay`,
+  `Comparator` and `Sequence`'s values through one helper making `Float64` of
+  one shape, which replaces `promoted_keywords` and its refusal tests and may
+  absorb `shape_type` and `GaussianWhiteNoise`'s idiom; then `RateLimiter`'s
+  `rising` and `falling` and `FirstOrderLag`'s `τ` widened from `Float64` to
+  `V`. A length mismatch stays Julia's `DimensionMismatch`, as on `PID`.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`. Its records, none
   normative, are `design/inspector/initial_design.md` and one per axis
