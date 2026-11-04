@@ -15,6 +15,7 @@ import ForwardDiff
 # --- the junction (§13.7, D-311) -------------------------------------------------
 
 # Design: §2.3, §6.2, D-437.
+# `F` is the fold's type, inferred by the constructor.
 """
     Junction{In, Out, N}(f) -> Junction{In, Out, N}
 
@@ -25,9 +26,9 @@ The inputs `in1` to `inN` are typed `In`. The one output, `y`, is typed `Out`,
 and a wire names it as in `"sum/y"`. It publishes `y = f(in1, …, inN)`, the
 fold applied in positional order.
 
-The [block](@ref g-block) is stateless. The fold `f` is instance data, and the
-constructor infers the type parameter `F` from it. A model writes a custom fold,
-such as a weighted blend or a mass-properties composition, at the site.
+The [block](@ref g-block) is stateless. The fold `f` is instance data. A model
+writes a custom fold, such as a weighted blend or a mass-properties
+composition, at the site.
 
 The fold holds no state and declares no [events](@ref g-state-event). A
 discontinuity written into it therefore lands wherever it falls inside a step. A
@@ -196,6 +197,7 @@ y_types(::Constant{V}) where {V} = Pinned{V}
 y_state(c::Constant, _) = c.value
 
 # Design: §5.5, §10.6, D-231, D-437.
+# `V` is `s0`'s type.
 """
     UnitDelay(s0) -> UnitDelay
 
@@ -209,7 +211,7 @@ The [block](@ref g-block) is the native `z⁻¹` of the discrete
 The output publishes the stored value `s` from
 [stage 1](@ref g-stage-function), `y = s`, and `s0` at the first publication.
 Each tick stores the input for the next one, `s⁺ = u`. The
-[store](@ref g-store) is isbits, which bounds `V`.
+[store](@ref g-store) is isbits, which bounds the type of `s0`.
 
 It breaks an [algebraic loop](@ref g-algebraic-loop), and that is a modelling
 decision. Placed in a continuous loop, it moves the signal onto the discrete
@@ -343,6 +345,7 @@ s_update(::Delay{V, K}, (; s, u)) where {V, K} =
     (ring = Base.setindex(s.ring, u, s.cursor), cursor = s.cursor == K ? 1 : s.cursor + 1)
 
 # Design: §5.5, §9.4, §10.5, D-263, D-437, D-438.
+# `R` is the `reset` keyword as a type parameter.
 # A same-tick reset would read the flag in an output stage, which makes every
 # input a feedthrough edge and costs the loop break, so it is not offered.
 """
@@ -361,7 +364,7 @@ Each [tick](@ref g-tick) advances the store by forward Euler,
 [component](@ref g-component)'s own period, so the integral is per second at any
 rate.
 
-`reset = true`, the parameter `R`, adds the `Bool` input `reset`, so the inputs
+`reset = true` adds the `Bool` input `reset`, so the inputs
 `u` and `reset` are named. The reset is a level. At every tick where `reset`
 reads true, the update writes `s0` in place of the sum. The state lands at the
 next tick, and the output at the reset tick still publishes the integral before
@@ -378,7 +381,7 @@ so an integer `s0` qualifies.
 # Keywords
 
 - `s0`: the initial value of `s`, and the value a reset writes.
-- `reset`: `true` to add the input `reset`, the parameter `R`.
+- `reset`: `true` to add the input `reset`.
 
 See also [`DiscreteLimitedIntegrator`](@ref), [`Integrator`](@ref).
 """
@@ -397,6 +400,7 @@ s_update(::DiscreteIntegrator{V, false}, (; s, u, Δt)) where {V} = s + Δt * u
 s_update(c::DiscreteIntegrator{V, true}, (; s, u, Δt)) where {V} = ifelse(u.reset, c.s0, s + Δt * signal(u))
 
 # Design: D-437, D-438.
+# `R` is the `reset` keyword as a type parameter.
 """
     DiscreteLimitedIntegrator(; lower, upper, s0 = zero(lower), reset::Bool = false) -> DiscreteLimitedIntegrator
 
@@ -419,7 +423,7 @@ off.
 Over a static vector, the limits and the codes are componentwise, and
 `saturation` publishes a static vector of `Int8`.
 
-`reset = true`, the parameter `R`, adds the `Bool` input `reset`, so the inputs
+`reset = true` adds the `Bool` input `reset`, so the inputs
 `u` and `reset` are named. It is the level reset of
 [`DiscreteIntegrator`](@ref). The update writes `s0`, clamped, at every tick
 where the flag reads true.
@@ -434,7 +438,7 @@ not below `upper`, componentwise over a vector, is refused with an
 - `lower`: the lower limit, below `upper`.
 - `upper`: the upper limit.
 - `s0`: the initial value of `s`, and the value a reset writes, clamped.
-- `reset`: `true` to add the input `reset`, the parameter `R`.
+- `reset`: `true` to add the input `reset`.
 
 See also [`DiscreteIntegrator`](@ref).
 """
@@ -771,6 +775,7 @@ function y_direct(c::LinearBlock{true}, (; x, u))
 end
 
 # Design: §5.3, §5.5, §7.2, D-437.
+# `FT` is the feedthrough class, the parent's parameter.
 # `linear_blocks.md` gives the reasoning: the storage, the realization a
 # transfer function goes through, and why the name is the one
 # ControlSystemsBase exports. The positional method over static matrices is
@@ -792,8 +797,8 @@ input is `u` and its output `y`:
 The state is an `SVector` at every size. `u` is a `Float64` when `n_u` is one
 and an `SVector{n_u, Float64}` otherwise, and `y` likewise by `n_y`.
 
-The type parameter `FT` is the [feedthrough](@ref g-feedthrough) class of
-[`LinearBlock`](@ref), and `D` picks it. A zero `D` publishes `y` from
+`D` picks the block's [feedthrough](@ref g-feedthrough) class, which
+[`LinearBlock`](@ref) explains. A zero `D` publishes `y` from
 [stage 1](@ref g-stage-function). The block then breaks an
 [algebraic loop](@ref g-algebraic-loop) as the lag does. A nonzero `D` publishes
 it from stage 2, so a loop closed on the block through a memoryless path is
@@ -875,6 +880,7 @@ function realize(num, den)
 end
 
 # Design: §5.3, D-437.
+# `FT` is the feedthrough class, the parent's parameter.
 # `linear_blocks.md` gives the realization in section 2 and the initial
 # condition in section 5.
 """
@@ -895,8 +901,8 @@ There is no `x0`, because a realization's state means nothing to a user who
 knows only `G(s)`. The block starts at rest, or, with `u0` given, at the steady
 state for the constant input `u0`, where `y` is `G(0) u0`.
 
-The type parameter `FT` is the [feedthrough](@ref g-feedthrough) class of
-[`LinearBlock`](@ref), and the degrees pick it. A numerator of lower degree than
+The degrees pick the block's [feedthrough](@ref g-feedthrough) class, which
+[`LinearBlock`](@ref) explains. A numerator of lower degree than
 the denominator publishes `y` from [stage 1](@ref g-stage-function). The block
 then breaks an [algebraic loop](@ref g-algebraic-loop). One of equal degree
 publishes it from stage 2.
@@ -1213,6 +1219,7 @@ realization(c::DiscretizedTransferFunction, Δt) = realization(c.realization, Δ
 # --- the step (§2.3, §10.4, D-313) ----------------------------------------------
 
 # Design: §2.3, §10.6, D-179, D-312, D-437, D-438.
+# `L` is the `localized` keyword as a type parameter.
 # Localized, the guard is the sign form `t - t_step`. Boundary-detected, it is
 # the `Bool` `t ≥ t_step`. The policy is the type parameter `L` rather than a
 # field because the build reads it off the guard's return type.
@@ -1227,11 +1234,13 @@ on. The [block](@ref g-block) is a mode-only primitive with no inputs. Its one
 mode, the field `m`, written `fired` below, picks the value, and one
 [state event](@ref g-state-event), `fire`, sets it once `t` reaches `t_step`.
 
-The output is [pinned](@ref g-walked) at `V`. The value depends on neither state
-nor an input that follows the scalar, so it carries zero partials under every
+`before` and `after` are promoted to one `V`, a floating-point type or a static
+array of one, and taken by `float`, so integer values qualify. The output is
+[pinned](@ref g-walked) at `V`. The value depends on neither state nor an input
+that follows the scalar, so it carries zero partials under every
 [activation](@ref g-activation), as a [`Constant`](@ref)'s does.
 
-`localized` picks the detection policy, the type parameter `L`.
+`localized` picks the detection policy.
 [Localized](@ref g-localized), the step ends at the crossing and the jump lands
 there. [Boundary-detected](@ref g-boundary-detected), the event fires at the end
 of the step in which it was first observed. The jump then lands on the first
@@ -1240,9 +1249,6 @@ of the step in which it was first observed. The jump then lands on the first
 [Boundary zero](@ref g-boundary-zero) sets every [prior](@ref g-prior) to
 not-holding. A `t_step` at or before `t₀` therefore fires there, and the output
 publishes `after` from the start.
-
-`before` and `after` are promoted to one `V`, a floating-point type or a static
-array of one, and taken by `float`, so integer values qualify.
 
 # Keywords
 
@@ -1270,6 +1276,7 @@ step_handler(::Step, _) = (m = true,)
 state_events(::Step) = (fire = StateEvent(step_guard, step_handler),)
 
 # Design: §2.3, §10.4, §10.6, D-179, D-312, D-362, D-437, D-438.
+# `L` is the `localized` keyword as a type parameter.
 # The handler counts every breakpoint at or before `t` rather than adding one.
 # Two breakpoints observed at one boundary, inside one boundary-detected step or
 # at or before `t₀`, would otherwise strand the count: the first firing leaves
@@ -1293,10 +1300,12 @@ inputs, and a [`Step`](@ref) at one breakpoint.
 Its one mode, the field `m`, written `passed` below, counts the breakpoints
 passed. One [state event](@ref g-state-event), `advance`, fires when `t`
 reaches the next breakpoint and sets the count to every breakpoint at or before
-`t`. The output is [pinned](@ref g-walked) at `V`, so it carries zero partials
-under every [activation](@ref g-activation).
+`t`. `values` are promoted to one `V`, a floating-point type or a static array
+of one, and taken by `float`, so integer values qualify. The output is
+[pinned](@ref g-walked) at `V`, so it carries zero partials under every
+[activation](@ref g-activation).
 
-`localized` picks the detection policy, the type parameter `L`.
+`localized` picks the detection policy.
 [Localized](@ref g-localized), each breakpoint ends the step at its crossing, so
 two breakpoints inside one step each land at their own time.
 [Boundary-detected](@ref g-boundary-detected), each jump lands on the first
@@ -1307,10 +1316,8 @@ inside one step advance together there.
 not-holding. The breakpoints at or before `t₀` are therefore passed there, and
 the output starts at the value that follows them.
 
-`values` are promoted to one `V`, a floating-point type or a static array of
-one, and taken by `float`, so integer values qualify. `times` that do not ascend
-strictly, or a count of `values` other than `N + 1`, are refused with an
-`ArgumentError`.
+`times` that do not ascend strictly, or a count of `values` other than `N + 1`,
+are refused with an `ArgumentError`.
 
 # Keywords
 
@@ -1720,9 +1727,11 @@ out.
 
 `y` reads no input, so the [block](@ref g-block) has no
 [feedthrough](@ref g-feedthrough). A relay closing a feedback loop therefore
-makes no [algebraic loop](@ref g-algebraic-loop). `y` is
-[pinned](@ref g-walked) at `V`. It depends on the mode and the instance alone,
-so it carries zero partials under every [activation](@ref g-activation).
+makes no [algebraic loop](@ref g-algebraic-loop). The four values are promoted
+to one `V`, a floating-point type or a static array of one, and taken by
+`float`, so integer values qualify, and `y` is [pinned](@ref g-walked) at `V`.
+It depends on the mode and the instance alone, so it carries zero partials
+under every [activation](@ref g-activation).
 
 Over a static vector, the thresholds, the values and the codes are
 componentwise. The block declares `N` copies of the two events, one per
@@ -1734,9 +1743,7 @@ The relay starts off. [Boundary zero](@ref g-boundary-zero) sets every
 `t₀` therefore turns the relay on there, and an input between the thresholds
 leaves it off, which is the hysteresis itself.
 
-The four values are promoted to one `V`, a floating-point type or a static array
-of one, and taken by `float`, so integer values qualify. A `lower` above `upper`
-is refused with an `ArgumentError`.
+A `lower` above `upper` is refused with an `ArgumentError`.
 
 # Keywords
 
@@ -1783,6 +1790,7 @@ function state_events(::Relay{V}) where {V <: StaticArray}
 end
 
 # Design: §2.3, §3.1, §10.4, §10.6, D-179, D-312, D-437, D-438.
+# `L` is the `localized` keyword as a type parameter.
 # Localized, the guards are sign forms gated by the mode. Boundary-detected,
 # they are the `Bool` predicates. The policy is the type parameter `L` rather
 # than a field because the build reads it off the guard's return type.
@@ -1807,7 +1815,7 @@ feed a [`Switch`](@ref)'s `select` from a continuous quantity, and the switch's
 jump then lands where the comparator's event lands. `y` reads no input, so the
 [block](@ref g-block) has no [feedthrough](@ref g-feedthrough).
 
-`localized` picks the detection policy, the type parameter `L`.
+`localized` picks the detection policy.
 [Localized](@ref g-localized), each switch ends the step at the crossing.
 [Boundary-detected](@ref g-boundary-detected), each switch lands on the first
 boundary that observes it.
