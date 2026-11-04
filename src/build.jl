@@ -365,12 +365,39 @@ end
 # left out the bare output's face `y`, by the declared shape alone. A path with
 # no port at all is the named form's `KeyError`.
 function port_addr(layout::Layout, path::String, name::Union{Nothing,Symbol})
-    name === nothing || return layout.addr[(path, name)]
-    face = default_name(y_types)
-    path in layout.bare_outputs || !any(key -> first(key) == path, keys(layout.addr)) ||
-        throw(ArgumentError("$(_at_path(path)) declares no bare output, whose face `$face` a " *
-                            "`port` read with no name reads — name the port (§11.2, D-437)"))
-    layout.addr[(path, face)]
+    names = Symbol[last(key) for key in keys(layout.addr) if first(key) == path]
+    isempty(names) && !(path in layout.bare_outputs) && !isempty(path) &&
+        refuse_path(:port, unique!(String[first(key) for key in keys(layout.addr)]), path)
+    if name === nothing
+        face = default_name(y_types)
+        path in layout.bare_outputs ||
+            throw(ArgumentError("$(_at_path(path)) declares no bare output, whose face `$face` a " *
+                                "`port` read with no name reads — name the port (§11.2, D-437)"))
+        return layout.addr[(path, face)]
+    end
+    name in names || throw(ArgumentError("$(_at_path(path)) has no port `$name`" *
+                                         (isempty(names) ? ", and no port at all" :
+                                          " — its ports are $(_namelist(names))") * " (Appendix B, D-440)"))
+    layout.addr[(path, name)]
+end
+
+# A value read's path against the paths in hand (Appendix B, D-440): a path
+# naming none is refused as `PathResolution`, the did-you-mean computed from the
+# longest known prefix and the children it has, so a typo never reads as a
+# `KeyError` or as a framework fault. A snapshot holds a layout and no
+# structure, so the paths come from the caller, the layout's or the structure's.
+function refuse_path(call::Symbol, paths::Vector{String}, path::String)
+    path in paths && return nothing
+    segments = split(path, '/')
+    stop = findlast(i -> join(segments[1:i], '/') in paths, 1:length(segments)-1)
+    owner = stop === nothing ? "" : join(segments[1:stop], '/')
+    segment = String(segments[stop === nothing ? 1 : stop + 1])
+    below(p) = isempty(owner) ? p : (startswith(p, owner * "/") ? p[length(owner)+2:end] : nothing)
+    candidates = unique!(sort!(String[first(split(tail, '/'))
+                                      for tail in filter(!isnothing, map(below, paths)) if !isempty(tail)]))
+    throw(DiagnosticError(PathResolution(entry = "`$call`", spelling = path, reason = :unknown_child,
+                                         owner = _at_path(owner), segment = segment,
+                                         candidates = candidates)))
 end
 
 function cell_layout(structure::Structure, decls::Vector{Decls}, ::Type{T}) where {T}

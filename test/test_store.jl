@@ -110,6 +110,39 @@ function store_discrete_cells()
     end
 end
 
+# --- the reads on a bad path (§7.3, Appendix B, D-440) --------------------------
+
+function store_read_refusals()
+    @testset "a value read refuses an unknown path as `PathResolution` and an unknown name as `ArgumentError` (D-440)" begin
+        sim = Simulation(Group((; counter = TickCounter(), moded = ModedSource())); h = 1//10)
+        init!(sim)
+        snapshot = latest(sim)
+        for read in (() -> port(sim, "counterr", :n), () -> state(sim, "counterr"),
+                     () -> modes(sim, "counterr"), () -> port(snapshot, "counterr", :n),
+                     () -> port(sim.model, "counterr"))
+            err = try read(); nothing catch e; e end
+            @test err isa DiagnosticError
+            d = diagnostic(err)
+            @test d isa PathResolution && d.reason === :unknown_child
+            @test d.spelling == "counterr" && d.segment == "counterr"
+            @test d.owner == "the root component" && d.candidates == ["counter", "moded"]
+        end
+        # A deep typo stops at the longest known prefix and lists its children.
+        err = try state(sim, "counter/n"); nothing catch e; e end
+        @test diagnostic(err).owner == "`counter`" && diagnostic(err).candidates == String[]
+        # An unknown name on a known component lists the ports it has.
+        for read in (() -> port(sim, "counter", :m), () -> port(snapshot, "counter", :m))
+            err = try read(); nothing catch e; e end
+            @test err isa ArgumentError && occursin("`even`", err.msg)
+        end
+        @test_throws ArgumentError port(sim, "", :m)     # the root has no root input `m`
+        # A component with no store of the kind reads `nothing`, never a `MethodError`.
+        @test modes(sim, "counter") === nothing
+        @test state(sim, "moded") === nothing
+        @test modes(sim, "moded") === (phase = :idle,)
+    end
+end
+
 # --- the workspace, the home that is not a store (§7.3) -----------------------
 
 function store_workspace()
@@ -238,6 +271,7 @@ function test_store()
     store_pinned_leaf()
     store_mixed_cell()
     store_discrete_cells()
+    store_read_refusals()
     store_workspace()
     store_shared_bodies()
     store_successor_type()

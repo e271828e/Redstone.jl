@@ -2904,7 +2904,7 @@ end
 
 # The table's reads on the simulation, each forwarded to its model (model.jl, D-317).
 
-# Design: §7.3, D-317.
+# Design: §7.3, D-317, D-440.
 """
     port(sim::Simulation, path::String, name::Union{Nothing,Symbol} = nothing) -> Any
 
@@ -2918,6 +2918,10 @@ a bare port, the port `y`, by that name or by the path alone. An
 [root inputs](@ref g-root-input). The read is its model's, as
 `port(model, path, name)` gives it. To read a port off a published
 [snapshot](@ref g-snapshot) instead, use `port(snapshot, path, name)`.
+
+A path naming no component is refused as `PathResolution`, with the children of
+the level it stopped at, and a name the component has no port of as an
+`ArgumentError` listing its ports.
 """
 port(sim::Simulation, path::String, name::Union{Nothing,Symbol} = nothing) =
     port(sim.model, path, name)

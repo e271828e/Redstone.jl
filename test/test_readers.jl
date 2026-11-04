@@ -664,10 +664,14 @@ function test_readers()
         @test e.reason === :port_shape && e.candidates == [:y]
         @test d.selector == "get_output(\"plant\")"
         @test_throws ArgumentError port(named, "acc")
-        # A path with no port is the named form's `KeyError`, and the refusal
-        # names a primitive root as every diagnostic does.
-        @test_throws KeyError(("zzz", :y)) port(named, "zzz")
-        @test_throws KeyError(("zzz", :y)) port(named, "zzz", :y)
+        # A path naming no component is refused as `PathResolution` with the
+        # root's children (D-440), and the refusal below names a primitive root
+        # as every diagnostic does.
+        for read in (() -> port(named, "zzz"), () -> port(named, "zzz", :y))
+            err = try read(); nothing catch e; e end
+            @test err isa DiagnosticError && diagnostic(err) isa PathResolution
+            @test diagnostic(err).segment == "zzz" && "plant" in diagnostic(err).candidates
+        end
         acc_root = Model(BareAccumulator(); h = 1//10)
         @test_throws "the root component declares no bare output" port(acc_root, "")
         # At a primitive mount and at a primitive root, the bare input and output.

@@ -691,7 +691,7 @@ warnings(model::Model) = vcat(warnings(model.deployment.build), warnings(model.d
 # §8.6's canonical strings, and an assembly's own path addresses its faces —
 # which resolve to the cells they derive from.
 
-# Design: §7.3, D-317.
+# Design: §7.3, D-317, D-440.
 """
     port(model::Model, path::String, name::Union{Nothing,Symbol} = nothing) -> Any
 
@@ -704,13 +704,18 @@ a bare port, the port `y`, by that name or by the path alone. An
 [faces](@ref g-face), which resolve to the [cells](@ref g-cell) they derive
 from. The empty path addresses the [root inputs](@ref g-root-input).
 
+A path naming no component is refused as `PathResolution`, with the children of
+the level it stopped at. A name the component has no port of is refused as an
+`ArgumentError` listing its ports, and so is a name left out at a component
+whose output contract is named.
+
 A simulation's `port(sim, path, name)` reads its model's. To read a port off a
 published [snapshot](@ref g-snapshot) instead, use `port(snapshot, path, name)`.
 """
 port(model::Model, path::String, name::Union{Nothing,Symbol} = nothing) =
     gather_cell(model.exec.store, port_addr(model.exec.act.layout, path, name))
 
-# Design: §7.3, D-317.
+# Design: §7.3, D-317, D-440.
 """
     state(model::Model, path::String) -> Any
     state(sim::Simulation, path::String) -> Any
@@ -720,11 +725,15 @@ Return the state of the [component](@ref g-component) at `path`, from whichever
 
 A [continuous component](@ref g-continuous-component)'s state is its `x`, read
 from the model's flat state [buffer](@ref g-buffer). A discrete component's is
-its `s`, read from its own store. A simulation's state is its model's. For a
-component's modes, see [`modes`](@ref).
+its `s`, read from its own store. A component with no state reads `nothing`. A
+simulation's state is its model's. For a component's modes, see
+[`modes`](@ref).
+
+A path naming no component is refused as `PathResolution`, with the children of
+the level it stopped at.
 """
 function state(model::Model{T}, path::String) where {T}
-    ci = index_of(model.deployment.build.structure, path)
+    ci = _component_index(model, :state, path)
     model.exec.sstores[ci] === nothing || return model.exec.sstores[ci][]
     _tier(i) = model.deployment.build.structure.components[i].tier
     _decls(i) = declarations(model.deployment.build.structure.components[i].instance, _tier(i), T)
@@ -735,7 +744,7 @@ function state(model::Model{T}, path::String) where {T}
     reconstruct(typeof(_decls(ci).x), model.exec.xbuf, x_offset)
 end
 
-# Design: §7.3, D-317.
+# Design: §7.3, D-317, D-440.
 """
     modes(model::Model, path::String) -> Any
     modes(sim::Simulation, path::String) -> Any
@@ -744,11 +753,23 @@ Return the modes of the [component](@ref g-component) at `path`, from its `m`
 [store](@ref g-store).
 
 The read changes nothing. Only the component's event handlers write its modes.
-A simulation's modes are its model's. For the rest of a component's state, see
-[`state`](@ref).
+A component with no modes reads `nothing`. A simulation's modes are its
+model's. For the rest of a component's state, see [`state`](@ref).
+
+A path naming no component is refused as `PathResolution`, with the children of
+the level it stopped at.
 """
-modes(model::Model, path::String) =
-    model.exec.mstores[index_of(model.deployment.build.structure, path)][]
+function modes(model::Model, path::String)
+    store = model.exec.mstores[_component_index(model, :modes, path)]
+    store === nothing ? nothing : store[]
+end
+
+# The component a read names, refused as `PathResolution` when none does (D-440).
+function _component_index(model::Model, call::Symbol, path::String)
+    structure = model.deployment.build.structure
+    refuse_path(call, String[entry.path for entry in structure.components], path)
+    index_of(structure, path)
+end
 
 # The one `StepError` constructor (§13.4, D-059): the frame from the cursor, the
 # clock at the failure, the frame-entry boundary as the replay pointer, the host

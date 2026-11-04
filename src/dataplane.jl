@@ -538,7 +538,7 @@ struct Snapshot{T,S<:StoreBundle}
     status::FrameworkStatus
 end
 
-# Design: §11.2.
+# Design: §11.2, D-440.
 """
     port(snapshot::Snapshot, path::String, name::Union{Nothing,Symbol} = nothing) -> Any
 
@@ -552,7 +552,9 @@ included. Address a port exactly as in the live table, by its
 `y`, by that name or by the path alone. An [assembly](@ref g-assembly)'s own
 path addresses its output [faces](@ref g-face). The empty path addresses the
 root inputs. Nothing in a published snapshot is written again, so the read is
-safe from any task.
+safe from any task. A path naming no component is refused as `PathResolution`,
+and a name the component has no port of as an `ArgumentError` listing its ports,
+as on the live table.
 
 A snapshot carries no state, only ports. For a port's live value, see
 `port(sim, path, name)` and `port(model, path, name)`, and for snapshots

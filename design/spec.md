@@ -13930,7 +13930,11 @@ assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
     from whichever home owns it, and its modes ([§7.3][s7-3], [D-317][d-317]).
     The name may be left out, which names a bare output's face `y`; left
     out at a component whose output contract is named, the call throws
-    `ArgumentError` ([D-437][d-437]).
+    `ArgumentError` ([D-437][d-437]). A path naming no component is refused as
+    `PathResolution`, with the children of the level it stopped at, and a
+    name the component has no port of as `ArgumentError` listing its ports
+    ([D-440][d-440]). `state` and `modes` return `nothing` at a component with no
+    store of the kind ([D-440][d-440]).
   - `port(snapshot, path, name)`. A port's value off a published
     [snapshot](#g-snapshot), addressed exactly as the live table, the same
     default included.
@@ -14313,9 +14317,10 @@ collection ([§9.2][s9-2], [D-250][d-250]).
   offending leaf, both declared leaf types; both remedies in the message
   ("remove the entry's `Pinned` if the consumer promotes; feed it from a
   non-walking source if the freeze is genuine").
-- **`PathResolution`** ([§6.1][s6-1], [§13.3][s13-3], [§14.3][s14-3]). Error · build, or
-  service resolving a service path · collected, but fail-fast where a
-  declaration body calls `resolve` or `resolve_terminal`. The condition or
+- **`PathResolution`** ([§6.1][s6-1], [§13.3][s13-3], [§14.3][s14-3]). Error · build, a
+  service resolving a service path, or a value read on a path ([D-440][d-440]) ·
+  collected, but fail-fast where a declaration body calls `resolve` or
+  `resolve_terminal`, and at a value read. The condition or
   wiring entry, the path as written, the component it was resolved against,
   offending segment, sibling child list, and a `reason`. The reasons are
   `:unknown_child`, `:not_a_terminal`, `:empty_path` and `:reaches_past`. A
@@ -16410,6 +16415,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-437]: decisions.md#d-437--address-a-bare-contracts-port-by-the-default-face-u-or-y
 [d-438]: decisions.md#d-438--name-a-bare-stores-leaf-by-the-declarations-letter-x-s-or-m
 [d-439]: decisions.md#d-439--open-an-inert-namedtuple-field-in-the-parameter-summary
+[d-440]: decisions.md#d-440--refuse-a-value-reads-unknown-path-as-pathresolution
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop
