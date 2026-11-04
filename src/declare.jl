@@ -53,7 +53,7 @@ A continuous [primitive](@ref g-primitive) declares its state by value, written
 with `Float64` values, as in `x_init(::Engine) = (ω = 0.0,)`. The value fixes
 the state's type, and its real values follow the scalar of each
 [activation](@ref g-activation). Each field, or the bare value, is one `Float64`
-or one static array of `Float64`. Integers, `Bool`s and enums belong in
+or one `SArray` of `Float64`. Integers, `Bool`s and enums belong in
 [`m_init`](@ref).
 
 A state of one leaf may be that leaf alone, as in
