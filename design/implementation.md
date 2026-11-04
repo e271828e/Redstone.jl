@@ -148,13 +148,16 @@ The standard component library, the submodule `Redstone.Blocks`:
 - `Source`, pinned, its `f` fed the nominal time (D-312, D-313).
 - `Constant`, `UnitDelay` and `Freeze` (D-312).
 - `StopRequest` (D-316).
-- `Delay`, `DiscreteIntegrator`, `DiscreteLimitedIntegrator` with the helper
-  `saturation_code`, and `RateLimiter` (D-313).
+- `Delay`, `DiscreteIntegrator{V, R}`, `DiscreteLimitedIntegrator{V, R}` with the
+  helper `saturation_code`, and `RateLimiter` (D-313). The reset form `R = true`
+  of both is the level reset in `s_update` (§5.3).
 - `GaussianWhiteNoise`, with the helpers `splitmix` and `gaussian` (D-231,
   D-313).
-- `Integrator{V, R}`, its reset form `R = true` adding the `Bool` input
-  `reset` and one boundary-detected event (D-141), `FirstOrderLag`, `Step`,
-  `Sequence`, `LimitedIntegrator`, `Relay` and `Comparator` (D-313).
+- `Integrator{V, R}` and `LimitedIntegrator{V, L, R}`, their reset form
+  `R = true` adding the `Bool` input `reset` and one boundary-detected event
+  (D-141), over the helpers `reset_ports`, `signal` and `reset_guard` shared
+  with the discrete pair; `FirstOrderLag`, `Step`, `Sequence`, `Relay` and
+  `Comparator` (D-313).
   `Step`, `Sequence`, `LimitedIntegrator` and `Comparator` each ship two
   detection policies, localized and boundary-detected, selected by the type
   parameter `L` (D-179). `LimitedIntegrator`, `Relay` and `Comparator` are
