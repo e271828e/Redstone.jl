@@ -276,6 +276,17 @@ y_types(::StopRequest) = StopFlag
 y_direct(::StopRequest, (; u)) = u ? STOP_REQUESTED : NO_STOP
 stop_reason(c::StopRequest) = c.reason
 
+# --- the reset form (§5.3, D-141, D-437) ----------------------------------------
+
+# A block's reset form, `R = true`, names its input side `(u, reset)` and keeps
+# the data port's face `u` (D-437); the plain form is bare. `signal` reads the
+# data port under either form, and `reset_guard` is the continuous blocks' guard.
+reset_ports(::Type{V}, ::Val{false}) where {V} = V
+reset_ports(::Type{V}, ::Val{true}) where {V} = (u = V, reset = Bool)
+signal(u) = u
+signal(u::NamedTuple) = u.u
+reset_guard(_, (; u)) = u.reset
+
 # --- the discrete tier (§7.3, §10.5, D-313) -------------------------------------
 
 # Design: §5.5, §10.5.
@@ -325,18 +336,27 @@ s_update(::Delay{V, K}, (; s, u)) where {V, K} =
 
 # Design: §5.5, §9.4, §10.5, D-263.
 """
-    DiscreteIntegrator(; s0 = 0.0) -> DiscreteIntegrator
+    DiscreteIntegrator(; s0 = 0.0, reset::Bool = false) -> DiscreteIntegrator
 
 A discrete [primitive](@ref g-primitive) that publishes the forward-Euler
 integral of its input.
 
 The [block](@ref g-block) holds one bare [store](@ref g-store) value from `s0`, `s`
 below, the field `s`.
-Its input `u` and its output `y` are bare. Each [tick](@ref g-tick) advances
+Without `reset`, its input `u` and its output `y` are bare. Each [tick](@ref g-tick) advances
 the store by forward Euler, `s⁺ = s + Δt u`, and the output publishes `y = s`
 from [stage 1](@ref g-stage-function). The block therefore breaks
 an [algebraic loop](@ref g-algebraic-loop) as [`UnitDelay`](@ref) does. `Δt` is
 the component's own period, so the integral is per second at any rate.
+
+`reset = true`, the parameter `R`, adds the `Bool` input `reset` beside `u`,
+which then names the input side. The reset is a level: at every tick where
+`reset` reads true the update writes `s0` in place of the sum, so the state
+lands at the next tick, and the output at the reset tick still publishes the
+integral before it. A same-tick reset would read the flag in an output stage,
+which makes every input a [feedthrough](@ref g-feedthrough) edge and costs the
+loop break, so it is not offered; the continuous [`Integrator`](@ref) resets on
+the flag's rising edge instead, as an event.
 
 The discrete [tier](@ref g-tier) never follows the scalar of an
 [activation](@ref g-activation), so under a `Dual` activation the block holds
@@ -346,26 +366,31 @@ its last value.
 
 - `s0`: the initial value of `s`. `V` is `Float64` or a static array of
   `Float64`, taken from `float(s0)`, so an integer `s0` qualifies.
+- `reset`: `true` to add the input `reset`, the parameter `R`.
 
 See also [`DiscreteLimitedIntegrator`](@ref), [`Integrator`](@ref).
 """
-struct DiscreteIntegrator{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: AbstractComponent
+struct DiscreteIntegrator{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, R} <: AbstractComponent
     s0::V
 end
-DiscreteIntegrator(; s0 = 0.0) = DiscreteIntegrator(float(s0))
+function DiscreteIntegrator(; s0 = 0.0, reset::Bool = false)
+    s0 = float(s0)
+    DiscreteIntegrator{typeof(s0), reset}(s0)
+end
 s_init(c::DiscreteIntegrator) = c.s0
-u_types(::DiscreteIntegrator{V}) where {V} = V
+u_types(::DiscreteIntegrator{V, R}) where {V, R} = reset_ports(V, Val(R))
 y_types(::DiscreteIntegrator{V}) where {V} = V
 y_state(::DiscreteIntegrator, (; s)) = s
-s_update(::DiscreteIntegrator, (; s, u, Δt)) = s + Δt * u
+s_update(::DiscreteIntegrator{V, false}, (; s, u, Δt)) where {V} = s + Δt * u
+s_update(c::DiscreteIntegrator{V, true}, (; s, u, Δt)) where {V} = ifelse(u.reset, c.s0, s + Δt * u.u)
 
 """
-    DiscreteLimitedIntegrator(; lower, upper, s0 = zero(lower)) -> DiscreteLimitedIntegrator
+    DiscreteLimitedIntegrator(; lower, upper, s0 = zero(lower), reset::Bool = false) -> DiscreteLimitedIntegrator
 
 A discrete [primitive](@ref g-primitive) that publishes the forward-Euler
 integral of its input, held between two limits.
 
-Its input `u` is bare. Each [tick](@ref g-tick) advances the one bare
+Without `reset`, its input `u` is bare. Each [tick](@ref g-tick) advances the one bare
 [store](@ref g-store) value, `s` below, from `s0` as
 `s⁺ = clamp(s + Δt u, lower, upper)`. The output `out` publishes `s` from
 [stage 1](@ref g-stage-function). The mode and four events of the continuous
@@ -380,6 +405,10 @@ next tick moves the state off.
 Over a static vector, the limits and the codes are componentwise, and
 `saturation` publishes a static vector of `Int8`.
 
+`reset = true`, the parameter `R`, adds the `Bool` input `reset` beside `u`,
+which then names the input side: the level reset of [`DiscreteIntegrator`](@ref),
+the update writing `s0`, clamped, at every tick where the flag reads true.
+
 # Keywords
 
 - `lower`: the lower limit, below `upper`, componentwise over a vector.
@@ -387,25 +416,28 @@ Over a static vector, the limits and the codes are componentwise, and
 - `s0`: the initial value of `s`. `s0`, `lower` and `upper` are promoted to one
   `V`, which is `Float64` or a static array of `Float64`, and taken by `float`,
   so integer values qualify.
+- `reset`: `true` to add the input `reset`, the parameter `R`.
 
 See also [`DiscreteIntegrator`](@ref).
 """
-struct DiscreteLimitedIntegrator{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: AbstractComponent
+struct DiscreteLimitedIntegrator{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, R} <: AbstractComponent
     s0::V
     lower::V
     upper::V
 end
-function DiscreteLimitedIntegrator(; lower, upper, s0 = zero(lower))
+function DiscreteLimitedIntegrator(; lower, upper, s0 = zero(lower), reset::Bool = false)
     s0, lower, upper = float.(promote(s0, lower, upper))
-    DiscreteLimitedIntegrator(s0, lower, upper)
+    DiscreteLimitedIntegrator{typeof(s0), reset}(s0, lower, upper)
 end
 saturation_code(q, lower, upper) = q >= upper ? Int8(1) : q <= lower ? Int8(-1) : Int8(0)
 s_init(c::DiscreteLimitedIntegrator) = c.s0
-u_types(::DiscreteLimitedIntegrator{V}) where {V} = V
+u_types(::DiscreteLimitedIntegrator{V, R}) where {V, R} = reset_ports(V, Val(R))
 y_types(::DiscreteLimitedIntegrator{V}) where {V} = (out = V, saturation = saturation_type(V))
 y_state(c::DiscreteLimitedIntegrator, (; s)) =
     (out = s, saturation = saturation_code.(s, c.lower, c.upper))
-s_update(c::DiscreteLimitedIntegrator, (; s, u, Δt)) = clamp.(s + Δt * u, c.lower, c.upper)
+s_update(c::DiscreteLimitedIntegrator{V, false}, (; s, u, Δt)) where {V} = clamp.(s + Δt * u, c.lower, c.upper)
+s_update(c::DiscreteLimitedIntegrator{V, true}, (; s, u, Δt)) where {V} =
+    clamp.(ifelse(u.reset, c.s0, s + Δt * u.u), c.lower, c.upper)
 
 # Design: §5.3, §5.5, §10.5.
 """
@@ -612,13 +644,10 @@ function Integrator(; x0 = 0.0, reset::Bool = false)
     Integrator{typeof(x0), reset}(x0)
 end
 x_init(c::Integrator) = c.x0
-u_types(::Integrator{V, false}) where {V} = V
-u_types(::Integrator{V, true}) where {V} = (u = V, reset = Bool)
+u_types(::Integrator{V, R}) where {V, R} = reset_ports(V, Val(R))
 y_types(::Integrator{V}) where {V} = V
 y_state(::Integrator, (; x)) = x
-x_deriv(::Integrator{V, false}, (; u)) where {V} = u
-x_deriv(::Integrator{V, true}, (; u)) where {V} = u.u
-reset_guard(::Integrator, (; u)) = u.reset
+x_deriv(::Integrator, (; u)) = signal(u)
 reset_handler(c::Integrator, _) = (x = c.x0,)
 state_events(::Integrator{V, true}) where {V} = (reset = StateEvent(reset_guard, reset_handler),)
 
@@ -1239,13 +1268,13 @@ saturation_type(::Type{V}) where {V} = channel_type(V, Int8)
 # Design: §2.3, §10.4, §10.6, D-179.
 # `limited_integrator_variants.md` gives the reasoning.
 """
-    LimitedIntegrator(; lower, upper, x0 = zero(lower), localized::Bool = true) -> LimitedIntegrator
+    LimitedIntegrator(; lower, upper, x0 = zero(lower), localized::Bool = true, reset::Bool = false) -> LimitedIntegrator
 
 A continuous [primitive](@ref g-primitive) that publishes the time integral of
 its input, held between two limits.
 
-The [block](@ref g-block) holds one continuous state `x`. Its one input `u` is
-bare, with `ẋ = u` while free and `ẋ = 0` while saturated, and the output
+The [block](@ref g-block) holds one continuous state `x`. Without `reset`, its
+one input `u` is bare, with `ẋ = u` while free and `ẋ = 0` while saturated, and the output
 `out` publishes `x` from [stage 1](@ref g-stage-function). It is not a clamp. The bare mode, `saturation`
 below, is read by the derivative, and four [state events](@ref g-state-event) move
 it. It
@@ -1284,6 +1313,13 @@ one component and each handler writes it.
 not-holding. An `x0` outside the limits is therefore clamped there, and the
 initial mode agrees with the initial input.
 
+`reset = true`, the parameter `R`, adds the `Bool` input `reset` beside `u`,
+which then names the input side, and a fifth event, `reset`, the
+[`Integrator`](@ref)'s: boundary-detected on the flag, so it fires once per
+rising edge. Its handler writes `x0`, clamped to the limits, and the code `x0`
+earns, so a reset onto a limit lands saturated and a reset inside lands free,
+whatever the mode was.
+
 # Keywords
 
 - `lower`: the lower limit, below `upper`, componentwise over a vector.
@@ -1293,24 +1329,25 @@ initial mode agrees with the initial input.
   so integer values qualify.
 - `localized`: `true` for localized leave events, `false` for boundary-detected
   ones.
+- `reset`: `true` to add the input `reset` and the event, the parameter `R`.
 
 See also [`DiscreteLimitedIntegrator`](@ref), [`Integrator`](@ref).
 """
-struct LimitedIntegrator{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, L} <: AbstractComponent
+struct LimitedIntegrator{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, L, R} <: AbstractComponent
     x0::V
     lower::V
     upper::V
 end
-function LimitedIntegrator(; lower, upper, x0 = zero(lower), localized::Bool = true)
+function LimitedIntegrator(; lower, upper, x0 = zero(lower), localized::Bool = true, reset::Bool = false)
     x0, lower, upper = float.(promote(x0, lower, upper))
-    LimitedIntegrator{typeof(x0), localized}(x0, lower, upper)
+    LimitedIntegrator{typeof(x0), localized, reset}(x0, lower, upper)
 end
 x_init(c::LimitedIntegrator) = c.x0
 m_init(c::LimitedIntegrator) = Int8.(zero(c.x0))    # the saturation: -1 lower, 0 free, +1 upper
-u_types(::LimitedIntegrator{V}) where {V} = V
+u_types(::LimitedIntegrator{V, L, R}) where {V, L, R} = reset_ports(V, Val(R))
 y_types(::LimitedIntegrator{V}) where {V} = (out = V, saturation = saturation_type(V))
 y_state(::LimitedIntegrator, (; x, m)) = (out = x, saturation = m)
-x_deriv(::LimitedIntegrator, (; u, m)) = ifelse.(m .== 0, u, zero(u))
+x_deriv(::LimitedIntegrator, (; u, m)) = (v = signal(u); ifelse.(m .== 0, v, zero(v)))
 # The hit guards are not gated by the free code on purpose. Gated, a hit guard
 # would read `0` the instant a leave handler frees the mode, present a fresh
 # edge and saturate the block again.
@@ -1324,19 +1361,26 @@ hit_lower_guard(c::LimitedIntegrator, (; x)) = c.lower - x
 # converges on that crossing, since only the sign drives it, but ITP falls back
 # to bisection's count, about 15 extra interior sweeps per leave.
 leave_upper_guard(::LimitedIntegrator{V, true}, (; m, u)) where {V} =
-    m == 1 && u < 0 ? -u : -one(u)
+    (v = signal(u); m == 1 && v < 0 ? -v : -one(v))
 leave_lower_guard(::LimitedIntegrator{V, true}, (; m, u)) where {V} =
-    m == -1 && u > 0 ? u : -one(u)
+    (v = signal(u); m == -1 && v > 0 ? v : -one(v))
 # The `Bool` forms are the same predicates, boundary-detected and strict by
 # construction.
 leave_upper_guard(::LimitedIntegrator{V, false}, (; m, u)) where {V} =
-    m == 1 && u < 0
+    m == 1 && signal(u) < 0
 leave_lower_guard(::LimitedIntegrator{V, false}, (; m, u)) where {V} =
-    m == -1 && u > 0
+    m == -1 && signal(u) > 0
 hit_upper_handler(c::LimitedIntegrator, _) = (x = c.upper, m = Int8(1))
 hit_lower_handler(c::LimitedIntegrator, _) = (x = c.lower, m = Int8(-1))
 leave_handler(::LimitedIntegrator, _) = (m = Int8(0),)
-state_events(::LimitedIntegrator{V}) where {V <: Real} =
+# The reset lands `x0` clamped, with the code it earns: a reset onto a limit
+# whose hit guard already holds would otherwise leave `x` beyond it, free.
+reset_handler(c::LimitedIntegrator, _) =
+    (x = clamp.(c.x0, c.lower, c.upper), m = saturation_code.(c.x0, c.lower, c.upper))
+state_events(c::LimitedIntegrator{V, L, false}) where {V, L} = limit_events(c)
+state_events(c::LimitedIntegrator{V, L, true}) where {V, L} =
+    (limit_events(c)..., reset = StateEvent(reset_guard, reset_handler))
+limit_events(::LimitedIntegrator{V}) where {V <: Real} =
     (hit_upper = StateEvent(hit_upper_guard, hit_upper_handler),
      hit_lower = StateEvent(hit_lower_guard, hit_lower_handler),
      leave_upper = StateEvent(leave_upper_guard, leave_handler),
@@ -1345,7 +1389,7 @@ state_events(::LimitedIntegrator{V}) where {V <: Real} =
 # reasoning holds component by component. A reduced hit guard holds for good
 # once one component sits clamped on its limit, so a second arrival makes no
 # edge, and gating it by the mode brings back the re-saturation above.
-function state_events(::LimitedIntegrator{V, L}) where {V <: StaticArray, L}
+function limit_events(::LimitedIntegrator{V, L}) where {V <: StaticArray, L}
     N = length(V)
     hit_upper = ntuple(N) do i
         StateEvent((c, (; x)) -> x[i] - c.upper[i],
@@ -1358,13 +1402,13 @@ function state_events(::LimitedIntegrator{V, L}) where {V <: StaticArray, L}
                                      m = Base.setindex(m, Int8(-1), i)))
     end
     leave_upper = ntuple(N) do i
-        guard = L ? ((c, (; m, u)) -> m[i] == 1 && u[i] < 0 ? -u[i] : -one(u[i])) :
-                    ((c, (; m, u)) -> m[i] == 1 && u[i] < 0)
+        guard = L ? ((c, (; m, u)) -> (v = signal(u)[i]; m[i] == 1 && v < 0 ? -v : -one(v))) :
+                    ((c, (; m, u)) -> m[i] == 1 && signal(u)[i] < 0)
         StateEvent(guard, (c, (; m)) -> (m = Base.setindex(m, Int8(0), i),))
     end
     leave_lower = ntuple(N) do i
-        guard = L ? ((c, (; m, u)) -> m[i] == -1 && u[i] > 0 ? u[i] : -one(u[i])) :
-                    ((c, (; m, u)) -> m[i] == -1 && u[i] > 0)
+        guard = L ? ((c, (; m, u)) -> (v = signal(u)[i]; m[i] == -1 && v > 0 ? v : -one(v))) :
+                    ((c, (; m, u)) -> m[i] == -1 && signal(u)[i] > 0)
         StateEvent(guard, (c, (; m)) -> (m = Base.setindex(m, Int8(0), i),))
     end
     names = (ntuple(i -> Symbol(:hit_upper_, i), N)..., ntuple(i -> Symbol(:hit_lower_, i), N)...,

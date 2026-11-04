@@ -129,13 +129,26 @@ integrator_model(x0, value) =
 
 # An integrator from 0.5 fed by `1`, its `reset` a comparator on three steps
 # summed: high from 0.25 to 0.55 and from 0.85 on.
-pulse_reset_model(localized) =
+pulse_reset_model(localized; block = Integrator(x0 = 0.5, reset = true)) =
     Group((; rise = Step(t_step = 0.25, localized = localized),
              fall = Step(t_step = 0.55, after = -1.0, localized = localized),
              again = Step(t_step = 0.85, localized = localized), pulse = SumJunction{Float64, 3}(),
-             c = Comparator(threshold = 0.5), k = Constant(1.0), i = Integrator(x0 = 0.5, reset = true));
+             c = Comparator(threshold = 0.5), k = Constant(1.0), i = block);
           local_wires = ("rise/y" => "pulse/in1", "fall/y" => "pulse/in2", "again/y" => "pulse/in3",
                          "pulse/y" => "c/u", "c/y" => "i/reset", "k/y" => "i/u"))
+
+# A discrete block fed by `1`, its `reset` a comparator on two boundary-detected
+# steps summed: high from `5h` to `7h`.
+discrete_reset_model(block, h) =
+    Group((; rise = Step(t_step = 5h, localized = false), fall = Step(t_step = 7h, after = -1.0, localized = false),
+             pulse = SumJunction{Float64, 2}(), c = Comparator(threshold = 0.5, localized = false),
+             k = Constant(1.0), d = block);
+          local_wires = ("rise/y" => "pulse/in1", "fall/y" => "pulse/in2", "pulse/y" => "c/u",
+                         "c/y" => "d/reset", "k/y" => "d/u"))
+
+# A block under a held `reset` and a constant input.
+held_reset_model(block, value) =
+    Group((; k = Constant(value), r = Constant(true), i = block); local_wires = ("k/y" => "i/u", "r/y" => "i/reset"))
 
 # A reset integrator under the root inputs `in` and `reset`.
 reset_root_model() = Group((; c = Integrator(reset = true)); input_wires = ("in" => "c/u", "reset" => "c/reset"))
@@ -854,6 +867,35 @@ function test_blocks()
         @test !Redstone.has_stage(y_direct, vector_block)
     end
 
+    @testset "the discrete integrators' reset is a level: the state lands at the next tick, the output at the reset tick stale (§5.3, D-313)" begin
+        h = 1//100
+        for block in (DiscreteIntegrator(s0 = 0.5, reset = true), DiscreteLimitedIntegrator(lower = 0, upper = 1, s0 = 0.5, reset = true))
+            @test u_types(block) == (u = Float64, reset = Bool)
+            sim = Simulation(discrete_reset_model(block, h); h = h)
+            init!(sim, set())
+            out = block isa DiscreteLimitedIntegrator ? (sim -> port(sim, "d", :out)) : (sim -> port(sim, "d"))
+            # The flag rises at `5h`, where the output is still the integral, and
+            # falls at `7h`, where the update first sums from `s0` again.
+            for (t_plus, reset, value) in ((4h, false, 0.54), (h, true, 0.55), (h, true, 0.5), (h, false, 0.5),
+                                           (h, false, 0.51), (h, false, 0.52))
+                step!(sim; t_plus = t_plus)
+                @test port(sim, "c") === reset
+                @test out(sim) ≈ value atol = 1e-12
+            end
+            @test build(discrete_reset_model(block, h); activations = (Float64, LinearizeDual, ProbeDual)) isa Build
+        end
+        # The limited block's reset lands `s0` clamped.
+        clamped = Simulation(held_reset_model(DiscreteLimitedIntegrator(lower = 0, upper = 1, s0 = 2, reset = true), 1.0); h = h)
+        init!(clamped, set())
+        step!(clamped; t_plus = h)
+        @test port(clamped, "i", :out) === 1.0 && port(clamped, "i", :saturation) === Int8(1)
+        vector_models = (held_reset_model(DiscreteIntegrator(s0 = SVector(0.0, 1.0), reset = true), SVector(1.0, -1.0)),
+                         held_reset_model(DiscreteLimitedIntegrator(lower = SVector(0, 0), upper = SVector(1, 1), reset = true), SVector(1.0, -1.0)))
+        for model in vector_models
+            @test build(model; activations = (Float64, LinearizeDual, ProbeDual)) isa Build
+        end
+    end
+
     @testset "the rate limiter follows its input within two slews per tick and is feedthrough (§7.3, §5.3, D-313)" begin
         rising_sim = Simulation(limiter_model(0.0, 1.0); h = 1//100)
         init!(rising_sim, set())
@@ -954,6 +996,8 @@ function test_blocks()
                 (map(model -> (model, (;)),
                      (fed_by(Constant(1.0), DiscreteIntegrator()), feedback_loop(DiscreteIntegrator()),
                       discrete_limited_model(), limiter_model(0.0, 1.0),
+                      discrete_reset_model(DiscreteIntegrator(s0 = 0.5, reset = true), 1//100),
+                      discrete_reset_model(DiscreteLimitedIntegrator(lower = 0, upper = 1, s0 = 0.5, reset = true), 1//100),
                       fed_by(Constant(1.0), Delay(K = 50, v0 = 0.0)),
                       fed_by(Constant(1.0), scalar_hold()),
                       fed_by(Constant(SVector(1.0, -1.0)), DiscretizedStateSpace(two_state_block())),
@@ -1104,9 +1148,46 @@ function test_blocks()
         @test d isa TapResolution && d.reason === :unseedable && d.tap === :u && d.declared === Bool
     end
 
+    @testset "the limited integrator's reset lands `x0` with its code: inside free, on or beyond a limit saturated (§3.1, §5.3, §10.6, D-141)" begin
+        block = LimitedIntegrator(lower = 0, upper = 1, x0 = 0.5, reset = true)
+        @test u_types(block) == (u = Float64, reset = Bool)
+        policies = only(row for row in build(pulse_reset_model(true; block = block)).events.components if row.path == "i").policies
+        @test length(policies) == 5 && policies.reset === :boundary
+        h = 1//10
+        bracket_width = Simulation(pulse_reset_model(true; block = block); h = h).model.deployment.localization_tol * h
+        # At t = 0.2, 0.3, 0.5, 0.8 and 1.0: the resets land as the integrator's,
+        # the block saturates at 0.8, and the second reset frees it from the limit.
+        for (localized, expected, atol) in ((true, (0.7, 0.55, 0.75, 1.0, 0.65), bracket_width),
+                                            (false, (0.7, 0.5, 0.7, 1.0, 0.6), 1e-12))
+            sim = Simulation(pulse_reset_model(localized; block = block); h = h)
+            init!(sim, set())
+            for (t_plus, x, code) in zip((2h, h, 2h, 3h, 2h), expected, (0, 0, 0, 1, 0))
+                step!(sim; t_plus = t_plus)
+                @test state(sim, "i") ≈ x atol = atol
+                @test modes(sim, "i") === Int8(code)
+            end
+        end
+        # A reset onto the limit, and one beyond it, land clamped and saturated
+        # over the condition's state, and stay there under an outward input.
+        for x0 in (1.0, 2.0)
+            held = Simulation(held_reset_model(LimitedIntegrator(lower = 0, upper = 1, x0 = x0, reset = true), 1.0); h = h)
+            init!(held, at("i", set(x = 0.2)))
+            @test state(held, "i") === 1.0 && modes(held, "i") === Int8(1)
+            step!(held; t_plus = 3h)
+            @test state(held, "i") === 1.0 && modes(held, "i") === Int8(1)
+        end
+        vector_block = LimitedIntegrator(lower = SVector(0, 0), upper = SVector(1, 1), x0 = SVector(0.5, 2.0), reset = true)
+        @test build(held_reset_model(vector_block, SVector(1.0, 1.0)); activations = (Float64, LinearizeDual, ProbeDual)) isa Build
+        # Component 2 lands on its limit under an outward input, so it stays there.
+        vector_sim = Simulation(held_reset_model(vector_block, SVector(1.0, 1.0)); h = h)
+        init!(vector_sim, at("i", set(x = SVector(0.2, 0.2))))
+        @test state(vector_sim, "i") === SVector(0.5, 1.0) && modes(vector_sim, "i") === SVector{2, Int8}(0, 1)
+    end
+
     @testset "the reset model's phase bodies and its quiet boundary allocate nothing (§9.8)" begin
-        for localized in (true, false)
-            sim = Simulation(pulse_reset_model(localized); h = 1//10)
+        for localized in (true, false), block in (Integrator(x0 = 0.5, reset = true),
+                                                  LimitedIntegrator(lower = 0, upper = 1, x0 = 0.5, reset = true))
+            sim = Simulation(pulse_reset_model(localized; block = block); h = 1//10)
             bodies = phase_bodies(sim)
             for name in (:sweep_1, :sweep_2, :rhs, :ticks)
                 body = bodies[name]
@@ -2546,6 +2627,11 @@ function test_blocks()
               LimitedIntegrator{SVector{2, Float64}, true}
         @test Delay(K = 2, v0 = 1) isa Delay{Float64, 2}
         @test DiscreteIntegrator(s0 = 1) isa DiscreteIntegrator{Float64}
+        @test DiscreteIntegrator(s0 = 1, reset = true) isa DiscreteIntegrator{Float64, true}
+        @test DiscreteLimitedIntegrator(lower = -1, upper = 1, reset = true) isa DiscreteLimitedIntegrator{Float64, true}
+        @test LimitedIntegrator(lower = -1, upper = 1, reset = true) isa LimitedIntegrator{Float64, true, true}
+        @test_throws TypeError LimitedIntegrator(lower = -1, upper = 1, reset = 1)
+        @test_throws TypeError DiscreteIntegrator(reset = 1)
         @test DiscreteLimitedIntegrator(lower = -1, upper = 1) isa DiscreteLimitedIntegrator{Float64}
         @test DiscreteLimitedIntegrator(lower = SVector(-1, -1), upper = SVector(1, 1)) isa
               DiscreteLimitedIntegrator{SVector{2, Float64}}
