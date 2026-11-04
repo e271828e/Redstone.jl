@@ -26,7 +26,10 @@ the drawer, `r` the color mode, `?` the help page.
 - [ ] **0.5** Agent C's departure: a history entry made by a hash link or a
   typed hash is stamped as a level entry, so Shift-h now walks back from a
   typed level hash. Keep, or confine the stamp to `#help`.
-- [ ] **0.6** `build_release.md`'s pending note bites (notes, "For the
+- [ ] **0.6** Review finding 1: a primitive root's root-input row now
+  selects the tag, agent A's premise having been false. Finding 6: the badge
+  takes the pointer for its hover title. Both land with the fixer.
+- [ ] **0.7** `build_release.md`'s pending note bites (notes, "For the
   user" 2): bare `@ref` links to parent-module names land at the API page's
   top. Settled by increment 10's writer change; nothing to do here.
 
@@ -41,10 +44,13 @@ the drawer, `r` the color mode, `?` the help page.
   `Δt`, "0", "—", "the deployment's", the last in the key column (agent A's
   departure). Choose a better reading for the two empty cells, or leave.
 - [ ] **1.4** Anchor rows 1 to 10 all `1/50 s`, each selecting its
-  declaring assembly; a row whose scope is the root has no button.
+  declaring assembly; a row whose scope is the root has no button. The scope
+  buttons read as plain code, nothing showing they are clickable; `tau`
+  reads "0/1 s" (reviewer).
 - [ ] **1.5** Components: ten rows, the swatch the rate color in both modes
   (reading 13). The sort toggle "by period" reads right; the tab switch keeps
-  it.
+  it. An extra triple's swatch carries no "#9" number, unlike the canvas
+  (reviewer; `large` shows it).
 - [ ] **1.6** The schedule note's build sentence under the tables.
 - [ ] **1.7** Execution order: 24 rows, stage-1 ports as open boxes, stage-2
   filled (agent A's rendering). Does the distinction read without a legend?
@@ -69,22 +75,27 @@ the drawer, `r` the color mode, `?` the help page.
 - [ ] **2.3** Rate mode: the four raised pills (reading 19) float above the
   badges on `pid_controller`, `lqr_controller`, `selection`, `actuators`;
   `sensing` keeps both on the edge. The pills on `selection` and
-  `actuators` sit on the wire along the drawing's top (agent B). Keep, or
-  move the pill elsewhere on a narrow block.
+  `actuators` sit on the wire along the drawing's top (agent B). A raised
+  pill can read as the neighbour's: `rates`' `slow` under `fast`'s bottom
+  edge, `pid_controller`'s "4 clocks" under `lqr_controller` zoomed in
+  (reviewer). Keep, or move the pill elsewhere on a narrow block.
 - [ ] **2.4** The breadcrumb's third control "order" beside "types" and the
   mode switch; the row's width at a narrow window.
 - [ ] **2.5** `rates`: `fast` "2–3", `fast/outer` "3", `slow` "4".
   `primitive`: the leaf's "1".
 - [ ] **2.6** The badges' tie to a dimmed block under a focus, and under the
   search's dim.
+- [ ] **2.7** The badges are tiny at the root's fit (reviewer); their hover
+  title now shows, the badge taking the pointer (review finding 6).
+- [ ] **2.8** The Fit button covers `selection`'s badge zoomed in (reviewer).
 
 ## 3. The docstrings: `library` and `closed_loop`
 
 - [ ] **3.1** `integrator`: the signature as a code block, the prose in the
   pane's font, seven links in the highlight color opening in a new tab;
   "Keywords" as a small heading over a list (agent B's departure).
-- [ ] **3.2** `lqr`: fifteen links, the two long signature forms wrapping in
-  their code block.
+- [ ] **3.2** `lqr`: fifteen links, the two long signature forms wrapping
+  messily in their code block (reviewer).
 - [ ] **3.3** A bare link to a parent-module name (`local_wires` in a
   `Group` docstring, through `closed_loop`'s `sensing`) lands at the API
   page's top (0.6).
@@ -131,7 +142,8 @@ the drawer, `r` the color mode, `?` the help page.
 - [ ] **5.1** `o` and `?` act; nothing is swallowed any more. With the help
   page shown only `?` and Escape are the page's, Space and the arrows
   scroll.
-- [ ] **5.2** Shift-h after a typed level hash now walks back (0.5).
+- [ ] **5.2** Shift-h after a typed level hash now walks back (0.5); Shift-l
+  from a level whose forward entry is `#help` reopens the page (reviewer).
 - [ ] **5.3** Escape's chain: the help page first, then the route, the
   focused diagnostic, the legend's focus, the search, the selection.
 

@@ -274,3 +274,52 @@ the help page, so focus falls to the body after the close. The map's open
 items name increment 10 for the release's items (the docs flip, the Vimium
 check), which the roadmap renumbered to 11 on 2026-11-04; the fixer amends
 them. The cold review follows at `226fb4b`.
+
+## The cold review, 2026-11-04
+
+One Opus reviewer over `63bc8b4..226fb4b`, every check green from a clean
+install (`npm run check` 398 files, `npm test` 504 tests in 29 files, `npm
+run e2e -- --project=chromium` 192 checks, `npm ci` accepting the lock),
+the oracle rerun byte-identical, its own third reading of the positions,
+badges, edges, consumers, anchors, scopes and both component orders, and of
+every `@ref` URL, agreeing on every fixture; workspace 6 row by row on
+`closed_loop` and `rates`, answer 7 in both modes at two levels, answer 11
+section by section with the keys table checked against the handler, build
+7's rule on 38 blocks and 29 hostile inputs, the help page's history in
+twelve scenarios, all holding by probe. The bundle: no `javascript:`
+anywhere, each Vimium pattern and the docs constant once. Of 38 mutants 33
+die; five survive, two as findings below and three acceptable (the badge's
+pointer, a line break inside an `@ref` gap, the pinned column with no
+pinned fixture). Seven findings, all low, each ruled by the coordinating
+session:
+
+1. **A primitive root's root-input row selects the leaf's port, not the
+   tag**, agent A's premise that no tag is drawn there being false (the
+   level draws `⟨in⟩u` and `⟨in⟩d`). Accepted: the tag, the unit case and
+   the map amended.
+2. **The help keys table omits Ctrl-K**, which the handler takes beside
+   Cmd-K. Accepted, in `KEYS` and the map's table together.
+3. **The format major is hand-kept** in `protocol.ts` (`MAJOR = 1`) and
+   `loader.ts` (a literal and "format 1.0"), against build 8. Accepted:
+   both read `__FORMAT_MAJOR__`.
+4. **Agent C's null-state stamp has no check** (mutant 26 survived).
+   Accepted: a link-opened page closing by back, and a typed level hash
+   then Shift-h returning.
+5. **"The badge dims with its block" has no check** (mutant 27 survived).
+   Accepted: the effective opacities compared under a search.
+6. **The badge's `<title>` can never show** under `pointer-events: none`,
+   and the lower-half click cannot pin the pointer rule (mutant 28). Ruled:
+   the badge takes the pointer so its title shows, a click selecting the
+   block as the bubbling already does; the map's claim corrected; the click
+   check kept as the click's pin.
+7. **The map's open items say increment 10** for the release's items;
+   renumbered to 11.
+
+Observations for the look pass, added to `look_inspector_08.md`: a raised
+clock pill can read as a neighbour's (`rates`' `slow` under `fast`,
+`pid_controller`'s under `lqr_controller`); the badges are tiny at the
+root's fit; the anchor table's scope buttons read as plain code; `tau`
+reads "0/1 s"; an extra triple's swatch carries no number, unlike the
+canvas; `LQRTracker`'s signatures wrap messily; Shift-l from a level whose
+forward entry is `#help` reopens the page; the Fit button covers
+`selection`'s badge zoomed in. The fixer follows at `226fb4b`.
