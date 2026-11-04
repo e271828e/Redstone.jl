@@ -146,6 +146,12 @@ discrete_reset_model(block, h) =
           local_wires = ("rise/y" => "pulse/in1", "fall/y" => "pulse/in2", "pulse/y" => "c/u",
                          "c/y" => "d/reset", "k/y" => "d/u"))
 
+# A reset-form block in unit feedback from `1`, its `reset` held low.
+reset_feedback_loop(block) =
+    Group((; r = Constant(1.0), f = Constant(false), e = Junction{Float64, Float64, 2}(-), p = block);
+          local_wires = ("r/y" => "e/in1", (block isa DiscreteLimitedIntegrator || block isa LimitedIntegrator ? "p/out" : "p/y") => "e/in2",
+                         "e/y" => "p/u", "f/y" => "p/reset"))
+
 # A block under a held `reset` and a constant input.
 held_reset_model(block, value) =
     Group((; k = Constant(value), r = Constant(true), i = block); local_wires = ("k/y" => "i/u", "r/y" => "i/reset"))
@@ -1158,8 +1164,10 @@ function test_blocks()
         # At t = 0.2, 0.3, 0.5, 0.8 and 1.0: the resets land as the integrator's,
         # the block saturates at 0.8, and the second reset frees it from the limit.
         for (localized, expected, atol) in ((true, (0.7, 0.55, 0.75, 1.0, 0.65), bracket_width),
-                                            (false, (0.7, 0.5, 0.7, 1.0, 0.6), 1e-12))
-            sim = Simulation(pulse_reset_model(localized; block = block); h = h)
+                                            (false, (0.7, 0.5, 0.7, 1.0, 0.6), 1e-12)),
+            leaves_localized in (true, false)
+            limited = LimitedIntegrator(lower = 0, upper = 1, x0 = 0.5, reset = true, localized = leaves_localized)
+            sim = Simulation(pulse_reset_model(localized; block = limited); h = h)
             init!(sim, set())
             for (t_plus, x, code) in zip((2h, h, 2h, 3h, 2h), expected, (0, 0, 0, 1, 0))
                 step!(sim; t_plus = t_plus)
@@ -1176,17 +1184,40 @@ function test_blocks()
             step!(held; t_plus = 3h)
             @test state(held, "i") === 1.0 && modes(held, "i") === Int8(1)
         end
-        vector_block = LimitedIntegrator(lower = SVector(0, 0), upper = SVector(1, 1), x0 = SVector(0.5, 2.0), reset = true)
-        @test build(held_reset_model(vector_block, SVector(1.0, 1.0)); activations = (Float64, LinearizeDual, ProbeDual)) isa Build
-        # Component 2 lands on its limit under an outward input, so it stays there.
-        vector_sim = Simulation(held_reset_model(vector_block, SVector(1.0, 1.0)); h = h)
-        init!(vector_sim, at("i", set(x = SVector(0.2, 0.2))))
-        @test state(vector_sim, "i") === SVector(0.5, 1.0) && modes(vector_sim, "i") === SVector{2, Int8}(0, 1)
+        # A reset arriving while the block sits saturated from t₀ lands `x0`
+        # clamped with its code: no hit event follows to repair either, since
+        # the hit guard held already.
+        for x0 in (1.0, 2.0)
+            saturated = Simulation(pulse_reset_model(true; block = LimitedIntegrator(lower = 0, upper = 1, x0 = x0, reset = true)); h = h)
+            init!(saturated, set())
+            step!(saturated; t_plus = 3h)
+            @test state(saturated, "i") === 1.0 && modes(saturated, "i") === Int8(1)
+        end
+        for leaves_localized in (true, false)
+            vector_block = LimitedIntegrator(lower = SVector(0, 0), upper = SVector(1, 1), x0 = SVector(0.5, 2.0),
+                                             reset = true, localized = leaves_localized)
+            @test build(held_reset_model(vector_block, SVector(1.0, 1.0)); activations = (Float64, LinearizeDual, ProbeDual)) isa Build
+            # Component 2 lands on its limit under an outward input, so it stays there.
+            vector_sim = Simulation(held_reset_model(vector_block, SVector(1.0, 1.0)); h = h)
+            init!(vector_sim, at("i", set(x = SVector(0.2, 0.2))))
+            @test state(vector_sim, "i") === SVector(0.5, 1.0) && modes(vector_sim, "i") === SVector{2, Int8}(0, 1)
+            # An inward input frees the component its reset landed on the limit.
+            step!(vector_sim; t_plus = h)
+            inward = Simulation(held_reset_model(vector_block, SVector(1.0, -1.0)); h = h)
+            init!(inward, at("i", set(x = SVector(0.2, 0.2))))
+            @test modes(inward, "i") === SVector{2, Int8}(0, 0)
+        end
+        # The reset forms keep their output from stage 1, so they break a loop.
+        for form in (block, DiscreteIntegrator(reset = true), DiscreteLimitedIntegrator(lower = 0, upper = 1, reset = true))
+            @test !Redstone.has_stage(y_direct, form)
+            @test build(reset_feedback_loop(form)) isa Build
+        end
     end
 
     @testset "the reset model's phase bodies and its quiet boundary allocate nothing (§9.8)" begin
         for localized in (true, false), block in (Integrator(x0 = 0.5, reset = true),
-                                                  LimitedIntegrator(lower = 0, upper = 1, x0 = 0.5, reset = true))
+                                                  LimitedIntegrator(lower = 0, upper = 1, x0 = 0.5, reset = true),
+                                                  LimitedIntegrator(lower = 0, upper = 1, x0 = 0.5, reset = true, localized = false))
             sim = Simulation(pulse_reset_model(localized; block = block); h = 1//10)
             bodies = phase_bodies(sim)
             for name in (:sweep_1, :sweep_2, :rhs, :ticks)
@@ -2733,7 +2764,9 @@ function test_blocks()
                      DiscreteIntegrator(), DiscreteLimitedIntegrator(lower = -1.0, upper = 1.0),
                      DiscreteLimitedIntegrator(lower = SVector(-1.0, -1.0), upper = SVector(1.0, 1.0)),
                      RateLimiter(rising = 1.0),
-                     Integrator(), Integrator(reset = true), FirstOrderLag(τ = 1.0), Step(t_step = 1.0),
+                     Integrator(), Integrator(reset = true), LimitedIntegrator(lower = 0, upper = 1, reset = true),
+                     DiscreteIntegrator(reset = true), DiscreteLimitedIntegrator(lower = 0, upper = 1, reset = true),
+                     FirstOrderLag(τ = 1.0), Step(t_step = 1.0),
                      Step(t_step = 1.0, localized = false), Sequence(times = (1.0,), values = (0.0, 1.0)),
                      Sequence(times = (0.0, 1.0), values = (SVector(0.0), SVector(1.0), SVector(2.0)), localized = false),
                      LimitedIntegrator(lower = -1.0, upper = 1.0),

@@ -358,8 +358,26 @@ discrete limited reset without the clamp; the flag read in `y_state`
 **The cold review** of 94a1bc2 against b5aff6b: the docs against the tree
 for the three rows and the map's entry; the boundary cases, a reset
 coinciding with a hit or a leave in either order, under the
-blocked-events rule and within the firing budget (reset, hit and leave at
-one boundary are three rounds of four); the plain forms bitwise unchanged,
+blocked-events rule and within the firing budget (a reset, a hit and a leave at
+one boundary are three rounds, and the budget of four counts firings per
+event); the plain forms bitwise unchanged,
 `Integrator` included after its move onto the helpers; allocation on
 every reset model at `(Float64, LinearizeDual)`; the mutants above on a
 scratch copy; the gate.
+
+**The coda's review.** No behaviour defect: every boundary case probed
+(a reset coinciding with a hit or a leave in either order, a reset while
+localizing a hit, the discrete flag on and off the grid and under a
+`Relative(2)` anchor) read as derived, the plain forms were bitwise
+unchanged over 22 models for 300 frames, and the gate was green at 3923
+and 3890. Six findings, all landed as one fix commit: the limited block's
+boundary-detected reset form was never run, so two leave-guard mutants
+reading the whole input side survived (medium); the handler's clamp and
+code were pinned only from a free start, where the hit event repaired
+both, so two mutants survived (medium); the reset forms' loop break was
+unpinned, so a `y_direct` with the same values survived; the map claimed
+`reset_guard` shared with the discrete pair; four docstring inaccuracies
+and the inventory's clause on a reset onto a limit under an inward input;
+the shadowing sweep omitted the three forms. One equivalent survivor is
+accepted: the `reset` event declared before the limit events, since a
+blocked event is re-decided next round.

@@ -343,7 +343,7 @@ integral of its input.
 
 The [block](@ref g-block) holds one bare [store](@ref g-store) value from `s0`, `s`
 below, the field `s`.
-Without `reset`, its input `u` and its output `y` are bare. Each [tick](@ref g-tick) advances
+Its output `y` is bare, and so is its input `u` without `reset`. Each [tick](@ref g-tick) advances
 the store by forward Euler, `s⁺ = s + Δt u`, and the output publishes `y = s`
 from [stage 1](@ref g-stage-function). The block therefore breaks
 an [algebraic loop](@ref g-algebraic-loop) as [`UnitDelay`](@ref) does. `Δt` is
@@ -364,8 +364,9 @@ its last value.
 
 # Keywords
 
-- `s0`: the initial value of `s`. `V` is `Float64` or a static array of
-  `Float64`, taken from `float(s0)`, so an integer `s0` qualifies.
+- `s0`: the initial value of `s`, and the value a reset writes. `V` is
+  `Float64` or a static array of `Float64`, taken from `float(s0)`, so an
+  integer `s0` qualifies.
 - `reset`: `true` to add the input `reset`, the parameter `R`.
 
 See also [`DiscreteLimitedIntegrator`](@ref), [`Integrator`](@ref).
@@ -382,7 +383,7 @@ u_types(::DiscreteIntegrator{V, R}) where {V, R} = reset_ports(V, Val(R))
 y_types(::DiscreteIntegrator{V}) where {V} = V
 y_state(::DiscreteIntegrator, (; s)) = s
 s_update(::DiscreteIntegrator{V, false}, (; s, u, Δt)) where {V} = s + Δt * u
-s_update(c::DiscreteIntegrator{V, true}, (; s, u, Δt)) where {V} = ifelse(u.reset, c.s0, s + Δt * u.u)
+s_update(c::DiscreteIntegrator{V, true}, (; s, u, Δt)) where {V} = ifelse(u.reset, c.s0, s + Δt * signal(u))
 
 """
     DiscreteLimitedIntegrator(; lower, upper, s0 = zero(lower), reset::Bool = false) -> DiscreteLimitedIntegrator
@@ -413,9 +414,9 @@ the update writing `s0`, clamped, at every tick where the flag reads true.
 
 - `lower`: the lower limit, below `upper`, componentwise over a vector.
 - `upper`: the upper limit.
-- `s0`: the initial value of `s`. `s0`, `lower` and `upper` are promoted to one
-  `V`, which is `Float64` or a static array of `Float64`, and taken by `float`,
-  so integer values qualify.
+- `s0`: the initial value of `s`, and the value a reset writes, clamped. `s0`,
+  `lower` and `upper` are promoted to one `V`, which is `Float64` or a static
+  array of `Float64`, and taken by `float`, so integer values qualify.
 - `reset`: `true` to add the input `reset`, the parameter `R`.
 
 See also [`DiscreteIntegrator`](@ref).
@@ -437,7 +438,7 @@ y_state(c::DiscreteLimitedIntegrator, (; s)) =
     (out = s, saturation = saturation_code.(s, c.lower, c.upper))
 s_update(c::DiscreteLimitedIntegrator{V, false}, (; s, u, Δt)) where {V} = clamp.(s + Δt * u, c.lower, c.upper)
 s_update(c::DiscreteLimitedIntegrator{V, true}, (; s, u, Δt)) where {V} =
-    clamp.(ifelse(u.reset, c.s0, s + Δt * u.u), c.lower, c.upper)
+    clamp.(ifelse(u.reset, c.s0, s + Δt * signal(u)), c.lower, c.upper)
 
 # Design: §5.3, §5.5, §10.5.
 """
@@ -1314,7 +1315,8 @@ not-holding. An `x0` outside the limits is therefore clamped there, and the
 initial mode agrees with the initial input.
 
 `reset = true`, the parameter `R`, adds the `Bool` input `reset` beside `u`,
-which then names the input side, and a fifth event, `reset`, the
+which then names the input side, and one more event, `reset`, one over the
+whole block whatever its width, the
 [`Integrator`](@ref)'s: boundary-detected on the flag, so it fires once per
 rising edge. Its handler writes `x0`, clamped to the limits, and the code `x0`
 earns, so a reset onto a limit lands saturated and a reset inside lands free,
@@ -1324,9 +1326,9 @@ whatever the mode was.
 
 - `lower`: the lower limit, below `upper`, componentwise over a vector.
 - `upper`: the upper limit.
-- `x0`: the initial value of `x`. `x0`, `lower` and `upper` are promoted to one
-  `V`, which is `Float64` or a static array of `Float64`, and taken by `float`,
-  so integer values qualify.
+- `x0`: the initial value of `x`, and the value a reset writes, clamped. `x0`,
+  `lower` and `upper` are promoted to one `V`, which is `Float64` or a static
+  array of `Float64`, and taken by `float`, so integer values qualify.
 - `localized`: `true` for localized leave events, `false` for boundary-detected
   ones.
 - `reset`: `true` to add the input `reset` and the event, the parameter `R`.

@@ -155,8 +155,8 @@ The standard component library, the submodule `Redstone.Blocks`:
   D-313).
 - `Integrator{V, R}` and `LimitedIntegrator{V, L, R}`, their reset form
   `R = true` adding the `Bool` input `reset` and one boundary-detected event
-  (D-141), over the helpers `reset_ports`, `signal` and `reset_guard` shared
-  with the discrete pair; `FirstOrderLag`, `Step`, `Sequence`, `Relay` and
+  (D-141), over the helpers `reset_ports` and `signal`, shared with the
+  discrete pair, and `reset_guard`; `FirstOrderLag`, `Step`, `Sequence`, `Relay` and
   `Comparator` (D-313).
   `Step`, `Sequence`, `LimitedIntegrator` and `Comparator` each ship two
   detection policies, localized and boundary-detected, selected by the type
