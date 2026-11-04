@@ -27,7 +27,12 @@ item changes what the spec says, the spec edit is part of the item.
   `V`. A length mismatch stays Julia's `DimensionMismatch`, as on `PID`. The
   widening carries `RateLimiter`'s positivity refusal to `all(rising .> 0)`,
   and the helper restores the docstrings' `Float64` wording and retires the
-  limited integrators' sentence on refused mixes. `check_limits` stays.
+  limited integrators' sentence on refused mixes. `check_limits` stays. The
+  same commit refuses a non-positive `τ`, `τd` or `Tt` as `ArgumentError` in
+  `FirstOrderLag`, `PID` and the trackers, over every component, skipping
+  `AsPort()`, with `Tt = Inf` allowed and `DiscretePID`'s `τd = 0` kept
+  legal, since the audit of 2026-11-04 found `τ = 0` failing at the first
+  step as `NonfiniteState` and `τ = -1` diverging silently.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`. Its records, none
   normative, are `design/inspector/initial_design.md` and one per axis
@@ -63,7 +68,10 @@ item changes what the spec says, the spec edit is part of the item.
   rather than by accident, and until the audit runs the module exports
   nothing (D-226). The audit is a full-surface sweep under the four-class
   naming convention (§8.1, D-144): every API name is exported, renamed or
-  left unexported. It comes after the tutorial, which surfaces the names a
+  left unexported. It also settles which fields are public, since `Model`'s
+  docstring lists every field, `exec` and `frame_diag` included, while
+  `Deployment` and `Schedule` list none and tests read `deployment.h`. It
+  comes after the tutorial, which surfaces the names a
   user types, and after the library has added its names; the examples are
   a package of their own and add none.
   - **The extension-only surface**, where *unexported* is preferred. It has
@@ -213,18 +221,6 @@ breaking user code, and each may benefit from user feedback first.
   links one per member, under the message. A member traced structurally has
   its dependence presumed, so its `y_direct` may not read the input, and the
   row should say so. The spec edit and its log entry come first.
-
-- **The docstring audit's open decisions.** The audit of 2026-11-04 left its
-  open points in `design/reports/20261104_docstring_audit/report.md` section 5.
-  The nine false claims, the plan methods' sentence, the smaller points and four
-  rulings folded into the sheet landed the same day. Still open: the two code
-  changes, the unchecked time constants `τ`, `τd` and `Tt`, and `port`, `state`
-  and `modes` on a bad path; which fields of `Model`, `Deployment` and
-  `Schedule` are public, a question for the exported-name audit; whether "bare"
-  and "entry" compounds link to the glossary; the mechanism sentences kept in
-  `LinearBlock`, `Group` and the discrete controllers; and §12.2's sentence
-  that `stale` tolerates a device parked in a blocking read, which a device
-  parked over two seconds does not bear out.
 
 ## Deviations
 
