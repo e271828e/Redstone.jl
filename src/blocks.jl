@@ -1458,8 +1458,8 @@ the step at the input's zero crossing.
 [Boundary-detected](@ref g-boundary-detected), the guards are the `Bool`
 [predicates](@ref g-predicate). The departure then fires at the first boundary
 after `u` first pointed back into the range, at the latest the end of that
-step, so `q` and `v` are held on the limit for the rest of that step. From then
-on `v` carries an offset of at most `a h² / 2`, `a` the input's slope at its
+step, so `q` and `v` are held on the limit until then. From then on `v`
+carries an offset of at most `a h² / 2`, `a` the input's slope at its
 zero crossing, and `q` an offset that grows by as much per unit time, until the
 next limit removes both. What the
 cheap form buys is that a departure costs no root-finding and splits no step.
