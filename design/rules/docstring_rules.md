@@ -116,10 +116,13 @@ closed(run::Run) = run.termination !== nothing
 21. **Each paragraph answers one of three questions.** What the call needs,
     what it produces, or what it refuses and with which diagnostic kind, named
     in code as Appendix B does: "refused as `DeploymentInvalid` when absent".
-22. **Mechanism, a correction or a review finding enters only where the user
-    needs it to use the call correctly.** How a run is paced belongs in `run!`'s
-    docstring because `margin` is a keyword; how the pacer's wait is
-    implemented does not. The rest goes to the comment or the companion.
+22. **Mechanism, a correction, a review finding or an increment's novelty
+    enters only where the user needs it to use the call correctly.** How a
+    run is paced belongs in `run!`'s docstring because `margin` is a keyword;
+    how the pacer's wait is implemented does not. That a block declares its
+    one port bare belongs in `u_types`'s docstring and the glossary; at the
+    block, the reader needs the port's name and type, which the wire example
+    gives. The rest goes to the comment or the companion.
 23. **A sentence that states a behaviour is checked against the code.** The
     other rules govern form, and a rewrite that keeps every sentence keeps
     every error in them. A claim the code does not show on its face is settled
