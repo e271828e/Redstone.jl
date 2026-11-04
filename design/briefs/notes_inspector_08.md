@@ -323,3 +323,23 @@ reads "0/1 s"; an extra triple's swatch carries no number, unlike the
 canvas; `LQRTracker`'s signatures wrap messily; Shift-l from a level whose
 forward entry is `#help` reopens the page; the Fit button covers
 `selection`'s badge zoomed in. The fixer follows at `226fb4b`.
+
+## The fix, 2026-11-04
+
+The fixer landed the seven findings as `6dcf5d5`: `rowTarget` selecting
+the root tag for every root, the unit case renamed and the map's line
+amended; Ctrl-K in `KEYS` and the map's table together; `MAJOR` read from
+`__FORMAT_MAJOR__` and the loader's comparison, refusals and note using it;
+two `help.spec.ts` checks, a link-opened page closing by back with
+`goForward` showing it again, and a typed level hash then Shift-h returning
+to the root; an `order.spec.ts` check comparing a non-hit badge's effective
+opacity with its block's shape under a search, `plant`'s at 1; the badge's
+`pointer-events: none` removed, with a check that `elementFromPoint` on its
+upper half hits the badge, and the map's claim corrected; the open item
+renumbered to 11. `npm run check` 398 files, 0 errors; `npm test` 504 tests;
+`npm run e2e -- --project=chromium` 195 checks. Mutant 26 turns both new
+help checks red, mutant 27 the dimming check, and `pointer-events: none`
+put back the pointer check. Two notes from the fixer: `faceSelection` is
+unchanged, so a search hit on a primitive root's face still selects its
+port; two comments (`App.svelte`, `search.spec.ts`'s header) still say
+"`/` and Cmd-K" without Ctrl-K. The reviewer verifies the delta next.
