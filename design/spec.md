@@ -5123,8 +5123,8 @@ lossy `Dual → Float64` cast. So a `Float64` observed at a walking leaf means n
 direction is zero, which is precisely what the embedded constant says. This
 scopes the blanket convert-on-write rejection to the nominal check
 ([D-053][d-053]). The scalars a `Model` admits, `Float64` and a
-`ForwardDiff.Dual`, are this guarantee as a list, since a `Float64` embeds
-into each exactly ([§9.2][s9-2], [D-320][d-320]).
+concrete `ForwardDiff.Dual` over `Float64`, nested or not, are this guarantee
+as a list, since a `Float64` embeds into each exactly ([§9.2][s9-2], [D-320][d-320]).
 
 #### Deliberate stripping
 
@@ -12376,7 +12376,9 @@ boundary, the ordinary macro-sequence with an empty integrate) means for trim.
   opening the run before the model's method writes. Each form of `trim!`
   commits through the matching `init!`, the model's or the simulation's
   ([§14.8][s14-8]). Conditions are time-free. Nothing after boundary zero
-  sets the origin. A restore inherits the clock and takes no `t0`
+  sets the origin. A `t0` that is not finite, or so large that its rounding slack
+  in frames leaves `Int`, is refused as `ArgumentInvalid` before any write, and
+  `trim!` refuses it before its search. A restore inherits the clock and takes no `t0`
   ([D-273][d-273]).
 - **Trim is untouched by all of this** ([D-067][d-067]). Optimizer
   iterations are raw write → sweep → read cycles on the activation, with no
@@ -14713,7 +14715,7 @@ activation):
   name, or the bare position where the writer's schema has no name for it;
   frame ordinal, the trace's device tag, the root input-face list.
 - **`ArgumentInvalid`** ([§9.2][s9-2], [§10.5][s10-5], [§11.6][s11-6], [§12.1][s12-1], [§12.4][s12-4],
-  [§12.6][s12-6], [§12.7][s12-7], [§13.5][s13-5], [§14.8][s14-8], [§14.10][s14-10]). Error · service, or build in a `sample_times`
+  [§12.6][s12-6], [§12.7][s12-7], [§13.5][s13-5], [§14.5][s14-5], [§14.8][s14-8], [§14.10][s14-10]). Error · service, or build in a `sample_times`
   declaration · fail-fast, but collected over a `TableBinding`'s entry table,
   over the `Model` and `Simulation` constructors' keywords and the claim
   on the model ([D-318][d-318]), and over the recording keywords of `init!`,

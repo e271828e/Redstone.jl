@@ -178,4 +178,9 @@ pushed unless the user asks.
 
 ## The review's record
 
-To be filled after the review.
+One cold review over `4a818b2..f61308e`, with one finding of "wrong" (`Pinned`),
+three "misleading" (`t0`, `Model`, `TrimReport`), one missing test (`init!(sim)`'s
+origin check), twelve of form and eight notes. Of 24 mutants, 22 went red, one was
+that missing test and one is equivalent (`isfinite` before `eps`). `7b00240` landed
+the fixes, the reviewer verified its delta with no new findings, and the gate read
+9099 of 9099. The findings are in the arc's report folder as `ledgers/review.txt`.

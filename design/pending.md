@@ -37,13 +37,6 @@ item changes what the spec says, the spec edit is part of the item.
   `design/reports/20261105_docstring_audit/probes/A3/p3_init.jl` and `probes/A3/p6_edges.jl`, and the
   `run!`, `step!` and `replay!` rows of `ledgers/A8.txt`, whose `p1_replay.jl`
   the audit did not keep.
-- **The API docstrings' audit and sweep.** One read-only pass checks every
-  docstring on the API page against the code, and a second checks it against
-  `rules/docstring_rules.md`. The user rules on the findings, a sweep applies
-  them, and a cold review closes the arc. The audit reads a pinned base, and
-  the sweep needs `src/` quiet. Brief
-  `design/increments/20261105_docstring_audit/brief_docstring_audit.md`, base
-  `4a818b2`. Report `design/reports/20261105_docstring_audit/report.md`. State: the review's findings landed, and the review verifies the delta.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose

@@ -180,6 +180,11 @@ replacement, and compliance rows to the proposed edit.
 The user ruled on 2026-11-05: every item of section 6 as recommended. The sheet's
 amendments from items 12, 14, 15, 17 and 19 landed with this record.
 
+Later rulings the same day supersede section 6 in three places. Defect j clamps
+`s0` at `t₀` instead of refusing it, since a test and the inventory pin the clamp.
+`trim!` refuses a bad `t0` before its search. Defect h's log entry was removed as
+overkill, so its §14.8 sentence stands unmarked, and §14.5 states the `t0` refusals.
+
 ## 8. What was not established
 
 - Real `SIGINT`s were not sent. Interrupts in probes are thrown from user code.
