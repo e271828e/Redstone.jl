@@ -12,14 +12,6 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
-- **Stage-function locations in the descriptor** (§13.9, D-432). A `types`
-  row carries the source locations of the declaration methods alone, so the
-  inspector has no line to show for an algebraic loop, whose feedthrough is
-  in its members' `y_direct`; since increment 7's look pass its drawer shows
-  none for a loop. With `y_direct`'s location in the row, the loop's row
-  links one per member, under the message. A member traced structurally has
-  its dependence presumed, so its `y_direct` may not read the input, and the
-  row should say so. The spec edit and its log entry come first.
 - **One broadcast convention for the blocks' keywords** (§13.7, D-313), a
   loose fix, ruled by the user on 2026-11-04. Keywords sharing `V` broadcast
   to one shape, as `PID`, `DiscretePID`, `GaussianWhiteNoise` and the trackers
@@ -50,8 +42,7 @@ item changes what the spec says, the spec edit is part of the item.
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose
   `design/roadmap.md` stages its eleven increments. What this repo owes it
-  is the stage-function locations in the descriptor below, and the later
-  stages after the release. The descriptor's class value `"leaf"` became
+  is the later stages after the release. The descriptor's class value `"leaf"` became
   `"primitive"` on 2026-11-05, with the schema's `PrimitiveNode` and
   `PrimitiveFace` and no format bump; the inspector's half, the
   regenerated types and the renames through the frontend and the records,
