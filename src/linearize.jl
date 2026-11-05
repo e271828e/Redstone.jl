@@ -26,11 +26,13 @@ The [tap set](@ref g-taps) of three [read sets](@ref g-read-set) that
 linearization seeds and reads.
 
 [`taps`](@ref) returns it, [`linearize`](@ref) takes it, and [`at`](@ref)
-mounts it below a prefix. A tap set holds the three lists given
-as `x`, `u` and `y`, each a [`Reads`](@ref). The `x` list names the continuous
-state leaves to seed, the `u` list the [root inputs](@ref g-root-input) to seed,
-and the `y` list the outputs to read. Their labels become the axes of the
-matrices `linearize` returns.
+mounts it below a prefix. A tap set holds these fields, each a [`Reads`](@ref).
+
+- `x`: the continuous state leaves to seed.
+- `u`: the [root inputs](@ref g-root-input) to seed.
+- `y`: the outputs to read.
+
+Their labels become the axes of the matrices `linearize` returns.
 """
 struct Taps{X<:Reads,U<:Reads,Y<:Reads}
     x::X
@@ -47,9 +49,9 @@ end
 Return the [tap set](@ref g-taps) a linearization seeds and reads, built from
 three labeled [selector](@ref g-selector) lists.
 
-A tap set is what [`linearize`](@ref) takes. Each list is a
-`NamedTuple` of selectors, and its labels become the axes of the returned
-matrices. Membership is closed per list, and every tap names one scalar leaf.
+A tap set is what [`linearize`](@ref) takes. Each list is a `NamedTuple` of
+selectors, and its labels become the axes of the returned matrices. Each list
+takes only what its bullet names. Every tap names one scalar leaf.
 
 `taps` checks only that each list is a `NamedTuple` of selectors, and refuses
 anything else as `ReadSetMisuse`. `linearize` checks membership and the rest
@@ -108,7 +110,7 @@ const LinearizeDual = ForwardDiff.Dual{LinearizeTag,Float64,LINEARIZE_WIDTH}
 The result of a linearization, holding the operating point and the four
 Jacobians, labeled by the [taps](@ref g-taps).
 
-[`linearize`](@ref) returns it. The labels are those of the tap set, and a
+[`linearize`](@ref) returns it. The labels are those of the tap set. A
 `Linearization` holds these fields.
 
 - `x₀`, `u₀`: the seeded states and [root inputs](@ref g-root-input) at the
@@ -155,7 +157,10 @@ end
 # a simulation has claimed still answers it (D-319). The tap set's refusals:
 # no discrete store in `x` (D-197), no unseedable root input in `u` (D-168,
 # D-263), no two seeds at one site (D-272), with the reads' own refusals beside
-# them (D-406).
+# them (D-406). The tap set is three lists of selectors, declaring what
+# linearization seeds and reads. The value parts give `ẋ₀` and `y₀`. The
+# partials give `A` and `B` read at the state derivative, and `C` and `D` read
+# at the `y` taps.
 """
     linearize(model::Model{Float64}, tap_set::Taps; about = nothing, t0 = nothing,
               width::Int = 8) -> Linearization
@@ -177,12 +182,9 @@ By default the operating point is `checkpoint(model)`, the model's state at the
 [sweep](@ref g-sweep) with every discrete output stage run then sets the
 discrete outputs.
 
-The [tap set](@ref g-taps), built by [`taps`](@ref), names the axes. It is three
-lists of [selectors](@ref g-selector), declaring what linearization seeds and
-reads. `linearize` seeds one direction per `x` tap and per `u` tap, and
-evaluates the model with dual numbers. The value parts give `ẋ₀` and `y₀`. The
-partials give `A` and `B` read at the state derivative, and `C` and `D` read at
-the `y` taps. States and [root inputs](@ref g-root-input) that no tap names sit
+The [tap set](@ref g-taps), built by [`taps`](@ref), names the axes. `linearize`
+seeds one direction per `x` tap and per `u` tap, and evaluates the model with
+dual numbers. States and [root inputs](@ref g-root-input) that no tap names sit
 constant at the operating point. The discrete [tier](@ref g-tier) is held.
 
 The `width` changes the grouping, never the answer. The default width's scalar
@@ -201,11 +203,13 @@ resolve is refused as `ConditionResolution`, `PathResolution`,
 raises. A root input it leaves without a value is refused as
 `UninitializedInputs`.
 
-`linearize` resolves the taps in one collecting pass, and refuses their faults
-together as `TapResolution`, beside the selectors' own `ReadResolution` and
-`PathResolution` failures. The faults are a member in the wrong list, a discrete
-state in `x`, a tap that is not one scalar, a root input that cannot be seeded,
-and a second tap on one seeded site.
+`linearize` resolves the taps in one
+[collecting](@ref g-collect-the-checks-fail-the-evaluations-fast) pass, and
+refuses their faults together as `TapResolution`, beside the
+[selectors](@ref g-selector)' own `ReadResolution` and `PathResolution`
+failures. The faults are a member in the wrong list, a discrete state in `x`, a
+tap that is not one scalar, a root input that cannot be seeded, and a second tap
+on one seeded site.
 
 A `t0` without `about`, a `width` below 1, a second argument that is not a tap
 set, and a model at a scalar type other than `Float64` are refused as
