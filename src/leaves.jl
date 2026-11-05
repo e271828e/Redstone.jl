@@ -301,6 +301,10 @@ how the marker is stripped at nominal, and any other entry is `retype`
 """
 retype_entry(::Type{T}, ::Type{Pinned{P}}) where {T,P} = P
 retype_entry(::Type{T}, ::Type{P}) where {T,P} = retype(T, P)
+# A value where a type goes, a tuple of types or a number, is left as written:
+# the walk refuses it as `IllegalPortType` `:not_a_type` (§8.2), and the
+# structure barrier throws before anything reads the entry as a type.
+retype_entry(::Type, @nospecialize(entry)) = entry
 
 """
 Value counterpart: the same value with its `Float64` leaves converted to `T`.

@@ -1333,6 +1333,46 @@ x_init(::MixedPinSource) = nothing
 y_types(::MixedPinSource) = (m = MixedParams{Float64,Pinned{Float64}},)
 y_state(::MixedPinSource, (; t)) = (m = MixedParams(1.0, 2.0),)
 
+# A contract entry that is no type (§8.2): a tuple of types and a number, named
+# and bare, under an output and under an input, and on a discrete leaf.
+struct TupleEntrySource <: AbstractComponent
+end
+x_init(::TupleEntrySource) = nothing
+y_types(::TupleEntrySource) = (v = (Float64, Int),)
+y_state(::TupleEntrySource, (; t)) = (v = 1.0,)
+
+struct NumberEntrySource <: AbstractComponent
+end
+x_init(::NumberEntrySource) = nothing
+y_types(::NumberEntrySource) = (v = 1.0,)
+y_state(::NumberEntrySource, (; t)) = (v = 1.0,)
+
+struct BareTupleSource <: AbstractComponent
+end
+x_init(::BareTupleSource) = nothing
+y_types(::BareTupleSource) = (Float64, Int)
+y_state(::BareTupleSource, (; t)) = 1.0
+
+struct TupleEntryConsumer <: AbstractComponent
+end
+x_init(::TupleEntryConsumer) = nothing
+u_types(::TupleEntryConsumer) = (v = (Float64, Int),)
+y_types(::TupleEntryConsumer) = (s = Float64,)
+y_direct(::TupleEntryConsumer, (; u)) = (s = first(u.v),)
+
+struct BareNumberConsumer <: AbstractComponent
+end
+x_init(::BareNumberConsumer) = nothing
+u_types(::BareNumberConsumer) = 1.0
+y_types(::BareNumberConsumer) = Float64
+y_direct(::BareNumberConsumer, (; u)) = u
+
+struct DiscreteTupleEntry <: AbstractComponent
+end
+s_init(::DiscreteTupleEntry) = nothing
+y_types(::DiscreteTupleEntry) = (v = (Float64, Int),)
+y_state(::DiscreteTupleEntry, (; t)) = (v = 1.0,)
+
 struct EmptyNoOutputs <: AbstractComponent    # an empty store and no contract
 end
 x_init(::EmptyNoOutputs) = nothing
@@ -1471,6 +1511,35 @@ function build_tier()
                                         local_wires = ("src/v" => "c/v",))))
         @test Set(kinds(err)) == Set([IllegalPortType])
         @test length(diagnostics(err)) == 2
+
+        # An entry that is no type, a tuple of types or a number, named or bare,
+        # is `IllegalPortType` `:not_a_type` on both tiers (§8.2), the value
+        # itself in the type's place, and the walk reads that entry no further.
+        for (comp, site, entry, value) in ((TupleEntrySource(), :port, :v, (Float64, Int)),
+                                           (NumberEntrySource(), :port, :v, 1.0),
+                                           (BareTupleSource(), :port, :y, (Float64, Int)),
+                                           (TupleEntryConsumer(), :face, :v, (Float64, Int)),
+                                           (BareNumberConsumer(), :face, :u, 1.0),
+                                           (DiscreteTupleEntry(), :port, :v, (Float64, Int)))
+            diags = Diagnostic[]
+            @test classify_tier("c", comp, diags) === nothing
+            d = only(diags)
+            @test d isa IllegalPortType && d.reason === :not_a_type
+            @test d.site === site && d.name === entry && d.declared == value
+        end
+        # The walk collects it, a wire into the entry and a root primitive's own
+        # contract included, and the barrier throws before any entry is read as
+        # a type.
+        err = failure(() -> build(Group((; src = TupleEntrySource(), c = TupleEntryConsumer(),
+                                          n = BareNumberConsumer());
+                                        local_wires = ("src/v" => "c/v", "src/v" => "n/u"))))
+        @test Set(kinds(err)) == Set([IllegalPortType])
+        @test Set((d.path, d.site, d.name, d.reason) for d in diagnostics(err)) ==
+              Set([("src", :port, :v, :not_a_type), ("c", :face, :v, :not_a_type),
+                   ("n", :face, :u, :not_a_type)])
+        d = only(diagnostics(failure(() -> build(BareNumberConsumer()))))
+        @test d isa IllegalPortType && d.reason === :not_a_type
+        @test d.site === :face && d.name === :u && path(d) == ""
 
         # A store with no update law is §8.2's sibling of the classless component.
         diags = Diagnostic[]

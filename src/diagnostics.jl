@@ -830,20 +830,25 @@ message(d::StatelessWithoutOutputs) =
     "fields and the update law that drives them. Its leaf declarations are " *
     "$(_namelist(d.declarations)) (§8.2)"
 
-"§4.3, §7.1, §8.2, §13.5, D-215, D-237, D-243, D-265, D-316: a port type the leaf walk cannot lay out — no leaves, a mutable type on the walk, an opaque leaf at a root input, or the `Pinned` marker below the top of an entry; or a `StopFlag` nested in another port type or at a root input."
+"§4.3, §7.1, §8.2, §13.5, D-215, D-237, D-243, D-265, D-316: a port type the leaf walk cannot lay out — no leaves, a mutable type on the walk, an opaque leaf at a root input, or the `Pinned` marker below the top of an entry; a `StopFlag` nested in another port type or at a root input; or an entry that is no type at all."
 Base.@kwdef struct IllegalPortType <: Diagnostic
     path::String
     site::Symbol                             # :port | :face | :root_input
     name::Symbol
-    declared::Any                            # the offending type
+    declared::Any                            # the offending type; the value itself under :not_a_type
     reason::Symbol = :no_leaves              # :no_leaves | :mutable | :handle_at_root | :nested_marker |
-                                             # :stop_flag_nested | :stop_flag_at_root
+                                             # :stop_flag_nested | :stop_flag_at_root | :not_a_type
     position::Any = nothing                  # :mutable — the dotted position of the mutable type, "" for the port itself
 end
 path(d::IllegalPortType) = d.path
 function message(d::IllegalPortType)
     site = (d.site === :root_input ? "root input" : d.site === :face ? "input face" : "port") *
            " `$(d.name)`"
+    d.reason === :not_a_type &&
+        return "$(_at_path(d.path)): $site declares $(repr(d.declared)), which is no type — " *
+               "a `u_types` or `y_types` entry is one type written at `Float64`, such as " *
+               "`Float64` or `SVector{3, Float64}`; a tuple of types is one named entry per " *
+               "port, and a value such as `1.0` is written as its type (§8.2)"
     d.reason === :nested_marker &&
         return "$(_at_path(d.path)): $site declares $(d.declared), with the `Pinned` " *
                "marker below the top of the entry — the marker wraps a whole entry, and a field " *

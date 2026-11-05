@@ -869,15 +869,21 @@ function classify_tier(path::String, @nospecialize(comp), diags::Vector{Diagnost
                                            announced = Symbol(tier_word(tier))))
     end
     # Both contracts read on the declaration as written, one report per entry:
-    # the marker below the top of an entry is refused on both tiers (§8.2,
-    # D-265), and a top marker says nothing where every leaf pins (§8.5, D-263).
+    # an entry that is no type is refused and read no further (§8.2), the
+    # marker below the top of an entry is refused on both tiers (§8.2, D-265),
+    # and a top marker says nothing where every leaf pins (§8.5, D-263).
     for (name, fn) in ((:u_types, u_types), (:y_types, y_types))
         _declares(fn, comp) || continue
+        site = name === :u_types ? :face : :port
         for (entry_name, P) in pairs(_keyed(invoke_declaration(fn, comp), default_name(fn)))
+            if !(P isa Type)
+                push!(diags, IllegalPortType(path = path, site = site, name = entry_name,
+                                             declared = P, reason = :not_a_type))
+                continue
+            end
             _holds_marker(P) &&
-                push!(diags, IllegalPortType(path = path, site = name === :u_types ? :face : :port,
-                                             name = entry_name, declared = P,
-                                             reason = :nested_marker))
+                push!(diags, IllegalPortType(path = path, site = site, name = entry_name,
+                                             declared = P, reason = :nested_marker))
             tier === DISCRETE && _is_marker(P) &&
                 push!(diags, DeclarationOnWrongTier(path = path, declaration = name,
                                                    reason = :pinned_entry, entry = entry_name,

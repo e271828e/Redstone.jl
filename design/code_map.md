@@ -53,7 +53,8 @@ in the `src/model.jl` entry.
   of the walk. It records what it finds instead of throwing, the walk reads
   the tier beside the class, and the store decides the tier. It records
   `StatelessWithoutOutputs` and runs the pinned-entry check, both from D-263,
-  and holds `IllegalPortType`'s nested-marker arm, on both tiers (D-265).
+  and holds `IllegalPortType`'s nested-marker arm (D-265) and its not-a-type
+  arm, both on both tiers (§8.2).
 - Beside it the shape helper `store_fields`, a store's pairs in the keyed form,
   a bare store's one pair under its letter `x`, `s` or `m` and none for
   `nothing`, which build.jl reuses (D-438). The store isbits check
@@ -648,7 +649,8 @@ D-260, D-261, D-317, D-318.
     dispatches on it.
   - `retype_entry` strips the marker at the top of an entry alone (D-265). It
     sits over `retype`, which replaces each `Float64` position by the scalar
-    and pins a mutable type's parameters (D-263).
+    and pins a mutable type's parameters (D-263). An entry that is no type
+    passes through it as written, for the walk's refusal in assembly.jl (§8.2).
   - `_holds_marker` finds a marker below the top.
 - `StopFlag`, the stop-request enum, beside `Pinned` (D-316).
 - `leaf_names`' dotted spelling of a flat position, a matrix leaf by its

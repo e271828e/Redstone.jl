@@ -12,11 +12,6 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
-- **A contract entry that is not a type.** A `u_types` or `y_types` entry
-  holding a value that is no type, a tuple of types or a number, named or
-  bare, fails late as a raw error, since the walk never checks that an entry
-  is a type (§8.2). The fix is a loose one: the walk refuses it as
-  `IllegalPortType` under a reason of its own, with its Appendix C row.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose

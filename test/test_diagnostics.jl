@@ -356,6 +356,8 @@ function diagnostics_kind_set()
                             declared = @NamedTuple{flag::StopFlag, x::Float64}, reason = :stop_flag_nested),
             IllegalPortType(path = "", site = :root_input, name = :stop, declared = StopFlag,
                             reason = :stop_flag_at_root),
+            IllegalPortType(path = "a/b", site = :port, name = :y, declared = (Float64, Int),
+                            reason = :not_a_type),
             EmptyStore(path = "a/b", store = :x_init),
             EmptyStore(path = "a/b", store = :m_init),
             IllegalStoreField(path = "a/b", store = :s_init, name = :label, declared = String),
@@ -1089,6 +1091,13 @@ function diagnostics_kind_set()
                                            declared = StopFlag, reason = :stop_flag_at_root))
         @test startswith(rendered, "the root component: root input `stop` carries a `StopFlag`") &&
               occursin("never an operator's", rendered) && occursin("`stop!`", rendered)
+
+        # A value where a type goes (§8.2) is shown as written, and the remedy
+        # names the two shapes it was mistaken for.
+        rendered = message(IllegalPortType(path = "a/b", site = :face, name = :v,
+                                           declared = (Float64, Bool), reason = :not_a_type))
+        @test startswith(rendered, "`a/b`: input face `v` declares (Float64, Bool), which is no type")
+        @test occursin("one named entry per port", rendered) && occursin("written as its type", rendered)
 
         # The cycle's three forms (§5.5, §13.8, D-245), over constructed values: the
         # cluster's wires read as one loop, and the classification, where there is
