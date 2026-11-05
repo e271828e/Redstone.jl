@@ -128,13 +128,16 @@ hand-written keyword constructor, as in `Integrator(; x0 = 0.0)` and
 `Relay(; lower, upper, off = zero(lower), on = one.(lower))`. A positional
 call is easy to get wrong, and [§8.2][s8-2] already makes keyword defaults the
 convention. A parameter with no sensible default is a required keyword.
-Fields that share a type parameter promote, so mixed `Int` and `Float64`
-keywords work, which is why the constructor is hand-written rather than
-`@kwdef`. The PID's keywords that share `V` broadcast to one shape instead,
-as `GaussianWhiteNoise`'s do: a scalar pairs with a vector and the shape's
-type is `V`, so a uniform vector gain spells one keyword as a vector,
-`Kp = @SVector fill(2.0, 3)`. A keyword given as `AsPort()` is a port of
-the block, not a field, and takes no part in the shape. The struct keeps
+Keywords that share a type parameter broadcast to one shape, `Float64` or
+an `SArray` of `Float64`, which is why the constructor is hand-written
+rather than `@kwdef`. A scalar pairs with a vector and integer keywords
+qualify, so a uniform vector gain spells one keyword as a vector,
+`Kp = @SVector fill(2.0, 3)`, and a scalar limit serves every component of a
+vector integrator. Two lengths are Julia's `DimensionMismatch`. The
+convention is one for every block because only broadcasting pairs the PID's
+scalar defaults with a vector `Kp`, where promotion throws. A keyword given
+as `AsPort()` is a port of the block, not a field, and takes no part in the
+shape. The struct keeps
 its positional constructor. A block with one required parameter, such as
 `Constant(value)`, takes it positionally. Its docstring shows the keyword
 form, and its tests call it.
