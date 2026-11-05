@@ -564,12 +564,12 @@ _ports(entry::ComponentOutputs) = vcat(entry.stage1, entry.stage2)
 """
     Outputs
 
-The output [port](@ref g-port) names each [component](@ref g-component)'s stages
-produce, and the order the components run in.
+The output [port](@ref g-port) names each [component](@ref g-component)'s
+[stages](@ref g-stage-function) produce, and the order the components run in.
 
 `Outputs` is a product of the [nominal evaluation](@ref g-nominal). Read it off
 a [`Build`](@ref) as `build.outputs`. It holds names only and does not depend on
-the scalar type, so a reader that wants a list of port names takes it from here
+the scalar type. A reader that wants a list of port names takes it from here
 rather than from an [activation](@ref g-activation).
 
 An `Outputs` holds these fields.
@@ -619,10 +619,9 @@ The detection policy of each [component](@ref g-component)'s
 it off a [`Build`](@ref) as `build.events`. Like [`Outputs`](@ref), it holds
 names only and does not depend on the scalar type.
 
-An `Events` holds this field.
-
-- `components`: one entry per [primitive](@ref g-primitive), in the order the
-  build walks the tree, so one index addresses it and `Outputs` alike.
+Its one field, `components`, holds one entry per [primitive](@ref g-primitive),
+in the order the build walks the tree, so one index addresses it and `Outputs`
+alike.
 
 Each entry holds these fields.
 
@@ -645,6 +644,8 @@ end
 # torn-state-free. The schedule the structure carries is anchor-relative, each
 # component entry's `timing` against `structure.anchors`, because final
 # divisors for anchored entries do not exist until `Δt_base` binds.
+# The build's steps produce these fields. They do not depend on the scalar type,
+# by construction.
 """
     Build
 
@@ -652,8 +653,7 @@ The artifact [`build`](@ref) produces, the checked
 [contract](@ref g-contract) of a [component](@ref g-component) tree before any
 grid is fixed.
 
-A build holds these fields, which the build's steps produce. They do not depend
-on the scalar type, by construction.
+A build holds these fields, none of which depends on the scalar type.
 
 - `structure`: the [`Structure`](@ref).
 - `outputs`: the [`Outputs`](@ref).
@@ -715,9 +715,10 @@ const ProbeDual = ForwardDiff.Dual{ProbeTag,Float64,1}
 Check a [component](@ref g-component) tree and return its [`Build`](@ref), with
 no grid chosen yet.
 
-`build` runs the structure step, the [nominal evaluation](@ref g-nominal) and
-the eager [activations](@ref g-activation). The structure step flattens the
-tree, classifies its components and type-checks the wires into the
+`build` runs the [structure step](@ref g-structure), the
+[nominal evaluation](@ref g-nominal) and the eager
+[activations](@ref g-activation). The structure step flattens the tree,
+classifies its components and type-checks the wires into the
 [`Structure`](@ref). The nominal evaluation [probes](@ref g-probe) every user
 function. It returns the [`Outputs`](@ref), the [`Events`](@ref) and the nominal
 activation. Nothing here needs `h`, `N_base` or [`Δt_base`](@ref g-dt_base),
