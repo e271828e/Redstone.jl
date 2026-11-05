@@ -25,6 +25,14 @@ item changes what the spec says, the spec edit is part of the item.
   unreleased package never needs. The inspector's half, the regenerated
   types and the renames through the frontend and the records, lands with
   its next pin on the core.
+- **Stage-function locations in the descriptor** (§13.9, D-432). A `types`
+  row carries the source locations of the declaration methods alone, so the
+  inspector has no line to show for an algebraic loop, whose feedthrough is
+  in its members' `y_direct`; since increment 7's look pass its drawer shows
+  none for a loop. With `y_direct`'s location in the row, the loop's row
+  links one per member, under the message. A member traced structurally has
+  its dependence presumed, so its `y_direct` may not read the input, and the
+  row should say so. The spec edit and its log entry come first.
 - **Tighten the blocks' `V` bound to what the build admits** (§7.1, §13.7,
   D-094, D-320), a loose fix, ruled by the user on 2026-11-04. Fifteen blocks,
   `Freeze` to `DiscretePID`, bound `V` as `Union{Real, StaticArray{<:Tuple,
@@ -57,6 +65,11 @@ item changes what the spec says, the spec edit is part of the item.
   `AsPort()`, with `Tt = Inf` allowed and `DiscretePID`'s `τd = 0` kept
   legal, since the audit of 2026-11-04 found `τ = 0` failing at the first
   step as `NonfiniteState` and `τ = -1` diverging silently.
+- **A contract entry that is not a type.** A `u_types` or `y_types` entry
+  holding a value that is no type, a tuple of types or a number, named or
+  bare, fails late as a raw error, since the walk never checks that an entry
+  is a type (§8.2). The fix is a loose one: the walk refuses it as
+  `IllegalPortType` under a reason of its own, with its Appendix C row.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose
@@ -211,11 +224,6 @@ breaking user code, and each may benefit from user feedback first.
   break, a candidate design and its open questions are
   `design/reports/20261016_ctrlc_julia_114/report.md`. It is taken up when 1.14
   branches or its cancellation names become public, whichever comes first.
-- **A contract entry that is not a type.** A `u_types` or `y_types` entry
-  holding a value that is no type, a tuple of types or a number, named or
-  bare, fails late as a raw error, since the walk never checks that an entry
-  is a type (§8.2). The fix is a loose one: the walk refuses it as
-  `IllegalPortType` under a reason of its own, with its Appendix C row.
 - **The library's remaining candidates.** Whatever of the inventory in
   `design/companions/library_inventory.md` is unbuilt, each block
   built when wanted (§13.7, D-313). The order, by the mechanism each family
@@ -227,14 +235,6 @@ breaking user code, and each may benefit from user feedback first.
   and scheduled limits move `lower` and `upper` into the guards' `u` and take
   `x0`'s default with them. `Freeze` over a struct is a framework seam, not a
   block, and stays here after the four.
-- **Stage-function locations in the descriptor** (§13.9, D-432). A `types`
-  row carries the source locations of the declaration methods alone, so the
-  inspector has no line to show for an algebraic loop, whose feedthrough is
-  in its members' `y_direct`; since increment 7's look pass its drawer shows
-  none for a loop. With `y_direct`'s location in the row, the loop's row
-  links one per member, under the message. A member traced structurally has
-  its dependence presumed, so its `y_direct` may not read the input, and the
-  row should say so. The spec edit and its log entry come first.
 
 ## Deviations
 
