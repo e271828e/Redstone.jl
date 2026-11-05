@@ -164,6 +164,11 @@ lag_model(value) =
     Group((; k = Constant(value), l = FirstOrderLag(τ = 0.5, x0 = zero(value)));
           local_wires = ("k/y" => "l/u",))
 
+# A vector lag from rest with a time constant per component, fed by a constant.
+vector_lag_model() =
+    Group((; k = Constant(SVector(1.0, -2.0)), l = FirstOrderLag(τ = SVector(0.5, 0.25)));
+          local_wires = ("k/y" => "l/u",))
+
 # The two-state state space with two inputs and two outputs, strictly proper
 # unless given a direct term.
 two_state_block(; kwargs...) = StateSpace(A = [-1 0.5; 0 -2], B = [1 0.5; 0 1], C = [1 2; 0 1]; kwargs...)
@@ -1097,6 +1102,12 @@ function test_blocks()
         step!(vector_sim; t_plus = 1//10)
         @test isapprox(port(vector_sim, "c"), SVector(0.22, -0.55); atol = 1e-12)
         @test build(vector_model; activations = (Float64, LinearizeDual)) isa Build
+        # The rates broadcast with `s0`, so each component slews at its own.
+        rates_sim = Simulation(fed_by(Constant(SVector(1.0, -1.0)),
+                                      RateLimiter(rising = SVector(2.0, 1.0), falling = SVector(5.0, 3.0))); h = 1//100)
+        init!(rates_sim, set())
+        step!(rates_sim; t_plus = 1//10)
+        @test isapprox(port(rates_sim, "c"), SVector(0.22, -0.33); atol = 1e-12)
     end
 
     @testset "the Gaussian white noise is a pure function of its seed and tick, with the moments it claims (§7.3, §2.5, D-231, D-313)" begin
@@ -1178,6 +1189,8 @@ function test_blocks()
                              DiscreteLimitedIntegrator(lower = SVector(-0.03, -0.03), upper = SVector(0.05, 0.05))),
                       fed_by(Step(t_step = 0.1, before = SVector(0.0, 1.0), after = SVector(1.0, 0.0)),
                              RateLimiter(rising = 2.0, falling = 5.0, s0 = SVector(0.0, 1.0))),
+                      fed_by(Step(t_step = 0.1, before = SVector(0.0, 1.0), after = SVector(1.0, 0.0)),
+                             RateLimiter(rising = SVector(2.0, 1.0), falling = SVector(5.0, 3.0), s0 = SVector(0.0, 1.0))),
                       discrete_reset_model(DiscreteIntegrator(s0 = SVector(0.5, 0.5), reset = true), 1//100;
                                            input = SVector(1.0, -1.0)),
                       discrete_reset_model(DiscreteLimitedIntegrator(lower = SVector(0, 0), upper = SVector(1, 1),
@@ -1441,10 +1454,15 @@ function test_blocks()
         init!(vector_sim, set())
         step!(vector_sim; t_plus = 1.0)
         @test isapprox(state(vector_sim, "l"), (1 - exp(-2)) * SVector(1.0, -2.0); rtol = 1e-7)
+        # `τ` broadcasts with `x0`, so each component relaxes at its own rate.
+        rates_sim = Simulation(vector_lag_model(); h = 1//100)
+        init!(rates_sim, set())
+        step!(rates_sim; t_plus = 1.0)
+        @test isapprox(state(rates_sim, "l"), SVector(1 - exp(-2), -2 * (1 - exp(-4))); rtol = 1e-7)
         linearization = block_linearization(FirstOrderLag(τ = 0.5))
         @test isapprox(linearization.A, [-2.0;;]; atol = 1e-12)
         @test isapprox(linearization.B, [2.0;;]; atol = 1e-12)
-        # The time constant is pinned at `Float64` whatever the keyword's type.
+        # The time constant is made `Float64` whatever the keyword's type.
         @test FirstOrderLag(τ = 1) isa FirstOrderLag{Float64}
     end
 
@@ -1588,7 +1606,8 @@ function test_blocks()
         for model in (fed_by(Constant(SVector(1.0, -1.0)), two_state_block()),
                       fed_by(Constant(SVector(1.0, -1.0)), two_state_block(D = two_state_direct())),
                       feedback_loop(0.0), fed_by(Constant(1.0), StateSpace(; scalar_direct()...)),
-                      fed_by(Constant(1.0), lag_form()), lead_lag_loop(), lag_model(SVector(1.0, -1.0)))
+                      fed_by(Constant(1.0), lag_form()), lead_lag_loop(), lag_model(SVector(1.0, -1.0)),
+                      vector_lag_model())
             @test build(model; activations = (Float64, LinearizeDual)) isa Build
             sim = Simulation(model; h = 1//100)
             bodies = phase_bodies(sim)
@@ -3240,17 +3259,48 @@ function test_blocks()
         @test_throws ArgumentError RateLimiter(rising = 0)
         @test_throws ArgumentError RateLimiter(rising = 1, falling = -1)
         @test RateLimiter(rising = 1, falling = Inf).falling == Inf
+        # The rates and `τ` broadcast with the state's keyword and are checked
+        # in every component.
+        @test RateLimiter(rising = SVector(1, 2)) isa RateLimiter{SVector{2, Float64}}
+        @test RateLimiter(rising = 1, s0 = SVector(0, 0)).falling === SVector(1.0, 1.0)
+        @test_throws ArgumentError RateLimiter(rising = SVector(1, 0))
+        @test_throws ArgumentError RateLimiter(rising = 1, falling = SVector(1, -1))
+        @test_throws DimensionMismatch RateLimiter(rising = SVector(1, 2), falling = SVector(1, 2, 3))
+        @test FirstOrderLag(τ = SVector(1, 2)) isa FirstOrderLag{SVector{2, Float64}}
+        @test FirstOrderLag(τ = 1, x0 = SVector(0, 0)).τ === SVector(1.0, 1.0)
+        @test_throws ArgumentError FirstOrderLag(τ = 0)
+        @test_throws ArgumentError FirstOrderLag(τ = -1)
+        @test_throws ArgumentError FirstOrderLag(τ = SVector(1, 0))
+        @test_throws DimensionMismatch FirstOrderLag(τ = SVector(1, 2), x0 = SVector(0, 0, 0))
+        # A continuous controller refuses a non-positive time constant, and a
+        # discrete one a negative, since its zero is a legal limit; a port is
+        # the model's to keep so.
         for pid in (PID, DiscretePID)
             @test_throws ArgumentError pid(Kp = 1.0, u_min = 1, u_max = -1)
             @test_throws ArgumentError pid(Kp = SVector(1.0, 1.0), u_min = SVector(-1, 1), u_max = SVector(1, 0))
             @test pid(Kp = 1.0, u_min = 1, u_max = 1) isa pid
             @test pid(Kp = 1.0, u_min = AsPort(), u_max = -1) isa pid
+            @test_throws ArgumentError pid(Kp = 1.0, τd = -0.1)
+            @test_throws ArgumentError pid(Kp = 1.0, Tt = -1.0)
+            @test_throws ArgumentError pid(Kp = SVector(1.0, 1.0), τd = SVector(0.1, -0.1))
+            @test_throws ArgumentError pid(Kp = SVector(1.0, 1.0), Tt = SVector(1.0, -1.0))
+            @test pid(Kp = 1.0, τd = AsPort(), Tt = AsPort()) isa pid
         end
+        @test_throws ArgumentError PID(Kp = 1.0, τd = 0)
+        @test_throws ArgumentError PID(Kp = 1.0, Tt = 0)
+        @test_throws ArgumentError PID(Kp = SVector(1.0, 1.0), Tt = SVector(1.0, 0.0))
+        @test DiscretePID(Kp = 1.0, τd = 0, Tt = 0) isa DiscretePID
         for tracker in (LQRTracker, DiscreteLQRTracker)
             @test_throws ArgumentError tracker(; tracker_gains()..., u_min = 1.0, u_max = -1.0)
             @test_throws ArgumentError tracker(; tracker_gains()..., u_min = SVector(-1.0, 1.0), u_max = SVector(1.0, 0.0))
             @test tracker(; tracker_gains()..., u_min = AsPort(), u_max = -1.0) isa tracker
+            @test_throws ArgumentError tracker(; tracker_gains()..., Tt = -1.0)
+            @test_throws ArgumentError tracker(; tracker_gains()..., Tt = SVector(1.0, -1.0))
+            @test tracker(; tracker_gains()..., Tt = AsPort()) isa tracker
         end
+        @test_throws ArgumentError LQRTracker(; tracker_gains()..., Tt = 0.0)
+        @test_throws ArgumentError LQRTracker(; tracker_gains()..., Tt = SVector(1.0, 0.0))
+        @test DiscreteLQRTracker(; tracker_gains()..., Tt = 0.0) isa DiscreteLQRTracker
         @test_throws ArgumentError Relay(lower = 1, upper = 0)
         @test_throws ArgumentError Relay(lower = SVector(0, 1), upper = SVector(1, 0))
         @test_throws TypeError Comparator(threshold = 0, localized = 1)

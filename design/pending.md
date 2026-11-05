@@ -12,27 +12,6 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
-- **One broadcast convention for the blocks' keywords** (§13.7, D-313), a
-  loose fix, ruled by the user on 2026-11-04. Keywords sharing `V` broadcast
-  to one shape, as `PID`, `DiscretePID`, `GaussianWhiteNoise` and the trackers
-  do; the promoting blocks are the older spelling, with no design reason
-  behind the difference. Only broadcasting can be universal, since `PID`'s
-  scalar defaults must sit beside a vector `Kp`. Three commits: the
-  inventory's sentence on promotion rewritten first; then `LimitedIntegrator`,
-  `LimitedDoubleIntegrator`, `DiscreteLimitedIntegrator`, `Step`, `Relay`,
-  `Comparator` and `Sequence`'s values through one helper making `Float64` of
-  one shape, which replaces `promoted_keywords` and its refusal tests and may
-  absorb `shape_type` and `GaussianWhiteNoise`'s idiom; then `RateLimiter`'s
-  `rising` and `falling` and `FirstOrderLag`'s `τ` widened from `Float64` to
-  `V`. A length mismatch stays Julia's `DimensionMismatch`, as on `PID`. The
-  widening carries `RateLimiter`'s positivity refusal to `all(rising .> 0)`,
-  and the helper retires the limited integrators' sentence on refused
-  mixes. `check_limits` stays. The
-  same commit refuses a non-positive `τ`, `τd` or `Tt` as `ArgumentError` in
-  `FirstOrderLag`, `PID` and the trackers, over every component, skipping
-  `AsPort()`, with `Tt = Inf` allowed and `DiscretePID`'s `τd = 0` kept
-  legal, since the audit of 2026-11-04 found `τ = 0` failing at the first
-  step as `NonfiniteState` and `τ = -1` diverging silently.
 - **A contract entry that is not a type.** A `u_types` or `y_types` entry
   holding a value that is no type, a tuple of types or a number, named or
   bare, fails late as a raw error, since the walk never checks that an entry

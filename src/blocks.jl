@@ -503,10 +503,13 @@ is refused as `AlgebraicCycle`. A form publishing the stored value from
 one tick at every rate. That form is this block followed by a
 [`UnitDelay`](@ref), a modelling decision the model makes by placing the delay.
 
-A `rising` or a `falling` that is not positive is refused with an
-`ArgumentError`. Both stay `Float64` whatever scalar the model runs at. The
-state and both ports share one type, the parameter `V`, `Float64` or an
-`SArray` of `Float64`, taken from `float(s0)`.
+The rates, the state and both ports share one type, the parameter `V`,
+`Float64` or an `SArray` of `Float64`, the broadcast of `rising`, `falling` and
+`s0` to one shape, so a scalar rate pairs with a vector `s0` and integer values
+qualify. Over an `SArray` each component slews at its own rates. A `rising` or
+a `falling` that is not positive in every component is refused with an
+`ArgumentError`. The rates are instance data, held at `Float64` whatever scalar
+the model runs at.
 
 # Keywords
 
@@ -516,14 +519,14 @@ state and both ports share one type, the parameter `V`, `Float64` or an
   one slew step from it.
 """
 struct RateLimiter{V <: Union{Float64, SArray{<:Tuple, Float64}}} <: AbstractComponent
-    rising::Float64
-    falling::Float64
+    rising::V
+    falling::V
     s0::V
 end
 function RateLimiter(; rising, falling = rising, s0 = 0.0)
-    rising > 0 && falling > 0 || throw(ArgumentError(
+    all(rising .> 0) && all(falling .> 0) || throw(ArgumentError(
         "the rate limiter's `rising` and `falling` must be positive, not $rising and $falling"))
-    s0 = float(s0)
+    rising, falling, s0 = broadcast_keywords((; rising, falling, s0))
     RateLimiter{typeof(s0)}(rising, falling, s0)
 end
 s_init(c::RateLimiter) = c.s0
@@ -728,10 +731,12 @@ For a scalar signal the block is
 stays for `SArray` signals, for `x0` in the signal's own coordinates and for
 the spelling.
 
-The state, the input `u` and the output `y` share one type, the parameter `V`,
-`Float64` or an `SArray` of `Float64`, taken from `float(x0)`, so an integer
-`x0` qualifies. `τ` is instance data, kept a `Float64` whatever scalar the
-model runs at.
+The state, the input `u`, the output `y` and `τ` share one type, the parameter
+`V`, `Float64` or an `SArray` of `Float64`, the broadcast of `τ` and `x0` to
+one shape, so a scalar `τ` pairs with a vector `x0` and integer values qualify.
+Over an `SArray` the lag is componentwise, each component at its own `τ`. A `τ`
+that is not positive in every component is refused with an `ArgumentError`.
+`τ` is instance data, held at `Float64` whatever scalar the model runs at.
 
 # Keywords
 
@@ -740,17 +745,18 @@ model runs at.
 """
 struct FirstOrderLag{V <: Union{Float64, SArray{<:Tuple, Float64}}} <: AbstractComponent
     x0::V
-    τ::Float64
+    τ::V
 end
 function FirstOrderLag(; τ, x0 = 0.0)
-    x0 = float(x0)
+    check_time_constant(:τ, τ)
+    τ, x0 = broadcast_keywords((; τ, x0))
     FirstOrderLag{typeof(x0)}(x0, τ)
 end
 x_init(c::FirstOrderLag) = c.x0
 u_types(::FirstOrderLag{V}) where {V} = V
 y_types(::FirstOrderLag{V}) where {V} = V
 y_state(::FirstOrderLag, (; x)) = x
-x_deriv(c::FirstOrderLag, (; x, u)) = (u - x) / c.τ
+x_deriv(c::FirstOrderLag, (; x, u)) = (u - x) ./ c.τ
 
 # --- the linear blocks (§13.7, §5.3, D-313) -------------------------------------
 
@@ -2041,6 +2047,16 @@ function fixed_parameters(given::NamedTuple{names}, types::NamedTuple{names}) wh
     NamedTuple{fixed_names}(map(name -> types[name](given[name] .+ zero(types[name])), fixed_names))
 end
 
+# A time constant given as a value is positive in every channel, or, where the
+# tier makes zero a legal limit, not negative; `Inf` passes either. One given as
+# `AsPort()` is the model's to keep so. A zero `τ`, `τd` or `Tt` divides the
+# continuous law by zero at the first step, and a negative one diverges silently.
+function check_time_constant(name, value; zero_legal::Bool = false)
+    value === AsPort() || all(zero_legal ? value .>= 0 : value .> 0) || throw(ArgumentError(
+        "`$name` must be $(zero_legal ? "non-negative" : "positive") in every channel, not $value"))
+    nothing
+end
+
 # Tracking follows `v` at rate `1/Tt`, so a `Tt` given infinite in any channel
 # would follow nothing; a scheduled `Tt` is the model's to keep finite.
 function check_tracking(tracking, Tt)
@@ -2105,6 +2121,8 @@ Tracking needs `Tt` spelled, or given as `AsPort()`, which leaves it to the
 model to keep finite.
 
 A `u_min` above `u_max`, both given as values, is refused as an `ArgumentError`.
+So is a `τd` or a `Tt` given as a value and not positive in every channel; the
+default `Tt = Inf` passes.
 
 `q` holds the integral term in output units, with `Ki` inside the integral, so
 a change in `Ki` alters only future accumulation.
@@ -2170,6 +2188,8 @@ end
 function PID(; Kp, Ki = 0.0, Kd = 0.0, τd = 0.1, Tt = Inf, u_min = -Inf, u_max = Inf, b = 1.0, c = 0.0,
              hold::Bool = false, tracking::Bool = false)
     check_tracking(tracking, Tt)
+    check_time_constant(:τd, τd)
+    check_time_constant(:Tt, Tt)
     given = (; Kp, Ki, Kd, τd, Tt, u_min, u_max, b, c)
     V = shape_type(given)
     check_output_limits(u_min, u_max)
@@ -2230,7 +2250,8 @@ integral's error stays `e`.
 
 `tracking = true` with a `Tt` given infinite in any channel is refused as an
 `ArgumentError`, as in `PID`. So is a `u_min` above `u_max`, both given as
-values.
+values, and so is a `τd` or a `Tt` given as a value and negative in any
+channel; either may be zero.
 
 The parameters, the inputs, the outputs `u` and `u_raw` and the states share
 one type, the parameter `V`, `Float64` or an `SArray` of `Float64`, and over an
@@ -2298,6 +2319,8 @@ end
 function DiscretePID(; Kp, Ki = 0.0, Kd = 0.0, τd = 0.1, Tt = Inf, u_min = -Inf, u_max = Inf, b = 1.0, c = 0.0,
                      hold::Bool = false, tracking::Bool = false)
     check_tracking(tracking, Tt)
+    check_time_constant(:τd, τd; zero_legal = true)
+    check_time_constant(:Tt, Tt; zero_legal = true)
     given = (; Kp, Ki, Kd, τd, Tt, u_min, u_max, b, c)
     V = shape_type(given)
     check_output_limits(u_min, u_max)
@@ -2453,7 +2476,8 @@ The own clamp is the correction's, and `Tt = Inf` switches it off.
 
 Tracking with a `Tt` given as a value and infinite in any channel is refused as
 an `ArgumentError`, as for `PID`. A `u_min` above `u_max`, both given as values,
-is refused as an `ArgumentError`.
+is refused as an `ArgumentError`, and so is a `Tt` given as a value and not
+positive in every channel; the default `Tt = Inf` passes.
 
 The [ports](@ref g-port) are each an `SVector` at every size. `x` is an
 `SVector{NX, Float64}`, `z` and `z_ref` are `SVector{NZ, Float64}`, and `u`,
@@ -2521,6 +2545,7 @@ function LQRTracker{NX, NU, NZ}(; K_fbk, K_fwd, K_int = zero(SMatrix{NU, NZ, Flo
                                 z_trim = zero(SVector{NZ, Float64}), Tt = Inf, u_min = -Inf, u_max = Inf,
                                 hold::Bool = false, tracking::Bool = false) where {NX, NU, NZ}
     check_tracking(tracking, Tt)
+    check_time_constant(:Tt, Tt)
     types, given = parameter_types(NX, NU, NZ), (; K_fbk, K_fwd, K_int, x_trim, u_trim, z_trim, Tt, u_min, u_max)
     check_shapes(types, given)
     check_output_limits(u_min, u_max)
@@ -2585,7 +2610,7 @@ reference falls back to `u` in each channel that is free. All of this is as in
 
 `tracking = true` with a `Tt` given infinite in any channel is refused as an
 `ArgumentError`, as in `LQRTracker`. So is a `u_min` above `u_max`, both given
-as values.
+as values, and so is a `Tt` given as a value and negative in any channel.
 
 Every `Tt` is stable. `Tt = Inf` switches the correction off. `Tt = 0` is legal
 and brings `u_raw` to the reference by the next tick, so a channel not engaged
@@ -2644,6 +2669,7 @@ function DiscreteLQRTracker{NX, NU, NZ}(; K_fbk, K_fwd, K_int = zero(SMatrix{NU,
                                         z_trim = zero(SVector{NZ, Float64}), Tt = Inf, u_min = -Inf, u_max = Inf,
                                         hold::Bool = false, tracking::Bool = false) where {NX, NU, NZ}
     check_tracking(tracking, Tt)
+    check_time_constant(:Tt, Tt; zero_legal = true)
     types, given = parameter_types(NX, NU, NZ), (; K_fbk, K_fwd, K_int, x_trim, u_trim, z_trim, Tt, u_min, u_max)
     check_shapes(types, given)
     check_output_limits(u_min, u_max)

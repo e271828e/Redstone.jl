@@ -154,8 +154,9 @@ The standard component library, the submodule `Redstone.Blocks`:
   and static vectors, carrying `signal_ports`, `u_types`, `y_types` and
   `parameters`, over `PID` and `DiscretePID`, with the marker `AsPort`, the
   roster `PID_PARAMETERS` and the helpers `shape_type`, `fixed_parameters`,
-  `check_tracking`, `check_output_limits` and `channel_type` (D-313, D-383,
-  D-384, D-385).
+  `check_tracking`, `check_output_limits`, `check_time_constant`, shared with
+  the trackers and `FirstOrderLag`, and `channel_type` (D-313, D-383, D-384,
+  D-385).
 - `LQRTrackerBlock{NX, NU, NZ, Hold, Track, Fixed}`, a `ControllerBlock`,
   carrying `signal_ports`, `u_types`, `y_types` and `parameters`, over
   `LQRTracker` and `DiscreteLQRTracker`, with the roster `LQR_PARAMETERS`, the
