@@ -411,6 +411,8 @@ _contract(fn, @nospecialize(comp)) = declared_at(fn, comp, CONTINUOUS)
 # does not evaluate it again; standalone the primitive evaluates it. Called from
 # a declaration body during a build, `input_faces` reuses the build's evaluation
 # of the child's declaration. A leaf's keys are asked at the nominal `Float64`.
+# The list keeps declaration order, so printouts are deterministic and
+# diagnostics stable.
 """
     input_faces(comp) -> Vector{String}
 
@@ -418,10 +420,10 @@ Return the [component](@ref g-component)'s input [face](@ref g-face) names, in
 declaration order.
 
 For a [primitive](@ref g-primitive) the input faces are the keys of its
-[`u_types`](@ref), which do not depend on the scalar type, and a bare `u_types`
-lists as its face `u`. For an [assembly](@ref g-assembly) they are the face
-names its [`input_wires`](@ref) declares. The list keeps declaration order, so
-printouts are deterministic and diagnostics stable.
+[`u_types`](@ref), which do not depend on the scalar type, and a
+[bare](@ref g-bare-contract) `u_types` lists as its face `u`. For an
+[assembly](@ref g-assembly) they are the face names its [`input_wires`](@ref)
+declares.
 
 The vector returned is a fresh one, the caller's to change.
 
@@ -444,8 +446,8 @@ Return the [component](@ref g-component)'s output [face](@ref g-face) names, in
 declaration order.
 
 For a [primitive](@ref g-primitive) the output faces are the keys of its
-[`y_types`](@ref), and a bare `y_types` lists as its face `y`. For an
-[assembly](@ref g-assembly) they are the face names its
+[`y_types`](@ref), and a [bare](@ref g-bare-contract) `y_types` lists as its
+face `y`. For an [assembly](@ref g-assembly) they are the face names its
 [`output_wires`](@ref) declares.
 
 The vector returned is a fresh one, the caller's to change.
@@ -491,19 +493,20 @@ end
 Return input wire [entries](@ref g-entry) that expose a child's input
 [faces](@ref g-face) on the [assembly](@ref g-assembly)'s own boundary.
 
-The helper serves the pass-through case, where an assembly hands up the inputs
-of a child it does not feed itself. Splat its entries into the assembly's
-[`input_wires`](@ref), where they mix freely with hand-written ones, as in
+The helper serves an assembly that hands up the inputs of a child it does not
+feed itself. Splat its entries into the assembly's [`input_wires`](@ref), where
+they mix freely with hand-written ones, as in
 `input_wires(w::World) = (input_passthrough(w, "aircraft"; except = ("atm",))...,)`.
 
 Each face of the child, as [`input_faces`](@ref) lists it, becomes the pair
-`prefix * sep * face => child_path * "/" * face`. A bare input is the face `u`,
-so the default labels an `integrator` child's bare input `"integrator.u"`.
+`prefix * sep * face => child_path * "/" * face`. A [bare](@ref g-bare-contract)
+input is the face `u`, so the default labels an `integrator` child's bare input
+`"integrator.u"`.
 
-The default `prefix` folds the path's `/` into `sep`, so a container element
-`"units/1"` labels its faces `"units.1.…"`, a legal face name. The helper uses
-an explicit `prefix` verbatim, and `prefix = ""` drops the prefixing entirely,
-labelling a bare input `u`.
+The default `prefix` folds the path's `/` into `sep`, so a
+[container](@ref g-container-children) element `"units/1"` labels its faces
+`"units.1.…"`, a legal face name. The helper uses an explicit `prefix` verbatim.
+`prefix = ""` drops the prefixing entirely, labelling a bare input `u`.
 
 `child_path` names an immediate child, a bare key where the container is
 name-transparent. A deeper path is refused as `PathResolution`, as
@@ -540,6 +543,8 @@ end
 # Its consumer is one-level routing: every level re-exports the outputs it
 # surfaces, so the output side needs the computed spelling the input side
 # already has.
+# Each level re-exports the outputs it surfaces, so an output deep in the tree
+# reaches the root only through one entry per level, which this helper computes.
 """
     output_passthrough(assembly, child_path::AbstractString; sep::AbstractString = ".",
                        prefix::AbstractString = replace(child_path, "/" => sep),
@@ -555,11 +560,9 @@ folded default `prefix` and the same three exclusive selection keywords, one per
 call, `select` receiving face names.
 
 Its pairs read along the flow, `child_path * "/" * face => prefix * sep * face`,
-internal source to face name, as every pair in that declaration does. A bare
-output is the face `y`, labelled `"integrator.y"` by default.
-
-Each level re-exports the outputs it surfaces, so an output deep in the tree
-reaches the root only through one entry per level, which this helper computes.
+internal source to face name, as every pair in that declaration does. A
+[bare](@ref g-bare-contract) output is the face `y`, labelled `"integrator.y"`
+by default.
 
 Its refusals are `input_passthrough`'s. More than one selection keyword, or an
 unknown name, is refused as `UnknownFaceSelection`, and a selection keyword that
@@ -989,7 +992,7 @@ end
 """
     Structure
 
-The structure step's product, the declared facts the
+The [structure step](@ref g-structure)'s product, the declared facts the
 [component](@ref g-component) tree alone fixes, held as rows.
 
 Read it off a [`Build`](@ref) as `build.structure`. Nothing in it depends on a
@@ -1001,8 +1004,8 @@ A `Structure` holds these fields.
 - `components`: one entry per [primitive](@ref g-primitive), in the order the
   build walks the tree.
 - `anchors`: one entry per [`Absolute`](@ref) declaration, the exact `(T, τ)`
-  pair (period and offset in rational seconds) with the declaring scope and
-  key.
+  pair (period and offset in rational seconds) with the declaring
+  [scope](@ref g-rate-scope) and key.
 - `scopes`: one entry per [assembly](@ref g-assembly) a `sample_times` key
   names, with its path, the key and the timing the build derived for it.
 - `root_inputs`: the [root inputs](@ref g-root-input), in order.
