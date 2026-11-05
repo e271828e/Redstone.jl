@@ -43,6 +43,9 @@ struct Junction{In, Out, N, F} <: AbstractComponent
     f::F
 end
 (::Type{Junction{In, Out, N}})(f) where {In, Out, N} = Junction{In, Out, N, typeof(f)}(f)
+# A type as the fold, `Junction{Int, Float64, 1}(Float64)`, is held as `Type{T}`
+# and not as `DataType`, which fixes no method and would dispatch at every call.
+(::Type{Junction{In, Out, N}})(f::Type{T}) where {In, Out, N, T} = Junction{In, Out, N, Type{T}}(f)
 
 # Design: §6.2, D-437.
 """

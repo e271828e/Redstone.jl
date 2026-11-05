@@ -834,6 +834,8 @@ function test_blocks()
         @test y_types(Or{3}()) == Bool
         @test u_types(SumJunction{Float64,2}()) == (in1 = Float64, in2 = Float64)
         @test Junction{Float64,Float64,3}(max) isa Junction{Float64,Float64,3,typeof(max)}
+        # A type as the fold is held as `Type{T}`, which fixes a method; `DataType` fixes none.
+        @test typeof(Junction{Int, Float64, 1}(Float64)) === Junction{Int, Float64, 1, Type{Float64}}
         @test Or{3}() isa Junction && And{2}() isa Junction
         @test typeof(Or{3}()) === Junction{Bool,Bool,3,typeof(|)}
         @test SumJunction{Float64,2}().f === +
@@ -1096,7 +1098,9 @@ function test_blocks()
                       fed_by(Constant(1.0), Freeze{Float64}()),
                       fed_by(Constant(SVector(1.0, -1.0)), Freeze{SVector{2, Float64}}()),
                       requested(true, "x"), fed_by(Constant(2.0), Fn{Float64}(v -> 3v - 1)),
-                      fed_by(Constant(2), Fn{Int, Float64}(Float64)), vector_select_model()))...,
+                      fed_by(Constant(2), Fn{Int, Float64}(Float64)),
+                      Group((; k = Constant(2), j = Junction{Int, Float64, 1}(Float64)); local_wires = ("k/y" => "j/in1",)),
+                      vector_select_model()))...,
                  (switch_root(), (in1 = 1.0, in2 = -1.0, select = true)),
                  (select_root(), (climb = 1.0, cruise = 2.0, descent = 3.0, leg = DESCENT)),
                  (course_model(), (a = 1.5,)),
