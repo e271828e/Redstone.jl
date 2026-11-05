@@ -77,8 +77,10 @@ method's own comment shows the sentence is the intent, `spec`, or `sheet`. A
 finding that also holds for a sibling off the roster names the sibling.
 
 **"Run" in a docstring.** The word covers both the state a door builds and the
-span of `run!` or `replay!`. The agent states which reading a sentence needs. A
-sentence that is true under one and false under the other is IMPRECISE.
+span of `run!` or `replay!`. A sentence is IMPRECISE on this ground only where
+its own words leave the reading open and the other reading leads a user to a wrong
+conclusion on a reachable path. Where the context fixes the reading, the claim is
+judged as usual.
 
 ### 3. The compliance pass
 
@@ -92,9 +94,12 @@ Four groups, read-only, at the base.
 | C4 | `devices`, `roster`, `trace`, `readers`, `trim`, `linearize`, `conditions` | 8,430 |
 
 The job is rules 4 to 6, 17 to 22, 24 to 31 and 35 to 38, read in order, on every
-docstring in the roster. It takes the tools' output as given and resolves the 13
-candidates. It judges existing examples and proposes none. The sheet's own
+docstring in the roster, plus a signature line with no return type under rule 7.
+It takes the tools' output as given and resolves the 13 candidates. It judges existing examples and proposes none. The sheet's own
 examples of kept forms are compliant. None or many findings are both acceptable.
+
+The agent appends its ledger to a `ledger.txt` in its scratch directory and
+returns only its counts and gaps as its final message.
 
     name | file:line | clean
     name | file:line | rule N | quoted text | proposed edit, naming what moves to the comment
