@@ -894,6 +894,17 @@ y_state(::LastStage, (; x)) = (q = x.q,)
 x_deriv(::LastStage, (; x, u, t)) =
     u.arm && t > 0.09 ? throw(InterruptException()) : (q = one(x.q),)
 
+# A ramp whose RHS throws a bare string past t = 0.15: the one throw the
+# carrier's constructor refuses, so the status moves and the `MethodError`
+# propagates (§13.4, D-225, D-441).
+struct BareThrower <: AbstractComponent end
+
+x_init(::BareThrower) = (q = 0.0,)
+y_types(::BareThrower) = (q = Float64,)
+
+y_state(::BareThrower, (; x)) = (q = x.q,)
+x_deriv(::BareThrower, (; x, t)) = t > 0.15 ? throw("bare") : (q = one(x.q),)
+
 # The runtime's pending-SIGINT word: nonzero from the signal's delivery until
 # an unmask raises it (§12.4).
 sigint_pending() = unsafe_load(cglobal(:jl_signal_pending, Cint)) != 0

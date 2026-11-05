@@ -298,4 +298,56 @@ patch's source); the reviewer reverts each fix on a scratch copy as
 
 ## The review's record
 
-Filled after the review.
+The cold review ran on `afc1568` in a worktree, on Julia 1.13.3, the floor:
+the gate 9359/9359 in 9m09s, the `-t 1` subset `failures devices lifecycle
+trace` 1610/1610, the examples 77/77. Its probes and mutant scripts sit in
+the coordinator's scratch (`review_probes/`), the one probe worth keeping
+copied beside this brief. Six findings survived verification; the user
+ruled on the first, the coordinator landed the rest as the docs commit
+`8bd06bf` and the code commit after it.
+
+- **F1, a false premise in D-441's Rationale and §12.4.** Both said a run
+  ending `errored` after a forced throw loses "nothing operational", since
+  `init!`, `restore!` and `replay!` accept any status. True of the model's
+  doors, false of the simulation's: all four refuse `:errored`, which §12.6
+  rules terminal (D-059). The user re-ruled A with the true cost, the
+  session, on the ground that a cut frame is a frame failure and `errored`'s
+  terminality is D-059's own rule with no exception for one species of
+  failure. The two sentences now say the simulation is terminal like any
+  `errored` one and the trace replays the run into a fresh simulation.
+- **F2, the defect class survived in the doors' prefix.** `init!` runs
+  `establish_defaults!` (the user's `m_init` inside), `_apply_plan!` and the
+  clock writes before its `try`, and `overlay!` runs `_apply_plan!` before
+  its own. A throw there on a re-initialized model left `:consistent` over
+  half-reset stores, and on a simulation `run.frame == 0` with the clock at
+  the old time, a case the dropped clock clause had refused at the tip.
+  Fixed by writing `:built` at each door's first write (`init!`, `overlay!`,
+  `_restore_state!`), so a throw anywhere in a door leaves `:built`, a
+  `settled!` throw included; the two docstrings' "writes no status" became
+  "the status left `:built`". The reviewer's probe then reads `:built`,
+  `checkpoint(sim)` refused as `ServiceLifecycle`, `step!` as `MissingInit`.
+- **F3, a raw interrupt out of `frame!`'s catch.** The species rule's
+  lookup re-invokes the user's declarations and rethrew an interrupt raw,
+  now after the status write, so the run ended `errored` under a stop
+  record. Fixed: the lookup returns the original error on any throw, since
+  the frame has already failed. `_advance!`'s header comment (F6) is true
+  with it.
+- **F4, reading E unpinned.** The mutant moving `frame!`'s status write back
+  after `_wrap_step` survived. Fixed by the `BareThrower` fixture and the
+  testset "a bare value thrown inside a frame moves the status, the carrier
+  lost (§13.4, D-441)", asserting the constructor's `MethodError` and
+  `:inconsistent`.
+- **F5, a false comment and an ambiguous sentence on the counter.**
+  `frame_top!`'s comment claimed the index is the clock's frame plus one
+  after any cut frame, false when the throw lands after the clock write;
+  §12.4's "a throw there" read as inside the `try`. Both reworded.
+- **F6**, `_advance!`'s header missing F3's source: resolved by F3.
+
+The mutant table ran as predicted, with four extra mutants of the
+reviewer's (the `:restore` lead line and interrupt recipe, the `overlay!(sim)`
+gate call, the restore catch at `:inconsistent`), each red. Survivors
+accepted: m9 and m10 alone, and m13. Rejected: m21, F4's.
+
+Outside the increment, reproduced at `0217a1c`: a real SIGINT into the
+pause wait at `-t 1` with a device rostered hangs. Recorded as a pending
+bullet with the probe `probe_pause_wait_t1.jl` beside this brief.

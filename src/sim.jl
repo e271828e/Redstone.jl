@@ -2005,7 +2005,8 @@ _claimed_gate(::Model, ::LoopHooks, ::Symbol) = nothing
 # wait. See `settled!` for the other hook. The run's frame index advances here,
 # inside the frame's `try`, before the drain records the batch at it: no throw
 # can land between the advance and the guarded sequence, so after any cut frame
-# the index is the clock's frame plus one and the status says the frame failed.
+# the index names the cut frame, wherever the clock stands, and the status says
+# it failed.
 frame_top!(hooks::LoopHooks) = (hooks.sim.run.frame += 1; drain!(hooks.sim, hooks.roster))
 
 # Design: §11.2, §11.4, §13.4, §13.5, D-317.

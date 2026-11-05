@@ -273,8 +273,8 @@ simulation's own `init!`.
 
 A throw inside boundary zero arrives as a `StepError` at `t0`, with `boundary` 0
 and host `:boundary_zero`, an `InterruptException` included. It writes the
-status back to `:built`. A throw from `settled!(hooks)` propagates as it is and
-writes no status.
+status back to `:built`. A throw from `settled!(hooks)` propagates as it is, the
+status left `:built`.
 
 # Keywords
 
@@ -296,6 +296,7 @@ function init!(model::Model{T}, plan::ConditionPlan; t0::Real = 0.0,
     _claimed_gate(model, hooks, :init!)
     _check_origin(model, :init!, t0)
     exec = model.exec
+    @atomic :release model.status = :built   # the door's first write (D-441)
     establish_defaults!(exec.xbuf, exec.sstores, exec.mstores,
                         model.deployment.build.structure.components,
                         activation(model.deployment.build, T).decls)   # D-063's reset
@@ -372,7 +373,7 @@ A throw inside the settling, an `InterruptException` included, arrives as a
 `StepError` with host `:overlay` and the frame the clock sits at. It writes the
 status back to `:built`, with the stores partly written as a failed
 [boundary zero](@ref g-boundary-zero) leaves them. A throw from
-`settled!(hooks)` propagates as it is and writes no status.
+`settled!(hooks)` propagates as it is, the status left `:built`.
 
 # Keywords
 
@@ -390,6 +391,7 @@ end
 function overlay!(model::Model, plan::ConditionPlan; hooks::FrameHooks = NoHooks())
     _claimed_gate(model, hooks, :overlay!)
     k = _assert_at_rest(model, :overlay!)
+    @atomic :release model.status = :built   # the door's first write (D-441)
     _apply_plan!(model, plan)
     try
         _settle!(model; fresh = false)
@@ -862,8 +864,7 @@ function _species(model::Model, err::FieldError)
         family === :x_deriv || family === :s_update ?
             bundle_names(update_of(tier), comp, tier, stage1_ports) :
         return err
-    catch lookup_err
-        lookup_err isa InterruptException && rethrow()
+    catch                             # an interrupt too: the frame has already failed (D-441)
         return err
     end
     # By names, not by the exact type: the runtime bundle's value types differ
@@ -1067,6 +1068,7 @@ function _restore_state!(model::Model, model_state::ModelState; hooks::FrameHook
     k = _frames_to(model_state.t, model_state.t₀, model_state.deployment.h)
     cursor = model.exec.cursor
     cursor.comp = 0; cursor.fn = :none   # no stale frame: a restore runs no component
+    @atomic :release model.status = :built   # the door's first write (D-441)
     try
         _restore_state!(model.exec, model_state)
         settled!(hooks)               # the restored boundary's snapshot (§11.2, §12.6)

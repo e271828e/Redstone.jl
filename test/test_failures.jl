@@ -701,6 +701,15 @@ function failures_runtime()
                                            "oops")
     end
 
+    @testset "a bare value thrown inside a frame moves the status, the carrier lost (§13.4, D-441)" begin
+        # The constructor refuses the bare value, so its `MethodError` is what
+        # propagates; the status was written first, so the frame is a failure.
+        bare = Model(single(BareThrower()); h = 1//10)
+        init!(bare); frame!(bare, 1)
+        @test failure(() -> frame!(bare, 2)) isa MethodError
+        @test bare.status === :inconsistent
+    end
+
     @testset "the `Dual` activations reach the same carrier and cause (§13.4, §9.4)" begin
         # Appendix C's payloads are `Float64` and the clock under a `D8` activation
         # is a `Dual`, which `Float64` has no method for: the framing is what would
