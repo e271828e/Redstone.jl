@@ -259,6 +259,8 @@ happens when the step is not finite, when it falls below the rounding scale of
 the decisions it would move, or when every trial is rejected until the damping
 passes its ceiling.
 
+A `λ₀` that is not positive is refused as `ArgumentError`.
+
 # Keywords
 
 - `maxiter`: the most iterations the solver runs.
@@ -271,8 +273,10 @@ struct LevenbergMarquardt
     λ₀::Float64
 end
 
-LevenbergMarquardt(; maxiter::Integer = 100, λ₀::Real = 1e-3) =
+function LevenbergMarquardt(; maxiter::Integer = 100, λ₀::Real = 1e-3)
+    λ₀ > 0 || throw(ArgumentError("`λ₀` must be positive, not $λ₀"))
     LevenbergMarquardt(Int(maxiter), Float64(λ₀))
+end
 
 # The damping bracket. Below `λMIN` the damped normal equations are the
 # undamped ones to rounding; above `λMAX` the step is `−Jᵀr/λ·diag` scaled into

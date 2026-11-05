@@ -238,6 +238,13 @@ function test_trim()
         @test result.n_evaluations == 1 + 16     # λ from 1e-3 up to 1e12, by decades
     end
 
+    @testset "a starting damping that is not positive is refused at construction (§14.8)" begin
+        @test_throws ArgumentError LevenbergMarquardt(λ₀ = 0)
+        @test_throws ArgumentError LevenbergMarquardt(λ₀ = -1.0)
+        @test_throws ArgumentError LevenbergMarquardt(λ₀ = NaN)
+        @test LevenbergMarquardt(λ₀ = 1//2).λ₀ == 0.5
+    end
+
     @testset "the iteration budget ends the descent as `:maxiter`, unless the last step met the box (§14.8)" begin
         # One damped step leaves `λ₀/(1 + λ₀)` of the linear residual `d - 2`.
         linear_eval!(r, J, d) = (r[1] = d[1] - 2; J[1, 1] = 1.0; nothing)
