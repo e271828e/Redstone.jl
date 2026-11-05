@@ -973,8 +973,8 @@ function test_blocks()
             step!(vector_sim; t_plus = 1//100)
             @test port(vector_sim, "c") == (k < 2 ? SVector(0.0, 0.0) : SVector(1.0, -2.0))
         end
-        # The store is isbits by rule (D-231), which the type bounds at the spelling.
-        @test_throws TypeError Delay(K = 2, v0 = [1.0])
+        # The store is isbits by rule (D-231), so an array `v0` is converted to an `SArray`.
+        @test Delay(K = 2, v0 = [1.0]).v0 === SVector(1.0)
         @test_throws ArgumentError Delay(K = 0)
         # `out` is the store's, from stage 1, so a loop through the line builds.
         @test build(feedback_loop(Delay(K = 2, v0 = 0.0))) isa Build
@@ -3322,13 +3322,19 @@ function test_blocks()
         @test_throws ArgumentError GaussianWhiteNoise(seed = 1, σ = 1.0, psd = 1.0)
     end
 
-    @testset "a keyword is made `Float64`, and an `MVector` refused at the constructor, on either tier (§7.1, §13.7, D-320)" begin
-        # The build admits `Float64` and `SArray`s of it alone, so the bound
-        # refuses the rest where the block is written, not at build.
-        @test_throws TypeError Integrator(x0 = MVector(1.0, 2.0))
-        @test_throws TypeError DiscreteIntegrator(s0 = MVector(1.0, 2.0))
-        @test_throws TypeError Delay(K = 1, v0 = MVector(1.0, 2.0))
-        @test_throws TypeError Relay(lower = MVector(0.0), upper = MVector(1.0))
+    @testset "a keyword is made `Float64`, and an array keyword an `SArray`, on either tier (§7.1, §13.7, D-320)" begin
+        # The build admits `Float64` and `SArray`s of it alone, so an array
+        # keyword of any kind becomes the `SArray` of its size, one keyword,
+        # several, or the PID's shape.
+        @test Integrator(x0 = [1.0, 2.0]).x0 === SVector(1.0, 2.0)
+        @test DiscreteIntegrator(s0 = zeros(2, 2, 2)) isa DiscreteIntegrator{SArray{Tuple{2, 2, 2}, Float64, 3, 8}}
+        @test Delay(K = 1, v0 = MVector(1, 2)).v0 === SVector(1.0, 2.0)
+        @test Relay(lower = [0.0, 0.0], upper = MVector(1.0, 1.0)) isa Relay{SVector{2, Float64}}
+        @test GaussianWhiteNoise(seed = 1, σ = [1.0, 2.0]) isa GaussianWhiteNoise{SVector{2, Float64}}
+        @test PID(Kp = [1.0, 2.0]) isa PID{SVector{2, Float64}}
+        @test DiscretePID(Kp = ones(2, 2)).fixed.Ki === zero(SMatrix{2, 2, Float64})
+        # A spelled type parameter has no value to convert.
+        @test_throws TypeError Freeze{MVector{2, Float64}}
         # A `Float32` converts as an `Int` does, one keyword or several.
         @test Integrator(x0 = 1.5f0).x0 === 1.5
         @test Integrator(x0 = SVector(1.5f0, 2f0)).x0 === SVector(1.5, 2.0)

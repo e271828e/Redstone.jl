@@ -297,17 +297,22 @@ reset_guard(_, (; u)) = u.reset
 
 # --- the keyword shape (§13.7, D-313) -------------------------------------------
 
+# A keyword given as any array becomes the `SArray` of its size, so a plain
+# `Vector`, an `MVector` or a `Diagonal` qualify; a scalar keeps its kind.
+as_static(v::AbstractArray) = SArray{Tuple{size(v)...}}(v)
+as_static(v) = v
+
 # The zero of the shape a set of values broadcast to, the sum of their zeros as
 # `Float64`, so a scalar pairs with a static array; two lengths are Julia's
 # `DimensionMismatch`. `promote` cannot serve, since `promote(1.0, SVector(1.0, 2.0))`
 # throws, and the PID's scalar defaults must sit beside a vector `Kp`.
-shape_zero(given) = Float64.(reduce((a, b) -> a .+ b, map(zero, given); init = 0.0))
+shape_zero(given) = Float64.(reduce((a, b) -> a .+ b, map(zero ∘ as_static, given); init = 0.0))
 
 # The keywords of one `V`, each broadcast to their one shape and made `Float64`,
-# so integer values qualify; `V` is the shape's type.
+# so integer values and plain arrays qualify; `V` is the shape's type.
 function broadcast_keywords(given)
     shape = shape_zero(given)
-    map(v -> Float64.(v .+ shape), given)
+    map(v -> Float64.(as_static(v) .+ shape), given)
 end
 
 # --- the discrete tier (§7.3, §10.5, D-313) -------------------------------------
@@ -339,7 +344,8 @@ A smaller `K` is refused as an `ArgumentError`.
 `v0` is a value of the signal, copied into every slot of the ring. It is not
 the initial store, so it is not `UnitDelay`'s `s0`. The ring's values and both
 ports share one type, the parameter `V`, `Float64` or an `SArray` of `Float64`,
-taken from `Float64.(v0)`, so an integer or a `Float32` `v0` qualifies.
+taken from `Float64.(v0)`, an array converted to an `SArray`, so an integer, a
+`Float32` or a plain array `v0` qualifies.
 
 # Keywords
 
@@ -351,7 +357,7 @@ struct Delay{V <: Union{Float64, SArray{<:Tuple, Float64}}, K} <: AbstractCompon
 end
 function Delay(; K::Int, v0 = 0.0)
     K >= 1 || throw(ArgumentError("Delay takes `K >= 1`; `K = 1` is `UnitDelay`."))
-    v0 = Float64.(v0)
+    v0 = Float64.(as_static(v0))
     Delay{typeof(v0), K}(v0)
 end
 s_init(c::Delay{V, K}) where {V, K} = (ring = SVector{K, V}(ntuple(_ -> c.v0, K)), cursor = 1)
@@ -393,8 +399,9 @@ The discrete [tier](@ref g-tier) never follows the scalar of an
 its last value.
 
 The state, the input `u` and the output `y` share one type, the parameter `V`,
-`Float64` or an `SArray` of `Float64`, taken from `Float64.(s0)`, so an integer
-or a `Float32` `s0` qualifies.
+`Float64` or an `SArray` of `Float64`, taken from `Float64.(s0)`, an array
+converted to an `SArray`, so an integer, a `Float32` or a plain array `s0`
+qualifies.
 
 # Keywords
 
@@ -407,7 +414,7 @@ struct DiscreteIntegrator{V <: Union{Float64, SArray{<:Tuple, Float64}}, R} <: A
     s0::V
 end
 function DiscreteIntegrator(; s0 = 0.0, reset::Bool = false)
-    s0 = Float64.(s0)
+    s0 = Float64.(as_static(s0))
     DiscreteIntegrator{typeof(s0), reset}(s0)
 end
 s_init(c::DiscreteIntegrator) = c.s0
@@ -685,8 +692,9 @@ which localizes the crossing. [Boundary zero](@ref g-boundary-zero) sets every
 there.
 
 The state, the input `u` and the output `y` share one type, the parameter `V`,
-`Float64` or an `SArray` of `Float64`, taken from `Float64.(x0)`, so an integer
-or a `Float32` `x0` qualifies.
+`Float64` or an `SArray` of `Float64`, taken from `Float64.(x0)`, an array
+converted to an `SArray`, so an integer, a `Float32` or a plain array `x0`
+qualifies.
 
 # Keywords
 
@@ -699,7 +707,7 @@ struct Integrator{V <: Union{Float64, SArray{<:Tuple, Float64}}, R} <: AbstractC
     x0::V
 end
 function Integrator(; x0 = 0.0, reset::Bool = false)
-    x0 = Float64.(x0)
+    x0 = Float64.(as_static(x0))
     Integrator{typeof(x0), reset}(x0)
 end
 x_init(c::Integrator) = c.x0
