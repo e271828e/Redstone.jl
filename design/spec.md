@@ -11273,7 +11273,7 @@ instance holds) instead ([§14.9][s14-9], [D-364][d-364]).
 
 ```julia
 # Freeze{V} — a stateless continuous primitive; tolerant in, pinned out
-struct Freeze{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: AbstractComponent end
+struct Freeze{V <: Union{Float64, SArray{<:Tuple, Float64}}} <: AbstractComponent end
 x_init(::Freeze) = nothing
 u_types(::Freeze{V}) where {V} = V
 y_types(::Freeze{V}) where {V} = Pinned{V}
@@ -11281,12 +11281,15 @@ y_direct(::Freeze, (; u)) = ForwardDiff.value.(u)   # leafwise strip, by broadca
 ```
 
 At nominal the strip is the identity, so the block costs one gather and one
-scatter. **`V` is a `Real` or a `StaticArray` of them, constrained at the type**
-([D-312][d-312]), so a struct-valued freeze is refused at the spelling until a model
-needs one. Under a `Dual` activation the block drops the partials, and its
-output satisfies the pinned entry. What the wire then declares is a zero
-coupling in every Jacobian along that path ([D-266][d-266]), the modeling decision [§14.10][s14-10]
-asks an author to state on the page rather than bury mid-expression. A sampler
+scatter. **`V` is a `Float64` or an `SArray` of `Float64`, constrained at the type**
+([D-312][d-312], [D-320][d-320]), so a struct-valued freeze is refused at the
+spelling until a model needs one. The bound also refuses a `Float32` or an
+`MVector` there, which the build would otherwise refuse later ([§7.1][s7-1]).
+Under a `Dual` activation the block drops the partials, and its output
+satisfies the pinned entry. What the wire then declares is a zero coupling in
+every Jacobian along that path ([D-266][d-266]), the modeling decision
+[§14.10][s14-10] asks an author to state on the page rather than bury
+mid-expression. A sampler
 is the other non-walking source, and it changes the model, holding the value
 between ticks ([§10.5][s10-5]). The block is for a continuous value the consumer cannot
 differentiate through. Where the coupling matters to the Jacobian, the local

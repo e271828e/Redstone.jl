@@ -13861,6 +13861,15 @@ form is the more connectable one. `Step` and `Relay` are the second and third
 instances, ruled when they shipped; `UnitDelay` stays plain because the
 discrete tier pins wholesale ([D-263][d-263]).
 
+Annotation (2026-11-05): the bound narrows to what the build admits. `Freeze`
+and the fourteen blocks that took its spelling, `Delay` to `DiscretePID`,
+bound `V` as `Union{Float64, SArray{<:Tuple, Float64}}`. The `Real` and
+`StaticArray` bound let a `Float32` or an `MVector` through the constructor,
+to be refused at build as `IllegalStateLeaf`, `IllegalStoreField` or
+`ConformanceFailure`, since the build admits no scalar but `Float64` ([D-320][d-320])
+and no leaf but a plain scalar or an `SArray` ([D-094][d-094]). The refusal is now the
+constructor's `TypeError`.
+
 ### D-313 — Admit a library block by judgement against three guidelines
 
 **Status.** ratified

@@ -427,7 +427,7 @@ nor its parameters, so the design lives here and in the inventory
 ([§13.7][s13-7], [D-313][d-313]).
 
 **Widening, not forking.** The library's vector blocks are one struct each
-over `V <: Union{Real, StaticArray{<:Tuple, <:Real}}`, with the law in
+over `V <: Union{Float64, SArray{<:Tuple, Float64}}`, with the law in
 broadcast form: `Integrator`, `FirstOrderLag`, `LimitedIntegrator`, `Relay`,
 `DiscreteLimitedIntegrator` and `RateLimiter`. Only two things fork on
 scalar against vector, `state_events` and the saturation code's port type.
