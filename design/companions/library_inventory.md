@@ -313,6 +313,7 @@ and slip modes is a mechanics package's.
 | `DiscretizedStateSpace` and `DiscretizedTransferFunction`, from a continuous system | shipped | the zero-order hold taken per tick at the bundle's `Δt`, so the class and the initial condition are the continuous ones; `linear_blocks.md`, section 9 |
 | `DiscreteLimitedIntegrator{V, R}` | shipped | tier semantics by contrast: the continuous block's mode and four events are one `clamp` in `s_update`, with no mode store and no localization |
 | `Delay(; K, v0)` | shipped | the tier's `z⁻ᴷ` in a ring store, `K` ticks of the component's own period ([§10.5][s10-5]), one output, `K = 1` the `UnitDelay` in keyword spelling |
+| a trapezoidal or backward-Euler integrator, and Tustin on the discretized pair | not admitted | all three feedthrough, which costs the loop break `DiscreteIntegrator` exists for; a Tustin design arrives discretized, through the pair in `z`; `linear_blocks.md`, section 9.2 |
 
 **`DiscreteIntegrator`.** `reset = true` adds the `Bool` input `reset`, a level
 reset in `s_update` ([§5.3][s5-3]). The update writes `s0` while the flag reads true, so
@@ -404,10 +405,6 @@ row:
   `LimitedIntegrator` and `DiscreteLimitedIntegrator`, as on the controllers.
 - Tapped Delay: a second output on `Delay` publishing the ring as an
   `SVector{K, V}`, for a FIR law written in a stage body.
-- The trapezoidal and backward-Euler Discrete-Time Integrator: both are
-  feedthrough, so they would stop `DiscreteIntegrator` breaking a loop. The
-  honest spelling is a `method` keyword on the discretized pair, Tustin
-  beside the zero-order hold.
 - Zero-Pole: a `zeros`, `poles`, `gain` keyword path into `TransferFunction`.
 
 ## 4. The order of work
