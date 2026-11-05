@@ -120,10 +120,10 @@ Return whether the [binding](@ref g-binding) [claims](@ref g-claim) every
 
 `is_greedy` selects where an input-side binding's claim comes from.
 [`attach!`](@ref) computes a greedy binding's [claim](@ref g-greedy-claim) as
-every [root input](@ref g-root-input) no [device](@ref g-device) already attached
-has claimed. It computes the claim once and never recomputes it, so attachment order
-decides it. A greedy device is best attached last. An empty remainder is legal
-and warns `EmptyGreedyClaim`.
+every [root input](@ref g-root-input) no [device](@ref g-device) already
+attached has claimed. It computes the claim once and never recomputes it, so
+attachment order decides it. A greedy device is best attached last. An empty
+remainder is legal and warns `EmptyGreedyClaim`.
 
 A greedy binding declares [`is_input`](@ref) and defines no [`claims`](@ref)
 method. `attach!` refuses a greedy binding without the input side, or one that
