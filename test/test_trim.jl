@@ -282,7 +282,7 @@ function test_trim()
         end
     end
 
-    @testset "the search runs with the clock at `t0`, as the commit does (§14.8, D-441)" begin
+    @testset "the search runs with the clock at `t0`, as the commit does (§14.8)" begin
         # `q̇ = -t·q² + u` at `q = 1` holds still at `u = t`, a point only the clock names.
         problem() = TrimProblem(guess = (u = 0.5,), lower = (u = -Inf,), upper = (u = Inf,),
                                 condition = d -> set(u = (in = d.u,)),

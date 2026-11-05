@@ -12805,7 +12805,7 @@ read. An incomplete `baseline` is one declaration-ordered
 `UninitializedInputs` at setup rather than a whole solve against undefined
 [cells](#g-cell).
 
-**The search runs with the clock at `t0`** ([D-441][d-441]). Setup sets both halves'
+The search runs with the clock at `t0`. Setup sets both halves'
 clock and origin to `t0` before the first evaluation (below), as `linearize`'s
 `about` form does ([§14.10][s14-10]). A residual that reads `t` thus solves at the
 time the commit's boundary zero starts from.
@@ -16432,7 +16432,6 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-438]: log.md#d-438--name-a-bare-stores-leaf-by-the-declarations-letter-x-s-or-m
 [d-439]: log.md#d-439--open-an-inert-namedtuple-field-in-the-parameter-summary
 [d-440]: log.md#d-440--refuse-a-value-reads-unknown-path-as-pathresolution
-[d-441]: log.md#d-441--run-trims-search-with-the-clock-at-t0
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop

@@ -1099,14 +1099,14 @@ Spec: §5.4, §13.8, §9.3, D-012, D-140, D-245, D-437.
   two-half scratch world. Each half is a scratch `Model`, built by model.jl's
   `_scratch` (D-317, D-319).
 - `_solve_problem`, the solve through the verdict's evaluation, with both
-  halves' clocks at `t0` (D-441), and `_verdict!`, which takes the caller's
+  halves' clocks at `t0` (§14.8), and `_verdict!`, which takes the caller's
   commit, both shared with the simulation's method in sim.jl (D-319).
 - The misuse fallback on a `Model`, and `ArgumentInvalid`'s `:non_nominal` on
   a `Model` at another scalar (D-319).
 - `TrimReport`, with its `committed_checks` (D-262).
 
 Spec: §9.6, §13.1, §14.5–§14.9, D-070, D-158, D-213, D-224, D-253, D-262,
-D-277, D-317, D-318, D-319, D-441.
+D-277, D-317, D-318, D-319.
 
 ### `test/fixtures.jl`
 

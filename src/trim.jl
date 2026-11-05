@@ -581,7 +581,7 @@ function _solve_problem(model::Model{Float64}, problem::TrimProblem; baseline, t
 
     # --- the nominal half (D-213) ------------------------------------------------
     nominal_exec = _scratch(model, Float64).exec
-    _set_clock!(nominal_exec, t0, t0)         # the search's time is the commit's (D-441)
+    _set_clock!(nominal_exec, t0, t0)         # the search's time is the commit's (§14.8)
     plan = resolve_condition(override(baseline, problem.condition(guess)), build, Float64)
     assert_total(plan, build.structure, :trim!)    # (§14.6): pre-evaluation, all-or-nothing
     apply!(nominal_exec, plan)
