@@ -339,7 +339,7 @@ A smaller `K` is refused as an `ArgumentError`.
 `v0` is a value of the signal, copied into every slot of the ring. It is not
 the initial store, so it is not `UnitDelay`'s `s0`. The ring's values and both
 ports share one type, the parameter `V`, `Float64` or an `SArray` of `Float64`,
-taken from `float(v0)`, so an integer `v0` qualifies.
+taken from `Float64.(v0)`, so an integer or a `Float32` `v0` qualifies.
 
 # Keywords
 
@@ -351,7 +351,7 @@ struct Delay{V <: Union{Float64, SArray{<:Tuple, Float64}}, K} <: AbstractCompon
 end
 function Delay(; K::Int, v0 = 0.0)
     K >= 1 || throw(ArgumentError("Delay takes `K >= 1`; `K = 1` is `UnitDelay`."))
-    v0 = float(v0)
+    v0 = Float64.(v0)
     Delay{typeof(v0), K}(v0)
 end
 s_init(c::Delay{V, K}) where {V, K} = (ring = SVector{K, V}(ntuple(_ -> c.v0, K)), cursor = 1)
@@ -393,8 +393,8 @@ The discrete [tier](@ref g-tier) never follows the scalar of an
 its last value.
 
 The state, the input `u` and the output `y` share one type, the parameter `V`,
-`Float64` or an `SArray` of `Float64`, taken from `float(s0)`, so an integer
-`s0` qualifies.
+`Float64` or an `SArray` of `Float64`, taken from `Float64.(s0)`, so an integer
+or a `Float32` `s0` qualifies.
 
 # Keywords
 
@@ -407,7 +407,7 @@ struct DiscreteIntegrator{V <: Union{Float64, SArray{<:Tuple, Float64}}, R} <: A
     s0::V
 end
 function DiscreteIntegrator(; s0 = 0.0, reset::Bool = false)
-    s0 = float(s0)
+    s0 = Float64.(s0)
     DiscreteIntegrator{typeof(s0), reset}(s0)
 end
 s_init(c::DiscreteIntegrator) = c.s0
@@ -685,8 +685,8 @@ which localizes the crossing. [Boundary zero](@ref g-boundary-zero) sets every
 there.
 
 The state, the input `u` and the output `y` share one type, the parameter `V`,
-`Float64` or an `SArray` of `Float64`, taken from `float(x0)`, so an integer
-`x0` qualifies.
+`Float64` or an `SArray` of `Float64`, taken from `Float64.(x0)`, so an integer
+or a `Float32` `x0` qualifies.
 
 # Keywords
 
@@ -699,7 +699,7 @@ struct Integrator{V <: Union{Float64, SArray{<:Tuple, Float64}}, R} <: AbstractC
     x0::V
 end
 function Integrator(; x0 = 0.0, reset::Bool = false)
-    x0 = float(x0)
+    x0 = Float64.(x0)
     Integrator{typeof(x0), reset}(x0)
 end
 x_init(c::Integrator) = c.x0

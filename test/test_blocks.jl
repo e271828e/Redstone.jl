@@ -3322,16 +3322,18 @@ function test_blocks()
         @test_throws ArgumentError GaussianWhiteNoise(seed = 1, σ = 1.0, psd = 1.0)
     end
 
-    @testset "a `Float32` or an `MVector` keyword is refused at the constructor, on either tier (§7.1, §13.7, D-320)" begin
+    @testset "a keyword is made `Float64`, and an `MVector` refused at the constructor, on either tier (§7.1, §13.7, D-320)" begin
         # The build admits `Float64` and `SArray`s of it alone, so the bound
         # refuses the rest where the block is written, not at build.
-        @test_throws TypeError Integrator(x0 = 1f0)
         @test_throws TypeError Integrator(x0 = MVector(1.0, 2.0))
-        @test_throws TypeError DiscreteIntegrator(s0 = 1f0)
         @test_throws TypeError DiscreteIntegrator(s0 = MVector(1.0, 2.0))
+        @test_throws TypeError Delay(K = 1, v0 = MVector(1.0, 2.0))
         @test_throws TypeError Relay(lower = MVector(0.0), upper = MVector(1.0))
-        # A block whose keywords broadcast makes `Float64` of a `Float32`, as of
-        # an `Int`; a block taking its shape from `float(x0)` refuses it above.
+        # A `Float32` converts as an `Int` does, one keyword or several.
+        @test Integrator(x0 = 1.5f0).x0 === 1.5
+        @test Integrator(x0 = SVector(1.5f0, 2f0)).x0 === SVector(1.5, 2.0)
+        @test DiscreteIntegrator(s0 = 1.5f0).s0 === 1.5
+        @test Delay(K = 1, v0 = 1.5f0).v0 === 1.5
         @test Relay(lower = 0f0, upper = 1f0) isa Relay{Float64}
     end
 
