@@ -52,7 +52,8 @@ checks = [
     "summary at twenty words" => d -> wc(rendered(summary(d.text))) >= 20,
     "no signature first" => d -> !startswith(d.text, "    "),
     "prose after # Keywords" =>
-        d -> occursin(r"# Keywords\n\n(?:(?:- |  ).*\n)*\n(?!#|See also|\s*$)\S", d.text),
+        d -> occursin(r"# Keywords\n\n(?!- )\S", d.text) ||
+             occursin(r"# Keywords\n\n(?:(?:- |  ).*\n)*\n(?!#|See also|\s*$)\S", d.text),
 ]
 for (label, bad) in checks
     println(rpad(label, 26), [d.name for d in docs if bad(d)])

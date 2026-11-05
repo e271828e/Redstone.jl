@@ -52,10 +52,13 @@ closed(run::Run) = run.termination !== nothing
     name, its default in the signature, its meaning in one sentence. A list
     reads in the REPL at any width, where a wide table wraps. A table that is
     not a keyword list, such as `ControllerBlock`'s case table, stays where a
-    list cannot carry it.
+    list cannot carry it. Parallel names may share a bullet, as
+    `Linearization`'s `A` to `D`. A slurped `kw...` whose names the caller
+    chooses takes prose and no bullet.
 6. **A struct whose fields are public lists them under a lead sentence**, such
     as "A report holds these fields.", one bullet per field, its meaning in one
-    sentence. One public field is named in prose.
+    sentence. One public field is named in prose. Parallel fields may share a
+    bullet, as in rule 5.
 
 ## Signatures
 
@@ -64,7 +67,8 @@ closed(run::Run) = run.termination !== nothing
     definition writes them, then the return type after `->`. The code is what a
     user calls; Appendix B is an inventory of names, not a source of spelling,
     and writes `→` where a docstring writes `->`. A long line wraps at a
-    keyword, the continuation aligned under the first argument.
+    keyword, the continuation aligned under the first argument. A line that
+    only names a type takes no return type.
 8. **A return type that is not one concrete type is written in words, or as
     `Any`.** `x_init` returns `NamedTuple, value or nothing`, each member
     named. A read whose type is the cell's writes `-> Any`, which is for a
@@ -142,12 +146,15 @@ closed(run::Run) = run.termination !== nothing
     Appendix D and skips its meta-vocabulary group, so a term there, such as
     "artifact", takes no link. The spec keeps its glosses, since its readers
     cannot follow a link where a docstring's reader is one link from the page.
+    A link follows the sense, so a word used otherwise than its entry, such as
+    "the log" for Julia's logging, takes none.
 26. **A docstring never defines a term inline, and coins none.** The glossary
     carries the definitions, and a term it does not carry is unwound into plain
     words.
 27. **A code-named entry is linked through its API link only.** `Model`,
     `TrimProblem` and `at` take [`Model`](@ref) and the like, never a glossary
-    link, and prose "build", "deployment", "model" and "run" take none. A
+    link, and prose "build", "deployment", "model", "run" and "schedule" take
+    none. A
     code-named entry with no API link, such as `should_abort` or `t*`, keeps
     its glossary link.
 28. **Primitive or assembly names the class, continuous or discrete the
@@ -168,7 +175,8 @@ closed(run::Run) = run.termination !== nothing
     then say "pinned at `V`". A
     parameter the user never writes, such as the `R` that `reset = true`
     fixes, is mechanism under rule 22 and goes to the comment; the prose
-    names the keyword.
+    names the keyword. A signature defines a parameter the user writes, as
+    `Junction`'s `V`.
 
 ## What moves and what stays
 

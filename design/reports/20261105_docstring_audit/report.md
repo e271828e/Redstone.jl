@@ -177,7 +177,8 @@ replacement, and compliance rows to the proposed edit.
 
 ## 7. Rulings
 
-To be filled from the user's answers.
+The user ruled on 2026-11-05: every item of section 6 as recommended. The sheet's
+amendments from items 12, 14, 15, 17 and 19 landed with this record.
 
 ## 8. What was not established
 

@@ -19,7 +19,7 @@ item changes what the spec says, the spec edit is part of the item.
   the sweep needs `src/` quiet. Brief
   `design/increments/20261105_docstring_audit/brief_docstring_audit.md`, base
   `4a818b2`. Report `design/reports/20261105_docstring_audit/report.md`. State: the audit
-  is done, and the sweep waits on the user's rulings, its section 6.
+  is done and ruled, section 7, and stage 5 starts with section 5's defects.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose
