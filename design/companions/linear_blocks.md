@@ -231,7 +231,7 @@ The first draft forwarded instead, `y_state(c::TransferFunction{N, false},
 b) = y_state(c.realization, b)` and its twin, and the user asked what the
 obvious generic spelling, `y_state(c::TransferFunction, b) =
 y_state(c.sys, b)` for both stages, would do. The build detects a stage by
-`hasmethod` on the component's type and never looks inside, so a method's
+the methods on the component's type and never looks inside, so a method's
 existence is the declaration: the generic pair declares both stages for
 every transfer function. A probe followed the three steps an author would
 take from there. The generic pair builds nothing, since the arm the inner

@@ -747,7 +747,10 @@ function foreign_declarations(@nospecialize(comp))
               getfield(author_module, name) !== getfield(@__MODULE__, name)]
 end
 
-has_stage(fn, @nospecialize(comp)) = hasmethod(fn, Tuple{typeof(comp),NamedTuple})
+# Any method on the component's type declares the stage, whatever its last
+# argument's annotation (§8.2, D-350). One that rejects the value fails at the
+# probe, so a typed `x_projection` never vanishes silently.
+has_stage(fn, @nospecialize(comp)) = !isempty(methods(fn, Tuple{typeof(comp),Any}))
 
 """
 Is `fn` declared *for this component* in the arity `extra` names, as against

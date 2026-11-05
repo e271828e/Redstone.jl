@@ -12,14 +12,6 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
-- **A bare state's typed `x_projection`, the audit's defect f.**
-  `x_projection(::C, x::Float64)` on a bare state never runs, with no refusal.
-  The state stays 2.0 under a clamp at 1.0, and the same method with `x`
-  unannotated gives 1.0. `has_stage` asks `hasmethod` with
-  `Tuple{C,NamedTuple}`, which the annotation cannot match, so the lookup has
-  to test the method against the state's type. Evidence:
-  `design/reports/20261105_docstring_audit/probes/A4/p2_runtime.jl`, and the `x_projection` row of
-  `ledgers/A4.txt`.
 - **An interrupt at RK4's last stage, the audit's defect g.** It leaves the
   clock on a frame top with the status `:consistent`, so `checkpoint` passes
   and returns the stage point as the state. This needs a look before a fix.

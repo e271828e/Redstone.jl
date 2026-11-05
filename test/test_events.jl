@@ -73,6 +73,36 @@ y_state(::BadProjectShape, (; x)) = (q = x.q,)
 x_deriv(::BadProjectShape, (; x)) = (q = 0.0,)
 x_projection(::BadProjectShape, x) = (v = x.q,)
 
+# Projections typed on the state, each a clamp the lookup must find. The field
+# keeps the `Float64` one out of the `Dual` sweep, which it cannot pass (§7.2).
+struct TypedBareProjection <: AbstractComponent
+    limit::Float64
+end
+x_init(::TypedBareProjection) = 2.0
+x_deriv(::TypedBareProjection, (; x)) = one(x)
+x_projection(c::TypedBareProjection, x::Float64) = min(x, c.limit)
+
+struct TypedNamedProjection <: AbstractComponent end
+x_init(::TypedNamedProjection) = (q = 2.0,)
+x_deriv(::TypedNamedProjection, (; x)) = (q = one(x.q),)
+x_projection(::TypedNamedProjection, x::NamedTuple{(:q,),<:Tuple{Real}}) = (q = min(x.q, one(x.q)),)
+
+struct MistypedProjection <: AbstractComponent end  # a method the state never matches
+x_init(::MistypedProjection) = 2.0
+x_deriv(::MistypedProjection, (; x)) = one(x)
+x_projection(::MistypedProjection, x::Int) = x
+
+struct TypedProjectOnDiscrete <: AbstractComponent end
+s_init(::TypedProjectOnDiscrete) = 0
+s_update(::TypedProjectOnDiscrete, (; s)) = s + 1
+x_projection(::TypedProjectOnDiscrete, x::Int) = x
+
+struct TypedProjectNoState <: AbstractComponent end
+x_init(::TypedProjectNoState) = nothing
+y_types(::TypedProjectNoState) = Float64
+y_state(::TypedProjectNoState, (; t)) = 1.0
+x_projection(::TypedProjectNoState, x::Float64) = x
+
 # `q̇ = 1` on the manifold `q ≤ 0.5`, under a handler that writes off it. `leak`
 # holds only off the manifold, so it fires iff a guard reads an unprojected write.
 struct ProjectedReset <: AbstractComponent end
@@ -127,6 +157,33 @@ function test_events()
         @test d isa ConformanceFailure && d.what == "x_projection" && d.reason === :field_set &&
               d.observed_fields == [:v] && d.declared_fields == [:q]
         @test d.event === nothing                 # no handler, no event
+    end
+
+    @testset "a method typed on the state declares `x_projection` (§5.3, §7.2, §8.2, D-350)" begin
+        # The clamp runs at `init!` and after each step, where `q̇ = 1` leaves it.
+        for comp in (TypedBareProjection(1.0), TypedNamedProjection())
+            sim = Simulation(single(comp); h = 1 // 10)
+            init!(sim)
+            @test only(state(sim, "c")) ≈ 1.0
+            step!(sim; frames = 2)
+            @test only(state(sim, "c")) ≈ 1.0
+        end
+
+        # A method that cannot take the state is refused, never dropped.
+        d = diagnostic(failure(() -> build(single(MistypedProjection()))))
+        @test d isa UserCodeFraming && d.fn == "x_projection" && d.cause isa MethodError
+
+        # The `Dual` probe still checks §7.2's obligation on a typed projection.
+        @test build(single(TypedNamedProjection()); activations = (ProbeDual,)) isa Build
+        d = diagnostic(failure(() -> build(single(TypedBareProjection(1.0));
+                                           activations = (ProbeDual,))))
+        @test d isa UserCodeFraming && d.fn == "x_projection" && d.cause isa MethodError
+
+        # The tier refusals read the typed method as they read an untyped one.
+        d = only(diagnostics(failure(() -> build(single(TypedProjectOnDiscrete())))))
+        @test d isa DeclarationOnWrongTier && d.reason === :continuous_only
+        d = only(diagnostics(failure(() -> build(single(TypedProjectNoState())))))
+        @test d isa DeclarationOnWrongTier && d.reason === :no_manifold
     end
 
     @testset "the guard's form is the declared policy (§2.3, §10.4, D-179)" begin
