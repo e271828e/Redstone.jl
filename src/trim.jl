@@ -540,14 +540,16 @@ as `ArgumentInvalid`, before any check. So is a second argument that is not a
 
 - `baseline`: the required baseline the problem's condition is layered over, at
   setup and at the commit.
-- `t0`: the start time of the committing boundary zero, any real, held as a
-  `Float64` origin.
+- `t0`: the start time of the committing boundary zero, a finite real whose
+  frame index fits an `Int`, held as a `Float64` origin, and refused as
+  `ArgumentInvalid` before the search otherwise.
 - `backend`: the solver, any value with a [`solve`](@ref) method, by default
   [`LevenbergMarquardt`](@ref).
 """
 function trim!(model::Model{Float64}, problem::TrimProblem; baseline,
                t0::Real = 0.0, backend = LevenbergMarquardt())
     _claimed_gate(model, NoHooks(), :trim!)   # the claim is said first: the call commits (D-318)
+    _check_origin(model, :trim!, t0)
     solved = _solve_problem(model, problem; baseline, t0 = Float64(t0), backend)
     _verdict!(model, problem, baseline, solved,
               condition -> init!(model, condition; t0 = Float64(t0)))

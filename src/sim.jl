@@ -815,7 +815,7 @@ function init!(sim::Simulation, condition = set(); t0::Real = 0.0, trace = true,
     lifecycle_state === :errored && throw(DiagnosticError(
         ServiceLifecycle(op = :init!, status = :errored, legal = collect(STOPPED_SIM_LEGAL))))
     _check_recording(:init!, trace, log, log_every, log_max)   # the run's keywords (D-261)
-    _check_origin(sim.model, t0)                               # before the run opens
+    _check_origin(sim.model, :init!, t0)                       # before the run opens
     plan = resolve_condition(condition, sim.model.deployment.build, Float64)   # both refusals precede every write
     assert_total(plan, sim.model.deployment.build.structure, :init!)   # (§14.6): all-or-nothing
     _reset_periphery!(sim)
@@ -1104,6 +1104,7 @@ function trim!(sim::Simulation, problem::TrimProblem; baseline,
         op = :trim!, status = :running, legal = collect(STOPPED_SIM_LEGAL))))
     lifecycle_state === :errored && throw(DiagnosticError(ServiceLifecycle(
         op = :trim!, status = :errored, legal = collect(STOPPED_SIM_LEGAL))))
+    _check_origin(sim.model, :trim!, t0)
     solved = _solve_problem(sim.model, problem; baseline, t0 = Float64(t0), backend)
     _verdict!(sim.model, problem, baseline, solved,
               condition -> init!(sim, condition; t0 = Float64(t0)))

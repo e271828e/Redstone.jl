@@ -600,6 +600,7 @@ function diagnostics_kind_set()
             ArgumentInvalid(call = :Model, reason = :scalar, argument = :T, value = Float32),
             ArgumentInvalid(call = :Model, reason = :range, argument = :chunk_size, value = 0),
             ArgumentInvalid(call = :init!, reason = :range, argument = :t0, value = NaN),
+            ArgumentInvalid(call = :trim!, reason = :range, argument = :t0, value = NaN),
             ArgumentInvalid(call = :init!, reason = :range, argument = :trace, value = 1),
             ArgumentInvalid(call = :init!, reason = :range, argument = :log, value = 1),
             ArgumentInvalid(call = :init!, reason = :range, argument = :log_every, value = 0),

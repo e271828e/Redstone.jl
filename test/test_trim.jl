@@ -310,6 +310,28 @@ function test_trim()
         @test report.status === :bypassed && report.converged
     end
 
+    @testset "a `t0` `init!` would refuse is refused before the search, in both forms (§14.5, §14.8, Appendix C)" begin
+        # One iteration cannot converge, so only the refusal can stop this search.
+        short = LevenbergMarquardt(maxiter = 1)
+        evaluated = Ref(0)
+        counted = TrimProblem(guess = (u = 0.0,), lower = (u = -Inf,), upper = (u = Inf,),
+                              condition = d -> (evaluated[] += 1; decide_u(d)), reads = torque_reads(),
+                              residuals = torque_only, tolerances = (torque = 1e-9,))
+        for bad in (NaN, Inf, -Inf, 1e34)
+            model = Model(fed(Pendulum(), :u); h = 1//10)
+            d = carried(@test_throws DiagnosticError{ArgumentInvalid} trim!(model, counted; baseline = pend_base(),
+                                                                            t0 = bad, backend = short))
+            @test d.call === :trim! && d.reason === :range && d.argument === :t0 && d.value === bad
+            @test model.status === :built
+            sim = Simulation(fed(Pendulum(), :u); h = 1//10)
+            d = carried(@test_throws DiagnosticError{ArgumentInvalid} trim!(sim, counted; baseline = pend_base(),
+                                                                            t0 = bad, backend = short))
+            @test d.call === :trim! && d.reason === :range && d.argument === :t0 && d.value === bad
+            @test lifecycle(sim) === :built
+        end
+        @test evaluated[] == 0
+    end
+
     @testset "the iteration budget ends the descent as `:maxiter`, unless the last step met the box (§14.8)" begin
         # One damped step leaves `λ₀/(1 + λ₀)` of the linear residual `d - 2`.
         linear_eval!(r, J, d) = (r[1] = d[1] - 2; J[1, 1] = 1.0; nothing)

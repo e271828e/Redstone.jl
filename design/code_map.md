@@ -1095,7 +1095,8 @@ Spec: §5.4, §13.8, §9.3, D-012, D-140, D-245, D-437.
   read set mounted, the path-free fields and a `reads` that is no read set
   passed through (§14.9, D-277).
 - The `solve` seam, with `LevenbergMarquardt`.
-- `trim!` on a `Model{Float64}`, gated on the claim (D-318), over D-213's
+- `trim!` on a `Model{Float64}`, gated on the claim (D-318), refusing what
+  `_check_origin` rejects before the search (§14.8), over D-213's
   two-half scratch world. Each half is a scratch `Model`, built by model.jl's
   `_scratch` (D-317, D-319).
 - `_solve_problem`, the solve through the verdict's evaluation, with both
