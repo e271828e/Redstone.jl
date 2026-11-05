@@ -1035,6 +1035,27 @@ function test_blocks()
         @test !Redstone.has_stage(y_direct, vector_block)
     end
 
+    @testset "the limited discrete integrator publishes `s0` clamped into its limits at `t₀`, as a reset lands it (§5.3, D-313)" begin
+        at_t₀(block) = (sim = Simulation(Group((; k = Constant(block.s0 .* 0.0), d = block);
+                                               local_wires = ("k/y" => "d/u",)); h = 1//10);
+                        init!(sim, set()); sim)
+        above = at_t₀(DiscreteLimitedIntegrator(lower = -1, upper = 0.5, s0 = 5.0))
+        @test port(above, "d", :out) === 0.5 && port(above, "d", :saturation) === Int8(1)
+        @test state(above, "d") === 0.5
+        below = at_t₀(DiscreteLimitedIntegrator(lower = -1, upper = 0.5, s0 = -3.0))
+        @test port(below, "d", :out) === -1.0 && port(below, "d", :saturation) === Int8(-1)
+        # The default `s0` is zero, which these limits leave out.
+        default_s0 = at_t₀(DiscreteLimitedIntegrator(lower = 0.5, upper = 1.0))
+        @test port(default_s0, "d", :out) === 0.5 && port(default_s0, "d", :saturation) === Int8(-1)
+        # Inside the limits, and componentwise over an `SArray`.
+        inside = at_t₀(DiscreteLimitedIntegrator(lower = -1, upper = 0.5, s0 = 0.25))
+        @test port(inside, "d", :out) === 0.25 && port(inside, "d", :saturation) === Int8(0)
+        vector_block = at_t₀(DiscreteLimitedIntegrator(lower = SVector(-1, -1), upper = SVector(0.5, 0.5),
+                                                       s0 = SVector(5.0, 0.25)))
+        @test port(vector_block, "d", :out) === SVector(0.5, 0.25)
+        @test port(vector_block, "d", :saturation) === SVector(Int8(1), Int8(0))
+    end
+
     @testset "the discrete integrators' reset is a level: the state lands at the next tick, the output at the reset tick stale (§5.3, D-313)" begin
         h = 1//100
         for block in (DiscreteIntegrator(s0 = 0.5, reset = true), DiscreteLimitedIntegrator(lower = 0, upper = 1, s0 = 0.5, reset = true))

@@ -488,7 +488,7 @@ function DiscreteLimitedIntegrator(; lower, upper, s0 = zero(lower), reset::Bool
     DiscreteLimitedIntegrator{typeof(s0), reset}(s0, lower, upper)
 end
 saturation_code(q, lower, upper) = q >= upper ? Int8(1) : q <= lower ? Int8(-1) : Int8(0)
-s_init(c::DiscreteLimitedIntegrator) = c.s0
+s_init(c::DiscreteLimitedIntegrator) = clamp.(c.s0, c.lower, c.upper)
 u_types(::DiscreteLimitedIntegrator{V, R}) where {V, R} = reset_ports(V, Val(R))
 y_types(::DiscreteLimitedIntegrator{V}) where {V} = (out = V, saturation = saturation_type(V))
 y_state(c::DiscreteLimitedIntegrator, (; s)) =
