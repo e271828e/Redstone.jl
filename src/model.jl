@@ -35,18 +35,18 @@
           localization_tol = 1e-6, localization_budget = 8,
           chunk_size = 16) -> Model{T}
 
-A deployment materialized at one scalar type `T`, ready to be written, evaluated
-and stepped.
+A deployment materialized at one scalar type, ready to be written, evaluated and
+stepped.
+
+`T` is `Float64` or a concrete `ForwardDiff.Dual` over `Float64`, into which a
+`Float64` embeds exactly. Any other `T` is refused as `ArgumentInvalid` with
+reason `:scalar`, before anything is compiled.
 
 It carries the [`Deployment`](@ref) and the [executor](@ref g-executor) built
 from it at `T`, with its [buffers](@ref g-buffer). It runs nothing in real time,
 talks to no [device](@ref g-device) and records nothing. A [`Simulation`](@ref)
 does that around a `Model{Float64}`. One deployment backs many models, and each
 model owns its buffers alone.
-
-`T` is `Float64` or a concrete `ForwardDiff.Dual` over `Float64`, into which a
-`Float64` embeds exactly. Any other `T` is refused as `ArgumentInvalid` with
-reason `:scalar`, before anything is compiled.
 
 `Model(build; kw...)` is
 `Model(Deployment(build; grid keywords...), T; chunk_size)`, and
@@ -73,7 +73,7 @@ a frame other than an `InterruptException` writes `:inconsistent`. A throw
 inside boundary zero or `overlay!`'s settling writes `:built`. Only the model's
 own calls write it.
 
-`claimed` is set once a `Simulation` takes the model and is never cleared, so a
+`claimed` is set once a `Simulation` takes the model and is never cleared. A
 simulation owns its model and never shares it. The model's own calls that write,
 such as [`init!`](@ref), [`frame!`](@ref), [`restore!`](@ref),
 [`overlay!`](@ref) and [`trim!`](@ref), refuse a claimed model as
@@ -268,7 +268,7 @@ condition that does not resolve against the build is refused as
 `ArgumentInvalid`.
 
 A second method takes the condition already resolved, and serves the
-simulation's own `init!`, which resolves before it opens its run.
+simulation's own `init!`.
 
 A throw inside boundary zero arrives as a `StepError` at `t0`, with `boundary` 0
 and host `:boundary_zero`. It writes the status back to `:built`. An
@@ -343,8 +343,8 @@ The condition overwrites the [stores](@ref g-store) it names. Every other store,
 the clock and the event [priors](@ref g-prior) are kept. A partial store entry
 merges onto the current store rather than the declared default.
 [Root-input](@ref g-root-input) entries write the root inputs'
-[cells](@ref g-cell), and none is required, since every root input already holds
-a value.
+[cells](@ref g-cell). None is required, since every root input already holds a
+value.
 
 The overlaid state then settles. An overlaid `x` is
 [projected](@ref g-projection), and [events](@ref g-state-event) fire until none
@@ -705,10 +705,10 @@ end
 Return the warnings that constructing the model's build and deployment
 raised.
 
-The list is the build's warnings followed by the deployment's, and a
-simulation's list is its model's. A warning raised while a run changes state
-goes to the status each [snapshot](@ref g-snapshot) carries, so nothing raised
-at run time is listed here.
+The list is the build's warnings followed by the deployment's. A simulation's
+list is its model's. A warning raised while a run changes state goes to the
+[status](@ref g-framework-status) each [snapshot](@ref g-snapshot) carries, so
+nothing raised at run time is listed here.
 """
 warnings(model::Model) = vcat(warnings(model.deployment.build), warnings(model.deployment))
 
@@ -721,23 +721,24 @@ warnings(model::Model) = vcat(warnings(model.deployment.build), warnings(model.d
 # Design: §7.3, D-317, D-440.
 """
     port(model::Model, path::String, name::Union{Nothing,Symbol} = nothing) -> Any
+    port(sim::Simulation, path::String, name::Union{Nothing,Symbol} = nothing) -> Any
 
 Return a [port](@ref g-port)'s current value in the model's
 [signal table](@ref g-signal-table).
 
 Address an output by its [component](@ref g-component)'s path and its name. An
-input [face](@ref g-face) below the root has no address. Address a bare port,
-the port `y`, by that name or by the path alone. An
-[assembly](@ref g-assembly)'s own path addresses its output faces, which resolve
-to the [cells](@ref g-cell) they derive from. The empty path addresses the
-[root inputs](@ref g-root-input) and the outputs the root exports, or a
-[primitive](@ref g-primitive) root's own ports.
+input [face](@ref g-face) below the root has no address. Address a
+[bare](@ref g-bare-contract) port, the port `y`, by that name or by the path
+alone. An [assembly](@ref g-assembly)'s own path addresses its output faces,
+which resolve to the [cells](@ref g-cell) they derive from. The empty path
+addresses the [root inputs](@ref g-root-input) and the outputs the root exports,
+or a [primitive](@ref g-primitive) root's own ports.
 
 A path naming no component is refused as `PathResolution`, with the children of
 the level it stopped at. A name the component has no port of is refused as an
 `ArgumentError` listing its ports. A name left out at a component whose output
-contract is named is an `ArgumentError` too, which tells the caller to name the
-port.
+[contract](@ref g-contract) is named is an `ArgumentError` too, which tells the
+caller to name the port.
 
 A simulation's `port(sim, path, name)` reads its model's. To read a port off a
 published [snapshot](@ref g-snapshot) instead, use `port(snapshot, path, name)`.
@@ -891,23 +892,21 @@ end
 # Design: §12.6, D-231, D-273, D-274, D-319, D-429.
 # The stores are copied by value, being isbits (D-231). A `t*` abandon leaves
 # the clock inside the frame, and the model steps whole frames, so a state taken
-# there would have no next frame to continue on.
+# there would have no next frame to continue on. The state holds the flat state
+# buffer, the `s` and `m` stores and the whole signal table. It also holds the
+# event priors. It holds the clock's `t` and `t₀`, and the fingerprint. A
+# model's state is not a condition and enters no condition expression.
 """
     checkpoint(model::Model{T}) -> ModelState{T}
 
 Return the model's state at the [frame top](@ref g-frame) its clock rests on.
 
-The state, a [`ModelState`](@ref), holds the flat state [buffer](@ref g-buffer),
-the `s` and `m` [stores](@ref g-store) and the whole
-[signal table](@ref g-signal-table). It also holds the event
-[priors](@ref g-prior). It holds the clock's `t` and `t₀`, and the
-[fingerprint](@ref g-fingerprint). The stores are copied by value.
-`checkpoint(sim)` wraps the same state with the run's frame index and
-[boundary](@ref g-boundary) ordinal.
+The state is a [`ModelState`](@ref), whose docstring lists its fields. The
+[stores](@ref g-store) are copied by value. `checkpoint(sim)` wraps the same
+state with the run's frame index and [boundary](@ref g-boundary) ordinal.
 
-A model's state is not a [condition](@ref g-condition) and enters no condition
-expression. [`restore!`](@ref) puts it back, and [`overlay!`](@ref) writes a
-condition onto a model at rest.
+[`restore!`](@ref) puts it back, and [`overlay!`](@ref) writes a
+[condition](@ref g-condition) onto a model at rest.
 
 `checkpoint` is legal while the model is `:consistent`, after [`init!`](@ref),
 `overlay!` or a restore and before any throw. It is refused as
