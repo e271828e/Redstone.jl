@@ -4522,7 +4522,8 @@ event parameters, runs harmonic-grid validation, and builds the `Schedule`. The
 `Deployment` it returns holds the build, the grid parameters, the algorithm,
 the three event parameters, the `Schedule`, the grid diagnostics below and its
 own `warnings`. `Model` materializes it at a scalar type `T` that is
-`Float64` or a `ForwardDiff.Dual`, and `Simulation` runs a `Model{Float64}`.
+`Float64` or a concrete `ForwardDiff.Dual` over `Float64`, nested or not, and
+`Simulation` runs a `Model{Float64}`.
 **`Model` refuses any other scalar** as `ArgumentInvalid`, before it derives
 the activation at `T` ([§9.5][s9-5], [D-320][d-320]). Two
 `Deployment`s compare as values, which is what replay's header check reads
@@ -14727,7 +14728,8 @@ activation):
   model not at `:built` is reason `:not_built` ([D-318][d-318]). `trace(sim)`
   under `trace = false` is reason `:disabled`. `trim!` and `linearize` on a `Model` at another scalar raise it
   with reason `:non_nominal` ([D-319][d-319]). `Model` at a scalar other than
-  `Float64` or a `ForwardDiff.Dual` raises it with reason `:scalar`, alone
+  `Float64` or a concrete `ForwardDiff.Dual` over `Float64`, nested or not,
+  raises it with reason `:scalar`, alone
   and before the keywords are read ([D-320][d-320]).
   The twin of `DeploymentInvalid` for arguments that are not deployment
   parameters.
