@@ -14657,6 +14657,11 @@ fusion, so a refusal at the `Model` door now refuses the mode itself.
 - *Refusing in `activation`:* the build's activation cache is internal, and the
   `Model` constructor is the API a caller reaches.
 
+Annotation (2026-11-05): the check now tests the rule this entry states, where
+`T <: ForwardDiff.Dual` let two scalars past it. A bare `Dual` and a `Dual` over
+another value type, such as `Float32`, are refused with reason `:scalar`. A nested
+`Dual` over `Float64` passes, since `Float64` embeds exactly through every layer.
+
 ### D-321 — The parallel-routes signal, the handle's pin chain and the input pin's failure at the wire
 
 **Status.** ratified
@@ -18094,6 +18099,14 @@ same paths.
   end's, with a declaring entry and a side a read has not, and
   `ArgumentError` is already the voice of the missing-name refusal in the
   same call ([D-437][d-437]).
+
+Annotation (2026-11-05): the Position's two refusals now hold at a real component
+with nothing to read. The refusal's paths came from the layout's addresses or the
+primitives, so a component with no port and an assembly read as unknown paths,
+with a message listing the path as its own child. The layout now holds every
+component's path, assemblies and the root included, and the Rationale's "paths the
+layout addresses" reads so. A component with no port takes the `ArgumentError`,
+and `state` and `modes` read `nothing` at an assembly, a component with no store.
 
 ### D-441 — Run `trim!`'s search with the clock at `t0`
 
