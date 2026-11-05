@@ -734,6 +734,7 @@ the level it stopped at.
 """
 function state(model::Model{T}, path::String) where {T}
     ci = _component_index(model, :state, path)
+    ci === nothing && return nothing
     model.exec.sstores[ci] === nothing || return model.exec.sstores[ci][]
     _tier(i) = model.deployment.build.structure.components[i].tier
     _decls(i) = declarations(model.deployment.build.structure.components[i].instance, _tier(i), T)
@@ -760,15 +761,17 @@ A path naming no component is refused as `PathResolution`, with the children of
 the level it stopped at.
 """
 function modes(model::Model, path::String)
-    store = model.exec.mstores[_component_index(model, :modes, path)]
+    ci = _component_index(model, :modes, path)
+    ci === nothing && return nothing
+    store = model.exec.mstores[ci]
     store === nothing ? nothing : store[]
 end
 
-# The component a read names, refused as `PathResolution` when none does (D-440).
+# The primitive a read names, or `nothing` at an assembly, which holds no store.
+# A path naming no component is refused as `PathResolution` (D-440).
 function _component_index(model::Model, call::Symbol, path::String)
-    structure = model.deployment.build.structure
-    refuse_path(call, String[entry.path for entry in structure.components], path)
-    index_of(structure, path)
+    refuse_path(call, model.exec.act.layout.component_paths, path)
+    findfirst(entry -> entry.path == path, model.deployment.build.structure.components)
 end
 
 # The one `StepError` constructor (§13.4, D-059): the frame from the cursor, the

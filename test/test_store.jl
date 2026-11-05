@@ -143,6 +143,47 @@ function store_read_refusals()
     end
 end
 
+# A primitive that only consumes, so the signal table holds no port of its own.
+struct PortlessSink <: AbstractComponent end
+s_init(::PortlessSink) = (n = 0,)
+u_types(::PortlessSink) = (a = Float64,)
+s_update(::PortlessSink, (; s)) = (n = s.n + 1,)
+
+function store_portless_reads()
+    @testset "a real component with no port or store is named as such, never as an unknown path (Appendix B, D-440)" begin
+        faceless = Group((; k = Constant(1.0), g = Gain(2.0)); local_wires = ("k/y" => "g/e",))
+        root = Group((; inner = faceless, sink = PortlessSink());
+                     input_wires = ("in" => "sink/a",))
+        sim = Simulation(root; h = 1//10)
+        init!(sim, set(u = (in = 1.0,)))
+        snapshot = latest(sim)
+        for path in ("inner", "sink"), read in (() -> port(sim, path, :nope), () -> port(snapshot, path, :nope),
+                                                () -> port(sim.model, path, :nope))
+            err = try read(); nothing catch e; e end
+            @test err isa ArgumentError && occursin("has no port `nope`", err.msg)
+        end
+        for path in ("inner", "sink")
+            @test_throws "declares no bare output" port(sim, path)
+        end
+        # An assembly is a component with no store of either kind.
+        @test state(sim, "inner") === nothing && modes(sim, "inner") === nothing
+        @test state(sim, "") === nothing && modes(sim, "") === nothing
+        @test modes(sim, "sink") === nothing && state(sim, "sink") == (n = 1,)
+        @test state(sim, "inner/g") === nothing
+        # A typo below an assembly stops at the assembly, whose children it lists.
+        for read in (() -> port(sim, "inner/zz", :y), () -> state(sim, "inner/zz"),
+                     () -> modes(sim, "inner/zz"), () -> port(snapshot, "inner/zz", :y))
+            d = diagnostic(try read(); nothing catch e; e end)
+            @test d isa PathResolution && d.reason === :unknown_child && d.segment == "zz"
+            @test d.owner == "`inner`" && d.candidates == ["g", "k"]
+        end
+        # A sibling of a portless component lists it among the root's children.
+        d = diagnostic(try port(snapshot, "sinkk", :y); nothing catch e; e end)
+        @test d isa PathResolution && d.owner == "the root component" &&
+              d.candidates == ["inner", "sink"]
+    end
+end
+
 # --- the workspace, the home that is not a store (§7.3) -----------------------
 
 function store_workspace()
@@ -272,6 +313,7 @@ function test_store()
     store_mixed_cell()
     store_discrete_cells()
     store_read_refusals()
+    store_portless_reads()
     store_workspace()
     store_shared_bodies()
     store_successor_type()

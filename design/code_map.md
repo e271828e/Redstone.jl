@@ -232,9 +232,10 @@ Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §8.5, §10.4, §13.5, §13.7, D-141, D
   `x` ranges every offset is read from (D-261). `Requester` is one entry of the
   layout's `requesters`, the roster of the `StopFlag` buffer (D-316). The
   layout's `bare_outputs` are the primitives whose `y_types` is bare, which
-  `port_addr` reads for `port`'s defaulted name (D-437). `refuse_path` beside
-  it refuses a value read's unknown path as `PathResolution` from the paths in
-  hand, the layout's or the structure's (D-440). Its alias
+  `port_addr` reads for `port`'s defaulted name (D-437). Its `component_paths`
+  hold every component's path, assemblies and the root included. `refuse_path`
+  beside it refuses a value read's path naming none of them as
+  `PathResolution` (D-440). Its alias
   pass enters assembly output faces alone, from `terminal_producer`;
   `compile`'s input group reads a primitive input face's address as its
   terminal producer's (D-210, D-315).

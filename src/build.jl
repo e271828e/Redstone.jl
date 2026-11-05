@@ -359,15 +359,15 @@ struct Layout
     xblocks::Vector{UnitRange{Int}}          # per component: its range in the flat `x` buffer, empty where it owns none
     requesters::Vector{Requester}            # entry `i` owns offset `i - 1` of the `StopFlag` buffer (§13.5, D-316)
     bare_outputs::Set{String}                # the primitives whose `y_types` is bare, `port`'s default (D-437)
+    component_paths::Vector{String}          # every component's path, assemblies and the root included, what a read's path resolves against (D-440)
 end
 
 # The address `port` reads (§11.2, D-437): the port `name`, or where the name is
-# left out the bare output's face `y`, by the declared shape alone. A path with
-# no port at all is the named form's `KeyError`.
+# left out the bare output's face `y`, by the declared shape alone. A component
+# with no port at all takes the same `ArgumentError` as any name it lacks.
 function port_addr(layout::Layout, path::String, name::Union{Nothing,Symbol})
     names = Symbol[last(key) for key in keys(layout.addr) if first(key) == path]
-    isempty(names) && !(path in layout.bare_outputs) && !isempty(path) &&
-        refuse_path(:port, unique!(String[first(key) for key in keys(layout.addr)]), path)
+    isempty(names) && refuse_path(:port, layout.component_paths, path)
     if name === nothing
         face = default_name(y_types)
         path in layout.bare_outputs ||
@@ -376,7 +376,7 @@ function port_addr(layout::Layout, path::String, name::Union{Nothing,Symbol})
         return layout.addr[(path, face)]
     end
     name in names || throw(ArgumentError("$(_at_path(path)) has no port `$name`" *
-                                         (isempty(names) ? ", and no port at all" :
+                                         (isempty(names) ? ", and no output port at all" :
                                           " — its ports are $(_namelist(names))") * " (Appendix B, D-440)"))
     layout.addr[(path, name)]
 end
@@ -385,7 +385,7 @@ end
 # naming none is refused as `PathResolution`, the did-you-mean computed from the
 # longest known prefix and the children it has, so a typo never reads as a
 # `KeyError` or as a framework fault. A snapshot holds a layout and no
-# structure, so the paths come from the caller, the layout's or the structure's.
+# structure, so the paths are the layout's.
 function refuse_path(call::Symbol, paths::Vector{String}, path::String)
     path in paths && return nothing
     segments = split(path, '/')
@@ -507,7 +507,9 @@ function cell_layout(structure::Structure, decls::Vector{Decls}, ::Type{T}) wher
         throw(InternalInvariant("a `StopFlag` offset with no requester"))
     bare_outputs = Set{String}(entry.path for (entry, decl) in zip(structure.components, decls)
                                if is_bare(decl.outs))
-    Layout(addr, root_inputs, sizes, xblocks, requesters, bare_outputs)
+    component_paths = unique!(String[String[level.path for level in structure.levels];
+                                     String[entry.path for entry in structure.components]])
+    Layout(addr, root_inputs, sizes, xblocks, requesters, bare_outputs, component_paths)
 end
 
 # A root input's cells at an activation: D-168's meet, at the level of the whole
