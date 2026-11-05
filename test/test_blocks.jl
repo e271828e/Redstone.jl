@@ -3335,6 +3335,9 @@ function test_blocks()
         @test DiscretePID(Kp = ones(2, 2)).fixed.Ki === zero(SMatrix{2, 2, Float64})
         # A spelled type parameter has no value to convert.
         @test_throws TypeError Freeze{MVector{2, Float64}}
+        # Past `STATIC_WARN_LENGTH` elements the conversion warns, once per session.
+        @test_logs Integrator(x0 = zeros(Redstone.Blocks.STATIC_WARN_LENGTH))
+        @test_logs (:warn, r"513 elements becomes an `SArray`") Integrator(x0 = zeros(Redstone.Blocks.STATIC_WARN_LENGTH + 1))
         # A `Float32` converts as an `Int` does, one keyword or several.
         @test Integrator(x0 = 1.5f0).x0 === 1.5
         @test Integrator(x0 = SVector(1.5f0, 2f0)).x0 === SVector(1.5, 2.0)

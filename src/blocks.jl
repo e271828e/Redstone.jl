@@ -297,9 +297,19 @@ reset_guard(_, (; u)) = u.reset
 
 # --- the keyword shape (§13.7, D-313) -------------------------------------------
 
+# The element count past which an array keyword's `SArray` compiles slowly in
+# every stage that touches it and gains nothing over a plain array; §7.1's
+# "few KB comfortable" at `Float64`.
+const STATIC_WARN_LENGTH = 512
+
 # A keyword given as any array becomes the `SArray` of its size, so a plain
 # `Vector`, an `MVector` or a `Diagonal` qualify; a scalar keeps its kind.
-as_static(v::AbstractArray) = SArray{Tuple{size(v)...}}(v)
+function as_static(v::AbstractArray)
+    length(v) > STATIC_WARN_LENGTH && @warn "an array keyword of $(length(v)) elements becomes an " *
+        "`SArray`, which compiles slowly past $STATIC_WARN_LENGTH and runs no faster than a plain array " *
+        "(§7.1)" maxlog = 1
+    SArray{Tuple{size(v)...}}(v)
+end
 as_static(v) = v
 
 # The zero of the shape a set of values broadcast to, the sum of their zeros as
