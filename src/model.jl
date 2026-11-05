@@ -94,8 +94,14 @@ mutable struct Model{T,E}
     const frame_diag::DiagCell
 end
 
+# The scalars `Float64` embeds exactly into (D-320): itself, and a concrete `Dual`
+# over one of them, at any depth.
+_embeds_float64(::Type{Float64}) = true  # COV_EXCL_LINE
+_embeds_float64(::Type{ForwardDiff.Dual{Tag,V,N}}) where {Tag,V,N} = _embeds_float64(V)
+_embeds_float64(::Type) = false  # COV_EXCL_LINE
+
 function Model(deployment::Deployment, ::Type{T} = Float64; chunk_size = 16) where {T}
-    T === Float64 || T <: ForwardDiff.Dual || throw(DiagnosticError(
+    _embeds_float64(T) || throw(DiagnosticError(
         ArgumentInvalid(call = :Model, reason = :scalar, argument = :T, value = T)))
     # The call's keyword is not a deployment parameter, so it is an
     # `ArgumentInvalid`, collected as the call's one throw (Appendix C, D-256).

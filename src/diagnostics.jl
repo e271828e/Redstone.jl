@@ -2329,7 +2329,7 @@ function message(d::ArgumentInvalid)
     end
     d.call === :Model && d.reason === :scalar &&
         return "`Model` at scalar `$(d.value)` — a model admits `Float64`, the nominal " *
-               "scalar, or a `ForwardDiff.Dual`, into which `Float64` embeds exactly; any " *
+               "scalar, or a `ForwardDiff.Dual` over it, into which `Float64` embeds exactly; any " *
                "other scalar would round every pinned value at the wire it crosses " *
                "(§9.2, §9.5, D-320)"
     # The materialization's `join_timeout` (D-256) and the doors' four recording

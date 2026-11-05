@@ -327,13 +327,18 @@ function discrete_deployment()
         @test sim.model isa Model{Float64}
         @test_throws MethodError Simulation(Model(deployment, D8))
         @test_throws MethodError Simulation(deployment, Float32)
-        # A `Model` admits only `Float64` and a `Dual`, into which `Float64`
+        # A `Model` admits only `Float64` and a `Dual` over it, into which `Float64`
         # embeds exactly, and refuses any other scalar at the door (D-320).
-        for T in (Float32, Int)
+        for T in (Float32, Int, ForwardDiff.Dual, ForwardDiff.Dual{Nothing},
+                  ForwardDiff.Dual{Nothing,Float32,1},
+                  ForwardDiff.Dual{Nothing,ForwardDiff.Dual{Nothing,Float32,1},1})
             d = carried(@test_throws DiagnosticError{ArgumentInvalid} Model(deployment, T))
             @test d.call === :Model && d.reason === :scalar && d.argument === :T &&
                   d.value === T
         end
+        # A `Float64` embeds exactly through every layer of a nested `Dual`.
+        nested = ForwardDiff.Dual{Nothing,ForwardDiff.Dual{Nothing,Float64,1},1}
+        @test Model(deployment, nested) isa Model{nested}
         # Its keyword `chunk_size` is an integer ≥ 1, refused otherwise and
         # collected (Appendix C). A negative width would leave the executor's
         # walk with no chunks, since `1:-1:n` is empty.
