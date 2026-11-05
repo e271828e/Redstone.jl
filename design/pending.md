@@ -41,11 +41,10 @@ item changes what the spec says, the spec edit is part of the item.
   `design/increments/20261105_docstring_audit/brief_docstring_audit.md`, base
   `4a818b2`. Report `design/reports/20261105_docstring_audit/report.md`. State: the audit
   is done and ruled, section 7, and section 5's rulings landed, a, b, c, d, e,
-  h and l as fixes, f, g and k as the bullets above, except j. Refusing an
-  out-of-limits `s0` on `DiscreteLimitedIntegrator` waits on a ruling, since
-  `test_blocks.jl` pins a reset landing `s0 = 2` clamped, and the inventory says
-  the same. i, m and `DeviceHandle`'s `gather` are the sweep's docstring
-  corrections, which come next.
+  h, j and l as fixes, f, g and k as the bullets above. j went the other way
+  from section 6 by a later ruling, so `DiscreteLimitedIntegrator` clamps `s0`
+  at `t₀` and refuses nothing. i, m and `DeviceHandle`'s `gather` are the
+  sweep's docstring corrections, which come next.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose
