@@ -194,8 +194,7 @@ breaking user code, and each may benefit from user feedback first.
   readings wait for the brief: a second output on `Delay` names its output
   side, so the taps are a type parameter keeping the bare spelling; and
   scheduled limits move `lower` and `upper` into the guards' `u` and take
-  `x0`'s default with them. `Freeze` over a struct is a framework seam, not a
-  block, and stays here after the four.
+  `x0`'s default with them.
 
 ## Deviations
 

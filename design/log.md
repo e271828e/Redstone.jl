@@ -13884,6 +13884,12 @@ refusal in the helper, and an array keyword of any kind, a plain `Vector` or an
 keyword is an input to the leaf, not the leaf. The `TypeError` meets only a
 spelled type parameter, `Freeze{Float32}` or `Freeze{MVector{2, Float64}}`.
 
+Annotation (2026-11-05): the struct-valued `Freeze` is retired from the
+inventory's candidates rather than built. No model produced a walking struct
+feeding a pinned entry, and the strip for one struct is a leaf of the author's,
+tolerant in and pinned out as the block is, so the allocation-free leafwise map
+has no user to wait for. The bound and the refusal at the spelling stand.
+
 ### D-313 — Admit a library block by judgement against three guidelines
 
 **Status.** ratified

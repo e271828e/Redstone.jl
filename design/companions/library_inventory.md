@@ -335,7 +335,7 @@ off the state from stage 1. The reset is the level form of
 | Block | Status | Mechanism |
 |---|---|---|
 | `Freeze{V}` over `Float64` and `SArray` | shipped | the declared stop-gradient ([D-266][d-266]) |
-| `Freeze` over a struct `V` | candidate | needs an allocation-free leafwise map ([D-312][d-312]) |
+| `Freeze` over a struct `V` | not admitted | the strip for one struct is a leaf of the author's, tolerant in and pinned out; the generic allocation-free leafwise map has no user ([D-312][d-312]) |
 
 ### Controllers
 
