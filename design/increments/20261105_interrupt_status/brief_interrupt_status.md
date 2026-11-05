@@ -343,10 +343,17 @@ ruled on the first, the coordinator landed the rest as the docs commit
   §12.4's "a throw there" read as inside the `try`. Both reworded.
 - **F6**, `_advance!`'s header missing F3's source: resolved by F3.
 
-The mutant table ran as predicted, with four extra mutants of the
+The mutant table ran as predicted, with six extra mutants of the
 reviewer's (the `:restore` lead line and interrupt recipe, the `overlay!(sim)`
-gate call, the restore catch at `:inconsistent`), each red. Survivors
-accepted: m9 and m10 alone, and m13. Rejected: m21, F4's.
+gate call, the restore catch at `:inconsistent`, the status write moved
+after `_wrap_step`, and `frame!` skipping the write for an interrupt), each
+red but m21. Survivors accepted: m9 and m10 alone, and m13. Rejected: m21,
+F4's.
+
+The reviewer verified the delta at `1bf4727`: every probe reads as the
+fixes say, m21 dies (1 failure) and m1, m14, m15, m16 and m20 stay red, the
+gate on the floor 9384/9384 in 8m54s, the examples 77/77. Done from the
+review's side.
 
 Outside the increment, reproduced at `0217a1c`: a real SIGINT into the
 pause wait at `-t 1` with a device rostered hangs. Recorded as a pending
