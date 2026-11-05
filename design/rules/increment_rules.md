@@ -59,7 +59,10 @@ the pipeline stops only for a design decision. The brief's rules are
   increment's patch when the next prototype needs it, and the brief's
   reference file names which hunks are its own.
 - Probe read-only against the real tree only while no agent runs on it, in
-  a `module` under `Main` with `test/repl.jl` and `test/utils.jl`.
+  a `module` under `Main` with `test/repl.jl` and `test/utils.jl`, the second
+  after `using Test`. A probe of a device paces its run, since a short run
+  ends before the device's task is scheduled, and bounds every wait. `@allocated`
+  can read 0 on a dynamic call whose result goes unused, so use the result.
 - Measure allocations through `phase_bodies`, and build under `(Float64,
   LinearizeDual)`, before a number enters a brief. Measure compile latency
   through the real entry point in a fresh process with `--startup-file=no`:

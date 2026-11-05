@@ -127,7 +127,9 @@ closed(run::Run) = run.termination !== nothing
     other rules govern form, and a rewrite that keeps every sentence keeps
     every error in them. A claim the code does not show on its face is settled
     by a probe, and a false one is a finding, reported with its replacement
-    drafted.
+    drafted. So is an imprecise one, true on the common path and false on a
+    path a user can reach. A path only a poke at the internals reaches is
+    neither.
 24. **A sibling's job is a cross-reference, not an explanation**, a
     [`name`](@ref) link and a clause saying why the reader would go there.
 

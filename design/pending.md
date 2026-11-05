@@ -18,7 +18,7 @@ item changes what the spec says, the spec edit is part of the item.
   them, and a cold review closes the arc. The audit reads a pinned base, and
   the sweep needs `src/` quiet. Brief
   `design/increments/20261105_docstring_audit/brief_docstring_audit.md`, base
-  `4a818b2`. State: stage 1, the calibration, is running.
+  `4a818b2`. State: the calibration passed, and stage 2, the accuracy pass, is running.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose

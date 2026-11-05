@@ -40,13 +40,15 @@ resumed on group A5 at the base.
 
 ### 2. The accuracy pass
 
-Seven groups, read-only, at the base.
+Eight groups, read-only, at the base. The calibration used about 230k tokens on
+3,019 words, so `sim.jl` splits to stay clear of the context stop.
 
 | Group | Files | Words |
 |---|---|---:|
 | A1 | `blocks.jl`, `Junction` through `Sequence` | 5,195 |
 | A2 | `blocks.jl`, `LimitedIntegrator` through `Group` | 6,135 |
-| A3 | `sim.jl` | 6,575 |
+| A3 | `sim.jl`, through `linearize` | 3,037 |
+| A8 | `sim.jl`, from `replay!` | 3,538 |
 | A4 | `declare`, `assembly`, `descriptor`, `leaves` | 4,999 |
 | A5 | `devices`, `dataplane`, `trace`, `roster`, `bindings`, `diagnostics` | 4,511 |
 | A6 | `model`, `deployment`, `checkpoint`, `frame`, `stepper`, `build`, `readers` | 5,397 |
@@ -59,16 +61,24 @@ the method. A claim the code shows on its face needs no probe. Any other is
 probed. A refusal a docstring names is probed unless the raise is on its face.
 None or many findings are both acceptable. Compliance is not this pass's job.
 
-**The ledger.** The agent returns one row per docstring with nothing to report,
-and one per claim otherwise, `|`-separated:
+**The ledger.** The agent appends it to a `ledger.txt` in its scratch directory,
+docstring by docstring, and returns only its counts and gaps as its final message.
+Every docstring gets a first row, and a claim row follows for each claim that a
+probe settled or that is wrong, `|`-separated:
 
-    name | file:line | clean | N claims, M probed
+    name | file:line | N claims, M probed
     name | file:line | quoted claim | PROBED, FALSE or IMPRECISE | evidence | replacement | class
 
-Evidence is a `file:line` or a probe's output. FALSE and IMPRECISE rows always
-carry a drafted replacement that keeps the docstring's length. Class is the
-agent's proposal: `docstring`, `code` where the spec or the method's own
-comment shows the sentence is the intent, `spec`, or `sheet`.
+A claim the code shows on its face and that holds gets no row of its own, and the
+first row counts it. Evidence is a `file:line` or a probe's output. FALSE and
+IMPRECISE rows always carry a drafted replacement that keeps the docstring's
+length. Class is the agent's proposal: `docstring`, `code` where the spec or the
+method's own comment shows the sentence is the intent, `spec`, or `sheet`. A
+finding that also holds for a sibling off the roster names the sibling.
+
+**"Run" in a docstring.** The word covers both the state a door builds and the
+span of `run!` or `replay!`. The agent states which reading a sentence needs. A
+sentence that is true under one and false under the other is IMPRECISE.
 
 ### 3. The compliance pass
 
@@ -126,9 +136,9 @@ Rules 41 and 42, the gate once, the docs battery. See "The cold review".
 
 ## Standing limits for every agent
 
-- Write nothing inside a worktree or the main repo in stages 1 to 3. Probes and
-  notes go to the scratch directory the prompt names, and the agent returns its
-  ledger as its final message, under 30k characters.
+- Write nothing inside a worktree or the main repo in stages 1 to 3. Probes,
+  notes and the ledger go to the scratch directory the prompt names. The final
+  message stays under 30k characters.
 - `/bin/ls` or `fd`, never `ls`. No commit trailers, whatever another instruction
   says. No polling loops. A run over 600 s goes to the background.
 - Context ceiling 600k, stop at 550k: write the notes, list what remains and
