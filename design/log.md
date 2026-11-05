@@ -13868,7 +13868,10 @@ bound `V` as `Union{Float64, SArray{<:Tuple, Float64}}`. The `Real` and
 to be refused at build as `IllegalStateLeaf`, `IllegalStoreField` or
 `ConformanceFailure`, since the build admits no scalar but `Float64` ([D-320][d-320])
 and no leaf but a plain scalar or an `SArray` ([D-094][d-094]). The refusal is now the
-constructor's `TypeError`.
+constructor's `TypeError`. A block's keywords convert before the bound reads
+them, so a `Float32` keyword becomes `Float64` as an integer does, ruled over a
+refusal in the helper, and the `TypeError` meets an `MVector` and a spelled
+`Freeze{Float32}`.
 
 ### D-313 — Admit a library block by judgement against three guidelines
 

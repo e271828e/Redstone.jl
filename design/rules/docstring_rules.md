@@ -161,8 +161,8 @@ closed(run::Run) = run.termination !== nothing
     it, in the sentence that first uses it.** The sentence says which values
     share the type, that it is the block's parameter, and what it may be and
     where it comes from: "the state and both ports share one type, the
-    parameter `V`, a floating-point type or a static array of one, taken
-    from `float(x0)`". A later sentence may then say "pinned at `V`". A
+    parameter `V`, `Float64` or an `SArray` of `Float64`, taken from
+    `Float64.(x0)`". A later sentence may then say "pinned at `V`". A
     parameter the user never writes, such as the `R` that `reset = true`
     fixes, is mechanism under rule 22 and goes to the comment; the prose
     names the keyword.
