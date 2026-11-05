@@ -13870,8 +13870,10 @@ to be refused at build as `IllegalStateLeaf`, `IllegalStoreField` or
 and no leaf but a plain scalar or an `SArray` ([D-094][d-094]). The refusal is now the
 constructor's `TypeError`. A block's keywords convert before the bound reads
 them, so a `Float32` keyword becomes `Float64` as an integer does, ruled over a
-refusal in the helper, and the `TypeError` meets an `MVector` and a spelled
-`Freeze{Float32}`.
+refusal in the helper, and an array keyword of any kind, a plain `Vector` or an
+`MVector`, becomes the `SArray` of its size, as `StateSpace`'s matrices do: the
+keyword is an input to the leaf, not the leaf. The `TypeError` meets only a
+spelled type parameter, `Freeze{Float32}` or `Freeze{MVector{2, Float64}}`.
 
 ### D-313 — Admit a library block by judgement against three guidelines
 

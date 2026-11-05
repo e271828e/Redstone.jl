@@ -131,8 +131,9 @@ convention. A parameter with no sensible default is a required keyword.
 Keywords that share a type parameter broadcast to one shape, `Float64` or
 an `SArray` of `Float64`, which is why the constructor is hand-written
 rather than `@kwdef`. A scalar pairs with a vector, and integer and `Float32`
-keywords convert, a block's lone keyword too, so a uniform vector gain spells
-one keyword as a vector,
+keywords convert, a block's lone keyword too, as does an array keyword of any
+kind, a plain `Vector` or an `MVector`, which becomes the `SArray` of its
+size. A uniform vector gain spells one keyword as a vector,
 `Kp = @SVector fill(2.0, 3)`, and a scalar limit serves every component of a
 vector integrator. Two lengths are Julia's `DimensionMismatch`. The
 convention is one for every block because only broadcasting pairs the PID's

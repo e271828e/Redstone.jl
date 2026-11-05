@@ -123,9 +123,10 @@ The standard component library, the submodule `Redstone.Blocks`:
 - `Source`, pinned, its `f` fed the nominal time (D-312, D-313).
 - `Constant`, `UnitDelay` and `Freeze` (D-312).
 - `StopRequest` (D-316).
-- The keyword-shape helpers `shape_zero` and `broadcast_keywords`, which every
-  block whose keywords share `V` reads them through, `GaussianWhiteNoise` and
-  the PID's `shape_type` included (§13.7).
+- The keyword-shape helpers `as_static`, `shape_zero` and `broadcast_keywords`,
+  which every block whose keywords share `V` reads them through,
+  `GaussianWhiteNoise` and the PID's `shape_type` included (§13.7). `as_static`
+  makes the `SArray` of its size of an array keyword of any kind.
 - `Delay`, `DiscreteIntegrator{V, R}`, `DiscreteLimitedIntegrator{V, R}` with the
   helper `saturation_code`, and `RateLimiter` (D-313). The reset form `R = true`
   of both is the level reset in `s_update` (§5.3).
