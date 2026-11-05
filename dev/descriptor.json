@@ -101,7 +101,7 @@
       "additionalProperties": false
     },
     "Cycle": {
-      "description": "An AlgebraicCycle's cluster (§13.8): `members` are component paths in the order the diagnostic lists them; `wires` the cluster's own wires as terminal pairs, leaf output to leaf input; `classification`, `real` or `artificial`, is absent when a member's evaluation threw; `dead` lists every hop the trace found unrouted; `traced` records each member's tracing mode.",
+      "description": "An AlgebraicCycle's cluster (§13.8): `members` are component paths in the order the diagnostic lists them; `wires` the cluster's own wires as terminal pairs, primitive output to primitive input; `classification`, `real` or `artificial`, is absent when a member's evaluation threw; `dead` lists every hop the trace found unrouted; `traced` records each member's tracing mode.",
       "type": "object",
       "properties": {
         "members": { "type": "array", "items": { "type": "string" } },
@@ -138,7 +138,7 @@
       "type": "object",
       "properties": {
         "nodes": { "type": "array", "items": { "$ref": "#/definitions/Node" } },
-        "root_inputs": { "type": "array", "items": { "$ref": "#/definitions/LeafFace" } },
+        "root_inputs": { "type": "array", "items": { "$ref": "#/definitions/PrimitiveFace" } },
         "anchors": { "type": "array", "items": { "$ref": "#/definitions/Anchor" } },
         "scopes": { "type": "array", "items": { "$ref": "#/definitions/Scope" } },
         "types": { "type": "array", "items": { "$ref": "#/definitions/TypeRow" } }
@@ -149,7 +149,7 @@
     "Node": {
       "description": "One component of the walk, keyed by its path. `class` says which of the two shapes the node takes.",
       "oneOf": [
-        { "$ref": "#/definitions/LeafNode" },
+        { "$ref": "#/definitions/PrimitiveNode" },
         { "$ref": "#/definitions/AssemblyNode" }
       ]
     },
@@ -167,7 +167,7 @@
       },
       "dependencies": { "key": ["field"] }
     },
-    "LeafNode": {
+    "PrimitiveNode": {
       "allOf": [
         { "$ref": "#/definitions/NodeIdentity" },
         {
@@ -180,11 +180,11 @@
             "alias": { "type": "string" },
             "signature": { "type": "string" },
             "parameters": { "type": "array", "items": { "$ref": "#/definitions/Parameter" } },
-            "class": { "const": "leaf" },
+            "class": { "const": "primitive" },
             "tier": { "type": "string", "enum": ["continuous", "discrete"] },
             "timing": { "$ref": "#/definitions/Timing" },
-            "inputs": { "type": "array", "items": { "$ref": "#/definitions/LeafFace" } },
-            "outputs": { "type": "array", "items": { "$ref": "#/definitions/LeafFace" } }
+            "inputs": { "type": "array", "items": { "$ref": "#/definitions/PrimitiveFace" } },
+            "outputs": { "type": "array", "items": { "$ref": "#/definitions/PrimitiveFace" } }
           },
           "required": ["path", "class", "tier", "timing", "type", "signature", "inputs", "outputs", "parameters"],
           "additionalProperties": false
@@ -215,8 +215,8 @@
         }
       ]
     },
-    "LeafFace": {
-      "description": "A leaf's face: its name, the declared type as printed (display text), the kind marker, and whether the declaration was wrapped in Pinned.",
+    "PrimitiveFace": {
+      "description": "A primitive's face: its name, the declared type as printed (display text), the kind marker, and whether the declaration was wrapped in Pinned.",
       "type": "object",
       "properties": {
         "name": { "type": "string" },
@@ -297,7 +297,7 @@
       "additionalProperties": false
     },
     "Timing": {
-      "description": "The anchor a leaf or a scope hangs from (0 the base grid), its period multiple and its phase in that anchor's ticks.",
+      "description": "The anchor a primitive or a scope hangs from (0 the base grid), its period multiple and its phase in that anchor's ticks.",
       "type": "object",
       "properties": {
         "anchor": { "type": "integer", "minimum": 0 },
@@ -375,7 +375,7 @@
       "additionalProperties": false
     },
     "OutputsSection": {
-      "description": "The Outputs' projection: the execution order as leaf paths, and per leaf the port names each stage produces.",
+      "description": "The Outputs' projection: the execution order as primitive paths, and per primitive the port names each stage produces.",
       "type": "object",
       "properties": {
         "order": { "type": "array", "items": { "type": "string" } },
