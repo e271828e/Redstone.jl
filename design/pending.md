@@ -12,19 +12,6 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
-- **The descriptor's class value `"leaf"` becomes `"primitive"`** (§13.9,
-  D-432). The spec spells a node's class as assembly or primitive, and
-  *leaf* in the spec is a value leaf, the leaf walk's and the leaf
-  address's, which §13.9's own kind-marker paragraph uses in that sense.
-  The schema of record writes `"class": "leaf"` with the definitions
-  `LeafNode` and `LeafFace`, and the inspector's records, map and frontend
-  follow it; `RedstoneInspector.jl/design/initial_design.md` answer 17
-  called that the spec's vocabulary when it was not. The schema conforms:
-  `"primitive"`, `PrimitiveNode` and `PrimitiveFace`, the writer and
-  `test_descriptor.jl`, with no change to the format's version, which an
-  unreleased package never needs. The inspector's half, the regenerated
-  types and the renames through the frontend and the records, lands with
-  its next pin on the core.
 - **Stage-function locations in the descriptor** (§13.9, D-432). A `types`
   row carries the source locations of the declaration methods alone, so the
   inspector has no line to show for an algebraic loop, whose feedthrough is
@@ -74,8 +61,12 @@ item changes what the spec says, the spec edit is part of the item.
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose
   `design/roadmap.md` stages its eleven increments. What this repo owes it
-  is the class value above, the stage-function locations in the
-  descriptor below, and the later stages after the release.
+  is the stage-function locations in the descriptor below, and the later
+  stages after the release. The descriptor's class value `"leaf"` became
+  `"primitive"` on 2026-11-05, with the schema's `PrimitiveNode` and
+  `PrimitiveFace` and no format bump; the inspector's half, the
+  regenerated types and the renames through the frontend and the records,
+  lands with its next pin on the core.
 - **The API docstrings' two later passes.** The sweep to the manual's
   conventions landed (record `design/increments/20261027_docstring_sweep/notes_docstring_sweep.md`,
   convention `design/rules/docstring_rules.md`). Two passes remain: an examples pass

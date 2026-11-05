@@ -125,7 +125,7 @@ end
 function _structure_section(structure::Structure)
     nodes, node_instances = _nodes(structure)
     (nodes = nodes,
-     root_inputs = [_leaf_face(face, T) for (face, T) in zip(structure.root_inputs, structure.root_types)],
+     root_inputs = [_primitive_face(face, T) for (face, T) in zip(structure.root_inputs, structure.root_types)],
      anchors = [(T = _rational(anchor.T), tau = _rational(anchor.τ),
                  scope = anchor.scope, key = String(anchor.key))
                 for anchor in structure.anchors],
@@ -141,18 +141,18 @@ _rational(x::Rational{Int}) = (num = numerator(x), den = denominator(x))
 # Beside them the instances in the same order, for the `types` table.
 function _nodes(structure::Structure)
     levels = Dict(level.path => level for level in structure.levels)
-    leaves = Dict(entry.path => entry for entry in structure.components)
+    primitives = Dict(entry.path => entry for entry in structure.components)
     nodes, node_instances = NamedTuple[], Any[]
-    _push_nodes!(nodes, node_instances, levels, leaves, "", (path = "",))
+    _push_nodes!(nodes, node_instances, levels, primitives, "", (path = "",))
     nodes, node_instances
 end
 
 function _push_nodes!(nodes::Vector{NamedTuple}, node_instances::Vector{Any},
-                      levels::Dict{String,LevelEntry}, leaves::Dict{String,ComponentEntry},
+                      levels::Dict{String,LevelEntry}, primitives::Dict{String,ComponentEntry},
                       path::String, identity::NamedTuple)
-    if haskey(leaves, path)
-        push!(nodes, _leaf_node(identity, leaves[path]))
-        push!(node_instances, leaves[path].instance)
+    if haskey(primitives, path)
+        push!(nodes, _primitive_node(identity, primitives[path]))
+        push!(node_instances, primitives[path].instance)
         return
     end
     level = levels[path]
@@ -160,7 +160,7 @@ function _push_nodes!(nodes::Vector{NamedTuple}, node_instances::Vector{Any},
     push!(node_instances, level.instance)
     for child in level.children
         child_path = isempty(path) ? child.segment : path * "/" * child.segment
-        _push_nodes!(nodes, node_instances, levels, leaves, child_path, _identity(child_path, child))
+        _push_nodes!(nodes, node_instances, levels, primitives, child_path, _identity(child_path, child))
     end
 end
 
@@ -174,12 +174,12 @@ function _identity(path::String, child::Child)
     (path = path, field = field, key = key)
 end
 
-function _leaf_node(identity::NamedTuple, entry::ComponentEntry)
+function _primitive_node(identity::NamedTuple, entry::ComponentEntry)
     instance = entry.instance
     merge(identity,
-          (class = "leaf", tier = tier_word(entry.tier), timing = entry.timing),
+          (class = "primitive", tier = tier_word(entry.tier), timing = entry.timing),
           _type_identity(typeof(instance)),
-          (inputs = _leaf_faces(u_types, instance), outputs = _leaf_faces(y_types, instance),
+          (inputs = _primitive_faces(u_types, instance), outputs = _primitive_faces(y_types, instance),
            parameters = _parameters(instance)))
 end
 
@@ -199,15 +199,15 @@ _endpoint((path, port)::Tuple{String,Symbol}) = (path = path, port = String(port
 
 # --- faces and the kind marker --------------------------------------------------
 
-# A leaf's faces as declared, a `Pinned` entry unwrapped and flagged, a bare
+# A primitive's faces as declared, a `Pinned` entry unwrapped and flagged, a bare
 # contract's one face named `u` or `y` (§13.9, D-437).
-function _leaf_faces(fn, @nospecialize(instance))
+function _primitive_faces(fn, @nospecialize(instance))
     _declares(fn, instance) || return NamedTuple[]
     decl = invoke_declaration(fn, instance)
-    NamedTuple[_leaf_face(name, P) for (name, P) in pairs(_keyed(decl, default_name(fn)))]
+    NamedTuple[_primitive_face(name, P) for (name, P) in pairs(_keyed(decl, default_name(fn)))]
 end
 
-function _leaf_face(name::Symbol, @nospecialize(declared::Type))
+function _primitive_face(name::Symbol, @nospecialize(declared::Type))
     pinned = _is_marker(declared)
     face_type = pinned ? declared.parameters[1] : declared
     (name = String(name), type = _type_string(face_type), kind = _kind_marker(face_type), pinned = pinned)

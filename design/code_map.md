@@ -454,9 +454,9 @@ D-250, D-254, D-256, D-261.
   `/` into path and port, a bare port's its face; never the payload (D-434,
   D-437).
 - The node walk `_nodes`, a pre-order over the level rows' children with the
-  leaves read off `components`, and the node's `field` and `key` from
+  primitives read off `components`, and the node's `field` and `key` from
   `membership` on the `Child`.
-- The leaf faces `_leaf_faces`, read off the declarations as written with a
+- The primitive faces `_primitive_faces`, read off the declarations as written with a
   `Pinned` entry unwrapped and flagged, a bare contract's face `u` or `y`, and the kind marker `_kind_marker`,
   §13.9's table in test order, its `struct` row the leaf walk's isbits cut
   and its `vector` row over `_static_shape` (D-433).

@@ -62,7 +62,7 @@ function test_descriptor()
             nodes = value.build.structure.nodes
             # node order is the walk order, on both classes; a primitive root's
             # level row is no assembly
-            @test [node.path for node in nodes if node.class == "leaf"] == paths(built.structure)
+            @test [node.path for node in nodes if node.class == "primitive"] == paths(built.structure)
             @test [node.path for node in nodes if node.class == "assembly"] ==
                   [level.path for level in built.structure.levels if level.path ∉ paths(built.structure)]
             # every wire endpoint names a node, the level's own path included
@@ -252,11 +252,11 @@ function test_descriptor()
         @test value.kind == "deployment"
         @test keys(value.deployment) == (:build,)
         @test value.deployment.build == descriptor(built).build
-        # a primitive root deploys too: one leaf node at the root, no wires
+        # a primitive root deploys too: one primitive node at the root, no wires
         primitive = descriptor(Deployment(build(Plant()); h = 1//100))
         round_trip(primitive)
         root = only(primitive.deployment.build.structure.nodes)
-        @test root.path == "" && root.class == "leaf" && !haskey(root, :wires)
+        @test root.path == "" && root.class == "primitive" && !haskey(root, :wires)
         @test !haskey(root, :field) && !haskey(root, :key)
     end
 
@@ -280,10 +280,10 @@ function test_descriptor()
         @test root.wires[1] == (from = (path = "gains/a", port = "out"), to = (path = "gains/b", port = "e"))
         @test root.wires[3] == (from = (path = "", port = "u"), to = (path = "gains/a", port = "e"))
         @test root.wires[4] == (from = (path = "pair/1", port = "out"), to = (path = "", port = "y"))
-        @test !haskey(keyed, :wires) && keyed.class == "leaf"
+        @test !haskey(keyed, :wires) && keyed.class == "primitive"
     end
 
-    @testset "a leaf face carries its type, kind marker and pinned flag (§13.9)" begin
+    @testset "a primitive face carries its type, kind marker and pinned flag (§13.9)" begin
         body = descriptor(build(kinds_model())).build
         marker(path, name) = face_of(node_at(body, path), :outputs, name).kind
         @test marker("i", "y") == (kind = "integer",)
@@ -301,7 +301,7 @@ function test_descriptor()
         @test face_of(node_at(body, "free"), :inputs, "v").kind == (kind = "opaque",)   # size left free
         @test marker("pose", "pose") == (kind = "vector", shape = [3], element = (kind = "float",))   # a FieldVector
         @test face_of(node_at(body, "dut"), :inputs, "terrain").kind == (kind = "opaque",)
-        # the pinned flag reads the declaration, and the type string is the leaf's
+        # the pinned flag reads the declaration, and the type string is the unwrapped type's
         @test face_of(node_at(body, "i"), :outputs, "y").pinned
         @test face_of(node_at(body, "i"), :outputs, "y").type == "Int8"
         @test !face_of(node_at(body, "p"), :inputs, "phase").pinned
@@ -312,7 +312,7 @@ function test_descriptor()
         @test node_at(body, "").wires[end] == (from = (path = "", port = "dut.k"), to = (path = "dut", port = "k"))
     end
 
-    @testset "a leaf node carries its tier and timing, and the structure its anchors and scopes (§9.1, §13.9)" begin
+    @testset "a primitive node carries its tier and timing, and the structure its anchors and scopes (§9.1, §13.9)" begin
         body = descriptor(build(MultiRate())).build
         @test node_at(body, "gnss").tier == "discrete"
         @test node_at(body, "gnss").timing == (anchor = 1, m = 1, c = 0)
