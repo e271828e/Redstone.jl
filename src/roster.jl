@@ -90,7 +90,7 @@ defines.
 input side as `BindingContractMismatch`. See [`is_output`](@ref) for the output
 side.
 """
-is_input(::AbstractBinding) = false
+is_input(::AbstractBinding) = false  # COV_EXCL_LINE
 
 # Design: §11.6.
 """
@@ -109,7 +109,7 @@ defines.
 output side as `BindingContractMismatch`. See [`is_input`](@ref) for the input
 side.
 """
-is_output(::AbstractBinding) = false
+is_output(::AbstractBinding) = false  # COV_EXCL_LINE
 
 # Design: §11.3, §11.6.
 """
@@ -129,7 +129,7 @@ A greedy binding declares [`is_input`](@ref) and defines no [`claims`](@ref)
 method. `attach!` refuses a greedy binding without the input side, or one that
 also defines `claims`, as `BindingContractMismatch`.
 """
-is_greedy(::AbstractBinding) = false
+is_greedy(::AbstractBinding) = false  # COV_EXCL_LINE
 
 # Design: §11.6.
 # The enumeration contract. The root's fallback is error-throwing, so a declared

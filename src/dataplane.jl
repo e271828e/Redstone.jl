@@ -66,19 +66,19 @@ KindCounts() = KindCounts(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
 # A kind's `KindCounts` field, defined on the type so a renderer names a kind
 # no retained value carries; an occurrence forwards to its type.
-_kind(::Type{MalformedDatum})   = :malformed
-_kind(::Type{OutOfClaimEntry})  = :out_of_claim
-_kind(::Type{ClaimedFaceEntry}) = :claimed_face
-_kind(::Type{EntryTypeMismatch}) = :type_mismatch
-_kind(::Type{ChatteringBudget}) = :chattering
-_kind(::Type{FiringBudget})     = :firing
-_kind(::Type{DebtReanchor})     = :reanchor
-_kind(::Type{UnboundedRun})     = :unbounded
-_kind(::Type{ThreadBudget})     = :thread_budget
-_kind(::Type{DeviceCrash})      = :crash
-_kind(::Type{DeviceJoinTimeout}) = :join_timeout
-_kind(::Type{ReplayDiscardedStaging}) = :replay_discarded
-_kind(::Type{EmptyGreedyClaim}) = :empty_greedy
+_kind(::Type{MalformedDatum})   = :malformed  # COV_EXCL_LINE
+_kind(::Type{OutOfClaimEntry})  = :out_of_claim  # COV_EXCL_LINE
+_kind(::Type{ClaimedFaceEntry}) = :claimed_face  # COV_EXCL_LINE
+_kind(::Type{EntryTypeMismatch}) = :type_mismatch  # COV_EXCL_LINE
+_kind(::Type{ChatteringBudget}) = :chattering  # COV_EXCL_LINE
+_kind(::Type{FiringBudget})     = :firing  # COV_EXCL_LINE
+_kind(::Type{DebtReanchor})     = :reanchor  # COV_EXCL_LINE
+_kind(::Type{UnboundedRun})     = :unbounded  # COV_EXCL_LINE
+_kind(::Type{ThreadBudget})     = :thread_budget  # COV_EXCL_LINE
+_kind(::Type{DeviceCrash})      = :crash  # COV_EXCL_LINE
+_kind(::Type{DeviceJoinTimeout}) = :join_timeout  # COV_EXCL_LINE
+_kind(::Type{ReplayDiscardedStaging}) = :replay_discarded  # COV_EXCL_LINE
+_kind(::Type{EmptyGreedyClaim}) = :empty_greedy  # COV_EXCL_LINE
 _kind(d::DiagValue) = _kind(typeof(d))
 
 _bump(counts::KindCounts, kind::Symbol) =

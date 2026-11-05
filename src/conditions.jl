@@ -581,7 +581,7 @@ _store_overlay(defaults::NamedTuple, overlay::NamedTuple) = merge(defaults, over
 _store_overlay(defaults, overlay::NamedTuple) = only(overlay)
 
 # A leaf's offset in its component's `x` block; a bare state is the block itself.
-_leaf_offset(x, ::Symbol) = 0
+_leaf_offset(x, ::Symbol) = 0  # COV_EXCL_LINE
 function _leaf_offset(x::NamedTuple, field::Symbol)
     offset = 0
     for (k, v) in pairs(x)

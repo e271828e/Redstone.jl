@@ -352,7 +352,7 @@ publishes such a port, and all of the component's requests share the reason. It
 is instance data, never a port value. A run that a request ends carries the
 reason on its [`ModelRequestedStop`](@ref) source.
 """
-stop_reason(::Any) = ""
+stop_reason(::Any) = ""  # COV_EXCL_LINE
 
 # --- rate scopes (§8.7, §10.5) --------------------------------------------------
 # The two forms of the sample-time declaration, and the wrappers are the
@@ -776,11 +776,11 @@ declared_at(fn, @nospecialize(comp), tier::Tier, ::Type{S} = Float64) where {S} 
 
 # Design: §7.1, §7.3, §8.2, D-437, D-438.
 # The name a bare declaration's one entry takes, the declaration's letter.
-default_name(::typeof(x_init)) = :x
-default_name(::typeof(s_init)) = :s
-default_name(::typeof(m_init)) = :m
-default_name(::typeof(u_types)) = :u
-default_name(::typeof(y_types)) = :y
+default_name(::typeof(x_init)) = :x  # COV_EXCL_LINE
+default_name(::typeof(s_init)) = :s  # COV_EXCL_LINE
+default_name(::typeof(m_init)) = :m  # COV_EXCL_LINE
+default_name(::typeof(u_types)) = :u  # COV_EXCL_LINE
+default_name(::typeof(y_types)) = :y  # COV_EXCL_LINE
 
 # A declaration's value in the keyed form (§8.2): a `NamedTuple` as declared,
 # `nothing` as no entry, a bare value or type as its one entry under `letter`.
@@ -897,7 +897,7 @@ end
 # to state a valid default.
 
 probe_value(::Type{T}) where {T<:Real} = zero(T)
-probe_value(::Type{Bool}) = false
+probe_value(::Type{Bool}) = false  # COV_EXCL_LINE
 probe_value(::Type{E}) where {E<:Enum} = first(instances(E))
 probe_value(::Type{P}) where {P<:StaticArray} = zero(P)
 probe_value(::Type{P}) where {P} = P()

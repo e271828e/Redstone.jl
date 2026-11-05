@@ -5,6 +5,8 @@
 # their `Dual` activation. `test/test_precompile.jl` runs `workload` in a fresh
 # process and pins what it compiles.
 
+# COV_EXCL_START
+
 """
     workload_loop()
 
@@ -64,3 +66,5 @@ end
         workload()
     end
 end
+
+# COV_EXCL_STOP

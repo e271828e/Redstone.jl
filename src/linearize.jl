@@ -345,9 +345,9 @@ _tap_kind(::Val{:u}) = GetInput
 _tap_kind(::Val{:y}) = Union{GetOutput,GetFace}
 
 # Which of `x`/`u`/`y` a selector addresses, by its kind (§14.10).
-_tap(::Union{GetState,GetDeriv}) = :x
-_tap(::Union{GetOutput,GetFace}) = :y
-_tap(::GetInput) = :u
+_tap(::Union{GetState,GetDeriv}) = :x  # COV_EXCL_LINE
+_tap(::Union{GetOutput,GetFace}) = :y  # COV_EXCL_LINE
+_tap(::GetInput) = :u  # COV_EXCL_LINE
 
 # One `TapResolution` off a tap, for the tap set's own reasons: the read as
 # authored, as readers.jl's `_reader_violation` spells it, and the tap set. A

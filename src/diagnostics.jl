@@ -56,7 +56,7 @@ The kind's severity (§13.2, D-214): `:error` — an occurrence throws, alone or
 within a collection — or `:warning`, which never throws and joins no throw. The
 default is `:error`; the warning kinds override it.
 """
-severity(::Diagnostic) = :error
+severity(::Diagnostic) = :error  # COV_EXCL_LINE
 
 """
 The component or assembly path a diagnostic is attributed to, in slash form and
@@ -697,7 +697,7 @@ Base.@kwdef struct EmptyFaceSelection <: Diagnostic
     names::Vector{String} = String[]         # the selector's names; empty for `select`
     candidates::Vector{String} = String[]    # the child's face list on that side
 end
-severity(::EmptyFaceSelection) = :warning
+severity(::EmptyFaceSelection) = :warning  # COV_EXCL_LINE
 path(d::EmptyFaceSelection) = d.path
 function message(d::EmptyFaceSelection)
     side = startswith(d.who, "input") ? "input" : "output"
@@ -1414,7 +1414,7 @@ Base.@kwdef struct GridUtilization <: Diagnostic
     fastest::String                      # the path attaining it
     grid::GridReport                     # the attribution the block renders
 end
-severity(::GridUtilization) = :warning
+severity(::GridUtilization) = :warning  # COV_EXCL_LINE
 message(d::GridUtilization) =
     "Δt_base derived as $(d.Δt_base) s: the grid is $(d.utilization)× finer than the " *
     "fastest declared work (`$(d.fastest)` at D = $(d.utilization)) (§9.2)" * _grid_block(d.grid)
@@ -1455,7 +1455,7 @@ Base.@kwdef struct EmptyGreedyClaim <: Diagnostic
     device::String
     binding::String
 end
-severity(::EmptyGreedyClaim) = :warning
+severity(::EmptyGreedyClaim) = :warning  # COV_EXCL_LINE
 message(d::EmptyGreedyClaim) =
     "$(d.device) under $(d.binding) staked the empty remainder — every root input face is " *
     "already claimed (§11.6)"
@@ -1615,18 +1615,18 @@ end
 # warning by construction. `message(d)` renders what the emitting site
 # interpolates today; the sites still print the value itself (§11.8), so
 # nothing here changes what the stream shows.
-severity(::MalformedDatum) = :warning
-severity(::OutOfClaimEntry) = :warning
-severity(::ClaimedFaceEntry) = :warning
-severity(::EntryTypeMismatch) = :warning
-severity(::ChatteringBudget) = :warning
-severity(::FiringBudget) = :warning
-severity(::DebtReanchor) = :warning
-severity(::UnboundedRun) = :warning
-severity(::ThreadBudget) = :warning
-severity(::DeviceCrash) = :warning
-severity(::DeviceJoinTimeout) = :warning
-severity(::ReplayDiscardedStaging) = :warning
+severity(::MalformedDatum) = :warning  # COV_EXCL_LINE
+severity(::OutOfClaimEntry) = :warning  # COV_EXCL_LINE
+severity(::ClaimedFaceEntry) = :warning  # COV_EXCL_LINE
+severity(::EntryTypeMismatch) = :warning  # COV_EXCL_LINE
+severity(::ChatteringBudget) = :warning  # COV_EXCL_LINE
+severity(::FiringBudget) = :warning  # COV_EXCL_LINE
+severity(::DebtReanchor) = :warning  # COV_EXCL_LINE
+severity(::UnboundedRun) = :warning  # COV_EXCL_LINE
+severity(::ThreadBudget) = :warning  # COV_EXCL_LINE
+severity(::DeviceCrash) = :warning  # COV_EXCL_LINE
+severity(::DeviceJoinTimeout) = :warning  # COV_EXCL_LINE
+severity(::ReplayDiscardedStaging) = :warning  # COV_EXCL_LINE
 
 path(d::ChatteringBudget) = d.path
 path(d::FiringBudget) = d.path
@@ -2179,7 +2179,7 @@ end
 Base.@kwdef struct TrimCommitEvents <: Diagnostic
     events::Vector{Tuple{String,Symbol}}     # component path and event name
 end
-severity(::TrimCommitEvents) = :warning
+severity(::TrimCommitEvents) = :warning  # COV_EXCL_LINE
 message(d::TrimCommitEvents) =
     "boundary zero fired " *
     join(("`$p`.$n" for (p, n) in d.events), ", ") * " at the commit — a handler that " *
@@ -2190,7 +2190,7 @@ message(d::TrimCommitEvents) =
 Base.@kwdef struct TrimCommitResiduals <: Diagnostic
     residuals::Vector{Tuple{Symbol,Float64,Float64}}   # name, committed value, tolerance
 end
-severity(::TrimCommitResiduals) = :warning
+severity(::TrimCommitResiduals) = :warning  # COV_EXCL_LINE
 message(d::TrimCommitResiduals) =
     "this solve converged, and the residuals re-gathered after the commit leave the box: " *
     join(("`$k` = $v against $tolerance" for (k, v, tolerance) in d.residuals), ", ") *
@@ -2202,7 +2202,7 @@ message(d::TrimCommitResiduals) =
 Base.@kwdef struct TrimCommitChecks <: Diagnostic
     checks::Vector{Tuple{Symbol,Float64,Float64}}   # name, committed value, tolerance
 end
-severity(::TrimCommitChecks) = :warning
+severity(::TrimCommitChecks) = :warning  # COV_EXCL_LINE
 message(d::TrimCommitChecks) =
     "this solve converged to a real equilibrium, and the checks read back after the " *
     "commit leave their tolerances: " *

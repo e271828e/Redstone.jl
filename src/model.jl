@@ -220,7 +220,7 @@ abandons the remainder of a frame, so [`frame!`](@ref) runs every frame to its
 end. See [`FrameHooks`](@ref) for the contract every method keeps, and
 [`frame_top!`](@ref) for the other hook.
 """
-settled!(::NoHooks) = false
+settled!(::NoHooks) = false  # COV_EXCL_LINE
 
 # The claim's gate at the top of each model door (D-318): a claimed model
 # refuses every hooks but its simulation's. The `LoopHooks` method (sim.jl)

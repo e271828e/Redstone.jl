@@ -1314,7 +1314,7 @@ function Step(; t_step, before = 0.0, after = 1.0, localized::Bool = true)
     Step{typeof(before), localized}(before, after, t_step)
 end
 x_init(::Step) = nothing
-m_init(::Step) = false                                           # fired
+m_init(::Step) = false                                           # fired  # COV_EXCL_LINE
 y_types(::Step{V}) where {V} = Pinned{V}
 y_state(c::Step, (; m)) = m ? c.after : c.before
 step_guard(c::Step{V, true}, (; t)) where {V} = t - c.t_step     # sign form: localized
@@ -1389,7 +1389,7 @@ function Sequence(; times, values, localized::Bool = true)
     Sequence{eltype(shaped), localized}(collect(Float64, times), collect(shaped))
 end
 x_init(::Sequence) = nothing
-m_init(::Sequence) = 0                                           # passed
+m_init(::Sequence) = 0                                           # passed  # COV_EXCL_LINE
 y_types(::Sequence{V}) where {V} = Pinned{V}
 y_state(c::Sequence, (; m)) = c.values[m + 1]
 advance_guard(c::Sequence{V, true}, (; t, m)) where {V} = m < length(c.times) ? t - c.times[m + 1] : -one(t)
@@ -2786,6 +2786,6 @@ local_wires(g::Group) = g.local_wires
 input_wires(g::Group) = g.input_wires
 output_wires(g::Group) = g.output_wires
 sample_times(g::Group) = g.sample_times
-transparent_container(::Group) = :children
+transparent_container(::Group) = :children  # COV_EXCL_LINE
 
 end # module Blocks

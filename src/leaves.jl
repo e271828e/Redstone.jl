@@ -28,8 +28,8 @@ _atom(::Type{P}) where {P} = P <: Real || P <: Enum || _opaque(P)
 Number of activation-scalar leaves a value of type `P` occupies in a flat
 buffer. Layout-time only — never on an evaluation path.
 """
-nleaves(::Type{<:Real}) = 1
-nleaves(::Type{<:Enum}) = 1
+nleaves(::Type{<:Real}) = 1  # COV_EXCL_LINE
+nleaves(::Type{<:Enum}) = 1  # COV_EXCL_LINE
 nleaves(::Type{P}) where {P<:StaticArray} = length(P) * nleaves(eltype(P))
 nleaves(::Type{P}) where {P} = _opaque(P) ? 1 : sum(nleaves, fieldtypes(P); init = 0)
 

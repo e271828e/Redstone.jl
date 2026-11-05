@@ -950,7 +950,7 @@ _leaf_violation(read::MountedRead, refusal::LeafRefusal) =
                       declared = refusal.declared, candidates = refusal.candidates)
 
 _selpath(selector::Union{GetState,GetDeriv,GetOutput}) = selector.path
-_selpath(::Union{GetInput,GetFace}) = ""
+_selpath(::Union{GetInput,GetFace}) = ""  # COV_EXCL_LINE
 
 # A face selector's head is matched against the faces it may name (§14.4,
 # D-276): the face its address names, or the whole address where none matches.

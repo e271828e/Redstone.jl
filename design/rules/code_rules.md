@@ -347,6 +347,17 @@ changes that touch only `docs/`, `design/` and Markdown files. A separate workfl
 Codecov. It is kept apart so that a failure under instrumentation, such as an
 allocation the compiler adds, leaves the gate and its badge green.
 
+A one-liner returning a constant can run and still read as a miss. Julia
+writes `-` for its line in the `.cov` file, and CoverageTools turns a `-` inside
+a function into `0`. Such a line carries a trailing `# COV_EXCL_LINE`, and
+`src/precompile.jl` sits between `# COV_EXCL_START` and `# COV_EXCL_STOP`, since
+its workload runs in the precompile process and in no process under coverage.
+CoverageTools matches these words as text on the line and drops the line from
+the totals. So a comment quoting one excludes its own line, and a marked line
+that stops running shows nothing. A line takes a marker only once the gate is
+shown to run it, by a test that calls it directly or a recording override. A
+line the gate does not run takes a test.
+
 The examples are a second package, `examples/`, in an environment of its
 own that reaches `Redstone` by a `[sources]` path
 (`companions/examples_inventory.md`, which is also their register). Their

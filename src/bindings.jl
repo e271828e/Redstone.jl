@@ -90,7 +90,7 @@ function TableBinding(; entries...)
     TableBinding(table)
 end
 
-is_input(::TableBinding) = true
+is_input(::TableBinding) = true  # COV_EXCL_LINE
 claims(b::TableBinding) = String[String(e.face) for e in values(b.table)]
 
 # Design: §11.4, §11.6.
