@@ -12,6 +12,12 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
+- **The API docstrings' audit and sweep.** One read-only pass checks every
+  docstring on the API page against the code, and a second checks it against
+  `rules/docstring_rules.md`. The user rules on the findings, a sweep applies
+  them, and a cold review closes the arc. The audit reads a pinned base, and
+  the sweep needs `src/` quiet. State: the tools and the sheet's amendments
+  landed, and the brief awaits the user's reading.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose

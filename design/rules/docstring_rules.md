@@ -170,8 +170,10 @@ closed(run::Run) = run.termination !== nothing
 
 ## What moves and what stays
 
-32. **An edit deletes nothing.** Every sentence it takes out of the docstring
-    moves into the comment, rewritten or as it was.
+32. **An edit deletes nothing but a false sentence.** Every other sentence it
+    takes out of the docstring moves into the comment, rewritten or as it was.
+    A false sentence is replaced by its correction, and the comment does not
+    keep it.
 33. **Every citation moves to the comment**, whose first line lists the
     sections and entries the docstring cited. Maintainer prose with content of
     its own, such as which policy an advance declares and where it lives
@@ -194,11 +196,11 @@ closed(run::Run) = run.termination !== nothing
 
 ## Procedure and review
 
-39. **A sweep is staffed one source file per agent, this sheet as the brief's
-    rule set, after a pilot file** on the stable core, whose lessons land here
-    first. Each agent rewrites every docstring in scope in its file and reports
-    every finding from the rules instead of resolving it. A cold review
-    follows.
+39. **A sweep is staffed one large source file per agent, the small files
+    grouped by word count, this sheet as the brief's rule set, after a pilot
+    file** on the stable core, whose lessons land here first. Each agent
+    rewrites every docstring in scope in its files and reports every finding
+    from the rules instead of resolving it. A cold review follows.
 40. **The reviewer's checklist is the numbered headlines, read in order.** A
     rule is its headline, so the list cannot drift from the rules, and a brief
     cites a rule by its number.
@@ -212,7 +214,10 @@ closed(run::Run) = run.termination !== nothing
     docstrings.** `§`, `D-[0-9]`, a predecessor's name and a companion pointer
     come back empty, and no summary reaches twenty words. After a rewrite,
     each file's citation set is unchanged with its comments counted, and its
-    AST with the docstrings stripped matches the base. `roster.jl` and
-    `ast_check.jl` in `design/reports/20261104_docstring_audit/` run them. The
-    grep traps in `code_rules.md` that read docstring text are re-checked
-    after a file's rewrite.
+    AST with the docstrings stripped matches the base.
+    `design/tools/docstring_roster.jl` lists the docstrings and runs the token
+    and summary checks, `design/tools/docstring_signatures.jl` prints
+    signature and keyword candidates for a reader, and `ast_check.jl` in
+    `design/reports/20261104_docstring_audit/` compares the ASTs. The grep
+    traps in `code_rules.md` that read docstring text are re-checked after a
+    file's rewrite.
