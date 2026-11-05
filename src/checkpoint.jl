@@ -33,8 +33,7 @@ end
 """
     ModelState{T}
 
-A model's state at the start of a [frame](@ref g-frame) as one value, at the
-scalar type `T`.
+A `Model{T}`'s state at the start of a [frame](@ref g-frame) as one value.
 
 [`checkpoint`](@ref) takes it from a [`Model`](@ref), and [`restore!`](@ref)
 puts it back, into a model or, at `Float64`, into a [`Simulation`](@ref). Its
@@ -54,15 +53,16 @@ fields hold the state.
 The frame index and the [boundary](@ref g-boundary) ordinal belong to a run, so
 a [`Checkpoint`](@ref) carries them beside the state.
 
-`t` is a grid time, `t₀ + k·h` as the clock writes it, so a hand-typed decimal
-can miss the grid by an ulp and be refused as `CheckpointMidFrame`.
+`t` equals `t₀ + k·h` as the clock writes it. A hand-typed decimal can miss the
+grid by an ulp and be refused as `CheckpointMidFrame`.
 
 A model's state is not a [condition](@ref g-condition). It holds the
 [root inputs](@ref g-root-input) as values, never as the condition that set
 them. It enters no condition expression and yields none. To write a condition
-onto a model at rest, use [`overlay!`](@ref). `==` compares identity, on a state
-and on its `table` and `layout` fields, so compare `x`, `s`, `m` and `prior` by
-value and the table buffer by buffer.
+onto a model at rest, use [`overlay!`](@ref).
+
+`==` compares identity, on a state and on its `table` and `layout` fields, so
+compare `x`, `s`, `m` and `prior` by value and the table buffer by buffer.
 """
 struct ModelState{T}
     x::Vector{T}                     # the flat buffer
@@ -78,7 +78,7 @@ end
 
 # Design: §12.6, D-274, D-319.
 # It has no scalar parameter, because a cursor belongs to a trajectory and only
-# a nominal model has one.
+# a nominal model has one. Only a simulation's model has a run.
 """
     Checkpoint
 
@@ -87,10 +87,9 @@ run's frame index and [boundary](@ref g-boundary) ordinal.
 
 `checkpoint(sim)` returns it, and a [trace's header](@ref g-trace-header) holds
 one. [`restore!`](@ref) and [`replay!`](@ref) put it back. The state is always
-`Float64`, since only a simulation's model has a run, and a simulation runs only
-a `Model{Float64}`.
+`Float64`, since a simulation runs only a `Model{Float64}`.
 
-A checkpoint holds these fields.
+A [checkpoint](@ref g-checkpoint) holds these fields.
 
 - `state`: the model's state, a `Float64` [`ModelState`](@ref).
 - `frame`: the run's frame index.
