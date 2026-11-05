@@ -162,12 +162,33 @@ from pinned data alone need no parameter.
 |---|---|---|
 | `Junction{In, Out, N}(f)`, with `SumJunction{V, N}`, `Or{N}`, `And{N}` | shipped | one wire per input; the consumer's consolidated input |
 | `Group` | shipped | the on-the-fly assembly ([§8.5][s8-5], [D-184][d-184]) |
-| `Pack{V, N}`, a junction alias at a named fold, and `Unpack{V, N}` between scalar ports and an `SVector{N, V}` port | shipped | wires name whole ports |
-| `StopRequest`, reason as instance data | shipped | a `Bool` in, a `StopFlag` out, consumed by nobody; the request is the port's type, so any component may publish one, and `stop_reason` names it in the termination record ([§13.5][s13-5], [D-316][d-316]) |
+| `Pack{V, N}` and `Unpack{V, N}` | shipped | wires name whole ports: between scalar ports and an `SVector{N, V}` port, `Pack` a junction alias at a named fold |
+| `StopRequest`, reason as instance data | shipped | a `Bool` in, a `StopFlag` out, consumed by nobody; the request is the port's type, so any component may publish one |
 | An unbundling component, a `y_direct` leaf taking a struct-valued bundle port | candidate | publishes the bundle's fields as loose ports, for a consumer wanting less than the bundle, since wiring is port-granular ([§4.3][s4-3], [D-276][d-276]) |
-| `Switch{V}` selecting between two inputs on a `Bool` | shipped | the `Bool` a junction's one `In` cannot type; the jump lands where the selector flips, so the event is the selector's producer's, a `Comparator` when the selector reads a continuous quantity |
-| `Select{V, K}` choosing among inputs on an enum `K` | candidate | the N-way `Switch`, Simulink's Multiport Switch and Index Vector, keyed on `instances(K)` so the inputs wear the enum's names and a wire reads `sel/CRUISE`; `y_direct` by field lookup on the selector's `Symbol`, type-stable since every data input is a `V`; the value set is closed, so no out-of-range case exists; an enum is an atom the cells, the probe and the descriptor already carry, and its producer holds it as a mode ([D-308][d-308]), so the jump lands on a boundary as `Switch` wants; no integer-keyed form, since an index wants an enum anyway; `Switch{V}` stays, `Bool` being no `Enum` |
-| `Fn{U, Y}(f)`, one input of type `U` and one output of type `Y`, `f` applied in `y_direct`; `Fn{U}(f)` for `Y = U` | candidate | the transform between two children that wires cannot express, a unit conversion or a sign flip, where the alternative is a four-declaration primitive per glue step; the feedthrough sibling of `Source{V}(f)`; admitted on the fourth guideline, as the `Junction` is, not as a gain, so section 1's pricing still applies per instance; the port types are type parameters and never read off `f` ([D-033][d-033]), so a closure's output type is declared; a `y_direct` leaf, so stage 2; `f` walks under `Dual`, which the probe checks |
+| `Switch{V}` selecting between two inputs on a `Bool` | shipped | the `Bool` a junction's one `In` cannot type |
+| `Select{V, K}` choosing among inputs on an enum `K` | candidate | the N-way `Switch`, Simulink's Multiport Switch and Index Vector, keyed on `instances(K)` so the inputs wear the enum's names and a wire reads `sel/CRUISE` |
+| `Fn{U, Y}(f)`, one input of type `U` and one output of type `Y`; `Fn{U}(f)` for `Y = U` | candidate | the transform between two children that wires cannot express, a unit conversion or a sign flip; the feedthrough sibling of `Source{V}(f)` |
+
+**`StopRequest`.** `stop_reason` names the request in the termination record
+([§13.5][s13-5], [D-316][d-316]).
+
+**`Switch`.** The jump lands where the selector flips, so the event is the
+selector's producer's, a `Comparator` when the selector reads a continuous
+quantity.
+
+**`Select`.** `y_direct` by field lookup on the selector's `Symbol`, type-stable
+since every data input is a `V`. The value set is closed, so no out-of-range
+case exists. An enum is an atom the cells, the probe and the descriptor already
+carry, and its producer holds it as a mode ([D-308][d-308]), so the jump lands on a
+boundary as `Switch` wants. There is no integer-keyed form, since an index wants
+an enum anyway. `Switch{V}` stays, `Bool` being no `Enum`.
+
+**`Fn`.** The alternative is a four-declaration primitive per glue step. It is
+admitted on the fourth guideline, as the `Junction` is, not as a gain, so
+section 1's pricing still applies per instance. The port types are type
+parameters and never read off `f` ([D-033][d-033]), so a closure's output type is
+declared. `f` is applied in `y_direct`, so the block is a stage 2 leaf, and `f`
+walks under `Dual`, which the probe checks.
 
 ### Sources
 
@@ -175,44 +196,137 @@ from pinned data alone need no parameter.
 |---|---|---|
 | `Constant(value)` | shipped | the pinned source; the zero-contributor wire and the rig stub |
 | `Step(; t_step, before = 0.0, after = 1.0, localized = true)`, with a guard on the bundle's `t` in either form | shipped | the jump is localized, or lands on a step boundary, by the guard's form, which `localized` picks ([D-179][d-179]) |
-| `Sequence(; times, values, localized = true)`, `N` strictly ascending breakpoints and `N + 1` values | shipped | the breakpoint schedule, `Step` at `N = 1`, covering Signal Builder, Repeating Sequence Stair and a finite pulse train: a mode counting the breakpoints passed, read by `y_state`, and one event whose guard is `t - times[m + 1]` until the last, so it re-arms after each firing; its handler sets the mode to the count of breakpoints at or before `t`, never `m + 1`: two breakpoints observed at one boundary, inside one boundary-detected step or both at or before `t₀`, present no fresh edge after the first firing ([§10.6][s10-6]), so an increment would stick one short for good; not periodic, since a periodic reset is not a time-guard event ([D-362][d-362]), so a periodic pulse is a discrete counter at its own period, `s⁺ = mod(s + 1, K)`, a one-liner and no block |
+| `Sequence(; times, values, localized = true)`, `N` strictly ascending breakpoints and `N + 1` values | shipped | the breakpoint schedule, `Step` at `N = 1`, covering Signal Builder, Repeating Sequence Stair and a finite pulse train |
 | `Source{V}(f)`, a user function of the nominal `t` | shipped | covers ramps and sines without a block each; pinned ([D-312][d-312]): `t` is the activation scalar, stripped before `f` |
-| `GaussianWhiteNoise(; seed, μ, σ, psd)`, a discrete Gaussian white noise process, seed as instance data | shipped | a counter-based draw: the sample is a pure function of the seed and a tick counter, the store's one field ([D-231][d-231]), so the stage draws and no generator or workspace is needed; `σ` per sample, or the two-sided density `psd` read against the bundle's `Δt` as `σ² = psd/Δt` |
+| `GaussianWhiteNoise(; seed, μ, σ, psd)`, a discrete Gaussian white noise process, seed as instance data | shipped | a counter-based draw; `σ` per sample, or the two-sided density `psd` read against the bundle's `Δt` as `σ² = psd/Δt` |
+
+**`Sequence`.** A mode counts the breakpoints passed, read by `y_state`. One
+event's guard is `t - times[m + 1]` until the last, so it re-arms after each
+firing. Its handler sets the mode to the count of breakpoints at or before `t`,
+never `m + 1`: two breakpoints observed at one boundary, inside one
+boundary-detected step or both at or before `t₀`, present no fresh edge after
+the first firing ([§10.6][s10-6]), so an increment would stick one short for good. It
+is not periodic, since a periodic reset is not a time-guard event ([D-362][d-362]). A
+periodic pulse is a discrete counter at its own period, `s⁺ = mod(s + 1, K)`, a
+one-liner and no block.
+
+**`GaussianWhiteNoise`.** The sample is a pure function of the seed and a tick
+counter, the store's one field ([D-231][d-231]), so the stage draws and no generator
+or workspace is needed.
 
 ### Continuous dynamics
 
 | Block | Status | Mechanism |
 |---|---|---|
-| `Integrator(; x0 = 0.0, reset = false)`, `reset = true` a type parameter adding the `Bool` input `reset` | shipped | walks under `Dual`; the commanded continuous reset as an event ([§3.1][s3-1], [§5.3][s5-3], [D-141][d-141]): one boundary-detected event whose guard reads `reset` and whose handler writes `x0`, firing once per rising edge and never while held, which is [§2.3][s2-3]'s edge semantics and needs no latch; rising edge only, no level reset and no initial-condition port, so no all-in-one ([D-362][d-362]); the data port keeps the face `u` in both forms ([D-437][d-437]); a reset driven by a continuous quantity arrives through a `Comparator`, where it is localized; a `Bool` input is held, never tapped, so the linearization has no `reset` column; on the discrete tier the same reset is the level form, one `ifelse` in `s_update`, on `DiscreteIntegrator(; reset)` and its limited sibling by contrast |
-| `LimitedIntegrator{V, L, R}` over `Float64` or an `SArray` | shipped | a mode the derivative reads, and four events, the hit pair reading `x - limit` and on the limit `u`, so a block freed there presents a fresh edge when its input turns outward, the leave pair gated by the mode and strictly inward input; departures localized or boundary-detected, by `L` ([D-179][d-179]); modes as `Int8` codes, `4N` per-component events over a vector; `saturation` published; `reset = true` the `Integrator`'s reset form, a fifth event on the flag's rising edge whose handler writes `x0` clamped to the limits and the code `x0` earns, so a reset onto a limit lands saturated, until an inward input frees it by its leave event, and one inside lands free |
-| `LimitedDoubleIntegrator(; lower, upper, q0 = zero(lower), v0 = zero(lower), localized = true)`, position limits on the double integral of its input | shipped | the mechanical stop, Simulink's Second-Order Integrator Limited: the named state pair `q` and `v`, each keyword naming the leaf it starts, `LimitedIntegrator`'s mode and four events, the hit pair on `q` and the leave pair on the input's sign, and hit handlers that write the limit and zero the velocity; saturated means at rest on the limit, so a block that reaches a limit while its input already points back frees in the next round of the same boundary and leaves from rest; a hit guard reads the first nonzero of `q - limit`, `v` and `u`, so a block freed at rest does not hold its predicate and an input turning outward again, even inside the same step, presents a fresh edge ([§2.3][s2-3]), while a slow departure whose `q` rounds back onto the limit does not re-fire; a `q0` on a limit with `v0` pointing back in starts free and keeps it; under the boundary-detected leave `v` carries an offset of at most `a h² / 2` and `q` one that grows with time until the next limit; outputs `out`, `velocity` and `saturation`; `4N` per-component events over a vector; no reset form yet, its two open questions in increment 87's brief; actuators with inertia and gear struts; the bouncing ball, `v ← -e v` with no saturated mode, is the same shape, an example model where its Zeno behaviour shows the event budget ([§10.6][s10-6]) and not a row |
-| `FirstOrderLag{V}`, time constant as instance data | shipped | the actuator model and [§5.5][s5-5]'s α-filter idiom; for a scalar signal it is the lag form of `TransferFunction`, and the block stays for static-array signals, for `x0` in the signal's own coordinates and for the spelling |
+| `Integrator(; x0 = 0.0, reset = false)`, `reset = true` a type parameter adding the `Bool` input `reset` | shipped | walks under `Dual`; the commanded continuous reset as an event ([§3.1][s3-1], [§5.3][s5-3], [D-141][d-141]) |
+| `LimitedIntegrator{V, L, R}` over `Float64` or an `SArray` | shipped | a mode the derivative reads, and four events; departures localized or boundary-detected, by `L` ([D-179][d-179]); `saturation` published |
+| `LimitedDoubleIntegrator(; lower, upper, q0 = zero(lower), v0 = zero(lower), localized = true)` | shipped | position limits on the double integral of its input, the mechanical stop, Simulink's Second-Order Integrator Limited |
+| `FirstOrderLag{V}`, time constant as instance data | shipped | the actuator model and [§5.5][s5-5]'s α-filter idiom |
 | a continuous rate limiter | not admitted | `q̇ = clamp((in - q) / τ, -R, R)` is one line, its kinks are second-order and its offsets decay; the discrete form is the block |
-| `StateSpace(; A, B, C, D, x0)` from any matrices, stored as static ones, scalar or `SVector` ports by the matrix shapes | shipped | `D` picks the stage, so the feedthrough class is a type parameter; `x0` in the user's coordinates; `linear_blocks.md` |
-| `TransferFunction(; num, den, u0)` from coefficient tuples or vectors, one input and one output | shipped | realized to a `StateSpace` at construction, the stage arms shared through the abstract `LinearBlock{FT}`; the class from the numerator's degree; started at rest or at the steady state for `u0`, never from an `x0`; `linear_blocks.md` |
+| `StateSpace(; A, B, C, D, x0)` from any matrices, scalar or `SVector` ports by the matrix shapes | shipped | stored as static ones; `D` picks the stage, so the feedthrough class is a type parameter; `x0` in the user's coordinates; `linear_blocks.md` |
+| `TransferFunction(; num, den, u0)` from coefficient tuples or vectors, one input and one output | shipped | realized to a `StateSpace` at construction; started at rest or at the steady state for `u0`, never from an `x0`; `linear_blocks.md` |
 | a continuous transport delay | not admitted | a history buffer indexed by the step; `reports/20260809_extensions_charter/report.md` item 4 |
+
+**`Integrator`.** The reset is one boundary-detected event whose guard reads
+`reset` and whose handler writes `x0`, firing once per rising edge and never
+while held, which is [§2.3][s2-3]'s edge semantics and needs no latch. It acts on the
+rising edge only, with no level reset and no initial-condition port, so no
+all-in-one ([D-362][d-362]). The data port keeps the face `u` in both forms ([D-437][d-437]). A
+reset driven by a continuous quantity arrives through a `Comparator`, where it
+is localized. A `Bool` input is held, never tapped, so the linearization has no
+`reset` column. On the discrete tier the same reset is the level form, one
+`ifelse` in `s_update`, on `DiscreteIntegrator(; reset)` and its limited sibling
+by contrast.
+
+**`LimitedIntegrator`.** The hit pair of events reads `x - limit` and on the
+limit `u`, so a block freed there presents a fresh edge when its input turns
+outward. The leave pair is gated by the mode and strictly inward input. Modes
+are `Int8` codes, with `4N` per-component events over a vector. `reset = true`
+is the `Integrator`'s reset form, a fifth event on the flag's rising edge whose
+handler writes `x0` clamped to the limits and the code `x0` earns. So a reset
+onto a limit lands saturated, until an inward input frees it by its leave event,
+and one inside lands free.
+
+**`LimitedDoubleIntegrator`.** The named state pair is `q` and `v`, each keyword
+naming the leaf it starts. It has `LimitedIntegrator`'s mode and four events,
+the hit pair on `q` and the leave pair on the input's sign, and hit handlers
+that write the limit and zero the velocity. Saturated means at rest on the
+limit, so a block that reaches a limit while its input already points back frees
+in the next round of the same boundary and leaves from rest. A hit guard reads
+the first nonzero of `q - limit`, `v` and `u`, so a block freed at rest does not
+hold its predicate and an input turning outward again, even inside the same
+step, presents a fresh edge ([§2.3][s2-3]), while a slow departure whose `q` rounds back
+onto the limit does not re-fire. A `q0` on a limit with `v0` pointing back in
+starts free and keeps it. Under the boundary-detected leave `v` carries an
+offset of at most `a h² / 2` and `q` one that grows with time until the next
+limit. The outputs are `out`, `velocity` and `saturation`, with `4N`
+per-component events over a vector. It has no reset form yet, its two open
+questions in increment 87's brief. It serves actuators with inertia and gear
+struts. The bouncing ball, `v ← -e v` with no saturated mode, is the same shape,
+an example model where its Zeno behaviour shows the event budget ([§10.6][s10-6]) and not
+a row.
+
+**`FirstOrderLag`.** For a scalar signal it is the lag form of
+`TransferFunction`, and the block stays for static-array signals, for `x0` in
+the signal's own coordinates and for the spelling.
+
+**`TransferFunction`.** The stage arms are shared through the abstract
+`LinearBlock{FT}`, and the class comes from the numerator's degree.
 
 ### Discontinuities
 
 | Block | Status | Mechanism |
 |---|---|---|
-| `Relay{V}` (hysteresis) over `Float64` or an `SArray` | shipped | the reference mode-switching leaf; modes as `Int8` codes, `2N` per-component events over a vector; the fall strict as the `Comparator`'s, so `lower == upper` is a plain threshold that chatters nowhere |
-| `Comparator(; threshold, lower, upper, localized = true)`, `threshold` alone or both limits, a `Bool` output | shipped | Hit Crossing, Compare To Constant and the threshold criterion of Simulink's Switch in one: `Relay`'s latch and guard pair publishing `Pinned{Bool}` from the mode, a plain threshold at `lower == upper` and hysteresis between them, the policy by `L` as in `Step` ([D-179][d-179]); the fall strict, `u < lower`, spelled `prevfloat(lower) - u` in sign form, since with both guards non-strict an input sitting exactly on a plain threshold holds both predicates and the switches re-enable each other to the firing budget; `lower > upper` refused; the declared way to produce `Switch`'s `select` from a continuous quantity, which the `Switch` docstring otherwise calls a mode made silently; the declared kink the saturation row reserves, a clamp staying one line beside it; `Relay` is a `Comparator` feeding a `Switch` over two constants, and stays for the spelling |
+| `Relay{V}` (hysteresis) over `Float64` or an `SArray` | shipped | the reference mode-switching leaf; modes as `Int8` codes, `2N` per-component events over a vector |
+| `Comparator(; threshold, lower, upper, localized = true)`, `threshold` alone or both limits, a `Bool` output | shipped | Hit Crossing, Compare To Constant and the threshold criterion of Simulink's Switch in one; a plain threshold at `lower == upper`, hysteresis between them |
 | Saturation, dead zone | not admitted | one-line clamps; when localization doctrine wants a declared kink, a `Comparator` on the same signal lands the step on it |
-| Quantizer, Coulomb and viscous friction | not admitted | the quantizer jumps at every level and belongs on the discrete tier, where it jumps at ticks and smears nothing; the friction block is a memoryless sign law, and a stiction model with stick and slip modes is a mechanics package's |
+| Quantizer, Coulomb and viscous friction | not admitted | the quantizer belongs on the discrete tier; the friction block is a memoryless sign law |
+
+**`Relay`.** The fall is strict as the `Comparator`'s, so `lower == upper` is a
+plain threshold that chatters nowhere.
+
+**`Comparator`.** `Relay`'s latch and guard pair publishing `Pinned{Bool}` from
+the mode, the policy by `L` as in `Step` ([D-179][d-179]). The fall is strict,
+`u < lower`, spelled `prevfloat(lower) - u` in sign form, since with both guards
+non-strict an input sitting exactly on a plain threshold holds both predicates
+and the switches re-enable each other to the firing budget. `lower > upper` is
+refused. It is the declared way to produce `Switch`'s `select` from a continuous
+quantity, which the `Switch` docstring otherwise calls a mode made silently. It
+is the declared kink the saturation row reserves, a clamp staying one line
+beside it. `Relay` is a `Comparator` feeding a `Switch` over two constants, and
+stays for the spelling.
+
+**Quantizer and friction.** The quantizer jumps at every level, and on the
+discrete tier it jumps at ticks and smears nothing. A stiction model with stick
+and slip modes is a mechanics package's.
 
 ### Discrete tier
 
 | Block | Status | Mechanism |
 |---|---|---|
 | `UnitDelay{V}` | shipped | the tier's native `z⁻¹` ([§10.6][s10-6]) |
-| `DiscreteIntegrator{V, R}` | shipped | tier semantics; forward Euler, its bare output the state from `s0`, so it breaks a loop as `UnitDelay` does; no gain and no limits, as `Integrator` has none; `reset = true` adds the `Bool` input `reset`, a level reset in `s_update` ([§5.3][s5-3]): the update writes `s0` while the flag reads true, so the state lands at the next tick and the output at the reset tick is the stale integral; the same-tick spelling reads the flag in an output stage, which makes every input a feedthrough edge and costs the loop break, so it is not offered |
+| `DiscreteIntegrator{V, R}` | shipped | tier semantics; forward Euler, its bare output the state from `s0`, so it breaks a loop as `UnitDelay` does; no gain and no limits, as `Integrator` has none |
 | `RateLimiter{V}` | shipped | tier semantics; feedthrough, its bare output following its bare input within `rising Δt` up and `falling Δt` down per tick from `s0`; its `s_update` stores `y` |
-| a discrete backlash, `y = clamp(s, u - w/2, u + w/2)` with `s_update` storing `y` | candidate | the continuous block needs the sign of `u̇`, which no stage sees and Simulink fakes; the discrete form is `RateLimiter`'s sibling, admitted on tier semantics as the rate limiter was and priced as the one-liner it is, the weakest candidate of the 2026-10-30 sweep |
+| a discrete backlash, `y = clamp(s, u - w/2, u + w/2)` with `s_update` storing `y` | candidate | `RateLimiter`'s sibling, admitted on tier semantics as the rate limiter was and priced as the one-liner it is |
 | `DiscreteStateSpace` and `DiscreteTransferFunction`, the pair in `z` | shipped | the continuous pair mirrored over `DiscreteLinearBlock{FT}`, `s_update` for `x_deriv`; the period is the scope's and the block cannot check it; `linear_blocks.md`, section 9 |
 | `DiscretizedStateSpace` and `DiscretizedTransferFunction`, from a continuous system | shipped | the zero-order hold taken per tick at the bundle's `Δt`, so the class and the initial condition are the continuous ones; `linear_blocks.md`, section 9 |
-| `DiscreteLimitedIntegrator{V, R}` | shipped | tier semantics by contrast: the continuous block's mode and four events are one `clamp` in `s_update`, with no mode store and no localization; `LimitedIntegrator`'s interface, `lower`, `upper`, `s0`, `reset` and the `Int8` `saturation` code, the code read off the state from stage 1; the reset the level form of `DiscreteIntegrator`'s, `s0` clamped |
+| `DiscreteLimitedIntegrator{V, R}` | shipped | tier semantics by contrast: the continuous block's mode and four events are one `clamp` in `s_update`, with no mode store and no localization |
 | `Delay(; K, v0)` | shipped | the tier's `z⁻ᴷ` in a ring store, `K` ticks of the component's own period ([§10.5][s10-5]), one output, `K = 1` the `UnitDelay` in keyword spelling |
+
+**`DiscreteIntegrator`.** `reset = true` adds the `Bool` input `reset`, a level
+reset in `s_update` ([§5.3][s5-3]). The update writes `s0` while the flag reads true, so
+the state lands at the next tick and the output at the reset tick is the stale
+integral. The same-tick spelling reads the flag in an output stage, which makes
+every input a feedthrough edge and costs the loop break, so it is not offered.
+
+**Discrete backlash.** The continuous block needs the sign of `u̇`, which no
+stage sees and Simulink fakes. This is the weakest candidate of the 2026-10-30
+sweep.
+
+**`DiscreteLimitedIntegrator`.** It has `LimitedIntegrator`'s interface,
+`lower`, `upper`, `s0`, `reset` and the `Int8` `saturation` code, the code read
+off the state from stage 1. The reset is the level form of
+`DiscreteIntegrator`'s, `s0` clamped.
 
 ### Stop-gradient
 
@@ -225,10 +339,48 @@ from pinned data alone need no parameter.
 
 | Block | Status | Mechanism |
 |---|---|---|
-| `PID(; Kp, …, hold, tracking)` over `Float64` or an `SArray` | shipped | one law, `q̇ = Ki ε + (ref - u_raw) / Tt`, componentwise over a static vector, with two independent axes: the hold, adding the saturation code that gates the integrator by sign and the flag `engaged` under which the error is gated off, not engaged taking precedence; and the tracking reference `v`, which `u_raw` converges to while limited or not engaged, so a block not in command follows the selected command and engages bumplessly, with the fallback to the own `u` while free; back-calculation against the own limits otherwise; the three ports at the output's shape; `Ki` inside the integral; every parameter a `V`, and any of them a port by `AsPort()`; the setpoint weights `b = 1` and `c = 0`, so the derivative acts on the measurement by default; a fixed infinite `Tt` refused with `tracking`; no saturation output, since a continuous code would need a mode and events; `pid_anti_windup.md`, section 4 for the table, section 10 for the vectors, the ports and the weights, section 11 for standby |
-| `DiscretePID(; Kp, …, hold, tracking)` | shipped | the positional law carried to the discrete tier, the ports, the gate, the reference rule and the parameters shared through `PIDBlock{V, Hold, Track, Fixed}`, so componentwise over a static vector, every parameter a `V`, any of them a port by `AsPort()` and the weights `b = 1` and `c = 0` as in `PID`; forward Euler on the integral, backward Euler on the derivative filter so `τd = 0` is the backward difference, and the correction's step `1 - e^{-Δt/Tt}` so every `Tt` is stable and `Tt = 0` is instant, which makes standby follow exactly; a second output `saturated`, the own clamp's `Int8` code written to the store at the tick and published from stage 1 at the next, one tick stale, for an outer block's hold, named apart from the hold's input ([D-384][d-384]); `pid_anti_windup.md`, sections 9 to 11 |
-| `LQRTracker(; K_fbk, K_fwd, …)` | shipped | the LQR tracker about a trim point, `u_raw = u_trim + K_fwd (z_ref - z_trim) - K_fbk (x - x_trim) + q` with `q̇ = ε + (ref - u_raw) / Tt` over an `n_u`-wide integrator, `ε` the gated `K_int (z_ref - z)` and `K_int` inside it; inputs `x`, `z` and `z_ref` as static vectors, outputs `u` and `u_raw` from stage 2; the PID's two axes over the integrator input channel by channel, `engaged` per channel, and the own clamp by back-calculation; the nine parameters, the three gains and the trim triple as static matrices and vectors and `Tt`, `u_min`, `u_max` per channel, any of them a port by `AsPort()`, which is how a gain schedule arrives; gains designed outside, from `trim!` and `linearize`; no saturation output; `lqr_tracker.md` |
-| `DiscreteLQRTracker(; K_fbk, K_fwd, …)` | shipped | the tracker on the discrete tier over `LQRTrackerBlock`, forward Euler on the integrator and the correction's exact step as `DiscretePID`; the own clamp's `Int8` code vector as the output `saturated` ([D-384][d-384]), from stage 1 off the store, one tick stale, for the outer loops of a cascade, each channel reaching a scalar consumer through `Unpack{Int8, NU}`; `lqr_tracker.md`, sections 6 and 7 |
+| `PID(; Kp, …, hold, tracking)` over `Float64` or an `SArray` | shipped | one law, `q̇ = Ki ε + (ref - u_raw) / Tt`, componentwise over a static vector, with two independent axes, the hold and the tracking reference `v` |
+| `DiscretePID(; Kp, …, hold, tracking)` | shipped | the positional law carried to the discrete tier, the ports, the gate, the reference rule and the parameters shared through `PIDBlock{V, Hold, Track, Fixed}` |
+| `LQRTracker(; K_fbk, K_fwd, …)` | shipped | the LQR tracker about a trim point; inputs `x`, `z` and `z_ref` as static vectors, outputs `u` and `u_raw` from stage 2; gains designed outside, from `trim!` and `linearize`; no saturation output |
+| `DiscreteLQRTracker(; K_fbk, K_fwd, …)` | shipped | the tracker on the discrete tier over `LQRTrackerBlock`, forward Euler on the integrator and the correction's exact step as `DiscretePID` |
+
+**`PID`.** The hold adds the saturation code that gates the integrator by sign
+and the flag `engaged` under which the error is gated off, not engaged taking
+precedence. The tracking reference `v` is what `u_raw` converges to while
+limited or not engaged, so a block not in command follows the selected command
+and engages bumplessly, with the fallback to the own `u` while free. Otherwise
+back-calculation runs against the own limits. The three ports are at the
+output's shape, and `Ki` sits inside the integral. Every parameter is a `V`, and
+any of them a port by `AsPort()`. The setpoint weights are `b = 1` and `c = 0`,
+so the derivative acts on the measurement by default. A fixed infinite `Tt` is
+refused with `tracking`. There is no saturation output, since a continuous code
+would need a mode and events. See `pid_anti_windup.md`, section 4 for the table,
+section 10 for the vectors, the ports and the weights, section 11 for standby.
+
+**`DiscretePID`.** The sharing makes it componentwise over a static vector,
+every parameter a `V`, any of them a port by `AsPort()` and the weights `b = 1`
+and `c = 0`, as in `PID`. It uses forward Euler on the integral, backward Euler
+on the derivative filter so `τd = 0` is the backward difference, and the
+correction's step `1 - e^{-Δt/Tt}` so every `Tt` is stable and `Tt = 0` is
+instant, which makes standby follow exactly. A second output `saturated`, the
+own clamp's `Int8` code written to the store at the tick and published from
+stage 1 at the next, one tick stale, serves an outer block's hold, named apart
+from the hold's input ([D-384][d-384]). See `pid_anti_windup.md`, sections 9 to 11.
+
+**`LQRTracker`.** The law is
+`u_raw = u_trim + K_fwd (z_ref - z_trim) - K_fbk (x - x_trim) + q` with
+`q̇ = ε + (ref - u_raw) / Tt` over an `n_u`-wide integrator, `ε` the gated
+`K_int (z_ref - z)` and `K_int` inside it. It has the PID's two axes over the
+integrator input channel by channel, `engaged` per channel, and the own clamp by
+back-calculation. The nine parameters are the three gains and the trim triple as
+static matrices and vectors and `Tt`, `u_min`, `u_max` per channel, any of them
+a port by `AsPort()`, which is how a gain schedule arrives. See
+`lqr_tracker.md`.
+
+**`DiscreteLQRTracker`.** The own clamp's `Int8` code vector is the output
+`saturated` ([D-384][d-384]), from stage 1 off the store, one tick stale, for the outer
+loops of a cascade, each channel reaching a scalar consumer through
+`Unpack{Int8, NU}`. See `lqr_tracker.md`, sections 6 and 7.
 
 A flag-gated reset face on a library PI block is sugar over exactly the
 edge-triggered reset event of [§5.3][s5-3], which resets a continuous
