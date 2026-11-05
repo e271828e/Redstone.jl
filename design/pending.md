@@ -16,8 +16,9 @@ item changes what the spec says, the spec edit is part of the item.
   docstring on the API page against the code, and a second checks it against
   `rules/docstring_rules.md`. The user rules on the findings, a sweep applies
   them, and a cold review closes the arc. The audit reads a pinned base, and
-  the sweep needs `src/` quiet. State: the tools and the sheet's amendments
-  landed, and the brief awaits the user's reading.
+  the sweep needs `src/` quiet. Brief
+  `design/increments/20261105_docstring_audit/brief_docstring_audit.md`, base
+  `4a818b2`. State: stage 1, the calibration, is running.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose
