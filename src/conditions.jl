@@ -37,6 +37,7 @@ struct Fragment{X,S,M,L}
 end
 
 # Design: §14.2, §14.3, Appendix B.
+# `at` stores the prefix and never applies it.
 """
     Scoped
 
@@ -45,8 +46,7 @@ prefix, stored and not yet applied.
 
 [`at`](@ref) returns it from a node of a condition, and `at`, [`combine`](@ref)
 and [`override`](@ref) take it. It holds the prefix and the node `at` was given.
-`at` stores the prefix and never applies it. The paths join when a service
-resolves the condition against its build.
+The paths join when a service resolves the condition against its build.
 
 See also [`ConditionNode`](@ref).
 """
@@ -56,6 +56,8 @@ struct Scoped{N}
 end
 
 # Design: §14.2, Appendix B.
+# Two nodes that set one leaf are refused as `DuplicateConditionLeaf` when a
+# service resolves the condition. The diagnostic names where each was authored.
 """
     Combined
 
@@ -64,9 +66,7 @@ symmetrically, each leaf set by at most one.
 
 [`combine`](@ref) returns it, and [`at`](@ref), `combine` and
 [`override`](@ref) take it as a node of a condition. It holds the nodes in the
-order given, an order that matters only to diagnostics. Two nodes that set one
-leaf are refused as `DuplicateConditionLeaf` when a service resolves the
-condition, and the diagnostic names where each was authored.
+order given, an order that matters only to diagnostics.
 
 See also [`ConditionNode`](@ref).
 """
@@ -75,6 +75,9 @@ struct Combined{T<:Tuple}
 end
 
 # Design: §14.6, Appendix B. The fourth node kind; layering is variadic.
+# A leaf set in several layers takes the last layer's value. Its diagnostics
+# name both layers. Two entries on one leaf within one layer are still refused
+# as `DuplicateConditionLeaf`.
 """
     Override
 
@@ -83,9 +86,7 @@ layer winning on a shared leaf.
 
 [`override`](@ref) returns it, and [`at`](@ref), [`combine`](@ref) and
 `override` take it as a node of a condition. It holds the layers, the base first
-and each patch after it. A leaf set in several layers takes the last layer's
-value, and the origin its diagnostics report names both layers. Two entries on
-one leaf within one layer are still refused as `DuplicateConditionLeaf`.
+and each patch after it.
 
 See also [`ConditionNode`](@ref).
 """
@@ -103,8 +104,8 @@ combinator takes.
 A condition is a tree of nodes. [`set`](@ref) returns its leaf, a
 [`Fragment`](@ref). [`at`](@ref) returns a [`Scoped`](@ref), [`combine`](@ref) a
 [`Combined`](@ref) and [`override`](@ref) an [`Override`](@ref). `at`, `combine`
-and `override` take any `ConditionNode`, and a service such as [`init!`](@ref)
-takes the root node and resolves the tree against its build.
+and `override` take any `ConditionNode`. A service such as [`init!`](@ref) takes
+the root node and resolves the tree against its build.
 """
 const ConditionNode = Union{Fragment,Scoped,Combined,Override}
 
@@ -118,32 +119,33 @@ Return the [component](@ref g-component)'s own [condition](@ref g-condition),
 built from keywords in its own vocabulary.
 
 A component type ships its condition as a method of this function,
-`condition(c::C; kw...) = set(…)`. The owner of a structure pulls its children's
-conditions under [`at`](@ref) and collects them with [`combine`](@ref), as in
+`condition(c::C; kw...) = set(…)`. A parent component calls its children's
+`condition` methods under [`at`](@ref) and collects them with
+[`combine`](@ref), as in
 `combine(at("engine", condition(sys.engine; n_eng)), …)`.
 
 A model package extends `condition` through `import Redstone: condition`, as it
 extends the declaration functions. There is no fallback method, so a child type
-without one fails at its owner's pull as a `MethodError` naming it. An owner in
-another package pulling a method written to a package-local `condition` fails
+without one fails at its parent's call as a `MethodError` naming it. A parent in
+another package calling a method written to a package-local `condition` fails
 the same way, and no earlier check catches it. Within one package the local
 function works.
 """
 function condition end
 
 # Design: §14.1, §14.2, Appendix B.
+# A condition is a tree, and `set` builds its leaf.
 """
     set(; x = (;), s = (;), m = (;), u = (;)) -> Fragment
 
 Return the leaf of a [condition](@ref g-condition), setting values on the
 [component](@ref g-component) it is authored for.
 
-A condition is a tree, and `set` builds its leaf. Each payload
-is a `NamedTuple` in the vocabulary of the component at the authoring level, and
-names none of its children. A store declared bare has the field `x`, `s` or
-`m`, which a bare payload names, as in `set(x = 1.0)` for `set(x = (x = 1.0,))`.
-[`at`](@ref) scopes a leaf to a child, and
-[`combine`](@ref) and [`override`](@ref) compose leaves.
+Each payload is a `NamedTuple` in the vocabulary of the component at the
+authoring level, and names none of its children. A
+[bare store](@ref g-bare-store) has the field `x`, `s` or `m`. A bare payload
+names it, as in `set(x = 1.0)` for `set(x = (x = 1.0,))`. [`at`](@ref) scopes a
+leaf to a child, and [`combine`](@ref) and [`override`](@ref) compose leaves.
 
 A condition sets state, modes and [root inputs](@ref g-root-input) only. It
 never sets outputs, and never [workspace](@ref g-workspace). Only a
@@ -161,7 +163,8 @@ the condition against its build.
 - `m`: modes, by name, or a bare mode store's value.
 - `u`: root input values, named by the authoring level's own input
   [faces](@ref g-face), or a bare input's value, the face `u`, at a
-  [primitive](@ref g-primitive) level whose `u_types` is bare.
+  [primitive](@ref g-primitive) level whose `u_types` is
+  [bare](@ref g-bare-contract).
 """
 function set(; x = (;), s = (;), m = (;), u = (;))
     _payload(:x, x); _payload(:s, s); _payload(:m, m); _payload(:u, u)
@@ -178,6 +181,8 @@ _payload(name, p) = p !== nothing ||
 # Design: §14.2, §14.3, §14.9, D-277, D-278.
 # Nothing is concatenated here: the prefix is stored, and flattening at
 # resolution is the one place path strings ever join (§14.3).
+# On a read set, a service walks the chain from the root, and rebases every
+# selector onto it.
 """
     at(prefix::AbstractString, node::ConditionNode) -> Scoped
     at(prefix::AbstractString, read_set::Reads) -> Reads
@@ -188,12 +193,11 @@ Scope a [condition](@ref g-condition) or a [read set](@ref g-read-set) under
 `prefix` is a slash path relative to the level where the result is placed, such
 as `"pwp/engine"`. On a node of a condition, built by [`set`](@ref) or a
 combinator, `at` stores the prefix beside the node and applies nothing. The
-paths join when a service resolves the condition against its build, and a path
-the build does not have is refused there as `PathResolution`.
+paths join when a service resolves the condition against its build. A path the
+build does not have is refused there as `PathResolution`.
 
 On a read set, `at` adds `prefix` to the front of the set's
-[mount chain](@ref g-mounting). A service walks the chain from the root, and
-rebases every [selector](@ref g-selector) onto it. Other methods of `at` scope a
+[mount chain](@ref g-mounting). Other methods of `at` scope a
 [`TrimProblem`](@ref) and a tap set from [`taps`](@ref) the same way.
 
 An empty prefix names no child, and is refused when `at` is called. The refusal
@@ -214,24 +218,23 @@ at(::AbstractString, other) = _node_misuse(other, ())
 # Design: §14.2, D-065, D-204.
 # Collision-intolerant by design, and the layering spelling is `override`.
 # `Base.merge` is last-writer-wins on NamedTuples, the exact semantics D-065
-# rejects here.
+# rejects here. `combine` is symmetric and collision-intolerant. It is not
+# `Base.merge` and does not extend it.
 """
     combine(nodes::ConditionNode...) -> Combined
 
 Return one [condition](@ref g-condition) collecting the sibling nodes, each leaf
 set by at most one of them.
 
-`combine` is symmetric and collision-intolerant. Each node is part of a
-condition, built by [`set`](@ref), [`at`](@ref) or a combinator, and their order
-matters only to diagnostics. Two nodes that set one leaf are refused as
-`DuplicateConditionLeaf` when a service resolves the condition, and the
-diagnostic names where each was authored. To layer one node over another, use
-[`override`](@ref).
+Each node is part of a condition, built by [`set`](@ref), [`at`](@ref) or a
+combinator. Their order matters only to diagnostics. Two nodes that set one leaf
+are refused as `DuplicateConditionLeaf` when a service resolves the condition.
+The diagnostic names where each was authored. To layer one node over another,
+use [`override`](@ref).
 
-`combine` is not `Base.merge` and does not extend it. A bare `NamedTuple` beside
-a node is refused as `ConditionNodeMisuse` when `combine` is called. Wrap it in
-`set(…)` first. Any other argument that is not a condition node is refused the
-same way.
+A bare `NamedTuple` beside a node is refused as `ConditionNodeMisuse` when
+`combine` is called. Wrap it in `set(…)` first. Any other argument that is not a
+condition node is refused the same way.
 """
 combine(nodes::ConditionNode...) = Combined(nodes)
 
@@ -255,12 +258,10 @@ Return one [condition](@ref g-condition) layering each patch over the layers
 before it, the last layer winning on a shared leaf.
 
 `override` layers conditions in order, where [`combine`](@ref) collects them
-symmetrically. It serves a [baseline](@ref g-baseline) with patches over it, and
+symmetrically. It serves a [baseline](@ref g-baseline) with patches over it.
 [`trim!`](@ref) commits `override(baseline, problem.condition(solution))`. A
-leaf set in several layers takes the last layer's value, and the origin its
-diagnostics report names both layers. Two entries on one leaf within one layer
-are still refused as `DuplicateConditionLeaf` when a service resolves the
-condition.
+leaf set in several layers takes the last layer's value. Its diagnostics name
+both layers.
 
 A `u` entry's leaf is the [root input](@ref g-root-input) it resolves to, not
 the [face](@ref g-face) it was written with. A baseline authored at the root
@@ -268,7 +269,8 @@ therefore layers cleanly under a patch that a [component](@ref g-component)'s
 own [`condition`](@ref) method writes against its local face.
 
 An argument that is not a condition node is refused as `ConditionNodeMisuse`
-when `override` is called.
+when `override` is called. Two entries on one leaf within one layer are still
+refused as `DuplicateConditionLeaf` when a service resolves the condition.
 """
 override(base::ConditionNode, patches::ConditionNode...) = Override((base, patches...))
 override(layers...) = _misuse_in(layers)
