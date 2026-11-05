@@ -35,7 +35,10 @@
 # check return's shape at the guess evaluation and can catch no more than that.
 # `trim!` checks a problem in two collecting passes. The first runs before any
 # evaluation, and the second checks the residual and check returns at the guess
-# evaluation.
+# evaluation. A selector resolves against a model, and the residual and check
+# names are observed at one evaluation at the guess. The names pair `guess`,
+# `lower` and `upper`. The problem carries its own convergence test, so the test
+# moves with it when `at` scopes it.
 """
     TrimProblem(; guess, lower, upper, condition, reads, residuals, tolerances,
                 checks, check_tolerances = (;)) -> TrimProblem
@@ -48,25 +51,21 @@ A trim problem is a condition given implicitly, as a function of decisions.
 within its tolerance, and commits the condition at that point. The first seven
 keywords are required, and the two check keywords default to no checks.
 
-The names pair `guess`, `lower` and `upper`. Setup reorders the bounds to
-`guess`'s order, so their spelling order does not matter. The `condition`
-function takes the decisions as its one argument, and it closes over everything
-fixed for the problem.
+Setup reorders the bounds to `guess`'s order, so their spelling order does not
+matter. The `condition` function takes the decisions as its one argument, and it
+closes over everything fixed for the problem.
 
-The problem carries its own convergence test, so the test moves with it when
-[`at`](@ref) scopes it. The checks take their reads from `reads`. A check
-outside its tolerance warns `TrimCommitChecks`.
+The checks take their reads from `reads`. A check outside its tolerance warns
+`TrimCommitChecks`.
 
 Constructing a problem validates nothing, since most of what it needs is only
-checkable against a build. A [selector](@ref g-selector) resolves against a
-model, and the residual and check names are observed at one evaluation at the
-guess. `trim!` refuses a malformed field as `TrimProblemInvalid`. A condition
-that does not resolve is refused as `ConditionResolution`, `PathResolution`,
-`DuplicateConditionLeaf` or `ConditionNodeMisuse`, and a `condition` or
-`residuals` that is not callable raises a `MethodError`. A check that throws at
-the guess fails at setup. One that throws or loses a name only at the solved
-point fails at the commit after the state has moved, as a residual can, and a
-name added later is ignored.
+checkable against a build. `trim!` refuses a malformed field as
+`TrimProblemInvalid`. A condition that does not resolve is refused as
+`ConditionResolution`, `PathResolution`, `DuplicateConditionLeaf` or
+`ConditionNodeMisuse`, and a `condition` or `residuals` that is not callable
+raises a `MethodError`. A check that throws at the guess fails at setup. One
+that throws or loses a name only at the solved point fails at the commit after
+the state has moved, as a residual can, and a name added later is ignored.
 
 # Keywords
 
@@ -110,14 +109,14 @@ TrimProblem(; guess, lower, upper, condition, reads, residuals, tolerances,
 
 Scope a trim problem under `prefix`, so that its paths resolve below that path.
 
-`at` lifts the [`TrimProblem`](@ref) field by field. The `condition` function is
-wrapped, so that each [condition](@ref g-condition) it returns is scoped under
+`at` scopes the [`TrimProblem`](@ref) field by field. It wraps the `condition`
+function, so that each [condition](@ref g-condition) it returns is scoped under
 `prefix`. The `reads` field is a [read set](@ref g-read-set). It takes `prefix`
 at the front of its [mount chain](@ref g-mounting). Every other field holds no
 path and passes through, the two check fields included.
 
 A `reads` field that is not a read set passes through untouched, so that
-`trim!`'s setup names it. When `reads` is a read set, the lift refuses only an
+`trim!`'s setup names it. When `reads` is a read set, `at` refuses only an
 empty prefix, as `ReadSetMisuse` from `at` on the read set.
 """
 at(prefix::AbstractString, problem::TrimProblem) = TrimProblem(
@@ -143,7 +142,8 @@ struct TrimTag end
 # `committed` flag: a converged solve is always committable (§14.8), so the
 # absence of the commit is the absence of `committed_residuals`. `saturated` is
 # the classic CG-limit diagnostic (D-070). The backend's counts are
-# authoritative over nothing (D-158).
+# authoritative over nothing (D-158). A check outside its tolerance warns
+# `TrimCommitChecks`.
 """
     TrimReport
 
@@ -154,15 +154,14 @@ verdict was read off.
 catch. A solve that does not converge returns one too. A malformed problem is a
 different case, and `trim!` refuses it at setup.
 
-The `converged` verdict alone gates the commit. A converged solve commits unless
-[boundary zero](@ref g-boundary-zero) throws, which arrives as a `StepError`
-with no report, so `committed_residuals` also tells whether the commit happened.
-A check outside its tolerance warns `TrimCommitChecks`.
+The `converged` verdict alone decides the commit. A converged solve commits
+unless [boundary zero](@ref g-boundary-zero) throws, which arrives as a
+`StepError` with no report, so `committed_residuals` also tells whether the
+commit happened.
 
 A non-empty `fired_events` means the committed [stores](@ref g-store) sit past
-the [events](@ref g-state-event)' handlers rather than at the reported solution,
-and a `TrimCommitEvents` warning comes with it. `:bypassed` is the status of a
-problem with no decisions, which makes no backend call.
+the [events](@ref g-state-event)' handlers rather than at the reported solution.
+A `TrimCommitEvents` warning comes with it.
 
 A report holds these fields.
 
@@ -177,8 +176,10 @@ A report holds these fields.
 - `committed_checks`: the checks at the committed state, read from the same
   [sweep](@ref g-sweep), `(;)` when the problem declares no checks and `nothing`
   when nothing was committed.
-- `status`, `n_evaluations`, `n_iterations`: the backend's own, recorded
-  verbatim and deciding nothing.
+- `status`: the backend's own, recorded verbatim and deciding nothing, or
+  `:bypassed` for a problem with no decisions, which makes no backend call.
+- `n_evaluations`, `n_iterations`: the backend's own, recorded verbatim and
+  deciding nothing.
 - `saturated`: the decisions sitting at a bound at the returned point, as
   `(name, :lower)` or `(name, :upper)`.
 - `fired_events`: the events boundary zero fired at the commit, as
@@ -223,8 +224,8 @@ fills the residual vector `r`, and fills the Jacobian `J` only when
 `J !== nothing`. A backend that needs no Jacobian always passes `nothing`.
 
 `d0`, `lower` and `upper` are `Vector{Float64}`s in `guess`'s order, with `±Inf`
-for an unbounded side, and a `d0` that is not `NaN` already lies within the
-bounds. A backend that ignores bounds ignores the two vectors. `tol` holds the
+for an unbounded side. A `d0` that is not `NaN` already lies within the bounds.
+A backend that ignores bounds ignores the two vectors. `tol` holds the
 tolerances in `tolerances`' order. A backend may stop on it, but it decides
 nothing. `trim!` tests convergence itself at the returned point.
 
@@ -251,9 +252,9 @@ The default trim backend, a dense Levenberg–Marquardt solver that stops on the
 problem's own tolerances.
 
 Each iteration solves `(JᵀJ + λ·D) δ = −Jᵀr` for a step, where `D` is
-`diag(JᵀJ)` floored at `1e-12`, and projects the step onto the bounds. A step is
-accepted when it lowers the normalized residual norm `‖r ./ tol‖`. `λ` then
-shrinks by a factor of 10, and a rejected step grows it by 10. The descent test
+`diag(JᵀJ)` floored at `1e-12`, and projects the step onto the bounds. The
+solver accepts a step when it lowers the normalized residual norm `‖r ./ tol‖`.
+`λ` then shrinks tenfold, and a rejected step grows it by 10. The descent test
 and the stopping rule both measure the residuals in their tolerances' units, the
 test [`trim!`](@ref) applies to the result.
 
@@ -520,20 +521,22 @@ zero can then move the committed stores off the solved point, through
 `x_projection` or an event whose [guard](@ref g-guard) already holds. `trim!`
 surfaces both. It lists the events fired in the report's `fired_events`, with a
 `TrimCommitEvents` warning. It reads the residuals again at the committed state,
-with a `TrimCommitResiduals` warning when they leave their tolerances. The
-checks are read from the same boundary-zero sweep, and `TrimCommitChecks` warns
-of those outside their tolerances.
+with a `TrimCommitResiduals` warning when they leave their tolerances. It reads
+the checks from the same boundary-zero sweep. `TrimCommitChecks` warns of those
+outside their tolerances.
 
 A problem with no decisions, `guess = (;)`, is legal. It skips the backend. The
 first sweep is its one evaluation, and the ordinary tolerance test decides. It
 answers whether the operating point is already an equilibrium, and commits as
 usual when it is.
 
-`trim!` checks the problem in two collecting passes, and each refuses it as
-`TrimProblemInvalid`. The first runs before any evaluation, with the
-[read set](@ref g-read-set)'s own `ReadResolution` and `PathResolution` failures
-beside the problem's faults. The second checks the residual and check returns at
-the guess evaluation, and the residual return again at the first seeded one.
+`trim!` checks the problem in two
+[collecting](@ref g-collect-the-checks-fail-the-evaluations-fast) passes, and
+each refuses it as `TrimProblemInvalid`. The first runs before any evaluation,
+with the [read set](@ref g-read-set)'s own `ReadResolution` and `PathResolution`
+failures beside the problem's faults. The second checks the residual and check
+returns at the guess evaluation, and the residual return again at the first
+seeded one.
 
 The baseline and the problem's condition at the guess must give every
 [root input](@ref g-root-input) a value, and one left without a value is refused
@@ -546,7 +549,7 @@ as `ArgumentInvalid`, before any check. So is a second argument that is not a
 - `baseline`: the required baseline the problem's condition is layered over, at
   setup and at the commit.
 - `t0`: the start time of the committing boundary zero, a finite real whose
-  frame index fits an `Int`, held as a `Float64` origin, and refused as
+  frame index fits an `Int`, converted to `Float64`, and refused as
   `ArgumentInvalid` before the search otherwise.
 - `backend`: the solver, any value with a [`solve`](@ref) method, by default
   [`LevenbergMarquardt`](@ref).
