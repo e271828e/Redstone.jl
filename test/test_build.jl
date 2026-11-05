@@ -1373,6 +1373,35 @@ s_init(::DiscreteTupleEntry) = nothing
 y_types(::DiscreteTupleEntry) = (v = (Float64, Int),)
 y_state(::DiscreteTupleEntry, (; t)) = (v = 1.0,)
 
+# A contract declared `nothing` (§8.2), under an output and under an input, and
+# on a discrete leaf; `(;)` beside them is an empty contract.
+struct NothingContractSource <: AbstractComponent
+end
+x_init(::NothingContractSource) = nothing
+y_types(::NothingContractSource) = nothing
+y_state(::NothingContractSource, (; t)) = 1.0
+
+struct NothingContractConsumer <: AbstractComponent
+end
+x_init(::NothingContractConsumer) = nothing
+u_types(::NothingContractConsumer) = nothing
+y_types(::NothingContractConsumer) = Float64
+y_direct(::NothingContractConsumer, (; u)) = u
+
+struct DiscreteNothingContract <: AbstractComponent
+end
+s_init(::DiscreteNothingContract) = nothing
+y_types(::DiscreteNothingContract) = nothing
+y_state(::DiscreteNothingContract, (; t)) = 1.0
+
+struct EmptyContractInputs <: AbstractComponent
+end
+x_init(::EmptyContractInputs) = 0.0
+u_types(::EmptyContractInputs) = (;)
+y_types(::EmptyContractInputs) = Float64
+y_state(::EmptyContractInputs, (; x)) = x
+x_deriv(::EmptyContractInputs, (; x)) = zero(x)
+
 struct EmptyNoOutputs <: AbstractComponent    # an empty store and no contract
 end
 x_init(::EmptyNoOutputs) = nothing
@@ -1512,15 +1541,19 @@ function build_tier()
         @test Set(kinds(err)) == Set([IllegalPortType])
         @test length(diagnostics(err)) == 2
 
-        # An entry that is no type, a tuple of types or a number, named or bare,
-        # is `IllegalPortType` `:not_a_type` on both tiers (§8.2), the value
-        # itself in the type's place, and the walk reads that entry no further.
+        # An entry that is no type, a tuple of types, a number or `nothing`, named
+        # or bare, is `IllegalPortType` `:not_a_type` on both tiers (§8.2),
+        # the value itself in the type's place, and the walk reads that entry no
+        # further.
         for (comp, site, entry, value) in ((TupleEntrySource(), :port, :v, (Float64, Int)),
                                            (NumberEntrySource(), :port, :v, 1.0),
                                            (BareTupleSource(), :port, :y, (Float64, Int)),
                                            (TupleEntryConsumer(), :face, :v, (Float64, Int)),
                                            (BareNumberConsumer(), :face, :u, 1.0),
-                                           (DiscreteTupleEntry(), :port, :v, (Float64, Int)))
+                                           (DiscreteTupleEntry(), :port, :v, (Float64, Int)),
+                                           (NothingContractSource(), :port, :y, nothing),
+                                           (NothingContractConsumer(), :face, :u, nothing),
+                                           (DiscreteNothingContract(), :port, :y, nothing))
             diags = Diagnostic[]
             @test classify_tier("c", comp, diags) === nothing
             d = only(diags)
@@ -1540,6 +1573,19 @@ function build_tier()
         d = only(diagnostics(failure(() -> build(BareNumberConsumer()))))
         @test d isa IllegalPortType && d.reason === :not_a_type
         @test d.site === :face && d.name === :u && path(d) == ""
+        # A contract declared `nothing` is refused where it is written, ahead of
+        # the stage conformance and the bundle law that met it before (§8.2). It
+        # has no entry to wire to, so the wire reports beside it, and `(;)` builds.
+        for comp in (NothingContractSource(), NothingContractConsumer(), DiscreteNothingContract())
+            d = only(diagnostics(failure(() -> build(comp))))
+            @test d isa IllegalPortType && d.reason === :not_a_type && d.declared === nothing
+        end
+        err = failure(() -> build(Group((; src = NothingContractSource(), c = NothingContractConsumer());
+                                        local_wires = ("src/y" => "c/u",))))
+        @test Set(kinds(err)) == Set([IllegalPortType, UnknownPort])
+        @test Set((d.path, d.site, d.name) for d in diagnostics(err) if d isa IllegalPortType) ==
+              Set([("src", :port, :y), ("c", :face, :u)])
+        @test build(EmptyContractInputs()) isa Build
 
         # A store with no update law is §8.2's sibling of the classless component.
         diags = Diagnostic[]

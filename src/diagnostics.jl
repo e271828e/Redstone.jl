@@ -848,7 +848,8 @@ function message(d::IllegalPortType)
         return "$(_at_path(d.path)): $site declares $(repr(d.declared)), which is no type — " *
                "a `u_types` or `y_types` entry is one type written at `Float64`, such as " *
                "`Float64` or `SVector{3, Float64}`; a tuple of types is one named entry per " *
-               "port, and a value such as `1.0` is written as its type (§8.2)"
+               "port, a value such as `1.0` is written as its type, and a contract with no " *
+               "entries is `(;)` or left undeclared (§8.2)"
     d.reason === :nested_marker &&
         return "$(_at_path(d.path)): $site declares $(d.declared), with the `Pinned` " *
                "marker below the top of the entry — the marker wraps a whole entry, and a field " *

@@ -1093,11 +1093,15 @@ function diagnostics_kind_set()
               occursin("never an operator's", rendered) && occursin("`stop!`", rendered)
 
         # A value where a type goes (§8.2) is shown as written, and the remedy
-        # names the two shapes it was mistaken for.
+        # names the three shapes it was mistaken for.
         rendered = message(IllegalPortType(path = "a/b", site = :face, name = :v,
                                            declared = (Float64, Bool), reason = :not_a_type))
         @test startswith(rendered, "`a/b`: input face `v` declares (Float64, Bool), which is no type")
         @test occursin("one named entry per port", rendered) && occursin("written as its type", rendered)
+        @test occursin("`(;)` or left undeclared", rendered)
+        @test startswith(message(IllegalPortType(path = "a/b", site = :port, name = :y, declared = nothing,
+                                                 reason = :not_a_type)),
+                         "`a/b`: port `y` declares nothing, which is no type")
 
         # The cycle's three forms (§5.5, §13.8, D-245), over constructed values: the
         # cluster's wires read as one loop, and the classification, where there is

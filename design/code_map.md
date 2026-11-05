@@ -54,7 +54,8 @@ in the `src/model.jl` entry.
   the tier beside the class, and the store decides the tier. It records
   `StatelessWithoutOutputs` and runs the pinned-entry check, both from D-263,
   and holds `IllegalPortType`'s nested-marker arm (D-265) and its not-a-type
-  arm, both on both tiers (§8.2).
+  arm, a contract declared `nothing` kept as one bare entry for it, both on
+  both tiers (§8.2).
 - Beside it the shape helper `store_fields`, a store's pairs in the keyed form,
   a bare store's one pair under its letter `x`, `s` or `m` and none for
   `nothing`, which build.jl reuses (D-438). The store isbits check

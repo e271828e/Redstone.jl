@@ -175,9 +175,9 @@ The build refuses a wire whose producer type does not fit the entry as
 `WireTypeMismatch`, and a producer that follows the scalar at a `Pinned` entry
 as `WalkingFaceAtFrozenEntry`. A `Pinned` marker below the top of an entry is
 refused as `IllegalPortType`, and a `Pinned` entry on a discrete primitive as
-`DeclarationOnWrongTier`. An entry that is no type, a tuple of types or a
-number, is refused as `IllegalPortType` too. An empty entry name is refused as
-`FaceNameIllegal`.
+`DeclarationOnWrongTier`. An entry that is no type, a tuple of types, a number
+or `nothing`, is refused as `IllegalPortType` too. An empty entry name is
+refused as `FaceNameIllegal`.
 """
 u_types(::Any) = NamedTuple()
 
@@ -214,7 +214,7 @@ A primitive with an empty state and no `y_types` is refused as
 `StatelessWithoutOutputs`. A declared port no stage returns is refused as
 `DeclaredNotProduced`, a returned name the declaration lacks as
 `UndeclaredReturnField`, and a port both stages return as `ProducedByTwoStages`.
-An entry that is no type, a tuple of types or a number, is refused as
+An entry that is no type, a tuple of types, a number or `nothing`, is refused as
 `IllegalPortType`. An empty entry name is refused as `FaceNameIllegal`.
 """
 y_types(::Any) = NamedTuple()

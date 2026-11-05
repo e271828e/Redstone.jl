@@ -875,7 +875,12 @@ function classify_tier(path::String, @nospecialize(comp), diags::Vector{Diagnost
     for (name, fn) in ((:u_types, u_types), (:y_types, y_types))
         _declares(fn, comp) || continue
         site = name === :u_types ? :face : :port
-        for (entry_name, P) in pairs(_keyed(invoke_declaration(fn, comp), default_name(fn)))
+        letter = default_name(fn)
+        declared = invoke_declaration(fn, comp)
+        # `_keyed` reads `nothing` as no entry, a store's spelling; on a contract
+        # it is one bare value, refused below (§8.2).
+        entries = declared === nothing ? NamedTuple{(letter,)}((nothing,)) : _keyed(declared, letter)
+        for (entry_name, P) in pairs(entries)
             if !(P isa Type)
                 push!(diags, IllegalPortType(path = path, site = site, name = entry_name,
                                              declared = P, reason = :not_a_type))
