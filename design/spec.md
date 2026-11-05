@@ -6319,7 +6319,7 @@ time, in different units.
 | entry | unit system | tick instants | constraints |
 |---|---|---|---|
 | `Relative(K, φ = 0)` | scope ticks | every `K`-th tick of the enclosing scope, starting from its `φ`-th | `K ≥ 1`, `0 ≤ φ < K` |
-| `Absolute(q, τ = 0)` | seconds | `t = τ + k·T`, with `T = period(q)` | `T > 0`, `0 ≤ τ < T` |
+| `Absolute(q, τ = 0)` | seconds | `t = t₀ + τ + k·T`, with `T = period(q)` and `t₀` the clock's origin | `T > 0`, `0 ≤ τ < T` |
 
 `K = 1` therefore admits no stagger ([D-185][d-185], [D-291][d-291]). Two same-rate siblings
 are staggered one level down instead. Declare the scope at twice their rate,
