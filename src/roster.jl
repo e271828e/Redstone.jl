@@ -178,9 +178,9 @@ matches its model fails at attach rather than sending wrong values.
 
 A binding that declares the output side and defines no `reads` method is
 refused at attach as `BindingContractMismatch`, as is a value that is not a
-`NamedTuple` of selectors. A selector that does not resolve is refused as
-`ReadResolution`, or as `PathResolution` when its path names no
-[component](@ref g-component).
+`NamedTuple` of selectors. A selector whose path names no
+[component](@ref g-component) is refused as `PathResolution`, and any other
+selector that does not resolve as `ReadResolution`.
 
 The keyword method, `reads(; selectors...)`, builds the read set a service such
 as [`series`](@ref) takes.

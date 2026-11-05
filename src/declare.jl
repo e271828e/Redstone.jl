@@ -69,7 +69,8 @@ The build refuses `(;)` as `EmptyStore`, and a field or bare value of any other
 type as `IllegalStateLeaf`. A non-empty state with neither `x_deriv` nor
 `s_update` is refused first as `StoreWithoutUpdate`. A primitive that defines
 neither `x_init` nor `s_init` is refused as `TierUnreadable`, and one that
-defines both, or an update law of the other tier, as `DeclarationOnWrongTier`.
+defines both, or an update law of the other [tier](@ref g-tier), as
+`DeclarationOnWrongTier`.
 """
 x_init(::Any) = nothing
 
@@ -223,8 +224,9 @@ y_types(::Any) = NamedTuple()
 
 # Design: §8.2, D-263, D-265.
 # Defined in `leaves.jl` beside the entry walk that dispatches on it.
-# The build strips the marker at `Float64`, so no value, layout or wire message
-# carries the wrapper itself.
+# The build strips the marker at `Float64`, so no value or layout carries the
+# wrapper itself. The refusals of a misplaced marker, of a walking producer and
+# of a tap on a root input it pins name it.
 """
     Pinned{P}
 
@@ -237,8 +239,8 @@ follows the scalar of an [activation](@ref g-activation). On an output the
 [port](@ref g-port)'s value is a `P` at every activation. On an input the entry
 demands an arriving value that never carries partials.
 
-Only the two refusals below name `Pinned`. It is a type-level marker, never
-instantiated.
+`Pinned` is a type-level marker, never instantiated, and no value or layout
+carries it.
 
 A marker below the top of an entry, in a type parameter, is refused as
 `IllegalPortType` on both [tiers](@ref g-tier). The marker is continuous-only. A
@@ -422,7 +424,7 @@ A sample time in [ticks](@ref g-tick) of the enclosing
 A [`sample_times`](@ref) [entry](@ref g-entry) `Relative(K, φ)` runs its child
 at every `K`-th tick of the enclosing rate scope, starting from its `φ`-th. `φ`
 defaults to `0`. Relative entries count scope ticks, so they compose affinely
-down the tree. Under a scope that ticks every `D_s` [base ticks](@ref g-dt_base)
+down the tree. Under a scope that ticks every `D_s` [base ticks](@ref g-tick)
 at [phase](@ref g-phase) `Φ_s`, the child ticks every `K·D_s` base ticks at
 phase `Φ_s + φ·D_s`.
 
@@ -451,7 +453,7 @@ the offset in seconds.
 
 The [entry](@ref g-entry) is an [anchor](@ref g-anchor). It detaches its child
 from the enclosing [scope](@ref g-rate-scope)'s grid, so the child may tick
-faster than its scope. The child's ticks count in [base ticks](@ref g-dt_base)
+faster than its scope. The child's ticks count in [base ticks](@ref g-tick)
 only once a [`Deployment`](@ref) fixes `Δt_base`. Anchor periods and nonzero
 offsets constrain the base grid together. An offset of `T/1000` can cost a grid
 1000 times finer.

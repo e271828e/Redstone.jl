@@ -27,8 +27,9 @@ item changes what the spec says, the spec edit is part of the item.
   `ledgers/A6.txt`.
 - **Values past `Int`'s range, the audit's defect k.** `run!(; t_end = 1e300)`,
   `step!(; frames = big(2)^70)` and `init!(; log_every = big(10)^30)` raise a raw
-  `InexactError`. `step!(; frames = typemax(Int))` overflows and returns 0
-  frames. `replay!(; t_end = 1e300)` throws after writing. One helper should
+  `InexactError`. `step!(; frames = typemax(Int))` from a frame past the first
+  overflows and returns 0 frames, and at the first frame runs without bound.
+  `replay!(; t_end = 1e300)` throws after writing. One helper should
   refuse them as `ArgumentInvalid`. Beside them, `ignore_stop_requests = :foo`
   raises a raw `MethodError`, and a bare string iterates per character, one
   `StopRequestInvalid` each, as the keyword rows of `run!` and `replay!` in
@@ -42,8 +43,7 @@ item changes what the spec says, the spec edit is part of the item.
   them, and a cold review closes the arc. The audit reads a pinned base, and
   the sweep needs `src/` quiet. Brief
   `design/increments/20261105_docstring_audit/brief_docstring_audit.md`, base
-  `4a818b2`. Report `design/reports/20261105_docstring_audit/report.md`. State: the defects, the truth commit and the form commits
-  landed, and the cold review is running.
+  `4a818b2`. Report `design/reports/20261105_docstring_audit/report.md`. State: the review's findings landed, and the review verifies the delta.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose

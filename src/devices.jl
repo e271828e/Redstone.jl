@@ -213,13 +213,13 @@ loop(dev::AbstractDevice, handle) =
 """
     running(handle::DeviceHandle) -> Bool
 
-Return `true` from after every device's `init!` until `run!` or `replay!` stops,
-and `false` otherwise.
+Return `true` from after every [device](@ref g-device)'s `init!` until `run!` or
+`replay!` stops, and `false` otherwise.
 
-A [device](@ref g-device)'s [`loop`](@ref) checks `running(handle)` between its
-blocking calls, and returns once it reads `false`. It turns `false` only after
-the run's final [snapshot](@ref g-snapshot) is published, so a loop that reads
-`false` may still read a complete final snapshot.
+A device's [`loop`](@ref) checks `running(handle)` between its blocking calls,
+and returns once it reads `false`. It turns `false` only after the run's final
+[snapshot](@ref g-snapshot) is published, so a loop that reads `false` may still
+read a complete final snapshot.
 
 Each call refreshes the device's [heartbeat](@ref g-heartbeat), as
 [`latest`](@ref), [`pending`](@ref), [`stage!`](@ref), [`gather`](@ref),
@@ -238,12 +238,13 @@ running(handle::DeviceHandle) =
 Request a stop of the running loop, issued by the [device](@ref g-device), from
 any task.
 
-`stop!` sets the [stop word](@ref g-stop-word), with the device's roster label
-as the issuer. The [frame](@ref g-frame) in flight completes and publishes. The
-loop then sees the word at the next frame top and shuts the run down, with no
-further [boundary](@ref g-boundary). The source of the
-[termination record](@ref g-termination-record) is then a `ControlRequestedStop`
-naming the device. The calling code issues the same stop with `stop!(sim)`.
+`stop!` sets the [stop word](@ref g-stop-word), with the device's
+[roster](@ref g-roster) label as the issuer. The [frame](@ref g-frame) in flight
+completes and publishes. The loop then sees the word at the next frame top and
+shuts the run down, with no further [boundary](@ref g-boundary). The source of
+the [termination record](@ref g-termination-record) is then a
+`ControlRequestedStop` naming the device. The calling code issues the same stop
+with `stop!(sim)`.
 
 The first issuer wins, so a later stop changes nothing. On a `stopped`
 simulation `stop!` has no effect. A stop issued while `initialized` ends the
@@ -393,7 +394,7 @@ per frame and counts the excess by [kind](@ref g-kind).
 
 `report!` is not a general diagnostics channel. [`MalformedDatum`](@ref) is the
 one kind a device may report. Any other exception the loop lets escape reaches
-the framework as a `DeviceCrash`, with the exceptions [`loop`](@ref) lists.
+the framework as a `DeviceCrash`, apart from the cases [`loop`](@ref) lists.
 After [`detach!`](@ref), the call is refused as `DeviceContractMismatch`.
 """
 report!(handle::DeviceHandle, occurrence::MalformedDatum) =
@@ -511,8 +512,7 @@ behind it. A root input and a produced output are their own sources.
 
 A GUI device's loop calls `port_views` once, at its top, after the run has fixed
 the [roster](@ref g-roster). [`peek`](@ref) and [`incumbent_status`](@ref) read
-a view and a
-[snapshot](@ref g-snapshot).
+a view and a [snapshot](@ref g-snapshot).
 """
 function port_views(handle::DeviceHandle)
     faces = handle.writer.faces
@@ -603,8 +603,8 @@ Return `true` when the record's [device](@ref g-device) has no live task inside
 
 A device is orphaned when its loop returned or crashed, or its [`init!`](@ref)
 threw. A later record's `DeviceCrash` count tells a crash from a return, since
-the count lands at the next [frame top](@ref g-frame). Outside them a device has
-no task and is not orphaned. The records of the
+the count lands at the next [frame top](@ref g-frame). Outside `run!` and
+`replay!` a device has no task and is not orphaned. The records of the
 [harness writer](@ref g-harness-writer) and of the loop are never orphaned.
 """
 orphaned(record::WriterStatus) = record.task_state === :done

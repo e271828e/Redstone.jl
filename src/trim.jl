@@ -179,7 +179,7 @@ A report holds these fields.
 - `status`: the backend's own, recorded verbatim and deciding nothing, or
   `:bypassed` for a problem with no decisions, which makes no backend call.
 - `n_evaluations`, `n_iterations`: the backend's own, recorded verbatim and
-  deciding nothing.
+  deciding nothing, `1` and `0` for a problem with no decisions.
 - `saturated`: the decisions sitting at a bound at the returned point, as
   `(name, :lower)` or `(name, :upper)`.
 - `fired_events`: the events boundary zero fired at the commit, as
@@ -548,9 +548,10 @@ as `ArgumentInvalid`, before any check. So is a second argument that is not a
 
 - `baseline`: the required baseline the problem's condition is layered over, at
   setup and at the commit.
-- `t0`: the start time of the committing boundary zero, a finite real whose
-  frame index fits an `Int`, converted to `Float64`, and refused as
-  `ArgumentInvalid` before the search otherwise.
+- `t0`: the start time of the committing boundary zero, a finite real, held as a
+  `Float64` origin, and refused as `ArgumentInvalid` before the search if not
+  finite or so large that four rounding steps of it span more frames than an
+  `Int` counts.
 - `backend`: the solver, any value with a [`solve`](@ref) method, by default
   [`LevenbergMarquardt`](@ref).
 """

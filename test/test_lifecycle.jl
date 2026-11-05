@@ -57,9 +57,13 @@ function test_lifecycle()
             step!(sim)
             before = latest(sim)
             x_before = copy(sim.model.exec.xbuf)
+            run_before = sim.run
+            stage!(sim, "ref" => 1.0)
             d = carried(@test_throws DiagnosticError{ArgumentInvalid} init!(sim, point; t0 = bad))
             @test d.call === :init! && d.reason === :range && d.argument === :t0
             @test latest(sim) === before && lifecycle(sim) === :initialized
+            @test sim.run === run_before
+            @test (@atomic sim.plane.harness.cell.pending) !== nothing
             @test sim.model.exec.clock.t₀ == 3.0 && sim.model.exec.xbuf == x_before
 
             # A fresh simulation stays unopened, its trace unreadable as before.

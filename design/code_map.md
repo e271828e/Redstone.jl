@@ -120,7 +120,8 @@ The standard component library, the submodule `Redstone.Blocks`:
   `pack`, `Pack` (D-311, D-313).
 - `Unpack`, its output names from the generated `unpack_names`, and `Switch`
   (D-313).
-- `Source`, pinned, its `f` fed the nominal time (D-312, D-313).
+- `Source`, pinned, its `f` fed the time with one `Dual` layer dropped (D-312,
+  D-313).
 - `Constant`, `UnitDelay` and `Freeze` (D-312).
 - `StopRequest` (D-316).
 - The keyword-shape helpers `as_static`, `shape_zero` and `broadcast_keywords`,

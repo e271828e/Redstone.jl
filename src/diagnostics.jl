@@ -1499,7 +1499,7 @@ continue.
 `cause` is any value the device chooses to record, such as the caught exception.
 The classification is the device's, since only its author knows its parser. Any
 other exception the loop lets escape reaches the framework as a `DeviceCrash`,
-with the exceptions [`loop`](@ref) lists.
+apart from the cases [`loop`](@ref) lists.
 
 `MalformedDatum` is a warning, which never throws. The report is counted in the
 reporting device's [`WriterStatus`](@ref) from the next
@@ -2347,8 +2347,8 @@ function message(d::ArgumentInvalid)
         return "`chunk_size` must be an integer ≥ 1 — the executor's unroll width, which " *
                "never moves the trajectory — got $(repr(d.value)) (§9.7)"
     d.argument === :t0 &&
-        return "`t0` must be a finite real whose frame index at `h` fits an `Int` — the " *
-               "grid's origin — got $(repr(d.value)) (§14.5)"
+        return "`t0` must be a finite real whose rounding slack in frames at `h` fits an " *
+               "`Int` — the grid's origin — got $(repr(d.value)) (§14.5)"
     d.argument === :trace &&
         return "`trace` must be true or false — §11.5's trace kill switch, got $(repr(d.value))"
     d.argument === :log &&

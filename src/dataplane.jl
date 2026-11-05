@@ -167,10 +167,10 @@ side of the cell, owned by the loop task alone. `recent` and `suppressed` are
 the pending delta — what the frame-top drain took and no snapshot has carried
 yet; the first publication after the drain takes them, so a reader at any
 cadence sees each occurrence exactly once in `recent`. `totals` is the
-cumulative per-kind record since the run began, reset at each run's top and
-*copied* into every status (`KindCounts` being isbits, the read is the copy):
-delta plus total is what makes the status legible at any reading cadence —
-nothing is lost by not looking.
+cumulative per-kind record since the last reset, by a door or by `run!` or
+`replay!` starting, and *copied* into every status (`KindCounts` being isbits,
+the read is the copy): delta plus total is what makes the status legible at any
+reading cadence — nothing is lost by not looking.
 """
 mutable struct WriterAccount
     recent::Vector{DiagValue}

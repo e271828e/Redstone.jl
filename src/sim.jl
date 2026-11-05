@@ -88,7 +88,7 @@ The termination source of a run stopped by the calling code, a
 [device](@ref g-device) or Ctrl-C.
 
 It carries the stop's `issuer`. The issuer is `:code` from `stop!(sim)`, the
-requesting device's roster label from `stop!(handle)`, such as
+requesting device's [roster](@ref g-roster) label from `stop!(handle)`, such as
 `"device 1 (Pad)"`, or `:interrupt` for Ctrl-C. The first issuer wins, so an
 earlier stop keeps its issuer. Read the record with [`termination`](@ref).
 """
@@ -804,8 +804,9 @@ again. `init!` under the same condition reproduces it.
 
 # Keywords
 
-- `t0`: the start time, a finite real whose frame index fits an `Int`, held as a
-  `Float64` origin, and refused as `ArgumentInvalid` otherwise.
+- `t0`: the start time, a finite real, held as a `Float64` origin, and refused
+  as `ArgumentInvalid` if not finite or so large that four rounding steps of it
+  span more frames than an `Int` counts.
 - `trace`: record the input trace of this run.
 - `log`: keep the snapshot log of this run.
 - `log_every`: keep every `log_every`-th published [boundary](@ref g-boundary)
@@ -1621,7 +1622,7 @@ function _run_body!(sim::Simulation, policy::StopPolicy, ignore_mask::Vector{Boo
         @atomic :release control.running = true
         @atomic control.stop_issuer = nothing # ahead of any safepoint: the arm reads the word
         append!(roster, plane.roster)         # read once (§11.3)
-        _reset_accounts!(sim, roster)         # §11.8: totals count since the run began
+        _reset_accounts!(sim, roster)         # §11.8: totals count from here, as from each door
         report_thread_budget!(plane, roster, Threads.nthreads())  # §12.2: one check per run, either entry point
         _init_devices!(sim, roster, live)     # §12.4's pre-spawn bracket, attachment order
         @atomic control.stopped = false
@@ -2791,7 +2792,7 @@ latest(sim::Simulation) = @atomic :acquire sim.plane.published.latest
 # reading it beside a running loop is the same hazard class as a mid-run
 # `attach!`. The switch gates retention wholesale.
 """
-    logged(sim::Simulation) -> Vector{<:Snapshot}
+    logged(sim::Simulation) -> Vector of Snapshot
 
 Return the [log](@ref g-log)'s retained [snapshots](@ref g-snapshot), oldest
 first.

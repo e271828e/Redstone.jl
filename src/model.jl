@@ -38,15 +38,15 @@
 A deployment materialized at one scalar type, ready to be written, evaluated and
 stepped.
 
-`T` is `Float64` or a concrete `ForwardDiff.Dual` over `Float64`, into which a
-`Float64` embeds exactly. Any other `T` is refused as `ArgumentInvalid` with
-reason `:scalar`, before anything is compiled.
+`T` is `Float64` or a concrete `ForwardDiff.Dual` over `Float64`, nested or not,
+into which a `Float64` embeds exactly. Any other `T` is refused as
+`ArgumentInvalid` with reason `:scalar`, before anything is compiled.
 
-It carries the [`Deployment`](@ref) and the [executor](@ref g-executor) built
-from it at `T`, with its [buffers](@ref g-buffer). It runs nothing in real time,
-talks to no [device](@ref g-device) and records nothing. A [`Simulation`](@ref)
-does that around a `Model{Float64}`. One deployment backs many models, and each
-model owns its buffers alone.
+A model carries the [`Deployment`](@ref) and the [executor](@ref g-executor)
+built from it at `T`, with its [buffers](@ref g-buffer). It runs nothing in real
+time, talks to no [device](@ref g-device) and records nothing. A
+[`Simulation`](@ref) does that around a `Model{Float64}`. One deployment backs
+many models, and each model owns its buffers alone.
 
 `Model(build; kw...)` is
 `Model(Deployment(build; grid keywords...), T; chunk_size)`, and
@@ -252,9 +252,9 @@ defaults, and run [boundary zero](@ref g-boundary-zero) at `t0`.
 
 `init!` resets the state to the declared defaults, applies the condition's
 overrides and sets the clock to `t0`. It sets every event [prior](@ref g-prior)
-to not [holding](@ref g-edge-semantics). A `Model` at a `Dual` has no events. It
-then runs boundary zero, which settles through `settled!(hooks)`, and the
-model's status becomes `:consistent`.
+to not [holding](@ref g-edge-semantics). It then runs boundary zero, which
+settles through `settled!(hooks)`, and the model's status becomes `:consistent`.
+A `Model` at a `Dual` has no events.
 
 The condition is built with [`set`](@ref) and its combinators.
 [Root inputs](@ref g-root-input) have no declared default, so the condition must
@@ -278,8 +278,9 @@ status.
 
 # Keywords
 
-- `t0`: the start time, a finite real whose frame index fits an `Int`, held as a
-  `Float64` origin, and refused as `ArgumentInvalid` otherwise.
+- `t0`: the start time, a finite real, held as a `Float64` origin, and refused
+  as `ArgumentInvalid` if not finite or so large that four rounding steps of it
+  span more frames than an `Int` counts.
 - `hooks`: the [`FrameHooks`](@ref) boundary zero settles through,
   [`NoHooks`](@ref) for a model stepped on its own.
 """
