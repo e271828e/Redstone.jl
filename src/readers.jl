@@ -36,6 +36,8 @@
 # source a store selector is refused as `ReadResolution`'s `:store_selector`,
 # by source rather than by client (D-406). The output face is the integration
 # read of §11.2. Only cells and stores are addressable (§5.2, §8.3).
+# The address is the component's path and a leaf address into its state. A bare
+# `Symbol` is the short form of a plain name.
 """
     GetState
 
@@ -43,14 +45,12 @@ The [selector](@ref g-selector) that reads one leaf of a
 [component](@ref g-component)'s state.
 
 [`get_state`](@ref) returns it, and [`reads`](@ref) labels it in a
-[read set](@ref g-read-set). A selector holds its address as authored. The
-address is the component's path and a [leaf address](@ref g-leaf-address) into
-its state. A bare `Symbol` is the short form of a plain name. The address is
-parsed, and each step checked against the declared type, when a reader resolves
-the selector.
+[read set](@ref g-read-set). A selector holds its address as authored. A reader
+parses the address and checks each step against the declared type when it
+resolves the selector.
 
 `GetState` reads the live [stores](@ref g-store), so a service that evaluates
-the model resolves it, and a reader over published [snapshots](@ref g-snapshot)
+the model resolves it. A reader over published [snapshots](@ref g-snapshot)
 refuses it as `ReadResolution`. [`GetDeriv`](@ref) is the other selector that
 reads the live stores.
 """
@@ -60,6 +60,8 @@ struct GetState
 end
 
 # Design: §14.4, Appendix B, D-276, D-406.
+# The address is the component's path and a leaf address into its continuous
+# state, with `[k]` or `[k,l]` steps only.
 """
     GetDeriv
 
@@ -67,13 +69,10 @@ The [selector](@ref g-selector) that reads one leaf of a
 [continuous component](@ref g-continuous-component)'s state derivative.
 
 [`get_deriv`](@ref) returns it, and [`reads`](@ref) labels it in a
-[read set](@ref g-read-set). A selector holds its address as authored. The
-address is the [component](@ref g-component)'s path and a
-[leaf address](@ref g-leaf-address) into its continuous state, with `[k]` or
-`[k,l]` steps only. The address is parsed and checked when a reader resolves the
-selector.
+[read set](@ref g-read-set). A selector holds its address as authored. A reader
+parses and checks the address when it resolves the selector.
 
-`GetDeriv` reads the live [stores](@ref g-store), like [`GetState`](@ref), and a
+`GetDeriv` reads the live [stores](@ref g-store), like [`GetState`](@ref). A
 reader over published [snapshots](@ref g-snapshot) refuses it as
 `ReadResolution`.
 """
@@ -83,6 +82,8 @@ struct GetDeriv
 end
 
 # Design: §11.2, §14.4, Appendix B, D-276.
+# The address is the component's path and a leaf address that starts with the
+# port name, or headless for a bare port.
 """
     GetOutput
 
@@ -90,10 +91,8 @@ The [selector](@ref g-selector) that reads one leaf of a
 [component](@ref g-component)'s declared output [port](@ref g-port).
 
 [`get_output`](@ref) returns it, and [`reads`](@ref) labels it in a
-[read set](@ref g-read-set). A selector holds its address as authored. The
-address is the component's path and a [leaf address](@ref g-leaf-address) that
-starts with the port name, or headless for a bare port. The address is parsed
-and checked when a reader resolves the selector.
+[read set](@ref g-read-set). A selector holds its address as authored. A reader
+parses and checks the address when it resolves the selector.
 
 `GetOutput` resolves against the [signal table](@ref g-signal-table) or a
 published [snapshot](@ref g-snapshot) alike. It is an
@@ -106,6 +105,9 @@ struct GetOutput
 end
 
 # Design: §14.4, Appendix B, D-276.
+# The address is a leaf address that starts with the face name, or headless for
+# a primitive's bare face. It reads back the value of a root input, the source
+# cell the input is.
 """
     GetInput
 
@@ -113,21 +115,19 @@ The [selector](@ref g-selector) that reads one leaf of a
 [root input](@ref g-root-input)'s value back.
 
 [`get_input`](@ref) returns it, and [`reads`](@ref) labels it in a
-[read set](@ref g-read-set). A selector holds its address as authored. The
-address is a [leaf address](@ref g-leaf-address) that starts with the
-[face](@ref g-face) name, or headless for a [primitive](@ref g-primitive)'s
-[bare](@ref g-bare-contract) face. It is parsed and checked when a reader
-resolves the selector.
+[read set](@ref g-read-set). A selector holds its address as authored. A reader
+parses and checks the address when it resolves the selector.
 
 `GetInput` resolves against the [signal table](@ref g-signal-table) or a
-published [snapshot](@ref g-snapshot) alike. It reads back the value of a root
-input, the source [cell](@ref g-cell) the input is.
+published [snapshot](@ref g-snapshot) alike.
 """
 struct GetInput
     leaf::Union{Symbol,String}
 end
 
 # Design: §11.2, §14.4, Appendix B, D-276.
+# The address is a leaf address that starts with the face name, or headless for
+# a primitive's bare port.
 """
     GetFace
 
@@ -135,10 +135,8 @@ The [selector](@ref g-selector) that reads one leaf of an exported output
 [face](@ref g-face).
 
 [`get_face`](@ref) returns it, and [`reads`](@ref) labels it in a
-[read set](@ref g-read-set). A selector holds its address as authored. The
-address is a [leaf address](@ref g-leaf-address) that starts with the face name,
-or headless for a [primitive](@ref g-primitive)'s [bare](@ref g-bare-contract)
-port. It is parsed and checked when a reader resolves the selector.
+[read set](@ref g-read-set). A selector holds its address as authored. A reader
+parses and checks the address when it resolves the selector.
 
 `GetFace` resolves against the [signal table](@ref g-signal-table) or a
 published [snapshot](@ref g-snapshot) alike. It is an
@@ -163,15 +161,15 @@ _authored_leaf(leaf::AbstractString) = String(leaf)
 Return a [selector](@ref g-selector) that reads one leaf of a
 [component](@ref g-component)'s state.
 
-A selector is labeled in a [read set](@ref g-read-set) built with
-[`reads`](@ref). `path` names the component, and `leaf` is a
-[leaf address](@ref g-leaf-address) that starts with the field name, as in
-`get_state("plant", "q[2]")`. A bare `Symbol` is the short form of a plain field
-name. The field is read from a
+`path` names the component, and `leaf` is a [leaf address](@ref g-leaf-address)
+that starts with the field name, as in `get_state("plant", "q[2]")`. A bare
+`Symbol` is the short form of a plain field name. The field is read from a
 [continuous component](@ref g-continuous-component)'s continuous state, or from
-a discrete component's discrete state.
+a discrete component's discrete state. A selector is labeled in a
+[read set](@ref g-read-set) built with [`reads`](@ref).
 
-A state declared bare has the field `x` or `s`, which an address may leave out.
+A [bare store](@ref g-bare-store) has the field `x` or `s`, which an address may
+leave out.
 `get_state("integrator")` reads it whole, as `get_state("integrator", "x")`
 does, and `get_state("integrator", "[2]")` reads one component of an `SVector`
 state.
@@ -197,18 +195,18 @@ get_state(path::AbstractString, leaf::Union{Symbol,AbstractString} = "") =
 Return a [selector](@ref g-selector) that reads one leaf of a
 [continuous component](@ref g-continuous-component)'s state derivative.
 
-A selector is labeled in a [read set](@ref g-read-set) built with
-[`reads`](@ref). `path` names the [component](@ref g-component), and `leaf` is a
+`path` names the [component](@ref g-component), and `leaf` is a
 [leaf address](@ref g-leaf-address) into its continuous state. The address takes
 `[k]` or `[k,l]` steps only, as [`get_state`](@ref) does on a continuous state,
-and may be headless for a bare state. The value read is the derivative of that
-leaf, which has the state's own shape.
+and may be headless for a [bare state](@ref g-bare-store). The value read is the
+derivative of that leaf, which has the state's own shape. A selector is labeled
+in a [read set](@ref g-read-set) built with [`reads`](@ref).
 
-Like `get_state`, `get_deriv` reads the live [stores](@ref g-store), and a
-reader over published [snapshots](@ref g-snapshot) refuses it as
-`ReadResolution`. A discrete component has no derivative, so a path that names
-one is refused as `ReadResolution`, as are an undeclared field and a step the
-field's type cannot take.
+Like `get_state`, `get_deriv` reads the live [stores](@ref g-store). A reader
+over published [snapshots](@ref g-snapshot) refuses it as `ReadResolution`. A
+discrete component has no derivative, so a path that names one is refused as
+`ReadResolution`, as are an undeclared field and a step the field's type cannot
+take.
 
 See also [`get_output`](@ref), [`get_input`](@ref), [`get_face`](@ref).
 """
@@ -222,14 +220,15 @@ get_deriv(path::AbstractString, leaf::Union{Symbol,AbstractString} = "") =
 Return a [selector](@ref g-selector) that reads one leaf of a
 [component](@ref g-component)'s declared output [port](@ref g-port).
 
-A selector is labeled in a [read set](@ref g-read-set) built with
-[`reads`](@ref). `path` names the component, and `leaf` is a [leaf
-address](@ref g-leaf-address) that starts with the port name, as in
-`get_output("plant", "pose.q_eb[2]")`. A port declared bare is the port `y`,
-which an address may leave out. `get_output("integrator")` reads it whole, and
-`get_output("integrator", "[2]")` reads one component of an `SVector` port.
+`path` names the component, and `leaf` is a
+[leaf address](@ref g-leaf-address) that starts with the port name, as in
+`get_output("plant", "pose.q_eb[2]")`. A
+[port declared bare](@ref g-bare-contract) is the port `y`, which an address may
+leave out. `get_output("integrator")` reads it whole, and
+`get_output("integrator", "[2]")` reads one component of an `SVector` port. A
+selector is labeled in a [read set](@ref g-read-set) built with [`reads`](@ref).
 
-`get_output` is an [inspection read](@ref g-inspection-read), and it resolves
+`get_output` is an [inspection read](@ref g-inspection-read). It resolves
 against the [signal table](@ref g-signal-table) or a published
 [snapshot](@ref g-snapshot) alike. For a named output the root exports, which
 keeps its meaning when the component behind it is replaced, use
@@ -251,14 +250,14 @@ get_output(path::AbstractString, leaf::Union{Symbol,AbstractString} = "") =
 Return a [selector](@ref g-selector) that reads one leaf of a
 [root input](@ref g-root-input)'s value back.
 
-A selector is labeled in a [read set](@ref g-read-set) built with
-[`reads`](@ref). `leaf` is a [leaf address](@ref g-leaf-address) that starts
-with a [face](@ref g-face) name. At the root, the face is a root input. In a
-read set mounted below the root with [`at`](@ref), it is an input face of the
-mounted level that reaches a root input. Where that level is a
-[primitive](@ref g-primitive) whose `u_types` is bare, the face `u` may be left
-out. `get_input()` reads it whole, and `get_input(".field")` reads one field of
-it.
+`leaf` is a [leaf address](@ref g-leaf-address) that starts with a
+[face](@ref g-face) name. At the root, the face is a root input. In a
+[read set](@ref g-read-set) mounted below the root with [`at`](@ref), it is an
+input face of the mounted level that reaches a root input. Where that level is a
+[primitive](@ref g-primitive) whose `u_types` is [bare](@ref g-bare-contract),
+the face `u` may be left out. `get_input()` reads it whole, and
+`get_input(".field")` reads one field of it. A selector is labeled in a read set
+built with [`reads`](@ref).
 
 `get_input` resolves against the [signal table](@ref g-signal-table) or a
 published [snapshot](@ref g-snapshot) alike. A face that names no input there is
@@ -276,13 +275,13 @@ get_input(leaf::Union{Symbol,AbstractString} = "") = GetInput(_authored_leaf(lea
 Return a [selector](@ref g-selector) that reads one leaf of an exported output
 [face](@ref g-face).
 
-A selector is labeled in a [read set](@ref g-read-set) built with
-[`reads`](@ref). `leaf` is a [leaf address](@ref g-leaf-address) that starts
-with a face name. At the root, the face is one the root exports. In a read set
+`leaf` is a [leaf address](@ref g-leaf-address) that starts with a face name. At
+the root, the face is one the root exports. In a [read set](@ref g-read-set)
 mounted below the root with [`at`](@ref), it is an output face of the mounted
 level. At a [primitive](@ref g-primitive) root the faces are its own
-[ports](@ref g-port), and a bare one, the port `y`, may be left out, as in
-`get_face()` or `get_face("[1,2]")`.
+[ports](@ref g-port), and a [bare](@ref g-bare-contract) one, the port `y`, may
+be left out, as in `get_face()` or `get_face("[1,2]")`. A selector is labeled in
+a read set built with [`reads`](@ref).
 
 `get_face` is an [integration read](@ref g-inspection-read). It resolves against
 the [signal table](@ref g-signal-table) or a published
@@ -494,7 +493,9 @@ end
 # The labeled selectors sit in one type so that a bare NamedTuple of selectors
 # reaching a service is refused with a directive rather than a `MethodError`,
 # exactly as `combine` refuses one in the condition algebra (§14.2). Nothing is
-# joined until the mount step walks the chain (§14.9, D-277).
+# joined until the mount step walks the chain (§14.9, D-277). The chain is
+# outermost first and empty at the root. A service that takes the set walks the
+# chain from the root and resolves each selector there.
 """
     Reads
 
@@ -506,15 +507,14 @@ The [read set](@ref g-read-set) that holds labeled
 [`series`](@ref) takes it, as does a [`TrimProblem`](@ref)'s `reads` keyword,
 and [`taps`](@ref) builds one from each list it is given. A read set holds the
 labeled selectors as a `NamedTuple` in the order written. It also holds the
-mount chain `at` builds, outermost first and empty at the root. A service that
-takes it walks the chain from the root and resolves each selector there.
+mount chain `at` builds.
 
 Every selector comes from a closed family of five, one address space for every
 reader of the model. The five are [`get_state`](@ref), [`get_deriv`](@ref),
 [`get_output`](@ref), [`get_input`](@ref) and [`get_face`](@ref). Only declared
 state and [ports](@ref g-port) are addressable. A value a
-[component](@ref g-component) computes without declaring it has no selector, and
-the remedy is always for the component to export it.
+[component](@ref g-component) computes without declaring it has no selector. The
+remedy is always for the component to export it.
 
 A bare `NamedTuple` of selectors is refused as `ReadSetMisuse` by `series`, as
 `TrimProblemInvalid` by `trim!`, and as `ConditionNodeMisuse` by `at`.
@@ -525,11 +525,14 @@ struct Reads{NT<:NamedTuple}
 end
 
 # Design: §9.5, §14.7.
+# `series` takes a read set, a trim problem holds one, and `at` mounts one below
+# the root.
 """
     reads(; selectors...) -> Reads
 
 Return the [read set](@ref g-read-set) of the labeled
-[selectors](@ref g-selector) given, which a service such as `series` gathers.
+[selectors](@ref g-selector) given, which a service such as [`series`](@ref)
+gathers.
 
 A read set names each selector under a label, as in
 `reads(speed = get_output("plant", :v))`. The labels are the names the gathered
@@ -537,13 +540,13 @@ A read set names each selector under a label, as in
 destructures. The order is the one written here, as everywhere a `NamedTuple`
 passes between the author and the framework.
 
-[`series`](@ref) takes a read set, a trim problem holds one, and [`at`](@ref)
-mounts one below the root. A value that is not a selector is refused as
-`ReadSetMisuse`. The service that takes the set resolves each selector, and
-refuses a selector whose path names no [component](@ref g-component) as
-`PathResolution`, and any other selector that does not resolve as
-`ReadResolution`. For the read set of a [device](@ref g-device)'s output side,
-see the [binding](@ref g-binding) method of `reads`.
+See [`Reads`](@ref) for what takes a read set. A value that is not a selector is
+refused as `ReadSetMisuse`. The service that takes the set resolves each
+selector, and refuses a selector whose path names no
+[component](@ref g-component) as `PathResolution`, and any other selector that
+does not resolve as `ReadResolution`. For the read set of a
+[device](@ref g-device)'s output side, see the [binding](@ref g-binding) method
+of `reads`.
 """
 reads(; selectors...) = _reads(NamedTuple(selectors))
 
