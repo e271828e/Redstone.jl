@@ -243,7 +243,8 @@ struct StepError{C <: Union{Diagnostic, Exception}} <: Exception
                      # phase, the stage or trial time mid-integration
     boundary::Int    # the frame-entry boundary index: replay!(…; to_boundary = boundary)
     host::Symbol     # the catch that took the throw: :boundary_zero under init!,
-                     # :overlay under overlay!, :loop inside a frame
+                     # :overlay under overlay!, :restore under a restore,
+                     # :loop inside a frame
     cause::C
 end
 
@@ -279,20 +280,44 @@ function Base.showerror(io::IO, carrier::StepError)
         cursor.fn === :none || print(io, " ", cursor.fn)
         print(io, ", ")
     end
-    print(io, _phase_text(cursor), " of the frame from boundary ", carrier.boundary,
-          " (t = ", carrier.t, "):\n  ")
+    # A restore runs no phase of a frame, so its line names the boundary alone.
+    carrier.host === :restore ?
+        print(io, "restoring boundary ", carrier.boundary, " (t = ", carrier.t, "):\n  ") :
+        print(io, _phase_text(cursor), " of the frame from boundary ", carrier.boundary,
+              " (t = ", carrier.t, "):\n  ")
     # The recipe follows the host (§13.4, D-274, D-429). A boundary-zero throw
     # leaves no trace, so `init!` reproduces it, and an overlay's leaves no
-    # header, so `overlay!` on the same stopped state does. A frame's throw
+    # header, so `overlay!` on the same stopped state does. A restore's
+    # reproduces under `restore!` of the same checkpoint. A frame's throw
     # takes the halt then `step!` at every pointer, 0 included: the halt
     # restores the header and runs no boundary zero, so frame one's record is
-    # still ahead.
-    carrier.host === :boundary_zero ?
-        print(io, "init!(sim2, condition) under the same condition reproduces it") :
-    carrier.host === :overlay ?
-        print(io, "overlay!(sim2, condition) on the same stopped state reproduces it") :
-        print(io, "replay!(sim2, trc; to_boundary = ", carrier.boundary,
-              ") then step!(sim2) reproduces it")
+    # still ahead. An interrupt cut the frame or the door and nothing
+    # reproduces it, so the line names the door that resumes from the pointer
+    # or runs the cut sequence again (D-441).
+    if carrier.cause isa InterruptException
+        carrier.host === :boundary_zero ?
+            print(io, "an interrupt cut boundary zero, so nothing reproduces it; ",
+                  "init!(sim2, condition) under the same condition runs it again") :
+        carrier.host === :overlay ?
+            print(io, "an interrupt cut the settling, so nothing reproduces it; ",
+                  "overlay!(sim2, condition) on the same stopped state runs it again") :
+        carrier.host === :restore ?
+            print(io, "an interrupt cut the restore, so nothing reproduces it; ",
+                  "restore!(sim2, cp) of the same checkpoint resumes from boundary ",
+                  carrier.boundary) :
+            print(io, "an interrupt cut the frame, so nothing reproduces it; ",
+                  "replay!(sim2, trc; to_boundary = ", carrier.boundary,
+                  ") resumes from the boundary it started at")
+    else
+        carrier.host === :boundary_zero ?
+            print(io, "init!(sim2, condition) under the same condition reproduces it") :
+        carrier.host === :overlay ?
+            print(io, "overlay!(sim2, condition) on the same stopped state reproduces it") :
+        carrier.host === :restore ?
+            print(io, "restore!(sim2, cp) of the same checkpoint reproduces it") :
+            print(io, "replay!(sim2, trc; to_boundary = ", carrier.boundary,
+                  ") then step!(sim2) reproduces it")
+    end
     print(io, "\n  cause: ")
     carrier.cause isa Diagnostic ? print(io, logline(carrier.cause)) :
                                    showerror(io, carrier.cause)
@@ -2523,7 +2548,7 @@ message(d::CheckpointMismatch) =
     "is compared against the `Build`, structural mismatch being an error and only " *
     "*parametric* difference the what-if replay (§12.7)"
 
-"§12.4, §12.6, §14: `checkpoint` on a simulation or a model, or `restore!` of a state on any of its forms, not at the rest a frame top leaves — the state a `t*` stop leaves, a frame an interrupt from model code abandoned, or a state read off the grid."
+"§12.4, §12.6, §14: `checkpoint` on a simulation or a model, or `restore!` of a state on any of its forms, not at the rest a frame top leaves — the state a `t*` stop leaves, or a state read off the grid."
 Base.@kwdef struct CheckpointMidFrame <: Diagnostic
     t::Float64                               # the clock
     t_frame::Float64                         # the top of the frame it stands in
@@ -2532,10 +2557,8 @@ end
 message(d::CheckpointMidFrame) =
     "a checkpoint is the state at a frame top, and this clock is " *
     (d.frame == 0 && d.t < d.t_frame ? "at t = $(d.t), before the origin t₀ = $(d.t_frame)" :
-     d.t == d.t_frame ? "at frame $(d.frame)'s top, t = $(d.t), which was never published" :
      "at t = $(d.t), inside frame $(d.frame) and short of its top at t = $(d.t_frame)") *
-    " — a `t*` stop abandons the frame's remainder, and an interrupt thrown from model code " *
-    "abandons the frame unpublished with its stores possibly mid-boundary. `checkpoint` " *
+    " — a `t*` stop abandons the frame's remainder. `checkpoint` " *
     "reads a run stopped at a frame top (`t_end`, a stop request read at a grid boundary, " *
     "or `stop!`), and `restore!` takes a `ModelState` read at one (§12.4, §12.6, D-274, " *
     "D-319)"

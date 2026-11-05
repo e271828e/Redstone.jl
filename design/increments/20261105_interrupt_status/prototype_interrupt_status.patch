@@ -1,0 +1,1018 @@
+diff --git a/src/diagnostics.jl b/src/diagnostics.jl
+index f03d5d2..099377f 100644
+--- a/src/diagnostics.jl
++++ b/src/diagnostics.jl
+@@ -243,7 +243,8 @@ struct StepError{C <: Union{Diagnostic, Exception}} <: Exception
+                      # phase, the stage or trial time mid-integration
+     boundary::Int    # the frame-entry boundary index: replay!(…; to_boundary = boundary)
+     host::Symbol     # the catch that took the throw: :boundary_zero under init!,
+-                     # :overlay under overlay!, :loop inside a frame
++                     # :overlay under overlay!, :restore under a restore,
++                     # :loop inside a frame
+     cause::C
+ end
+ 
+@@ -279,20 +280,44 @@ function Base.showerror(io::IO, carrier::StepError)
+         cursor.fn === :none || print(io, " ", cursor.fn)
+         print(io, ", ")
+     end
+-    print(io, _phase_text(cursor), " of the frame from boundary ", carrier.boundary,
+-          " (t = ", carrier.t, "):\n  ")
++    # A restore runs no phase of a frame, so its line names the boundary alone.
++    carrier.host === :restore ?
++        print(io, "restoring boundary ", carrier.boundary, " (t = ", carrier.t, "):\n  ") :
++        print(io, _phase_text(cursor), " of the frame from boundary ", carrier.boundary,
++              " (t = ", carrier.t, "):\n  ")
+     # The recipe follows the host (§13.4, D-274, D-429). A boundary-zero throw
+     # leaves no trace, so `init!` reproduces it, and an overlay's leaves no
+-    # header, so `overlay!` on the same stopped state does. A frame's throw
++    # header, so `overlay!` on the same stopped state does. A restore's
++    # reproduces under `restore!` of the same checkpoint. A frame's throw
+     # takes the halt then `step!` at every pointer, 0 included: the halt
+     # restores the header and runs no boundary zero, so frame one's record is
+-    # still ahead.
+-    carrier.host === :boundary_zero ?
+-        print(io, "init!(sim2, condition) under the same condition reproduces it") :
+-    carrier.host === :overlay ?
+-        print(io, "overlay!(sim2, condition) on the same stopped state reproduces it") :
+-        print(io, "replay!(sim2, trc; to_boundary = ", carrier.boundary,
+-              ") then step!(sim2) reproduces it")
++    # still ahead. An interrupt cut the frame or the door and nothing
++    # reproduces it, so the line names the door that resumes from the pointer
++    # or runs the cut sequence again (D-441).
++    if carrier.cause isa InterruptException
++        carrier.host === :boundary_zero ?
++            print(io, "an interrupt cut boundary zero, so nothing reproduces it; ",
++                  "init!(sim2, condition) under the same condition runs it again") :
++        carrier.host === :overlay ?
++            print(io, "an interrupt cut the settling, so nothing reproduces it; ",
++                  "overlay!(sim2, condition) on the same stopped state runs it again") :
++        carrier.host === :restore ?
++            print(io, "an interrupt cut the restore, so nothing reproduces it; ",
++                  "restore!(sim2, cp) of the same checkpoint resumes from boundary ",
++                  carrier.boundary) :
++            print(io, "an interrupt cut the frame, so nothing reproduces it; ",
++                  "replay!(sim2, trc; to_boundary = ", carrier.boundary,
++                  ") resumes from the boundary it started at")
++    else
++        carrier.host === :boundary_zero ?
++            print(io, "init!(sim2, condition) under the same condition reproduces it") :
++        carrier.host === :overlay ?
++            print(io, "overlay!(sim2, condition) on the same stopped state reproduces it") :
++        carrier.host === :restore ?
++            print(io, "restore!(sim2, cp) of the same checkpoint reproduces it") :
++            print(io, "replay!(sim2, trc; to_boundary = ", carrier.boundary,
++                  ") then step!(sim2) reproduces it")
++    end
+     print(io, "\n  cause: ")
+     carrier.cause isa Diagnostic ? print(io, logline(carrier.cause)) :
+                                    showerror(io, carrier.cause)
+@@ -2517,7 +2542,7 @@ message(d::CheckpointMismatch) =
+     "is compared against the `Build`, structural mismatch being an error and only " *
+     "*parametric* difference the what-if replay (§12.7)"
+ 
+-"§12.4, §12.6, §14: `checkpoint` on a simulation or a model, or `restore!` of a state on any of its forms, not at the rest a frame top leaves — the state a `t*` stop leaves, a frame an interrupt from model code abandoned, or a state read off the grid."
++"§12.4, §12.6, §14: `checkpoint` on a simulation or a model, or `restore!` of a state on any of its forms, not at the rest a frame top leaves — the state a `t*` stop leaves, or a state read off the grid."
+ Base.@kwdef struct CheckpointMidFrame <: Diagnostic
+     t::Float64                               # the clock
+     t_frame::Float64                         # the top of the frame it stands in
+@@ -2526,10 +2551,8 @@ end
+ message(d::CheckpointMidFrame) =
+     "a checkpoint is the state at a frame top, and this clock is " *
+     (d.frame == 0 && d.t < d.t_frame ? "at t = $(d.t), before the origin t₀ = $(d.t_frame)" :
+-     d.t == d.t_frame ? "at frame $(d.frame)'s top, t = $(d.t), which was never published" :
+      "at t = $(d.t), inside frame $(d.frame) and short of its top at t = $(d.t_frame)") *
+-    " — a `t*` stop abandons the frame's remainder, and an interrupt thrown from model code " *
+-    "abandons the frame unpublished with its stores possibly mid-boundary. `checkpoint` " *
++    " — a `t*` stop abandons the frame's remainder. `checkpoint` " *
+     "reads a run stopped at a frame top (`t_end`, a stop request read at a grid boundary, " *
+     "or `stop!`), and `restore!` takes a `ModelState` read at one (§12.4, §12.6, D-274, " *
+     "D-319)"
+diff --git a/src/frame.jl b/src/frame.jl
+index 391d054..a367f24 100644
+--- a/src/frame.jl
++++ b/src/frame.jl
+@@ -15,8 +15,10 @@
+ # The cursor's `:drain` phase is written first. A model with no localized
+ # events, every non-nominal activation included since its events compiled out,
+ # takes the bare step: no arrival machinery, no extra sweep. The whole frame is
+-# §13.4's one `try`, and the `StepError` is the one constructor's. The frame top
+-# `tₖ` is computed from `k` and never accumulated.
++# §13.4's one `try`, and the `StepError` is the one constructor's. Its catch
++# wraps every throw, an interrupt included, since the status says whether the
++# stores are a settled boundary and the cause says what cut the frame. The
++# frame top `tₖ` is computed from `k` and never accumulated.
+ """
+     frame!(model::Model, k::Int, hooks::FrameHooks = NoHooks()) -> Bool
+ 
+@@ -43,8 +45,8 @@ its own.
+ 
+ A model claimed by a [`Simulation`](@ref) is refused as `ArgumentInvalid`. A
+ throw inside the frame writes the status `:inconsistent` and arrives as a
+-`StepError` with host `:loop`. Its `boundary` is `k - 1`, the boundary the frame
+-started from. An `InterruptException` is never wrapped and writes no status.
++`StepError` with host `:loop`, an `InterruptException` included. Its `boundary`
++is `k - 1`, the boundary the frame started from.
+ """
+ function frame!(model::Model{T}, k::Int, hooks::FrameHooks = NoHooks()) where {T}
+     _claimed_gate(model, hooks, :frame!)
+@@ -64,10 +66,8 @@ function frame!(model::Model{T}, k::Int, hooks::FrameHooks = NoHooks()) where {T
+         k % N_base == 0 ? boundary!(model, k ÷ N_base) : offtick_boundary!(model)
+         settled!(hooks)
+     catch err
+-        err isa InterruptException && rethrow()
+-        failure = _wrap_step(model, k - 1, :loop, err)
+         @atomic :release model.status = :inconsistent
+-        rethrow(failure)                # the model's backtrace kept
++        rethrow(_wrap_step(model, k - 1, :loop, err))   # the model's backtrace kept
+     end
+ end
+ 
+diff --git a/src/model.jl b/src/model.jl
+index 41a1662..f3f110e 100644
+--- a/src/model.jl
++++ b/src/model.jl
+@@ -69,9 +69,9 @@ A model holds five values, each a field.
+ 
+ `status` is `:built` until [boundary zero](@ref g-boundary-zero) completes, and
+ `:consistent` once it has completed or a state has been restored. A throw inside
+-a frame other than an `InterruptException` writes `:inconsistent`. A throw
+-inside boundary zero or `overlay!`'s settling writes `:built`. Only the model's
+-own calls write it.
++a door returns it to `:built`, whether in `init!`'s boundary zero, `overlay!`'s
++settling or a restore. A throw inside a frame writes `:inconsistent`, an
++`InterruptException` included. Only the model's own calls write it.
+ 
+ `claimed` is set once a `Simulation` takes the model and is never cleared. A
+ simulation owns its model and never shares it. The model's own calls that write,
+@@ -242,7 +242,8 @@ _claimed_gate(model::Model, ::FrameHooks, call::Symbol) =
+ # `init!` can resolve before it touches its run. It hosts §13.4's catch around
+ # boundary zero (D-223), where a throw takes the one `StepError` constructor
+ # with the frame from the cursor. Nothing reads the return of `settled!(hooks)`
+-# here. An interrupt is not model code failing, and has no stop path here.
++# here. An interrupt has no stop path in a service, so the catch wraps it like
++# any throw (D-441).
+ """
+     init!(model::Model, condition = set(); t0::Real = 0.0,
+           hooks::FrameHooks = NoHooks()) -> Nothing
+@@ -271,10 +272,9 @@ A second method takes the condition already resolved, and serves the
+ simulation's own `init!`.
+ 
+ A throw inside boundary zero arrives as a `StepError` at `t0`, with `boundary` 0
+-and host `:boundary_zero`. It writes the status back to `:built`. An
+-[interrupt](@ref g-operator-interrupt) writes `:built` too, and propagates
+-unwrapped. A throw from `settled!(hooks)` propagates as it is and writes no
+-status.
++and host `:boundary_zero`, an `InterruptException` included. It writes the
++status back to `:built`. A throw from `settled!(hooks)` propagates as it is and
++writes no status.
+ 
+ # Keywords
+ 
+@@ -307,7 +307,6 @@ function init!(model::Model{T}, plan::ConditionPlan; t0::Real = 0.0,
+         boundary_zero!(model)
+     catch err
+         @atomic :release model.status = :built
+-        err isa InterruptException && rethrow()
+         rethrow(_wrap_step(model, 0, :boundary_zero, err))
+     end
+     settled!(hooks)                   # the boundary-zero snapshot (§11.2, §14.5)
+@@ -369,7 +368,7 @@ refused as `ConditionResolution`, `PathResolution`, `DuplicateConditionLeaf` or
+ A second method takes the condition already resolved, and serves the
+ simulation's own `overlay!`.
+ 
+-A throw inside the settling other than an `InterruptException` arrives as a
++A throw inside the settling, an `InterruptException` included, arrives as a
+ `StepError` with host `:overlay` and the frame the clock sits at. It writes the
+ status back to `:built`, with the stores partly written as a failed
+ [boundary zero](@ref g-boundary-zero) leaves them. A throw from
+@@ -396,7 +395,6 @@ function overlay!(model::Model, plan::ConditionPlan; hooks::FrameHooks = NoHooks
+         _settle!(model; fresh = false)
+     catch err
+         @atomic :release model.status = :built
+-        err isa InterruptException && rethrow()
+         rethrow(_wrap_step(model, k, :overlay, err))
+     end
+     settled!(hooks)                   # the overlay boundary's snapshot (§11.2, §12.6)
+@@ -811,10 +809,10 @@ end
+ # clock at the failure, the frame-entry boundary as the replay pointer, the host
+ # its caller names, and the cause under the species rule below. Nothing inside
+ # the sequence throws a `StepError`, so one arriving here is an invariant firing,
+-# not a re-wrap. Two callers reach it, both the model's catch sites (D-317):
+-# `frame!` (frame.jl) as `:loop`, and the model's `init!` and `overlay!`
+-# (above) around their settling as `:boundary_zero` and `:overlay` (D-223,
+-# D-429). It stays the only constructor.
++# not a re-wrap. Its callers are the model's catch sites (D-317): `frame!`
++# (frame.jl) as `:loop`, the model's `init!` and `overlay!` (above) around
++# their settling as `:boundary_zero` and `:overlay` (D-223, D-429), and the
++# inner restore (below) as `:restore`. It stays the only constructor.
+ function _wrap_step(model::Model, entry_boundary::Int, host::Symbol, err)
+     err isa StepError && throw(InternalInvariant(
+         "a StepError reached the catch site (§13.4), which is its only constructor — " *
+@@ -910,11 +908,13 @@ state with the run's frame index and [boundary](@ref g-boundary) ordinal.
+ [condition](@ref g-condition) onto a model at rest.
+ 
+ `checkpoint` is legal while the model is `:consistent`, after [`init!`](@ref),
+-`overlay!` or a restore and before any throw. It is refused as
+-`ServiceLifecycle` at `:built` or `:inconsistent`. It is refused as
+-`CheckpointMidFrame` with the clock off a frame top, naming the frame the clock
+-sits inside. A frame abandoned at a [localized](@ref g-localized) event time
+-[`t*`](@ref g-t) leaves the clock there.
++`overlay!` or a restore, until a throw writes another status. After an
++`InterruptException` inside a frame the model is `:inconsistent`, as after any
++other throw there. It is refused as `ServiceLifecycle` at `:built` or
++`:inconsistent`. It is refused as `CheckpointMidFrame` with the clock off a
++frame top, naming the frame the clock sits inside. A frame abandoned at a
++[localized](@ref g-localized) event time [`t*`](@ref g-t) leaves the clock
++there.
+ """
+ function checkpoint(model::Model{T}) where {T}
+     _assert_at_rest(model, :checkpoint)
+@@ -1027,6 +1027,10 @@ before any write. A state taken at another scalar type is refused as
+ `CheckpointMismatch` too. A model claimed by a [`Simulation`](@ref) is refused
+ as `ArgumentInvalid`.
+ 
++A throw inside the copy or the settling returns the status to `:built` and
++arrives as a `StepError` with host `:restore`, an `InterruptException` included.
++Its `boundary` is the frame the state's clock stands at.
++
+ # Keywords
+ 
+ - `hooks`: the [`FrameHooks`](@ref) the restored boundary settles through,
+@@ -1049,10 +1053,21 @@ restore!(::Model{T}, ::ModelState{S}; kw...) where {T,S} =
+ # The inner restore, ungated, which the door above and the simulation's door
+ # body call (D-318, D-319), in `init!`'s shape: the state copied back, the
+ # restored boundary settled through `settled!(hooks)`, whose return nothing
+-# reads here, and the status written `:consistent` last.
++# reads here, and the status written `:consistent` last. Both sit under §13.4's
++# catch with host `:restore`, an interrupt included, which returns the model to
++# `:built` as a throw inside `init!`'s or `overlay!`'s settling does. The pointer
++# is the frame the state stands at, on the grid the door has checked.
+ function _restore_state!(model::Model, model_state::ModelState; hooks::FrameHooks = NoHooks())
+-    _restore_state!(model.exec, model_state)
+-    settled!(hooks)                   # the restored boundary's snapshot (§11.2, §12.6)
++    k = _frames_to(model_state.t, model_state.t₀, model_state.deployment.h)
++    cursor = model.exec.cursor
++    cursor.comp = 0; cursor.fn = :none   # no stale frame: a restore runs no component
++    try
++        _restore_state!(model.exec, model_state)
++        settled!(hooks)               # the restored boundary's snapshot (§11.2, §12.6)
++    catch err
++        @atomic :release model.status = :built
++        rethrow(_wrap_step(model, k, :restore, err))
++    end
+     @atomic :release model.status = :consistent
+     nothing
+ end
+diff --git a/src/sim.jl b/src/sim.jl
+index 360e3e8..3e34442 100644
+--- a/src/sim.jl
++++ b/src/sim.jl
+@@ -14,9 +14,10 @@
+ # carries its issuer — `:code` from `stop!(sim)`, the requesting device's name
+ # from `stop!(handle)`, or `:interrupt`, the operator's stop (§12.4, D-268),
+ # requested at one of the frame loop's unmask points, by the init bracket or
+-# §11.6's wrapper when one leaves a device's `init!` or loop body, or by §13.4's
+-# defensive carve-out when one reaches the catch site — through the same
+-# first-writer-wins word, so an earlier issuer keeps it. `LoopError` is §13.6's
++# §11.6's wrapper when one leaves a device's `init!` or loop body, or by an
++# advance's interrupt arm — through the same first-writer-wins word, so an
++# earlier issuer keeps it. A frame an interrupt cut is a `LoopError` instead
++# (§13.4). `LoopError` is §13.6's
+ # abnormal entry, `exception` the retained cause — a `StepError` from the frame
+ # loop's one catch site (§13.4), which carries the raw cause in turn.
+ """
+@@ -105,9 +106,11 @@ end
+ The termination source of a run aborted by a failure inside the loop.
+ 
+ `LoopError` is the abnormal source. A run ends with it when a
+-[frame](@ref g-frame) throws anything other than an `InterruptException`. The
+-throw leaves the simulation `errored`, and the previous
+-[snapshot](@ref g-snapshot) is the run's final one.
++[frame](@ref g-frame) throws, whatever it throws. The throw leaves the
++simulation `errored`, and the previous [snapshot](@ref g-snapshot) is the run's
++final one. A single Ctrl-C never lands inside a frame, so it ends the run as a
++stop. The throw Julia forces after repeated Ctrl-C can cut a frame, and that
++frame ends the run with a `LoopError` that wraps the `InterruptException`.
+ 
+ `exception` holds the failure as the loop caught it. The value is a wrapper
+ whose `cause` is the raw error or the failed check's diagnostic, beside the time
+@@ -480,8 +483,9 @@ symbols.
+ Any task may read the state. The five states are these.
+ 
+ - `:built`: the [buffers](@ref g-buffer) are allocated and the model holds no
+-  consistent state. A throw inside [boundary zero](@ref g-boundary-zero) or an
+-  [`overlay!`](@ref)'s settling returns the simulation here.
++  consistent state. A throw inside a door returns the simulation here, whether
++  in [boundary zero](@ref g-boundary-zero), an [`overlay!`](@ref)'s settling or
++  a [`restore!`](@ref).
+ - `:initialized`: consistent at a [boundary](@ref g-boundary) and ready to
+   advance. [`init!`](@ref) establishes it, and a completed [`step!`](@ref)
+   returns to it.
+@@ -797,10 +801,11 @@ once it is `errored`. A recording keyword out of range is refused as
+ `UninitializedInputs`. Every refusal comes before any write, so a refused
+ `init!` leaves the simulation exactly as it was.
+ 
+-A throw inside boundary zero other than an `InterruptException` arrives as a
++A throw inside boundary zero, an `InterruptException` included, arrives as a
+ `StepError` with `boundary` 0 and host `:boundary_zero`. It leaves the
+ simulation `built`, with no trace, and `init!`, `restore!` and `replay!` legal
+-again. `init!` under the same condition reproduces it.
++again. `init!` under the same condition reproduces it, unless an interrupt cut
++it.
+ 
+ # Keywords
+ 
+@@ -840,12 +845,13 @@ function init!(sim::Simulation, condition = set(); t0::Real = 0.0, trace = true,
+     nothing
+ end
+ 
+-# Design: §12.4, §12.6, D-273, D-274, D-319, D-429.
++# Design: §12.4, §12.6, §13.4, D-273, D-274, D-319, D-429.
+ # The state is `checkpoint(sim.model)`, wrapped with the run's two counters. A
+ # `t*` stop abandons the frame's remainder with the clock inside the frame, and
+ # the loop integrates whole frames, so a checkpoint there would have no next
+-# frame to continue on. A frame an interrupt from model code abandoned published
+-# nothing (§12.4). A checkpoint holds the state buffer, the `s` and `m` stores
++# frame to continue on. A frame cut by any throw, an interrupt included, leaves
++# the model `:inconsistent`, which reads `errored`. The model's own gate checks
++# the clock. A checkpoint holds the state buffer, the `s` and `m` stores
+ # and the whole signal table. The checkpoint also holds the event priors and the
+ # clock's `t` and `t₀`. Last, it holds the fingerprint. Beside it are the run's
+ # two counters, its frame index and its boundary ordinal. A checkpoint is not a
+@@ -865,36 +871,27 @@ stopped run, use [`overlay!`](@ref).
+ `checkpoint` is legal while the simulation is `initialized` or `stopped`, its
+ [stores](@ref g-store) committed and consistent. It is refused as
+ `ServiceLifecycle` while `built`, `running` or `errored`. It is refused as
+-`CheckpointMidFrame` with the clock off a frame top, or with that frame top
+-unpublished. A stop at a [localized](@ref g-localized) event time
+-[`t*`](@ref g-t) leaves the clock inside the frame. An
+-[interrupt](@ref g-operator-interrupt) from model code that abandons a frame may
+-leave the stores mid-boundary, whatever the clock reads.
++`CheckpointMidFrame` with the clock off a frame top. A stop at a
++[localized](@ref g-localized) event time [`t*`](@ref g-t) leaves the clock
++inside the frame. A frame cut by a throw, an
++[interrupt](@ref g-operator-interrupt) included, leaves the simulation
++`errored`.
+ """
+ function checkpoint(sim::Simulation)
+     _assert_at_rest(sim, :checkpoint)
+     Checkpoint(checkpoint(sim.model), sim.run.frame, sim.run.boundary)
+ end
+ 
+-# The rest a `checkpoint` reads and an `overlay!` writes on (§12.6, D-274,
+-# D-429): a stopped-sim state, `initialized` or `stopped`, with the clock on a
+-# frame top and that top published. A frame top is exactly the time the loop
+-# writes there, `_grid_time` in the clock's scalar, whatever the origin; a `t*`
+-# stop leaves the clock short of it. At rest the latest snapshot is that top's,
+-# which an abandoned frame never published, a `t*` boundary it did publish
+-# included.
++# The rest a `checkpoint` reads and an `overlay!` writes on (§12.6, §13.4,
++# D-274, D-429): a stopped-sim state, `initialized` or `stopped`. The model's
++# own gate checks the clock on a frame top, which a `t*` stop leaves short of:
++# `checkpoint` reaches it through `checkpoint(sim.model)`, and `overlay!` calls
++# it before its first write. A frame cut by any throw writes `:inconsistent`,
++# which reads `errored` here.
+ function _assert_at_rest(sim::Simulation, op::Symbol)
+     lifecycle_state = lifecycle(sim)
+     lifecycle_state in (:initialized, :stopped) || throw(DiagnosticError(ServiceLifecycle(
+         op = op, status = lifecycle_state, legal = [:initialized, :stopped])))
+-    clock = sim.model.exec.clock
+-    frame = sim.run.frame
+-    t_frame = _grid_time(sim.model, frame)
+-    published = latest(sim)
+-    clock.t == oftype(clock.t, t_frame) && published.frame == frame &&
+-        published.t == clock.t ||
+-        throw(DiagnosticError(CheckpointMidFrame(t = _seconds(clock.t), t_frame = t_frame,
+-                                                 frame = frame)))
+     nothing
+ end
+ 
+@@ -948,13 +945,14 @@ call opens.
+ that does not resolve is refused as `ConditionResolution`, `PathResolution`,
+ `DuplicateConditionLeaf` or `ConditionNodeMisuse`.
+ 
+-A throw inside the settling other than an `InterruptException` arrives as a
++A throw inside the settling, an `InterruptException` included, arrives as a
+ `StepError` with host `:overlay`. It leaves the simulation `built` with no trace
+ header, as a failed [boundary zero](@ref g-boundary-zero) does.
+ """
+ function overlay!(sim::Simulation, condition = set(); trace = true, log = true,
+                   log_every = 1, log_max = 65536)
+     _assert_at_rest(sim, :overlay!)
++    _assert_at_rest(sim.model, :overlay!)   # the clock, before any write; the plan method repeats it
+     _check_recording(:overlay!, trace, log, log_every, log_max)   # the run's keywords (D-261)
+     plan = resolve_condition(condition, sim.model.deployment.build, Float64;
+                              bases = _store_values(sim.model.exec))   # the refusals precede every write
+@@ -1045,6 +1043,10 @@ match this simulation is refused as `CheckpointMismatch`, and one whose clock is
+ off its own grid as `CheckpointMidFrame`. These refusals are all collected into
+ one throw before any write. A `ModelState` taken at a scalar other than
+ `Float64` is refused as `CheckpointMismatch`.
++
++A throw inside the copy or the publication arrives as a `StepError` with host
++`:restore`, an `InterruptException` included, and leaves the simulation
++`built`.
+ """
+ function restore!(sim::Simulation, cp::Checkpoint; trace = true, log = true,
+                   log_every = 1, log_max = 65536)
+@@ -1137,10 +1139,10 @@ method.
+ 
+ The default form is legal where [`checkpoint`](@ref) is. It is refused as
+ `ServiceLifecycle` unless the simulation is `initialized` or `stopped`. It is
+-refused as `CheckpointMidFrame` with the clock off a frame top, or with that
+-frame top unpublished. The `about` form is legal where [`init!`](@ref) is. A
+-second argument that is not a tap set from [`taps`](@ref) is refused as
+-`ArgumentInvalid`, and so are a `width` below 1 and a `t0` without `about`.
++refused as `CheckpointMidFrame` with the clock off a frame top. The `about` form
++is legal where [`init!`](@ref) is. A second argument that is not a tap set from
++[`taps`](@ref) is refused as `ArgumentInvalid`, and so are a `width` below 1 and
++a `t0` without `about`.
+ """
+ function linearize(sim::Simulation, tap_set::Taps; about = nothing,
+                    t0 = nothing, width::Int = LINEARIZE_WIDTH)
+@@ -1498,9 +1500,11 @@ with no [termination record](@ref g-termination-record), and the mode turns
+ 
+ A failure inside the loop leaves the simulation `errored` instead, the cause
+ kept on the record. With no device rostered, `run!` then rethrows the failure.
+-With one or more, it logs the failure and returns. Ctrl-C is a stop, never a
+-failure. Caught at a frame top or during a pause, it ends the run `stopped` with
+-`ControlRequestedStop(:interrupt)`.
++With one or more, it logs the failure and returns. Ctrl-C is a stop. The loop
++holds it until the frame in flight has published, or catches it at a frame top
++or during a pause, and it ends the run `stopped` with
++`ControlRequestedStop(:interrupt)`. Only the throw Julia forces after repeated
++Ctrl-C can cut a frame, and that frame is a failure like any other.
+ 
+ A `pace` of `Inf`, the default, never waits, and `1` is real time.
+ [`pace!`](@ref) and [`margin!`](@ref) retune the pace and the margin during the
+@@ -1988,8 +1992,11 @@ _claimed_gate(::Model, ::LoopHooks, ::Symbol) = nothing
+ # applies the batch waiting in each staging cell, or under replay the
+ # recording's batches for the frame. A batch is a staged set of face ⇒ value
+ # writes. A staging cell is the per-device holding place where pending writes
+-# wait. See `settled!` for the other hook.
+-frame_top!(hooks::LoopHooks) = drain!(hooks.sim, hooks.roster)
++# wait. See `settled!` for the other hook. The run's frame index advances here,
++# inside the frame's `try`, before the drain records the batch at it: no throw
++# can land between the advance and the guarded sequence, so after any cut frame
++# the index is the clock's frame plus one and the status says the frame failed.
++frame_top!(hooks::LoopHooks) = (hooks.sim.run.frame += 1; drain!(hooks.sim, hooks.roster))
+ 
+ # Design: §11.2, §11.4, §13.4, §13.5, D-317.
+ # The settled hook publishes the boundary, then samples the stop requests off
+@@ -2046,8 +2053,10 @@ settled!(hooks::LoopHooks) =
+ # to a request the publication found holding (§13.5's order) and otherwise sets
+ # the `:interrupt` stop. A frame that throws arrives as the `StepError` the
+ # model's catch built, still masked, then unmasks: its throw is the
+-# disposition, a pending interrupt is consumed, and
+-# the run ends `errored` (§12.4, §13.4). Every `try` exit, normal or not,
++# disposition, a pending interrupt is consumed, and the run ends `errored`
++# (§12.4, §13.4). A bare interrupt reaching the arm is therefore a raise at an
++# unmask point, or a forced one outside the frame's `try`, and ends the run as
++# a stop. Every `try` exit, normal or not,
+ # restores the sigatomic count its entry saw, so the mask's two ends sit
+ # outside the frame's `try`.
+ function _advance!(sim::Simulation, ignore_mask::Vector{Bool}, upto::Int,
+@@ -2060,7 +2069,7 @@ function _advance!(sim::Simulation, ignore_mask::Vector{Bool}, upto::Int,
+     requester === nothing || return (ModelRequestedStop(requester), advanced)
+     pacer === nothing || anchor!(pacer, _seconds(clock.t), @atomic control.pace)   # the run's first
+     while true
+-        failure = nothing                     # the failed frame's `StepError`, once built
++        failure = nothing                     # the failed frame's throw, once caught
+         try
+             parked = wait_resume!(control)    # the pause block: an unmask point (§12.4)
+             pacer === nothing || !parked || isinf(pacer.pace) ||   # un-pause re-anchors (§10.7)
+@@ -2074,32 +2083,24 @@ function _advance!(sim::Simulation, ignore_mask::Vector{Bool}, upto::Int,
+                 wait_deadline!(control, pacer, plane.loop_diag, _seconds(clock.t), h)
+             Base.sigatomic_begin()                 # §12.4: masked across the boundary sequence
+             try
+-                # the index advances first and the drain runs as the frame's top
+-                # hook, so a batch taken at the top of frame `k` is recorded at
+-                # `k` (§11.5, D-317)
+-                k = (run.frame += 1)
+-                hit = frame!(sim.model, k, hooks)
++                # the top hook advances the index, then drains, so a batch taken
++                # at the top of frame `k` is recorded at `k` (§11.5, D-317)
++                hit = frame!(sim.model, run.frame + 1, hooks)
+                 # the snapshot the hook sampled is the latest, so the read repeats
+                 # it (§13.5, D-317)
+                 requester = hit ? _stop_hit(sim, ignore_mask) : nothing
+                 # a frame counts once it has published a boundary — which a `t*`
+-                # stop hit has done, its remainder abandoned; the carve-out below
+-                # is what makes the count observable, a throw carrying no return
+-                # value out
++                # stop hit has done, its remainder abandoned
+                 advanced += 1
+             catch err
+                 # The frame failed, so its throw is the disposition (§12.4, §13.4).
+                 # The model's catch built the `StepError` still masked, since the
+                 # species rule runs declarations, and it is carried in `failure`
+                 # across the unmask: a pending raise lands in the arm below, which
+-                # throws it. §13.4's one exception never wrapped is kept
+-                # defensively: a synchronous throw from model code, the mask
+-                # deferring only a signal. The frame is abandoned unpublished, the
+-                # stores possibly mid-boundary, and the run takes the stop path
+-                # (§12.4).
+-                err isa InterruptException || (failure = err)
++                # throws it. The model wraps every throw inside the frame, the
++                # forced interrupt included, so the frame ends the run errored.
++                failure = err
+                 Base.sigatomic_end()
+-                failure === nothing && return (_interrupt_source(control, nothing), advanced)
+                 rethrow(failure)                   # the model's backtrace kept
+             end
+             Base.sigatomic_end()                   # the mask's end: a deferred raise lands here
+@@ -2162,7 +2163,8 @@ simulation is left `stopped` with its
+ frames advanced, the stopping frame counted. A stop inside the last frame
+ requested returns the full count, so read [`lifecycle`](@ref) to detect a stop.
+ A failure inside the loop leaves the simulation `errored`, and `step!` always
+-rethrows it.
++rethrows it. Ctrl-C is a stop, with the one exception [`run!`](@ref) names, a
++frame cut by the throw repeated Ctrl-C forces.
+ 
+ In the `:replay` [input mode](@ref g-input-mode) the frames take their inputs
+ from the recording, which bounds the advance. A `step!` past its end advances
+@@ -2607,9 +2609,9 @@ function drain!(sim::Simulation, roster::Vector{RosterEntry})
+     plane = sim.plane
+     # one drain per frame, counted before any thunk runs, on both paths: the
+     # count is the recording's length (§11.5) *and* the ordinal each record
+-    # takes (D-260). The loop has advanced the run's frame index to `k` before
+-    # `frame!` runs the drain as its top hook, so a batch taken at the top of
+-    # frame `k` is recorded — and replayed — at `k` (D-317).
++    # takes (D-260). The top hook advances the run's frame index to `k` before
++    # it runs the drain, so a batch taken at the top of frame `k` is recorded —
++    # and replayed — at `k` (D-317).
+     trc = sim.run.trace
+     trc === nothing || (trc.frames += 1)
+     feed = sim.run.feed
+@@ -2646,7 +2648,7 @@ here either — and re-records each one under the recording's own writer index,
+ the header having been inherited (§12.7). The cursor only advances: the feed is
+ in drain order, and the loop visits frames in it.
+ 
+-The frame ordinal is the run's frame index, which the loop has already
++The frame ordinal is the run's frame index, which the top hook has already
+ advanced to this frame, rather than read off the trace: the records are keyed
+ by it and the discard reports name it, and under the kill switch there is no
+ trace to read it from (D-260, D-317).
+diff --git a/test/fixtures.jl b/test/fixtures.jl
+index cc05bf0..17f7fe3 100644
+--- a/test/fixtures.jl
++++ b/test/fixtures.jl
+@@ -865,8 +865,9 @@ x_projection(c::Primer, x) = x.q ≥ c.level ? throw(Detonated()) : (q = x.q,)
+ 
+ """
+ Interrupter: `q̇ = 1` whose RHS raises an `InterruptException` when armed — a
+-synchronous throw from model code, which §12.4's mask does not defer, so it is
+-the only way to reach §13.4's defensive carve-out.
++synchronous throw from model code, which §12.4's mask does not defer: the
++stand-in for the throw Julia forces after repeated Ctrl-C, which the frame's
++catch wraps like any other (§13.4).
+ """
+ struct Interrupter <: AbstractComponent end
+ 
+@@ -877,6 +878,22 @@ y_types(::Interrupter) = (q = Float64,)
+ y_state(::Interrupter, (; x)) = (q = x.q,)
+ x_deriv(::Interrupter, (; x, u)) = u.arm ? throw(InterruptException()) : (q = one(x.q),)
+ 
++"""
++LastStage: `q̇ = 1` whose RHS raises an `InterruptException` when armed and past
++`t = 0.09`, which in frame 1 is RK4's last stage alone: the stepper has already
++written the frame top to the clock, so the cut frame leaves the clock there with
++`x` at a stage point (§13.4).
++"""
++struct LastStage <: AbstractComponent end
++
++x_init(::LastStage) = (q = 0.0,)
++u_types(::LastStage) = (arm = Bool,)
++y_types(::LastStage) = (q = Float64,)
++
++y_state(::LastStage, (; x)) = (q = x.q,)
++x_deriv(::LastStage, (; x, u, t)) =
++    u.arm && t > 0.09 ? throw(InterruptException()) : (q = one(x.q),)
++
+ # The runtime's pending-SIGINT word: nonzero from the signal's delivery until
+ # an unmask raises it (§12.4).
+ sigint_pending() = unsafe_load(cglobal(:jl_signal_pending, Cint)) != 0
+diff --git a/test/test_diagnostics.jl b/test/test_diagnostics.jl
+index d0a0c88..baa79e0 100644
+--- a/test/test_diagnostics.jl
++++ b/test/test_diagnostics.jl
+@@ -1225,13 +1225,8 @@ function diagnostics_kind_set()
+         @test occursin("t = 0.315, inside frame 4 and short of its top at t = 0.4", rendered)
+         @test occursin("`t_end`, a stop request read at a grid boundary, or `stop!`", rendered)
+         @test occursin("`restore!` takes a `ModelState` read at one", rendered)
+-        # A frame an interrupt abandoned at its top reads as never published.
+-        rendered = message(CheckpointMidFrame(t = 0.4, t_frame = 0.4, frame = 4))
+-        @test startswith(rendered, "a checkpoint is the state at a frame top, and this " *
+-                                   "clock is at frame 4's top, t = 0.4, which was never " *
+-                                   "published")
+-        @test occursin("an interrupt thrown from model code abandons the frame unpublished",
+-                       rendered)
++        # A frame an interrupt cut is refused by the status, never here.
++        @test !occursin("interrupt", rendered)
+         # A state before its origin sits in frame 0, which has no interior.
+         rendered = message(CheckpointMidFrame(t = -0.1, t_frame = 0.0, frame = 0))
+         @test startswith(rendered, "a checkpoint is the state at a frame top, and this " *
+diff --git a/test/test_failures.jl b/test/test_failures.jl
+index b3de1a2..93a8cf5 100644
+--- a/test/test_failures.jl
++++ b/test/test_failures.jl
+@@ -1,7 +1,7 @@
+ # --- runtime failures (§13.4; increment 24) -------------------------------------
+ # The execution cursor written per dispatch and per phase transition, the one
+-# catch site wrapping into `StepError` against it, and the `InterruptException`
+-# carve-out to the stop path, then the `isfinite` sweep over `x` as the
++# catch site wrapping into `StepError` against it, an `InterruptException`
++# included, then the `isfinite` sweep over `x` as the
+ # boundary's first act and the replay pointer it names. The fixtures are library
+ # components (`Tripwire`, `Mine`, `Landmine`, `Sapper`, `Primer`, `Interrupter`,
+ # `Diverger`, `Consumer`, `LateDiverger`); the models below live at top level for
+@@ -12,21 +12,39 @@
+ interrupted() = Group((c = Interrupter(), trig = Trigger(0.15));
+                       local_wires = ("c/q" => "trig/sig", "trig/on" => "c/arm"))
+ 
+-# The interrupter whose armed RHS runs a hook before raising: the window between
+-# the frame top's stop-word read and the carve-out's catch, where another issuer
+-# can land first.
+-struct HookedInterrupter <: AbstractComponent
++# The ramp whose armed RHS runs a hook inside the frame, after the frame top's
++# stop-word read and before the mask's end, where another issuer can land
++# ahead of a deferred interrupt.
++struct HookedRamp <: AbstractComponent
+     hook::Base.RefValue{Any}
+ end
+-HookedInterrupter() = HookedInterrupter(Ref{Any}(nothing))
+-x_init(::HookedInterrupter) = (q = 0.0,)
+-u_types(::HookedInterrupter) = (arm = Bool,)
+-y_types(::HookedInterrupter) = (q = Float64,)
+-y_state(::HookedInterrupter, (; x)) = (q = x.q,)
+-x_deriv(c::HookedInterrupter, (; x, u)) =
+-    u.arm ? (c.hook[](); throw(InterruptException())) : (q = one(x.q),)
+-hooked_interrupted(c) = Group((c = c, trig = Trigger(0.15));
+-                              local_wires = ("c/q" => "trig/sig", "trig/on" => "c/arm"))
++HookedRamp() = HookedRamp(Ref{Any}(nothing))
++x_init(::HookedRamp) = (q = 0.0,)
++u_types(::HookedRamp) = (arm = Bool,)
++y_types(::HookedRamp) = (q = Float64,)
++y_state(::HookedRamp, (; x)) = (q = x.q,)
++x_deriv(c::HookedRamp, (; x, u)) = (u.arm && c.hook[](); (q = one(x.q),))
++hooked_ramp(c) = Group((c = c, trig = Trigger(0.15));
++                       local_wires = ("c/q" => "trig/sig", "trig/on" => "c/arm"))
++
++# A ramp whose boundary event, holding once `q` reaches 0.15, raises an
++# `InterruptException` from its handler: a throw at frame 2's top boundary, the
++# clock already on the top and nothing published (§13.4).
++struct TopInterrupter <: AbstractComponent end
++x_init(::TopInterrupter) = (q = 0.0,)
++y_types(::TopInterrupter) = (q = Float64,)
++y_state(::TopInterrupter, (; x)) = (q = x.q,)
++x_deriv(::TopInterrupter, (; x)) = (q = one(x.q),)
++top_guard(::TopInterrupter, (; x)) = x.q ≥ 0.15
++top_handler(::TopInterrupter, (; x)) =
++    x.q ≥ 0.15 ? throw(InterruptException()) : (x = (q = x.q,),)
++state_events(::TopInterrupter) = (cut = StateEvent(top_guard, top_handler),)
++
++# Hooks whose `settled!` raises an `InterruptException`: a throw after the
++# boundary settled and before the caller saw it, in a frame or a restore.
++struct InterruptingSettle <: FrameHooks end
++frame_top!(::InterruptingSettle) = nothing
++settled!(::InterruptingSettle) = throw(InterruptException())
+ 
+ # The self-interrupter under a stop request on its own ramp: the request holds
+ # at frame 3's publication, the frame whose integration sent the signal.
+@@ -363,36 +381,163 @@ function failures_runtime()
+         @test latest(sim).t == 0.2 && termination(sim).t == 0.2
+     end
+ 
+-    @testset "the interrupt carve-out routes to the stop path (§13.4, §12.4)" begin
++    @testset "an interrupt inside a model's frame writes :inconsistent and arrives wrapped (§13.4, §12.6)" begin
++        # The status says whether the stores are a settled boundary, whatever cut
++        # the frame, so the checkpoint is refused after an interrupt as after any
++        # throw, and a restore of an earlier state is the way back.
++        same_state(a, b) = a.x == b.x && a.s == b.s && a.m == b.m && a.prior == b.prior &&
++                           a.t == b.t && a.t₀ == b.t₀ && same_table(a.table, b.table)
++        function refused_then_restored(model, before)
++            d = carried(@test_throws DiagnosticError{ServiceLifecycle} checkpoint(model))
++            @test d.op === :checkpoint && d.status === :inconsistent
++            restore!(model, before)
++            @test model.status === :consistent && same_state(checkpoint(model), before)
++        end
++
++        # RK4's last stage: the clock already on the frame top and `x` at a stage
++        # point, which the clock alone cannot tell from a settled top.
++        staged = Model(fed(LastStage(), "arm"); h = 1//10)
++        init!(staged, set(u = (in = true,)))
++        before = checkpoint(staged)
++        err = failure(() -> frame!(staged, 1))
++        @test err isa StepError{InterruptException}
++        @test err.host === :loop && err.boundary == 0
++        @test err.cursor == CursorFrame("c", :x_deriv, :integrate, 4)
++        @test staged.exec.clock.t == 1 * 0.1 && staged.status === :inconsistent
++        refused_then_restored(staged, before)
++
++        # An event handler at the frame-top boundary.
++        top = Model(single(TopInterrupter()); h = 1//10)
++        init!(top)
++        frame!(top, 1)
++        before = checkpoint(top)
++        err = failure(() -> frame!(top, 2))
++        @test err isa StepError{InterruptException}
++        @test err.host === :loop && err.boundary == 1
++        @test err.cursor == CursorFrame("c", :handler, :round, 1)
++        @test top.exec.clock.t == 2 * 0.1 && top.status === :inconsistent
++        refused_then_restored(top, before)
++
++        # The `settled!` hook, after the frame top settled.
++        hooked = Model(fed(Interrupter(), "arm"); h = 1//10)
++        init!(hooked, set(u = (in = false,)))
++        before = checkpoint(hooked)
++        err = failure(() -> frame!(hooked, 1, InterruptingSettle()))
++        @test err isa StepError{InterruptException}
++        @test err.host === :loop && err.boundary == 0 && err.cursor.phase === :ticks
++        @test hooked.exec.clock.t == 1 * 0.1 && hooked.status === :inconsistent
++        refused_then_restored(hooked, before)
++    end
++
++    @testset "a restore an interrupt cuts returns the model to :built under host :restore (§12.6, §13.4)" begin
++        model = Model(fed(Interrupter(), "arm"); h = 1//10)
++        init!(model, set(u = (in = false,)))
++        frames!(model, 2)
++        before = checkpoint(model)
++        err = failure(() -> restore!(model, before; hooks = InterruptingSettle()))
++        @test err isa StepError{InterruptException}
++        @test err.host === :restore && err.boundary == 2 && err.t == 2 * 0.1
++        @test err.cursor.path === nothing && err.cursor.fn === :none   # a restore runs no component
++        @test model.status === :built                   # a door's throw, as `init!`'s
++        d = carried(@test_throws DiagnosticError{ServiceLifecycle} checkpoint(model))
++        @test d.status === :built
++        restore!(model, before)
++        @test model.status === :consistent && checkpoint(model).t == 2 * 0.1
++    end
++
++    @testset "a door's catch wraps an interrupt and returns the model to :built (§13.4, §12.6, D-441)" begin
++        # The condition starts `q` past the handler's level, so the event fires in
++        # boundary zero's first round, and in the overlay's settling likewise.
++        past_level = at("c", set(x = (q = 0.2,)))
++        model = Model(single(TopInterrupter()); h = 1//10)
++        err = failure(() -> init!(model, past_level))
++        @test err isa StepError{InterruptException}
++        @test err.host === :boundary_zero && err.boundary == 0
++        @test err.cursor == CursorFrame("c", :handler, :round, 1)
++        @test model.status === :built
++        init!(model)                                    # the door reopens the model
++        @test model.status === :consistent
++
++        frame!(model, 1)
++        err = failure(() -> overlay!(model, past_level))
++        @test err isa StepError{InterruptException}
++        @test err.host === :overlay && err.boundary == 1
++        @test model.status === :built
++        init!(model)
++        @test model.status === :consistent
++
++        # On a simulation the door's throw leaves it `built`, and `init!` legal again.
++        sim = Simulation(single(TopInterrupter()); h = 1//10)
++        err = failure(() -> init!(sim, past_level))
++        @test err isa StepError{InterruptException} && err.host === :boundary_zero
++        @test lifecycle(sim) === :built
++        init!(sim)
++        @test lifecycle(sim) === :initialized
++    end
++
++    @testset "an interrupt thrown inside a frame ends the run errored under its StepError (§12.4, §13.4)" begin
++        # The synchronous throw stands in for the one Julia forces after repeated
++        # Ctrl-C, which no test can produce. The frame's catch wraps it like any
++        # failure, and the type carries the disposition: a cut frame is a failure.
+         sim = Simulation(interrupted(); h = 1//10)
+-        probe = TailProbe()
+-        attach!(sim, probe, NoClaim())
+         init!(sim)
+-        run!(sim; t_end = 5.0)                          # returns normally: never a StepError
+-        @test lifecycle(sim) === :stopped
+-        @test termination(sim).source === ControlRequestedStop(:interrupt)
+-        # The frame is abandoned unpublished, so the last published boundary is
+-        # final and the graceful tail runs over it.
+-        @test latest(sim).t == 0.2 && termination(sim).t == 0.2
++        err = failure(() -> step!(sim; frames = 5, t_end = 5.0))
++        @test err isa StepError{InterruptException}
++        @test err.host === :loop && err.boundary == 2   # frame 3's first stage
++        @test lifecycle(sim) === :errored
++        source = termination(sim).source
++        @test source isa LoopError && source.exception === err
++        # The cut frame published nothing, so the last published boundary is final.
++        @test latest(sim).t == 2 * 0.1 && termination(sim).t == 2 * 0.1
++        d = carried(@test_throws DiagnosticError{ServiceLifecycle} checkpoint(sim))
++        @test d.op === :checkpoint && d.status === :errored
++
++        # Rostered, `run!` logs the failure and returns, the tail run as after any.
++        rostered = Simulation(interrupted(); h = 1//10)
++        probe = TailProbe()
++        attach!(rostered, probe, NoClaim())
++        init!(rostered)
++        logs, _ = Test.collect_test_logs() do
++            run!(rostered; t_end = 5.0)
++        end
++        @test lifecycle(rostered) === :errored
++        source = termination(rostered).source
++        @test source isa LoopError && source.exception isa StepError{InterruptException}
++        @test count(l -> l.level == Base.CoreLogging.Error, logs) == 1
+         @test probe.log == [:init, :shutdown]
++    end
+ 
+-        # The count itself, which only the carve-out makes observable through the
+-        # advance's return: the interrupted frame is not one advanced.
+-        sim2 = Simulation(interrupted(); h = 1//10)
+-        init!(sim2)
+-        @test step!(sim2; frames = 5, t_end = 5.0) == 2
+-        @test lifecycle(sim2) === :stopped
+-        @test termination(sim2).source === ControlRequestedStop(:interrupt)
++    @testset "the run's frame index advances inside the frame's guarded sequence (§13.4, §11.5, D-317)" begin
++        # A throw from the drain, the top hook's act after the index advanced:
++        # the frame is cut like any, its pointer the boundary it started from, and
++        # the index the clock's frame plus one. No fixture throws from inside the
++        # drain, so the harness writer's thunk is replaced in place, which only a
++        # door recompiles.
++        sim = Simulation(fed(Interrupter(), "arm"); h = 1//10)
++        init!(sim, set(u = (in = false,)))
++        step!(sim; frames = 2)
++        sim.plane.harness_drain = () -> error("the drain failed")
++        err = failure(() -> step!(sim))
++        @test err isa StepError{ErrorException} && err.host === :loop && err.boundary == 2
++        @test err.cursor == CursorFrame(nothing, :none, :drain, 0)
++        @test lifecycle(sim) === :errored
++        @test sim.model.exec.clock.t == 2 * 0.1 && sim.run.frame == 3
+     end
+ 
+-    @testset "an interrupt after another issuer keeps that issuer as the source (§12.1, §13.4)" begin
+-        c = HookedInterrupter()
+-        sim = Simulation(hooked_interrupted(c); h = 1//10)
+-        c.hook[] = () -> stop!(sim)     # lands between the frame top's read and the raise
+-        init!(sim)
+-        run!(sim; t_end = 5.0)
+-        @test lifecycle(sim) === :stopped
+-        @test termination(sim).source === ControlRequestedStop(:code)
++    @testset "a deferred interrupt after another issuer keeps that issuer as the source (§12.1, §12.4, D-268)" begin
++        sigint_raising() do
++            c = HookedRamp()
++            sim = Simulation(hooked_ramp(c); h = 1//10)
++            sent, held = Ref(false), Ref(false)
++            # inside frame 3's mask: the stop word first, then the signal it defers
++            c.hook[] = () -> sent[] ||
++                (sent[] = true; stop!(sim); interrupt_self(); held[] = sigint_pending())
++            init!(sim)
++            run!(sim; t_end = 5.0)
++            @test held[] && lifecycle(sim) === :stopped   # the signal held, then taken as a stop
++            @test termination(sim).source === ControlRequestedStop(:code)
++            @test latest(sim).frame == 3 && !sigint_pending()   # raised at the mask's end
++        end
+     end
+ 
+     @testset "a signal inside a frame is deferred to its unmask: the frame publishes and counts (§12.4, D-268)" begin
+@@ -491,6 +636,38 @@ function failures_runtime()
+         @test occursin("overlay!(sim2, condition) on the same stopped state reproduces it",
+                        overlay_rendered)
+         @test !occursin("replay!", overlay_rendered) && !occursin("init!", overlay_rendered)
++        # …and a restore's, which runs no phase of a frame, names the boundary and
++        # `restore!` of the same checkpoint (§12.6).
++        restore_rendered = sprint(showerror, StepError(CursorFrame(nothing, :none, :drain, 0),
++                                                       0.2, 2, :restore, Tripped()))
++        @test startswith(restore_rendered, "StepError: restoring boundary 2 (t = 0.2):")
++        @test occursin("restore!(sim2, cp) of the same checkpoint reproduces it",
++                       restore_rendered)
++        @test !occursin("drain", restore_rendered) && !occursin("replay!", restore_rendered)
++        # An interrupt is no failure a rerun repeats: the line says so and names the
++        # door that resumes from the pointer, the frame's or the restore's (§12.4).
++        cut_rendered = sprint(showerror, StepError(CursorFrame("c", :x_deriv, :integrate, 4),
++                                                   0.1, 0, :loop, InterruptException()))
++        @test occursin("an interrupt cut the frame, so nothing reproduces it; " *
++                       "replay!(sim2, trc; to_boundary = 0) resumes from the boundary it " *
++                       "started at", cut_rendered)
++        @test !occursin("step!", cut_rendered)
++        cut_restore = sprint(showerror, StepError(CursorFrame(nothing, :none, :drain, 0), 0.2, 2,
++                                                  :restore, InterruptException()))
++        @test occursin("an interrupt cut the restore, so nothing reproduces it; " *
++                       "restore!(sim2, cp) of the same checkpoint resumes from boundary 2",
++                       cut_restore)
++        # …and boundary zero's and the settling's name their own door (D-441).
++        cut_zero = sprint(showerror, StepError(CursorFrame("c", :handler, :round, 1), 0.0, 0,
++                                               :boundary_zero, InterruptException()))
++        @test occursin("an interrupt cut boundary zero, so nothing reproduces it; " *
++                       "init!(sim2, condition) under the same condition runs it again", cut_zero)
++        cut_overlay = sprint(showerror, StepError(CursorFrame("c", :handler, :round, 1), 0.1, 1,
++                                                  :overlay, InterruptException()))
++        @test occursin("an interrupt cut the settling, so nothing reproduces it; " *
++                       "overlay!(sim2, condition) on the same stopped state runs it again",
++                       cut_overlay)
++        @test !occursin("replay!", cut_zero) && !occursin("replay!", cut_overlay)
+ 
+         # A `Diagnostic` cause renders as its logline: the kind name leads, and the
+         # leaf the sweep named is in the line.
+diff --git a/test/test_lifecycle.jl b/test/test_lifecycle.jl
+index 9ff1009..6ff4970 100644
+--- a/test/test_lifecycle.jl
++++ b/test/test_lifecycle.jl
+@@ -29,9 +29,9 @@ stop_reason(::TwoFlags) = "two"
+ armed() = Group((; c = Trigger(0.5), stop = StopRequest(reason = "input at level"));
+                 input_wires = ("in" => "c/sig",), local_wires = ("c/on" => "stop/u",))
+ 
+-# The hooked interrupter beside a request that never holds: a requester
++# The hooked ramp beside a request that never holds: a requester
+ # honoured, or ignored, while only a control-plane stop can end the run.
+-hooked_requested(c) = Group((; run = hooked_interrupted(c), r = requested(false, "never")))
++hooked_requested(c) = Group((; run = hooked_ramp(c), r = requested(false, "never")))
+ 
+ # The pendulum's torque held by a discrete integrator, and the condition D-273's
+ # probe authored: a sampled model, where a resume from the stores alone ran one
+@@ -516,8 +516,8 @@ function test_lifecycle()
+         # interactive shape: nothing but a control-plane stop can end it, so the
+         # loop says so once (D-255, D-316). The model stops itself from its own
+         # RHS, `:code` the issuer. This one has no requester.
+-        comp = HookedInterrupter()
+-        sim = Simulation(hooked_interrupted(comp); h = 1//10)
++        comp = HookedRamp()
++        sim = Simulation(hooked_ramp(comp); h = 1//10)
+         comp.hook[] = () -> stop!(sim)
+         init!(sim)
+         run!(sim)
+@@ -528,7 +528,7 @@ function test_lifecycle()
+         @test advisory.t_end == Inf && isempty(advisory.ignored)
+ 
+         # A requester honoured bounds the run, though it never holds.
+-        comp_honoured = HookedInterrupter()
++        comp_honoured = HookedRamp()
+         honoured = Simulation(hooked_requested(comp_honoured); h = 1//10)
+         comp_honoured.hook[] = () -> stop!(honoured)
+         init!(honoured)
+@@ -537,7 +537,7 @@ function test_lifecycle()
+         @test writer_status(latest(honoured), "loop").totals.unbounded == 0
+         # Every requester ignored, the run is unbounded again, and the advisory
+         # names what was ignored.
+-        comp_ignored = HookedInterrupter()
++        comp_ignored = HookedRamp()
+         all_ignored = Simulation(hooked_requested(comp_ignored); h = 1//10)
+         comp_ignored.hook[] = () -> stop!(all_ignored)
+         init!(all_ignored)
+@@ -548,8 +548,8 @@ function test_lifecycle()
+         @test advisory.t_end == Inf && advisory.ignored == ["r/stop"]
+ 
+         # A bound of either kind is the advisory's absence.
+-        comp2 = HookedInterrupter()
+-        bounded = Simulation(hooked_interrupted(comp2); h = 1//10)
++        comp2 = HookedRamp()
++        bounded = Simulation(hooked_ramp(comp2); h = 1//10)
+         comp2.hook[] = () -> stop!(bounded)
+         init!(bounded)
+         run!(bounded; t_end = 5.0)
+diff --git a/test/test_trace.jl b/test/test_trace.jl
+index 51f39cd..d66d745 100644
+--- a/test/test_trace.jl
++++ b/test/test_trace.jl
+@@ -1114,7 +1114,7 @@ state_events(::GuardedRamp{names}) where {names} =
+ 
+ # A tick that raises an `InterruptException` when armed: a synchronous throw from
+ # a boundary phase, after the frame's integration and before its publication, so
+-# the frame is abandoned with the clock at its top (§12.4).
++# the frame is cut with the clock at its top (§12.4, §13.4).
+ struct TickInterrupter <: AbstractComponent end
+ s_init(::TickInterrupter) = (n = 0,)
+ u_types(::TickInterrupter) = (arm = Bool,)
+@@ -1259,27 +1259,27 @@ function trace_checkpoints()
+         run!(at_top; t_end = 0.3)
+         @test lifecycle(at_top) === :stopped && checkpoint(at_top).frame == 3
+ 
+-        # An interrupt from model code abandons its frame unpublished and ends the
+-        # run `stopped`. Thrown from a boundary phase it leaves the clock at the
+-        # frame top, the stores possibly mid-boundary: refused all the same, and
+-        # `linearize`'s default form with it. Thrown mid-integration it leaves the
+-        # clock inside the frame.
++        # An interrupt from model code cuts its frame like any throw and ends the
++        # run `errored`. Thrown from a boundary phase it leaves the clock at the
++        # frame top, the stores possibly mid-boundary, and thrown mid-integration
++        # inside the frame: the status refuses both, wherever the clock stands, and
++        # `linearize`'s default form with them.
+         for (model, at_frame_top) in ((fed(TickInterrupter(), "arm"), true),
+                                       (fed(Interrupter(), "arm"), false))
+             abandoned = Simulation(model; h = 1//10)
+             init!(abandoned, set(u = (in = false,)))
+             step!(abandoned; frames = 2)
+             stage!(abandoned, "in" => true)
+-            run!(abandoned; t_end = 5.0)
+-            @test lifecycle(abandoned) === :stopped
+-            @test termination(abandoned).source === ControlRequestedStop(:interrupt)
++            err = failure(() -> run!(abandoned; t_end = 5.0))
++            @test err isa StepError{InterruptException} && err.boundary == 2
++            @test lifecycle(abandoned) === :errored
++            @test termination(abandoned).source isa LoopError
+             @test abandoned.run.frame == 3 && latest(abandoned).frame == 2
+             @test (abandoned.model.exec.clock.t == 3 * 0.1) == at_frame_top    # frame 3's top
+-            d = carried(@test_throws DiagnosticError{CheckpointMidFrame} checkpoint(abandoned))
+-            @test d.frame == 3 && d.t_frame == 3 * 0.1
+-            @test d.t == abandoned.model.exec.clock.t
+-            d = carried(@test_throws DiagnosticError{CheckpointMidFrame} linearize(abandoned, taps()))
+-            @test d.frame == 3 && d.t == abandoned.model.exec.clock.t
++            d = carried(@test_throws DiagnosticError{ServiceLifecycle} checkpoint(abandoned))
++            @test d.op === :checkpoint && d.status === :errored
++            d = carried(@test_throws DiagnosticError{ServiceLifecycle} linearize(abandoned, taps()))
++            @test d.op === :linearize && d.status === :errored
+         end
+ 
+         # A frame top is the time the loop writes there, at any origin: near zero,

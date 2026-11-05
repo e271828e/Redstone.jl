@@ -69,9 +69,9 @@ A model holds five values, each a field.
 
 `status` is `:built` until [boundary zero](@ref g-boundary-zero) completes, and
 `:consistent` once it has completed or a state has been restored. A throw inside
-a frame other than an `InterruptException` writes `:inconsistent`. A throw
-inside boundary zero or `overlay!`'s settling writes `:built`. Only the model's
-own calls write it.
+a door returns it to `:built`, whether in `init!`'s boundary zero, `overlay!`'s
+settling or a restore. A throw inside a frame writes `:inconsistent`, an
+`InterruptException` included. Only the model's own calls write it.
 
 `claimed` is set once a `Simulation` takes the model and is never cleared. A
 simulation owns its model and never shares it. The model's own calls that write,
@@ -242,7 +242,8 @@ _claimed_gate(model::Model, ::FrameHooks, call::Symbol) =
 # `init!` can resolve before it touches its run. It hosts §13.4's catch around
 # boundary zero (D-223), where a throw takes the one `StepError` constructor
 # with the frame from the cursor. Nothing reads the return of `settled!(hooks)`
-# here. An interrupt is not model code failing, and has no stop path here.
+# here. An interrupt has no stop path in a service, so the catch wraps it like
+# any throw (D-441).
 """
     init!(model::Model, condition = set(); t0::Real = 0.0,
           hooks::FrameHooks = NoHooks()) -> Nothing
@@ -271,10 +272,9 @@ A second method takes the condition already resolved, and serves the
 simulation's own `init!`.
 
 A throw inside boundary zero arrives as a `StepError` at `t0`, with `boundary` 0
-and host `:boundary_zero`. It writes the status back to `:built`. An
-[interrupt](@ref g-operator-interrupt) writes `:built` too, and propagates
-unwrapped. A throw from `settled!(hooks)` propagates as it is and writes no
-status.
+and host `:boundary_zero`, an `InterruptException` included. It writes the
+status back to `:built`. A throw from `settled!(hooks)` propagates as it is and
+writes no status.
 
 # Keywords
 
@@ -307,7 +307,6 @@ function init!(model::Model{T}, plan::ConditionPlan; t0::Real = 0.0,
         boundary_zero!(model)
     catch err
         @atomic :release model.status = :built
-        err isa InterruptException && rethrow()
         rethrow(_wrap_step(model, 0, :boundary_zero, err))
     end
     settled!(hooks)                   # the boundary-zero snapshot (§11.2, §14.5)
@@ -369,7 +368,7 @@ refused as `ConditionResolution`, `PathResolution`, `DuplicateConditionLeaf` or
 A second method takes the condition already resolved, and serves the
 simulation's own `overlay!`.
 
-A throw inside the settling other than an `InterruptException` arrives as a
+A throw inside the settling, an `InterruptException` included, arrives as a
 `StepError` with host `:overlay` and the frame the clock sits at. It writes the
 status back to `:built`, with the stores partly written as a failed
 [boundary zero](@ref g-boundary-zero) leaves them. A throw from
@@ -396,7 +395,6 @@ function overlay!(model::Model, plan::ConditionPlan; hooks::FrameHooks = NoHooks
         _settle!(model; fresh = false)
     catch err
         @atomic :release model.status = :built
-        err isa InterruptException && rethrow()
         rethrow(_wrap_step(model, k, :overlay, err))
     end
     settled!(hooks)                   # the overlay boundary's snapshot (§11.2, §12.6)
@@ -817,10 +815,10 @@ end
 # clock at the failure, the frame-entry boundary as the replay pointer, the host
 # its caller names, and the cause under the species rule below. Nothing inside
 # the sequence throws a `StepError`, so one arriving here is an invariant firing,
-# not a re-wrap. Two callers reach it, both the model's catch sites (D-317):
-# `frame!` (frame.jl) as `:loop`, and the model's `init!` and `overlay!`
-# (above) around their settling as `:boundary_zero` and `:overlay` (D-223,
-# D-429). It stays the only constructor.
+# not a re-wrap. Its callers are the model's catch sites (D-317): `frame!`
+# (frame.jl) as `:loop`, the model's `init!` and `overlay!` (above) around
+# their settling as `:boundary_zero` and `:overlay` (D-223, D-429), and the
+# inner restore (below) as `:restore`. It stays the only constructor.
 function _wrap_step(model::Model, entry_boundary::Int, host::Symbol, err)
     err isa StepError && throw(InternalInvariant(
         "a StepError reached the catch site (§13.4), which is its only constructor — " *
@@ -916,11 +914,13 @@ state with the run's frame index and [boundary](@ref g-boundary) ordinal.
 [condition](@ref g-condition) onto a model at rest.
 
 `checkpoint` is legal while the model is `:consistent`, after [`init!`](@ref),
-`overlay!` or a restore and before any throw. It is refused as
-`ServiceLifecycle` at `:built` or `:inconsistent`. It is refused as
-`CheckpointMidFrame` with the clock off a frame top, naming the frame the clock
-sits inside. A frame abandoned at a [localized](@ref g-localized) event time
-[`t*`](@ref g-t) leaves the clock there.
+`overlay!` or a restore, until a throw writes another status. After an
+`InterruptException` inside a frame the model is `:inconsistent`, as after any
+other throw there. It is refused as `ServiceLifecycle` at `:built` or
+`:inconsistent`. It is refused as `CheckpointMidFrame` with the clock off a
+frame top, naming the frame the clock sits inside. A frame abandoned at a
+[localized](@ref g-localized) event time [`t*`](@ref g-t) leaves the clock
+there.
 """
 function checkpoint(model::Model{T}) where {T}
     _assert_at_rest(model, :checkpoint)
@@ -1033,6 +1033,10 @@ before any write. A state taken at another scalar type is refused as
 `CheckpointMismatch` too. A model claimed by a [`Simulation`](@ref) is refused
 as `ArgumentInvalid`.
 
+A throw inside the copy or the settling returns the status to `:built` and
+arrives as a `StepError` with host `:restore`, an `InterruptException` included.
+Its `boundary` is the frame the state's clock stands at.
+
 # Keywords
 
 - `hooks`: the [`FrameHooks`](@ref) the restored boundary settles through,
@@ -1055,10 +1059,21 @@ restore!(::Model{T}, ::ModelState{S}; kw...) where {T,S} =
 # The inner restore, ungated, which the door above and the simulation's door
 # body call (D-318, D-319), in `init!`'s shape: the state copied back, the
 # restored boundary settled through `settled!(hooks)`, whose return nothing
-# reads here, and the status written `:consistent` last.
+# reads here, and the status written `:consistent` last. Both sit under §13.4's
+# catch with host `:restore`, an interrupt included, which returns the model to
+# `:built` as a throw inside `init!`'s or `overlay!`'s settling does. The pointer
+# is the frame the state stands at, on the grid the door has checked.
 function _restore_state!(model::Model, model_state::ModelState; hooks::FrameHooks = NoHooks())
-    _restore_state!(model.exec, model_state)
-    settled!(hooks)                   # the restored boundary's snapshot (§11.2, §12.6)
+    k = _frames_to(model_state.t, model_state.t₀, model_state.deployment.h)
+    cursor = model.exec.cursor
+    cursor.comp = 0; cursor.fn = :none   # no stale frame: a restore runs no component
+    try
+        _restore_state!(model.exec, model_state)
+        settled!(hooks)               # the restored boundary's snapshot (§11.2, §12.6)
+    catch err
+        @atomic :release model.status = :built
+        rethrow(_wrap_step(model, k, :restore, err))
+    end
     @atomic :release model.status = :consistent
     nothing
 end

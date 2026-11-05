@@ -865,8 +865,9 @@ x_projection(c::Primer, x) = x.q ≥ c.level ? throw(Detonated()) : (q = x.q,)
 
 """
 Interrupter: `q̇ = 1` whose RHS raises an `InterruptException` when armed — a
-synchronous throw from model code, which §12.4's mask does not defer, so it is
-the only way to reach §13.4's defensive carve-out.
+synchronous throw from model code, which §12.4's mask does not defer: the
+stand-in for the throw Julia forces after repeated Ctrl-C, which the frame's
+catch wraps like any other (§13.4).
 """
 struct Interrupter <: AbstractComponent end
 
@@ -876,6 +877,22 @@ y_types(::Interrupter) = (q = Float64,)
 
 y_state(::Interrupter, (; x)) = (q = x.q,)
 x_deriv(::Interrupter, (; x, u)) = u.arm ? throw(InterruptException()) : (q = one(x.q),)
+
+"""
+LastStage: `q̇ = 1` whose RHS raises an `InterruptException` when armed and past
+`t = 0.09`, which in frame 1 is RK4's last stage alone: the stepper has already
+written the frame top to the clock, so the cut frame leaves the clock there with
+`x` at a stage point (§13.4).
+"""
+struct LastStage <: AbstractComponent end
+
+x_init(::LastStage) = (q = 0.0,)
+u_types(::LastStage) = (arm = Bool,)
+y_types(::LastStage) = (q = Float64,)
+
+y_state(::LastStage, (; x)) = (q = x.q,)
+x_deriv(::LastStage, (; x, u, t)) =
+    u.arm && t > 0.09 ? throw(InterruptException()) : (q = one(x.q),)
 
 # The runtime's pending-SIGINT word: nonzero from the signal's delivery until
 # an unmask raises it (§12.4).

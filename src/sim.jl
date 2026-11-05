@@ -14,9 +14,10 @@
 # carries its issuer — `:code` from `stop!(sim)`, the requesting device's name
 # from `stop!(handle)`, or `:interrupt`, the operator's stop (§12.4, D-268),
 # requested at one of the frame loop's unmask points, by the init bracket or
-# §11.6's wrapper when one leaves a device's `init!` or loop body, or by §13.4's
-# defensive carve-out when one reaches the catch site — through the same
-# first-writer-wins word, so an earlier issuer keeps it. `LoopError` is §13.6's
+# §11.6's wrapper when one leaves a device's `init!` or loop body, or by an
+# advance's interrupt arm — through the same first-writer-wins word, so an
+# earlier issuer keeps it. A frame an interrupt cut is a `LoopError` instead
+# (§13.4). `LoopError` is §13.6's
 # abnormal entry, `exception` the retained cause — a `StepError` from the frame
 # loop's one catch site (§13.4), which carries the raw cause in turn.
 """
@@ -105,9 +106,11 @@ end
 The termination source of a run aborted by a failure inside the loop.
 
 `LoopError` is the abnormal source. A run ends with it when a
-[frame](@ref g-frame) throws anything other than an `InterruptException`. The
-throw leaves the simulation `errored`, and the previous
-[snapshot](@ref g-snapshot) is the run's final one.
+[frame](@ref g-frame) throws, whatever it throws. The throw leaves the
+simulation `errored`, and the previous [snapshot](@ref g-snapshot) is the run's
+final one. A single Ctrl-C never lands inside a frame, so it ends the run as a
+stop. The throw Julia forces after repeated Ctrl-C can cut a frame, and that
+frame ends the run with a `LoopError` that wraps the `InterruptException`.
 
 `exception` holds the failure as the loop caught it. The value is a wrapper
 whose `cause` is the raw error or the failed check's diagnostic, beside the time
@@ -489,8 +492,9 @@ symbols.
 Any task may read the state. The five states are these.
 
 - `:built`: the [buffers](@ref g-buffer) are allocated and the model holds no
-  consistent state. A throw inside [boundary zero](@ref g-boundary-zero) or an
-  [`overlay!`](@ref)'s settling returns the simulation here.
+  consistent state. A throw inside a door returns the simulation here, whether
+  in [boundary zero](@ref g-boundary-zero), an [`overlay!`](@ref)'s settling or
+  a [`restore!`](@ref).
 - `:initialized`: consistent at a [boundary](@ref g-boundary) and ready to
   advance. [`init!`](@ref) establishes it, and a completed [`step!`](@ref)
   returns to it.
@@ -807,10 +811,11 @@ once it is `errored`. A recording keyword out of range is refused as
 `UninitializedInputs`. Every refusal comes before any write, so a refused
 `init!` leaves the simulation exactly as it was.
 
-A throw inside boundary zero other than an `InterruptException` arrives as a
+A throw inside boundary zero, an `InterruptException` included, arrives as a
 `StepError` with `boundary` 0 and host `:boundary_zero`. It leaves the
 simulation `built`, with no trace, and `init!`, `restore!` and `replay!` legal
-again. `init!` under the same condition reproduces it.
+again. `init!` under the same condition reproduces it, unless an interrupt cut
+it.
 
 # Keywords
 
@@ -850,12 +855,13 @@ function init!(sim::Simulation, condition = set(); t0::Real = 0.0, trace = true,
     nothing
 end
 
-# Design: §12.4, §12.6, D-273, D-274, D-319, D-429.
+# Design: §12.4, §12.6, §13.4, D-273, D-274, D-319, D-429.
 # The state is `checkpoint(sim.model)`, wrapped with the run's two counters. A
 # `t*` stop abandons the frame's remainder with the clock inside the frame, and
 # the loop integrates whole frames, so a checkpoint there would have no next
-# frame to continue on. A frame an interrupt from model code abandoned published
-# nothing (§12.4). A checkpoint holds the state buffer, the `s` and `m` stores
+# frame to continue on. A frame cut by any throw, an interrupt included, leaves
+# the model `:inconsistent`, which reads `errored`. The model's own gate checks
+# the clock. A checkpoint holds the state buffer, the `s` and `m` stores
 # and the whole signal table. The checkpoint also holds the event priors and the
 # clock's `t` and `t₀`. Last, it holds the fingerprint. Beside it are the run's
 # two counters, its frame index and its boundary ordinal. A checkpoint is not a
@@ -875,36 +881,27 @@ stopped run, use [`overlay!`](@ref).
 `checkpoint` is legal while the simulation is `initialized` or `stopped`, its
 [stores](@ref g-store) committed and consistent. It is refused as
 `ServiceLifecycle` while `built`, `running` or `errored`. It is refused as
-`CheckpointMidFrame` with the clock off a frame top, or with that frame top
-unpublished. A stop at a [localized](@ref g-localized) event time
-[`t*`](@ref g-t) leaves the clock inside the frame. An
-[interrupt](@ref g-operator-interrupt) from model code that abandons a frame may
-leave the stores mid-boundary, whatever the clock reads.
+`CheckpointMidFrame` with the clock off a frame top. A stop at a
+[localized](@ref g-localized) event time [`t*`](@ref g-t) leaves the clock
+inside the frame. A frame cut by a throw, an
+[interrupt](@ref g-operator-interrupt) included, leaves the simulation
+`errored`.
 """
 function checkpoint(sim::Simulation)
     _assert_at_rest(sim, :checkpoint)
     Checkpoint(checkpoint(sim.model), sim.run.frame, sim.run.boundary)
 end
 
-# The rest a `checkpoint` reads and an `overlay!` writes on (§12.6, D-274,
-# D-429): a stopped-sim state, `initialized` or `stopped`, with the clock on a
-# frame top and that top published. A frame top is exactly the time the loop
-# writes there, `_grid_time` in the clock's scalar, whatever the origin; a `t*`
-# stop leaves the clock short of it. At rest the latest snapshot is that top's,
-# which an abandoned frame never published, a `t*` boundary it did publish
-# included.
+# The rest a `checkpoint` reads and an `overlay!` writes on (§12.6, §13.4,
+# D-274, D-429): a stopped-sim state, `initialized` or `stopped`. The model's
+# own gate checks the clock on a frame top, which a `t*` stop leaves short of:
+# `checkpoint` reaches it through `checkpoint(sim.model)`, and `overlay!` calls
+# it before its first write. A frame cut by any throw writes `:inconsistent`,
+# which reads `errored` here.
 function _assert_at_rest(sim::Simulation, op::Symbol)
     lifecycle_state = lifecycle(sim)
     lifecycle_state in (:initialized, :stopped) || throw(DiagnosticError(ServiceLifecycle(
         op = op, status = lifecycle_state, legal = [:initialized, :stopped])))
-    clock = sim.model.exec.clock
-    frame = sim.run.frame
-    t_frame = _grid_time(sim.model, frame)
-    published = latest(sim)
-    clock.t == oftype(clock.t, t_frame) && published.frame == frame &&
-        published.t == clock.t ||
-        throw(DiagnosticError(CheckpointMidFrame(t = _seconds(clock.t), t_frame = t_frame,
-                                                 frame = frame)))
     nothing
 end
 
@@ -958,13 +955,14 @@ call opens.
 that does not resolve is refused as `ConditionResolution`, `PathResolution`,
 `DuplicateConditionLeaf` or `ConditionNodeMisuse`.
 
-A throw inside the settling other than an `InterruptException` arrives as a
+A throw inside the settling, an `InterruptException` included, arrives as a
 `StepError` with host `:overlay`. It leaves the simulation `built` with no trace
 header, as a failed [boundary zero](@ref g-boundary-zero) does.
 """
 function overlay!(sim::Simulation, condition = set(); trace = true, log = true,
                   log_every = 1, log_max = 65536)
     _assert_at_rest(sim, :overlay!)
+    _assert_at_rest(sim.model, :overlay!)   # the clock, before any write; the plan method repeats it
     _check_recording(:overlay!, trace, log, log_every, log_max)   # the run's keywords (D-261)
     plan = resolve_condition(condition, sim.model.deployment.build, Float64;
                              bases = _store_values(sim.model.exec))   # the refusals precede every write
@@ -1055,6 +1053,10 @@ match this simulation is refused as `CheckpointMismatch`, and one whose clock is
 off its own grid as `CheckpointMidFrame`. These refusals are all collected into
 one throw before any write. A `ModelState` taken at a scalar other than
 `Float64` is refused as `CheckpointMismatch`.
+
+A throw inside the copy or the publication arrives as a `StepError` with host
+`:restore`, an `InterruptException` included, and leaves the simulation
+`built`.
 """
 function restore!(sim::Simulation, cp::Checkpoint; trace = true, log = true,
                   log_every = 1, log_max = 65536)
@@ -1147,10 +1149,10 @@ method.
 
 The default form is legal where [`checkpoint`](@ref) is. It is refused as
 `ServiceLifecycle` unless the simulation is `initialized` or `stopped`. It is
-refused as `CheckpointMidFrame` with the clock off a frame top, or with that
-frame top unpublished. The `about` form is legal where [`init!`](@ref) is. A
-second argument that is not a tap set from [`taps`](@ref) is refused as
-`ArgumentInvalid`, and so are a `width` below 1 and a `t0` without `about`.
+refused as `CheckpointMidFrame` with the clock off a frame top. The `about` form
+is legal where [`init!`](@ref) is. A second argument that is not a tap set from
+[`taps`](@ref) is refused as `ArgumentInvalid`, and so are a `width` below 1 and
+a `t0` without `about`.
 """
 function linearize(sim::Simulation, tap_set::Taps; about = nothing,
                    t0 = nothing, width::Int = LINEARIZE_WIDTH)
@@ -1508,9 +1510,11 @@ with no [termination record](@ref g-termination-record), and the mode turns
 
 A failure inside the loop leaves the simulation `errored` instead, the cause
 kept on the record. With no device rostered, `run!` then rethrows the failure.
-With one or more, it logs the failure and returns. Ctrl-C is a stop, never a
-failure. Caught at a frame top or during a pause, it ends the run `stopped` with
-`ControlRequestedStop(:interrupt)`.
+With one or more, it logs the failure and returns. Ctrl-C is a stop. The loop
+holds it until the frame in flight has published, or catches it at a frame top
+or during a pause, and it ends the run `stopped` with
+`ControlRequestedStop(:interrupt)`. Only the throw Julia forces after repeated
+Ctrl-C can cut a frame, and that frame is a failure like any other.
 
 A `pace` of `Inf`, the default, never waits, and `1` is real time.
 [`pace!`](@ref) and [`margin!`](@ref) retune the pace and the margin during the
@@ -1998,8 +2002,11 @@ _claimed_gate(::Model, ::LoopHooks, ::Symbol) = nothing
 # applies the batch waiting in each staging cell, or under replay the
 # recording's batches for the frame. A batch is a staged set of face ⇒ value
 # writes. A staging cell is the per-device holding place where pending writes
-# wait. See `settled!` for the other hook.
-frame_top!(hooks::LoopHooks) = drain!(hooks.sim, hooks.roster)
+# wait. See `settled!` for the other hook. The run's frame index advances here,
+# inside the frame's `try`, before the drain records the batch at it: no throw
+# can land between the advance and the guarded sequence, so after any cut frame
+# the index is the clock's frame plus one and the status says the frame failed.
+frame_top!(hooks::LoopHooks) = (hooks.sim.run.frame += 1; drain!(hooks.sim, hooks.roster))
 
 # Design: §11.2, §11.4, §13.4, §13.5, D-317.
 # The settled hook publishes the boundary, then samples the stop requests off
@@ -2056,8 +2063,10 @@ settled!(hooks::LoopHooks) =
 # to a request the publication found holding (§13.5's order) and otherwise sets
 # the `:interrupt` stop. A frame that throws arrives as the `StepError` the
 # model's catch built, still masked, then unmasks: its throw is the
-# disposition, a pending interrupt is consumed, and
-# the run ends `errored` (§12.4, §13.4). Every `try` exit, normal or not,
+# disposition, a pending interrupt is consumed, and the run ends `errored`
+# (§12.4, §13.4). A bare interrupt reaching the arm is therefore a raise at an
+# unmask point, or a forced one outside the frame's `try`, and ends the run as
+# a stop. Every `try` exit, normal or not,
 # restores the sigatomic count its entry saw, so the mask's two ends sit
 # outside the frame's `try`.
 function _advance!(sim::Simulation, ignore_mask::Vector{Bool}, upto::Int,
@@ -2070,7 +2079,7 @@ function _advance!(sim::Simulation, ignore_mask::Vector{Bool}, upto::Int,
     requester === nothing || return (ModelRequestedStop(requester), advanced)
     pacer === nothing || anchor!(pacer, _seconds(clock.t), @atomic control.pace)   # the run's first
     while true
-        failure = nothing                     # the failed frame's `StepError`, once built
+        failure = nothing                     # the failed frame's throw, once caught
         try
             parked = wait_resume!(control)    # the pause block: an unmask point (§12.4)
             pacer === nothing || !parked || isinf(pacer.pace) ||   # un-pause re-anchors (§10.7)
@@ -2084,32 +2093,24 @@ function _advance!(sim::Simulation, ignore_mask::Vector{Bool}, upto::Int,
                 wait_deadline!(control, pacer, plane.loop_diag, _seconds(clock.t), h)
             Base.sigatomic_begin()                 # §12.4: masked across the boundary sequence
             try
-                # the index advances first and the drain runs as the frame's top
-                # hook, so a batch taken at the top of frame `k` is recorded at
-                # `k` (§11.5, D-317)
-                k = (run.frame += 1)
-                hit = frame!(sim.model, k, hooks)
+                # the top hook advances the index, then drains, so a batch taken
+                # at the top of frame `k` is recorded at `k` (§11.5, D-317)
+                hit = frame!(sim.model, run.frame + 1, hooks)
                 # the snapshot the hook sampled is the latest, so the read repeats
                 # it (§13.5, D-317)
                 requester = hit ? _stop_hit(sim, ignore_mask) : nothing
                 # a frame counts once it has published a boundary — which a `t*`
-                # stop hit has done, its remainder abandoned; the carve-out below
-                # is what makes the count observable, a throw carrying no return
-                # value out
+                # stop hit has done, its remainder abandoned
                 advanced += 1
             catch err
                 # The frame failed, so its throw is the disposition (§12.4, §13.4).
                 # The model's catch built the `StepError` still masked, since the
                 # species rule runs declarations, and it is carried in `failure`
                 # across the unmask: a pending raise lands in the arm below, which
-                # throws it. §13.4's one exception never wrapped is kept
-                # defensively: a synchronous throw from model code, the mask
-                # deferring only a signal. The frame is abandoned unpublished, the
-                # stores possibly mid-boundary, and the run takes the stop path
-                # (§12.4).
-                err isa InterruptException || (failure = err)
+                # throws it. The model wraps every throw inside the frame, the
+                # forced interrupt included, so the frame ends the run errored.
+                failure = err
                 Base.sigatomic_end()
-                failure === nothing && return (_interrupt_source(control, nothing), advanced)
                 rethrow(failure)                   # the model's backtrace kept
             end
             Base.sigatomic_end()                   # the mask's end: a deferred raise lands here
@@ -2172,7 +2173,8 @@ simulation is left `stopped` with its
 frames advanced, the stopping frame counted. A stop inside the last frame
 requested returns the full count, so read [`lifecycle`](@ref) to detect a stop.
 A failure inside the loop leaves the simulation `errored`, and `step!` always
-rethrows it.
+rethrows it. Ctrl-C is a stop, with the one exception [`run!`](@ref) names, a
+frame cut by the throw repeated Ctrl-C forces.
 
 In the `:replay` [input mode](@ref g-input-mode) the frames take their inputs
 from the recording, which bounds the advance. A `step!` past its end advances
@@ -2623,9 +2625,9 @@ function drain!(sim::Simulation, roster::Vector{RosterEntry})
     plane = sim.plane
     # one drain per frame, counted before any thunk runs, on both paths: the
     # count is the recording's length (§11.5) *and* the ordinal each record
-    # takes (D-260). The loop has advanced the run's frame index to `k` before
-    # `frame!` runs the drain as its top hook, so a batch taken at the top of
-    # frame `k` is recorded — and replayed — at `k` (D-317).
+    # takes (D-260). The top hook advances the run's frame index to `k` before
+    # it runs the drain, so a batch taken at the top of frame `k` is recorded —
+    # and replayed — at `k` (D-317).
     trc = sim.run.trace
     trc === nothing || (trc.frames += 1)
     feed = sim.run.feed
@@ -2662,7 +2664,7 @@ here either — and re-records each one under the recording's own writer index,
 the header having been inherited (§12.7). The cursor only advances: the feed is
 in drain order, and the loop visits frames in it.
 
-The frame ordinal is the run's frame index, which the loop has already
+The frame ordinal is the run's frame index, which the top hook has already
 advanced to this frame, rather than read off the trace: the records are keyed
 by it and the discard reports name it, and under the kill switch there is no
 trace to read it from (D-260, D-317).

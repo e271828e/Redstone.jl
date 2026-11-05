@@ -1114,7 +1114,7 @@ state_events(::GuardedRamp{names}) where {names} =
 
 # A tick that raises an `InterruptException` when armed: a synchronous throw from
 # a boundary phase, after the frame's integration and before its publication, so
-# the frame is abandoned with the clock at its top (§12.4).
+# the frame is cut with the clock at its top (§12.4, §13.4).
 struct TickInterrupter <: AbstractComponent end
 s_init(::TickInterrupter) = (n = 0,)
 u_types(::TickInterrupter) = (arm = Bool,)
@@ -1259,27 +1259,27 @@ function trace_checkpoints()
         run!(at_top; t_end = 0.3)
         @test lifecycle(at_top) === :stopped && checkpoint(at_top).frame == 3
 
-        # An interrupt from model code abandons its frame unpublished and ends the
-        # run `stopped`. Thrown from a boundary phase it leaves the clock at the
-        # frame top, the stores possibly mid-boundary: refused all the same, and
-        # `linearize`'s default form with it. Thrown mid-integration it leaves the
-        # clock inside the frame.
+        # An interrupt from model code cuts its frame like any throw and ends the
+        # run `errored`. Thrown from a boundary phase it leaves the clock at the
+        # frame top, the stores possibly mid-boundary, and thrown mid-integration
+        # inside the frame: the status refuses both, wherever the clock stands, and
+        # `linearize`'s default form with them.
         for (model, at_frame_top) in ((fed(TickInterrupter(), "arm"), true),
                                       (fed(Interrupter(), "arm"), false))
             abandoned = Simulation(model; h = 1//10)
             init!(abandoned, set(u = (in = false,)))
             step!(abandoned; frames = 2)
             stage!(abandoned, "in" => true)
-            run!(abandoned; t_end = 5.0)
-            @test lifecycle(abandoned) === :stopped
-            @test termination(abandoned).source === ControlRequestedStop(:interrupt)
+            err = failure(() -> run!(abandoned; t_end = 5.0))
+            @test err isa StepError{InterruptException} && err.boundary == 2
+            @test lifecycle(abandoned) === :errored
+            @test termination(abandoned).source isa LoopError
             @test abandoned.run.frame == 3 && latest(abandoned).frame == 2
             @test (abandoned.model.exec.clock.t == 3 * 0.1) == at_frame_top    # frame 3's top
-            d = carried(@test_throws DiagnosticError{CheckpointMidFrame} checkpoint(abandoned))
-            @test d.frame == 3 && d.t_frame == 3 * 0.1
-            @test d.t == abandoned.model.exec.clock.t
-            d = carried(@test_throws DiagnosticError{CheckpointMidFrame} linearize(abandoned, taps()))
-            @test d.frame == 3 && d.t == abandoned.model.exec.clock.t
+            d = carried(@test_throws DiagnosticError{ServiceLifecycle} checkpoint(abandoned))
+            @test d.op === :checkpoint && d.status === :errored
+            d = carried(@test_throws DiagnosticError{ServiceLifecycle} linearize(abandoned, taps()))
+            @test d.op === :linearize && d.status === :errored
         end
 
         # A frame top is the time the loop writes there, at any origin: near zero,

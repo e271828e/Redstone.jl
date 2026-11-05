@@ -15,8 +15,10 @@
 # The cursor's `:drain` phase is written first. A model with no localized
 # events, every non-nominal activation included since its events compiled out,
 # takes the bare step: no arrival machinery, no extra sweep. The whole frame is
-# §13.4's one `try`, and the `StepError` is the one constructor's. The frame top
-# `tₖ` is computed from `k` and never accumulated.
+# §13.4's one `try`, and the `StepError` is the one constructor's. Its catch
+# wraps every throw, an interrupt included, since the status says whether the
+# stores are a settled boundary and the cause says what cut the frame. The
+# frame top `tₖ` is computed from `k` and never accumulated.
 """
     frame!(model::Model, k::Int, hooks::FrameHooks = NoHooks()) -> Bool
 
@@ -43,8 +45,8 @@ its own.
 
 A model claimed by a [`Simulation`](@ref) is refused as `ArgumentInvalid`. A
 throw inside the frame writes the status `:inconsistent` and arrives as a
-`StepError` with host `:loop`. Its `boundary` is `k - 1`, the boundary the frame
-started from. An `InterruptException` is never wrapped and writes no status.
+`StepError` with host `:loop`, an `InterruptException` included. Its `boundary`
+is `k - 1`, the boundary the frame started from.
 """
 function frame!(model::Model{T}, k::Int, hooks::FrameHooks = NoHooks()) where {T}
     _claimed_gate(model, hooks, :frame!)
@@ -64,10 +66,8 @@ function frame!(model::Model{T}, k::Int, hooks::FrameHooks = NoHooks()) where {T
         k % N_base == 0 ? boundary!(model, k ÷ N_base) : offtick_boundary!(model)
         settled!(hooks)
     catch err
-        err isa InterruptException && rethrow()
-        failure = _wrap_step(model, k - 1, :loop, err)
         @atomic :release model.status = :inconsistent
-        rethrow(failure)                # the model's backtrace kept
+        rethrow(_wrap_step(model, k - 1, :loop, err))   # the model's backtrace kept
     end
 end
 

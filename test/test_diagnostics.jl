@@ -1231,13 +1231,8 @@ function diagnostics_kind_set()
         @test occursin("t = 0.315, inside frame 4 and short of its top at t = 0.4", rendered)
         @test occursin("`t_end`, a stop request read at a grid boundary, or `stop!`", rendered)
         @test occursin("`restore!` takes a `ModelState` read at one", rendered)
-        # A frame an interrupt abandoned at its top reads as never published.
-        rendered = message(CheckpointMidFrame(t = 0.4, t_frame = 0.4, frame = 4))
-        @test startswith(rendered, "a checkpoint is the state at a frame top, and this " *
-                                   "clock is at frame 4's top, t = 0.4, which was never " *
-                                   "published")
-        @test occursin("an interrupt thrown from model code abandons the frame unpublished",
-                       rendered)
+        # A frame an interrupt cut is refused by the status, never here.
+        @test !occursin("interrupt", rendered)
         # A state before its origin sits in frame 0, which has no interior.
         rendered = message(CheckpointMidFrame(t = -0.1, t_frame = 0.0, frame = 0))
         @test startswith(rendered, "a checkpoint is the state at a frame top, and this " *

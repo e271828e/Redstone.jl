@@ -29,9 +29,9 @@ stop_reason(::TwoFlags) = "two"
 armed() = Group((; c = Trigger(0.5), stop = StopRequest(reason = "input at level"));
                 input_wires = ("in" => "c/sig",), local_wires = ("c/on" => "stop/u",))
 
-# The hooked interrupter beside a request that never holds: a requester
+# The hooked ramp beside a request that never holds: a requester
 # honoured, or ignored, while only a control-plane stop can end the run.
-hooked_requested(c) = Group((; run = hooked_interrupted(c), r = requested(false, "never")))
+hooked_requested(c) = Group((; run = hooked_ramp(c), r = requested(false, "never")))
 
 # The pendulum's torque held by a discrete integrator, and the condition D-273's
 # probe authored: a sampled model, where a resume from the stores alone ran one
@@ -567,8 +567,8 @@ function test_lifecycle()
         # interactive shape: nothing but a control-plane stop can end it, so the
         # loop says so once (D-255, D-316). The model stops itself from its own
         # RHS, `:code` the issuer. This one has no requester.
-        comp = HookedInterrupter()
-        sim = Simulation(hooked_interrupted(comp); h = 1//10)
+        comp = HookedRamp()
+        sim = Simulation(hooked_ramp(comp); h = 1//10)
         comp.hook[] = () -> stop!(sim)
         init!(sim)
         run!(sim)
@@ -579,7 +579,7 @@ function test_lifecycle()
         @test advisory.t_end == Inf && isempty(advisory.ignored)
 
         # A requester honoured bounds the run, though it never holds.
-        comp_honoured = HookedInterrupter()
+        comp_honoured = HookedRamp()
         honoured = Simulation(hooked_requested(comp_honoured); h = 1//10)
         comp_honoured.hook[] = () -> stop!(honoured)
         init!(honoured)
@@ -588,7 +588,7 @@ function test_lifecycle()
         @test writer_status(latest(honoured), "loop").totals.unbounded == 0
         # Every requester ignored, the run is unbounded again, and the advisory
         # names what was ignored.
-        comp_ignored = HookedInterrupter()
+        comp_ignored = HookedRamp()
         all_ignored = Simulation(hooked_requested(comp_ignored); h = 1//10)
         comp_ignored.hook[] = () -> stop!(all_ignored)
         init!(all_ignored)
@@ -599,8 +599,8 @@ function test_lifecycle()
         @test advisory.t_end == Inf && advisory.ignored == ["r/stop"]
 
         # A bound of either kind is the advisory's absence.
-        comp2 = HookedInterrupter()
-        bounded = Simulation(hooked_interrupted(comp2); h = 1//10)
+        comp2 = HookedRamp()
+        bounded = Simulation(hooked_ramp(comp2); h = 1//10)
         comp2.hook[] = () -> stop!(bounded)
         init!(bounded)
         run!(bounded; t_end = 5.0)
