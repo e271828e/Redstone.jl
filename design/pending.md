@@ -12,13 +12,14 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
-- **A real SIGINT into the pause wait hangs at `-t 1` with a device
-  rostered.** Found by the interrupt increment's cold review and reproduced
-  at `0217a1c`, before that increment, so not its regression: with one
-  thread the signal lands on whichever task runs on thread 1, and the parked
-  loop never wakes (§12.4, D-268). Evidence:
-  `design/increments/20261105_interrupt_status/probe_pause_wait_t1.jl`. Taken
-  up with the Julia 1.14 bullet below, since the delivery is what moves.
+- **The library's remaining candidates.** Whatever of the inventory in
+  `design/companions/library_inventory.md` is unbuilt, each block
+  built when wanted (§13.7, D-313). The order, by the mechanism each family
+  exercises: the discrete backlash; then the additions to shipped blocks, where two
+  readings wait for the brief: a second output on `Delay` names its output
+  side, so the taps are a type parameter keeping the bare spelling; and
+  scheduled limits move `lower` and `upper` into the guards' `u` and take
+  `x0`'s default with them.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose
@@ -176,14 +177,15 @@ breaking user code, and each may benefit from user feedback first.
   break, a candidate design and its open questions are
   `design/reports/20261016_ctrlc_julia_114/report.md`. It is taken up when 1.14
   branches or its cancellation names become public, whichever comes first.
-- **The library's remaining candidates.** Whatever of the inventory in
-  `design/companions/library_inventory.md` is unbuilt, each block
-  built when wanted (§13.7, D-313). The order, by the mechanism each family
-  exercises: the discrete backlash; then the additions to shipped blocks, where two
-  readings wait for the brief: a second output on `Delay` names its output
-  side, so the taps are a type parameter keeping the bare spelling; and
-  scheduled limits move `lower` and `upper` into the guards' `u` and take
-  `x0`'s default with them.
+  - **The pause wait's hang at one thread.** A real SIGINT into the pause
+    wait at `-t 1` with a device rostered hangs the run: 1.13 throws the
+    interrupt into whichever task is current on thread 1, which is not the
+    parked loop (§12.4, D-268). Found by the interrupt increment's cold
+    review and reproduced at `0217a1c`, before that increment. Evidence:
+    `design/increments/20261105_interrupt_status/probe_pause_wait_t1.jl`.
+    Under 1.14 the pause wait is itself a cancellation point, so the case
+    does not exist there; whether it is fixed on 1.13 is settled with the
+    floor when this item lands.
 
 ## Deviations
 
