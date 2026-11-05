@@ -133,7 +133,10 @@ an `SArray` of `Float64`, which is why the constructor is hand-written
 rather than `@kwdef`. A scalar pairs with a vector, and integer and `Float32`
 keywords convert, a block's lone keyword too, as does an array keyword of any
 kind, a plain `Vector` or an `MVector`, which becomes the `SArray` of its
-size. A uniform vector gain spells one keyword as a vector,
+size; past `STATIC_WARN_LENGTH` elements, 512, the conversion warns once,
+since an `SArray` that large compiles slowly in every stage that touches it
+and runs no faster than a plain array ([§7.1][s7-1]). A uniform vector gain
+spells one keyword as a vector,
 `Kp = @SVector fill(2.0, 3)`, and a scalar limit serves every component of a
 vector integrator. Two lengths are Julia's `DimensionMismatch`. The
 convention is one for every block because only broadcasting pairs the PID's
@@ -304,6 +307,7 @@ qualifies the two they share, `StateSpace` and `TransferFunction`.
 [s5-5]: ../spec.md#55-algebraic-loop-policy-reject-at-build-time
 [s6-1]: ../spec.md#61-connections-and-hierarchy
 [s6-2]: ../spec.md#62-aggregation-explicit-summing-junctions
+[s7-1]: ../spec.md#71-continuous-state-structured-immutable-flat-backing
 [s8-2]: ../spec.md#82-the-declaration-inventory
 [s8-5]: ../spec.md#85-assembly-declaration-type-based-class-by-declaration-shape
 [s8-7]: ../spec.md#87-rate-scopes
