@@ -1,9 +1,9 @@
 using Test, BenchmarkTools
-include("test/repl.jl")
-include("test/utils.jl")
-include("test/test_readers.jl")
-include("test/test_trim.jl")
-include("test/test_linearize.jl")
+include(joinpath(pwd(), "test/repl.jl"))
+include(joinpath(pwd(), "test/utils.jl"))
+include(joinpath(pwd(), "test/test_readers.jl"))
+include(joinpath(pwd(), "test/test_trim.jl"))
+include(joinpath(pwd(), "test/test_linearize.jl"))
 function dshow(ds)
     for d in ds
         extras = String[]

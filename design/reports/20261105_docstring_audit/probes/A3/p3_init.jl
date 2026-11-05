@@ -1,5 +1,5 @@
 module P3
-include("design/reports/20261105_docstring_audit/probes/A3/common.jl")
+include(joinpath(pwd(), "design/reports/20261105_docstring_audit/probes/A3/common.jl"))
 println("--- events at t0")
 sim = Simulation(fed(Trigger(0.5), "sig"); h = 1//10)
 init!(sim, set(u = (in = 1.0,))); println("holding at t0: ", modes(sim, "c"), " prior=", sim.model.exec.events.prior)

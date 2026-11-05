@@ -1,7 +1,7 @@
 module P
 using Redstone, StaticArrays, LinearAlgebra, ForwardDiff
-include("test/imports.jl")
-include("test/fixtures.jl")
+include(joinpath(pwd(), "test/imports.jl"))
+include(joinpath(pwd(), "test/fixtures.jl"))
 lin_pend() = Group((; s = Sum(), c = Pendulum()); local_wires = ("s/e" => "c/u",),
                    input_wires = ("τ" => "s/a", "d" => "s/b"),
                    output_wires = ("c/θ" => "θ", "s/e" => "u_eff"))

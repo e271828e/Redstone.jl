@@ -1,8 +1,8 @@
 module P2
 using Test
-include("test/repl.jl")
-include("test/utils.jl")
-include("design/reports/20261105_docstring_audit/probes/A6/common.jl")
+include(joinpath(pwd(), "test/repl.jl"))
+include(joinpath(pwd(), "test/utils.jl"))
+include(joinpath(pwd(), "design/reports/20261105_docstring_audit/probes/A6/common.jl"))
 mutable struct LogHooks <: FrameHooks
     log::Vector{Any}
     model::Any

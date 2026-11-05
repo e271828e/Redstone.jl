@@ -1,5 +1,5 @@
 module P
-include("design/reports/20261105_docstring_audit/probes/A7/common.jl")
+include(joinpath(pwd(), "design/reports/20261105_docstring_audit/probes/A7/common.jl"))
 lm(; kw...) = Redstone.LevenbergMarquardt(; kw...)
 run1(label, b, eval!, d0, lo, up, tol) = try
     o = solve(b, eval!, d0, lo, up, tol)

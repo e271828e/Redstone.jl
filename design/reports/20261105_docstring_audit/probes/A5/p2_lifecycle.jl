@@ -1,6 +1,6 @@
 module P2
 using Test
-const W = "scratch/wt_base"
+const W = pwd()
 include(W * "/test/repl.jl")
 include(W * "/test/utils.jl")
 using Base.Threads: @spawn

@@ -1,8 +1,8 @@
 module P8
 using Test
-include("test/repl.jl")
-include("test/utils.jl")
-include("design/reports/20261105_docstring_audit/probes/A6/common.jl")
+include(joinpath(pwd(), "test/repl.jl"))
+include(joinpath(pwd(), "test/utils.jl"))
+include(joinpath(pwd(), "design/reports/20261105_docstring_audit/probes/A6/common.jl"))
 println("=== Dual frame: discrete, events")
 m = Model(single(TickCounter()), ProbeDual; h = 1//10); init!(m)
 println("init s=", state(m,"c"), " y=", port(m,"c",:n)); frames!(m, 3); println("after 3 frames s=", state(m,"c"), " y=", port(m,"c",:n), " clock ", m.exec.clock.t)

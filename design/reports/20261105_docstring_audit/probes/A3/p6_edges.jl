@@ -1,5 +1,5 @@
 module P6
-include("design/reports/20261105_docstring_audit/probes/A3/common.jl")
+include(joinpath(pwd(), "design/reports/20261105_docstring_audit/probes/A3/common.jl"))
 struct IntMine <: AbstractComponent end
 m_init(::IntMine) = (blown = false,)
 x_init(::IntMine) = nothing

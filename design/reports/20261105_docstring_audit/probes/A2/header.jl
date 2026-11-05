@@ -1,4 +1,4 @@
 using Test
-const WT = "scratch/wt_base"
+const WT = pwd()
 include(WT * "/test/repl.jl")
 include(WT * "/test/utils.jl")

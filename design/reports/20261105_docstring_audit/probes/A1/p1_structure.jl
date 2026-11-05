@@ -1,7 +1,7 @@
 module P1
 using Test
-include("test/repl.jl")
-include("test/utils.jl")
+include(joinpath(pwd(), "test/repl.jl"))
+include(joinpath(pwd(), "test/utils.jl"))
 show_err(f) = try; r = f(); println("  -> ok: ", r); catch e; println("  -> ", typeof(e), ": ", first(sprint(showerror, e), 300)); end
 
 println("== Junction wire and positional order")

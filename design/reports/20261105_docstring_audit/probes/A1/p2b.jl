@@ -1,8 +1,8 @@
 module P2b
 using Test
-include("test/repl.jl")
-include("test/utils.jl")
-include("design/reports/20261105_docstring_audit/probes/A1/common.jl")
+include(joinpath(pwd(), "test/repl.jl"))
+include(joinpath(pwd(), "test/utils.jl"))
+include(joinpath(pwd(), "design/reports/20261105_docstring_audit/probes/A1/common.jl"))
 println("UnitDelay Symbol run: "); show_err(()->seq(Group((; k=Constant(:b), d=UnitDelay(:a)); local_wires=("k/y"=>"d/u",)),"d",2))
 println("UnitDelay NamedTuple run: "); show_err(()->seq(Group((; k=Constant((a=3.0,b=4.0)), d=UnitDelay((a=1.0,b=2.0))); local_wires=("k/y"=>"d/u",)),"d",2))
 println("Dual: DiscreteIntegrator on state")

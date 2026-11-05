@@ -1,5 +1,5 @@
 module P
-include("design/reports/20261105_docstring_audit/probes/A7/common.jl")
+include(joinpath(pwd(), "design/reports/20261105_docstring_audit/probes/A7/common.jl"))
 function main()
     model = Model(Group((; c = Pendulum()); input_wires = ("in" => "c/u",)); h = 1//100)
     sim = Simulation(model)

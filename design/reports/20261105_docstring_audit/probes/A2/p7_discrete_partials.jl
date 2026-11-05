@@ -1,6 +1,6 @@
 module P7
 using Test
-const WT = "scratch/wt_base"
+const WT = pwd()
 include(WT * "/test/repl.jl")
 include(WT * "/test/utils.jl")
 # A continuous state schedules the parameter; the block's u leaves through a root output.

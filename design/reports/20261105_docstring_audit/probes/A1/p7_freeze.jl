@@ -1,8 +1,8 @@
 module P7
 using Test
-include("test/repl.jl")
-include("test/utils.jl")
-include("design/reports/20261105_docstring_audit/probes/A1/common.jl")
+include(joinpath(pwd(), "test/repl.jl"))
+include(joinpath(pwd(), "test/utils.jl"))
+include(joinpath(pwd(), "design/reports/20261105_docstring_audit/probes/A1/common.jl"))
 struct PE <: AbstractComponent end
 x_init(::PE)=nothing
 u_types(::PE)=Pinned{Float64}

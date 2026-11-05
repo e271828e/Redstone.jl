@@ -1,6 +1,6 @@
 using Test
-include("test/repl.jl")
-include("test/utils.jl")
+include(joinpath(pwd(), "test/repl.jl"))
+include(joinpath(pwd(), "test/utils.jl"))
 # prints what a call returns or the refusal it raises
 _kinds(err) = err.carried isa Vector ? collect(err.carried) : [err.carried]
 function tryit(label, f)

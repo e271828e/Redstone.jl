@@ -1,6 +1,6 @@
 module P2
 using Test
-const WT = "scratch/wt_base"
+const WT = pwd()
 include(joinpath(WT, "test/repl.jl"))
 include(joinpath(WT, "test/utils.jl"))
 const LOG = Any[]

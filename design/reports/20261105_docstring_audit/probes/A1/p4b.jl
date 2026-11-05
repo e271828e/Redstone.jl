@@ -1,8 +1,8 @@
 module P4b
 using Test
-include("test/repl.jl")
-include("test/utils.jl")
-include("design/reports/20261105_docstring_audit/probes/A1/common.jl")
+include(joinpath(pwd(), "test/repl.jl"))
+include(joinpath(pwd(), "test/utils.jl"))
+include(joinpath(pwd(), "design/reports/20261105_docstring_audit/probes/A1/common.jl"))
 const Nested = ForwardDiff.Dual{Nothing,ForwardDiff.Dual{Nothing,Float64,1},1}
 print("Model at Nested (Integrator only): "); show_err(()->begin b=build(Group((;i=Integrator());input_wires=("in"=>"i/u",))); d=Deployment(b; h=1//10); typeof(Model(d,Nested)).name.name end)
 print("Model at Nested (Source): "); show_err(()->begin b=build(Group((;s=Source(sin)))); d=Deployment(b; h=1//10); typeof(Model(d,Nested)).name.name end)

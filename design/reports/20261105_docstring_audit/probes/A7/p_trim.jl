@@ -1,5 +1,5 @@
 module P
-include("design/reports/20261105_docstring_audit/probes/A7/common.jl")
+include(joinpath(pwd(), "design/reports/20261105_docstring_audit/probes/A7/common.jl"))
 
 function logged(f)
     logs, v = Test.collect_test_logs(f; )
