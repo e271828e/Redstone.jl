@@ -12,6 +12,13 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
+- **A real SIGINT into the pause wait hangs at `-t 1` with a device
+  rostered.** Found by the interrupt increment's cold review and reproduced
+  at `0217a1c`, before that increment, so not its regression: with one
+  thread the signal lands on whichever task runs on thread 1, and the parked
+  loop never wakes (§12.4, D-268). Evidence:
+  `design/increments/20261105_interrupt_status/probe_pause_wait_t1.jl`. Taken
+  up with the Julia 1.14 bullet below, since the delivery is what moves.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose

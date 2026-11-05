@@ -18188,9 +18188,10 @@ over a status that [D-398][d-398]'s ruling made lie, a run `stopped` over
 mid-boundary stores. The status already has the value for a cut frame, so
 the fix is to write it, and the witness that compensated for not writing it
 goes. What a user loses by `errored` in place of `stopped` after a forced
-throw is nothing operational. `run!` refuses a stopped simulation too, and
-`init!`, `restore!` and `replay!` accept any status. The record gains the
-cursor, which says which stage the throw cut.
+throw is the session. `run!` refuses a stopped simulation too, but `errored`
+is terminal ([D-059][d-059]), so `init!`, `restore!` and `replay!` refuse it and the
+trace replays the run into a fresh simulation. The record gains the cursor,
+which says which stage the throw cut.
 
 With the witness gone, a forced throw landing between the counter's advance
 and the frame's `try` left the counter one ahead of a consistent clock, so

@@ -9369,13 +9369,13 @@ the throw, and raises inside the mask. Landing inside a frame, it reaches the
 catch site like any throw ([§13.4][s13-4]). The catch writes the `Model`'s status
 `:inconsistent` and wraps it in a `StepError`, and the run ends `errored` under
 that carrier. What the run published is consistent, since the frame published
-nothing. The status refuses every stopped-sim service until the next `init!`,
-`restore!` or `replay!`. The [trace](#g-trace) (the primary record of a session)
-replays the run to the boundary the cut frame started from ([§12.7][s12-7]).
+nothing. The simulation is then terminal like any `errored` one ([§12.6][s12-6]).
+The [trace](#g-trace) (the primary record of a session) replays the run into
+a fresh simulation, to the boundary the cut frame started from ([§12.7][s12-7]).
 Landing outside a frame, between the mask's start and the frame's `try` or in
 the tail's bookkeeping, the forced throw is a stop like a deferred one. The
-run's frame index advances inside the frame's `try`, so a throw there leaves
-the counter and the clock agreeing ([§12.6][s12-6]).
+run's frame index advances inside the frame's `try`, so a throw landing before
+it leaves the counter and the clock agreeing ([§12.6][s12-6]).
 
 **A second interrupt during the tail collapses the remaining joins
 immediately** ([D-132][d-132], [D-394][d-394]). That is (5)'s abandonment path taken at once,
