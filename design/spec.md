@@ -2578,7 +2578,8 @@ admits two pieces of framework vocabulary. One is the `Pinned{P}` marker
 below the top of an entry is `IllegalPortType`** ([D-265][d-265]). The other is a `StopFlag` entry, which
 places nothing and is left alone ([§13.5][s13-5]). A mutable type anywhere in
 an entry of either contract is `IllegalPortType` too ([§4.3][s4-3],
-[D-237][d-237]).
+[D-237][d-237]). So is an entry that is no type at all, a tuple of types or
+a number among them, named or bare ([Appendix C][sC]).
 
 On a continuous consumer the declaration is [walked](#g-walked), which means
 that every `Float64` position follows the scalar and a `Pinned` leaf stays
@@ -14435,7 +14436,10 @@ collection ([§9.2][s9-2], [D-250][d-250]).
   `Pinned` marker below the top of the entry, [D-265][d-265]). Two more reasons concern stop requests
   ([§13.5][s13-5], [D-316][d-316]): `:stop_flag_nested`, a `StopFlag` leaf inside a
   port whose type is not `StopFlag` itself, and `:stop_flag_at_root`, a root
-  input whose type carries a `StopFlag` anywhere.
+  input whose type carries a `StopFlag` anywhere. The last, `:not_a_type`, is
+  an entry that is no type at all, a tuple of types or a number among them,
+  named or bare; the payload then carries the value itself in the type's
+  place.
 - **`IllegalStoreField`** ([§7.3][s7-3], [§8.2][s8-2], [§9.1][s9-1]). Error ·
   build · collected. Component path, the store at fault (`s_init`/`m_init`),
   field name (`s` or `m` on a bare store), the offending type (one neither isbits nor `Symbol`). The
