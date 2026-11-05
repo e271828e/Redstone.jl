@@ -355,8 +355,8 @@ Return the reason the [component](@ref g-component)'s
 A component publishes a stop request as an output [port](@ref g-port) of type
 [`StopFlag`](@ref). The build reads `stop_reason` for every component that
 publishes such a port. All of the component's requests share the reason. It is
-instance data, never a port value. A run that a request ends carries the reason
-on its [`ModelRequestedStop`](@ref) source.
+a method's return, never a port value. A run that a request ends carries the
+reason on its [`ModelRequestedStop`](@ref) source.
 """
 stop_reason(::Any) = ""  # COV_EXCL_LINE
 

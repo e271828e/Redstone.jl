@@ -1073,8 +1073,8 @@ are those of [`StateSpace`](@ref), with `s0` in place of its `x0`.
 The [feedthrough](@ref g-feedthrough) class of [`DiscreteLinearBlock`](@ref) is
 also that of `StateSpace`. A zero `D` publishes `y` from
 [stage 1](@ref g-stage-function). The block then breaks an
-[algebraic loop](@ref g-algebraic-loop). A nonzero `D` publishes it from stage
-2.
+[algebraic loop](@ref g-algebraic-loop). A nonzero `D` publishes it from
+stage 2.
 
 The discrete [tier](@ref g-tier) never follows the scalar of an
 [activation](@ref g-activation), so under a `Dual` activation the block holds
@@ -1789,8 +1789,8 @@ mode, the field `m`, from [stage 1](@ref g-stage-function). The mode is an
 
 Two [state events](@ref g-state-event) move the mode. `switch_on` fires when `u`
 rises to `upper` while off, and `switch_off` when `u` falls strictly below
-`lower` while on. Both are [localized](@ref g-localized). At `lower == upper` an
-input exactly on the threshold therefore reads on.
+`lower` while on. At `lower == upper` an input exactly on the threshold therefore
+reads on. Both are [localized](@ref g-localized).
 
 `y` reads no input, so the [block](@ref g-block) has no
 [feedthrough](@ref g-feedthrough). A relay closing a feedback loop therefore

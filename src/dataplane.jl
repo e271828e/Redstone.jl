@@ -518,8 +518,8 @@ as it likes.
 
 [`latest`](@ref) returns the newest snapshot, [`wait_next_snapshot`](@ref) the
 newest once an unseen one is published and [`logged`](@ref) the retained ones.
-Read a root input or an output off it with `port(snapshot, path, name)`, a
-method of [`port`](@ref) addressed exactly as the live table. Read a
+Read a root input or an output off a snapshot with `port(snapshot, path, name)`,
+a method of [`port`](@ref) addressed exactly as the live table. Read a
 [device](@ref g-device)'s [read set](@ref g-read-set) with [`gather`](@ref).
 
 A snapshot holds these fields, beside the table that `port` reads.
