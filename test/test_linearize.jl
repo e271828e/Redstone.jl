@@ -254,7 +254,7 @@ function test_linearize()
         init!(sim, lin_point())
         before = Set(keys(materialized.activations))
         linearize(sim, lin_taps())
-        @test Set(keys(materialized.activations)) == before            # no compile at the keyboard
+        @test Set(keys(materialized.activations)) == before            # no activation at the call
         linearize(sim, lin_taps(); width = 3)
         @test setdiff(Set(keys(materialized.activations)), before) == Set([ForwardDiff.Dual{LinearizeTag,Float64,3}])
     end

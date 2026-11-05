@@ -12805,6 +12805,11 @@ read. An incomplete `baseline` is one declaration-ordered
 `UninitializedInputs` at setup rather than a whole solve against undefined
 [cells](#g-cell).
 
+**The search runs with the clock at `t0`** ([D-441][d-441]). Setup sets both halves'
+clock and origin to `t0` before the first evaluation (below), as `linearize`'s
+`about` form does ([§14.10][s14-10]). A residual that reads `t` thus solves at the
+time the commit's boundary zero starts from.
+
 **The frozen cells are established, not probe-seeded** ([D-213][d-213]). At the seeded
 activation the discrete [tier](#g-tier) (the discrete side of the hybrid formalism) is
 frozen ([§9.4][s9-4]). Its stages never run there, so nothing at that activation can
@@ -13259,7 +13264,8 @@ in groups of `width` directions per pass ([D-072][d-072]). **`width` is a keywor
 default 8** ([D-272][d-272]). The default width's scalar type is named. A build can
 therefore pre-materialize its [activation](#g-activation) (the build's typed products at a given
 scalar type) through `activations` ([§9.4][s9-4]), and a tap set of any size then
-linearizes with no compile at the keyboard ([D-272][d-272]). Value parts give `ẋ₀` and `y₀`.
+linearizes with no activation at the call ([D-272][d-272]). Julia still compiles each new tap
+set's shape once. Value parts give `ẋ₀` and `y₀`.
 Partials give `A` and `B` against the `x`- and `u`-seeds, and `C` and `D` against the same
 seeds read at `y`. All four come out simultaneously, exact to machine precision.
 `linearization_walkthrough.md` runs the pass on a two-state model, seed by seed.
@@ -16426,6 +16432,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-438]: log.md#d-438--name-a-bare-stores-leaf-by-the-declarations-letter-x-s-or-m
 [d-439]: log.md#d-439--open-an-inert-namedtuple-field-in-the-parameter-summary
 [d-440]: log.md#d-440--refuse-a-value-reads-unknown-path-as-pathresolution
+[d-441]: log.md#d-441--run-trims-search-with-the-clock-at-t0
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop
