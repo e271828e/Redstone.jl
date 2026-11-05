@@ -439,6 +439,7 @@ were derived.
 | [D-438][d-438] | Name a bare store's leaf by the declaration's letter `x`, `s` or `m` | ratified |
 | [D-439][d-439] | Open an inert `NamedTuple` field in the parameter summary | ratified |
 | [D-440][d-440] | Refuse a value read's unknown path as `PathResolution` | ratified |
+| [D-441][d-441] | Write `:inconsistent` for any throw inside a frame and `:built` for any throw inside a door | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -4573,6 +4574,13 @@ re-runs it, and `checkpoint` then `restore!` continues it ([D-274][d-274]).
   unattended runs that want the kill.
 - *Escalation reclassifying the run as `errored`:* nothing is broken — the
   operator asked twice for the same stop.
+
+Annotation (2026-11-05): the catch site now wraps an `InterruptException`
+like any throw, and a forced throw that cuts a frame ends the run `errored`
+([D-441][d-441]). The Rationale's discrimination clause at [§13.4][s13-4] and the Rejected item
+on escalation reclassifying the run are superseded for that case. A single
+Ctrl-C never reaches the catch, so the Position stands, and a second
+interrupt during the tail still only shortens it.
 
 ### D-133 — Split spec-invoked numeric constants into deployment parameters vs owning-section defaults
 
@@ -11636,6 +11644,11 @@ checkpoint's state back, and replay is a restore followed by the feed, so
 the stores of the second 2026-09-26 annotation may hold mid-boundary values
 until the next `init!`, `restore!` or `replay!` ([§12.4][s12-4]).
 
+Annotation (2026-11-05): the disposition of the 2026-09-26 annotation is
+superseded by [D-441][d-441]. A forced throw that cuts a frame ends the run `errored`
+under a `StepError` wrapping the interrupt, and the stores it leaves are
+refused by the `Model`'s status.
+
 **Rejected.**
 - *`pause!(sim, flag::Bool)` as one verb:* two verbs read at the call site
   and match `stop!`; a Boolean argument spells the un-pause as a negation.
@@ -14423,6 +14436,14 @@ no writer of the cursor remains outside the model.
   model's pair beside the runtime, so every simulation carried a loop
   whatever its scalar.
 
+Annotation (2026-11-05): amended by [D-441][d-441]. The status bullet's clause on the
+interrupt is superseded. The frame's catch wraps every throw, an interrupt
+included, and writes `:inconsistent`, while every door's catch writes
+`:built`, the restore door hosting a catch of its own with host `:restore`.
+The counters' bullet is amended too. The loop's top hook advances the frame
+index inside the frame's guarded sequence, before the drain, so the Rejected
+list's ordering rule holds with the hook named.
+
 ### D-318 — A `Simulation` claims its `Model`
 
 **Status.** ratified
@@ -14497,6 +14518,10 @@ before any write, and `trim!` joins the doors the claim refuses.
 - *A nested `finally` clearing the running flag when the termination record
   throws:* with the gate that path has no caller, and a flag left set keeps
   a framework fault loud rather than quiet.
+
+Annotation (2026-11-05): amended by [D-441][d-441]. The restore door hosts [§13.4][s13-4]'s
+catch. A throw inside the copy or the settling writes `:built` and arrives as
+a `StepError` with host `:restore`.
 
 ### D-319 — Split the checkpoint into the `Model`'s state and the run's cursor, and put the services on the `Model`
 
@@ -16117,6 +16142,9 @@ nothing new.
 - *Escalation reclassifying the run as `errored`:* nothing is broken; the
   operator asked twice for the same stop ([D-132][d-132]).
 
+Annotation (2026-11-05): the escalation item is superseded for a forced throw
+that cuts a frame, which ends the run `errored` ([D-441][d-441]).
+
 ### D-395 — Keep heartbeat staleness loose, the heartbeat advisory
 
 **Status.** ratified
@@ -16213,6 +16241,10 @@ word cleared at a run's start. None of them is in its Position. The entry
 decides nothing new.
 
 **Rejected.** None beyond [D-268][d-268]'s list.
+
+Annotation (2026-11-05): the second bullet is superseded by [D-441][d-441]. A forced
+throw that cuts a frame is that frame's failure, wrapped and ending the run
+`errored`. The first and third bullets stand.
 
 ### D-399 — Record boundary zero's firings in the header, and make a long run seekable
 
@@ -18113,6 +18145,98 @@ component's path, assemblies and the root included, and the Rationale's "paths t
 layout addresses" reads so. A component with no port takes the `ArgumentError`,
 and `state` and `modes` read `nothing` at an assembly, a component with no store.
 
+### D-441 — Write `:inconsistent` for any throw inside a frame and `:built` for any throw inside a door
+
+**Status.** ratified
+
+**Position.** The `Model`'s status is written by the host of the catch,
+whatever threw, and every catch site wraps what reaches it, an
+`InterruptException` included ([§12.4][s12-4], [§12.6][s12-6], [§13.4][s13-4]). The bundled rulings:
+
+- A throw inside a frame writes `:inconsistent`, and `frame!`'s catch wraps
+  it in a `StepError` with host `:loop`. The type carries the disposition to
+  the loop: a bare `InterruptException` reaching a loop arm is a deferred
+  raise at an unmask point, a stop, and a `StepError` is a cut frame, a
+  failure. Julia's forced throw after repeated Ctrl-C, the one interrupt
+  that lands inside a frame, therefore ends the run `errored` under
+  `LoopError`, superseding [D-398][d-398]'s second bullet.
+- A throw inside a door writes `:built`. `init!`'s boundary zero and
+  `overlay!`'s settling already did so. The restore door hosts a catch of
+  its own around the copy and the settling, with host `:restore` and the
+  state's frame as the pointer.
+- The simulation's rest is its lifecycle, `initialized` or `stopped`, and
+  the `Model`'s own rest, the status and the clock on a grid top. The
+  snapshot witness, that the latest snapshot be the clock's frame top, goes.
+- The run's frame index advances in the loop's top hook, inside the frame's
+  guarded sequence and before the drain, so nothing outside the `try` can
+  leave the counter ahead of the clock.
+- A bare value thrown by model code moves the status like any throw. Only
+  the carrier is lost.
+
+**Spec.** [§12.4][s12-4], [§12.6][s12-6], [§13.4][s13-4], [Appendix B][sB], [Appendix C][sC], [Appendix D][sD]
+
+**Rationale.** The docstring audit of 2026-11-05 found that an interrupt
+inside RK4's last stage leaves the clock on the frame top, since the stepper
+writes the clock before its last `evaluate!`, with the stores at a stage
+point and the status `:consistent`, so `checkpoint(model)` returned the stage
+point. An interrupt in a frame-top handler, a tick or `settled!` leaves the
+same shape. On a simulation the mask makes a single Ctrl-C land only at the
+unmask points, and the simulation's rest gate held a second witness, the
+latest snapshot's frame and time, for the forced throw [D-398][d-398] let through.
+The witness was born in the same commit as the split ([D-317][d-317]), as the patch
+over a status that [D-398][d-398]'s ruling made lie, a run `stopped` over
+mid-boundary stores. The status already has the value for a cut frame, so
+the fix is to write it, and the witness that compensated for not writing it
+goes. What a user loses by `errored` in place of `stopped` after a forced
+throw is nothing operational. `run!` refuses a stopped simulation too, and
+`init!`, `restore!` and `replay!` accept any status. The record gains the
+cursor, which says which stage the throw cut.
+
+With the witness gone, a forced throw landing between the counter's advance
+and the frame's `try` left the counter one ahead of a consistent clock, so
+`checkpoint(sim)` labelled the state of boundary `k - 1` as frame `k`.
+Moving the advance into the top hook closes the window by structure. The
+counter can be ahead only inside the `try`, where the catch writes
+`:inconsistent`. The hook is the simulation's, so the ordering rule of
+[D-317][d-317]'s Rejected list, a batch taken at the top of frame `k` recorded at
+`k`, holds as before. Under Julia 1.14, where Ctrl-C is a cancellation
+observed only at cancellation points and the forced throw is gone, the
+placement stays meaningful, where a clause comparing the clock with the
+counter would guard a window nothing can reach.
+
+A door's catch writes `:built` and not `:inconsistent` because a door is an
+entry into rest from any status, and `restore!(sim)` runs unmasked. Under
+`:inconsistent` a single Ctrl-C during the copy would leave the session
+`errored` with no termination record, the outcome [D-132][d-132] rules out. Under
+`:built` the lifecycle reads `built`, and the three doors from it are legal
+again.
+
+**Rejected.**
+- *A second witness on the `Model`, a flag on the clock set when the frame
+  top's boundary settled:* a second home for a fact the status already has
+  a value for, and a flag the simulation's gate would read beside the status.
+- *Writing the status and letting the interrupt through raw:* the loop's
+  arms would receive one type in two meanings, a deferred stop and a cut
+  frame, and would have to read the `Model`'s status to tell them apart, in
+  five places. The record's `LoopError` would hold a bare
+  `InterruptException` with no cursor, no time and no pointer, and the loop
+  builds no carrier ([§13.4][s13-4]).
+- *Masking `frame!` on the standalone model:* [D-317][d-317] places the mask on the
+  simulation's side, a mask split across `frame!`'s `try` is the trap
+  `code_rules.md` names, and the mechanism changes on Julia 1.14.
+- *A fourth status value for a cut frame:* the lifecycle table and the
+  three-valued status are written over, and nothing a cut frame needs is
+  missing from `:inconsistent`.
+- *A clause in the simulation's gate comparing the clock with the run's
+  frame, for a forced throw landing before the frame's `try`:* it guards a
+  window the placement of the advance removes, and on Julia 1.14 it guards
+  nothing.
+- *Repairing the counter from the clock in the interrupt arm:* machinery in
+  every stop path for a window a few instructions wide.
+- *The restore door's catch writing `:inconsistent`:* a single Ctrl-C during
+  an unmasked `restore!(sim)` would leave the session `errored` with no
+  termination record.
+
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
 [d-002]: #d-002--adopt-the-causal-port-based-paradigm
@@ -18528,6 +18652,7 @@ and `state` and `modes` read `nothing` at an assembly, a component with no store
 [d-438]: #d-438--name-a-bare-stores-leaf-by-the-declarations-letter-x-s-or-m
 [d-439]: #d-439--open-an-inert-namedtuple-field-in-the-parameter-summary
 [d-440]: #d-440--refuse-a-value-reads-unknown-path-as-pathresolution
+[d-441]: #d-441--write-inconsistent-for-any-throw-inside-a-frame-and-built-for-any-throw-inside-a-door
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property

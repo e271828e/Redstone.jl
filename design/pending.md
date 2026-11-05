@@ -12,11 +12,6 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
-- **An interrupt at RK4's last stage, the audit's defect g.** It leaves the
-  clock on a frame top with the status `:consistent`, so `checkpoint` passes
-  and returns the stage point as the state. This needs a look before a fix.
-  Evidence: `design/reports/20261105_docstring_audit/probes/A6/p8_misc.jl`, and the `checkpoint` row of
-  `ledgers/A6.txt`.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose

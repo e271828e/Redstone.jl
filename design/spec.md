@@ -9295,7 +9295,8 @@ The run completes the current boundary, publishes the final snapshot, takes
 this tail like any other stop, and ends `stopped`. The result is
 boundary-consistent. It is fully serviceable by the [§14][s14] [stopped-sim](#g-stopped-sim)
 services. `init!` re-runs it, and `checkpoint` then `restore!` continues it
-from where it stands ([§12.6][s12-6]).
+from where it stands ([§12.6][s12-6]). The one exception is the throw Julia
+forces after repeated Ctrl-C, below.
 
 The interrupt is the escape from a run nothing else ends, and the deviceless run
 has no other. A run with no finite `t_end` and no honoured stop request is the
@@ -9362,23 +9363,25 @@ half-way and leave the lifecycle `running`, every service refusing. A raise
 deferred to the end of that bookkeeping propagates out of `run!` raw, the
 simulation already terminal.
 
-**A forced throw reaches the defensive arm** ([D-268][d-268], [D-398][d-398]). Julia stops deferring
-after repeated SIGINTs in a short window, warns that it is forcing the throw,
-and raises inside the mask. That is the one way the branch [§13.4][s13-4] keeps is
-reached. The arm abandons the frame unpublished and the run ends `stopped`, the
-source `ControlRequestedStop(:interrupt)`. What the run published is consistent,
-since the frame published nothing. The stores may hold mid-boundary values until
-the next `init!`, `restore!` or `replay!` resets them, as after a throw inside
-[boundary zero](#g-boundary-zero), the initialization boundary, which runs the ordinary
-macro-sequence with an empty integrate ([§13.4][s13-4]). `checkpoint` refuses such a run
-as `CheckpointMidFrame`, since the [executor](#g-executor) (the compiled form of the stage
-execution order) no longer rests where its last snapshot was published ([§12.6][s12-6]).
-The [trace](#g-trace) (the primary record of a session) is the reproduction ([§12.7][s12-7]).
+**A forced throw inside a frame is that frame's failure** ([D-441][d-441]). Julia stops
+deferring after repeated SIGINTs in a short window, warns that it is forcing
+the throw, and raises inside the mask. Landing inside a frame, it reaches the
+catch site like any throw ([§13.4][s13-4]). The catch writes the `Model`'s status
+`:inconsistent` and wraps it in a `StepError`, and the run ends `errored` under
+that carrier. What the run published is consistent, since the frame published
+nothing. The status refuses every stopped-sim service until the next `init!`,
+`restore!` or `replay!`. The [trace](#g-trace) (the primary record of a session)
+replays the run to the boundary the cut frame started from ([§12.7][s12-7]).
+Landing outside a frame, between the mask's start and the frame's `try` or in
+the tail's bookkeeping, the forced throw is a stop like a deferred one. The
+run's frame index advances inside the frame's `try`, so a throw there leaves
+the counter and the clock agreeing ([§12.6][s12-6]).
 
 **A second interrupt during the tail collapses the remaining joins
 immediately** ([D-132][d-132], [D-394][d-394]). That is (5)'s abandonment path taken at once,
 with devices still reported by name (`DeviceJoinTimeout`). The run still
-ends `stopped`. Escalation shortens the tail, never reclassifies the run.
+ends `stopped`. Escalation during the tail shortens it and never reclassifies
+the run. A forced throw that cuts a frame is the frame's failure, above.
 
 ### 12.5 Scripts and the mid-run mutation doctrine
 
@@ -9500,7 +9503,8 @@ halt at a recording's end write `feed`. The loop's tail writes `termination`
 once, and `closed(run)` is `termination !== nothing`. Each door sets the two
 counters as it builds the run, `init!` to zero, `overlay!` to the stopped run's,
 and `restore!` and `replay!` to those of the [checkpoint](#g-checkpoint) (the `Model`'s state at a frame top, beside the run's
-frame index and boundary ordinal), and the loop advances them ([D-317][d-317]).
+frame index and boundary ordinal), and the loop advances them ([D-317][d-317]), the
+frame index in its top hook inside the frame's guarded sequence ([D-441][d-441]).
 `restore!` of a bare state sets the frame index to the state's frame and the
 boundary ordinal to zero, as `init!` does ([D-319][d-319]).
 
@@ -9554,8 +9558,9 @@ inputs exist**, and the placeholder run above is the one exception
 **A `Simulation` moves through five states**, *built*, *initialized*, *running*,
 and terminally *stopped* or *errored* ([§13.4][s13-4], [D-088][d-088]). *Built* means [stores](#g-store) (the
 framework-owned homes of a component's state) allocated and boundary zero not
-completed ([D-223][d-223]). It is the cold state, and the state a throw inside boundary
-zero returns the simulation to ([§13.4][s13-4]). *Initialized* means `init!` has
+completed ([D-223][d-223]). It is the cold state, and the state a throw inside a door
+returns the simulation to, boundary zero's, an overlay's settling or a
+restore's copy ([§13.4][s13-4], [D-441][d-441]). *Initialized* means `init!` has
 completed boundary zero ([§14.5][s14-5]), `restore!` or `replay!` has restored a
 checkpoint, or `overlay!` has settled an overlaid state (below).
 
@@ -9597,7 +9602,8 @@ set ([§13.2][s13-2]) naming `init!`. That is distinct from
 restores a checkpoint and runs no boundary zero ([§12.7][s12-7], [D-274][d-274]).
 `overlay!` is the fourth door, and it needs a run to overlay (below). A throw
 inside boundary zero, which only `init!` runs, leaves the simulation `built`
-([§13.4][s13-4], [D-223][d-223]), so the next `run!` or `step!` meets the same
+([§13.4][s13-4], [D-223][d-223]), and so does a throw inside the copy `restore!`
+or `replay!` runs ([D-441][d-441]). The next `run!` or `step!` then meets the same
 refusal.
 
 #### Partial advance
@@ -9684,15 +9690,16 @@ nothing advances until `init!`, `restore!` or `replay!` opens a new run, and
 `ModelState`. It holds the flat buffer, the `s` and `m` stores, the whole
 signal table, the guard priors, `t`, `t₀`, the [fingerprint](#g-fingerprint) (the structural
 layout) and the deployment. It is legal at `:consistent` with the clock on a
-grid top. `checkpoint(sim)` wraps that state with the run's frame index and
+grid top. A frame cut by a throw, an interrupt included, leaves the status
+`:inconsistent`, so no state is read off it ([§13.4][s13-4], [D-441][d-441]).
+`checkpoint(sim)` wraps that state with the run's frame index and
 boundary ordinal ([D-319][d-319]). It is a stopped-sim service, legal in
 `initialized` and `stopped` ([§14][s14]), and refused as `ServiceLifecycle` in
-any other state. It is refused wherever the executor is not at the rest a
-published frame top leaves (`CheckpointMidFrame`, [Appendix C][sC]). That is
-after a `t*` stop, which leaves the clock mid-frame with the remainder
-abandoned, and after a frame abandoned unpublished ([§12.4][s12-4]). The test
-is that the clock sits on a grid time and that the latest snapshot is of that
-very boundary.
+any other state. **The simulation's rest is its lifecycle and the `Model`'s
+own rest** ([D-441][d-441]). A cut frame reads `errored` and is refused as
+`ServiceLifecycle`. A `t*` stop leaves the clock mid-frame with the remainder
+abandoned, and the model's test refuses it as `CheckpointMidFrame`
+([Appendix C][sC]).
 
 `restore!(model, model_state)` checks the state's fingerprint and deployment
 against the model, and a mismatch is `CheckpointMismatch`. It also checks that
@@ -9700,7 +9707,9 @@ the state's `t` is a grid time `t₀ + k·h` of the state's own origin and step,
 and a state off its grid is `CheckpointMidFrame`. Every mismatch of either kind
 is collected into one throw before any write. The entry point then copies the
 state back, settles the restored boundary through the hooks and writes
-`:consistent` last ([D-318][d-318], [D-319][d-319]).
+`:consistent` last ([D-318][d-318], [D-319][d-319]). A throw inside the copy or the
+settling returns the status to `:built` and arrives as a `StepError` with host
+`:restore`, its pointer the state's frame ([§13.4][s13-4], [D-441][d-441]).
 
 `restore!(sim, cp)` takes the four recording keywords `init!` takes. It checks
 the state's fingerprint and deployment against the simulation as replay checks
@@ -10563,7 +10572,8 @@ boundary zero, and it is always a legal replay halt ([§12.7][s12-7]). The host 
 catch that took the throw. It is `:loop` for a throw inside a frame,
 `:boundary_zero` for a throw inside the boundary zero that `init!` runs, and
 `:overlay` for a throw inside the settling that `overlay!` runs ([§12.6][s12-6],
-[D-429][d-429]). A `StepError`
+[D-429][d-429]), and `:restore` for a throw inside the copy or the settling that
+`restore!` runs ([D-441][d-441]). A `StepError`
 renders under the doctrine of [§13.2][s13-2]. The cursor frame and the reproduction come
 first, the cause second, and names are strings.
 
@@ -10590,8 +10600,8 @@ carrier's idiom ([§13.2][s13-2]). A collected carrier riding as `cause` is an e
 falls under that arm. A bare value thrown deliberately by model code is neither,
 and the constructor refuses it, so it propagates from the catch unwrapped. The
 framework does not handle that throw ([D-225][d-225]). The cursor frame and the pointer
-are then lost, and the lifecycle does not move as it does when the catch builds
-a `StepError`.
+are then lost. The status is written before the carrier is built, so the
+lifecycle moves as for any throw ([D-441][d-441]).
 
 ```julia
 # the runtime carrier: its parameter the cause's type — a diagnostic's kind
@@ -10600,24 +10610,24 @@ struct StepError{C <: Union{Diagnostic, Exception}} <: Exception
     cursor         # the cursor frame: the cursor's copy at the catch
     t::Float64     # the clock at the failure
     boundary::Int  # the frame-entry boundary index: the replay pointer
-    host::Symbol   # :boundary_zero under init!, :overlay under overlay!, :loop inside a frame
+    host::Symbol   # :boundary_zero under init!, :overlay under overlay!,
+                   # :restore under restore!, :loop inside a frame
     cause::C
 end
 ```
 
 #### The interrupt
 
-An `InterruptException` is the one exception the catch site never wraps ([D-317][d-317]).
-It is not model code failing. It is the operator's stop command ([§12.4][s12-4]). So the
-catch site discriminates it and routes it to the stop path ([D-132][d-132]). The run
-takes the ordinary graceful tail and ends `stopped`, never `errored` under a
-`StepError`. With the boundary masking in force ([§12.4][s12-4]) a single interrupt never
-reaches the interrupt branch. It is deferred to a frame-top, wait or pause-block
-unmask point ([§12.4][s12-4], [D-294][d-294]), and never raises inside the guarded sequence.
-Julia's forced throw after repeated interrupts does reach it, with the
-disposition [§12.4][s12-4] gives it ([D-398][d-398]). The branch is kept for that case and
-defensively, because the cost of being wrong about the masking is a terminally
-errored session in place of a clean stop.
+**The catch site wraps an `InterruptException` like any throw** ([D-441][d-441]).
+Inside the guarded sequence it is not the operator's stop. It is a cut frame
+with the stores possibly mid-boundary, and the status says so. The interrupt
+means a stop at the unmask points ([§12.4][s12-4]), which the catch site never
+sees. The type then carries the disposition to the loop. A bare
+`InterruptException` reaching a loop arm is a deferred raise at an unmask
+point, a stop. A `StepError` is a cut frame, a failure. With the boundary
+masking in force ([§12.4][s12-4]) a single interrupt never raises inside the
+guarded sequence ([D-294][d-294]). Only Julia's forced throw after repeated
+interrupts does, and that frame ends the run `errored` ([§12.4][s12-4]).
 
 #### The disposition
 
@@ -10657,11 +10667,13 @@ macro-sequence executes the same user-code surfaces the frame's does, with the
 cursor maintained through them, so the `Model`'s `init!` hosts the same catch
 ([D-317][d-317]). A throw inside boundary zero arrives as a `StepError` from the one
 constructor. Its cursor frame comes from the cursor, its time is `t₀`, its pointer
-is `0`, and the species rule applies. Any throw inside boundary zero writes the
-`Model`'s status back to `:built`, which returns the simulation's lifecycle to `built`
-([§12.6][s12-6]). An `InterruptException` inside boundary zero is not model code failing,
-and it has no stop path to take in a service. The host therefore lets it
-propagate raw, unwrapped.
+is `0`, and the species rule applies. **Any throw inside a door writes the
+`Model`'s status back to `:built`** ([D-441][d-441]), boundary zero's, the settling
+`overlay!` runs and the copy `restore!` runs alike, which returns the simulation's
+lifecycle to `built` ([§12.6][s12-6]). A throw inside a frame writes
+`:inconsistent`. An `InterruptException` inside a door is not model code
+failing, and it has no stop path to take in a service. The door's catch wraps
+it like the frame's, and the carrier names where it landed.
 
 A throw inside boundary zero leaves no trace and no [checkpoint](#g-checkpoint) (the `Model`'s
 state at a frame top as one value). The run `init!` opened stays behind, empty and
@@ -13965,6 +13977,8 @@ assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
     `CheckpointMidFrame` ([D-319][d-319]).
   - `restore!(model, model_state; hooks = NoHooks())`. Copies the state back,
     settles through the hooks and writes `:consistent` last ([§12.6][s12-6]).
+    A throw inside writes `:built` and arrives as a `StepError` with host
+    `:restore` ([§13.4][s13-4]).
     A mismatch of [fingerprint](#g-fingerprint) (the structural layout a checkpoint carries) or
     deployment is `CheckpointMismatch` ([§12.6][s12-6]).
   - `overlay!(model, condition = set(); hooks = NoHooks())`. Writes the
@@ -14705,8 +14719,7 @@ activation):
 - **`CheckpointMidFrame`** ([§12.6][s12-6], [§14][s14]). Error · service ·
   fail-fast, but collected with `CheckpointMismatch` on `restore!`.
   `checkpoint` on a simulation or a model that is not at the rest a frame
-  top leaves. Either the clock is past a frame top after a `t*` stop, or a
-  simulation's frame was abandoned unpublished ([§12.4][s12-4]). `overlay!`
+  top leaves. The clock is past a frame top after a `t*` stop. `overlay!`
   raises it on the same rest. `restore!` raises it too, on any of its forms, for a state whose `t` is off the grid
   ([§12.6][s12-6]). The clock's or the state's `t`, the frame top `t_frame`,
   the frame index `frame`.
@@ -14756,7 +14769,7 @@ activation):
   the boundary phase: the frame-top drain, an integration stage, the arrival
   sweep, the θ = 0 validation, a localization trial, projection, an event
   round or the ticks, with the stage, trial or round ordinal), the clock at the failure, frame-entry boundary index (the replay pointer), the host of
-  the catch (`:loop`, `:boundary_zero` or `:overlay`), and the `cause`, a species'
+  the catch (`:loop`, `:boundary_zero`, `:overlay` or `:restore`), and the `cause`, a species'
   diagnostic or the original exception, its type the parameter.
 - **`NonfiniteState`** ([§13.4][s13-4]). Error · runtime · fail-fast.
   Component path, the offending state leaf (a bare leaf by its letter,
@@ -15629,8 +15642,9 @@ per-[frame](#g-frame) reset ([§12.3][s12-3]).
 interactive session, read as a control-plane stop rather than a failure.
 Delivery is masked across the [boundary macro-sequence](#g-boundary-sequence) and raised at a [frame](#g-frame)-top,
 wait or pause-block unmask point. The run then takes the ordinary graceful
-[tail](#g-tail) and ends `stopped`. Outside the REPL, SIGINT still kills the
-process ([§12.4][s12-4], [§12.1][s12-1]).
+[tail](#g-tail) and ends `stopped`. The throw Julia forces after repeated
+Ctrl-C can cut a frame, and that frame is a failure ([§13.4][s13-4]). Outside
+the REPL, SIGINT still kills the process ([§12.4][s12-4], [§12.1][s12-1]).
 
 <a id="g-orphaned-claims"></a>**orphaned claims** — the [claims](#g-claim) of a [device](#g-device) whose task died mid-run. Death
 is not detach. The [roster](#g-roster) entry and claims persist to run end, the [root
@@ -16439,6 +16453,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-438]: log.md#d-438--name-a-bare-stores-leaf-by-the-declarations-letter-x-s-or-m
 [d-439]: log.md#d-439--open-an-inert-namedtuple-field-in-the-parameter-summary
 [d-440]: log.md#d-440--refuse-a-value-reads-unknown-path-as-pathresolution
+[d-441]: log.md#d-441--write-inconsistent-for-any-throw-inside-a-frame-and-built-for-any-throw-inside-a-door
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop

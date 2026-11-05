@@ -630,8 +630,9 @@ D-249, D-255, D-261, D-289, D-317, D-437, D-438.
 
 - The model's `frame!(model, k, hooks)` (D-317): the top
   hook, the integration, the frame-top boundary and the settled hook, inside
-  §13.4's one `try`, whose catch writes the model's status and builds the
-  `StepError` with `_wrap_step`. The claim's gate precedes the `try` (D-318).
+  §13.4's one `try`, whose catch writes `:inconsistent` and builds the
+  `StepError` with `_wrap_step` for every throw, an interrupt included (D-441).
+  The claim's gate precedes the `try` (D-318).
 - The localization loop, with the arrival sweep, the θ = 0 validation, ITP
   bracketing `_crossing`, `t*` boundaries, the localization budget and the
   `ChatteringBudget` degradation, reported into the model's diagnostic cell.
@@ -764,8 +765,9 @@ soon as nothing in it names a `Simulation` in a signature, and below
   - `restore!(model, model_state; hooks)`, whose fingerprint check
     `_check_checkpoint!` and grid check `_check_grid!` precede the ungated
     inner `_restore_state!`, which
-    the simulation's door body calls, with the scalar fallback on a state at
-    another scalar (D-274, D-319).
+    the simulation's door body calls and which hosts §13.4's catch around the
+    copy and the settling, writing `:built` under host `:restore` (D-441), with
+    the scalar fallback on a state at another scalar (D-274, D-319).
   `frame!` (frame.jl) and `trim!` (trim.jl) are the other two gated doors.
   The stepping primitives `evaluate!`, `integrate!`, `boundary!`,
   `offtick_boundary!` and `boundary_zero!` stay ungated (D-318).
@@ -780,11 +782,12 @@ soon as nothing in it names a `Simulation` in a signature, and below
 - `warnings(::Model)` (D-250), and the reads `port`, `state` and `modes` on
   the model, which refuse an unknown path through `_component_index` and
   `refuse_path` (D-440).
-- The one `StepError` constructor `_wrap_step`, which the model's `frame!` and
-  `init!` call, and the species rule `_species` with the runtime bundle-field
+- The one `StepError` constructor `_wrap_step`, which the model's `frame!`,
+  `init!`, `overlay!` and the inner restore call, and the species rule `_species` with the runtime bundle-field
   match (§13.2, §13.4, D-059, D-221, D-248).
 - The checkpoint's model-level half: `_fingerprint`, and `checkpoint(model)`
-  over the rest gate `_assert_at_rest`, which `overlay!` shares, with its two
+  over the rest gate `_assert_at_rest`, the status and the clock on a grid
+  top, which `overlay!` and the simulation's doors share, with its two
   refusals, `ServiceLifecycle` and `CheckpointMidFrame` (D-274, D-319,
   D-429). `_check_checkpoint!`, the fingerprint check the restoring
   doors and replay's entry pass share, collecting `CheckpointMismatch`, and
@@ -950,8 +953,8 @@ Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315, D-437.
   run before it calls the model's inner restore. All three are model.jl's
   (D-317).
 - `checkpoint(sim)`, the wrap of `checkpoint(sim.model)` with the run's two
-  counters over the rest gate `_assert_at_rest`, which `overlay!` shares
-  (D-429), and `restore!`'s two forms, of a `Checkpoint` and of a bare
+  counters over the rest gate `_assert_at_rest`, the lifecycle test, with the
+  model's gate below it, which `overlay!` shares (D-429, D-441), and `restore!`'s two forms, of a `Checkpoint` and of a bare
   `ModelState{Float64}`, each checking through model.jl's
   `_check_checkpoint!` and `_check_grid!`, with the scalar fallback on a bare
   state (D-319).
@@ -987,7 +990,7 @@ Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315, D-437.
   the roster (§11.3). Both drains fold the model's diagnostic cell into the
   loop's account beside the loop's own cell (§11.8, D-317).
 - The loop's `LoopHooks`, one per advance, per `init!` and per restore: the
-  drain at the top, and publication then the stop sample at every settled
+  frame index's advance and the drain at the top (D-441), and publication then the stop sample at every settled
   boundary (§11.2, §13.5, D-317). `FrameHooks` and `NoHooks` are model.jl's.
   The claim's gate has its `LoopHooks` method here, a no-op, so the
   simulation's doors pass (D-318).
@@ -1000,7 +1003,8 @@ Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315, D-437.
 - `t_end` and `ignore_stop_requests`, the advances' keywords, and `run!`'s
   `UnboundedRun` advisory (D-255, D-260, D-261, D-316).
 - The lifecycle, derived, and the termination record (D-317).
-- The frame loop `_advance!`, whose catch disposes only (§13.4, D-317). The
+- The frame loop `_advance!`, whose catch disposes only and stores every
+  throw as the frame's failure (§13.4, D-317, D-441). The
   one constructor `_wrap_step` and the species rule `_species` are model.jl's.
 - §12.4's mask, its unmask points, and the interrupt arms of `run!` and
   `step!` (D-268). The invariants each arm keeps are
