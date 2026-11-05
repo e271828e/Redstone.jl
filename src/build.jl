@@ -809,7 +809,10 @@ function _check_event_declarations(draft::StructureDraft, diags::Vector{Diagnost
                     continue                       # neither half exists to look up
                 end
                 for (half, fn) in ((:guard, event.guard), (:handler, event.handler))
-                    hasmethod(fn, Tuple{typeof(comp),NamedTuple}) ||
+                    # Any method on the component's type counts, whatever its
+                    # bundle annotation. One that rejects the bundle fails at the
+                    # event probe, by its half.
+                    isempty(methods(fn, Tuple{typeof(comp),Any})) &&
                         push!(diags, EventHalfMissing(path = path, event = name, reason = half,
                                                      found = _typename(comp)))
                 end

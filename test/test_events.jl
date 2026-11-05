@@ -73,6 +73,35 @@ y_state(::BadProjectShape, (; x)) = (q = x.q,)
 x_deriv(::BadProjectShape, (; x)) = (q = 0.0,)
 x_projection(::BadProjectShape, x) = (v = x.q,)
 
+# Event halves typed on the bundle, which the lookup must find.
+const TYPED_EVENT_BUNDLE = NamedTuple{(:x, :t),<:Tuple{Real,Real}}
+
+struct TypedBundleEvent <: AbstractComponent end
+x_init(::TypedBundleEvent) = 0.0
+x_deriv(::TypedBundleEvent, (; x)) = one(x)
+typed_bundle_guard(::TypedBundleEvent, bundle::TYPED_EVENT_BUNDLE) = bundle.x > 0.15
+typed_bundle_handler(::TypedBundleEvent, ::TYPED_EVENT_BUNDLE) = (x = 0.0,)
+state_events(::TypedBundleEvent) = (go = StateEvent(typed_bundle_guard, typed_bundle_handler),)
+
+struct MistypedGuard <: AbstractComponent end       # a method the bundle never matches
+x_init(::MistypedGuard) = 0.0
+x_deriv(::MistypedGuard, (; x)) = one(x)
+mistyped_guard(::MistypedGuard, ::Int) = true
+mistyped_guard_handler(::MistypedGuard, (; x)) = (x = x,)
+state_events(::MistypedGuard) = (go = StateEvent(mistyped_guard, mistyped_guard_handler),)
+
+struct MistypedHandler <: AbstractComponent end
+x_init(::MistypedHandler) = 0.0
+x_deriv(::MistypedHandler, (; x)) = one(x)
+mistyped_handler_guard(::MistypedHandler, (; x)) = x > 0.15
+mistyped_handler(::MistypedHandler, ::Int) = (x = 0.0,)
+state_events(::MistypedHandler) = (go = StateEvent(mistyped_handler_guard, mistyped_handler),)
+
+struct MisaddressedEvent <: AbstractComponent end   # the halves' methods are another type's
+x_init(::MisaddressedEvent) = 0.0
+x_deriv(::MisaddressedEvent, (; x)) = one(x)
+state_events(::MisaddressedEvent) = (go = StateEvent(typed_bundle_guard, typed_bundle_handler),)
+
 # Projections typed on the state, each a clamp the lookup must find. The field
 # keeps the `Float64` one out of the `Dual` sweep, which it cannot pass (§7.2).
 struct TypedBareProjection <: AbstractComponent
@@ -157,6 +186,26 @@ function test_events()
         @test d isa ConformanceFailure && d.what == "x_projection" && d.reason === :field_set &&
               d.observed_fields == [:v] && d.declared_fields == [:q]
         @test d.event === nothing                 # no handler, no event
+    end
+
+    @testset "a half has a method whatever its bundle annotation (§8.2, §13.2, D-215)" begin
+        # The guard holds at the second boundary and the handler resets `x`, so
+        # three frames at `ẋ = 1` end at one step, where unfired they end at three.
+        sim = Simulation(single(TypedBundleEvent()); h = 1 // 10)
+        init!(sim)
+        step!(sim; frames = 3)
+        @test state(sim, "c") ≈ 0.1
+
+        # A method that rejects the bundle fails at the event probe, by its half.
+        for (comp, half) in ((MistypedGuard(), "guard"), (MistypedHandler(), "handler"))
+            d = diagnostic(failure(() -> build(single(comp))))
+            @test d isa UserCodeFraming && d.fn == half && d.cause isa MethodError
+        end
+
+        # A method on another component's type is no method for this one.
+        diags = diagnostics(failure(() -> build(single(MisaddressedEvent()))))
+        @test all(d -> d isa EventHalfMissing && d.found == "MisaddressedEvent", diags)
+        @test [d.reason for d in diags] == [:guard, :handler]
     end
 
     @testset "a method typed on the state declares `x_projection` (§5.3, §7.2, §8.2, D-350)" begin
