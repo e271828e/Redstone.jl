@@ -511,15 +511,16 @@ end
 The immutable publication of one settled [boundary](@ref g-boundary), with its
 [signal table](@ref g-signal-table), its time and its counters.
 
-[`latest`](@ref) returns the newest [snapshot](@ref g-snapshot),
-[`wait_next_snapshot`](@ref) the newest once an unseen one is published and
-[`logged`](@ref) the retained ones. A snapshot holds the whole signal table at
-its boundary, [root inputs](@ref g-root-input) included, and no state. Read a
-root input or an output off it with `port(snapshot, path, name)`, a method of
-[`port`](@ref) addressed exactly as the live table. Read a
+A [snapshot](@ref g-snapshot) holds the whole signal table at its boundary,
+[root inputs](@ref g-root-input) included, and no state. Nothing in a published
+snapshot is ever written again, so a reader on any task may hold one for as long
+as it likes.
+
+[`latest`](@ref) returns the newest snapshot, [`wait_next_snapshot`](@ref) the
+newest once an unseen one is published and [`logged`](@ref) the retained ones.
+Read a root input or an output off it with `port(snapshot, path, name)`, a
+method of [`port`](@ref) addressed exactly as the live table. Read a
 [device](@ref g-device)'s [read set](@ref g-read-set) with [`gather`](@ref).
-Nothing in a published snapshot is ever written again, so a reader on any task
-may hold one for as long as it likes.
 
 A snapshot holds these fields, beside the table that `port` reads.
 
@@ -553,13 +554,18 @@ Return a [port](@ref g-port)'s value in the [snapshot](@ref g-snapshot)'s
 A snapshot carries the whole signal table, [root inputs](@ref g-root-input)
 included. Address an output exactly as in the live table, by its
 [component](@ref g-component)'s path and its name. An input [face](@ref g-face)
-below the root has no address. Address a bare port, the port `y`, by that name
-or by the path alone. An [assembly](@ref g-assembly)'s own path addresses its
-output faces. The empty path addresses the root inputs and the outputs the root
-exports, or a [primitive](@ref g-primitive) root's own ports. Nothing in a
-published snapshot is written again, so the read is safe from any task. A path
-naming no component is refused as `PathResolution`, and a name the component has
-no port of as an `ArgumentError` listing its ports, as on the live table.
+below the root has no address. Address a [bare](@ref g-bare-contract) port, the
+port `y`, by that name or by the path alone. An [assembly](@ref g-assembly)'s
+own path addresses its output faces. The empty path addresses the root inputs
+and the outputs the root exports, or a [primitive](@ref g-primitive) root's own
+ports.
+
+Nothing in a published snapshot is written again, so the read is safe from any
+task.
+
+A path naming no component is refused as `PathResolution`, and a name the
+component has no port of as an `ArgumentError` listing its ports, as on the live
+table.
 
 A snapshot carries no state, only ports. For a port's live value, see
 `port(sim, path, name)` and `port(model, path, name)`, and for snapshots
