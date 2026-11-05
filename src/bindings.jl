@@ -28,9 +28,9 @@
 The shipped data-driven [binding](@ref g-binding), a table from channel names to
 the [root-input](@ref g-root-input) [faces](@ref g-face) they write.
 
-A binding of this type is built per pairing of [device](@ref g-device) and
-deployment, where configurations are made. Each keyword is a channel, the name a
-device's datum uses, and its value is a `NamedTuple` entry with these fields.
+Build one binding per pairing of [device](@ref g-device) and deployment, where
+configurations are made. Each keyword is a channel, the name a device's datum
+uses. Its value is a `NamedTuple` entry with these fields.
 
 - `face`: the root input the channel writes, a required string or symbol.
 - `deadzone`: the band around zero that reads as zero, in `[0, 1)`, with the
@@ -43,9 +43,9 @@ and conditioned. A channel that declares neither passes its value through
 untouched.
 
 The binding declares the input side ([`is_input`](@ref)). Its
-[claim](@ref g-claim) is the table's face set, which [`claims`](@ref) derives,
-so what the binding may write is exactly what its entries name. Its
-[`map_input`](@ref) maps a datum through the table.
+[claim](@ref g-claim) is the table's face set, which [`claims`](@ref) derives.
+The binding may write exactly what its entries name. Its [`map_input`](@ref)
+maps a datum through the table.
 
 An entry that is not a `NamedTuple`, has no `face`, names its face by anything
 but a string or a symbol, carries any other field, or sets a numeric `deadzone`
@@ -107,16 +107,17 @@ datum field.
 The datum is whatever the [device](@ref g-device)'s loop assembled, one field
 per channel it touched. `map_input` returns a pair for exactly those, as a tuple
 in the datum's field order, each value conditioned by its channel's `deadzone`
-and `expo`. A sparse datum therefore stages a sparse [batch](@ref g-batch), and
-the merge with what is already pending does the rest.
+and `expo`. A sparse datum therefore stages a sparse [batch](@ref g-batch),
+which [merges](@ref g-coalescing) with what is already pending.
 
 The loop idiom is `stage!(handle, map_input(datum, binding(handle))...)`, on the
 device's own task. Building the tuple allocates nothing when the table's
 [faces](@ref g-face) are `String`s, however many fields the datum carries.
 
-Staged values are levels, never deltas. The device struct holds state across
-data, such as press counters or edge detection. The loop maintains that state
-and passes it inside the datum, so `map_input` stays pure.
+Staged values are [levels](@ref g-levels-doctrine), never deltas. The device
+struct holds state across data, such as press counters or edge detection. The
+loop maintains that state and passes it inside the datum, so `map_input` stays
+pure.
 
 A datum field naming no channel of the table throws an `ErrorException`, which
 reaches the framework from the device's loop as the `DeviceCrash` it is.
@@ -179,7 +180,7 @@ end
 # The output side's convention name, declared here for the loop idiom and never
 # called by the framework.
 """
-    map_output(nt, b)
+    map_output(nt, b) -> Any
 
 Return the datum an output [binding](@ref g-binding) sends for one gathered
 `NamedTuple`, by the binding's own method.
