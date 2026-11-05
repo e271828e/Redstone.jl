@@ -1487,7 +1487,8 @@ message(d::EmptyGreedyClaim) =
 """
     MalformedDatum(cause) -> MalformedDatum
 
-The diagnostic a [device](@ref g-device) reports for a datum it could not map.
+The diagnostic a [device](@ref g-device) reports for a
+[bad datum](@ref g-bad-datum).
 
 A device's [`loop`](@ref) builds one after catching its own parser error, for a
 datum that failed for reasons outside the framework, such as a truncated
