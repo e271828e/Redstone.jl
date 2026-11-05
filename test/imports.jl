@@ -75,7 +75,7 @@ import Redstone: ASSEMBLY, Absolute, AbstractBinding, AbstractComponent,
     stop!, stop_reason, terminal_producer, termination, trace, transparent_container, trim!, u_types, unblock!,
     wait_deadline!, wait_next_snapshot, warnings, ws_init,
     x_deriv, x_init, x_projection, y_direct, y_state, y_types
-import Redstone.Blocks: Group, Junction, SumJunction, Or, And, Pack, Unpack, Switch, Source,
+import Redstone.Blocks: Group, Junction, SumJunction, Or, And, Pack, Unpack, Switch, Source, Fn, Select, Fields,
     Constant, Freeze, StopRequest, Sequence, UnitDelay, Delay, DiscreteIntegrator, DiscreteLimitedIntegrator, RateLimiter,
     GaussianWhiteNoise, Integrator, FirstOrderLag, Step, LimitedIntegrator, LimitedDoubleIntegrator, Relay, Comparator, PID, DiscretePID, AsPort,
     LQRTracker, DiscreteLQRTracker,

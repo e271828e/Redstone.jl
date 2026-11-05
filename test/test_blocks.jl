@@ -1,8 +1,9 @@
 # --- the standard component library (§13.7, §6.2) -------------------------------
 # The blocks of `Redstone.Blocks`, each built in a model and read off the
 # snapshot: the junction's contract and its folds, the pack, the unpack and the
-# switch, the source, the delay, the discrete integrators and the rate limiter,
-# the noise, the time source, the stop-gradient, the stop request, the
+# switch, the function block, the select and the fields block, the source, the
+# delay, the discrete integrators and the rate limiter, the noise, the time
+# source, the stop-gradient, the stop request, the
 # integrator, the lag, the state space, the transfer function, their discrete
 # twins, the step, the sequence, the limited integrator, the relay, the
 # comparator, the PID and its discrete twin, the PID assembled from blocks, the
@@ -24,8 +25,8 @@ blocks_sum_model() =
 # A delay behind a tick counter: the counter's `n` is its tick index. The delay
 # line's `V` is a float, so a junction converts the count.
 delay_model(delay) = Group((; c = TickCounter(), d = delay); local_wires = ("c/n" => "d/u",))
-delay_model(delay::Delay) = Group((; c = TickCounter(), f = Junction{Int, Float64, 1}(float), d = delay);
-                                  local_wires = ("c/n" => "f/in1", "f/y" => "d/u"))
+delay_model(delay::Delay) = Group((; c = TickCounter(), f = Fn{Int, Float64}(float), d = delay);
+                                  local_wires = ("c/n" => "f/u", "f/y" => "d/u"))
 
 # A block fed by a source, under the given rates.
 fed_by(src, c; sample_times = (;)) =
@@ -72,8 +73,8 @@ mixed_switch_model() =
 # A switch whose selector is a memoryless function of its own output.
 switch_cycle_model() =
     Group((; s = Switch{Float64}(), a = Constant(1.0), b = Constant(-1.0),
-             g = Junction{Float64, Bool, 1}(v -> v > 0));
-          local_wires = ("a/y" => "s/in1", "b/y" => "s/in2", "s/y" => "g/in1", "g/y" => "s/select"))
+             g = Fn{Float64, Bool}(v -> v > 0));
+          local_wires = ("a/y" => "s/in1", "b/y" => "s/in2", "s/y" => "g/u", "g/y" => "s/select"))
 
 # A switch from `-1` to `1` at 0.5, its selector a source of `t`, into an
 # integrator.
@@ -81,6 +82,65 @@ flip_model() =
     Group((; a = Constant(1.0), b = Constant(-1.0), k = Source{Bool}(t -> t >= 0.5), s = Switch{Float64}(),
              i = Integrator());
           local_wires = ("a/y" => "s/in1", "b/y" => "s/in2", "k/y" => "s/select", "s/y" => "i/u"))
+
+# The legs a `Select` keys on, and a course with a walking field, a walking
+# vector, an `Int` and an enum, which `Fields` splits. A root input of the
+# course takes its probe value from `probe_value` (§9.3, D-051).
+@enum FlightLeg CLIMB CRUISE DESCENT
+
+struct Course{T}
+    along::T
+    cross::SVector{2, T}
+    lap::Int
+    leg::FlightLeg
+end
+probe_value(::Type{Course{T}}) where {T} = Course(zero(T), zero(SVector{2, T}), 0, CLIMB)
+
+# An enum whose instance `select` collides with the selector input.
+module SelectClash
+@enum Clash select other
+end
+
+# The course built from a scalar `a`: `along` and `cross` follow `a`, `lap` and
+# `leg` do not.
+course_of(a) = Course(a, SVector(2a, -a), 3, CRUISE)
+
+# A course with its partials dropped field by field, the strip a pinned `Fn`
+# needs.
+strip_partials(course::Course) =
+    Course(ForwardDiff.value(course.along), ForwardDiff.value.(course.cross), course.lap, course.leg)
+
+# The root input `a` built into a course by an `Fn`, passed through the child
+# `pass` when given, and split by `Fields` into the root outputs `along`,
+# `cross`, `lap` and `leg`.
+function course_model(pass = nothing)
+    build_course = Fn{Float64, Course{Float64}}(course_of)
+    children = pass === nothing ? (; m = build_course, g = Fields{Course{Float64}}()) :
+               (; m = build_course, p = pass, g = Fields{Course{Float64}}())
+    Group(children; input_wires = ("a" => "m/u",),
+          local_wires = pass === nothing ? ("m/y" => "g/u",) : ("m/y" => "p/u", "p/y" => "g/u"),
+          output_wires = ("g/along" => "along", "g/cross" => "cross", "g/lap" => "lap", "g/leg" => "leg"))
+end
+
+# A `NamedTuple` holding a course, built from the root input `a` and split one
+# level deep by `Fields`.
+const NestedCourse = @NamedTuple{gain::Float64, course::Course{Float64}}
+nested_course_model() =
+    Group((; m = Fn{Float64, NestedCourse}(a -> (gain = 2a, course = course_of(a))), g = Fields{NestedCourse}());
+          input_wires = ("a" => "m/u",), local_wires = ("m/y" => "g/u",))
+
+# A select under the root inputs `climb`, `cruise`, `descent` and `leg` and the
+# root output `out`.
+select_root() =
+    Group((; s = Select{Float64, FlightLeg}());
+          input_wires = ("climb" => "s/CLIMB", "cruise" => "s/CRUISE", "descent" => "s/DESCENT", "leg" => "s/select"),
+          output_wires = ("s/y" => "out",))
+
+# A select among three constant vectors, its leg a constant `CRUISE`.
+vector_select_model() =
+    Group((; a = Constant(SVector(1.0, 2.0)), b = Constant(SVector(3.0, 4.0)), c = Constant(SVector(5.0, 6.0)),
+             k = Constant(CRUISE), s = Select{SVector{2, Float64}, FlightLeg}());
+          local_wires = ("a/y" => "s/CLIMB", "b/y" => "s/CRUISE", "c/y" => "s/DESCENT", "k/y" => "s/select"))
 
 # A vector source of `t` into a vector integrator.
 vector_source_model() =
@@ -509,9 +569,9 @@ end
 # driving an integrator plant; the continuous block unless given.
 pid_clamp_loop(controller = PID(Kp = 1.0, Ki = 0.5, Kd = 0.2, Tt = 1.0, tracking = true)) =
     Group((; reference = Step(t_step = 0.5, after = 5.0), controller = controller,
-             sat = Junction{Float64, Float64, 1}(v -> clamp(v, -1.0, 1.0)), plant = Integrator());
+             sat = Fn{Float64}(v -> clamp(v, -1.0, 1.0)), plant = Integrator());
           local_wires = ("reference/y" => "controller/r", "plant/y" => "controller/y",
-                         "controller/u" => "sat/in1", "sat/y" => "controller/v",
+                         "controller/u" => "sat/u", "sat/y" => "controller/v",
                          "sat/y" => "plant/u"))
 
 # A PID whose scheduled parameter `name`, `Kp` unless given, is a memoryless
@@ -519,9 +579,9 @@ pid_clamp_loop(controller = PID(Kp = 1.0, Ki = 0.5, Kd = 0.2, Tt = 1.0, tracking
 scheduled_pid_cycle(name = :Kp) =
     Group((; reference = Step(t_step = 0.5, after = 5.0),
              controller = PID(; merge((Kp = 1.0, Ki = 0.5, Kd = 0.2, Tt = 1.0), (; name => AsPort()))...),
-             gain = Junction{Float64, Float64, 1}(abs), plant = Integrator());
+             gain = Fn{Float64}(abs), plant = Integrator());
           local_wires = ("reference/y" => "controller/r", "plant/y" => "controller/y",
-                         "controller/u" => "gain/in1", "gain/y" => "controller/$name",
+                         "controller/u" => "gain/u", "gain/y" => "controller/$name",
                          "controller/u" => "plant/u"))
 
 # The PID's first variant as library blocks, the inspector's example beside
@@ -532,12 +592,12 @@ pid_assembly(; Kp, Ki, Kd, τd, Tt, u_min, u_max) = Group((
         der = Junction{Float64, Float64, 2}((y, yf) -> (y - yf) / τd),
         int = Integrator(),
         raw = Junction{Float64, Float64, 3}((e, q, rate) -> Kp * e + q - Kd * rate),
-        sat = Junction{Float64, Float64, 1}(v -> clamp(v, u_min, u_max)),
+        sat = Fn{Float64}(v -> clamp(v, u_min, u_max)),
         aw  = Junction{Float64, Float64, 3}((e, u, u_raw) -> Ki * e + (u - u_raw) / Tt));
       input_wires  = ("r" => "err/in1", "y" => ("err/in2", "lag/u", "der/in1")),
       local_wires  = ("lag/y" => "der/in2",
                       "err/y" => "raw/in1", "int/y" => "raw/in2", "der/y" => "raw/in3",
-                      "raw/y" => "sat/in1",
+                      "raw/y" => "sat/u",
                       "err/y" => "aw/in1", "sat/y" => "aw/in2", "raw/y" => "aw/in3",
                       "aw/y" => "int/u"),
       output_wires = ("sat/y" => "u", "raw/y" => "u_raw"))
@@ -625,9 +685,9 @@ function standby_siblings(controller_a, controller_b, plant; delay)
     holding && append!(wires, ["negate/y" => "b/engaged", "free/y" => "a/saturation", "free/y" => "b/saturation"])
     blocks = (ref_a = Step(t_step = 0.5, after = 5.0), ref_b = Constant(2.0), a = controller_a, b = controller_b,
               sel = Switch{Float64}(), plant = plant)
-    Group(merge(blocks, holding ? (negate = Junction{Bool, Bool, 1}(!), free = Constant(Int8(0))) : (;),
+    Group(merge(blocks, holding ? (negate = Fn{Bool}(!), free = Constant(Int8(0))) : (;),
                 delay ? (delay = UnitDelay(0.0),) : (;));
-          input_wires = ("mode" => (holding ? ("sel/select", "a/engaged", "negate/in1") : ("sel/select",)),),
+          input_wires = ("mode" => (holding ? ("sel/select", "a/engaged", "negate/u") : ("sel/select",)),),
           local_wires = Tuple(wires))
 end
 
@@ -760,12 +820,12 @@ function tracker_cascade(; delay = true, hold = true)
                           ["free/y" => "a/saturation", "free/y" => "b/saturation"])
     outer = DiscretePID(Kp = 0.5, Ki = 0.2, Tt = 0.1, hold = true, tracking = true)
     blocks = (ref_a = Step(t_step = 0.5, after = 1.5), ref_b = Constant(0.5), measurement = Unpack{Float64, 2}(),
-              a = outer, b = outer, sel = Switch{Float64}(), negate = Junction{Bool, Bool, 1}(!),
+              a = outer, b = outer, sel = Switch{Float64}(), negate = Fn{Bool}(!),
               level = Constant(0.0), reference = Pack{Float64, 2}(),
               inner = DiscreteLQRTracker(; tracker_gains()..., K_int = zeros(2, 2), u_max = SVector(0.6, Inf)),
               plant = tracker_plant())
     Group(merge(blocks, delay ? (delay = UnitDelay(0.0),) : (;), hold ? (code = Unpack{Int8, 2}(),) : (free = Constant(Int8(0)),));
-          input_wires = ("mode" => ("sel/select", "a/engaged", "negate/in1"),), local_wires = Tuple(wires))
+          input_wires = ("mode" => ("sel/select", "a/engaged", "negate/u"),), local_wires = Tuple(wires))
 end
 
 function test_blocks()
@@ -874,6 +934,122 @@ function test_blocks()
         @test d isa AlgebraicCycle && d.classification === :real
     end
 
+    @testset "the function block publishes `f` of its one bare input, its port types its parameters alone (§13.7, D-033, D-437)" begin
+        triple = Fn{Float64}(v -> 3v - 1)
+        @test u_types(triple) == Float64 && y_types(triple) == Float64
+        @test typeof(Fn{Float64}(abs)) === Fn{Float64, Float64, typeof(abs)}
+        @test u_types(Fn{Int, Float64}(float)) == Int && y_types(Fn{Int, Float64}(float)) == Float64
+        @test Redstone.has_stage(y_direct, triple) && !Redstone.has_stage(y_state, triple)
+        sim = Simulation(fed_by(Constant(2.0), triple); h = 1//10)
+        init!(sim, set())
+        @test port(sim, "c") == 5.0
+        # Alone at the root, its input is the root input `u` (D-210, D-437).
+        @test build(triple) isa Build
+        @test build(triple; activations = (Float64, LinearizeDual)) isa Build
+        root_sim = Simulation(fed(triple); h = 1//100)
+        init!(root_sim, set(u = (in = 2.0,)))
+        linearization = linearize(root_sim, taps(u = (in = get_input(:in),), y = (y = get_output("c"),)))
+        @test isapprox(linearization.D, [3.0;;]; atol = 1e-12)
+        # The output type is the parameter, never `f`'s: nothing converts.
+        d = only(diagnostics(failure(() -> build(fed(Fn{Float64}(v -> 1))))))
+        @test d isa ConformanceFailure && d.observed === Int && d.declared === Float64
+    end
+
+    @testset "a pinned `Fn` is the freeze of a struct: a strip walks to a zero coupling, an `f` that keeps the partials is refused where a `Dual` first runs it (§13.7, §9.5, D-266, D-312)" begin
+        strip = Fn{Course{Float64}, Pinned{Course{Float64}}}(strip_partials)
+        @test y_types(strip) == Pinned{Course{Float64}}
+        for (pass, column) in ((nothing, [1.0, -1.0]), (strip, [0.0, 0.0]))
+            model_build = build(course_model(pass); activations = (Float64, LinearizeDual))
+            @test model_build isa Build
+            sim = Simulation(model_build; h = 1//10)
+            init!(sim, set(u = (a = 1.5,)))
+            @test port(sim, "g", :along) == 1.5
+            linearization = linearize(sim, taps(u = (a = get_input(:a),),
+                                                y = (along = get_face(:along), cross2 = get_face("cross[2]"))))
+            @test isapprox(linearization.D[:, 1], column; atol = 1e-12)
+        end
+        # An identity at the pinned output keeps the partials. The nominal build
+        # has no `Dual` to see, and the first `Dual` probe refuses it.
+        kept = course_model(Fn{Course{Float64}, Pinned{Course{Float64}}}(identity))
+        @test build(kept) isa Build
+        refusals = (failure(() -> build(kept; activations = (Float64, LinearizeDual))),
+                    let sim = Simulation(kept; h = 1//10)
+                        init!(sim, set(u = (a = 1.5,)))
+                        @test port(sim, "g", :along) == 1.5
+                        failure(() -> linearize(sim, taps(u = (a = get_input(:a),), y = (along = get_face(:along),))))
+                    end)
+        for err in refusals
+            d = only(diagnostics(err))
+            @test d isa ConformanceFailure && d.path == "p" && d.what == "y_direct" && d.reason === :field_type
+            @test d.observed === Course{LinearizeDual} && d.declared === Course{Float64}
+        end
+    end
+
+    @testset "the select publishes the input its enum names, and linearizes to that input with no column for the selector (§13.7, §14.10, D-308)" begin
+        @test u_types(Select{Float64, FlightLeg}()) ==
+              (CLIMB = Float64, CRUISE = Float64, DESCENT = Float64, select = FlightLeg)
+        @test y_types(Select{Float64, FlightLeg}()) == Float64
+        @test Redstone.has_stage(y_direct, Select{Float64, FlightLeg}())
+        @test !Redstone.has_stage(y_state, Select{Float64, FlightLeg}())
+        inputs = (climb = 1.0, cruise = 2.0, descent = 3.0)
+        selector_taps = taps(u = (climb = get_input(:climb), cruise = get_input(:cruise), descent = get_input(:descent)),
+                             y = (out = get_face(:out),))
+        for (leg, out, row) in ((CLIMB, 1.0, [1 0 0]), (CRUISE, 2.0, [0 1 0]), (DESCENT, 3.0, [0 0 1]))
+            sim = Simulation(select_root(); h = 1//100)
+            init!(sim, set(u = (; inputs..., leg)))
+            @test port(sim, "s") == out
+            @test isapprox(linearize(sim, selector_taps).D, row; atol = 1e-12)
+        end
+        # The selector is held: its cell keeps the enum type, and no tap seeds it.
+        select_build = build(select_root(); activations = (Float64, LinearizeDual))
+        @test (FlightLeg => 1) in activation(select_build, LinearizeDual).layout.sizes
+        sim = Simulation(select_build; h = 1//100)
+        init!(sim, set(u = (; inputs..., leg = CRUISE)))
+        err = failure(() -> linearize(sim, taps(u = (leg = get_input(:leg),), y = (out = get_face(:out),))))
+        @test only(diagnostics(err)) isa TapResolution
+        vector_sim = Simulation(vector_select_model(); h = 1//10)
+        init!(vector_sim, set())
+        @test port(vector_sim, "s") == SVector(3.0, 4.0)
+        @test build(vector_select_model(); activations = (Float64, LinearizeDual)) isa Build
+        # Alone at the root, every input is a root input (D-210).
+        @test build(Select{Float64, FlightLeg}(); activations = (Float64, LinearizeDual)) isa Build
+    end
+
+    @testset "a select over an abstract `K`, or an enum with an instance named `select`, is refused at construction (§13.7)" begin
+        @test_throws ArgumentError Select{Float64, SelectClash.Clash}()
+        @test_throws ArgumentError Select{Float64, Enum}()
+    end
+
+    @testset "the fields block publishes each field of its struct input as a port, one level deep, walked or held as the field's type (§4.3, §13.7, §8.2, D-276)" begin
+        @test u_types(Fields{Course{Float64}}()) == Course{Float64}
+        @test y_types(Fields{Course{Float64}}()) == (along = Float64, cross = SVector{2, Float64}, lap = Int, leg = FlightLeg)
+        @test y_types(Fields{NestedCourse}()) == (gain = Float64, course = Course{Float64})
+        @test Redstone.has_stage(y_direct, Fields{Course{Float64}}())
+        @test !Redstone.has_stage(y_state, Fields{Course{Float64}}())
+        sim = Simulation(course_model(); h = 1//10)
+        init!(sim, set(u = (a = 1.5,)))
+        @test (port(sim, "g", :along), port(sim, "g", :cross), port(sim, "g", :lap), port(sim, "g", :leg)) ==
+              (1.5, SVector(3.0, -1.5), 3, CRUISE)
+        nested_sim = Simulation(nested_course_model(); h = 1//10)
+        init!(nested_sim, set(u = (a = 1.5,)))
+        @test port(nested_sim, "g", :gain) == 3.0 && port(nested_sim, "g", :course) == course_of(1.5)
+        # Under `Dual` the `Float64` leaves walk, and the `Int` and the enum hold.
+        dual_model = Model(build(course_model(); activations = (Float64, LinearizeDual)), LinearizeDual; h = 1//10)
+        init!(dual_model, set(u = (a = LinearizeDual(1.5),)))
+        @test port(dual_model, "g", :along) isa LinearizeDual
+        @test port(dual_model, "g", :cross) isa SVector{2, LinearizeDual}
+        @test port(dual_model, "g", :lap) === 3 && port(dual_model, "g", :leg) === CRUISE
+        @test build(nested_course_model(); activations = (Float64, LinearizeDual)) isa Build
+        # Alone at the root, the course is a root input with its probe value (D-210).
+        @test build(Fields{Course{Float64}}(); activations = (Float64, LinearizeDual)) isa Build
+    end
+
+    @testset "the fields block refuses a type with no fields to split: a scalar, a static array, a tuple, a `UnionAll` (§13.7)" begin
+        for V in (Float64, Int, SVector{2, Float64}, Tuple{Float64, Int}, @NamedTuple{}, Course)
+            @test_throws ArgumentError Fields{V}()
+        end
+    end
+
     @testset "the source publishes `f` at the grid time, pinned, and walks nothing (§13.7, §7.2, D-312, D-313)" begin
         sim = Simulation(fed_by(Source(sin), Integrator()); h = 1//100)
         init!(sim, set())
@@ -917,8 +1093,13 @@ function test_blocks()
                       fed_by(Source(t -> 2 * sin(t)), Integrator()), vector_source_model(), flip_model(),
                       fed_by(Constant(1.0), Freeze{Float64}()),
                       fed_by(Constant(SVector(1.0, -1.0)), Freeze{SVector{2, Float64}}()),
-                      requested(true, "x")))...,
-                 (switch_root(), (in1 = 1.0, in2 = -1.0, select = true)))
+                      requested(true, "x"), fed_by(Constant(2.0), Fn{Float64}(v -> 3v - 1)),
+                      vector_select_model()))...,
+                 (switch_root(), (in1 = 1.0, in2 = -1.0, select = true)),
+                 (select_root(), (climb = 1.0, cruise = 2.0, descent = 3.0, leg = DESCENT)),
+                 (course_model(), (a = 1.5,)),
+                 (course_model(Fn{Course{Float64}, Pinned{Course{Float64}}}(strip_partials)), (a = 1.5,)),
+                 (nested_course_model(), (a = 1.5,)))
             sim = Simulation(model; h = 1//10)
             bodies = phase_bodies(sim)
             for name in (:sweep_1, :sweep_2, :rhs, :ticks)
@@ -2626,7 +2807,7 @@ function test_blocks()
         d = only(diagnostics(err))
         @test d isa AlgebraicCycle && d.classification === :artificial
         @test d.dead == [("controller", :v, :u)]
-        @test d.wires == ["controller/u" => "sat/in1", "sat/y" => "controller/v"]
+        @test d.wires == ["controller/u" => "sat/u", "sat/y" => "controller/v"]
     end
 
     @testset "a scheduled parameter is a port: it carries partials, freezes through `Freeze`, and closes a cycle from the own output (§13.7, §5.4, §14.10)" begin
@@ -2646,7 +2827,7 @@ function test_blocks()
         d = only(diagnostics(err))
         @test d isa AlgebraicCycle && d.classification === :real
         @test isempty(d.dead)
-        @test d.wires == ["controller/u" => "gain/in1", "gain/y" => "controller/Kp"]
+        @test d.wires == ["controller/u" => "gain/u", "gain/y" => "controller/Kp"]
         # Only `x_deriv` reads `Ki`, so the hop is dead and the cycle artificial.
         err = failure(() -> build(scheduled_pid_cycle(:Ki)))
         @test err isa DiagnosticError
@@ -2917,7 +3098,7 @@ function test_blocks()
         d = only(diagnostics(err))
         @test d isa AlgebraicCycle && d.classification === :real
         @test isempty(d.dead)
-        @test d.wires == ["controller/u" => "sat/in1", "sat/y" => "controller/v"]
+        @test d.wires == ["controller/u" => "sat/u", "sat/y" => "controller/v"]
     end
 
     @testset "a tracking block not engaged follows the selected command through a delay and engages without a bump, and the switch without the delay is a cycle (§13.7, §5.4, §13.8, D-385)" begin

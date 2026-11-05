@@ -115,6 +115,52 @@ u_types(::Junction{In, Out, N}) where {In, Out, N} =
 y_types(::Junction{In, Out}) where {In, Out} = Out
 y_direct(j::Junction, (; u)) = j.f(u...)
 
+# Design: §9.7, §13.7, D-033, D-312, D-437.
+# `F` is the function's type, inferred by the constructor, as `Junction`'s fold.
+# The port types are the spelled parameters and are never read off `f` (D-033).
+# A pinned `Y` is the hand-spelled `Freeze` for a struct (§13.7): `f` must
+# strip, and an `f` that does not is refused at the build's `Dual` probe.
+"""
+    Fn{U, Y}(f) -> Fn{U, Y}
+    Fn{U}(f) -> Fn{U, U}
+
+A continuous [primitive](@ref g-primitive) that publishes a function of its one
+input as its one output.
+
+The one input, `u`, is typed `U`, and the one output, `y`, is typed `Y`, the
+two parameters as written. It publishes `y = f(u)`, and a wire names its ports
+as in `"fn/u"` and `"fn/y"`. `Fn{U}(f)` is `Fn{U, U}(f)`. The port types are
+never read off `f`, so `f` returns a `Y`. Nothing converts, so a value of
+another type is refused as `ConformanceFailure`, at build for the value the
+build reads and as a `StepError` carrying it on a later [frame](@ref g-frame).
+
+The [block](@ref g-block) is the one-input [`Junction`](@ref) with its input
+bare. It spells a step between two children that wires cannot, such as a unit
+conversion or a sign flip. It is not a gain. Each instance is a separate
+[component](@ref g-component) and costs a build entry, a cell, a gather and a
+scatter, so a one-line expression is cheaper inside the consumer's own stage.
+
+`f` runs under every [activation](@ref g-activation) of the build, a `Dual` one
+included. A `Y` wrapped in [`Pinned`](@ref) declares an output that carries no
+partials. `f` must then drop them itself, as [`Freeze`](@ref) does for a
+`Float64` or an `SArray`. An `f` that passes them on is refused as
+`ConformanceFailure` by the first build or linearization that runs it under a
+`Dual` activation.
+
+The function holds no state and declares no [events](@ref g-state-event), so a
+discontinuity written into it lands wherever it falls inside a step, as in a
+`Junction`.
+"""
+struct Fn{U, Y, F} <: AbstractComponent
+    f::F
+end
+(::Type{Fn{U, Y}})(f) where {U, Y} = Fn{U, Y, typeof(f)}(f)
+(::Type{Fn{U}})(f) where {U} = Fn{U, U}(f)
+x_init(::Fn) = nothing
+u_types(::Fn{U}) where {U} = U
+y_types(::Fn{U, Y}) where {U, Y} = Y
+y_direct(c::Fn, (; u)) = c.f(u)
+
 # --- the structure blocks (§13.7, D-313) ----------------------------------------
 
 @generated unpack_names(::Val{N}) where {N} = ntuple(i -> Symbol(:out, i), N)
@@ -138,6 +184,44 @@ x_init(::Unpack) = nothing
 u_types(::Unpack{V, N}) where {V, N} = SVector{N, V}
 y_types(::Unpack{V, N}) where {V, N} = NamedTuple{unpack_names(Val(N))}(ntuple(_ -> V, N))
 y_direct(::Unpack{V, N}, (; u)) where {V, N} = NamedTuple{unpack_names(Val(N))}(Tuple(u))
+
+# Design: §4.3, §8.2, D-276, D-437.
+# `fieldnames(V)` folds to a constant tuple in the body, so no generated helper
+# is needed where `Unpack` needs `unpack_names`. `V` is the nominal type; the
+# leaf walk substitutes the scalar in the field types, so under a `Dual`
+# activation `u` is the walked type and its fields the walked fields.
+"""
+    Fields{V}() -> Fields{V}
+
+A continuous [primitive](@ref g-primitive) that publishes each field of its
+struct input as an output of its own.
+
+The one input, `u`, is typed `V`, a struct or `NamedTuple` type with at least
+one field. The outputs take the field names of `V`, each typed as its field
+and publishing that field of `u`. A wire names them as in `"fields/u"` and
+`"fields/pose"`. The [block](@ref g-block) is stateless and unbundles one level
+only, so a field that is itself a struct is one output.
+
+A wire takes a [port](@ref g-port) whole, so the block is how a wired consumer
+takes less than a struct-valued port. A read takes a field directly through the
+[leaf address](@ref g-leaf-address) and needs no block.
+
+Any other `V` is refused as an `ArgumentError`. A `Float64` and an `SArray` are
+among them, and [`Unpack`](@ref) splits the latter.
+"""
+struct Fields{V} <: AbstractComponent
+    function Fields{V}() where {V}
+        isconcretetype(V) && isstructtype(V) && !(V <: Union{Real, StaticArray, Tuple}) &&
+            fieldcount(V) > 0 || throw(ArgumentError(
+                "Fields takes a struct or NamedTuple type with at least one field; got $V."))
+        new{V}()
+    end
+end
+x_init(::Fields) = nothing
+u_types(::Fields{V}) where {V} = V
+y_types(::Fields{V}) where {V} = NamedTuple{fieldnames(V)}(fieldtypes(V))
+y_direct(::Fields{V}, (; u)) where {V} =
+    NamedTuple{fieldnames(V)}(ntuple(i -> getfield(u, i), Val(fieldcount(V))))
 
 # Design: §2.3, §5.3, D-179, D-437.
 """
@@ -168,6 +252,63 @@ x_init(::Switch) = nothing
 u_types(::Switch{V}) where {V} = (in1 = V, in2 = V, select = Bool)
 y_types(::Switch{V}) where {V} = V
 y_direct(::Switch, (; u)) = ifelse(u.select, u.in1, u.in2)
+
+# The chain `select === K1 ? u[1] : … : u[n]`, generated over the instances as a
+# type parameter. Neither `Symbol` of an instance nor a string is formed, either
+# of which allocates, and a generator cannot call the enum's own methods.
+@generated function selected_input(u::NamedTuple, select, ::Val{keys}) where {keys}
+    chain = :(getfield(u, $(length(keys))))
+    for i in length(keys)-1:-1:1
+        chain = :(select === $(keys[i]) ? getfield(u, $i) : $chain)
+    end
+    chain
+end
+
+# Design: §2.3, §4.3, §5.3, §14.10, D-179, D-308, D-437.
+# The data inputs come first in `instances(K)` order, `select` last, so the
+# data input of instance `i` is the bundle's field `i`. The selector is an enum,
+# held under every `Dual` activation, so a linearization has no column for it.
+"""
+    Select{V, K}() -> Select{V, K}
+
+A continuous [primitive](@ref g-primitive) that publishes one of its inputs,
+picked by an enum input.
+
+`K` is an enum type. The block has one input per instance of `K`, named after
+the instance and typed `V`, and the input `select`, a `K`. The one output, `y`,
+is typed `V`. It is the input that `select` names, so over
+`@enum Leg CLIMB CRUISE` a wire reads `"sel/CRUISE"`. The
+[block](@ref g-block) is stateless.
+
+The output reads every input. A `select` wired from a memoryless function of the
+output therefore closes an [algebraic loop](@ref g-algebraic-loop), which the
+build refuses as `AlgebraicCycle`. A linearization takes no partials through
+`select`, and the picked input's pass through.
+
+The block declares no [event](@ref g-state-event), so the jump in the output
+lands where `select` changes. A `select` published from a mode, or held between
+[ticks](@ref g-tick), changes on a [boundary](@ref g-boundary) and the jump is
+clean. One computed from a continuous quantity inside a
+[stage body](@ref g-stage-function) changes inside a step and smears that step.
+
+An abstract `K`, or an enum with an instance named `select`, is refused as an
+`ArgumentError`.
+
+See also [`Switch`](@ref).
+"""
+struct Select{V, K <: Enum} <: AbstractComponent
+    function Select{V, K}() where {V, K <: Enum}
+        isconcretetype(K) || throw(ArgumentError("Select takes a concrete enum type; got $K."))
+        any(==(:select), map(Symbol, instances(K))) && throw(ArgumentError(
+            "Select over $K: an instance named `select` collides with the selector input."))
+        new{V, K}()
+    end
+end
+x_init(::Select) = nothing
+u_types(::Select{V, K}) where {V, K} =
+    NamedTuple{(map(Symbol, instances(K))..., :select)}((ntuple(_ -> V, length(instances(K)))..., K))
+y_types(::Select{V}) where {V} = V
+y_direct(::Select{V, K}, (; u)) where {V, K} = selected_input(u, u.select, Val(instances(K)))
 
 # --- the leaf blocks (§13.7, D-312) ---------------------------------------------
 
