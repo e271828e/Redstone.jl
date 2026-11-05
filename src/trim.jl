@@ -60,9 +60,13 @@ outside its tolerance warns `TrimCommitChecks`.
 Constructing a problem validates nothing, since most of what it needs is only
 checkable against a build. A [selector](@ref g-selector) resolves against a
 model, and the residual and check names are observed at one evaluation at the
-guess. `trim!` refuses a malformed problem as `TrimProblemInvalid`. A check
-whose names depend on values, or that throws, fails at the commit after the
-state has moved, as a residual does.
+guess. `trim!` refuses a malformed field as `TrimProblemInvalid`. A condition
+that does not resolve is refused as `ConditionResolution`, `PathResolution`,
+`DuplicateConditionLeaf` or `ConditionNodeMisuse`, and a `condition` or
+`residuals` that is not callable raises a `MethodError`. A check that throws at
+the guess fails at setup. One that throws or loses a name only at the solved
+point fails at the commit after the state has moved, as a residual can, and a
+name added later is ignored.
 
 # Keywords
 
@@ -150,9 +154,10 @@ verdict was read off.
 catch. A solve that does not converge returns one too. A malformed problem is a
 different case, and `trim!` refuses it at setup.
 
-The `converged` verdict alone gates the commit. A converged solve always
-commits, so `committed_residuals` also tells whether the commit happened. A
-check outside its tolerance warns `TrimCommitChecks`.
+The `converged` verdict alone gates the commit. A converged solve commits unless
+[boundary zero](@ref g-boundary-zero) throws, which arrives as a `StepError`
+with no report, so `committed_residuals` also tells whether the commit happened.
+A check outside its tolerance warns `TrimCommitChecks`.
 
 A non-empty `fired_events` means the committed [stores](@ref g-store) sit past
 the [events](@ref g-state-event)' handlers rather than at the reported solution,
@@ -176,8 +181,8 @@ A report holds these fields.
   verbatim and deciding nothing.
 - `saturated`: the decisions sitting at a bound at the returned point, as
   `(name, :lower)` or `(name, :upper)`.
-- `fired_events`: the events [boundary zero](@ref g-boundary-zero) fired at the
-  commit, as `(path, name)`.
+- `fired_events`: the events boundary zero fired at the commit, as
+  `(path, name)`.
 """
 struct TrimReport
     converged::Bool
@@ -218,10 +223,10 @@ fills the residual vector `r`, and fills the Jacobian `J` only when
 `J !== nothing`. A backend that needs no Jacobian always passes `nothing`.
 
 `d0`, `lower` and `upper` are `Vector{Float64}`s in `guess`'s order, with `±Inf`
-for an unbounded side, and `d0` already lies within the bounds. A backend that
-ignores bounds ignores the two vectors. `tol` holds the tolerances in
-`tolerances`' order. A backend may stop on it, but it decides nothing. `trim!`
-tests convergence itself at the returned point.
+for an unbounded side, and a `d0` that is not `NaN` already lies within the
+bounds. A backend that ignores bounds ignores the two vectors. `tol` holds the
+tolerances in `tolerances`' order. A backend may stop on it, but it decides
+nothing. `trim!` tests convergence itself at the returned point.
 
 The method returns `(; d, status, n_evaluations, n_iterations)`, the point
 reached, a status symbol and the two counts. The status set is open, and the
@@ -245,12 +250,12 @@ function solve end
 The default trim backend, a dense Levenberg–Marquardt solver that stops on the
 problem's own tolerances.
 
-Each iteration solves `(JᵀJ + λ·diag(JᵀJ)) δ = −Jᵀr` for a step, and projects
-the step onto the bounds. A step is accepted when it lowers the normalized
-residual norm `‖r ./ tol‖`. `λ` then shrinks by a factor of 10, and a rejected
-step grows it by 10. The descent test and the stopping rule both measure the
-residuals in their tolerances' units, the test [`trim!`](@ref) applies to the
-result.
+Each iteration solves `(JᵀJ + λ·D) δ = −Jᵀr` for a step, where `D` is
+`diag(JᵀJ)` floored at `1e-12`, and projects the step onto the bounds. A step is
+accepted when it lowers the normalized residual norm `‖r ./ tol‖`. `λ` then
+shrinks by a factor of 10, and a rejected step grows it by 10. The descent test
+and the stopping rule both measure the residuals in their tolerances' units, the
+test [`trim!`](@ref) applies to the result.
 
 The solver stops with status `:converged` when every residual is within its
 tolerance, `all(abs.(r) .≤ tol)`. It stops with `:maxiter` after `maxiter`
@@ -489,8 +494,8 @@ Solve a trim problem on the model, and commit the solution through `init!`.
 `trim!` searches the [`TrimProblem`](@ref)'s decisions for a point where every
 residual sits within its tolerance. Every evaluation runs on
 [scratch](@ref g-scratch) [stores](@ref g-store), so the search never writes the
-model. The Jacobian is exact, carried by dual numbers through the same
-evaluation.
+model. The search runs with the clock at `t0`. The Jacobian is exact, carried by
+dual numbers through the same evaluation.
 
 Setup layers the problem's [condition](@ref g-condition) at the guess over the
 [baseline](@ref g-baseline), as `override(baseline, problem.condition(guess))`.
@@ -526,9 +531,9 @@ usual when it is.
 
 `trim!` checks the problem in two collecting passes, and each refuses it as
 `TrimProblemInvalid`. The first runs before any evaluation, with the
-[read set](@ref g-read-set)'s own `ReadResolution` failures beside the problem's
-faults. The second checks the residual and check returns at the guess
-evaluation, and the residual return again at the first seeded one.
+[read set](@ref g-read-set)'s own `ReadResolution` and `PathResolution` failures
+beside the problem's faults. The second checks the residual and check returns at
+the guess evaluation, and the residual return again at the first seeded one.
 
 The baseline and the problem's condition at the guess must give every
 [root input](@ref g-root-input) a value, and one left without a value is refused

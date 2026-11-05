@@ -54,7 +54,8 @@ matrices. Membership is closed per list, and every tap names one scalar leaf.
 `taps` checks only that each list is a `NamedTuple` of selectors, and refuses
 anything else as `ReadSetMisuse`. `linearize` checks membership and the rest
 when it resolves the taps against its build, and refuses them as
-`TapResolution`, beside the selectors' own `ReadResolution` failures.
+`TapResolution`, beside the selectors' own `ReadResolution` and `PathResolution`
+failures.
 
 # Keywords
 
@@ -166,6 +167,8 @@ operating point, as a [`Linearization`](@ref). It is a pure query. It works on
 [scratch](@ref g-scratch) [stores](@ref g-store) and commits nothing. It runs no
 [boundary zero](@ref g-boundary-zero) and never writes the model. A model a
 [`Simulation`](@ref) has claimed still answers, since the query only reads it.
+It is not safe to query while that simulation runs. Call the simulation's method
+then, which refuses.
 
 By default the operating point is `checkpoint(model)`, the model's state at the
 [frame top](@ref g-frame) its clock rests on, at that clock's time. `about`, a
@@ -183,8 +186,9 @@ the `y` taps. States and [root inputs](@ref g-root-input) that no tap names sit
 constant at the operating point. The discrete [tier](@ref g-tier) is held.
 
 The `width` changes the grouping, never the answer. The default width's scalar
-is `LinearizeDual`, so a build that lists it in `activations` linearizes any tap
-set with no compile at the call.
+is `LinearizeDual`, so a build that lists it in `activations` makes no
+[activation](@ref g-activation) at the call, for any tap set. Julia still
+compiles each new tap set's shape once.
 
 The default form is legal only while the model's status is `:consistent`, and is
 refused as `ServiceLifecycle` otherwise. It is refused as `CheckpointMidFrame`
@@ -198,10 +202,10 @@ raises. A root input it leaves without a value is refused as
 `UninitializedInputs`.
 
 `linearize` resolves the taps in one collecting pass, and refuses their faults
-together as `TapResolution`, beside the selectors' own `ReadResolution`
-failures. The faults are a member in the wrong list, a discrete state in `x`, a
-tap that is not one scalar, a root input that cannot be seeded, and a second tap
-on one seeded site.
+together as `TapResolution`, beside the selectors' own `ReadResolution` and
+`PathResolution` failures. The faults are a member in the wrong list, a discrete
+state in `x`, a tap that is not one scalar, a root input that cannot be seeded,
+and a second tap on one seeded site.
 
 A `t0` without `about`, a `width` below 1, a second argument that is not a tap
 set, and a model at a scalar type other than `Float64` are refused as

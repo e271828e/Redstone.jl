@@ -159,8 +159,9 @@ flips. A `select` published from a mode, or held between [ticks](@ref g-tick),
 flips on a [boundary](@ref g-boundary) and the jump is clean. One computed from
 a continuous quantity inside a [stage body](@ref g-stage-function) flips inside
 a step and smears that step. That is a mode made silently. A
-[`Comparator`](@ref) on the quantity, or a [`Relay`](@ref) beside it, is the
-declared way to produce `select`.
+[`Comparator`](@ref) on the quantity is the declared way to produce `select`. A
+[`Relay`](@ref) publishes a value rather than a `Bool`, so it reaches `select`
+through a [`Junction`](@ref).
 """
 struct Switch{V} <: AbstractComponent end
 x_init(::Switch) = nothing
@@ -208,15 +209,16 @@ The [block](@ref g-block) is the native `z⁻¹` of the discrete
 [tier](@ref g-tier). A wire names its input `u` and its output `y` by
 [face](@ref g-face), `"delay/u"` and `"delay/y"`.
 
-The output publishes the stored value `s` from
-[stage 1](@ref g-stage-function), `y = s`, and `s0` at the first publication.
-Each tick stores the input for the next one, `s⁺ = u`. The store and both
-ports share one type, the parameter `V`, the type of `s0`, an isbits type as
-the [store](@ref g-store) requires.
+The output publishes the stored value `s` from [stage 1](@ref g-stage-function),
+`y = s`, and `s0` at the first publication. Each tick stores the input for the
+next one, `s⁺ = u`. The store and both ports share one type, the parameter `V`,
+the type of `s0`, an isbits type or a `Symbol`, as the [store](@ref g-store)
+requires.
 
 It breaks an [algebraic loop](@ref g-algebraic-loop), and that is a modelling
 decision. Placed in a continuous loop, it moves the signal onto the discrete
-tier and inserts a zero-order hold at the scale of [`Δt_base`](@ref g-dt_base).
+tier and inserts a zero-order hold over the [component](@ref g-component)'s own
+period, a multiple of [`Δt_base`](@ref g-dt_base).
 
 See also [`Delay`](@ref).
 """
@@ -244,7 +246,9 @@ along the path then reads a zero coupling, which is the modelling decision the
 block states.
 
 `V` is a `Float64` or an `SArray` of `Float64`. Any other `V` is refused as a
-`TypeError` where `Freeze{V}` is written.
+`TypeError` where `Freeze{V}` is written. The block drops one `Dual` layer, so
+at a nested `Dual` an input that carries partials is refused at build as
+`ConformanceFailure`.
 """
 struct Freeze{V <: Union{Float64, SArray{<:Tuple, Float64}}} <: AbstractComponent end
 x_init(::Freeze) = nothing
@@ -344,12 +348,13 @@ a ring of `K` values and a cursor.
 
 It breaks an [algebraic loop](@ref g-algebraic-loop) as [`UnitDelay`](@ref)
 does, and that is a modelling decision. Placed in a continuous loop, it moves
-the signal onto the discrete tier and inserts a zero-order hold at the scale of
+the signal onto the discrete tier and inserts a zero-order hold over the
+[component](@ref g-component)'s own period, a multiple of
 [`Δt_base`](@ref g-dt_base).
 
-`K` counts ticks of the [component](@ref g-component)'s own period, so the model
-picks it from the rate it declares. `K = 1` is `UnitDelay` in keyword spelling.
-A smaller `K` is refused as an `ArgumentError`.
+`K` counts ticks of the component's own period, so the model picks it from the
+rate it declares. `K = 1` is `UnitDelay` in keyword spelling. A smaller `K` is
+refused as an `ArgumentError`.
 
 `v0` is a value of the signal, copied into every slot of the ring. It is not
 the initial store, so it is not `UnitDelay`'s `s0`. The ring's values and both
@@ -397,12 +402,12 @@ Each [tick](@ref g-tick) advances the store by forward Euler,
 [component](@ref g-component)'s own period, so the integral is per second at any
 rate.
 
-`reset = true` adds the `Bool` input `reset`, so the inputs
-`u` and `reset` are named. The reset is a level. At every tick where `reset`
-reads true, the update writes `s0` in place of the sum. The state lands at the
-next tick, and the output at the reset tick still publishes the integral before
-it. The continuous [`Integrator`](@ref) resets on the flag's rising edge
-instead, as an event.
+`reset = true` adds the `Bool` input `reset`, so the inputs `u` and `reset` are
+named. The reset is a level. At every tick where `reset` reads true, the update
+writes `s0` in place of the sum. The output at the reset tick still publishes
+the integral before it, and the next tick's output publishes `s0`. The
+continuous [`Integrator`](@ref) resets on the flag's rising edge instead, as an
+event.
 
 The discrete [tier](@ref g-tier) never follows the scalar of an
 [activation](@ref g-activation), so under a `Dual` activation the block holds
@@ -584,7 +589,8 @@ Exactly one of `σ` and `psd` is given. Neither or both is refused as an
 
 # Keywords
 
-- `seed`: the integer the stream is drawn from, held as instance data.
+- `seed`: the non-negative integer the stream is drawn from, held as instance
+  data.
 - `μ`: the mean, zero in the scale's shape when left at `nothing`.
 - `σ`: the standard deviation per sample, at any period.
 - `psd`: the two-sided intensity `Q` of the white noise the samples stand for,
@@ -645,14 +651,17 @@ with no inputs and no state.
 
 Its one output, `y`, publishes `f(t)` from [stage 1](@ref g-stage-function).
 `Source(f)` is `Source{Float64}(f)`. `f` receives the plain `Float64` time under
-every [activation](@ref g-activation), so it need not be generic, and it returns
-a `V`. Nothing converts, so a value of another type is refused at build as
-`ConformanceFailure`.
+`Float64` and a one-layer `Dual` [activation](@ref g-activation), so it need not
+be generic there, and it returns a `V`. Nothing converts, so a value of another
+type is refused as `ConformanceFailure`, at build for the value the build reads
+and as a `StepError` carrying it on a later [frame](@ref g-frame).
 
-The output is [pinned](@ref g-walked) at `V`. The time is stripped of its
-partials before `f` sees it. The output therefore depends on neither state nor
-an input that follows the scalar, and carries zero partials under every
-activation. A source set from outside is a [root input](@ref g-root-input).
+The output is [pinned](@ref g-walked) at `V`. The time loses one `Dual` layer
+before `f` sees it. The output therefore depends on neither state nor an input
+that follows the scalar, and carries zero partials under every activation. At a
+nested `Dual`, an `f` that returns the inner `Dual` is refused at build as
+`ConformanceFailure`. A source set from outside is a
+[root input](@ref g-root-input).
 
 See also [`Constant`](@ref), [`Step`](@ref).
 """
@@ -1463,8 +1472,8 @@ With `false`, the leave events are
 [boundary-detected](@ref g-boundary-detected), and a departure costs neither. It
 fires at the first boundary after `u` points back into the range, at the latest
 the end of that step. `x` stays on the limit until then. It then carries an
-offset of at most `a h² / 2`, with `a` the input's slope at its zero crossing
-and `h` the step.
+offset of about `a h² / 2` at most, to leading order in `h`, with `a` the
+input's slope at its zero crossing and `h` the step.
 
 Over an `SArray`, the limits and the codes are componentwise, and `saturation`
 publishes an `SArray` of `Int8` of `V`'s shape. The block declares one copy of
@@ -1479,8 +1488,9 @@ and the initial mode agrees with the initial input.
 named. It also adds one `reset` event, however wide the block is. As on the
 [`Integrator`](@ref), the event is boundary-detected on the flag, so it fires
 once per rising edge. Its handler writes `x0`, clamped to the limits, and the
-code that value earns. A reset onto a limit therefore lands saturated, and a
-reset inside lands free, whatever the mode was.
+code that value earns. A reset onto a limit therefore lands saturated, and frees
+at that boundary if `u` points back into the range. A reset inside lands free,
+whatever the mode was.
 
 `x0`, `lower` and `upper` broadcast to one shape and type, the parameter `V`,
 `Float64` or an `SArray` of `Float64`, so a scalar limit pairs with a vector
@@ -1637,9 +1647,9 @@ With `false`, the leave events are
 [boundary-detected](@ref g-boundary-detected), and a departure costs neither. It
 fires at the first boundary after `u` points back into the range, at the latest
 the end of that step. `q` and `v` stay on the limit until then. From then on `v`
-carries an offset of at most `a h² / 2`, with `a` the input's slope at its zero
-crossing and `h` the step. `q` carries an offset that grows by as much per unit
-time. The next limit removes both.
+carries an offset of about `a h² / 2` at most, to leading order in `h`, with `a`
+the input's slope at its zero crossing and `h` the step. `q` carries an offset
+that grows by as much per unit time. The next limit removes both.
 
 Over an `SArray`, the limits, the leaves and the codes are componentwise,
 `velocity` publishes an `SArray` of `V`'s shape and `saturation` one of `Int8`.
@@ -2271,17 +2281,19 @@ integral's error stays `e`.
 values, and so is a `τd` or a `Tt` given as a value and negative in any
 channel; either may be zero.
 
-The parameters, the inputs, the outputs `u` and `u_raw` and the states share
-one type, the parameter `V`, `Float64` or an `SArray` of `Float64`, and over an
-`SArray` the law is componentwise, as in `PID`. The nine keywords given as
-values broadcast to one `V` by the rule of `PID`, the shape the sum of their
-`zero`s. A scalar therefore pairs with a vector, and a uniform vector gain
-spells one keyword as a vector, `Kp = @SVector fill(2.0, 3)`.
+The parameters, the inputs `r`, `y` and `v`, the outputs `u` and `u_raw` and the
+store fields `q` and `yf` share one type, the parameter `V`, `Float64` or an
+`SArray` of `Float64`, and over an `SArray` the law is componentwise, as in
+`PID`. The nine keywords given as values broadcast to one `V` by the rule of
+`PID`, the shape the sum of their `zero`s. A scalar therefore pairs with a
+vector, and a uniform vector gain spells one keyword as a vector,
+`Kp = @SVector fill(2.0, 3)`.
 
 Any parameter may be an input port, spelled `Kp = AsPort()` with
-[`AsPort`](@ref), typed `V` and outside the shape. It carries partials under a
-`Dual` [activation](@ref g-activation), and [`Freeze`](@ref) holds it at its
-plain `Float64` value, as in `PID`.
+[`AsPort`](@ref), typed `V` and outside the shape. Under a `Dual`
+[activation](@ref g-activation) the discrete tier does not run and holds its
+`Float64` values, so a linearization sees no coupling through the port and a
+[`Freeze`](@ref) on it changes nothing.
 
 The backward Euler lag is stable at every period, and `τd = 0` is legal. `yf` is
 then the previous weighted measurement, and the D term the backward difference
@@ -2289,8 +2301,10 @@ then the previous weighted measurement, and the D term the backward difference
 
 `β` is the exact step of the correction's relaxation over one period, so every
 `Tt` is stable. `Tt = Inf` switches the correction off. `Tt = 0` is legal and
-brings `u_raw` to the reference by the next tick, the clamping scheme as the
-limit of tracking. Not engaged with tracking, `Tt = 0` follows `v` exactly.
+brings `u_raw` to the reference plus the tick's integral step `Δt Ki ε` by the
+next tick, the clamping scheme as the limit of tracking. Not engaged with
+tracking, `Tt = 0` lands `u_raw` on the tick's `v` one tick later, exact for a
+constant `v` while `r` and `y` hold.
 
 A third output, `saturated`, publishes the `Int8` code of the block's own
 clamp, an `SArray` of `Int8` of `V`'s shape over an array. The code is `1` with
@@ -2631,8 +2645,9 @@ reference falls back to `u` in each channel that is free. All of this is as in
 as values, and so is a `Tt` given as a value and negative in any channel.
 
 Every `Tt` is stable. `Tt = Inf` switches the correction off. `Tt = 0` is legal
-and brings `u_raw` to the reference by the next tick, so a channel not engaged
-with tracking follows `v` exactly.
+and brings `u_raw` to the reference plus the tick's integral step `Δt ε` by the
+next tick. A channel not engaged with tracking lands `u_raw` on the tick's `v`
+one tick later, exact for a constant `v` while the direct terms hold.
 
 The ports, the nine parameters and their types, the [`AsPort`](@ref) spelling,
 the size inference and the explicit spelling, the second form, are those of
@@ -2734,11 +2749,11 @@ ordinary functions of the instance, which return its fields.
 The one declaration it adds is [`transparent_container`](@ref). `children` is
 name-transparent, so its elements go by bare key everywhere a child name
 appears. That is `"ctl/out" => "plant/u"` for a wire, `(ctl = Relative(2),)` for
-a rate, `at("ctl", …)` for a [condition](@ref g-condition) prefix and
-`"plant/y"` for a read path. A `Group`'s declarations are then textually
-identical to a named assembly's. The rate declaration's field-name sugar, keying
-on the field rather than on a path segment, keeps working as
-`(children = Relative(2),)` for the uniform case.
+a rate, `at("ctl", …)` for a [condition](@ref g-condition) prefix and `"plant"`
+for a read path, as in `port(sim, "plant", :y)`. A `Group`'s declarations are
+then textually identical to a named assembly's. The rate declaration's
+field-name sugar, keying on the field rather than on a path segment, keeps
+working as `(children = Relative(2),)` for the uniform case.
 
 The type parameters carry the children's concrete types, so the
 [executor](@ref g-executor) specializes on them as on a named assembly. What a

@@ -48,9 +48,9 @@ so what the binding may write is exactly what its entries name. Its
 [`map_input`](@ref) maps a datum through the table.
 
 An entry that is not a `NamedTuple`, has no `face`, names its face by anything
-but a string or a symbol, carries any other field, or sets `deadzone` or `expo`
-out of range is refused at construction as `ArgumentInvalid`. One throw reports
-every such entry.
+but a string or a symbol, carries any other field, or sets a numeric `deadzone`
+or `expo` out of range is refused at construction as `ArgumentInvalid`. One
+throw reports every such entry, and a non-numeric value raises a `MethodError`.
 """
 struct TableBinding{T<:NamedTuple} <: AbstractBinding
     table::T

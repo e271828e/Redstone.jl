@@ -66,9 +66,10 @@ declares `x_init(::C) = nothing`. A non-empty state needs an [`x_deriv`](@ref)
 method.
 
 The build refuses `(;)` as `EmptyStore`, and a field or bare value outside the
-state vocabulary as `IllegalStateLeaf`. A non-empty state with no `x_deriv` is
-refused as `StoreWithoutUpdate`, a primitive that defines neither `x_init` nor
-`s_init` as `TierUnreadable`, and one that defines both as
+state vocabulary as `IllegalStateLeaf`. A non-empty state with neither `x_deriv`
+nor `s_update` is refused first as `StoreWithoutUpdate`. A primitive that
+defines neither `x_init` nor `s_init` is refused as `TierUnreadable`, and one
+that defines both, or an update law of the other tier, as
 `DeclarationOnWrongTier`.
 """
 x_init(::Any) = nothing
@@ -96,9 +97,9 @@ declares `s_init(::C) = nothing`, and holds its outputs between its
 [ticks](@ref g-tick). A non-empty state needs an [`s_update`](@ref) method.
 
 The build refuses `(;)` as `EmptyStore`, and a field or bare value that is
-neither isbits nor a `Symbol` as `IllegalStoreField`. A non-empty state with no
-`s_update` is refused as `StoreWithoutUpdate`, and a primitive that also defines
-`x_init` as `DeclarationOnWrongTier`.
+neither isbits nor a `Symbol` as `IllegalStoreField`. A non-empty state with
+neither update law is refused as `StoreWithoutUpdate`. Past that, a primitive
+that also defines `x_init` or `x_deriv` is refused as `DeclarationOnWrongTier`.
 """
 s_init(::Any) = nothing
 
@@ -114,7 +115,8 @@ A continuous [primitive](@ref g-primitive) declares its modes by value, as in
 form, whose one field is named `m`. Every field, or the bare value, is isbits or
 a `Symbol`, as for [`s_init`](@ref).
 
-[Event](@ref g-state-event) handlers write the modes, and nothing else may. A
+Within a [frame](@ref g-frame), [event](@ref g-state-event) handlers alone write
+the modes. A [condition](@ref g-condition) sets them at `init!` or `overlay!`. A
 primitive may declare modes that no event of its own changes. A primitive
 without modes defines no method.
 
@@ -200,10 +202,10 @@ wrapped in [`Pinned`](@ref) keeps its type at every activation. On a discrete
 primitive every entry stays as written.
 
 A component with one output may declare it bare, as in
-`y_types(::Integrator{V}) where {V} = V`. The port's [face](@ref g-face) is
-then `y`. A wire names it `"integrator/y"`, a reader by that name or by the
-path alone, and the stage that produces it returns its value rather than a
-`NamedTuple`.
+`y_types(::Integrator{V}) where {V} = V`. The port's [face](@ref g-face) is then
+`y`. A wire names it `"integrator/y"`, a reader by the path `"integrator"` with
+that name or alone, and the stage that produces it returns its value rather than
+a `NamedTuple`.
 
 One declaration covers both output [stages](@ref g-stage-function),
 [`y_state`](@ref) and [`y_direct`](@ref), and no port names its stage. The build
@@ -233,8 +235,9 @@ follows the scalar of an [activation](@ref g-activation). On an output the
 [port](@ref g-port)'s value is a `P` at every activation. On an input the entry
 demands an arriving value that never carries partials.
 
-The build strips the marker at `Float64`, so no value, layout or message carries
-the wrapper itself. It is a type-level marker, never instantiated.
+The build strips the marker at `Float64`, so no value, layout or wire message
+carries the wrapper itself. Only the two refusals below name it. It is a
+type-level marker, never instantiated.
 
 A marker below the top of an entry, in a type parameter, is refused as
 `IllegalPortType` on both [tiers](@ref g-tier). The marker is continuous-only. A
@@ -333,9 +336,10 @@ Naming is the only thing it changes, and the container still has no wires,
 The declaration is optional, and a component may name at most one field. The
 default, `nothing`, keeps every container's key segment.
 
-The build refuses a name that matches no container field as
-`TransparentContainerUnknown`, and a bare key that collides with a sibling
-child's name as `ChildNameCollision`.
+On an [assembly](@ref g-assembly), the build refuses a name that matches no
+container field as `TransparentContainerUnknown`, and a bare key that collides
+with a sibling child's name as `ChildNameCollision`. A
+[primitive](@ref g-primitive)'s is never read.
 """
 transparent_container(::Any) = nothing
 
@@ -437,7 +441,7 @@ Relative(K::Integer) = Relative(K, 0)
     Absolute(q::Period, τ::Union{Integer,Rational{<:Integer}} = 0) -> Absolute
 
 A sample time in exact rational seconds, with [ticks](@ref g-tick) at
-`t = τ + k·T`.
+`t = t₀ + τ + k·T`.
 
 `q` is a period `T`, built with [`Period`](@ref) or [`Hz`](@ref), and `τ` is
 the offset in seconds.
@@ -559,9 +563,10 @@ Return the continuous state `x` projected back onto the
 alone stays positional. An attitude model might declare
 `x_projection(c::Attitude, x) = (; q = normalize(x.q))`.
 
-It runs after each integration step and after each event handler fires. Its
-return replaces the whole continuous state, so it carries every state field at
-the state's type, or for a bare state one value at its type.
+It runs after each integration step, after each event handler fires, and at
+`init!` and `overlay!`, so it also reshapes an authored state. Its return
+replaces the whole continuous state, so it carries every state field at the
+state's type, or for a bare state one value at its type.
 
 The method is optional and continuous-only. The build refuses it on a discrete
 [primitive](@ref g-primitive), or on one with an empty state, as
@@ -610,16 +615,17 @@ may carry `x`, `m`, `t` and `ws`, and on the discrete tier `s`, `t`, `Δt` and
 The stage returns a `NamedTuple` of port values at their [`y_types`](@ref)
 types, or the port's value itself under a bare `y_types`, the port `y`, as in
 `y_state(::Integrator, (; x)) = x`. [`y_direct`](@ref) receives the return as
-`y_x`, or `y_s` on the discrete tier, so an intermediate both stages need is
-computed once. A component exposes a state or mode field by returning it here.
+`y_x`, or `y_s` on the discrete tier, so a value both stages need, declared as a
+port, is computed once. A component exposes a state or mode field by returning
+it here.
 
-A discrete primitive's stages run only at its [ticks](@ref g-tick), and its
-ports hold their values in between.
+A discrete primitive's stages run at `init!` and then only at its
+[ticks](@ref g-tick), and its ports hold their values in between.
 
 The stage is optional, and a component with no stage-1 ports defines no method.
 The build refuses a read outside the bundle as `BundleFieldError`, a return of
-bare `(;)` as `DeadStage`, and a returned name `y_types` lacks as
-`UndeclaredReturnField`.
+bare `(;)` under a named `y_types` as `DeadStage`, and a returned name `y_types`
+lacks as `UndeclaredReturnField`.
 """
 function y_state end
 

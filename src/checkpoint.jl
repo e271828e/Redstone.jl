@@ -60,8 +60,9 @@ can miss the grid by an ulp and be refused as `CheckpointMidFrame`.
 A model's state is not a [condition](@ref g-condition). It holds the
 [root inputs](@ref g-root-input) as values, never as the condition that set
 them. It enters no condition expression and yields none. To write a condition
-onto a model at rest, use [`overlay!`](@ref). `==` compares identity, so compare
-two states field by field.
+onto a model at rest, use [`overlay!`](@ref). `==` compares identity, on a state
+and on its `table` and `layout` fields, so compare `x`, `s`, `m` and `prior` by
+value and the table buffer by buffer.
 """
 struct ModelState{T}
     x::Vector{T}                     # the flat buffer

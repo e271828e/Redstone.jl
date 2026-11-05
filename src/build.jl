@@ -574,7 +574,8 @@ rather than from an [activation](@ref g-activation).
 
 An `Outputs` holds these fields.
 
-- `components`: one entry per component, in the order the build walks the tree.
+- `components`: one entry per [primitive](@ref g-primitive), in the order the
+  build walks the tree.
 - `order`: the [execution order](@ref g-execution-order) over the indices of
   `components`.
 
@@ -620,8 +621,8 @@ names only and does not depend on the scalar type.
 
 An `Events` holds this field.
 
-- `components`: one entry per component, in the order the build walks the tree,
-  so one index addresses it and `Outputs` alike.
+- `components`: one entry per [primitive](@ref g-primitive), in the order the
+  build walks the tree, so one index addresses it and `Outputs` alike.
 
 Each entry holds these fields.
 

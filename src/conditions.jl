@@ -124,9 +124,10 @@ conditions under [`at`](@ref) and collects them with [`combine`](@ref), as in
 
 A model package extends `condition` through `import Redstone: condition`, as it
 extends the declaration functions. There is no fallback method, so a child type
-without one fails at its owner's pull as a `MethodError` naming it. A method
-written to a package-local `condition` fails the same way, and no earlier check
-catches it.
+without one fails at its owner's pull as a `MethodError` naming it. An owner in
+another package pulling a method written to a package-local `condition` fails
+the same way, and no earlier check catches it. Within one package the local
+function works.
 """
 function condition end
 
@@ -255,10 +256,11 @@ before it, the last layer winning on a shared leaf.
 
 `override` layers conditions in order, where [`combine`](@ref) collects them
 symmetrically. It serves a [baseline](@ref g-baseline) with patches over it, and
-[`trim!`](@ref) commits `override(baseline, solution)`. A leaf set in several
-layers takes the last layer's value, and the origin its diagnostics report names
-both layers. Two entries on one leaf within one layer are still refused as
-`DuplicateConditionLeaf` when a service resolves the condition.
+[`trim!`](@ref) commits `override(baseline, problem.condition(solution))`. A
+leaf set in several layers takes the last layer's value, and the origin its
+diagnostics report names both layers. Two entries on one leaf within one layer
+are still refused as `DuplicateConditionLeaf` when a service resolves the
+condition.
 
 A `u` entry's leaf is the [root input](@ref g-root-input) it resolves to, not
 the [face](@ref g-face) it was written with. A baseline authored at the root

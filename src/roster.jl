@@ -63,9 +63,9 @@ device binds differently per deployment, and narrowing the binding narrows the
 [claim](@ref g-claim). [`TableBinding`](@ref) is the shipped data-driven
 binding.
 
-`attach!` checks the traits against the methods. A binding that declares
-neither side, a declared side without its method, or a method under a `false`
-trait is refused as `BindingContractMismatch`.
+`attach!` checks the traits against the methods. A binding that declares neither
+side, a declared side without its `claims` or `reads`, or one of those under a
+`false` trait is refused as `BindingContractMismatch`.
 """
 abstract type AbstractBinding end
 

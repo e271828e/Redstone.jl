@@ -317,24 +317,24 @@ builds, which is what [`replay!`](@ref) checks before re-driving a recording.
 
 `Δt_base = :derive` derives the base tick from the discrete
 [components](@ref g-component)' sample times. It is refused as
-`DeploymentInvalid` unless every discrete component is
-[anchored](@ref g-anchor) by an [`Absolute`](@ref) entry. A derived `Δt_base`
-finer than the fastest declared sample time warns `GridUtilization`.
+`DeploymentInvalid` unless every discrete component is [anchored](@ref g-anchor)
+by an [`Absolute`](@ref) entry and the tree declares at least one. A derived
+`Δt_base` finer than the fastest declared sample time warns `GridUtilization`.
 
 A keyword outside its range is refused as `DeploymentInvalid`, and so is a
 `Δt_base` that is not a whole multiple of `h`, that disagrees with `N_base`, or
-that an anchor's period or offset does not divide. One throw reports the faults
+that does not divide an anchor's period or offset. One throw reports the faults
 found together. Exhausting `firing_budget` warns `FiringBudget`.
 
 # Keywords
 
-- `h`: the continuous step in seconds, a `Rational`, an integer, a `Period` or
-  an `Hz` value, required and refused as `DeploymentInvalid` when absent or
+- `h`: the continuous step in seconds, a `Rational{Int}`, an integer, a `Period`
+  or an `Hz` value, required and refused as `DeploymentInvalid` when absent or
   given as a float.
 - `N_base`: steps per base tick, `1` when `Δt_base` is absent and derived from
   `Δt_base` otherwise.
-- `Δt_base`: the base tick period as a `Rational`, a `Period` or an `Hz` value,
-  `N_base * h` by default, or `:derive`.
+- `Δt_base`: the base tick period as a `Rational{Int}`, an integer, a `Period`
+  or an `Hz` value, `N_base * h` by default, or `:derive`.
 - `algorithm`: the stepper, `RK4` or `Heun`, bound to the state
   [buffer](@ref g-buffer) when the `Model` is built.
 - `firing_budget`: how many times one event may fire at one

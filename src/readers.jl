@@ -115,8 +115,9 @@ The [selector](@ref g-selector) that reads one leaf of a
 [`get_input`](@ref) returns it, and [`reads`](@ref) labels it in a
 [read set](@ref g-read-set). A selector holds its address as authored. The
 address is a [leaf address](@ref g-leaf-address) that starts with the
-[face](@ref g-face) name. It is parsed and checked when a reader resolves the
-selector.
+[face](@ref g-face) name, or headless for a [primitive](@ref g-primitive)'s
+[bare](@ref g-bare-contract) face. It is parsed and checked when a reader
+resolves the selector.
 
 `GetInput` resolves against the [signal table](@ref g-signal-table) or a
 published [snapshot](@ref g-snapshot) alike. It reads back the value of a root
@@ -135,8 +136,9 @@ The [selector](@ref g-selector) that reads one leaf of an exported output
 
 [`get_face`](@ref) returns it, and [`reads`](@ref) labels it in a
 [read set](@ref g-read-set). A selector holds its address as authored. The
-address is a [leaf address](@ref g-leaf-address) that starts with the face name.
-It is parsed and checked when a reader resolves the selector.
+address is a [leaf address](@ref g-leaf-address) that starts with the face name,
+or headless for a [primitive](@ref g-primitive)'s [bare](@ref g-bare-contract)
+port. It is parsed and checked when a reader resolves the selector.
 
 `GetFace` resolves against the [signal table](@ref g-signal-table) or a
 published [snapshot](@ref g-snapshot) alike. It is an
@@ -198,9 +200,9 @@ Return a [selector](@ref g-selector) that reads one leaf of a
 A selector is labeled in a [read set](@ref g-read-set) built with
 [`reads`](@ref). `path` names the [component](@ref g-component), and `leaf` is a
 [leaf address](@ref g-leaf-address) into its continuous state. The address takes
-`[k]` or `[k,l]` steps only, as for [`get_state`](@ref), and is headless for a
-bare state. The value read is the derivative of that leaf, which has the state's
-own shape.
+`[k]` or `[k,l]` steps only, as [`get_state`](@ref) does on a continuous state,
+and may be headless for a bare state. The value read is the derivative of that
+leaf, which has the state's own shape.
 
 Like `get_state`, `get_deriv` reads the live [stores](@ref g-store), and a
 reader over published [snapshots](@ref g-snapshot) refuses it as
@@ -501,11 +503,11 @@ The [read set](@ref g-read-set) that holds labeled
 [mount chain](@ref g-mounting) they resolve under.
 
 [`reads`](@ref) returns it, [`at`](@ref) mounts it below a prefix, and
-[`series`](@ref) takes it, as do a [`TrimProblem`](@ref)'s `reads` keyword and
-each list of a tap set from [`taps`](@ref). A read set holds the labeled
-selectors as a `NamedTuple` in the order written. It also holds the mount chain
-`at` builds, outermost first and empty at the root. A service that takes it
-walks the chain from the root and resolves each selector there.
+[`series`](@ref) takes it, as does a [`TrimProblem`](@ref)'s `reads` keyword,
+and [`taps`](@ref) builds one from each list it is given. A read set holds the
+labeled selectors as a `NamedTuple` in the order written. It also holds the
+mount chain `at` builds, outermost first and empty at the root. A service that
+takes it walks the chain from the root and resolves each selector there.
 
 Every selector comes from a closed family of five, one address space for every
 reader of the model. The five are [`get_state`](@ref), [`get_deriv`](@ref),
@@ -514,8 +516,8 @@ state and [ports](@ref g-port) are addressable. A value a
 [component](@ref g-component) computes without declaring it has no selector, and
 the remedy is always for the component to export it.
 
-A bare `NamedTuple` of selectors where a read set is expected is refused as
-`ReadSetMisuse`.
+A bare `NamedTuple` of selectors is refused as `ReadSetMisuse` by `series`, as
+`TrimProblemInvalid` by `trim!`, and as `ConditionNodeMisuse` by `at`.
 """
 struct Reads{NT<:NamedTuple}
     prefixes::Tuple{Vararg{String}}
@@ -537,10 +539,11 @@ passes between the author and the framework.
 
 [`series`](@ref) takes a read set, a trim problem holds one, and [`at`](@ref)
 mounts one below the root. A value that is not a selector is refused as
-`ReadSetMisuse`. Each selector is resolved, and refused as `ReadResolution`
-when it does not resolve, by the service that takes the set. For the read set
-of a [device](@ref g-device)'s output side, see the [binding](@ref g-binding)
-method of `reads`.
+`ReadSetMisuse`. The service that takes the set resolves each selector, and
+refuses a selector whose path names no [component](@ref g-component) as
+`PathResolution`, and any other selector that does not resolve as
+`ReadResolution`. For the read set of a [device](@ref g-device)'s output side,
+see the [binding](@ref g-binding) method of `reads`.
 """
 reads(; selectors...) = _reads(NamedTuple(selectors))
 

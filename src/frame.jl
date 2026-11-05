@@ -23,16 +23,18 @@
 Advance the model through [frame](@ref g-frame) `k`, from `tₖ₋₁` to `tₖ`, and
 settle its frame-top [boundary](@ref g-boundary).
 
-A frame starts with `frame_top!(hooks)`, before the model touches any state, and
-then integrates. A [localized](@ref g-localized) event adds a boundary at its
-time [`t*`](@ref g-t). The clock is then set to the frame top `tₖ`, and the
-boundary there runs. `settled!(hooks)` follows every boundary, each `t*`'s and
-the frame top's.
+`k` must be the frame after the clock's, which `frame!` does not check. A frame
+starts with `frame_top!(hooks)`, before the model touches any state, and then
+integrates. A [localized](@ref g-localized) event adds a boundary at its time
+[`t*`](@ref g-t). The clock is then set to the frame top `tₖ`, and the boundary
+there runs. `settled!(hooks)` follows every boundary, each `t*`'s and the frame
+top's.
 
-When `k` is a multiple of `N_base`, the frame top is a
-[base tick](@ref g-tick). The discrete [components](@ref g-component)
-[due](@ref g-due) there run their stages and updates in it. Any other `k` runs
-an off-tick boundary, with no discrete update.
+When `k` is a multiple of `N_base`, the frame top is a [base tick](@ref g-tick).
+The discrete [components](@ref g-component) [due](@ref g-due) there run their
+stages and updates in it. Any other `k` runs an off-tick boundary, with no
+discrete update. A `Model` at a `Dual` has no events and freezes its discrete
+components.
 
 `frame!` returns whether `settled!` asked to abandon the frame. A `true` at a
 `t*` boundary leaves the rest of the frame unrun. The clock stays at `t*`, where

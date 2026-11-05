@@ -206,7 +206,7 @@ end
 
 # Design: §11.8, §12.2, Appendix B, D-193.
 # `recent` is the ring the frame's drain took, at most `DIAG_RING` entries.
-# `totals` is monotone across snapshots, so log decimation loses *which*
+# `totals` is monotone between resets, so log decimation loses *which*
 # boundary an occurrence fell on, never *how many*. `task_state` is read off the
 # run's `Task` handle at publication (D-193); `:done` without a live task covers
 # a failed `init!` and a returned inline body. The records render inside their
@@ -228,20 +228,23 @@ holds these fields.
 
 - `who`: the writer's name, as a port view's `incumbent` holds it.
 - `recent`: the diagnostics the writer reported since the previous
-  [frame top](@ref g-frame), at most 16, carried by this snapshot alone.
+  [frame top](@ref g-frame), at most 16 per
+  [diagnostic cell](@ref g-diagnostic-cell), of which the loop's record folds
+  two, carried by this snapshot alone.
 - `suppressed`: the counts by [kind](@ref g-kind) of the diagnostics dropped
   past those 16.
-- `totals`: the counts by kind since the run began, which never decrease from
-  one snapshot to the next.
+- `totals`: the counts by kind since the account was last reset, by a call that
+  opens a run or by `run!` or `replay!` starting, and which never decrease
+  between those.
 - `heartbeat`: a rostered device's [heartbeat](@ref g-heartbeat), in seconds as
   `time()` gives them.
 - `task_state`: the state of a rostered device's task, `:none`, `:running` or
   `:done`.
 
-`task_state` is `:none` outside a run. Inside one it is `:running` while the
-task lives, and `:done` once it has ended or when the device has no live task of
-its own. The harness writer and the loop have no task of their own, so their
-records hold `nothing` in `heartbeat` and `task_state`.
+`task_state` is `:none` outside `run!` and `replay!`. Inside them it is
+`:running` while the task lives, and `:done` once it has ended or when the
+device has no live task of its own. The harness writer and the loop have no task
+of their own, so their records hold `nothing` in `heartbeat` and `task_state`.
 """
 struct WriterStatus
     who::String
@@ -509,10 +512,10 @@ The immutable publication of one settled [boundary](@ref g-boundary), with its
 [signal table](@ref g-signal-table), its time and its counters.
 
 [`latest`](@ref) returns the newest [snapshot](@ref g-snapshot),
-[`wait_next_snapshot`](@ref) the next one and [`logged`](@ref) the retained
-ones. A snapshot holds the whole signal table at its boundary,
-[root inputs](@ref g-root-input) included, and no state. Read a
-[port](@ref g-port) off it with `port(snapshot, path, name)`, a method of
+[`wait_next_snapshot`](@ref) the newest once an unseen one is published and
+[`logged`](@ref) the retained ones. A snapshot holds the whole signal table at
+its boundary, [root inputs](@ref g-root-input) included, and no state. Read a
+root input or an output off it with `port(snapshot, path, name)`, a method of
 [`port`](@ref) addressed exactly as the live table. Read a
 [device](@ref g-device)'s [read set](@ref g-read-set) with [`gather`](@ref).
 Nothing in a published snapshot is ever written again, so a reader on any task
@@ -521,8 +524,9 @@ may hold one for as long as it likes.
 A snapshot holds these fields, beside the table that `port` reads.
 
 - `t`: the boundary time.
-- `frame`: the number of [frames](@ref g-frame) completed since the run's
-  origin.
+- `frame`: the [frame](@ref g-frame) index, the frames completed since the
+  trajectory's origin at a frame top and the frame in progress at an event
+  boundary inside one.
 - `boundary`: the boundary ordinal, counting the trajectory's published
   boundaries from `0` at [boundary zero](@ref g-boundary-zero).
 - `status`: the [framework status](@ref g-framework-status), with one
@@ -547,14 +551,15 @@ Return a [port](@ref g-port)'s value in the [snapshot](@ref g-snapshot)'s
 [boundary](@ref g-boundary).
 
 A snapshot carries the whole signal table, [root inputs](@ref g-root-input)
-included. Address a port exactly as in the live table, by its
-[component](@ref g-component)'s path and its name. Address a bare port, the port
-`y`, by that name or by the path alone. An [assembly](@ref g-assembly)'s own
-path addresses its output [faces](@ref g-face). The empty path addresses the
-root inputs. Nothing in a published snapshot is written again, so the read is
-safe from any task. A path naming no component is refused as `PathResolution`,
-and a name the component has no port of as an `ArgumentError` listing its ports,
-as on the live table.
+included. Address an output exactly as in the live table, by its
+[component](@ref g-component)'s path and its name. An input [face](@ref g-face)
+below the root has no address. Address a bare port, the port `y`, by that name
+or by the path alone. An [assembly](@ref g-assembly)'s own path addresses its
+output faces. The empty path addresses the root inputs and the outputs the root
+exports, or a [primitive](@ref g-primitive) root's own ports. Nothing in a
+published snapshot is written again, so the read is safe from any task. A path
+naming no component is refused as `PathResolution`, and a name the component has
+no port of as an `ArgumentError` listing its ports, as on the live table.
 
 A snapshot carries no state, only ports. For a port's live value, see
 `port(sim, path, name)` and `port(model, path, name)`, and for snapshots

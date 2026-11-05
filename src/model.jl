@@ -44,9 +44,9 @@ talks to no [device](@ref g-device) and records nothing. A [`Simulation`](@ref)
 does that around a `Model{Float64}`. One deployment backs many models, and each
 model owns its buffers alone.
 
-`T` is `Float64` or a `ForwardDiff.Dual`, into which a `Float64` embeds exactly.
-Any other `T` is refused as `ArgumentInvalid` with reason `:scalar`, before
-anything is compiled.
+`T` is `Float64` or a concrete `ForwardDiff.Dual` over `Float64`, into which a
+`Float64` embeds exactly. Any other `T` is refused as `ArgumentInvalid` with
+reason `:scalar`, before anything is compiled.
 
 `Model(build; kw...)` is
 `Model(Deployment(build; grid keywords...), T; chunk_size)`, and
@@ -69,8 +69,9 @@ A model holds five values, each a field.
 
 `status` is `:built` until [boundary zero](@ref g-boundary-zero) completes, and
 `:consistent` once it has completed or a state has been restored. A throw inside
-a frame writes `:inconsistent`, and a throw inside boundary zero writes
-`:built`. Only the model's own calls write it.
+a frame other than an `InterruptException` writes `:inconsistent`. A throw
+inside boundary zero or `overlay!`'s settling writes `:built`. Only the model's
+own calls write it.
 
 `claimed` is set once a `Simulation` takes the model and is never cleared, so a
 simulation owns its model and never shares it. The model's own calls that write,
@@ -251,8 +252,9 @@ defaults, and run [boundary zero](@ref g-boundary-zero) at `t0`.
 
 `init!` resets the state to the declared defaults, applies the condition's
 overrides and sets the clock to `t0`. It sets every event [prior](@ref g-prior)
-to not [holding](@ref g-edge-semantics). It then runs boundary zero, which
-settles through `settled!(hooks)`, and the model's status becomes `:consistent`.
+to not [holding](@ref g-edge-semantics). A `Model` at a `Dual` has no events. It
+then runs boundary zero, which settles through `settled!(hooks)`, and the
+model's status becomes `:consistent`.
 
 The condition is built with [`set`](@ref) and its combinators.
 [Root inputs](@ref g-root-input) have no declared default, so the condition must
@@ -260,7 +262,8 @@ give every one of them a value.
 
 The condition resolves, and its root inputs are checked, before any write. A
 condition that does not resolve against the build is refused as
-`ConditionResolution`, and a root input it leaves without a value as
+`ConditionResolution`, `PathResolution`, `DuplicateConditionLeaf` or
+`ConditionNodeMisuse`, and a root input it leaves without a value as
 `UninitializedInputs`. A model claimed by a [`Simulation`](@ref) is refused as
 `ArgumentInvalid`.
 
@@ -270,7 +273,8 @@ simulation's own `init!`, which resolves before it opens its run.
 A throw inside boundary zero arrives as a `StepError` at `t0`, with pointer 0
 and host `:boundary_zero`. It writes the status back to `:built`. An
 [interrupt](@ref g-operator-interrupt) writes `:built` too, and propagates
-unwrapped.
+unwrapped. A throw from `settled!(hooks)` propagates as it is and writes no
+status.
 
 # Keywords
 
@@ -344,27 +348,31 @@ a value.
 
 The overlaid state then settles. An overlaid `x` is
 [projected](@ref g-projection), and [events](@ref g-state-event) fire until none
-is left to fire. No discrete output stage and no `s_update` runs. An overlaid
-discrete store is therefore the state of the [component](@ref g-component)'s
-next [tick](@ref g-tick), and its held output stays until that tick. An event
-the overlay moves into [holding](@ref g-edge-semantics) fires at once. The
-settled [boundary](@ref g-boundary) goes through `settled!(hooks)`, and the
-status returns to `:consistent`.
+is left to fire or the [firing budget](@ref g-firing-budget) stops them. A
+`Model` at a `Dual` has no events. No discrete output stage and no `s_update`
+runs. An overlaid discrete store is therefore the state of the
+[component](@ref g-component)'s next [tick](@ref g-tick), and its held output
+stays until that tick. An event the overlay moves into
+[holding](@ref g-edge-semantics) fires at once. The settled
+[boundary](@ref g-boundary) goes through `settled!(hooks)`, and the status
+returns to `:consistent`.
 
 `overlay!` needs what [`checkpoint`](@ref) needs, the model `:consistent` and
 its clock on a [frame top](@ref g-frame). Otherwise it is refused as
 `ServiceLifecycle` or `CheckpointMidFrame`. The condition resolves against the
 build with [`init!`](@ref)'s diagnostics, so one that does not resolve is
-refused as `ConditionResolution`. A model claimed by a [`Simulation`](@ref) is
-refused as `ArgumentInvalid`.
+refused as `ConditionResolution`, `PathResolution`, `DuplicateConditionLeaf` or
+`ConditionNodeMisuse`. A model claimed by a [`Simulation`](@ref) is refused as
+`ArgumentInvalid`.
 
 A second method takes the condition already resolved, and serves the
 simulation's own `overlay!`.
 
-A throw inside the settling arrives as a `StepError` with host `:overlay` and
-the frame the clock sits at. It writes the status back to `:built`, with the
-stores partly written as a failed [boundary zero](@ref g-boundary-zero) leaves
-them.
+A throw inside the settling other than an `InterruptException` arrives as a
+`StepError` with host `:overlay` and the frame the clock sits at. It writes the
+status back to `:built`, with the stores partly written as a failed
+[boundary zero](@ref g-boundary-zero) leaves them. A throw from
+`settled!(hooks)` propagates as it is and writes no status.
 
 # Keywords
 
@@ -425,7 +433,7 @@ The named tuple holds four bodies, `sweep_1`, `sweep_2`, `rhs` and `ticks`, and
 two dictionaries of zero-argument callables over the same buffers. `events`
 holds the [guard](@ref g-guard) and the handler of each event, keyed by
 `(path, name)`. `projections` holds the `x_projection` call of each
-[component](@ref g-component), keyed by path.
+[component](@ref g-component) that declares one, keyed by path.
 
 The set is fixed. A model with no discrete components still gets `ticks`, which
 does nothing, so code over the bodies needs no branch per model.
@@ -717,16 +725,19 @@ warnings(model::Model) = vcat(warnings(model.deployment.build), warnings(model.d
 Return a [port](@ref g-port)'s current value in the model's
 [signal table](@ref g-signal-table).
 
-Address a port by its [component](@ref g-component)'s path and its name. Address
-a bare port, the port `y`, by that name or by the path alone. An
-[assembly](@ref g-assembly)'s own path addresses its output
-[faces](@ref g-face), which resolve to the [cells](@ref g-cell) they derive
-from. The empty path addresses the [root inputs](@ref g-root-input).
+Address an output by its [component](@ref g-component)'s path and its name. An
+input [face](@ref g-face) below the root has no address. Address a bare port,
+the port `y`, by that name or by the path alone. An
+[assembly](@ref g-assembly)'s own path addresses its output faces, which resolve
+to the [cells](@ref g-cell) they derive from. The empty path addresses the
+[root inputs](@ref g-root-input) and the outputs the root exports, or a
+[primitive](@ref g-primitive) root's own ports.
 
 A path naming no component is refused as `PathResolution`, with the children of
 the level it stopped at. A name the component has no port of is refused as an
-`ArgumentError` listing its ports, and so is a name left out at a component
-whose output contract is named.
+`ArgumentError` listing its ports. A name left out at a component whose output
+contract is named is an `ArgumentError` too, which tells the caller to name the
+port.
 
 A simulation's `port(sim, path, name)` reads its model's. To read a port off a
 published [snapshot](@ref g-snapshot) instead, use `port(snapshot, path, name)`.
@@ -772,9 +783,10 @@ end
 Return the modes of the [component](@ref g-component) at `path`, from its `m`
 [store](@ref g-store).
 
-The read changes nothing. Only the component's event handlers write its modes.
-A component with no modes reads `nothing`. A simulation's modes are its
-model's. For the rest of a component's state, see [`state`](@ref).
+The read changes nothing. Within a [frame](@ref g-frame) only the component's
+event handlers write its modes, and `init!`, `overlay!` and `restore!` write
+them at rest. A component with no modes reads `nothing`. A simulation's modes
+are its model's. For the rest of a component's state, see [`state`](@ref).
 
 A path naming no component is refused as `PathResolution`, with the children of
 the level it stopped at.

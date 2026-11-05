@@ -43,8 +43,9 @@ item changes what the spec says, the spec edit is part of the item.
   is done and ruled, section 7, and section 5's rulings landed, a, b, c, d, e,
   h, j and l as fixes, f, g and k as the bullets above. j went the other way
   from section 6 by a later ruling, so `DiscreteLimitedIntegrator` clamps `s0`
-  at `t₀` and refuses nothing. i, m and `DeviceHandle`'s `gather` are the
-  sweep's docstring corrections, which come next.
+  at `t₀` and refuses nothing. The accuracy half of the sweep landed, the
+  ruled corrections with i, m and `DeviceHandle`'s `gather` among them, and
+  the form half comes next.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose
