@@ -20,17 +20,6 @@ item changes what the spec says, the spec edit is part of the item.
   links one per member, under the message. A member traced structurally has
   its dependence presumed, so its `y_direct` may not read the input, and the
   row should say so. The spec edit and its log entry come first.
-- **Tighten the blocks' `V` bound to what the build admits** (§7.1, §13.7,
-  D-094, D-320), a loose fix, ruled by the user on 2026-11-04. Fifteen blocks,
-  `Freeze` to `DiscretePID`, bound `V` as `Union{Real, StaticArray{<:Tuple,
-  <:Real}}`, so a `Float32` or an `MVector` passes the constructor and is
-  refused at build as `IllegalStateLeaf`, `IllegalStoreField` or
-  `ConformanceFailure`; a probe on 2026-11-04 tried six such variants and
-  every one was refused. The bound becomes `Union{Float64, SArray{<:Tuple,
-  Float64}}`, so the refusal is the constructor's `TypeError`, with one test
-  per tier. `GaussianWhiteNoise` was widened from `SVector` to that bound on
-  2026-11-05, and the docstrings already say `Float64` or an `SArray` of
-  `Float64`.
 - **One broadcast convention for the blocks' keywords** (§13.7, D-313), a
   loose fix, ruled by the user on 2026-11-04. Keywords sharing `V` broadcast
   to one shape, as `PID`, `DiscretePID`, `GaussianWhiteNoise` and the trackers

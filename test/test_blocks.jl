@@ -1240,7 +1240,8 @@ function test_blocks()
         model = Group((; p = Pendulum(), f = Freeze{Float64}(), e = PinnedEntry());
                       local_wires = ("p/θ" => "f/u", "f/y" => "e/u"), input_wires = ("τ" => "p/u",))
         @test build(model; activations = (Float64, LinearizeDual)) isa Build
-        # `V` is a `Real` or a `StaticArray` of them, constrained at the type.
+        # `V` is a `Float64` or an `SArray` of `Float64`, constrained at the type.
+        @test_throws TypeError Freeze{Float32}
         @test_throws TypeError Freeze{HeightField}
     end
 
@@ -3260,6 +3261,16 @@ function test_blocks()
         @test_throws ArgumentError StateSpace(A = zeros(0, 0), B = zeros(0, 1), C = zeros(1, 0), D = [2.0;;])
         @test_throws ArgumentError GaussianWhiteNoise(seed = 1)
         @test_throws ArgumentError GaussianWhiteNoise(seed = 1, σ = 1.0, psd = 1.0)
+    end
+
+    @testset "a `Float32` or an `MVector` keyword is refused at the constructor, on either tier (§7.1, §13.7, D-320)" begin
+        # The build admits `Float64` and `SArray`s of it alone, so the bound
+        # refuses the rest where the block is written, not at build.
+        @test_throws TypeError Integrator(x0 = 1f0)
+        @test_throws TypeError Integrator(x0 = MVector(1.0, 2.0))
+        @test_throws TypeError DiscreteIntegrator(s0 = 1f0)
+        @test_throws TypeError DiscreteIntegrator(s0 = MVector(1.0, 2.0))
+        @test_throws TypeError Relay(lower = 0f0, upper = 1f0)
     end
 
     @testset "the loops' phase bodies and their quiet boundaries allocate nothing (§9.8)" begin

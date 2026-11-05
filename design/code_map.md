@@ -137,7 +137,7 @@ The standard component library, the submodule `Redstone.Blocks`:
   `Comparator` each ship two detection policies, localized and
   boundary-detected, selected by the type parameter `L` (D-179).
   `LimitedIntegrator`, `LimitedDoubleIntegrator`, `Relay` and `Comparator`
-  are over `Real` and static vectors, with `Int8` modes and, over a vector,
+  are over `Float64` and static vectors, with `Int8` modes and, over a vector,
   events generated per component; the fall of `Relay` and `Comparator` is
   strict.
   `LimitedIntegrator` and `LimitedDoubleIntegrator` publish their mode as the
@@ -148,7 +148,7 @@ The standard component library, the submodule `Redstone.Blocks`:
   `DiscreteLimitedIntegrator` does, and write their hit guards over
   `first_nonzero`.
 - `ControllerBlock{Hold, Track}`, carrying `axis_ports`, `gated_error` and
-  `correction_reference`, over `PIDBlock{V, Hold, Track, Fixed}` over `Real`
+  `correction_reference`, over `PIDBlock{V, Hold, Track, Fixed}` over `Float64`
   and static vectors, carrying `signal_ports`, `u_types`, `y_types` and
   `parameters`, over `PID` and `DiscretePID`, with the marker `AsPort`, the
   roster `PID_PARAMETERS` and the helpers `shape_type`, `fixed_parameters`,

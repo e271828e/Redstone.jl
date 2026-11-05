@@ -243,10 +243,10 @@ through it. At [nominal](@ref g-nominal) it is the identity. Every Jacobian
 along the path then reads a zero coupling, which is the modelling decision the
 block states.
 
-`V` is a `Real` or a `StaticArray` of them. Any other `V` is refused as a
+`V` is a `Float64` or an `SArray` of `Float64`. Any other `V` is refused as a
 `TypeError` where `Freeze{V}` is written.
 """
-struct Freeze{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: AbstractComponent end
+struct Freeze{V <: Union{Float64, SArray{<:Tuple, Float64}}} <: AbstractComponent end
 x_init(::Freeze) = nothing
 u_types(::Freeze{V}) where {V} = V
 y_types(::Freeze{V}) where {V} = Pinned{V}
@@ -331,7 +331,7 @@ taken from `float(v0)`, so an integer `v0` qualifies.
 - `K`: the delay in ticks, at least 1.
 - `v0`: the value published before `K` ticks have passed.
 """
-struct Delay{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, K} <: AbstractComponent
+struct Delay{V <: Union{Float64, SArray{<:Tuple, Float64}}, K} <: AbstractComponent
     v0::V
 end
 function Delay(; K::Int, v0 = 0.0)
@@ -388,7 +388,7 @@ The state, the input `u` and the output `y` share one type, the parameter `V`,
 
 See also [`DiscreteLimitedIntegrator`](@ref), [`Integrator`](@ref).
 """
-struct DiscreteIntegrator{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, R} <: AbstractComponent
+struct DiscreteIntegrator{V <: Union{Float64, SArray{<:Tuple, Float64}}, R} <: AbstractComponent
     s0::V
 end
 function DiscreteIntegrator(; s0 = 0.0, reset::Bool = false)
@@ -445,7 +445,7 @@ refused with an `ArgumentError`.
 
 See also [`DiscreteIntegrator`](@ref).
 """
-struct DiscreteLimitedIntegrator{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, R} <: AbstractComponent
+struct DiscreteLimitedIntegrator{V <: Union{Float64, SArray{<:Tuple, Float64}}, R} <: AbstractComponent
     s0::V
     lower::V
     upper::V
@@ -500,7 +500,7 @@ state and both ports share one type, the parameter `V`, `Float64` or an
 - `s0`: the previous output at the first tick, so the output at `t₀` is already
   one slew step from it.
 """
-struct RateLimiter{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: AbstractComponent
+struct RateLimiter{V <: Union{Float64, SArray{<:Tuple, Float64}}} <: AbstractComponent
     rising::Float64
     falling::Float64
     s0::V
@@ -677,7 +677,7 @@ The state, the input `u` and the output `y` share one type, the parameter `V`,
 
 See also [`LimitedIntegrator`](@ref), [`DiscreteIntegrator`](@ref).
 """
-struct Integrator{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, R} <: AbstractComponent
+struct Integrator{V <: Union{Float64, SArray{<:Tuple, Float64}}, R} <: AbstractComponent
     x0::V
 end
 function Integrator(; x0 = 0.0, reset::Bool = false)
@@ -723,7 +723,7 @@ model runs at.
 - `τ`: the time constant, positive.
 - `x0`: the initial value of `x`.
 """
-struct FirstOrderLag{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: AbstractComponent
+struct FirstOrderLag{V <: Union{Float64, SArray{<:Tuple, Float64}}} <: AbstractComponent
     x0::V
     τ::Float64
 end
@@ -1265,7 +1265,7 @@ publishes `after` from the start.
 - `after`: the value from `t_step` on.
 - `localized`: `true` for a localized step, `false` for a boundary-detected one.
 """
-struct Step{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, L} <: AbstractComponent
+struct Step{V <: Union{Float64, SArray{<:Tuple, Float64}}, L} <: AbstractComponent
     before::V
     after::V
     t_step::Float64
@@ -1334,7 +1334,7 @@ are refused with an `ArgumentError`.
 - `localized`: `true` for localized breakpoints, `false` for boundary-detected
   ones.
 """
-struct Sequence{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, L} <: AbstractComponent
+struct Sequence{V <: Union{Float64, SArray{<:Tuple, Float64}}, L} <: AbstractComponent
     times::Vector{Float64}
     values::Vector{V}
 end
@@ -1468,7 +1468,7 @@ an `ArgumentError`.
 See also [`LimitedDoubleIntegrator`](@ref), [`DiscreteLimitedIntegrator`](@ref),
 [`Integrator`](@ref).
 """
-struct LimitedIntegrator{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, L, R} <: AbstractComponent
+struct LimitedIntegrator{V <: Union{Float64, SArray{<:Tuple, Float64}}, L, R} <: AbstractComponent
     x0::V
     lower::V
     upper::V
@@ -1637,7 +1637,7 @@ refused with an `ArgumentError`.
 
 See also [`LimitedIntegrator`](@ref), [`Integrator`](@ref).
 """
-struct LimitedDoubleIntegrator{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, L} <: AbstractComponent
+struct LimitedDoubleIntegrator{V <: Union{Float64, SArray{<:Tuple, Float64}}, L} <: AbstractComponent
     q0::V
     v0::V
     lower::V
@@ -1761,7 +1761,7 @@ A `lower` above `upper` is refused with an `ArgumentError`.
 - `off`: the value `y` publishes while off.
 - `on`: the value `y` publishes while on.
 """
-struct Relay{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: AbstractComponent
+struct Relay{V <: Union{Float64, SArray{<:Tuple, Float64}}} <: AbstractComponent
     lower::V      # switch off when `u` falls below it
     upper::V      # switch on when `u` rises to it
     off::V        # `y` while off
@@ -1769,7 +1769,8 @@ struct Relay{V <: Union{Real, StaticArray{<:Tuple, <:Real}}} <: AbstractComponen
 end
 function Relay(; lower, upper, off = zero(lower), on = one.(lower))
     all(lower .<= upper) || throw(ArgumentError("the relay's `lower` must not exceed its `upper`"))
-    Relay(float.(promote(lower, upper, off, on))...)
+    lower, upper, off, on = float.(promote(lower, upper, off, on))
+    Relay{typeof(lower)}(lower, upper, off, on)
 end
 x_init(::Relay) = nothing
 m_init(c::Relay) = Int8.(zero(c.lower))    # the state: 0 off, 1 on
@@ -1858,7 +1859,7 @@ so integer values qualify.
 
 See also [`Relay`](@ref), [`Switch`](@ref).
 """
-struct Comparator{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, L} <: AbstractComponent
+struct Comparator{V <: Union{Float64, SArray{<:Tuple, Float64}}, L} <: AbstractComponent
     lower::V      # turn `false` when `u` falls below it
     upper::V      # turn `true` when `u` rises to it
 end
@@ -2155,7 +2156,7 @@ fine.
 
 See also [`DiscretePID`](@ref), [`PIDBlock`](@ref), [`LQRTracker`](@ref).
 """
-struct PID{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, Hold, Track, Fixed} <:
+struct PID{V <: Union{Float64, SArray{<:Tuple, Float64}}, Hold, Track, Fixed} <:
        PIDBlock{V, Hold, Track, Fixed}
     fixed::Fixed      # the parameters that are not ports, each a `V`, in roster order
 end
@@ -2283,7 +2284,7 @@ likewise.
 
 See also [`PIDBlock`](@ref), [`DiscreteLQRTracker`](@ref).
 """
-struct DiscretePID{V <: Union{Real, StaticArray{<:Tuple, <:Real}}, Hold, Track, Fixed} <:
+struct DiscretePID{V <: Union{Float64, SArray{<:Tuple, Float64}}, Hold, Track, Fixed} <:
        PIDBlock{V, Hold, Track, Fixed}
     fixed::Fixed      # the parameters that are not ports, each a `V`, in roster order
 end
