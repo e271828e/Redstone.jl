@@ -121,7 +121,8 @@ one input or one output a block has is a bare contract, one port whose face
 is the default `u` or `y`, which a wire addresses as `block/u` or `block/y`
 ([D-437][d-437]); a side with several ports names them `in1…inN`, and `out1…outN`
 where a block splits one port into `N` ports alike. The bundle reads a bare
-side as `u` or `y`, the value itself.
+side as `u` or `y`, the value itself. A long mechanism goes in a note under its
+table, which keeps each row on one line of a full-screen editor.
 
 A block with a defaulted parameter, or with more than one, gets a
 hand-written keyword constructor, as in `Integrator(; x0 = 0.0)` and
@@ -184,11 +185,11 @@ boundary as `Switch` wants. There is no integer-keyed form, since an index wants
 an enum anyway. `Switch{V}` stays, `Bool` being no `Enum`.
 
 **`Fn`.** The alternative is a four-declaration primitive per glue step. It is
-admitted on the fourth guideline, as the `Junction` is, not as a gain, so
-section 1's pricing still applies per instance. The port types are type
-parameters and never read off `f` ([D-033][d-033]), so a closure's output type is
-declared. `f` is applied in `y_direct`, so the block is a stage 2 leaf, and `f`
-walks under `Dual`, which the probe checks.
+admitted on didactic value, for the structure the declaration layer forces, as
+the `Junction` is, not as a gain, so section 1's pricing still applies per
+instance. The port types are type parameters and never read off `f` ([D-033][d-033]), so
+a closure's output type is declared. `f` is applied in `y_direct`, so the block
+is a stage 2 leaf, and `f` walks under `Dual`, which the probe checks.
 
 ### Sources
 
