@@ -548,7 +548,7 @@ as `ArgumentInvalid`, before any check. So is a second argument that is not a
 function trim!(model::Model{Float64}, problem::TrimProblem; baseline,
                t0::Real = 0.0, backend = LevenbergMarquardt())
     _claimed_gate(model, NoHooks(), :trim!)   # the claim is said first: the call commits (D-318)
-    solved = _solve_problem(model, problem; baseline, backend)
+    solved = _solve_problem(model, problem; baseline, t0 = Float64(t0), backend)
     _verdict!(model, problem, baseline, solved,
               condition -> init!(model, condition; t0 = Float64(t0)))
 end
@@ -564,7 +564,8 @@ trim!(::Model{T}, ::TrimProblem; kw...) where {T} = throw(DiagnosticError(
 # The solve, from the setup checks through the verdict's evaluation, on scratch
 # models alone; the commit is the caller's (D-319). The bypassed zero-decision
 # problem and the solved one return the same packing, what `_verdict!` reads.
-function _solve_problem(model::Model{Float64}, problem::TrimProblem; baseline, backend)
+function _solve_problem(model::Model{Float64}, problem::TrimProblem; baseline, t0::Float64,
+                        backend)
     build = model.deployment.build
     diags = Diagnostic[]
     _check_decisions!(diags, problem)
@@ -580,6 +581,7 @@ function _solve_problem(model::Model{Float64}, problem::TrimProblem; baseline, b
 
     # --- the nominal half (D-213) ------------------------------------------------
     nominal_exec = _scratch(model, Float64).exec
+    _set_clock!(nominal_exec, t0, t0)         # the search's time is the commit's (D-441)
     plan = resolve_condition(override(baseline, problem.condition(guess)), build, Float64)
     assert_total(plan, build.structure, :trim!)    # (§14.6): pre-evaluation, all-or-nothing
     apply!(nominal_exec, plan)
@@ -605,6 +607,7 @@ function _solve_problem(model::Model{Float64}, problem::TrimProblem; baseline, b
     T = ForwardDiff.Dual{TrimTag,Float64,N}
     act = activation(build, T)                # the cached activation (§9.4)
     seeded_exec = _scratch(model, T).exec
+    _set_clock!(seeded_exec, t0, t0)
     _establish_frozen!(seeded_exec, act, nominal_exec, model.deployment.build)
     # The names enter the closure as types: captured as a `Tuple` of `Symbol`s,
     # they would leave every `NamedTuple` `eval!` builds to runtime dispatch.

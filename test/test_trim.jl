@@ -282,6 +282,34 @@ function test_trim()
         end
     end
 
+    @testset "the search runs with the clock at `t0`, as the commit does (§14.8, D-441)" begin
+        # `q̇ = -t·q² + u` at `q = 1` holds still at `u = t`, a point only the clock names.
+        problem() = TrimProblem(guess = (u = 0.5,), lower = (u = -Inf,), upper = (u = Inf,),
+                                condition = d -> set(u = (in = d.u,)),
+                                reads = reads(q̇ = get_deriv("c", :q)),
+                                residuals = (r, d) -> (b = r.q̇,), tolerances = (b = 1e-9,))
+        # Each form commits with no `TrimCommitResiduals`.
+        model = Model(fed(TimedDecay()); h = 1//10)
+        report = @test_logs trim!(model, problem(); baseline = set(), t0 = 2.0)
+        @test report.converged && isapprox(report.solution.u, 2.0; atol = 1e-9)
+        @test abs(report.committed_residuals.b) ≤ 1e-9
+        @test model.exec.clock.t₀ == 2.0
+        sim = Simulation(fed(TimedDecay()); h = 1//10)
+        report = @test_logs trim!(sim, problem(); baseline = set(), t0 = 2.0)
+        @test report.converged && isapprox(report.solution.u, 2.0; atol = 1e-9)
+        @test abs(report.committed_residuals.b) ≤ 1e-9
+        # The default stays at 0, where `u = 0` holds.
+        @test trim!(Model(fed(TimedDecay()); h = 1//10), problem(); baseline = set()).solution.u ≈ 0.0 atol = 1e-9
+
+        # The empty problem's one evaluation is the nominal half's.
+        empty_problem = TrimProblem(guess = (;), lower = (;), upper = (;), condition = d -> set(),
+                                    reads = reads(q̇ = get_deriv("c", :q)),
+                                    residuals = (r, d) -> (b = r.q̇,), tolerances = (b = 1e-9,))
+        report = trim!(Model(fed(TimedDecay()); h = 1//10), empty_problem;
+                       baseline = set(u = (in = 2.0,)), t0 = 2.0)
+        @test report.status === :bypassed && report.converged
+    end
+
     @testset "the iteration budget ends the descent as `:maxiter`, unless the last step met the box (§14.8)" begin
         # One damped step leaves `λ₀/(1 + λ₀)` of the linear residual `d - 2`.
         linear_eval!(r, J, d) = (r[1] = d[1] - 2; J[1, 1] = 1.0; nothing)

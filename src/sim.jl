@@ -1104,7 +1104,7 @@ function trim!(sim::Simulation, problem::TrimProblem; baseline,
         op = :trim!, status = :running, legal = collect(STOPPED_SIM_LEGAL))))
     lifecycle_state === :errored && throw(DiagnosticError(ServiceLifecycle(
         op = :trim!, status = :errored, legal = collect(STOPPED_SIM_LEGAL))))
-    solved = _solve_problem(sim.model, problem; baseline, backend)
+    solved = _solve_problem(sim.model, problem; baseline, t0 = Float64(t0), backend)
     _verdict!(sim.model, problem, baseline, solved,
               condition -> init!(sim, condition; t0 = Float64(t0)))
 end
