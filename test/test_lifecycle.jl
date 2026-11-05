@@ -43,6 +43,36 @@ resume_condition() = combine(at("ctl", set(s = (acc = 4.0,))),
                              set(u = (in = 0.5,)))
 
 function test_lifecycle()
+    @testset "an origin that is not finite or lies past the frame range is refused before any write (§14.5, Appendix C)" begin
+        point = set(u = (ref = 0.0,))
+        for bad in (NaN, Inf, -Inf, 1e34, big"1e400")
+            model = Model(feedback_model(); h = 1//10)
+            d = carried(@test_throws DiagnosticError{ArgumentInvalid} init!(model, point; t0 = bad))
+            @test d.call === :init! && d.reason === :range && d.argument === :t0 && d.value === bad
+            @test model.status === :built
+
+            # A simulation at rest keeps its run, its clock and its state.
+            sim = Simulation(feedback_model(); h = 1//10)
+            init!(sim, point; t0 = 3.0)
+            step!(sim)
+            before = latest(sim)
+            x_before = copy(sim.model.exec.xbuf)
+            d = carried(@test_throws DiagnosticError{ArgumentInvalid} init!(sim, point; t0 = bad))
+            @test d.call === :init! && d.reason === :range && d.argument === :t0
+            @test latest(sim) === before && lifecycle(sim) === :initialized
+            @test sim.model.exec.clock.t₀ == 3.0 && sim.model.exec.xbuf == x_before
+
+            # A fresh simulation stays unopened, its trace unreadable as before.
+            fresh = Simulation(feedback_model(); h = 1//10)
+            @test_throws DiagnosticError{ArgumentInvalid} init!(fresh, point; t0 = bad)
+            @test lifecycle(fresh) === :built && latest(fresh) === nothing
+        end
+        # The last power of ten the frame range holds at this `h`.
+        sim = Simulation(feedback_model(); h = 1//10)
+        init!(sim, point; t0 = 1e33)
+        @test checkpoint(sim).state.t₀ == 1e33
+    end
+
     @testset "the five states, and the gates between them (§12.6)" begin
         sim = Simulation(feedback_model(); h = 1//50)
         @test lifecycle(sim) === :built

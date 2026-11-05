@@ -2343,6 +2343,9 @@ function message(d::ArgumentInvalid)
     d.argument === :chunk_size &&
         return "`chunk_size` must be an integer ≥ 1 — the executor's unroll width, which " *
                "never moves the trajectory — got $(repr(d.value)) (§9.7)"
+    d.argument === :t0 &&
+        return "`t0` must be a finite real whose frame index at `h` fits an `Int` — the " *
+               "grid's origin — got $(repr(d.value)) (§14.5)"
     d.argument === :trace &&
         return "`trace` must be true or false — §11.5's trace kill switch, got $(repr(d.value))"
     d.argument === :log &&

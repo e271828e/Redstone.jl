@@ -268,7 +268,8 @@ unwrapped.
 
 # Keywords
 
-- `t0`: the start time, any real, held as a `Float64` origin.
+- `t0`: the start time, a finite real whose frame index fits an `Int`, held as a
+  `Float64` origin, and refused as `ArgumentInvalid` otherwise.
 - `hooks`: the [`FrameHooks`](@ref) boundary zero settles through,
   [`NoHooks`](@ref) for a model stepped on its own.
 """
@@ -282,6 +283,7 @@ end
 function init!(model::Model{T}, plan::ConditionPlan; t0::Real = 0.0,
                hooks::FrameHooks = NoHooks()) where {T}
     _claimed_gate(model, hooks, :init!)
+    _check_origin(model, t0)
     exec = model.exec
     establish_defaults!(exec.xbuf, exec.sstores, exec.mstores,
                         model.deployment.build.structure.components,
@@ -299,6 +301,16 @@ function init!(model::Model{T}, plan::ConditionPlan; t0::Real = 0.0,
     end
     settled!(hooks)                   # the boundary-zero snapshot (§11.2, §14.5)
     @atomic :release model.status = :consistent   # boundary zero completed (D-317)
+    nothing
+end
+
+# The origin `init!` takes, before any write: finite, with the frame slack at it
+# inside `Int`, since a checkpoint counts frames from it with `_frames_to`.
+function _check_origin(model::Model, t0::Real)
+    origin = Float64(t0)
+    isfinite(origin) && _frame_slack(origin, origin, model.deployment.h) < typemax(Int) ||
+        throw(DiagnosticError(ArgumentInvalid(call = :init!, reason = :range, argument = :t0,
+                                              value = t0)))
     nothing
 end
 

@@ -749,9 +749,9 @@ soon as nothing in it names a `Simulation` in a signature, and below
   call as `ArgumentInvalid` `:claimed`. Its `LoopHooks` method is sim.jl's
   and compiles the check away on the loop's path (D-318).
 - The model's doors (D-317), each gated on the claim (D-318):
-  - `init!`, whose condition method resolves and whose plan method does the
-    writes, runs boundary zero under §13.4's catch and settles it through the
-    hooks (§14.5, D-223);
+  - `init!`, whose condition method resolves and whose plan method refuses
+    an origin `_check_origin` rejects, does the writes, runs boundary zero
+    under §13.4's catch and settles it through the hooks (§14.5, D-223);
   - `overlay!`, in the same two methods, whose condition method resolves with
     the stores as the merge bases, `_store_values`, and whose plan method
     runs the continuing settling under the same catch with host `:overlay`

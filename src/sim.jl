@@ -798,7 +798,8 @@ legal again. `init!` under the same condition reproduces it.
 
 # Keywords
 
-- `t0`: the start time, any real, held as a `Float64` origin.
+- `t0`: the start time, a finite real whose frame index fits an `Int`, held as a
+  `Float64` origin, and refused as `ArgumentInvalid` otherwise.
 - `trace`: record the input trace of this run.
 - `log`: keep the snapshot log of this run.
 - `log_every`: keep every `log_every`-th published [boundary](@ref g-boundary)
@@ -814,6 +815,7 @@ function init!(sim::Simulation, condition = set(); t0::Real = 0.0, trace = true,
     lifecycle_state === :errored && throw(DiagnosticError(
         ServiceLifecycle(op = :init!, status = :errored, legal = collect(STOPPED_SIM_LEGAL))))
     _check_recording(:init!, trace, log, log_every, log_max)   # the run's keywords (D-261)
+    _check_origin(sim.model, t0)                               # before the run opens
     plan = resolve_condition(condition, sim.model.deployment.build, Float64)   # both refusals precede every write
     assert_total(plan, sim.model.deployment.build.structure, :init!)   # (§14.6): all-or-nothing
     _reset_periphery!(sim)
