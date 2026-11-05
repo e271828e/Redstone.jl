@@ -1,0 +1,158 @@
+Junction | blocks.jl:19 | 11 claims, 3 probed
+Junction | blocks.jl:19 | "publishes `y = f(in1, …, inN)`, the fold applied in positional order" | PROBED | p1_structure: wires given out of order, fold x+2y+3z over 1,10,100 reads 321 | - | -
+Junction | blocks.jl:19 | "a wire names it as in `"sum/y"`" | PROBED | p1_structure: a Junction named `sum` wired on, `port(sim,"sum",:y)` reads 321.0 | - | -
+Junction | blocks.jl:19 | "The inputs `in1` to `inN` are typed `In`. The one output, `y`, is typed `Out`" | PROBED | p1_structure: Junction{Int,Bool,2}: (in1=Int64,in2=Int64), Bool | - | -
+SumJunction | blocks.jl:48 | 3 claims, 1 probed
+SumJunction | blocks.jl:48 | "SumJunction{V, N}() -> SumJunction{V, N}" and "the `Junction` at `+`" | PROBED | p1_structure: N = 1 and 3 construct, `isa SumJunction`, field f is `+` | - | -
+Or | blocks.jl:60 | 4 claims, 1 probed
+Or | blocks.jl:60 | "publishes the logical or of its `N` `Bool` inputs" | PROBED | p1_structure: Or{1} true, Or{2}(true,false) true; `Or{2}() isa Or{2}` | - | -
+And | blocks.jl:75 | 3 claims, 1 probed
+And | blocks.jl:75 | "publishes the logical and of its `N` `Bool` inputs" | PROBED | p1_structure: And{1} true, And{3}(true,false,true) false | - | -
+Pack | blocks.jl:94 | 3 claims, 1 probed
+Pack | blocks.jl:94 | "the inputs `in1` to `inN` typed `V` and the output `y` an `SVector{N, V}`" | PROBED | p1_structure: y_types SVector{2,Float64}, port [1.0, 2.0] | - | -
+Unpack | blocks.jl:125 | 5 claims, 2 probed
+Unpack | blocks.jl:125 | "outputs `out1` to `outN` are typed `V`, with `outi = u[i]`" | PROBED | p1_structure: y_types (out1=Float64,out2=Float64), ports 1.0 and 2.0 | - | -
+Unpack | blocks.jl:125 | "A wire names the input as in `"unpack/u"`" and "the inverse of `Pack`" | PROBED | p1_structure: "p/y" => "un/u" builds and round-trips | - | -
+Constant | blocks.jl:174 | 9 claims, 3 probed
+Constant | blocks.jl:174 | "discrete consumers read it as well" | PROBED | p1_structure: Constant(3) into UnitDelay(0) reads 3 one tick on | - | -
+Constant | blocks.jl:174 | "it carries zero partials under every `Dual` activation" | PROBED | p1_structure: linearize, C of get_output("k",:y) is [0.0] | - | -
+Constant | blocks.jl:174 | "A consumer input declared plain `Float64` ... accepts it" | PROBED | p1_structure: Constant(1.0) into Integrator builds at (Float64, LinearizeDual) | - | -
+UnitDelay | blocks.jl:201 | 10 claims, 4 probed
+UnitDelay | blocks.jl:201 | "`y = s`, and `s0` at the first publication. Each tick stores the input for the next one" | PROBED | p2_discrete: input 1000t, s0 = -1: -1, 0, 100, 200, 300 | - | -
+UnitDelay | blocks.jl:201 | "the type of `s0`, an isbits type as the [store] requires" | IMPRECISE | p2b: UnitDelay(:idle) builds and runs, ports :a, :b, :b. src/assembly check_store_form takes isbits or Symbol; message "store values are isbits or `Symbol`s" | "the type of `s0`, an isbits type or a `Symbol`, as the [store](@ref g-store) requires" | docstring
+UnitDelay | blocks.jl:201 | "inserts a zero-order hold at the scale of [`Δt_base`]" | IMPRECISE | p2_discrete: under `sample_times = (d = Relative(2),)` at h = 1//10 the output holds two frames, -1, -1, 0, 0, 200, 200. The hold spans the component's own period, a multiple of Δt_base; the spec's own wording is "on the scale of Δt_base", so this may be ruled acceptable. Sibling: AlgebraicCycle's message | "inserts a zero-order hold over the [component](@ref g-component)'s own period, a multiple of [`Δt_base`](@ref g-dt_base)" | docstring
+UnitDelay | blocks.jl:201 | "It breaks an algebraic loop" | PROBED | p5c: loop through a Junction builds | - | -
+Delay | blocks.jl:333 | 13 claims, 6 probed
+Delay | blocks.jl:333 | "publishes the input `u` from `K` ticks ago, and `v0` at the first `K` publications" | PROBED | p2_discrete: K=3: -1,-1,-1,0,100,200,300 | - | -
+Delay | blocks.jl:333 | "The store is a ring of `K` values and a cursor" | PROBED | p2_discrete: state (ring=[0,-1,-1], cursor=2) | - | -
+Delay | blocks.jl:333 | "inserts a zero-order hold at the scale of [`Δt_base`]" | IMPRECISE | as UnitDelay; p2_discrete K=2 at Relative(2) holds two frames per value | "inserts a zero-order hold over the component's own period, a multiple of [`Δt_base`](@ref g-dt_base)" | docstring
+Delay | blocks.jl:333 | "`K` counts ticks of the component's own period" | PROBED | p2_discrete: K=2 at Relative(2), h=1//10: -1,-1,-1,-1,0,0,200,200,400 | - | -
+Delay | blocks.jl:333 | "`K = 1` is `UnitDelay` in keyword spelling. A smaller `K` is refused as an `ArgumentError`" | PROBED | p2_discrete: K=1 gives -1,0,100,200; K=0 and K=-1 ArgumentError | - | -
+Delay | blocks.jl:333 | "an integer, a `Float32` or a plain array `v0` qualifies" | PROBED | p2_discrete: 1, 1f0, [1,2], [1 2;3 4], 1//2, true: V Float64 or SArray of Float64, u_types and y_types match | - | -
+DiscreteIntegrator | blocks.jl:384 | 14 claims, 6 probed
+DiscreteIntegrator | blocks.jl:384 | "`s⁺ = s + Δt u`, and the output publishes `y = s`" and "`Δt` is the component's own period" | PROBED | p2_discrete: u=2, s0=1, h=.1: 1, 1.2, 1.4; Relative(2): 1, 1, 1.4, 1.4, 1.8 | - | -
+DiscreteIntegrator | blocks.jl:384 | "the output at the reset tick still publishes the integral before it" | PROBED | p2_discrete: flag true on t=.2,.3: out at .2 is 1.4, at .3 is 1.0 | - | -
+DiscreteIntegrator | blocks.jl:384 | "The state lands at the next tick" | IMPRECISE | p2_discrete: at the reset tick t=.2, state(sim,"d") already reads 1.0 (s0) while the port reads 1.4. The store holds s0 from the reset tick on; only the output waits for the next tick | "The output at the reset tick still publishes the integral before it, and the next tick's output publishes `s0`" | docstring
+DiscreteIntegrator | blocks.jl:384 | "under a `Dual` activation the block holds its last value" | PROBED | p2b: integrator into block, linearize C=0, D=0, port 0.33 before and after | - | -
+DiscreteIntegrator | blocks.jl:384 | "an integer, a `Float32` or a plain array `s0` qualifies" | PROBED | p2_discrete: 1, 1f0, 1//2 give Float64; [1,2] gives SVector{2,Float64} | - | -
+DiscreteIntegrator | blocks.jl:384 | "breaks an algebraic loop as `UnitDelay` does" | PROBED | p5c: loop through a Junction builds | - | -
+DiscreteLimitedIntegrator | blocks.jl:439 | 16 claims, 7 probed
+DiscreteLimitedIntegrator | blocks.jl:439 | "`s⁺ = clamp(s + Δt u, lower, upper)`. The output `out` publishes `s`" | PROBED | p2b: u=2, upper=.5, h=.1: 0, .2, .4, .5, .5 | - | -
+DiscreteLimitedIntegrator | blocks.jl:439 | "publishes the forward-Euler integral of its input, held between two limits" and "`s0`: the initial value of `s`, and the value a reset writes, clamped" | IMPRECISE | p2b: s0=5.0 with limits -1 and .5 is accepted; out reads 5.0 at t₀, then .5. Only the update clamps. LimitedIntegrator clamps at boundary zero (p2b: x0=5 reads .5 at t₀; comment at blocks.jl:1428), so a `code` ruling is possible | "`s0`: the initial value of `s`, published as given until the first update clamps it, and the value a reset writes, clamped" | docstring
+DiscreteLimitedIntegrator | blocks.jl:439 | "The code is `1` at `upper`, `-1` at `lower` and `0` between" and "reads saturated until the next tick moves the state off" | PROBED | p2b: 0,0,0,1,1; at upper with u=-1, out .5,.4,.3, code 1,0,0 | - | -
+DiscreteLimitedIntegrator | blocks.jl:439 | "`saturation` publishes an `SArray` of `Int8` of `V`'s shape" and "componentwise" | PROBED | p2b: SVector{2,Int8}; Int8[1,-1] at limits [1,-2] | - | -
+DiscreteLimitedIntegrator | blocks.jl:439 | "The update writes `s0`, clamped, at every tick where the flag reads true" | PROBED | p2b: s0=5, flag true: 5, .5, .5, .5 | - | -
+DiscreteLimitedIntegrator | blocks.jl:439 | "A `lower` not below `upper`, componentwise over an `SArray`, is refused with an `ArgumentError`" | PROBED | p2b: equal, above, and one component above all ArgumentError | - | -
+DiscreteLimitedIntegrator | blocks.jl:439 | "a scalar limit pairs with a vector and integer values qualify" | PROBED | p2b: lower=[-1,-2], upper=1: V SVector{2,Float64}; lower=0,upper=1: Float64 | - | -
+RateLimiter | blocks.jl:501 | 14 claims, 6 probed
+RateLimiter | blocks.jl:501 | "y = s + clamp(u - s, -falling Δt, rising Δt)" and "`Δt` is the component's own period" | PROBED | p2b: rising 2, u=10, h=.1: .2,.4,.6; falling 5 at Relative(2), u=-10: -1,-1,-2,-2,-3 | - | -
+RateLimiter | blocks.jl:501 | "the output at `t₀` is already one slew step from it" | PROBED | p2b: s0=0: y at t₀ is .2 | - | -
+RateLimiter | blocks.jl:501 | "A loop closed on it through a memoryless path is refused as `AlgebraicCycle`" | PROBED | p2b: AlgebraicCycle; with a UnitDelay in the path it builds | - | -
+RateLimiter | blocks.jl:501 | "Over an `SArray` each component slews at its own rates" | PROBED | p2b: rising [1,2], falling [3,4]: [.1,.2] up, [-.3,-.4] down | - | -
+RateLimiter | blocks.jl:501 | "A `rising` or a `falling` that is not positive in every component is refused with an `ArgumentError`" | PROBED | p2b: 0, -1, falling 0, [1,0], falling [1,-1] all ArgumentError | - | -
+RateLimiter | blocks.jl:501 | "a scalar rate pairs with a vector `s0` and integer values qualify" | PROBED | p2b: rising=1, s0=[1,2]: RateLimiter{SVector{2,Float64}} | - | -
+GaussianWhiteNoise | blocks.jl:558 | 15 claims, 7 probed
+GaussianWhiteNoise | blocks.jl:558 | "an independent sample of mean `μ` and standard deviation `σ`" and "a pure function of `seed` and the tick count" | PROBED | p2b: ports equal 1+2*gaussian(3,k) for k=0..3 | - | -
+GaussianWhiteNoise | blocks.jl:558 | "`k` reads `N + 1` once the block has ticked `N` times past `t₀`" | PROBED | p2b: state 1,2,3,4 at N=0..3 | - | -
+GaussianWhiteNoise | blocks.jl:558 | "[replay] reproduces the stream" | PROBED | p2b: run! to t_end=1 then replay! of its trace, final port equal, 1.490148401450655 | - | -
+GaussianWhiteNoise | blocks.jl:558 | "Two blocks with one seed publish one stream" | PROBED | p2b: equal at one rate; at Relative(2) each reads the stream at its own tick count | - | -
+GaussianWhiteNoise | blocks.jl:558 | "Neither or both is refused as an `ArgumentError`" | PROBED | p2b: both ArgumentError | - | -
+GaussianWhiteNoise | blocks.jl:558 | "`seed`: the integer the stream is drawn from" | IMPRECISE | p2b: seed=-1 throws InexactError at UInt64(seed), not named anywhere; UInt64(2)^63 is accepted | "`seed`: the non-negative integer the stream is drawn from, held as instance data" | docstring
+GaussianWhiteNoise | blocks.jl:558 | "with `σ² = Q/Δt` at the component's own period `Δt`" | PROBED | p2b: psd=4 at Relative(2), h=1//100: -2.1324828917703753, equal to 2/sqrt(.02)*gaussian(3,0) | - | -
+Source | blocks.jl:639 | 9 claims, 5 probed
+Source | blocks.jl:639 | "Nothing converts, so a value of another type is refused at build as `ConformanceFailure`" | IMPRECISE | p4_linear: Source(t -> t < 0.25 ? 1.0 : 2) builds, then step! raises StepError{ConformanceFailure} at t = 0.3 ("y_state returns y::Int64, declared Float64"). The build reads f at one time only. p3: a constant wrong type does refuse at build (Int64, Float32) | "Nothing converts, so a value of another type is refused as `ConformanceFailure`, at build for the value the build reads and as a `StepError` carrying it on a later frame" | docstring
+Source | blocks.jl:639 | "`f` receives the plain `Float64` time under every activation" and "The time is stripped of its partials before `f` sees it" | IMPRECISE | p3_cont: at linearize f sees Float64. p3 and p4b: at a nested `Dual{Nothing,Dual{Nothing,Float64,1},1}`, build(; activations) and Model(deployment, T) refuse: y_state returns Dual{Nothing,Float64,1}, declared Float64. An Integrator alone materializes at that T (p4b). blocks.jl:666 strips one layer. Model's docstring admits any Dual; code map says "its `f` fed the nominal time" | if ruled docstring: "`f` receives the plain `Float64` time under a one-layer `Dual` activation, so it need not be generic; a nested `Dual` is refused at build as `ConformanceFailure`". If ruled code: strip every layer and keep the sentence | code
+Source | blocks.jl:639 | "`Source(f)` is `Source{Float64}(f)`" | PROBED | p3_cont: Source(t->1) fails against Float64; Source{Int}(t->1) is Source{Int64,...} | - | -
+Source | blocks.jl:639 | "carries zero partials under every activation" | PROBED | p3_cont: build at LinearizeDual and Model at ProbeDual pass (p4b) with Pinned output | - | -
+Integrator | blocks.jl:674 | 17 claims, 8 probed
+Integrator | blocks.jl:674 | "A rising edge of `reset` writes `x0` into `x`... the reset lands on the boundary where `reset` rises" | PROBED | p3_cont: Source{Bool} rising at .25, h=.1, x0=.5, u=1: .5,.6,.7,.5,.6,.7, so it lands at .3, the first boundary observing the rise | - | -
+Integrator | blocks.jl:674 | "holding `reset` resets once, and a second rising edge resets again" | PROBED | p5_events: pulses .15-.35 and from .55: 0,.1,0,.1,.2,.3,0,.1,.2 | - | -
+Integrator | blocks.jl:674 | "a `reset` already holding at `t₀` fires there" | PROBED | p3_cont: condition x=2.0, x0=.5, flag true: state .5 at t₀, .8 three frames on, so only once | - | -
+Integrator | blocks.jl:674 | "through one state event, `reset`" | PROBED | p3_cont: keys(state_events) = (:reset,) | - | -
+Integrator | blocks.jl:674 | "taken through a `Comparator`, which localizes the crossing" | PROBED | p6: Comparator(threshold = .55) on own y: x .05 at t=.6, .1 at t=1.2, so the reset lands at the crossing; Comparator(localized = false) lands at the next boundary, its keyword | - | -
+Integrator | blocks.jl:674 | "The block therefore has no feedthrough" | PROBED | p3_cont: loop through a Junction builds | - | -
+Integrator | blocks.jl:674 | "an integer, a `Float32` or a plain array `x0` qualifies" | PROBED | p3_cont: 1, 1f0, 1//2 Float64; [1,2] SVector; [1 2;3 4] SMatrix | - | -
+Integrator | blocks.jl:674 | "follows the scalar of a `Dual` activation, so the block linearizes" | PROBED | p3_cont: vector x0, A=0, B=I | - | -
+FirstOrderLag | blocks.jl:734 | 12 claims, 6 probed
+FirstOrderLag | blocks.jl:734 | "the lag linearizes to `A = -1/τ` and `B = 1/τ`" | PROBED | p3_cont: τ=.5: A=-2, B=2 | - | -
+FirstOrderLag | blocks.jl:734 | "A hand-written lag whose scratch is kept at `Float64` fails there instead" | PROBED | p3_cont: ws_init Vector{Float64}: build at LinearizeDual and linearize raise UserCodeFraming, cause MethodError Float64(::Dual) | - | -
+FirstOrderLag | blocks.jl:734 | "the block is `TransferFunction(num = (1,), den = (τ, 1), u0 = x0)`" | PROBED | p3_cont: same port 2.0 at t₀ and 1.1353352836035735 at t=1 | - | -
+FirstOrderLag | blocks.jl:734 | "Over an `SArray` the lag is componentwise, each component at its own `τ`" | PROBED | p3_cont: τ=[1,2]: [.6321205588,.3934693403], matches the exact | - | -
+FirstOrderLag | blocks.jl:734 | "A `τ` that is not positive in every component is refused with an `ArgumentError`" | PROBED | p3_cont: 0, -1, [1,0] all ArgumentError | - | -
+FirstOrderLag | blocks.jl:734 | "a scalar `τ` pairs with a vector `x0` and integer values qualify" | PROBED | p3_cont: τ=1, x0=[1,2]: FirstOrderLag{SVector{2,Float64}} | - | -
+LinearBlock | blocks.jl:783 | 6 claims, 3 probed
+LinearBlock | blocks.jl:783 | "`false` when the direct term is zero and the output comes from stage 1... `true` ... stage 2" | PROBED | p4_linear: has_stage y_direct and y_state both ways, loop builds at D=0 and AlgebraicCycle at D≠0 | - | -
+LinearBlock | blocks.jl:783 | "no linear block declares a stage of its own" | PROBED | blocks.jl:874 and 974 are the only subtypes; only `realization` methods follow them (blocks.jl:884-902, 988) | - | -
+StateSpace | blocks.jl:829 | 15 claims, 8 probed
+StateSpace | blocks.jl:829 | "The state is an `SVector` at every size. `u` is a `Float64` when `n_u` is one" | PROBED | p4_linear: 1x1 state SVector{1,Float64}; n_u=2 SVector{2}, n_y=1 Float64 | - | -
+StateSpace | blocks.jl:829 | "A zero `D` ... breaks an algebraic loop... A nonzero `D` ... refused as `AlgebraicCycle`" | PROBED | p4_linear: builds; AlgebraicCycle | - | -
+StateSpace | blocks.jl:829 | "linearizes to its own matrices" | PROBED | p4_linear: A,B,C,D returned exactly, D=3, off the initial point | - | -
+StateSpace | blocks.jl:829 | "A matrix that does not fit the others is refused as an `ArgumentError`, and so is an `x0` of the wrong length. An `A` of size zero is refused likewise" | PROBED | p4_linear: each of A,B,C,D misfit, x0 length 2 over 1, real x0 over 2, zeros(0,0), zeros(0,2): ArgumentError | - | -
+StateSpace | blocks.jl:829 | "integer entries qualify" | PROBED | p4_linear: integer A,B,C and x0=1 construct | - | -
+StateSpace | blocks.jl:829 | "`x0`: ... a vector of length `n_x`, or a real when `n_x` is one" | PROBED | p4_linear: [1], SVector, 1 pass; a tuple and a 1x1 matrix refused | - | -
+TransferFunction | blocks.jl:933 | 14 claims, 7 probed
+TransferFunction | blocks.jl:933 | "G(s) = ... " | PROBED | p4b: realization's C(jI-A)⁻¹B+D at s=j equals (2j+3)/(j²+4j+5) = .625-.125j; lead coefficient 2 also matches | - | -
+TransferFunction | blocks.jl:933 | "at the steady state for the constant input `u0`, where `y` is `G(0) u0`" | PROBED | p4b: y0 1.2 vs G(0)u0 1.2, strictly proper and equal degree | - | -
+TransferFunction | blocks.jl:933 | "A numerator of lower degree ... from stage 1 ... breaks an algebraic loop. One of equal degree publishes it from stage 2" | PROBED | p4_linear: low degree builds, equal degree AlgebraicCycle, equal length with a leading zero builds | - | -
+TransferFunction | blocks.jl:933 | "Four spellings are refused as an `ArgumentError`" | PROBED | p4b: all four, and den=() | - | -
+TransferFunction | blocks.jl:933 | "as a tuple or a vector of reals" | PROBED | p4b: tuple, vector and mixed construct | - | -
+TransferFunction | blocks.jl:933 | "from the input `u` to the output `y`, both `Float64`" | PROBED | p4b: u_types and y_types Float64 | - | -
+DiscreteLinearBlock | blocks.jl:1004 | 6 claims, 1 probed
+DiscreteLinearBlock | blocks.jl:1004 | "`false` when the direct term is zero ... `true` ... stage 2" | PROBED | p4_linear: DSS and DTF loop results both ways | - | -
+DiscreteStateSpace | blocks.jl:1041 | 11 claims, 4 probed
+DiscreteStateSpace | blocks.jl:1041 | "s⁺ = A s + B u, y = C s + D u" | PROBED | p4b: A=.5,B=1,C=2,D=3,s0=4,u=1: y 11,9,8; s 3,2.5,2.25 | - | -
+DiscreteStateSpace | blocks.jl:1041 | "the refusals are those of `StateSpace`, with `s0` in place of its `x0`" | PROBED | p4_linear: s0 length, A size zero and misfit A all ArgumentError, message names `s0`; s0=1 passes | - | -
+DiscreteStateSpace | blocks.jl:1041 | "A zero `D` ... breaks an algebraic loop" and nonzero D "from stage 2" | PROBED | p4_linear: builds; AlgebraicCycle | - | -
+DiscreteStateSpace | blocks.jl:1041 | "under a `Dual` activation the block holds its last value" | PROBED | p2b: with D=2 on a walking path, linearize C=0, D=0, port 4.6 before and after. Downstream continuous A=0 | - | -
+DiscreteTransferFunction | blocks.jl:1103 | 10 claims, 6 probed
+DiscreteTransferFunction | blocks.jl:1103 | "G(z) = ... highest power of `z` first" | PROBED | p4b: 1/(z-.5) from rest with u=1: 0,1,1.5,1.75,1.875, exact | - | -
+DiscreteTransferFunction | blocks.jl:1103 | "agrees with it only when the degrees are equal" | PROBED | p4b: (1,0)/(1,-.5) gives 1,1.5,1.75,1.875, filter's response; (1,)/(1,-.5) differs by one delay | - | -
+DiscreteTransferFunction | blocks.jl:1103 | "`(I - A) s = B u0` and `y` is `G(1) u0`" | PROBED | p4b: y 50.00000000000003 = G(1)*2, A s + B u0 - s = 0, port steady | - | -
+DiscreteTransferFunction | blocks.jl:1103 | "The keywords and the refusals are those of `TransferFunction`" | PROBED | p4b: order zero, improper, zero lead | - | -
+DiscreteTransferFunction | blocks.jl:1103 | "sum to zero within `1e-12` of the sum of their magnitudes" and "`(1, -0.7, -0.3)` misses an exact zero by rounding" | PROBED | p4b: sum is 5.55e-17, refused; (2,-2) refused; -1+1e-13 refused; -1+1e-11 passes | - | -
+DiscreteTransferFunction | blocks.jl:1103 | "The degrees pick the feedthrough class" | PROBED | p4_linear: equal degree AlgebraicCycle | - | -
+DiscretizedStateSpace | blocks.jl:1169 | 10 claims, 5 probed
+DiscretizedStateSpace | blocks.jl:1169 | "A_d = e^{A Δt}, B_d = ..., with `C` and `D` unchanged" | PROBED | p4b: realization(d2,.1) matches exp, C and D the continuous block's | - | -
+DiscretizedStateSpace | blocks.jl:1169 | "so the samples are the continuous system's own" | PROBED | p4b: 1-exp(-t) to 1e-15 at each sample | - | -
+DiscretizedStateSpace | blocks.jl:1169 | "the block follows the rate its rate scope gives it" | PROBED | p4b: Relative(2): y(.2), y(.4) exact | - | -
+DiscretizedStateSpace | blocks.jl:1169 | "The keywords and their refusals are those of `StateSpace`" | PROBED | p4_linear: x0 length and empty A ArgumentError; s0 is StateSpace's MethodError | - | -
+DiscretizedStateSpace | blocks.jl:1169 | "under a `Dual` activation the block holds its last value" | PROBED | p2b: D=2: C=0, D=0, port unchanged | - | -
+DiscretizedTransferFunction | blocks.jl:1226 | 9 claims, 4 probed
+DiscretizedTransferFunction | blocks.jl:1226 | "its refusals and its start at rest or at `G(0) u0`" | PROBED | p4b: four refusals; u0=2 over 1/(s+1): y0 2.0, steady | - | -
+DiscretizedTransferFunction | blocks.jl:1226 | "matches the step response at the samples" | PROBED | p4b: 1-exp(-t) to 1e-15 | - | -
+DiscretizedTransferFunction | blocks.jl:1226 | "the degrees pick the feedthrough class" | PROBED | p4_linear: equal AlgebraicCycle, lower builds | - | -
+DiscretizedTransferFunction | blocks.jl:1226 | "The block keeps the coefficients and holds the realization wrapped for the hold" | PROBED | p4b: fields num, den, realization; held returns the StateSpace | - | -
+Step | blocks.jl:1273 | 11 claims, 7 probed
+Step | blocks.jl:1273 | "[Localized], the step ends at the crossing and the jump lands there" | PROBED | p5_events: t_step=.25: integral .05 at t=.3 | - | -
+Step | blocks.jl:1273 | "the event fires at the end of the step ... first [boundary] at or after `t_step`, never inside a step" | PROBED | p5_events: integral 0 at .3, port 1.0 there; t_step=.3 exact grid lands at .3 both ways | - | -
+Step | blocks.jl:1273 | "A `t_step` at or before `t₀` therefore fires there, and the output publishes `after` from the start" | PROBED | p5_events: t₀=1: t_step=1, .5, -Inf, prevfloat(1) port 1 at t₀, both policies; nextfloat(1) 0 at t₀ | - | -
+Step | blocks.jl:1273 | "`before` and `after` broadcast to one shape and type" | PROBED | p5_events: before=0, after=[1,2]: Step{SVector{2,Float64},true}, Pinned | - | -
+Step | blocks.jl:1273 | "it carries zero partials under every activation" | PROBED | p5_events: linearize C=0, D=0 on the face | - | -
+Step | blocks.jl:1273 | "`t_step`: the time of the step, any time" | PROBED | p5_events: Inf never fires, -Inf fires at t₀; NaN never fires, no refusal | - | -
+Sequence | blocks.jl:1336 | 13 claims, 7 probed
+Sequence | blocks.jl:1336 | "two breakpoints inside one step each land at their own time" | PROBED | p5_events: times .15,.17,.3: integral .31 at .2, exact. Breakpoints within the localization width land together, but within that width of their own times | - | -
+Sequence | blocks.jl:1336 | "each jump lands on the first boundary at or after its breakpoint, and breakpoints passed inside one step advance together there" | PROBED | p5_events: integral .2 at t=.2, m goes 0 to 2 | - | -
+Sequence | blocks.jl:1336 | "The breakpoints at or before `t₀` are therefore passed there, and the output starts at the value that follows them" | PROBED | p5_events: [-1,0,.05]: value 3, m=2; [-2,-1]: 3; [0]: 2; both policies | - | -
+Sequence | blocks.jl:1336 | "a `Step` at one breakpoint" | PROBED | p5_events: integrals equal both policies | - | -
+Sequence | blocks.jl:1336 | "`times` that do not ascend strictly, or a count of `values` other than `N + 1`, are refused with an `ArgumentError`" | PROBED | p5_events: equal, descending, 1 and 3 values | - | -
+Sequence | blocks.jl:1336 | "a scalar pairs with a vector and integer values qualify" | PROBED | p5_events: (0,[1,2]): SVector{2,Float64}; integers Float64; Any vector also | - | -
+Sequence | blocks.jl:1336 | "sets the count to every breakpoint at or before `t`" | PROBED | p5_events: decimal breakpoints .1,.2,.3,.7 advance 1,2,3,3,3,3,4 at grid, near-grid prevfloat and nextfloat .3 both reach 1 at .3, no stuck count | - | -
+Switch | blocks.jl:143 | 10 claims, 6 probed
+Switch | blocks.jl:143 | "It is `in1` while `select` holds and `in2` otherwise" | PROBED | p5c: Comparator select: -.1,-.2,-.2,-.1 | - | -
+Switch | blocks.jl:143 | "A `select` wired from a memoryless function of the output therefore closes an algebraic loop, which the build refuses as `AlgebraicCycle`" | PROBED | p1_structure: AlgebraicCycle :real. The same holds for `in1` | - | -
+Switch | blocks.jl:143 | "A `select` published from a mode ... flips on a [boundary] and the jump is clean" | PROBED | p5c: localized Comparator at .25: integral -.2 at .3, exact | - | -
+Switch | blocks.jl:143 | "One computed from a continuous quantity inside a [stage body] flips inside a step and smears that step" | PROBED | p5c: Source{Bool}(t >= .25): -.1333 at .3 where exact is -.2 | - | -
+Switch | blocks.jl:143 | "A [`Comparator`] on the quantity, or a [`Relay`] beside it, is the declared way to produce `select`" | FALSE | p1_structure: Relay y wired to select raises WireTypeMismatch, "`s/select` declared Bool, fed from `r/y`::Float64"; Relay's V is Float64 or an SArray of Float64 (blocks.jl:1795), Relay(off=false,on=true) becomes Relay{Float64}. p5c: through a Junction{Float64,Bool,1} it builds and lands clean | "A [`Comparator`](@ref) on the quantity is the declared way to produce `select`. A [`Relay`](@ref) publishes a value rather than a `Bool`, so a fold reads it first." | docstring
+Switch | blocks.jl:143 | "The inputs `in1` and `in2` are typed `V` and `select` is a `Bool`" | PROBED | p1_structure: (in1=Float64,in2=Float64,select=Bool), y Float64 | - | -
+StopRequest | blocks.jl:258 | 8 claims, 5 probed
+StopRequest | blocks.jl:258 | "publishes `STOP_REQUESTED` while its one input ... holds and `NO_STOP` otherwise" | PROBED | p5b: input true stops at .3 with port STOP_REQUESTED; p5c: Constant(false): NO_STOP, lifecycle initialized | - | -
+StopRequest | blocks.jl:258 | "sits anywhere in the tree" | PROBED | p5_events: a/b/st reports ("a/b/st", :y, "deep"); p5b: bare leaf builds, inside a Relative(2) group reports ("a/st", :y, "done") | - | -
+StopRequest | blocks.jl:258 | "any [component] may publish one" | PROBED | p5b: a discrete DiscFlag stops the run, ("d", :y, "disc") at t=.2 | - | -
+StopRequest | blocks.jl:258 | "`reason`: the reason the block's requests report, read by `stop_reason`" | PROBED | p5_events: termination source ModelRequestedStop("st", :y, "done") | - | -
+StopRequest | blocks.jl:258 | "it refreshes at every boundary" | PROBED | p5_events: Source{Bool} rising at .25, stop observed at the .3 boundary | - | -
+Freeze | blocks.jl:233 | 7 claims, 5 probed
+Freeze | blocks.jl:233 | "publishes its input with its partials dropped, so no derivative passes through it" | IMPRECISE | p7_freeze: at a nested Dual{Nothing,Dual{Nothing,Float64,1},1}, build(; activations) and Model(deployment, T) refuse: y_direct returns Dual{Nothing,Float64,1}, declared Float64. blocks.jl:253 strips one layer. Model's docstring admits any Dual, and an Integrator alone materializes at it (p4b). Sibling of Source's row | if ruled docstring: add "A nested `Dual` activation is refused at build as `ConformanceFailure`." If ruled code: strip every layer and keep the sentence | code
+Freeze | blocks.jl:233 | "A producer that walks may therefore feed a [`Pinned`] input entry through it" | PROBED | p7_freeze: direct wire WalkingFaceAtFrozenEntry; through Freeze builds at LinearizeDual | - | -
+Freeze | blocks.jl:233 | "At nominal it is the identity. Every Jacobian along the path then reads a zero coupling" | PROBED | p5c: port .3 = θ; linearize C row direct [1,0], frozen [0,0] | - | -
+Freeze | blocks.jl:233 | "`V` is a `Float64` or an `SArray` of `Float64`. Any other `V` is refused as a `TypeError` where `Freeze{V}` is written" | PROBED | p1_structure: Float32, Int, Vector, SVector{2,Int}, MVector all TypeError; Float64, SVector, SMatrix construct | - | -
+Freeze | blocks.jl:233 | "[pinned] at `V`" over an SArray | PROBED | p5c: Freeze{SVector{2,Float64}} builds at LinearizeDual | - | -
