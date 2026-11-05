@@ -510,11 +510,14 @@ the [roster](@ref g-roster). Nothing is resolved by name afterwards.
 function port_views(handle::DeviceHandle)
     faces = handle.writer.faces
     addr = handle.layout.addr
+    root_inputs = Symbol[f for (f, _) in handle.layout.root_inputs]
     function view_of(path, port_name, source)
         (producer_path, face) = source
         live = producer_path == "" && face in faces
+        # The empty path also holds the root's exported outputs, which no writer drives.
         incumbent = live ? handle.who :
-                    producer_path == "" ? get(handle.claimedby, face, "harness") : ""
+                    producer_path == "" && face in root_inputs ?
+                    get(handle.claimedby, face, "harness") : ""
         PortView(path, port_name, source, live, live ? findfirst(==(face), faces) : 0,
                  addr[source], incumbent)
     end
@@ -531,7 +534,6 @@ function port_views(handle::DeviceHandle)
         views[(path, port_name)] =
             view_of(path, port_name, terminal_producer(structure, (path, port_name)))
     end
-    root_inputs = Symbol[f for (f, _) in handle.layout.root_inputs]
     for key in keys(addr)
         (path, port_name) = key
         path == "" && port_name in root_inputs && continue

@@ -1152,6 +1152,21 @@ function test_devices()
               (fan_views[("b", :e)].slot, fan_views[("b", :e)].addr)
     end
 
+    @testset "a root's exported output reads as a produced port, its root inputs keeping the harness (§11.7, D-270)" begin
+        root = Group((; g = Gain(2.0)); input_wires = ("in" => "g/e",), output_wires = ("g/out" => "out",))
+        sim = Simulation(root; h = 1//10)
+        handle = attach!(sim, Pad("a"), NoClaim())
+        init!(sim, set(u = (in = 3.0,)))
+        views = port_views(handle)
+        out_view = views[("", :out)]
+        @test !out_view.live && out_view.source == ("", :out) && out_view.incumbent == ""
+        @test incumbent_status(out_view, latest(sim)) === nothing
+        @test peek(out_view, handle, latest(sim)) ≈ 6.0
+        in_view = views[("", :in)]
+        @test in_view.incumbent == "harness"
+        @test incumbent_status(in_view, latest(sim)).who == "harness"
+    end
+
     @testset "pending reads the cell without taking it, and the peek composes it with the snapshot (§11.7, §11.4)" begin
         sim = Simulation(panel_model(); h = 1//10)
         dev = Pad("a")
