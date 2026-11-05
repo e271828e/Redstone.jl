@@ -15,7 +15,8 @@
 # The periphery's two roots, one mandatory word each, buying `attach!`'s
 # dispatch gate. The library's stub devices are mutable structs because an
 # immutable stub would be egal to its field-for-field twin, and `===` would
-# stop meaning identity.
+# stop meaning identity. The same device binds differently per deployment, and
+# narrowing the binding narrows the claim.
 """
     AbstractDevice
 
@@ -33,9 +34,8 @@ joysticks, are two devices. Two immutable instances whose fields are themselves
 `===` are `===`, so they count as one device.
 
 The device is attached under a [binding](@ref g-binding), which stays an
-`attach!` argument and is never a device field. The same device binds
-differently per deployment, and narrowing the binding narrows the
-[claim](@ref g-claim). See [`AbstractBinding`](@ref).
+`attach!` argument and is never a device field. See [`AbstractBinding`](@ref)
+for what it declares.
 """
 abstract type AbstractDevice end
 
@@ -48,7 +48,7 @@ The abstract type every [binding](@ref g-binding) subtypes.
 A binding is a value of a user type, `MyBinding <: AbstractBinding`, passed to
 [`attach!`](@ref) beside the [device](@ref g-device). It declares the device's
 sides with two `Bool` traits, [`is_input`](@ref) and [`is_output`](@ref), both
-`false` by default, and each declared side carries its own methods.
+`false` by default. Each declared side carries its own methods.
 
 - The input side: [`claims`](@ref) names the [faces](@ref g-face) the device may
   write, or [`is_greedy`](@ref) asks for every face still unclaimed. The loop's
@@ -58,9 +58,9 @@ sides with two `Bool` traits, [`is_input`](@ref) and [`is_output`](@ref), both
   [snapshot](@ref g-snapshot). The loop's [`map_output`](@ref) turns the
   gathered values into the device's output.
 
-The binding stays an `attach!` argument, never a device field, so the same
-device binds differently per deployment, and narrowing the binding narrows the
-[claim](@ref g-claim). [`TableBinding`](@ref) is the shipped data-driven
+The binding stays an `attach!` argument, never a device field. The same device
+therefore binds differently per deployment, and narrowing the binding narrows
+the [claim](@ref g-claim). [`TableBinding`](@ref) is the shipped data-driven
 binding.
 
 `attach!` checks the traits against the methods. A binding that declares neither
@@ -119,9 +119,9 @@ Return whether the [binding](@ref g-binding) [claims](@ref g-claim) every
 [face](@ref g-face) still unclaimed at attach, `false` by default.
 
 `is_greedy` selects where an input-side binding's claim comes from.
-[`attach!`](@ref) computes a greedy binding's claim as every
-[root input](@ref g-root-input) no [device](@ref g-device) already attached has
-claimed. It computes the claim once and never recomputes it, so attachment order
+[`attach!`](@ref) computes a greedy binding's [claim](@ref g-greedy-claim) as
+every [root input](@ref g-root-input) no [device](@ref g-device) already attached
+has claimed. It computes the claim once and never recomputes it, so attachment order
 decides it. A greedy device is best attached last. An empty remainder is legal
 and warns `EmptyGreedyClaim`.
 
@@ -138,7 +138,7 @@ is_greedy(::AbstractBinding) = false  # COV_EXCL_LINE
 # `is_greedy` trait carries the other, so the maximal surface stays reachable
 # only through an explicit declaration.
 """
-    claims(b::AbstractBinding)
+    claims(b::AbstractBinding) -> collection of strings or symbols
 
 Return the [root-input](@ref g-root-input) [faces](@ref g-face) an input-side
 [binding](@ref g-binding) may write, called once at attach.
@@ -146,7 +146,7 @@ Return the [root-input](@ref g-root-input) [faces](@ref g-face) an input-side
 A binding that declares [`is_input`](@ref) defines `claims` for its type,
 returning the face names as strings or symbols. [`attach!`](@ref) calls it once
 and stakes what it names as the [device](@ref g-device)'s [claim](@ref g-claim).
-Duplicates collapse, and an empty collection is a legal claim to write nothing.
+Duplicates collapse. An empty collection is a legal claim to write nothing.
 `claims` never returns a value meaning "every remaining face". A binding
 declares [`is_greedy`](@ref) for that.
 
@@ -171,7 +171,7 @@ side gathers from each [snapshot](@ref g-snapshot).
 
 A binding that declares [`is_output`](@ref) defines `reads` for its type. Its
 read set is a `NamedTuple` of labeled [selectors](@ref g-selector), such as
-`(; speed = get_output("plant", :v))`, and the labels key the `NamedTuple` that
+`(; speed = get_output("plant", :v))`. The labels key the `NamedTuple` that
 [`gather`](@ref) returns and [`map_output`](@ref) receives. [`attach!`](@ref)
 calls it once and resolves it against the build, so a binding that no longer
 matches its model fails at attach rather than sending wrong values.
@@ -180,8 +180,10 @@ A binding that declares the output side and defines no `reads` method is
 refused at attach as `BindingContractMismatch`, as is a value that is not a
 `NamedTuple` of selectors. A selector that does not resolve is refused as
 `ReadResolution`, or as `PathResolution` when its path names no
-[component](@ref g-component). The keyword method, `reads(; selectors...)`,
-builds the read set a service such as [`series`](@ref) takes.
+[component](@ref g-component).
+
+The keyword method, `reads(; selectors...)`, builds the read set a service such
+as [`series`](@ref) takes.
 """
 reads(b::AbstractBinding) = throw(DiagnosticError(
     BindingContractMismatch(binding = _typename(b), reason = :reads_missing)))
