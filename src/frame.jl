@@ -44,7 +44,7 @@ its own.
 
 A model claimed by a [`Simulation`](@ref) is refused as `ArgumentInvalid`. A
 throw inside the frame writes the status `:inconsistent` and arrives as a
-`StepError` with host `:loop`. Its pointer is `k - 1`, the boundary the frame
+`StepError` with host `:loop`. Its `boundary` is `k - 1`, the boundary the frame
 started from. An `InterruptException` is never wrapped and writes no status.
 """
 function frame!(model::Model{T}, k::Int, hooks::FrameHooks = NoHooks()) where {T}

@@ -270,7 +270,7 @@ condition that does not resolve against the build is refused as
 A second method takes the condition already resolved, and serves the
 simulation's own `init!`, which resolves before it opens its run.
 
-A throw inside boundary zero arrives as a `StepError` at `t0`, with pointer 0
+A throw inside boundary zero arrives as a `StepError` at `t0`, with `boundary` 0
 and host `:boundary_zero`. It writes the status back to `:built`. An
 [interrupt](@ref g-operator-interrupt) writes `:built` too, and propagates
 unwrapped. A throw from `settled!(hooks)` propagates as it is and writes no
@@ -909,12 +909,12 @@ A model's state is not a [condition](@ref g-condition) and enters no condition
 expression. [`restore!`](@ref) puts it back, and [`overlay!`](@ref) writes a
 condition onto a model at rest.
 
-`checkpoint` is legal while the model is `:consistent`, after [`init!`](@ref) or
-a restore and before any throw. It is refused as `ServiceLifecycle` at `:built`
-or `:inconsistent`. It is refused as `CheckpointMidFrame` with the clock off a
-frame top, naming the frame the clock sits inside. A frame abandoned at a
-[localized](@ref g-localized) event time [`t*`](@ref g-t) leaves the clock
-there.
+`checkpoint` is legal while the model is `:consistent`, after [`init!`](@ref),
+`overlay!` or a restore and before any throw. It is refused as
+`ServiceLifecycle` at `:built` or `:inconsistent`. It is refused as
+`CheckpointMidFrame` with the clock off a frame top, naming the frame the clock
+sits inside. A frame abandoned at a [localized](@ref g-localized) event time
+[`t*`](@ref g-t) leaves the clock there.
 """
 function checkpoint(model::Model{T}) where {T}
     _assert_at_rest(model, :checkpoint)

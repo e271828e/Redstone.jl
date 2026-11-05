@@ -143,7 +143,7 @@ shutdown!(::AbstractDevice) = nothing
     unblock!(dev::AbstractDevice) -> Nothing
 
 Make the [device](@ref g-device)'s loop return from its own blocking call once
-the run is stopping.
+[`running`](@ref) reads `false`.
 
 `unblock!` is one of a device's three optional hooks, beside [`init!`](@ref) and
 [`shutdown!`](@ref), and the default does nothing. The framework calls it as the
@@ -152,11 +152,11 @@ every [`wait_next_snapshot`](@ref) has been woken. A device whose [`loop`](@ref)
 blocks in a call of its own, such as a socket read, overrides it to make that
 call return, for example by closing the socket.
 
-A throw the override provokes in the loop, once the run is stopping, is treated
-as shutdown, not reported as `DeviceCrash`. A device that does not override
-`unblock!` has nothing to provoke a throw, so any throw from its loop is a
-crash. A throw inside `unblock!` itself is logged as a warning. A loop still
-blocked then holds the shutdown until the `join_timeout` of its
+A throw the override provokes in the loop, once `running` reads `false`, is
+treated as shutdown, not reported as `DeviceCrash`. A device that does not
+override `unblock!` has nothing to provoke a throw, so any throw from its loop
+is a crash. A throw inside `unblock!` itself is logged as a warning. A loop
+still blocked then holds the shutdown until the `join_timeout` of its
 [`Simulation`](@ref), which abandons the task and reports `DeviceJoinTimeout`.
 """
 unblock!(::AbstractDevice) = nothing
