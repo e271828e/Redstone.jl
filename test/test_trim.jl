@@ -245,6 +245,43 @@ function test_trim()
         @test LevenbergMarquardt(λ₀ = 1//2).λ₀ == 0.5
     end
 
+    @testset "a non-finite Jacobian over two decisions stalls with the guess kept (§14.8)" begin
+        for bad in (NaN, Inf)
+            bad_eval!(r, J, d) = (r .= 1.0; J === nothing || (J .= bad); nothing)
+            result = solve(LevenbergMarquardt(), bad_eval!, [0.5, 0.25], [-Inf, -Inf], [Inf, Inf],
+                           [1e-6, 1e-6])
+            @test result.status === :stalled && result.n_iterations == 1
+            @test result.d == [0.5, 0.25] && result.n_evaluations == 1
+        end
+        # Finite entries whose squares overflow reach the solve as the same matrix.
+        huge_eval!(r, J, d) = (r .= 1.0; J === nothing || (J .= 1e200); nothing)
+        @test solve(LevenbergMarquardt(), huge_eval!, [0.0, 0.0], [-Inf, -Inf], [Inf, Inf],
+                    [1e-6, 1e-6]).status === :stalled
+        # A non-finite residual over a finite Jacobian gives a non-finite step.
+        bad_residual!(r, J, d) = (r .= Inf; J === nothing || (J .= [1.0 0.0; 0.0 1.0]); nothing)
+        @test solve(LevenbergMarquardt(), bad_residual!, [0.0, 0.0], [-Inf, -Inf], [Inf, Inf],
+                    [1e-6, 1e-6]).status === :stalled
+
+        # Through the service: a partial that is not finite at the guess, and a
+        # NaN guess, each report a stall and commit nothing.
+        kinked = TrimProblem(guess = (θ = 0.0, u = 0.0), lower = (θ = -1.0, u = -1.0),
+                             upper = (θ = 1.0, u = 1.0), condition = decide_both,
+                             reads = both_reads(),
+                             residuals = (r, d) -> (hold = sqrt(abs(d.u)) + 1.0, torque = r.θ - 0.3),
+                             tolerances = (hold = 1e-6, torque = 1e-6))
+        not_a_number = TrimProblem(guess = (θ = NaN, u = 0.0), lower = (θ = -1.0, u = -1.0),
+                                   upper = (θ = 1.0, u = 1.0), condition = decide_both,
+                                   reads = both_reads(), residuals = both_residuals,
+                                   tolerances = (hold = 1e-6, torque = 1e-6))
+        for problem in (kinked, not_a_number)
+            sim = Simulation(fed(Pendulum(), :u); h = 1//10)
+            report = trim!(sim, problem; baseline = pend_base())
+            @test report.status === :stalled && !report.converged
+            @test report.committed_residuals === nothing
+            @test lifecycle(sim) === :built
+        end
+    end
+
     @testset "the iteration budget ends the descent as `:maxiter`, unless the last step met the box (§14.8)" begin
         # One damped step leaves `λ₀/(1 + λ₀)` of the linear residual `d - 2`.
         linear_eval!(r, J, d) = (r[1] = d[1] - 2; J[1, 1] = 1.0; nothing)

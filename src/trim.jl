@@ -313,7 +313,11 @@ function solve(backend::LevenbergMarquardt, eval!, d0::Vector{Float64},
         current_norm = _scaled_norm(r, tol)
         accepted = false
         while true
-            δ = (JᵀJ + λ * damping) \ (-Jᵀr)
+            # Past one decision `\` throws on a non-finite matrix, which is a
+            # stall as much as the non-finite step below.
+            system = JᵀJ + λ * damping
+            all(isfinite, system) || break
+            δ = system \ (-Jᵀr)
             all(isfinite, δ) || break
             @. d_trial = clamp(d + δ, lower, upper)          # step projection onto the box
             # A step the decisions cannot represent is the end of the descent,
