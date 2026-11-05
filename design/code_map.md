@@ -746,7 +746,8 @@ soon as nothing in it names a `Simulation` in a signature, and below
 - The grid (§10.4): `_grid_time`, frame top `k` from the index and `t₀`,
   never accumulated, and the arithmetic over `t`, `t₀` and `h`,
   `_frame_slack`, `_frames_to` and `_frame_at` (§12.4, §12.6, D-260, D-319),
-  read by `frame!`, the checkpoint and the loop.
+  read by `frame!`, the checkpoint and the loop, and `_frames_fit`, the doors'
+  check that a time's frame count fits an `Int` before either rounds it.
 - The claim's gate `_claimed_gate`, which refuses a claimed model's direct
   call as `ArgumentInvalid` `:claimed`. Its `LoopHooks` method is sim.jl's
   and compiles the check away on the loop's path (D-318).

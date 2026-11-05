@@ -77,6 +77,57 @@ function test_lifecycle()
         @test checkpoint(sim).state.t₀ == 1e33
     end
 
+    @testset "a keyword past the frame range or past `Int` is refused as out of range before any write (§11.2, §12.6, §13.5)" begin
+        point = set(u = (ref = 0.0,))
+        big30 = big(10)^30
+        fresh() = (sim = Simulation(feedback_model(); h = 1//10); init!(sim, point); step!(sim);
+                   stage!(sim, "ref" => 1.0); sim)
+        recorded = fresh()
+        run!(recorded; t_end = 0.3)
+        trc = trace(recorded)
+        # Each refusal names the keyword, and the run, the latest snapshot and the
+        # staged batch stand.
+        function refused(sim, argument, f)
+            before, run_before = latest(sim), sim.run
+            pending = @atomic sim.plane.harness.cell.pending
+            ds = carried_diagnostics(failure(f))
+            @test length(ds) == 1 && ds[1] isa ArgumentInvalid && ds[1].reason === :range
+            @test ds[1].argument === argument
+            @test latest(sim) === before && sim.run === run_before && lifecycle(sim) === :initialized
+            @test (@atomic sim.plane.harness.cell.pending) === pending
+        end
+        sim = fresh()
+        for t_end in (1e300, big"1e400")   # the second converts to `Inf`: checked as given
+            refused(sim, :t_end, () -> run!(sim; t_end))
+            refused(sim, :t_end, () -> step!(sim; t_end))
+        end
+        refused(sim, :t_plus, () -> step!(sim; t_plus = 1e300))
+        refused(sim, :frames, () -> step!(sim; frames = big(2)^70))
+        refused(sim, :frames, () -> step!(sim; frames = typemax(Int)))   # past frame 0, the sum would wrap
+        refused(sim, :ignore_stop_requests, () -> run!(sim; t_end = 0.3, ignore_stop_requests = :foo))
+        refused(sim, :ignore_stop_requests, () -> step!(sim; ignore_stop_requests = "ctl"))
+        refused(sim, :log_every, () -> init!(sim, point; log_every = big30))
+        refused(sim, :log_max, () -> init!(sim, point; log_max = big30))
+        refused(sim, :log_every, () -> overlay!(sim; log_every = big30))
+        refused(sim, :log_max, () -> restore!(sim, checkpoint(sim); log_max = big30))
+        # `replay!` refuses ahead of its restore, so the simulation keeps its own frame.
+        rep = Simulation(recorded.model.deployment)
+        init!(rep, point); step!(rep); stage!(rep, "ref" => 1.0)
+        refused(rep, :t_end, () -> replay!(rep, trc; t_end = 1e300))
+        refused(rep, :to_time, () -> replay!(rep, trc; to_time = 1e300))
+        refused(rep, :log_max, () -> replay!(rep, trc; log_max = big30))
+        @test latest(rep).frame == 1
+        # The largest count the index still holds is legal, and the bound ends it.
+        sim = fresh()
+        @test step!(sim; frames = typemax(Int) - sim.run.frame, t_end = 0.3) == 2
+        @test lifecycle(sim) === :stopped && termination(sim).source isa EndTimeReached
+        # A bound at or before a far origin is frame 0, never a rounding failure.
+        sim = Simulation(feedback_model(); h = 1//10)
+        init!(sim, point; t0 = 1e33)
+        run!(sim; t_end = 1.0)
+        @test latest(sim).frame == 0 && termination(sim).source isa EndTimeReached
+    end
+
     @testset "the five states, and the gates between them (§12.6)" begin
         sim = Simulation(feedback_model(); h = 1//50)
         @test lifecycle(sim) === :built

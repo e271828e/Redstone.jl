@@ -17,18 +17,6 @@ item changes what the spec says, the spec edit is part of the item.
   and returns the stage point as the state. This needs a look before a fix.
   Evidence: `design/reports/20261105_docstring_audit/probes/A6/p8_misc.jl`, and the `checkpoint` row of
   `ledgers/A6.txt`.
-- **Values past `Int`'s range, the audit's defect k.** `run!(; t_end = 1e300)`,
-  `step!(; frames = big(2)^70)` and `init!(; log_every = big(10)^30)` raise a raw
-  `InexactError`. `step!(; frames = typemax(Int))` from a frame past the first
-  overflows and returns 0 frames, and at the first frame runs without bound.
-  `replay!(; t_end = 1e300)` throws after writing. One helper should
-  refuse them as `ArgumentInvalid`. Beside them, `ignore_stop_requests = :foo`
-  raises a raw `MethodError`, and a bare string iterates per character, one
-  `StopRequestInvalid` each, as the keyword rows of `run!` and `replay!` in
-  `ledgers/A8.txt` record. Evidence:
-  `design/reports/20261105_docstring_audit/probes/A3/p3_init.jl` and `probes/A3/p6_edges.jl`, and the
-  `run!`, `step!` and `replay!` rows of `ledgers/A8.txt`, whose `p1_replay.jl`
-  the audit did not keep.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose

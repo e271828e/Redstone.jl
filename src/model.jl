@@ -320,7 +320,7 @@ end
 # with `_frames_to`.
 function _check_origin(model::Model, call::Symbol, t0::Real)
     origin = Float64(t0)
-    isfinite(origin) && _frame_slack(origin, origin, model.deployment.h) < typemax(Int) ||
+    isfinite(origin) && _frames_fit(origin, origin, model.deployment.h) ||
         throw(DiagnosticError(ArgumentInvalid(call = call, reason = :range, argument = :t0,
                                               value = t0)))
     nothing
@@ -456,11 +456,17 @@ _grid_time(model::Model, k::Int) = model.exec.clock.t₀ + k * model.deployment.
 # at the larger of `|t|` and `|t₀|`, since `t₀ + k·h` and `t - t₀` both round
 # at that magnitude. `0.3/0.1` is `2.9999999999999996`, and at `t₀ = -0.3` the
 # loop writes frame 3's time as `5.6e-17`, whose own ulps absorb none of that.
-# `t` and `t₀` are any reals; the step is `Float64` (D-260).
+# `t` and `t₀` are any reals; the step is `Float64` (D-260). A bound at or
+# before the origin is frame 0, whatever its distance, so `_frames_to` never
+# rounds a count `Int` cannot hold on that side; `_frames_fit` is the doors'
+# check for the other side, with `Inf` mapping onto the unbounded budget.
 _frame_slack(t::Real, t₀::Real, h::Float64) = 4 * eps(max(abs(t), abs(t₀))) / h
+_frames_fit(t::Real, t₀::Real, h::Float64) =
+    isinf(t) || (t - t₀) / h + _frame_slack(t, t₀, h) < typemax(Int)
 function _frames_to(t::Real, t₀::Real, h::Float64)
     isinf(t) && return typemax(Int)
-    max(0, ceil(Int, (t - t₀) / h - _frame_slack(t, t₀, h)))
+    count = (t - t₀) / h - _frame_slack(t, t₀, h)
+    count ≤ 0 ? 0 : ceil(Int, count)
 end
 _frame_at(t::Real, t₀::Real, h::Float64) = floor(Int, (t - t₀) / h + _frame_slack(t, t₀, h))
 

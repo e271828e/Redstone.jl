@@ -10845,8 +10845,10 @@ run ended) carries the policy that actually ended the run. The ignore list,
 strings names requesters by component path. Each path is validated against
 the requester roster on every call, and duplicates collapse, in the order
 given. A path naming no requester is `StopRequestInvalid`, collected over the
-given paths ([Appendix C][sC]). A `t_end` that is not a non-negative real is
-`ArgumentInvalid`, refused before the ignore list is read ([D-413][d-413]).
+given paths ([Appendix C][sC]). A `t_end` that is not a non-negative real, or
+whose frame top from `t₀` leaves `Int`, is `ArgumentInvalid`, refused before the
+ignore list is read ([D-413][d-413]); an ignore list that is a bare string, or a
+symbol other than `:all`, is `ArgumentInvalid` too.
 
 Each advance builds a [`StopPolicy`](#g-stop-policy) (the immutable value of `t_end` plus the
 ignored requester paths), and passes it to the loop with an ignore mask, one

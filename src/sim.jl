@@ -398,8 +398,11 @@ warnings(sim::Simulation) = warnings(sim.model)
 # the throw is fail-fast — an advance is one call, so the bound refuses before
 # the ignored requesters are looked at. `Inf` is a value, not an absence: it is the
 # default every advance states, and `_frames_to` maps it onto the frame loop's
-# unbounded budget.
-_t_bound(t_end, call::Symbol) = (t_end isa Real && t_end ≥ 0) ? Float64(t_end) :
+# unbounded budget. A finite bound is checked as given, before the conversion,
+# so a value past the frame range is refused rather than rounded to `Inf`.
+_t_bound(sim::Simulation, t_end, call::Symbol) =
+    (t_end isa Real && t_end ≥ 0 &&
+     _frames_fit(t_end, sim.model.exec.clock.t₀, sim.model.deployment.h)) ? Float64(t_end) :
     throw(DiagnosticError(ArgumentInvalid(call = call, reason = :range,
                                           argument = :t_end, value = t_end)))
 
@@ -444,8 +447,14 @@ function _ignored_requests(layout::Layout, ignore_stop_requests, diags::Vector{D
 end
 
 # Each advance declares its own ignore list in a call of its own, so a fresh
-# list thrown here is that call's one barrier (§13.1, D-229).
+# list thrown here is that call's one barrier (§13.1, D-229). The list's shape
+# is refused first, fail-fast: a symbol other than `:all` iterates nothing, and
+# a bare string iterates its characters, so neither reaches the path pass.
 function _ignored_requests(layout::Layout, ignore_stop_requests; site::Symbol)
+    ignore_stop_requests === :all || !(ignore_stop_requests isa Union{Symbol,AbstractString}) ||
+        throw(DiagnosticError(ArgumentInvalid(call = site, reason = :range,
+                                              argument = :ignore_stop_requests,
+                                              value = ignore_stop_requests)))
     diags = Diagnostic[]
     r = _ignored_requests(layout, ignore_stop_requests, diags; site)
     isempty(diags) || throw(DiagnosticError(diags))
@@ -459,7 +468,7 @@ end
 # `_t_bound` is fail-fast, and the paths are a collecting pass behind it — so a
 # call naming both a bad bound and a bad path is refused for the bound.
 function _bind_policy(sim::Simulation, t_end, ignore_stop_requests, site::Symbol)
-    bound = _t_bound(t_end, site)
+    bound = _t_bound(sim, t_end, site)
     (ignored, ignore_mask) = _ignored_requests(sim.model.exec.act.layout, ignore_stop_requests; site)
     (StopPolicy(bound, ignored), ignore_mask)
 end
@@ -658,8 +667,9 @@ function _check_recording(call::Symbol, trace_switch, log_switch, log_every, log
                                                      argument = argument, value = v))
     trace_switch isa Bool || _arg(:trace, trace_switch)
     log_switch isa Bool || _arg(:log, log_switch)
-    log_every isa Integer && log_every ≥ 1 || _arg(:log_every, log_every)
-    (log_max isa Integer && log_max ≥ 1) || log_max === Inf || _arg(:log_max, log_max)
+    log_every isa Integer && 1 ≤ log_every ≤ typemax(Int) || _arg(:log_every, log_every)
+    (log_max isa Integer && 1 ≤ log_max ≤ typemax(Int)) || log_max === Inf ||
+        _arg(:log_max, log_max)
     restore isa Bool || _arg(:restore, restore)
     isempty(diags) || throw(DiagnosticError(diags))
     nothing
@@ -1358,11 +1368,11 @@ function replay!(sim::Simulation, trc::Trace; to_boundary = nothing,
         # word about a time the recording covers). `_frame_at` carries the
         # slack: without it the plain floor would halt one boundary short of
         # the one named.
-        t₀ = trc.header.state.t₀
-        to_time isa Real && isfinite(to_time) && to_time ≥ t₀ || throw(DiagnosticError(
-            ArgumentInvalid(call = :replay!, reason = :range, argument = :to_time,
-                            value = to_time)))
-        to_boundary = _frame_at(Float64(to_time), t₀, trc.header.state.deployment.h)
+        t₀, h = trc.header.state.t₀, trc.header.state.deployment.h
+        to_time isa Real && isfinite(to_time) && to_time ≥ t₀ && _frames_fit(to_time, t₀, h) ||
+            throw(DiagnosticError(ArgumentInvalid(call = :replay!, reason = :range,
+                                                  argument = :to_time, value = to_time)))
+        to_boundary = _frame_at(Float64(to_time), t₀, h)
         first_frame ≤ to_boundary ≤ trc.frames || throw(DiagnosticError(   # outside the feed
             ArgumentInvalid(call = :replay!, reason = :range, argument = :to_time,
                             value = to_time)))
@@ -1533,10 +1543,10 @@ requester as `StopRequestInvalid`.
 - `pace`: simulated seconds per wall-clock second, a positive real.
 - `margin`: the seconds of each pacing wait spent spinning rather than sleeping,
   a non-negative real.
-- `t_end`: the time at which this advance ends the run, a non-negative real or
-  `Inf`.
+- `t_end`: the time at which this advance ends the run, a non-negative real
+  within the frame range from `t₀`, or `Inf`.
 - `ignore_stop_requests`: the stop requests this advance does not honour, `:all`
-  or the paths of the requesting [components](@ref g-component).
+  or an iterable of the requesting [components](@ref g-component)' paths.
 """
 function run!(sim::Simulation; pace = Inf, margin = 0.002, t_end = Inf,
               ignore_stop_requests = ())
@@ -2179,9 +2189,10 @@ ignored path that names no requester as `StopRequestInvalid`.
 
 # Keywords
 
-- `frames`: the number of frames to advance, an integer of at least 1.
-- `t_plus`: the duration to advance, a positive finite real, in whole frames
-  until the boundary time first covers it.
+- `frames`: the number of frames to advance, an integer of at least 1 that keeps
+  the frame index within `Int`.
+- `t_plus`: the duration to advance, a positive finite real within the frame
+  range, in whole frames until the boundary time first covers it.
 - `t_end`, `ignore_stop_requests`: this advance's
   [stop policy](@ref g-stop-policy), as for [`run!`](@ref), with the same
   defaults, validated per call.
@@ -2194,15 +2205,20 @@ function step!(sim::Simulation; frames = nothing, t_plus = nothing,
     frames === nothing || t_plus === nothing ||
         throw(DiagnosticError(ArgumentInvalid(call = :step!, reason = :both_given)))
     if t_plus === nothing
+        # bounded by what the frame index can still hold, so the sum below
+        # never wraps and a count past `Int` is a refusal, not an `InexactError`
         frame_count = frames === nothing ? 1 : frames
-        frame_count isa Integer && frame_count ≥ 1 || throw(DiagnosticError(
-            ArgumentInvalid(call = :step!, reason = :range, argument = :frames,
-                            value = frame_count)))
+        frame_count isa Integer && 1 ≤ frame_count ≤ typemax(Int) - sim.run.frame ||
+            throw(DiagnosticError(ArgumentInvalid(call = :step!, reason = :range,
+                                                  argument = :frames, value = frame_count)))
         frame_count = Int(frame_count)
     else
-        t_plus isa Real && isfinite(t_plus) && t_plus > 0 || throw(DiagnosticError(
-            ArgumentInvalid(call = :step!, reason = :range, argument = :t_plus, value = t_plus)))
+        # the duration is checked as the frame index it lands on, from the origin
         t = sim.model.exec.clock.t                  # the frame top the duration counts from
+        t_plus isa Real && isfinite(t_plus) && t_plus > 0 &&
+            _frames_fit(t + t_plus, sim.model.exec.clock.t₀, sim.model.deployment.h) ||
+            throw(DiagnosticError(ArgumentInvalid(call = :step!, reason = :range,
+                                                  argument = :t_plus, value = t_plus)))
         frame_count = max(1, _frames_to(t + Float64(t_plus), t, sim.model.deployment.h))
     end
     (policy, ignore_mask) = _bind_policy(sim, t_end, ignore_stop_requests, :step!)   # this advance's policy (§13.5, D-255)

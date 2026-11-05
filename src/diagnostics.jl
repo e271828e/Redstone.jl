@@ -2354,9 +2354,9 @@ function message(d::ArgumentInvalid)
     d.argument === :log &&
         return "`log` must be true or false — the retention switch, got $(repr(d.value)) (§11.2)"
     d.argument === :log_every &&
-        return "`log_every` must be an integer ≥ 1, got $(repr(d.value)) (§11.2)"
+        return "`log_every` must be an integer ≥ 1 within `Int`, got $(repr(d.value)) (§11.2)"
     d.argument === :log_max &&
-        return "`log_max` must be an integer ≥ 1, or Inf as the explicit opt-out, got " *
+        return "`log_max` must be an integer ≥ 1 within `Int`, or Inf as the explicit opt-out, got " *
                "$(repr(d.value)) (§11.2)"
     d.argument === :pace &&
         return "`pace` must be a positive real — simulated seconds per wall-clock second, " *
@@ -2368,17 +2368,23 @@ function message(d::ArgumentInvalid)
         return "`restore` must be true or false — whether `replay!` restores the trace's " *
                "header or feeds the simulation as it stands, got $(repr(d.value)) (§12.7)"
     d.argument === :t_end &&
-        return "`t_end` must be a real ≥ 0 — the run's clock bound, taken to the nearest " *
-               "frame top, Inf the unbounded default, got $(repr(d.value)) (§13.5)"
+        return "`t_end` must be a real ≥ 0 whose frame top from `t₀` at `h` fits an `Int` — " *
+               "the run's clock bound, taken to the nearest frame top, Inf the unbounded " *
+               "default — got $(repr(d.value)) (§13.5)"
+    d.argument === :ignore_stop_requests &&
+        return "`ignore_stop_requests` must be `:all` or an iterable of requester paths — " *
+               "a bare string or another symbol is neither — got $(repr(d.value)) (§13.5)"
     d.argument === :frames ?
-        "frames must be an integer ≥ 1, got $(d.value) (§12.6)" :
+        "frames must be an integer ≥ 1 that keeps the frame index within `Int`, got " *
+        "$(d.value) (§12.6)" :
         d.argument === :to_boundary ?
         "to_boundary must be a whole grid boundary the recording covers — from the frame " *
         "the feed starts at through its own length — got $(repr(d.value)) (§12.7, §13.4)" :
         d.argument === :to_time ?
         "to_time must be a finite real at or after the recording's `t₀`, naming a time the " *
         "recording covers — got $(repr(d.value)) (§12.7, D-219)" :
-        "t_plus must be a finite real > 0 — the duration spelling — got $(d.value) (§12.6)"
+        "t_plus must be a finite real > 0 whose end frame fits an `Int` — the duration " *
+        "spelling — got $(d.value) (§12.6)"
 end
 
 "§14.4, §14.10, D-215, D-272, D-278: a non-selector in a read set or a tap list, a tap list that is no NamedTuple, a non-`Reads` where one is expected, or an empty `at` prefix on a read set — `ConditionNodeMisuse`'s twin."

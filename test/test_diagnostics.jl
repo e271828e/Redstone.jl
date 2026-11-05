@@ -607,6 +607,8 @@ function diagnostics_kind_set()
             ArgumentInvalid(call = :init!, reason = :range, argument = :log_max, value = 1.5),
             ArgumentInvalid(call = :Simulation, reason = :range, argument = :t_end, value = -1.0),
             ArgumentInvalid(call = :run!, reason = :range, argument = :t_end, value = -1.0),
+            ArgumentInvalid(call = :run!, reason = :range, argument = :ignore_stop_requests,
+                            value = :foo),
             ArgumentInvalid(call = :Period, reason = :inexact, value = 0.02),
             ArgumentInvalid(call = :Hz, reason = :inexact, value = 0.5),
             ArgumentInvalid(call = :Absolute, reason = :inexact, value = 0.5),
@@ -1219,6 +1221,10 @@ function diagnostics_kind_set()
                                            value = NaN))
         @test startswith(rendered, "`t0` must be a finite real")
         @test occursin("got NaN", rendered)
+        rendered = message(ArgumentInvalid(call = :run!, reason = :range,
+                                           argument = :ignore_stop_requests, value = "nope"))
+        @test startswith(rendered, "`ignore_stop_requests` must be `:all` or an iterable")
+        @test occursin("got \"nope\"", rendered)
         # A `t*` stop's refusal names the clock, the top it fell short of, the
         # frame, and the three ways to stop at a top.
         rendered = message(CheckpointMidFrame(t = 0.315, t_frame = 0.4, frame = 4))
