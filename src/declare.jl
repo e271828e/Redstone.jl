@@ -27,7 +27,7 @@ children. Defining any primitive declaration, such as [`x_init`](@ref),
 makes it a primitive.
 
 A component's module extends the declarations it defines, importing each one by
-name, as in `import Redstone: x_init, y_types, y_direct`, and defines them at
+name, as in `import Redstone: x_init, y_types, y_direct`. It defines them at
 module top level.
 
 The build refuses a type that defines neither family as `ClassUnreadable`, and
@@ -47,30 +47,29 @@ abstract type AbstractComponent end
     x_init(c) -> NamedTuple, value or nothing
 
 Return the [component](@ref g-component)'s initial continuous state, as a
-`NamedTuple` of named values or as one bare value.
+`NamedTuple` of named values or as one [bare](@ref g-bare-store) value.
 
 A continuous [primitive](@ref g-primitive) declares its state by value, written
 with `Float64` values, as in `x_init(::Engine) = (ω = 0.0,)`. The value fixes
-the state's type, and its real values follow the scalar of each
+the state's type. Its real values follow the scalar of each
 [activation](@ref g-activation). Each field, or the bare value, is one `Float64`
 or one `SArray` of `Float64`. Integers, `Bool`s and enums belong in
 [`m_init`](@ref).
 
 A state of one leaf may be that leaf alone, as in
-`x_init(c::Integrator) = c.x0`. This bare state's one field is named `x`, and
-the component's functions then receive it bare.
+`x_init(c::Integrator) = c.x0`. This bare state's one field is named `x`. The
+component's functions then receive it bare.
 
-Every primitive defines exactly one of `x_init` and [`s_init`](@ref), and the
-one it defines makes it continuous or discrete. A stateless continuous primitive
+Every primitive defines exactly one of `x_init` and [`s_init`](@ref). The one it
+defines makes it continuous or discrete. A stateless continuous primitive
 declares `x_init(::C) = nothing`. A non-empty state needs an [`x_deriv`](@ref)
 method.
 
-The build refuses `(;)` as `EmptyStore`, and a field or bare value outside the
-state vocabulary as `IllegalStateLeaf`. A non-empty state with neither `x_deriv`
-nor `s_update` is refused first as `StoreWithoutUpdate`. A primitive that
-defines neither `x_init` nor `s_init` is refused as `TierUnreadable`, and one
-that defines both, or an update law of the other tier, as
-`DeclarationOnWrongTier`.
+The build refuses `(;)` as `EmptyStore`, and a field or bare value of any other
+type as `IllegalStateLeaf`. A non-empty state with neither `x_deriv` nor
+`s_update` is refused first as `StoreWithoutUpdate`. A primitive that defines
+neither `x_init` nor `s_init` is refused as `TierUnreadable`, and one that
+defines both, or an update law of the other tier, as `DeclarationOnWrongTier`.
 """
 x_init(::Any) = nothing
 
@@ -82,19 +81,18 @@ x_init(::Any) = nothing
     s_init(c) -> NamedTuple, value or nothing
 
 Return the [component](@ref g-component)'s initial discrete state, as a
-`NamedTuple` of named values or as one bare value.
+`NamedTuple` of named values or as one [bare](@ref g-bare-store) value.
 
 A discrete [primitive](@ref g-primitive) declares its state by value, as in
 `s_init(::Counter) = (n = 0,)`, or `s_init(::Counter) = 0` for the bare form,
 whose one field is named `s`. Every field, or the bare value, is isbits or a
-`Symbol`, and its type stays as written at every
-[activation](@ref g-activation). Text and bulk data belong on the component
-instance.
+`Symbol`. Its type stays as written at every [activation](@ref g-activation).
+Text and bulk data belong on the component instance.
 
-Every primitive defines exactly one of [`x_init`](@ref) and `s_init`, and the
-one it defines makes it continuous or discrete. A stateless discrete primitive
-declares `s_init(::C) = nothing`, and holds its outputs between its
-[ticks](@ref g-tick). A non-empty state needs an [`s_update`](@ref) method.
+Every primitive defines exactly one of [`x_init`](@ref) and `s_init`. The one it
+defines makes it continuous or discrete. A stateless discrete primitive declares
+`s_init(::C) = nothing`. It holds its outputs between its [ticks](@ref g-tick).
+A non-empty state needs an [`s_update`](@ref) method.
 
 The build refuses `(;)` as `EmptyStore`, and a field or bare value that is
 neither isbits nor a `Symbol` as `IllegalStoreField`. A non-empty state with
@@ -108,7 +106,7 @@ s_init(::Any) = nothing
     m_init(c) -> NamedTuple, value or nothing
 
 Return the [component](@ref g-component)'s initial modes, as a `NamedTuple` of
-named values or as one bare value.
+named values or as one [bare](@ref g-bare-store) value.
 
 A continuous [primitive](@ref g-primitive) declares its modes by value, as in
 `m_init(::Engine) = (phase = off,)`, or `m_init(::Switch) = false` for the bare
@@ -142,9 +140,11 @@ come from the instance and eltypes from `T`, as in
 
 The allocator takes `T` on both [tiers](@ref g-tier). The framework calls a
 continuous allocator at the scalar of each [activation](@ref g-activation), and
-a discrete one always receives `Float64`. The contents at each call are
-unspecified, and the framework never reads or writes them. A component that
-needs no [scratch](@ref g-scratch) defines no method.
+a discrete one always receives `Float64`.
+
+The contents at each call are unspecified, and the framework never reads or
+writes them. A component that needs no [scratch](@ref g-scratch) defines no
+method.
 """
 function ws_init end
 
@@ -160,9 +160,9 @@ component alone on both [tiers](@ref g-tier), as in
 `u_types(::Engine) = (throttle = Float64, starter = Bool)`. The default declares
 no inputs.
 
-A component with one input may declare it bare, as in
+A component with one input may declare it [bare](@ref g-bare-contract), as in
 `u_types(::Integrator{V}) where {V} = V`. The input's [face](@ref g-face) is
-then `u`, a wire names it `"integrator/u"`, and the [bundle](@ref g-bundle)'s
+then `u`, and a wire names it `"integrator/u"`. The [bundle](@ref g-bundle)'s
 `u` is its value.
 
 On a continuous [primitive](@ref g-primitive) every `Float64` position follows
@@ -170,7 +170,7 @@ the scalar of each [activation](@ref g-activation), and an entry wrapped in
 [`Pinned`](@ref) does not. On a discrete primitive every entry stays as written.
 
 An entry states what the component allows to arrive. An unwrapped `Float64`
-leaf tolerates both the activation scalar and a frozen `Float64`, and a
+position tolerates both the activation scalar and a frozen `Float64`, and a
 `Pinned` entry demands an arriving value that never carries partials.
 
 The build refuses a wire whose producer type does not fit the entry as
@@ -201,16 +201,16 @@ position, alone or as a type parameter, at that activation's scalar. An entry
 wrapped in [`Pinned`](@ref) keeps its type at every activation. On a discrete
 primitive every entry stays as written.
 
-A component with one output may declare it bare, as in
+A component with one output may declare it [bare](@ref g-bare-contract), as in
 `y_types(::Integrator{V}) where {V} = V`. The port's [face](@ref g-face) is then
-`y`. A wire names it `"integrator/y"`, a reader by the path `"integrator"` with
-that name or alone, and the stage that produces it returns its value rather than
-a `NamedTuple`.
+`y`. A wire names it `"integrator/y"`, and a reader by the path `"integrator"`
+with that name or alone. The [stage](@ref g-stage-function) that produces it
+returns its value rather than a `NamedTuple`.
 
-One declaration covers both output [stages](@ref g-stage-function),
-[`y_state`](@ref) and [`y_direct`](@ref), and no port names its stage. The build
-finds which stage produces each port by its [probe](@ref g-probe), and checks
-each return against this declaration.
+One declaration covers both output stages, [`y_state`](@ref) and
+[`y_direct`](@ref), and no port names its stage. The build finds which stage
+produces each port by its [probe](@ref g-probe). It checks each return against
+this declaration.
 
 A primitive with an empty state and no `y_types` is refused as
 `StatelessWithoutOutputs`. A declared port no stage returns is refused as
@@ -223,6 +223,8 @@ y_types(::Any) = NamedTuple()
 
 # Design: §8.2, D-263, D-265.
 # Defined in `leaves.jl` beside the entry walk that dispatches on it.
+# The build strips the marker at `Float64`, so no value, layout or wire message
+# carries the wrapper itself.
 """
     Pinned{P}
 
@@ -235,9 +237,8 @@ follows the scalar of an [activation](@ref g-activation). On an output the
 [port](@ref g-port)'s value is a `P` at every activation. On an input the entry
 demands an arriving value that never carries partials.
 
-The build strips the marker at `Float64`, so no value, layout or wire message
-carries the wrapper itself. Only the two refusals below name it. It is a
-type-level marker, never instantiated.
+Only the two refusals below name `Pinned`. It is a type-level marker, never
+instantiated.
 
 A marker below the top of an entry, in a type parameter, is refused as
 `IllegalPortType` on both [tiers](@ref g-tier). The marker is continuous-only. A
@@ -262,8 +263,9 @@ ordered collection of `"child/face" => "child/face"` pairs.
 
 Every pair runs from a child's output [face](@ref g-face) to a child's input
 face, and its arrow reads along the signal flow. Both endpoints are relative to
-the declaring assembly, each one an immediate child and one of its faces, so
-`"aircraft/2/face"` names a container element's face in one level.
+the declaring assembly, each one an immediate child and one of its faces. The
+path `"aircraft/2/face"` names a [container](@ref g-container-children)
+element's face in one level.
 
 Defining `local_wires` is what makes a [component](@ref g-component) an
 assembly, so an assembly defines it even with no wires, as
@@ -321,7 +323,7 @@ output_wires(::Any) = ()
 # "At most one" is unrepresentable otherwise here: the return is one `Symbol`
 # or `nothing`.
 """
-    transparent_container(c) -> Union{Symbol,Nothing}
+    transparent_container(c) -> Symbol or nothing
 
 Return the name of the one [container field](@ref g-container-children) whose
 children go by bare key, or `nothing`.
@@ -330,7 +332,7 @@ Its elements are children of the [component](@ref g-component), named
 `"field/key"` or `"field/1"`. Returning that field's `Symbol` names them `"key"`
 and `"1"` instead, everywhere a child name appears, in wiring endpoints,
 [`sample_times`](@ref) keys, read paths, [`at`](@ref) prefixes and diagnostics.
-Naming is the only thing it changes, and the container still has no wires,
+Naming is the only thing it changes. The container still has no wires,
 [faces](@ref g-face) or rate of its own.
 
 The declaration is optional, and a component may name at most one field. The
@@ -352,9 +354,9 @@ Return the reason the [component](@ref g-component)'s
 
 A component publishes a stop request as an output [port](@ref g-port) of type
 [`StopFlag`](@ref). The build reads `stop_reason` for every component that
-publishes such a port, and all of the component's requests share the reason. It
-is instance data, never a port value. A run that a request ends carries the
-reason on its [`ModelRequestedStop`](@ref) source.
+publishes such a port. All of the component's requests share the reason. It is
+instance data, never a port value. A run that a request ends carries the reason
+on its [`ModelRequestedStop`](@ref) source.
 """
 stop_reason(::Any) = ""  # COV_EXCL_LINE
 
@@ -369,6 +371,7 @@ stop_reason(::Any) = ""  # COV_EXCL_LINE
 # argument throws the teaching error naming the exact spelling.
 
 # Design: §10.5.
+# GCD arithmetic derives the base grid, and it is ill-defined over floats.
 """
     Period(T::Union{Integer,Rational{<:Integer}}) -> Period
 
@@ -379,8 +382,8 @@ keyword of [`Deployment`](@ref) take. `Period(1//50)` and `Hz(50)` are the same
 value, so the spelling is a choice. Each normalizes to the exact rational period
 at construction. See [`Hz`](@ref) for the frequency spelling.
 
-A float is refused as `ArgumentInvalid`. GCD arithmetic derives the base grid,
-and it is ill-defined over floats. Write `Period(1//50)`, not `Period(0.02)`.
+A float is refused as `ArgumentInvalid`, because the grid arithmetic is exact.
+Write `Period(1//50)`, not `Period(0.02)`.
 """
 struct Period
     T::Rational{Int}
@@ -413,15 +416,15 @@ period(q::Period) = q.T
     Relative(K, φ) -> Relative
     Relative(K::Integer) -> Relative
 
-A sample time in [ticks](@ref g-tick) of the enclosing scope, every `K`-th tick
-starting from the `φ`-th.
+A sample time in [ticks](@ref g-tick) of the enclosing
+[scope](@ref g-rate-scope), every `K`-th tick starting from the `φ`-th.
 
 A [`sample_times`](@ref) [entry](@ref g-entry) `Relative(K, φ)` runs its child
-at every `K`-th tick of the enclosing [rate scope](@ref g-rate-scope), starting
-from its `φ`-th, and `φ` defaults to `0`. Relative entries count scope ticks, so
-they compose affinely down the tree. Under a scope that ticks every
-`D_s` [base ticks](@ref g-dt_base) at [phase](@ref g-phase) `Φ_s`, the child
-ticks every `K·D_s` base ticks at phase `Φ_s + φ·D_s`.
+at every `K`-th tick of the enclosing rate scope, starting from its `φ`-th. `φ`
+defaults to `0`. Relative entries count scope ticks, so they compose affinely
+down the tree. Under a scope that ticks every `D_s` [base ticks](@ref g-dt_base)
+at [phase](@ref g-phase) `Φ_s`, the child ticks every `K·D_s` base ticks at
+phase `Φ_s + φ·D_s`.
 
 `K = 1` admits no stagger. Stagger two same-rate siblings one level down
 instead. Declare their scope at twice their rate, and give them `Relative(2, 0)`
@@ -446,12 +449,12 @@ A sample time in exact rational seconds, with [ticks](@ref g-tick) at
 `q` is a period `T`, built with [`Period`](@ref) or [`Hz`](@ref), and `τ` is
 the offset in seconds.
 
-The [entry](@ref g-entry) is an [anchor](@ref g-anchor). It severs its child
-from the enclosing scope's grid, so the child may tick faster than its scope.
-The child's ticks count in [base ticks](@ref g-dt_base) only once a
-[`Deployment`](@ref) fixes `Δt_base`. Anchor periods and nonzero offsets
-constrain that grid together, and an offset of `T/1000` can cost a grid 1000
-times finer.
+The [entry](@ref g-entry) is an [anchor](@ref g-anchor). It detaches its child
+from the enclosing [scope](@ref g-rate-scope)'s grid, so the child may tick
+faster than its scope. The child's ticks count in [base ticks](@ref g-dt_base)
+only once a [`Deployment`](@ref) fixes `Δt_base`. Anchor periods and nonzero
+offsets constrain the base grid together. An offset of `T/1000` can cost a grid
+1000 times finer.
 
 A float offset is refused as `ArgumentInvalid`, and so is a bare number in place
 of a `Period`. Write `Absolute(Hz(50), 1//500)`. The build refuses a period that
@@ -478,8 +481,9 @@ A [rate scope](@ref g-rate-scope) schedules the assembly's discrete children and
 sub-assemblies, as in
 `sample_times(::A) = (nav = Relative(5), gnss = Absolute(Hz(10)))`. The
 declaration is optional, and so is every key. An unlisted discrete child
-defaults to `Relative(1)`, so only multiplied, phased or anchored children
-appear. A [container field](@ref g-container-children)'s bare name keys one
+defaults to `Relative(1)`, so only multiplied, [phased](@ref g-phase) or
+[anchored](@ref g-anchor) children appear. A
+[container field](@ref g-container-children)'s bare name keys one
 [entry](@ref g-entry) for all its elements.
 
 The rates belong to the assembly type, as design ratios or a modeled
@@ -513,8 +517,9 @@ where the value is `≥ 0`.
 
 The handler returns a `NamedTuple` of the [stores](@ref g-store) it writes, such
 as `(; m = (; phase = running))`. A present `x` replaces the whole continuous
-state, and a present `m` merges into the modes. Against a bare mode store, `m`
-is one value at its type and replaces it whole.
+state, and a present `m` merges into the modes. Against a
+[bare](@ref g-bare-store) mode store, `m` is one value at its type and replaces
+it whole.
 
 The build refuses a guard that returns neither form as `GuardForm`, a missing
 guard or handler method as `EventHalfMissing`, and a handler key that names no
@@ -534,7 +539,7 @@ Return the [component](@ref g-component)'s [events](@ref g-state-event), a
 
 A continuous [primitive](@ref g-primitive) declares its events as named entries,
 `state_events(::Engine) = (start = StateEvent(start_guard, start_handler),)`.
-Nothing here is inferred, and the default declares no events.
+Nothing here is inferred. The default declares no events.
 
 The order of the entries decides which event fires. At a
 [boundary](@ref g-boundary) a component fires at most one event per round, the
@@ -552,21 +557,22 @@ state_events(::Any) = (;)
 # It runs between a state write and its decode, and its return is written back
 # to the buffer wholesale, so the probe holds it complete against the state
 # shape.
+# One store goes in and the same store comes out, which is why it alone stays
+# positional.
 """
     x_projection(c, x) -> NamedTuple or value
 
-Return the continuous state `x` projected back onto the
+Return the continuous state `x` [projected](@ref g-projection) back onto the
 [component](@ref g-component)'s manifold.
 
 `x_projection` takes the state alone, not a [bundle](@ref g-bundle). One
-[store](@ref g-store) goes in and the same store comes out, which is why it
-alone stays positional. An attitude model might declare
-`x_projection(c::Attitude, x) = (; q = normalize(x.q))`.
+[store](@ref g-store) goes in and the same store comes out. An attitude model
+might declare `x_projection(c::Attitude, x) = (; q = normalize(x.q))`.
 
 It runs after each integration step, after each event handler fires, and at
 `init!` and `overlay!`, so it also reshapes an authored state. Its return
 replaces the whole continuous state, so it carries every state field at the
-state's type, or for a bare state one value at its type.
+state's type, or for a [bare](@ref g-bare-store) state one value at its type.
 
 The method is optional and continuous-only. The build refuses it on a discrete
 [primitive](@ref g-primitive), or on one with an empty state, as
@@ -605,19 +611,19 @@ Return the [component](@ref g-component)'s
 `y_state` is the first of a [primitive](@ref g-primitive)'s two output stages,
 defined by a method for the component's type, as in
 `y_state(::Engine, (; x)) = (; ω = x.ω)`. Its [bundle](@ref g-bundle) carries no
-inputs, so a stage-1 [port](@ref g-port) never depends instantly on an input and
-breaks would-be feedback loops.
+inputs, so a stage-1 [port](@ref g-port) never depends instantly on an input.
+That breaks would-be feedback loops.
 
 A primitive sits on one [tier](@ref g-tier). On the continuous tier the bundle
 may carry `x`, `m`, `t` and `ws`, and on the discrete tier `s`, `t`, `Δt` and
 `ws`, each only if the component has it.
 
 The stage returns a `NamedTuple` of port values at their [`y_types`](@ref)
-types, or the port's value itself under a bare `y_types`, the port `y`, as in
-`y_state(::Integrator, (; x)) = x`. [`y_direct`](@ref) receives the return as
-`y_x`, or `y_s` on the discrete tier, so a value both stages need, declared as a
-port, is computed once. A component exposes a state or mode field by returning
-it here.
+types, or the port's value itself under a [bare](@ref g-bare-contract)
+`y_types`, the port `y`, as in `y_state(::Integrator, (; x)) = x`.
+[`y_direct`](@ref) receives the return as `y_x`, or `y_s` on the discrete tier,
+so a value both stages need, declared as a port, is computed once. A component
+exposes a state or mode field by returning it here.
 
 A discrete primitive's stages run at `init!` and then only at its
 [ticks](@ref g-tick), and its ports hold their values in between.
@@ -639,13 +645,13 @@ Return the [component](@ref g-component)'s
 `y_direct` is the second of a [primitive](@ref g-primitive)'s two output stages,
 as in `y_direct(eng::Engine, (; x, m, u)) = (; M_shaft = ..., P = ...)`. Beside
 the state, its [bundle](@ref g-bundle) carries the inputs `u` and the return of
-[`y_state`](@ref) as `y_x`. Under a bare [`u_types`](@ref) the bundle's `u` is
-the value of the one input, the [face](@ref g-face) `u`.
+[`y_state`](@ref) as `y_x`, or `y_s` on the discrete [tier](@ref g-tier). Under
+a [bare](@ref g-bare-contract) [`u_types`](@ref) the bundle's `u` is the value
+of the one input, the [face](@ref g-face) `u`.
 
-A primitive sits on one [tier](@ref g-tier), and a discrete primitive receives
-that return as `y_s`. On the continuous tier the bundle may carry `x`, `m`, `u`,
-`y_x`, `t` and `ws`, and on the discrete tier `s`, `u`, `y_s`, `t`, `Δt` and
-`ws`, each only if the component has it.
+A primitive sits on one tier. On the continuous tier the bundle may carry `x`,
+`m`, `u`, `y_x`, `t` and `ws`, and on the discrete tier `s`, `u`, `y_s`, `t`,
+`Δt` and `ws`, each only if the component has it.
 
 The build takes every stage-2 [port](@ref g-port) to depend on every wired
 input.
@@ -677,10 +683,11 @@ instead of computing them again. Its [bundle](@ref g-bundle) may carry `x`, `m`,
 `y`, `u`, `t` and `ws`, each only if the component has it.
 
 The return has exactly the fields of [`x_init`](@ref), each at the state's type.
-For a bare state, the field `x`, it is one value at the state's type, as in
-`x_deriv(::Integrator, (; u)) = u`. There a bare [`u_types`](@ref) makes `u` the
-value of the one input, the [face](@ref g-face) `u`. A continuous primitive with
-a non-empty state must define it.
+For a [bare](@ref g-bare-store) state, the field `x`, it is one value at the
+state's type, as in `x_deriv(::Integrator, (; u)) = u`. There a
+[bare](@ref g-bare-contract) [`u_types`](@ref) makes `u` the value of the one
+input, the [face](@ref g-face) `u`. A continuous primitive with a non-empty
+state must define it.
 
 The build refuses a non-empty `x_init` with no `x_deriv` as
 `StoreWithoutUpdate`, a return whose fields or types differ from the state's
@@ -701,12 +708,12 @@ Return the [component](@ref g-component)'s discrete state after one
 `s_update(::Counter, (; s)) = (n = s.n + 1,)`. It runs at each of the
 component's ticks, once the [boundary](@ref g-boundary)'s outputs and
 [events](@ref g-state-event) have settled. Its [bundle](@ref g-bundle) may carry
-`s`, `y`, `u`, `t`, `Δt` and `ws`, each only if the component has it, and `Δt`
-is the component's own tick period.
+`s`, `y`, `u`, `t`, `Δt` and `ws`, each only if the component has it. `Δt` is
+the component's own tick period.
 
 The return replaces the whole state, so it has exactly the type of the value
-[`s_init`](@ref) returns, the one leaf itself for a bare state, the field `s`.
-A discrete primitive with a non-empty state must define it.
+[`s_init`](@ref) returns. For a [bare](@ref g-bare-store) state, the field `s`,
+it is that one leaf. A discrete primitive with a non-empty state must define it.
 
 The build refuses a non-empty `s_init` with no `s_update` as
 `StoreWithoutUpdate`, a return of another type as `ConformanceFailure`, and a
