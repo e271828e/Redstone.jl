@@ -187,7 +187,8 @@ The standard component library, the submodule `Redstone.Blocks`:
   or one output declares that contract bare, its face `u` or `y`, the
   `Junction`'s output, both sides of `Fn` and the inputs of `Fields`, `Unpack`, `LimitedIntegrator`,
   `LimitedDoubleIntegrator` and `DiscreteLimitedIntegrator` included; a side
-  with two or more ports stays named (§13.5, §13.7, D-437).
+  with two or more ports stays named, as do `Fields`'s outputs at any count,
+  since the fields name them (§13.5, §13.7, D-437).
 
 It reaches the parent through its import list alone, as a user's component
 file does (D-313). Nothing in the package depends on it, so `src/Redstone.jl`

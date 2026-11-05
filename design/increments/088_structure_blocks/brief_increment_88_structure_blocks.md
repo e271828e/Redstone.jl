@@ -255,4 +255,39 @@ not separate.
 
 ## The review's record
 
-Filled after the review.
+The docs commit is 4f2675c and the code commit 0217a1c. The cold review ran
+on 2026-11-05 by one Opus agent on a scratch worktree at 0217a1c, its
+probes and notes under the coordinator's scratchpad `review88/`. The gate
+ran on Julia 1.13.3, since the floor 1.13.0 that `Project.toml` declares is
+not installed: `Redstone 9303/9303` in 9m08s, no warning. Twenty-two
+mutants over `test_blocks()`; every pin the brief lists turned red,
+reading 3's abstract-`K` refusal included.
+
+Findings, landed as "Fix increment 88's review findings":
+
+- `Fn{U, Y}(Float64)` held a `DataType`, which fixes no method, so the
+  body dispatched at every call: 64 B per `sweep_2` body and 80 B per
+  boundary. A second constructor method holds a type as `Type{T}`; pinned
+  by the allocation testset over `fed_by(Constant(2), Fn{Int, Float64}(Float64))`
+  and by a type assertion. `Junction{In, Out, 1}(Float64)` shares the trap
+  and is a follow-up outside this increment.
+- `Fields`'s `Real` clause had no test, since `Float64` and `Int` fall to
+  the field count first; `Rational{Int}` joins the refusal loop.
+- `isstructtype(V)` in `Fields`'s constructor was redundant with
+  `fieldcount(V) > 0`, and goes.
+- Docstrings: `Fields`'s wire sentence named the input among the outputs;
+  `Fn`'s "nothing converts" holds at nominal only, since a `Float64` for a
+  walking port embeds under a `Dual`; `Fn`'s refusal comes from a build, a
+  linearization or a trim; "ports" takes its glossary link; `Unpack`
+  splits an `SVector`, not any `SArray`; `Select`'s "partials pass through".
+- The static parameter `keys` of `selected_input` shadowed `Base.keys`,
+  which the file calls; renamed `instance_values`.
+- The map's bare-contract sentence now says `Fields`'s outputs stay named
+  at any count.
+
+Survivors: M10, the names built in the body through strings, equivalent on
+Julia 1.13 since the compiler folds them, and caught by the allocation pin
+on a Julia that did not; M17, `isstructtype` dropped, retired with the
+clause. Informational and not fixed: `Fields{V}()` admits a mutable struct
+that the build refuses as `IllegalPortType(:mutable)`; an enum instance
+named `y` or a field named `u` collides at the root as D-437 rules.

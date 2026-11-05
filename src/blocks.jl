@@ -128,11 +128,12 @@ A continuous [primitive](@ref g-primitive) that publishes a function of its one
 input as its one output.
 
 The one input, `u`, is typed `U`, and the one output, `y`, is typed `Y`, the
-two parameters as written. It publishes `y = f(u)`, and a wire names its ports
-as in `"fn/u"` and `"fn/y"`. `Fn{U}(f)` is `Fn{U, U}(f)`. The port types are
-never read off `f`, so `f` returns a `Y`. Nothing converts, so a value of
-another type is refused as `ConformanceFailure`, at build for the value the
-build reads and as a `StepError` carrying it on a later [frame](@ref g-frame).
+two parameters as written. It publishes `y = f(u)`, and a wire names its
+[ports](@ref g-port) as in `"fn/u"` and `"fn/y"`. `Fn{U}(f)` is `Fn{U, U}(f)`.
+The port types are never read off `f`, so `f` returns a `Y`. Nothing converts
+at nominal, so a value of another type is refused as `ConformanceFailure`, at
+build for the value the build reads and as a `StepError` carrying it on a later
+[frame](@ref g-frame).
 
 The [block](@ref g-block) is the one-input [`Junction`](@ref) with its input
 bare. It spells a step between two children that wires cannot, such as a unit
@@ -144,8 +145,8 @@ scatter, so a one-line expression is cheaper inside the consumer's own stage.
 included. A `Y` wrapped in [`Pinned`](@ref) declares an output that carries no
 partials. `f` must then drop them itself, as [`Freeze`](@ref) does for a
 `Float64` or an `SArray`. An `f` that passes them on is refused as
-`ConformanceFailure` by the first build or linearization that runs it under a
-`Dual` activation.
+`ConformanceFailure` by the first build, linearization or trim that runs it
+under a `Dual` activation.
 
 The function holds no state and declares no [events](@ref g-state-event), so a
 discontinuity written into it lands wherever it falls inside a step, as in a
@@ -155,6 +156,9 @@ struct Fn{U, Y, F} <: AbstractComponent
     f::F
 end
 (::Type{Fn{U, Y}})(f) where {U, Y} = Fn{U, Y, typeof(f)}(f)
+# A type as `f`, `Fn{Int, Float64}(Float64)`, is held as `Type{T}` and not as
+# `DataType`, which fixes no method and would dispatch at every call.
+(::Type{Fn{U, Y}})(f::Type{T}) where {U, Y, T} = Fn{U, Y, Type{T}}(f)
 (::Type{Fn{U}})(f) where {U} = Fn{U, U}(f)
 x_init(::Fn) = nothing
 u_types(::Fn{U}) where {U} = U
@@ -198,21 +202,21 @@ struct input as an output of its own.
 
 The one input, `u`, is typed `V`, a struct or `NamedTuple` type with at least
 one field. The outputs take the field names of `V`, each typed as its field
-and publishing that field of `u`. A wire names them as in `"fields/u"` and
-`"fields/pose"`. The [block](@ref g-block) is stateless and unbundles one level
-only, so a field that is itself a struct is one output.
+and publishing that field of `u`. A wire names the input as in `"fields/u"` and
+an output as in `"fields/pose"`. The [block](@ref g-block) is stateless and
+unbundles one level only, so a field that is itself a struct is one output.
 
 A wire takes a [port](@ref g-port) whole, so the block is how a wired consumer
 takes less than a struct-valued port. A read takes a field directly through the
 [leaf address](@ref g-leaf-address) and needs no block.
 
 Any other `V` is refused as an `ArgumentError`. A `Float64` and an `SArray` are
-among them, and [`Unpack`](@ref) splits the latter.
+among them, and [`Unpack`](@ref) splits an `SVector`.
 """
 struct Fields{V} <: AbstractComponent
     function Fields{V}() where {V}
-        isconcretetype(V) && isstructtype(V) && !(V <: Union{Real, StaticArray, Tuple}) &&
-            fieldcount(V) > 0 || throw(ArgumentError(
+        isconcretetype(V) && !(V <: Union{Real, StaticArray, Tuple}) && fieldcount(V) > 0 ||
+            throw(ArgumentError(
                 "Fields takes a struct or NamedTuple type with at least one field; got $V."))
         new{V}()
     end
@@ -256,10 +260,10 @@ y_direct(::Switch, (; u)) = ifelse(u.select, u.in1, u.in2)
 # The chain `select === K1 ? u[1] : … : u[n]`, generated over the instances as a
 # type parameter. Neither `Symbol` of an instance nor a string is formed, either
 # of which allocates, and a generator cannot call the enum's own methods.
-@generated function selected_input(u::NamedTuple, select, ::Val{keys}) where {keys}
-    chain = :(getfield(u, $(length(keys))))
-    for i in length(keys)-1:-1:1
-        chain = :(select === $(keys[i]) ? getfield(u, $i) : $chain)
+@generated function selected_input(u::NamedTuple, select, ::Val{instance_values}) where {instance_values}
+    chain = :(getfield(u, $(length(instance_values))))
+    for i in length(instance_values)-1:-1:1
+        chain = :(select === $(instance_values[i]) ? getfield(u, $i) : $chain)
     end
     chain
 end
@@ -283,7 +287,7 @@ is typed `V`. It is the input that `select` names, so over
 The output reads every input. A `select` wired from a memoryless function of the
 output therefore closes an [algebraic loop](@ref g-algebraic-loop), which the
 build refuses as `AlgebraicCycle`. A linearization takes no partials through
-`select`, and the picked input's pass through.
+`select`, and the picked input's partials pass through.
 
 The block declares no [event](@ref g-state-event), so the jump in the output
 lands where `select` changes. A `select` published from a mode, or held between

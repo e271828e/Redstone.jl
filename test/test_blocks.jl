@@ -938,6 +938,8 @@ function test_blocks()
         triple = Fn{Float64}(v -> 3v - 1)
         @test u_types(triple) == Float64 && y_types(triple) == Float64
         @test typeof(Fn{Float64}(abs)) === Fn{Float64, Float64, typeof(abs)}
+        # A type as `f` is held as `Type{T}`, which fixes a method; `DataType` fixes none.
+        @test typeof(Fn{Int, Float64}(Float64)) === Fn{Int, Float64, Type{Float64}}
         @test u_types(Fn{Int, Float64}(float)) == Int && y_types(Fn{Int, Float64}(float)) == Float64
         @test Redstone.has_stage(y_direct, triple) && !Redstone.has_stage(y_state, triple)
         sim = Simulation(fed_by(Constant(2.0), triple); h = 1//10)
@@ -1045,7 +1047,7 @@ function test_blocks()
     end
 
     @testset "the fields block refuses a type with no fields to split: a scalar, a static array, a tuple, a `UnionAll` (§13.7)" begin
-        for V in (Float64, Int, SVector{2, Float64}, Tuple{Float64, Int}, @NamedTuple{}, Course)
+        for V in (Float64, Int, Rational{Int}, SVector{2, Float64}, Tuple{Float64, Int}, @NamedTuple{}, Course)
             @test_throws ArgumentError Fields{V}()
         end
     end
@@ -1094,7 +1096,7 @@ function test_blocks()
                       fed_by(Constant(1.0), Freeze{Float64}()),
                       fed_by(Constant(SVector(1.0, -1.0)), Freeze{SVector{2, Float64}}()),
                       requested(true, "x"), fed_by(Constant(2.0), Fn{Float64}(v -> 3v - 1)),
-                      vector_select_model()))...,
+                      fed_by(Constant(2), Fn{Int, Float64}(Float64)), vector_select_model()))...,
                  (switch_root(), (in1 = 1.0, in2 = -1.0, select = true)),
                  (select_root(), (climb = 1.0, cruise = 2.0, descent = 3.0, leg = DESCENT)),
                  (course_model(), (a = 1.5,)),
