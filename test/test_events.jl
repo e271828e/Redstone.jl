@@ -73,6 +73,22 @@ y_state(::BadProjectShape, (; x)) = (q = x.q,)
 x_deriv(::BadProjectShape, (; x)) = (q = 0.0,)
 x_projection(::BadProjectShape, x) = (v = x.q,)
 
+# `q̇ = 1` on the manifold `q ≤ 0.5`, under a handler that writes off it. `leak`
+# holds only off the manifold, so it fires iff a guard reads an unprojected write.
+struct ProjectedReset <: AbstractComponent end
+x_init(::ProjectedReset) = (q = 0.0,)
+m_init(::ProjectedReset) = (resets = 0, leaks = 0)
+y_types(::ProjectedReset) = (q = Float64,)
+y_state(::ProjectedReset, (; x)) = (q = x.q,)
+x_deriv(::ProjectedReset, (; x)) = (q = one(x.q),)
+x_projection(::ProjectedReset, x) = (q = min(x.q, 0.5),)
+projected_reset_guard(::ProjectedReset, (; x)) = x.q ≥ 0.25
+projected_reset_handler(::ProjectedReset, (; x, m)) = (x = (q = 2.0,), m = (; m..., resets = m.resets + 1))
+projected_leak_guard(::ProjectedReset, (; x)) = x.q > 1.0
+projected_leak_handler(::ProjectedReset, (; m)) = (m = (; m..., leaks = m.leaks + 1),)
+state_events(::ProjectedReset) = (reset = StateEvent(projected_reset_guard, projected_reset_handler),
+                                  leak = StateEvent(projected_leak_guard, projected_leak_handler))
+
 function test_events()
     @testset "the declaration layer and probe reject malformed events (§8.2, §9.3)" begin
         d = only(diagnostics(failure(() -> build(single(HalfEvent())))))
@@ -299,6 +315,23 @@ function test_events()
         r = state(sim, "c").r
         @test r[1]^2 + r[2]^2 ≈ 1.0 atol = 1e-14             # pinned to the manifold
         @test r ≈ SVector(cos(2.0), sin(2.0)) rtol = 1e-6    # and still the right trajectory
+    end
+
+    @testset "each firing projects before the round's guards and sweep read the state (§5.3, §10.6)" begin
+        sim = Simulation(single(ProjectedReset()); h = 1//10)
+        init!(sim)
+        step!(sim; frames = 2)
+        @test modes(sim, "c") == (resets = 0, leaks = 0)
+        @test state(sim, "c").q ≈ 0.2 atol = 1e-12
+        # `q` reaches 0.3 and the handler writes 2.0. The next round's guards read
+        # the projected 0.5, so `leak` stays quiet, and the sweep publishes 0.5.
+        step!(sim; frames = 1)
+        @test modes(sim, "c") == (resets = 1, leaks = 0)
+        @test state(sim, "c").q ≈ 0.5 atol = 1e-12
+        @test port(sim, "c", :q) ≈ 0.5 atol = 1e-12
+        step!(sim; frames = 3)
+        @test modes(sim, "c") == (resets = 1, leaks = 0)     # the edge is spent, and `q` stays pinned
+        @test state(sim, "c").q ≈ 0.5 atol = 1e-12
     end
 
     @testset "events compile out at a non-nominal activation (§9.4, D-052)" begin

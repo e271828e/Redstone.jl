@@ -354,6 +354,47 @@ function build_algebraic_cycles()
         v = SVector(tracer1, tracer2, tracer3)
         @test norm(v).dependencies == 0b111
         @test norm(v, 1).dependencies == 0b111
+        # A plain `Vector` takes the `AbstractArray` method, not StaticArrays' own.
+        @test norm([tracer1, tracer2, tracer3]).dependencies == 0b111
+        @test norm([tracer1, tracer2, tracer3]).value ≈ sqrt(14.0) atol = 1e-14
+        @test norm([tracer1, tracer2, tracer3], 1).value ≈ 6.0 atol = 1e-14
+    end
+
+    @testset "every decision the scalar answers is refused on a tainted operand (§13.8)" begin
+        tainted, clean, sampled = Tracer{true}(-1.5, 0b1), Tracer{true}(-1.5, UInt64(0)),
+                                  Tracer{false}(-1.5, 0b1)
+        for f in (iszero, isnan, isfinite, isinf, signbit)
+            @test_throws Undecidable f(tainted)
+            @test f(clean) === f(-1.5)
+            @test f(sampled) === f(-1.5)
+        end
+        # The two values separate the three rounding modes: 2, 1, 1 and -2, -2, -1.
+        for f in (round, floor, trunc), value in (1.5, -1.5)
+            @test_throws Undecidable f(Int, Tracer{true}(value, 0b1))
+            @test f(Int, Tracer{true}(value, UInt64(0))) === f(Int, value)
+            @test f(Int, Tracer{false}(value, 0b1)) === f(Int, value)
+        end
+        @test_throws Undecidable Int(Tracer{true}(2.0, 0b1))
+        @test Int(Tracer{true}(2.0, UInt64(0))) === 2
+        @test Int(Tracer{false}(2.0, 0b1)) === 2
+        @test_throws Undecidable Bool(Tracer{true}(1.0, 0b1))
+        @test Bool(Tracer{true}(1.0, UInt64(0))) === true
+        @test Bool(Tracer{false}(0.0, 0b1)) === false
+    end
+
+    @testset "a conversion to `Float64` severs the set: sampled keeps the value, global refuses (§13.8)" begin
+        @test Float64(Tracer{false}(1.5, 0b1)) === 1.5
+        # The global tracer refuses even an empty set: the value would leave the trace.
+        @test_throws Undecidable Float64(Tracer{true}(1.5, 0b1))
+        @test_throws Undecidable Float64(Tracer{true}(1.5, UInt64(0)))
+    end
+
+    @testset "the scalar's own identities keep the set they were handed (§13.8)" begin
+        tracer = Tracer{true}(0.5, 0b101)
+        @test Tracer{true}(tracer) === tracer
+        @test float(tracer) === tracer
+        unit = one(Tracer{true})
+        @test unit.value === 1.0 && unit.dependencies == 0
     end
 end
 

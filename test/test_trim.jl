@@ -216,6 +216,46 @@ function test_trim()
         @test lifecycle(live) === :initialized
     end
 
+    @testset "a step that raises the residual is rejected and retried under more damping (§14.8)" begin
+        # The full step from 3 lands near -9.5, where `atan` is larger in magnitude
+        # than at 3, so the first trial is rejected. Each rejection costs an
+        # evaluation and no iteration.
+        atan_eval!(r, J, d) = (r[1] = atan(d[1]); J[1, 1] = 1 / (1 + d[1]^2); nothing)
+        result = solve(LevenbergMarquardt(), atan_eval!, [3.0], [-Inf], [Inf], [1e-9])
+        @test result.status === :converged
+        @test abs(atan(result.d[1])) ≤ 1e-9
+        @test result.n_evaluations > result.n_iterations + 1
+    end
+
+    @testset "a descent no damping can find stalls at the damping's cap (§14.8)" begin
+        # At the kink of `|d| + 1` the Jacobian reads 1, and every step raises the
+        # residual, however short. The cap ends it with the guess kept: the steps
+        # are still far above the resolution of `d`, so only the cap can stop them.
+        kink_eval!(r, J, d) = (r[1] = abs(d[1]) + 1; J[1, 1] = d[1] < 0 ? -1.0 : 1.0; nothing)
+        result = solve(LevenbergMarquardt(), kink_eval!, [0.0], [-Inf], [Inf], [1e-9])
+        @test result.status === :stalled && result.n_iterations == 1
+        @test result.d == [0.0]
+        @test result.n_evaluations == 1 + 16     # λ from 1e-3 up to 1e12, by decades
+    end
+
+    @testset "the iteration budget ends the descent as `:maxiter`, unless the last step met the box (§14.8)" begin
+        # One damped step leaves `λ₀/(1 + λ₀)` of the linear residual `d - 2`.
+        linear_eval!(r, J, d) = (r[1] = d[1] - 2; J[1, 1] = 1.0; nothing)
+        budget = LevenbergMarquardt(maxiter = 1)
+        short = solve(budget, linear_eval!, [0.0], [-Inf], [Inf], [1e-9])
+        @test short.status === :maxiter && short.n_iterations == 1 && short.n_evaluations == 2
+        @test short.d[1] ≈ 2 / (1 + 1e-3) atol = 1e-12
+        met = solve(budget, linear_eval!, [0.0], [-Inf], [Inf], [1e-2])
+        @test met.status === :converged && met.n_iterations == 1
+
+        # The service records the status verbatim, and an exhausted budget commits nothing.
+        sim = Simulation(fed(Pendulum(), :u); h = 1//10)
+        report = trim!(sim, u_problem(); baseline = pend_base(), backend = budget)
+        @test report.status === :maxiter && !report.converged
+        @test report.committed_residuals === nothing
+        @test lifecycle(sim) === :built
+    end
+
     @testset "a converged solve names the decisions sitting at a bound (§14.8, D-070)" begin
         # The actuator saturates below the equilibrium torque, and the force balance
         # is declared to a tolerance the saturated point still meets: converged, at
@@ -384,6 +424,36 @@ function test_trim()
         @test d.names == [:wrong] && d.expected == [:torque]
         d = only(d for d in diagnostics(err) if d.field === :checks)
         @test d.names == [:off] && d.expected == [:θ]
+        @test world(sim) == before && lifecycle(sim) === :built
+    end
+
+    @testset "a field or a return that is no `NamedTuple` is named as such (§14.7, §13.1)" begin
+        sim = Simulation(fed(Pendulum(), :u); h = 1//10)
+        before = world(sim)
+
+        err = failure(() -> trim!(sim, TrimProblem(
+            guess = 0.0, lower = (u = -Inf,), upper = (u = Inf,),
+            condition = decide_u, reads = torque_reads(),
+            residuals = torque_only, tolerances = (torque = 1e-9,)); baseline = pend_base()))
+        d = only(diagnostics(err))
+        @test d isa TrimProblemInvalid && d.field === :guess
+        @test d.reason === :not_a_namedtuple && d.observed === Float64
+
+        err = failure(() -> trim!(sim, TrimProblem(
+            guess = (u = 0.0,), lower = (u = -Inf,), upper = (u = Inf,),
+            condition = decide_u, reads = torque_reads(),
+            residuals = torque_only, tolerances = 1e-9); baseline = pend_base()))
+        d = only(diagnostics(err))
+        @test d isa TrimProblemInvalid && d.field === :tolerances
+        @test d.reason === :not_a_namedtuple && d.observed === Float64
+
+        err = failure(() -> trim!(sim, TrimProblem(
+            guess = (u = 0.0,), lower = (u = -Inf,), upper = (u = Inf,),
+            condition = decide_u, reads = torque_reads(),
+            residuals = (r, d) -> r.ω̇, tolerances = (torque = 1e-9,)); baseline = pend_base()))
+        d = only(diagnostics(err))
+        @test d isa TrimProblemInvalid && d.field === :residuals
+        @test d.reason === :not_a_namedtuple && d.observed === Float64
         @test world(sim) == before && lifecycle(sim) === :built
     end
 

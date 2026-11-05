@@ -134,6 +134,18 @@ y_state(::LateIntegerProjection, (; x)) = (q = x.a,)
 x_deriv(::LateIntegerProjection, (; x)) = (a = -10.0 * x.a,)
 x_projection(::LateIntegerProjection, x) = x.a > 0.5 ? (a = x.a,) : (a = 0,)
 
+# A projection that throws only on the state its own handler writes: the throw
+# happens inside the fire walk, never at a routine boundary's projection.
+struct DetonatedOnReset <: AbstractComponent end
+x_init(::DetonatedOnReset) = (q = 0.0,)
+y_types(::DetonatedOnReset) = (q = Float64,)
+y_state(::DetonatedOnReset, (; x)) = (q = x.q,)
+x_deriv(::DetonatedOnReset, (; x)) = (q = one(x.q),)
+x_projection(::DetonatedOnReset, x) = x.q > 1.0 ? throw(Detonated()) : (q = x.q,)
+detonated_reset_guard(::DetonatedOnReset, (; x)) = x.q ≥ 0.25
+detonated_reset_handler(::DetonatedOnReset, (; x)) = (x = (q = 2.0,),)
+state_events(::DetonatedOnReset) = (reset = StateEvent(detonated_reset_guard, detonated_reset_handler),)
+
 # The lawful late `Float64`: the constant branch under a `Dual` activation, which
 # the write embeds as a zero-partial rather than refusing (§9.5, D-166).
 struct DecayingBranch <: AbstractComponent end
@@ -330,6 +342,17 @@ function failures_runtime()
         @test err isa StepError{Detonated}
         @test err.cursor.path == "c" && err.cursor.fn === :x_projection && err.cursor.phase === :project
         @test err.boundary == 1                         # `q` reaches the level in frame 2
+    end
+
+    @testset "a throw in a firing's projection names the projection, not the handler (§13.4)" begin
+        sim = Simulation(single(DetonatedOnReset()); h = 1//10)
+        init!(sim)
+        err = failure(() -> run!(sim; t_end = 5.0))
+        @test err isa StepError{Detonated}
+        @test err.cursor.path == "c" && err.cursor.fn === :x_projection
+        # The firing's own, not the next boundary's routine projection: `q` reaches
+        # the guard's level in frame 3, and a routine one would throw a frame later.
+        @test err.cursor.phase === :round && err.boundary == 2
     end
 
     @testset "a failed frame is not counted, and the record ends at the last one (§13.4)" begin
