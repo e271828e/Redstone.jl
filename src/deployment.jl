@@ -135,19 +135,19 @@ end
 
 # Design: §9.2, §10.5, D-254, D-261. The per-component `(D, Φ, Δt)` the
 # executor compiles over are derived from the rows at `compile`, never stored
-# beside them (D-261).
+# beside them (D-261). The component rows sit in walk order.
 """
     Schedule
 
-The deployment's [tick](@ref g-tick) table, with one row per discrete
-[component](@ref g-component), in walk order, and one per
+The deployment's [tick](@ref g-tick) table, one row per discrete
+[component](@ref g-component), in the build's order, and one per
 [rate scope](@ref g-rate-scope).
 
 A component row holds the component's path, the [anchor](@ref g-anchor) it
 resolved against, its tick divisor `D` and [phase](@ref g-phase) `Φ` in
-[base ticks](@ref g-dt_base), and its period `Δt` in seconds.
-[`Deployment`](@ref) builds the [schedule](@ref g-schedule) and carries it. A
-run reads every `Δt` it uses from it.
+[base ticks](@ref g-tick), and its period `Δt` in seconds.
+[`Deployment`](@ref) builds the schedule and carries it. A run reads every `Δt`
+it uses from it.
 """
 struct Schedule
     rows::Vector{ScheduleEntry}
@@ -305,15 +305,17 @@ end
                firing_budget = 4, localization_tol = 1e-6,
                localization_budget = 8) -> Deployment
 
-The build fixed to a continuous step, a [base tick](@ref g-dt_base) and event
+The build fixed to a continuous step, a [base tick](@ref g-tick) and event
 parameters, with no scalar type yet.
 
-A deployment carries the build, the grid it settled, the
-[schedule](@ref g-schedule) and the warnings its construction raised, read with
-[`warnings`](@ref). [`Model`](@ref) materializes it at a scalar type, and one
-deployment backs many models. Two deployments compare equal when their step,
-base tick, algorithm, event parameters and schedule agree, whatever their
-builds, which is what [`replay!`](@ref) checks before re-driving a recording.
+A deployment carries the build, the grid it settled, the [`Schedule`](@ref) and
+the warnings its construction raised, read with [`warnings`](@ref).
+[`Model`](@ref) materializes it at a scalar type, and one deployment backs many
+models.
+
+Two deployments compare equal when their step, base tick, algorithm, event
+parameters and schedule agree, whatever their builds. [`replay!`](@ref) checks
+this before re-driving a recording.
 
 `Δt_base = :derive` derives the base tick from the discrete
 [components](@ref g-component)' sample times. It is refused as
