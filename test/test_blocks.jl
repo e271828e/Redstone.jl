@@ -1757,7 +1757,7 @@ function test_blocks()
         end
     end
 
-    @testset "the step switches a vector, and its keywords promote (§13.7)" begin
+    @testset "the step switches a vector, and its keywords broadcast (§13.7)" begin
         @test y_types(Step(t_step = 1.0)) == Pinned{Float64}    # D-312
         source = Step(t_step = 0.25, before = SVector(0.0, 0.0), after = SVector(1.0, -1.0))
         sim = Simulation(single(source); h = 1//10)
@@ -3215,13 +3215,22 @@ function test_blocks()
         @test_throws ArgumentError Sequence(times = (0.25, 0.25), values = (0, 1, 2))
         @test_throws ArgumentError Sequence(times = (0.25, 0.5), values = (0, 1))
         @test_throws ArgumentError Sequence(times = (0.25,), values = (0, 1, 2))
-        for block in (LimitedIntegrator, LimitedDoubleIntegrator)
-            @test_throws ArgumentError block(lower = -1, upper = SVector(1, 1))
-            @test_throws ArgumentError block(lower = SVector(-1, -1), upper = SVector(1, 1, 1))
+        # Keywords sharing `V` broadcast to one shape, so a scalar pairs with a
+        # vector; two lengths are Julia's `DimensionMismatch`, as on the PID.
+        for block in (LimitedIntegrator, LimitedDoubleIntegrator, DiscreteLimitedIntegrator)
+            @test block(lower = -1, upper = SVector(1, 2)).lower === SVector(-1.0, -1.0)
+            @test_throws DimensionMismatch block(lower = SVector(-1, -1), upper = SVector(1, 1, 1))
         end
-        @test_throws ArgumentError LimitedIntegrator(lower = SVector(-1, -1), upper = SVector(1, 1), x0 = 0.5)
-        @test_throws ArgumentError LimitedDoubleIntegrator(lower = SVector(-1, -1), upper = SVector(1, 1), q0 = 0.5)
-        @test_throws ArgumentError LimitedDoubleIntegrator(lower = SVector(-1, -1), upper = SVector(1, 1), v0 = 0.5)
+        @test LimitedIntegrator(lower = SVector(-1, -1), upper = SVector(1, 1), x0 = 0.5).x0 === SVector(0.5, 0.5)
+        @test LimitedDoubleIntegrator(lower = SVector(-1, -1), upper = SVector(1, 1), q0 = 0.5, v0 = 1).v0 === SVector(1.0, 1.0)
+        @test Step(t_step = 0.25, after = SVector(1, 2)).before === SVector(0.0, 0.0)
+        @test Sequence(times = (1,), values = (0, SVector(1, 2))) isa Sequence{SVector{2, Float64}, true}
+        @test Relay(lower = 0, upper = SVector(1, 2)).on === SVector(1.0, 1.0)
+        @test Comparator(lower = 0, upper = SVector(1, 2)).lower === SVector(0.0, 0.0)
+        @test GaussianWhiteNoise(seed = 1, μ = 1, σ = SVector(1, 2)).μ === SVector(1.0, 1.0)
+        @test_throws DimensionMismatch Relay(lower = SVector(0, 0), upper = SVector(1, 1, 1))
+        @test_throws DimensionMismatch Step(t_step = 0.25, before = SVector(0, 0), after = SVector(1, 1, 1))
+        @test_throws DimensionMismatch Sequence(times = (1,), values = (SVector(0, 0), SVector(1, 1, 1)))
         for block in (LimitedIntegrator, LimitedDoubleIntegrator, DiscreteLimitedIntegrator)
             @test_throws ArgumentError block(lower = 1, upper = -1)
             @test_throws ArgumentError block(lower = 1, upper = 1)
@@ -3270,7 +3279,10 @@ function test_blocks()
         @test_throws TypeError Integrator(x0 = MVector(1.0, 2.0))
         @test_throws TypeError DiscreteIntegrator(s0 = 1f0)
         @test_throws TypeError DiscreteIntegrator(s0 = MVector(1.0, 2.0))
-        @test_throws TypeError Relay(lower = 0f0, upper = 1f0)
+        @test_throws TypeError Relay(lower = MVector(0.0), upper = MVector(1.0))
+        # A block whose keywords broadcast makes `Float64` of a `Float32`, as of
+        # an `Int`; a block taking its shape from `float(x0)` refuses it above.
+        @test Relay(lower = 0f0, upper = 1f0) isa Relay{Float64}
     end
 
     @testset "the loops' phase bodies and their quiet boundaries allocate nothing (§9.8)" begin

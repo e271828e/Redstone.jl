@@ -121,6 +121,9 @@ The standard component library, the submodule `Redstone.Blocks`:
 - `Source`, pinned, its `f` fed the nominal time (D-312, D-313).
 - `Constant`, `UnitDelay` and `Freeze` (D-312).
 - `StopRequest` (D-316).
+- The keyword-shape helpers `shape_zero` and `broadcast_keywords`, which every
+  block whose keywords share `V` reads them through, `GaussianWhiteNoise` and
+  the PID's `shape_type` included (§13.7).
 - `Delay`, `DiscreteIntegrator{V, R}`, `DiscreteLimitedIntegrator{V, R}` with the
   helper `saturation_code`, and `RateLimiter` (D-313). The reset form `R = true`
   of both is the level reset in `s_update` (§5.3).
@@ -143,8 +146,7 @@ The standard component library, the submodule `Redstone.Blocks`:
   `LimitedIntegrator` and `LimitedDoubleIntegrator` publish their mode as the
   output `saturation`, typed by the helper `saturation_type`, shared with
   `DiscreteLimitedIntegrator` and the PID.
-  Both read their keywords through the helper `promoted_keywords`, which
-  refuses a mix of shapes, check their limits through `check_limits`, as
+  Both check their limits through `check_limits`, as
   `DiscreteLimitedIntegrator` does, and write their hit guards over
   `first_nonzero`.
 - `ControllerBlock{Hold, Track}`, carrying `axis_ports`, `gated_error` and

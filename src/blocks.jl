@@ -295,6 +295,21 @@ signal(u) = u
 signal(u::NamedTuple) = u.u
 reset_guard(_, (; u)) = u.reset
 
+# --- the keyword shape (§13.7, D-313) -------------------------------------------
+
+# The zero of the shape a set of values broadcast to, the sum of their zeros as
+# `Float64`, so a scalar pairs with a static array; two lengths are Julia's
+# `DimensionMismatch`. `promote` cannot serve, since `promote(1.0, SVector(1.0, 2.0))`
+# throws, and the PID's scalar defaults must sit beside a vector `Kp`.
+shape_zero(given) = Float64.(reduce((a, b) -> a .+ b, map(zero, given); init = 0.0))
+
+# The keywords of one `V`, each broadcast to their one shape and made `Float64`,
+# so integer values qualify; `V` is the shape's type.
+function broadcast_keywords(given)
+    shape = shape_zero(given)
+    map(v -> Float64.(v .+ shape), given)
+end
+
 # --- the discrete tier (§7.3, §10.5, D-313) -------------------------------------
 
 # Design: §5.5, §10.5, D-437.
@@ -431,10 +446,10 @@ publishes an `SArray` of `Int8` of `V`'s shape.
 [`DiscreteIntegrator`](@ref). The update writes `s0`, clamped, at every tick
 where the flag reads true.
 
-`s0`, `lower` and `upper` are promoted to one type, the parameter `V`,
-`Float64` or an `SArray` of `Float64`, and taken by `float`, so integer values
-qualify. A `lower` not below `upper`, componentwise over an `SArray`, is
-refused with an `ArgumentError`.
+`s0`, `lower` and `upper` broadcast to one shape and type, the parameter `V`,
+`Float64` or an `SArray` of `Float64`, so a scalar limit pairs with a vector
+and integer values qualify. A `lower` not below `upper`, componentwise over an
+`SArray`, is refused with an `ArgumentError`.
 
 # Keywords
 
@@ -451,7 +466,7 @@ struct DiscreteLimitedIntegrator{V <: Union{Float64, SArray{<:Tuple, Float64}}, 
     upper::V
 end
 function DiscreteLimitedIntegrator(; lower, upper, s0 = zero(lower), reset::Bool = false)
-    s0, lower, upper = float.(promote(s0, lower, upper))
+    s0, lower, upper = broadcast_keywords((; s0, lower, upper))
     check_limits(lower, upper)
     DiscreteLimitedIntegrator{typeof(s0), reset}(s0, lower, upper)
 end
@@ -565,8 +580,8 @@ function GaussianWhiteNoise(; seed, μ = nothing, σ = nothing, psd = nothing)
     (σ === nothing) == (psd === nothing) &&
         throw(ArgumentError("GaussianWhiteNoise takes exactly one of `σ` and `psd`."))
     scale = psd === nothing ? σ : sqrt.(psd)
-    μ = something(μ, zero(scale))
-    GaussianWhiteNoise(UInt64(seed), Float64.(μ .+ zero(scale)), Float64.(scale .+ zero(μ)), psd !== nothing)
+    μ, scale = broadcast_keywords((; μ = something(μ, 0.0), scale))
+    GaussianWhiteNoise(UInt64(seed), μ, scale, psd !== nothing)
 end
 
 # SplitMix64's output on the state after `k + 1` advances from `seed`: the
@@ -1242,9 +1257,9 @@ on. The [block](@ref g-block) is a mode-only primitive with no inputs. Its one
 mode, the field `m`, written `fired` below, picks the value, and one
 [state event](@ref g-state-event), `fire`, sets it once `t` reaches `t_step`.
 
-`before` and `after` are promoted to one type, the parameter `V`, `Float64` or
-an `SArray` of `Float64`, and taken by `float`, so integer values qualify. The
-output is [pinned](@ref g-walked) at `V`. The value depends on neither state
+`before` and `after` broadcast to one shape and type, the parameter `V`,
+`Float64` or an `SArray` of `Float64`, so a scalar pairs with a vector and
+integer values qualify. The output is [pinned](@ref g-walked) at `V`. The value depends on neither state
 nor an input that follows the scalar, so it carries zero partials under every
 [activation](@ref g-activation), as a [`Constant`](@ref)'s does.
 
@@ -1271,7 +1286,7 @@ struct Step{V <: Union{Float64, SArray{<:Tuple, Float64}}, L} <: AbstractCompone
     t_step::Float64
 end
 function Step(; t_step, before = 0.0, after = 1.0, localized::Bool = true)
-    before, after = float.(promote(before, after))
+    before, after = broadcast_keywords((; before, after))
     Step{typeof(before), localized}(before, after, t_step)
 end
 x_init(::Step) = nothing
@@ -1308,9 +1323,9 @@ inputs, and a [`Step`](@ref) at one breakpoint.
 Its one mode, the field `m`, written `passed` below, counts the breakpoints
 passed. One [state event](@ref g-state-event), `advance`, fires when `t`
 reaches the next breakpoint and sets the count to every breakpoint at or before
-`t`. `values` are promoted to one type, the parameter `V`, `Float64` or an
-`SArray` of `Float64`, and taken by `float`, so integer values qualify. The
-output is [pinned](@ref g-walked) at `V`, so it carries zero partials under
+`t`. `values` broadcast to one shape and type, the parameter `V`, `Float64` or
+an `SArray` of `Float64`, so a scalar pairs with a vector and integer values
+qualify. The output is [pinned](@ref g-walked) at `V`, so it carries zero partials under
 every [activation](@ref g-activation).
 
 `localized` picks the detection policy.
@@ -1346,8 +1361,8 @@ function Sequence(; times, values, localized::Bool = true)
         throw(ArgumentError("a sequence over $N breakpoints takes $(N + 1) values, not $(length(values))"))
     all(k -> times[k] < times[k + 1], 1:N - 1) ||
         throw(ArgumentError("the sequence's `times` must ascend strictly"))
-    V = typeof(float(zero(mapreduce(typeof, promote_type, values))))
-    Sequence{V, localized}(collect(Float64, times), V[float(v) for v in values])
+    shaped = broadcast_keywords(values)
+    Sequence{eltype(shaped), localized}(collect(Float64, times), collect(shaped))
 end
 x_init(::Sequence) = nothing
 m_init(::Sequence) = 0                                           # passed
@@ -1371,14 +1386,6 @@ saturation_type(::Type{V}) where {V} = channel_type(V, Int8)
 first_nonzero(a, b) = a != 0 ? a : b
 first_nonzero(a, b, c) = first_nonzero(a, first_nonzero(b, c))
 
-# The keywords of one `V`, promoted and made float. `promote` over a scalar and a
-# static array, or over two lengths, throws an `ErrorException` naming no keyword.
-function promoted_keywords(given::NamedTuple)
-    allequal(size, given) || throw(ArgumentError(
-        "the keywords $(join(keys(given), ", ")) must share one shape, not the sizes $(join(map(size, given), ", "))"))
-    float.(promote(given...))
-end
-
 # A limited integrator needs a range to move in, so equal limits are refused.
 check_limits(lower, upper) =
     all(lower .< upper) || throw(ArgumentError("`lower` must be below `upper`, not $lower and $upper"))
@@ -1394,7 +1401,7 @@ check_limits(lower, upper) =
 # about 22 trial sweeps and a boundary. The policy is the type parameter `L`
 # rather than a field because the build reads it off the guard's return type;
 # `R` is the reset form. Boundary zero sets every prior to not-holding, which is
-# why an out-of-limits `x0` is clamped there. `V` is the promoted keyword type.
+# why an out-of-limits `x0` is clamped there. `V` is the keywords' broadcast type.
 # Each guard reads its one component and each handler writes it.
 """
     LimitedIntegrator(; lower, upper, x0 = zero(lower), localized::Bool = true, reset::Bool = false) -> LimitedIntegrator
@@ -1451,10 +1458,10 @@ once per rising edge. Its handler writes `x0`, clamped to the limits, and the
 code that value earns. A reset onto a limit therefore lands saturated, and a
 reset inside lands free, whatever the mode was.
 
-`x0`, `lower` and `upper` are promoted to one type, `Float64` or an `SArray` of
-`Float64`,, and taken by `float`, so integer values qualify. A `lower` not
-below `upper`, a scalar beside an `SArray` and two shapes are each refused with
-an `ArgumentError`.
+`x0`, `lower` and `upper` broadcast to one shape and type, the parameter `V`,
+`Float64` or an `SArray` of `Float64`, so a scalar limit pairs with a vector
+and integer values qualify. A `lower` not below `upper`, componentwise over an
+`SArray`, is refused with an `ArgumentError`.
 
 # Keywords
 
@@ -1474,7 +1481,7 @@ struct LimitedIntegrator{V <: Union{Float64, SArray{<:Tuple, Float64}}, L, R} <:
     upper::V
 end
 function LimitedIntegrator(; lower, upper, x0 = zero(lower), localized::Bool = true, reset::Bool = false)
-    x0, lower, upper = promoted_keywords((; x0, lower, upper))
+    x0, lower, upper = broadcast_keywords((; x0, lower, upper))
     check_limits(lower, upper)
     LimitedIntegrator{typeof(x0), localized, reset}(x0, lower, upper)
 end
@@ -1565,7 +1572,7 @@ end
 # boundary-detected ones are the `Bool` predicates. The policy is the type
 # parameter `L` rather than a field because the build reads it off the guard's
 # return type. Boundary zero sets every prior to not-holding, which is why an
-# out-of-limits `q0` is clamped there. `V` is the promoted keyword type.
+# out-of-limits `q0` is clamped there. `V` is the keywords' broadcast type.
 # Each guard reads its one component, each hit handler writes its one component
 # of `q`, `v` and the code, and each leave handler its one code.
 """
@@ -1621,10 +1628,10 @@ with `v` zeroed. A `q0` on a limit with `v0` pointing back into the range starts
 free and keeps `v0`. At rest there, the initial mode agrees with the initial
 input.
 
-`q0`, `v0`, `lower` and `upper` are promoted to one type, `Float64` or an
-`SArray` of `Float64`,, and taken by `float`, so integer values qualify. A
-`lower` not below `upper`, a scalar beside an `SArray` and two shapes are each
-refused with an `ArgumentError`.
+`q0`, `v0`, `lower` and `upper` broadcast to one shape and type, the parameter
+`V`, `Float64` or an `SArray` of `Float64`, so a scalar limit pairs with a
+vector and integer values qualify. A `lower` not below `upper`, componentwise
+over an `SArray`, is refused with an `ArgumentError`.
 
 # Keywords
 
@@ -1644,7 +1651,7 @@ struct LimitedDoubleIntegrator{V <: Union{Float64, SArray{<:Tuple, Float64}}, L}
     upper::V
 end
 function LimitedDoubleIntegrator(; lower, upper, q0 = zero(lower), v0 = zero(lower), localized::Bool = true)
-    q0, v0, lower, upper = promoted_keywords((; q0, v0, lower, upper))
+    q0, v0, lower, upper = broadcast_keywords((; q0, v0, lower, upper))
     check_limits(lower, upper)
     LimitedDoubleIntegrator{typeof(q0), localized}(q0, v0, lower, upper)
 end
@@ -1737,8 +1744,8 @@ out.
 [feedthrough](@ref g-feedthrough). A relay closing a feedback loop therefore
 makes no [algebraic loop](@ref g-algebraic-loop). The four values and both
 ports share one type, the parameter `V`, `Float64` or an `SArray` of `Float64`,
-taken by `float`, so integer values qualify, and `y` is [pinned](@ref g-walked)
-at `V`. It depends on the mode and the instance alone, so it carries zero
+the four keywords' broadcast to one shape, so a scalar pairs with a vector and
+integer values qualify, and `y` is [pinned](@ref g-walked) at `V`. It depends on the mode and the instance alone, so it carries zero
 partials under every [activation](@ref g-activation).
 
 Over an `SArray`, the thresholds, the values and the codes are componentwise.
@@ -1769,7 +1776,7 @@ struct Relay{V <: Union{Float64, SArray{<:Tuple, Float64}}} <: AbstractComponent
 end
 function Relay(; lower, upper, off = zero(lower), on = one.(lower))
     all(lower .<= upper) || throw(ArgumentError("the relay's `lower` must not exceed its `upper`"))
-    lower, upper, off, on = float.(promote(lower, upper, off, on))
+    lower, upper, off, on = broadcast_keywords((; lower, upper, off, on))
     Relay{typeof(lower)}(lower, upper, off, on)
 end
 x_init(::Relay) = nothing
@@ -1843,9 +1850,9 @@ A plain comparator takes `threshold` alone. Hysteresis takes `lower` and `upper`
 together and without `threshold`. Any other combination of the three keywords,
 or a `lower` above `upper`, is refused with an `ArgumentError`.
 
-`lower` and `upper` are promoted to one type, the parameter `V`, which the
-input `u` shares, `Float64` or an `SArray` of `Float64`, and taken by `float`,
-so integer values qualify.
+`lower` and `upper` broadcast to one shape and type, the parameter `V`, which
+the input `u` shares, `Float64` or an `SArray` of `Float64`, so a scalar pairs
+with a vector and integer values qualify.
 
 # Keywords
 
@@ -1869,7 +1876,7 @@ function Comparator(; threshold = nothing, lower = nothing, upper = nothing, loc
     elseif threshold !== nothing || lower === nothing || upper === nothing
         throw(ArgumentError("a comparator takes `threshold` alone, or `lower` and `upper` together"))
     end
-    lower, upper = float.(promote(lower, upper))
+    lower, upper = broadcast_keywords((; lower, upper))
     all(lower .<= upper) || throw(ArgumentError("the comparator's `lower` must not exceed its `upper`"))
     Comparator{typeof(lower), localized}(lower, upper)
 end
@@ -2019,11 +2026,11 @@ y_types(::PIDBlock{V}) where {V} = (u = V, u_raw = V)
 # No port name is a parameter name, so the whole input bundle merges.
 parameters(c::PIDBlock, u) = NamedTuple{PID_PARAMETERS}(merge(c.fixed, u))
 
-# The type of the PID's shape, the sum of the `zero`s of the keywords given as
-# values; `AsPort()` keywords take no part.
+# The type of the PID's shape, the keywords given as values broadcast to one;
+# `AsPort()` keywords take no part.
 function shape_type(given)
     fixed_names = filter(name -> given[name] !== AsPort(), keys(given))
-    typeof(Float64.(reduce((a, b) -> a .+ b, map(name -> zero(given[name]), fixed_names); init = 0.0)))
+    typeof(shape_zero(given[fixed_names]))
 end
 
 # The keywords given as values, each broadcast against the zero of its type in
