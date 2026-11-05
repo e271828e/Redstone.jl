@@ -165,10 +165,10 @@ from pinned data alone need no parameter.
 | `Group` | shipped | the on-the-fly assembly ([§8.5][s8-5], [D-184][d-184]) |
 | `Pack{V, N}` and `Unpack{V, N}` | shipped | wires name whole ports: between scalar ports and an `SVector{N, V}` port, `Pack` a junction alias at a named fold |
 | `StopRequest`, reason as instance data | shipped | a `Bool` in, a `StopFlag` out, consumed by nobody; the request is the port's type, so any component may publish one |
-| An unbundling component, a `y_direct` leaf taking a struct-valued bundle port | candidate | publishes the bundle's fields as loose ports, for a consumer wanting less than the bundle, since wiring is port-granular ([§4.3][s4-3], [D-276][d-276]) |
+| `Fields{V}`, a `y_direct` leaf taking a struct-valued bundle port | shipped | publishes the bundle's fields as loose ports, one level deep, for a consumer wanting less than the bundle, since wiring is port-granular ([§4.3][s4-3], [D-276][d-276]) |
 | `Switch{V}` selecting between two inputs on a `Bool` | shipped | the `Bool` a junction's one `In` cannot type |
-| `Select{V, K}` choosing among inputs on an enum `K` | candidate | the N-way `Switch`, Simulink's Multiport Switch and Index Vector, keyed on `instances(K)` so the inputs wear the enum's names and a wire reads `sel/CRUISE` |
-| `Fn{U, Y}(f)`, one input of type `U` and one output of type `Y`; `Fn{U}(f)` for `Y = U` | candidate | the transform between two children that wires cannot express, a unit conversion or a sign flip; the feedthrough sibling of `Source{V}(f)` |
+| `Select{V, K}` choosing among inputs on an enum `K` | shipped | the N-way `Switch`, Simulink's Multiport Switch and Index Vector, keyed on `instances(K)` so the inputs wear the enum's names and a wire reads `sel/CRUISE` |
+| `Fn{U, Y}(f)`, one input of type `U` and one output of type `Y`; `Fn{U}(f)` for `Y = U` | shipped | the transform between two children that wires cannot express, a unit conversion or a sign flip; the feedthrough sibling of `Source{V}(f)` |
 
 **`StopRequest`.** `stop_reason` names the request in the termination record
 ([§13.5][s13-5], [D-316][d-316]).
@@ -177,9 +177,13 @@ from pinned data alone need no parameter.
 selector's producer's, a `Comparator` when the selector reads a continuous
 quantity.
 
-**`Select`.** `y_direct` by field lookup on the selector's `Symbol`, type-stable
-since every data input is a `V`. The value set is closed, so no out-of-range
-case exists. An enum is an atom the cells, the probe and the descriptor already
+**`Select`.** `y_direct` is a generated chain, `select === K1 ? u.K1 : …`, over
+`instances(K)` passed as a `Val`, since a generator runs in its own world and
+cannot call the enum's methods; no `Symbol` and no string is formed in the
+body, either of which allocates. It is type-stable since every data input is a
+`V`. The value set is closed, so no out-of-range case exists. The selector is
+`select`, as `Switch` spells it, and an enum with an instance of that name, or
+an abstract `K`, is refused at construction. An enum is an atom the cells, the probe and the descriptor already
 carry, and its producer holds it as a mode ([D-308][d-308]), so the jump lands on a
 boundary as `Switch` wants. There is no integer-keyed form, since an index wants
 an enum anyway. `Switch{V}` stays, `Bool` being no `Enum`.
@@ -189,7 +193,18 @@ admitted on didactic value, for the structure the declaration layer forces, as
 the `Junction` is, not as a gain, so section 1's pricing still applies per
 instance. The port types are type parameters and never read off `f` ([D-033][d-033]), so
 a closure's output type is declared. `f` is applied in `y_direct`, so the block
-is a stage 2 leaf, and `f` walks under `Dual`, which the probe checks.
+is a stage 2 leaf, and `f` walks under `Dual`, which the probe checks. It is the
+one-input `Junction` with its input bare ([D-437][d-437]), a struct of its own
+since the junction's `in1` is the N-ary spelling. A `Pinned{Y}` is the struct
+`Freeze`'s spelling, `Fn{V, Pinned{V}}(strip)`: `f` must drop the partials
+itself, and one that keeps them is refused as `ConformanceFailure` at the first
+`Dual` build or linearization ([D-266][d-266], [D-312][d-312]).
+
+**`Fields`.** The outputs take the field names and types of `V`, one level
+deep, so a struct field is one output and a second instance splits it. A
+`NamedTuple` qualifies by its names. A `Real`, a `StaticArray`, a `Tuple`, an
+empty `NamedTuple` or a `UnionAll` is refused at construction, and `Unpack`
+splits the static array.
 
 ### Sources
 
@@ -416,7 +431,10 @@ order, each when wanted. A second sweep of Simulink's base library on
 backlash. The comparator, the reset and the schedule shipped first, as
 increment 86 on 2026-11-03, since the first two closed gaps a shipped
 docstring already named, and the limited double integrator as increment 87
-on 2026-11-04. The example model (`examples_inventory.md`) is one
+on 2026-11-04, and the structure blocks `Fn`, `Select` and `Fields` as
+increment 88 on 2026-11-05, the day Tustin on the discretized pair and
+`Freeze` over a struct were retired from the candidates. The example model
+(`examples_inventory.md`) is one
 source of further candidates: what it hand-writes
 twice is a block to list. Packaging beyond the `Redstone.Blocks` submodule,
 a workspace sub-package or a separate repository, is an after-release

@@ -120,6 +120,12 @@ The standard component library, the submodule `Redstone.Blocks`:
   `pack`, `Pack` (D-311, D-313).
 - `Unpack`, its output names from the generated `unpack_names`, and `Switch`
   (D-313).
+- `Fn`, the one-input `Junction` with its input bare, its `f` a field typed
+  by a parameter; a `Pinned` output is the struct `Freeze`'s spelling
+  (D-033, D-266, D-312, D-313).
+- `Fields`, its outputs the field names and types of `V`, and `Select`, its
+  dispatch the generated chain `selected_input` over `instances(K)` passed
+  as a `Val` (D-276, D-308, D-313).
 - `Source`, pinned, its `f` fed the time with one `Dual` layer dropped (D-312,
   D-313).
 - `Constant`, `UnitDelay` and `Freeze` (D-312).
@@ -179,7 +185,7 @@ The standard component library, the submodule `Redstone.Blocks`:
 - Every block with one state field or one mode declares it bare, and every
   stateless block declares `nothing` (§8.2, D-438). Every block with one input
   or one output declares that contract bare, its face `u` or `y`, the
-  `Junction`'s output and the inputs of `Unpack`, `LimitedIntegrator`,
+  `Junction`'s output, both sides of `Fn` and the inputs of `Fields`, `Unpack`, `LimitedIntegrator`,
   `LimitedDoubleIntegrator` and `DiscreteLimitedIntegrator` included; a side
   with two or more ports stays named (§13.5, §13.7, D-437).
 

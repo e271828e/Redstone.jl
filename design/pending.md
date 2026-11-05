@@ -172,8 +172,7 @@ breaking user code, and each may benefit from user feedback first.
 - **The library's remaining candidates.** Whatever of the inventory in
   `design/companions/library_inventory.md` is unbuilt, each block
   built when wanted (§13.7, D-313). The order, by the mechanism each family
-  exercises: the structure blocks `Fn`, `Select`, the unbundling component
-  and the discrete backlash; then the additions to shipped blocks, where two
+  exercises: the discrete backlash; then the additions to shipped blocks, where two
   readings wait for the brief: a second output on `Delay` names its output
   side, so the taps are a type parameter keeping the bare spelling; and
   scheduled limits move `lower` and `upper` into the guards' `u` and take
