@@ -59,8 +59,8 @@ later [frames](@ref g-frame) never reach it. A trace holds these fields.
   call that opened it and never again.
 - `schemas`: each writer's [face](@ref g-face) names by position, as
   `writer => faces` pairs.
-- `batches`: one record per drained batch, in [drain](@ref g-drain) order, by
-  frame and then by writer.
+- `batches`: one [record](@ref g-trace-record) per drained batch, in
+  [drain](@ref g-drain) order, by frame and then by writer.
 - `frames`: the frame index of the last drain, which is the frame every record
   of that drain carries.
 
