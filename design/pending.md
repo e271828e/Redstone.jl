@@ -202,6 +202,17 @@ breaking user code, and each may benefit from user feedback first.
   blocks' sweep and `x_deriv` bodies and says nothing about the discrete
   blocks. The standing rule for new blocks is `rules/brief_rules.md`'s,
   under its library-blocks section.
+- **Wide discrete stores compile superlinearly** (§9.7, §10.5). A static
+  value of a hundred or more leaves published off a discrete store from
+  stage 1 makes the first sweep's compile grow about as the cube of the
+  width: a 100-wide `UnitDelay` costs 7 s at `init!` and a 200-wide one
+  56 s, while the same width through a stateless block or a continuous
+  state costs 0.4 s. The time sits in the compiler's escape analysis over
+  the sweep. The curve, the controls and the profile are
+  `design/reports/20261106_wide_store_compile/report.md`; the statement in
+  the executor that hands the analysis the wide object is not pinned down.
+  It is taken up when a model wants a wide discrete state, or the taps on
+  `Delay` past about `K = 50`.
 
 ## Deviations
 
