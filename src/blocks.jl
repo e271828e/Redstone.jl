@@ -485,7 +485,9 @@ end
 # bare without it.
 # The slot under the cursor holds the value from `K` ticks ago. Each tick
 # overwrites it with `u` and advances, with no shift of the other slots. The
-# taps read the ring backwards from the slot before the cursor.
+# taps read the ring backwards from the slot before the cursor. The taps
+# form's compile cost is the discrete tier's wide-store trait, not the read:
+# `reports/20261106_wide_store_compile/report.md`.
 """
     Delay(; K::Int, v0 = 0.0, taps::Bool = false) -> Delay
 
@@ -498,18 +500,10 @@ and `v0` at the first `K` publications.
 It publishes from [stage 1](@ref g-stage-function). The [store](@ref g-store) is
 a ring of `K` values and a cursor.
 
-`taps = true` adds a second output, `taps`, so the outputs `y` and `taps` are
-named. It publishes the last `K` inputs as an `SVector{K, V}`, newest first.
-`taps[1]` is the input from one tick ago and `taps[K]` the one from `K` ticks
-ago, which is `y`. It serves a law over the window written in a stage body, a
-moving median or a minimum over the last `K` samples. A FIR filter is a
-[`DiscreteTransferFunction`](@ref) instead. The taps publish from stage 1 as `y`
-does.
-
 It breaks an [algebraic loop](@ref g-algebraic-loop) as [`UnitDelay`](@ref)
-does in either form, and that is a modelling decision. Placed in a continuous loop, it moves
-the signal onto the discrete tier and inserts a zero-order hold over the
-[component](@ref g-component)'s own period, a multiple of
+does in either form, and that is a modelling decision. Placed in a continuous
+loop, it moves the signal onto the discrete tier and inserts a zero-order hold
+over the [component](@ref g-component)'s own period, a multiple of
 [`Δt_base`](@ref g-dt_base).
 
 `K` counts ticks of the component's own period, so the user picks it from the
@@ -517,10 +511,20 @@ rate the component declares. `K = 1` is `UnitDelay` in keyword spelling. A
 smaller `K` is refused as an `ArgumentError`.
 
 `v0` is a value of the signal, copied into every slot of the ring. It is not the
-initial store, so it is not `UnitDelay`'s `s0`. The ring's values and both
-[ports](@ref g-port) share one type, the parameter `V`, `Float64` or an `SArray`
-of `Float64`, taken from `Float64.(v0)`, an array converted to an `SArray`, so
-an integer, a `Float32` or a plain array `v0` qualifies.
+initial store, so it is not `UnitDelay`'s `s0`. The ring's values, the input
+`u` and the output `y` share one type, the parameter `V`, `Float64` or an
+`SArray` of `Float64`, taken from `Float64.(v0)`, an array converted to an
+`SArray`, so an integer, a `Float32` or a plain array `v0` qualifies.
+
+`taps = true` adds a second output, `taps`, so the outputs `y` and `taps` are
+named. It publishes the last `K` inputs as an `SVector{K, V}`, newest first,
+with `v0` in the slots no tick has filled yet. `taps[1]` is the input from one
+tick ago and `taps[K]` the one from `K` ticks ago, which is `y`. It serves a
+law over the window written in a stage body, a moving median or a minimum over
+the last `K` samples. A FIR filter is a [`DiscreteTransferFunction`](@ref)
+instead. The taps publish from stage 1 as `y` does. The first run's compile
+time grows fast with `K`, about a second at 50 and a minute at 200, which the
+discrete tier pays for any wide value published off a store.
 
 # Keywords
 
@@ -1155,36 +1159,48 @@ function realize(num, den)
 end
 
 # The coefficients, highest power first, of the monic polynomial with the given
-# roots. Real roots and conjugate pairs give real coefficients; any other set is
-# refused, by the same relative tolerance the discrete pole check uses.
+# roots. Each complex root is paired with its conjugate before the expansion,
+# by a tolerance relative to the root, and one with no partner is refused. A
+# check on the expanded coefficients' imaginary parts instead misreads the
+# rounding of a long product: discrete poles spread around a circle sum to
+# small coefficients, and exact conjugate sets of ten pairs were refused.
 function coefficients_from_roots(roots, name)
+    unpaired = collect(Complex{Float64}, roots)
+    while !isempty(unpaired)
+        root = pop!(unpaired)
+        abs(imag(root)) <= 1e-12 * abs(root) && continue
+        partner = findfirst(other -> abs(other - conj(root)) <= 1e-12 * abs(root), unpaired)
+        partner === nothing && throw(ArgumentError(
+            "`$name` are not real or in conjugate pairs: $root has no conjugate"))
+        deleteat!(unpaired, partner)
+    end
     coefficients = [1.0 + 0.0im]
     for root in roots
         coefficients = [coefficients; 0.0] .- root .* [0.0; coefficients]
     end
-    scale = sum(abs, coefficients)
-    all(coefficient -> abs(imag(coefficient)) <= 1e-12 * scale, coefficients) || throw(ArgumentError(
-        "`$name` are not real or in conjugate pairs, so the polynomial has complex coefficients"))
     real.(coefficients)
 end
 
 # The two spellings of a transfer function, `num` and `den` or `zeros`, `poles`
 # and `gain`, resolved to the coefficients. Each refusal names the spelling it
-# saw, and the counting refusals follow on the coefficients. The parameter
-# `zeros` shadows `Base.zeros` here alone, which this body never calls.
-function transfer_coefficients(num, den, zeros, poles, gain)
+# saw, and the counting refusals follow on the coefficients. The constructors'
+# keyword `zeros` is a public spelling, outside the naming rule, and shadows
+# `Base.zeros` in bodies that never call it; this helper's parameters take
+# other names.
+function transfer_coefficients(num, den, zero_roots, pole_roots, gain)
     by_coefficients = num !== nothing || den !== nothing
-    by_roots = zeros !== nothing || poles !== nothing || gain !== nothing
+    by_roots = zero_roots !== nothing || pole_roots !== nothing || gain !== nothing
     by_coefficients && by_roots && throw(ArgumentError(
         "give `num` and `den`, or `zeros`, `poles` and `gain`, not both spellings"))
     by_roots || (num !== nothing && den !== nothing) || throw(ArgumentError(
         "give `num` and `den`, or `zeros`, `poles` and `gain`"))
     by_roots || return num, den
-    poles === nothing && throw(ArgumentError("`zeros` or `gain` is given without `poles`"))
-    zeros = something(zeros, ())
-    length(zeros) <= length(poles) || throw(ArgumentError(
-        "$(length(zeros)) zeros over $(length(poles)) poles, an improper transfer function"))
-    something(gain, 1.0) .* coefficients_from_roots(zeros, "zeros"), coefficients_from_roots(poles, "poles")
+    pole_roots === nothing && throw(ArgumentError("`zeros` or `gain` is given without `poles`"))
+    gain === nothing || gain isa Real || throw(ArgumentError("`gain` is $gain where a real number is needed"))
+    zero_roots = something(zero_roots, ())
+    length(zero_roots) <= length(pole_roots) || throw(ArgumentError(
+        "$(length(zero_roots)) zeros over $(length(pole_roots)) poles, an improper transfer function"))
+    something(gain, 1.0) .* coefficients_from_roots(zero_roots, "zeros"), coefficients_from_roots(pole_roots, "poles")
 end
 
 # Design: §5.3, D-437.
@@ -1525,8 +1541,9 @@ function through a zero-order hold at each [tick](@ref g-tick).
 
 The [block](@ref g-block) takes the transfer function in `s` of
 [`TransferFunction`](@ref), with its keywords in either spelling, its refusals
-and its start at rest or at `G(0) u0`. It runs it on the discrete [tier](@ref g-tier) through the
-zero-order hold of [`DiscretizedStateSpace`](@ref). The hold is taken at each
+and its start at rest or at `G(0) u0`. It runs it on the discrete
+[tier](@ref g-tier) through the zero-order hold of
+[`DiscretizedStateSpace`](@ref). The hold is taken at each
 tick. It spans `Δt`, the [component](@ref g-component)'s own period. The degrees
 pick the [feedthrough](@ref g-feedthrough) class of
 [`DiscreteLinearBlock`](@ref) as for `TransferFunction`.

@@ -100,9 +100,18 @@ All from runs on the worktree, Julia 1.13.3.
   `@NamedTuple{y::Float64, taps::SVector{3, Float64}}` with no `Any`. The
   same call with the result discarded reads 160 B to 2560 B, the trap
   `increment_rules.md` names.
-- **Compile latency** at `K = 50`, `Simulation`, `init!` and ten frames in
-  a fresh process with `--startup-file=no`: 1.10 s without taps, 1.58 s
-  with, so the `Val(50)` unroll costs about half a second once.
+- **Compile latency**, `Simulation`, `init!` and ten frames in a fresh
+  process with `--startup-file=no`, the taps form against the plain
+  `Delay`: equal within noise to `K = 20`; at 50, 2.1 s against 1.7 s; at
+  100, 7.3 s against 1.4 s; at 200, 48.8 s against 1.4 s; at 400, 341 s.
+  All of it in `init!`, the first sweep's compile, growing about as `K³`
+  in the leaves of the `taps` port. Not the rotation: the `ntuple` body
+  compiles in 0.3 s alone at `K = 200`, and a loop over an `MVector`
+  changed nothing in the model. A 100-wide `UnitDelay` with no taps costs
+  7.4 s and a 100-wide `DiscreteIntegrator` 11.4 s, while a 100-wide `Fn`
+  and `Integrator` cost 0.4 s: the discrete tier's trait for a wide value
+  published off a store, `reports/20261106_wide_store_compile/report.md`,
+  measured after the code commit at the user's request.
 - **Each form alone at the root (D-210)**: `Delay(K = 3, taps = true)`,
   `Delay(K = 3)`, `TransferFunction(zeros = (-2,), poles = (-5,))`,
   `DiscreteTransferFunction(poles = (0.5,))` and
@@ -121,9 +130,10 @@ All from runs on the worktree, Julia 1.13.3.
    bodies and `transfer_coefficients`.** `code_rules.md`'s naming rule bars
    a local sharing a Base name the package calls, and `realize` calls
    `zeros`. The keyword is the spelling a control engineer writes and the
-   inventory settled it; none of the three bodies calls `zeros`, and
-   `transfer_coefficients`'s comment says so. Kept, ratified by the user
-   with the spelling.
+   inventory settled it. Kept, ratified by the user with the spelling. The
+   review placed it: the constructors' keyword falls under the rule's
+   public-signature exemption, the private helper's parameter did not and
+   was renamed.
 2. **`gain` defaults to `nothing`, not `1.0`**, so that `gain` beside
    `num` and `den` is refused as a mixed spelling rather than ignored. The
    docstring's second signature line writes `gain = 1.0`, the value the
@@ -141,9 +151,10 @@ All from runs on the worktree, Julia 1.13.3.
   the counter through `window_model(3)` against the window `max(k - i,
   -1)`, `y == taps[end]`, the mean through `Fn` off the `d/taps` wire; the
   headless read refused; the vector form after one and two ticks; the loop
-  through the taps form builds; the default form's type is `Delay{Float64,
-  2, false}`. A reversed order, an off-by-one cursor, a missing `mod1` and
-  a stage-2 `taps` each turn it red.
+  through the taps form builds, closed through `y` and through the taps;
+  the default form's type is `Delay{Float64, 2, false}`. A reversed order,
+  an off-by-one cursor, a missing `mod1` and a stage-2 `taps` each turn it
+  red.
 - **The zero-pole spelling expands to the coefficients on all three
   transfer functions, and refuses a mixed spelling, an unpaired complex root
   and more zeros than poles** (§13.7, D-313): the lead-lag from its roots
@@ -152,9 +163,12 @@ All from runs on the worktree, Julia 1.13.3.
   `gain = 6` on `(s + 1)/((s + 2)(s + 3))` with `u0 = 2` reaching `G(0) u0`
   at init; the pair in `z` and the discretized lead-lag equal to their
   coefficient spellings, `held` included; the `z = 1` refusal reached
-  through roots; nine refused spellings on each of the three constructors.
-  A dropped `gain`, a sign flip in the product, a dropped conjugation check
-  and a dropped exclusivity check each turn it red.
+  through roots; ten conjugate pairs on the unit circle accepted and one
+  root moved by `1e-6` refused; the helper's two messages; eleven refused
+  spellings on each of the three constructors, a vector and a complex
+  `gain` among them. A dropped `gain`, a sign flip in the product, a
+  dropped pairing, a dropped exclusivity check and a vector `gain`
+  broadcast each turn it red.
 - **The discrete tier's phase bodies allocate nothing** (§9.8): the two
   taps models at `K = 50`, scalar and vector.
 
@@ -191,4 +205,47 @@ without `poles` through. "Empty is acceptable."
 
 ## The review's record
 
-Filled after the review.
+The docs commit is 59bfc5b, the brief f59e08c and the code commit f9b4ccf.
+The cold review ran on 2026-11-06 by one Opus agent on scratch worktrees at
+f9b4ccf, its probes and notes under the coordinator's scratchpad
+`review89/`. The gate ran on Julia 1.13.3, the floor: `Redstone 9523/9523`
+in 11m43s, no warning. Twelve mutants over `test_blocks()`; nine turned a
+pin red, three survived.
+
+Findings, landed as "Fix increment 89's review findings":
+
+- `coefficients_from_roots` checked the expansion's imaginary parts against
+  the coefficients' sum, which is small for discrete poles spread around a
+  circle, so exact conjugate sets of ten to twenty pairs were refused with
+  a false message. Each complex root is now paired with its conjugate
+  before the expansion, by a tolerance relative to the root, and an
+  unmatched one refused; pinned by ten pairs on the unit circle accepted
+  and one root moved by `1e-6` refused.
+- `taps` moved alone into `y_direct` survived, since the loop test closes
+  through `y`; a loop closed through `d/taps` joins the testset.
+- `Delay`'s docstring said both ports share `V`, false in the taps form,
+  and used `V` before defining it; the taps paragraph moved below `v0`'s,
+  the sentence names `u` and `y`, and the paragraph says what fills the
+  slots before `K` ticks.
+- A vector `gain` broadcast silently and a complex one failed with
+  `InexactError`; `gain` is refused unless `Real`, pinned.
+- Reading 1 was half right: the constructors' keyword `zeros` falls under
+  the naming rule's public-signature exemption, the helper's positional
+  parameter did not, and the comment was wrong; the helper's parameters
+  are `zero_roots` and `pole_roots`.
+- Two docstring lines rewrapped.
+
+Survivors, fixed by pinning the messages: the helper's "without `poles`"
+and "zeros over" refusals, which the constructor body's own refusals
+repeated as a plain `ArgumentError`. Informational and not changed:
+`gain = 0` builds the zero system, as the coefficient spelling does; a
+user's positional `Delay{Float64, 2}(0.0)` now breaks on the third type
+parameter, behind the keyword constructor docstring rule 10 shows; the
+docstring rules have no sentence for a sentinel shown as its resolved
+value, the shape of reading 2.
+
+The latency sweep the user asked for beside the review found the taps
+form's compile cost growing as `K³`, the discrete tier's wide-store trait:
+`reports/20261106_wide_store_compile/report.md` and its pending bullet
+landed as a docs commit before the fixes, and `Delay`'s docstring sentence
+on it with them.

@@ -1201,8 +1201,11 @@ function test_blocks()
         step!(vector_sim; t_plus = 1//100)
         @test port(vector_sim, "c", :taps) == SVector(SVector(1.0, -2.0), SVector(1.0, -2.0))
         @test port(vector_sim, "c", :y) == SVector(1.0, -2.0)
-        # The taps are the store's, from stage 1, so a loop through the line still builds.
+        # The taps are the store's, from stage 1, so a loop through the line still builds,
+        # closed through `y` or through the taps.
         @test build(feedback_loop(Delay(K = 2, v0 = 0.0, taps = true))) isa Build
+        @test build(Group((; d = Delay(K = 2, taps = true), f = Fn{SVector{2, Float64}, Float64}(window -> window[1] + 1));
+                          local_wires = ("d/taps" => "f/u", "f/y" => "d/u"))) isa Build
         @test Delay(K = 2).v0 === 0.0 && Delay(K = 2) isa Delay{Float64, 2, false}
     end
 
@@ -1885,7 +1888,7 @@ function test_blocks()
         @test_throws "order zero" TransferFunction(num = (), den = ())
     end
 
-    @testset "the zero-pole spelling expands to the coefficients on all three transfer functions, and refuses a mixed spelling, an unpaired complex root and more zeros than poles (§13.7, D-313)" begin
+    @testset "the zero-pole spelling expands to the coefficients on all three transfer functions, and refuses a mixed spelling, an unpaired complex root, a gain that is not real and more zeros than poles (§13.7, D-313)" begin
         # The lead-lag `(s + 2)/(s + 5)` from its roots.
         zero_pole = TransferFunction(zeros = (-2,), poles = (-5,))
         @test zero_pole.num == lead_lag().num && zero_pole.den == lead_lag().den
@@ -1906,13 +1909,23 @@ function test_blocks()
         in_z = DiscreteTransferFunction(zeros = (0.9,), poles = (0.5,))
         @test in_z.num == (1.0, -0.9) && in_z.den == (1.0, -0.5)
         @test_throws ArgumentError DiscreteTransferFunction(poles = (1.0,), u0 = 1.0)
+        # Ten conjugate pairs on the unit circle expand to real coefficients, where a check
+        # on the expansion's imaginary parts misreads the product's rounding, and one root
+        # moved by `1e-6` leaves its partner unmatched.
+        circle = [exp(im * π * k / 11) for k in 1:10]
+        @test DiscreteTransferFunction(poles = [circle; conj.(circle)]) isa DiscreteTransferFunction{20, false}
+        @test_throws ArgumentError DiscreteTransferFunction(poles = [circle; conj.(circle[1:end-1]); conj(circle[end]) + 1e-6])
+        # Each refusal names the spelling it saw.
+        @test_throws "without `poles`" TransferFunction(zeros = (-1,))
+        @test_throws "zeros over" TransferFunction(zeros = (-1, -2), poles = (-3,))
         held_lead_lag = DiscretizedTransferFunction(zeros = (-2,), poles = (-5,))
         @test held_lead_lag.num == (1.0, 2.0) && held_lead_lag.den == (1.0, 5.0)
         @test Redstone.Blocks.held(held_lead_lag) == Redstone.Blocks.held(DiscretizedTransferFunction(num = (1, 2), den = (1, 5)))
         for spelling in ((num = (1,), den = (1, 2), poles = (-2,)), (num = (1,), den = (1, 2), gain = 2.0),
                          (zeros = (-1,),), (gain = 2.0,), (;), (poles = (),),
                          (poles = (-1 + 1im, -2),), (zeros = (-1 + 1im, -1 + 1im), poles = (-2, -3)),
-                         (zeros = (-1, -2), poles = (-3,)))
+                         (zeros = (-1, -2), poles = (-3,)), (poles = (-2,), gain = [1, 2]),
+                         (poles = (-2,), gain = 2im))
             @test_throws ArgumentError TransferFunction(; spelling...)
             @test_throws ArgumentError DiscreteTransferFunction(; spelling...)
             @test_throws ArgumentError DiscretizedTransferFunction(; spelling...)
