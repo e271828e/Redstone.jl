@@ -28,6 +28,13 @@ delay_model(delay) = Group((; c = TickCounter(), d = delay); local_wires = ("c/n
 delay_model(delay::Delay) = Group((; c = TickCounter(), f = Fn{Int, Float64}(float), d = delay);
                                   local_wires = ("c/n" => "f/u", "f/y" => "d/u"))
 
+# The tick counter through a tapped delay line of `K`, with the mean over the
+# taps beside it.
+window_model(K) =
+    Group((; c = TickCounter(), f = Fn{Int, Float64}(float), d = Delay(K = K, v0 = -1, taps = true),
+             m = Fn{SVector{K, Float64}, Float64}(window -> sum(window) / K));
+          local_wires = ("c/n" => "f/u", "f/y" => "d/u", "d/taps" => "m/u"))
+
 # A block fed by a source, under the given rates.
 fed_by(src, c; sample_times = (;)) =
     Group((; k = src, c = c); local_wires = ("k/y" => "c/u",), sample_times = sample_times)
@@ -1172,6 +1179,33 @@ function test_blocks()
         @test build(feedback_loop(Delay(K = 2, v0 = 0.0))) isa Build
     end
 
+    @testset "the tapped delay line publishes the last `K` inputs newest first, `y` the oldest, from stage 1 (§7.3, §13.7, D-313, D-437)" begin
+        sim = Simulation(window_model(3); h = 1//100)
+        init!(sim, set())
+        @test port(sim, "d", :y) == -1 && port(sim, "d", :taps) == SVector(-1.0, -1.0, -1.0)
+        for k in 1:8
+            step!(sim; t_plus = 1//100)
+            window = SVector{3}(max(k - i, -1) for i in 1:3)    # `k - 1` first, `v0` before the line fills
+            @test port(sim, "d", :taps) == window
+            @test port(sim, "d", :y) == window[end]
+            @test port(sim, "m") ≈ sum(window) / 3 rtol = 1e-12
+        end
+        # The named output side keeps the face `y`, so a headless read refuses.
+        @test_throws ArgumentError port(sim, "d")
+        vector_sim = Simulation(fed_by(Constant(SVector(1.0, -2.0)), Delay(K = 2, v0 = SVector(0.0, 0.0), taps = true));
+                                h = 1//100)
+        init!(vector_sim, set())
+        step!(vector_sim; t_plus = 1//100)
+        @test port(vector_sim, "c", :taps) == SVector(SVector(1.0, -2.0), SVector(0.0, 0.0))
+        @test port(vector_sim, "c", :y) == SVector(0.0, 0.0)
+        step!(vector_sim; t_plus = 1//100)
+        @test port(vector_sim, "c", :taps) == SVector(SVector(1.0, -2.0), SVector(1.0, -2.0))
+        @test port(vector_sim, "c", :y) == SVector(1.0, -2.0)
+        # The taps are the store's, from stage 1, so a loop through the line still builds.
+        @test build(feedback_loop(Delay(K = 2, v0 = 0.0, taps = true))) isa Build
+        @test Delay(K = 2).v0 === 0.0 && Delay(K = 2) isa Delay{Float64, 2, false}
+    end
+
     @testset "the discrete integrator accumulates `Δt in` per tick from `s0`, at its own period, and breaks a loop from stage 1 (§7.3, §10.5, §5.5, D-313)" begin
         sim = Simulation(fed_by(Constant(1.0), DiscreteIntegrator()); h = 1//100)
         init!(sim, set())
@@ -1456,6 +1490,8 @@ function test_blocks()
                                            input = SVector(1.0, -1.0)),
                       fed_by(Constant(1.0), Delay(K = 50, v0 = 0.0)),
                       fed_by(Constant(SVector(1.0, -1.0)), Delay(K = 50, v0 = SVector(0.0, 0.0))),
+                      window_model(50),
+                      fed_by(Constant(SVector(1.0, -1.0)), Delay(K = 50, v0 = SVector(0.0, 0.0), taps = true)),
                       fed_by(Constant(1.0), scalar_hold()),
                       fed_by(Constant(1.0), DiscretizedStateSpace(; scalar_direct()...)),
                       fed_by(Constant(SVector(1.0, -1.0)), DiscretizedStateSpace(two_state_block())),
@@ -1847,6 +1883,40 @@ function test_blocks()
         # before the explicit refusal existed.
         @test_throws "order zero" TransferFunction(num = (2,), den = (1,))
         @test_throws "order zero" TransferFunction(num = (), den = ())
+    end
+
+    @testset "the zero-pole spelling expands to the coefficients on all three transfer functions, and refuses a mixed spelling, an unpaired complex root and more zeros than poles (§13.7, D-313)" begin
+        # The lead-lag `(s + 2)/(s + 5)` from its roots.
+        zero_pole = TransferFunction(zeros = (-2,), poles = (-5,))
+        @test zero_pole.num == lead_lag().num && zero_pole.den == lead_lag().den
+        @test Redstone.Blocks.realization(zero_pole) == Redstone.Blocks.realization(lead_lag())
+        # The second-order `4/(s² + 1.2s + 4)` from its conjugate pair, `zeros` left out.
+        pole = -0.6 + sqrt(3.64)im
+        resonant = TransferFunction(poles = (pole, conj(pole)), gain = 4)
+        @test resonant.num == (4.0,)
+        @test collect(resonant.den) ≈ [1.0, 1.2, 4.0] atol = 1e-12
+        @test resonant isa TransferFunction{2, false}
+        # The gain scales the numerator alone, vectors qualify, and `u0` reaches `G(0) u0`.
+        scaled = TransferFunction(zeros = [-1], poles = [-2, -3], gain = 6, u0 = 2.0)
+        @test scaled.num == (6.0, 6.0) && scaled.den == (1.0, 5.0, 6.0)
+        sim = Simulation(linear_root_model(scaled); h = 1//100)
+        init!(sim, set(u = (in = 2.0,)))
+        @test port(sim, "c") ≈ 2.0 rtol = 1e-12
+        # The discrete pair take the same spelling, the roots in `z` and in `s`.
+        in_z = DiscreteTransferFunction(zeros = (0.9,), poles = (0.5,))
+        @test in_z.num == (1.0, -0.9) && in_z.den == (1.0, -0.5)
+        @test_throws ArgumentError DiscreteTransferFunction(poles = (1.0,), u0 = 1.0)
+        held_lead_lag = DiscretizedTransferFunction(zeros = (-2,), poles = (-5,))
+        @test held_lead_lag.num == (1.0, 2.0) && held_lead_lag.den == (1.0, 5.0)
+        @test Redstone.Blocks.held(held_lead_lag) == Redstone.Blocks.held(DiscretizedTransferFunction(num = (1, 2), den = (1, 5)))
+        for spelling in ((num = (1,), den = (1, 2), poles = (-2,)), (num = (1,), den = (1, 2), gain = 2.0),
+                         (zeros = (-1,),), (gain = 2.0,), (;), (poles = (),),
+                         (poles = (-1 + 1im, -2),), (zeros = (-1 + 1im, -1 + 1im), poles = (-2, -3)),
+                         (zeros = (-1, -2), poles = (-3,)))
+            @test_throws ArgumentError TransferFunction(; spelling...)
+            @test_throws ArgumentError DiscreteTransferFunction(; spelling...)
+            @test_throws ArgumentError DiscretizedTransferFunction(; spelling...)
+        end
     end
 
     @testset "the transfer function's stage follows its degree, and it declares no stage of its own (§5.3, D-313)" begin

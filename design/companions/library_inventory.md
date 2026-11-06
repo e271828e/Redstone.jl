@@ -427,7 +427,8 @@ row:
   rate, which no stage sees, so the best design is a staircase one boundary
   behind the limit, two more `Bool`-form events and a [§10.6][s10-6] probe,
   for no model that asks for it.
-- Tapped Delay: a second output on `Delay` publishing the ring as an
+- Tapped Delay, shipped on 2026-11-06 as increment 89: a second output on
+  `Delay` publishing the ring as an
   `SVector{K, V}`, for a law over the window written in a stage body, a
   moving median or a min over the last `K` samples; a FIR filter is already a
   `DiscreteTransferFunction`. `taps = true` is a type parameter naming the
@@ -436,7 +437,8 @@ row:
   from one tick ago and `taps[K]` from `K`, so `y == taps[end]`; published
   from stage 1 as a rotation of the ring by the cursor, so the loop break
   stays.
-- Zero-Pole: a `zeros`, `poles`, `gain` keyword path into `TransferFunction`,
+- Zero-Pole, shipped on 2026-11-06 as increment 89: a `zeros`, `poles`,
+  `gain` keyword path into `TransferFunction`,
   `DiscreteTransferFunction` and `DiscretizedTransferFunction`, exclusive
   with `num` and `den`. Roots real or complex; a product whose imaginary part
   is not zero to rounding is refused, which conjugate pairs pass, and the
@@ -454,7 +456,8 @@ docstring already named, and the limited double integrator as increment 87
 on 2026-11-04, and the structure blocks `Fn`, `Select` and `Fields` as
 increment 88 on 2026-11-05, the day Tustin on the discretized pair and
 `Freeze` over a struct were retired from the candidates, and the discrete
-backlash as a loose commit on 2026-11-06. The example model
+backlash as a loose commit on 2026-11-06, and the two additions to shipped
+blocks as increment 89 the same day, which closed the list. The example model
 (`examples_inventory.md`) is one
 source of further candidates: what it hand-writes
 twice is a block to list. Packaging beyond the `Redstone.Blocks` submodule,

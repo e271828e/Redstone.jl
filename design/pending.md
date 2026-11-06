@@ -12,14 +12,6 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
-- **The library's remaining candidates.** Whatever of the inventory in
-  `design/companions/library_inventory.md` is unbuilt, each block
-  built when wanted (§13.7, D-313). What remains is two additions to shipped
-  blocks, their shapes settled on 2026-11-06 in the inventory's additions
-  section: the taps on `Delay`, a type parameter naming the output side, and
-  the zero-pole path into the three transfer functions. Scheduled limits were
-  not admitted the same day. Both land as one small increment, prototyped by
-  the coordinator and cold-reviewed.
 - **Variable-step integration.** The frame and the integration step become
   separate quantities: `Δt_frame`, the frame period, and `Δt_base` stand in
   no required ratio on the `Deployment`, `N_base` retires, and the step is

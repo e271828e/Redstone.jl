@@ -135,9 +135,12 @@ The standard component library, the submodule `Redstone.Blocks`:
   `GaussianWhiteNoise` and the PID's `shape_type` included (§13.7). `as_static`
   makes the `SArray` of its size of an array keyword of any kind, and warns once
   past `STATIC_WARN_LENGTH` elements.
-- `Delay`, `DiscreteIntegrator{V, R}`, `DiscreteLimitedIntegrator{V, R}` with the
-  helper `saturation_code`, `RateLimiter` and `Backlash` (D-313). The reset form
-  `R = true` of both integrators is the level reset in `s_update` (§5.3).
+- `Delay{V, K, Taps}`, its taps form `Taps = true` naming the output side
+  `(y, taps)` and reading the ring backwards from the cursor,
+  `DiscreteIntegrator{V, R}`, `DiscreteLimitedIntegrator{V, R}` with the
+  helper `saturation_code`, `RateLimiter` and `Backlash` (D-313, D-437). The
+  reset form `R = true` of both integrators is the level reset in `s_update`
+  (§5.3).
 - `GaussianWhiteNoise`, with the helpers `splitmix` and `gaussian` (D-231,
   D-313).
 - `Integrator{V, R}` and `LimitedIntegrator{V, L, R}`, their reset form
@@ -176,7 +179,10 @@ The standard component library, the submodule `Redstone.Blocks`:
   D-385).
 - `StateSpace` with the helper `static_system`, over scalar or `SVector` ports
   by its matrix shapes, its feedthrough class the type parameter `FT`, and
-  `TransferFunction`, realized by `realize` into a held `StateSpace` (D-313).
+  `TransferFunction`, realized by `realize` into a held `StateSpace`
+  (D-313). The helpers `coefficients_from_roots` and `transfer_coefficients`
+  resolve the zero-pole spelling for the three transfer functions, the
+  discretized one forwarding its keywords to the continuous constructor.
 - `DiscreteLinearBlock{FT}` with the accessors `held`, `realization(c, Δt)` and
   `initial_state`, the held system's `s0` or `x0`,
   over `DiscreteStateSpace`, `DiscreteTransferFunction`, `DiscretizedStateSpace`

@@ -481,10 +481,13 @@ end
 # --- the discrete tier (§7.3, §10.5, D-313) -------------------------------------
 
 # Design: §5.5, §10.5, D-437.
+# `Taps` is the `taps` keyword as a type parameter, so the output side stays
+# bare without it.
 # The slot under the cursor holds the value from `K` ticks ago. Each tick
-# overwrites it with `u` and advances, with no shift of the other slots.
+# overwrites it with `u` and advances, with no shift of the other slots. The
+# taps read the ring backwards from the slot before the cursor.
 """
-    Delay(; K::Int, v0 = 0.0) -> Delay
+    Delay(; K::Int, v0 = 0.0, taps::Bool = false) -> Delay
 
 A discrete [primitive](@ref g-primitive) that publishes its input from `K`
 [ticks](@ref g-tick) before.
@@ -495,8 +498,16 @@ and `v0` at the first `K` publications.
 It publishes from [stage 1](@ref g-stage-function). The [store](@ref g-store) is
 a ring of `K` values and a cursor.
 
+`taps = true` adds a second output, `taps`, so the outputs `y` and `taps` are
+named. It publishes the last `K` inputs as an `SVector{K, V}`, newest first.
+`taps[1]` is the input from one tick ago and `taps[K]` the one from `K` ticks
+ago, which is `y`. It serves a law over the window written in a stage body, a
+moving median or a minimum over the last `K` samples. A FIR filter is a
+[`DiscreteTransferFunction`](@ref) instead. The taps publish from stage 1 as `y`
+does.
+
 It breaks an [algebraic loop](@ref g-algebraic-loop) as [`UnitDelay`](@ref)
-does, and that is a modelling decision. Placed in a continuous loop, it moves
+does in either form, and that is a modelling decision. Placed in a continuous loop, it moves
 the signal onto the discrete tier and inserts a zero-order hold over the
 [component](@ref g-component)'s own period, a multiple of
 [`Δt_base`](@ref g-dt_base).
@@ -515,19 +526,23 @@ an integer, a `Float32` or a plain array `v0` qualifies.
 
 - `K`: the delay in ticks, at least 1.
 - `v0`: the value published before `K` ticks have passed.
+- `taps`: `true` to add the output `taps`.
 """
-struct Delay{V <: Union{Float64, SArray{<:Tuple, Float64}}, K} <: AbstractComponent
+struct Delay{V <: Union{Float64, SArray{<:Tuple, Float64}}, K, Taps} <: AbstractComponent
     v0::V
 end
-function Delay(; K::Int, v0 = 0.0)
+function Delay(; K::Int, v0 = 0.0, taps::Bool = false)
     K >= 1 || throw(ArgumentError("Delay takes `K >= 1`; `K = 1` is `UnitDelay`."))
     v0 = Float64.(as_static(v0))
-    Delay{typeof(v0), K}(v0)
+    Delay{typeof(v0), K, taps}(v0)
 end
 s_init(c::Delay{V, K}) where {V, K} = (ring = SVector{K, V}(ntuple(_ -> c.v0, K)), cursor = 1)
 u_types(::Delay{V}) where {V} = V
-y_types(::Delay{V}) where {V} = V
-y_state(::Delay, (; s)) = s.ring[s.cursor]
+y_types(::Delay{V, K, false}) where {V, K} = V
+y_types(::Delay{V, K, true}) where {V, K} = (y = V, taps = SVector{K, V})
+y_state(::Delay{V, K, false}, (; s)) where {V, K} = s.ring[s.cursor]
+y_state(::Delay{V, K, true}, (; s)) where {V, K} =
+    (y = s.ring[s.cursor], taps = SVector{K, V}(ntuple(i -> s.ring[mod1(s.cursor - i, K)], Val(K))))
 s_update(::Delay{V, K}, (; s, u)) where {V, K} =
     (ring = Base.setindex(s.ring, u, s.cursor), cursor = s.cursor == K ? 1 : s.cursor + 1)
 
@@ -1139,14 +1154,50 @@ function realize(num, den)
     (; A, B, C, D)
 end
 
+# The coefficients, highest power first, of the monic polynomial with the given
+# roots. Real roots and conjugate pairs give real coefficients; any other set is
+# refused, by the same relative tolerance the discrete pole check uses.
+function coefficients_from_roots(roots, name)
+    coefficients = [1.0 + 0.0im]
+    for root in roots
+        coefficients = [coefficients; 0.0] .- root .* [0.0; coefficients]
+    end
+    scale = sum(abs, coefficients)
+    all(coefficient -> abs(imag(coefficient)) <= 1e-12 * scale, coefficients) || throw(ArgumentError(
+        "`$name` are not real or in conjugate pairs, so the polynomial has complex coefficients"))
+    real.(coefficients)
+end
+
+# The two spellings of a transfer function, `num` and `den` or `zeros`, `poles`
+# and `gain`, resolved to the coefficients. Each refusal names the spelling it
+# saw, and the counting refusals follow on the coefficients. The parameter
+# `zeros` shadows `Base.zeros` here alone, which this body never calls.
+function transfer_coefficients(num, den, zeros, poles, gain)
+    by_coefficients = num !== nothing || den !== nothing
+    by_roots = zeros !== nothing || poles !== nothing || gain !== nothing
+    by_coefficients && by_roots && throw(ArgumentError(
+        "give `num` and `den`, or `zeros`, `poles` and `gain`, not both spellings"))
+    by_roots || (num !== nothing && den !== nothing) || throw(ArgumentError(
+        "give `num` and `den`, or `zeros`, `poles` and `gain`"))
+    by_roots || return num, den
+    poles === nothing && throw(ArgumentError("`zeros` or `gain` is given without `poles`"))
+    zeros = something(zeros, ())
+    length(zeros) <= length(poles) || throw(ArgumentError(
+        "$(length(zeros)) zeros over $(length(poles)) poles, an improper transfer function"))
+    something(gain, 1.0) .* coefficients_from_roots(zeros, "zeros"), coefficients_from_roots(poles, "poles")
+end
+
 # Design: §5.3, D-437.
 # `FT` is the feedthrough class, the parent's parameter.
 # `linear_blocks.md` gives the realization in section 2 and the initial
 # condition in section 5.
 # There is no `x0` because a realization's state means nothing to a user who
 # knows only `G(s)`. The block shares the stages of its `StateSpace`.
+# The sentinel defaults tell the two spellings apart; `gain` is `1.0` in the
+# root spelling.
 """
     TransferFunction(; num, den, u0 = 0.0) -> TransferFunction
+    TransferFunction(; zeros = (), poles, gain = 1.0, u0 = 0.0) -> TransferFunction
 
 A continuous [primitive](@ref g-primitive) that runs a single-input,
 single-output linear system given by its transfer function in `s`.
@@ -1158,6 +1209,16 @@ The transfer function is
 from the input `u` to the output `y`, both `Float64`. The [block](@ref g-block)
 keeps the coefficients and holds their realization in controllable canonical
 form, a [`StateSpace`](@ref).
+
+The second spelling gives the roots in place of the coefficients,
+
+    G(s) = gain (s - zeros[1]) … (s - zeros[end]) / ((s - poles[1]) … (s - poles[end]))
+
+with `zeros` empty by default. A root is real or complex, and the complex ones
+come in conjugate pairs, so that the coefficients are real. The block keeps the
+coefficients the roots expand to. Mixing the two spellings is refused as an
+`ArgumentError`, as is a set of roots that is not closed under conjugation, and
+more zeros than poles.
 
 There is no `x0`. The block starts at rest, or, with `u0` given, at the steady
 state for the constant input `u0`, where `y` is `G(0) u0`.
@@ -1179,6 +1240,9 @@ zero, a pole at the origin, which has no steady state.
 - `num`: the numerator's coefficients, highest power first, as a tuple or a
   vector of reals.
 - `den`: the denominator's coefficients, highest power first, likewise.
+- `zeros`: the zeros, real or complex, as a tuple or a vector; none by default.
+- `poles`: the poles, likewise.
+- `gain`: the factor on the numerator, `1.0` by default.
 - `u0`: the constant input whose steady state the block starts at, `0.0` for
   rest.
 
@@ -1193,7 +1257,9 @@ end
 TransferFunction(num::NTuple{M, Float64}, den::NTuple{K, Float64},
                  realization::StateSpace{N, 1, 1, FT, LA}) where {M, K, N, FT, LA} =
     TransferFunction{N, FT, M, K, LA}(num, den, realization)
-function TransferFunction(; num, den, u0 = 0.0)
+function TransferFunction(; num = nothing, den = nothing, zeros = nothing, poles = nothing,
+                            gain = nothing, u0 = 0.0)
+    num, den = transfer_coefficients(num, den, zeros, poles, gain)
     length(den) < 2 && throw(ArgumentError(
         "a transfer function of order zero is a gain, which is written in a stage body, not a block"))
     length(num) <= length(den) || throw(ArgumentError(
@@ -1318,6 +1384,7 @@ realization(c::DiscreteStateSpace, _) = c
 # state for `u0` solves `(I - A) s = B u0`.
 """
     DiscreteTransferFunction(; num, den, u0 = 0.0) -> DiscreteTransferFunction
+    DiscreteTransferFunction(; zeros = (), poles, gain = 1.0, u0 = 0.0) -> DiscreteTransferFunction
 
 A discrete [primitive](@ref g-primitive) that runs a single-input, single-output
 linear system given by its transfer function in `z`.
@@ -1338,8 +1405,9 @@ for `TransferFunction`.
 The block starts at rest, or, with `u0` given, at the steady state for the
 constant input `u0`, where `y` is `G(1) u0`.
 
-The keywords and the refusals are those of `TransferFunction`, save that the
-pole with no steady state is at `z = 1`. A nonzero `u0` is refused as an
+The keywords, the two spellings and the refusals are those of
+`TransferFunction`, the roots in `z`, save that the pole with no steady state is
+at `z = 1`. A nonzero `u0` is refused as an
 `ArgumentError` over a denominator whose coefficients sum to zero within `1e-12`
 of the sum of their magnitudes. A designed denominator such as `(1, -0.7, -0.3)`
 misses an exact zero by rounding.
@@ -1352,6 +1420,10 @@ cannot check, as for `DiscreteStateSpace`.
 - `num`: the numerator's coefficients, highest power of `z` first, as a tuple or
   a vector of reals.
 - `den`: the denominator's coefficients, highest power of `z` first, likewise.
+- `zeros`: the zeros in `z`, real or complex, as a tuple or a vector; none by
+  default.
+- `poles`: the poles in `z`, likewise.
+- `gain`: the factor on the numerator, `1.0` by default.
 - `u0`: the constant input whose steady state the block starts at, `0.0` for
   rest.
 
@@ -1362,7 +1434,9 @@ struct DiscreteTransferFunction{N, FT, M, K, LA} <: DiscreteLinearBlock{FT}
     den::NTuple{K, Float64}
     realization::DiscreteStateSpace{N, 1, 1, FT, LA, N, N, 1}
 end
-function DiscreteTransferFunction(; num, den, u0 = 0.0)
+function DiscreteTransferFunction(; num = nothing, den = nothing, zeros = nothing, poles = nothing,
+                                    gain = nothing, u0 = 0.0)
+    num, den = transfer_coefficients(num, den, zeros, poles, gain)
     length(den) < 2 && throw(ArgumentError(
         "a transfer function of order zero is a gain, which is written in a stage body, not a block"))
     length(num) <= length(den) || throw(ArgumentError(
@@ -1444,13 +1518,14 @@ end
 # hold. Tustin's method would give every block feedthrough.
 """
     DiscretizedTransferFunction(; num, den, u0 = 0.0) -> DiscretizedTransferFunction
+    DiscretizedTransferFunction(; zeros = (), poles, gain = 1.0, u0 = 0.0) -> DiscretizedTransferFunction
 
 A discrete [primitive](@ref g-primitive) that runs a continuous transfer
 function through a zero-order hold at each [tick](@ref g-tick).
 
 The [block](@ref g-block) takes the transfer function in `s` of
-[`TransferFunction`](@ref), with its keywords, its refusals and its start at
-rest or at `G(0) u0`. It runs it on the discrete [tier](@ref g-tier) through the
+[`TransferFunction`](@ref), with its keywords in either spelling, its refusals
+and its start at rest or at `G(0) u0`. It runs it on the discrete [tier](@ref g-tier) through the
 zero-order hold of [`DiscretizedStateSpace`](@ref). The hold is taken at each
 tick. It spans `Δt`, the [component](@ref g-component)'s own period. The degrees
 pick the [feedthrough](@ref g-feedthrough) class of
@@ -1465,6 +1540,10 @@ and uses [`DiscreteTransferFunction`](@ref).
 - `num`: the numerator's coefficients, highest power of `s` first, as a tuple or
   a vector of reals.
 - `den`: the denominator's coefficients, highest power of `s` first, likewise.
+- `zeros`: the zeros in `s`, real or complex, as a tuple or a vector; none by
+  default.
+- `poles`: the poles in `s`, likewise.
+- `gain`: the factor on the numerator, `1.0` by default.
 - `u0`: the constant input whose steady state the block starts at, `0.0` for
   rest.
 """
@@ -1473,8 +1552,8 @@ struct DiscretizedTransferFunction{N, FT, M, K, LA} <: DiscreteLinearBlock{FT}
     den::NTuple{K, Float64}
     realization::DiscretizedStateSpace{N, 1, 1, FT, LA, N, N, 1}
 end
-function DiscretizedTransferFunction(; num, den, u0 = 0.0)
-    continuous = TransferFunction(; num, den, u0)
+function DiscretizedTransferFunction(; kw...)
+    continuous = TransferFunction(; kw...)
     DiscretizedTransferFunction(continuous.num, continuous.den, DiscretizedStateSpace(continuous.realization))
 end
 held(c::DiscretizedTransferFunction) = held(c.realization)
