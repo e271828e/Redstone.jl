@@ -74,6 +74,10 @@ counts, and restates nothing a rules file says. The pipeline it feeds is
   block that gains a form (a policy, a reset) runs every existing policy
   of that form; a model whose `localized` reaches only the sources leaves
   the block's boundary-detected arm untested.
+- A continuous block's allocation testset measures its phase bodies at
+  `LinearizeDual` beside `Float64`, by `test_executor.jl`'s loop over the
+  two scalars. A `Dual` model freezes the discrete tier and compiles events
+  out, so a discrete block has no bodies to measure there.
 
 ## Prose for agents
 

@@ -186,6 +186,15 @@ breaking user code, and each may benefit from user feedback first.
     Under 1.14 the pause wait is itself a cancellation point, so the case
     does not exist there; whether it is fixed on 1.13 is settled with the
     floor when this item lands.
+- **`Dual` allocation coverage for the library** (§9.8, §13.7). The block
+  allocation testsets in `test_blocks.jl` measure phase bodies at `Float64`
+  alone; the suite's one `Dual` measurement is `test_executor.jl`'s over
+  `bare_ports_world`. Extend each continuous block's testset with that
+  test's loop over `(Float64, LinearizeDual)`. A `Dual` model freezes the
+  discrete tier and compiles events out, so the sweep covers the continuous
+  blocks' sweep and `x_deriv` bodies and says nothing about the discrete
+  blocks. The standing rule for new blocks is `rules/brief_rules.md`'s,
+  under its library-blocks section.
 
 ## Deviations
 
