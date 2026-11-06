@@ -417,11 +417,30 @@ Simulink features that are a keyword or an output on a shipped block, not a
 row:
 
 - Saturation Dynamic, Rate Limiter Dynamic and Dead Zone Dynamic take their
-  limits as ports: `AsPort()` on the limits of `RateLimiter`,
-  `LimitedIntegrator` and `DiscreteLimitedIntegrator`, as on the controllers.
+  limits as ports, `AsPort()` on the limits of `RateLimiter`,
+  `LimitedIntegrator` and `DiscreteLimitedIntegrator`: not admitted, on
+  2026-11-06. On the discrete blocks the scheduled form is the same one-liner
+  reading its limits off `u`, which a model writes as its own three-line
+  component, and the cascade case, inner limits set by an outer command, is
+  what the controllers' scheduled `u_min` and `u_max` serve. On
+  `LimitedIntegrator` a moving limit on a saturated state needs the limit's
+  rate, which no stage sees, so the best design is a staircase one boundary
+  behind the limit, two more `Bool`-form events and a [§10.6][s10-6] probe,
+  for no model that asks for it.
 - Tapped Delay: a second output on `Delay` publishing the ring as an
-  `SVector{K, V}`, for a FIR law written in a stage body.
-- Zero-Pole: a `zeros`, `poles`, `gain` keyword path into `TransferFunction`.
+  `SVector{K, V}`, for a law over the window written in a stage body, a
+  moving median or a min over the last `K` samples; a FIR filter is already a
+  `DiscreteTransferFunction`. `taps = true` is a type parameter naming the
+  output side `(y, taps)`, so `taps = false` keeps the bare `y` as
+  `Integrator(reset = true)` keeps `u`. Newest first, `taps[1]` the input
+  from one tick ago and `taps[K]` from `K`, so `y == taps[end]`; published
+  from stage 1 as a rotation of the ring by the cursor, so the loop break
+  stays.
+- Zero-Pole: a `zeros`, `poles`, `gain` keyword path into `TransferFunction`,
+  `DiscreteTransferFunction` and `DiscretizedTransferFunction`, exclusive
+  with `num` and `den`. Roots real or complex; a product whose imaginary part
+  is not zero to rounding is refused, which conjugate pairs pass, and the
+  real coefficients then meet the existing refusals.
 
 ## 4. The order of work
 
