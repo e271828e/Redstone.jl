@@ -1,0 +1,339 @@
+diff --git a/src/blocks.jl b/src/blocks.jl
+index 09ad6cf..11e43ab 100644
+--- a/src/blocks.jl
++++ b/src/blocks.jl
+@@ -481,10 +481,13 @@ end
+ # --- the discrete tier (§7.3, §10.5, D-313) -------------------------------------
+ 
+ # Design: §5.5, §10.5, D-437.
++# `Taps` is the `taps` keyword as a type parameter, so the output side stays
++# bare without it.
+ # The slot under the cursor holds the value from `K` ticks ago. Each tick
+-# overwrites it with `u` and advances, with no shift of the other slots.
++# overwrites it with `u` and advances, with no shift of the other slots. The
++# taps read the ring backwards from the slot before the cursor.
+ """
+-    Delay(; K::Int, v0 = 0.0) -> Delay
++    Delay(; K::Int, v0 = 0.0, taps::Bool = false) -> Delay
+ 
+ A discrete [primitive](@ref g-primitive) that publishes its input from `K`
+ [ticks](@ref g-tick) before.
+@@ -495,8 +498,16 @@ and `v0` at the first `K` publications.
+ It publishes from [stage 1](@ref g-stage-function). The [store](@ref g-store) is
+ a ring of `K` values and a cursor.
+ 
++`taps = true` adds a second output, `taps`, so the outputs `y` and `taps` are
++named. It publishes the last `K` inputs as an `SVector{K, V}`, newest first.
++`taps[1]` is the input from one tick ago and `taps[K]` the one from `K` ticks
++ago, which is `y`. It serves a law over the window written in a stage body, a
++moving median or a minimum over the last `K` samples. A FIR filter is a
++[`DiscreteTransferFunction`](@ref) instead. The taps publish from stage 1 as `y`
++does.
++
+ It breaks an [algebraic loop](@ref g-algebraic-loop) as [`UnitDelay`](@ref)
+-does, and that is a modelling decision. Placed in a continuous loop, it moves
++does in either form, and that is a modelling decision. Placed in a continuous loop, it moves
+ the signal onto the discrete tier and inserts a zero-order hold over the
+ [component](@ref g-component)'s own period, a multiple of
+ [`Δt_base`](@ref g-dt_base).
+@@ -515,19 +526,23 @@ an integer, a `Float32` or a plain array `v0` qualifies.
+ 
+ - `K`: the delay in ticks, at least 1.
+ - `v0`: the value published before `K` ticks have passed.
++- `taps`: `true` to add the output `taps`.
+ """
+-struct Delay{V <: Union{Float64, SArray{<:Tuple, Float64}}, K} <: AbstractComponent
++struct Delay{V <: Union{Float64, SArray{<:Tuple, Float64}}, K, Taps} <: AbstractComponent
+     v0::V
+ end
+-function Delay(; K::Int, v0 = 0.0)
++function Delay(; K::Int, v0 = 0.0, taps::Bool = false)
+     K >= 1 || throw(ArgumentError("Delay takes `K >= 1`; `K = 1` is `UnitDelay`."))
+     v0 = Float64.(as_static(v0))
+-    Delay{typeof(v0), K}(v0)
++    Delay{typeof(v0), K, taps}(v0)
+ end
+ s_init(c::Delay{V, K}) where {V, K} = (ring = SVector{K, V}(ntuple(_ -> c.v0, K)), cursor = 1)
+ u_types(::Delay{V}) where {V} = V
+-y_types(::Delay{V}) where {V} = V
+-y_state(::Delay, (; s)) = s.ring[s.cursor]
++y_types(::Delay{V, K, false}) where {V, K} = V
++y_types(::Delay{V, K, true}) where {V, K} = (y = V, taps = SVector{K, V})
++y_state(::Delay{V, K, false}, (; s)) where {V, K} = s.ring[s.cursor]
++y_state(::Delay{V, K, true}, (; s)) where {V, K} =
++    (y = s.ring[s.cursor], taps = SVector{K, V}(ntuple(i -> s.ring[mod1(s.cursor - i, K)], Val(K))))
+ s_update(::Delay{V, K}, (; s, u)) where {V, K} =
+     (ring = Base.setindex(s.ring, u, s.cursor), cursor = s.cursor == K ? 1 : s.cursor + 1)
+ 
+@@ -1139,14 +1154,50 @@ function realize(num, den)
+     (; A, B, C, D)
+ end
+ 
++# The coefficients, highest power first, of the monic polynomial with the given
++# roots. Real roots and conjugate pairs give real coefficients; any other set is
++# refused, by the same relative tolerance the discrete pole check uses.
++function coefficients_from_roots(roots, name)
++    coefficients = [1.0 + 0.0im]
++    for root in roots
++        coefficients = [coefficients; 0.0] .- root .* [0.0; coefficients]
++    end
++    scale = sum(abs, coefficients)
++    all(coefficient -> abs(imag(coefficient)) <= 1e-12 * scale, coefficients) || throw(ArgumentError(
++        "`$name` are not real or in conjugate pairs, so the polynomial has complex coefficients"))
++    real.(coefficients)
++end
++
++# The two spellings of a transfer function, `num` and `den` or `zeros`, `poles`
++# and `gain`, resolved to the coefficients. Each refusal names the spelling it
++# saw, and the counting refusals follow on the coefficients. The parameter
++# `zeros` shadows `Base.zeros` here alone, which this body never calls.
++function transfer_coefficients(num, den, zeros, poles, gain)
++    by_coefficients = num !== nothing || den !== nothing
++    by_roots = zeros !== nothing || poles !== nothing || gain !== nothing
++    by_coefficients && by_roots && throw(ArgumentError(
++        "give `num` and `den`, or `zeros`, `poles` and `gain`, not both spellings"))
++    by_roots || (num !== nothing && den !== nothing) || throw(ArgumentError(
++        "give `num` and `den`, or `zeros`, `poles` and `gain`"))
++    by_roots || return num, den
++    poles === nothing && throw(ArgumentError("`zeros` or `gain` is given without `poles`"))
++    zeros = something(zeros, ())
++    length(zeros) <= length(poles) || throw(ArgumentError(
++        "$(length(zeros)) zeros over $(length(poles)) poles, an improper transfer function"))
++    something(gain, 1.0) .* coefficients_from_roots(zeros, "zeros"), coefficients_from_roots(poles, "poles")
++end
++
+ # Design: §5.3, D-437.
+ # `FT` is the feedthrough class, the parent's parameter.
+ # `linear_blocks.md` gives the realization in section 2 and the initial
+ # condition in section 5.
+ # There is no `x0` because a realization's state means nothing to a user who
+ # knows only `G(s)`. The block shares the stages of its `StateSpace`.
++# The sentinel defaults tell the two spellings apart; `gain` is `1.0` in the
++# root spelling.
+ """
+     TransferFunction(; num, den, u0 = 0.0) -> TransferFunction
++    TransferFunction(; zeros = (), poles, gain = 1.0, u0 = 0.0) -> TransferFunction
+ 
+ A continuous [primitive](@ref g-primitive) that runs a single-input,
+ single-output linear system given by its transfer function in `s`.
+@@ -1159,6 +1210,16 @@ from the input `u` to the output `y`, both `Float64`. The [block](@ref g-block)
+ keeps the coefficients and holds their realization in controllable canonical
+ form, a [`StateSpace`](@ref).
+ 
++The second spelling gives the roots in place of the coefficients,
++
++    G(s) = gain (s - zeros[1]) … (s - zeros[end]) / ((s - poles[1]) … (s - poles[end]))
++
++with `zeros` empty by default. A root is real or complex, and the complex ones
++come in conjugate pairs, so that the coefficients are real. The block keeps the
++coefficients the roots expand to. Mixing the two spellings is refused as an
++`ArgumentError`, as is a set of roots that is not closed under conjugation, and
++more zeros than poles.
++
+ There is no `x0`. The block starts at rest, or, with `u0` given, at the steady
+ state for the constant input `u0`, where `y` is `G(0) u0`.
+ 
+@@ -1179,6 +1240,9 @@ zero, a pole at the origin, which has no steady state.
+ - `num`: the numerator's coefficients, highest power first, as a tuple or a
+   vector of reals.
+ - `den`: the denominator's coefficients, highest power first, likewise.
++- `zeros`: the zeros, real or complex, as a tuple or a vector; none by default.
++- `poles`: the poles, likewise.
++- `gain`: the factor on the numerator, `1.0` by default.
+ - `u0`: the constant input whose steady state the block starts at, `0.0` for
+   rest.
+ 
+@@ -1193,7 +1257,9 @@ end
+ TransferFunction(num::NTuple{M, Float64}, den::NTuple{K, Float64},
+                  realization::StateSpace{N, 1, 1, FT, LA}) where {M, K, N, FT, LA} =
+     TransferFunction{N, FT, M, K, LA}(num, den, realization)
+-function TransferFunction(; num, den, u0 = 0.0)
++function TransferFunction(; num = nothing, den = nothing, zeros = nothing, poles = nothing,
++                            gain = nothing, u0 = 0.0)
++    num, den = transfer_coefficients(num, den, zeros, poles, gain)
+     length(den) < 2 && throw(ArgumentError(
+         "a transfer function of order zero is a gain, which is written in a stage body, not a block"))
+     length(num) <= length(den) || throw(ArgumentError(
+@@ -1318,6 +1384,7 @@ realization(c::DiscreteStateSpace, _) = c
+ # state for `u0` solves `(I - A) s = B u0`.
+ """
+     DiscreteTransferFunction(; num, den, u0 = 0.0) -> DiscreteTransferFunction
++    DiscreteTransferFunction(; zeros = (), poles, gain = 1.0, u0 = 0.0) -> DiscreteTransferFunction
+ 
+ A discrete [primitive](@ref g-primitive) that runs a single-input, single-output
+ linear system given by its transfer function in `z`.
+@@ -1338,8 +1405,9 @@ for `TransferFunction`.
+ The block starts at rest, or, with `u0` given, at the steady state for the
+ constant input `u0`, where `y` is `G(1) u0`.
+ 
+-The keywords and the refusals are those of `TransferFunction`, save that the
+-pole with no steady state is at `z = 1`. A nonzero `u0` is refused as an
++The keywords, the two spellings and the refusals are those of
++`TransferFunction`, the roots in `z`, save that the pole with no steady state is
++at `z = 1`. A nonzero `u0` is refused as an
+ `ArgumentError` over a denominator whose coefficients sum to zero within `1e-12`
+ of the sum of their magnitudes. A designed denominator such as `(1, -0.7, -0.3)`
+ misses an exact zero by rounding.
+@@ -1352,6 +1420,10 @@ cannot check, as for `DiscreteStateSpace`.
+ - `num`: the numerator's coefficients, highest power of `z` first, as a tuple or
+   a vector of reals.
+ - `den`: the denominator's coefficients, highest power of `z` first, likewise.
++- `zeros`: the zeros in `z`, real or complex, as a tuple or a vector; none by
++  default.
++- `poles`: the poles in `z`, likewise.
++- `gain`: the factor on the numerator, `1.0` by default.
+ - `u0`: the constant input whose steady state the block starts at, `0.0` for
+   rest.
+ 
+@@ -1362,7 +1434,9 @@ struct DiscreteTransferFunction{N, FT, M, K, LA} <: DiscreteLinearBlock{FT}
+     den::NTuple{K, Float64}
+     realization::DiscreteStateSpace{N, 1, 1, FT, LA, N, N, 1}
+ end
+-function DiscreteTransferFunction(; num, den, u0 = 0.0)
++function DiscreteTransferFunction(; num = nothing, den = nothing, zeros = nothing, poles = nothing,
++                                    gain = nothing, u0 = 0.0)
++    num, den = transfer_coefficients(num, den, zeros, poles, gain)
+     length(den) < 2 && throw(ArgumentError(
+         "a transfer function of order zero is a gain, which is written in a stage body, not a block"))
+     length(num) <= length(den) || throw(ArgumentError(
+@@ -1444,13 +1518,14 @@ end
+ # hold. Tustin's method would give every block feedthrough.
+ """
+     DiscretizedTransferFunction(; num, den, u0 = 0.0) -> DiscretizedTransferFunction
++    DiscretizedTransferFunction(; zeros = (), poles, gain = 1.0, u0 = 0.0) -> DiscretizedTransferFunction
+ 
+ A discrete [primitive](@ref g-primitive) that runs a continuous transfer
+ function through a zero-order hold at each [tick](@ref g-tick).
+ 
+ The [block](@ref g-block) takes the transfer function in `s` of
+-[`TransferFunction`](@ref), with its keywords, its refusals and its start at
+-rest or at `G(0) u0`. It runs it on the discrete [tier](@ref g-tier) through the
++[`TransferFunction`](@ref), with its keywords in either spelling, its refusals
++and its start at rest or at `G(0) u0`. It runs it on the discrete [tier](@ref g-tier) through the
+ zero-order hold of [`DiscretizedStateSpace`](@ref). The hold is taken at each
+ tick. It spans `Δt`, the [component](@ref g-component)'s own period. The degrees
+ pick the [feedthrough](@ref g-feedthrough) class of
+@@ -1465,6 +1540,10 @@ and uses [`DiscreteTransferFunction`](@ref).
+ - `num`: the numerator's coefficients, highest power of `s` first, as a tuple or
+   a vector of reals.
+ - `den`: the denominator's coefficients, highest power of `s` first, likewise.
++- `zeros`: the zeros in `s`, real or complex, as a tuple or a vector; none by
++  default.
++- `poles`: the poles in `s`, likewise.
++- `gain`: the factor on the numerator, `1.0` by default.
+ - `u0`: the constant input whose steady state the block starts at, `0.0` for
+   rest.
+ """
+@@ -1473,8 +1552,8 @@ struct DiscretizedTransferFunction{N, FT, M, K, LA} <: DiscreteLinearBlock{FT}
+     den::NTuple{K, Float64}
+     realization::DiscretizedStateSpace{N, 1, 1, FT, LA, N, N, 1}
+ end
+-function DiscretizedTransferFunction(; num, den, u0 = 0.0)
+-    continuous = TransferFunction(; num, den, u0)
++function DiscretizedTransferFunction(; kw...)
++    continuous = TransferFunction(; kw...)
+     DiscretizedTransferFunction(continuous.num, continuous.den, DiscretizedStateSpace(continuous.realization))
+ end
+ held(c::DiscretizedTransferFunction) = held(c.realization)
+diff --git a/test/test_blocks.jl b/test/test_blocks.jl
+index ece9a97..91e72d8 100644
+--- a/test/test_blocks.jl
++++ b/test/test_blocks.jl
+@@ -28,6 +28,13 @@ delay_model(delay) = Group((; c = TickCounter(), d = delay); local_wires = ("c/n
+ delay_model(delay::Delay) = Group((; c = TickCounter(), f = Fn{Int, Float64}(float), d = delay);
+                                   local_wires = ("c/n" => "f/u", "f/y" => "d/u"))
+ 
++# The tick counter through a tapped delay line of `K`, with the mean over the
++# taps beside it.
++window_model(K) =
++    Group((; c = TickCounter(), f = Fn{Int, Float64}(float), d = Delay(K = K, v0 = -1, taps = true),
++             m = Fn{SVector{K, Float64}, Float64}(window -> sum(window) / K));
++          local_wires = ("c/n" => "f/u", "f/y" => "d/u", "d/taps" => "m/u"))
++
+ # A block fed by a source, under the given rates.
+ fed_by(src, c; sample_times = (;)) =
+     Group((; k = src, c = c); local_wires = ("k/y" => "c/u",), sample_times = sample_times)
+@@ -1172,6 +1179,33 @@ function test_blocks()
+         @test build(feedback_loop(Delay(K = 2, v0 = 0.0))) isa Build
+     end
+ 
++    @testset "the tapped delay line publishes the last `K` inputs newest first, `y` the oldest, from stage 1 (§7.3, §13.7, D-313, D-437)" begin
++        sim = Simulation(window_model(3); h = 1//100)
++        init!(sim, set())
++        @test port(sim, "d", :y) == -1 && port(sim, "d", :taps) == SVector(-1.0, -1.0, -1.0)
++        for k in 1:8
++            step!(sim; t_plus = 1//100)
++            window = SVector{3}(max(k - i, -1) for i in 1:3)    # `k - 1` first, `v0` before the line fills
++            @test port(sim, "d", :taps) == window
++            @test port(sim, "d", :y) == window[end]
++            @test port(sim, "m") ≈ sum(window) / 3 rtol = 1e-12
++        end
++        # The named output side keeps the face `y`, so a headless read refuses.
++        @test_throws ArgumentError port(sim, "d")
++        vector_sim = Simulation(fed_by(Constant(SVector(1.0, -2.0)), Delay(K = 2, v0 = SVector(0.0, 0.0), taps = true));
++                                h = 1//100)
++        init!(vector_sim, set())
++        step!(vector_sim; t_plus = 1//100)
++        @test port(vector_sim, "c", :taps) == SVector(SVector(1.0, -2.0), SVector(0.0, 0.0))
++        @test port(vector_sim, "c", :y) == SVector(0.0, 0.0)
++        step!(vector_sim; t_plus = 1//100)
++        @test port(vector_sim, "c", :taps) == SVector(SVector(1.0, -2.0), SVector(1.0, -2.0))
++        @test port(vector_sim, "c", :y) == SVector(1.0, -2.0)
++        # The taps are the store's, from stage 1, so a loop through the line still builds.
++        @test build(feedback_loop(Delay(K = 2, v0 = 0.0, taps = true))) isa Build
++        @test Delay(K = 2).v0 === 0.0 && Delay(K = 2) isa Delay{Float64, 2, false}
++    end
++
+     @testset "the discrete integrator accumulates `Δt in` per tick from `s0`, at its own period, and breaks a loop from stage 1 (§7.3, §10.5, §5.5, D-313)" begin
+         sim = Simulation(fed_by(Constant(1.0), DiscreteIntegrator()); h = 1//100)
+         init!(sim, set())
+@@ -1456,6 +1490,8 @@ function test_blocks()
+                                            input = SVector(1.0, -1.0)),
+                       fed_by(Constant(1.0), Delay(K = 50, v0 = 0.0)),
+                       fed_by(Constant(SVector(1.0, -1.0)), Delay(K = 50, v0 = SVector(0.0, 0.0))),
++                      window_model(50),
++                      fed_by(Constant(SVector(1.0, -1.0)), Delay(K = 50, v0 = SVector(0.0, 0.0), taps = true)),
+                       fed_by(Constant(1.0), scalar_hold()),
+                       fed_by(Constant(1.0), DiscretizedStateSpace(; scalar_direct()...)),
+                       fed_by(Constant(SVector(1.0, -1.0)), DiscretizedStateSpace(two_state_block())),
+@@ -1849,6 +1885,40 @@ function test_blocks()
+         @test_throws "order zero" TransferFunction(num = (), den = ())
+     end
+ 
++    @testset "the zero-pole spelling expands to the coefficients on all three transfer functions, and refuses a mixed spelling, an unpaired complex root and more zeros than poles (§13.7, D-313)" begin
++        # The lead-lag `(s + 2)/(s + 5)` from its roots.
++        zero_pole = TransferFunction(zeros = (-2,), poles = (-5,))
++        @test zero_pole.num == lead_lag().num && zero_pole.den == lead_lag().den
++        @test Redstone.Blocks.realization(zero_pole) == Redstone.Blocks.realization(lead_lag())
++        # The second-order `4/(s² + 1.2s + 4)` from its conjugate pair, `zeros` left out.
++        pole = -0.6 + sqrt(3.64)im
++        resonant = TransferFunction(poles = (pole, conj(pole)), gain = 4)
++        @test resonant.num == (4.0,)
++        @test collect(resonant.den) ≈ [1.0, 1.2, 4.0] atol = 1e-12
++        @test resonant isa TransferFunction{2, false}
++        # The gain scales the numerator alone, vectors qualify, and `u0` reaches `G(0) u0`.
++        scaled = TransferFunction(zeros = [-1], poles = [-2, -3], gain = 6, u0 = 2.0)
++        @test scaled.num == (6.0, 6.0) && scaled.den == (1.0, 5.0, 6.0)
++        sim = Simulation(linear_root_model(scaled); h = 1//100)
++        init!(sim, set(u = (in = 2.0,)))
++        @test port(sim, "c") ≈ 2.0 rtol = 1e-12
++        # The discrete pair take the same spelling, the roots in `z` and in `s`.
++        in_z = DiscreteTransferFunction(zeros = (0.9,), poles = (0.5,))
++        @test in_z.num == (1.0, -0.9) && in_z.den == (1.0, -0.5)
++        @test_throws ArgumentError DiscreteTransferFunction(poles = (1.0,), u0 = 1.0)
++        held_lead_lag = DiscretizedTransferFunction(zeros = (-2,), poles = (-5,))
++        @test held_lead_lag.num == (1.0, 2.0) && held_lead_lag.den == (1.0, 5.0)
++        @test Redstone.Blocks.held(held_lead_lag) == Redstone.Blocks.held(DiscretizedTransferFunction(num = (1, 2), den = (1, 5)))
++        for spelling in ((num = (1,), den = (1, 2), poles = (-2,)), (num = (1,), den = (1, 2), gain = 2.0),
++                         (zeros = (-1,),), (gain = 2.0,), (;), (poles = (),),
++                         (poles = (-1 + 1im, -2),), (zeros = (-1 + 1im, -1 + 1im), poles = (-2, -3)),
++                         (zeros = (-1, -2), poles = (-3,)))
++            @test_throws ArgumentError TransferFunction(; spelling...)
++            @test_throws ArgumentError DiscreteTransferFunction(; spelling...)
++            @test_throws ArgumentError DiscretizedTransferFunction(; spelling...)
++        end
++    end
++
+     @testset "the transfer function's stage follows its degree, and it declares no stage of its own (§5.3, D-313)" begin
+         @test build(feedback_loop(lag_form())) isa Build
+         err = failure(() -> build(feedback_loop(lead_lag())))
