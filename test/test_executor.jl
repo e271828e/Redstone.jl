@@ -160,6 +160,41 @@ function test_executor()
         end
     end
 
+    @testset "the update and handler bundles gather behind a barrier (§9.7)" begin
+        # The compiler's escape analysis runs on a body whose only writes are
+        # field stores, and costs about the cube of a value's leaf count when
+        # the body builds the value from as many buffer loads. The update entry
+        # and the handler write a store by field store, so their bundles gather
+        # through `gather_input_barrier`: the compiled walk invokes it, and the
+        # call keeps the walk allocation-free. A 100-wide `UnitDelay` compiled
+        # in 7 s inline and in 0.4 s behind the barrier.
+        invokes_barrier(f, types) =
+            any(first(only(Base.code_typed(f, types))).code) do stmt
+                stmt isa Expr && stmt.head === :invoke || return false
+                callee = stmt.args[1]
+                callee isa Core.CodeInstance && (callee = callee.def)
+                callee.def.name === :gather_input_barrier
+            end
+        wide = zero(SVector{100, Float64})
+        sim = Simulation(Group((; k = Constant(wide), d = UnitDelay(wide));
+                               local_wires = ("k/y" => "d/u",)); h = 1//100)
+        init!(sim)
+        ticks = phase_bodies(sim).ticks
+        @test invokes_barrier(only(ticks.boundary), (Int,))
+        @test !invokes_barrier(only(phase_bodies(sim).sweep_1.boundary), (Int,))
+        @test @ballocated($ticks(1)) == 0
+
+        sim = Simulation(Group((; k = Constant(wide), r = Constant(false),
+                                  d = Integrator(x0 = wide, reset = true));
+                               local_wires = ("k/y" => "d/u", "r/y" => "d/reset")); h = 1//100)
+        init!(sim)
+        event = phase_bodies(sim).events[("d", :reset)]
+        @test invokes_barrier(event.handler, ())
+        @test !invokes_barrier(event.guard, ())
+        event.handler()
+        @test @ballocated($(event.handler)()) == 0
+    end
+
     @testset "a bare store's write replaces it whole, its law the declared shape's (§9.5, §9.8, D-235)" begin
         mode_store = Ref(false)
         Redstone._merge_modes!(mode_store, true, "p", :handler, :e)

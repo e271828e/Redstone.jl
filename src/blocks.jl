@@ -485,9 +485,7 @@ end
 # bare without it.
 # The slot under the cursor holds the value from `K` ticks ago. Each tick
 # overwrites it with `u` and advances, with no shift of the other slots. The
-# taps read the ring backwards from the slot before the cursor. The taps
-# form's compile cost is the discrete tier's wide-store trait, not the read:
-# `design/reports/20261106_wide_store_compile/report.md`.
+# taps read the ring backwards from the slot before the cursor.
 """
     Delay(; K::Int, v0 = 0.0, taps::Bool = false) -> Delay
 
@@ -522,9 +520,7 @@ with `v0` in the slots no tick has filled yet. `taps[1]` is the input from one
 tick ago and `taps[K]` the one from `K` ticks ago, which is `y`. It serves a
 law over the window written in a stage body, a moving median or a minimum over
 the last `K` samples. A FIR filter is a [`DiscreteTransferFunction`](@ref)
-instead. The taps publish from stage 1 as `y` does. The first run's compile
-time grows fast with `K`, about a second at 50 and a minute at 200, which the
-discrete tier pays for any wide value published off a store.
+instead. The taps publish from stage 1 as `y` does.
 
 # Keywords
 

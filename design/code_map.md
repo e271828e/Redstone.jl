@@ -626,6 +626,12 @@ D-406, D-437, D-438.
   it.
 - `_merge_modes!`, one generated method, which replaces a bare `m` whole and
   merges a named one, a bare one's failure on the field `m` (§9.5, D-438).
+- The bundles, from `_bundle_expr`: the stage, RHS and guard bundles gather
+  their sides inline, the update entry's and the handler's
+  (`make_handler_bundle`) through `gather_input_barrier`, since a body whose
+  only writes are field stores is the shape the compiler's escape analysis
+  runs on, at about the cube of a gathered value's leaf count
+  (`reports/20261106_update_entry_escape_analysis/report.md`).
 - The event set, with its registers. It is mutable, so the executor holds it
   by reference. Its `entries` and `projects` hold `EventChunk`s, each a
   mutable chunk of entries, so their `length` counts chunks.
@@ -1060,6 +1066,8 @@ Spec: §10.2, D-017.
   check, decided at generation (D-235). A bare side is one cell: `gather_input`
   reads a group or one cell, and `scatter_group!`'s `CellAddr` method writes a
   bare port's value under the same check, its failure on the port `y` (D-437).
+  `gather_input_barrier` is the same gather behind a `@noinline` call, for the
+  executor's update and handler bundles.
 - `_cell_key`, and `STOP_FLAG_KEY`, the `StopFlag` buffer's key (D-316).
 - The `Clock` of `t` and `t₀`, the frame and boundary counters being the
   run's (D-260, D-317):

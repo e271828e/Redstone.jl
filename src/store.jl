@@ -88,6 +88,17 @@ end
 @inline gather_input(addrs::NamedTuple, store) = gather_group(addrs, store)
 @inline gather_input(addr::CellAddr, store) = gather_cell(store, addr)
 
+# The same gather behind a function barrier, for the two bundles whose
+# consumer writes a store by field store and nothing else, the update entry's
+# and the handler's (executor.jl). Julia 1.13 runs its escape analysis on a
+# body whose only side effects are field stores, and that analysis costs about
+# the cube of a value's leaf count when the value is built in the body from
+# as many buffer loads: a 200-wide gather there compiled in 40 s. Behind the
+# barrier the value arrives from a call and nothing is tracked. The call
+# returns the value on the stack, allocating nothing, and costs about 3 ns
+# per gathered side. Record: `design/reports/20261106_update_entry_escape_analysis/report.md`.
+@noinline gather_input_barrier(addrs, store) = gather_input(addrs, store)
+
 # §9.5's always-on check, decided at generation (D-235): the key sets must agree
 # as sets, and each returned field must be a lawful arrival at its cell under
 # the embed-accept relation. A conformant return type generates the straight

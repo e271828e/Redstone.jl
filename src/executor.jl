@@ -114,16 +114,20 @@ UpdateEntry{BN}(comp, inputs, y, clock, sstore, ws, Δt, path, ci, cursor) where
 # outright (D-195): `x` reconstructs from the flat buffer, `s` reads the
 # component's own store, and no name selects a home by tier at compile time
 # because the tier already picked the name. A bare side's field is its one cell's
-# value, `gather_input` dispatching on the address (D-437).
-function _bundle_expr(BN, XT)
+# value, `gather_input` dispatching on the address (D-437). `gather` names the
+# gather the sides go through: `gather_input` inline for the stage, RHS and
+# guard bundles, whose consumers write a buffer, and `gather_input_barrier`
+# (store.jl) for the update entry's and the handler's, whose consumers write a
+# store by field store alone, the shape the compiler's escape analysis runs on.
+function _bundle_expr(BN, XT, gather::Symbol = :gather_input)
     args = map(BN) do field
         field === :x   ? :(reconstruct($XT, xbuf, entry.x_off)) :
         field === :s   ? :(entry.sstore[]) :
         field === :m   ? :(entry.mstore[]) :
-        field === :u   ? :(gather_input(entry.inputs, store)) :
-        field === :y_x ? :(gather_input(entry.y1, store)) :
-        field === :y_s ? :(gather_input(entry.y1, store)) :
-        field === :y   ? :(gather_input(entry.y, store)) :
+        field === :u   ? :($gather(entry.inputs, store)) :
+        field === :y_x ? :($gather(entry.y1, store)) :
+        field === :y_s ? :($gather(entry.y1, store)) :
+        field === :y   ? :($gather(entry.y, store)) :
         field === :ws  ? :(entry.ws) :
         field === :t   ? :(entry.clock.t) :
         field === :Δt  ? :(entry.Δt) :
@@ -150,7 +154,7 @@ end
 @generated function make_bundle(entry::UpdateEntry{Comp,BN}, store, xbuf) where {Comp,BN}
     quote
         $(Expr(:meta, :inline))
-        $(_bundle_expr(BN, Nothing))
+        $(_bundle_expr(BN, Nothing, :gather_input_barrier))
     end
 end
 
@@ -218,6 +222,16 @@ EventEntry{XT,BN}(guard, handler, projection, comp, event_index, inputs, y, x_of
     quote
         $(Expr(:meta, :inline))
         $(_bundle_expr(BN, XT))
+    end
+end
+
+# The handler's bundle, the guard's with the sides gathered behind the barrier:
+# a handler that returns no `x` writes the mode store alone (see `_bundle_expr`).
+@generated function make_handler_bundle(entry::EventEntry{G,H,P,Comp,XT,BN}, store,
+                                        xbuf) where {G,H,P,Comp,XT,BN}
+    quote
+        $(Expr(:meta, :inline))
+        $(_bundle_expr(BN, XT, :gather_input_barrier))
     end
 end
 
@@ -370,7 +384,7 @@ _fire!(event_set::EventSet, store, xbuf) =
 @inline function _fire_entry!(entry, store, xbuf, fire)
     if fire[entry.event_index]
         entry.cursor.comp = entry.ci; entry.cursor.fn = :handler
-        _latch!(entry, entry.handler(entry.comp, make_bundle(entry, store, xbuf)), xbuf)
+        _latch!(entry, entry.handler(entry.comp, make_handler_bundle(entry, store, xbuf)), xbuf)
         _fire_project!(entry, xbuf)
     end
     nothing
@@ -450,7 +464,7 @@ function _event_bodies(entry::EventEntry, store, xbuf)
     guard() = (entry.cursor.comp = entry.ci; entry.cursor.fn = :guard;
                entry.guard(entry.comp, make_bundle(entry, store, xbuf)))
     handler() = (entry.cursor.comp = entry.ci; entry.cursor.fn = :handler;
-                 _latch!(entry, entry.handler(entry.comp, make_bundle(entry, store, xbuf)), xbuf);
+                 _latch!(entry, entry.handler(entry.comp, make_handler_bundle(entry, store, xbuf)), xbuf);
                  _fire_project!(entry, xbuf))
     (guard = guard, handler = handler)
 end
