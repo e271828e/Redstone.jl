@@ -706,6 +706,58 @@ y_types(::RateLimiter{V}) where {V} = V
 y_direct(c::RateLimiter, (; s, u, Δt)) = s + clamp.(u - s, -c.falling * Δt, c.rising * Δt)
 s_update(::RateLimiter, (; y)) = y
 
+# Design: §5.3, §5.5, §10.5, D-437, D-438.
+# The continuous backlash needs the sign of the input's rate, which no stage
+# sees, so the block lives on the discrete tier alone.
+"""
+    Backlash(; width, s0 = 0.0) -> Backlash
+
+A discrete [primitive](@ref g-primitive) that holds its output inside a deadband
+about it and moves it with the input outside.
+
+The output `y` holds while the input `u` stays within half of `width` of it,
+and follows `u` at that offset once `u` moves further. One [store](@ref g-store)
+value, the field `s`, holds the previous output, and each [tick](@ref g-tick)
+stores `y`:
+
+    y = clamp(s, u - width / 2, u + width / 2)
+
+Over an `SArray` the deadband is componentwise.
+
+`y` reads `u`, so the [block](@ref g-block) has
+[feedthrough](@ref g-feedthrough). A loop closed on it through a memoryless path
+is refused as `AlgebraicCycle`. A [`UnitDelay`](@ref) after the block breaks
+that loop, and lags the output by one tick at every rate.
+
+The width, the state and both [ports](@ref g-port) share one type, the parameter
+`V`, `Float64` or an `SArray` of `Float64`, the broadcast of `width` and `s0` to
+one shape, so a scalar width pairs with a vector `s0` and integer values
+qualify. A `width` that is not positive in every component is refused as an
+`ArgumentError`. The width stays at `Float64` whatever scalar the model runs at.
+
+# Keywords
+
+- `width`: the full width of the deadband, positive.
+- `s0`: the previous output at the first tick, so the output at `t₀` already
+  sits within half a width of the input.
+
+See also [`RateLimiter`](@ref).
+"""
+struct Backlash{V <: Union{Float64, SArray{<:Tuple, Float64}}} <: AbstractComponent
+    width::V
+    s0::V
+end
+function Backlash(; width, s0 = 0.0)
+    all(width .> 0) || throw(ArgumentError("the backlash's `width` must be positive, not $width"))
+    width, s0 = broadcast_keywords((; width, s0))
+    Backlash{typeof(s0)}(width, s0)
+end
+s_init(c::Backlash) = c.s0
+u_types(::Backlash{V}) where {V} = V
+y_types(::Backlash{V}) where {V} = V
+y_direct(c::Backlash, (; s, u)) = clamp.(s, u - c.width / 2, u + c.width / 2)
+s_update(::Backlash, (; y)) = y
+
 # --- the noise source (§7.3, §2.5, D-231, D-313) --------------------------------
 
 # Design: §2.4, §2.5, §10.5, D-231, D-437, D-438.

@@ -156,6 +156,11 @@ limiter_model(before, after) =
     fed_by(Step(t_step = 0.1, before = before, after = after),
            RateLimiter(rising = 2.0, falling = 5.0, s0 = before))
 
+# A backlash of width 0.2 fed by a schedule that leaves, re-enters and
+# leaves its deadband: 0, then 1 at 0.1, 0.95 at 0.2 and 0.5 at 0.3.
+backlash_model() =
+    fed_by(Sequence(times = (0.1, 0.2, 0.3), values = (0.0, 1.0, 0.95, 0.5)), Backlash(width = 0.2))
+
 # A noise source as the root's one child `c`, under the given rates.
 noise_model(noise; sample_times = (;)) = Group((; c = noise); sample_times = sample_times)
 
@@ -1318,6 +1323,48 @@ function test_blocks()
         @test isapprox(port(rates_sim, "c"), SVector(0.22, -0.33); atol = 1e-12)
     end
 
+    @testset "the backlash holds its output inside its deadband, follows the input at half a width outside it, and is feedthrough (§7.3, §5.3, D-313)" begin
+        sim = Simulation(backlash_model(); h = 1//100)
+        init!(sim, set())
+        @test port(sim, "c") == 0.0
+        step!(sim; t_plus = 1//10)
+        @test port(sim, "c") ≈ 0.9 atol = 1e-12
+        # 0.95 sits within 0.1 of 0.9, so the output holds.
+        step!(sim; t_plus = 1//10)
+        @test port(sim, "c") ≈ 0.9 atol = 1e-12
+        step!(sim; t_plus = 1//10)
+        @test port(sim, "c") ≈ 0.6 atol = 1e-12
+        step!(sim; t_plus = 1//10)
+        @test port(sim, "c") ≈ 0.6 atol = 1e-12
+        # `s0` is the previous output at the first tick, so `t₀` already reads
+        # within half a width of the input, or holds if it sat there.
+        outside_sim = Simulation(fed_by(Constant(0.0), Backlash(width = 0.2, s0 = 0.5)); h = 1//100)
+        init!(outside_sim, set())
+        @test port(outside_sim, "c") ≈ 0.1 atol = 1e-12
+        step!(outside_sim; t_plus = 1//100)
+        @test port(outside_sim, "c") ≈ 0.1 atol = 1e-12
+        inside_sim = Simulation(fed_by(Constant(0.0), Backlash(width = 0.2, s0 = 0.05)); h = 1//100)
+        init!(inside_sim, set())
+        @test port(inside_sim, "c") == 0.05
+        @test Redstone.has_stage(y_direct, Backlash(width = 1.0))
+        @test !Redstone.has_stage(y_state, Backlash(width = 1.0))
+        err = failure(() -> build(feedback_loop(Backlash(width = 1.0))))
+        @test err isa DiagnosticError
+        d = only(diagnostics(err))
+        @test d isa AlgebraicCycle && d.classification === :real
+        # The deadband is componentwise, and a scalar width broadcasts with `s0`.
+        vector_model = fed_by(Constant(SVector(1.0, -1.0)),
+                              Backlash(width = SVector(0.2, 0.4), s0 = SVector(0.0, 0.0)))
+        vector_sim = Simulation(vector_model; h = 1//100)
+        init!(vector_sim, set())
+        @test isapprox(port(vector_sim, "c"), SVector(0.9, -0.8); atol = 1e-12)
+        @test build(vector_model; activations = (Float64, LinearizeDual)) isa Build
+        width_sim = Simulation(fed_by(Constant(SVector(1.0, -1.0)),
+                                      Backlash(width = 0.2, s0 = SVector(0.0, 0.0))); h = 1//100)
+        init!(width_sim, set())
+        @test isapprox(port(width_sim, "c"), SVector(0.9, -0.9); atol = 1e-12)
+    end
+
     @testset "the Gaussian white noise is a pure function of its seed and tick, with the moments it claims (§7.3, §2.5, D-231, D-313)" begin
         sim = Simulation(noise_model(GaussianWhiteNoise(seed = 42, σ = 1.0)); h = 1//100)
         init!(sim, set())
@@ -1399,6 +1446,9 @@ function test_blocks()
                              RateLimiter(rising = 2.0, falling = 5.0, s0 = SVector(0.0, 1.0))),
                       fed_by(Step(t_step = 0.1, before = SVector(0.0, 1.0), after = SVector(1.0, 0.0)),
                              RateLimiter(rising = SVector(2.0, 1.0), falling = SVector(5.0, 3.0), s0 = SVector(0.0, 1.0))),
+                      backlash_model(),
+                      fed_by(Step(t_step = 0.1, before = SVector(0.0, 1.0), after = SVector(1.0, 0.0)),
+                             Backlash(width = SVector(0.2, 0.4), s0 = SVector(0.0, 1.0))),
                       discrete_reset_model(DiscreteIntegrator(s0 = SVector(0.5, 0.5), reset = true), 1//100;
                                            input = SVector(1.0, -1.0)),
                       discrete_reset_model(DiscreteLimitedIntegrator(lower = SVector(0, 0), upper = SVector(1, 1),
@@ -3403,6 +3453,9 @@ function test_blocks()
               DiscreteLimitedIntegrator{SVector{2, Float64}}
         @test RateLimiter(rising = 1) isa RateLimiter{Float64}
         @test RateLimiter(rising = 3).falling == 3.0
+        @test Backlash(width = 1) isa Backlash{Float64}
+        @test Backlash(width = 1, s0 = SVector(0, 0)).width === SVector(1.0, 1.0)
+        @test Backlash(width = SVector(1, 2)) isa Backlash{SVector{2, Float64}}
         @test PID(Kp = 1) isa PID{Float64, false, false}
         @test DiscretePID(Kp = 1) isa DiscretePID{Float64, false, false}
         @test PID(Kp = 1, Tt = 1, tracking = true) isa PID{Float64, false, true}
@@ -3474,6 +3527,10 @@ function test_blocks()
         @test_throws ArgumentError RateLimiter(rising = SVector(1, 0))
         @test_throws ArgumentError RateLimiter(rising = 1, falling = SVector(1, -1))
         @test_throws DimensionMismatch RateLimiter(rising = SVector(1, 2), falling = SVector(1, 2, 3))
+        @test_throws ArgumentError Backlash(width = 0)
+        @test_throws ArgumentError Backlash(width = -1)
+        @test_throws ArgumentError Backlash(width = SVector(1, 0))
+        @test_throws DimensionMismatch Backlash(width = SVector(1, 2), s0 = SVector(1, 2, 3))
         @test FirstOrderLag(τ = SVector(1, 2)) isa FirstOrderLag{SVector{2, Float64}}
         @test FirstOrderLag(τ = 1, x0 = SVector(0, 0)).τ === SVector(1.0, 1.0)
         @test_throws ArgumentError FirstOrderLag(τ = 0)
@@ -3594,7 +3651,7 @@ function test_blocks()
                      Delay(K = 3, v0 = 0.0), Delay(K = 2, v0 = SVector(0.0, 0.0)),
                      DiscreteIntegrator(), DiscreteLimitedIntegrator(lower = -1.0, upper = 1.0),
                      DiscreteLimitedIntegrator(lower = SVector(-1.0, -1.0), upper = SVector(1.0, 1.0)),
-                     RateLimiter(rising = 1.0),
+                     RateLimiter(rising = 1.0), Backlash(width = 1.0),
                      Integrator(), Integrator(reset = true), LimitedIntegrator(lower = 0, upper = 1, reset = true),
                      DiscreteIntegrator(reset = true), DiscreteLimitedIntegrator(lower = 0, upper = 1, reset = true),
                      FirstOrderLag(τ = 1.0), Step(t_step = 1.0),

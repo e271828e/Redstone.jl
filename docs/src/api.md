@@ -257,6 +257,7 @@ Delay
 DiscreteIntegrator
 DiscreteLimitedIntegrator
 RateLimiter
+Backlash
 DiscreteLinearBlock
 DiscreteStateSpace
 DiscreteTransferFunction
