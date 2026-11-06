@@ -1909,11 +1909,11 @@ function test_blocks()
         in_z = DiscreteTransferFunction(zeros = (0.9,), poles = (0.5,))
         @test in_z.num == (1.0, -0.9) && in_z.den == (1.0, -0.5)
         @test_throws ArgumentError DiscreteTransferFunction(poles = (1.0,), u0 = 1.0)
-        # Ten conjugate pairs on the unit circle expand to real coefficients, where a check
-        # on the expansion's imaginary parts misreads the product's rounding, and one root
-        # moved by `1e-6` leaves its partner unmatched.
-        circle = [exp(im * π * k / 11) for k in 1:10]
-        @test DiscreteTransferFunction(poles = [circle; conj.(circle)]) isa DiscreteTransferFunction{20, false}
+        # Twenty conjugate pairs on the unit circle expand to real coefficients, where a check
+        # on the expansion's imaginary parts reads a residue 7500 times its tolerance, and one
+        # root moved by `1e-6` leaves its partner unmatched.
+        circle = [exp(im * π * k / 21) for k in 1:20]
+        @test DiscreteTransferFunction(poles = [circle; conj.(circle)]) isa DiscreteTransferFunction{40, false}
         @test_throws ArgumentError DiscreteTransferFunction(poles = [circle; conj.(circle[1:end-1]); conj(circle[end]) + 1e-6])
         # Each refusal names the spelling it saw.
         @test_throws "without `poles`" TransferFunction(zeros = (-1,))

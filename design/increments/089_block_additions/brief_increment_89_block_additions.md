@@ -163,8 +163,8 @@ All from runs on the worktree, Julia 1.13.3.
   `gain = 6` on `(s + 1)/((s + 2)(s + 3))` with `u0 = 2` reaching `G(0) u0`
   at init; the pair in `z` and the discretized lead-lag equal to their
   coefficient spellings, `held` included; the `z = 1` refusal reached
-  through roots; ten conjugate pairs on the unit circle accepted and one
-  root moved by `1e-6` refused; the helper's two messages; eleven refused
+  through roots; twenty conjugate pairs on the unit circle accepted and
+  one root moved by `1e-6` refused; the helper's two messages; eleven refused
   spellings on each of the three constructors, a vector and a complex
   `gain` among them. A dropped `gain`, a sign flip in the product, a
   dropped pairing, a dropped exclusivity check and a vector `gain`
@@ -219,8 +219,11 @@ Findings, landed as "Fix increment 89's review findings":
   circle, so exact conjugate sets of ten to twenty pairs were refused with
   a false message. Each complex root is now paired with its conjugate
   before the expansion, by a tolerance relative to the root, and an
-  unmatched one refused; pinned by ten pairs on the unit circle accepted
-  and one root moved by `1e-6` refused.
+  unmatched one refused; pinned by twenty pairs on the unit circle accepted
+  and one root moved by `1e-6` refused. The first pin took ten pairs,
+  whose residue under the old check fell below its tolerance, so the
+  check put back survived the suite; the verification pass found it, and
+  the twenty-pair set fails the old check by a factor of 7500.
 - `taps` moved alone into `y_direct` survived, since the loop test closes
   through `y`; a loop closed through `d/taps` joins the testset.
 - `Delay`'s docstring said both ports share `V`, false in the taps form,
@@ -243,6 +246,13 @@ user's positional `Delay{Float64, 2}(0.0)` now breaks on the third type
 parameter, behind the keyword constructor docstring rule 10 shows; the
 docstring rules have no sentence for a sentinel shown as its resolved
 value, the shape of reading 2.
+
+The fixes landed as deb0bb3 after the gate on the real tree, 9534/9534 on
+Julia 1.13.3, no warning, Documenter green. The reviewer verified the
+delta: the three survivors turn a pin red, the pairing accepts every
+review set and refuses each with one root moved by `1e-6` or `1e-3`, and
+the docstring and the roster tool pass. The pin swap landed as a second
+fix commit, the `blocks` and `build` runners green.
 
 The latency sweep the user asked for beside the review found the taps
 form's compile cost growing as `K³`, the discrete tier's wide-store trait:

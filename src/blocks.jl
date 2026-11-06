@@ -487,7 +487,7 @@ end
 # overwrites it with `u` and advances, with no shift of the other slots. The
 # taps read the ring backwards from the slot before the cursor. The taps
 # form's compile cost is the discrete tier's wide-store trait, not the read:
-# `reports/20261106_wide_store_compile/report.md`.
+# `design/reports/20261106_wide_store_compile/report.md`.
 """
     Delay(; K::Int, v0 = 0.0, taps::Bool = false) -> Delay
 
