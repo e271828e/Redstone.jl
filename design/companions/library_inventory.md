@@ -323,7 +323,7 @@ and slip modes is a mechanics package's.
 | `UnitDelay{V}` | shipped | the tier's native `z⁻¹` ([§10.6][s10-6]) |
 | `DiscreteIntegrator{V, R}` | shipped | tier semantics; forward Euler, its bare output the state from `s0`, so it breaks a loop as `UnitDelay` does; no gain and no limits, as `Integrator` has none |
 | `RateLimiter{V}` | shipped | tier semantics; feedthrough, its bare output following its bare input within `rising Δt` up and `falling Δt` down per tick from `s0`; its `s_update` stores `y` |
-| a discrete backlash, `y = clamp(s, u - w/2, u + w/2)` with `s_update` storing `y` | candidate | `RateLimiter`'s sibling, admitted on tier semantics as the rate limiter was and priced as the one-liner it is |
+| `Backlash{V}` | shipped | `RateLimiter`'s sibling, admitted on tier semantics as the rate limiter was and priced as the one-liner it is: `y = clamp(s, u - w/2, u + w/2)`, its `s_update` storing `y` |
 | `DiscreteStateSpace` and `DiscreteTransferFunction`, the pair in `z` | shipped | the continuous pair mirrored over `DiscreteLinearBlock{FT}`, `s_update` for `x_deriv`; the period is the scope's and the block cannot check it; `linear_blocks.md`, section 9 |
 | `DiscretizedStateSpace` and `DiscretizedTransferFunction`, from a continuous system | shipped | the zero-order hold taken per tick at the bundle's `Δt`, so the class and the initial condition are the continuous ones; `linear_blocks.md`, section 9 |
 | `DiscreteLimitedIntegrator{V, R}` | shipped | tier semantics by contrast: the continuous block's mode and four events are one `clamp` in `s_update`, with no mode store and no localization |
@@ -336,9 +336,10 @@ the state lands at the next tick and the output at the reset tick is the stale
 integral. The same-tick spelling reads the flag in an output stage, which makes
 every input a feedthrough edge and costs the loop break, so it is not offered.
 
-**Discrete backlash.** The continuous block needs the sign of `u̇`, which no
-stage sees and Simulink fakes. This is the weakest candidate of the 2026-10-30
-sweep.
+**`Backlash`.** The output holds inside a deadband of `width` about itself and
+follows the input at half a width's offset outside it, from `s0` as the previous
+output. The continuous block needs the sign of `u̇`, which no stage sees and
+Simulink fakes.
 
 **`DiscreteLimitedIntegrator`.** It has `LimitedIntegrator`'s interface,
 `lower`, `upper`, `s0`, `reset` and the `Int8` `saturation` code, the code read
@@ -433,7 +434,8 @@ increment 86 on 2026-11-03, since the first two closed gaps a shipped
 docstring already named, and the limited double integrator as increment 87
 on 2026-11-04, and the structure blocks `Fn`, `Select` and `Fields` as
 increment 88 on 2026-11-05, the day Tustin on the discretized pair and
-`Freeze` over a struct were retired from the candidates. The example model
+`Freeze` over a struct were retired from the candidates, and the discrete
+backlash as a loose commit on 2026-11-06. The example model
 (`examples_inventory.md`) is one
 source of further candidates: what it hand-writes
 twice is a block to list. Packaging beyond the `Redstone.Blocks` submodule,

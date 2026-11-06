@@ -14,12 +14,11 @@ item changes what the spec says, the spec edit is part of the item.
 
 - **The library's remaining candidates.** Whatever of the inventory in
   `design/companions/library_inventory.md` is unbuilt, each block
-  built when wanted (§13.7, D-313). The order, by the mechanism each family
-  exercises: the discrete backlash; then the additions to shipped blocks, where two
-  readings wait for the brief: a second output on `Delay` names its output
-  side, so the taps are a type parameter keeping the bare spelling; and
-  scheduled limits move `lower` and `upper` into the guards' `u` and take
-  `x0`'s default with them.
+  built when wanted (§13.7, D-313). What remains is the additions to shipped
+  blocks, where two readings wait for the brief: a second output on `Delay`
+  names its output side, so the taps are a type parameter keeping the bare
+  spelling; and scheduled limits move `lower` and `upper` into the guards' `u`
+  and take `x0`'s default with them.
 - **Variable-step integration.** The frame and the integration step become
   separate quantities: `Δt_frame`, the frame period, and `Δt_base` stand in
   no required ratio on the `Deployment`, `N_base` retires, and the step is

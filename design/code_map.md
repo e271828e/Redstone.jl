@@ -136,8 +136,8 @@ The standard component library, the submodule `Redstone.Blocks`:
   makes the `SArray` of its size of an array keyword of any kind, and warns once
   past `STATIC_WARN_LENGTH` elements.
 - `Delay`, `DiscreteIntegrator{V, R}`, `DiscreteLimitedIntegrator{V, R}` with the
-  helper `saturation_code`, and `RateLimiter` (D-313). The reset form `R = true`
-  of both is the level reset in `s_update` (§5.3).
+  helper `saturation_code`, `RateLimiter` and `Backlash` (D-313). The reset form
+  `R = true` of both integrators is the level reset in `s_update` (§5.3).
 - `GaussianWhiteNoise`, with the helpers `splitmix` and `gaussian` (D-231,
   D-313).
 - `Integrator{V, R}` and `LimitedIntegrator{V, L, R}`, their reset form
