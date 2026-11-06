@@ -20,6 +20,21 @@ item changes what the spec says, the spec edit is part of the item.
   side, so the taps are a type parameter keeping the bare spelling; and
   scheduled limits move `lower` and `upper` into the guards' `u` and take
   `x0`'s default with them.
+- **Variable-step integration.** The frame and the integration step become
+  separate quantities: `Δt_frame`, the frame period, and `Δt_base` stand in
+  no required ratio on the `Deployment`, `N_base` retires, and the step is
+  the method's, fixed for RK4 and Heun or proposed by an error controller,
+  clamped by the `Model` to the nearer of the next frame top and the next
+  due instant (§2.1, §2.2, §10.2, §10.4, §10.5). Every accepted sub-step
+  ends in a boundary; the drain, the control read, the pacer's deadline and
+  the trace's ordinal stay at frame tops; `restore!` restores the stepper's
+  state and never reseeds it. The plan, the settled rulings and the open
+  decisions are `design/increments/roadmap_variable_step.md`: five
+  increments, the deployment surface first, then the three lattices, the
+  seam protocol, the first adaptive backend and the teaching, with every
+  existing trajectory bit-identical through the third. The surface changes
+  the deployment keywords, so it precedes the exported-name audit and
+  delays the release.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose
