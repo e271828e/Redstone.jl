@@ -1345,7 +1345,7 @@ _deployment_constraint(parameter::Symbol) =
     parameter === :firing_budget       ? "must be an integer ≥ 1" :
     parameter === :localization_tol    ? "must be a positive real" :
     parameter === :localization_budget ? "must be an integer ≥ 1" :
-    (parameter === :h || parameter === :Δt_frame) ? "must be positive" :
+    (parameter === :h || parameter === :Δt_frame) ? "must be positive and finite" :
                                  "is outside its constraint"
 _deployment_section(parameter::Symbol) =
     (parameter === :algorithm || parameter === :h) ? " (§10.2)" :
@@ -2490,7 +2490,7 @@ _checkpoint_value(d::CheckpointMismatch, value) =
 
 _checkpoint_paths(paths) = isempty(paths) ? "none" : join((_at_path(p) for p in paths), ", ")
 
-# The `:deployment` arms, one per case the walk in `trace.jl` emits: the seven
+# The `:deployment` arms, one per case the walk in `trace.jl` emits: the six
 # parameters and the two lists carry no path, a schedule row and a rate scope
 # carry theirs, and a scope column rides in `name` behind its prefix.
 _checkpoint_deployment(d::CheckpointMismatch) =
@@ -2506,7 +2506,7 @@ _checkpoint_deployment(d::CheckpointMismatch) =
      "path and its key, so a differing scope list is reported whole rather than column by " *
      "column (§12.7)" :
      "the checkpoint was taken at `$(d.name)` = $(d.expected) and this " *
-     "simulation is bound at $(d.found) — the seven trajectory-determining " *
+     "simulation is bound at $(d.found) — the six trajectory-determining " *
      "deployment parameters are compared, the schedule with them, never taken as a " *
      "what-if: a deployment change moves the lattice the state continues on and the times " *
      "a trace's batches apply at, which is different inputs rather than a modified model " *

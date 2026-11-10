@@ -554,11 +554,12 @@ Given identical compiled code, five things fix a run's trajectory. They are
 the model, its origin `t₀`, its initial state, the root-input values applied
 at each frame top, and the deployment parameters ([§11.5][s11-5],
 [§12.7][s12-7], [D-067][d-067], [D-101][d-101], [D-254][d-254],
-[D-273][d-273]). The deployment parameters are the step `h`, the
+[D-273][d-273]). The deployment parameters are the
+[frame period](#g-dt_frame) (the spacing of the loop's frame tops), the
 [base tick period](#g-dt_base) (the step of the lattice all discrete rates
-share), the integration method, the localization tolerance and budget, and
-the firing budget ([§9.2][s9-2], [D-133][d-133], [D-181][d-181],
-[D-254][d-254]).
+share), the integration method with its step `h`, the localization tolerance
+and budget, and the firing budget ([§9.2][s9-2], [D-133][d-133],
+[D-181][d-181], [D-254][d-254], [D-442][d-442], [D-443][d-443]).
 
 Nothing else changes a trajectory under that code. Each of the following
 leaves it bit-identical ([§10.7][s10-7], [§11.2][s11-2], [§12.6][s12-6],
@@ -4593,7 +4594,7 @@ carries.
 `DeploymentInvalid` ([Appendix C][sC]), carrying parameter, value and the
 violated constraint:
 
-- a nonpositive `Δt_frame` or `h`;
+- a `Δt_frame` or an `h` that is not positive and finite;
 - a harmonic-grid violation, a fixed step that does not divide `Δt_frame` or
   `Δt_base`;
 - an `h` other than `Δt_frame`, or a `Δt_base` off the frame tops;
@@ -9532,7 +9533,7 @@ The origin `t₀` is not a run field ([D-260][d-260]). The clock of the [executo
 compiled form of the stage execution order) holds it beside `t`. `init!` sets it
 on the clock before [boundary zero](#g-boundary-zero), the initialization boundary run as the
 ordinary [macro-sequence](#g-boundary-sequence) with an empty integrate ([§14.5][s14-5]). A checkpoint carries it
-with the clock ([§11.5][s11-5], [D-273][d-273]). It is a `Float64`, as `h` and `t_end` are
+with the clock ([§11.5][s11-5], [D-273][d-273]). It is a `Float64`, as `Δt_frame` and `t_end` are
 ([D-260][d-260]).
 
 **A `Simulation` is constructed with a placeholder run** ([D-255][d-255]). The

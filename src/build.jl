@@ -665,7 +665,7 @@ construction raised, read with [`warnings`](@ref). `build` makes the
 first request and keeps it.
 
 Everything in a build is settled before [`Δt_base`](@ref g-dt_base) exists.
-`Δt_frame`, `Δt_base` and the integration algorithm are the
+[`Δt_frame`](@ref g-dt_frame), `Δt_base` and the integration algorithm are the
 [`Deployment`](@ref)'s.
 
 A build is immutable apart from its activation cache, whose insertion is safe
@@ -722,7 +722,8 @@ no grid chosen yet.
 classifies its components and type-checks the wires into the
 [`Structure`](@ref). The nominal evaluation [probes](@ref g-probe) every user
 function. It returns the [`Outputs`](@ref), the [`Events`](@ref) and the nominal
-activation. Nothing here needs `Δt_frame`, [`Δt_base`](@ref g-dt_base) or the
+activation. Nothing here needs [`Δt_frame`](@ref g-dt_frame),
+[`Δt_base`](@ref g-dt_base) or the
 algorithm, which are the [`Deployment`](@ref)'s.
 
 A tree the build rejects is refused as one `DiagnosticError` that carries every

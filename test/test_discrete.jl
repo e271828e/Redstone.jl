@@ -391,6 +391,7 @@ function discrete_deployment()
             ((() -> Simulation(multirate_build),                       :Δt_frame, :missing),
              (() -> Simulation(multirate_build; Δt_frame = 1e-3),      :Δt_frame, :inexact),
              (() -> Simulation(multirate_build; Δt_frame = 0),         :Δt_frame, :range),
+             (() -> Simulation(multirate_build; Δt_frame = 1//0),      :Δt_frame, :range),
              (() -> Simulation(multirate_build; Δt_frame = "1//500"),  :Δt_frame, :not_a_quantity))
             d = only(diagnostics(failure(f)))
             @test d isa DeploymentInvalid && d.parameter === param && d.reason === reason

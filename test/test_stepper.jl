@@ -52,6 +52,9 @@ function test_stepper()
               d.related == 1//500
         d = only(refused(Δt_frame = 1//500, algorithm = RK4(-1//500)))
         @test d.parameter === :h && d.reason === :range && d.value == -1//500
+        # An infinite step is out of range too, never a step that subcycles.
+        d = only(refused(Δt_frame = 1//500, algorithm = RK4(1//0)))
+        @test d.parameter === :h && d.reason === :range && d.value == 1//0
         # With discrete work the step must divide the base tick too, and every
         # fault arrives in one throw (D-229).
         @test Set((d.parameter, d.reason)

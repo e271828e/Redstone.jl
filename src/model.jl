@@ -52,8 +52,9 @@ many models, and each model owns its buffers alone.
 `Model(Deployment(build; grid keywords...), T; chunk_size)`, and
 `Model(root; kw...)` calls [`build`](@ref) first. The grid, algorithm and event
 keywords are `Deployment`'s, documented and refused as `DeploymentInvalid`
-there. `Δt_frame` is required, as for [`Deployment`](@ref). A `chunk_size` that is not
-an integer of at least 1 is refused as `ArgumentInvalid`.
+there. [`Δt_frame`](@ref g-dt_frame) is required, as for [`Deployment`](@ref). A
+`chunk_size` that is not an integer of at least 1 is refused as
+`ArgumentInvalid`.
 
 A model holds five values, each a field.
 

@@ -220,3 +220,11 @@ introducing a deviation adds its bullet, and the one retiring it deletes it.
 Where the code's shape is coherent and the spec may be what moves, the call
 is the user's; a ruling lands docs-commit-first, then the bullet retires or
 the code conforms.
+
+- **`bind_schedule` stops short of every check** (§9.2, D-229). The spec has
+  every check whose premise holds run before the one throw. The anchor loop
+  reads `Δt_base` alone, yet a lattice or step fault returns ahead of it,
+  and an unsound `Δt_frame` skips the step's check against `Δt_base`. A
+  call with two independent faults can therefore report one. The roadmap's
+  increment 2 rewrites the binding and makes it strict
+  (`design/increments/roadmap_variable_step.md`).

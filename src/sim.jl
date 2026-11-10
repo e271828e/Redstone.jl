@@ -335,7 +335,7 @@ The other three forms compose through a `Float64` model.
 
 The grid, algorithm and event keywords are [`Deployment`](@ref)'s, documented
 and refused as `DeploymentInvalid` there, and `chunk_size` is [`Model`](@ref)'s.
-`Δt_frame` is required, as for [`Deployment`](@ref).
+[`Δt_frame`](@ref g-dt_frame) is required, as for [`Deployment`](@ref).
 
 `join_timeout` is a positive real, refused as `ArgumentInvalid` otherwise. It
 never changes the trajectory.

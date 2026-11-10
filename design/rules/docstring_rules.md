@@ -90,9 +90,9 @@ closed(run::Run) = run.termination !== nothing
     no signature line.** One sentence of prose states its refusal or its role,
     as `trim!`'s does for a second argument that is not a `TrimProblem`.
 14. **A sentinel default that exists only to raise a diagnostic is shown as
-    required.** `Deployment`'s `h = nothing` makes a missing `h`
-    `DeploymentInvalid` rather than a `MethodError`; the line writes `h` with
-    no default, and the keyword list says it is required.
+    required.** `Deployment`'s `Δt_frame = nothing` makes a missing `Δt_frame`
+    `DeploymentInvalid` rather than a `MethodError`; the line writes
+    `Δt_frame` with no default, and the keyword list says it is required.
 15. **A default that is an unexported constant is written as its value**,
     `width::Int = 8` for `LINEARIZE_WIDTH`. A default with no literal value,
     such as `_no_checks`, is left off the line and stated in the prose.

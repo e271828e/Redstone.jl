@@ -281,9 +281,9 @@ D-438.
 
 - `ModelState{T}`, a model's state as one value (D-274, D-319): the flat
   buffer, the `s` and `m` stores, the signal table with every cell buffer
-  copied, the guard priors, the clock's `t` and `t₀` (a `Float64` like `h`),
-  and the fingerprint, the `Deployment` and the structural layout
-  `Fingerprint`.
+  copied, the guard priors, the clock's `t` and `t₀` (a `Float64` like
+  `Δt_frame`), and the fingerprint, the `Deployment` and the structural
+  layout `Fingerprint`.
 - `Checkpoint`, a `ModelState{Float64}` beside the run's frame index and
   boundary ordinal, with no scalar parameter (D-317, D-319).
 - `Fingerprint` holds the cell sizes, the root-input faces, the component
@@ -774,7 +774,7 @@ soon as nothing in it names a `Simulation` in a signature, and below
 - The frame's hooks `FrameHooks`, with `frame_top!` and `settled!`, and the
   no-op `NoHooks` (§11.2, §13.5, D-317).
 - The grid (§10.4): `_grid_time`, frame top `k` from the index and `t₀`,
-  never accumulated, and the arithmetic over `t`, `t₀` and `h`,
+  never accumulated, and the arithmetic over `t`, `t₀` and `Δt_frame`,
   `_frame_slack`, `_frames_to` and `_frame_at` (§12.4, §12.6, D-260, D-319),
   read by `frame!`, the checkpoint and the loop, and `_frames_fit`, the doors'
   check that a time's frame count fits an `Int` before either rounds it.

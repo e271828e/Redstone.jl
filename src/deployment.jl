@@ -187,14 +187,16 @@ The pass records into the call's list and returns `nothing` when a premise
 fails; the caller owns the one throw per `Deployment` call (§9.1, D-229).
 `Δt_frame`, `Δt_base` and `h` are independent premises, each checked and
 recorded on its own; the lattice checks read the pairs they relate, and run
-only when both of a pair are sound (D-229).
+only when both of a pair are sound (D-229). The anchor loop still waits on
+the lattice and step checks, though it reads `Δt_base` alone, and an unsound
+`Δt_frame` skips the step's check against `Δt_base` (pending.md's deviations).
 """
 function bind_schedule(build::Build, Δt_frame, Δt_base, algorithm, diags::Vector{Diagnostic})
     count_on_entry = length(diags)
     Δt_frame === nothing &&
         push!(diags, DeploymentInvalid(parameter = :Δt_frame, reason = :missing))
     Δt_frame_r = Δt_frame === nothing ? nothing : _exact(:Δt_frame, Δt_frame, diags)
-    if Δt_frame_r !== nothing && !(Δt_frame_r > 0)
+    if Δt_frame_r !== nothing && !(Δt_frame_r > 0 && isfinite(Δt_frame_r))
         push!(diags, DeploymentInvalid(parameter = :Δt_frame, reason = :range,
                                        value = Δt_frame_r))
         Δt_frame_r = nothing
@@ -203,7 +205,8 @@ function bind_schedule(build::Build, Δt_frame, Δt_base, algorithm, diags::Vect
     # `Δt_frame` when it names none (§10.2, D-442). An unsound algorithm has none.
     h_r = algorithm === nothing ? nothing :
           algorithm.h === nothing ? Δt_frame_r : algorithm.h
-    if algorithm !== nothing && algorithm.h !== nothing && !(algorithm.h > 0)
+    if algorithm !== nothing && algorithm.h !== nothing &&
+       !(algorithm.h > 0 && isfinite(algorithm.h))
         push!(diags, DeploymentInvalid(parameter = :h, reason = :range, value = algorithm.h))
         h_r = nothing
     end
@@ -321,18 +324,21 @@ abstract type AbstractAlgorithm end
 
 # Design: §10.2, D-442.
 """
-    RK4()
-    RK4(h::Union{Integer,Rational{<:Integer},Period})
+    RK4() -> RK4
+    RK4(h::Union{Integer,Rational{<:Integer}}) -> RK4
+    RK4(h::Period) -> RK4
 
 The classical fourth-order Runge–Kutta method with a fixed step `h`, the default
 algorithm.
 
 Pass it as the `algorithm` keyword of [`Deployment`](@ref). `RK4()` steps by the
-deployment's [frame](@ref g-frame) period `Δt_frame`. `h` is in exact seconds, a
+deployment's [frame](@ref g-frame) period [`Δt_frame`](@ref g-dt_frame). `h` is in
+exact seconds, a
 `Rational`, an integer or a [`Period`](@ref), so `RK4(1//100)` and
 `RK4(Hz(100))` are the same value. A float is refused as `ArgumentInvalid`.
-The deployment refuses an `h` that is not positive or does not divide its
-periods as `DeploymentInvalid`.
+The deployment refuses an `h` that is not positive and finite or does not divide
+its periods as `DeploymentInvalid`. For now it also refuses an `h` other than
+`Δt_frame`.
 
 For the second-order method, see [`Heun`](@ref).
 """
@@ -347,13 +353,15 @@ end
 
 # Design: §10.2, D-442.
 """
-    Heun()
-    Heun(h::Union{Integer,Rational{<:Integer},Period})
+    Heun() -> Heun
+    Heun(h::Union{Integer,Rational{<:Integer}}) -> Heun
+    Heun(h::Period) -> Heun
 
 Heun's second-order method, the explicit trapezoidal rule, with a fixed step `h`.
 
 Pass it as the `algorithm` keyword of [`Deployment`](@ref). `Heun()` steps by
-the deployment's [frame](@ref g-frame) period `Δt_frame`, and `h` takes the
+the deployment's [frame](@ref g-frame) period [`Δt_frame`](@ref g-dt_frame), and
+`h` takes the
 values [`RK4`](@ref)'s does, refused alike.
 """
 struct Heun <: AbstractAlgorithm
@@ -394,7 +402,7 @@ Base.show(io::IO, algorithm::Union{RK4,Heun}) =
                localization_budget = 8) -> Deployment
 
 The build fixed to a [frame](@ref g-frame) period, a [base tick](@ref g-tick),
-an integration algorithm and event parameters, with no scalar type yet.
+an algorithm and event parameters, with no scalar type.
 
 A deployment carries the build, the grid it settled, the [`Schedule`](@ref) and
 the warnings its construction raised, read with [`warnings`](@ref).
@@ -413,7 +421,7 @@ by an [`Absolute`](@ref) entry and the tree declares at least one. A derived
 
 A keyword outside its range is refused as `DeploymentInvalid`, and so is a
 `Δt_base` that does not divide an anchor's period or offset. A fixed step `h`
-must divide `Δt_frame` and, when the tree has discrete components, `Δt_base`.
+must divide [`Δt_frame`](@ref g-dt_frame) and, when the tree has discrete components, `Δt_base`.
 For now `h` must also equal `Δt_frame`, and `Δt_base` must be a whole multiple
 of `Δt_frame`. One throw reports the faults found together. Exhausting
 `firing_budget` warns `FiringBudget`.

@@ -795,6 +795,13 @@ function diagnostics_kind_set()
                                                    reason = :not_frame_multiple,
                                                    value = 1//50, related = 1//30)),
                          "Δt_base = 1//50 is not an integer multiple of Δt_frame = 1//30")
+        # A float step's refusal names the token's own constructor (§10.2, D-442).
+        @test startswith(message(ArgumentInvalid(call = :RK4, reason = :inexact, value = 0.01)),
+                         "a fixed step is an exact Rational — write `RK4(1//100)`, not RK4(0.01)")
+        # A header mismatch counts the parameters the walk names (§12.7).
+        @test occursin("the six trajectory-determining deployment parameters",
+                       message(CheckpointMismatch(what = :deployment, name = :algorithm,
+                                                  expected = RK4(1//100), found = Heun(1//100))))
 
         # The obligation chain renders innermost first, the last face being the one
         # nobody wired.

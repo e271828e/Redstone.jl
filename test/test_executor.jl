@@ -45,6 +45,9 @@ function test_executor()
                     input_wires = ("ref" => ntuple(i -> "m$(i)/ref", 6),))
         sim = Simulation(six; Δt_frame = 1//100, chunk_size = 1)
         @test length(sim.model.exec.bodies.sweep_2.interior) > 16
+        # `Model`'s build form forwards `chunk_size` as `Simulation`'s does (§9.2).
+        @test length(Model(six; Δt_frame = 1//100, chunk_size = 1).exec.bodies.sweep_2.interior) ==
+              length(sim.model.exec.bodies.sweep_2.interior)
         for name in BLOCKS
             body = phase_bodies(sim)[name]
             body(); body(0)
