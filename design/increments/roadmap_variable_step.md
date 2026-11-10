@@ -137,14 +137,17 @@ trajectory is bit-identical to today's, the old trajectories being the
 oracle for the rewritten loop.
 
 1. **The deployment surface.** `Deployment(build; Δt_frame, Δt_base,
-   algorithm = RK4(h))`, `N_base` retired, `Δt_base` defaulting to
-   `Δt_frame`, the fixed-step divisibility check, `==` and `hash` over the
-   algorithm value, `show`, the descriptor's deployment body,
-   `_walk_deployment!`, the sugar constructors collapsed to a `kw...`
-   passthrough, and the test files that spell `h =` (29 at the time of
-   writing). No change to `frame!`. Spec: §9.2, §10.2's backend paragraphs,
-   Appendix B and C, the glossary. Log: a new entry landing D-227's
-   deferred instance form.
+   algorithm = RK4())`, the step inside the algorithm instance and
+   `Δt_frame` when the instance names none, `N_base` retired, `Δt_base`
+   defaulting to `Δt_frame`, the fixed-step divisibility check, `==` and
+   `hash` over the algorithm value, `show`, `_walk_deployment!`, the sugar
+   constructors collapsed to a `kw...` passthrough, and the 28 test files
+   that spell `h =`. The descriptor's deployment body is the build's alone,
+   so it does not change. No change to `frame!`: until increment 2 the
+   constructor refuses a step other than the frame and a base tick off the
+   frame tops. Spec: §2.2, §9.2, §10.2's backend paragraphs, §10.4, §10.5,
+   §11.5, §12.7, Appendices B, C and D. Log: D-442, landing D-227's
+   deferred instance form, and D-443, the frame period apart from the step.
 
 2. **The three lattices.** The Model's frame loop advances to the nearer of
    the next frame top and the next due instant, each from its index, with a

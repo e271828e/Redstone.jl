@@ -321,9 +321,9 @@ The demo, line by line:
   avionics and systems, and re-routes it at each level below ([§6.1][s6-1]).
   Today's mapping writes flaps/brakes directly into `act`, bypassing avionics.
   That bypass becomes a declared route.
-- `Simulation(world; algorithm = RK4, h = 0.02, N_base = 1)`.
-  `N_base` binds `Δt_base = N_base·h` ([§10.5][s10-5]). Its default of 1 puts
-  a base tick on every step. The entire build pipeline runs here:
+- `Simulation(world; Δt_frame = 1//50, algorithm = RK4())`.
+  `Δt_base` defaults to `Δt_frame` ([§9.2][s9-2]), which puts
+  a base tick on every frame top. The entire build pipeline runs here:
   class resolution, path validation, face derivation (computed
   interface connections expanded, printable), the two-producers and
   unconnected checks, topological sort, probe passes, rate
@@ -469,7 +469,6 @@ ladder. The items below take the three claims in turn.
 [d-364]: ../log.md#d-364--hold-a-bulk-data-rig-environment-in-a-constant-source
 [s10-2]: ../spec.md#102-the-stepper-seam
 [s10-4]: ../spec.md#104-localization-mechanics
-[s10-5]: ../spec.md#105-multi-rate-tick-scheduling
 [s11]: ../spec.md#11-runtime-periphery-the-data-plane
 [s11-2]: ../spec.md#112-outbound-snapshot-publication
 [s11-3]: ../spec.md#113-inbound-root-inputs-claims-and-the-frozen-roster
@@ -499,5 +498,6 @@ ladder. The items below take the three claims in turn.
 [s7-1]: ../spec.md#71-continuous-state-structured-immutable-flat-backing
 [s8-6]: ../spec.md#86-paths-wiring-and-faces
 [s8-8]: ../spec.md#88-computed-connections-and-generic-holding
+[s9-2]: ../spec.md#92-the-build-and-deployment-artifacts
 [s9-6]: ../spec.md#96-stopped-sim-services-as-activation-clients
 [sA]: ../spec.md#appendix-a-taught-contracts-the-author-facing-index

@@ -251,14 +251,14 @@ were derived.
 | [D-224][d-224] | Let a throw inside a trim commit propagate as the commit's `StepError` | ratified |
 | [D-225][d-225] | Parametrize `StepError` on its cause's type | ratified |
 | [D-226][d-226] | Reach the public surface by qualified name until the export audit | ratified |
-| [D-227][d-227] | Select the stepper by type under the `algorithm` keyword | ratified |
+| [D-227][d-227] | Select the stepper by type under the `algorithm` keyword | superseded → [D-442][d-442] |
 | [D-228][d-228] | Attribute runtime diagnostics by cell, never by payload | ratified |
 | [D-229][d-229] | Collect to the stratum barrier under a dependency rule | ratified |
 | [D-230][d-230] | Stamp the snapshot with the trajectory's boundary ordinal, not the wait counter | ratified |
 | [D-231][d-231] | Require isbits store values, checked at build | ratified |
 | [D-232][d-232] | Refuse the roster operations on an errored simulation | ratified |
 | [D-233][d-233] | Retire the termination record's absent-time arm | ratified |
-| [D-234][d-234] | Rename the deployment keyword `n` to `N_base` | ratified |
+| [D-234][d-234] | Rename the deployment keyword `n` to `N_base` | superseded → [D-443][d-443] |
 | [D-235][d-235] | Realize the always-on check at the generated write, against the cell type | ratified |
 | [D-236][d-236] | Type-check a wire by one relation with embedding, in Stratum A | ratified |
 | [D-237][d-237] | Classify a non-isbits immutable port type as one opaque leaf | ratified |
@@ -440,6 +440,8 @@ were derived.
 | [D-439][d-439] | Open an inert `NamedTuple` field in the parameter summary | ratified |
 | [D-440][d-440] | Refuse a value read's unknown path as `PathResolution` | ratified |
 | [D-441][d-441] | Write `:inconsistent` for any throw inside a frame and `:built` for any throw inside a door | ratified |
+| [D-442][d-442] | Select the integration method by an instance that carries its step | ratified |
+| [D-443][d-443] | Fix the frame period on the deployment, apart from the method's step | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -4642,6 +4644,11 @@ Annotation (2026-10-15): amended by [D-198][d-198] and [D-316][d-316]. The join 
 `join_timeout`, a keyword defaulting to 5 s ([D-198][d-198]). `stop_on` is
 `ignore_stop_requests` since [D-316][d-316]: a model's stop request ends the run at
 the first publication where it holds, unless the advance ignores it.
+
+Annotation (2026-11-10): amended by [D-442][d-442] and [D-443][d-443]. The keywords stand
+beside `Δt_frame`, `Δt_base` and the algorithm, whose instance carries `h`.
+`localization_tol · h` holds as stated while the loop takes one step of
+`h = Δt_frame` per frame.
 
 **Rejected.**
 - *An absolute-in-`t` localization tolerance:* breaks scale-freedom across `h`
@@ -9108,7 +9115,7 @@ under that heading too.
 
 ### D-227 — Select the stepper by type under the `algorithm` keyword
 
-**Status.** ratified
+**Status.** superseded → [D-442][d-442]
 
 **Position.** The deployment keyword that picks the integration backend is
 `algorithm`, and its value is a stepper type, `RK4` by default, which binding
@@ -9135,6 +9142,10 @@ and throughout the package's own commentary means a method of a generic
 function, so a diagnostic naming `:method` as an invalid deployment parameter
 reads as a dispatch complaint. `algorithm` is the spec's majority term and
 the glossary's, and carries no such collision.
+
+Annotation (2026-11-10): superseded by [D-442][d-442]. The keyword keeps its name, and
+its value is an instance carrying the step, `RK4(h)`, since [D-443][d-443] made the
+step the method's own parameter.
 
 **Rejected.**
 - *`algorithm = RK4()`, the instance form:* builds a materialization layer for
@@ -9396,7 +9407,7 @@ unaffected, there being no absence left to spell.
 
 ### D-234 — Rename the deployment keyword `n` to `N_base`
 
-**Status.** ratified
+**Status.** superseded → [D-443][d-443]
 
 **Position.** The steps-per-base-tick factor, `Δt_base = N_base·h`, is spelled
 `N_base` everywhere: the `Simulation` keyword, the trace header's deployment
@@ -9416,6 +9427,9 @@ reads as "the base period is `N_base` steps", and the pair matches in
 spelling. Julia's style guide rules on module, type and function names only;
 keyword names are unconstrained by it, and Base's lowercase keywords are an
 unwritten practice.
+
+Annotation (2026-11-10): superseded by [D-443][d-443]. `N_base` retires with the
+frame's separation from the step; `Δt_base` defaults to `Δt_frame`.
 
 **Rejected.**
 - *Bare `N`:* collides with the stepper seam's state count, `Or{N}` and the
@@ -10440,6 +10454,10 @@ Annotation (2026-10-09): amended by [D-317][d-317]. A `Model` materializes a
 deployment at `T`, and a `Simulation` runs a `Model{Float64}`. The two
 convenience constructors compose through a `Float64` model.
 
+Annotation (2026-11-10): amended by [D-442][d-442] and [D-443][d-443]. The `Deployment`
+carries `Δt_frame`, `Δt_base` and the algorithm instance with its step;
+`h` and `N_base` are no longer its fields.
+
 **Rejected.**
 - *Binding inside the `Simulation` constructor, as today:* the products
   have no type, cannot be compared or printed on their own, and the
@@ -10593,6 +10611,10 @@ the model, the run, the plane and the control, and the model holds the
 deployment and the executor. The model also owns a diagnostic cell for its
 frame, which the drain folds into the loop's account beside the plane's
 loop cell. `chunk_size` follows its field to the `Model` constructors.
+
+Annotation (2026-11-10): amended by [D-442][d-442] and [D-443][d-443]. The deployment's
+grid parameters are `Δt_frame` and `Δt_base`, and the step rides the
+algorithm instance; `N_base` retired.
 
 **Rejected.**
 - *Leaving the fields flat:* every reader of a grid parameter or a buffer
@@ -12690,6 +12712,10 @@ periods and offsets are `Rational` (as recorded in [D-185][d-185]).
 The explicit request has no prior entry. [§9.2][s9-2] and [Appendix B][sB] state it, and
 [§9.2][s9-2] gives its reason: derivation is never entered by default, so the
 `N_base·h` path stays what silence means.
+
+Annotation (2026-11-10): amended by [D-443][d-443]. The second source is
+`Δt_frame`, the default when the keyword is absent, in place of the
+`N_base·h` product, and the explicit keyword derives no count.
 
 **Rejected.**
 - *Silent `Δt_base` derivation with unanchored components present:* the
@@ -18238,6 +18264,111 @@ again.
   an unmasked `restore!(sim)` would leave the session `errored` with no
   termination record.
 
+### D-442 — Select the integration method by an instance that carries its step
+
+**Status.** ratified
+
+**Position.** The deployment keyword `algorithm` takes an instance, `RK4(h)`
+or `Heun(h)`, that names the method and carries what the deployment fixes for
+it, the fixed step `h`. The bundled rulings:
+
+- The instance is a token, a separate type from the stepper. Materialization
+  at `Model` construction binds the token to its stepper, which owns scratch
+  sized by the state and typed by the scalar.
+- `RK4()` is the default. An instance with no step steps by `Δt_frame`, and
+  the deployment records the instance with its step resolved, so `RK4()` and
+  `RK4(Δt_frame)` deploy as one value.
+- The step is exact, a `Rational`, an integer, a `Period` or an `Hz` value. A
+  float is refused at the token as `ArgumentInvalid`, as `Period` refuses
+  one. A step that is not positive is refused at the deployment as
+  `DeploymentInvalid` with parameter `h`, collected with its siblings.
+- The instance compares and hashes as a value, prints as it is spelled, and
+  reaches every surface that records the choice: the trace header's
+  deployment block, the replay comparison, the checkpoint's deployment and
+  the `DeploymentInvalid` parameter.
+
+**Spec.** [§9.2][s9-2], [§10.2][s10-2], [§11.5][s11-5], [§12.7][s12-7], [Appendix B][sB], [Appendix C][sC]
+
+**Rationale.** [D-227][d-227] selected by type because no first-cut backend carried a
+parameter, and named the instance form as the extension a parametrized backend
+would bring. Separating the frame from the step ([D-443][d-443]) gives every backend a
+parameter, its step, and an adaptive backend brings more, its tolerances and
+bounds. A step is the method's, not the schedule's: under an error controller
+it is a proposal, and a keyword beside `Δt_frame` would mean nothing to such a
+backend. The value the user writes is therefore the identity of the choice,
+and the deployment compares it whole, so two runs that differ in the method's
+parameters can never compare equal. [D-227][d-227]'s objection stands where it was
+aimed. A stepper still cannot exist before materialization, since its scratch
+needs the state count and the scalar, so the token and the stepper are two
+types, joined by one binding function per backend. Defaulting the step to the
+frame period keeps today's deployments one keyword long and makes silence mean
+one step per frame, the loop the framework ran before the split. Resolving the
+step before recording it keeps the comparison honest across spellings, as
+`Δt_base`'s spellings already are. The float refusal sits at the token because
+a token holding a float would carry an inexact step into the divisibility
+check; the range check stays with the deployment, where [D-229][d-229] collects it.
+
+**Rejected.**
+- *One parametrized type for the token and the stepper:* the token would
+  carry empty scratch fields or a `Nothing` parameter, and every comparison
+  and print would have to ignore what the runtime half holds.
+- *The step as a deployment keyword beside the type:* the step is the
+  method's and an adaptive method has none, so the keyword would be a
+  default an adaptive backend ignores and a recorded field that says nothing
+  about the run.
+- *The step required in the instance:* every existing deployment would spell
+  the frame period twice, and a mismatch would be a refusal of a value the
+  user never meant to differ.
+- *A callable token, `algorithm(T, n_x)`, as the binding:* reads as a
+  constructor call on a value and hides the backend contract behind call
+  syntax; a named function states it.
+
+### D-443 — Fix the frame period on the deployment, apart from the method's step
+
+**Status.** ratified
+
+**Position.** A `Deployment` fixes three time quantities: `Δt_frame`, the
+frame period; `Δt_base`, the base lattice of the discrete tier; and the
+method's step `h`, inside the algorithm value ([D-442][d-442]). The bundled rulings:
+
+- `Δt_frame` is the `Deployment`'s and is required. The simulation owns the
+  activities keyed to the frame, never the frame.
+- `Δt_base` defaults to `Δt_frame`. Derivation stays the explicit
+  `Δt_base = :derive` ([D-283][d-283]).
+- `N_base` retires as a keyword, a field and a recorded parameter.
+- A fixed step divides `Δt_frame` and, when discrete components exist,
+  `Δt_base`. A step that does not is refused as `DeploymentInvalid` with
+  reason `:not_harmonic`, the period it fails named as the parameter.
+
+**Spec.** [§9.2][s9-2], [§10.2][s10-2], [§10.5][s10-5], [Appendix B][sB], [Appendix C][sC], [Appendix D][sD]
+
+**Rationale.** The step and the frame were one object, `tₖ = t₀ + k·h`, and
+the drain, the pacer, the trace, the checkpoints and the tick lattice all
+keyed to it. An adaptive method makes the step a controller's proposal, so
+the fixed quantities those activities need must be named apart from it. The
+trajectory test places `Δt_frame` on the `Deployment`: it fixes where root
+inputs land and, under an adaptive method, clamps the step, so two runs at
+different frame periods are different trajectories and replay must compare
+it. `h` and its derivatives name what the method does, and `Δt` with its
+subscripts what the schedule fixes. `N_base` was the ratio of two of the three
+quantities, and the lattices stand in no required ratio once the loop lands
+on due instants, so it has no meaning left to carry. A default `Δt_base` of
+`Δt_frame` is what the old default `N_base = 1` meant, so every deployment
+that spelled `h` alone keeps its schedule. The divisibility rule keeps a
+fixed-step backend landing exactly on every frame top and every base tick,
+which is what lets it subcycle inside a frame.
+
+**Rejected.**
+- *The frame on the `Simulation`:* the frame moves the trajectory, and a
+  value outside the recorded deployment would let replay accept a run at a
+  different frame period.
+- *Keep `N_base` beside `Δt_frame`:* it would restate a ratio of two recorded
+  quantities, with a cross-check between them as the only thing it adds, and
+  it presumes a ratio the independent lattices do not require.
+- *`h` as the frame's name, a new name for the method's step:* `h` is the
+  step in the numerical-methods literature and in the seam's contract, and
+  the schedule's quantities already take `Δt`.
+
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
 [d-002]: #d-002--adopt-the-causal-port-based-paradigm
@@ -18654,6 +18785,8 @@ again.
 [d-439]: #d-439--open-an-inert-namedtuple-field-in-the-parameter-summary
 [d-440]: #d-440--refuse-a-value-reads-unknown-path-as-pathresolution
 [d-441]: #d-441--write-inconsistent-for-any-throw-inside-a-frame-and-built-for-any-throw-inside-a-door
+[d-442]: #d-442--select-the-integration-method-by-an-instance-that-carries-its-step
+[d-443]: #d-443--fix-the-frame-period-on-the-deployment-apart-from-the-methods-step
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property

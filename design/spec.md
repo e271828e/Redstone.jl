@@ -323,8 +323,8 @@ partly from outside the model. This section fixes how a step integrates, then
 when outside values enter and what else may influence a run.
 
 A fixed-step one-step method advances the continuous state across each step.
-The method is chosen at deployment, beside the step `h` ([§10.2][s10-2],
-[D-017][d-017], [D-227][d-227]). Each step starts from the state the previous
+The method is chosen at deployment, with its step `h` ([§10.2][s10-2],
+[D-017][d-017], [D-442][d-442]). Each step starts from the state the previous
 [boundary](#g-boundary) (a published consistency point) left. By then that
 state has passed through any event handler's reset and through
 [projection](#g-projection) (the per-component hook that returns state to its
@@ -3918,8 +3918,8 @@ A `sample_times` key on a continuous child is a build error
 continuous [bundle](#g-bundle) (the `NamedTuple` of views a component function
 receives) carries no `Δt` ([§10.5][s10-5]).
 
-`Δt_base`, `h` and `N_base` appear in no declaration. They are deployment
-decisions fixed at deployment ([D-254][d-254]). [§9.2][s9-2] gives the three
+`Δt_frame`, `Δt_base` and the integration step `h` appear in no declaration.
+They are deployment decisions fixed at deployment ([D-254][d-254]). [§9.2][s9-2] gives the three
 sources for `Δt_base`.
 
 The declaration belongs to the assembly type, not to the child instance
@@ -4517,11 +4517,11 @@ with different grid parameters.
 **A `Deployment` is scalar-free** ([D-254][d-254]). It carries everything the
 grid parameters fix. Its constructor sits after the build's three steps,
 and nothing in them depends on it. The constructor consumes the `Build` and
-the grid parameters. It binds the grid parameters, the algorithm and the three
-event parameters, runs harmonic-grid validation, and builds the `Schedule`. The
-`Deployment` it returns holds the build, the grid parameters, the algorithm,
-the three event parameters, the `Schedule`, the grid diagnostics below and its
-own `warnings`. `Model` materializes it at a scalar type `T` that is
+the grid parameters. It binds the grid parameters, the algorithm with its step
+and the three event parameters, runs harmonic-grid validation, and builds the
+`Schedule`. The `Deployment` it returns holds the build, the grid parameters,
+the algorithm, the three event parameters, the `Schedule`, the grid
+diagnostics below and its own `warnings`. `Model` materializes it at a scalar type `T` that is
 `Float64` or a concrete `ForwardDiff.Dual` over `Float64`, nested or not, and
 `Simulation` runs a `Model{Float64}`.
 **`Model` refuses any other scalar** as `ArgumentInvalid`, before it derives
@@ -4529,13 +4529,21 @@ the activation at `T` ([§9.5][s9-5], [D-320][d-320]). Two
 `Deployment`s compare as values, which is what replay's header check reads
 ([§12.7][s12-7]).
 
-**`Δt_base` has exactly one of three sources**, cross-validated
-([D-283][d-283]):
+**A `Deployment` fixes three time quantities** ([D-443][d-443]). The
+[frame period](#g-dt_frame) `Δt_frame` (the spacing of the loop's frame tops)
+fixes where root inputs land and how often the run meets the outside. The base
+tick `Δt_base` is the lattice of the discrete tier ([§10.5][s10-5]). The step
+`h` is the integration method's, and it travels inside the `algorithm` value
+([§10.2][s10-2], [D-442][d-442]). `Δt_frame` belongs to the `Deployment`
+because it moves the trajectory. The simulation owns the activities keyed to
+the frame, never the frame. `Δt_frame` has no default and is required of the
+caller, since a domain rate is not a framework default.
 
-- the explicit keyword, a `Rational`, `Period` or `Hz` value, from which
-  `N_base` is derived as `Δt_base/h` and validated an integer ≥ 1;
-- the `N_base·h` product when only `N_base` is given, with the
-  default `N_base = 1`;
+**`Δt_base` has exactly one of three sources**, cross-validated
+([D-283][d-283], [D-443][d-443]):
+
+- the explicit keyword, a `Rational`, `Period` or `Hz` value;
+- `Δt_frame`, when the keyword is absent;
 - derivation, permitted only when every discrete component is anchored, that
   is, with anchor 0 unpopulated.
 
@@ -4545,8 +4553,14 @@ Derivation is requested explicitly:
 Δt_base = :derive
 ```
 
-It is never entered by default, so the `N_base·h` path stays what silence
-means.
+It is never entered by default, so `Δt_frame` stays what silence means.
+
+**A fixed step `h` divides `Δt_frame` and, when the tree has discrete
+components, `Δt_base`** ([D-443][d-443]). A step that does not is refused as
+`DeploymentInvalid`. Two further refusals follow from the loop as
+[§10.4][s10-4] and [§10.5][s10-5] state it, one step per frame with base
+ticks on frame tops. The constructor refuses an `h` other than `Δt_frame`,
+and a `Δt_base` that is not a whole multiple of `Δt_frame`.
 
 **If any unanchored component exists, deployment must declare `Δt_base`**
 ([D-283][d-283]). The refusal is constructive, carrying the suggestion message
@@ -4579,11 +4593,11 @@ carries.
 `DeploymentInvalid` ([Appendix C][sC]), carrying parameter, value and the
 violated constraint:
 
-- a nonpositive `h`;
-- an `N_base < 1`;
-- a harmonic-grid violation;
+- a nonpositive `Δt_frame` or `h`;
+- a harmonic-grid violation, a fixed step that does not divide `Δt_frame` or
+  `Δt_base`;
+- an `h` other than `Δt_frame`, or a `Δt_base` off the frame tops;
 - a non-dividing anchor period or offset;
-- a declared `Δt_base` disagreeing with a declared `N_base`;
 - an algorithm the [stepper seam](#g-seam) does not know;
 - a nonpositive `localization_tol`;
 - a `localization_budget` or a `firing_budget` that is not an integer ≥ 1.
@@ -5737,13 +5751,17 @@ required of the stepper, because linearization and the
 rejected cycle as real or artificial, [§13.8][s13-8]) drive the *sweep*, never the
 integrator.
 
-**`RK4` is the default** of the two ([D-227][d-227]). The `algorithm` keyword
-selects the backend by type on the [`Deployment`](#g-deployment) (the
-scalar-free artifact the grid parameters fix). Materialization at
-`Model` construction binds the stepper against the state buffer, on the
-executor ([Appendix B][sB], [§9.2][s9-2], [D-227][d-227]). The step `h` has
-no default and is required of the caller. A domain rate is not a framework
-default.
+**The `algorithm` keyword selects the backend by an instance that carries
+its step**, `RK4(h)` or `Heun(h)`, on the [`Deployment`](#g-deployment) (the
+scalar-free artifact the grid parameters fix) ([D-442][d-442]). **`RK4()` is
+the default** of the two ([D-442][d-442]). An instance with no step steps by
+the frame period `Δt_frame`, which the `Deployment` requires ([§9.2][s9-2]).
+The deployment records the instance with its step resolved, so `RK4()` and
+`RK4(Δt_frame)` deploy as one value. The instance is a token. The stepper is
+a separate runtime object, since it owns scratch sized by the state and typed
+by the scalar, and only materialization knows both. Materialization at `Model`
+construction binds the token to its stepper against the state buffer, on the
+executor ([Appendix B][sB], [§9.2][s9-2], [D-442][d-442]).
 
 An `OrdinaryDiffEq`-backed stepper can exist later as a package extension, if
 an offline study genuinely demands adaptive or stiff methods
@@ -6157,7 +6175,7 @@ expected modeling outcome as broken machinery, which the no-throw doctrine of
 
 Both localization constants are deployment, not implementation.
 `localization_tol` and `localization_budget` are constructor keywords of the
-`Deployment`. They stand beside `h`, `N_base` and the algorithm ([§9.2][s9-2],
+`Deployment`. They stand beside `Δt_frame`, `Δt_base` and the algorithm ([§9.2][s9-2],
 [Appendix B][sB], [D-256][d-256]). The constructor validates them with the third
 such keyword, the `firing_budget` of [§10.6][s10-6], and failures are collected
 into `DeploymentInvalid`, as [§9.2][s9-2] and [Appendix C][sC] set out. All
@@ -6167,8 +6185,8 @@ three are grid-independent, so none enters the harmonic-grid check
 All three are recorded ([D-133][d-133], [D-181][d-181]), because they determine
 the trajectory. They ride the `Deployment` in the
 [trace header](#g-trace-header) (the trace's fixed preamble, [§11.5][s11-5]).
-They also join the set that replay compares up front, exactly as `h` and the
-algorithm do ([§12.7][s12-7]).
+They also join the set that replay compares up front, exactly as `Δt_frame`
+and the algorithm do ([§12.7][s12-7]).
 
 Without this record, the replays-identically promise above is empty. A run
 that does not record what its localizer was told to do cannot be re-driven
@@ -6189,15 +6207,17 @@ three, in that order.
 
 **Every discrete [component](#g-component)'s period is an integer multiple of a
 base [tick](#g-tick) period `Δt_base`** ([D-019][d-019]). `Δt_base` is itself
-an integer multiple of the continuous step, with `N_base` steps per base tick
-($\Delta t_{\mathrm{base}} = N_{\mathrm{base}} \cdot h$, $N_{\mathrm{base}} \ge 1$).
-That is the [harmonic grid](#g-harmonic-grid). Ticks therefore land on step
-boundaries, which is the only place anything discrete ever happens.
+an integer multiple of the continuous step `h`. That is the
+[harmonic grid](#g-harmonic-grid). Ticks therefore land on step boundaries,
+which is the only place anything discrete ever happens. The loop takes one
+step per frame, so `h` is the frame period `Δt_frame`, and a base tick spans
+$n = \Delta t_{\mathrm{base}} / \Delta t_{\mathrm{frame}} \ge 1$ frames
+([§9.2][s9-2]).
 
 [Frames](#g-frame) (iterations of the loop) are counted by the frame index
-`k`. The frame top at `t = t₀ + k·h` is a base tick exactly when `k` is a
-multiple of `N_base`. Its [tick index](#g-tick-index) is then
-`tick = k ÷ N_base`. A frame top that is no base tick has no tick index, and
+`k`. The frame top at `t = t₀ + k·Δt_frame` is a base tick exactly when `k` is
+a multiple of `n`. Its [tick index](#g-tick-index) is then
+`tick = k ÷ n`. A frame top that is no base tick has no tick index, and
 neither does a boundary at a localized event time `t*`
 ([§10.4][s10-4], [D-185][d-185], [D-288][d-288]).
 
@@ -6257,10 +6277,10 @@ one round of it.
 
 Each kind of boundary has its own due set:
 
-- At a tick frame top (every `N_base`-th frame top), the due set is every
+- At a tick frame top (every `n`-th frame top), the due set is every
   discrete component whose gate admits the tick index. These are the `(D, Φ)`
   pairs with `(tick − Φ) % D == 0`.
-- At an off-tick frame top (a frame top with `N_base > 1` that is no base
+- At an off-tick frame top (a frame top with `n > 1` that is no base
   tick), the due set is empty. The tick counter has not advanced, so no
   component is at a tick instant.
 - At a `t*` boundary, the due set is empty for the same reason. A modulo test
@@ -7910,8 +7930,8 @@ services own root-input initialization ([§14.6][s14-6]), and the checkpoint's t
 the values they wrote. The fingerprint and the deployment are the parts of the
 header replay compares rather than restores ([§12.7][s12-7]).
 
-The deployment comes from [§9.2][s9-2]. It carries `Δt_base`, `h`, `N_base`, the
-algorithm identifier, `localization_tol`, `localization_budget` ([§10.4][s10-4]) and
+The deployment comes from [§9.2][s9-2]. It carries `Δt_frame`, `Δt_base`, the
+algorithm with its step, `localization_tol`, `localization_budget` ([§10.4][s10-4]) and
 `firing_budget` ([§10.6][s10-6], [D-254][d-254]). The fingerprint is the store layout and the
 root-input faces the [`Build`](#g-build) (the artifact `build(world)` produces) fixes. It
 also holds what a copy by position relies on, namely each component's `x` type,
@@ -10017,8 +10037,8 @@ no face name is resolved per frame under replay either.
 The checkpoint carries the recorded run's `Deployment`, the target
 simulation's `Model` carries its own, and the check is their comparison, on
 the *structural* side of that line. The value covers the
-trajectory-determining parameters, `Δt_base`, `h`, `N_base`, the algorithm,
-`localization_tol`, `localization_budget` ([§10.4][s10-4]) and
+trajectory-determining parameters, `Δt_frame`, `Δt_base`, the algorithm with
+its step, `localization_tol`, `localization_budget` ([§10.4][s10-4]) and
 `firing_budget` ([§10.6][s10-6], [D-133][d-133]). It also covers the
 [schedule](#g-schedule) (the typed per-component `(D, Φ, Δt)` tick table) with
 every column, the anchor and rate-chain columns included. A rate re-declared
@@ -10046,7 +10066,7 @@ The dispositions, by trace content:
 | trace content | disposition |
 |---|---|
 | the checkpoint's fingerprint: store layout, root-input faces, and what a copy by position relies on | compared against the `Build` |
-| the recorded `Deployment`, carrying `Δt_base`, `h`, `N_base`, the algorithm, `localization_tol`, `localization_budget`, `firing_budget` | compared as a value against the deployment the target simulation's `Model` carries |
+| the recorded `Deployment`, carrying `Δt_frame`, `Δt_base`, the algorithm with its step, `localization_tol`, `localization_budget`, `firing_budget` | compared as a value against the deployment the target simulation's `Model` carries |
 | each writer's face-name → position schema (on the trace's `schemas` list) | validated against the target model's root-input faces: disagreement is a replay error |
 | the checkpoint's state | restored under the default form; no boundary zero |
 | the clock | restored under the default form, `replay!` takes no `t0`; under `restore = false` the simulation's own clock runs, its origin equal to the recording's |
@@ -10914,7 +10934,7 @@ The advisory fires in `:live` only. A `run!` in `:replay` is bounded by the
 recording, whatever its policy says ([§12.7][s12-7], [D-218][d-218]).
 
 ```julia
-sim = Simulation(world; h = 1//50)          # no policy here: the deployment has none
+sim = Simulation(world; Δt_frame = 1//50)   # no policy here: the deployment has none
 
 init!(sim, cond); run!(sim; t_end = 60)                     # every request honoured
 init!(sim, cond); run!(sim; t_end = 60,
@@ -13909,7 +13929,7 @@ assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
 
 #### Deployment and the model
 
-- `Deployment(build; h, N_base = nothing, Δt_base = nothing, algorithm = RK4,
+- `Deployment(build; Δt_frame, Δt_base = nothing, algorithm = RK4(),
   firing_budget = 4, localization_tol = 1e-6, localization_budget = 8) →
   Deployment`. The [deployment](#g-deployment) (the scalar-free artifact the
   grid parameters fix), carrying the [`Schedule`](#g-schedule) (the typed
@@ -13918,14 +13938,17 @@ assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
 
   | keyword | default | meaning | owning section |
   |---|---|---|---|
-  | `algorithm` | `RK4` | the stepper (`RK4` or `Heun`), bound against the state buffer at [`Model`](#g-model) construction ([D-227][d-227]) | [§10.2][s10-2] |
-  | `h` | — | required, refused as `DeploymentInvalid` when absent | [§10.2][s10-2] |
-  | `N_base` | — | steps per base tick, `1` absent `Δt_base` and derived otherwise | [§9.2][s9-2] |
-  | [`Δt_base`](#g-dt_base) | `nothing` | the base tick period (`Rational`, `Period` or `Hz`), or `:derive` | [§9.2][s9-2] |
+  | `algorithm` | `RK4()` | the integration method with its fixed step, `RK4(h)` or `Heun(h)`, the step `Δt_frame` when the instance names none, bound against the state buffer at [`Model`](#g-model) construction ([D-442][d-442]) | [§10.2][s10-2] |
+  | [`Δt_frame`](#g-dt_frame) | — | the frame period (`Rational`, `Period` or `Hz`), required, refused as `DeploymentInvalid` when absent ([D-443][d-443]) | [§9.2][s9-2] |
+  | [`Δt_base`](#g-dt_base) | `nothing` | the base tick period (`Rational`, `Period` or `Hz`), `Δt_frame` when absent, or `:derive` | [§9.2][s9-2] |
   | `localization_tol` | `1e-6` | the root-finder's relative bracket-width convergence test (`localization_tol · h`) | [§10.4][s10-4] |
   | `localization_budget` | `8` | the per-frame localization allowance | [§10.4][s10-4] |
   | [`firing_budget`](#g-firing-budget) | `4` | the per-event, per-boundary firing allowance, an integer ≥ 1; exhaustion warns `FiringBudget` | [§10.6][s10-6] |
 
+- `RK4(h)`, `RK4()`, `Heun(h)` and `Heun()`. The algorithm instances the
+  `algorithm` keyword takes, each a token carrying its fixed step `h` in exact
+  seconds (`Rational`, integer, `Period` or `Hz`). A float `h` is refused as
+  `ArgumentInvalid` ([§10.2][s10-2], [D-442][d-442]).
 - `Model(deployment, T = Float64; chunk_size = 16) → Model{T}`. Materializes a
   deployment at a scalar type, allocating the buffers ([§9.2][s9-2], [D-317][d-317]).
 
@@ -14550,11 +14573,15 @@ activation):
 - **`DeploymentInvalid`** ([§9.2][s9-2]). Error · service · collected. The
   deployment parameter, the value in hand and the value it is measured
   against, and a `reason` naming the violated constraint. The parameter is
-  one of `h`, `N_base`, `Δt_base`, algorithm, `localization_tol`,
-  `localization_budget` or `firing_budget`. The reasons are `:range`,
-  `:inexact`, `:not_a_quantity` and `:missing` (no `h`), and four on
-  `Δt_base`'s grid. Those are `:not_harmonic` (the harmonic-grid relation),
-  `:disagrees_with_n` (`N_base` against `Δt_base / h`, the quotient in hand),
+  one of `Δt_frame`, `Δt_base`, algorithm, `h` (the algorithm's step),
+  `localization_tol`, `localization_budget` or `firing_budget`. The reasons
+  are `:range`, `:inexact`, `:not_a_quantity` and `:missing` (no
+  `Δt_frame`). `:not_harmonic` is the harmonic-grid relation, a fixed step
+  that does not divide `Δt_frame` or `Δt_base`, the period named as the
+  parameter and the step in hand. `:subcycling` is an `h` that divides
+  `Δt_frame` without equaling it, and `:not_frame_multiple` a `Δt_base` that
+  is not a whole multiple of `Δt_frame`, both refused while the loop takes
+  one step per frame ([§9.2][s9-2]). Two more are on `Δt_base`'s grid,
   `:unanchored` (derivation with unanchored discrete components, their paths
   in hand) and `:no_constraint` (derivation with no anchored work). A
   non-dividing anchor period or offset is `:anchor_period` or
@@ -14706,7 +14733,7 @@ activation):
   root-input value that does not convert to its declared type, the scalar
   type (the
   recorded one vs. the target model's), a deployment parameter
-  (`Δt_base`/`h`/`N_base`/algorithm/`localization_tol`/`localization_budget`/`firing_budget`,
+  (`Δt_frame`/`Δt_base`/algorithm/`localization_tol`/`localization_budget`/`firing_budget`,
   recorded vs. bound value), a [schedule](#g-schedule) row whose column
   differs (the component path, the column, recorded vs. bound value), a rate
   scope whose column differs (its path, the column, recorded vs. bound
@@ -14738,7 +14765,7 @@ activation):
   `overlay!`, `restore!` and `replay!` ([D-261][d-261]). The call
   (`Model`, `Simulation`, `init!`, `overlay!`, `frame!`, `apply!`, `restore!`, `run!`,
   `step!`, `replay!`, `live!`, `pace!`, `margin!`, `trim!`, `linearize`,
-  `trace`, `TableBinding`, a period constructor), the argument, the value in
+  `trace`, `TableBinding`, a period constructor, an algorithm instance), the argument, the value in
   hand, and a `reason` naming the violated constraint. A `TableBinding`
   refusal also carries the entry key, and one with reason `:vocabulary` the
   offending key and the legal entry vocabulary. A model
@@ -15234,11 +15261,16 @@ stops for the rest of the frame, and further crossings fire at the next
 [boundary](#g-boundary), under a `ChatteringBudget` warning naming the event
 ([§10.4][s10-4]).
 
-<a id="g-dt_base"></a>**`Δt_base`** — the base [tick](#g-tick) period, an integer multiple `N_base·h` of the
-continuous step. It is bound at the `Deployment` constructor from one of three
-sources: an explicit keyword, `N_base·h`, or derivation from the constraint
+<a id="g-dt_base"></a>**`Δt_base`** — the base [tick](#g-tick) period, an integer multiple of the
+fixed step. It is bound at the `Deployment` constructor from one of three
+sources: an explicit keyword, `Δt_frame`, or derivation from the constraint
 pool (fully anchored models only). Every discrete [component's](#g-component) period is an
 integer multiple of it ([§10.5][s10-5], [§9.2][s9-2]).
+
+<a id="g-dt_frame"></a>**`Δt_frame`** — the [frame](#g-frame) period, the spacing of the frame tops,
+a required [deployment](#g-deployment) keyword. Root inputs land, the [drain](#g-drain) runs and the
+pacer waits at its instants. A fixed step divides it ([§9.2][s9-2], [§10.2][s10-2],
+[D-443][d-443]).
 
 <a id="g-due"></a>**due** — a discrete [component](#g-component) is due at a [boundary](#g-boundary) when its
 `(D, Φ)` pair admits that boundary's [tick index](#g-tick-index), `(tick − Φ) %
@@ -15348,11 +15380,11 @@ root-finder's final bracket, structurally strictly later than `tₙ`. A full
 <a id="g-tick"></a>**tick** — an instant at which a discrete [component's](#g-component) stages and update run,
 gated by counter modulo against the [harmonic grid](#g-harmonic-grid) inside the [boundary sweep](#g-sweep).
 Different [boundaries](#g-boundary) therefore run different subsets of the [execution order](#g-execution-order).
-A **base tick** is a tick of the base grid, the instant every `N_base` [frame](#g-frame)
-tops; its period is `Δt_base` ([§10.5][s10-5]).
+A **base tick** is a tick of the base grid, the instant every `Δt_base/Δt_frame`
+[frame](#g-frame) tops; its period is `Δt_base` ([§10.5][s10-5]).
 
-<a id="g-tick-index"></a>**tick index** — the count of base [ticks](#g-tick), `tick = k ÷ N_base` at the [frame](#g-frame)
-top of frame `k` when `k` is a multiple of `N_base`. It is the index the
+<a id="g-tick-index"></a>**tick index** — the count of base [ticks](#g-tick), `tick = k ÷ n` at the [frame](#g-frame)
+top of frame `k` when `k` is a multiple of `n = Δt_base/Δt_frame`. It is the index the
 [boundary](#g-boundary) gate reads. An off-tick frame top and a `t*` boundary have none
 ([§10.5][s10-5]).
 
@@ -15403,8 +15435,8 @@ chunk the same way. It is the
 implementation's only representation freedom, and it converts compile cost
 from superlinear in body size to linear in entry count ([§9.7][s9-7]).
 
-<a id="g-deployment"></a>**`Deployment`** — the artifact the grid parameters fix: the [build](#g-build) plus `h`,
-`N_base`, `Δt_base`, the algorithm and the three event parameters, carrying
+<a id="g-deployment"></a>**`Deployment`** — the artifact the grid parameters fix: the [build](#g-build) plus
+`Δt_frame`, `Δt_base`, the algorithm with its step and the three event parameters, carrying
 the `Schedule`, the grid diagnostics and its own `warnings`. It is
 scalar-free, it compares as a value, and a `Model` materializes it at a
 scalar type ([§9.2][s9-2], [D-254][d-254], [D-317][d-317]).
@@ -15776,7 +15808,7 @@ front. The default form restores the clock with the rest of the state
 ([§12.7][s12-7]).
 
 <a id="g-run-metadata"></a>**run metadata** — the [trace header's](#g-trace-header) `Deployment` and `t₀`, hence
-`Δt_base`, `h`, `N_base`, the algorithm identifier, `localization_tol`,
+`Δt_frame`, `Δt_base`, the algorithm with its step, `localization_tol`,
 `localization_budget` and `firing_budget`. It carries no stop policy; each
 advance declares its own ([§11.5][s11-5], [§13.5][s13-5]).
 
@@ -16274,7 +16306,6 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-224]: log.md#d-224--let-a-throw-inside-a-trim-commit-propagate-as-the-commits-steperror
 [d-225]: log.md#d-225--parametrize-steperror-on-its-causes-type
 [d-226]: log.md#d-226--reach-the-public-surface-by-qualified-name-until-the-export-audit
-[d-227]: log.md#d-227--select-the-stepper-by-type-under-the-algorithm-keyword
 [d-228]: log.md#d-228--attribute-runtime-diagnostics-by-cell-never-by-payload
 [d-229]: log.md#d-229--collect-to-the-stratum-barrier-under-a-dependency-rule
 [d-230]: log.md#d-230--stamp-the-snapshot-with-the-trajectorys-boundary-ordinal-not-the-wait-counter
@@ -16454,6 +16485,8 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-439]: log.md#d-439--open-an-inert-namedtuple-field-in-the-parameter-summary
 [d-440]: log.md#d-440--refuse-a-value-reads-unknown-path-as-pathresolution
 [d-441]: log.md#d-441--write-inconsistent-for-any-throw-inside-a-frame-and-built-for-any-throw-inside-a-door
+[d-442]: log.md#d-442--select-the-integration-method-by-an-instance-that-carries-its-step
+[d-443]: log.md#d-443--fix-the-frame-period-on-the-deployment-apart-from-the-methods-step
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop
