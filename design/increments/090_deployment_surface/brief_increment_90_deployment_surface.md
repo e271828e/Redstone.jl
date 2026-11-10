@@ -220,3 +220,54 @@ the spec and the companions; D-442 and D-443 against `log_rules.md`; the
 new docstrings against `docstring_rules.md`. "Empty is acceptable."
 
 ## The review's record
+
+The cold review ran at 029cbab, an independent high-tier agent, and found
+no correctness bug. The fixes landed as 23a82ab, built by the coordinator,
+and the reviewer verified the delta with its context intact.
+
+- **Gate.** 9576 of 9576 at 029cbab on Julia 1.13.3, the floor, against
+  9540 at c16c8a2; the per-file totals are equal but for diagnostics (995
+  to 1013), stepper (17 to 33) and trace (576 to 578), so no file lost an
+  assertion. 9581 of 9581 at the fixes, the coordinator's run. The
+  Documenter build clean and the examples 77 of 77, both times.
+- **Bit-identity.** Ten runs against a `git archive` of c16c8a2, byte for
+  byte on the frame index, the clock's bits, `xbuf` and `repr(logged(sim))`:
+  the feedback model under RK4 and Heun, `MultiRate` at two and at five
+  frames per tick, the localized `Bouncer` under both methods, a sampled
+  loop at two and at three frames per tick, `Sawtooth` with a `Stamper`,
+  and a `Dual` model over 50 frames.
+- **Findings, all fixed in 23a82ab.**
+  1. `CheckpointMismatch`'s deployment message counted seven parameters
+     where the walk names six. Corrected and pinned.
+  2. No test read the `RK4` float-step message. One rendering assertion.
+  3. No test caught `Model(build; chunk_size)` dropping the keyword. One
+     assertion beside the `Simulation` twin's.
+  4. `bind_schedule` returns ahead of the anchor loop on a lattice or step
+     fault, short of D-229. The code stays, by this brief's scope;
+     `pending.md`'s deviation list records it for increment 2's rewrite.
+  5. `RK4(1//0)` drew a false `:subcycling`, and `Δt_frame = 1//0` a raw
+     `DivideError`, the second older than the increment. Both periods are
+     now refused as `:range` unless positive and finite, §9.2's list and
+     the message saying so. The reviewer had proposed a guard on the
+     subcycling test and judged the range rule the better fix.
+  6. Stale `h` as the deployment's parameter: §2.4's list, one sentence of
+     §12.6, `docstring_rules.md` rule 14 and two `code_map.md` lines.
+  7. Docstrings: `Deployment`'s summary at 21 words, the `RK4` and `Heun`
+     signature lines without return types, `Δt_frame` unlinked in seven
+     docstrings, and `RK4`'s silence on the interim refusal.
+- **Mutants.** 22 in the first round, 19 killed. M08, the dropped
+  `RK4`/`Heun` message arm, and M14, the dropped `chunk_size`, survived as
+  missing tests; the fixes pin both, and both die in the second round. M20,
+  the early return removed, survives and is acceptable: it is the strict
+  D-229 form of finding 4. The brief's unrun dropped-arm mutant was run
+  and dies. In the second round the two `isfinite` mutants and the count
+  mutant die; a mutant on the wording "positive and finite" survives and is
+  acceptable, message text being pinned in the rendering testset alone.
+- **Handed to increment 2.** `Δt_base` has no range check of its own: a
+  zero, negative or infinite value is refused only through
+  `:not_frame_multiple`, which that increment lifts. The `pending.md`
+  bullet names it.
+- **Not done.** Compile latency and a separate allocation probe: no loop
+  signature changed, and the gate's allocation pins pass.
+- **After the delta check.** Three docstring passages of `deployment.jl`
+  rewrapped, text unchanged, with this record.

@@ -35,7 +35,10 @@ item changes what the spec says, the spec edit is part of the item.
     the constructor refuses a step other than the frame and a base tick off
     the frame tops (§9.2), and `Deployment.frames_per_tick` is the frame
     loop's tick key. The increment lifts both refusals and deletes the
-    field.
+    field. `Δt_base` has no range check of its own: a zero, negative or
+    infinite value is refused today only through `:not_frame_multiple`,
+    so the rewrite gives it one before that refusal goes, and §9.2's list
+    names it.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose

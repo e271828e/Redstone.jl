@@ -332,13 +332,12 @@ The classical fourth-order Runge–Kutta method with a fixed step `h`, the defau
 algorithm.
 
 Pass it as the `algorithm` keyword of [`Deployment`](@ref). `RK4()` steps by the
-deployment's [frame](@ref g-frame) period [`Δt_frame`](@ref g-dt_frame). `h` is in
-exact seconds, a
-`Rational`, an integer or a [`Period`](@ref), so `RK4(1//100)` and
-`RK4(Hz(100))` are the same value. A float is refused as `ArgumentInvalid`.
-The deployment refuses an `h` that is not positive and finite or does not divide
-its periods as `DeploymentInvalid`. For now it also refuses an `h` other than
-`Δt_frame`.
+deployment's [frame](@ref g-frame) period [`Δt_frame`](@ref g-dt_frame). `h` is
+in exact seconds, a `Rational`, an integer or a [`Period`](@ref), so
+`RK4(1//100)` and `RK4(Hz(100))` are the same value. A float is refused as
+`ArgumentInvalid`. The deployment refuses an `h` that is not positive and finite
+or does not divide its periods as `DeploymentInvalid`. For now it also refuses
+an `h` other than `Δt_frame`.
 
 For the second-order method, see [`Heun`](@ref).
 """
@@ -361,8 +360,7 @@ Heun's second-order method, the explicit trapezoidal rule, with a fixed step `h`
 
 Pass it as the `algorithm` keyword of [`Deployment`](@ref). `Heun()` steps by
 the deployment's [frame](@ref g-frame) period [`Δt_frame`](@ref g-dt_frame), and
-`h` takes the
-values [`RK4`](@ref)'s does, refused alike.
+`h` takes the values [`RK4`](@ref)'s does, refused alike.
 """
 struct Heun <: AbstractAlgorithm
     h::Union{Nothing,Rational{Int}}
@@ -421,10 +419,10 @@ by an [`Absolute`](@ref) entry and the tree declares at least one. A derived
 
 A keyword outside its range is refused as `DeploymentInvalid`, and so is a
 `Δt_base` that does not divide an anchor's period or offset. A fixed step `h`
-must divide [`Δt_frame`](@ref g-dt_frame) and, when the tree has discrete components, `Δt_base`.
-For now `h` must also equal `Δt_frame`, and `Δt_base` must be a whole multiple
-of `Δt_frame`. One throw reports the faults found together. Exhausting
-`firing_budget` warns `FiringBudget`.
+must divide [`Δt_frame`](@ref g-dt_frame) and, when the tree has discrete
+components, `Δt_base`. For now `h` must also equal `Δt_frame`, and `Δt_base`
+must be a whole multiple of `Δt_frame`. One throw reports the faults found
+together. Exhausting `firing_budget` warns `FiringBudget`.
 
 # Keywords
 
