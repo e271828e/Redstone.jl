@@ -32,7 +32,8 @@ integrates. A [localized](@ref g-localized) event adds a boundary at its time
 the boundary there. `settled!(hooks)` follows every boundary, each `t*`'s and
 the frame top's.
 
-When `k` is a multiple of `N_base`, the frame top is a [base tick](@ref g-tick).
+When `k` is a multiple of `Δt_base/Δt_frame`, the frame top is a
+[base tick](@ref g-tick).
 The discrete [components](@ref g-component) [due](@ref g-due) there run their
 stages and updates in it. Any other `k` runs a boundary with no discrete update.
 A `Model` at a `Dual` has no events and freezes its discrete components.
@@ -59,11 +60,14 @@ function frame!(model::Model{T}, k::Int, hooks::FrameHooks = NoHooks()) where {T
         if model.exec.has_localized
             _localized_frame!(model, t_to, hooks) && return true
         else
-            integrate!(model, T(model.deployment.h))
+            # one step of `h = Δt_frame`, the only step the deployment admits
+            # until the loop subcycles (pending.md)
+            integrate!(model, T(model.deployment.Δt_frame))
         end
         model.exec.clock.t = t_to
-        N_base = model.deployment.N_base
-        k % N_base == 0 ? boundary!(model, k ÷ N_base) : offtick_boundary!(model)
+        frames_per_tick = model.deployment.frames_per_tick
+        k % frames_per_tick == 0 ? boundary!(model, k ÷ frames_per_tick) :
+                                   offtick_boundary!(model)
         settled!(hooks)
     catch err
         @atomic :release model.status = :inconsistent
@@ -226,11 +230,12 @@ discarded by the caller.
 """
 function _crossing(model::Model, i::Int, σ₀::Float64, σ₁::Float64, t_seg, h′)
     events = model.exec.events
-    # The stop is a width in time, `localization_tol · h` (§10.4, D-133). In θ
+    # The stop is a width in time, `localization_tol · h` (§10.4, D-133), `h`
+    # being `Δt_frame` while the loop takes one step per frame. In θ
     # over a remainder segment shorter than the frame it widens by h/h′; past
     # 1 the segment is already within tolerance, no trial runs, and the
     # crossing folds into the segment's end.
-    tol = model.deployment.localization_tol * model.deployment.h / _seconds(h′)
+    tol = model.deployment.localization_tol * model.deployment.Δt_frame / _seconds(h′)
     lo, hi = 0.0, 1.0
     σlo, σhi = σ₀, σ₁
     # ITP constants over the unit bracket: κ₁ = 0.2, κ₂ = 2, n₀ = 1; ε is the

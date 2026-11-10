@@ -183,7 +183,7 @@ Traps the code does not warn about, each hit more than once while building:
 - **`isempty` is no presence test for a store.** `isempty(nothing)` and
   `isempty(:idle)` throw, and an empty `SVector` is a declared store, so a
   store is present iff it is not `nothing` (§5.2);
-- **a test's clock value is an indexed frame top**, `t₀ + k * h` bitwise,
+- **a test's clock value is an indexed frame top**, `t₀ + k * Δt_frame` bitwise,
   never a decimal literal; a derived index takes the helper its sibling
   door uses;
 - **a test that stages a root input reads it back with `get_input`** and
@@ -283,7 +283,7 @@ rulings behind them are `design/reports/20260923_naming_inventory/README.md`.
   two words never fuse in a local. A spec symbol fuses with the word for
   what holds it and takes an underscore for a subscript, counts included:
   `xbuf`, `mstores`, `xnext`; `t_seg`, `h_r`, `y_x`, `n_leaves`, `n_x`,
-  `N_base`. Locals never take camelCase;
+  `Δt_frame`. Locals never take camelCase;
 - the suite follows the same rules; the API's keyword names inside calls are
   not locals.
 

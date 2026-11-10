@@ -103,7 +103,7 @@ function test_descriptor()
         @test [(row.kind, row.severity, row.path) for row in value.build.warnings] == [("EmptyFaceSelection", "warning", "g")]
         @test only(value.build.warnings).message == message(only(warnings(built)))
         # the deployment's embedded body carries them too
-        deployed = descriptor(Deployment(built; h = 1//100))
+        deployed = descriptor(Deployment(built; Δt_frame = 1//100))
         round_trip(deployed)
         @test deployed.deployment.build.warnings == value.build.warnings
     end
@@ -236,7 +236,7 @@ function test_descriptor()
 
     @testset "a service's carrier is a failure descriptor with the list alone (§13.9, D-434)" begin
         anchored_build = build(AnchoredBank((TickCounter(), TickCounter()), TickCounter()))
-        err = failure(() -> Deployment(anchored_build; h = 1//500))
+        err = failure(() -> Deployment(anchored_build; Δt_frame = 1//500))
         value = descriptor(err)
         round_trip(value)
         @test value.failure.policy == "collected"
@@ -246,14 +246,14 @@ function test_descriptor()
 
     @testset "the deployment envelope embeds the build body whole (§13.9)" begin
         built = build(MultiRate())
-        value = descriptor(Deployment(built; h = 1//1000, N_base = 2))
+        value = descriptor(Deployment(built; Δt_frame = 1//1000, Δt_base = 1//500))
         round_trip(value)
         @test keys(value) == (:format_version, :redstone_version, :kind, :deployment)
         @test value.kind == "deployment"
         @test keys(value.deployment) == (:build,)
         @test value.deployment.build == descriptor(built).build
         # a primitive root deploys too: one primitive node at the root, no wires
-        primitive = descriptor(Deployment(build(Plant()); h = 1//100))
+        primitive = descriptor(Deployment(build(Plant()); Δt_frame = 1//100))
         round_trip(primitive)
         root = only(primitive.deployment.build.structure.nodes)
         @test root.path == "" && root.class == "primitive" && !haskey(root, :wires)

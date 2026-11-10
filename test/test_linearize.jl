@@ -19,7 +19,7 @@ lin_taps() = taps(x = (θ = get_state("c", :θ), ω = get_state("c", :ω)),
 
 # The same model initialized at its trim point, for the refusals that need a
 # legal call around them.
-lin_pend_sim() = (sim = Simulation(lin_pend(); h = 1//10); init!(sim, lin_point()); sim)
+lin_pend_sim() = (sim = Simulation(lin_pend(); Δt_frame = 1//10); init!(sim, lin_point()); sim)
 
 # A vector state, a vector root input and a vector face, closed through
 # `u = -k·qin₁`.
@@ -91,7 +91,7 @@ rig_lin_pend() = Group((; rig = lin_pend()); input_wires = ("torque" => "rig/τ"
 
 function test_linearize()
     @testset "the pendulum linearizes to its closed form, exact to round-off (§14.10)" begin
-        sim = Simulation(lin_pend(); h = 1//10)
+        sim = Simulation(lin_pend(); Δt_frame = 1//10)
         init!(sim, lin_point())
         linearization = linearize(sim, lin_taps())
         @test isapprox(linearization.A, lin_closed_A(); atol = 1e-12)
@@ -108,7 +108,7 @@ function test_linearize()
     end
 
     @testset "the default operating point is the checkpoint, and the sim is untouched (§14.10, D-274)" begin
-        sim = Simulation(lin_pend(); h = 1//10)
+        sim = Simulation(lin_pend(); Δt_frame = 1//10)
         init!(sim, lin_point())
         run!(sim; t_end = 0.3)
         before, snapshot = checkpoint(sim), latest(sim)
@@ -132,7 +132,7 @@ function test_linearize()
     end
 
     @testset "`linearize` on a standalone model reads its own checkpoint (§14.10, D-319)" begin
-        model = Model(lin_pend(); h = 1//10)
+        model = Model(lin_pend(); Δt_frame = 1//10)
         d = carried(@test_throws DiagnosticError{ServiceLifecycle} linearize(model, lin_taps()))
         @test d.op === :linearize && d.status === :built && d.legal == [:consistent]
         @test linearize(model, lin_taps(); about = lin_point()) isa Linearization
@@ -161,14 +161,14 @@ function test_linearize()
                   for f in fieldnames(typeof(before.layout)))
 
         # The query is a read, so a model a simulation has claimed still answers.
-        claimed = Model(lin_pend(); h = 1//10)
+        claimed = Model(lin_pend(); Δt_frame = 1//10)
         sim = Simulation(claimed)
         @test linearize(claimed, lin_taps(); about = lin_point()) isa Linearization
         @test lifecycle(sim) === :built
     end
 
     @testset "the default form's frozen cells are the checkpoint's held cells (§14.10, D-213, D-274)" begin
-        sim = Simulation(lin_sampled(); h = 1//10)
+        sim = Simulation(lin_sampled(); Δt_frame = 1//10)
         init!(sim, resume_condition())
         step!(sim; frames = 3)
         # at rest the store is one tick ahead of the cell it publishes (D-273)
@@ -179,7 +179,7 @@ function test_linearize()
     end
 
     @testset "the default form linearizes at the checkpoint's own time (§14.10, D-274)" begin
-        sim = Simulation(fed(TimedDecay(), "u"); h = 1//10)
+        sim = Simulation(fed(TimedDecay(), "u"); Δt_frame = 1//10)
         init!(sim, set(u = (in = 0.0,)); t0 = 0.2)
         step!(sim; frames = 3)
         t, q = sim.model.exec.clock.t, state(sim, "c").q
@@ -189,7 +189,7 @@ function test_linearize()
     end
 
     @testset "`about` is legal in built and mid-frame, where the default form is refused (§14, D-274)" begin
-        sim = Simulation(lin_pend(); h = 1//10)
+        sim = Simulation(lin_pend(); Δt_frame = 1//10)
         d = carried(@test_throws DiagnosticError{ServiceLifecycle} linearize(sim, lin_taps()))
         @test d.op === :linearize && d.status === :built && d.legal == [:initialized, :stopped]
 
@@ -208,7 +208,7 @@ function test_linearize()
 
         # `running` is the §11.3 freeze for both forms, as in test_trim. Both ends
         # of the run are test-controlled.
-        running_sim = Simulation(armed(); h = 1//100)
+        running_sim = Simulation(armed(); Δt_frame = 1//100)
         init!(running_sim, set(u = (in = 0.0,)))
         attach!(running_sim, TailProbe(), NoClaim())   # a rostered device makes the loop yield every
                                                 # frame (§12.2), so the spin gets its turn on one thread
@@ -226,7 +226,7 @@ function test_linearize()
 
         # A `t*` stop leaves the clock inside the frame: the default form inherits
         # `checkpoint`'s refusal, and `about` is legal there as anywhere `init!` is.
-        tripped = Simulation(overloaded(); h = 1//10)
+        tripped = Simulation(overloaded(); Δt_frame = 1//10)
         init!(tripped)
         run!(tripped; t_end = 5.0)
         d = carried(@test_throws DiagnosticError{CheckpointMidFrame} linearize(tripped, taps()))
@@ -235,7 +235,7 @@ function test_linearize()
     end
 
     @testset "the width groups the directions and never changes the answer (§14.10, D-272)" begin
-        sim = Simulation(lin_pend(); h = 1//10)
+        sim = Simulation(lin_pend(); Δt_frame = 1//10)
         init!(sim, lin_point())
         results = [linearize(sim, lin_taps(); width = w) for w in (1, 3, LINEARIZE_WIDTH)]
         for linearization in results
@@ -250,7 +250,7 @@ function test_linearize()
     @testset "the default width's activation is pre-materializable, and a custom width keys its own (§9.7, D-272)" begin
         materialized = build(lin_pend(); activations = (Float64, LinearizeDual))
         @test haskey(materialized.activations, LinearizeDual)
-        sim = Simulation(materialized; h = 1//10)
+        sim = Simulation(materialized; Δt_frame = 1//10)
         init!(sim, lin_point())
         before = Set(keys(materialized.activations))
         linearize(sim, lin_taps())
@@ -262,7 +262,7 @@ function test_linearize()
     @testset "indexed taps on vector leaves, on both sides (§14.10, D-276)" begin
         # ω = 2, ζ = 0.1, k = 2: `u = -k·qin₁ = -1`, `power = u·q₂`, so
         # ∂power/∂q₂ = u and ∂power/∂qin₁ = -k·q₂.
-        sim = Simulation(lin_vector(); h = 1//10)
+        sim = Simulation(lin_vector(); Δt_frame = 1//10)
         init!(sim, lin_vector_point())
         linearization = linearize(sim, taps(x = (q1 = get_state("p", "q[1]"), q2 = get_state("p", "q[2]")),
                                 u = (qin1 = get_input("qin[1]"), qin2 = get_input("qin[2]")),
@@ -277,7 +277,7 @@ function test_linearize()
     end
 
     @testset "a matrix leaf's `[k,l]` tap seeds the entry its linear `[k]` names (§14.10, D-276)" begin
-        sim = Simulation(single(MatrixDecay()); h = 1//10)
+        sim = Simulation(single(MatrixDecay()); Δt_frame = 1//10)
         init!(sim)
         by_indices = linearize(sim, taps(x = (m11 = get_state("c", "m[1,1]"), m21 = get_state("c", "m[2,1]"),
                                               m12 = get_state("c", "m[1,2]"), m22 = get_state("c", "m[2,2]"))))
@@ -294,7 +294,7 @@ function test_linearize()
     end
 
     @testset "a matrix root input's `[k,l]` and linear `[k]` taps name one seed site (§14.10, D-276)" begin
-        sim = Simulation(fed(MatrixConsumer(), "w"); h = 1//10)
+        sim = Simulation(fed(MatrixConsumer(), "w"); Δt_frame = 1//10)
         about = set(u = (in = SMatrix{2,2}(1.0, 2.0, 3.0, 4.0),))
         state_taps = (q = get_state("c", :q),)
         d = only(diagnostics(failure(() -> linearize(sim, taps(
@@ -308,7 +308,7 @@ function test_linearize()
     @testset "a seed follows index steps alone: a `.name` step is unseedable (§14.10, D-036, D-276)" begin
         # A seed writes a whole cell or one `SArray` component, and there is no
         # lens into a struct's slots, so the step is refused before any seed.
-        sim = Simulation(fed(PoseConsumer(), "pose"); h = 1//10)
+        sim = Simulation(fed(PoseConsumer(), "pose"); Δt_frame = 1//10)
         about = set(u = (in = LeafPose(SVector(1.0, 0.0, 0.0),
                                        SMatrix{2,2}(1.0, 0.0, 0.0, 1.0)),))
         d = only(diagnostics(failure(() -> linearize(sim, taps(u = (v1 = get_input("in.v[1]"),));
@@ -321,7 +321,7 @@ function test_linearize()
         # `LeafPose` has no `convert` between its scalar instantiations, so the
         # checkpoint's value cannot enter the seeded cell. The refusal is the
         # condition path's own, with the checkpoint as the origin.
-        sim = Simulation(fed(PoseConsumer(), "pose"); h = 1//10)
+        sim = Simulation(fed(PoseConsumer(), "pose"); Δt_frame = 1//10)
         pose = LeafPose(SVector(1.0, 0.0, 0.0), SMatrix{2,2}(1.0, 0.0, 0.0, 1.0))
         init!(sim, set(u = (in = pose,)))
         state_taps = (q = get_state("c", :q),)
@@ -336,7 +336,7 @@ function test_linearize()
     end
 
     @testset "the frozen discrete tier holds, and its cell is the established one (§14.10, D-213, D-197)" begin
-        sim = Simulation(lin_sampled(); h = 1//10)
+        sim = Simulation(lin_sampled(); Δt_frame = 1//10)
         state_taps = (θ = get_state("c", :θ), ω = get_state("c", :ω))
         linearization = linearize(sim, taps(x = state_taps); about = lin_sampled_point())
         @test abs(linearization.ẋ₀.ω) < 1e-12            # the held torque is the authored 4.0, not the probe's zero
@@ -357,14 +357,14 @@ function test_linearize()
     end
 
     @testset "the pinned root input is refused naming its consumer (§14.10, D-167, D-168)" begin
-        sim = Simulation(lin_pinned(); h = 1//10)
+        sim = Simulation(lin_pinned(); Δt_frame = 1//10)
         d = only(diagnostics(failure(() -> linearize(sim, taps(u = (τ = get_input(:τ),)); about = set(u = (τ = 0.0,))))))
         @test d isa TapResolution && d.reason === :unseedable && d.field === :τ && d.tap === :u
         @test d.pinning == [("g", :continuous, Pinned{Float64})] && d.declared === Float64
     end
 
     @testset "resolution collects every tap violation into one refusal (§14.10, §13.1)" begin
-        sim = Simulation(lin_vector(); h = 1//10)
+        sim = Simulation(lin_vector(); Δt_frame = 1//10)
         init!(sim, lin_vector_point())
         err = failure(() -> linearize(sim, taps(x = (a = get_state("p", :q), b = get_deriv("p", "q[1]")),
                                                 u = (c = get_face("q[1]"), d = get_input(:nope)),
@@ -399,7 +399,7 @@ function test_linearize()
               by_label[:again].tap === :u
 
         # A vector leaf's site is its component: two components are two sites.
-        vector_sim = Simulation(lin_vector(); h = 1//10)
+        vector_sim = Simulation(lin_vector(); Δt_frame = 1//10)
         init!(vector_sim, lin_vector_point())
         d = only(diagnostics(failure(() -> linearize(vector_sim, taps(
             x = (q1 = get_state("p", "q[1]"), q2 = get_state("p", "q[2]"), again = get_state("p", "q[1]")))))))
@@ -422,13 +422,13 @@ function test_linearize()
 
         d = carried(@test_throws DiagnosticError{ArgumentInvalid} linearize(lin_pend_sim(), (x = (;),)))
         @test d.call === :linearize && d.reason === :not_a_tap_set && d.argument === :taps
-        dual = Model(lin_pend(), D8; h = 1//10)
+        dual = Model(lin_pend(), D8; Δt_frame = 1//10)
         d = carried(@test_throws DiagnosticError{ArgumentInvalid} linearize(dual, lin_taps()))
         @test d.call === :linearize && d.reason === :non_nominal && startswith(d.value, "Model{")
     end
 
     @testset "the two table selectors read a component through the leaf address (§14.4, D-276)" begin
-        sim = Simulation(lin_vector(); h = 1//10)
+        sim = Simulation(lin_vector(); Δt_frame = 1//10)
         init!(sim, lin_vector_point())
         reader = _compile_reads(reads(a = get_input("qin[2]"), b = get_face("q[1]")), sim.model.deployment.build)
         @test gather_reads(reader, sim.model.exec) === (a = 0.0, b = 0.1)
@@ -437,8 +437,8 @@ function test_linearize()
     end
 
     @testset "a mounted tap set linearizes what the flat world does (§14.10, D-277)" begin
-        flat = linearize(Simulation(lin_pend(); h = 1//10), lin_taps(); about = lin_point())
-        mounted = linearize(Simulation(rig_lin_pend(); h = 1//10), at("rig", lin_taps());
+        flat = linearize(Simulation(lin_pend(); Δt_frame = 1//10), lin_taps(); about = lin_point())
+        mounted = linearize(Simulation(rig_lin_pend(); Δt_frame = 1//10), at("rig", lin_taps());
                             about = at("rig", lin_point()))
         @test same_linearization(mounted, flat)                  # the labels included
     end
@@ -446,7 +446,7 @@ function test_linearize()
     @testset "the tap refusals at a mount: the pinning meet, the wired face, the kind (§14.10, D-277)" begin
         # The meet sees the root input the chain landed on, and the consumer it
         # names is the mount itself.
-        sim = Simulation(lin_pinned(); h = 1//10)
+        sim = Simulation(lin_pinned(); Δt_frame = 1//10)
         d = only(diagnostics(failure(() -> linearize(sim, at("g", taps(u = (e = get_input(:e),)));
                                                      about = set(u = (τ = 0.0,))))))
         @test d isa TapResolution && d.reason === :unseedable && d.mount == "g"
@@ -465,7 +465,7 @@ function test_linearize()
 
     @testset "a bare discrete consumer pins a root input by the meet, read in its declared shape (§14.10, D-436)" begin
         pair = Group((; int = Integrator(), del = UnitDelay(0.0)); input_wires = ("u" => ("int/u", "del/u"),))
-        sim = Simulation(pair; h = 1//10)
+        sim = Simulation(pair; Δt_frame = 1//10)
         init!(sim, set(u = (u = 0.0,)))
         d = only(diagnostics(failure(() -> linearize(sim, taps(x = (x = get_state("int"),),
                                                               u = (u = get_input(:u),))))))

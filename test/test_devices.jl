@@ -231,7 +231,7 @@ end
 # fast-paced run and then re-initialized, so a pacing test measures the wait and
 # never the JIT (§10.7). Staging `in` afterwards arms the stall for frame 1.
 function warm_staller()
-    sim = Simulation(fed(Staller(), "stall"); h = 1//100)
+    sim = Simulation(fed(Staller(), "stall"); Δt_frame = 1//100)
     init!(sim, set(u = (in = 0.0,)))
     run!(sim; t_end = 0.03, pace = 1.0e6)
     init!(sim, set(u = (in = 0.0,)))
@@ -270,7 +270,7 @@ orphan_record(sim, view) =
 
 function test_devices()
     @testset "a device stages through its handle from its own task, and departure consults should_abort (§11.6, §12.4)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         dev = OneShot(0.7)
         handle = attach!(sim, dev, Enumerated("a"); should_abort = true)
         init!(sim, set(u = (a = 0.0, b = 0.0)))
@@ -291,7 +291,7 @@ function test_devices()
     end
 
     @testset "wait_next_snapshot observes ordered boundaries and wakes on the stop (§12.3, §12.4)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         dev = Collector()
         attach!(sim, dev, Enumerated())          # the may-write-nothing degenerate: a pure reader
         init!(sim, set(u = (a = 0.0, b = 0.0)))
@@ -307,7 +307,7 @@ function test_devices()
     end
 
     @testset "the boundary ordinal rides in the snapshot (§12.3)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         init!(sim, set(u = (a = 0.0, b = 0.0)))  # boundary zero: ordinal 0
         run!(sim; t_end = 0.5)
         @test latest(sim).boundary == 5
@@ -325,7 +325,7 @@ function test_devices()
     end
 
     @testset "stop! from any task ends the run at a frame top (§12.1, §12.4)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         attach!(sim, Pad("p"), Enumerated("a"))  # a rostered device keeps the loop yielding (§12.2)
         init!(sim, set(u = (a = 0.0, b = 0.0)))
         stopper = Threads.@spawn (sleep(0.05); stop!(sim))
@@ -343,7 +343,7 @@ function test_devices()
     end
 
     @testset "pause! from another task parks the loop at a frame top, and resume! lets it advance (§12.1)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         attach!(sim, Pad("p"), Enumerated("a"))  # a rostered device keeps the loop yielding (§12.2)
         init!(sim, set(u = (a = 0.0, b = 0.0)))
         loop_task = current_task()               # a rostered device keeps the loop here (§11.1)
@@ -376,7 +376,7 @@ function test_devices()
     end
 
     @testset "a stop issued while paused ends the run at that frame top, with no further frame (§12.1, §12.4(2))" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         handle = attach!(sim, Pad("p"), Enumerated("a"))
         loop_task = current_task()               # a rostered device keeps the loop here (§11.1)
         for (request, issuer) in ((() -> stop!(sim), :code), (() -> stop!(handle), "device 1 (Pad)"))
@@ -398,7 +398,7 @@ function test_devices()
     end
 
     @testset "pause! before run! starts the run paused at its first frame top, and the tail clears the flag (§12.1)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         attach!(sim, Pad("p"), Enumerated("a"))
         init!(sim, set(u = (a = 0.0, b = 0.0)))
         pause!(sim)
@@ -428,7 +428,7 @@ function test_devices()
     end
 
     @testset "step! blocks while paused until a resume! from another task, then advances in full (§12.1)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         init!(sim, set(u = (a = 0.0, b = 0.0)))
         pause!(sim)
         resumer = Threads.@spawn begin
@@ -447,7 +447,7 @@ function test_devices()
         # Delivered through `schedule`, which the mask does not see: this
         # exercises the frame top's interrupt arm. A real signal's delivery
         # into the pause is covered by the review's probe, not here.
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         attach!(sim, Pad("p"), Enumerated("a"))
         init!(sim, set(u = (a = 0.0, b = 0.0)))
         pause!(sim)                              # the run parks at its first frame top
@@ -479,7 +479,7 @@ function test_devices()
         # Rostered, the failure is logged and `run!` returns; deviceless, rethrown.
         for rostered in (true, false)
             comp = GatedExploder()
-            sim = Simulation(single(comp); h = 1//10)
+            sim = Simulation(single(comp); Δt_frame = 1//10)
             rostered && attach!(sim, TailProbe(), NoClaim())
             init!(sim)
             caller = current_task()
@@ -514,7 +514,7 @@ function test_devices()
 
     @testset "paused reads the flag in every lifecycle state, and the verbs refuse none (§12.1, D-268)" begin
         # `:running` is read, and both verbs issued, from another task above.
-        sim = Simulation(fed(Exploder(), "arm"); h = 1//10)
+        sim = Simulation(fed(Exploder(), "arm"); Δt_frame = 1//10)
         @test lifecycle(sim) === :built && pause_round(sim) == (true, false)
         init!(sim, set(u = (in = false,)))
         @test lifecycle(sim) === :initialized && pause_round(sim) == (true, false)
@@ -528,7 +528,7 @@ function test_devices()
 
     @testset "paced and unpaced runs are bit-identical (§10.7)" begin
         runs = map((Inf, 5)) do p                    # 2 ms budgets at pace 5
-            sim = Simulation(feedback_model(); h = 1//100)
+            sim = Simulation(feedback_model(); Δt_frame = 1//100)
             init!(sim, set(u = (ref = 1.0,)))
             stage!(sim, "ref" => 2.0)            # a traced batch, so the traces carry one
             run!(sim; t_end = 0.2, pace = p)     # twenty frames
@@ -734,7 +734,7 @@ function test_devices()
     end
 
     @testset "the pacing keywords and verbs validate, and every lifecycle state admits the verbs (§12.1, D-269)" begin
-        sim = Simulation(fed(Exploder(), "arm"); h = 1//10)
+        sim = Simulation(fed(Exploder(), "arm"); Δt_frame = 1//10)
         @test (pace(sim), margin(sim)) == (Inf, 0.002)   # the control plane's defaults
         @test lifecycle(sim) === :built && knob_round(sim) == (2.0, 0.01)
         init!(sim, set(u = (in = false,)))
@@ -743,7 +743,7 @@ function test_devices()
         trc = trace(sim)
         refusals = Any[(:pace, p) for p in (0, -1, NaN, "1")]
         push!(refusals, (:margin, -1))
-        target = Simulation(fed(Exploder(), "arm"); h = 1//10)
+        target = Simulation(fed(Exploder(), "arm"); Δt_frame = 1//10)
         for (argument, value) in refusals
             calls = ((:run!, () -> run!(sim; t_end = 0.2, argument => value)),
                      (:replay!, () -> replay!(target, trc; argument => value)),
@@ -767,7 +767,7 @@ function test_devices()
     end
 
     @testset "a crash is caught, shutdown! runs, the run continues, claims persist (§12.4(6))" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         dev = Crasher()
         attach!(sim, dev, Enumerated("a"))
         init!(sim, set(u = (a = 0.0, b = 0.0)))
@@ -784,7 +784,7 @@ function test_devices()
     end
 
     @testset "a crash under should_abort requests the stop (§12.4(6))" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         attach!(sim, Crasher(), Enumerated("a"); should_abort = true)
         init!(sim, set(u = (a = 0.0, b = 0.0)))
         logs, _ = Test.collect_test_logs() do
@@ -795,7 +795,7 @@ function test_devices()
     end
 
     @testset "a failed init! is bracketed: shutdown!, no task, claims persist (§12.4)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         dev = BadInit()
         attach!(sim, dev, Enumerated("a"))
         init!(sim, set(u = (a = 0.0, b = 0.0)))
@@ -819,7 +819,7 @@ function test_devices()
         # With should_abort set the stop is already pending at the loop's start:
         # the run advances zero frames and ends through the same tail — no frame
         # top ever folds the report, so only the run's-end sweep can present it.
-        sim2 = Simulation(two_root_inputs(); h = 1//10)
+        sim2 = Simulation(two_root_inputs(); Δt_frame = 1//10)
         attach!(sim2, BadInit(), Enumerated("a"); should_abort = true)
         init!(sim2, set(u = (a = 0.0, b = 0.0)))
         logs, _ = Test.collect_test_logs() do
@@ -838,7 +838,7 @@ function test_devices()
     end
 
     @testset "report! by roster entry files a crash in that entry's cell alone, with no beat (§12.4)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         attach!(sim, Pad("p"), Enumerated("a"))
         attach!(sim, Pad("q"), Enumerated("b"))
         init!(sim, set(u = (a = 0.0, b = 0.0)))
@@ -856,7 +856,7 @@ function test_devices()
     end
 
     @testset "an interrupt inside init! is the operator's stop: released, no crash, no task (§12.4, D-268)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         dev = InitInterrupted()
         probe = TailProbe()
         attach!(sim, dev, Enumerated("a"))
@@ -887,7 +887,7 @@ function test_devices()
         # releases the device and drops it from `live`; its stop request then
         # parks on `wake`, which the observer holds, and a second interrupt there
         # escapes the bracket into `run!`'s arm.
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         probe = TailProbe()
         dev = HookedInit()
         attach!(sim, probe, Enumerated())
@@ -934,7 +934,7 @@ function test_devices()
     end
 
     @testset "a body ignoring the predicate is abandoned under join_timeout, by name (§12.4(5))" begin
-        sim = Simulation(two_root_inputs(); h = 1//10, join_timeout = 0.2)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10, join_timeout = 0.2)
         dev = Stubborn()
         attach!(sim, dev, Enumerated())
         init!(sim, set(u = (a = 0.0, b = 0.0)))
@@ -965,7 +965,7 @@ function test_devices()
     end
 
     @testset "an interrupt during the tail collapses the joins, the device named (§12.4, D-268)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10, join_timeout = 30.0)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10, join_timeout = 30.0)
         dev = Wedged()
         attach!(sim, dev, Enumerated())
         init!(sim, set(u = (a = 0.0, b = 0.0)))
@@ -999,7 +999,7 @@ function test_devices()
     end
 
     @testset "unblock! makes the blocking call return: a clean exit, no timeout (§12.4(3))" begin
-        sim = Simulation(two_root_inputs(); h = 1//10, join_timeout = 30.0)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10, join_timeout = 30.0)
         dev = Blocked()
         attach!(sim, dev, Enumerated())
         init!(sim, set(u = (a = 0.0, b = 0.0)))
@@ -1014,7 +1014,7 @@ function test_devices()
     end
 
     @testset "the raise unblock! provokes is shutdown, not a crash (§12.4(3))" begin
-        sim = Simulation(two_root_inputs(); h = 1//10, join_timeout = 2.0)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10, join_timeout = 2.0)
         dev = Raising()
         attach!(sim, dev, Enumerated())
         init!(sim, set(u = (a = 0.0, b = 0.0)))
@@ -1028,7 +1028,7 @@ function test_devices()
     end
 
     @testset "an interrupt leaving a loop body is a stop, never a crash (§11.6, D-132)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10, join_timeout = 2.0)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10, join_timeout = 2.0)
         dev = Interrupting()
         attach!(sim, dev, Enumerated())
         init!(sim, set(u = (a = 0.0, b = 0.0)))
@@ -1043,7 +1043,7 @@ function test_devices()
         @test dev.log == [:loop, :shutdown]      # shutdown! on this exit path too
         # No should_abort consultation: the interrupt already holds the stop word,
         # and the abort's later request loses the first-writer CAS (§11.6).
-        sim2 = Simulation(two_root_inputs(); h = 1//10, join_timeout = 2.0)
+        sim2 = Simulation(two_root_inputs(); Δt_frame = 1//10, join_timeout = 2.0)
         attach!(sim2, Interrupting(), Enumerated(); should_abort = true)
         init!(sim2, set(u = (a = 0.0, b = 0.0)))
         run_to_device_stop!(sim2)
@@ -1051,7 +1051,7 @@ function test_devices()
     end
 
     @testset "a device with no loop method is refused at attach!, by kind (§11.6)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         d = carried(@test_throws DiagnosticError{DeviceContractMismatch} attach!(sim, Loopless(), Enumerated()))
         @test d.reason === :no_loop && d.device == "Loopless"
         @test isempty(sim.plane.roster)               # the rejection consumed no id
@@ -1062,7 +1062,7 @@ function test_devices()
     end
 
     @testset "gather without an output side is a contract misuse, by kind (§11.6)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         handle = attach!(sim, Pad("p"), Enumerated("a"))
         init!(sim, set(u = (a = 0.0, b = 0.0)))
         d = carried(@test_throws DiagnosticError{DeviceContractMismatch} gather(handle, latest(sim)))
@@ -1070,7 +1070,7 @@ function test_devices()
     end
 
     @testset "a detached handle's writes refuse by name, its reads stay legal (§11.6, D-244)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         dev = Pad("p")
         handle = attach!(sim, dev, Enumerated("a"))
         init!(sim, set(u = (a = 0.0, b = 0.0)))
@@ -1093,15 +1093,15 @@ function test_devices()
     @testset "join_timeout is validated and never trajectory-determining (§12.4, D-198)" begin
         # It is a keyword of the materialization, not a deployment parameter, so it
         # is an `ArgumentInvalid` (D-256).
-        err = failure(() -> Simulation(two_root_inputs(); h = 1//10, join_timeout = 0))
+        err = failure(() -> Simulation(two_root_inputs(); Δt_frame = 1//10, join_timeout = 0))
         d = only(diagnostics(err))
         @test err isa DiagnosticError && d isa ArgumentInvalid && d.call === :Simulation
         @test d.argument === :join_timeout && d.reason === :range
-        err = failure(() -> Simulation(two_root_inputs(); h = 1//10, join_timeout = "5"))
+        err = failure(() -> Simulation(two_root_inputs(); Δt_frame = 1//10, join_timeout = "5"))
         d = only(diagnostics(err))
         @test err isa DiagnosticError && d isa ArgumentInvalid && d.argument === :join_timeout
         trajectories = map((5.0, 0.01)) do cap
-            sim = Simulation(two_root_inputs(); h = 1//10, join_timeout = cap)
+            sim = Simulation(two_root_inputs(); Δt_frame = 1//10, join_timeout = cap)
             attach!(sim, Pad("p"), Enumerated("a"))
             init!(sim, set(u = (a = 0.0, b = 0.0)))
             run!(sim; t_end = 0.5)
@@ -1111,7 +1111,7 @@ function test_devices()
     end
 
     @testset "port views resolve every port across levels, and liveness follows the claim (§11.7)" begin
-        sim = Simulation(panel_model(); h = 1//10)
+        sim = Simulation(panel_model(); Δt_frame = 1//10)
         enumerated_handle = attach!(sim, Pad("a"), Enumerated("in"))
         alone_views = port_views(enumerated_handle)   # before the second claim exists
         greedy_handle = attach!(sim, Pad("b"), Greedy())
@@ -1145,7 +1145,7 @@ function test_devices()
         # Baked before the second attach, the incumbent is the harness (D-270).
         @test alone_views[("inner/g", :e)].incumbent == "harness"
         # Fan-out: two ports on one root input share liveness, slot and address.
-        fan_sim = Simulation(fanned_gains(); h = 1//10)
+        fan_sim = Simulation(fanned_gains(); Δt_frame = 1//10)
         fan_views = port_views(attach!(fan_sim, Pad("f"), Greedy()))
         @test fan_views[("a", :e)].live && fan_views[("b", :e)].live
         @test (fan_views[("a", :e)].slot, fan_views[("a", :e)].addr) ==
@@ -1154,7 +1154,7 @@ function test_devices()
 
     @testset "a root's exported output reads as a produced port, its root inputs keeping the harness (§11.7, D-270)" begin
         root = Group((; g = Gain(2.0)); input_wires = ("in" => "g/e",), output_wires = ("g/out" => "out",))
-        sim = Simulation(root; h = 1//10)
+        sim = Simulation(root; Δt_frame = 1//10)
         handle = attach!(sim, Pad("a"), NoClaim())
         init!(sim, set(u = (in = 3.0,)))
         views = port_views(handle)
@@ -1168,7 +1168,7 @@ function test_devices()
     end
 
     @testset "pending reads the cell without taking it, and the peek composes it with the snapshot (§11.7, §11.4)" begin
-        sim = Simulation(panel_model(); h = 1//10)
+        sim = Simulation(panel_model(); Δt_frame = 1//10)
         dev = Pad("a")
         enumerated_handle = attach!(sim, dev, Enumerated("in"))
         greedy_handle = attach!(sim, Pad("b"), Greedy())
@@ -1194,7 +1194,7 @@ function test_devices()
     end
 
     @testset "an edge widget counts multi-click through the pending peek (§11.7)" begin
-        sim = Simulation(panel_model(); h = 1//10)
+        sim = Simulation(panel_model(); Δt_frame = 1//10)
         handle = attach!(sim, Pad("a"), Enumerated("in"))
         init!(sim, set(u = (in = 1.0, gain_in = 2.0)))
         view = port_views(handle)[("ctl", :e)]
@@ -1207,7 +1207,7 @@ function test_devices()
     end
 
     @testset "a staged edit shows through the peek while paused, and through the snapshot after the un-pause drain (§11.7, §12.1)" begin
-        sim = Simulation(panel_model(); h = 1//10)
+        sim = Simulation(panel_model(); Δt_frame = 1//10)
         handle = attach!(sim, Pad("a"), Enumerated("in"))
         init!(sim, set(u = (in = 1.0, gain_in = 2.0)))
         view = port_views(handle)[("ctl", :e)]
@@ -1235,7 +1235,7 @@ function test_devices()
     end
 
     @testset "incumbent_status joins the view to the writer record, and orphaned reads the task state (§11.7, §12.2)" begin
-        sim = Simulation(panel_model(); h = 1//10)
+        sim = Simulation(panel_model(); Δt_frame = 1//10)
         handle = attach!(sim, Pad("a"), Enumerated("in"))
         attach!(sim, Pad("b"), Greedy())
         init!(sim, set(u = (in = 1.0, gain_in = 2.0)))
@@ -1248,7 +1248,7 @@ function test_devices()
         step!(sim)
         record = incumbent_status(views[("inner/g", :e)], latest(sim))
         @test latest(sim).frame == 1 && record.task_state === :none && !orphaned(record)
-        alone_sim = Simulation(panel_model(); h = 1//10)
+        alone_sim = Simulation(panel_model(); Δt_frame = 1//10)
         alone_handle = attach!(alone_sim, Pad("a"), Enumerated("in"))
         init!(alone_sim, set(u = (in = 1.0, gain_in = 2.0)))
         harness_record = incumbent_status(port_views(alone_handle)[("inner/g", :e)], latest(alone_sim))
@@ -1257,7 +1257,7 @@ function test_devices()
         # During a run: the Pad's loop returns at once, the Crasher's throws. The
         # wrapper catches the crash, so both tasks end `:done`, and the crash
         # count tells them apart.
-        run_sim = Simulation(panel_model(); h = 1//10)
+        run_sim = Simulation(panel_model(); Δt_frame = 1//10)
         run_handle = attach!(run_sim, Pad("a"), Enumerated("in"))
         attach!(run_sim, Crasher(), Enumerated("gain_in"))
         init!(run_sim, set(u = (in = 1.0, gain_in = 2.0)))
@@ -1290,7 +1290,7 @@ function test_devices()
         # Pad's body returns at once, and the BadInit's `init!` throws so no
         # task is spawned. `run!` returns only when the loop ends, so the
         # observer stops the sim.
-        dead_sim = Simulation(panel_model(); h = 1//10)
+        dead_sim = Simulation(panel_model(); Δt_frame = 1//10)
         dead_handle = attach!(dead_sim, Pad("p"), Enumerated("in"))
         attach!(dead_sim, BadInit(), Enumerated("gain_in"))
         init!(dead_sim, set(u = (in = 1.0, gain_in = 2.0)))

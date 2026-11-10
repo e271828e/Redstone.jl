@@ -24,9 +24,18 @@ item changes what the spec says, the spec edit is part of the item.
   decisions are `design/increments/roadmap_variable_step.md`: five
   increments, the deployment surface first, then the three lattices, the
   seam protocol, the first adaptive backend and the teaching, with every
-  existing trajectory bit-identical through the third. The surface changes
+  existing trajectory bit-identical through the third. The update changes
   the deployment keywords, so it precedes the exported-name audit and
   delays the release.
+  - **Landed: the deployment surface**, increment 90 (D-442, D-443,
+    `design/increments/090_deployment_surface/`). `Δt_frame` and `Δt_base`
+    sit on the `Deployment`, the step rides `algorithm = RK4(h)` and is
+    `Δt_frame` when the instance names none, and `N_base` is gone.
+  - **Next: the three lattices**, the roadmap's increment 2. Until it lands
+    the constructor refuses a step other than the frame and a base tick off
+    the frame tops (§9.2), and `Deployment.frames_per_tick` is the frame
+    loop's tick key. The increment lifts both refusals and deletes the
+    field.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose
@@ -35,7 +44,8 @@ item changes what the spec says, the spec edit is part of the item.
   `"primitive"` on 2026-11-05, with the schema's `PrimitiveNode` and
   `PrimitiveFace` and no format bump; the inspector's half, the
   regenerated types and the renames through the frontend and the records,
-  lands with its next pin on the core.
+  lands with its next pin on the core. The same pin moves its six
+  construction sites from `h =` to `Δt_frame =` (D-443).
 - **The API docstrings' two later passes.** The sweep to the manual's
   conventions landed (record `design/increments/20261027_docstring_sweep/notes_docstring_sweep.md`,
   convention `design/rules/docstring_rules.md`). Two passes remain: an examples pass

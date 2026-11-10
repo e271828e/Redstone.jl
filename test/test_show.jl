@@ -16,7 +16,7 @@ function anchored_group()
     comp = Group((; a = TickCounter(), b = TickCounter());
                  sample_times = (; a = Absolute(Hz(500)), b = Absolute(Hz(10), 1//150)))
     @test_logs (:info, r"derived") (:warn, r"^GridUtilization") Deployment(
-        build(comp); h = 1//1500, Δt_base = :derive)
+        build(comp); Δt_frame = 1//1500, Δt_base = :derive)
 end
 
 # The framework status built by hand (§11.8), no run needed: a counter record
@@ -93,9 +93,9 @@ Schedule: 3 rows, 1 rate scope, hyperperiod 10 base ticks
 
 function test_show()
     multirate = build(MultiRate())
-    deployed = Deployment(multirate; h = 1//500)
+    deployed = Deployment(multirate; Δt_frame = 1//500)
     pendulum = build(Pendulum())
-    pendulum_deployed = Deployment(pendulum; h = 1//100)
+    pendulum_deployed = Deployment(pendulum; Δt_frame = 1//100)
     group = anchored_group()
 
     @testset "the compact forms are one line with the counts (§9.2, D-257)" begin
@@ -112,7 +112,7 @@ function test_show()
         activated = build(MultiRate())
         activation(activated, D8)
         @test compact(activated) == "Build(4 components, activations: Float64, $(D8))"
-        @test compact(deployed) == "Deployment(h = 0.002, N_base = 1, Δt_base = 0.002, RK4)"
+        @test compact(deployed) == "Deployment(Δt_frame = 0.002, Δt_base = 0.002, RK4(1//500))"
         for x in (multirate.structure, multirate.outputs, multirate.events, deployed.schedule,
                   multirate, deployed)
             @test !occursin('\n', compact(x))
@@ -229,7 +229,7 @@ function test_show()
 
     @testset "Deployment: the parameters, the schedule, the grid and the warnings (§9.2, D-257)" begin
         text = plain(deployed)
-        @test startswith(text, "Deployment: h = 0.002, N_base = 1, Δt_base = 0.002, RK4; " *
+        @test startswith(text, "Deployment: Δt_frame = 0.002, Δt_base = 0.002, RK4(1//500); " *
                                "firing_budget = 4, localization_tol = 1.0e-6, localization_budget = 8\n" *
                                "  build: Build(4 components, activations: Float64)\n")
         @test occursin("\n" * join("  " .* split(MULTIRATE_SCHEDULE, '\n'), "\n") * "\n  grid:\n", text)
@@ -295,7 +295,7 @@ function test_show()
 
         # A live status renders the same way: the occurrence in full on the
         # snapshot whose delta carries it, its count line on every later one.
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         handle = attach!(sim, Pad("p"), Enumerated("a"))
         init!(sim, set(u = (a = 0.0, b = 0.0)))
         report!(handle, MalformedDatum("one"))       # folded at frame 1's top

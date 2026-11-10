@@ -27,7 +27,7 @@ function discrete_one_rate()
         end
         snext = s + kI * Δt * (r - q[1])   # the update boundary n_samples itself performs
 
-        sim = Simulation(sampled_loop(; kI, ω, ζ); h = 1//50)   # h = Δt: one rate, N_base = 1
+        sim = Simulation(sampled_loop(; kI, ω, ζ); Δt_frame = 1//50)   # Δt_frame = Δt: one rate, one frame per tick
         init!(sim, set(u = (ref = r,)))
         run!(sim; t_end = n_samples * Δt)
 
@@ -44,7 +44,7 @@ function discrete_one_rate()
     end
 
     @testset "the ZOH holds by compile-time absence (§10.5)" begin
-        sim = Simulation(sampled_loop(); h = 1//50)
+        sim = Simulation(sampled_loop(); Δt_frame = 1//50)
         init!(sim, set(u = (ref = 1.0,)))    # excite the loop, or nothing moves at all
 
         # Structural: the interior variants carry continuous entries only, so there
@@ -77,7 +77,7 @@ function discrete_frozen_activation()
         # zero's wide gate included (D-205 admits entries, and a frozen component
         # has none) — and its cell holds the nominal products §9.4 carried across,
         # pinned for the whole run.
-        dual_model = Model(sampled_loop(), D8; h = 1//50)
+        dual_model = Model(sampled_loop(), D8; Δt_frame = 1//50)
         @test isempty(walked(dual_model.exec.bodies.ticks))
         @test length(walked(dual_model.exec.bodies.sweep_1)) == 1          # plant only; ctl frozen
         @test port(dual_model, "ctl", :u) isa Float64
@@ -150,7 +150,7 @@ function discrete_rate_fold()
 
         # A bare container field name applies one declaration to every element.
         sim = Simulation(Group((; c1 = TickCounter(), c2 = TickCounter());
-                               sample_times = (; children = Relative(2, 1))); h = 1//10)
+                               sample_times = (; children = Relative(2, 1))); Δt_frame = 1//10)
         rows = sim.model.deployment.schedule.rows
         @test length(rows) == 2
         @test all(e.D == 2 && e.Φ == 1 for e in rows)
@@ -158,10 +158,10 @@ function discrete_rate_fold()
 
     @testset "bare rate keys drive the grid the composite ones did (§8.7, D-211)" begin
         bare = Simulation(Group((; a = TickCounter(), b = TickCounter());
-                                sample_times = (; a = Relative(2), b = Relative(3, 1))); h = 1//10)
+                                sample_times = (; a = Relative(2), b = Relative(3, 1))); Δt_frame = 1//10)
         opaque = Simulation(OpaqueRoster((a = TickCounter(), b = TickCounter()),
                                          (; var"kids/a" = Relative(2),
-                                            var"kids/b" = Relative(3, 1))); h = 1//10)
+                                            var"kids/b" = Relative(3, 1))); Δt_frame = 1//10)
         bare_rows, opaque_rows =
             bare.model.deployment.schedule.rows, opaque.model.deployment.schedule.rows
         @test [(e.D, e.Φ) for e in bare_rows] == [(2, 0), (3, 1)]
@@ -175,9 +175,9 @@ function discrete_rate_fold()
     @testset "the worked example compiles to the spec's pairs (§9.2)" begin
         # Three discrete components under two scopes, deployed at Δt_base = 2 ms:
         # inner (1, 0), outer (5, 2), gnss (10, 0) — §9.2's table, exactly.
-        sim = Simulation(MultiRate(); h = 1//500)
+        sim = Simulation(MultiRate(); Δt_frame = 1//500)
         deployment = sim.model.deployment
-        @test deployment.N_base == 1 && deployment.Δt_base == 0.002
+        @test deployment.Δt_frame == 0.002 && deployment.Δt_base == 0.002
         @test [(e.path, e.D, e.Φ) for e in deployment.schedule.rows] ==
               [("fcs/inner", 1, 0), ("fcs/outer", 5, 2), ("gnss", 10, 0)]
         @test [e.Δt for e in deployment.schedule.rows] ≈ [0.002, 0.01, 0.02]
@@ -193,7 +193,7 @@ function discrete_rate_fold()
         # The ramp makes every sample carry its acquisition time (1 + t), so each
         # cell says when its owner last ticked — the chart's dots, and the
         # deterministic aging of the stagger, in the spec's own numbers.
-        sim = Simulation(MultiRate(); h = 1//500)
+        sim = Simulation(MultiRate(); Δt_frame = 1//500)
         init!(sim)                                       # boundary zero: Φ = 0 is due
         @test port(sim, "fcs/inner", :out) == 1.0
         @test port(sim, "gnss", :out) == 1.0
@@ -215,7 +215,7 @@ function discrete_rate_fold()
         inner_group = Group((; a = TickCounter(), b = TickCounter());
                             sample_times = (; a = Relative(1), b = Relative(5, 2)))
         sim = Simulation(Group((; f = inner_group);
-                               sample_times = (; f = Relative(2, 1))); h = 1//100)
+                               sample_times = (; f = Relative(2, 1))); Δt_frame = 1//100)
         @test [(e.D, e.Φ) for e in sim.model.deployment.schedule.rows] == [(2, 1), (10, 5)]
 
         # Neither has Φ = 0, so boundary zero admits neither; over base ticks 1…10,
@@ -231,7 +231,7 @@ function discrete_rate_fold()
         gps = Group((; rx = TickCounter());
                     sample_times = (; rx = Relative(3)))
         sim = Simulation(Group((; gps = gps);
-                               sample_times = (; gps = Absolute(Hz(50)))); h = 1//500)
+                               sample_times = (; gps = Absolute(Hz(50)))); Δt_frame = 1//500)
         @test [(e.D, e.Φ) for e in sim.model.deployment.schedule.rows] == [(30, 0)]
     end
 end
@@ -244,11 +244,11 @@ function discrete_deployment()
     # `Model` materializes it, and the two convenience forms compose the two.
     @testset "the Deployment is the artifact the grid parameters fix (§9.1, D-254)" begin
         multirate_build = build(MultiRate())
-        deployment = Deployment(multirate_build; h = 1//500)
+        deployment = Deployment(multirate_build; Δt_frame = 1//500)
         @test deployment isa Deployment
-        @test deployment.h == 0.002 && deployment.N_base == 1 &&
-              deployment.Δt_base == 0.002
-        @test deployment.algorithm === RK4 && deployment.firing_budget == 4 &&
+        @test deployment.Δt_frame == 0.002 && deployment.Δt_base == 0.002
+        # the default algorithm, its step resolved to the frame period (D-442)
+        @test deployment.algorithm == RK4(1//500) && deployment.firing_budget == 4 &&
               deployment.localization_budget == 8 && deployment.localization_tol == 1e-6
         # the very build, never a reconstruction
         @test deployment.build === multirate_build
@@ -289,30 +289,31 @@ function discrete_deployment()
 
     @testset "two deployments compare as values; the build is not compared (§12.7)" begin
         multirate_build = build(MultiRate())
-        deployment = Deployment(multirate_build; h = 1//500)
-        @test deployment == Deployment(multirate_build; h = 1//500) &&
-              hash(deployment) == hash(Deployment(multirate_build; h = 1//500))
+        deployment = Deployment(multirate_build; Δt_frame = 1//500)
+        @test deployment == Deployment(multirate_build; Δt_frame = 1//500) &&
+              hash(deployment) == hash(Deployment(multirate_build; Δt_frame = 1//500))
         # Each compared field moves the trajectory, so each one differing severs.
-        @test deployment != Deployment(multirate_build; h = 1//500, N_base = 2)
-        @test deployment != Deployment(multirate_build; h = 1//500, algorithm = Heun)
-        @test deployment != Deployment(multirate_build; h = 1//500, firing_budget = 8)
-        @test deployment != Deployment(multirate_build; h = 1//500, localization_tol = 1e-8)
-        @test deployment != Deployment(multirate_build; h = 1//500, localization_budget = 4)
+        @test deployment != Deployment(multirate_build; Δt_frame = 1//500, Δt_base = 1//250)
+        @test deployment != Deployment(multirate_build; Δt_frame = 1//250)
+        @test deployment != Deployment(multirate_build; Δt_frame = 1//500, algorithm = Heun())
+        @test deployment != Deployment(multirate_build; Δt_frame = 1//500, firing_budget = 8)
+        @test deployment != Deployment(multirate_build; Δt_frame = 1//500, localization_tol = 1e-8)
+        @test deployment != Deployment(multirate_build; Δt_frame = 1//500, localization_budget = 4)
         # The build is not compared: a what-if replay re-drives a recording against
         # a modified model of the same structure, so comparing it would refuse what
         # §12.7 admits. Two builds of one model therefore deploy equal.
-        deployment2 = Deployment(build(MultiRate()); h = 1//500)
+        deployment2 = Deployment(build(MultiRate()); Δt_frame = 1//500)
         @test deployment2.build !== deployment.build && deployment2 == deployment &&
               hash(deployment2) == hash(deployment)
     end
 
     @testset "materializing fixes the scalar; one deployment backs many (§9.2, D-254)" begin
         multirate_build = build(MultiRate())
-        deployment = Deployment(multirate_build; h = 1//500)
+        deployment = Deployment(multirate_build; Δt_frame = 1//500)
         sim = Simulation(deployment)
         @test sim.model.deployment === deployment
         # the sugar, *defined as* the composition
-        reference = Simulation(multirate_build; h = 1//500)
+        reference = Simulation(multirate_build; Δt_frame = 1//500)
         @test sim.model.deployment == reference.model.deployment
         init!(sim); run!(sim; t_end = 12 * 0.002)
         init!(reference); run!(reference; t_end = 12 * 0.002)
@@ -362,76 +363,74 @@ function discrete_deployment()
     @testset "one Build backs many Simulations; Δt_base has three sources (§9.1)" begin
         multirate_build = build(MultiRate())
 
-        # The N_base·h product (the default path), an explicit N_base, the explicit keyword
-        # (Rational or quantity): the anchored divisor is deployment's, not the
-        # build's — the same Build lands gnss at D = 10 or D = 5.
-        default_sim = Simulation(multirate_build; h = 1//500)
-        n_base_sim = Simulation(multirate_build; h = 1//500, N_base = 2)
-        Δt_base_sim = Simulation(multirate_build; h = 1//500, Δt_base = 1//250)
-        period_sim = Simulation(multirate_build; h = 1//500, Δt_base = Period(1//250))
+        # `Δt_frame` (the default path) and the explicit keyword (Rational or
+        # quantity): the anchored divisor is deployment's, not the build's — the
+        # same Build lands gnss at D = 10 or D = 5.
+        default_sim = Simulation(multirate_build; Δt_frame = 1//500)
+        Δt_base_sim = Simulation(multirate_build; Δt_frame = 1//500, Δt_base = 1//250)
+        period_sim = Simulation(multirate_build; Δt_frame = 1//500, Δt_base = Period(1//250))
         @test [e.D for e in default_sim.model.deployment.schedule.rows] == [1, 5, 10]
-        @test [e.D for e in n_base_sim.model.deployment.schedule.rows] == [1, 5, 5]
+        @test [e.D for e in Δt_base_sim.model.deployment.schedule.rows] == [1, 5, 5]
+        # Silence means `Δt_frame`: the default deploys equal to the spelled value.
+        @test default_sim.model.deployment ==
+              Deployment(multirate_build; Δt_frame = 1//500, Δt_base = 1//500)
         # The deployment is a value (§12.7, D-254): two spellings of one base tick
         # period, over one build, deploy equal — and hash equal with it.
-        @test Δt_base_sim.model.deployment.N_base == 2
-        @test Δt_base_sim.model.deployment == n_base_sim.model.deployment == period_sim.model.deployment
+        @test Δt_base_sim.model.deployment == period_sim.model.deployment
         @test hash(Δt_base_sim.model.deployment) == hash(period_sim.model.deployment)
 
         # Nothing writable is shared: each `Model` materializes its own buffers.
         init!(default_sim); run!(default_sim; t_end = 0.02)
-        init!(n_base_sim)
+        init!(Δt_base_sim)
         @test port(default_sim, "fcs/inner", :out) ≈ 1.02
-        @test port(n_base_sim, "fcs/inner", :out) == 1.0
+        @test port(Δt_base_sim, "fcs/inner", :out) == 1.0
 
         # Cross-validation: one `DeploymentInvalid` per refused deployment, the
         # parameter and the failed relation on the payload.
         for (f, param, reason) in
-            ((() -> Simulation(multirate_build),                          :h, :missing),
-             (() -> Simulation(multirate_build; h = 1e-3),                :h, :inexact),
-             (() -> Simulation(multirate_build; h = 1//500, Δt_base = 1//250, N_base = 3),
-                               :Δt_base, :disagrees_with_n),
-             (() -> Simulation(multirate_build; h = 1//300, Δt_base = 1//500),
-                               :Δt_base, :not_harmonic),
-             (() -> Simulation(multirate_build; h = 1//500, N_base = 0),  :N_base, :range))
+            ((() -> Simulation(multirate_build),                       :Δt_frame, :missing),
+             (() -> Simulation(multirate_build; Δt_frame = 1e-3),      :Δt_frame, :inexact),
+             (() -> Simulation(multirate_build; Δt_frame = 0),         :Δt_frame, :range),
+             (() -> Simulation(multirate_build; Δt_frame = "1//500"),  :Δt_frame, :not_a_quantity))
             d = only(diagnostics(failure(f)))
             @test d isa DeploymentInvalid && d.parameter === param && d.reason === reason
         end
+        # A base tick off the frame tops is refused while the loop takes one step
+        # per frame; under the default step it also fails the fixed-step relation.
+        err = failure(() -> Simulation(multirate_build; Δt_frame = 1//300, Δt_base = 1//500))
+        @test Set((d.parameter, d.reason, d.value, d.related) for d in diagnostics(err)) ==
+              Set([(:Δt_base, :not_frame_multiple, 1//500, 1//300),
+                   (:Δt_base, :not_harmonic, 1//500, 1//300)])
 
-        # The call is the barrier (§9.1, D-229): `h` and `N_base` are independent
-        # premises, so both refusals arrive in one throw.
-        err = failure(() -> Simulation(multirate_build; h = 1e-3, N_base = 0))
+        # The call is the barrier (§9.1, D-229): `Δt_frame` and the event
+        # parameters are independent premises, so both refusals arrive in one throw.
+        err = failure(() -> Simulation(multirate_build; Δt_frame = 1e-3, firing_budget = 0))
         @test Set((d.parameter, d.reason) for d in diagnostics(err)) ==
-              Set([(:h, :inexact), (:N_base, :range)])
+              Set([(:Δt_frame, :inexact), (:firing_budget, :range)])
 
         # Deploying, materializing and initializing are separate calls (§9.2,
         # D-254, D-256, D-261), each with its own barrier: `log_every` is the
         # door's keyword, refused under `ArgumentInvalid` before any write.
-        sim = Simulation(multirate_build; h = 1//500)
+        sim = Simulation(multirate_build; Δt_frame = 1//500)
         d = only(diagnostics(failure(() -> init!(sim; log_every = 0))))
         @test d isa ArgumentInvalid && d.call === :init! && d.argument === :log_every
         @test lifecycle(sim) === :built
 
-        # `Δt_base` is a third independent premise: the explicit keyword reads only
+        # `Δt_base` is an independent premise: the explicit keyword reads only
         # itself and derivation reads the tiers and the anchors, so neither is
-        # suppressed by an unsound `h` or `N_base`.
-        err = failure(() -> Simulation(multirate_build; h = 1e-3, Δt_base = 1e-3))
+        # suppressed by an unsound `Δt_frame` or step.
+        err = failure(() -> Simulation(multirate_build; Δt_frame = 1e-3, Δt_base = 1e-3))
         @test Set((d.parameter, d.reason) for d in diagnostics(err)) ==
-              Set([(:h, :inexact), (:Δt_base, :inexact)])
-        err = failure(() ->
-            Simulation(multirate_build; h = 1//500, Δt_base = :derive, N_base = 0))
+              Set([(:Δt_frame, :inexact), (:Δt_base, :inexact)])
+        err = failure(() -> Simulation(multirate_build; Δt_frame = 1//500, Δt_base = :derive,
+                                       algorithm = RK4(0)))
         @test Set((d.parameter, d.reason) for d in diagnostics(err)) ==
-              Set([(:N_base, :range), (:Δt_base, :unanchored)])
-
-        # `N_base` is a count: a non-integer is refused as a range violation, not left
-        # to fail inside the exact arithmetic.
-        d = only(diagnostics(failure(() ->
-            Simulation(multirate_build; h = 1//500, N_base = 2.5))))
-        @test d isa DeploymentInvalid && d.parameter === :N_base && d.reason === :range
+              Set([(:h, :range), (:Δt_base, :unanchored)])
 
         # A non-dividing anchor is refused with its declaring scope and key, and the
         # attribution is named off the pool (§9.2, D-187). `MultiRate`'s pool is the
         # one anchor period, and a pool of one refines nothing.
-        err = failure(() -> Simulation(multirate_build; h = 1//500, Δt_base = 3//250))
+        err = failure(() -> Simulation(multirate_build; Δt_frame = 1//500, Δt_base = 3//250))
         @test err isa DiagnosticError
         d = only(diagnostics(err))
         @test d isa DeploymentInvalid && d.reason === :anchor_period
@@ -442,7 +441,7 @@ function discrete_deployment()
         # grid the rest of the pool already supports (§9.2, D-187).
         offset = Group((; a = TickCounter(), b = TickCounter());
                        sample_times = (; a = Absolute(Hz(500)), b = Absolute(Hz(10), 1//150)))
-        d = only(diagnostics(failure(() -> Simulation(offset; h = 1//500))))
+        d = only(diagnostics(failure(() -> Simulation(offset; Δt_frame = 1//500))))
         @test d isa DeploymentInvalid && d.reason === :anchor_offset
         @test d.grid.admissible == 1//1500
         @test only(e.alternatives for e in d.grid.pool if e.kind === :offset) ==
@@ -455,7 +454,7 @@ function discrete_deployment()
         @test length(anchored_build.structure.anchors) == 2
         @test [Tuple(e.timing) for e in anchored_build.structure.components] ==
               [(1, 1, 0), (1, 1, 0), (2, 1, 0)]
-        d = only(diagnostics(failure(() -> Deployment(anchored_build; h = 1//500))))
+        d = only(diagnostics(failure(() -> Deployment(anchored_build; Δt_frame = 1//500))))
         @test d isa DeploymentInvalid && d.reason === :anchor_offset
         @test [(e.kind, e.factor) for e in d.grid.pool] ==
               [(:period, 1), (:period, 10), (:offset, 3)]
@@ -466,7 +465,7 @@ function discrete_deployment()
     @testset "Δt_base derivation demands an all-anchored model (§9.1)" begin
         # Derivation with an unanchored component present is action at a distance:
         # refused constructively, naming the components whose periods would rescale.
-        d = only(diagnostics(failure(() -> Simulation(build(MultiRate()); h = 1//500, Δt_base = :derive))))
+        d = only(diagnostics(failure(() -> Simulation(build(MultiRate()); Δt_frame = 1//500, Δt_base = :derive))))
         @test d isa DeploymentInvalid
         @test d.parameter === :Δt_base && d.reason === :unanchored
         @test "fcs/inner" in d.paths
@@ -476,8 +475,8 @@ function discrete_deployment()
         anchored = Group((; c = TickCounter());
                          sample_times = (; c = Absolute(Hz(50), 1//100)))
         sim = @test_logs (:info, r"derived") (:warn, r"^GridUtilization") Simulation(
-            anchored; h = 1//500, Δt_base = :derive)
-        @test sim.model.deployment.Δt_base == 0.01 && sim.model.deployment.N_base == 5
+            anchored; Δt_frame = 1//500, Δt_base = :derive)
+        @test sim.model.deployment.Δt_base == 0.01 && sim.model.deployment.frames_per_tick == 5
         @test [(e.D, e.Φ) for e in sim.model.deployment.schedule.rows] == [(2, 1)]
 
         # The offset alone refines, so the grid is twice the fastest declared work
@@ -499,9 +498,9 @@ function discrete_deployment()
         comp = Group((; a = TickCounter(), b = TickCounter());
                      sample_times = (; a = Absolute(Hz(500)), b = Absolute(Hz(10), 1//150)))
         deployment = @test_logs (:info, r"derived") (:warn, r"^GridUtilization") Deployment(
-            build(comp); h = 1//1500, Δt_base = :derive)
+            build(comp); Δt_frame = 1//1500, Δt_base = :derive)
         grid = deployment.grid
-        @test deployment.Δt_base == Float64(1//1500) && deployment.N_base == 1
+        @test deployment.Δt_base == Float64(1//1500) && deployment.frames_per_tick == 1
         @test grid.admissible == 1//1500 &&
               [row.D for row in deployment.schedule.rows] == [3, 150]
 
@@ -541,7 +540,7 @@ function discrete_deployment()
         # information — the line prints, nothing warns.
         plain = Group((; a = TickCounter(), b = TickCounter());
                       sample_times = (; a = Absolute(Hz(500)), b = Absolute(Hz(10))))
-        deployment2 = @test_logs (:info, r"derived") Deployment(build(plain); h = 1//500,
+        deployment2 = @test_logs (:info, r"derived") Deployment(build(plain); Δt_frame = 1//500,
                                                                 Δt_base = :derive)
         @test deployment2.grid.admissible == 1//500 &&
               [e.factor for e in deployment2.grid.pool] == [50, 1]
@@ -554,7 +553,7 @@ function discrete_deployment()
                          sample_times = (; a = Absolute(Hz(4)), b = Absolute(Hz(6)),
                                     c = Absolute(Hz(12))))
         deployment3 = @test_logs (:info, r"no entry refines another") Deployment(
-            build(harmonic); h = 1//12, Δt_base = :derive)
+            build(harmonic); Δt_frame = 1//12, Δt_base = :derive)
         @test deployment3.grid.admissible == 1//12 &&
               [e.factor for e in deployment3.grid.pool] == [1, 1, 1]
         @test [row.D for row in deployment3.schedule.rows] == [3, 2, 1] &&
@@ -572,7 +571,7 @@ function discrete_deployment()
                      local_wires = ("src/out" => "z/in",),
                      output_wires = ("z/out" => "y",),
                      sample_times = (; z = Relative(2, 1)))
-        sim = Simulation(late; h = 1//100)
+        sim = Simulation(late; Δt_frame = 1//100)
         init!(sim)
         @test port(sim, "", :y) == 5.0                   # the ramp at t₀, evaluated
         step!(sim)                                       # base tick 1: the first tick
@@ -601,7 +600,7 @@ function discrete_deployment()
 
         # §10.5's exposed-multiplier idiom: the deployment preference arrives as a
         # constructor parameter, and the declaration stays the assembly's.
-        sim = Simulation(SampledLoop(; kI, ω, ζ, ctl_rate = Relative(2)); h = 1//200, N_base = 2)
+        sim = Simulation(SampledLoop(; kI, ω, ζ, ctl_rate = Relative(2)); Δt_frame = 1//200, Δt_base = 1//100)
         @test [(e.path, e.D, e.Φ) for e in sim.model.deployment.schedule.rows] == [("ctl", 2, 0)]
         @test sim.model.deployment.schedule.rows[1].Δt ≈ Δt_ctl
         init!(sim, set(u = (ref = r,)))
@@ -615,11 +614,11 @@ function discrete_deployment()
         # checkpoint is taken at frame 6, a base tick where the controller is not
         # due, so its store holds the state its next tick decodes beside the cell
         # it published at frame 4 (D-273).
-        sim = Simulation(SampledLoop(; ctl_rate = Relative(2)); h = 1//200, N_base = 2)
+        sim = Simulation(SampledLoop(; ctl_rate = Relative(2)); Δt_frame = 1//200, Δt_base = 1//100)
         init!(sim, set(u = (ref = 0.7,)))
         step!(sim; frames = 6)
         cp = checkpoint(sim)
-        twin = Simulation(SampledLoop(; ctl_rate = Relative(2)); h = 1//200, N_base = 2)
+        twin = Simulation(SampledLoop(; ctl_rate = Relative(2)); Δt_frame = 1//200, Δt_base = 1//100)
         restore!(twin, cp)
         @test step!(sim; frames = 34) == step!(twin; frames = 34) == 34
 
@@ -637,7 +636,7 @@ function discrete_deployment()
     end
 
     @testset "the gated boundary walk does not allocate (§9.8)" begin
-        sim = Simulation(MultiRate(); h = 1//500)
+        sim = Simulation(MultiRate(); Δt_frame = 1//500)
         init!(sim)
         bodies = phase_bodies(sim)
         for name in (:sweep_1, :sweep_2, :rhs, :ticks)
@@ -646,7 +645,7 @@ function discrete_deployment()
             @test @ballocated($body()) == 0
             @test @ballocated($body(2)) == 0             # a boundary where gates split
         end
-        sim2 = Simulation(SampledLoop(; ctl_rate = Relative(2)); h = 1//200, N_base = 2)
+        sim2 = Simulation(SampledLoop(; ctl_rate = Relative(2)); Δt_frame = 1//200, Δt_base = 1//100)
         init!(sim2, set(u = (ref = 0.0,)))
         @test @ballocated(integrate!($sim2, 0.005)) == 0
         @test @ballocated(offtick_boundary!($sim2)) == 0
@@ -654,7 +653,7 @@ function discrete_deployment()
     end
 
     @testset "an overlaid store is the next tick's state, its held cell kept until then (§12.6, §14.5, D-273, D-429)" begin
-        sim = Simulation(single(TickCounter()); h = 1//10)
+        sim = Simulation(single(TickCounter()); Δt_frame = 1//10)
         init!(sim)
         step!(sim; frames = 3)
         @test port(sim, "c", :n) == 3 && state(sim, "c").n == 4     # the rest reading
@@ -665,7 +664,7 @@ function discrete_deployment()
         step!(sim)
         @test port(sim, "c", :n) == 10 && state(sim, "c").n == 11
         # `init!` from the same copy decodes it at boundary zero, one tick ahead
-        fresh = Simulation(single(TickCounter()); h = 1//10)
+        fresh = Simulation(single(TickCounter()); Δt_frame = 1//10)
         init!(fresh, at("c", set(s = (n = 10,))); t0 = 3 * 0.1)
         @test port(fresh, "c", :n) == 10 && state(fresh, "c").n == 11
     end
@@ -673,7 +672,7 @@ function discrete_deployment()
     @testset "an overlay keeps the lattice: the controller moves at its own ticks (§10.5, §12.6, D-429)" begin
         # The loop of the restore test above, overlaid at frame 6, a base tick
         # where the controller is not due: its held command stays until frame 8.
-        sim = Simulation(SampledLoop(; ctl_rate = Relative(2)); h = 1//200, N_base = 2)
+        sim = Simulation(SampledLoop(; ctl_rate = Relative(2)); Δt_frame = 1//200, Δt_base = 1//100)
         init!(sim, set(u = (ref = 0.7,)))
         step!(sim; frames = 6)
         held = port(sim, "ctl", :u)

@@ -57,7 +57,7 @@ end
 
 function diagnostics_channel()
     @testset "a bad datum is tolerated: catch, stage nothing, report, continue (§11.6)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         dev = Parser(0.7, "garbage", 0.9)
         handle = attach!(sim, dev, Enumerated("a"))
         init!(sim, set(u = (a = 0.0, b = 0.0)))
@@ -84,7 +84,7 @@ function diagnostics_channel()
     end
 
     @testset "the ring's bound is the rate limit: 16 retained, excess to the counts (§11.8)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         handle = attach!(sim, Pad("p"), Enumerated("a"))
         init!(sim, set(u = (a = 0.0, b = 0.0)))
         for k in 1:20                                # one frame's flood, pending in the cell
@@ -101,7 +101,7 @@ function diagnostics_channel()
     end
 
     @testset "a quiet publication allocates the capture, the status vector and the snapshot (§11.8, D-241)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         attach!(sim, Pad("p"), Enumerated("a"))
         init!(sim, set(u = (a = 0.0, b = 0.0)); log = false)
         publish!(sim, sim.plane.roster); capture_stores(sim.model.exec.store)  # warm
@@ -113,7 +113,7 @@ function diagnostics_channel()
     end
 
     @testset "the status: the delta rides one snapshot, totals ride every one (§11.8, §11.2)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         handle = attach!(sim, Pad("p"), Enumerated("a"))
         init!(sim, set(u = (a = 0.0, b = 0.0)))
         # Boundary zero's status: the writers in the drain's order — devices in
@@ -144,7 +144,7 @@ function diagnostics_channel()
     end
 
     @testset "liveness: heartbeat and task_state ride the device's record (§11.8, §12.2, §12.4)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         dev = Ticker()
         attach!(sim, dev, Enumerated())
         init!(sim, set(u = (a = 0.0, b = 0.0)))
@@ -161,7 +161,7 @@ function diagnostics_channel()
     end
 
     @testset "the run's-end sweep: past the final frame top, loud rather than lost (§11.8, §12.4)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         dev = LateReporter()
         attach!(sim, dev, Enumerated())
         init!(sim, set(u = (a = 0.0, b = 0.0)))
@@ -228,7 +228,7 @@ function diagnostics_channel()
     end
 
     @testset "the heartbeat rides in the cell, stored by the handle primitives (§11.8, §12.2)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         handle = attach!(sim, Pad("p"), Enumerated("a"))
         # A never-heartbeated cell reads its initial 0.0 — stale against any wall
         # clock, which is what marks a failed init!'s device with no machinery
@@ -425,16 +425,22 @@ function diagnostics_kind_set()
             ServiceLifecycle(op = :checkpoint, status = :built, legal = [:consistent]),
             StopRequestInvalid(path = "a", site = :step!, candidates = ["a/stop", "b"]),
             DeploymentInvalid(parameter = :firing_budget, reason = :range, value = 0),
-            DeploymentInvalid(parameter = :h, reason = :inexact, value = 0.01),
+            DeploymentInvalid(parameter = :Δt_frame, reason = :inexact, value = 0.01),
             DeploymentInvalid(parameter = :Δt_base, reason = :not_a_quantity, value = Int),
-            DeploymentInvalid(parameter = :h, reason = :missing),
+            DeploymentInvalid(parameter = :Δt_frame, reason = :missing),
+            DeploymentInvalid(parameter = :h, reason = :range, value = -1//100),
+            DeploymentInvalid(parameter = :algorithm, reason = :range, value = Int),
             DeploymentInvalid(parameter = :Δt_base, reason = :unanchored, paths = ["a/b"],
                               grid = grid),
             DeploymentInvalid(parameter = :Δt_base, reason = :no_constraint),
             DeploymentInvalid(parameter = :Δt_base, reason = :not_harmonic, value = 1//3,
                               related = 1//100),
-            DeploymentInvalid(parameter = :Δt_base, reason = :disagrees_with_n, value = 1//50,
-                              related = 3, quotient = 2),
+            DeploymentInvalid(parameter = :Δt_frame, reason = :not_harmonic, value = 1//100,
+                              related = 1//30),
+            DeploymentInvalid(parameter = :Δt_base, reason = :not_frame_multiple, value = 1//50,
+                              related = 1//30),
+            DeploymentInvalid(parameter = :h, reason = :subcycling, value = 1//200,
+                              related = 1//100),
             DeploymentInvalid(parameter = :Δt_base, reason = :anchor_period, value = 1//30,
                               related = 1//100, scope = "a", key = :b, grid = grid),
             DeploymentInvalid(parameter = :Δt_base, reason = :anchor_offset, value = 1//7,
@@ -611,6 +617,7 @@ function diagnostics_kind_set()
                             value = :foo),
             ArgumentInvalid(call = :Period, reason = :inexact, value = 0.02),
             ArgumentInvalid(call = :Hz, reason = :inexact, value = 0.5),
+            ArgumentInvalid(call = :RK4, reason = :inexact, value = 0.01),
             ArgumentInvalid(call = :Absolute, reason = :inexact, value = 0.5),
             ArgumentInvalid(call = :Absolute, reason = :not_a_quantity, value = 1),
             ArgumentInvalid(call = :step!, reason = :both_given),
@@ -774,6 +781,20 @@ function diagnostics_kind_set()
         @test startswith(warning_lines[end], "  TrimCommitResiduals: ")
         @test kinds(with_warning) == kinds(carrier) &&
               diagnostics(with_warning) == diagnostics(carrier)
+
+        # The fixed step's refusals name the period the step fails on, by the
+        # payload's parameter (§10.2, D-443).
+        @test startswith(message(DeploymentInvalid(parameter = :Δt_frame, reason = :not_harmonic,
+                                                   value = 1//100, related = 1//30)),
+                         "harmonic grid: Δt_frame = 1//100 is not an integer multiple of " *
+                         "the fixed step h = 1//30")
+        @test startswith(message(DeploymentInvalid(parameter = :h, reason = :subcycling,
+                                                   value = 1//200, related = 1//100)),
+                         "h = 1//200 divides Δt_frame = 1//100 but is not equal to it")
+        @test startswith(message(DeploymentInvalid(parameter = :Δt_base,
+                                                   reason = :not_frame_multiple,
+                                                   value = 1//50, related = 1//30)),
+                         "Δt_base = 1//50 is not an integer multiple of Δt_frame = 1//30")
 
         # The obligation chain renders innermost first, the last face being the one
         # nobody wired.

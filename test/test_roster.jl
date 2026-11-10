@@ -48,7 +48,7 @@ end
 
 function test_roster()
     @testset "the binding conformance check names every drift at the attach point (§11.6)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         dev = Pad("d")
         for (b, reason) in ((NoSides(), :neither_side),
                             (NoEnum(), :claims_missing),
@@ -67,7 +67,7 @@ function test_roster()
     end
 
     @testset "admission is three checks in spec order (§11.3)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         dev = Pad("d1")
         attach!(sim, dev, Enumerated("a"))
         @test sim.plane.roster[end].id == 1
@@ -90,7 +90,7 @@ function test_roster()
     end
 
     @testset "a device writes inside its claim, every check at its own staging (§11.3, §11.4)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         dev_a, dev_b = Pad("da"), Pad("db")
         handle_a = attach!(sim, dev_a, Enumerated("a"))           # the handle is the write capability (§11.6)
         handle_b = attach!(sim, dev_b, Enumerated("b"))
@@ -125,7 +125,7 @@ function test_roster()
     end
 
     @testset "the computed claim is the complement at the attach instant (§11.3, §11.6)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         dev, greedy = Pad("d1"), Pad("gui")
         attach!(sim, dev, Enumerated("a"))
         # greedy last: exactly what is left
@@ -163,7 +163,7 @@ function test_roster()
     end
 
     @testset "the harness surface is the unclaimed complement, recomputed at roster changes (§11.3)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         @test sim.plane.harness.faces == [:a, :b]        # the empty roster's complement
         dev = Pad("d")
         attach!(sim, dev, Enumerated("a"))
@@ -186,7 +186,7 @@ function test_roster()
     end
 
     @testset "the recompilation seam: a pending harness batch is renormalized at attach (§11.4)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         init!(sim, set(u = (a = 0.0, b = 0.0)))  # first: a pre-init! batch would clear (§12.6)
         stage!(sim, "a" => 1.0, "b" => 2.0)              # staged while stopped, roster still empty
         # The attach reshapes the pending batch through the new schema, discarding
@@ -200,7 +200,7 @@ function test_roster()
         @test entry isa ClaimedFaceEntry && entry.face === :a
         @test entry.incumbent == "device 1 (Pad)" && entry.site === :renormalization
         # At detach the surface only broadens: every pending entry survives.
-        sim2 = Simulation(two_root_inputs(); h = 1//10)
+        sim2 = Simulation(two_root_inputs(); Δt_frame = 1//10)
         init!(sim2, set(u = (a = 0.0, b = 0.0)))
         dev = Pad("d2")
         attach!(sim2, dev, Enumerated("a"))
@@ -211,7 +211,7 @@ function test_roster()
     end
 
     @testset "device ids are monotonic per Simulation and never reused (§11.3)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         dev = Pad("d1")
         attach!(sim, dev, Enumerated("a"))
         @test sim.plane.roster[end].id == 1
@@ -225,7 +225,7 @@ function test_roster()
     end
 
     @testset "the roster is frozen per run: attach and detach are stopped-sim operations (§11.3)" begin
-        sim = Simulation(chain3(); h = 1//100000)
+        sim = Simulation(chain3(); Δt_frame = 1//100000)
         init!(sim, set(u = (u = 0.0,)))
         dev = Pad("d")
         attach!(sim, dev, Enumerated("u"))               # also warms both compile paths, so
@@ -251,7 +251,7 @@ function test_roster()
     end
 
     @testset "the run drains and reports the roster it read at run!, not the plane's (§11.3)" begin
-        sim = Simulation(chain3(); h = 1//100)
+        sim = Simulation(chain3(); Δt_frame = 1//100)
         emptier = RosterEmptier(sim)
         rostered = [attach!(sim, emptier, NoClaim()).who, attach!(sim, TailProbe(), NoClaim()).who]
         init!(sim, set(u = (u = 0.0,)))
@@ -269,7 +269,7 @@ function test_roster()
     end
 
     @testset "the frame's outcome is a pure function of the drained batches, whoever staged them (§11.4)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         dev_a, dev_b = Pad("da"), Pad("db")
         handle_a = attach!(sim, dev_a, Enumerated("a"))
         handle_b = attach!(sim, dev_b, Enumerated("b"))
@@ -278,7 +278,7 @@ function test_roster()
         stage!(handle_a, "a" => 0.7)
         stage!(handle_b, "b" => -1.3)
         step!(sim; t_plus = 0.5)
-        reference = Simulation(two_root_inputs(); h = 1//10)
+        reference = Simulation(two_root_inputs(); Δt_frame = 1//10)
         init!(reference, set(u = (a = 0.0, b = 0.0)))
         step!(reference; t_plus = 0.3)
         # the counterfactual, under the data plane
@@ -289,7 +289,7 @@ function test_roster()
     end
 
     @testset "an empty drain stays free with a populated roster (§11.1, §11.4)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         attach!(sim, Pad("da"), Enumerated("a"))
         attach!(sim, Pad("gui"), Greedy())
         init!(sim, set(u = (a = 0.0, b = 0.0)))
@@ -299,7 +299,7 @@ function test_roster()
     @testset "a populated device drain is as free as an empty one (§11.4, D-202)" begin
         # `trace = false`: the scatter's cost is what this measures, §11.5's sparse
         # record being the drain's one admitted allocation (test_dataplane.jl)
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         handle_a = attach!(sim, Pad("da"), Enumerated("a"))
         greedy_handle = attach!(sim, Pad("gui"), Greedy())
         init!(sim, set(u = (a = 0.0, b = 0.0)); trace = false)

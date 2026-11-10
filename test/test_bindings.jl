@@ -96,7 +96,7 @@ function test_bindings()
         @test sort(claims(b)) == ["a", "b"]
         # Two channels onto one face collapse to one claim, like any enumeration's
         # duplicates (§11.3).
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         attach!(sim, Pad("p"), TableBinding(x = (face = "a",), y = (face = "a",)))
         @test sim.plane.roster[1].handle.writer.faces == [:a]
     end
@@ -162,7 +162,7 @@ function test_bindings()
     end
 
     @testset "the loop idiom end to end: poll → map_input(binding(handle)) → stage! (§11.6)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         dev = Poller((; stick = 0.55, thr = 0.7))
         handle = attach!(sim, dev, TableBinding(stick = (face = "a", deadzone = 0.1),
                                                 thr   = (face = "b",)))
@@ -176,16 +176,16 @@ function test_bindings()
         @test port(sim, "", :b) === 0.7          # pass-through, bitwise
         # The device-staged trajectory is the directly-staged one: conditioning ran
         # upstream, so the model consumed post-conditioning levels (§11.4).
-        reference = Simulation(two_root_inputs(); h = 1//10)
+        reference = Simulation(two_root_inputs(); Δt_frame = 1//10)
         init!(reference, set(u = (a = 0.0, b = 0.0)))
         reference_value = last(only(map_input(
             (; stick = 0.55), TableBinding(stick = (face = "a", deadzone = 0.1)))))
         stage!(reference, "a" => reference_value, "b" => 0.7)
-        run!(reference; t_end = sim.run.frame * sim.model.deployment.h)
+        run!(reference; t_end = sim.run.frame * sim.model.deployment.Δt_frame)
         @test port(sim, "s", :e) === port(reference, "s", :e)
         # An unknown channel in a real loop body crashes the device by name, the
         # run continuing (§11.6: any non-datum exception propagates to the wrapper).
-        sim2 = Simulation(two_root_inputs(); h = 1//10)
+        sim2 = Simulation(two_root_inputs(); Δt_frame = 1//10)
         attach!(sim2, Poller((; wheel = 0.1)), TableBinding(stick = (face = "a",)))
         init!(sim2, set(u = (a = 0.0, b = 0.0)))
         logs, _ = Test.collect_test_logs() do
@@ -196,7 +196,7 @@ function test_bindings()
     end
 
     @testset "the output side completes the conformance check, both directions (§11.6)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         d = carried(@test_throws DiagnosticError{BindingContractMismatch} attach!(sim, Pad("p"), NoReads()))
         @test d.reason === :reads_missing
         d = carried(@test_throws DiagnosticError{BindingContractMismatch} attach!(sim, Pad("p"), ReadsUndeclared()))
@@ -209,7 +209,7 @@ function test_bindings()
     end
 
     @testset "reads resolve at attach: binding drift fails there, never on the wire (§11.2, §14.4)" begin
-        sim = Simulation(outfaced(); h = 1//10)
+        sim = Simulation(outfaced(); Δt_frame = 1//10)
         # An unknown path is the path walk's refusal, the children in hand (§13.3).
         d = only(diagnostics(failure(() -> attach!(sim, Pad("t"), Readout(alt = get_output("q", "y"))))))
         @test d isa PathResolution && d.reason === :unknown_child && d.segment == "q" &&
@@ -248,7 +248,7 @@ function test_bindings()
     end
 
     @testset "the compiled gather: wait → gather → map_output on the device task (§11.2, §12.3)" begin
-        sim = Simulation(outfaced(); h = 1//10)
+        sim = Simulation(outfaced(); Δt_frame = 1//10)
         dev = Telemetry()
         handle = attach!(sim, dev, Readout(alt = get_face("y"),
                                            raw = get_output("p", "y"),
@@ -271,7 +271,7 @@ function test_bindings()
     end
 
     @testset "gather without an output side is a contract misuse, by name (§11.6)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         handle = attach!(sim, Pad("p"), Enumerated("a"))
         init!(sim, set(u = (a = 0.0, b = 0.0)))
         d = carried(@test_throws DiagnosticError{DeviceContractMismatch} gather(handle, latest(sim)))
@@ -279,7 +279,7 @@ function test_bindings()
     end
 
     @testset "a bidirectional binding composes both halves (§11.6)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         handle = attach!(sim, Pad("p"), Duplex())
         @test sim.plane.roster[1].handle.writer.faces == [:a]   # the input half: the claim staked
         init!(sim, set(u = (a = 0.0, b = 0.0)))

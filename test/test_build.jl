@@ -68,7 +68,7 @@ function build_probe_refusals()
         @test d isa ConformanceFailure && d.what == "x_deriv" &&
               d.reason === :field_type && d.observed === Int64 && d.declared === Float64
         @test failure(() -> build(single(ScrambledDerivative()))) === nothing
-        sim = Simulation(single(ScrambledDerivative()); h = 1//100)
+        sim = Simulation(single(ScrambledDerivative()); Δt_frame = 1//100)
         @test failure(() -> (init!(sim); run!(sim; t_end = 0.05))) === nothing
         d = only(diagnostics(failure(() -> build(single(NoFlow())))))
         @test d isa StoreWithoutUpdate && d.store === :x_init
@@ -100,7 +100,7 @@ x_deriv(::SwappedPorts, (; x)) = (p = -x.p, q = -x.q)
 
 function build_schedule()
     @testset "the schedule follows the feedthrough graph (§5.3)" begin
-        sim = Simulation(feedback_model(); h = 1//1000)
+        sim = Simulation(feedback_model(); Δt_frame = 1//1000)
         # sum first (both its inputs are loop-breaking), then ctl, then plant
         order = [e.comp isa Sum ? :sum : e.comp isa Gain ? :ctl : :plant
                  for e in walked(sim.model.exec.bodies.sweep_2)]
@@ -517,14 +517,14 @@ function build_root_input_type()
         # consumer still walks downstream of its own frozen read (D-168, D-236).
         for model in (_fanned_root(RealEntry(), PinnedEntry()),
                       _fanned_root(PinnedEntry(), RealEntry()))
-            dual_model = Model(build(model), D8; h = 1//100)
+            dual_model = Model(build(model), D8; Δt_frame = 1//100)
             @test port(dual_model, "", :in) isa Float64
             @test port(dual_model, "a", :y) isa D8
         end
 
         # With every consumer tolerant the root input follows the scalar.
         tolerant_model = Model(build(_fanned_root(RealEntry(), RealEntry())),
-                               D8; h = 1//100)
+                               D8; Δt_frame = 1//100)
         @test port(tolerant_model, "", :in) isa D8
     end
 end
@@ -659,14 +659,14 @@ function build_wire_clauses()
             model = Group((; s = src, r = FieldReader()); local_wires = ("s/fld" => "r/f",))
             field_build = build(model)
             @test field_build isa Build
-            sim = Simulation(field_build; h = 1//100)
+            sim = Simulation(field_build; Δt_frame = 1//100)
             init!(sim)
             run!(sim; t_end = 0.02)
             # the bundle field carried the concrete type, not the bound
             @test port(sim, "r", :out) == want
             # and likewise at the walking activation, two frames standing for
             # `run!` to `0.02` at `h = 1//100`
-            dual_model = Model(field_build, D8; h = 1//100)
+            dual_model = Model(field_build, D8; Δt_frame = 1//100)
             init!(dual_model)
             frames!(dual_model, 2)
             @test port(dual_model, "r", :out) == want
@@ -677,14 +677,14 @@ function build_wire_clauses()
         real_build = build(Group((; src = NomSource(), r = RealReader());
                                  local_wires = ("src/val" => "r/u",)))
         @test real_build isa Build
-        @test port(Model(real_build, D8; h = 1//100), "r", :out) isa D8
+        @test port(Model(real_build, D8; Δt_frame = 1//100), "r", :out) isa D8
 
         # An abstract container entry: the walking producer matches as declared,
         # the pinned one through the lifted candidate. Its `Float64` sum embeds at
         # the write into a cell declared `T` (D-235).
         for src in (VecSource(), PinnedVecSource())
             model = Group((; s = src, r = VecReader()); local_wires = ("s/v" => "r/v",))
-            dual_model = Model(build(model), D8; h = 1//100)
+            dual_model = Model(build(model), D8; Δt_frame = 1//100)
             @test port(dual_model, "r", :n) isa D8
         end
 
@@ -693,7 +693,7 @@ function build_wire_clauses()
         variadic_build = build(Group((; s = TupleOut(), r = VariadicReader());
                                      local_wires = ("s/out" => "r/pair",)))
         @test variadic_build isa Build
-        @test port(Model(variadic_build, D8; h = 1//100), "r", :n) isa D8
+        @test port(Model(variadic_build, D8; Δt_frame = 1//100), "r", :n) isa D8
     end
 
     @testset "a root input with no concrete entry is refused (§8.2, D-236)" begin
@@ -717,11 +717,11 @@ function build_wire_clauses()
         # it and takes part in the meet, so no `RootInputTypeConflict`.
         vec_build = build(_fanned_v(VecReader(), SVecEntry()))
         @test vec_build isa Build
-        @test port(Model(vec_build, D8; h = 1//100), "", :in) isa SVector{3,D8}
+        @test port(Model(vec_build, D8; Δt_frame = 1//100), "", :in) isa SVector{3,D8}
 
         # Beside a pinning co-consumer the whole root input pins (D-168's meet).
         pinned_model = Model(build(_fanned_v(VecReader(), PinnedSVecEntry())),
-                             D8; h = 1//100)
+                             D8; Δt_frame = 1//100)
         @test port(pinned_model, "", :in) isa SVector{3,Float64}
 
         # An abstract co-consumer whose bound fails is the bound clause's, named
@@ -767,7 +767,7 @@ function build_wire_clauses()
         for src in (PinnedOffsetSource(), DiscreteOffsetSource())
             frozen_build = build(offset_model(src))
             @test frozen_build isa Build
-            frozen_model = Model(frozen_build, D8; h = 1//100)
+            frozen_model = Model(frozen_build, D8; Δt_frame = 1//100)
             @test port(frozen_model, "src", :terrain) isa OffsetField{Float64}
             @test port(frozen_model, "q", :h) isa D8
         end
@@ -777,7 +777,7 @@ function build_wire_clauses()
         walked_build = build(Group((; src = NomSource(), c = RealEntry());
                                    local_wires = ("src/val" => "c/u",)))
         @test walked_build isa Build
-        @test port(Model(walked_build, D8; h = 1//100), "c", :y) isa D8
+        @test port(Model(walked_build, D8; Δt_frame = 1//100), "c", :y) isa D8
 
         # D-167's tier scope: a discrete consumer takes the bound clause alone, so
         # a continuous producer feeding a pinned discrete entry stays legal.
@@ -974,7 +974,7 @@ function build_port_type_refusals()
     @testset "an opaque leaf is accepted by identity alone (D-237)" begin
         # Built at `T`, the handle's cell follows the activation and the query
         # carries partials.
-        dual_model = Model(offset_model(OffsetAtT()), D8; h = 1//10)
+        dual_model = Model(offset_model(OffsetAtT()), D8; Δt_frame = 1//10)
         init!(dual_model)
         @test port(dual_model, "src", :terrain) isa OffsetField{D8}
         @test port(dual_model, "q", :h) isa D8
@@ -983,10 +983,10 @@ function build_port_type_refusals()
         # is refused at the probe with both types named, where the tip before
         # D-237's identity rule died in a raw `MethodError` from the embedding.
         model = offset_model(OffsetAtLiteral())
-        sim = Simulation(model; h = 1//10)
+        sim = Simulation(model; Δt_frame = 1//10)
         init!(sim)
         @test port(sim, "q", :h) == 2.0
-        d = only(diagnostics(failure(() -> Model(model, D8; h = 1//10))))
+        d = only(diagnostics(failure(() -> Model(model, D8; Δt_frame = 1//10))))
         @test d isa ConformanceFailure && d.reason === :field_type && d.field === :terrain
         @test d.observed === OffsetField{Float64} && d.declared === OffsetField{D8}
     end
@@ -1457,7 +1457,7 @@ function build_label_ports()
         model = Group((; sel = GearSelector(), rd = GearReader());
                       local_wires = ("sel/gear" => "rd/gear",), input_wires = ("x" => "rd/x",))
         gear_build = build(model)
-        sim = Simulation(gear_build; h = 1//10)
+        sim = Simulation(gear_build; Δt_frame = 1//10)
         init!(sim, set(u = (x = 1.0,)))
         @test port(sim, "sel", :gear) === up
         @test port(sim, "rd", :code) == 1
@@ -1468,7 +1468,7 @@ function build_label_ports()
         # At the walking activation the real walks and the enum pins; the
         # discrete producer is outside that activation's executable set (D-052),
         # so its cell holds the nominal probe's product.
-        dual_model = Model(gear_build, D8; h = 1//10)
+        dual_model = Model(gear_build, D8; Δt_frame = 1//10)
         init!(dual_model, set(u = (x = 1.0,)))
         @test port(dual_model, "rd", :drag) isa D8
         @test port(dual_model, "sel", :gear) === up
@@ -1481,7 +1481,7 @@ function build_label_ports()
                   index_of(gear_root_build.structure, "rd")].code == 1
         # Probe values are probe-scoped: the run's value is the one the fragment
         # authored, and an enum converts through the condition apply as itself.
-        sim = Simulation(gear_root_build; h = 1//10)
+        sim = Simulation(gear_root_build; Δt_frame = 1//10)
         init!(sim, set(u = (gear = down, x = 1.0)))
         @test port(sim, "", :gear) === down
         @test port(sim, "rd", :code) == 2
@@ -1494,14 +1494,14 @@ function build_label_ports()
         @test activation(gear_mode_build, Float64).products[ci][stage1] ===
               (gear = up, y = 0.0)
         @test keys(activation(gear_mode_build, D8).products[ci][stage1]) === (:gear, :y)
-        dual_model = Model(gear_mode_build, D8; h = 1//10)
+        dual_model = Model(gear_mode_build, D8; Δt_frame = 1//10)
         @test port(dual_model, "c", :gear) === up
     end
 
     @testset "a Symbol port is one opaque leaf, with no synthesis at a root (§4.3, §8.2, D-243)" begin
         model = Group((; sel = PhaseSelector(), rd = PhaseReader());
                       local_wires = ("sel/phase" => "rd/phase",))
-        sim = Simulation(build(model); h = 1//10)
+        sim = Simulation(build(model); Δt_frame = 1//10)
         init!(sim, set())
         @test port(sim, "sel", :phase) === :idle && !port(sim, "rd", :armed)
         run!(sim; t_end = 0.1)
@@ -1657,8 +1657,8 @@ function build_tier()
         @test counter_build isa Build
         d = only(diagnostics(failure(() -> Simulation(counter_build))))
         @test d isa DeploymentInvalid
-        @test d.parameter === :h && d.reason === :missing
-        @test Simulation(counter_build; h = 1//10) isa Simulation
+        @test d.parameter === :Δt_frame && d.reason === :missing
+        @test Simulation(counter_build; Δt_frame = 1//10) isa Simulation
     end
 end
 
@@ -1842,7 +1842,7 @@ function build_bare_contracts()
             @test act.layout.bare_outputs ⊇ Set(["plant/loop/flow", "plant/spin", "ramp"])
         end
         # The run: `ẋ = -2x` from 1, the summer counting `u` per tick.
-        sim = Simulation(built; h = 1//100)
+        sim = Simulation(built; Δt_frame = 1//100)
         init!(sim, set(u = (u = 0.5,)))
         run!(sim; t_end = 1.0)
         @test port(sim, "plant/loop/flow") ≈ exp(-2.0) rtol = 1e-8
@@ -2027,7 +2027,7 @@ function build_embed_accept()
         # Both ports return literal `Float64`s at a `Dual` activation — the scalar
         # through a branch not taken, the `SVector` wholesale.
         dual_model = Model(Group((; c = ConstantBranch()); input_wires = ("in" => "c/in",)),
-                           D8; h = 1//100)
+                           D8; Δt_frame = 1//100)
         init!(dual_model, set(u = (in = 0.0,)))
         # What the table holds is the cell's type, the constant embedded into it.
         @test port(dual_model, "c", :out) isa D8
@@ -2089,7 +2089,7 @@ function build_activations()
         # The frozen reader's cells hold what the *nominal* probe computed from its
         # real upstream value — 2·(3.0 + 0.0) — not a value synthesized off its
         # declaration. Its cell pins while its producer's walks.
-        dual_model = Model(pair_build, D8; h = 1//100)
+        dual_model = Model(pair_build, D8; Δt_frame = 1//100)
         @test port(dual_model, "src", :val) isa D8
         @test port(dual_model, "rd", :out) === 6.0
 
@@ -2097,7 +2097,7 @@ function build_activations()
         # executable set): `t` in a discrete bundle is lawful, because it is a
         # `Float64` whenever the stage actually runs — so this must not detonate
         # as a `Dual` arriving at a pinned declaration.
-        stamp_model = Model(single(ClockStamp()), D8; h = 1//100)
+        stamp_model = Model(single(ClockStamp()), D8; Δt_frame = 1//100)
         @test port(stamp_model, "c", :stamp) === 0.0
 
         # The same world holds for scratch: a discrete allocator receives
@@ -2491,7 +2491,7 @@ function build_warnings()
         # the grid twice as fine as the one discrete child's own period. Each
         # artifact logs its own once at return, in the order the two steps run.
         sim = @test_logs (:warn, r"^EmptyFaceSelection") (:info, r"derived") (:warn, r"^GridUtilization") Simulation(
-            EmptySelectionRated(Gain(2.0), Gain(3.0), TickCounter()); h = 1//500,
+            EmptySelectionRated(Gain(2.0), Gain(3.0), TickCounter()); Δt_frame = 1//500,
             Δt_base = :derive)
         @test only(warnings(sim.model.deployment.build)) isa EmptyFaceSelection
         @test only(warnings(sim.model.deployment)) isa GridUtilization

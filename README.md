@@ -88,7 +88,7 @@ loop(feedback) = Group((plant = Plant(2.0, 0.3), ctl = PI(3.0, 2.0));
     output_wires = "plant/y" => "y",
     sample_times = (ctl = Absolute(Hz(50)),))
 
-sim = Simulation(loop("y"); h = 1//1000)
+sim = Simulation(loop("y"); Δt_frame = 1//1000)
 init!(sim, set(u = (ref = 1.0,)))
 run!(sim; t_end = 10.0)
 

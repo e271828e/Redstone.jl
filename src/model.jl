@@ -27,11 +27,11 @@
 # internal `apply!` on a claimed model as well.
 """
     Model(deployment::Deployment, ::Type{T} = Float64; chunk_size = 16) -> Model{T}
-    Model(build::Build, ::Type{T} = Float64; h, N_base = nothing, Δt_base = nothing,
-          algorithm = RK4, firing_budget = 4, localization_tol = 1e-6,
+    Model(build::Build, ::Type{T} = Float64; Δt_frame, Δt_base = nothing,
+          algorithm = RK4(), firing_budget = 4, localization_tol = 1e-6,
           localization_budget = 8, chunk_size = 16) -> Model{T}
-    Model(root::AbstractComponent, ::Type{T} = Float64; h, N_base = nothing,
-          Δt_base = nothing, algorithm = RK4, firing_budget = 4,
+    Model(root::AbstractComponent, ::Type{T} = Float64; Δt_frame,
+          Δt_base = nothing, algorithm = RK4(), firing_budget = 4,
           localization_tol = 1e-6, localization_budget = 8,
           chunk_size = 16) -> Model{T}
 
@@ -52,7 +52,7 @@ many models, and each model owns its buffers alone.
 `Model(Deployment(build; grid keywords...), T; chunk_size)`, and
 `Model(root; kw...)` calls [`build`](@ref) first. The grid, algorithm and event
 keywords are `Deployment`'s, documented and refused as `DeploymentInvalid`
-there. `h` is required, as for [`Deployment`](@ref). A `chunk_size` that is not
+there. `Δt_frame` is required, as for [`Deployment`](@ref). A `chunk_size` that is not
 an integer of at least 1 is refused as `ArgumentInvalid`.
 
 A model holds five values, each a field.
@@ -117,12 +117,11 @@ function Model(deployment::Deployment, ::Type{T} = Float64; chunk_size = 16) whe
     Model{T,typeof(exec)}(deployment, exec, :built, false, DiagCell(EMPTY_DIAG))
 end
 
-# The two sugar forms, each *defined as* the composition (§9.2, D-254).
-Model(build::Build, ::Type{T} = Float64; h = nothing, N_base = nothing,
-      Δt_base = nothing, algorithm = RK4, firing_budget = 4,
-      localization_tol = 1e-6, localization_budget = 8, kw...) where {T} =
-    Model(Deployment(build; h, N_base, Δt_base, algorithm, firing_budget,
-                     localization_tol, localization_budget), T; kw...)
+# The two sugar forms, each *defined as* the composition (§9.2, D-254). The
+# materialization's keyword is named, and every other keyword is the
+# deployment's, passed through so the keyword list has one home.
+Model(build::Build, ::Type{T} = Float64; chunk_size = 16, kw...) where {T} =
+    Model(Deployment(build; kw...), T; chunk_size)
 Model(root::AbstractComponent, ::Type{T} = Float64; kw...) where {T} =
     Model(build(root), T; kw...)
 
@@ -320,7 +319,7 @@ end
 # with `_frames_to`.
 function _check_origin(model::Model, call::Symbol, t0::Real)
     origin = Float64(t0)
-    isfinite(origin) && _frames_fit(origin, origin, model.deployment.h) ||
+    isfinite(origin) && _frames_fit(origin, origin, model.deployment.Δt_frame) ||
         throw(DiagnosticError(ArgumentInvalid(call = call, reason = :range, argument = :t0,
                                               value = t0)))
     nothing
@@ -448,7 +447,7 @@ phase_bodies(model::Model) = model.exec.bodies
 """Frame top `k`, computed from the index and `t₀` — never accumulated (§10.4).
 The origin and the stride are both `Float64`, so the top is one too, and the
 clock write below converts it into the deployment's scalar (D-260)."""
-_grid_time(model::Model, k::Int) = model.exec.clock.t₀ + k * model.deployment.h
+_grid_time(model::Model, k::Int) = model.exec.clock.t₀ + k * model.deployment.Δt_frame
 
 # Whole frames from the origin `t₀` until the grid boundary `t₀ + k·h` first
 # reaches the bound `t` (§12.4, §12.6), and its floor sibling, the last
@@ -701,7 +700,8 @@ end
         # the frame-entry index, off the grid time the clock sits on: every
         # `integrate!` inside `frame!` ends at one, so rounding is exact at any
         # scalar. The counters are the run's, which the model never sees (D-317)
-        boundary = round(Int, (_seconds(exec.clock.t) - exec.clock.t₀) / model.deployment.h) - 1)))
+        boundary = round(Int, (_seconds(exec.clock.t) - exec.clock.t₀) /
+                         model.deployment.Δt_frame) - 1)))
 end
 
 # Design: §9.2, §11.8, D-250.
@@ -943,7 +943,7 @@ function _assert_at_rest(model::Model, op::Symbol)
     model_status === :consistent || throw(DiagnosticError(ServiceLifecycle(
         op = op, status = model_status, legal = [:consistent])))
     clock = model.exec.clock
-    k = _frames_to(clock.t, clock.t₀, model.deployment.h)
+    k = _frames_to(clock.t, clock.t₀, model.deployment.Δt_frame)
     t_frame = _grid_time(model, k)
     clock.t == oftype(clock.t, t_frame) ||
         throw(DiagnosticError(CheckpointMidFrame(t = _seconds(clock.t), t_frame = t_frame,
@@ -1002,9 +1002,9 @@ end
 # `checkpoint(model)` uses, a clock before `t₀` sitting in frame 0, and the
 # clock exactly that frame's top in the state's scalar. Returns the frame.
 function _check_grid!(diags::Vector{Diagnostic}, model_state::ModelState)
-    t, t₀, h = model_state.t, model_state.t₀, model_state.deployment.h
-    k = _frames_to(t, t₀, h)
-    t_frame = t₀ + k * h
+    t, t₀, Δt_frame = model_state.t, model_state.t₀, model_state.deployment.Δt_frame
+    k = _frames_to(t, t₀, Δt_frame)
+    t_frame = t₀ + k * Δt_frame
     t == oftype(t, t_frame) ||
         push!(diags, CheckpointMidFrame(t = _seconds(t), t_frame = t_frame, frame = k))
     k
@@ -1065,7 +1065,7 @@ restore!(::Model{T}, ::ModelState{S}; kw...) where {T,S} =
 # `:built` as a throw inside `init!`'s or `overlay!`'s settling does. The pointer
 # is the frame the state stands at, on the grid the door has checked.
 function _restore_state!(model::Model, model_state::ModelState; hooks::FrameHooks = NoHooks())
-    k = _frames_to(model_state.t, model_state.t₀, model_state.deployment.h)
+    k = _frames_to(model_state.t, model_state.t₀, model_state.deployment.Δt_frame)
     cursor = model.exec.cursor
     cursor.comp = 0; cursor.fn = :none   # no stale frame: a restore runs no component
     @atomic :release model.status = :built   # the door's first write (D-441)

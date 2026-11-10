@@ -9,7 +9,7 @@ function continuous_skeleton()
         Acl = A - B * k * SVector(1.0, 0.0)'
         exact(t) = exp(Acl * t) * (Acl \ (B * k * r)) - Acl \ (B * k * r)
 
-        sim = Simulation(feedback_model(; k, ω, ζ); h = 1//1000)
+        sim = Simulation(feedback_model(; k, ω, ζ); Δt_frame = 1//1000)
         init!(sim, set(u = (ref = r,)))
         run!(sim; t_end = 2.0)
 
@@ -22,7 +22,7 @@ function continuous_skeleton()
     end
 
     @testset "a simulation owns one executor, and it is the one the loop runs (§9.2, §9.7)" begin
-        sim = Simulation(feedback_model(); h = 1//100)
+        sim = Simulation(feedback_model(); Δt_frame = 1//100)
         exec = sim.model.exec
         @test exec isa Executor{Float64}
         @test sim.model isa Model{Float64}
@@ -41,7 +41,7 @@ function continuous_skeleton()
     end
 
     @testset "gate 1: stepping does not allocate (§9.8)" begin
-        sim = Simulation(feedback_model(); h = 1//1000)
+        sim = Simulation(feedback_model(); Δt_frame = 1//1000)
         init!(sim, set(u = (ref = 0.0,)))
         integrate!(sim, 1e-3)
         @test @ballocated(integrate!($sim, 1e-3)) == 0
@@ -49,7 +49,7 @@ function continuous_skeleton()
     end
 
     @testset "the whole continuous path is generic over the scalar (§7.2)" begin
-        dual_model = Model(feedback_model(), D8; h = 1//1000)
+        dual_model = Model(feedback_model(), D8; Δt_frame = 1//1000)
         init!(dual_model, set(u = (ref = D8(0.7),)))
         frames!(dual_model, 50)                # `run!` to 0.05
         @test state(dual_model, "plant").q isa SVector{2,D8}
@@ -68,13 +68,13 @@ function continuous_state_return()
         # declared initials into these cells: only a value the seed could not
         # have left shows that boundary zero's `ESTABLISH` round ran
         # `y_state` over the authored stores.
-        seeded = Simulation(fed(Motor(1.0), "M_load"); h = 1//100)
+        seeded = Simulation(fed(Motor(1.0), "M_load"); Δt_frame = 1//100)
         init!(seeded, combine(at("c", set(x = (ω = 3.0,), m = (running = true,))),
                               set(u = (in = 0.0,))))
         @test port(seeded, "c", :ω) == 3.0
         @test port(seeded, "c", :running) === true
 
-        sim = Simulation(fed(Motor(1.0), "M_load"); h = 1//100)
+        sim = Simulation(fed(Motor(1.0), "M_load"); Δt_frame = 1//100)
         # A root input must be covered at `init!` (§14.6, `UninitializedInputs`),
         # and `M_load = 0` is what makes the closed form below exact.
         init!(sim, set(u = (in = 0.0,)))
@@ -108,8 +108,8 @@ function continuous_state_return()
         # `q₀ = 0` and `ref = 0` both trajectories are identically zero and the
         # comparison is vacuous.
         q₀ = SVector(1.0, 0.0)
-        vector_sim = Simulation(vector_feedback_model(; k = 4.0, q₀); h = 1//100)
-        scalar_sim = Simulation(feedback_model(; k = 4.0, q₀); h = 1//100)
+        vector_sim = Simulation(vector_feedback_model(; k = 4.0, q₀); Δt_frame = 1//100)
+        scalar_sim = Simulation(feedback_model(; k = 4.0, q₀); Δt_frame = 1//100)
         init!(vector_sim)
         init!(scalar_sim, set(u = (ref = 0.0,)))
         run!(vector_sim; t_end = 2.0)

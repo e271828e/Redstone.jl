@@ -17,11 +17,11 @@ y_state(::PinnedLeaf, (; t)) = (a = t, frozen = 2.0)
 function store_pinned_leaf()
     @testset "a pinned leaf lives in its own store (D-166, D-162)" begin
         # Nominally the pin and the activation scalar coincide: one buffer.
-        sim = Simulation(single(PinnedLeaf()); h = 1//100)
+        sim = Simulation(single(PinnedLeaf()); Δt_frame = 1//100)
         @test keys(sim.model.exec.store.stores) === (_cell_key(Float64),)
         # Off nominal the pin keeps a `Float64` buffer of its own beside the `Dual`
         # one, rather than being flattened into it as a zero-partial.
-        dual_model = Model(single(PinnedLeaf()), D8; h = 1//100)
+        dual_model = Model(single(PinnedLeaf()), D8; Δt_frame = 1//100)
         @test Set(keys(dual_model.exec.store.stores)) == Set([_cell_key(D8), _cell_key(Float64)])
         init!(dual_model)
         @test port(dual_model, "c", :a) isa D8
@@ -57,7 +57,7 @@ function store_mixed_cell()
     @testset "a mixed-leaf cell lays out across its eltypes' buffers (§8.2, D-162)" begin
         # The Int leaf beside T: mixed at every activation. The tag must come back
         # as a stored `Int`, not a converted double in the `T` buffer.
-        sim = Simulation(single(MixedCell()); h = 1//100)
+        sim = Simulation(single(MixedCell()); Δt_frame = 1//100)
         @test Set(keys(sim.model.exec.store.stores)) == Set([_cell_key(Float64), _cell_key(Int)])
         init!(sim)
         out = port(sim, "c", :out)
@@ -68,9 +68,9 @@ function store_mixed_cell()
         # The pinned leaf inside a declared struct (D-263): homogeneous at nominal
         # (K = 1), mixed off it — same declaration, and at `Dual` the `T` half
         # walks while `ref` stays a pinned `Float64` in its own buffer.
-        sim = Simulation(single(PinnedInside()); h = 1//100)
+        sim = Simulation(single(PinnedInside()); Δt_frame = 1//100)
         @test keys(sim.model.exec.store.stores) === (_cell_key(Float64),)
-        dual_model = Model(single(PinnedInside()), D8; h = 1//100)
+        dual_model = Model(single(PinnedInside()), D8; Δt_frame = 1//100)
         @test Set(keys(dual_model.exec.store.stores)) == Set([_cell_key(D8), _cell_key(Float64)])
         init!(dual_model)
         out = port(dual_model, "c", :out)
@@ -84,7 +84,7 @@ end
 function store_discrete_cells()
     @testset "discrete state and modes live outside the buffer (§7.3)" begin
         sim = Simulation(Group((; counter = TickCounter(), moded = ModedSource()));
-                         h = 1//10)
+                         Δt_frame = 1//10)
         # The flat buffer is continuous state only; the counter's `Int` is in its
         # own store, and no store mirrors another.
         @test isempty(sim.model.exec.xbuf)
@@ -114,7 +114,7 @@ end
 
 function store_read_refusals()
     @testset "a value read refuses an unknown path as `PathResolution` and an unknown name as `ArgumentError` (D-440)" begin
-        sim = Simulation(Group((; counter = TickCounter(), moded = ModedSource())); h = 1//10)
+        sim = Simulation(Group((; counter = TickCounter(), moded = ModedSource())); Δt_frame = 1//10)
         init!(sim)
         snapshot = latest(sim)
         for read in (() -> port(sim, "counterr", :n), () -> state(sim, "counterr"),
@@ -154,7 +154,7 @@ function store_portless_reads()
         faceless = Group((; k = Constant(1.0), g = Gain(2.0)); local_wires = ("k/y" => "g/e",))
         root = Group((; inner = faceless, sink = PortlessSink());
                      input_wires = ("in" => "sink/a",))
-        sim = Simulation(root; h = 1//10)
+        sim = Simulation(root; Δt_frame = 1//10)
         init!(sim, set(u = (in = 1.0,)))
         snapshot = latest(sim)
         for path in ("inner", "sink"), read in (() -> port(sim, path, :nope), () -> port(snapshot, path, :nope),
@@ -192,7 +192,7 @@ function store_workspace()
                                local_wires = ("src/out" => "sm/a",
                                         "src/out" => "sm/b",
                                         "src/out" => "wg/in"));
-                         h = 1//10)
+                         Δt_frame = 1//10)
         init!(sim)
         @test port(sim, "wg", :out) == 0.0      # 2 × the idle-phase constant
         run!(sim; t_end = 0.3)
@@ -219,7 +219,7 @@ function store_shared_bodies()
         # keeps offsets in fields. The root's one face fans out to both.
         two = Group((; a = feedback_model(), b = feedback_model(k = 3.0));
                     input_wires = ("ref" => ("a/ref", "b/ref"),))
-        sim = Simulation(two; h = 1//100)
+        sim = Simulation(two; Δt_frame = 1//100)
         types(body) = unique(typeof(e) for e in walked(body))
         @test length(types(sim.model.exec.bodies.sweep_1)) == 1     # two Plants, one y_state body
         @test length(types(sim.model.exec.bodies.sweep_2)) == 3    # Plant, Gain, Sum
@@ -229,7 +229,7 @@ function store_shared_bodies()
         # *type* every instance of a component type shares, so the store lives in a
         # field and two counters still compile to one `s_update` body.
         counters = Simulation(Group((; c1 = TickCounter(), c2 = TickCounter()));
-                              h = 1//10)
+                              Δt_frame = 1//10)
         @test length(walked(counters.model.exec.bodies.ticks)) == 2
         @test length(types(counters.model.exec.bodies.ticks)) == 1
         @test length(types(counters.model.exec.bodies.sweep_1)) == 1
@@ -259,7 +259,7 @@ end
 # the scatter are one load and one store of the whole struct.
 function store_opaque_leaf()
     @testset "a handle type is its own cell store (§9.7, D-237)" begin
-        sim = Simulation(handle_model(); h = 1//10)
+        sim = Simulation(handle_model(); Δt_frame = 1//10)
         @test Set(keys(sim.model.exec.store.stores)) ==
               Set([_cell_key(Float64), _cell_key(HeightField)])
 
@@ -273,7 +273,7 @@ function store_opaque_leaf()
 
         # The handle's declaration carries no `T`, so its cell is the same type
         # at every activation while the numeric ports follow the scalar.
-        dual_model = Model(build(handle_model()), D8; h = 1//10)
+        dual_model = Model(build(handle_model()), D8; Δt_frame = 1//10)
         init!(dual_model)
         @test _cell_key(HeightField) in keys(dual_model.exec.store.stores)
         @test port(dual_model, "src", :terrain) isa HeightField
@@ -294,7 +294,7 @@ function store_opaque_leaf()
         run!(sim; t_end = 0.5)
         @test port(latest(sim), "src", :terrain) isa HeightField
         trc = trace(sim)
-        twin = Simulation(handle_model(); h = 1//10)
+        twin = Simulation(handle_model(); Δt_frame = 1//10)
         init!(twin)
         replay!(twin, trc)
         @test port(twin, "q", :h) == 3.0
@@ -302,7 +302,7 @@ function store_opaque_leaf()
         # The abstract entry admits the handle by the bound clause (D-236).
         abstract_model = Group((; src = Terrain(), q = AbstractTerrainQuery());
                                local_wires = ("src/terrain" => "q/terrain",))
-        abstract_sim = Simulation(abstract_model; h = 1//10)
+        abstract_sim = Simulation(abstract_model; Δt_frame = 1//10)
         init!(abstract_sim)
         @test port(abstract_sim, "q", :h) == 3.0
     end

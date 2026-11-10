@@ -87,7 +87,7 @@ function assembly_class()
         B = SVector(0.0, 1.0)
         exact(t) = exp(A * t) * (A \ (B * u)) - A \ (B * u)
 
-        sim = Simulation(Plant(; ω, ζ); h = 1//1000)
+        sim = Simulation(Plant(; ω, ζ); Δt_frame = 1//1000)
         init!(sim, set(u = (u = u,)))
         @test port(sim, "", :u) === u              # the root input's own cell
         run!(sim; t_end = 2.0)
@@ -99,7 +99,7 @@ function assembly_class()
         # Totality reaches it like any other root input, and the condition's own
         # vocabulary composes at the root with no `at` prefix in sight.
         @test_throws DiagnosticError{UninitializedInputs} init!(sim)
-        sim2 = Simulation(Plant(; ω, ζ); h = 1//1000)
+        sim2 = Simulation(Plant(; ω, ζ); Δt_frame = 1//1000)
         init!(sim2, combine(condition(Plant(); y = 1.0), set(u = (u = 0.0,))))
         @test state(sim2, "").q === SVector(1.0, 0.0)
     end
@@ -163,7 +163,7 @@ function assembly_container_children()
         # `Group` names them bare, its `children` being transparent (D-211); the
         # naming rule itself is the undeclared containers' below.
         sim = Simulation(Group((; c1 = TickCounter(), c2 = TickCounter()));
-                         h = 1//10)
+                         Δt_frame = 1//10)
         @test paths(sim.model.deployment.build.structure) == ["c1", "c2"]
         @test state(sim, "c2") === (n = 0,)
 
@@ -180,7 +180,7 @@ function assembly_container_children()
 
         # The `Tuple` form: the same rule with index segments, `"field/1"…"field/N"`
         # (§8.5), addressable by the parent's declarations like any child name.
-        tuple_sim = Simulation(TupleRoster((Gain(2.0), Gain(3.0))); h = 1//10)
+        tuple_sim = Simulation(TupleRoster((Gain(2.0), Gain(3.0))); Δt_frame = 1//10)
         @test paths(tuple_sim.model.deployment.build.structure) == ["units/1", "units/2"]
         init!(tuple_sim, set(u = (in = 1.0,)))
         @test port(tuple_sim, "units/2", :out) === 6.0
@@ -270,7 +270,7 @@ function assembly_transparent_containers()
         # Naming is the only thing the declaration changes: the same two children in
         # the same declaration order, addressed without the field segment — wiring
         # endpoints, the flat list and the read path alike.
-        sim = Simulation(TransparentRoster((a = Gain(2.0), b = Gain(3.0))); h = 1//10)
+        sim = Simulation(TransparentRoster((a = Gain(2.0), b = Gain(3.0))); Δt_frame = 1//10)
         @test paths(sim.model.deployment.build.structure) == ["a", "b"]
         init!(sim, set(u = (in = 1.0,)))
         @test port(sim, "b", :out) === 6.0
@@ -325,7 +325,7 @@ function assembly_transparent_containers()
         # container and empty inert data at once, so reserving its name would refuse
         # over inert data, a false positive where no shadow exists. Legality is
         # per-instantiation, as every wiring judgment already is.
-        sim = Simulation(Shadowed((units = Gain(2.0),), (), Gain(3.0)); h = 1//10)
+        sim = Simulation(Shadowed((units = Gain(2.0),), (), Gain(3.0)); Δt_frame = 1//10)
         @test paths(sim.model.deployment.build.structure) == ["units", "trim"]     # the bare child, and nothing under it
         init!(sim, set(u = (in = 1.0,)))
         @test port(sim, "units", :out) === 6.0             # reads resolve `units` bare
@@ -357,7 +357,7 @@ function assembly_transparent_containers()
         @test input_wires(tuple_group) == () && output_wires(tuple_group) == ()
 
         # The normalized declarations are the ones that build.
-        sim = Simulation(pair_group; h = 1//10)
+        sim = Simulation(pair_group; Δt_frame = 1//10)
         init!(sim, set(u = (in = 2.0,)))
         @test port(sim, "", :y) === 4.0
     end
@@ -402,7 +402,7 @@ function assembly_paths()
     @testset "a wiring endpoint names one child and one of its faces (§6.1, D-207)" begin
         # Routed through the sub-assembly's own face: legal, the routed input is fed
         # exactly once, and the re-exported face aliases the port behind it.
-        sim = Simulation(ConcreteHold(SampledLoop()); h = 1//50)
+        sim = Simulation(ConcreteHold(SampledLoop()); Δt_frame = 1//50)
         init!(sim, set(u = (ref = 1.0,)))
         @test port(sim, "", :y) === port(sim, "inner/plant", :y)
 
@@ -410,7 +410,7 @@ function assembly_paths()
         # generically: substitutability now holds at *every* boundary, so the
         # generic holder builds too, and the concrete/generic distinction has left
         # this case entirely.
-        generic_sim = Simulation(GenericHold(SampledLoop()); h = 1//50)
+        generic_sim = Simulation(GenericHold(SampledLoop()); Δt_frame = 1//50)
         init!(generic_sim, set(u = (ref = 1.0,)))
         @test paths(generic_sim.model.deployment.build.structure) ==
               paths(sim.model.deployment.build.structure)
@@ -524,7 +524,7 @@ function assembly_wires()
         addr = activation(collision_build, Float64).layout.addr
         @test terminal_producer(collision_build.structure, ("c", :u)) == ("", :in)
         @test addr[("c", :u)] !== addr[("", :in)]
-        sim = Simulation(collision_build; h = 1//10)
+        sim = Simulation(collision_build; Δt_frame = 1//10)
         init!(sim, set(u = (in = 1.5,)))
         step!(sim; frames = 1)
         @test port(sim, "c", :u) === 3.0
@@ -575,7 +575,7 @@ function assembly_two_level()
             q, s = Ad * q + Bd * s, s + kI * Δt * (k * r - q[1])
         end
 
-        sim = Simulation(Vehicle(; k, kI, ω, ζ); h = 1//50)
+        sim = Simulation(Vehicle(; k, kI, ω, ζ); Δt_frame = 1//50)
         @test paths(sim.model.deployment.build.structure) == ["loop/plant", "loop/ctl", "loop/sum", "trim"]
         init!(sim, set(u = (ref = r,)))
         run!(sim; t_end = n_steps * Δt)
@@ -584,7 +584,7 @@ function assembly_two_level()
     end
 
     @testset "a face's type and tier are its internal endpoint's (§8.6)" begin
-        sim = Simulation(Vehicle(); h = 1//50)
+        sim = Simulation(Vehicle(); Δt_frame = 1//50)
         init!(sim, set(u = (ref = 1.0,)))
         run!(sim; t_end = 0.1)
         # A face is its endpoint: no cell of its own, at any level of re-export.
@@ -599,7 +599,7 @@ function assembly_two_level()
 
         # Tier-neutral, and the tiers are *derived*: at a non-nominal activation the
         # continuous-sourced face walks while the discrete-sourced one stays pinned.
-        dual_model = Model(Vehicle(), D8; h = 1//50)
+        dual_model = Model(Vehicle(), D8; Δt_frame = 1//50)
         @test port(dual_model, "", :y) isa D8
         @test port(dual_model, "", :cmd) isa Float64
     end
@@ -888,7 +888,7 @@ function assembly_obligations()
         # The one legitimate terminus: the root's own input faces are the root inputs,
         # authored by the init service's condition (§11.3, §14.6).
         sim = Simulation(Group((; c = Gain(2.0)); input_wires = ("in" => "c/e",));
-                         h = 1//100)
+                         Δt_frame = 1//100)
         @test sim.model.deployment.build.structure.root_inputs == [:in]
         init!(sim, set(u = (in = 0.0,)))
         @test port(sim, "c", :out) == 0.0
@@ -1121,7 +1121,7 @@ function assembly_primitives()
                                for (_, face) in first(structure.levels).wires if isempty(first(face))]
         @test exported(passed_build.structure) == exported(wired_build.structure)
         @test paths(passed_build.structure) == paths(wired_build.structure)
-        passed_sim, wired_sim = Simulation(passed; h = 1//10), Simulation(wired; h = 1//10)
+        passed_sim, wired_sim = Simulation(passed; Δt_frame = 1//10), Simulation(wired; Δt_frame = 1//10)
         authored = set(u = (var"inner.b" = 1.0, e = 2.0))
         init!(passed_sim, authored); init!(wired_sim, authored)
         @test port(passed_sim, "", :var"inner.scaled") ===
@@ -1248,7 +1248,7 @@ function assembly_primitives()
         @test input_wires(group) == ("inner.b" => "inner/b", "e" => "trim/e")
         @test output_wires(group) == ("inner/scaled" => "inner.scaled",)
 
-        sim = Simulation(group; h = 1//10)
+        sim = Simulation(group; Δt_frame = 1//10)
         @test paths(sim.model.deployment.build.structure) == ["inner/s", "inner/g", "trim"]
         init!(sim, set(u = (var"inner.b" = 1.0, e = 2.0)))
         @test port(sim, "", :var"inner.scaled") === 2.0 * (3.0 * 2.0 - 1.0)
@@ -1285,7 +1285,7 @@ function assembly_primitives()
         @test producers(one_build.structure, "ldg/right", (:e,)) ==
               [:e => ("", :var"ldg.right.brake")]
 
-        sim = Simulation(systems; h = 1//10)
+        sim = Simulation(systems; Δt_frame = 1//10)
         init!(sim, set(u = (var"aero.alpha" = 0.5, var"ldg.right.brake" = 1.0,
                             cmd = 2.0)))
         @test port(sim, "", :wrench) === 6 * 2.0 + 0.5
@@ -1494,7 +1494,7 @@ function assembly_bare_contracts()
         root = build(BareScale())
         @test root.structure.root_inputs == [:u]
         @test Set(k for k in keys(activation(root, Float64).layout.addr)) == Set([("", :u), ("", :y)])
-        sim = Simulation(root; h = 1//100)
+        sim = Simulation(root; Δt_frame = 1//100)
         init!(sim, set(u = (u = 1.5,)))
         @test port(sim, "") == -3.0 && port(sim, "", :u) == 1.5
         # A named key `u` beside a bare `u_types` collides as any shared key.

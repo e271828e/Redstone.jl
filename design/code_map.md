@@ -437,12 +437,21 @@ D-179, D-185, D-195, D-211, D-246, D-248, D-263, D-289, D-316, D-437, D-438.
   - the rate-scope rows, in `ScopeEntry`;
   - `_gates`, which derives the per-component triple the executor compiles
     over from the rows at `compile`.
-- The `Deployment` holds the build plus the grid parameters `h`, `N_base` and
-  `Δt_base`, the algorithm and the three event parameters `firing_budget`,
-  `localization_tol` and `localization_budget`. It is scalar-free. The
-  `Deployment` constructor has one throw per call (§9.2, D-229).
+- The algorithm tokens `RK4` and `Heun` under `AbstractAlgorithm`, each
+  carrying its fixed step `h`, with the float refusal at the token and the
+  `show` that prints them as spelled (§10.2, D-442). Their steppers are
+  stepper.jl's.
+- The `Deployment` holds the build plus the grid parameters `Δt_frame` and
+  `Δt_base`, the algorithm token with its step resolved and the three event
+  parameters `firing_budget`, `localization_tol` and `localization_budget`.
+  It is scalar-free. The `Deployment` constructor has one throw per call
+  (§9.2, D-229). It also holds `frames_per_tick`, `Δt_base/Δt_frame`, the
+  frame loop's tick key while the loop takes one step per frame (§9.2).
+- `bind_schedule` checks the fixed-step relations beside the grid (D-443),
+  and the two transitional refusals, `:subcycling` and
+  `:not_frame_multiple` (§9.2).
 - `==`/`hash` on a `Deployment` compare by value over everything but the
-  build, the grid attribution and the warnings (§12.7).
+  build, the grid attribution, `frames_per_tick` and the warnings (§12.7).
 - `warnings(::Deployment)`.
 - The grid attribution `_grid_report` (D-187):
   - the constraint pool, with each entry's leave-one-out refinement factor;
@@ -456,8 +465,8 @@ D-179, D-185, D-195, D-211, D-246, D-248, D-263, D-289, D-316, D-437, D-438.
   with both attribution forms. The derivation path also raises the
   `GridUtilization` advisory at `min_i Dᵢ > 1`.
 
-Spec: §9.2, §10.5, §12.7, Appendix B, Appendix C, D-187, D-227, D-229,
-D-250, D-254, D-256, D-261.
+Spec: §9.2, §10.2, §10.5, §12.7, Appendix B, Appendix C, D-187, D-229,
+D-250, D-254, D-256, D-261, D-442, D-443.
 
 ### `src/descriptor.jl`
 
@@ -659,7 +668,8 @@ D-249, D-255, D-261, D-289, D-317, D-437, D-438.
 - `settled!` at every `t*` boundary and at the frame top. A `true` abandons
   the frame's remainder and is `frame!`'s return (§13.5, D-261, D-317).
 - The grid arithmetic `frame!` steps by, `_grid_time` and `_frames_to`, is
-  model.jl's.
+  model.jl's. The step is `Δt_frame` and the tick key the deployment's
+  `frames_per_tick` while the loop takes one step per frame (§9.2).
 
 Spec: §10.2, §10.4, §11.8, §12.4, §13.4, §13.5, D-018, D-059, D-133, D-255,
 D-260, D-261, D-317, D-318.
@@ -1047,12 +1057,15 @@ D-268, D-269, D-270, D-274, D-316, D-317, D-318, D-319, D-407, D-429.
 
 ### `src/stepper.jl`
 
-The seam's backend side: RK4 and Heun, the retained `startpoint`, dense output.
+The seam's backend side: the steppers `RK4Stepper` and `HeunStepper`, each
+bound from its algorithm token by `bind_stepper` at `compile` (D-442), the
+retained `startpoint`, dense output.
 `checkpoint_stepper` and `restore_stepper!` are the checkpoint's hook pair,
 empty for both methods, which hold nothing across a frame top (D-274). The
-seam's framework side, `integrate!(model, h)`, is model.jl's.
+seam's framework side, `integrate!(model, h)`, is model.jl's, and the tokens
+are deployment.jl's.
 
-Spec: §10.2, D-017.
+Spec: §10.2, D-017, D-442.
 
 ### `src/store.jl`
 

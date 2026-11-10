@@ -121,7 +121,7 @@ pendulum_problem() = TrimProblem(guess = (u = 0.0,), lower = (u = -Inf,), upper 
 
 function test_trim()
     @testset "a one-step linear problem solves, commits and reads back (§14.7, §14.8)" begin
-        sim = Simulation(fed(Pendulum(), :u); h = 1//10)
+        sim = Simulation(fed(Pendulum(), :u); Δt_frame = 1//10)
         report = trim!(sim, u_problem(); baseline = pend_base(), t0 = 0.25)
 
         # The equilibrium torque at θ = 0.5 with ω = 0, which is the whole problem.
@@ -149,7 +149,7 @@ function test_trim()
     end
 
     @testset "an iterative nonlinear problem converges, the box picking the branch (§14.7)" begin
-        sim = Simulation(fed(Pendulum(), :u); h = 1//10)
+        sim = Simulation(fed(Pendulum(), :u); Δt_frame = 1//10)
         report = trim!(sim, θ_problem(); baseline = pend_base())
 
         # −(g/l)·sin θ + u = 0 has two branches in [0, π]; the box admits one.
@@ -174,8 +174,8 @@ function test_trim()
                                upper = (u = Inf, θ = π/2), condition = decide_both,
                                reads = both_reads(), residuals = both_residuals,
                                tolerances = (hold = 1e-9, torque = 1e-9))
-        declared_report = trim!(Simulation(fed(Pendulum(), :u); h = 1//10), declared; baseline = pend_base())
-        permuted_report = trim!(Simulation(fed(Pendulum(), :u); h = 1//10), permuted; baseline = pend_base())
+        declared_report = trim!(Simulation(fed(Pendulum(), :u); Δt_frame = 1//10), declared; baseline = pend_base())
+        permuted_report = trim!(Simulation(fed(Pendulum(), :u); Δt_frame = 1//10), permuted; baseline = pend_base())
 
         @test declared_report.converged && permuted_report.converged
         @test declared_report.solution ==
@@ -195,7 +195,7 @@ function test_trim()
             reads = torque_reads(), residuals = torque_only, tolerances = (torque = 1e-9,))
 
         # On a never-initialized simulation: it stays `built`, and `run!` still says so.
-        fresh = Simulation(fed(Pendulum(), :u); h = 1//10)
+        fresh = Simulation(fed(Pendulum(), :u); Δt_frame = 1//10)
         report = trim!(fresh, infeasible; baseline = pend_base())
         @test !report.converged
         @test report.status isa Symbol                   # recorded verbatim, decisive of nothing
@@ -206,7 +206,7 @@ function test_trim()
         @test failure(() -> run!(fresh; t_end = 0.1)) isa DiagnosticError
 
         # On an initialized one: every buffer equals its pre-call copy.
-        live = Simulation(fed(Pendulum(), :u); h = 1//10)
+        live = Simulation(fed(Pendulum(), :u); Δt_frame = 1//10)
         init!(live, combine(at("c", condition(Pendulum(); θ = 0.2)),
                             set(u = (in = 1.0,))))
         before = world(live)
@@ -274,7 +274,7 @@ function test_trim()
                                    reads = both_reads(), residuals = both_residuals,
                                    tolerances = (hold = 1e-6, torque = 1e-6))
         for problem in (kinked, not_a_number)
-            sim = Simulation(fed(Pendulum(), :u); h = 1//10)
+            sim = Simulation(fed(Pendulum(), :u); Δt_frame = 1//10)
             report = trim!(sim, problem; baseline = pend_base())
             @test report.status === :stalled && !report.converged
             @test report.committed_residuals === nothing
@@ -289,23 +289,23 @@ function test_trim()
                                 reads = reads(q̇ = get_deriv("c", :q)),
                                 residuals = (r, d) -> (b = r.q̇,), tolerances = (b = 1e-9,))
         # Each form commits with no `TrimCommitResiduals`.
-        model = Model(fed(TimedDecay()); h = 1//10)
+        model = Model(fed(TimedDecay()); Δt_frame = 1//10)
         report = @test_logs trim!(model, problem(); baseline = set(), t0 = 2.0)
         @test report.converged && isapprox(report.solution.u, 2.0; atol = 1e-9)
         @test abs(report.committed_residuals.b) ≤ 1e-9
         @test model.exec.clock.t₀ == 2.0
-        sim = Simulation(fed(TimedDecay()); h = 1//10)
+        sim = Simulation(fed(TimedDecay()); Δt_frame = 1//10)
         report = @test_logs trim!(sim, problem(); baseline = set(), t0 = 2.0)
         @test report.converged && isapprox(report.solution.u, 2.0; atol = 1e-9)
         @test abs(report.committed_residuals.b) ≤ 1e-9
         # The default stays at 0, where `u = 0` holds.
-        @test trim!(Model(fed(TimedDecay()); h = 1//10), problem(); baseline = set()).solution.u ≈ 0.0 atol = 1e-9
+        @test trim!(Model(fed(TimedDecay()); Δt_frame = 1//10), problem(); baseline = set()).solution.u ≈ 0.0 atol = 1e-9
 
         # The empty problem's one evaluation is the nominal half's.
         empty_problem = TrimProblem(guess = (;), lower = (;), upper = (;), condition = d -> set(),
                                     reads = reads(q̇ = get_deriv("c", :q)),
                                     residuals = (r, d) -> (b = r.q̇,), tolerances = (b = 1e-9,))
-        report = trim!(Model(fed(TimedDecay()); h = 1//10), empty_problem;
+        report = trim!(Model(fed(TimedDecay()); Δt_frame = 1//10), empty_problem;
                        baseline = set(u = (in = 2.0,)), t0 = 2.0)
         @test report.status === :bypassed && report.converged
     end
@@ -318,12 +318,12 @@ function test_trim()
                               condition = d -> (evaluated[] += 1; decide_u(d)), reads = torque_reads(),
                               residuals = torque_only, tolerances = (torque = 1e-9,))
         for bad in (NaN, Inf, -Inf, 1e34)
-            model = Model(fed(Pendulum(), :u); h = 1//10)
+            model = Model(fed(Pendulum(), :u); Δt_frame = 1//10)
             d = carried(@test_throws DiagnosticError{ArgumentInvalid} trim!(model, counted; baseline = pend_base(),
                                                                             t0 = bad, backend = short))
             @test d.call === :trim! && d.reason === :range && d.argument === :t0 && d.value === bad
             @test model.status === :built
-            sim = Simulation(fed(Pendulum(), :u); h = 1//10)
+            sim = Simulation(fed(Pendulum(), :u); Δt_frame = 1//10)
             d = carried(@test_throws DiagnosticError{ArgumentInvalid} trim!(sim, counted; baseline = pend_base(),
                                                                             t0 = bad, backend = short))
             @test d.call === :trim! && d.reason === :range && d.argument === :t0 && d.value === bad
@@ -343,7 +343,7 @@ function test_trim()
         @test met.status === :converged && met.n_iterations == 1
 
         # The service records the status verbatim, and an exhausted budget commits nothing.
-        sim = Simulation(fed(Pendulum(), :u); h = 1//10)
+        sim = Simulation(fed(Pendulum(), :u); Δt_frame = 1//10)
         report = trim!(sim, u_problem(); baseline = pend_base(), backend = budget)
         @test report.status === :maxiter && !report.converged
         @test report.committed_residuals === nothing
@@ -357,7 +357,7 @@ function test_trim()
         saturating = TrimProblem(guess = (u = 0.0,), lower = (u = -Inf,), upper = (u = 4.0,),
                                  condition = decide_u, reads = torque_reads(),
                                  residuals = torque_only, tolerances = (torque = 1.0,))
-        sim = Simulation(fed(Pendulum(), :u); h = 1//10)
+        sim = Simulation(fed(Pendulum(), :u); Δt_frame = 1//10)
         report = trim!(sim, saturating; baseline = pend_base())
 
         @test report.converged
@@ -367,7 +367,7 @@ function test_trim()
         @test port(sim, "", :in) === 4.0                 # and it committed, at the bound
 
         # An unsaturated solve of the same shape names nothing.
-        unbounded = trim!(Simulation(fed(Pendulum(), :u); h = 1//10), u_problem();
+        unbounded = trim!(Simulation(fed(Pendulum(), :u); Δt_frame = 1//10), u_problem();
                           baseline = pend_base())
         @test unbounded.converged && isempty(unbounded.saturated)
     end
@@ -382,7 +382,7 @@ function test_trim()
 
         # θ = 0, ω = 0, u = 0 is an equilibrium: nothing to pack, no seeded
         # activation, no backend call — the establishment round is the evaluation.
-        at_rest = Simulation(fed(Pendulum(), :u); h = 1//10)
+        at_rest = Simulation(fed(Pendulum(), :u); Δt_frame = 1//10)
         yes = trim!(at_rest, probe(0.0); baseline = pend_base())
         @test yes.converged && yes.status === :bypassed
         @test yes.n_evaluations == 1 && yes.n_iterations == 0
@@ -392,7 +392,7 @@ function test_trim()
 
         # And the same probe on a baseline that is not an equilibrium answers no,
         # by the ordinary box test, leaving the simulation untouched.
-        forced = Simulation(fed(Pendulum(), :u); h = 1//10)
+        forced = Simulation(fed(Pendulum(), :u); Δt_frame = 1//10)
         no = trim!(forced, probe(1.0); baseline = pend_base())
         @test !no.converged && no.status === :bypassed
         @test no.residuals.torque ≈ 1.0 && no.committed_residuals === nothing
@@ -401,7 +401,7 @@ function test_trim()
     end
 
     @testset "a malformed problem is a collected `TrimProblemInvalid` (§14.7, §13.1)" begin
-        sim = Simulation(fed(Pendulum(), :u); h = 1//10)
+        sim = Simulation(fed(Pendulum(), :u); Δt_frame = 1//10)
         before = world(sim)
 
         # A bounds key-set mismatch, an `Int` guess field and an unresolvable
@@ -522,7 +522,7 @@ function test_trim()
     end
 
     @testset "a field or a return that is no `NamedTuple` is named as such (§14.7, §13.1)" begin
-        sim = Simulation(fed(Pendulum(), :u); h = 1//10)
+        sim = Simulation(fed(Pendulum(), :u); Δt_frame = 1//10)
         before = world(sim)
 
         err = failure(() -> trim!(sim, TrimProblem(
@@ -560,7 +560,7 @@ function test_trim()
         outside = TrimProblem(guess = (u = 100.0,), lower = (u = -1.0,), upper = (u = 1.0,),
                               condition = decide_u, reads = torque_reads(),
                               residuals = torque_only, tolerances = (torque = 10.0,))
-        sim = Simulation(fed(Pendulum(), :u); h = 1//10)
+        sim = Simulation(fed(Pendulum(), :u); Δt_frame = 1//10)
         report = trim!(sim, outside; baseline = pend_base())
 
         @test report.converged                            # the box point meets the loose tolerance
@@ -574,7 +574,7 @@ function test_trim()
         degenerate = TrimProblem(guess = (u = 0.0,), lower = (u = 2.0,), upper = (u = 2.0,),
                                  condition = decide_u, reads = torque_reads(),
                                  residuals = torque_only, tolerances = (torque = 10.0,))
-        pinned = Simulation(fed(Pendulum(), :u); h = 1//10)
+        pinned = Simulation(fed(Pendulum(), :u); Δt_frame = 1//10)
         degenerate_report = trim!(pinned, degenerate; baseline = pend_base())
         @test degenerate_report.converged && degenerate_report.solution.u === 2.0
         @test degenerate_report.saturated == [(:u, :lower)]
@@ -586,7 +586,7 @@ function test_trim()
         # that branches on the scalar answers a different key set at the seeded
         # activation, and that is the problem being malformed rather than the bare
         # `ErrorException` the reorder to `tolerances`' order would raise.
-        sim = Simulation(fed(Pendulum(), :u); h = 1//10)
+        sim = Simulation(fed(Pendulum(), :u); Δt_frame = 1//10)
         before = world(sim)
         err = failure(() -> trim!(sim, TrimProblem(
             guess = (u = 0.0,), lower = (u = -Inf,), upper = (u = Inf,),
@@ -602,7 +602,7 @@ function test_trim()
         # Setup's own application to the scratch stores is one of §14.6's three
         # sites, and its coverage is a plan-level fact: the check runs before any
         # evaluation, not merely before any write.
-        sim = Simulation(fed(Pendulum(), :u); h = 1//10)
+        sim = Simulation(fed(Pendulum(), :u); Δt_frame = 1//10)
         before = world(sim)
         d = carried(@test_throws DiagnosticError{UninitializedInputs} trim!(sim, TrimProblem(
             guess = (θ = 0.1,), lower = (θ = -1.0,), upper = (θ = 1.0,),
@@ -620,7 +620,7 @@ function test_trim()
         # nominal half's establishment round: `asin(4/g_l)` is reachable exactly
         # when it holds the authored `s`'s output, and the probe's synthesized zero
         # would put the solution at 0 instead.
-        sim = Simulation(sampled_pend(); h = 1//10)
+        sim = Simulation(sampled_pend(); Δt_frame = 1//10)
         report = trim!(sim, θ_alone_problem(); baseline = sampled_base(4.0))
         @test report.converged
         @test report.solution.θ ≈ asin(4.0 / PEND_G_L)
@@ -629,7 +629,7 @@ function test_trim()
 
         # The same model with a *different* authored `s` moves the solution with it,
         # which is what makes the copy decisive rather than incidental.
-        other = Simulation(sampled_pend(); h = 1//10)
+        other = Simulation(sampled_pend(); Δt_frame = 1//10)
         @test trim!(other, θ_alone_problem(); baseline = sampled_base(2.0)).solution.θ ≈
               asin(2.0 / PEND_G_L)
 
@@ -637,7 +637,7 @@ function test_trim()
         # resolution, by the seeded half's own `ConditionResolution` — the tier
         # cannot carry partials, and the refusal says so rather than folding into
         # the problem's kind.
-        refused = Simulation(sampled_pend(); h = 1//10)
+        refused = Simulation(sampled_pend(); Δt_frame = 1//10)
         err = failure(() -> trim!(refused, TrimProblem(
             guess = (θ = 0.1, acc = 4.0), lower = (θ = -π/2, acc = -Inf),
             upper = (θ = π/2, acc = Inf),
@@ -655,7 +655,7 @@ function test_trim()
     @testset "the commit is an ordinary boundary zero: fired events are reported (§14.5)" begin
         # A guard the solved attitude already holds fires at `t₀` — derived, not
         # asserted (D-067) — and the report carries the list beside the warning.
-        sim = Simulation(triggered_pend(); h = 1//10)
+        sim = Simulation(triggered_pend(); Δt_frame = 1//10)
         report = @test_logs (:warn, r"^TrimCommitEvents") trim!(sim, u_problem();
                                                                 baseline = pend_base())
         @test report.converged
@@ -671,7 +671,7 @@ function test_trim()
         # sit where the reported solution never described. Both warnings fire, in
         # order, and the numbers that describe where the simulation actually *is*
         # are the committed ones — the verdict is not re-litigated (D-150).
-        sim = Simulation(fed(Snapback(0.3), :u); h = 1//10)
+        sim = Simulation(fed(Snapback(0.3), :u); Δt_frame = 1//10)
         problem = TrimProblem(guess = (u = 0.0,), lower = (u = -Inf,), upper = (u = Inf,),
                               condition = snap_decide_u, reads = torque_reads(),
                               residuals = torque_only, tolerances = (torque = 1e-9,))
@@ -691,7 +691,7 @@ function test_trim()
     @testset "a check inside its tolerance is reported and raises nothing (§14.7, §14.8, D-262)" begin
         # The check reads the attitude through the problem's one read set and
         # compares it with the decision: the committed state is the solved one.
-        sim = Simulation(fed(Pendulum(), :u); h = 1//10)
+        sim = Simulation(fed(Pendulum(), :u); Δt_frame = 1//10)
         problem = TrimProblem(guess = (θ = 0.1,), lower = (θ = -π/2,), upper = (θ = π/2,),
                               condition = decide_θ, reads = both_reads(),
                               residuals = torque_only, tolerances = (torque = 1e-9,),
@@ -707,7 +707,7 @@ function test_trim()
         # The condition pins θ = 0.5, the world side; the request says 0.3, the
         # params side. The torque balance holds at the committed state, so the
         # residuals sit inside the box, and only the check sees the mismatch.
-        sim = Simulation(fed(Pendulum(), :u); h = 1//10)
+        sim = Simulation(fed(Pendulum(), :u); Δt_frame = 1//10)
         problem = TrimProblem(guess = (u = 0.0,), lower = (u = -Inf,), upper = (u = Inf,),
                               condition = decide_u, reads = both_reads(),
                               residuals = torque_only, tolerances = (torque = 1e-9,),
@@ -724,7 +724,7 @@ function test_trim()
     @testset "a check reads the committed state, not the guess (§14.8, D-262)" begin
         # The attitude problem starts at θ = 0.1 and solves g/l·sin θ = 4, so a
         # check that returns θ itself tells the committed state from the guess.
-        sim = Simulation(fed(Pendulum(), :u); h = 1//10)
+        sim = Simulation(fed(Pendulum(), :u); Δt_frame = 1//10)
         problem = TrimProblem(guess = (θ = 0.1,), lower = (θ = -π/2,), upper = (θ = π/2,),
                               condition = decide_θ, reads = both_reads(),
                               residuals = torque_only, tolerances = (torque = 1e-9,),
@@ -738,7 +738,7 @@ function test_trim()
     @testset "a mover at the commit shows in the committed-state checks (§14.8, D-262)" begin
         # The handler resets the solved θ = 0.5 to 0 at boundary zero, and the
         # checks read the moved point: `θ` returns it and `hold` fails on it.
-        sim = Simulation(fed(Snapback(0.3), :u); h = 1//10)
+        sim = Simulation(fed(Snapback(0.3), :u); Δt_frame = 1//10)
         problem = TrimProblem(guess = (u = 0.0,), lower = (u = -Inf,), upper = (u = Inf,),
                               condition = snap_decide_u, reads = both_reads(),
                               residuals = torque_only, tolerances = (torque = 1e-9,),
@@ -753,8 +753,8 @@ function test_trim()
     end
 
     @testset "the commit is literally an `init!` over the same composite (§14.8, §14.9)" begin
-        sim = Simulation(fed(Pendulum(), :u); h = 1//10)
-        twin = Simulation(fed(Pendulum(), :u); h = 1//10)
+        sim = Simulation(fed(Pendulum(), :u); Δt_frame = 1//10)
+        twin = Simulation(fed(Pendulum(), :u); Δt_frame = 1//10)
         report = trim!(sim, u_problem(); baseline = pend_base(), t0 = 0.75)
 
         # The hand-written spelling of what `trim!` ran: the same composite over the
@@ -766,7 +766,7 @@ function test_trim()
     end
 
     @testset "a stopped simulation trims from an authored baseline at a new anchor (§14.8, §12.6)" begin
-        sim = Simulation(fed(Pendulum(), :u); h = 1//10)
+        sim = Simulation(fed(Pendulum(), :u); Δt_frame = 1//10)
         init!(sim, combine(at("c", condition(Pendulum(); θ = 0.2)),
                            set(u = (in = 1.0,))))
         run!(sim; t_end = 0.4)
@@ -787,7 +787,7 @@ function test_trim()
         # of it are compiled: the shape-compiled plan and the compiled reader, at
         # the service's own seeded scalar. The user's residual lambda is theirs, so
         # the gates are on the two the framework owns.
-        sim = Simulation(fed(Pendulum(), :u); h = 1//10)
+        sim = Simulation(fed(Pendulum(), :u); Δt_frame = 1//10)
         build = sim.model.deployment.build
         TD = ForwardDiff.Dual{TrimTag,Float64,1}
         exec = compile(build, activation(build, TD), sim.model.deployment.schedule;
@@ -820,18 +820,18 @@ function test_trim()
                               reads = both_reads(), residuals = both_residuals,
                               tolerances = (hold = 1e-9, torque = 1e-9))
         probe = AllocProbe(Ref(-1))
-        trim!(Simulation(fed(Pendulum(), :u); h = 1//10), problem;
+        trim!(Simulation(fed(Pendulum(), :u); Δt_frame = 1//10), problem;
               baseline = pend_base(), backend = probe)
         @test probe.bytes[] == 0
     end
 
     @testset "`trim!` is a stopped-sim service on a nominal deployment (§14.8, §12.6)" begin
-        dual = Model(fed(Pendulum(), :u), D8; h = 1//10)
+        dual = Model(fed(Pendulum(), :u), D8; Δt_frame = 1//10)
         d = carried(@test_throws DiagnosticError{ArgumentInvalid} trim!(dual, u_problem(); baseline = pend_base()))
         @test d.call === :trim! && d.reason === :non_nominal && startswith(d.value, "Model{")
 
         # And a value that is not a problem is a directive, not a `MethodError`.
-        plain = Simulation(fed(Pendulum(), :u); h = 1//10)
+        plain = Simulation(fed(Pendulum(), :u); Δt_frame = 1//10)
         d = carried(@test_throws DiagnosticError{ArgumentInvalid} trim!(plain, (guess = (u = 0.0,),); baseline = pend_base()))
         @test d.call === :trim! &&
               d.reason === :not_a_problem && d.argument === :problem &&
@@ -839,7 +839,7 @@ function test_trim()
 
         # `running` is the §11.3 freeze, as for every other §14 service. Both ends
         # of the run are test-controlled, exactly as in test_lifecycle.
-        live = Simulation(armed(); h = 1//100)
+        live = Simulation(armed(); Δt_frame = 1//100)
         init!(live, set(u = (in = 0.0,)))
         attach!(live, TailProbe(), NoClaim())   # a rostered device makes the loop yield every
                                                 # frame (§12.2), so the spin gets its turn on one thread
@@ -856,7 +856,7 @@ function test_trim()
     end
 
     @testset "`trim!` on a standalone model commits through the model's `init!` (§14.8, D-319)" begin
-        model = Model(fed(Pendulum(), :u); h = 1//10)
+        model = Model(fed(Pendulum(), :u); Δt_frame = 1//10)
         report = trim!(model, u_problem(); baseline = pend_base(), t0 = 0.25)
         @test report.converged
         @test report.solution.u ≈ PEND_G_L * sin(0.5)
@@ -872,14 +872,14 @@ function test_trim()
             condition = d -> combine(at("c", set(x = (θ = d.θ, ω = 0.0))),
                                      set(u = (in = 2 * PEND_G_L,))),
             reads = torque_reads(), residuals = torque_only, tolerances = (torque = 1e-9,))
-        fresh = Model(fed(Pendulum(), :u); h = 1//10)
+        fresh = Model(fed(Pendulum(), :u); Δt_frame = 1//10)
         fresh_report = trim!(fresh, infeasible; baseline = pend_base())
         @test !fresh_report.converged && fresh_report.committed_residuals === nothing
         @test fresh.status === :built
 
         # A claimed model refuses the call before every evaluation: the
         # infeasible problem would return a report if the solve ran first.
-        claimed = Model(fed(Pendulum(), :u); h = 1//10)
+        claimed = Model(fed(Pendulum(), :u); Δt_frame = 1//10)
         sim = Simulation(claimed)
         d = carried(@test_throws DiagnosticError{ArgumentInvalid} trim!(claimed, u_problem(); baseline = pend_base()))
         @test d.reason === :claimed && d.call === :trim! && lifecycle(sim) === :built
@@ -890,9 +890,9 @@ function test_trim()
     @testset "a mounted problem solves what the flat world solves (§14.9, D-277)" begin
         # The decision's `u` entry reaches the root input through `rig`'s
         # face, and the read's path is joined below the mount.
-        flat = Simulation(fed(Pendulum(), :u); h = 1//10)
+        flat = Simulation(fed(Pendulum(), :u); Δt_frame = 1//10)
         flat_report = trim!(flat, θ_problem(); baseline = pend_base())
-        wrapped = Simulation(rig_pend(); h = 1//10)
+        wrapped = Simulation(rig_pend(); Δt_frame = 1//10)
         wrapped_report = trim!(wrapped, at("rig", θ_problem()); baseline = rig_base())
         @test flat_report.converged
         for f in (:converged, :solution, :residuals, :status, :n_evaluations, :n_iterations)
@@ -901,7 +901,7 @@ function test_trim()
         @test state(wrapped, "rig/c") == state(flat, "c")
 
         # Mounted twice, the chain walked a level at a time.
-        deep = Simulation(outer_pend(); h = 1//10)
+        deep = Simulation(outer_pend(); Δt_frame = 1//10)
         deep_report = trim!(deep, at("outer", at("rig", θ_problem())); baseline = outer_base())
         for f in (:converged, :solution, :residuals, :status, :n_evaluations, :n_iterations)
             @test getfield(deep_report, f) == getfield(flat_report, f)
@@ -918,9 +918,9 @@ function test_trim()
         mounted_problem = at("rig", problem)
         @test mounted_problem.checks === problem.checks &&
               mounted_problem.check_tolerances === problem.check_tolerances
-        flat_report = @test_logs trim!(Simulation(fed(Pendulum(), :u); h = 1//10), problem;
+        flat_report = @test_logs trim!(Simulation(fed(Pendulum(), :u); Δt_frame = 1//10), problem;
                                        baseline = pend_base())
-        wrapped_report = @test_logs trim!(Simulation(rig_pend(); h = 1//10), mounted_problem;
+        wrapped_report = @test_logs trim!(Simulation(rig_pend(); Δt_frame = 1//10), mounted_problem;
                                           baseline = rig_base())
         @test wrapped_report.converged
         @test wrapped_report.committed_checks == flat_report.committed_checks
@@ -934,14 +934,14 @@ function test_trim()
 
     @testset "a face the world computes is untrimmable from outside (§14.9)" begin
         # Mounted where its input face is a root input's, the problem solves.
-        sim = Simulation(fed(Pendulum(), :u); h = 1//10)
+        sim = Simulation(fed(Pendulum(), :u); Δt_frame = 1//10)
         report = trim!(sim, at("c", pendulum_problem()); baseline = pend_base())
         @test report.converged && report.solution.u ≈ PEND_G_L * sin(0.5)
         @test port(sim, "", :in) === report.solution.u
 
         # Mounted where a discrete producer feeds that face, the condition's entry
         # is refused naming the producer, and nothing is written.
-        refused = Simulation(sampled_pend(); h = 1//10)
+        refused = Simulation(sampled_pend(); Δt_frame = 1//10)
         err = failure(() -> trim!(refused, at("c", pendulum_problem()); baseline = sampled_base()))
         d = only(diagnostics(err))
         @test err isa DiagnosticError && d isa ConditionResolution && d.reason === :internally_wired
@@ -955,7 +955,7 @@ function test_trim()
                               tolerances = (torque = 1e-9,))
         mounted_problem = at("rig", problem)                  # the lift never raises
         @test mounted_problem.reads === (;)
-        err = failure(() -> trim!(Simulation(rig_pend(); h = 1//10), mounted_problem;
+        err = failure(() -> trim!(Simulation(rig_pend(); Δt_frame = 1//10), mounted_problem;
                                   baseline = rig_base()))
         d = only(diagnostics(err))
         @test err isa DiagnosticError && d isa TrimProblemInvalid && d.reason === :not_a_read_set

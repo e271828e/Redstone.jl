@@ -22,7 +22,7 @@ function test_localization()
         # isolates the localization machinery itself — t* within the bracket width.
         model = Group((; src = Sawtooth(1.0), s = Stamper(0.315));
                       local_wires = ("src/q" => "s/sig",))
-        sim = Simulation(model; h = 1//10)
+        sim = Simulation(model; Δt_frame = 1//10)
         init!(sim)
         step!(sim; t_plus = 0.5)
         @test modes(sim, "s").count == 1
@@ -38,7 +38,7 @@ function test_localization()
         # with the firing instant: localized resets give the exact period
         # level/rate at an h-incommensurate level, where boundary-resolution
         # firings would have accumulated a full overshoot per reset.
-        sim = Simulation(single(Bouncer(1.0, 0.315)); h = 1//10)
+        sim = Simulation(single(Bouncer(1.0, 0.315)); Δt_frame = 1//10)
         init!(sim)
         run!(sim; t_end = 2.0)                                          # resets at 0.315·k, k = 1..6
         @test modes(sim, "c").count == 6
@@ -52,7 +52,7 @@ function test_localization()
         model = Group((; src = Rotor(; ω = 1.0, r₀ = SVector(-1.0, 0.0)),
                        s = Stamper(-0.5));
                   local_wires = ("src/c" => "s/sig",))
-        sim = Simulation(model; h = 1//10)
+        sim = Simulation(model; Δt_frame = 1//10)
         init!(sim)
         run!(sim; t_end = 1.5)
         @test modes(sim, "s").count == 1
@@ -64,14 +64,14 @@ function test_localization()
         # frame top without crossing anything, σ₀ re-measured under the frame's own
         # u holds, and not localizing is the action — the event falls through to
         # the frame top's ordinary iteration and stamps the indexed grid time.
-        sim = Simulation(fed(Stamper(0.5), "sig"); h = 1//10)
+        sim = Simulation(fed(Stamper(0.5), "sig"); Δt_frame = 1//10)
         init!(sim, set(u = (in = 0.0,)))
         step!(sim; t_plus = 0.3)
         @test modes(sim, "c").count == 0
         stage!(sim, "in" => 1.0)                     # staged, drained at the next frame top (§11.4)
         step!(sim; t_plus = 0.3)
         @test modes(sim, "c").count == 1
-        @test modes(sim, "c").t_fired == 4 * sim.model.deployment.h     # the grid point itself
+        @test modes(sim, "c").t_fired == 4 * sim.model.deployment.Δt_frame     # the grid point itself
     end
 
     @testset "t* = tₙ₊₁ exactly degenerates to the grid boundary (§10.4)" begin
@@ -80,11 +80,11 @@ function test_localization()
         # is discarded — one boundary, one firing, stamping the indexed grid time.
         model = Group((; src = Ramp(0.0), s = Stamper(0.4));
                       local_wires = ("src/out" => "s/sig",))
-        sim = Simulation(model; h = 1//10)
+        sim = Simulation(model; Δt_frame = 1//10)
         init!(sim)
         run!(sim; t_end = 0.6)
         @test modes(sim, "s").count == 1
-        @test modes(sim, "s").t_fired == 4 * sim.model.deployment.h
+        @test modes(sim, "s").t_fired == 4 * sim.model.deployment.Δt_frame
     end
 
     @testset "multiple crossings in one frame: earliest first, re-localized on the remainder" begin
@@ -92,7 +92,7 @@ function test_localization()
                      (; src = Sawtooth(1.0), s1 = Stamper(0.31), s2 = Stamper(0.34));
                      local_wires = ("src/q" => "s1/sig",
                               "src/q" => "s2/sig"))
-        sim = Simulation(two_stamper_model(); h = 1//10)
+        sim = Simulation(two_stamper_model(); Δt_frame = 1//10)
         init!(sim)
         @test_logs run!(sim; t_end = 0.5)                               # both localize: no degradation
         @test modes(sim, "s1").t_fired ≈ 0.31 atol = 1e-6
@@ -106,7 +106,7 @@ function test_localization()
                    (; src = Sawtooth(1.0), s1 = Stamper(0.315), s2 = Stamper(0.315));
                    local_wires = ("src/q" => "s1/sig",
                             "src/q" => "s2/sig"))
-        tied_sim = Simulation(tied_model; h = 1//10, localization_budget = 1)
+        tied_sim = Simulation(tied_model; Δt_frame = 1//10, localization_budget = 1)
         init!(tied_sim)
         @test_logs run!(tied_sim; t_end = 0.5)
         @test modes(tied_sim, "s1").t_fired == modes(tied_sim, "s2").t_fired
@@ -116,11 +116,11 @@ function test_localization()
         # Distinct crossings under budget 1: the earliest localizes, the second
         # spends nothing — it degrades to boundary granularity under the report,
         # stamping the frame top.
-        distinct_sim = Simulation(two_stamper_model(); h = 1//10, localization_budget = 1)
+        distinct_sim = Simulation(two_stamper_model(); Δt_frame = 1//10, localization_budget = 1)
         init!(distinct_sim)
         run!(distinct_sim; t_end = 0.5)             # the degradation reports on the loop's cell (§11.8)
         @test modes(distinct_sim, "s1").t_fired ≈ 0.31 atol = 1e-6
-        @test modes(distinct_sim, "s2").t_fired == 4 * distinct_sim.model.deployment.h
+        @test modes(distinct_sim, "s2").t_fired == 4 * distinct_sim.model.deployment.Δt_frame
         loop_status = writer_status(latest(distinct_sim), "loop")
         # frame 4's report, folded at frame 5's top
         d = only(loop_status.recent)
@@ -140,12 +140,12 @@ function test_localization()
         # per-segment tol·h′ would have kept trying, to 0.39995.
         model = Group((; src = Sawtooth(1.0), s1 = Stamper(0.399), s2 = Stamper(0.39995));
                       local_wires = ("src/q" => "s1/sig", "src/q" => "s2/sig"))
-        sim = Simulation(model; h = 1//10, localization_tol = 1e-3)
+        sim = Simulation(model; Δt_frame = 1//10, localization_tol = 1e-3)
         init!(sim)
         @test_logs run!(sim; t_end = 0.5)
         @test modes(sim, "s1").t_fired ≈ 0.399 atol = 1e-4
-        @test modes(sim, "s1").t_fired < 4 * sim.model.deployment.h
-        @test modes(sim, "s2").t_fired == 4 * sim.model.deployment.h
+        @test modes(sim, "s1").t_fired < 4 * sim.model.deployment.Δt_frame
+        @test modes(sim, "s2").t_fired == 4 * sim.model.deployment.Δt_frame
         @test modes(sim, "s1").count == 1 && modes(sim, "s2").count == 1
     end
 
@@ -155,7 +155,7 @@ function test_localization()
         # the 9th trigger reports — naming the event and the count — and fires in
         # the frame top's ordinary iteration. The remainder had already completed,
         # so the run proceeds, at boundary granularity for that frame alone.
-        sim = Simulation(single(Relaxer(1.0, 0.05, 0.001)); h = 1//10)
+        sim = Simulation(single(Relaxer(1.0, 0.05, 0.001)); Δt_frame = 1//10)
         init!(sim)
         # The report lands in the run's only frame, past that frame's own top: no
         # later drain exists, so no snapshot can carry it — the run's-end sweep
@@ -170,13 +170,13 @@ function test_localization()
         # Every frame chatters. A replay's drain folds the frame's own cell as
         # the live drain does, so the replayed account carries the reports the
         # original's did (§11.8, D-317).
-        relaxed = Simulation(single(Relaxer(1.0, 0.05, 0.001)); h = 1//10)
+        relaxed = Simulation(single(Relaxer(1.0, 0.05, 0.001)); Δt_frame = 1//10)
         init!(relaxed)
         step!(relaxed; frames = 3)
         original_status = writer_status(latest(relaxed), "loop")
         @test original_status.totals.chattering == 2   # frames 1 and 2, folded at the next tops
         step!(relaxed; frames = 2)                     # the recording runs past the replay's end
-        replayed_sim = Simulation(single(Relaxer(1.0, 0.05, 0.001)); h = 1//10)
+        replayed_sim = Simulation(single(Relaxer(1.0, 0.05, 0.001)); Δt_frame = 1//10)
         init!(replayed_sim)
         @test_logs (:warn, r"ChatteringBudget from loop") #=
             =# replay!(replayed_sim, trace(relaxed); t_end = 0.3)
@@ -194,7 +194,7 @@ function test_localization()
 
         # Gate true from the start: the Bool factor is constant over the bracket
         # and the continuous atom localizes as such.
-        sim = Simulation(gated_model(); h = 1//10)
+        sim = Simulation(gated_model(); Δt_frame = 1//10)
         init!(sim, set(u = (gate = true,)))
         run!(sim; t_end = 0.5)
         @test modes(sim, "s").t_fired ≈ 0.315 atol = 1e-6
@@ -202,14 +202,14 @@ function test_localization()
         # Gate flipped at a frame top, with σ already past the level: the edge is
         # the u seam's, σ₀ holds under the frame's own u, and the event fires at
         # the frame top exactly — epoch-caused, never root-found.
-        sim2 = Simulation(gated_model(); h = 1//10)
+        sim2 = Simulation(gated_model(); Δt_frame = 1//10)
         init!(sim2, set(u = (gate = false,)))
         step!(sim2; t_plus = 0.5)
         @test modes(sim2, "s").count == 0              # gate down: -one(σ) throughout
         stage!(sim2, "gate" => true)                            # the u seam, through the drain (§11.4)
         step!(sim2; t_plus = 0.3)
         @test modes(sim2, "s").count == 1
-        @test modes(sim2, "s").t_fired == 6 * sim2.model.deployment.h
+        @test modes(sim2, "s").t_fired == 6 * sim2.model.deployment.Δt_frame
     end
 
     @testset "ticks are never due at t*: the discrete tier holds through it (§10.4)" begin
@@ -219,7 +219,7 @@ function test_localization()
         model = Group((; src = Sawtooth(1.0), s = Stamper(0.315), ctl = DiscreteAccumulator(1.0));
                       local_wires = ("src/q" => "s/sig",
                                "src/q" => "ctl/e"))
-        sim = Simulation(model; h = 1//10)
+        sim = Simulation(model; Δt_frame = 1//10)
         init!(sim)
         run!(sim; t_end = 0.5)
         @test modes(sim, "s").count == 1               # the event did localize
@@ -228,18 +228,18 @@ function test_localization()
 
     @testset "the two deployment keywords are validated with their siblings (§10.4)" begin
         model = single(Bouncer(1.0, 0.315))
-        d = only(diagnostics(failure(() -> Simulation(model; h = 1//10, localization_tol = 0.0))))
+        d = only(diagnostics(failure(() -> Simulation(model; Δt_frame = 1//10, localization_tol = 0.0))))
         @test d isa DeploymentInvalid && d.parameter === :localization_tol
-        d = only(diagnostics(failure(() -> Simulation(model; h = 1//10, localization_tol = -1e-3))))
+        d = only(diagnostics(failure(() -> Simulation(model; Δt_frame = 1//10, localization_tol = -1e-3))))
         @test d isa DeploymentInvalid && d.parameter === :localization_tol
-        d = only(diagnostics(failure(() -> Simulation(model; h = 1//10, localization_budget = 0))))
+        d = only(diagnostics(failure(() -> Simulation(model; Δt_frame = 1//10, localization_budget = 0))))
         @test d isa DeploymentInvalid && d.parameter === :localization_budget
     end
 
     @testset "localization compiles out at a non-nominal activation (§9.4, D-052)" begin
         # Events are outside every non-nominal executable set, so the frame loop's
         # fast-path key is off: the bare step, no arrival machinery, no reset.
-        dual_model = Model(single(Bouncer(1.0, 0.315)), D8; h = 1//10)
+        dual_model = Model(single(Bouncer(1.0, 0.315)), D8; Δt_frame = 1//10)
         @test !dual_model.exec.has_localized
         init!(dual_model)
         frames!(dual_model, 5)                 # `run!` to 0.5
@@ -250,7 +250,7 @@ function test_localization()
         # A quiet frame pays the arrival sweep and the trigger scan, nothing else.
         quiet_model = Group((; src = Sawtooth(0.1), s = Stamper(100.0));
                             local_wires = ("src/q" => "s/sig",))
-        quiet_sim = Simulation(quiet_model; h = 1//10)
+        quiet_sim = Simulation(quiet_model; Δt_frame = 1//10)
         init!(quiet_sim)
         run!(quiet_sim; t_end = 0.2)
         no_mask = Bool[]                    # the advance's argument (D-260, D-261)
@@ -271,7 +271,7 @@ function test_localization()
         # two boundaries' own publications, the t* one's and the frame top's —
         # the framework-side carve-out (§9.8, §11.2) — and nothing of the
         # localization machinery's.
-        localizing_sim = Simulation(single(Bouncer(1.0, 0.07)); h = 1//10)
+        localizing_sim = Simulation(single(Bouncer(1.0, 0.07)); Δt_frame = 1//10)
         init!(localizing_sim; log = false)
         publish_bytes = @ballocated publish!($localizing_sim, $(localizing_sim.plane.roster))
         hooks = LoopHooks(localizing_sim, localizing_sim.plane.roster, nothing, no_mask)
@@ -287,7 +287,7 @@ function test_localization()
                                                ctl = DiscreteAccumulator(1.0));
                                             local_wires = ("src/q" => "s/sig",
                                                            "src/q" => "ctl/e")));
-                                h = 1//10)
+                                Δt_frame = 1//10)
         model = Model(deployment)
         init!(model)
         frames!(model, 10)
@@ -316,7 +316,7 @@ function test_localization()
         @test length(hooks.boundaries) == 11
         t_star = modes(model, "s").t_fired
         @test t_star ≈ 0.315 atol = 1e-6
-        @test hooks.boundaries[4:5] == [t_star, 4 * deployment.h]
+        @test hooks.boundaries[4:5] == [t_star, 4 * deployment.Δt_frame]
 
         # A `true` at the first t* abandons the frame there: the clock stays at
         # t*, the frame top is never reached, and the remainder never runs.
@@ -331,14 +331,14 @@ function test_localization()
         @test modes(model, "s").count == 1
         # The clock inside the frame is no state to take (§12.6, D-319).
         d = carried(@test_throws DiagnosticError{CheckpointMidFrame} checkpoint(model))
-        @test d.frame == 4 && d.t_frame == 4 * deployment.h && d.t == model.exec.clock.t
+        @test d.frame == 4 && d.t_frame == 4 * deployment.Δt_frame && d.t == model.exec.clock.t
 
         # A `true` at the frame top is `frame!`'s return too, in a frame with no t*.
         model = Model(deployment)
         init!(model)
         hooks = RecordingHooks(model, 0, Float64[], true)
         @test frame!(model, 1, hooks) === true
-        @test hooks.boundaries == [deployment.h]
+        @test hooks.boundaries == [deployment.Δt_frame]
 
         # A `D8` model steps its frame too, its events compiled out (§9.4).
         dual_model = Model(deployment, D8)
@@ -353,7 +353,7 @@ function test_localization()
         # difference of two advances cancels what a call pays once, and both
         # cross frame 512, where a boxed `Int` read would start to allocate.
         sim = Simulation(Group((; src = Sawtooth(0.1), s = Stamper(100.0));
-                               local_wires = ("src/q" => "s/sig",)); h = 1//1000)
+                               local_wires = ("src/q" => "s/sig",)); Δt_frame = 1//1000)
         init!(sim; log = false)
         step!(sim; frames = 10)
         publish_bytes = @ballocated publish!($sim, $(sim.plane.roster))

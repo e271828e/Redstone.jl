@@ -191,7 +191,7 @@ function test_events()
     @testset "a half has a method whatever its bundle annotation (§8.2, §13.2, D-215)" begin
         # The guard holds at the second boundary and the handler resets `x`, so
         # three frames at `ẋ = 1` end at one step, where unfired they end at three.
-        sim = Simulation(single(TypedBundleEvent()); h = 1 // 10)
+        sim = Simulation(single(TypedBundleEvent()); Δt_frame = 1 // 10)
         init!(sim)
         step!(sim; frames = 3)
         @test state(sim, "c") ≈ 0.1
@@ -211,7 +211,7 @@ function test_events()
     @testset "a method typed on the state declares `x_projection` (§5.3, §7.2, §8.2, D-350)" begin
         # The clamp runs at `init!` and after each step, where `q̇ = 1` leaves it.
         for comp in (TypedBareProjection(1.0), TypedNamedProjection())
-            sim = Simulation(single(comp); h = 1 // 10)
+            sim = Simulation(single(comp); Δt_frame = 1 // 10)
             init!(sim)
             @test only(state(sim, "c")) ≈ 1.0
             step!(sim; frames = 2)
@@ -251,7 +251,7 @@ function test_events()
     end
 
     @testset "edge semantics: a u-edge fires at its boundary, a sticky predicate once" begin
-        sim = Simulation(fed(Trigger(0.5), "sig"); h = 1//10)
+        sim = Simulation(fed(Trigger(0.5), "sig"); Δt_frame = 1//10)
         init!(sim, set(u = (in = 0.0,)))    # authored at 0.0: not holding
         step!(sim; t_plus = 0.3)
         @test modes(sim, "c").count == 0
@@ -264,7 +264,7 @@ function test_events()
 
         # Boundary zero establishes every prior as not-holding (§10.6): a predicate
         # already holding in the authored state fires at t₀ — derived, not asserted.
-        sim2 = Simulation(fed(Trigger(0.5), "sig"); h = 1//10)
+        sim2 = Simulation(fed(Trigger(0.5), "sig"); Δt_frame = 1//10)
         init!(sim2, set(u = (in = 1.0,)))
         @test modes(sim2, "c").count == 1
         # A warm restart resets the registers from scratch: it fires again — and
@@ -275,7 +275,7 @@ function test_events()
     end
 
     @testset "the priors survive a restore: a holding guard does not fire again (§12.6, D-274)" begin
-        sim = Simulation(fed(Trigger(0.5), "sig"); h = 1//10)
+        sim = Simulation(fed(Trigger(0.5), "sig"); Δt_frame = 1//10)
         init!(sim, set(u = (in = 0.0,)))
         stage!(sim, "in" => 1.0)
         step!(sim; frames = 3)                       # fired at frame 1, holding since
@@ -284,7 +284,7 @@ function test_events()
         @test cp.state.prior == [true]
 
         # The restore resets no prior, so the next boundary sees no edge.
-        twin = Simulation(fed(Trigger(0.5), "sig"); h = 1//10)
+        twin = Simulation(fed(Trigger(0.5), "sig"); Δt_frame = 1//10)
         restore!(twin, cp)
         @test twin.model.exec.events.prior == [true] && twin.model.exec.events.last == [true]
         step!(twin)
@@ -292,7 +292,7 @@ function test_events()
 
         # `init!` from the same stores establishes the prior as not-holding, so
         # boundary zero fires the holding guard again (§10.6).
-        fresh = Simulation(fed(Trigger(0.5), "sig"); h = 1//10)
+        fresh = Simulation(fed(Trigger(0.5), "sig"); Δt_frame = 1//10)
         init!(fresh, combine(at("c", set(m = (state = :fired, count = 1))),
                              set(u = (in = 1.0,))))
         @test modes(fresh, "c") === (state = :fired, count = 2)
@@ -304,7 +304,7 @@ function test_events()
                                  "f1/on" => "f2/go"),
                         input_wires = ("in" => "trig/sig",))
         for h in (1//10, 1//1000)                    # the latency is rounds, never steps
-            sim = Simulation(chain(); h)
+            sim = Simulation(chain(); Δt_frame = h)
             init!(sim, set(u = (in = 1.0,)))    # one boundary: three rounds to quiescence
             @test modes(sim, "trig").state === :fired
             @test modes(sim, "f1").state === :on
@@ -317,13 +317,13 @@ function test_events()
         # Both events present the same edge; `first` fires by declaration order and
         # `second` is eligible but blocked — its sample is not overwritten, so the
         # standing edge fires it in the next round.
-        sim = Simulation(fed(TwoShot(), "sig"); h = 1//10)
+        sim = Simulation(fed(TwoShot(), "sig"); Δt_frame = 1//10)
         init!(sim, set(u = (in = 2.0,)))
         @test modes(sim, "c") === (a = true, b = true)
 
         # The premise the first transition falsifies: re-decided against the
         # post-transition sweep, `second` never fires on its stale round-1 edge.
-        preempted_sim = Simulation(fed(Preempted(), "sig"); h = 1//10)
+        preempted_sim = Simulation(fed(Preempted(), "sig"); Δt_frame = 1//10)
         init!(preempted_sim, set(u = (in = 2.0,)))
         @test modes(preempted_sim, "c") === (a = true, b = false)
     end
@@ -332,12 +332,12 @@ function test_events()
         # The sawtooth's wrap now genuinely localizes, but its carrying handler
         # (`q ← q − 1`) makes the *boundary states* invariant to where the firing
         # lands, so the boundary recursion stays the exact reference — and the
-        # second wrap crosses inside an *off-tick* frame under N_base = 2, which must
+        # second wrap crosses inside an *off-tick* frame under two frames per base tick, which must
         # fire it all the same.
         q_ref(n_steps) = (q = 0.0;
                           for _ in 1:n_steps; q += 0.03; q ≥ 1 && (q -= 1); end; q)
         for n_base in (1, 2)
-            sim = Simulation(single(Sawtooth(0.3)); h = 1//10, N_base = n_base)
+            sim = Simulation(single(Sawtooth(0.3)); Δt_frame = 1//10, Δt_base = n_base // 10)
             init!(sim)
             step!(sim; t_plus = 6.7)                 # boundary 67: the off-tick wrap
             @test state(sim, "c").q ≈ q_ref(67) rtol = 1e-9
@@ -354,7 +354,7 @@ function test_events()
         # 0.02.
         model = Group((; saw = Sawtooth(0.3), ctl = DiscreteAccumulator(1.0));
                       local_wires = ("saw/q" => "ctl/e",))
-        sim = Simulation(model; h = 1//10)
+        sim = Simulation(model; Δt_frame = 1//10)
         init!(sim)
         run!(sim; t_end = 4.0)
         q, acc = 0.0, 0.0
@@ -369,7 +369,7 @@ function test_events()
     @testset "budget exhaustion degrades, reported on the loop's cell (§10.6, §11.8)" begin
         chatty() = Group((; chat = Chatterer(), trig = Trigger(0.5));
                          input_wires = ("in" => "trig/sig",))
-        sim = Simulation(chatty(); h = 1//10)
+        sim = Simulation(chatty(); Δt_frame = 1//10)
         init!(sim, set(u = (in = 1.0,)))            # exhaustion at boundary zero
         @test modes(sim, "chat").flips == 8         # 2 × the default budget of 4
         @test modes(sim, "trig").count == 1         # the sibling fired normally
@@ -399,19 +399,19 @@ function test_events()
         @test writer_status(latest(sim), "loop").totals.firing == 1
 
         # The budget is a deployment keyword, validated with its siblings.
-        sim2 = Simulation(chatty(); h = 1//10, firing_budget = 2)
+        sim2 = Simulation(chatty(); Δt_frame = 1//10, firing_budget = 2)
         init!(sim2, set(u = (in = 1.0,)))
         @test modes(sim2, "chat").flips == 4
         run!(sim2; t_end = 0.1)
         d = only(writer_status(latest(sim2), "loop").recent)
         @test d isa FiringBudget && d.budget == 2 &&
               d.count == 2
-        d = only(diagnostics(failure(() -> Simulation(chatty(); h = 1//10, firing_budget = 0))))
+        d = only(diagnostics(failure(() -> Simulation(chatty(); Δt_frame = 1//10, firing_budget = 0))))
         @test d isa DeploymentInvalid && d.parameter === :firing_budget
     end
 
     @testset "projection runs at every boundary, between write and decode (§5.3)" begin
-        sim = Simulation(single(Rotor(; ω = 2.0, r₀ = SVector(2.0, 0.0))); h = 1//100)
+        sim = Simulation(single(Rotor(; ω = 2.0, r₀ = SVector(2.0, 0.0))); Δt_frame = 1//100)
         init!(sim)
         # Boundary zero already projects (§14.5), and the sweep decodes the
         # projected state — a wrong order would publish c = 2.0.
@@ -424,7 +424,7 @@ function test_events()
     end
 
     @testset "each firing projects before the round's guards and sweep read the state (§5.3, §10.6)" begin
-        sim = Simulation(single(ProjectedReset()); h = 1//10)
+        sim = Simulation(single(ProjectedReset()); Δt_frame = 1//10)
         init!(sim)
         step!(sim; frames = 2)
         @test modes(sim, "c") == (resets = 0, leaks = 0)
@@ -441,14 +441,14 @@ function test_events()
     end
 
     @testset "events compile out at a non-nominal activation (§9.4, D-052)" begin
-        dual_model = Model(fed(Trigger(0.5), "sig"), D8; h = 1//10)
+        dual_model = Model(fed(Trigger(0.5), "sig"), D8; Δt_frame = 1//10)
         @test isempty(dual_model.exec.events.entries)
         init!(dual_model, set(u = (in = D8(1.0),)))
         frames!(dual_model, 3)                      # `run!` to 0.3
         @test modes(dual_model, "c").count == 0     # the guard never ran
 
         # Projection is continuous machinery, inside every executable set.
-        rotor_model = Model(single(Rotor(; r₀ = SVector(2.0, 0.0))), D8; h = 1//100)
+        rotor_model = Model(single(Rotor(; r₀ = SVector(2.0, 0.0))), D8; Δt_frame = 1//100)
         init!(rotor_model)
         @test ForwardDiff.value(state(rotor_model, "c").r[1]) ≈ 1.0 atol = 1e-15
     end
@@ -456,14 +456,14 @@ function test_events()
     @testset "gate 3: a quiet boundary with events does not allocate (§9.8)" begin
         # The first iteration round always runs, so guard evaluation is on the
         # measured path even when nothing ever fires.
-        sim = Simulation(fed(Trigger(0.5), "sig"); h = 1//10)
+        sim = Simulation(fed(Trigger(0.5), "sig"); Δt_frame = 1//10)
         init!(sim, set(u = (in = 0.0,)))
         boundary!(sim, 1); offtick_boundary!(sim)
         @test @ballocated(boundary!($sim, 1)) == 0
         @test @ballocated(offtick_boundary!($sim)) == 0
         @test @ballocated(integrate!($sim, 0.1)) == 0
 
-        rotor_sim = Simulation(single(Rotor()); h = 1//100)  # projection on the measured path
+        rotor_sim = Simulation(single(Rotor()); Δt_frame = 1//100)  # projection on the measured path
         init!(rotor_sim)
         boundary!(rotor_sim, 1)
         @test @ballocated(boundary!($rotor_sim, 1)) == 0
@@ -475,7 +475,7 @@ function test_events()
         # by a sweep before anything is read — which is why the cell and the
         # store agree at the boundary, and why the snapshot taken there already
         # carries the flip.
-        sim = Simulation(overloaded(); h = 1//10)
+        sim = Simulation(overloaded(); Δt_frame = 1//10)
         init!(sim)
         @test port(sim, "mon", :tripped) === false       # before the crossing
         run!(sim; t_end = 5.0)
@@ -490,7 +490,7 @@ function test_events()
     @testset "an overlay fires the guard it moves into holding, at the overlay boundary (§12.6, D-429)" begin
         # A root-input entry lifts the trigger's input over its level: the prior
         # is kept, so that is an edge, and the handler runs before the next frame.
-        sim = Simulation(fed(Trigger(0.5), "sig"); h = 1//10)
+        sim = Simulation(fed(Trigger(0.5), "sig"); Δt_frame = 1//10)
         init!(sim, set(u = (in = 0.0,)))
         step!(sim; frames = 2)
         @test modes(sim, "c") === (state = :armed, count = 0)
@@ -502,7 +502,7 @@ function test_events()
 
         # An overlaid `x` past the sawtooth's sign-form guard: the handler wraps
         # it at the overlay boundary, and the next frame integrates from there.
-        saw = Simulation(single(Sawtooth(1.0)); h = 1//10)
+        saw = Simulation(single(Sawtooth(1.0)); Δt_frame = 1//10)
         init!(saw)
         step!(saw; frames = 2)
         overlay!(saw, at("c", set(x = (q = 1.5,))))
@@ -512,7 +512,7 @@ function test_events()
     end
 
     @testset "an overlay keeps the priors and merges a partial store onto the current one (§12.6, §14.1, D-429)" begin
-        sim = Simulation(fed(Trigger(0.5), "sig"); h = 1//10)
+        sim = Simulation(fed(Trigger(0.5), "sig"); Δt_frame = 1//10)
         init!(sim, set(u = (in = 0.0,)))
         stage!(sim, "in" => 1.0)
         step!(sim; frames = 3)                       # fired at frame 1, holding since
@@ -525,7 +525,7 @@ function test_events()
     end
 
     @testset "an overlaid state off the manifold is projected before publication (§5.3, §12.6, D-429)" begin
-        sim = Simulation(single(Rotor(; ω = 2.0)); h = 1//100)
+        sim = Simulation(single(Rotor(; ω = 2.0)); Δt_frame = 1//100)
         init!(sim)
         step!(sim)
         overlay!(sim, at("c", set(x = (r = SVector(3.0, 0.0),))))
@@ -536,7 +536,7 @@ function test_events()
     @testset "a handler's `x` and `m` replace a bare state and a bare mode store whole (§5.2, §9.5)" begin
         # `x[1] = t` reaches 1 at `t = 1`, and the handler reflects the rate and
         # latches the mode, so `x[1] = 2 - t` after it.
-        sim = Simulation(single(BareLatch()); h = 1//10)
+        sim = Simulation(single(BareLatch()); Δt_frame = 1//10)
         init!(sim)
         step!(sim; t_plus = 0.5)
         @test modes(sim, "c") === false && port(sim, "c", :latched) === false

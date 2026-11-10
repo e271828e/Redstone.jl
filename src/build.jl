@@ -664,8 +664,9 @@ construction raised, read with [`warnings`](@ref). `build` makes the
 [nominal](@ref g-nominal) `Float64` activation, and a build derives any other at
 first request and keeps it.
 
-Everything in a build is settled before [`Δt_base`](@ref g-dt_base) exists. `h`,
-`N_base` and `Δt_base` are the [`Deployment`](@ref)'s.
+Everything in a build is settled before [`Δt_base`](@ref g-dt_base) exists.
+`Δt_frame`, `Δt_base` and the integration algorithm are the
+[`Deployment`](@ref)'s.
 
 A build is immutable apart from its activation cache, whose insertion is safe
 across tasks. One build backs any number of deployments and [`Model`](@ref)s,
@@ -721,8 +722,8 @@ no grid chosen yet.
 classifies its components and type-checks the wires into the
 [`Structure`](@ref). The nominal evaluation [probes](@ref g-probe) every user
 function. It returns the [`Outputs`](@ref), the [`Events`](@ref) and the nominal
-activation. Nothing here needs `h`, `N_base` or [`Δt_base`](@ref g-dt_base),
-which are the [`Deployment`](@ref)'s.
+activation. Nothing here needs `Δt_frame`, [`Δt_base`](@ref g-dt_base) or the
+algorithm, which are the [`Deployment`](@ref)'s.
 
 A tree the build rejects is refused as one `DiagnosticError` that carries every
 diagnostic the failing step found, and the warnings raised so far. A build that
@@ -1424,8 +1425,9 @@ readers being user values, so reaching here is an internal assertion firing.
         "silence; one product is compiled per activation (§9.2)"))
 
 # `algorithm` takes no default: it is trajectory-determining (§12.7), so a
-# scratch executor silently built on `RK4` against a `Heun` deployment would
-# give a wrong answer with no diagnostic. Every caller passes the deployment's.
+# scratch executor silently built on `RK4()` against a `Heun()` deployment would
+# give a wrong answer with no diagnostic. Every caller passes the deployment's
+# token, which `bind_stepper` (stepper.jl) binds over this buffer set.
 # `schedule` is the deployment's `Schedule`, untyped here because `deployment.jl` is
 # included after this file; the per-component gates are derived from its rows
 # by `_gates` there (§9.2, D-261).
@@ -1604,7 +1606,7 @@ function compile(build::Build, act::Activation{T}, schedule; chunk_size::Int = 1
     # The seam's backend and the arrival pair are this buffer set's, so they are
     # built here rather than by the caller (§12.6, D-256).
     Executor(act, store, xbuf, ẋbuf, sstores, mstores, clock, bodies, event_set, cursor,
-             chunk_size, algorithm(T, n_x), zeros(T, n_x), zeros(T, n_x),
+             chunk_size, bind_stepper(algorithm, T, n_x), zeros(T, n_x), zeros(T, n_x),
              any(event_localized))
 end
 

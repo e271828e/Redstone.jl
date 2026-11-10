@@ -200,7 +200,7 @@ state_events(::LateModeScalar) = (fire = StateEvent(late_mode_guard, late_mode_s
 
 function failures_runtime()
     @testset "the cursor names where execution was after a quiet frame (§13.4)" begin
-        sim = Simulation(feedback_model(); h = 1//50)
+        sim = Simulation(feedback_model(); Δt_frame = 1//50)
         init!(sim, set(u = (ref = 0.0,)))
         step!(sim; t_end = 1.0)
         cursor = sim.model.exec.cursor
@@ -210,7 +210,7 @@ function failures_runtime()
     end
 
     @testset "a throw in the frame's top hook names the drain, not a stale frame (§13.4, D-317)" begin
-        model = Model(diverging(); h = 1//10)
+        model = Model(diverging(); Δt_frame = 1//10)
         init!(model, set(u = (in = false,)))
         frames!(model, 3)                               # the cursor holds frame 3's last dispatch
         err = failure(() -> frame!(model, 4, ThrowingTop()))
@@ -228,7 +228,7 @@ function failures_runtime()
     end
 
     @testset "a throw mid-integration names the component, `x_deriv` and the stage (§13.4)" begin
-        sim = Simulation(fed(Tripwire(0.05), "arm"); h = 1//10)
+        sim = Simulation(fed(Tripwire(0.05), "arm"); Δt_frame = 1//10)
         init!(sim, set(u = (in = true,)))
         err = failure(() -> run!(sim; t_end = 5.0))
         @test err isa StepError
@@ -243,7 +243,7 @@ function failures_runtime()
     end
 
     @testset "a throw in a handler names the event round (§13.4)" begin
-        sim = Simulation(fed(Mine(), "sig"); h = 1//10)
+        sim = Simulation(fed(Mine(), "sig"); Δt_frame = 1//10)
         init!(sim, set(u = (in = false,)))
         stage!(sim, "in" => true)                       # frame 1's drain arms the guard
         err = failure(() -> step!(sim; t_end = 5.0))
@@ -252,7 +252,7 @@ function failures_runtime()
         @test err.boundary == 0
 
         # The pointer is the frame-entry index actually recorded, not a constant.
-        sim2 = Simulation(fed(Mine(), "sig"); h = 1//10)
+        sim2 = Simulation(fed(Mine(), "sig"); Δt_frame = 1//10)
         init!(sim2, set(u = (in = false,)))
         @test step!(sim2; frames = 3, t_end = 5.0) == 3
         stage!(sim2, "in" => true)
@@ -261,7 +261,7 @@ function failures_runtime()
     end
 
     @testset "a bundle field missed past the probe is a `BundleFieldError` species (§13.2, §13.4, D-248)" begin
-        sim = Simulation(single(LateRead()); h = 1//100)
+        sim = Simulation(single(LateRead()); Δt_frame = 1//100)
         init!(sim)
         err = failure(() -> run!(sim; t_end = 0.2))
         @test err isa StepError{BundleFieldError}
@@ -271,7 +271,7 @@ function failures_runtime()
         @test lifecycle(sim) === :errored
 
         # The author's own struct, missed just as late: unmatched, so the raw throw.
-        own = Simulation(single(LateOwnMiss()); h = 1//100)
+        own = Simulation(single(LateOwnMiss()); Δt_frame = 1//100)
         init!(own)
         @test failure(() -> run!(own; t_end = 0.2)) isa StepError{FieldError}
     end
@@ -280,7 +280,7 @@ function failures_runtime()
         # The same mine, armed by the *authored* condition: the guard holds against
         # the not-holding prior boundary zero establishes, so the handler fires
         # inside `init!` rather than inside the loop.
-        sim = Simulation(fed(Mine(), "sig"); h = 1//10)
+        sim = Simulation(fed(Mine(), "sig"); Δt_frame = 1//10)
         err = failure(() -> init!(sim, set(u = (in = true,))))
         @test err isa StepError
         @test err.cursor == CursorFrame("c", :handler, :round, 1)
@@ -306,7 +306,7 @@ function failures_runtime()
 
         # The reproduction is `init!` under the same condition (D-274): the same
         # frame, the same pointer, the same host, the same cause.
-        sim2 = Simulation(fed(Mine(), "sig"); h = 1//10)
+        sim2 = Simulation(fed(Mine(), "sig"); Δt_frame = 1//10)
         reproduced = failure(() -> init!(sim2, set(u = (in = true,))))
         @test reproduced isa StepError{Detonated}
         @test reproduced.cursor == err.cursor && reproduced.boundary == 0 && reproduced.t == err.t
@@ -322,7 +322,7 @@ function failures_runtime()
     @testset "a throw in a guard trial names the localization trial (§13.4)" begin
         # Arrival, validation and the boundary rounds all sit on the grid before any
         # t* has occurred, so the off-grid guard is reachable by a trial alone.
-        sim = Simulation(single(Landmine(1.0, 0.35, 0.1)); h = 1//10)
+        sim = Simulation(single(Landmine(1.0, 0.35, 0.1)); Δt_frame = 1//10)
         init!(sim)
         err = failure(() -> run!(sim; t_end = 5.0))
         @test err isa StepError{Detonated}
@@ -337,7 +337,7 @@ function failures_runtime()
         # the segment's end — is the one that throws. The ordinal is deliberately not
         # asserted: `evaluate!` counts RHS evaluations within the phase, so the sweep
         # reads 0 and the ẋₙ₊₁ evaluation beside it 1.
-        sim = Simulation(single(Landmine(1.0, 0.35, 0.03)); h = 1//10)
+        sim = Simulation(single(Landmine(1.0, 0.35, 0.03)); Δt_frame = 1//10)
         init!(sim)
         err = failure(() -> run!(sim; t_end = 5.0))
         @test err isa StepError{Detonated}
@@ -347,14 +347,14 @@ function failures_runtime()
     end
 
     @testset "a throw in `s_update` or in `x_projection` names its own block (§13.4)" begin
-        sim = Simulation(fed(Sapper(), "sig"); h = 1//10)
+        sim = Simulation(fed(Sapper(), "sig"); Δt_frame = 1//10)
         init!(sim, set(u = (in = false,)))
         stage!(sim, "in" => true)
         err = failure(() -> step!(sim; t_end = 5.0))
         @test err isa StepError{Detonated}
         @test err.cursor.path == "c" && err.cursor.fn === :s_update && err.cursor.phase === :ticks
 
-        projection_sim = Simulation(single(Primer(0.15)); h = 1//10)
+        projection_sim = Simulation(single(Primer(0.15)); Δt_frame = 1//10)
         init!(projection_sim)
         err = failure(() -> run!(projection_sim; t_end = 5.0))
         @test err isa StepError{Detonated}
@@ -363,7 +363,7 @@ function failures_runtime()
     end
 
     @testset "a throw in a firing's projection names the projection, not the handler (§13.4)" begin
-        sim = Simulation(single(DetonatedOnReset()); h = 1//10)
+        sim = Simulation(single(DetonatedOnReset()); Δt_frame = 1//10)
         init!(sim)
         err = failure(() -> run!(sim; t_end = 5.0))
         @test err isa StepError{Detonated}
@@ -374,7 +374,7 @@ function failures_runtime()
     end
 
     @testset "a failed frame is not counted, and the record ends at the last one (§13.4)" begin
-        sim = Simulation(fed(Tripwire(0.25), "arm"); h = 1//10)
+        sim = Simulation(fed(Tripwire(0.25), "arm"); Δt_frame = 1//10)
         init!(sim, set(u = (in = true,)))
         err = failure(() -> step!(sim; frames = 5, t_end = 5.0))
         @test err isa StepError && err.boundary == 2    # frame 3 throws at its half step
@@ -396,7 +396,7 @@ function failures_runtime()
 
         # RK4's last stage: the clock already on the frame top and `x` at a stage
         # point, which the clock alone cannot tell from a settled top.
-        staged = Model(fed(LastStage(), "arm"); h = 1//10)
+        staged = Model(fed(LastStage(), "arm"); Δt_frame = 1//10)
         init!(staged, set(u = (in = true,)))
         before = checkpoint(staged)
         err = failure(() -> frame!(staged, 1))
@@ -407,7 +407,7 @@ function failures_runtime()
         refused_then_restored(staged, before)
 
         # An event handler at the frame-top boundary.
-        top = Model(single(TopInterrupter()); h = 1//10)
+        top = Model(single(TopInterrupter()); Δt_frame = 1//10)
         init!(top)
         frame!(top, 1)
         before = checkpoint(top)
@@ -419,7 +419,7 @@ function failures_runtime()
         refused_then_restored(top, before)
 
         # The `settled!` hook, after the frame top settled.
-        hooked = Model(fed(Interrupter(), "arm"); h = 1//10)
+        hooked = Model(fed(Interrupter(), "arm"); Δt_frame = 1//10)
         init!(hooked, set(u = (in = false,)))
         before = checkpoint(hooked)
         err = failure(() -> frame!(hooked, 1, InterruptingSettle()))
@@ -430,7 +430,7 @@ function failures_runtime()
     end
 
     @testset "a restore an interrupt cuts returns the model to :built under host :restore (§12.6, §13.4)" begin
-        model = Model(fed(Interrupter(), "arm"); h = 1//10)
+        model = Model(fed(Interrupter(), "arm"); Δt_frame = 1//10)
         init!(model, set(u = (in = false,)))
         frames!(model, 2)
         before = checkpoint(model)
@@ -449,7 +449,7 @@ function failures_runtime()
         # The condition starts `q` past the handler's level, so the event fires in
         # boundary zero's first round, and in the overlay's settling likewise.
         past_level = at("c", set(x = (q = 0.2,)))
-        model = Model(single(TopInterrupter()); h = 1//10)
+        model = Model(single(TopInterrupter()); Δt_frame = 1//10)
         err = failure(() -> init!(model, past_level))
         @test err isa StepError{InterruptException}
         @test err.host === :boundary_zero && err.boundary == 0
@@ -467,7 +467,7 @@ function failures_runtime()
         @test model.status === :consistent
 
         # On a simulation the door's throw leaves it `built`, and `init!` legal again.
-        sim = Simulation(single(TopInterrupter()); h = 1//10)
+        sim = Simulation(single(TopInterrupter()); Δt_frame = 1//10)
         err = failure(() -> init!(sim, past_level))
         @test err isa StepError{InterruptException} && err.host === :boundary_zero
         @test lifecycle(sim) === :built
@@ -479,7 +479,7 @@ function failures_runtime()
         # The synchronous throw stands in for the one Julia forces after repeated
         # Ctrl-C, which no test can produce. The frame's catch wraps it like any
         # failure, and the type carries the disposition: a cut frame is a failure.
-        sim = Simulation(interrupted(); h = 1//10)
+        sim = Simulation(interrupted(); Δt_frame = 1//10)
         init!(sim)
         err = failure(() -> step!(sim; frames = 5, t_end = 5.0))
         @test err isa StepError{InterruptException}
@@ -493,7 +493,7 @@ function failures_runtime()
         @test d.op === :checkpoint && d.status === :errored
 
         # Rostered, `run!` logs the failure and returns, the tail run as after any.
-        rostered = Simulation(interrupted(); h = 1//10)
+        rostered = Simulation(interrupted(); Δt_frame = 1//10)
         probe = TailProbe()
         attach!(rostered, probe, NoClaim())
         init!(rostered)
@@ -513,7 +513,7 @@ function failures_runtime()
         # the index the clock's frame plus one. No fixture throws from inside the
         # drain, so the harness writer's thunk is replaced in place, which only a
         # door recompiles.
-        sim = Simulation(fed(Interrupter(), "arm"); h = 1//10)
+        sim = Simulation(fed(Interrupter(), "arm"); Δt_frame = 1//10)
         init!(sim, set(u = (in = false,)))
         step!(sim; frames = 2)
         sim.plane.harness_drain = () -> error("the drain failed")
@@ -527,7 +527,7 @@ function failures_runtime()
     @testset "a deferred interrupt after another issuer keeps that issuer as the source (§12.1, §12.4, D-268)" begin
         sigint_raising() do
             c = HookedRamp()
-            sim = Simulation(hooked_ramp(c); h = 1//10)
+            sim = Simulation(hooked_ramp(c); Δt_frame = 1//10)
             sent, held = Ref(false), Ref(false)
             # inside frame 3's mask: the stop word first, then the signal it defers
             c.hook[] = () -> sent[] ||
@@ -542,7 +542,7 @@ function failures_runtime()
 
     @testset "a signal inside a frame is deferred to its unmask: the frame publishes and counts (§12.4, D-268)" begin
         sigint_raising() do
-            sim = Simulation(single(SelfInterrupter(0.22)); h = 1//10)
+            sim = Simulation(single(SelfInterrupter(0.22)); Δt_frame = 1//10)
             init!(sim)
             run!(sim; t_end = 5.0)                      # returns normally: a stop, not a failure
             @test lifecycle(sim) === :stopped
@@ -553,7 +553,7 @@ function failures_runtime()
             @test !sigint_pending()                     # taken at the unmask, nothing left
             # The count, against the synchronous carve-out's above: the
             # interrupted frame is one advanced.
-            sim2 = Simulation(single(SelfInterrupter(0.22)); h = 1//10)
+            sim2 = Simulation(single(SelfInterrupter(0.22)); Δt_frame = 1//10)
             init!(sim2)
             @test step!(sim2; frames = 5, t_end = 5.0) == 3
             @test termination(sim2).source === ControlRequestedStop(:interrupt)
@@ -563,13 +563,13 @@ function failures_runtime()
 
     @testset "a deferred interrupt yields to a stop request holding at the same publication (§12.4, §13.5, D-268)" begin
         sigint_raising() do
-            sim = Simulation(interrupter_watched(); h = 1//10)
+            sim = Simulation(interrupter_watched(); Δt_frame = 1//10)
             init!(sim)
             run!(sim; t_end = 5.0)
             @test termination(sim).source === ModelRequestedStop("stop", :y, "ramp at level")
             @test latest(sim).frame == 3 && !sigint_pending()
             # With the request ignored the same frame ends on the interrupt.
-            unwatched = Simulation(interrupter_watched(); h = 1//10)
+            unwatched = Simulation(interrupter_watched(); Δt_frame = 1//10)
             init!(unwatched)
             run!(unwatched; t_end = 5.0, ignore_stop_requests = :all)
             @test termination(unwatched).source === ControlRequestedStop(:interrupt)
@@ -579,7 +579,7 @@ function failures_runtime()
 
     @testset "a frame that throws with a signal pending ends errored under its own StepError (§12.4, §13.4, D-268)" begin
         sigint_raising() do
-            sim = Simulation(single(SelfInterrupter(0.22; throws = true)); h = 1//10)
+            sim = Simulation(single(SelfInterrupter(0.22; throws = true)); Δt_frame = 1//10)
             init!(sim)
             err = failure(() -> run!(sim; t_end = 5.0))
             @test err isa StepError{Exploded} && err.boundary == 2
@@ -595,7 +595,7 @@ function failures_runtime()
         sigint_raising() do
             for advance in (sim -> run!(sim; t_end = 5.0), sim -> step!(sim; frames = 50))
                 comp = LateSignal()
-                sim = Simulation(single(comp); h = 1//10)
+                sim = Simulation(single(comp); Δt_frame = 1//10)
                 init!(sim)
                 err = failure(() -> advance(sim))
                 @test comp.sent[]                       # sent inside the frame's catch
@@ -609,7 +609,7 @@ function failures_runtime()
     end
 
     @testset "the rendering states the frame and the reproduction (§13.4, §13.2)" begin
-        sim = Simulation(fed(Tripwire(0.05), "arm"); h = 1//10)
+        sim = Simulation(fed(Tripwire(0.05), "arm"); Δt_frame = 1//10)
         init!(sim, set(u = (in = true,)))
         err = failure(() -> run!(sim; t_end = 5.0))
         rendered = sprint(showerror, err)
@@ -621,14 +621,14 @@ function failures_runtime()
                        rendered) && !occursin("init!", rendered)
         # …and boundary zero's, on the same pointer, takes `init!`: no trace to
         # replay, and the `step!` it would refuse is not named.
-        zero_sim = Simulation(fed(Mine(), "sig"); h = 1//10)
+        zero_sim = Simulation(fed(Mine(), "sig"); Δt_frame = 1//10)
         zero_rendered =
             sprint(showerror, failure(() -> init!(zero_sim, set(u = (in = true,)))))
         @test occursin("init!(sim2, condition) under the same condition reproduces it",
                        zero_rendered)
         @test !occursin("replay!", zero_rendered) && !occursin("step!", zero_rendered)
         # …and a settling's, under `overlay!`, names that door on the stopped state (D-429).
-        armed_sim = Simulation(fed(Mine(), "sig"); h = 1//10)
+        armed_sim = Simulation(fed(Mine(), "sig"); Δt_frame = 1//10)
         init!(armed_sim, set(u = (in = false,)))
         step!(armed_sim; frames = 2)
         overlay_rendered =
@@ -671,7 +671,7 @@ function failures_runtime()
 
         # A `Diagnostic` cause renders as its logline: the kind name leads, and the
         # leaf the sweep named is in the line.
-        diverging_sim = Simulation(diverging(); h = 1//10)
+        diverging_sim = Simulation(diverging(); Δt_frame = 1//10)
         init!(diverging_sim, set(u = (in = true,)))
         diverging_rendered =
             sprint(showerror, failure(() -> step!(diverging_sim; t_end = 5.0)))
@@ -704,7 +704,7 @@ function failures_runtime()
     @testset "a bare value thrown inside a frame moves the status, the carrier lost (§13.4, D-441)" begin
         # The constructor refuses the bare value, so its `MethodError` is what
         # propagates; the status was written first, so the frame is a failure.
-        bare = Model(single(BareThrower()); h = 1//10)
+        bare = Model(single(BareThrower()); Δt_frame = 1//10)
         init!(bare); frame!(bare, 1)
         @test failure(() -> frame!(bare, 2)) isa MethodError
         @test bare.status === :inconsistent
@@ -716,7 +716,7 @@ function failures_runtime()
         # throw a `MethodError` over the model's own failure, losing the cause.
         # The model's frame hosts the catch: stepped under no hooks, it throws the
         # carrier and marks itself inconsistent (D-317).
-        dual_model = Model(fed(Tripwire(0.05), "arm"), D8; h = 1//10)
+        dual_model = Model(fed(Tripwire(0.05), "arm"), D8; Δt_frame = 1//10)
         init!(dual_model, set(u = (in = true,)))
         err = failure(() -> frames!(dual_model, 5))
         @test err isa StepError{Tripped}
@@ -726,7 +726,7 @@ function failures_runtime()
 
         # The sweep's own species too: `isfinite` is defined on a `Dual`, the value
         # rides as the `Dual` it is, and the payload times are seconds either way.
-        diverging_model = Model(diverging(), D8; h = 1//10)
+        diverging_model = Model(diverging(), D8; Δt_frame = 1//10)
         init!(diverging_model, set(u = (in = true,)))
         err = failure(() -> frames!(diverging_model, 1))
         @test err isa StepError{NonfiniteState}
@@ -741,7 +741,7 @@ function failures_runtime()
     end
 
     @testset "the sweep names the diverging block, never its downstream (§13.4, D-157)" begin
-        sim = Simulation(diverging(); h = 1//10)
+        sim = Simulation(diverging(); Δt_frame = 1//10)
         init!(sim, set(u = (in = false,)))
         @test step!(sim; t_end = 5.0) == 1
         stage!(sim, "in" => true)                       # frame 2's drain arms the RHS
@@ -760,7 +760,7 @@ function failures_runtime()
         @test !(err.cause isa DomainError) && d.path != "con"
         @test lifecycle(sim) === :errored
         # A bare state's leaf is named by its field `x` (D-438).
-        bare = Model(bare_world(); h = 1//10)
+        bare = Model(bare_world(); Δt_frame = 1//10)
         init!(bare, set(u = (u = NaN, p = 0.0)))
         err = failure(() -> frames!(bare, 1))
         @test err isa StepError{NonfiniteState} && err.cause.path == "acc" && err.cause.leaf == "x"
@@ -769,7 +769,7 @@ function failures_runtime()
     @testset "the sweep covers a localized frame's remainder segment (§13.4, D-157)" begin
         # `q` crosses 0.15 inside frame 2; the handler latches, and the remainder
         # segment from t* to the frame top is the integrate that diverges.
-        sim = Simulation(single(LateDiverger(1.0, 0.15)); h = 1//10)
+        sim = Simulation(single(LateDiverger(1.0, 0.15)); Δt_frame = 1//10)
         init!(sim)
         err = failure(() -> run!(sim; t_end = 5.0))
         @test err isa StepError{NonfiniteState}
@@ -787,13 +787,13 @@ end
 # needs is the one past the halt, which is what the `:replay` mode keeps a
 # consumer for (§12.7, D-218).
 function reproduction(model, quiet::Int)
-    sim = Simulation(model; h = 1//10)
+    sim = Simulation(model; Δt_frame = 1//10)
     init!(sim, set(u = (in = false,)))
     quiet > 0 && step!(sim; frames = quiet, t_end = 5.0)   # the quiet frames before it
     stage!(sim, "in" => true)                       # drained at the failing frame's top
     failure(() -> step!(sim; t_end = 5.0))
     err = termination(sim).source.exception
-    sim2 = Simulation(model; h = 1//10)
+    sim2 = Simulation(model; Δt_frame = 1//10)
     init!(sim2, set(u = (in = false,)))
     replay!(sim2, trace(sim); to_boundary = err.boundary, t_end = 5.0)
     @test lifecycle(sim2) === :initialized          # the pointer is always a legal halt
@@ -836,7 +836,7 @@ function failures_pointer_twin()
     end
 
     @testset "`to_boundary` counts grid boundaries, not base ticks (§12.7, §13.4)" begin
-        grid() = Simulation(feedback_model(); h = 1//10, N_base = 2)
+        grid() = Simulation(feedback_model(); Δt_frame = 1//10, Δt_base = 1//5)
         sim = grid()
         init!(sim, set(u = (ref = 1.0,)))
         stage!(sim, "ref" => 2.0)
@@ -849,7 +849,7 @@ function failures_pointer_twin()
         replay!(sim2, trc; to_boundary = 3, t_end = 5.0)
         @test lifecycle(sim2) === :initialized
         @test sim2.run.frame == 3                # the halt is at `k`, never at `k · n`
-        @test sim2.run.frame % sim2.model.deployment.N_base == 1       # and 3 is an off-tick frame top here
+        @test sim2.run.frame % sim2.model.deployment.frames_per_tick == 1       # and 3 is an off-tick frame top here
         @test same_trajectory(logged(sim2), [s for s in logged(sim) if s.frame ≤ 3])
 
         # `to_time` counts the same boundaries: 0.3 is boundary 3's own time here,
@@ -876,7 +876,7 @@ end
 
 function failures_conformance()
     @testset "an integer port on a late branch is refused at the write (§9.5)" begin
-        sim = Simulation(single(LateInteger()); h = 1//100)
+        sim = Simulation(single(LateInteger()); Δt_frame = 1//100)
         init!(sim)
         err = failure(() -> run!(sim; t_end = 0.2))
         @test err isa StepError{ConformanceFailure}
@@ -890,7 +890,7 @@ function failures_conformance()
     end
 
     @testset "a mutable static array on a late branch is refused at the write (§9.5, D-238)" begin
-        sim = Simulation(single(LateMutable()); h = 1//100)
+        sim = Simulation(single(LateMutable()); Δt_frame = 1//100)
         init!(sim)
         err = failure(() -> run!(sim; t_end = 0.2))
         @test err isa StepError{ConformanceFailure}
@@ -903,7 +903,7 @@ function failures_conformance()
     end
 
     @testset "an extra and a missing port on a late branch are key-set failures (§9.5)" begin
-        sim = Simulation(single(LateExtraPort()); h = 1//100)
+        sim = Simulation(single(LateExtraPort()); Δt_frame = 1//100)
         init!(sim)
         err = failure(() -> run!(sim; t_end = 0.2))
         @test err isa StepError{ConformanceFailure}
@@ -911,7 +911,7 @@ function failures_conformance()
         @test Set(err.cause.observed_fields) == Set([:q, :extra])
         @test err.cause.declared_fields == [:q]
 
-        sim2 = Simulation(single(LateMissingPort()); h = 1//100)
+        sim2 = Simulation(single(LateMissingPort()); Δt_frame = 1//100)
         init!(sim2)
         err = failure(() -> run!(sim2; t_end = 0.2))
         @test err isa StepError{ConformanceFailure}
@@ -921,13 +921,13 @@ function failures_conformance()
     end
 
     @testset "the names are the pairing, at the port write and the state write (§9.5)" begin
-        sim = Simulation(single(ScrambledPorts()); h = 1//100)
+        sim = Simulation(single(ScrambledPorts()); Δt_frame = 1//100)
         init!(sim)
         run!(sim; t_end = 0.05)
         @test port(sim, "c", :a) == 1.0
         @test port(sim, "c", :b) == 2.0
 
-        rate_sim = Simulation(single(ScrambledRate()); h = 1//100)
+        rate_sim = Simulation(single(ScrambledRate()); Δt_frame = 1//100)
         init!(rate_sim)
         run!(rate_sim; t_end = 0.1)
         @test port(rate_sim, "c", :pa) ≈ 1.1    # ȧ = 1, over 0.1 s
@@ -935,7 +935,7 @@ function failures_conformance()
     end
 
     @testset "an integer derivative leaf on a late branch is refused (§7.1, §9.5)" begin
-        sim = Simulation(single(LateIntegerRate()); h = 1//100)
+        sim = Simulation(single(LateIntegerRate()); Δt_frame = 1//100)
         init!(sim)
         err = failure(() -> run!(sim; t_end = 0.2))
         @test err isa StepError{ConformanceFailure}
@@ -947,7 +947,7 @@ function failures_conformance()
     end
 
     @testset "an integer projection leaf on a late branch is refused (§9.3, §9.5)" begin
-        sim = Simulation(single(LateIntegerProjection()); h = 1//100)
+        sim = Simulation(single(LateIntegerProjection()); Δt_frame = 1//100)
         init!(sim)
         err = failure(() -> run!(sim; t_end = 0.2))
         @test err isa StepError{ConformanceFailure}
@@ -960,7 +960,7 @@ function failures_conformance()
     end
 
     @testset "the constant branch embeds as a zero-partial at the write (§9.5, D-166)" begin
-        dual_model = Model(single(DecayingBranch()), D8; h = 1//100)
+        dual_model = Model(single(DecayingBranch()), D8; Δt_frame = 1//100)
         init!(dual_model)
         frames!(dual_model, 20)                 # `run!` to 0.2; `a` decays under 0.5 mid-run
         value = port(dual_model, "c", :q)
@@ -970,7 +970,7 @@ function failures_conformance()
     end
 
     @testset "a discrete successor of another type on a late tick is refused (§9.5)" begin
-        sim = Simulation(single(LateSuccessor()); h = 1//100)
+        sim = Simulation(single(LateSuccessor()); Δt_frame = 1//100)
         init!(sim)
         err = failure(() -> run!(sim; t_end = 0.2))
         @test err isa StepError{ConformanceFailure}
@@ -982,7 +982,7 @@ function failures_conformance()
     end
 
     @testset "a mode write of another type on the second firing is refused (§5.2, §9.5)" begin
-        sim = Simulation(single(LateMode()); h = 1//100)
+        sim = Simulation(single(LateMode()); Δt_frame = 1//100)
         init!(sim)
         err = failure(() -> run!(sim; t_end = 0.2))
         @test err isa StepError{ConformanceFailure}
@@ -995,7 +995,7 @@ function failures_conformance()
     end
 
     @testset "a mode write that is not a NamedTuple on the second firing is refused (§5.2, §9.5)" begin
-        sim = Simulation(single(LateModeScalar()); h = 1//100)
+        sim = Simulation(single(LateModeScalar()); Δt_frame = 1//100)
         init!(sim)
         err = failure(() -> run!(sim; t_end = 0.2))
         @test err isa StepError{ConformanceFailure}

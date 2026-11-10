@@ -152,7 +152,7 @@ function conditions_algebra()
         @test set(x = 3.0) isa Fragment && set(s = 1, m = :idle) isa Fragment
         # And the service entry point itself: a bare NamedTuple where a condition
         # belongs gets the directive, never a `MethodError`.
-        @test_throws DiagnosticError{ConditionNodeMisuse} init!(Simulation(tri(); h = 1//10), (u = 1.0, e = 2.0))
+        @test_throws DiagnosticError{ConditionNodeMisuse} init!(Simulation(tri(); Δt_frame = 1//10), (u = 1.0, e = 2.0))
     end
 
     @testset "an empty `at` prefix is refused at composition, at the root and below (§14.2, D-278)" begin
@@ -261,7 +261,7 @@ function conditions_algebra()
     end
 
     @testset "root-input totality is checked pre-write, and a rejection changes nothing (§14.6, D-068)" begin
-        sim = Simulation(tri(); h = 1//10)
+        sim = Simulation(tri(); Δt_frame = 1//10)
         init!(sim, set(u = (u = 1.0, e = 2.0)))
         snapshot, q = latest(sim), state(sim, "plant").q
         acc, initial_lifecycle = state(sim, "ctl").acc, lifecycle(sim)
@@ -278,21 +278,21 @@ function conditions_algebra()
         @test lifecycle(sim) === initial_lifecycle && latest(sim) === snapshot
 
         # Every uncovered face, in declaration order (§14.6).
-        fresh = Simulation(tri(); h = 1//10)
+        fresh = Simulation(tri(); Δt_frame = 1//10)
         d = carried(@test_throws DiagnosticError{UninitializedInputs} init!(fresh))
         @test d.faces == [:u, :e]
         @test lifecycle(fresh) === :built
     end
 
     @testset "`init!(sim)` is legal exactly where the build has no root inputs (§14.6)" begin
-        free = Simulation(single(Sawtooth(1.0)); h = 1//10)
+        free = Simulation(single(Sawtooth(1.0)); Δt_frame = 1//10)
         init!(free)                                    # nothing to cover: total by construction
         @test lifecycle(free) === :initialized
         @test isempty(free.model.deployment.build.structure.root_inputs)
     end
 
     @testset "a sparse overlay lands on the declared defaults (§14.1, §14.3)" begin
-        sim = Simulation(tri(); h = 1//10)
+        sim = Simulation(tri(); Δt_frame = 1//10)
         init!(sim, combine(at("ctl", set(s = (acc = 4.0,))),
                            at("trig", set(m = (count = 7,))),
                            set(u = (u = 1.0, e = 0.0))))
@@ -305,7 +305,7 @@ function conditions_algebra()
     end
 
     @testset "fresh run: `init!` restarts from the declared defaults, not the trajectory (D-063)" begin
-        sim = Simulation(tri(); h = 1//10)
+        sim = Simulation(tri(); Δt_frame = 1//10)
         init!(sim, set(u = (u = 4.0, e = 1.0)))
         run!(sim; t_end = 2.0)
         @test lifecycle(sim) === :stopped
@@ -328,7 +328,7 @@ function conditions_algebra()
         # The probe's synthesized 0.0 reaches no published cell.
         total = combine(at("off", set(s = (acc = 7.0,))),
                         set(u = (in = 3.0,)))
-        sim = Simulation(offset_pair(); h = 1//100)
+        sim = Simulation(offset_pair(); Δt_frame = 1//100)
         init!(sim, total)
         @test port(sim, "", :held) === 3.0             # u(t₀), not the probe's 0.0
         @test port(sim, "", :acc) === 7.0              # the authored `s`, published
@@ -356,7 +356,7 @@ function conditions_algebra()
         # staged: boundary zero establishes every prior as not-holding, so the
         # event fires visibly at t₀ rather than one step later.
         model = tri()
-        sim = Simulation(model; h = 1//10)
+        sim = Simulation(model; Δt_frame = 1//10)
         init!(sim, combine(at("plant", condition(model.children.plant; y = 1.0)),
                            set(u = (u = 0.0, e = 0.0))))
         @test modes(sim, "trig") === (state = :fired, count = 1)
@@ -366,7 +366,7 @@ function conditions_algebra()
 
     @testset "the condition-method idiom composes by pull across two levels (§14.2)" begin
         vehicle = Vehicle(; k = 2.0)
-        sim = Simulation(vehicle; h = 1//50)
+        sim = Simulation(vehicle; Δt_frame = 1//50)
         init!(sim, condition(vehicle; ref = 1.0, y = 0.3, v = -0.2, cmd = 2.0))
         # Deep paths are compiled derivatives of the nesting `at` recorded: the
         # owner wrote "loop", the loop wrote "plant", and nothing wrote "loop/plant".
@@ -396,7 +396,7 @@ function conditions_service_walk()
         # path, and the value lands at the leaf it addressed.
         concrete_build = build(ConcreteHold(SampledLoop()))
         @test resolve_condition(deep, concrete_build) isa ConditionPlan
-        concrete_sim = Simulation(ConcreteHold(SampledLoop()); h = 1//50)
+        concrete_sim = Simulation(ConcreteHold(SampledLoop()); Δt_frame = 1//50)
         init!(concrete_sim, combine(deep, set(u = (ref = 1.0,))))
         @test state(concrete_sim, "inner/plant").q == q
 
@@ -405,7 +405,7 @@ function conditions_service_walk()
         # same, since no check refuses traversal past a generically held child.
         generic_build = build(GenericHold(SampledLoop()))
         @test resolve_condition(deep, generic_build) isa ConditionPlan
-        generic_sim = Simulation(GenericHold(SampledLoop()); h = 1//50)
+        generic_sim = Simulation(GenericHold(SampledLoop()); Δt_frame = 1//50)
         init!(generic_sim, combine(deep, set(u = (ref = 1.0,))))
         @test state(generic_sim, "inner/plant").q === state(concrete_sim, "inner/plant").q
 
@@ -413,7 +413,7 @@ function conditions_service_walk()
         # resolves *to* a child, then `plant` from that child's own level.
         nest = at("inner", at("plant", set(x = (q = q,))))
         @test resolve_condition(nest, generic_build) isa ConditionPlan
-        nested_sim = Simulation(GenericHold(SampledLoop()); h = 1//50)
+        nested_sim = Simulation(GenericHold(SampledLoop()); Δt_frame = 1//50)
         init!(nested_sim, combine(nest, set(u = (ref = 1.0,))))
         @test state(nested_sim, "inner/plant").q === state(generic_sim, "inner/plant").q
 
@@ -500,8 +500,8 @@ landed(sim) = (copy(sim.model.exec.xbuf),
 
 function conditions_specialized_apply()
     @testset "a shape-compiled plan lands what the dynamic walk lands (§14.4, D-066)" begin
-        specialized = Simulation(tri(); h = 1//10)
-        dynamic = Simulation(tri(); h = 1//10)
+        specialized = Simulation(tri(); Δt_frame = 1//10)
+        dynamic = Simulation(tri(); Δt_frame = 1//10)
         # Compiled from one tree, applied to a second of the same shape with other
         # values everywhere: the plan holds lenses, not the values it was shown.
         plan = compile_plan(tri_tree(SVector(1.0, 2.0), 3.0, :fired, 4.0, 5.0), specialized.model.deployment.build)
@@ -524,7 +524,7 @@ function conditions_specialized_apply()
     end
 
     @testset "the specialized `apply!` writes without allocating (§14.4, §9.8)" begin
-        sim = Simulation(tri(); h = 1//10)
+        sim = Simulation(tri(); Δt_frame = 1//10)
         plan = compile_plan(tri_tree(SVector(1.0, 2.0), 3.0, :fired, 4.0, 5.0), sim.model.deployment.build)
         tree = tri_tree(SVector(9.0, 8.0), 7.0, :armed, 6.0, 5.5)
         # The whole path: the prefix sweep, the flat-buffer write, both stores as
@@ -535,7 +535,7 @@ function conditions_specialized_apply()
 
     @testset "the specialized `apply!` stays allocation-free past 32 writes (§14.4, §9.8)" begin
         # 64 `at` nodes over 64 components: 64 `x` writes and 64 prefixes to sweep.
-        sim = Simulation(sawtooth_bank(); h = 1//10)
+        sim = Simulation(sawtooth_bank(); Δt_frame = 1//10)
         bank_tree(v) = combine((at("s$i", set(x = (q = v + i,))) for i in 1:64)...)
         plan = compile_plan(bank_tree(0.0), sim.model.deployment.build)
         tree = bank_tree(0.25)
@@ -545,7 +545,7 @@ function conditions_specialized_apply()
         @test (@ballocated apply!($(sim.model.exec), $plan, $tree)) == 0
 
         # One store of 64 fields: one write, its overlay 64 authored values.
-        wide_sim = Simulation(Group((; w = WideStore())); h = 1//10)
+        wide_sim = Simulation(Group((; w = WideStore())); Δt_frame = 1//10)
         authored = NamedTuple{ntuple(i -> Symbol(:f, i), 64)}(ntuple(i -> 0.5i, 64))
         wide_tree = at("w", set(s = authored))
         wide_plan = compile_plan(wide_tree, wide_sim.model.deployment.build)
@@ -556,7 +556,7 @@ function conditions_specialized_apply()
     end
 
     @testset "the store merge is the composite's, not one layer's (§14.3)" begin
-        sim = Simulation(Group((; led = Ledger())); h = 1//10)
+        sim = Simulation(Group((; led = Ledger())); Δt_frame = 1//10)
         # The plan is compiled from the whole composite tree a service builds, so
         # the two layers' fields meet in one `merge(defaults, overlay)`. A plan over
         # the patch alone would write `(a = 0.0, b = 4.0)` — the baseline's `a`
@@ -568,7 +568,7 @@ function conditions_specialized_apply()
     end
 
     @testset "shape drift is a structured error, and nothing is written (§14.4, §9.5)" begin
-        sim = Simulation(tri(); h = 1//10)
+        sim = Simulation(tri(); Δt_frame = 1//10)
         plan = compile_plan(tri_tree(SVector(1.0, 2.0), 3.0, :fired, 4.0, 5.0), sim.model.deployment.build)
         before = landed(sim)
 
@@ -599,7 +599,7 @@ function conditions_specialized_apply()
         # sweep whenever it still spells the same path. That is the property a
         # service rebuilding its tree per evaluation actually needs, and it is both
         # stronger and truer than "equal literals are one object".
-        sim = Simulation(tri(); h = 1//10)
+        sim = Simulation(tri(); Δt_frame = 1//10)
         plan = compile_plan(tri_tree(SVector(1.0, 2.0), 3.0, :fired, 4.0, 5.0), sim.model.deployment.build)
 
         prefix_words = split("plant ctl trig")       # the prefixes as data, not literals
@@ -618,7 +618,7 @@ function conditions_specialized_apply()
     end
 
     @testset "the converters are baked per leaf, at the activation (§14.3)" begin
-        dual_model = Model(tri(), D8; h = 1//10)
+        dual_model = Model(tri(), D8; Δt_frame = 1//10)
         build = dual_model.deployment.build
 
         # A plain `Float64` leaf against a seeded activation: the zero-partial
@@ -654,7 +654,7 @@ end
 
 function conditions_bare_stores()
     @testset "a bare store takes a bare payload whole, at either way of applying it (§14.1, §14.3, §14.4)" begin
-        model = Model(bare_world(); h = 1//10)
+        model = Model(bare_world(); Δt_frame = 1//10)
         roots = set(u = (u = 0.0, p = 0.0))
         tree = combine(roots, at("acc", set(x = 2.5)), at("tick", set(s = 7)),
                        at("latch", set(x = SVector(0.5, 2.0), m = true)))
@@ -676,7 +676,7 @@ function conditions_bare_stores()
     end
 
     @testset "a bare payload names the bare store's letter, and a named one names it too (§14.3, D-438)" begin
-        model = Model(bare_world(); h = 1//10)
+        model = Model(bare_world(); Δt_frame = 1//10)
         roots = set(u = (u = 0.0, p = 0.0))
         init!(model, combine(roots, at("acc", set(x = (x = 3.5,))), at("tick", set(s = (s = 2,))),
                              at("latch", set(m = (m = true,)))))
@@ -711,13 +711,13 @@ function conditions_bare_stores()
 
     @testset "a bare `u` payload names a bare input's face `u` (§14.2, D-437)" begin
         world_build = build(bare_ports_world())
-        model = Model(world_build; h = 1//100)
+        model = Model(world_build; Δt_frame = 1//100)
         init!(model, at("plant/summer", set(u = 0.75)))
         @test port(model, "", :u) === 0.75
         init!(model, at("plant/summer", set(u = (u = 0.25,))))
         @test port(model, "", :u) === 0.25
         # At the root primitive the bare payload is the root input `u` itself.
-        root = Model(BareScale(); h = 1//10)
+        root = Model(BareScale(); Δt_frame = 1//10)
         init!(root, set(u = 1.5))
         @test port(root, "", :u) === 1.5 && port(root, "") === -3.0
         # A bare payload at a named level or an assembly is the shape's refusal;

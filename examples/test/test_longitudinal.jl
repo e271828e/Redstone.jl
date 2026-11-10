@@ -7,7 +7,7 @@ import RedstoneExamples: Longitudinal, aircraft, level_flight, longitudinal_taps
 
 # The aircraft trimmed at level flight, the simulation left at the commit.
 function trimmed_aircraft()
-    sim = Simulation(aircraft(); h = 1//100)
+    sim = Simulation(aircraft(); Δt_frame = 1//100)
     report = trim!(sim, level_flight(); baseline = set(u = (δe = 0.0, δt = 0.5)))
     (sim, report)
 end
@@ -24,7 +24,7 @@ function fly_closed_loop(solution, gains; cascade = true, switch_at = nothing, h
                          noise_σ = 0.3, t_end = 120.0)
     h = 1//200
     frame(t) = round(Int, t / h)
-    sim = Simulation(closed_loop(solution, gains; noise_σ); h)
+    sim = Simulation(closed_loop(solution, gains; noise_σ); Δt_frame = h)
     init!(sim, cascade ? trimmed(solution) : override(trimmed(solution), set(u = (mode = false,))))
     step!(sim; frames = frame(5.0) - 1)
     stage!(sim, "h_ref" => 1000.0 + h_step)
@@ -79,7 +79,7 @@ end
     end
 
     @testset "the open loop from 55 m/s crosses the trim airspeed every half phugoid period (§10.2)" begin
-        open_loop = Simulation(aircraft(); h = 1//100)
+        open_loop = Simulation(aircraft(); Δt_frame = 1//100)
         init!(open_loop, at_trim(solution, condition(Longitudinal(); V = 55.0, θ = solution.θ)))
         run!(open_loop; t_end = 120.0)
         times = logged_times(open_loop)
@@ -173,7 +173,7 @@ end
     end
 
     @testset "the descent ends at touchdown with the gear's stop reason (§2.3, §13.5, D-316)" begin
-        flight = Simulation(descent(); h = 1//100)
+        flight = Simulation(descent(); Δt_frame = 1//100)
         init!(flight, at_trim(solution, condition(Longitudinal(); θ = solution.θ, h = 30.0); δt = 0.25))
         run!(flight; t_end = 200.0)
         record = termination(flight)
@@ -187,7 +187,7 @@ end
     end
 
     @testset "the closed loop's phase bodies allocate nothing (§9.8)" begin
-        bodies = phase_bodies(Simulation(closed_loop(solution, gains); h = 1//200))
+        bodies = phase_bodies(Simulation(closed_loop(solution, gains); Δt_frame = 1//200))
         for name in (:sweep_1, :sweep_2, :rhs, :ticks)
             body = bodies[name]
             body(); body(0)

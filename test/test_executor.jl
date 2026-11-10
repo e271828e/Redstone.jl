@@ -8,7 +8,7 @@ const BLOCKS = (:sweep_1, :sweep_2, :rhs, :ticks)   # the four blocks, both arit
 
 function test_executor()
     @testset "the phase-body roster is fixed and total (§9.7)" begin
-        sim = Simulation(feedback_model(); h = 1//100)
+        sim = Simulation(feedback_model(); Δt_frame = 1//100)
         bodies = phase_bodies(sim)
         @test keys(bodies) === (:sweep_1, :sweep_2, :rhs, :ticks, :events, :projections)
         @test bodies.ticks() === nothing            # empty body: legal, a no-op
@@ -24,7 +24,7 @@ function test_executor()
         # One stage-1 return over both homes (§5.3): `Motor` returns `ω` from
         # `x` and `running` from `m` in a single `y_state`, so its stage-1
         # block is one `StageEntry` and the canary holds over it.
-        motor_sim = Simulation(fed(Motor(1.0), "M_load"); h = 1//100)
+        motor_sim = Simulation(fed(Motor(1.0), "M_load"); Δt_frame = 1//100)
         bodies = phase_bodies(motor_sim)
         walk = walked(bodies.sweep_1, :interior)
         @test count(e -> e isa StageEntry, walk) == 1
@@ -43,7 +43,7 @@ function test_executor()
         # walks within one chunk.
         six = Group(NamedTuple{ntuple(i -> Symbol(:m, i), 6)}(ntuple(_ -> feedback_model(), 6));
                     input_wires = ("ref" => ntuple(i -> "m$(i)/ref", 6),))
-        sim = Simulation(six; h = 1//100, chunk_size = 1)
+        sim = Simulation(six; Δt_frame = 1//100, chunk_size = 1)
         @test length(sim.model.exec.bodies.sweep_2.interior) > 16
         for name in BLOCKS
             body = phase_bodies(sim)[name]
@@ -58,7 +58,7 @@ function test_executor()
         forty = Group(NamedTuple{ntuple(i -> Symbol(:m, i), 40)}(ntuple(_ -> feedback_model(), 40));
                       input_wires = ("ref" => ntuple(i -> "m$(i)/ref", 40),))
         for chunk_size in (1, 40)
-            sim = Simulation(forty; h = 1//100, chunk_size)
+            sim = Simulation(forty; Δt_frame = 1//100, chunk_size)
             sweep_2 = sim.model.exec.bodies.sweep_2
             @test length(sweep_2.interior) == 120 ÷ chunk_size
             @test length(first(sweep_2.interior).entries) == chunk_size
@@ -75,7 +75,7 @@ function test_executor()
         rotors = Group(NamedTuple{ntuple(i -> Symbol(:p, i), 40)}(
             ntuple(_ -> Group((; rot = Rotor(), saw = Sawtooth(1.0))), 40)))
         for chunk_size in (1, 40)
-            sim = Simulation(rotors; h = 1//100, chunk_size)
+            sim = Simulation(rotors; Δt_frame = 1//100, chunk_size)
             init!(sim)
             @test length(phase_bodies(sim).projections) == 40
             @test length(phase_bodies(sim).events) == 40
@@ -104,11 +104,11 @@ function test_executor()
             ntuple(i -> Group((; rot = Rotor(; ω = 1.0 + i / 100),
                                  saw = Sawtooth(1.0 + i / 100))), n)))
         for model in (loops, rotor_saws)
-            small, big = Simulation(model(6); h = 1//100), Simulation(model(40); h = 1//100)
+            small, big = Simulation(model(6); Δt_frame = 1//100), Simulation(model(40); Δt_frame = 1//100)
             @test sizeof(big.model.exec) - sizeof(small.model.exec) ==
                   sizeof(Int) * (count_chunks(big) - count_chunks(small))
         end
-        events = Simulation(rotor_saws(40); h = 1//100).model.exec.events
+        events = Simulation(rotor_saws(40); Δt_frame = 1//100).model.exec.events
         @test ismutable(events)
         @test sizeof(events.entries) == sizeof(Int) * length(events.entries)
         @test sizeof(events.projects) == sizeof(Int) * length(events.projects)
@@ -118,7 +118,7 @@ function test_executor()
         # three wraps is the run at 16 and at 64.
         rotors = rotor_saws(40)
         runs = map((4, 16, 64)) do chunk_size
-            sim = Simulation(rotors; h = 1//100, chunk_size)
+            sim = Simulation(rotors; Δt_frame = 1//100, chunk_size)
             init!(sim)
             run!(sim; t_end = 3.5)
             sim
@@ -130,7 +130,7 @@ function test_executor()
 
         # A body with no gated entry walks its interior at a boundary: its two
         # tuples have one type, and the boundary call writes what the interior does.
-        sim = Simulation(feedback_model(); h = 1//100)
+        sim = Simulation(feedback_model(); Δt_frame = 1//100)
         init!(sim, set(u = (ref = 0.5,)))
         run!(sim; t_end = 0.1)
         rhs = phase_bodies(sim).rhs
@@ -147,7 +147,7 @@ function test_executor()
     end
 
     @testset "the event and projection callables ride with the four blocks (§9.7)" begin
-        sim = Simulation(Group((; rot = Rotor(), saw = Sawtooth(1.0))); h = 1//100)
+        sim = Simulation(Group((; rot = Rotor(), saw = Sawtooth(1.0))); Δt_frame = 1//100)
         init!(sim)
         bodies = phase_bodies(sim)
         @test collect(keys(bodies.events)) == [("saw", :wrap)]
@@ -177,7 +177,7 @@ function test_executor()
             end
         wide = zero(SVector{100, Float64})
         sim = Simulation(Group((; k = Constant(wide), d = UnitDelay(wide));
-                               local_wires = ("k/y" => "d/u",)); h = 1//100)
+                               local_wires = ("k/y" => "d/u",)); Δt_frame = 1//100)
         init!(sim)
         ticks = phase_bodies(sim).ticks
         @test invokes_barrier(only(ticks.boundary), (Int,))
@@ -186,7 +186,7 @@ function test_executor()
 
         sim = Simulation(Group((; k = Constant(wide), r = Constant(false),
                                   d = Integrator(x0 = wide, reset = true));
-                               local_wires = ("k/y" => "d/u", "r/y" => "d/reset")); h = 1//100)
+                               local_wires = ("k/y" => "d/u", "r/y" => "d/reset")); Δt_frame = 1//100)
         init!(sim)
         event = phase_bodies(sim).events[("d", :reset)]
         @test invokes_barrier(event.handler, ())
@@ -210,7 +210,7 @@ function test_executor()
               d.observed === Float64 && d.declared === Int
         # Over bare stores, and a stateless leaf marked `nothing`, the phase
         # bodies allocate nothing, the always-on check folded away.
-        sim = Simulation(bare_world(); h = 1//100)
+        sim = Simulation(bare_world(); Δt_frame = 1//100)
         init!(sim, set(u = (u = 0.5, p = 0.0)))
         step!(sim)
         bodies = phase_bodies(sim)
@@ -234,7 +234,7 @@ function test_executor()
         # Over bare contracts at depth, under a `Dual` activation too, the phase
         # bodies allocate nothing, the check folded away.
         for T in (Float64, LinearizeDual)
-            model = Model(bare_ports_world(), T; h = 1//100)
+            model = Model(bare_ports_world(), T; Δt_frame = 1//100)
             init!(model, set(u = (u = 0.5,)))
             bodies = phase_bodies(model)
             for name in BLOCKS

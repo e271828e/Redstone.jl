@@ -16,10 +16,24 @@
 # The seam is never entered empty (§10.2): the framework short-circuits an
 # empty state on its own side — `integrate!(model, h)` in model.jl — so no backend ever
 # faces N = 0. Both first-cut backends are fixed-step, zero-allocation and
-# generic in the scalar; the backend is a deployment binding (`algorithm = RK4`,
-# the default), and nothing outside this file knows which one ran.
+# generic in the scalar; the backend is a deployment binding (`algorithm =
+# RK4()`, the default), and nothing outside this file knows which one ran.
+#
+# Each backend is two types (D-442): the token the deployment records, `RK4(h)`
+# (deployment.jl), and the stepper it binds to here, which owns scratch sized by
+# the state and typed by the scalar, both known only at `Model` construction.
 
 abstract type AbstractStepper end
+
+"""
+    bind_stepper(algorithm, T, n_x) -> AbstractStepper
+
+The stepper an algorithm token binds to at `Model` construction (§10.2, D-442):
+its scratch over the model's flat state buffer of `n_x` scalars of type `T`.
+The token's step is the deployment's, read by the frame loop, so the stepper
+does not hold it.
+"""
+function bind_stepper end
 
 """
     startpoint(stepper)
@@ -44,29 +58,22 @@ the model's state has no field for it; a multistep backend would add one.
 checkpoint_stepper(::AbstractStepper) = nothing
 restore_stepper!(::AbstractStepper, model_state) = nothing
 
-# Design: §10.2.
-# It owns exactly its own scratch, the state at the start of the step and the
-# four stage derivatives.
-"""
-    RK4(::Type{T}, n_x::Int) -> RK4{T}
-
-The classical fourth-order Runge–Kutta method, the default stepper.
-
-Choose it with `algorithm = RK4`, the default of [`Deployment`](@ref). Building
-a [`Model`](@ref) constructs it over the model's flat state
-[buffer](@ref g-buffer) of `n_x` scalars of type `T`. For the second-order
-method, see [`Heun`](@ref).
-"""
-struct RK4{T} <: AbstractStepper
+# Design: §10.2, D-442.
+# The classical fourth-order Runge–Kutta method, `RK4`'s stepper. It owns
+# exactly its own scratch, the state at the start of the step and the four
+# stage derivatives, over the model's flat state buffer of `n_x` scalars of
+# type `T`.
+struct RK4Stepper{T} <: AbstractStepper
     x₀::Vector{T}
     k₁::Vector{T}
     k₂::Vector{T}
     k₃::Vector{T}
     k₄::Vector{T}
 end
-RK4(::Type{T}, n_x::Int) where {T} = RK4{T}(ntuple(_ -> zeros(T, n_x), 5)...)
+bind_stepper(::RK4, ::Type{T}, n_x::Int) where {T} =
+    RK4Stepper{T}(ntuple(_ -> zeros(T, n_x), 5)...)
 
-function integrate!(stepper::RK4, model::Model, h)
+function integrate!(stepper::RK4Stepper, model::Model, h)
     x, ẋ = model.exec.xbuf, model.exec.ẋbuf
     (; x₀, k₁, k₂, k₃, k₄) = stepper
     t = model.exec.clock.t
@@ -86,30 +93,21 @@ function integrate!(stepper::RK4, model::Model, h)
     nothing
 end
 
-startpoint(stepper::RK4) = (stepper.x₀, stepper.k₁)
+startpoint(stepper::RK4Stepper) = (stepper.x₀, stepper.k₁)
 
-# Design: §10.2.
+# Design: §10.2, D-442.
+# Heun's second-order method, the explicit trapezoidal rule, `Heun`'s stepper.
 # It owns exactly its own scratch, the state at the start of the step and the
 # two stage derivatives.
-"""
-    Heun(::Type{T}, n_x::Int) -> Heun{T}
-
-Heun's second-order method, the explicit trapezoidal rule, the other built-in
-stepper.
-
-Choose it with `algorithm = Heun` on [`Deployment`](@ref). Building a
-[`Model`](@ref) constructs it over the model's flat state
-[buffer](@ref g-buffer) of `n_x` scalars of type `T`. For the default
-fourth-order method, see [`RK4`](@ref).
-"""
-struct Heun{T} <: AbstractStepper
+struct HeunStepper{T} <: AbstractStepper
     x₀::Vector{T}
     k₁::Vector{T}
     k₂::Vector{T}
 end
-Heun(::Type{T}, n_x::Int) where {T} = Heun{T}(ntuple(_ -> zeros(T, n_x), 3)...)
+bind_stepper(::Heun, ::Type{T}, n_x::Int) where {T} =
+    HeunStepper{T}(ntuple(_ -> zeros(T, n_x), 3)...)
 
-function integrate!(stepper::Heun, model::Model, h)
+function integrate!(stepper::HeunStepper, model::Model, h)
     x, ẋ = model.exec.xbuf, model.exec.ẋbuf
     (; x₀, k₁, k₂) = stepper
     t = model.exec.clock.t
@@ -125,7 +123,7 @@ function integrate!(stepper::Heun, model::Model, h)
     nothing
 end
 
-startpoint(stepper::Heun) = (stepper.x₀, stepper.k₁)
+startpoint(stepper::HeunStepper) = (stepper.x₀, stepper.k₁)
 
 @inline function _stage_point!(x, x₀, k, h)
     @inbounds for i in eachindex(x)

@@ -8,7 +8,7 @@ function test_log()
     @testset "every boundary publishes: t* included, boundary-consistent (§11.2, §10.6)" begin
         model = Group((; src = Sawtooth(1.0), s = Stamper(0.315));
                       local_wires = ("src/q" => "s/sig",))
-        sim = Simulation(model; h = 1//10)
+        sim = Simulation(model; Δt_frame = 1//10)
         init!(sim)
         run!(sim; t_end = 0.5)
         snapshots = logged(sim)
@@ -28,7 +28,7 @@ function test_log()
     end
 
     @testset "the log is the publications themselves: full density, zero copies (§11.2)" begin
-        sim = Simulation(fed(Plant(), "u"); h = 1//10)
+        sim = Simulation(fed(Plant(), "u"); Δt_frame = 1//10)
         init!(sim, set(u = (in = 1.0,)))
         step!(sim; t_plus = 1.0)
         snapshots = logged(sim)
@@ -45,7 +45,7 @@ function test_log()
         # Equal, not zero: §11.2 builds a snapshot and a table copy per frame
         # by design, log or no log. The log stores the box publication made.
         # 1000 frames carry the ordinal past 511, where a dynamic `Int` read boxes.
-        sim = Simulation(feedback_model(); h = 1//100)
+        sim = Simulation(feedback_model(); Δt_frame = 1//100)
         authored = set(u = (ref = 0.0,))
         for log in (true, false)                             # compilation out of the number
             init!(sim, authored; log)
@@ -59,7 +59,7 @@ function test_log()
     end
 
     @testset "logged is typed by the run's snapshot type, empty or not (§11.2)" begin
-        sim = Simulation(fed(Plant(), "u"); h = 1//10)
+        sim = Simulation(fed(Plant(), "u"); Δt_frame = 1//10)
         unpublished = eltype(logged(sim))                    # before the first `init!`
         init!(sim, set(u = (in = 0.0,)))
         run!(sim; t_end = 0.5)
@@ -71,7 +71,7 @@ function test_log()
     end
 
     @testset "log_every thins retention, never publication (§11.2)" begin
-        sim = Simulation(fed(Plant(), "u"); h = 1//10)
+        sim = Simulation(fed(Plant(), "u"); Δt_frame = 1//10)
         init!(sim, set(u = (in = 0.0,)); log_every = 3)
         step!(sim; frames = 1)
         @test latest(sim).frame == 1                         # published to live readers…
@@ -81,7 +81,7 @@ function test_log()
     end
 
     @testset "the endpoints are unconditional and outside the bound (§11.2)" begin
-        sim = Simulation(fed(Plant(), "u"); h = 1//10)
+        sim = Simulation(fed(Plant(), "u"); Δt_frame = 1//10)
         init!(sim, set(u = (in = 0.0,)); log_every = 4, log_max = 2)
         run!(sim; t_end = 4.0)
         snapshots = logged(sim)
@@ -91,7 +91,7 @@ function test_log()
     end
 
     @testset "re-decimation: stride doubles, coverage stays global, the bound holds continuously (§11.2, D-137)" begin
-        sim = Simulation(fed(Plant(), "u"); h = 1//10)
+        sim = Simulation(fed(Plant(), "u"); Δt_frame = 1//10)
         init!(sim, set(u = (in = 0.0,)); log_max = 8)
         ok_bound = ok_ends = ok_sorted = true
         for k in 1:128                                       # one frame at a time: every
@@ -111,7 +111,7 @@ function test_log()
         @test length(logged(sim)) == 9
 
         # The effective stride composes with the authored one: log_every · 2^k.
-        sim2 = Simulation(fed(Plant(), "u"); h = 1//10)
+        sim2 = Simulation(fed(Plant(), "u"); Δt_frame = 1//10)
         init!(sim2, set(u = (in = 0.0,)); log_every = 2, log_max = 4)
         run!(sim2; t_end = 4.0)
         @test [snapshot.frame for snapshot in logged(sim2)] == [0, 8, 16, 24, 32, 40]
@@ -119,7 +119,7 @@ function test_log()
     end
 
     @testset "log = false retains nothing; publication is upstream of the switch (§11.2)" begin
-        sim = Simulation(fed(Plant(), "u"); h = 1//10)
+        sim = Simulation(fed(Plant(), "u"); Δt_frame = 1//10)
         init!(sim, set(u = (in = 0.0,)); log = false)
         run!(sim; t_end = 0.5)
         @test isempty(logged(sim))
@@ -130,7 +130,7 @@ function test_log()
         # A localized-event trajectory, so the t* machinery is in the loop too:
         # retention differing in every keyword, the trajectory bitwise the same.
         function session(; kw...)
-            sim = Simulation(single(Bouncer(1.0, 0.315)); h = 1//10)
+            sim = Simulation(single(Bouncer(1.0, 0.315)); Δt_frame = 1//10)
             init!(sim; kw...)
             sim
         end
@@ -146,7 +146,7 @@ function test_log()
     end
 
     @testset "a warm restart is a new trajectory: the log starts over (§11.2)" begin
-        sim = Simulation(fed(Plant(), "u"); h = 1//10)
+        sim = Simulation(fed(Plant(), "u"); Δt_frame = 1//10)
         init!(sim, set(u = (in = 0.0,)))
         run!(sim; t_end = 1.0)
         @test length(logged(sim)) == 11
@@ -156,10 +156,10 @@ function test_log()
     end
 
     @testset "a restored run counts its stride from its first endpoint (§11.2, D-274)" begin
-        sim = Simulation(fed(Plant(), "u"); h = 1//10)
+        sim = Simulation(fed(Plant(), "u"); Δt_frame = 1//10)
         init!(sim, set(u = (in = 0.0,)))
         step!(sim; frames = 4)
-        restored = Simulation(fed(Plant(), "u"); h = 1//10)
+        restored = Simulation(fed(Plant(), "u"); Δt_frame = 1//10)
         restore!(restored, checkpoint(sim); log_every = 3)
         step!(restored; frames = 9)
         # the first endpoint re-publishes boundary 4, and every third past it is kept
@@ -167,7 +167,7 @@ function test_log()
     end
 
     @testset "logged is a stopped-sim read behind the §11.3 gate" begin
-        sim = Simulation(fed(Plant(), "u"); h = 1//100000)
+        sim = Simulation(fed(Plant(), "u"); Δt_frame = 1//100000)
         init!(sim, set(u = (in = 0.0,)); log_max = 16)
         logged(sim)                                          # warms the compile path, so the
                                                              # mid-run check below races no JIT
@@ -186,7 +186,7 @@ function test_log()
     end
 
     @testset "the retention keywords are validated with their siblings (§11.2)" begin
-        sim = Simulation(fed(Plant(), "u"); h = 1//10)
+        sim = Simulation(fed(Plant(), "u"); Δt_frame = 1//10)
         authored = set(u = (in = 0.0,))
         # View policies are the door's keywords, so they are `ArgumentInvalid`s
         # at `call = :init!` (D-261), refused before any write.
@@ -212,7 +212,7 @@ function test_log()
     # --- the series over the log (§11.2, D-407) --------------------------------------
 
     @testset "columns are the comprehension's values, typed by the leaf (§11.2, D-407)" begin
-        sim = Simulation(fed(VectorPlant(), "u"); h = 1//10)
+        sim = Simulation(fed(VectorPlant(), "u"); Δt_frame = 1//10)
         init!(sim, set(u = (in = 1.0,)))
         run!(sim; t_end = 1.0)
         snapshots = logged(sim)
@@ -225,7 +225,7 @@ function test_log()
         # The stamps are the snapshots' own, read on a run whose t* boundary
         # shares its frame's ordinal, so the frame and boundary columns differ.
         stamped = Simulation(Group((; src = Sawtooth(1.0), s = Stamper(0.315));
-                                   local_wires = ("src/q" => "s/sig",)); h = 1//10)
+                                   local_wires = ("src/q" => "s/sig",)); Δt_frame = 1//10)
         init!(stamped)
         run!(stamped; t_end = 0.5)
         snapshots = logged(stamped)
@@ -238,7 +238,7 @@ function test_log()
     end
 
     @testset "a leaf step reads one component (§14.4, D-276, D-407)" begin
-        sim = Simulation(fed(VectorPlant(), "u"); h = 1//10)
+        sim = Simulation(fed(VectorPlant(), "u"); Δt_frame = 1//10)
         init!(sim, set(u = (in = 1.0,)))
         run!(sim; t_end = 1.0)
         qs = [port(snapshot, "c", :q) for snapshot in logged(sim)]
@@ -246,7 +246,7 @@ function test_log()
         @test columns.q2 == getindex.(qs, 2)
         @test typeof(columns.q2) === Vector{Float64}
         # A `.name` step and a two-index step on a struct port.
-        posed = Simulation(pose_model(); h = 1//10)
+        posed = Simulation(pose_model(); Δt_frame = 1//10)
         init!(posed)
         run!(posed; t_end = 0.5)
         poses = [port(snapshot, "c", :pose) for snapshot in logged(posed)]
@@ -258,7 +258,7 @@ function test_log()
     end
 
     @testset "labels and order are the set's (D-407)" begin
-        sim = Simulation(fed(VectorPlant(), "u"); h = 1//10)
+        sim = Simulation(fed(VectorPlant(), "u"); Δt_frame = 1//10)
         init!(sim, set(u = (in = 1.0,)))
         run!(sim; t_end = 0.5)
         columns = series(sim, reads(power = get_output("c", :power), q = get_output("c", :q),
@@ -268,7 +268,7 @@ function test_log()
     end
 
     @testset "empty before the first init!, typed all the same (§11.2, D-407)" begin
-        sim = Simulation(fed(VectorPlant(), "u"); h = 1//10)
+        sim = Simulation(fed(VectorPlant(), "u"); Δt_frame = 1//10)
         empty_series = series(sim, reads(q = get_output("c", :q), q2 = get_output("c", "q[2]")))
         @test length(empty_series.t) == length(empty_series.frame) == length(empty_series.boundary) == 0
         @test typeof(empty_series.columns) ===
@@ -277,7 +277,7 @@ function test_log()
     end
 
     @testset "a mount reads what its root-authored twin reads (§14.9, D-277)" begin
-        sim = Simulation(fed(Plant(), "u"); h = 1//10)
+        sim = Simulation(fed(Plant(), "u"); Δt_frame = 1//10)
         init!(sim, set(u = (in = 1.0,)))
         run!(sim; t_end = 1.0)
         mounted = series(sim, at("c", reads(h = get_face(:y), p = get_face(:power)))).columns
@@ -287,7 +287,7 @@ function test_log()
     end
 
     @testset "refusals are the resolver's, collected (§14.4, §13.1, D-406, D-407)" begin
-        sim = Simulation(fed(VectorPlant(), "u"); h = 1//10)
+        sim = Simulation(fed(VectorPlant(), "u"); Δt_frame = 1//10)
         init!(sim, set(u = (in = 1.0,)))
         run!(sim; t_end = 0.5)
         d = only(diagnostics(failure(() -> series(sim, reads(x = get_state("c", :q))))))
@@ -309,7 +309,7 @@ function test_log()
     end
 
     @testset "the stride thins the columns with the log (§11.2)" begin
-        sim = Simulation(fed(VectorPlant(), "u"); h = 1//10)
+        sim = Simulation(fed(VectorPlant(), "u"); Δt_frame = 1//10)
         init!(sim, set(u = (in = 1.0,)); log_every = 3)
         run!(sim; t_end = 1.0)
         thinned = series(sim, reads(q = get_output("c", :q)))
@@ -318,7 +318,7 @@ function test_log()
     end
 
     @testset "series is a stopped-sim read behind the §11.3 gate" begin
-        sim = Simulation(fed(Plant(), "u"); h = 1//100000)
+        sim = Simulation(fed(Plant(), "u"); Δt_frame = 1//100000)
         init!(sim, set(u = (in = 0.0,)); log_max = 16)
         read_set = reads(y = get_output("c", :y))
         series(sim, read_set)                                # warms the compile path, so the
@@ -341,7 +341,7 @@ function test_log()
         # `series` compiles once per simulation type, whatever its read set, and
         # `_column` once per entry type. The counts are read around calls on one
         # simulation, so the snapshot type is fixed; `q[1]` is read nowhere else.
-        sim = Simulation(fed(VectorPlant(), "u"); h = 1//10)
+        sim = Simulation(fed(VectorPlant(), "u"); Δt_frame = 1//10)
         init!(sim, set(u = (in = 1.0,)))
         run!(sim; t_end = 0.5)
         series(sim, reads(q = get_output("c", :q), power = get_output("c", :power)))

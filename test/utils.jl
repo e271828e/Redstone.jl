@@ -15,7 +15,7 @@ gated(body) = count(e isa Gated for c in body.boundary for e in c.entries)
 # top its clock sits on (D-317).
 function frames!(model, n)
     clock = model.exec.clock
-    k₀ = round(Int, (clock.t - clock.t₀) / model.deployment.h)
+    k₀ = round(Int, (clock.t - clock.t₀) / model.deployment.Δt_frame)
     for i in 1:n
         frame!(model, k₀ + i)
     end

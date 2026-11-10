@@ -252,9 +252,10 @@ end
 
 # --- Deployment -------------------------------------------------------------------
 
+# The algorithm prints by its token's `show`, with its step resolved (D-442).
 _deployment_parameters(deployment::Deployment) =
-    "h = $(repr(deployment.h)), N_base = $(deployment.N_base), Δt_base = $(repr(deployment.Δt_base)), " *
-    string(nameof(deployment.algorithm))
+    "Δt_frame = $(repr(deployment.Δt_frame)), Δt_base = $(repr(deployment.Δt_base)), " *
+    sprint(show, deployment.algorithm)
 
 Base.show(io::IO, deployment::Deployment) =
     print(io, "Deployment(", _deployment_parameters(deployment), ")")

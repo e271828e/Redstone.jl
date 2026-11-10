@@ -15,7 +15,7 @@ chain3() = Group((; p = Plant(), g1 = Gain(2.0), g2 = Gain(2.0));
 
 function dataplane_exchange()
     @testset "a staged batch lands at its frame top, and nowhere earlier (§11.1, §11.4)" begin
-        sim = Simulation(fed(Plant(), "u"); h = 1//10)
+        sim = Simulation(fed(Plant(), "u"); Δt_frame = 1//10)
         init!(sim, set(u = (in = 0.0,)))
         step!(sim; t_plus = 0.3)
         stage!(sim, "in" => 1.0)
@@ -26,7 +26,7 @@ function dataplane_exchange()
         # The frame's outcome is a pure function of the drained batch: the same
         # write applied directly at the same stopped point is the same trajectory,
         # bitwise.
-        reference = Simulation(fed(Plant(), "u"); h = 1//10)
+        reference = Simulation(fed(Plant(), "u"); Δt_frame = 1//10)
         init!(reference, set(u = (in = 0.0,)))
         step!(reference; t_plus = 0.3)
         # the counterfactual, under the data plane
@@ -43,7 +43,7 @@ function dataplane_exchange()
         # it would clobber, so init! clears it (§12.6); staged *after* init! — the
         # pre-run sequence — it is pending, not applied, and the edge arrives with
         # frame 1's drain, never at boundary zero.
-        sim = Simulation(fed(Trigger(0.5), "sig"); h = 1//10)
+        sim = Simulation(fed(Trigger(0.5), "sig"); Δt_frame = 1//10)
         stage!(sim, "in" => 1.0)                 # predates boundary zero: cleared by init!
         init!(sim, set(u = (in = 0.0,)))
         @test (@atomic sim.plane.harness.cell.pending) === nothing
@@ -55,7 +55,7 @@ function dataplane_exchange()
     end
 
     @testset "coalescing: merge only — newest wins per face, untouched faces survive (§11.4)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         init!(sim, set(u = (a = 0.0, b = 0.0)))
         stage!(sim, "a" => 1.0)
         stage!(sim, "b" => 2.0)                  # sparse: must not clobber the pending `a`
@@ -67,7 +67,7 @@ function dataplane_exchange()
     end
 
     @testset "every check runs at staging, on the writer's side; the drain is pure (§11.4)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         init!(sim, set(u = (a = 0.0, b = 0.0)))
         # Each rejection is written into the harness writer's diagnostic cell on
         # the staging task (§11.8) — a stopped-sim staging waits there exactly as
@@ -95,7 +95,7 @@ function dataplane_exchange()
     # No shim test at a `Dual` root input: the plane writes only a `Float64` model (D-317).
 
     @testset "publication: one immutable value per frame-top boundary (§11.2)" begin
-        sim = Simulation(chain3(); h = 1//10)
+        sim = Simulation(chain3(); Δt_frame = 1//10)
         @test latest(sim) === nothing            # nothing is published before init!
         init!(sim, set(u = (u = 1.0,)))
         snap0 = latest(sim)
@@ -118,7 +118,7 @@ function dataplane_exchange()
         @test latest(sim).frame == 10
 
         # Every frame top publishes, the off-tick boundary included.
-        offtick_sim = Simulation(chain3(); h = 1//20, N_base = 2)
+        offtick_sim = Simulation(chain3(); Δt_frame = 1//20, Δt_base = 1//10)
         init!(offtick_sim, set(u = (u = 0.0,)))
         run!(offtick_sim; t_end = 0.05)                         # one frame, not a base tick
         @test latest(offtick_sim).frame == 1
@@ -126,7 +126,7 @@ function dataplane_exchange()
 
     @testset "every snapshot's status carries the pacer's record, Inf and zeros where no pacer runs (§10.7, §11.8)" begin
         idle = PacerStatus(Inf, 0.0, 0.0, 0, 0, 0.0, 0, 0.0)
-        sim = Simulation(chain3(); h = 1//100)
+        sim = Simulation(chain3(); Δt_frame = 1//100)
         init!(sim, set(u = (u = 1.0,)))
         @test latest(sim).status.pacer === idle          # boundary zero runs no pacer
         step!(sim; frames = 3)                            # nor does step! (D-269)
@@ -138,7 +138,7 @@ function dataplane_exchange()
     end
 
     @testset "the exchange is wait-free and coherent: no reader ever sees a torn world (§11.2)" begin
-        sim = Simulation(chain3(); h = 1//1000)
+        sim = Simulation(chain3(); Δt_frame = 1//1000)
         init!(sim, set(u = (u = 1.0,)))
         stop = Threads.Atomic{Bool}(false)
         reader = Threads.@spawn begin
@@ -167,7 +167,7 @@ function dataplane_exchange()
     end
 
     @testset "staging from another task: the CAS merge loses nothing it shouldn't (§11.4)" begin
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         init!(sim, set(u = (a = 0.0, b = 0.0)))
         writer = Threads.@spawn for i in 1:1000
             stage!(sim, "a" => Float64(i))
@@ -184,7 +184,7 @@ function dataplane_exchange()
     end
 
     @testset "an empty drain is free: the frame top adds no work to a quiet loop (§11.1)" begin
-        sim = Simulation(chain3(); h = 1//10)
+        sim = Simulation(chain3(); Δt_frame = 1//10)
         init!(sim, set(u = (u = 0.0,)))
         @test @ballocated(drain!($sim, $(sim.plane.roster))) == 0
     end
@@ -194,7 +194,7 @@ function dataplane_exchange()
         # sparse record is the drain's one admitted allocation (D-176, pinned in
         # test_trace.jl) — it would otherwise stand between the measurement and
         # D-202's claim.
-        sim = Simulation(two_root_inputs(); h = 1//10)
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
         init!(sim, set(u = (a = 0.0, b = 0.0)); trace = false)
         stage!(sim, "a" => 1.0); drain!(sim, sim.plane.roster)  # warm the writer's one scatter
         @test @ballocated(drain!($sim, $(sim.plane.roster)), setup = (stage!($sim, "a" => 1.0)), evals = 1) == 0
@@ -221,7 +221,7 @@ wide_zero(n) = set(u = NamedTuple(Symbol(p, i) => 0.0
 function dataplane_wide_surface()
     @testset "a wide surface stages, merges and drains like a narrow one (§11.4, D-202)" begin
         # `trace = false` for the two allocation assertions below, as above
-        sim = Simulation(wide_root_inputs(17); h = 1//10)   # 34 root faces
+        sim = Simulation(wide_root_inputs(17); Δt_frame = 1//10)   # 34 root faces
         init!(sim, wide_zero(17); trace = false)
         stage!(sim, "a3" => 1.5)
         stage!(sim, "b9" => -2.0, "a3" => 2.5)           # merge: newest wins, untouched survive

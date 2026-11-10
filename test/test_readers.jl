@@ -121,7 +121,7 @@ world(sim::Simulation) = world(sim.model)
 function test_readers()
     @testset "the five selectors read what they name, at either activation (§14.4)" begin
         for T in (Float64, D8)
-            model = Model(readable(), T; h = 1//10)
+            model = Model(readable(), T; Δt_frame = 1//10)
             init!(model, readable_condition())
             evaluate!(model.exec)                     # `ẋ` is integrator scratch: fill it first
             r = _compile_reads(readable_reads(), model.deployment.build, T)
@@ -144,7 +144,7 @@ function test_readers()
 
             # The leaf address steps into a struct port (§14.4, D-276): a field and
             # a component, a matrix entry by its indices and by its linear place.
-            posed_model = Model(pose_model(), T; h = 1//10)
+            posed_model = Model(pose_model(), T; Δt_frame = 1//10)
             init!(posed_model)
             pose = gather_reads(_compile_reads(pose_reads(), posed_model.deployment.build, T), posed_model.exec)
             @test pose.whole isa LeafPose{T} && pose.short === pose.whole  # `:pose` is `"pose"`
@@ -155,7 +155,7 @@ function test_readers()
         end
 
         # A discrete `s` field takes a `.name` step and a chain of two index steps.
-        store_sim = Simulation(single(PoseStore()); h = 1//10)
+        store_sim = Simulation(single(PoseStore()); Δt_frame = 1//10)
         init!(store_sim)
         stored = gather_reads(_compile_reads(reads(m12 = get_state("c", "pose.m[1,2]"),
                                                    w21 = get_state("c", "w[2][1]")),
@@ -164,7 +164,7 @@ function test_readers()
     end
 
     @testset "the reader is the gather twin: allocation-free over an executor (§14.4, §9.8)" begin
-        sim = Simulation(readable(); h = 1//10)
+        sim = Simulation(readable(); Δt_frame = 1//10)
         init!(sim, readable_condition())
         evaluate!(sim.model.exec)
         reader, exec = _compile_reads(readable_reads(), sim.model.deployment.build), sim.model.exec
@@ -174,7 +174,7 @@ function test_readers()
         @test gather_reads(_compile_reads(reads(), sim.model.deployment.build), exec) === (;)   # the empty set reads nothing
 
         # A two-step address is unrolled at compile time, so it allocates nothing.
-        pose_sim = Simulation(pose_model(); h = 1//10)
+        pose_sim = Simulation(pose_model(); Δt_frame = 1//10)
         init!(pose_sim)
         pose_reader, pose_exec = _compile_reads(pose_reads(), pose_sim.model.deployment.build), pose_sim.model.exec
         gather_reads(pose_reader, pose_exec)
@@ -183,7 +183,7 @@ function test_readers()
 
         # 64 reads, past the 32 elements where `map` over a tuple allocates and
         # loses its element types.
-        bank_sim = Simulation(sawtooth_bank(); h = 1//10)
+        bank_sim = Simulation(sawtooth_bank(); Δt_frame = 1//10)
         init!(bank_sim)
         bank_reader = _compile_reads(reads(; (Symbol(:q, i) => get_state("s$i", :q) for i in 1:64)...),
                                      bank_sim.model.deployment.build)
@@ -281,7 +281,7 @@ function test_readers()
         # instance two ways (`test_assembly.jl`).
         deep = reads(q = get_state("inner/plant", :q))
         for holder in (ConcreteHold(SampledLoop()), GenericHold(SampledLoop()))
-            sim = Simulation(holder; h = 1//50)
+            sim = Simulation(holder; Δt_frame = 1//50)
             init!(sim, combine(at("inner/plant", set(x = (q = SVector(0.3, 0.1),))),
                                set(u = (ref = 1.0,))))
             evaluate!(sim.model.exec)
@@ -307,7 +307,7 @@ function test_readers()
         # A mount *to* a generic child is legal, and the authored path below it
         # is walked from the mount level: the read `deep` names resolves mounted
         # at `inner` as it does at the root (§13.3, D-277).
-        generic_sim = Simulation(GenericHold(SampledLoop()); h = 1//50)
+        generic_sim = Simulation(GenericHold(SampledLoop()); Δt_frame = 1//50)
         init!(generic_sim, combine(at("inner", at("plant", set(x = (q = SVector(0.3, 0.1),)))),
                                    set(u = (ref = 1.0,))))
         evaluate!(generic_sim.model.exec)
@@ -345,7 +345,7 @@ function test_readers()
         end
 
         for T in (Float64, D8)
-            model = Model(wrapped_readable(), T; h = 1//10)
+            model = Model(wrapped_readable(), T; Δt_frame = 1//10)
             init!(model, at("inner", readable_condition()))
             evaluate!(model.exec)
             wrapped_build = model.deployment.build
@@ -373,7 +373,7 @@ function test_readers()
 
         # Dotted faces behind a mount: the longest face wins at the mount level as
         # at the root, and the steps ride through the rebase to a dotted root input.
-        dotted_sim = Simulation(wrapped_dotted(); h = 1//10)
+        dotted_sim = Simulation(wrapped_dotted(); Δt_frame = 1//10)
         init!(dotted_sim, at("inner", dotted_condition()))
         dotted_build = dotted_sim.model.deployment.build
         dotted = gather_reads(_compile_reads(at("inner", reads(b = get_input("left.brake[2]"),
@@ -442,7 +442,7 @@ function test_readers()
     end
 
     @testset "the source rule: a snapshot-bound reader may not name a store selector (§14.4)" begin
-        sim = Simulation(readable(); h = 1//10)
+        sim = Simulation(readable(); Δt_frame = 1//10)
         d = only(diagnostics(failure(() -> attach!(sim, Pad("t"), Readout(q = get_state("plant", :q))))))
         @test d isa ReadResolution && d.reason === :store_selector && d.label === :q &&
               d.selector == "get_state(\"plant\", :q)"
@@ -450,7 +450,7 @@ function test_readers()
 
         # Every table member takes a leaf address, and a binding gather is the
         # family's baked read over the snapshot (§14.4, D-276).
-        vector_sim = Simulation(lin_vector(); h = 1//10)
+        vector_sim = Simulation(lin_vector(); Δt_frame = 1//10)
         handle = attach!(vector_sim, Pad("t"), Readout(q2 = get_output("p", "q[2]"),
                                                        qin1 = get_input("qin[1]"),
                                                        face2 = get_face("q[2]")))
@@ -465,7 +465,7 @@ function test_readers()
         @test @ballocated(gather($handle, $snapshot)) == 0
 
         # A `.name` step into a struct port, and a matrix entry by its indices.
-        pose_sim = Simulation(pose_model(); h = 1//10)
+        pose_sim = Simulation(pose_model(); Δt_frame = 1//10)
         handle = attach!(pose_sim, Pad("t"), Readout(v = get_output("c", "pose.v"),
                                                      m12 = get_output("c", "pose.m[1,2]")))
         init!(pose_sim)
@@ -476,7 +476,7 @@ function test_readers()
         @test @ballocated(gather_reads($gatherer, $snapshot)) == 0      # `pose.m[1,2]` is two steps
 
         # A device reading 64 outputs: the gather walks a tuple of 64 entries.
-        bank_sim = Simulation(sawtooth_bank(); h = 1//10)
+        bank_sim = Simulation(sawtooth_bank(); Δt_frame = 1//10)
         bank_handle = attach!(bank_sim, Pad("t"),
                               Readout(; (Symbol(:q, i) => get_output("s$i", "q") for i in 1:64)...))
         init!(bank_sim)
@@ -499,7 +499,7 @@ function test_readers()
     end
 
     @testset "a face name may hold a dot: a face selector's head is matched (§14.4, D-276)" begin
-        sim = Simulation(dotted_model(); h = 1//10)
+        sim = Simulation(dotted_model(); Δt_frame = 1//10)
         init!(sim, dotted_condition())
         v = gather_reads(_compile_reads(reads(brake = get_input("left.brake"),
                                               short = get_input(:var"left.brake"),
@@ -517,7 +517,7 @@ function test_readers()
         @test v.m12 === 3.0                                # `pose`, then `.m[1,2]`
 
         # A binding read matches the same way (§11.2).
-        bound_sim = Simulation(dotted_model(); h = 1//10)
+        bound_sim = Simulation(dotted_model(); Δt_frame = 1//10)
         handle = attach!(bound_sim, Pad("t"), Readout(brake = get_input("left.brake"),
                                                       theta = get_face("att.theta"),
                                                       pose_v = get_face("pose.v")))
@@ -552,8 +552,8 @@ function test_readers()
         # both scalars named — before anything is touched. §14.4 makes that pairing
         # an invariant the services uphold, so the refusal is an internal assertion
         # and carries no kind name.
-        nominal = Simulation(readable(); h = 1//10)
-        seeded = Model(readable(), D8; h = 1//10)
+        nominal = Simulation(readable(); Δt_frame = 1//10)
+        seeded = Model(readable(), D8; Δt_frame = 1//10)
         init!(seeded, readable_condition())
         before = world(seeded)
 
@@ -576,7 +576,7 @@ function test_readers()
         # `t₀` is the grid's anchor and no design reader wants it perturbed, so
         # it is a `Float64` on the clock while `t` stays in the model's
         # scalar. A `T`-typed keyword refused `t0 = 0.25` here.
-        seeded = Model(readable(), D8; h = 1//10)
+        seeded = Model(readable(), D8; Δt_frame = 1//10)
         init!(seeded, readable_condition(); t0 = 0.25)
         @test seeded.exec.clock.t₀ === 0.25
         @test seeded.exec.clock.t isa D8 && ForwardDiff.value(seeded.exec.clock.t) === 0.25
@@ -589,7 +589,7 @@ function test_readers()
         @test Redstone.parse_leaf("q[2]") == (:q, Redstone.AccessStep[(2,)])
         @test get_state("acc") == get_state("acc", "") && get_deriv("acc").leaf == ""
 
-        model = Model(bare_world(); h = 1//10)
+        model = Model(bare_world(); Δt_frame = 1//10)
         init!(model, combine(set(u = (u = 0.5, p = 0.0)), at("tick", set(s = 4))))
         evaluate!(model.exec)
         r = _compile_reads(reads(acc = get_state("acc"), acc_x = get_state("acc", "x"),
@@ -604,7 +604,7 @@ function test_readers()
         @test v.tick === 5 === v.tick_s        # a bare discrete store, read whole, past `t₀`'s tick
         @test v.q === SVector(0.0, 0.0)
         # A field step into a bare isbits struct in `s`.
-        held = Model(Group((; hold = BarePoseHold()); input_wires = ("pose" => "hold/u",)); h = 1//10)
+        held = Model(Group((; hold = BarePoseHold()); input_wires = ("pose" => "hold/u",)); Δt_frame = 1//10)
         init!(held, set(u = (pose = LeafPose(SVector(0.1, 0.2, 0.3), SMatrix{2,2}(0.0, 0.0, 0.0, 0.0)),)))
         r = _compile_reads(reads(v2 = get_state("hold", ".v[2]"), m = get_state("hold", "s.m[2,1]")),
                            held.deployment.build)
@@ -624,14 +624,14 @@ function test_readers()
         @test c.reason === :not_indexable && c.step == "[2]" && c.declared === Float64
         @test d.reason === :store_shape && d.field === nothing && isempty(d.candidates)
         @test a.selector == "get_state(\"plant\")"             # spelled as authored
-        one_field = Model(single(Sawtooth(1.0)); h = 1//10)
+        one_field = Model(single(Sawtooth(1.0)); Δt_frame = 1//10)
         d = only(diagnostics(failure(() -> _compile_reads(reads(a = get_state("c")),
                                                           one_field.deployment.build))))
         @test d.reason === :store_shape && d.candidates == [:q]
         @test _compile_reads(reads(a = get_state("c", :q)), one_field.deployment.build) isa Reader
     end
     @testset "a bare port's face is `u` or `y`, which a headless address supplies (§14.4, §14.9, D-437)" begin
-        model = Model(bare_ports_world(); h = 1//100)
+        model = Model(bare_ports_world(); Δt_frame = 1//100)
         init!(model, set(u = (u = 0.5,)))
         r = _compile_reads(reads(spin = get_output("plant/spin"), spin_y = get_output("plant/spin", "y"),
                                  y = get_output("plant/spin", "[2]"),
@@ -642,7 +642,7 @@ function test_readers()
         @test v.total === port(model, "plant/summer") === port(model, "", :total)
         # `port`'s name left out is the bare output's `y`, on all three homes.
         @test port(model, "plant/loop/flow") === 1.0 === port(model, "plant/loop/flow", :y)
-        sim = Simulation(build(bare_ports_world()); h = 1//100)
+        sim = Simulation(build(bare_ports_world()); Δt_frame = 1//100)
         init!(sim, set(u = (u = 0.5,)))
         @test port(sim, "plant/spin") === port(sim, "plant/spin", :y) === SVector(1.0, 0.0)
         @test port(latest(sim), "plant/spin") === port(latest(sim), "plant/spin", :y)
@@ -656,7 +656,7 @@ function test_readers()
         @test b_.reason === :assembly_path
         @test c.reason === :index_bounds && c.step == "[3]"
         # A headless address against named ports, one port or two: the shape triggers.
-        named = Model(bare_world(); h = 1//100)
+        named = Model(bare_world(); Δt_frame = 1//100)
         (d, e) = diagnostics(failure(() -> _compile_reads(reads(a = get_output("plant"),
                                                                 b = get_output("acc")),
                                                           named.deployment.build)))
@@ -672,10 +672,10 @@ function test_readers()
             @test err isa DiagnosticError && diagnostic(err) isa PathResolution
             @test diagnostic(err).segment == "zzz" && "plant" in diagnostic(err).candidates
         end
-        acc_root = Model(BareAccumulator(); h = 1//10)
+        acc_root = Model(BareAccumulator(); Δt_frame = 1//10)
         @test_throws "the root component declares no bare output" port(acc_root, "")
         # At a primitive mount and at a primitive root, the bare input and output.
-        held = Model(Group((; hold = BarePoseHold()); input_wires = ("pose" => "hold/u",)); h = 1//10)
+        held = Model(Group((; hold = BarePoseHold()); input_wires = ("pose" => "hold/u",)); Δt_frame = 1//10)
         init!(held, set(u = (pose = LeafPose(SVector(0.1, 0.2, 0.3), SMatrix{2,2}(0.0, 0.0, 0.0, 0.0)),)))
         r = _compile_reads(at("hold", reads(u = get_input(), v1 = get_input(".v[1]"), y = get_face(),
                                             m12 = get_face("[1,2]"), m12_y = get_face("y[1,2]"))),
@@ -683,7 +683,7 @@ function test_readers()
         v = gather_reads(r, held.exec)
         @test v.u.v === SVector(0.1, 0.2, 0.3) && v.v1 === 0.1
         @test v.y === SMatrix{2,2}(5.0, 6.0, 7.0, 8.0) && v.m12 === 7.0 === v.m12_y
-        root = Model(BareScale(); h = 1//10)
+        root = Model(BareScale(); Δt_frame = 1//10)
         init!(root, set(u = (u = 1.5,)))
         r = _compile_reads(reads(u = get_input(), y = get_face()), root.deployment.build)
         @test gather_reads(r, root.exec) === (u = 1.5, y = -3.0)
@@ -702,7 +702,7 @@ function test_readers()
         @test [(d.reason, d.declares, d.candidates) for d in diags] ==
               [(:port_shape, :input_face, [:u]), (:port_shape, :output_port, [:y])]
         d = only(diagnostics(failure(() -> _compile_reads(reads(a = get_face()),
-                                                          Model(Sawtooth(1.0); h = 1//10).deployment.build))))
+                                                          Model(Sawtooth(1.0); Δt_frame = 1//10).deployment.build))))
         @test (d.reason, d.declares, d.candidates) == (:port_shape, :output_port, [:q])
     end
 end

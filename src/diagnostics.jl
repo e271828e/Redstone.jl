@@ -1327,10 +1327,9 @@ end
 "§9.1: a deployment parameter outside its constraint, or a grid that does not close."
 Base.@kwdef struct DeploymentInvalid <: Diagnostic
     parameter::Symbol
-    reason::Symbol   # :range|:inexact|:not_a_quantity|:missing|:unanchored|:no_constraint|:not_harmonic|:disagrees_with_n|:anchor_period|:anchor_offset
+    reason::Symbol   # :range|:inexact|:not_a_quantity|:missing|:unanchored|:no_constraint|:not_harmonic|:not_frame_multiple|:subcycling|:anchor_period|:anchor_offset
     value::Any = nothing
     related::Any = nothing                   # the value it is measured against
-    quotient::Union{Nothing,Int} = nothing   # Δt_base / h, where that is the fact
     paths::Vector{String} = String[]         # the unanchored components
     scope::String = ""                       # the anchor's declaring scope path, on the two anchor arms
     key::Union{Nothing,Symbol} = nothing     # the anchor's declaring key, on the two anchor arms
@@ -1342,18 +1341,17 @@ end
 # `ArgumentInvalid` (D-256, D-261), and their constraint text and section moved
 # with them.
 _deployment_constraint(parameter::Symbol) =
-    parameter === :algorithm           ? "must be a stepper type — RK4 or Heun" :
+    parameter === :algorithm           ? "must be an algorithm with its step — `RK4()`, `RK4(h)`, `Heun()` or `Heun(h)`" :
     parameter === :firing_budget       ? "must be an integer ≥ 1" :
     parameter === :localization_tol    ? "must be a positive real" :
     parameter === :localization_budget ? "must be an integer ≥ 1" :
-    parameter === :h                   ? "must be positive" :
-    parameter === :N_base              ? "must be an integer ≥ 1" :
+    (parameter === :h || parameter === :Δt_frame) ? "must be positive" :
                                  "is outside its constraint"
 _deployment_section(parameter::Symbol) =
-    parameter === :algorithm           ? " (§10.2)" :
+    (parameter === :algorithm || parameter === :h) ? " (§10.2)" :
     parameter === :firing_budget       ? " (§10.6)" :
     (parameter === :localization_tol || parameter === :localization_budget) ? " (§10.4)" :
-    parameter === :N_base              ? " (§9.1)" : ""
+    parameter === :Δt_frame            ? " (§9.2)" : ""
 
 # The grid block (§9.2, D-187), appended to the first line of every consumer that
 # names the grid: the three grid refusals, the derivation path's info line and
@@ -1406,22 +1404,26 @@ function message(d::DeploymentInvalid)
     d.reason === :not_a_quantity &&
         return "`$(d.parameter)` must be a Rational or a `Period`/`Hz` value, got $(d.value)"
     d.reason === :missing &&
-        return "deployment needs the continuous step: `Simulation(…; h = 1//100)` — a " *
-               "domain rate is not a framework default (§9.1)"
+        return "deployment needs the frame period: `Simulation(…; Δt_frame = 1//100)` — a " *
+               "domain rate is not a framework default (§9.2)"
     d.reason === :unanchored &&
         return "Δt_base cannot be derived: `$(join(d.paths, "`, `"))` is/are unanchored, " *
                "with period `m·Δt_base` — an anchor edit anywhere in the tree would " *
-               "silently rescale it. Declare the base tick period instead: `Δt_base = …`, " *
-               "or `N_base = …` (§9.1)" * _grid_block(d.grid)
+               "silently rescale it. Declare the base tick period instead: `Δt_base = …` " *
+               "(§9.1)" * _grid_block(d.grid)
     d.reason === :no_constraint &&
         return "Δt_base cannot be derived: no anchor declares a constraint to derive it " *
                "from (§9.1)"
     d.reason === :not_harmonic &&
-        return "harmonic grid: Δt_base = $(d.value) is not an integer multiple of " *
-               "h = $(d.related) (Δt_base = N_base·h, N_base ≥ 1, §10.5)"
-    d.reason === :disagrees_with_n &&
-        return "Δt_base = $(d.value) disagrees with N_base = $(d.related): Δt_base/h = " *
-               "$(d.quotient) (§9.1)"
+        return "harmonic grid: $(d.parameter) = $(d.value) is not an integer multiple of " *
+               "the fixed step h = $(d.related) (§10.2)"
+    d.reason === :not_frame_multiple &&
+        return "Δt_base = $(d.value) is not an integer multiple of Δt_frame = $(d.related): " *
+               "a base tick lands on a frame top while the frame loop takes one step " *
+               "per frame (§10.5)"
+    d.reason === :subcycling &&
+        return "h = $(d.value) divides Δt_frame = $(d.related) but is not equal to it: " *
+               "the frame loop takes one step per frame and does not subcycle yet (§10.2)"
     d.reason === :anchor_period &&
         return "$(_anchor_label(d.scope, d.key)): period $(d.value) is not an integer " *
                "multiple of Δt_base = $(d.related) (§9.1)" * _grid_block(d.grid)
@@ -2264,7 +2266,7 @@ message(d::ConditionShapeDrift) =
 
 "§10.5, §11.6, §12.4, §12.6, §14.7, D-215: an argument outside its constraint — `DeploymentInvalid`'s twin off the deployment surface."
 Base.@kwdef struct ArgumentInvalid <: Diagnostic
-    call::Symbol                             # :Model|:Simulation|:init!|:restore!|:Period|:Hz|:Absolute|:step!|:run!|:replay!|:live!|:pace!|:margin!|:trim!|:linearize|:trace|:TableBinding
+    call::Symbol                             # :Model|:Simulation|:init!|:restore!|:Period|:Hz|:Absolute|:RK4|:Heun|:step!|:run!|:replay!|:live!|:pace!|:margin!|:trim!|:linearize|:trace|:TableBinding
     reason::Symbol
     argument::Union{Nothing,Symbol} = nothing
     value::Any = nothing
@@ -2280,6 +2282,10 @@ function message(d::ArgumentInvalid)
                d.call === :Hz ?
                "a frequency is an exact Rational — write `Hz(1//2)` for 0.5 Hz, not " *
                "$(repr(d.value)): grid derivation is GCD arithmetic (§10.5)" :
+               (d.call === :RK4 || d.call === :Heun) ?
+               "a fixed step is an exact Rational — write `$(d.call)(1//100)`, not " *
+               "$(d.call)($(repr(d.value))): the step must divide the frame period exactly " *
+               "(§10.2)" :
                "an offset is an exact Rational — write `Absolute(Hz(50), 1//500)`, not " *
                "$(repr(d.value)): grid derivation is GCD arithmetic (§10.5)"
     d.reason === :not_a_quantity &&

@@ -16,8 +16,8 @@ boundary entries and the event phase, `stepper.jl` the integration seam, and
 code open beside this document can follow one frame and know which rule each
 line serves.
 
-The running example is a deployment with `h = 0.01` and `N_base = 4`, so
-`Δt_base = 0.04` and only every fourth frame top is a base tick. The model
+The running example is a deployment with `Δt_frame = 1//100` and
+`Δt_base = 1//25`, so only every fourth frame top is a base tick. The model
 holds a continuous plant with a localized sign-form guard, and a discrete
 controller with `(D, Φ) = (1, 0)`, which ticks at every base tick. The frame
 followed is `k = 8`, whose top `t = 0.08` is base tick `2`; section 3 notes
@@ -42,7 +42,9 @@ _phase!(cursor, :drain)
 frame_top!(hooks)                     # drain!
 ...                                   # integration, section 2
 model.exec.clock.t = t_to
-k % N_base == 0 ? boundary!(model, k ÷ N_base) : offtick_boundary!(model)
+frames_per_tick = model.deployment.frames_per_tick
+k % frames_per_tick == 0 ? boundary!(model, k ÷ frames_per_tick) :
+                           offtick_boundary!(model)
 settled!(hooks)                       # publish!, then _stop_hit
 ```
 
@@ -58,8 +60,8 @@ Three things happen in order, all inside the frame's one `try` ([§13.4][s13-4])
 top hook applies the device writes. The integration carries the continuous
 state across `[t₇, t₈]` and fires any localized event inside it. One of two
 boundary entries then runs at the frame top. For `k = 8` the selector picks
-`boundary!(model, 2)`, the tick index being `k ÷ N_base`. For `k = 7` it
-picks `offtick_boundary!(model)`. This selector is the whole of the
+`boundary!(model, 2)`, the tick index being `k ÷ frames_per_tick`. For
+`k = 7` it picks `offtick_boundary!(model)`. This selector is the whole of the
 frame/tick discrimination [§10.5][s10-5] describes: the gate reads a tick index, and an
 off-tick frame top has none.
 
@@ -81,11 +83,11 @@ a guard here is an edge with no in-frame crossing.
 and picks the path:
 
 ```julia
-t_to = _grid_time(model, k)                   # t₀ + k·h
+t_to = _grid_time(model, k)                   # t₀ + k·Δt_frame
 if model.exec.has_localized
     _localized_frame!(model, t_to, hooks) && return true
 else
-    integrate!(model, T(model.deployment.h))
+    integrate!(model, T(model.deployment.Δt_frame))
 end
 ```
 
@@ -96,7 +98,7 @@ frame first, then a remainder from each `t*`. It returns `true` only when a
 
 **One integration segment.** `integrate!(model, h′)` in `model.jl` sets the
 cursor phase to `:integrate` and crosses the stepper seam ([§10.2][s10-2]) to the
-backend's `integrate!(::RK4, model, h)` in `stepper.jl`:
+backend's `integrate!(::RK4Stepper, model, h)` in `stepper.jl`:
 
 ```julia
 copyto!(x₀, x)
@@ -305,7 +307,8 @@ from ([§13.4][s13-4]).
 **Boundary count.** Frame 8 in this example published twice, at the `t*`
 boundary and at the tick boundary. Frame 7 without an event publishes once, at
 the off-tick boundary. The frame index advanced by one in both cases and the
-tick index only at frame 8, which is what the code's `k ÷ N_base` expresses.
+tick index only at frame 8, which is what the code's `k ÷ frames_per_tick`
+expresses.
 
 ## Section 4 — Boundary zero, for contrast
 

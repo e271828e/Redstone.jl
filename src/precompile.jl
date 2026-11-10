@@ -40,7 +40,7 @@ the same build. `@compile_workload` runs it once while the package precompiles.
 function workload()
     loop_build = build(workload_loop())
     sprint(show, MIME"text/plain"(), loop_build)
-    sim = Simulation(loop_build; h = 1//1000)
+    sim = Simulation(loop_build; Δt_frame = 1//1000)
     init!(sim, set(u = (disturbance = 0.0,)))
     step!(sim)
     run!(sim; t_end = 0.1)
@@ -48,7 +48,7 @@ function workload()
     state(sim, "plant")
     series(sim, reads(y = get_output("plant")))
     restore!(sim, checkpoint(sim))
-    trim_sim = Simulation(loop_build; h = 1//1000)
+    trim_sim = Simulation(loop_build; Δt_frame = 1//1000)
     trim!(trim_sim, TrimProblem(
         guess = (d = 0.3,), lower = (d = -1.0,), upper = (d = 1.0,),
         condition = d -> set(u = (disturbance = d.d,)),

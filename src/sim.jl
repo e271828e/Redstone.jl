@@ -307,12 +307,12 @@ end
     Simulation(model::Model{Float64}; join_timeout = 5.0) -> Simulation
     Simulation(deployment::Deployment; join_timeout = 5.0,
                chunk_size = 16) -> Simulation
-    Simulation(build::Build; h, N_base = nothing, Δt_base = nothing,
-               algorithm = RK4, firing_budget = 4, localization_tol = 1e-6,
+    Simulation(build::Build; Δt_frame, Δt_base = nothing, algorithm = RK4(),
+               firing_budget = 4, localization_tol = 1e-6,
                localization_budget = 8, join_timeout = 5.0,
                chunk_size = 16) -> Simulation
-    Simulation(root::AbstractComponent; h, N_base = nothing, Δt_base = nothing,
-               algorithm = RK4, firing_budget = 4, localization_tol = 1e-6,
+    Simulation(root::AbstractComponent; Δt_frame, Δt_base = nothing,
+               algorithm = RK4(), firing_budget = 4, localization_tol = 1e-6,
                localization_budget = 8, join_timeout = 5.0,
                chunk_size = 16) -> Simulation
 
@@ -335,7 +335,7 @@ The other three forms compose through a `Float64` model.
 
 The grid, algorithm and event keywords are [`Deployment`](@ref)'s, documented
 and refused as `DeploymentInvalid` there, and `chunk_size` is [`Model`](@ref)'s.
-`h` is required, as for [`Deployment`](@ref).
+`Δt_frame` is required, as for [`Deployment`](@ref).
 
 `join_timeout` is a positive real, refused as `ArgumentInvalid` otherwise. It
 never changes the trajectory.
@@ -383,14 +383,13 @@ end
 
 # The three sugar forms, each *defined as* the composition through a `Float64`
 # model (§9.2, D-254, D-317): every existing call site deploys and materializes
-# in one call, and nothing in the artifact is lost by composing.
+# in one call, and nothing in the artifact is lost by composing. The build's
+# form names the two keywords that are not the deployment's and passes every
+# other one through, so the keyword list has one home.
 Simulation(deployment::Deployment; join_timeout = 5.0, chunk_size = 16) =
     Simulation(Model(deployment; chunk_size); join_timeout)
-Simulation(build::Build; h = nothing, N_base = nothing,
-           Δt_base = nothing, algorithm = RK4, firing_budget = 4,
-           localization_tol = 1e-6, localization_budget = 8, kw...) =
-    Simulation(Deployment(build; h, N_base, Δt_base, algorithm, firing_budget,
-                          localization_tol, localization_budget); kw...)
+Simulation(build::Build; join_timeout = 5.0, chunk_size = 16, kw...) =
+    Simulation(Deployment(build; kw...); join_timeout, chunk_size)
 Simulation(root::AbstractComponent; kw...) = Simulation(build(root); kw...)
 
 warnings(sim::Simulation) = warnings(sim.model)
@@ -405,7 +404,7 @@ warnings(sim::Simulation) = warnings(sim.model)
 # so a value past the frame range is refused rather than rounded to `Inf`.
 _t_bound(sim::Simulation, t_end, call::Symbol) =
     (t_end isa Real && t_end ≥ 0 &&
-     _frames_fit(t_end, sim.model.exec.clock.t₀, sim.model.deployment.h)) ? Float64(t_end) :
+     _frames_fit(t_end, sim.model.exec.clock.t₀, sim.model.deployment.Δt_frame)) ? Float64(t_end) :
     throw(DiagnosticError(ArgumentInvalid(call = call, reason = :range,
                                           argument = :t_end, value = t_end)))
 
@@ -420,7 +419,7 @@ _margin_value(value, call::Symbol) = (value isa Real && value ≥ 0) ? Float64(v
                                           argument = :margin, value = value)))
 
 _t_end_frame(sim::Simulation, t_end::Float64) =
-    _frames_to(t_end, sim.model.exec.clock.t₀, sim.model.deployment.h)
+    _frames_to(t_end, sim.model.exec.clock.t₀, sim.model.deployment.Δt_frame)
 
 # §13.5's ignore-list validation and compilation, run identically at the three
 # binding sites — `run!`, `replay!` and `step!` (§12.7, D-316): `:all` expands
@@ -1363,18 +1362,19 @@ function replay!(sim::Simulation, trc::Trace; to_boundary = nothing,
     if to_time !== nothing
         # D-219's time spelling of the same pointer, floored onto the last frame
         # top at or before it: the *header's* `t₀` as the origin and the
-        # *header's* `h` as the stride — the recording's own grid, so
+        # *header's* `Δt_frame` as the stride — the recording's own grid, so
         # `k ≤ trc.frames` names a boundary of the recording, and a target
-        # bound at a different `h` never gets here, the entry pass above
+        # bound at a different `Δt_frame` never gets here, the entry pass above
         # having refused it honestly (`CheckpointMismatch`, never a false
         # word about a time the recording covers). `_frame_at` carries the
         # slack: without it the plain floor would halt one boundary short of
         # the one named.
-        t₀, h = trc.header.state.t₀, trc.header.state.deployment.h
-        to_time isa Real && isfinite(to_time) && to_time ≥ t₀ && _frames_fit(to_time, t₀, h) ||
+        t₀, Δt_frame = trc.header.state.t₀, trc.header.state.deployment.Δt_frame
+        to_time isa Real && isfinite(to_time) && to_time ≥ t₀ &&
+            _frames_fit(to_time, t₀, Δt_frame) ||
             throw(DiagnosticError(ArgumentInvalid(call = :replay!, reason = :range,
                                                   argument = :to_time, value = to_time)))
-        to_boundary = _frame_at(Float64(to_time), t₀, h)
+        to_boundary = _frame_at(Float64(to_time), t₀, Δt_frame)
         first_frame ≤ to_boundary ≤ trc.frames || throw(DiagnosticError(   # outside the feed
             ArgumentInvalid(call = :replay!, reason = :range, argument = :to_time,
                             value = to_time)))
@@ -1467,7 +1467,7 @@ end
 # after the final snapshot, the waits woken, `unblock!`, and the join under
 # `join_timeout`. Inside the loop, `frame!` carries each grid step `[tₖ₋₁, tₖ]`
 # through the §10.4 localization loop, firing any `t*` boundaries it brackets on
-# the way. The frame-top boundary (§10.3) is a base tick every `N_base` frames,
+# the way. The frame-top boundary (§10.3) is a base tick every `Δt_base/Δt_frame` frames,
 # where the gate reads the tick index, and the empty-due-set boundary in
 # between. The drain runs at the frame top only, never at a `t*` boundary
 # (§10.4), while publication follows every boundary sequence (§11.2), through
@@ -2073,7 +2073,7 @@ settled!(hooks::LoopHooks) =
 function _advance!(sim::Simulation, ignore_mask::Vector{Bool}, upto::Int,
                    t_end_frame::Int, roster::Vector{RosterEntry}, pacer::Union{Nothing,Pacer})
     plane, control, clock, run = sim.plane, sim.control, sim.model.exec.clock, sim.run
-    h = sim.model.deployment.h
+    Δt_frame = sim.model.deployment.Δt_frame
     hooks = LoopHooks(sim, roster, pacer, ignore_mask)   # one per advance (D-317)
     advanced = 0
     requester = _stop_hit(sim, ignore_mask)
@@ -2091,7 +2091,7 @@ function _advance!(sim::Simulation, ignore_mask::Vector{Bool}, upto::Int,
             run.frame < upto || return (nothing, advanced)
             isempty(roster) || yield()
             pacer === nothing ||              # the pacer's wait: an unmask point (§12.4)
-                wait_deadline!(control, pacer, plane.loop_diag, _seconds(clock.t), h)
+                wait_deadline!(control, pacer, plane.loop_diag, _seconds(clock.t), Δt_frame)
             Base.sigatomic_begin()                 # §12.4: masked across the boundary sequence
             try
                 # the top hook advances the index, then drains, so a batch taken
@@ -2219,10 +2219,10 @@ function step!(sim::Simulation; frames = nothing, t_plus = nothing,
         # the duration is checked as the frame index it lands on, from the origin
         t = sim.model.exec.clock.t                  # the frame top the duration counts from
         t_plus isa Real && isfinite(t_plus) && t_plus > 0 &&
-            _frames_fit(t + t_plus, sim.model.exec.clock.t₀, sim.model.deployment.h) ||
+            _frames_fit(t + t_plus, sim.model.exec.clock.t₀, sim.model.deployment.Δt_frame) ||
             throw(DiagnosticError(ArgumentInvalid(call = :step!, reason = :range,
                                                   argument = :t_plus, value = t_plus)))
-        frame_count = max(1, _frames_to(t + Float64(t_plus), t, sim.model.deployment.h))
+        frame_count = max(1, _frames_to(t + Float64(t_plus), t, sim.model.deployment.Δt_frame))
     end
     (policy, ignore_mask) = _bind_policy(sim, t_end, ignore_stop_requests, :step!)   # this advance's policy (§13.5, D-255)
     t_end_frame = _t_end_frame(sim, policy.t_end)
