@@ -428,6 +428,15 @@ function test_lattices()
         init!(sim; log = false)
         run!(sim; t_end = 1000.0)
         @test sim.run.frame == 1000 && sim.model.exec.clock.t === 1000.0
+        # A duration inside the bound's slack still runs a frame, the one past
+        # the last: refused at the door, the simulation as it was.
+        sim = Simulation(deployment)
+        init!(sim; log = false)
+        @test step!(sim; frames = 1000) == 1000
+        before = lifecycle(sim)
+        d = carried(@test_throws DiagnosticError{ArgumentInvalid} step!(sim; t_plus = 1e-13))
+        @test d.call === :step! && d.argument === :t_plus
+        @test sim.run.frame == 1000 && lifecycle(sim) === before
     end
 
     @testset "the clock's resolution sets the last frame from the gap between boundaries and the origin (§10.5, D-450)" begin
@@ -529,6 +538,13 @@ function test_lattices()
         h_max = (3^25 ÷ 2)//3^25
         d = only(refused(unit_rig(), 1//1; Δt_frame = 2^30, h_max))
         @test d.parameter === :h_max && d.reason === :range && d.value == h_max
+        # A bound whose count `units·q` fits, but whose step's exact length over
+        # the unit's denominator would not: one frame of `1//(2^33 + 1)` taken in
+        # about 2^30 steps.
+        d = only(diagnostics(failure(() -> Deployment(build(feedback_model());
+                                                      Δt_frame = 1//(2^33 + 1),
+                                                      h_max = 1//typemax(Int)))))
+        @test d.parameter === :h_max && d.reason === :range
         # Collected with the event parameters' faults in the one throw (D-229).
         @test Set((d.parameter, d.reason)
                   for d in refused(unit_rig(), 1//typemax(Int); firing_budget = 0)) ==

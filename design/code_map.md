@@ -1016,10 +1016,10 @@ D-261.
 - The `Schedule`'s hyperperiod chart, over `lcm(Dᵢ)` base ticks, with its
   binary guard at 100.
 - The `Deployment` sets `_grid_block`'s lines under `grid:`, and its
-  parameters line names `h_max` resolved. `_steps_line` states the steps per
-  frame, walked span by span from frame 1 over one hyperperiod of the frame
-  tops and the due instants, capped at `STEPS_MAXFRAMES = 10_000` frames,
-  the line naming the frames it walked when the cap cuts it (D-449).
+  parameters line names `h_max` resolved. `_steps_line` states the steps of
+  a frame no due instant falls inside, one `cld` over the bound's ratio to
+  the unit, and names each schedule row whose ticks are not all frame tops,
+  one divisibility check per row (D-449).
 - The published `FrameworkStatus`'s two forms. The `MIME"text/plain"` form
   prints one block per writer and the pacer's line last. It prints each
   writer × kind in full up to `STATUS_MAXLOG` cumulative occurrences, and

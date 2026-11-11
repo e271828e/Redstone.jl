@@ -275,4 +275,68 @@ log and the records. "Empty is acceptable."
 
 ## The review's record
 
-To be filled after the review.
+The arc on top of fd155e6: 8ba044c (docs), 12fe723 (this brief and the
+patch), 4868f30 (code), then the review's fixes. Nothing is pushed.
+
+**The review**, at 4868f30. An independent high-tier agent ran the gate,
+9727 of 9727 in 9m41s on Julia 1.13.3, with the examples 77 of 77, the
+Documenter build clean and the battery green. Its own bit-identity probe
+matched fd155e6 on eleven cases, including subcycled runs, a checkpoint
+restore, replay and every advance door at a negative origin. One run with a
+due instant inside a sub-frame step differs, as the invariant allows. It
+checked D-450's derivation line by line against the code and attacked the
+bound with about 112 000 random deployments just inside it: no pair of
+distinct boundaries took equal or decreasing clocks, and the worst error
+was 0.32 of the gap against the 0.5 that `2^50` allows. Of its 32 mutants
+28 died. `check_rows` lists 444 to 450 as newly cited, not 449 and 450
+alone as "What is settled" says; the baseline has not moved since increment
+91.
+
+The user ruled on each finding on 2026-11-11. The coordinator landed the
+fixes as one commit:
+
+- **F1, the `t_plus` door admitted a run past the last frame**, a
+  regression from reading 17. The door checked the bound from the origin
+  but ran `max(1, …)` frames from the clock under another slack, so a
+  duration inside the slack at the last frame ran frame `last + 1` into
+  `frame!`'s refusal, a loop error. The door now also checks the count it
+  runs against `_last_frame`, as the `frames` door does. Test: a `t_plus`
+  of `1e-13` at the last frame is refused and leaves the simulation as it
+  was; without the check, 2 failures.
+- **F5, the steps line could take seconds.** It walked every span of up to
+  10 000 frames, 1.4 s for a 10 kHz component under 1 s frames. The user
+  chose a closed form. The line states the steps of a frame no due instant
+  falls inside and names every component whose ticks are not all frame
+  tops, one divisibility check per row. D-449's sixth bullet is rewritten
+  and its Rejected list records the walk; §9.2, the roadmap and the code
+  map follow. `STEPS_MAXFRAMES` is gone. Mutants: the phase check dropped,
+  2 failures; the period check dropped, 3.
+- **F6, F3 and F7, stale text.** The `t0` refusal named the old slack test;
+  a comment in `sim.jl` named step points; `frame!`'s docstring joined two
+  sentences with a colon.
+- **F8, Part I.** §2.1 states the clock of a step end inside a span, and
+  §10.5 marks that ruling of D-449 in bold, which no section did.
+- **F10, F11, the clock sentences.** §2.1's "distinct boundaries take
+  strictly increasing clock values" excepts a `t*`. D-450's δ is the lesser
+  of the unit and half the bound when the bound splits a span, edited in
+  place since the entry is this increment's. §10.5's reason for "more than
+  `h_max / 2`" is now `n < g / h_max + 1`.
+- **A25, a missing test.** A bound whose step count fits but whose step's
+  exact length over the unit's denominator would not is refused as `h_max`
+  `:range`. Without the check, 1 error.
+- **F9, deferred.** `h_max` compares as a `Float64`, so `1//3` and
+  `Rational(1/3)` compare equal while their step counts differ, and replay
+  accepts one's recording into the other. The roadmap's open decision on
+  exact periods now names `h_max` with that evidence, for increment 4.
+- **F2, already ruled.** The unchecked `units · unit` numerator is a site of
+  increment 91's ruling 38. `pending.md` now counts two such sites, since
+  `bind_schedule`'s `Δt_frame / h` is gone.
+- **F4, outside the increment.** The plain `show` of a deployment threw
+  `OverflowError` where the schedule's hyperperiod leaves `Int`, from the
+  `Schedule`'s own `lcm`. It lands as its own commit after the fixes.
+
+**Survivors accepted.** A16, replay's `to_time` door reading `max_frame`:
+its second check against the recording's frame count raises the same error.
+A22, `hash` without `h_max`: it stays consistent with `==` and only
+collides more often. A29, the steps walk past `max_frame`, went with the
+walk.

@@ -319,6 +319,10 @@ Every frame top is a boundary, but not every boundary is a frame top. A step
 end inside a frame and a localized event time are boundaries inside a frame,
 never frame tops.
 
+A step end before the next mandatory instant lies on neither lattice. Its
+time is the mandatory instant before it plus its count times the step, never
+a sum of steps ([D-449][d-449]).
+
 ```
  frame 1       frame 2
 |-------------|------|------|------|------•----|
@@ -329,9 +333,10 @@ t₁  frame top             s   a step end inside a span
 t*  a localized event     t₂  frame top
 ```
 
-Distinct boundaries take strictly increasing clock values. A run whose clock
-cannot keep two of its boundaries apart is refused rather than run
-([§10.5][s10-5], [D-450][d-450]).
+Distinct boundaries other than a `t*` take strictly increasing clock values.
+A run whose clock cannot keep two of them apart is refused rather than run
+([§10.5][s10-5], [D-450][d-450]). A `t*` lies on no lattice, and the refusal
+does not cover it.
 
 Everything discrete happens at boundaries. Discrete components
 [tick](#g-tick) (run their stages and update) only at boundaries
@@ -4716,11 +4721,14 @@ divisor is `D = m·D₁`, with `D₁ = T₁/Δt_base = (1//50)/(1//500) = 10`.
   from the structure's connections and the producers' stage-2 names
   ([D-261][d-261]).
 - **`show(::Deployment)` states the steps per frame** a fixed-step method
-  takes, as a range such as "4 to 5" under its parameters ([D-449][d-449]).
-  It counts from frame 1 over one hyperperiod of the frame tops and the due
-  instants, which repeat together, and stops after 10 000 frames, saying how
-  many it walked. The count is how a user learns that the schedule splits
-  steps, and construction raises no warning for a split.
+  takes in a frame no due instant falls inside, under its parameters
+  ([D-449][d-449]). It then names every discrete component whose due
+  instants fall inside frames. Such a frame splits into spans, each taken in
+  its own equal steps, so it never takes fewer. The line is how a user learns
+  that the schedule splits steps, and construction raises no warning for a
+  split. It costs one check per component, since a component's ticks all
+  fall on frame tops exactly when the frame divides its period and its
+  offset.
 
 A REPL user gets each table by evaluating the value. A client outside the
 process gets the same facts as data: `descriptor` renders a `Build` or a
@@ -6463,9 +6471,9 @@ since the step's interpolant spans those two instants ([§10.4][s10-4]).
 
 The clock at a step's end is written once, from an index
 ([D-445][d-445]). A frame top is `t₀ + k·Δt_frame`, and a due instant off the
-frame tops is `t₀ + n·Δt_base`. A step end inside a span is the span's start
-clock plus `i·(g / n)`, from its count `i` in the span, never accumulated
-([§10.4][s10-4], [D-449][d-449]).
+frame tops is `t₀ + n·Δt_base`. **A step end inside a span is the span's
+start clock plus `i·(g / n)`**, from its count `i` in the span, never
+accumulated ([§10.4][s10-4], [D-449][d-449]).
 
 The split follows the schedule, not the state. A `Model` at a `Dual` takes
 the steps the `Float64` model takes, though its discrete tier is frozen
@@ -6480,7 +6488,8 @@ that are equal or out of order** ([D-450][d-450]). Every clock the loop
 writes lies within about `2⁻⁵²·(|t₀| + 2·(t − t₀))` of its instant `t`. Two
 consecutive boundaries lie at least a gap `δ` apart. The gap is the unit
 between two mandatory instants, and more than `h_max / 2` between two equal
-steps, since a span longer than `h_max` takes at least two steps. So a run
+steps, since a span of length `g > h_max` takes
+`n = ⌈g / h_max⌉ < g / h_max + 1` of them. So a run
 from `t₀` may reach an instant `t` only while
 
 ```

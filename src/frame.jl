@@ -54,9 +54,9 @@ reached. See [`FrameHooks`](@ref) for the hooks, and [`NoHooks`](@ref) for a
 model stepped on its own.
 
 A model claimed by a [`Simulation`](@ref) is refused as `ArgumentInvalid`, and
-so is a `k` past the last frame the run may take: the last whose positions the
-deployment's lattices index in an `Int`, and whose clocks the origin resolves
-in order. A throw inside the frame writes the status `:inconsistent` and
+so is a `k` past the last frame the run may take. That is the last frame whose
+positions the deployment's lattices index in an `Int` and whose clocks the
+origin resolves in order. A throw inside the frame writes the status `:inconsistent` and
 arrives as a `StepError` with host `:loop`, an `InterruptException` included.
 Its `boundary` is `k - 1`, the boundary the frame started from.
 """

@@ -261,43 +261,21 @@ _deployment_parameters(deployment::Deployment) =
 Base.show(io::IO, deployment::Deployment) =
     print(io, "Deployment(", _deployment_parameters(deployment), ")")
 
-"""
-The most frames `show(::Deployment)` walks to count the steps per frame
-(§9.2, D-449). Presentation, like `STATUS_MAXLOG`: a hyperperiod longer than
-this is counted over its first frames and says so.
-"""
-const STEPS_MAXFRAMES = 10_000
-
-# The steps of a fixed-step method per frame (§9.2, §10.5, D-449). The frame
-# tops and the due instants repeat together with the least common multiple of
-# the frame and the schedule's hyperperiod, so frames 1 to that many hold every
-# frame's count. Each frame is walked as the loop walks it, span by span, from
-# frame 1 and to at most `STEPS_MAXFRAMES` frames or the lattices' last frame.
-# The hyperperiod is a `BigInt`, since it is printed, never indexed.
+# The steps of a fixed-step method per frame (§9.2, §10.5, D-449). A frame no
+# due instant falls inside is one span, taken in `⌈Δt_frame / h_max⌉` steps, one
+# `cld` over the bound's ratio to the unit. A row's ticks lie at
+# `(Φ + j·D)·base` units, all of them frame tops exactly when the frame divides
+# both `Φ·base` and `D·base`; every other row splits frames, and the line names
+# it. No frame is walked, so the line costs one check per row. The products fit
+# `Int`, since `_lattice` fits `D·base` past a frame top and `Φ < D`.
 function _steps_line(deployment::Deployment)
-    lattice, rows = deployment.lattice, deployment.schedule.rows
-    hyperperiod = isempty(rows) ? big(1) :
-        lcm(big(lattice.frame), lcm(big.([row.D for row in rows])) * lattice.base) ÷ lattice.frame
-    walked = Int(min(hyperperiod, STEPS_MAXFRAMES, lattice.max_frame))
-    fewest, most = typemax(Int), 0
-    for k in 1:walked
-        origin, position, count_k = (k - 1) * lattice.frame, 0, 0
-        (_, due_at) = _next_due(rows, lattice.base, origin)
-        while true
-            target = min(lattice.frame, due_at - origin)
-            count_k += cld((target - position) * denominator(lattice.bound),
-                           numerator(lattice.bound))
-            target == lattice.frame && break
-            position = target
-            (_, due_at) = _next_due(rows, lattice.base, origin + target)
-        end
-        fewest, most = min(fewest, count_k), max(most, count_k)
-    end
-    counts = fewest == most ? "$fewest" : "$fewest to $most"
-    walked == hyperperiod ?
-        "steps per frame: $counts, over one hyperperiod of " * _count(walked, "frame") :
-        "steps per frame: $counts in the first " * _count(walked, "frame") *
-        " of a hyperperiod of $hyperperiod"
+    lattice = deployment.lattice
+    steps = cld(lattice.frame * denominator(lattice.bound), numerator(lattice.bound))
+    splitting = [_path_label(row.path) for row in deployment.schedule.rows
+                 if (row.Φ * lattice.base) % lattice.frame != 0 ||
+                    (row.D * lattice.base) % lattice.frame != 0]
+    "steps per frame: $steps" *
+        (isempty(splitting) ? "" : "; due instants of " * join(splitting, ", ") * " split frames")
 end
 
 # The parameters, the steps per frame, the build in its compact form (a reader

@@ -91,10 +91,11 @@ needs it.
   the lesser of the two. It does not cover `t*` boundaries, which sit
   on no lattice. §10.5's and D-445's sentences on equal clocks then state
   the refusal.
-- **The steps per frame.** `show(deployment)` states the bound and the
-  steps per frame over one hyperperiod, such as "at most 5 ms, 4 to 5 steps
-  per frame", for a fixed-step method and with a cap on the frames it
-  counts. No warning is raised when a due instant splits a step.
+- **The steps per frame.** `show(deployment)` states the steps of a frame
+  no due instant falls inside, and names the components whose due instants
+  split frames, at one check per component (D-449). It replaced a count
+  over one hyperperiod, which took seconds on a fast component under a slow
+  frame. No warning is raised when a due instant splits a step.
 - **The seam protocol.** `propose(stepper)`, `attempt!(stepper, model, h)`
   returning acceptance and the next proposal, `discontinuity!(stepper)`,
   the retained `startpoint`, the generic `dense!` a backend may override,
@@ -190,8 +191,12 @@ in discussion.
   two instants the Model knows exactly and the float distance from a `t*` or
   an adaptive step end. Increment 4, where the bit-identity invariant ends.
 - **Exact periods on the `Deployment`.** Whether it stores and compares
-  `Δt_frame` and `Δt_base` as exact rationals, where it compares their
-  `Float64` values today. Increment 4, with the recorded set.
+  `Δt_frame`, `Δt_base` and `h_max` as exact rationals, where it compares
+  their `Float64` values today. The bound makes the hole easy to reach: at a
+  1 s frame, `h_max = 1//3` and `h_max = Rational(1/3)` compare and hash
+  equal and take 3 and 4 steps per frame, and `replay!` accepts one's
+  recording into the other while the state drifts by 0.014 in five frames.
+  Increment 4, with the recorded set.
 
 ## The sequence
 

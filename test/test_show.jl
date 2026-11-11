@@ -233,7 +233,7 @@ function test_show()
         @test startswith(text, "Deployment: Δt_frame = 0.002, Δt_base = 0.002, h_max = 0.002, " *
                                "RK4(); firing_budget = 4, localization_tol = 1.0e-6, " *
                                "localization_budget = 8\n" *
-                               "  steps per frame: 1, over one hyperperiod of 10 frames\n" *
+                               "  steps per frame: 1\n" *
                                "  build: Build(4 components, activations: Float64)\n")
         @test occursin("\n" * join("  " .* split(MULTIRATE_SCHEDULE, '\n'), "\n") * "\n  grid:\n", text)
         @test endswith(text, "\n  warnings: none")
@@ -248,31 +248,43 @@ function test_show()
                        "  grid: no constraint\n  warnings: none", text)
     end
 
-    @testset "Deployment: the steps per frame over one hyperperiod, capped (§9.2, §10.5, D-449)" begin
+    @testset "Deployment: the steps of an unsplit frame, and the components that split frames (§9.2, §10.5, D-449)" begin
         steps_line(deployment) = split(plain(deployment), '\n')[2]
-        # A counter at 0.07 s in 0.1 s frames under a 25 ms bound: the frames
-        # and the ticks repeat every 7 frames, and frame 4, whose tick halves
-        # it, takes 4 steps where every other frame takes 5.
+        # A counter at 0.07 s in 0.1 s frames under a 25 ms bound: an unsplit
+        # frame takes 4 steps, and the counter's ticks fall inside frames.
         rig = build(Group((; c = Plant(), a = TickCounter()); input_wires = ("in" => "c/u",),
                           sample_times = (; a = Absolute(Period(7//100)))))
         @test steps_line(Deployment(rig; Δt_frame = 1//10, Δt_base = 1//100, h_max = 1//40)) ==
-              "  steps per frame: 4 to 5, over one hyperperiod of 7 frames"
-        # No bound: one step per span, and frames 3 and 5 hold two ticks.
+              "  steps per frame: 4; due instants of a split frames"
+        # No bound: one step per unsplit frame.
         @test steps_line(Deployment(rig; Δt_frame = 1//10, Δt_base = 1//100)) ==
-              "  steps per frame: 2 to 3, over one hyperperiod of 7 frames"
-        # No discrete component: one span per frame, so a hyperperiod of one.
+              "  steps per frame: 1; due instants of a split frames"
+        # No discrete component: a bound that divides the frame, then one that
+        # divides nothing, ⌈0.01/0.003⌉ = 4.
         @test steps_line(Deployment(pendulum; Δt_frame = 1//100, h_max = 1//400)) ==
-              "  steps per frame: 4, over one hyperperiod of 1 frame"
-        @test steps_line(pendulum_deployed) == "  steps per frame: 1, over one hyperperiod of 1 frame"
-        # Periods of 0.1 s and 0.10001 s over a 10 µs base repeat every 50005
-        # frames of 20 ms, past the cap: the count names the frames it walked.
+              "  steps per frame: 4"
+        @test steps_line(Deployment(pendulum; Δt_frame = 1//100, h_max = 3//1000)) ==
+              "  steps per frame: 4"
+        @test steps_line(pendulum_deployed) == "  steps per frame: 1"
+        # Two components at the frame period, one offset by half a frame: only
+        # the offset one splits, by its phase alone.
+        offset = build(Group((; a = TickCounter(), b = TickCounter());
+                             sample_times = (; a = Absolute(Period(1//10), 1//20),
+                                               b = Absolute(Period(1//10)))))
+        @test steps_line(Deployment(offset; Δt_frame = 1//10, Δt_base = 1//20)) ==
+              "  steps per frame: 1; due instants of a split frames"
+        # Periods of 0.1 s and 0.10001 s in 20 ms frames: only the second splits,
+        # by its period alone. With both offset, both are named in row order.
         long = build(Group((; a = TickCounter(), b = TickCounter());
                            sample_times = (; a = Absolute(Period(1//10)),
                                              b = Absolute(Period(10001//100000)))))
         @test steps_line(Deployment(long; Δt_frame = 1//50, Δt_base = 1//100000)) ==
-              "  steps per frame: 1 to 2 in the first $(STEPS_MAXFRAMES) frames of a " *
-              "hyperperiod of 50005"
-        @test STEPS_MAXFRAMES == 10_000
+              "  steps per frame: 1; due instants of b split frames"
+        both = build(Group((; a = TickCounter(), b = TickCounter());
+                           sample_times = (; a = Absolute(Period(1//10), 1//100),
+                                             b = Absolute(Period(1//10), 1//100))))
+        @test steps_line(Deployment(both; Δt_frame = 1//50, Δt_base = 1//100)) ==
+              "  steps per frame: 1; due instants of a, b split frames"
     end
 
     @testset "the status's compact form is one line with the counts (§11.8, D-257)" begin

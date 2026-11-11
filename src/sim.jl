@@ -1464,9 +1464,9 @@ end
 # a termination source fires; and the tail closes the run with the sticky status
 # after the final snapshot, the waits woken, `unblock!`, and the join under
 # `join_timeout`. Inside the loop, `frame!` carries each frame `[tₖ₋₁, tₖ]`
-# through its steps, each ending at the nearest step point, due instant or
-# frame top, and through the §10.4 localization loop inside each step, firing
-# any `t*` boundaries it brackets on the way (D-444, D-445). A due instant's
+# through each span between two mandatory instants in equal steps, and through
+# the §10.4 localization loop inside each step, firing any `t*` boundaries it
+# brackets on the way (D-445, D-449). A due instant's
 # boundary reads its tick index at the gate, and every other boundary takes the
 # empty due set. The drain runs at the frame top only, never at a step end
 # inside the frame or a `t*` boundary (§10.4), while publication follows every
@@ -2229,13 +2229,19 @@ function step!(sim::Simulation; frames = nothing, t_plus = nothing,
                                                   argument = :frames, value = frame_count)))
         frame_count = Int(frame_count)
     else
-        # the duration is checked as the frame index it lands on, from the origin
+        # the duration is checked as the frame index it lands on, from the origin,
+        # before the conversion, and then as the frames it runs: those count from
+        # the clock under their own slack and at least one, so they can pass the
+        # bound's frame (§12.6, D-450)
         t = sim.model.exec.clock.t                  # the frame top the duration counts from
         t_plus isa Real && isfinite(t_plus) && t_plus > 0 &&
             _frames_fit(sim.model, t + t_plus) ||
             throw(DiagnosticError(ArgumentInvalid(call = :step!, reason = :range,
                                                   argument = :t_plus, value = t_plus)))
         frame_count = max(1, _frames_to(sim.model.deployment, t + Float64(t_plus), t))
+        frame_count ≤ _last_frame(sim.model) - sim.run.frame ||
+            throw(DiagnosticError(ArgumentInvalid(call = :step!, reason = :range,
+                                                  argument = :t_plus, value = t_plus)))
     end
     (policy, ignore_mask) = _bind_policy(sim, t_end, ignore_stop_requests, :step!)   # this advance's policy (§13.5, D-255)
     t_end_frame = _t_end_frame(sim, policy.t_end)

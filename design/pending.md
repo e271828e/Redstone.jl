@@ -57,8 +57,9 @@ item changes what the spec says, the spec edit is part of the item.
       reached, since a cap would end the run without saying why.
     - A `settled!` hook's contract stays stated and unenforced (D-447). Only
       a hand-written hooks type on an unclaimed model can break it.
-    - The three sites that raise a raw `OverflowError` on periods of extreme
-      magnitude are left.
+    - The sites that raise a raw `OverflowError` on periods of extreme
+      magnitude are left. They were three. The step bound removed
+      `bind_schedule`'s `Δt_frame / h`, so two remain.
     - The rename of D-448 does not sweep the log, and `rules/log_rules.md`
       rule 2 now says why. `:boundary` in the `Events` policies became
       `:non_localized`.

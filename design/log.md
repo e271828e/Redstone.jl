@@ -18680,9 +18680,9 @@ nothing. The bundled rulings:
   inside a span has no position. Its clock is the span's start clock plus
   `i` times the span's exact step, from its count `i` in the span, never
   accumulated.
-- `show(deployment)` states the steps per frame over one hyperperiod of the
-  frame tops and the due instants, counted from frame 1 and capped at
-  10 000 frames. No warning is raised when a due instant splits a step.
+- `show(deployment)` states the steps of a frame no due instant falls
+  inside, and names every component whose due instants fall inside frames.
+  No warning is raised when a due instant splits a step.
 
 **Spec.** [§2.1][s2-1], [§2.2][s2-2], [§2.4][s2-4], [§9.2][s9-2], [§10.1][s10-1], [§10.2][s10-2], [§10.4][s10-4], [§10.5][s10-5], [§10.6][s10-6], [§11.5][s11-5],
 [§12.7][s12-7], [Appendix B][sB], [Appendix C][sC], [Appendix D][sD]
@@ -18730,6 +18730,13 @@ per frame, split only at due instants, is bit-identical to increment 91's.
   that moves nothing.
 - *A bound above the frame refused:* it refuses a value whose meaning, no
   bound below the frame, is already well defined.
+- *The steps per frame counted frame by frame over one hyperperiod, as a
+  range such as "4 to 5":* the walk visits every span of up to 10 000
+  frames, which takes seconds for a fast component under a slow frame, a
+  10 kHz component under 1 s frames among them. The range it buys is not
+  what a user acts on. Which components split frames is, and one check per
+  component finds it: a component's ticks all fall on frame tops exactly
+  when the frame divides its period and its offset.
 
 ### D-450 — Refuse a run whose clock cannot order its boundaries
 
@@ -18739,7 +18746,8 @@ per frame, split only at due instants, is bit-identical to increment 91's.
 clocks that are equal or out of order. The bundled rulings:
 
 - With `δ` the least gap between two consecutive boundaries, the lattices'
-  unit, or half of `h_max` when the bound splits a span, a run from `t₀` may
+  unit, or the lesser of it and half of `h_max` when the bound splits a
+  span, a run from `t₀` may
   reach an instant `t` only while `|t₀| + 2·(t − t₀) < 2^50·δ`.
 - The bound gives a last frame beside the lattices' `Int` range, and a run
   may take frames up to the lesser of the two. Every door that refuses a run

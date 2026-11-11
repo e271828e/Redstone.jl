@@ -32,7 +32,7 @@ import Redstone: ASSEMBLY, Absolute, AbstractAlgorithm, AbstractBinding, Abstrac
     RatesViolation, ReadResolution,
     ReadSetMisuse, Reader, Reads, Relative, ReplayDiscardedStaging, ReplayFeed,
     ReplaySchemaMismatch, ReplayUnknownFace, Requester,
-    RootInputTypeConflict, Run, STATUS_MAXLOG, STEPS_MAXFRAMES, STOP_REQUESTED, Schedule, ScheduleEntry, ScopeEntry, Scoped, Series,
+    RootInputTypeConflict, Run, STATUS_MAXLOG, STOP_REQUESTED, Schedule, ScheduleEntry, ScopeEntry, Scoped, Series,
     ServiceLifecycle, Simulation, Snapshot,
     SpecializedPlan, StageEntry, StateEvent, StatelessWithoutOutputs, StepError,
     StopFlag, StopRequestInvalid, StoreBundle,
