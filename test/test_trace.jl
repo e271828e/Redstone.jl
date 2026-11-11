@@ -255,22 +255,32 @@ function trace_entry_pass()
         @test d.what === :store && d.expected == ["s", "g"] && d.found == ["s", "g", "k"]
         @test any(d -> d.what === :store && d.name === :sizes, diagnostics(err))
 
-        # The six trajectory-determining parameters, one assertion each where the
+        # The seven trajectory-determining parameters, one assertion each where the
         # keyword is independently settable. `Δt_frame` moves `Δt_base` and the
-        # default step with it, so the collection carries all three, the
-        # algorithm compared as one value with its step resolved (D-442).
+        # default bound with it, so the collection carries all three, the bound
+        # compared resolved (D-449).
         err = failure(() -> _compile_feed(Simulation(three_root_inputs(); Δt_frame = 1//20), trc))
         d = only(x for x in diagnostics(err) if x.name === :Δt_frame)
         @test d.what === :deployment && d.expected === 0.1 && d.found === 0.05
         @test any(x -> x.what === :deployment && x.name === :Δt_base, diagnostics(err))
-        d = only(x for x in diagnostics(err) if x.name === :algorithm)
-        @test d.what === :deployment && d.expected == RK4(1//10) && d.found == RK4(1//20)
-        # The algorithm alone: the same frame under another method.
+        d = only(x for x in diagnostics(err) if x.name === :h_max)
+        @test d.what === :deployment && d.expected === 0.1 && d.found === 0.05
+        # The bound alone: the same frame in two steps, and a bound above the
+        # frame, which is the recording's own trajectory and passes.
+        err = failure(() -> _compile_feed(
+            Simulation(three_root_inputs(); Δt_frame = 1//10, h_max = 1//20), trc))
+        d = only(diagnostics(err))
+        @test d.what === :deployment && d.name === :h_max && d.expected === 0.1 &&
+              d.found === 0.05
+        @test _compile_feed(Simulation(three_root_inputs(); Δt_frame = 1//10, h_max = 1), trc) !==
+              nothing
+        # The algorithm alone: the same frame under another method, compared as
+        # one value (D-442).
         err = failure(() -> _compile_feed(
             Simulation(three_root_inputs(); Δt_frame = 1//10, algorithm = Heun()), trc))
         d = only(diagnostics(err))
-        @test d.what === :deployment && d.name === :algorithm && d.expected == RK4(1//10) &&
-              d.found == Heun(1//10)
+        @test d.what === :deployment && d.name === :algorithm && d.expected == RK4() &&
+              d.found == Heun()
 
         err = failure(() -> _compile_feed(
             Simulation(three_root_inputs(); Δt_frame = 1//10, localization_budget = 4), trc))

@@ -1,8 +1,8 @@
-# --- the three lattices (§2.1, §10.5, D-444, D-445) -----------------------------
-# The frame tops, the base ticks and the step points stand in no required
-# ratio. A frame's steps end at the nearest step point, due instant or frame
-# top, each instant written from its own index, and every step end is a
-# boundary.
+# --- the lattices and the step bound (§2.1, §10.5, D-445, D-449, D-450) ---------
+# The frame tops and the base ticks stand in no required ratio. A span runs
+# from one mandatory instant, a frame top or a due instant, to the next, and a
+# fixed-step method takes it in the fewest equal steps `h_max` allows. Every
+# step end is a boundary, and every clock is written from an index.
 
 # A frame's hooks that keep, at every settled boundary, the clock and the two
 # tick counters of the lattice rig, and report nothing written at the top.
@@ -18,11 +18,7 @@ settled!(hooks::LatticeHooks) =
 # A recording backend (§10.2): forward Euler that keeps every step length the
 # loop hands it, the scalar's value, and whether that step's first stage found
 # the table fresh (D-447).
-struct Recorder <: AbstractAlgorithm
-    h::Union{Nothing,Rational{Int}}
-    Recorder() = new(nothing)
-    Recorder(h::Rational{Int}) = new(h)
-end
+struct Recorder <: AbstractAlgorithm end
 struct RecorderStepper{T} <: AbstractStepper
     x₀::Vector{T}
     k₁::Vector{T}
@@ -65,7 +61,7 @@ frame_top!(::FreshHooks) = false
 settled!(::FreshHooks) = false
 
 # Three stampers on one sawtooth, crossing in the first, second and third steps
-# of frame 4 at `h = 1//40`.
+# of frame 4 under `h_max = 1//40`.
 three_stampers() = Group((; src = Sawtooth(1.0), s1 = Stamper(0.31), s2 = Stamper(0.335),
                           s3 = Stamper(0.36));
                          local_wires = ("src/q" => "s1/sig", "src/q" => "s2/sig",
@@ -75,7 +71,12 @@ three_stampers() = Group((; src = Sawtooth(1.0), s1 = Stamper(0.31), s2 = Stampe
 # frame spans 10^16 units, so only 921 frames fit `Int`.
 overflow_rig() = Group((; c = TickCounter()); sample_times = (; c = Relative(10^16)))
 
-# A counter due at every base tick, whose exact unit with the step sets the
+# A counter whose period is a thousand units short of `typemax(Int)`, at a unit
+# of one second: only frames 1 to 1000 keep its next due index inside `Int`,
+# long before the clock's resolution ends.
+long_period_rig() = Group((; c = TickCounter()); sample_times = (; c = Relative(typemax(Int) - 1000)))
+
+# A counter due at every base tick, whose exact unit with the frame sets the
 # lattices' resolution.
 unit_rig() = Group((; c = TickCounter()); sample_times = (; c = Relative(1)))
 
@@ -113,10 +114,19 @@ function test_lattices()
         @test count(b -> b[1] == frames * Δt_frame, hooks.boundaries) == 1
     end
 
-    @testset "a schedule on the step points takes Δt_frame/h equal steps in every frame (§10.5, D-444)" begin
+    @testset "a harmonic h_max takes equal steps of exactly h_max (§10.5, D-449)" begin
+        # Three steps of 0.1 to a 0.3 s frame: the step is the exact `h_max`,
+        # where dividing the frame's float by 3 would round below it.
+        model = Model(fed(Plant(), "u"); Δt_frame = 3//10, h_max = 1//10, algorithm = Recorder())
+        init!(model, set(u = (in = 0.0,)))
+        frames!(model, 4)
+        @test model.exec.stepper.lengths == fill(0.1, 12)
+        @test Float64(3//10) / 3 !== 0.1
+        # A due instant at every span's end: two spans a frame, two steps each.
         rig = Group((; c = Plant(), a = TickCounter()); input_wires = ("in" => "c/u",),
                     sample_times = (; a = Relative(1)))
-        model = Model(rig; Δt_frame = 1//50, Δt_base = 1//100, algorithm = Recorder(1//200))
+        model = Model(rig; Δt_frame = 1//50, Δt_base = 1//100, h_max = 1//200,
+                      algorithm = Recorder())
         init!(model, set(u = (in = 0.0,)))
         frames!(model, 10)
         @test model.exec.stepper.lengths == fill(Float64(1//200), 40)
@@ -159,25 +169,66 @@ function test_lattices()
         @test dual.exec.stepper.lengths == model.exec.stepper.lengths
     end
 
-    @testset "step points are counted from the frame top, never from the last boundary (§10.5, D-444)" begin
-        # A due instant 7 units into a 5-unit step: after the split the next
-        # step runs to the next step point, so frame 2's due instant at 14
-        # leaves a 1-unit piece before the step point at 15.
-        model = Model(split_rig(); Δt_frame = 1//10, Δt_base = 1//100, algorithm = Recorder(1//20))
-        init!(model, set(u = (in = 0.0,)))
-        frames!(model, 2)
+    @testset "a due instant cuts a span, and each piece takes its own equal steps, written from the span's start (§10.5, D-449)" begin
+        # A due instant 7 units into a 10-unit frame under a 5-unit bound: the
+        # spans of 7 and 3 units take 2 and 1 steps, then 4 and 6 take 1 and 2.
+        model = Model(split_rig(); Δt_frame = 1//10, Δt_base = 1//100, h_max = 1//20,
+                      algorithm = Recorder())
+        init!(model, set(u = (in = 0.0,)); t0 = 0.25)
+        clocks = Float64[]
+        hooks = RecordingHooks(model, 0, clocks, false)
+        for k in 1:2
+            frame!(model, k, hooks)
+        end
         @test model.exec.stepper.lengths ==
-              Float64[5//100, 2//100, 3//100, 4//100, 1//100, 5//100]
+              Float64[7//200, 7//200, 3//100, 4//100, 3//100, 3//100]
         @test state(model, "a").n == 1 + 2
+        # An interior step end from its span's start clock and its count, the
+        # mandatory instants from their own indices (D-445, D-449).
+        Δt_frame, Δt_base = model.deployment.Δt_frame, model.deployment.Δt_base
+        @test clocks == [(0.25 + 0 * Δt_frame) + 1 * Float64(7//200), 0.25 + 7 * Δt_base,
+                         0.25 + 1 * Δt_frame, 0.25 + 14 * Δt_base,
+                         (0.25 + 14 * Δt_base) + 1 * Float64(3//100), 0.25 + 2 * Δt_frame]
     end
 
-    @testset "a due instant on a step point is written from its base-tick index (§10.5, D-445)" begin
-        # Every step point is a base tick here, so every step end inside a
-        # frame is due, and its clock comes from `n`, where the step's own
-        # formula rounds otherwise: frame 2's second step end is tick 5.
+    @testset "a bound that divides neither the frame nor a span still takes each span in equal steps no longer than it (§10.5, D-449)" begin
+        # `h_max = 1//35` is 20/7 units: spans of 7 and 3 units take 3 and 2
+        # steps, of 4 and 6 units 2 and 3, each longer than half the bound.
+        h_max = 1//35
+        model = Model(split_rig(); Δt_frame = 1//10, Δt_base = 1//100, h_max, algorithm = Recorder())
+        init!(model, set(u = (in = 0.0,)))
+        frames!(model, 2)
+        lengths = model.exec.stepper.lengths
+        @test lengths == Float64[7//300, 7//300, 7//300, 3//200, 3//200,
+                                 1//50, 1//50, 1//50, 1//50, 1//50]
+        @test all(h -> h / 2 < h_max ≥ h, lengths)
+        # The split follows the schedule, not the state: at a `Dual` the frozen
+        # discrete tier takes the same steps (D-444).
+        dual = Model(split_rig(), D8; Δt_frame = 1//10, Δt_base = 1//100, h_max,
+                     algorithm = Recorder())
+        init!(dual, set(u = (in = D8(0.0),)))
+        frames!(dual, 2)
+        @test dual.exec.stepper.lengths == lengths
+    end
+
+    @testset "a bound at or above the frame bounds nothing: one step a span, the unbounded trajectory (§10.5, D-449)" begin
+        lengths = map((nothing, 1//10, 1//1)) do h_max
+            model = Model(split_rig(); Δt_frame = 1//10, Δt_base = 1//100, h_max,
+                          algorithm = Recorder())
+            init!(model, set(u = (in = 0.0,)))
+            frames!(model, 2)
+            model.exec.stepper.lengths
+        end
+        @test lengths[1] == lengths[2] == lengths[3] == Float64[7//100, 3//100, 4//100, 6//100]
+    end
+
+    @testset "a due instant is written from its base-tick index (§10.5, D-445)" begin
+        # Every span is one base tick here, so every step end inside a frame is
+        # due, and its clock comes from `n`, where a count from the frame top
+        # rounds otherwise: frame 2's second step end is tick 5.
         rig = Group((; c = Plant(), a = TickCounter()); input_wires = ("in" => "c/u",),
                     sample_times = (; a = Relative(1)))
-        model = Model(rig; Δt_frame = 1//10, Δt_base = 1//30, algorithm = RK4(1//30))
+        model = Model(rig; Δt_frame = 1//10, Δt_base = 1//30, h_max = 1//30)
         init!(model, set(u = (in = 0.0,)))
         clocks = Float64[]
         hooks = RecordingHooks(model, 0, clocks, false)
@@ -191,13 +242,13 @@ function test_lattices()
         @test state(model, "a").n == 1 + 6
     end
 
-    @testset "a step shorter than the frame subcycles: the analytic solution, bitwise the frame at h (§2.2, §10.2, D-444)" begin
+    @testset "a bound finer than the frame subcycles: the analytic solution, bitwise the frame at h_max (§2.2, §10.2, D-449)" begin
         ω, ζ, k, r = 2.0, 0.1, 4.0, 0.7
         A = SMatrix{2,2}(0.0, -ω^2, 1.0, -2ζ * ω)
         B = SVector(0.0, 1.0)
         Acl = A - B * k * SVector(1.0, 0.0)'
         exact(t) = exp(Acl * t) * (Acl \ (B * k * r)) - Acl \ (B * k * r)
-        subcycled = Model(feedback_model(; k, ω, ζ); Δt_frame = 1//100, algorithm = RK4(1//400))
+        subcycled = Model(feedback_model(; k, ω, ζ); Δt_frame = 1//100, h_max = 1//400)
         stepwise = Model(feedback_model(; k, ω, ζ); Δt_frame = 1//400)
         init!(subcycled, set(u = (ref = r,)))
         init!(stepwise, set(u = (ref = r,)))
@@ -210,10 +261,11 @@ function test_lattices()
             agree &= state(subcycled, "plant").q === state(stepwise, "plant").q
         end
         # The model reads no time, so the four steps of a frame are the four
-        # frames at `h` to the bit.
+        # frames at `h_max` to the bit.
         @test agree
         @test norm(state(subcycled, "plant").q - exact(2.0)) < 1e-9
-        # Each step point from its frame's index and its count from the top.
+        # Each interior step end from its span's start, the frame top, and its
+        # count in the span (D-449).
         Δt_frame, h = subcycled.deployment.Δt_frame, Float64(1//400)
         @test clocks == [j == 4 ? frame * Δt_frame : (frame - 1) * Δt_frame + j * h
                          for frame in 1:200 for j in 1:4]
@@ -233,18 +285,17 @@ function test_lattices()
     end
 
     @testset "every step end publishes, under its frame's index and the next ordinal (§11.2, §12.3, D-445)" begin
-        sim = Simulation(split_rig(); Δt_frame = 1//10, Δt_base = 1//100,
-                         algorithm = RK4(1//20))
+        sim = Simulation(split_rig(); Δt_frame = 1//10, Δt_base = 1//100, h_max = 1//20)
         init!(sim, set(u = (in = 0.0,)))
         step!(sim; frames = 3)
         snapshots = logged(sim)
-        Δt_frame, Δt_base, h = 0.1, 0.01, 0.05
+        Δt_frame, Δt_base = 0.1, 0.01
         @test [s.frame for s in snapshots] == [0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3]
         @test [s.boundary for s in snapshots] == collect(0:10)
         @test [s.t for s in snapshots] ==
-              [0.0, 0 * Δt_frame + 1 * h, 7 * Δt_base, 1 * Δt_frame,
-               14 * Δt_base, 1 * Δt_frame + 1 * h, 2 * Δt_frame,
-               21 * Δt_base, 2 * Δt_frame + 1 * h, 28 * Δt_base, 3 * Δt_frame]
+              [0.0, 0 * Δt_frame + 1 * 0.035, 7 * Δt_base, 1 * Δt_frame,
+               14 * Δt_base, 14 * Δt_base + 1 * 0.03, 2 * Δt_frame,
+               21 * Δt_base, 21 * Δt_base + 1 * 0.035, 28 * Δt_base, 3 * Δt_frame]
         @test [port(s, "a", :n) for s in snapshots] == [0, 0, 1, 1, 2, 2, 2, 3, 3, 4, 4]
     end
 
@@ -265,7 +316,8 @@ function test_lattices()
 
         # Under the loop's hooks a frame's first step is fresh unless its drain
         # applied a batch or it opens an advance; every later step is fresh.
-        recorded() = Simulation(fed(Plant(), "u"); Δt_frame = 1//10, algorithm = Recorder(1//20))
+        recorded() = Simulation(fed(Plant(), "u"); Δt_frame = 1//10, h_max = 1//20,
+                                algorithm = Recorder())
         sim = recorded()
         init!(sim, set(u = (in = 0.0,)))
         step!(sim; frames = 3)
@@ -290,7 +342,7 @@ function test_lattices()
     end
 
     @testset "a localized event in a frame's later step, the budget counted across its steps (§10.4, D-446)" begin
-        sim = Simulation(three_stampers(); Δt_frame = 1//10, algorithm = RK4(1//40),
+        sim = Simulation(three_stampers(); Δt_frame = 1//10, h_max = 1//40,
                          localization_budget = 2)
         init!(sim)
         run!(sim; t_end = 0.5)
@@ -298,7 +350,8 @@ function test_lattices()
         @test modes(sim, "s1").t_fired ≈ 0.31 atol = 1e-6
         @test modes(sim, "s2").t_fired ≈ 0.335 atol = 1e-6
         # s3 crosses in the third: the budget of 2 is spent, so it fires at the
-        # end of the step it was found in, written from its frame and its count.
+        # end of the step it was found in, written from its span's start and its
+        # count.
         Δt_frame, h = sim.model.deployment.Δt_frame, Float64(1//40)
         @test modes(sim, "s3").t_fired === 3 * Δt_frame + 3 * h
         # The frame's report folds at frame 5's top, so the first publication
@@ -312,8 +365,7 @@ function test_lattices()
     end
 
     @testset "a stop request holding at a step end inside a frame ends the run there (§13.5, D-445)" begin
-        sim = Simulation(ramp_request(0.33, "ramp at level"); Δt_frame = 1//10,
-                         algorithm = RK4(1//40))
+        sim = Simulation(ramp_request(0.33, "ramp at level"); Δt_frame = 1//10, h_max = 1//40)
         init!(sim)
         run!(sim; t_end = 1.0)
         Δt_frame, h = sim.model.deployment.Δt_frame, Float64(1//40)
@@ -326,37 +378,42 @@ function test_lattices()
     end
 
     @testset "a frame whose positions leave `Int` is refused, and an unbounded run stops before it (§10.5, §12.6, D-445)" begin
-        deployment = Deployment(build(overflow_rig()); Δt_frame = 1//100, Δt_base = 1//10^18)
-        @test deployment.lattice.max_frame == fld(typemax(Int) - 10^16, 10^16) == 921
+        deployment = Deployment(build(long_period_rig()); Δt_frame = 1)
+        @test deployment.lattice.max_frame == 1000
         model = Model(deployment)
         init!(model)
-        @test _frames_fit(model, 9.0) && !_frames_fit(model, 10.0)
-        d = carried(@test_throws DiagnosticError{ArgumentInvalid} frame!(model, 922))
-        @test d.call === :frame! && d.reason === :range && d.argument === :k && d.value == 922 &&
-              d.related == 921
+        @test _last_frame(model) == 1000              # the clock resolves far past it
+        # A bound fits where the frame it lands on runs: the last frame's top
+        # within its slack, not the frame after it.
+        @test _frames_fit(model, 999.0) && _frames_fit(model, 1000.0) &&
+              _frames_fit(model, nextfloat(1000.0))
+        @test !_frames_fit(model, 1000.5) && !_frames_fit(model, 1001.0)
+        d = carried(@test_throws DiagnosticError{ArgumentInvalid} frame!(model, 1001))
+        @test d.call === :frame! && d.reason === :range && d.argument === :k && d.value == 1001 &&
+              d.related == 1000
         @test model.status === :consistent && model.exec.clock.t == 0.0
         # The last frame runs, its due index next to `typemax(Int)`.
-        @test frame!(model, 921) === false
-        @test model.exec.clock.t === 921 * deployment.Δt_frame && state(model, "c").n == 2
+        @test frame!(model, 1000) === false
+        @test model.exec.clock.t === 1000.0 && state(model, "c").n == 1
         # A finite bound past the last frame is refused at the door.
         sim = Simulation(deployment)
         init!(sim; log = false)
-        d = carried(@test_throws DiagnosticError{ArgumentInvalid} run!(sim; t_end = 10.0))
+        d = carried(@test_throws DiagnosticError{ArgumentInvalid} run!(sim; t_end = 1001.0))
         @test d.argument === :t_end
         # So is a frame count past it, before any frame runs.
-        d = carried(@test_throws DiagnosticError{ArgumentInvalid} step!(sim; frames = 922))
-        @test d.call === :step! && d.argument === :frames && d.value == 922
+        d = carried(@test_throws DiagnosticError{ArgumentInvalid} step!(sim; frames = 1001))
+        @test d.call === :step! && d.argument === :frames && d.value == 1001
         @test sim.run.frame == 0 && lifecycle(sim) === :initialized
         @test step!(sim; frames = 10) == 10
-        d = carried(@test_throws DiagnosticError{ArgumentInvalid} step!(sim; frames = 912))
-        @test d.value == 912 && sim.run.frame == 10
-        # An unbounded run reaches frame 921's top and throws the frame's
+        d = carried(@test_throws DiagnosticError{ArgumentInvalid} step!(sim; frames = 991))
+        @test d.value == 991 && sim.run.frame == 10
+        # An unbounded run reaches frame 1000's top and throws the frame's
         # refusal: the stores stay a settled boundary, so the model is
         # consistent, the lifecycle `:stopped` and the record a loop error.
         d = carried(@test_throws DiagnosticError{ArgumentInvalid} run!(sim))
-        @test d.call === :frame! && d.value == 922 && d.related == 921
+        @test d.call === :frame! && d.value == 1001 && d.related == 1000
         @test lifecycle(sim) === :stopped && sim.model.status === :consistent
-        @test sim.run.frame == 921 && sim.model.exec.clock.t === 921 * deployment.Δt_frame
+        @test sim.run.frame == 1000 && sim.model.exec.clock.t === 1000.0
         @test termination(sim).source isa LoopError
         # With a device the run returns under the error log, the device shut down.
         sim = Simulation(deployment)
@@ -366,28 +423,115 @@ function test_lattices()
         @test_logs (:error, r"the run ended on a loop error") match_mode = :any run!(sim)
         @test probe.log == [:init, :shutdown] && lifecycle(sim) === :stopped
         @test termination(sim).source.exception isa DiagnosticError{ArgumentInvalid}
+        # A `t_end` at the last frame's top is admitted, and the run ends there.
+        sim = Simulation(deployment)
+        init!(sim; log = false)
+        run!(sim; t_end = 1000.0)
+        @test sim.run.frame == 1000 && sim.model.exec.clock.t === 1000.0
     end
 
-    @testset "a lattice whose exact unit cannot index one frame in an `Int` is refused at deployment (§9.2, §10.5, D-445)" begin
-        deploy(rig, Δt_base, h; Δt_frame = 1//1, kw...) =
-            Deployment(build(rig); Δt_frame, Δt_base, algorithm = RK4(h), kw...)
-        refused(rig, Δt_base, h; kw...) =
-            diagnostics(failure(() -> deploy(rig, Δt_base, h; kw...)))
-        # Two coprime denominators near √typemax(Int): one frame fits, and only one.
-        @test deploy(unit_rig(), 1//3037000453, 1//3037000493).lattice.max_frame == 1
-        # Finer, one frame's units leave `Int`: a refusal, never an `OverflowError`.
-        d = only(refused(unit_rig(), 1//(10^10 + 1), 1//10^10))
+    @testset "the clock's resolution sets the last frame from the gap between boundaries and the origin (§10.5, D-450)" begin
+        # `|t₀| + 2·(t − t₀) < 2^50·g`, with `g` the unit, or half the bound when
+        # the bound splits a span; dyadic periods keep the counts exact.
+        feedback_build = build(feedback_model())
+        unbounded = Deployment(feedback_build; Δt_frame = 1//64)
+        @test _last_frame(unbounded, 0.0) == 2^49 - 1             # g = 1//64
+        @test _last_frame(Deployment(feedback_build; Δt_frame = 1//64, h_max = 1//256), 0.0) ==
+              2^46 - 1                                             # g = 1//512
+        @test _last_frame(Deployment(feedback_build; Δt_frame = 1//64, h_max = 3//256), 0.0) ==
+              3 * 2^46 - 1                                         # g = 3//512
+        # A bound at or above the frame splits nothing, and `g` stays the unit.
+        @test _last_frame(Deployment(feedback_build; Δt_frame = 1//64, h_max = 1//32), 0.0) ==
+              2^49 - 1
+        # The origin spends the same room: 2^50 units leave none.
+        @test _last_frame(unbounded, 2.0^50 / 64 - 20 / 64) == 9
+        @test _last_frame(unbounded, 2.0^50 / 64) == 0
+        # The run under it: the lattice's `Int` range is far off, the clock's is not.
+        @test unbounded.lattice.max_frame == typemax(Int)
+    end
+
+    @testset "a run the clock cannot resolve is refused at every door (§10.5, §12.6, §12.7, §14.5, D-450)" begin
+        # From this origin the last frame the clock resolves is 9, at a 10 ms
+        # frame whose unit is the gap: `|t₀| + 2·9·Δt_frame < 2^50·Δt_frame`.
+        Δt_frame = 1//100
+        t0 = 2.0^50 / 100 - 0.19
+        deployment = Deployment(build(fed(Plant(), "u")); Δt_frame)
+        @test _last_frame(deployment, t0) == 9
+        # The origin: one whose first frame is already past the resolution.
+        model = Model(deployment)
+        d = carried(@test_throws DiagnosticError{ArgumentInvalid} init!(model, set(u = (in = 0.0,));
+                                                                       t0 = 2.0^50 / 100))
+        @test d.call === :init! && d.argument === :t0
+        @test model.status === :built
+        # One whose first frame is the last the run may take is admitted.
+        t0_last = 2.0^50 / 100 - 0.03
+        @test _last_frame(deployment, t0_last) == 1
+        init!(model, set(u = (in = 0.0,)); t0 = t0_last)
+        @test model.status === :consistent
+        # `frame!`, with the last frame as the bound it names.
+        init!(model, set(u = (in = 0.0,)); t0)
+        d = carried(@test_throws DiagnosticError{ArgumentInvalid} frame!(model, 10))
+        @test d.call === :frame! && d.argument === :k && d.value == 10 && d.related == 9
+        @test frame!(model, 9) === false && model.status === :consistent
+        # The advances' doors, each refused before a frame runs.
+        sim = Simulation(deployment)
+        init!(sim, set(u = (in = 0.0,)); t0)
+        d = carried(@test_throws DiagnosticError{ArgumentInvalid} run!(sim; t_end = t0 + 0.2))
+        @test d.argument === :t_end
+        d = carried(@test_throws DiagnosticError{ArgumentInvalid} step!(sim; frames = 10))
+        @test d.argument === :frames && d.value == 10
+        d = carried(@test_throws DiagnosticError{ArgumentInvalid} step!(sim; t_plus = 0.2))
+        @test d.argument === :t_plus
+        @test sim.run.frame == 0
+        @test step!(sim; frames = 5) == 5
+        # Replay's time spelling of the halt, against the recording's origin.
+        twin = Simulation(deployment)
+        init!(twin, set(u = (in = 0.0,)); t0)
+        d = carried(@test_throws DiagnosticError{ArgumentInvalid} replay!(twin, trace(sim);
+                                                                          to_time = t0 + 0.2))
+        @test d.call === :replay! && d.argument === :to_time
+        # An unbounded run ends on `frame!`'s refusal at frame 10, as at the end
+        # of the `Int` range.
+        d = carried(@test_throws DiagnosticError{ArgumentInvalid} run!(sim))
+        @test d.call === :frame! && d.value == 10 && d.related == 9
+        @test sim.run.frame == 9 && lifecycle(sim) === :stopped
+        # The clocks it wrote are strictly increasing.
+        clocks = [snapshot.t for snapshot in logged(sim)]
+        @test issorted(clocks; lt = ≤) && length(clocks) == 10
+    end
+
+    @testset "a lattice whose exact unit or bound cannot count one frame in an `Int` is refused at deployment (§9.2, §10.5, D-445, D-449)" begin
+        deploy(rig, Δt_base; Δt_frame = 1//1, kw...) =
+            Deployment(build(rig); Δt_frame, Δt_base, kw...)
+        refused(rig, Δt_base; kw...) = diagnostics(failure(() -> deploy(rig, Δt_base; kw...)))
+        # A frame of 2^62 units with one unit of period past its top: one frame
+        # fits, and only one.
+        @test deploy(unit_rig(), 1//2^62).lattice.max_frame == 1
+        # A frame of `typemax(Int)` units leaves no room for the period past its
+        # top: a refusal, never an `OverflowError`.
+        d = only(refused(unit_rig(), 1//typemax(Int)))
         @test d isa DeploymentInvalid && d.parameter === :Δt_base && d.reason === :range &&
-              d.value == 1//(10^10 + 1) && d.related == 1//10^10
-        # At one step per frame the frame fits, and the unit itself leaves `Int`.
-        d = only(refused(unit_rig(), 1//(10^10 + 1), 1//10^10; Δt_frame = 1//10^10))
+              d.value == 1//typemax(Int) && d.related == 1//1
+        # The unit itself leaves `Int` with two coprime denominators past √typemax.
+        d = only(refused(unit_rig(), 1//(10^10 + 1); Δt_frame = 1//10^10))
         @test d.parameter === :Δt_base && d.reason === :range && d.related == 1//10^10
         # A frame that fits `Int` with no room for a period past its top.
-        d = only(refused(overflow_rig(), 1//9_220_000_000_000_000_000, 1//1))
+        d = only(refused(overflow_rig(), 1//9_220_000_000_000_000_000))
         @test d.parameter === :Δt_base && d.reason === :range && d.related == 1//1
+        # A bound whose steps of one frame cannot be counted in an `Int`: a
+        # thousand-unit frame times the bound's denominator, 2^57.
+        d = only(refused(unit_rig(), 1//1000; h_max = 1//2^60))
+        @test d.parameter === :h_max && d.reason === :range && d.value == 1//2^60 &&
+              d.related == 1//1
+        @test deploy(unit_rig(), 1//1000; h_max = 1//2^52).lattice.bound == 1000//2^52
+        # A bound near half a unit over a denominator of 3^25: one frame of 2^30
+        # units takes 2^31 steps, but the count `units·q` would leave `Int`.
+        h_max = (3^25 ÷ 2)//3^25
+        d = only(refused(unit_rig(), 1//1; Δt_frame = 2^30, h_max))
+        @test d.parameter === :h_max && d.reason === :range && d.value == h_max
         # Collected with the event parameters' faults in the one throw (D-229).
         @test Set((d.parameter, d.reason)
-                  for d in refused(unit_rig(), 1//(10^10 + 1), 1//10^10; firing_budget = 0)) ==
+                  for d in refused(unit_rig(), 1//typemax(Int); firing_budget = 0)) ==
               Set([(:Δt_base, :range), (:firing_budget, :range)])
     end
 end

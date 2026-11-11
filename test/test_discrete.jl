@@ -247,8 +247,10 @@ function discrete_deployment()
         deployment = Deployment(multirate_build; Δt_frame = 1//500)
         @test deployment isa Deployment
         @test deployment.Δt_frame == 0.002 && deployment.Δt_base == 0.002
-        # the default algorithm, its step resolved to the frame period (D-442)
-        @test deployment.algorithm == RK4(1//500) && deployment.firing_budget == 4 &&
+        # the default algorithm, and no bound below the frame, the bound resolved
+        # to the frame period (D-442, D-449)
+        @test deployment.algorithm == RK4() && deployment.h_max == 0.002 &&
+              deployment.firing_budget == 4 &&
               deployment.localization_budget == 8 && deployment.localization_tol == 1e-6
         # the very build, never a reconstruction
         @test deployment.build === multirate_build
@@ -397,9 +399,10 @@ function discrete_deployment()
             @test d isa DeploymentInvalid && d.parameter === param && d.reason === reason
         end
         # A base tick off the frame tops deploys: the lattices stand in no
-        # required ratio, and the step is the frame under the default (D-445).
+        # required ratio, and the bound is the frame under the default (D-445,
+        # D-449).
         off_frame = Deployment(multirate_build; Δt_frame = 1//300, Δt_base = 1//500)
-        @test off_frame.algorithm == RK4(1//300) &&
+        @test off_frame.h_max == Float64(1//300) &&
               [e.D for e in off_frame.schedule.rows] == [1, 5, 10]
 
         # The call is the barrier (§9.1, D-229): `Δt_frame` and the event
@@ -418,14 +421,14 @@ function discrete_deployment()
 
         # `Δt_base` is an independent premise: the explicit keyword reads only
         # itself and derivation reads the tiers and the anchors, so neither is
-        # suppressed by an unsound `Δt_frame` or step.
+        # suppressed by an unsound `Δt_frame` or bound.
         err = failure(() -> Simulation(multirate_build; Δt_frame = 1e-3, Δt_base = 1e-3))
         @test Set((d.parameter, d.reason) for d in diagnostics(err)) ==
               Set([(:Δt_frame, :inexact), (:Δt_base, :inexact)])
         err = failure(() -> Simulation(multirate_build; Δt_frame = 1//500, Δt_base = :derive,
-                                       algorithm = RK4(0)))
+                                       h_max = 0))
         @test Set((d.parameter, d.reason) for d in diagnostics(err)) ==
-              Set([(:h, :range), (:Δt_base, :unanchored)])
+              Set([(:h_max, :range), (:Δt_base, :unanchored)])
 
         # A non-dividing anchor is refused with its declaring scope and key, and the
         # attribution is named off the pool (§9.2, D-187). `MultiRate`'s pool is the

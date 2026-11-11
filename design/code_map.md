@@ -438,36 +438,41 @@ D-179, D-185, D-195, D-211, D-246, D-248, D-263, D-289, D-316, D-437, D-438.
   - the rate-scope rows, in `ScopeEntry`;
   - `_gates`, which derives the per-component triple the executor compiles
     over from the rows at `compile`.
-- The algorithm tokens `RK4` and `Heun` under `AbstractAlgorithm`, each
-  carrying its fixed step `h`, with the float refusal at the token and the
-  `show` that prints them as spelled (§10.2, D-442). Their steppers are
-  stepper.jl's.
+- The algorithm tokens `RK4()` and `Heun()` under `AbstractAlgorithm`,
+  singletons that carry no step, and the `show` that prints them as spelled
+  (§10.2, D-442, D-449). Their steppers are stepper.jl's.
 - The `Deployment` holds the build plus the grid parameters `Δt_frame` and
-  `Δt_base`, the algorithm token with its step resolved and the three event
-  parameters `firing_budget`, `localization_tol` and `localization_budget`.
+  `Δt_base`, the step bound `h_max` resolved to the lesser of itself and
+  `Δt_frame` (D-449), the algorithm token and the three event parameters
+  `firing_budget`, `localization_tol` and `localization_budget`.
   It is scalar-free. The `Deployment` constructor has one throw per call
   (§9.2, D-229). It also holds the `Lattice`, the frame loop's index-to-time
   map, derived from the exact periods once (§10.5, D-445).
-- The `Lattice`: `h` as a `Float64`, the exact unit `gcd(h, Δt_base)` (the
-  step alone when no discrete component exists), the frame, base tick and
-  step as whole units, and `max_frame`, the last frame index whose positions
-  fit `Int`. `max_frame` bounds `k·frame` plus the largest period in units,
-  so it is one frame conservative: frame `max_frame + 1` would still fit.
-  The doors and `frame!` refuse past it (§10.5, §12.6). `_lattice` builds it
-  in `Int128` and returns `nothing` when the unit, a period in units or one
-  frame's positions leave `Int`, or `max_frame < 1`.
-- `bind_schedule` is strict under D-229: `Δt_frame`, `h` and `Δt_base` are
-  each a premise of its own, positive and finite (`_positive_finite`), every
-  check whose premise holds runs, and the one fixed-step relation is
-  `h | Δt_frame` (§9.2, D-444). The lattices come last, with every other
-  check as their premise: `_lattice`'s `nothing` is `DeploymentInvalid` on
-  `Δt_base` with reason `:range` and the step as `related`, the one `:range`
-  that carries a related value, collected with the event parameters'
-  faults (§9.2, §10.5, D-445).
+- The `Lattice`: the exact unit `gcd(Δt_frame, Δt_base)` (`Δt_frame` alone
+  when no discrete component exists), the frame and base tick as whole
+  units, the bound `h_max` as an exact ratio to the unit, `max_frame`, the
+  last frame index whose positions fit `Int`, and `reach`, the clock bound's
+  `2^50·δ` in seconds, `δ` the least gap between two boundaries: the unit,
+  or the lesser of it and `h_max / 2` when the bound splits a frame (D-450).
+  `max_frame` bounds `k·frame` plus the largest period in units, so it is
+  one frame conservative: frame `max_frame + 1` would still fit. `_lattice`
+  builds it in `Int128` and returns `:Δt_base` when the unit, a period in
+  units or one frame's positions leave `Int`, or `max_frame < 1`, and
+  `:h_max` when a frame's step count or its steps' exact denominator would.
+  The bound is not in the unit's gcd (D-449).
+- `bind_schedule` is strict under D-229: `Δt_frame`, `Δt_base` and `h_max`
+  are each a premise of its own, positive and finite (`_positive_finite`),
+  every check whose premise holds runs, and nothing relates them (D-445,
+  D-449). `h_max` resolves against `Δt_frame`, absent meaning `Δt_frame`.
+  The lattices come last, with every other check as their premise:
+  `_lattice`'s `:Δt_base` is `DeploymentInvalid` on `Δt_base` with reason
+  `:range` and `Δt_frame` as `related`, and its `:h_max` the same on
+  `h_max`, the two `:range`s that carry a related value, collected with the
+  event parameters' faults (§9.2, §10.5, D-445, D-449).
 - `==`/`hash` on a `Deployment` compare by value over everything but the
-  build, the grid attribution, the `Lattice` and the warnings (§12.7). Two
-  exact periods that round to one `Float64` therefore compare equal, though
-  their lattices differ.
+  build, the grid attribution, the `Lattice` and the warnings (§12.7), the
+  bound resolved. Two exact periods that round to one `Float64` therefore
+  compare equal, though their lattices differ.
 - `warnings(::Deployment)`.
 - The grid attribution `_grid_report` (D-187):
   - the constraint pool, with each entry's leave-one-out refinement factor;
@@ -482,7 +487,7 @@ D-179, D-185, D-195, D-211, D-246, D-248, D-263, D-289, D-316, D-437, D-438.
   `GridUtilization` advisory at `min_i Dᵢ > 1`.
 
 Spec: §9.2, §10.2, §10.5, §12.6, §12.7, Appendix B, Appendix C, D-187, D-229,
-D-250, D-254, D-256, D-261, D-442, D-443, D-444, D-445.
+D-250, D-254, D-256, D-261, D-442, D-443, D-444, D-445, D-449, D-450.
 
 ### `src/descriptor.jl`
 
@@ -624,18 +629,21 @@ D-256, D-261, D-268, D-270, D-315.
 - `ArgumentInvalid`'s `:scalar` on `Model`, the materialization's refusal of
   its scalar (§9.2, D-320).
 - `ArgumentInvalid`'s `related`, the bound a `:range` value passes, which
-  `frame!`'s refusal of `k` fills with the `Lattice`'s `max_frame`, and that
-  refusal's message arm. `DeploymentInvalid`'s `:range` on `Δt_base`, and
-  its message arm for the lattices' refusal, a `:range` with the step as
-  `related`; the reasons `:subcycling` and `:not_frame_multiple` are gone
-  (§9.2, §10.5, D-444, D-445).
+  `frame!`'s refusal of `k` fills with the last frame the run may take
+  (model.jl's `_last_frame`), and that refusal's message arm.
+  `DeploymentInvalid`'s `:range` on `Δt_base` and on `h_max`, each with a
+  message arm for the lattices' refusal, a `:range` with `Δt_frame` as
+  `related`, and `:inexact`'s wording for `h_max`. The reasons
+  `:subcycling`, `:not_frame_multiple` and `:not_harmonic`, the parameter
+  `:h` and the tokens' `:inexact` are gone (§9.2, §10.5, D-445, D-449,
+  D-450).
 
 Spec: §9.1, §9.2, §10.4, §10.6, §10.7, §11.4, §11.6, §11.8, §12.2, §12.4,
 §12.6, §12.7, §13.1, §13.2, §13.4, §13.5, §14.4, §14.8, §14.9, §14.10,
 Appendix C, D-027, D-058, D-059, D-157, D-187, D-203, D-214, D-215, D-222,
 D-225, D-250, D-255, D-256,
 D-261, D-262, D-263, D-272, D-274, D-276, D-277, D-316, D-318, D-319, D-320,
-D-406, D-437, D-438, D-444, D-445.
+D-406, D-437, D-438, D-444, D-445, D-449, D-450.
 
 ### `src/executor.jl`
 
@@ -682,15 +690,19 @@ D-249, D-255, D-261, D-289, D-317, D-437, D-438.
   hook, then `_frame_steps!`, inside §13.4's one `try`, whose catch writes
   `:inconsistent` and builds the `StepError` with `_wrap_step` for every throw,
   an interrupt included (D-441). The claim's gate and the refusal of a `k`
-  past the `Lattice`'s `max_frame` precede the `try`, so that refusal leaves
-  the model `:consistent` (D-318, D-445).
-- `_frame_steps!`, the frame's steps on the three lattices (D-444, D-445):
-  each step ends at the nearest step point, due instant or frame top, found
-  by integer comparisons over the `Lattice`'s units, and each boundary's
-  clock is written once, from its own index, through model.jl's grid. A due
-  boundary runs `run_boundary!` with its tick index, every other one with the
-  empty due set. A bare step integrates by its exact length, `h` when
-  unsplit; a localized one by the float distance to its end (§10.5).
+  past `_last_frame(model)`, the lesser of the `Lattice`'s `max_frame` and
+  the clock's resolution from the origin, precede the `try`, so that
+  refusal leaves the model `:consistent` (D-318, D-445, D-450).
+- `_frame_steps!`, the frame as two nested loops (D-445, D-449). The outer
+  one runs over the mandatory instants, the frame tops and the due instants,
+  found by integer comparisons over the `Lattice`'s units, each clock
+  written from its own index through model.jl's grid. The inner one takes a
+  span's `cld(units·q, p)` equal steps, `p/q` the bound in units, each of
+  exact length `(units·unit)/n`; an interior step end's clock is the span's
+  start clock plus `i` times that length, never accumulated. The span's last
+  step runs `run_boundary!` with its tick index when due, every other step
+  end with the empty due set. A bare step integrates by its exact length; a
+  localized one by the float distance to its end (§10.5).
 - The next due instant is recomputed after each due boundary, one `mod` per
   schedule row (`_next_due`, model.jl's). Nothing is cached, so nothing needs
   invalidating at a restore, an overlay or `init!`.
@@ -712,7 +724,7 @@ D-249, D-255, D-261, D-289, D-317, D-437, D-438.
   D-261, D-317).
 
 Spec: §10.2–§10.5, §11.8, §12.4, §13.4, §13.5, D-018, D-059, D-255,
-D-260, D-261, D-317, D-318, D-444, D-445, D-446, D-447.
+D-260, D-261, D-317, D-318, D-444, D-445, D-446, D-447, D-449, D-450.
 
 ### `src/leaves.jl`
 
@@ -816,14 +828,18 @@ soon as nothing in it names a `Simulation` in a signature, and below
   no-op `NoHooks` (§11.2, §13.5, D-317). `frame_top!` returning `false`
   reports nothing written, and `NoHooks`' `nothing` counts as a write (D-447).
 - The grid (§10.4, §10.5, D-445): `_grid_time`, frame top `k` from the index
-  and `t₀`; `_tick_time`, a due instant from its base-tick index; and
-  `_step_time`, a step point from its frame's index and `j`; none
-  accumulated. `_next_due`, the next due instant past a position, one `mod`
-  per schedule row, recomputed per due boundary and never cached. The
-  arithmetic over `t`, `t₀` and `Δt_frame`, `_frame_slack`, `_frames_to` and
-  `_frame_at` (§12.4, §12.6, D-260, D-319), read by `frame!`, the checkpoint
-  and the loop, and `_frames_fit`, the doors' check that a time's frame count
-  stays within the `Lattice`'s `max_frame` before either rounds it. Their
+  and `t₀`, and `_tick_time`, a due instant from its base-tick index; neither
+  accumulated. An interior step end is frame.jl's (D-449). `_next_due`, the
+  next due instant past a position, one `mod` per schedule row, recomputed
+  per due boundary and never cached. The arithmetic over `t`, `t₀` and
+  `Δt_frame`, `_frame_slack`, `_frames_to` and `_frame_at` (§12.4, §12.6,
+  D-260, D-319), read by `frame!`, the checkpoint and the loop.
+  `_last_frame(deployment, t₀)`, the last frame a run from `t₀` may take,
+  the lesser of the `Lattice`'s `max_frame` and the frame where
+  `|t₀| + 2·(t − t₀)` reaches its `reach`, a few flops per call and never
+  stored (D-450). `_frames_fit`, the doors' check that a time's frame count
+  stays within `_last_frame` before either rounds it, `_check_origin`'s
+  included. Their
   deployment and model methods are what sim.jl's sites call, so no caller
   rebuilds the `(t, t₀, Δt_frame)` triple.
 - The claim's gate `_claimed_gate`, which refuses a claimed model's direct
@@ -879,7 +895,8 @@ soon as nothing in it names a `Simulation` in a signature, and below
 
 Spec: §9.2, §9.5, §10.2–§10.6, §11.2, §11.8, §12.4, §12.6, §13.2,
 §13.4, §13.5, §14.1, §14.5, §14.8, D-059, D-157, D-185, D-213, D-221, D-223, D-248,
-D-250, D-254, D-260, D-274, D-317, D-318, D-319, D-320, D-429, D-445, D-447.
+D-250, D-254, D-260, D-274, D-317, D-318, D-319, D-320, D-429, D-445, D-447,
+D-449, D-450.
 
 ### `src/precompile.jl`
 
@@ -998,13 +1015,17 @@ D-261.
   A side with no root face prints no block.
 - The `Schedule`'s hyperperiod chart, over `lcm(Dᵢ)` base ticks, with its
   binary guard at 100.
-- The `Deployment` sets `_grid_block`'s lines under `grid:`.
+- The `Deployment` sets `_grid_block`'s lines under `grid:`, and its
+  parameters line names `h_max` resolved. `_steps_line` states the steps per
+  frame, walked span by span from frame 1 over one hyperperiod of the frame
+  tops and the due instants, capped at `STEPS_MAXFRAMES = 10_000` frames,
+  the line naming the frames it walked when the cap cuts it (D-449).
 - The published `FrameworkStatus`'s two forms. The `MIME"text/plain"` form
   prints one block per writer and the pacer's line last. It prints each
   writer × kind in full up to `STATUS_MAXLOG` cumulative occurrences, and
   count-only past it.
 
-Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315, D-437.
+Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315, D-437, D-449.
 
 ### `src/sim.jl`
 
@@ -1089,10 +1110,11 @@ Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315, D-437.
   buffer (D-316).
 - `t_end` and `ignore_stop_requests`, the advances' keywords, and `run!`'s
   `UnboundedRun` advisory (D-255, D-260, D-261, D-316). The bounds `t_end`,
-  `t_plus`, `frames` and replay's `to_time` are checked against the model's
-  `Lattice` through model.jl's `_frames_fit`, so an advance past `max_frame`
-  is refused up front. An unbounded `run!` ends on `frame!`'s refusal of
-  frame `max_frame + 1`, its record a `LoopError` (§12.6, D-445).
+  `t_plus`, `frames` and replay's `to_time` are checked against model.jl's
+  `_last_frame` through `_frames_fit`, or directly for `frames`, so an
+  advance past the last frame the run may take is refused up front. An
+  unbounded `run!` ends on `frame!`'s refusal of the frame after it, its
+  record a `LoopError` (§12.6, D-445, D-450).
 - The lifecycle, derived, and the termination record (D-317).
 - The frame loop `_advance!`, whose catch disposes only and stores every
   throw as the frame's failure (§13.4, D-317, D-441). The
@@ -1116,7 +1138,7 @@ Spec: §10.2–§10.7, §11.1–§11.5, §11.8, §12.1–§12.7, §13.4–§13.6
 §14, §14.1, §14.5, §14.6, §14.8, §14.10, D-027, D-101, D-198, D-203, D-218,
 D-219, D-223, D-232, D-233, D-250, D-253, D-254, D-255, D-256, D-260, D-261,
 D-268, D-269, D-270, D-274, D-316, D-317, D-318, D-319, D-407, D-429, D-445,
-D-447.
+D-447, D-450.
 
 ### `src/stepper.jl`
 
@@ -1246,12 +1268,14 @@ framework name the tests call or extend is admitted. A second line,
 
 ### `test/test_lattices.jl`
 
-The frame on its three lattices (§2.1, §10.3–§10.5, D-444–D-447): the step
-counts against the exact periods, the split, subcycling, sub-step
+The frame on its lattices and the step bound (§2.1, §10.3–§10.5,
+D-444–D-447, D-449, D-450): the step counts against the exact periods, the
+split, equal steps under `h_max`, harmonic or not, subcycling, sub-step
 publication, freshness, localization across a frame's steps, a stop at a step
-end and the `Int` bound. Its fixtures are its own:
+end, the `Int` bound and the clock's resolution at every door. Its fixtures
+are its own:
 
-- `Recorder`, an `AbstractAlgorithm` defined in the suite, and its
+- `Recorder()`, an `AbstractAlgorithm` defined in the suite, and its
   `RecorderStepper`, forward Euler through the seam that keeps each step's
   length and the model's `fresh` flag (§10.2). No backend in `src/` records.
 - `LatticeHooks` and `FreshHooks`, hooks keeping each boundary's counters and

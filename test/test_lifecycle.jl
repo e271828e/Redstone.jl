@@ -43,9 +43,9 @@ resume_condition() = combine(at("ctl", set(s = (acc = 4.0,))),
                              set(u = (in = 0.5,)))
 
 function test_lifecycle()
-    @testset "an origin that is not finite or lies past the frame range is refused before any write (§14.5, Appendix C)" begin
+    @testset "an origin that is not finite or lies past the frame range is refused before any write (§10.5, §14.5, Appendix C, D-450)" begin
         point = set(u = (ref = 0.0,))
-        for bad in (NaN, Inf, -Inf, 1e34, big"1e400")
+        for bad in (NaN, Inf, -Inf, 1e15, 1e34, big"1e400")
             model = Model(feedback_model(); Δt_frame = 1//10)
             d = carried(@test_throws DiagnosticError{ArgumentInvalid} init!(model, point; t0 = bad))
             @test d.call === :init! && d.reason === :range && d.argument === :t0 && d.value === bad
@@ -71,10 +71,11 @@ function test_lifecycle()
             @test_throws DiagnosticError{ArgumentInvalid} init!(fresh, point; t0 = bad)
             @test lifecycle(fresh) === :built && latest(fresh) === nothing
         end
-        # The last power of ten the frame range holds at this `h`.
+        # The last power of ten whose first frame the clock resolves at this
+        # frame, `|t₀| + 2·Δt_frame < 2^50·Δt_frame`, a bound near 1.1e14.
         sim = Simulation(feedback_model(); Δt_frame = 1//10)
-        init!(sim, point; t0 = 1e33)
-        @test checkpoint(sim).state.t₀ == 1e33
+        init!(sim, point; t0 = 1e14)
+        @test checkpoint(sim).state.t₀ == 1e14
     end
 
     @testset "a keyword past the frame range or past `Int` is refused as out of range before any write (§11.2, §12.6, §13.5)" begin
@@ -117,13 +118,13 @@ function test_lifecycle()
         refused(rep, :to_time, () -> replay!(rep, trc; to_time = 1e300))
         refused(rep, :log_max, () -> replay!(rep, trc; log_max = big30))
         @test latest(rep).frame == 1
-        # The largest count the index still holds is legal, and the bound ends it.
+        # The largest count the run may take is legal, and the bound ends it.
         sim = fresh()
-        @test step!(sim; frames = typemax(Int) - sim.run.frame, t_end = 0.3) == 2
+        @test step!(sim; frames = _last_frame(sim.model) - sim.run.frame, t_end = 0.3) == 2
         @test lifecycle(sim) === :stopped && termination(sim).source isa EndTimeReached
         # A bound at or before a far origin is frame 0, never a rounding failure.
         sim = Simulation(feedback_model(); Δt_frame = 1//10)
-        init!(sim, point; t0 = 1e33)
+        init!(sim, point; t0 = 1e14)
         run!(sim; t_end = 1.0)
         @test latest(sim).frame == 0 && termination(sim).source isa EndTimeReached
     end

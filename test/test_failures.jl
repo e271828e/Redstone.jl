@@ -769,7 +769,7 @@ function failures_runtime()
     end
 
     @testset "a nonfinite state under subcycling names the frame its step lies in (§13.4, D-445)" begin
-        sim = Simulation(diverging(); Δt_frame = 1//10, algorithm = RK4(1//40))
+        sim = Simulation(diverging(); Δt_frame = 1//10, h_max = 1//40)
         init!(sim, set(u = (in = false,)))
         step!(sim; frames = 3)
         stage!(sim, "in" => true)                       # frame 4's drain arms the RHS

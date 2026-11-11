@@ -112,7 +112,8 @@ function test_show()
         activated = build(MultiRate())
         activation(activated, D8)
         @test compact(activated) == "Build(4 components, activations: Float64, $(D8))"
-        @test compact(deployed) == "Deployment(Δt_frame = 0.002, Δt_base = 0.002, RK4(1//500))"
+        @test compact(deployed) ==
+              "Deployment(Δt_frame = 0.002, Δt_base = 0.002, h_max = 0.002, RK4())"
         for x in (multirate.structure, multirate.outputs, multirate.events, deployed.schedule,
                   multirate, deployed)
             @test !occursin('\n', compact(x))
@@ -229,8 +230,10 @@ function test_show()
 
     @testset "Deployment: the parameters, the schedule, the grid and the warnings (§9.2, D-257)" begin
         text = plain(deployed)
-        @test startswith(text, "Deployment: Δt_frame = 0.002, Δt_base = 0.002, RK4(1//500); " *
-                               "firing_budget = 4, localization_tol = 1.0e-6, localization_budget = 8\n" *
+        @test startswith(text, "Deployment: Δt_frame = 0.002, Δt_base = 0.002, h_max = 0.002, " *
+                               "RK4(); firing_budget = 4, localization_tol = 1.0e-6, " *
+                               "localization_budget = 8\n" *
+                               "  steps per frame: 1, over one hyperperiod of 10 frames\n" *
                                "  build: Build(4 components, activations: Float64)\n")
         @test occursin("\n" * join("  " .* split(MULTIRATE_SCHEDULE, '\n'), "\n") * "\n  grid:\n", text)
         @test endswith(text, "\n  warnings: none")
@@ -243,6 +246,33 @@ function test_show()
         text = plain(pendulum_deployed)
         @test occursin("\n  build: Build(1 component, activations: Float64)\n  Schedule: no rows\n" *
                        "  grid: no constraint\n  warnings: none", text)
+    end
+
+    @testset "Deployment: the steps per frame over one hyperperiod, capped (§9.2, §10.5, D-449)" begin
+        steps_line(deployment) = split(plain(deployment), '\n')[2]
+        # A counter at 0.07 s in 0.1 s frames under a 25 ms bound: the frames
+        # and the ticks repeat every 7 frames, and frame 4, whose tick halves
+        # it, takes 4 steps where every other frame takes 5.
+        rig = build(Group((; c = Plant(), a = TickCounter()); input_wires = ("in" => "c/u",),
+                          sample_times = (; a = Absolute(Period(7//100)))))
+        @test steps_line(Deployment(rig; Δt_frame = 1//10, Δt_base = 1//100, h_max = 1//40)) ==
+              "  steps per frame: 4 to 5, over one hyperperiod of 7 frames"
+        # No bound: one step per span, and frames 3 and 5 hold two ticks.
+        @test steps_line(Deployment(rig; Δt_frame = 1//10, Δt_base = 1//100)) ==
+              "  steps per frame: 2 to 3, over one hyperperiod of 7 frames"
+        # No discrete component: one span per frame, so a hyperperiod of one.
+        @test steps_line(Deployment(pendulum; Δt_frame = 1//100, h_max = 1//400)) ==
+              "  steps per frame: 4, over one hyperperiod of 1 frame"
+        @test steps_line(pendulum_deployed) == "  steps per frame: 1, over one hyperperiod of 1 frame"
+        # Periods of 0.1 s and 0.10001 s over a 10 µs base repeat every 50005
+        # frames of 20 ms, past the cap: the count names the frames it walked.
+        long = build(Group((; a = TickCounter(), b = TickCounter());
+                           sample_times = (; a = Absolute(Period(1//10)),
+                                             b = Absolute(Period(10001//100000)))))
+        @test steps_line(Deployment(long; Δt_frame = 1//50, Δt_base = 1//100000)) ==
+              "  steps per frame: 1 to 2 in the first $(STEPS_MAXFRAMES) frames of a " *
+              "hyperperiod of 50005"
+        @test STEPS_MAXFRAMES == 10_000
     end
 
     @testset "the status's compact form is one line with the counts (§11.8, D-257)" begin

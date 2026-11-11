@@ -19,7 +19,7 @@
 # generic in the scalar; the backend is a deployment binding (`algorithm =
 # RK4()`, the default), and nothing outside this file knows which one ran.
 #
-# Each backend is two types (D-442): the token the deployment records, `RK4(h)`
+# Each backend is two types (D-442): the token the deployment records, `RK4()`
 # (deployment.jl), and the stepper it binds to here, which owns scratch sized by
 # the state and typed by the scalar, both known only at `Model` construction.
 
@@ -30,8 +30,8 @@ abstract type AbstractStepper end
 
 The stepper an algorithm token binds to at `Model` construction (§10.2, D-442):
 its scratch over the model's flat state buffer of `n_x` scalars of type `T`.
-The token's step is the deployment's, read by the frame loop, so the stepper
-does not hold it.
+A fixed step's length is the frame loop's, from the deployment's lattices and
+its bound `h_max` (D-449), so neither the token nor the stepper holds one.
 """
 function bind_stepper end
 

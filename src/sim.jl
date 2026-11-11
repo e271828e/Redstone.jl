@@ -307,14 +307,14 @@ end
     Simulation(model::Model{Float64}; join_timeout = 5.0) -> Simulation
     Simulation(deployment::Deployment; join_timeout = 5.0,
                chunk_size = 16) -> Simulation
-    Simulation(build::Build; Δt_frame, Δt_base = nothing, algorithm = RK4(),
-               firing_budget = 4, localization_tol = 1e-6,
-               localization_budget = 8, join_timeout = 5.0,
-               chunk_size = 16) -> Simulation
-    Simulation(root::AbstractComponent; Δt_frame, Δt_base = nothing,
+    Simulation(build::Build; Δt_frame, Δt_base = nothing, h_max = nothing,
                algorithm = RK4(), firing_budget = 4, localization_tol = 1e-6,
                localization_budget = 8, join_timeout = 5.0,
                chunk_size = 16) -> Simulation
+    Simulation(root::AbstractComponent; Δt_frame, Δt_base = nothing,
+               h_max = nothing, algorithm = RK4(), firing_budget = 4,
+               localization_tol = 1e-6, localization_budget = 8,
+               join_timeout = 5.0, chunk_size = 16) -> Simulation
 
 Construct a simulation around a `Model{Float64}`, with no
 [device](@ref g-device) attached and an empty run.
@@ -2219,12 +2219,12 @@ function step!(sim::Simulation; frames = nothing, t_plus = nothing,
     frames === nothing || t_plus === nothing ||
         throw(DiagnosticError(ArgumentInvalid(call = :step!, reason = :both_given)))
     if t_plus === nothing
-        # bounded by the last frame the lattices index, so the sum below never
+        # bounded by the last frame the run may take, so the sum below never
         # wraps and a count past it is refused up front, as a `t_end` past it is
-        # (§12.6, D-445)
+        # (§12.6, D-445, D-450)
         frame_count = frames === nothing ? 1 : frames
         frame_count isa Integer &&
-            1 ≤ frame_count ≤ sim.model.deployment.lattice.max_frame - sim.run.frame ||
+            1 ≤ frame_count ≤ _last_frame(sim.model) - sim.run.frame ||
             throw(DiagnosticError(ArgumentInvalid(call = :step!, reason = :range,
                                                   argument = :frames, value = frame_count)))
         frame_count = Int(frame_count)

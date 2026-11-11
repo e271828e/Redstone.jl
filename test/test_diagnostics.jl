@@ -428,7 +428,8 @@ function diagnostics_kind_set()
             DeploymentInvalid(parameter = :Δt_frame, reason = :inexact, value = 0.01),
             DeploymentInvalid(parameter = :Δt_base, reason = :not_a_quantity, value = Int),
             DeploymentInvalid(parameter = :Δt_frame, reason = :missing),
-            DeploymentInvalid(parameter = :h, reason = :range, value = -1//100),
+            DeploymentInvalid(parameter = :h_max, reason = :range, value = -1//100),
+            DeploymentInvalid(parameter = :h_max, reason = :inexact, value = 0.001),
             DeploymentInvalid(parameter = :algorithm, reason = :range, value = Int),
             DeploymentInvalid(parameter = :Δt_base, reason = :unanchored, paths = ["a/b"],
                               grid = grid),
@@ -436,8 +437,8 @@ function diagnostics_kind_set()
             DeploymentInvalid(parameter = :Δt_base, reason = :range, value = 0//1),
             DeploymentInvalid(parameter = :Δt_base, reason = :range, value = 1//(10^10 + 1),
                               related = 1//10^10),
-            DeploymentInvalid(parameter = :Δt_frame, reason = :not_harmonic, value = 1//100,
-                              related = 1//30),
+            DeploymentInvalid(parameter = :h_max, reason = :range, value = 1//2^60,
+                              related = 1//1),
             DeploymentInvalid(parameter = :Δt_base, reason = :anchor_period, value = 1//30,
                               related = 1//100, scope = "a", key = :b, grid = grid),
             DeploymentInvalid(parameter = :Δt_base, reason = :anchor_offset, value = 1//7,
@@ -616,7 +617,6 @@ function diagnostics_kind_set()
                             value = :foo),
             ArgumentInvalid(call = :Period, reason = :inexact, value = 0.02),
             ArgumentInvalid(call = :Hz, reason = :inexact, value = 0.5),
-            ArgumentInvalid(call = :RK4, reason = :inexact, value = 0.01),
             ArgumentInvalid(call = :Absolute, reason = :inexact, value = 0.5),
             ArgumentInvalid(call = :Absolute, reason = :not_a_quantity, value = 1),
             ArgumentInvalid(call = :step!, reason = :both_given),
@@ -663,7 +663,7 @@ function diagnostics_kind_set()
                                expected = (Float64, (0,)), found = nothing),
             CheckpointMismatch(what = :root_input, expected = [:a], found = [:a, :b]),
             CheckpointMismatch(what = :root_input, name = :a, expected = Float64, found = "x"),
-            CheckpointMismatch(what = :deployment, name = :h, expected = 0.1, found = 0.05),
+            CheckpointMismatch(what = :deployment, name = :h_max, expected = 0.1, found = 0.05),
             CheckpointMismatch(what = :deployment, path = "m/fcs", name = :D,
                                expected = 5, found = 10),
             CheckpointMismatch(what = :deployment, path = "m/fcs", name = Symbol("scope.anchor"),
@@ -781,32 +781,37 @@ function diagnostics_kind_set()
         @test kinds(with_warning) == kinds(carrier) &&
               diagnostics(with_warning) == diagnostics(carrier)
 
-        # The fixed step's one refusal names the frame period it fails on, by the
-        # payload's parameter, and `Δt_base` has a range of its own (§9.2, D-444,
-        # D-445).
-        @test startswith(message(DeploymentInvalid(parameter = :Δt_frame, reason = :not_harmonic,
-                                                   value = 1//100, related = 1//30)),
-                         "harmonic grid: Δt_frame = 1//100 is not an integer multiple of " *
-                         "the fixed step h = 1//30")
+        # `Δt_base` and the bound each have a range of their own, and the bound's
+        # exactness is its step count's (§9.2, §10.5, D-445, D-449).
         @test message(DeploymentInvalid(parameter = :Δt_base, reason = :range, value = 0//1)) ==
               "`Δt_base` must be positive and finite, got 0//1 (§9.2)"
-        # A unit too fine to index one frame names `Δt_base` and the step (§10.5, D-445).
+        @test message(DeploymentInvalid(parameter = :h_max, reason = :range, value = 0//1)) ==
+              "`h_max` must be positive and finite, got 0//1 (§10.5)"
+        @test message(DeploymentInvalid(parameter = :h_max, reason = :inexact, value = 0.001)) ==
+              "`h_max` must be exact — a Rational (`h_max = 1//100`) or a `Period`/`Hz` " *
+              "value: a span's step count is exact arithmetic, ill-defined over floats " *
+              "(§9.1, §10.5)"
+        # A unit too fine to index one frame names `Δt_base` and the frame (§10.5, D-445).
         @test startswith(message(DeploymentInvalid(parameter = :Δt_base, reason = :range,
                                                    value = 1//(10^10 + 1), related = 1//10^10)),
-                         "the lattices' exact unit, gcd(h, Δt_base) for Δt_base = " *
-                         "1//10000000001 and h = 1//10000000000, is too fine to index one " *
-                         "frame in an `Int`")
-        # A frame past the lattices' last is named against that last frame (§10.5, D-445).
+                         "the lattices' exact unit, gcd(Δt_frame, Δt_base) for Δt_base = " *
+                         "1//10000000001 and Δt_frame = 1//10000000000, is too fine to index " *
+                         "one frame in an `Int`")
+        # A bound too fine to count one frame's steps names itself and the frame (D-449).
+        @test startswith(message(DeploymentInvalid(parameter = :h_max, reason = :range,
+                                                   value = 1//2^60, related = 1//1)),
+                         "the step bound h_max = 1//1152921504606846976 is too fine to count " *
+                         "the steps of one frame of Δt_frame = 1//1 in an `Int`")
+        # A frame past the run's last is named against that last frame, for either
+        # cause (§10.5, D-445, D-450).
         @test startswith(message(ArgumentInvalid(call = :frame!, reason = :range, argument = :k,
                                                  value = 922, related = 921)),
-                         "frame 922 is past frame 921, the last this deployment's lattices index")
-        # A float step's refusal names the token's own constructor (§10.2, D-442).
-        @test startswith(message(ArgumentInvalid(call = :RK4, reason = :inexact, value = 0.01)),
-                         "a fixed step is an exact Rational — write `RK4(1//100)`, not RK4(0.01)")
+                         "frame 922 is past frame 921, the last a run of this deployment " *
+                         "from this origin may take")
         # A header mismatch counts the parameters the walk names (§12.7).
-        @test occursin("the six trajectory-determining deployment parameters",
+        @test occursin("the seven trajectory-determining deployment parameters",
                        message(CheckpointMismatch(what = :deployment, name = :algorithm,
-                                                  expected = RK4(1//100), found = Heun(1//100))))
+                                                  expected = RK4(), found = Heun())))
 
         # The obligation chain renders innermost first, the last face being the one
         # nobody wired.
@@ -1198,9 +1203,9 @@ function diagnostics_kind_set()
         rendered = message(CheckpointMismatch(what = :scalar, expected = Float64, found = D8))
         @test startswith(rendered, "the checkpoint was taken on a `Model{Float64}`")
         @test occursin("the target is a `Model{", rendered) && !occursin("replay:", rendered)
-        rendered = message(CheckpointMismatch(what = :deployment, name = :h, expected = 0.1,
+        rendered = message(CheckpointMismatch(what = :deployment, name = :h_max, expected = 0.1,
                                               found = 0.05))
-        @test startswith(rendered, "the checkpoint was taken at `h` = 0.1 and this " *
+        @test startswith(rendered, "the checkpoint was taken at `h_max` = 0.1 and this " *
                                    "simulation is bound at 0.05")
         rendered = message(CheckpointMismatch(what = :root_input, expected = [:a],
                                               found = [:a, :b]))

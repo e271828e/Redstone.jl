@@ -8,24 +8,16 @@
 requested_bouncer() = Group((; b = Bouncer(1.0, 0.07), r = requested(false, "never")))
 
 function test_stepper()
-    @testset "the method is a deployment binding by instance, RK4() the default (§10.2, D-442)" begin
+    @testset "the method is a deployment binding by instance, RK4() the default (§10.2, D-442, D-449)" begin
         sim = Simulation(feedback_model(); Δt_frame = 1//100)
         @test sim.model.exec.stepper isa RK4Stepper{Float64}
         heun_sim = Simulation(feedback_model(); Δt_frame = 1//100, algorithm = Heun())
         @test heun_sim.model.exec.stepper isa HeunStepper{Float64}
-        # The token's step defaults to the frame period and is recorded resolved,
-        # so the default and every spelling of one step deploy as one value.
-        @test sim.model.deployment.algorithm == RK4(1//100)
-        @test heun_sim.model.deployment.algorithm == Heun(Period(1//100))
-        feedback_build = build(feedback_model())
-        spelled = Deployment(feedback_build; Δt_frame = Hz(100), algorithm = RK4(Hz(100)))
-        @test spelled == sim.model.deployment && hash(spelled) == hash(sim.model.deployment)
-        @test spelled != heun_sim.model.deployment
-        # A step is exact, so a float is refused at the token, as `Period` refuses one.
-        for (algorithm_type, call) in ((RK4, :RK4), (Heun, :Heun))
-            d = carried(@test_throws DiagnosticError{ArgumentInvalid} algorithm_type(0.01))
-            @test d.call === call && d.reason === :inexact && d.value === 0.01
-        end
+        @test sim.model.deployment.algorithm == RK4() && heun_sim.model.deployment.algorithm == Heun()
+        @test sim.model.deployment != heun_sim.model.deployment
+        # A token carries no step: the bound is the deployment's `h_max` (D-449).
+        @test_throws MethodError RK4(1//100)
+        @test_throws MethodError Heun(1//100)
         # validated with its siblings: anything but a token is refused at binding,
         # the type form included, not deep in a MethodError
         for bad in (4, Int, RK4, Heun)
@@ -35,44 +27,53 @@ function test_stepper()
                   d.reason === :range && d.value === bad
         end
         # The token prints as it is spelled, so a header reads alike from any module.
-        @test repr(RK4()) == "RK4()" && repr(Heun(1//50)) == "Heun(1//50)"
+        @test repr(RK4()) == "RK4()" && repr(Heun()) == "Heun()"
     end
 
-    @testset "a fixed step divides the frame, and nothing relates it to the base tick (§9.2, D-444)" begin
-        # One refusal for the one relation, the step and the frame on the payload.
+    @testset "h_max bounds the step, divides nothing, and is recorded resolved against the frame (§9.2, §10.5, D-449)" begin
+        feedback_build = build(feedback_model())
         multirate_build = build(MultiRate())   # discrete work: three rows
         refused(; kw...) = diagnostics(failure(() -> Deployment(multirate_build; kw...)))
-        d = only(diagnostics(failure(() -> Deployment(build(feedback_model()); Δt_frame = 1//500,
-                                                      algorithm = RK4(3//1000)))))
-        @test d isa DeploymentInvalid && d.parameter === :Δt_frame &&
-              d.reason === :not_harmonic && d.value == 1//500 && d.related == 3//1000
-        d = only(refused(Δt_frame = 1//500, algorithm = RK4(-1//500)))
-        @test d.parameter === :h && d.reason === :range && d.value == -1//500
-        # An infinite step is out of range too, never a step that divides the frame.
-        d = only(refused(Δt_frame = 1//500, algorithm = RK4(1//0)))
-        @test d.parameter === :h && d.reason === :range && d.value == 1//0
-        # A step that divides the frame subcycles, and a base tick off the step
-        # points is no fault: with discrete work, `Δt_frame = 1//500`, `Δt_base =
-        # 1//300` and `h = 1//1000` deploy, the step recorded as given.
+        # No bound, a bound at the frame and one above it are one trajectory, so
+        # they deploy as one value, the bound resolved to the frame.
+        unbounded = Deployment(feedback_build; Δt_frame = 1//100)
+        for spelled in (Deployment(feedback_build; Δt_frame = Hz(100), h_max = 1//100),
+                        Deployment(feedback_build; Δt_frame = 1//100, h_max = Period(1//50)),
+                        Deployment(feedback_build; Δt_frame = 1//100, h_max = 7))
+            @test spelled == unbounded && hash(spelled) == hash(unbounded)
+            @test spelled.h_max === unbounded.h_max === 0.01
+        end
+        # A bound below the frame is a different deployment, in every spelling.
+        bounded = Deployment(feedback_build; Δt_frame = 1//100, h_max = Hz(400))
+        @test bounded.h_max === Float64(1//400) && bounded != unbounded &&
+              bounded == Deployment(feedback_build; Δt_frame = 1//100, h_max = 1//400)
+        # A bound need divide nothing: with discrete work, `Δt_frame = 1//500`,
+        # `Δt_base = 1//300` and `h_max = 3//2000` deploy, the bound a ratio of
+        # the unit `gcd(1//500, 1//300) = 1//1500`.
         deployment = Deployment(multirate_build; Δt_frame = 1//500, Δt_base = 1//300,
-                                algorithm = Heun(1//1000))
-        @test deployment.algorithm == Heun(1//1000)
-        @test (deployment.lattice.frame, deployment.lattice.base, deployment.lattice.step) ==
-              (6, 10, 3)       # in units of gcd(1//1000, 1//300) = 1//3000
+                                h_max = 3//2000)
+        @test (deployment.lattice.frame, deployment.lattice.base, deployment.lattice.bound) ==
+              (3, 5, 9//4)
+        # `h_max` is a premise of its own, exact, positive and finite.
+        d = only(refused(Δt_frame = 1//500, h_max = 0.001))
+        @test d isa DeploymentInvalid && d.parameter === :h_max && d.reason === :inexact &&
+              d.value === 0.001
+        for bad in (0, -1//500, 1//0)
+            d = only(refused(Δt_frame = 1//500, h_max = bad))
+            @test d.parameter === :h_max && d.reason === :range && d.value == bad
+        end
+        d = only(refused(Δt_frame = 1//500, h_max = "1//1000"))
+        @test d.parameter === :h_max && d.reason === :not_a_quantity
         # `Δt_base` is a premise of its own, positive and finite (D-445).
         for bad in (0, -1//300, 1//0)
             d = only(refused(Δt_frame = 1//500, Δt_base = bad))
             @test d.parameter === :Δt_base && d.reason === :range && d.value == bad
         end
-        # Every check whose premise holds runs (D-229): a step fault no longer
-        # skips the anchor loop, which reads `Δt_base` alone.
+        # Every check whose premise holds runs (D-229): a bound's fault skips
+        # nothing, since the anchor loop reads `Δt_base` alone.
         @test Set((d.parameter, d.reason)
-                  for d in refused(Δt_frame = 1//500, Δt_base = 3//250, algorithm = RK4(0))) ==
-              Set([(:h, :range), (:Δt_base, :anchor_period)])
-        @test Set((d.parameter, d.reason)
-                  for d in refused(Δt_frame = 1//500, Δt_base = 3//250,
-                                   algorithm = RK4(3//1000))) ==
-              Set([(:Δt_frame, :not_harmonic), (:Δt_base, :anchor_period)])
+                  for d in refused(Δt_frame = 1//500, Δt_base = 3//250, h_max = 0)) ==
+              Set([(:h_max, :range), (:Δt_base, :anchor_period)])
     end
 
     @testset "convergence order: each backend is itself — 4 and 2 (§10.2)" begin

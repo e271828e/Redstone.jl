@@ -1327,9 +1327,9 @@ end
 "§9.1: a deployment parameter outside its constraint, or a grid that does not close."
 Base.@kwdef struct DeploymentInvalid <: Diagnostic
     parameter::Symbol
-    reason::Symbol   # :range|:inexact|:not_a_quantity|:missing|:unanchored|:no_constraint|:not_harmonic|:anchor_period|:anchor_offset
+    reason::Symbol   # :range|:inexact|:not_a_quantity|:missing|:unanchored|:no_constraint|:anchor_period|:anchor_offset
     value::Any = nothing
-    related::Any = nothing                   # the value it is measured against; the step, on the lattices' `:range`
+    related::Any = nothing                   # the value it is measured against; `Δt_frame`, on the lattices' `:range`
     paths::Vector{String} = String[]         # the unanchored components
     scope::String = ""                       # the anchor's declaring scope path, on the two anchor arms
     key::Union{Nothing,Symbol} = nothing     # the anchor's declaring key, on the two anchor arms
@@ -1341,15 +1341,16 @@ end
 # `ArgumentInvalid` (D-256, D-261), and their constraint text and section moved
 # with them.
 _deployment_constraint(parameter::Symbol) =
-    parameter === :algorithm           ? "must be an algorithm with its step — `RK4()`, `RK4(h)`, `Heun()` or `Heun(h)`" :
+    parameter === :algorithm           ? "must be an algorithm — `RK4()` or `Heun()`" :
     parameter === :firing_budget       ? "must be an integer ≥ 1" :
     parameter === :localization_tol    ? "must be a positive real" :
     parameter === :localization_budget ? "must be an integer ≥ 1" :
-    (parameter === :h || parameter === :Δt_frame || parameter === :Δt_base) ?
+    (parameter === :h_max || parameter === :Δt_frame || parameter === :Δt_base) ?
                                    "must be positive and finite" :
                                    "is outside its constraint"
 _deployment_section(parameter::Symbol) =
-    (parameter === :algorithm || parameter === :h) ? " (§10.2)" :
+    parameter === :algorithm           ? " (§10.2)" :
+    parameter === :h_max               ? " (§10.5)" :
     parameter === :firing_budget       ? " (§10.6)" :
     (parameter === :localization_tol || parameter === :localization_budget) ? " (§10.4)" :
     (parameter === :Δt_frame || parameter === :Δt_base) ? " (§9.2)" : ""
@@ -1398,15 +1399,21 @@ function _grid_block(grid::Union{Nothing,GridReport})
 end
 
 function message(d::DeploymentInvalid)
-    # A `:range` with a related value is the lattices' refusal, the step in hand.
+    # A `:range` with a related value is the lattices' refusal, `Δt_frame` in hand:
+    # the unit's, on `Δt_base`, or the bound's, on `h_max`.
+    d.reason === :range && d.related !== nothing && d.parameter === :h_max &&
+        return "the step bound h_max = $(d.value) is too fine to count the steps of one " *
+               "frame of Δt_frame = $(d.related) in an `Int` — coarsen `h_max` (§9.2, §10.5)"
     d.reason === :range && d.related !== nothing &&
-        return "the lattices' exact unit, gcd(h, Δt_base) for Δt_base = $(d.value) and " *
-               "h = $(d.related), is too fine to index one frame in an `Int` — coarsen " *
-               "`Δt_base` or the step (§9.2, §10.5)"
+        return "the lattices' exact unit, gcd(Δt_frame, Δt_base) for Δt_base = $(d.value) " *
+               "and Δt_frame = $(d.related), is too fine to index one frame in an `Int` — " *
+               "coarsen `Δt_base` or `Δt_frame` (§9.2, §10.5)"
     d.reason === :inexact &&
         return "`$(d.parameter)` must be exact — a Rational (`$(d.parameter) = 1//100`) or " *
-               "a `Period`/`Hz` value: grid derivation is GCD arithmetic, ill-defined over " *
-               "floats (§9.1, §10.5)"
+               "a `Period`/`Hz` value: " *
+               (d.parameter === :h_max ? "a span's step count is exact arithmetic" :
+                                         "grid derivation is GCD arithmetic") *
+               ", ill-defined over floats (§9.1, §10.5)"
     d.reason === :not_a_quantity &&
         return "`$(d.parameter)` must be a Rational or a `Period`/`Hz` value, got $(d.value)"
     d.reason === :missing &&
@@ -1420,9 +1427,6 @@ function message(d::DeploymentInvalid)
     d.reason === :no_constraint &&
         return "Δt_base cannot be derived: no anchor declares a constraint to derive it " *
                "from (§9.1)"
-    d.reason === :not_harmonic &&
-        return "harmonic grid: $(d.parameter) = $(d.value) is not an integer multiple of " *
-               "the fixed step h = $(d.related) (§10.2)"
     d.reason === :anchor_period &&
         return "$(_anchor_label(d.scope, d.key)): period $(d.value) is not an integer " *
                "multiple of Δt_base = $(d.related) (§9.1)" * _grid_block(d.grid)
@@ -2265,7 +2269,7 @@ message(d::ConditionShapeDrift) =
 
 "§10.5, §11.6, §12.4, §12.6, §14.7, D-215: an argument outside its constraint — `DeploymentInvalid`'s twin off the deployment surface."
 Base.@kwdef struct ArgumentInvalid <: Diagnostic
-    call::Symbol                             # :Model|:Simulation|:init!|:restore!|:Period|:Hz|:Absolute|:RK4|:Heun|:step!|:run!|:replay!|:live!|:pace!|:margin!|:trim!|:linearize|:trace|:TableBinding
+    call::Symbol                             # :Model|:Simulation|:init!|:restore!|:Period|:Hz|:Absolute|:step!|:run!|:replay!|:live!|:pace!|:margin!|:trim!|:linearize|:trace|:TableBinding
     reason::Symbol
     argument::Union{Nothing,Symbol} = nothing
     value::Any = nothing
@@ -2282,10 +2286,6 @@ function message(d::ArgumentInvalid)
                d.call === :Hz ?
                "a frequency is an exact Rational — write `Hz(1//2)` for 0.5 Hz, not " *
                "$(repr(d.value)): grid derivation is GCD arithmetic (§10.5)" :
-               (d.call === :RK4 || d.call === :Heun) ?
-               "a fixed step is an exact Rational — write `$(d.call)(1//100)`, not " *
-               "$(d.call)($(repr(d.value))): the step must divide the frame period exactly " *
-               "(§10.2)" :
                "an offset is an exact Rational — write `Absolute(Hz(50), 1//500)`, not " *
                "$(repr(d.value)): grid derivation is GCD arithmetic (§10.5)"
     d.reason === :not_a_quantity &&
@@ -2366,11 +2366,13 @@ function message(d::ArgumentInvalid)
                "scalar, or a `ForwardDiff.Dual` over it, into which `Float64` embeds exactly; any " *
                "other scalar would round every pinned value at the wire it crosses " *
                "(§9.2, §9.5, D-320)"
-    # `frame!`'s index past the last frame the lattices hold in an `Int` (§10.5, D-445).
+    # `frame!`'s index past the last frame the run may take: the lattices' `Int`
+    # range, or the clock's resolution at the origin (§10.5, D-445, D-450).
     d.call === :frame! && d.argument === :k &&
-        return "frame $(d.value) is past frame $(d.related), the last this deployment's " *
-               "lattices index: the frame's positions, counted in the lattices' exact unit, " *
-               "would leave `Int` (§10.5)"
+        return "frame $(d.value) is past frame $(d.related), the last a run of this " *
+               "deployment from this origin may take: past it the frame's positions, counted " *
+               "in the lattices' exact unit, would leave `Int`, or two of its boundaries " *
+               "could take clocks out of order (§10.5)"
     # The materialization's `join_timeout` (D-256) and the doors' four recording
     # keywords (D-261): each carries the constraint text and section its
     # `DeploymentInvalid` row carried before the keywords moved off the
@@ -2384,7 +2386,8 @@ function message(d::ArgumentInvalid)
                "never moves the trajectory — got $(repr(d.value)) (§9.7)"
     d.argument === :t0 &&
         return "`t0` must be a finite real whose rounding slack in frames stays within the " *
-               "last frame the lattices index — the grid's origin — got $(repr(d.value)) (§14.5)"
+               "last frame a run from it may take, so at least its first frame — the grid's " *
+               "origin — got $(repr(d.value)) (§10.5, §14.5)"
     d.argument === :trace &&
         return "`trace` must be true or false — §11.5's trace kill switch, got $(repr(d.value))"
     d.argument === :log &&
@@ -2404,7 +2407,7 @@ function message(d::ArgumentInvalid)
         return "`restore` must be true or false — whether `replay!` restores the trace's " *
                "header or feeds the simulation as it stands, got $(repr(d.value)) (§12.7)"
     d.argument === :t_end &&
-        return "`t_end` must be a real ≥ 0 whose frame top from `t₀` the lattices index — " *
+        return "`t_end` must be a real ≥ 0 whose frame top from `t₀` the run may take — " *
                "the run's clock bound, taken to the nearest frame top, Inf the unbounded " *
                "default — got $(repr(d.value)) (§13.5)"
     d.argument === :ignore_stop_requests &&
@@ -2412,7 +2415,7 @@ function message(d::ArgumentInvalid)
                "a bare string or another symbol is neither — got $(repr(d.value)) (§13.5)"
     d.argument === :frames ?
         "frames must be an integer ≥ 1 that keeps the frame index within the last frame " *
-        "the lattices index, got " *
+        "the run may take, got " *
         "$(d.value) (§12.6)" :
         d.argument === :to_boundary ?
         "to_boundary must be a whole grid boundary the recording covers — from the frame " *
@@ -2420,7 +2423,7 @@ function message(d::ArgumentInvalid)
         d.argument === :to_time ?
         "to_time must be a finite real at or after the recording's `t₀`, naming a time the " *
         "recording covers — got $(repr(d.value)) (§12.7, D-219)" :
-        "t_plus must be a finite real > 0 whose end frame the lattices index — the duration " *
+        "t_plus must be a finite real > 0 whose end frame the run may take — the duration " *
         "spelling — got $(d.value) (§12.6)"
 end
 
@@ -2496,7 +2499,7 @@ _checkpoint_value(d::CheckpointMismatch, value) =
 
 _checkpoint_paths(paths) = isempty(paths) ? "none" : join((_at_path(p) for p in paths), ", ")
 
-# The `:deployment` arms, one per case the walk in `trace.jl` emits: the six
+# The `:deployment` arms, one per case the walk in `trace.jl` emits: the seven
 # parameters and the two lists carry no path, a schedule row and a rate scope
 # carry theirs, and a scope column rides in `name` behind its prefix.
 _checkpoint_deployment(d::CheckpointMismatch) =
@@ -2512,7 +2515,7 @@ _checkpoint_deployment(d::CheckpointMismatch) =
      "path and its key, so a differing scope list is reported whole rather than column by " *
      "column (§12.7)" :
      "the checkpoint was taken at `$(d.name)` = $(d.expected) and this " *
-     "simulation is bound at $(d.found) — the six trajectory-determining " *
+     "simulation is bound at $(d.found) — the seven trajectory-determining " *
      "deployment parameters are compared, the schedule with them, never taken as a " *
      "what-if: a deployment change moves the lattice the state continues on and the times " *
      "a trace's batches apply at, which is different inputs rather than a modified model " *

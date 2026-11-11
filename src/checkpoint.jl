@@ -169,16 +169,16 @@ _deployment_diff!(diags::Vector{Diagnostic}, path::String, name::Symbol, expecte
     push!(diags, CheckpointMismatch(what = :deployment, path = path, name = name,
                                     expected = expected, found = found))
 
-# What the `==` above refused, named (§12.7, Appendix C): the six
-# trajectory-determining parameters by name, the algorithm as one value with its
-# step (D-442), then the schedule, which the value
+# What the `==` above refused, named (§12.7, Appendix C): the seven
+# trajectory-determining parameters by name, the algorithm as one value
+# (D-442) and the bound resolved (D-449), then the schedule, which the value
 # covers with every column — the anchor and the rates included, so a rate
 # re-declared through a different anchor at the same tick table is a different
 # deployment. The walk covers exactly what `Deployment`'s and `Schedule`'s `==`
 # compare, so a refusal is never silent.
 function _walk_deployment!(diags::Vector{Diagnostic}, recorded::Deployment,
                            target::Deployment)
-    for name in (:Δt_base, :Δt_frame, :algorithm, :localization_tol,
+    for name in (:Δt_base, :Δt_frame, :h_max, :algorithm, :localization_tol,
                  :localization_budget, :firing_budget)
         _deployment_diff!(diags, "", name, getfield(recorded, name), getfield(target, name))
     end

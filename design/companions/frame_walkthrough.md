@@ -5,8 +5,8 @@ in [§10.2][s10-2], publication in [§11.2][s11-2]) wins wherever the two disagr
 against the tree at `e6696a7` ([D-431][d-431]): every function named here is the
 implementation's, and the code moves more often than the spec. Function names
 are given without line numbers for that reason; `grep` finds them. The quotes
-of `frame.jl` and the boundary routine follow the three-lattice loop of
-[D-445][d-445].*
+of `frame.jl` and the boundary routine follow the span loop of
+[D-449][d-449].*
 
 This document follows a single frame through the frame loop and names, at
 each step, the function that performs it. It exists because the spec states
@@ -23,8 +23,8 @@ The running example is a deployment with `Δt_frame = 1//100` and
 holds a continuous plant with a localized sign-form guard, and a discrete
 controller with `(D, Φ) = (1, 0)`, which ticks at every base tick. The frame
 followed is `k = 8`, whose top `t = 0.08` is base tick `2`; section 3 notes
-where frame `k = 7`, an off-tick frame top, differs. The step is `RK4()`'s
-default, the frame itself, so each frame is one step and its end is the
+where frame `k = 7`, an off-tick frame top, differs. The deployment sets no
+`h_max`, so each frame is one span taken in one step, and its end is the
 frame top.
 
 ## Section 1 — The frame loop and the drain
@@ -83,22 +83,28 @@ a guard here is an edge with no in-frame crossing.
 
 ## Section 2 — Integration and localization
 
-**`frame!`** computes the frame top from the index, never by accumulation,
-and picks the path:
+**`frame!`** computes the span's end from its index, never by accumulation,
+takes the span's equal steps, and picks the path for each:
 
 ```julia
-t_to = is_top ? _grid_time(model, k) :        # t₀ + k·Δt_frame
-       is_due ? _tick_time(model, due) : _step_time(model, k, j)
-if exec.has_localized
-    (abandoned, localizations) =
-        _localized_step!(model, t_to, k, hooks, fresh, localizations)
-    abandoned && return true
-else
-    integrate_step!(model, T(h), k, fresh)    # h, or a split piece's exact length
+t_to = is_top ? _grid_time(model, k) : _tick_time(model, due)   # t₀ + k·Δt_frame
+steps = cld(units * denominator(lattice.bound), numerator(lattice.bound))
+h = Float64((units * lattice.unit) / steps)   # the span's exact equal step
+for i in 1:steps
+    t_next = i == steps ? t_to : t_from + i * h
+    if exec.has_localized
+        (abandoned, localizations) =
+            _localized_step!(model, t_next, k, hooks, fresh, localizations)
+        abandoned && return true
+    else
+        integrate_step!(model, T(h), k, fresh)
+    end
+    ...
 end
 ```
 
-Here the step ends at the frame top, so `t_to` is `_grid_time(model, 8)`. A
+Here the one span ends at the frame top in one step, so `t_next` is
+`_grid_time(model, 8)`. A
 model with no localized events takes one bare step. Ours enters
 `_localized_step!`, whose loop integrates one segment per turn: the whole
 step first, then a remainder from each `t*`. It returns `true` only when a
@@ -347,8 +353,8 @@ boundary zero has no integrate and no drain.
 [d-223]: ../log.md#d-223--host-the-runtime-catch-in-boundary-zero-under-the-services-disposition
 [d-230]: ../log.md#d-230--stamp-the-snapshot-with-the-trajectorys-boundary-ordinal-not-the-wait-counter
 [d-431]: ../log.md#d-431--collect-a-stopping-check-over-its-own-unit
-[d-445]: ../log.md#d-445--advance-the-frame-through-boundaries-on-three-lattices
 [d-447]: ../log.md#d-447--run-a-steps-first-stage-over-a-fresh-table-as-the-flow-alone
+[d-449]: ../log.md#d-449--bound-the-step-by-h_max-and-take-each-span-in-equal-steps
 [s10-2]: ../spec.md#102-the-stepper-seam
 [s10-4]: ../spec.md#104-localization-mechanics
 [s10-5]: ../spec.md#105-multi-rate-tick-scheduling

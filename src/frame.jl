@@ -1,15 +1,15 @@
 # The model's frame (§10.4, §10.5): the loop that carries frame `k` from its top
-# to the next, through every boundary in between. A frame runs on three
-# lattices in no required ratio (D-445): the frame top, the step points `j·h`
-# after it, and the base ticks at which some discrete component is due. Each
-# step ends at the nearest of the next step point, the next due instant and the
-# frame top, so a due instant inside a step splits it (D-444), and every step
-# end is a boundary. With localized events each step is carried through
-# `integrate → arrival sweep → trigger → θ = 0 validation → bracket → root-find
-# → t* → remainder step`, iterated under the frame's `localization_budget`
-# (D-446). A sign-form guard's crossing is bracketed by trial evaluations over
-# the seam's dense output (§10.2, `dense!`) and fired at a `t*` boundary,
-# strictly inside the step.
+# to the next, through every boundary in between. The frame tops and the due
+# instants, the base ticks at which some discrete component is due, are the
+# mandatory instants, on two lattices in no required ratio (D-445). A span runs
+# from one mandatory instant to the next, and the method takes it in the fewest
+# equal steps the deployment's `h_max` allows (D-449), so a due instant inside
+# the frame ends a span and every step end is a boundary. With localized events
+# each step is carried through `integrate → arrival sweep → trigger → θ = 0
+# validation → bracket → root-find → t* → remainder step`, iterated under the
+# frame's `localization_budget` (D-446). A sign-form guard's crossing is
+# bracketed by trial evaluations over the seam's dense output (§10.2, `dense!`)
+# and fired at a `t*` boundary, strictly inside the step.
 #
 # Frame ≠ boundary (§10.1): the frame `[tₖ₋₁, tₖ]` is the unit of scheduling —
 # the drain and the trace key to it — while a boundary is a published
@@ -17,17 +17,18 @@
 # to `settled!` as the frame top's does (D-317).
 
 # Design: §10.3, §10.4, §10.5, §13.4, §13.5, D-261, D-268, D-317, D-444, D-445,
-# D-447. The cursor's `:drain` phase is written first. Positions inside the
-# frame are whole units of the deployment's `Lattice`, so the nearest instant and
+# D-447, D-449, D-450. The cursor's `:drain` phase is written first. Mandatory
+# instants are whole units of the deployment's `Lattice`, so the next one and
 # every coincidence are integer comparisons, and each boundary's clock is
-# written once, from its own index: the frame top `t₀ + k·Δt_frame`, a due
-# instant from its base-tick index, a step point from `k` and `j`. A model with
-# no localized events, every non-nominal activation included since its events
-# compiled out, takes the bare step by its exact length: no arrival machinery,
-# no extra sweep. The whole frame is §13.4's one `try`, and the `StepError` is the
-# one constructor's. Its catch wraps every throw, an interrupt included, since
-# the status says whether the stores are a settled boundary and the cause says
-# what cut the frame. The index bound and the claim's gate precede it.
+# written once: a frame top `t₀ + k·Δt_frame`, a due instant from its base-tick
+# index, an interior step end from its span's start and its count in the span.
+# A model with no localized events, every non-nominal activation included since
+# its events compiled out, takes the bare step by its exact length: no arrival
+# machinery, no extra sweep. The whole frame is §13.4's one `try`, and the
+# `StepError` is the one constructor's. Its catch wraps every throw, an
+# interrupt included, since the status says whether the stores are a settled
+# boundary and the cause says what cut the frame. The index bound and the
+# claim's gate precede it.
 """
     frame!(model::Model, k::Int, hooks::FrameHooks = NoHooks()) -> Bool
 
@@ -35,10 +36,11 @@ Advance the model through [frame](@ref g-frame) `k`, from `tₖ₋₁` to `tₖ`
 settle every [boundary](@ref g-boundary) in it.
 
 `k` must be the frame after the clock's, which `frame!` does not check. A frame
-starts with `frame_top!(hooks)`, before the model touches any state, and then
-integrates in steps of the algorithm's `h`. A step ends early at a
-[due](@ref g-due) instant, where the discrete [components](@ref g-component) due
-there run their stages and updates. A [localized](@ref g-localized) event adds a
+starts with `frame_top!(hooks)`, before the model touches any state. It then
+integrates from each [mandatory instant](@ref g-mandatory-instant) to the next
+in the fewest equal steps the deployment's `h_max` allows. At a
+[due](@ref g-due) instant the discrete [components](@ref g-component) due there
+run their stages and updates. A [localized](@ref g-localized) event adds a
 boundary at its time [`t*`](@ref g-t). Every step end is a boundary, and the
 last is the frame top `tₖ`. `settled!(hooks)` follows every boundary.
 
@@ -52,17 +54,18 @@ reached. See [`FrameHooks`](@ref) for the hooks, and [`NoHooks`](@ref) for a
 model stepped on its own.
 
 A model claimed by a [`Simulation`](@ref) is refused as `ArgumentInvalid`, and
-so is a `k` whose frame the deployment's lattices cannot index in an `Int`. A
-throw inside the frame writes the status `:inconsistent` and arrives as a
-`StepError` with host `:loop`, an `InterruptException` included. Its `boundary`
-is `k - 1`, the boundary the frame started from.
+so is a `k` past the last frame the run may take: the last whose positions the
+deployment's lattices index in an `Int`, and whose clocks the origin resolves
+in order. A throw inside the frame writes the status `:inconsistent` and
+arrives as a `StepError` with host `:loop`, an `InterruptException` included.
+Its `boundary` is `k - 1`, the boundary the frame started from.
 """
 function frame!(model::Model, k::Int, hooks::FrameHooks = NoHooks())
     _claimed_gate(model, hooks, :frame!)
-    k ≤ model.deployment.lattice.max_frame ||
+    last_frame = _last_frame(model)
+    k ≤ last_frame ||
         throw(DiagnosticError(ArgumentInvalid(call = :frame!, reason = :range, argument = :k,
-                                              value = k,
-                                              related = model.deployment.lattice.max_frame)))
+                                              value = k, related = last_frame)))
     try
         cursor = model.exec.cursor
         cursor.comp = 0; cursor.fn = :none   # no stale frame for a top-side throw (§13.4)
@@ -78,13 +81,17 @@ function frame!(model::Model, k::Int, hooks::FrameHooks = NoHooks())
     end
 end
 
-# The frame's steps (§10.5, D-444, D-445). `origin` is the frame top `tₖ₋₁`'s
-# position and `position` the current boundary's offset from it, both in units.
-# The next step point is the next multiple of `step`, the frame top among them,
-# since `h` divides the frame. The next due instant is recomputed only after one
-# is reached. A step's exact length is integer arithmetic over the unit; an
-# unsplit step is `h` itself. Returns `settled!`'s answer at the frame top, and
-# `true` where it abandoned the frame at an earlier boundary.
+# The frame's spans (§10.5, D-445, D-449), two nested loops. The outer one runs
+# over the mandatory instants: `origin` is the frame top `tₖ₋₁`'s position and
+# `position` the span's start as an offset from it, both in units, and the next
+# due instant is recomputed only after one is reached. The inner one takes the
+# span's `n = ⌈g / h_max⌉` equal steps, `n` one `cld` over the bound's exact
+# ratio to the unit. A step's exact length is `(units·unit)/n`, so a harmonic
+# bound steps by `h_max` itself and a span of one step by its own length. An
+# interior step end has no position: its clock is the span's start clock plus
+# its count times that length, never accumulated (D-449). Returns `settled!`'s
+# answer at the frame top, and `true` where it abandoned the frame at an
+# earlier boundary.
 function _frame_steps!(model::Model{T}, k::Int, hooks::FrameHooks, fresh::Bool) where {T}
     exec, deployment = model.exec, model.deployment
     lattice, rows = deployment.lattice, deployment.schedule.rows
@@ -92,36 +99,40 @@ function _frame_steps!(model::Model{T}, k::Int, hooks::FrameHooks, fresh::Bool) 
     (due, due_at) = _next_due(rows, lattice.base, origin)
     exec.has_localized && fill!(exec.events.loc_warned, false)   # one report per event per frame
     localizations = 0                                             # the frame's, across its steps (D-446)
-    position = 0
+    position, t_from = 0, _grid_time(model, k - 1)
     while true
-        step_end = position - position % lattice.step + lattice.step
-        target = min(step_end, due_at - origin)
+        target = min(lattice.frame, due_at - origin)
         is_top = target == lattice.frame
         is_due = target == due_at - origin
-        t_to = is_top ? _grid_time(model, k) :
-               is_due ? _tick_time(model, due) : _step_time(model, k, target ÷ lattice.step)
-        if exec.has_localized
-            (abandoned, localizations) =
-                _localized_step!(model, t_to, k, hooks, fresh, localizations)
-            abandoned && return true
-        else
-            units = target - position
-            h = units == lattice.step ? lattice.h : Float64(units * lattice.unit)
-            integrate_step!(model, T(h), k, fresh)
+        t_to = is_top ? _grid_time(model, k) : _tick_time(model, due)
+        units = target - position
+        steps = cld(units * denominator(lattice.bound), numerator(lattice.bound))
+        h = Float64((units * lattice.unit) / steps)
+        for i in 1:steps
+            span_end = i == steps
+            t_next = span_end ? t_to : t_from + i * h
+            if exec.has_localized
+                (abandoned, localizations) =
+                    _localized_step!(model, t_next, k, hooks, fresh, localizations)
+                abandoned && return true
+            else
+                integrate_step!(model, T(h), k, fresh)
+            end
+            exec.clock.t = t_next
+            if span_end && is_due
+                run_boundary!(model, due)
+            else
+                run_boundary!(model, nothing)
+            end
+            # Every settled boundary may end the frame (§13.5): a `true` before the
+            # frame top abandons the remainder and reaches the loop as `frame!`'s
+            # return (D-261, D-317).
+            abandon = settled!(hooks)
+            (span_end && is_top || abandon) && return abandon
+            fresh = true
         end
-        exec.clock.t = t_to
-        if is_due
-            run_boundary!(model, due)
-            (due, due_at) = _next_due(rows, lattice.base, origin + target)
-        else
-            run_boundary!(model, nothing)
-        end
-        # Every settled boundary may end the frame (§13.5): a `true` before the
-        # frame top abandons the remainder and reaches the loop as `frame!`'s
-        # return (D-261, D-317).
-        abandon = settled!(hooks)
-        (is_top || abandon) && return abandon
-        position, fresh = target, true
+        is_due && ((due, due_at) = _next_due(rows, lattice.base, origin + target))
+        position, t_from = target, t_to
     end
 end
 

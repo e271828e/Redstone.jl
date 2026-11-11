@@ -40,15 +40,15 @@ item changes what the spec says, the spec edit is part of the item.
     points, a due instant inside a fixed step splits it, `frames_per_tick`
     and the two transitional refusals are gone, and `bind_schedule` is
     strict under D-229.
-  - **Next: the step bound**, the roadmap's increment 2b, ruled by the user
-    on 2026-11-11 and not yet briefed. `h_max` is an optional bound on the
-    `Deployment`, a fixed-step method divides each span between two
-    mandatory instants into equal steps, and `RK4()` and `Heun()` carry no
-    step. The increment also refuses a run the clock cannot resolve and
-    states the steps per frame in `show(deployment)`. It reverses the step
-    inside the instance (D-442) and the step points (D-444), so its docs
-    commit comes first.
-  - **Then: the seam protocol**, the roadmap's increment 3.
+  - **Landed: the step bound**, increment 92 (D-449, D-450,
+    `design/increments/092_step_bound/`). `h_max` is an optional bound on the
+    `Deployment`, recorded as the lesser of itself and `Δt_frame`, a
+    fixed-step method takes each span between two mandatory instants in
+    equal steps, and `RK4()` and `Heun()` carry no step. A run the clock
+    cannot resolve is refused at every door, and `show(deployment)` states
+    the steps per frame. D-442, D-443, D-444 and D-445 are superseded in
+    part.
+  - **Next: the seam protocol**, the roadmap's increment 3.
   - **Ruled from the three lattices** by the user on 2026-11-11, on the open
     points of `design/increments/091_three_lattices/notes_increment_91.md`:
     - The reconstructed Rejected lists of D-445 to D-447 stand as written.
@@ -65,13 +65,13 @@ item changes what the spec says, the spec edit is part of the item.
     - A loop error outside the frame reads `stopped` (§13.5). The log
       message and §13.4 now say so.
     - The steps per frame and the refusal of a lattice finer than the clock
-      land with the step bound.
+      landed with the step bound (D-449, D-450).
     - Exact periods on the `Deployment` and one step-length rule wait for
       the roadmap's increment 4, as open decisions there.
 
-    The log owes two rejections from these rulings, the cap at the range's
-    end and an enforced hook contract. They land with the step bound's docs
-    commit.
+    The two rejections these rulings owed the log landed with the step
+    bound: the cap at the range's end in D-450's Rejected list, and an
+    enforced hook contract in an annotation of D-447.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose

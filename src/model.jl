@@ -28,11 +28,12 @@
 """
     Model(deployment::Deployment, ::Type{T} = Float64; chunk_size = 16) -> Model{T}
     Model(build::Build, ::Type{T} = Float64; Δt_frame, Δt_base = nothing,
-          algorithm = RK4(), firing_budget = 4, localization_tol = 1e-6,
-          localization_budget = 8, chunk_size = 16) -> Model{T}
-    Model(root::AbstractComponent, ::Type{T} = Float64; Δt_frame,
-          Δt_base = nothing, algorithm = RK4(), firing_budget = 4,
+          h_max = nothing, algorithm = RK4(), firing_budget = 4,
           localization_tol = 1e-6, localization_budget = 8,
+          chunk_size = 16) -> Model{T}
+    Model(root::AbstractComponent, ::Type{T} = Float64; Δt_frame,
+          Δt_base = nothing, h_max = nothing, algorithm = RK4(),
+          firing_budget = 4, localization_tol = 1e-6, localization_budget = 8,
           chunk_size = 16) -> Model{T}
 
 A deployment materialized at one scalar type, ready to be written, evaluated and
@@ -334,12 +335,12 @@ function init!(model::Model{T}, plan::ConditionPlan; t0::Real = 0.0,
     nothing
 end
 
-# The origin `init!` and `trim!` take, before any write or search: finite, with
-# the frame slack at it inside `Int`, since a checkpoint counts frames from it
-# with `_frames_to`.
+# The origin `init!` and `trim!` take, before any write or search: finite, and
+# with a first frame the run may take, inside the lattices' `Int` range and
+# resolved by the origin's clocks (D-450).
 function _check_origin(model::Model, call::Symbol, t0::Real)
     origin = Float64(t0)
-    isfinite(origin) && _frames_fit(model.deployment, origin, origin) ||
+    isfinite(origin) && _last_frame(model.deployment, origin) ≥ 1 ||
         throw(DiagnosticError(ArgumentInvalid(call = call, reason = :range, argument = :t0,
                                               value = t0)))
     nothing
@@ -475,12 +476,10 @@ The origin and the stride are both `Float64`, so the top is one too, and the
 clock write below converts it into the deployment's scalar (D-260)."""
 _grid_time(model::Model, k::Int) = model.exec.clock.t₀ + k * model.deployment.Δt_frame
 
-# A due instant off the frame tops, from its base-tick index, and a step point
-# on neither, from its frame's index and its count `j` from the frame top
-# (§10.4, D-445).
+# A due instant off the frame tops, from its base-tick index (§10.4, D-445). An
+# interior step end has no index of its own: frame.jl writes it from its span's
+# start and its count in the span (D-449).
 _tick_time(model::Model, n::Int) = model.exec.clock.t₀ + n * model.deployment.Δt_base
-_step_time(model::Model, k::Int, j::Int) =
-    model.exec.clock.t₀ + (k - 1) * model.deployment.Δt_frame + j * model.deployment.lattice.h
 
 # The next due instant strictly past `position` (in units from `t₀`): the first
 # base-tick index there that some row's gate admits, one modular computation
@@ -505,12 +504,13 @@ end
 # loop writes frame 3's time as `5.6e-17`, whose own ulps absorb none of that.
 # `t` and `t₀` are any reals; the stride is `Float64` (D-260). A bound at or
 # before the origin is frame 0, whatever its distance, so `_frames_to` never
-# rounds a count `Int` cannot hold on that side; `_frames_fit` is the doors'
-# check for the other side, against the lattice's last frame whose positions
-# fit `Int` (§10.5), with `Inf` mapping onto the unbounded budget.
+# rounds a count `Int` cannot hold on that side. `_frames_fit` is the doors'
+# check for the other side, `_frames_to`'s mirror before its conversion: the
+# frame the bound lands on is at most the last frame the run may take (§10.5,
+# D-450), and `Inf` maps onto the unbounded budget.
 _frame_slack(t::Real, t₀::Real, Δt_frame::Float64) = 4 * eps(max(abs(t), abs(t₀))) / Δt_frame
-_frames_fit(t::Real, t₀::Real, Δt_frame::Float64, max_frame::Int) =
-    isinf(t) || (t - t₀) / Δt_frame + _frame_slack(t, t₀, Δt_frame) < max_frame
+_frames_fit(t::Real, t₀::Real, Δt_frame::Float64, last_frame::Int) =
+    isinf(t) || (t - t₀) / Δt_frame - _frame_slack(t, t₀, Δt_frame) ≤ last_frame
 function _frames_to(t::Real, t₀::Real, Δt_frame::Float64)
     isinf(t) && return typemax(Int)
     count = (t - t₀) / Δt_frame - _frame_slack(t, t₀, Δt_frame)
@@ -519,10 +519,25 @@ end
 _frame_at(t::Real, t₀::Real, Δt_frame::Float64) =
     floor(Int, (t - t₀) / Δt_frame + _frame_slack(t, t₀, Δt_frame))
 
+# The last frame a run from the origin `t₀` may take (§10.5, D-445, D-450): the
+# lesser of the lattices' `max_frame` and the last frame whose clocks the origin
+# resolves. Every clock the loop writes in frame `k` lies within
+# `2^-52·(|t₀| + 2·(t - t₀))` of its instant, `t = t₀ + k·Δt_frame` the frame's
+# end, so two boundaries a gap `δ` apart take ordered clocks while
+# `|t₀| + 2·(t - t₀) < 2^50·δ`, half the first-order threshold. `reach` is
+# `2^50·δ`; the frame count it leaves is a few flops per call, so nothing is
+# stored where `t₀` is set.
+function _last_frame(deployment::Deployment, t₀::Float64)
+    lattice = deployment.lattice
+    room = (lattice.reach - abs(t₀)) / (2 * deployment.Δt_frame)   # k < room
+    min(lattice.max_frame, room ≤ 1 ? 0 : ceil(Int, room) - 1)
+end
+_last_frame(model::Model) = _last_frame(model.deployment, model.exec.clock.t₀)
+
 # The same three over a deployment's lattices from an origin, and over a model's
 # own clock, so no caller rebuilds the triple (§12.6, D-445).
 _frames_fit(deployment::Deployment, t::Real, t₀::Real) =
-    _frames_fit(t, t₀, deployment.Δt_frame, deployment.lattice.max_frame)
+    _frames_fit(t, t₀, deployment.Δt_frame, _last_frame(deployment, Float64(t₀)))
 _frames_to(deployment::Deployment, t::Real, t₀::Real) = _frames_to(t, t₀, deployment.Δt_frame)
 _frame_at(deployment::Deployment, t::Real, t₀::Real) = _frame_at(t, t₀, deployment.Δt_frame)
 _frames_fit(model::Model, t::Real) = _frames_fit(model.deployment, t, model.exec.clock.t₀)

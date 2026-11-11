@@ -186,8 +186,9 @@ Traps the code does not warn about, each hit more than once while building:
   store is present iff it is not `nothing` (§5.2);
 - **a test's clock value is an indexed instant**, bitwise, never a decimal
   literal: a frame top `t₀ + k * Δt_frame`, a due instant off the tops
-  `t₀ + n * Δt_base`, a step point on neither `t₀ + (k - 1) * Δt_frame + j * h`
-  (D-445); a derived index takes the helper its sibling door uses;
+  `t₀ + n * Δt_base`, a step end inside a span its start's clock plus
+  `i * h`, `h` the span's exact step as a `Float64` (D-445, D-449); a derived
+  index takes the helper its sibling door uses;
 - **a test that stages a root input reads it back with `get_input`** and
   pins the snapshot where it changes: `stage!` reports a misspelled face
   to the harness writer's diagnostic cell, never to the caller, and a
