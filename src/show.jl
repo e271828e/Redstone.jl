@@ -150,8 +150,9 @@ end
 # --- Schedule ---------------------------------------------------------------------
 
 # The hyperperiod: the pattern repeats with `lcm(Dᵢ)` base ticks, so one is the
-# complete truth (§9.2).
-_hyperperiod(schedule::Schedule) = lcm([row.D for row in schedule.rows])
+# complete truth (§9.2). A `BigInt`, since coprime periods can take it past
+# `Int` and it is printed, never indexed past the chart's guard.
+_hyperperiod(schedule::Schedule) = lcm(big.([row.D for row in schedule.rows]))
 
 function Base.show(io::IO, schedule::Schedule)
     isempty(schedule.rows) && return print(io, "Schedule(no rows)")
@@ -186,6 +187,7 @@ function _lines(schedule::Schedule)
     hyperperiod = _hyperperiod(schedule)
     hyperperiod > 100 &&
         return push!(lines, "  hyperperiod: $hyperperiod base ticks, chart omitted")
+    hyperperiod = Int(hyperperiod)
     push!(lines, "  hyperperiod chart, $hyperperiod base ticks:")
     width = maximum(textwidth(_path_label(row.path)) for row in rows)
     ruler = ""

@@ -206,6 +206,18 @@ function test_show()
         @test startswith(text, "Schedule: 2 rows, hyperperiod 150 base ticks\n")
         @test endswith(text, "\n  hyperperiod: 150 base ticks, chart omitted")
         @test !occursin("●", text) && !occursin("hyperperiod chart", text)
+        # Two coprime periods past 2^40 base ticks: a hyperperiod past `Int`,
+        # printed whole, and the deployment's plain form whole too.
+        coprime = Deployment(build(Group((; a = TickCounter(), b = TickCounter());
+                                         sample_times = (; a = Relative(2^40 + 15),
+                                                           b = Relative(2^40 + 61))));
+                             Δt_frame = 1)
+        hyperperiod = lcm(big(2^40 + 15), big(2^40 + 61))
+        @test hyperperiod > typemax(Int)
+        @test compact(coprime.schedule) == "Schedule(2 rows, hyperperiod $hyperperiod base ticks)"
+        @test endswith(plain(coprime.schedule),
+                       "\n  hyperperiod: $hyperperiod base ticks, chart omitted")
+        @test occursin("\n  Schedule: 2 rows, hyperperiod $hyperperiod base ticks\n", plain(coprime))
         # No rows: the heading alone, no chart line at all.
         @test plain(pendulum_deployed.schedule) == "Schedule: no rows"
     end
