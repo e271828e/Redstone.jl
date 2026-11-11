@@ -1,11 +1,13 @@
 # Roadmap: variable-step integration
 
 The live roadmap for the integration-step update, settled in discussion on
-2026-11-05 and 2026-11-06. It stages the work in five increments, names
-the rulings the discussion settled, and lists the decisions each increment
-still needs. Its `pending.md` bullet carries the state of the work; this
-file carries the plan. Every number here is a reading of the tree at the
-time of writing, and each brief re-counts what it pins.
+2026-11-05 and 2026-11-06 and amended on 2026-11-11. It stages the work in
+six increments, names the rulings the discussion settled, and lists the
+decisions each increment still needs. Its `pending.md` bullet carries the
+state of the work; this file carries the plan. Every number here is a
+reading of the tree at the time of writing, and each brief re-counts what it
+pins. The step bound entered on 2026-11-11 between the second increment and
+the third. It is numbered 2b, so the numbers the records cite still hold.
 
 ## What the update is
 
@@ -13,10 +15,13 @@ Today the integration step `h` and the frame are one object: `tₖ = t₀ + k·h
 and the drain, the pacer, the trace, the checkpoints and the tick lattice
 all key to it. The update separates them. The frame stays the fixed,
 schedule-determined unit of exposure to the outside. The integration step
-becomes the method's: fixed for RK4 and Heun, proposed by an error
-controller for an adaptive backend. The Model decides each step by clamping
-the method's proposal to the nearer of the next frame top and the next
-instant at which a discrete component is due.
+becomes the Model's to decide. Two kinds of instant are mandatory, the frame
+tops and the instants at which a discrete component is due, and no step
+crosses one. Between two of them no step is longer than `h_max`, an optional
+bound on the `Deployment`. A fixed-step method proposes nothing, so it takes
+each span in the fewest equal steps the bound allows. An adaptive backend's
+error controller proposes a step, and the Model clamps it to the bound and
+to the next mandatory instant.
 
 ## Settled in discussion
 
@@ -24,9 +29,10 @@ Each of these lands in the spec and the log with the increment that first
 needs it. None is built yet.
 
 - **Three quantities.** `Δt_frame`, the frame period; `Δt_base`, the base
-  lattice of the discrete tier; `h`, the method's step. `h` and its
-  derivatives (`h_init`, `h_min`, `h_max`) name what the method does, `Δt`
-  and its subscripts name what the schedule fixes. `N_base` retires.
+  lattice of the discrete tier; `h`, the step the Model takes. `h` and its
+  derivatives (`h_init`, `h_min`, `h_max`) name the step and its limits,
+  `Δt` and its subscripts name what the schedule fixes. `N_base` retires.
+  Since 2026-11-11 no method carries a step; see the step bound below.
 - **Ownership.** `Δt_frame` is the `Deployment`'s, beside `Δt_base`, by the
   trajectory test: it fixes where root inputs land and, under an adaptive
   method, clamps the step. The simulation owns the activities keyed to the
@@ -44,13 +50,49 @@ needs it. None is built yet.
 - **The frame top keeps the drain, the control read, the pacer's deadline
   and the trace's ordinal.** Control latency stays one frame budget,
   `Δt_frame/p`.
-- **Fixed-step divisibility.** A fixed-step `h` must divide `Δt_frame`,
-  refused otherwise as `DeploymentInvalid`, and nothing relates it to
-  `Δt_base`: a due instant inside a step splits the step there. The user
-  ruled the split on 2026-11-11, reversing the earlier "and, when discrete
-  components exist, `Δt_base`" (D-444). A fixed-step backend may subcycle
-  inside a frame. Today's deployments map to `Δt_frame = h`,
-  `Δt_base = N_base·h`.
+- **The step bound.** The user's ruling of 2026-11-11, made after increment
+  91 landed. `h_max` is an optional keyword of the `Deployment`, an exact
+  positive time that bounds every step under every method and need divide
+  nothing. `RK4()` and `Heun()` carry no step. The frame tops and the due
+  instants are the mandatory instants, and a span runs from one to the next.
+  A fixed-step method takes a span of length `g` in `n = ⌈g / h_max⌉` steps
+  of `g / n` each, so the steps of a span are equal. Without `h_max`, `n` is
+  1: one step per frame, split at the due instants inside it. Deployments
+  from before the update map to `Δt_frame = h`, `Δt_base = N_base·h` and no
+  `h_max`.
+  - *What it reverses.* The step inside the algorithm instance (D-442), the
+    step that divides `Δt_frame`, and the step points counted from the frame
+    top, the same day's earlier ruling (D-444). Step points go, and with
+    them the third lattice of D-445.
+  - *Why.* `RK4(h)` reads as a promise of steps of `h`, which the split had
+    already broken. A bound promises only what holds, and it means the same
+    under an adaptive method. Equal division takes the same number of steps
+    as full steps and a remainder, at a lower truncation error: to leading
+    order up to `(n/(n−1))^p` lower in a span, for a method of order `p`.
+    It also never makes a short step of its own.
+  - *Weighed and rejected*, for the log entry. `RK4(h)` as built. A lattice
+    of step points on the deployment, `Δt_step`: its one distinct property
+    is boundaries at instants no tick moves, which a harmonic `h_max` gives
+    anyway, and it forces boundaries on an adaptive controller. The bound
+    with full steps and a remainder: it keeps a sliver, and it puts `h_max`
+    into the lattice's unit. A warning at construction when a due instant
+    splits a step: the split is the designed use.
+- **The clock's resolution.** A run is refused where two distinct
+  boundaries could take clocks that are equal or out of order, ruled on
+  2026-11-11 on increment 91's open point. With `g` the smallest gap between
+  two boundaries, the run needs `|t₀|/g + 2·(t − t₀)/g < 2^51` at every
+  instant `t`. Under the step bound `g` is the lesser of the lattice's unit
+  and `h_max / 2`. The bound is sufficient, not tight, and was derived for
+  increment 91's clock formulas, so the step bound's brief derives it again.
+  It gives a last frame beside the lattice's `max_frame`, computed where
+  `t₀` is set, and each door that refuses a run past `max_frame` refuses
+  past the lesser of the two. It does not cover `t*` boundaries, which sit
+  on no lattice. §10.5's and D-445's sentences on equal clocks then state
+  the refusal.
+- **The steps per frame.** `show(deployment)` states the bound and the
+  steps per frame over one hyperperiod, such as "at most 5 ms, 4 to 5 steps
+  per frame", for a fixed-step method and with a cap on the frames it
+  counts. No warning is raised when a due instant splits a step.
 - **The seam protocol.** `propose(stepper)`, `attempt!(stepper, model, h)`
   returning acceptance and the next proposal, `discontinuity!(stepper)`,
   the retained `startpoint`, the generic `dense!` a backend may override,
@@ -130,6 +172,24 @@ in discussion.
   bites. Deferred.
 - **`localization_tol`'s reference.** `Δt_frame`. The budget stays per
   frame. Increment 2.
+- **Equal division under an adaptive proposal.** Whether the Model shapes an
+  adaptive proposal as it shapes a fixed-step span, taking
+  `r / ⌈r / min(proposal, h_max)⌉` over the distance `r` to the next
+  mandatory instant, or only clamps it. Equal division leaves no sliver
+  before a scheduled instant, and it reaches into the controller's memory.
+  Increment 4.
+- **`h_min`'s home.** The adaptive instance, as the controller's floor, or
+  the `Deployment` beside `h_max`. Recommended: the instance, since a
+  fixed-step method has no use for it. Increment 4.
+- **One step-length rule.** A model without localized events integrates by
+  the exact length of the piece, one with them by the float distance to the
+  step's end, so declaring a localized event that never fires moves a
+  trajectory by ulps. Recommended: a rule by piece, the exact length between
+  two instants the Model knows exactly and the float distance from a `t*` or
+  an adaptive step end. Increment 4, where the bit-identity invariant ends.
+- **Exact periods on the `Deployment`.** Whether it stores and compares
+  `Δt_frame` and `Δt_base` as exact rationals, where it compares their
+  `Float64` values today. Increment 4, with the recorded set.
 
 ## The sequence
 
@@ -137,7 +197,9 @@ Each increment runs the pipeline of `rules/increment_rules.md`: a prototype
 in a worktree, the docs commit first, one or more code stages, one cold
 review. The invariant through increments 1 to 3 is that every existing test
 trajectory is bit-identical to today's, the old trajectories being the
-oracle for the rewritten loop.
+oracle for the rewritten loop. Increment 2b should move only trajectories
+that increment 91's own tests introduced, those with a bound finer than the
+frame and a due instant inside it. That is an argument, not yet a run.
 
 1. **The deployment surface.** `Deployment(build; Δt_frame, Δt_base,
    algorithm = RK4())`, the step inside the algorithm instance and
@@ -169,6 +231,28 @@ oracle for the rewritten loop.
    frame's inputs; boundary ordinals and frame indices under sub-step
    publication; the first stage over a fresh table bit-identical to the
    sweep's.
+
+2b. **The step bound.** `h_max` on the `Deployment`, `RK4()` and `Heun()`
+    without a step, and the frame loop as two nested loops: the outer one
+    over mandatory instants, the inner one over the `n` equal steps of a
+    span. Mandatory instants keep integer positions, on the unit of
+    `Δt_frame` and `Δt_base`. An interior step end has no position and needs
+    none, since no mandatory instant lies inside a span. Its clock comes
+    from its index in the span, never accumulated. `lattice.step`,
+    `lattice.h` and `_step_time` go, and `_localized_step!` stands, since it
+    takes the step's end. The clock's resolution refusal and the steps per
+    frame in `show` land here. Spec: §2.1, §2.2, §9.2, §10.2, §10.5,
+    Appendices B, C and D, with "step point" leaving the glossary. Log:
+    D-442 and D-444 superseded in part, D-445 amended, new entries for the
+    bound and for the clock refusal, and the two rejections the log owes
+    from increment 91's rulings, which `pending.md` names. The brief settles
+    three details: whether `h_max` joins the unit's gcd or the constructor
+    stores its ratio to the unit, the second recommended; the constant of
+    the clock bound; and what a bound at or above `Δt_frame` does. Tests:
+    the trajectories from before increment 90 bit-identical; a harmonic
+    `h_max` giving equal steps of `h_max`; equal steps in a span that a due
+    instant cuts; the clock refusal at each door; and increment 91's pin on
+    step points counted from the frame top retired.
 
 3. **The seam protocol.** `propose`, `attempt!`, `discontinuity!` and the
    non-empty checkpoint pair, with RK4 and Heun rewritten under it, always
@@ -205,8 +289,7 @@ oracle for the rewritten loop.
 Later, when wanted: Dormand–Prince 5(4) for the tight-tolerance offline
 study, carrying the `dense!` override with its fourth-order extension, the
 D-018 annotation and the matched-interpolant question; the checkpoint rest
-relaxation; a backend-side `h_max`; the controller's constants as
-keywords; the adapter.
+relaxation; the controller's constants as keywords; the adapter.
 
 ## Risks
 
@@ -215,6 +298,8 @@ keywords; the adapter.
   analysis counts it.
 - The due-instant arithmetic runs on `Int` indices; a tiny `Δt_base` under
   a long run needs the overflow guard `_frames_fit` gives frames today.
-- A sliver remainder before a scheduled instant is stretched onto it
-  rather than taken as a step of a few ulps.
+- A sliver remainder before a scheduled instant. Under a fixed-step method
+  equal division makes none, though the schedule can still put two due
+  instants a unit apart. Under an adaptive method it waits on increment 4's
+  decision on equal division.
 - The keyword list exists in three copies until increment 1 collapses it.

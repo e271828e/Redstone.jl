@@ -15,16 +15,19 @@ item changes what the spec says, the spec edit is part of the item.
 - **Variable-step integration.** The frame and the integration step become
   separate quantities: `Δt_frame`, the frame period, and `Δt_base` stand in
   no required ratio on the `Deployment`, `N_base` retires, and the step is
-  the method's, fixed for RK4 and Heun or proposed by an error controller,
-  clamped by the `Model` to the nearer of the next frame top and the next
-  due instant (§2.1, §2.2, §10.2, §10.4, §10.5). Every accepted sub-step
+  the `Model`'s to decide. It never crosses a frame top or a due instant and
+  is never longer than the deployment's optional `h_max`. A fixed-step
+  method takes the span between two such instants in equal steps, and an
+  adaptive one under its error controller's proposal (§2.1, §2.2, §10.2,
+  §10.4, §10.5). Every accepted sub-step
   ends in a boundary; the drain, the control read, the pacer's deadline and
   the trace's ordinal stay at frame tops; `restore!` restores the stepper's
   state and never reseeds it. The plan, the settled rulings and the open
-  decisions are `design/increments/roadmap_variable_step.md`: five
+  decisions are `design/increments/roadmap_variable_step.md`: six
   increments, the deployment surface first, then the three lattices, the
-  seam protocol, the first adaptive backend and the teaching, with every
-  existing trajectory bit-identical through the third. The update changes
+  step bound, the seam protocol, the first adaptive backend and the
+  teaching, with every trajectory from before the update bit-identical
+  through the seam protocol. The update changes
   the deployment keywords, so it precedes the exported-name audit and
   delays the release.
   - **Landed: the deployment surface**, increment 90 (D-442, D-443,
@@ -37,18 +40,38 @@ item changes what the spec says, the spec edit is part of the item.
     points, a due instant inside a fixed step splits it, `frames_per_tick`
     and the two transitional refusals are gone, and `bind_schedule` is
     strict under D-229.
-  - **Next: the seam protocol**, the roadmap's increment 3.
-  - **Open from the three lattices**, ruled overnight on 2026-11-11 and
-    awaiting the user: the reconstructed Rejected lists of D-445 to D-447;
-    whether the `Deployment` stores and compares exact periods; what an
-    unbounded run does at the end of the lattices' `Int` range; a report of
-    the steps per frame in `show(deployment)`; whether a `settled!` hook's
-    contract should be enforced in code; whether a lattice finer than the
-    clock should be refused; whether `:boundary` in the `Events` register
-    follows the rename (D-448), and whether the rename sweeps the log. Each
-    is in `design/increments/091_three_lattices/notes_increment_91.md`,
-    which also lists three sites where periods of extreme magnitude still
-    raise a raw `OverflowError`.
+  - **Next: the step bound**, the roadmap's increment 2b, ruled by the user
+    on 2026-11-11 and not yet briefed. `h_max` is an optional bound on the
+    `Deployment`, a fixed-step method divides each span between two
+    mandatory instants into equal steps, and `RK4()` and `Heun()` carry no
+    step. The increment also refuses a run the clock cannot resolve and
+    states the steps per frame in `show(deployment)`. It reverses the step
+    inside the instance (D-442) and the step points (D-444), so its docs
+    commit comes first.
+  - **Then: the seam protocol**, the roadmap's increment 3.
+  - **Ruled from the three lattices** by the user on 2026-11-11, on the open
+    points of `design/increments/091_three_lattices/notes_increment_91.md`:
+    - The reconstructed Rejected lists of D-445 to D-447 stand as written.
+    - An unbounded run keeps ending on `frame!`'s refusal at the end of the
+      lattices' range (§10.5). It is not capped as if a `t_end` were
+      reached, since a cap would end the run without saying why.
+    - A `settled!` hook's contract stays stated and unenforced (D-447). Only
+      a hand-written hooks type on an unclaimed model can break it.
+    - The three sites that raise a raw `OverflowError` on periods of extreme
+      magnitude are left.
+    - The rename of D-448 does not sweep the log, and `rules/log_rules.md`
+      rule 2 now says why. `:boundary` in the `Events` policies became
+      `:non_localized`.
+    - A loop error outside the frame reads `stopped` (§13.5). The log
+      message and §13.4 now say so.
+    - The steps per frame and the refusal of a lattice finer than the clock
+      land with the step bound.
+    - Exact periods on the `Deployment` and one step-length rule wait for
+      the roadmap's increment 4, as open decisions there.
+
+    The log owes two rejections from these rulings, the cap at the range's
+    end and an enforced hook contract. They land with the step bound's docs
+    commit.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose
