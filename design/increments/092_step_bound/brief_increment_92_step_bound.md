@@ -340,3 +340,20 @@ its second check against the recording's frame count raises the same error.
 A22, `hash` without `h_max`: it stays consistent with `==` and only
 collides more often. A29, the steps walk past `max_frame`, went with the
 walk.
+
+**The delta**, at 48154bc. The reviewer, resumed, found every finding
+resolved or closed by its ruling. Its gate passed 9738 of 9738 in 10m12s,
+with the examples 77 of 77, the Documenter build clean and the battery
+green. It checked the closed form against a brute force over the ticks of
+six deployments, offsets, a base off the frame and a bound among them, and
+against the steps the loop takes in unsplit frames: all agree. F1's probes
+and every door at its last admitted value and one past it behave as D-450
+says. Six of its eight mutants died. Two survived, both accepted: the
+chart's `Int` conversion dropped, since a `BigInt` range draws the same
+chart; and `row.D % frame` for `(row.D * base) % frame`, an equivalent
+mutant, since the unit is the gcd of the frame and the base tick, which
+leaves the two coprime in units. It found one stale sentence, §10.5's
+worked example still reporting "4 to 5 steps per frame", corrected in the
+commit of this record. When every frame holds a due instant, the line's
+count describes an unsplit frame that never occurs; that follows from the
+ruled form and is no defect.

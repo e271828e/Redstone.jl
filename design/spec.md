@@ -6519,8 +6519,8 @@ those 5005 frames the loop takes 6000 steps without a bound, one per frame
 and one more in each of the 995 frames holding a due instant off its top.
 Under `h_max = 5 ms` a frame with no due instant inside takes 4 steps of
 5 ms. A frame holding one takes its two spans in 4 or 5 equal steps between
-them, so the run takes 21 000 steps, and `show` reports 4 to 5 steps per
-frame ([§9.2][s9-2]).
+them, so the run takes 21 000 steps. `show` reports 4 steps per frame and
+names the 0.1001 s component as splitting frames ([§9.2][s9-2]).
 
 #### Simultaneous ticks
 
