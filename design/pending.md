@@ -12,6 +12,24 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
+- **Retire the term *block*.** Decided by the user on 2026-11-11, during
+  the inspector's look pass for its increment 8. The word names a component
+  the standard library ships and carries no framework meaning (Appendix D,
+  D-062), so it retires from the prose and from the names. In prose it
+  becomes "library component", or "component" where the context says the
+  rest. The word's other senses stay: a thread that blocks, a state block,
+  a code block. The module `Redstone.Blocks` with `src/blocks.jl` and the
+  abstract types `LinearBlock`, `DiscreteLinearBlock`, `ControllerBlock`,
+  `PIDBlock` and `LQRTrackerBlock` are renamed, the new names chosen in the
+  session that writes the ruling. The log is not swept, a renamed term
+  applying forward only (`rules/log_rules.md` rule 2). It runs as one
+  increment after increment 93, the seam protocol, lands and before the
+  arc's next increment starts: the docs commit with the ruling first, then
+  a mechanical code stage whose proof is the test suite. It precedes the
+  arc's teaching increment and the tutorial, so both are written in the
+  surviving vocabulary. The inspector follows at its next pin, since a
+  node's `type` carries the module's name: its fixtures regenerate and its
+  icon table's keys change (`RedstoneInspector.jl/design/pending.md`).
 - **Variable-step integration.** The frame and the integration step become
   separate quantities: `Δt_frame`, the frame period, and `Δt_base` stand in
   no required ratio on the `Deployment`, `N_base` retires, and the step is
