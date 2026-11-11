@@ -420,3 +420,9 @@ findings, landed as a third commit:
 **After the third commit.** The gate in the worktree, 9822 of 9822 in
 9m43s, with the examples 77 of 77, the battery green and the 27 allocation
 measurements still 0 B. Nothing is pushed.
+
+**The reviewer's last look**, at 25332d5: empty. Its stuck `step!` ends in
+0.2 s and renders "integration of the frame from boundary 0", a refused
+retry carries the same cursor frame with the clock put back, and inference
+and the allocations are unchanged. It agreed that an infinite proposal
+stays legal.
