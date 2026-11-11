@@ -788,18 +788,26 @@ end
 # pass, and that remainder itself when the clamp reaches it, so the step ends on
 # the instant. A length that does not advance the clock is the backend's bug and
 # is refused here, since a span of such steps never ends and the frame runs
-# masked against an interrupt (§12.4).
+# masked against an interrupt (§12.4). So is a proposal that is not a number,
+# which the clamp would otherwise read as the whole remainder.
 @inline function _clamped(model::Model, proposal::Float64, t, t_limit)
     remaining = t_limit - t
     cap = min(proposal, model.deployment.h_max)
     h = cap < _seconds(remaining) ? oftype(remaining, cap) : remaining
-    t + h > t || _stalled(proposal, t)             # the throw is the cold path
+    (!isnan(proposal) && t + h > t) || _stalled(model, proposal, t)   # the throw is the cold path
     h
 end
 
-@noinline _stalled(proposal, t) = throw(InternalInvariant(
-    "the backend proposed a step of $proposal s at t = $(_seconds(t)) s, which does not " *
-    "advance the clock (§10.2)"))
+# The refusal is the framework's own act at the start of an attempt, with no
+# stage run, so the cursor names integration and no component (§13.4).
+@noinline function _stalled(model::Model, proposal, t)
+    cursor = model.exec.cursor
+    cursor.comp = 0; cursor.fn = :none
+    _phase!(cursor, :integrate)
+    throw(InternalInvariant(
+        "the backend proposed a step of $proposal s at t = $(_seconds(t)) s, which does not " *
+        "advance the clock (§10.2)"))
+end
 
 # The clock at the end of a step offered `h` toward `t_next`, of which the
 # backend accepted `h_accepted` from `t` (D-452): `t_next` when it took the whole

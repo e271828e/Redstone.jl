@@ -106,6 +106,15 @@ third.
     makes a loop run without end now fails its test where it filled 25 GB
     during the review. Test code only.
 
+12. **E1 and E2, from the reviewer's check of ruling 9.** The refusal named
+    the last component the previous boundary dispatched, so `_stalled` now
+    sets the cursor to integration with no component, as the nonfinite
+    check does. A proposal that is not a number passed the comparison, since
+    the clamp reads it as the whole remainder; it is refused with the rest.
+    An infinite proposal stays legal and takes the span: the reviewer's
+    `isfinite` would have refused it. A controller's proposal goes `NaN`
+    when its error estimate does, so the case is one increment 4 can reach.
+
 ## Corrections with no ruling in them
 
 - **F5.** The "ulp edge" the coordinator told the user about cannot happen.

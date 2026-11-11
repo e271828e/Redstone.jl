@@ -401,3 +401,22 @@ Increment 4's controller will.
 **After the second commit.** The gate in the worktree, 9814 of 9814 in
 9m41s, with the examples 77 of 77, the battery green and the step path's 27
 allocation measurements still 0 B.
+
+**The reviewer's check of the second commit**, at 68c723c. The refusal
+covers a `Dual` clock, the localized path and the bare `integrate!`'s
+retries, and can refuse no legitimate step, since a length that reaches the
+span's end is at least an ulp of the clock. Its stuck `step!` now ends in
+0.3 s as a `StepError` over the invariant, the simulation `errored`.
+Inference and the allocations are unchanged, and its three mutants die. Two
+findings, landed as a third commit:
+
+- **E1, the refusal named the wrong place**: the component the previous
+  boundary last dispatched. `_stalled` now writes the cursor to integration
+  with no component. The cursor reset dropped: 5 failures.
+- **E2, a `NaN` proposal passed**, read by the clamp as the whole
+  remainder. Refused with the rest. An infinite proposal stays legal. The
+  `NaN` test dropped: 1 failure and 2 errors.
+
+**After the third commit.** The gate in the worktree, 9822 of 9822 in
+9m43s, with the examples 77 of 77, the battery green and the 27 allocation
+measurements still 0 B. Nothing is pushed.

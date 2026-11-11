@@ -5843,8 +5843,9 @@ reaches the span's end ends on that [mandatory instant](#g-mandatory-instant)
 stops short ends at its start's clock plus its length, an instant on no
 lattice. **The `Model` refuses a length that does not advance the clock**
 ([D-452][d-452]). A proposal that is zero, negative or below the clock's
-resolution is a backend's bug, and a span of such steps would never end. The
-refusal is an internal invariant, since no user can fix it.
+resolution is a backend's bug, and a span of such steps would never end. A
+proposal that is not a number is refused with them. The refusal is an
+internal invariant, since no user can fix it.
 
 The backend takes each step in [attempts](#g-attempt) (tries at the step, each
 of which it accepts or rejects). **An attempt writes the step's end into a trial

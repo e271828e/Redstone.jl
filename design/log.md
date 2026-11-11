@@ -18879,8 +18879,8 @@ discontinuity notice. The bundled rulings:
   asked.
 - The `Model` asks no proposal of the backend of a model with no continuous
   state ([D-156][d-156]).
-- The `Model` refuses a shaped length that does not advance the clock, as an
-  internal invariant.
+- The `Model` refuses a shaped length that does not advance the clock, and a
+  proposal that is not a number, as an internal invariant.
 - Neither `propose` nor the checkpoint pair has a default. A fixed-step
   backend answers `nothing` to each.
 - The `Model` clamps a proposal to `h_max` and to the span's end. A step that

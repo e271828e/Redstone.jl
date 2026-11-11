@@ -517,13 +517,16 @@ function test_seam_protocol()
 
     @testset "a proposal that does not advance the clock is refused as the backend's bug (§10.2, D-452)" begin
         # At t₀ = 1 a length of 1e-20 is below the clock's resolution. Each of
-        # the three would otherwise take steps without end.
-        for proposal in (0.0, -0.1, 1e-20)
+        # the first three would otherwise take steps without end, and the clamp
+        # would read the fourth as the whole span. The frame names integration
+        # and no component, since no stage ran.
+        for proposal in (0.0, -0.1, 1e-20, NaN)
             model = Model(Group((; r = BareRamp())); Δt_frame = 1//8, algorithm = Scheduled(proposal))
             init!(model; t0 = 1.0)
             err = failure(() -> frame!(model, 1))
             @test err isa StepError && err.cause isa InternalInvariant
             @test err.t == 1.0 && model.exec.stepper.attempts == 0
+            @test err.cursor == CursorFrame(nothing, :none, :integrate, 0, 0)
         end
         # A retry is shaped the same way: rejected for none of its length.
         model = Model(Group((; r = BareRamp())); Δt_frame = 1//8,
@@ -531,6 +534,12 @@ function test_seam_protocol()
         init!(model)
         err = failure(() -> frame!(model, 1))
         @test err.cause isa InternalInvariant && model.exec.stepper.attempts == 1
+        @test err.cursor == CursorFrame(nothing, :none, :integrate, 0, 0)
+        # An infinite proposal asks for all it may have, and takes the span.
+        model = Model(Group((; r = BareRamp())); Δt_frame = 1//8, algorithm = Scheduled(Inf))
+        init!(model)
+        frame!(model, 1)
+        @test model.exec.stepper.lengths == [1/8]
     end
 
     @testset "the attempt loop allocates nothing, rejections included (§9.8, D-452)" begin
