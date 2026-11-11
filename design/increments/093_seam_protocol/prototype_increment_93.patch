@@ -1,0 +1,2521 @@
+diff --git a/design/code_map.md b/design/code_map.md
+index 45c7c0e..1c8f611 100644
+--- a/design/code_map.md
++++ b/design/code_map.md
+@@ -281,7 +281,9 @@ D-438.
+ 
+ - `ModelState{T}`, a model's state as one value (D-274, D-319): the flat
+   buffer, the `s` and `m` stores, the signal table with every cell buffer
+-  copied, the guard priors, the clock's `t` and `t₀` (a `Float64` like
++  copied, the guard priors, the stepper's carried state `stepper`, the
++  value `checkpoint_stepper` reads, typed `Any` and `nothing` for a
++  fixed-step method (D-452), the clock's `t` and `t₀` (a `Float64` like
+   `Δt_frame`), and the fingerprint, the `Deployment` and the structural
+   layout `Fingerprint`.
+ - `Checkpoint`, a `ModelState{Float64}` beside the run's frame index and
+@@ -295,7 +297,8 @@ D-438.
+   cursor and the periphery.
+ - `_restore_state!` on an executor, taking the state, behind `linearize`'s
+   default operating point and under the model's restore door. It is strict
+-  about the scalar. `_restore_stores!` is the part of it that writes the `s`
++  about the scalar, and hands the stepper its carried state back through
++  `restore_stepper!` with no discontinuity notice (D-452). `_restore_stores!` is the part of it that writes the `s`
+   and `m` stores, shared with `linearize`'s seeded half.
+ - `_detach`'s two methods, the state's and the checkpoint's over it.
+ - The mismatch namers behind `_check_checkpoint!` (§12.7): `_check_addresses!`
+@@ -306,7 +309,8 @@ D-438.
+   fingerprint check `_check_checkpoint!` and the model's restore doors, are
+   model.jl's (D-317, D-319).
+ 
+-Spec: §11.5, §12.6, §12.7, §14.10, D-038, D-254, D-273, D-274, D-317, D-319.
++Spec: §10.2, §11.5, §12.6, §12.7, §14.10, D-038, D-254, D-273, D-274, D-317, D-319,
++D-452.
+ 
+ ### `src/conditions.jl`
+ 
+@@ -611,7 +615,9 @@ D-256, D-261, D-268, D-270, D-315.
+ - `TierUnreadable` and `StatelessWithoutOutputs` (D-263).
+ - `InternalInvariant`.
+ - §13.4's runtime trio `CursorFrame`, `StepError` and `NonfiniteState`, whose
+-  leaf names a bare state's field `x` (D-438).
++  leaf names a bare state's field `x` (D-438). `CursorFrame` carries the
++  attempt, 0 outside integration, which its four-field form spells, and
++  `_phase_text` renders it past the first (D-452).
+ - §12.7's replay trio `CheckpointMismatch`, `ReplaySchemaMismatch` and
+   `ReplayUnknownFace` (D-255, D-274).
+ - `CheckpointMidFrame` (D-274).
+@@ -643,7 +649,7 @@ Spec: §9.1, §9.2, §10.4, §10.6, §10.7, §11.4, §11.6, §11.8, §12.2, §12
+ Appendix C, D-027, D-058, D-059, D-157, D-187, D-203, D-214, D-215, D-222,
+ D-225, D-250, D-255, D-256,
+ D-261, D-262, D-263, D-272, D-274, D-276, D-277, D-316, D-318, D-319, D-320,
+-D-406, D-437, D-438, D-444, D-445, D-449, D-450.
++D-406, D-437, D-438, D-444, D-445, D-449, D-450, D-452.
+ 
+ ### `src/executor.jl`
+ 
+@@ -679,15 +685,18 @@ D-406, D-437, D-438, D-444, D-445, D-449, D-450.
+   hands them (D-261).
+ - The execution cursor, which every entry stores into. The cursor holds its
+   dispatch fields alone, and whether a frame was abandoned is `frame!`'s
+-  `Bool` return (§13.5, D-261, D-317).
++  `Bool` return (§13.5, D-261, D-317). Its `attempt` is the step's attempt
++  ordinal, which `_phase!` clears and model.jl's attempt loop writes
++  (D-452).
+ 
+ Spec: §5.3, §9.5, §9.7, §10.4–§10.6, §13.4, §13.5, §14.5, D-059, D-205, D-235,
+-D-249, D-255, D-261, D-289, D-317, D-437, D-438.
++D-249, D-255, D-261, D-289, D-317, D-437, D-438, D-452.
+ 
+ ### `src/frame.jl`
+ 
+ - The model's `frame!(model, k, hooks)` (D-317): the top
+-  hook, then `_frame_steps!`, inside §13.4's one `try`, whose catch writes
++  hook, whose `true` raises the stepper's discontinuity notice (D-452), then
++  `_frame_steps!`, inside §13.4's one `try`, whose catch writes
+   `:inconsistent` and builds the `StepError` with `_wrap_step` for every throw,
+   an interrupt included (D-441). The claim's gate and the refusal of a `k`
+   past `_last_frame(model)`, the lesser of the `Lattice`'s `max_frame` and
+@@ -696,26 +705,34 @@ D-249, D-255, D-261, D-289, D-317, D-437, D-438.
+ - `_frame_steps!`, the frame as two nested loops (D-445, D-449). The outer
+   one runs over the mandatory instants, the frame tops and the due instants,
+   found by integer comparisons over the `Lattice`'s units, each clock
+-  written from its own index through model.jl's grid. The inner one takes a
+-  span's `cld(units·q, p)` equal steps, `p/q` the bound in units, each of
+-  exact length `(units·unit)/n`; an interior step end's clock is the span's
+-  start clock plus `i` times that length, never accumulated. The span's last
+-  step runs `run_boundary!` with its tick index when due, every other step
+-  end with the empty due set. A bare step integrates by its exact length; a
+-  localized one by the float distance to its end (§10.5).
++  written from its own index through model.jl's grid. The inner one asks
++  `propose` before each step. Under `nothing` it takes a span's
++  `cld(units·q, p)` equal steps, `p/q` the bound in units, each of exact
++  length `(units·unit)/n`; an interior step end's clock is the span's start
++  clock plus `i` times that length, never accumulated. Under a proposal it
++  clamps the length through model.jl's `_clamped`, and a step a rejection
++  shortened ends where `_step_end` says, the clock plus its length (D-452).
++  The span's last step runs `run_boundary!` with its tick index when due,
++  every other step end with the empty due set. A bare step integrates by its
++  exact length; a localized one by the float distance to its end (§10.5).
+ - The next due instant is recomputed after each due boundary, one `mod` per
+   schedule row (`_next_due`, model.jl's). Nothing is cached, so nothing needs
+   invalidating at a restore, an overlay or `init!`.
+-- `_localized_step!`, the localization loop over one step, with the arrival
++- `_localized_step!`, the localization loop over one step, returning the
++  step's end, which a rejection may bring short of the offer but never past
++  the span's end, a remainder never past the step's (D-452). It keeps
++  `xₙ₊₁` in the trial buffer `xnext` the step was committed from, with the arrival
+   sweep, the θ = 0 validation, ITP bracketing `_crossing`, `t*` boundaries,
+   the remainder step to the step's end, the localization budget counted
+   across the frame's steps, and the `ChatteringBudget` degradation, reported
+   into the model's diagnostic cell (D-446). The report folds at the next
+   frame top and its delta rides the first publication after the fold, which
+   under subcycling is that frame's first step end, not its top.
+-- The freshness flag (D-447): the frame's first step is fresh when
+-  `frame_top!` returned `false`, every later step and every remainder is
+-  fresh, and `integrate_step!` arms it.
++- `run_frame!`, the frame behind `frame!`, which takes the caller's word that
++  the frame continues the last one (D-452). The freshness flag (D-447): the
++  frame's first step is fresh when the frame is continued and `frame_top!`
++  returned `false`, every later step and every remainder is fresh, and
++  `integrate_step!` arms it.
+ - The cursor's drain/arrival/validation/trial phases. After a boundary at
+   which nothing is due the cursor reads the event round, since no ticks
+   block runs (D-445).
+@@ -724,7 +741,7 @@ D-249, D-255, D-261, D-289, D-317, D-437, D-438.
+   D-261, D-317).
+ 
+ Spec: §10.2–§10.5, §11.8, §12.4, §13.4, §13.5, D-018, D-059, D-255,
+-D-260, D-261, D-317, D-318, D-444, D-445, D-446, D-447, D-449, D-450.
++D-260, D-261, D-317, D-318, D-444, D-445, D-446, D-447, D-449, D-450, D-452.
+ 
+ ### `src/leaves.jl`
+ 
+@@ -825,8 +842,9 @@ soon as nothing in it names a `Simulation` in a signature, and below
+   dies with the call, and `_establish_frozen!`, the frozen copy over the
+   `Outputs`' port list.
+ - The frame's hooks `FrameHooks`, with `frame_top!` and `settled!`, and the
+-  no-op `NoHooks` (§11.2, §13.5, D-317). `frame_top!` returning `false`
+-  reports nothing written, and `NoHooks`' `nothing` counts as a write (D-447).
++  no-op `NoHooks` (§11.2, §13.5, D-317). `frame_top!` returns whether it
++  wrote a value, which raises the discontinuity notice and denies the frame's
++  first step the table (D-447, D-452).
+ - The grid (§10.4, §10.5, D-445): `_grid_time`, frame top `k` from the index
+   and `t₀`, and `_tick_time`, a due instant from its base-tick index; neither
+   accumulated. An interior step end is frame.jl's (D-449). `_next_due`, the
+@@ -851,8 +869,8 @@ soon as nothing in it names a `Simulation` in a signature, and below
+     under §13.4's catch and settles it through the hooks (§14.5, D-223);
+   - `overlay!`, in the same two methods, whose condition method resolves with
+     the stores as the merge bases, `_store_values`, and whose plan method
+-    runs the continuing settling under the same catch with host `:overlay`
+-    (§12.6, §14.1, D-429);
++    raises the discontinuity notice and runs the continuing settling under
++    the same catch with host `:overlay` (§12.6, §14.1, D-429, D-452);
+   - `apply!` on a model, gated under `NoHooks` before the inner
+     `_apply_plan!`, which `init!` and the simulation's forwarding method call;
+   - `restore!(model, model_state; hooks)`, whose fingerprint check
+@@ -868,16 +886,24 @@ soon as nothing in it names a `Simulation` in a signature, and below
+   runs the `x_deriv` block alone when `fresh` is set, and clears it (D-447).
+ - The one boundary routine `run_boundary!(model, due)` over its due set, a
+   tick index, `nothing` or `ESTABLISH`, with `run_ticks!` selecting the
+-  ticks block by arity (§10.5, §10.6, D-185, D-445). `boundary!`,
++  ticks block by arity (§10.5, §10.6, D-185, D-445). It raises the
++  stepper's discontinuity notice where a handler fired, which
++  `event_phase!` returns, or its due set is not empty (D-452). `boundary!`,
+   `offtick_boundary!` and `boundary_zero!` are thin wrappers over it, and
+   `overlay!`'s continuing settling is its empty due set (D-429). Beside it
+   `_round!` and the §10.6 event phase `event_phase!`, with its `FiringBudget`
+   degradation into the model's diagnostic cell.
+-- The seam's framework side `integrate!(model, h)` over `integrate_step!`,
+-  which the frame loop calls with its frame index and the freshness flag,
+-  and its `isfinite` sweep `_check_finite!`, whose `NonfiniteState` names the
+-  loop's frame or, off the loop, the frame top the clock rounds to (§10.2,
+-  D-157, D-445).
++- The seam's framework side (§10.2, D-452): `integrate_step!`, the attempt
++  loop, which the frame loop calls with the step's offered length, the
++  instant no attempt may pass, its frame index and the freshness flag, and
++  which returns the accepted length. It counts the attempts into the cursor,
++  commits an accepted trial from `xnext` after the `isfinite` sweep
++  `_check_finite!`, and puts a rejected attempt's start back from
++  `startpoint`. `_clamped` shapes a proposal into a length and `_step_end`
++  writes where a step ended. The bare primitive `integrate!(model, h)` is
++  one step toward `t + h`. `_check_finite!`'s `NonfiniteState` names the
++  loop's frame or, off the loop, the frame top the clock rounds to (D-157,
++  D-445).
+ - `warnings(::Model)` (D-250), and the reads `port`, `state` and `modes` on
+   the model, which refuse an unknown path through `_component_index` and
+   `refuse_path` (D-440).
+@@ -896,7 +922,7 @@ soon as nothing in it names a `Simulation` in a signature, and below
+ Spec: §9.2, §9.5, §10.2–§10.6, §11.2, §11.8, §12.4, §12.6, §13.2,
+ §13.4, §13.5, §14.1, §14.5, §14.8, D-059, D-157, D-185, D-213, D-221, D-223, D-248,
+ D-250, D-254, D-260, D-274, D-317, D-318, D-319, D-320, D-429, D-445, D-447,
+-D-449, D-450.
++D-449, D-450, D-452.
+ 
+ ### `src/precompile.jl`
+ 
+@@ -1100,10 +1126,12 @@ Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315, D-437, D-449.
+   whether a batch reached the table, the drain's report (§10.3, D-447).
+ - The loop's `LoopHooks`, one per advance, per `init!` and per restore: the
+   frame index's advance and the drain at the top (D-441), and publication then the stop sample at every settled
+-  boundary (§11.2, §13.5, D-317). Its `first_frame` is the advance's first
+-  frame, whose top reports a write whatever the drain found, since a door or
+-  a stepping primitive may have written the model between advances; the
+-  doors pass 0 (D-447). `FrameHooks` and `NoHooks` are model.jl's.
++  boundary (§11.2, §13.5, D-317). The top returns whether the drain applied
++  a batch, so the discontinuity notice never depends on how a run is split
++  into advances. `_advance!` calls frame.jl's `run_frame!` and tells it that
++  every frame after the advance's first continues the last one, since a door
++  or a stepping primitive may have written the model between advances
++  (D-447, D-452). `FrameHooks` and `NoHooks` are model.jl's.
+   The claim's gate has its `LoopHooks` method here, a no-op, so the
+   simulation's doors pass (D-318).
+ - Publication's `task_state`, read off `run_tasks` by `_status` (§12.2,
+@@ -1142,19 +1170,22 @@ Spec: §10.2–§10.7, §11.1–§11.5, §11.8, §12.1–§12.7, §13.4–§13.6
+ §14, §14.1, §14.5, §14.6, §14.8, §14.10, D-027, D-101, D-198, D-203, D-218,
+ D-219, D-223, D-232, D-233, D-250, D-253, D-254, D-255, D-256, D-260, D-261,
+ D-268, D-269, D-270, D-274, D-316, D-317, D-318, D-319, D-407, D-429, D-445,
+-D-447, D-450, D-451.
++D-447, D-450, D-451, D-452.
+ 
+ ### `src/stepper.jl`
+ 
+-The seam's backend side: the steppers `RK4Stepper` and `HeunStepper`, each
+-bound from its algorithm token by `bind_stepper` at `compile` (D-442), the
+-retained `startpoint`, dense output.
+-`checkpoint_stepper` and `restore_stepper!` are the checkpoint's hook pair,
+-empty for both methods, which hold nothing across a frame top (D-274). The
+-seam's framework side, `integrate!(model, h)`, is model.jl's, and the tokens
+-are deployment.jl's.
++The seam's backend side (D-452): the protocol's generics `propose`,
++`attempt!`, which returns the backend's verdict, `discontinuity!`, a no-op by
++default, the retained `startpoint` and the generic `dense!`, and the steppers
++`RK4Stepper` and `HeunStepper`, each bound from its algorithm token by
++`bind_stepper` at `compile` (D-442), each proposing `nothing` and accepting
++every attempt, which writes the step's end into the executor's trial buffer
++`xnext`. `checkpoint_stepper` and `restore_stepper!` are the checkpoint pair.
++Neither it nor `propose` has a default, and both steppers carry `nothing`
++(D-274). The seam's framework
++side, `integrate_step!`, is model.jl's, and the tokens are deployment.jl's.
+ 
+-Spec: §10.2, D-017, D-442.
++Spec: §10.2, §12.6, D-017, D-274, D-442, D-452.
+ 
+ ### `src/store.jl`
+ 
+@@ -1280,12 +1311,30 @@ end, the `Int` bound and the clock's resolution at every door. Its fixtures
+ are its own:
+ 
+ - `Recorder()`, an `AbstractAlgorithm` defined in the suite, and its
+-  `RecorderStepper`, forward Euler through the seam that keeps each step's
+-  length and the model's `fresh` flag (§10.2). No backend in `src/` records.
++  `RecorderStepper`, forward Euler through the seam's protocol, proposing
++  nothing and accepting every attempt, that keeps each step's length and the
++  model's `fresh` flag (§10.2, D-452). No backend in `src/` records.
+ - `LatticeHooks` and `FreshHooks`, hooks keeping each boundary's counters and
+   reporting nothing written at the top (D-317, D-447). The stop test reuses
+   `test_lifecycle.jl`'s `ramp_request`.
+ 
++### `test/test_stepper.jl`
++
++The stepper seam (§10.2, §12.6, §13.4, D-442, D-449, D-452): the method as a
++deployment binding, the step bound, each backend's order, localization under
++either backend, allocation, and the seam's protocol. Its fixtures are its own:
++
++- `Scheduled(h; rejected, every, factor, poison, record)`, an
++  `AbstractAlgorithm` defined in the suite, and its `ScheduledStepper`,
++  Heun's method through the protocol that proposes `h`, rejects attempts on
++  a schedule, proposes `factor` times a rejected length, carries its proposal
++  and its attempt count through the checkpoint pair, and keeps each
++  attempt's start, each accepted length and each notice. No backend in
++  `src/` rejects.
++- `seam_rig()`, a closed loop beside a counter due off the frame tops, every
++  period dyadic, `stamped()`, a model with localized events, and
++  `same_snapshots`, two logs compared bitwise.
++
+ ### `test/utils.jl`
+ 
+ The helpers shared across the test files, no model among them:
+diff --git a/design/companions/frame_walkthrough.md b/design/companions/frame_walkthrough.md
+index 4606eb4..da02869 100644
+--- a/design/companions/frame_walkthrough.md
++++ b/design/companions/frame_walkthrough.md
+@@ -6,7 +6,7 @@ against the tree at `e6696a7` ([D-431][d-431]): every function named here is the
+ implementation's, and the code moves more often than the spec. Function names
+ are given without line numbers for that reason; `grep` finds them. The quotes
+ of `frame.jl` and the boundary routine follow the span loop of
+-[D-449][d-449].*
++[D-449][d-449], and those of the seam its protocol of [D-452][d-452].*
+ 
+ This document follows a single frame through the frame loop and names, at
+ each step, the function that performs it. It exists because the spec states
+@@ -37,13 +37,12 @@ publishes through two hooks:
+ 
+ ```julia
+ # sim.jl, _advance!
+-k = (run.frame += 1)
+-hit = frame!(sim.model, k, hooks)
++hit = run_frame!(sim.model, run.frame + 1, hooks, advanced > 0)
+ requester = hit ? _stop_hit(sim, ignore_mask) : nothing
+ 
+-# frame.jl, inside frame! and _frame_steps!
++# frame.jl, inside run_frame! and _frame_steps!
+ _phase!(cursor, :drain)
+-fresh = frame_top!(hooks) === false   # drain!, and its report
++wrote = frame_top!(hooks)             # drain!, and whether it wrote a value
+ ...                                   # integration, section 2
+ exec.clock.t = t_to
+ is_due ? run_boundary!(model, due) : run_boundary!(model, nothing)
+@@ -84,22 +83,24 @@ a guard here is an edge with no in-frame crossing.
+ ## Section 2 — Integration and localization
+ 
+ **`frame!`** computes the span's end from its index, never by accumulation,
+-takes the span's equal steps, and picks the path for each:
++asks the backend for a proposal, takes the span's equal steps when there is
++none, and picks the path for each:
+ 
+ ```julia
+ t_to = is_top ? _grid_time(model, k) : _tick_time(model, due)   # t₀ + k·Δt_frame
+ steps = cld(units * denominator(lattice.bound), numerator(lattice.bound))
+ h = Float64((units * lattice.unit) / steps)   # the span's exact equal step
+-for i in 1:steps
+-    t_next = i == steps ? t_to : t_from + i * h
+-    if exec.has_localized
+-        (abandoned, localizations) =
+-            _localized_step!(model, t_next, k, hooks, fresh, localizations)
+-        abandoned && return true
+-    else
+-        integrate_step!(model, T(h), k, fresh)
+-    end
+-    ...
++...                                           # for each step i of the span
++proposal = propose(exec.stepper)              # `nothing` for RK4
++span_end = i == steps
++t_next = span_end ? t_to : t_from + i * h
++if exec.has_localized
++    (abandoned, localizations, t_end) =
++        _localized_step!(model, t_next, t_to, k, hooks, fresh, localizations)
++    abandoned && return true
++else
++    h_accepted = integrate_step!(model, T(h), t_to, k, fresh)
++    t_end = _step_end(t, T(h), h_accepted, t_next, t_to)
+ end
+ ```
+ 
+@@ -110,10 +111,12 @@ model with no localized events takes one bare step. Ours enters
+ step first, then a remainder from each `t*`. It returns `true` only when a
+ `t*` boundary's `settled!` stops the frame.
+ 
+-**One integration segment.** `integrate_step!(model, h′, k, fresh)` in
+-`model.jl` sets the cursor phase to `:integrate` and crosses the stepper seam
+-([§10.2][s10-2]) to the backend's `integrate!(::RK4Stepper, model, h)` in
+-`stepper.jl`:
++**One integration segment.** `integrate_step!(model, h′, t_limit, k, fresh)`
++in `model.jl` is the `Model`'s attempt loop. It sets the cursor phase to
++`:integrate` and the attempt to 1, and crosses the stepper seam
++([§10.2][s10-2]) to the backend's `attempt!(::RK4Stepper, model, h)` in
++`stepper.jl`, which writes the step's end into the trial buffer `exec.xnext`
++and returns `true`, an acceptance:
+ 
+ ```julia
+ copyto!(x₀, x)
+@@ -121,7 +124,7 @@ evaluate!(model); copyto!(k₁, ẋ)
+ _stage_point!(x, x₀, k₁, h / 2); model.exec.clock.t = t + h / 2
+ evaluate!(model); copyto!(k₂, ẋ)
+ ...
+-x[i] = x₀[i] + (h / 6) * (k₁[i] + 2k₂[i] + 2k₃[i] + k₄[i])
++xtrial[i] = x₀[i] + (h / 6) * (k₁[i] + 2k₂[i] + 2k₃[i] + k₄[i])
+ ```
+ 
+ Each RK stage is one `evaluate!`, and evaluating the right-hand side means
+@@ -142,9 +145,11 @@ writes the derivative into `ẋbuf`. The controller's output cells are not
+ touched at any of the four stages. That is the zero-order hold, by absence
+ rather than by a runtime test ([§10.5][s10-5]). When the drain reported nothing
+ written, the table is the last boundary's, and the first `evaluate!` runs
+-`rhs()` alone ([D-447][d-447]). When the backend returns,
+-`integrate_step!` runs `_check_finite!`, which sweeps `x` before
+-anything reads it ([§13.4][s13-4]).
++`rhs()` alone ([D-447][d-447]). When the backend accepts,
++`integrate_step!` writes the clock at the step's end, runs `_check_finite!`
++over the trial before anything reads it ([§13.4][s13-4]), and copies the
++trial into the state buffer. RK4 never rejects; a backend that did would
++have the loop put the step's start back and try again.
+ 
+ **Arrival sweep and trigger.** Back in `_localized_step!`, the state is at
+ `t₈` in the buffer, and the cursor phase is `:arrival`. One interior sweep
+@@ -161,8 +166,8 @@ boundary was not-holding, and it holds now ([§10.4][s10-4]). If nothing trigger
+ function returns `false` and the frame goes straight to section 3. Say the
+ plant's guard triggered.
+ 
+-**The θ = 0 validation.** The arrival state is first kept in `exec.xnext`.
+-The frame-start state is then recovered from the seam's retained
++**The θ = 0 validation.** The arrival state stays in `exec.xnext`, the trial
++the step was committed from. The frame-start state is then recovered from the seam's retained
+ `startpoint`, put back in the buffer with the clock at `t_seg`, and swept
+ once more under the phase `:validation`:
+ 
+@@ -260,7 +265,7 @@ scans the stop requests on it ([§13.5][s13-5]). If one holds, `settled!` return
+ none holds, the localization count increments and the loop turns again.
+ 
+ **The remainder.** The next turn reads `t_seg = t*` off the clock and sets
+-`h′ = t₈ − t*`, and `integrate_step!(model, h′, k, fresh)` runs a full RK4 step from the
++`h′ = t₈ − t*`, and `integrate_step!(model, h′, t_limit, k, fresh)` runs a full RK4 step from the
+ post-handler state. A one-step method restarts from a new state at no cost,
+ which is why the seam admits nothing else ([D-017][d-017]). The arrival sweep at `t₈`
+ finds no new edge, `_localized_step!` returns `false`, and `frame!` stamps
+@@ -355,6 +360,7 @@ boundary zero has no integrate and no drain.
+ [d-431]: ../log.md#d-431--collect-a-stopping-check-over-its-own-unit
+ [d-447]: ../log.md#d-447--run-a-steps-first-stage-over-a-fresh-table-as-the-flow-alone
+ [d-449]: ../log.md#d-449--bound-the-step-by-h_max-and-take-each-span-in-equal-steps
++[d-452]: ../log.md#d-452--split-each-step-between-a-proposing-backend-and-a-shaping-model
+ [s10-2]: ../spec.md#102-the-stepper-seam
+ [s10-4]: ../spec.md#104-localization-mechanics
+ [s10-5]: ../spec.md#105-multi-rate-tick-scheduling
+diff --git a/design/increments/roadmap_variable_step.md b/design/increments/roadmap_variable_step.md
+index b8d06d2..6c7c59d 100644
+--- a/design/increments/roadmap_variable_step.md
++++ b/design/increments/roadmap_variable_step.md
+@@ -97,10 +97,14 @@ needs it.
+   over one hyperperiod, which took seconds on a fast component under a slow
+   frame. No warning is raised when a due instant splits a step.
+ - **The seam protocol.** `propose(stepper)`, `attempt!(stepper, model, h)`
+-  returning acceptance and the next proposal, `discontinuity!(stepper)`,
+-  the retained `startpoint`, the generic `dense!` a backend may override,
+-  and the checkpoint pair, no longer empty. The Model owns the clamp, the
+-  bounds, the attempt count and the discontinuity notice.
++  returning acceptance, `discontinuity!(stepper)`, the retained
++  `startpoint`, the generic `dense!` a backend may override, and the
++  checkpoint pair, no longer empty. The Model owns the clamp, the bounds,
++  the attempt count and the discontinuity notice. Landed as D-452 with
++  three changes the user ruled on 2026-11-11. `attempt!` returns its verdict
++  alone, and the Model reads `propose` before each step and after each
++  rejection. Neither `propose` nor the checkpoint pair has a default. The
++  attempt writes the trial buffer `xnext`, and the Model commits it.
+ - **The discontinuity notice.** Raised at every boundary where a handler
+   fired, a tick ran or the drain wrote a value, and at `init!` and
+   `overlay!`. What the backend does with it is its own: a fixed-step
+@@ -111,6 +115,11 @@ needs it.
+   quiescent table is the next step's first-stage table, so the first stage
+   runs the `x_deriv` block alone. The drain may report whether it wrote
+   anything, extending the saving to every step of a deviceless run.
++  Increment 93 found that the notice and freshness cannot share one report
++  (D-452). Freshness may be denied whenever the caller cannot vouch for the
++  table, and the notice must depend on the trajectory alone. The frame-top
++  hook returns whether it wrote a value, and the caller of a frame says
++  whether it continues the last one.
+ - **Strict first-same-as-last reuse is not built.** The arrival derivative
+   of a FSAL backend serves the interpolant, so the lazy sweep for `ẋₙ₊₁`
+   disappears for that backend.
+@@ -123,7 +132,8 @@ needs it.
+   differ only in whether the crossing instant is located.
+ - **The checkpoint.** `ModelState` gains the stepper's carried state: the
+   proposal and the controller's memory, both `Float64`. The derivative
+-  buffer stays out; a restore counts as a discontinuity.
++  buffer stays out. A restore counts as a discontinuity for that buffer
++  alone: its first frame runs the sweep, and it raises no notice (D-452).
+ - **The `Run`'s counters and the trace's format are unchanged.** The frame
+   index counts fixed frames; the boundary ordinal counts more boundaries.
+   Replay compares the deployment by value, now with `Δt_frame` and the
+@@ -141,17 +151,16 @@ needs it.
+ Each names the increment that needs it ruled and the reading recommended
+ in discussion.
+ 
+-- **The trial buffer.** Whether `attempt!` writes the state buffer and
+-  restores it on rejection, or writes a trial buffer the Model copies on
+-  acceptance. Recommended: the trial buffer; the arrival pair and the
+-  interpolant already read `xnext`. Increment 3.
+ - **The floor.** A frame that reaches `h_min` or spends its attempt budget
+   degrades under a new warning kind, accepting the step at the floor, at
+   most one report per frame; or throws a `StepError`. Recommended:
+-  degrade, by the doctrine of the two existing budgets. Increment 4.
+-- **The nonfinite trial.** Inside an attempt, a nonfinite state is a
+-  rejection above `h_min` and the existing `NonfiniteState` throw at it.
+-  Increment 3.
++  degrade, by the doctrine of the two existing budgets. Increment 4. Until
++  then nothing bounds a step's attempts, and no backend in `src/` rejects
++  one.
++- **The nonfinite trial.** Increment 93 checks an accepted trial before the
++  commit and never a rejected one (D-452). What remains is whether the Model
++  turns a nonfinite accepted trial into a rejection above `h_min`, keeping
++  the `NonfiniteState` throw at it. Increment 4.
+ - **What the notice does to the proposal.** After a handler reset, keep the
+   proposal and let the controller reject, or shrink it. Recommended: the
+   backend's choice, stated per backend. Increment 4.
+@@ -190,6 +199,9 @@ in discussion.
+   trajectory by ulps. Recommended: a rule by piece, the exact length between
+   two instants the Model knows exactly and the float distance from a `t*` or
+   an adaptive step end. Increment 4, where the bit-identity invariant ends.
++  The rule also settles an edge increment 93 left: under a proposing backend
++  an interior step end is the clock plus the accepted length, which can round
++  one ulp past the span's end and leave a negative remainder.
+ - **Exact periods on the `Deployment`.** Whether it stores and compares
+   `Δt_frame`, `Δt_base` and `h_max` as exact rationals, where it compares
+   their `Float64` values today. The bound makes the hole easy to reach: at a
+diff --git a/design/log.md b/design/log.md
+index 3d064b5..3e5a708 100644
+--- a/design/log.md
++++ b/design/log.md
+@@ -450,6 +450,7 @@ were derived.
+ | [D-449][d-449] | Bound the step by `h_max` and take each span in equal steps | ratified |
+ | [D-450][d-450] | Refuse a run whose clock cannot order its boundaries | ratified |
+ | [D-451][d-451] | Discard a replaying advance's late staging at its halt | ratified |
++| [D-452][d-452] | Split each step between a proposing backend and a shaping Model | ratified |
+ 
+ ### D-001 — Hybrid causal formalism with two-tier events and projection
+ 
+@@ -776,6 +777,12 @@ only); in-house fixed-step RK4/Heun as the sole first-cut backends;
+ 
+ **Rationale.** Recorded only through the rejections below.
+ 
++Annotation (2026-11-11): the seam's clauses are now a protocol between the
++`Model` and the backend ([D-452][d-452]). Advancing by arbitrary `h` is an attempt the
++backend accepts or rejects, the dense output is over the last accepted step,
++and the checkpoint hook is a pair that carries an adaptive method's proposal
++and memory. The one-step restriction stands.
++
+ **Rejected.**
+ - *`OrdinaryDiffEq` as substrate with `CallbackSet` choreography:* semantics by
+   convention in a foreign event loop; demonstrated churn — the
+@@ -6118,6 +6125,10 @@ source axis).
+ 
+ **Rationale.** A round-5 kernel dry-run finding (finding 13).
+ 
++Annotation (2026-11-11): the pass reads the trial an accepted attempt wrote,
++before the `Model` commits it, which is still before `project` and the
++boundary sweep ([D-452][d-452]). A rejected trial is discarded unread.
++
+ **Rejected.**
+ - *Checking after the event phase or after `g`:* sweep and guards run on the
+   NaN state first — the locality inversion the check exists to prevent.
+@@ -12274,6 +12285,11 @@ an override of `x` and the root inputs on a checkpoint, lands as `overlay!`
+ the rest reading: an overlaid store is the next tick's state, and its held
+ cell is kept.
+ 
++Annotation (2026-11-11): the stepper seam's checkpoint hook of the first
++bullet is the checkpoint pair of [D-452][d-452]. A `ModelState` holds the stepper's
++carried state, `nothing` for a fixed-step method, and a restore writes it
++back with no discontinuity notice. The derivative buffer stays out.
++
+ **Rejected.**
+ - *Two header kinds, the pre-sequence resolved condition for an authored
+   opening and the checkpoint for a restored one:* one fingerprint, but a
+@@ -18622,6 +18638,12 @@ weighed and rejected. Only a hand-written hooks type on an unclaimed model can
+ break it, and a guard would be a trait on the hooks' contract that only a
+ hook breaking the rule needs. The contract stays stated and unenforced.
+ 
++Annotation (2026-11-11): superseded in part by [D-452][d-452]. A frame-top hook returns
++a `Bool`, whether it wrote a value, so the third bullet falls. The first
++frame of an advance is no longer a write the hook reports. The caller of the
++frame says whether it continues the last one, and the table at a frame top is
++fresh when it does and the hook wrote nothing. The rest stands.
++
+ **Rejected.**
+ - *Freshness inside each backend:* every backend would restate when the
+   table is fresh, and the seam's contract would gain a clause a backend can
+@@ -18839,6 +18861,117 @@ replay.
+ - *Taking them in `run!`'s sweep alone:* `step!` spawns no device task, but a
+   harness writer staging from another task meets the same window there.
+ 
++### D-452 — Split each step between a proposing backend and a shaping Model
++
++**Status.** ratified
++
++**Position.** The stepper seam is a protocol of six calls, and the `Model`
++owns each step's length, its attempts, the commit, the clock and the
++discontinuity notice. The bundled rulings:
++
++- The backend answers `propose(stepper)`, `attempt!(stepper, model, h)`,
++  `discontinuity!(stepper)`, `startpoint`, the generic `dense!` it may
++  override, and the checkpoint pair. A method that proposes nothing takes a
++  span in equal steps ([D-449][d-449]) and always accepts.
++- `attempt!` returns whether the backend accepts, and nothing else. The
++  `Model` reads `propose` before every step and after every rejection.
++- Neither `propose` nor the checkpoint pair has a default. A fixed-step
++  backend answers `nothing` to each.
++- The `Model` clamps a proposal to `h_max` and to the span's end. A step that
++  reaches the span's end takes the mandatory instant's clock, and one that
++  stops short ends at the clock plus its length.
++- An attempt writes the step's end into a trial buffer. On acceptance the
++  `Model` writes the clock, checks the trial for a nonfinite value and copies
++  it into the state buffer. On rejection it puts back the step's start from
++  `startpoint` and the clock, asks for a new proposal and offers it under the
++  same clamp. The next attempt's first evaluation runs the sweep.
++- The `Model` counts the attempts of each step, and the execution cursor
++  records the ordinal inside integration. A rendered cursor frame names it
++  past the first.
++- The `Model` raises the discontinuity notice at every boundary where a
++  handler fired or a tick ran, boundary zero's included, at a frame top whose
++  drain wrote a value, and when `overlay!` settles. It arrives as its boundary
++  settles. What the backend does with it is its own. The first frame of an
++  advance raises none, and neither does a restore.
++- A frame-top hook returns whether it wrote a value, as a `Bool`. A value
++  written raises the notice.
++- At a frame top the table is fresh when the frame continues the last one and
++  the hook wrote nothing. The caller of the frame says whether it continues:
++  an advance for every frame after its first, and `frame!` never.
++- A `ModelState` holds the stepper's carried state, the value its checkpoint
++  pair reads, `nothing` for a fixed-step method. A restore writes it back.
++
++**Spec.** [§10.2][s10-2], [§10.3][s10-3], [§12.6][s12-6], [§13.4][s13-4], [Appendix B][sB], [Appendix D][sD]
++
++**Rationale.** The backend knows its method and the error of a step. The
++`Model` knows the mandatory instants, the bound, the clock and the
++boundaries. So the length is the backend's to propose and the `Model`'s to
++shape, and the backend never restates an instant the `Model` holds.
++
++The trial buffer gives each step one commit point. The stages run the sweep,
++and the phase bodies close over the state buffer, so a stage point must be
++written there and a rejection puts the step's start back whatever the attempt
++writes. What the trial buffer adds is the order: the nonfinite check reads
++the step's end before the state buffer holds it, and the localization loop's
++retained `xₙ₊₁` is the trial itself. It costs one copy of the state per
++accepted step, and none for a model with localized events, whose loop made
++that copy already.
++
++The notice and freshness ([D-447][d-447]) answer two questions, and each has its own
++owner. The hook knows whether its drain wrote a value. Only the loop running
++the frames knows whether anything else wrote the model since the last frame's
++top boundary. [D-447][d-447] folded both into the hook's one return, where any value
++but `false` counted as a write and the first frame of an advance reported
++one. The notice could not read that return. Raised at the first frame of an
++advance, it would part a stepped simulation from the same frames under `run!`
++([§12.6][s12-6]). Freshness changes no value, so it may be denied whenever the caller
++cannot vouch for the table. The notice changes an adaptive trajectory, so it
++must depend on the trajectory alone. So the hook returns its own write as a
++`Bool`, and the caller passes the frame's continuity as an argument. Raised
++at a restore, the notice would clear a history the original kept. A restore
++still reads no table or derivative it left: its first frame is the first of
++an advance, whose first stage runs the sweep.
++
++The backend keeps its proposal whatever `attempt!` returns, since `propose`
++and the checkpoint read it, and a notice between two steps may change it. So
++`propose` is its one source. A default `propose` would choose the stepping
++rule for a backend that forgot it, and a default checkpoint pair would drop
++its state at every restore, each without an error.
++
++A notice reaches the backend as its boundary settles, so nothing waits for
++the next step and a checkpoint taken at the boundary already holds what the
++backend did with it. A fixed-step method has no floor below its own step, so
++a nonfinite accepted trial throws `NonfiniteState` as before. An adaptive
++method rejects a trial that blew up, so a rejected trial is never checked.
++
++**Rejected.**
++- *The attempt writing the state buffer, the `Model` putting the start back
++  on rejection:* it saves one copy per accepted step, but the check would
++  read a state the stages and the commit share, and the localization loop
++  would copy `xₙ₊₁` out again.
++- *The backend clamping its own proposal:* every backend would restate the
++  mandatory instants and the bound, which the `Model` already holds.
++- *The notice at every frame top whose hook reports a write of any kind:* a
++  stepped simulation would hear notices `run!` does not, and under an
++  adaptive method its trajectory would differ.
++- *A frame-top hook returning three states, `false`, `true` and anything else
++  for a write it cannot name:* the hook would still report, at the first
++  frame of an advance, what its caller knows and it does not, and its return
++  would no longer be one concrete type.
++- *`attempt!` returning the next proposal beside its verdict:* the `Model`
++  reads `propose` before every step, so the returned value would serve only
++  after a rejection, a second source for one fact.
++- *Defaults for the checkpoint pair that carry nothing:* a backend that
++  forgot the pair would lose its state at every restore, and the restored run
++  would part from the original with no error.
++- *A restore as a discontinuity:* a proportional-integral controller would
++  clear the history the original kept, and the restored run would part from
++  it.
++- *A notice held on the `Model` until the next step:* it would be state a
++  checkpoint at that boundary has to carry.
++- *Checking every trial for a nonfinite value:* rejection is how an adaptive
++  method answers a step that blew up.
++
+ <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
+ [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
+ [d-002]: #d-002--adopt-the-causal-port-based-paradigm
+@@ -19265,6 +19398,7 @@ replay.
+ [d-449]: #d-449--bound-the-step-by-h_max-and-take-each-span-in-equal-steps
+ [d-450]: #d-450--refuse-a-run-whose-clock-cannot-order-its-boundaries
+ [d-451]: #d-451--discard-a-replaying-advances-late-staging-at-its-halt
++[d-452]: #d-452--split-each-step-between-a-proposing-backend-and-a-shaping-model
+ [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
+ [s10-2]: spec.md#102-the-stepper-seam
+ [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property
+diff --git a/design/pending.md b/design/pending.md
+index 0f98fbe..f8e2faf 100644
+--- a/design/pending.md
++++ b/design/pending.md
+@@ -76,7 +76,23 @@ item changes what the spec says, the spec edit is part of the item.
+     cannot resolve is refused at every door, and `show(deployment)` states
+     the steps per frame. D-442, D-443, D-444 and D-445 are superseded in
+     part.
+-  - **Next: the seam protocol**, the roadmap's increment 3.
++  - **Landed: the seam protocol**, increment 93 (D-452,
++    `design/increments/093_seam_protocol/`). The backend proposes a length
++    or nothing and accepts or rejects each attempt, which writes a trial
++    buffer the `Model` commits; the `Model` clamps a proposal to `h_max` and
++    to the span's end, counts the attempts, checks an accepted trial for a
++    nonfinite value, and raises the discontinuity notice. `RK4()` and
++    `Heun()` propose nothing and always accept, the cursor names the
++    attempt, and a `ModelState` carries the stepper's state. A frame-top
++    hook returns whether it wrote a value, and the caller of a frame says
++    whether it continues the last one; D-447 is superseded in part. Two
++    things wait for the next increment, and no backend in `src/` reaches
++    either. Nothing bounds a step's attempts, so the floor and the attempt
++    budget are owed. And under a proposing backend an interior step end is
++    the clock plus the accepted length, which can round one ulp past the
++    span's end and leave a negative remainder; the fix belongs with the one
++    step-length rule.
++  - **Next: the first adaptive backend**, the roadmap's increment 4.
+   - **Ruled from the three lattices** by the user on 2026-11-11, on the open
+     points of `design/increments/091_three_lattices/notes_increment_91.md`:
+     - The reconstructed Rejected lists of D-445 to D-447 stand as written.
+diff --git a/design/spec.md b/design/spec.md
+index b0ea871..51c0995 100644
+--- a/design/spec.md
++++ b/design/spec.md
+@@ -5798,16 +5798,93 @@ The seam contract has four clauses.
+   instants into equal steps ([§10.5][s10-5], [D-449][d-449]). It also
+   resumes from a [localized](#g-localized) event time (the crossing instant
+   bracketed by root-finding over [trial evaluations](#g-trial-evaluation)).
+-- The backend provides dense output on demand over the last completed step.
++- The backend provides dense output on demand over the last accepted step.
+   Only event localization needs it ([§10.4][s10-4]), so the backend
+   constructs it lazily.
+ - The backend uses one-step methods only. Event handlers reset state
+   discontinuously, and a one-step method restarts from a new state for free.
+   Multistep methods are excluded ([D-017][d-017]).
+ - The seam carries what a backend needs across a frame top through a
+-  checkpoint hook, empty for a single-step method. A
+-  [checkpoint](#g-checkpoint) is the `Model`'s state at a frame top
+-  ([§12.6][s12-6], [D-274][d-274]).
++  checkpoint pair. A [checkpoint](#g-checkpoint) is the `Model`'s state at a
++  frame top ([§12.6][s12-6], [D-274][d-274]). **The pair carries an adaptive
++  method's proposal and its controller's memory, and nothing for a
++  fixed-step method** ([D-452][d-452]).
++
++#### The step protocol
++
++One step is split between the `Model` and the backend. The backend knows its
++method and the error of a step. The `Model` knows the instants no step may
++cross, the bound `h_max`, the clock and the boundaries. This part states the
++calls between them, then how a step is shaped and taken. The next part states
++the notice the `Model` sends at a discontinuity.
++
++```julia
++propose(stepper)                    # the length the backend asks for next, or nothing
++attempt!(stepper, model, h)         # one try at a step of length h → accepted
++discontinuity!(stepper)             # the next step starts at a discontinuity
++startpoint(stepper)                 # (xₙ, ẋₙ), kept from the last attempt
++dense!(stepper, x̂, x₁, ẋ₁, θ, h′)    # the interpolant over the last accepted step
++checkpoint_stepper(stepper)         # the carried state; restore_stepper! puts it back
++```
++
++**The `Model` shapes every step's length, and the backend only proposes
++one** ([D-452][d-452]). Before each step, and after each rejected attempt,
++the `Model` asks `propose` for a proposal. A
++fixed-step method proposes nothing, and the `Model` takes the span in equal
++steps no longer than `h_max` ([§10.5][s10-5], [D-449][d-449]). **A proposal
++is clamped to `h_max` and to the span's end** ([D-452][d-452]). A step that
++reaches the span's end ends on that [mandatory instant](#g-mandatory-instant)
++(a frame top or a due instant) and takes its clock. A step that stops short
++ends at its start's clock plus its length, an instant on no lattice.
++
++The backend takes each step in [attempts](#g-attempt) (tries at the step, each
++of which it accepts or rejects). **An attempt writes the step's end into a trial
++buffer, and the `Model` commits it only on acceptance** ([D-452][d-452]).
++The backend reads the step's start from the state buffer. Its stages run the
++sweep, which reads the state buffer, so they write that buffer and the clock
++as scratch. On acceptance the `Model` writes the clock at the step's end,
++checks the trial for a nonfinite value ([§13.4][s13-4]) and copies it into
++the state buffer. On rejection the `Model` puts back the step's start, the
++state `startpoint` kept and the clock as it stood. It then asks for a new
++proposal and offers it, under the same clamp, as the next attempt. The
++rejected stages left their values in the signal table, so the next attempt's
++first evaluation runs the sweep ([§10.3][s10-3]). A method that proposes
++nothing always accepts. The trial buffer is also the `xₙ₊₁` the localization
++loop keeps for its interpolant ([§10.4][s10-4]).
++
++**The `Model` counts the attempts of each step** ([D-452][d-452]). The
++count names the attempt in a cursor frame ([§13.4][s13-4]). The first-cut
++backends accept every attempt, so their steps take one each.
++
++**Neither `propose` nor the checkpoint pair has a default**
++([D-452][d-452]). A backend that forgot `propose` would change the stepping
++rule, and one that forgot the pair would lose its state at a restore, each
++without an error. So every backend states both, and a fixed-step one answers
++`nothing`.
++
++#### The discontinuity notice
++
++A [discontinuity notice](#g-discontinuity-notice) (the `Model`'s word to the
++backend that the next step starts at a discontinuity) lets an adaptive method
++drop history a jump has made stale. **The `Model` raises the notice at every
++boundary where a handler fired or a tick ran, at a frame top whose drain
++wrote a value, and when `overlay!` settles** ([D-452][d-452]). Boundary zero
++runs every tick, so `init!` raises it too. The notice arrives as its boundary
++settles, before a checkpoint can be taken there, so the checkpoint holds what
++the backend did with it. Two notices before a step mean one.
++
++**What the backend does with the notice is its own** ([D-452][d-452]). A
++fixed-step method ignores it. An integral controller may keep its proposal,
++and a proportional-integral controller may clear its history.
++
++**The notice depends on the trajectory alone** ([D-452][d-452]). At a frame
++top only a value the hook wrote raises it, which the hook returns as a `Bool`
++([Appendix B][sB]). The first frame of an advance raises none for being
++first, though its first stage runs the sweep ([§10.3][s10-3]). A stepped
++simulation is therefore bit-identical to the same frames under `run!`
++([§12.6][s12-6]). **A restore raises no notice** ([D-452][d-452]). It
++hands the backend its carried state back, so the restored run proposes what
++the original proposed ([§12.6][s12-6]).
+ 
+ #### Models with no continuous state
+ 
+@@ -5905,9 +5982,13 @@ model) change only at frame tops ([§2.2][s2-2]). **A `settled!` hook writes
+ nothing into the model** ([D-447][d-447]). It reads the boundary it settles
+ and writes neither a [store](#g-store) (a framework-owned home of `x`, `s`
+ or `m`), a root input nor the table. A hook that writes does so in
+-`frame_top!` and reports the write. At a frame top the table is fresh when
+-the drain wrote nothing, and the first frame of each advance counts as
+-written. The flow then reads the cells the sweep would recompute at the
++`frame_top!` and returns `true`. **At a frame top the table is fresh when
++the frame continues the last one and the hook wrote nothing**
++([D-452][d-452]). A frame continues the last one when nothing wrote the
++model between that frame's top boundary and this one. Only the loop running
++the frames knows that, so the caller of the frame says it. An advance says
++it for every frame after its first, and `frame!` never does. The flow then
++reads the cells the sweep would recompute at the
+ same state, time, modes and inputs, so the derivative is the sweep's to the
+ bit. The rule lives on the framework side of the [stepper seam](#g-seam),
+ and a backend's first stage is the same call either way.
+@@ -9934,8 +10015,12 @@ nothing advances until `init!`, `restore!` or `replay!` opens a new run, and
+ **a `Checkpoint` is the `Model`'s state beside the run's cursor**
+ ([D-319][d-319]). `checkpoint(model)` returns the state alone, a
+ `ModelState`. It holds the flat buffer, the `s` and `m` stores, the whole
+-signal table, the guard priors, `t`, `t₀`, the [fingerprint](#g-fingerprint) (the structural
+-layout) and the deployment. It is legal at `:consistent` with the clock on a
++signal table, the guard priors, the stepper's carried state, `t`, `t₀`, the
++[fingerprint](#g-fingerprint) (the structural layout) and the deployment.
++The stepper's carried state is what the backend's checkpoint pair reads,
++`nothing` for a fixed-step method ([§10.2][s10-2], [D-452][d-452]). The
++derivative buffer stays out, as every step rewrites it before reading it. It
++is legal at `:consistent` with the clock on a
+ grid top. A frame cut by a throw, an interrupt included, leaves the status
+ `:inconsistent`, so no state is read off it ([§13.4][s13-4], [D-441][d-441]).
+ `checkpoint(sim)` wraps that state with the run's frame index and
+@@ -9954,7 +10039,11 @@ the state's `t` is a frame top `t₀ + k·Δt_frame` of the state's own origin a
+ and a state off its grid is `CheckpointMidFrame`. Every mismatch of either kind
+ is collected into one throw before any write. The entry point then copies the
+ state back, settles the restored boundary through the hooks and writes
+-`:consistent` last ([D-318][d-318], [D-319][d-319]). A throw inside the copy or the
++`:consistent` last ([D-318][d-318], [D-319][d-319]). The copy hands the
++backend its carried state back and raises no
++[discontinuity notice](#g-discontinuity-notice) (the `Model`'s word that the
++next step starts at a discontinuity), so the next frame proposes what the
++original's did ([§10.2][s10-2], [D-452][d-452]). A throw inside the copy or the
+ settling returns the status to `:built` and arrives as a `StepError` with host
+ `:restore`, its pointer the state's frame ([§13.4][s13-4], [D-441][d-441]).
+ 
+@@ -9997,7 +10086,8 @@ totality is asked, since every root input already holds a value.
+ **The overlaid state settles through boundary zero's tail with the discrete
+ output stages and the `s_update` calls left out** ([§14.5][s14-5], [D-429][d-429]). Projection
+ runs, and the sweep and the events iterate to quiescence with the priors
+-kept. An overlaid discrete store is therefore the next tick's state, and its
++kept. The overlay is a discontinuity, so the settling raises the stepper's
++notice ([§10.2][s10-2], [D-452][d-452]). An overlaid discrete store is therefore the next tick's state, and its
+ held cell stays until that tick ([§14.5][s14-5], [D-273][d-273]). A guard the overlay moves into
+ holding fires at the overlay boundary, before the next integrate, and a guard
+ already holding does not fire again. The door takes the four recording
+@@ -10807,7 +10897,11 @@ execution order) carries. The second is which function is running, one of
+ event's predicate), a handler, or `x_projection`. The third is the boundary phase,
+ one of the frame-top drain, integration stage *k*, the arrival [sweep](#g-sweep) (one pass
+ through the execution order), the θ = 0 validation, a localization trial,
+-projection, event round *r*, or the ticks. Maintaining the cursor costs one cheap
++projection, event round *r*, or the ticks. **Inside integration the cursor also
++records the [attempt](#g-attempt) (one try at a step, which the backend accepts or
++rejects), by its ordinal in the step** ([§10.2][s10-2], [D-452][d-452]). A
++rendered frame names the attempt past the first, so a step its backend accepted
++at once reads as it did before attempts existed. Maintaining the cursor costs one cheap
+ store per dispatch on a single-tasked executor, with no allocation and no
+ exception handlers. It covers every user-code surface uniformly, including the
+ forgettable ones. Those are the evaluations of the [RHS](#g-flow) (the continuous
+@@ -10818,7 +10912,8 @@ the trial points of ITP or Brent root-finding ([§10.4][s10-4]).
+ # the cursor: one mutable field of the executor, overwritten per dispatch
+ mutable struct ExecutionCursor
+     …    # what it records, per the prose above: component path
+-         # (component-list index), which function, and the boundary phase
++         # (component-list index), which function, the boundary phase,
++         # and the attempt inside integration
+ end
+ ```
+ 
+@@ -10977,13 +11072,15 @@ Divergence is not termination. Dynamics that blow up (ground penetration, an
+ unstable gain) produce NaNs that defeat guards. NaN comparisons are false, so no
+ declared guard will catch them. An `isfinite` pass over the flat state [buffer](#g-buffer) (the
+ contiguous vector backing all continuous state), run by the model after every
+-return from the integrator backend, fails fast as `NonfiniteState`, a `StepError`
++accepted attempt, fails fast as `NonfiniteState`, a `StepError`
+ species naming the component, the state leaf and the frame-entry boundary. It
+ catches diverging models generally, not just post-terminal ones.
+ 
+ **The pass is the boundary's first act** ([D-157][d-157]), and that placement is the whole of
+ its value. The pass runs immediately after integrate returns, before
+-`x_projection` and before the boundary sweep. Run there, `NonfiniteState` names the
++`x_projection` and before the boundary sweep. **It reads the trial an
++accepted attempt wrote, before the `Model` commits it** ([§10.2][s10-2],
++[D-452][d-452]). A rejected trial is discarded unread. Run there, `NonfiniteState` names the
+ component whose own block diverged. Run later, the NaN has already propagated.
+ It reaches an innocent downstream component through the ordinary signal path and
+ surfaces as that component's lookup-table `DomainError`, or as an `InexactError` in
+@@ -14228,14 +14325,18 @@ assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
+     ([§10.5][s10-5], [§13.4][s13-4], [D-445][d-445]). It returns
+     `true` when a hook abandoned the frame's remainder ([§13.5][s13-5],
+     [D-317][d-317]). A `k` whose positions on the lattices leave `Int` is
+-    refused as `ArgumentInvalid` with reason `:range`. `FrameHooks` is the hooks' type. `frame_top!(hooks)` runs
+-    before the frame touches any state. It returns `false` when it wrote
+-    nothing into the model, and any other value counts as a write
+-    ([§10.3][s10-3], [D-447][d-447]). `settled!(hooks) → Bool` runs at
++    refused as `ArgumentInvalid` with reason `:range`. `FrameHooks` is the hooks' type. `frame_top!(hooks) → Bool` runs
++    before the frame touches any state. It returns whether it wrote a value
++    into the model. A value written raises the stepper's
++    [discontinuity notice](#g-discontinuity-notice), and the frame's first
++    step then runs its sweep
++    ([§10.2][s10-2], [§10.3][s10-3], [D-447][d-447], [D-452][d-452]).
++    `settled!(hooks) → Bool` runs at
+     every settled boundary and writes nothing into the model. `NoHooks()`
+-    is the no-op. Its `frame_top!` returns `nothing`, a write, and its
+-    `settled!` returns `false`
+-    ([D-317][d-317]).
++    is the no-op. Its `frame_top!` and its `settled!` return `false`
++    ([D-317][d-317]). A frame run by `frame!` never reads its top's table as
++    fresh, since only a simulation's advance can say that a frame continues
++    the last one ([§10.3][s10-3]).
+   - `port(model, path, name)`, `state(model, path)` and `modes(model, path)`,
+     with the `Simulation` forms `port(sim, path, name)`, `state(sim, path)`
+     and `modes(sim, path)`. The reads of a [port](#g-port)'s value, a component's state
+@@ -15497,6 +15598,14 @@ scope's grid. Anchor 0 is the base grid itself. Anchors join the [deployment](#g
+ constraint pool, and relative declarations below one compose against it
+ exactly as against the root grid ([§10.5][s10-5], [§9.2][s9-2]).
+ 
++<a id="g-attempt"></a>**attempt** — one try at an integration step of a given
++length, which the backend accepts or rejects. The backend writes the step's
++end into a trial buffer, and the `Model` commits it only on acceptance. After
++a rejection the `Model` puts the step's start back and offers the backend's
++**proposal**, the length it asks for next, clamped to `h_max` and to the
++[span](#g-mandatory-instant)'s end. A cursor frame names the attempt by its
++ordinal in the step ([§10.2][s10-2], [§13.4][s13-4]).
++
+ <a id="g-boundary"></a>**boundary** — a published consistency point, where the
+ boundary's [macro-sequence](#g-boundary-sequence) completes and a [snapshot](#g-snapshot) goes out ([§10.6][s10-6]).
+ Every [frame](#g-frame) top and every end of an integration step is a boundary.
+@@ -15519,6 +15628,14 @@ stops for the rest of the frame, and further crossings fire at the next
+ [boundary](#g-boundary), under a `ChatteringBudget` warning naming the event
+ ([§10.4][s10-4]).
+ 
++<a id="g-discontinuity-notice"></a>**discontinuity notice** — the `Model`'s
++word to the integration backend that the next step starts at a
++discontinuity. The `Model` raises it at a [boundary](#g-boundary) where a
++handler fired or a [tick](#g-tick) ran, at a [frame](#g-frame) top whose
++[drain](#g-drain) wrote a value, and when `overlay!` settles. What the
++backend does with it is its own. A restore raises none
++([§10.2][s10-2], [§12.6][s12-6]).
++
+ <a id="g-dt_base"></a>**`Δt_base`** — the base [tick](#g-tick) period, in no required ratio to
+ `Δt_frame` or `h_max`. It is bound at the `Deployment` constructor from one of three
+ sources: an explicit keyword, `Δt_frame`, or derivation from the constraint
+@@ -16771,6 +16888,7 @@ worked C172 cruise problem of [§14.7][s14-7].
+ [d-449]: log.md#d-449--bound-the-step-by-h_max-and-take-each-span-in-equal-steps
+ [d-450]: log.md#d-450--refuse-a-run-whose-clock-cannot-order-its-boundaries
+ [d-451]: log.md#d-451--discard-a-replaying-advances-late-staging-at-its-halt
++[d-452]: log.md#d-452--split-each-step-between-a-proposing-backend-and-a-shaping-model
+ [s1]: #1-introduction
+ [s10]: #10-time-and-execution
+ [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop
+diff --git a/design/tools/coinage_inventory.md b/design/tools/coinage_inventory.md
+index a6c13be..b1014f2 100644
+--- a/design/tools/coinage_inventory.md
++++ b/design/tools/coinage_inventory.md
+@@ -71,6 +71,8 @@ context wants.
+ | state | — | D-250's other criterion word; Appendix D entry `g-state-single-owner` in D.10, bucket A |
+ | step point | — | D-444's instant of the method's lattice, `j·h` after a frame top; retired with its Appendix D entry `g-step-point` when D-449 removed the step points |
+ | mandatory instant | 14 | D-449's frame top or due instant, which no step crosses, with its **span**; §2.1, §2.2, §9.2, §10.1, §10.5, §10.6, Appendix D; Appendix D entry `g-mandatory-instant`, bucket A from here on |
++| attempt | — | D-452's try at a step, which the backend accepts or rejects, with the backend's **proposal**; §10.2, §13.4, Appendix D; Appendix D entry `g-attempt`, bucket A from here on |
++| discontinuity notice | — | D-452's word from the `Model` to the backend that the next step starts at a discontinuity; §10.2, §12.6, Appendix B, Appendix D; Appendix D entry `g-discontinuity-notice`, bucket A from here on |
+ 
+ The nine rows above are the pipeline redesign's coinages (D-250 through
+ D-258). Each went straight to an Appendix D entry, because each names a type
+diff --git a/src/checkpoint.jl b/src/checkpoint.jl
+index c966db7..daa4c52 100644
+--- a/src/checkpoint.jl
++++ b/src/checkpoint.jl
+@@ -26,9 +26,11 @@ struct Fingerprint
+     events::Vector{Tuple{String,Symbol}}
+ end
+ 
+-# Design: §12.6, D-038, D-273, D-274, D-319, D-429.
++# Design: §10.2, §12.6, D-038, D-273, D-274, D-319, D-429, D-452.
+ # The priors are the one event register that crosses a boundary: `last` equals
+-# them at rest. What every frame rewrites before reading it, the derivative
++# them at rest. The stepper's carried state is the value `checkpoint_stepper`
++# returns, immutable, `nothing` for a method that carries none, so it is typed
++# by no backend. What every frame rewrites before reading it, the derivative
+ # buffer, the arrival pair and the localization samples, stays out.
+ """
+     ModelState{T}
+@@ -45,6 +47,9 @@ fields hold the state.
+ - `table`: the whole [signal table](@ref g-signal-table), every
+   [cell](@ref g-cell) buffer copied.
+ - `prior`: the event [priors](@ref g-prior).
++- `stepper`: what the integration method carries from one step to the next,
++  such as its next step's length, and `nothing` for a method that carries
++  nothing, `RK4()` and `Heun()` among them.
+ - `t` and `t₀`: the clock's time and origin.
+ - `deployment`: the [`Deployment`](@ref), compared as a value on restore.
+ - `layout`: the [fingerprint](@ref g-fingerprint), compared against the target's
+@@ -62,7 +67,8 @@ them. It enters no condition expression and yields none. To write a condition
+ onto a model at rest, use [`overlay!`](@ref).
+ 
+ `==` compares identity, on a state and on its `table` and `layout` fields, so
+-compare `x`, `s`, `m` and `prior` by value and the table buffer by buffer.
++compare `x`, `s`, `m`, `prior` and `stepper` by value and the table buffer by
++buffer.
+ """
+ struct ModelState{T}
+     x::Vector{T}                     # the flat buffer
+@@ -70,6 +76,7 @@ struct ModelState{T}
+     m::Vector{Any}                   # likewise for the mode stores
+     table::StoreBundle               # the signal table, every cell buffer copied
+     prior::Vector{Bool}              # the guard priors
++    stepper::Any                     # the stepper's carried state (§10.2), immutable
+     t::T                             # the clock's time
+     t₀::Float64                      # the clock's origin
+     deployment::Deployment           # compared as a value at restore (§12.7)
+@@ -102,9 +109,11 @@ struct Checkpoint
+ end
+ 
+ # The inverse: every field copied back into the executor, the clock's `t` and
+-# `t₀` written as the state has them. The counters are the run's, which the
+-# door opens from the checkpoint (D-317). Nothing is published here and nothing
+-# runs, so a caller that publishes owns the ordinal.
++# `t₀` written as the state has them, and the stepper's carried state handed
++# back, with no discontinuity notice, so the next step proposes what the
++# original's did (D-452). The counters are the run's, which the door opens from
++# the checkpoint (D-317). Nothing is published here and nothing runs, so a
++# caller that publishes owns the ordinal.
+ function _restore_state!(exec::Executor{T}, model_state::ModelState{T}) where {T}
+     copyto!(exec.xbuf, model_state.x)
+     _restore_stores!(exec, model_state)
+@@ -114,7 +123,7 @@ function _restore_state!(exec::Executor{T}, model_state::ModelState{T}) where {T
+     copyto!(exec.events.last, model_state.prior)
+     clock = exec.clock
+     clock.t, clock.t₀ = model_state.t, model_state.t₀
+-    restore_stepper!(exec.stepper, model_state)
++    restore_stepper!(exec.stepper, model_state.stepper)
+     nothing
+ end
+ 
+@@ -133,11 +142,13 @@ end
+ 
+ # A state for the trace that inherits it (§12.7): every mutable field copied, so
+ # nothing the caller still holds is reachable from the new trace. The
+-# `Deployment` and the fingerprint are immutable artifacts and ride as they are.
++# `Deployment`, the fingerprint and the stepper's carried state are immutable
++# and ride as they are.
+ _detach(model_state::ModelState{T}) where {T} =
+     ModelState{T}(copy(model_state.x), copy(model_state.s), copy(model_state.m),
+                   capture_stores(model_state.table), copy(model_state.prior),
+-                  model_state.t, model_state.t₀, model_state.deployment, model_state.layout)
++                  model_state.stepper, model_state.t, model_state.t₀,
++                  model_state.deployment, model_state.layout)
+ _detach(cp::Checkpoint) = Checkpoint(_detach(cp.state), cp.frame, cp.boundary)
+ 
+ # The table's addresses key by key, each named `port.<name>` at its path, with
+diff --git a/src/diagnostics.jl b/src/diagnostics.jl
+index cf9891f..60b6986 100644
+--- a/src/diagnostics.jl
++++ b/src/diagnostics.jl
+@@ -213,19 +213,24 @@ _seconds(t::ForwardDiff.Dual) = _seconds(ForwardDiff.value(t))
+ An immutable copy of the execution cursor at the catch (§13.4): the frame a
+ `StepError` carries. `path` is the component's — `""` for a bare-leaf build's
+ own root component — and `nothing` where the cursor named none, which the
+-rendering drops rather than spelling as the root.
++rendering drops rather than spelling as the root. `attempt` is the step's
++attempt ordinal inside integration, and 0 in every other phase, which the
++four-field form spells (D-452).
+ """
+ struct CursorFrame
+     path::Union{Nothing,String}
+     fn::Symbol
+     phase::Symbol
+     index::Int
++    attempt::Int
+ end
++CursorFrame(path, fn::Symbol, phase::Symbol, index::Int) = CursorFrame(path, fn, phase, index, 0)
+ 
+ # A payload value, compared as one: the default for an immutable holding a
+ # `String` is egality, which two equal frames built apart would fail.
+ Base.:(==)(a::CursorFrame, b::CursorFrame) =
+-    a.path == b.path && a.fn === b.fn && a.phase === b.phase && a.index == b.index
++    a.path == b.path && a.fn === b.fn && a.phase === b.phase && a.index == b.index &&
++    a.attempt == b.attempt
+ 
+ """
+ §13.4's runtime carrier, `DiagnosticError`'s counterpart: the cursor's frame, the
+@@ -253,11 +258,14 @@ diagnostic(carrier::StepError{<:Diagnostic}) = carrier.cause
+ 
+ # The phase, spelled per case (§13.4). The index rides only where one applies:
+ # an `:integrate` frame at index 0 is the framework's own act inside the
+-# integrate — the nonfinite sweep — and not a stage. A phase this list does not
+-# know renders as its own symbol, never as another phase's spelling.
++# integrate — the nonfinite sweep — and not a stage. The attempt rides past the
++# first, so a step its backend accepted at once reads as it always did (D-452).
++# A phase this list does not know renders as its own symbol, never as another
++# phase's spelling.
+ _phase_text(cursor::CursorFrame) =
+-    cursor.phase === :integrate  ? (cursor.index == 0 ? "integration" :
+-                                                  "integration stage $(cursor.index)") :
++    cursor.phase === :integrate  ? string(cursor.index == 0 ? "integration" :
++                                                         "integration stage $(cursor.index)",
++                                          cursor.attempt > 1 ? " in attempt $(cursor.attempt)" : "") :
+     cursor.phase === :arrival    ? "arrival sweep" :
+     cursor.phase === :validation ? "θ = 0 validation" :
+     cursor.phase === :trial      ? "localization trial $(cursor.index)" :
+diff --git a/src/executor.jl b/src/executor.jl
+index 14e4abe..d70fc55 100644
+--- a/src/executor.jl
++++ b/src/executor.jl
+@@ -20,13 +20,19 @@ mutable struct ExecutionCursor
+                      # :guard | :handler | :x_projection | :none
+     phase::Symbol    # :drain | :integrate | :arrival | :validation | :trial | :project | :round | :ticks
+     index::Int       # the RK stage, the event round, the trial ordinal; 0 where none applies
++    attempt::Int     # the step's attempt ordinal, from 1 inside `:integrate`; 0 elsewhere
+ end
+-ExecutionCursor() = ExecutionCursor(0, :none, :drain, 0)
++ExecutionCursor() = ExecutionCursor(0, :none, :drain, 0, 0)
+ 
+-"A phase transition: written by the model's own code, never per dispatch (§13.4, D-317)."
++"""
++A phase transition: written by the model's own code, never per dispatch (§13.4,
++D-317). It clears the attempt, which only the Model's attempt loop writes, after
++entering `:integrate` (D-452).
++"""
+ @inline function _phase!(cursor::ExecutionCursor, phase::Symbol, index::Int = 0)
+     cursor.phase = phase
+     cursor.index = index
++    cursor.attempt = 0
+     nothing
+ end
+ 
+diff --git a/src/frame.jl b/src/frame.jl
+index d3193b0..c8dc26d 100644
+--- a/src/frame.jl
++++ b/src/frame.jl
+@@ -60,7 +60,17 @@ origin resolves in order. A throw inside the frame writes the status `:inconsist
+ arrives as a `StepError` with host `:loop`, an `InterruptException` included.
+ Its `boundary` is `k - 1`, the boundary the frame started from.
+ """
+-function frame!(model::Model, k::Int, hooks::FrameHooks = NoHooks())
++frame!(model::Model, k::Int, hooks::FrameHooks = NoHooks()) = run_frame!(model, k, hooks, false)
++
++# Design: §10.3, §13.4, D-447, D-452.
++# The frame behind `frame!`. `continued` is the caller's word that nothing wrote
++# the model since the last frame's top boundary, which only the loop running
++# the frames can give: a simulation's advance gives it for every frame after
++# its first, and `frame!` never does. The top hook's `Bool` says whether it
++# wrote a value. A value written raises the stepper's discontinuity notice
++# (D-452), and the table is the last boundary's when the frame is continued and
++# the hook wrote nothing (D-447).
++function run_frame!(model::Model, k::Int, hooks::FrameHooks, continued::Bool)
+     _claimed_gate(model, hooks, :frame!)
+     last_frame = _last_frame(model)
+     k ≤ last_frame ||
+@@ -70,10 +80,9 @@ function frame!(model::Model, k::Int, hooks::FrameHooks = NoHooks())
+         cursor = model.exec.cursor
+         cursor.comp = 0; cursor.fn = :none   # no stale frame for a top-side throw (§13.4)
+         _phase!(cursor, :drain)
+-        # the top hook's `false` reports nothing written, so the table is the last
+-        # boundary's (D-447); anything else is a write
+-        fresh = frame_top!(hooks) === false
+-        return _frame_steps!(model, k, hooks, fresh)
++        wrote = frame_top!(hooks)
++        wrote && discontinuity!(model.exec.stepper)
++        return _frame_steps!(model, k, hooks, continued && !wrote)
+     catch err
+         model.fresh = false
+         @atomic :release model.status = :inconsistent
+@@ -85,13 +94,16 @@ end
+ # over the mandatory instants: `origin` is the frame top `tₖ₋₁`'s position and
+ # `position` the span's start as an offset from it, both in units, and the next
+ # due instant is recomputed only after one is reached. The inner one takes the
+-# span's `n = ⌈g / h_max⌉` equal steps, `n` one `cld` over the bound's exact
+-# ratio to the unit. A step's exact length is `(units·unit)/n`, so a harmonic
+-# bound steps by `h_max` itself and a span of one step by its own length. An
+-# interior step end has no position: its clock is the span's start clock plus
+-# its count times that length, never accumulated (D-449). Returns `settled!`'s
+-# answer at the frame top, and `true` where it abandoned the frame at an
+-# earlier boundary.
++# span's steps. A backend that proposes nothing takes `n = ⌈g / h_max⌉` equal
++# steps, `n` one `cld` over the bound's exact ratio to the unit. A step's exact
++# length is `(units·unit)/n`, so a harmonic bound steps by `h_max` itself and a
++# span of one step by its own length. An interior step end has no position: its
++# clock is the span's start clock plus its count times that length, never
++# accumulated (D-449). A backend that proposes a length has it clamped to
++# `h_max` and to the span's end, and an interior end it reaches is the clock
++# plus the accepted length; the span ends at the step that reaches its end
++# (D-452). Returns `settled!`'s answer at the frame top, and `true` where it
++# abandoned the frame at an earlier boundary.
+ function _frame_steps!(model::Model{T}, k::Int, hooks::FrameHooks, fresh::Bool) where {T}
+     exec, deployment = model.exec, model.deployment
+     lattice, rows = deployment.lattice, deployment.schedule.rows
+@@ -108,17 +120,32 @@ function _frame_steps!(model::Model{T}, k::Int, hooks::FrameHooks, fresh::Bool)
+         units = target - position
+         steps = cld(units * denominator(lattice.bound), numerator(lattice.bound))
+         h = Float64((units * lattice.unit) / steps)
+-        for i in 1:steps
+-            span_end = i == steps
+-            t_next = span_end ? t_to : t_from + i * h
++        i = 0
++        while true
++            i += 1
++            t = exec.clock.t
++            proposal = propose(exec.stepper)
++            if proposal === nothing
++                span_end = i == steps
++                t_next = span_end ? t_to : t_from + i * h
++                h_step = T(h)
++            else
++                remaining = t_to - t
++                h_step = _clamped(model, proposal, remaining)
++                span_end = h_step == remaining
++                t_next = span_end ? oftype(t, t_to) : t + h_step
++            end
+             if exec.has_localized
+-                (abandoned, localizations) =
+-                    _localized_step!(model, t_next, k, hooks, fresh, localizations)
++                (abandoned, localizations, t_end) =
++                    _localized_step!(model, t_next, t_to, k, hooks, fresh, localizations)
+                 abandoned && return true
+             else
+-                integrate_step!(model, T(h), k, fresh)
++                h_accepted = integrate_step!(model, h_step, t_to, k, fresh)
++                t_end = _step_end(t, h_step, h_accepted, t_next, t_to)
+             end
+-            exec.clock.t = t_next
++            # a rejection may end the step short of where it was offered (D-452)
++            proposal === nothing || (span_end = t_end == t_to)
++            exec.clock.t = t_end
+             if span_end && is_due
+                 run_boundary!(model, due)
+             else
+@@ -130,6 +157,7 @@ function _frame_steps!(model::Model{T}, k::Int, hooks::FrameHooks, fresh::Bool)
+             abandon = settled!(hooks)
+             (span_end && is_top || abandon) && return abandon
+             fresh = true
++            span_end && break
+         end
+         is_due && ((due, due_at) = _next_due(rows, lattice.base, origin + target))
+         position, t_from = target, t_to
+@@ -140,22 +168,30 @@ end
+ # integrates one segment — the whole step first, then remainder steps from each
+ # `t*` — and either returns at the step's end or fires one `t*` boundary and goes
+ # around. A segment integrates by the distance from the clock to `t_to`, since
+-# its interpolant spans those two instants. The budget counts the frame's
+-# localizations, one per `t*` boundary produced, across all its steps: per
+-# segment, root-finding runs are already structurally bounded (at most one per
+-# declared event), while the segment count is the quantity chattering inflates
+-# without bound. Returns whether `settled!` abandoned the frame at a `t*`
+-# boundary, and the frame's localization count (D-261, D-317).
+-function _localized_step!(model::Model, t_to, k::Int, hooks::FrameHooks, fresh::Bool,
+-                          localizations::Int)
++# its interpolant spans those two instants. A rejection may shorten the first
++# segment, no further than `t_limit`, the span's end, and the step then ends
++# where the accepted attempt did; a remainder targets the step's end and never a
++# later instant (D-452). The budget counts the frame's localizations, one per
++# `t*` boundary produced, across all its steps: per segment, root-finding runs
++# are already structurally bounded (at most one per declared event), while the
++# segment count is the quantity chattering inflates without bound. Returns
++# whether `settled!` abandoned the frame at a `t*` boundary, the frame's
++# localization count, and the step's end (D-261, D-317).
++function _localized_step!(model::Model, t_to, t_limit, k::Int, hooks::FrameHooks,
++                          fresh::Bool, localizations::Int)
+     exec = model.exec
+     events, cursor = exec.events, exec.cursor
+     n_events = length(events.prior)
+     (x₀, _) = startpoint(exec.stepper)         # the seam's retained pair (§10.2):
+-    while true                                 # x₀ = x(t_seg) after each integrate!
++    while true                                 # x₀ = x(t_seg) after each attempt
+         t_seg = exec.clock.t
+         h′ = t_to - t_seg
+-        integrate_step!(model, h′, k, fresh)
++        h_accepted = integrate_step!(model, h′, t_limit, k, fresh)
++        if h_accepted != h′
++            t_to = _step_end(t_seg, h′, h_accepted, t_to, t_limit)
++            h′ = h_accepted
++        end
++        t_limit = t_to
+         # The arrival sweep at the segment's end — interior, on the raw
+         # unprojected state, before any discrete cell refreshes (§10.4): the
+         # sweep that closes the integration step is what raises the trigger.
+@@ -172,7 +208,7 @@ function _localized_step!(model::Model, t_to, k::Int, hooks::FrameHooks, fresh::
+                                   events.σ1[i] ≥ 0
+             any_triggered |= events.triggered[i]
+         end
+-        any_triggered || return (false, localizations)
++        any_triggered || return (false, localizations, t_to)
+ 
+         # Budget exhaustion degrades; it does not throw (§10.4): the remainder
+         # step has already completed, and this crossing fires in the coming
+@@ -189,10 +225,11 @@ function _localized_step!(model::Model, t_to, k::Int, hooks::FrameHooks, fresh::
+                                               model.deployment.localization_budget,
+                                               localizations))
+             end
+-            return (false, localizations)
++            return (false, localizations, t_to)
+         end
+ 
+-        copyto!(exec.xnext, exec.xbuf)   # retain xₙ₊₁ before the trials clobber it
++        # xₙ₊₁ stays in the trial buffer the step was committed from (D-452),
++        # which the trials below never write.
+ 
+         # The θ = 0 validation (§10.4): x(t_seg) back into the buffer, one
+         # interior sweep, no interpolant — x̂(0) = xₙ identically. σ₀ is the left
+@@ -216,7 +253,7 @@ function _localized_step!(model::Model, t_to, k::Int, hooks::FrameHooks, fresh::
+         if !remaining
+             # epoch-caused only: fall through to the step's end
+             copyto!(exec.xbuf, exec.xnext)
+-            return (false, localizations)
++            return (false, localizations, t_to)
+         end
+ 
+         # ẋₙ₊₁, paid only past a validated trigger (§10.4): one sweep and the
+@@ -242,7 +279,7 @@ function _localized_step!(model::Model, t_to, k::Int, hooks::FrameHooks, fresh::
+             # boundary's ordinary iteration — one boundary, no zero-length
+             # remainder.
+             copyto!(exec.xbuf, exec.xnext)
+-            return (false, localizations)
++            return (false, localizations, t_to)
+         end
+ 
+         # The t* boundary (§10.4): interpolated state in, then the §10.6
+@@ -262,7 +299,7 @@ function _localized_step!(model::Model, t_to, k::Int, hooks::FrameHooks, fresh::
+         # boundary the frame's last, its remainder abandoned, and reaches the
+         # loop as `frame!`'s return (D-261, D-317). The remainder's first stage
+         # reads the table this boundary left (D-447).
+-        settled!(hooks) && return (true, localizations)
++        settled!(hooks) && return (true, localizations, t_to)
+         localizations += 1
+         fresh = true
+     end
+diff --git a/src/model.jl b/src/model.jl
+index 144ba3d..22a81ce 100644
+--- a/src/model.jl
++++ b/src/model.jl
+@@ -160,14 +160,17 @@ function _establish_frozen!(seeded_exec::Executor, act::Activation{T},
+     nothing
+ end
+ 
+-# Design: §10.3, §10.4, §11.2, D-317, D-445, D-447.
++# Design: §10.2, §10.3, §10.4, §11.2, D-317, D-445, D-447, D-452.
+ # A subtype is a struct with concrete fields, built once per advance. §11.2's
+ # rule that every boundary publishes before integration resumes is a contract
+-# on `settled!`. The top hook's `false` is the drain's report that the table is
+-# the last boundary's, so the frame's first step may skip its first sweep; any
+-# other return is the safe answer, a write. The fresh table after a boundary
+-# inside a frame rests on `settled!` writing nothing into the model, a contract
+-# the code does not enforce. The simulation's hooks are `LoopHooks` (sim.jl).
++# on `settled!`. The top hook returns whether it wrote a value into the model,
++# which raises the stepper's discontinuity notice and tells the frame its first
++# step cannot reuse the table. Whether the frame continues the last one with
++# nothing written in between is the caller's to say, to `run_frame!` (frame.jl),
++# so the hook reports its own write and nothing else. The fresh table after a
++# boundary inside a frame rests on `settled!` writing nothing into the model, a
++# contract the code does not enforce. The simulation's hooks are `LoopHooks`
++# (sim.jl).
+ """
+     FrameHooks
+ 
+@@ -179,8 +182,8 @@ and at each settled [boundary](@ref g-boundary).
+ functions on it.
+ 
+ - [`frame_top!`](@ref) runs first, before the frame touches any state. It is
+-  where external inputs arrive. It returns `false` when it wrote nothing into
+-  the model, and any other value counts as a write.
++  where external inputs arrive. It returns whether it wrote a value into the
++  model, as a `Bool`.
+ - [`settled!`](@ref) runs at every settled boundary before integration resumes.
+   Those boundaries are the end of each integration step, the frame top among
+   them, each [localized](@ref g-localized) event time [`t*`](@ref g-t),
+@@ -194,10 +197,9 @@ resumes, so a subtype that publishes [snapshots](@ref g-snapshot) does it in
+ `settled!`. That method writes neither a [store](@ref g-store), a
+ [root input](@ref g-root-input) nor the [signal table](@ref g-signal-table),
+ since the next step's first stage reads the table the boundary left. A hook
+-that writes into the model does so in `frame_top!` and reports the write.
+-A `false` from `frame_top!` lets the frame's first step reuse the
+-table the last boundary left, and changes no value. Return it only when nothing
+-wrote into the model since that boundary. [`NoHooks`](@ref) does nothing and never abandons, for a model
++that writes into the model does so in `frame_top!` and returns `true`. That
++tells the integration method that its next step starts at a discontinuity,
++which an adaptive method may act on. [`NoHooks`](@ref) does nothing and never abandons, for a model
+ stepped on its own. A [`Simulation`](@ref) passes hooks of its own, which apply
+ the staged input [batches](@ref g-batch) at the frame top and publish a snapshot
+ at each settled boundary.
+@@ -221,17 +223,16 @@ struct NoHooks <: FrameHooks end
+ 
+ # Design: §10.4, §13.4, D-317.
+ """
+-    frame_top!(::NoHooks) -> Nothing
++    frame_top!(::NoHooks) -> Bool
+ 
+ Do nothing at the top of a model's [frame](@ref g-frame), before the frame
+-touches any state.
++touches any state, and return `false`.
+ 
+ A model stepped on its own takes no staged inputs, so its frame starts from the
+-state as it stands. The model may have been written between two frames, so the
+-`nothing` it returns counts as a write. See [`FrameHooks`](@ref) for the
++state as it stands and the hook writes nothing. See [`FrameHooks`](@ref) for the
+ contract every method keeps, and [`settled!`](@ref) for the other hook.
+ """
+-frame_top!(::NoHooks) = nothing
++frame_top!(::NoHooks) = false  # COV_EXCL_LINE
+ 
+ # Design: §10.3, §10.4, §13.4, D-317, D-447.
+ """
+@@ -417,6 +418,7 @@ function overlay!(model::Model, plan::ConditionPlan; hooks::FrameHooks = NoHooks
+     k = _assert_at_rest(model, :overlay!)
+     @atomic :release model.status = :built   # the door's first write (D-441)
+     _apply_plan!(model, plan)
++    discontinuity!(model.exec.stepper)       # the overlaid state is a discontinuity (D-452)
+     try
+         run_boundary!(model, nothing)
+     catch err
+@@ -583,12 +585,15 @@ end
+ # reading post-transition values off the settled table, so a discrete
+ # component's cells carry `y[k]` from `s[k]` while `s_update` produces `s[k+1]`.
+ # The event phase reports a `FiringBudget` into the model's `frame_diag` (§11.8,
+-# D-317).
++# D-317). A boundary where a handler fired or a tick ran raises the stepper's
++# discontinuity notice as it settles, boundary zero's included, so a checkpoint
++# taken there holds what the backend did with it (§10.2, D-452).
+ @inline function run_boundary!(model::Model, due)
+     _phase!(model.exec.cursor, :project)
+     _projects!(model.exec.events, model.exec.xbuf)
+-    event_phase!(model, due)
++    fired = event_phase!(model, due)
+     run_ticks!(model, due)
++    (fired || due !== nothing) && discontinuity!(model.exec.stepper)
+     nothing
+ end
+ 
+@@ -662,14 +667,16 @@ exhaustion degrades rather than throwing: the event's further edges at this
+ boundary are lost under a `FiringBudget` warning, at most once per event per
+ boundary, while every other event iterates untouched. At quiescence the prior
+ is updated unconditionally from the final samples — every prior an honest
+-observation of a settled boundary.
++observation of a settled boundary. Returns whether any handler fired, which the
++boundary's discontinuity notice reads (D-452).
+ """
+ function event_phase!(model::Model, tick)
+     events, cursor = model.exec.events, model.exec.cursor
+     _phase!(cursor, :round, 1)       # §13.4: the boundary sweep is round 1, and the guard
+     _round!(model, tick)            # walk and the fire walk of a round carry its index
+     n_events = length(events.prior)
+-    n_events == 0 && return nothing
++    n_events == 0 && return false
++    fired = false
+     copyto!(events.last, events.prior)
+     fill!(events.count, 0)
+     fill!(events.warned, false)
+@@ -701,56 +708,101 @@ function event_phase!(model::Model, tick)
+             (eligible && !firing) || (events.last[i] = events.now[i])
+         end
+         any_fired || break
++        fired = true
+         _fire!(events, model.exec.store, model.exec.xbuf)
+         cursor.index += 1
+         _round!(model, tick)
+     end
+     copyto!(events.prior, events.last)
+-    nothing
++    fired
+ end
+ 
+-# --- the stepper seam, framework side (§10.2) ----------------------------------
++# --- the stepper seam, framework side (§10.2, D-452) ----------------------------
+ 
+ """
+     integrate!(model, h)
+     integrate!(sim, h)
+ 
+-Advance the continuous state from `t` by `h`, delegated across the stepper
+-seam to whichever backend the deployment bound (stepper.jl). The seam is never
+-entered empty: with no continuous state the step degenerates to advancing `t`,
+-the backend is simply not called, and no backend contract has to say what it
+-would do at N = 0.
++One step of the continuous state from `t`, offered the length `h`, delegated
++across the stepper seam to whichever backend the deployment bound (stepper.jl).
++The step runs the Model's attempt loop toward `t + h`: a backend that proposes
++nothing takes `h` whole, and a retry after a rejection never passes `t + h`.
++The seam is never entered empty: with no continuous state the step degenerates
++to advancing `t`, the backend is simply not called, and no backend contract has
++to say what it would do at N = 0.
+ """
+-@inline integrate!(model::Model, h) = integrate_step!(model, h, nothing, false)
+-
+-# The frame loop's step (§10.2, §10.3, D-447): `k` is the frame the step lies in,
+-# which a nonfinite state's report names, and `fresh` says the table is the last
+-# boundary's, which the backend's first `evaluate!` then reads without a sweep.
+-# The flag is disarmed after the backend returns, so it never outlives the step.
+-@inline function integrate_step!(model::Model, h, k::Union{Nothing,Int}, fresh::Bool)
+-    _phase!(model.exec.cursor, :integrate)     # §13.4: `evaluate!` counts the stages from here
+-    if isempty(model.exec.xbuf)
+-        model.exec.clock.t += h
+-    else
++@inline integrate!(model::Model, h) =
++    (integrate_step!(model, h, model.exec.clock.t + h, nothing, false); nothing)
++
++# Design: §10.2, §10.3, §13.4, D-157, D-447, D-452.
++# The Model's step over the seam: attempts from the clock until the backend
++# accepts one, and the accepted length returned. `h` is the first attempt's
++# length; after a rejection the backend's proposal, clamped to `h_max` and to
++# `t_limit`, the instant no attempt may pass, is the next one's. `k` is the frame the step lies
++# in, which a nonfinite state's report names, and `fresh` says the table is the
++# last boundary's, which the first attempt's first `evaluate!` reads without a
++# sweep. A rejected attempt leaves its stages in the table, so the next one
++# sweeps. An accepted trial is checked before the commit (D-157), and a rejected
++# one is discarded unread: the state buffer takes the step's start back from
++# `startpoint`, the clock its value. The flag is disarmed after each attempt, so
++# it never outlives the step. Nothing bounds the attempts here: the backends in
++# `src/` always accept.
++@inline function integrate_step!(model::Model, h, t_limit, k::Union{Nothing,Int}, fresh::Bool)
++    exec = model.exec
++    cursor, clock = exec.cursor, exec.clock
++    t = clock.t
++    if isempty(exec.xbuf)
++        _phase!(cursor, :integrate)
++        clock.t = t + h
++        return h
++    end
++    attempt = 0
++    while true
++        attempt += 1
++        _phase!(cursor, :integrate)     # §13.4: `evaluate!` counts the stages from here
++        cursor.attempt = attempt
+         model.fresh = fresh
+-        integrate!(model.exec.stepper, model, h)
++        accepted = attempt!(exec.stepper, model, h)
+         model.fresh = false
++        if accepted
++            clock.t = t + h
++            _check_finite!(model, exec.xnext, k)
++            copyto!(exec.xbuf, exec.xnext)
++            return h
++        end
++        copyto!(exec.xbuf, first(startpoint(exec.stepper)))
++        clock.t = t
++        fresh = false
++        h = _clamped(model, propose(exec.stepper), t_limit - t)
+     end
+-    _check_finite!(model, k)
+-    nothing
+ end
+ 
+-# The boundary's first act (D-157, §13.4): one pass over the flat state buffer,
+-# immediately after the backend returns and before anything reads the state —
+-# `frame!`'s bare path and every segment of a localized frame alike, which is
+-# why the site is the seam's framework side and not the frame loop. `ẋ` does
+-# not participate: a nonfinite derivative contaminates its own block's step
+-# result within that very step, so this is the same detection with the same
+-# attribution, and `ẋ` is integrator scratch besides.
+-@inline function _check_finite!(model::Model, k::Union{Nothing,Int})
+-    x = model.exec.xbuf
++# A proposal shaped into a step's length (§10.2, D-452): clamped to the bound
++# and to what remains before the instant no step may pass, and that remainder
++# itself when the clamp reaches it, so the step ends on the instant.
++@inline function _clamped(model::Model, proposal::Float64, remaining)
++    cap = min(proposal, model.deployment.h_max)
++    cap < _seconds(remaining) ? oftype(remaining, cap) : remaining
++end
++
++# The clock at the end of a step offered `h` toward `t_next`, of which the
++# backend accepted `h_accepted` from `t` (D-452): `t_next` when it took the whole
++# offer, `t_limit` when a retry was clamped to it, and `t + h_accepted`
++# otherwise, an end that lies on no lattice.
++@inline _step_end(t, h, h_accepted, t_next, t_limit) =
++    h_accepted == h ? oftype(t, t_next) :
++    h_accepted == t_limit - t ? oftype(t, t_limit) : t + h_accepted
++
++# The boundary's first act (D-157, §13.4): one pass over an accepted trial,
++# immediately after the backend returns and before the commit, so nothing reads
++# the state first — `frame!`'s bare path and every segment of a localized frame
++# alike, which is why the site is the seam's framework side and not the frame
++# loop. `ẋ` does not participate: a nonfinite derivative contaminates its own
++# block's step result within that very step, so this is the same detection with
++# the same attribution, and `ẋ` is integrator scratch besides.
++@inline function _check_finite!(model::Model, x::Vector, k::Union{Nothing,Int})
+     @inbounds for i in eachindex(x)
+-        isfinite(x[i]) || _nonfinite(model, i, k)      # the throw is the cold path
++        isfinite(x[i]) || _nonfinite(model, x, i, k)   # the throw is the cold path
+     end
+     nothing
+ end
+@@ -758,18 +810,18 @@ end
+ # The owner of `flat_index` and its leaf within that component's block, both
+ # read off the layout's `xblocks`. Thrown as a fail-fast `DiagnosticError`, which
+ # the catch site's species rule unwraps into the `StepError`'s `cause`.
+-@noinline function _nonfinite(model::Model, flat_index::Int, k::Union{Nothing,Int})
++@noinline function _nonfinite(model::Model, x::Vector, flat_index::Int, k::Union{Nothing,Int})
+     exec = model.exec
+     xblocks = exec.act.layout.xblocks
+     owner = findfirst(b -> flat_index in b, xblocks)::Int
+-    cursor = exec.cursor                    # the phase stays `:integrate`, but the sweep is the
+-    cursor.comp = owner; cursor.fn = :none  # framework's own act between the stages and the
+-    cursor.index = 0                        # boundary — no stage of its own, so no ordinal
++    cursor = exec.cursor                    # the phase and the attempt stay the integrate's, but
++    cursor.comp = owner; cursor.fn = :none  # the sweep is the framework's own act between the
++    cursor.index = 0                        # stages and the commit — no stage, so no ordinal
+     x_leaf_names = leaf_names(typeof(_keyed(exec.act.decls[owner].x, default_name(x_init))))
+     throw(DiagnosticError(NonfiniteState(
+         path = model.deployment.build.structure.components[owner].path,
+         leaf = x_leaf_names[flat_index - first(xblocks[owner]) + 1],
+-        value = exec.xbuf[flat_index],
++        value = x[flat_index],
+         t = _seconds(exec.clock.t),
+         # the frame-entry index: the frame loop names its frame, since a step may
+         # end inside it (D-445); a bare `integrate!` rounds the clock onto the
+@@ -903,7 +955,7 @@ function _wrap_step(model::Model, entry_boundary::Int, host::Symbol, err)
+     cursor = model.exec.cursor
+     StepError(CursorFrame(cursor.comp == 0 ? nothing :
+                               model.deployment.build.structure.components[cursor.comp].path,
+-                          cursor.fn, cursor.phase, cursor.index),
++                          cursor.fn, cursor.phase, cursor.index, cursor.attempt),
+               _seconds(model.exec.clock.t), entry_boundary, host, _species(model, err))
+ end
+ 
+@@ -970,12 +1022,13 @@ function _fingerprint(model::Model)
+                 copy(exec.events.names))   # the priors' own index, empty off the nominal activation
+ end
+ 
+-# Design: §12.6, D-231, D-273, D-274, D-319, D-429.
++# Design: §12.6, D-231, D-273, D-274, D-319, D-429, D-452.
+ # The stores are copied by value, being isbits (D-231). A `t*` abandon leaves
+ # the clock inside the frame, and the model steps whole frames, so a state taken
+ # there would have no next frame to continue on. The state holds the flat state
+ # buffer, the `s` and `m` stores and the whole signal table. It also holds the
+-# event priors. It holds the clock's `t` and `t₀`, and the fingerprint. A
++# event priors and the stepper's carried state. It holds the clock's `t` and
++# `t₀`, and the fingerprint. A
+ # model's state is not a condition and enters no condition expression.
+ """
+     checkpoint(model::Model{T}) -> ModelState{T}
+@@ -1004,9 +1057,9 @@ function checkpoint(model::Model{T}) where {T}
+     clock = exec.clock
+     s = Any[st === nothing ? nothing : st[] for st in exec.sstores]
+     m = Any[st === nothing ? nothing : st[] for st in exec.mstores]
+-    checkpoint_stepper(exec.stepper)   # empty for a one-step method (stepper.jl)
+     ModelState{T}(copy(exec.xbuf), s, m, capture_stores(exec.store), copy(exec.events.prior),
+-                  clock.t, clock.t₀, model.deployment, _fingerprint(model))
++                  checkpoint_stepper(exec.stepper), clock.t, clock.t₀, model.deployment,
++                  _fingerprint(model))
+ end
+ 
+ # The rest a `checkpoint` reads and an `overlay!` writes on (§12.6, D-274,
+diff --git a/src/sim.jl b/src/sim.jl
+index 5730bd0..788ce9a 100644
+--- a/src/sim.jl
++++ b/src/sim.jl
+@@ -843,7 +843,7 @@ function init!(sim::Simulation, condition = set(); t0::Real = 0.0, trace = true,
+     # The model's door does the writes and boundary zero, which publishes
+     # through `settled!`; nothing reads its return there, so the mask is empty
+     # (§11.2, §14.5, D-317).
+-    init!(sim.model, plan; t0, hooks = LoopHooks(sim, sim.plane.roster, nothing, Bool[], 0))
++    init!(sim.model, plan; t0, hooks = LoopHooks(sim, sim.plane.roster, nothing, Bool[]))
+     # §11.5's header: the checkpoint at the end of boundary zero, so a throw
+     # inside it leaves no header and no trace to hand back (D-274)
+     trc = sim.run.trace
+@@ -967,7 +967,7 @@ function overlay!(sim::Simulation, condition = set(); trace = true, log = true,
+     _open_run!(sim, nothing, Pair{String,Vector{Symbol}}[], nothing, sim.run.frame,
+                sim.run.boundary, trace, log, Int(log_every), log_max)
+     sim.run.boundary -= 1   # the settling re-publishes the stopped run's last ordinal
+-    overlay!(sim.model, plan; hooks = LoopHooks(sim, sim.plane.roster, nothing, Bool[], 0))
++    overlay!(sim.model, plan; hooks = LoopHooks(sim, sim.plane.roster, nothing, Bool[]))
+     # §11.5's header: the checkpoint after the settling, so a throw inside it
+     # leaves no header and replay needs no knowledge of the overlay (D-429)
+     trc = sim.run.trace
+@@ -994,7 +994,7 @@ function _enter_checkpoint!(sim::Simulation, cp::Checkpoint, schemas, feed,
+     _open_run!(sim, trace_switch ? _detach(cp) : nothing, schemas, feed, cp.frame, cp.boundary,
+                trace_switch, log_switch, log_every, log_max)
+     sim.run.boundary -= 1
+-    _restore_state!(sim.model, cp.state; hooks = LoopHooks(sim, sim.plane.roster, nothing, Bool[], 0))
++    _restore_state!(sim.model, cp.state; hooks = LoopHooks(sim, sim.plane.roster, nothing, Bool[]))
+     nothing
+ end
+ 
+@@ -1990,13 +1990,12 @@ struct LoopHooks{S<:Simulation} <: FrameHooks
+     roster::Vector{RosterEntry}     # the run's copy (§11.3)
+     pacer::Union{Nothing,Pacer}     # the run's, `nothing` under `step!` and `init!` (§10.7)
+     ignore_mask::Vector{Bool}       # the advance's policy against the requesters (D-316)
+-    first_frame::Int                # the advance's first frame, which counts as written (D-447)
+ end
+ 
+ # The simulation's own doors pass the claim's gate, which is model.jl's (D-318).
+ _claimed_gate(::Model, ::LoopHooks, ::Symbol) = nothing
+ 
+-# Design: §11.2, §11.4, §13.4, §13.5, D-317.
++# Design: §10.2, §11.2, §11.4, §13.4, §13.5, D-317, D-447, D-452.
+ # The top hook is the drain. `LoopHooks` is internal, so the method has no
+ # docstring on the public `frame_top!` page. It applies the staged input batches
+ # at the top of a simulation's frame, before the frame touches any state. A
+@@ -2010,15 +2009,12 @@ _claimed_gate(::Model, ::LoopHooks, ::Symbol) = nothing
+ # inside the frame's `try`, before the drain records the batch at it: no throw
+ # can land between the advance and the guarded sequence, so after any cut frame
+ # the index names the cut frame, wherever the clock stands, and the status says
+-# it failed. The return is the drain's report (§10.3, D-447): `false` when no
+-# batch was applied, so the frame's first step reads the table the last
+-# boundary left. The advance's first frame always reports a write, since
+-# between two advances a door or a stepping primitive may have written the
+-# model outside the loop.
++# it failed. The return is the drain's report (§10.3, D-447, D-452): whether a
++# batch was applied, which is the stepper's discontinuity and a table the
++# frame's first step cannot reuse.
+ function frame_top!(hooks::LoopHooks)
+-    frame = (hooks.sim.run.frame += 1)
+-    wrote = drain!(hooks.sim, hooks.roster)
+-    wrote || frame == hooks.first_frame
++    hooks.sim.run.frame += 1
++    drain!(hooks.sim, hooks.roster)
+ end
+ 
+ # Design: §11.2, §11.4, §13.4, §13.5, D-317.
+@@ -2087,7 +2083,7 @@ function _advance!(sim::Simulation, ignore_mask::Vector{Bool}, upto::Int,
+                    t_end_frame::Int, roster::Vector{RosterEntry}, pacer::Union{Nothing,Pacer})
+     plane, control, clock, run = sim.plane, sim.control, sim.model.exec.clock, sim.run
+     Δt_frame = sim.model.deployment.Δt_frame
+-    hooks = LoopHooks(sim, roster, pacer, ignore_mask, run.frame + 1)   # one per advance (D-317)
++    hooks = LoopHooks(sim, roster, pacer, ignore_mask)   # one per advance (D-317)
+     advanced = 0
+     requester = _stop_hit(sim, ignore_mask)
+     requester === nothing || return (ModelRequestedStop(requester), advanced)
+@@ -2109,7 +2105,9 @@ function _advance!(sim::Simulation, ignore_mask::Vector{Bool}, upto::Int,
+             try
+                 # the top hook advances the index, then drains, so a batch taken
+                 # at the top of frame `k` is recorded at `k` (§11.5, D-317)
+-                hit = frame!(sim.model, run.frame + 1, hooks)
++                # and a frame after the advance's first continues the last one, with
++                # nothing written in between (D-447)
++                hit = run_frame!(sim.model, run.frame + 1, hooks, advanced > 0)
+                 # the snapshot the hook sampled is the latest, so the read repeats
+                 # it (§13.5, D-317)
+                 requester = hit ? _stop_hit(sim, ignore_mask) : nothing
+diff --git a/src/stepper.jl b/src/stepper.jl
+index 45c2229..acd4d74 100644
+--- a/src/stepper.jl
++++ b/src/stepper.jl
+@@ -1,23 +1,28 @@
+-# The stepper seam (§10.2): loop ownership stops at one operation — *advance
+-# the continuous state from `t` by `h`* — delegated across this narrow
+-# interface so the integration method can be replaced without the loop
+-# changing. The contract has three clauses, each answered by dispatch on the
+-# stepper:
++# The stepper seam (§10.2, D-452): loop ownership stops at one operation, *one
++# step of the continuous state from the clock*, delegated across this narrow
++# interface so the integration method can be replaced without the loop changing.
++# The backend's side is six functions, each answered by dispatch on the stepper:
+ #
+-#   - **advance by arbitrary `h`** — `integrate!(stepper, model, h)`, on a
+-#     `Model` (model.jl): the loop lands on tick boundaries and resumes from
+-#     localized event times;
+-#   - **dense output on demand over the last completed step** — `dense!`, built
+-#     lazily on the pair `startpoint` retains, because only event localization
+-#     (§10.4) ever asks;
+-#   - **one-step methods only** — handlers reset state discontinuously, and a
+-#     one-step method restarts from a new state for free (D-017).
++#   - `propose(stepper)`, the length the backend asks for next, `nothing` for a
++#     method that proposes none, which takes each span in equal steps (D-449);
++#   - `attempt!(stepper, model, h)`, one try at a step of length `h`, returning
++#     whether the backend accepts it;
++#   - `discontinuity!(stepper)`, the notice that the next step starts at a
++#     discontinuity, which a backend may ignore;
++#   - `startpoint(stepper)` and `dense!`, the dense output over the last
++#     accepted step, built lazily, because only event localization (§10.4) asks;
++#   - `checkpoint_stepper`/`restore_stepper!`, what the backend carries across a
++#     frame top, read into a model's state and written back from it.
+ #
+-# The seam is never entered empty (§10.2): the framework short-circuits an
+-# empty state on its own side — `integrate!(model, h)` in model.jl — so no backend ever
+-# faces N = 0. Both first-cut backends are fixed-step, zero-allocation and
+-# generic in the scalar; the backend is a deployment binding (`algorithm =
+-# RK4()`, the default), and nothing outside this file knows which one ran.
++# The Model's side is model.jl's `integrate_step!`: it shapes the proposal into
++# a length, counts the attempts, discards a rejected one, checks and commits an
++# accepted one, writes the clock, and raises the notice. One-step methods only:
++# handlers reset state discontinuously, and a one-step method restarts from a
++# new state for free (D-017). The seam is never entered empty (§10.2): an empty
++# state never reaches `attempt!`, so no backend faces N = 0. Both first-cut
++# backends are fixed-step, always accept, zero-allocation and generic in the
++# scalar; the backend is a deployment binding (`algorithm = RK4()`, the
++# default), and nothing outside this file knows which one ran.
+ #
+ # Each backend is two types (D-442): the token the deployment records, `RK4()`
+ # (deployment.jl), and the stepper it binds to here, which owns scratch sized by
+@@ -35,30 +40,75 @@ its bound `h_max` (D-449), so neither the token nor the stepper holds one.
+ """
+ function bind_stepper end
+ 
++"""
++    propose(stepper) -> Union{Float64, Nothing}
++
++The length, in seconds, the backend asks for its next attempt (§10.2, D-452),
++or `nothing` for a method that proposes none. The Model asks before every step
++and after every rejected attempt. It takes a span in equal steps no longer than
++`h_max` under `nothing` (D-449), and otherwise clamps the proposal to `h_max`
++and to the span's end. Every backend states its answer; there is no default,
++since a forgotten one would change the stepping rule in silence.
++"""
++function propose end
++
++"""
++    attempt!(stepper, model, h) -> Bool
++
++One try at a step of length `h` from the clock (§10.2, D-452). The backend
++reads the state at the step's start from the model's state buffer, writes the
++state at the step's end into the trial buffer `model.exec.xnext`, and returns
++whether it accepts the step. Its stages may write the state buffer and the
++clock as scratch, through `evaluate!(model)`. The Model then writes both: on an
++acceptance it commits the trial and the clock at the step's end, and on a
++rejection it puts back the step's start, the state from `startpoint` and the
++clock as it was, and asks `propose` for the next attempt's length. A method
++that proposes nothing always accepts.
++"""
++function attempt! end
++
++"""
++    discontinuity!(stepper) -> Nothing
++
++The notice that the next step starts at a discontinuity (§10.2, D-452): a
++boundary where a handler fired or a tick ran, a frame top whose drain wrote a
++value, or the settling of `overlay!`. A notice arrives when its boundary
++settles, so a checkpoint taken there holds what the backend did with it. Two
++notices before a step mean one. What the backend does with it is its own, and
++the default does nothing, which is a fixed-step method's answer.
++"""
++discontinuity!(::AbstractStepper) = nothing
++
+ """
+     startpoint(stepper)
+ 
+ The seam's retained pair `(xₙ, ẋₙ)`: the state and derivative at the start of
+-the last completed step, surviving in the backend's own scratch. This is the
+-data clause of the dense-output obligation — the frame loop's θ = 0 validation
+-reads the state half directly, and the generic `dense!` builds on both halves.
++the last attempt, surviving in the backend's own scratch. This is the data
++clause of the dense-output obligation. The frame loop's θ = 0 validation reads
++the state half directly, the generic `dense!` builds on both halves, and the
++Model puts the state half back into the state buffer when it discards a
++rejected attempt.
+ """
+ function startpoint end
+ 
+ """
+     checkpoint_stepper(stepper)
+-    restore_stepper!(stepper, model_state)
+-
+-The seam's checkpoint pair (D-274): what a backend carries across a frame top,
+-read when a checkpoint is taken and written back when one is restored. A
+-one-step method carries nothing, its `startpoint` being rewritten by every step
+-before anything reads it, so both first-cut backends take this empty pair and
+-the model's state has no field for it; a multistep backend would add one.
++    restore_stepper!(stepper, carried)
++
++The seam's checkpoint pair (§12.6, D-274, D-452): what a backend carries across
++a frame top, such as its proposal and its controller's memory, read into the
++model's state when a checkpoint is taken and written back when one is restored.
++The value is immutable, so a detached state can share it. A restore writes it
++back and raises no notice, so the restored run proposes what the original
++proposed. Every backend states its pair; there is no default, since a forgotten
++one would lose the backend's state at a restore in silence. A fixed-step method
++carries nothing, its `startpoint` being rewritten by every attempt before
++anything reads it, so both first-cut backends carry `nothing`.
+ """
+-checkpoint_stepper(::AbstractStepper) = nothing
+-restore_stepper!(::AbstractStepper, model_state) = nothing
++function checkpoint_stepper end
++function restore_stepper! end
+ 
+-# Design: §10.2, D-442.
++# Design: §10.2, D-442, D-452.
+ # The classical fourth-order Runge–Kutta method, `RK4`'s stepper. It owns
+ # exactly its own scratch, the state at the start of the step and the four
+ # stage derivatives, over the model's flat state buffer of `n_x` scalars of
+@@ -73,29 +123,34 @@ end
+ bind_stepper(::RK4, ::Type{T}, n_x::Int) where {T} =
+     RK4Stepper{T}(ntuple(_ -> zeros(T, n_x), 5)...)
+ 
+-function integrate!(stepper::RK4Stepper, model::Model, h)
+-    x, ẋ = model.exec.xbuf, model.exec.ẋbuf
++propose(::RK4Stepper) = nothing
++checkpoint_stepper(::RK4Stepper) = nothing
++restore_stepper!(::RK4Stepper, ::Nothing) = nothing
++
++function attempt!(stepper::RK4Stepper, model::Model, h)
++    exec = model.exec
++    x, ẋ, xtrial = exec.xbuf, exec.ẋbuf, exec.xnext
+     (; x₀, k₁, k₂, k₃, k₄) = stepper
+-    t = model.exec.clock.t
++    t = exec.clock.t
+     copyto!(x₀, x)
+ 
+     evaluate!(model); copyto!(k₁, ẋ)
+-    _stage_point!(x, x₀, k₁, h / 2); model.exec.clock.t = t + h / 2
++    _stage_point!(x, x₀, k₁, h / 2); exec.clock.t = t + h / 2
+     evaluate!(model); copyto!(k₂, ẋ)
+     _stage_point!(x, x₀, k₂, h / 2)
+     evaluate!(model); copyto!(k₃, ẋ)
+-    _stage_point!(x, x₀, k₃, h); model.exec.clock.t = t + h
++    _stage_point!(x, x₀, k₃, h); exec.clock.t = t + h
+     evaluate!(model); copyto!(k₄, ẋ)
+ 
+-    @inbounds for i in eachindex(x)
+-        x[i] = x₀[i] + (h / 6) * (k₁[i] + 2k₂[i] + 2k₃[i] + k₄[i])
++    @inbounds for i in eachindex(xtrial)
++        xtrial[i] = x₀[i] + (h / 6) * (k₁[i] + 2k₂[i] + 2k₃[i] + k₄[i])
+     end
+-    nothing
++    true
+ end
+ 
+ startpoint(stepper::RK4Stepper) = (stepper.x₀, stepper.k₁)
+ 
+-# Design: §10.2, D-442.
++# Design: §10.2, D-442, D-452.
+ # Heun's second-order method, the explicit trapezoidal rule, `Heun`'s stepper.
+ # It owns exactly its own scratch, the state at the start of the step and the
+ # two stage derivatives.
+@@ -107,20 +162,25 @@ end
+ bind_stepper(::Heun, ::Type{T}, n_x::Int) where {T} =
+     HeunStepper{T}(ntuple(_ -> zeros(T, n_x), 3)...)
+ 
+-function integrate!(stepper::HeunStepper, model::Model, h)
+-    x, ẋ = model.exec.xbuf, model.exec.ẋbuf
++propose(::HeunStepper) = nothing
++checkpoint_stepper(::HeunStepper) = nothing
++restore_stepper!(::HeunStepper, ::Nothing) = nothing
++
++function attempt!(stepper::HeunStepper, model::Model, h)
++    exec = model.exec
++    x, ẋ, xtrial = exec.xbuf, exec.ẋbuf, exec.xnext
+     (; x₀, k₁, k₂) = stepper
+-    t = model.exec.clock.t
++    t = exec.clock.t
+     copyto!(x₀, x)
+ 
+     evaluate!(model); copyto!(k₁, ẋ)
+-    _stage_point!(x, x₀, k₁, h); model.exec.clock.t = t + h
++    _stage_point!(x, x₀, k₁, h); exec.clock.t = t + h
+     evaluate!(model); copyto!(k₂, ẋ)
+ 
+-    @inbounds for i in eachindex(x)
+-        x[i] = x₀[i] + (h / 2) * (k₁[i] + k₂[i])
++    @inbounds for i in eachindex(xtrial)
++        xtrial[i] = x₀[i] + (h / 2) * (k₁[i] + k₂[i])
+     end
+-    nothing
++    true
+ end
+ 
+ startpoint(stepper::HeunStepper) = (stepper.x₀, stepper.k₁)
+@@ -134,7 +194,7 @@ end
+ """
+     dense!(stepper, x̂, x₁, ẋ₁, θ, h′)
+ 
+-Dense output over the last completed step (§10.2): write x̂(θ), θ ∈ [0, 1],
++Dense output over the last accepted step (§10.2): write x̂(θ), θ ∈ [0, 1],
+ into `x̂`, from the seam's retained `startpoint` pair and the arrival pair
+ `(x₁, ẋ₁)` the caller holds — the caller pays ẋₙ₊₁ lazily, which is why it is
+ an argument rather than a retention. The generic method is the cubic Hermite
+diff --git a/test/imports.jl b/test/imports.jl
+index 3f41837..cb828ac 100644
+--- a/test/imports.jl
++++ b/test/imports.jl
+@@ -3,7 +3,8 @@
+ # `repl.jl`: `include` evaluates in the including module, so the same file
+ # imports into `RedstoneTests` and into `Main`.
+ import Redstone: ASSEMBLY, Absolute, AbstractAlgorithm, AbstractBinding, AbstractComponent,
+-    AbstractStepper, bind_stepper, startpoint,
++    AbstractStepper, attempt!, bind_stepper, checkpoint_stepper, discontinuity!, propose,
++    restore_stepper!, startpoint,
+     AbstractDevice, AlgebraicCycle, AlreadyAttached, Anchor, ArgumentInvalid,
+     AbstractAtRoot, AttachUnknownFace, Authored, BUILD_WARNINGS, BindingContractMismatch,
+     Build, BundleFieldError,
+@@ -26,7 +27,7 @@ import Redstone: ASSEMBLY, Absolute, AbstractAlgorithm, AbstractBinding, Abstrac
+     KINDS, KindCounts, LEGAL_BUNDLE, LINEARIZE_WIDTH, LevelEntry, LevenbergMarquardt, Linearization, LinearizeDual,
+     LinearizeTag, LoopError, LoopHooks, MalformedDatum, Marker, MissingInit,
+     MissingProbeValue, Model, ModelRequestedStop, ModelState,
+-    NO_STOP, NonfiniteState, NotAttached, OutOfClaimEntry, Outputs, PRIMITIVE, Pacer, PacerStatus,
++    NO_STOP, NoHooks, NonfiniteState, NotAttached, OutOfClaimEntry, Outputs, PRIMITIVE, Pacer, PacerStatus,
+     PathResolution,
+     Period, Pinned, ProbeDual, ProbeTag, ProducedByTwoStages, RK4, RK4Stepper,
+     RatesViolation, ReadResolution,
+@@ -69,7 +70,7 @@ import Redstone: ASSEMBLY, Absolute, AbstractAlgorithm, AbstractBinding, Abstrac
+     override, pace, pace!, path, pause!, paused, peek, pending, period, phase_bodies, port,
+     port_views, probe_value, publish!, reads,
+     reconstruct, replay!, report!, resolve, resolve_condition, resolve_dest, restore!,
+-    resolve_source, resolve_terminal, resume!, retype, retype_entry, retype_value, run!, running,
++    resolve_source, resolve_terminal, resume!, retype, retype_entry, retype_value, run!, run_frame!, running,
+     s_init, s_update, sample_times,
+     scatter_cell!, series, set, settled!, severity, shutdown!, solve, stage!, stale, state,
+     state_events, step!, taps,
+diff --git a/test/test_failures.jl b/test/test_failures.jl
+index 7dc9ab4..54a35ed 100644
+--- a/test/test_failures.jl
++++ b/test/test_failures.jl
+@@ -43,7 +43,7 @@ state_events(::TopInterrupter) = (cut = StateEvent(top_guard, top_handler),)
+ # Hooks whose `settled!` raises an `InterruptException`: a throw after the
+ # boundary settled and before the caller saw it, in a frame or a restore.
+ struct InterruptingSettle <: FrameHooks end
+-frame_top!(::InterruptingSettle) = nothing
++frame_top!(::InterruptingSettle) = false
+ settled!(::InterruptingSettle) = throw(InterruptException())
+ 
+ # The self-interrupter under a stop request on its own ramp: the request holds
+@@ -234,7 +234,7 @@ function failures_runtime()
+         init!(sim, set(u = (in = true,)))
+         err = failure(() -> run!(sim; t_end = 5.0))
+         @test err isa StepError
+-        @test err.cursor == CursorFrame("c", :x_deriv, :integrate, 2)  # RK4's half-step evaluation
++        @test err.cursor == CursorFrame("c", :x_deriv, :integrate, 2, 1)  # RK4's half-step evaluation, in the first attempt
+         @test err.boundary == 0 && err.t == 0.05
+         @test err.host === :loop                        # frame one, not boundary zero
+         @test err.cause isa Tripped
+@@ -404,7 +404,7 @@ function failures_runtime()
+         err = failure(() -> frame!(staged, 1))
+         @test err isa StepError{InterruptException}
+         @test err.host === :loop && err.boundary == 0
+-        @test err.cursor == CursorFrame("c", :x_deriv, :integrate, 4)
++        @test err.cursor == CursorFrame("c", :x_deriv, :integrate, 4, 1)
+         @test staged.exec.clock.t == 1 * 0.1 && staged.status === :inconsistent
+         refused_then_restored(staged, before)
+ 
+@@ -722,7 +722,7 @@ function failures_runtime()
+         init!(dual_model, set(u = (in = true,)))
+         err = failure(() -> frames!(dual_model, 5))
+         @test err isa StepError{Tripped}
+-        @test err.cursor == CursorFrame("c", :x_deriv, :integrate, 2)
++        @test err.cursor == CursorFrame("c", :x_deriv, :integrate, 2, 1)
+         @test err.t == 0.05 && err.boundary == 0 && err.host === :loop
+         @test dual_model.status === :inconsistent
+ 
+@@ -833,7 +833,7 @@ function failures_pointer_twin()
+         # frame's own drain.
+         err = reproduction(fed(Tripwire(0.35), "arm"), 3)
+         @test err.cause isa Tripped && err.boundary == 3
+-        @test err.cursor == CursorFrame("c", :x_deriv, :integrate, 2)
++        @test err.cursor == CursorFrame("c", :x_deriv, :integrate, 2, 1)
+ 
+         # And the nonfinite species, which the sweep raises rather than model code.
+         err = reproduction(diverging(), 1)
+@@ -845,7 +845,7 @@ function failures_pointer_twin()
+         # still ahead and `step!` re-executes that frame.
+         err = reproduction(fed(Tripwire(0.05), "arm"), 0)
+         @test err.cause isa Tripped && err.boundary == 0 && err.host === :loop
+-        @test err.cursor == CursorFrame("c", :x_deriv, :integrate, 2)
++        @test err.cursor == CursorFrame("c", :x_deriv, :integrate, 2, 1)
+         @test err.t == 0.05                   # inside frame one
+         err = reproduction(diverging(), 0)
+         @test err.cause isa NonfiniteState && err.boundary == 0 && err.host === :loop
+diff --git a/test/test_lattices.jl b/test/test_lattices.jl
+index 7f3616d..91a6078 100644
+--- a/test/test_lattices.jl
++++ b/test/test_lattices.jl
+@@ -10,14 +10,15 @@ mutable struct LatticeHooks{M} <: FrameHooks
+     model::M
+     boundaries::Vector{Tuple{Float64,Int,Int}}
+ end
+-frame_top!(::LatticeHooks) = nothing
++frame_top!(::LatticeHooks) = false
+ settled!(hooks::LatticeHooks) =
+     (push!(hooks.boundaries, (hooks.model.exec.clock.t, state(hooks.model, "a").n,
+                               state(hooks.model, "b").n)); false)
+ 
+-# A recording backend (§10.2): forward Euler that keeps every step length the
+-# loop hands it, the scalar's value, and whether that step's first stage found
+-# the table fresh (D-447).
++# A recording backend (§10.2, D-452): forward Euler through the seam's
++# protocol, proposing nothing and accepting every attempt, that keeps every step
++# length the loop hands it, the scalar's value, and whether that step's first
++# stage found the table fresh (D-447).
+ struct Recorder <: AbstractAlgorithm end
+ struct RecorderStepper{T} <: AbstractStepper
+     x₀::Vector{T}
+@@ -27,14 +28,15 @@ struct RecorderStepper{T} <: AbstractStepper
+ end
+ bind_stepper(::Recorder, ::Type{T}, n_x::Int) where {T} =
+     RecorderStepper{T}(zeros(T, n_x), zeros(T, n_x), Float64[], Bool[])
+-function integrate!(stepper::RecorderStepper, model::Model, h)
++propose(::RecorderStepper) = nothing
++checkpoint_stepper(::RecorderStepper) = nothing
++restore_stepper!(::RecorderStepper, ::Nothing) = nothing
++function attempt!(stepper::RecorderStepper, model::Model, h)
+     push!(stepper.lengths, ForwardDiff.value(h)); push!(stepper.fresh, model.fresh)
+-    x = model.exec.xbuf
+-    copyto!(stepper.x₀, x)
++    copyto!(stepper.x₀, model.exec.xbuf)
+     evaluate!(model); copyto!(stepper.k₁, model.exec.ẋbuf)
+-    x .= stepper.x₀ .+ h .* stepper.k₁
+-    model.exec.clock.t += h
+-    nothing
++    model.exec.xnext .= stepper.x₀ .+ h .* stepper.k₁
++    true
+ end
+ startpoint(stepper::RecorderStepper) = (stepper.x₀, stepper.k₁)
+ 
+@@ -55,11 +57,6 @@ localized_split_rig() = Group((; c = Sawtooth(1.0), a = TickCounter());
+ sampled_rig() = Group((; z = ZOH()); input_wires = ("in" => "z/in",),
+                       sample_times = (; z = Absolute(Period(7//100))))
+ 
+-# Hooks whose top reports nothing written, the drain's empty report (D-447).
+-struct FreshHooks <: FrameHooks end
+-frame_top!(::FreshHooks) = false
+-settled!(::FreshHooks) = false
+-
+ # Three stampers on one sawtooth, crossing in the first, second and third steps
+ # of frame 4 under `h_max = 1//40`.
+ three_stampers() = Group((; src = Sawtooth(1.0), s1 = Stamper(0.31), s2 = Stamper(0.335),
+@@ -299,9 +296,9 @@ function test_lattices()
+         @test [port(s, "a", :n) for s in snapshots] == [0, 0, 1, 1, 2, 2, 2, 3, 3, 4, 4]
+     end
+ 
+-    @testset "a first stage over a fresh table is the sweep's, bitwise, and the drain's report arms it (§10.3, D-447)" begin
+-        # A top that reports nothing written skips the first sweep of every
+-        # frame; the trajectory is the one that sweeps.
++    @testset "a first stage over a fresh table is the sweep's, bitwise, and a continued frame whose drain wrote nothing arms it (§10.3, D-447, D-452)" begin
++        # A continued frame whose top wrote nothing skips its first sweep; the
++        # trajectory is the one that sweeps. `frame!` never continues.
+         swept = Model(feedback_model(); Δt_frame = 1//50)
+         fresh = Model(feedback_model(); Δt_frame = 1//50)
+         init!(swept, set(u = (ref = 0.7,)))
+@@ -309,7 +306,7 @@ function test_lattices()
+         agree = true
+         for k in 1:100
+             frame!(swept, k)
+-            frame!(fresh, k, FreshHooks())
++            run_frame!(fresh, k, NoHooks(), true)
+             agree &= state(swept, "plant").q === state(fresh, "plant").q
+         end
+         @test agree
+@@ -323,11 +320,11 @@ function test_lattices()
+         step!(sim; frames = 3)
+         stage!(sim, "in" => 1.0)
+         step!(sim; frames = 2)
+-        # the loop's hooks outside an advance, so only the drain reports
+-        hooks = LoopHooks(sim, sim.plane.roster, nothing, Bool[], 0)
++        # the loop's hooks under frames continued by hand, so only the drain reports
++        hooks = LoopHooks(sim, sim.plane.roster, nothing, Bool[])
+         stage!(sim, "in" => 2.0)
+-        frame!(sim.model, 6, hooks)
+-        frame!(sim.model, 7, hooks)
++        run_frame!(sim.model, 6, hooks, true)
++        run_frame!(sim.model, 7, hooks, true)
+         flags = [false, true, true, true, true, true,     # frames 1 to 3, one advance
+                  false, true, true, true,                 # frames 4 and 5, the batch at 4
+                  false, true, true, true]                 # frames 6 and 7, the batch at 6
+diff --git a/test/test_localization.jl b/test/test_localization.jl
+index b5eb546..f52d4ac 100644
+--- a/test/test_localization.jl
++++ b/test/test_localization.jl
+@@ -12,7 +12,7 @@ mutable struct RecordingHooks{M} <: FrameHooks
+     boundaries::Vector{Float64}
+     abandon::Bool
+ end
+-frame_top!(hooks::RecordingHooks) = (hooks.tops += 1; nothing)
++frame_top!(hooks::RecordingHooks) = (hooks.tops += 1; false)
+ settled!(hooks::RecordingHooks) =
+     (push!(hooks.boundaries, hooks.model.exec.clock.t); hooks.abandon)
+ 
+@@ -261,7 +261,7 @@ function test_localization()
+         init!(quiet_standalone)
+         frames!(quiet_standalone, 2)
+         @test @ballocated(frame!($quiet_standalone, 3)) == 0
+-        quiet_hooks = LoopHooks(quiet_sim, quiet_sim.plane.roster, nothing, no_mask, 0)
++        quiet_hooks = LoopHooks(quiet_sim, quiet_sim.plane.roster, nothing, no_mask)
+         quiet_bytes = @ballocated publish!($quiet_sim, $(quiet_sim.plane.roster))
+         @test @ballocated(frame!($(quiet_sim.model), 3, $quiet_hooks)) == quiet_bytes
+ 
+@@ -274,7 +274,7 @@ function test_localization()
+         localizing_sim = Simulation(single(Bouncer(1.0, 0.07)); Δt_frame = 1//10)
+         init!(localizing_sim; log = false)
+         publish_bytes = @ballocated publish!($localizing_sim, $(localizing_sim.plane.roster))
+-        hooks = LoopHooks(localizing_sim, localizing_sim.plane.roster, nothing, no_mask, 0)
++        hooks = LoopHooks(localizing_sim, localizing_sim.plane.roster, nothing, no_mask)
+         @test @ballocated(frame!($(localizing_sim.model), 1, $hooks), setup = (init!($localizing_sim; log = false)), evals = 1) == 2 * publish_bytes
+         localizing_standalone = Model(localizing_sim.model.deployment)
+         @test @ballocated(frame!($localizing_standalone, 1), setup = (init!($localizing_standalone)), evals = 1) == 0
+diff --git a/test/test_stepper.jl b/test/test_stepper.jl
+index 1c119fe..2f85b1e 100644
+--- a/test/test_stepper.jl
++++ b/test/test_stepper.jl
+@@ -7,6 +7,84 @@
+ # scanned at every publication.
+ requested_bouncer() = Group((; b = Bouncer(1.0, 0.07), r = requested(false, "never")))
+ 
++# A backend that rejects on a schedule (§10.2, D-452): Heun's method through the
++# seam's protocol, proposing a standing length `h`. It rejects the attempts whose
++# ordinals over the run `rejected` lists, and every `every`-th one, and proposes
++# `factor` times a rejected length for the retry; after an acceptance it proposes
++# `h` again. Its stages write the state buffer and the clock, so a rejection
++# leaves real scratch for the Model to discard, and under `poison` it fills a
++# rejected trial with `NaN`. It carries its proposal and its attempt count
++# across a frame top, so a restore that dropped them would move the schedule.
++# Under `record` it keeps the clock and the state each attempt found at its
++# start, each accepted length, and the attempt count at which each
++# discontinuity notice arrived.
++struct Scheduled{N} <: AbstractAlgorithm
++    h::Float64
++    rejected::NTuple{N,Int}
++    every::Int
++    factor::Float64
++    poison::Bool
++    record::Bool
++end
++Scheduled(h; rejected = (), every = 0, factor = 1.0, poison = false, record = true) =
++    Scheduled(h, rejected, every, factor, poison, record)
++
++mutable struct ScheduledStepper{T,N} <: AbstractStepper
++    const algorithm::Scheduled{N}
++    const x₀::Vector{T}
++    const k₁::Vector{T}
++    const k₂::Vector{T}
++    proposal::Float64
++    attempts::Int
++    const starts::Vector{Tuple{Float64,Vector{T}}}
++    const lengths::Vector{Float64}
++    const notices::Vector{Int}
++end
++bind_stepper(algorithm::Scheduled{N}, ::Type{T}, n_x::Int) where {T,N} =
++    ScheduledStepper{T,N}(algorithm, zeros(T, n_x), zeros(T, n_x), zeros(T, n_x), algorithm.h, 0,
++                        Tuple{Float64,Vector{T}}[], Float64[], Int[])
++propose(stepper::ScheduledStepper) = stepper.proposal
++discontinuity!(stepper::ScheduledStepper) =
++    (stepper.algorithm.record && push!(stepper.notices, stepper.attempts); nothing)
++startpoint(stepper::ScheduledStepper) = (stepper.x₀, stepper.k₁)
++checkpoint_stepper(stepper::ScheduledStepper) = (stepper.proposal, stepper.attempts)
++restore_stepper!(stepper::ScheduledStepper, (proposal, attempts)::Tuple{Float64,Int}) =
++    (stepper.proposal = proposal; stepper.attempts = attempts; nothing)
++function attempt!(stepper::ScheduledStepper, model::Model, h)
++    exec, algorithm = model.exec, stepper.algorithm
++    x, ẋ, (; x₀, k₁, k₂) = exec.xbuf, exec.ẋbuf, stepper
++    t = exec.clock.t
++    ordinal = (stepper.attempts += 1)
++    algorithm.record && push!(stepper.starts, (ForwardDiff.value(t), copy(x)))
++    copyto!(x₀, x)
++    evaluate!(model); copyto!(k₁, ẋ)
++    x .= x₀ .+ h .* k₁; exec.clock.t = t + h
++    evaluate!(model); copyto!(k₂, ẋ)
++    exec.xnext .= x₀ .+ (h / 2) .* (k₁ .+ k₂)
++    if ordinal in algorithm.rejected || (algorithm.every > 0 && ordinal % algorithm.every == 0)
++        algorithm.poison && fill!(exec.xnext, NaN)
++        stepper.proposal = algorithm.factor * ForwardDiff.value(h)
++        return false
++    end
++    algorithm.record && push!(stepper.lengths, ForwardDiff.value(h))
++    stepper.proposal = algorithm.h
++    true
++end
++
++# The closed loop beside a counter due at 3/32 s, off the 1/8 s frame tops: the
++# plant's derivative reads a cell the sweep computes from its state, and every
++# period is dyadic, so a clock written as the clock plus a length is exact.
++seam_rig() = Group((plant = Plant(), ctl = Gain(4.0), sum = Sum(), a = TickCounter());
++                   local_wires = ("ctl/out" => "plant/u", "sum/e" => "ctl/e",
++                                  "plant/y" => "sum/b"),
++                   input_wires = "ref" => "sum/a",
++                   sample_times = (; a = Absolute(Period(3//32))))
++seam_sim(algorithm) = Simulation(seam_rig(); Δt_frame = 1//8, Δt_base = 1//32, algorithm)
++
++# A sawtooth whose stamper crosses inside a step, and whose own wrap does too: a
++# model with localized events.
++stamped() = Group((; src = Sawtooth(1.0), s = Stamper(0.315)); local_wires = ("src/q" => "s/sig",))
++
+ function test_stepper()
+     @testset "the method is a deployment binding by instance, RK4() the default (§10.2, D-442, D-449)" begin
+         sim = Simulation(feedback_model(); Δt_frame = 1//100)
+@@ -151,7 +229,7 @@ function test_stepper()
+         init!(bouncer_sim; log = false)
+         publish_bytes = @ballocated publish!($bouncer_sim, $(bouncer_sim.plane.roster))
+         no_mask = Bool[]                    # the advance's argument (D-260, D-261)
+-        hooks = LoopHooks(bouncer_sim, bouncer_sim.plane.roster, nothing, no_mask, 0)
++        hooks = LoopHooks(bouncer_sim, bouncer_sim.plane.roster, nothing, no_mask)
+         @test @ballocated(frame!($(bouncer_sim.model), 1, $hooks), setup = (init!($bouncer_sim; log = false)), evals = 1) == 2 * publish_bytes
+         # One honoured requester adds the scan of its buffer and no allocation
+         # (§13.5, D-316).
+@@ -159,7 +237,7 @@ function test_stepper()
+         init!(requested_sim; log = false)
+         requested_bytes = @ballocated publish!($requested_sim, $(requested_sim.plane.roster))
+         honoured_mask = Bool[false]
+-        requested_hooks = LoopHooks(requested_sim, requested_sim.plane.roster, nothing, honoured_mask, 0)
++        requested_hooks = LoopHooks(requested_sim, requested_sim.plane.roster, nothing, honoured_mask)
+         @test @ballocated(frame!($(requested_sim.model), 1, $requested_hooks), setup = (init!($requested_sim; log = false)), evals = 1) == 2 * requested_bytes
+     end
+ 
+@@ -169,4 +247,198 @@ function test_stepper()
+         frames!(dual_model, 50)                # `run!` to 0.05
+         @test state(dual_model, "plant").q isa SVector{2,D8}
+     end
++
++    test_seam_protocol()
++end
++
++# Two logs snapshot by snapshot: the clock bitwise, the counters, the table
++# buffer by buffer.
++same_snapshots(a, b) =
++    length(a) == length(b) &&
++    all(s.t === r.t && s.frame == r.frame && s.boundary == r.boundary && same_table(s.store, r.store)
++        for (s, r) in zip(a, b))
++
++function test_seam_protocol()
++    @testset "a rejected attempt leaves no trace: the retry starts from the step's start, and the run publishes the unrejected one bit for bit (§10.2, §10.3, D-452)" begin
++        # Every third attempt is rejected and retried at the same length. The
++        # rejected attempts ran both stages, so the state buffer, the clock and
++        # the table held their scratch; the drain at frame 3 makes that frame's
++        # first attempt read a written table, and every later step's a fresh one.
++        plain, rejecting = seam_sim(Scheduled(1/16)), seam_sim(Scheduled(1/16; every = 3))
++        for sim in (plain, rejecting)
++            init!(sim, set(u = (ref = 0.7,)))
++            step!(sim; frames = 2)
++            stage!(sim, "ref" => 1.0)
++            step!(sim; frames = 6)
++        end
++        stepper = rejecting.model.exec.stepper
++        @test length(stepper.lengths) == plain.model.exec.stepper.attempts ≥ 2 * stepper.attempts ÷ 3
++        # each retry found the clock and the state its rejected attempt found
++        @test all(stepper.starts[n + 1][1] === stepper.starts[n][1] &&
++                  stepper.starts[n + 1][2] == stepper.starts[n][2]
++                  for n in 3:3:(stepper.attempts - 1))
++        @test stepper.lengths == plain.model.exec.stepper.lengths
++        @test same_snapshots(logged(rejecting), logged(plain))
++        @test state(rejecting, "plant").q === state(plain, "plant").q
++        # A model with localized events: the rejections land in whole steps and
++        # in remainders after `t*` alike.
++        localized = [Simulation(stamped(); Δt_frame = 1//10, algorithm) for algorithm in
++                     (Scheduled(1/40), Scheduled(1/40; every = 3))]
++        for sim in localized
++            init!(sim)
++            run!(sim; t_end = 0.5)
++        end
++        @test modes(localized[1], "s").t_fired ≈ 0.315 atol = 1e-6
++        @test same_snapshots(logged(localized[2]), logged(localized[1]))
++        # A remainder's retry never passes the end of its step (D-446). Over
++        # dyadic periods, attempt 12 is the remainder from the stamper's `t*`
++        # to 11/32, rejected for four times its length, and the retry is
++        # clamped back to it.
++        straight, grown = [Simulation(stamped(); Δt_frame = 1//8, algorithm) for algorithm in
++                           (Scheduled(1/32), Scheduled(1/32; rejected = (12,), factor = 4.0))]
++        for sim in (straight, grown)
++            init!(sim)
++            run!(sim; t_end = 0.5)
++        end
++        @test grown.model.exec.stepper.attempts == straight.model.exec.stepper.attempts + 1 == 18
++        @test same_snapshots(logged(grown), logged(straight))
++    end
++
++    @testset "a proposal is clamped to h_max and to the span's end, a rejection's proposal is the retry's, and a shortened step ends at the clock plus its length (§10.2, §10.5, D-452)" begin
++        # Every period is dyadic, so each clock below is exact. The proposal of
++        # 0.1 is clamped to `h_max = 1/16`. Attempt 2, offered the span's last
++        # 1/32, is rejected for a quarter of it, so the step ends at
++        # 1/16 + 1/128, a boundary on no lattice, and the next step takes the
++        # span's rest to the due instant at 3/32.
++        model = Model(seam_rig(); Δt_frame = 1//8, Δt_base = 1//32, h_max = 1//16,
++                      algorithm = Scheduled(0.1; rejected = (2,), factor = 0.25))
++        init!(model, set(u = (ref = 0.7,)))
++        hooks = RecordingHooks(model, 0, Float64[], false)
++        frame!(model, 1, hooks)
++        frame!(model, 2, hooks)
++        stepper = model.exec.stepper
++        @test hooks.boundaries == [1/16, 1/16 + 1/128, 3/32, 1/8, 3/16, 1/4]
++        @test stepper.lengths == [1/16, 1/128, 3/128, 1/32, 1/16, 1/16]
++        @test stepper.attempts == 7
++        @test stepper.starts[3] == stepper.starts[2]
++        @test state(model, "a").n == 1 + 2         # the ticks at 3/32 and 3/16, at their instants
++        # A localized event inside a step a rejection shortened still fires at
++        # its crossing.
++        sim = Simulation(stamped(); Δt_frame = 1//10, algorithm = Scheduled(1/40; every = 2, factor = 0.5))
++        init!(sim)
++        run!(sim; t_end = 0.5)
++        @test modes(sim, "s").count == 1
++        @test modes(sim, "s").t_fired ≈ 0.315 atol = 1e-6
++    end
++
++    @testset "the notice reaches the backend where a handler fired, a tick ran, a drain wrote, and at init! and overlay!, never at a restore, and the same under one advance and many (§10.2, §12.6, D-452)" begin
++        # One step a span: frame tops at k/8, ticks every 3/32. The tick at 3/8
++        # lands on a frame top. The notices are recorded as the attempt count
++        # they arrived at: boundary zero's at 0, a tick's after its step, and
++        # frame 4's drain at its top, after the 3/8 tick's.
++        notices = [0, 1, 3, 5, 6, 6, 7, 9, 11, 12]
++        once, stepped = seam_sim(Scheduled(0.2)), seam_sim(Scheduled(0.2))
++        init!(once, set(u = (ref = 0.7,)))
++        step!(once; frames = 3)
++        stage!(once, "ref" => 1.0)
++        step!(once; frames = 3)
++        # the same frames one advance at a time: only a drain that wrote notifies at a top
++        init!(stepped, set(u = (ref = 0.7,)))
++        foreach(_ -> step!(stepped), 1:3)
++        stage!(stepped, "ref" => 1.0)
++        foreach(_ -> step!(stepped), 1:3)
++        @test once.model.exec.stepper.notices == stepped.model.exec.stepper.notices == notices
++        @test same_snapshots(logged(stepped), logged(once))
++        # `overlay!` notifies; a restore hands the carried state back and does not.
++        cp = checkpoint(once)
++        overlay!(once, set(u = (ref = 0.5,)))
++        @test once.model.exec.stepper.notices == [notices; 12]
++        restore!(once, cp)
++        @test once.model.exec.stepper.notices == [notices; 12]
++        # A handler that fires notifies at its boundary: the stamper's `t*`, in
++        # frame 4's one step.
++        sim = Simulation(stamped(); Δt_frame = 1//10, algorithm = Scheduled(0.2))
++        init!(sim)
++        run!(sim; t_end = 0.5)
++        @test sim.model.exec.stepper.notices == [0, 4]
++    end
++
++    @testset "a checkpoint carries the stepper's state, and a restore followed by a step is the unrestored run bit for bit (§12.6, D-274, D-452)" begin
++        # The stepper carries its proposal and its attempt count. A restore that
++        # dropped the count would reject attempts 5 and 9 again.
++        algorithm = Scheduled(1/16; rejected = (5, 9, 14, 20), factor = 0.5)
++        original = seam_sim(algorithm)
++        init!(original, set(u = (ref = 0.7,)))
++        @test trace(original).header.state.stepper == (1/16, 0)
++        step!(original; frames = 3)
++        cp = checkpoint(original)
++        stepper = original.model.exec.stepper
++        @test cp.state.stepper == (stepper.proposal, stepper.attempts) && stepper.attempts > 9
++        attempts_at_cp, accepted_at_cp = stepper.attempts, length(stepper.lengths)
++        step!(original; frames = 4)
++        resumed = seam_sim(algorithm)
++        restore!(resumed, cp)
++        step!(resumed; frames = 4)
++        resumed_stepper = resumed.model.exec.stepper
++        @test resumed_stepper.attempts == stepper.attempts > attempts_at_cp
++        @test resumed_stepper.lengths == stepper.lengths[(accepted_at_cp + 1):end]
++        after = filter(s -> s.boundary ≥ first(logged(resumed)).boundary, logged(original))
++        @test same_snapshots(logged(resumed), after)
++        # The model's own pair: a state taken from a standalone model and
++        # restored into a fresh one.
++        model = Model(seam_rig(); Δt_frame = 1//8, Δt_base = 1//32, algorithm)
++        init!(model, set(u = (ref = 0.7,)))
++        frames!(model, 3)
++        model_state = checkpoint(model)
++        @test model_state.stepper == (model.exec.stepper.proposal, model.exec.stepper.attempts)
++        twin = Model(seam_rig(); Δt_frame = 1//8, Δt_base = 1//32, algorithm)
++        restore!(twin, model_state)
++        frames!(model, 4)
++        frames!(twin, 4)
++        @test state(twin, "plant").q === state(model, "plant").q
++        @test twin.exec.stepper.lengths == model.exec.stepper.lengths[(end - length(twin.exec.stepper.lengths) + 1):end]
++        # The trace's header is detached and replays through the same attempts.
++        replayed = seam_sim(algorithm)
++        init!(replayed, set(u = (ref = 0.7,)))
++        replay!(replayed, trace(original))
++        @test replayed.model.exec.stepper.lengths == stepper.lengths
++        @test same_snapshots(logged(replayed)[2:end], logged(original)[2:end])
++    end
++
++    @testset "a cursor frame names the attempt, rendered past the first (§13.4, D-452)" begin
++        # Attempt 1 offers 0.02, whose second stage at 0.02 is short of the
++        # trip; it is rejected for four times its length, and attempt 2's second
++        # stage, at 0.08, trips.
++        model = Model(fed(Tripwire(0.05), "arm"); Δt_frame = 1//10,
++                      algorithm = Scheduled(0.02; rejected = (1,), factor = 4.0))
++        init!(model, set(u = (in = true,)))
++        err = failure(() -> frame!(model, 1))
++        @test err isa StepError{Tripped}
++        @test err.cursor == CursorFrame("c", :x_deriv, :integrate, 2, 2)
++        @test err.t == 0.08 && err.boundary == 0
++        @test occursin("integration stage 2 in attempt 2 of the frame from boundary 0",
++                       sprint(showerror, err))
++    end
++
++    @testset "a rejected trial is discarded unread: a nonfinite one raises nothing (§13.4, D-157, D-452)" begin
++        poisoned, clean = seam_sim(Scheduled(1/16; every = 2, poison = true)),
++                          seam_sim(Scheduled(1/16; every = 2))
++        for sim in (poisoned, clean)
++            init!(sim, set(u = (ref = 0.7,)))
++            step!(sim; frames = 4)
++        end
++        @test lifecycle(poisoned) === :initialized
++        @test same_snapshots(logged(poisoned), logged(clean))
++    end
++
++    @testset "the attempt loop allocates nothing, rejections included (§9.8, D-452)" begin
++        model = Model(seam_rig(); Δt_frame = 1//8, Δt_base = 1//32,
++                      algorithm = Scheduled(1/16; every = 2, factor = 0.5, record = false))
++        init!(model, set(u = (ref = 0.7,)))
++        frames!(model, 2)
++        k = Ref(3)
++        attempts = model.exec.stepper.attempts
++        @test @ballocated(frame!($model, k), setup = (k = $k[]; $k[] += 1), evals = 1) == 0
++        @test model.exec.stepper.attempts > attempts
++    end
+ end
+diff --git a/test/test_trace.jl b/test/test_trace.jl
+index 086ae17..8aca886 100644
+--- a/test/test_trace.jl
++++ b/test/test_trace.jl
+@@ -1649,8 +1649,8 @@ function trace_checkpoints()
+         # checkpoint's too, collected with the fingerprint's mismatches.
+         for (t, k) in ((0.25, 3), (0.34, 4), (-0.1, 0))
+             off_grid = ModelState(model_state.x, model_state.s, model_state.m,
+-                                  model_state.table, model_state.prior, t, model_state.t₀,
+-                                  model_state.deployment, model_state.layout)
++                                  model_state.table, model_state.prior, model_state.stepper, t,
++                                  model_state.t₀, model_state.deployment, model_state.layout)
+             d = only(diagnostics(failure(() -> restore!(sim, off_grid))))
+             @test d isa CheckpointMidFrame && d.frame == k && d.t === t &&
+                   d.t_frame === 0.0 + k * 0.1
+@@ -1671,8 +1671,8 @@ function trace_checkpoints()
+         # one throw carrying both kinds.
+         fine_state = checkpoint(fine)
+         off_both = ModelState(fine_state.x, fine_state.s, fine_state.m, fine_state.table,
+-                              fine_state.prior, 0.025, fine_state.t₀, fine_state.deployment,
+-                              fine_state.layout)
++                              fine_state.prior, fine_state.stepper, 0.025, fine_state.t₀,
++                              fine_state.deployment, fine_state.layout)
+         err = failure(() -> restore!(sim, off_both))
+         @test err isa DiagnosticError && any(d isa CheckpointMismatch for d in diagnostics(err)) &&
+               any(d isa CheckpointMidFrame for d in diagnostics(err))
