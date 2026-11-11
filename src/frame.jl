@@ -124,16 +124,15 @@ function _frame_steps!(model::Model{T}, k::Int, hooks::FrameHooks, fresh::Bool) 
         while true
             i += 1
             t = exec.clock.t
-            # a model with no continuous state never calls its stepper (D-156)
+            # a model with no continuous state attempts no step and asks no proposal (D-156)
             proposal = isempty(exec.xbuf) ? nothing : propose(exec.stepper)
             if proposal === nothing
                 span_end = i == steps
                 t_next = span_end ? t_to : t_from + i * h
                 h_step = T(h)
             else
-                span_left = t_to - t
-                h_step = _clamped(model, proposal, span_left)
-                span_end = h_step == span_left
+                h_step = _clamped(model, proposal, t, t_to)
+                span_end = h_step == t_to - t
                 t_next = span_end ? oftype(t, t_to) : t + h_step
             end
             if exec.has_localized

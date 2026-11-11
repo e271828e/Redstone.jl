@@ -901,7 +901,8 @@ soon as nothing in it names a `Simulation` in a signature, and below
   which returns the accepted length. It counts the attempts into the cursor,
   commits an accepted trial from `xnext` after the `isfinite` sweep
   `_check_finite!`, and puts a rejected attempt's start back from
-  `startpoint`. `_clamped` shapes a proposal into a length and `_step_end`
+  `startpoint`. `_clamped` shapes a proposal into a length, and refuses one
+  that does not advance the clock as an `InternalInvariant`, and `_step_end`
   writes where a step ended. The bare primitive `integrate!(model, h)` is
   one step toward `t + h`. `_check_finite!`'s `NonfiniteState` names the
   loop's frame or, off the loop, the frame top the clock rounds to (D-157,

@@ -18,7 +18,8 @@ requested_bouncer() = Group((; b = Bouncer(1.0, 0.07), r = requested(false, "nev
 # across a frame top, so a restore that dropped them would move the schedule.
 # Under `record` it keeps the clock and the state each attempt found at its
 # start, each accepted length, and the attempt count at which each
-# discontinuity notice arrived.
+# discontinuity notice arrived, and it throws past 10 000 attempts, so a loop
+# that never ends fails its test where it would fill the memory.
 struct Scheduled{N} <: AbstractAlgorithm
     h::Float64
     rejected::NTuple{N,Int}
@@ -57,6 +58,7 @@ function attempt!(stepper::ScheduledStepper, model::Model, h)
     x, ẋ, (; x₀, k₁, k₂) = exec.xbuf, exec.ẋbuf, stepper
     t = exec.clock.t
     ordinal = (stepper.attempts += 1)
+    algorithm.record && ordinal > 10_000 && error("the scheduled stub ran past 10 000 attempts")
     algorithm.record && push!(stepper.starts, (ForwardDiff.value(t), copy(x)))
     copyto!(x₀, x)
     evaluate!(model); copyto!(k₁, ẋ)
@@ -511,7 +513,24 @@ function test_seam_protocol()
         hooks = RecordingHooks(model, 0, Float64[], false)
         frame!(model, 1, hooks)
         @test hooks.boundaries == [Float64(1//10)] && model.exec.stepper.attempts == 0
-        @test frame_top!(NoHooks()) === false
+    end
+
+    @testset "a proposal that does not advance the clock is refused as the backend's bug (§10.2, D-452)" begin
+        # At t₀ = 1 a length of 1e-20 is below the clock's resolution. Each of
+        # the three would otherwise take steps without end.
+        for proposal in (0.0, -0.1, 1e-20)
+            model = Model(Group((; r = BareRamp())); Δt_frame = 1//8, algorithm = Scheduled(proposal))
+            init!(model; t0 = 1.0)
+            err = failure(() -> frame!(model, 1))
+            @test err isa StepError && err.cause isa InternalInvariant
+            @test err.t == 1.0 && model.exec.stepper.attempts == 0
+        end
+        # A retry is shaped the same way: rejected for none of its length.
+        model = Model(Group((; r = BareRamp())); Δt_frame = 1//8,
+                      algorithm = Scheduled(1/16; rejected = (1,), factor = 0.0))
+        init!(model)
+        err = failure(() -> frame!(model, 1))
+        @test err.cause isa InternalInvariant && model.exec.stepper.attempts == 1
     end
 
     @testset "the attempt loop allocates nothing, rejections included (§9.8, D-452)" begin

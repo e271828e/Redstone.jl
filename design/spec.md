@@ -5832,16 +5832,19 @@ checkpoint_stepper(stepper)         # the carried state; restore_stepper! puts i
 
 **The `Model` shapes every step's length, and the backend only proposes
 one** ([D-452][d-452]). Before each step, and after each rejected attempt,
-the `Model` asks `propose` for a proposal. The remainder of a step after a
-[`t*`](#g-t) boundary is offered whole, up to the step's end, with no
-proposal asked ([§10.4][s10-4]). A
+the `Model` asks `propose` for a proposal. **The remainder of a step after
+a [`t*`](#g-t) boundary is offered whole, up to the step's end, with no
+proposal asked** ([§10.4][s10-4], [D-452][d-452]). A
 fixed-step method proposes nothing, and the `Model` takes the span in equal
 steps no longer than `h_max` ([§10.5][s10-5], [D-449][d-449]). **A proposal
 is clamped to `h_max` and to the span's end** ([D-452][d-452]). A step that
 reaches the span's end ends on that [mandatory instant](#g-mandatory-instant)
 (a frame top or a due instant) and takes its clock. A proposed step that
 stops short ends at its start's clock plus its length, an instant on no
-lattice.
+lattice. **The `Model` refuses a length that does not advance the clock**
+([D-452][d-452]). A proposal that is zero, negative or below the clock's
+resolution is a backend's bug, and a span of such steps would never end. The
+refusal is an internal invariant, since no user can fix it.
 
 The backend takes each step in [attempts](#g-attempt) (tries at the step, each
 of which it accepts or rejects). **An attempt writes the step's end into a trial
@@ -5901,8 +5904,9 @@ to be run.
 **The seam is never entered empty** ([D-156][d-156]). The framework
 short-circuits this case rather than pushing it down the seam. With an empty
 `x`, the integrate step degenerates to advancing `t` to the next boundary,
-and the stepper is not called. The `Model` asks it for no proposal either,
-so such a model takes each span in equal steps under any backend. No backend
+and the stepper is not called. **The `Model` asks it for no proposal
+either** ([D-452][d-452]), so such a model takes each span in equal steps
+under any backend. No backend
 ever faces a state count of `N = 0`, and no backend contract has to say what
 it would do there.
 

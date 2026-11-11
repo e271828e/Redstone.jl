@@ -310,6 +310,7 @@ function test_lattices()
             agree &= state(swept, "plant").q === state(fresh, "plant").q
         end
         @test agree
+        @test frame_top!(NoHooks()) === false      # a bare frame's top writes nothing
 
         # Under the loop's hooks a frame's first step is fresh unless its drain
         # applied a batch or it opens an advance; every later step is fresh.

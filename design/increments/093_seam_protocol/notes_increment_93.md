@@ -36,7 +36,8 @@ F15, summarized in the brief's record.
 ## Rulings that left the design alone
 
 3. **F1: a proposal that does not advance the clock is left to increment
-   4.** A stub that proposes zero, a negative length or one below the
+   4.** Reversed by ruling 9 after the delta review. As first ruled: a stub
+   that proposes zero, a negative length or one below the
    clock's resolution never ends its span, with every attempt accepted. The
    reviewer recommended refusing a non-positive proposal now. The
    coordinator did not: a refusal needs an error kind, and the roadmap's
@@ -72,6 +73,39 @@ F15, summarized in the brief's record.
 8. **`CursorFrame` has `==` and no `hash`.** It predates the increment. Not
    touched.
 
+## After the delta review, on 2026-11-12
+
+The reviewer verified 2db7ae1 and agreed with every ruling above but the
+third.
+
+9. **D1: the `Model` refuses a length that does not advance the clock.**
+   This reverses ruling 3. The reviewer showed the hang cannot be
+   interrupted: the frame runs inside the advance's interrupt mask (§12.4),
+   and a SIGINT sent into a stuck frame was never delivered. Ruling 3's
+   reason was that a refusal needs an error kind the floor decision will
+   shape. It does not: `InternalInvariant` is the exception a framework
+   self-check raises, outside the kind set (D-215), and a backend is
+   framework code. The check is one comparison in `_clamped`, where a
+   proposal becomes a length, so it covers first offers and retries. D-452
+   gains the bullet, a Rationale paragraph and one rejection, and §10.2
+   states it. What it does not cover is named on the `pending.md` bullet: a
+   proposal that advances by almost nothing, and a backend that keeps
+   rejecting. To reverse: drop the comparison and the helper.
+   This is the second ruling that adds to the seam's contract, after ruling
+   1.
+
+10. **D4, a survivor accepted.** `init!`'s reset moved after boundary zero
+    survives, because the test stub's notice edits no carried state. D-452
+    says "before boundary zero", which matters once a backend's
+    `discontinuity!` edits what it carries. Increment 4's controller does,
+    and its re-initialization test will pin the order. Changing the stub's
+    carried tuple now would touch five existing pins for no backend in the
+    tree.
+
+11. **The recording test stub throws past 10 000 attempts.** A mutant that
+    makes a loop run without end now fails its test where it filled 25 GB
+    during the review. Test code only.
+
 ## Corrections with no ruling in them
 
 - **F5.** The "ulp edge" the coordinator told the user about cannot happen.
@@ -86,3 +120,10 @@ F15, summarized in the brief's record.
   now dies, M20 excepted.
 - **F13, F14.** A local renamed, a comment's count, a walkthrough sentence
   and one qualifier in §10.2.
+- **D2.** Two rulings of D-452 stood unbolded in §10.2, and one of its
+  bullets held three rulings. Bolded and split. §2.4 left its Spec field,
+  which lists where the mechanism lives.
+- **D3.** The cost sentence again: a localized step pays no extra copy where
+  its arrival raises a trigger the budget still admits, validated or not.
+- **D4.** A comment that overstated D-156, and an assertion moved to a
+  testset whose name states it.

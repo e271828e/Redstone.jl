@@ -779,17 +779,27 @@ to say what it would do at N = 0.
         copyto!(exec.xbuf, first(startpoint(exec.stepper)))
         clock.t = t
         fresh = false
-        h = _clamped(model, propose(exec.stepper), t_limit - t)
+        h = _clamped(model, propose(exec.stepper), t, t_limit)
     end
 end
 
-# A proposal shaped into a step's length (§10.2, D-452): clamped to the bound
-# and to what remains before the instant no step may pass, and that remainder
-# itself when the clamp reaches it, so the step ends on the instant.
-@inline function _clamped(model::Model, proposal::Float64, remaining)
+# A proposal shaped into the length of a step from `t` (§10.2, D-452): clamped
+# to the bound and to what remains before `t_limit`, the instant no step may
+# pass, and that remainder itself when the clamp reaches it, so the step ends on
+# the instant. A length that does not advance the clock is the backend's bug and
+# is refused here, since a span of such steps never ends and the frame runs
+# masked against an interrupt (§12.4).
+@inline function _clamped(model::Model, proposal::Float64, t, t_limit)
+    remaining = t_limit - t
     cap = min(proposal, model.deployment.h_max)
-    cap < _seconds(remaining) ? oftype(remaining, cap) : remaining
+    h = cap < _seconds(remaining) ? oftype(remaining, cap) : remaining
+    t + h > t || _stalled(proposal, t)             # the throw is the cold path
+    h
 end
+
+@noinline _stalled(proposal, t) = throw(InternalInvariant(
+    "the backend proposed a step of $proposal s at t = $(_seconds(t)) s, which does not " *
+    "advance the clock (§10.2)"))
 
 # The clock at the end of a step offered `h` toward `t_next`, of which the
 # backend accepted `h_accepted` from `t` (D-452): `t_next` when it took the whole

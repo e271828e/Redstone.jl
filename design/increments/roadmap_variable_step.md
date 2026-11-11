@@ -158,10 +158,14 @@ in discussion.
   most one report per frame; or throws a `StepError`. Recommended:
   degrade, by the doctrine of the two existing budgets. Increment 4. Until
   then nothing bounds a step's attempts, and no backend in `src/` rejects
-  one. Nor does anything check that a proposal advances the clock. A
-  proposal that is zero, negative or below the clock's resolution never
-  ends its span, with every attempt accepted, as increment 93's review
-  showed with a stub. The floor settles both.
+  one. Increment 93's review showed with a stub that a proposal that is
+  zero, negative or below the clock's resolution never ends its span, with
+  every attempt accepted, and that the frame's interrupt mask makes the
+  hang unstoppable. The Model now refuses such a length as an internal
+  invariant (D-452). A proposal that advances by almost nothing still takes
+  steps without a bound, and so does a backend that keeps rejecting. The
+  floor settles both, and it must sit above the clock's resolution over the
+  run, as D-450's bound does for the lattices.
 - **The nonfinite trial.** Increment 93 checks an accepted trial before the
   commit and never a rejected one (D-452). What remains is whether the Model
   turns a nonfinite accepted trial into a rejection above `h_min`, keeping

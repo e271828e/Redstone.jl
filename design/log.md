@@ -18874,9 +18874,13 @@ discontinuity notice. The bundled rulings:
   override, and the checkpoint pair. A method that proposes nothing takes a
   span in equal steps ([D-449][d-449]) and always accepts.
 - `attempt!` returns whether the backend accepts, and nothing else. The
-  `Model` reads `propose` before every step and after every rejection. It
-  offers the remainder of a step after a `t*` whole, and it asks no proposal
-  of the backend of a model with no continuous state ([D-156][d-156]).
+  `Model` reads `propose` before every step and after every rejection.
+- The remainder of a step after a `t*` is offered whole, with no proposal
+  asked.
+- The `Model` asks no proposal of the backend of a model with no continuous
+  state ([D-156][d-156]).
+- The `Model` refuses a shaped length that does not advance the clock, as an
+  internal invariant.
 - Neither `propose` nor the checkpoint pair has a default. A fixed-step
   backend answers `nothing` to each.
 - The `Model` clamps a proposal to `h_max` and to the span's end. A step that
@@ -18905,7 +18909,7 @@ discontinuity notice. The bundled rulings:
 - `init!` hands the backend the carried state it was bound with, before
   boundary zero.
 
-**Spec.** [§2.4][s2-4], [§10.2][s10-2], [§10.3][s10-3], [§12.6][s12-6], [§13.4][s13-4], [Appendix B][sB], [Appendix D][sD]
+**Spec.** [§10.2][s10-2], [§10.3][s10-3], [§12.6][s12-6], [§13.4][s13-4], [Appendix B][sB], [Appendix D][sD]
 
 **Rationale.** The backend knows its method and the error of a step. The
 `Model` knows the mandatory instants, the bound, the clock and the
@@ -18918,14 +18922,22 @@ written there and a rejection puts the step's start back whatever the attempt
 writes. What the trial buffer adds is the order: the nonfinite check reads
 the step's end before the state buffer holds it, and the localization loop's
 retained `xₙ₊₁` is the trial itself. It costs one copy of the state per
-accepted attempt. A step whose trigger the localization loop goes on to
-validate pays none extra, since that loop copied `xₙ₊₁` out already.
+accepted attempt. A step whose arrival raises a trigger the budget still
+admits pays none extra, since that loop copied `xₙ₊₁` out already.
 
 The carried state outlives a run, so `init!` must put it back. Left alone, a
 second `init!` under the same condition would continue the first run's
 proposal, and the run would no longer be a function of its condition
 ([§2.4][s2-4]). The state as bound is a value every backend already takes
 through its own pair, so no backend states a reset.
+
+A step that does not advance the clock would settle a second boundary at the
+clock of the first, which [D-450][d-450] forbids, and a span of such steps never ends.
+The frame runs masked against an interrupt ([§12.4][s12-4]), so the operator could
+not stop it. The refusal is one comparison where a proposal becomes a length.
+It names no kind, because a backend is framework code and its proposal is no
+failure a user can fix. A floor on the step, where an adaptive method brings
+one, makes the refusal unreachable for a proposal at or above it.
 
 The notice and freshness ([D-447][d-447]) answer two questions, and each has its own
 owner. The hook knows whether its drain wrote a value. Only the loop running
@@ -18979,6 +18991,9 @@ method rejects a trial that blew up, so a rejected trial is never checked.
 - *A reset call every backend states:* a backend that forgot it would carry
   one run's state into the next, and the checkpoint pair already takes the
   state as bound.
+- *Leaving a length that does not advance the clock to the floor of an
+  adaptive method:* until one exists the frame hangs past an interrupt, and a
+  floor below the clock's resolution would hang it still.
 - *A restore as a discontinuity:* a proportional-integral controller would
   clear the history the original kept, and the restored run would part from
   it.

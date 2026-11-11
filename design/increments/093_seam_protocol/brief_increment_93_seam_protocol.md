@@ -325,15 +325,15 @@ commit:
   proposal names the point for increment 4.
 - **F1, a proposal that does not advance the clock never ends its span.**
   Zero, negative and vanishing proposals, every attempt accepted. Left to
-  increment 4's floor and named on the `pending.md` bullet and in the
-  roadmap. No backend in `src/` proposes.
+  increment 4's floor at first, then refused after the delta review, below.
+  No backend in `src/` proposes.
 - **F5, the ulp edge of reading 4 cannot happen.** A proposed length is
   below the float distance to the span's end, so the sum cannot pass it. A
   step can end a sliver short. `pending.md` and the roadmap are reworded.
 - **F4, D-452's cost sentence.** The trial buffer costs one copy per
   accepted attempt, and a localized step pays none extra only where its
-  trigger is validated. Reading 1's "per accepted bare step" is loose the
-  same way.
+  arrival raises a trigger the budget still admits. Reading 1's "per
+  accepted bare step" is loose the same way.
 - **F6, F7, F9, F10 and F11, missing tests.** The span-end clocks were
   pinned on dyadic periods alone, where the float sum is exact; a 3/10 s
   frame now separates them, on the bare and the localized path. An accepted
@@ -367,4 +367,37 @@ step's end, so nothing reads the difference.
 
 **After the fixes.** The coordinator ran the gate in the worktree, 9807 of
 9807 in 10m58s, the 18 new assertions included, with the examples 77 of 77
-and the battery green. The reviewer checks the delta.
+and the battery green.
+
+**The delta review**, at 2db7ae1. The reviewer found every fix closing its
+finding and none opening another. It checked `stepper_bound` through every
+door: a `Dual` model, `restore!`, `replay!`, `linearize`'s scratch models,
+`overlay!` and `trim!`. Its ten former survivors die on the stepper file
+alone, and of four mutants on the fix's own lines three die. It agreed with
+the coordinator's rulings but one, and the coordinator landed a second
+commit:
+
+- **D1, the hang of F1 cannot be interrupted.** The frame runs inside the
+  advance's interrupt mask, and a SIGINT sent into a stuck frame was never
+  delivered. The `Model` now refuses a shaped length that does not advance
+  the clock, as an `InternalInvariant`, in `_clamped`. D-452 gains the
+  bullet, the reason and one rejection. Test: proposals of 0, −0.1 and
+  1e-20 at `t₀ = 1`, and a retry of no length. The check dropped: 6
+  failures and 1 error. The check admitting a zero length: 4 and 1. Under
+  either mutant the test stub's cap of 10 000 attempts ends the loop.
+- **D2, two rulings of D-452 stood unbolded in §10.2**, the whole remainder
+  after a `t*` and no proposal for a model with no continuous state. Bolded,
+  and D-452's bullet that held three rulings is split.
+- **D3, the cost sentence of F4** named the validated trigger where the
+  base's copy came before the validation. Reworded here and in D-452.
+- **D4, nits.** A comment overstated D-156: a stateless model's stepper
+  still hears the notice and the checkpoint pair. `frame_top!(::NoHooks)`'s
+  assertion moved to the freshness testset, whose name states it.
+
+**A second survivor accepted.** `init!`'s reset moved after boundary zero:
+the stub's notice edits no carried state, so nothing reads the order.
+Increment 4's controller will.
+
+**After the second commit.** The gate in the worktree, 9814 of 9814 in
+9m41s, with the examples 77 of 77, the battery green and the step path's 27
+allocation measurements still 0 B.

@@ -86,13 +86,15 @@ item changes what the spec says, the spec edit is part of the item.
     attempt, and a `ModelState` carries the stepper's state, which `init!`
     puts back as bound. A frame-top hook returns whether it wrote a value,
     and the caller of a frame says whether it continues the last one; D-447
-    is superseded in part. Three things wait for the next increment, and no
-    backend in `src/` reaches any. Nothing bounds a step's attempts, so the
-    floor and the attempt budget are owed. Nothing checks that a proposal
-    advances the clock: one that is zero, negative or below the clock's
-    resolution never ends its span, which the floor settles too. And a
-    proposed step can end a sliver short of the span's end, leaving a last
-    step of about an ulp, which belongs with the one step-length rule.
+    is superseded in part. The `Model` refuses a proposed length that does
+    not advance the clock, as an internal invariant. Two things wait for the
+    next increment, and no backend in `src/` reaches either. Nothing bounds
+    a step's attempts or the count of steps in a span, so a backend that
+    keeps rejecting, or proposes steps that advance by almost nothing, holds
+    its frame past an interrupt, since the frame runs masked (§12.4); the
+    floor and the attempt budget are owed. And a proposed step can end a
+    sliver short of the span's end, leaving a last step of about an ulp,
+    which belongs with the one step-length rule.
   - **Next: the first adaptive backend**, the roadmap's increment 4.
   - **Ruled from the three lattices** by the user on 2026-11-11, on the open
     points of `design/increments/091_three_lattices/notes_increment_91.md`:
