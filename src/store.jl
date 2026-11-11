@@ -152,10 +152,10 @@ capture_stores(bundle::StoreBundle) = StoreBundle(map(cs -> CellStore(copy(cs.bu
 The clock, in its own mutable cell so the zero-arg phase bodies can close over
 it. `t` is a bundle field for every stage (§5.2's bundle law) and varies within
 a step — RK stages evaluate at internal times. `t₀` anchors the indexed grid:
-frame tops are `t₀ + k·h`, computed from the index and never accumulated, so a
-remainder step's float arithmetic cannot drift the grid (§10.4). The frame
-index `k` and the boundary ordinal are not the clock's: they are the run's two
-counters (§12.6, D-317). `t₀` is a `Float64`, like `h` and `t_end`, while `t`
+frame tops are `t₀ + k·Δt_frame`, computed from the index and never
+accumulated, so a remainder step's float arithmetic cannot drift the grid
+(§10.4). The frame index `k` and the boundary ordinal are not the clock's:
+they are the run's two counters (§12.6, D-317). `t₀` is a `Float64`, like `h` and `t_end`, while `t`
 stays in the model's scalar: the origin is the grid's anchor and no design
 reader wants it perturbed, and a `Float64` origin is what lets `init!` take
 `t0 = 0.25` on a `Dual` model (§12.6, D-260, D-317). The constructor below takes

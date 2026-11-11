@@ -164,8 +164,9 @@ end
 # rule that every boundary publishes before integration resumes is a contract
 # on `settled!`. The top hook's `false` is the drain's report that the table is
 # the last boundary's, so the frame's first step may skip its first sweep; any
-# other return is the safe answer, a write. The simulation's hooks are
-# `LoopHooks` (sim.jl).
+# other return is the safe answer, a write. The fresh table after a boundary
+# inside a frame rests on `settled!` writing nothing into the model, a contract
+# the code does not enforce. The simulation's hooks are `LoopHooks` (sim.jl).
 """
     FrameHooks
 
@@ -183,12 +184,17 @@ functions on it.
   Those boundaries are the end of each integration step, the frame top among
   them, each [localized](@ref g-localized) event time [`t*`](@ref g-t),
   [boundary zero](@ref g-boundary-zero) under `init!`, and the boundary
-  `overlay!` or `restore!` settles. It returns whether to abandon the frame's
-  remainder, and `frame!` returns that value.
+  `overlay!` or `restore!` settles. It reads the settled boundary and writes
+  nothing into the model. It returns whether to abandon the frame's remainder,
+  and `frame!` returns that value.
 
 A subtype defines a method of each. Every boundary publishes before integration
 resumes, so a subtype that publishes [snapshots](@ref g-snapshot) does it in
-`settled!`. A `false` from `frame_top!` lets the frame's first step reuse the
+`settled!`. That method writes neither a [store](@ref g-store), a
+[root input](@ref g-root-input) nor the [signal table](@ref g-signal-table),
+since the next step's first stage reads the table the boundary left. A hook
+that writes into the model does so in `frame_top!` and reports the write.
+A `false` from `frame_top!` lets the frame's first step reuse the
 table the last boundary left, and changes no value. Return it only when nothing
 wrote into the model since that boundary. [`NoHooks`](@ref) does nothing and never abandons, for a model
 stepped on its own. A [`Simulation`](@ref) passes hooks of its own, which apply
@@ -226,7 +232,7 @@ contract every method keeps, and [`settled!`](@ref) for the other hook.
 """
 frame_top!(::NoHooks) = nothing
 
-# Design: §10.4, §13.4, D-317.
+# Design: §10.3, §10.4, §13.4, D-317, D-447.
 """
     settled!(::NoHooks) -> Bool
 
@@ -235,7 +241,9 @@ Publish nothing at a settled [boundary](@ref g-boundary) of a model's
 
 A model stepped on its own publishes no [snapshot](@ref g-snapshot). It never
 abandons the remainder of a frame, so [`frame!`](@ref) runs every frame to its
-end. See [`FrameHooks`](@ref) for the contract every method keeps, and
+end. Like every `settled!` method, it writes nothing into the model, since the
+next step's first stage reads the table the boundary left. See
+[`FrameHooks`](@ref) for the contract every method keeps, and
 [`frame_top!`](@ref) for the other hook.
 """
 settled!(::NoHooks) = false  # COV_EXCL_LINE

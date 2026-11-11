@@ -336,15 +336,15 @@ Base.@kwdef struct NonfiniteState <: Diagnostic
     path::String
     leaf::String     # the leaf's dotted spelling within the state, `"q"`, `"v[2]"`, `"x"` for a bare scalar (D-438)
     value::Any       # the offending value: NaN, Inf or -Inf
-    t::Float64       # the frame-top time the integrate landed on
-    boundary::Int    # the frame-entry boundary index, as the carrier's
+    t::Float64       # the time the step ended at
+    boundary::Int    # the frame-entry boundary index of the step's frame, as the carrier's
 end
 
 path(d::NonfiniteState) = d.path
 message(d::NonfiniteState) = string(
     _at_path(d.path), ": state leaf `", d.leaf, "` is ",
-    d.value, " at the frame top t = ",
-    d.t, " (from boundary ", d.boundary, ") — the model diverged; replay to ",
+    d.value, " at t = ", d.t, ", the end of a step in the frame from boundary ",
+    d.boundary, " — the model diverged; replay to ",
     d.boundary, " and step! to inspect the frame")
 
 """
@@ -1329,7 +1329,7 @@ Base.@kwdef struct DeploymentInvalid <: Diagnostic
     parameter::Symbol
     reason::Symbol   # :range|:inexact|:not_a_quantity|:missing|:unanchored|:no_constraint|:not_harmonic|:anchor_period|:anchor_offset
     value::Any = nothing
-    related::Any = nothing                   # the value it is measured against
+    related::Any = nothing                   # the value it is measured against; the step, on the lattices' `:range`
     paths::Vector{String} = String[]         # the unanchored components
     scope::String = ""                       # the anchor's declaring scope path, on the two anchor arms
     key::Union{Nothing,Symbol} = nothing     # the anchor's declaring key, on the two anchor arms
@@ -1398,6 +1398,11 @@ function _grid_block(grid::Union{Nothing,GridReport})
 end
 
 function message(d::DeploymentInvalid)
+    # A `:range` with a related value is the lattices' refusal, the step in hand.
+    d.reason === :range && d.related !== nothing &&
+        return "the lattices' exact unit, gcd(h, Δt_base) for Δt_base = $(d.value) and " *
+               "h = $(d.related), is too fine to index one frame in an `Int` — coarsen " *
+               "`Δt_base` or the step (§9.2, §10.5)"
     d.reason === :inexact &&
         return "`$(d.parameter)` must be exact — a Rational (`$(d.parameter) = 1//100`) or " *
                "a `Period`/`Hz` value: grid derivation is GCD arithmetic, ill-defined over " *
@@ -2555,7 +2560,7 @@ message(d::CheckpointMismatch) =
     "is compared against the `Build`, structural mismatch being an error and only " *
     "*parametric* difference the what-if replay (§12.7)"
 
-"§12.4, §12.6, §14: `checkpoint` on a simulation or a model, or `restore!` of a state on any of its forms, not at the rest a frame top leaves — the state a `t*` stop leaves, or a state read off the grid."
+"§12.4, §12.6, §14: `checkpoint` on a simulation or a model, or `restore!` of a state on any of its forms, not at the rest a frame top leaves — the state a stop before a frame top leaves, or a state read off the grid."
 Base.@kwdef struct CheckpointMidFrame <: Diagnostic
     t::Float64                               # the clock
     t_frame::Float64                         # the top of the frame it stands in
@@ -2565,10 +2570,10 @@ message(d::CheckpointMidFrame) =
     "a checkpoint is the state at a frame top, and this clock is " *
     (d.frame == 0 && d.t < d.t_frame ? "at t = $(d.t), before the origin t₀ = $(d.t_frame)" :
      "at t = $(d.t), inside frame $(d.frame) and short of its top at t = $(d.t_frame)") *
-    " — a `t*` stop abandons the frame's remainder. `checkpoint` " *
-    "reads a run stopped at a frame top (`t_end`, a stop request read at a grid boundary, " *
-    "or `stop!`), and `restore!` takes a `ModelState` read at one (§12.4, §12.6, D-274, " *
-    "D-319)"
+    " — a stop at any boundary before the frame top, a `t*` or a step end, abandons the " *
+    "frame's remainder. `checkpoint` reads a run stopped at a frame top (`t_end`, a stop " *
+    "request read at a frame top, or `stop!`), and `restore!` takes a `ModelState` read " *
+    "at one (§12.4, §12.6, D-274, D-319)"
 
 "§11.5, §12.7: a recorded writer schema naming faces the target model does not export as root inputs."
 Base.@kwdef struct ReplaySchemaMismatch <: Diagnostic

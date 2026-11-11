@@ -2748,9 +2748,9 @@ Annotation (2026-10-02): amended by [D-181][d-181], [D-128][d-128] and [D-230][d
 event phase runs under `firing_budget`. Replay pointers are the frame-entry
 boundary index, and a snapshot carries the published-boundary ordinal.
 
-Annotation (2026-11-11): amended by [D-445][d-445]. Every end of an integration step is
-a boundary too, and tick eligibility keys to due instants, not to frames. The
-frame keeps the drain and the pacer deadlines.
+Annotation (2026-11-11): superseded in part by [D-445][d-445]. Every end of an
+integration step is a boundary too, and tick eligibility keys to due instants,
+not to frames. The frame keeps the drain and the pacer deadlines.
 
 **Rejected.**
 - *Frame-only publication:* contradicts [§13.5][s13-5]'s snapshot-at-the-crossing
@@ -15116,9 +15116,9 @@ the sweep is the interior variant ([D-147][d-147]). [D-194][d-194]'s Rationale t
 from [§5.3][s5-3] as a premise, and [§10.3][s10-3], [§10.4][s10-4] and the glossary restate it, so no
 entry ruled it.
 
-Annotation (2026-11-11): amended by [D-447][d-447]. A step's first stage over a fresh
-table runs the flow alone, the table holding the sweep's cells at that very
-state.
+Annotation (2026-11-11): superseded in part by [D-447][d-447]. A step's first stage
+over a fresh table runs the flow alone, the table holding the sweep's cells at
+that very state.
 
 **Rejected.**
 - *Incremental `x_deriv`-only re-evaluation:* the flow would read cells
@@ -18452,9 +18452,9 @@ model follows the schedule rather than its frozen tier, so a `Model` at a
 `Dual` stepped through `frame!` takes the steps the `Float64` model takes.
 
 **Rejected.**
-- *`h` divides `Δt_base` ([D-443][d-443] as ratified):* at `RK4()` it is the
-  `:not_frame_multiple` refusal under another name, so the default backend
-  gains nothing from independent lattices. It makes "a base tick at which
+- *Superseded position — `h` divides `Δt_base`, [D-443][d-443]'s fourth bullet as
+  ratified:* at `RK4()` it is the `:not_frame_multiple` refusal under another
+  name, so the default backend gains nothing from independent lattices. It makes "a base tick at which
   nothing is due is no boundary" vacuous for a fixed step. And it turns
   [§10.5][s10-5]'s cost of an offset, a finer base grid, into a finer integration
   step. A 60 Hz frame over a 400 Hz controller needs 20 steps per frame,
@@ -18476,8 +18476,10 @@ boundary. The bundled rulings:
   tops comes from its base-tick index, and a step point on neither comes
   from its frame's index and `j`. The clock is written once per boundary.
 - Coincidence is decided on the deployment's exact periods, never by
-  comparing computed times, so a gap of a few ulps between two scheduled
-  instants cannot arise. A short exact gap is taken as the step it is.
+  comparing computed times, so two instants that coincide are one boundary
+  and rounding opens no gap between them. A short exact gap is taken as the
+  step it is, and two instants closer than the clock's resolution take one
+  clock value, in order.
 - The step lands on due instants, not on base ticks. A base tick at which
   nothing is due is no boundary. A boundary at which nothing is due takes
   the empty due set by arity selection ([D-185][d-185]).
@@ -18570,17 +18572,21 @@ alone. The bundled rulings:
 - Freshness lives on the framework side of the stepper seam, so a backend's
   first stage is the same call either way.
 - A frame-top hook that does not report counts as having written.
+- A `settled!` hook writes nothing into the model, neither a store, a root
+  input nor the signal table. A hook that writes does so at the frame top and
+  reports it.
 
-**Spec.** [§5.3][s5-3], [§10.2][s10-2], [§10.3][s10-3], [Appendix D][sD]
+**Spec.** [§5.3][s5-3], [§10.2][s10-2], [§10.3][s10-3], [Appendix B][sB], [Appendix D][sD]
 
 **Rationale.** The boundary's last sweep ran at the state, time, modes and
 inputs the next step starts from. Between that sweep and the first stage
-nothing writes the table but the drain, so the sweep would recompute the
-values the table already holds, and the first stage reads the same cells
-either way. A deviceless run's drain writes nothing, so every step of it
-saves one sweep: one of RK4's four per step and one of Heun's two. [D-347][d-347]'s
-rejected alternative read cells computed at another state; a fresh table
-holds cells computed at this one.
+nothing writes the table but the drain, given a `settled!` hook that writes
+nothing and root inputs that change only at frame tops ([§2.2][s2-2]). So the
+sweep would recompute the values the table already holds, and the first
+stage reads the same cells either way. A deviceless run's drain writes
+nothing, so every step of it saves one sweep: one of RK4's four per step
+and one of Heun's two. [D-347][d-347]'s rejected alternative read cells computed at
+another state; a fresh table holds cells computed at this one.
 
 **Rejected.**
 - *Freshness inside each backend:* every backend would restate when the

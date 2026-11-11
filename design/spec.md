@@ -277,8 +277,8 @@ of scheduling). A run starts at its origin `t₀`, and its frame
 tops are `tₖ = t₀ + k·Δt_frame` for k = 0, 1, 2 and so on. `Δt_frame` is the
 frame period. The start of a frame is its frame top.
 
-**The frame tops, the base ticks and the step points are three lattices in no
-required ratio** ([D-445][d-445]).
+**The frame tops, the base ticks and the [step points](#g-step-point) are
+three lattices in no required ratio** ([D-445][d-445]).
 
 - The frame tops, `Δt_frame` apart, are where the run meets the outside.
 - The base ticks, `Δt_base` apart, are the lattice on which every discrete
@@ -4603,7 +4603,8 @@ It is never entered by default, so `Δt_frame` stays what silence means.
 A fixed step `h` divides `Δt_frame`. **Nothing relates `h` to `Δt_base`**
 ([D-444][d-444]). A step that does not divide the frame is refused
 as `DeploymentInvalid`. A due instant that falls inside a step splits it
-([§10.5][s10-5]), so no schedule is refused for lying off the step points.
+([§10.5][s10-5]), so no schedule is refused for lying off the
+[step points](#g-step-point) (the instants `j·h` after each frame top).
 
 **If any unanchored component exists, deployment must declare `Δt_base`**
 ([D-283][d-283]). The refusal is constructive, carrying the suggestion message
@@ -4640,6 +4641,8 @@ violated constraint:
   checked on its own ([D-445][d-445]);
 - a fixed step that does not divide `Δt_frame`;
 - a non-dividing anchor period or offset;
+- a `Δt_base` whose exact unit with the step is too fine to index one frame
+  in an `Int` ([§10.5][s10-5], [D-445][d-445]);
 - an algorithm the [stepper seam](#g-seam) does not know;
 - a nonpositive `localization_tol`;
 - a `localization_budget` or a `firing_budget` that is not an integer ≥ 1.
@@ -5718,7 +5721,8 @@ and they mean different things.
 
 Every frame top is a boundary, but not every boundary is a frame top.
 **Every end of an integration step is a boundary**, whether the step ends at
-a step point, at a due instant inside the frame, or at the frame top
+a [step point](#g-step-point) (an instant `j·h` after the frame's top), at a
+due instant inside the frame, or at the frame top
 ([D-445][d-445]). The full boundary runs there, and the frame top alone adds
 the drain, the control read and the pacer's deadline. The frame therefore
 sets the coarsest spacing of snapshots, never the actual one. `t*` is an
@@ -5862,12 +5866,17 @@ solvers, linearization and trim already seed `x` and run the composite.
 ([D-447][d-447]). The table is fresh when it is the quiescent table of the
 boundary the step starts from. That holds after every boundary inside a
 frame, since nothing writes the table between such a boundary and the next
-step. At a frame top it holds when the drain wrote nothing, and the first
-frame of each advance counts as written. The flow then reads the cells the
-sweep would recompute at the same state, time, modes and inputs, so the
-derivative is the sweep's to the bit. The rule lives on the framework side
-of the [stepper seam](#g-seam), and a backend's first stage is the same call
-either way.
+step. [Root inputs](#g-root-input) (source cells written from outside the
+model) change only at frame tops ([§2.2][s2-2]). **A `settled!` hook writes
+nothing into the model** ([D-447][d-447]). It reads the boundary it settles
+and writes neither a [store](#g-store) (a framework-owned home of `x`, `s`
+or `m`), a root input nor the table. A hook that writes does so in
+`frame_top!` and reports the write. At a frame top the table is fresh when
+the drain wrote nothing, and the first frame of each advance counts as
+written. The flow then reads the cells the sweep would recompute at the
+same state, time, modes and inputs, so the derivative is the sweep's to the
+bit. The rule lives on the framework side of the [stepper seam](#g-seam),
+and a backend's first stage is the same call either way.
 While the RK stages run, the [signal table](#g-signal-table) is transiently
 integrator scratch. The boundary sweep in the
 [§5.3][s5-3] sequence restores consistency at each accepted
@@ -5895,8 +5904,9 @@ published consistency point, [§10.1][s10-1]). It is not the top of a
 
 **Localization runs inside each integration step** ([D-446][d-446]). Here
 tₙ and tₙ₊₁ name the two ends of the step being localized. Each end is a
-boundary, a frame top, a step point or a [due](#g-due) instant (an instant at
-which a discrete component is scheduled to run, [§10.5][s10-5]). A step in
+boundary, a frame top, a [step point](#g-step-point) (an instant `j·h` after
+the frame's top) or a [due](#g-due) instant. A due instant is one at which a
+discrete component is scheduled to run ([§10.5][s10-5]). A step in
 which one event localizes runs through these steps. Its boundaries are tₙ,
 `t*` and tₙ₊₁.
 
@@ -6300,8 +6310,9 @@ the frame period `Δt_frame` or to the step `h` ([§9.2][s9-2], [D-445][d-445]).
 component is due is a [due](#g-due) instant. **Every due instant is a
 boundary, and a base tick at which nothing is due is none**
 ([D-445][d-445]). The loop ends the integration step at each due instant,
-splitting the step when the instant falls between two step points
-([D-444][d-444]). Ticks therefore land on boundaries, which is the only place
+splitting the step when the instant falls between two
+[step points](#g-step-point) (the instants `j·h` after each frame top,
+[D-444][d-444]). Ticks therefore land on boundaries, which is the only place
 anything discrete ever happens. A boundary that is no due instant has no
 tick index. That covers a frame top or step end where nothing is due, and a
 boundary at a localized event time `t*` ([§10.4][s10-4], [D-185][d-185],
@@ -6409,7 +6420,10 @@ The next due instant after an instant is one modular computation per
 schedule row. It is the first base-tick index
 past the instant that the row's gate admits, and the nearest is the minimum
 over the rows. A short exact gap between a step point and a due instant is a
-short step, never merged into a neighbour.
+short step, never merged into a neighbour. Two scheduled instants closer than
+the clock's `Float64` resolution at that time take the same clock value, in
+order. The step between them keeps its exact length in a model without
+localized events, which integrates by exact lengths, as below.
 
 A step's length depends on whether the model has localized events. A step
 in a model without them integrates by its exact length, `h` for an unsplit
@@ -6422,10 +6436,11 @@ The split follows the schedule, not the state. A `Model` at a `Dual` takes
 the steps the `Float64` model takes, though its discrete tier is frozen
 ([§9.4][s9-4], [D-444][d-444]).
 
-The indices are `Int`s, so a run whose frame top or base-tick index would
-leave `Int` is refused at the advance that names it, by its end time or by
-its frame count ([§12.4][s12-4], [§12.6][s12-6]). `frame!` refuses such a frame as well. An unbounded run
-therefore ends at the last frame top the indices reach, with that refusal as
+The loop's positions are `Int`s, so a run is refused whose positions,
+counted in the lattices' exact unit, would leave `Int`. The advance that
+names such a run refuses it, by its end time or by its frame count
+([§12.4][s12-4], [§12.6][s12-6]). `frame!` refuses such a frame as well. An unbounded run
+therefore ends at the last frame top the lattices index, with that refusal as
 its loop error ([§13.6][s13-6]).
 
 Take a 20 ms frame at `RK4()` over a 100 µs base grid, with one component at
@@ -6937,9 +6952,10 @@ The boundary macro-sequence, in its final form, is the following.
 
 Boundary zero is the same sequence with an empty integrate ([§14.5][s14-5],
 [D-067][d-067]). Every end of an integration step runs the whole sequence,
-whether it falls at a frame top, at a step point or at a due instant inside
-the frame. The due updates run where the instant is due, and only the frame
-top adds the drain ([§10.1][s10-1], [D-445][d-445]).
+whether it falls at a frame top, at a [step point](#g-step-point) (an
+instant `j·h` after the frame's top) or at a due instant inside the frame.
+The due updates run where the instant is due, and only the frame top adds
+the drain ([§10.1][s10-1], [D-445][d-445]).
 
 The sequence decides the mixed case, where the handler of a
 [continuous component](#g-continuous-component) (the hybrid primitive, with
@@ -14120,8 +14136,9 @@ assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
     before the frame touches any state. It returns `false` when it wrote
     nothing into the model, and any other value counts as a write
     ([§10.3][s10-3], [D-447][d-447]). `settled!(hooks) → Bool` runs at
-    every settled boundary. `NoHooks()` is the no-op. Its `frame_top!`
-    returns `nothing`, a write, and its `settled!` returns `false`
+    every settled boundary and writes nothing into the model. `NoHooks()`
+    is the no-op. Its `frame_top!` returns `nothing`, a write, and its
+    `settled!` returns `false`
     ([D-317][d-317]).
   - `port(model, path, name)`, `state(model, path)` and `modes(model, path)`,
     with the `Simulation` forms `port(sim, path, name)`, `state(sim, path)`
@@ -14722,9 +14739,11 @@ activation):
   `localization_tol`, `localization_budget` or `firing_budget`. The reasons
   are `:range`, `:inexact`, `:not_a_quantity` and `:missing` (no
   `Δt_frame`). `:range` covers a `Δt_frame`, a `Δt_base` or an `h` that is
-  not positive and finite. `:not_harmonic` is the step's one relation, a
-  fixed step that does not divide `Δt_frame`, the frame period named as the
-  parameter and the step in hand ([D-444][d-444]). Two more are on
+  not positive and finite. It also covers a `Δt_base` whose exact unit with
+  the step is too fine to index one frame in an `Int`, the step in hand
+  ([§10.5][s10-5], [D-445][d-445]). `:not_harmonic` is the step's one
+  relation, a fixed step that does not divide `Δt_frame`, the frame period
+  named as the parameter and the step in hand ([D-444][d-444]). Two more are on
   `Δt_base`'s grid,
   `:unanchored` (derivation with unanchored discrete components, their paths
   in hand) and `:no_constraint` (derivation with no anchored work). A
@@ -14890,7 +14909,8 @@ activation):
 - **`CheckpointMidFrame`** ([§12.6][s12-6], [§14][s14]). Error · service ·
   fail-fast, but collected with `CheckpointMismatch` on `restore!`.
   `checkpoint` on a simulation or a model that is not at the rest a frame
-  top leaves. The clock is past a frame top after a `t*` stop. `overlay!`
+  top leaves. The clock is past a frame top after a stop at any boundary
+  before the next one, a `t*` or a step end ([D-445][d-445]). `overlay!`
   raises it on the same rest. `restore!` raises it too, on any of its forms, for a state whose `t` is off the grid
   ([§12.6][s12-6]). The clock's or the state's `t`, the frame top `t_frame`,
   the frame index `frame`.
@@ -14946,8 +14966,8 @@ activation):
   diagnostic or the original exception, its type the parameter.
 - **`NonfiniteState`** ([§13.4][s13-4]). Error · runtime · fail-fast.
   Component path, the offending state leaf (a bare leaf by its letter,
-  [D-438][d-438]) and its value, the frame-top time and the frame-entry
-  boundary index.
+  [D-438][d-438]) and its value, the time the step ended at, and the
+  frame-entry boundary index of the frame the step lies in.
 - **`ChatteringBudget`** ([§10.4][s10-4]). Warning · runtime · rate-limited.
   Component path, event name, boundary time, the exhausted
   `localization_budget` and the frame's localization count.
@@ -15418,7 +15438,7 @@ required ratio to `Δt_base` ([§9.2][s9-2], [§10.2][s10-2], [D-444][d-444]).
 `(D, Φ)` pair admits that boundary's [tick index](#g-tick-index), `(tick − Φ) %
 D == 0` ([§10.5][s10-5]). A **due instant** is a base tick at which some
 component is due. Every due instant ends an integration step, splitting it
-when the instant falls between two step points ([§10.5][s10-5]). A due component runs its stages in the [boundary sweep](#g-sweep)
+when the instant falls between two [step points](#g-step-point) ([§10.5][s10-5]). A due component runs its stages in the [boundary sweep](#g-sweep)
 and its `s_update` after [quiescence](#g-quiescence) ([§10.6][s10-6]). The due set is fixed for
 the boundary's event iteration and is given per kind of boundary
 ([§10.5][s10-5]).
@@ -15522,6 +15542,13 @@ detected, declared as a `StateEvent(guard, handler)` pair under
 `state_events`. The criterion is detection versus scheduling, not which
 fields the [guard](#g-guard) reads, so a guard over an input is a state event too. It is
 either [non-localized](#g-non-localized) or [localized](#g-localized) ([§2.3][s2-3], [§8.2][s8-2]).
+
+<a id="g-step-point"></a>**step point** — an instant of the integration method's lattice, `j·h`
+after a [frame](#g-frame) top for `j` from 1 to `Δt_frame/h`, the frame's closing top
+the last. The step points are counted from each frame top, so every frame top
+is one. A fixed step ends at the next step point unless a [due](#g-due) instant comes
+first, and then the next step runs to the step point after it ([§2.1][s2-1],
+[§10.5][s10-5], [D-444][d-444]).
 
 <a id="g-t"></a>**`t*`** — the [localized](#g-localized) event time: the holding endpoint of the
 root-finder's final bracket, structurally strictly later than `tₙ`. A full

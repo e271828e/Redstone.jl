@@ -768,6 +768,21 @@ function failures_runtime()
         @test err isa StepError{NonfiniteState} && err.cause.path == "acc" && err.cause.leaf == "x"
     end
 
+    @testset "a nonfinite state under subcycling names the frame its step lies in (§13.4, D-445)" begin
+        sim = Simulation(diverging(); Δt_frame = 1//10, algorithm = RK4(1//40))
+        init!(sim, set(u = (in = false,)))
+        step!(sim; frames = 3)
+        stage!(sim, "in" => true)                       # frame 4's drain arms the RHS
+        err = failure(() -> step!(sim; frames = 2))
+        @test err isa StepError{NonfiniteState}
+        # The clock at frame 4's first step end rounds to the top that ended
+        # frame 3, and the payload still names frame 4, the frame from boundary
+        # 3, as the carrier does.
+        Δt_frame, h = sim.model.deployment.Δt_frame, Float64(1//40)
+        @test err.cause.boundary == 3 && err.boundary == 3
+        @test err.cause.t ≈ 3 * Δt_frame + 1 * h
+    end
+
     @testset "the sweep covers a localized frame's remainder segment (§13.4, D-157)" begin
         # `q` crosses 0.15 inside frame 2; the handler latches, and the remainder
         # segment from t* to the frame top is the integrate that diverges.

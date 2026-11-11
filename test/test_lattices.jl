@@ -75,6 +75,10 @@ three_stampers() = Group((; src = Sawtooth(1.0), s1 = Stamper(0.31), s2 = Stampe
 # frame spans 10^16 units, so only 921 frames fit `Int`.
 overflow_rig() = Group((; c = TickCounter()); sample_times = (; c = Relative(10^16)))
 
+# A counter due at every base tick, whose exact unit with the step sets the
+# lattices' resolution.
+unit_rig() = Group((; c = TickCounter()); sample_times = (; c = Relative(1)))
+
 function test_lattices()
     @testset "a 20 ms frame over a 100 µs base takes one step, plus one per due instant off its top (§10.5, D-444, D-445)" begin
         model = Model(lattice_rig(); Δt_frame = 1//50, Δt_base = 1//10000)
@@ -153,6 +157,38 @@ function test_lattices()
         init!(dual, set(u = (in = D8(0.0),)); t0 = 0.25)
         frames!(dual, 2)
         @test dual.exec.stepper.lengths == model.exec.stepper.lengths
+    end
+
+    @testset "step points are counted from the frame top, never from the last boundary (§10.5, D-444)" begin
+        # A due instant 7 units into a 5-unit step: after the split the next
+        # step runs to the next step point, so frame 2's due instant at 14
+        # leaves a 1-unit piece before the step point at 15.
+        model = Model(split_rig(); Δt_frame = 1//10, Δt_base = 1//100, algorithm = Recorder(1//20))
+        init!(model, set(u = (in = 0.0,)))
+        frames!(model, 2)
+        @test model.exec.stepper.lengths ==
+              Float64[5//100, 2//100, 3//100, 4//100, 1//100, 5//100]
+        @test state(model, "a").n == 1 + 2
+    end
+
+    @testset "a due instant on a step point is written from its base-tick index (§10.5, D-445)" begin
+        # Every step point is a base tick here, so every step end inside a
+        # frame is due, and its clock comes from `n`, where the step's own
+        # formula rounds otherwise: frame 2's second step end is tick 5.
+        rig = Group((; c = Plant(), a = TickCounter()); input_wires = ("in" => "c/u",),
+                    sample_times = (; a = Relative(1)))
+        model = Model(rig; Δt_frame = 1//10, Δt_base = 1//30, algorithm = RK4(1//30))
+        init!(model, set(u = (in = 0.0,)))
+        clocks = Float64[]
+        hooks = RecordingHooks(model, 0, clocks, false)
+        for k in 1:2
+            frame!(model, k, hooks)
+        end
+        Δt_frame, Δt_base, h = model.deployment.Δt_frame, model.deployment.Δt_base, Float64(1//30)
+        @test clocks == [1 * Δt_base, 2 * Δt_base, 1 * Δt_frame,
+                         4 * Δt_base, 5 * Δt_base, 2 * Δt_frame]
+        @test clocks[5] !== 1 * Δt_frame + 2 * h        # the two formulas part by an ulp
+        @test state(model, "a").n == 1 + 6
     end
 
     @testset "a step shorter than the frame subcycles: the analytic solution, bitwise the frame at h (§2.2, §10.2, D-444)" begin
@@ -330,5 +366,28 @@ function test_lattices()
         @test_logs (:error, r"the run ended errored") match_mode = :any run!(sim)
         @test probe.log == [:init, :shutdown] && lifecycle(sim) === :stopped
         @test termination(sim).source.exception isa DiagnosticError{ArgumentInvalid}
+    end
+
+    @testset "a lattice whose exact unit cannot index one frame in an `Int` is refused at deployment (§9.2, §10.5, D-445)" begin
+        deploy(rig, Δt_base, h; Δt_frame = 1//1, kw...) =
+            Deployment(build(rig); Δt_frame, Δt_base, algorithm = RK4(h), kw...)
+        refused(rig, Δt_base, h; kw...) =
+            diagnostics(failure(() -> deploy(rig, Δt_base, h; kw...)))
+        # Two coprime denominators near √typemax(Int): one frame fits, and only one.
+        @test deploy(unit_rig(), 1//3037000453, 1//3037000493).lattice.max_frame == 1
+        # Finer, one frame's units leave `Int`: a refusal, never an `OverflowError`.
+        d = only(refused(unit_rig(), 1//(10^10 + 1), 1//10^10))
+        @test d isa DeploymentInvalid && d.parameter === :Δt_base && d.reason === :range &&
+              d.value == 1//(10^10 + 1) && d.related == 1//10^10
+        # At one step per frame the frame fits, and the unit itself leaves `Int`.
+        d = only(refused(unit_rig(), 1//(10^10 + 1), 1//10^10; Δt_frame = 1//10^10))
+        @test d.parameter === :Δt_base && d.reason === :range && d.related == 1//10^10
+        # A frame that fits `Int` with no room for a period past its top.
+        d = only(refused(overflow_rig(), 1//9_220_000_000_000_000_000, 1//1))
+        @test d.parameter === :Δt_base && d.reason === :range && d.related == 1//1
+        # Collected with the event parameters' faults in the one throw (D-229).
+        @test Set((d.parameter, d.reason)
+                  for d in refused(unit_rig(), 1//(10^10 + 1), 1//10^10; firing_budget = 0)) ==
+              Set([(:Δt_base, :range), (:firing_budget, :range)])
     end
 end

@@ -453,11 +453,17 @@ D-179, D-185, D-195, D-211, D-246, D-248, D-263, D-289, D-316, D-437, D-438.
   step as whole units, and `max_frame`, the last frame index whose positions
   fit `Int`. `max_frame` bounds `k·frame` plus the largest period in units,
   so it is one frame conservative: frame `max_frame + 1` would still fit.
-  The doors and `frame!` refuse past it (§10.5, §12.6).
+  The doors and `frame!` refuse past it (§10.5, §12.6). `_lattice` builds it
+  in `Int128` and returns `nothing` when the unit, a period in units or one
+  frame's positions leave `Int`, or `max_frame < 1`.
 - `bind_schedule` is strict under D-229: `Δt_frame`, `h` and `Δt_base` are
   each a premise of its own, positive and finite (`_positive_finite`), every
   check whose premise holds runs, and the one fixed-step relation is
-  `h | Δt_frame` (§9.2, D-444).
+  `h | Δt_frame` (§9.2, D-444). The lattices come last, with every other
+  check as their premise: `_lattice`'s `nothing` is `DeploymentInvalid` on
+  `Δt_base` with reason `:range` and the step as `related`, the one `:range`
+  that carries a related value, collected with the event parameters'
+  faults (§9.2, §10.5, D-445).
 - `==`/`hash` on a `Deployment` compare by value over everything but the
   build, the grid attribution, the `Lattice` and the warnings (§12.7). Two
   exact periods that round to one `Float64` therefore compare equal, though
@@ -619,9 +625,10 @@ D-256, D-261, D-268, D-270, D-315.
   its scalar (§9.2, D-320).
 - `ArgumentInvalid`'s `related`, the bound a `:range` value passes, which
   `frame!`'s refusal of `k` fills with the `Lattice`'s `max_frame`, and that
-  refusal's message arm. `DeploymentInvalid`'s `:range` on `Δt_base`; the
-  reasons `:subcycling` and `:not_frame_multiple` are gone (§9.2, §10.5,
-  D-444, D-445).
+  refusal's message arm. `DeploymentInvalid`'s `:range` on `Δt_base`, and
+  its message arm for the lattices' refusal, a `:range` with the step as
+  `related`; the reasons `:subcycling` and `:not_frame_multiple` are gone
+  (§9.2, §10.5, D-444, D-445).
 
 Spec: §9.1, §9.2, §10.4, §10.6, §10.7, §11.4, §11.6, §11.8, §12.2, §12.4,
 §12.6, §12.7, §13.1, §13.2, §13.4, §13.5, §14.4, §14.8, §14.9, §14.10,

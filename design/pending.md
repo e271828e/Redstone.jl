@@ -38,6 +38,17 @@ item changes what the spec says, the spec edit is part of the item.
     and the two transitional refusals are gone, and `bind_schedule` is
     strict under D-229.
   - **Next: the seam protocol**, the roadmap's increment 3.
+  - **Open from the three lattices**, ruled overnight on 2026-11-11 and
+    awaiting the user: the reconstructed Rejected lists of D-445 to D-447;
+    whether the `Deployment` stores and compares exact periods; what an
+    unbounded run does at the end of the lattices' `Int` range; a report of
+    the steps per frame in `show(deployment)`; whether a `settled!` hook's
+    contract should be enforced in code; whether a lattice finer than the
+    clock should be refused; whether `:boundary` in the `Events` register
+    follows the rename (D-448), and whether the rename sweeps the log. Each
+    is in `design/increments/091_three_lattices/notes_increment_91.md`,
+    which also lists three sites where periods of extreme magnitude still
+    raise a raw `OverflowError`.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose

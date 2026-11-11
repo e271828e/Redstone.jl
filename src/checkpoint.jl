@@ -53,8 +53,8 @@ fields hold the state.
 The frame index and the [boundary](@ref g-boundary) ordinal belong to a run, so
 a [`Checkpoint`](@ref) carries them beside the state.
 
-`t` equals `t₀ + k·h` as the clock writes it. A hand-typed decimal can miss the
-grid by an ulp and be refused as `CheckpointMidFrame`.
+`t` equals `t₀ + k·Δt_frame` as the clock writes it. A hand-typed decimal can
+miss the grid by an ulp and be refused as `CheckpointMidFrame`.
 
 A model's state is not a [condition](@ref g-condition). It holds the
 [root inputs](@ref g-root-input) as values, never as the condition that set

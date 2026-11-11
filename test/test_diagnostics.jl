@@ -434,6 +434,8 @@ function diagnostics_kind_set()
                               grid = grid),
             DeploymentInvalid(parameter = :Δt_base, reason = :no_constraint),
             DeploymentInvalid(parameter = :Δt_base, reason = :range, value = 0//1),
+            DeploymentInvalid(parameter = :Δt_base, reason = :range, value = 1//(10^10 + 1),
+                              related = 1//10^10),
             DeploymentInvalid(parameter = :Δt_frame, reason = :not_harmonic, value = 1//100,
                               related = 1//30),
             DeploymentInvalid(parameter = :Δt_base, reason = :anchor_period, value = 1//30,
@@ -788,6 +790,12 @@ function diagnostics_kind_set()
                          "the fixed step h = 1//30")
         @test message(DeploymentInvalid(parameter = :Δt_base, reason = :range, value = 0//1)) ==
               "`Δt_base` must be positive and finite, got 0//1 (§9.2)"
+        # A unit too fine to index one frame names `Δt_base` and the step (§10.5, D-445).
+        @test startswith(message(DeploymentInvalid(parameter = :Δt_base, reason = :range,
+                                                   value = 1//(10^10 + 1), related = 1//10^10)),
+                         "the lattices' exact unit, gcd(h, Δt_base) for Δt_base = " *
+                         "1//10000000001 and h = 1//10000000000, is too fine to index one " *
+                         "frame in an `Int`")
         # A frame past the lattices' last is named against that last frame (§10.5, D-445).
         @test startswith(message(ArgumentInvalid(call = :frame!, reason = :range, argument = :k,
                                                  value = 922, related = 921)),
@@ -1083,6 +1091,8 @@ function diagnostics_kind_set()
         @test occursin("s_update field `s` is Float64, state field is Int64", bare_renderings[4])
         @test startswith(bare_renderings[5], "`x.x` at `a/b` takes Float64")
         @test startswith(bare_renderings[6], "`a/b`: state leaf `x` is NaN")
+        @test occursin("at t = 0.1, the end of a step in the frame from boundary 2 —",
+                       bare_renderings[6])
         @test occursin("a tap on its store `s.s` could only", bare_renderings[7])
 
         # A named payload against a bare store is the ordinary undeclared field,
@@ -1254,7 +1264,9 @@ function diagnostics_kind_set()
         # frame, and the three ways to stop at a top.
         rendered = message(CheckpointMidFrame(t = 0.315, t_frame = 0.4, frame = 4))
         @test occursin("t = 0.315, inside frame 4 and short of its top at t = 0.4", rendered)
-        @test occursin("`t_end`, a stop request read at a grid boundary, or `stop!`", rendered)
+        @test occursin("a stop at any boundary before the frame top, a `t*` or a step end, " *
+                       "abandons the frame's remainder", rendered)
+        @test occursin("`t_end`, a stop request read at a frame top, or `stop!`", rendered)
         @test occursin("`restore!` takes a `ModelState` read at one", rendered)
         # A frame an interrupt cut is refused by the status, never here.
         @test !occursin("interrupt", rendered)

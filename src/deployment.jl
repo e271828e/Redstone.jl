@@ -199,15 +199,24 @@ end
 
 # The positions run on `Int`. Inside frame `k` the largest one the loop forms is a
 # due index's, at most a period past the frame top, so `max_frame` bounds `k` by
-# that margin; it is computed in `Int128` once, here.
-function Lattice(Δt_frame::Rational{Int}, Δt_base::Rational{Int}, h::Rational{Int},
-                 rows::Vector{ScheduleEntry})
-    unit = isempty(rows) ? h : gcd(h, Δt_base)
-    frame, step = _as_int(Δt_frame / unit), _as_int(h / unit)
-    base = isempty(rows) ? 0 : _as_int(Δt_base / unit)
+# that margin. Everything is computed once, here, in `Int128`: the gcd of two
+# `Int` rationals, each period in units and each product of two `Int`s fit it,
+# and every factor is checked against `Int` before it multiplies. Returns
+# `nothing` when the unit or one frame's positions leave `Int`, which
+# `bind_schedule` refuses (§9.2, D-229).
+function _lattice(Δt_frame::Rational{Int}, Δt_base::Rational{Int}, h::Rational{Int},
+                  rows::Vector{ScheduleEntry})
+    wide(value) = Rational{Int128}(value)
+    fits(value) = value ≤ typemax(Int)
+    unit = isempty(rows) ? wide(h) : gcd(wide(h), wide(Δt_base))
+    steps, step = numerator(wide(Δt_frame) / wide(h)), numerator(wide(h) / unit)
+    base = isempty(rows) ? Int128(0) : numerator(wide(Δt_base) / unit)
+    (fits(denominator(unit)) && fits(steps) && fits(step) && fits(base)) || return nothing
+    frame = steps * step   # past `Int`, it leaves `max_frame` at 0
     margin = isempty(rows) ? Int128(0) : maximum(Int128(row.D) for row in rows) * base
-    max_frame = clamp(fld(Int128(typemax(Int)) - margin, frame), 0, typemax(Int))
-    Lattice(Float64(h), unit, frame, base, step, Int(max_frame))
+    max_frame = fld(Int128(typemax(Int)) - margin, frame)
+    max_frame ≥ 1 || return nothing
+    Lattice(Float64(h), Rational{Int}(unit), Int(frame), Int(base), Int(step), Int(max_frame))
 end
 
 # A period checked on its own premise (§9.2, D-229, D-445): positive and finite,
@@ -235,7 +244,9 @@ Every check whose premise holds runs, and the pass records into the call's list
 and returns `nothing` on any fault; the caller owns the one throw per
 `Deployment` call (§9.1, D-229). The fixed-step relation reads `Δt_frame` and
 `h`, and the anchor loop reads `Δt_base` alone, so neither waits on the other
-(D-444).
+(D-444). The lattices come last, every check above their premise: a unit too
+fine to index one frame in an `Int` is `Δt_base`'s `:range`, the step its
+related value (§10.5, D-445).
 """
 function bind_schedule(build::Build, Δt_frame, Δt_base, algorithm, diags::Vector{Diagnostic})
     count_on_entry = length(diags)
@@ -326,9 +337,16 @@ function bind_schedule(build::Build, Δt_frame, Δt_base, algorithm, diags::Vect
               for scope in structure.scopes]
     # Every other premise's fault, the algorithm's included, is on the list by now.
     (length(diags) == count_on_entry && algorithm !== nothing) || return nothing
+    # The lattices' premise is all of the above. A unit too fine to index one
+    # frame in an `Int` joins the event parameters' faults in the one throw.
+    lattice = _lattice(Δt_frame_r, Δt_r, h_r, rows)
+    if lattice === nothing
+        push!(diags, DeploymentInvalid(parameter = :Δt_base, reason = :range,
+                                       value = Δt_r, related = h_r))
+        return nothing
+    end
     (Δt_frame = Float64(Δt_frame_r), Δt_base = Δtb, algorithm = typeof(algorithm)(h_r),
-     schedule = Schedule(rows, scopes), lattice = Lattice(Δt_frame_r, Δt_r, h_r, rows),
-     grid = grid, derived = derived)
+     schedule = Schedule(rows, scopes), lattice = lattice, grid = grid, derived = derived)
 end
 
 # --- the integration algorithm (§10.2, D-442) -----------------------------------
@@ -440,8 +458,9 @@ by an [`Absolute`](@ref) entry and the tree declares at least one. A derived
 A keyword outside its range is refused as `DeploymentInvalid`, and so is a
 `Δt_base` that does not divide an anchor's period or offset. A fixed step `h`
 must divide [`Δt_frame`](@ref g-dt_frame), and `Δt_base` stands in no required
-ratio to either. One throw reports the faults found together. Exhausting
-`firing_budget` warns `FiringBudget`.
+ratio to either. A `Δt_base` whose exact common unit with `h` is too fine to
+count one frame in an `Int` is refused as well. One throw reports the faults
+found together. Exhausting `firing_budget` warns `FiringBudget`.
 
 # Keywords
 
