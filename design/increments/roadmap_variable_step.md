@@ -26,7 +26,7 @@ to the next mandatory instant.
 ## Settled in discussion
 
 Each of these lands in the spec and the log with the increment that first
-needs it. None is built yet.
+needs it.
 
 - **Three quantities.** `Δt_frame`, the frame period; `Δt_base`, the base
   lattice of the discrete tier; `h`, the step the Model takes. `h` and its
@@ -80,13 +80,15 @@ needs it. None is built yet.
 - **The clock's resolution.** A run is refused where two distinct
   boundaries could take clocks that are equal or out of order, ruled on
   2026-11-11 on increment 91's open point. With `g` the smallest gap between
-  two boundaries, the run needs `|t₀|/g + 2·(t − t₀)/g < 2^51` at every
+  two boundaries, the run needs `|t₀|/g + 2·(t − t₀)/g < 2^50` at every
   instant `t`. Under the step bound `g` is the lesser of the lattice's unit
-  and `h_max / 2`. The bound is sufficient, not tight, and was derived for
-  increment 91's clock formulas, so the step bound's brief derives it again.
-  It gives a last frame beside the lattice's `max_frame`, computed where
-  `t₀` is set, and each door that refuses a run past `max_frame` refuses
-  past the lesser of the two. It does not cover `t*` boundaries, which sit
+  and `h_max / 2`. The bound is sufficient, not tight. The step bound's
+  prototype derived it again from its own clock formulas: `2^51` is the
+  first-order threshold, with no room for the terms it drops, so the bound
+  is half of it (D-450). It gives a last frame beside the lattice's
+  `max_frame`, a function of the deployment and `t₀` that each door
+  computes, and each door that refuses a run past `max_frame` refuses past
+  the lesser of the two. It does not cover `t*` boundaries, which sit
   on no lattice. §10.5's and D-445's sentences on equal clocks then state
   the refusal.
 - **The steps per frame.** `show(deployment)` states the bound and the
@@ -243,7 +245,7 @@ frame and a due instant inside it. That is an argument, not yet a run.
     takes the step's end. The clock's resolution refusal and the steps per
     frame in `show` land here. Spec: §2.1, §2.2, §9.2, §10.2, §10.5,
     Appendices B, C and D, with "step point" leaving the glossary. Log:
-    D-442 and D-444 superseded in part, D-445 amended, new entries for the
+    D-442, D-443, D-444 and D-445 superseded in part, new entries for the
     bound and for the clock refusal, and the two rejections the log owes
     from increment 91's rulings, which `pending.md` names. The brief settles
     three details: whether `h_max` joins the unit's gcd or the constructor

@@ -15,8 +15,10 @@ D-303 added the entry, and the `stop request` row on 2026-10-08, when D-316
 replaced `stop_on`'s. The `requester roster` row was counted on 2026-10-19,
 when chapter 13's rewrite added the entry. The twenty rows Appendix D's
 rewrite added were counted on 2026-10-21; no other row was recounted then.
-The `block` row was counted on 2026-10-27, when the entry was added, and the
-`step point` row on 2026-11-11, when the review of increment 91 added it.
+The `block` row was counted on 2026-10-27, when the entry was added. The
+`step point` row, added on 2026-11-11 by the review of increment 91, was
+removed the same day with its entry (D-449), and the `mandatory instant` row
+was counted then, when D-449 added the entry.
 
 ## D.1 Component model and declaration layer
 
@@ -106,6 +108,7 @@ The `block` row was counted on 2026-10-27, when the entry was added, and the
 | input epoch | g-input-epoch | 3 | A | a maximal span of constant `u`, delimited by frame-top drains |
 | interpolant | g-interpolant | 1 | A | the cubic Hermite continuous extension over the last completed step |
 | localized | g-localized | 8 | A | the crossing instant bracketed by root-finding over trial sweeps |
+| mandatory instant | g-mandatory-instant | 7 | A | a frame top or a due instant, which no integration step crosses |
 | pacing / pacer debt | g-pacing | 8 | A | waits inserted between completed frames, never altering the boundary sequence |
 | phase (`Φ`) | g-phase | 3 | A | a schedule's offset against its grid, compiled to base ticks |
 | predicate | g-predicate | 7 | B | what a guard defines: a `Bool` form or a sign |
@@ -114,7 +117,6 @@ The `block` row was counted on 2026-10-27, when the entry was added, and the
 | remainder step | g-remainder-step | 1 | A | the integration from `t*` to the original grid target |
 | schedule / `Schedule` | g-schedule | 3 | A | the typed per-component `(D, Φ, Δt)` table the `Deployment` carries |
 | state event | g-state-event | 1 | B | an event whose instant is unknown in advance and must be detected |
-| step point | g-step-point | 6 | A | an instant `j·h` after a frame top, where a fixed step ends |
 | `t*` | g-t | 0 | — | the localized event time, structurally strictly later than `tₙ` |
 | tick | g-tick | 30 | B | an instant at which a discrete component's stages run |
 | tier | g-tier | 35 | B | the continuous or discrete side of the hybrid formalism |

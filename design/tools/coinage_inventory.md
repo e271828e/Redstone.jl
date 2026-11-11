@@ -69,7 +69,8 @@ context wants.
 | Appendix D's gap check | — | promoted by Appendix D's gap check of 2026-10-21, each a coined name used in three or more sections: auto-bubbling, bound law / walk clause, branch-shape rule, export chain, locality law / one-level rule, opaque leaf, fused idiom, hand-down, hop / dead hop, boundary sequence / macro-sequence, trial evaluation, shadowing check, door, heartbeat, inspection read / integration read, levels doctrine, tail, fingerprint, read set, stopped-sim; bucket A from here on |
 | artifact | — | D-250's criterion word; Appendix D entry `g-artifact` in D.10, bucket A |
 | state | — | D-250's other criterion word; Appendix D entry `g-state-single-owner` in D.10, bucket A |
-| step point | 17 | D-444's instant of the method's lattice, `j·h` after a frame top; §2.1, §9.2, §10.1, §10.4, §10.5, §10.6, Appendix D; Appendix D entry `g-step-point`, bucket A from here on |
+| step point | — | D-444's instant of the method's lattice, `j·h` after a frame top; retired with its Appendix D entry `g-step-point` when D-449 removed the step points |
+| mandatory instant | 14 | D-449's frame top or due instant, which no step crosses, with its **span**; §2.1, §2.2, §9.2, §10.1, §10.5, §10.6, Appendix D; Appendix D entry `g-mandatory-instant`, bucket A from here on |
 
 The nine rows above are the pipeline redesign's coinages (D-250 through
 D-258). Each went straight to an Appendix D entry, because each names a type

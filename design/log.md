@@ -447,6 +447,8 @@ were derived.
 | [D-446][d-446] | Localize inside the step against the frame period, under a per-frame budget | ratified |
 | [D-447][d-447] | Run a step's first stage over a fresh table as the flow alone | ratified |
 | [D-448][d-448] | Name the detection policy of a `Bool` guard non-localized | ratified |
+| [D-449][d-449] | Bound the step by `h_max` and take each span in equal steps | ratified |
+| [D-450][d-450] | Refuse a run whose clock cannot order its boundaries | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -18352,6 +18354,13 @@ step before recording it keeps the comparison honest across spellings, as
 a token holding a float would carry an inexact step into the divisibility
 check; the range check stays with the deployment, where [D-229][d-229] collects it.
 
+Annotation (2026-11-11): superseded in part by [D-449][d-449]. A fixed-step instance
+carries no step: `RK4()` and `Heun()` are the tokens, and the step bound is
+the deployment's `h_max`, recorded resolved against `Δt_frame`. The float
+refusal at the token and the parameter `h` of `DeploymentInvalid` are gone.
+The token and the stepper as two types, `RK4()` as the default and the
+instance compared and printed as a value stand.
+
 **Rejected.**
 - *One parametrized type for the token and the stepper:* the token would
   carry empty scratch fields or a `Nothing` parameter, and every comparison
@@ -18407,6 +18416,10 @@ divides `Δt_frame` alone, and a due instant inside a step splits it, so
 `:not_harmonic` relates the step to the frame only. The other three bullets
 stand.
 
+Annotation (2026-11-11): superseded in part by [D-449][d-449]. The third time
+quantity is the step bound `h_max` on the `Deployment`, no longer a step
+inside the algorithm value. The first three bullets stand.
+
 **Rejected.**
 - *The frame on the `Simulation`:* the frame moves the trajectory, and a
   value outside the recorded deployment would let replay accept a run at a
@@ -18450,6 +18463,13 @@ off the step points. A user who wants equal steps chooses `h` to divide
 every period and offset, and declares guards in the `Bool` form. The `Dual`
 model follows the schedule rather than its frozen tier, so a `Model` at a
 `Dual` stepped through `frame!` takes the steps the `Float64` model takes.
+
+Annotation (2026-11-11): superseded in part by [D-449][d-449]. A fixed step no longer
+divides `Δt_frame`, and the step points are gone: a fixed-step method takes
+each span between two mandatory instants in the fewest equal steps `h_max`
+allows. A due instant still ends the step that reaches it, nothing relates
+the bound to `Δt_base`, and a `Model` at a `Dual` takes the steps the
+`Float64` model takes.
 
 **Rejected.**
 - *Superseded position — `h` divides `Δt_base`, [D-443][d-443]'s fourth bullet as
@@ -18508,6 +18528,13 @@ ulps apart. A boundary at every step end keeps the step-boundary contract
 publishes the state it acted on. The frame keeps what it keyed before
 because those activities meet the outside, and the outside sees the frame,
 not the step.
+
+Annotation (2026-11-11): superseded in part by [D-449][d-449] and [D-450][d-450]. With the step
+points gone, the frame tops and the base ticks are two lattices, and a step
+end inside a span lies on neither: its clock is the span's start clock plus
+its count times the span's exact step ([D-449][d-449]). Two boundaries closer than the
+clock resolves no longer take clocks equal or out of order, since such a run
+is refused ([D-450][d-450]). The other bullets stand.
 
 **Rejected.**
 - *Every base tick a boundary:* a finer base grid, the price [§10.5][s10-5] names for
@@ -18589,6 +18616,11 @@ nothing, so every step of it saves one sweep: one of RK4's four per step
 and one of Heun's two. [D-347][d-347]'s rejected alternative read cells computed at
 another state; a fresh table holds cells computed at this one.
 
+Annotation (2026-11-11): enforcing the fourth bullet's contract in code was
+weighed and rejected. Only a hand-written hooks type on an unclaimed model can
+break it, and a guard would be a trait on the hooks' contract that only a
+hook breaking the rule needs. The contract stays stated and unenforced.
+
 **Rejected.**
 - *Freshness inside each backend:* every backend would restate when the
   table is fresh, and the seam's contract would gain a clause a backend can
@@ -18622,6 +18654,135 @@ policies apart.
 
 **Rejected.**
 - *Keeping "boundary-detected":* it names what both policies do.
+
+### D-449 — Bound the step by `h_max` and take each span in equal steps
+
+**Status.** ratified
+
+**Position.** `h_max` is an optional keyword of the `Deployment`, an exact
+positive time that bounds every step under every method and need divide
+nothing. The bundled rulings:
+
+- The frame tops and the due instants are the mandatory instants, and a span
+  runs from one to the next. A fixed-step method takes a span of length `g`
+  in `n = ⌈g / h_max⌉` steps of `g / n` each. Without `h_max`, `n` is 1.
+- `RK4()` and `Heun()` carry no step. An algorithm instance carries what the
+  deployment fixes for its method alone.
+- The deployment records the bound resolved, the lesser of `h_max` and
+  `Δt_frame`, and `Δt_frame` when `h_max` is absent. `==`, `hash` and
+  replay's check compare it so.
+- `h_max` takes the values `Δt_frame` takes. A float is refused as
+  `:inexact`, and a bound that is not positive and finite as `:range`, each
+  collected with its siblings ([D-229][d-229]). A bound too fine to count the steps of
+  one frame in an `Int` is refused as `:range` with `Δt_frame` in hand.
+- Mandatory instants keep integer positions on the unit of `Δt_frame` and
+  `Δt_base`, and the bound stays an exact ratio to that unit. A step end
+  inside a span has no position. Its clock is the span's start clock plus
+  `i` times the span's exact step, from its count `i` in the span, never
+  accumulated.
+- `show(deployment)` states the steps per frame over one hyperperiod of the
+  frame tops and the due instants, counted from frame 1 and capped at
+  10 000 frames. No warning is raised when a due instant splits a step.
+
+**Spec.** [§2.1][s2-1], [§2.2][s2-2], [§2.4][s2-4], [§9.2][s9-2], [§10.1][s10-1], [§10.2][s10-2], [§10.4][s10-4], [§10.5][s10-5], [§10.6][s10-6], [§11.5][s11-5],
+[§12.7][s12-7], [Appendix B][sB], [Appendix C][sC], [Appendix D][sD]
+
+**Rationale.** `RK4(h)` reads as a promise of steps of `h`, which the split
+of [D-444][d-444] had already broken. A bound promises only what holds, and it means
+the same under an adaptive method, whose controller proposes a step that the
+Model clamps to the bound and to the next mandatory instant. Equal division
+takes the same number of steps as full steps and a remainder, at a lower
+truncation error: to leading order up to `(n/(n−1))^p` lower in a span, for
+a method of order `p`. It also never makes a short step of its own. The bound
+stays out of the unit's gcd, so a bound that divides nothing leaves the
+positions as coarse as the schedule makes them, and a span's step count is
+one integer division rounded up. A bound at or above the frame splits no
+span, so no bound, a bound at the frame and one above it are one trajectory;
+recording the bound resolved keeps the comparison honest across those
+spellings, as [D-442][d-442] did for the step. Writing a step end inside a span from
+the span's start keeps [D-082][d-082]'s argument against accumulation. For a bound
+that divides a frame with no due instant inside, it also reproduces [D-445][d-445]'s
+step points to the bit, so increment 91's subcycled runs keep their clocks.
+Deployments from before the update map to `Δt_frame = h`,
+`Δt_base = N_base·h` and no `h_max`, and every trajectory that takes one step
+per frame, split only at due instants, is bit-identical to increment 91's.
+
+**Rejected.**
+- *Superseded position — the step inside the algorithm instance, `RK4(h)`,
+  [D-442][d-442]'s position:* it reads as a promise of steps of `h` that the split
+  breaks, and an adaptive method has no step to carry.
+- *Superseded position — a fixed step that divides `Δt_frame`, with step
+  points counted from the frame top, [D-444][d-444]'s first bullet:* after a split
+  the next step ran to the next step point, so a frame's pieces were unequal
+  and a due instant just before a step point left a sliver.
+- *A lattice of step points on the deployment, `Δt_step`:* its one distinct
+  property is boundaries at instants no tick moves, which a harmonic `h_max`
+  gives anyway, and it forces boundaries on an adaptive controller.
+- *The bound with full steps and a remainder:* it keeps a sliver, and it puts
+  `h_max` into the lattice's unit.
+- *A warning at construction when a due instant splits a step:* the split is
+  the designed use.
+- *`h_max` in the unit's gcd:* a bound that divides nothing would make the
+  unit finer than the schedule needs, shrinking the range of the positions
+  and the clock's resolution for no instant the loop compares.
+- *The bound recorded as written:* three spellings of one trajectory would
+  compare unequal, and replay would refuse a recording over a difference
+  that moves nothing.
+- *A bound above the frame refused:* it refuses a value whose meaning, no
+  bound below the frame, is already well defined.
+
+### D-450 — Refuse a run whose clock cannot order its boundaries
+
+**Status.** ratified
+
+**Position.** A run is refused where two distinct boundaries could take
+clocks that are equal or out of order. The bundled rulings:
+
+- With `δ` the least gap between two consecutive boundaries, the lattices'
+  unit, or half of `h_max` when the bound splits a span, a run from `t₀` may
+  reach an instant `t` only while `|t₀| + 2·(t − t₀) < 2^50·δ`.
+- The bound gives a last frame beside the lattices' `Int` range, and a run
+  may take frames up to the lesser of the two. Every door that refuses a run
+  past the `Int` range refuses past the lesser: `frame!`, `step!`'s frame
+  count and duration, a `t_end` and replay's `to_time`. `init!` and `trim!`
+  refuse an origin whose first frame is already past it.
+- The last frame is a function of the deployment and `t₀`, computed where a
+  door reads it and never stored.
+- An unbounded run ends on `frame!`'s refusal at the last frame, as a loop
+  error.
+- The refusal does not cover `t*` boundaries, which lie on no lattice.
+
+**Spec.** [§2.1][s2-1], [§10.5][s10-5], [§12.6][s12-6], [§14.5][s14-5], [Appendix C][sC]
+
+**Rationale.** Every clock the loop writes is rounded from its own formula.
+With `u = 2^-53` and `ε = t − t₀`, a mandatory instant's clock,
+`t₀ + m·P` over an exact period `P`, errs by at most `u·|t₀| + 3u·ε` to
+first order: one rounding of `P`, one of the product and one of the sum. A
+step end inside a span adds the span's start clock to `i` times the rounded
+step and errs by at most `2u·|t₀| + 4u·ε`. Two consecutive boundaries `δ`
+apart therefore keep ordered clocks while `4u·(|t₀| + 2ε) < δ`, which is
+`|t₀| + 2ε < 2^51·δ`. That threshold has no room for the second-order terms
+or for the float arithmetic that computes the last frame, so the bound is
+half of it. A span of length `g` longer than `h_max` takes
+`n = ⌈g / h_max⌉ < g / h_max + 1` steps, each longer than `h_max / 2`, and a
+span just longer than `h_max` takes two steps just over `h_max / 2`, so no
+larger gap holds for every deployment. The bound is sufficient, not tight. A
+probe found no disordered clock in about 47 000 boundaries of random
+deployments just inside it, and the counter due `1e-17` seconds before every
+frame top that showed the fault in increment 91 is refused at `init!`. A pure
+function of the deployment and `t₀` needs no reset at `init!`, `restore!` or
+`overlay!`, and costs a few float operations per frame.
+
+**Rejected.**
+- *Clamping each clock to the larger of its own value and the last one:*
+  two boundaries could still share one clock, so the localized path could
+  integrate a step of zero length, and a clock written from the last one is
+  accumulated, which [D-082][d-082] rejects.
+- *Capping an unbounded run at the last frame, as if a `t_end` were
+  reached:* a cap would end the run without saying why.
+- *The last frame stored where `t₀` is set:* `init!`, `restore!` and every
+  other door that sets the origin would have to reset it, to save a few float
+  operations per frame.
 
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
@@ -19046,6 +19207,8 @@ policies apart.
 [d-446]: #d-446--localize-inside-the-step-against-the-frame-period-under-a-per-frame-budget
 [d-447]: #d-447--run-a-steps-first-stage-over-a-fresh-table-as-the-flow-alone
 [d-448]: #d-448--name-the-detection-policy-of-a-bool-guard-non-localized
+[d-449]: #d-449--bound-the-step-by-h_max-and-take-each-span-in-equal-steps
+[d-450]: #d-450--refuse-a-run-whose-clock-cannot-order-its-boundaries
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property
