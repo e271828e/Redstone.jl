@@ -177,8 +177,8 @@ function test_show()
         @test plain(multirate.events) == "Events: no events over 4 components"
         @test plain(build(Motor(1.0)).events) ==
               "Events: 1 event over 1 component\n" *
-              "  component  events             bundle\n" *
-              "  root       start => boundary  (x, m, u, y, t)"
+              "  component  events                  bundle\n" *
+              "  root       start => non_localized  (x, m, u, y, t)"
         @test occursin("\n  Events: 1 event over 1 component\n" *
                        "    component  events             bundle\n" *
                        "    root       wrap => localized  (x, y, t)\n", plain(build(Sawtooth(1.0))))

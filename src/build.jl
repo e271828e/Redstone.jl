@@ -600,7 +600,7 @@ names, `()` where the component declares no events.
 """
 struct ComponentEvents
     path::String
-    policies::NamedTuple   # event name => :boundary | :localized
+    policies::NamedTuple   # event name => :non_localized | :localized
     bundle::Tuple
 end
 
@@ -627,10 +627,10 @@ Each entry holds these fields.
 
 - `path`: the component's path.
 - `policies`: a `NamedTuple` from each event name, in declaration order, to the
-  detection policy its [guard](@ref g-guard)'s return form fixes, `:boundary`
-  for a `Bool` guard checked at step [boundaries](@ref g-boundary) only, or
-  `:localized` for a guard returning a `Float64`, whose crossing is located in
-  time.
+  detection policy its [guard](@ref g-guard)'s return form fixes,
+  `:non_localized` for a `Bool` guard checked at step
+  [boundaries](@ref g-boundary) only, or `:localized` for a guard returning a
+  `Float64`, whose crossing is located in time.
 - `bundle`: the field names of the event bundle, `()` where the component
   declares no events.
 """
@@ -1258,7 +1258,7 @@ function probe_events(structure::Structure, act::Activation{Float64})
             for name in declared_names
                 σ = invoke_probed(declared_events[name].guard, :guard, path, comp,
                                   CONTINUOUS, bundle)
-                policy = σ isa Bool ? :boundary :
+                policy = σ isa Bool ? :non_localized :
                          σ isa Float64 ? :localized :
                          throw(DiagnosticError(GuardForm(path = path, event = name,
                                                     observed = typeof(σ))))

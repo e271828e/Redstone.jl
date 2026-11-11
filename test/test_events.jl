@@ -236,7 +236,7 @@ function test_events()
     end
 
     @testset "the guard's form is the declared policy (§2.3, §10.4, D-179)" begin
-        @test build(fed(Trigger(0.5), "sig")).events.components[1].policies === (fire = :boundary,)
+        @test build(fed(Trigger(0.5), "sig")).events.components[1].policies === (fire = :non_localized,)
         @test build(single(Sawtooth(0.3))).events.components[1].policies === (wrap = :localized,)
         @test build(single(Rotor())).events.components[1].policies === NamedTuple()
     end

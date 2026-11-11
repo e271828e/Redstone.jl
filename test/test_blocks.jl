@@ -1611,7 +1611,7 @@ function test_blocks()
         @test u_types(Integrator()) == Float64
         @test y_types(Integrator(reset = true)) == Float64
         @test only(row for row in build(pulse_reset_model(true)).events.components if row.path == "i").policies ===
-              (reset = :boundary,)
+              (reset = :non_localized,)
         @test m_init(Integrator(reset = true)) === nothing
         @test only(row for row in build(integrator_model(1.0, 2.0)).events.components if row.path == "i").policies ===
               NamedTuple()
@@ -1660,7 +1660,7 @@ function test_blocks()
         block = LimitedIntegrator(lower = 0, upper = 1, x0 = 0.5, reset = true)
         @test u_types(block) == (u = Float64, reset = Bool)
         policies = only(row for row in build(pulse_reset_model(true; block = block)).events.components if row.path == "i").policies
-        @test length(policies) == 5 && policies.reset === :boundary
+        @test length(policies) == 5 && policies.reset === :non_localized
         h = 1//10
         bracket_width = Simulation(pulse_reset_model(true; block = block); Δt_frame = h).model.deployment.localization_tol * h
         # At t = 0.2, 0.3, 0.5, 0.8 and 1.0: the resets land as the integrator's,
@@ -2106,7 +2106,7 @@ function test_blocks()
         @test port(sim, "s") == 1.0
         step!(sim; t_plus = 0.1)
         @test state(sim, "i") ≈ 0.1 atol = 1e-12
-        @test step_events(step_model(Step(t_step = 0.25, localized = false))).policies === (fire = :boundary,)
+        @test step_events(step_model(Step(t_step = 0.25, localized = false))).policies === (fire = :non_localized,)
     end
 
     @testset "a step at or before t₀ publishes `after` from boundary zero (§10.6)" begin
@@ -2164,7 +2164,7 @@ function test_blocks()
             end
             step!(sim; t_plus = 2h)
             @test state(sim, "i") ≈ integral atol = atol
-            @test step_events(step_model(sequence)).policies === (advance = localized ? :localized : :boundary,)
+            @test step_events(step_model(sequence)).policies === (advance = localized ? :localized : :non_localized,)
             @test build(step_model(sequence); activations = (Float64, LinearizeDual, ProbeDual)) isa Build
         end
     end
@@ -2403,7 +2403,7 @@ function test_blocks()
         @test limited_events(limited_model(true)).policies ===
               (hit_upper = :localized, hit_lower = :localized, leave_upper = :localized, leave_lower = :localized)
         @test limited_events(limited_model(false)).policies ===
-              (hit_upper = :localized, hit_lower = :localized, leave_upper = :boundary, leave_lower = :boundary)
+              (hit_upper = :localized, hit_lower = :localized, leave_upper = :non_localized, leave_lower = :non_localized)
         # Over a vector, `N` copies of each event, in the scalar order.
         @test limited_events(vector_limited_model(true)).policies ===
               (hit_upper_1 = :localized, hit_upper_2 = :localized, hit_lower_1 = :localized,
@@ -2411,8 +2411,8 @@ function test_blocks()
                leave_lower_1 = :localized, leave_lower_2 = :localized)
         @test limited_events(vector_limited_model(false)).policies ===
               (hit_upper_1 = :localized, hit_upper_2 = :localized, hit_lower_1 = :localized,
-               hit_lower_2 = :localized, leave_upper_1 = :boundary, leave_upper_2 = :boundary,
-               leave_lower_1 = :boundary, leave_lower_2 = :boundary)
+               hit_lower_2 = :localized, leave_upper_1 = :non_localized, leave_upper_2 = :non_localized,
+               leave_lower_1 = :non_localized, leave_lower_2 = :non_localized)
     end
 
     @testset "the non-localized departure is off by at most `a h² / 2` (§2.3, §10.4)" begin
@@ -2424,11 +2424,11 @@ function test_blocks()
         step!(localized_sim; t_plus = 3.0)
         bracket_width = localized_sim.model.deployment.localization_tol * localized_sim.model.deployment.Δt_frame    # in time (§10.4)
         @test state(localized_sim, "li") ≈ 0.4 - 1.95^2 / 2 atol = bracket_width
-        boundary_sim = Simulation(ramp_limited_model(false); Δt_frame = 1//10)
-        init!(boundary_sim, set())
-        step!(boundary_sim; t_plus = 3.0)
-        @test state(boundary_sim, "li") ≈ -1.5 atol = 1e-12    # RK4 is exact on the quadratic
-        @test 0 < state(boundary_sim, "li") - state(localized_sim, "li") ≤ 0.1^2 / 2
+        non_localized_sim = Simulation(ramp_limited_model(false); Δt_frame = 1//10)
+        init!(non_localized_sim, set())
+        step!(non_localized_sim; t_plus = 3.0)
+        @test state(non_localized_sim, "li") ≈ -1.5 atol = 1e-12    # RK4 is exact on the quadratic
+        @test 0 < state(non_localized_sim, "li") - state(localized_sim, "li") ≤ 0.1^2 / 2
     end
 
     @testset "the limited double integrator stops exactly, at rest, frees on its input's sign, and linearizes by its mode (§10.4, §10.6)" begin
@@ -2630,15 +2630,15 @@ function test_blocks()
         @test limited_events(double_limited_model(true)).policies ===
               (hit_upper = :localized, hit_lower = :localized, leave_upper = :localized, leave_lower = :localized)
         @test limited_events(double_limited_model(false)).policies ===
-              (hit_upper = :localized, hit_lower = :localized, leave_upper = :boundary, leave_lower = :boundary)
+              (hit_upper = :localized, hit_lower = :localized, leave_upper = :non_localized, leave_lower = :non_localized)
         @test limited_events(vector_double_limited_model(true)).policies ===
               (hit_upper_1 = :localized, hit_upper_2 = :localized, hit_lower_1 = :localized,
                hit_lower_2 = :localized, leave_upper_1 = :localized, leave_upper_2 = :localized,
                leave_lower_1 = :localized, leave_lower_2 = :localized)
         @test limited_events(vector_double_limited_model(false)).policies ===
               (hit_upper_1 = :localized, hit_upper_2 = :localized, hit_lower_1 = :localized,
-               hit_lower_2 = :localized, leave_upper_1 = :boundary, leave_upper_2 = :boundary,
-               leave_lower_1 = :boundary, leave_lower_2 = :boundary)
+               hit_lower_2 = :localized, leave_upper_1 = :non_localized, leave_upper_2 = :non_localized,
+               leave_lower_1 = :non_localized, leave_lower_2 = :non_localized)
     end
 
     @testset "the limited double integrator's non-localized departure offsets `v` by `a δ² / 2` and `q` by `a δ² τ / 2 - a δ³ / 3` (§2.3, §10.4)" begin
@@ -2652,13 +2652,13 @@ function test_blocks()
         bracket_width = localized_sim.model.deployment.localization_tol * localized_sim.model.deployment.Δt_frame    # in time (§10.4)
         @test state(localized_sim, "li").q ≈ 0.15 - 1.95^3 / 6 atol = bracket_width
         @test state(localized_sim, "li").v ≈ -1.95^2 / 2 atol = bracket_width
-        boundary_sim = Simulation(ramp_double_limited_model(false); Δt_frame = 1//10)
-        init!(boundary_sim, set())
-        step!(boundary_sim; t_plus = 3.0)
+        non_localized_sim = Simulation(ramp_double_limited_model(false); Δt_frame = 1//10)
+        init!(non_localized_sim, set())
+        step!(non_localized_sim; t_plus = 3.0)
         δ, τ = 0.05, 1.95
-        @test state(boundary_sim, "li").v ≈ -1.9 atol = 1e-12    # RK4 is exact on the cubic
-        @test state(boundary_sim, "li").q ≈ 0.15 - 1.95^3 / 6 + δ^2 * τ / 2 - δ^3 / 3 atol = 1e-12
-        @test state(boundary_sim, "li").v - state(localized_sim, "li").v ≈ δ^2 / 2 atol = bracket_width
+        @test state(non_localized_sim, "li").v ≈ -1.9 atol = 1e-12    # RK4 is exact on the cubic
+        @test state(non_localized_sim, "li").q ≈ 0.15 - 1.95^3 / 6 + δ^2 * τ / 2 - δ^3 / 3 atol = 1e-12
+        @test state(non_localized_sim, "li").v - state(localized_sim, "li").v ≈ δ^2 / 2 atol = bracket_width
     end
 
     @testset "the relay switches with hysteresis, from boundary zero on (§10.4, §10.6, D-313)" begin
@@ -2760,14 +2760,14 @@ function test_blocks()
         step!(localized_sim; t_plus = 5h)
         bracket_width = localized_sim.model.deployment.localization_tol * localized_sim.model.deployment.Δt_frame    # in time (§10.4)
         @test state(localized_sim, "i") ≈ 0.25 atol = bracket_width    # switched at 0.25
-        boundary_sim = Simulation(comparator_switch_model(false); Δt_frame = h)
-        init!(boundary_sim, set())
-        step!(boundary_sim; t_plus = 5h)
-        @test state(boundary_sim, "i") ≈ 0.2 atol = 1e-12    # switched at the boundary 0.3
+        non_localized_sim = Simulation(comparator_switch_model(false); Δt_frame = h)
+        init!(non_localized_sim, set())
+        step!(non_localized_sim; t_plus = 5h)
+        @test state(non_localized_sim, "i") ≈ 0.2 atol = 1e-12    # switched at the boundary 0.3
         @test comparator_events(comparator_switch_model(true)).policies ===
               (switch_on = :localized, switch_off = :localized)
         @test comparator_events(comparator_switch_model(false)).policies ===
-              (switch_on = :boundary, switch_off = :boundary)
+              (switch_on = :non_localized, switch_off = :non_localized)
         for localized in (true, false)
             @test build(comparator_switch_model(localized); activations = (Float64, LinearizeDual, ProbeDual)) isa Build
         end
@@ -2799,7 +2799,7 @@ function test_blocks()
             end
             @test build(vector_comparator_model(localized); activations = (Float64, LinearizeDual, ProbeDual)) isa Build
         end
-        policy = (:boundary, :localized)
+        policy = (:non_localized, :localized)
         for localized in (true, false)
             @test comparator_events(vector_comparator_model(localized)).policies ===
                   NamedTuple{(:switch_on_1, :switch_on_2, :switch_off_1, :switch_off_2)}(ntuple(_ -> policy[1 + localized], 4))
@@ -3042,10 +3042,10 @@ function test_blocks()
         end
         @test port(sim, "plant") ≈ 1.0 atol = 1e-3
         # Non-localized, the departure moves by up to one step.
-        boundary_sim = Simulation(servo_loop(false); Δt_frame = 1//100)
-        init!(boundary_sim, set())
-        step!(boundary_sim; t_plus = 40.0)
-        @test port(boundary_sim, "plant") ≈ 1.0 atol = 1e-3
+        non_localized_sim = Simulation(servo_loop(false); Δt_frame = 1//100)
+        init!(non_localized_sim, set())
+        step!(non_localized_sim; t_plus = 40.0)
+        @test port(non_localized_sim, "plant") ≈ 1.0 atol = 1e-3
     end
 
     @testset "the PID's correction against its own limits stops a single loop's windup (§13.7, D-313)" begin
