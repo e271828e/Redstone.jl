@@ -18874,7 +18874,9 @@ discontinuity notice. The bundled rulings:
   override, and the checkpoint pair. A method that proposes nothing takes a
   span in equal steps ([D-449][d-449]) and always accepts.
 - `attempt!` returns whether the backend accepts, and nothing else. The
-  `Model` reads `propose` before every step and after every rejection.
+  `Model` reads `propose` before every step and after every rejection. It
+  offers the remainder of a step after a `t*` whole, and it asks no proposal
+  of the backend of a model with no continuous state ([D-156][d-156]).
 - Neither `propose` nor the checkpoint pair has a default. A fixed-step
   backend answers `nothing` to each.
 - The `Model` clamps a proposal to `h_max` and to the span's end. A step that
@@ -18900,8 +18902,10 @@ discontinuity notice. The bundled rulings:
   an advance for every frame after its first, and `frame!` never.
 - A `ModelState` holds the stepper's carried state, the value its checkpoint
   pair reads, `nothing` for a fixed-step method. A restore writes it back.
+- `init!` hands the backend the carried state it was bound with, before
+  boundary zero.
 
-**Spec.** [§10.2][s10-2], [§10.3][s10-3], [§12.6][s12-6], [§13.4][s13-4], [Appendix B][sB], [Appendix D][sD]
+**Spec.** [§2.4][s2-4], [§10.2][s10-2], [§10.3][s10-3], [§12.6][s12-6], [§13.4][s13-4], [Appendix B][sB], [Appendix D][sD]
 
 **Rationale.** The backend knows its method and the error of a step. The
 `Model` knows the mandatory instants, the bound, the clock and the
@@ -18914,8 +18918,14 @@ written there and a rejection puts the step's start back whatever the attempt
 writes. What the trial buffer adds is the order: the nonfinite check reads
 the step's end before the state buffer holds it, and the localization loop's
 retained `xₙ₊₁` is the trial itself. It costs one copy of the state per
-accepted step, and none for a model with localized events, whose loop made
-that copy already.
+accepted attempt. A step whose trigger the localization loop goes on to
+validate pays none extra, since that loop copied `xₙ₊₁` out already.
+
+The carried state outlives a run, so `init!` must put it back. Left alone, a
+second `init!` under the same condition would continue the first run's
+proposal, and the run would no longer be a function of its condition
+([§2.4][s2-4]). The state as bound is a value every backend already takes
+through its own pair, so no backend states a reset.
 
 The notice and freshness ([D-447][d-447]) answer two questions, and each has its own
 owner. The hook knows whether its drain wrote a value. Only the loop running
@@ -18964,6 +18974,11 @@ method rejects a trial that blew up, so a rejected trial is never checked.
 - *Defaults for the checkpoint pair that carry nothing:* a backend that
   forgot the pair would lose its state at every restore, and the restored run
   would part from the original with no error.
+- *The carried state surviving `init!`:* a run would depend on what the
+  model ran before it.
+- *A reset call every backend states:* a backend that forgot it would carry
+  one run's state into the next, and the checkpoint pair already takes the
+  state as bound.
 - *A restore as a discontinuity:* a proportional-integral controller would
   clear the history the original kept, and the restored run would part from
   it.

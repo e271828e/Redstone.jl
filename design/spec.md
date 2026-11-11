@@ -5808,7 +5808,10 @@ The seam contract has four clauses.
   checkpoint pair. A [checkpoint](#g-checkpoint) is the `Model`'s state at a
   frame top ([§12.6][s12-6], [D-274][d-274]). **The pair carries an adaptive
   method's proposal and its controller's memory, and nothing for a
-  fixed-step method** ([D-452][d-452]).
+  fixed-step method** ([D-452][d-452]). **`init!` hands the backend the
+  carried state it was bound with** ([D-452][d-452]). A run that `init!`
+  opens is then a function of its condition under any method, whatever the
+  model ran before ([§2.4][s2-4]).
 
 #### The step protocol
 
@@ -5829,13 +5832,16 @@ checkpoint_stepper(stepper)         # the carried state; restore_stepper! puts i
 
 **The `Model` shapes every step's length, and the backend only proposes
 one** ([D-452][d-452]). Before each step, and after each rejected attempt,
-the `Model` asks `propose` for a proposal. A
+the `Model` asks `propose` for a proposal. The remainder of a step after a
+[`t*`](#g-t) boundary is offered whole, up to the step's end, with no
+proposal asked ([§10.4][s10-4]). A
 fixed-step method proposes nothing, and the `Model` takes the span in equal
 steps no longer than `h_max` ([§10.5][s10-5], [D-449][d-449]). **A proposal
 is clamped to `h_max` and to the span's end** ([D-452][d-452]). A step that
 reaches the span's end ends on that [mandatory instant](#g-mandatory-instant)
-(a frame top or a due instant) and takes its clock. A step that stops short
-ends at its start's clock plus its length, an instant on no lattice.
+(a frame top or a due instant) and takes its clock. A proposed step that
+stops short ends at its start's clock plus its length, an instant on no
+lattice.
 
 The backend takes each step in [attempts](#g-attempt) (tries at the step, each
 of which it accepts or rejects). **An attempt writes the step's end into a trial
@@ -5895,8 +5901,10 @@ to be run.
 **The seam is never entered empty** ([D-156][d-156]). The framework
 short-circuits this case rather than pushing it down the seam. With an empty
 `x`, the integrate step degenerates to advancing `t` to the next boundary,
-and the stepper is not called. No backend ever faces a state count of
-`N = 0`, and no backend contract has to say what it would do there.
+and the stepper is not called. The `Model` asks it for no proposal either,
+so such a model takes each span in equal steps under any backend. No backend
+ever faces a state count of `N = 0`, and no backend contract has to say what
+it would do there.
 
 The loop-ownership rule ([§10.1][s10-1]) pays off structurally here. Under a
 foreign solver loop, an empty state pays a dummy-`[0.0]` tax

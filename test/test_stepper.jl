@@ -13,7 +13,8 @@ requested_bouncer() = Group((; b = Bouncer(1.0, 0.07), r = requested(false, "nev
 # `factor` times a rejected length for the retry; after an acceptance it proposes
 # `h` again. Its stages write the state buffer and the clock, so a rejection
 # leaves real scratch for the Model to discard, and under `poison` it fills a
-# rejected trial with `NaN`. It carries its proposal and its attempt count
+# rejected trial with `NaN`. It fills the accepted trial of attempt `spoil` with
+# `Inf`. It carries its proposal and its attempt count
 # across a frame top, so a restore that dropped them would move the schedule.
 # Under `record` it keeps the clock and the state each attempt found at its
 # start, each accepted length, and the attempt count at which each
@@ -24,10 +25,11 @@ struct Scheduled{N} <: AbstractAlgorithm
     every::Int
     factor::Float64
     poison::Bool
+    spoil::Int
     record::Bool
 end
-Scheduled(h; rejected = (), every = 0, factor = 1.0, poison = false, record = true) =
-    Scheduled(h, rejected, every, factor, poison, record)
+Scheduled(h; rejected = (), every = 0, factor = 1.0, poison = false, spoil = 0, record = true) =
+    Scheduled(h, rejected, every, factor, poison, spoil, record)
 
 mutable struct ScheduledStepper{T,N} <: AbstractStepper
     const algorithm::Scheduled{N}
@@ -66,6 +68,7 @@ function attempt!(stepper::ScheduledStepper, model::Model, h)
         stepper.proposal = algorithm.factor * ForwardDiff.value(h)
         return false
     end
+    ordinal == algorithm.spoil && fill!(exec.xnext, Inf)
     algorithm.record && push!(stepper.lengths, ForwardDiff.value(h))
     stepper.proposal = algorithm.h
     true
@@ -429,6 +432,86 @@ function test_seam_protocol()
         end
         @test lifecycle(poisoned) === :initialized
         @test same_snapshots(logged(poisoned), logged(clean))
+    end
+
+    @testset "a step that reaches the span's end takes its clock where the float sum would miss it (§10.2, §10.5, D-452)" begin
+        # From 0.03 the span's rest is 0.27, and 0.03 + 0.27 is one ulp past 0.3,
+        # so every end below is written from the frame top's index or missed.
+        Δt = Float64(3//10)
+        short = 0.1 * Δt
+        @test short + (Δt - short) != Δt
+        ramp() = Model(Group((; r = BareRamp())); Δt_frame = 3//10,
+                       algorithm = Scheduled(1.0; rejected = (1,), factor = 0.1))
+        # A first offer: attempt 1 is rejected for a tenth of the frame, and the
+        # next step is offered the rest of the span.
+        model = ramp()
+        init!(model)
+        hooks = RecordingHooks(model, 0, Float64[], false)
+        frame!(model, 1, hooks)
+        @test hooks.boundaries == [short, Δt] && model.exec.clock.t === Δt
+        # A retry: the second step is offered `short`, rejected for a hundred
+        # times that, and the retry is clamped to the span's rest. The same on a
+        # model with localized events, whose loop moves the step's end.
+        for root in (Group((; r = BareRamp())), stamped())
+            model = Model(root; Δt_frame = 3//10,
+                          algorithm = Scheduled(short; rejected = (2,), factor = 100.0))
+            init!(model)
+            hooks = RecordingHooks(model, 0, Float64[], false)
+            frame!(model, 1, hooks)
+            @test hooks.boundaries == [short, Δt] && model.exec.clock.t === Δt
+            @test model.exec.stepper.attempts == 3
+        end
+        # A localized step's first retry is clamped to the span's end, not to the
+        # end it was first offered: rejected at 1/32 for four times that, it takes
+        # the whole frame.
+        localized = Model(stamped(); Δt_frame = 1//8,
+                          algorithm = Scheduled(1/32; rejected = (1,), factor = 4.0))
+        init!(localized)
+        frame!(localized, 1)
+        @test localized.exec.stepper.lengths == [1/8]
+        # The bare primitive's retry never passes the length it was given.
+        bare = Model(Group((; r = BareRamp())); Δt_frame = 1//8,
+                     algorithm = Scheduled(1/16; rejected = (1,), factor = 4.0))
+        init!(bare)
+        integrate!(bare, 1/16)
+        @test bare.exec.stepper.lengths == [1/16] && bare.exec.clock.t === 1/16
+    end
+
+    @testset "an accepted trial is checked before it is committed, and the report reads the trial (§13.4, D-157, D-452)" begin
+        # Attempt 3, the first of frame 2, is accepted with an infinite trial.
+        model = Model(Group((; r = BareRamp())); Δt_frame = 1//4, algorithm = Scheduled(1/8; spoil = 3))
+        init!(model)
+        frame!(model, 1)
+        err = failure(() -> frame!(model, 2))
+        @test err isa StepError{NonfiniteState}
+        @test err.cause.value == Inf && err.cause.t == 3/8
+        @test err.cursor == CursorFrame("r", :none, :integrate, 0, 1)
+        @test all(isfinite, model.exec.xbuf)       # the trial never reached the state buffer
+        @test CursorFrame("r", :x_deriv, :integrate, 2, 1) != CursorFrame("r", :x_deriv, :integrate, 2, 2)
+    end
+
+    @testset "init! hands the stepper its state as bound, so a run is a function of its condition (§2.4, §12.6, D-452)" begin
+        algorithm = Scheduled(1/16; rejected = (5, 9), factor = 0.5)
+        fresh, again = seam_sim(algorithm), seam_sim(algorithm)
+        init!(fresh, set(u = (ref = 0.7,)))
+        step!(fresh; frames = 3)
+        init!(again, set(u = (ref = 0.7,)))
+        step!(again; frames = 2)                   # leaves the stepper past attempt 5
+        init!(again, set(u = (ref = 0.7,)))
+        @test trace(again).header.state.stepper == trace(fresh).header.state.stepper == (1/16, 0)
+        step!(again; frames = 3)
+        @test again.model.exec.stepper.attempts == fresh.model.exec.stepper.attempts
+        @test same_snapshots(logged(again), logged(fresh))
+    end
+
+    @testset "a model with no continuous state never asks its stepper for a proposal (§10.2, D-156, D-452)" begin
+        # One step a frame, though the backend's standing proposal is 0.03.
+        model = Model(Group((; a = TickCounter())); Δt_frame = 1//10, algorithm = Scheduled(0.03))
+        init!(model)
+        hooks = RecordingHooks(model, 0, Float64[], false)
+        frame!(model, 1, hooks)
+        @test hooks.boundaries == [Float64(1//10)] && model.exec.stepper.attempts == 0
+        @test frame_top!(NoHooks()) === false
     end
 
     @testset "the attempt loop allocates nothing, rejections included (§9.8, D-452)" begin

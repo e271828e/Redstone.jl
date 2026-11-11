@@ -288,3 +288,83 @@ nothing)` and three-state wording outside the log and the records. "Empty
 is acceptable."
 
 ## The review's record
+
+The arc on top of ddca615: 3a1269b (docs), 66c5ba6 (this brief and the
+patch), e7dacf9 (code), then the review's fixes. Nothing is pushed.
+
+**The review**, at e7dacf9. An independent high-tier agent ran the gate,
+9789 of 9789 in 9m55s on Julia 1.13.3, with the examples 77 of 77, the
+Documenter build clean and the battery green. Its own bit-identity probe
+matched the base on 22 records under RK4 and Heun, including independent
+lattices, a checkpoint with an overlay and a restore, a replay, the bare
+`integrate!` and a `Dual` model. `propose`, `attempt!`, `frame_top!` and
+`run_frame!` infer concretely, and the step path allocates nothing at
+`Float64` and `LinearizeDual`. Compile latency did not move. Its report
+lists 27 mutants, 15 dead and 12 alive. One of the dead, a clamp that
+ignores the span's end, never terminated and was stopped by the coordinator
+at 25 GB.
+
+The user was away and had delegated the findings short of a significant
+design question. The coordinator ruled on each, recorded the rulings in
+`notes_increment_93.md` beside this brief, and landed the fixes as one
+commit:
+
+- **F2, `init!` left the stepper's carried state as the last run left it.**
+  A second `init!` under the same condition continued the first run's
+  proposal, so a run was no longer a function of its condition (§2.4). The
+  `Model` now keeps the carried state as bound, `stepper_bound`, and `init!`
+  hands it back before boundary zero. D-452 gains the bullet and two
+  rejections, edited in place since the entry is this increment's. Test: a
+  second `init!` gives the fresh run's header and snapshots; without the
+  line, 3 failures.
+- **F12, a model with no continuous state asked its stepper for a
+  proposal**, against D-156. The loop reads none there. Without the guard,
+  1 failure.
+- **F3, the remainder after a `t*` is offered without asking `propose`.**
+  §10.2 now says so, and the roadmap's open decision on the notice and the
+  proposal names the point for increment 4.
+- **F1, a proposal that does not advance the clock never ends its span.**
+  Zero, negative and vanishing proposals, every attempt accepted. Left to
+  increment 4's floor and named on the `pending.md` bullet and in the
+  roadmap. No backend in `src/` proposes.
+- **F5, the ulp edge of reading 4 cannot happen.** A proposed length is
+  below the float distance to the span's end, so the sum cannot pass it. A
+  step can end a sliver short. `pending.md` and the roadmap are reworded.
+- **F4, D-452's cost sentence.** The trial buffer costs one copy per
+  accepted attempt, and a localized step pays none extra only where its
+  trigger is validated. Reading 1's "per accepted bare step" is loose the
+  same way.
+- **F6, F7, F9, F10 and F11, missing tests.** The span-end clocks were
+  pinned on dyadic periods alone, where the float sum is exact; a 3/10 s
+  frame now separates them, on the bare and the localized path. An accepted
+  trial filled with `Inf` shows the check reads the trial. The bare
+  `integrate!` under a rejecting backend, a localized first retry clamped to
+  the span's end, and two cursor frames that differ in the attempt alone.
+  The coordinator re-ran ten of the reviewer's twelve survivors, each in
+  its own process under a time limit where it could loop, and all ten die,
+  with 1 to 4 failures. The eleventh is accepted below, and the twelfth was
+  two of the ten combined.
+- **F8, `frame_top!(::NoHooks)`** is now called by a test, which its
+  coverage marker needed.
+- **F13 and F14, text.** `remaining` in `frame.jl` held two meanings, and
+  the new one is `span_left`. The seam's header counted six functions and
+  listed seven. The walkthrough's sentence on a fresh table names the
+  continued frame. §10.2's clock sentence says "a proposed step".
+- **F15, two questions.** Projection writes the state at every boundary and
+  raises no notice, which no text states: a new open decision in the
+  roadmap. A hook that returns `nothing` fails as a `TypeError` inside a
+  `StepError`: left.
+
+**Two readings above were wrong as written.** Reading 11: `boundary!`,
+`offtick_boundary!` and `boundary_zero!` raise the notice where a tick ran
+or a handler fired, since they go through `run_boundary!`; only `integrate!`
+and `apply!` raise none. Reading 5: a frame boundary raises the notice only
+where a tick is due or a handler fired.
+
+**Survivors accepted.** The clock written after the nonfinite check
+instead of before it: every backend in the tree leaves the clock at the
+step's end, so nothing reads the difference.
+
+**After the fixes.** The coordinator ran the gate in the worktree, 9807 of
+9807 in 10m58s, the 18 new assertions included, with the examples 77 of 77
+and the battery green. The reviewer checks the delta.

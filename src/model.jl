@@ -57,7 +57,7 @@ there. [`Δt_frame`](@ref g-dt_frame) is required, as for [`Deployment`](@ref). 
 `chunk_size` that is not an integer of at least 1 is refused as
 `ArgumentInvalid`.
 
-A model holds six values, each a field.
+A model holds seven values, each a field.
 
 - `deployment`: the deployment it materializes, and through it the build.
 - `exec`: the executor this model owns, with its stepper and its buffers.
@@ -71,6 +71,8 @@ A model holds six values, each a field.
 - `fresh`: whether the stage the integrator evaluates next may read the table
   the last [boundary](@ref g-boundary) left. Only the frame loop sets it, and
   that stage clears it.
+- `stepper_bound`: what the integration method carried from step to step when
+  the model was built, which [`init!`](@ref) hands back to it.
 
 `status` is `:built` until [boundary zero](@ref g-boundary-zero) completes, and
 `:consistent` once it has completed or a state has been restored. A throw inside
@@ -99,6 +101,7 @@ mutable struct Model{T,E}
     @atomic claimed::Bool
     const frame_diag::DiagCell
     fresh::Bool   # the next stage's table is the last boundary's (§10.3, D-447)
+    const stepper_bound::Any   # the stepper's carried state as bound, `init!`'s reset (D-452)
 end
 
 # The scalars `Float64` embeds exactly into (D-320): itself, and a concrete `Dual`
@@ -120,7 +123,8 @@ function Model(deployment::Deployment, ::Type{T} = Float64; chunk_size = 16) whe
     act = activation(deployment.build, T)
     exec = compile(deployment.build, act, deployment.schedule; chunk_size = Int(chunk_size),
                    algorithm = deployment.algorithm)
-    Model{T,typeof(exec)}(deployment, exec, :built, false, DiagCell(EMPTY_DIAG), false)
+    Model{T,typeof(exec)}(deployment, exec, :built, false, DiagCell(EMPTY_DIAG), false,
+                          checkpoint_stepper(exec.stepper))
 end
 
 # The two sugar forms, each *defined as* the composition (§9.2, D-254). The
@@ -325,6 +329,8 @@ function init!(model::Model{T}, plan::ConditionPlan; t0::Real = 0.0,
     exec.clock.t = Float64(t0)        # the origin at the door, into the deployment's scalar (D-260)
     exec.clock.t₀ = Float64(t0)       # exact: the clock's origin is a `Float64` too
     fill!(exec.events.prior, false)   # every prior not-holding (§10.6)
+    # the stepper as bound, so the run is a function of the condition (D-452)
+    restore_stepper!(exec.stepper, model.stepper_bound)
     try
         boundary_zero!(model)
     catch err

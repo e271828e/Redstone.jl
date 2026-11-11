@@ -1,0 +1,88 @@
+# Notes: increment 93, rulings made while the user was away
+
+The user stepped away on 2026-11-11 after the code commit e7dacf9, with the
+cold review running, and asked the coordinator to proceed alone unless a
+finding raised a significant design question. These are the rulings the
+coordinator made on the review's findings, each with its reason and what it
+costs to reverse. Nothing was pushed. The findings are the reviewer's F1 to
+F15, summarized in the brief's record.
+
+## Rulings that changed the design
+
+1. **F2: `init!` hands the backend the carried state it was bound with.**
+   The review showed that a second `init!` under the same condition
+   continued the first run's proposal: a proposing stub gave a different
+   state and a header of `(8, 7)` where a fresh run gave `(1, 0)`. §2.4 makes
+   a run a function of its condition, so the carried state cannot survive
+   `init!`. The `Model` reads `checkpoint_stepper` once when it is built,
+   keeps the value as `stepper_bound`, and `init!` passes it to
+   `restore_stepper!` before boundary zero. Reason for this mechanism: it
+   uses the pair every backend already states, so no backend can forget a
+   reset. Rejected: a `reset` call each backend states, and the state
+   surviving `init!`; both are in D-452's Rejected list. Cost: `Model` gains
+   a seventh field, typed `Any`. To reverse: drop the field and the one
+   line in `init!`, and add the generic.
+   This is the one ruling that adds to the seam's contract. It follows from
+   an existing law, so the coordinator did not hold it for the user, but it
+   is the first to look at.
+
+2. **F12: a model with no continuous state asks its stepper for no
+   proposal.** `_frame_steps!` called `propose` on a stateless model, whose
+   boundaries then followed the proposal, though D-156 says the stepper is
+   never called there. The loop now reads the proposal as `nothing` when the
+   state buffer is empty. Reason: the code conforms to a standing ruling.
+   No alternative was weighed.
+
+## Rulings that left the design alone
+
+3. **F1: a proposal that does not advance the clock is left to increment
+   4.** A stub that proposes zero, a negative length or one below the
+   clock's resolution never ends its span, with every attempt accepted. The
+   reviewer recommended refusing a non-positive proposal now. The
+   coordinator did not: a refusal needs an error kind, and the roadmap's
+   open decision on the floor, degrade or throw at `h_min`, decides what
+   that kind is. A floor also covers the whole family, since a proposal at
+   or below zero is below any `h_min`. No backend in `src/` proposes. The
+   gap is named on the `pending.md` bullet and under the roadmap's "The
+   floor". To reverse: one comparison in `_clamped` and a diagnostic kind.
+
+4. **F3: the remainder after a `t*` is offered whole, and the spec now says
+   so.** §10.2 said the `Model` asks `propose` before each step, and the
+   localization loop offers each remainder without asking. The reviewer's
+   other option was to ask before each remainder. That is the roadmap's open
+   decision "What the notice does to the proposal", which is increment 4's,
+   so the coordinator amended the sentence to match the code and added the
+   point to that decision. Fixed-step trajectories are the same either way.
+
+5. **F15, projection and the notice: recorded as an open decision.**
+   `x_projection` writes the state at every boundary and raises no notice.
+   Neither the spec nor D-452 says so. It is a new entry in the roadmap's
+   open decisions for increment 4. No sentence was added to the spec.
+
+6. **F15, a hook that returns `nothing`: left as it is.** A hand-written
+   hook under the old contract now fails as a `StepError` wrapping a
+   `TypeError`. It fails at once and names the frame. A check with a
+   message of its own would be error handling for a contract violation, and
+   no test pins the accident.
+
+7. **M20 accepted as a survivor**, on the reviewer's judgement: the clock
+   written after the nonfinite check is equivalent for every backend in the
+   tree, since each leaves the clock at the step's end.
+
+8. **`CursorFrame` has `==` and no `hash`.** It predates the increment. Not
+   touched.
+
+## Corrections with no ruling in them
+
+- **F5.** The "ulp edge" the coordinator told the user about cannot happen.
+  A proposed length is below the float distance to the span's end, so the
+  sum cannot pass it. What can happen is a sliver: a step that ends just
+  short and leaves a last step of about an ulp. `pending.md` and the
+  roadmap now say that.
+- **F4.** D-452's Rationale misstated the trial buffer's cost for a model
+  with localized events. Edited in place, since the entry is this
+  increment's.
+- **F6 to F11.** Missing tests, added. Every mutant the reviewer left alive
+  now dies, M20 excepted.
+- **F13, F14.** A local renamed, a comment's count, a walkthrough sentence
+  and one qualifier in §10.2.

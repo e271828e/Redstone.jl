@@ -143,9 +143,9 @@ chunk tuple, which `chunked_body` compiled from continuous entries only
 views and scatters the returned ports into the table; each `run_entry!(::RHSEntry)`
 writes the derivative into `ẋbuf`. The controller's output cells are not
 touched at any of the four stages. That is the zero-order hold, by absence
-rather than by a runtime test ([§10.5][s10-5]). When the drain reported nothing
-written, the table is the last boundary's, and the first `evaluate!` runs
-`rhs()` alone ([D-447][d-447]). When the backend accepts,
+rather than by a runtime test ([§10.5][s10-5]). When the frame continues the
+last one and the drain wrote nothing, the table is the last boundary's, and
+the first `evaluate!` runs `rhs()` alone ([D-447][d-447], [D-452][d-452]). When the backend accepts,
 `integrate_step!` writes the clock at the step's end, runs `_check_finite!`
 over the trial before anything reads it ([§13.4][s13-4]), and copies the
 trial into the state buffer. RK4 never rejects; a backend that did would

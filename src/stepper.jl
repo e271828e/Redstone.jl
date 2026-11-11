@@ -1,7 +1,7 @@
 # The stepper seam (§10.2, D-452): loop ownership stops at one operation, *one
 # step of the continuous state from the clock*, delegated across this narrow
 # interface so the integration method can be replaced without the loop changing.
-# The backend's side is six functions, each answered by dispatch on the stepper:
+# The backend's side is six calls, each answered by dispatch on the stepper:
 #
 #   - `propose(stepper)`, the length the backend asks for next, `nothing` for a
 #     method that proposes none, which takes each span in equal steps (D-449);

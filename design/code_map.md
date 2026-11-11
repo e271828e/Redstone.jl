@@ -706,7 +706,8 @@ D-249, D-255, D-261, D-289, D-317, D-437, D-438, D-452.
   one runs over the mandatory instants, the frame tops and the due instants,
   found by integer comparisons over the `Lattice`'s units, each clock
   written from its own index through model.jl's grid. The inner one asks
-  `propose` before each step. Under `nothing` it takes a span's
+  `propose` before each step, and never of a model with no continuous state
+  (D-156). Under `nothing` it takes a span's
   `cld(units·q, p)` equal steps, `p/q` the bound in units, each of exact
   length `(units·unit)/n`; an interior step end's clock is the span's start
   clock plus `i` times that length, never accumulated. Under a proposal it
@@ -865,8 +866,9 @@ soon as nothing in it names a `Simulation` in a signature, and below
   and compiles the check away on the loop's path (D-318).
 - The model's doors (D-317), each gated on the claim (D-318):
   - `init!`, whose condition method resolves and whose plan method refuses
-    an origin `_check_origin` rejects, does the writes, runs boundary zero
-    under §13.4's catch and settles it through the hooks (§14.5, D-223);
+    an origin `_check_origin` rejects, does the writes, hands the stepper its
+    carried state as bound, the model's `stepper_bound` (D-452), runs boundary
+    zero under §13.4's catch and settles it through the hooks (§14.5, D-223);
   - `overlay!`, in the same two methods, whose condition method resolves with
     the stores as the merge bases, `_store_values`, and whose plan method
     raises the discontinuity notice and runs the continuing settling under

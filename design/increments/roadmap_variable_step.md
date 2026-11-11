@@ -104,7 +104,9 @@ needs it.
   three changes the user ruled on 2026-11-11. `attempt!` returns its verdict
   alone, and the Model reads `propose` before each step and after each
   rejection. Neither `propose` nor the checkpoint pair has a default. The
-  attempt writes the trial buffer `xnext`, and the Model commits it.
+  attempt writes the trial buffer `xnext`, and the Model commits it. Its
+  review added that `init!` hands the backend the carried state it was bound
+  with, so a run is a function of its condition.
 - **The discontinuity notice.** Raised at every boundary where a handler
   fired, a tick ran or the drain wrote a value, and at `init!` and
   `overlay!`. What the backend does with it is its own: a fixed-step
@@ -156,14 +158,23 @@ in discussion.
   most one report per frame; or throws a `StepError`. Recommended:
   degrade, by the doctrine of the two existing budgets. Increment 4. Until
   then nothing bounds a step's attempts, and no backend in `src/` rejects
-  one.
+  one. Nor does anything check that a proposal advances the clock. A
+  proposal that is zero, negative or below the clock's resolution never
+  ends its span, with every attempt accepted, as increment 93's review
+  showed with a stub. The floor settles both.
 - **The nonfinite trial.** Increment 93 checks an accepted trial before the
   commit and never a rejected one (D-452). What remains is whether the Model
   turns a nonfinite accepted trial into a rejection above `h_min`, keeping
   the `NonfiniteState` throw at it. Increment 4.
 - **What the notice does to the proposal.** After a handler reset, keep the
   proposal and let the controller reject, or shrink it. Recommended: the
-  backend's choice, stated per backend. Increment 4.
+  backend's choice, stated per backend. Increment 4. Increment 93 offers the
+  remainder of a step after a `t*` whole, without asking `propose`, so a
+  backend can shrink it only by rejecting. Whether the Model asks there is
+  part of this decision.
+- **Projection and the notice.** `x_projection` writes the state at every
+  boundary and raises no notice, and neither the spec nor D-452 says so.
+  Increment 4.
 - **The recorded set's comparison.** The algorithm instance compared as a
   whole value for equality, walked field by field for the
   `CheckpointMismatch` message. Increment 4.
@@ -200,8 +211,10 @@ in discussion.
   two instants the Model knows exactly and the float distance from a `t*` or
   an adaptive step end. Increment 4, where the bit-identity invariant ends.
   The rule also settles an edge increment 93 left: under a proposing backend
-  an interior step end is the clock plus the accepted length, which can round
-  one ulp past the span's end and leave a negative remainder.
+  an interior step end is the clock plus the accepted length, which can land
+  a sliver short of the span's end and leave a last step of about an ulp. It
+  cannot pass the span's end, since the length is below the float distance
+  to it.
 - **Exact periods on the `Deployment`.** Whether it stores and compares
   `Δt_frame`, `Δt_base` and `h_max` as exact rationals, where it compares
   their `Float64` values today. The bound makes the hole easy to reach: at a
