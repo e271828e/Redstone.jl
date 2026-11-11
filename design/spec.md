@@ -10814,9 +10814,10 @@ honestly. An interactive session logs the rendered error. **`run!` and `replay!`
 discriminate the two by the [roster](#g-roster)** (the list of attached device entries)
 ([D-268][d-268]). With no [device](#g-device) (any attached participant in the periphery) rostered the
 run is unattended and rethrows. With one or more it logs the rendered error
-through the logging backend and returns, the lifecycle reading `errored` and
-`termination(sim)` retaining the cause. `step!` is deviceless by construction
-([§12.6][s12-6], [D-389][d-389]) and always rethrows.
+through the logging backend and returns, with `termination(sim)` retaining the
+cause. The lifecycle reads `errored` after a throw inside the frame and
+`stopped` after a fault outside it ([§13.5][s13-5]). `step!` is deviceless by
+construction ([§12.6][s12-6], [D-389][d-389]) and always rethrows.
 
 #### Reproduction
 
@@ -11127,7 +11128,9 @@ diagnostic convention, so its type is its identity and its payload is plain data
   reads `errored`. A loop fault outside the frame, in the pacer, a yield or
   the [tail](#g-tail) (the ordered shutdown sequence every stop takes), closes the run as
   `stopped` with the `Model` consistent at its last settled boundary, since only the
-  `Model`'s own catch sites mark it ([D-317][d-317]). The record covers both exactly alike.
+  `Model`'s own catch sites mark it ([D-317][d-317]). `frame!`'s refusal of a frame
+  past the lattices' range is such a fault, since it precedes the frame
+  ([§10.5][s10-5]). The record covers both exactly alike.
 
 A `stopped` simulation therefore answers "why did it stop?" without its
 consumer reconstructing the answer from the clock. It answers "how did the

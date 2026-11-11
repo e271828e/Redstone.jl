@@ -363,7 +363,7 @@ function test_lattices()
         probe = TailProbe()
         attach!(sim, probe, NoClaim())
         init!(sim; log = false)
-        @test_logs (:error, r"the run ended errored") match_mode = :any run!(sim)
+        @test_logs (:error, r"the run ended on a loop error") match_mode = :any run!(sim)
         @test probe.log == [:init, :shutdown] && lifecycle(sim) === :stopped
         @test termination(sim).source.exception isa DiagnosticError{ArgumentInvalid}
     end

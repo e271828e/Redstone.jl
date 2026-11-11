@@ -1746,9 +1746,10 @@ function _run_body!(sim::Simulation, policy::StopPolicy, ignore_mask::Vector{Boo
             # published nothing and the previous snapshot is already final. The
             # source retains the cause as the frame loop wrapped it — a
             # `StepError` against the execution cursor (§13.4) — and the
-            # record itself is assembled here, after the sweep (D-203). The
-            # model's catch already wrote its status, which reads `errored`
-            # (D-317).
+            # record itself is assembled here, after the sweep (D-203). A throw
+            # inside the frame arrives with the model's status written by its
+            # catch, and reads `errored`. A fault outside the frame leaves the
+            # model consistent, and the run reads `stopped` (§13.5, D-317).
             error_source = LoopError(cause)
             sim.run.termination = _record(sim, policy, error_source, residue)
         else
@@ -1764,7 +1765,7 @@ function _run_body!(sim::Simulation, policy::StopPolicy, ignore_mask::Vector{Boo
         Base.sigatomic_end()
     end
     logged_cause === nothing ||
-        @error "the run ended errored; the cause is retained on termination(sim) (§13.4, §13.6)" *
+        @error "the run ended on a loop error; the cause is retained on termination(sim) (§13.5, §13.6)" *
                " and the simulation refuses every advance (§12.6)" exception = logged_cause
     nothing
 end
