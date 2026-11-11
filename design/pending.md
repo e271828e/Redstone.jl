@@ -31,14 +31,13 @@ item changes what the spec says, the spec edit is part of the item.
     `design/increments/090_deployment_surface/`). `Δt_frame` and `Δt_base`
     sit on the `Deployment`, the step rides `algorithm = RK4(h)` and is
     `Δt_frame` when the instance names none, and `N_base` is gone.
-  - **Next: the three lattices**, the roadmap's increment 2. Until it lands
-    the constructor refuses a step other than the frame and a base tick off
-    the frame tops (§9.2), and `Deployment.frames_per_tick` is the frame
-    loop's tick key. The increment lifts both refusals and deletes the
-    field. `Δt_base` has no range check of its own: a zero, negative or
-    infinite value is refused today only through `:not_frame_multiple`,
-    so the rewrite gives it one before that refusal goes, and §9.2's list
-    names it.
+  - **Landed: the three lattices**, increment 91 (D-444, D-445, D-446,
+    D-447, `design/increments/091_three_lattices/`). The frame advances
+    through boundaries on the frame tops, the due instants and the step
+    points, a due instant inside a fixed step splits it, `frames_per_tick`
+    and the two transitional refusals are gone, and `bind_schedule` is
+    strict under D-229.
+  - **Next: the seam protocol**, the roadmap's increment 3.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose
@@ -223,11 +222,3 @@ introducing a deviation adds its bullet, and the one retiring it deletes it.
 Where the code's shape is coherent and the spec may be what moves, the call
 is the user's; a ruling lands docs-commit-first, then the bullet retires or
 the code conforms.
-
-- **`bind_schedule` stops short of every check** (§9.2, D-229). The spec has
-  every check whose premise holds run before the one throw. The anchor loop
-  reads `Δt_base` alone, yet a lattice or step fault returns ahead of it,
-  and an unsound `Δt_frame` skips the step's check against `Δt_base`. A
-  call with two independent faults can therefore report one. The roadmap's
-  increment 2 rewrites the binding and makes it strict
-  (`design/increments/roadmap_variable_step.md`).

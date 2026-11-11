@@ -376,7 +376,8 @@ D-256, D-268, D-269, D-317.
 
 - The compiled writer `Writer` and `Batch`, and the staging cells.
 - The per-writer drain `_drain!`, which sim.jl's `drain!` reaches through the
-  roster's thunks.
+  roster's thunks. It returns whether a batch reached the table, the report
+  the frame's freshness reads (§10.3, D-447).
 - The diagnostic cells, one per writer and one on each model for its frame
   (D-317). The channel's kinds are diagnostics.jl's.
 - `KINDS`, the closed set's one home. The union `DiagValue` and `KindCounts`'
@@ -395,8 +396,8 @@ D-256, D-268, D-269, D-317.
 - `ResidueRecord`, one writer's share of the tail residue, which sim.jl's
   sweep builds and the termination record holds (§13.5, D-203).
 
-Spec: §10.7, §11.1–§11.4, §11.8, §12.2, §12.4, §12.6, §13.2, §13.5, §14.4, D-023,
-D-027, D-038, D-137, D-203, D-250, D-255, D-269, D-316, D-317, D-406.
+Spec: §10.3, §10.7, §11.1–§11.4, §11.8, §12.2, §12.4, §12.6, §13.2, §13.5, §14.4, D-023,
+D-027, D-038, D-137, D-203, D-250, D-255, D-269, D-316, D-317, D-406, D-447.
 
 ### `src/declare.jl`
 
@@ -445,13 +446,22 @@ D-179, D-185, D-195, D-211, D-246, D-248, D-263, D-289, D-316, D-437, D-438.
   `Δt_base`, the algorithm token with its step resolved and the three event
   parameters `firing_budget`, `localization_tol` and `localization_budget`.
   It is scalar-free. The `Deployment` constructor has one throw per call
-  (§9.2, D-229). It also holds `frames_per_tick`, `Δt_base/Δt_frame`, the
-  frame loop's tick key while the loop takes one step per frame (§9.2).
-- `bind_schedule` checks the fixed-step relations beside the grid (D-443),
-  and the two transitional refusals, `:subcycling` and
-  `:not_frame_multiple` (§9.2).
+  (§9.2, D-229). It also holds the `Lattice`, the frame loop's index-to-time
+  map, derived from the exact periods once (§10.5, D-445).
+- The `Lattice`: `h` as a `Float64`, the exact unit `gcd(h, Δt_base)` (the
+  step alone when no discrete component exists), the frame, base tick and
+  step as whole units, and `max_frame`, the last frame index whose positions
+  fit `Int`. `max_frame` bounds `k·frame` plus the largest period in units,
+  so it is one frame conservative: frame `max_frame + 1` would still fit.
+  The doors and `frame!` refuse past it (§10.5, §12.6).
+- `bind_schedule` is strict under D-229: `Δt_frame`, `h` and `Δt_base` are
+  each a premise of its own, positive and finite (`_positive_finite`), every
+  check whose premise holds runs, and the one fixed-step relation is
+  `h | Δt_frame` (§9.2, D-444).
 - `==`/`hash` on a `Deployment` compare by value over everything but the
-  build, the grid attribution, `frames_per_tick` and the warnings (§12.7).
+  build, the grid attribution, the `Lattice` and the warnings (§12.7). Two
+  exact periods that round to one `Float64` therefore compare equal, though
+  their lattices differ.
 - `warnings(::Deployment)`.
 - The grid attribution `_grid_report` (D-187):
   - the constraint pool, with each entry's leave-one-out refinement factor;
@@ -465,8 +475,8 @@ D-179, D-185, D-195, D-211, D-246, D-248, D-263, D-289, D-316, D-437, D-438.
   with both attribution forms. The derivation path also raises the
   `GridUtilization` advisory at `min_i Dᵢ > 1`.
 
-Spec: §9.2, §10.2, §10.5, §12.7, Appendix B, Appendix C, D-187, D-229,
-D-250, D-254, D-256, D-261, D-442, D-443.
+Spec: §9.2, §10.2, §10.5, §12.6, §12.7, Appendix B, Appendix C, D-187, D-229,
+D-250, D-254, D-256, D-261, D-442, D-443, D-444, D-445.
 
 ### `src/descriptor.jl`
 
@@ -607,13 +617,18 @@ D-256, D-261, D-268, D-270, D-315.
   `ArgumentInvalid`'s `:non_nominal` raised on a `Model` (D-319).
 - `ArgumentInvalid`'s `:scalar` on `Model`, the materialization's refusal of
   its scalar (§9.2, D-320).
+- `ArgumentInvalid`'s `related`, the bound a `:range` value passes, which
+  `frame!`'s refusal of `k` fills with the `Lattice`'s `max_frame`, and that
+  refusal's message arm. `DeploymentInvalid`'s `:range` on `Δt_base`; the
+  reasons `:subcycling` and `:not_frame_multiple` are gone (§9.2, §10.5,
+  D-444, D-445).
 
 Spec: §9.1, §9.2, §10.4, §10.6, §10.7, §11.4, §11.6, §11.8, §12.2, §12.4,
 §12.6, §12.7, §13.1, §13.2, §13.4, §13.5, §14.4, §14.8, §14.9, §14.10,
 Appendix C, D-027, D-058, D-059, D-157, D-187, D-203, D-214, D-215, D-222,
 D-225, D-250, D-255, D-256,
 D-261, D-262, D-263, D-272, D-274, D-276, D-277, D-316, D-318, D-319, D-320,
-D-406, D-437, D-438.
+D-406, D-437, D-438, D-444, D-445.
 
 ### `src/executor.jl`
 
@@ -657,22 +672,40 @@ D-249, D-255, D-261, D-289, D-317, D-437, D-438.
 ### `src/frame.jl`
 
 - The model's `frame!(model, k, hooks)` (D-317): the top
-  hook, the integration, the frame-top boundary and the settled hook, inside
-  §13.4's one `try`, whose catch writes `:inconsistent` and builds the
-  `StepError` with `_wrap_step` for every throw, an interrupt included (D-441).
-  The claim's gate precedes the `try` (D-318).
-- The localization loop, with the arrival sweep, the θ = 0 validation, ITP
-  bracketing `_crossing`, `t*` boundaries, the localization budget and the
-  `ChatteringBudget` degradation, reported into the model's diagnostic cell.
-- The cursor's drain/arrival/validation/trial phases.
-- `settled!` at every `t*` boundary and at the frame top. A `true` abandons
-  the frame's remainder and is `frame!`'s return (§13.5, D-261, D-317).
-- The grid arithmetic `frame!` steps by, `_grid_time` and `_frames_to`, is
-  model.jl's. The step is `Δt_frame` and the tick key the deployment's
-  `frames_per_tick` while the loop takes one step per frame (§9.2).
+  hook, then `_frame_steps!`, inside §13.4's one `try`, whose catch writes
+  `:inconsistent` and builds the `StepError` with `_wrap_step` for every throw,
+  an interrupt included (D-441). The claim's gate and the refusal of a `k`
+  past the `Lattice`'s `max_frame` precede the `try`, so that refusal leaves
+  the model `:consistent` (D-318, D-445).
+- `_frame_steps!`, the frame's steps on the three lattices (D-444, D-445):
+  each step ends at the nearest step point, due instant or frame top, found
+  by integer comparisons over the `Lattice`'s units, and each boundary's
+  clock is written once, from its own index, through model.jl's grid. A due
+  boundary runs `run_boundary!` with its tick index, every other one with the
+  empty due set. A bare step integrates by its exact length, `h` when
+  unsplit; a localized one by the float distance to its end (§10.5).
+- The next due instant is recomputed after each due boundary, one `mod` per
+  schedule row (`_next_due`, model.jl's). Nothing is cached, so nothing needs
+  invalidating at a restore, an overlay or `init!`.
+- `_localized_step!`, the localization loop over one step, with the arrival
+  sweep, the θ = 0 validation, ITP bracketing `_crossing`, `t*` boundaries,
+  the remainder step to the step's end, the localization budget counted
+  across the frame's steps, and the `ChatteringBudget` degradation, reported
+  into the model's diagnostic cell (D-446). The report folds at the next
+  frame top and its delta rides the first publication after the fold, which
+  under subcycling is that frame's first step end, not its top.
+- The freshness flag (D-447): the frame's first step is fresh when
+  `frame_top!` returned `false`, every later step and every remainder is
+  fresh, and `integrate_step!` arms it.
+- The cursor's drain/arrival/validation/trial phases. After a boundary at
+  which nothing is due the cursor reads the event round, since no ticks
+  block runs (D-445).
+- `settled!` at every step end, every `t*` boundary and the frame top. A
+  `true` abandons the frame's remainder and is `frame!`'s return (§13.5,
+  D-261, D-317).
 
-Spec: §10.2, §10.4, §11.8, §12.4, §13.4, §13.5, D-018, D-059, D-133, D-255,
-D-260, D-261, D-317, D-318.
+Spec: §10.2–§10.5, §11.8, §12.4, §13.4, §13.5, D-018, D-059, D-255,
+D-260, D-261, D-317, D-318, D-444, D-445, D-446, D-447.
 
 ### `src/leaves.jl`
 
@@ -758,7 +791,8 @@ soon as nothing in it names a `Simulation` in a signature, and below
 `model.jl` as soon as something in it names a `Model`.
 
 - `Model{T,E}`, the deployment and its executor at one scalar, its status,
-  its claim flag and its frame's diagnostic cell, with the materialization
+  its claim flag, its frame's diagnostic cell and the freshness flag `fresh`
+  (§10.3, D-447), with the materialization
   `Model(deployment, T)` and `Model(::Build)` and `Model(::AbstractComponent)`
   over it (§9.2, §11.8, §12.6, D-254, D-317). `Simulation(model)` sets the
   claim flag once and nothing clears it (D-318).
@@ -772,12 +806,19 @@ soon as nothing in it names a `Simulation` in a signature, and below
   dies with the call, and `_establish_frozen!`, the frozen copy over the
   `Outputs`' port list.
 - The frame's hooks `FrameHooks`, with `frame_top!` and `settled!`, and the
-  no-op `NoHooks` (§11.2, §13.5, D-317).
-- The grid (§10.4): `_grid_time`, frame top `k` from the index and `t₀`,
-  never accumulated, and the arithmetic over `t`, `t₀` and `Δt_frame`,
-  `_frame_slack`, `_frames_to` and `_frame_at` (§12.4, §12.6, D-260, D-319),
-  read by `frame!`, the checkpoint and the loop, and `_frames_fit`, the doors'
-  check that a time's frame count fits an `Int` before either rounds it.
+  no-op `NoHooks` (§11.2, §13.5, D-317). `frame_top!` returning `false`
+  reports nothing written, and `NoHooks`' `nothing` counts as a write (D-447).
+- The grid (§10.4, §10.5, D-445): `_grid_time`, frame top `k` from the index
+  and `t₀`; `_tick_time`, a due instant from its base-tick index; and
+  `_step_time`, a step point from its frame's index and `j`; none
+  accumulated. `_next_due`, the next due instant past a position, one `mod`
+  per schedule row, recomputed per due boundary and never cached. The
+  arithmetic over `t`, `t₀` and `Δt_frame`, `_frame_slack`, `_frames_to` and
+  `_frame_at` (§12.4, §12.6, D-260, D-319), read by `frame!`, the checkpoint
+  and the loop, and `_frames_fit`, the doors' check that a time's frame count
+  stays within the `Lattice`'s `max_frame` before either rounds it. Their
+  deployment and model methods are what sim.jl's sites call, so no caller
+  rebuilds the `(t, t₀, Δt_frame)` triple.
 - The claim's gate `_claimed_gate`, which refuses a claimed model's direct
   call as `ArgumentInvalid` `:claimed`. Its `LoopHooks` method is sim.jl's
   and compiles the check away on the loop's path (D-318).
@@ -800,14 +841,20 @@ soon as nothing in it names a `Simulation` in a signature, and below
   `frame!` (frame.jl) and `trim!` (trim.jl) are the other two gated doors.
   The stepping primitives `evaluate!`, `integrate!`, `boundary!`,
   `offtick_boundary!` and `boundary_zero!` stay ungated (D-318).
-- `phase_bodies`, and `evaluate!` on the executor and the model.
-- The boundary macro-sequence `boundary!`, `offtick_boundary!`,
-  `boundary_zero!` over the settling routine `_settle!`, whose flag separates
-  boundary zero's sweep and updates from `overlay!`'s continuing settling
-  (D-429), and `_round!`, and the §10.6 event phase `event_phase!`,
-  with its `FiringBudget` degradation into the model's diagnostic cell.
-- The seam's framework side `integrate!(model, h)` and its `isfinite` sweep
-  `_check_finite!` (§10.2, D-157).
+- `phase_bodies`, and `evaluate!` on the executor and the model. The model's
+  runs the `x_deriv` block alone when `fresh` is set, and clears it (D-447).
+- The one boundary routine `run_boundary!(model, due)` over its due set, a
+  tick index, `nothing` or `ESTABLISH`, with `run_ticks!` selecting the
+  ticks block by arity (§10.5, §10.6, D-185, D-445). `boundary!`,
+  `offtick_boundary!` and `boundary_zero!` are thin wrappers over it, and
+  `overlay!`'s continuing settling is its empty due set (D-429). Beside it
+  `_round!` and the §10.6 event phase `event_phase!`, with its `FiringBudget`
+  degradation into the model's diagnostic cell.
+- The seam's framework side `integrate!(model, h)` over `integrate_step!`,
+  which the frame loop calls with its frame index and the freshness flag,
+  and its `isfinite` sweep `_check_finite!`, whose `NonfiniteState` names the
+  loop's frame or, off the loop, the frame top the clock rounds to (§10.2,
+  D-157, D-445).
 - `warnings(::Model)` (D-250), and the reads `port`, `state` and `modes` on
   the model, which refuse an unknown path through `_component_index` and
   `refuse_path` (D-440).
@@ -823,9 +870,9 @@ soon as nothing in it names a `Simulation` in a signature, and below
   beside it `_check_grid!`, the grid check the three restore doors share,
   collecting `CheckpointMidFrame` into the same list.
 
-Spec: §9.2, §9.5, §10.2, §10.4, §10.6, §11.2, §11.8, §12.4, §12.6, §13.2,
-§13.4, §13.5, §14.1, §14.5, §14.8, D-059, D-157, D-213, D-221, D-223, D-248,
-D-250, D-254, D-260, D-274, D-317, D-318, D-319, D-320, D-429.
+Spec: §9.2, §9.5, §10.2–§10.6, §11.2, §11.8, §12.4, §12.6, §13.2,
+§13.4, §13.5, §14.1, §14.5, §14.8, D-059, D-157, D-185, D-213, D-221, D-223, D-248,
+D-250, D-254, D-260, D-274, D-317, D-318, D-319, D-320, D-429, D-445, D-447.
 
 ### `src/precompile.jl`
 
@@ -1017,10 +1064,14 @@ Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315, D-437.
 - Staging, the drain with its replay substitution, and publication:
   `stage!`, `drain!`, `_replay_drain!` and `publish!`, with the run's copy of
   the roster (§11.3). Both drains fold the model's diagnostic cell into the
-  loop's account beside the loop's own cell (§11.8, D-317).
+  loop's account beside the loop's own cell (§11.8, D-317). Both return
+  whether a batch reached the table, the drain's report (§10.3, D-447).
 - The loop's `LoopHooks`, one per advance, per `init!` and per restore: the
   frame index's advance and the drain at the top (D-441), and publication then the stop sample at every settled
-  boundary (§11.2, §13.5, D-317). `FrameHooks` and `NoHooks` are model.jl's.
+  boundary (§11.2, §13.5, D-317). Its `first_frame` is the advance's first
+  frame, whose top reports a write whatever the drain found, since a door or
+  a stepping primitive may have written the model between advances; the
+  doors pass 0 (D-447). `FrameHooks` and `NoHooks` are model.jl's.
   The claim's gate has its `LoopHooks` method here, a no-op, so the
   simulation's doors pass (D-318).
 - Publication's `task_state`, read off `run_tasks` by `_status` (§12.2,
@@ -1030,7 +1081,11 @@ Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315, D-437.
   mask through `_ignored_requests`, and `_stop_hit`, the scan of the `StopFlag`
   buffer (D-316).
 - `t_end` and `ignore_stop_requests`, the advances' keywords, and `run!`'s
-  `UnboundedRun` advisory (D-255, D-260, D-261, D-316).
+  `UnboundedRun` advisory (D-255, D-260, D-261, D-316). The bounds `t_end`,
+  `t_plus`, `frames` and replay's `to_time` are checked against the model's
+  `Lattice` through model.jl's `_frames_fit`, so an advance past `max_frame`
+  is refused up front. An unbounded `run!` ends on `frame!`'s refusal of
+  frame `max_frame + 1`, its record a `LoopError` (§12.6, D-445).
 - The lifecycle, derived, and the termination record (D-317).
 - The frame loop `_advance!`, whose catch disposes only and stores every
   throw as the frame's failure (§13.4, D-317, D-441). The
@@ -1053,7 +1108,8 @@ Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315, D-437.
 Spec: §10.2–§10.7, §11.1–§11.5, §11.8, §12.1–§12.7, §13.4–§13.6,
 §14, §14.1, §14.5, §14.6, §14.8, §14.10, D-027, D-101, D-198, D-203, D-218,
 D-219, D-223, D-232, D-233, D-250, D-253, D-254, D-255, D-256, D-260, D-261,
-D-268, D-269, D-270, D-274, D-316, D-317, D-318, D-319, D-407, D-429.
+D-268, D-269, D-270, D-274, D-316, D-317, D-318, D-319, D-407, D-429, D-445,
+D-447.
 
 ### `src/stepper.jl`
 
@@ -1180,6 +1236,20 @@ pinned on purpose, which it must refuse.
 The suite's `import Redstone:` list, shared with `repl.jl` — the one place a
 framework name the tests call or extend is admitted. A second line,
 `import Redstone.Blocks:`, admits the library's blocks.
+
+### `test/test_lattices.jl`
+
+The frame on its three lattices (§2.1, §10.3–§10.5, D-444–D-447): the step
+counts against the exact periods, the split, subcycling, sub-step
+publication, freshness, localization across a frame's steps, a stop at a step
+end and the `Int` bound. Its fixtures are its own:
+
+- `Recorder`, an `AbstractAlgorithm` defined in the suite, and its
+  `RecorderStepper`, forward Euler through the seam that keeps each step's
+  length and the model's `fresh` flag (§10.2). No backend in `src/` records.
+- `LatticeHooks` and `FreshHooks`, hooks keeping each boundary's counters and
+  reporting nothing written at the top (D-317, D-447). The stop test reuses
+  `test_lifecycle.jl`'s `ramp_request`.
 
 ### `test/utils.jl`
 

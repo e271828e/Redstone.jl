@@ -1327,7 +1327,7 @@ end
 "§9.1: a deployment parameter outside its constraint, or a grid that does not close."
 Base.@kwdef struct DeploymentInvalid <: Diagnostic
     parameter::Symbol
-    reason::Symbol   # :range|:inexact|:not_a_quantity|:missing|:unanchored|:no_constraint|:not_harmonic|:not_frame_multiple|:subcycling|:anchor_period|:anchor_offset
+    reason::Symbol   # :range|:inexact|:not_a_quantity|:missing|:unanchored|:no_constraint|:not_harmonic|:anchor_period|:anchor_offset
     value::Any = nothing
     related::Any = nothing                   # the value it is measured against
     paths::Vector{String} = String[]         # the unanchored components
@@ -1345,13 +1345,14 @@ _deployment_constraint(parameter::Symbol) =
     parameter === :firing_budget       ? "must be an integer ≥ 1" :
     parameter === :localization_tol    ? "must be a positive real" :
     parameter === :localization_budget ? "must be an integer ≥ 1" :
-    (parameter === :h || parameter === :Δt_frame) ? "must be positive and finite" :
-                                 "is outside its constraint"
+    (parameter === :h || parameter === :Δt_frame || parameter === :Δt_base) ?
+                                   "must be positive and finite" :
+                                   "is outside its constraint"
 _deployment_section(parameter::Symbol) =
     (parameter === :algorithm || parameter === :h) ? " (§10.2)" :
     parameter === :firing_budget       ? " (§10.6)" :
     (parameter === :localization_tol || parameter === :localization_budget) ? " (§10.4)" :
-    parameter === :Δt_frame            ? " (§9.2)" : ""
+    (parameter === :Δt_frame || parameter === :Δt_base) ? " (§9.2)" : ""
 
 # The grid block (§9.2, D-187), appended to the first line of every consumer that
 # names the grid: the three grid refusals, the derivation path's info line and
@@ -1417,13 +1418,6 @@ function message(d::DeploymentInvalid)
     d.reason === :not_harmonic &&
         return "harmonic grid: $(d.parameter) = $(d.value) is not an integer multiple of " *
                "the fixed step h = $(d.related) (§10.2)"
-    d.reason === :not_frame_multiple &&
-        return "Δt_base = $(d.value) is not an integer multiple of Δt_frame = $(d.related): " *
-               "a base tick lands on a frame top while the frame loop takes one step " *
-               "per frame (§10.5)"
-    d.reason === :subcycling &&
-        return "h = $(d.value) divides Δt_frame = $(d.related) but is not equal to it: " *
-               "the frame loop takes one step per frame and does not subcycle yet (§10.2)"
     d.reason === :anchor_period &&
         return "$(_anchor_label(d.scope, d.key)): period $(d.value) is not an integer " *
                "multiple of Δt_base = $(d.related) (§9.1)" * _grid_block(d.grid)
@@ -2272,6 +2266,7 @@ Base.@kwdef struct ArgumentInvalid <: Diagnostic
     value::Any = nothing
     entry::Union{Nothing,Symbol} = nothing   # the `TableBinding` entry at fault
     vocabulary::Vector{Symbol} = Symbol[]    # the legal entry keys
+    related::Any = nothing                   # the bound a `:range` value passes: `frame!`'s last frame
 end
 
 function message(d::ArgumentInvalid)
@@ -2366,6 +2361,11 @@ function message(d::ArgumentInvalid)
                "scalar, or a `ForwardDiff.Dual` over it, into which `Float64` embeds exactly; any " *
                "other scalar would round every pinned value at the wire it crosses " *
                "(§9.2, §9.5, D-320)"
+    # `frame!`'s index past the last frame the lattices hold in an `Int` (§10.5, D-445).
+    d.call === :frame! && d.argument === :k &&
+        return "frame $(d.value) is past frame $(d.related), the last this deployment's " *
+               "lattices index: the frame's positions, counted in the lattices' exact unit, " *
+               "would leave `Int` (§10.5)"
     # The materialization's `join_timeout` (D-256) and the doors' four recording
     # keywords (D-261): each carries the constraint text and section its
     # `DeploymentInvalid` row carried before the keywords moved off the
@@ -2378,8 +2378,8 @@ function message(d::ArgumentInvalid)
         return "`chunk_size` must be an integer ≥ 1 — the executor's unroll width, which " *
                "never moves the trajectory — got $(repr(d.value)) (§9.7)"
     d.argument === :t0 &&
-        return "`t0` must be a finite real whose rounding slack in frames at `h` fits an " *
-               "`Int` — the grid's origin — got $(repr(d.value)) (§14.5)"
+        return "`t0` must be a finite real whose rounding slack in frames stays within the " *
+               "last frame the lattices index — the grid's origin — got $(repr(d.value)) (§14.5)"
     d.argument === :trace &&
         return "`trace` must be true or false — §11.5's trace kill switch, got $(repr(d.value))"
     d.argument === :log &&
@@ -2399,14 +2399,15 @@ function message(d::ArgumentInvalid)
         return "`restore` must be true or false — whether `replay!` restores the trace's " *
                "header or feeds the simulation as it stands, got $(repr(d.value)) (§12.7)"
     d.argument === :t_end &&
-        return "`t_end` must be a real ≥ 0 whose frame top from `t₀` at `h` fits an `Int` — " *
+        return "`t_end` must be a real ≥ 0 whose frame top from `t₀` the lattices index — " *
                "the run's clock bound, taken to the nearest frame top, Inf the unbounded " *
                "default — got $(repr(d.value)) (§13.5)"
     d.argument === :ignore_stop_requests &&
         return "`ignore_stop_requests` must be `:all` or an iterable of requester paths — " *
                "a bare string or another symbol is neither — got $(repr(d.value)) (§13.5)"
     d.argument === :frames ?
-        "frames must be an integer ≥ 1 that keeps the frame index within `Int`, got " *
+        "frames must be an integer ≥ 1 that keeps the frame index within the last frame " *
+        "the lattices index, got " *
         "$(d.value) (§12.6)" :
         d.argument === :to_boundary ?
         "to_boundary must be a whole grid boundary the recording covers — from the frame " *
@@ -2414,7 +2415,7 @@ function message(d::ArgumentInvalid)
         d.argument === :to_time ?
         "to_time must be a finite real at or after the recording's `t₀`, naming a time the " *
         "recording covers — got $(repr(d.value)) (§12.7, D-219)" :
-        "t_plus must be a finite real > 0 whose end frame fits an `Int` — the duration " *
+        "t_plus must be a finite real > 0 whose end frame the lattices index — the duration " *
         "spelling — got $(d.value) (§12.6)"
 end
 

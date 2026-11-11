@@ -396,12 +396,11 @@ function discrete_deployment()
             d = only(diagnostics(failure(f)))
             @test d isa DeploymentInvalid && d.parameter === param && d.reason === reason
         end
-        # A base tick off the frame tops is refused while the loop takes one step
-        # per frame; under the default step it also fails the fixed-step relation.
-        err = failure(() -> Simulation(multirate_build; Δt_frame = 1//300, Δt_base = 1//500))
-        @test Set((d.parameter, d.reason, d.value, d.related) for d in diagnostics(err)) ==
-              Set([(:Δt_base, :not_frame_multiple, 1//500, 1//300),
-                   (:Δt_base, :not_harmonic, 1//500, 1//300)])
+        # A base tick off the frame tops deploys: the lattices stand in no
+        # required ratio, and the step is the frame under the default (D-445).
+        off_frame = Deployment(multirate_build; Δt_frame = 1//300, Δt_base = 1//500)
+        @test off_frame.algorithm == RK4(1//300) &&
+              [e.D for e in off_frame.schedule.rows] == [1, 5, 10]
 
         # The call is the barrier (§9.1, D-229): `Δt_frame` and the event
         # parameters are independent premises, so both refusals arrive in one throw.
@@ -477,7 +476,7 @@ function discrete_deployment()
                          sample_times = (; c = Absolute(Hz(50), 1//100)))
         sim = @test_logs (:info, r"derived") (:warn, r"^GridUtilization") Simulation(
             anchored; Δt_frame = 1//500, Δt_base = :derive)
-        @test sim.model.deployment.Δt_base == 0.01 && sim.model.deployment.frames_per_tick == 5
+        @test sim.model.deployment.Δt_base == 0.01
         @test [(e.D, e.Φ) for e in sim.model.deployment.schedule.rows] == [(2, 1)]
 
         # The offset alone refines, so the grid is twice the fastest declared work
@@ -501,7 +500,7 @@ function discrete_deployment()
         deployment = @test_logs (:info, r"derived") (:warn, r"^GridUtilization") Deployment(
             build(comp); Δt_frame = 1//1500, Δt_base = :derive)
         grid = deployment.grid
-        @test deployment.Δt_base == Float64(1//1500) && deployment.frames_per_tick == 1
+        @test deployment.Δt_base == Float64(1//1500)
         @test grid.admissible == 1//1500 &&
               [row.D for row in deployment.schedule.rows] == [3, 150]
 

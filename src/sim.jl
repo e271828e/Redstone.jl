@@ -403,8 +403,7 @@ warnings(sim::Simulation) = warnings(sim.model)
 # unbounded budget. A finite bound is checked as given, before the conversion,
 # so a value past the frame range is refused rather than rounded to `Inf`.
 _t_bound(sim::Simulation, t_end, call::Symbol) =
-    (t_end isa Real && t_end ≥ 0 &&
-     _frames_fit(t_end, sim.model.exec.clock.t₀, sim.model.deployment.Δt_frame)) ? Float64(t_end) :
+    (t_end isa Real && t_end ≥ 0 && _frames_fit(sim.model, t_end)) ? Float64(t_end) :
     throw(DiagnosticError(ArgumentInvalid(call = call, reason = :range,
                                           argument = :t_end, value = t_end)))
 
@@ -418,8 +417,7 @@ _margin_value(value, call::Symbol) = (value isa Real && value ≥ 0) ? Float64(v
     throw(DiagnosticError(ArgumentInvalid(call = call, reason = :range,
                                           argument = :margin, value = value)))
 
-_t_end_frame(sim::Simulation, t_end::Float64) =
-    _frames_to(t_end, sim.model.exec.clock.t₀, sim.model.deployment.Δt_frame)
+_t_end_frame(sim::Simulation, t_end::Float64) = _frames_to(sim.model, t_end)
 
 # §13.5's ignore-list validation and compilation, run identically at the three
 # binding sites — `run!`, `replay!` and `step!` (§12.7, D-316): `:all` expands
@@ -845,7 +843,7 @@ function init!(sim::Simulation, condition = set(); t0::Real = 0.0, trace = true,
     # The model's door does the writes and boundary zero, which publishes
     # through `settled!`; nothing reads its return there, so the mask is empty
     # (§11.2, §14.5, D-317).
-    init!(sim.model, plan; t0, hooks = LoopHooks(sim, sim.plane.roster, nothing, Bool[]))
+    init!(sim.model, plan; t0, hooks = LoopHooks(sim, sim.plane.roster, nothing, Bool[], 0))
     # §11.5's header: the checkpoint at the end of boundary zero, so a throw
     # inside it leaves no header and no trace to hand back (D-274)
     trc = sim.run.trace
@@ -969,7 +967,7 @@ function overlay!(sim::Simulation, condition = set(); trace = true, log = true,
     _open_run!(sim, nothing, Pair{String,Vector{Symbol}}[], nothing, sim.run.frame,
                sim.run.boundary, trace, log, Int(log_every), log_max)
     sim.run.boundary -= 1   # the settling re-publishes the stopped run's last ordinal
-    overlay!(sim.model, plan; hooks = LoopHooks(sim, sim.plane.roster, nothing, Bool[]))
+    overlay!(sim.model, plan; hooks = LoopHooks(sim, sim.plane.roster, nothing, Bool[], 0))
     # §11.5's header: the checkpoint after the settling, so a throw inside it
     # leaves no header and replay needs no knowledge of the overlay (D-429)
     trc = sim.run.trace
@@ -996,7 +994,7 @@ function _enter_checkpoint!(sim::Simulation, cp::Checkpoint, schemas, feed,
     _open_run!(sim, trace_switch ? _detach(cp) : nothing, schemas, feed, cp.frame, cp.boundary,
                trace_switch, log_switch, log_every, log_max)
     sim.run.boundary -= 1
-    _restore_state!(sim.model, cp.state; hooks = LoopHooks(sim, sim.plane.roster, nothing, Bool[]))
+    _restore_state!(sim.model, cp.state; hooks = LoopHooks(sim, sim.plane.roster, nothing, Bool[], 0))
     nothing
 end
 
@@ -1369,12 +1367,12 @@ function replay!(sim::Simulation, trc::Trace; to_boundary = nothing,
         # word about a time the recording covers). `_frame_at` carries the
         # slack: without it the plain floor would halt one boundary short of
         # the one named.
-        t₀, Δt_frame = trc.header.state.t₀, trc.header.state.deployment.Δt_frame
+        t₀, recorded = trc.header.state.t₀, trc.header.state.deployment
         to_time isa Real && isfinite(to_time) && to_time ≥ t₀ &&
-            _frames_fit(to_time, t₀, Δt_frame) ||
+            _frames_fit(recorded, to_time, t₀) ||
             throw(DiagnosticError(ArgumentInvalid(call = :replay!, reason = :range,
                                                   argument = :to_time, value = to_time)))
-        to_boundary = _frame_at(Float64(to_time), t₀, Δt_frame)
+        to_boundary = _frame_at(recorded, Float64(to_time), t₀)
         first_frame ≤ to_boundary ≤ trc.frames || throw(DiagnosticError(   # outside the feed
             ArgumentInvalid(call = :replay!, reason = :range, argument = :to_time,
                             value = to_time)))
@@ -1465,12 +1463,14 @@ end
 # and the loop runs on the calling task (§11.1, D-310); the loop advances until
 # a termination source fires; and the tail closes the run with the sticky status
 # after the final snapshot, the waits woken, `unblock!`, and the join under
-# `join_timeout`. Inside the loop, `frame!` carries each grid step `[tₖ₋₁, tₖ]`
-# through the §10.4 localization loop, firing any `t*` boundaries it brackets on
-# the way. The frame-top boundary (§10.3) is a base tick every `Δt_base/Δt_frame` frames,
-# where the gate reads the tick index, and the empty-due-set boundary in
-# between. The drain runs at the frame top only, never at a `t*` boundary
-# (§10.4), while publication follows every boundary sequence (§11.2), through
+# `join_timeout`. Inside the loop, `frame!` carries each frame `[tₖ₋₁, tₖ]`
+# through its steps, each ending at the nearest step point, due instant or
+# frame top, and through the §10.4 localization loop inside each step, firing
+# any `t*` boundaries it brackets on the way (D-444, D-445). A due instant's
+# boundary reads its tick index at the gate, and every other boundary takes the
+# empty due set. The drain runs at the frame top only, never at a step end
+# inside the frame or a `t*` boundary (§10.4), while publication follows every
+# boundary sequence (§11.2), through
 # the frame's `settled!` hook before integration resumes (D-317). The grid is
 # driven by the frame index (§12.4). Every run creates its pacer and anchors it
 # as the loop starts. Under a finite pace it waits at each frame top, after the
@@ -1987,6 +1987,7 @@ struct LoopHooks{S<:Simulation} <: FrameHooks
     roster::Vector{RosterEntry}     # the run's copy (§11.3)
     pacer::Union{Nothing,Pacer}     # the run's, `nothing` under `step!` and `init!` (§10.7)
     ignore_mask::Vector{Bool}       # the advance's policy against the requesters (D-316)
+    first_frame::Int                # the advance's first frame, which counts as written (D-447)
 end
 
 # The simulation's own doors pass the claim's gate, which is model.jl's (D-318).
@@ -2006,8 +2007,16 @@ _claimed_gate(::Model, ::LoopHooks, ::Symbol) = nothing
 # inside the frame's `try`, before the drain records the batch at it: no throw
 # can land between the advance and the guarded sequence, so after any cut frame
 # the index names the cut frame, wherever the clock stands, and the status says
-# it failed.
-frame_top!(hooks::LoopHooks) = (hooks.sim.run.frame += 1; drain!(hooks.sim, hooks.roster))
+# it failed. The return is the drain's report (§10.3, D-447): `false` when no
+# batch was applied, so the frame's first step reads the table the last
+# boundary left. The advance's first frame always reports a write, since
+# between two advances a door or a stepping primitive may have written the
+# model outside the loop.
+function frame_top!(hooks::LoopHooks)
+    frame = (hooks.sim.run.frame += 1)
+    wrote = drain!(hooks.sim, hooks.roster)
+    wrote || frame == hooks.first_frame
+end
 
 # Design: §11.2, §11.4, §13.4, §13.5, D-317.
 # The settled hook publishes the boundary, then samples the stop requests off
@@ -2016,8 +2025,9 @@ frame_top!(hooks::LoopHooks) = (hooks.sim.run.frame += 1; drain!(hooks.sim, hook
 # docstring on the public `settled!` page. It publishes the settled boundary's
 # snapshot, and returns whether an honoured stop request holds in it. The model
 # calls `settled!` at every settled boundary before integration resumes: each
-# localized event boundary, the frame top's, that of boundary zero (the
-# initialization boundary), and the boundary `overlay!` or `restore!` settles.
+# step end inside the frame, each localized event boundary, the frame top's,
+# that of boundary zero (the initialization boundary), and the boundary
+# `overlay!` or `restore!` settles.
 # This method publishes the snapshot (the immutable per-boundary publication).
 # It then reads the snapshot's stop requests, the `StopFlag` output ports,
 # skipping those the advance ignores. A `true` makes the frame abandon its
@@ -2074,7 +2084,7 @@ function _advance!(sim::Simulation, ignore_mask::Vector{Bool}, upto::Int,
                    t_end_frame::Int, roster::Vector{RosterEntry}, pacer::Union{Nothing,Pacer})
     plane, control, clock, run = sim.plane, sim.control, sim.model.exec.clock, sim.run
     Δt_frame = sim.model.deployment.Δt_frame
-    hooks = LoopHooks(sim, roster, pacer, ignore_mask)   # one per advance (D-317)
+    hooks = LoopHooks(sim, roster, pacer, ignore_mask, run.frame + 1)   # one per advance (D-317)
     advanced = 0
     requester = _stop_hit(sim, ignore_mask)
     requester === nothing || return (ModelRequestedStop(requester), advanced)
@@ -2208,10 +2218,12 @@ function step!(sim::Simulation; frames = nothing, t_plus = nothing,
     frames === nothing || t_plus === nothing ||
         throw(DiagnosticError(ArgumentInvalid(call = :step!, reason = :both_given)))
     if t_plus === nothing
-        # bounded by what the frame index can still hold, so the sum below
-        # never wraps and a count past `Int` is a refusal, not an `InexactError`
+        # bounded by the last frame the lattices index, so the sum below never
+        # wraps and a count past it is refused up front, as a `t_end` past it is
+        # (§12.6, D-445)
         frame_count = frames === nothing ? 1 : frames
-        frame_count isa Integer && 1 ≤ frame_count ≤ typemax(Int) - sim.run.frame ||
+        frame_count isa Integer &&
+            1 ≤ frame_count ≤ sim.model.deployment.lattice.max_frame - sim.run.frame ||
             throw(DiagnosticError(ArgumentInvalid(call = :step!, reason = :range,
                                                   argument = :frames, value = frame_count)))
         frame_count = Int(frame_count)
@@ -2219,10 +2231,10 @@ function step!(sim::Simulation; frames = nothing, t_plus = nothing,
         # the duration is checked as the frame index it lands on, from the origin
         t = sim.model.exec.clock.t                  # the frame top the duration counts from
         t_plus isa Real && isfinite(t_plus) && t_plus > 0 &&
-            _frames_fit(t + t_plus, sim.model.exec.clock.t₀, sim.model.deployment.Δt_frame) ||
+            _frames_fit(sim.model, t + t_plus) ||
             throw(DiagnosticError(ArgumentInvalid(call = :step!, reason = :range,
                                                   argument = :t_plus, value = t_plus)))
-        frame_count = max(1, _frames_to(t + Float64(t_plus), t, sim.model.deployment.Δt_frame))
+        frame_count = max(1, _frames_to(sim.model.deployment, t + Float64(t_plus), t))
     end
     (policy, ignore_mask) = _bind_policy(sim, t_end, ignore_stop_requests, :step!)   # this advance's policy (§13.5, D-255)
     t_end_frame = _t_end_frame(sim, policy.t_end)
@@ -2621,6 +2633,10 @@ the *trace* instead of the cells (`_replay_drain!` below). The branch is the
 whole of the substitution — the live path underneath is untouched, which is
 what "the ordinary loop" means (§12.7) — and what selects it is the attached
 recording, which is what the input mode the caller reads *is* (§12.6, D-260).
+
+Both paths return whether a batch reached the table, which the frame reads as
+the drain's report: an empty drain leaves the last boundary's table fresh for
+the frame's first step (§10.3, D-447).
 """
 function drain!(sim::Simulation, roster::Vector{RosterEntry})
     plane = sim.plane
@@ -2634,16 +2650,18 @@ function drain!(sim::Simulation, roster::Vector{RosterEntry})
     feed = sim.run.feed
     feed === nothing || return _replay_drain!(sim, roster, feed)
     # The diagnostic cells drain at the same point (§11.8): retained values into the
-    # pending delta, every occurrence into the totals.
+    # pending delta, every occurrence into the totals. The return is whether any
+    # batch reached the table, the report the frame's freshness reads (D-447).
+    wrote = false
     for entry in roster
-        entry.drain()
+        wrote |= entry.drain()::Bool
         _fold!(entry.account, _handle(entry).diag_cell)
     end
-    plane.harness_drain()
+    wrote |= plane.harness_drain()::Bool
     _fold!(plane.harness_account, plane.harness_diag)
     _fold!(sim.plane.loop_account, sim.plane.loop_diag)
     _fold!(sim.plane.loop_account, sim.model.frame_diag)   # the frame's own cell (§11.8, D-317)
-    nothing
+    wrote
 end
 
 """
@@ -2701,8 +2719,9 @@ function _replay_drain!(sim::Simulation, roster::Vector{RosterEntry}, feed::Repl
                                             copy(replay_record.record.entries)))
         i += 1
     end
+    applied = i > feed.next          # a record reached the table (D-447)
     feed.next = i
-    nothing
+    applied
 end
 
 # One cell's take under a feed (§12.7): the batch is dropped, and what the drop

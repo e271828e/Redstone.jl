@@ -204,7 +204,9 @@ function failures_runtime()
         init!(sim, set(u = (ref = 0.0,)))
         step!(sim; t_end = 1.0)
         cursor = sim.model.exec.cursor
-        @test cursor.phase === :ticks                    # the sequence's last block, empty here
+        # nothing is due at these frame tops, so the boundary takes the empty due
+        # set and its last block is the event phase's round (§10.5, D-445)
+        @test cursor.phase === :round
         @test cursor.fn === :y_direct              # the last dispatch the sweep walked
         @test cursor.comp == index_of(sim.model.deployment.build.structure, "plant")
     end
@@ -424,7 +426,7 @@ function failures_runtime()
         before = checkpoint(hooked)
         err = failure(() -> frame!(hooked, 1, InterruptingSettle()))
         @test err isa StepError{InterruptException}
-        @test err.host === :loop && err.boundary == 0 && err.cursor.phase === :ticks
+        @test err.host === :loop && err.boundary == 0 && err.cursor.phase === :round
         @test hooked.exec.clock.t == 1 * 0.1 && hooked.status === :inconsistent
         refused_then_restored(hooked, before)
     end
@@ -849,7 +851,7 @@ function failures_pointer_twin()
         replay!(sim2, trc; to_boundary = 3, t_end = 5.0)
         @test lifecycle(sim2) === :initialized
         @test sim2.run.frame == 3                # the halt is at `k`, never at `k · n`
-        @test sim2.run.frame % sim2.model.deployment.frames_per_tick == 1       # and 3 is an off-tick frame top here
+        @test 3 * sim2.model.deployment.Δt_frame / sim2.model.deployment.Δt_base ≈ 1.5   # an off-tick frame top here
         @test same_trajectory(logged(sim2), [s for s in logged(sim) if s.frame ≤ 3])
 
         # `to_time` counts the same boundaries: 0.3 is boundary 3's own time here,

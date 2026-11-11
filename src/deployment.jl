@@ -172,44 +172,81 @@ function _gates(schedule::Schedule, structure::Structure)
     D_c, Φ_c, Δt_c
 end
 
-"""
-Deployment binding (§9.1): `Δt_base` from one of three cross-validated sources —
-the explicit keyword, `Δt_frame` by default, or GCD derivation over the
-constraint pool, requested as `Δt_base = :derive` and permitted only with every
-discrete component anchored — and the method's step `h`, the token's or
-`Δt_frame` when the token names none. Resolution is one exact division pair per
-anchor and one multiply-add per component. Returns the bound grid: `Δt_frame`,
-`Δt_base`, the frames per base tick, the algorithm with its step resolved, the
-`Schedule` (§9.2's typed artifact), the grid attribution and whether the
-derivation path produced the value.
+# --- the lattices (§2.1, §10.5, D-444, D-445) -----------------------------------
 
-The pass records into the call's list and returns `nothing` when a premise
-fails; the caller owns the one throw per `Deployment` call (§9.1, D-229).
-`Δt_frame`, `Δt_base` and `h` are independent premises, each checked and
-recorded on its own; the lattice checks read the pairs they relate, and run
-only when both of a pair are sound (D-229). The anchor loop still waits on
-the lattice and step checks, though it reads `Δt_base` alone, and an unsound
-`Δt_frame` skips the step's check against `Δt_base` (pending.md's deviations).
+# Design: §10.5, D-444, D-445. The frame tops, the base ticks and the step points
+# stand in no required ratio, so the loop reads them as integer multiples of one
+# exact unit, `gcd(h, Δt_base)`: the nearest instant and every coincidence are
+# integer comparisons, never float ones. A tree with no discrete component has no
+# due instant, so `Δt_base` then constrains nothing and the unit is the step.
+# The instants themselves are written by model.jl's grid, each from its own
+# index and stride.
+"""
+The index-to-time map of a deployment's three lattices (§2.1, §10.5, D-445):
+the step `h` as a `Float64`, the exact `unit`, the frame period, the base tick
+and the step as whole units (`base` is 0 when no discrete component exists),
+and `max_frame`, the last frame index whose positions and next due index fit
+an `Int`.
+"""
+struct Lattice
+    h::Float64
+    unit::Rational{Int}
+    frame::Int
+    base::Int
+    step::Int
+    max_frame::Int
+end
+
+# The positions run on `Int`. Inside frame `k` the largest one the loop forms is a
+# due index's, at most a period past the frame top, so `max_frame` bounds `k` by
+# that margin; it is computed in `Int128` once, here.
+function Lattice(Δt_frame::Rational{Int}, Δt_base::Rational{Int}, h::Rational{Int},
+                 rows::Vector{ScheduleEntry})
+    unit = isempty(rows) ? h : gcd(h, Δt_base)
+    frame, step = _as_int(Δt_frame / unit), _as_int(h / unit)
+    base = isempty(rows) ? 0 : _as_int(Δt_base / unit)
+    margin = isempty(rows) ? Int128(0) : maximum(Int128(row.D) for row in rows) * base
+    max_frame = clamp(fld(Int128(typemax(Int)) - margin, frame), 0, typemax(Int))
+    Lattice(Float64(h), unit, frame, base, step, Int(max_frame))
+end
+
+# A period checked on its own premise (§9.2, D-229, D-445): positive and finite,
+# recorded under its parameter otherwise.
+function _positive_finite(parameter::Symbol, value, diags::Vector{Diagnostic})
+    value === nothing && return nothing
+    value > 0 && isfinite(value) && return value
+    push!(diags, DeploymentInvalid(parameter = parameter, reason = :range, value = value))
+    nothing
+end
+
+"""
+Deployment binding (§9.1, §9.2): `Δt_frame`, the method's step `h` and
+`Δt_base`, each a premise of its own, then the one relation between them, the
+anchors against `Δt_base`, the `Schedule` and the lattices. `Δt_base` comes
+from one of three cross-validated sources, the explicit keyword, `Δt_frame` by
+default, or GCD derivation over the constraint pool, requested as
+`Δt_base = :derive` and permitted only with every discrete component anchored.
+`h` is the token's, or `Δt_frame` when the token names none. Returns the bound
+grid: `Δt_frame`, `Δt_base`, the algorithm with its step resolved, the
+`Schedule` (§9.2's typed artifact), the `Lattice`, the grid attribution and
+whether the derivation path produced the value.
+
+Every check whose premise holds runs, and the pass records into the call's list
+and returns `nothing` on any fault; the caller owns the one throw per
+`Deployment` call (§9.1, D-229). The fixed-step relation reads `Δt_frame` and
+`h`, and the anchor loop reads `Δt_base` alone, so neither waits on the other
+(D-444).
 """
 function bind_schedule(build::Build, Δt_frame, Δt_base, algorithm, diags::Vector{Diagnostic})
     count_on_entry = length(diags)
     Δt_frame === nothing &&
         push!(diags, DeploymentInvalid(parameter = :Δt_frame, reason = :missing))
-    Δt_frame_r = Δt_frame === nothing ? nothing : _exact(:Δt_frame, Δt_frame, diags)
-    if Δt_frame_r !== nothing && !(Δt_frame_r > 0 && isfinite(Δt_frame_r))
-        push!(diags, DeploymentInvalid(parameter = :Δt_frame, reason = :range,
-                                       value = Δt_frame_r))
-        Δt_frame_r = nothing
-    end
+    Δt_frame_r = _positive_finite(:Δt_frame,
+        Δt_frame === nothing ? nothing : _exact(:Δt_frame, Δt_frame, diags), diags)
     # The method's step: the token's own, exact since the token normalized it, or
     # `Δt_frame` when it names none (§10.2, D-442). An unsound algorithm has none.
     h_r = algorithm === nothing ? nothing :
-          algorithm.h === nothing ? Δt_frame_r : algorithm.h
-    if algorithm !== nothing && algorithm.h !== nothing &&
-       !(algorithm.h > 0 && isfinite(algorithm.h))
-        push!(diags, DeploymentInvalid(parameter = :h, reason = :range, value = algorithm.h))
-        h_r = nothing
-    end
+          algorithm.h === nothing ? Δt_frame_r : _positive_finite(:h, algorithm.h, diags)
 
     structure = build.structure
     anchors = structure.anchors
@@ -220,7 +257,7 @@ function bind_schedule(build::Build, Δt_frame, Δt_base, algorithm, diags::Vect
 
     # The Δt_base branch is its own premise: derivation reads the tiers and the
     # anchors, the explicit keyword reads only itself, and only the default path
-    # reads `Δt_frame` — which is why it alone is skipped when that is unsound.
+    # reads `Δt_frame`, which is why it alone is skipped when that is unsound.
     Δt_r, derived = nothing, false
     if Δt_base === :derive
         unanchored = [entry.path for entry in structure.components
@@ -234,43 +271,26 @@ function bind_schedule(build::Build, Δt_frame, Δt_base, algorithm, diags::Vect
             Δt_r, derived = grid.admissible, true    # the coarsest admissible value
         end
     elseif Δt_base !== nothing
-        Δt_r = _exact(:Δt_base, Δt_base, diags)
-    elseif Δt_frame_r !== nothing
+        Δt_r = _positive_finite(:Δt_base, _exact(:Δt_base, Δt_base, diags), diags)
+    else
         Δt_r = Δt_frame_r                                 # the default path (§9.2)
     end
 
-    # The lattice checks and the anchor loop read `Δt_frame` and `Δt_base`
-    # together, so they run only on a sound value of each (D-229).
-    (Δt_frame_r !== nothing && Δt_r !== nothing) || return nothing
-
-    # While the frame loop takes one step per frame, a base tick lands on a frame
-    # top: `Δt_base` a whole multiple of `Δt_frame`, the loop's tick key.
-    frames_per_tick = _as_int(Δt_r / Δt_frame_r)
-    (frames_per_tick === nothing || frames_per_tick < 1) &&
-        push!(diags, DeploymentInvalid(parameter = :Δt_base, reason = :not_frame_multiple,
-                                       value = Δt_r, related = Δt_frame_r))
-    # The fixed-step rule (§10.2, D-443): `h` divides the frame and, when discrete
-    # work exists, the base tick. Then, while the loop takes one step per frame,
-    # a step that divides the frame must be the frame.
-    if h_r !== nothing
-        has_discrete = any(entry -> entry.tier === DISCRETE, structure.components)
-        for (parameter, Δt_lattice) in ((:Δt_frame, Δt_frame_r), (:Δt_base, Δt_r))
-            parameter === :Δt_base && !has_discrete && continue
-            steps = _as_int(Δt_lattice / h_r)
-            (steps === nothing || steps < 1) &&
-                push!(diags, DeploymentInvalid(parameter = parameter, reason = :not_harmonic,
-                                               value = Δt_lattice, related = h_r))
-        end
-        h_r != Δt_frame_r && _as_int(Δt_frame_r / h_r) !== nothing &&
-            push!(diags, DeploymentInvalid(parameter = :h, reason = :subcycling,
-                                           value = h_r, related = Δt_frame_r))
+    # The step's one relation (§9.2, D-444): a fixed step divides the frame. Nothing
+    # relates it to `Δt_base`, since a due instant inside a step splits it.
+    if Δt_frame_r !== nothing && h_r !== nothing
+        steps = _as_int(Δt_frame_r / h_r)
+        steps === nothing &&
+            push!(diags, DeploymentInvalid(parameter = :Δt_frame, reason = :not_harmonic,
+                                           value = Δt_frame_r, related = h_r))
     end
-    length(diags) == count_on_entry || return nothing
 
     # Per anchor, one exact division pair; anchor 0 is the base grid itself. The
     # loop collects into the call's list (§13.1): every anchor the chosen base
     # grid cannot express is named, so the coarsest admissible value is chosen
-    # against the whole list.
+    # against the whole list. It reads `Δt_base` alone (D-229).
+    Δt_r === nothing && return nothing
+    anchors_on_entry = length(diags)
     Dk, Φk = [1], [0]
     for anchor in anchors
         D = _as_int(anchor.T / Δt_r)
@@ -285,7 +305,7 @@ function bind_schedule(build::Build, Δt_frame, Δt_base, algorithm, diags::Vect
                                           scope = anchor.scope, key = anchor.key, grid = grid))
         push!(Dk, something(D, 1)); push!(Φk, something(Φ, 0))
     end
-    length(diags) == count_on_entry || return nothing
+    length(diags) == anchors_on_entry || return nothing
 
     # Per component, one multiply-add; the canonical residue 0 ≤ Φ < D survives
     # composition (§10.5), which is what the gate's truncated rem relies on. The
@@ -304,11 +324,11 @@ function bind_schedule(build::Build, Δt_frame, Δt_base, algorithm, diags::Vect
     scopes = [ScopeEntry(scope.path, scope.key, scope.timing.anchor,
                          timing_gates(scope.timing)...)
               for scope in structure.scopes]
-    # The algorithm's own fault is on the caller's list, ahead of this pass.
-    algorithm === nothing && return nothing
-    (Δt_frame = Float64(Δt_frame_r), Δt_base = Δtb, frames_per_tick = frames_per_tick,
-     algorithm = typeof(algorithm)(h_r), schedule = Schedule(rows, scopes), grid = grid,
-     derived = derived)
+    # Every other premise's fault, the algorithm's included, is on the list by now.
+    (length(diags) == count_on_entry && algorithm !== nothing) || return nothing
+    (Δt_frame = Float64(Δt_frame_r), Δt_base = Δtb, algorithm = typeof(algorithm)(h_r),
+     schedule = Schedule(rows, scopes), lattice = Lattice(Δt_frame_r, Δt_r, h_r, rows),
+     grid = grid, derived = derived)
 end
 
 # --- the integration algorithm (§10.2, D-442) -----------------------------------
@@ -336,8 +356,9 @@ deployment's [frame](@ref g-frame) period [`Δt_frame`](@ref g-dt_frame). `h` is
 in exact seconds, a `Rational`, an integer or a [`Period`](@ref), so
 `RK4(1//100)` and `RK4(Hz(100))` are the same value. A float is refused as
 `ArgumentInvalid`. The deployment refuses an `h` that is not positive and finite
-or does not divide its periods as `DeploymentInvalid`. For now it also refuses
-an `h` other than `Δt_frame`.
+or does not divide `Δt_frame` as `DeploymentInvalid`. A step shorter than the
+frame subcycles inside it, and a [due](@ref g-due) instant inside a step splits
+the step there.
 
 For the second-order method, see [`Heun`](@ref).
 """
@@ -385,15 +406,14 @@ Base.show(io::IO, algorithm::Union{RK4,Heun}) =
 # `Δt_frame` is required because a domain rate is not a framework default. The
 # algorithm and the three event parameters are trajectory-determining: the
 # event parameters validate on their own terms, and the algorithm's step only
-# against the two periods it must divide (§10.2, D-443). The defaults: a
+# against the frame period it must divide (§10.2, D-444). The defaults: a
 # legitimate re-enable is
 # one or two firings deep and a toggling FSM pair chatters without bound, so 4
 # separates them; the event time is only as accurate as the O(h⁴) interpolant,
 # so a tolerance tighter than 1e-6 buys nothing while each trial evaluation
 # costs a full sweep; a multi-event frame needs three or four localizations and
-# chattering needs tens, so 8. Until the frame loop subcycles (pending.md), the
-# constructor also refuses a step other than the frame and a base tick off the
-# frame tops, and `frames_per_tick` is the loop's tick key.
+# chattering needs tens, so 8. The `Lattice` is the loop's index-to-time map,
+# derived here from the exact periods once (§10.5, D-445).
 """
     Deployment(build::Build; Δt_frame, Δt_base = nothing, algorithm = RK4(),
                firing_budget = 4, localization_tol = 1e-6,
@@ -419,10 +439,9 @@ by an [`Absolute`](@ref) entry and the tree declares at least one. A derived
 
 A keyword outside its range is refused as `DeploymentInvalid`, and so is a
 `Δt_base` that does not divide an anchor's period or offset. A fixed step `h`
-must divide [`Δt_frame`](@ref g-dt_frame) and, when the tree has discrete
-components, `Δt_base`. For now `h` must also equal `Δt_frame`, and `Δt_base`
-must be a whole multiple of `Δt_frame`. One throw reports the faults found
-together. Exhausting `firing_budget` warns `FiringBudget`.
+must divide [`Δt_frame`](@ref g-dt_frame), and `Δt_base` stands in no required
+ratio to either. One throw reports the faults found together. Exhausting
+`firing_budget` warns `FiringBudget`.
 
 # Keywords
 
@@ -436,8 +455,8 @@ together. Exhausting `firing_budget` warns `FiringBudget`.
   built.
 - `firing_budget`: how many times one event may fire at one
   [boundary](@ref g-boundary), an integer of at least 1.
-- `localization_tol`: the positive relative bracket width, as a fraction of the
-  step, at which event localization stops.
+- `localization_tol`: the positive relative bracket width, as a fraction of
+  `Δt_frame`, at which event localization stops.
 - `localization_budget`: how many event localizations one frame admits, an
   integer of at least 1.
 
@@ -453,7 +472,7 @@ struct Deployment
     localization_budget::Int      # t* boundaries permitted per frame (§10.4)
     schedule::Schedule            # the bound per-component tick table (§9.2)
     grid::GridReport              # the attribution over the constraint pool (§9.2, D-187)
-    frames_per_tick::Int          # Δt_base/Δt_frame, the frame loop's tick key (pending.md)
+    lattice::Lattice              # the loop's index-to-time map (§10.5, D-445)
     warnings::Vector{Diagnostic}  # the warnings the constructor raised (§9.1, D-250)
 end
 
@@ -500,7 +519,7 @@ function Deployment(build::Build; Δt_frame = nothing, Δt_base = nothing,
     deployment = Deployment(build, bound.Δt_frame, bound.Δt_base, bound.algorithm,
                             Int(firing_budget), Float64(localization_tol),
                             Int(localization_budget), bound.schedule, bound.grid,
-                            bound.frames_per_tick, raised)
+                            bound.lattice, raised)
     # The completed constructor carries the record, and logs each warning once at
     # return through the standard backend (Appendix C's `logged`), as `build` does.
     for warning in raised
@@ -512,7 +531,7 @@ end
 # §12.7's header check is the consumer, and a what-if replay re-drives a
 # recording against a *modified model of the same structure*, so **the build is
 # not compared**: comparing it would refuse what the spec admits. `grid`,
-# `frames_per_tick` and `warnings` are not compared either — all three are
+# `lattice` and `warnings` are not compared either — all three are
 # functions of the rest. The algorithm compares as a value, its step resolved,
 # so `RK4()` and `RK4(Δt_frame)` deploy alike (D-442).
 Base.:(==)(a::Deployment, b::Deployment) =

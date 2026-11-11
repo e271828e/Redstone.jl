@@ -488,11 +488,11 @@ end
 # kill switch that capture is `nothing` and the branch below folds (D-260).
 function _drain!(store, writer::Writer, trc, writer_index::Int)
     taken = @atomicswap writer.cell.pending = nothing
-    taken === nothing && return nothing
+    taken === nothing && return false
     batch = taken[]
     _apply!(store, writer.addrs, batch)
     trc === nothing || _record!(trc, writer_index, batch)
-    nothing
+    true          # a batch reached the table: the drain's report (§10.3, D-447)
 end
 
 # --- publication (§11.2) -------------------------------------------------------

@@ -4,7 +4,9 @@
 in [§10.2][s10-2], publication in [§11.2][s11-2]) wins wherever the two disagree. Written
 against the tree at `e6696a7` ([D-431][d-431]): every function named here is the
 implementation's, and the code moves more often than the spec. Function names
-are given without line numbers for that reason; `grep` finds them.*
+are given without line numbers for that reason; `grep` finds them. The quotes
+of `frame.jl` and the boundary routine follow the three-lattice loop of
+[D-445][d-445].*
 
 This document follows a single frame through the frame loop and names, at
 each step, the function that performs it. It exists because the spec states
@@ -21,7 +23,9 @@ The running example is a deployment with `Δt_frame = 1//100` and
 holds a continuous plant with a localized sign-form guard, and a discrete
 controller with `(D, Φ) = (1, 0)`, which ticks at every base tick. The frame
 followed is `k = 8`, whose top `t = 0.08` is base tick `2`; section 3 notes
-where frame `k = 7`, an off-tick frame top, differs.
+where frame `k = 7`, an off-tick frame top, differs. The step is `RK4()`'s
+default, the frame itself, so each frame is one step and its end is the
+frame top.
 
 ## Section 1 — The frame loop and the drain
 
@@ -37,14 +41,12 @@ k = (run.frame += 1)
 hit = frame!(sim.model, k, hooks)
 requester = hit ? _stop_hit(sim, ignore_mask) : nothing
 
-# frame.jl, inside frame!
+# frame.jl, inside frame! and _frame_steps!
 _phase!(cursor, :drain)
-frame_top!(hooks)                     # drain!
+fresh = frame_top!(hooks) === false   # drain!, and its report
 ...                                   # integration, section 2
-model.exec.clock.t = t_to
-frames_per_tick = model.deployment.frames_per_tick
-k % frames_per_tick == 0 ? boundary!(model, k ÷ frames_per_tick) :
-                           offtick_boundary!(model)
+exec.clock.t = t_to
+is_due ? run_boundary!(model, due) : run_boundary!(model, nothing)
 settled!(hooks)                       # publish!, then _stop_hit
 ```
 
@@ -58,12 +60,14 @@ only through the two hooks. `frame_top!` runs `drain!`, and `settled!` runs
 
 Three things happen in order, all inside the frame's one `try` ([§13.4][s13-4]). The
 top hook applies the device writes. The integration carries the continuous
-state across `[t₇, t₈]` and fires any localized event inside it. One of two
-boundary entries then runs at the frame top. For `k = 8` the selector picks
-`boundary!(model, 2)`, the tick index being `k ÷ frames_per_tick`. For
-`k = 7` it picks `offtick_boundary!(model)`. This selector is the whole of the
-frame/tick discrimination [§10.5][s10-5] describes: the gate reads a tick index, and an
-off-tick frame top has none.
+state across `[t₇, t₈]` and fires any localized event inside it. The one
+boundary routine then runs at the frame top over its due set. For `k = 8`
+the frame top is due instant `2`, the base-tick index `_next_due` computed
+from the schedule rows, so the loop calls `run_boundary!(model, 2)`. For
+`k = 7` nothing is due, and the loop calls `run_boundary!(model, nothing)`.
+This selection is the whole of the frame/tick discrimination [§10.5][s10-5]
+describes: the gate reads a tick index, and a boundary with nothing due has
+none.
 
 **The drain.** `frame!` sets the cursor's phase to `:drain` and then calls the
 top hook. `drain!` in `sim.jl` counts the frame in the trace ([§11.5][s11-5]). It
@@ -83,22 +87,27 @@ a guard here is an edge with no in-frame crossing.
 and picks the path:
 
 ```julia
-t_to = _grid_time(model, k)                   # t₀ + k·Δt_frame
-if model.exec.has_localized
-    _localized_frame!(model, t_to, hooks) && return true
+t_to = is_top ? _grid_time(model, k) :        # t₀ + k·Δt_frame
+       is_due ? _tick_time(model, due) : _step_time(model, k, j)
+if exec.has_localized
+    (abandoned, localizations) =
+        _localized_step!(model, t_to, k, hooks, fresh, localizations)
+    abandoned && return true
 else
-    integrate!(model, T(model.deployment.Δt_frame))
+    integrate_step!(model, T(h), k, fresh)    # h, or a split piece's exact length
 end
 ```
 
-A model with no localized events takes one bare `integrate!`. Ours enters
-`_localized_frame!`, whose loop integrates one segment per turn: the whole
-frame first, then a remainder from each `t*`. It returns `true` only when a
+Here the step ends at the frame top, so `t_to` is `_grid_time(model, 8)`. A
+model with no localized events takes one bare step. Ours enters
+`_localized_step!`, whose loop integrates one segment per turn: the whole
+step first, then a remainder from each `t*`. It returns `true` only when a
 `t*` boundary's `settled!` stops the frame.
 
-**One integration segment.** `integrate!(model, h′)` in `model.jl` sets the
-cursor phase to `:integrate` and crosses the stepper seam ([§10.2][s10-2]) to the
-backend's `integrate!(::RK4Stepper, model, h)` in `stepper.jl`:
+**One integration segment.** `integrate_step!(model, h′, k, fresh)` in
+`model.jl` sets the cursor phase to `:integrate` and crosses the stepper seam
+([§10.2][s10-2]) to the backend's `integrate!(::RK4Stepper, model, h)` in
+`stepper.jl`:
 
 ```julia
 copyto!(x₀, x)
@@ -125,11 +134,13 @@ chunk tuple, which `chunked_body` compiled from continuous entries only
 views and scatters the returned ports into the table; each `run_entry!(::RHSEntry)`
 writes the derivative into `ẋbuf`. The controller's output cells are not
 touched at any of the four stages. That is the zero-order hold, by absence
-rather than by a runtime test ([§10.5][s10-5]). When the backend returns,
-`integrate!(model, h′)` runs `_check_finite!`, which sweeps `x` before
+rather than by a runtime test ([§10.5][s10-5]). When the drain reported nothing
+written, the table is the last boundary's, and the first `evaluate!` runs
+`rhs()` alone ([D-447][d-447]). When the backend returns,
+`integrate_step!` runs `_check_finite!`, which sweeps `x` before
 anything reads it ([§13.4][s13-4]).
 
-**Arrival sweep and trigger.** Back in `_localized_frame!`, the state is at
+**Arrival sweep and trigger.** Back in `_localized_step!`, the state is at
 `t₈` in the buffer, and the cursor phase is `:arrival`. One interior sweep
 refreshes the table, `_guards!` in `executor.jl` evaluates every guard into
 the predicate register `now` and the numeric register `σ`, and the arrival
@@ -180,20 +191,20 @@ and the arrival pair `(x₁, ẋ₁)`. A trial is an interior sweep on raw,
 unprojected state; the discrete cells hold through every trial. The cursor
 phase `:trial` with the iteration ordinal is what a `StepError` reports if a
 guard throws here ([§13.4][s13-4]). The earliest `θ★` across the triggered events wins,
-and a `θ★` of exactly one is discarded as a crossing at the frame top.
+and a `θ★` of exactly one is discarded as a crossing at the step's end.
 
 **The `t*` boundary.** The interpolated state goes into the buffer, the clock
-moves to `t* = t_seg + θ★·h′`, and the boundary runs as an off-tick boundary:
+moves to `t* = t_seg + θ★·h′`, and the boundary runs over the empty due set:
 
 ```julia
 dense!(exec.stepper, exec.xbuf, exec.xnext, exec.ẋnext, θ★, h′)
 exec.clock.t = t_seg + θ★ * h′
-offtick_boundary!(model)
-settled!(hooks) && return true
+run_boundary!(model, nothing)
+settled!(hooks) && return (true, localizations)
 ```
 
-`offtick_boundary!` in `model.jl` is projection followed by the event phase,
-with no tick argument:
+`run_boundary!(model, nothing)` in `model.jl` is projection followed by the
+event phase, with no tick argument and no ticks block:
 
 ```julia
 _phase!(model.exec.cursor, :project)
@@ -243,23 +254,23 @@ scans the stop requests on it ([§13.5][s13-5]). If one holds, `settled!` return
 none holds, the localization count increments and the loop turns again.
 
 **The remainder.** The next turn reads `t_seg = t*` off the clock and sets
-`h′ = t₈ − t*`, and `integrate!(model, h′)` runs a full RK4 step from the
+`h′ = t₈ − t*`, and `integrate_step!(model, h′, k, fresh)` runs a full RK4 step from the
 post-handler state. A one-step method restarts from a new state at no cost,
 which is why the seam admits nothing else ([D-017][d-017]). The arrival sweep at `t₈`
-finds no new edge, `_localized_frame!` returns `false`, and `frame!` stamps
+finds no new edge, `_localized_step!` returns `false`, and `frame!` stamps
 the clock at `t₈`. Had the remainder triggered again, the loop would localize
-once more, up to `localization_budget` per frame. Past that budget, further
-crossings are left to the frame-top boundary under a `ChatteringBudget`
+once more, up to `localization_budget` per frame, counted across its steps.
+Past that budget, further crossings are left to the step's end boundary under a `ChatteringBudget`
 warning, which goes into the model's `frame_diag` ([§10.4][s10-4]).
 
 ## Section 3 — The frame-top boundary and publication
 
-**The tick boundary, `boundary!(model, 2)`** in `model.jl`:
+**The tick boundary, `run_boundary!(model, 2)`** in `model.jl`:
 
 ```julia
 _projects!(model.exec.events, model.exec.xbuf)
-event_phase!(model, tick)
-model.exec.bodies.ticks(tick)
+event_phase!(model, due)
+run_ticks!(model, due)       # bodies.ticks(tick) at an `Int`, nothing at `nothing`
 ```
 
 The difference from the `t*` boundary lies in the argument. `_round!` with an
@@ -287,8 +298,8 @@ post-transition values, and they run after the output stages, so the
 sampled-data recursion holds by construction: outputs from `s[k]`, then the
 update to `s[k+1]` ([§10.6][s10-6]).
 
-**The off-tick frame top.** For frame `k = 7` the selector picks
-`offtick_boundary!(model)` instead. Projection and the event phase run in
+**The off-tick frame top.** For frame `k = 7` the loop calls
+`run_boundary!(model, nothing)` instead. Projection and the event phase run in
 full, the sweeps are the zero-argument ones, and no `ticks` body runs at all.
 The controller's cells still hold the values it published at `t = 0.04`, and
 its `s` is untouched until `t = 0.08`.
@@ -301,20 +312,20 @@ honoured one holds, `frame!` returns `true`. The loop reads the requester
 again off the same snapshot and returns `ModelRequestedStop(requester)`
 ([§13.5][s13-5]). Otherwise the loop proceeds to the next frame top, and the cursor's
 trail restarts: `:drain`, `:integrate`, `:arrival`, `:validation`, `:trial`,
-`:project`, `:round`, `:ticks`, the sequence a `StepError`'s frame is read
-from ([§13.4][s13-4]).
+`:project`, `:round`, and `:ticks` where something is due, the sequence a
+`StepError`'s frame is read from ([§13.4][s13-4]).
 
 **Boundary count.** Frame 8 in this example published twice, at the `t*`
 boundary and at the tick boundary. Frame 7 without an event publishes once, at
 the off-tick boundary. The frame index advanced by one in both cases and the
-tick index only at frame 8, which is what the code's `k ÷ frames_per_tick`
-expresses.
+tick index only at frame 8, which is what `_next_due` computes from the
+schedule rows.
 
 ## Section 4 — Boundary zero, for contrast
 
 The simulation's `init!` runs boundary zero through the model's `init!`, which
 calls `boundary_zero!` under the catch that returns a throwing model to
-`:built` ([§13.4][s13-4], [D-223][d-223]). `boundary_zero!` is `_settle!(model; fresh = true)`.
+`:built` ([§13.4][s13-4], [D-223][d-223]). `boundary_zero!` is `run_boundary!(model, ESTABLISH)`.
 The sequence is the ordinary one with one difference:
 `event_phase!(model, ESTABLISH)` passes a marker in place of a tick index, and
 `run_at!` on a `Gated` entry admits every discrete output stage against it,
@@ -336,6 +347,8 @@ boundary zero has no integrate and no drain.
 [d-223]: ../log.md#d-223--host-the-runtime-catch-in-boundary-zero-under-the-services-disposition
 [d-230]: ../log.md#d-230--stamp-the-snapshot-with-the-trajectorys-boundary-ordinal-not-the-wait-counter
 [d-431]: ../log.md#d-431--collect-a-stopping-check-over-its-own-unit
+[d-445]: ../log.md#d-445--advance-the-frame-through-boundaries-on-three-lattices
+[d-447]: ../log.md#d-447--run-a-steps-first-stage-over-a-fresh-table-as-the-flow-alone
 [s10-2]: ../spec.md#102-the-stepper-seam
 [s10-4]: ../spec.md#104-localization-mechanics
 [s10-5]: ../spec.md#105-multi-rate-tick-scheduling

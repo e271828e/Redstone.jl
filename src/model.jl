@@ -56,7 +56,7 @@ there. [`Δt_frame`](@ref g-dt_frame) is required, as for [`Deployment`](@ref). 
 `chunk_size` that is not an integer of at least 1 is refused as
 `ArgumentInvalid`.
 
-A model holds five values, each a field.
+A model holds six values, each a field.
 
 - `deployment`: the deployment it materializes, and through it the build.
 - `exec`: the executor this model owns, with its stepper and its buffers.
@@ -67,6 +67,9 @@ A model holds five values, each a field.
   [diagnostic cell](@ref g-diagnostic-cell), where the
   [chattering](@ref g-chattering) and [firing-budget](@ref g-firing-budget)
   reports go.
+- `fresh`: whether the stage the integrator evaluates next may read the table
+  the last [boundary](@ref g-boundary) left. Only the frame loop sets it, and
+  that stage clears it.
 
 `status` is `:built` until [boundary zero](@ref g-boundary-zero) completes, and
 `:consistent` once it has completed or a state has been restored. A throw inside
@@ -94,6 +97,7 @@ mutable struct Model{T,E}
     @atomic status::Symbol
     @atomic claimed::Bool
     const frame_diag::DiagCell
+    fresh::Bool   # the next stage's table is the last boundary's (§10.3, D-447)
 end
 
 # The scalars `Float64` embeds exactly into (D-320): itself, and a concrete `Dual`
@@ -115,7 +119,7 @@ function Model(deployment::Deployment, ::Type{T} = Float64; chunk_size = 16) whe
     act = activation(deployment.build, T)
     exec = compile(deployment.build, act, deployment.schedule; chunk_size = Int(chunk_size),
                    algorithm = deployment.algorithm)
-    Model{T,typeof(exec)}(deployment, exec, :built, false, DiagCell(EMPTY_DIAG))
+    Model{T,typeof(exec)}(deployment, exec, :built, false, DiagCell(EMPTY_DIAG), false)
 end
 
 # The two sugar forms, each *defined as* the composition (§9.2, D-254). The
@@ -155,10 +159,13 @@ function _establish_frozen!(seeded_exec::Executor, act::Activation{T},
     nothing
 end
 
-# Design: §10.4, §11.2, D-317.
+# Design: §10.3, §10.4, §11.2, D-317, D-445, D-447.
 # A subtype is a struct with concrete fields, built once per advance. §11.2's
 # rule that every boundary publishes before integration resumes is a contract
-# on `settled!`. The simulation's hooks are `LoopHooks` (sim.jl).
+# on `settled!`. The top hook's `false` is the drain's report that the table is
+# the last boundary's, so the frame's first step may skip its first sweep; any
+# other return is the safe answer, a write. The simulation's hooks are
+# `LoopHooks` (sim.jl).
 """
     FrameHooks
 
@@ -170,17 +177,20 @@ and at each settled [boundary](@ref g-boundary).
 functions on it.
 
 - [`frame_top!`](@ref) runs first, before the frame touches any state. It is
-  where external inputs arrive.
+  where external inputs arrive. It returns `false` when it wrote nothing into
+  the model, and any other value counts as a write.
 - [`settled!`](@ref) runs at every settled boundary before integration resumes.
-  Those boundaries are each [localized](@ref g-localized) event time
-  [`t*`](@ref g-t), the frame-top boundary that ends the frame,
+  Those boundaries are the end of each integration step, the frame top among
+  them, each [localized](@ref g-localized) event time [`t*`](@ref g-t),
   [boundary zero](@ref g-boundary-zero) under `init!`, and the boundary
   `overlay!` or `restore!` settles. It returns whether to abandon the frame's
   remainder, and `frame!` returns that value.
 
 A subtype defines a method of each. Every boundary publishes before integration
 resumes, so a subtype that publishes [snapshots](@ref g-snapshot) does it in
-`settled!`. [`NoHooks`](@ref) does nothing and never abandons, for a model
+`settled!`. A `false` from `frame_top!` lets the frame's first step reuse the
+table the last boundary left, and changes no value. Return it only when nothing
+wrote into the model since that boundary. [`NoHooks`](@ref) does nothing and never abandons, for a model
 stepped on its own. A [`Simulation`](@ref) passes hooks of its own, which apply
 the staged input [batches](@ref g-batch) at the frame top and publish a snapshot
 at each settled boundary.
@@ -210,8 +220,9 @@ Do nothing at the top of a model's [frame](@ref g-frame), before the frame
 touches any state.
 
 A model stepped on its own takes no staged inputs, so its frame starts from the
-state as it stands. See [`FrameHooks`](@ref) for the contract every method
-keeps, and [`settled!`](@ref) for the other hook.
+state as it stands. The model may have been written between two frames, so the
+`nothing` it returns counts as a write. See [`FrameHooks`](@ref) for the
+contract every method keeps, and [`settled!`](@ref) for the other hook.
 """
 frame_top!(::NoHooks) = nothing
 
@@ -320,15 +331,19 @@ end
 # with `_frames_to`.
 function _check_origin(model::Model, call::Symbol, t0::Real)
     origin = Float64(t0)
-    isfinite(origin) && _frames_fit(origin, origin, model.deployment.Δt_frame) ||
+    isfinite(origin) && _frames_fit(model.deployment, origin, origin) ||
         throw(DiagnosticError(ArgumentInvalid(call = call, reason = :range, argument = :t0,
                                               value = t0)))
     nothing
 end
 
 # Design: §12.6, §14.1, §14.3, D-429.
-# The state what-if on a model at rest, settled by boundary zero's tail with the
-# discrete stages and updates skipped (`_settle!`). The plan method,
+# The state what-if on a model at rest, settled by the boundary routine over the
+# empty due set (D-445): projection and the event phase, every discrete entry
+# gated out and no update run, so an overlaid store is the next tick's state and
+# its held cell stays (D-273). The priors are the doors' business: `init!`
+# resets them, `overlay!` keeps them, so only a guard the overlay moved into
+# holding fires here. The plan method,
 # `overlay!(model, plan::ConditionPlan; hooks)`, writes alone, so the
 # simulation's `overlay!` can resolve before it touches its run. A plan carries
 # the merge base it was resolved with: one resolved with the default `bases`
@@ -394,7 +409,7 @@ function overlay!(model::Model, plan::ConditionPlan; hooks::FrameHooks = NoHooks
     @atomic :release model.status = :built   # the door's first write (D-441)
     _apply_plan!(model, plan)
     try
-        _settle!(model; fresh = false)
+        run_boundary!(model, nothing)
     catch err
         @atomic :release model.status = :built
         rethrow(_wrap_step(model, k, :overlay, err))
@@ -441,34 +456,69 @@ does nothing, so code over the bodies needs no branch per model.
 """
 phase_bodies(model::Model) = model.exec.bodies
 
-# --- the grid (§10.4) ----------------------------------------------------------
-# Frame tops are `t₀ + k·h`, computed from the index and never accumulated; the
-# frame driver (frame.jl), the checkpoint and the loop all read it from here.
+# --- the grid (§10.4, §10.5, D-445) ---------------------------------------------
+# Each instant is written from its own index on its own lattice, never
+# accumulated; the frame loop (frame.jl), the checkpoint and the loop all read
+# them from here. Positions are compared as whole units of the deployment's
+# `Lattice`, so a coincidence is an integer equality and never a float one.
 
 """Frame top `k`, computed from the index and `t₀` — never accumulated (§10.4).
 The origin and the stride are both `Float64`, so the top is one too, and the
 clock write below converts it into the deployment's scalar (D-260)."""
 _grid_time(model::Model, k::Int) = model.exec.clock.t₀ + k * model.deployment.Δt_frame
 
-# Whole frames from the origin `t₀` until the grid boundary `t₀ + k·h` first
-# reaches the bound `t` (§12.4, §12.6), and its floor sibling, the last
-# boundary at or before `t`. Both carry a slack of a few ulps in frame units,
-# at the larger of `|t|` and `|t₀|`, since `t₀ + k·h` and `t - t₀` both round
+# A due instant off the frame tops, from its base-tick index, and a step point
+# on neither, from its frame's index and its count `j` from the frame top
+# (§10.4, D-445).
+_tick_time(model::Model, n::Int) = model.exec.clock.t₀ + n * model.deployment.Δt_base
+_step_time(model::Model, k::Int, j::Int) =
+    model.exec.clock.t₀ + (k - 1) * model.deployment.Δt_frame + j * model.deployment.lattice.h
+
+# The next due instant strictly past `position` (in units from `t₀`): the first
+# base-tick index there that some row's gate admits, one modular computation
+# per row (§10.5, D-445), and that index's position. No row, no due instant:
+# the position is `typemax(Int)`, past every frame. `Lattice`'s `max_frame`
+# keeps both inside `Int`.
+function _next_due(rows::Vector{ScheduleEntry}, base::Int, position::Int)
+    isempty(rows) && return (0, typemax(Int))
+    first_tick = fld(position, base) + 1
+    tick = typemax(Int)
+    for row in rows
+        tick = min(tick, first_tick + mod(row.Φ - first_tick, row.D))
+    end
+    (tick, tick * base)
+end
+
+# Whole frames from the origin `t₀` until the frame top `t₀ + k·Δt_frame` first
+# reaches the bound `t` (§12.4, §12.6), and its floor sibling, the last frame
+# top at or before `t`. Both carry a slack of a few ulps in frame units, at the
+# larger of `|t|` and `|t₀|`, since `t₀ + k·Δt_frame` and `t - t₀` both round
 # at that magnitude. `0.3/0.1` is `2.9999999999999996`, and at `t₀ = -0.3` the
 # loop writes frame 3's time as `5.6e-17`, whose own ulps absorb none of that.
-# `t` and `t₀` are any reals; the step is `Float64` (D-260). A bound at or
+# `t` and `t₀` are any reals; the stride is `Float64` (D-260). A bound at or
 # before the origin is frame 0, whatever its distance, so `_frames_to` never
 # rounds a count `Int` cannot hold on that side; `_frames_fit` is the doors'
-# check for the other side, with `Inf` mapping onto the unbounded budget.
-_frame_slack(t::Real, t₀::Real, h::Float64) = 4 * eps(max(abs(t), abs(t₀))) / h
-_frames_fit(t::Real, t₀::Real, h::Float64) =
-    isinf(t) || (t - t₀) / h + _frame_slack(t, t₀, h) < typemax(Int)
-function _frames_to(t::Real, t₀::Real, h::Float64)
+# check for the other side, against the lattice's last frame whose positions
+# fit `Int` (§10.5), with `Inf` mapping onto the unbounded budget.
+_frame_slack(t::Real, t₀::Real, Δt_frame::Float64) = 4 * eps(max(abs(t), abs(t₀))) / Δt_frame
+_frames_fit(t::Real, t₀::Real, Δt_frame::Float64, max_frame::Int) =
+    isinf(t) || (t - t₀) / Δt_frame + _frame_slack(t, t₀, Δt_frame) < max_frame
+function _frames_to(t::Real, t₀::Real, Δt_frame::Float64)
     isinf(t) && return typemax(Int)
-    count = (t - t₀) / h - _frame_slack(t, t₀, h)
+    count = (t - t₀) / Δt_frame - _frame_slack(t, t₀, Δt_frame)
     count ≤ 0 ? 0 : ceil(Int, count)
 end
-_frame_at(t::Real, t₀::Real, h::Float64) = floor(Int, (t - t₀) / h + _frame_slack(t, t₀, h))
+_frame_at(t::Real, t₀::Real, Δt_frame::Float64) =
+    floor(Int, (t - t₀) / Δt_frame + _frame_slack(t, t₀, Δt_frame))
+
+# The same three over a deployment's lattices from an origin, and over a model's
+# own clock, so no caller rebuilds the triple (§12.6, D-445).
+_frames_fit(deployment::Deployment, t::Real, t₀::Real) =
+    _frames_fit(t, t₀, deployment.Δt_frame, deployment.lattice.max_frame)
+_frames_to(deployment::Deployment, t::Real, t₀::Real) = _frames_to(t, t₀, deployment.Δt_frame)
+_frame_at(deployment::Deployment, t::Real, t₀::Real) = _frame_at(t, t₀, deployment.Δt_frame)
+_frames_fit(model::Model, t::Real) = _frames_fit(model.deployment, t, model.exec.clock.t₀)
+_frames_to(model::Model, t::Real) = _frames_to(model.deployment, t, model.exec.clock.t₀)
 
 # --- evaluation ---------------------------------------------------------------
 
@@ -486,50 +536,60 @@ whatever `xbuf` holds.
     nothing
 end
 
-@inline evaluate!(model::Model) = evaluate!(model.exec)
+# A step's first stage over a fresh table runs the `x_deriv` block alone (§10.3,
+# D-447): the table is the last boundary's, at the state, time, modes and inputs
+# the stage reads, so the sweep would recompute it unchanged. The frame loop arms
+# the flag through `integrate_step!`, and the first evaluation disarms it, so
+# every other caller sweeps.
+@inline function evaluate!(model::Model)
+    model.fresh || return evaluate!(model.exec)
+    model.fresh = false
+    model.exec.cursor.index += 1
+    model.exec.bodies.rhs()
+    nothing
+end
+
+# Design: §5.3, §10.6, §14.5, D-205, D-429, D-445.
+# The one boundary routine, over its due set (§10.5, D-185): a tick index at a
+# due instant, `nothing` at a boundary where nothing is due, and `ESTABLISH` at
+# boundary zero, whose sweep admits every discrete output stage and whose
+# updates keep the ordinary gate at index 0 (D-205). The empty due set is arity
+# selection, never a sentinel index failing every gate. Projection comes first,
+# between integration's write and its decode, then the event phase with the due
+# set fixed for the whole boundary, then the due updates after quiescence,
+# reading post-transition values off the settled table, so a discrete
+# component's cells carry `y[k]` from `s[k]` while `s_update` produces `s[k+1]`.
+# The event phase reports a `FiringBudget` into the model's `frame_diag` (§11.8,
+# D-317).
+@inline function run_boundary!(model::Model, due)
+    _phase!(model.exec.cursor, :project)
+    _projects!(model.exec.events, model.exec.xbuf)
+    event_phase!(model, due)
+    run_ticks!(model, due)
+    nothing
+end
+
+@inline run_ticks!(::Model, ::Nothing) = nothing
+@inline run_ticks!(model::Model, tick::Int) =
+    (_phase!(model.exec.cursor, :ticks); model.exec.bodies.ticks(tick); nothing)
+@inline run_ticks!(model::Model, ::Establish) =
+    (_phase!(model.exec.cursor, :ticks); model.exec.bodies.ticks(0); nothing)
 
 """
-The boundary macro-sequence at a base tick, final form (§5.3, §10.6):
+The boundary macro-sequence at a due instant, `tick` its base-tick index
+(§5.3, §10.6):
 
 > integrate → project → [sweep → guards → handlers] iterated to quiescence
 > (under the firing budget) → all due `s_update` calls
-
-Integration has just written the state, so projection runs first — between the
-write and its decode; the event phase then iterates with the due set fixed for
-the whole boundary, and the due updates run last, after quiescence, reading
-post-transition values off the settled table. Output stages before updates, so
-a discrete component's cells carry `y[k]` computed from `s[k]` while
-`s_update` produces `s[k+1]` — the sampled-data recursion, ordered by
-construction rather than by convention.
-
-The three boundary routines run on the model, and the event phase reports a
-`FiringBudget` into the model's `frame_diag` (§11.8, D-317).
 """
-@inline function boundary!(model::Model, tick::Int)
-    cursor = model.exec.cursor
-    _phase!(cursor, :project)
-    _projects!(model.exec.events, model.exec.xbuf)
-    event_phase!(model, tick)
-    _phase!(cursor, :ticks)
-    model.exec.bodies.ticks(tick)
-    nothing
-end
+@inline boundary!(model::Model, tick::Int) = run_boundary!(model, tick)
 
 """
-The macro-sequence at a step boundary that is *not* a base tick: the tick
-counter has not advanced, so the due set is empty — and emptiness is arity
-selection, never a sentinel index failing every gate (§10.5, D-185). The
-zero-arg interior bodies are exactly the boundary walk with every discrete
-entry gated out, so consistency is restored and nothing discrete can move;
-projection and the event phase run in full — every step boundary is a boundary
-(§10.4).
+The macro-sequence at a boundary where nothing is due: projection and the event
+phase in full, with the empty due set by arity selection (§10.5, D-185), so
+consistency is restored and nothing discrete can move.
 """
-@inline function offtick_boundary!(model::Model)
-    _phase!(model.exec.cursor, :project)
-    _projects!(model.exec.events, model.exec.xbuf)
-    event_phase!(model, nothing)
-    nothing
-end
+@inline offtick_boundary!(model::Model) = run_boundary!(model, nothing)
 
 """
 Boundary zero's macro-sequence (§14.5, D-205): the ordinary one, with the
@@ -550,29 +610,7 @@ everywhere.
 Never called bare: the model's `init!` (above) hosts it, the one door
 that runs it (D-274), wrapping a throw as §13.4's catch does (D-223, D-317).
 """
-@inline boundary_zero!(model::Model) = _settle!(model; fresh = true)
-
-# The settling routine both doors call (§14.5, §12.6, D-429): boundary zero's
-# tail, projection and the event phase to quiescence, with one flag. Fresh, the
-# sweep admits every discrete output stage and the due updates run, boundary
-# zero's two amendments (D-205, D-067). Continuing, under `overlay!`, the sweep
-# is the off-tick one with every discrete entry gated out and no update runs:
-# an overlaid store is the next tick's state and its held cell stays (D-273).
-# The priors are the doors' business: `init!` resets them, `overlay!` keeps
-# them, so only a guard the overlay moved into holding fires here.
-@inline function _settle!(model::Model; fresh::Bool)
-    cursor = model.exec.cursor
-    _phase!(cursor, :project)
-    _projects!(model.exec.events, model.exec.xbuf)
-    if fresh
-        event_phase!(model, ESTABLISH)
-        _phase!(cursor, :ticks)
-        model.exec.bodies.ticks(0)
-    else
-        event_phase!(model, nothing)
-    end
-    nothing
-end
+@inline boundary_zero!(model::Model) = run_boundary!(model, ESTABLISH)
 
 # One iteration round's sweep: the whole gated schedule (§10.6), in the due-set
 # arity the boundary fixed — never the update laws, which wait for quiescence.
@@ -660,10 +698,22 @@ entered empty: with no continuous state the step degenerates to advancing `t`,
 the backend is simply not called, and no backend contract has to say what it
 would do at N = 0.
 """
-@inline function integrate!(model::Model, h)
+@inline integrate!(model::Model, h) = integrate_step!(model, h, nothing, false)
+
+# The frame loop's step (§10.2, §10.3, D-447): `k` is the frame the step lies in,
+# which a nonfinite state's report names, and `fresh` says the table is the last
+# boundary's, which the backend's first `evaluate!` then reads without a sweep.
+# The flag is disarmed after the backend returns, so it never outlives the step.
+@inline function integrate_step!(model::Model, h, k::Union{Nothing,Int}, fresh::Bool)
     _phase!(model.exec.cursor, :integrate)     # §13.4: `evaluate!` counts the stages from here
-    isempty(model.exec.xbuf) ? (model.exec.clock.t += h) : integrate!(model.exec.stepper, model, h)
-    _check_finite!(model)
+    if isempty(model.exec.xbuf)
+        model.exec.clock.t += h
+    else
+        model.fresh = fresh
+        integrate!(model.exec.stepper, model, h)
+        model.fresh = false
+    end
+    _check_finite!(model, k)
     nothing
 end
 
@@ -674,10 +724,10 @@ end
 # not participate: a nonfinite derivative contaminates its own block's step
 # result within that very step, so this is the same detection with the same
 # attribution, and `ẋ` is integrator scratch besides.
-@inline function _check_finite!(model::Model)
+@inline function _check_finite!(model::Model, k::Union{Nothing,Int})
     x = model.exec.xbuf
     @inbounds for i in eachindex(x)
-        isfinite(x[i]) || _nonfinite(model, i)      # the throw is the cold path
+        isfinite(x[i]) || _nonfinite(model, i, k)      # the throw is the cold path
     end
     nothing
 end
@@ -685,7 +735,7 @@ end
 # The owner of `flat_index` and its leaf within that component's block, both
 # read off the layout's `xblocks`. Thrown as a fail-fast `DiagnosticError`, which
 # the catch site's species rule unwraps into the `StepError`'s `cause`.
-@noinline function _nonfinite(model::Model, flat_index::Int)
+@noinline function _nonfinite(model::Model, flat_index::Int, k::Union{Nothing,Int})
     exec = model.exec
     xblocks = exec.act.layout.xblocks
     owner = findfirst(b -> flat_index in b, xblocks)::Int
@@ -698,11 +748,12 @@ end
         leaf = x_leaf_names[flat_index - first(xblocks[owner]) + 1],
         value = exec.xbuf[flat_index],
         t = _seconds(exec.clock.t),
-        # the frame-entry index, off the grid time the clock sits on: every
-        # `integrate!` inside `frame!` ends at one, so rounding is exact at any
-        # scalar. The counters are the run's, which the model never sees (D-317)
-        boundary = round(Int, (_seconds(exec.clock.t) - exec.clock.t₀) /
-                         model.deployment.Δt_frame) - 1)))
+        # the frame-entry index: the frame loop names its frame, since a step may
+        # end inside it (D-445); a bare `integrate!` rounds the clock onto the
+        # frame top it ends at. The counters are the run's, which the model never
+        # sees (D-317)
+        boundary = (k === nothing ? round(Int, (_seconds(exec.clock.t) - exec.clock.t₀) /
+                                           model.deployment.Δt_frame) : k) - 1)))
 end
 
 # Design: §9.2, §11.8, D-250.

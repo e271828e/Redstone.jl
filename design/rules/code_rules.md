@@ -114,8 +114,9 @@ Traps the code does not warn about, each hit more than once while building:
   a second home with no enforcer but the constructor. `Layout` is the one
   home for address facts (§9.2, D-261);
 - **`checkpoint` is refused after a `t*` stop and after an abandoned
-  frame.** A test that checkpoints a stopped run stops it at a frame top:
-  `t_end`, a stop request read at a grid boundary, or `stop!` (§12.6, D-274);
+  frame**, a stop at a step end inside a frame included. A test that
+  checkpoints a stopped run stops it at a frame top: `t_end`, a stop request
+  read at a frame top, or `stop!` (§12.6, D-274, D-445);
 - **a mask's two ends sit on one level, never split across a `try`.** On
   1.13 a `try` exit restores the sigatomic count to its entry value, normal
   exit included. A deferred interrupt raises at `sigatomic_end`, so a mask
@@ -183,9 +184,10 @@ Traps the code does not warn about, each hit more than once while building:
 - **`isempty` is no presence test for a store.** `isempty(nothing)` and
   `isempty(:idle)` throw, and an empty `SVector` is a declared store, so a
   store is present iff it is not `nothing` (§5.2);
-- **a test's clock value is an indexed frame top**, `t₀ + k * Δt_frame` bitwise,
-  never a decimal literal; a derived index takes the helper its sibling
-  door uses;
+- **a test's clock value is an indexed instant**, bitwise, never a decimal
+  literal: a frame top `t₀ + k * Δt_frame`, a due instant off the tops
+  `t₀ + n * Δt_base`, a step point on neither `t₀ + (k - 1) * Δt_frame + j * h`
+  (D-445); a derived index takes the helper its sibling door uses;
 - **a test that stages a root input reads it back with `get_input`** and
   pins the snapshot where it changes: `stage!` reports a misspelled face
   to the harness writer's diagnostic cell, never to the caller, and a

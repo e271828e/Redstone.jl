@@ -433,14 +433,9 @@ function diagnostics_kind_set()
             DeploymentInvalid(parameter = :Δt_base, reason = :unanchored, paths = ["a/b"],
                               grid = grid),
             DeploymentInvalid(parameter = :Δt_base, reason = :no_constraint),
-            DeploymentInvalid(parameter = :Δt_base, reason = :not_harmonic, value = 1//3,
-                              related = 1//100),
+            DeploymentInvalid(parameter = :Δt_base, reason = :range, value = 0//1),
             DeploymentInvalid(parameter = :Δt_frame, reason = :not_harmonic, value = 1//100,
                               related = 1//30),
-            DeploymentInvalid(parameter = :Δt_base, reason = :not_frame_multiple, value = 1//50,
-                              related = 1//30),
-            DeploymentInvalid(parameter = :h, reason = :subcycling, value = 1//200,
-                              related = 1//100),
             DeploymentInvalid(parameter = :Δt_base, reason = :anchor_period, value = 1//30,
                               related = 1//100, scope = "a", key = :b, grid = grid),
             DeploymentInvalid(parameter = :Δt_base, reason = :anchor_offset, value = 1//7,
@@ -601,6 +596,8 @@ function diagnostics_kind_set()
             ArgumentInvalid(call = :Simulation, reason = :claimed, argument = :model),
             ArgumentInvalid(call = :init!, reason = :claimed, argument = :model),
             ArgumentInvalid(call = :frame!, reason = :claimed, argument = :model),
+            ArgumentInvalid(call = :frame!, reason = :range, argument = :k, value = 922,
+                            related = 921),
             ArgumentInvalid(call = :apply!, reason = :claimed, argument = :model),
             ArgumentInvalid(call = :restore!, reason = :claimed, argument = :model),
             ArgumentInvalid(call = :Model, reason = :scalar, argument = :T, value = Float32),
@@ -782,19 +779,19 @@ function diagnostics_kind_set()
         @test kinds(with_warning) == kinds(carrier) &&
               diagnostics(with_warning) == diagnostics(carrier)
 
-        # The fixed step's refusals name the period the step fails on, by the
-        # payload's parameter (§10.2, D-443).
+        # The fixed step's one refusal names the frame period it fails on, by the
+        # payload's parameter, and `Δt_base` has a range of its own (§9.2, D-444,
+        # D-445).
         @test startswith(message(DeploymentInvalid(parameter = :Δt_frame, reason = :not_harmonic,
                                                    value = 1//100, related = 1//30)),
                          "harmonic grid: Δt_frame = 1//100 is not an integer multiple of " *
                          "the fixed step h = 1//30")
-        @test startswith(message(DeploymentInvalid(parameter = :h, reason = :subcycling,
-                                                   value = 1//200, related = 1//100)),
-                         "h = 1//200 divides Δt_frame = 1//100 but is not equal to it")
-        @test startswith(message(DeploymentInvalid(parameter = :Δt_base,
-                                                   reason = :not_frame_multiple,
-                                                   value = 1//50, related = 1//30)),
-                         "Δt_base = 1//50 is not an integer multiple of Δt_frame = 1//30")
+        @test message(DeploymentInvalid(parameter = :Δt_base, reason = :range, value = 0//1)) ==
+              "`Δt_base` must be positive and finite, got 0//1 (§9.2)"
+        # A frame past the lattices' last is named against that last frame (§10.5, D-445).
+        @test startswith(message(ArgumentInvalid(call = :frame!, reason = :range, argument = :k,
+                                                 value = 922, related = 921)),
+                         "frame 922 is past frame 921, the last this deployment's lattices index")
         # A float step's refusal names the token's own constructor (§10.2, D-442).
         @test startswith(message(ArgumentInvalid(call = :RK4, reason = :inexact, value = 0.01)),
                          "a fixed step is an exact Rational — write `RK4(1//100)`, not RK4(0.01)")

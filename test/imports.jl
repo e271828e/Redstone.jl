@@ -2,7 +2,8 @@
 # call or extend is admitted (code_rules.md's authoring caveat). Shared with
 # `repl.jl`: `include` evaluates in the including module, so the same file
 # imports into `RedstoneTests` and into `Main`.
-import Redstone: ASSEMBLY, Absolute, AbstractBinding, AbstractComponent,
+import Redstone: ASSEMBLY, Absolute, AbstractAlgorithm, AbstractBinding, AbstractComponent,
+    AbstractStepper, bind_stepper, startpoint,
     AbstractDevice, AlgebraicCycle, AlreadyAttached, Anchor, ArgumentInvalid,
     AbstractAtRoot, AttachUnknownFace, Authored, BUILD_WARNINGS, BindingContractMismatch,
     Build, BundleFieldError,
@@ -46,7 +47,7 @@ import Redstone: ASSEMBLY, Absolute, AbstractBinding, AbstractComponent,
     _accepts, _accepts_wire, _bump, _check_handler, _check_root_faces, _check_transparent,
     _children, _container_fields, _contract, _element_keys, _elements, _is_container,
     _declares, _declares_workspace, _holds_marker, _kind, _leaf_values, _cell_key, _compile_feed, _compile_reads, _gates, _heartbeat,
-    _fire!, _frame_at, _frames_to, _guards!, _mflatten_expr, _mreconstruct_expr, _ports, _projects!,
+    _fire!, _frame_at, _frames_fit, _frames_to, _guards!, _mflatten_expr, _mreconstruct_expr, _ports, _projects!,
     report_cell!, report_thread_budget!, _restore_state!, _saturated, _take!,
     _total, _typename, _walk!, _walk_at,
     _walked_children, _warn!, _workspace, activation, anchor!, apply!, at, at_component, attach!,

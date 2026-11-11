@@ -38,34 +38,41 @@ function test_stepper()
         @test repr(RK4()) == "RK4()" && repr(Heun(1//50)) == "Heun(1//50)"
     end
 
-    @testset "a fixed step divides the frame and the base tick, and is the frame for now (§10.2, D-443)" begin
-        # One refusal per relation, the step and the period it fails on the payload.
+    @testset "a fixed step divides the frame, and nothing relates it to the base tick (§9.2, D-444)" begin
+        # One refusal for the one relation, the step and the frame on the payload.
         multirate_build = build(MultiRate())   # discrete work: three rows
         refused(; kw...) = diagnostics(failure(() -> Deployment(multirate_build; kw...)))
         d = only(diagnostics(failure(() -> Deployment(build(feedback_model()); Δt_frame = 1//500,
                                                       algorithm = RK4(3//1000)))))
         @test d isa DeploymentInvalid && d.parameter === :Δt_frame &&
               d.reason === :not_harmonic && d.value == 1//500 && d.related == 3//1000
-        # A step dividing the frame is the rule's, refused until the loop subcycles.
-        d = only(refused(Δt_frame = 1//500, algorithm = Heun(1//1000)))
-        @test d.parameter === :h && d.reason === :subcycling && d.value == 1//1000 &&
-              d.related == 1//500
         d = only(refused(Δt_frame = 1//500, algorithm = RK4(-1//500)))
         @test d.parameter === :h && d.reason === :range && d.value == -1//500
-        # An infinite step is out of range too, never a step that subcycles.
+        # An infinite step is out of range too, never a step that divides the frame.
         d = only(refused(Δt_frame = 1//500, algorithm = RK4(1//0)))
         @test d.parameter === :h && d.reason === :range && d.value == 1//0
-        # With discrete work the step must divide the base tick too, and every
-        # fault arrives in one throw (D-229).
+        # A step that divides the frame subcycles, and a base tick off the step
+        # points is no fault: with discrete work, `Δt_frame = 1//500`, `Δt_base =
+        # 1//300` and `h = 1//1000` deploy, the step recorded as given.
+        deployment = Deployment(multirate_build; Δt_frame = 1//500, Δt_base = 1//300,
+                                algorithm = Heun(1//1000))
+        @test deployment.algorithm == Heun(1//1000)
+        @test (deployment.lattice.frame, deployment.lattice.base, deployment.lattice.step) ==
+              (6, 10, 3)       # in units of gcd(1//1000, 1//300) = 1//3000
+        # `Δt_base` is a premise of its own, positive and finite (D-445).
+        for bad in (0, -1//300, 1//0)
+            d = only(refused(Δt_frame = 1//500, Δt_base = bad))
+            @test d.parameter === :Δt_base && d.reason === :range && d.value == bad
+        end
+        # Every check whose premise holds runs (D-229): a step fault no longer
+        # skips the anchor loop, which reads `Δt_base` alone.
         @test Set((d.parameter, d.reason)
-                  for d in refused(Δt_frame = 1//500, Δt_base = 1//300,
-                                   algorithm = RK4(1//1000))) ==
-              Set([(:h, :subcycling), (:Δt_base, :not_frame_multiple), (:Δt_base, :not_harmonic)])
-        # With none, the base tick constrains no step.
-        err = failure(() -> Deployment(build(feedback_model()); Δt_frame = 1//500,
-                                       Δt_base = 1//300, algorithm = RK4(1//1000)))
-        @test Set((d.parameter, d.reason) for d in diagnostics(err)) ==
-              Set([(:h, :subcycling), (:Δt_base, :not_frame_multiple)])
+                  for d in refused(Δt_frame = 1//500, Δt_base = 3//250, algorithm = RK4(0))) ==
+              Set([(:h, :range), (:Δt_base, :anchor_period)])
+        @test Set((d.parameter, d.reason)
+                  for d in refused(Δt_frame = 1//500, Δt_base = 3//250,
+                                   algorithm = RK4(3//1000))) ==
+              Set([(:Δt_frame, :not_harmonic), (:Δt_base, :anchor_period)])
     end
 
     @testset "convergence order: each backend is itself — 4 and 2 (§10.2)" begin
@@ -143,7 +150,7 @@ function test_stepper()
         init!(bouncer_sim; log = false)
         publish_bytes = @ballocated publish!($bouncer_sim, $(bouncer_sim.plane.roster))
         no_mask = Bool[]                    # the advance's argument (D-260, D-261)
-        hooks = LoopHooks(bouncer_sim, bouncer_sim.plane.roster, nothing, no_mask)
+        hooks = LoopHooks(bouncer_sim, bouncer_sim.plane.roster, nothing, no_mask, 0)
         @test @ballocated(frame!($(bouncer_sim.model), 1, $hooks), setup = (init!($bouncer_sim; log = false)), evals = 1) == 2 * publish_bytes
         # One honoured requester adds the scan of its buffer and no allocation
         # (§13.5, D-316).
@@ -151,7 +158,7 @@ function test_stepper()
         init!(requested_sim; log = false)
         requested_bytes = @ballocated publish!($requested_sim, $(requested_sim.plane.roster))
         honoured_mask = Bool[false]
-        requested_hooks = LoopHooks(requested_sim, requested_sim.plane.roster, nothing, honoured_mask)
+        requested_hooks = LoopHooks(requested_sim, requested_sim.plane.roster, nothing, honoured_mask, 0)
         @test @ballocated(frame!($(requested_sim.model), 1, $requested_hooks), setup = (init!($requested_sim; log = false)), evals = 1) == 2 * requested_bytes
     end
 
