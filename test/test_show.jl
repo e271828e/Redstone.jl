@@ -267,10 +267,10 @@ function test_show()
         rig = build(Group((; c = Plant(), a = TickCounter()); input_wires = ("in" => "c/u",),
                           sample_times = (; a = Absolute(Period(7//100)))))
         @test steps_line(Deployment(rig; Δt_frame = 1//10, Δt_base = 1//100, h_max = 1//40)) ==
-              "  steps per frame: 4; due instants of a split frames"
+              "  steps per unsplit frame: 4; due instants of a split frames"
         # No bound: one step per unsplit frame.
         @test steps_line(Deployment(rig; Δt_frame = 1//10, Δt_base = 1//100)) ==
-              "  steps per frame: 1; due instants of a split frames"
+              "  steps per unsplit frame: 1; due instants of a split frames"
         # No discrete component: a bound that divides the frame, then one that
         # divides nothing, ⌈0.01/0.003⌉ = 4.
         @test steps_line(Deployment(pendulum; Δt_frame = 1//100, h_max = 1//400)) ==
@@ -284,19 +284,19 @@ function test_show()
                              sample_times = (; a = Absolute(Period(1//10), 1//20),
                                                b = Absolute(Period(1//10)))))
         @test steps_line(Deployment(offset; Δt_frame = 1//10, Δt_base = 1//20)) ==
-              "  steps per frame: 1; due instants of a split frames"
+              "  steps per unsplit frame: 1; due instants of a split frames"
         # Periods of 0.1 s and 0.10001 s in 20 ms frames: only the second splits,
         # by its period alone. With both offset, both are named in row order.
         long = build(Group((; a = TickCounter(), b = TickCounter());
                            sample_times = (; a = Absolute(Period(1//10)),
                                              b = Absolute(Period(10001//100000)))))
         @test steps_line(Deployment(long; Δt_frame = 1//50, Δt_base = 1//100000)) ==
-              "  steps per frame: 1; due instants of b split frames"
+              "  steps per unsplit frame: 1; due instants of b split frames"
         both = build(Group((; a = TickCounter(), b = TickCounter());
                            sample_times = (; a = Absolute(Period(1//10), 1//100),
                                              b = Absolute(Period(1//10), 1//100))))
         @test steps_line(Deployment(both; Δt_frame = 1//50, Δt_base = 1//100)) ==
-              "  steps per frame: 1; due instants of a, b split frames"
+              "  steps per unsplit frame: 1; due instants of a, b split frames"
     end
 
     @testset "the status's compact form is one line with the counts (§11.8, D-257)" begin

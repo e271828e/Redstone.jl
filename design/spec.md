@@ -4726,7 +4726,9 @@ divisor is `D = m·D₁`, with `D₁ = T₁/Δt_base = (1//50)/(1//500) = 10`.
   instants fall inside frames. Such a frame splits into spans, each taken in
   its own equal steps, so it never takes fewer. The line is how a user learns
   that the schedule splits steps, and construction raises no warning for a
-  split. It costs one check per component, since a component's ticks all
+  split. Where a component splits frames, the line calls its count the steps
+  per unsplit frame, which stays true when every frame holds a due instant.
+  It costs one check per component, since a component's ticks all
   fall on frame tops exactly when the frame divides its period and its
   offset.
 
@@ -6519,8 +6521,8 @@ those 5005 frames the loop takes 6000 steps without a bound, one per frame
 and one more in each of the 995 frames holding a due instant off its top.
 Under `h_max = 5 ms` a frame with no due instant inside takes 4 steps of
 5 ms. A frame holding one takes its two spans in 4 or 5 equal steps between
-them, so the run takes 21 000 steps. `show` reports 4 steps per frame and
-names the 0.1001 s component as splitting frames ([§9.2][s9-2]).
+them, so the run takes 21 000 steps. `show` reports 4 steps per unsplit
+frame and names the 0.1001 s component as splitting frames ([§9.2][s9-2]).
 
 #### Simultaneous ticks
 

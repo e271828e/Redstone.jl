@@ -1019,7 +1019,8 @@ D-261.
   parameters line names `h_max` resolved. `_steps_line` states the steps of
   a frame no due instant falls inside, one `cld` over the bound's ratio to
   the unit, and names each schedule row whose ticks are not all frame tops,
-  one divisibility check per row (D-449).
+  one divisibility check per row, the count then labelled per unsplit frame
+  (D-449).
 - The published `FrameworkStatus`'s two forms. The `MIME"text/plain"` form
   prints one block per writer and the pacer's line last. It prints each
   writer × kind in full up to `STATUS_MAXLOG` cumulative occurrences, and

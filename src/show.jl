@@ -268,7 +268,8 @@ Base.show(io::IO, deployment::Deployment) =
 # `cld` over the bound's ratio to the unit. A row's ticks lie at
 # `(Φ + j·D)·base` units, all of them frame tops exactly when the frame divides
 # both `Φ·base` and `D·base`; every other row splits frames, and the line names
-# it. No frame is walked, so the line costs one check per row. The products fit
+# it, the count then labelled as the unsplit frame's. No frame is walked, so
+# the line costs one check per row. The products fit
 # `Int`, since `_lattice` fits `D·base` past a frame top and `Φ < D`.
 function _steps_line(deployment::Deployment)
     lattice = deployment.lattice
@@ -276,8 +277,11 @@ function _steps_line(deployment::Deployment)
     splitting = [_path_label(row.path) for row in deployment.schedule.rows
                  if (row.Φ * lattice.base) % lattice.frame != 0 ||
                     (row.D * lattice.base) % lattice.frame != 0]
-    "steps per frame: $steps" *
-        (isempty(splitting) ? "" : "; due instants of " * join(splitting, ", ") * " split frames")
+    # Where a row splits frames, the count is labelled as the unsplit frame's,
+    # which holds even when every frame is split.
+    isempty(splitting) ? "steps per frame: $steps" :
+        "steps per unsplit frame: $steps; due instants of " * join(splitting, ", ") *
+        " split frames"
 end
 
 # The parameters, the steps per frame, the build in its compact form (a reader

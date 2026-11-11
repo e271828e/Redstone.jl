@@ -356,4 +356,6 @@ leaves the two coprime in units. It found one stale sentence, §10.5's
 worked example still reporting "4 to 5 steps per frame", corrected in the
 commit of this record. When every frame holds a due instant, the line's
 count describes an unsplit frame that never occurs; that follows from the
-ruled form and is no defect.
+ruled form and is no defect. At the user's word the line now says so: where
+a component splits frames it reads `steps per unsplit frame: 4; due
+instants of a split frames`, true even when no frame is unsplit.
