@@ -8970,7 +8970,8 @@ terminal publication. What lands after it can reach no snapshot. Examples are a
 report from a device's exit path and the `DeviceJoinTimeout` raised by the [tail](#g-tail)
 (the ordered shutdown sequence every stop takes) ([§12.4][s12-4]). So the loop takes each
 diagnostic cell once more at the run's end, keeping the next run's account
-clean.
+clean. A replaying run first takes each staging cell once more, so a batch
+discarded past the final frame top is reported in this take ([§12.7][s12-7]).
 
 That last take is folded into the [termination record](#g-termination-record) (the stopped-sim value
 naming how the run ended) as the tail residue ([§13.5][s13-5]). Per writer, the tail
@@ -10231,6 +10232,24 @@ rate-limited warning (`ReplayDiscardedStaging`, [Appendix C][sC]). Mixing live
 writes into a replay would destroy the property replay exists to provide. A
 session that wants live input is a continuation (`run!` after replay), not a
 replay.
+
+**An advance in `:replay` takes every staging cell once more as it ends,
+on every exit, and discards what it finds** ([D-451][d-451]). A device can
+stage after the last frame top, late in its loop or from its exit path.
+Without the take, that batch would wait in its cell, and the live
+continuation would apply it once the mode flips. The take reports each
+discard as a frame top does. The report names the frame after the halt, the
+one the batch was staged for. The take runs after the tail joins the device
+tasks ([§12.4][s12-4]). It therefore catches every device's batch except one
+from a task abandoned at `join_timeout`. A harness writer staging from
+another task can still land after the take. That batch waits for the next
+advance, like one staged after the call returns.
+
+The take's reports reach the run's-end sweep ([§11.8][s11-8]) wherever the
+advance runs one. A `step!` that halts `initialized` runs none. Its reports wait
+in the diagnostic cells for the next advance's first frame top. A door in
+between leaves those cells as they stand, so the reports surface in the next
+run's account.
 
 #### Validation up front
 
@@ -16751,6 +16770,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-448]: log.md#d-448--name-the-detection-policy-of-a-bool-guard-non-localized
 [d-449]: log.md#d-449--bound-the-step-by-h_max-and-take-each-span-in-equal-steps
 [d-450]: log.md#d-450--refuse-a-run-whose-clock-cannot-order-its-boundaries
+[d-451]: log.md#d-451--discard-a-replaying-advances-late-staging-at-its-halt
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop

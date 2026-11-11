@@ -311,7 +311,7 @@ function pending(handle::DeviceHandle, slot::Int)
     held[].mask[slot] ? Some(held[].staged[slot]) : nothing
 end
 
-# Design: §11.4, §11.6, D-244.
+# Design: §11.4, §11.6, §12.7, D-244, D-451.
 # The same compiled shim, CAS merge and per-face newest-wins as every writer's,
 # against this attachment's claim set, with every check at staging.
 """
@@ -323,12 +323,13 @@ the [device](@ref g-device)'s handle, from any task at any moment.
 Each write is a `"face" => value` pair naming a root input inside the device's
 [claim](@ref g-claim). The pairs form one batch. The batch waits in the device's
 [staging cell](@ref g-staging-cell) and is applied at the top of the next
-[frame](@ref g-frame). A call that opens a run drops it silently, and under the
-`:replay` [input mode](@ref g-input-mode) the frame top discards it. Batches
-merge, the newest value winning per [face](@ref g-face), so a face not staged
-again keeps its pending value. A loop usually stages what [`map_input`](@ref)
-returns. The calling code stages through the
-[harness writer](@ref g-harness-writer) with `stage!(sim, …)`.
+[frame](@ref g-frame). A call that opens a run drops it silently. Under the
+`:replay` [input mode](@ref g-input-mode) the frame top discards it, and a
+batch that lands during an advance after its last frame top is discarded as
+that advance ends. Batches merge, the newest value winning per
+[face](@ref g-face), so a face not staged again keeps its pending value. A loop
+usually stages what [`map_input`](@ref) returns. The calling code stages
+through the [harness writer](@ref g-harness-writer) with `stage!(sim, …)`.
 
 A face outside the claim is discarded as `OutOfClaimEntry`, which names the
 device that claims it, if any. A value that does not convert to the face's type

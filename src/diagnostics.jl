@@ -1635,9 +1635,11 @@ end
 found in a cell is taken and dropped rather than applied. The attribution is
 the cell's, as everywhere in this channel — the emitting site knows whose cell
 it writes — and the payload is what the drop cost: the faces the batch touched,
-and the frame it was drained at. Rate-limited by construction: the drain takes
-each cell once per frame and coalescing makes a batch at most one per writer
-per frame, which is exactly §11.8's per-source limit.
+and the frame it was staged for. A frame top's take names its own frame; the
+take at a replaying advance's halt names the frame after the halt (D-451).
+Rate-limited by construction: the drain takes each cell once per frame, the
+halt once more per advance, and coalescing makes a batch at most one per writer
+per take, which keeps §11.8's per-source limit.
 """
 struct ReplayDiscardedStaging <: Diagnostic
     faces::Vector{Symbol}

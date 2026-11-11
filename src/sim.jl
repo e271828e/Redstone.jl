@@ -1207,7 +1207,7 @@ function _compile_feed(sim::Simulation, trc::Trace, restore::Bool = true)
 end
 
 # Design: §10.4, §11.1, §11.5, §12.4, §12.6, §12.7, §13.4, §13.5, D-218, D-219,
-# D-261, D-268, D-269, D-274.
+# D-261, D-268, D-269, D-274, D-451.
 # Replay is the ordinary loop with exactly one substitution, not a separate
 # execution mode, which is what keeps every property proved of the loop true of
 # a replay. `replay!` stands in `init!`'s lifecycle position and does what
@@ -1253,8 +1253,9 @@ does. No [boundary zero](@ref g-boundary-zero) runs, so nothing is applied
 twice. At each frame top, it applies the recording's [batches](@ref g-batch) for
 that frame verbatim. It drops whatever a live writer stages into its
 [staging cell](@ref g-staging-cell) during the replay, with a
-`ReplayDiscardedStaging` warning at the frame top. A batch staged before the
-call is dropped silently, as under `restore!`. The replayed trajectory is
+`ReplayDiscardedStaging` warning at the frame top. A batch staged after the
+last frame top is dropped at the halt, with the same warning. A batch staged
+before the call is dropped silently, as under `restore!`. The replayed trajectory is
 bit-identical to the recorded one. A paced replay is bit-identical to an unpaced
 one.
 
@@ -1735,6 +1736,7 @@ function _run_body!(sim::Simulation, policy::StopPolicy, ignore_mask::Vector{Boo
         # its end propagating raw, the simulation already terminal (§12.4, D-268).
         Base.sigatomic_begin()
         @atomic control.stopped = true
+        _discard_late_staging!(sim, roster)   # §12.7: a replay's staging past its last top
         residue = _sweep_tail!(sim, roster)   # the run's last take (§11.8): what landed past
                                               # the final frame top — recorded and presented,
                                               # never published (D-201, D-203)
@@ -2278,6 +2280,7 @@ function step!(sim::Simulation; frames = nothing, t_plus = nothing,
         end
     finally
         Base.sigatomic_begin()                # masked bookkeeping, as `run!`'s (§12.4, D-268)
+        _discard_late_staging!(sim, roster)   # §12.7: ahead of the flip, as in `_run_body!`
         if cause !== nothing                  # §13.6, the stepped entry: same tail,
             _finish!(sim)                     # deviceless — waits woken, accounts swept
             # the model's catch already wrote its status, which reads `errored` (D-317)
@@ -2578,7 +2581,7 @@ end
 
 # --- the data plane (§11): staging, the drain, publication ---------------------
 
-# Design: §11.1, §11.3, §11.4, §11.8, D-192.
+# Design: §11.1, §11.3, §11.4, §11.8, §12.7, D-192, D-451.
 # The harness writer (§11.3). The coalescing policy is a CAS merge (§11.4).
 # Every check runs here, on the writer's side. A device stages through the
 # handle its `attach!` returned, `stage!(handle, writes...)` in devices.jl, the
@@ -2593,8 +2596,9 @@ Each write is a `"face" => value` pair naming a root input. Together the writes
 form a batch. The harness writer never touches a live root input. The batch
 waits in its [staging cell](@ref g-staging-cell) and is applied at the top of
 the next [frame](@ref g-frame) the loop advances. A call that opens a run drops
-it silently, and under the `:replay` [input mode](@ref g-input-mode) the frame
-top discards it. Batches merge, the newest value winning per
+it silently. Under the `:replay` [input mode](@ref g-input-mode) the frame top
+discards it, and a batch that lands during an advance after its last frame top
+is discarded as that advance ends. Batches merge, the newest value winning per
 [face](@ref g-face), so a face not staged again keeps its pending value.
 
 A face outside the harness writer's [surface](@ref g-write-surface) is
@@ -2741,6 +2745,22 @@ function _discard_staged!(writer::Writer, cell::DiagCell, frame::Int)
     report_cell!(cell, ReplayDiscardedStaging(Symbol[writer.faces[i] for i in 1:length(mask)
                                                      if mask[i]],
                                               frame))
+    nothing
+end
+
+# A replaying advance's last take of the staging cells, at its halt (§12.7,
+# D-451): after the tail's joins, so a device's exit path is caught, and ahead
+# of the mode's flip, which detaches the feed. A batch past the last top was
+# staged for the frame after it, which the report names. What it reports the
+# sweep presents; where no sweep runs it waits in the cell for the next fold.
+function _discard_late_staging!(sim::Simulation, roster::Vector{RosterEntry})
+    sim.run.feed === nothing && return nothing
+    frame = sim.run.frame + 1
+    for entry in roster
+        handle = _handle(entry)
+        _discard_staged!(handle.writer, handle.diag_cell, frame)
+    end
+    _discard_staged!(sim.plane.harness, sim.plane.harness_diag, frame)
     nothing
 end
 

@@ -1083,7 +1083,10 @@ Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315, D-437, D-449.
   - the sweep `_sweep_tail!` after the tail, which builds the
     `ResidueRecord`s, dataplane.jl's (§13.5, D-203), and folds the model's
     diagnostic cell into the loop's account beside the loop's own cell
-    (§11.8, D-317).
+    (§11.8, D-317);
+  - `_discard_late_staging!`, a replaying advance's last take of the staging
+    cells at its halt, ahead of the sweep and the mode's flip, which `step!`
+    calls too (§12.7, D-451).
 - `attach!`/`detach!`.
 - The pause verbs `pause!`/`resume!`/`paused`, beside `stop!(sim)` (§12.1,
   D-268).
@@ -1139,7 +1142,7 @@ Spec: §10.2–§10.7, §11.1–§11.5, §11.8, §12.1–§12.7, §13.4–§13.6
 §14, §14.1, §14.5, §14.6, §14.8, §14.10, D-027, D-101, D-198, D-203, D-218,
 D-219, D-223, D-232, D-233, D-250, D-253, D-254, D-255, D-256, D-260, D-261,
 D-268, D-269, D-270, D-274, D-316, D-317, D-318, D-319, D-407, D-429, D-445,
-D-447, D-450.
+D-447, D-450, D-451.
 
 ### `src/stepper.jl`
 

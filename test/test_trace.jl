@@ -923,6 +923,81 @@ function trace_discarded_staging()
     end
 end
 
+# A `Nudge` that stages on its exit path: it parks until the run stops, so its
+# batch lands past the replay's last frame top on every thread layout.
+mutable struct ExitNudge <: AbstractDevice
+    face::String
+    v::Float64
+end
+loop(dev::ExitNudge, handle) = (while running(handle); wait_next_snapshot(handle); end;
+                                stage!(handle, dev.face => dev.v); nothing)
+
+function trace_discarded_late_staging()
+    @testset "staging past a replay's last frame top is discarded at the halt (§12.7, D-451)" begin
+        (sim, trc) = recorded_run()
+        sim2 = replay_twin()
+        handle = attach!(sim2, ExitNudge("rate", 99.0), Enumerated("rate"))
+        logs, _ = Test.collect_test_logs() do
+            replay!(sim2, trc)
+        end
+        @test lifecycle(sim2) === :initialized && mode(sim2) === :live
+        @test same_trajectory(logged(sim2), logged(sim))
+
+        # The batch reaches no snapshot: the halt's take reports it, and the sweep
+        # presents it once.
+        who = "device 1 (ExitNudge)"
+        @test writer_status(latest(sim2), who).totals.replay_discarded == 0
+        @test length(discard_reports(sim2, logs, who)) == 1
+        @test pending(handle, 1) === nothing
+
+        # …and the live continuation does not apply it.
+        batch_count = length(trace(sim2).batches)
+        step!(sim2)
+        @test length(trace(sim2).batches) == batch_count
+    end
+end
+
+# The simulation `late_stage` stages into, once, from inside a frame: on the
+# loop task, so the batch lands past that frame's top on every thread layout.
+const LATE_STAGE_TARGET = Ref{Any}(nothing)
+function late_stage(u)
+    sim = LATE_STAGE_TARGET[]
+    sim === nothing || (LATE_STAGE_TARGET[] = nothing; stage!(sim, "in" => 5.0))
+    u
+end
+late_stage_model() = Group((; c = Fn{Float64}(late_stage));
+                           input_wires = ("in" => "c/u",), output_wires = ("c/y" => "y",))
+
+function trace_discarded_stepped_staging()
+    @testset "a stepped replay's halt discards late staging, reported at the next frame top (§12.7, D-451)" begin
+        sim = Simulation(late_stage_model(); Δt_frame = 1//10)
+        init!(sim, set(u = (in = 0.0,)))
+        stage!(sim, "in" => 1.0)
+        step!(sim; frames = 4)
+        trc = trace(sim)
+
+        sim2 = Simulation(late_stage_model(); Δt_frame = 1//10)
+        init!(sim2, set(u = (in = 0.0,)))
+        replay!(sim2, trc; to_boundary = trc.frames - 1)
+        LATE_STAGE_TARGET[] = sim2                  # armed for the recording's last frame
+        @test step!(sim2; frames = 2) == 1          # the recording bounds the advance
+        @test LATE_STAGE_TARGET[] === nothing && mode(sim2) === :live
+        @test lifecycle(sim2) === :initialized
+
+        # No sweep ran, so the report waits in the harness writer's cell: the
+        # live continuation's first frame top folds it, and drains no batch.
+        batch_count = length(trace(sim2).batches)
+        boundary = latest(sim2).boundary
+        step!(sim2)
+        @test length(trace(sim2).batches) == batch_count
+        @test writer_status(latest(sim2), "harness").totals.replay_discarded == 1
+        seen = [d for snapshot in logged(sim2) if snapshot.boundary > boundary
+                  for d in writer_status(snapshot, "harness").recent
+                  if d isa ReplayDiscardedStaging]
+        @test only(seen).faces == [:in] && only(seen).frame == trc.frames + 1
+    end
+end
+
 # The harness arm of the same discard, with a concurrent route into it: a
 # spawned device whose `stage!(sim, …)` — the harness writer's own surface,
 # not the device's claim — lands mid-replay, frame after frame, from its own
@@ -1739,6 +1814,8 @@ function test_trace()
     trace_entry_pass()
     trace_replay_loop()
     trace_discarded_staging()
+    trace_discarded_late_staging()
+    trace_discarded_stepped_staging()
     trace_discarded_harness()
     trace_checkpoints()
     trace_overlay()
