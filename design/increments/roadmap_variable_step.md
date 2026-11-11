@@ -44,10 +44,13 @@ needs it. None is built yet.
 - **The frame top keeps the drain, the control read, the pacer's deadline
   and the trace's ordinal.** Control latency stays one frame budget,
   `Δt_frame/p`.
-- **Fixed-step divisibility.** A fixed-step `h` must divide `Δt_frame`
-  and, when discrete components exist, `Δt_base`, refused otherwise as
-  `DeploymentInvalid`. A fixed-step backend may subcycle inside a frame.
-  Today's deployments map to `Δt_frame = h`, `Δt_base = N_base·h`.
+- **Fixed-step divisibility.** A fixed-step `h` must divide `Δt_frame`,
+  refused otherwise as `DeploymentInvalid`, and nothing relates it to
+  `Δt_base`: a due instant inside a step splits the step there. The user
+  ruled the split on 2026-11-11, reversing the earlier "and, when discrete
+  components exist, `Δt_base`" (D-444). A fixed-step backend may subcycle
+  inside a frame. Today's deployments map to `Δt_frame = h`,
+  `Δt_base = N_base·h`.
 - **The seam protocol.** `propose(stepper)`, `attempt!(stepper, model, h)`
   returning acceptance and the next proposal, `discontinuity!(stepper)`,
   the retained `startpoint`, the generic `dense!` a backend may override,

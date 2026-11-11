@@ -442,6 +442,10 @@ were derived.
 | [D-441][d-441] | Write `:inconsistent` for any throw inside a frame and `:built` for any throw inside a door | ratified |
 | [D-442][d-442] | Select the integration method by an instance that carries its step | ratified |
 | [D-443][d-443] | Fix the frame period on the deployment, apart from the method's step | ratified |
+| [D-444][d-444] | Split a fixed step at a due instant inside it | ratified |
+| [D-445][d-445] | Advance the frame through boundaries on three lattices | ratified |
+| [D-446][d-446] | Localize inside the step against the frame period, under a per-frame budget | ratified |
+| [D-447][d-447] | Run a step's first stage over a fresh table as the flow alone | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -829,6 +833,11 @@ compiled to absolute divisors); `Δt` arrives as a discrete-bundle field
 Annotation (2026-10-02): amended by [D-185][d-185], [D-186][d-186] and [D-283][d-283]. Phases are
 adopted, reversing the phase-offset rejection below, and rates compile to
 anchor-relative triples whose divisors deployment binds.
+
+Annotation (2026-11-11): superseded in part by [D-444][d-444]. `Δt_base` need not be a
+whole number of steps: a tick lands on a step boundary because a due instant
+inside a step splits it. The harmonic grid of discrete periods over `Δt_base`,
+the gating and the rest stand.
 
 **Rejected.**
 - *Superseded position — a `comp.Δt` virtual property (the earlier design of
@@ -2738,6 +2747,10 @@ Annotation (2026-10-02): amended by [D-181][d-181], [D-128][d-128] and [D-230][d
 event phase runs under `firing_budget`. Replay pointers are the frame-entry
 boundary index, and a snapshot carries the published-boundary ordinal.
 
+Annotation (2026-11-11): amended by [D-445][d-445]. Every end of an integration step is
+a boundary too, and tick eligibility keys to due instants, not to frames. The
+frame keeps the drain and the pacer deadlines.
+
 **Rejected.**
 - *Frame-only publication:* contradicts [§13.5][s13-5]'s snapshot-at-the-crossing
   promise.
@@ -2773,6 +2786,10 @@ Annotation (2026-10-02): refined by [D-274][d-274]. The prior is in no state sto
 and no condition, and a re-run from a condition rebuilds it at boundary zero.
 Every checkpoint, the trace header included, carries it, and `restore!`
 copies it back.
+
+Annotation (2026-11-11): amended by [D-446][d-446]. The remainder step targets the end of
+the step the crossing was found in, and `t*` at that end degenerates to its
+boundary. Indexed instants stand, on every lattice ([D-445][d-445]).
 
 **Rejected.**
 - *Direction-agnostic sign-change firing:* no coherent boundary-zero behavior;
@@ -4650,6 +4667,10 @@ beside `Δt_frame`, `Δt_base` and the algorithm, whose instance carries `h`.
 `localization_tol · h` holds as stated while the loop takes one step of
 `h = Δt_frame` per frame.
 
+Annotation (2026-11-11): superseded in part by [D-446][d-446]. The bracket width is
+measured against `Δt_frame`, and the budget counts the frame's localizations
+across all its steps.
+
 **Rejected.**
 - *An absolute-in-`t` localization tolerance:* breaks scale-freedom across `h`
   — one number is slack at `h = 1` and unreachable at `h = 10⁻⁴`.
@@ -5671,6 +5692,10 @@ was quietly falsified by the single-mechanism reading.
 Annotation (2026-10-02): amended by [D-185][d-185], [D-205][d-205] and [D-291][d-291] for
 boundary zero, as on [D-067][d-067], and renamed by [D-196][d-196]: `sweep_hx` and
 `sweep_hxu` are `sweep_1` and `sweep_2`.
+
+Annotation (2026-11-11): amended by [D-445][d-445]. The due set is the gate's image of the
+tick index at a due instant, and empty at every other boundary: a frame top
+or a step end where nothing is due, and `t*`.
 
 **Rejected.**
 - *Superseded position — counter-modulo gating as the sole mechanism (the prior
@@ -13120,6 +13145,10 @@ holds for a guard whose value within a step depends only on modes, root
 inputs and held discrete outputs. An input fed by continuous state or by time
 varies within the step.
 
+Annotation (2026-11-11): the third bullet is superseded in part by [D-446][d-446]. `t*`
+at the end of the step it was found in degenerates to that step's boundary,
+and the remainder step targets that end. Indexed instants stand.
+
 **Rejected.** None beyond the source entries' lists.
 
 Annotation (2026-10-07): the gate form also serves a predicate that must
@@ -15078,6 +15107,10 @@ linearization and trim already seed `x` and run the composite. Within a step
 the sweep is the interior variant ([D-147][d-147]). [D-194][d-194]'s Rationale takes the ruling
 from [§5.3][s5-3] as a premise, and [§10.3][s10-3], [§10.4][s10-4] and the glossary restate it, so no
 entry ruled it.
+
+Annotation (2026-11-11): amended by [D-447][d-447]. A step's first stage over a fresh
+table runs the flow alone, the table holding the sweep's cells at that very
+state.
 
 **Rejected.**
 - *Incremental `x_deriv`-only re-evaluation:* the flow would read cells
@@ -18358,6 +18391,11 @@ that spelled `h` alone keeps its schedule. The divisibility rule keeps a
 fixed-step backend landing exactly on every frame top and every base tick,
 which is what lets it subcycle inside a frame.
 
+Annotation (2026-11-11): the fourth bullet is superseded by [D-444][d-444]. A fixed step
+divides `Δt_frame` alone, and a due instant inside a step splits it, so
+`:not_harmonic` relates the step to the frame only. The other three bullets
+stand.
+
 **Rejected.**
 - *The frame on the `Simulation`:* the frame moves the trajectory, and a
   value outside the recorded deployment would let replay accept a run at a
@@ -18368,6 +18406,182 @@ which is what lets it subcycle inside a frame.
 - *`h` as the frame's name, a new name for the method's step:* `h` is the
   step in the numerical-methods literature and in the seam's contract, and
   the schedule's quantities already take `Δt`.
+
+### D-444 — Split a fixed step at a due instant inside it
+
+**Status.** ratified
+
+**Position.** A fixed step `h` divides `Δt_frame` and nothing else, and a
+due instant that falls inside a step ends the step there. The bundled
+rulings:
+
+- Step points are counted from the frame top, `j·h` after it. The loop
+  advances to the nearest of the next step point, the next due instant and
+  the frame top, and the seam integrates by whatever length that is, as it
+  already does for the remainder step after `t*`.
+- Nothing relates `h` to `Δt_base`, so the constructor refuses no schedule
+  for lying off the step points.
+- The split follows the schedule, not the state. A `Model` at a `Dual` takes
+  the step sequence the `Float64` model takes, though its discrete tier is
+  frozen.
+
+**Spec.** [§2.1][s2-1], [§2.2][s2-2], [§3.2][s3-2], [§9.2][s9-2], [§10.2][s10-2], [§10.5][s10-5], [Appendix C][sC]
+
+**Rationale.** A tick reads the continuous state at its instant, so the
+integrator must land there ([§10.2][s10-2]'s first domain claim). [D-443][d-443] made a
+fixed step land on every tick by refusing a step that does not divide
+`Δt_base`. The split lands it there by ending the step at the tick instead,
+which leaves the step free of the schedule. The split gives up three
+things. The steps inside a frame are no longer equal, which a localized
+event already causes. A due instant just after a step point costs a short
+step and a full boundary. And the constructor no longer refuses a schedule
+off the step points. A user who wants equal steps chooses `h` to divide
+every period and offset, and declares guards in the `Bool` form. The `Dual`
+model follows the schedule rather than its frozen tier, so a `Model` at a
+`Dual` stepped through `frame!` takes the steps the `Float64` model takes.
+
+**Rejected.**
+- *`h` divides `Δt_base` ([D-443][d-443] as ratified):* at `RK4()` it is the
+  `:not_frame_multiple` refusal under another name, so the default backend
+  gains nothing from independent lattices. It makes "a base tick at which
+  nothing is due is no boundary" vacuous for a fixed step. And it turns
+  [§10.5][s10-5]'s cost of an offset, a finer base grid, into a finer integration
+  step. A 60 Hz frame over a 400 Hz controller needs 20 steps per frame,
+  where the split needs 7 or 8.
+- *`h` divides every component's period and offset:* a more complex check,
+  per component, that helps only when the base is finer than the schedule
+  needs; an offset defeats it.
+
+### D-445 — Advance the frame through boundaries on three lattices
+
+**Status.** ratified
+
+**Position.** The frame tops, the base ticks and the step points are three
+lattices in no required ratio, and every end of an integration step is a
+boundary. The bundled rulings:
+
+- Each instant is computed from its own index on its own lattice, never
+  accumulated. A frame top is `t₀ + k·Δt_frame`, a due instant off the frame
+  tops comes from its base-tick index, and a step point on neither comes
+  from its frame's index and `j`. The clock is written once per boundary.
+- Coincidence is decided on the deployment's exact periods, never by
+  comparing computed times, so a gap of a few ulps between two scheduled
+  instants cannot arise. A short exact gap is taken as the step it is.
+- The step lands on due instants, not on base ticks. A base tick at which
+  nothing is due is no boundary. A boundary at which nothing is due takes
+  the empty due set by arity selection ([D-185][d-185]).
+- Every step end runs the whole boundary: projection, the event phase to
+  quiescence, the due updates when the instant is due, publication and the
+  stop-request scan. The frame top alone adds the drain, the control read,
+  the pacer's deadline and the trace's ordinal ([D-081][d-081]). The frame sets the
+  coarsest spacing of snapshots and of boundary detection, never the actual
+  one.
+- `Δt_base` is refused unless positive and finite, on a premise of its own
+  ([D-229][d-229]).
+
+**Spec.** [§2.1][s2-1], [§2.2][s2-2], [§3.2][s3-2], [§9.2][s9-2], [§10.1][s10-1], [§10.4][s10-4], [§10.5][s10-5], [§10.6][s10-6], [§12.6][s12-6], [Appendix C][sC]
+
+**Rationale.** The frame is the run's exposure to the outside, the base
+ticks are the discrete tier's schedule, and the step is the method's. Tying
+any two of them together makes one quantity's choice constrain another's,
+which the split ([D-444][d-444]) removes for the step. Writing each instant from its
+own index keeps [D-082][d-082]'s argument against accumulation for every lattice: a
+due instant computed by adding steps would drift off the instant the
+schedule names. Deciding coincidence on the exact periods keeps a due
+instant and a step point that are equal from becoming two boundaries a few
+ulps apart. A boundary at every step end keeps the step-boundary contract
+([§10.1][s10-1]): a guard is checked, and a handler fires, only where a snapshot
+publishes the state it acted on. The frame keeps what it keyed before
+because those activities meet the outside, and the outside sees the frame,
+not the step.
+
+**Rejected.**
+- *Every base tick a boundary:* a finer base grid, the price [§10.5][s10-5] names for
+  an offset, would add boundaries and snapshots where nothing runs, and the
+  boundaries would depend on bookkeeping no component sees.
+- *A step end inside a frame that publishes nothing:* the frame would set
+  the actual spacing of boundary detection again, and a guard checked there
+  would act on a state no reader sees.
+- *Coincidence by comparing the computed instants:* two scheduled instants a
+  few ulps apart would become two boundaries with a sliver step between
+  them, or one boundary under a tolerance some schedule defeats.
+- *A drain at every step end:* input timing would follow the schedule's
+  arithmetic rather than the frame, the reason [D-081][d-081] keeps the drain off
+  `t*`.
+
+### D-446 — Localize inside the step against the frame period, under a per-frame budget
+
+**Status.** ratified
+
+**Position.** Localization runs inside each integration step, and its
+tolerance and its budget stay frame quantities. The bundled rulings:
+
+- The trigger reads the arrival sweep at the step's end. The remainder step
+  targets the end of the step the crossing was found in, and a crossing at
+  that end degenerates to its boundary.
+- Localization stops once the bracket is narrower than
+  `localization_tol · Δt_frame`.
+- `localization_budget` counts the frame's localizations across all its
+  steps.
+
+**Spec.** [§2.3][s2-3], [§10.4][s10-4]
+
+**Rationale.** The step varies inside a frame once a due instant splits it,
+and under an adaptive backend it is a controller's proposal. The frame
+period is the time scale the deployment fixes, so a tolerance against it
+locates every crossing to the same resolution whatever step it falls in. At
+`RK4()` the frame is the step, and every existing localization keeps its
+tolerance. The budget bounds chattering per unit of exposure, and the frame
+is that unit. The remainder targets the step's end because that end is the
+next boundary, and no step crosses one.
+
+**Rejected.**
+- *Tolerance relative to the step `h`:* under an adaptive backend it would
+  follow the controller's proposal, so the event time would depend on the
+  controller's history.
+- *Tolerance relative to the length of the step being localized:* a split
+  piece or a remainder is arbitrarily short, so the tolerance would vanish
+  with it.
+- *A budget per step:* the bound on one frame's localizations would grow
+  with the number of steps the schedule splits the frame into.
+
+### D-447 — Run a step's first stage over a fresh table as the flow alone
+
+**Status.** ratified
+
+**Position.** When the boundary's quiescent table is the next step's
+first-stage table, the step's first RHS evaluation runs the `x_deriv` block
+alone. The bundled rulings:
+
+- The table is fresh after every boundary inside a frame. At a frame top it
+  is fresh when the drain reports that it wrote nothing, and the first frame
+  of each advance counts as written.
+- Freshness lives on the framework side of the stepper seam, so a backend's
+  first stage is the same call either way.
+- A frame-top hook that does not report counts as having written.
+
+**Spec.** [§5.3][s5-3], [§10.2][s10-2], [§10.3][s10-3], [Appendix D][sD]
+
+**Rationale.** The boundary's last sweep ran at the state, time, modes and
+inputs the next step starts from. Between that sweep and the first stage
+nothing writes the table but the drain, so the sweep would recompute the
+values the table already holds, and the first stage reads the same cells
+either way. A deviceless run's drain writes nothing, so every step of it
+saves one sweep: one of RK4's four per step and one of Heun's two. [D-347][d-347]'s
+rejected alternative read cells computed at another state; a fresh table
+holds cells computed at this one.
+
+**Rejected.**
+- *Freshness inside each backend:* every backend would restate when the
+  table is fresh, and the seam's contract would gain a clause a backend can
+  break.
+- *A model-side flag cleared by every write:* a write between two advances,
+  through `apply!` or a stepping primitive, reaches the table outside the
+  frame loop, so the flag would claim a freshness the table lacks. The
+  drain's report and the advance's first frame are the writes the loop
+  accounts for.
+- *Always sweeping:* the sweep is the costliest part of a stage, and the
+  saving changes no value.
 
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
@@ -18787,6 +19001,10 @@ which is what lets it subcycle inside a frame.
 [d-441]: #d-441--write-inconsistent-for-any-throw-inside-a-frame-and-built-for-any-throw-inside-a-door
 [d-442]: #d-442--select-the-integration-method-by-an-instance-that-carries-its-step
 [d-443]: #d-443--fix-the-frame-period-on-the-deployment-apart-from-the-methods-step
+[d-444]: #d-444--split-a-fixed-step-at-a-due-instant-inside-it
+[d-445]: #d-445--advance-the-frame-through-boundaries-on-three-lattices
+[d-446]: #d-446--localize-inside-the-step-against-the-frame-period-under-a-per-frame-budget
+[d-447]: #d-447--run-a-steps-first-stage-over-a-fresh-table-as-the-flow-alone
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property
@@ -18832,6 +19050,8 @@ which is what lets it subcycle inside a frame.
 [s14-8]: spec.md#148-the-trim-service-solver-seam-scratch-stores-commit-and-report
 [s14-9]: spec.md#149-mounting-problems-as-relocatable-values
 [s2]: spec.md#2-formalism
+[s2-1]: spec.md#21-time-and-boundaries
+[s2-2]: spec.md#22-integration-and-inputs
 [s2-3]: spec.md#23-events-two-detection-policies
 [s2-4]: spec.md#24-runs
 [s2-5]: spec.md#25-exclusions-deliberate
