@@ -105,8 +105,8 @@ An event design is checked against [§10.6][s10-6]'s boundary bookkeeping before
 enters a row, since three shapes have failed there. A handler that moves
 the guard onto a predicate already holding presents no fresh edge, so a
 mode meant to advance one step per firing sticks when two crossings are
-observed at one boundary, two inside a boundary-detected step or two at
-or before `t₀`. A latch mode around a `Bool`-form guard duplicates [§2.3][s2-3]'s
+observed at one boundary, two inside a non-localized step or two at or
+before `t₀`. A latch mode around a `Bool`-form guard duplicates [§2.3][s2-3]'s
 edge rule, and no test tells the two apart. A threshold with non-strict
 guards on both sides chatters at `lower == upper`; one side is strict.
 
@@ -220,9 +220,9 @@ splits the static array.
 event's guard is `t - times[m + 1]` until the last, so it re-arms after each
 firing. Its handler sets the mode to the count of breakpoints at or before `t`,
 never `m + 1`: two breakpoints observed at one boundary, inside one
-boundary-detected step or both at or before `t₀`, present no fresh edge after
-the first firing ([§10.6][s10-6]), so an increment would stick one short for good. It
-is not periodic, since a periodic reset is not a time-guard event ([D-362][d-362]). A
+non-localized step or both at or before `t₀`, present no fresh edge after the
+first firing ([§10.6][s10-6]), so an increment would stick one short for good. It is
+not periodic, since a periodic reset is not a time-guard event ([D-362][d-362]). A
 periodic pulse is a discrete counter at its own period, `s⁺ = mod(s + 1, K)`, a
 one-liner and no block.
 
@@ -235,7 +235,7 @@ or workspace is needed.
 | Block | Status | Mechanism |
 |---|---|---|
 | `Integrator(; x0 = 0.0, reset = false)`, `reset = true` a type parameter adding the `Bool` input `reset` | shipped | walks under `Dual`; the commanded continuous reset as an event ([§3.1][s3-1], [§5.3][s5-3], [D-141][d-141]) |
-| `LimitedIntegrator{V, L, R}` over `Float64` or an `SArray` | shipped | a mode the derivative reads, and four events; departures localized or boundary-detected, by `L` ([D-179][d-179]); `saturation` published |
+| `LimitedIntegrator{V, L, R}` over `Float64` or an `SArray` | shipped | a mode the derivative reads, and four events; departures localized or non-localized, by `L` ([D-179][d-179]); `saturation` published |
 | `LimitedDoubleIntegrator(; lower, upper, q0 = zero(lower), v0 = zero(lower), localized = true)` | shipped | position limits on the double integral of its input, the mechanical stop, Simulink's Second-Order Integrator Limited |
 | `FirstOrderLag{V}`, time constant as instance data | shipped | the actuator model and [§5.5][s5-5]'s α-filter idiom |
 | a continuous rate limiter | not admitted | `q̇ = clamp((in - q) / τ, -R, R)` is one line, its kinks are second-order and its offsets decay; the discrete form is the block |
@@ -243,7 +243,7 @@ or workspace is needed.
 | `TransferFunction(; num, den, u0)` from coefficient tuples or vectors, one input and one output | shipped | realized to a `StateSpace` at construction; started at rest or at the steady state for `u0`, never from an `x0`; `linear_blocks.md` |
 | a continuous transport delay | not admitted | a history buffer indexed by the step; `reports/20260809_extensions_charter/report.md` item 4 |
 
-**`Integrator`.** The reset is one boundary-detected event whose guard reads
+**`Integrator`.** The reset is one non-localized event whose guard reads
 `reset` and whose handler writes `x0`, firing once per rising edge and never
 while held, which is [§2.3][s2-3]'s edge semantics and needs no latch. It acts on the
 rising edge only, with no level reset and no initial-condition port, so no
@@ -273,7 +273,7 @@ the first nonzero of `q - limit`, `v` and `u`, so a block freed at rest does not
 hold its predicate and an input turning outward again, even inside the same
 step, presents a fresh edge ([§2.3][s2-3]), while a slow departure whose `q` rounds back
 onto the limit does not re-fire. A `q0` on a limit with `v0` pointing back in
-starts free and keeps it. Under the boundary-detected leave `v` carries an
+starts free and keeps it. Under the non-localized leave `v` carries an
 offset of at most `a h² / 2` and `q` one that grows with time until the next
 limit. The outputs are `out`, `velocity` and `saturation`, with `4N`
 per-component events over a vector. It has no reset form yet, its two open

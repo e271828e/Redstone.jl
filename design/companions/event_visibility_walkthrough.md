@@ -110,7 +110,7 @@ guard_ovld(b::Battery, (; u))   = u.i_load > b.i_max          # wired load curre
 handler_ovld(b::Battery, (; m)) = (; m = (; m..., tripped = true))
 
 # Avionics: on reaching target altitude, latches what it saw at capture
-guard_cap(a::Avionics, (; x))   = x.alt - a.alt_target        # boundary-detected: σ ≥ 0
+guard_cap(a::Avionics, (; x))   = x.alt >= a.alt_target       # non-localized: a `Bool` guard
 handler_cap(a::Avionics, (; m, u)) =
     (; m = (; m..., captured = true, v_at_capture = u.bus_voltage))
 ```

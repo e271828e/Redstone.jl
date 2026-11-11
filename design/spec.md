@@ -420,12 +420,12 @@ per-event `direction` keyword as a [guarded addition](#g-guarded-addition) (a ca
 admits but does not build).
 
 The predicate's form fixes its policy. A Boolean predicate is
-[boundary-detected](#g-boundary-detected), and a sign-form predicate is
-[localized](#g-localized) ([D-179][d-179]). [§10.4][s10-4] gives the
+[non-localized](#g-non-localized), and a sign-form predicate is
+[localized](#g-localized) ([D-179][d-179], [D-448][d-448]). [§10.4][s10-4] gives the
 exactness result that motivates the Boolean form, and the gate idiom for
 localizing mixed predicates. The two policies follow.
 
-- Boundary-detected (cheap). The framework checks each guard for a not-holding →
+- Non-localized (cheap). The framework checks each guard for a not-holding →
   holding edge ([§10.6][s10-6]) at boundaries only. There is no
   root-finding and no step rejection. The handler fires at the first boundary
   that observes the edge. That boundary is the step's end, or a localized
@@ -441,7 +441,7 @@ model, and it fixes the resolution at which the crossing is observed. It never
 depends on real-time [pacing](#g-pacing) (the waits that hold a run to
 wall-clock time, [§10.7][s10-7], [D-080][d-080]).
 
-Boundary detection is exact for a guard whose value within a step depends
+Non-localized detection is exact for a guard whose value within a step depends
 only on modes, root inputs and held discrete outputs. None of these changes
 between boundaries. Such a predicate therefore cannot cross there, and a
 boundary check misses no crossing instant ([§10.4][s10-4], [D-365][d-365]). A guard that
@@ -471,7 +471,7 @@ at the step's end ([§10.4][s10-4], [D-082][d-082]). Root-finding then locates i
 period that the deployment sets ([D-446][d-446]). The predicate holds at
 `t*`, and `t*` lies strictly after the step's start ([D-290][d-290]). A
 crossing exactly at the step's end is that step's ordinary boundary, and the
-event fires there as a boundary-detected event would ([D-290][d-290],
+event fires there as a non-localized event would ([D-290][d-290],
 [D-446][d-446]).
 
 The state at `t*` is the step's continuous extension evaluated there, the
@@ -503,14 +503,14 @@ allows a bounded number of localizations, counted across all its steps. That
 bound is its [localization budget](#g-chattering) (the count of
 localizations permitted in one frame). Past it, further crossings in that
 frame fire at the boundary that ends the step they cross in, as
-boundary-detected events would ([§10.4][s10-4], [D-018][d-018],
+non-localized events would ([§10.4][s10-4], [D-018][d-018],
 [D-446][d-446]).
 
 An edge that an input change causes has no crossing to locate. Root inputs
 change only at frame tops ([§2.2][s2-2]). Suppose the values applied there
 make a localized predicate hold already at the start of the frame's first
 step, and it still holds at that step's end. The event then fires at the
-boundary that ends the step, like a boundary-detected event
+boundary that ends the step, like a non-localized event
 ([§10.4][s10-4], [D-182][d-182], [D-290][d-290]).
 
 ### 2.4 Runs
@@ -636,7 +636,7 @@ compiled at another optimization level agrees with it only to round-off
   therefore gives a bit-identical trajectory ([D-231][d-231]).
 - No unconditional per-step hook, because its semantics depend on the step
   size ([D-001][d-001]). The uses of such a hook decompose into projection and
-  [boundary-detected](#g-boundary-detected) events (checked for edges at step
+  [non-localized](#g-non-localized) events (checked for edges at step
   boundaries only, no root-finding). A level-triggered reset becomes an
   edge-triggered event, which tightens the semantics ([§5.3][s5-3],
   [D-141][d-141]).
@@ -2417,8 +2417,8 @@ x_deriv(eng::Engine, (; x, y, u)) = (ω = (y.M_shaft - u.M_load) / eng.J,)
 
 #events: ordered and named — order matters (§5.3, §10.6); detection policy by the guard's return type (§10.4)
 state_events(::Engine) = (
-    start    = StateEvent(start_guard, start_handler),        # boundary-detected: Bool guard
-    ignition = StateEvent(ignition_guard, ignition_handler),  # boundary-detected: Bool guard
+    start    = StateEvent(start_guard, start_handler),        # non-localized: Bool guard
+    ignition = StateEvent(ignition_guard, ignition_handler),  # non-localized: Bool guard
     flameout = StateEvent(flameout_guard, flameout_handler))  # localized: sign-form guard
 start_guard(::Engine, (; m, u)) =                        #manual trigger: an input (§12.5)
     m.phase === off && u.starter
@@ -3105,7 +3105,7 @@ y_direct(atm, args) = (; … = atmospheric_field(atm; T_sl = …, p_sl = …, wi
 guard is the declared function defining an event's predicate). A pair is spelled
 `StateEvent(guard, handler)`, with no detection keyword. Detection policy is
 declared by the guard's return type instead ([D-179][d-179]). A `Bool` guard makes the
-event [boundary-detected](#g-boundary-detected), checked for edges at step boundaries only, with no
+event [non-localized](#g-non-localized), checked for edges at step boundaries only, with no
 root-finding. A guard returning the nominal scalar makes it [localized](#g-localized), with
 the crossing instant bracketed by root-finding over trial sweeps ([§10.4][s10-4]).
 
@@ -5913,7 +5913,7 @@ before tₙ₊₁.
 **The guard's return type declares its detection policy** ([D-179][d-179]). No
 flag is involved.
 
-- A guard returning `Bool` is [boundary-detected](#g-boundary-detected). The framework checks it for
+- A guard returning `Bool` is [non-localized](#g-non-localized). The framework checks it for
   edges at step boundaries only and never root-finds it.
 - A guard returning the nominal scalar, the continuous sign form, is localized.
   The framework brackets the crossing instant by root-finding over trial
@@ -5927,14 +5927,14 @@ Localization brackets a root, and only the sign form offers one. Because the
 form is the policy, a localized `Bool` guard cannot be written at all. It needs
 no diagnostic.
 
-A localized guard becomes boundary-detected with a one-line rewrite, at no
+A localized guard becomes non-localized with a one-line rewrite, at no
 semantic cost ([D-179][d-179]). Return the predicate `σ ≥ 0` instead of the
 sign-form value `σ`. That cast is the definition of the predicate
 ([§2.3][s2-3]). The predicate and its edges stay the same. Only the resolution
 at which they are observed changes.
 
 **For a guard whose value within a step depends only on modes, root inputs
-and held discrete outputs, boundary detection is exact** ([D-179][d-179],
+and held discrete outputs, non-localized detection is exact** ([D-179][d-179],
 [D-365][d-365]). Such a predicate is constant between boundaries. Root inputs
 change only at the frame-top [drain](#g-drain) (the swap that publishes staged
 device writes into the root inputs, [§11.4][s11-4]). Held discrete outputs
@@ -5947,8 +5947,8 @@ and localization would have nothing to do.
 The exactness does not extend to every input. A guard that reads an input
 fed, directly or through other components, by continuous state or by time
 can cross inside a step, as a guard on its own state can ([D-365][d-365]).
-Every interior sweep recomputes such an input, so boundary detection observes
-its crossing at step resolution.
+Every interior sweep recomputes such an input, so non-localized detection
+observes its crossing at step resolution.
 
 A mixed predicate combines `Bool` factors with a continuous one. Take a piston
 engine whose modes include `starting` and `running`. Its `starting → running`
@@ -5974,7 +5974,7 @@ step, so it is not constant over the bracket, and σ jumps from `-1` to a
 small positive value at the crossing. Only the sign drives the bracket, so
 it still converges on the crossing, but the root-finder loses its
 interpolation step and pays bisection's count on that event ([D-290][d-290]).
-The `Bool` form `u < 0` is the same predicate boundary-detected, strict by
+The `Bool` form `u < 0` is the same predicate non-localized, strict by
 construction. `companions/limited_integrator_variants.md` works the case
 that needed it, and records why the convention itself stays at `σ ≥ 0`. The
 latching predicate of such a pair stays ungated on the mode. Gated on the
@@ -6079,14 +6079,14 @@ trajectory-caused.
 **An epoch-caused edge is discarded, not degraded** ([D-182][d-182], [D-290][d-290]). The
 localization is abandoned and the event fires inside tₙ₊₁'s ordinary iteration.
 Mechanically, not localizing is the action. The frame falls through, and the
-boundary iteration detects and fires the event like any boundary-detected event.
+boundary iteration detects and fires the event like any non-localized event.
 This path costs one interior sweep. It never pays for ẋₙ₊₁ or an interpolant,
 and it consumes no `localization_budget` (see "The localization budget" below).
 It also warns nothing. Input timing is a frame fact, by the same doctrine that
-forbids draining at `t*` below, and boundary detection is exact for an edge the
-drain causes (above; [D-179][d-179], [D-365][d-365]). Boundary firing is therefore the correct
-semantics, not a degradation. This is the left-end mirror of the `t* = tₙ₊₁`
-degeneracy below.
+forbids draining at `t*` below, and non-localized detection is exact for an edge
+the drain causes (above; [D-179][d-179], [D-365][d-365]). Boundary firing is therefore the
+correct semantics, not a degradation. This is the left-end mirror of the
+`t* = tₙ₊₁` degeneracy below.
 
 The interpolant is the seam's dense output ([§10.2][s10-2]). It is built lazily
 ([D-018][d-018]). It is the cubic Hermite continuous extension
@@ -6162,7 +6162,7 @@ records an actual observation rather than an assumption.
 the step's end, where σ(tₙ₊₁) = 0 both triggers detection and is the root. It
 degenerates to the boundary at that end ([D-446][d-446]). The localization result is discarded and
 the event fires inside tₙ₊₁'s ordinary iteration. That outcome is bitwise
-identical to the boundary-detected one, with one boundary, one
+identical to the non-localized one, with one boundary, one
 [snapshot](#g-snapshot) (the immutable per-boundary publication) and no
 zero-length remainder.
 
@@ -6715,7 +6715,7 @@ transitions at one time point. Modelica iterates events to quiescence.
 Stateflow runs charts to completion within a [tick](#g-tick) (an instant at
 which a discrete component's stages and update run).
 
-Boundary-detection timing remains h-dependent, but that is a different
+Non-localized detection timing remains h-dependent, but that is a different
 quantity. It is the resolution at which a physical crossing is noticed. The
 cascade delay would have been structure the framework inserts between
 transitions the model declares simultaneous.
@@ -6973,7 +6973,7 @@ Detection policy is inside the semantics. **Event localization runs
 identically paced or unpaced** ([§10.4][s10-4], [D-080][d-080]). Its
 [sweep](#g-sweep) cost is absorbed as debt (wall time that later
 frames repay) like any other expensive frame ([D-080][d-080]). Degrading to
-boundary detection under pacing was rejected ([D-080][d-080]).
+non-localized detection under pacing was rejected ([D-080][d-080]).
 
 **The wall-clock map is piecewise affine, re-anchored at every knee**
 ([D-021][d-021]). A knee is a point where the map changes slope or offset. A
@@ -9597,7 +9597,7 @@ scenario components, not devices.
 
 **Manual event triggering needs no mechanism** ([D-031][d-031]). It takes a
 [root input](#g-root-input) (the root component's own input face) plus a
-[boundary-detected](#g-boundary-detected) [guard](#g-guard) (an edge check at
+[non-localized](#g-non-localized) [guard](#g-guard) (an edge check at
 step boundaries only, with no root-finding) reading that root input. That is
 already expressible in settled machinery. The [levels doctrine](#g-levels-doctrine) (staged values are
 levels, never deltas) applies ([§11.4][s11-4]), with latched commands or counters. The
@@ -13740,8 +13740,8 @@ For component authors:
   [§10.6][s10-6]; [D-365][d-365]). A guard
   defines a [predicate](#g-predicate), either as a `Bool` or as a sign value
   `σ`, which holds when `σ ≥ 0`. The form chosen *is* the detection policy. A
-  `Bool` guard is [boundary-detected](#g-boundary-detected), a sign guard is
-  localized. Boundary detection is exact for a guard whose
+  `Bool` guard is [non-localized](#g-non-localized), a sign guard is
+  localized. Non-localized detection is exact for a guard whose
   value within a step depends only on modes, [root inputs](#g-root-input) and
   held discrete outputs. A guard that reads an input fed by continuous state
   or by time can cross inside a step. Events fire on
@@ -13756,7 +13756,7 @@ For component authors:
   equality, such as "the input points back into the range", does not hold at an input of exactly zero, but
   the sign form `-u` alone holds there. It gates on the strict comparison
   instead, as `u < 0 ? -u : -one(u)`, or takes the `Bool` form `u < 0`, the
-  same predicate boundary-detected. The
+  same predicate non-localized. The
   predicate that latches the mode stays ungated on it. Gated on the free
   mode, each handler hands the other guard a fresh edge, and the boundary chatters
   until the [firing budget](#g-firing-budget) breaks the tie, under a
@@ -15389,13 +15389,6 @@ zero](#g-boundary-zero) ([§14.5][s14-5]) are boundaries but not frame tops
 ([§2.1][s2-1], [§10.1][s10-1]). The structural sense, a component's boundary and its boundary
 declarations, is ordinary English, never linked here ([§8.6][s8-6]).
 
-<a id="g-boundary-detected"></a>**boundary-detected** — the detection policy a
-`Bool`-returning [guard](#g-guard) declares. The framework checks the guard for a
-not-holding → holding edge at boundaries only and never root-finds it
-([§2.3][s2-3]). The policy is exact for guards over modes, [root inputs](#g-root-input) and held
-discrete outputs alone. Those [predicates](#g-predicate) cannot cross between boundaries
-([§10.4][s10-4]).
-
 <a id="g-boundary-sequence"></a>**boundary sequence / macro-sequence** — what
 the framework runs at each [boundary](#g-boundary). It integrates, projects, iterates [boundary
 sweep](#g-sweep), [guards](#g-guard) and handlers to [quiescence](#g-quiescence) under the [firing
@@ -15445,7 +15438,7 @@ Exhaustion drops the event's further edges there under a `FiringBudget` warning
 <a id="g-guard"></a>**guard** — the declared function that defines an event's
 [predicate](#g-predicate). It pairs with a handler in the ordered, named `state_events`
 collection ([§8.2][s8-2]). Its return type declares its detection policy. A
-`Bool` guard is [boundary-detected](#g-boundary-detected), and a guard returning the [nominal](#g-nominal) scalar is
+`Bool` guard is [non-localized](#g-non-localized), and a guard returning the [nominal](#g-nominal) scalar is
 [localized](#g-localized) ([§10.4][s10-4]).
 
 <a id="g-harmonic-grid"></a>**harmonic grid** — the rule that every discrete
@@ -15474,6 +15467,14 @@ crossing instant is bracketed by derivative-free root-finding over trial
 `localization_tol · Δt_frame` (a [deployment](#g-deployment) keyword, default `1e-6`). Only the sign
 form can declare it, since the `Bool` form offers no root to bracket. It
 runs identically paced or unpaced ([§10.7][s10-7], [§10.4][s10-4]).
+
+<a id="g-non-localized"></a>**non-localized** — the detection policy a
+`Bool`-returning [guard](#g-guard) declares. Both it and the [localized](#g-localized) policy detect at
+[boundaries](#g-boundary). This one does not locate the crossing instant ([D-448][d-448]). The
+framework checks the guard for a not-holding → holding edge at boundaries
+only and never root-finds it ([§2.3][s2-3]). The policy is exact for guards over
+modes, [root inputs](#g-root-input) and held discrete outputs alone. Those [predicates](#g-predicate) cannot
+cross between boundaries ([§10.4][s10-4]).
 
 <a id="g-pacing"></a>**pacing / pacer debt** — the pacer inserts waits between completed [frames](#g-frame)
 and never alters the [boundary sequence](#g-boundary-sequence). A frame exceeding its wall budget
@@ -15520,8 +15521,7 @@ the hyperperiod chart ([§9.2][s9-2], [§10.5][s10-5], [D-258][d-258],
 detected, declared as a `StateEvent(guard, handler)` pair under
 `state_events`. The criterion is detection versus scheduling, not which
 fields the [guard](#g-guard) reads, so a guard over an input is a state event too. It is
-detected either [boundary-detected](#g-boundary-detected) or [localized](#g-localized) ([§2.3][s2-3],
-[§8.2][s8-2]).
+either [non-localized](#g-non-localized) or [localized](#g-localized) ([§2.3][s2-3], [§8.2][s8-2]).
 
 <a id="g-t"></a>**`t*`** — the [localized](#g-localized) event time: the holding endpoint of the
 root-finder's final bracket, structurally strictly later than `tₙ`. A full
@@ -15545,7 +15545,7 @@ formalism, read off the [state declaration](#g-state-declaration) every [primiti
 `s_init`, `nothing` when stateless (`DeclarationOnWrongTier` names a violation)
 ([§8.2][s8-2], [§8.5][s8-5]). Bare "tier" means only this. The genericity
 classes are [walked / pinned / exempt](#g-walked) and the detection policies
-*[boundary-detected](#g-boundary-detected) / [localized](#g-localized)*.
+*[non-localized](#g-non-localized) / [localized](#g-localized)*.
 
 <a id="g-time-event"></a>**time event** — an event whose instant is known in advance and scheduled:
 the discrete [tier's](#g-tier) [ticks](#g-tick), declared by `sample_times` and gated by the
@@ -16643,6 +16643,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-445]: log.md#d-445--advance-the-frame-through-boundaries-on-three-lattices
 [d-446]: log.md#d-446--localize-inside-the-step-against-the-frame-period-under-a-per-frame-budget
 [d-447]: log.md#d-447--run-a-steps-first-stage-over-a-fresh-table-as-the-flow-alone
+[d-448]: log.md#d-448--name-the-detection-policy-of-a-bool-guard-non-localized
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop

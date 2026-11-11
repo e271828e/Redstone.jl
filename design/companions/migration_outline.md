@@ -86,7 +86,7 @@ The gear then wires `strut.wow → frc.reset`. That is the **touchdown** edge,
 with the not-holding → holding semantics ([§2.3][s2-3]),
 and it gives fresh regulator state per contact episode. The liftoff edge
 (`!wow`) was rejected ([D-141][d-141]). The
-boundary-detected policy (checked for edges at step
+non-localized policy (checked for edges at step
 boundaries only, no root-finding) suffices, because the regulator's input
 ramps from zero at touchdown, so localization buys nothing. A sim initialized
 on ground fires the reset at boundary zero (the

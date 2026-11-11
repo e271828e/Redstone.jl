@@ -127,7 +127,7 @@ mechanics (write a state into the buffer, run the interior sweep, call the guard
    tₙ₊₁'s ordinary iteration. Mechanically this is almost nothing — *not localizing
    is the action*: skip and fall through, and the boundary's event phase detects the
    edge (prior not-holding, sample holding) and fires E exactly as a
-   boundary-detected event.
+   non-localized event.
 5. The buffer is overwritten by the next trial evaluation or restored as usual —
    trial evaluations own the buffer during localization.
 
@@ -146,8 +146,8 @@ a firing time that is only defined to frame resolution. **There is no finer trut
 localization to recover — t\* doesn't exist**, not merely "isn't worth computing."
 
 This is the discrete-driven exactness doctrine ([§10.4][s10-4], [D-179][d-179]) resurfacing: for edges
-caused by root-input or mode steps, boundary detection is not a cheap approximation, it *is* the
-semantics. Localization's jurisdiction is trajectory facts; the θ = 0 trial
+caused by root-input or mode steps, non-localized detection is not a cheap approximation, it *is*
+the semantics. Localization's jurisdiction is trajectory facts; the θ = 0 trial
 evaluation is the jurisdictional check at its door. That is also why the degenerate
 path warns nothing:
 an input-gated event firing at boundary granularity is correct sampled-input timing,

@@ -144,7 +144,7 @@ The standard component library, the submodule `Redstone.Blocks`:
 - `GaussianWhiteNoise`, with the helpers `splitmix` and `gaussian` (D-231,
   D-313).
 - `Integrator{V, R}` and `LimitedIntegrator{V, L, R}`, their reset form
-  `R = true` adding the `Bool` input `reset` and one boundary-detected event
+  `R = true` adding the `Bool` input `reset` and one non-localized event
   (D-141), over the helpers `reset_ports` and `signal`, shared with the
   discrete pair, and `reset_guard`; `LimitedDoubleIntegrator{V, L}`, the
   stop on the double integral over the named state `(q, v)`, its four events
@@ -152,7 +152,7 @@ The standard component library, the submodule `Redstone.Blocks`:
   `Sequence`, `Relay` and `Comparator` (D-313).
   `Step`, `Sequence`, `LimitedIntegrator`, `LimitedDoubleIntegrator` and
   `Comparator` each ship two detection policies, localized and
-  boundary-detected, selected by the type parameter `L` (D-179).
+  non-localized, selected by the type parameter `L` (D-179).
   `LimitedIntegrator`, `LimitedDoubleIntegrator`, `Relay` and `Comparator`
   are over `Float64` and static vectors, with `Int8` modes and, over a vector,
   events generated per component; the fall of `Relay` and `Comparator` is

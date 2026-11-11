@@ -87,8 +87,8 @@ function continuous_state_return()
         # `running` flips at `t = 0.1` and `M_shaft` is 1 after it, so with
         # `J = 1` and `M_load = 0` the closed form is `ω(t) = max(t − 0.1, 0)`.
         # The tolerance is RK4's over the ramp, not the semantics' — the event is
-        # boundary-detected and `h = 1//100` places 0.1 exactly on the grid, so
-        # the crossing costs no localization error of its own.
+        # non-localized and `h = 1//100` places 0.1 exactly on the grid, so the
+        # crossing costs no localization error of its own.
         @test port(sim, "c", :ω) ≈ 0.4 rtol = 1e-9
         @test port(sim, "c", :running) === true
         # Bitwise, and the one place the suite may be: the claim is that the

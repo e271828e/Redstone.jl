@@ -5,7 +5,7 @@
 
 # A monitored ramp: the trigger fires at the first boundary whose sweep sees the
 # ramp at its level, and the stop request publishes it from that boundary on —
-# the boundary-detected request.
+# the non-localized request.
 ramp_request(level, reason) =
     Group((; src = Ramp(0.0), trig = Trigger(level), stop = StopRequest(reason = reason));
           local_wires = ("src/out" => "trig/sig", "trig/on" => "stop/u"))

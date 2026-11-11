@@ -167,8 +167,8 @@ inside a step. Section 5 shows that this kink is mild, so the error is a
 one-time offset of order `a h²`. This is the cheapest form, but it declares
 no departure, loses the mode, and is dominated by the next one.
 
-**The boundary-detected departure, chosen as the second policy.** [D-179][d-179]
-says a localized guard becomes boundary-detected by returning the predicate
+**The non-localized departure, chosen as the second policy.** [D-179][d-179]
+says a localized guard becomes non-localized by returning the predicate
 instead of the sign value. Here that rewrite does two things at once:
 
 ```julia
@@ -208,7 +208,7 @@ exact state at the end of the step is
 x(tₙ + h) = upper - a (1 - θ)² h² / 2
 ```
 
-The boundary-detected policy holds the mode to the end of the step, keeps
+The non-localized policy holds the mode to the end of the step, keeps
 `ẋ = 0` throughout and lands exactly on `upper`. Its error is
 `a (1 - θ)² h² / 2`, at most `a h² / 2`. The computed clamp without a
 release event switches the derivative inside the step, and RK4 sees the
@@ -224,7 +224,7 @@ tolerance, about 1e-8 in time.
 | variant | cost per departure | error per departure | corner-safe | mode kept |
 |---|---|---|---|---|
 | localized, strict gate | about 22 trial sweeps and a grid split | root-finder tolerance | yes | yes |
-| boundary-detected `Bool` guard | one `Bool` per step | at most `a h² / 2`, once | yes | yes |
+| non-localized `Bool` guard | one `Bool` per step | at most `a h² / 2`, once | yes | yes |
 | computed clamp, release localized | about 7 trial sweeps per zero crossing of the input, anywhere | root-finder tolerance | yes | no |
 | computed clamp, no release event | nothing | about `a h² θ (1 - 3θ) / 6`, once | yes | no |
 
@@ -234,13 +234,13 @@ The block ships both detection policies for its departures, selected by a
 type parameter in `Step`'s shape, `LimitedIntegrator{V, L}` with the
 keyword `localized = true`. Arrivals are localized in both, since that kink
 is first-order and the exact clamp depends on it. The localized departure
-is the accurate form and the default; the boundary-detected departure is
-the cheap form, exact at every zero input, and off by at most `a h² / 2`
-per departure. The two forms differ in one method per leave guard, and the
+is the accurate form and the default; the non-localized departure is the
+cheap form, exact at every zero input, and off by at most `a h² / 2` per
+departure. The two forms differ in one method per leave guard, and the
 policy must be a type parameter because the build reads it off the guard's
 probed return type ([D-179][d-179]). The computed forms were not built: the first is
 dominated on cost in every realistic use, and the second on everything but
-a constant factor by the boundary-detected policy.
+a constant factor by the non-localized policy.
 
 On 2026-10-07 the modes were recoded from `Symbol` labels to the signed `Int8`
 codes `-1`, `0` and `+1`, so that the vector form could share them under
@@ -250,8 +250,8 @@ labels.
 ## 7. What the episode says about the framework
 
 The convention that a predicate holds at `σ ≥ 0`, with edges detected
-against a prior, is what makes boundary-detected and localized events share
-one declaration ([§2.3][s2-3]), and it is what made the rest point a trap: at
+against a prior, is what makes non-localized and localized events share one
+declaration ([§2.3][s2-3]), and it is what made the rest point a trap: at
 `(upper, 0)` both "`x` has reached the limit" and "`u` has stopped pushing"
 hold, and neither can produce an edge from there. Any block that latches a
 mode on one continuous quantity reaching zero and releases it on another
@@ -272,8 +272,8 @@ today and never would. It would also make the sign form `x - upper` and the
 predicate, not of the framework: a reach predicate holds at equality and a
 release predicate does not, and one global convention cannot serve both.
 `≥` serves the common kind, and the strict gate is the local statement for
-the other, with the `Bool` form as its boundary-detected twin. [§10.4][s10-4] names
-the idiom beside the gate form, and [D-290][d-290] carries the annotation.
+the other, with the `Bool` form as its non-localized twin. [§10.4][s10-4] names the
+idiom beside the gate form, and [D-290][d-290] carries the annotation.
 
 ## 8. The return after a leave
 
@@ -283,7 +283,7 @@ single integrator shares. A leave frees the block with `x` on the limit, where
 `x - upper = 0` holds. If `x` dips and comes back inside one step, the predicate
 stops holding and holds again between two boundaries, so [§2.3][s2-3] sees no edge,
 and the block runs free past the limit until `x` falls back under it. Under the
-boundary-detected leave one reversal is enough: `u` is negative at the boundary and
+non-localized leave one reversal is enough: `u` is negative at the boundary and
 turns outward within the next step. On `u = (t - 0.45)(t - 0.52)` at `h = 0.5` with
 `upper = 0.02`, `x` stood 1.16 past the limit at `t = 2`. A localized leave observes
 the crossing only when `u` is negative where the step ends, which rules out the
@@ -302,7 +302,7 @@ holds, as safety demands, the strict gate stays necessary, and this σ is
 discontinuous at `x = upper` for `u < 0`, which is the discontinuity section 3 says
 some guard must carry. A hit at `x = upper` under `u = 0` while free cannot arise,
 since the leave is strict. The cost is nothing measurable: section 4's `cos(t)` input
-over 20 s makes 865 derivative calls localized and 835 boundary-detected under either
+over 20 s makes 865 derivative calls localized and 835 non-localized under either
 guard, and reaches the same state.
 
 The guard reads the leading term of the motion against the limit, so the double

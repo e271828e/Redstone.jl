@@ -896,7 +896,7 @@ y_state(c::Source, (; t)) = c.f(ForwardDiff.value(t))
 
 # Design: §2.3, §3.1, §5.3, §7.2, §10.6, D-082, D-141, D-437.
 # The reset event's guard is `reset` itself, a `Bool` predicate, which is why it
-# is boundary-detected. An event fires only when its predicate turns from
+# is non-localized. An event fires only when its predicate turns from
 # not-holding to holding.
 # Boundary zero sets every prior to not-holding, so a `reset` already holding at
 # `t₀` fires there.
@@ -919,7 +919,7 @@ With `reset`, the block gains a second input, the `Bool` `reset`, and its data
 input keeps the face `u`, as in `"integrator/u"` and `"integrator/reset"`. A
 rising edge of `reset` writes `x0` into `x`, through one
 [state event](@ref g-state-event), `reset`. The event is
-[boundary-detected](@ref g-boundary-detected), so the reset lands on the
+[non-localized](@ref g-non-localized), so the reset lands on the
 [boundary](@ref g-boundary) where `reset` rises. Under
 [edge semantics](@ref g-edge-semantics), holding `reset` resets once, and a
 second rising edge resets again.
@@ -1576,8 +1576,8 @@ realization(c::DiscretizedTransferFunction, Δt) = realization(c.realization, Δ
 
 # Design: §2.3, §10.6, D-179, D-312, D-437, D-438.
 # `L` is the `localized` keyword as a type parameter.
-# Localized, the guard is the sign form `t - t_step`. Boundary-detected, it is
-# the `Bool` `t ≥ t_step`. The policy is the type parameter `L` rather than a
+# Localized, the guard is the sign form `t - t_step`. Non-localized, it is the
+# `Bool` `t ≥ t_step`. The policy is the type parameter `L` rather than a
 # field because the build reads it off the guard's return type.
 # The field `m` is written `fired` in the code. The value depends on neither
 # state nor an input that follows the scalar. Boundary zero sets every prior to
@@ -1601,8 +1601,8 @@ zero partials under every [activation](@ref g-activation), as a
 
 `localized` picks the detection policy.
 [Localized](@ref g-localized), the step ends at the crossing and the jump lands
-there. [Boundary-detected](@ref g-boundary-detected), the event fires at the end
-of the step in which it was first observed. The jump then lands on the first
+there. [Non-localized](@ref g-non-localized), the event fires at the end of the
+step in which it was first observed. The jump then lands on the first
 [boundary](@ref g-boundary) at or after `t_step`, never inside a step.
 
 A `t_step` at or before `t₀` fires at [boundary zero](@ref g-boundary-zero), and
@@ -1613,7 +1613,7 @@ the output publishes `after` from the start.
 - `t_step`: the time of the step, any time.
 - `before`: the value before `t_step`.
 - `after`: the value from `t_step` on.
-- `localized`: `true` for a localized step, `false` for a boundary-detected one.
+- `localized`: `true` for a localized step, `false` for a non-localized one.
 """
 struct Step{V <: Union{Float64, SArray{<:Tuple, Float64}}, L} <: AbstractComponent
     before::V
@@ -1629,19 +1629,19 @@ m_init(::Step) = false                                           # fired  # COV_
 y_types(::Step{V}) where {V} = Pinned{V}
 y_state(c::Step, (; m)) = m ? c.after : c.before
 step_guard(c::Step{V, true}, (; t)) where {V} = t - c.t_step     # sign form: localized
-step_guard(c::Step{V, false}, (; t)) where {V} = t >= c.t_step   # Bool form: boundary-detected
+step_guard(c::Step{V, false}, (; t)) where {V} = t >= c.t_step   # Bool form: non-localized
 step_handler(::Step, _) = (m = true,)
 state_events(::Step) = (fire = StateEvent(step_guard, step_handler),)
 
 # Design: §2.3, §10.4, §10.6, D-179, D-312, D-362, D-437, D-438.
 # `L` is the `localized` keyword as a type parameter.
 # The handler counts every breakpoint at or before `t` rather than adding one.
-# Two breakpoints observed at one boundary, inside one boundary-detected step or
-# at or before `t₀`, would otherwise strand the count: the first firing leaves
+# Two breakpoints observed at one boundary, inside one non-localized step or at
+# or before `t₀`, would otherwise strand the count: the first firing leaves
 # the guard holding on the next breakpoint, so the next round sees no fresh edge
 # and the prior is written holding.
 # Localized, the guard is the sign form `t - times[passed + 1]`.
-# Boundary-detected, it is the `Bool` `t ≥ times[passed + 1]`. The policy is the
+# Non-localized, it is the `Bool` `t ≥ times[passed + 1]`. The policy is the
 # type parameter `L` rather than a field because the build reads it off the
 # guard's return type.
 # The field `m` is written `passed` in the code. Boundary zero sets every prior
@@ -1670,7 +1670,7 @@ partials under every [activation](@ref g-activation).
 `localized` picks the detection policy.
 [Localized](@ref g-localized), each breakpoint ends the step at its crossing, so
 two breakpoints inside one step each land at their own time.
-[Boundary-detected](@ref g-boundary-detected), each jump lands on the first
+[Non-localized](@ref g-non-localized), each jump lands on the first
 [boundary](@ref g-boundary) at or after its breakpoint, and breakpoints passed
 inside one step advance together there.
 
@@ -1685,7 +1685,7 @@ are refused as an `ArgumentError`.
 
 - `times`: the `N` breakpoints, strictly ascending, any times.
 - `values`: the `N + 1` values.
-- `localized`: `true` for localized breakpoints, `false` for boundary-detected
+- `localized`: `true` for localized breakpoints, `false` for non-localized
   ones.
 """
 struct Sequence{V <: Union{Float64, SArray{<:Tuple, Float64}}, L} <: AbstractComponent
@@ -1736,7 +1736,7 @@ check_limits(lower, upper) =
 # first terms of the error's expansion a moment ahead. A block freed on a limit
 # therefore does not hold its hit predicate, and an outward input presents a
 # fresh edge. Localized leave guards are sign forms gated by the mode;
-# boundary-detected ones are the `Bool` predicates. A localized departure pays
+# non-localized ones are the `Bool` predicates. A localized departure pays
 # about 22 trial sweeps and a boundary. The policy is the type parameter `L`
 # rather than a field because the build reads it off the guard's return type;
 # `R` is the reset form. Boundary zero sets every prior to not-holding, which is
@@ -1775,9 +1775,9 @@ event fires, and so only on a declared [boundary](@ref g-boundary).
 `localized` picks how the leave events fire. With `true`, a departure ends the
 step at the input's zero crossing, at the cost of root-finding and a split step.
 With `false`, the leave events are
-[boundary-detected](@ref g-boundary-detected), and a departure costs neither. It
-fires at the first boundary after `u` points back into the range, at the latest
-the end of that step. `x` stays on the limit until then. It then carries an
+[non-localized](@ref g-non-localized), and a departure costs neither. It fires
+at the first boundary after `u` points back into the range, at the latest the
+end of that step. `x` stays on the limit until then. It then carries an
 offset of about `a h² / 2` at most, to leading order in `h`, with `a` the
 input's slope at its zero crossing and `h` the step.
 
@@ -1792,7 +1792,7 @@ and the initial mode agrees with the initial input.
 
 `reset = true` adds the `Bool` input `reset`, so the inputs `u` and `reset` are
 named. It also adds one `reset` event, however wide the block is. As on the
-[`Integrator`](@ref), the event is boundary-detected on the flag, so it fires
+[`Integrator`](@ref), the event is non-localized on the flag, so it fires
 once per rising edge. Its handler writes `x0`, clamped to the limits, and the
 code that value earns. A reset onto a limit therefore lands saturated, and frees
 at that boundary if `u` points back into the range. A reset inside lands free,
@@ -1808,7 +1808,7 @@ integer values qualify. A `lower` not below `upper`, componentwise over an
 - `lower`: the lower limit, below `upper`.
 - `upper`: the upper limit.
 - `x0`: the initial value of `x`, and the value a reset writes.
-- `localized`: `true` for localized leave events, `false` for boundary-detected
+- `localized`: `true` for localized leave events, `false` for non-localized
   ones.
 - `reset`: `true` to add the input `reset` and its event.
 
@@ -1849,7 +1849,7 @@ leave_upper_guard(::LimitedIntegrator{V, true}, (; m, u)) where {V} =
     (v = signal(u); m == 1 && v < 0 ? -v : -one(v))
 leave_lower_guard(::LimitedIntegrator{V, true}, (; m, u)) where {V} =
     (v = signal(u); m == -1 && v > 0 ? v : -one(v))
-# The `Bool` forms are the same predicates, boundary-detected and strict by
+# The `Bool` forms are the same predicates, non-localized and strict by
 # construction.
 leave_upper_guard(::LimitedIntegrator{V, false}, (; m, u)) where {V} =
     m == 1 && signal(u) < 0
@@ -1909,7 +1909,7 @@ end
 # `u`, the first terms of the error's expansion a moment ahead. A block freed on
 # a limit therefore does not hold its hit predicate, and an outward input
 # presents a fresh edge. Localized leave guards are sign forms gated by the mode;
-# boundary-detected ones are the `Bool` predicates. The policy is the type
+# non-localized ones are the `Bool` predicates. The policy is the type
 # parameter `L` rather than a field because the build reads it off the guard's
 # return type. Boundary zero sets every prior to not-holding, which is why an
 # out-of-limits `q0` is clamped there. `V` is the keywords' broadcast type.
@@ -1950,9 +1950,9 @@ changes only when an event fires, and so only on a declared boundary.
 `localized` picks how the leave events fire. With `true`, a departure ends the
 step at the input's zero crossing, at the cost of root-finding and a split step.
 With `false`, the leave events are
-[boundary-detected](@ref g-boundary-detected), and a departure costs neither. It
-fires at the first boundary after `u` points back into the range, at the latest
-the end of that step. `q` and `v` stay on the limit until then. From then on `v`
+[non-localized](@ref g-non-localized), and a departure costs neither. It fires
+at the first boundary after `u` points back into the range, at the latest the
+end of that step. `q` and `v` stay on the limit until then. From then on `v`
 carries an offset of about `a h² / 2` at most, to leading order in `h`, with `a`
 the input's slope at its zero crossing and `h` the step. `q` carries an offset
 that grows by as much per unit time. The next limit removes both.
@@ -1979,7 +1979,7 @@ over an `SArray`, is refused as an `ArgumentError`.
 - `upper`: the upper limit on `q`.
 - `q0`: the initial value of `q`.
 - `v0`: the initial value of `v`.
-- `localized`: `true` for localized leave events, `false` for boundary-detected
+- `localized`: `true` for localized leave events, `false` for non-localized
   ones.
 
 See also [`LimitedIntegrator`](@ref), [`Integrator`](@ref).
@@ -2152,7 +2152,7 @@ end
 
 # Design: §2.3, §3.1, §10.4, §10.6, D-179, D-312, D-437, D-438.
 # `L` is the `localized` keyword as a type parameter.
-# Localized, the guards are sign forms gated by the mode. Boundary-detected,
+# Localized, the guards are sign forms gated by the mode. Non-localized,
 # they are the `Bool` predicates. The policy is the type parameter `L` rather
 # than a field because the build reads it off the guard's return type.
 # The field `m` is written `state` in the code. Each guard reads its one
@@ -2182,7 +2182,7 @@ block has no [feedthrough](@ref g-feedthrough).
 
 `localized` picks the detection policy.
 [Localized](@ref g-localized), each switch ends the step at the crossing.
-[Boundary-detected](@ref g-boundary-detected), each switch lands on the first
+[Non-localized](@ref g-non-localized), each switch lands on the first
 boundary that observes it.
 
 Over an `SArray`, the thresholds and the codes are componentwise, and `y` is an
@@ -2208,7 +2208,7 @@ with a vector and integer values qualify.
 - `lower`: the threshold `u` falls below for the output to turn `false`, at most
   `upper`, componentwise over an `SArray`.
 - `upper`: the threshold `u` rises to for the output to turn `true`.
-- `localized`: `true` for localized switches, `false` for boundary-detected
+- `localized`: `true` for localized switches, `false` for non-localized
   ones.
 
 See also [`Relay`](@ref), [`Switch`](@ref).

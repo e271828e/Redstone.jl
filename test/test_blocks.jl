@@ -209,7 +209,7 @@ pulse_reset_model(localized; block = Integrator(x0 = 0.5, reset = true), input =
           local_wires = ("rise/y" => "pulse/in1", "fall/y" => "pulse/in2", "again/y" => "pulse/in3",
                          "pulse/y" => "c/u", "c/y" => "i/reset", "k/y" => "i/u"))
 
-# A discrete block fed by `input`, its `reset` a comparator on two boundary-detected
+# A discrete block fed by `input`, its `reset` a comparator on two non-localized
 # steps summed: high from `5h` to `7h`.
 discrete_reset_model(block, h; input = 1.0) =
     Group((; rise = Step(t_step = 5h, localized = false), fall = Step(t_step = 7h, after = -1.0, localized = false),
@@ -396,8 +396,8 @@ vector_lower_double_limited_model(localized) =
           local_wires = ("s/y" => "li/u",))
 
 # Saturated by 0.1 under `u = (t - 0.45)(t - 0.52)`, with the dip across the
-# boundary at 0.5, so a boundary-detected leave frees the block on the limit there
-# and `u` turns outward just after. `side` is `1` for the upper limit, `-1` the lower.
+# boundary at 0.5, so a non-localized leave frees the block on the limit there and
+# `u` turns outward just after. `side` is `1` for the upper limit, `-1` the lower.
 dip_across_boundary_model(side, localized; reset = false) =
     Group((; k = Constant(side * 2.0), r1 = Integrator(x0 = -side * 0.97), r2 = Integrator(x0 = side * 0.234),
              flag = Constant(false),
@@ -1625,7 +1625,7 @@ function test_blocks()
         h = 1//10
         bracket_width = Simulation(pulse_reset_model(true); Δt_frame = h).model.deployment.localization_tol * h    # in time (§10.4)
         # At t = 0.2, 0.3, 0.5, 0.8 and 1.0: the localized steps reset at 0.25
-        # and 0.85, the boundary-detected ones at the boundaries 0.3 and 0.9.
+        # and 0.85, the non-localized ones at the boundaries 0.3 and 0.9.
         for (localized, expected, atol) in ((true, (0.7, 0.55, 0.75, 1.05, 0.65), bracket_width),
                                             (false, (0.7, 0.5, 0.7, 1.0, 0.6), 1e-12))
             sim = Simulation(pulse_reset_model(localized); Δt_frame = h)
@@ -2096,7 +2096,7 @@ function test_blocks()
         @test step_events(step_model(Step(t_step = 0.25))).policies === (fire = :localized,)
     end
 
-    @testset "the boundary-detected step jumps at the first boundary at or after `t_step` (§2.3, §10.4, D-179)" begin
+    @testset "the non-localized step jumps at the first boundary at or after `t_step` (§2.3, §10.4, D-179)" begin
         sim = Simulation(step_model(Step(t_step = 0.25, localized = false)); Δt_frame = 1//10)
         init!(sim, set())
         step!(sim; t_plus = 0.2)
@@ -2173,7 +2173,7 @@ function test_blocks()
         h = 1//10
         bracket_width = Simulation(step_model(Step(t_step = 0.25)); Δt_frame = h).model.deployment.localization_tol * h    # in time (§10.4)
         # The values 0, 1 and 3, switching at 0.23 and 0.27, inside the step
-        # from 0.2 to 0.3: localized, each lands at its crossing; boundary-detected,
+        # from 0.2 to 0.3: localized, each lands at its crossing; non-localized,
         # both land on the boundary 0.3.
         for (localized, integral, atol) in ((true, 0.04 + 0.39, 2 * bracket_width), (false, 0.3, 1e-12))
             sim = Simulation(step_model(Sequence(times = (0.23, 0.27), values = (0, 1, 3), localized = localized)); Δt_frame = h)
@@ -2241,7 +2241,7 @@ function test_blocks()
 
     @testset "the limited integrator saturates exactly, frees on its input's sign, and linearizes by its mode (§10.4, §10.6, D-313)" begin
         @test y_types(LimitedIntegrator(lower = -1.0, upper = 0.5)) == (out = Float64, saturation = Int8)
-        # The step's jump carries its own boundary, so the boundary-detected
+        # The step's jump carries its own boundary, so the non-localized
         # departure fires there too.
         for localized in (true, false)
             sim = Simulation(limited_model(localized); Δt_frame = 1//10)
@@ -2290,7 +2290,7 @@ function test_blocks()
     end
 
     @testset "the vector limited integrator saturates and frees each component on its own (§10.4, §10.6, D-313)" begin
-        # The step's jump carries its own boundary, so the boundary-detected
+        # The step's jump carries its own boundary, so the non-localized
         # departure fires there too. At 0.4 only component 2 is clamped, which
         # tells a handler writing its one component from one writing them all;
         # from 1.05 component 2's input is exactly zero, which tells a leave
@@ -2356,7 +2356,7 @@ function test_blocks()
                 vector_sim = Simulation(vector_dip_model(side, index, localized); Δt_frame = 1//2)
                 init!(vector_sim, set())
                 step!(vector_sim; t_plus = 0.5)
-                # The boundary-detected leave frees it on the limit at the boundary,
+                # The non-localized leave frees it on the limit at the boundary,
                 # with no event of its own at the input's zero.
                 @test modes(vector_sim, "li")[index] === Int8(0)
                 localized || @test state(vector_sim, "li")[index] === limit
@@ -2415,7 +2415,7 @@ function test_blocks()
                leave_lower_1 = :boundary, leave_lower_2 = :boundary)
     end
 
-    @testset "the boundary-detected departure is off by at most `a h² / 2` (§2.3, §10.4)" begin
+    @testset "the non-localized departure is off by at most `a h² / 2` (§2.3, §10.4)" begin
         # The block reaches 0.4 at t = 0.5 and leaves it at the input's zero, 1.05,
         # or at the boundary 1.1: θ = 0.5 and a = 1, so the offset is
         # a h² (1 - θ)² / 2 = 0.00125.
@@ -2641,9 +2641,9 @@ function test_blocks()
                leave_lower_1 = :boundary, leave_lower_2 = :boundary)
     end
 
-    @testset "the limited double integrator's boundary-detected departure offsets `v` by `a δ² / 2` and `q` by `a δ² τ / 2 - a δ³ / 3` (§2.3, §10.4)" begin
+    @testset "the limited double integrator's non-localized departure offsets `v` by `a δ² / 2` and `q` by `a δ² τ / 2 - a δ³ / 3` (§2.3, §10.4)" begin
         # The input -a (t - t_c) crosses zero at t_c = 1.05 with a = 1, and the
-        # boundary-detected leave fires δ = (1 - θ) h = 0.05 later. Exact from
+        # non-localized leave fires δ = (1 - θ) h = 0.05 later. Exact from
         # t_c, v = -a τ² / 2 and q = 0.15 - a τ³ / 6, τ = t - t_c; freed at δ,
         # v = -a (τ² - δ²) / 2, and q integrates the constant offset.
         localized_sim = Simulation(ramp_double_limited_model(true); Δt_frame = 1//10)
@@ -3041,7 +3041,7 @@ function test_blocks()
             @test modes(sim, "controller") === saturation
         end
         @test port(sim, "plant") ≈ 1.0 atol = 1e-3
-        # Boundary-detected, the departure moves by up to one step.
+        # Non-localized, the departure moves by up to one step.
         boundary_sim = Simulation(servo_loop(false); Δt_frame = 1//100)
         init!(boundary_sim, set())
         step!(boundary_sim; t_plus = 40.0)

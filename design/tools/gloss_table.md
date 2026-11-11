@@ -93,7 +93,7 @@ The `block` row was counted on 2026-10-27, when the entry was added.
 | anchor | g-anchor | 3 | A | the exact `(T, τ)` pair an `Absolute` entry establishes |
 | boundary | g-boundary | 39 | B | a published consistency point where a snapshot goes out |
 | boundary sequence / macro-sequence | g-boundary-sequence | 23 | B | integrate, project, iterate events to quiescence, then due updates |
-| boundary-detected | g-boundary-detected | 8 | A | checked for edges at step boundaries only, no root-finding |
+| non-localized | g-non-localized | 8 | A | checked for edges at step boundaries only, no root-finding |
 | chattering / localization budget | g-chattering | 4 | A | the bounded per-frame localization allowance, exhaustion degrading rather than throwing |
 | trial evaluation | g-trial-evaluation | 3 | A | a guard's value at one instant inside the step |
 | `Δt_base` | g-dt_base | 1 | A | the base tick period, an integer multiple `n·h` |

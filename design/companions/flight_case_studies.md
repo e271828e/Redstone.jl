@@ -27,7 +27,7 @@ machinery specified here:
 | Hand-ordered `f_ode!` body (kinematics → airdata → systems → route five `dynamics.u` assignments → dynamics last) | Build-time topological sort; wrong wiring = build error naming the cycle or dangling port |
 | Velocity state duplicated in `dynamics.x` and `kinematics.u`, kept in sync by hand | One state, one owner; consumers wire to `dyn.vel` |
 | `get_wr_b`/`get_mp_b`/`get_hr_b` generated tree-walk sums | Summing junctions at ownership boundaries, one explicit wire per contributor, exported totals ([§6.2][s6-2]) |
-| `f_step!` quaternion renorm + engine-phase/stall-latch checks | `x_projection` hook + boundary-detected events with defined semantics |
+| `f_step!` quaternion renorm + engine-phase/stall-latch checks | `x_projection` hook + non-localized events with defined semantics |
 | `Aircraft.f_ode!` runs avionics before the vehicle → continuous avionics reads one-stage-stale `vehicle.y` (implicit delay) | Avionics ordered inside the sweep, after the stage-1 outputs avionics consumes — no delay. Or avionics declared periodic, sampling post-step by stated semantics |
 | `atmosphere`/`terrain` threaded as arguments through every signature | Field-handle signals through ordinary ports ([§4.4][s4-4]) |
 
@@ -123,7 +123,7 @@ each of those features under the decoder interfaces.
   the orthodox split, `f(x, u, t)` would reproduce essentially the whole
   `f_ode!` body, four lookups and the mode branch, at each of the four RK
   stages per step ([D-015][d-015]).
-- `f_step!`'s transitions become boundary-detected
+- `f_step!`'s transitions become non-localized
   events with mixed predicate/threshold guards
   ([§2.5][s2-5], [§10.4][s10-4]).
 - `fuel_available` becomes an ordinary port. It is state-derived at the fuel

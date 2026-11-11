@@ -513,7 +513,7 @@ The guard and the handler both take the [component](@ref g-component) and its
 [bundle](@ref g-bundle). The bundle may carry `x`, `m`, `y`, `u`, `t` and `ws`.
 
 There is no detection keyword, because the guard's return type declares the
-policy. A `Bool` guard is [boundary-detected](@ref g-boundary-detected). A guard
+policy. A `Bool` guard is [non-localized](@ref g-non-localized). A guard
 returning a `Float64` is [localized](@ref g-localized), and its event holds
 where the value is `≥ 0`.
 

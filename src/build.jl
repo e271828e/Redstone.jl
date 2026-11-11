@@ -1227,8 +1227,8 @@ end
 Probe the event system, at the nominal activation only (§9.3, D-052): guards
 and handlers never run at a non-nominal activation (§9.4), so nothing here is
 parametric in the scalar. Each guard runs against real probed values and its
-return type *is* the detection policy (§10.4, D-179) — `Bool` boundary-detected,
-the nominal scalar localized, anything else an error naming both admissible
+return type *is* the detection policy (§10.4, D-179) — `Bool` non-localized, the
+nominal scalar localized, anything else an error naming both admissible
 forms. Each handler runs once and its return is held to the §5.2 return law,
 key by key. Returns the `Events`, the nominal evaluation's last product (§9.1,
 D-253): one row per component, its policy register beside the bundle names its

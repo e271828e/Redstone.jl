@@ -149,7 +149,7 @@ bare_ports_world() = Group((; plant = Group((; loop = bare_loop(), spin = BareSp
 """
 §8.2's worked engine at the suite's size: `ω` is a state field and `running` a
 mode field, both declared and both returned from `y_state`; `M_shaft` is
-the one stage-2 product. The boundary-detected `start` event flips `running` at
+the one stage-2 product. The non-localized `start` event flips `running` at
 `t = 0.1`, after which `M_shaft = 1` — with `M_load = 0` and `J = 1`,
 `ω(t) = max(t − 0.1, 0)` at every boundary.
 """
@@ -467,7 +467,7 @@ Sawtooth: `q̇ = rate`, and a **sign-form** guard `q − 1` whose handler carrie
 the overshoot across the reset, `q ← q − 1`. The sign form declares the event
 localized (§10.4, D-179) — and the carrying handler makes the *trajectory*
 invariant to where the firing lands, `q(t) = rate·t − #wraps` either way, so
-the boundary-detected recursion stays its exact reference. What localization
+the non-localized recursion stays its exact reference. What localization
 changes here is only the timing resolution `Bouncer` makes observable.
 """
 struct Sawtooth <: AbstractComponent

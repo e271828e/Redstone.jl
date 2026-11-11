@@ -1150,7 +1150,7 @@ end
 path(d::GuardForm) = d.path
 message(d::GuardForm) =
     "`$(d.path)`: event `$(d.event)`'s guard returns $(d.observed) — a guard is " *
-    "`Bool`-valued (boundary-detected) or returns the continuous sign value (localized) " *
+    "`Bool`-valued (non-localized) or returns the continuous sign value (localized) " *
     "(§2.3, §10.4)"
 
 "§5.2, §13.2: a bundle field a component function destructured that its bundle does not carry, classified against the legal sets."
